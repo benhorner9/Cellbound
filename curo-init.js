@@ -13,4 +13,12 @@ document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',
 ui.retryBtn.addEventListener('click',async()=>{ui.deathPanel.hidden=true;player.hp=player.max;paused=false;startTroll(true)});
 ui.completionBtn.addEventListener('click',()=>{ui.completionPanel.hidden=true;paused=false;toast('A World Beyond Curo is now active.',2500)});
 
-(async()=>{try{const ok=await loadPersistentState();if(!ok)return;configureFromStage();renderInventory();renderCells();updateHUD();ui.loadingText.textContent='Curo is ready.';setTimeout(()=>{ui.loading.classList.add('hide');paused=false;log(`You arrive in <span class="gold">${mode==='town'?'Curo':'Forgotten Hollow'}</span>.`);if(player.tutorialStage==='arrived_curo')toast('Use the movement control or WASD to explore.',2500)},350);requestAnimationFrame(loop)}catch(err){console.error(err);ui.loadingText.textContent='The world could not be loaded. Refresh to try again.'}})();
+(async()=>{try{
+  ui.loadingText.textContent='Painting Curo into the world...';
+  await loadCuroBackdrop();
+  const ok=await loadPersistentState();if(!ok)return;
+  configureFromStage();renderInventory();renderCells();updateHUD();
+  ui.loadingText.textContent=curoBackdropReady?'Curo is ready.':'Curo is ready in fallback mode.';
+  setTimeout(()=>{ui.loading.classList.add('hide');paused=false;log(`You arrive in <span class="gold">${mode==='town'?'Curo':'Forgotten Hollow'}</span>.`);if(player.tutorialStage==='arrived_curo')toast('Use the movement control or tap the ground to explore.',2500)},350);
+  requestAnimationFrame(loop)
+}catch(err){console.error(err);ui.loadingText.textContent='The world could not be loaded. Refresh to try again.'}})();
