@@ -3,6 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "rm -rf dist && mkdir -p dist && cp index.html styles.css script.js character.html character.css character.js curo.html curo.css curo.js dist/"
+    "build": "node build.js"
   }
 }
