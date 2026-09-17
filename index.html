@@ -5,104 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#071019" />
   <title>Cellbound</title>
-  <meta name="description" content="Enter the world of Cellbound." />
+  <meta name="description" content="Build the guild that conquers the world." />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
   <main class="login-shell">
     <div class="world" aria-hidden="true">
-      <div class="world__moon"></div>
-      <div class="world__mountain world__mountain--one"></div>
-      <div class="world__mountain world__mountain--two"></div>
-      <div class="world__mountain world__mountain--three"></div>
-      <div class="world__ruin world__ruin--left"></div>
-      <div class="world__ruin world__ruin--right"></div>
-      <div class="world__bridge"></div>
-      <div class="world__crystal world__crystal--one"></div>
-      <div class="world__crystal world__crystal--two"></div>
-      <div class="world__crystal world__crystal--three"></div>
-      <div class="world__mist world__mist--one"></div>
-      <div class="world__mist world__mist--two"></div>
+      <div class="world__moon"></div><div class="world__mountain world__mountain--one"></div><div class="world__mountain world__mountain--two"></div><div class="world__mountain world__mountain--three"></div><div class="world__ruin world__ruin--left"></div><div class="world__ruin world__ruin--right"></div><div class="world__bridge"></div><div class="world__crystal world__crystal--one"></div><div class="world__crystal world__crystal--two"></div><div class="world__crystal world__crystal--three"></div><div class="world__mist world__mist--one"></div><div class="world__mist world__mist--two"></div>
     </div>
-
-    <header class="topbar">
-      <div class="brand-mini">
-        <div class="cell-mark" aria-hidden="true">
-          <span class="cell-mark__ring cell-mark__ring--outer"></span>
-          <span class="cell-mark__ring cell-mark__ring--inner"></span>
-          <span class="cell-mark__crystal"></span>
-          <span class="cell-mark__flare"></span>
-        </div>
-        <span>CELLBOUND</span>
-      </div>
-      <div class="world-status"><span></span> Worlds online</div>
-    </header>
-
-    <section class="hero-copy">
-      <div class="hero-copy__eyebrow"><span></span> THE WORLD REMEMBERS</div>
-      <h1>Power is not learned.<br><strong>It is unlocked.</strong></h1>
-      <p>Hunt ancient bosses. Claim rare Cells. Unlock the skills that define your journey.</p>
-      <div class="hero-copy__rule"></div>
-      <p class="hero-copy__small">Every Cell changes what your character can become.</p>
+    <header class="topbar"><div class="brand-mini"><div class="cell-mark" aria-hidden="true"><span class="cell-mark__ring cell-mark__ring--outer"></span><span class="cell-mark__ring cell-mark__ring--inner"></span><span class="cell-mark__crystal"></span><span class="cell-mark__flare"></span></div><span>CELLBOUND</span></div><div class="world-status"><span></span> Founding season</div></header>
+    <section class="hero-copy"><div class="hero-copy__eyebrow"><span></span> YOU RUN THE GUILD</div><h1>Your heroes fight.<br><strong>You build the team.</strong></h1><p>Recruit tanks, healers and damage dealers. Develop talents, manage gear, learn encounters through failure and build a roster capable of conquering dungeons and raids.</p><div class="hero-copy__rule"></div><p class="hero-copy__small">Every wipe teaches. Every boss kill changes your guild.</p></section>
+    <section class="login-card" aria-label="Cellbound account login"><div class="login-card__glow" aria-hidden="true"></div><div class="login-card__crest"><div class="cell-mark" aria-hidden="true"><span class="cell-mark__ring cell-mark__ring--outer"></span><span class="cell-mark__ring cell-mark__ring--inner"></span><span class="cell-mark__crystal"></span><span class="cell-mark__flare"></span></div></div><p class="login-card__kicker">GUILD COMMAND</p><h2>Enter Cellbound</h2><p id="login-intro" class="login-card__intro">Sign in to continue your guild.</p>
+      <form id="login-form"><label for="email">Email address</label><div class="field"><span class="field-icon">✦</span><input id="email" type="email" placeholder="you@example.com" autocomplete="email" required /></div><div class="label-row"><label for="password">Password</label><button id="forgot-password" class="text-button" type="button">Forgot password?</button></div><div class="field"><span class="field-icon">◇</span><input id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required /><button id="toggle-password" class="eye-button" type="button">Show</button></div><label class="remember"><input id="remember-device" type="checkbox" /><span>Keep me signed in on this device</span></label><button id="enter-button" class="enter-button" type="submit"><span>ENTER GUILD COMMAND</span><b>→</b></button></form>
+      <p id="login-message" class="login-card__message" aria-live="polite" hidden></p><div class="divider"><span>NEW TO CELLBOUND?</span></div><button id="create-account" class="create-button" type="button">CREATE AN ACCOUNT</button><p class="legal">By continuing, you agree to the Terms of Service and Privacy Policy.</p>
     </section>
-
-    <section class="login-card" aria-label="Cellbound account login">
-      <div class="login-card__glow" aria-hidden="true"></div>
-      <div class="login-card__crest">
-        <div class="cell-mark" aria-hidden="true">
-          <span class="cell-mark__ring cell-mark__ring--outer"></span>
-          <span class="cell-mark__ring cell-mark__ring--inner"></span>
-          <span class="cell-mark__crystal"></span>
-          <span class="cell-mark__flare"></span>
-        </div>
-      </div>
-      <p class="login-card__kicker">RETURN TO THE BOUND WORLD</p>
-      <h2>Enter Cellbound</h2>
-      <p id="login-intro" class="login-card__intro">Sign in to continue your journey.</p>
-
-      <form id="login-form">
-        <label for="email">Email address</label>
-        <div class="field">
-          <span class="field-icon">✦</span>
-          <input id="email" type="email" placeholder="you@example.com" autocomplete="email" required />
-        </div>
-
-        <div class="label-row">
-          <label for="password">Password</label>
-          <button id="forgot-password" class="text-button" type="button">Forgot password?</button>
-        </div>
-        <div class="field">
-          <span class="field-icon">◇</span>
-          <input id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required />
-          <button id="toggle-password" class="eye-button" type="button">Show</button>
-        </div>
-
-        <label class="remember">
-          <input id="remember-device" type="checkbox" />
-          <span>Keep me signed in on this device</span>
-        </label>
-
-        <button id="enter-button" class="enter-button" type="submit">
-          <span>ENTER THE WORLD</span>
-          <b>→</b>
-        </button>
-      </form>
-
-      <p id="login-message" class="login-card__message" aria-live="polite" hidden></p>
-
-      <div class="divider"><span>NEW TO CELLBOUND?</span></div>
-      <button id="create-account" class="create-button" type="button">CREATE AN ACCOUNT</button>
-
-      <p class="legal">By continuing, you agree to the Terms of Service and Privacy Policy.</p>
-    </section>
-
-    <footer>
-      <span>© 2026 CELLBOUND</span>
-      <span class="footer-rune">◇</span>
-      <span>PRE-ALPHA</span>
-    </footer>
+    <footer><span>© 2026 CELLBOUND</span><span class="footer-rune">◇</span><span>MANAGEMENT REBOOT · PRE-ALPHA</span></footer>
   </main>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
-  <script src="./script.js"></script>
+  <script src="./auth.js?v=1"></script>
 </body>
 </html>
