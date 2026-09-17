@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#071019" />
+  <title>Create your character · Cellbound</title>
+  <meta name="description" content="Create your Cellbound character and choose your first combat path." />
+  <link rel="stylesheet" href="./character.css" />
+</head>
+<body>
+  <main class="creator-shell">
+    <div class="scene" aria-hidden="true">
+      <div class="scene__moon"></div>
+      <div class="scene__mountains scene__mountains--back"></div>
+      <div class="scene__mountains scene__mountains--front"></div>
+      <div class="scene__spire scene__spire--left"></div>
+      <div class="scene__spire scene__spire--right"></div>
+      <div class="scene__mist scene__mist--one"></div>
+      <div class="scene__mist scene__mist--two"></div>
+      <div class="scene__runes scene__runes--one">◇ ✦ ◈ ⟡</div>
+      <div class="scene__runes scene__runes--two">⟡ ◇ ✦</div>
+    </div>
+
+    <header class="creator-header">
+      <a class="brand" href="./index.html" aria-label="Back to Cellbound login">
+        <span class="brand__mark" aria-hidden="true"><i></i><b></b></span>
+        <span>CELLBOUND</span>
+      </a>
+      <div class="step-indicator">
+        <span>CHARACTER BINDING</span>
+        <b>01</b><i></i><em>02</em>
+      </div>
+      <button id="sign-out" class="quiet-button" type="button">Sign out</button>
+    </header>
+
+    <section class="creator-layout">
+      <aside class="panel panel--identity">
+        <div class="panel__eyebrow"><span></span> YOUR IDENTITY</div>
+        <h1>Who enters<br>the bound world?</h1>
+        <p class="panel__lead">Shape the person the world will remember. Appearance can be changed later.</p>
+
+        <div class="control-block control-block--name">
+          <div class="control-heading">
+            <label for="character-name">Character name</label>
+            <span id="name-count">0 / 18</span>
+          </div>
+          <div class="name-field">
+            <input id="character-name" maxlength="18" autocomplete="off" spellcheck="false" placeholder="Choose a name" />
+            <span>◇</span>
+          </div>
+          <p id="name-hint" class="control-hint">3–18 characters. Letters, spaces, apostrophes and hyphens.</p>
+        </div>
+
+        <div class="control-block">
+          <div class="control-heading"><span>Build</span></div>
+          <div class="segmented" data-control="build">
+            <button type="button" data-value="lean">Lean</button>
+            <button type="button" data-value="balanced" class="is-active">Balanced</button>
+            <button type="button" data-value="broad">Broad</button>
+          </div>
+        </div>
+
+        <div class="control-block">
+          <div class="control-heading"><span>Face</span></div>
+          <div class="face-options" data-control="face">
+            <button type="button" data-value="one" class="is-active"><span class="face-icon face-icon--one"></span><b>I</b></button>
+            <button type="button" data-value="two"><span class="face-icon face-icon--two"></span><b>II</b></button>
+            <button type="button" data-value="three"><span class="face-icon face-icon--three"></span><b>III</b></button>
+            <button type="button" data-value="four"><span class="face-icon face-icon--four"></span><b>IV</b></button>
+          </div>
+        </div>
+
+        <div class="control-block">
+          <div class="control-heading"><span>Hair</span></div>
+          <div class="segmented segmented--four" data-control="hair">
+            <button type="button" data-value="cropped" class="is-active">Cropped</button>
+            <button type="button" data-value="swept">Swept</button>
+            <button type="button" data-value="long">Long</button>
+            <button type="button" data-value="braided">Braided</button>
+          </div>
+        </div>
+
+        <div class="swatch-row">
+          <div class="control-block control-block--swatches">
+            <div class="control-heading"><span>Skin tone</span></div>
+            <div class="swatches" data-control="skin">
+              <button type="button" data-value="#f1c7aa" style="--swatch:#f1c7aa" aria-label="Skin tone 1"></button>
+              <button type="button" data-value="#dca27f" style="--swatch:#dca27f" aria-label="Skin tone 2" class="is-active"></button>
+              <button type="button" data-value="#b97655" style="--swatch:#b97655" aria-label="Skin tone 3"></button>
+              <button type="button" data-value="#8b533d" style="--swatch:#8b533d" aria-label="Skin tone 4"></button>
+              <button type="button" data-value="#5e382d" style="--swatch:#5e382d" aria-label="Skin tone 5"></button>
+            </div>
+          </div>
+
+          <div class="control-block control-block--swatches">
+            <div class="control-heading"><span>Hair colour</span></div>
+            <div class="swatches" data-control="hairColor">
+              <button type="button" data-value="#171a1a" style="--swatch:#171a1a" aria-label="Black hair" class="is-active"></button>
+              <button type="button" data-value="#4a2e24" style="--swatch:#4a2e24" aria-label="Brown hair"></button>
+              <button type="button" data-value="#9b7650" style="--swatch:#9b7650" aria-label="Light brown hair"></button>
+              <button type="button" data-value="#c7b17b" style="--swatch:#c7b17b" aria-label="Blonde hair"></button>
+              <button type="button" data-value="#712f2b" style="--swatch:#712f2b" aria-label="Auburn hair"></button>
+            </div>
+          </div>
+        </div>
+
+        <button id="randomise" class="randomise-button" type="button"><span>↻</span> Randomise appearance</button>
+      </aside>
+
+      <section class="character-stage" aria-label="Character preview">
+        <div class="stage-title">
+          <span id="preview-name">UNBOUND</span>
+          <small id="preview-path">Choose your path</small>
+        </div>
+
+        <div class="binding-ring binding-ring--outer"></div>
+        <div class="binding-ring binding-ring--middle"></div>
+        <div class="binding-ring binding-ring--inner"></div>
+        <div class="binding-glyphs" aria-hidden="true">◇　✦　⟡　◈　◇　✦　⟡　◈</div>
+        <div class="stage-glow"></div>
+
+        <div id="character-preview" class="character-preview" data-build="balanced" data-face="one" data-hair="cropped" data-path="melee" style="--skin:#dca27f;--hair:#171a1a">
+          <svg viewBox="0 0 420 720" role="img" aria-label="Cellbound character preview">
+            <defs>
+              <linearGradient id="cloth" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#2a3538"/>
+                <stop offset=".48" stop-color="#172226"/>
+                <stop offset="1" stop-color="#0d1518"/>
+              </linearGradient>
+              <linearGradient id="leather" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#5a4737"/>
+                <stop offset="1" stop-color="#2b241f"/>
+              </linearGradient>
+              <radialGradient id="arcane" cx="50%" cy="50%" r="50%">
+                <stop offset="0" stop-color="#eaffff"/>
+                <stop offset=".25" stop-color="#72fff1"/>
+                <stop offset=".62" stop-color="#1a9b9b"/>
+                <stop offset="1" stop-color="#0a3d47" stop-opacity="0"/>
+              </radialGradient>
+              <filter id="glow"><feGaussianBlur stdDeviation="9"/></filter>
+            </defs>
+
+            <ellipse cx="210" cy="672" rx="118" ry="21" fill="#000" opacity=".45"/>
+
+            <g class="weapon weapon--melee">
+              <path d="M320 176 L339 184 L240 474 L221 466 Z" fill="#899b9e"/>
+              <path d="M331 164 L349 175 L339 184 L320 176 Z" fill="#d9f1ef"/>
+              <path d="M226 444 L267 460 L263 475 L219 458 Z" fill="#625243"/>
+            </g>
+            <g class="weapon weapon--ranged">
+              <path d="M316 183 Q378 334 310 488" fill="none" stroke="#8b6846" stroke-width="12" stroke-linecap="round"/>
+              <path d="M316 183 Q336 334 310 488" fill="none" stroke="#b6d8d4" stroke-width="2"/>
+              <path d="M277 217 L326 423" stroke="#6b4b31" stroke-width="8"/>
+            </g>
+            <g class="weapon weapon--magic">
+              <path d="M316 199 L329 202 L286 514 L273 510 Z" fill="#574c44"/>
+              <path d="M316 183 L334 194 L329 215 L311 212 L301 195 Z" fill="#4fe7dc"/>
+              <circle cx="317" cy="197" r="40" fill="url(#arcane)" filter="url(#glow)" opacity=".9"/>
+            </g>
+
+            <g class="body-group">
+              <path class="leg" d="M161 438 L207 440 L194 626 L158 626 Z" fill="#151e21"/>
+              <path class="leg" d="M212 440 L258 438 L264 626 L228 626 Z" fill="#121b1e"/>
+              <path d="M154 609 L196 609 L194 653 L139 653 Q138 630 154 609Z" fill="#2b2823"/>
+              <path d="M227 609 L269 609 Q284 629 281 653 L228 653 Z" fill="#2b2823"/>
+
+              <path class="torso" d="M145 240 Q210 205 275 240 L293 426 Q210 460 127 426 Z" fill="url(#cloth)" stroke="#415356" stroke-width="2"/>
+              <path d="M153 274 Q210 306 267 274 L270 300 Q211 333 150 300 Z" fill="#394548" opacity=".75"/>
+              <path d="M188 230 L232 230 L247 416 L172 416 Z" fill="#202c2f" opacity=".75"/>
+              <path d="M171 329 L260 329 L266 353 L166 353 Z" fill="url(#leather)"/>
+              <rect x="205" y="329" width="22" height="24" rx="2" fill="#85715a"/>
+              <path d="M143 376 Q210 402 281 373" fill="none" stroke="#47605f" stroke-width="3" opacity=".65"/>
+
+              <path class="arm arm--left" d="M145 251 Q115 270 102 326 L119 424 Q132 434 146 424 L142 329 L169 282 Z" fill="url(#cloth)"/>
+              <path class="arm arm--right" d="M274 250 Q307 272 317 329 L304 424 Q290 435 278 424 L281 329 L253 282 Z" fill="url(#cloth)"/>
+              <path d="M107 411 Q115 399 126 410 L130 457 Q110 472 96 454 Z" fill="var(--skin)"/>
+              <path d="M293 409 Q303 399 313 410 L323 452 Q309 470 290 456 Z" fill="var(--skin)"/>
+
+              <path d="M183 211 L237 211 L241 246 Q210 263 179 246 Z" fill="var(--skin)"/>
+              <ellipse class="head" cx="210" cy="166" rx="52" ry="65" fill="var(--skin)"/>
+              <path d="M163 172 Q157 136 171 111 Q209 76 249 110 Q264 135 256 176 L246 146 Q215 122 174 145 Z" fill="var(--hair)" class="hair hair--cropped"/>
+              <path d="M158 170 Q151 126 176 101 Q224 71 260 110 Q273 144 253 190 L244 142 Q204 112 167 150 Z" fill="var(--hair)" class="hair hair--swept"/>
+              <path d="M158 170 Q149 122 176 98 Q222 73 258 109 L268 230 L247 247 L240 142 Q201 113 166 149 L177 242 L156 224 Z" fill="var(--hair)" class="hair hair--long"/>
+              <path d="M158 168 Q151 126 174 102 Q219 75 258 109 Q268 141 252 184 L246 143 Q207 113 166 148 Z M250 175 Q279 231 255 289 L242 281 Q260 227 236 184 Z" fill="var(--hair)" class="hair hair--braided"/>
+
+              <g class="face-details face-details--one">
+                <path d="M180 160 L195 157" stroke="#413129" stroke-width="3" stroke-linecap="round"/>
+                <path d="M225 157 L241 160" stroke="#413129" stroke-width="3" stroke-linecap="round"/>
+                <circle cx="190" cy="168" r="3" fill="#102226"/><circle cx="232" cy="168" r="3" fill="#102226"/>
+                <path d="M202 199 Q211 204 220 199" fill="none" stroke="#80594a" stroke-width="2"/>
+              </g>
+              <g class="face-details face-details--two">
+                <path d="M179 158 Q190 151 198 157" stroke="#3d2e27" stroke-width="4" fill="none"/>
+                <path d="M223 157 Q234 151 242 159" stroke="#3d2e27" stroke-width="4" fill="none"/>
+                <circle cx="190" cy="169" r="3.5" fill="#102226"/><circle cx="232" cy="169" r="3.5" fill="#102226"/>
+                <path d="M198 200 Q211 209 225 199" fill="none" stroke="#80594a" stroke-width="2"/>
+              </g>
+              <g class="face-details face-details--three">
+                <path d="M178 160 L198 155" stroke="#3c2c27" stroke-width="3"/>
+                <path d="M222 155 L243 160" stroke="#3c2c27" stroke-width="3"/>
+                <path d="M185 169 L196 169 M226 169 L238 169" stroke="#102226" stroke-width="4" stroke-linecap="round"/>
+                <path d="M201 201 L221 201" stroke="#80594a" stroke-width="2"/>
+              </g>
+              <g class="face-details face-details--four">
+                <path d="M177 157 Q190 163 200 156" stroke="#3d2c25" stroke-width="3" fill="none"/>
+                <path d="M222 156 Q234 163 244 157" stroke="#3d2c25" stroke-width="3" fill="none"/>
+                <circle cx="190" cy="169" r="3" fill="#102226"/><circle cx="233" cy="169" r="3" fill="#102226"/>
+                <path d="M200 201 Q211 197 222 202" fill="none" stroke="#80594a" stroke-width="2"/>
+              </g>
+
+              <path d="M151 246 Q173 223 187 226 L179 266 L143 290 Z" fill="#313d40"/>
+              <path d="M269 246 Q247 223 233 226 L241 266 L278 290 Z" fill="#313d40"/>
+            </g>
+          </svg>
+        </div>
+
+        <div class="path-aura path-aura--melee"></div>
+        <div class="path-aura path-aura--ranged"></div>
+        <div class="path-aura path-aura--magic"></div>
+
+        <div class="stage-caption"><span>YOUR FIRST BINDING</span><p>Your starting path unlocks one combat skill immediately. The others must be earned through Cells.</p></div>
+      </section>
+
+      <aside class="panel panel--path">
+        <div class="panel__eyebrow"><span></span> FIRST BINDING</div>
+        <h2>Choose your<br>combat path.</h2>
+        <p class="panel__lead">This is the only skill granted freely. Every other skill must be unlocked through a Cell.</p>
+
+        <div id="path-options" class="path-options">
+          <button type="button" class="path-card is-active" data-path="melee">
+            <div class="path-card__icon path-card__icon--melee">⚔</div>
+            <div class="path-card__copy"><span>VANGUARD</span><b>Melee</b><small>Close-range weapons, armour and direct pressure.</small></div>
+            <div class="path-card__state">BOUND</div>
+          </button>
+          <button type="button" class="path-card" data-path="ranged">
+            <div class="path-card__icon path-card__icon--ranged">➶</div>
+            <div class="path-card__copy"><span>RANGER</span><b>Ranged</b><small>Distance, precision and control of the battlefield.</small></div>
+            <div class="path-card__state">CHOOSE</div>
+          </button>
+          <button type="button" class="path-card" data-path="magic">
+            <div class="path-card__icon path-card__icon--magic">✦</div>
+            <div class="path-card__copy"><span>ARCANIST</span><b>Magic</b><small>Channel unstable energy through arcane focus.</small></div>
+            <div class="path-card__state">CHOOSE</div>
+          </button>
+        </div>
+
+        <div class="binding-warning">
+          <span>◇</span>
+          <p><b>Your path is not your class.</b> It only determines the combat skill you begin with. Other combat styles can be unlocked later by finding their Cells.</p>
+        </div>
+
+        <div class="creator-actions">
+          <p id="creator-message" aria-live="polite"></p>
+          <button id="bind-character" class="bind-button" type="button">
+            <span>BIND THIS CHARACTER</span><b>→</b>
+          </button>
+        </div>
+      </aside>
+    </section>
+
+    <div id="bound-overlay" class="bound-overlay" hidden>
+      <div class="bound-overlay__sigil"><span>◇</span></div>
+      <p>THE BINDING HOLDS</p>
+      <h2 id="bound-name">Your journey begins.</h2>
+      <span id="bound-description">The first path is yours. The rest must be earned.</span>
+      <button id="continue-tutorial" type="button">BEGIN THE TUTORIAL <b>→</b></button>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
+  <script src="./character.js"></script>
+</body>
+</html>
