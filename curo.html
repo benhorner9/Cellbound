@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#9fd58b" />
+  <title>Cellbound — Curo</title>
+  <meta name="description" content="Explore Curo, the first town in Cellbound." />
+  <link rel="stylesheet" href="./curo.css" />
+</head>
+<body>
+  <main id="game-shell">
+    <canvas id="game" aria-label="Cellbound tutorial in Curo"></canvas>
+
+    <header class="hud-top">
+      <div class="location-card">
+        <span class="location-kicker">THE FIRST HAVEN</span>
+        <strong id="location-name">CURO</strong>
+        <span id="location-subtitle">A quiet beginning</span>
+      </div>
+      <div class="player-card">
+        <div class="portrait"><span id="portrait-rune">◇</span></div>
+        <div>
+          <strong id="player-name">BOUND ONE</strong>
+          <span id="player-path">Vanguard · Melee</span>
+        </div>
+        <div class="health"><i id="health-fill"></i></div>
+      </div>
+    </header>
+
+    <aside class="quest-card" id="quest-card">
+      <span>FIRST STEPS</span>
+      <strong id="quest-title">The Waiting Mage</strong>
+      <p id="quest-copy">Find the mage waiting beside Curo's well.</p>
+    </aside>
+
+    <div class="hint" id="hint">Tap the ground to move · or use the movement pad</div>
+
+    <div class="interaction-prompt" id="interaction-prompt" hidden>
+      <span id="interaction-key">TAP</span>
+      <strong id="interaction-text">Speak to the Mage</strong>
+    </div>
+
+    <section class="dialogue" id="dialogue" hidden>
+      <div class="dialogue-portrait"><span>✦</span></div>
+      <div class="dialogue-copy">
+        <span class="dialogue-name" id="dialogue-name">THE MAGE</span>
+        <p id="dialogue-text"></p>
+      </div>
+      <button id="dialogue-next" type="button">CONTINUE <b>→</b></button>
+    </section>
+
+    <section class="loot-banner" id="loot-banner" hidden>
+      <span>VICTORY</span>
+      <strong>The troll has fallen.</strong>
+      <p>Something is glowing amongst the remains.</p>
+    </section>
+
+    <section class="inventory" id="inventory">
+      <span class="inventory-title">PACK</span>
+      <div class="slot"><span>🦴</span><b id="bones-count">0</b></div>
+      <div class="slot cell-slot"><span>◇</span><b id="cell-count">0</b></div>
+    </section>
+
+    <div class="joystick" id="joystick" aria-label="Movement control">
+      <div class="joystick-ring"></div>
+      <div class="joystick-knob" id="joystick-knob"></div>
+    </div>
+
+    <button class="action-button" id="action-button" type="button">
+      <span id="action-icon">✦</span>
+      <strong id="action-label">INTERACT</strong>
+    </button>
+
+    <div class="desktop-keys">
+      <span>WASD / ARROWS</span>
+      <i>MOVE</i>
+      <span>SPACE / E</span>
+      <i>ACTION</i>
+    </div>
+
+    <div class="fade" id="fade"></div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
+  <script src="./curo.js"></script>
+</body>
+</html>
