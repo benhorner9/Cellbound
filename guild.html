@@ -76,6 +76,39 @@
 <div id="attemptModal" class="modal-backdrop" hidden><section class="attempt-modal"><div id="attemptStage"></div></section></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
-<script src="./guild.js?v=1"></script>
+<script>
+(() => {
+  const REMEMBER_KEY = 'cellbound-remember-device';
+  const sharedStorage = {
+    getItem(key) {
+      return localStorage.getItem(key) ?? sessionStorage.getItem(key);
+    },
+    setItem(key, value) {
+      const remember = localStorage.getItem(REMEMBER_KEY) === '1';
+      const primary = remember ? localStorage : sessionStorage;
+      const secondary = remember ? sessionStorage : localStorage;
+      primary.setItem(key, value);
+      secondary.removeItem(key);
+    },
+    removeItem(key) {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    }
+  };
+
+  const originalCreateClient = window.supabase.createClient.bind(window.supabase);
+  window.supabase.createClient = (url, key, options = {}) => originalCreateClient(url, key, {
+    ...options,
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      ...(options.auth || {}),
+      storage: sharedStorage
+    }
+  });
+})();
+</script>
+<script src="./guild.js?v=2"></script>
 </body>
 </html>
