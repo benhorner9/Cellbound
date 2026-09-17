@@ -5,28 +5,86 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,maximum-scale=1">
 <meta name="theme-color" content="#0b1112">
 <title>Cellbound — Curo</title>
-<link rel="stylesheet" href="./curo.css?v=2">
+<link rel="stylesheet" href="./curo.css?v=3">
 </head>
 <body>
-<canvas id="game"></canvas>
-<div class="ui">
-  <div class="logo"><div><div class="logo-title">CELLB<span style="color:#b6a487">◇</span>UND</div><div class="logo-sub">SKILLS LIVE DEEPER</div></div></div>
-  <div class="frame player-hud"><span class="orn tl"></span><span class="orn tr"></span><span class="orn bl"></span><span class="orn br"></span><div class="crest"></div><div class="level">1</div><div class="player-name" id="playerName">Bound One</div><div class="bar"><i id="hpFill"></i><span id="hpText">100 / 100</span></div><div class="bar mana"><i></i><span>50 / 50</span></div></div>
-  <div class="frame boss-hud" id="bossHud"><span class="orn tl"></span><span class="orn tr"></span><div class="boss-name">Gorvak, the Curo Troll</div><div class="bossbar"><i id="bossFill"></i><b id="bossPct">100%</b></div><div class="boss-sub">TUTORIAL · BRUTE · CELL-BEARER</div></div>
-  <div class="frame minimap"><div class="mini-title" id="miniTitle">Curo</div><div class="mini-clock">16:30</div><div class="mini-map"></div><div class="compass">N</div><div class="zoom"><span>+</span><span>−</span></div></div>
-  <div class="right-stack">
-    <div class="frame panel quest"><span class="orn tl"></span><span class="orn br"></span><div class="quest-title">◇ <span id="questTitle">The Waiting Mage</span></div><p id="questText"><span class="check">□</span>Find the mage waiting beside Curo's well.</p></div>
-    <div class="frame panel skills"><div class="panel-head"><span class="ico">⚔</span> Skills (Cells)<span class="close">×</span></div><div class="skills-body"><div class="skills-help">Obtain Cells from powerful foes to unlock new skills.</div><div class="skill-grid"><div class="skill unlocked"><div class="icon">⚒</div><b>Combat</b><small>Unlocked</small></div><div class="skill"><div class="icon">⛏</div><b>Mining</b><small>Locked</small></div><div class="skill"><div class="icon">🪓</div><b>Woodcutting</b><small>Locked</small></div><div class="skill"><div class="icon">∫</div><b>Fishing</b><small>Locked</small></div><div class="skill"><div class="icon">♨</div><b>Cooking</b><small>Locked</small></div><div class="skill"><div class="icon">◇</div><b>Runecraft</b><small>Locked</small></div></div></div></div>
-    <div class="frame panel inventory"><div class="panel-head"><span class="ico">▣</span> Inventory<span class="close">×</span></div><div class="inventory-body"><div class="slots" id="slots"></div><div class="inv-foot"><span>● <b style="color:#e7c06b">128</b></span><span>▰ 7 / 24</span></div></div></div>
+<canvas id="game" aria-label="Cellbound game world"></canvas>
+<div class="ui" id="ui">
+  <div class="brand"><div class="brand-title">CELLB<span>◇</span>UND</div><div class="brand-sub">SKILLS LIVE DEEPER</div></div>
+
+  <section class="frame player-hud">
+    <div class="crest">◇</div><div class="level" id="level">1</div>
+    <div class="player-name" id="playerName">Bound One</div>
+    <div class="bar hp"><i id="hpFill"></i><span id="hpText">100 / 100</span></div>
+    <div class="bar focus"><i id="focusFill"></i><span>CELL FOCUS</span></div>
+  </section>
+
+  <section class="frame boss-hud" id="bossHud" hidden>
+    <div class="boss-name">GORVAK, THE CURO TROLL</div>
+    <div class="bossbar"><i id="bossFill"></i><b id="bossPct">100%</b></div>
+    <div class="boss-sub" id="bossState">CELL-BEARER · TUTORIAL BOSS</div>
+  </section>
+
+  <section class="frame minimap">
+    <div class="mini-head"><span id="miniTitle">Curo</span><b id="miniState">SAFE</b></div>
+    <div class="mini-map"><span class="mini-player">◆</span><span class="mini-objective" id="miniObjective">✦</span></div>
+  </section>
+
+  <section class="frame quest">
+    <div class="quest-kicker">CURRENT OBJECTIVE</div>
+    <div class="quest-title" id="questTitle">The Waiting Mage</div>
+    <p id="questText">Find the mage beside Curo's old well.</p>
+  </section>
+
+  <div class="system-toast" id="toast" hidden></div>
+
+  <section class="frame chat" id="chatPanel">
+    <div class="chat-tabs"><b>System</b><span>Local</span><span>Party</span><span>Guild</span></div>
+    <div class="chat-log" id="chatLog"></div>
+  </section>
+
+  <div class="hotbar-wrap">
+    <div class="frame hotbar">
+      <button class="hot active" id="basicBtn" aria-label="Basic attack"><span id="basicIcon">⚔</span><kbd>1</kbd><small>BASIC</small></button>
+      <button class="hot locked" id="slamBtn" aria-label="Troll Slam" disabled><span>◇</span><kbd>2</kbd><small id="slamLabel">LOCKED</small><i id="slamCooldown"></i></button>
+      <button class="hot utility" id="inventoryBtn" aria-label="Inventory"><span>▣</span><kbd>I</kbd><small>PACK</small></button>
+      <button class="hot utility" id="cellsBtn" aria-label="Cells"><span>✦</span><kbd>C</kbd><small>CELLS</small></button>
+    </div>
   </div>
-  <div class="frame chat"><div class="tabs"><span class="active">All</span><span>System</span><span>Global</span><span>Trade</span><span>Clan</span><span>+</span></div><div class="chat-log" id="chatLog"><div>[16:27] You arrive in <span class="gold">Curo</span>.</div><div>[16:28] The air here feels unusually calm.</div><div>[16:29] A mage waits beside the old well.</div></div><div class="chat-input">◌ &nbsp; Press Enter to chat...</div></div>
-  <div class="hotbar-wrap"><div class="frame hotbar"><div class="hot active">⚔<kbd>1</kbd></div><div class="hot cool">✦<kbd>2</kbd></div><div class="hot">➶<kbd>3</kbd></div><div class="hot">◆<kbd>4</kbd></div><div class="hot">🛡<kbd>5</kbd></div><div class="hot">✧<kbd>6</kbd></div><div class="hot"><kbd>7</kbd></div><div class="hot"><kbd>8</kbd></div><div class="hot">🧪<kbd>9</kbd></div><div class="hot">🧪<kbd>0</kbd></div></div></div>
-  <div class="frame menu"><span>☰</span><span>♟</span><span>♟</span><span>◉</span><span>⚙</span></div>
-  <div class="joy" id="joy"><div class="knob" id="knob"></div></div><button class="action" id="action">INTERACT</button>
-  <div class="prompt" id="prompt" hidden>INTERACT · Speak to the Mage</div>
-  <div class="frame dialog" id="dialog" hidden><div class="portrait">✦</div><small>THE MAGE</small><p id="dialogText"></p><button id="next">CONTINUE →</button></div>
-  <div class="frame loot-banner" id="lootBanner" hidden><div class="cell-icon">◇</div><small>You received</small><b>First Cell</b><span>A new skill can now be unlocked.</span></div>
+
+  <div class="joy" id="joy" aria-label="Movement control"><div class="knob" id="knob"></div></div>
+  <button class="action" id="action"><span id="actionIcon">✦</span><small id="actionLabel">INTERACT</small></button>
+  <div class="prompt" id="prompt" hidden></div>
+
+  <section class="frame dialog" id="dialog" hidden>
+    <div class="portrait" id="dialogPortrait">✦</div>
+    <div class="dialog-copy"><small id="dialogName">THE MAGE</small><p id="dialogText"></p></div>
+    <button id="next">CONTINUE →</button>
+  </section>
+
+  <section class="frame modal" id="inventoryPanel" hidden>
+    <div class="modal-head"><div><small>CHARACTER STORAGE</small><h2>Inventory</h2></div><button data-close="inventoryPanel">×</button></div>
+    <div class="inventory-grid" id="inventoryGrid"></div>
+    <div class="item-detail" id="itemDetail"><b>Select an item</b><p>Your recovered materials and Cells appear here.</p></div>
+  </section>
+
+  <section class="frame modal" id="cellsPanel" hidden>
+    <div class="modal-head"><div><small>BOUND POWER</small><h2>Cells</h2></div><button data-close="cellsPanel">×</button></div>
+    <div class="cell-list" id="cellList"></div>
+    <button class="primary-action" id="absorbBtn" hidden>ABSORB CELL</button>
+  </section>
+
+  <section class="frame death" id="deathPanel" hidden>
+    <small>YOU HAVE FALLEN</small><h1>The Cell still calls.</h1><p>Gorvak has reset. Return to the chamber and try again.</p><button id="retryBtn">TRY AGAIN</button>
+  </section>
+
+  <section class="frame completion" id="completionPanel" hidden>
+    <small>TUTORIAL COMPLETE</small><h1>Your first Cell is bound.</h1><p>The road beyond Curo is now your next objective.</p><button id="completionBtn">RETURN TO CURO</button>
+  </section>
+
+  <div class="loading" id="loading"><div class="rune">◇</div><strong>Entering Curo...</strong><span id="loadingText">Binding your character to the world.</span></div>
 </div>
-<script src="./curo.js?v=2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./curo.js?v=3"></script>
 </body>
 </html>
