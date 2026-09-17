@@ -5,7 +5,8 @@ const files = [
   'index.html', 'styles.css', 'script.js',
   'character.html', 'character.css', 'character.js',
   'curo.html', 'curo.css', 'curo.js',
-  'curo-core.js', 'curo-render.js', 'curo-combat.js', 'curo-init.js'
+  'curo-core.js', 'curo-render.js', 'curo-combat.js', 'curo-init.js',
+  'assets/curo/curo-world.part1', 'assets/curo/curo-world.part2'
 ];
 
 const out = path.join(__dirname, 'dist');
@@ -17,6 +18,7 @@ const touchFix = `\n<style id="cellbound-ios-touch-fix">\nhtml,body{touch-action
 for (const file of files) {
   const src = path.join(__dirname, file);
   const dest = path.join(out, file);
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
   let contents = fs.readFileSync(src, 'utf8');
 
   if (file.endsWith('.html')) {
@@ -26,4 +28,4 @@ for (const file of files) {
   fs.writeFileSync(dest, contents);
 }
 
-console.log('Cellbound build complete with iPad touch safeguards.');
+console.log('Cellbound build complete with Curo world art and iPad touch safeguards.');
