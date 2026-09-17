@@ -115,6 +115,12 @@ function friendlyAuthError(error) {
   if (/invalid login credentials/i.test(message)) return 'Email or password is incorrect.';
   if (/email not confirmed/i.test(message)) return 'Confirm your email before entering Cellbound.';
   if (/user already registered/i.test(message)) return 'That email already has a Cellbound account.';
+  if (/email address not authorized|email_address_not_authorized/i.test(message)) {
+    return 'Supabase is still using its restricted test email service. For now, use the email address that owns the Supabase project, or configure a custom SMTP provider for public signups.';
+  }
+  if (/redirect/i.test(message) && /allow|authoriz|invalid/i.test(message)) {
+    return 'The signup redirect is not allowed yet. I have removed that dependency from new account creation.';
+  }
   if (/rate limit/i.test(message)) return 'Too many attempts. Try again shortly.';
   return message;
 }
@@ -178,14 +184,12 @@ createAccount?.addEventListener('click', async () => {
   setRememberPreference();
   setBusy(true);
 
-  const { data, error } = await supabaseClient.auth.signUp({
-    ...credentials,
-    options: {
-      emailRedirectTo: `${window.location.origin}/character.html`,
-    },
-  });
+  // Do not force a redirect URL here. A new Supabase project rejects
+  // un-allow-listed redirects before an account can be created.
+  const { data, error } = await supabaseClient.auth.signUp(credentials);
 
   if (error) {
+    console.error('Cellbound signup failed:', error);
     setBusy(false);
     setMessage(friendlyAuthError(error), 'error');
     return;
@@ -207,9 +211,7 @@ forgotPassword?.addEventListener('click', async () => {
   if (!credentials) return;
 
   setBusy(true);
-  const { error } = await supabaseClient.auth.resetPasswordForEmail(credentials.email, {
-    redirectTo: window.location.origin,
-  });
+  const { error } = await supabaseClient.auth.resetPasswordForEmail(credentials.email);
   setBusy(false);
 
   if (error) {
