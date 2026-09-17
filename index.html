@@ -58,7 +58,7 @@
       </div>
       <p class="login-card__kicker">RETURN TO THE BOUND WORLD</p>
       <h2>Enter Cellbound</h2>
-      <p class="login-card__intro">Sign in to continue your journey.</p>
+      <p id="login-intro" class="login-card__intro">Sign in to continue your journey.</p>
 
       <form id="login-form">
         <label for="email">Email address</label>
@@ -69,7 +69,7 @@
 
         <div class="label-row">
           <label for="password">Password</label>
-          <button class="text-button" type="button">Forgot password?</button>
+          <button id="forgot-password" class="text-button" type="button">Forgot password?</button>
         </div>
         <div class="field">
           <span class="field-icon">◇</span>
@@ -78,20 +78,20 @@
         </div>
 
         <label class="remember">
-          <input type="checkbox" />
+          <input id="remember-device" type="checkbox" />
           <span>Keep me signed in on this device</span>
         </label>
 
-        <button class="enter-button" type="submit">
+        <button id="enter-button" class="enter-button" type="submit">
           <span>ENTER THE WORLD</span>
           <b>→</b>
         </button>
       </form>
 
-      <p id="login-message" class="login-card__message" hidden></p>
+      <p id="login-message" class="login-card__message" aria-live="polite" hidden></p>
 
       <div class="divider"><span>NEW TO CELLBOUND?</span></div>
-      <button class="create-button" type="button">CREATE AN ACCOUNT</button>
+      <button id="create-account" class="create-button" type="button">CREATE AN ACCOUNT</button>
 
       <p class="legal">By continuing, you agree to the Terms of Service and Privacy Policy.</p>
     </section>
@@ -102,6 +102,7 @@
       <span>PRE-ALPHA</span>
     </footer>
   </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
   <script src="./script.js"></script>
 </body>
 </html>
