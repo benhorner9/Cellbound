@@ -15,6 +15,7 @@ const enterButton = document.getElementById('enter-button');
 const enterButtonLabel = enterButton?.querySelector('span');
 
 let recoveryMode = false;
+let routingToCharacter = false;
 
 const authStorage = {
   getItem(key) {
@@ -101,8 +102,12 @@ async function ensureProfile(user) {
 }
 
 function enterAuthenticatedState(user) {
+  if (routingToCharacter || recoveryMode) return;
+  routingToCharacter = true;
   const player = user?.email || 'player';
-  setMessage(`Authenticated as ${player}. Character creation is the next step.`, 'success');
+  setMessage(`Welcome back, ${player}. Entering the bound world…`, 'success');
+  setBusy(true);
+  window.setTimeout(() => window.location.replace('./character.html'), 450);
 }
 
 function friendlyAuthError(error) {
@@ -154,9 +159,9 @@ loginForm?.addEventListener('submit', async (event) => {
   setBusy(true);
 
   const { data, error } = await supabaseClient.auth.signInWithPassword(credentials);
-  setBusy(false);
 
   if (error) {
+    setBusy(false);
     setMessage(friendlyAuthError(error), 'error');
     return;
   }
@@ -176,13 +181,12 @@ createAccount?.addEventListener('click', async () => {
   const { data, error } = await supabaseClient.auth.signUp({
     ...credentials,
     options: {
-      emailRedirectTo: window.location.origin,
+      emailRedirectTo: `${window.location.origin}/character.html`,
     },
   });
 
-  setBusy(false);
-
   if (error) {
+    setBusy(false);
     setMessage(friendlyAuthError(error), 'error');
     return;
   }
@@ -193,7 +197,8 @@ createAccount?.addEventListener('click', async () => {
     return;
   }
 
-  setMessage('Account created. Check your email to confirm it, then return here to sign in.', 'success');
+  setBusy(false);
+  setMessage('Account created. Check your email to confirm it, then return to enter Cellbound.', 'success');
 });
 
 forgotPassword?.addEventListener('click', async () => {
@@ -218,6 +223,7 @@ forgotPassword?.addEventListener('click', async () => {
 supabaseClient.auth.onAuthStateChange((event, session) => {
   if (event === 'PASSWORD_RECOVERY') {
     recoveryMode = true;
+    routingToCharacter = false;
     loginIntro.textContent = 'Choose a new password for your Cellbound account.';
     passwordInput.value = '';
     passwordInput.autocomplete = 'new-password';
@@ -227,8 +233,11 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
     return;
   }
 
-  if (event === 'SIGNED_IN' && session?.user) {
-    window.setTimeout(() => ensureProfile(session.user), 0);
+  if (event === 'SIGNED_IN' && session?.user && !recoveryMode) {
+    window.setTimeout(async () => {
+      await ensureProfile(session.user);
+      enterAuthenticatedState(session.user);
+    }, 0);
   }
 });
 
