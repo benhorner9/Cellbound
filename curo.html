@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no,maximum-scale=1">
 <meta name="theme-color" content="#0b1112">
 <title>Cellbound — Curo</title>
-<link rel="stylesheet" href="./curo.css?v=3">
+<link rel="stylesheet" href="./curo.css?v=4">
 </head>
 <body>
 <canvas id="game" aria-label="Cellbound game world"></canvas>
@@ -22,7 +22,7 @@
   <section class="frame boss-hud" id="bossHud" hidden>
     <div class="boss-name">GORVAK, THE CURO TROLL</div>
     <div class="bossbar"><i id="bossFill"></i><b id="bossPct">100%</b></div>
-    <div class="boss-sub" id="bossState">CELL-BEARER · TUTORIAL BOSS</div>
+    <div class="boss-sub" id="bossState">SELECT GORVAK TO BEGIN</div>
   </section>
 
   <section class="frame minimap">
@@ -45,7 +45,7 @@
 
   <div class="hotbar-wrap">
     <div class="frame hotbar">
-      <button class="hot active" id="basicBtn" aria-label="Basic attack"><span id="basicIcon">⚔</span><kbd>1</kbd><small>BASIC</small></button>
+      <button class="hot" id="basicBtn" aria-label="Select combat target and auto attack"><span id="basicIcon">⚔</span><kbd>1</kbd><small>AUTO</small></button>
       <button class="hot locked" id="slamBtn" aria-label="Troll Slam" disabled><span>◇</span><kbd>2</kbd><small id="slamLabel">LOCKED</small><i id="slamCooldown"></i></button>
       <button class="hot utility" id="inventoryBtn" aria-label="Inventory"><span>▣</span><kbd>I</kbd><small>PACK</small></button>
       <button class="hot utility" id="cellsBtn" aria-label="Cells"><span>✦</span><kbd>C</kbd><small>CELLS</small></button>
@@ -85,6 +85,9 @@
   <div class="loading" id="loading"><div class="rune">◇</div><strong>Entering Curo...</strong><span id="loadingText">Binding your character to the world.</span></div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
-<script src="./curo.js?v=3"></script>
+<script src="./curo-core.js?v=4"></script>
+<script src="./curo-render.js?v=4"></script>
+<script src="./curo-combat.js?v=4"></script>
+<script src="./curo-init.js?v=4"></script>
 </body>
 </html>
