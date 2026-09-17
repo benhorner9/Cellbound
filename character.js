@@ -266,8 +266,7 @@ signOutButton.addEventListener('click', async () => {
 });
 
 continueTutorial.addEventListener('click', () => {
-  boundOverlay.hidden = true;
-  setMessage('Character complete. The tutorial is the next Cellbound system to build.', 'success');
+  window.location.href = './curo.html';
 });
 
 (async () => {
