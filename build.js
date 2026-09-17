@@ -4,7 +4,8 @@ const path = require('path');
 const files = [
   'index.html', 'styles.css', 'script.js',
   'character.html', 'character.css', 'character.js',
-  'curo.html', 'curo.css', 'curo.js'
+  'curo.html', 'curo.css', 'curo.js',
+  'curo-core.js', 'curo-render.js', 'curo-combat.js', 'curo-init.js'
 ];
 
 const out = path.join(__dirname, 'dist');
