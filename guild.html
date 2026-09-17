@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#0b1015">
 <title>Cellbound — Guild Command</title>
 <link rel="stylesheet" href="./guild.css?v=1">
+<link rel="stylesheet" href="./bank.css?v=1">
 </head>
 <body>
 <div class="app-shell">
@@ -14,6 +15,7 @@
     <nav>
       <button class="nav-btn active" data-view="overview"><span>⌂</span>Overview</button>
       <button class="nav-btn" data-view="roster"><span>♟</span>Roster</button>
+      <button class="nav-btn" data-view="bank"><span>▦</span>Bank</button>
       <button class="nav-btn" data-view="content"><span>⚔</span>Content</button>
       <button class="nav-btn" data-view="party"><span>◆</span>Party Builder</button>
       <button class="nav-btn" data-view="reports"><span>▤</span>Reports</button>
@@ -27,7 +29,7 @@
   <main class="main">
     <header class="topbar">
       <div><small>THE GUILDMASTER'S DESK</small><h1 id="pageTitle">Command Overview</h1></div>
-      <div class="resource-strip"><div><span>Guild Renown</span><b id="renown">120</b></div><div><span>Gold</span><b id="gold">1,840</b></div><div><span>Roster</span><b id="rosterCount">9 / 12</b></div></div>
+      <div class="resource-strip"><div><span>Guild Renown</span><b id="renown">120</b></div><div><span>Gold</span><b id="gold">1,840</b></div><div><span>Roster</span><b id="rosterCount">9 / 12</b></div><div><span>Bank</span><b id="bankCount">0</b></div></div>
     </header>
 
     <section id="overview" class="view active">
@@ -45,6 +47,12 @@
     <section id="roster" class="view">
       <div class="section-intro"><div><small>YOUR ADVENTURERS</small><h2>Roster</h2><p>Every character develops independently through levels, equipment, talents and encounter knowledge.</p></div><div class="filters"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="tank">Tanks</button><button class="filter" data-filter="healer">Healers</button><button class="filter" data-filter="dps">Damage</button></div></div>
       <div id="rosterGrid" class="roster-grid"></div>
+    </section>
+
+    <section id="bank" class="view">
+      <div class="section-intro"><div><small>GUILD STORAGE</small><h2>Bank</h2><p>Boss loot is stored here first. You decide which adventurer receives each upgrade.</p></div></div>
+      <div id="bankSummary" class="bank-summary"></div>
+      <div id="bankGrid" class="bank-grid"></div>
     </section>
 
     <section id="content" class="view">
@@ -73,42 +81,10 @@
 </div>
 
 <div id="characterModal" class="modal-backdrop" hidden><section class="character-modal"><button class="modal-close" data-close>×</button><div id="characterDetail"></div></section></div>
+<div id="bankModal" class="modal-backdrop" hidden><section class="character-modal bank-modal"><button class="modal-close" data-bank-close>×</button><div id="bankDetail"></div></section></div>
 <div id="attemptModal" class="modal-backdrop" hidden><section class="attempt-modal"><div id="attemptStage"></div></section></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
-<script>
-(() => {
-  const REMEMBER_KEY = 'cellbound-remember-device';
-  const sharedStorage = {
-    getItem(key) {
-      return localStorage.getItem(key) ?? sessionStorage.getItem(key);
-    },
-    setItem(key, value) {
-      const remember = localStorage.getItem(REMEMBER_KEY) === '1';
-      const primary = remember ? localStorage : sessionStorage;
-      const secondary = remember ? sessionStorage : localStorage;
-      primary.setItem(key, value);
-      secondary.removeItem(key);
-    },
-    removeItem(key) {
-      localStorage.removeItem(key);
-      sessionStorage.removeItem(key);
-    }
-  };
-
-  const originalCreateClient = window.supabase.createClient.bind(window.supabase);
-  window.supabase.createClient = (url, key, options = {}) => originalCreateClient(url, key, {
-    ...options,
-    auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
-      ...(options.auth || {}),
-      storage: sharedStorage
-    }
-  });
-})();
-</script>
-<script src="./guild.js?v=3"></script>
+<script src="./guild-v2.js?v=1"></script>
 </body>
 </html>
