@@ -7,3 +7,5 @@ The `main` branch builds Cellbound and deploys the production `dist/` output to 
 Production URL: `https://cb.athleticsmanagergame.com`
 
 The hosting subdomain `cb.athleticsmanagergame.com` must use `/CB` as its document root.
+
+FTPS deployment is configured through repository Actions secrets.
