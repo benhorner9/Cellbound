@@ -132,43 +132,62 @@ function statBlock(c){
   const block=role==='tank'?Math.round(8+gear*.18):0;
   return {Strength:strength,Agility:agility,Intellect:intellect,Stamina:stamina,Armour:armour,Crit:`${crit}%`,Haste:`${haste}%`,Block:block?`${block}%`:'—'};
 }
-function equipmentSlot(c,slot){
-  const item=c.equipment?.[slot];
+function bestBankUpgrade(state,c,slot){
+  const current=Math.max(0,Number(c.equipment?.[slot]?.itemLevel)||0);
+  const candidates=(state?.bank||[]).filter(item=>canUse(c,item)&&possibleSlots(item).includes(slot));
+  const best=candidates.sort((x,y)=>(Number(y.itemLevel)||0)-(Number(x.itemLevel)||0))[0];
+  const gain=(Number(best?.itemLevel)||0)-current;
+  return gain>0?{item:best,gain}:null;
+}
+function equipmentSlot(c,slot,state){
+  const item=c.equipment?.[slot],upgrade=bestBankUpgrade(state,c,slot);
   const art=item?(G?.artHTML?.(item,48,'cb-slot-art')||item.icon||slotIcons[slot]||'◇'):(slotIcons[slot]||'◇');
-  return `<button class="cb-equip-slot ${item?rarityClass(item):'cb-empty'}" data-slot="${slot}">
+  return `<button class="cb-equip-slot ${item?rarityClass(item):'cb-empty'} ${upgrade?'has-upgrade':''}" data-slot="${slot}">
     <span class="cb-slot-icon">${art}</span>
-    <span class="cb-slot-copy"><small>${slot.replace(/(\d)/,' $1')}</small><b>${item?.name||'Empty'}</b>${item?.power?`<em>+${item.power} power</em>`:''}${item?`<span class="cb-slot-ilvl">Item Level ${item.itemLevel||0}</span>`:'<span class="cb-slot-ilvl">Future slot</span>'}</span>
+    <span class="cb-slot-copy"><small>${slot.replace(/(\d)/,' $1')}</small><b>${item?.name||'Empty'}</b>${item?.power?`<em>+${item.power} power</em>`:''}${item?`<span class="cb-slot-ilvl">Item Level ${item.itemLevel||0}</span>`:'<span class="cb-slot-ilvl">Empty equipment slot</span>'}</span>
+    ${upgrade?`<span class="cb-slot-upgrade">+${upgrade.gain} ILVL</span>`:''}
   </button>`;
 }
-function coreLoadoutItem(c,slot){
-  const item=c.equipment?.[slot];
-  return `<button class="cb-core-item ${item?rarityClass(item):'cb-empty'}" data-slot="${slot}">
-    <span>${item?(G?.artHTML?.(item,68,'cb-core-art')||item.icon||slotIcons[slot]):slotIcons[slot]}</span>
-    <div><small>${slot}</small><b>${item?.name||'Empty'}</b><em>${item?`iLvl ${item.itemLevel||0} · +${item.power||0} Power`:'No item equipped'}</em></div>
+function armouryFocus(c,slot,state,position){
+  const item=c.equipment?.[slot],upgrade=bestBankUpgrade(state,c,slot);
+  const art=item?(G?.artHTML?.(item,74,'cb-armoury-art')||item.icon||slotIcons[slot]):slotIcons[slot];
+  return `<button class="cb-armoury-focus cb-focus-${position} ${item?rarityClass(item):'cb-empty'} ${upgrade?'has-upgrade':''}" data-slot="${slot}" title="${slot}">
+    <span class="cb-armoury-focus-art">${art}</span>
+    <span class="cb-armoury-focus-label"><small>${slot}</small><b>${item?.name||'Empty'}</b></span>
+    ${upgrade?'<i>UPGRADE</i>':''}
   </button>`;
 }
-function paperDoll(c){
+function paperDoll(c,state){
   const meta=classMeta[c.class]||{icon:'◇',accent:'#58d7cf'};
   const role=roleOf(c),stats=statBlock(c);
   const itemLevel=window.CellboundGame?.characterItemLevel?.(c)||c.gear||0;
   const equipped=[...leftSlots,...rightSlots].filter(slot=>c.equipment?.[slot]).length;
-  return `<div class="cb-paperdoll cb-loadout-screen" style="--cb-accent:${meta.accent}">
-    <div class="cb-gear-column cb-gear-left">${leftSlots.map(s=>equipmentSlot(c,s)).join('')}</div>
-    <section class="cb-loadout-stage">
-      <div class="cb-loadout-sigil"><span>${c.portrait||meta.icon}</span><i>${meta.icon}</i></div>
-      <small class="cb-loadout-kicker">ACTIVE ADVENTURER</small>
-      <h3>${c.name}</h3>
-      <p>${c.race||'Veyren'} · ${c.class} · ${c.spec}</p>
-      <div class="cb-role-pill cb-role-${role}">${roleLabel(role)}</div>
-      <div class="cb-loadout-summary">
+  const upgradeCount=[...leftSlots,...rightSlots].filter(slot=>bestBankUpgrade(state,c,slot)).length;
+  return `<div class="cb-paperdoll cb-armoury-screen" style="--cb-accent:${meta.accent}">
+    <div class="cb-gear-column cb-gear-left">${leftSlots.map(s=>equipmentSlot(c,s,state)).join('')}</div>
+    <section class="cb-armoury-stage">
+      <div class="cb-armoury-heading"><div><small>ARMOURY</small><h3>${c.name}</h3><p>${c.race||'Veyren'} · ${c.class} · ${c.spec}</p></div><span class="cb-role-pill cb-role-${role}">${roleLabel(role)}</span></div>
+      <div class="cb-armoury-ring">
+        <div class="cb-armoury-orbit"></div>
+        ${armouryFocus(c,'Head',state,'top')}
+        ${armouryFocus(c,'OffHand',state,'left')}
+        <div class="cb-armoury-core">
+          <span class="cb-armoury-crest">${meta.icon}</span>
+          <b>${c.portrait||String(c.name||'?').slice(0,2).toUpperCase()}</b>
+          <small>LEVEL ${c.level||1}</small>
+        </div>
+        ${armouryFocus(c,'Weapon',state,'right')}
+        ${armouryFocus(c,'Chest',state,'bottom')}
+      </div>
+      <div class="cb-armoury-summary">
         <div><span>ITEM LEVEL</span><b>${itemLevel}</b></div>
         <div><span>POWER</span><b>${c.power||0}</b></div>
-        <div><span>EQUIPPED</span><b>${equipped}/14</b></div>
+        <div><span>SLOTS FILLED</span><b>${equipped}/14</b></div>
+        <div class="${upgradeCount?'has-upgrades':''}"><span>BANK UPGRADES</span><b>${upgradeCount}</b></div>
       </div>
-      <div class="cb-core-loadout-head"><span>CORE LOADOUT</span><small>Tap an item to manage the slot</small></div>
-      <div class="cb-core-loadout">${['Head','Chest','Weapon'].map(slot=>coreLoadoutItem(c,slot)).join('')}</div>
+      <div class="cb-armoury-hint">${upgradeCount?`<strong>${upgradeCount} upgrade${upgradeCount===1?'':'s'} available</strong><span>Slots with a gold marker have stronger gear waiting in the Guild Bank.</span>`:'<strong>Loadout current</strong><span>No higher Item Level upgrades are currently waiting in the Guild Bank.</span>'}</div>
     </section>
-    <div class="cb-gear-column cb-gear-right">${rightSlots.map(s=>equipmentSlot(c,s)).join('')}</div>
+    <div class="cb-gear-column cb-gear-right">${rightSlots.map(s=>equipmentSlot(c,s,state)).join('')}</div>
     <div class="cb-stats-panel">${Object.entries(stats).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('')}</div>
   </div>`;
 }
@@ -183,7 +202,7 @@ function slotPicker(state,c,slot){
   const candidates=(state.bank||[]).filter(item=>canUse(c,item)&&possibleSlots(item).includes(slot));
   const current=c.equipment?.[slot];
   const currentIlvl=Number(current?.itemLevel)||0;
-  return `<div class="cb-slot-drawer">
+  return `<button class="cb-slot-drawer-backdrop" data-close-slot aria-label="Close equipment drawer"></button><div class="cb-slot-drawer">
     <div class="cb-slot-drawer-head"><div><small>${slot}</small><h3>${current?.name||'Empty slot'}</h3></div><button data-close-slot>×</button></div>
     ${current?`<div class="cb-current-item ${rarityClass(current)}"><span>${G?.artHTML?.(current,56)||current.icon||slotIcons[slot]}</span><div><b>${current.name}</b><small>${current.rarity||'Starter'} · iLvl ${currentIlvl}${current.power?` · +${current.power} power`:''}</small></div></div>`:''}
     <p>Compatible Guild Bank items</p>
@@ -256,7 +275,7 @@ function historyPanel(c,state){
 }
 function sheetBody(state,c){
   if(currentTab==='overview')return overviewPanel(c,state);
-  if(currentTab==='equipment')return `${paperDoll(c)}${activeSlot?slotPicker(state,c,activeSlot):''}`;
+  if(currentTab==='equipment')return `${paperDoll(c,state)}${activeSlot?slotPicker(state,c,activeSlot):''}`;
   if(currentTab==='talents'){const treeSpec=selectedTreeSpec&&specs[c.class]?.[selectedTreeSpec]?selectedTreeSpec:c.spec;return `<div class="cb-spec-tabs">${specTabs(c)}</div>${talentTree(c,treeSpec)}`}
   if(currentTab==='professions')return professionsPanel(c);
   if(currentTab==='history')return historyPanel(c,state);
