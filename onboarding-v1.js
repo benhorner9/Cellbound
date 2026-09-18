@@ -320,8 +320,8 @@ async function runTutorialDungeon(my){
   tdFeed('The Hollow Warden drops profession reagents.');await sleep(900);
   const s=state();
   if(s.onboarding.stage==='dungeon-running'&&!s.onboarding.tutorialDungeonComplete){
-    s.materials['ashen-soul-fragment']=(Number(s.materials['ashen-soul-fragment'])||0)+4;
-    s.materials['warden-iron']=(Number(s.materials['warden-iron'])||0)+2;
+    s.materials['faded-cell-fragment']=(Number(s.materials['faded-cell-fragment'])||0)+4;
+    s.materials['zeltiran-iron']=(Number(s.materials['zeltiran-iron'])||0)+2;
     s.onboarding.tutorialDungeonComplete=true;s.onboarding.stage='profession-choice';
     s.activity.push('The Zeltiran Hollows were cleared. Profession reagents recovered.');
     Game.save();await Game.persistState();
@@ -333,7 +333,7 @@ function renderProfessionChoice(){
   const s=state(),selectedChar=s.onboarding.professionCharacterId||s.roster[0]?.id,selectedProf=s.onboarding.professionName||null;
   const chars=s.roster.map(c=>'<button class="prof-char-choice '+(c.id===selectedChar?'active':'')+'" data-prof-char="'+c.id+'"><span>'+c.portrait+'</span><div><b>'+esc(c.name)+'</b><small>'+esc(c.race)+' · '+esc(c.class)+'</small></div></button>').join('');
   const profs=Object.entries(P.PROFESSIONS).map(([name,p])=>'<button class="prof-choice '+(name===selectedProf?'active':'')+'" data-prof="'+name+'"><strong>'+p.icon+'</strong><div><b>'+name+'</b><p>'+p.summary+'</p><small>FIRST RECIPE · '+esc(p.recipes[0].name)+'</small></div></button>').join('');
-  const mats='<div class="loot-material"><i>✦</i><span><b>Ashen Soul Fragment ×'+(s.materials['ashen-soul-fragment']||0)+'</b><small>Recovered from the Hollows</small></span></div><div class="loot-material"><i>⬡</i><span><b>Warden Iron ×'+(s.materials['warden-iron']||0)+'</b><small>Recovered from the Hollows</small></span></div>';
+  const mats='<div class="loot-material"><i>◇</i><span><b>Faded Cell Fragment ×'+(s.materials['faded-cell-fragment']||0)+'</b><small>Recovered from the Hollows</small></span></div><div class="loot-material"><i>⬡</i><span><b>Zeltiran Iron ×'+(s.materials['zeltiran-iron']||0)+'</b><small>Recovered from the Hollows</small></span></div>';
   const body='<div class="profession-tutorial"><aside><small>DUNGEON LOOT</small><h2>These are reagents.</h2><p>Reagents are used by professions. Different professions turn the same dungeon drops into equipment, enhancements or consumables.</p>'+mats+'</aside><main><div class="builder-section-head"><div><small>01</small><h3>Who learns the profession?</h3></div><p>Every adventurer can learn a profession. Standard accounts begin with one profession slot per character.</p></div><div class="prof-char-grid">'+chars+'</div><div class="builder-section-head"><div><small>02</small><h3>Choose their first profession</h3></div><p>This choice becomes part of the character and persists after the tutorial.</p></div><div class="prof-grid">'+profs+'</div><button id="confirmProfession" class="on-primary" '+(selectedChar&&selectedProf?'':'disabled')+'>LEARN '+esc(selectedProf||'A PROFESSION')+' →</button></main></div>';
   ensureRoot().innerHTML=chrome(body,'profession-choice');
   $$('[data-prof-char]').forEach(b=>b.onclick=()=>{s.onboarding.professionCharacterId=b.dataset.profChar;Game.save();renderProfessionChoice()});
