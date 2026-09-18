@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="./economy-v2.css?v=1">
 <link rel="stylesheet" href="./social-v3.css?v=1">
 <link rel="stylesheet" href="./evolution-v1.css?v=2">
-<link rel="stylesheet" href="./dungeon-2d-v1.css?v=1">
+<link rel="stylesheet" href="./dungeon-2d-v1.css?v=1">\n<link rel="stylesheet" href="./admin-v1.css?v=1">
 </head>
 <body>
 <div class="app-shell">
@@ -29,7 +29,7 @@
       <button class="nav-btn" data-view="world"><span>✹</span>World <em id="worldActiveBadge"></em></button>
       <button class="nav-btn" data-view="content"><span>⚔</span>Content</button>
       <button class="nav-btn" data-view="party"><span>◆</span>Party Builder</button>
-      <button class="nav-btn" data-view="reports"><span>▤</span>Reports</button>
+      <button class="nav-btn" data-view="reports"><span>▤</span>Reports</button>\n      <button id="adminNav" class="nav-btn" data-view="admin" hidden><span>⚙</span>Admin <em>DEV</em></button>
       <button class="nav-btn locked"><span>✦</span>Raids <em>LOCKED</em></button>
       <button class="nav-btn locked"><span>◎</span>PvP <em>LOCKED</em></button>
     </nav>
@@ -167,6 +167,33 @@
       </div>
     </section>
 
+    <section id="admin" class="view admin-view">
+      <div class="section-intro"><div><small>DEVELOPER CONTROL</small><h2>Admin</h2><p>Private testing controls for authorised Cellbound administrators.</p></div><b id="adminRole" class="economy-badge">ADMIN</b></div>
+      <div class="admin-shell">
+        <article class="admin-card">
+          <small>TESTING OVERRIDES</small><h3>Cell Shock Controls</h3>
+          <p>Clear recovery pressure instantly while testing encounters, or keep auto-clear enabled so Cell Shock is removed whenever it is applied.</p>
+          <div class="admin-status-grid">
+            <div><span>Cell Shock</span><b id="adminShockSummary">Checking…</b></div>
+            <div><span>Auto-clear</span><b id="adminAutoState">Checking…</b></div>
+            <div><span>Account</span><b id="adminAccount">Authenticated admin</b></div>
+            <div><span>Authority</span><b>Server verified</b></div>
+          </div>
+          <div class="admin-actions">
+            <button id="adminResetShock">RESET ALL CELL SHOCK<small>Immediately clears Cell Shock and recovery locks from your entire roster.</small></button>
+            <button id="adminAutoToggle">ENABLE AUTO-CLEAR<small>When enabled, testing saves are kept at 0% Cell Shock automatically.</small></button>
+            <button id="adminRefresh">REFRESH ADMIN STATUS<small>Re-check server-side admin permissions and testing overrides.</small></button>
+          </div>
+          <p id="adminMessage" class="admin-message" hidden></p>
+        </article>
+        <aside class="admin-card">
+          <small>ADMIN SAFETY</small><h3>Private Developer Tools</h3>
+          <p class="admin-warning">This tab is authorised by Supabase, not by a visible email check in the browser. Regular players cannot reveal the controls by editing page HTML.</p>
+          <p>Auto-clear is intended for development and encounter testing. Disable it when you want to test the normal Cell Shock and recovery loop.</p>
+        </aside>
+      </div>
+    </section>
+
     <section id="reports" class="view">
       <div class="section-intro"><div><small>ENCOUNTER HISTORY</small><h2>Attempt Reports</h2><p>Wipes teach encounter knowledge but now also add Cell Shock. PvE victories do not remove it.</p></div></div>
       <div id="reportsList" class="reports-list"></div>
@@ -188,7 +215,7 @@
 <script src="./economy-v2.js?v=1"></script>
 <script src="./social-v3.js?v=1"></script>
 <script src="./evolution-v1.js?v=2"></script>
-<script src="./dungeon-2d-v1.js?v=1"></script>
+<script src="./dungeon-2d-v1.js?v=1"></script>\n<script src="./admin-v1.js?v=1"></script>
 </body>
 </html>
 
