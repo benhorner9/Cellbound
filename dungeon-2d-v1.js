@@ -822,7 +822,8 @@ function lootGearCard(item){
  return '<article class="cb2d-loot-item '+lootRarityClass(item)+'"><div class="cb2d-loot-art">'+art+'</div><div><small>'+esc(String(item.rarity||'GEAR').toUpperCase())+' · '+esc(item.slot||'ITEM')+'</small><h4>'+esc(item.name||'Unknown Item')+'</h4><p>Item Level '+(Number(item.itemLevel)||0)+(item.power?' · +'+Number(item.power)+' Power':'')+'</p><em>Sent to Guild Bank</em></div></article>'
 }
 function lootMaterialCard(m){
- return '<article class="cb2d-loot-material"><strong>'+esc(m.icon||'◇')+'</strong><div><small>'+esc(String(m.rarity||'MATERIAL').toUpperCase())+'</small><h4>'+esc(m.name)+'</h4><p>'+esc(m.source||'The Ashen Vault')+'</p></div><b>×'+Number(m.quantity||0)+'</b></article>'
+ const art=P?.materialArtHTML?P.materialArtHTML(m.key,44,'cb2d-material-art'):esc(m.icon||'◇');
+ return '<article class="cb2d-loot-material"><strong class="cb2d-loot-material-art">'+art+'</strong><div><small>'+esc(String(m.rarity||'MATERIAL').toUpperCase())+'</small><h4>'+esc(m.name)+'</h4><p>'+esc(m.source||'The Ashen Vault')+'</p></div><b>×'+Number(m.quantity||0)+'</b></article>'
 }
 function finish(ok,s){
  if(!run)return;run.resolved=true;const e=$('#cb2dEnd');e.hidden=false;
