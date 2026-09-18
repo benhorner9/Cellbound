@@ -242,10 +242,23 @@ function renderDungeonBriefing(){
   ensureRoot().innerHTML=chrome(body,'dungeon-briefing');
   $('#enterTutorialDungeon')?.addEventListener('click',async()=>{await setStage('dungeon-running');});
 }
+function tdRole(c){return Game.classes?.[c.class]?.specs?.[c.spec]?.role||'dps'}
+function tdProfile(c){
+  const r=tdRole(c);
+  if(r==='tank')return'tank';
+  if(r==='healer')return'healer';
+  if(['Rogue','Warrior','Paladin'].includes(c.class))return'melee';
+  return'ranged';
+}
 function unitMarkup(c,i){
-  const r=Game.classes?.[c.class]?.specs?.[c.spec]?.role||'dps';
-  const pos=r==='tank'?[31,50]:r==='healer'?[20,63]:[[18,28],[20,44],[19,78]][Math.max(0,i-2)]||[18,35];
-  return '<div class="td-unit party '+r+'" data-td-party="'+c.id+'" style="left:'+pos[0]+'%;top:'+pos[1]+'%"><i></i><span>'+esc(c.name)+'</span><em><b style="width:100%"></b></em></div>';
+  const r=tdRole(c),profile=tdProfile(c);
+  const melee=state().roster.filter(x=>tdProfile(x)==='melee'),ranged=state().roster.filter(x=>tdProfile(x)==='ranged');
+  let pos=[20,50];
+  if(profile==='tank')pos=[34,50];
+  else if(profile==='melee')pos=[27,42+melee.indexOf(c)*16];
+  else if(profile==='ranged')pos=[21,30+ranged.indexOf(c)*40];
+  else pos=[15,64];
+  return '<div class="td-unit party '+r+' profile-'+profile+'" data-td-party="'+c.id+'" style="left:'+pos[0]+'%;top:'+pos[1]+'%"><i></i><span>'+esc(c.name)+'</span><em><b style="width:100%"></b></em></div>';
 }
 function renderDungeonRunning(){
   const body='<div class="td-wrap"><div class="td-top"><div><small>ZELTIRA TRAINING DUNGEON</small><h2 id="tdEncounter">Entering the Hollows…</h2></div><b class="td-safe">TRAINING RUN · GUARANTEED CLEAR</b></div><div class="td-route"><span class="active" data-td-route="0">1 · Rootling Nest</span><span data-td-route="1">2 · Collapsed Gallery</span><span data-td-route="2">3 · Hollow Warden</span></div><div class="td-arena" id="tdArena"><div class="td-floor"></div><div id="tdEnemies"></div><div id="tdParty">'+state().roster.map(unitMarkup).join('')+'</div><div class="td-callout" id="tdCallout">Your party advances together.</div></div><div class="td-bottom"><div class="td-actions"><div><i class="on-role tank"></i><b>Tank</b><span id="tdTankAction">Taking point</span></div><div><i class="on-role healer"></i><b>Healer</b><span id="tdHealAction">Following</span></div><div><i class="on-role dps"></i><b>Damage</b><span id="tdDpsAction">Acquiring targets</span></div></div><div class="td-feed" id="tdFeed">Zeltira gate closes behind the party.</div></div></div>';
@@ -270,6 +283,49 @@ function tdFeed(text){
 function tdAction(role,text){
   const id=role==='tank'?'tdTankAction':role==='healer'?'tdHealAction':'tdDpsAction';const e=$('#'+id);if(e)e.textContent=text;
 }
+function tdMove(selector,x,y,ms=360){
+  const e=$(selector);if(!e)return;e.style.transitionDuration=ms+'ms';requestAnimationFrame(()=>{e.style.left=x+'%';e.style.top=y+'%'});
+}
+function tdPct(selector){
+  const e=$(selector);return e?{x:parseFloat(e.style.left)||50,y:parseFloat(e.style.top)||50}:{x:50,y:50};
+}
+function tdEnemyPct(index){return tdPct('[data-td-enemy="'+index+'"]')}
+function tdFormationPoint(c,index){
+  const ep=tdEnemyPct(index),profile=tdProfile(c);
+  if(profile==='tank')return{x:ep.x-9,y:ep.y};
+  if(profile==='melee'){
+    const m=state().roster.filter(x=>tdProfile(x)==='melee'),i=Math.max(0,m.indexOf(c)),offset=[-10,10,-15][i]||0;
+    return{x:ep.x+6,y:ep.y+offset};
+  }
+  if(profile==='ranged'){
+    const r=state().roster.filter(x=>tdProfile(x)==='ranged'),i=Math.max(0,r.indexOf(c));
+    return{x:ep.x-31-i*3,y:[31,69,48][i]||50};
+  }
+  return{x:ep.x-42,y:66};
+}
+function tdMovePartyIntoPositions(index){
+  state().roster.forEach(c=>{
+    const p=tdFormationPoint(c,index);tdMove('[data-td-party="'+c.id+'"]',p.x,p.y,520)
+  });
+}
+function tdRegroup(){
+  const melee=state().roster.filter(x=>tdProfile(x)==='melee'),ranged=state().roster.filter(x=>tdProfile(x)==='ranged');
+  state().roster.forEach(c=>{
+    const p=tdProfile(c);let x=28,y=50;
+    if(p==='tank'){x=39;y=50}
+    else if(p==='melee'){x=31;y=42+melee.indexOf(c)*16}
+    else if(p==='ranged'){x=24;y=31+ranged.indexOf(c)*38}
+    else{x=18;y=64}
+    tdMove('[data-td-party="'+c.id+'"]',x,y,520)
+  })
+}
+function tdThreatLine(enemyIndex,tank){
+  const arena=$('#tdArena'),a=tdPoint('[data-td-enemy="'+enemyIndex+'"]'),b=tdPoint('[data-td-party="'+tank.id+'"]');if(!arena||!a||!b)return;
+  const old=arena.querySelector('[data-td-threat="'+enemyIndex+'"]');if(old)old.remove();
+  const line=document.createElement('i'),dx=b.x-a.x,dy=b.y-a.y;
+  line.className='td-threat-line';line.dataset.tdThreat=enemyIndex;line.style.left=a.x+'px';line.style.top=a.y+'px';line.style.width=Math.hypot(dx,dy)+'px';line.style.transform='rotate('+(Math.atan2(dy,dx)*180/Math.PI)+'deg)';arena.appendChild(line);setTimeout(()=>line.remove(),900)
+}
+
 function spawnTdEnemies(names,boss){
   const root=$('#tdEnemies');if(!root)return;
   root.innerHTML=names.map((n,i)=>{
@@ -284,23 +340,47 @@ function setTdHp(index,hp){
   if(next<=0)e.classList.add('dead');
 }
 async function fightTdPack(names,boss,my){
-  spawnTdEnemies(names,boss);await sleep(550);
-  const attackers=state().roster.filter(c=>(Game.classes?.[c.class]?.specs?.[c.spec]?.role||'dps')!=='healer');
+  spawnTdEnemies(names,boss);await sleep(420);
+  const tank=state().roster.find(c=>tdProfile(c)==='tank'),healer=state().roster.find(c=>tdProfile(c)==='healer');
+  const attackers=state().roster.filter(c=>tdProfile(c)!=='healer');
+  if(tank){
+    tdAction('tank',tank.name+' moves in first and establishes threat');
+    tdMove('[data-td-party="'+tank.id+'"]',55,50,480);
+    await sleep(250);
+    $('[data-td-enemy]').forEach((e,i)=>{const y=names.length===1?50:42+i*16;tdMove('[data-td-enemy="'+i+'"]',64,y,430);setTimeout(()=>tdThreatLine(i,tank),220)});
+    tdFeed(tank.name+' pulls the pack and takes threat.');
+    await sleep(430);
+  }
+  tdMovePartyIntoPositions(0);
+  if(healer)tdAction('healer',healer.name+' holds the backline in healing range');
+  tdAction('dps','Melee closes in while ranged holds distance');
+  await sleep(500);
   let turn=0;
-  while(my===tutorialToken&&$$('[data-td-enemy]').some(e=>Number(e.dataset.hp)>0)){
-    const living=$$('[data-td-enemy]').find(e=>Number(e.dataset.hp)>0);if(!living)break;
-    const idx=Number(living.dataset.tdEnemy),c=attackers[turn%attackers.length],r=Game.classes?.[c.class]?.specs?.[c.spec]?.role||'dps';
-    tdAction(r==='tank'?'tank':'dps',c.name+' attacks '+names[idx]);
+  while(my===tutorialToken&&$('[data-td-enemy]').some(e=>Number(e.dataset.hp)>0)){
+    const living=$('[data-td-enemy]').find(e=>Number(e.dataset.hp)>0);if(!living)break;
+    const idx=Number(living.dataset.tdEnemy),c=attackers[turn%attackers.length],profile=tdProfile(c),r=tdRole(c);
+    const desired=tdFormationPoint(c,idx);
+    tdMove('[data-td-party="'+c.id+'"]',desired.x,desired.y,profile==='melee'?220:380);
+    tdAction(r==='tank'?'tank':'dps',c.name+(profile==='melee'?' attacks from close range':' attacks from range'));
+    if(profile==='melee')await sleep(120);
     tdProjectile('[data-td-party="'+c.id+'"]','[data-td-enemy="'+idx+'"]',c.class==='Mage'?'magic':c.class==='Hunter'?'arrow':'slash');
     await sleep(300);
     const hit=(r==='tank'?19:27)+Math.floor(Math.random()*8),hpNow=Number(living.dataset.hp)-hit;setTdHp(idx,hpNow);tdFloat('[data-td-enemy="'+idx+'"]','-'+hit,'damage');
-    if(turn%3===1){
-      const tank=state().roster.find(x=>(Game.classes?.[x.class]?.specs?.[x.spec]?.role||'dps')==='tank');
-      if(tank){tdProjectile('[data-td-enemy="'+idx+'"]','[data-td-party="'+tank.id+'"]','enemy');tdFloat('[data-td-party="'+tank.id+'"]','-8','incoming');tdAction('healer','Stabilising '+tank.name);await sleep(180);tdProjectile('[data-td-party="'+state().roster.find(x=>(Game.classes?.[x.class]?.specs?.[x.spec]?.role||'dps')==='healer')?.id+'"]','[data-td-party="'+tank.id+'"]','heal');tdFloat('[data-td-party="'+tank.id+'"]','+8','heal')}
+    if(tank&&turn%2===1){
+      tdThreatLine(idx,tank);
+      tdMove('[data-td-enemy="'+idx+'"]',tdPct('[data-td-party="'+tank.id+'"]').x+8,tdPct('[data-td-party="'+tank.id+'"]').y+(idx%2?6:-6),340);
+      tdProjectile('[data-td-enemy="'+idx+'"]','[data-td-party="'+tank.id+'"]','enemy');tdFloat('[data-td-party="'+tank.id+'"]','-8','incoming');
+      tdAction('tank',tank.name+' keeps the mob facing the frontline');
+      if(healer){await sleep(170);const hp=tdPct('[data-td-party="'+tank.id+'"]');tdMove('[data-td-party="'+healer.id+'"]',Math.max(14,hp.x-38),Math.min(80,hp.y+15),360);tdAction('healer',healer.name+' stays back and heals '+tank.name);tdProjectile('[data-td-party="'+healer.id+'"]','[data-td-party="'+tank.id+'"]','heal');tdFloat('[data-td-party="'+tank.id+'"]','+8','heal')}
     }
-    turn++;await sleep(160);
+    if(turn%3===2){
+      state().roster.filter(x=>tdProfile(x)==='ranged').forEach((x,i)=>{const p=tdFormationPoint(x,idx);tdMove('[data-td-party="'+x.id+'"]',p.x+(Math.random()*3-1.5),p.y+(Math.random()*4-2),380)})
+    }
+    turn++;await sleep(150);
   }
-  tdFeed((boss?'Boss defeated: ':'Pack cleared: ')+names.join(', '));await sleep(700);
+  tdFeed((boss?'Boss defeated: ':'Pack cleared: ')+names.join(', '));
+  tdRegroup();tdAction('tank','Regrouping and leading onward');tdAction('healer','Following at safe range');tdAction('dps','Returning to travel formation');
+  await sleep(750);
 }
 async function runTutorialDungeon(my){
   if(my!==tutorialToken||onboarding().stage!=='dungeon-running')return;
