@@ -11,6 +11,7 @@ let expedition=null;
 let worldEncounterId=null;
 let dockChannel='world',dockTimer=null,dockMinimized=true;
 let bankObserver=null,rosterObserver=null,professionObserver=null,worldObserver=null,reportsObserver=null;
+let bankEnhancing=false,bankEnhanceQueued=false;
 
 const state=()=>Game?.getState?.();
 const ent=()=>Game?.getEntitlements?.()||{rosterCap:5};
@@ -159,8 +160,16 @@ function bankUpgradeCount(item){
     return (Number(item.itemLevel)||0)>(Number(current?.itemLevel)||0);
   }).length;
 }
+function scheduleBankEnhance(){
+  if(bankEnhanceQueued)return;
+  bankEnhanceQueued=true;
+  requestAnimationFrame(()=>{bankEnhanceQueued=false;enhanceBank()});
+}
 function enhanceBank(){
-  const root=$('#bankGrid'),s=state();if(!root||!s)return;
+  const root=$('#bankGrid'),s=state();if(!root||!s||bankEnhancing)return;
+  bankEnhancing=true;
+  bankObserver?.disconnect();
+  try{
   const byId=new Map(s.bank.map(x=>[x.id,x]));
 
   const resourceModels=[
@@ -233,11 +242,16 @@ function enhanceBank(){
     if(!box){box=document.createElement('div');box.className='evo-bank-summary';summary.appendChild(box)}
     box.innerHTML=`<span>Crafting Stock</span><b>${craftTotal}</b>`;
   }
+  }finally{
+    bankEnhancing=false;
+    if(root&&bankObserver)bankObserver.observe(root,{childList:true});
+  }
 }
 function bindBank(){
   const pairs=[['bankSearch','input',v=>bankSearch=v],['bankCategory','change',v=>bankCategory=v],['bankClass','change',v=>bankClass=v],['bankRarity','change',v=>bankRarity=v],['bankTrade','change',v=>bankTrade=v],['bankSort','change',v=>bankSort=v]];
-  pairs.forEach(([id,ev,set])=>$('#'+id)?.addEventListener(ev,e=>{set(e.target.value);enhanceBank()}));
-  const root=$('#bankGrid');if(root){bankObserver=new MutationObserver(()=>requestAnimationFrame(enhanceBank));bankObserver.observe(root,{childList:true})}
+  pairs.forEach(([id,ev,set])=>$('#'+id)?.addEventListener(ev,e=>{set(e.target.value);scheduleBankEnhance()}));
+  const root=$('#bankGrid');if(root){bankObserver=new MutationObserver(scheduleBankEnhance);bankObserver.observe(root,{childList:true})}
+  document.querySelector('.nav-btn[data-view="bank"]')?.addEventListener('click',scheduleBankEnhance);
 }
 
 /* ---------- Professions ---------- */
