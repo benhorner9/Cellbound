@@ -324,3 +324,8 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 .cb2d-loot-screen .cb2d-loot-section:nth-of-type(2){animation:cb2dLootReveal .55s .18s ease both}
 .cb2d-loot-screen .cb2d-loot-actions{animation:cb2dLootReveal .5s .24s ease both}
 @keyframes cb2dLootReveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Loot material artwork */
+.cb2d-loot-material{grid-template-columns:52px 1fr auto}
+.cb2d-loot-material>strong.cb2d-loot-material-art{width:48px;height:48px;border:0;background:transparent;font-size:0}
+.cb2d-loot-material-art .material-art{width:44px!important;height:44px!important;box-shadow:inset 0 0 0 1px rgba(216,185,118,.09),0 4px 12px rgba(0,0,0,.28)}
