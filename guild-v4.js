@@ -157,8 +157,11 @@ function removeInvalidPartyMembers(s){
   s.party.dps=Array.isArray(s.party?.dps)?s.party.dps.slice(0,3):[null,null,null];while(s.party.dps.length<3)s.party.dps.push(null);s.party.dps=s.party.dps.map(id=>allowed.has(id)?id:null);
 }
 function migrateState(raw){
-  const validRaw=raw&&typeof raw==='object'&&(Array.isArray(raw.roster)||raw.__fresh_start===true||raw.onboarding);
-  const s=validRaw?raw:initialState();
+  const freshMarker=raw&&raw.__fresh_start===true;
+  const validRaw=raw&&typeof raw==='object'&&(Array.isArray(raw.roster)||freshMarker||raw.onboarding);
+  const freshStartedAt=freshMarker?(raw.fresh_start_at||new Date().toISOString()):null;
+  const s=freshMarker?initialState():(validRaw?raw:initialState());
+  if(freshMarker){s.onboarding.freshStartAt=freshStartedAt;s.activity=['Fresh Start ready. Build your first party to begin again.'];}
   const hadRoster=Array.isArray(s.roster)&&s.roster.length>0;
   s.saveVersion=SAVE_VERSION;s.gearVersion=2;s.renown=Number(s.renown)||0;s.gold=Number(s.gold)||0;s.socialDisplayName=typeof s.socialDisplayName==='string'?s.socialDisplayName:'';
   s.roster=Array.isArray(s.roster)?s.roster.map(normalizeCharacter):[];
