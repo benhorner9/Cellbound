@@ -251,4 +251,60 @@ function battleEvent(ev){
       battleLog(`${tank?.name||'Tank'} rotates the enemy away from the party.`,'tank');
       break;
     case'coneResolve':
-      stopBatt
+      stopBattleCast(false);clearTelegraphs('cone');flashBattle(m.cone,ev.fail?'danger':'warning');
+      if(tank)damageBattle(tank.id,18,m.cone);
+      if(ev.fail&&dps[0]){damageBattle(dps[0].id,42,'CAUGHT IN CONE');battleLog(`${dps[0].name} is caught by ${m.cone}.`,'danger')}
+      else battleLog(`${m.cone} is contained on the tank.`,'success');
+      if(tank)setBattlePos(tank.id,45,50);setBattlePos('boss',65,50);setBattleFacing(180);
+      if(boss)setBossHp(b.bossHp-9);
+      break;
+    case'groundStart':
+      startBattleCast(m.ground,1.8,false,'boss');
+      [...dps,healer].filter(Boolean).forEach((u,i)=>{addCircleTelegraph(u.x,u.y,76,m.ground);setBattlePos(u.id,20+(i*13)%45,18+(i%2)*62,650)});
+      battleLog('Ground markers appear. The party spreads.','warning');
+      break;
+    case'groundResolve':
+      stopBattleCast(false);flashBattle(m.ground,ev.fail?'danger':'warning');
+      if(ev.fail&&dps[1]){damageBattle(dps[1].id,48,m.ground);battleLog(`${dps[1].name} reacts late and is hit.`,'danger')}
+      else battleLog('All marked players clear the danger zones.','success');
+      clearTelegraphs('circle');
+      b.party.forEach(u=>{const start=b.startPos[u.id];if(start)setBattlePos(u.id,start[0],start[1],700)});
+      if(boss)setBossHp(b.bossHp-10);
+      break;
+    case'addsSpawn':
+      spawnBattleAdds();battleLog(`${m.adds} enter the arena.`,'warning');flashBattle('ADDS SPAWN','warning');
+      break;
+    case'addsGather':
+      if(tank){setBattlePos(tank.id,67,50);battleAction(tank.id,battleAbility(party().find(c=>c.id===tank.charId),'taunt'),'tank')}
+      b.units.filter(x=>x.add).forEach((u,i)=>setBattlePos(u.id,64+(i%2)*4,43+i*7,550));
+      battleLog(`${tank?.name||'Tank'} taunts and gathers the adds.`,'tank');
+      break;
+    case'addsBurn':
+      dps.forEach(u=>battleAction(u.id,'AOE BURST','dps'));killBattleAdds();if(tank)setBattlePos(tank.id,45,50);battleLog('The damage dealers burn the add pack down.','success');if(boss)setBossHp(b.bossHp-8);break;
+    case'enemyCast':
+      startBattleCast(m.cast,2.5,true,'boss');battleLog(`Priority cast: ${m.cast}.`,'warning');break;
+    case'interrupt':{
+      const interrupter=dps.find(u=>party().find(c=>c.id===u.charId)?.class!=='Priest')||dps[0];
+      if(ev.fail){
+        battleLog(`${m.cast} completes — interrupt missed.`,'danger');stopBattleCast(false);flashBattle('CAST COMPLETED','danger');
+        b.party.forEach(u=>damageBattle(u.id,u.role==='tank'?18:28,m.cast));
+      }else{
+        if(interrupter){const c=party().find(x=>x.id===interrupter.charId);battleAction(interrupter.id,battleAbility(c,'interrupt'),'success')}
+        stopBattleCast(true);battleLog(`${interrupter?.name||'DPS'} lands the interrupt.`,'success');
+      }
+      if(boss)setBossHp(b.bossHp-8);
+      break;
+    }
+    case'lineStart':
+      startBattleCast(m.cone,1.7,false,'boss');addLineTelegraph(m.cone);battleLog('A lethal beam tracks across the room.','warning');
+      b.party.forEach((u,i)=>setBattlePos(u.id,u.x,15+(i*17)%70,600));break;
+    case'lineResolve':
+      stopBattleCast(false);clearTelegraphs('line');flashBattle('CORE BEAM',ev.fail?'danger':'warning');
+      if(ev.fail&&dps[2]){damageBattle(dps[2].id,55,'CORE BEAM');battleLog(`${dps[2].name} is clipped by the beam.`,'danger')}else battleLog('The party clears the beam path.','success');
+      b.party.forEach(u=>{const p=b.startPos[u.id];if(p)setBattlePos(u.id,p[0],p[1],700)});setBossHp(b.bossHp-8);break;
+    case'phase':
+      if(b.stage.kind==='final'){flashBattle('PHASE 2 · CORE EXPOSED','phase');battleLog('The Vaultheart fractures. The core is exposed.','phase');battleDom()?.querySelector('.evo2d-arena')?.classList.add('phase-two')}
+      else{flashBattle('PHASE SHIFT','phase');battleLog(`${b.stage.title} becomes more aggressive.`,'phase')}
+      break;
+    case'partyBurst':
+      dps.forEach(u=>{const c=party().find(x=>x.id===u.charId);battleAction(u.id,battleAbility(c,'burst'),'dps')});if(boss)setBossHp(b.bossHp-18);else b.enemies.forEach
