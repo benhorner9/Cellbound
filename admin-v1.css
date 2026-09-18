@@ -24,3 +24,6 @@
 .admin-update-note input{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:11px 12px;border:1px solid rgba(255,255,255,.07);background:#081115;color:#d8ddd9;font-size:.54rem;text-transform:none;letter-spacing:0;outline:none}
 .admin-update-note input:focus{border-color:rgba(216,185,118,.28)}
 @media(max-width:900px){.admin-release-card{grid-column:auto}}
+
+.admin-actions .admin-danger-action{border-color:rgba(205,103,83,.28);background:#211310;color:#e0a092}
+.admin-actions .admin-danger-action:hover{border-color:rgba(222,116,91,.48);background:#2b1713;color:#efb0a2}
