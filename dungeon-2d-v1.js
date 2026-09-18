@@ -284,7 +284,7 @@ async function combatLoop(s,tok){
  const attackers=party().filter(c=>role(c)!=='healer');
  while(run&&run.combatActive&&tok===token){
    const index=enemyIndex();if(index<0)break;
-   if(turn===0){const tank=party().find(c=>combatProfile(c)==='tank');if(tank){buildThreat(index,tank,100,'taunt');settleFormation(index);act('tank',tank.name+' · Establishing threat');await delay(240)}}
+   if(turn===0){const tank=party().find(c=>combatProfile(c)==='tank');if(tank){run.enemyHp.forEach((v,i)=>{if(v>0)buildThreat(i,tank,100,'taunt')});settleFormation(index);act('tank',tank.name+' · Establishing threat on the pack');await delay(240)}}
    const c=attackers[turn%attackers.length];if(c){rangedDrift(c,index);await partyAttack(c,index,tok)}
    if(tok!==token||!run?.combatActive)break;
    if(turn%2===1)await enemyAttack(index,tok,s);
