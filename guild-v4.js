@@ -8,6 +8,7 @@ const SUPABASE_PUBLISHABLE_KEY='sb_publishable_R79iqkCPo4hRgXNNzzTmAg_ODAiA1fl';
 const REMEMBER_KEY='cellbound-remember-device';
 const STORAGE='cellbound-management-reboot-v3';
 const PREVIOUS_STORAGE='cellbound-management-reboot-v2';
+const LOCAL_OWNER='cellbound-management-owner';
 const SAVE_VERSION=4;
 const PVE_WIPE_CELL_SHOCK=25;
 const STANDARD_RECOVERY_MINUTES=60;
@@ -149,7 +150,9 @@ function migrateState(raw){
   s.saveVersion=SAVE_VERSION;s.gearVersion=2;s.renown=Number(s.renown)||0;s.gold=Number(s.gold)||0;s.roster=s.roster.map(normalizeCharacter);s.bank=canonicalBank(s.bank);s.collectionHistory=Array.isArray(s.collectionHistory)?s.collectionHistory:[];s.reports=Array.isArray(s.reports)?s.reports:[];s.activity=Array.isArray(s.activity)?s.activity:[];s.bossKills=s.bossKills||{ashwarden:false,embermaw:false,vaultheart:false};s.party=s.party||{tank:null,healer:null,dps:[null,null,null]};
   s.roster.forEach(c=>refreshRecovery(c));return s;
 }
-function localCandidate(){
+function localCandidate(userId){
+  const owner=localStorage.getItem(LOCAL_OWNER);
+  if(owner&&userId&&owner!==userId)return null;
   for(const key of [STORAGE,PREVIOUS_STORAGE]){try{const raw=JSON.parse(localStorage.getItem(key));if(raw?.roster?.length)return raw;}catch{}}
   return null;
 }
@@ -168,10 +171,10 @@ function save(){writeLocal();clearTimeout(syncTimer);syncTimer=setTimeout(()=>pe
 async function loadAccount(user){
   currentUser=user;setSync('Loading…','busy');
   const {data,error}=await supabaseClient.from('guild_accounts').select('user_id,game_state,membership_active_until,membership_override,updated_at').eq('user_id',user.id).maybeSingle();
-  if(error){console.error('Cellbound account load failed',error);account={user_id:user.id,membership_active_until:null,membership_override:false};state=migrateState(localCandidate()||initialState());setSync('Local fallback','error');writeLocal();return;}
+  if(error){console.error('Cellbound account load failed',error);account={user_id:user.id,membership_active_until:null,membership_override:false};state=migrateState(localCandidate(user.id)||initialState());setSync('Local fallback','error');writeLocal();return;}
   account=data||{user_id:user.id,membership_active_until:null,membership_override:false};
-  state=migrateState(data?.game_state&&Object.keys(data.game_state).length?data.game_state:(localCandidate()||initialState()));
-  removeInvalidPartyMembers(state);writeLocal();
+  state=migrateState(data?.game_state&&Object.keys(data.game_state).length?data.game_state:(localCandidate(user.id)||initialState()));
+  removeInvalidPartyMembers(state);nativeLocalSet.call(localStorage,LOCAL_OWNER,user.id);writeLocal();
   if(!data){await supabaseClient.from('guild_accounts').insert({user_id:user.id,game_state:state,updated_at:new Date().toISOString()});}
   else await persistState();
   setSync('Saved','ok');
