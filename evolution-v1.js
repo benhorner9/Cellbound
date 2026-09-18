@@ -173,7 +173,7 @@ function enhanceBank(){
   const byId=new Map(s.bank.map(x=>[x.id,x]));
 
   const resourceModels=[
-    ...Object.entries(s.materials||{}).filter(([,q])=>Number(q)>0).map(([key,q])=>({key:`mat:${key}`,name:P?.MATERIALS?.[key]?.name||key,category:'Reagent',rarity:P?.MATERIALS?.[key]?.rarity||'Common',quantity:Number(q),source:P?.MATERIALS?.[key]?.source||'Dungeon reagent',icon:P?.MATERIALS?.[key]?.icon||'◇',tradeState:'tradeable'})),
+    ...Object.entries(s.materials||{}).filter(([,q])=>Number(q)>0).map(([key,q])=>({key:`mat:${key}`,materialKey:key,name:P?.MATERIALS?.[key]?.name||key,category:'Reagent',rarity:P?.MATERIALS?.[key]?.rarity||'Common',quantity:Number(q),source:P?.MATERIALS?.[key]?.source||'Dungeon reagent',icon:P?.MATERIALS?.[key]?.icon||'◇',tradeState:'tradeable'})),
     ...(s.consumables||[]).filter(x=>(x.quantity||0)>0).map(x=>({key:`con:${x.key}`,name:x.name,category:'Consumable',rarity:'Uncommon',quantity:x.quantity||1,source:'Crafted stock',icon:'⚗',tradeState:'tradeable'})),
     ...(s.recipeScrolls||[]).filter(x=>(x.quantity||0)>0).map(x=>({key:`rec:${x.recipeId}`,name:x.name,category:'Recipe',rarity:'Rare',quantity:x.quantity||1,source:'Rare recipe scroll',icon:'▤',tradeState:'tradeable'}))
   ];
@@ -186,7 +186,8 @@ function enhanceBank(){
       const card=document.createElement('article');
       card.className=`bank-item evo-bank-resource rarity-${String(item.rarity).toLowerCase()}`;
       card.dataset.evoKey=item.key;
-      card.innerHTML=`<div class="bank-icon gear-bank-icon"><span class="evo-resource-icon">${esc(item.icon)}</span></div><div class="bank-copy"><small>${esc(item.category.toUpperCase())} · ${esc(item.rarity.toUpperCase())}</small><h3>${esc(item.name)}</h3><p>${esc(item.source)}</p></div><div class="bank-qty">×${item.quantity}</div><button data-resource-jump="professions">OPEN PROFESSIONS</button>`;
+      const art=item.materialKey&&P?.materialArtHTML?P.materialArtHTML(item.materialKey,66,'evo-resource-art'):`<span class="evo-resource-icon">${esc(item.icon)}</span>`;
+      card.innerHTML=`<div class="bank-icon gear-bank-icon">${art}</div><div class="bank-copy"><small>${esc(item.category.toUpperCase())} · ${esc(item.rarity.toUpperCase())}</small><h3>${esc(item.name)}</h3><p>${esc(item.source)}</p></div><div class="bank-qty">×${item.quantity}</div><button data-resource-jump="professions">OPEN PROFESSIONS</button>`;
       root.appendChild(card);
     });
     root.querySelectorAll('[data-resource-jump]').forEach(btn=>btn.addEventListener('click',()=>Game.switchView('professions')));
@@ -270,7 +271,7 @@ function enhanceProfessions(){
     }
     if(recipe&&!card.querySelector('.evo-recipe-owned')){
       const owned=document.createElement('div');owned.className='evo-recipe-owned';
-      owned.innerHTML=Object.entries(recipe.inputs||{}).map(([k,q])=>{const m=P.MATERIALS?.[k],have=Number(state()?.materials?.[k])||0;return `<span class="${have>=q?'ready':'missing'}"><b>${esc(m?.name||k)}</b> ${have}/${q}</span>`}).join('');
+      owned.innerHTML=Object.entries(recipe.inputs||{}).map(([k,q])=>{const m=P.MATERIALS?.[k],have=Number(state()?.materials?.[k])||0,art=P?.materialArtHTML?P.materialArtHTML(k,24,'evo-material-mini'):'';return `<span class="${have>=q?'ready':'missing'}">${art}<b>${esc(m?.name||k)}</b> ${have}/${q}</span>`}).join('');
       card.querySelector('div')?.appendChild(owned);
     }
     if(recipe&&!card.querySelector('.evo-recipe-sources')){
