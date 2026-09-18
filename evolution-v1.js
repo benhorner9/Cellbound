@@ -4,7 +4,7 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 let Game=null,G=null,P=null,db=null,user=null;
-let rosterRole='all',rosterStatus='all',rosterSearch='',rosterSort='ilvl';
+let rosterRole='all',rosterStatus='all',rosterClass='all',rosterProfession='all',rosterSearch='',rosterSort='ilvl';
 let bankSearch='',bankCategory='all',bankClass='all',bankRarity='all',bankTrade='all',bankSort='newest';
 let profRecipeFilter='all';
 let expedition=null;
@@ -116,7 +116,10 @@ function enhanceRoster(){
     const searchOk=!q||[c.name,c.class,c.spec,...(c.professions||[]).filter(Boolean).map(p=>p.name)].join(' ').toLowerCase().includes(q);
     const isActive=ids.has(c.id),recovering=Game.isUnavailable(c);
     const statusOk=rosterStatus==='all'||(rosterStatus==='active'&&isActive)||(rosterStatus==='reserve'&&!isActive)||(rosterStatus==='available'&&!recovering)||(rosterStatus==='recovering'&&recovering);
-    return roleOk&&searchOk&&statusOk;
+    const classOk=rosterClass==='all'||c.class===rosterClass;
+    const profs=(c.professions||[]).filter(Boolean).map(p=>p.name);
+    const professionOk=rosterProfession==='all'||(rosterProfession==='untrained'&&!profs.length)||profs.includes(rosterProfession);
+    return roleOk&&searchOk&&statusOk&&classOk&&professionOk;
   });
   filtered.sort((a,b)=>{
     const ca=byId.get(a.dataset.charId),cb=byId.get(b.dataset.charId);
@@ -139,6 +142,8 @@ function enhanceRoster(){
 function bindRoster(){
   $('#rosterSearch')?.addEventListener('input',e=>{rosterSearch=e.target.value;enhanceRoster()});
   $('#rosterStatusFilter')?.addEventListener('change',e=>{rosterStatus=e.target.value;enhanceRoster()});
+  $('#rosterClassFilter')?.addEventListener('change',e=>{rosterClass=e.target.value;enhanceRoster()});
+  $('#rosterProfessionFilter')?.addEventListener('change',e=>{rosterProfession=e.target.value;enhanceRoster()});
   $('#rosterSort')?.addEventListener('change',e=>{rosterSort=e.target.value;enhanceRoster()});
   $$('.roster-role-filters [data-filter]').forEach(b=>b.addEventListener('click',()=>{rosterRole=b.dataset.filter;setTimeout(enhanceRoster,0)}));
   const root=$('#rosterGrid');if(root){rosterObserver=new MutationObserver(()=>requestAnimationFrame(enhanceRoster));rosterObserver.observe(root,{childList:true})}
@@ -241,7 +246,8 @@ function enhanceProfessions(){
   root.querySelectorAll('.recipe-card').forEach(card=>{
     const btn=card.querySelector('[data-craft]'),id=btn?.dataset.craft,recipe=P?.recipeById?.(id);
     const ready=btn&&!btn.disabled&&!card.classList.contains('locked');
-    card.dataset.evoHidden=(profRecipeFilter==='ready'&&!ready)||(profRecipeFilter==='locked'&&ready)?'1':'0';
+    const rare=Boolean(recipe?.requiresDiscovery||recipe?.endgame);
+    card.dataset.evoHidden=(profRecipeFilter==='ready'&&!ready)||(profRecipeFilter==='locked'&&ready)||(profRecipeFilter==='rare'&&!rare)?'1':'0';
     if(recipe&&!card.querySelector('.evo-recipe-art')){
       const output=recipe.output||{},gear=output.category==='gear'?(G.byId(output.key)||G.byName(output.name)):null;
       const art=document.createElement('span');art.className='evo-recipe-art';
