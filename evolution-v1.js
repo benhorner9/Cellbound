@@ -294,7 +294,7 @@ function renderDungeonJournal(){
   const kills=state().bossKills||{};
   route.innerHTML=DUNGEON.stages.map((st,i)=>{
     const complete=st.bossId?Boolean(kills[st.bossId]):false;
-    const label=st.kind==='final'?'FINAL BOSS':st.kind==='boss'?'ENCOUNTER':st.kind==='event'?'DUNGEON EVENT':'ENEMY PACK';
+    const label=st.id==='kael'?'2D BATTLEFIELD':st.kind==='final'?'FINAL BOSS':st.kind==='boss'?'ENCOUNTER':st.kind==='event'?'DUNGEON EVENT':'ENEMY PACK';
     return `<div class="dungeon-stage ${complete?'complete':''}" data-kind="${st.kind}"><div class="dungeon-stage-rune">${complete?'✓':st.rune}</div><div class="dungeon-stage-copy"><b>${i+1}. ${st.title}</b><small>${st.desc}</small></div><span class="dungeon-stage-tag">${label}</span></div>`;
   }).join('');
   const intelKeys=[['ashwarden','Ash Warden Kael'],['embermaw','Embermaw'],['vaultheart','The Vaultheart']];
@@ -369,6 +369,47 @@ function startExpedition(){
   expedition={stage:0,condition:Object.fromEntries(party().map(c=>[c.id,100])),log:['The party crosses the Broken Gate.'],resolved:false};
   renderExpedition();
 }
+async function resolveKaelBattlefield(outcome){
+  if(!expedition)return;
+  const stage=DUNGEON.stages[expedition.stage];if(stage?.id!=='kael')return;
+  const ps=party(),conditions=outcome?.partyCondition||{};
+  ps.forEach(ch=>{if(Number.isFinite(Number(conditions[ch.id])))expedition.condition[ch.id]=clamp(Number(conditions[ch.id]),0,100)});
+  const gainBase=outcome?.success?Math.max(6,Math.round(6+(Number(outcome?.metrics?.execution)||0)*.05)):8;
+  const knowledgeGain=ps.map(ch=>{
+    ch.knowledge=ch.knowledge||{};const before=Number(ch.knowledge.ashwarden)||0,after=clamp(before+gainBase,0,100);ch.knowledge.ashwarden=after;
+    return{name:ch.name,before,after,gain:after-before};
+  });
+  if(outcome?.success){
+    const reward=expeditionLoot(stage);state().bossKills[stage.bossId]=true;state().gold+=35;state().renown+=15;
+    state().activity.push(`Ash Warden Kael was defeated on the 2D battlefield. Execution ${outcome.metrics?.execution||0}%.`);
+    state().reports=Array.isArray(state().reports)?state().reports:[];
+    state().reports.unshift({id:Date.now(),boss:stage.bossId,success:true,knowledgeGain,loot:reward.loot?.name||null,lootItemId:reward.loot?.itemId||null,lootTier:reward.loot?.tier||null,lootItemLevel:reward.loot?.itemLevel||null,reagents:reward.reagents,cellShockGain:0,partyItemLevel:partyIlvl(),battlefield:true,execution:outcome.metrics?.execution||0,at:new Date().toISOString()});
+    expedition.log.push(`Kael falls after a live battlefield encounter. ${outcome.metrics?.handled||0}/${outcome.metrics?.mechanics||0} mechanics handled.`);
+    await persist(false);expedition.stage++;expedition.resolved=false;renderExpedition();renderDungeonJournal();
+  }else{
+    Game.applyPartyCellShock(25);
+    state().reports=Array.isArray(state().reports)?state().reports:[];
+    state().reports.unshift({id:Date.now(),boss:stage.bossId,success:false,knowledgeGain,loot:null,lootItemId:null,reagents:[],cellShockGain:25,partyItemLevel:partyIlvl(),battlefield:true,execution:outcome?.metrics?.execution||0,at:new Date().toISOString()});
+    state().dungeonHistory.unshift({at:new Date().toISOString(),result:'wipe',stage:stage.id,partyIlvl:partyIlvl(),reason:outcome?.reason||'Formation collapsed'});
+    state().dungeonHistory=state().dungeonHistory.slice(0,20);
+    state().activity.push(`The guild wiped on Ash Warden Kael in live combat. Each hero gained 25% Cell Shock.`);
+    await persist();expedition=null;renderExpedition();Game.switchView('content');renderDungeonJournal();
+  }
+}
+function launchKaelBattlefield(){
+  if(!expedition)return;
+  const stage=DUNGEON.stages[expedition.stage],engine=window.CellboundBattlefield;
+  if(stage?.id!=='kael')return;
+  if(!engine?.available){expedition.log.push('The 2D battlefield is still loading.');renderExpedition();return}
+  engine.startKael({
+    party:party(),
+    conditions:{...expedition.condition},
+    knowledge:avgKnowledge('ashwarden'),
+    onRetreat:()=>{if(expedition){expedition.log.push('The company withdrew before engaging Kael.');renderExpedition()}},
+    onComplete:resolveKaelBattlefield
+  });
+}
+
 function renderExpedition(){
   const root=expeditionModal();if(!expedition){root.hidden=true;return}
   root.hidden=false;
@@ -377,12 +418,13 @@ function renderExpedition(){
     <div class="evo-expedition-map">${DUNGEON.stages.map((s,i)=>`<span class="evo-map-node ${i<expedition.stage?'done':i===expedition.stage?'current':''}">${i+1}. ${s.title}</span>`).join('')}</div>
     <div class="evo-expedition-scene"><div class="evo-scene-main"><small class="evo-scene-kicker">${stage.kind==='final'?'FINAL BOSS':stage.kind==='boss'?'ENCOUNTER':stage.kind==='event'?'DUNGEON EVENT':'HOSTILE PACK'}</small><h3>${stage.title}</h3><p>${stage.desc}</p>
       <div class="evo-enemy-line">${stage.enemies.map(([n,d])=>`<div class="evo-enemy"><b>${n}</b><small>${d}</small></div>`).join('')}</div>
-      <div class="evo-command-bar">${['focus','interrupt','defend','aggressive'].map(cmd=>{const [a,b]=commandLabel(cmd);return `<button data-expedition-command="${cmd}" ${expedition.resolved?'disabled':''}><b>${a}</b><small>${b}</small></button>`}).join('')}<button class="evo-consumable-command" data-expedition-consumable ${expedition.resolved||!dungeonConsumable()?'disabled':''}><b>USE CONSUMABLE</b><small>${dungeonConsumable()?esc(dungeonConsumable().name):'No usable consumables in stock.'}</small></button></div>
+      ${stage.id==='kael'?`<div class="cbf-launch-panel"><span class="cbf-prototype-badge">● LIVE 2D COMBAT</span><h4>Command the fight on the battlefield</h4><p>Kael is the first encounter using Cellbound's new combat layer. Watch boss facing, cast bars and ground telegraphs while your five heroes attack and heal automatically.</p><button data-open-battlefield>ENTER 2D BATTLEFIELD →</button></div>`:`<div class="evo-command-bar">${['focus','interrupt','defend','aggressive'].map(cmd=>{const [a,b]=commandLabel(cmd);return `<button data-expedition-command="${cmd}" ${expedition.resolved?'disabled':''}><b>${a}</b><small>${b}</small></button>`}).join('')}<button class="evo-consumable-command" data-expedition-consumable ${expedition.resolved||!dungeonConsumable()?'disabled':''}><b>USE CONSUMABLE</b><small>${dungeonConsumable()?esc(dungeonConsumable().name):'No usable consumables in stock.'}</small></button></div>`}
       <div class="evo-expedition-log">${expedition.log.slice(-4).map(x=>esc(x)).join('<br>')}</div><div id="evoExpeditionResult"></div>
     </div><aside class="evo-party-status"><small>ACTIVE FIVE · PARTY ILVL ${partyIlvl()}</small>${party().map(c=>`<div class="evo-party-member"><span class="avatar">${esc(c.portrait)}</span><div><b>${esc(c.name)}</b><small>${esc(c.class)} · ${esc(c.spec)}</small></div><strong>${expeditionCondition(c.id)}% condition</strong></div>`).join('')}<div class="evo-expedition-log">Field knowledge: ${avgKnowledge(stage.knowledge)}%<br>Best-known approach projects roughly ${chancePreview}% stability.</div></aside></div></section>`;
   root.querySelector('[data-expedition-close]')?.addEventListener('click',()=>{expedition=null;renderExpedition()});
   root.querySelectorAll('[data-expedition-command]').forEach(b=>b.addEventListener('click',()=>resolveExpeditionStage(b.dataset.expeditionCommand)));
   root.querySelector('[data-expedition-consumable]')?.addEventListener('click',useDungeonConsumable);
+  root.querySelector('[data-open-battlefield]')?.addEventListener('click',launchKaelBattlefield);
 }
 async function resolveExpeditionStage(command){
   if(!expedition||expedition.resolved)return;
@@ -556,7 +598,7 @@ async function init(){
   bindRoster();bindBank();bindProfessions();bindWorldEnhancement();bindReportEnhancement();bindGlobal();interceptWorldActions();dock();queueEnhance();enhanceWorldCards();
   clearInterval(dockTimer);dockTimer=setInterval(()=>{if(!dockMinimized)loadDockChat()},8000);
   window.addEventListener('beforeunload',()=>clearInterval(dockTimer),{once:true});
-  window.CellboundEvolution={renderDungeonJournal,startExpedition,enhanceRoster,enhanceBank,openWorldEncounter};
+  window.CellboundEvolution={renderDungeonJournal,startExpedition,enhanceRoster,enhanceBank,openWorldEncounter,launchKaelBattlefield};
 }
 init();
 })();
