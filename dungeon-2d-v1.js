@@ -12,6 +12,65 @@ const STAGES=[
  {id:'vault-depths',title:'The Vault Depths',kind:'trash',knowledge:'vaultheart',base:78,enemies:['Soul Binder','Ash Guardian','Ash Guardian'],mechanics:[['Soul Bind','interrupt',2000],['Guardian Reinforcements','adds',1400]]},
  {id:'vaultheart',title:'The Vaultheart',kind:'final',bossId:'vaultheart',knowledge:'vaultheart',base:70,enemies:['The Vaultheart'],mechanics:[['Core Pulse','circle',2100],['Fracture Spawn','adds',1500],['Rupture Beam','line',1800],['Core Collapse','circle',2600]]}
 ];
+const ASHEN_ROOMS={
+ 'broken-gate':{
+   room:'broken-gate',label:'Collapsed Vault Entrance',
+   ambience:'Ash drifts through a shattered seal.',
+   props:[
+     ['gate',86,48,0,1.05],['pillar-broken',9,18,-10,.9],['pillar-broken',11,82,13,.82],
+     ['rubble',18,16,0,1],['rubble',18,84,0,.85],['chain',77,15,18,.9],['brazier',79,79,0,.8]
+   ]
+ },
+ 'hall-embers':{
+   room:'hall-embers',label:'Ember Processional Hall',
+   ambience:'Old braziers still breathe beneath the ash.',
+   props:[
+     ['pillar',8,20,0,.95],['pillar',8,80,0,.95],['pillar',88,20,0,.95],['pillar',88,80,0,.95],
+     ['brazier',18,24,0,.8],['brazier',18,76,0,.8],['vault-mark',72,50,0,1.1]
+   ]
+ },
+ 'kael':{
+   room:'warden-seal',label:'The Warden Seal',
+   ambience:'Chains hold an ancient oath around the chamber.',
+   props:[
+     ['seal-ring',66,50,0,1.05],['chain',87,23,-18,1],['chain',87,77,18,1],
+     ['statue',10,22,0,.9],['statue',10,78,0,.9],['brazier',83,50,0,.95]
+   ]
+ },
+ 'furnace':{
+   room:'furnace-passage',label:'Furnace Passage',
+   ambience:'Heat pulses through cracked iron channels.',
+   props:[
+     ['furnace',88,50,0,1.05],['vent',70,22,0,.9],['vent',70,78,0,.9],
+     ['pipe',10,16,8,1],['pipe',10,84,-8,1],['ember-crack',49,18,14,1.1],['ember-crack',53,83,-11,.9]
+   ]
+ },
+ 'embermaw':{
+   room:'embermaw-forge',label:'The Ember Forge',
+   ambience:'The floor itself glows beneath Embermaw.',
+   props:[
+     ['forge-ring',66,50,0,1.12],['furnace',88,18,0,.85],['furnace',88,82,0,.85],
+     ['chain',9,28,16,.9],['chain',9,72,-16,.9],['ember-crack',43,20,20,1.05],['ember-crack',45,80,-18,1]
+   ]
+ },
+ 'vault-depths':{
+   room:'vault-depths',label:'Sealed Vault Depths',
+   ambience:'Dead reliquaries line the path inward.',
+   props:[
+     ['coffer',10,20,-8,.85],['coffer',10,80,7,.85],['coffer',88,16,9,.85],['coffer',88,84,-7,.85],
+     ['soul-urn',78,30,0,.75],['soul-urn',78,70,0,.75],['vault-mark',65,50,0,.9]
+   ]
+ },
+ 'vaultheart':{
+   room:'vaultheart-sanctum',label:'The Vaultheart Sanctum',
+   ambience:'A sealed Cell reliquary hums beneath the final chamber.',
+   props:[
+     ['vault-door',90,50,0,1.1],['heart-sigil',65,50,0,1.18],
+     ['containment',9,22,0,.9],['containment',9,78,0,.9],['crystal',80,18,-8,.85],['crystal',80,82,8,.85],
+     ['chain',86,28,-15,.9],['chain',86,72,15,.9]
+   ]
+ }
+};
 let Game=null,G=null,P=null,run=null,token=0;
 let tactics={aggression:'balanced',interrupts:'important',defensives:'balanced',adds:'dangerous',consumables:'danger'};
 const party=()=>Game&&Game.getPartyCharacters?Game.getPartyCharacters():[];
@@ -70,7 +129,7 @@ function rows(){
 }
 function drawViewer(){
  const s=STAGES[run.stage],r=root();r.hidden=false;
- r.innerHTML='<section class="cb2d-shell"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LIVE 2D DUNGEON</small><h2 id="cb2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close>×</button></div></header><div class="cb2d-route" id="cb2dRoute">'+route()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena" id="cb2dArena"><div class="cb2d-floor"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div><div class="cb2d-caption"><span id="cb2dType">'+s.kind.toUpperCase()+'</span><b id="cb2dStatus">Entering encounter…</b></div></div><div class="cb2d-controls"><button data-override="focus"><b>FOCUS TARGET</b><small>Force priority damage.</small></button><button data-override="interrupt"><b>INTERRUPT NOW</b><small>Force the next interrupt.</small></button><button data-override="defensive"><b>DEFENSIVE</b><small>Stabilise the group.</small></button><button data-override="burn"><b>BURN BOSS</b><small>Commit damage cooldowns.</small></button><button data-override="consumable"><b>USE CONSUMABLE</b><small>Use available stock.</small></button></div><div class="cb2d-feed"><small>COMBAT FEED</small><p id="cb2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>PARTY CONDITION · ILVL '+ilvl()+'</small><div id="cb2dRows">'+rows()+'</div></div><div class="cb2d-plan"><small>PERSISTENT TACTICS</small><b>'+tactics.aggression.toUpperCase()+' · '+tactics.interrupts.toUpperCase()+' INTERRUPTS</b><span>'+tactics.defensives.toUpperCase()+' DEFENSIVES · '+tactics.adds.toUpperCase()+' ADDS</span></div></aside></div><div class="cb2d-end" id="cb2dEnd" hidden></div></section>';
+ r.innerHTML='<section class="cb2d-shell"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LIVE 2D DUNGEON</small><h2 id="cb2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close>×</button></div></header><div class="cb2d-route" id="cb2dRoute">'+route()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena" id="cb2dArena"><div class="cb2d-floor"></div><div class="cb2d-environment" id="cb2dEnvironment"></div><div class="cb2d-room-tag" id="cb2dRoomTag"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div><div class="cb2d-caption"><span id="cb2dType">'+s.kind.toUpperCase()+'</span><b id="cb2dStatus">Entering encounter…</b></div></div><div class="cb2d-controls"><button data-override="focus"><b>FOCUS TARGET</b><small>Force priority damage.</small></button><button data-override="interrupt"><b>INTERRUPT NOW</b><small>Force the next interrupt.</small></button><button data-override="defensive"><b>DEFENSIVE</b><small>Stabilise the group.</small></button><button data-override="burn"><b>BURN BOSS</b><small>Commit damage cooldowns.</small></button><button data-override="consumable"><b>USE CONSUMABLE</b><small>Use available stock.</small></button></div><div class="cb2d-feed"><small>COMBAT FEED</small><p id="cb2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>PARTY CONDITION · ILVL '+ilvl()+'</small><div id="cb2dRows">'+rows()+'</div></div><div class="cb2d-plan"><small>PERSISTENT TACTICS</small><b>'+tactics.aggression.toUpperCase()+' · '+tactics.interrupts.toUpperCase()+' INTERRUPTS</b><span>'+tactics.defensives.toUpperCase()+' DEFENSIVES · '+tactics.adds.toUpperCase()+' ADDS</span></div></aside></div><div class="cb2d-end" id="cb2dEnd" hidden></div></section>';
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.resolved&&!confirm('Leave the Ashen Vault?'))return;close()};
  r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  r.querySelectorAll('[data-override]').forEach(b=>b.onclick=()=>override(b.dataset.override,b));
@@ -117,8 +176,31 @@ function setFocusEnemy(index){
  $$('[data-unit^="e-"]').forEach(e=>e.classList.remove('focused'));
  if(index>=0){const e=$('[data-unit="e-'+index+'"]');if(e)e.classList.add('focused')}
 }
+function ashParticle(type,i){
+ const e=document.createElement('i');e.className='cb2d-ambient '+type;
+ e.style.setProperty('--x',(6+((i*17)%88))+'%');
+ e.style.setProperty('--delay',(-((i*0.73)%5))+'s');
+ e.style.setProperty('--dur',(3.8+(i%5)*.55)+'s');
+ e.style.setProperty('--drift',(-18+(i%7)*6)+'px');
+ return e
+}
+function renderDungeonEnvironment(s){
+ const arena=$('#cb2dArena'),root=$('#cb2dEnvironment'),tag=$('#cb2dRoomTag');if(!arena||!root)return;
+ const cfg=ASHEN_ROOMS[s.id]||ASHEN_ROOMS['broken-gate'];
+ arena.className='cb2d-arena theme-ashen room-'+cfg.room+(s.kind==='boss'||s.kind==='final'?' boss-room':'');
+ root.innerHTML='';
+ (cfg.props||[]).forEach((p,i)=>{
+   const e=document.createElement('span');e.className='cb2d-prop prop-'+p[0];
+   e.style.left=p[1]+'%';e.style.top=p[2]+'%';e.style.setProperty('--rot',(p[3]||0)+'deg');e.style.setProperty('--scale',String(p[4]||1));e.dataset.prop=i;root.appendChild(e)
+ });
+ const ambience=document.createElement('div');ambience.className='cb2d-ambience';
+ for(let i=0;i<13;i++)ambience.appendChild(ashParticle(i%4===0?'ember':'ash',i));
+ root.appendChild(ambience);
+ if(tag)tag.innerHTML='<b>'+esc(cfg.label)+'</b><small>'+esc(cfg.ambience)+'</small>'
+}
+
 function spawn(s){
- $('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
+ renderDungeonEnvironment(s);$('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
  const max=s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120;
  run.enemyMax=s.enemies.map(()=>max);run.enemyHp=s.enemies.map(()=>max);
  run.threat=s.enemies.map(()=>Object.fromEntries(party().map(c=>[c.id,0])));
@@ -648,6 +730,7 @@ async function mechanic(s,m,tok){
 }
 async function travelDeeper(nextStage,tok){
  if(tok!==token||!run)return;
+ const arena=$('#cb2dArena');arena?.classList.add('travelling');
  run.mechanicActive=false;setFocusEnemy(-1);$('#cb2dTelegraphs').innerHTML='';
  status('Path clear · moving deeper into the Vault');
  act('tank','Leading the route');act('healer','Following the group');act('dps','Moving to the next pull');
@@ -658,7 +741,7 @@ async function travelDeeper(nextStage,tok){
  await delay(520);
  chars.forEach((c,i)=>move('p-'+c.id,88,travelY[i]||50,720));
  const banner=document.createElement('div');banner.className='cb2d-travel-banner';banner.innerHTML='<small>MOVING DEEPER</small><b>'+esc(nextStage.title)+'</b>';$('#cb2dArena')?.appendChild(banner);
- await delay(760);banner.remove()
+ await delay(760);banner.remove();arena?.classList.remove('travelling')
 }
 
 function bonus(s){let b=run.override||0;if(tactics.aggression==='aggressive')b+=4;if(tactics.aggression==='safe'&&s.kind==='trash')b+=4;if(tactics.defensives==='early')b+=3;if(tactics.defensives==='save'&&s.kind==='final')b+=5;if(tactics.adds==='full'&&s.mechanics.some(m=>m[1]==='adds'))b+=4;return b}
