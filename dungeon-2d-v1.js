@@ -77,6 +77,33 @@ const party=()=>Game&&Game.getPartyCharacters?Game.getPartyCharacters():[];
 const state=()=>Game&&Game.getState?Game.getState():null;
 const role=c=>Game&&Game.classes&&Game.classes[c.class]&&Game.classes[c.class].specs[c.spec]?Game.classes[c.class].specs[c.spec].role:'dps';
 const ilvl=()=>Number(Game&&Game.partyItemLevel?Game.partyItemLevel():0)||0;
+const ASHEN_VAULT_XP=420;
+function xpNeeded(level){return 800+Math.max(0,(Number(level)||1)-1)*250}
+function awardPartyXp(amount){
+ const gains=[];
+ party().forEach(c=>{
+   const beforeLevel=Math.max(1,Number(c.level)||1);
+   const beforeXp=Math.max(0,Number(c.xp)||0);
+   const beforeNeed=xpNeeded(beforeLevel);
+   let level=beforeLevel,xp=beforeXp+Math.max(0,Number(amount)||0),levels=0;
+   while(xp>=xpNeeded(level)){
+     xp-=xpNeeded(level);
+     level++;
+     levels++;
+   }
+   c.level=level;c.xp=xp;
+   if(levels>0){
+     c.talent=(Number(c.talent)||0)+levels;
+     c.power=(Number(c.power)||1)+(levels*2);
+   }
+   gains.push({
+     id:c.id,name:c.name,portrait:c.portrait||String(c.name||'?').slice(0,2).toUpperCase(),
+     amount:Math.max(0,Number(amount)||0),beforeLevel,beforeXp,beforeNeed,
+     afterLevel:level,afterXp:xp,afterNeed:xpNeeded(level),levels
+   });
+ });
+ return gains
+}
 const delay=ms=>new Promise(r=>setTimeout(r,Math.round(ms/((run&&run.speed)||1))));
 const cond=id=>run&&run.condition[id]!=null?run.condition[id]:100;
 const setCond=(id,v)=>{if(run)run.condition[id]=clamp(Math.round(v),0,100)};
@@ -118,7 +145,7 @@ function briefing(){
  r.querySelector('[data-start]').onclick=start;
 }
 function start(){
- const p=party();token++;run={token:token,stage:0,speed:1,condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0},resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0};
+ const p=party();token++;run={token:token,stage:0,speed:1,condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},xpGrowth:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0};
  drawViewer();seamless(token);
 }
 function route(){
@@ -813,7 +840,7 @@ async function seamless(tok){
    if(!await resolveStage(s)||tok!==token)return;
    if(i<STAGES.length-1){party().forEach(c=>setHp(c.id,hp(c.id)+6));updateRows();flash('PATH CLEAR',false);await delay(420);await travelDeeper(STAGES[i+1],tok)}
   }
-  const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;st.gold+=120;st.renown+=60;run.loot.gold+=120;run.loot.renown+=60;st.dungeonCompletions++;st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',partyIlvl:ilvl()});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault cleared. The Vaultheart has fallen.');await Game.persistState();finish(true,STAGES[6])
+  const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;st.gold+=120;st.renown+=60;run.loot.gold+=120;run.loot.renown+=60;run.loot.xp=ASHEN_VAULT_XP;run.xpGrowth=awardPartyXp(ASHEN_VAULT_XP);st.dungeonCompletions++;st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',partyIlvl:ilvl(),xpPerCharacter:ASHEN_VAULT_XP});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault cleared. The Vaultheart has fallen. Each adventurer earned '+ASHEN_VAULT_XP+' XP.');run.xpGrowth.filter(x=>x.levels>0).forEach(x=>st.activity.push(x.name+' reached Level '+x.afterLevel+'.'));await Game.persistState();finish(true,STAGES[6])
  }catch(e){if(e&&e.message!=='cancelled')console.error('Ashen Vault 2D runtime',e)}
 }
 function lootRarityClass(item){return 'rarity-'+String(item?.rarity||'common').toLowerCase().replace(/[^a-z0-9-]/g,'')}
@@ -825,22 +852,50 @@ function lootMaterialCard(m){
  const art=P?.materialArtHTML?P.materialArtHTML(m.key,44,'cb2d-material-art'):esc(m.icon||'◇');
  return '<article class="cb2d-loot-material"><strong class="cb2d-loot-material-art">'+art+'</strong><div><small>'+esc(String(m.rarity||'MATERIAL').toUpperCase())+'</small><h4>'+esc(m.name)+'</h4><p>'+esc(m.source||'The Ashen Vault')+'</p></div><b>×'+Number(m.quantity||0)+'</b></article>'
 }
+function xpGrowthCard(x){
+ const startPct=Math.max(0,Math.min(100,(x.beforeXp/Math.max(1,x.beforeNeed))*100));
+ const endPct=Math.max(0,Math.min(100,(x.afterXp/Math.max(1,x.afterNeed))*100));
+ const levelCopy=x.levels>0?'<em class="cb2d-level-up">LEVEL UP'+(x.levels>1?' ×'+x.levels:'')+'</em>':'<em>+'+x.amount+' XP</em>';
+ return '<article class="cb2d-xp-card" data-xp-row data-start="'+startPct.toFixed(2)+'" data-end="'+endPct.toFixed(2)+'" data-levels="'+x.levels+'">'+
+   '<div class="cb2d-xp-avatar">'+esc(x.portrait)+'</div>'+
+   '<div class="cb2d-xp-copy"><div><span><b>'+esc(x.name)+'</b><small>Level '+x.beforeLevel+(x.afterLevel!==x.beforeLevel?' → '+x.afterLevel:'')+'</small></span>'+levelCopy+'</div>'+
+   '<div class="cb2d-xp-bar"><i style="width:'+startPct.toFixed(2)+'%"></i></div>'+
+   '<p><span>'+x.beforeXp+' / '+x.beforeNeed+' XP</span><strong>+'+x.amount+' XP</strong><span>'+x.afterXp+' / '+x.afterNeed+' XP</span></p></div>'+
+   '</article>'
+}
+function animateXpGrowth(root){
+ const rows=[...(root?.querySelectorAll('[data-xp-row]')||[])];
+ rows.forEach((row,index)=>{
+   const bar=row.querySelector('.cb2d-xp-bar i'),start=Number(row.dataset.start)||0,end=Number(row.dataset.end)||0,levels=Number(row.dataset.levels)||0;
+   if(!bar)return;
+   setTimeout(()=>{
+     if(levels<=0){bar.style.width=end+'%';return}
+     bar.style.width='100%';
+     setTimeout(()=>{
+       row.classList.add('levelled');
+       bar.style.transition='none';bar.style.width='0%';void bar.offsetWidth;
+       bar.style.transition='width .8s cubic-bezier(.2,.75,.25,1)';bar.style.width=end+'%';
+     },760);
+   },220+index*90);
+ })
+}
 function finish(ok,s){
  if(!run)return;run.resolved=true;const e=$('#cb2dEnd');e.hidden=false;
  if(!ok){
    e.className='cb2d-end';e.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Knowledge earned during the run is retained.</p></div><button>RETURN TO GUILD →</button>';
    e.querySelector('button').onclick=()=>{close();Game.switchView('content')};return
  }
- const gear=run.loot?.gear||[],materials=Object.values(run.loot?.materials||{});
+ const gear=run.loot?.gear||[],materials=Object.values(run.loot?.materials||{}),xpGrowth=run.xpGrowth||[];
  e.className='cb2d-end cb2d-loot-screen';
  e.innerHTML='<div class="cb2d-loot-wrap">'+
    '<header class="cb2d-loot-head"><div><small>THE ASHEN VAULT · CLEARED</small><h3>Expedition Rewards</h3><p>The Vaultheart has fallen. Everything below has already been secured to your guild.</p></div><div class="cb2d-loot-complete">✓<span>DUNGEON<br>COMPLETE</span></div></header>'+
-   '<div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+Number(run.loot?.gold||0)+'</b><small>Added to Guild treasury</small></article><article><span>RENOWN</span><b>+'+Number(run.loot?.renown||0)+'</b><small>Guild reputation earned</small></article><article><span>BOSS CHESTS</span><b>'+gear.length+'</b><small>Gear drops secured</small></article></div>'+
+   '<div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+Number(run.loot?.gold||0)+'</b><small>Added to Guild treasury</small></article><article><span>RENOWN</span><b>+'+Number(run.loot?.renown||0)+'</b><small>Guild reputation earned</small></article><article><span>PARTY XP</span><b>+'+Number(run.loot?.xp||0)+'</b><small>Earned by each adventurer</small></article><article><span>BOSS CHESTS</span><b>'+gear.length+'</b><small>Gear drops secured</small></article></div>'+
+   '<section class="cb2d-loot-section cb2d-xp-section"><div class="cb2d-loot-title"><span>PARTY EXPERIENCE</span><small>Every member of the active five gains experience from the clear</small></div><div class="cb2d-xp-grid">'+(xpGrowth.length?xpGrowth.map(xpGrowthCard).join(''):'<div class="cb2d-loot-empty">No character XP was awarded.</div>')+'</div></section>'+
    '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>GEAR ACQUIRED</span><small>Stored automatically in the Guild Bank</small></div><div class="cb2d-loot-gear">'+(gear.length?gear.map(lootGearCard).join(''):'<div class="cb2d-loot-empty">No bonus gear dropped before the guaranteed Vaultheart reward.</div>')+'</div></section>'+
    '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>PROFESSION REAGENTS</span><small>Available immediately for crafting</small></div><div class="cb2d-loot-materials">'+(materials.length?materials.map(lootMaterialCard).join(''):'<div class="cb2d-loot-empty">No profession reagents recovered.</div>')+'</div></section>'+
    '<footer class="cb2d-loot-actions"><button data-loot-bank>VIEW GUILD BANK</button><button class="primary" data-loot-return>RETURN TO GUILD →</button></footer>'+
    '</div>';
- e.querySelector('[data-loot-bank]').onclick=()=>{close();Game.switchView('bank')};
+ animateXpGrowth(e);e.querySelector('[data-loot-bank]').onclick=()=>{close();Game.switchView('bank')};
  e.querySelector('[data-loot-return]').onclick=()=>{close();Game.switchView('content')}
 }
 async function override(t,b){
