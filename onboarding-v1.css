@@ -154,3 +154,8 @@ linear-gradient(135deg,rgba(24,31,27,.88),rgba(6,12,14,.96))}
  .name-builder{grid-template-columns:1fr}.formation-board{height:260px}.td-wrap{padding:10px}.td-arena{height:380px}.td-actions{grid-template-columns:1fr}
  .builder-section-head{align-items:flex-start;flex-direction:column}.z-map-node{width:118px}.z-map-node[data-node="quartermaster"]{left:20%}.z-map-node[data-node="workshop"]{right:8%}
 }
+
+.td-threat-line{position:absolute;z-index:5;height:1px;transform-origin:0 50%;background:linear-gradient(90deg,rgba(216,201,79,.10),rgba(216,90,77,.62));box-shadow:0 0 7px rgba(216,90,77,.2);pointer-events:none;opacity:.72}
+.td-unit.profile-melee>i{box-shadow:0 0 0 2px rgba(255,255,255,.03),0 0 18px currentColor}
+.td-unit.profile-ranged>i{box-shadow:0 0 0 5px rgba(255,255,255,.018),0 0 18px currentColor}
+.td-unit.profile-healer>i{box-shadow:0 0 0 6px rgba(90,167,232,.03),0 0 18px currentColor}
