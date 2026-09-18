@@ -369,4 +369,45 @@ function renderPartyFrame(unit){
 }
 function startExpedition(){
   if(!partyAvailable()||partyIlvl()<DUNGEON.requiredIlvl)return;
-  ensureState();cancelB
+  ensureState();cancelBattle();
+  expedition={stage:0,condition:Object.fromEntries(party().map(c=>[c.id,100])),log:['The party crosses the Broken Gate.'],resolved:false};
+  renderExpedition();
+}
+function renderExpedition(){
+  const root=expeditionModal();if(!expedition){cancelBattle();root.hidden=true;return}
+  cancelBattle();root.hidden=false;
+  const stage=DUNGEON.stages[expedition.stage],partyModels=battlePartyModels(),enemyModels=battleEnemyModels(stage),boss=stage.kind==='boss'||stage.kind==='final';
+  root.innerHTML=`<section class="evo-expedition evo2d-expedition">
+    <header class="evo-expedition-head evo2d-head"><div><small>${DUNGEON.name.toUpperCase()} · LIVE COMBAT</small><h2>${stage.title}</h2></div><div class="evo2d-head-actions"><button id="evo2dPause" title="Pause battle">Ⅱ</button><button id="evo2dSpeed" title="Battle speed">1×</button><button data-expedition-close title="Leave dungeon">×</button></div></header>
+    <div class="evo-expedition-map">${DUNGEON.stages.map((s,i)=>`<span class="evo-map-node ${i<expedition.stage?'done':i===expedition.stage?'current':''}">${i+1}. ${s.title}</span>`).join('')}</div>
+    <div class="evo2d-layout">
+      <div class="evo2d-combat-column">
+        ${boss?`<div class="evo2d-boss-frame"><div><small>${stage.kind==='final'?'FINAL BOSS':'BOSS'}</small><b>${esc(stage.title)}</b></div><div class="evo2d-boss-hp"><i id="evo2dBossHp" style="width:100%"></i></div><strong id="evo2dBossHpText">100%</strong></div>`:''}
+        <div class="evo2d-arena" data-stage="${stage.id}">
+          <div class="evo2d-grid"></div><div class="evo2d-rune rune-a">◇</div><div class="evo2d-rune rune-b">◇</div>
+          <div id="evo2dActionBox" class="evo2d-action-box" hidden><small>ENEMY CAST</small><div><b>Ability</b><em>0.0s</em></div><span><i></i></span></div>
+          <div class="evo2d-units">${[...partyModels,...enemyModels].map(renderBattleUnit).join('')}</div>
+          <div class="evo2d-legend"><span class="tank">● Tank</span><span class="healer">● Healer</span><span class="dps">● DPS</span><span class="enemy">● Enemy</span></div>
+          <div id="evo2dStageResult" class="evo2d-stage-result" hidden></div>
+        </div>
+        <div class="evo2d-mechanic-note"><small>LIVE ENCOUNTER</small><b>${esc(stage.desc)}</b><span>Movement is role-driven: threat, healing range, target priority and encounter mechanics determine every reposition.</span></div>
+      </div>
+      <aside class="evo2d-side">
+        <div class="evo2d-side-title"><small>ACTIVE FIVE · PARTY ILVL ${partyIlvl()}</small><b>Party Frames</b></div>
+        <div id="evo2dPartyFrames">${partyModels.map(renderPartyFrame).join('')}</div>
+        <div class="evo2d-feed-head"><small>COMBAT EVENTS</small><b>Action Feed</b></div>
+        <div id="evo2dFeed" class="evo2d-feed"></div>
+        <div class="evo2d-intel"><span>Encounter knowledge</span><b>${avgKnowledge(stage.knowledge)}%</b><small>${esc(currentHint(stage.knowledge).text)}</small></div>
+        <div id="evoExpeditionResult"></div>
+      </aside>
+    </div>
+  </section>`;
+  root.querySelector('[data-expedition-close]')?.addEventListener('click',()=>{cancelBattle();expedition=null;renderExpedition()});
+  root.querySelector('#evo2dPause')?.addEventListener('click',e=>{if(!expeditionBattle)return;expeditionBattle.paused=!expeditionBattle.paused;e.currentTarget.textContent=expeditionBattle.paused?'▶':'Ⅱ';battleLog(expeditionBattle.paused?'Combat paused.':'Combat resumed.','phase')});
+  root.querySelector('#evo2dSpeed')?.addEventListener('click',e=>{if(!expeditionBattle)return;expeditionBattle.speed=expeditionBattle.speed===1?2:1;e.currentTarget.textContent=`${expeditionBattle.speed}×`;battleLog(`Combat speed ${expeditionBattle.speed}×.`,'phase')});
+  startBattleEngine(stage);
+}
+async function resolveExpeditionStage(command='auto',forcedSuccess=null){
+  if(!expedition||expedition.resolved)return;
+  expedition.resolved=true;
+  const stage=DUNGEON.stages[expedition.stage],success=forcedSuccess??expeditionBattle?.
