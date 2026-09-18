@@ -309,3 +309,18 @@
   .cb-loadout-screen{grid-template-columns:1fr}
   .cb-gear-left,.cb-gear-right{grid-row:auto}
 }
+
+.cb-tree-head-actions{display:flex;align-items:center;gap:12px}
+.cb-tree-head-actions>button{
+  min-width:150px;padding:8px 10px;border:1px solid rgba(216,185,118,.18);
+  background:#0b1417;color:#c9b781;font-size:.36rem;font-weight:900;letter-spacing:.07em
+}
+.cb-tree-head-actions>button small{
+  display:block;margin-top:3px;color:#5d6b66;font-size:.3rem;font-weight:600;letter-spacing:0;text-transform:none
+}
+.cb-tree-head-actions>button:hover{border-color:rgba(216,185,118,.34);background:#17170f}
+@media(max-width:850px){
+  .cb-tree-head{align-items:flex-start}
+  .cb-tree-head-actions{flex-direction:column;align-items:flex-end}
+  .cb-tree-head-actions>button{min-width:0}
+}
