@@ -291,11 +291,39 @@ function renderDungeonJournal(){
 }
 function expeditionCondition(id){return expedition?.condition?.[id]??100}
 function commandLabel(id){return ({focus:['FOCUS PRIORITY','Burn the most dangerous target first.'],interrupt:['INTERRUPT','Hold control for the key cast.'],defend:['DEFENSIVE STANCE','Trade damage for stability.'],aggressive:['COMMIT DAMAGE','Push through the danger window.']})[id]}
+function dungeonConsumable(){
+  const stock=state()?.consumables||[],stage=DUNGEON.stages[expedition?.stage||0];
+  const priority=stage?.id==='vaultheart'?['vaultheart-tonic','emberward-flask','minor-recovery-tonic']:stage?.id==='embermaw'||stage?.id==='furnace'?['emberward-flask','minor-recovery-tonic','vaultheart-tonic']:['minor-recovery-tonic','emberward-flask','vaultheart-tonic'];
+  for(const key of priority){const item=stock.find(x=>x.key===key&&(x.quantity||0)>0);if(item)return item}
+  return null;
+}
+async function useDungeonConsumable(){
+  if(!expedition||expedition.resolved)return;
+  const item=dungeonConsumable();if(!item){expedition.log.push('No usable expedition consumables remain.');renderExpedition();return}
+  const stage=DUNGEON.stages[expedition.stage];
+  if(item.key==='minor-recovery-tonic'){
+    const lowest=party().slice().sort((a,b)=>expeditionCondition(a.id)-expeditionCondition(b.id))[0];
+    if(lowest)expedition.condition[lowest.id]=clamp(expeditionCondition(lowest.id)+24,0,100);
+    expedition.log.push(`${lowest?.name||'The party'} uses a Minor Recovery Tonic and steadies the formation.`);
+  }else if(item.key==='emberward-flask'){
+    party().forEach(ch=>expedition.condition[ch.id]=clamp(expeditionCondition(ch.id)+10,0,100));
+    expedition.buff={kind:'emberward',stage:stage.id,bonus:stage.id==='embermaw'||stage.id==='furnace'?14:6};
+    expedition.log.push('An Emberward Flask coats the party in heat-resistant alchemy.');
+  }else{
+    party().forEach(ch=>expedition.condition[ch.id]=clamp(expeditionCondition(ch.id)+7,0,100));
+    expedition.buff={kind:'vaultheart',stage:stage.id,bonus:stage.id==='vaultheart'?17:7};
+    expedition.log.push('A Vaultheart Tonic sharpens the party for the next command.');
+  }
+  item.quantity--;if(item.quantity<=0)state().consumables=state().consumables.filter(x=>x!==item);
+  state().activity.push(`${item.name} used during ${DUNGEON.name}.`);
+  await persist(false);renderExpedition();
+}
 function stageChance(stage,command){
   const pi=partyIlvl(),knowledge=avgKnowledge(stage.knowledge),adv=(pi-DUNGEON.requiredIlvl)*2.2,conditionAvg=party().reduce((n,c)=>n+expeditionCondition(c.id),0)/5;
   let chance=stage.base+adv+knowledge*.16+(conditionAvg-75)*.12;
   chance+=command===stage.best?17:-5;
   if(command==='defend')chance+=4;
+  if(expedition?.buff?.stage===stage.id)chance+=Number(expedition.buff.bonus)||0;
   return clamp(Math.round(chance),24,96);
 }
 function expeditionLoot(stage){
@@ -304,6 +332,7 @@ function expeditionLoot(stage){
   let loot=null;
   const guaranteed=stage.kind==='final',roll=guaranteed||Math.random()<(stage.id==='embermaw'?.55:.38);
   if(roll){loot=G.rollDungeonLoot(boss.name,boss.tier2Chance);Game.addBankItem({...loot,source:`${DUNGEON.name} · ${boss.name}`})}
+  if(stage.id==='vaultheart'&&!state().discoveredRecipes.includes('enc-vault-glyph')&&!state().recipeScrolls.some(x=>x.recipeId==='enc-vault-glyph')&&Math.random()<.12){state().recipeScrolls.push({recipeId:'enc-vault-glyph',name:'Recipe: Vaultheart Glyph',quantity:1});reagents.push({key:'recipe:enc-vault-glyph',quantity:1,recipe:true});state().activity.push('Rare recipe scroll dropped: Vaultheart Glyph.');}
   return {loot,reagents};
 }
 function gainKnowledge(stage,success){
@@ -330,16 +359,18 @@ function renderExpedition(){
     <div class="evo-expedition-map">${DUNGEON.stages.map((s,i)=>`<span class="evo-map-node ${i<expedition.stage?'done':i===expedition.stage?'current':''}">${i+1}. ${s.title}</span>`).join('')}</div>
     <div class="evo-expedition-scene"><div class="evo-scene-main"><small class="evo-scene-kicker">${stage.kind==='final'?'FINAL BOSS':stage.kind==='boss'?'ENCOUNTER':stage.kind==='event'?'DUNGEON EVENT':'HOSTILE PACK'}</small><h3>${stage.title}</h3><p>${stage.desc}</p>
       <div class="evo-enemy-line">${stage.enemies.map(([n,d])=>`<div class="evo-enemy"><b>${n}</b><small>${d}</small></div>`).join('')}</div>
-      <div class="evo-command-bar">${['focus','interrupt','defend','aggressive'].map(cmd=>{const [a,b]=commandLabel(cmd);return `<button data-expedition-command="${cmd}" ${expedition.resolved?'disabled':''}><b>${a}</b><small>${b}</small></button>`}).join('')}</div>
+      <div class="evo-command-bar">${['focus','interrupt','defend','aggressive'].map(cmd=>{const [a,b]=commandLabel(cmd);return `<button data-expedition-command="${cmd}" ${expedition.resolved?'disabled':''}><b>${a}</b><small>${b}</small></button>`}).join('')}<button class="evo-consumable-command" data-expedition-consumable ${expedition.resolved||!dungeonConsumable()?'disabled':''}><b>USE CONSUMABLE</b><small>${dungeonConsumable()?esc(dungeonConsumable().name):'No usable consumables in stock.'}</small></button></div>
       <div class="evo-expedition-log">${expedition.log.slice(-4).map(x=>esc(x)).join('<br>')}</div><div id="evoExpeditionResult"></div>
     </div><aside class="evo-party-status"><small>ACTIVE FIVE · PARTY ILVL ${partyIlvl()}</small>${party().map(c=>`<div class="evo-party-member"><span class="avatar">${esc(c.portrait)}</span><div><b>${esc(c.name)}</b><small>${esc(c.class)} · ${esc(c.spec)}</small></div><strong>${expeditionCondition(c.id)}% condition</strong></div>`).join('')}<div class="evo-expedition-log">Field knowledge: ${avgKnowledge(stage.knowledge)}%<br>Best-known approach projects roughly ${chancePreview}% stability.</div></aside></div></section>`;
   root.querySelector('[data-expedition-close]')?.addEventListener('click',()=>{expedition=null;renderExpedition()});
   root.querySelectorAll('[data-expedition-command]').forEach(b=>b.addEventListener('click',()=>resolveExpeditionStage(b.dataset.expeditionCommand)));
+  root.querySelector('[data-expedition-consumable]')?.addEventListener('click',useDungeonConsumable);
 }
 async function resolveExpeditionStage(command){
   if(!expedition||expedition.resolved)return;
   expedition.resolved=true;
   const stage=DUNGEON.stages[expedition.stage],chance=stageChance(stage,command),success=Math.random()*100<chance;
+  const usedBuff=expedition.buff?.stage===stage.id; if(usedBuff)expedition.buff=null;
   const result=$('#evoExpeditionResult');
   if(success){
     const dmg=command===stage.best?Math.floor(Math.random()*9)+4:Math.floor(Math.random()*14)+8;
@@ -433,7 +464,11 @@ async function commandWorldBoss(b,action,button){
   let note='';
   if(data.wiped){
     Game.applyPartyCellShock(25);await Game.persistState();
+    await db.rpc('leave_world_boss',{p_boss_id:b.id});
     note='The command failed under pressure. Your company was forced out and all five gain 25% Cell Shock.';
+    worldBackdrop().hidden=true;worldEncounterId=null;
+    window.CellboundSocial?.loadWorld?.();
+    return;
   }else{
     const right=data.action===data.recommended;
     note=`${right?'Tactical call executed cleanly.':'The party forces the action through.'} ${Number(data.damage||0).toLocaleString()} damage dealt.`;
