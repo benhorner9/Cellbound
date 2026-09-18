@@ -300,3 +300,9 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:1px solid 
 @media(max-width:720px){.evo-command-bar{grid-template-columns:1fr 1fr}.evo-chat-dock{z-index:145}.evo-history-list{grid-template-columns:1fr}}
 
 @media(max-width:1320px){.roster-command-bar{grid-template-columns:repeat(3,minmax(0,1fr))}.roster-company-summary{grid-column:1/-1}}
+
+/* Material art alignment */
+.evo-recipe-owned span{display:inline-flex;align-items:center;gap:5px}
+.evo-recipe-owned .material-art{flex:0 0 auto;width:24px!important;height:24px!important;border-radius:4px;box-shadow:none}
+.evo-recipe-owned .material-art img{display:block}
+.evo-recipe-art .gear-art{transform:scale(.9);transform-origin:center}
