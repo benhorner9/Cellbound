@@ -142,4 +142,54 @@ function battleAction(id,text,tone=''){
 }
 function battleLog(text,tone=''){
   if(!expeditionBattle)return;
-  const stamp=Math.max(0,expeditionBattle.elap
+  const stamp=Math.max(0,expeditionBattle.elapsed).toFixed(1).padStart(4,'0');
+  expeditionBattle.log.push({stamp,text,tone});expeditionBattle.log=expeditionBattle.log.slice(-8);
+  const box=battleDom()?.querySelector('#evo2dFeed');if(box)box.innerHTML=expeditionBattle.log.slice().reverse().map(x=>`<div data-tone="${x.tone}"><span>${x.stamp}s</span><b>${esc(x.text)}</b></div>`).join('');
+}
+function floatBattleText(id,text,tone=''){
+  const el=battleUnit(id),arena=battleDom()?.querySelector('.evo2d-arena');if(!el||!arena)return;
+  const f=document.createElement('span');f.className=`evo2d-float ${tone}`;f.textContent=text;
+  const er=el.getBoundingClientRect(),ar=arena.getBoundingClientRect();f.style.left=`${er.left-ar.left+er.width/2}px`;f.style.top=`${er.top-ar.top}px`;arena.appendChild(f);setTimeout(()=>f.remove(),1200);
+}
+function flashBattle(text,tone=''){
+  const arena=battleDom()?.querySelector('.evo2d-arena');if(!arena)return;
+  const f=document.createElement('div');f.className=`evo2d-flash ${tone}`;f.textContent=text;arena.appendChild(f);setTimeout(()=>f.remove(),1050);
+}
+function clearTelegraphs(kind=''){
+  const arena=battleDom()?.querySelector('.evo2d-arena');if(!arena)return;
+  arena.querySelectorAll(kind?`.evo2d-telegraph[data-kind="${kind}"]`:'.evo2d-telegraph').forEach(x=>x.remove());
+}
+function addCircleTelegraph(x,y,size=82,label=''){
+  const arena=battleDom()?.querySelector('.evo2d-arena');if(!arena)return;
+  const t=document.createElement('div');t.className='evo2d-telegraph evo2d-circle';t.dataset.kind='circle';t.style.left=`${x}%`;t.style.top=`${y}%`;t.style.width=`${size}px`;t.style.height=`${size}px`;if(label)t.innerHTML=`<span>${esc(label)}</span>`;arena.appendChild(t);
+}
+function addConeTelegraph(label=''){
+  const arena=battleDom()?.querySelector('.evo2d-arena'),boss=battleUnit('boss');if(!arena||!boss)return;
+  const t=document.createElement('div');t.className='evo2d-telegraph evo2d-cone';t.dataset.kind='cone';t.style.left=boss.style.left||'65%';t.style.top=boss.style.top||'50%';t.style.transform=`translateY(-50%) rotate(${expeditionBattle?.facing||180}deg)`;if(label)t.innerHTML=`<span>${esc(label)}</span>`;arena.appendChild(t);
+}
+function addLineTelegraph(label=''){
+  const arena=battleDom()?.querySelector('.evo2d-arena');if(!arena)return;
+  const t=document.createElement('div');t.className='evo2d-telegraph evo2d-line';t.dataset.kind='line';t.style.left='15%';t.style.top='46%';t.style.transform='rotate(-8deg)';if(label)t.innerHTML=`<span>${esc(label)}</span>`;arena.appendChild(t);
+}
+function startBattleCast(name,duration,interruptible=false,source='boss'){
+  if(!expeditionBattle)return;
+  expeditionBattle.cast={name,duration,start:expeditionBattle.elapsed,interruptible,source};
+  const box=battleDom()?.querySelector('#evo2dActionBox');if(box){box.hidden=false;box.dataset.interruptible=interruptible?'1':'0';box.querySelector('b').textContent=name;box.querySelector('small').textContent=interruptible?'INTERRUPTIBLE CAST':'ENEMY CAST';}
+  battleAction(source,name,interruptible?'warning':'');
+  battleLog(`${expeditionBattle.stage.title}: ${name} begins casting.`,interruptible?'warning':'');
+}
+function stopBattleCast(interrupted=false){
+  if(!expeditionBattle?.cast)return;
+  const name=expeditionBattle.cast.name;expeditionBattle.cast=null;
+  const box=battleDom()?.querySelector('#evo2dActionBox');if(box){box.hidden=true;box.dataset.interruptible='0'}
+  if(interrupted){flashBattle('INTERRUPTED','success');battleLog(`${name} interrupted.`,'success')}
+}
+function updateBattleCast(){
+  const cast=expeditionBattle?.cast,box=battleDom()?.querySelector('#evo2dActionBox');if(!cast||!box)return;
+  const pct=clamp(((expeditionBattle.elapsed-cast.start)/cast.duration)*100,0,100);
+  const fill=box.querySelector('i');if(fill)fill.style.width=`${pct}%`;
+  const left=box.querySelector('em');if(left)left.textContent=`${Math.max(0,cast.duration-(expeditionBattle.elapsed-cast.start)).toFixed(1)}s`;
+  if(pct>=100)stopBattleCast(false);
+}
+function spawnBattleAdds(){
+  if(!
