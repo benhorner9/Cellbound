@@ -5,3 +5,164 @@
 .trading-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px}.trading-side{display:grid;gap:16px;align-content:start}.trade-filters{display:flex;gap:5px}.trade-listings,.my-trade-listings{display:grid;gap:8px;padding:12px}.trade-card{display:grid;grid-template-columns:52px 1fr auto auto;gap:12px;align-items:center;padding:12px;border:1px solid rgba(255,255,255,.055);background:#081216}.trade-card .trade-art{width:52px;height:52px;display:grid;place-items:center;border:1px solid rgba(100,188,180,.12);background:#101b20;font-size:1.1rem}.trade-card h4{margin:0;font-family:Georgia,serif;font-size:.94rem;font-weight:500}.trade-card small{display:block;color:#60736f;font-size:.46rem;margin-top:3px}.trade-price{text-align:right}.trade-price b{display:block;font-family:Georgia,serif;color:#e3c16e}.trade-price small{color:#706f5c}.trade-card button{height:34px;padding:0 12px;border:1px solid rgba(91,203,191,.25);background:#123033;color:#c3f1ed;font-size:.5rem;font-weight:900;letter-spacing:.08em}.trade-card button[disabled]{opacity:.35}.trade-sell-form{display:grid;gap:11px;padding:14px}.trade-sell-form label{display:grid;gap:5px;color:#6c7e7a;font-size:.48rem;text-transform:uppercase;letter-spacing:.08em}.trade-sell-form select,.trade-sell-form input{height:38px;border:1px solid rgba(130,174,168,.12);background:#081216;color:#dce7e4;padding:0 10px}.trade-sell-form>button{height:40px;border:1px solid rgba(89,211,202,.34);background:#143638;color:#c8f4f0;font-size:.55rem;font-weight:900;letter-spacing:.1em}.trade-sell-form p{margin:0;color:#5e716d;font-size:.5rem;line-height:1.5}.market-empty{padding:30px;color:#60736f;text-align:center}
 @media(max-width:1050px){.profession-layout,.trading-layout{grid-template-columns:1fr}.profession-roster-panel{order:0}.trading-side{grid-template-columns:1fr 1fr}.reagent-grid,.crafted-inventory{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.profession-slot-grid,.profession-choices,.trading-side,.reagent-grid,.crafted-inventory{grid-template-columns:1fr}.trade-card{grid-template-columns:44px 1fr auto}.trade-card button{grid-column:1/-1}.trade-filters{overflow:auto}.trade-filters .filter{white-space:nowrap}}
+
+/* Trading Post listing preview */
+.trading-layout{grid-template-columns:minmax(0,1fr) 360px}
+.trade-sell-form{gap:10px}
+.trade-sell-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.trade-sell-preview{
+  min-height:116px;
+  border:1px solid rgba(216,185,118,.08);
+  background:linear-gradient(180deg,#0d181c,#071115);
+}
+.trade-preview-card{
+  position:relative;
+  display:grid;
+  grid-template-columns:86px minmax(0,1fr);
+  gap:11px;
+  align-items:center;
+  min-height:116px;
+  padding:11px;
+  overflow:hidden;
+}
+.trade-preview-card:before{
+  content:"";
+  position:absolute;
+  left:0;top:0;bottom:0;width:2px;
+  background:#817253
+}
+.trade-preview-gear:before{background:#b99b58}
+.trade-preview-material:before{background:#718f78}
+.trade-preview-art{
+  display:grid;
+  place-items:center;
+  width:82px;height:82px;
+  overflow:hidden;
+  border:1px solid rgba(216,185,118,.1);
+  border-radius:6px;
+  background:
+    radial-gradient(circle at 50% 38%,rgba(65,82,84,.38),transparent 58%),
+    #050c0f;
+  box-shadow:inset 0 0 20px rgba(0,0,0,.42)
+}
+.trade-preview-art .gear-art{transform:scale(.88);transform-origin:center}
+.trade-preview-art .material-art{width:76px!important;height:76px!important;box-shadow:none}
+.trade-preview-symbol{
+  display:grid;place-items:center;
+  width:100%;height:100%;
+  color:#d0bc80;
+  font-size:1.7rem
+}
+.trade-preview-copy{min-width:0;padding-right:42px}
+.trade-preview-copy>small{
+  display:block;
+  color:#897956;
+  font-size:.34rem;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase
+}
+.trade-preview-copy h4{
+  overflow:hidden;
+  margin:4px 0 4px;
+  color:#e8e1d1;
+  font-family:Georgia,serif;
+  font-size:.92rem;
+  font-weight:500;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.trade-preview-copy p{
+  margin:0;
+  color:#9aa8a3;
+  font-size:.43rem;
+  line-height:1.35
+}
+.trade-preview-copy em{
+  display:block;
+  overflow:hidden;
+  margin-top:4px;
+  color:#5e6d68;
+  font-size:.36rem;
+  font-style:normal;
+  line-height:1.35;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.trade-preview-owned{
+  position:absolute;
+  right:8px;top:8px;
+  text-align:right
+}
+.trade-preview-owned span{
+  display:block;
+  color:#56645f;
+  font-size:.27rem;
+  font-weight:900;
+  letter-spacing:.08em
+}
+.trade-preview-owned b{
+  display:block;
+  margin-top:2px;
+  color:#c9b477;
+  font-family:Georgia,serif;
+  font-size:.62rem;
+  font-weight:400
+}
+.trade-preview-empty{
+  display:grid;
+  place-items:center;
+  min-height:116px;
+  padding:18px;
+  color:#596b66;
+  font-size:.44rem;
+  text-align:center
+}
+.trade-sell-summary{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  border:1px solid rgba(255,255,255,.045);
+  background:#081216
+}
+.trade-sell-summary:empty{display:none}
+.trade-sell-summary>div{
+  min-width:0;
+  padding:8px 7px;
+  border-right:1px solid rgba(255,255,255,.035)
+}
+.trade-sell-summary>div:last-child{border-right:0}
+.trade-sell-summary span{
+  display:block;
+  color:#596965;
+  font-size:.29rem;
+  line-height:1.25;
+  text-transform:uppercase;
+  letter-spacing:.05em
+}
+.trade-sell-summary b{
+  display:block;
+  margin-top:3px;
+  color:#b7c0bc;
+  font-family:Georgia,serif;
+  font-size:.58rem;
+  font-weight:400
+}
+.trade-sell-summary .net{
+  background:rgba(119,99,48,.07)
+}
+.trade-sell-summary .net b{color:#dcc47e}
+.trade-art .material-art{
+  width:46px!important;
+  height:46px!important;
+  border-radius:5px;
+  box-shadow:none
+}
+@media(max-width:1050px){
+  .trading-layout{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+  .trade-sell-fields{grid-template-columns:1fr}
+  .trade-sell-summary{grid-template-columns:1fr}
+  .trade-sell-summary>div{border-right:0;border-bottom:1px solid rgba(255,255,255,.035)}
+  .trade-sell-summary>div:last-child{border-bottom:0}
+}
