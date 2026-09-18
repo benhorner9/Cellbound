@@ -132,3 +132,24 @@ linear-gradient(155deg,rgba(255,255,255,.012),transparent 28%,rgba(255,255,255,.
 .cb2d-ground-legend{position:absolute;z-index:8;right:10px;top:10px;display:flex;gap:6px;pointer-events:none}
 .cb2d-ground-legend span{padding:4px 6px;border:1px solid rgba(255,255,255,.05);background:rgba(5,9,10,.74);font-size:.34rem;font-weight:800;letter-spacing:.055em}
 .cb2d-ground-legend .danger{color:#d98572}.cb2d-ground-legend .spawn{color:#cab368}.cb2d-ground-legend .aggro{color:#c6ad70}
+
+/* Final presentation polish */
+.cb2d-unit>i{position:relative}
+.cb2d-unit>i:after{content:"";position:absolute;left:50%;top:50%;width:0;height:0;border-top:3px solid transparent;border-bottom:3px solid transparent;border-left:7px solid currentColor;transform:translate(9px,-50%) rotate(var(--face-angle,0deg));transform-origin:-9px 50%;opacity:.62;filter:brightness(1.2);transition:transform .18s ease}
+.cb2d-unit.enemy>i:after{opacity:.72}
+.cb2d-unit.focused:before{content:"";position:absolute;left:50%;top:-24px;width:8px;height:8px;border-top:2px solid #e0c979;border-right:2px solid #e0c979;transform:translateX(-50%) rotate(135deg);filter:drop-shadow(0 0 5px rgba(224,201,121,.45));animation:cb2dFocusBob .7s ease-in-out infinite alternate}
+.cb2d-unit.boss.focused:before,.cb2d-unit.big.focused:before{top:-30px}
+.cb2d-unit.hit>i{animation:cb2dHitReact .28s ease-out}
+.cb2d-unit.healed>i{animation:cb2dHealReact .32s ease-out}
+.cb2d-unit.dying>i{animation:cb2dDying .3s ease-in forwards}
+.cb2d-unit.dying>span,.cb2d-unit.dying .cb2d-unit-hp{opacity:.35;transition:opacity .2s ease}
+.cb2d-death-burst{position:absolute;z-index:18;width:18px;height:18px;border:2px solid rgba(233,198,105,.72);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;animation:cb2dDeathBurst .62s ease-out forwards}
+.cb2d-travel-banner{position:absolute;z-index:30;left:50%;top:50%;transform:translate(-50%,-50%);min-width:230px;padding:14px 18px;border:1px solid rgba(216,185,118,.16);background:rgba(7,12,14,.88);backdrop-filter:blur(8px);text-align:center;box-shadow:0 14px 45px rgba(0,0,0,.38);animation:cb2dTravelIn .75s ease both}
+.cb2d-travel-banner small{display:block;color:#8f7d5c;font-size:.38rem;font-weight:900;letter-spacing:.14em}
+.cb2d-travel-banner b{display:block;margin-top:4px;color:#ddd5bd;font-family:Georgia,serif;font-size:.82rem;font-weight:400}
+@keyframes cb2dFocusBob{from{transform:translate(-50%,0) rotate(135deg);opacity:.55}to{transform:translate(-50%,4px) rotate(135deg);opacity:1}}
+@keyframes cb2dHitReact{0%{filter:brightness(1);transform:scale(1)}35%{filter:brightness(2.2);transform:scale(.82)}100%{filter:brightness(1);transform:scale(1)}}
+@keyframes cb2dHealReact{0%{box-shadow:0 0 0 3px rgba(255,255,255,.04),0 0 18px currentColor}45%{box-shadow:0 0 0 8px rgba(105,217,155,.12),0 0 28px rgba(105,217,155,.65);filter:brightness(1.45)}100%{box-shadow:0 0 0 3px rgba(255,255,255,.04),0 0 18px currentColor}}
+@keyframes cb2dDying{0%{transform:scale(1);filter:brightness(1)}45%{transform:scale(1.25);filter:brightness(2)}100%{transform:scale(.45);filter:brightness(.7);opacity:.15}}
+@keyframes cb2dDeathBurst{0%{width:12px;height:12px;opacity:.9}100%{width:64px;height:64px;opacity:0}}
+@keyframes cb2dTravelIn{0%{opacity:0;transform:translate(-50%,-45%) scale(.96)}20%,75%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-55%) scale(.98)}}
