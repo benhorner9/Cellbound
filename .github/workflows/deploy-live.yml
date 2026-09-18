@@ -1,0 +1,54 @@
+name: Deploy Cellbound Live
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cellbound-live-deploy
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    name: Build and deploy via FTPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out Cellbound
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Cellbound
+        run: npm run build
+
+      - name: Verify deployment package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f dist/index.html
+          test -f dist/guild.html
+          test -f dist/auth.js
+          test -f dist/guild-v4.js
+          test -f dist/assets/gear/cellbound-gear-atlas.webp
+          ! grep -R --line-number -E 'href="/|src="/' dist/*.html
+
+      - name: Deploy Cellbound to shared hosting
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: ${{ secrets.FTP_PORT || 21 }}
+          server-dir: ./CB/
+          local-dir: ./dist/
+          log-level: standard
