@@ -250,6 +250,32 @@ function tdProfile(c){
   if(['Rogue','Warrior','Paladin'].includes(c.class))return'melee';
   return'ranged';
 }
+const ZELTIRA_ROOMS=[
+  {
+    id:'rootling-nest',room:'rootling-nest',label:'Rootling Nest',
+    ambience:'Wet roots twist through a shallow cave floor.',
+    props:[
+      ['root',8,24,-8,1.05],['root',10,76,7,.95],['mushroom',18,19,0,.9],['mushroom',20,82,0,.75],
+      ['fallen-log',83,20,-12,.9],['stone',86,78,8,.8],['nest',73,50,0,1]
+    ]
+  },
+  {
+    id:'collapsed-gallery',room:'collapsed-gallery',label:'Collapsed Gallery',
+    ambience:'Old Zeltiran stonework has been swallowed by the hollow.',
+    props:[
+      ['ruin-pillar',9,20,-7,.9],['ruin-pillar',10,80,8,.82],['root',18,13,16,.85],['root',20,88,-14,.8],
+      ['broken-wall',86,50,0,1],['mushroom',76,18,0,.7],['mushroom',78,82,0,.8],['puddle',60,78,0,.9]
+    ]
+  },
+  {
+    id:'hollow-warden',room:'warden-chamber',label:'Warden Chamber',
+    ambience:'A root-bound shrine waits beneath the oldest stone.',
+    props:[
+      ['shrine-ring',66,50,0,1.1],['shrine-stone',87,50,0,1],['root',10,22,-12,1],['root',10,78,12,1],
+      ['glow-fungus',80,18,0,.8],['glow-fungus',80,82,0,.8],['standing-stone',16,16,-8,.8],['standing-stone',16,84,8,.8]
+    ]
+  }
+];
 function unitMarkup(c,i){
   const r=tdRole(c),profile=tdProfile(c);
   const melee=state().roster.filter(x=>tdProfile(x)==='melee'),ranged=state().roster.filter(x=>tdProfile(x)==='ranged');
@@ -261,7 +287,7 @@ function unitMarkup(c,i){
   return '<div class="td-unit party '+r+' profile-'+profile+'" data-td-party="'+c.id+'" style="left:'+pos[0]+'%;top:'+pos[1]+'%"><i></i><span>'+esc(c.name)+'</span><em><b style="width:100%"></b></em></div>';
 }
 function renderDungeonRunning(){
-  const body='<div class="td-wrap"><div class="td-top"><div><small>ZELTIRA TRAINING DUNGEON</small><h2 id="tdEncounter">Entering the Hollows…</h2></div><b class="td-safe">TRAINING RUN · GUARANTEED CLEAR</b></div><div class="td-route"><span class="active" data-td-route="0">1 · Rootling Nest</span><span data-td-route="1">2 · Collapsed Gallery</span><span data-td-route="2">3 · Hollow Warden</span></div><div class="td-arena" id="tdArena"><div class="td-floor"></div><div id="tdEnemies"></div><div id="tdParty">'+state().roster.map(unitMarkup).join('')+'</div><div class="td-callout" id="tdCallout">Your party advances together.</div></div><div class="td-bottom"><div class="td-actions"><div><i class="on-role tank"></i><b>Tank</b><span id="tdTankAction">Taking point</span></div><div><i class="on-role healer"></i><b>Healer</b><span id="tdHealAction">Following</span></div><div><i class="on-role dps"></i><b>Damage</b><span id="tdDpsAction">Acquiring targets</span></div></div><div class="td-feed" id="tdFeed">Zeltira gate closes behind the party.</div></div></div>';
+  const body='<div class="td-wrap"><div class="td-top"><div><small>ZELTIRA TRAINING DUNGEON</small><h2 id="tdEncounter">Entering the Hollows…</h2></div><b class="td-safe">TRAINING RUN · GUARANTEED CLEAR</b></div><div class="td-route"><span class="active" data-td-route="0">1 · Rootling Nest</span><span data-td-route="1">2 · Collapsed Gallery</span><span data-td-route="2">3 · Hollow Warden</span></div><div class="td-arena theme-hollows room-rootling-nest" id="tdArena"><div class="td-floor"></div><div class="td-environment" id="tdEnvironment"></div><div class="td-room-tag" id="tdRoomTag"></div><div id="tdEnemies"></div><div id="tdParty">'+state().roster.map(unitMarkup).join('')+'</div><div class="td-callout" id="tdCallout">Your party advances together.</div></div><div class="td-bottom"><div class="td-actions"><div><i class="on-role tank"></i><b>Tank</b><span id="tdTankAction">Taking point</span></div><div><i class="on-role healer"></i><b>Healer</b><span id="tdHealAction">Following</span></div><div><i class="on-role dps"></i><b>Damage</b><span id="tdDpsAction">Acquiring targets</span></div></div><div class="td-feed" id="tdFeed">Zeltira gate closes behind the party.</div></div></div>';
   ensureRoot().innerHTML=chrome(body,'dungeon-running');
   const my=++tutorialToken;setTimeout(()=>runTutorialDungeon(my),350);
 }
@@ -324,6 +350,24 @@ function tdThreatLine(enemyIndex,tank){
   const old=arena.querySelector('[data-td-threat="'+enemyIndex+'"]');if(old)old.remove();
   const line=document.createElement('i'),dx=b.x-a.x,dy=b.y-a.y;
   line.className='td-threat-line';line.dataset.tdThreat=enemyIndex;line.style.left=a.x+'px';line.style.top=a.y+'px';line.style.width=Math.hypot(dx,dy)+'px';line.style.transform='rotate('+(Math.atan2(dy,dx)*180/Math.PI)+'deg)';arena.appendChild(line);setTimeout(()=>line.remove(),900)
+}
+
+function renderTdEnvironment(index){
+  const arena=$('#tdArena'),root=$('#tdEnvironment'),tag=$('#tdRoomTag'),cfg=ZELTIRA_ROOMS[index]||ZELTIRA_ROOMS[0];
+  if(!arena||!root)return;
+  arena.className='td-arena theme-hollows room-'+cfg.room+(index===2?' boss-room':'');
+  root.innerHTML='';
+  cfg.props.forEach((p,i)=>{
+    const e=document.createElement('span');e.className='td-prop prop-'+p[0];e.style.left=p[1]+'%';e.style.top=p[2]+'%';
+    e.style.setProperty('--rot',(p[3]||0)+'deg');e.style.setProperty('--scale',String(p[4]||1));e.dataset.prop=i;root.appendChild(e)
+  });
+  const ambience=document.createElement('div');ambience.className='td-ambience';
+  for(let i=0;i<11;i++){
+    const e=document.createElement('i');e.className='td-mote '+(i%4===0?'spore':'dust');e.style.setProperty('--x',(8+((i*19)%84))+'%');
+    e.style.setProperty('--delay',(-((i*.61)%5))+'s');e.style.setProperty('--dur',(4.4+(i%4)*.7)+'s');e.style.setProperty('--drift',(-14+(i%6)*6)+'px');ambience.appendChild(e)
+  }
+  root.appendChild(ambience);
+  if(tag)tag.innerHTML='<b>'+esc(cfg.label)+'</b><small>'+esc(cfg.ambience)+'</small>'
 }
 
 function spawnTdEnemies(names,boss){
@@ -483,7 +527,7 @@ async function runTutorialDungeon(my){
   for(let i=0;i<encounters.length;i++){
     if(my!==tutorialToken)return;
     $$('[data-td-route]').forEach((x,j)=>x.classList.toggle('active',j===i));
-    const e=encounters[i];$('#tdEncounter').textContent=e.name;$('#tdCallout').textContent=i===0?'The Tank moves first.':i===1?'Damage swaps to the priority target.':'The party commits everything to the boss.';
+    const e=encounters[i];renderTdEnvironment(i);$('#tdEncounter').textContent=e.name;$('#tdCallout').textContent=i===0?'The Tank moves first.':i===1?'Damage swaps to the priority target.':'The party commits everything to the boss.';
     tdFeed('Entering '+e.name+'.');await fightTdPack(e.mobs,e.boss,my);
   }
   if(my!==tutorialToken)return;
