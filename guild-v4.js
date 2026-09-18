@@ -10,7 +10,7 @@ const REMEMBER_KEY='cellbound-remember-device';
 const STORAGE='cellbound-management-reboot-v3';
 const PREVIOUS_STORAGE='cellbound-management-reboot-v2';
 const LOCAL_OWNER='cellbound-management-owner';
-const SAVE_VERSION=4;
+const SAVE_VERSION=5;
 const PVE_WIPE_CELL_SHOCK=25;
 const STANDARD_RECOVERY_MINUTES=60;
 const MEMBER_RECOVERY_MINUTES=30;
@@ -87,7 +87,14 @@ const starterRoster=starterDefs.map(([id,name,klass,spec,level,power,knowledge,p
   return {id,name,class:klass,spec,level,power,gear:0,talent:1,knowledge:{ashwarden:knowledge,embermaw:0,vaultheart:0},portrait,gearItems:ILVL_SLOTS.map(slot=>equipment[slot]?.name||'Empty'),equipment,talents:talentState(klass),cellShock:0,cellShockLockedUntil:null,professions:[null,null]};
 });
 function initialState(){
-  return {saveVersion:SAVE_VERSION,gearVersion:2,renown:120,gold:1840,socialDisplayName:'',roster:JSON.parse(JSON.stringify(starterRoster)),party:{tank:'r1',healer:'r2',dps:['r3','r4','r5']},bossKills:{ashwarden:false,embermaw:false,vaultheart:false},reports:[],bank:[],materials:{},consumables:[],recipeScrolls:[],discoveredRecipes:[],tradeInbox:[],collectionHistory:[],activity:['The guild charter has been signed.','Your first five adventurers are ready.','Tier 1 equipment issued to the active party.','The Ashen Vault is available.']};
+  return {
+    saveVersion:SAVE_VERSION,gearVersion:2,renown:0,gold:250,socialDisplayName:'',
+    roster:[],party:{tank:null,healer:null,dps:[null,null,null]},
+    bossKills:{ashwarden:false,embermaw:false,vaultheart:false},reports:[],bank:[],materials:{},
+    consumables:[],recipeScrolls:[],discoveredRecipes:[],tradeInbox:[],collectionHistory:[],
+    onboarding:{version:1,complete:false,stage:'party-builder',zone:'zeltira',startedAt:new Date().toISOString()},
+    activity:['A new charter awaits. Build your first party to begin.']
+  };
 }
 function entitlementFromAccount(a){
   const until=a?.membership_active_until?new Date(a.membership_active_until).getTime():0;
@@ -131,9 +138,12 @@ function currentBossProgressionUnlocked(boss){const i=bosses.findIndex(b=>b.id==
 
 function normalizeCharacter(c,index=0){
   c.id=c.id||`legacy-${index}-${Date.now()}`;c.class=c.class||'Warrior';c.spec=c.spec||Object.keys(classDef(c).specs)[0];c.level=Math.max(1,Number(c.level)||1);c.power=Math.max(1,Number(c.power)||1);
-  c.talents=c.talents||talentState(c.class);c.knowledge=c.knowledge||{ashwarden:0,embermaw:0,vaultheart:0};c.equipment=c.equipment||{};
-  const starters=starterEquipment(c.class);
-  ILVL_SLOTS.forEach(slot=>{const existing=canonicalItem(c.equipment?.[slot]);c.equipment[slot]=existing||starters[slot];});
+  c.race=c.race||'Veyren';c.raceTrait=c.raceTrait||'';c.talents=c.talents||talentState(c.class);c.knowledge=c.knowledge||{ashwarden:0,embermaw:0,vaultheart:0};c.equipment=c.equipment||{};
+  const starters=starterEquipment(c.class),keepBare=c.tutorialNew===true&&c.onboardingGearIssued!==true;
+  ILVL_SLOTS.forEach(slot=>{
+    const hasSlot=Object.prototype.hasOwnProperty.call(c.equipment,slot),existing=canonicalItem(c.equipment?.[slot]);
+    c.equipment[slot]=existing||(keepBare&&hasSlot?null:starters[slot]);
+  });
   ['Shoulders','Hands','Waist','Legs','Feet','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic'].forEach(slot=>{if(!(slot in c.equipment))c.equipment[slot]=null;});
   c.gearItems=ILVL_SLOTS.map(slot=>c.equipment[slot]?.name||'Empty');c.cellShock=Math.max(0,Math.min(100,Number(c.cellShock)||0));c.cellShockLockedUntil=c.cellShockLockedUntil||null;c.professions=Array.isArray(c.professions)?c.professions.slice(0,2):[null,null];while(c.professions.length<2)c.professions.push(null);
   c.gear=characterItemLevel(c);return c;
@@ -147,9 +157,15 @@ function removeInvalidPartyMembers(s){
   s.party.dps=Array.isArray(s.party?.dps)?s.party.dps.slice(0,3):[null,null,null];while(s.party.dps.length<3)s.party.dps.push(null);s.party.dps=s.party.dps.map(id=>allowed.has(id)?id:null);
 }
 function migrateState(raw){
-  const s=raw&&Array.isArray(raw.roster)&&raw.roster.length?raw:initialState();
-  s.saveVersion=SAVE_VERSION;s.gearVersion=2;s.renown=Number(s.renown)||0;s.gold=Number(s.gold)||0;s.socialDisplayName=typeof s.socialDisplayName==='string'?s.socialDisplayName:'';s.roster=s.roster.map(normalizeCharacter);s.bank=canonicalBank(s.bank);s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};s.consumables=Array.isArray(s.consumables)?s.consumables:[];s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];s.collectionHistory=Array.isArray(s.collectionHistory)?s.collectionHistory:[];s.reports=Array.isArray(s.reports)?s.reports:[];s.activity=Array.isArray(s.activity)?s.activity:[];s.bossKills=s.bossKills||{ashwarden:false,embermaw:false,vaultheart:false};s.party=s.party||{tank:null,healer:null,dps:[null,null,null]};
-  s.roster.forEach(c=>refreshRecovery(c));return s;
+  const validRaw=raw&&typeof raw==='object'&&(Array.isArray(raw.roster)||raw.__fresh_start===true||raw.onboarding);
+  const s=validRaw?raw:initialState();
+  const hadRoster=Array.isArray(s.roster)&&s.roster.length>0;
+  s.saveVersion=SAVE_VERSION;s.gearVersion=2;s.renown=Number(s.renown)||0;s.gold=Number(s.gold)||0;s.socialDisplayName=typeof s.socialDisplayName==='string'?s.socialDisplayName:'';
+  s.roster=Array.isArray(s.roster)?s.roster.map(normalizeCharacter):[];
+  s.bank=canonicalBank(s.bank);s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};s.consumables=Array.isArray(s.consumables)?s.consumables:[];s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];s.collectionHistory=Array.isArray(s.collectionHistory)?s.collectionHistory:[];s.reports=Array.isArray(s.reports)?s.reports:[];s.activity=Array.isArray(s.activity)?s.activity:[];s.bossKills=s.bossKills||{ashwarden:false,embermaw:false,vaultheart:false};s.party=s.party||{tank:null,healer:null,dps:[null,null,null]};
+  if(s.__fresh_start===true||!s.onboarding&&!hadRoster)s.onboarding={version:1,complete:false,stage:'party-builder',zone:'zeltira',startedAt:new Date().toISOString()};
+  else if(!s.onboarding&&hadRoster)s.onboarding={version:1,complete:true,stage:'complete',zone:'zeltira',legacy:true};
+  s.roster.forEach(c=>refreshRecovery(c));delete s.__fresh_start;return s;
 }
 function localCandidate(userId){
   const owner=localStorage.getItem(LOCAL_OWNER);
@@ -206,12 +222,12 @@ function renderTop(){
 function shockMarkup(c){const pct=Math.round(c.cellShock||0),locked=isUnavailable(c);return `<div class="cell-shock-row"><div><span>Cell Shock</span><b>${pct}%${locked?` · ${formatRemaining(c)}`:''}</b></div><div class="cell-shock-bar"><i style="width:${pct}%"></i></div></div>`;}
 function rosterCard(c,index){
   const role=roleOf(c),unlocked=isRosterSlotUnlocked(index),locked=isUnavailable(c),ilvl=characterItemLevel(c),status=!unlocked?'MEMBERSHIP SLOT':locked?'RECOVERING':'READY';
-  return `<article class="char-card ${!unlocked?'roster-locked':''} ${locked?'shock-locked':''}" data-role="${role}" style="--glow:${classDef(c).glow}"><div class="char-top"><div class="char-portrait">${c.portrait}</div><span class="role-tag role-${role}">${roleLabel(role)}</span></div><div class="character-status ${locked?'danger':''}">${status}${locked?` · ${formatRemaining(c)}`:''}</div><h3>${c.name}</h3><div class="class">${c.class} · ${c.spec} · Level ${c.level}</div><div class="char-stats"><div><span>Power</span><b>${c.power}</b></div><div><span>Item Level</span><b>${ilvl}</b></div><div><span>Points</span><b>${c.talent}</b></div></div>${shockMarkup(c)}<div class="knowledge-row"><div><span>Avg. Knowledge</span><b>${averageKnowledge(c)}%</b></div><div class="knowledge-bar"><i style="width:${averageKnowledge(c)}%"></i></div></div><button data-char="${c.id}" ${!unlocked?'disabled':''}>${unlocked?'VIEW CHARACTER':'MEMBERSHIP REQUIRED'}</button></article>`;
+  return `<article class="char-card ${!unlocked?'roster-locked':''} ${locked?'shock-locked':''}" data-role="${role}" style="--glow:${classDef(c).glow}"><div class="char-top"><div class="char-portrait">${c.portrait}</div><span class="role-tag role-${role}">${roleLabel(role)}</span></div><div class="character-status ${locked?'danger':''}">${status}${locked?` · ${formatRemaining(c)}`:''}</div><h3>${c.name}</h3><div class="class">${c.race||'Veyren'} · ${c.class} · ${c.spec} · Level ${c.level}</div><div class="char-stats"><div><span>Power</span><b>${c.power}</b></div><div><span>Item Level</span><b>${ilvl}</b></div><div><span>Points</span><b>${c.talent}</b></div></div>${shockMarkup(c)}<div class="knowledge-row"><div><span>Avg. Knowledge</span><b>${averageKnowledge(c)}%</b></div><div class="knowledge-bar"><i style="width:${averageKnowledge(c)}%"></i></div></div><button data-char="${c.id}" ${!unlocked?'disabled':''}>${unlocked?'VIEW CHARACTER':'MEMBERSHIP REQUIRED'}</button></article>`;
 }
 function renderRoster(filter='all'){if(!ui.rosterGrid)return;ui.rosterGrid.innerHTML=state.roster.filter(c=>filter==='all'||roleOf(c)===filter).map(c=>rosterCard(c,state.roster.indexOf(c))).join('');}
 $$('#roster .filter[data-filter]').forEach(b=>b.addEventListener('click',()=>{$$('#roster .filter[data-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderRoster(b.dataset.filter);}));
 function renderOverview(){
-  if(!ui.overviewRoster)return;const active=new Set(flatPartyIds());ui.overviewRoster.innerHTML=state.roster.slice(0,entitlements().rosterCap).map(c=>`<div class="mini-row ${isUnavailable(c)?'shock-mini':''}"><div class="avatar">${c.portrait}</div><div><b>${c.name}</b><small>${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}${active.has(c.id)?' · ACTIVE':''}</small></div><span class="role-tag role-${roleOf(c)}">${isUnavailable(c)?formatRemaining(c):roleLabel(roleOf(c))}</span></div>`).join('');if(ui.activityLog)ui.activityLog.innerHTML=state.activity.slice(-6).reverse().map((a,i)=>`<div class="activity-entry"><span>${i===0?'Latest':`${i} event${i>1?'s':''} ago`}</span><b>${a}</b></div>`).join('');
+  if(!ui.overviewRoster)return;const active=new Set(flatPartyIds());ui.overviewRoster.innerHTML=state.roster.slice(0,entitlements().rosterCap).map(c=>`<div class="mini-row ${isUnavailable(c)?'shock-mini':''}"><div class="avatar">${c.portrait}</div><div><b>${c.name}</b><small>${c.race||'Veyren'} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}${active.has(c.id)?' · ACTIVE':''}</small></div><span class="role-tag role-${roleOf(c)}">${isUnavailable(c)?formatRemaining(c):roleLabel(roleOf(c))}</span></div>`).join('');if(ui.activityLog)ui.activityLog.innerHTML=state.activity.slice(-6).reverse().map((a,i)=>`<div class="activity-entry"><span>${i===0?'Latest':`${i} event${i>1?'s':''} ago`}</span><b>${a}</b></div>`).join('');
 }
 function renderBosses(){
   const pi=partyItemLevel();
@@ -227,7 +243,7 @@ function renderBank(){
 }
 function openBankItem(id){
   const item=state.bank.find(x=>x.id===id);if(!item)return;const eligible=state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&canUseItem(c,item)&&!isUnavailable(c));
-  ui.bankDetail.innerHTML=`<div class="detail-hero gear-detail-hero"><div class="gear-detail-art">${G.artHTML(item,112)}</div><div><small>${tierText(item).toUpperCase()} · ${item.class.toUpperCase()} · ${item.slot.toUpperCase()}</small><h2>${item.name}</h2><p>Dropped by ${item.source||'Unknown source'}</p><p>Quantity in bank: ${item.quantity||1}</p></div></div><div class="bank-manage"><h3>Equip to an adventurer</h3><p>Equipment stays in the Guild Bank until you assign it.</p><div class="bank-character-list">${eligible.map(c=>`<button data-equip-char="${c.id}"><span class="avatar">${c.portrait}</span><span><b>${c.name}</b><small>${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}</small></span><em>${c.equipment?.[item.slot]?.name?`Replace ${c.equipment[item.slot].name}`:'Empty slot'}</em></button>`).join('')||'<p>No available characters can use this item.</p>'}</div></div>`;
+  ui.bankDetail.innerHTML=`<div class="detail-hero gear-detail-hero"><div class="gear-detail-art">${G.artHTML(item,112)}</div><div><small>${tierText(item).toUpperCase()} · ${item.class.toUpperCase()} · ${item.slot.toUpperCase()}</small><h2>${item.name}</h2><p>Dropped by ${item.source||'Unknown source'}</p><p>Quantity in bank: ${item.quantity||1}</p></div></div><div class="bank-manage"><h3>Equip to an adventurer</h3><p>Equipment stays in the Guild Bank until you assign it.</p><div class="bank-character-list">${eligible.map(c=>`<button data-equip-char="${c.id}"><span class="avatar">${c.portrait}</span><span><b>${c.name}</b><small>${c.race||'Veyren'} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}</small></span><em>${c.equipment?.[item.slot]?.name?`Replace ${c.equipment[item.slot].name}`:'Empty slot'}</em></button>`).join('')||'<p>No available characters can use this item.</p>'}</div></div>`;
   ui.bankModal.hidden=false;ui.bankDetail.querySelectorAll('[data-equip-char]').forEach(b=>b.addEventListener('click',()=>equipBankItem(id,b.dataset.equipChar)));
 }
 function addBankItem(raw,record=true){
@@ -284,7 +300,7 @@ function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(
 window.CellboundGame={
   ready:false,getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,
   characterItemLevel,partyItemLevel,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,
-  addBankItem,addMaterial,renderAll,switchView,
+  addBankItem,addMaterial,renderAll,switchView,starterEquipment,
   getPartyCharacters:()=>flatPartyIds().map(charById).filter(Boolean),
   applyPartyCellShock:(amount=PVE_WIPE_CELL_SHOCK)=>{flatPartyIds().map(charById).filter(Boolean).forEach(ch=>applyCellShock(ch,amount));save();renderAll();return flatPartyIds().map(charById).filter(Boolean).map(ch=>({id:ch.id,name:ch.name,cellShock:ch.cellShock}));}
 };
