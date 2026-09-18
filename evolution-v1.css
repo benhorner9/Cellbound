@@ -300,3 +300,74 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:1px solid 
 @media(max-width:720px){.evo-command-bar{grid-template-columns:1fr 1fr}.evo-chat-dock{z-index:145}.evo-history-list{grid-template-columns:1fr}}
 
 @media(max-width:1320px){.roster-command-bar{grid-template-columns:repeat(3,minmax(0,1fr))}.roster-company-summary{grid-column:1/-1}}
+
+/* 2D Dungeon Combat — live tactical encounter layer */
+.evo2d-expedition{width:min(1460px,98vw);max-height:96vh;overflow:auto}
+.evo2d-head{position:sticky;top:0;z-index:40}
+.evo2d-head-actions{display:flex;gap:7px;align-items:center}
+.evo2d-head-actions button{width:42px;height:36px;border:1px solid rgba(216,185,118,.16);background:#0b1418;color:#d8c58f;font-size:.62rem;font-weight:900}
+.evo2d-head-actions button:hover{background:#211d14;border-color:rgba(216,185,118,.34)}
+.evo2d-layout{display:grid;grid-template-columns:minmax(0,1fr) 330px;min-height:690px}
+.evo2d-combat-column{min-width:0;padding:18px;background:#071014}
+.evo2d-side{border-left:1px solid rgba(216,185,118,.09);background:linear-gradient(180deg,#091216,#071014);padding:16px;overflow:auto}
+.evo2d-boss-frame{display:grid;grid-template-columns:minmax(150px,.8fr) minmax(220px,1.5fr) 48px;gap:14px;align-items:center;margin-bottom:10px;padding:10px 12px;border:1px solid rgba(230,200,77,.13);background:linear-gradient(90deg,rgba(77,57,18,.24),rgba(11,21,24,.92))}
+.evo2d-boss-frame small{display:block;color:#a99564;font-size:.42rem;letter-spacing:.14em;font-weight:900}.evo2d-boss-frame b{display:block;margin-top:2px;font-family:Georgia,serif;font-size:.86rem;font-weight:500;color:#f0e6cf}
+.evo2d-boss-frame>strong{font-size:.56rem;color:#d9c373;text-align:right}
+.evo2d-boss-hp{height:10px;background:#171d1d;border:1px solid rgba(255,255,255,.04);overflow:hidden}.evo2d-boss-hp i{display:block;height:100%;background:linear-gradient(90deg,#8d6d18,#e6c84d);transition:width .35s ease}
+.evo2d-arena{position:relative;isolation:isolate;min-height:590px;overflow:hidden;border:1px solid rgba(216,185,118,.12);background:
+ radial-gradient(circle at 68% 50%,rgba(160,108,28,.075),transparent 23%),
+ radial-gradient(circle at 28% 50%,rgba(28,91,77,.08),transparent 25%),
+ linear-gradient(180deg,#10191a,#091315 68%,#071013);box-shadow:inset 0 0 80px #0008}
+.evo2d-grid{position:absolute;inset:0;z-index:0;opacity:.28;background-image:
+ linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),
+ linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:42px 42px}
+.evo2d-grid:after{content:"";position:absolute;inset:8%;border:1px solid rgba(216,185,118,.045);border-radius:50%;box-shadow:0 0 0 34px rgba(255,255,255,.006)}
+.evo2d-rune{position:absolute;z-index:0;color:rgba(216,185,118,.05);font-size:8rem;line-height:1;pointer-events:none}.evo2d-rune.rune-a{left:8%;top:10%;transform:rotate(28deg)}.evo2d-rune.rune-b{right:10%;bottom:8%;transform:rotate(-24deg)}
+.evo2d-arena.phase-two{background:
+ radial-gradient(circle at 65% 50%,rgba(113,71,164,.17),transparent 28%),
+ linear-gradient(180deg,#131720,#0a1118 70%,#071013)}
+.evo2d-units{position:absolute;inset:0;z-index:5;pointer-events:none}
+.evo2d-unit{--move-ms:650ms;position:absolute;width:112px;transform:translate(-50%,-50%);transition:left var(--move-ms) cubic-bezier(.22,.8,.32,1),top var(--move-ms) cubic-bezier(.22,.8,.32,1),opacity .25s ease;z-index:5;text-align:center}
+.evo2d-dot{position:relative;width:28px;height:28px;margin:0 auto;border-radius:50%;border:2px solid rgba(255,255,255,.72);box-shadow:0 0 0 4px rgba(255,255,255,.035),0 0 20px rgba(255,255,255,.12)}
+.evo2d-unit.role-tank .evo2d-dot{background:#e45353;box-shadow:0 0 0 4px rgba(228,83,83,.09),0 0 24px rgba(228,83,83,.22)}
+.evo2d-unit.role-healer .evo2d-dot{background:#4b9ff5;box-shadow:0 0 0 4px rgba(75,159,245,.09),0 0 24px rgba(75,159,245,.22)}
+.evo2d-unit.role-dps .evo2d-dot{background:#4dcc7a;box-shadow:0 0 0 4px rgba(77,204,122,.09),0 0 24px rgba(77,204,122,.22)}
+.evo2d-unit.enemy .evo2d-dot{background:#e6c84d;border-color:#fff1a5;box-shadow:0 0 0 4px rgba(230,200,77,.08),0 0 25px rgba(230,200,77,.24)}
+.evo2d-unit.enemy.trash .evo2d-dot{width:20px;height:20px;border-width:1px}
+.evo2d-unit.enemy.elite .evo2d-dot{width:38px;height:38px}
+.evo2d-unit.enemy.boss .evo2d-dot{width:58px;height:58px;border-width:3px}
+.evo2d-unit.enemy.final .evo2d-dot{width:72px;height:72px;border-width:3px;box-shadow:0 0 0 7px rgba(230,200,77,.07),0 0 44px rgba(230,200,77,.3)}
+.evo2d-unit.enemy.boss,.evo2d-unit.enemy.final{z-index:6}
+.evo2d-facing{position:absolute;left:50%;top:50%;width:26px;height:3px;background:#fff5bd;transform-origin:0 50%;transform:rotate(var(--facing,180deg));box-shadow:0 0 6px rgba(255,245,189,.6)}
+.evo2d-facing:after{content:"";position:absolute;right:-1px;top:-3px;border-left:6px solid #fff5bd;border-top:4px solid transparent;border-bottom:4px solid transparent}
+.evo2d-unit.party .evo2d-facing,.evo2d-unit.enemy.trash .evo2d-facing,.evo2d-unit.enemy.elite .evo2d-facing{display:none}
+.evo2d-unit-label{margin-top:6px;white-space:nowrap;text-shadow:0 1px 3px #000}.evo2d-unit-label b{display:block;overflow:hidden;text-overflow:ellipsis;font-size:.49rem;color:#e9eee9}.evo2d-unit-label small{display:block;margin-top:1px;font-size:.36rem;letter-spacing:.09em;color:#73817b}
+.evo2d-unit.enemy .evo2d-unit-label b{color:#e7d78f}.evo2d-unit.enemy.trash .evo2d-unit-label{margin-top:4px}
+.evo2d-unit-hp{width:58px;height:4px;margin:3px auto 0;background:#182124;overflow:hidden}.evo2d-unit-hp i{display:block;height:100%;background:#83b792;transition:width .25s ease}.evo2d-unit.enemy .evo2d-unit-hp i{background:#d8b94a}
+.evo2d-unit.critical .evo2d-unit-hp i{background:#c85f52}.evo2d-unit.dead{opacity:.26}.evo2d-unit.dead .evo2d-dot{filter:grayscale(1);transform:scale(.78)}
+.evo2d-unit-action{min-height:17px;margin-top:3px;padding:2px 4px;color:#b8c4be;font-size:.37rem;font-weight:900;letter-spacing:.04em;text-shadow:0 1px 2px #000}.evo2d-unit-action:empty{padding:0}.evo2d-unit-action[data-tone="tank"]{color:#ff8f87}.evo2d-unit-action[data-tone="heal"]{color:#78baff}.evo2d-unit-action[data-tone="dps"]{color:#75dc96}.evo2d-unit-action[data-tone="warning"]{color:#f0ce69}.evo2d-unit-action[data-tone="success"]{color:#8ae2a8}
+.evo2d-action-box{position:absolute;z-index:20;left:50%;top:18px;transform:translateX(-50%);width:min(360px,58%);padding:9px 11px;border:1px solid rgba(230,200,77,.22);background:rgba(7,13,15,.94);box-shadow:0 12px 32px #0008;backdrop-filter:blur(5px)}
+.evo2d-action-box[hidden]{display:none}.evo2d-action-box small{display:block;color:#a89055;font-size:.37rem;font-weight:900;letter-spacing:.14em}.evo2d-action-box>div{display:flex;justify-content:space-between;gap:10px;margin:4px 0}.evo2d-action-box b{font-size:.63rem}.evo2d-action-box em{font-style:normal;color:#d8c782;font-size:.54rem}
+.evo2d-action-box>span{display:block;height:5px;background:#1a2221;overflow:hidden}.evo2d-action-box>span i{display:block;height:100%;width:0;background:#d0a946;transition:width .06s linear}.evo2d-action-box[data-interruptible="1"]{border-color:rgba(217,103,76,.46);box-shadow:0 0 28px rgba(217,103,76,.12)}.evo2d-action-box[data-interruptible="1"]>span i{background:#d96d4f}
+.evo2d-telegraph{position:absolute;z-index:2;pointer-events:none}.evo2d-telegraph span{position:absolute;color:#ffcf93;font-size:.36rem;font-weight:900;letter-spacing:.06em;white-space:nowrap;text-shadow:0 1px 3px #000}
+.evo2d-circle{transform:translate(-50%,-50%);border-radius:50%;border:2px solid rgba(235,104,69,.78);background:radial-gradient(circle,rgba(220,83,50,.08) 0 47%,rgba(230,84,52,.22) 48% 100%);box-shadow:inset 0 0 25px rgba(230,84,52,.12),0 0 18px rgba(230,84,52,.12);animation:evo2d-pulse .72s ease-in-out infinite alternate}.evo2d-circle span{left:50%;top:50%;transform:translate(-50%,-50%)}
+.evo2d-cone{width:290px;height:220px;transform-origin:0 50%;clip-path:polygon(0 47%,100% 0,100% 100%,0 53%);background:linear-gradient(90deg,rgba(226,91,54,.35),rgba(226,91,54,.12));border-right:2px solid rgba(244,126,87,.65)}.evo2d-cone span{right:24px;top:50%;transform:translateY(-50%)}
+.evo2d-line{width:84%;height:58px;transform-origin:center;border-top:2px solid rgba(231,91,69,.72);border-bottom:2px solid rgba(231,91,69,.72);background:linear-gradient(180deg,rgba(217,71,53,.12),rgba(217,71,53,.28),rgba(217,71,53,.12));animation:evo2d-pulse .55s ease-in-out infinite alternate}.evo2d-line span{left:50%;top:50%;transform:translate(-50%,-50%)}
+@keyframes evo2d-pulse{from{opacity:.55}to{opacity:1}}
+.evo2d-flash{position:absolute;z-index:30;left:50%;top:50%;transform:translate(-50%,-50%);padding:12px 18px;border:1px solid rgba(216,185,118,.23);background:rgba(7,12,14,.9);font-family:Georgia,serif;font-size:1.15rem;letter-spacing:.06em;color:#e8d89f;box-shadow:0 16px 50px #000a;animation:evo2d-flash-out 1.05s ease forwards;pointer-events:none}.evo2d-flash.danger{color:#ff8a7a;border-color:rgba(224,91,70,.42)}.evo2d-flash.success{color:#8be2a8;border-color:rgba(105,205,137,.35)}.evo2d-flash.tank{color:#ff9b92}.evo2d-flash.phase{color:#c6a9ff;border-color:rgba(166,121,225,.38)}
+@keyframes evo2d-flash-out{0%{opacity:0;transform:translate(-50%,-48%) scale(.96)}18%,72%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-53%) scale(1.02)}}
+.evo2d-float{position:absolute;z-index:28;transform:translate(-50%,-20px);font-size:.47rem;font-weight:900;color:#efb09f;text-shadow:0 2px 4px #000;animation:evo2d-float 1.2s ease forwards;pointer-events:none}.evo2d-float.heal{color:#72baff}.evo2d-float.damage{color:#f39885}
+@keyframes evo2d-float{0%{opacity:0;transform:translate(-50%,-8px)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-42px)}}
+.evo2d-legend{position:absolute;z-index:12;left:12px;bottom:10px;display:flex;gap:8px;flex-wrap:wrap;padding:6px 8px;background:rgba(5,11,13,.75);border:1px solid rgba(255,255,255,.04);font-size:.39rem}.evo2d-legend .tank{color:#e45353}.evo2d-legend .healer{color:#4b9ff5}.evo2d-legend .dps{color:#4dcc7a}.evo2d-legend .enemy{color:#e6c84d}
+.evo2d-stage-result{position:absolute;z-index:24;right:12px;bottom:10px;max-width:310px;padding:9px 11px;border:1px solid rgba(255,255,255,.08);background:rgba(6,12,14,.9);box-shadow:0 12px 28px #0008}.evo2d-stage-result[hidden]{display:none}.evo2d-stage-result b{display:block;font-size:.5rem}.evo2d-stage-result span{display:block;margin-top:2px;color:#76847e;font-size:.42rem}.evo2d-stage-result[data-tone="success"] b{color:#78d99a}.evo2d-stage-result[data-tone="danger"] b{color:#e47a68}
+.evo2d-mechanic-note{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 12px;margin-top:10px;padding:11px 13px;border:1px solid rgba(216,185,118,.075);background:#0a1417}.evo2d-mechanic-note small{grid-row:1/3;color:#ad9968;font-size:.39rem;font-weight:900;letter-spacing:.12em;padding-top:2px}.evo2d-mechanic-note b{font-size:.52rem;color:#cbd1cd}.evo2d-mechanic-note span{font-size:.43rem;color:#63716c}
+.evo2d-side-title,.evo2d-feed-head{padding-bottom:8px;border-bottom:1px solid rgba(216,185,118,.065)}.evo2d-side-title small,.evo2d-feed-head small{display:block;color:#9e8b61;font-size:.38rem;letter-spacing:.13em;font-weight:900}.evo2d-side-title b,.evo2d-feed-head b{display:block;margin-top:3px;font-family:Georgia,serif;font-size:.85rem;font-weight:500}
+#evo2dPartyFrames{display:grid;gap:5px;margin:9px 0 17px}
+.evo2d-party-frame{display:grid;grid-template-columns:9px minmax(0,1fr) 35px;gap:8px;align-items:center;padding:8px;border:1px solid rgba(255,255,255,.045);background:#081115}.evo2d-role-pip{width:7px;height:28px;background:#777}.evo2d-party-frame.role-tank .evo2d-role-pip{background:#e45353}.evo2d-party-frame.role-healer .evo2d-role-pip{background:#4b9ff5}.evo2d-party-frame.role-dps .evo2d-role-pip{background:#4dcc7a}.evo2d-party-frame b{display:block;font-size:.53rem}.evo2d-party-frame small{display:block;margin-top:1px;color:#61706a;font-size:.37rem}.evo2d-party-frame strong{font-size:.43rem;text-align:right;color:#a9b3ae}
+.evo2d-frame-hp{height:4px;margin-top:5px;background:#182124}.evo2d-frame-hp i{display:block;height:100%;background:#7eb78e;transition:width .25s}.evo2d-party-frame.role-tank .evo2d-frame-hp i{background:#d85a55}.evo2d-party-frame.role-healer .evo2d-frame-hp i{background:#4b9ff5}.evo2d-party-frame.role-dps .evo2d-frame-hp i{background:#4dcc7a}
+.evo2d-feed-head{margin-top:5px}.evo2d-feed{height:190px;overflow:auto;padding:5px 0}.evo2d-feed>div{display:grid;grid-template-columns:38px minmax(0,1fr);gap:6px;padding:5px 4px;border-bottom:1px solid rgba(255,255,255,.028)}.evo2d-feed span{color:#586862;font-size:.36rem;font-variant-numeric:tabular-nums}.evo2d-feed b{font-size:.43rem;font-weight:600;line-height:1.35;color:#9fa9a4}.evo2d-feed [data-tone="tank"] b{color:#e9968f}.evo2d-feed [data-tone="heal"] b{color:#75b6f5}.evo2d-feed [data-tone="dps"] b{color:#72d894}.evo2d-feed [data-tone="warning"] b{color:#dfc06c}.evo2d-feed [data-tone="danger"] b{color:#df7464}.evo2d-feed [data-tone="success"] b{color:#78d99a}.evo2d-feed [data-tone="phase"] b{color:#bfa2ee}
+.evo2d-intel{margin-top:10px;padding:10px;border:1px solid rgba(216,185,118,.075);background:#0a1416}.evo2d-intel span{color:#697772;font-size:.4rem}.evo2d-intel b{float:right;color:#d0ba79;font-size:.51rem}.evo2d-intel small{display:block;clear:both;margin-top:7px;color:#6c7a75;font-size:.42rem;line-height:1.45}
+.evo2d-result{margin-top:12px}.evo2d-result.success{border-color:rgba(112,201,143,.16);background:#0c1712}.evo2d-result.danger{border-color:rgba(200,100,83,.18);background:#17100f}
+@media(max-width:1100px){.evo2d-layout{grid-template-columns:1fr}.evo2d-side{border-left:0;border-top:1px solid rgba(216,185,118,.09)}.evo2d-arena{min-height:560px}.evo2d-feed{height:150px}}
+@media(max-width:720px){.evo2d-expedition{max-height:98vh}.evo2d-combat-column{padding:8px}.evo2d-arena{min-height:500px}.evo2d-boss-frame{grid-template-columns:1fr 40px}.evo2d-boss-frame>div:first-child{grid-column:1/-1}.evo2d-action-box{width:72%;top:10px}.evo2d-unit{width:86px}.evo2d-unit-label b{font-size:.42rem}.evo2d-unit-label small{font-size:.31rem}.evo2d-unit.enemy.boss .evo2d-dot{width:50px;height:50px}.evo2d-unit.enemy.final .evo2d-dot{width:60px;height:60px}.evo2d-cone{width:220px;height:170px}.evo2d-mechanic-note{grid-template-columns:1fr}.evo2d-mechanic-note small{grid-row:auto}.evo2d-stage-result{left:10px;right:10px;max-width:none;bottom:44px}}
+@media(max-width:480px){.evo2d-arena{min-height:460px}.evo2d-legend{gap:5px;font-size:.34rem}.evo2d-head h2{font-size:1.25rem}.evo2d-head-actions button{width:35px}.evo2d-action-box{width:82%}.evo2d-unit{width:74px}.evo2d-unit-label b{font-size:.38rem}.evo2d-unit-hp{width:44px}.evo2d-cone{width:180px;height:140px}}
