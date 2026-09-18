@@ -60,4 +60,86 @@ function battleMechanicNames(stage){
     'vault-depths':{cone:'Guardian Cleave',ground:'Soul Snare',cast:'Bind Essence',adds:'Ash Guardians',tank:'Soul Crush'},
     vaultheart:{cone:'Core Beam',ground:'Cell Fracture',cast:'Heartflare',adds:'Cellspawn',tank:'Core Impact'}
   };
-  return map[stage.id]||{cone:'Fronta
+  return map[stage.id]||{cone:'Frontal Assault',ground:'Danger Zone',cast:'Lethal Cast',adds:'Reinforcements',tank:'Heavy Strike'};
+}
+function battleTimeline(stage,success){
+  const boss=stage.kind==='boss'||stage.kind==='final';
+  if(!boss){
+    return[
+      {at:.25,type:'engage'},
+      {at:1.1,type:'partyAttack'},
+      {at:2.0,type:'packGather'},
+      {at:3.0,type:'heal'},
+      {at:4.0,type:'groundStart'},
+      {at:5.4,type:'groundResolve',fail:!success},
+      {at:6.1,type:'enemyCast'},
+      {at:7.5,type:'interrupt',fail:!success},
+      {at:8.4,type:'partyBurst'},
+      {at:10.2,type:'packFinish',fail:!success},
+      {at:11.2,type:'finish'}
+    ];
+  }
+  const tl=[
+    {at:.25,type:'engage'},
+    {at:1.1,type:'partyAttack'},
+    {at:2.2,type:'tankBuster'},
+    {at:3.4,type:'heal'},
+    {at:4.6,type:'coneStart'},
+    {at:6.8,type:'coneResolve',fail:!success&&stage.id==='kael'},
+    {at:7.5,type:'partyAttack'},
+    {at:8.7,type:'groundStart'},
+    {at:10.5,type:'groundResolve',fail:!success&&stage.id!=='kael'},
+    {at:11.3,type:'addsSpawn'},
+    {at:12.4,type:'addsGather'},
+    {at:13.7,type:'addsBurn'},
+    {at:14.6,type:'enemyCast'},
+    {at:16.4,type:'interrupt',fail:!success},
+    {at:17.2,type:'phase'},
+    {at:18.1,type:'partyBurst'},
+    {at:20.1,type:'tankBuster',late:true},
+    {at:21.0,type:'heal'},
+    {at:22.0,type:'finalBurn',fail:!success},
+    {at:23.5,type:'finish'}
+  ];
+  if(stage.kind==='final')tl.splice(11,0,{at:13.1,type:'lineStart'},{at:14.1,type:'lineResolve',fail:!success});
+  return tl.sort((a,b)=>a.at-b.at);
+}
+function battleDom(){return expeditionBattle?.root||null}
+function battleUnit(id){return battleDom()?.querySelector(`[data-battle-unit="${id}"]`)}
+function battlePartyUnit(charId){return battleUnit(`party-${charId}`)}
+function setBattlePos(id,x,y,ms=650){
+  const el=battleUnit(id);if(!el)return;
+  el.style.setProperty('--move-ms',`${ms}ms`);el.style.left=`${x}%`;el.style.top=`${y}%`;
+}
+function setBattleFacing(deg){
+  const boss=battleUnit('boss');if(boss)boss.style.setProperty('--facing',`${deg}deg`);
+  if(expeditionBattle)expeditionBattle.facing=deg;
+}
+function setBattleHp(id,hp){
+  if(!expeditionBattle)return;
+  const unit=expeditionBattle.units.find(x=>x.id===id);if(unit)unit.hp=clamp(hp,0,100);
+  const el=battleUnit(id);if(el){const bar=el.querySelector('.evo2d-unit-hp i');if(bar)bar.style.width=`${clamp(hp,0,100)}%`;el.classList.toggle('critical',hp<=25);el.classList.toggle('dead',hp<=0)}
+  const frame=battleDom()?.querySelector(`[data-frame="${id}"]`);if(frame){const bar=frame.querySelector('i');if(bar)bar.style.width=`${clamp(hp,0,100)}%`;const n=frame.querySelector('strong');if(n)n.textContent=`${Math.max(0,Math.round(hp))}%`}
+}
+function damageBattle(id,amount,label=''){
+  const unit=expeditionBattle?.units.find(x=>x.id===id);if(!unit)return;
+  setBattleHp(id,unit.hp-amount);floatBattleText(id,`-${Math.round(amount)}${label?` · ${label}`:''}`,'damage');
+}
+function healBattle(id,amount,label=''){
+  const unit=expeditionBattle?.units.find(x=>x.id===id);if(!unit)return;
+  setBattleHp(id,Math.min(100,unit.hp+amount));floatBattleText(id,`+${Math.round(amount)}${label?` · ${label}`:''}`,'heal');
+}
+function setBossHp(hp){
+  if(!expeditionBattle)return;
+  expeditionBattle.bossHp=clamp(hp,0,100);
+  setBattleHp('boss',expeditionBattle.bossHp);
+  const top=battleDom()?.querySelector('#evo2dBossHp');if(top)top.style.width=`${expeditionBattle.bossHp}%`;
+  const txt=battleDom()?.querySelector('#evo2dBossHpText');if(txt)txt.textContent=`${Math.round(expeditionBattle.bossHp)}%`;
+}
+function battleAction(id,text,tone=''){
+  const el=battleUnit(id);if(!el)return;const chip=el.querySelector('.evo2d-unit-action');if(!chip)return;
+  chip.textContent=text;chip.dataset.tone=tone;clearTimeout(el._actionTimer);el._actionTimer=setTimeout(()=>{chip.textContent='';chip.dataset.tone=''},1600/Math.max(1,expeditionBattle?.speed||1));
+}
+function battleLog(text,tone=''){
+  if(!expeditionBattle)return;
+  const stamp=Math.max(0,expeditionBattle.elap
