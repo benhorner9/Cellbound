@@ -336,7 +336,14 @@ function changeSpec(spec){
   writeState(state);renderSheet();
 }
 function openCharacter(id){currentId=id;currentTab='overview';activeSlot=null;selectedTalentId=null;selectedTalentSpec=null;selectedTreeSpec=null;renderSheet()}
-function closeCharacter(){modal.hidden=true;if(dirty)location.reload()}
+function closeCharacter(){
+  modal.hidden=true;activeSlot=null;
+  const game=window.CellboundGame,next=dirty?readState():null;
+  if(dirty&&next&&game?.replaceState){game.replaceState(next);dirty=false}
+  else if(dirty){game?.renderAll?.();dirty=false}
+  if(game?.switchView)game.switchView('roster');
+  else document.querySelector('[data-view="roster"]')?.click()
+}
 
 document.addEventListener('click',event=>{
   const charBtn=event.target.closest('[data-char]');
