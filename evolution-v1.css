@@ -306,3 +306,363 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:1px solid 
 .evo-recipe-owned .material-art{flex:0 0 auto;width:24px!important;height:24px!important;border-radius:4px;box-shadow:none}
 .evo-recipe-owned .material-art img{display:block}
 .evo-recipe-art .gear-art{transform:scale(.9);transform-origin:center}
+
+
+/* ========================================================================
+   Roster + Bank UI refinement
+   ======================================================================== */
+
+/* Shared command bars */
+#roster .roster-command-bar,
+#bank .bank-command-bar{
+  border-color:rgba(216,185,118,.085);
+  background:linear-gradient(180deg,rgba(12,22,26,.94),rgba(8,15,18,.96));
+  box-shadow:none;
+}
+#roster .ui-search,#roster .ui-select,
+#bank .ui-search,#bank .ui-select{
+  height:36px;
+  border-color:rgba(216,185,118,.09);
+  background:#081216;
+  font-size:.54rem;
+}
+#roster .ui-search:focus-within,#roster .ui-select:focus,
+#bank .ui-search:focus-within,#bank .ui-select:focus{
+  border-color:rgba(216,185,118,.28);
+}
+#roster .roster-command-bar{
+  grid-template-columns:168px minmax(205px,1.35fr) repeat(4,minmax(112px,.72fr));
+  gap:6px;
+  padding:8px;
+  margin-bottom:12px;
+}
+#roster .roster-company-summary{padding:0 8px}
+#roster .roster-company-summary span{font-size:.4rem}
+#roster .roster-company-summary b{font-size:.72rem;margin-top:2px}
+#roster .roster-company-summary small{font-size:.42rem;margin-top:1px}
+#bank .bank-command-bar{
+  grid-template-columns:minmax(220px,1.5fr) repeat(5,minmax(105px,.72fr));
+  gap:6px;
+  padding:8px;
+  margin-bottom:12px;
+}
+
+/* Roster: deliberately sized management cards rather than tall portrait panels */
+#roster .roster-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  align-items:start;
+}
+#roster .char-card{
+  min-height:0;
+  padding:0;
+  overflow:hidden;
+  border-color:rgba(198,179,128,.095);
+  background:
+    linear-gradient(180deg,rgba(16,29,34,.98),rgba(8,16,20,.99));
+  box-shadow:0 12px 28px rgba(0,0,0,.24);
+}
+#roster .char-card:hover{
+  transform:translateY(-2px);
+  border-color:rgba(216,185,118,.27);
+  box-shadow:0 17px 36px rgba(0,0,0,.31);
+}
+#roster .char-card:before{
+  width:125px;
+  height:125px;
+  right:-25px;
+  top:-38px;
+  opacity:.18;
+}
+#roster .char-card .char-top{
+  min-height:76px;
+  padding:12px 13px 9px;
+  align-items:flex-start;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.012),transparent),
+    radial-gradient(circle at 82% 5%,var(--glow),transparent 43%);
+  border-bottom:1px solid rgba(255,255,255,.035);
+}
+#roster .char-card[data-active-party="1"] .char-top{padding-top:23px}
+#roster .char-card .char-portrait{
+  width:50px;
+  height:50px;
+  font-size:1rem;
+  border-color:rgba(216,185,118,.16);
+  background:#081115;
+  box-shadow:inset 0 0 18px rgba(0,0,0,.7);
+}
+#roster .char-card .role-tag{
+  margin-left:auto;
+  padding:4px 6px;
+  background:rgba(7,14,17,.48);
+  font-size:.38rem;
+}
+#roster .char-card[data-active-party="1"]:after{
+  left:0;
+  top:0;
+  padding:4px 8px;
+  font-size:.36rem;
+  letter-spacing:.1em;
+  background:#cdb16f;
+}
+#roster .char-card>.character-status,
+#roster .char-card>h3,
+#roster .char-card>.class,
+#roster .char-card>.char-stats,
+#roster .char-card>.cell-shock-row,
+#roster .char-card>.knowledge-row,
+#roster .char-card>button{
+  margin-left:13px;
+  margin-right:13px;
+}
+#roster .char-card>.character-status{
+  min-height:19px;
+  margin-top:9px;
+  margin-bottom:0;
+  padding:0 6px;
+  font-size:.36rem;
+}
+#roster .char-card>h3{
+  margin-top:6px;
+  margin-bottom:1px;
+  font-size:1.08rem;
+  line-height:1.1;
+}
+#roster .char-card>.class{
+  font-size:.5rem;
+  line-height:1.35;
+}
+#roster .char-card>.char-stats{
+  margin-top:10px;
+  padding:8px 0;
+  border-top:1px solid rgba(255,255,255,.04);
+  border-bottom:1px solid rgba(255,255,255,.04);
+}
+#roster .char-card>.char-stats div{
+  padding:0 8px 0 0;
+  border-right:1px solid rgba(255,255,255,.035);
+}
+#roster .char-card>.char-stats div:last-child{border-right:0}
+#roster .char-card>.char-stats span{font-size:.36rem}
+#roster .char-card>.char-stats b{font-size:.64rem;margin-top:2px}
+#roster .char-card>.cell-shock-row,
+#roster .char-card>.knowledge-row{margin-top:8px}
+#roster .char-card .cell-shock-row span,
+#roster .char-card .knowledge-row span{font-size:.39rem}
+#roster .char-card .cell-shock-row b,
+#roster .char-card .knowledge-row b{font-size:.42rem}
+#roster .char-card .cell-shock-bar,
+#roster .char-card .knowledge-bar{height:3px;margin-top:4px}
+#roster .evo-roster-footer{
+  grid-template-columns:1fr 1fr;
+  gap:0;
+  margin:9px 13px 0;
+  border-top:1px solid rgba(255,255,255,.04);
+  border-bottom:1px solid rgba(255,255,255,.04);
+}
+#roster .evo-roster-footer>div{
+  min-width:0;
+  padding:7px 8px 7px 0;
+  border:0;
+  background:transparent;
+}
+#roster .evo-roster-footer>div+div{
+  padding-left:9px;
+  border-left:1px solid rgba(255,255,255,.04);
+}
+#roster .evo-roster-footer span{font-size:.34rem}
+#roster .evo-roster-footer b{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:.43rem;
+  margin-top:2px;
+}
+#roster .char-card>button{
+  position:static;
+  display:block;
+  width:calc(100% - 26px);
+  height:31px;
+  margin-top:9px;
+  margin-bottom:12px;
+  border-color:rgba(216,185,118,.14);
+  background:rgba(31,29,22,.58);
+  color:#c9b985;
+  font-size:.42rem;
+}
+#roster .char-card>button:hover{
+  background:#272319;
+  border-color:rgba(216,185,118,.3);
+}
+#roster .char-card[data-status="recovering"]{
+  background:linear-gradient(180deg,rgba(35,23,22,.98),rgba(14,15,18,.99));
+}
+
+/* Bank: artwork first, controls second */
+#bank .section-intro{margin-bottom:14px}
+#bank .bank-upgrade-legend{
+  padding:6px 9px;
+  background:#0f1514;
+  font-size:.37rem;
+}
+#bank .bank-summary{
+  gap:7px;
+  margin-bottom:8px;
+}
+#bank .bank-summary>div{
+  padding:11px 13px;
+  background:linear-gradient(180deg,#0f191d,#091216);
+}
+#bank .bank-summary span{font-size:.4rem}
+#bank .bank-summary b{margin-top:2px;font-size:1.05rem}
+#bank .bank-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:11px;
+  align-items:start;
+}
+#bank .bank-item,
+#bank .gear-bank-item,
+#bank .evo-bank-resource{
+  position:relative;
+  display:grid;
+  grid-template-columns:68px minmax(0,1fr);
+  grid-template-rows:minmax(68px,auto) 29px;
+  column-gap:11px;
+  row-gap:7px;
+  min-height:116px;
+  padding:11px!important;
+  border-color:rgba(198,179,128,.09);
+  background:linear-gradient(180deg,#0f1a1e,#081216);
+  box-shadow:0 10px 25px rgba(0,0,0,.2);
+}
+#bank .bank-item:hover{
+  border-color:rgba(216,185,118,.24);
+  background:linear-gradient(180deg,#111e22,#091418);
+}
+#bank .bank-icon,
+#bank .gear-bank-item .gear-bank-icon,
+#bank .evo-bank-resource .gear-bank-icon{
+  position:static!important;
+  left:auto!important;
+  top:auto!important;
+  grid-column:1;
+  grid-row:1;
+  width:68px!important;
+  height:68px!important;
+  padding:4px!important;
+  align-self:start;
+  border-radius:6px;
+  background:#060d10;
+}
+#bank .gear-bank-item .gear-bank-icon .gear-art{
+  transform:scale(.83);
+}
+#bank .evo-bank-resource .material-art{
+  width:58px!important;
+  height:58px!important;
+}
+#bank .bank-copy{
+  grid-column:2;
+  grid-row:1;
+  min-width:0;
+  align-self:center;
+  padding-right:2px;
+}
+#bank .bank-copy small{
+  display:block;
+  padding-right:74px;
+  color:#8b7d5d;
+  font-size:.35rem;
+  line-height:1.25;
+  letter-spacing:.075em;
+}
+#bank .bank-copy h3{
+  overflow:hidden;
+  margin:4px 0 3px;
+  color:#ebe5d9;
+  font-size:.89rem;
+  line-height:1.1;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+#bank .bank-copy p{
+  overflow:hidden;
+  margin:0;
+  color:#61716b;
+  font-size:.43rem;
+  line-height:1.25;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+#bank .bank-qty{
+  right:9px;
+  top:9px;
+  color:#9ca9a5;
+  font-size:.48rem;
+}
+#bank .gear-bank-item .bank-qty{top:31px;color:#64726e}
+#bank .bank-upgrade-chip{
+  top:8px;
+  right:8px;
+  max-width:104px;
+  padding:3px 5px;
+  font-size:.32rem;
+  line-height:1.15;
+  letter-spacing:.06em;
+  text-align:center;
+}
+#bank .bank-item>button,
+#bank .gear-bank-item>button,
+#bank .evo-bank-resource>button{
+  position:static;
+  grid-column:2;
+  grid-row:2;
+  width:100%;
+  height:29px;
+  margin:0;
+  align-self:end;
+  border-color:rgba(216,185,118,.12);
+  background:rgba(29,27,21,.6);
+  color:#c4b484;
+  font-size:.39rem;
+}
+#bank .bank-item>button:hover{
+  background:#272319;
+  border-color:rgba(216,185,118,.28);
+}
+#bank .gear-bank-item.tier-2{background:linear-gradient(135deg,#0b1a13,#081216 58%)}
+#bank .gear-bank-item.tier-3{background:linear-gradient(135deg,#0a1622,#081216 58%)}
+
+/* Admin is a page, never a footer underneath normal views */
+#admin.admin-view:not(.active){display:none!important}
+
+/* Responsive layout */
+@media(max-width:1320px){
+  #roster .roster-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #roster .roster-command-bar{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #roster .roster-company-summary{grid-column:1/-1}
+  #roster .roster-command-bar .ui-search{grid-column:span 2}
+  #bank .bank-command-bar{grid-template-columns:repeat(3,minmax(0,1fr))}
+  #bank .bank-command-bar .ui-search{grid-column:1/-1}
+  #bank .bank-command-bar .ui-select:nth-of-type(4),
+  #bank .bank-command-bar .ui-select:nth-of-type(5){display:block}
+}
+@media(min-width:1321px){
+  #roster .roster-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:900px){
+  #roster .roster-grid,#bank .bank-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #roster .roster-command-bar{grid-template-columns:1fr 1fr}
+  #roster .roster-company-summary,#roster .roster-command-bar .ui-search{grid-column:1/-1}
+}
+@media(max-width:720px){
+  #roster .roster-grid,#bank .bank-grid{grid-template-columns:1fr}
+  #roster .roster-command-bar,#bank .bank-command-bar{grid-template-columns:1fr 1fr}
+  #roster .roster-command-bar .ui-search,#bank .bank-command-bar .ui-search{grid-column:1/-1}
+  #roster .char-card[data-active-party="1"] .char-top{padding-top:23px}
+}
+@media(max-width:480px){
+  #roster .roster-command-bar,#bank .bank-command-bar{grid-template-columns:1fr}
+  #roster .roster-company-summary,#roster .roster-command-bar .ui-search,#bank .bank-command-bar .ui-search{grid-column:auto}
+}
