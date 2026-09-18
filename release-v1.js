@@ -36,6 +36,7 @@ function playerBusy(){
   const worldBoss=$('#worldBoss2dBackdrop');
   const questDialogue=$('#questDialogue');
   const questEncounter=$('#questEncounterBackdrop');
+  const questPuzzle=$('#questPuzzle');
   const hollow=$('#hs2dBackdrop');
   const questUnlock=$('.quest-unlock-backdrop');
   return Boolean(
@@ -48,6 +49,7 @@ function playerBusy(){
     (worldBoss&&!worldBoss.hidden)||
     (questDialogue&&!questDialogue.hidden)||
     (questEncounter&&!questEncounter.hidden)||
+    (questPuzzle&&!questPuzzle.hidden)||
     (hollow&&!hollow.hidden)||
     Boolean(questUnlock)
   );
