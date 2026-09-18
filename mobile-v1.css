@@ -525,3 +525,56 @@
   .cb2d-layout>aside{grid-template-columns:1fr!important}
   .cb2d-layout>aside>.cb2d-party{grid-column:auto}
 }
+
+
+/* Mobile immersive-entry safety
+   The command dock must never cover dungeon or combat CTAs. */
+@media(max-width:720px){
+  #content{
+    padding-bottom:calc(var(--cb-mobile-dock) + 52px + env(safe-area-inset-bottom))!important;
+  }
+  #content .journal-entry-panel,
+  #content .hs-journal-entry{
+    position:relative;
+    z-index:2;
+  }
+  #content .journal-entry-panel button,
+  #content .hs-journal-entry button{
+    min-height:48px!important;
+    scroll-margin-bottom:calc(var(--cb-mobile-dock) + 28px + env(safe-area-inset-bottom));
+  }
+
+  body.cb2d-open .sidebar,
+  body.hs2d-open .sidebar,
+  body.wb2d-open .sidebar,
+  body.qe-open .sidebar{
+    display:none!important;
+  }
+
+  .cb2d-backdrop{
+    z-index:1400!important;
+  }
+
+  body.cb2d-open .main,
+  body.hs2d-open .main,
+  body.wb2d-open .main,
+  body.qe-open .main{
+    padding-bottom:0!important;
+  }
+
+  .cb2d-brief,
+  .hs2d-brief{
+    padding-bottom:calc(10px + env(safe-area-inset-bottom));
+  }
+  .cb2d-brief-grid aside,
+  .hs2d-brief-grid aside{
+    padding-bottom:calc(16px + env(safe-area-inset-bottom))!important;
+  }
+  .cb2d-brief-grid aside>button,
+  .hs2d-brief-grid aside>button,
+  .cb2d-blocked button{
+    min-height:50px!important;
+    position:relative;
+    z-index:4;
+  }
+}
