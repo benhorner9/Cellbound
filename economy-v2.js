@@ -14,6 +14,7 @@ function normalise(){
   const s=state();if(!s)return;
   s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};
   s.consumables=Array.isArray(s.consumables)?s.consumables:[];
+  s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];
   s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];
   s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];
   s.roster.forEach(c=>{c.professions=Array.isArray(c.professions)?c.professions.slice(0,2):[null,null];while(c.professions.length<2)c.professions.push(null);c.professions=c.professions.map(p=>p?{name:p.name,level:Math.max(1,Math.min(100,Number(p.level)||1)),xp:Math.max(0,Number(p.xp)||0)}:null);});
@@ -34,7 +35,7 @@ async function processInbox(){
     if(d.category==='material')Game.addMaterial(d.itemKey,qty);
     else if(d.category==='consumable')addConsumable({key:d.itemKey,name:d.itemName,payload:d.payload},qty);
     else if(d.category==='gear'){const gear=G.byId(d.itemKey)||G.byName(d.itemName)||d.payload;for(let i=0;i<qty;i++)Game.addBankItem({...gear,source:'Trading Post'});}
-    else if(d.category==='recipe'){const rid=d.payload?.recipeId||d.itemKey;if(rid&&!s.discoveredRecipes.includes(rid))s.discoveredRecipes.push(rid);}
+    else if(d.category==='recipe'){const rid=d.payload?.recipeId||d.itemKey;if(rid){const x=s.recipeScrolls.find(v=>v.recipeId===rid);if(x)x.quantity=(x.quantity||1)+qty;else s.recipeScrolls.push({recipeId:rid,name:d.itemName||`Recipe: ${P.recipeById(rid)?.name||rid}`,quantity:qty});}}
     s.activity.push(`Trading Post delivery received: ${d.itemName} ×${qty}.`);
   }
   s.tradeInbox=[];await commit(false);return true;
@@ -101,7 +102,10 @@ function renderProfessions(){
 function renderCrafted(){
   const root=$('#craftedInventory');if(!root||!state())return;const s=state();
   if(!s.consumables.length){root.innerHTML='<div class="profession-empty">Nothing crafted yet.</div>';return;}
-  root.innerHTML=s.consumables.map(x=>`<div class="crafted-card"><strong>×${x.quantity||1}</strong><b>⚗ ${x.name}</b><small>Tradeable crafted item</small>${x.key==='cell-shock-draught'? `<select data-potion-target="${x.key}">${s.roster.map(c=>`<option value="${c.id}">${c.name} · Shock ${c.cellShock||0}%</option>`).join('')}</select><button data-use-potion="${x.key}">USE</button>`:''}</div>`).join('');
+  const consumables=s.consumables.map(x=>`<div class="crafted-card"><strong>×${x.quantity||1}</strong><b>⚗ ${x.name}</b><small>Tradeable crafted item</small>${x.key==='cell-shock-draught'? `<select data-potion-target="${x.key}">${s.roster.map(c=>`<option value="${c.id}">${c.name} · Shock ${c.cellShock||0}%</option>`).join('')}</select><button data-use-potion="${x.key}">USE</button>`:''}</div>`).join('');
+  const scrolls=s.recipeScrolls.map(x=>`<div class="crafted-card"><strong>×${x.quantity||1}</strong><b>▤ ${x.name}</b><small>Rare tradeable recipe scroll</small><button data-learn-scroll="${x.recipeId}">LEARN</button></div>`).join('');
+  root.innerHTML=consumables+scrolls;
+  root.querySelectorAll('[data-learn-scroll]').forEach(b=>b.onclick=async()=>{const x=s.recipeScrolls.find(v=>v.recipeId===b.dataset.learnScroll);if(!x)return;if(!s.discoveredRecipes.includes(x.recipeId))s.discoveredRecipes.push(x.recipeId);x.quantity--;if(x.quantity<=0)s.recipeScrolls=s.recipeScrolls.filter(v=>v!==x);s.activity.push(`${x.name} learned.`);await commit();});
   root.querySelectorAll('[data-use-potion]').forEach(b=>b.onclick=async()=>{const sel=root.querySelector(`[data-potion-target="${b.dataset.usePotion}"]`),c=s.roster.find(x=>x.id===sel?.value),stack=s.consumables.find(x=>x.key===b.dataset.usePotion);if(!c||!stack)return;c.cellShock=0;c.cellShockLockedUntil=null;stack.quantity--;if(stack.quantity<=0)s.consumables=s.consumables.filter(x=>x!==stack);s.activity.push(`${c.name}'s Cell Shock was cleared with a Cell Shock Draught.`);await commit();});
 }
 function sellOptions(){
@@ -109,6 +113,7 @@ function sellOptions(){
   s.bank.filter(x=>x.tradeState!=='soulbound').forEach(x=>out.push({type:'gear',id:x.id,key:x.itemId,name:x.name,qty:x.quantity||1,payload:Game.canonicalItem(x)}));
   Object.entries(s.materials).filter(([,q])=>Number(q)>0).forEach(([k,q])=>out.push({type:'material',id:k,key:k,name:materialName(k),qty:Number(q),payload:P.MATERIALS[k]}));
   s.consumables.filter(x=>(x.quantity||0)>0).forEach(x=>out.push({type:'consumable',id:x.key,key:x.key,name:x.name,qty:x.quantity||1,payload:x.payload||{}}));
+  s.recipeScrolls.filter(x=>(x.quantity||0)>0).forEach(x=>out.push({type:'recipe',id:x.recipeId,key:x.recipeId,name:x.name,qty:x.quantity||1,payload:{recipeId:x.recipeId}}));
   return out;
 }
 function renderSellOptions(){
@@ -121,7 +126,7 @@ async function createListing(e){
   const before=clone(s);
   if(type==='gear'){const x=s.bank.find(v=>v.id===id);x.quantity=(x.quantity||1)-qty;if(x.quantity<=0)s.bank=s.bank.filter(v=>v.id!==id);}
   else if(type==='material')s.materials[id]-=qty;
-  else if(type==='consumable'){const x=s.consumables.find(v=>v.key===id);x.quantity-=qty;if(x.quantity<=0)s.consumables=s.consumables.filter(v=>v!==x);}
+  else if(type==='consumable'){const x=s.consumables.find(v=>v.key===id);x.quantity-=qty;if(x.quantity<=0)s.consumables=s.consumables.filter(v=>v!==x);}else if(type==='recipe'){const x=s.recipeScrolls.find(v=>v.recipeId===id);x.quantity-=qty;if(x.quantity<=0)s.recipeScrolls=s.recipeScrolls.filter(v=>v!==x);}
   await commit(false);
   const {error}=await db.from('trading_post_listings').insert({seller_id:user.id,seller_label:`Guild ${user.id.slice(0,4).toUpperCase()}`,category:type,item_key:item.key,item_name:item.name,payload:item.payload||{},quantity:qty,unit_price:price});
   if(error){console.error(error);Game.replaceState(before);$('#tradeSellHint').textContent='Listing failed. Your item was returned.';return;}
@@ -156,7 +161,7 @@ async function cancelListing(id){
   if(error){console.error(error);return;}
   if(l.category==='gear'){const gear=G.byId(l.item_key)||G.byName(l.item_name)||l.payload;for(let i=0;i<l.quantity;i++)Game.addBankItem({...gear,source:'Trading Post cancellation'});}
   else if(l.category==='material')Game.addMaterial(l.item_key,l.quantity);
-  else if(l.category==='consumable')addConsumable({key:l.item_key,name:l.item_name,payload:l.payload},l.quantity);
+  else if(l.category==='consumable')addConsumable({key:l.item_key,name:l.item_name,payload:l.payload},l.quantity);else if(l.category==='recipe'){const x=state().recipeScrolls.find(v=>v.recipeId===l.item_key);if(x)x.quantity=(x.quantity||1)+l.quantity;else state().recipeScrolls.push({recipeId:l.item_key,name:l.item_name,quantity:l.quantity});}
   state().activity.push(`Cancelled Trading Post listing: ${l.item_name}.`);await commit();await loadMarket();
 }
 function bind(){
