@@ -32,12 +32,14 @@ function playerBusy(){
   const legacyDungeon=$('#evoExpeditionBackdrop');
   const character=$('#characterModal');
   const bank=$('#bankModal');
+  const onboarding=$('#cellboundOnboarding');
   return Boolean(
     (dungeon&&!dungeon.hidden)||
     (legacyAttempt&&!legacyAttempt.hidden)||
     (legacyDungeon&&!legacyDungeon.hidden)||
     (character&&!character.hidden)||
-    (bank&&!bank.hidden)
+    (bank&&!bank.hidden)||
+    (onboarding&&!onboarding.hidden)
   );
 }
 function showGate(info){
