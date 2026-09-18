@@ -237,8 +237,9 @@ function equipItem(bankId,slot){
     c.power=Math.max(1,(c.power||1)-(old.power||0));
     if(old.name&&old.name!=='Empty')state.bank.push({...old,id:`bank-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,quantity:1,source:`Unequipped from ${c.name}`,classes:old.classes||[c.class],slot:old.slot==='Trinket1'||old.slot==='Trinket2'?'Trinket':old.slot});
   }
-  c.equipment[slot]={name:item.name,power:item.power||0,rarity:item.rarity||'Uncommon',slot,classes:item.classes,icon:item.icon};
-  c.gear=(c.gear||0)+(item.power||0);
+  const canonical=window.CellboundGame?.canonicalItem?.(item)||item;
+  c.equipment[slot]={...canonical,slot:canonical.slot||slot,source:'Equipped'};
+  c.gear=(c.gear||0)+(canonical.power||0);
   c.power=(c.power||0)+(item.power||0);
   item.quantity=(item.quantity||1)-1;
   if(item.quantity<=0)state.bank=state.bank.filter(x=>x.id!==bankId);
