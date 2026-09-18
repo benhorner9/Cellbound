@@ -127,7 +127,7 @@ function combatProfile(c){
  return'ranged';
 }
 function root(){let r=$('#cb2dBackdrop');if(!r){r=document.createElement('div');r.id='cb2dBackdrop';r.className='cb2d-backdrop';r.hidden=true;document.body.appendChild(r)}return r}
-function close(){token++;run=null;const r=root();r.hidden=true;r.innerHTML=''}
+function close(){token++;run=null;document.body.classList.remove('cb2d-open');const r=root();r.hidden=true;r.innerHTML=''}
 function knowledge(key){const p=party();return p.length?Math.round(p.reduce((n,c)=>n+(Number(c.knowledge&&c.knowledge[key])||0),0)/p.length):0}
 function readiness(){
  const p=party();
@@ -141,7 +141,7 @@ function readiness(){
 function ready(){return readiness().ok}
 function groupButtons(key,items){return '<div class="cb2d-plan-row" data-plan="'+key+'">'+items.map(x=>'<button class="'+(tactics[key]===x[0]?'active':'')+'" data-pick="'+key+':'+x[0]+'"><b>'+x[1]+'</b><small>'+x[2]+'</small></button>').join('')+'</div>'}
 function briefing(){
- const gate=readiness(),r=root();r.hidden=false;
+ const gate=readiness(),r=root();document.body.classList.add('cb2d-open');r.hidden=false;
  if(!gate.ok){
    r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · ENTRY CHECK</small><h2>Dungeon entry is currently blocked.</h2></div><button data-close>×</button></header><div class="cb2d-blocked"><b>NOT READY</b><p>'+esc(gate.reason)+'</p><button data-party>OPEN PARTY BUILDER →</button></div></section>';
    r.querySelector('[data-close]').onclick=close;
