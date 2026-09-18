@@ -152,9 +152,10 @@ function enhanceBank(){
     ...(s.recipeScrolls||[]).filter(x=>(x.quantity||0)>0).map(x=>({key:`rec:${x.recipeId}`,name:x.name,category:'Recipe',rarity:'Rare',quantity:x.quantity||1,source:'Rare recipe scroll',icon:'▤',tradeState:'tradeable'}))
   ];
   const resourceSignature=resourceModels.map(x=>`${x.key}:${x.quantity}`).join('|');
-  if(root.dataset.resourceSignature!==resourceSignature){
+  if(root.dataset.resourceSignature!==resourceSignature||root.querySelectorAll('.evo-bank-resource').length!==resourceModels.length){
     root.dataset.resourceSignature=resourceSignature;
     root.querySelectorAll('.evo-bank-resource').forEach(x=>x.remove());
+    if(resourceModels.length)root.querySelector('.bank-empty')?.remove();
     resourceModels.forEach(item=>{
       const card=document.createElement('article');
       card.className=`bank-item evo-bank-resource rarity-${String(item.rarity).toLowerCase()}`;
