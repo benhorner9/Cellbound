@@ -9,7 +9,7 @@ const MATERIALS={
   'ember-core':{name:'Ember Core',rarity:'Uncommon',source:'Embermaw',icon:'◉',artIndex:4},
   'vaultheart-crystal':{name:'Vaultheart Crystal',rarity:'Rare',source:'The Vaultheart',icon:'◇',artIndex:5},
   'ancient-soul':{name:'Ancient Soul',rarity:'Epic',source:'Future end-game content',icon:'✧',artIndex:6,endgame:true},
-  'void-crystal':{name:'Void Crystal',rarity:'Epic',source:'Future end-game content',icon:'◆',artIndex:7,endgame:true}
+  'void-crystal':{name:'Void Crystal',rarity:'Epic',source:'The Hollow Sanctum',icon:'◆',artIndex:7,endgame:true}
 };
 function materialArtHTML(key,size=64,extra=''){
   const m=MATERIALS[key];if(!m||!Number.isInteger(m.artIndex))return `<span class="material-art material-art-empty ${extra}" style="display:inline-grid;width:${size}px;height:${size}px;place-items:center">${m?.icon||'◇'}</span>`;
