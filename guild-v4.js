@@ -213,8 +213,8 @@ Storage.prototype.setItem=function(key,value){
 
 function switchView(id){
   $$('.view').forEach(v=>v.classList.toggle('active',v.id===id));$$('.nav-btn[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
-  const labels={overview:'Command Overview',roster:'Roster',bank:'Guild Bank',professions:'Professions',trading:'Trading Post',chat:'Chat',world:'Living World',content:'PvE Content',party:'Party Builder',reports:'Attempt Reports',admin:'Admin Control'};if(ui.pageTitle)ui.pageTitle.textContent=labels[id]||'Cellbound';
-  if(id==='party')renderParty();if(id==='reports')renderReports();if(id==='bank')renderBank();if(id==='content')renderBosses();if(id==='roster')renderRoster();
+  const labels={overview:'Command Overview',roster:'Roster',bank:'Guild Bank',professions:'Professions',trading:'Trading Post',chat:'Chat',world:'Living World',content:'PvE Content',quests:'Quest Journal',party:'Party Builder',reports:'Attempt Reports',admin:'Admin Control'};if(ui.pageTitle)ui.pageTitle.textContent=labels[id]||'Cellbound';
+  if(id==='party')renderParty();if(id==='reports')renderReports();if(id==='bank')renderBank();if(id==='content'){renderBosses();window.CellboundHollowSanctum?.renderCard?.()}if(id==='roster')renderRoster();if(id==='quests')window.CellboundQuests?.render?.();
 }
 $$('.nav-btn[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));$$('[data-jump]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.jump)));
 
@@ -297,7 +297,7 @@ function renderReports(){
   if(!state.reports.length){ui.reportsList.innerHTML='<div class="panel" style="padding:30px;color:#657874">No attempts yet. Build a party and enter The Ashen Vault.</div>';return;}
   ui.reportsList.innerHTML=state.reports.map(r=>{const b=bossById(r.boss),loot=G.byId(r.lootItemId)||G.byName(r.loot);return `<article class="report-card"><div><div class="report-result ${r.success?'kill':'wipe'}">${r.success?'VICTORY':'WIPE'}</div><small>${new Date(r.at).toLocaleString()}</small></div><div><h3>${b?.name||'Encounter'}</h3><p>${r.success?'The party defeated the encounter. PvE victories do not clear Cell Shock.':`The party gained ${r.cellShockGain||PVE_WIPE_CELL_SHOCK}% Cell Shock and encounter knowledge.`}${loot?` Loot: ${loot.name} · iLvl ${r.lootItemLevel||loot.itemLevel||'—'} → Guild Bank.`:''}${r.reagents?.length?` Reagents: ${r.reagents.map(d=>`${P?.MATERIALS?.[d.key]?.name||'Recipe'} ×${d.quantity}`).join(', ')}.`:''}</p></div><div class="report-gain"><b>Knowledge gained</b>${r.knowledgeGain.map(k=>`<span>${k.name} +${k.gain}%</span>`).join('')}</div></article>`;}).join('');
 }
-function renderAll(){if(!state)return;state.roster.forEach(c=>{refreshRecovery(c);c.gear=characterItemLevel(c);});renderTop();renderOverview();renderRoster();renderBosses();renderParty();renderBank();renderReports();writeLocal();}
+function renderAll(){if(!state)return;state.roster.forEach(c=>{refreshRecovery(c);c.gear=characterItemLevel(c);});renderTop();renderOverview();renderRoster();renderBosses();renderParty();renderBank();renderReports();writeLocal();window.CellboundQuests?.render?.();window.CellboundHollowSanctum?.renderCard?.();}
 function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(c=>{if(refreshRecovery(c)){state.activity.push(`${c.name} has fully recovered from Cell Shock.`);changed=true;}});if(changed)save();if(state.roster.some(c=>isUnavailable(c)))renderAll();}
 
 window.CellboundGame={
