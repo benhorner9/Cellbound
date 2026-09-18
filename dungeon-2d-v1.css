@@ -83,3 +83,27 @@ background-size:46px 46px}
 .cb2d-blocked>b{padding:6px 9px;border:1px solid rgba(211,103,83,.22);background:#18100e;color:#d98978;font-size:.48rem;letter-spacing:.12em}
 .cb2d-blocked p{margin:0;max-width:620px;color:#83908b;font-size:.62rem;line-height:1.6}
 .cb2d-blocked button{height:42px;padding:0 14px;border:1px solid rgba(216,185,118,.24);background:#292419;color:#e4d29c;font-size:.5rem;font-weight:900}
+
+.cb2d-unit-hp{position:absolute;left:50%;top:-10px;transform:translateX(-50%);width:44px;height:5px;border-radius:4px;background:rgba(0,0,0,.72);overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+.cb2d-unit-hp>i{display:block;width:100%;height:100%;background:linear-gradient(90deg,#63c678,#9ed66b);transition:width .28s ease}
+.cb2d-unit.enemy .cb2d-unit-hp>i{background:linear-gradient(90deg,#a33b2d,#d36a45)}
+.cb2d-unit.boss .cb2d-unit-hp,.cb2d-unit.big .cb2d-unit-hp{width:72px;top:-14px;height:6px}
+.cb2d-unit.critical .cb2d-unit-hp>i{background:linear-gradient(90deg,#7e231f,#c44c35)}
+.cb2d-unit.dead{opacity:.22;filter:grayscale(1);transform:translate(-50%,-50%) scale(.82)}
+.cb2d-unit.targeted:after{content:"";position:absolute;left:50%;top:50%;width:38px;height:38px;border:1px solid rgba(240,215,135,.75);border-radius:50%;transform:translate(-50%,-50%);animation:cb2dTarget .42s ease-out both}
+.cb2d-unit.boss.targeted:after,.cb2d-unit.big.targeted:after{width:58px;height:58px}
+@keyframes cb2dTarget{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.35)}}
+.cb2d-projectile{position:absolute;z-index:15;width:8px;height:8px;border-radius:50%;pointer-events:none;transition:transform .3s linear;transform:translate(0,0)}
+.cb2d-projectile.magic{background:#8bb8ff;box-shadow:0 0 12px 3px rgba(108,157,255,.5)}
+.cb2d-projectile.arrow{width:13px;height:2px;border-radius:1px;background:#d9ca8a;box-shadow:0 0 6px rgba(217,202,138,.4)}
+.cb2d-projectile.slash{width:18px;height:3px;border-radius:2px;background:#f0e7cf;box-shadow:0 0 10px rgba(255,255,255,.45);transform-origin:left center}
+.cb2d-projectile.enemy{background:#db6a45;box-shadow:0 0 11px 2px rgba(219,106,69,.42)}
+.cb2d-projectile.enemy-heavy{width:11px;height:11px;background:#e24e33;box-shadow:0 0 18px 5px rgba(226,78,51,.42)}
+.cb2d-projectile.heal{background:#69d99b;box-shadow:0 0 13px 4px rgba(105,217,155,.42)}
+.cb2d-number{position:absolute;z-index:25;transform:translate(-50%,-50%);font-weight:900;font-size:.68rem;pointer-events:none;text-shadow:0 2px 4px #000;animation:cb2dNumber .85s ease-out both}
+.cb2d-number.damage{color:#f0d37e}.cb2d-number.incoming{color:#ef765f}.cb2d-number.heal{color:#79dfa2}
+@keyframes cb2dNumber{0%{opacity:0;transform:translate(-50%,-15% ) scale(.8)}15%{opacity:1}100%{opacity:0;transform:translate(-50%,-145%) scale(1.05)}}
+.cb2d-side-hp{display:block;width:100%;height:5px;margin-top:4px;background:#172125;border-radius:3px;overflow:hidden}
+.cb2d-side-hp>i{display:block;height:100%;background:linear-gradient(90deg,#4fa968,#7fd79a);transition:width .28s ease}
+.cb2d-party-row>span{min-width:0}
+.cb2d-party-row>strong{min-width:44px;text-align:right}
