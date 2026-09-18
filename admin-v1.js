@@ -30,8 +30,8 @@ function render(){
     toggle.textContent=status.auto_clear_cell_shock?'DISABLE AUTO-CLEAR':'ENABLE AUTO-CLEAR';
     toggle.dataset.enabled=status.auto_clear_cell_shock?'1':'0';
   }
-  if(build)build.textContent=String(window.CELLBOUND_BUILD||'development').slice(0,12);
-  if(published)published.textContent=releaseStatus?.build_id?String(releaseStatus.build_id).slice(0,12):'Not published yet';
+  if(build)build.textContent=String(window.CELLBOUND_BUILD||'development').slice(0,12)+' · #'+(Number(window.CELLBOUND_BUILD_NUMBER||0)||'—');
+  if(published)published.textContent=releaseStatus?.build_id?(String(releaseStatus.build_id).slice(0,12)+' · #'+(releaseStatus.build_number||'—')):'Not published yet';
 }
 function message(text,tone='ok'){
   const el=$('#adminMessage');if(!el)return;
@@ -85,14 +85,15 @@ async function refreshRelease(){
 async function publishUpdate(){
   const btn=$('#adminPublishUpdate'),input=$('#adminUpdateMessage');
   const build=String(window.CELLBOUND_BUILD||'').trim();
-  if(!build||build==='development'||build.includes('__CELLBOUND_BUILD__')){
+  const buildNumber=Number(window.CELLBOUND_BUILD_NUMBER||0)||0;
+  if(!build||build==='development'||build.includes('__CELLBOUND_BUILD__')||buildNumber<=0){
     message('This build does not have a production release ID yet. Refresh after deployment finishes, then publish the update.','error');
     return;
   }
   if(!confirm('Publish this Cellbound build as required for all players? Active dungeon runs will be allowed to finish first.'))return;
   if(btn)btn.disabled=true;
   const note=(input?.value||'').trim()||'Cellbound has been updated. Load the latest version to continue.';
-  const {data,error}=await db.rpc('cellbound_admin_publish_release',{p_build_id:build,p_message:note});
+  const {data,error}=await db.rpc('cellbound_admin_publish_release',{p_build_id:build,p_build_number:buildNumber,p_message:note});
   if(btn)btn.disabled=false;
   if(error){message(error.message||'Could not publish update.','error');return}
   releaseStatus=data||{build_id:build,message:note};
