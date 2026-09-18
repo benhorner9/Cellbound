@@ -201,6 +201,7 @@ async function finishCombat(s,tok){
    let guard=0;
    while(tok===token&&enemyIndex()>=0&&guard<36){await delay(180);guard++}
  }else await delay(700);
+ if(run.allowKill&&enemyIndex()>=0){run.enemyHp.forEach((v,i)=>{if(v>0){setEnemyHp(i,0);floating('e-'+i,'FINISH','damage')}})}
  run.combatActive=false
 }
 
@@ -221,7 +222,7 @@ async function mechanic(s,m,tok){
  const name=m[0],type=m[1],ms=m[2];run.mechanicActive=true;status(name+' incoming');log(name+' begins.');
  if(type==='interrupt'){
    const v=tg('cast');act('dps','Watching interrupt window');
-   if(interruptOK(s)){await cast(name,Math.round(ms*.56),tok);flash('INTERRUPTED',false);log('A damage dealer interrupts '+name+'.');act('dps','Interrupt successful');v.remove();return}
+   if(interruptOK(s)){await cast(name,Math.round(ms*.56),tok);flash('INTERRUPTED',false);log('A damage dealer interrupts '+name+'.');act('dps','Interrupt successful');v.remove();run.mechanicActive=false;return}
    await cast(name,ms,tok);flash('CAST COMPLETES',true);log(name+' lands. The healer recovers the group.');party().forEach(c=>{setCond(c.id,cond(c.id)-5);setHp(c.id,hp(c.id)-8);floating('p-'+c.id,'-8','incoming')});updateRows();v.remove();run.mechanicActive=false;return
  }
  if(type==='cone'){
