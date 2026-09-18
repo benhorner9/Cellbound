@@ -56,6 +56,30 @@ async function resetShock(){
   if(data&&typeof data==='object')Game.replaceState(data);
   message('Cell Shock cleared for your entire roster.','ok');render();
 }
+async function freshStart(){
+  const typed=prompt('This resets YOUR Cellbound testing account to a brand-new playable state.\n\nYour login and Admin access are preserved.\n\nType FRESH START to continue.');
+  if(typed===null)return;
+  if(String(typed).trim().toUpperCase()!=='FRESH START'){
+    message('Fresh Start cancelled. The confirmation text did not match.','error');
+    return;
+  }
+  if(!confirm('Final confirmation: reset your guild, character/tutorial progress, listings, groups and personal world-boss state?'))return;
+  const btn=$('#adminFreshStart');
+  if(btn){btn.disabled=true;btn.textContent='RESETTING ACCOUNT…'}
+  try{
+    await Game.persistState?.();
+    const {data,error}=await db.rpc('cellbound_admin_fresh_start',{p_confirmation:'FRESH START'});
+    if(error)throw error;
+    Game.replaceState?.({__fresh_start:true,fresh_start_at:new Date().toISOString()});
+    await Game.persistState?.();
+    localStorage.removeItem('cellbound-management-reboot-v2');
+    sessionStorage.removeItem('cellbound-management-reboot-v2');
+    location.replace('./guild.html?freshStart='+Date.now());
+  }catch(error){
+    if(btn){btn.disabled=false;btn.innerHTML='FRESH START<small>Reset your own account so onboarding and starting zones can be tested again.</small>'}
+    message(error?.message||'Fresh Start failed. No reset was completed.','error');
+  }
+}
 async function toggleAuto(){
   const btn=$('#adminAutoToggle'),next=!status.auto_clear_cell_shock;if(btn)btn.disabled=true;
   const {data,error}=await db.rpc('cellbound_admin_set_auto_clear_cell_shock',{p_enabled:next});
@@ -103,6 +127,7 @@ async function publishUpdate(){
 function bind(){
   if(bound)return;bound=true;
   $('#adminResetShock')?.addEventListener('click',resetShock);
+  $('#adminFreshStart')?.addEventListener('click',freshStart);
   $('#adminAutoToggle')?.addEventListener('click',toggleAuto);
   $('#adminRefresh')?.addEventListener('click',async()=>{await Promise.all([refreshStatus(),refreshRelease()]);clearLocalShock();message('Admin status refreshed.','ok')});
   $('#adminPublishUpdate')?.addEventListener('click',publishUpdate);
