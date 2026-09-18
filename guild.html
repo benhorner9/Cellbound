@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="./foundations.css?v=1">
 <link rel="stylesheet" href="./economy-v2.css?v=1">
 <link rel="stylesheet" href="./social-v3.css?v=1">
+<link rel="stylesheet" href="./evolution-v1.css?v=1">
 </head>
 <body>
 <div class="app-shell">
@@ -62,13 +63,27 @@
     </section>
 
     <section id="roster" class="view">
-      <div class="section-intro"><div><small>YOUR ADVENTURERS</small><h2>Roster</h2><p>Standard accounts command 5 roster slots. Membership expands the roster to 10 while the active combat party remains 5.</p></div><div class="filters"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="tank">Tanks</button><button class="filter" data-filter="healer">Healers</button><button class="filter" data-filter="dps">Damage</button></div></div>
+      <div class="section-intro roster-intro"><div><small>YOUR ADVENTURING COMPANY</small><h2>Roster</h2><p>Review every adventurer, compare readiness and decide who earns a place in the active five.</p></div><div class="filters roster-role-filters"><button class="filter active" data-filter="all">All Roles</button><button class="filter" data-filter="tank">Tanks</button><button class="filter" data-filter="healer">Healers</button><button class="filter" data-filter="dps">Damage</button></div></div>
+      <div class="roster-command-bar panel">
+        <div class="roster-company-summary"><span>ACTIVE COMPANY</span><b id="rosterActiveSummary">5 / 5 deployed</b><small id="rosterRecoverySummary">All available</small></div>
+        <label class="ui-search"><span>⌕</span><input id="rosterSearch" type="search" placeholder="Search adventurers"></label>
+        <select id="rosterStatusFilter" class="ui-select"><option value="all">All adventurers</option><option value="active">Active party</option><option value="reserve">Reserve</option><option value="available">Available</option><option value="recovering">Recovering</option></select>
+        <select id="rosterSort" class="ui-select"><option value="ilvl">Highest Item Level</option><option value="level">Highest Level</option><option value="shock">Highest Cell Shock</option><option value="name">Name A–Z</option></select>
+      </div>
       <div id="rosterGrid" class="roster-grid"></div>
     </section>
 
     <section id="bank" class="view">
-      <div class="section-intro"><div><small>GUILD STORAGE</small><h2>Bank</h2><p>Boss loot is stored here first. Item Level belongs to the item, while rarity describes its quality.</p></div></div>
+      <div class="section-intro"><div><small>GUILD VAULT</small><h2>Bank</h2><p>Sort the guild's spoils, identify upgrades and move equipment to the adventurers who need it most.</p></div><div id="bankUpgradeLegend" class="bank-upgrade-legend">UPGRADES ARE CALCULATED AGAINST YOUR ROSTER</div></div>
       <div id="bankSummary" class="bank-summary"></div>
+      <div class="bank-command-bar panel">
+        <label class="ui-search"><span>⌕</span><input id="bankSearch" type="search" placeholder="Search the vault"></label>
+        <select id="bankCategory" class="ui-select"><option value="all">All equipment</option><option value="Weapon">Weapons</option><option value="Head">Head</option><option value="Chest">Chest</option></select>
+        <select id="bankClass" class="ui-select"><option value="all">All classes</option><option>Warrior</option><option>Paladin</option><option>Priest</option><option>Druid</option><option>Hunter</option><option>Rogue</option><option>Mage</option></select>
+        <select id="bankRarity" class="ui-select"><option value="all">All rarities</option><option>Common</option><option>Uncommon</option><option>Rare</option><option>Epic</option></select>
+        <select id="bankTrade" class="ui-select"><option value="all">Any binding</option><option value="tradeable">Tradeable</option><option value="soulbound">Soulbound</option></select>
+        <select id="bankSort" class="ui-select"><option value="newest">Newest</option><option value="ilvl-desc">Highest Item Level</option><option value="ilvl-asc">Lowest Item Level</option><option value="rarity">Rarity</option><option value="name">Name A–Z</option></select>
+      </div>
       <div id="bankGrid" class="bank-grid"></div>
     </section>
 
@@ -78,7 +93,7 @@
         <aside class="panel profession-roster-panel"><div class="panel-head"><div><small>ADVENTURERS</small><h3>Profession Slots</h3></div></div><div id="professionCharacterList" class="profession-character-list"></div></aside>
         <div class="profession-main">
           <article class="panel"><div class="panel-head"><div><small>REAGENT VAULT</small><h3>Dungeon Materials</h3></div></div><div id="reagentGrid" class="reagent-grid"></div></article>
-          <article class="panel workshop-panel"><div class="panel-head"><div><small>WORKSHOP</small><h3 id="workshopTitle">Choose an Adventurer</h3></div></div><div id="professionWorkshop" class="profession-workshop"></div></article>
+          <article class="panel workshop-panel"><div class="panel-head"><div><small>WORKSHOP</small><h3 id="workshopTitle">Choose an Adventurer</h3></div><div id="professionRecipeFilters" class="profession-recipe-filters"><button class="active" data-prof-recipe-filter="all">All</button><button data-prof-recipe-filter="ready">Craftable</button><button data-prof-recipe-filter="locked">Locked</button></div></div><div id="professionWorkshop" class="profession-workshop"></div></article>
           <article class="panel"><div class="panel-head"><div><small>CRAFTED STOCK</small><h3>Consumables & Runes</h3></div></div><div id="craftedInventory" class="crafted-inventory"></div></article>
         </div>
       </div>
@@ -123,8 +138,16 @@
     </section>
 
     <section id="content" class="view">
-      <div class="section-intro"><div><small>PVE CONTENT</small><h2>The Ashen Vault</h2><p>Dungeon · 5 players · Party Item Level progression</p></div><div class="content-status"><span>Progress</span><b id="dungeonProgress">0 / 3 bosses</b></div></div>
-      <div id="bossList" class="boss-list"></div>
+      <div class="section-intro dungeon-intro"><div><small>DUNGEON JOURNAL</small><h2>The Ashen Vault</h2><p>Five adventurers descend through a ruined forge where each encounter teaches the mechanics needed for the next.</p></div><div class="content-status"><span>Completion</span><b id="dungeonProgress">0 / 3 bosses</b></div></div>
+      <div class="dungeon-journal-hero">
+        <div class="dungeon-journal-art"><span class="journal-eyebrow">CURO HINTERLANDS · DUNGEON</span><h3>The Ashen Vault</h3><p>The old forge has begun breathing again. Ashbound cultists are feeding something beneath the mountain.</p><div class="journal-badges"><span>5 adventurers</span><span>10–15 min</span><span id="journalPartyIlvl">Party iLvl —</span></div></div>
+        <div class="journal-entry-panel"><small>ENTRY REQUIREMENT</small><b>Party Item Level 18</b><p id="journalEntryHint">Build a complete party before entering.</p><button id="enterDungeonBtn">ENTER THE ASHEN VAULT</button></div>
+      </div>
+      <div class="dungeon-journal-layout">
+        <article class="panel dungeon-route-panel"><div class="panel-head"><div><small>DUNGEON ROUTE</small><h3>Expedition Path</h3></div><b>7 STAGES</b></div><div id="dungeonRoute" class="dungeon-route"></div></article>
+        <aside class="panel dungeon-intel-panel"><div class="panel-head"><div><small>ENCOUNTER INTELLIGENCE</small><h3>What Your Guild Knows</h3></div></div><div id="dungeonIntel" class="dungeon-intel"></div></aside>
+      </div>
+      <div id="bossList" class="boss-list evolution-legacy-boss-list" hidden></div>
     </section>
 
     <section id="party" class="view">
@@ -134,7 +157,8 @@
           <div class="panel-head"><div><small>FORMATION</small><h3>5-Player Dungeon Party</h3></div><b id="readinessLabel">NOT READY</b></div>
           <div id="partySlots" class="party-slots"></div>
           <div class="readiness"><div class="readiness-line"><span>Party Readiness</span><b id="readinessText">0%</b></div><div class="readiness-bar"><i id="readinessFill"></i></div><p id="readinessHint">Assign 1 Tank, 1 Healer and 3 Damage characters.</p></div>
-          <div class="attempt-controls"><label>Target boss<select id="bossSelect"></select></label><button id="attemptBtn" disabled>BEGIN ATTEMPT</button></div>
+          <div class="attempt-controls evolution-legacy-attempt"><label>Target boss<select id="bossSelect"></select></label><button id="attemptBtn" disabled>BEGIN ATTEMPT</button></div>
+          <div class="party-dungeon-cta"><div><small>DUNGEON READY</small><b>The Ashen Vault now runs as a complete expedition.</b><span>Trash packs, mini-bosses, an elite encounter and a final boss.</span></div><button data-jump="content">OPEN DUNGEON JOURNAL →</button></div>
         </div>
         <div class="selection-panel panel"><div class="panel-head"><div><small>AVAILABLE</small><h3>Choose Adventurers</h3></div></div><div id="partyRoster" class="party-roster"></div></div>
       </div>
@@ -160,6 +184,7 @@
 <script src="./character-foundations-patch.js?v=1"></script>
 <script src="./economy-v2.js?v=1"></script>
 <script src="./social-v3.js?v=1"></script>
+<script src="./evolution-v1.js?v=1"></script>
 </body>
 </html>
 
