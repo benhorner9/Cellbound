@@ -10,7 +10,7 @@ let profRecipeFilter='all';
 let expedition=null;
 let worldEncounterId=null;
 let dockChannel='world',dockTimer=null,dockMinimized=true;
-let bankObserver=null,rosterObserver=null,professionObserver=null;
+let bankObserver=null,rosterObserver=null,professionObserver=null,worldObserver=null;
 
 const state=()=>Game?.getState?.();
 const ent=()=>Game?.getEntitlements?.()||{rosterCap:5};
@@ -434,6 +434,29 @@ async function sendDockChat(e){
   input.value='';await loadDockChat();
 }
 
+/* ---------- World screen presentation ---------- */
+const WORLD_LORE={
+  'gloamhide':{lore:'A colossal hide-plated beast has wandered out of the Gloamwood, carrying old Cell scars beneath its armour.',reward:'Tier 1 equipment · personal reward'},
+  'hollow-wyrm':{lore:'The Hollow Wyrm coils beneath ruined roads, surfacing only when the ground begins to resonate with Cell energy.',reward:'Tier 2 equipment · personal reward'},
+  'cell-torn':{lore:'Veyr was once something mortal. The Cell rupture inside it now tears at the world around every movement.',reward:'Tier 3 equipment · personal reward'}
+};
+function enhanceWorldCards(){
+  const root=$('#worldBossGrid');if(!root)return;
+  root.querySelectorAll('.world-boss-card').forEach(card=>{
+    const attack=card.querySelector('[data-world-attack]'),join=card.querySelector('[data-world-join],[data-world-leave]');
+    const id=attack?.dataset.worldAttack||join?.dataset.worldJoin||join?.dataset.worldLeave;
+    if(!id)return;const info=WORLD_LORE[id];if(!info)return;
+    if(attack&&!attack.disabled)attack.textContent='OPEN ENCOUNTER';
+    let lore=card.querySelector('.evo-world-lore');
+    if(!lore){lore=document.createElement('div');lore.className='evo-world-lore';const body=card.querySelector('.world-boss-body');body?.insertBefore(lore,body.querySelector('.world-actions'))}
+    lore.innerHTML=`<p>${esc(info.lore)}</p><small>${esc(info.reward)}</small>`;
+  });
+}
+function bindWorldEnhancement(){
+  const root=$('#worldBossGrid');if(root){worldObserver=new MutationObserver(()=>requestAnimationFrame(enhanceWorldCards));worldObserver.observe(root,{childList:true})}
+  document.querySelector('.nav-btn[data-view="world"]')?.addEventListener('click',()=>setTimeout(enhanceWorldCards,0));
+}
+
 /* ---------- World boss encounter ---------- */
 function worldBackdrop(){
   let root=$('#evoWorldBackdrop');if(!root){root=document.createElement('div');root.id='evoWorldBackdrop';root.className='evo-world-backdrop';root.hidden=true;document.body.appendChild(root)}return root;
@@ -501,7 +524,7 @@ async function init(){
   Game=window.CellboundGame;
   if(!Game?.ready){setTimeout(init,80);return}
   G=window.CellboundGear;P=window.CellboundProfessions;db=Game.getSupabase();user=Game.getUser();ensureState();
-  bindRoster();bindBank();bindProfessions();bindGlobal();interceptWorldActions();dock();queueEnhance();
+  bindRoster();bindBank();bindProfessions();bindWorldEnhancement();bindGlobal();interceptWorldActions();dock();queueEnhance();enhanceWorldCards();
   clearInterval(dockTimer);dockTimer=setInterval(()=>{if(!dockMinimized)loadDockChat()},8000);
   window.addEventListener('beforeunload',()=>clearInterval(dockTimer),{once:true});
   window.CellboundEvolution={renderDungeonJournal,startExpedition,enhanceRoster,enhanceBank,openWorldEncounter};
