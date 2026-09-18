@@ -1,0 +1,155 @@
+/* Cellbound Quest Adventures v2 — RuneScape-style quest presentation */
+
+.quest-v2-list-card{
+  display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;align-items:center;
+  width:100%;padding:12px 10px;border:1px solid rgba(216,185,118,.15);
+  background:linear-gradient(180deg,#111914,#091215);color:#d7ded9;text-align:left;
+  box-shadow:inset 2px 0 #a98c4e;
+}
+.quest-v2-icon{
+  display:grid;place-items:center;width:40px;height:40px;
+  border:1px solid rgba(216,185,118,.16);border-radius:50%;
+  background:#081114;color:#c4a762;font-size:1.15rem
+}
+.quest-v2-list-card small{display:block;color:#8c7953;font-size:.3rem;font-weight:900;letter-spacing:.09em}
+.quest-v2-list-card b{display:block;margin-top:3px;color:#e1d9c7;font-family:Georgia,serif;font-size:.78rem;font-weight:400}
+.quest-v2-list-card em{display:block;margin-top:3px;color:#5b6a65;font-size:.32rem;font-style:normal}
+
+.quest-v2-hero{
+  display:flex;justify-content:space-between;align-items:center;gap:18px;
+  padding:22px;border-bottom:1px solid rgba(216,185,118,.08);
+  background:
+    radial-gradient(circle at 88% 20%,rgba(160,126,62,.12),transparent 28%),
+    linear-gradient(180deg,#111a1c,#0a1215)
+}
+.quest-v2-hero small{display:block;color:#917d54;font-size:.33rem;font-weight:900;letter-spacing:.12em}
+.quest-v2-hero h2{margin:5px 0 3px;color:#efe7d5;font-family:Georgia,serif;font-size:1.55rem;font-weight:400}
+.quest-v2-hero p{margin:0;color:#65736e;font-size:.4rem}
+.quest-points-medallion{
+  flex:0 0 68px;display:grid;place-items:center;align-content:center;
+  width:68px;height:68px;border:1px solid rgba(216,185,118,.2);border-radius:50%;
+  background:radial-gradient(circle,#211d13,#0a1113 70%);
+  box-shadow:inset 0 0 28px rgba(205,166,80,.08),0 0 28px rgba(0,0,0,.3)
+}
+.quest-points-medallion b{color:#e5ca80;font-family:Georgia,serif;font-size:1.25rem;font-weight:400;line-height:1}
+.quest-points-medallion span{margin-top:3px;color:#887650;font-size:.28rem;font-weight:900;letter-spacing:.1em}
+
+.quest-v2-summary{padding:16px 22px 10px}
+.quest-v2-summary>p{margin:0;color:#95a29e;font-family:Georgia,serif;font-size:.67rem;line-height:1.65}
+.quest-progress{display:grid;grid-template-columns:auto minmax(120px,1fr);gap:10px;align-items:center;margin-top:13px}
+.quest-progress>span{color:#66746f;font-size:.34rem}.quest-progress>span b{color:#b8aa82}
+.quest-progress>div{height:4px;background:#1c2422;overflow:hidden}.quest-progress i{display:block;height:100%;background:linear-gradient(90deg,#76633a,#c6aa61)}
+
+.quest-stage-track{padding:8px 22px 4px}
+.quest-stage-track>div{
+  position:relative;display:grid;grid-template-columns:28px 1fr;gap:9px;align-items:center;
+  min-height:49px;padding:5px 0;opacity:.38
+}
+.quest-stage-track>div:not(:last-child):after{
+  content:"";position:absolute;left:13px;top:34px;bottom:-12px;width:1px;background:rgba(216,185,118,.08)
+}
+.quest-stage-track>div.current,.quest-stage-track>div.done{opacity:1}
+.quest-stage-track>div.current{background:linear-gradient(90deg,rgba(173,142,69,.07),transparent)}
+.quest-stage-track>div>i{
+  display:grid;place-items:center;width:26px;height:26px;
+  border:1px solid rgba(216,185,118,.11);border-radius:50%;
+  background:#081114;color:#786a4c;font-size:.34rem;font-style:normal
+}
+.quest-stage-track>div.done>i{border-color:rgba(94,171,116,.2);color:#7dc390}
+.quest-stage-track>div.current>i{border-color:rgba(216,185,118,.3);color:#dfc57e;box-shadow:0 0 16px rgba(190,151,67,.09)}
+.quest-stage-track b{display:block;color:#aeb8b3;font-size:.39rem}.quest-stage-track small{display:block;margin-top:2px;color:#53615d;font-size:.28rem}
+.quest-stage-track .current b{color:#dfd5bd}
+
+.quest-current-step{
+  margin:12px 22px 0;padding:13px 14px;
+  border:1px solid rgba(216,185,118,.09);border-left:2px solid #aa8c4e;
+  background:#0a1416
+}
+.quest-current-step>small{display:block;color:#8c7850;font-size:.3rem;font-weight:900;letter-spacing:.1em}
+.quest-current-step h3{margin:4px 0 5px;color:#ddd6c6;font-family:Georgia,serif;font-size:.9rem;font-weight:400}
+.quest-current-step p{margin:0;color:#84918c;font-size:.43rem;line-height:1.5}
+.quest-current-step em{display:block;margin-top:6px;color:#5e6d68;font-size:.34rem;font-style:normal}
+
+.quest-v2-meta>div{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.025)}
+.quest-v2-meta span{color:#5a6964;font-size:.31rem}.quest-v2-meta b{color:#b7c0bc;font-size:.33rem}
+.quest-requirements{margin-top:7px;display:grid;gap:5px}
+.quest-requirement{display:grid;grid-template-columns:18px 1fr;gap:6px;align-items:center;padding:6px;border:1px solid rgba(255,255,255,.035);background:#081114}
+.quest-requirement i{display:grid;place-items:center;width:16px;height:16px;border:1px solid rgba(216,185,118,.09);border-radius:50%;color:#76664a;font-size:.28rem;font-style:normal}
+.quest-requirement.met i{color:#79bd8c;border-color:rgba(90,171,113,.18)}
+.quest-requirement span{color:#71807a;font-size:.31rem;line-height:1.35}
+
+.quest-items{display:grid;gap:6px;margin-top:7px}
+.quest-item{display:grid;grid-template-columns:36px 1fr;gap:8px;padding:8px;border:1px solid rgba(255,255,255,.04);background:#081114}
+.quest-item>i{display:grid;place-items:center;width:34px;height:34px;border:1px solid rgba(216,185,118,.1);background:#060c0f;color:#c0a461;font-size:.92rem;font-style:normal}
+.quest-item b{display:block;color:#bcc5c0;font-size:.34rem}.quest-item small{display:block;margin-top:2px;color:#596762;font-size:.27rem;line-height:1.35}.quest-item em{display:block;margin-top:4px;color:#826f4c;font-size:.24rem;font-style:normal;font-weight:900;letter-spacing:.08em}
+.quest-item.used,.quest-item.archived{opacity:.52}.quest-items-empty{margin:7px 0 0;color:#586661!important;font-size:.32rem!important}
+.quest-reward-list{margin-top:7px}.quest-reward-list p{margin:0 0 4px!important;padding:5px 6px;border-left:1px solid rgba(216,185,118,.14);background:#081114;color:#8c9893!important;font-size:.31rem!important}
+
+/* Survey puzzle */
+.quest-puzzle-backdrop{
+  position:fixed;z-index:1380;inset:0;display:grid;place-items:center;padding:14px;
+  background:rgba(2,6,8,.88);backdrop-filter:blur(8px)
+}
+.quest-puzzle-backdrop[hidden]{display:none!important}
+.quest-puzzle{
+  width:min(720px,95vw);padding:18px;border:1px solid rgba(216,185,118,.18);
+  background:
+    radial-gradient(circle at 50% 0,rgba(177,141,68,.08),transparent 32%),
+    linear-gradient(180deg,#111918,#080e11);
+  box-shadow:0 28px 80px rgba(0,0,0,.65)
+}
+.quest-puzzle>header{display:flex;justify-content:space-between;gap:14px;align-items:flex-start;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.045)}
+.quest-puzzle header small{display:block;color:#8f7950;font-size:.31rem;font-weight:900;letter-spacing:.11em}
+.quest-puzzle header h2{margin:4px 0 0;color:#e6decc;font-family:Georgia,serif;font-size:1.05rem;font-weight:400}
+.quest-puzzle header button{width:34px;height:34px;border:1px solid rgba(255,255,255,.06);background:#081114;color:#7d8984}
+.quest-puzzle-clue{margin-top:12px;padding:10px 11px;border-left:2px solid #9b8249;background:#0a1315}
+.quest-puzzle-clue span{display:block;color:#876f48;font-size:.28rem;font-weight:900;letter-spacing:.09em}
+.quest-puzzle-clue p{margin:4px 0 0;color:#a0a9a5;font-family:Georgia,serif;font-size:.54rem;line-height:1.5}
+.quest-puzzle-board{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:14px}
+.quest-puzzle-board button{
+  min-height:112px;padding:10px 6px;border:1px solid rgba(216,185,118,.08);background:#081114;color:#aeb8b3;text-align:center
+}
+.quest-puzzle-board button:hover{border-color:rgba(216,185,118,.25);background:#121711}
+.quest-puzzle-board button.chosen{border-color:rgba(216,185,118,.3);background:#17170f}
+.quest-puzzle-board i{display:block;color:#cfb36c;font-size:1.45rem;font-style:normal}
+.quest-puzzle-board b{display:block;margin-top:6px;color:#c9d0cc;font-size:.38rem}.quest-puzzle-board small{display:block;margin-top:4px;color:#5d6a66;font-size:.26rem}
+.quest-puzzle-route{display:flex;justify-content:center;align-items:center;gap:8px;margin:16px 0 9px}
+.quest-puzzle-route span{display:grid;place-items:center;width:38px;height:38px;border:1px solid rgba(216,185,118,.1);border-radius:50%;background:#081114;color:#5d6a66;font-size:.62rem}
+.quest-puzzle-route span.filled{border-color:rgba(216,185,118,.3);color:#d3b874;background:#17170f}.quest-puzzle-route>i{color:#4d5a56;font-style:normal}
+#questPuzzleHint{margin:0 0 9px;color:#66736e;font-size:.35rem;text-align:center}#questPuzzleHint.wrong{color:#bd766a}
+.quest-puzzle-confirm{width:100%;min-height:42px;border:1px solid rgba(216,185,118,.22);background:#252014;color:#d9c488;font-size:.36rem;font-weight:900;letter-spacing:.08em}
+.quest-puzzle-confirm:disabled{opacity:.35}
+.quest-puzzle.solved{text-align:center;padding:30px}.quest-puzzle-solved{display:grid;place-items:center;width:76px;height:76px;margin:0 auto 12px;border:1px solid rgba(216,185,118,.22);border-radius:50%;color:#d2b36d;font-size:1.8rem}.quest-puzzle.solved>small{color:#8d784f;font-size:.32rem;font-weight:900;letter-spacing:.12em}.quest-puzzle.solved h2{margin:5px 0;color:#e8dfcc;font-family:Georgia,serif;font-size:1.3rem;font-weight:400}.quest-puzzle.solved p{max-width:520px;margin:0 auto;color:#7e8b86;font-size:.46rem;line-height:1.55}.quest-puzzle.solved button{width:min(300px,100%);min-height:44px;margin-top:15px;border:1px solid rgba(216,185,118,.23);background:#241f14;color:#dbc68e;font-size:.36rem;font-weight:900}
+
+/* Proper quest-complete screen */
+.quest-complete-card{
+  width:min(700px,95vw);padding:30px 28px;border:1px solid rgba(216,185,118,.2);
+  background:radial-gradient(circle at 50% 0,rgba(182,145,67,.13),transparent 34%),linear-gradient(180deg,#131912,#080d10);
+  box-shadow:0 30px 90px rgba(0,0,0,.7);text-align:center
+}
+.quest-complete-rune{display:grid;place-items:center;width:84px;height:84px;margin:0 auto 13px;border:1px solid rgba(216,185,118,.24);border-radius:50%;color:#d5b86f;font-size:2rem;box-shadow:inset 0 0 30px rgba(192,153,69,.08)}
+.quest-complete-card>small{display:block;color:#8ab98f;font-size:.34rem;font-weight:900;letter-spacing:.15em}
+.quest-complete-card h2{margin:6px 0;color:#eee6d3;font-family:Georgia,serif;font-size:1.65rem;font-weight:400}
+.quest-complete-card>p{max-width:540px;margin:0 auto;color:#7f8b86;font-size:.48rem;line-height:1.6}
+.quest-complete-rewards{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:16px 0}
+.quest-complete-rewards article{padding:11px;border:1px solid rgba(216,185,118,.08);background:#0a1112}.quest-complete-rewards span{display:block;color:#6d654e;font-size:.28rem;font-weight:900}.quest-complete-rewards b{display:block;margin-top:4px;color:#e0c77f;font-family:Georgia,serif;font-size:.88rem;font-weight:400}
+.quest-complete-unlock{padding:12px;border:1px solid rgba(128,88,161,.14);background:#0d0e14}.quest-complete-unlock small{display:block;color:#88699f;font-size:.28rem;font-weight:900;letter-spacing:.09em}.quest-complete-unlock h3{margin:4px 0;color:#d6cadf;font-family:Georgia,serif;font-size:.95rem;font-weight:400}.quest-complete-unlock p{margin:0;color:#65706e;font-size:.36rem}
+.quest-complete-card>button{width:min(300px,100%);min-height:44px;margin-top:14px;border:1px solid rgba(216,185,118,.22);background:#241f14;color:#d9c58d;font-size:.36rem;font-weight:900}
+
+@media(max-width:720px){
+  .quest-v2-hero{padding:16px 14px}.quest-v2-hero h2{font-size:1.28rem}.quest-points-medallion{width:58px;height:58px;flex-basis:58px}
+  .quest-v2-summary{padding:13px 14px 8px}.quest-v2-summary>p{font-size:.72rem}
+  .quest-stage-track{padding:6px 14px}.quest-stage-track>div{min-height:46px}
+  .quest-current-step{margin:10px 14px 0}.quest-current-step p{font-size:.6rem}.quest-current-step em{font-size:.48rem}
+  .quest-puzzle-backdrop{padding:0;align-items:end}.quest-puzzle{width:100%;max-height:92dvh;overflow:auto;padding:14px 12px calc(14px + env(safe-area-inset-bottom));border-left:0;border-right:0;border-bottom:0;border-radius:16px 16px 0 0}
+  .quest-puzzle-board{grid-template-columns:repeat(2,1fr)}.quest-puzzle-board button{min-height:96px}
+  .quest-puzzle-clue p{font-size:.68rem}.quest-puzzle-route{gap:5px}.quest-puzzle-route span{width:34px;height:34px}
+  #questPuzzleHint{font-size:.52rem}.quest-puzzle-confirm{min-height:48px;font-size:.5rem}
+  .quest-complete-card{width:100%;padding:24px 14px calc(18px + env(safe-area-inset-bottom));border-left:0;border-right:0;border-bottom:0;border-radius:18px 18px 0 0}
+  .quest-complete-rewards{grid-template-columns:repeat(3,1fr)}.quest-complete-card h2{font-size:1.35rem}.quest-complete-card>p{font-size:.68rem}.quest-complete-unlock p{font-size:.52rem}
+  .quest-complete-backdrop{align-items:end!important;padding:0!important}
+}
+@media(max-width:410px){
+  .quest-progress{grid-template-columns:1fr}.quest-puzzle-board{grid-template-columns:1fr 1fr}
+  .quest-complete-rewards{grid-template-columns:1fr}
+}
