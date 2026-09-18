@@ -150,7 +150,7 @@ function renderWorldRewards(){
 }
 async function claimReward(id){
   const {data,error}=await db.rpc('claim_world_boss_reward',{p_reward_id:id});if(error){alert(error.message||'Reward could not be claimed');return;}
-  state().activity.push(`World boss reward claimed from ${data.bossName}.`);await saveState();location.reload();
+  location.reload();
 }
 async function refreshAll(markSeen=false){await Promise.all([loadChat(markSeen),loadGroups(),loadWorld()]);}
 function bind(){
