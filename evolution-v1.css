@@ -286,3 +286,4 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:1px solid 
   .world-boss-grid{grid-template-columns:1fr}
 }
 .cb-slot-options em{display:block;margin-top:4px;font-style:normal;font-size:.45rem;color:#6d7c77}.cb-slot-options em.upgrade{color:#78cb91}.cb-slot-options em.downgrade{color:#c97768}.evo-recipe-sources{margin-top:9px!important;padding-top:8px;border-top:1px solid rgba(255,255,255,.04);font-size:.43rem!important;color:#65746f!important}.evo-recipe-sources span{display:block;margin-top:2px}.cb-character-tabs{overflow:auto;white-space:nowrap}.cb-character-tabs button{flex:0 0 auto;min-width:92px}
+.bank-summary{grid-template-columns:repeat(4,minmax(0,1fr))}.evo-resource-icon{font-size:1.6rem;color:#d5bb7e}.evo-bank-resource .bank-upgrade-chip{display:none}@media(max-width:760px){.bank-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
