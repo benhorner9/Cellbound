@@ -58,3 +58,9 @@
 @media(max-width:1050px){.cbf-body{grid-template-columns:minmax(0,1fr) 240px}.cbf-commands{grid-template-columns:repeat(3,minmax(0,1fr))}.cbf-header{grid-template-columns:1fr minmax(300px,.75fr) auto}}
 @media(max-width:780px){.cbf-overlay{padding:4px}.cbf-shell{width:100%;height:98vh}.cbf-header{grid-template-columns:1fr auto}.cbf-boss-hud{grid-column:1/-1;grid-row:2}.cbf-body{grid-template-columns:1fr}.cbf-side{display:none}.cbf-arena{min-height:460px}.cbf-command-wrap{padding-bottom:10px}.cbf-commands{grid-template-columns:repeat(2,minmax(0,1fr))}.cbf-cast-box{width:82%}}
 @media(max-width:520px){.cbf-shell{height:100vh}.cbf-overlay{padding:0}.cbf-arena{min-height:430px}.cbf-unit-core{width:38px;height:38px}.cbf-boss .cbf-unit-core{width:68px;height:68px}.cbf-unit-label{font-size:.39rem}.cbf-boss .cbf-unit-label{top:73px}.cbf-command-label small{display:none}.cbf-commands button{min-height:47px}.cbf-result-stats{grid-template-columns:1fr}}
+
+.evo-battlefield-report{grid-column:1/-1;display:grid;grid-template-columns:auto auto 1fr;gap:8px 12px;align-items:center;margin-top:9px;padding:8px 10px;border:1px solid rgba(116,207,196,.1);background:#0a1718}
+.evo-battlefield-report span{color:#72bdb4;font-size:.4rem;font-weight:1000;letter-spacing:.1em}
+.evo-battlefield-report b{color:#d4c18a;font-size:.48rem}
+.evo-battlefield-report small{color:#60716b;font-size:.42rem}
+@media(max-width:620px){.evo-battlefield-report{grid-template-columns:1fr}.evo-battlefield-report small{grid-column:1}}
