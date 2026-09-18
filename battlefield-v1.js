@@ -149,7 +149,7 @@ function spawnFloat(x,y,text,type='damage'){
 function hitUnit(u,amount,reason=''){
   if(!u||u.hp<=0)return;
   const defended=performance.now()<battle.defendUntil;
-  const dmg=Math.max(.5,amount*(defended?.55:1));u.hp=clamp(u.hp-dmg,0,100);
+  const dmg=Math.max(.5,amount*(defended ? .55 : 1));u.hp=clamp(u.hp-dmg,0,100);
   const el=document.querySelector(`[data-cbf-unit="${CSS.escape(u.id)}"]`);if(el){el.dataset.hit='1';setTimeout(()=>el.dataset.hit='0',180)}
   spawnFloat(u.x,u.y-4,'-'+Math.round(dmg),'damage');
   if(reason&&dmg>8)log(`${u.name} takes ${Math.round(dmg)}% from ${reason}.`,'bad');
@@ -288,7 +288,7 @@ function resolveMechanic(){
     else{battle.units.forEach(u=>hitUnit(u,22,'Anvilbreaker'));log('Anvilbreaker crashes through the unprepared party.','bad');flash()}
   }
   battle.metrics.mechanics++;
-  if(m.handled)battle.metrics.handled++;else battle.metrics.failed++;
+  if(m.handled)battle.metrics.handled++;else{battle.metrics.failed++;battle.metrics.failures.push(m.name)}
   clearMechanic();
   updateVisuals();
 }
@@ -342,7 +342,9 @@ function finish(success,reason){
   result.hidden=false;
   const condition=Object.fromEntries(battle.units.map(u=>[u.id,Math.max(0,Math.round(u.hp))]));
   const score=battle.metrics.mechanics?Math.round(battle.metrics.handled/battle.metrics.mechanics*100):100;
-  result.innerHTML=`<div class="cbf-result-card"><small>${success?'ENCOUNTER COMPLETE':'COMPANY DEFEATED'}</small><h3>${success?'Kael Falls':'The Warden Holds'}</h3><p>${esc(reason)}</p><div class="cbf-result-stats"><div><span>Mechanics handled</span><b>${battle.metrics.handled} / ${battle.metrics.mechanics}</b></div><div><span>Execution</span><b>${score}%</b></div><div><span>Fight time</span><b>${Math.round(battle.elapsed)}s</b></div></div><p>${success?'Your party carries its remaining condition deeper into The Ashen Vault.':'Failed mechanics still increase your company’s knowledge of Kael.'}</p><button data-cbf-result>${success?'CONTINUE INTO THE FURNACE →':'RETURN TO DUNGEON JOURNAL'}</button></div>`;
+  const firstFailure=battle.metrics.failures[0]||'';
+  const lesson=firstFailure==='Crushing Cleave'?'Move the tank around Kael before the cone resolves so the attack faces away from the party.':firstFailure==="Warden's Roar"||firstFailure==='Wardenbreaker'?'Hold an interrupt for Kael’s dangerous cast bar and fire it before the cast completes.':firstFailure==='Ashen Brand'?'Move the tank into the glowing red marker before Ashen Brand detonates.':firstFailure==='Anvilbreaker'?'Use Defensive Stance before the party-wide impact lands.':'Keep the tank and healer alive while responding to the highlighted mechanic command.';
+  result.innerHTML=`<div class="cbf-result-card"><small>${success?'ENCOUNTER COMPLETE':'COMPANY DEFEATED'}</small><h3>${success?'Kael Falls':'The Warden Holds'}</h3><p>${esc(reason)}</p><div class="cbf-result-stats"><div><span>Mechanics handled</span><b>${battle.metrics.handled} / ${battle.metrics.mechanics}</b></div><div><span>Execution</span><b>${score}%</b></div><div><span>Fight time</span><b>${Math.round(battle.elapsed)}s</b></div></div><p>${success?'Your party carries its remaining condition deeper into The Ashen Vault.':`<strong>Encounter lesson:</strong> ${esc(lesson)}<br><br>Failed mechanics still increase your company’s knowledge of Kael.`}</p><button data-cbf-result>${success?'CONTINUE INTO THE FURNACE →':'RETURN TO DUNGEON JOURNAL'}</button></div>`;
   result.querySelector('[data-cbf-result]').addEventListener('click',async()=>{
     const outcome={success,reason,partyCondition:condition,metrics:{...battle.metrics,execution:score,time:Math.round(battle.elapsed)},logs:battle.logs.map(x=>x.text)};
     const cb=battle.onComplete;closeBattle();if(cb)await cb(outcome);
@@ -364,7 +366,7 @@ function startKael(options={}){
     units:chars.map((c,i)=>({id:c.id,name:c.name,class:c.class,spec:c.spec,role:roleOf(c),icon:iconOf(c),x:pos[i].x,y:pos[i].y,hp:clamp(Number(condition[c.id]??100),12,100)})),
     bossHp:1000,bossMax:1000,elapsed:0,lastTick:performance.now(),nextMechanicAt:performance.now()+3600,mechanic:null,mechanicIndex:0,focusUntil:0,defendUntil:0,cellReadyAt:0,basicAttackClock:0,attackVisualClock:0,healClock:0,pressure:0,finished:false,
     logs:[{text:'The active five enter Kael’s chamber. Basic combat begins automatically.',tone:'info'},{text:'Watch the battlefield. Issue commands when Kael telegraphs a mechanic.',tone:''}],
-    metrics:{mechanics:0,handled:0,failed:0,damage:0,healing:0}
+    metrics:{mechanics:0,handled:0,failed:0,failures:[],damage:0,healing:0}
   };
   renderBattle();timer=setInterval(step,100);return true;
 }
