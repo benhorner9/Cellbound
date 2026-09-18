@@ -1,6 +1,6 @@
 const fs=require('fs');
 const path=require('path');
-const files=['index.html','styles.css','auth.js','guild.html','guild.css','bank.css','character-sheet.css','gear-system.css','foundations.css','economy-v2.css','social-v3.css','evolution-v1.css','gear-data.js','profession-data.js','guild-v4.js','character-sheet.js','gear-character-patch.js','character-foundations-patch.js','economy-v2.js','social-v3.js','evolution-v1.js'];
+const files=['index.html','styles.css','auth.js','guild.html','guild.css','bank.css','character-sheet.css','gear-system.css','foundations.css','economy-v2.css','social-v3.css','evolution-v1.css','dungeon-2d-v1.css','gear-data.js','profession-data.js','guild-v4.js','character-sheet.js','gear-character-patch.js','character-foundations-patch.js','economy-v2.js','social-v3.js','evolution-v1.js','dungeon-2d-v1.js'];
 const assets=['assets/gear/cellbound-gear-atlas.webp'];
 const out=path.join(__dirname,'dist');
 fs.rmSync(out,{recursive:true,force:true});
@@ -14,10 +14,11 @@ for(const file of files){
     const required=['rosterGrid','bankGrid','professionWorkshop','chatMessages','worldBossGrid','dungeonRoute','dungeonIntel','enterDungeonBtn','partySlots'];
     for(const id of required)if(!contents.includes(`id="${id}"`))throw new Error(`Missing required Evolution hook: ${id}`);
     if(!contents.includes('evolution-v1.css')||!contents.includes('evolution-v1.js'))throw new Error('Evolution Pass assets are not linked from guild.html');
+    if(!contents.includes('dungeon-2d-v1.css')||!contents.includes('dungeon-2d-v1.js'))throw new Error('Ashen Vault 2D viewer assets are not linked from guild.html');
   }
   if(file.endsWith('.html'))contents=contents.replace('</head>',`${touchFix}</head>`);
   fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,contents)
 }
 for(const file of assets){const src=path.join(__dirname,file),dest=path.join(out,file);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest)}
-console.log('Cellbound Evolution Pass 01 build complete: studio UI, dungeon expedition, persistent chat and tactical world encounters.');
+console.log('Cellbound build complete: studio UI, seamless Ashen Vault 2D viewer, persistent chat and tactical world encounters.');
 console.log('Evolution smoke gate passed: browser scripts parse and required UI hooks are present.');
