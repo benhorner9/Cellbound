@@ -11,6 +11,8 @@ let dirty=false;
 let currentId=null;
 let currentTab='overview';
 let activeSlot=null;
+let selectedTalentId=null;
+let selectedTalentSpec=null;
 
 const classMeta={
   Warrior:{icon:'⚔',accent:'#b86b55',primary:'Strength'},
@@ -131,23 +133,41 @@ function statBlock(c){
 }
 function equipmentSlot(c,slot){
   const item=c.equipment?.[slot];
+  const art=item?(G?.artHTML?.(item,48,'cb-slot-art')||item.icon||slotIcons[slot]||'◇'):(slotIcons[slot]||'◇');
   return `<button class="cb-equip-slot ${item?rarityClass(item):'cb-empty'}" data-slot="${slot}">
-    <span class="cb-slot-icon">${item?.icon||slotIcons[slot]||'◇'}</span>
-    <span class="cb-slot-copy"><small>${slot.replace(/(\d)/,' $1')}</small><b>${item?.name||'Empty'}</b>${item?.power?`<em>+${item.power} power</em>`:''}</span>
+    <span class="cb-slot-icon">${art}</span>
+    <span class="cb-slot-copy"><small>${slot.replace(/(\d)/,' $1')}</small><b>${item?.name||'Empty'}</b>${item?.power?`<em>+${item.power} power</em>`:''}${item?`<span class="cb-slot-ilvl">Item Level ${item.itemLevel||0}</span>`:'<span class="cb-slot-ilvl">Future slot</span>'}</span>
+  </button>`;
+}
+function coreLoadoutItem(c,slot){
+  const item=c.equipment?.[slot];
+  return `<button class="cb-core-item ${item?rarityClass(item):'cb-empty'}" data-slot="${slot}">
+    <span>${item?(G?.artHTML?.(item,68,'cb-core-art')||item.icon||slotIcons[slot]):slotIcons[slot]}</span>
+    <div><small>${slot}</small><b>${item?.name||'Empty'}</b><em>${item?`iLvl ${item.itemLevel||0} · +${item.power||0} Power`:'No item equipped'}</em></div>
   </button>`;
 }
 function paperDoll(c){
   const meta=classMeta[c.class]||{icon:'◇',accent:'#58d7cf'};
   const role=roleOf(c),stats=statBlock(c);
-  return `<div class="cb-paperdoll" style="--cb-accent:${meta.accent}">
-    <div class="cb-gear-column">${leftSlots.map(s=>equipmentSlot(c,s)).join('')}</div>
-    <div class="cb-avatar-stage">
-      <div class="cb-rune-ring"><span>${meta.icon}</span></div>
-      <div class="cb-hero-silhouette"><div class="cb-hero-head">${c.portrait}</div><div class="cb-hero-body"></div><div class="cb-hero-arms"></div><div class="cb-hero-legs"></div></div>
-      <div class="cb-stage-name"><b>${c.name}</b><span>${c.race||'Veyren'} · ${c.class} · ${c.spec}</span></div>
+  const itemLevel=window.CellboundGame?.characterItemLevel?.(c)||c.gear||0;
+  const equipped=[...leftSlots,...rightSlots].filter(slot=>c.equipment?.[slot]).length;
+  return `<div class="cb-paperdoll cb-loadout-screen" style="--cb-accent:${meta.accent}">
+    <div class="cb-gear-column cb-gear-left">${leftSlots.map(s=>equipmentSlot(c,s)).join('')}</div>
+    <section class="cb-loadout-stage">
+      <div class="cb-loadout-sigil"><span>${c.portrait||meta.icon}</span><i>${meta.icon}</i></div>
+      <small class="cb-loadout-kicker">ACTIVE ADVENTURER</small>
+      <h3>${c.name}</h3>
+      <p>${c.race||'Veyren'} · ${c.class} · ${c.spec}</p>
       <div class="cb-role-pill cb-role-${role}">${roleLabel(role)}</div>
-    </div>
-    <div class="cb-gear-column">${rightSlots.map(s=>equipmentSlot(c,s)).join('')}</div>
+      <div class="cb-loadout-summary">
+        <div><span>ITEM LEVEL</span><b>${itemLevel}</b></div>
+        <div><span>POWER</span><b>${c.power||0}</b></div>
+        <div><span>EQUIPPED</span><b>${equipped}/14</b></div>
+      </div>
+      <div class="cb-core-loadout-head"><span>CORE LOADOUT</span><small>Tap an item to manage the slot</small></div>
+      <div class="cb-core-loadout">${['Head','Chest','Weapon'].map(slot=>coreLoadoutItem(c,slot)).join('')}</div>
+    </section>
+    <div class="cb-gear-column cb-gear-right">${rightSlots.map(s=>equipmentSlot(c,s)).join('')}</div>
     <div class="cb-stats-panel">${Object.entries(stats).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('')}</div>
   </div>`;
 }
@@ -176,12 +196,43 @@ function treeNodeState(c,spec,node){
   const tierOk=spent>=node.tier*2;
   return {rank,available:prereq&&tierOk,complete:rank>=node.max};
 }
+function talentLockReason(c,spec,node,s){
+  if(s.complete)return'Maximum rank reached.';
+  if(node.req&&!(c.talents?.[spec]?.[node.req]>0))return'Requires '+node.req+'.';
+  const spent=totalSpent(c,spec),need=node.tier*2;
+  if(spent<need)return'Requires '+need+' points spent in this tree.';
+  if(!(c.talent>0))return'No talent points available.';
+  return'Ready to invest.';
+}
+function talentInspector(c,spec,node){
+  if(!node)return `<aside class="cb-talent-inspector empty"><span>SELECT A TALENT</span><h3>Inspect before you spend.</h3><p>Choose any talent in the tree — including locked talents — to see its effect and requirements.</p></aside>`;
+  const s=treeNodeState(c,spec,node),reason=talentLockReason(c,spec,node,s);
+  const canInvest=s.available&&!s.complete&&(c.talent>0);
+  const nextCopy=s.complete?'This talent is fully ranked.':node.max===1?'Spending one point unlocks this talent effect.':`Spending one point advances this talent to Rank ${s.rank+1} of ${node.max}.`;
+  return `<aside class="cb-talent-inspector ${canInvest?'investable':''}">
+    <div class="cb-talent-inspector-head"><span class="cb-inspector-icon">${node.icon}</span><div><small>TIER ${node.tier+1} · ${spec.toUpperCase()}</small><h3>${node.id}</h3><p>Rank ${s.rank} / ${node.max}</p></div></div>
+    <section><small>WHAT IT DOES</small><p>${node.desc}</p></section>
+    <section><small>NEXT INVESTMENT</small><p>${nextCopy} Each point also grants <b>+1 Power</b>.</p></section>
+    <div class="cb-talent-requirements">
+      <div><span>Tree requirement</span><b>${node.tier?node.tier*2+' points spent':'Available from Tier 1'}</b></div>
+      <div><span>Prerequisite</span><b>${node.req||'None'}</b></div>
+      <div><span>Status</span><b class="${canInvest?'ready':''}">${reason}</b></div>
+    </div>
+    <button class="cb-invest-talent" data-invest-talent="${node.id}" data-tree-spec="${spec}" ${canInvest?'':'disabled'}>${s.complete?'MAXIMUM RANK':canInvest?'SPEND 1 TALENT POINT':'UNAVAILABLE'}</button>
+  </aside>`;
+}
 function talentTree(c,spec){
   const nodes=trees[c.class]?.[spec]||[];
   const spent=totalSpent(c,spec);
+  let selected=nodes.find(n=>n.id===selectedTalentId&&selectedTalentSpec===spec);
+  if(!selected)selected=nodes[0]||null;
+  if(selected){selectedTalentId=selected.id;selectedTalentSpec=spec}
   return `<div class="cb-tree-shell">
-    <div class="cb-tree-head"><div><small>${c.class}</small><h3>${spec}</h3><p>${roleLabel(specs[c.class]?.[spec]||'dps')} specialisation</p></div><div class="cb-tree-points"><b>${c.talent||0}</b><span>points available</span><small>${spent} spent in tree</small></div></div>
-    <div class="cb-tree-grid">${[0,1,2,3,4].map(tier=>`<div class="cb-tier-line" style="--tier:${tier}"><span>Tier ${tier+1}</span></div>`).join('')}${nodes.map(node=>{const s=treeNodeState(c,spec,node);return `<button class="cb-talent-node ${s.available?'available':'locked'} ${s.complete?'complete':''}" style="--tier:${node.tier};--col:${node.col}" data-talent-node="${node.id}" data-tree-spec="${spec}" ${(!s.available||s.complete||!(c.talent>0))?'disabled':''}><span class="cb-node-icon">${node.icon}</span><b>${node.id}</b><em>${s.rank}/${node.max}</em><small>${node.desc}</small></button>`}).join('')}</div>
+    <div class="cb-tree-head"><div><small>${c.class}</small><h3>${spec}</h3><p>${roleLabel(specs[c.class]?.[spec]||'dps')} specialisation · Select a talent to inspect it before investing.</p></div><div class="cb-tree-points"><b>${c.talent||0}</b><span>points available</span><small>${spent} spent in tree</small></div></div>
+    <div class="cb-tree-layout">
+      <div class="cb-tree-grid">${[0,1,2,3,4].map(tier=>`<div class="cb-tier-line" style="--tier:${tier}"><span>Tier ${tier+1}</span></div>`).join('')}${nodes.map(node=>{const s=treeNodeState(c,spec,node),isSelected=selected?.id===node.id;return `<button class="cb-talent-node ${s.available?'available':'locked'} ${s.complete?'complete':''} ${isSelected?'selected':''}" style="--tier:${node.tier};--col:${node.col}" data-talent-node="${node.id}" data-tree-spec="${spec}" aria-pressed="${isSelected?'true':'false'}"><span class="cb-node-icon">${node.icon}</span><b>${node.id}</b><em>${s.rank}/${node.max}</em></button>`}).join('')}</div>
+      ${talentInspector(c,spec,selected)}
+    </div>
   </div>`;
 }
 function knowledgePanel(c){return `<div class="cb-knowledge-grid">${Object.entries(c.knowledge||{}).map(([id,val])=>`<article><div><span>${id.replace(/([a-z])([A-Z])/g,'$1 $2')}</span><b>${val}%</b></div><div class="cb-knowledge-bar"><i style="width:${val}%"></i></div></article>`).join('')}</div>`}
@@ -260,11 +311,11 @@ function investTalent(spec,nodeId){
 function changeSpec(spec){
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));
   if(!state||!c||!specs[c.class]?.[spec]||c.spec===spec)return;
-  c.spec=spec;removeFromParty(state,c.id);
+  c.spec=spec;selectedTalentId=null;selectedTalentSpec=spec;removeFromParty(state,c.id);
   state.activity=state.activity||[];state.activity.push(`${c.name} changed specialisation to ${spec} (${roleLabel(roleOf(c))}).`);
   writeState(state);renderSheet();
 }
-function openCharacter(id){currentId=id;currentTab='overview';activeSlot=null;renderSheet()}
+function openCharacter(id){currentId=id;currentTab='overview';activeSlot=null;selectedTalentId=null;selectedTalentSpec=null;renderSheet()}
 function closeCharacter(){modal.hidden=true;if(dirty)location.reload()}
 
 document.addEventListener('click',event=>{
@@ -275,7 +326,8 @@ document.addEventListener('click',event=>{
     const slot=event.target.closest('[data-slot]');if(slot){activeSlot=slot.dataset.slot;renderSheet();return}
     const closeSlot=event.target.closest('[data-close-slot]');if(closeSlot){activeSlot=null;renderSheet();return}
     const equip=event.target.closest('[data-equip-bank]');if(equip){equipItem(equip.dataset.equipBank,equip.dataset.equipSlot);return}
-    const node=event.target.closest('[data-talent-node]');if(node){investTalent(node.dataset.treeSpec,node.dataset.talentNode);return}
+    const node=event.target.closest('[data-talent-node]');if(node){selectedTalentId=node.dataset.talentNode;selectedTalentSpec=node.dataset.treeSpec;renderSheet();return}
+    const invest=event.target.closest('[data-invest-talent]');if(invest){investTalent(invest.dataset.treeSpec,invest.dataset.investTalent);return}
     const spec=event.target.closest('[data-spec-tab]');if(spec){changeSpec(spec.dataset.specTab);return}
     const close=event.target.closest('[data-close]');if(close){event.preventDefault();event.stopImmediatePropagation();closeCharacter();return}
   }
