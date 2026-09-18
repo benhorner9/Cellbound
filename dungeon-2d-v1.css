@@ -153,3 +153,96 @@ linear-gradient(155deg,rgba(255,255,255,.012),transparent 28%,rgba(255,255,255,.
 @keyframes cb2dDying{0%{transform:scale(1);filter:brightness(1)}45%{transform:scale(1.25);filter:brightness(2)}100%{transform:scale(.45);filter:brightness(.7);opacity:.15}}
 @keyframes cb2dDeathBurst{0%{width:12px;height:12px;opacity:.9}100%{width:64px;height:64px;opacity:0}}
 @keyframes cb2dTravelIn{0%{opacity:0;transform:translate(-50%,-45%) scale(.96)}20%,75%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-55%) scale(.98)}}
+
+
+/* Dungeon environment themes */
+.cb2d-environment{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none;transition:opacity .35s ease,filter .35s ease}
+.cb2d-arena.travelling .cb2d-environment{opacity:.42;filter:blur(1px)}
+.cb2d-room-tag{position:absolute;z-index:8;left:10px;top:10px;max-width:230px;padding:6px 8px;border:1px solid rgba(218,190,126,.07);background:rgba(5,9,10,.58);backdrop-filter:blur(5px);pointer-events:none}
+.cb2d-room-tag b{display:block;color:#b9aa86;font-family:Georgia,serif;font-size:.48rem;font-weight:400}
+.cb2d-room-tag small{display:block;margin-top:2px;color:#65726d;font-size:.34rem;line-height:1.35}
+.cb2d-prop{position:absolute;z-index:1;display:block;transform:translate(-50%,-50%) rotate(var(--rot,0deg)) scale(var(--scale,1));transform-origin:center;opacity:.72;filter:saturate(.78)}
+.cb2d-prop:before,.cb2d-prop:after{content:"";position:absolute;box-sizing:border-box}
+.cb2d-ambience{position:absolute;inset:0;z-index:2;overflow:hidden}
+.cb2d-ambient{position:absolute;left:var(--x);bottom:-12px;display:block;pointer-events:none}
+.cb2d-ambient.ash{width:3px;height:3px;border-radius:50%;background:rgba(190,184,164,.18);animation:cb2dAshRise var(--dur) linear infinite;animation-delay:var(--delay)}
+.cb2d-ambient.ember{width:3px;height:3px;border-radius:50%;background:rgba(219,122,66,.62);box-shadow:0 0 7px rgba(219,122,66,.35);animation:cb2dEmberRise var(--dur) ease-in infinite;animation-delay:var(--delay)}
+@keyframes cb2dAshRise{0%{transform:translate(0,0);opacity:0}15%{opacity:.45}85%{opacity:.22}100%{transform:translate(var(--drift),-500px);opacity:0}}
+@keyframes cb2dEmberRise{0%{transform:translate(0,0) scale(.7);opacity:0}18%{opacity:.85}100%{transform:translate(var(--drift),-430px) scale(1.15);opacity:0}}
+
+/* Ashen Vault base material */
+.cb2d-arena.theme-ashen{background:#090e10}
+.cb2d-arena.theme-ashen .cb2d-floor{background:
+radial-gradient(ellipse at 62% 52%,rgba(134,65,33,.075),transparent 27%),
+linear-gradient(155deg,rgba(255,255,255,.018),transparent 29%,rgba(0,0,0,.08) 31% 33%,transparent 35%),
+repeating-linear-gradient(0deg,rgba(218,190,126,.018) 0 1px,transparent 1px 72px),
+repeating-linear-gradient(90deg,rgba(218,190,126,.014) 0 1px,transparent 1px 94px),
+linear-gradient(180deg,#111819,#0a1012)}
+.cb2d-arena.theme-ashen .cb2d-floor:before{box-shadow:inset 0 0 90px rgba(0,0,0,.46)}
+
+/* Broken Gate */
+.cb2d-arena.room-broken-gate .cb2d-floor{background:
+radial-gradient(circle at 83% 50%,rgba(164,78,38,.10),transparent 16%),
+linear-gradient(18deg,transparent 0 47%,rgba(219,185,107,.025) 48% 49%,transparent 50%),
+repeating-linear-gradient(0deg,rgba(218,190,126,.016) 0 1px,transparent 1px 78px),
+linear-gradient(180deg,#121918,#091012)}
+.cb2d-prop.prop-gate{width:94px;height:178px;border:9px solid rgba(105,94,75,.34);border-bottom:0;border-radius:46px 46px 4px 4px;box-shadow:inset 0 0 0 3px rgba(0,0,0,.22),0 0 30px rgba(176,83,40,.06)}
+.cb2d-prop.prop-gate:before{inset:13px;border:2px solid rgba(203,177,113,.08);border-bottom:0;border-radius:34px 34px 0 0}
+.cb2d-prop.prop-gate:after{left:44px;top:10px;bottom:-4px;width:3px;background:rgba(66,61,52,.55);box-shadow:-22px 44px 0 rgba(66,61,52,.35),22px 44px 0 rgba(66,61,52,.35)}
+.cb2d-prop.prop-pillar,.cb2d-prop.prop-pillar-broken{width:25px;height:112px;background:linear-gradient(90deg,rgba(77,75,67,.55),rgba(126,116,92,.38),rgba(62,61,57,.52));border:1px solid rgba(205,183,126,.07);box-shadow:8px 8px 18px rgba(0,0,0,.28)}
+.cb2d-prop.prop-pillar:before,.cb2d-prop.prop-pillar-broken:before{left:-7px;right:-7px;top:-8px;height:11px;background:rgba(93,88,75,.62);border:1px solid rgba(205,183,126,.07)}
+.cb2d-prop.prop-pillar:after{left:-8px;right:-8px;bottom:-7px;height:11px;background:rgba(80,77,68,.6)}
+.cb2d-prop.prop-pillar-broken{height:70px;clip-path:polygon(0 12%,22% 2%,46% 13%,63% 0,100% 12%,100% 100%,0 100%)}
+.cb2d-prop.prop-rubble{width:48px;height:24px;border-radius:50%;background:
+radial-gradient(circle at 18% 60%,rgba(99,91,75,.54) 0 8px,transparent 9px),
+radial-gradient(circle at 48% 44%,rgba(77,74,66,.66) 0 9px,transparent 10px),
+radial-gradient(circle at 76% 66%,rgba(112,99,78,.46) 0 7px,transparent 8px)}
+.cb2d-prop.prop-chain{width:8px;height:112px;background:repeating-linear-gradient(180deg,rgba(103,101,91,.55) 0 7px,transparent 7px 13px);border-left:1px solid rgba(205,183,126,.08);border-right:1px solid rgba(205,183,126,.04)}
+.cb2d-prop.prop-chain:after{left:-4px;top:0;width:14px;height:14px;border:2px solid rgba(101,98,88,.55);border-radius:50%}
+.cb2d-prop.prop-brazier{width:28px;height:28px;border:3px solid rgba(126,103,69,.5);border-radius:50%;background:radial-gradient(circle,#d27a3f 0 8%,rgba(195,86,42,.22) 28%,transparent 68%);box-shadow:0 0 25px rgba(210,100,48,.12)}
+.cb2d-prop.prop-brazier:after{left:11px;top:23px;width:5px;height:30px;background:rgba(78,72,61,.6)}
+
+/* Hall / seals / forge */
+.cb2d-arena.room-hall-embers .cb2d-floor{background:
+radial-gradient(circle at 73% 50%,rgba(205,100,46,.10),transparent 19%),
+repeating-linear-gradient(90deg,transparent 0 119px,rgba(215,190,126,.022) 120px 121px),
+linear-gradient(180deg,#121a19,#0a1012)}
+.cb2d-prop.prop-vault-mark,.cb2d-prop.prop-seal-ring,.cb2d-prop.prop-forge-ring,.cb2d-prop.prop-heart-sigil{width:145px;height:145px;border:1px solid rgba(210,181,110,.09);border-radius:50%;box-shadow:inset 0 0 0 16px rgba(210,181,110,.018),inset 0 0 0 33px rgba(0,0,0,.08)}
+.cb2d-prop.prop-vault-mark:before,.cb2d-prop.prop-seal-ring:before,.cb2d-prop.prop-forge-ring:before,.cb2d-prop.prop-heart-sigil:before{left:50%;top:50%;width:80px;height:80px;border:1px dashed rgba(210,181,110,.08);border-radius:50%;transform:translate(-50%,-50%)}
+.cb2d-prop.prop-seal-ring{border-color:rgba(189,119,74,.14);box-shadow:inset 0 0 0 18px rgba(183,88,44,.025),0 0 35px rgba(178,75,39,.06)}
+.cb2d-prop.prop-statue{width:28px;height:78px;background:linear-gradient(180deg,rgba(105,100,84,.58),rgba(58,60,56,.64));clip-path:polygon(35% 0,65% 0,74% 20%,86% 33%,72% 100%,28% 100%,14% 33%,26% 20%)}
+.cb2d-prop.prop-statue:before{left:7px;top:-12px;width:14px;height:14px;border-radius:50%;background:rgba(105,100,84,.6)}
+
+/* Furnace rooms */
+.cb2d-arena.room-furnace-passage .cb2d-floor,.cb2d-arena.room-embermaw-forge .cb2d-floor{background:
+linear-gradient(90deg,transparent 0 25%,rgba(183,77,37,.045) 26% 28%,transparent 29% 64%,rgba(183,77,37,.04) 65% 67%,transparent 68%),
+radial-gradient(ellipse at 74% 51%,rgba(211,91,43,.13),transparent 23%),
+linear-gradient(180deg,#151918,#0a0f11)}
+.cb2d-prop.prop-furnace{width:75px;height:116px;border:5px solid rgba(86,76,65,.62);border-radius:22px 22px 3px 3px;background:linear-gradient(180deg,rgba(79,72,61,.42),rgba(25,28,28,.8));box-shadow:0 0 34px rgba(197,78,35,.08)}
+.cb2d-prop.prop-furnace:before{left:17px;right:17px;bottom:18px;height:38px;border:3px solid rgba(92,76,61,.7);border-radius:18px 18px 3px 3px;background:radial-gradient(ellipse at 50% 100%,rgba(225,94,41,.48),rgba(142,53,26,.17) 45%,transparent 70%);box-shadow:0 0 18px rgba(218,87,36,.18)}
+.cb2d-prop.prop-vent{width:42px;height:42px;border-radius:50%;border:4px double rgba(103,92,74,.5);background:radial-gradient(circle,rgba(214,96,45,.15),transparent 58%)}
+.cb2d-prop.prop-pipe{width:118px;height:13px;border:3px solid rgba(85,82,72,.5);border-radius:8px;background:linear-gradient(180deg,rgba(121,111,89,.2),rgba(44,47,44,.6))}
+.cb2d-prop.prop-ember-crack{width:115px;height:4px;background:linear-gradient(90deg,transparent,rgba(225,90,40,.48),rgba(221,133,69,.24),transparent);clip-path:polygon(0 50%,14% 0,31% 75%,49% 20%,68% 95%,84% 28%,100% 55%,100% 100%,0 100%);box-shadow:0 0 13px rgba(222,82,35,.16)}
+.cb2d-prop.prop-forge-ring{border-color:rgba(224,108,50,.17);box-shadow:inset 0 0 0 16px rgba(218,88,39,.035),0 0 45px rgba(207,75,31,.10)}
+
+/* Vault depths */
+.cb2d-arena.room-vault-depths .cb2d-floor{background:
+radial-gradient(circle at 68% 50%,rgba(101,72,111,.06),transparent 20%),
+linear-gradient(180deg,#101617,#080d0f)}
+.cb2d-prop.prop-coffer{width:61px;height:30px;border:2px solid rgba(112,101,79,.48);border-radius:4px;background:linear-gradient(180deg,rgba(89,80,65,.42),rgba(35,38,35,.72));box-shadow:4px 6px 15px rgba(0,0,0,.26)}
+.cb2d-prop.prop-coffer:before{left:7px;right:7px;top:9px;height:2px;background:rgba(192,164,100,.09)}
+.cb2d-prop.prop-soul-urn{width:24px;height:44px;border-radius:45% 45% 35% 35%;background:linear-gradient(90deg,rgba(76,70,72,.6),rgba(118,93,109,.36),rgba(55,55,58,.64));box-shadow:0 0 18px rgba(129,80,139,.05)}
+.cb2d-prop.prop-soul-urn:before{left:7px;top:-7px;width:10px;height:9px;border:2px solid rgba(92,81,87,.6);border-radius:4px}
+
+/* Final sanctum */
+.cb2d-arena.room-vaultheart-sanctum .cb2d-floor{background:
+radial-gradient(circle at 65% 50%,rgba(128,79,148,.10),transparent 18%),
+radial-gradient(circle at 65% 50%,rgba(199,109,59,.055),transparent 34%),
+linear-gradient(180deg,#111617,#080d0f)}
+.cb2d-prop.prop-vault-door{width:100px;height:190px;border:10px solid rgba(91,83,74,.58);border-bottom:0;border-radius:48px 48px 0 0;background:radial-gradient(circle at 50% 48%,rgba(128,82,144,.10),transparent 20%),linear-gradient(90deg,rgba(56,56,53,.7),rgba(77,70,61,.54),rgba(48,49,48,.72));box-shadow:0 0 42px rgba(118,72,139,.08)}
+.cb2d-prop.prop-vault-door:before{left:50%;top:48%;width:38px;height:38px;border:3px solid rgba(183,149,89,.16);border-radius:50%;transform:translate(-50%,-50%);box-shadow:inset 0 0 0 6px rgba(0,0,0,.13)}
+.cb2d-prop.prop-heart-sigil{width:178px;height:178px;border-color:rgba(151,99,170,.18);box-shadow:inset 0 0 0 18px rgba(151,99,170,.025),0 0 46px rgba(133,73,154,.08)}
+.cb2d-prop.prop-containment{width:31px;height:92px;border:2px solid rgba(112,101,88,.45);border-radius:16px;background:linear-gradient(90deg,rgba(52,55,54,.7),rgba(98,78,105,.34),rgba(48,51,50,.7));box-shadow:0 0 22px rgba(127,78,143,.06)}
+.cb2d-prop.prop-containment:before{left:6px;right:6px;top:16px;bottom:16px;border:1px solid rgba(165,113,183,.15);border-radius:12px;background:radial-gradient(ellipse,rgba(143,88,162,.09),transparent)}
+.cb2d-prop.prop-crystal{width:24px;height:51px;background:linear-gradient(135deg,rgba(158,107,177,.55),rgba(78,73,91,.25));clip-path:polygon(50% 0,100% 36%,75% 100%,25% 100%,0 36%);box-shadow:0 0 24px rgba(145,89,166,.12)}
+.cb2d-arena.boss-room .cb2d-environment{filter:saturate(.92) contrast(1.02)}
