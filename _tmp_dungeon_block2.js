@@ -307,4 +307,66 @@ function battleEvent(ev){
       else{flashBattle('PHASE SHIFT','phase');battleLog(`${b.stage.title} becomes more aggressive.`,'phase')}
       break;
     case'partyBurst':
-      dps.forEach(u=>{const c=party().find(x=>x.id===u.charId);battleAction(u.id,battleAbility(c,'burst'),'dps')});if(boss)setBossHp(b.bossHp-18);else b.enemies.forEach
+      dps.forEach(u=>{const c=party().find(x=>x.id===u.charId);battleAction(u.id,battleAbility(c,'burst'),'dps')});if(boss)setBossHp(b.bossHp-18);else b.enemies.forEach(u=>setBattleHp(u.id,Math.max(0,u.hp-35)));battleLog('The party commits its burst window.','dps');break;
+    case'finalBurn':
+      if(ev.fail){
+        battleLog('The formation collapses under overlapping mechanics.','danger');flashBattle('FORMATION BREAK','danger');
+        b.party.filter(u=>u.role!=='tank').forEach((u,i)=>damageBattle(u.id,35+i*4,'OVERWHELMED'));
+        setBossHp(Math.max(5,b.bossHp-6));
+      }else{
+        dps.forEach(u=>battleAction(u.id,'FINISHER','success'));setBossHp(0);flashBattle('BOSS DEFEATED','success');battleLog(`${b.stage.title} is defeated.`,'success');
+      }
+      break;
+    case'packFinish':
+      if(ev.fail){
+        battleLog('The pack breaks through the formation.','danger');b.party.forEach((u,i)=>damageBattle(u.id,18+i*3,'PRESSURE'));
+      }else{
+        b.enemies.forEach(u=>setBattleHp(u.id,0));flashBattle('PACK CLEARED','success');battleLog('Enemy pack cleared.','success');
+      }
+      break;
+    case'finish':
+      if(boss&&b.success&&b.bossHp>0)setBossHp(0);
+      finishBattlePresentation();break;
+  }
+}
+function battleFrame(ts){
+  const b=expeditionBattle;if(!b||!b.running)return;
+  if(!b.lastTs)b.lastTs=ts;
+  const delta=Math.min(80,ts-b.lastTs);b.lastTs=ts;
+  if(!b.paused)b.elapsed+=delta/1000*b.speed;
+  updateBattleCast();
+  while(b.eventIndex<b.timeline.length&&b.timeline[b.eventIndex].at<=b.elapsed){battleEvent(b.timeline[b.eventIndex]);b.eventIndex++}
+  if(b.running)b.raf=requestAnimationFrame(battleFrame);
+}
+function finishBattlePresentation(){
+  const b=expeditionBattle;if(!b||b.finishing)return;b.finishing=true;b.running=false;cancelAnimationFrame(b.raf);
+  stopBattleCast(false);clearTelegraphs();
+  setTimeout(()=>{if(expeditionBattle===b)resolveExpeditionStage('auto',b.success)},450);
+}
+function startBattleEngine(stage){
+  const root=expeditionModal(),partyModels=battlePartyModels(),enemyModels=battleEnemyModels(stage),success=Math.random()*100<stageChance(stage,stage.best);
+  const units=[...partyModels,...enemyModels];
+  expeditionBattle={root,stage,party:partyModels,enemies:enemyModels,units,success,bossHp:100,facing:180,elapsed:0,lastTs:0,eventIndex:0,timeline:battleTimeline(stage,success),running:true,paused:false,speed:1,cast:null,log:[],finishing:false,startPos:Object.fromEntries(partyModels.map(x=>[x.id,[x.x,x.y]])),raf:0,mechanics:battleMechanicNames(stage)};
+  const arena=root.querySelector('.evo2d-arena');if(arena)arena.dataset.stage=stage.id;
+  battleLog('Party enters combat.','phase');
+  expeditionBattle.raf=requestAnimationFrame(battleFrame);
+}
+function cancelBattle(){
+  if(expeditionBattle){expeditionBattle.running=false;cancelAnimationFrame(expeditionBattle.raf);expeditionBattle=null}
+}
+function renderBattleUnit(unit){
+  const enemy=unit.role==='enemy'||unit.id==='boss'||unit.id.startsWith('mob-');
+  const role=enemy?'enemy':unit.role,size=unit.size||'player';
+  return `<div class="evo2d-unit ${enemy?'enemy':'party'} role-${role} ${size}" data-battle-unit="${unit.id}" style="left:${unit.x}%;top:${unit.y}%">
+    <div class="evo2d-unit-cast"></div><div class="evo2d-dot"><span class="evo2d-facing"></span></div>
+    <div class="evo2d-unit-label"><b>${esc(unit.name)}</b><small>${enemy?(unit.size==='trash'?'ENEMY':unit.size==='elite'?'ELITE':'BOSS'):dungeonRoleLabel(unit.role)}</small></div>
+    <div class="evo2d-unit-hp"><i style="width:${unit.hp}%"></i></div><div class="evo2d-unit-action"></div>
+  </div>`;
+}
+function renderPartyFrame(unit){
+  const c=party().find(x=>x.id===unit.charId);
+  return `<div class="evo2d-party-frame role-${unit.role}" data-frame="${unit.id}"><span class="evo2d-role-pip"></span><div><b>${esc(unit.name)}</b><small>${esc(c?.class||'')} · ${esc(c?.spec||'')} · ${dungeonRoleLabel(unit.role)}</small><div class="evo2d-frame-hp"><i style="width:${unit.hp}%"></i></div></div><strong>${Math.round(unit.hp)}%</strong></div>`;
+}
+function startExpedition(){
+  if(!partyAvailable()||partyIlvl()<DUNGEON.requiredIlvl)return;
+  ensureState();cancelB
