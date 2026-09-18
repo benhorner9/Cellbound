@@ -88,7 +88,7 @@ function move(id,x,y,ms){const e=$('[data-unit="'+id+'"]');if(!e)return;e.style.
 function spawn(s){
  $('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
  const spots=[[27,38],[23,61],[18,26],[18,49],[18,73]];
- const max=s.kind==='final'?1350:s.kind==='boss'?950:s.kind==='event'?260:160;
+ const max=s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120;
  run.enemyMax=s.enemies.map(()=>max);run.enemyHp=s.enemies.map(()=>max);
  party().forEach((c,i)=>{addUnit('p-'+c.id,c.name,'party '+role(c),4,50+(i-2)*4,'');setTimeout(()=>{move('p-'+c.id,spots[i][0],spots[i][1],850);const bar=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(bar)bar.style.width=hp(c.id)+'%'},40)});
  s.enemies.forEach((n,i)=>{const boss=s.enemies.length===1&&(s.kind==='boss'||s.kind==='final');const y=s.enemies.length===1?50:30+i*(40/Math.max(1,s.enemies.length-1));addUnit('e-'+i,n,boss?'enemy boss':'enemy',92,y,boss?'big':'');setTimeout(()=>move('e-'+i,68,y,850),60)});
@@ -199,7 +199,7 @@ async function finishCombat(s,tok){
  run.allowKill=run.stageOutcome||!(s.kind==='boss'||s.kind==='final');
  if(run.allowKill){
    let guard=0;
-   while(tok===token&&enemyIndex()>=0&&guard<28){await delay(180);guard++}
+   while(tok===token&&enemyIndex()>=0&&guard<36){await delay(180);guard++}
  }else await delay(700);
  run.combatActive=false
 }
