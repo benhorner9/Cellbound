@@ -1,0 +1,13 @@
+.release-gate{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:20px;background:rgba(2,5,7,.96);backdrop-filter:blur(16px)}
+.release-gate[hidden]{display:none}
+.release-gate section{width:min(560px,94vw);padding:30px;border:1px solid rgba(216,185,118,.22);background:linear-gradient(180deg,#111b1e,#081014);box-shadow:0 30px 100px #000;text-align:center}
+.release-gate small{color:#ad9566;font-size:.48rem;font-weight:900;letter-spacing:.16em}
+.release-gate h2{margin:9px 0 10px;font-family:Georgia,serif;font-size:2rem;font-weight:400;color:#e7e4d8}
+.release-gate p{margin:0 auto;max-width:430px;color:#84928c;font-size:.62rem;line-height:1.65}
+.release-builds{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0}
+.release-builds span{padding:10px;border:1px solid rgba(255,255,255,.05);background:#081115;color:#65736d;font-size:.43rem;text-transform:uppercase;letter-spacing:.08em}
+.release-builds b{display:block;margin-top:4px;color:#cdbb84;font-size:.52rem;text-transform:none}
+.release-gate button{width:100%;height:48px;border:1px solid rgba(216,185,118,.32);background:linear-gradient(180deg,#30291a,#211c13);color:#ead8a2;font-size:.56rem;font-weight:900;letter-spacing:.05em}
+.release-gate button:disabled{opacity:.55}
+.release-gate em{display:block;margin-top:10px;color:#58645f;font-size:.43rem;font-style:normal}
+@media(max-width:560px){.release-builds{grid-template-columns:1fr}.release-gate section{padding:22px}.release-gate h2{font-size:1.55rem}}
