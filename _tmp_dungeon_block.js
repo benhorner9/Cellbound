@@ -205,4 +205,102 @@ function spawnBattleAdds(){
 }
 function killBattleAdds(){
   if(!expeditionBattle)return;
-  expeditionBattle.units.filter(x=>x.add).forEach(x=>{setBattleHp(x.id,0);battleAction(x.id,'DEFEATED','success')
+  expeditionBattle.units.filter(x=>x.add).forEach(x=>{setBattleHp(x.id,0);battleAction(x.id,'DEFEATED','success')});
+  setTimeout(()=>battleDom()?.querySelectorAll('.evo2d-unit.add').forEach(x=>x.remove()),700);
+  expeditionBattle.units=expeditionBattle.units.filter(x=>!x.add);
+}
+function partyByRole(role){return expeditionBattle?.party.find(x=>x.role===role)}
+function dpsUnits(){return expeditionBattle?.party.filter(x=>x.role==='dps')||[]}
+function battleEvent(ev){
+  const b=expeditionBattle;if(!b)return;
+  const m=b.mechanics,tank=partyByRole('tank'),healer=partyByRole('healer'),dps=dpsUnits(),boss=b.stage.kind==='boss'||b.stage.kind==='final';
+  switch(ev.type){
+    case'engage':
+      battleLog(`${tank?.name||'The tank'} establishes threat.`,'tank');
+      if(boss){setBattleFacing(180);battleAction('boss','TARGET: TANK','warning');battleAction(tank?.id,battleAbility(party().find(c=>c.id===tank?.charId),'taunt'),'tank')}
+      else b.enemies.forEach((e,i)=>setBattlePos(e.id,58+(i%2)*6,34+(i*12)%40,650));
+      break;
+    case'partyAttack':
+      dps.forEach((u,i)=>{const c=party().find(x=>x.id===u.charId);battleAction(u.id,battleAbility(c,'attack'),'dps')});
+      if(tank){const c=party().find(x=>x.id===tank.charId);battleAction(tank.id,battleAbility(c,'attack'),'tank')}
+      if(boss)setBossHp(Math.max(4,b.bossHp-(ev.late?15:13)));else b.enemies.forEach((e,i)=>setBattleHp(e.id,Math.max(8,e.hp-(22+i*2))));
+      battleLog('Damage rotation begins.','dps');
+      break;
+    case'packGather':
+      battleLog(`${tank?.name||'Tank'} gathers the pack and turns it away from the group.`,'tank');
+      if(tank){setBattlePos(tank.id,48,50);battleAction(tank.id,battleAbility(party().find(c=>c.id===tank.charId),'taunt'),'tank')}
+      b.enemies.forEach((e,i)=>setBattlePos(e.id,56+(i%2)*4,39+(i%3)*11,500));
+      break;
+    case'tankBuster':
+      if(!tank)return;
+      startBattleCast(m.tank,1.35,false,'boss');
+      battleAction(tank.id,battleAbility(party().find(c=>c.id===tank.charId),'defensive'),'tank');
+      battleLog(`${tank.name} commits a defensive cooldown for ${m.tank}.`,'tank');
+      setTimeout(()=>{if(expeditionBattle!==b)return;stopBattleCast(false);damageBattle(tank.id,ev.late?22:17,m.tank);flashBattle('BLOCKED','tank')},780/Math.max(1,b.speed));
+      break;
+    case'heal':
+      if(!healer)return;
+      const hc=party().find(c=>c.id===healer.charId),targets=[tank,...dps].filter(Boolean).sort((a,z)=>a.hp-z.hp);
+      battleAction(healer.id,battleAbility(hc,targets[0]?.hp<55?'groupHeal':'heal'),'heal');
+      targets.slice(0,targets[0]?.hp<55?4:2).forEach((u,i)=>healBattle(u.id,i?8:16,battleAbility(hc,'heal')));
+      battleLog(`${healer.name} stabilises the party.`,'heal');
+      break;
+    case'coneStart':
+      startBattleCast(m.cone,2.2,false,'boss');addConeTelegraph(m.cone);
+      if(tank){setBattlePos(tank.id,53,24);setBattlePos('boss',63,39);setBattleFacing(215);battleAction(tank.id,'REPOSITIONING','tank')}
+      battleLog(`${tank?.name||'Tank'} rotates the enemy away from the party.`,'tank');
+      break;
+    case'coneResolve':
+      stopBattleCast(false);clearTelegraphs('cone');flashBattle(m.cone,ev.fail?'danger':'warning');
+      if(tank)damageBattle(tank.id,18,m.cone);
+      if(ev.fail&&dps[0]){damageBattle(dps[0].id,42,'CAUGHT IN CONE');battleLog(`${dps[0].name} is caught by ${m.cone}.`,'danger')}
+      else battleLog(`${m.cone} is contained on the tank.`,'success');
+      if(tank)setBattlePos(tank.id,45,50);setBattlePos('boss',65,50);setBattleFacing(180);
+      if(boss)setBossHp(b.bossHp-9);
+      break;
+    case'groundStart':
+      startBattleCast(m.ground,1.8,false,'boss');
+      [...dps,healer].filter(Boolean).forEach((u,i)=>{addCircleTelegraph(u.x,u.y,76,m.ground);setBattlePos(u.id,20+(i*13)%45,18+(i%2)*62,650)});
+      battleLog('Ground markers appear. The party spreads.','warning');
+      break;
+    case'groundResolve':
+      stopBattleCast(false);flashBattle(m.ground,ev.fail?'danger':'warning');
+      if(ev.fail&&dps[1]){damageBattle(dps[1].id,48,m.ground);batteLog(`${dps[1].name} reacts late and is hit.`,'danger')}
+      else battleLog('All marked players clear the danger zones.','success');
+      clearTelegraphs('circle');
+      b.party.forEach(u=>{const start=b.startPos[u.id];if(start)setBattlePos(u.id,start[0],start[1],700)});
+      if(boss)setBossHp(b.bossHp-10);
+      break;
+    case'addsSpawn':
+      spawnBattleAdds();battleLog(`${m.adds} enter the arena.`,'warning');flashBattle('ADDS SPAWN','warning');
+      break;
+    case'addsGather':
+      if(tank){setBattlePos(tank.id,67,50);battleAction(tank.id,battleAbility(party().find(c=>c.id===tank.charId),'taunt'),'tank')}
+      b.units.filter(x=>x.add).forEach((u,i)=>setBattlePos(u.id,64+(i%2)*4,43+i*7,550));
+      battleLog(`${tank?.name||'Tank'} taunts and gathers the adds.`,'tank');
+      break;
+    case'addsBurn':
+      dps.forEach(u=>battleAction(u.id,'AOE BURST','dps'));killBattleAdds();if(tank)setBattlePos(tank.id,45,50);batteLog('The damage dealers burn the add pack down.','success');if(boss)setBossHp(b.bossHp-8);break;
+    case'enemyCast':
+      startBattleCast(m.cast,2.5,true,'boss');battleLog(`Priority cast: ${m.cast}.`,'warning');break;
+    case'interrupt':{
+      const interrupter=dps.find(u=>party().find(c=>c.id===u.charId)?.class!=='Priest')||dps[0];
+      if(ev.fail){
+        battleLog(`${m.cast} completes — interrupt missed.`,'danger');stopBattleCast(false);flashBattle('CAST COMPLETED','danger');
+        b.party.forEach(u=>damageBattle(u.id,u.role==='tank'?18:28,m.cast));
+      }else{
+        if(interrupter){const c=party().find(x=>x.id===interrupter.charId);battleAction(interrupter.id,battleAbility(c,'interrupt'),'success')}
+        stopBattleCast(true);battleLog(`${interrupter?.name||'DPS'} lands the interrupt.`,'success');
+      }
+      if(boss)setBossHp(b.bossHp-8);
+      break;
+    }
+    case'lineStart':
+      startBattleCast(m.cone,1.7,false,'boss');addLineTelegraph(m.cone);batteLog('A lethal beam tracks across the room.','warning');
+      b.party.forEach((u,i)=>setBattlePos(u.id,u.x,15+(i*17)%70,600));break;
+    case'lineResolve':
+      stopBattleCast(false);clearTelegraphs('line');flashBattle('CORE BEAM',ev.fail?'danger':'warning');
+      if(ev.fail&&dps[2]){damageBattle(dps[2].id,55,'CORE BEAM');battleLog(`${dps[2].name} is clipped by the beam.`,'danger')}else battleLog('The party clears the beam path.','success');
+      b.party.forEach(u=>{const p=b.startPos[u.id];if(p)setBattlePos(u.id,p[0],p[1],700)});setBossHp(b.bossHp-8);break;
+    case'phase':
+      if(b.stage.kind==='final')
