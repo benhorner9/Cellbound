@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const $=s=>document.querySelector(s);
-let Game=null,db=null,timer=null,busy=false,lastRequired=null;
+let Game=null,db=null,timer=null,busy=false,lastRequired=null,pendingInfo=null;
 const currentBuild=()=>String(window.CELLBOUND_BUILD||'development');
 
 function overlay(){
@@ -25,7 +25,28 @@ async function loadUpdate(){
   url.searchParams.set('t',Date.now().toString());
   location.replace(url.href);
 }
+function playerBusy(){
+  const dungeon=$('#cb2dBackdrop');
+  const legacyAttempt=$('#attemptModal');
+  const legacyDungeon=$('#evoExpeditionBackdrop');
+  const character=$('#characterModal');
+  const bank=$('#bankModal');
+  return Boolean(
+    (dungeon&&!dungeon.hidden)||
+    (legacyAttempt&&!legacyAttempt.hidden)||
+    (legacyDungeon&&!legacyDungeon.hidden)||
+    (character&&!character.hidden)||
+    (bank&&!bank.hidden)
+  );
+}
 function showGate(info){
+  if(playerBusy()){
+    pendingInfo=info;
+    document.documentElement.dataset.updatePending='1';
+    return;
+  }
+  pendingInfo=null;
+  delete document.documentElement.dataset.updatePending;
   const el=overlay();lastRequired=info.build_id;
   $('#releaseGateMessage').textContent=info.message||'A new Cellbound update is ready. Load the latest version to continue.';
   $('#releaseCurrentBuild').textContent=short(currentBuild());
@@ -33,8 +54,14 @@ function showGate(info){
   el.hidden=false;document.documentElement.dataset.updateRequired='1';
 }
 function hideGate(){
+  pendingInfo=null;
   const el=$('#cellboundUpdateGate');if(el)el.hidden=true;
+  delete document.documentElement.dataset.updatePending;
   delete document.documentElement.dataset.updateRequired;
+}
+function flushPending(){
+  if(!pendingInfo||playerBusy())return;
+  const info=pendingInfo;pendingInfo=null;showGate(info);
 }
 async function check(){
   if(busy||!db)return;busy=true;
@@ -59,7 +86,7 @@ async function init(){
   db=Game.getSupabase?.();
   if(!db)return;
   await check();
-  timer=setInterval(check,5000);
+  timer=setInterval(()=>{check();flushPending()},5000);
   window.addEventListener('beforeunload',()=>clearInterval(timer),{once:true});
 }
 init();
