@@ -180,7 +180,7 @@ async function createParty(){
   const ids=draft.map(()=>uid());
   const roster=draft.map((d,i)=>({
     id:ids[i],name:d.name.trim(),race:d.race,raceTrait:raceById(d.race).trait,class:d.klass,spec:d.spec,role:d.role,
-    level:1,power:d.role==='tank'?30:d.role==='healer'?27:29,talent:1,portrait:initials(d.name),
+    level:1,xp:0,power:d.role==='tank'?30:d.role==='healer'?27:29,talent:1,portrait:initials(d.name),
     knowledge:{ashwarden:0,embermaw:0,vaultheart:0},equipment:emptyEquipment(),gearItems:['Empty','Empty','Empty'],
     cellShock:0,cellShockLockedUntil:null,professions:[null,null],tutorialNew:true,onboardingGearIssued:false
   }));
