@@ -2,13 +2,14 @@
 'use strict';
 
 const STORAGE='cellbound-management-reboot-v3';
+const G=window.CellboundGear;
 const modal=document.getElementById('characterModal');
 const detail=document.getElementById('characterDetail');
 if(!modal||!detail)return;
 
 let dirty=false;
 let currentId=null;
-let currentTab='equipment';
+let currentTab='overview';
 let activeSlot=null;
 
 const classMeta={
@@ -160,11 +161,12 @@ function canUse(c,item){return item.classes==='all'||!item.classes||item.classes
 function slotPicker(state,c,slot){
   const candidates=(state.bank||[]).filter(item=>canUse(c,item)&&possibleSlots(item).includes(slot));
   const current=c.equipment?.[slot];
+  const currentIlvl=Number(current?.itemLevel)||0;
   return `<div class="cb-slot-drawer">
     <div class="cb-slot-drawer-head"><div><small>${slot}</small><h3>${current?.name||'Empty slot'}</h3></div><button data-close-slot>×</button></div>
-    ${current?`<div class="cb-current-item ${rarityClass(current)}"><span>${current.icon||slotIcons[slot]}</span><div><b>${current.name}</b><small>${current.rarity||'Starter'}${current.power?` · +${current.power} power`:''}</small></div></div>`:''}
+    ${current?`<div class="cb-current-item ${rarityClass(current)}"><span>${G?.artHTML?.(current,56)||current.icon||slotIcons[slot]}</span><div><b>${current.name}</b><small>${current.rarity||'Starter'} · iLvl ${currentIlvl}${current.power?` · +${current.power} power`:''}</small></div></div>`:''}
     <p>Compatible Guild Bank items</p>
-    <div class="cb-slot-options">${candidates.length?candidates.map(item=>`<button data-equip-bank="${item.id}" data-equip-slot="${slot}" class="${rarityClass(item)}"><span>${item.icon||'◇'}</span><div><b>${item.name}</b><small>${item.rarity} · +${item.power} power · ×${item.quantity||1}</small></div></button>`).join(''):'<div class="cb-no-items">No compatible items are currently stored in the Bank.</div>'}</div>
+    <div class="cb-slot-options">${candidates.length?candidates.sort((a,b)=>(b.itemLevel||0)-(a.itemLevel||0)).map(item=>{const delta=(Number(item.itemLevel)||0)-currentIlvl;return `<button data-equip-bank="${item.id}" data-equip-slot="${slot}" class="${rarityClass(item)}"><span>${G?.artHTML?.(item,48)||item.icon||'◇'}</span><div><b>${item.name}</b><small>${item.rarity} · iLvl ${item.itemLevel||0} · ×${item.quantity||1}</small><em class="${delta>0?'upgrade':delta<0?'downgrade':''}">${delta===0?'No Item Level change':delta>0?`+${delta} Item Level`:`${delta} Item Level`}</em></div></button>`}).join(''):'<div class="cb-no-items">No compatible items are currently stored in the Bank.</div>'}</div>
   </div>`;
 }
 function totalSpent(c,spec){return Object.values(c.talents?.[spec]||{}).reduce((a,b)=>a+(Number(b)||0),0)}
@@ -184,6 +186,30 @@ function talentTree(c,spec){
 }
 function knowledgePanel(c){return `<div class="cb-knowledge-grid">${Object.entries(c.knowledge||{}).map(([id,val])=>`<article><div><span>${id.replace(/([a-z])([A-Z])/g,'$1 $2')}</span><b>${val}%</b></div><div class="cb-knowledge-bar"><i style="width:${val}%"></i></div></article>`).join('')}</div>`}
 function specTabs(c){return Object.keys(specs[c.class]||{}).map(spec=>`<button class="cb-spec-tab ${c.spec===spec?'active':''}" data-spec-tab="${spec}">${spec}<small>${roleLabel(specs[c.class][spec])}</small></button>`).join('')}
+function overviewPanel(c,state){
+  const meta=classMeta[c.class]||{primary:'Strength'},stats=statBlock(c),role=roleLabel(roleOf(c));
+  const ilvl=window.CellboundGame?.characterItemLevel?.(c)||c.gear||0;
+  const active=[state?.party?.tank,state?.party?.healer,...(state?.party?.dps||[])].includes(c.id);
+  const avg=Object.values(c.knowledge||{});const knowledge=avg.length?Math.round(avg.reduce((a,b)=>a+(Number(b)||0),0)/avg.length):0;
+  return `<div class="cb-profile-overview"><section class="cb-profile-panel"><h3>Adventurer Overview</h3><div class="cb-profile-stats"><div><span>Role</span><b>${role}</b></div><div><span>Item Level</span><b>${ilvl}</b></div><div><span>Cell Shock</span><b>${Math.round(c.cellShock||0)}%</b></div><div><span>Knowledge</span><b>${knowledge}%</b></div><div><span>${meta.primary}</span><b>${stats[meta.primary]}</b></div><div><span>Stamina</span><b>${stats.Stamina}</b></div><div><span>Armour</span><b>${stats.Armour}</b></div><div><span>Status</span><b>${active?'Active Five':'Reserve'}</b></div></div><p>${c.name} is a Level ${c.level} ${c.class} specialising in ${c.spec}. Their current equipment and experience determine whether they are ready for the next expedition.</p></section><section class="cb-profile-panel"><h3>Current Loadout</h3>${['Head','Chest','Weapon'].map(slot=>{const item=c.equipment?.[slot];return `<div class="cb-history-entry"><b>${slot}</b><br>${item?.name||'Empty'} · iLvl ${item?.itemLevel||0}</div>`}).join('')}</section></div>`;
+}
+function professionsPanel(c){
+  const ent=window.CellboundGame?.getEntitlements?.()||{professionSlots:1,member:false};
+  return `<div class="cb-profession-profile">${[0,1].map(i=>{const p=c.professions?.[i],locked=i>=ent.professionSlots;return `<article><small>PROFESSION ${i+1}</small><b>${locked?'Membership Slot':p?.name||'Unlearned'}</b><span>${locked?'Unlocks with membership':p?`Skill ${p.level}/100`:'Visit Professions to learn a trade.'}</span></article>`}).join('')}</div>`;
+}
+function historyPanel(c,state){
+  const entries=(state?.activity||[]).filter(x=>String(x).includes(c.name)).slice(-14).reverse();
+  const reports=(state?.reports||[]).filter(r=>(r.knowledgeGain||[]).some(k=>k.name===c.name)).slice(0,6);
+  return `<div class="cb-character-history">${entries.map(x=>`<div class="cb-history-entry"><b>Guild Record</b><br>${x}</div>`).join('')}${reports.map(r=>`<div class="cb-history-entry"><b>${r.success?'Victory':'Wipe'} · ${new Date(r.at).toLocaleDateString()}</b><br>Party iLvl ${Math.round(r.partyItemLevel||0)} · Knowledge gained ${r.knowledgeGain.find(k=>k.name===c.name)?.gain||0}%.</div>`).join('')||(!entries.length?'<div class="cb-no-items">No notable history recorded yet.</div>':'')}</div>`;
+}
+function sheetBody(state,c){
+  if(currentTab==='overview')return overviewPanel(c,state);
+  if(currentTab==='equipment')return `${paperDoll(c)}${activeSlot?slotPicker(state,c,activeSlot):''}`;
+  if(currentTab==='talents')return `<div class="cb-spec-tabs">${specTabs(c)}</div>${talentTree(c,c.spec)}`;
+  if(currentTab==='professions')return professionsPanel(c);
+  if(currentTab==='history')return historyPanel(c,state);
+  return knowledgePanel(c);
+}
 function renderSheet(){
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));
   if(!state||!c)return;
@@ -191,8 +217,8 @@ function renderSheet(){
   const roles=[...new Set(Object.values(specs[c.class]||{}).map(roleLabel))].join(' / ');
   detail.innerHTML=`<div class="cb-sheet" style="--cb-accent:${meta.accent}">
     <header class="cb-sheet-header"><div class="cb-header-crest">${meta.icon}</div><div><small>LEVEL ${c.level} · ${roles}</small><h2>${c.name}</h2><p>${c.class} · ${c.spec} · Power ${c.power} · Gear ${c.gear}</p></div><div class="cb-header-points"><b>${c.talent||0}</b><span>Talent points</span></div></header>
-    <nav class="cb-character-tabs"><button data-sheet-tab="equipment" class="${currentTab==='equipment'?'active':''}">Equipment</button><button data-sheet-tab="talents" class="${currentTab==='talents'?'active':''}">Talents</button><button data-sheet-tab="knowledge" class="${currentTab==='knowledge'?'active':''}">Knowledge</button></nav>
-    <main class="cb-sheet-body">${currentTab==='equipment'?`${paperDoll(c)}${activeSlot?slotPicker(state,c,activeSlot):''}`:currentTab==='talents'?`<div class="cb-spec-tabs">${specTabs(c)}</div>${talentTree(c,c.spec)}`:knowledgePanel(c)}</main>
+    <nav class="cb-character-tabs"><button data-sheet-tab="overview" class="${currentTab==='overview'?'active':''}">Overview</button><button data-sheet-tab="equipment" class="${currentTab==='equipment'?'active':''}">Equipment</button><button data-sheet-tab="talents" class="${currentTab==='talents'?'active':''}">Talents</button><button data-sheet-tab="professions" class="${currentTab==='professions'?'active':''}">Professions</button><button data-sheet-tab="knowledge" class="${currentTab==='knowledge'?'active':''}">Knowledge</button><button data-sheet-tab="history" class="${currentTab==='history'?'active':''}">History</button></nav>
+    <main class="cb-sheet-body">${sheetBody(state,c)}</main>
   </div>`;
   modal.hidden=false;
 }
@@ -237,7 +263,7 @@ function changeSpec(spec){
   state.activity=state.activity||[];state.activity.push(`${c.name} changed specialisation to ${spec} (${roleLabel(roleOf(c))}).`);
   writeState(state);renderSheet();
 }
-function openCharacter(id){currentId=id;currentTab='equipment';activeSlot=null;renderSheet()}
+function openCharacter(id){currentId=id;currentTab='overview';activeSlot=null;renderSheet()}
 function closeCharacter(){modal.hidden=true;if(dirty)location.reload()}
 
 document.addEventListener('click',event=>{
