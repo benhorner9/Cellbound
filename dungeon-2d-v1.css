@@ -252,3 +252,68 @@ linear-gradient(180deg,#111617,#080d0f)}
 .cb2d-prop.prop-containment:before{left:6px;right:6px;top:16px;bottom:16px;border:1px solid rgba(165,113,183,.15);border-radius:12px;background:radial-gradient(ellipse,rgba(143,88,162,.09),transparent)}
 .cb2d-prop.prop-crystal{width:24px;height:51px;background:linear-gradient(135deg,rgba(158,107,177,.55),rgba(78,73,91,.25));clip-path:polygon(50% 0,100% 36%,75% 100%,25% 100%,0 36%);box-shadow:0 0 24px rgba(145,89,166,.12)}
 .cb2d-arena.boss-room .cb2d-environment{filter:saturate(.92) contrast(1.02)}
+
+
+/* Dungeon loot reward screen */
+.cb2d-end.cb2d-loot-screen{position:absolute;z-index:80;inset:0;display:block;overflow:auto;padding:0;border:0;background:
+radial-gradient(circle at 50% 10%,rgba(203,158,72,.11),transparent 26%),
+linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blur(9px)}
+.cb2d-loot-wrap{width:min(980px,calc(100% - 36px));margin:0 auto;padding:28px 0 34px}
+.cb2d-loot-head{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px 0 22px;border-bottom:1px solid rgba(216,185,118,.13)}
+.cb2d-loot-head small{display:block;color:#9e895e;font-size:.42rem;font-weight:900;letter-spacing:.15em}
+.cb2d-loot-head h3{margin:5px 0 4px;color:#ebe4cf;font-family:Georgia,serif;font-size:1.8rem;font-weight:400}
+.cb2d-loot-head p{margin:0;color:#74827d;font-size:.5rem;line-height:1.5}
+.cb2d-loot-complete{display:flex;align-items:center;gap:9px;min-width:154px;padding:11px 13px;border:1px solid rgba(105,199,139,.18);background:rgba(20,51,31,.33);color:#79d39a;font-size:1.1rem}
+.cb2d-loot-complete span{color:#8cb39a;font-size:.4rem;font-weight:900;letter-spacing:.1em;line-height:1.25}
+
+.cb2d-loot-currency{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 0}
+.cb2d-loot-currency article{padding:14px;border:1px solid rgba(216,185,118,.09);background:linear-gradient(180deg,rgba(26,27,21,.78),rgba(10,18,20,.86))}
+.cb2d-loot-currency span{display:block;color:#847454;font-size:.38rem;font-weight:900;letter-spacing:.11em}
+.cb2d-loot-currency b{display:block;margin:4px 0 2px;color:#e5cc83;font-family:Georgia,serif;font-size:1.25rem;font-weight:400}
+.cb2d-loot-currency small{color:#68766f;font-size:.39rem}
+
+.cb2d-loot-section{margin-top:18px}
+.cb2d-loot-title{display:flex;justify-content:space-between;gap:14px;align-items:flex-end;margin-bottom:7px;padding-bottom:7px;border-bottom:1px solid rgba(255,255,255,.045)}
+.cb2d-loot-title span{color:#c4b386;font-size:.44rem;font-weight:900;letter-spacing:.11em}
+.cb2d-loot-title small{color:#586660;font-size:.38rem}
+.cb2d-loot-gear{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.cb2d-loot-item{position:relative;display:grid;grid-template-columns:86px 1fr;gap:12px;align-items:center;min-height:105px;padding:11px;border:1px solid rgba(216,185,118,.1);background:linear-gradient(135deg,#0d1719,#0a1114);overflow:hidden}
+.cb2d-loot-item:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#92866a}
+.cb2d-loot-item.rarity-uncommon:before{background:#69aa76;box-shadow:0 0 12px rgba(105,170,118,.25)}
+.cb2d-loot-item.rarity-rare:before{background:#629bd0;box-shadow:0 0 13px rgba(98,155,208,.3)}
+.cb2d-loot-item.rarity-epic:before{background:#a77ac8;box-shadow:0 0 15px rgba(167,122,200,.3)}
+.cb2d-loot-item.rarity-legendary:before{background:#d89352;box-shadow:0 0 17px rgba(216,147,82,.34)}
+.cb2d-loot-art{display:grid;place-items:center;width:78px;height:78px;border:1px solid rgba(216,185,118,.1);background:#081013}
+.cb2d-loot-item small{display:block;color:#887856;font-size:.37rem;font-weight:800;letter-spacing:.07em}
+.cb2d-loot-item h4{margin:3px 0;color:#ded9c9;font-family:Georgia,serif;font-size:.76rem;font-weight:500}
+.cb2d-loot-item p{margin:0;color:#718079;font-size:.42rem}
+.cb2d-loot-item em{display:inline-block;margin-top:7px;padding:3px 5px;border:1px solid rgba(105,199,139,.12);background:rgba(22,52,33,.25);color:#7db592;font-size:.35rem;font-style:normal;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+
+.cb2d-loot-materials{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.cb2d-loot-material{display:grid;grid-template-columns:36px 1fr auto;gap:8px;align-items:center;padding:10px;border:1px solid rgba(255,255,255,.045);background:#091316}
+.cb2d-loot-material>strong{display:grid;place-items:center;width:34px;height:34px;border:1px solid rgba(216,185,118,.09);background:#101819;color:#c7b06f;font-size:.92rem}
+.cb2d-loot-material small{display:block;color:#796b4e;font-size:.34rem;letter-spacing:.06em}
+.cb2d-loot-material h4{margin:2px 0;color:#c7cfca;font-size:.47rem}
+.cb2d-loot-material p{margin:0;color:#5b6963;font-size:.36rem}
+.cb2d-loot-material>b{color:#dfca8c;font-size:.6rem}
+.cb2d-loot-empty{grid-column:1/-1;padding:18px;border:1px dashed rgba(255,255,255,.05);color:#596761;font-size:.43rem;text-align:center}
+
+.cb2d-loot-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:22px;padding-top:15px;border-top:1px solid rgba(216,185,118,.09)}
+.cb2d-loot-actions button{min-width:170px;min-height:45px;padding:0 14px;border:1px solid rgba(216,185,118,.15);background:#0d1719;color:#b8c2bd;font-size:.43rem;font-weight:900;letter-spacing:.06em}
+.cb2d-loot-actions button.primary{border-color:rgba(216,185,118,.3);background:linear-gradient(180deg,#30291a,#211c13);color:#ead79f}
+.cb2d-loot-actions button:hover{filter:brightness(1.08)}
+@media(max-width:760px){
+ .cb2d-loot-wrap{width:calc(100% - 22px);padding-top:18px}
+ .cb2d-loot-head{align-items:flex-start;flex-direction:column}
+ .cb2d-loot-complete{min-width:0}
+ .cb2d-loot-currency{grid-template-columns:1fr 1fr 1fr}
+ .cb2d-loot-gear{grid-template-columns:1fr}
+ .cb2d-loot-materials{grid-template-columns:1fr 1fr}
+ .cb2d-loot-actions{flex-direction:column}
+ .cb2d-loot-actions button{width:100%}
+}
+@media(max-width:480px){
+ .cb2d-loot-currency,.cb2d-loot-materials{grid-template-columns:1fr}
+ .cb2d-loot-item{grid-template-columns:70px 1fr}
+ .cb2d-loot-art{width:64px;height:64px}
+}
