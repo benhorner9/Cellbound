@@ -5,10 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#0b1015">
 <title>Cellbound — Guild Command</title>
-<link rel="stylesheet" href="./guild.css?v=4">
-<link rel="stylesheet" href="./bank.css?v=4">
-<link rel="stylesheet" href="./character-sheet.css?v=4">
-<link rel="stylesheet" href="./gear-system.css?v=4">
+<link rel="stylesheet" href="./guild.css?v=5">
+<link rel="stylesheet" href="./bank.css?v=5">
+<link rel="stylesheet" href="./character-sheet.css?v=5">
+<link rel="stylesheet" href="./gear-system.css?v=6">
+<link rel="stylesheet" href="./foundations.css?v=1">
+<link rel="stylesheet" href="./economy-v2.css?v=1">
 </head>
 <body>
 <div class="app-shell">
@@ -18,52 +20,86 @@
       <button class="nav-btn active" data-view="overview"><span>⌂</span>Overview</button>
       <button class="nav-btn" data-view="roster"><span>♟</span>Roster</button>
       <button class="nav-btn" data-view="bank"><span>▦</span>Bank</button>
+      <button class="nav-btn" data-view="professions"><span>⚒</span>Professions</button>
+      <button class="nav-btn" data-view="trading"><span>⇄</span>Trading Post</button>
       <button class="nav-btn" data-view="content"><span>⚔</span>Content</button>
       <button class="nav-btn" data-view="party"><span>◆</span>Party Builder</button>
       <button class="nav-btn" data-view="reports"><span>▤</span>Reports</button>
       <button class="nav-btn locked"><span>✦</span>Raids <em>LOCKED</em></button>
       <button class="nav-btn locked"><span>◎</span>PvP <em>LOCKED</em></button>
     </nav>
-    <div class="season-card"><small>FOUNDING SEASON</small><b>Week 1</b><span>Build your first dungeon team.</span></div>
+    <div class="season-card"><small>FOUNDING SEASON</small><b>Week 1</b><span>Build, gear and manage your first five.</span></div>
     <button id="signOut" class="sign-out">Sign out</button>
   </aside>
 
   <main class="main">
     <header class="topbar">
-      <div><small>THE GUILDMASTER'S DESK</small><h1 id="pageTitle">Command Overview</h1></div>
-      <div class="resource-strip"><div><span>Guild Renown</span><b id="renown">120</b></div><div><span>Gold</span><b id="gold">1,840</b></div><div><span>Roster</span><b id="rosterCount">9 / 12</b></div><div><span>Bank</span><b id="bankCount">0</b></div></div>
+      <div><small>THE GUILDMASTER'S DESK</small><h1 id="pageTitle">Command Overview</h1><span id="syncStatus" class="sync-status">Loading…</span></div>
+      <div class="resource-strip">
+        <div><span>Guild Renown</span><b id="renown">120</b></div>
+        <div><span>Gold</span><b id="gold">1,840</b></div>
+        <div><span>Party iLvl</span><b id="partyItemLevelTop">—</b></div>
+        <div><span>Roster</span><b id="rosterCount">5 / 5</b></div>
+        <div><span>Account</span><b id="membershipStatus">STANDARD</b></div>
+        <div><span>Bank</span><b id="bankCount">0</b></div>
+      </div>
     </header>
 
     <section id="overview" class="view active">
       <div class="hero-card">
-        <div><small>CELLBOUND</small><h2>Your heroes fight.<br>You build the team that wins.</h2><p>Recruit, gear and develop adventurers. Learn encounters through failure. Build a roster capable of clearing dungeons, raids and eventually ranked PvP.</p></div>
-        <div class="hero-stat"><span>Current Objective</span><b>Form your first 5-player party</b><button data-jump="party">BUILD PARTY →</button></div>
+        <div><small>CELLBOUND</small><h2>Your heroes fight.<br>You build the team that wins.</h2><p>Manage a five-character party, develop individual builds, improve Item Level and decide who is ready for the next encounter.</p></div>
+        <div class="hero-stat"><span>Current Objective</span><b>Prepare your active 5-player party</b><button data-jump="party">MANAGE PARTY →</button></div>
       </div>
       <div class="dashboard-grid">
-        <article class="panel"><div class="panel-head"><div><small>ROSTER HEALTH</small><h3>Ready Adventurers</h3></div><b class="good">9 READY</b></div><div id="overviewRoster" class="mini-roster"></div></article>
-        <article class="panel"><div class="panel-head"><div><small>NEXT CONTENT</small><h3>The Ashen Vault</h3></div><b>5 PLAYER</b></div><div class="dungeon-preview"><div class="dungeon-art"><span>THE ASHEN VAULT</span></div><div><p>An abandoned dwarven storehouse now occupied by ash-cursed creatures.</p><div class="boss-pips"><span class="active"></span><span></span><span></span></div><button data-jump="content">VIEW DUNGEON →</button></div></div></article>
+        <article class="panel"><div class="panel-head"><div><small>ACTIVE ROSTER</small><h3>Your Adventurers</h3></div><b class="good">5 PARTY SLOTS</b></div><div id="overviewRoster" class="mini-roster"></div></article>
+        <article class="panel"><div class="panel-head"><div><small>NEXT CONTENT</small><h3>The Ashen Vault</h3></div><b>ITEM LEVEL GATED</b></div><div class="dungeon-preview"><div class="dungeon-art"><span>THE ASHEN VAULT</span></div><div><p>Dungeon access now checks the equipment strength of the whole active party, not one over-geared hero.</p><div class="boss-pips"><span class="active"></span><span></span><span></span></div><button data-jump="content">VIEW DUNGEON →</button></div></div></article>
         <article class="panel activity-panel"><div class="panel-head"><div><small>GUILD LOG</small><h3>Recent Activity</h3></div></div><div id="activityLog" class="activity-log"></div></article>
       </div>
     </section>
 
     <section id="roster" class="view">
-      <div class="section-intro"><div><small>YOUR ADVENTURERS</small><h2>Roster</h2><p>Every character develops independently through levels, equipment, talents and encounter knowledge.</p></div><div class="filters"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="tank">Tanks</button><button class="filter" data-filter="healer">Healers</button><button class="filter" data-filter="dps">Damage</button></div></div>
+      <div class="section-intro"><div><small>YOUR ADVENTURERS</small><h2>Roster</h2><p>Standard accounts command 5 roster slots. Membership expands the roster to 10 while the active combat party remains 5.</p></div><div class="filters"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="tank">Tanks</button><button class="filter" data-filter="healer">Healers</button><button class="filter" data-filter="dps">Damage</button></div></div>
       <div id="rosterGrid" class="roster-grid"></div>
     </section>
 
     <section id="bank" class="view">
-      <div class="section-intro"><div><small>GUILD STORAGE</small><h2>Bank</h2><p>Boss loot is stored here first. You decide which adventurer receives each upgrade.</p></div></div>
+      <div class="section-intro"><div><small>GUILD STORAGE</small><h2>Bank</h2><p>Boss loot is stored here first. Item Level belongs to the item, while rarity describes its quality.</p></div></div>
       <div id="bankSummary" class="bank-summary"></div>
       <div id="bankGrid" class="bank-grid"></div>
     </section>
 
+    <section id="professions" class="view">
+      <div class="section-intro"><div><small>CRAFTING & GATHERING</small><h2>Professions</h2><p>Each adventurer develops their own trade skills. Crafting earns profession experience; dungeon victories provide the reagents.</p></div><b class="economy-badge">SKILL 1–100</b></div>
+      <div class="profession-layout">
+        <aside class="panel profession-roster-panel"><div class="panel-head"><div><small>ADVENTURERS</small><h3>Profession Slots</h3></div></div><div id="professionCharacterList" class="profession-character-list"></div></aside>
+        <div class="profession-main">
+          <article class="panel"><div class="panel-head"><div><small>REAGENT VAULT</small><h3>Dungeon Materials</h3></div></div><div id="reagentGrid" class="reagent-grid"></div></article>
+          <article class="panel workshop-panel"><div class="panel-head"><div><small>WORKSHOP</small><h3 id="workshopTitle">Choose an Adventurer</h3></div></div><div id="professionWorkshop" class="profession-workshop"></div></article>
+          <article class="panel"><div class="panel-head"><div><small>CRAFTED STOCK</small><h3>Consumables & Runes</h3></div></div><div id="craftedInventory" class="crafted-inventory"></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="trading" class="view">
+      <div class="section-intro"><div><small>PLAYER ECONOMY</small><h2>Trading Post</h2><p>Buy and sell tradeable gear, reagents and crafted goods. A 5% sale tax removes gold from the economy.</p></div><button id="refreshTrading" class="ghost-btn">REFRESH MARKET</button></div>
+      <div class="trading-layout">
+        <div class="trading-main">
+          <article class="panel trading-market"><div class="panel-head"><div><small>LIVE LISTINGS</small><h3>Market</h3></div><div id="tradeFilters" class="trade-filters"><button class="filter active" data-trade-filter="all">All</button><button class="filter" data-trade-filter="gear">Gear</button><button class="filter" data-trade-filter="material">Reagents</button><button class="filter" data-trade-filter="consumable">Crafted</button><button class="filter" data-trade-filter="recipe">Recipes</button></div></div><div id="tradeListings" class="trade-listings"></div></article>
+        </div>
+        <aside class="trading-side">
+          <article class="panel sell-panel"><div class="panel-head"><div><small>SELL</small><h3>Create Listing</h3></div></div><form id="tradeSellForm" class="trade-sell-form"><label>Item<select id="tradeSellItem"></select></label><label>Quantity<input id="tradeSellQuantity" type="number" min="1" value="1"></label><label>Price per item<input id="tradeSellPrice" type="number" min="1" value="50"></label><button type="submit">LIST ITEM</button><p id="tradeSellHint">Choose an item from your Bank, reagent vault or crafted stock.</p></form></article>
+          <article class="panel"><div class="panel-head"><div><small>YOUR SALES</small><h3>My Listings</h3></div></div><div id="myTradeListings" class="my-trade-listings"></div></article>
+        </aside>
+      </div>
+    </section>
+
     <section id="content" class="view">
-      <div class="section-intro"><div><small>PVE CONTENT</small><h2>The Ashen Vault</h2><p>Dungeon · 5 players · Tier 1/2 gear</p></div><div class="content-status"><span>Progress</span><b id="dungeonProgress">0 / 3 bosses</b></div></div>
+      <div class="section-intro"><div><small>PVE CONTENT</small><h2>The Ashen Vault</h2><p>Dungeon · 5 players · Party Item Level progression</p></div><div class="content-status"><span>Progress</span><b id="dungeonProgress">0 / 3 bosses</b></div></div>
       <div id="bossList" class="boss-list"></div>
     </section>
 
     <section id="party" class="view">
-      <div class="section-intro"><div><small>GROUP MANAGEMENT</small><h2>Party Builder</h2><p>Build a balanced 5-player team. Encounter knowledge belongs to individual characters, so experience matters.</p></div><button id="autoFill" class="ghost-btn">AUTO-FILL</button></div>
+      <div class="section-intro"><div><small>GROUP MANAGEMENT</small><h2>Party Builder</h2><p>Build 1 Tank, 1 Healer and 3 Damage. Item Level, Cell Shock and roster access are validated before an attempt can begin.</p></div><button id="autoFill" class="ghost-btn">AUTO-FILL</button></div>
       <div class="party-layout">
         <div class="formation-panel panel">
           <div class="panel-head"><div><small>FORMATION</small><h3>5-Player Dungeon Party</h3></div><b id="readinessLabel">NOT READY</b></div>
@@ -76,7 +112,7 @@
     </section>
 
     <section id="reports" class="view">
-      <div class="section-intro"><div><small>ENCOUNTER HISTORY</small><h2>Attempt Reports</h2><p>Every wipe should teach you something. Review failures, knowledge gains and loot here.</p></div></div>
+      <div class="section-intro"><div><small>ENCOUNTER HISTORY</small><h2>Attempt Reports</h2><p>Wipes teach encounter knowledge but now also add Cell Shock. PvE victories do not remove it.</p></div></div>
       <div id="reportsList" class="reports-list"></div>
     </section>
   </main>
@@ -87,9 +123,14 @@
 <div id="attemptModal" class="modal-backdrop" hidden><section class="attempt-modal"><div id="attemptStage"></div></section></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
-<script src="./gear-data.js?v=4"></script>
-<script src="./guild-v3.js?v=4"></script>
-<script src="./character-sheet.js?v=4"></script>
-<script src="./gear-character-patch.js?v=4"></script>
+<script src="./gear-data.js?v=7"></script>
+<script src="./profession-data.js?v=1"></script>
+<script src="./guild-v4.js?v=2"></script>
+<script src="./character-sheet.js?v=5"></script>
+<script src="./gear-character-patch.js?v=6"></script>
+<script src="./character-foundations-patch.js?v=1"></script>
+<script src="./economy-v2.js?v=1"></script>
 </body>
 </html>
+
+<!-- Batch 1 progressive gear art -->

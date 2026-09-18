@@ -48,20 +48,26 @@ function rollDungeonLoot(source='Dungeon',tier2Chance=.25){
   const base=pool[Math.floor(Math.random()*pool.length)];
   return {...base,source};
 }
-function artStyle(item,size=64){
-  if(!item)return'';
+function artCoordinates(item,size=64){
+  if(!item)return null;
   const canonical=byName(item.name)||byId(item.itemId)||item;
   const classIndex=Number.isInteger(canonical.classIndex)?canonical.classIndex:CLASS_ORDER.indexOf(canonical.class);
   const slotIndex=Number.isInteger(canonical.slotIndex)?canonical.slotIndex:SLOT_ORDER.indexOf(canonical.slot);
   const rowIndex=Number.isInteger(canonical.rowIndex)?canonical.rowIndex:Math.max(0,(canonical.tier||1)-1);
-  if(classIndex<0||slotIndex<0)return'';
-  const col=classIndex*3+slotIndex;
-  return `width:${size}px;height:${size}px;background-image:url('./assets/gear/cellbound-gear-atlas.webp');background-size:${21*size}px ${3*size}px;background-position:-${col*size}px -${rowIndex*size}px;`;
+  if(classIndex<0||slotIndex<0)return null;
+  return {canonical,col:classIndex*3+slotIndex,row:rowIndex,size};
+}
+function artStyle(item,size=64){
+  const pos=artCoordinates(item,size);
+  if(!pos)return'';
+  return `display:inline-block;position:relative;overflow:hidden;width:${size}px;height:${size}px;min-width:${size}px;min-height:${size}px;background:#070b0e;`;
 }
 function artHTML(item,size=64,extra=''){
-  const canonical=byName(item?.name)||byId(item?.itemId)||item;
-  if(!canonical)return`<span class="gear-art gear-art-empty ${extra}">◇</span>`;
-  return `<span class="gear-art tier-${canonical.tier||1} ${extra}" style="${artStyle(canonical,size)}" aria-label="${canonical.name}"></span>`;
+  const pos=artCoordinates(item,size);
+  const canonical=pos?.canonical||byName(item?.name)||byId(item?.itemId)||item;
+  if(!pos||!canonical)return`<span class="gear-art gear-art-empty ${extra}" style="display:inline-grid;width:${size}px;height:${size}px;place-items:center">◇</span>`;
+  const glyph=canonical.slot==='Head'?'⛑':canonical.slot==='Chest'?'▣':'⚔';
+  return `<span class="gear-art tier-${canonical.tier||1} ${extra}" style="${artStyle(canonical,size)}" aria-label="${canonical.name}" title="${canonical.name}"><span class="gear-art-fallback" aria-hidden="true">${glyph}</span><img class="gear-art-sprite" src="./assets/gear/cellbound-gear-atlas.webp?v=3" alt="${canonical.name}" draggable="false" style="position:absolute;max-width:none;width:${21*size}px;height:${3*size}px;left:-${pos.col*size}px;top:-${pos.row*size}px"></span>`;
 }
 window.CellboundGear={CLASS_ORDER,SLOT_ORDER,TIER_META,NAMES,items,byId,byName,starterSet,poolForTier,rollDungeonLoot,artStyle,artHTML};
 })();
