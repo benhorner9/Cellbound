@@ -410,4 +410,40 @@ function renderExpedition(){
 async function resolveExpeditionStage(command='auto',forcedSuccess=null){
   if(!expedition||expedition.resolved)return;
   expedition.resolved=true;
-  const stage=DUNGEON.stages[expedition.stage],success=forcedSuccess??expeditionBattle?.
+  const stage=DUNGEON.stages[expedition.stage],success=forcedSuccess??expeditionBattle?.success??(Math.random()*100<stageChance(stage,stage.best));
+  const result=$('#evoExpeditionResult');
+  if(success){
+    const dmg=Math.floor(Math.random()*8)+5;
+    party().forEach(c=>expedition.condition[c.id]=clamp(expeditionCondition(c.id)-dmg,10,100));
+    const knowledge=gainKnowledge(stage,true),reward=stage.bossId?expeditionLoot(stage):{loot:null,reagents:[]};
+    if(stage.bossId)state().bossKills[stage.bossId]=true;
+    if(stage.id==='kael')state().gold+=35;
+    if(stage.id==='embermaw')state().gold+=55;
+    expedition.log.push(`${stage.title} cleared by the party.`);
+    state().activity.push(`${stage.title} cleared during ${DUNGEON.name}.`);
+    await persist(false);
+    const final=expedition.stage===DUNGEON.stages.length-1;
+    if(final){
+      state().gold+=120;state().renown+=60;state().dungeonCompletions++;state().dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',partyIlvl:partyIlvl()});state().dungeonHistory=state().dungeonHistory.slice(0,20);
+      state().activity.push(`${DUNGEON.name} cleared. The Vaultheart has fallen.`);
+      await persist();
+    }
+    if(result)result.innerHTML=`<div class="evo-expedition-result evo2d-result success"><h4>${final?'DUNGEON COMPLETE':'ENCOUNTER CLEARED'}</h4><p>Encounter knowledge +${knowledge}%.${reward.loot?` ${esc(reward.loot.name)} was sent to the Guild Bank.`:''}${reward.reagents.length?` Reagents: ${reward.reagents.map(r=>`${P.MATERIALS?.[r.key]?.name||r.key} ×${r.quantity}`).join(', ')}.`:''}</p><button data-expedition-next>${final?'RETURN TO GUILD':'CONTINUE DEEPER →'}</button></div>`;
+    result?.querySelector('[data-expedition-next]')?.addEventListener('click',()=>{if(final){cancelBattle();expedition=null;renderExpedition();Game.switchView('content');renderDungeonJournal()}else{expedition.stage++;expedition.resolved=false;renderExpedition()}});
+  }else{
+    gainKnowledge(stage,false);
+    party().forEach(c=>expedition.condition[c.id]=clamp(expeditionCondition(c.id)-34,0,100));
+    const wiped=stage.kind==='boss'||stage.kind==='final'||party().some(c=>expeditionCondition(c.id)<=0);
+    expedition.log.push(wiped?`${stage.title} breaks the formation. The expedition ends in a wipe.`:'The formation is damaged but still standing.');
+    if(wiped){
+      Game.applyPartyCellShock(25);
+      state().dungeonHistory.unshift({at:new Date().toISOString(),result:'wipe',stage:stage.id,partyIlvl:partyIlvl()});state().dungeonHistory=state().dungeonHistory.slice(0,20);
+      state().activity.push(`The guild wiped at ${stage.title}. All five gained 25% Cell Shock.`);
+      await persist();
+    }else await persist(false);
+    if(result)result.innerHTML=`<div class="evo-expedition-result evo2d-result danger"><h4>${wiped?'EXPEDITION FAILED':'PARTY STAGGERED'}</h4><p>${wiped?'The failed mechanic was visible in the combat replay. All five adventurers gain 25% Cell Shock.':'The party survives the mistake, but carries damage into the next attempt.'}</p><button data-expedition-recover>${wiped?'RETURN TO GUILD':'RETRY ENCOUNTER'}</button></div>`;
+    result?.querySelector('[data-expedition-recover]')?.addEventListener('click',()=>{if(wiped){cancelBattle();expedition=null;renderExpedition();Game.switchView('content');renderDungeonJournal()}else{expedition.resolved=false;renderExpedition()}});
+  }
+  const stageResult=$('#evo2dStageResult');if(stageResult){stageResult.hidden=false;stageResult.dataset.tone=success?'success':'danger';stageResult.innerHTML=`<b>${success?'ENCOUNTER COMPLETE':'MECHANIC FAILURE'}</b><span>${success?'Formation intact. Review the feed or continue.':'The action feed shows where the formation broke.'}</span>`}
+}
+
