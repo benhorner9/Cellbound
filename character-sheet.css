@@ -619,3 +619,172 @@
   .cb-armoury-hint{display:block}
   .cb-armoury-hint span{display:block;max-width:none;margin-top:4px;text-align:left}
 }
+
+
+/* ========================================================================
+   Equipment centre: stats command view
+   ======================================================================== */
+.cb-armoury-stats-screen .cb-armoury-stage{
+  min-height:0;
+  padding:18px 18px 16px;
+}
+.cb-stat-command{
+  display:flex;
+  flex-direction:column;
+}
+.cb-stat-hero{
+  display:grid;
+  grid-template-columns:118px minmax(0,1fr);
+  gap:14px;
+  align-items:stretch;
+  margin-top:14px;
+}
+.cb-stat-crest{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-height:126px;
+  border:1px solid color-mix(in srgb,var(--cb-accent) 32%,rgba(216,185,118,.12));
+  background:
+    radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--cb-accent) 15%,transparent),transparent 62%),
+    #081115;
+  overflow:hidden
+}
+.cb-stat-crest>span{
+  position:absolute;
+  color:color-mix(in srgb,var(--cb-accent) 50%,#d8c17f);
+  font-size:4.6rem;
+  opacity:.08
+}
+.cb-stat-crest>b{
+  position:relative;z-index:2;
+  color:#e7deca;
+  font-family:Georgia,serif;
+  font-size:1.25rem;
+  font-weight:400
+}
+.cb-stat-crest>small{
+  position:relative;z-index:2;
+  margin-top:7px;
+  color:#917e56;
+  font-size:.33rem;
+  font-weight:900;
+  letter-spacing:.1em
+}
+.cb-stat-vitals{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px
+}
+.cb-stat-vitals article{
+  min-width:0;
+  padding:12px 11px 10px;
+  border:1px solid rgba(255,255,255,.05);
+  background:linear-gradient(180deg,#0d171a,#081114)
+}
+.cb-stat-vitals article.danger{
+  border-color:rgba(183,77,63,.22);
+  background:linear-gradient(180deg,#1a1111,#0b1113)
+}
+.cb-stat-vitals span,
+.cb-stat-grid span{
+  display:block;
+  color:#64736e;
+  font-size:.31rem;
+  font-weight:900;
+  letter-spacing:.08em
+}
+.cb-stat-vitals b{
+  display:block;
+  margin-top:4px;
+  color:#e4dac3;
+  font-family:Georgia,serif;
+  font-size:1rem;
+  font-weight:400
+}
+.cb-stat-vitals article.danger b{color:#dc8f7e}
+.cb-stat-vitals small{
+  display:block;
+  margin-top:2px;
+  color:#51605b;
+  font-size:.31rem
+}
+.cb-stat-section{
+  margin-top:13px;
+  padding-top:10px;
+  border-top:1px solid rgba(255,255,255,.045)
+}
+.cb-stat-section-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+  gap:10px;
+  margin-bottom:7px
+}
+.cb-stat-section-head span{
+  color:#a79262;
+  font-size:.34rem;
+  font-weight:900;
+  letter-spacing:.1em
+}
+.cb-stat-section-head small{
+  color:#52615d;
+  font-size:.31rem
+}
+.cb-stat-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:6px
+}
+.cb-stat-grid article{
+  min-width:0;
+  padding:10px 8px;
+  border:1px solid rgba(255,255,255,.045);
+  background:#091216
+}
+.cb-stat-grid b{
+  display:block;
+  margin-top:3px;
+  color:#d9d2c1;
+  font-family:Georgia,serif;
+  font-size:.78rem;
+  font-weight:400
+}
+.cb-stat-loadout-summary{
+  margin-top:13px
+}
+.cb-stat-loadout-summary>div{
+  padding:8px 6px
+}
+.cb-stat-loadout-summary b{
+  font-size:.72rem
+}
+.cb-armoury-stats-screen>.cb-gear-column{
+  align-self:start
+}
+.cb-armoury-stats-screen>.cb-gear-column .cb-equip-slot{
+  min-height:61px
+}
+.cb-armoury-stats-screen>.cb-gear-column .cb-slot-icon{
+  width:43px;height:43px
+}
+.cb-armoury-stats-screen>.cb-gear-column .cb-slot-copy b{
+  font-size:.53rem
+}
+/* The centre now owns all equipment-tab stats, so no repeated lower panel. */
+.cb-armoury-stats-screen+.cb-foundation-panel{display:none!important}
+
+@media(max-width:1100px){
+  .cb-stat-hero{grid-template-columns:104px minmax(0,1fr)}
+  .cb-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:850px){
+  .cb-stat-command{grid-column:1/-1}
+}
+@media(max-width:620px){
+  .cb-stat-hero{grid-template-columns:1fr}
+  .cb-stat-crest{min-height:96px}
+  .cb-stat-vitals{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
