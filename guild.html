@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="./evolution-v1.css?v=2">
 <link rel="stylesheet" href="./dungeon-2d-v1.css?v=3">
 <link rel="stylesheet" href="./admin-v1.css?v=1">
+<link rel="stylesheet" href="./release-v1.css?v=1">
 </head>
 <body>
 <div class="app-shell">
@@ -188,6 +189,18 @@
           </div>
           <p id="adminMessage" class="admin-message" hidden></p>
         </article>
+        <article class="admin-card admin-release-card">
+          <small>LIVE RELEASE CONTROL</small><h3>Publish Cellbound Update</h3>
+          <p>Mark the build you are currently running as the required live version. Players on older builds will be updated once they are out of active gameplay.</p>
+          <div class="admin-status-grid">
+            <div><span>This device</span><b id="adminCurrentBuild">Checking…</b></div>
+            <div><span>Published build</span><b id="adminPublishedBuild">Checking…</b></div>
+          </div>
+          <label class="admin-update-note">Update message<input id="adminUpdateMessage" maxlength="240" value="Cellbound has been updated. Load the latest version to continue."></label>
+          <div class="admin-actions">
+            <button id="adminPublishUpdate">PUBLISH UPDATE<small>Older clients are flagged immediately. Active dungeon runs and open gameplay modals are allowed to finish first.</small></button>
+          </div>
+        </article>
         <aside class="admin-card">
           <small>ADMIN SAFETY</small><h3>Private Developer Tools</h3>
           <p class="admin-warning">This tab is authorised by Supabase, not by a visible email check in the browser. Even if someone tampers with the page, the admin actions still fail unless the signed-in account is authorised server-side.</p>
@@ -207,6 +220,7 @@
 <div id="bankModal" class="modal-backdrop" hidden><section class="character-modal bank-modal"><button class="modal-close" data-bank-close>×</button><div id="bankDetail"></div></section></div>
 <div id="attemptModal" class="modal-backdrop" hidden><section class="attempt-modal"><div id="attemptStage"></div></section></div>
 
+<script>window.CELLBOUND_BUILD='__CELLBOUND_BUILD__';</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
 <script src="./gear-data.js?v=7"></script>
 <script src="./profession-data.js?v=1"></script>
@@ -219,6 +233,7 @@
 <script src="./evolution-v1.js?v=4"></script>
 <script src="./dungeon-2d-v1.js?v=3"></script>
 <script src="./admin-v1.js?v=1"></script>
+<script src="./release-v1.js?v=1"></script>
 </body>
 </html>
 
