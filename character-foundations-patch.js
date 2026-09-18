@@ -21,7 +21,7 @@ function professionCards(c){
   const cards=[];
   for(let i=0;i<2;i++){
     if(i>=slots){cards.push(`<div class="cb-profession-slot locked"><small>Profession ${i+1}</small><b>Membership Slot</b><span>Unlocks with membership</span></div>`);continue;}
-    const p=items[i];cards.push(`<div class="cb-profession-slot"><small>Profession ${i+1}</small><b>${p?.name||'Unlearned'}</b><span>${p?.level?`Level ${p.level}`:'Choose a profession in a future update'}</span></div>`);
+    const p=items[i];cards.push(`<div class="cb-profession-slot"><small>Profession ${i+1}</small><b>${p?.name||'Unlearned'}</b><span>${p?.level?`Level ${p.level}`:'Choose a profession from the Professions tab'}</span></div>`);
   }
   return cards.join('');
 }
