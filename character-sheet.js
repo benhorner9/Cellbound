@@ -13,6 +13,7 @@ let currentTab='overview';
 let activeSlot=null;
 let selectedTalentId=null;
 let selectedTalentSpec=null;
+let selectedTreeSpec=null;
 
 const classMeta={
   Warrior:{icon:'⚔',accent:'#b86b55',primary:'Strength'},
@@ -228,7 +229,7 @@ function talentTree(c,spec){
   if(!selected)selected=nodes[0]||null;
   if(selected){selectedTalentId=selected.id;selectedTalentSpec=spec}
   return `<div class="cb-tree-shell">
-    <div class="cb-tree-head"><div><small>${c.class}</small><h3>${spec}</h3><p>${roleLabel(specs[c.class]?.[spec]||'dps')} specialisation · Select a talent to inspect it before investing.</p></div><div class="cb-tree-points"><b>${c.talent||0}</b><span>points available</span><small>${spent} spent in tree</small></div></div>
+    <div class="cb-tree-head"><div><small>${c.class}</small><h3>${spec}</h3><p>${roleLabel(specs[c.class]?.[spec]||'dps')} specialisation · Select a talent to inspect it before investing.</p></div><div class="cb-tree-head-actions">${spec!==c.spec?`<button data-activate-spec="${spec}">SET ${spec.toUpperCase()} ACTIVE<small>Removes this character from the active party</small></button>`:''}<div class="cb-tree-points"><b>${c.talent||0}</b><span>points available</span><small>${spent} spent in tree</small></div></div></div>
     <div class="cb-tree-layout">
       <div class="cb-tree-grid">${[0,1,2,3,4].map(tier=>`<div class="cb-tier-line" style="--tier:${tier}"><span>Tier ${tier+1}</span></div>`).join('')}${nodes.map(node=>{const s=treeNodeState(c,spec,node),isSelected=selected?.id===node.id;return `<button class="cb-talent-node ${s.available?'available':'locked'} ${s.complete?'complete':''} ${isSelected?'selected':''}" style="--tier:${node.tier};--col:${node.col}" data-talent-node="${node.id}" data-tree-spec="${spec}" aria-pressed="${isSelected?'true':'false'}"><span class="cb-node-icon">${node.icon}</span><b>${node.id}</b><em>${s.rank}/${node.max}</em></button>`}).join('')}</div>
       ${talentInspector(c,spec,selected)}
@@ -236,7 +237,7 @@ function talentTree(c,spec){
   </div>`;
 }
 function knowledgePanel(c){return `<div class="cb-knowledge-grid">${Object.entries(c.knowledge||{}).map(([id,val])=>`<article><div><span>${id.replace(/([a-z])([A-Z])/g,'$1 $2')}</span><b>${val}%</b></div><div class="cb-knowledge-bar"><i style="width:${val}%"></i></div></article>`).join('')}</div>`}
-function specTabs(c){return Object.keys(specs[c.class]||{}).map(spec=>`<button class="cb-spec-tab ${c.spec===spec?'active':''}" data-spec-tab="${spec}">${spec}<small>${roleLabel(specs[c.class][spec])}</small></button>`).join('')}
+function specTabs(c){const browsing=selectedTreeSpec&&specs[c.class]?.[selectedTreeSpec]?selectedTreeSpec:c.spec;return Object.keys(specs[c.class]||{}).map(spec=>`<button class="cb-spec-tab ${browsing===spec?'active':''}" data-spec-tab="${spec}">${spec}<small>${roleLabel(specs[c.class][spec])}${c.spec===spec?' · ACTIVE':''}</small></button>`).join('')}
 function overviewPanel(c,state){
   const meta=classMeta[c.class]||{primary:'Strength'},stats=statBlock(c),role=roleLabel(roleOf(c));
   const ilvl=window.CellboundGame?.characterItemLevel?.(c)||c.gear||0;
@@ -256,7 +257,7 @@ function historyPanel(c,state){
 function sheetBody(state,c){
   if(currentTab==='overview')return overviewPanel(c,state);
   if(currentTab==='equipment')return `${paperDoll(c)}${activeSlot?slotPicker(state,c,activeSlot):''}`;
-  if(currentTab==='talents')return `<div class="cb-spec-tabs">${specTabs(c)}</div>${talentTree(c,c.spec)}`;
+  if(currentTab==='talents'){const treeSpec=selectedTreeSpec&&specs[c.class]?.[selectedTreeSpec]?selectedTreeSpec:c.spec;return `<div class="cb-spec-tabs">${specTabs(c)}</div>${talentTree(c,treeSpec)}`}
   if(currentTab==='professions')return professionsPanel(c);
   if(currentTab==='history')return historyPanel(c,state);
   return knowledgePanel(c);
@@ -311,11 +312,11 @@ function investTalent(spec,nodeId){
 function changeSpec(spec){
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));
   if(!state||!c||!specs[c.class]?.[spec]||c.spec===spec)return;
-  c.spec=spec;selectedTalentId=null;selectedTalentSpec=spec;removeFromParty(state,c.id);
+  c.spec=spec;selectedTreeSpec=spec;selectedTalentId=null;selectedTalentSpec=spec;removeFromParty(state,c.id);
   state.activity=state.activity||[];state.activity.push(`${c.name} changed specialisation to ${spec} (${roleLabel(roleOf(c))}).`);
   writeState(state);renderSheet();
 }
-function openCharacter(id){currentId=id;currentTab='overview';activeSlot=null;selectedTalentId=null;selectedTalentSpec=null;renderSheet()}
+function openCharacter(id){currentId=id;currentTab='overview';activeSlot=null;selectedTalentId=null;selectedTalentSpec=null;selectedTreeSpec=null;renderSheet()}
 function closeCharacter(){modal.hidden=true;if(dirty)location.reload()}
 
 document.addEventListener('click',event=>{
@@ -328,7 +329,8 @@ document.addEventListener('click',event=>{
     const equip=event.target.closest('[data-equip-bank]');if(equip){equipItem(equip.dataset.equipBank,equip.dataset.equipSlot);return}
     const node=event.target.closest('[data-talent-node]');if(node){selectedTalentId=node.dataset.talentNode;selectedTalentSpec=node.dataset.treeSpec;renderSheet();return}
     const invest=event.target.closest('[data-invest-talent]');if(invest){investTalent(invest.dataset.treeSpec,invest.dataset.investTalent);return}
-    const spec=event.target.closest('[data-spec-tab]');if(spec){changeSpec(spec.dataset.specTab);return}
+    const spec=event.target.closest('[data-spec-tab]');if(spec){selectedTreeSpec=spec.dataset.specTab;selectedTalentId=null;selectedTalentSpec=selectedTreeSpec;renderSheet();return}
+    const activateSpec=event.target.closest('[data-activate-spec]');if(activateSpec){changeSpec(activateSpec.dataset.activateSpec);return}
     const close=event.target.closest('[data-close]');if(close){event.preventDefault();event.stopImmediatePropagation();closeCharacter();return}
   }
 },true);
