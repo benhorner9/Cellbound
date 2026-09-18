@@ -1,6 +1,6 @@
 const fs=require('fs');
 const path=require('path');
-const files=['index.html','styles.css','auth.js','guild.html','guild.css','bank.css','character-sheet.css','gear-system.css','foundations.css','economy-v2.css','social-v3.css','evolution-v1.css','dungeon-2d-v1.css','admin-v1.css','release-v1.css','gear-data.js','profession-data.js','guild-v4.js','character-sheet.js','gear-character-patch.js','character-foundations-patch.js','economy-v2.js','social-v3.js','evolution-v1.js','dungeon-2d-v1.js','admin-v1.js','release-v1.js'];
+const files=['index.html','styles.css','auth.js','guild.html','guild.css','bank.css','character-sheet.css','gear-system.css','foundations.css','economy-v2.css','social-v3.css','evolution-v1.css','dungeon-2d-v1.css','admin-v1.css','release-v1.css','onboarding-v1.css','gear-data.js','profession-data.js','guild-v4.js','character-sheet.js','gear-character-patch.js','character-foundations-patch.js','economy-v2.js','social-v3.js','evolution-v1.js','dungeon-2d-v1.js','admin-v1.js','release-v1.js','onboarding-v1.js'];
 const assets=['assets/gear/cellbound-gear-atlas.webp'];
 const out=path.join(__dirname,'dist');
 const buildId=String(process.env.GITHUB_SHA||process.env.CELLBOUND_BUILD||'local-dev').trim();
@@ -19,6 +19,7 @@ for(const file of files){
     if(!contents.includes('dungeon-2d-v1.css')||!contents.includes('dungeon-2d-v1.js'))throw new Error('Ashen Vault 2D viewer assets are not linked from guild.html');
     if(!contents.includes('admin-v1.css')||!contents.includes('admin-v1.js')||!contents.includes('id=\"adminNav\"'))throw new Error('Admin panel assets or navigation hook are not linked from guild.html');
     if(!contents.includes('release-v1.css')||!contents.includes('release-v1.js')||!contents.includes('CELLBOUND_BUILD'))throw new Error('Release gate assets or build hook are not linked from guild.html');
+    if(!contents.includes('onboarding-v1.css')||!contents.includes('onboarding-v1.js'))throw new Error('Zeltira onboarding assets are not linked from guild.html');
   }
   if(file.endsWith('.html')){
     contents=contents.replace(/__CELLBOUND_BUILD__/g,buildId);
