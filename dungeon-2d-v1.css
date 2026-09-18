@@ -110,3 +110,10 @@ background-size:46px 46px}
 
 .cb2d-unit.attacking>i{animation:cb2dAttackPulse .42s ease-out}
 @keyframes cb2dAttackPulse{0%{transform:scale(1)}35%{transform:scale(1.42);filter:brightness(1.8)}100%{transform:scale(1)}}
+
+.cb2d-threat-line{position:absolute;z-index:4;height:1px;transform-origin:0 50%;background:linear-gradient(90deg,rgba(217,200,80,.12),rgba(216,90,77,.68));box-shadow:0 0 7px rgba(216,90,77,.25);pointer-events:none;opacity:.7}
+.cb2d-threat-line.danger{height:2px;background:linear-gradient(90deg,rgba(217,200,80,.18),rgba(235,82,59,.92));box-shadow:0 0 12px rgba(235,82,59,.42)}
+.cb2d-number.threat{color:#e8ce78;font-size:.5rem;letter-spacing:.05em}
+.cb2d-unit.profile-melee>i{box-shadow:0 0 0 2px rgba(255,255,255,.035),0 0 18px currentColor}
+.cb2d-unit.profile-ranged>i{box-shadow:0 0 0 5px rgba(255,255,255,.02),0 0 18px currentColor}
+.cb2d-unit.profile-healer>i{box-shadow:0 0 0 6px rgba(90,167,232,.035),0 0 18px currentColor}
