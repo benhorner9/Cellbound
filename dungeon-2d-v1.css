@@ -22,8 +22,8 @@ linear-gradient(180deg,#111a1b,#0a1114)}
 .cb2d-floor{position:absolute;inset:0;background:
 radial-gradient(ellipse at 48% 58%,rgba(255,255,255,.018),transparent 42%),
 linear-gradient(155deg,rgba(255,255,255,.012),transparent 28%,rgba(255,255,255,.008) 56%,transparent 78%)}
-.cb2d-floor:before{content:"";position:absolute;left:4%;right:4%;top:7%;bottom:7%;border:1px solid rgba(216,185,118,.035);border-radius:18px;box-shadow:inset 0 0 60px rgba(0,0,0,.22)}
-.cb2d-floor:after{content:"";position:absolute;left:9%;right:9%;top:50%;height:1px;background:linear-gradient(90deg,transparent,rgba(216,185,118,.025),transparent)}
+.cb2d-floor:before{content:"";position:absolute;inset:0;box-shadow:inset 0 0 70px rgba(0,0,0,.28);pointer-events:none}
+.cb2d-floor:after{content:none}
 .cb2d-caption{position:absolute;left:14px;bottom:12px;display:flex;gap:10px;align-items:center;padding:7px 9px;background:rgba(4,9,11,.8);border:1px solid rgba(255,255,255,.05)}
 .cb2d-caption span{color:#b79561;font-size:.42rem;font-weight:900;letter-spacing:.09em}.cb2d-caption b{font-size:.5rem;color:#aebbb5}
 .cb2d-unit{position:absolute;z-index:6;transform:translate(-50%,-50%);transition:left .6s ease,top .6s ease;pointer-events:none}
