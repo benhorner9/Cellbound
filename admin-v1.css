@@ -19,3 +19,8 @@
 #adminNav[hidden]{display:none!important}
 @media(max-width:900px){.admin-shell{grid-template-columns:1fr}}
 @media(max-width:560px){.admin-status-grid{grid-template-columns:1fr}}
+.admin-release-card{grid-column:1/-1}
+.admin-update-note{display:block;margin-top:14px;color:#798781;font-size:.46rem;text-transform:uppercase;letter-spacing:.08em}
+.admin-update-note input{display:block;width:100%;box-sizing:border-box;margin-top:6px;padding:11px 12px;border:1px solid rgba(255,255,255,.07);background:#081115;color:#d8ddd9;font-size:.54rem;text-transform:none;letter-spacing:0;outline:none}
+.admin-update-note input:focus{border-color:rgba(216,185,118,.28)}
+@media(max-width:900px){.admin-release-card{grid-column:auto}}
