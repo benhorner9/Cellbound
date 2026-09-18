@@ -230,6 +230,17 @@ function enhanceProfessions(){
     const btn=card.querySelector('[data-craft]'),id=btn?.dataset.craft,recipe=P?.recipeById?.(id);
     const ready=btn&&!btn.disabled&&!card.classList.contains('locked');
     card.dataset.evoHidden=(profRecipeFilter==='ready'&&!ready)||(profRecipeFilter==='locked'&&ready)?'1':'0';
+    if(recipe&&!card.querySelector('.evo-recipe-art')){
+      const output=recipe.output||{},gear=output.category==='gear'?(G.byId(output.key)||G.byName(output.name)):null;
+      const art=document.createElement('span');art.className='evo-recipe-art';
+      art.innerHTML=gear?G.artHTML(gear,54):(output.category==='consumable'?'⚗':'◇');
+      card.prepend(art);card.classList.add('has-art');
+    }
+    if(recipe&&!card.querySelector('.evo-recipe-owned')){
+      const owned=document.createElement('div');owned.className='evo-recipe-owned';
+      owned.innerHTML=Object.entries(recipe.inputs||{}).map(([k,q])=>{const m=P.MATERIALS?.[k],have=Number(state()?.materials?.[k])||0;return `<span class="${have>=q?'ready':'missing'}"><b>${esc(m?.name||k)}</b> ${have}/${q}</span>`}).join('');
+      card.querySelector('div')?.appendChild(owned);
+    }
     if(recipe&&!card.querySelector('.evo-recipe-sources')){
       const line=document.createElement('p');line.className='evo-recipe-sources';
       line.innerHTML=Object.keys(recipe.inputs||{}).map(k=>{
@@ -269,7 +280,10 @@ function renderDungeonJournal(){
     return `<div class="dungeon-stage ${complete?'complete':''}" data-kind="${st.kind}"><div class="dungeon-stage-rune">${complete?'✓':st.rune}</div><div class="dungeon-stage-copy"><b>${i+1}. ${st.title}</b><small>${st.desc}</small></div><span class="dungeon-stage-tag">${label}</span></div>`;
   }).join('');
   const intelKeys=[['ashwarden','Ash Warden Kael'],['embermaw','Embermaw'],['vaultheart','The Vaultheart']];
-  intel.innerHTML=intelKeys.map(([key,name])=>{const h=currentHint(key);return `<article class="intel-card"><div class="intel-card-head"><b>${name}</b><span>${h.knowledge}% known</span></div><p class="${h.knowledge<20?'intel-lock':''}">${esc(h.text)}</p></article>`}).join('');
+  const history=state().dungeonHistory||[],last=history[0];
+  intel.innerHTML=intelKeys.map(([key,name])=>{const h=currentHint(key);return `<article class="intel-card"><div class="intel-card-head"><b>${name}</b><span>${h.knowledge}% known</span></div><p class="${h.knowledge<20?'intel-lock':''}">${esc(h.text)}</p></article>`}).join('')+
+    `<article class="intel-card"><div class="intel-card-head"><b>Expedition Record</b><span>${state().dungeonCompletions||0} clears</span></div><p>${last?`Last expedition: ${last.result==='complete'?'Cleared':'Wiped at '+String(last.stage||'unknown').replaceAll('-',' ')} · Party iLvl ${Math.round(last.partyIlvl||0)}.`:'No expedition has been recorded yet.'}</p></article>`+
+    `<article class="intel-card"><div class="intel-card-head"><b>Known Rewards</b><span>T1 / T2</span></div><p>Class equipment, Ashen Soul Fragments, Warden Iron, Ember Cores and Vaultheart Crystals. Rare profession discoveries can also emerge from the deepest chamber.</p></article>`;
   const pi=partyIlvl(),ready=partyAvailable()&&pi>=DUNGEON.requiredIlvl;
   if($('#journalPartyIlvl'))$('#journalPartyIlvl').textContent=`Party iLvl ${pi||'—'}`;
   if($('#journalEntryHint'))$('#journalEntryHint').textContent=!completeParty()?'Build a complete 5-character party first.':!partyAvailable()?'A party member is unavailable due to Cell Shock.':pi<DUNGEON.requiredIlvl?`Party iLvl ${pi}. You need ${DUNGEON.requiredIlvl}.`:`Ready. Recommended iLvl ${DUNGEON.recommendedIlvl}.`;
