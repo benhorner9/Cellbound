@@ -114,7 +114,7 @@ function deathBurst(id){
  const e=document.createElement('i');e.className='cb2d-death-burst';e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),620)
 }
 function setFocusEnemy(index){
- $('[data-unit^="e-"]').forEach(e=>e.classList.remove('focused'));
+ $$('[data-unit^="e-"]').forEach(e=>e.classList.remove('focused'));
  if(index>=0){const e=$('[data-unit="e-'+index+'"]');if(e)e.classList.add('focused')}
 }
 function spawn(s){
