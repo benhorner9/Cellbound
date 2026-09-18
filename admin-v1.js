@@ -70,9 +70,9 @@ async function freshStart(){
     await Game.persistState?.();
     const {data,error}=await db.rpc('cellbound_admin_fresh_start',{p_confirmation:'FRESH START'});
     if(error)throw error;
-    Game.replaceState?.({__fresh_start:true,fresh_start_at:new Date().toISOString()});
-    await Game.persistState?.();
+    localStorage.removeItem('cellbound-management-reboot-v3');
     localStorage.removeItem('cellbound-management-reboot-v2');
+    sessionStorage.removeItem('cellbound-management-reboot-v3');
     sessionStorage.removeItem('cellbound-management-reboot-v2');
     location.replace('./guild.html?freshStart='+Date.now());
   }catch(error){
