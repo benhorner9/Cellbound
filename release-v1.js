@@ -32,14 +32,14 @@ function playerBusy(){
   const legacyDungeon=$('#evoExpeditionBackdrop');
   const character=$('#characterModal');
   const bank=$('#bankModal');
-  const onboarding=$('#cellboundOnboarding');
+  const onboarding=$('#cellboundOnboarding');\n  const worldBoss=$('#worldBoss2dBackdrop');
   return Boolean(
     (dungeon&&!dungeon.hidden)||
     (legacyAttempt&&!legacyAttempt.hidden)||
     (legacyDungeon&&!legacyDungeon.hidden)||
     (character&&!character.hidden)||
     (bank&&!bank.hidden)||
-    (onboarding&&!onboarding.hidden)
+    (onboarding&&!onboarding.hidden)||\n    (worldBoss&&!worldBoss.hidden)
   );
 }
 function showGate(info){
