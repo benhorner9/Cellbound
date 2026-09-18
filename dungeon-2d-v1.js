@@ -104,6 +104,16 @@ function awardPartyXp(amount){
  });
  return gains
 }
+async function syncPartyXpRecords(gains){
+ const db=Game?.getSupabase?.(),user=Game?.getUser?.();
+ if(!db||!user||!Array.isArray(gains)||!gains.length)return;
+ const now=new Date().toISOString();
+ try{
+   await Promise.all(gains.map(x=>db.from('characters').update({
+     level:x.afterLevel,xp:x.afterXp,last_played_at:now
+   }).eq('user_id',user.id).eq('name',x.name)));
+ }catch(error){console.warn('Character XP mirror sync failed',error)}
+}
 const delay=ms=>new Promise(r=>setTimeout(r,Math.round(ms/((run&&run.speed)||1))));
 const cond=id=>run&&run.condition[id]!=null?run.condition[id]:100;
 const setCond=(id,v)=>{if(run)run.condition[id]=clamp(Math.round(v),0,100)};
@@ -840,7 +850,7 @@ async function seamless(tok){
    if(!await resolveStage(s)||tok!==token)return;
    if(i<STAGES.length-1){party().forEach(c=>setHp(c.id,hp(c.id)+6));updateRows();flash('PATH CLEAR',false);await delay(420);await travelDeeper(STAGES[i+1],tok)}
   }
-  const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;st.gold+=120;st.renown+=60;run.loot.gold+=120;run.loot.renown+=60;run.loot.xp=ASHEN_VAULT_XP;run.xpGrowth=awardPartyXp(ASHEN_VAULT_XP);st.dungeonCompletions++;st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',partyIlvl:ilvl(),xpPerCharacter:ASHEN_VAULT_XP});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault cleared. The Vaultheart has fallen. Each adventurer earned '+ASHEN_VAULT_XP+' XP.');run.xpGrowth.filter(x=>x.levels>0).forEach(x=>st.activity.push(x.name+' reached Level '+x.afterLevel+'.'));await Game.persistState();finish(true,STAGES[6])
+  const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;st.gold+=120;st.renown+=60;run.loot.gold+=120;run.loot.renown+=60;run.loot.xp=ASHEN_VAULT_XP;run.xpGrowth=awardPartyXp(ASHEN_VAULT_XP);st.dungeonCompletions++;st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',partyIlvl:ilvl(),xpPerCharacter:ASHEN_VAULT_XP});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault cleared. The Vaultheart has fallen. Each adventurer earned '+ASHEN_VAULT_XP+' XP.');run.xpGrowth.filter(x=>x.levels>0).forEach(x=>st.activity.push(x.name+' reached Level '+x.afterLevel+'.'));await Game.persistState();await syncPartyXpRecords(run.xpGrowth);finish(true,STAGES[6])
  }catch(e){if(e&&e.message!=='cancelled')console.error('Ashen Vault 2D runtime',e)}
 }
 function lootRarityClass(item){return 'rarity-'+String(item?.rarity||'common').toLowerCase().replace(/[^a-z0-9-]/g,'')}
