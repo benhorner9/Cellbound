@@ -541,7 +541,6 @@ function queueEnhance(){
   requestAnimationFrame(()=>{enhanceRoster();enhanceBank();enhanceProfessions();renderDungeonJournal();renderDungeonHistory();enhanceWorldCards()});
 }
 function bindGlobal(){
-  $('#enterDungeonBtn')?.addEventListener('click',startExpedition);
   document.querySelector('.nav-btn[data-view="content"]')?.addEventListener('click',()=>setTimeout(renderDungeonJournal,0));
   document.querySelector('.nav-btn[data-view="roster"]')?.addEventListener('click',()=>setTimeout(enhanceRoster,0));
   document.querySelector('.nav-btn[data-view="bank"]')?.addEventListener('click',()=>setTimeout(enhanceBank,0));
