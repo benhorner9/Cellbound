@@ -84,7 +84,7 @@ async function mechanic(s,m,tok){
  const name=m[0],type=m[1],ms=m[2];status(name+' incoming');log(name+' begins.');
  if(type==='interrupt'){
    const v=tg('cast');act('dps','Watching interrupt window');
-   if(interruptOK(s)){const promise=cast(name,ms,tok);await delay(ms*.56);flash('INTERRUPTED',false);log('A damage dealer interrupts '+name+'.');act('dps','Interrupt successful');v.remove();return}
+   if(interruptOK(s)){await cast(name,Math.round(ms*.56),tok);flash('INTERRUPTED',false);log('A damage dealer interrupts '+name+'.');act('dps','Interrupt successful');v.remove();return}
    await cast(name,ms,tok);flash('CAST COMPLETES',true);log(name+' lands. The healer recovers the group.');party().forEach(c=>setCond(c.id,cond(c.id)-5));updateRows();v.remove();return
  }
  if(type==='cone'){
