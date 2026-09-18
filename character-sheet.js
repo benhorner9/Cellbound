@@ -132,6 +132,11 @@ function statBlock(c){
   const block=role==='tank'?Math.round(8+gear*.18):0;
   return {Strength:strength,Agility:agility,Intellect:intellect,Stamina:stamina,Armour:armour,Crit:`${crit}%`,Haste:`${haste}%`,Block:block?`${block}%`:'—'};
 }
+function sheetMaxHealth(c){
+  const ilvl=window.CellboundGame?.characterItemLevel?.(c)||0;
+  const role=roleOf(c);
+  return Math.round(100+(Number(c.level)||1)*28+ilvl*5+(role==='tank'?90:role==='healer'?30:50));
+}
 function bestBankUpgrade(state,c,slot){
   const current=Math.max(0,Number(c.equipment?.[slot]?.itemLevel)||0);
   const candidates=(state?.bank||[]).filter(item=>canUse(c,item)&&possibleSlots(item).includes(slot));
@@ -163,32 +168,44 @@ function paperDoll(c,state){
   const itemLevel=window.CellboundGame?.characterItemLevel?.(c)||c.gear||0;
   const equipped=[...leftSlots,...rightSlots].filter(slot=>c.equipment?.[slot]).length;
   const upgradeCount=[...leftSlots,...rightSlots].filter(slot=>bestBankUpgrade(state,c,slot)).length;
-  return `<div class="cb-paperdoll cb-armoury-screen" style="--cb-accent:${meta.accent}">
+  const ent=window.CellboundGame?.getEntitlements?.()||{professionSlots:1,member:false};
+  const health=sheetMaxHealth(c),shock=Math.round(Number(c.cellShock)||0);
+  const coreStats=['Strength','Agility','Intellect','Stamina'];
+  const combatStats=['Armour','Crit','Haste','Block'];
+  return `<div class="cb-paperdoll cb-armoury-screen cb-armoury-stats-screen" style="--cb-accent:${meta.accent}">
     <div class="cb-gear-column cb-gear-left">${leftSlots.map(s=>equipmentSlot(c,s,state)).join('')}</div>
-    <section class="cb-armoury-stage">
-      <div class="cb-armoury-heading"><div><small>ARMOURY</small><h3>${c.name}</h3><p>${c.race||'Veyren'} · ${c.class} · ${c.spec}</p></div><span class="cb-role-pill cb-role-${role}">${roleLabel(role)}</span></div>
-      <div class="cb-armoury-ring">
-        <div class="cb-armoury-orbit"></div>
-        ${armouryFocus(c,'Head',state,'top')}
-        ${armouryFocus(c,'OffHand',state,'left')}
-        <div class="cb-armoury-core">
-          <span class="cb-armoury-crest">${meta.icon}</span>
-          <b>${c.portrait||String(c.name||'?').slice(0,2).toUpperCase()}</b>
-          <small>LEVEL ${c.level||1}</small>
+    <section class="cb-armoury-stage cb-stat-command">
+      <div class="cb-armoury-heading"><div><small>CHARACTER STATS</small><h3>${c.name}</h3><p>${c.race||'Veyren'} · ${c.class} · ${c.spec}</p></div><span class="cb-role-pill cb-role-${role}">${roleLabel(role)}</span></div>
+
+      <div class="cb-stat-hero">
+        <div class="cb-stat-crest"><span>${meta.icon}</span><b>${c.portrait||String(c.name||'?').slice(0,2).toUpperCase()}</b><small>LEVEL ${c.level||1}</small></div>
+        <div class="cb-stat-vitals">
+          <article><span>HEALTH</span><b>${health.toLocaleString()}</b><small>Maximum health</small></article>
+          <article><span>ITEM LEVEL</span><b>${itemLevel}</b><small>Average equipped gear</small></article>
+          <article><span>POWER</span><b>${c.power||0}</b><small>Character power</small></article>
+          <article class="${shock>=75?'danger':''}"><span>CELL SHOCK</span><b>${shock}%</b><small>${shock>=100?'Unavailable':shock?'Recovering':'Ready for duty'}</small></article>
         </div>
-        ${armouryFocus(c,'Weapon',state,'right')}
-        ${armouryFocus(c,'Chest',state,'bottom')}
       </div>
-      <div class="cb-armoury-summary">
-        <div><span>ITEM LEVEL</span><b>${itemLevel}</b></div>
-        <div><span>POWER</span><b>${c.power||0}</b></div>
+
+      <div class="cb-stat-section">
+        <div class="cb-stat-section-head"><span>CORE ATTRIBUTES</span><small>Base combat profile</small></div>
+        <div class="cb-stat-grid">${coreStats.map(k=>`<article><span>${k.toUpperCase()}</span><b>${stats[k]}</b></article>`).join('')}</div>
+      </div>
+
+      <div class="cb-stat-section">
+        <div class="cb-stat-section-head"><span>COMBAT RATINGS</span><small>Derived from level and equipment</small></div>
+        <div class="cb-stat-grid">${combatStats.map(k=>`<article><span>${k.toUpperCase()}</span><b>${stats[k]}</b></article>`).join('')}</div>
+      </div>
+
+      <div class="cb-armoury-summary cb-stat-loadout-summary">
         <div><span>SLOTS FILLED</span><b>${equipped}/14</b></div>
         <div class="${upgradeCount?'has-upgrades':''}"><span>BANK UPGRADES</span><b>${upgradeCount}</b></div>
+        <div><span>PROFESSION SLOTS</span><b>${ent.professionSlots||1}</b></div>
+        <div><span>ACCOUNT RULE</span><b>${ent.member?'MEMBER':'STANDARD'}</b></div>
       </div>
-      <div class="cb-armoury-hint">${upgradeCount?`<strong>${upgradeCount} upgrade${upgradeCount===1?'':'s'} available</strong><span>Slots with a gold marker have stronger gear waiting in the Guild Bank.</span>`:'<strong>Loadout current</strong><span>No higher Item Level upgrades are currently waiting in the Guild Bank.</span>'}</div>
+      <div class="cb-armoury-hint">${upgradeCount?`<strong>${upgradeCount} upgrade${upgradeCount===1?'':'s'} available</strong><span>Gold-marked equipment slots have a stronger compatible item waiting in the Guild Bank.</span>`:'<strong>Loadout current</strong><span>No higher Item Level upgrades are currently waiting in the Guild Bank.</span>'}</div>
     </section>
     <div class="cb-gear-column cb-gear-right">${rightSlots.map(s=>equipmentSlot(c,s,state)).join('')}</div>
-    <div class="cb-stats-panel">${Object.entries(stats).map(([k,v])=>`<div><span>${k}</span><b>${v}</b></div>`).join('')}</div>
   </div>`;
 }
 function possibleSlots(item){
