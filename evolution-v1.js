@@ -96,6 +96,12 @@ function enhanceRoster(){
     card.dataset.shock=String(c.cellShock||0);
     card.dataset.name=(c.name||'').toLowerCase();
     card.dataset.class=(c.class||'').toLowerCase();
+    const gearSlots=['Head','Chest','Weapon'].map(slot=>({slot,item:Game.canonicalItem(c.equipment?.[slot])}));
+    gearSlots.sort((a,b)=>(Number(a.item?.itemLevel)||0)-(Number(b.item?.itemLevel)||0));
+    const weakest=gearSlots[0],professions=(c.professions||[]).filter(Boolean);
+    let footer=card.querySelector('.evo-roster-footer');
+    if(!footer){footer=document.createElement('div');footer.className='evo-roster-footer';const action=card.querySelector('[data-char]');action?.insertAdjacentElement('beforebegin',footer)}
+    if(footer)footer.innerHTML=`<div><span>Professions</span><b>${professions.length?professions.map(p=>`${esc(p.name)} ${p.level}`).join(' · '):'Untrained'}</b></div><div><span>Weakest Gear</span><b>${esc(weakest?.slot||'—')} · iLvl ${weakest?.item?.itemLevel||0}</b></div>`;
   });
   const filtered=cards.filter(card=>{
     const c=byId.get(card.dataset.charId);if(!c)return false;
