@@ -159,3 +159,66 @@ linear-gradient(135deg,rgba(24,31,27,.88),rgba(6,12,14,.96))}
 .td-unit.profile-melee>i{box-shadow:0 0 0 2px rgba(255,255,255,.03),0 0 18px currentColor}
 .td-unit.profile-ranged>i{box-shadow:0 0 0 5px rgba(255,255,255,.018),0 0 18px currentColor}
 .td-unit.profile-healer>i{box-shadow:0 0 0 6px rgba(90,167,232,.03),0 0 18px currentColor}
+
+
+/* Zeltiran Hollows environment theme */
+.td-environment{position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none}
+.td-room-tag{position:absolute;z-index:8;left:10px;top:10px;max-width:220px;padding:6px 8px;border:1px solid rgba(170,202,151,.08);background:rgba(5,11,10,.58);backdrop-filter:blur(5px);pointer-events:none}
+.td-room-tag b{display:block;color:#a7b99c;font-family:Georgia,serif;font-size:.48rem;font-weight:400}
+.td-room-tag small{display:block;margin-top:2px;color:#61756a;font-size:.34rem;line-height:1.35}
+.td-prop{position:absolute;z-index:1;display:block;transform:translate(-50%,-50%) rotate(var(--rot,0deg)) scale(var(--scale,1));transform-origin:center;opacity:.78;filter:saturate(.85)}
+.td-prop:before,.td-prop:after{content:"";position:absolute;box-sizing:border-box}
+.td-ambience{position:absolute;inset:0;z-index:2;overflow:hidden}
+.td-mote{position:absolute;left:var(--x);bottom:-10px;display:block;pointer-events:none}
+.td-mote.dust{width:3px;height:3px;border-radius:50%;background:rgba(187,207,174,.16);animation:tdDustRise var(--dur) linear infinite;animation-delay:var(--delay)}
+.td-mote.spore{width:4px;height:4px;border-radius:50%;background:rgba(124,187,136,.48);box-shadow:0 0 8px rgba(124,187,136,.26);animation:tdSporeRise var(--dur) ease-in-out infinite;animation-delay:var(--delay)}
+@keyframes tdDustRise{0%{transform:translate(0,0);opacity:0}15%{opacity:.4}90%{opacity:.16}100%{transform:translate(var(--drift),-420px);opacity:0}}
+@keyframes tdSporeRise{0%{transform:translate(0,0) scale(.75);opacity:0}18%{opacity:.68}100%{transform:translate(var(--drift),-390px) scale(1.1);opacity:0}}
+
+/* Base hollow floor */
+.td-arena.theme-hollows{background:#09120f}
+.td-arena.theme-hollows .td-floor{background:
+radial-gradient(ellipse at 55% 54%,rgba(85,131,91,.08),transparent 30%),
+radial-gradient(circle at 18% 18%,rgba(123,105,68,.045),transparent 18%),
+linear-gradient(160deg,rgba(255,255,255,.012),transparent 34%,rgba(0,0,0,.07) 35% 38%,transparent 40%),
+linear-gradient(180deg,#121b17,#09110e)}
+
+/* Rootling Nest */
+.td-arena.room-rootling-nest .td-floor{background:
+radial-gradient(ellipse at 72% 50%,rgba(86,135,83,.09),transparent 24%),
+radial-gradient(circle at 28% 78%,rgba(83,104,63,.055),transparent 18%),
+linear-gradient(180deg,#142018,#0b120f)}
+.td-prop.prop-root{width:128px;height:12px;border-radius:50%;background:linear-gradient(90deg,transparent,rgba(82,69,47,.58) 12%,rgba(103,81,52,.46) 60%,transparent);box-shadow:0 3px 7px rgba(0,0,0,.18)}
+.td-prop.prop-root:after{left:38px;top:-10px;width:55px;height:8px;border-radius:50%;background:rgba(79,68,47,.42);transform:rotate(-27deg)}
+.td-prop.prop-mushroom,.td-prop.prop-glow-fungus{width:20px;height:25px}
+.td-prop.prop-mushroom:before,.td-prop.prop-glow-fungus:before{left:7px;top:9px;width:6px;height:17px;border-radius:3px;background:rgba(115,101,76,.66)}
+.td-prop.prop-mushroom:after,.td-prop.prop-glow-fungus:after{left:1px;top:2px;width:18px;height:12px;border-radius:50% 50% 35% 35%;background:linear-gradient(180deg,rgba(135,115,76,.74),rgba(84,87,64,.6))}
+.td-prop.prop-glow-fungus:after{background:linear-gradient(180deg,rgba(119,185,135,.8),rgba(61,111,78,.62));box-shadow:0 0 15px rgba(104,183,129,.18)}
+.td-prop.prop-fallen-log{width:112px;height:22px;border-radius:12px;background:linear-gradient(180deg,rgba(89,70,46,.68),rgba(51,47,35,.76));box-shadow:0 7px 16px rgba(0,0,0,.22)}
+.td-prop.prop-fallen-log:before{left:8px;right:8px;top:7px;height:3px;background:rgba(139,111,69,.11);border-radius:2px}
+.td-prop.prop-stone{width:46px;height:28px;border-radius:50% 55% 45% 50%;background:linear-gradient(135deg,rgba(97,101,84,.58),rgba(58,68,59,.65));box-shadow:4px 6px 12px rgba(0,0,0,.18)}
+.td-prop.prop-nest{width:92px;height:58px;border-radius:50%;border:7px solid rgba(75,66,47,.44);box-shadow:inset 0 0 0 5px rgba(93,77,50,.12),0 6px 16px rgba(0,0,0,.16);background:radial-gradient(ellipse,rgba(66,79,52,.22),transparent 68%)}
+
+/* Collapsed Gallery */
+.td-arena.room-collapsed-gallery .td-floor{background:
+radial-gradient(ellipse at 70% 50%,rgba(100,119,81,.065),transparent 24%),
+linear-gradient(160deg,rgba(121,110,83,.035),transparent 19% 45%,rgba(121,110,83,.025) 46% 47%,transparent 48%),
+linear-gradient(180deg,#131c17,#09100e)}
+.td-prop.prop-ruin-pillar,.td-prop.prop-standing-stone{width:25px;height:94px;background:linear-gradient(90deg,rgba(83,89,76,.62),rgba(121,119,96,.4),rgba(58,67,59,.68));border:1px solid rgba(180,182,143,.06);box-shadow:7px 8px 15px rgba(0,0,0,.22)}
+.td-prop.prop-ruin-pillar{height:67px;clip-path:polygon(0 9%,20% 0,47% 14%,67% 3%,100% 12%,100% 100%,0 100%)}
+.td-prop.prop-standing-stone{border-radius:48% 45% 11% 8%;clip-path:polygon(30% 0,71% 4%,93% 22%,86% 100%,12% 100%,5% 24%)}
+.td-prop.prop-broken-wall{width:96px;height:128px;background:
+linear-gradient(90deg,rgba(79,84,73,.5),rgba(55,62,55,.58));clip-path:polygon(0 11%,14% 4%,29% 17%,43% 6%,57% 12%,72% 0,100% 10%,100% 100%,0 100%);box-shadow:-9px 8px 20px rgba(0,0,0,.22)}
+.td-prop.prop-broken-wall:before{left:9px;right:9px;top:30px;height:2px;background:rgba(168,159,122,.06);box-shadow:0 28px 0 rgba(168,159,122,.05),0 56px 0 rgba(168,159,122,.04)}
+.td-prop.prop-puddle{width:115px;height:38px;border-radius:50%;background:radial-gradient(ellipse,rgba(80,115,103,.16),rgba(41,69,62,.08) 55%,transparent 72%);box-shadow:inset 0 0 15px rgba(92,137,119,.08)}
+
+/* Warden chamber */
+.td-arena.room-warden-chamber .td-floor{background:
+radial-gradient(circle at 66% 50%,rgba(90,150,103,.10),transparent 20%),
+radial-gradient(circle at 66% 50%,rgba(120,111,76,.045),transparent 34%),
+linear-gradient(180deg,#142019,#09110e)}
+.td-prop.prop-shrine-ring{width:166px;height:166px;border:1px solid rgba(155,170,124,.11);border-radius:50%;box-shadow:inset 0 0 0 18px rgba(130,156,111,.018),inset 0 0 0 42px rgba(0,0,0,.045)}
+.td-prop.prop-shrine-ring:before{left:50%;top:50%;width:94px;height:94px;border:1px dashed rgba(140,168,117,.09);border-radius:50%;transform:translate(-50%,-50%)}
+.td-prop.prop-shrine-stone{width:66px;height:105px;background:linear-gradient(180deg,rgba(103,112,91,.56),rgba(55,68,58,.68));clip-path:polygon(26% 0,74% 4%,100% 30%,86% 100%,13% 100%,0 28%);box-shadow:0 0 22px rgba(91,141,102,.07)}
+.td-prop.prop-shrine-stone:before{left:50%;top:24px;width:18px;height:27px;border:1px solid rgba(135,188,142,.16);border-radius:50%;transform:translateX(-50%);box-shadow:0 0 10px rgba(111,181,128,.08)}
+.td-arena.boss-room .td-environment{filter:saturate(.96) contrast(1.02)}
