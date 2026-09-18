@@ -87,7 +87,7 @@ const starterRoster=starterDefs.map(([id,name,klass,spec,level,power,knowledge,p
   return {id,name,class:klass,spec,level,power,gear:0,talent:1,knowledge:{ashwarden:knowledge,embermaw:0,vaultheart:0},portrait,gearItems:ILVL_SLOTS.map(slot=>equipment[slot]?.name||'Empty'),equipment,talents:talentState(klass),cellShock:0,cellShockLockedUntil:null,professions:[null,null]};
 });
 function initialState(){
-  return {saveVersion:SAVE_VERSION,gearVersion:2,renown:120,gold:1840,roster:JSON.parse(JSON.stringify(starterRoster)),party:{tank:'r1',healer:'r2',dps:['r3','r4','r5']},bossKills:{ashwarden:false,embermaw:false,vaultheart:false},reports:[],bank:[],materials:{},consumables:[],recipeScrolls:[],discoveredRecipes:[],tradeInbox:[],collectionHistory:[],activity:['The guild charter has been signed.','Your first five adventurers are ready.','Tier 1 equipment issued to the active party.','The Ashen Vault is available.']};
+  return {saveVersion:SAVE_VERSION,gearVersion:2,renown:120,gold:1840,socialDisplayName:'',roster:JSON.parse(JSON.stringify(starterRoster)),party:{tank:'r1',healer:'r2',dps:['r3','r4','r5']},bossKills:{ashwarden:false,embermaw:false,vaultheart:false},reports:[],bank:[],materials:{},consumables:[],recipeScrolls:[],discoveredRecipes:[],tradeInbox:[],collectionHistory:[],activity:['The guild charter has been signed.','Your first five adventurers are ready.','Tier 1 equipment issued to the active party.','The Ashen Vault is available.']};
 }
 function entitlementFromAccount(a){
   const until=a?.membership_active_until?new Date(a.membership_active_until).getTime():0;
@@ -148,7 +148,7 @@ function removeInvalidPartyMembers(s){
 }
 function migrateState(raw){
   const s=raw&&Array.isArray(raw.roster)&&raw.roster.length?raw:initialState();
-  s.saveVersion=SAVE_VERSION;s.gearVersion=2;s.renown=Number(s.renown)||0;s.gold=Number(s.gold)||0;s.roster=s.roster.map(normalizeCharacter);s.bank=canonicalBank(s.bank);s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};s.consumables=Array.isArray(s.consumables)?s.consumables:[];s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];s.collectionHistory=Array.isArray(s.collectionHistory)?s.collectionHistory:[];s.reports=Array.isArray(s.reports)?s.reports:[];s.activity=Array.isArray(s.activity)?s.activity:[];s.bossKills=s.bossKills||{ashwarden:false,embermaw:false,vaultheart:false};s.party=s.party||{tank:null,healer:null,dps:[null,null,null]};
+  s.saveVersion=SAVE_VERSION;s.gearVersion=2;s.renown=Number(s.renown)||0;s.gold=Number(s.gold)||0;s.socialDisplayName=typeof s.socialDisplayName==='string'?s.socialDisplayName:'';s.roster=s.roster.map(normalizeCharacter);s.bank=canonicalBank(s.bank);s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};s.consumables=Array.isArray(s.consumables)?s.consumables:[];s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];s.collectionHistory=Array.isArray(s.collectionHistory)?s.collectionHistory:[];s.reports=Array.isArray(s.reports)?s.reports:[];s.activity=Array.isArray(s.activity)?s.activity:[];s.bossKills=s.bossKills||{ashwarden:false,embermaw:false,vaultheart:false};s.party=s.party||{tank:null,healer:null,dps:[null,null,null]};
   s.roster.forEach(c=>refreshRecovery(c));return s;
 }
 function localCandidate(userId){
@@ -194,7 +194,7 @@ Storage.prototype.setItem=function(key,value){
 
 function switchView(id){
   $$('.view').forEach(v=>v.classList.toggle('active',v.id===id));$$('.nav-btn[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
-  const labels={overview:'Command Overview',roster:'Roster',bank:'Guild Bank',professions:'Professions',trading:'Trading Post',content:'PvE Content',party:'Party Builder',reports:'Attempt Reports'};if(ui.pageTitle)ui.pageTitle.textContent=labels[id]||'Cellbound';
+  const labels={overview:'Command Overview',roster:'Roster',bank:'Guild Bank',professions:'Professions',trading:'Trading Post',chat:'Chat',world:'Living World',content:'PvE Content',party:'Party Builder',reports:'Attempt Reports'};if(ui.pageTitle)ui.pageTitle.textContent=labels[id]||'Cellbound';
   if(id==='party')renderParty();if(id==='reports')renderReports();if(id==='bank')renderBank();if(id==='content')renderBosses();
 }
 $$('.nav-btn[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));$$('[data-jump]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.jump)));
@@ -284,7 +284,9 @@ function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(
 window.CellboundGame={
   ready:false,getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,
   characterItemLevel,partyItemLevel,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,
-  addBankItem,addMaterial,renderAll,switchView
+  addBankItem,addMaterial,renderAll,switchView,
+  getPartyCharacters:()=>flatPartyIds().map(charById).filter(Boolean),
+  applyPartyCellShock:(amount=PVE_WIPE_CELL_SHOCK)=>{flatPartyIds().map(charById).filter(Boolean).forEach(ch=>applyCellShock(ch,amount));save();renderAll();return flatPartyIds().map(charById).filter(Boolean).map(ch=>({id:ch.id,name:ch.name,cellShock:ch.cellShock}));}
 };
 $('#signOut')?.addEventListener('click',async()=>{clearTimeout(syncTimer);await persistState();await supabaseClient.auth.signOut();location.replace('./index.html');});
 (async()=>{
