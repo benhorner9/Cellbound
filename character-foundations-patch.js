@@ -65,6 +65,7 @@ function decorate(){
     const paper=body.querySelector('.cb-paperdoll');
     let panel=body.querySelector('.cb-foundation-panel');
     if(!paper){panel?.remove();return;}
+    if(paper.classList.contains('cb-armoury-stats-screen')){panel?.remove();return;}
     const foundationHTML=`<div class="cb-foundation-stats"><div><small>Health</small><b>${maxHealth(c).toLocaleString()}</b></div><div><small>Item Level</small><b>${ilvl}</b></div><div><small>Cell Shock</small><b class="${shock>=75?'danger':''}">${shock}%</b><span>${locked?`Recovering · ${remaining}`:'Ready for duty'}</span></div><div><small>Profession Capacity</small><b>${ent.professionSlots}</b><span>${ent.member?'Member':'Standard'} roster rules</span></div></div><div class="cb-profession-grid">${professionCards(c)}</div>`;
     if(!panel){panel=document.createElement('section');panel.className='cb-foundation-panel';panel.innerHTML=foundationHTML;paper.insertAdjacentElement('afterend',panel);}
     else if(panel.innerHTML!==foundationHTML)panel.innerHTML=foundationHTML;
