@@ -496,33 +496,38 @@ function telegraphBase(type,label){
 }
 function coneTelegraph(fromId,toId,label='FRONTAL · MOVE OUT'){
  const a=arenaPoint(fromId),b=arenaPoint(toId);if(!a||!b)return telegraphBase('cone',label);
- const e=telegraphBase('cone dynamic',label),dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI;
- const length=Math.max(170,Math.min(Math.hypot(a.w,a.h)*.62,360));
- e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.width=length+'px';e.style.height=Math.max(110,Math.min(170,length*.46))+'px';e.style.transform='translateY(-50%) rotate('+angle+'deg)';
+ const e=telegraphBase('cone dynamic',label),dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx);
+ const length=Math.max(170,Math.min(Math.hypot(a.w,a.h)*.62,360)),height=Math.max(110,Math.min(170,length*.46));
+ e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.width=length+'px';e.style.height=height+'px';e.style.transform='translateY(-50%) rotate('+(angle*180/Math.PI)+'deg)';
+ e._hitShape={type:'cone',x:a.x,y:a.y,angle,length,halfAngle:Math.atan2(height/2,length)};
  return e
 }
 function lineTelegraph(fromId,toId,label='CHARGE PATH · MOVE'){
  const a=arenaPoint(fromId),b=arenaPoint(toId);if(!a||!b)return telegraphBase('line',label);
- const e=telegraphBase('line dynamic',label),angle=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI;
- const length=Math.hypot(a.w,a.h)*1.15;
- e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.width=length+'px';e.style.height='42px';e.style.transform='translateY(-50%) rotate('+angle+'deg)';
+ const angle=Math.atan2(b.y-a.y,b.x-a.x),e=telegraphBase('line dynamic',label);
+ const length=Math.hypot(a.w,a.h)*1.15,halfWidth=21;
+ e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.width=length+'px';e.style.height=(halfWidth*2)+'px';e.style.transform='translateY(-50%) rotate('+(angle*180/Math.PI)+'deg)';
+ e._hitShape={type:'line',x:a.x,y:a.y,angle,length,halfWidth};
  return e
 }
 function circleTelegraph(targetId,size=150,label='AREA ATTACK · MOVE OUT'){
  const p=arenaPoint(targetId);if(!p)return telegraphBase('circle',label);
  const e=telegraphBase('circle dynamic',label);
  e.style.left=p.x+'px';e.style.top=p.y+'px';e.style.width=size+'px';e.style.height=size+'px';e.style.transform='translate(-50%,-50%)';
+ e._hitShape={type:'circle',x:p.x,y:p.y,radius:size/2};
  return e
 }
 function multiCircleTelegraph(targetIds,size=105,label='TARGETED AREA · MOVE'){
  const root=$('#cb2dTelegraphs');if(!root)return null;
- const wrap=document.createElement('div');wrap.className='cb2d-tg circles dynamic';
+ const wrap=document.createElement('div');wrap.className='cb2d-tg circles dynamic';const circles=[];
  targetIds.forEach((id,i)=>{
    const p=arenaPoint(id);if(!p)return;
+   circles.push({x:p.x,y:p.y,radius:size/2});
    const mark=document.createElement('i');mark.style.left=p.x+'px';mark.style.top=p.y+'px';mark.style.width=size+'px';mark.style.height=size+'px';mark.style.transform='translate(-50%,-50%)';
    if(i===0&&label){const s=document.createElement('span');s.className='cb2d-tg-label';s.textContent=label;mark.appendChild(s)}
    wrap.appendChild(mark)
  });
+ wrap._hitShape={type:'circles',circles};
  root.appendChild(wrap);requestAnimationFrame(()=>wrap.classList.add('show'));return wrap
 }
 function castTelegraph(casterId,label='INTERRUPTIBLE CAST'){
@@ -535,6 +540,56 @@ function addTelegraph(points,label='ADDS SPAWNING'){
  points.forEach((p,i)=>{const mark=document.createElement('i');mark.style.left=p.x+'%';mark.style.top=p.y+'%';if(i===0){const s=document.createElement('span');s.className='cb2d-tg-label';s.textContent=label;mark.appendChild(s)}wrap.appendChild(mark)});
  root.appendChild(wrap);requestAnimationFrame(()=>wrap.classList.add('show'));return wrap
 }
+function pointInTelegraph(p,shape){
+ if(!p||!shape)return false;
+ if(shape.type==='circle')return Math.hypot(p.x-shape.x,p.y-shape.y)<=shape.radius;
+ if(shape.type==='circles')return shape.circles.some(x=>Math.hypot(p.x-x.x,p.y-x.y)<=x.radius);
+ const dx=p.x-shape.x,dy=p.y-shape.y;
+ const along=dx*Math.cos(shape.angle)+dy*Math.sin(shape.angle);
+ const across=-dx*Math.sin(shape.angle)+dy*Math.cos(shape.angle);
+ if(shape.type==='line')return along>=0&&along<=shape.length&&Math.abs(across)<=shape.halfWidth;
+ if(shape.type==='cone'){
+   if(along<0||along>shape.length)return false;
+   const angle=Math.abs(Math.atan2(across,along));
+   return angle<=shape.halfAngle;
+ }
+ return false
+}
+function telegraphVictims(e){
+ const shape=e?._hitShape;if(!shape)return[];
+ return party().filter(c=>hp(c.id)>0&&pointInTelegraph(arenaPoint('p-'+c.id),shape))
+}
+function applyMechanicDamage(victims,amount,conditionLoss,label){
+ if(!victims.length)return[];
+ victims.forEach(c=>{
+   setHp(c.id,hp(c.id)-amount);
+   setCond(c.id,cond(c.id)-conditionLoss);
+   hitReact('p-'+c.id,'hit');
+   floating('p-'+c.id,'-'+amount,'incoming')
+ });
+ updateRows();
+ const names=victims.map(c=>c.name);
+ log(label+' hits '+names.join(', ')+'.');
+ return names
+}
+function resolveFloorMechanic(e,{damage=14,condition=5,label='Mechanic',allowTankSoak=false}={}){
+ const victims=telegraphVictims(e);
+ if(!victims.length){
+   flash('AVOIDED',false);log(label+' is avoided by the party.');clearTelegraph(e,'safe');
+   return{victims:[],avoidableHits:[]}
+ }
+ const avoidableHits=allowTankSoak?victims.filter(c=>combatProfile(c)!=='tank'):victims;
+ applyMechanicDamage(victims,damage,condition,label);
+ if(avoidableHits.length){
+   flash(avoidableHits.length+' HIT',true);
+   clearTelegraph(e,'impact')
+ }else{
+   flash('TANK SOAK',false);
+   clearTelegraph(e,'impact')
+ }
+ return{victims,avoidableHits}
+}
+
 function clearTelegraph(e,result='safe'){
  if(!e)return;e.classList.add(result);setTimeout(()=>e.remove(),260)
 }
@@ -572,19 +627,19 @@ async function mechanic(s,m,tok){
  if(type==='interrupt'){
    const v=castTelegraph('e-0','INTERRUPT '+name.toUpperCase());act('dps','Watching interrupt window');
    if(interruptOK(s)){await cast(name,Math.round(ms*.56),tok);flash('INTERRUPTED',false);log('A damage dealer interrupts '+name+'.');act('dps','Interrupt successful');clearTelegraph(v,'safe');run.mechanicActive=false;return}
-   await cast(name,ms,tok);flash('CAST COMPLETES',true);log(name+' lands. The healer recovers the group.');party().forEach(c=>{setCond(c.id,cond(c.id)-5);setHp(c.id,hp(c.id)-8);floating('p-'+c.id,'-8','incoming')});updateRows();clearTelegraph(v,'impact');run.mechanicActive=false;return
+   await cast(name,ms,tok);flash('CAST COMPLETES',true);log(name+' lands. The healer recovers the group.');party().forEach(c=>{setCond(c.id,cond(c.id)-5);setHp(c.id,hp(c.id)-8);hitReact('p-'+c.id,'hit');floating('p-'+c.id,'-8','incoming')});updateRows();clearTelegraph(v,'impact');run.mechanicActive=false;return
  }
  if(type==='cone'){
    const tank=party().find(c=>role(c)==='tank');if(tank)move('p-'+tank.id,51,50,420);move('e-0',59,50,420);await delay(180);const v=coneTelegraph('e-0',tank?'p-'+tank.id:'p-'+party()[0]?.id,'FRONTAL CLEAVE · ONLY TANK IN FRONT');act('tank','Turning the frontal away');log('Tank rotates the enemy away from the party.');
-   await cast(name,ms,tok);flash('FRONTAL AVOIDED',false);clearTelegraph(v,'safe');regroup();run.mechanicActive=false;return
+   await cast(name,ms,tok);const result=resolveFloorMechanic(v,{damage:12,condition:4,label:name,allowTankSoak:true});if(result.avoidableHits.length)act('healer','Recovering frontal damage');else act('tank','Frontal contained');regroup();run.mechanicActive=false;return
  }
  if(type==='circle'||type==='circles'){
    const p=party(),targets=type==='circles'?p.filter(c=>combatProfile(c)!=='tank').slice(0,3):[],v=type==='circles'?multiCircleTelegraph(targets.map(c=>'p-'+c.id),108,'VENTS TARGET PLAYERS · SPREAD'):circleTelegraph('e-0',170,'BOSS AOE · GET OUT'),a=[[25,20],[20,78],[38,22],[36,51],[38,80]];p.forEach((c,i)=>move('p-'+c.id,a[i][0],a[i][1],450));act('healer','Moving while maintaining heals');act('dps','Spreading from danger');
-   await cast(name,ms,tok);flash('SAFE',false);clearTelegraph(v,'safe');regroup();run.mechanicActive=false;return
+   await cast(name,ms,tok);const result=resolveFloorMechanic(v,{damage:type==='circles'?15:18,condition:type==='circles'?5:6,label:name});if(result.victims.length)act('healer','Recovering '+result.victims.length+' mechanic hit'+(result.victims.length>1?'s':''));regroup();run.mechanicActive=false;return
  }
  if(type==='line'){
    const candidates=party().filter(c=>combatProfile(c)!=='tank'&&hp(c.id)>0),target=candidates[Math.floor(Math.random()*Math.max(1,candidates.length))]||party()[0],v=lineTelegraph('e-0','p-'+target.id,'CHARGE LINE · SIDESTEP');party().filter(c=>c.id!==target.id&&combatProfile(c)!=='tank').forEach((c,i)=>move('p-'+c.id,27,24+i*27,420));if(target)move('p-'+target.id,25,82,420);act('dps','Sidestepping line attack');
-   await cast(name,ms,tok);flash('DODGED',false);clearTelegraph(v,'safe');regroup();run.mechanicActive=false;return
+   await cast(name,ms,tok);const result=resolveFloorMechanic(v,{damage:20,condition:7,label:name});if(result.victims.length)act('healer','Recovering line damage');regroup();run.mechanicActive=false;return
  }
  if(type==='adds'){
    const v=addTelegraph([{x:72,y:35},{x:72,y:65}],'ADDS SPAWNING · TANK PREPARES');for(let i=0;i<2;i++){addUnit('add-'+i,'Add','enemy small',84,35+i*30,'small');setTimeout(()=>move('add-'+i,56,35+i*30,450),20)}const tank=party().find(c=>combatProfile(c)==='tank');if(tank)act('tank',tank.name+' · Taunting spawned adds');act('dps',tactics.adds==='boss'?'Maintaining boss pressure':'Swapping to adds');log('Adds spawn. The tank gathers them.');
