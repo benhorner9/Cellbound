@@ -192,4 +192,63 @@ function updateBattleCast(){
   if(pct>=100)stopBattleCast(false);
 }
 function spawnBattleAdds(){
-  if(!
+  if(!expeditionBattle)return;
+  const arena=battleDom()?.querySelector('.evo2d-units');if(!arena)return;
+  for(let i=0;i<3;i++){
+    const id=`add-${i}`;if(expeditionBattle.units.some(x=>x.id===id))continue;
+    const unit={id,name:'Cellspawn',role:'enemy',x:82,y:28+i*21,hp:100,maxHp:100,size:'trash',add:true};
+    expeditionBattle.units.push(unit);
+    const el=document.createElement('div');el.className='evo2d-unit enemy trash add';el.dataset.battleUnit=id;el.style.left=`${unit.x}%`;el.style.top=`${unit.y}%`;
+    el.innerHTML=`<div class="evo2d-unit-cast"></div><div class="evo2d-dot"><span class="evo2d-facing"></span></div><div class="evo2d-unit-label"><b>Cellspawn</b><small>ADD</small></div><div class="evo2d-unit-hp"><i style="width:100%"></i></div><div class="evo2d-unit-action"></div>`;
+    arena.appendChild(el);
+  }
+}
+function killBattleAdds(){
+  if(!expeditionBattle)return;
+  expeditionBattle.units.filter(x=>x.add).forEach(x=>{setBattleHp(x.id,0);battleAction(x.id,'DEFEATED','success')});
+  setTimeout(()=>battleDom()?.querySelectorAll('.evo2d-unit.add').forEach(x=>x.remove()),700);
+  expeditionBattle.units=expeditionBattle.units.filter(x=>!x.add);
+}
+function partyByRole(role){return expeditionBattle?.party.find(x=>x.role===role)}
+function dpsUnits(){return expeditionBattle?.party.filter(x=>x.role==='dps')||[]}
+function battleEvent(ev){
+  const b=expeditionBattle;if(!b)return;
+  const m=b.mechanics,tank=partyByRole('tank'),healer=partyByRole('healer'),dps=dpsUnits(),boss=b.stage.kind==='boss'||b.stage.kind==='final';
+  switch(ev.type){
+    case'engage':
+      battleLog(`${tank?.name||'The tank'} establishes threat.`,'tank');
+      if(boss){setBattleFacing(180);battleAction('boss','TARGET: TANK','warning');battleAction(tank?.id,battleAbility(party().find(c=>c.id===tank?.charId),'taunt'),'tank')}
+      else b.enemies.forEach((e,i)=>setBattlePos(e.id,58+(i%2)*6,34+(i*12)%40,650));
+      break;
+    case'partyAttack':
+      dps.forEach((u,i)=>{const c=party().find(x=>x.id===u.charId);battleAction(u.id,battleAbility(c,'attack'),'dps')});
+      if(tank){const c=party().find(x=>x.id===tank.charId);battleAction(tank.id,battleAbility(c,'attack'),'tank')}
+      if(boss)setBossHp(Math.max(4,b.bossHp-(ev.late?15:13)));else b.enemies.forEach((e,i)=>setBattleHp(e.id,Math.max(8,e.hp-(22+i*2))));
+      battleLog('Damage rotation begins.','dps');
+      break;
+    case'packGather':
+      battleLog(`${tank?.name||'Tank'} gathers the pack and turns it away from the group.`,'tank');
+      if(tank){setBattlePos(tank.id,48,50);battleAction(tank.id,battleAbility(party().find(c=>c.id===tank.charId),'taunt'),'tank')}
+      b.enemies.forEach((e,i)=>setBattlePos(e.id,56+(i%2)*4,39+(i%3)*11,500));
+      break;
+    case'tankBuster':
+      if(!tank)return;
+      startBattleCast(m.tank,1.35,false,'boss');
+      battleAction(tank.id,battleAbility(party().find(c=>c.id===tank.charId),'defensive'),'tank');
+      battleLog(`${tank.name} commits a defensive cooldown for ${m.tank}.`,'tank');
+      setTimeout(()=>{if(expeditionBattle!==b)return;stopBattleCast(false);damageBattle(tank.id,ev.late?22:17,m.tank);flashBattle('BLOCKED','tank')},780/Math.max(1,b.speed));
+      break;
+    case'heal':
+      if(!healer)return;
+      const hc=party().find(c=>c.id===healer.charId),targets=[tank,...dps].filter(Boolean).sort((a,z)=>a.hp-z.hp);
+      battleAction(healer.id,battleAbility(hc,targets[0]?.hp<55?'groupHeal':'heal'),'heal');
+      targets.slice(0,targets[0]?.hp<55?4:2).forEach((u,i)=>healBattle(u.id,i?8:16,battleAbility(hc,'heal')));
+      battleLog(`${healer.name} stabilises the party.`,'heal');
+      break;
+    case'coneStart':
+      startBattleCast(m.cone,2.2,false,'boss');addConeTelegraph(m.cone);
+      if(tank){setBattlePos(tank.id,53,24);setBattlePos('boss',63,39);setBattleFacing(215);battleAction(tank.id,'REPOSITIONING','tank')}
+      battleLog(`${tank?.name||'Tank'} rotates the enemy away from the party.`,'tank');
+      break;
+    case'coneResolve':
+      stopBatt
