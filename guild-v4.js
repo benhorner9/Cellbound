@@ -194,7 +194,7 @@ Storage.prototype.setItem=function(key,value){
 
 function switchView(id){
   $$('.view').forEach(v=>v.classList.toggle('active',v.id===id));$$('.nav-btn[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
-  const labels={overview:'Command Overview',roster:'Roster',bank:'Guild Bank',professions:'Professions',trading:'Trading Post',chat:'Chat',world:'Living World',content:'PvE Content',party:'Party Builder',reports:'Attempt Reports'};if(ui.pageTitle)ui.pageTitle.textContent=labels[id]||'Cellbound';
+  const labels={overview:'Command Overview',roster:'Roster',bank:'Guild Bank',professions:'Professions',trading:'Trading Post',chat:'Chat',world:'Living World',content:'PvE Content',party:'Party Builder',reports:'Attempt Reports',admin:'Admin Control'};if(ui.pageTitle)ui.pageTitle.textContent=labels[id]||'Cellbound';
   if(id==='party')renderParty();if(id==='reports')renderReports();if(id==='bank')renderBank();if(id==='content')renderBosses();if(id==='roster')renderRoster();
 }
 $$('.nav-btn[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));$$('[data-jump]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.jump)));
