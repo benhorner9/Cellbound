@@ -77,7 +77,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:1px solid 
 .dungeon-art{background:linear-gradient(180deg,transparent,#100b08ef),radial-gradient(circle at 50% 38%,#7b4b2c 0,#36251c 33%,#111516 72%)}
 
 /* Roster */
-.roster-command-bar{display:grid;grid-template-columns:minmax(190px,1.2fr) minmax(220px,1.5fr) minmax(150px,.8fr) minmax(180px,.9fr);gap:10px;align-items:center;padding:12px;margin-bottom:14px}
+.roster-command-bar{display:grid;grid-template-columns:minmax(190px,1.15fr) minmax(200px,1.25fr) repeat(4,minmax(132px,.72fr));gap:9px;align-items:center;padding:12px;margin-bottom:14px}
 .roster-company-summary{padding:2px 8px}
 .roster-company-summary span{display:block;color:#a49169;font-size:.46rem;letter-spacing:.14em;font-weight:900}
 .roster-company-summary b{display:block;margin-top:3px;font-family:Georgia,serif;font-weight:500;color:#ece5d6}
@@ -298,3 +298,5 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:1px solid 
 .evo-dungeon-history{margin-bottom:14px;border:1px solid rgba(216,185,118,.1);background:linear-gradient(180deg,#10191d,#081115);box-shadow:var(--cb-shadow)}.evo-history-head{padding:14px 16px;border-bottom:1px solid rgba(216,185,118,.07)}.evo-history-head small{color:#a18e64;font-size:.46rem;font-weight:900;letter-spacing:.13em}.evo-history-head h3{margin:4px 0 0;font-family:Georgia,serif;font-weight:500}.evo-history-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:0}.evo-history-list article{padding:12px 14px;border-right:1px solid rgba(255,255,255,.035);border-bottom:1px solid rgba(255,255,255,.035)}.evo-history-list b{display:block;color:#dcd7cb;font-size:.55rem}.evo-history-list span{display:block;margin-top:4px;color:#687771;font-size:.47rem}
 @media(max-width:1050px){.evo-command-bar{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:720px){.evo-command-bar{grid-template-columns:1fr 1fr}.evo-chat-dock{z-index:145}.evo-history-list{grid-template-columns:1fr}}
+
+@media(max-width:1320px){.roster-command-bar{grid-template-columns:repeat(3,minmax(0,1fr))}.roster-company-summary{grid-column:1/-1}}
