@@ -118,7 +118,7 @@ function briefing(){
  r.querySelector('[data-start]').onclick=start;
 }
 function start(){
- const p=party();token++;run={token:token,stage:0,speed:1,condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0};
+ const p=party();token++;run={token:token,stage:0,speed:1,condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0},resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0};
  drawViewer();seamless(token);
 }
 function route(){
@@ -747,9 +747,23 @@ async function travelDeeper(nextStage,tok){
 function bonus(s){let b=run.override||0;if(tactics.aggression==='aggressive')b+=4;if(tactics.aggression==='safe'&&s.kind==='trash')b+=4;if(tactics.defensives==='early')b+=3;if(tactics.defensives==='save'&&s.kind==='final')b+=5;if(tactics.adds==='full'&&s.mechanics.some(m=>m[1]==='adds'))b+=4;return b}
 function chance(s){const avg=party().reduce((n,c)=>n+cond(c.id),0)/5;return clamp(Math.round(s.base+(ilvl()-18)*2+knowledge(s.knowledge)*.12+(avg-75)*.1+bonus(s)),35,97)}
 function learn(s,ok){const a=ok?(s.kind==='trash'||s.kind==='event'?3:7):5;party().forEach(c=>{c.knowledge=c.knowledge||{};c.knowledge[s.knowledge]=clamp((Number(c.knowledge[s.knowledge])||0)+a,0,100)});return a}
+function recordMaterialDrop(drop,bossName){
+ if(!run?.loot||!drop)return;
+ const meta=P?.MATERIALS?.[drop.key],current=run.loot.materials[drop.key]||{key:drop.key,name:meta?.name||drop.key,quantity:0,source:bossName,icon:meta?.icon||'◇',rarity:meta?.rarity||'Common'};
+ current.quantity+=Number(drop.quantity)||0;current.source=bossName;run.loot.materials[drop.key]=current
+}
 function loot(s){
- if(!s.bossId)return null;const boss=Game.bosses.find(b=>b.id===s.bossId);if(P&&P.rollReagents)(P.rollReagents(s.bossId)||[]).forEach(d=>Game.addMaterial(d.key,d.quantity));
- if((s.kind==='final'||Math.random()<.45)&&G&&G.rollDungeonLoot&&boss){const x=G.rollDungeonLoot(boss.name,boss.tier2Chance);Game.addBankItem(Object.assign({},x,{source:'The Ashen Vault · '+boss.name}));return x}return null
+ if(!s.bossId)return null;
+ const boss=Game.bosses.find(b=>b.id===s.bossId);
+ if(P&&P.rollReagents){
+   const drops=P.rollReagents(s.bossId)||[];
+   drops.forEach(d=>{Game.addMaterial(d.key,d.quantity);recordMaterialDrop(d,boss?.name||s.title)})
+ }
+ if((s.kind==='final'||Math.random()<.45)&&G&&G.rollDungeonLoot&&boss){
+   const x=G.rollDungeonLoot(boss.name,boss.tier2Chance),item=Object.assign({},x,{source:'The Ashen Vault · '+boss.name});
+   Game.addBankItem(item);run.loot.gear.push(item);return item
+ }
+ return null
 }
 async function playWipeVisual(s){
  if(!run)return;
@@ -775,7 +789,9 @@ async function resolveStage(s){
  const ok=run.stageOutcome,dmg=ok?(s.kind==='boss'||s.kind==='final'?5:3):(s.kind==='boss'||s.kind==='final'?22:10);
  party().forEach(c=>{const hit=Math.max(1,dmg-Math.floor(Math.random()*4));setCond(c.id,cond(c.id)-hit);if(!ok)setHp(c.id,hp(c.id)-Math.ceil(hit/2))});updateRows();
  if(ok){
-   const k=learn(s,true),item=loot(s);if(s.bossId)state().bossKills[s.bossId]=true;if(s.id==='kael')state().gold+=35;if(s.id==='embermaw')state().gold+=55;
+   const k=learn(s,true),item=loot(s);if(s.bossId)state().bossKills[s.bossId]=true;
+   if(s.id==='kael'){state().gold+=35;run.loot.gold+=35}
+   if(s.id==='embermaw'){state().gold+=55;run.loot.gold+=55}
    state().activity.push(s.title+' cleared during The Ashen Vault.');log(s.title+' cleared. Knowledge +'+k+'%.');if(item){run.rewards.push(item.name);flash('LOOT ACQUIRED',false);log(item.name+' sent to the Guild Bank.')}
    Game.save();await Game.persistState();return true
  }
@@ -797,10 +813,35 @@ async function seamless(tok){
    if(!await resolveStage(s)||tok!==token)return;
    if(i<STAGES.length-1){party().forEach(c=>setHp(c.id,hp(c.id)+6));updateRows();flash('PATH CLEAR',false);await delay(420);await travelDeeper(STAGES[i+1],tok)}
   }
-  const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;st.gold+=120;st.renown+=60;st.dungeonCompletions++;st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',partyIlvl:ilvl()});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault cleared. The Vaultheart has fallen.');await Game.persistState();finish(true,STAGES[6])
+  const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;st.gold+=120;st.renown+=60;run.loot.gold+=120;run.loot.renown+=60;st.dungeonCompletions++;st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',partyIlvl:ilvl()});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault cleared. The Vaultheart has fallen.');await Game.persistState();finish(true,STAGES[6])
  }catch(e){if(e&&e.message!=='cancelled')console.error('Ashen Vault 2D runtime',e)}
 }
-function finish(ok,s){if(!run)return;run.resolved=true;const e=$('#cb2dEnd');e.hidden=false;e.innerHTML='<div><small>'+(ok?'DUNGEON COMPLETE':'EXPEDITION FAILED')+'</small><h3>'+(ok?'The Vaultheart has fallen.':'Wipe at '+esc(s.title)+'.')+'</h3><p>'+(ok?('The full Ashen Vault run completed seamlessly.'+(run.rewards.length?' Loot: '+run.rewards.map(esc).join(', ')+'.':'')):'All five adventurers gained 25% Cell Shock. Knowledge earned during the run is retained.')+'</p></div><button>RETURN TO GUILD →</button>';e.querySelector('button').onclick=()=>{close();Game.switchView('content')}}
+function lootRarityClass(item){return 'rarity-'+String(item?.rarity||'common').toLowerCase().replace(/[^a-z0-9-]/g,'')}
+function lootGearCard(item){
+ const art=G?.artHTML?G.artHTML(item,78):(item.icon||'◇');
+ return '<article class="cb2d-loot-item '+lootRarityClass(item)+'"><div class="cb2d-loot-art">'+art+'</div><div><small>'+esc(String(item.rarity||'GEAR').toUpperCase())+' · '+esc(item.slot||'ITEM')+'</small><h4>'+esc(item.name||'Unknown Item')+'</h4><p>Item Level '+(Number(item.itemLevel)||0)+(item.power?' · +'+Number(item.power)+' Power':'')+'</p><em>Sent to Guild Bank</em></div></article>'
+}
+function lootMaterialCard(m){
+ return '<article class="cb2d-loot-material"><strong>'+esc(m.icon||'◇')+'</strong><div><small>'+esc(String(m.rarity||'MATERIAL').toUpperCase())+'</small><h4>'+esc(m.name)+'</h4><p>'+esc(m.source||'The Ashen Vault')+'</p></div><b>×'+Number(m.quantity||0)+'</b></article>'
+}
+function finish(ok,s){
+ if(!run)return;run.resolved=true;const e=$('#cb2dEnd');e.hidden=false;
+ if(!ok){
+   e.className='cb2d-end';e.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Knowledge earned during the run is retained.</p></div><button>RETURN TO GUILD →</button>';
+   e.querySelector('button').onclick=()=>{close();Game.switchView('content')};return
+ }
+ const gear=run.loot?.gear||[],materials=Object.values(run.loot?.materials||{});
+ e.className='cb2d-end cb2d-loot-screen';
+ e.innerHTML='<div class="cb2d-loot-wrap">'+
+   '<header class="cb2d-loot-head"><div><small>THE ASHEN VAULT · CLEARED</small><h3>Expedition Rewards</h3><p>The Vaultheart has fallen. Everything below has already been secured to your guild.</p></div><div class="cb2d-loot-complete">✓<span>DUNGEON<br>COMPLETE</span></div></header>'+
+   '<div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+Number(run.loot?.gold||0)+'</b><small>Added to Guild treasury</small></article><article><span>RENOWN</span><b>+'+Number(run.loot?.renown||0)+'</b><small>Guild reputation earned</small></article><article><span>BOSS CHESTS</span><b>'+gear.length+'</b><small>Gear drops secured</small></article></div>'+
+   '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>GEAR ACQUIRED</span><small>Stored automatically in the Guild Bank</small></div><div class="cb2d-loot-gear">'+(gear.length?gear.map(lootGearCard).join(''):'<div class="cb2d-loot-empty">No bonus gear dropped before the guaranteed Vaultheart reward.</div>')+'</div></section>'+
+   '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>PROFESSION REAGENTS</span><small>Available immediately for crafting</small></div><div class="cb2d-loot-materials">'+(materials.length?materials.map(lootMaterialCard).join(''):'<div class="cb2d-loot-empty">No profession reagents recovered.</div>')+'</div></section>'+
+   '<footer class="cb2d-loot-actions"><button data-loot-bank>VIEW GUILD BANK</button><button class="primary" data-loot-return>RETURN TO GUILD →</button></footer>'+
+   '</div>';
+ e.querySelector('[data-loot-bank]').onclick=()=>{close();Game.switchView('bank')};
+ e.querySelector('[data-loot-return]').onclick=()=>{close();Game.switchView('content')}
+}
 async function override(t,b){
  if(!run||run.resolved)return;b.classList.add('active');setTimeout(()=>b.classList.remove('active'),450);
  if(t==='focus'){run.override=Math.max(run.override,4);act('dps','Focusing priority target');log('Override: focus target.')}
