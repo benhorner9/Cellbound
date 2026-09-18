@@ -556,7 +556,7 @@ async function mechanic(s,m,tok){
  }
  if(type==='adds'){
    const v=addTelegraph([{x:72,y:35},{x:72,y:65}],'ADDS SPAWNING · TANK PREPARES');for(let i=0;i<2;i++){addUnit('add-'+i,'Add','enemy small',84,35+i*30,'small');setTimeout(()=>move('add-'+i,56,35+i*30,450),20)}const tank=party().find(c=>combatProfile(c)==='tank');if(tank)act('tank',tank.name+' · Taunting spawned adds');act('dps',tactics.adds==='boss'?'Maintaining boss pressure':'Swapping to adds');log('Adds spawn. The tank gathers them.');
-   await cast(name,ms,tok);clearTelegraph(v,'impact');await delay(550);$('[data-unit^="add-"]').forEach(e=>e.remove());run.mechanicActive=false;return
+   await cast(name,ms,tok);clearTelegraph(v,'impact');await delay(550);$$('[data-unit^="add-"]').forEach(e=>e.remove());run.mechanicActive=false;return
  }
 }
 function bonus(s){let b=run.override||0;if(tactics.aggression==='aggressive')b+=4;if(tactics.aggression==='safe'&&s.kind==='trash')b+=4;if(tactics.defensives==='early')b+=3;if(tactics.defensives==='save'&&s.kind==='final')b+=5;if(tactics.adds==='full'&&s.mechanics.some(m=>m[1]==='adds'))b+=4;return b}
