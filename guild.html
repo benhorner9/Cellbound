@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="./character-sheet.css?v=5">
 <link rel="stylesheet" href="./gear-system.css?v=6">
 <link rel="stylesheet" href="./foundations.css?v=1">
+<link rel="stylesheet" href="./economy-v2.css?v=1">
 </head>
 <body>
 <div class="app-shell">
@@ -19,6 +20,8 @@
       <button class="nav-btn active" data-view="overview"><span>⌂</span>Overview</button>
       <button class="nav-btn" data-view="roster"><span>♟</span>Roster</button>
       <button class="nav-btn" data-view="bank"><span>▦</span>Bank</button>
+      <button class="nav-btn" data-view="professions"><span>⚒</span>Professions</button>
+      <button class="nav-btn" data-view="trading"><span>⇄</span>Trading Post</button>
       <button class="nav-btn" data-view="content"><span>⚔</span>Content</button>
       <button class="nav-btn" data-view="party"><span>◆</span>Party Builder</button>
       <button class="nav-btn" data-view="reports"><span>▤</span>Reports</button>
@@ -65,6 +68,31 @@
       <div id="bankGrid" class="bank-grid"></div>
     </section>
 
+    <section id="professions" class="view">
+      <div class="section-intro"><div><small>CRAFTING & GATHERING</small><h2>Professions</h2><p>Each adventurer develops their own trade skills. Crafting earns profession experience; dungeon victories provide the reagents.</p></div><b class="economy-badge">SKILL 1–100</b></div>
+      <div class="profession-layout">
+        <aside class="panel profession-roster-panel"><div class="panel-head"><div><small>ADVENTURERS</small><h3>Profession Slots</h3></div></div><div id="professionCharacterList" class="profession-character-list"></div></aside>
+        <div class="profession-main">
+          <article class="panel"><div class="panel-head"><div><small>REAGENT VAULT</small><h3>Dungeon Materials</h3></div></div><div id="reagentGrid" class="reagent-grid"></div></article>
+          <article class="panel workshop-panel"><div class="panel-head"><div><small>WORKSHOP</small><h3 id="workshopTitle">Choose an Adventurer</h3></div></div><div id="professionWorkshop" class="profession-workshop"></div></article>
+          <article class="panel"><div class="panel-head"><div><small>CRAFTED STOCK</small><h3>Consumables & Runes</h3></div></div><div id="craftedInventory" class="crafted-inventory"></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="trading" class="view">
+      <div class="section-intro"><div><small>PLAYER ECONOMY</small><h2>Trading Post</h2><p>Buy and sell tradeable gear, reagents and crafted goods. A 5% sale tax removes gold from the economy.</p></div><button id="refreshTrading" class="ghost-btn">REFRESH MARKET</button></div>
+      <div class="trading-layout">
+        <div class="trading-main">
+          <article class="panel trading-market"><div class="panel-head"><div><small>LIVE LISTINGS</small><h3>Market</h3></div><div id="tradeFilters" class="trade-filters"><button class="filter active" data-trade-filter="all">All</button><button class="filter" data-trade-filter="gear">Gear</button><button class="filter" data-trade-filter="material">Reagents</button><button class="filter" data-trade-filter="consumable">Crafted</button></div></div><div id="tradeListings" class="trade-listings"></div></article>
+        </div>
+        <aside class="trading-side">
+          <article class="panel sell-panel"><div class="panel-head"><div><small>SELL</small><h3>Create Listing</h3></div></div><form id="tradeSellForm" class="trade-sell-form"><label>Item<select id="tradeSellItem"></select></label><label>Quantity<input id="tradeSellQuantity" type="number" min="1" value="1"></label><label>Price per item<input id="tradeSellPrice" type="number" min="1" value="50"></label><button type="submit">LIST ITEM</button><p id="tradeSellHint">Choose an item from your Bank, reagent vault or crafted stock.</p></form></article>
+          <article class="panel"><div class="panel-head"><div><small>YOUR SALES</small><h3>My Listings</h3></div></div><div id="myTradeListings" class="my-trade-listings"></div></article>
+        </aside>
+      </div>
+    </section>
+
     <section id="content" class="view">
       <div class="section-intro"><div><small>PVE CONTENT</small><h2>The Ashen Vault</h2><p>Dungeon · 5 players · Party Item Level progression</p></div><div class="content-status"><span>Progress</span><b id="dungeonProgress">0 / 3 bosses</b></div></div>
       <div id="bossList" class="boss-list"></div>
@@ -96,10 +124,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
 <script src="./gear-data.js?v=7"></script>
-<script src="./guild-v4.js?v=1"></script>
+<script src="./profession-data.js?v=1"></script>
+<script src="./guild-v4.js?v=2"></script>
 <script src="./character-sheet.js?v=5"></script>
 <script src="./gear-character-patch.js?v=6"></script>
 <script src="./character-foundations-patch.js?v=1"></script>
+<script src="./economy-v2.js?v=1"></script>
 </body>
 </html>
 
