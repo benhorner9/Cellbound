@@ -77,8 +77,10 @@ function updateRows(){
  party().forEach(c=>{
    const row=$('[data-row="'+c.id+'"]');
    const value=row?.querySelector('strong');if(value)value.textContent=hp(c.id)+' HP';
+   const detail=row?.querySelector('small');if(detail)detail.textContent=String(role(c)).toUpperCase()+' · '+c.spec+' · Condition '+cond(c.id)+'%';
    const bar=$('[data-side-hp="'+c.id+'"]');if(bar)bar.style.width=hp(c.id)+'%';
    const unit=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(unit)unit.style.width=hp(c.id)+'%';
+   const marker=$('[data-unit="p-'+c.id+'"]');if(marker)marker.classList.toggle('dead',hp(c.id)<=0);
  })
 }
 function addUnit(id,label,cls,x,y,size){
@@ -249,6 +251,26 @@ function loot(s){
  if(!s.bossId)return null;const boss=Game.bosses.find(b=>b.id===s.bossId);if(P&&P.rollReagents)(P.rollReagents(s.bossId)||[]).forEach(d=>Game.addMaterial(d.key,d.quantity));
  if((s.kind==='final'||Math.random()<.45)&&G&&G.rollDungeonLoot&&boss){const x=G.rollDungeonLoot(boss.name,boss.tier2Chance);Game.addBankItem(Object.assign({},x,{source:'The Ashen Vault · '+boss.name}));return x}return null
 }
+async function playWipeVisual(s){
+ if(!run)return;
+ run.combatActive=false;run.mechanicActive=false;
+ status((s.kind==='final'?'Final mechanic failed':'The formation breaks')+' · party wipe');
+ log(s.title+' overwhelms the party.');
+ act('tank','Down');act('healer','Down');act('dps','Down');
+ const chars=party();
+ for(let i=0;i<chars.length;i++){
+   const c=chars[i],remaining=Math.max(1,hp(c.id)),enemy='e-'+Math.min(i,Math.max(0,(run.enemyHp?.length||1)-1));
+   targetPulse('p-'+c.id);
+   projectile(enemy,'p-'+c.id,'enemy-heavy',260);
+   await delay(120);
+   setHp(c.id,0);setCond(c.id,0);
+   floating('p-'+c.id,'-'+remaining,'incoming');
+   updateRows();
+ }
+ flash('PARTY WIPE',true);
+ await delay(650);
+}
+
 async function resolveStage(s){
  const ok=run.stageOutcome,dmg=ok?(s.kind==='boss'||s.kind==='final'?5:3):(s.kind==='boss'||s.kind==='final'?22:10);
  party().forEach(c=>{const hit=Math.max(1,dmg-Math.floor(Math.random()*4));setCond(c.id,cond(c.id)-hit);if(!ok)setHp(c.id,hp(c.id)-Math.ceil(hit/2))});updateRows();
@@ -257,8 +279,9 @@ async function resolveStage(s){
    state().activity.push(s.title+' cleared during The Ashen Vault.');log(s.title+' cleared. Knowledge +'+k+'%.');if(item){run.rewards.push(item.name);flash('LOOT ACQUIRED',false);log(item.name+' sent to the Guild Bank.')}
    Game.save();await Game.persistState();return true
  }
- learn(s,false);const wipe=s.kind==='boss'||s.kind==='final'||party().some(c=>cond(c.id)<=0);
+ learn(s,false);const wipe=s.kind==='boss'||s.kind==='final'||party().some(c=>hp(c.id)<=0||cond(c.id)<=0);
  if(!wipe){log(s.title+' hurts the group, but the party keeps moving.');Game.save();await Game.persistState();return true}
+ await playWipeVisual(s);
  Game.applyPartyCellShock(25);const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonHistory.unshift({at:new Date().toISOString(),result:'wipe',stage:s.id,partyIlvl:ilvl()});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The guild wiped at '+s.title+'. All five gained 25% Cell Shock.');await Game.persistState();finish(false,s);return false
 }
 async function seamless(tok){
