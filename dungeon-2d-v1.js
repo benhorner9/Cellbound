@@ -70,7 +70,7 @@ function rows(){
 }
 function drawViewer(){
  const s=STAGES[run.stage],r=root();r.hidden=false;
- r.innerHTML='<section class="cb2d-shell"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LIVE 2D DUNGEON</small><h2 id="cb2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close>×</button></div></header><div class="cb2d-route" id="cb2dRoute">'+route()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena" id="cb2dArena"><div class="cb2d-floor"></div><div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div><div class="cb2d-caption"><span id="cb2dType">'+s.kind.toUpperCase()+'</span><b id="cb2dStatus">Entering encounter…</b></div></div><div class="cb2d-controls"><button data-override="focus"><b>FOCUS TARGET</b><small>Force priority damage.</small></button><button data-override="interrupt"><b>INTERRUPT NOW</b><small>Force the next interrupt.</small></button><button data-override="defensive"><b>DEFENSIVE</b><small>Stabilise the group.</small></button><button data-override="burn"><b>BURN BOSS</b><small>Commit damage cooldowns.</small></button><button data-override="consumable"><b>USE CONSUMABLE</b><small>Use available stock.</small></button></div><div class="cb2d-feed"><small>COMBAT FEED</small><p id="cb2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>PARTY CONDITION · ILVL '+ilvl()+'</small><div id="cb2dRows">'+rows()+'</div></div><div class="cb2d-plan"><small>PERSISTENT TACTICS</small><b>'+tactics.aggression.toUpperCase()+' · '+tactics.interrupts.toUpperCase()+' INTERRUPTS</b><span>'+tactics.defensives.toUpperCase()+' DEFENSIVES · '+tactics.adds.toUpperCase()+' ADDS</span></div></aside></div><div class="cb2d-end" id="cb2dEnd" hidden></div></section>';
+ r.innerHTML='<section class="cb2d-shell"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LIVE 2D DUNGEON</small><h2 id="cb2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close>×</button></div></header><div class="cb2d-route" id="cb2dRoute">'+route()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena" id="cb2dArena"><div class="cb2d-floor"></div><div class="cb2d-ground-legend"><span class="danger">RED · INCOMING DAMAGE</span><span class="spawn">AMBER · SPAWN / PRIORITY</span></div><div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div><div class="cb2d-caption"><span id="cb2dType">'+s.kind.toUpperCase()+'</span><b id="cb2dStatus">Entering encounter…</b></div></div><div class="cb2d-controls"><button data-override="focus"><b>FOCUS TARGET</b><small>Force priority damage.</small></button><button data-override="interrupt"><b>INTERRUPT NOW</b><small>Force the next interrupt.</small></button><button data-override="defensive"><b>DEFENSIVE</b><small>Stabilise the group.</small></button><button data-override="burn"><b>BURN BOSS</b><small>Commit damage cooldowns.</small></button><button data-override="consumable"><b>USE CONSUMABLE</b><small>Use available stock.</small></button></div><div class="cb2d-feed"><small>COMBAT FEED</small><p id="cb2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>PARTY CONDITION · ILVL '+ilvl()+'</small><div id="cb2dRows">'+rows()+'</div></div><div class="cb2d-plan"><small>PERSISTENT TACTICS</small><b>'+tactics.aggression.toUpperCase()+' · '+tactics.interrupts.toUpperCase()+' INTERRUPTS</b><span>'+tactics.defensives.toUpperCase()+' DEFENSIVES · '+tactics.adds.toUpperCase()+' ADDS</span></div></aside></div><div class="cb2d-end" id="cb2dEnd" hidden></div></section>';
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.resolved&&!confirm('Leave the Ashen Vault?'))return;close()};
  r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  r.querySelectorAll('[data-override]').forEach(b=>b.onclick=()=>override(b.dataset.override,b));
@@ -451,10 +451,69 @@ async function finishCombat(s,tok){
  if(run)run.combatActive=false;
 }
 
+function arenaPoint(id){
+ const arena=$('#cb2dArena'),u=$('[data-unit="'+id+'"]');if(!arena||!u)return null;
+ const a=arena.getBoundingClientRect(),r=u.getBoundingClientRect();
+ return{x:r.left-a.left+r.width/2,y:r.top-a.top+r.height/2,w:a.width,h:a.height};
+}
+function telegraphBase(type,label){
+ const root=$('#cb2dTelegraphs');if(!root)return null;
+ const e=document.createElement('div');e.className='cb2d-tg '+type;
+ if(label){const s=document.createElement('span');s.className='cb2d-tg-label';s.textContent=label;e.appendChild(s)}
+ root.appendChild(e);requestAnimationFrame(()=>e.classList.add('show'));return e
+}
+function coneTelegraph(fromId,toId,label='FRONTAL · MOVE OUT'){
+ const a=arenaPoint(fromId),b=arenaPoint(toId);if(!a||!b)return telegraphBase('cone',label);
+ const e=telegraphBase('cone dynamic',label),dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI;
+ const length=Math.max(170,Math.min(Math.hypot(a.w,a.h)*.62,360));
+ e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.width=length+'px';e.style.height=Math.max(110,Math.min(170,length*.46))+'px';e.style.transform='translateY(-50%) rotate('+angle+'deg)';
+ return e
+}
+function lineTelegraph(fromId,toId,label='CHARGE PATH · MOVE'){
+ const a=arenaPoint(fromId),b=arenaPoint(toId);if(!a||!b)return telegraphBase('line',label);
+ const e=telegraphBase('line dynamic',label),angle=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI;
+ const length=Math.hypot(a.w,a.h)*1.15;
+ e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.width=length+'px';e.style.height='42px';e.style.transform='translateY(-50%) rotate('+angle+'deg)';
+ return e
+}
+function circleTelegraph(targetId,size=150,label='AREA ATTACK · MOVE OUT'){
+ const p=arenaPoint(targetId);if(!p)return telegraphBase('circle',label);
+ const e=telegraphBase('circle dynamic',label);
+ e.style.left=p.x+'px';e.style.top=p.y+'px';e.style.width=size+'px';e.style.height=size+'px';e.style.transform='translate(-50%,-50%)';
+ return e
+}
+function multiCircleTelegraph(targetIds,size=105,label='TARGETED AREA · MOVE'){
+ const root=$('#cb2dTelegraphs');if(!root)return null;
+ const wrap=document.createElement('div');wrap.className='cb2d-tg circles dynamic';
+ targetIds.forEach((id,i)=>{
+   const p=arenaPoint(id);if(!p)return;
+   const mark=document.createElement('i');mark.style.left=p.x+'px';mark.style.top=p.y+'px';mark.style.width=size+'px';mark.style.height=size+'px';mark.style.transform='translate(-50%,-50%)';
+   if(i===0&&label){const s=document.createElement('span');s.className='cb2d-tg-label';s.textContent=label;mark.appendChild(s)}
+   wrap.appendChild(mark)
+ });
+ root.appendChild(wrap);requestAnimationFrame(()=>wrap.classList.add('show'));return wrap
+}
+function castTelegraph(casterId,label='INTERRUPTIBLE CAST'){
+ const p=arenaPoint(casterId);if(!p)return telegraphBase('cast',label);
+ const e=telegraphBase('cast dynamic',label);e.style.left=p.x+'px';e.style.top=p.y+'px';e.style.width='72px';e.style.height='72px';e.style.transform='translate(-50%,-50%)';return e
+}
+function addTelegraph(points,label='ADDS SPAWNING'){
+ const root=$('#cb2dTelegraphs');if(!root)return null;
+ const wrap=document.createElement('div');wrap.className='cb2d-tg adds dynamic';
+ points.forEach((p,i)=>{const mark=document.createElement('i');mark.style.left=p.x+'%';mark.style.top=p.y+'%';if(i===0){const s=document.createElement('span');s.className='cb2d-tg-label';s.textContent=label;mark.appendChild(s)}wrap.appendChild(mark)});
+ root.appendChild(wrap);requestAnimationFrame(()=>wrap.classList.add('show'));return wrap
+}
+function clearTelegraph(e,result='safe'){
+ if(!e)return;e.classList.add(result);setTimeout(()=>e.remove(),260)
+}
 function tg(type){
- const p=$('#cb2dTelegraphs'),e=document.createElement('div');e.className='cb2d-tg '+type;
- if(type==='circles')e.innerHTML='<i></i><i></i><i></i>';
- p.appendChild(e);requestAnimationFrame(()=>e.classList.add('show'));return e
+ if(type==='cast')return castTelegraph('e-0');
+ if(type==='cone'){const tank=party().find(c=>combatProfile(c)==='tank');return coneTelegraph('e-0',tank?'p-'+tank.id:'p-'+party()[0]?.id)}
+ if(type==='line'){const targets=party().filter(c=>combatProfile(c)!=='tank'&&hp(c.id)>0),target=targets[Math.floor(Math.random()*Math.max(1,targets.length))]||party()[0];return lineTelegraph('e-0','p-'+target.id)}
+ if(type==='circle')return circleTelegraph('e-0',160,'BOSS AOE · MOVE OUT');
+ if(type==='circles'){const targets=party().filter(c=>combatProfile(c)!=='tank').slice(0,3);return multiCircleTelegraph(targets.map(c=>'p-'+c.id),105,'TARGETED AOE · SPREAD')}
+ if(type==='adds')return addTelegraph([{x:72,y:35},{x:72,y:65}]);
+ return telegraphBase(type)
 }
 function flash(t,danger){const a=$('#cb2dArena'),e=document.createElement('div');e.className='cb2d-flash '+(danger?'bad':'good');e.textContent=t;a.appendChild(e);setTimeout(()=>e.remove(),900)}
 async function cast(name,ms,tok){
@@ -479,25 +538,25 @@ function regroup(){
 async function mechanic(s,m,tok){
  const name=m[0],type=m[1],ms=m[2];run.mechanicActive=true;status(name+' incoming');log(name+' begins.');
  if(type==='interrupt'){
-   const v=tg('cast');act('dps','Watching interrupt window');
-   if(interruptOK(s)){await cast(name,Math.round(ms*.56),tok);flash('INTERRUPTED',false);log('A damage dealer interrupts '+name+'.');act('dps','Interrupt successful');v.remove();run.mechanicActive=false;return}
+   const v=castTelegraph('e-0','INTERRUPT '+name.toUpperCase());act('dps','Watching interrupt window');
+   if(interruptOK(s)){await cast(name,Math.round(ms*.56),tok);flash('INTERRUPTED',false);log('A damage dealer interrupts '+name+'.');act('dps','Interrupt successful');clearTelegraph(v,'safe');run.mechanicActive=false;return}
    await cast(name,ms,tok);flash('CAST COMPLETES',true);log(name+' lands. The healer recovers the group.');party().forEach(c=>{setCond(c.id,cond(c.id)-5);setHp(c.id,hp(c.id)-8);floating('p-'+c.id,'-8','incoming')});updateRows();v.remove();run.mechanicActive=false;return
  }
  if(type==='cone'){
-   const v=tg('cone'),tank=party().find(c=>role(c)==='tank');if(tank)move('p-'+tank.id,51,50,420);move('e-0',59,50,420);act('tank','Turning the frontal away');log('Tank rotates the enemy away from the party.');
-   await cast(name,ms,tok);flash('FRONTAL AVOIDED',false);v.remove();regroup();run.mechanicActive=false;return
+   const tank=party().find(c=>role(c)==='tank');if(tank)move('p-'+tank.id,51,50,420);move('e-0',59,50,420);await delay(180);const v=coneTelegraph('e-0',tank?'p-'+tank.id:'p-'+party()[0]?.id,'FRONTAL CLEAVE · ONLY TANK IN FRONT');act('tank','Turning the frontal away');log('Tank rotates the enemy away from the party.');
+   await cast(name,ms,tok);flash('FRONTAL AVOIDED',false);clearTelegraph(v,'safe');regroup();run.mechanicActive=false;return
  }
  if(type==='circle'||type==='circles'){
-   const v=tg(type),p=party(),a=[[25,20],[20,78],[38,22],[36,51],[38,80]];p.forEach((c,i)=>move('p-'+c.id,a[i][0],a[i][1],450));act('healer','Moving while maintaining heals');act('dps','Spreading from danger');
+   const p=party(),targets=type==='circles'?p.filter(c=>combatProfile(c)!=='tank').slice(0,3):[],v=type==='circles'?multiCircleTelegraph(targets.map(c=>'p-'+c.id),108,'VENTS TARGET PLAYERS · SPREAD'):circleTelegraph('e-0',170,'BOSS AOE · GET OUT'),a=[[25,20],[20,78],[38,22],[36,51],[38,80]];p.forEach((c,i)=>move('p-'+c.id,a[i][0],a[i][1],450));act('healer','Moving while maintaining heals');act('dps','Spreading from danger');
    await cast(name,ms,tok);flash('SAFE',false);v.remove();regroup();run.mechanicActive=false;return
  }
  if(type==='line'){
-   const v=tg('line');party().slice(2).forEach((c,i)=>move('p-'+c.id,27,24+i*27,420));act('dps','Sidestepping line attack');
+   const candidates=party().filter(c=>combatProfile(c)!=='tank'&&hp(c.id)>0),target=candidates[Math.floor(Math.random()*Math.max(1,candidates.length))]||party()[0],v=lineTelegraph('e-0','p-'+target.id,'CHARGE LINE · SIDESTEP');party().filter(c=>c.id!==target.id&&combatProfile(c)!=='tank').forEach((c,i)=>move('p-'+c.id,27,24+i*27,420));if(target)move('p-'+target.id,25,82,420);act('dps','Sidestepping line attack');
    await cast(name,ms,tok);flash('DODGED',false);v.remove();regroup();run.mechanicActive=false;return
  }
  if(type==='adds'){
-   tg('adds');for(let i=0;i<2;i++){addUnit('add-'+i,'Add','enemy small',84,35+i*30,'small');setTimeout(()=>move('add-'+i,56,35+i*30,450),20)}const tank=party().find(c=>combatProfile(c)==='tank');if(tank)act('tank',tank.name+' · Taunting spawned adds');act('dps',tactics.adds==='boss'?'Maintaining boss pressure':'Swapping to adds');log('Adds spawn. The tank gathers them.');
-   await cast(name,ms,tok);await delay(550);$$('[data-unit^="add-"]').forEach(e=>e.remove());$('#cb2dTelegraphs').innerHTML='';run.mechanicActive=false;return
+   const v=addTelegraph([{x:72,y:35},{x:72,y:65}],'ADDS SPAWNING · TANK PREPARES');for(let i=0;i<2;i++){addUnit('add-'+i,'Add','enemy small',84,35+i*30,'small');setTimeout(()=>move('add-'+i,56,35+i*30,450),20)}const tank=party().find(c=>combatProfile(c)==='tank');if(tank)act('tank',tank.name+' · Taunting spawned adds');act('dps',tactics.adds==='boss'?'Maintaining boss pressure':'Swapping to adds');log('Adds spawn. The tank gathers them.');
+   await cast(name,ms,tok);clearTelegraph(v,'impact');await delay(550);$('[data-unit^="add-"]').forEach(e=>e.remove());run.mechanicActive=false;return
  }
 }
 function bonus(s){let b=run.override||0;if(tactics.aggression==='aggressive')b+=4;if(tactics.aggression==='safe'&&s.kind==='trash')b+=4;if(tactics.defensives==='early')b+=3;if(tactics.defensives==='save'&&s.kind==='final')b+=5;if(tactics.adds==='full'&&s.mechanics.some(m=>m[1]==='adds'))b+=4;return b}
