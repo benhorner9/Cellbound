@@ -93,7 +93,30 @@ function updateRows(){
 function addUnit(id,label,cls,x,y,size){
  const e=document.createElement('div');e.className='cb2d-unit '+cls+' '+(size||'');e.dataset.unit=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+'</span><em class="cb2d-unit-hp"><i></i></em>';$('#cb2dUnits').appendChild(e)
 }
-function move(id,x,y,ms){const e=$('[data-unit="'+id+'"]');if(!e)return;e.style.transitionDuration=Math.round(ms/((run&&run.speed)||1))+'ms';requestAnimationFrame(()=>{e.style.left=x+'%';e.style.top=y+'%'})}
+function move(id,x,y,ms){
+ const e=$('[data-unit="'+id+'"]');if(!e)return;
+ const ox=parseFloat(e.style.left)||x,oy=parseFloat(e.style.top)||y,dx=x-ox,dy=y-oy;
+ if(Math.hypot(dx,dy)>.8)e.style.setProperty('--face-angle',(Math.atan2(dy,dx)*180/Math.PI)+'deg');
+ e.style.transitionDuration=Math.round(ms/((run&&run.speed)||1))+'ms';
+ requestAnimationFrame(()=>{e.style.left=x+'%';e.style.top=y+'%'})
+}
+function faceUnit(id,targetId){
+ const e=$('[data-unit="'+id+'"]'),a=pctPosition(id),b=pctPosition(targetId);if(!e||!a||!b)return;
+ e.style.setProperty('--face-angle',(Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI)+'deg')
+}
+function hitReact(id,kind='hit'){
+ const e=$('[data-unit="'+id+'"]');if(!e)return;
+ e.classList.remove('hit','healed');void e.offsetWidth;e.classList.add(kind==='heal'?'healed':'hit');
+ setTimeout(()=>e.classList.remove('hit','healed'),320)
+}
+function deathBurst(id){
+ const arena=$('#cb2dArena'),p=point(id);if(!arena||!p)return;
+ const e=document.createElement('i');e.className='cb2d-death-burst';e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),620)
+}
+function setFocusEnemy(index){
+ $('[data-unit^="e-"]').forEach(e=>e.classList.remove('focused'));
+ if(index>=0){const e=$('[data-unit="e-'+index+'"]');if(e)e.classList.add('focused')}
+}
 function spawn(s){
  $('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
  const max=s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120;
@@ -121,10 +144,18 @@ function point(id){
 }
 function setEnemyHp(index,value){
  if(!run)return;
+ const previous=Number(run.enemyHp[index])||0;
  run.enemyHp[index]=clamp(Math.round(value),0,run.enemyMax[index]||1);
  const pct=(run.enemyHp[index]/Math.max(1,run.enemyMax[index]))*100;
  const bar=$('[data-unit="e-'+index+'"] .cb2d-unit-hp i');if(bar)bar.style.width=pct+'%';
- const unit=$('[data-unit="e-'+index+'"]');if(unit){unit.classList.toggle('critical',pct<30);unit.classList.toggle('dead',pct<=0)}
+ const unit=$('[data-unit="e-'+index+'"]');
+ if(unit){
+   unit.classList.toggle('critical',pct<30&&pct>0);
+   if(previous>0&&run.enemyHp[index]<=0){
+     unit.classList.add('dying');deathBurst('e-'+index);
+     setTimeout(()=>{unit.classList.remove('dying');unit.classList.add('dead')},300);
+   }
+ }
 }
 function floating(id,text,kind){
  const arena=$('#cb2dArena'),p=point(id);if(!arena||!p)return;
@@ -267,7 +298,7 @@ function firePartyAttack(c,index,tok){
  const amount=(profile==='tank'?12:18)+Math.floor(Math.random()*10)+(tactics.aggression==='aggressive'?4:0);
 
  maintainPosition(c,index,true);
- targetPulse('e-'+index);
+ setFocusEnemy(index);faceUnit('p-'+c.id,'e-'+index);
  const attacker=$('[data-unit="p-'+c.id+'"]');
  if(attacker){attacker.classList.add('attacking');setTimeout(()=>attacker.classList.remove('attacking'),360)}
  act(profile==='tank'?'tank':'dps',c.name+' · '+name);
@@ -286,7 +317,7 @@ function firePartyAttack(c,index,tok){
    let next=run.enemyHp[index]-amount;
    if(!run.allowKill)next=Math.max(next,(run.enemyMax[index]||1)*.16);
    setEnemyHp(index,next);
-   floating('e-'+index,'-'+amount,'damage');
+   hitReact('e-'+index,'hit');floating('e-'+index,'-'+amount,'damage');
    buildThreat(index,c,amount,'damage');
  },travel,tok);
 }
@@ -295,7 +326,7 @@ function fireEnemyAttack(index,tok,s){
  const target=enemyTarget(index);if(!target||hp(target.id)<=0)return;
 
  moveEnemyToThreat(index,s);
- targetPulse('p-'+target.id);
+ faceUnit('e-'+index,'p-'+target.id);
  const attacker=$('[data-unit="e-'+index+'"]');
  if(attacker){attacker.classList.add('attacking');setTimeout(()=>attacker.classList.remove('attacking'),360)}
  projectile('e-'+index,'p-'+target.id,s.kind==='boss'||s.kind==='final'?'enemy-heavy':'enemy',280);
@@ -304,6 +335,7 @@ function fireEnemyAttack(index,tok,s){
  scheduleImpact(()=>{
    if(hp(target.id)<=0)return;
    setHp(target.id,hp(target.id)-amount);
+   hitReact('p-'+target.id,'hit');
    setCond(target.id,cond(target.id)-Math.max(1,Math.round(amount/3)));
    floating('p-'+target.id,'-'+amount,'incoming');
    updateRows();
@@ -319,11 +351,11 @@ function fireHeal(healer,target,tok){
  const activeEnemy=enemyIndex();
  if(activeEnemy>=0)maintainPosition(healer,activeEnemy,false);
  act('healer',healer.name+' · Healing '+target.name);
- projectile('p-'+healer.id,'p-'+target.id,'heal',320);
+ faceUnit('p-'+healer.id,'p-'+target.id);projectile('p-'+healer.id,'p-'+target.id,'heal',320);
  scheduleImpact(()=>{
    if(hp(target.id)<=0)return;
    setHp(target.id,hp(target.id)+amount);
-   floating('p-'+target.id,'+'+amount,'heal');
+   hitReact('p-'+target.id,'heal');floating('p-'+target.id,'+'+amount,'heal');
    updateRows();
    run?.enemyHp?.forEach((v,i)=>{if(v>0)buildThreat(i,healer,amount*.35,'heal')});
  },320,tok);
@@ -333,7 +365,7 @@ function fireHealerDamage(healer,index,tok){
  const amount=7+Math.floor(Math.random()*5);
  maintainPosition(healer,index,false);
  act('healer',healer.name+' · Supporting damage');
- projectile('p-'+healer.id,'e-'+index,'magic',340);
+ faceUnit('p-'+healer.id,'e-'+index);projectile('p-'+healer.id,'e-'+index,'magic',340);
  scheduleImpact(()=>{
    if(run.enemyHp[index]<=0)return;
    let next=run.enemyHp[index]-amount;
@@ -382,7 +414,7 @@ function combatLoop(s,tok){
      if(tok!==token||!run||!run.combatActive){resolve();return}
 
      const now=performance.now();
-     const targetIndex=enemyIndex();
+     const targetIndex=enemyIndex();setFocusEnemy(targetIndex);
      if(targetIndex<0){run.combatActive=false;resolve();return}
 
      party().forEach(c=>{
@@ -559,6 +591,21 @@ async function mechanic(s,m,tok){
    await cast(name,ms,tok);clearTelegraph(v,'impact');await delay(550);$$('[data-unit^="add-"]').forEach(e=>e.remove());run.mechanicActive=false;return
  }
 }
+async function travelDeeper(nextStage,tok){
+ if(tok!==token||!run)return;
+ run.mechanicActive=false;setFocusEnemy(-1);$('#cb2dTelegraphs').innerHTML='';
+ status('Path clear · moving deeper into the Vault');
+ act('tank','Leading the route');act('healer','Following the group');act('dps','Moving to the next pull');
+ log('The party regroups and advances toward '+nextStage.title+'.');
+ const chars=party();
+ const travelY=[50,60,35,47,73];
+ chars.forEach((c,i)=>move('p-'+c.id,46+(combatProfile(c)==='tank'?6:0),travelY[i]||50,500));
+ await delay(520);
+ chars.forEach((c,i)=>move('p-'+c.id,88,travelY[i]||50,720));
+ const banner=document.createElement('div');banner.className='cb2d-travel-banner';banner.innerHTML='<small>MOVING DEEPER</small><b>'+esc(nextStage.title)+'</b>';$('#cb2dArena')?.appendChild(banner);
+ await delay(760);banner.remove()
+}
+
 function bonus(s){let b=run.override||0;if(tactics.aggression==='aggressive')b+=4;if(tactics.aggression==='safe'&&s.kind==='trash')b+=4;if(tactics.defensives==='early')b+=3;if(tactics.defensives==='save'&&s.kind==='final')b+=5;if(tactics.adds==='full'&&s.mechanics.some(m=>m[1]==='adds'))b+=4;return b}
 function chance(s){const avg=party().reduce((n,c)=>n+cond(c.id),0)/5;return clamp(Math.round(s.base+(ilvl()-18)*2+knowledge(s.knowledge)*.12+(avg-75)*.1+bonus(s)),35,97)}
 function learn(s,ok){const a=ok?(s.kind==='trash'||s.kind==='event'?3:7):5;party().forEach(c=>{c.knowledge=c.knowledge||{};c.knowledge[s.knowledge]=clamp((Number(c.knowledge[s.knowledge])||0)+a,0,100)});return a}
@@ -578,7 +625,7 @@ async function playWipeVisual(s){
    targetPulse('p-'+c.id);
    projectile(enemy,'p-'+c.id,'enemy-heavy',260);
    await delay(120);
-   setHp(c.id,0);setCond(c.id,0);
+   setHp(c.id,0);setCond(c.id,0);hitReact('p-'+c.id,'hit');
    floating('p-'+c.id,'-'+remaining,'incoming');
    updateRows();
  }
@@ -610,7 +657,7 @@ async function seamless(tok){
    for(const m of s.mechanics){await mechanic(s,m,tok);await delay(220)}
    run.mechanicActive=false;status('Finishing encounter…');await finishCombat(s,tok);await combat;
    if(!await resolveStage(s)||tok!==token)return;
-   if(i<STAGES.length-1){party().forEach(c=>setHp(c.id,hp(c.id)+6));updateRows();status('Encounter clear · moving deeper');flash('PATH CLEAR',false);await delay(950)}
+   if(i<STAGES.length-1){party().forEach(c=>setHp(c.id,hp(c.id)+6));updateRows();flash('PATH CLEAR',false);await delay(420);await travelDeeper(STAGES[i+1],tok)}
   }
   const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;st.gold+=120;st.renown+=60;st.dungeonCompletions++;st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',partyIlvl:ilvl()});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault cleared. The Vaultheart has fallen.');await Game.persistState();finish(true,STAGES[6])
  }catch(e){if(e&&e.message!=='cancelled')console.error('Ashen Vault 2D runtime',e)}
