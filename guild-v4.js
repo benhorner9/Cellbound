@@ -195,7 +195,7 @@ Storage.prototype.setItem=function(key,value){
 function switchView(id){
   $$('.view').forEach(v=>v.classList.toggle('active',v.id===id));$$('.nav-btn[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
   const labels={overview:'Command Overview',roster:'Roster',bank:'Guild Bank',professions:'Professions',trading:'Trading Post',chat:'Chat',world:'Living World',content:'PvE Content',party:'Party Builder',reports:'Attempt Reports'};if(ui.pageTitle)ui.pageTitle.textContent=labels[id]||'Cellbound';
-  if(id==='party')renderParty();if(id==='reports')renderReports();if(id==='bank')renderBank();if(id==='content')renderBosses();
+  if(id==='party')renderParty();if(id==='reports')renderReports();if(id==='bank')renderBank();if(id==='content')renderBosses();if(id==='roster')renderRoster();
 }
 $$('.nav-btn[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));$$('[data-jump]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.jump)));
 
@@ -209,7 +209,7 @@ function rosterCard(c,index){
   return `<article class="char-card ${!unlocked?'roster-locked':''} ${locked?'shock-locked':''}" data-role="${role}" style="--glow:${classDef(c).glow}"><div class="char-top"><div class="char-portrait">${c.portrait}</div><span class="role-tag role-${role}">${roleLabel(role)}</span></div><div class="character-status ${locked?'danger':''}">${status}${locked?` · ${formatRemaining(c)}`:''}</div><h3>${c.name}</h3><div class="class">${c.class} · ${c.spec} · Level ${c.level}</div><div class="char-stats"><div><span>Power</span><b>${c.power}</b></div><div><span>Item Level</span><b>${ilvl}</b></div><div><span>Points</span><b>${c.talent}</b></div></div>${shockMarkup(c)}<div class="knowledge-row"><div><span>Avg. Knowledge</span><b>${averageKnowledge(c)}%</b></div><div class="knowledge-bar"><i style="width:${averageKnowledge(c)}%"></i></div></div><button data-char="${c.id}" ${!unlocked?'disabled':''}>${unlocked?'VIEW CHARACTER':'MEMBERSHIP REQUIRED'}</button></article>`;
 }
 function renderRoster(filter='all'){if(!ui.rosterGrid)return;ui.rosterGrid.innerHTML=state.roster.filter(c=>filter==='all'||roleOf(c)===filter).map(c=>rosterCard(c,state.roster.indexOf(c))).join('');}
-$$('.filter').forEach(b=>b.addEventListener('click',()=>{$$('.filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderRoster(b.dataset.filter);}));
+$('#roster .filter[data-filter]').forEach(b=>b.addEventListener('click',()=>{$('#roster .filter[data-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderRoster(b.dataset.filter);}));
 function renderOverview(){
   if(!ui.overviewRoster)return;const active=new Set(flatPartyIds());ui.overviewRoster.innerHTML=state.roster.slice(0,entitlements().rosterCap).map(c=>`<div class="mini-row ${isUnavailable(c)?'shock-mini':''}"><div class="avatar">${c.portrait}</div><div><b>${c.name}</b><small>${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}${active.has(c.id)?' · ACTIVE':''}</small></div><span class="role-tag role-${roleOf(c)}">${isUnavailable(c)?formatRemaining(c):roleLabel(roleOf(c))}</span></div>`).join('');if(ui.activityLog)ui.activityLog.innerHTML=state.activity.slice(-6).reverse().map((a,i)=>`<div class="activity-entry"><span>${i===0?'Latest':`${i} event${i>1?'s':''} ago`}</span><b>${a}</b></div>`).join('');
 }
