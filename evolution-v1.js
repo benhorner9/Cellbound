@@ -145,37 +145,76 @@ function bankUpgradeCount(item){
 function enhanceBank(){
   const root=$('#bankGrid'),s=state();if(!root||!s)return;
   const byId=new Map(s.bank.map(x=>[x.id,x]));
-  const cards=[...root.querySelectorAll('[data-bank-item]')].map(b=>b.closest('.bank-item')).filter(Boolean);
-  cards.forEach(card=>{
+
+  const resourceModels=[
+    ...Object.entries(s.materials||{}).filter(([,q])=>Number(q)>0).map(([key,q])=>({key:`mat:${key}`,name:P?.MATERIALS?.[key]?.name||key,category:'Reagent',rarity:P?.MATERIALS?.[key]?.rarity||'Common',quantity:Number(q),source:P?.MATERIALS?.[key]?.source||'Dungeon reagent',icon:P?.MATERIALS?.[key]?.icon||'◇',tradeState:'tradeable'})),
+    ...(s.consumables||[]).filter(x=>(x.quantity||0)>0).map(x=>({key:`con:${x.key}`,name:x.name,category:'Consumable',rarity:'Uncommon',quantity:x.quantity||1,source:'Crafted stock',icon:'⚗',tradeState:'tradeable'})),
+    ...(s.recipeScrolls||[]).filter(x=>(x.quantity||0)>0).map(x=>({key:`rec:${x.recipeId}`,name:x.name,category:'Recipe',rarity:'Rare',quantity:x.quantity||1,source:'Rare recipe scroll',icon:'▤',tradeState:'tradeable'}))
+  ];
+  const resourceSignature=resourceModels.map(x=>`${x.key}:${x.quantity}`).join('|');
+  if(root.dataset.resourceSignature!==resourceSignature){
+    root.dataset.resourceSignature=resourceSignature;
+    root.querySelectorAll('.evo-bank-resource').forEach(x=>x.remove());
+    resourceModels.forEach(item=>{
+      const card=document.createElement('article');
+      card.className=`bank-item evo-bank-resource rarity-${String(item.rarity).toLowerCase()}`;
+      card.dataset.evoKey=item.key;
+      card.innerHTML=`<div class="bank-icon gear-bank-icon"><span class="evo-resource-icon">${esc(item.icon)}</span></div><div class="bank-copy"><small>${esc(item.category.toUpperCase())} · ${esc(item.rarity.toUpperCase())}</small><h3>${esc(item.name)}</h3><p>${esc(item.source)}</p></div><div class="bank-qty">×${item.quantity}</div><button data-resource-jump="professions">OPEN PROFESSIONS</button>`;
+      root.appendChild(card);
+    });
+    root.querySelectorAll('[data-resource-jump]').forEach(btn=>btn.addEventListener('click',()=>Game.switchView('professions')));
+  }
+
+  const gearCards=[...root.querySelectorAll('[data-bank-item]')].map(b=>b.closest('.bank-item')).filter(Boolean);
+  gearCards.forEach(card=>{
     const id=card.querySelector('[data-bank-item]')?.dataset.bankItem,item=byId.get(id);if(!item)return;
-    card.dataset.itemId=id;
+    card.dataset.itemId=id;card.dataset.evoKey=`gear:${id}`;
     const upgrades=bankUpgradeCount(item);
     let chip=card.querySelector('.bank-upgrade-chip');
     if(!chip){chip=document.createElement('span');chip.className='bank-upgrade-chip';card.appendChild(chip)}
     chip.classList.toggle('none',upgrades===0);chip.textContent=upgrades?`UPGRADE FOR ${upgrades}`:'NO DIRECT UPGRADE';
   });
-  const visible=cards.filter(card=>{
-    const item=byId.get(card.dataset.itemId);if(!item)return false;
+
+  const resourceByKey=new Map(resourceModels.map(x=>[x.key,x]));
+  const entries=[
+    ...gearCards.map((card,index)=>({card,item:byId.get(card.dataset.itemId),category:'Gear',order:index})),
+    ...[...root.querySelectorAll('.evo-bank-resource')].map((card,index)=>({card,item:resourceByKey.get(card.dataset.evoKey),category:resourceByKey.get(card.dataset.evoKey)?.category,order:10000+index}))
+  ].filter(x=>x.item);
+
+  const visible=entries.filter(({item,category})=>{
     const q=bankSearch.toLowerCase();
-    return (!q||[item.name,item.class,item.slot,item.source].join(' ').toLowerCase().includes(q))
-      &&(bankCategory==='all'||item.slot===bankCategory)
-      &&(bankClass==='all'||item.class===bankClass||item.classes==='all'||item.classes?.includes?.(bankClass))
-      &&(bankRarity==='all'||item.rarity===bankRarity)
-      &&(bankTrade==='all'||(item.tradeState||'tradeable')===bankTrade);
+    const searchOk=!q||[item.name,item.class,item.slot,item.source,item.category].filter(Boolean).join(' ').toLowerCase().includes(q);
+    let categoryOk=bankCategory==='all';
+    if(!categoryOk&&category==='Gear'){
+      categoryOk=bankCategory==='Armour'?['Head','Chest','Shoulders','Hands','Waist','Legs','Feet'].includes(item.slot):item.slot===bankCategory;
+    }else if(!categoryOk)categoryOk=category===bankCategory;
+    const classOk=bankClass==='all'||(category==='Gear'&&(item.class===bankClass||item.classes==='all'||item.classes?.includes?.(bankClass)));
+    const rarityOk=bankRarity==='all'||item.rarity===bankRarity;
+    const tradeOk=bankTrade==='all'||(item.tradeState||'tradeable')===bankTrade;
+    return searchOk&&categoryOk&&classOk&&rarityOk&&tradeOk;
   });
+
   visible.sort((a,b)=>{
-    const ia=byId.get(a.dataset.itemId),ib=byId.get(b.dataset.itemId);
+    const ia=a.item,ib=b.item;
     if(bankSort==='ilvl-desc')return (ib.itemLevel||0)-(ia.itemLevel||0);
     if(bankSort==='ilvl-asc')return (ia.itemLevel||0)-(ib.itemLevel||0);
     if(bankSort==='rarity')return (rarityRank[ib.rarity]||0)-(rarityRank[ia.rarity]||0);
     if(bankSort==='name')return ia.name.localeCompare(ib.name);
-    return s.bank.indexOf(ib)-s.bank.indexOf(ia);
+    return b.order-a.order;
   });
-  cards.forEach(c=>c.dataset.hidden='1');
-  const currentOrder=[...root.querySelectorAll('.bank-item')].filter(c=>visible.includes(c)).map(c=>c.dataset.itemId).join('|');
-  const targetOrder=visible.map(c=>c.dataset.itemId).join('|');
-  visible.forEach(c=>c.dataset.hidden='0');
-  if(currentOrder!==targetOrder)visible.forEach(c=>root.appendChild(c));
+
+  entries.forEach(x=>x.card.dataset.hidden='1');
+  const currentOrder=[...root.querySelectorAll('.bank-item')].filter(card=>visible.some(x=>x.card===card)).map(card=>card.dataset.evoKey).join('|');
+  const targetOrder=visible.map(x=>x.card.dataset.evoKey).join('|');
+  visible.forEach(x=>x.card.dataset.hidden='0');
+  if(currentOrder!==targetOrder)visible.forEach(x=>root.appendChild(x.card));
+
+  const craftTotal=resourceModels.reduce((n,x)=>n+x.quantity,0),summary=$('#bankSummary');
+  if(summary){
+    let box=summary.querySelector('.evo-bank-summary');
+    if(!box){box=document.createElement('div');box.className='evo-bank-summary';summary.appendChild(box)}
+    box.innerHTML=`<span>Crafting Stock</span><b>${craftTotal}</b>`;
+  }
 }
 function bindBank(){
   const pairs=[['bankSearch','input',v=>bankSearch=v],['bankCategory','change',v=>bankCategory=v],['bankClass','change',v=>bankClass=v],['bankRarity','change',v=>bankRarity=v],['bankTrade','change',v=>bankTrade=v],['bankSort','change',v=>bankSort=v]];
