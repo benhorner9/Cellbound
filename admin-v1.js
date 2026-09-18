@@ -6,6 +6,7 @@ let Game=null;
 let db=null;
 let status={is_admin:false,role:null,auto_clear_cell_shock:false};
 let bound=false;
+let releaseStatus=null;
 
 window.CellboundAdmin={autoClear:false,role:null,isAdmin:false};
 
@@ -16,7 +17,7 @@ function rosterStats(){
   return{roster,affected,peak};
 }
 function render(){
-  const nav=$('#adminNav'),view=$('#admin'),badge=$('#adminRole'),auto=$('#adminAutoState'),shock=$('#adminShockSummary'),account=$('#adminAccount'),toggle=$('#adminAutoToggle');
+  const nav=$('#adminNav'),view=$('#admin'),badge=$('#adminRole'),auto=$('#adminAutoState'),shock=$('#adminShockSummary'),account=$('#adminAccount'),toggle=$('#adminAutoToggle'),build=$('#adminCurrentBuild'),published=$('#adminPublishedBuild');
   if(!status.is_admin){if(nav)nav.hidden=true;return}
   if(nav)nav.hidden=false;
   if(view)view.dataset.adminReady='1';
@@ -29,6 +30,8 @@ function render(){
     toggle.textContent=status.auto_clear_cell_shock?'DISABLE AUTO-CLEAR':'ENABLE AUTO-CLEAR';
     toggle.dataset.enabled=status.auto_clear_cell_shock?'1':'0';
   }
+  if(build)build.textContent=String(window.CELLBOUND_BUILD||'development').slice(0,12);
+  if(published)published.textContent=releaseStatus?.build_id?String(releaseStatus.build_id).slice(0,12):'Not published yet';
 }
 function message(text,tone='ok'){
   const el=$('#adminMessage');if(!el)return;
@@ -73,11 +76,35 @@ async function refreshStatus(){
   window.CellboundAdmin.autoClear=Boolean(status.auto_clear_cell_shock);
   render();
 }
+async function refreshRelease(){
+  const {data,error}=await db.rpc('cellbound_release_status');
+  if(error){console.warn('Release status unavailable',error);return}
+  releaseStatus=data||null;
+  render();
+}
+async function publishUpdate(){
+  const btn=$('#adminPublishUpdate'),input=$('#adminUpdateMessage');
+  const build=String(window.CELLBOUND_BUILD||'').trim();
+  if(!build||build==='development'||build.includes('__CELLBOUND_BUILD__')){
+    message('This build does not have a production release ID yet. Refresh after deployment finishes, then publish the update.','error');
+    return;
+  }
+  if(!confirm('Publish this Cellbound build as required for all players? Active dungeon runs will be allowed to finish first.'))return;
+  if(btn)btn.disabled=true;
+  const note=(input?.value||'').trim()||'Cellbound has been updated. Load the latest version to continue.';
+  const {data,error}=await db.rpc('cellbound_admin_publish_release',{p_build_id:build,p_message:note});
+  if(btn)btn.disabled=false;
+  if(error){message(error.message||'Could not publish update.','error');return}
+  releaseStatus=data||{build_id:build,message:note};
+  message('Update published. Older clients will be prompted as soon as they are out of active gameplay.','ok');
+  render();
+}
 function bind(){
   if(bound)return;bound=true;
   $('#adminResetShock')?.addEventListener('click',resetShock);
   $('#adminAutoToggle')?.addEventListener('click',toggleAuto);
-  $('#adminRefresh')?.addEventListener('click',async()=>{await refreshStatus();clearLocalShock();message('Admin status refreshed.','ok')});
+  $('#adminRefresh')?.addEventListener('click',async()=>{await Promise.all([refreshStatus(),refreshRelease()]);clearLocalShock();message('Admin status refreshed.','ok')});
+  $('#adminPublishUpdate')?.addEventListener('click',publishUpdate);
   document.querySelector('.nav-btn[data-view="admin"]')?.addEventListener('click',()=>setTimeout(render,0));
 }
 async function init(){
@@ -86,7 +113,7 @@ async function init(){
   db=Game.getSupabase?.();
   if(!db)return;
   bind();
-  await refreshStatus();
+  await Promise.all([refreshStatus(),refreshRelease()]);
   setInterval(()=>{if(status.auto_clear_cell_shock)clearLocalShock()},500);
 }
 init();
