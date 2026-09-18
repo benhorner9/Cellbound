@@ -222,3 +222,8 @@ linear-gradient(180deg,#142019,#09110e)}
 .td-prop.prop-shrine-stone{width:66px;height:105px;background:linear-gradient(180deg,rgba(103,112,91,.56),rgba(55,68,58,.68));clip-path:polygon(26% 0,74% 4%,100% 30%,86% 100%,13% 100%,0 28%);box-shadow:0 0 22px rgba(91,141,102,.07)}
 .td-prop.prop-shrine-stone:before{left:50%;top:24px;width:18px;height:27px;border:1px solid rgba(135,188,142,.16);border-radius:50%;transform:translateX(-50%);box-shadow:0 0 10px rgba(111,181,128,.08)}
 .td-arena.boss-room .td-environment{filter:saturate(.96) contrast(1.02)}
+
+/* Tutorial material artwork */
+.loot-material>i:has(.material-art),.craft-input>i:has(.material-art){display:grid;place-items:center;border:0;background:transparent;width:auto;height:auto}
+.loot-material .material-art{width:34px!important;height:34px!important;border-radius:5px;box-shadow:inset 0 0 0 1px rgba(216,185,118,.09),0 3px 9px rgba(0,0,0,.25)}
+.craft-input .material-art{width:30px!important;height:30px!important;border-radius:5px;box-shadow:inset 0 0 0 1px rgba(216,185,118,.08)}
