@@ -255,7 +255,11 @@ function addBankItem(raw,record=true){
 function addMaterial(key,quantity=1){if(!key||quantity<=0)return;state.materials[key]=(Number(state.materials[key])||0)+quantity;}
 function awardReagents(boss){if(!P)return[];const drops=P.rollReagents(boss.id);drops.forEach(d=>addMaterial(d.key,d.quantity));if(boss.id==='vaultheart'&&!state.discoveredRecipes.includes('enc-vault-glyph')&&!state.recipeScrolls.some(x=>x.recipeId==='enc-vault-glyph')&&Math.random()<.12){state.recipeScrolls.push({recipeId:'enc-vault-glyph',name:'Recipe: Vaultheart Glyph',quantity:1});drops.push({key:'recipe:enc-vault-glyph',quantity:1,recipe:true});state.activity.push('Rare recipe scroll dropped: Vaultheart Glyph.');}return drops;}
 function equipBankItem(itemId,charId){
-  const item=state.bank.find(x=>x.id===itemId),c=charById(charId);if(!item||!c||!canUseItem(c,item)||isUnavailable(c))return;const old=canonicalItem(c.equipment?.[item.slot]);if(old?.name)addBankItem({...old,source:`Unequipped from ${c.name}`},false);c.equipment[item.slot]={...canonicalItem(item),source:'Equipped'};c.gearItems=ILVL_SLOTS.map(slot=>c.equipment?.[slot]?.name||'Empty');c.gear=characterItemLevel(c);item.quantity=(item.quantity||1)-1;if(item.quantity<=0)state.bank=state.bank.filter(x=>x.id!==item.id);state.activity.push(`${c.name} equipped ${item.name} (iLvl ${item.itemLevel}).`);save();ui.bankModal.hidden=true;renderAll();switchView('bank');
+  const item=state.bank.find(x=>x.id===itemId),c=charById(charId);if(!item||!c||!canUseItem(c,item)||isUnavailable(c))return;
+  const slot=item.slot,old=canonicalItem(c.equipment?.[slot]),incoming=canonicalItem(item);
+  if(old?.name){c.power=Math.max(1,(Number(c.power)||1)-(Number(old.power)||0));addBankItem({...old,source:`Unequipped from ${c.name}`},false)}
+  c.equipment[slot]={...incoming,source:'Equipped'};c.power=Math.max(1,(Number(c.power)||1)+(Number(incoming?.power)||0));
+  c.gearItems=ILVL_SLOTS.map(s=>c.equipment?.[s]?.name||'Empty');c.gear=characterItemLevel(c);item.quantity=(item.quantity||1)-1;if(item.quantity<=0)state.bank=state.bank.filter(x=>x.id!==item.id);state.activity.push(`${c.name} equipped ${item.name} (iLvl ${item.itemLevel}).`);save();ui.bankModal.hidden=true;renderAll();switchView('bank');
 }
 $('[data-bank-close]')?.addEventListener('click',()=>ui.bankModal.hidden=true);ui.bankModal?.addEventListener('click',e=>{if(e.target===ui.bankModal)ui.bankModal.hidden=true;});
 
