@@ -392,26 +392,26 @@ function combatLoop(s,tok){
 
        if(now>=rt.nextMove){
          microPosition(c,targetIndex);
-         rt.nextMove=now+(profile==='melee'?260:profile==='tank'?300:420);
+         rt.nextMove=now+(profile==='melee'?260:profile==='tank'?300:420)/(run.speed||1);
        }
 
        if(profile==='healer'){
          const low=healerNeedsTarget();
          if(low&&now>=rt.nextHeal){
            fireHeal(c,low,tok);
-           rt.nextHeal=now+820+Math.random()*220;
-           rt.nextSupport=now+1250;
+           rt.nextHeal=now+(820+Math.random()*220)/(run.speed||1);
+           rt.nextSupport=now+1250/(run.speed||1);
          }else if(!low&&now>=rt.nextSupport){
            act('healer',c.name+' · Holding safe healing range');
            fireHealerDamage(c,targetIndex,tok);
-           rt.nextSupport=now+1700+Math.random()*450;
+           rt.nextSupport=now+(1700+Math.random()*450)/(run.speed||1);
          }
          return;
        }
 
        if(now>=rt.nextAttack){
          firePartyAttack(c,targetIndex,tok);
-         rt.nextAttack=now+attackCooldown(c)+(Math.random()*180-90);
+         rt.nextAttack=now+(attackCooldown(c)+(Math.random()*180-90))/(run.speed||1);
        }
      });
 
@@ -420,11 +420,11 @@ function combatLoop(s,tok){
        const rt=run.rtEnemies[i]||(run.rtEnemies[i]={nextAttack:now,nextMove:now});
        if(now>=rt.nextMove){
          moveEnemyToThreat(i,s);
-         rt.nextMove=now+220+Math.random()*120;
+         rt.nextMove=now+(220+Math.random()*120)/(run.speed||1);
        }
        if(now>=rt.nextAttack){
          fireEnemyAttack(i,tok,s);
-         rt.nextAttack=now+enemyCooldown(s,i);
+         rt.nextAttack=now+enemyCooldown(s,i)/(run.speed||1);
        }
      });
 
