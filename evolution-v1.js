@@ -114,7 +114,10 @@ function enhanceRoster(){
     return charIlvl(cb)-charIlvl(ca);
   });
   cards.forEach(c=>c.style.display='none');
-  filtered.forEach(c=>{c.style.display='';root.appendChild(c)});
+  const currentOrder=[...root.querySelectorAll('.char-card')].filter(c=>filtered.includes(c)).map(c=>c.dataset.charId).join('|');
+  const targetOrder=filtered.map(c=>c.dataset.charId).join('|');
+  filtered.forEach(c=>{c.style.display=''});
+  if(currentOrder!==targetOrder)filtered.forEach(c=>root.appendChild(c));
   let empty=root.querySelector('.roster-empty-state');
   if(!filtered.length){if(!empty){empty=document.createElement('div');empty.className='roster-empty-state';empty.textContent='No adventurers match these filters.';root.appendChild(empty)}}else empty?.remove();
   const recovering=chars.filter(c=>Game.isUnavailable(c)).length;
@@ -168,7 +171,11 @@ function enhanceBank(){
     if(bankSort==='name')return ia.name.localeCompare(ib.name);
     return s.bank.indexOf(ib)-s.bank.indexOf(ia);
   });
-  cards.forEach(c=>c.dataset.hidden='1');visible.forEach(c=>{c.dataset.hidden='0';root.appendChild(c)});
+  cards.forEach(c=>c.dataset.hidden='1');
+  const currentOrder=[...root.querySelectorAll('.bank-item')].filter(c=>visible.includes(c)).map(c=>c.dataset.itemId).join('|');
+  const targetOrder=visible.map(c=>c.dataset.itemId).join('|');
+  visible.forEach(c=>c.dataset.hidden='0');
+  if(currentOrder!==targetOrder)visible.forEach(c=>root.appendChild(c));
 }
 function bindBank(){
   const pairs=[['bankSearch','input',v=>bankSearch=v],['bankCategory','change',v=>bankCategory=v],['bankClass','change',v=>bankClass=v],['bankRarity','change',v=>bankRarity=v],['bankTrade','change',v=>bankTrade=v],['bankSort','change',v=>bankSort=v]];
