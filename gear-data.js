@@ -63,6 +63,9 @@ function artStyle(item,size=64){
   return `display:inline-block;position:relative;overflow:hidden;width:${size}px;height:${size}px;min-width:${size}px;min-height:${size}px;background:#070b0e;`;
 }
 function artHTML(item,size=64,extra=''){
+  if(item?.questArtMaterial&&window.CellboundProfessions?.materialArtHTML){
+    return window.CellboundProfessions.materialArtHTML(item.questArtMaterial,size,'gear-art quest-gear-art '+extra);
+  }
   const pos=artCoordinates(item,size);
   const canonical=pos?.canonical||byName(item?.name)||byId(item?.itemId)||item;
   if(!pos||!canonical)return`<span class="gear-art gear-art-empty ${extra}" style="display:inline-grid;width:${size}px;height:${size}px;place-items:center">◇</span>`;
