@@ -578,3 +578,8 @@
     z-index:4;
   }
 }
+
+@media(max-width:720px){
+  body.quest-puzzle-open .sidebar{display:none!important}
+  body.quest-puzzle-open .main{padding-bottom:0!important}
+}
