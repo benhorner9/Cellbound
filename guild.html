@@ -16,7 +16,7 @@
 <link rel="stylesheet" href="./dungeon-2d-v1.css?v=4">\n<link rel="stylesheet" href="./world-boss-2d-v1.css?v=1">
 <link rel="stylesheet" href="./admin-v1.css?v=2">
 <link rel="stylesheet" href="./release-v1.css?v=1">
-<link rel="stylesheet" href="./onboarding-v1.css?v=1">
+<link rel="stylesheet" href="./onboarding-v1.css?v=1">\n<link rel="stylesheet" href="./hollow-sanctum-v1.css?v=1">\n<link rel="stylesheet" href="./quests-v1.css?v=1">
 </head>
 <body>
 <div class="app-shell">
@@ -31,6 +31,7 @@
       <button class="nav-btn" data-view="chat"><span>◌</span>Chat <em id="chatUnread"></em></button>
       <button class="nav-btn" data-view="world"><span>✹</span>World <em id="worldActiveBadge"></em></button>
       <button class="nav-btn" data-view="content"><span>⚔</span>Content</button>
+      <button class="nav-btn" data-view="quests"><span>⌁</span>Quests <em id="questNavBadge"></em></button>
       <button class="nav-btn" data-view="party"><span>◆</span>Party Builder</button>
       <button class="nav-btn" data-view="reports"><span>▤</span>Reports</button>
       <button id="adminNav" class="nav-btn" data-view="admin" hidden><span>⚙</span>Admin <em>DEV</em></button>
@@ -58,7 +59,7 @@
     <section id="overview" class="view active">
       <div class="hero-card">
         <div><small>CELLBOUND</small><h2>Your heroes fight.<br>You build the team that wins.</h2><p>Manage a five-character party, develop individual builds, improve Item Level and decide who is ready for the next encounter.</p></div>
-        <div class="hero-stat"><span>Current Objective</span><b>Prepare your active five-character party</b><button data-jump="party">MANAGE PARTY →</button></div>
+        <div id="questHomeObjective" class="hero-stat"><span>Current Objective</span><b>Prepare your active five-character party</b><button data-jump="party">MANAGE PARTY →</button></div>
       </div>
       <div class="dashboard-grid">
         <article class="panel"><div class="panel-head"><div><small>ACTIVE ROSTER</small><h3>Your Adventurers</h3></div><b class="good">5 PARTY SLOTS</b></div><div id="overviewRoster" class="mini-roster"></div></article>
@@ -144,6 +145,18 @@
       <article class="panel world-rules"><div class="panel-head"><div><small>WORLD BOSS RULES</small><h3>Shared Encounter Rules</h3></div></div><div class="world-rule-grid"><span>Each commander brings their normal 5-character party.</span><span>Every participating player earns one personal item when the boss dies.</span><span>A party wipe adds Cell Shock to all five participating characters.</span><span>After a kill, the next spawn is hidden and randomly set between 10 minutes and 8 hours.</span></div></article>
     </section>
 
+    <section id="quests" class="view">
+      <div class="section-intro quest-intro"><div><small>THE GUILD'S JOURNEY</small><h2>Quest Journal</h2><p>Follow investigations, make decisions and uncover the places, enemies and Cells shaping your guild's story.</p></div><div id="questCampaignStatus" class="quest-campaign-status">CAMPAIGN AVAILABLE</div></div>
+      <div class="quest-journal-shell">
+        <aside class="panel quest-journal-nav">
+          <div class="quest-tabs"><button class="active" data-quest-tab="active">ACTIVE</button><button data-quest-tab="campaign">CAMPAIGN</button><button data-quest-tab="completed">COMPLETED</button></div>
+          <div id="questJournalList" class="quest-journal-list"></div>
+        </aside>
+        <main id="questJournalDetail" class="panel quest-journal-detail"></main>
+        <aside id="questJournalSide" class="panel quest-journal-side"></aside>
+      </div>
+    </section>
+
     <section id="content" class="view">
       <div class="section-intro dungeon-intro"><div><small>DUNGEON JOURNAL</small><h2>The Ashen Vault</h2><p>Five adventurers descend through a ruined forge where each encounter teaches the mechanics needed for the next.</p></div><div class="content-status"><span>Completion</span><b id="dungeonProgress">0 / 3 bosses</b></div></div>
       <div class="dungeon-journal-hero">
@@ -155,6 +168,7 @@
         <aside class="panel dungeon-intel-panel"><div class="panel-head"><div><small>ENCOUNTER INTELLIGENCE</small><h3>What Your Guild Knows</h3></div></div><div id="dungeonIntel" class="dungeon-intel"></div></aside>
       </div>
       <div id="bossList" class="boss-list evolution-legacy-boss-list" hidden></div>
+      <div id="hollowSanctumMount" class="hollow-sanctum-mount"></div>
     </section>
 
     <section id="party" class="view">
@@ -234,7 +248,7 @@
 <script src="./social-v3.js?v=2"></script>\n<script src="./world-boss-2d-v1.js?v=1"></script>
 <script src="./evolution-v1.js?v=4"></script>
 <script src="./dungeon-2d-v1.js?v=4"></script>
-<script src="./onboarding-v1.js?v=2"></script>
+<script src="./onboarding-v1.js?v=2"></script>\n<script src="./hollow-sanctum-v1.js?v=1"></script>\n<script src="./quests-v1.js?v=1"></script>
 <script src="./admin-v1.js?v=1"></script>
 <script src="./release-v1.js?v=1"></script>
 </body>
