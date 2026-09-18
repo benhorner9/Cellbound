@@ -383,13 +383,13 @@ async function resolveKaelBattlefield(outcome){
     const reward=expeditionLoot(stage);state().bossKills[stage.bossId]=true;state().gold+=35;state().renown+=15;
     state().activity.push(`Ash Warden Kael was defeated on the 2D battlefield. Execution ${outcome.metrics?.execution||0}%.`);
     state().reports=Array.isArray(state().reports)?state().reports:[];
-    state().reports.unshift({id:Date.now(),boss:stage.bossId,success:true,knowledgeGain,loot:reward.loot?.name||null,lootItemId:reward.loot?.itemId||null,lootTier:reward.loot?.tier||null,lootItemLevel:reward.loot?.itemLevel||null,reagents:reward.reagents,cellShockGain:0,partyItemLevel:partyIlvl(),battlefield:true,execution:outcome.metrics?.execution||0,at:new Date().toISOString()});
+    state().reports.unshift({id:Date.now(),boss:stage.bossId,success:true,knowledgeGain,loot:reward.loot?.name||null,lootItemId:reward.loot?.itemId||null,lootTier:reward.loot?.tier||null,lootItemLevel:reward.loot?.itemLevel||null,reagents:reward.reagents,cellShockGain:0,partyItemLevel:partyIlvl(),battlefield:true,execution:outcome.metrics?.execution||0,mechanicsHandled:outcome.metrics?.handled||0,mechanicsTotal:outcome.metrics?.mechanics||0,failedMechanics:outcome.metrics?.failures||[],reason:outcome.reason||'',at:new Date().toISOString()});
     expedition.log.push(`Kael falls after a live battlefield encounter. ${outcome.metrics?.handled||0}/${outcome.metrics?.mechanics||0} mechanics handled.`);
     await persist(false);expedition.stage++;expedition.resolved=false;renderExpedition();renderDungeonJournal();
   }else{
     Game.applyPartyCellShock(25);
     state().reports=Array.isArray(state().reports)?state().reports:[];
-    state().reports.unshift({id:Date.now(),boss:stage.bossId,success:false,knowledgeGain,loot:null,lootItemId:null,reagents:[],cellShockGain:25,partyItemLevel:partyIlvl(),battlefield:true,execution:outcome?.metrics?.execution||0,at:new Date().toISOString()});
+    state().reports.unshift({id:Date.now(),boss:stage.bossId,success:false,knowledgeGain,loot:null,lootItemId:null,reagents:[],cellShockGain:25,partyItemLevel:partyIlvl(),battlefield:true,execution:outcome?.metrics?.execution||0,mechanicsHandled:outcome?.metrics?.handled||0,mechanicsTotal:outcome?.metrics?.mechanics||0,failedMechanics:outcome?.metrics?.failures||[],reason:outcome?.reason||'',at:new Date().toISOString()});
     state().dungeonHistory.unshift({at:new Date().toISOString(),result:'wipe',stage:stage.id,partyIlvl:partyIlvl(),reason:outcome?.reason||'Formation collapsed'});
     state().dungeonHistory=state().dungeonHistory.slice(0,20);
     state().activity.push(`The guild wiped on Ash Warden Kael in live combat. Each hero gained 25% Cell Shock.`);
@@ -517,9 +517,17 @@ function renderDungeonHistory(){
   const root=$('#reportsList'),s=state();if(!root||!s)return;
   let wrap=root.querySelector('.evo-dungeon-history');
   const rows=(s.dungeonHistory||[]).slice(0,12);
-  if(!rows.length){wrap?.remove();return;}
-  if(!wrap){wrap=document.createElement('section');wrap.className='evo-dungeon-history';root.prepend(wrap);}
-  wrap.innerHTML=`<div class="evo-history-head"><small>DUNGEON EXPEDITIONS</small><h3>The Ashen Vault</h3></div><div class="evo-history-list">${rows.map(r=>`<article><b>${r.result==='complete'?'CLEARED':'FAILED'} · ${new Date(r.at).toLocaleString()}</b><span>Party iLvl ${Math.round(r.partyIlvl||0)}${r.stage?` · Ended at ${esc(DUNGEON.stages.find(s=>s.id===r.stage)?.title||r.stage)}`:''}</span></article>`).join('')}</div>`;
+  if(!rows.length)wrap?.remove();
+  else{
+    if(!wrap){wrap=document.createElement('section');wrap.className='evo-dungeon-history';root.prepend(wrap);}
+    wrap.innerHTML=`<div class="evo-history-head"><small>DUNGEON EXPEDITIONS</small><h3>The Ashen Vault</h3></div><div class="evo-history-list">${rows.map(r=>`<article><b>${r.result==='complete'?'CLEARED':'FAILED'} · ${new Date(r.at).toLocaleString()}</b><span>Party iLvl ${Math.round(r.partyIlvl||0)}${r.stage?` · Ended at ${esc(DUNGEON.stages.find(s=>s.id===r.stage)?.title||r.stage)}`:''}</span></article>`).join('')}</div>`;
+  }
+  [...root.querySelectorAll('.report-card')].forEach((card,i)=>{
+    const report=(s.reports||[])[i];if(!report?.battlefield)return;
+    let strip=card.querySelector('.evo-battlefield-report');
+    if(!strip){strip=document.createElement('div');strip.className='evo-battlefield-report';card.appendChild(strip);}
+    strip.innerHTML=`<span>2D BATTLEFIELD</span><b>Execution ${Math.round(report.execution||0)}%</b><small>${report.mechanicsHandled||0}/${report.mechanicsTotal||0} mechanics handled${report.failedMechanics?.length?` · Review: ${esc(report.failedMechanics[0])}`:''}</small>`;
+  });
 }
 function bindReportEnhancement(){
   const root=$('#reportsList');if(!root)return;
