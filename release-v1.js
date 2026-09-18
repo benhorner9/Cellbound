@@ -3,6 +3,7 @@
 const $=s=>document.querySelector(s);
 let Game=null,db=null,timer=null,busy=false,lastRequired=null,pendingInfo=null;
 const currentBuild=()=>String(window.CELLBOUND_BUILD||'development');
+const currentBuildNumber=()=>Number(window.CELLBOUND_BUILD_NUMBER||0)||0;
 
 function overlay(){
   let el=$('#cellboundUpdateGate');
@@ -69,11 +70,16 @@ async function check(){
     const {data,error}=await db.rpc('cellbound_release_status');
     if(error){console.warn('Release status check failed',error);return}
     const required=String(data?.build_id||'').trim();
-    if(required&&required!==currentBuild())showGate(data);
+    const requiredNumber=Number(data?.build_number||0)||0;
+    const currentNumber=currentBuildNumber();
+    if(requiredNumber>0&&currentNumber>0&&currentNumber<requiredNumber)showGate(data);
+    else if(requiredNumber<=0&&required&&required!==currentBuild())showGate(data);
     else hideGate();
     window.CellboundRelease={
       currentBuild:currentBuild(),
       requiredBuild:required||null,
+      currentBuildNumber:currentBuildNumber(),
+      requiredBuildNumber:Number(data?.build_number||0)||null,
       message:data?.message||null,
       publishedAt:data?.published_at||null,
       refresh:check
