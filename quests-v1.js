@@ -68,9 +68,9 @@ function showDialogue(title,speaker,beats,onDone){
  draw();root.hidden=false;
 }
 async function startCampaign(){
- const q=ensure();if(q.started)return;
- q.started=true;q.startedAt=new Date().toISOString();q.current='letter-in-glass';selectedQuest='letter-in-glass';addHistory('A glass-sealed letter from Bram Kel arrived at the guild.');
- await commit();
+ const q=ensure();
+ if(!q.started){q.started=true;q.startedAt=new Date().toISOString();q.current='letter-in-glass';selectedQuest='letter-in-glass';addHistory('A glass-sealed letter from Bram Kel arrived at the guild.');await commit()}
+ if(q.current!=='letter-in-glass'||completed('letter-in-glass'))return;
  showDialogue('The Letter in Glass','Bram Kel',[
   'We were cutting a drainage channel beneath the east road when the pick struck something black. Not ore. Not stone. It was warm.',
   'By nightfall the shard had started humming. Every Cellbound worker on the road said they could feel it through their teeth.',
@@ -84,7 +84,7 @@ async function startCampaign(){
 
 async function chooseBearer(id){
  const q=ensure(),c=state()?.roster?.find(x=>x.id===id);if(!q||q.current!=='living-resonance'||!c)return;
- q.bearerId=c.id;q.bearerName=c.name;q.ashenBaseline=Number(state().dungeonCompletions)||0;
+ q.bearerId=c.id;q.bearerName=c.name;q.ashenBaseline=Number(state().dungeonCompletions)||0;q.ashTestStartedAt=new Date().toISOString();
  addHistory(c.name+' accepted the Blackened Fragment.');
  await finishQuest('living-resonance','ash-makes-it-sing',{renown:40,note:c.name+' became the Bearer of the fragment.'});
 }
