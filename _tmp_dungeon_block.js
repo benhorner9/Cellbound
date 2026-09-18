@@ -119,4 +119,90 @@ function setBattleHp(id,hp){
   if(!expeditionBattle)return;
   const unit=expeditionBattle.units.find(x=>x.id===id);if(unit)unit.hp=clamp(hp,0,100);
   const el=battleUnit(id);if(el){const bar=el.querySelector('.evo2d-unit-hp i');if(bar)bar.style.width=`${clamp(hp,0,100)}%`;el.classList.toggle('critical',hp<=25);el.classList.toggle('dead',hp<=0)}
-  const frame=battleDom()?.querySelector(`[data-frame="${i
+  const frame=battleDom()?.querySelector(`[data-frame="${id}"]`);if(frame){const bar=frame.querySelector('i');if(bar)bar.style.width=`${clamp(hp,0,100)}%`;const n=frame.querySelector('strong');if(n)n.textContent=`${Math.max(0,Math.round(hp))}%`}
+}
+function damageBattle(id,amount,label=''){
+  const unit=expeditionBattle?.units.find(x=>x.id===id);if(!unit)return;
+  setBattleHp(id,unit.hp-amount);floatBattleText(id,`-${Math.round(amount)}${label?` · ${label}`:''}`,'damage');
+}
+function healBattle(id,amount,label=''){
+  const unit=expeditionBattle?.units.find(x=>x.id===id);if(!unit)return;
+  setBattleHp(id,Math.min(100,unit.hp+amount));floatBattleText(id,`+${Math.round(amount)}${label?` · ${label}`:''}`,'heal');
+}
+function setBossHp(hp){
+  if(!expeditionBattle)return;
+  expeditionBattle.bossHp=clamp(hp,0,100);
+  setBattleHp('boss',expeditionBattle.bossHp);
+  const top=battleDom()?.querySelector('#evo2dBossHp');if(top)top.style.width=`${expeditionBattle.bossHp}%`;
+  const txt=battleDom()?.querySelector('#evo2dBossHpText');if(txt)txt.textContent=`${Math.round(expeditionBattle.bossHp)}%`;
+}
+function battleAction(id,text,tone=''){
+  const el=battleUnit(id);if(!el)return;const chip=el.querySelector('.evo2d-unit-action');if(!chip)return;
+  chip.textContent=text;chip.dataset.tone=tone;clearTimeout(el._actionTimer);el._actionTimer=setTimeout(()=>{chip.textContent='';chip.dataset.tone=''},1600/Math.max(1,expeditionBattle?.speed||1));
+}
+function battleLog(text,tone=''){
+  if(!expeditionBattle)return;
+  const stamp=Math.max(0,expeditionBattle.elapsed).toFixed(1).padStart(4,'0');
+  expeditionBattle.log.push({stamp,text,tone});expeditionBattle.log=expeditionBattle.log.slice(-8);
+  const box=battleDom()?.querySelector('#evo2dFeed');if(box)box.innerHTML=expeditionBattle.log.slice().reverse().map(x=>`<div data-tone="${x.tone}"><span>${x.stamp}s</span><b>${esc(x.text)}</b></div>`).join('');
+}
+function floatBattleText(id,text,tone=''){
+  const el=battleUnit(id),arena=battleDom()?.querySelector('.evo2d-arena');if(!el||!arena)return;
+  const f=document.createElement('span');f.className=`evo2d-float ${tone}`;f.textContent=text;
+  const er=el.getBoundingClientRect(),ar=arena.getBoundingClientRect();f.style.left=`${er.left-ar.left+er.width/2}px`;f.style.top=`${er.top-ar.top}px`;arena.appendChild(f);setTimeout(()=>f.remove(),1200);
+}
+function flashBattle(text,tone=''){
+  const arena=battleDom()?.querySelector('.evo2d-arena');if(!arena)return;
+  const f=document.createElement('div');f.className=`evo2d-flash ${tone}`;f.textContent=text;arena.appendChild(f);setTimeout(()=>f.remove(),1050);
+}
+function clearTelegraphs(kind=''){
+  const arena=battleDom()?.querySelector('.evo2d-arena');if(!arena)return;
+  arena.querySelectorAll(kind?`.evo2d-telegraph[data-kind="${kind}"]`:'.evo2d-telegraph').forEach(x=>x.remove());
+}
+function addCircleTelegraph(x,y,size=82,label=''){
+  const arena=battleDom()?.querySelector('.evo2d-arena');if(!arena)return;
+  const t=document.createElement('div');t.className='evo2d-telegraph evo2d-circle';t.dataset.kind='circle';t.style.left=`${x}%`;t.style.top=`${y}%`;t.style.width=`${size}px`;t.style.height=`${size}px`;if(label)t.innerHTML=`<span>${esc(label)}</span>`;arena.appendChild(t);
+}
+function addConeTelegraph(label=''){
+  const arena=battleDom()?.querySelector('.evo2d-arena'),boss=battleUnit('boss');if(!arena||!boss)return;
+  const t=document.createElement('div');t.className='evo2d-telegraph evo2d-cone';t.dataset.kind='cone';t.style.left=boss.style.left||'65%';t.style.top=boss.style.top||'50%';t.style.transform=`translateY(-50%) rotate(${expeditionBattle?.facing||180}deg)`;if(label)t.innerHTML=`<span>${esc(label)}</span>`;arena.appendChild(t);
+}
+function addLineTelegraph(label=''){
+  const arena=battleDom()?.querySelector('.evo2d-arena');if(!arena)return;
+  const t=document.createElement('div');t.className='evo2d-telegraph evo2d-line';t.dataset.kind='line';t.style.left='15%';t.style.top='46%';t.style.transform='rotate(-8deg)';if(label)t.innerHTML=`<span>${esc(label)}</span>`;arena.appendChild(t);
+}
+function startBattleCast(name,duration,interruptible=false,source='boss'){
+  if(!expeditionBattle)return;
+  expeditionBattle.cast={name,duration,start:expeditionBattle.elapsed,interruptible,source};
+  const box=battleDom()?.querySelector('#evo2dActionBox');if(box){box.hidden=false;box.dataset.interruptible=interruptible?'1':'0';box.querySelector('b').textContent=name;box.querySelector('small').textContent=interruptible?'INTERRUPTIBLE CAST':'ENEMY CAST';}
+  battleAction(source,name,interruptible?'warning':'');
+  battleLog(`${expeditionBattle.stage.title}: ${name} begins casting.`,interruptible?'warning':'');
+}
+function stopBattleCast(interrupted=false){
+  if(!expeditionBattle?.cast)return;
+  const name=expeditionBattle.cast.name;expeditionBattle.cast=null;
+  const box=battleDom()?.querySelector('#evo2dActionBox');if(box){box.hidden=true;box.dataset.interruptible='0'}
+  if(interrupted){flashBattle('INTERRUPTED','success');battleLog(`${name} interrupted.`,'success')}
+}
+function updateBattleCast(){
+  const cast=expeditionBattle?.cast,box=battleDom()?.querySelector('#evo2dActionBox');if(!cast||!box)return;
+  const pct=clamp(((expeditionBattle.elapsed-cast.start)/cast.duration)*100,0,100);
+  const fill=box.querySelector('i');if(fill)fill.style.width=`${pct}%`;
+  const left=box.querySelector('em');if(left)left.textContent=`${Math.max(0,cast.duration-(expeditionBattle.elapsed-cast.start)).toFixed(1)}s`;
+  if(pct>=100)stopBattleCast(false);
+}
+function spawnBattleAdds(){
+  if(!expeditionBattle)return;
+  const arena=battleDom()?.querySelector('.evo2d-units');if(!arena)return;
+  for(let i=0;i<3;i++){
+    const id=`add-${i}`;if(expeditionBattle.units.some(x=>x.id===id))continue;
+    const unit={id,name:'Cellspawn',role:'enemy',x:82,y:28+i*21,hp:100,maxHp:100,size:'trash',add:true};
+    expeditionBattle.units.push(unit);
+    const el=document.createElement('div');el.className='evo2d-unit enemy trash add';el.dataset.battleUnit=id;el.style.left=`${unit.x}%`;el.style.top=`${unit.y}%`;
+    el.innerHTML=`<div class="evo2d-unit-cast"></div><div class="evo2d-dot"><span class="evo2d-facing"></span></div><div class="evo2d-unit-label"><b>Cellspawn</b><small>ADD</small></div><div class="evo2d-unit-hp"><i style="width:100%"></i></div><div class="evo2d-unit-action"></div>`;
+    arena.appendChild(el);
+  }
+}
+function killBattleAdds(){
+  if(!expeditionBattle)return;
+  expeditionBattle.units.filter(x=>x.add).forEach(x=>{setBattleHp(x.id,0);battleAction(x.id,'DEFEATED','success')
