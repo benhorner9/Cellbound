@@ -34,6 +34,10 @@ function playerBusy(){
   const bank=$('#bankModal');
   const onboarding=$('#cellboundOnboarding');
   const worldBoss=$('#worldBoss2dBackdrop');
+  const questDialogue=$('#questDialogue');
+  const questEncounter=$('#questEncounterBackdrop');
+  const hollow=$('#hs2dBackdrop');
+  const questUnlock=$('.quest-unlock-backdrop');
   return Boolean(
     (dungeon&&!dungeon.hidden)||
     (legacyAttempt&&!legacyAttempt.hidden)||
@@ -41,7 +45,11 @@ function playerBusy(){
     (character&&!character.hidden)||
     (bank&&!bank.hidden)||
     (onboarding&&!onboarding.hidden)||
-    (worldBoss&&!worldBoss.hidden)
+    (worldBoss&&!worldBoss.hidden)||
+    (questDialogue&&!questDialogue.hidden)||
+    (questEncounter&&!questEncounter.hidden)||
+    (hollow&&!hollow.hidden)||
+    Boolean(questUnlock)
   );
 }
 function showGate(info){
