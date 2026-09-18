@@ -67,7 +67,7 @@ function artHTML(item,size=64,extra=''){
   const canonical=pos?.canonical||byName(item?.name)||byId(item?.itemId)||item;
   if(!pos||!canonical)return`<span class="gear-art gear-art-empty ${extra}" style="display:inline-grid;width:${size}px;height:${size}px;place-items:center">◇</span>`;
   const glyph=canonical.slot==='Head'?'⛑':canonical.slot==='Chest'?'▣':'⚔';
-  return `<span class="gear-art tier-${canonical.tier||1} ${extra}" style="${artStyle(canonical,size)}" aria-label="${canonical.name}" title="${canonical.name}"><span class="gear-art-fallback" aria-hidden="true">${glyph}</span><img class="gear-art-sprite" src="./assets/gear/cellbound-gear-atlas.webp?v=2" alt="${canonical.name}" draggable="false" style="position:absolute;max-width:none;width:${21*size}px;height:${3*size}px;left:-${pos.col*size}px;top:-${pos.row*size}px"></span>`;
+  return `<span class="gear-art tier-${canonical.tier||1} ${extra}" style="${artStyle(canonical,size)}" aria-label="${canonical.name}" title="${canonical.name}"><span class="gear-art-fallback" aria-hidden="true">${glyph}</span><img class="gear-art-sprite" src="./assets/gear/cellbound-gear-atlas.webp?v=3" alt="${canonical.name}" draggable="false" style="position:absolute;max-width:none;width:${21*size}px;height:${3*size}px;left:-${pos.col*size}px;top:-${pos.row*size}px"></span>`;
 }
 window.CellboundGear={CLASS_ORDER,SLOT_ORDER,TIER_META,NAMES,items,byId,byName,starterSet,poolForTier,rollDungeonLoot,artStyle,artHTML};
 })();
