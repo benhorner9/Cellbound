@@ -4,6 +4,7 @@ const files=['index.html','styles.css','auth.js','guild.html','guild.css','bank.
 const assets=['assets/gear/cellbound-gear-atlas.webp'];
 const out=path.join(__dirname,'dist');
 const buildId=String(process.env.GITHUB_SHA||process.env.CELLBOUND_BUILD||'local-dev').trim();
+const buildNumber=String(process.env.GITHUB_RUN_NUMBER||process.env.CELLBOUND_BUILD_NUMBER||'0').trim();
 fs.rmSync(out,{recursive:true,force:true});
 fs.mkdirSync(out,{recursive:true});
 const touchFix=`\n<style id="cellbound-ios-touch-fix">html,body{touch-action:manipulation;-webkit-text-size-adjust:100%}button,a,input,label,[role="button"]{touch-action:manipulation}@media (hover:none) and (pointer:coarse){input,select,textarea{font-size:16px!important}}</style>\n`;
@@ -21,6 +22,7 @@ for(const file of files){
   }
   if(file.endsWith('.html')){
     contents=contents.replace(/__CELLBOUND_BUILD__/g,buildId);
+    contents=contents.replace(/__CELLBOUND_BUILD_NUMBER__/g,buildNumber);
     contents=contents.replace(/(\.\/[A-Za-z0-9_./-]+\.(?:js|css))(?:\?[^"'\s>]*)?/g,(m,p)=>p+'?b='+encodeURIComponent(buildId));
     contents=contents.replace('</head>',`${touchFix}</head>`);
   }
