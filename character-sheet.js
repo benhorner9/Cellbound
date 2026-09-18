@@ -144,7 +144,7 @@ function paperDoll(c){
     <div class="cb-avatar-stage">
       <div class="cb-rune-ring"><span>${meta.icon}</span></div>
       <div class="cb-hero-silhouette"><div class="cb-hero-head">${c.portrait}</div><div class="cb-hero-body"></div><div class="cb-hero-arms"></div><div class="cb-hero-legs"></div></div>
-      <div class="cb-stage-name"><b>${c.name}</b><span>${c.class} · ${c.spec}</span></div>
+      <div class="cb-stage-name"><b>${c.name}</b><span>${c.race||'Veyren'} · ${c.class} · ${c.spec}</span></div>
       <div class="cb-role-pill cb-role-${role}">${roleLabel(role)}</div>
     </div>
     <div class="cb-gear-column">${rightSlots.map(s=>equipmentSlot(c,s)).join('')}</div>
@@ -191,7 +191,7 @@ function overviewPanel(c,state){
   const ilvl=window.CellboundGame?.characterItemLevel?.(c)||c.gear||0;
   const active=[state?.party?.tank,state?.party?.healer,...(state?.party?.dps||[])].includes(c.id);
   const avg=Object.values(c.knowledge||{});const knowledge=avg.length?Math.round(avg.reduce((a,b)=>a+(Number(b)||0),0)/avg.length):0;
-  return `<div class="cb-profile-overview"><section class="cb-profile-panel"><h3>Adventurer Overview</h3><div class="cb-profile-stats"><div><span>Role</span><b>${role}</b></div><div><span>Item Level</span><b>${ilvl}</b></div><div><span>Cell Shock</span><b>${Math.round(c.cellShock||0)}%</b></div><div><span>Knowledge</span><b>${knowledge}%</b></div><div><span>${meta.primary}</span><b>${stats[meta.primary]}</b></div><div><span>Stamina</span><b>${stats.Stamina}</b></div><div><span>Armour</span><b>${stats.Armour}</b></div><div><span>Status</span><b>${active?'Active Five':'Reserve'}</b></div></div><p>${c.name} is a Level ${c.level} ${c.class} specialising in ${c.spec}. Their current equipment and experience determine whether they are ready for the next expedition.</p></section><section class="cb-profile-panel"><h3>Current Loadout</h3>${['Head','Chest','Weapon'].map(slot=>{const item=c.equipment?.[slot];return `<div class="cb-history-entry"><b>${slot}</b><br>${item?.name||'Empty'} · iLvl ${item?.itemLevel||0}</div>`}).join('')}</section></div>`;
+  return `<div class="cb-profile-overview"><section class="cb-profile-panel"><h3>Adventurer Overview</h3><div class="cb-profile-stats"><div><span>Role</span><b>${role}</b></div><div><span>Item Level</span><b>${ilvl}</b></div><div><span>Cell Shock</span><b>${Math.round(c.cellShock||0)}%</b></div><div><span>Knowledge</span><b>${knowledge}%</b></div><div><span>${meta.primary}</span><b>${stats[meta.primary]}</b></div><div><span>Stamina</span><b>${stats.Stamina}</b></div><div><span>Armour</span><b>${stats.Armour}</b></div><div><span>Status</span><b>${active?'Active Five':'Reserve'}</b></div></div><p>${c.name} is a Level ${c.level} ${c.race||'Veyren'} ${c.class} specialising in ${c.spec}. Their current equipment and experience determine whether they are ready for the next expedition.</p></section><section class="cb-profile-panel"><h3>Current Loadout</h3>${['Head','Chest','Weapon'].map(slot=>{const item=c.equipment?.[slot];return `<div class="cb-history-entry"><b>${slot}</b><br>${item?.name||'Empty'} · iLvl ${item?.itemLevel||0}</div>`}).join('')}</section></div>`;
 }
 function professionsPanel(c){
   const ent=window.CellboundGame?.getEntitlements?.()||{professionSlots:1,member:false};
@@ -216,7 +216,7 @@ function renderSheet(){
   const meta=classMeta[c.class]||{icon:'◇',accent:'#58d7cf'};
   const roles=[...new Set(Object.values(specs[c.class]||{}).map(roleLabel))].join(' / ');
   detail.innerHTML=`<div class="cb-sheet" style="--cb-accent:${meta.accent}">
-    <header class="cb-sheet-header"><div class="cb-header-crest">${meta.icon}</div><div><small>LEVEL ${c.level} · ${roles}</small><h2>${c.name}</h2><p>${c.class} · ${c.spec} · Power ${c.power} · Gear ${c.gear}</p></div><div class="cb-header-points"><b>${c.talent||0}</b><span>Talent points</span></div></header>
+    <header class="cb-sheet-header"><div class="cb-header-crest">${meta.icon}</div><div><small>LEVEL ${c.level} · ${roles}</small><h2>${c.name}</h2><p>${c.race||'Veyren'} · ${c.class} · ${c.spec} · Power ${c.power} · Gear ${c.gear}</p></div><div class="cb-header-points"><b>${c.talent||0}</b><span>Talent points</span></div></header>
     <nav class="cb-character-tabs"><button data-sheet-tab="overview" class="${currentTab==='overview'?'active':''}">Overview</button><button data-sheet-tab="equipment" class="${currentTab==='equipment'?'active':''}">Equipment</button><button data-sheet-tab="talents" class="${currentTab==='talents'?'active':''}">Talents</button><button data-sheet-tab="professions" class="${currentTab==='professions'?'active':''}">Professions</button><button data-sheet-tab="knowledge" class="${currentTab==='knowledge'?'active':''}">Knowledge</button><button data-sheet-tab="history" class="${currentTab==='history'?'active':''}">History</button></nav>
     <main class="cb-sheet-body">${sheetBody(state,c)}</main>
   </div>`;
