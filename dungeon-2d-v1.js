@@ -210,7 +210,7 @@ function moveEnemyToThreat(index,s){
  const t=pctPosition('p-'+target.id),e=pctPosition('e-'+index);
  const boss=s.kind==='boss'||s.kind==='final';
  const desiredX=clamp(t.x+(combatProfile(target)==='tank'?8:4),boss?52:40,84);
- const desiredY=clamp(t.y+(index%2?5:-5),14,86);
+ const packOffsets=[-10,0,10,-16,16];const desiredY=clamp(t.y+(packOffsets[index%packOffsets.length]||0),14,86);
  if(Math.hypot(desiredX-e.x,desiredY-e.y)>3)move('e-'+index,desiredX,desiredY,boss?500:360);
  showThreatLink(index,target);
 }
@@ -267,7 +267,8 @@ async function enemyAttack(index,tok,s){
 async function healPulse(tok){
  if(tok!==token)return;
  const healer=party().find(c=>role(c)==='healer'&&hp(c.id)>0);if(!healer)return;
- const target=party().filter(c=>hp(c.id)>0).sort((a,b)=>hp(a.id)-hp(b.id))[0];if(!target||hp(target.id)>88)return;
+ const activeEnemy=enemyIndex();if(activeEnemy>=0)maintainPosition(healer,activeEnemy,false);
+ const target=party().filter(c=>hp(c.id)>0).sort((a,b)=>hp(a.id)-hp(b.id))[0];if(!target||hp(target.id)>88){act('healer',healer.name+' · Holding safe healing range');return}
  const amount=8+Math.floor(Math.random()*9);act('healer',healer.name+' · Healing '+target.name);projectile('p-'+healer.id,'p-'+target.id,'heal',330);
  await delay(300);setHp(target.id,hp(target.id)+amount);floating('p-'+target.id,'+'+amount,'heal');updateRows();
  run?.enemyHp?.forEach((v,i)=>{if(v>0)buildThreat(i,healer,amount*.35,'heal')});
