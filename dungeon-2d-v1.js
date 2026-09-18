@@ -24,11 +24,26 @@ const setCond=(id,v)=>{if(run)run.condition[id]=clamp(Math.round(v),0,100)};
 function root(){let r=$('#cb2dBackdrop');if(!r){r=document.createElement('div');r.id='cb2dBackdrop';r.className='cb2d-backdrop';r.hidden=true;document.body.appendChild(r)}return r}
 function close(){token++;run=null;const r=root();r.hidden=true;r.innerHTML=''}
 function knowledge(key){const p=party();return p.length?Math.round(p.reduce((n,c)=>n+(Number(c.knowledge&&c.knowledge[key])||0),0)/p.length):0}
-function ready(){const p=party();return Game&&Game.ready&&p.length===5&&!p.some(c=>Game.isUnavailable(c))&&ilvl()>=18}
+function readiness(){
+ const p=party();
+ if(!Game||!Game.ready)return{ok:false,reason:'Guild data is still loading.'};
+ if(p.length!==5)return{ok:false,reason:'Build a complete five-character party in Party Builder first.'};
+ const locked=p.find(c=>Game.isUnavailable(c));
+ if(locked)return{ok:false,reason:locked.name+' is still recovering from Cell Shock.'};
+ if(ilvl()<18)return{ok:false,reason:'Party Item Level '+ilvl()+'. The Ashen Vault requires Item Level 18.'};
+ return{ok:true,reason:'Ready to enter.'};
+}
+function ready(){return readiness().ok}
 function groupButtons(key,items){return '<div class="cb2d-plan-row" data-plan="'+key+'">'+items.map(x=>'<button class="'+(tactics[key]===x[0]?'active':'')+'" data-pick="'+key+':'+x[0]+'"><b>'+x[1]+'</b><small>'+x[2]+'</small></button>').join('')+'</div>'}
 function briefing(){
- if(!ready())return;
- const r=root();r.hidden=false;
+ const gate=readiness(),r=root();r.hidden=false;
+ if(!gate.ok){
+   r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · ENTRY CHECK</small><h2>Dungeon entry is currently blocked.</h2></div><button data-close>×</button></header><div class="cb2d-blocked"><b>NOT READY</b><p>'+esc(gate.reason)+'</p><button data-party>OPEN PARTY BUILDER →</button></div></section>';
+   r.querySelector('[data-close]').onclick=close;
+   r.querySelector('[data-party]').onclick=()=>{close();Game.switchView('party')};
+   return;
+ }
+
  r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · TACTICAL BRIEFING</small><h2>Set the plan once. Then watch the dungeon run.</h2></div><button data-close>×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">These tactics persist through the whole expedition. The party will move, react and fight automatically. Live overrides remain available without stopping combat.</p><h3>Aggression</h3>'+groupButtons('aggression',[['safe','SAFE','Prioritise stability.'],['balanced','BALANCED','Standard dungeon pace.'],['aggressive','AGGRESSIVE','Push damage windows.']])+'<h3>Interrupts</h3>'+groupButtons('interrupts',[['important','IMPORTANT','Stop dangerous casts.'],['high','HIGH','Interrupt aggressively.'],['conservative','CONSERVATIVE','Save for critical casts.']])+'<h3>Defensives</h3>'+groupButtons('defensives',[['early','EARLY','Use cooldowns sooner.'],['balanced','BALANCED','React to pressure.'],['save','SAVE','Hold for late bosses.']])+'<h3>Add Priority</h3>'+groupButtons('adds',[['dangerous','DANGEROUS','Swap to threatening adds.'],['full','FULL','Clear every add wave.'],['boss','BOSS','Stay on primary target.']])+'</main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+role(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span><strong>'+String(role(c)).toUpperCase()+'</strong></div>').join('')+'<button class="cb2d-start" data-start>BEGIN EXPEDITION →</button></aside></div></section>';
  r.querySelector('[data-close]').onclick=close;
  r.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{const a=b.dataset.pick.split(':');tactics[a[0]]=a[1];r.querySelectorAll('[data-plan="'+a[0]+'"] button').forEach(x=>x.classList.toggle('active',x===b))});
@@ -146,7 +161,24 @@ async function override(t,b){
  if(t==='burn'){run.override=Math.max(run.override,6);act('dps','Committing damage cooldowns');log('Override: burn boss.')}
  if(t==='consumable'){const st=state(),x=(st.consumables||[]).find(y=>(y.quantity||0)>0);if(!x){log('No usable consumables remain.');return}party().forEach(c=>setCond(c.id,cond(c.id)+12));x.quantity--;if(x.quantity<=0)st.consumables=st.consumables.filter(y=>y!==x);updateRows();log(x.name+' used.');Game.save()}
 }
-document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('#enterDungeonBtn');if(!b)return;e.preventDefault();e.stopImmediatePropagation();briefing()},true);
-function init(){Game=window.CellboundGame;G=window.CellboundGear;P=window.CellboundProfessions;if(!Game||!Game.ready){setTimeout(init,120);return}document.documentElement.dataset.cb2d='ready'}
+function syncEntryButton(){
+ const b=$('#enterDungeonBtn');if(!b||!Game?.ready)return;
+ const gate=readiness();
+ b.disabled=false;
+ b.setAttribute('aria-disabled',gate.ok?'false':'true');
+ b.title=gate.reason;
+ b.dataset.cb2dReady=gate.ok?'1':'0';
+}
+document.addEventListener('click',e=>{
+ const b=e.target.closest&&e.target.closest('#enterDungeonBtn');if(!b)return;
+ e.preventDefault();e.stopImmediatePropagation();briefing();
+},true);
+function init(){
+ Game=window.CellboundGame;G=window.CellboundGear;P=window.CellboundProfessions;
+ if(!Game||!Game.ready){setTimeout(init,120);return}
+ document.documentElement.dataset.cb2d='ready';
+ syncEntryButton();
+ setInterval(syncEntryButton,400);
+}
 init();
 })();
