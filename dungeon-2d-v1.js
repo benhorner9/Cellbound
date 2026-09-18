@@ -21,6 +21,8 @@ const ilvl=()=>Number(Game&&Game.partyItemLevel?Game.partyItemLevel():0)||0;
 const delay=ms=>new Promise(r=>setTimeout(r,Math.round(ms/((run&&run.speed)||1))));
 const cond=id=>run&&run.condition[id]!=null?run.condition[id]:100;
 const setCond=(id,v)=>{if(run)run.condition[id]=clamp(Math.round(v),0,100)};
+const hp=id=>run&&run.hp&&run.hp[id]!=null?run.hp[id]:100;
+const setHp=(id,v)=>{if(run&&run.hp)run.hp[id]=clamp(Math.round(v),0,100)};
 function root(){let r=$('#cb2dBackdrop');if(!r){r=document.createElement('div');r.id='cb2dBackdrop';r.className='cb2d-backdrop';r.hidden=true;document.body.appendChild(r)}return r}
 function close(){token++;run=null;const r=root();r.hidden=true;r.innerHTML=''}
 function knowledge(key){const p=party();return p.length?Math.round(p.reduce((n,c)=>n+(Number(c.knowledge&&c.knowledge[key])||0),0)/p.length):0}
@@ -50,14 +52,14 @@ function briefing(){
  r.querySelector('[data-start]').onclick=start;
 }
 function start(){
- const p=party();token++;run={token:token,stage:0,speed:1,condition:Object.fromEntries(p.map(c=>[c.id,100])),log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],resolved:false};
+ const p=party();token++;run={token:token,stage:0,speed:1,condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0};
  drawViewer();seamless(token);
 }
 function route(){
  return STAGES.map((s,i)=>'<span class="'+(i<run.stage?'done':i===run.stage?'current':'')+'"><i>'+(i+1)+'</i>'+esc(s.title)+'</span>').join('');
 }
 function rows(){
- return party().map(c=>'<div class="cb2d-party-row" data-row="'+c.id+'"><i class="cb2d-dot '+role(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+String(role(c)).toUpperCase()+' · '+esc(c.spec)+'</small></span><strong>'+cond(c.id)+'%</strong></div>').join('');
+ return party().map(c=>'<div class="cb2d-party-row" data-row="'+c.id+'"><i class="cb2d-dot '+role(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+String(role(c)).toUpperCase()+' · '+esc(c.spec)+' · Condition '+cond(c.id)+'%</small><em class="cb2d-side-hp"><i data-side-hp="'+c.id+'" style="width:'+hp(c.id)+'%"></i></em></span><strong>'+hp(c.id)+' HP</strong></div>').join('');
 }
 function drawViewer(){
  const s=STAGES[run.stage],r=root();r.hidden=false;
@@ -71,17 +73,137 @@ function feed(){const e=$('#cb2dFeed');if(e&&run)e.innerHTML=run.log.slice(-6).m
 function log(t){if(!run)return;run.log.push(t);run.log=run.log.slice(-30);feed()}
 function status(t){const e=$('#cb2dStatus');if(e)e.textContent=t}
 function act(r,t){const e=$('[data-act="'+r+'"] em');if(e)e.textContent=t}
-function updateRows(){party().forEach(c=>{const e=$('[data-row="'+c.id+'"] strong');if(e)e.textContent=cond(c.id)+'%'})}
+function updateRows(){
+ party().forEach(c=>{
+   const row=$('[data-row="'+c.id+'"]');
+   const value=row?.querySelector('strong');if(value)value.textContent=hp(c.id)+' HP';
+   const bar=$('[data-side-hp="'+c.id+'"]');if(bar)bar.style.width=hp(c.id)+'%';
+   const unit=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(unit)unit.style.width=hp(c.id)+'%';
+ })
+}
 function addUnit(id,label,cls,x,y,size){
- const e=document.createElement('div');e.className='cb2d-unit '+cls+' '+(size||'');e.dataset.unit=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+'</span>';$('#cb2dUnits').appendChild(e)
+ const e=document.createElement('div');e.className='cb2d-unit '+cls+' '+(size||'');e.dataset.unit=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+'</span><em class="cb2d-unit-hp"><i></i></em>';$('#cb2dUnits').appendChild(e)
 }
 function move(id,x,y,ms){const e=$('[data-unit="'+id+'"]');if(!e)return;e.style.transitionDuration=Math.round(ms/((run&&run.speed)||1))+'ms';requestAnimationFrame(()=>{e.style.left=x+'%';e.style.top=y+'%'})}
 function spawn(s){
  $('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
  const spots=[[27,38],[23,61],[18,26],[18,49],[18,73]];
- party().forEach((c,i)=>{addUnit('p-'+c.id,c.name,'party '+role(c),4,50+(i-2)*4,'');setTimeout(()=>move('p-'+c.id,spots[i][0],spots[i][1],850),40)});
+ const max=s.kind==='final'?1350:s.kind==='boss'?950:s.kind==='event'?260:160;
+ run.enemyMax=s.enemies.map(()=>max);run.enemyHp=s.enemies.map(()=>max);
+ party().forEach((c,i)=>{addUnit('p-'+c.id,c.name,'party '+role(c),4,50+(i-2)*4,'');setTimeout(()=>{move('p-'+c.id,spots[i][0],spots[i][1],850);const bar=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(bar)bar.style.width=hp(c.id)+'%'},40)});
  s.enemies.forEach((n,i)=>{const boss=s.enemies.length===1&&(s.kind==='boss'||s.kind==='final');const y=s.enemies.length===1?50:30+i*(40/Math.max(1,s.enemies.length-1));addUnit('e-'+i,n,boss?'enemy boss':'enemy',92,y,boss?'big':'');setTimeout(()=>move('e-'+i,68,y,850),60)});
 }
+
+function point(id){
+ const arena=$('#cb2dArena'),u=$('[data-unit="'+id+'"]');if(!arena||!u)return null;
+ const a=arena.getBoundingClientRect(),r=u.getBoundingClientRect();
+ return{x:r.left-a.left+r.width/2,y:r.top-a.top+r.height/2};
+}
+function setEnemyHp(index,value){
+ if(!run)return;
+ run.enemyHp[index]=clamp(Math.round(value),0,run.enemyMax[index]||1);
+ const pct=(run.enemyHp[index]/Math.max(1,run.enemyMax[index]))*100;
+ const bar=$('[data-unit="e-'+index+'"] .cb2d-unit-hp i');if(bar)bar.style.width=pct+'%';
+ const unit=$('[data-unit="e-'+index+'"]');if(unit){unit.classList.toggle('critical',pct<30);unit.classList.toggle('dead',pct<=0)}
+}
+function floating(id,text,kind){
+ const arena=$('#cb2dArena'),p=point(id);if(!arena||!p)return;
+ const e=document.createElement('div');e.className='cb2d-number '+(kind||'damage');e.textContent=text;e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),850)
+}
+function targetPulse(id){
+ const u=$('[data-unit="'+id+'"]');if(!u)return;u.classList.add('targeted');setTimeout(()=>u.classList.remove('targeted'),420)
+}
+function projectile(from,to,kind='physical',ms=320){
+ const arena=$('#cb2dArena'),a=point(from),b=point(to);if(!arena||!a||!b)return;
+ const e=document.createElement('i');e.className='cb2d-projectile '+kind;e.style.left=a.x+'px';e.style.top=a.y+'px';arena.appendChild(e);
+ requestAnimationFrame(()=>{e.style.transitionDuration=Math.round(ms/((run&&run.speed)||1))+'ms';e.style.transform='translate('+(b.x-a.x)+'px,'+(b.y-a.y)+'px)'});
+ setTimeout(()=>e.remove(),Math.round(ms/((run&&run.speed)||1))+120)
+}
+function attackKind(c){
+ if(c.class==='Mage')return'magic';
+ if(c.class==='Hunter')return'arrow';
+ if(role(c)==='healer')return'heal';
+ return'melee';
+}
+function ability(c){
+ if(c.class==='Mage')return'Arcane Bolt';
+ if(c.class==='Hunter')return'Quick Shot';
+ if(c.class==='Rogue')return'Eviscerate';
+ if(c.class==='Priest')return'Smite';
+ if(c.class==='Paladin')return'Judgement';
+ return role(c)==='tank'?'Shield Strike':'Heavy Slash';
+}
+function enemyTarget(){
+ const p=party().filter(c=>hp(c.id)>0),tank=p.find(c=>role(c)==='tank');
+ if(tank&&Math.random()<.62)return tank;
+ return p[Math.floor(Math.random()*p.length)]||tank||party()[0];
+}
+function enemyIndex(){
+ if(!run)return-1;
+ const floor=run.allowKill?0:.16;
+ let idx=run.enemyHp.findIndex((v,i)=>v>(run.enemyMax[i]||1)*floor+1);
+ if(idx<0)idx=run.enemyHp.findIndex(v=>v>0);
+ return idx;
+}
+async function partyAttack(c,index,tok){
+ if(tok!==token||index<0||hp(c.id)<=0)return;
+ const kind=attackKind(c),name=ability(c),amount=(role(c)==='tank'?12:18)+Math.floor(Math.random()*10)+(tactics.aggression==='aggressive'?4:0);
+ targetPulse('e-'+index);act(role(c)==='dps'?'dps':'tank',c.name+' · '+name);
+ if(kind==='melee'){
+   const u=$('[data-unit="p-'+c.id+'"]'),before=u?{left:u.style.left,top:u.style.top}:null;
+   const ep=point('e-'+index),arena=$('#cb2dArena')?.getBoundingClientRect();
+   if(ep&&arena)move('p-'+c.id,Math.max(5,Math.min(90,ep.x/arena.width*100-7)),Math.max(8,Math.min(92,ep.y/arena.height*100)),180);
+   await delay(150);
+   projectile('p-'+c.id,'e-'+index,'slash',170);
+   if(before&&u)setTimeout(()=>{u.style.left=before.left;u.style.top=before.top},Math.round(220/(run.speed||1)));
+ }else projectile('p-'+c.id,'e-'+index,kind,kind==='arrow'?280:360);
+ await delay(kind==='melee'?150:300);
+ let next=run.enemyHp[index]-amount;
+ if(!run.allowKill)next=Math.max(next,(run.enemyMax[index]||1)*.16);
+ setEnemyHp(index,next);floating('e-'+index,'-'+amount,'damage');
+}
+async function enemyAttack(index,tok,s){
+ if(tok!==token||index<0||run.enemyHp[index]<=0)return;
+ const target=enemyTarget();if(!target)return;
+ const amount=(s.kind==='boss'||s.kind==='final'?6:3)+Math.floor(Math.random()*(s.kind==='boss'||s.kind==='final'?7:5));
+ targetPulse('p-'+target.id);projectile('e-'+index,'p-'+target.id,s.kind==='boss'||s.kind==='final'?'enemy-heavy':'enemy',300);
+ await delay(280);setHp(target.id,hp(target.id)-amount);setCond(target.id,cond(target.id)-Math.max(1,Math.round(amount/3)));floating('p-'+target.id,'-'+amount,'incoming');updateRows();
+ if(hp(target.id)<35)act('healer','Emergency healing '+target.name)
+}
+async function healPulse(tok){
+ if(tok!==token)return;
+ const healer=party().find(c=>role(c)==='healer'&&hp(c.id)>0);if(!healer)return;
+ const target=party().filter(c=>hp(c.id)>0).sort((a,b)=>hp(a.id)-hp(b.id))[0];if(!target||hp(target.id)>88)return;
+ const amount=8+Math.floor(Math.random()*9);act('healer',healer.name+' · Healing '+target.name);projectile('p-'+healer.id,'p-'+target.id,'heal',330);
+ await delay(300);setHp(target.id,hp(target.id)+amount);floating('p-'+target.id,'+'+amount,'heal');updateRows()
+}
+function rangedDrift(c){
+ if(run?.mechanicActive)return;
+ const u=$('[data-unit="p-'+c.id+'"]');if(!u||role(c)==='tank')return;
+ const left=parseFloat(u.style.left)||25,top=parseFloat(u.style.top)||50;
+ move('p-'+c.id,clamp(left+(Math.random()*6-3),14,40),clamp(top+(Math.random()*8-4),18,82),360)
+}
+async function combatLoop(s,tok){
+ run.combatActive=true;let turn=0;
+ const attackers=party().filter(c=>role(c)!=='healer');
+ while(run&&run.combatActive&&tok===token){
+   const index=enemyIndex();if(index<0)break;
+   const c=attackers[turn%attackers.length];if(c){rangedDrift(c);await partyAttack(c,index,tok)}
+   if(tok!==token||!run?.combatActive)break;
+   if(turn%2===1)await enemyAttack(index,tok,s);
+   if(turn%3===2)await healPulse(tok);
+   turn++;await delay(120)
+ }
+}
+async function finishCombat(s,tok){
+ run.allowKill=run.stageOutcome||!(s.kind==='boss'||s.kind==='final');
+ if(run.allowKill){
+   let guard=0;
+   while(tok===token&&enemyIndex()>=0&&guard<28){await delay(180);guard++}
+ }else await delay(700);
+ run.combatActive=false
+}
+
 function tg(type){
  const p=$('#cb2dTelegraphs'),e=document.createElement('div');e.className='cb2d-tg '+type;
  if(type==='circles')e.innerHTML='<i></i><i></i><i></i>';
@@ -96,27 +218,27 @@ async function cast(name,ms,tok){
 function interruptOK(s){if(run.forceInterrupt){run.forceInterrupt=false;return true}if(tactics.interrupts==='high')return true;if(tactics.interrupts==='important')return s.kind==='boss'||s.kind==='final'||knowledge(s.knowledge)>=25;return s.kind==='final'||knowledge(s.knowledge)>=70}
 function regroup(){const p=party(),a=[[34,50],[25,59],[27,32],[24,48],[27,72]];p.forEach((c,i)=>move('p-'+c.id,a[i][0],a[i][1],500))}
 async function mechanic(s,m,tok){
- const name=m[0],type=m[1],ms=m[2];status(name+' incoming');log(name+' begins.');
+ const name=m[0],type=m[1],ms=m[2];run.mechanicActive=true;status(name+' incoming');log(name+' begins.');
  if(type==='interrupt'){
    const v=tg('cast');act('dps','Watching interrupt window');
    if(interruptOK(s)){await cast(name,Math.round(ms*.56),tok);flash('INTERRUPTED',false);log('A damage dealer interrupts '+name+'.');act('dps','Interrupt successful');v.remove();return}
-   await cast(name,ms,tok);flash('CAST COMPLETES',true);log(name+' lands. The healer recovers the group.');party().forEach(c=>setCond(c.id,cond(c.id)-5));updateRows();v.remove();return
+   await cast(name,ms,tok);flash('CAST COMPLETES',true);log(name+' lands. The healer recovers the group.');party().forEach(c=>{setCond(c.id,cond(c.id)-5);setHp(c.id,hp(c.id)-8);floating('p-'+c.id,'-8','incoming')});updateRows();v.remove();run.mechanicActive=false;return
  }
  if(type==='cone'){
    const v=tg('cone'),tank=party().find(c=>role(c)==='tank');if(tank)move('p-'+tank.id,51,50,420);move('e-0',59,50,420);act('tank','Turning the frontal away');log('Tank rotates the enemy away from the party.');
-   await cast(name,ms,tok);flash('FRONTAL AVOIDED',false);v.remove();regroup();return
+   await cast(name,ms,tok);flash('FRONTAL AVOIDED',false);v.remove();regroup();run.mechanicActive=false;return
  }
  if(type==='circle'||type==='circles'){
    const v=tg(type),p=party(),a=[[25,20],[20,78],[38,22],[36,51],[38,80]];p.forEach((c,i)=>move('p-'+c.id,a[i][0],a[i][1],450));act('healer','Moving while maintaining heals');act('dps','Spreading from danger');
-   await cast(name,ms,tok);flash('SAFE',false);v.remove();regroup();return
+   await cast(name,ms,tok);flash('SAFE',false);v.remove();regroup();run.mechanicActive=false;return
  }
  if(type==='line'){
    const v=tg('line');party().slice(2).forEach((c,i)=>move('p-'+c.id,27,24+i*27,420));act('dps','Sidestepping line attack');
-   await cast(name,ms,tok);flash('DODGED',false);v.remove();regroup();return
+   await cast(name,ms,tok);flash('DODGED',false);v.remove();regroup();run.mechanicActive=false;return
  }
  if(type==='adds'){
    tg('adds');for(let i=0;i<2;i++){addUnit('add-'+i,'Add','enemy small',84,35+i*30,'small');setTimeout(()=>move('add-'+i,56,35+i*30,450),20)}act('tank','Gathering spawned adds');act('dps',tactics.adds==='boss'?'Maintaining boss pressure':'Swapping to adds');log('Adds spawn. The tank gathers them.');
-   await cast(name,ms,tok);await delay(550);$$('[data-unit^="add-"]').forEach(e=>e.remove());$('#cb2dTelegraphs').innerHTML='';return
+   await cast(name,ms,tok);await delay(550);$$('[data-unit^="add-"]').forEach(e=>e.remove());$('#cb2dTelegraphs').innerHTML='';run.mechanicActive=false;return
  }
 }
 function bonus(s){let b=run.override||0;if(tactics.aggression==='aggressive')b+=4;if(tactics.aggression==='safe'&&s.kind==='trash')b+=4;if(tactics.defensives==='early')b+=3;if(tactics.defensives==='save'&&s.kind==='final')b+=5;if(tactics.adds==='full'&&s.mechanics.some(m=>m[1]==='adds'))b+=4;return b}
@@ -127,8 +249,8 @@ function loot(s){
  if((s.kind==='final'||Math.random()<.45)&&G&&G.rollDungeonLoot&&boss){const x=G.rollDungeonLoot(boss.name,boss.tier2Chance);Game.addBankItem(Object.assign({},x,{source:'The Ashen Vault · '+boss.name}));return x}return null
 }
 async function resolveStage(s){
- const ok=Math.random()*100<chance(s),dmg=ok?(s.kind==='boss'||s.kind==='final'?9:6):(s.kind==='boss'||s.kind==='final'?36:18);
- party().forEach(c=>setCond(c.id,cond(c.id)-Math.max(2,dmg-Math.floor(Math.random()*4))));updateRows();
+ const ok=run.stageOutcome,dmg=ok?(s.kind==='boss'||s.kind==='final'?5:3):(s.kind==='boss'||s.kind==='final'?22:10);
+ party().forEach(c=>{const hit=Math.max(1,dmg-Math.floor(Math.random()*4));setCond(c.id,cond(c.id)-hit);if(!ok)setHp(c.id,hp(c.id)-Math.ceil(hit/2))});updateRows();
  if(ok){
    const k=learn(s,true),item=loot(s);if(s.bossId)state().bossKills[s.bossId]=true;if(s.id==='kael')state().gold+=35;if(s.id==='embermaw')state().gold+=55;
    state().activity.push(s.title+' cleared during The Ashen Vault.');log(s.title+' cleared. Knowledge +'+k+'%.');if(item){run.rewards.push(item.name);flash('LOOT ACQUIRED',false);log(item.name+' sent to the Guild Bank.')}
@@ -143,11 +265,13 @@ async function seamless(tok){
   for(let i=0;i<STAGES.length;i++){
    if(tok!==token)return;run.stage=i;run.override=0;const s=STAGES[i];
    $('#cb2dTitle').textContent=s.title;$('#cb2dRoute').innerHTML=route();$('#cb2dType').textContent=s.kind==='final'?'FINAL BOSS':s.kind==='boss'?'BOSS':s.kind==='event'?'EVENT':'HOSTILE PACK';
-   spawn(s);status('Party moving into position…');log('Entering '+s.title+'.');act('tank','Taking point');act('healer','Following formation');act('dps','Acquiring targets');await delay(1150);
-   act('tank','Establishing threat');act('healer','Beginning healing rotation');act('dps','Opening damage');await delay(500);
-   for(const m of s.mechanics){await mechanic(s,m,tok);await delay(250)}
-   status('Finishing encounter…');await delay(550);if(!await resolveStage(s)||tok!==token)return;
-   if(i<STAGES.length-1){status('Encounter clear · moving deeper');flash('PATH CLEAR',false);await delay(950)}
+   spawn(s);run.stageOutcome=Math.random()*100<chance(s);run.allowKill=false;run.mechanicActive=false;status('Party moving into position…');log('Entering '+s.title+'.');act('tank','Taking point');act('healer','Following formation');act('dps','Acquiring targets');await delay(1050);
+   act('tank','Establishing threat');act('healer','Beginning healing rotation');act('dps','Opening damage');
+   const combat=combatLoop(s,tok);await delay(420);
+   for(const m of s.mechanics){await mechanic(s,m,tok);await delay(220)}
+   run.mechanicActive=false;status('Finishing encounter…');await finishCombat(s,tok);await combat;
+   if(!await resolveStage(s)||tok!==token)return;
+   if(i<STAGES.length-1){party().forEach(c=>setHp(c.id,hp(c.id)+6));updateRows();status('Encounter clear · moving deeper');flash('PATH CLEAR',false);await delay(950)}
   }
   const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;st.gold+=120;st.renown+=60;st.dungeonCompletions++;st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',partyIlvl:ilvl()});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault cleared. The Vaultheart has fallen.');await Game.persistState();finish(true,STAGES[6])
  }catch(e){if(e&&e.message!=='cancelled')console.error('Ashen Vault 2D runtime',e)}
