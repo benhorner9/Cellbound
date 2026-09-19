@@ -527,6 +527,7 @@ function qAddUnit(id,label,cls,x,y,size=''){
 function qUnit(id){return $('[data-q-unit="'+id+'"]')}
 function qMove(id,x,y,ms=520){const e=qUnit(id);if(!e)return;const ox=parseFloat(e.style.left)||x,oy=parseFloat(e.style.top)||y;e.style.setProperty('--face-angle',(Math.atan2(y-oy,x-ox)*180/Math.PI)+'deg');e.style.transitionDuration=ms+'ms';requestAnimationFrame(()=>{e.style.left=x+'%';e.style.top=y+'%'})}
 function qPoint(id){const a=$('#q2dArena'),u=qUnit(id);if(!a||!u)return null;const ar=a.getBoundingClientRect(),r=u.getBoundingClientRect();return{x:r.left-ar.left+r.width/2,y:r.top-ar.top+r.height/2,w:ar.width,h:ar.height}}
+function qFace(id,targetId){const e=qUnit(id),a=qPoint(id),b=qPoint(targetId);if(!e||!a||!b)return;e.style.setProperty('--face-angle',(Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI)+'deg')}
 function qProjectile(from,to,kind='physical',ms=320){const arena=$('#q2dArena'),a=qPoint(from),b=qPoint(to);if(!arena||!a||!b)return;const dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI,e=document.createElement('i');e.className='cb2d-projectile '+kind;e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.transform='rotate('+angle+'deg)';arena.appendChild(e);requestAnimationFrame(()=>{e.style.transitionDuration=ms+'ms';e.style.transform='translate('+dx+'px,'+dy+'px) rotate('+angle+'deg)'});setTimeout(()=>e.remove(),ms+130)}
 function qFloat(id,text,kind='damage'){const arena=$('#q2dArena'),p=qPoint(id);if(!arena||!p)return;const e=document.createElement('div');e.className='cb2d-number '+kind;e.textContent=text;e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),850)}
 function qSetEnemyHp(i,value){
@@ -576,7 +577,7 @@ async function qAttack(index,rounds=1){
       if(questFight.enemyHp[index]<=0)break;
       const kind=c.class==='Mage'?'magic':c.class==='Hunter'?'arrow':'slash',base=qRole(c)==='tank'?18:25,boost=(questFight.burn?8:0)+(questFight.focus?4:0),prep=window.CellboundProfessions?.activeBonuses?.(c)||{};
       let dmg=base+boost+Math.floor(Math.random()*8);dmg=Math.round(dmg*(1+(Number(prep.damagePct)||0)/100));if((Number(prep.crit)||0)>0&&Math.random()*100<Number(prep.crit))dmg=Math.round(dmg*1.5);
-      qProjectile('p-'+c.id,target,kind);questFight.damage[c.id]+=dmg;qSetEnemyHp(index,questFight.enemyHp[index]-dmg);qFloat(target,'-'+dmg,'damage');
+      qFace('p-'+c.id,target);qProjectile('p-'+c.id,target,kind);questFight.damage[c.id]+=dmg;qSetEnemyHp(index,questFight.enemyHp[index]-dmg);qFloat(target,'-'+dmg,'damage');
       qAct(qRole(c)==='tank'?'tank':'dps',c.name+' attacks '+questFight.enemies[index]);qRenderMeters(index);await wait(90)
     }
     await wait(300)
@@ -584,8 +585,8 @@ async function qAttack(index,rounds=1){
 }
 async function qEnemyHit(index,amount=14){
   const tank=party().find(c=>qRole(c)==='tank'),healer=party().find(c=>qRole(c)==='healer');if(!tank||questFight.enemyHp[index]<=0)return;
-  qProjectile('e-'+index,'p-'+tank.id,'enemy');const hit=Math.max(4,amount-(questFight.defensive?7:0));qSetPartyHp(tank,questFight.partyHp[tank.id]-hit);qFloat('p-'+tank.id,'-'+hit,'incoming');qAct('tank',tank.name+' absorbs the hit');await wait(280);
-  if(healer){qProjectile('p-'+healer.id,'p-'+tank.id,'heal');const heal=Math.min(12,100-questFight.partyHp[tank.id]);qSetPartyHp(tank,questFight.partyHp[tank.id]+heal);qFloat('p-'+tank.id,'+'+heal,'heal');qAct('healer',healer.name+' restores '+tank.name);await wait(260)}
+  qFace('e-'+index,'p-'+tank.id);qProjectile('e-'+index,'p-'+tank.id,'enemy');const hit=Math.max(4,amount-(questFight.defensive?7:0));qSetPartyHp(tank,questFight.partyHp[tank.id]-hit);qFloat('p-'+tank.id,'-'+hit,'incoming');qAct('tank',tank.name+' absorbs the hit');await wait(280);
+  if(healer){qFace('p-'+healer.id,'p-'+tank.id);qProjectile('p-'+healer.id,'p-'+tank.id,'heal');const heal=Math.min(12,100-questFight.partyHp[tank.id]);qSetPartyHp(tank,questFight.partyHp[tank.id]+heal);qFloat('p-'+tank.id,'+'+heal,'heal');qAct('healer',healer.name+' restores '+tank.name);await wait(260)}
 }
 function qTelegraph(type,fromId,toId,label,size=145){
   const root=$('#q2dTelegraphs'),a=qPoint(fromId),b=qPoint(toId);if(!root||!a||!b)return null;
