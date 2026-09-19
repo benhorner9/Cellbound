@@ -508,12 +508,13 @@ function knownFacts(q){
   return facts;
 }
 function visibleRewards(){
-  if(complete())return ['250 Gold','150 Guild Renown','The Hollow Sanctum unlocked','Void Crystal source discovered'];
-  return ['250 Gold','150 Guild Renown','A permanent discovery','Further rewards unknown'];
+  if(complete())return ['250 Gold','150 Guild Renown','3 × Tier 2 quest gear choices','The Hollow Sanctum unlocked'];
+  return ['Tier 2 quest gear at major milestones','250 Gold','150 Guild Renown','The Hollow Sanctum discovery'];
 }
 function actionHtml(){
   const q=ensure(),stage=currentStage();
   if(complete())return '<div class="quest-complete-stamp">QUEST COMPLETE</div>';
+  if(!q.started&&!echoesUnlocked())return '<div class="quest-action-block locked"><b>PROGRESSION REQUIRED</b><small>Clear The Ashen Vault once or reach average active-party Level 3. Current average: '+averagePartyLevel()+'.</small></div>';
   if(!q.started)return '<button class="quest-primary" data-start>START QUEST →</button>';
   if(stage==='letter')return '<button class="quest-primary" data-start>READ BRAM’S LETTER →</button>';
   if(stage==='bearer'){
@@ -526,15 +527,50 @@ function actionHtml(){
   if(stage==='seal')return '<button class="quest-primary danger" data-seal>INSPECT THE HOLLOW SEAL →</button>';
   return '';
 }
+function ashfallActionHtml(){
+  const a=ensure().ashfall,stage=ashfallStage();
+  if(a.complete)return '<div class="quest-complete-stamp">QUEST COMPLETE</div>';
+  if(!a.started||stage==='warning')return '<button class="quest-primary" data-ashfall-start>'+(a.started?'CONTINUE INVESTIGATION':'START QUEST')+' →</button>';
+  if(stage==='tracks')return '<button class="quest-primary" data-ashfall-tracks>INSPECT THE ABANDONED CART →</button>';
+  if(stage==='ambush')return '<button class="quest-primary danger" data-ashfall-ambush>FOLLOW THE SCORCHED TRACKS →</button>';
+  if(stage==='key')return '<button class="quest-primary" data-ashfall-finish>RETURN THE FORGE KEY →</button>';
+  return '';
+}
+function ashfallFacts(a){
+  const facts=[];
+  if(a.started)facts.push('Three supply carts vanished from the east road beyond Zeltira.');
+  if(a.done.includes('warning')||['tracks','ambush','key','complete'].includes(ashfallStage()))facts.push('Ash at the first cart came from the old forge above the road.');
+  if(a.done.includes('tracks')||['ambush','key','complete'].includes(ashfallStage()))facts.push('Scorched bootprints led uphill rather than back toward Zeltira.');
+  if(a.done.includes('ambush')||['key','complete'].includes(ashfallStage()))facts.push('An Ashbound runner carried an iron key stamped with the old forge seal.');
+  if(a.complete)facts.push('The forge key opened the route into The Ashen Vault.');
+  return facts;
+}
+function renderAshfallDetail(root,side){
+  const q=ensure(),a=q.ashfall,stage=ashfallStage(),d=stage==='complete'?ASHFALL_STAGES[ASHFALL_STAGES.length-1]:ashfallDef(stage),facts=ashfallFacts(a);
+  root.innerHTML='<div class="quest-v3-hero"><div><small>'+ASHFALL.difficulty.toUpperCase()+' · '+ASHFALL.length.toUpperCase()+' ADVENTURE</small><h2>'+ASHFALL.title+'</h2><p>'+ASHFALL.start+'</p></div><span class="quest-v3-status '+(a.complete?'complete':'')+'">'+(a.complete?'COMPLETE':a.started?'IN PROGRESS':'AVAILABLE')+'</span></div>'+
+    '<div class="quest-v3-story"><p>'+ASHFALL.summary+'</p></div>'+
+    '<section class="quest-v3-clue"><small>'+(a.complete?'WHERE IT LED':'CURRENT CLUE')+'</small><h3>'+esc(a.complete?'The Ashen Vault':d.label)+'</h3><p>'+esc(a.complete?'The old forge entrance is open. The Ashen Vault can now be farmed for stronger randomized versions of the equipment earned on this road.':d.objective)+'</p>'+(a.complete?'':'<em>'+esc(d.hint)+'</em>')+'</section>'+
+    '<section class="quest-v3-known"><div class="quest-v3-section-head"><span>WHAT YOUR GUILD KNOWS</span><small>Investigation notes are recorded as you uncover them.</small></div><div>'+(facts.length?facts.map(x=>'<p>'+esc(x)+'</p>').join(''):'<p class="quest-v3-unknown">Warden Elara is waiting at Zeltira’s east gate.</p>')+'</div></section>'+
+    '<div class="quest-detail-action">'+ashfallActionHtml()+'</div>';
+  side.innerHTML='<section><small>PROGRESSION REWARD</small><div class="quest-reward-list"><p>3 × Tier 1 quest gear choices</p><p>Reliable spec-focused stats</p><p>Dungeons roll stronger values</p><p>The Ashen Vault permanently unlocked</p></div></section>'+
+    '<section><small>QUEST REWARD HISTORY</small><div class="quest-history">'+(Object.values(q.rewardClaims||{}).filter(x=>String(x?.itemName||'')&&['Head','Chest','Weapon'].includes(x.slot)&&String(x.tier)==='1').map(x=>'<p>'+esc(x.characterName+' · '+x.itemName)+'</p>').join('')||'<p>No quest equipment claimed yet.</p>')+'</div></section>'+
+    '<section><small>ADVENTURE JOURNAL</small><div class="quest-history">'+(a.history.slice(-6).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>No journal entries yet.</p>')+'</div></section>';
+}
+
 function renderList(){
-  const root=$('#questJournalList');if(!root)return;const q=ensure();
-  const status=complete()?'COMPLETE':q.started?'IN PROGRESS':'AVAILABLE';
-  const shouldShow=selectedTab==='campaign'||(selectedTab==='active'&&!complete())||(selectedTab==='completed'&&complete());
-  if(!shouldShow){root.innerHTML='<div class="quest-list-empty">'+(selectedTab==='completed'?'No completed adventures yet.':'No active adventures.')+'</div>';return}
-  root.innerHTML='<button class="quest-v2-list-card selected"><div class="quest-v2-icon">⌁</div><span><small>'+status+' · '+QUEST.difficulty.toUpperCase()+'</small><b>'+QUEST.title+'</b><em>'+QUEST.length+' adventure · Zeltira</em></span></button>';
+  const root=$('#questJournalList');if(!root)return;const q=ensure(),a=q.ashfall;
+  const cards=[
+    {id:'ashfall',title:ASHFALL.title,meta:ASHFALL.length+' adventure · Zeltira',difficulty:ASHFALL.difficulty,status:a.complete?'COMPLETE':a.started?'IN PROGRESS':'AVAILABLE',complete:a.complete,locked:false},
+    {id:'echoes',title:QUEST.title,meta:QUEST.length+' adventure · Zeltira',difficulty:QUEST.difficulty,status:complete()?'COMPLETE':q.started?'IN PROGRESS':echoesUnlocked()?'AVAILABLE':'LOCKED',complete:complete(),locked:!echoesUnlocked()&&!q.started}
+  ].filter(x=>selectedTab==='campaign'||(selectedTab==='active'&&!x.complete)||(selectedTab==='completed'&&x.complete));
+  if(!cards.length){root.innerHTML='<div class="quest-list-empty">'+(selectedTab==='completed'?'No completed adventures yet.':'No active adventures.')+'</div>';return}
+  if(!cards.some(x=>x.id===selectedAdventure))selectedAdventure=cards[0].id;
+  root.innerHTML=cards.map(x=>'<button class="quest-v2-list-card '+(x.id===selectedAdventure?'selected':'')+(x.locked?' locked':'')+'" data-adventure="'+x.id+'"><div class="quest-v2-icon">'+(x.id==='ashfall'?'♜':'⌁')+'</div><span><small>'+x.status+' · '+x.difficulty.toUpperCase()+'</small><b>'+x.title+'</b><em>'+x.meta+'</em></span></button>').join('');
+  root.querySelectorAll('[data-adventure]').forEach(b=>b.onclick=()=>{selectedAdventure=b.dataset.adventure;render()});
 }
 function renderDetail(){
   const root=$('#questJournalDetail'),side=$('#questJournalSide');if(!root||!side)return;
+  if(selectedAdventure==='ashfall'){renderAshfallDetail(root,side);bindActions();return}
   const q=ensure(),stage=currentStage(),d=stage==='complete'?STAGES[STAGES.length-1]:stageDef(stage),facts=knownFacts(q),rewards=visibleRewards();
   root.innerHTML='<div class="quest-v3-hero"><div><small>'+QUEST.difficulty.toUpperCase()+' · '+QUEST.length.toUpperCase()+' ADVENTURE</small><h2>'+QUEST.title+'</h2><p>'+esc(QUEST.start)+'</p></div><span class="quest-v3-status '+(complete()?'complete':'')+'">'+(complete()?'COMPLETE':q.started?'IN PROGRESS':'AVAILABLE')+'</span></div>'+
     '<div class="quest-v3-story"><p>'+QUEST.summary+'</p></div>'+
@@ -550,6 +586,10 @@ function renderDetail(){
   bindActions();
 }
 function bindActions(){
+  $('[data-ashfall-start]')?.addEventListener('click',startAshfall);
+  $('[data-ashfall-tracks]')?.addEventListener('click',openAshfallTracks);
+  $('[data-ashfall-ambush]')?.addEventListener('click',beginAshfallAmbush);
+  $('[data-ashfall-finish]')?.addEventListener('click',finishAshfall);
   $('[data-start]')?.addEventListener('click',startQuest);
   $$('[data-bearer]').forEach(b=>b.addEventListener('click',()=>chooseBearer(b.dataset.bearer)));
   $('[data-ashen]')?.addEventListener('click',openAshen);
