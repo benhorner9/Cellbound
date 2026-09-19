@@ -121,22 +121,22 @@ function ensureCharacter(c){
 }
 function rarityClass(item){return `cb-rarity-${String(item?.rarity||'starter').toLowerCase()}`}
 function statBlock(c){
-  const meta=classMeta[c.class]||{primary:'Strength'};
+  const meta=classMeta[c.class]||{primary:'Strength'},bonus=G?.aggregateStats?.(c)||{};
   const level=c.level||1,gear=c.gear||0,role=roleOf(c);
-  const strength=Math.round(level*7+gear*(meta.primary==='Strength'?.62:.2));
-  const agility=Math.round(level*6+gear*(meta.primary==='Agility'?.62:.18));
-  const intellect=Math.round(level*7+gear*(meta.primary==='Intellect'?.64:.16));
-  const stamina=Math.round(level*9+gear*.52+(role==='tank'?18:0));
-  const armour=Math.round(gear*14+level*20+(role==='tank'?180:role==='healer'?35:60));
-  const crit=Math.max(3,Math.round(5+gear*.11));
-  const haste=Math.max(2,Math.round(3+level*.7));
-  const block=role==='tank'?Math.round(8+gear*.18):0;
-  return {Strength:strength,Agility:agility,Intellect:intellect,Stamina:stamina,Armour:armour,Crit:`${crit}%`,Haste:`${haste}%`,Block:block?`${block}%`:'—'};
+  const strength=Math.round(level*7+gear*(meta.primary==='Strength'?.62:.2)+(bonus.strength||0));
+  const agility=Math.round(level*6+gear*(meta.primary==='Agility'?.62:.18)+(bonus.agility||0));
+  const intellect=Math.round(level*7+gear*(meta.primary==='Intellect'?.64:.16)+(bonus.intellect||0));
+  const stamina=Math.round(level*9+gear*.52+(role==='tank'?18:0)+(bonus.stamina||0));
+  const armour=Math.round(gear*14+level*20+(role==='tank'?180:role==='healer'?35:60)+(bonus.armour||0));
+  const crit=Math.max(3,Math.round(5+gear*.11+(bonus.crit||0)));
+  const haste=Math.max(2,Math.round(3+level*.7+(bonus.haste||0)));
+  const block=role==='tank'?Math.round(8+gear*.18+(bonus.block||0)):Number(bonus.block||0);
+  return {Strength:strength,Agility:agility,Intellect:intellect,Stamina:stamina,Armour:armour,Crit:`${crit}%`,Haste:`${haste}%`,Block:block?`${block}%`:'—',Threat:bonus.threat?`+${bonus.threat}%`:'—',Healing:bonus.healing?`+${bonus.healing}%`:'—'};
 }
 function sheetMaxHealth(c){
   const ilvl=window.CellboundGame?.characterItemLevel?.(c)||0;
   const role=roleOf(c);
-  return Math.round(100+(Number(c.level)||1)*28+ilvl*5+(role==='tank'?90:role==='healer'?30:50));
+  const bonus=G?.aggregateStats?.(c)||{};return Math.round(100+(Number(c.level)||1)*28+ilvl*5+(role==='tank'?90:role==='healer'?30:50)+(Number(bonus.stamina)||0)*4);
 }
 function bestBankUpgrade(state,c,slot){
   const current=Math.max(0,Number(c.equipment?.[slot]?.itemLevel)||0);
@@ -172,7 +172,7 @@ function paperDoll(c,state){
   const ent=window.CellboundGame?.getEntitlements?.()||{professionSlots:1,member:false};
   const health=sheetMaxHealth(c),shock=Math.round(Number(c.cellShock)||0);
   const coreStats=['Strength','Agility','Intellect','Stamina'];
-  const combatStats=['Armour','Crit','Haste','Block'];
+  const combatStats=['Armour','Crit','Haste','Block','Threat','Healing'];
   return `<div class="cb-paperdoll cb-armoury-screen cb-armoury-stats-screen" style="--cb-accent:${meta.accent}">
     <div class="cb-gear-column cb-gear-left">${leftSlots.map(s=>equipmentSlot(c,s,state)).join('')}</div>
     <section class="cb-armoury-stage cb-stat-command">
