@@ -211,7 +211,8 @@ function renderCombatMeters(){
  const threatRows=p.map(c=>({c,value:Number(table[c.id])||0})).sort((a,b)=>b.value-a.value),maxThreat=Math.max(1,...threatRows.map(x=>x.value)),aggro=run.aggro?.[targetIndex];
  threatRoot.innerHTML=threatRows.map(({c,value},i)=>{
    const pct=value/maxThreat*100,hasAggro=c.id===aggro,danger=hasAggro&&combatProfile(c)!=='tank';
-   return '<div class="cb2d-meter-row '+meterRole(c)+(hasAggro?' aggro':'')+(danger?' danger':'')+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(c.name)+(hasAggro?' <strong>AGGRO</strong>':'')+'</b><span>'+Math.round(value).toLocaleString()+' · '+Math.round(pct)+'%</span></div><em><i style="width:'+pct+'%"></i></em></div>';
+   const tank=p.find(x=>combatProfile(x)==='tank'),tankThreat=tank?Number(table[tank.id])||0:0,high=!hasAggro&&combatProfile(c)!=='tank'&&tankThreat>0&&value>=tankThreat*.85;
+   return '<div class="cb2d-meter-row '+meterRole(c)+(hasAggro?' aggro':'')+(danger?' danger':'')+(high?' high':'')+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(c.name)+(hasAggro?' <strong>AGGRO</strong>':high?' <strong>HIGH</strong>':'')+'</b><span>'+Math.round(value).toLocaleString()+' · '+Math.round(pct)+'%</span></div><em><i style="width:'+pct+'%"></i></em></div>';
  }).join('');
 }
 function addUnit(id,label,cls,x,y,size){
@@ -347,12 +348,18 @@ function maintainPosition(c,index,fast=false){
 }
 function buildThreat(index,c,amount,source='damage'){
  if(!run?.threat?.[index]||!c)return;
- const profile=combatProfile(c);
- let value=Math.max(1,Number(amount)||1);
- if(profile==='tank')value*=source==='taunt'?16:6.5;
- else if(profile==='healer')value*=.55;
- else value*=1;
- run.threat[index][c.id]=(run.threat[index][c.id]||0)+value;
+ const profile=combatProfile(c),table=run.threat[index];
+ let value=Math.max(0,Number(amount)||0);
+ if(source==='taunt'&&profile==='tank'){
+   const highest=Math.max(0,...Object.values(table).map(Number));
+   const snap=Math.max(Number(table[c.id])||0,highest*1.15+Math.max(70,value*.6));
+   table[c.id]=snap;
+   updateAggro(index);renderCombatMeters();return;
+ }
+ if(value<=0)return;
+ if(source==='heal')value*=1.5;
+ else if(profile==='tank')value*=2.4;
+ table[c.id]=(Number(table[c.id])||0)+value;
  updateAggro(index);renderCombatMeters();
 }
 function updateAggro(index){
@@ -503,10 +510,13 @@ function fireHeal(healer,target,tok){
  faceUnit('p-'+healer.id,'p-'+target.id);projectile('p-'+healer.id,'p-'+target.id,'heal',320);
  scheduleImpact(()=>{
    if(hp(target.id)<=0)return;
-   setHp(target.id,hp(target.id)+amount);
-   hitReact('p-'+target.id,'heal');floating('p-'+target.id,'+'+amount,'heal');
+   const before=hp(target.id);
+   setHp(target.id,before+amount);
+   const effective=Math.max(0,hp(target.id)-before);
+   hitReact('p-'+target.id,'heal');
+   if(effective>0)floating('p-'+target.id,'+'+effective,'heal');
    updateRows();
-   run?.enemyHp?.forEach((v,i)=>{if(v>0)buildThreat(i,healer,amount*.35,'heal')});
+   if(effective>0)run?.enemyHp?.forEach((v,i)=>{if(v>0)buildThreat(i,healer,effective,'heal')});
  },320,tok);
 }
 function fireHealerDamage(healer,index,tok){

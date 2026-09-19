@@ -54,7 +54,7 @@ function ensureShell(){
           <div id="wb2dRaidList" class="wb2d-raid-list"></div>
           <div class="wb2d-meter-stack">
             <section class="wb2d-meter-panel"><div class="wb2d-meter-title"><span>DAMAGE METER</span><small>SERVER</small></div><div id="wb2dDamageMeter" class="wb2d-meter-list"></div></section>
-            <section class="wb2d-meter-panel threat"><div class="wb2d-meter-title"><span>THREAT METER</span><small>SERVER</small></div><div id="wb2dThreatMeter" class="wb2d-meter-list"></div></section>
+            <section class="wb2d-meter-panel threat"><div class="wb2d-meter-title"><span>YOUR PARTY THREAT</span><small>GLOBAL HEAL</small></div><div id="wb2dThreatMeter" class="wb2d-meter-list"></div></section>
           </div>
           <div class="wb2d-feed-head"><span>COMBAT FEED</span></div>
           <div id="wb2dFeed" class="wb2d-feed"></div>
@@ -100,7 +100,7 @@ function bossHealth(boss){
 }
 function groupParty(participant,index){
   if(participant.isYou){
-    return party().map((c,i)=>({key:'you-'+(c.id||i),name:c.name,role:roleOf(c),ranged:isRanged(c),own:true}));
+    return party().map((c,i)=>({key:'you-'+(c.id||i),id:c.id,name:c.name,role:roleOf(c),ranged:isRanged(c),own:true}));
   }
   return [
     {key:'g'+index+'-t',name:'Tank',role:'tank',ranged:false},
@@ -123,6 +123,8 @@ function renderParticipants(parts){
   const units=document.getElementById('wb2dUnits'),raid=document.getElementById('wb2dRaidList');
   if(!units||!raid)return;
   const previous=new Map([...units.querySelectorAll('[data-unit-key]')].map(e=>[e.dataset.unitKey,e]));
+  const ownThreat=active?.partyThreat||{},ownGuildAggro=Boolean(parts.find(p=>p.isYou)?.isAggro);
+  const topOwnId=Object.entries(ownThreat).sort((a,b)=>(Number(b[1])||0)-(Number(a[1])||0))[0]?.[0]||null;
   const nextKeys=new Set(),html=[];
   parts.forEach((p,index)=>{
     const anchor=groupAnchors[index%groupAnchors.length],members=groupParty(p,index),guild=String(p.guildLabel||'Unknown Guild');
@@ -135,7 +137,7 @@ function renderParticipants(parts){
         el.dataset.unitKey=key;el.innerHTML='<span class="wb2d-unit-dot">'+(u.role==='tank'?'T':u.role==='healer'?'H':'D')+'</span><div class="wb2d-unit-hp"><i></i></div><small></small>';
         units.appendChild(el);
       }
-      el.className='wb2d-unit role-'+u.role+(u.own?' own':'')+(u.ranged?' ranged':' melee')+(p.isAggro?' aggro':'');
+      el.className='wb2d-unit role-'+u.role+(u.own?' own':'')+(u.ranged?' ranged':' melee')+(p.isAggro?' aggro':'')+(u.own&&ownGuildAggro&&u.id===topOwnId?' boss-target':'');
       el.style.left=pos.x+'%';el.style.top=pos.y+'%';
       el.dataset.x=pos.x;el.dataset.y=pos.y;el.dataset.guild=guild;
       el.querySelector('small').textContent=u.own?u.name:(i===0?guild:'');
@@ -146,20 +148,29 @@ function renderParticipants(parts){
   raid.innerHTML=html.join('')||'<div class="wb2d-empty">No commanders engaged.</div>';
   document.getElementById('wb2dPlayerCount').textContent=parts.length+' COMMANDER'+(parts.length===1?'':'S');
 }
-function renderCombatMeters(parts){
+function renderCombatMeters(parts,partyThreat){
   const damageRoot=document.getElementById('wb2dDamageMeter'),threatRoot=document.getElementById('wb2dThreatMeter');
   const rows=Array.isArray(parts)?parts:[];
-  const meter=(root,key,isThreat=false)=>{
-    if(!root)return;
-    const sorted=[...rows].sort((a,b)=>(Number(b[key])||0)-(Number(a[key])||0));
-    if(!sorted.length){root.innerHTML='<div class="wb2d-meter-empty">No combat data yet.</div>';return}
-    const max=Math.max(1,...sorted.map(x=>Number(x[key])||0));
-    root.innerHTML=sorted.slice(0,6).map((p,i)=>{
-      const value=Number(p[key])||0,pct=value/max*100,aggro=isThreat&&p.isAggro;
-      return '<div class="wb2d-meter-row '+(p.isYou?'you ':'')+(aggro?'aggro':'')+'"><div><b>'+(i+1)+'. '+esc(p.guildLabel||'Unknown Guild')+(aggro?' <strong>AGGRO</strong>':'')+'</b><span>'+value.toLocaleString()+'</span></div><em><i style="width:'+pct+'%"></i></em></div>';
-    }).join('');
-  };
-  meter(damageRoot,'damageDone',false);meter(threatRoot,'threatDone',true);
+  if(damageRoot){
+    const sorted=[...rows].sort((a,b)=>(Number(b.damageDone)||0)-(Number(a.damageDone)||0));
+    if(!sorted.length)damageRoot.innerHTML='<div class="wb2d-meter-empty">No combat data yet.</div>';
+    else{
+      const max=Math.max(1,...sorted.map(x=>Number(x.damageDone)||0));
+      damageRoot.innerHTML=sorted.slice(0,6).map((p,i)=>{
+        const value=Number(p.damageDone)||0,pct=value/max*100;
+        return '<div class="wb2d-meter-row '+(p.isYou?'you':'')+'"><div><b>'+(i+1)+'. '+esc(p.guildLabel||'Unknown Guild')+'</b><span>'+value.toLocaleString()+'</span></div><em><i style="width:'+pct+'%"></i></em></div>';
+      }).join('');
+    }
+  }
+  if(!threatRoot)return;
+  const map=partyThreat&&typeof partyThreat==='object'?partyThreat:{},chars=party();
+  const threatRows=chars.map(c=>({c,value:Number(map[c.id])||0})).sort((a,b)=>b.value-a.value);
+  const maxThreat=Math.max(1,...threatRows.map(x=>x.value)),ownGuildAggro=Boolean(rows.find(p=>p.isYou)?.isAggro),leader=threatRows[0]?.c?.id;
+  const tank=chars.find(c=>roleOf(c)==='tank'),tankThreat=tank?Number(map[tank.id])||0:0;
+  threatRoot.innerHTML=threatRows.length?threatRows.map(({c,value},i)=>{
+    const pct=value/maxThreat*100,isBossTarget=ownGuildAggro&&c.id===leader,high=!isBossTarget&&roleOf(c)!=='tank'&&tankThreat>0&&value>=tankThreat*.85;
+    return '<div class="wb2d-meter-row '+(isBossTarget?'aggro ':'')+(high?'high ':'')+'"><div><b>'+(i+1)+'. '+esc(c.name)+(isBossTarget?' <strong>AGGRO</strong>':high?' <strong>HIGH</strong>':'')+'</b><span>'+Math.round(value).toLocaleString()+'</span></div><em><i style="width:'+pct+'%"></i></em></div>';
+  }).join(''):'<div class="wb2d-meter-empty">Threat appears when your party attacks.</div>';
 }
 function projectileFrom(el,role){
   const arena=document.getElementById('wb2dArena'),boss=document.getElementById('wb2dBoss'),fx=document.getElementById('wb2dEffects');
@@ -227,7 +238,7 @@ async function combatState(){
 async function refresh(){
   const data=await combatState();if(!data||!active)return;
   active.boss=data.boss||active.boss;const parts=Array.isArray(data.participants)?data.participants:[];
-  checkDamageChanges(parts);renderParticipants(parts);renderCombatMeters(parts);bossHealth(active.boss);
+  active.partyThreat=data.yourPartyThreat||{};checkDamageChanges(parts);renderParticipants(parts);renderCombatMeters(parts,active.partyThreat);bossHealth(active.boss);
   document.getElementById('wb2dBossName').textContent=active.boss.name;
   document.getElementById('wb2dBossLabel').textContent=active.boss.name.toUpperCase();
   document.getElementById('wb2dStatus').textContent='Tier '+active.boss.tier+' · '+parts.length+'/'+active.boss.playerCap+' commanders engaged · Party attacks every 5 seconds';
@@ -246,7 +257,9 @@ async function attack(manual=false){
     if(data?.wiped){
       Game.applyPartyCellShock?.(25);await Game.persistState?.();wipeOwnParty();stopAttackTimer();
     }else{
-      const dmg=Number(data?.damage)||0,threat=Number(data?.threat)||0;floatDamage(dmg,true);feed('Your party dealt '+dmg.toLocaleString()+' damage · +'+threat.toLocaleString()+' threat.','damage');
+      const dmg=Number(data?.damage)||0,healing=Number(data?.healing)||0,healingThreat=Number(data?.healingThreat)||0,threat=Number(data?.threat)||0;
+      active.partyThreat=data?.threatBreakdown||active.partyThreat||{};
+      floatDamage(dmg,true);feed('Your party dealt '+dmg.toLocaleString()+' damage · healer restored '+healing.toLocaleString()+' · +'+healingThreat.toLocaleString()+' global healing threat · +'+threat.toLocaleString()+' total threat.','damage');
       if(data?.currentHp!=null){active.boss.currentHp=data.currentHp;active.boss.maxHp=data.maxHp||active.boss.maxHp;bossHealth(active.boss)}
     }
     if(data?.killed)victory();
@@ -266,7 +279,7 @@ async function open(bossId){
   db=Game.getSupabase?.();if(!db)return;
   stopCombatTimers();participantDamage.clear();mechanicSeq=0;
   const root=ensureShell(),known=(window.CellboundSocial?.getWorldBosses?.()||[]).find(b=>b.id===bossId);
-  active={boss:known||{id:bossId,name:'World Boss',tier:1,currentHp:1,maxHp:1,status:'in_combat'}};
+  active={boss:known||{id:bossId,name:'World Boss',tier:1,currentHp:1,maxHp:1,status:'in_combat'},partyThreat:{}};
   root.hidden=false;document.body.classList.add('wb2d-open');
   document.getElementById('wb2dFeed').innerHTML='';
   document.getElementById('wb2dMessage').hidden=true;
