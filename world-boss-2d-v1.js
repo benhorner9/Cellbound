@@ -16,6 +16,7 @@ const groupAnchors=[
   {x:55,y:12},{x:55,y:89},{x:85,y:35},{x:85,y:67}
 ];
 const roleOf=c=>Game?.classes?.[c.class]?.specs?.[c.spec]?.role||'dps';
+const classKey=c=>'class-'+String(c?.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const isRanged=c=>['Hunter','Mage','Priest'].includes(c.class)||(c.class==='Druid'&&c.spec!=='Feral');
 const party=()=>Game?.getPartyCharacters?.()||[];
 
@@ -47,7 +48,7 @@ function ensureShell(){
             <div id="wb2dCast" class="wb2d-cast" hidden><small>BOSS CAST</small><b></b><div><i></i></div></div>
             <div id="wb2dMessage" class="wb2d-message"></div>
           </div>
-          <div class="wb2d-legend"><span><i class="tank"></i>Tank</span><span><i class="healer"></i>Healer</span><span><i class="dps"></i>Damage</span><b>Your party has a gold ring.</b></div>
+          <div class="wb2d-legend"><span>PLAYER DOTS · CLASS COLOURS</span><b>Your party has a gold ring · boss has a gold edge.</b></div>
         </div>
         <aside class="wb2d-raid-panel">
           <div class="wb2d-raid-head"><span>RAID FORCE</span><small>Live shared encounter</small></div>
@@ -100,7 +101,7 @@ function bossHealth(boss){
 }
 function groupParty(participant,index){
   if(participant.isYou){
-    return party().map((c,i)=>({key:'you-'+(c.id||i),id:c.id,name:c.name,role:roleOf(c),ranged:isRanged(c),own:true}));
+    return party().map((c,i)=>({key:'you-'+(c.id||i),id:c.id,name:c.name,role:roleOf(c),ranged:isRanged(c),own:true,classKey:classKey(c)}));
   }
   return [
     {key:'g'+index+'-t',name:'Tank',role:'tank',ranged:false},
@@ -133,11 +134,11 @@ function renderParticipants(parts){
       const pos=unitPosition(anchor,u,i),key=u.key;nextKeys.add(key);
       let el=previous.get(key);
       if(!el){
-        el=document.createElement('div');el.className='wb2d-unit role-'+u.role+(u.own?' own':'');
+        el=document.createElement('div');el.className='wb2d-unit role-'+u.role+' '+(u.classKey||'class-unknown')+(u.own?' own':'');
         el.dataset.unitKey=key;el.innerHTML='<span class="wb2d-unit-dot">'+(u.role==='tank'?'T':u.role==='healer'?'H':'D')+'</span><div class="wb2d-unit-hp"><i></i></div><small></small>';
         units.appendChild(el);
       }
-      el.className='wb2d-unit role-'+u.role+(u.own?' own':'')+(u.ranged?' ranged':' melee')+(p.isAggro?' aggro':'')+(u.own&&ownGuildAggro&&u.id===topOwnId?' boss-target':'');
+      el.className='wb2d-unit role-'+u.role+' '+(u.classKey||'class-unknown')+(u.own?' own':'')+(u.ranged?' ranged':' melee')+(p.isAggro?' aggro':'')+(u.own&&ownGuildAggro&&u.id===topOwnId?' boss-target':'');
       el.style.left=pos.x+'%';el.style.top=pos.y+'%';
       el.dataset.x=pos.x;el.dataset.y=pos.y;el.dataset.guild=guild;
       el.querySelector('small').textContent=u.own?u.name:(i===0?guild:'');
