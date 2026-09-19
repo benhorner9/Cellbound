@@ -306,7 +306,7 @@ function disposeBankItem(id,mode){
     removeBankQuantity(item,qty);Object.entries(yieldMap).forEach(([key,n])=>addMaterial(key,n));
     state.activity.push(`Dismantled ${qty} × ${name}: ${summary}.`);
   }else return;
-  save();ui.bankModal.hidden=true;renderAll();switchView('bank');
+  save();ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open');renderAll();switchView('bank');
 }
 function openBankItem(id){
   const item=state.bank.find(x=>x.id===id);if(!item)return;
@@ -325,7 +325,7 @@ function openBankItem(id){
       </div>`;
 
   ui.bankDetail.innerHTML=`<div class="detail-hero gear-detail-hero"><div class="gear-detail-art">${G.artHTML(item,112)}</div><div><small>${tierText(item).toUpperCase()} · ${String(item.class||'All').toUpperCase()} · ${String(item.slot||'Gear').toUpperCase()}</small><h2>${item.name}</h2><p>Dropped by ${item.source||'Unknown source'}</p><p>Quantity in bank: ${qty}</p></div></div><div class="bank-manage"><h3>Equip to an adventurer</h3><p>Equipment stays in the Guild Bank until you assign it.</p><div class="bank-character-list">${eligible.map(c=>`<button data-equip-char="${c.id}"><span class="avatar">${c.portrait}</span><span><b>${c.name}</b><small>${c.race||'Veyren'} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}</small></span><em>${c.equipment?.[item.slot]?.name?`Replace ${c.equipment[item.slot].name}`:'Empty slot'}</em></button>`).join('')||'<p>No available characters can use this item.</p>'}</div></div>${cleanup}`;
-  ui.bankModal.hidden=false;
+  document.body.classList.add('bank-manage-open');ui.bankModal.hidden=false;
   ui.bankDetail.querySelectorAll('[data-equip-char]').forEach(b=>b.addEventListener('click',()=>equipBankItem(id,b.dataset.equipChar)));
   if(!protectedItem){
     $('#bankCleanupQty')?.addEventListener('input',()=>updateBankCleanupPreview(id));
@@ -344,9 +344,9 @@ function equipBankItem(itemId,charId){
   const slot=item.slot,old=canonicalItem(c.equipment?.[slot]),incoming=canonicalItem(item);
   if(old?.name){c.power=Math.max(1,(Number(c.power)||1)-(Number(old.power)||0));addBankItem({...old,source:`Unequipped from ${c.name}`},false)}
   c.equipment[slot]={...incoming,source:'Equipped'};c.power=Math.max(1,(Number(c.power)||1)+(Number(incoming?.power)||0));
-  c.gearItems=ILVL_SLOTS.map(s=>c.equipment?.[s]?.name||'Empty');c.gear=characterItemLevel(c);item.quantity=(item.quantity||1)-1;if(item.quantity<=0)state.bank=state.bank.filter(x=>x.id!==item.id);state.activity.push(`${c.name} equipped ${item.name} (iLvl ${item.itemLevel}).`);save();ui.bankModal.hidden=true;renderAll();switchView('bank');
+  c.gearItems=ILVL_SLOTS.map(s=>c.equipment?.[s]?.name||'Empty');c.gear=characterItemLevel(c);item.quantity=(item.quantity||1)-1;if(item.quantity<=0)state.bank=state.bank.filter(x=>x.id!==item.id);state.activity.push(`${c.name} equipped ${item.name} (iLvl ${item.itemLevel}).`);save();ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open');renderAll();switchView('bank');
 }
-$('[data-bank-close]')?.addEventListener('click',()=>ui.bankModal.hidden=true);ui.bankModal?.addEventListener('click',e=>{if(e.target===ui.bankModal)ui.bankModal.hidden=true;});
+$('[data-bank-close]')?.addEventListener('click',()=>{ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open')});ui.bankModal?.addEventListener('click',e=>{if(e.target===ui.bankModal){ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open')}});
 
 function removeChar(id){if(state.party.tank===id)state.party.tank=null;if(state.party.healer===id)state.party.healer=null;state.party.dps=state.party.dps.map(x=>x===id?null:x);}
 function assignChar(id){const c=charById(id);if(!c||!isCharacterRosterUnlocked(id)||isUnavailable(c))return;const role=roleOf(c);removeChar(id);if(role==='tank')state.party.tank=id;else if(role==='healer')state.party.healer=id;else{const idx=state.party.dps.findIndex(x=>!x);if(idx>=0)state.party.dps[idx]=id;else state.party.dps[0]=id;}save();renderAll();}
