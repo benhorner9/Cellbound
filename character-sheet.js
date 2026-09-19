@@ -3,6 +3,7 @@
 
 const STORAGE='cellbound-management-reboot-v3';
 const G=window.CellboundGear;
+const I=window.CellboundIdentities;
 const modal=document.getElementById('characterModal');
 const detail=document.getElementById('characterDetail');
 if(!modal||!detail)return;
@@ -274,12 +275,18 @@ function talentTree(c,spec){
 }
 function knowledgePanel(c){return `<div class="cb-knowledge-grid">${Object.entries(c.knowledge||{}).map(([id,val])=>`<article><div><span>${id.replace(/([a-z])([A-Z])/g,'$1 $2')}</span><b>${val}%</b></div><div class="cb-knowledge-bar"><i style="width:${val}%"></i></div></article>`).join('')}</div>`}
 function specTabs(c){const browsing=selectedTreeSpec&&specs[c.class]?.[selectedTreeSpec]?selectedTreeSpec:c.spec;return Object.keys(specs[c.class]||{}).map(spec=>`<button class="cb-spec-tab ${browsing===spec?'active':''}" data-spec-tab="${spec}">${spec}<small>${roleLabel(specs[c.class][spec])}${c.spec===spec?' · ACTIVE':''}</small></button>`).join('')}
+function combatIdentityPanel(c){
+  const info=I?.summary?.(c),race=info?.race,spec=info?.spec;
+  if(!race||!spec)return'';
+  return '<section class="cb-profile-panel cb-identity-panel"><h3>Combat Identity</h3><div class="cb-identity-grid"><article><small>RACE · '+escHtml(race.name)+'</small><b>'+escHtml(race.trait)+'</b><p>'+escHtml(race.strength)+'</p><em>Trade-off: '+escHtml(race.tradeoff)+'</em></article><article><small>'+escHtml(c.class)+' · '+escHtml(c.spec)+'</small><b>'+escHtml(spec.title)+'</b><p>'+escHtml(spec.strength)+'</p><em>Trade-off: '+escHtml(spec.tradeoff)+'</em></article></div></section>';
+}
+function escHtml(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function overviewPanel(c,state){
   const meta=classMeta[c.class]||{primary:'Strength'},stats=statBlock(c),role=roleLabel(roleOf(c));
   const ilvl=window.CellboundGame?.characterItemLevel?.(c)||c.gear||0;
   const active=[state?.party?.tank,state?.party?.healer,...(state?.party?.dps||[])].includes(c.id);
   const avg=Object.values(c.knowledge||{});const knowledge=avg.length?Math.round(avg.reduce((a,b)=>a+(Number(b)||0),0)/avg.length):0;
-  return `<div class="cb-profile-overview"><section class="cb-profile-panel"><h3>Adventurer Overview</h3><div class="cb-profile-stats"><div><span>Role</span><b>${role}</b></div><div><span>Item Level</span><b>${ilvl}</b></div><div><span>Cell Shock</span><b>${Math.round(c.cellShock||0)}%</b></div><div><span>Knowledge</span><b>${knowledge}%</b></div><div><span>${meta.primary}</span><b>${stats[meta.primary]}</b></div><div><span>Stamina</span><b>${stats.Stamina}</b></div><div><span>Armour</span><b>${stats.Armour}</b></div><div><span>Status</span><b>${active?'Active Five':'Reserve'}</b></div></div><p>${c.name} is a Level ${c.level} ${c.race||'Veyren'} ${c.class} specialising in ${c.spec}. Their current equipment and experience determine whether they are ready for the next expedition.</p></section><section class="cb-profile-panel"><h3>Current Loadout</h3>${['Head','Chest','Weapon'].map(slot=>{const item=c.equipment?.[slot];return `<div class="cb-history-entry"><b>${slot}</b><br>${item?.name||'Empty'} · iLvl ${item?.itemLevel||0}</div>`}).join('')}</section></div>`;
+  return `<div class="cb-profile-overview"><section class="cb-profile-panel"><h3>Adventurer Overview</h3><div class="cb-profile-stats"><div><span>Role</span><b>${role}</b></div><div><span>Item Level</span><b>${ilvl}</b></div><div><span>Cell Shock</span><b>${Math.round(c.cellShock||0)}%</b></div><div><span>Knowledge</span><b>${knowledge}%</b></div><div><span>${meta.primary}</span><b>${stats[meta.primary]}</b></div><div><span>Stamina</span><b>${stats.Stamina}</b></div><div><span>Armour</span><b>${stats.Armour}</b></div><div><span>Status</span><b>${active?'Active Five':'Reserve'}</b></div></div><p>${c.name} is a Level ${c.level} ${c.race||'Veyren'} ${c.class} specialising in ${c.spec}. Race, class, talents, equipment and encounter knowledge now all affect how they behave in combat.</p></section><section class="cb-profile-panel"><h3>Current Loadout</h3>${['Head','Chest','Weapon'].map(slot=>{const item=c.equipment?.[slot];return `<div class="cb-history-entry"><b>${slot}</b><br>${item?.name||'Empty'} · iLvl ${item?.itemLevel||0}</div>`}).join('')}</section>${combatIdentityPanel(c)}</div>`;
 }
 function professionsPanel(c){
   const ent=window.CellboundGame?.getEntitlements?.()||{professionSlots:1,member:false};

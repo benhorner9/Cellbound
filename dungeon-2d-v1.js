@@ -72,6 +72,7 @@ const ASHEN_ROOMS={
  }
 };
 let Game=null,G=null,P=null,run=null,token=0;
+const I=window.CellboundIdentities;
 let tactics={aggression:'balanced',interrupts:'important',defensives:'balanced',adds:'dangerous',consumables:'danger'};
 const party=()=>Game&&Game.getPartyCharacters?Game.getPartyCharacters():[];
 const state=()=>Game&&Game.getState?Game.getState():null;
@@ -155,7 +156,7 @@ function briefing(){
  r.querySelector('[data-start]').onclick=start;
 }
 function start(){
- const p=party();token++;run={token:token,stage:0,speed:1,condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],damageDone:Object.fromEntries(p.map(c=>[c.id,0])),combatStartedAt:0,lastMeterAt:0,log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},xpGrowth:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0};
+ const p=party();token++;run={token:token,stage:0,speed:1,condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],damageDone:Object.fromEntries(p.map(c=>[c.id,0])),hitCount:Object.fromEntries(p.map(c=>[c.id,0])),identityTimers:{},combatStartedAt:0,lastMeterAt:0,log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},xpGrowth:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0};
  drawViewer();seamless(token);
 }
 function route(){
@@ -352,13 +353,16 @@ function buildThreat(index,c,amount,source='damage'){
  let value=Math.max(0,Number(amount)||0);
  if(source==='taunt'&&profile==='tank'){
    const highest=Math.max(0,...Object.values(table).map(Number));
-   const snap=Math.max(Number(table[c.id])||0,highest*1.15+Math.max(70,value*.6));
+   const lead=I?.tauntLead?.(c)||1.15;
+   const snap=Math.max(Number(table[c.id])||0,highest*lead+Math.max(70,value*.6));
    table[c.id]=snap;
    updateAggro(index);renderCombatMeters();return;
  }
  if(value<=0)return;
- if(source==='heal')value*=1.5;
- else if(profile==='tank')value*=2.4;
+ const enemyCount=run.enemyHp.filter(v=>v>0).length;
+ if(source==='heal')value*=1.5*(I?.healThreatMultiplier?.(c)||1);
+ else if(source==='group')value*=1;
+ else value*=I?.damageThreatMultiplier?.(c,{enemyCount})||(profile==='tank'?2.4:1);
  table[c.id]=(Number(table[c.id])||0)+value;
  updateAggro(index);renderCombatMeters();
 }
@@ -429,13 +433,14 @@ function enemyIndex(){
 
 function attackCooldown(c){
  const profile=combatProfile(c);
- if(profile==='tank')return 1050;
- if(c.class==='Rogue')return 700;
- if(c.class==='Hunter')return 1050;
- if(c.class==='Mage')return 1250;
- if(c.class==='Warrior')return 900;
- if(c.class==='Paladin')return 1050;
- return 1000;
+ let base=1000;
+ if(profile==='tank')base=1050;
+ else if(c.class==='Rogue')base=700;
+ else if(c.class==='Hunter')base=1050;
+ else if(c.class==='Mage')base=1250;
+ else if(c.class==='Warrior')base=900;
+ else if(c.class==='Paladin')base=1050;
+ return Math.round(base*(I?.cooldownMultiplier?.(c)||1));
 }
 function enemyCooldown(s,index){
  const base=s.kind==='final'?900:s.kind==='boss'?1000:s.kind==='event'?1150:1250;
@@ -449,8 +454,10 @@ function scheduleImpact(fn,ms,tok){
 }
 function firePartyAttack(c,index,tok){
  if(tok!==token||!run?.combatActive||index<0||hp(c.id)<=0||run.enemyHp[index]<=0)return;
- const kind=attackKind(c),profile=combatProfile(c),name=ability(c);
- const amount=(profile==='tank'?12:18)+Math.floor(Math.random()*10)+(tactics.aggression==='aggressive'?4:0);
+ const kind=attackKind(c),profile=combatProfile(c),name=ability(c),beforePct=(run.enemyHp[index]/Math.max(1,run.enemyMax[index]))*100;
+ const hit=Number(run.hitCount?.[c.id])||0,base=(profile==='tank'?12:18)+Math.floor(Math.random()*10)+(tactics.aggression==='aggressive'?4:0);
+ const amount=Math.max(1,Math.round(base*(I?.damageMultiplier?.(c,{enemyCount:run.enemyHp.filter(v=>v>0).length,enemyPct:beforePct,healthPct:hp(c.id),opening:hit===0,hit})||1)));
+ run.hitCount[c.id]=hit+1;
 
  maintainPosition(c,index,true);
  setFocusEnemy(index);faceUnit('p-'+c.id,'e-'+index);
@@ -462,9 +469,7 @@ function firePartyAttack(c,index,tok){
    const desired=formationPoint(c,index);
    move('p-'+c.id,desired.x,desired.y,150);
    scheduleImpact(()=>projectile('p-'+c.id,'e-'+index,'slash',150),90,tok);
- }else{
-   projectile('p-'+c.id,'e-'+index,kind,kind==='arrow'?260:330);
- }
+ }else projectile('p-'+c.id,'e-'+index,kind,kind==='arrow'?260:330);
 
  const travel=kind==='melee'?180:(kind==='arrow'?280:350);
  scheduleImpact(()=>{
@@ -475,6 +480,26 @@ function firePartyAttack(c,index,tok){
    const dealt=Math.max(0,before-run.enemyHp[index]);recordDamage(c,dealt);
    hitReact('e-'+index,'hit');floating('e-'+index,'-'+Math.round(dealt),'damage');
    buildThreat(index,c,dealt,'damage');
+
+   const cleave=I?.cleaveRatio?.(c)||0;
+   if(cleave>0){
+     const others=run.enemyHp.map((v,i)=>({v,i})).filter(x=>x.i!==index&&x.v>0).slice(0,c.class==='Mage'?2:1);
+     others.forEach(x=>{
+       const b=run.enemyHp[x.i],secondary=Math.max(1,Math.round(dealt*cleave));let n=b-secondary;
+       if(!run.allowKill)n=Math.max(n,(run.enemyMax[x.i]||1)*.16);
+       setEnemyHp(x.i,n);const actual=Math.max(0,b-run.enemyHp[x.i]);if(actual<=0)return;
+       recordDamage(c,actual);projectile('p-'+c.id,'e-'+x.i,kind==='magic'?'magic':'slash',220);
+       floating('e-'+x.i,'-'+Math.round(actual),'damage');buildThreat(x.i,c,actual,'damage');
+     });
+   }
+
+   const groupRatio=I?.groupThreatRatio?.(c)||0,now=performance.now();
+   if(groupRatio>0&&run.enemyHp.filter(v=>v>0).length>1&&now>Number(run.identityTimers[c.id]||0)){
+     run.enemyHp.forEach((v,i)=>{if(v>0&&i!==index)buildThreat(i,c,dealt*groupRatio,'group')});
+     run.identityTimers[c.id]=now+3000;
+     floating('p-'+c.id,c.class==='Paladin'?'CONSECRATION':'PACK THREAT','threat');
+     if(c.class==='Paladin')act('tank',c.name+' · Consecration holding the pack');
+   }
  },travel,tok);
 }
 function fireEnemyAttack(index,tok,s){
@@ -487,7 +512,8 @@ function fireEnemyAttack(index,tok,s){
  if(attacker){attacker.classList.add('attacking');setTimeout(()=>attacker.classList.remove('attacking'),360)}
  projectile('e-'+index,'p-'+target.id,s.kind==='boss'||s.kind==='final'?'enemy-heavy':'enemy',280);
 
- const amount=(s.kind==='boss'||s.kind==='final'?6:3)+Math.floor(Math.random()*(s.kind==='boss'||s.kind==='final'?7:5));
+ const raw=(s.kind==='boss'||s.kind==='final'?6:3)+Math.floor(Math.random()*(s.kind==='boss'||s.kind==='final'?7:5));
+ const amount=Math.max(1,Math.round(raw*(I?.incomingMultiplier?.(target,'physical')||1)));
  scheduleImpact(()=>{
    if(hp(target.id)<=0)return;
    setHp(target.id,hp(target.id)-amount);
@@ -501,27 +527,55 @@ function fireEnemyAttack(index,tok,s){
 function healerNeedsTarget(){
  return party().filter(c=>hp(c.id)>0&&hp(c.id)<94).sort((a,b)=>hp(a.id)-hp(b.id))[0]||null;
 }
+function scaledHeal(healer,target,base,kind='direct'){
+ return Math.max(1,Math.round(base*(I?.healingMultiplier?.(healer,target,{kind,targetHp:hp(target.id)})||1)));
+}
+function applyHeal(healer,target,amount){
+ if(!target||hp(target.id)<=0)return 0;
+ const before=hp(target.id);setHp(target.id,before+amount);const effective=Math.max(0,hp(target.id)-before);
+ if(effective>0){
+   hitReact('p-'+target.id,'heal');floating('p-'+target.id,'+'+effective,'heal');
+   run?.enemyHp?.forEach((v,i)=>{if(v>0)buildThreat(i,healer,effective,'heal')});
+ }
+ return effective;
+}
 function fireHeal(healer,target,tok){
  if(tok!==token||!run?.combatActive||!healer||!target||hp(healer.id)<=0||hp(target.id)<=0)return;
- const amount=8+Math.floor(Math.random()*9);
+ const base=8+Math.floor(Math.random()*9),amount=scaledHeal(healer,target,base,'direct');
  const activeEnemy=enemyIndex();
  if(activeEnemy>=0)maintainPosition(healer,activeEnemy,false);
  act('healer',healer.name+' · Healing '+target.name);
  faceUnit('p-'+healer.id,'p-'+target.id);projectile('p-'+healer.id,'p-'+target.id,'heal',320);
  scheduleImpact(()=>{
-   if(hp(target.id)<=0)return;
-   const before=hp(target.id);
-   setHp(target.id,before+amount);
-   const effective=Math.max(0,hp(target.id)-before);
-   hitReact('p-'+target.id,'heal');
-   if(effective>0)floating('p-'+target.id,'+'+effective,'heal');
+   const effective=applyHeal(healer,target,amount);if(!effective)return;
+   const tank=party().find(c=>combatProfile(c)==='tank'&&hp(c.id)>0);
+   const beacon=I?.beaconRatio?.(healer)||0;
+   if(beacon>0&&tank&&tank.id!==target.id){
+     const copied=scaledHeal(healer,tank,base*beacon,'beacon');applyHeal(healer,tank,copied);
+     act('healer',healer.name+' · Beacon copies healing to '+tank.name);
+   }
+   const splash=I?.groupHealRatio?.(healer)||0;
+   if(splash>0){
+     const count=I?.groupHealTargets?.(healer)||2;
+     party().filter(c=>c.id!==target.id&&hp(c.id)>0&&hp(c.id)<98).sort((a,b)=>hp(a.id)-hp(b.id)).slice(0,count).forEach(c=>{
+       const extra=scaledHeal(healer,c,base*splash,'group');applyHeal(healer,c,extra);
+     });
+     act('healer',healer.name+' · Party recovery');
+   }
+   const hot=I?.hotRatio?.(healer)||0;
+   if(hot>0){
+     [620,1240].forEach((ms,n)=>scheduleImpact(()=>{
+       if(hp(target.id)<=0)return;const tick=scaledHeal(healer,target,base*hot,'hot');const got=applyHeal(healer,target,tick);
+       if(got>0&&n===0)act('healer',healer.name+' · Rejuvenation ticking');
+       updateRows();
+     },ms,tok));
+   }
    updateRows();
-   if(effective>0)run?.enemyHp?.forEach((v,i)=>{if(v>0)buildThreat(i,healer,effective,'heal')});
  },320,tok);
 }
 function fireHealerDamage(healer,index,tok){
  if(index<0||run.enemyHp[index]<=0)return;
- const amount=7+Math.floor(Math.random()*5);
+ const base=7+Math.floor(Math.random()*5),amount=Math.max(1,Math.round(base*(I?.damageMultiplier?.(healer,{enemyCount:run.enemyHp.filter(v=>v>0).length,enemyPct:(run.enemyHp[index]/Math.max(1,run.enemyMax[index]))*100,healthPct:hp(healer.id),hit:Number(run.hitCount?.[healer.id])||0})||1)));
  maintainPosition(healer,index,false);
  act('healer',healer.name+' · Supporting damage');
  faceUnit('p-'+healer.id,'e-'+index);projectile('p-'+healer.id,'e-'+index,'magic',340);
@@ -582,6 +636,12 @@ function combatLoop(s,tok){
        if(hp(c.id)<=0)return;
        const rt=run.rtParty[c.id]||(run.rtParty[c.id]={nextAttack:now,nextMove:now,nextHeal:now,nextSupport:now});
        const profile=combatProfile(c);
+       const regen=I?.passiveRegen?.(c)||0;
+       if(regen>0&&now>=rt.nextRacePulse){
+         const before=hp(c.id);setHp(c.id,before+regen);const gained=Math.max(0,hp(c.id)-before);
+         if(gained>0)floating('p-'+c.id,'+'+gained,'heal');
+         rt.nextRacePulse=now+2400/(run.speed||1);updateRows();
+       }
 
        if(now>=rt.nextMove){
          microPosition(c,targetIndex);
@@ -733,14 +793,14 @@ function applyMechanicDamage(victims,amount,conditionLoss,label){
  log(label+' hits '+names.join(', ')+'.');
  return names
 }
-function resolveFloorMechanic(e,{damage=14,condition=5,label='Mechanic',allowTankSoak=false}={}){
+function resolveFloorMechanic(e,{damage=14,condition=5,label='Mechanic',allowTankSoak=false,damageType='magic'}={}){
  const victims=telegraphVictims(e);
  if(!victims.length){
    flash('AVOIDED',false);log(label+' is avoided by the party.');clearTelegraph(e,'safe');
    return{victims:[],avoidableHits:[]}
  }
  const avoidableHits=allowTankSoak?victims.filter(c=>combatProfile(c)!=='tank'):victims;
- applyMechanicDamage(victims,damage,condition,label);
+ applyMechanicDamage(victims,damage,condition,label,damageType);
  if(avoidableHits.length){
    flash(avoidableHits.length+' HIT',true);
    clearTelegraph(e,'impact')
@@ -769,7 +829,8 @@ async function cast(name,ms,tok){
  const total=Math.round(ms/(run.speed||1)),start=Date.now();
  return new Promise((res,rej)=>{const q=setInterval(()=>{if(tok!==token){clearInterval(q);rej(new Error('cancelled'));return}const p=clamp((Date.now()-start)/total,0,1);if(f)f.style.width=(p*100)+'%';if(tm)tm.textContent=Math.max(0,(total-(Date.now()-start))/1000).toFixed(1)+'s';if(p>=1){clearInterval(q);res()}},45)})
 }
-function interruptOK(s){if(run.forceInterrupt){run.forceInterrupt=false;return true}if(tactics.interrupts==='high')return true;if(tactics.interrupts==='important')return s.kind==='boss'||s.kind==='final'||knowledge(s.knowledge)>=25;return s.kind==='final'||knowledge(s.knowledge)>=70}
+function interruptSpecialist(){return party().find(c=>hp(c.id)>0&&(c.class==='Rogue'||c.class==='Hunter'||(c.class==='Warrior'&&c.spec==='Arms')))||party().find(c=>hp(c.id)>0&&combatProfile(c)!=='healer')}
+function interruptOK(s){if(run.forceInterrupt){run.forceInterrupt=false;return true}const specialist=Boolean(interruptSpecialist());if(tactics.interrupts==='high')return true;if(tactics.interrupts==='important')return s.kind==='boss'||s.kind==='final'||knowledge(s.knowledge)>=25||(specialist&&knowledge(s.knowledge)>=10);return s.kind==='final'||knowledge(s.knowledge)>=70}
 function regroup(){
  const index=enemyIndex();
  if(index>=0){settleFormation(index);return}
@@ -792,7 +853,7 @@ async function mechanic(s,m,tok){
  }
  if(type==='cone'){
    const tank=party().find(c=>role(c)==='tank');if(tank)move('p-'+tank.id,51,50,420);move('e-0',59,50,420);await delay(180);const v=coneTelegraph('e-0',tank?'p-'+tank.id:'p-'+party()[0]?.id,'FRONTAL CLEAVE · ONLY TANK IN FRONT');act('tank','Turning the frontal away');log('Tank rotates the enemy away from the party.');
-   await cast(name,ms,tok);const result=resolveFloorMechanic(v,{damage:12,condition:4,label:name,allowTankSoak:true});if(result.avoidableHits.length)act('healer','Recovering frontal damage');else act('tank','Frontal contained');regroup();run.mechanicActive=false;return
+   await cast(name,ms,tok);const result=resolveFloorMechanic(v,{damage:12,condition:4,label:name,allowTankSoak:true,damageType:'physical'});if(result.avoidableHits.length)act('healer','Recovering frontal damage');else act('tank','Frontal contained');regroup();run.mechanicActive=false;return
  }
  if(type==='circle'||type==='circles'){
    const p=party(),targets=type==='circles'?p.filter(c=>combatProfile(c)!=='tank').slice(0,3):[],v=type==='circles'?multiCircleTelegraph(targets.map(c=>'p-'+c.id),108,'VENTS TARGET PLAYERS · SPREAD'):circleTelegraph('e-0',170,'BOSS AOE · GET OUT'),a=[[25,20],[20,78],[38,22],[36,51],[38,80]];p.forEach((c,i)=>move('p-'+c.id,a[i][0],a[i][1],450));act('healer','Moving while maintaining heals');act('dps','Spreading from danger');
@@ -800,7 +861,7 @@ async function mechanic(s,m,tok){
  }
  if(type==='line'){
    const candidates=party().filter(c=>combatProfile(c)!=='tank'&&hp(c.id)>0),target=candidates[Math.floor(Math.random()*Math.max(1,candidates.length))]||party()[0],v=lineTelegraph('e-0','p-'+target.id,'CHARGE LINE · SIDESTEP');party().filter(c=>c.id!==target.id&&combatProfile(c)!=='tank').forEach((c,i)=>move('p-'+c.id,27,24+i*27,420));if(target)move('p-'+target.id,25,82,420);act('dps','Sidestepping line attack');
-   await cast(name,ms,tok);const result=resolveFloorMechanic(v,{damage:20,condition:7,label:name});if(result.victims.length)act('healer','Recovering line damage');regroup();run.mechanicActive=false;return
+   await cast(name,ms,tok);const result=resolveFloorMechanic(v,{damage:20,condition:7,label:name,damageType:'physical'});if(result.victims.length)act('healer','Recovering line damage');regroup();run.mechanicActive=false;return
  }
  if(type==='adds'){
    const v=addTelegraph([{x:72,y:35},{x:72,y:65}],'ADDS SPAWNING · TANK PREPARES');for(let i=0;i<2;i++){addUnit('add-'+i,'Add','enemy small',84,35+i*30,'small');setTimeout(()=>move('add-'+i,56,35+i*30,450),20)}const tank=party().find(c=>combatProfile(c)==='tank');if(tank)act('tank',tank.name+' · Taunting spawned adds');act('dps',tactics.adds==='boss'?'Maintaining boss pressure':'Swapping to adds');log('Adds spawn. The tank gathers them.');
@@ -825,7 +886,7 @@ async function travelDeeper(nextStage,tok){
 
 function bonus(s){let b=run.override||0;if(tactics.aggression==='aggressive')b+=4;if(tactics.aggression==='safe'&&s.kind==='trash')b+=4;if(tactics.defensives==='early')b+=3;if(tactics.defensives==='save'&&s.kind==='final')b+=5;if(tactics.adds==='full'&&s.mechanics.some(m=>m[1]==='adds'))b+=4;return b}
 function chance(s){const avg=party().reduce((n,c)=>n+cond(c.id),0)/5;return clamp(Math.round(s.base+(ilvl()-18)*2+knowledge(s.knowledge)*.12+(avg-75)*.1+bonus(s)),35,97)}
-function learn(s,ok){const a=ok?(s.kind==='trash'||s.kind==='event'?3:7):5;party().forEach(c=>{c.knowledge=c.knowledge||{};c.knowledge[s.knowledge]=clamp((Number(c.knowledge[s.knowledge])||0)+a,0,100)});return a}
+function learn(s,ok){const a=ok?(s.kind==='trash'||s.kind==='event'?3:7):5;party().forEach(c=>{c.knowledge=c.knowledge||{};const gain=Math.max(1,Math.round(a*(I?.knowledgeMultiplier?.(c)||1)));c.knowledge[s.knowledge]=clamp((Number(c.knowledge[s.knowledge])||0)+gain,0,100)});return a}
 function recordMaterialDrop(drop,bossName){
  if(!run?.loot||!drop)return;
  const meta=P?.MATERIALS?.[drop.key],current=run.loot.materials[drop.key]||{key:drop.key,name:meta?.name||drop.key,quantity:0,source:bossName,icon:meta?.icon||'◇',rarity:meta?.rarity||'Common'};
