@@ -62,8 +62,48 @@ function setStatus(text){const e=$('#hs2dStatus');if(e)e.textContent=text}
 function feed(text){if(!run)return;run.log.push(text);const e=$('#hs2dFeed');if(e)e.innerHTML=run.log.slice(-7).reverse().map(x=>'<p>'+esc(x)+'</p>').join('')}
 function addUnit(id,label,cls,x,y,big=false){const e=document.createElement('div');e.className='hs2d-unit '+cls+(big?' big':'');e.dataset.hs=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+'</span><em><i></i></em>';$('#hs2dUnits').appendChild(e)}
 function move(id,x,y,ms=550){const e=$('[data-hs="'+id+'"]');if(!e)return;e.style.transitionDuration=ms+'ms';e.style.left=x+'%';e.style.top=y+'%'}
-function projectile(id,target='enemy'){const a=$('[data-hs="'+id+'"]'),arena=$('#hs2dArena'),fx=$('#hs2dFx');if(!a||!arena||!fx)return;const ar=arena.getBoundingClientRect(),r=a.getBoundingClientRect(),t=target==='enemy'?$('#hs2dUnits .enemy:not(.dead)'):null;if(!t)return;const tr=t.getBoundingClientRect(),p=document.createElement('i');p.className='hs2d-shot';p.style.left=(r.left+r.width/2-ar.left)+'px';p.style.top=(r.top+r.height/2-ar.top)+'px';p.style.setProperty('--dx',(tr.left+tr.width/2-r.left-r.width/2)+'px');p.style.setProperty('--dy',(tr.top+tr.height/2-r.top-r.height/2)+'px');fx.appendChild(p);setTimeout(()=>p.remove(),520)}
-function telegraph(type,label){const layer=$('#hs2dTelegraphs');if(!layer)return;const e=document.createElement('div');e.className='hs2d-tele '+type;e.innerHTML='<span>'+esc(label)+'</span>';layer.appendChild(e);setTimeout(()=>e.classList.add('impact'),900);setTimeout(()=>e.remove(),1450)}
+function hsPoint(id){const arena=$('#hs2dArena'),e=$('[data-hs="'+id+'"]');if(!arena||!e)return null;const ar=arena.getBoundingClientRect(),r=e.getBoundingClientRect();return{x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,w:ar.width,h:ar.height}}
+function projectile(fromId,toId,kind='magic',ms=420){
+ const a=hsPoint(fromId),b=hsPoint(toId),fx=$('#hs2dFx');if(!a||!b||!fx)return;
+ const dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI,p=document.createElement('i');
+ p.className='hs2d-shot '+kind;p.style.left=a.x+'px';p.style.top=a.y+'px';p.style.setProperty('--dx',dx+'px');p.style.setProperty('--dy',dy+'px');p.style.setProperty('--angle',angle+'deg');fx.appendChild(p);setTimeout(()=>p.remove(),ms+120)
+}
+function hsFloat(id,text,kind='damage'){const p=hsPoint(id),arena=$('#hs2dArena');if(!p||!arena)return;const e=document.createElement('b');e.className='hs2d-float '+kind;e.textContent=text;e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),800)}
+function hsBar(id,pct){const bar=$('[data-hs="'+id+'"] > em i');if(bar)bar.style.width=Math.max(0,Math.min(100,pct))+'%'}
+function livingEnemyIds(){return $$('[data-hs^="e"]').filter(e=>!e.classList.contains('dead')).map(e=>e.dataset.hs)}
+function primaryEnemy(){return livingEnemyIds()[0]||null}
+function partyIndexes(){return party().map((c,i)=>({c,i,role:role(c)}))}
+function tankEntry(){return partyIndexes().find(x=>x.role==='tank')||partyIndexes()[0]}
+function healerEntry(){return partyIndexes().find(x=>x.role==='healer')||null}
+function hsTelegraph(type,label,sourceId,targetId,size=170){
+ const layer=$('#hs2dTelegraphs'),a=sourceId?hsPoint(sourceId):null,b=targetId?hsPoint(targetId):null;if(!layer)return null;
+ const e=document.createElement('div');e.className='hs2d-tele '+type+' dynamic';e.innerHTML='<span>'+esc(label)+'</span>';
+ if(type==='circle'){
+   const p=b||a;if(!p)return null;e.style.left=p.x+'px';e.style.top=p.y+'px';e.style.width=size+'px';e.style.height=size+'px';e.style.transform='translate(-50%,-50%)';
+ }else{
+   if(!a||!b)return null;const dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI;
+   e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.width=Math.max(220,Math.hypot(a.w,a.h)*.78)+'px';e.style.height='58px';e.style.transform='translateY(-50%) rotate('+angle+'deg)';
+ }
+ layer.appendChild(e);return e
+}
+async function hsMechanic(s,index){
+ const tank=tankEntry(),healer=healerEntry(),players=partyIndexes(),bossId='e0';
+ if(index===1){
+   const targets=players.filter(x=>x.role!=='tank'),target=targets[Math.floor(Math.random()*Math.max(1,targets.length))]||players[0];
+   const tg=hsTelegraph('line',s.mechanic,bossId,'p'+target.i);
+   feed(s.enemies[0]+' lines up '+target.c.name+' with '+s.mechanic+'.');
+   const y=parseFloat($('[data-hs="p'+target.i+'"]')?.style.top)||50;move('p'+target.i,28,y>50?25:78,430);
+   await wait(850);tg?.classList.add('impact');await wait(280);tg?.remove();return;
+ }
+ if(index===2){
+   const tg=hsTelegraph('circle',s.mechanic,bossId,bossId,210);feed(s.enemies[0]+' begins '+s.mechanic+' around itself.');
+   players.forEach((x,i)=>{if(x.role==='tank')move('p'+x.i,43,50,430);else move('p'+x.i,20+(i%2)*10,20+(i%3)*28,430)});
+   await wait(900);tg?.classList.add('impact');await wait(300);tg?.remove();return;
+ }
+ const target=players.filter(x=>x.role!=='tank')[0]||players[0],tg=hsTelegraph('circle',s.mechanic,bossId,'p'+target.i,145);
+ feed('An echo locks onto '+target.c.name+'.');const y=parseFloat($('[data-hs="p'+target.i+'"]')?.style.top)||50;move('p'+target.i,24,y>50?22:78,420);
+ await wait(820);tg?.classList.add('impact');await wait(260);tg?.remove();
+}
 function stageEnvironment(s){const arena=$('#hs2dArena');arena.className='hs2d-arena stage-'+s.id;$('#hs2dRoom').innerHTML='<b>'+esc(s.title)+'</b><small>'+(s.id==='gallery'?'Cell glass whispers through the walls.':s.id==='sentinel'?'A guardian made of glass and bone blocks the descent.':'Several voices are speaking from one body.')+'</small>'}
 function spawnStage(s){
  stageEnvironment(s);$('#hs2dUnits').innerHTML='';$('#hs2dTelegraphs').innerHTML='';$('#hs2dFx').innerHTML='';
@@ -73,20 +113,53 @@ function spawnStage(s){
 }
 async function fightStage(s,tok,index){
  spawnStage(s);setStatus('Entering '+s.title+'…');feed('The party enters '+s.title+'.');await wait(1000);if(tok!==token)return false;
- setStatus('Establishing formation…');party().forEach((c,i)=>{if(role(c)==='tank')move('p'+i,48,50,550)});await wait(700);
+ const players=partyIndexes(),tank=tankEntry(),healer=healerEntry();
+ setStatus('Tank establishing threat…');
+ if(tank){move('p'+tank.i,49,50,480);feed(tank.c.name+' moves in first and takes threat.')}
+ await wait(300);
+ s.enemies.forEach((_,i)=>move('e'+i,60, s.enemies.length===1?50:36+i*(28/Math.max(1,s.enemies.length-1)),430));
+ await wait(420);
+ players.forEach((x,i)=>{
+   if(x.role==='tank')return;
+   const ranged=['Hunter','Mage','Priest'].includes(x.c.class)||x.role==='healer';
+   if(ranged)move('p'+x.i,x.role==='healer'?17:24,28+(i%3)*22,430);
+   else move('p'+x.i,66,38+(i%2)*24,430);
+ });
+ await wait(420);
+
  for(let wave=0;wave<3;wave++){
    if(tok!==token)return false;
-   setStatus(wave===1?s.mechanic:'The party is attacking.');
-   party().forEach((c,i)=>{const el=$('[data-hs="p'+i+'"]');if(el){el.classList.add('attack');setTimeout(()=>el.classList.remove('attack'),300)}if(['Hunter','Mage','Priest'].includes(c.class)||role(c)==='healer')projectile('p'+i)});
-   if(wave===1){telegraph(index===1?'line':'circle',s.mechanic);feed(s.enemies[0]+' begins '+s.mechanic+'.');$$('#hs2dUnits .party').forEach((e,i)=>{if(i%2)move(e.dataset.hs,parseFloat(e.style.left)+(index===1?-7:5),parseFloat(e.style.top)+(i%3-1)*9,450)});}
-   await wait(1250);
-   const live=$$('#hs2dUnits .enemy:not(.dead)');if(live.length){const victim=live[0];victim.querySelector('em i').style.width=(66-wave*33)+'%';}
+   const enemyId=primaryEnemy();if(!enemyId)break;
+   if(wave===1){setStatus(s.mechanic+' incoming…');await hsMechanic(s,index);if(tok!==token)return false}
+   setStatus('Party attacking.');
+   players.forEach((x,i)=>{
+     const target=primaryEnemy();if(!target||x.role==='healer')return;
+     const kind=x.c.class==='Hunter'?'arrow':x.c.class==='Mage'?'magic':'slash';
+     const el=$('[data-hs="p'+i+'"]');if(el){el.classList.add('attack');setTimeout(()=>el.classList.remove('attack'),300)}
+     projectile('p'+i,target,kind,kind==='arrow'?320:260);
+   });
+   if(healer&&tank){
+     projectile('p'+healer.i,'p'+tank.i,'heal',330);hsFloat('p'+tank.i,'+10','heal');hsBar('p'+tank.i,100);feed(healer.c.name+' restores '+tank.c.name+'.');
+   }
+   s.enemies.forEach((_,i)=>{
+     const id='e'+i,enemy=$('[data-hs="'+id+'"]');if(!enemy||enemy.classList.contains('dead')||!tank)return;
+     projectile(id,'p'+tank.i,'enemy',300);hsFloat('p'+tank.i,'-8','incoming');hsBar('p'+tank.i,82);
+   });
+   await wait(520);
+   const live=$$('#hs2dUnits .enemy:not(.dead)');
+   if(live.length){
+     const victim=live[0],id=victim.dataset.hs,next=Math.max(0,66-wave*33);hsBar(id,next);
+     hsFloat(id,'-'+(34+wave*4),'damage');
+     if(next<=0)victim.classList.add('dead');
+   }
+   await wait(620);
  }
- const live=$$('#hs2dUnits .enemy:not(.dead)');live.forEach((e,i)=>setTimeout(()=>e.classList.add('dead'),i*120));feed(s.title+' is clear.');setStatus('Path clear.');await wait(850);return true;
+ const live=$$('#hs2dUnits .enemy:not(.dead)');live.forEach((e,i)=>setTimeout(()=>{e.classList.add('dead');hsBar(e.dataset.hs,0)},i*120));
+ feed(s.title+' is clear.');setStatus('Path clear.');await wait(850);return true;
 }
 function draw(){
  const s=STAGES[run.stage],r=root();r.hidden=false;
- r.innerHTML='<section class="hs2d-shell"><header><div><small>THE HOLLOW SANCTUM · LIVE 2D DUNGEON</small><h2 id="hs2dTitle">'+esc(s.title)+'</h2></div><div class="hs2d-live"><i></i>LIVE <button data-close>×</button></div></header><div class="hs2d-route">'+STAGES.map((x,i)=>'<span class="'+(i<run.stage?'done':i===run.stage?'current':'')+'"><i>'+(i+1)+'</i>'+esc(x.title)+'</span>').join('')+'</div><div class="hs2d-layout"><main><div class="hs2d-arena" id="hs2dArena"><div class="hs2d-floor"></div><div class="hs2d-crystals"><i></i><i></i><i></i><i></i><i></i></div><div id="hs2dTelegraphs"></div><div id="hs2dUnits"></div><div id="hs2dFx"></div><div class="hs2d-room" id="hs2dRoom"></div><div class="hs2d-caption"><span>EXPEDITION</span><b id="hs2dStatus">Descending…</b></div></div><div class="hs2d-feed" id="hs2dFeed"></div></main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="hs2d-member"><i class="'+role(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span></div>').join('')+'<div class="hs2d-loot-intel"><small>KNOWN REWARDS</small><b>Tier 3 randomized equipment</b><span>Void Crystal · '+(!firstCleared()?'Blackglass Resonator first clear':'unique Relic already recovered')+'</span></div></aside></div><div id="hs2dEnd" class="hs2d-end" hidden></div></section>';
+ r.innerHTML='<section class="hs2d-shell"><header><div><small>THE HOLLOW SANCTUM · LIVE 2D DUNGEON</small><h2 id="hs2dTitle">'+esc(s.title)+'</h2></div><div class="hs2d-live"><i></i>LIVE <button data-close>×</button></div></header><div class="hs2d-route">'+STAGES.map((x,i)=>'<span class="'+(i<run.stage?'done':i===run.stage?'current':'')+'"><i>'+(i+1)+'</i>'+esc(x.title)+'</span>').join('')+'</div><div class="hs2d-layout"><main><div class="hs2d-arena" id="hs2dArena"><div class="hs2d-floor"></div><div class="hs2d-crystals"><i></i><i></i><i></i><i></i><i></i></div><div id="hs2dTelegraphs"></div><div id="hs2dUnits"></div><div id="hs2dFx"></div><div class="hs2d-room" id="hs2dRoom"></div><div class="hs2d-caption"><span>EXPEDITION</span><b id="hs2dStatus">Descending…</b></div></div><div class="hs2d-feed" id="hs2dFeed"></div></main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="hs2d-member"><i class="'+role(c)+' '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span></div>').join('')+'<div class="hs2d-loot-intel"><small>KNOWN REWARDS</small><b>Tier 3 randomized equipment</b><span>Void Crystal · '+(!firstCleared()?'Blackglass Resonator first clear':'unique Relic already recovered')+'</span></div></aside></div><div id="hs2dEnd" class="hs2d-end" hidden></div></section>';
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.done&&!confirm('Leave The Hollow Sanctum?'))return;close()}
 }
 async function start(){
