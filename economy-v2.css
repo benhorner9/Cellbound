@@ -169,3 +169,17 @@
 
 /* Rolled gear on Trading Post */
 .trade-roll-stats{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.trade-roll-stats span{padding:2px 5px;border:1px solid rgba(95,201,167,.13);background:#0b1a18;color:#91cdb8;font-size:.36rem;font-weight:800}@media(max-width:760px){.trade-roll-stats span{font-size:.46rem}}
+
+/* Profession preparation economy */
+.crafted-card{display:grid;gap:7px;align-content:start;min-height:132px}
+.crafted-card>small{min-height:34px;line-height:1.45}
+.crafted-card select{width:100%;height:34px;border:1px solid rgba(104,190,180,.12);background:#071115;color:#d7e3df;padding:0 8px;font-size:.45rem}
+.crafted-card button{min-height:36px;border:1px solid rgba(86,202,191,.26);background:#123033;color:#b9eee9;font-size:.45rem;font-weight:900;letter-spacing:.06em}
+.crafted-card em{display:block;margin-top:auto;padding:7px;border-left:2px solid rgba(216,185,118,.24);background:#0b1517;color:#7f8d87;font-size:.4rem;font-style:normal;line-height:1.4}
+.crafted-active-grid{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:4px;padding:9px;border:1px solid rgba(216,185,118,.08);background:#091315}
+.crafted-active-grid>small{grid-column:1/-1;color:#98845c;font-size:.36rem;font-weight:900;letter-spacing:.09em}
+.crafted-active{padding:8px;border:1px solid rgba(95,201,167,.08);background:#0a1716}
+.crafted-active b{display:block;color:#d1dad5;font-size:.5rem}
+.crafted-active small{display:block;margin-top:3px;color:#7eaaa0;font-size:.38rem;line-height:1.45}
+.recipe-card p:first-of-type{color:#859690}
+@media(max-width:700px){.crafted-active-grid{grid-template-columns:1fr}.crafted-card{min-height:auto}}
