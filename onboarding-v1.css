@@ -245,3 +245,10 @@ linear-gradient(180deg,#142019,#09110e)}
 
 @media(max-width:900px){.gear-school,.loot-school,.growth-school,.quest-school{grid-template-columns:1fr}.gear-school>aside,.loot-school>aside,.growth-school>aside,.quest-school>aside{border-left:0;border-top:1px solid rgba(216,185,118,.08)}.growth-cards{grid-template-columns:1fr}.progression-teach{grid-template-columns:1fr}.progression-teach>i{transform:rotate(90deg);text-align:center}}
 @media(max-width:620px){.gear-school>main,.loot-school>main,.growth-school>main,.quest-school>main{padding:18px 14px}.gear-lesson-compare{grid-template-columns:1fr}.gear-lesson-compare button{grid-template-columns:78px 1fr}.td-lesson{padding:10px}.td-lesson section{width:100%;padding:14px}.td-lesson p{font-size:.58rem}.td-lesson button{font-size:.52rem}.tutorial-loot-card{grid-template-columns:86px 1fr}.tutorial-loot-card p,.growth-cards p,.first-quest-preview p{font-size:.5rem}.first-quest-preview{grid-template-columns:58px 1fr}.quest-preview-rune{width:54px;height:54px}.tutorial-question button{font-size:.52rem}}
+
+/* Class-coloured tutorial battle units */
+.td-unit.party[class*="class-"]{color:var(--combat-class,#7F8B88)!important}
+.td-unit.party[class*="class-"]>i{background:var(--combat-class,#7F8B88)!important;box-shadow:0 0 18px var(--combat-class,#7F8B88)!important}
+.td-unit.enemy{color:#D4473E!important}.td-unit.enemy>i{background:#D4473E!important}
+.td-unit.enemy.boss>i{border:2px solid #D7B45B!important;box-shadow:0 0 0 4px rgba(215,180,91,.18),0 0 30px rgba(212,71,62,.4)!important}
+.td-unit.enemy.boss>span{color:#E6C86C!important}
