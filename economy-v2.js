@@ -134,10 +134,11 @@ function sellPreviewMeta(item){
   const p=item?.payload||{};
   if(!item)return{eyebrow:'',detail:'',sub:''};
   if(item.type==='gear'){
-    const gear=G.byId(item.key)||G.byName(item.name)||p||{};
+    const base=G.byId(item.key)||G.byName(item.name)||{},gear={...base,...p};
     const rarity=gear.rarity||'Common',slot=gear.slot||'Gear',ilvl=Number(gear.itemLevel)||0,power=Number(gear.power)||0;
     const classes=gear.classes==='all'||!gear.classes?'All classes':Array.isArray(gear.classes)?gear.classes.join(', '):String(gear.classes);
-    return{eyebrow:`${rarity} · ${slot}`,detail:`Item Level ${ilvl}${power?` · +${power} Power`:''}`,sub:`${classes}${gear.source?` · ${gear.source}`:''}`};
+    const roll=(G.statLines?.(gear)||[]).map(s=>s.text).join(' · ');
+    return{eyebrow:`${rarity} · ${slot}`,detail:`Item Level ${ilvl}${power?` · +${power} Power`:''}${roll?` · ${roll}`:''}`,sub:`${classes}${gear.source?` · ${gear.source}`:''}`};
   }
   if(item.type==='material'){
     const mat=P?.MATERIALS?.[item.key]||p;
@@ -194,7 +195,7 @@ async function loadMarket(){
 function renderMarket(){
   const root=$('#tradeListings');if(!root)return;const rows=market.filter(l=>l.status==='active'&&(tradeFilter==='all'||l.category===tradeFilter));
   if(!rows.length){root.innerHTML='<div class="market-empty">No active listings in this category.</div>';return;}
-  root.innerHTML=rows.map(l=>`<article class="trade-card"><div class="trade-art">${tradeArt(l)}</div><div><h4>${l.item_name}</h4><small>${l.category.toUpperCase()} · ×${l.quantity} · ${l.seller_label}</small></div><div class="trade-price"><b>${Number(l.unit_price).toLocaleString()}g</b><small>each</small></div><button data-buy="${l.id}" ${l.seller_id===user.id?'disabled':''}>${l.seller_id===user.id?'YOUR LISTING':'BUY 1'}</button></article>`).join('');
+  root.innerHTML=rows.map(l=>{const base=l.category==='gear'?(G.byId(l.item_key)||G.byName(l.item_name)||{}):{},gear=l.category==='gear'?{...base,...(l.payload||{})}:null,roll=gear?(G.statLines?.(gear)||[]):[];return `<article class="trade-card"><div class="trade-art">${tradeArt(l)}</div><div><h4>${l.item_name}</h4><small>${l.category.toUpperCase()} · ×${l.quantity} · ${l.seller_label}</small>${roll.length?`<div class="trade-roll-stats">${roll.map(s=>`<span>${s.text}</span>`).join('')}</div>`:''}</div><div class="trade-price"><b>${Number(l.unit_price).toLocaleString()}g</b><small>each</small></div><button data-buy="${l.id}" ${l.seller_id===user.id?'disabled':''}>${l.seller_id===user.id?'YOUR LISTING':'BUY 1'}</button></article>`}).join('');
   root.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buyListing(b.dataset.buy));
 }
 function renderMyListings(){
