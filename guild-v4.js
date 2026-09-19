@@ -244,6 +244,7 @@ function switchView(id){
   if(id==='content'){renderBosses();window.CellboundHollowSanctum?.renderCard?.()}
   if(id==='roster')renderRoster();
   if(id==='quests')window.CellboundQuests?.render?.();
+  window.dispatchEvent(new CustomEvent('cellbound:view-changed',{detail:{view:id,workspace:hub}}));
 }
 $$('.nav-btn[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
 $$('[data-jump]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.jump)));
