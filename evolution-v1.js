@@ -317,9 +317,9 @@ function renderDungeonJournal(){
   intel.innerHTML=intelKeys.map(([key,name])=>{const h=currentHint(key);return `<article class="intel-card"><div class="intel-card-head"><b>${name}</b><span>${h.knowledge}% known</span></div><p class="${h.knowledge<20?'intel-lock':''}">${esc(h.text)}</p></article>`}).join('')+
     `<article class="intel-card"><div class="intel-card-head"><b>Expedition Record</b><span>${state().dungeonCompletions||0} clears</span></div><p>${last?`Last expedition: ${last.result==='complete'?'Cleared':'Wiped at '+String(last.stage||'unknown').replaceAll('-',' ')} · Party iLvl ${Math.round(last.partyIlvl||0)}.`:'No expedition has been recorded yet.'}</p></article>`+
     `<article class="intel-card"><div class="intel-card-head"><b>Known Rewards</b><span>T1 / T2</span></div><p>Class equipment, Ashen Soul Fragments, Warden Iron, Ember Cores and Vaultheart Crystals. Rare profession discoveries can also emerge from the deepest chamber.</p></article>`;
-  const pi=partyIlvl(),ready=partyAvailable()&&pi>=DUNGEON.requiredIlvl;
+  const pi=partyIlvl(),questOpen=state()?.progression?.ashenVaultUnlocked!==false,ready=questOpen&&partyAvailable()&&pi>=DUNGEON.requiredIlvl;
   if($('#journalPartyIlvl'))$('#journalPartyIlvl').textContent=`Party iLvl ${pi||'—'}`;
-  if($('#journalEntryHint'))$('#journalEntryHint').textContent=!completeParty()?'Build a complete 5-character party first.':!partyAvailable()?'A party member is unavailable due to Cell Shock.':pi<DUNGEON.requiredIlvl?`Party iLvl ${pi}. You need ${DUNGEON.requiredIlvl}.`:`Ready. Recommended iLvl ${DUNGEON.recommendedIlvl}.`;
+  if($('#journalEntryHint'))$('#journalEntryHint').textContent=!questOpen?'Complete Ashes on the East Road to discover the old forge entrance.':!completeParty()?'Build a complete 5-character party first.':!partyAvailable()?'A party member is unavailable due to Cell Shock.':pi<DUNGEON.requiredIlvl?`Party iLvl ${pi}. You need ${DUNGEON.requiredIlvl}.`:`Ready. Quest access secured · recommended iLvl ${DUNGEON.recommendedIlvl}.`;
   if($('#enterDungeonBtn'))$('#enterDungeonBtn').disabled=!ready;
 }
 function expeditionCondition(id){return expedition?.condition?.[id]??100}
