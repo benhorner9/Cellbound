@@ -122,7 +122,7 @@ const SPECS={
 };
 
 const role=c=>ROLE_MAP[c?.class]?.[c?.spec]||'dps';
-const gearStats=c=>window.CellboundGear?.aggregateStats?.(c)||{};
+const gearStats=c=>{const base={...(window.CellboundGear?.aggregateStats?.(c)||{})},extra=window.CellboundProfessions?.activeBonuses?.(c)||{};Object.entries(extra).forEach(([k,v])=>base[k]=(Number(base[k])||0)+(Number(v)||0));return base};
 const primaryKey=c=>c?.class==='Warrior'?'strength':['Hunter','Rogue'].includes(c?.class)?'agility':'intellect';
 const getRace=id=>RACES[id]||RACES.Veyren;
 const getSpec=(klass,spec)=>SPECS[klass]?.[spec]||{title:'Adventurer',strength:'Flexible combatant.',tradeoff:'No defined specialisation.',damage:1,threat:1};
@@ -136,6 +136,7 @@ function damageMultiplier(c,ctx={}){
   const p=specFor(c),gear=gearStats(c);let m=Number(p.damage)||1;
   m*=raceMod(c,'damage',1);
   m*=1+(Number(gear[primaryKey(c)])||0)*.0025;
+  m*=1+(Number(gear.damagePct)||0)/100;
   if((Number(gear.crit)||0)>0&&Math.random()*100<Number(gear.crit))m*=1.5;
   if(c?.class==='Mage')m*=raceMod(c,'magicDamage',1);
   if(c?.race==='Emberkin'&&Number(ctx.healthPct)<45)m*=raceMod(c,'lowHealthDamage',1);
@@ -171,6 +172,7 @@ function incomingMultiplier(c,type='physical'){
   m*=raceMod(c,type==='magic'?'magicTaken':'physicalTaken',1);
   m*=Math.max(.88,1-(Number(gear.stamina)||0)*.002);
   if(type==='physical')m*=Math.max(.84,1-(Number(gear.armour)||0)*.001);
+  if(type==='magic')m*=Math.max(.75,1-(Number(gear.magicWardPct)||0)/100);
   if(type==='physical'&&role(c)==='tank'&&(Number(gear.block)||0)>0&&Math.random()*100<Number(gear.block))m*=.72;
   if(c?.class==='Warrior'&&c?.spec==='Protection'&&type==='physical')m*=Math.max(.82,1-rank(c,'Shield Mastery')*.025);
   if(c?.class==='Paladin'&&c?.spec==='Protection'&&type==='physical')m*=Math.max(.85,1-rank(c,'Sacred Shield')*.02);
