@@ -35,3 +35,16 @@
 .hs2d-unit.enemy>em i{background:#D4473E!important}
 .hs2d-unit.enemy.boss>i{border-color:#D7B45B!important;box-shadow:0 0 0 4px rgba(215,180,91,.18),0 0 26px rgba(212,71,62,.38)!important}
 .hs2d-unit.enemy.boss>span{color:#E6C86C!important}
+
+/* Truthful combat vectors */
+.hs2d-shot{transform-origin:center;--angle:0deg}
+.hs2d-shot.arrow{width:14px;height:2px;border-radius:1px;background:#D9CA8A;box-shadow:0 0 6px rgba(217,202,138,.45)}
+.hs2d-shot.slash{width:18px;height:3px;border-radius:2px;background:#F0E7CF;box-shadow:0 0 9px rgba(255,255,255,.38)}
+.hs2d-shot.magic{background:#8BB8FF;box-shadow:0 0 12px 3px rgba(108,157,255,.45)}
+.hs2d-shot.enemy{background:#DB6A45;box-shadow:0 0 11px 2px rgba(219,106,69,.42)}
+.hs2d-shot.heal{background:#69D99B;box-shadow:0 0 13px 4px rgba(105,217,155,.42)}
+@keyframes hsShot{from{transform:rotate(var(--angle));opacity:1}to{transform:translate(var(--dx),var(--dy)) rotate(var(--angle));opacity:.1}}
+.hs2d-tele.line.dynamic{transform-origin:left center}
+.hs2d-float{position:absolute;z-index:18;transform:translate(-50%,-50%);font-size:.56rem;font-weight:900;text-shadow:0 2px 4px #000;animation:hsFloatTruth .8s ease-out both}
+.hs2d-float.damage{color:#F0D37E}.hs2d-float.incoming{color:#EF765F}.hs2d-float.heal{color:#79DFA2}
+@keyframes hsFloatTruth{0%{opacity:0;transform:translate(-50%,-20%)}18%{opacity:1}100%{opacity:0;transform:translate(-50%,-130%)}}
