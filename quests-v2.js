@@ -4,8 +4,9 @@
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const G=window.CellboundGear;
 
-let Game=null,selectedTab='active',encounterToken=0;
+let Game=null,selectedTab='active',selectedAdventure='ashfall',encounterToken=0;
 
 const QUEST={
   id:'echoes-beneath-zeltira',
@@ -17,6 +18,23 @@ const QUEST={
   rewards:['250 Gold','150 Guild Renown'],
   requirements:['Zeltira tutorial completed','An active five-character party will be needed','Access to The Ashen Vault']
 };
+
+const ASHFALL={
+  id:'ashes-on-the-east-road',
+  title:'Ashes on the East Road',
+  difficulty:'Novice',
+  length:'Medium',
+  start:'Warden Elara Vey · Zeltira East Gate',
+  summary:'Supply carts have vanished on the road beneath the old forge. The tracks lead toward a sealed entrance that should have remained dead.',
+  requirements:['Zeltira tutorial completed','A complete active five-character party'],
+  rewards:['Tier 1 quest gear','The Ashen Vault unlocked','120 Gold','75 Guild Renown']
+};
+const ASHFALL_STAGES=[
+  {id:'warning',label:'A Road Gone Quiet',objective:'Speak with Warden Elara about the missing supply carts.',hint:'Three carts entered the east road. None returned.'},
+  {id:'tracks',label:'Tracks in the Cinders',objective:'Inspect the abandoned cart and identify where the attackers came from.',hint:'Not every mark in the ash belongs to the attackers.'},
+  {id:'ambush',label:'The Cinder Cart',objective:'Follow the true tracks and survive the Ashbound ambush.',hint:'The trail climbs toward the old forge entrance.'},
+  {id:'key',label:'A Door in the Mountain',objective:'Return the recovered forge key to Elara.',hint:'The key bears the same mark carved above The Ashen Vault.'}
+];
 
 const STAGES=[
   {id:'letter',label:'An Unwelcome Delivery',npc:'Bram Kel',objective:'Read the glass-sealed letter and take the fragment to Tessa Orr.',hint:'Bram’s road crew found something warm inside solid stone.'},
@@ -89,8 +107,22 @@ function ensure(){
   const q=s.questSystem;
   q.flags=q.flags||{};
   migrate(q,s);
+  q.rewardClaims=q.rewardClaims&&typeof q.rewardClaims==='object'?q.rewardClaims:{};
+  q.ashfall=q.ashfall&&typeof q.ashfall==='object'?q.ashfall:{started:false,stage:'warning',done:[],complete:false,history:[]};
+  q.ashfall.done=Array.isArray(q.ashfall.done)?q.ashfall.done:[];
+  q.ashfall.history=Array.isArray(q.ashfall.history)?q.ashfall.history:[];
+  s.progression=s.progression&&typeof s.progression==='object'?s.progression:{};
+  if(typeof s.progression.ashenVaultUnlocked!=='boolean')s.progression.ashenVaultUnlocked=Boolean(Number(s.dungeonCompletions)>0||Object.values(s.bossKills||{}).some(Boolean)||q.ashfall.complete);
+  if(q.ashfall.complete)s.progression.ashenVaultUnlocked=true;
   return q;
 }
+
+const averagePartyLevel=()=>{const p=party();return p.length?Math.round(p.reduce((n,c)=>n+(Number(c.level)||1),0)/p.length):1};
+const ashenUnlocked=()=>Boolean(state()?.progression?.ashenVaultUnlocked);
+const echoesUnlocked=()=>Boolean(ensure()?.started||complete()||(ashenUnlocked()&&((Number(state()?.dungeonCompletions)||0)>0||averagePartyLevel()>=3)));
+const ashfallStage=()=>ensure()?.ashfall?.complete?'complete':ensure()?.ashfall?.stage||'warning';
+const ashfallDef=id=>ASHFALL_STAGES.find(x=>x.id===id)||ASHFALL_STAGES[0];
+function ashfallHistory(text){const a=ensure().ashfall;a.history.push({at:new Date().toISOString(),text});a.history=a.history.slice(-30)}
 
 function grantItemRaw(q,id){
   if(!ITEMS[id])return;
