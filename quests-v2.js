@@ -534,7 +534,8 @@ async function qAttack(index,rounds=1){
     for(const c of p){
       if(qRole(c)==='healer')continue;
       if(questFight.enemyHp[index]<=0)break;
-      const kind=c.class==='Mage'?'magic':c.class==='Hunter'?'arrow':'slash',base=qRole(c)==='tank'?18:25,boost=(questFight.burn?8:0)+(questFight.focus?4:0),dmg=base+boost+Math.floor(Math.random()*8);
+      const kind=c.class==='Mage'?'magic':c.class==='Hunter'?'arrow':'slash',base=qRole(c)==='tank'?18:25,boost=(questFight.burn?8:0)+(questFight.focus?4:0),prep=window.CellboundProfessions?.activeBonuses?.(c)||{};
+      let dmg=base+boost+Math.floor(Math.random()*8);dmg=Math.round(dmg*(1+(Number(prep.damagePct)||0)/100));if((Number(prep.crit)||0)>0&&Math.random()*100<Number(prep.crit))dmg=Math.round(dmg*1.5);
       qProjectile('p-'+c.id,target,kind);questFight.damage[c.id]+=dmg;qSetEnemyHp(index,questFight.enemyHp[index]-dmg);qFloat(target,'-'+dmg,'damage');
       qAct(qRole(c)==='tank'?'tank':'dps',c.name+' attacks '+questFight.enemies[index]);qRenderMeters(index);await wait(90)
     }
