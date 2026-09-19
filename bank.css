@@ -45,3 +45,6 @@
   .bank-bulk-actions #bankBulkClear{grid-column:1/-1;min-height:34px}
   .bank-bulk-actions button{min-height:44px}
 }
+
+/* Rolled gear stats */
+.bank-roll-stats,.bank-detail-rolls{display:flex;flex-wrap:wrap;gap:4px;margin:7px 0}.bank-roll-stats span,.bank-detail-rolls span{padding:3px 5px;border:1px solid rgba(95,201,167,.13);background:#0b1a18;color:#91cdb8;font-size:.4rem;font-weight:800}.bank-roll-stats span.legacy,.bank-detail-rolls span.legacy{border-color:rgba(255,255,255,.06);background:#101719;color:#62726d}.bank-set-tag{display:inline-block;margin:2px 0 6px;padding:4px 7px;border:1px solid rgba(176,108,255,.25);background:#191225;color:#c9a5f4;font-size:.4rem;font-weight:900}.bank-character-list em.roll-fit{padding:3px 5px;border-radius:2px}.bank-character-list em.roll-fit.ideal{color:#8cd3a6;background:#102219}.bank-character-list em.roll-fit.mixed{color:#d7be75;background:#211d12}.bank-character-list em.roll-fit.off{color:#c68179;background:#221413}@media(max-width:760px){.bank-roll-stats span,.bank-detail-rolls span{font-size:.48rem}}
