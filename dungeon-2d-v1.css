@@ -425,3 +425,10 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 @media(max-width:620px){.cb2d-combat-meters{grid-template-columns:1fr}.cb2d-meter-panel{padding:8px}}
 
 .cb2d-loot-roll{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0}.cb2d-loot-roll span{padding:3px 5px;border:1px solid rgba(94,195,159,.14);background:#0b1816;color:#92cdb7;font-size:.38rem;font-weight:900}@media(max-width:720px){.cb2d-loot-roll span{font-size:.48rem}}
+
+/* Active profession preparation */
+.cb2d-prep-summary{margin-top:12px;padding:10px;border:1px solid rgba(216,185,118,.09);background:#0a1315}
+.cb2d-prep-summary>small{display:block;color:#9a8864;font-size:.38rem;font-weight:900;letter-spacing:.09em}
+.cb2d-prep-summary p{display:grid;grid-template-columns:90px 1fr;gap:8px;margin:7px 0 0;padding-top:7px;border-top:1px solid rgba(255,255,255,.035)}
+.cb2d-prep-summary b{color:#d2d9d5;font-size:.43rem}
+.cb2d-prep-summary span{color:#79a99c;font-size:.38rem;line-height:1.4}
