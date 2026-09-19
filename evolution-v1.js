@@ -252,7 +252,6 @@ function bindBank(){
   const pairs=[['bankSearch','input',v=>bankSearch=v],['bankCategory','change',v=>bankCategory=v],['bankClass','change',v=>bankClass=v],['bankRarity','change',v=>bankRarity=v],['bankTrade','change',v=>bankTrade=v],['bankSort','change',v=>bankSort=v]];
   pairs.forEach(([id,ev,set])=>$('#'+id)?.addEventListener(ev,e=>{set(e.target.value);scheduleBankEnhance()}));
   const root=$('#bankGrid');if(root){bankObserver=new MutationObserver(scheduleBankEnhance);bankObserver.observe(root,{childList:true})}
-  document.querySelector('.nav-btn[data-view="bank"]')?.addEventListener('click',scheduleBankEnhance);
 }
 
 /* ---------- Professions ---------- */
@@ -556,10 +555,14 @@ function queueEnhance(){
   requestAnimationFrame(()=>{enhanceRoster();enhanceBank();enhanceProfessions();renderDungeonJournal();renderDungeonHistory();enhanceWorldCards()});
 }
 function bindGlobal(){
-  document.querySelector('.nav-btn[data-view="content"]')?.addEventListener('click',()=>setTimeout(renderDungeonJournal,0));
-  document.querySelector('.nav-btn[data-view="roster"]')?.addEventListener('click',()=>setTimeout(enhanceRoster,0));
-  document.querySelector('.nav-btn[data-view="bank"]')?.addEventListener('click',()=>setTimeout(enhanceBank,0));
-  document.querySelector('.nav-btn[data-view="professions"]')?.addEventListener('click',()=>setTimeout(enhanceProfessions,0));
+  window.addEventListener('cellbound:view-changed',e=>{
+    const view=e.detail?.view;
+    if(view==='content')setTimeout(renderDungeonJournal,0);
+    if(view==='roster')setTimeout(enhanceRoster,0);
+    if(view==='bank')setTimeout(enhanceBank,0);
+    if(view==='professions')setTimeout(enhanceProfessions,0);
+    if(view==='world')setTimeout(enhanceWorldCards,0);
+  });
   window.addEventListener('resize',()=>{if(innerWidth<720&&dockMinimized===false){}});
 }
 
