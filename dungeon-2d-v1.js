@@ -131,8 +131,9 @@ function root(){let r=$('#cb2dBackdrop');if(!r){r=document.createElement('div');
 function close(){token++;run=null;document.body.classList.remove('cb2d-open');const r=root();r.hidden=true;r.innerHTML=''}
 function knowledge(key){const p=party();return p.length?Math.round(p.reduce((n,c)=>n+(Number(c.knowledge&&c.knowledge[key])||0),0)/p.length):0}
 function readiness(){
- const p=party();
+ const p=party(),s=state();
  if(!Game||!Game.ready)return{ok:false,reason:'Guild data is still loading.'};
+ if(s?.onboarding?.complete===true&&s?.progression?.ashenVaultUnlocked===false)return{ok:false,reason:'Complete Ashes on the East Road in the Quest Journal to unlock The Ashen Vault.'};
  if(p.length!==5)return{ok:false,reason:'Build a complete five-character party in Party Builder first.'};
  const locked=p.find(c=>Game.isUnavailable(c));
  if(locked)return{ok:false,reason:locked.name+' is still recovering from Cell Shock.'};
