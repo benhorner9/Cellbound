@@ -223,16 +223,24 @@ function renderArrival(){
 }
 function renderGear(){
   const tank=state().roster.find(c=>Game.classes?.[c.class]?.specs?.[c.spec]?.role==='tank')||state().roster[0];
-  const weapon=G.starterSet(tank.class).find(x=>x.slot==='Weapon');
-  const body='<div class="zeltira-layout"><main>'+zeltiraMap('quartermaster')+'</main><aside class="z-guide"><small>ZELTIRA · QUARTERMASTER</small><h2>Equipment changes what your party can survive.</h2><p>Items have a class, slot and Item Level. Equip the weapon below to <b>'+esc(tank.name)+'</b>. Once you do, the Quartermaster will issue basic training sets to the rest of your five.</p><div class="tutorial-item">'+G.artHTML(weapon,92)+'<div><small>'+esc(weapon.tierLabel||'TIER 1')+' · '+esc(weapon.slot)+'</small><h3>'+esc(weapon.name)+'</h3><p>'+esc(tank.class)+' training weapon · Item Level '+(weapon.itemLevel||22)+'</p></div></div><div class="equip-arrow">GUILD STORES <span>→</span> '+esc(tank.name)+'</div><button id="equipFirstItem" class="on-primary">EQUIP '+esc(weapon.name).toUpperCase()+' →</button></aside></div>';
+  const good=G.createQuestGear?.(tank,'Weapon',1,'specialist','Zeltira Training')||G.starterSet(tank.class).find(x=>x.slot==='Weapon');
+  const off=G.createQuestGear?.(tank,'Weapon',1,'swift','Zeltira Training')||good;
+  const stats=item=>(G.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'No bonus stat';
+  const body='<div class="gear-school"><main><small>ZELTIRA · QUARTERMASTER</small><h2>Item Level tells you how advanced an item is. The roll tells you who actually wants it.</h2><p>These two weapons are the <b>same Item Level</b>. One better suits '+esc(tank.name)+' as a '+esc(tank.spec)+' '+esc(tank.class)+'. Choose the one you would equip.</p><div class="gear-lesson-compare"><button data-training-gear="good">'+G.artHTML(good,82)+'<span><small>ITEM LEVEL '+(good.itemLevel||22)+'</small><b>'+esc(good.name)+'</b><em>'+esc(stats(good))+'</em></span></button><button data-training-gear="off">'+G.artHTML(off,82)+'<span><small>ITEM LEVEL '+(off.itemLevel||22)+'</small><b>'+esc(off.name)+'</b><em>'+esc(stats(off))+'</em></span></button></div><div class="gear-school-rule"><b>Remember</b><span>Higher Item Level usually means more power, but two items at the same level can be very different because their bonus stats roll differently.</span></div><p id="gearLessonHint">Look for a stat that matches what your Tank is trying to do.</p></main><aside class="z-guide"><small>YOUR TANK</small><div class="gear-student"><span>'+esc(tank.portrait)+'</span><div><h3>'+esc(tank.name)+'</h3><p>'+esc(tank.race)+' · '+esc(tank.class)+' · '+esc(tank.spec)+'</p></div></div><div class="role-lessons"><div><i class="on-role tank"></i><b>Tank wants</b><span>Threat, Block, Stamina and Armour are strong tank rolls.</span></div></div><p>The dungeon version of an item can roll stronger values than reliable quest gear. That is why you may keep farming the same boss later.</p></aside></div>';
   ensureRoot().innerHTML=chrome(body,'gear');
-  $('#equipFirstItem')?.addEventListener('click',issueStarterGear);
+  $('[data-training-gear]').forEach(b=>b.onclick=()=>{
+    if(b.dataset.trainingGear!=='good'){
+      const h=$('#gearLessonHint');if(h){h.textContent='That roll is usable, but it does not help this Tank control or survive the fight as directly. Try the other weapon.';h.classList.add('lesson-wrong')}return
+    }
+    issueStarterGear(good);
+  });
 }
-async function issueStarterGear(){
-  const s=state();
+async function issueStarterGear(trainingWeapon){
+  const s=state(),tank=s.roster.find(c=>Game.classes?.[c.class]?.specs?.[c.spec]?.role==='tank')||s.roster[0];
   s.roster.forEach(c=>{
     const set=Game.starterEquipment(c.class);
     c.equipment={...emptyEquipment(),...clone(set)};
+    if(c.id===tank.id&&trainingWeapon)c.equipment.Weapon={...clone(trainingWeapon),source:'Equipped in Zeltira'};
     c.tutorialNew=false;c.onboardingGearIssued=true;
     c.gearItems=['Head','Chest','Weapon'].map(slot=>c.equipment[slot]?.name||'Empty');
   });
