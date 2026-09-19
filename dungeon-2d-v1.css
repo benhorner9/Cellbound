@@ -440,3 +440,13 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 .cb2d-unit.enemy{color:#D4473E!important}.cb2d-unit.enemy>i{background:#D4473E!important}
 .cb2d-unit.enemy.big>i,.cb2d-unit.enemy.boss>i{border:2px solid #D7B45B!important;box-shadow:0 0 0 4px rgba(215,180,91,.18),0 0 28px rgba(212,71,62,.42)!important}
 .cb2d-unit.enemy.big>span,.cb2d-unit.enemy.boss>span{color:#E6C86C!important}
+
+/* Class-coloured damage and threat meters */
+.cb2d-meter-row[class*="class-"] .cb2d-meter-label>b{color:var(--combat-class,#AEBBB6)}
+.cb2d-meter-row[class*="class-"]>em>i{background:var(--combat-class,#7F8B88)!important;box-shadow:0 0 8px color-mix(in srgb,var(--combat-class,#7F8B88) 30%,transparent)}
+.cb2d-meter-panel.threat .cb2d-meter-row[class*="class-"]>em>i{background:var(--combat-class,#7F8B88)!important}
+.cb2d-meter-panel.threat .cb2d-meter-row.aggro{padding:3px 4px;background:rgba(185,151,71,.055);box-shadow:inset 2px 0 #D7B45B}
+.cb2d-meter-panel.threat .cb2d-meter-row.aggro .cb2d-meter-label strong{color:#E6C86C}
+.cb2d-meter-panel.threat .cb2d-meter-row.high{padding:3px 4px;background:rgba(201,74,57,.06);box-shadow:inset 2px 0 #C94A39}
+.cb2d-meter-panel.threat .cb2d-meter-row.high .cb2d-meter-label strong,.cb2d-meter-panel.threat .cb2d-meter-row.danger .cb2d-meter-label strong{color:#E77A6A}
+.cb2d-meter-panel.threat .cb2d-meter-row.danger>em>i{background:var(--combat-class,#7F8B88)!important}
