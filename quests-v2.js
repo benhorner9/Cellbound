@@ -465,6 +465,7 @@ function openSurveyPuzzle(){
 
 /* Quest combat uses the same 2D language as dungeon combat. */
 function qRole(c){return Game.classes?.[c.class]?.specs?.[c.spec]?.role||'dps'}
+function qClassKey(c){return 'class-'+String(c?.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}
 function qProfile(c){const r=qRole(c);if(r==='tank'||r==='healer')return r;if(['Rogue','Warrior','Paladin'].includes(c.class))return'melee';return'ranged'}
 function encounterRoot(){
   let r=$('#questEncounterBackdrop');
@@ -472,7 +473,7 @@ function encounterRoot(){
   return r;
 }
 function qRows(){
-  return party().map(c=>'<div class="cb2d-party-row"><i class="cb2d-dot '+qRole(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+qRole(c).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-q-side-hp="'+c.id+'" style="width:100%"></i></em></span><strong data-q-hp-text="'+c.id+'">100 HP</strong></div>').join('');
+  return party().map(c=>'<div class="cb2d-party-row"><i class="cb2d-dot '+qClassKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+qRole(c).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-q-side-hp="'+c.id+'" style="width:100%"></i></em></span><strong data-q-hp-text="'+c.id+'">100 HP</strong></div>').join('');
 }
 function qRoute(){
   return (questFight?.phases||[]).map((x,i)=>'<span class="'+(i<questFight.phase?'done':i===questFight.phase?'current':'')+'"><i>'+(i+1)+'</i>'+esc(x)+'</span>').join('');
@@ -516,8 +517,8 @@ function qDraw(config,finish){
 }
 function qSpawn(){
   const p=party(),melee=p.filter(c=>qProfile(c)==='melee'),ranged=p.filter(c=>qProfile(c)==='ranged');
-  p.forEach((c,i)=>{qAddUnit('p-'+c.id,c.name,'party '+qRole(c)+' profile-'+qProfile(c),4,50+(i-2)*4);let x=16,y=50;if(qRole(c)==='tank'){x=30;y=50}else if(qProfile(c)==='melee'){x=23;y=43+melee.indexOf(c)*14}else if(qProfile(c)==='ranged'){x=17;y=28+ranged.indexOf(c)*44}else{x=12;y=61}setTimeout(()=>qMove('p-'+c.id,x,y,800),40)});
-  questFight.enemies.forEach((n,i)=>{const y=questFight.enemies.length===1?50:27+i*(46/Math.max(1,questFight.enemies.length-1)),big=i===questFight.eliteIndex||questFight.enemies.length===1;qAddUnit('e-'+i,n,big?'enemy big':'enemy',92,y,big?'big':'');setTimeout(()=>qMove('e-'+i,68,y,780),70)});
+  p.forEach((c,i)=>{qAddUnit('p-'+c.id,c.name,'party '+qRole(c)+' profile-'+qProfile(c)+' '+qClassKey(c),4,50+(i-2)*4);let x=16,y=50;if(qRole(c)==='tank'){x=30;y=50}else if(qProfile(c)==='melee'){x=23;y=43+melee.indexOf(c)*14}else if(qProfile(c)==='ranged'){x=17;y=28+ranged.indexOf(c)*44}else{x=12;y=61}setTimeout(()=>qMove('p-'+c.id,x,y,800),40)});
+  questFight.enemies.forEach((n,i)=>{const y=questFight.enemies.length===1?50:27+i*(46/Math.max(1,questFight.enemies.length-1)),big=i===questFight.eliteIndex||questFight.enemies.length===1,boss=questFight.enemies.length===1;qAddUnit('e-'+i,n,boss?'enemy boss':big?'enemy big':'enemy',92,y,big?'big':'');setTimeout(()=>qMove('e-'+i,68,y,780),70)});
   qRenderMeters(questFight.eliteIndex>=0?questFight.eliteIndex:0)
 }
 async function qPhase(i,text){if(!questFight)return;questFight.phase=i;const r=$('#q2dRoute');if(r)r.innerHTML=qRoute();qStatus(text);qLog(text);await wait(500)}
