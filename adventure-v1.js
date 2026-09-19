@@ -85,11 +85,17 @@ function worldBosses(){return window.CellboundSocial?.getWorldBosses?.()||[]}
 function bossRegion(b){return b.id==='gloamhide'?'gloam-marsh':b.id==='hollow-wyrm'?'hollow-deep':b.id==='cell-torn'?'cell-scar':null}
 function activeBossForRegion(id){return worldBosses().find(b=>bossRegion(b)===id&&(b.status==='active'||b.status==='in_combat'))}
 function todaysIncidents(){
+ const a=ensure();if(!a)return[];
+ if(Array.isArray(a.daily?.lineup)&&a.daily.lineup.length){
+  const saved=a.daily.lineup.map(id=>INCIDENTS.find(x=>x.id===id)).filter(Boolean);
+  if(saved.length)return saved;
+ }
  const available=INCIDENTS.filter(x=>isUnlocked(x.location));if(!available.length)return[];
  const seed=hash(dateKey()+'|'+(Game.getUser?.()?.id||'guild')+'|cellbound-world');
  const ordered=[...available].sort((x,y)=>hash(x.id+'|'+seed)-hash(y.id+'|'+seed)),chosen=[],regions=new Set();
  for(const item of ordered){if(chosen.length>=3)break;if(!regions.has(item.location)){chosen.push(item);regions.add(item.location)}}
  for(const item of ordered){if(chosen.length>=3)break;if(!chosen.includes(item))chosen.push(item)}
+ a.daily.lineup=chosen.map(x=>x.id);Game.save?.();
  return chosen;
 }
 async function commit(){Game.save?.();await Game.persistState?.();Game.renderAll?.();render()}
