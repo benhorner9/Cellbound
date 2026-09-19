@@ -235,30 +235,71 @@ async function startAshfall(){
 }
 function openAshfallTracks(){
   if(ashfallStage()!=='tracks')return;
-  const root=puzzleRoot();root.hidden=false;document.body.classList.add('quest-puzzle-open');
-  root.innerHTML='<section class="quest-puzzle"><header><div><small>QUEST INVESTIGATION · EAST ROAD</small><h2>Which sign belongs to the attackers?</h2></div><button data-close>×</button></header><div class="quest-puzzle-clue"><span>ABANDONED CART</span><p>The horse fled west. One wheel broke downhill. Three sets of bootprints are scorched around the edges and point uphill toward the forge.</p></div><div class="quest-puzzle-board ashfall-clues"><button data-ash-clue="wheel"><i>◯</i><b>Broken wheel</b><small>Fresh splintering</small></button><button data-ash-clue="hoof"><i>⌁</i><b>Horse tracks</b><small>Running toward Zeltira</small></button><button data-ash-clue="boots"><i>♟</i><b>Scorched boots</b><small>Heading toward the mountain</small></button></div><p id="questPuzzleHint">Choose the clue that identifies where the attackers went.</p></section>';
-  root.querySelector('[data-close]').onclick=()=>{root.hidden=true;document.body.classList.remove('quest-puzzle-open')};
-  root.querySelectorAll('[data-ash-clue]').forEach(b=>b.onclick=async()=>{
-    if(b.dataset.ashClue!=='boots'){const h=$('#questPuzzleHint');h.textContent='That explains the cart, not the attackers. Look for something moving toward the forge.';h.classList.add('wrong');return}
-    root.hidden=true;document.body.classList.remove('quest-puzzle-open');ashfallHistory('Scorched bootprints revealed the attackers travelled uphill toward the old forge.');
-    await openGearReward({key:'ashfall-head',title:'Tracks in the Cinders',slot:'Head',tier:1,source:ASHFALL.title+' · Tracks in the Cinders',onClaim:()=>advanceAshfall('tracks','ambush','The guild followed the scorched tracks toward the mountain.')});
-  });
+  const q=ensure(),a=q.ashfall,root=puzzleRoot();root.hidden=false;document.body.classList.add('quest-puzzle-open');
+  a.investigationMistakes=Number(a.investigationMistakes)||0;
+  const evidence=[
+    {icon:'◫',title:'Axle & wheel',text:'The axle split outward. There are no impact scores on the cart, but the horse harness tore forward as if the animals bolted.'},
+    {icon:'⌁',title:'Tracks',text:'Hound pads and two different boot patterns enter from the north-east cut. Only the two boot patterns continue uphill.'},
+    {icon:'✦',title:'Ash sample',text:'The ash contains tiny beads of black furnace glass. Elara says that residue has only been found around the abandoned forge.'},
+    {icon:'↯',title:'Scorching',text:'Scorch marks sit on top of the spilled grain but beneath the bootprints. The fire came after the cart overturned, before the attackers left.'}
+  ];
+  const questions=[
+    {title:'What most likely caused the cart to crash?',answers:['A weapon smashed the axle','The hounds panicked the horses from the north-east cut','The driver deliberately overturned it'],correct:1,success:'The axle failed during the panic. The ambush began off-road, not with a direct strike on the cart.'},
+    {title:'Which trail should the party follow?',answers:['The horse tracks back toward Zeltira','The hound pads that stop beside the cart','The two boot patterns continuing uphill'],correct:2,success:'The animals stayed at the wreck. The human attackers withdrew uphill.'},
+    {title:'Where are the attackers most likely heading?',answers:['The abandoned forge','The river crossing','Back into Zeltira'],correct:0,success:'The furnace-glass residue ties the attackers to the old forge above the road.'}
+  ];
+  let step=0;
+  const draw=(note='')=>{
+    const question=questions[step];
+    root.innerHTML='<section class="quest-puzzle quest-investigation"><header><div><small>QUEST INVESTIGATION · EAST ROAD</small><h2>Reconstruct the ambush</h2></div><button data-close>×</button></header>'+
+      '<div class="quest-evidence-grid">'+evidence.map(x=>'<article><i>'+x.icon+'</i><div><b>'+x.title+'</b><p>'+x.text+'</p></div></article>').join('')+'</div>'+
+      '<div class="quest-deduction"><small>DEDUCTION '+(step+1)+' / '+questions.length+'</small><h3>'+question.title+'</h3><div>'+question.answers.map((x,i)=>'<button data-deduction="'+i+'">'+x+'</button>').join('')+'</div><p id="questPuzzleHint" class="'+(note?'wrong':'')+'">'+(note||'Use all of the evidence. The obvious-looking clue is not always the useful one.')+'</p></div>'+
+      '<div class="quest-alert-meter"><span>AMBUSH ALERT</span><div><i style="width:'+Math.min(100,a.investigationMistakes*34)+'%"></i></div><b>'+a.investigationMistakes+'</b><small>Mistakes make the party noisier. High alert changes the fight ahead.</small></div></section>';
+    root.querySelector('[data-close]').onclick=()=>{root.hidden=true;document.body.classList.remove('quest-puzzle-open')};
+    root.querySelectorAll('[data-deduction]').forEach(b=>b.onclick=async()=>{
+      const answer=Number(b.dataset.deduction);
+      if(answer!==question.correct){
+        a.investigationMistakes++;Game.save?.();
+        draw('That explanation conflicts with at least one piece of evidence. Re-read the timing of the tracks, ash and damage.');
+        return;
+      }
+      if(step<questions.length-1){step++;draw(question.success);return}
+      root.hidden=true;document.body.classList.remove('quest-puzzle-open');
+      ashfallHistory('The guild reconstructed the ambush from the wreck. '+(a.investigationMistakes>=2?'Their search made enough noise to alert the forge sentries.':'They kept the investigation quiet.'));
+      await openGearReward({key:'ashfall-head',title:'Tracks in the Cinders',slot:'Head',tier:1,source:ASHFALL.title+' · Tracks in the Cinders',onClaim:()=>advanceAshfall('tracks','ambush','The guild followed the attackers’ withdrawal route toward the old forge.')});
+    });
+  };
+  draw();
 }
 async function beginAshfallAmbush(){
   if(ashfallStage()!=='ambush')return;
   const p=party();if(p.length!==5){alert('Build a complete five-character party before following the tracks.');Game.switchView?.('party');return}
-  const tok=++encounterToken,root=encounterRoot();root.hidden=false;document.body.classList.add('qe-open');
-  root.innerHTML='<section class="qe-shell"><header><div><small>QUEST ENCOUNTER · ASHES ON THE EAST ROAD</small><h2>The Cinder Cart</h2></div><button data-qe-close>×</button></header><div class="qe-body"><main><div class="qe-arena"><div class="qe-floor"></div><div id="qeTelegraphs"></div><div id="qeUnits"></div><div class="qe-location"><b>Old Forge Approach</b><small>A burnt cart blocks the road ahead.</small></div></div><div class="qe-feed" id="qeFeed"></div></main><aside><small>ACTIVE FIVE</small><div class="qe-party">'+p.map(c=>'<div><i class="'+(Game.classes?.[c.class]?.specs?.[c.spec]?.role||'dps')+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span></div>').join('')+'</div><div class="qe-objective"><small>CURRENT OBJECTIVE</small><b id="qeObjective">Reach the burnt cart.</b><p>The tracks disappear beneath fresh cinders.</p></div></aside></div></section>';
-  root.querySelector('[data-qe-close]').onclick=()=>{encounterToken++;root.hidden=true;document.body.classList.remove('qe-open')};
-  const layer=$('#qeUnits');p.forEach((c,i)=>qeUnit(layer,'ap'+i,c.name,'party '+(Game.classes?.[c.class]?.specs?.[c.spec]?.role||'dps'),8,30+i*10));
-  p.forEach((c,i)=>qeMove('ap'+i,33,30+i*10,700));qeFeed('The party follows the scorched tracks into a narrow cut below the forge.');await wait(900);if(tok!==encounterToken)return;
-  ['Cinder Hound','Ashbound Runner','Cinder Hound'].forEach((n,i)=>qeUnit(layer,'ae'+i,n,'enemy '+(i===1?'elite':''),92,35+i*15));
-  ['ae0','ae1','ae2'].forEach((id,i)=>qeMove(id,66,35+i*15,520));$('#qeObjective').textContent='Break the ambush.';qeFeed('Ashbound attackers spring from behind the cart.');await wait(850);
-  qeTele('cone','CINDER BREATH');p.forEach((c,i)=>{if(i>1)qeMove('ap'+i,38,18+i*12,420)});await wait(1100);
-  qeFeed('Your tank catches the hounds while the damage line collapses onto the runner.');await wait(700);
-  ['ae0','ae1','ae2'].forEach((id,i)=>setTimeout(()=>{const e=$('[data-qe="'+id+'"]');if(e)e.classList.add('dead')},i*130));await wait(800);
-  qeFeed('The runner drops a heavy iron key stamped with the old forge seal.');$('#qeObjective').textContent='Recover the forge key.';await wait(650);
-  root.hidden=true;document.body.classList.remove('qe-open');
+  const a=ensure().ashfall,alertLevel=Number(a.investigationMistakes)||0;
+  const enemies=['Cinder Hound','Ashbound Runner','Cinder Hound'];
+  if(alertLevel>=2)enemies.push('Ashbound Scout');
+  const won=await runQuest2DFight({
+    quest:ASHFALL.title,title:'The Cinder Cart',location:'Old Forge Approach',
+    ambience:alertLevel>=2?'Your noisy investigation has drawn an extra sentry to the ambush.':'The party reaches the burnt cart before the sentries realise they were followed.',
+    phases:['Ambush','Signal Flare','Cinder Breath'],enemies,eliteIndex:1,
+    script:async api=>{
+      await api.phase(0,'The ambush closes from both sides.');
+      await api.tankEngage();
+      await api.attack(1,2);
+      await api.phase(1,'The runner reaches for a flare.');
+      await api.cast(1,'SIGNAL FLARE',1800,true);
+      if(alertLevel>=2&&enemies.length>3){
+        await api.cast(3,'ASH WHISTLE',1500,true);
+        await api.attack(3,1);
+      }
+      await api.phase(2,'A hound inhales a cone of burning cinders.');
+      await api.cone(0,'CINDER BREATH');
+      await api.attack(0,2);
+      await api.attack(2,2);
+      await api.finishAll();
+      api.log('The Ashbound Runner drops a heavy iron key stamped with the old forge seal.');
+    }
+  });
+  if(!won)return;
   await openGearReward({key:'ashfall-chest',title:'The Cinder Cart',slot:'Chest',tier:1,source:ASHFALL.title+' · The Cinder Cart',onClaim:()=>advanceAshfall('ambush','key','An Ashbound runner dropped a key bearing the old forge seal.')});
 }
 async function finishAshfall(){
