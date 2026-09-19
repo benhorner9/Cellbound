@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: cellbound-live-deploy-v2
+  group: cellbound-live-deploy-v3
   cancel-in-progress: true
 
 jobs:
