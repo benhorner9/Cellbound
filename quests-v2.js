@@ -615,7 +615,7 @@ function renderHome(){
 }
 function render(){
   if(!Game?.ready)return;const q=ensure();if(!q)return;
-  $('.quest-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.questTab===selectedTab));
+  $$('.quest-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.questTab===selectedTab));
   const activeCount=(q.ashfall.complete?0:1)+(complete()?0:1);
   const status=$('#questCampaignStatus');if(status)status.textContent=activeCount?activeCount+' ADVENTURE'+(activeCount===1?'':'S')+' IN PROGRESSION':'CURRENT STORY COMPLETE';
   renderList();renderDetail();renderHome();window.CellboundHollowSanctum?.renderCard?.();
