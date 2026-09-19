@@ -120,8 +120,12 @@ function ensureCharacter(c){
   return c;
 }
 function rarityClass(item){return `cb-rarity-${String(item?.rarity||'starter').toLowerCase()}`}
+function combinedBonusStats(c){
+  const out={...(G?.aggregateStats?.(c)||{})},prep=window.CellboundProfessions?.activeBonuses?.(c)||{};
+  Object.entries(prep).forEach(([k,v])=>out[k]=(Number(out[k])||0)+(Number(v)||0));return out
+}
 function statBlock(c){
-  const meta=classMeta[c.class]||{primary:'Strength'},bonus=G?.aggregateStats?.(c)||{};
+  const meta=classMeta[c.class]||{primary:'Strength'},bonus=combinedBonusStats(c);
   const level=c.level||1,gear=c.gear||0,role=roleOf(c);
   const strength=Math.round(level*7+gear*(meta.primary==='Strength'?.62:.2)+(bonus.strength||0));
   const agility=Math.round(level*6+gear*(meta.primary==='Agility'?.62:.18)+(bonus.agility||0));
@@ -136,7 +140,7 @@ function statBlock(c){
 function sheetMaxHealth(c){
   const ilvl=window.CellboundGame?.characterItemLevel?.(c)||0;
   const role=roleOf(c);
-  const bonus=G?.aggregateStats?.(c)||{};return Math.round(100+(Number(c.level)||1)*28+ilvl*5+(role==='tank'?90:role==='healer'?30:50)+(Number(bonus.stamina)||0)*4);
+  const bonus=combinedBonusStats(c);return Math.round(100+(Number(c.level)||1)*28+ilvl*5+(role==='tank'?90:role==='healer'?30:50)+(Number(bonus.stamina)||0)*4);
 }
 function bestBankUpgrade(state,c,slot){
   const current=Math.max(0,Number(c.equipment?.[slot]?.itemLevel)||0);
@@ -146,11 +150,11 @@ function bestBankUpgrade(state,c,slot){
   return gain>0?{item:best,gain}:null;
 }
 function equipmentSlot(c,slot,state){
-  const item=c.equipment?.[slot],upgrade=bestBankUpgrade(state,c,slot);
+  const item=c.equipment?.[slot],upgrade=bestBankUpgrade(state,c,slot),prep=(window.CellboundProfessions?.activeEffects?.(c)||[]).find(x=>x.kind==='enhancement'&&x.slot===slot);
   const art=item?(G?.artHTML?.(item,48,'cb-slot-art')||item.icon||slotIcons[slot]||'◇'):(slotIcons[slot]||'◇');
   return `<button class="cb-equip-slot ${item?rarityClass(item):'cb-empty'} ${upgrade?'has-upgrade':''}" data-slot="${slot}">
     <span class="cb-slot-icon">${art}</span>
-    <span class="cb-slot-copy"><small>${slot.replace(/(\d)/,' $1')}</small><b>${item?.name||'Empty'}</b>${item?.power?`<em>+${item.power} power</em>`:''}${item?`<span class="cb-slot-ilvl">Item Level ${item.itemLevel||0}</span><span class="cb-slot-roll">${(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll'}</span>`:'<span class="cb-slot-ilvl">Empty equipment slot</span>'}</span>
+    <span class="cb-slot-copy"><small>${slot.replace(/(\d)/,' $1')}</small><b>${item?.name||'Empty'}</b>${item?.power?`<em>+${item.power} power</em>`:''}${item?`<span class="cb-slot-ilvl">Item Level ${item.itemLevel||0}</span><span class="cb-slot-roll">${(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll'}</span>${prep?`<span class="cb-slot-roll cb-slot-prep">✥ ${prep.name} · ${window.CellboundProfessions?.bonusText?.(prep.bonuses)||''} · ${prep.remainingBosses} bosses</span>`:''}`:'<span class="cb-slot-ilvl">Empty equipment slot</span>'}</span>
     ${upgrade?`<span class="cb-slot-upgrade">+${upgrade.gain} ILVL</span>`:''}
   </button>`;
 }
