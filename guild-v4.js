@@ -62,6 +62,8 @@ const bosses=[
 let state=null;
 let account=null;
 let currentUser=null;
+let bankBulkMode=false;
+const bankBulkSelected=new Set();
 let saveSerial=Promise.resolve();
 let syncTimer=null;
 let recoveringTicker=null;
@@ -237,12 +239,98 @@ function renderBosses(){
   ui.bossList.innerHTML=bosses.map((b,i)=>{const progression=currentBossProgressionUnlocked(b),ilvlOk=pi>=b.requiredItemLevel,known=Math.round(state.roster.reduce((s,c)=>s+(c.knowledge[b.id]||0),0)/Math.max(1,state.roster.length));const gate=state.bossKills[b.id]?'DEFEATED · FARMABLE':!progression?'LOCKED — DEFEAT PREVIOUS BOSS':!ilvlOk?`ITEM LEVEL REQUIRED — ${pi} / ${b.requiredItemLevel}`:'AVAILABLE';return `<article class="boss-card ${(!progression||!ilvlOk)?'boss-gated':''}"><div class="boss-visual" data-rune="${b.rune}" style="--boss-glow:${b.glow}"><span class="boss-number">BOSS ${i+1}</span></div><div class="boss-body"><div class="boss-title-row"><h3>${b.name}</h3><span class="ilvl-badge">iLvl ${b.requiredItemLevel}+</span></div><p>${b.mechanic}</p><div class="boss-meta"><div><span>Your Party</span><b>iLvl ${pi||'—'}</b></div><div><span>Recommended</span><b>iLvl ${b.recommendedItemLevel}</b></div><div><span>Guild Knowledge</span><b>${known}%</b></div><div><span>Gear Drops</span><b>T1 / T2</b></div></div><div class="boss-lock">${gate}</div></div></article>`;}).join('');
   ui.bossSelect.innerHTML=bosses.map((b,i)=>`<option value="${b.id}" ${i>0&&!state.bossKills[bosses[i-1].id]?'disabled':''}>${b.name} · iLvl ${b.requiredItemLevel}${state.bossKills[b.id]?' — Farm':''}</option>`).join('');
 }
+function bankBulkSelection(){
+  [...bankBulkSelected].forEach(id=>{
+    const item=state.bank.find(x=>x.id===id);
+    if(!item||bankItemProtected(item))bankBulkSelected.delete(id);
+  });
+  return state.bank.filter(item=>bankBulkSelected.has(item.id)&&!bankItemProtected(item));
+}
+function mergeBankYield(target,source){
+  Object.entries(source||{}).forEach(([key,qty])=>target[key]=(target[key]||0)+(Number(qty)||0));
+  return target;
+}
+function bankBulkTotals(){
+  const items=bankBulkSelection(),yieldMap={};
+  let units=0,gold=0;
+  items.forEach(item=>{
+    const qty=Math.max(1,Number(item.quantity)||1);
+    units+=qty;
+    gold+=bankVendorUnitValue(item)*qty;
+    mergeBankYield(yieldMap,bankDismantleYield(item,qty));
+  });
+  return{items,units,gold,yieldMap};
+}
+function updateBankBulkControls(){
+  const toggle=$('#bankBulkToggle'),bar=$('#bankBulkBar'),count=$('#bankBulkCount'),hint=$('#bankBulkHint'),returns=$('#bankBulkReturns'),sell=$('#bankBulkSell'),dismantle=$('#bankBulkDismantle'),clear=$('#bankBulkClear');
+  if(toggle){
+    toggle.textContent=bankBulkMode?'DONE SELECTING':'SELECT ITEMS';
+    toggle.setAttribute('aria-pressed',bankBulkMode?'true':'false');
+  }
+  if(bar)bar.hidden=!bankBulkMode;
+  if(!bankBulkMode)return;
+  const{items,units,gold,yieldMap}=bankBulkTotals(),stacks=items.length;
+  if(count)count.textContent=`${stacks} stack${stacks===1?'':'s'} selected · ${units} item${units===1?'':'s'}`;
+  if(hint)hint.textContent=stacks?'Whole stacks will be processed. Review the combined return before confirming.':'Select unwanted equipment below. Protected quest and story items cannot be selected.';
+  if(returns)returns.innerHTML=stacks
+    ?`<div><span>SELL VALUE</span><b>+${gold.toLocaleString()} Gold</b></div><div><span>DISMANTLE RETURN</span><strong>${bankDismantleMarkup(yieldMap)||'No materials'}</strong></div>`
+    :'<div class="bank-bulk-empty">Nothing selected yet.</div>';
+  if(sell){sell.disabled=!stacks;sell.textContent=stacks?`SELL ${units} ITEM${units===1?'':'S'}`:'SELL SELECTED';}
+  if(dismantle){dismantle.disabled=!stacks;dismantle.textContent=stacks?`DISMANTLE ${units} ITEM${units===1?'':'S'}`:'DISMANTLE SELECTED';}
+  if(clear)clear.disabled=!stacks;
+}
+function setBankBulkMode(next){
+  bankBulkMode=typeof next==='boolean'?next:!bankBulkMode;
+  if(!bankBulkMode)bankBulkSelected.clear();
+  renderBank();
+}
+function toggleBankBulkItem(id){
+  const item=state.bank.find(x=>x.id===id);
+  if(!bankBulkMode||!item||bankItemProtected(item))return;
+  if(bankBulkSelected.has(id))bankBulkSelected.delete(id);else bankBulkSelected.add(id);
+  renderBank();
+}
+function clearBankBulkSelection(){
+  bankBulkSelected.clear();
+  renderBank();
+}
+function disposeBankBulk(mode){
+  const{items,units,gold,yieldMap}=bankBulkTotals();
+  if(!items.length)return;
+  const stackSummary=items.map(item=>`• ${item.name} ×${Math.max(1,Number(item.quantity)||1)}`).join('\n');
+  if(mode==='vendor'){
+    if(!confirm(`Sell ${units} selected item${units===1?'':'s'} to the Guild Quartermaster for ${gold.toLocaleString()} Gold?\n\n${stackSummary}\n\nThis cannot be undone.`))return;
+    items.forEach(item=>removeBankQuantity(item,Math.max(1,Number(item.quantity)||1)));
+    state.gold=(Number(state.gold)||0)+gold;
+    state.activity.push(`Bulk sold ${units} item${units===1?'':'s'} from ${items.length} bank stack${items.length===1?'':'s'} for ${gold} Gold.`);
+  }else if(mode==='dismantle'){
+    const materialSummary=Object.entries(yieldMap).map(([key,n])=>`${P?.MATERIALS?.[key]?.name||key} ×${n}`).join(', ');
+    if(!confirm(`Dismantle ${units} selected item${units===1?'':'s'}?\n\n${stackSummary}\n\nYou will receive: ${materialSummary}.\n\nThis cannot be undone.`))return;
+    items.forEach(item=>removeBankQuantity(item,Math.max(1,Number(item.quantity)||1)));
+    Object.entries(yieldMap).forEach(([key,n])=>addMaterial(key,n));
+    state.activity.push(`Bulk dismantled ${units} item${units===1?'':'s'} from ${items.length} bank stack${items.length===1?'':'s'}: ${materialSummary}.`);
+  }else return;
+  bankBulkSelected.clear();
+  bankBulkMode=false;
+  save();
+  renderAll();
+  switchView('bank');
+}
 function renderBank(){
+  bankBulkSelection();
   const total=bankTotal(),unique=state.bank.length,t1=state.bank.filter(x=>x.tier===1).reduce((a,b)=>a+(b.quantity||1),0),t2=state.bank.filter(x=>x.tier===2).reduce((a,b)=>a+(b.quantity||1),0);
   ui.bankSummary.innerHTML=`<div><span>Stored Items</span><b>${total}</b></div><div><span>Unique Items</span><b>${unique}</b></div><div><span>Tier 1 / Tier 2</span><b>${t1} / ${t2}</b></div>`;
+  updateBankBulkControls();
   if(!state.bank.length){ui.bankGrid.innerHTML='<div class="bank-empty"><span>◇</span><h3>Your bank is empty.</h3><p>Dungeon victories award equipment here before you decide who receives it.</p></div>';return;}
-  ui.bankGrid.innerHTML=state.bank.map(item=>`<article class="bank-item gear-bank-item tier-${item.tier||1}"><div class="bank-icon gear-bank-icon">${G.artHTML(item,72)}</div><div class="bank-copy"><small>${tierText(item)} · ${item.class} · ${item.slot}</small><h3>${item.name}</h3><p>${item.source||'Guild Bank'}</p></div><div class="bank-qty">×${item.quantity||1}</div><button data-bank-item="${item.id}">MANAGE</button></article>`).join('');
+  ui.bankGrid.innerHTML=state.bank.map(item=>{
+    const protectedItem=bankItemProtected(item),selected=bankBulkSelected.has(item.id);
+    const action=bankBulkMode
+      ?`<button data-bank-select="${item.id}" aria-pressed="${selected?'true':'false'}" ${protectedItem?'disabled':''}>${protectedItem?'PROTECTED':selected?'✓ SELECTED':'SELECT ITEM'}</button>`
+      :`<button data-bank-item="${item.id}">MANAGE</button>`;
+    return`<article class="bank-item gear-bank-item tier-${item.tier||1} ${selected?'bank-item-selected':''} ${protectedItem?'bank-item-protected':''}"><div class="bank-icon gear-bank-icon">${G.artHTML(item,72)}</div><div class="bank-copy"><small>${tierText(item)} · ${item.class} · ${item.slot}</small><h3>${item.name}</h3><p>${item.source||'Guild Bank'}</p></div><div class="bank-qty">×${item.quantity||1}</div>${action}</article>`;
+  }).join('');
   ui.bankGrid.querySelectorAll('[data-bank-item]').forEach(b=>b.addEventListener('click',()=>openBankItem(b.dataset.bankItem)));
+  ui.bankGrid.querySelectorAll('[data-bank-select]').forEach(b=>b.addEventListener('click',()=>toggleBankBulkItem(b.dataset.bankSelect)));
 }
 function bankItemProtected(item){
   const id=String(item?.itemId||'').toLowerCase(),label=String(item?.tierLabel||'').toLowerCase();
@@ -347,6 +435,10 @@ function equipBankItem(itemId,charId){
   c.gearItems=ILVL_SLOTS.map(s=>c.equipment?.[s]?.name||'Empty');c.gear=characterItemLevel(c);item.quantity=(item.quantity||1)-1;if(item.quantity<=0)state.bank=state.bank.filter(x=>x.id!==item.id);state.activity.push(`${c.name} equipped ${item.name} (iLvl ${item.itemLevel}).`);save();ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open');renderAll();switchView('bank');
 }
 $('[data-bank-close]')?.addEventListener('click',()=>{ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open')});ui.bankModal?.addEventListener('click',e=>{if(e.target===ui.bankModal){ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open')}});
+$('#bankBulkToggle')?.addEventListener('click',()=>setBankBulkMode());
+$('#bankBulkClear')?.addEventListener('click',clearBankBulkSelection);
+$('#bankBulkSell')?.addEventListener('click',()=>disposeBankBulk('vendor'));
+$('#bankBulkDismantle')?.addEventListener('click',()=>disposeBankBulk('dismantle'));
 
 function removeChar(id){if(state.party.tank===id)state.party.tank=null;if(state.party.healer===id)state.party.healer=null;state.party.dps=state.party.dps.map(x=>x===id?null:x);}
 function assignChar(id){const c=charById(id);if(!c||!isCharacterRosterUnlocked(id)||isUnavailable(c))return;const role=roleOf(c);removeChar(id);if(role==='tank')state.party.tank=id;else if(role==='healer')state.party.healer=id;else{const idx=state.party.dps.findIndex(x=>!x);if(idx>=0)state.party.dps[idx]=id;else state.party.dps[0]=id;}save();renderAll();}
