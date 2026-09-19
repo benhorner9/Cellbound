@@ -540,10 +540,10 @@ function qRenderMeters(target=0){
   const damageRoot=$('#q2dDamageMeter'),threatRoot=$('#q2dThreatMeter'),p=party();
   const rows=p.map(c=>({c,value:Number(questFight.damage[c.id])||0})).sort((a,b)=>b.value-a.value),max=Math.max(1,...rows.map(x=>x.value)),total=rows.reduce((n,x)=>n+x.value,0);
   const totalEl=$('#q2dDamageTotal');if(totalEl)totalEl.textContent=total+' total';
-  if(damageRoot)damageRoot.innerHTML=rows.map((x,i)=>'<div class="cb2d-meter-row '+qRole(x.c)+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(x.c.name)+'</b><span>'+x.value+' damage</span></div><em><i style="width:'+(x.value/max*100)+'%"></i></em></div>').join('');
+  if(damageRoot)damageRoot.innerHTML=rows.map((x,i)=>'<div class="cb2d-meter-row '+qClassKey(x.c)+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(x.c.name)+'</b><span>'+x.value+' damage</span></div><em><i style="width:'+(x.value/max*100)+'%"></i></em></div>').join('');
   const tank=p.find(c=>qRole(c)==='tank'),threatRows=p.map(c=>({c,value:qRole(c)==='tank'?100:Math.min(92,22+(questFight.damage[c.id]||0)/8)})).sort((a,b)=>b.value-a.value);
   const label=$('#q2dThreatTarget');if(label)label.textContent=questFight.enemies[target]||'No target';
-  if(threatRoot)threatRoot.innerHTML=threatRows.map((x,i)=>'<div class="cb2d-meter-row '+qRole(x.c)+(tank&&x.c.id===tank.id?' aggro':'')+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(x.c.name)+(tank&&x.c.id===tank.id?' <strong>AGGRO</strong>':'')+'</b><span>'+Math.round(x.value)+'%</span></div><em><i style="width:'+x.value+'%"></i></em></div>').join('')
+  if(threatRoot)threatRoot.innerHTML=threatRows.map((x,i)=>'<div class="cb2d-meter-row '+qClassKey(x.c)+(tank&&x.c.id===tank.id?' aggro':'')+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(x.c.name)+(tank&&x.c.id===tank.id?' <strong>AGGRO</strong>':'')+'</b><span>'+Math.round(x.value)+'%</span></div><em><i style="width:'+x.value+'%"></i></em></div>').join('')
 }
 function qDraw(config,finish){
   const root=encounterRoot();root.className='cb2d-backdrop quest-cb2d-backdrop';root.hidden=false;document.body.classList.add('quest-cb2d-open');
