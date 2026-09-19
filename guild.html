@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="./foundations.css?v=1">
 <link rel="stylesheet" href="./economy-v2.css?v=2">
 <link rel="stylesheet" href="./social-v3.css?v=1">
+<link rel="stylesheet" href="./adventure-v1.css?v=1">
 <link rel="stylesheet" href="./evolution-v1.css?v=4">
 <link rel="stylesheet" href="./dungeon-2d-v1.css?v=5">
 <link rel="stylesheet" href="./world-boss-2d-v1.css?v=2">
@@ -63,12 +64,12 @@
 
     <section id="overview" class="view active">
       <div class="hero-card">
-        <div><small>CELLBOUND</small><h2>Your heroes fight.<br>You build the team that wins.</h2><p>Manage a five-character party, develop individual builds, improve Item Level and decide who is ready for the next encounter.</p></div>
+        <div><small>CELLBOUND</small><h2>Your heroes fight.<br>You decide where their story goes.</h2><p>Travel the living world, follow quests, investigate incidents, develop your characters and enter dangerous content when your guild chooses.</p></div>
         <div id="questHomeObjective" class="hero-stat"><span>Current Objective</span><b>Prepare your active five-character party</b><button data-jump="party">MANAGE PARTY →</button></div>
       </div>
       <div class="dashboard-grid">
         <article class="panel"><div class="panel-head"><div><small>ACTIVE ROSTER</small><h3>Your Adventurers</h3></div><b class="good">5 PARTY SLOTS</b></div><div id="overviewRoster" class="mini-roster"></div></article>
-        <article class="panel"><div class="panel-head"><div><small>NEXT CONTENT</small><h3>The Ashen Vault</h3></div><b>ITEM LEVEL GATED</b></div><div class="dungeon-preview"><div class="dungeon-art"><span>THE ASHEN VAULT</span></div><div><p>Dungeon access now checks the equipment strength of the whole active party, not one over-geared hero.</p><div class="boss-pips"><span class="active"></span><span></span><span></span></div><button data-jump="content">VIEW DUNGEON →</button></div></div></article>
+        <article id="adventureOverviewCard" class="panel adventure-overview"><div class="adventure-overview-copy"><small>LIVING WORLD</small><h3>Choose your next move.</h3><p>The wider world is opening around Zeltira.</p></div><button data-jump="world">OPEN WORLD →</button></article>
         <article class="panel activity-panel"><div class="panel-head"><div><small>GUILD LOG</small><h3>Recent Activity</h3></div></div><div id="activityLog" class="activity-log"></div></article>
       </div>
     </section>
@@ -149,7 +150,10 @@
     </section>
 
     <section id="world" class="view">
-      <div class="section-intro"><div><small>SHARED WORLD</small><h2>World Bosses</h2><p>World bosses appear on hidden random timers. Once active, they remain until players defeat them.</p></div><button id="refreshWorld" class="ghost-btn">REFRESH WORLD</button></div>
+      <div class="section-intro"><div><small>LIVING WORLD</small><h2>Adventure</h2><p>Travel beyond Zeltira, investigate changing incidents, discover routes and decide what your guild pursues next.</p></div><button id="refreshWorld" class="ghost-btn">REFRESH WORLD</button></div>
+      <div id="adventureWorldMount"></div>
+      <div id="adventureDailyMount"></div>
+      <div id="worldBossSection" class="world-boss-section-head"><div><small>SHARED ENCOUNTERS</small><h3 id="worldBossSectionTitle">World Bosses</h3></div><p id="worldBossSectionCopy">World bosses appear on hidden random timers.</p></div>
       <div id="worldBossRewards" class="world-boss-rewards"></div>
       <div id="worldBossGrid" class="world-boss-grid"></div>
       <article class="panel world-rules"><div class="panel-head"><div><small>WORLD BOSS RULES</small><h3>Shared Encounter Rules</h3></div></div><div class="world-rule-grid"><span>Each commander brings their normal 5-character party.</span><span>Every participating player earns one personal item when the boss dies.</span><span>A party wipe adds Cell Shock to all five participating characters.</span><span>After a kill, the next spawn is hidden and randomly set between 10 minutes and 8 hours.</span></div></article>
@@ -262,6 +266,7 @@
 <script src="./onboarding-v1.js?v=2"></script>
 <script src="./hollow-sanctum-v1.js?v=1"></script>
 <script src="./quests-v2.js?v=3"></script>
+<script src="./adventure-v1.js?v=1"></script>
 <script src="./admin-v1.js?v=1"></script>
 <script src="./mobile-v1.js?v=1"></script>
 <script src="./release-v1.js?v=3"></script>
