@@ -432,3 +432,11 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 .cb2d-prep-summary p{display:grid;grid-template-columns:90px 1fr;gap:8px;margin:7px 0 0;padding-top:7px;border-top:1px solid rgba(255,255,255,.035)}
 .cb2d-prep-summary b{color:#d2d9d5;font-size:.43rem}
 .cb2d-prep-summary span{color:#79a99c;font-size:.38rem;line-height:1.4}
+
+/* Class-coloured battle units */
+.cb2d-unit.party[class*="class-"]{color:var(--combat-class,#7F8B88)}
+.cb2d-unit.party[class*="class-"]>i{background:var(--combat-class,#7F8B88)!important;box-shadow:0 0 0 3px rgba(255,255,255,.04),0 0 18px var(--combat-class,#7F8B88)}
+.cb2d-dot[class*="class-"]{background:var(--combat-class,#7F8B88)!important;color:var(--combat-class,#7F8B88)!important}
+.cb2d-unit.enemy{color:#D4473E!important}.cb2d-unit.enemy>i{background:#D4473E!important}
+.cb2d-unit.enemy.big>i,.cb2d-unit.enemy.boss>i{border:2px solid #D7B45B!important;box-shadow:0 0 0 4px rgba(215,180,91,.18),0 0 28px rgba(212,71,62,.42)!important}
+.cb2d-unit.enemy.big>span,.cb2d-unit.enemy.boss>span{color:#E6C86C!important}
