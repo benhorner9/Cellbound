@@ -173,23 +173,36 @@ function renderCombatMeters(parts,partyThreat){
     return '<div class="wb2d-meter-row '+classKey(c)+' '+(isBossTarget?'aggro ':'')+(high?'high ':'')+'"><div><b>'+(i+1)+'. '+esc(c.name)+(isBossTarget?' <strong>AGGRO</strong>':high?' <strong>HIGH</strong>':'')+'</b><span>'+Math.round(value).toLocaleString()+'</span></div><em><i style="width:'+pct+'%"></i></em></div>';
   }).join(''):'<div class="wb2d-meter-empty">Threat appears when your party attacks.</div>';
 }
-function projectileFrom(el,role){
-  const arena=document.getElementById('wb2dArena'),boss=document.getElementById('wb2dBoss'),fx=document.getElementById('wb2dEffects');
-  if(!arena||!boss||!fx||!el)return;
-  const ar=arena.getBoundingClientRect(),a=el.getBoundingClientRect(),b=boss.getBoundingClientRect();
-  const x=a.left+a.width/2-ar.left,y=a.top+a.height/2-ar.top,tx=b.left+b.width/2-ar.left,ty=b.top+b.height/2-ar.top;
-  const p=document.createElement('i');p.className='wb2d-projectile '+role;p.style.left=x+'px';p.style.top=y+'px';p.style.setProperty('--dx',(tx-x)+'px');p.style.setProperty('--dy',(ty-y)+'px');fx.appendChild(p);setTimeout(()=>p.remove(),620);
+function wbPoint(el){
+  const arena=document.getElementById('wb2dArena');if(!arena||!el)return null;
+  const ar=arena.getBoundingClientRect(),r=el.getBoundingClientRect();
+  return{x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,w:ar.width,h:ar.height};
 }
-function pulseRaid(){
-  const units=[...document.querySelectorAll('#wb2dUnits .wb2d-unit')];
+function projectileBetween(fromEl,toEl,kind){
+  const fx=document.getElementById('wb2dEffects'),a=wbPoint(fromEl),b=wbPoint(toEl);if(!fx||!a||!b)return;
+  const dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI,p=document.createElement('i');
+  p.className='wb2d-projectile '+kind;p.style.left=a.x+'px';p.style.top=a.y+'px';p.style.setProperty('--dx',dx+'px');p.style.setProperty('--dy',dy+'px');p.style.setProperty('--angle',angle+'deg');fx.appendChild(p);setTimeout(()=>p.remove(),620);
+}
+function projectileFrom(el,role){
+  const boss=document.getElementById('wb2dBoss');if(!boss||!el)return;
+  projectileBetween(el,boss,role);
+}
+function pulseRaid(participant){
+  const guild=String(participant?.guildLabel||''),units=[...document.querySelectorAll('#wb2dUnits .wb2d-unit')].filter(u=>u.dataset.guild===guild);
   if(!units.length)return;
+  const tank=units.find(u=>u.classList.contains('role-tank'));
   units.forEach((u,i)=>{
     setTimeout(()=>{
       if(!active||u.classList.contains('wiped'))return;
+      if(u.classList.contains('role-healer')){
+        const target=tank||units.find(x=>x!==u&&!x.classList.contains('wiped'));if(!target)return;
+        u.classList.add('attacking');setTimeout(()=>u.classList.remove('attacking'),450);
+        projectileBetween(u,target,'heal');
+        return;
+      }
       u.classList.add('attacking');setTimeout(()=>u.classList.remove('attacking'),450);
-      if(u.classList.contains('ranged')||u.classList.contains('role-healer'))projectileFrom(u,u.classList.contains('role-healer')?'heal':'ranged');
-      else if(i%2===0)projectileFrom(u,'melee');
-    },(i%8)*55);
+      projectileFrom(u,u.classList.contains('ranged')?'ranged':'melee');
+    },(i%5)*70);
   });
 }
 function floatDamage(amount,own=false){
@@ -199,24 +212,48 @@ function floatDamage(amount,own=false){
 function checkDamageChanges(parts){
   parts.forEach(p=>{
     const key=p.guildLabel+(p.isYou?'|you':'|other'),now=Number(p.damageDone)||0,old=participantDamage.get(key);
-    if(old!=null&&now>old){floatDamage(now-old,p.isYou);pulseRaid()}
+    if(old!=null&&now>old){floatDamage(now-old,p.isYou);pulseRaid(p)}
     participantDamage.set(key,now);
   });
+}
+function wbDodge(unit,dxPct=0,dyPct=12){
+  if(!unit)return;const x=parseFloat(unit.style.left)||50,y=parseFloat(unit.style.top)||50;
+  unit.classList.add('dodging');unit.style.left=clamp(x+dxPct,6,94)+'%';unit.style.top=clamp(y+dyPct,7,93)+'%';
+  setTimeout(()=>unit.classList.remove('dodging'),900);
 }
 function randomMechanic(){
   if(!active)return;
   const t=themeFor(active.boss.id),name=t.mechanics[mechanicSeq++%t.mechanics.length],types=['cone','circle','line'],type=types[mechanicSeq%types.length];
-  const cast=document.getElementById('wb2dCast'),tele=document.getElementById('wb2dTelegraphs');
-  if(!cast||!tele)return;
+  const cast=document.getElementById('wb2dCast'),tele=document.getElementById('wb2dTelegraphs'),boss=document.getElementById('wb2dBoss');
+  if(!cast||!tele||!boss)return;
+  const units=[...document.querySelectorAll('#wb2dUnits .wb2d-unit:not(.wiped)')],own=units.filter(u=>u.classList.contains('own'));
+  const tankTarget=units.find(u=>u.classList.contains('boss-target'))||own.find(u=>u.classList.contains('role-tank'))||units.find(u=>u.classList.contains('role-tank'))||units[0];
+  const nonTank=(own.length?own:units).filter(u=>!u.classList.contains('role-tank'));
+  const target=nonTank[Math.floor(Math.random()*Math.max(1,nonTank.length))]||tankTarget;
+  const bp=wbPoint(boss),tp=wbPoint(type==='cone'?tankTarget:target);
   cast.hidden=false;cast.querySelector('b').textContent=name;const fill=cast.querySelector('i');fill.style.transition='none';fill.style.width='0%';void fill.offsetWidth;fill.style.transition='width 1.7s linear';fill.style.width='100%';
   const tg=document.createElement('div');tg.className='wb2d-telegraph '+type;
-  if(type==='circle'){tg.style.left=(23+Math.random()*52)+'%';tg.style.top=(24+Math.random()*52)+'%'}
+  if(bp&&tp){
+    if(type==='circle'){
+      tg.style.left=tp.x+'px';tg.style.top=tp.y+'px';
+      feed(active.boss.name+' marks '+(target?.querySelector('small')?.textContent||'a player')+' with '+name+'.','cast');
+      setTimeout(()=>wbDodge(target,10,target&&parseFloat(target.style.top)>50?-10:10),360);
+    }else{
+      const dx=tp.x-bp.x,dy=tp.y-bp.y,angle=Math.atan2(dy,dx)*180/Math.PI;
+      tg.style.left=bp.x+'px';tg.style.top=bp.y+'px';
+      tg.style.transform=(type==='cone'?'translateY(-50%) ':'')+'rotate('+angle+'deg)';
+      if(type==='cone'){
+        feed(active.boss.name+' faces '+(tankTarget?.querySelector('small')?.textContent||'the highest-threat Tank')+' for '+name+'.','cast');
+        own.filter(u=>u!==tankTarget).forEach((u,i)=>setTimeout(()=>wbDodge(u,0,(i%2?1:-1)*10),260+i*35));
+      }else{
+        feed(active.boss.name+' lines up '+(target?.querySelector('small')?.textContent||'a player')+' with '+name+'.','cast');
+        setTimeout(()=>wbDodge(target,0,parseFloat(target?.style.top||50)>50?-14:14),360);
+      }
+    }
+  }else feed(active.boss.name+' begins '+name+'.','cast');
   tele.appendChild(tg);
-  document.querySelectorAll('#wb2dUnits .wb2d-unit').forEach((u,i)=>{if((i+mechanicSeq)%3===0)u.classList.add('dodging')});
-  feed(active.boss.name+' begins '+name+'.','cast');
   setTimeout(()=>{
     tg.classList.add('impact');message(name+' resolves','danger');
-    document.querySelectorAll('#wb2dUnits .wb2d-unit.dodging').forEach(u=>u.classList.remove('dodging'));
     setTimeout(()=>{tg.remove();cast.hidden=true},430);
   },1750);
 }
