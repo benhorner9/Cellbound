@@ -92,7 +92,7 @@ function initialState(){
   return {
     saveVersion:SAVE_VERSION,gearVersion:2,renown:0,gold:250,socialDisplayName:'',
     roster:[],party:{tank:null,healer:null,dps:[null,null,null]},
-    bossKills:{ashwarden:false,embermaw:false,vaultheart:false},reports:[],bank:[],materials:{},
+    bossKills:{ashwarden:false,embermaw:false,vaultheart:false},progression:{ashenVaultUnlocked:false},reports:[],bank:[],materials:{},
     consumables:[],recipeScrolls:[],discoveredRecipes:[],tradeInbox:[],collectionHistory:[],
     onboarding:{version:1,complete:false,stage:'party-builder',zone:'zeltira',startedAt:new Date().toISOString()},
     activity:['A new charter awaits. Build your first party to begin.']
@@ -167,7 +167,7 @@ function migrateState(raw){
   const hadRoster=Array.isArray(s.roster)&&s.roster.length>0;
   s.saveVersion=SAVE_VERSION;s.gearVersion=2;s.renown=Number(s.renown)||0;s.gold=Number(s.gold)||0;s.socialDisplayName=typeof s.socialDisplayName==='string'?s.socialDisplayName:'';
   s.roster=Array.isArray(s.roster)?s.roster.map(normalizeCharacter):[];
-  s.bank=canonicalBank(s.bank);s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};s.consumables=Array.isArray(s.consumables)?s.consumables:[];s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];s.collectionHistory=Array.isArray(s.collectionHistory)?s.collectionHistory:[];s.reports=Array.isArray(s.reports)?s.reports:[];s.activity=Array.isArray(s.activity)?s.activity:[];s.bossKills=s.bossKills||{ashwarden:false,embermaw:false,vaultheart:false};s.party=s.party||{tank:null,healer:null,dps:[null,null,null]};
+  s.progression=s.progression&&typeof s.progression==='object'?s.progression:{};if(typeof s.progression.ashenVaultUnlocked!=='boolean')s.progression.ashenVaultUnlocked=Boolean(Number(s.dungeonCompletions)>0||Object.values(s.bossKills||{}).some(Boolean)||s.questSystem?.ashfall?.complete);s.bank=canonicalBank(s.bank);s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};s.consumables=Array.isArray(s.consumables)?s.consumables:[];s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];s.collectionHistory=Array.isArray(s.collectionHistory)?s.collectionHistory:[];s.reports=Array.isArray(s.reports)?s.reports:[];s.activity=Array.isArray(s.activity)?s.activity:[];s.bossKills=s.bossKills||{ashwarden:false,embermaw:false,vaultheart:false};s.party=s.party||{tank:null,healer:null,dps:[null,null,null]};
   if(s.__fresh_start===true||!s.onboarding&&!hadRoster)s.onboarding={version:1,complete:false,stage:'party-builder',zone:'zeltira',startedAt:new Date().toISOString()};
   else if(!s.onboarding&&hadRoster)s.onboarding={version:1,complete:true,stage:'complete',zone:'zeltira',legacy:true};
   s.roster.forEach(c=>refreshRecovery(c));delete s.__fresh_start;return s;
