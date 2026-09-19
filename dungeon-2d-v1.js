@@ -151,7 +151,7 @@ function briefing(){
    return;
  }
 
- r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · TACTICAL BRIEFING</small><h2>Set the plan once. Then watch the dungeon run.</h2></div><button data-close>×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">These tactics persist through the whole expedition. The party will move, react and fight automatically. Live overrides remain available without stopping combat.</p><h3>Aggression</h3>'+groupButtons('aggression',[['safe','SAFE','Prioritise stability.'],['balanced','BALANCED','Standard dungeon pace.'],['aggressive','AGGRESSIVE','Push damage windows.']])+'<h3>Interrupts</h3>'+groupButtons('interrupts',[['important','IMPORTANT','Stop dangerous casts.'],['high','HIGH','Interrupt aggressively.'],['conservative','CONSERVATIVE','Save for critical casts.']])+'<h3>Defensives</h3>'+groupButtons('defensives',[['early','EARLY','Use cooldowns sooner.'],['balanced','BALANCED','React to pressure.'],['save','SAVE','Hold for late bosses.']])+'<h3>Add Priority</h3>'+groupButtons('adds',[['dangerous','DANGEROUS','Swap to threatening adds.'],['full','FULL','Clear every add wave.'],['boss','BOSS','Stay on primary target.']])+'</main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+role(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span><strong>'+String(role(c)).toUpperCase()+'</strong></div>').join('')+'<button class="cb2d-start" data-start>BEGIN EXPEDITION →</button></aside></div></section>';
+ r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · TACTICAL BRIEFING</small><h2>Set the plan once. Then watch the dungeon run.</h2></div><button data-close>×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">These tactics persist through the whole expedition. The party will move, react and fight automatically. Live overrides remain available without stopping combat.</p><h3>Aggression</h3>'+groupButtons('aggression',[['safe','SAFE','Prioritise stability.'],['balanced','BALANCED','Standard dungeon pace.'],['aggressive','AGGRESSIVE','Push damage windows.']])+'<h3>Interrupts</h3>'+groupButtons('interrupts',[['important','IMPORTANT','Stop dangerous casts.'],['high','HIGH','Interrupt aggressively.'],['conservative','CONSERVATIVE','Save for critical casts.']])+'<h3>Defensives</h3>'+groupButtons('defensives',[['early','EARLY','Use cooldowns sooner.'],['balanced','BALANCED','React to pressure.'],['save','SAVE','Hold for late bosses.']])+'<h3>Add Priority</h3>'+groupButtons('adds',[['dangerous','DANGEROUS','Swap to threatening adds.'],['full','FULL','Clear every add wave.'],['boss','BOSS','Stay on primary target.']])+'</main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+role(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span><strong>'+String(role(c)).toUpperCase()+'</strong></div>').join('')+'<div class="cb2d-prep-summary"><small>ACTIVE PROFESSION PREP</small>'+party().map(c=>{const fx=P?.activeEffects?.(c)||[];return fx.length?'<p><b>'+esc(c.name)+'</b><span>'+fx.map(x=>esc(x.name)+' · '+x.remainingBosses+' bosses').join('<br>')+'</span></p>':''}).join('')+'</div><button class="cb2d-start" data-start>BEGIN EXPEDITION →</button></aside></div></section>';
  r.querySelector('[data-close]').onclick=close;
  r.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{const a=b.dataset.pick.split(':');tactics[a[0]]=a[1];r.querySelectorAll('[data-plan="'+a[0]+'"] button').forEach(x=>x.classList.toggle('active',x===b))});
  r.querySelector('[data-start]').onclick=start;
@@ -886,7 +886,15 @@ async function travelDeeper(nextStage,tok){
 }
 
 function bonus(s){let b=run.override||0;if(tactics.aggression==='aggressive')b+=4;if(tactics.aggression==='safe'&&s.kind==='trash')b+=4;if(tactics.defensives==='early')b+=3;if(tactics.defensives==='save'&&s.kind==='final')b+=5;if(tactics.adds==='full'&&s.mechanics.some(m=>m[1]==='adds'))b+=4;return b}
-function chance(s){const avg=party().reduce((n,c)=>n+cond(c.id),0)/5;return clamp(Math.round(s.base+(ilvl()-18)*2+knowledge(s.knowledge)*.12+(avg-75)*.1+bonus(s)),35,97)}
+function professionPrepBonus(){
+ if(!P?.activeBonuses)return 0;
+ const score=party().reduce((n,c)=>{const b=P.activeBonuses(c)||{};return n+
+   (Number(b.damagePct)||0)*.55+(Number(b.crit)||0)*.18+(Number(b.haste)||0)*.16+
+   (Number(b.block)||0)*.16+(Number(b.healing)||0)*.16+(Number(b.stamina)||0)*.08+
+   (Number(b.armour)||0)*.015+(Number(b.magicWardPct)||0)*.2},0);
+ return clamp(score,0,8)
+}
+function chance(s){const avg=party().reduce((n,c)=>n+cond(c.id),0)/5;return clamp(Math.round(s.base+(ilvl()-18)*2+knowledge(s.knowledge)*.12+(avg-75)*.1+bonus(s)+professionPrepBonus()),35,97)}
 function learn(s,ok){const a=ok?(s.kind==='trash'||s.kind==='event'?3:7):5;party().forEach(c=>{c.knowledge=c.knowledge||{};const gain=Math.max(1,Math.round(a*(I?.knowledgeMultiplier?.(c)||1)));c.knowledge[s.knowledge]=clamp((Number(c.knowledge[s.knowledge])||0)+gain,0,100)});return a}
 function recordMaterialDrop(drop,bossName){
  if(!run?.loot||!drop)return;
@@ -930,7 +938,11 @@ async function resolveStage(s){
  const ok=run.stageOutcome,dmg=ok?(s.kind==='boss'||s.kind==='final'?5:3):(s.kind==='boss'||s.kind==='final'?22:10);
  party().forEach(c=>{const hit=Math.max(1,dmg-Math.floor(Math.random()*4));setCond(c.id,cond(c.id)-hit);if(!ok)setHp(c.id,hp(c.id)-Math.ceil(hit/2))});updateRows();
  if(ok){
-   const k=learn(s,true),item=loot(s);if(s.bossId)state().bossKills[s.bossId]=true;
+   const k=learn(s,true),item=loot(s);if(s.bossId){
+     state().bossKills[s.bossId]=true;
+     const expired=P?.consumeBossCharges?.(party())||[];
+     if(expired.length){expired.forEach(x=>log(x+' expired.'));flash('PROFESSION EFFECT EXPIRED',false)}
+   }
    if(s.id==='kael'){state().gold+=35;run.loot.gold+=35}
    if(s.id==='embermaw'){state().gold+=55;run.loot.gold+=55}
    state().activity.push(s.title+' cleared during The Ashen Vault.');log(s.title+' cleared. Knowledge +'+k+'%.');if(item){run.rewards.push(item.name);flash('LOOT ACQUIRED',false);log(item.name+' sent to the Guild Bank.')}
@@ -1018,7 +1030,13 @@ async function override(t,b){
  if(t==='interrupt'){run.forceInterrupt=true;log('Override: force next interrupt.')}
  if(t==='defensive'){run.override=Math.max(run.override,5);party().forEach(c=>setCond(c.id,cond(c.id)+5));updateRows();act('tank','Using defensive cooldowns');log('Override: defensive cooldowns.')}
  if(t==='burn'){run.override=Math.max(run.override,6);act('dps','Committing damage cooldowns');log('Override: burn boss.')}
- if(t==='consumable'){const st=state(),x=(st.consumables||[]).find(y=>(y.quantity||0)>0);if(!x){log('No usable consumables remain.');return}party().forEach(c=>setCond(c.id,cond(c.id)+12));x.quantity--;if(x.quantity<=0)st.consumables=st.consumables.filter(y=>y!==x);updateRows();log(x.name+' used.');Game.save()}
+ if(t==='consumable'){
+   const st=state(),list=(st.consumables||[]).filter(y=>(y.quantity||0)>0),x=list.find(y=>y.payload?.effect==='combat-potion')||list.find(y=>!y.payload?.effect);
+   if(!x){log('No combat potions remain. Craft or buy one before the next run.');return}
+   const target=[...party()].sort((a,b)=>hp(a.id)-hp(b.id))[0],heal=Math.max(0,Number(x.payload?.healHp)||18),condition=Math.max(0,Number(x.payload?.condition)||10);
+   if(target){setHp(target.id,hp(target.id)+heal);setCond(target.id,cond(target.id)+condition);floating('p-'+target.id,'+'+heal,'heal');act('healer',target.name+' uses '+x.name)}
+   x.quantity--;if(x.quantity<=0)st.consumables=st.consumables.filter(y=>y!==x);updateRows();log(x.name+' restores '+(target?.name||'the party')+'.');Game.save()
+ }
 }
 function syncEntryButton(){
  const b=$('#enterDungeonBtn');if(!b||!Game?.ready)return;
