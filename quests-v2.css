@@ -153,3 +153,106 @@
   .quest-progress{grid-template-columns:1fr}.quest-puzzle-board{grid-template-columns:1fr 1fr}
   .quest-complete-rewards{grid-template-columns:1fr}
 }
+
+
+/* ==========================================================================
+   Adventure Log refinement — mystery first, systems second
+   ========================================================================== */
+.quest-v3-hero{
+  display:flex;justify-content:space-between;align-items:flex-start;gap:18px;
+  padding:22px;
+  border-bottom:1px solid rgba(216,185,118,.07);
+  background:
+    radial-gradient(circle at 92% 8%,rgba(154,120,58,.09),transparent 30%),
+    linear-gradient(180deg,#10191b,#091215)
+}
+.quest-v3-hero small{
+  display:block;color:#8d7951;font-size:.33rem;font-weight:900;letter-spacing:.12em
+}
+.quest-v3-hero h2{
+  margin:5px 0 3px;color:#eee6d4;
+  font-family:Georgia,serif;font-size:1.55rem;font-weight:400
+}
+.quest-v3-hero p{margin:0;color:#62706c;font-size:.4rem}
+.quest-v3-status{
+  flex:0 0 auto;padding:6px 8px;
+  border:1px solid rgba(216,185,118,.12);
+  background:#12170f;color:#b7a16a;
+  font-size:.3rem;font-weight:900;letter-spacing:.09em
+}
+.quest-v3-status.complete{
+  border-color:rgba(92,168,112,.16);
+  background:#0c1710;color:#7dbe8f
+}
+.quest-v3-story{padding:17px 22px 4px}
+.quest-v3-story p{
+  margin:0;color:#94a19d;
+  font-family:Georgia,serif;font-size:.68rem;line-height:1.65
+}
+.quest-v3-clue{
+  margin:14px 22px 0;padding:14px 15px;
+  border:1px solid rgba(216,185,118,.09);
+  border-left:2px solid #aa8c4d;
+  background:linear-gradient(90deg,#0d1718,#091215)
+}
+.quest-v3-clue>small{
+  display:block;color:#8d7950;font-size:.3rem;font-weight:900;letter-spacing:.11em
+}
+.quest-v3-clue h3{
+  margin:5px 0;color:#ded6c5;
+  font-family:Georgia,serif;font-size:.96rem;font-weight:400
+}
+.quest-v3-clue p{margin:0;color:#889590;font-size:.45rem;line-height:1.5}
+.quest-v3-clue em{
+  display:block;margin-top:7px;padding-top:7px;
+  border-top:1px solid rgba(255,255,255,.03);
+  color:#62706c;font-size:.35rem;font-style:normal;line-height:1.45
+}
+.quest-v3-known{padding:16px 22px 2px}
+.quest-v3-section-head{
+  display:flex;justify-content:space-between;align-items:flex-end;gap:12px;
+  margin-bottom:8px
+}
+.quest-v3-section-head span{
+  color:#8c7850;font-size:.3rem;font-weight:900;letter-spacing:.1em
+}
+.quest-v3-section-head small{color:#4f5d59;font-size:.28rem}
+.quest-v3-known>div:last-child{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px
+}
+.quest-v3-known p{
+  position:relative;margin:0;padding:9px 9px 9px 20px;
+  border:1px solid rgba(255,255,255,.035);
+  background:#081114;color:#74827d;font-size:.35rem;line-height:1.42
+}
+.quest-v3-known p:before{
+  content:"";position:absolute;left:9px;top:14px;
+  width:4px;height:4px;border-radius:50%;background:#9b824b
+}
+.quest-detail-action{padding-top:14px}
+.quest-v2-list-card em{color:#56645f}
+.quest-journal-side section>small{letter-spacing:.11em}
+.quest-reward-list p:last-child{color:#a18e63!important}
+.quest-items-empty{line-height:1.45}
+
+/* Old v2 progress UI is intentionally not part of the adventure-log presentation. */
+.quest-points-medallion,
+.quest-progress,
+.quest-stage-track{display:none!important}
+
+@media(max-width:720px){
+  .quest-v3-hero{padding:15px 13px;gap:10px}
+  .quest-v3-hero h2{font-size:1.26rem}
+  .quest-v3-status{font-size:.28rem;padding:5px 6px}
+  .quest-v3-story{padding:13px 14px 2px}
+  .quest-v3-story p{font-size:.72rem}
+  .quest-v3-clue{margin:10px 14px 0;padding:12px}
+  .quest-v3-clue h3{font-size:.9rem}
+  .quest-v3-clue p{font-size:.6rem}
+  .quest-v3-clue em{font-size:.48rem}
+  .quest-v3-known{padding:13px 14px 2px}
+  .quest-v3-section-head{display:block}
+  .quest-v3-section-head small{display:block;margin-top:3px;font-size:.38rem}
+  .quest-v3-known>div:last-child{grid-template-columns:1fr}
+  .quest-v3-known p{font-size:.52rem;padding:9px 9px 9px 20px}
+}
