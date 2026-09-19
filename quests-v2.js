@@ -14,35 +14,48 @@ const QUEST={
   difficulty:'Intermediate',
   length:'Long',
   start:'Bram Kel · East Road Survey Camp',
-  summary:'A road crew has found a piece of black Cell glass beneath Zeltira. It should be inert. Instead, it reacts to Cellbound adventurers — and appears to remember a road that no longer exists.',
+  summary:'A road crew breaks open stone beneath Zeltira and finds black Cell glass warm to the touch. The shard should be dead. Instead, it reacts to your guild — and remembers somewhere no living map records.',
   rewards:['250 Gold','150 Guild Renown'],
   requirements:['Zeltira tutorial completed','An active five-character party will be needed','Access to The Ashen Vault']
 };
 
+/*
+QUEST WRITING BIBLE
+- Dialogue should sound spoken, not like quest instructions.
+- NPCs know only what they plausibly know; let the player connect clues.
+- Prefer tension, personality and implication over exposition.
+- No NPC should explain a puzzle answer before the player solves it.
+- Keep most dialogue beats to one strong thought.
+NPC voices:
+  Elara Vey — clipped, practical, protective; distrusts guesses and wasted lives.
+  Bram Kel — working-man dry humour; jokes when uncomfortable, never when stakes are obvious.
+  Tessa Orr — precise, fascinated, occasionally unsettling; treats dangerous Cell phenomena as irresistible problems.
+  Old Jory — prickly expert, proud of obsolete knowledge, warmer than he pretends.
+*/
 const ASHFALL={
   id:'ashes-on-the-east-road',
   title:'Ashes on the East Road',
   difficulty:'Novice',
   length:'Medium',
   start:'Warden Elara Vey · Zeltira East Gate',
-  summary:'Supply carts have vanished on the road beneath the old forge. The tracks lead toward a sealed entrance that should have remained dead.',
+  summary:'Three supply carts vanish on the same quiet road. At the first wreck, ash from a forge abandoned for years is ground into the wheel ruts.',
   requirements:['Zeltira tutorial completed','A complete active five-character party'],
   rewards:['Tier 1 quest gear','The Ashen Vault unlocked','120 Gold','75 Guild Renown']
 };
 const ASHFALL_STAGES=[
-  {id:'warning',label:'A Road Gone Quiet',objective:'Speak with Warden Elara about the missing supply carts.',hint:'Three carts entered the east road. None returned.'},
-  {id:'tracks',label:'Tracks in the Cinders',objective:'Inspect the abandoned cart and identify where the attackers came from.',hint:'Not every mark in the ash belongs to the attackers.'},
-  {id:'ambush',label:'The Cinder Cart',objective:'Follow the true tracks and survive the Ashbound ambush.',hint:'The trail climbs toward the old forge entrance.'},
-  {id:'key',label:'A Door in the Mountain',objective:'Return the recovered forge key to Elara.',hint:'The key bears the same mark carved above The Ashen Vault.'}
+  {id:'warning',label:'A Road Gone Quiet',objective:'Elara has stopped traffic on the east road. Find out why.',hint:'The first wreck was found before dawn. The horses were gone.'},
+  {id:'tracks',label:'Tracks in the Cinders',objective:'Reconstruct what happened at the first wreck.',hint:'Something arrived from off-road. Something else left uphill.'},
+  {id:'ambush',label:'The Cinder Cart',objective:'Follow the attackers before they realise they were tracked.',hint:'The forge has been cold for years. The ash beneath your boots is not.'},
+  {id:'key',label:'A Door in the Mountain',objective:'Show Elara what the Ashbound were carrying.',hint:'Elara will recognise the seal.'}
 ];
 
 const STAGES=[
-  {id:'letter',label:'An Unwelcome Delivery',npc:'Bram Kel',objective:'Read the glass-sealed letter and take the fragment to Tessa Orr.',hint:'Bram’s road crew found something warm inside solid stone.'},
-  {id:'bearer',label:'A Living Resonance',npc:'Tessa Orr',objective:'Choose one of your active five to carry the Blackened Fragment.',hint:'The fragment only responds when it is near a living Cellbound adventurer.'},
-  {id:'vault',label:'Make It Sing',npc:'Tessa Orr',objective:'Clear The Ashen Vault with the Bearer in your active five.',hint:'Tessa believes the Vaultheart will force the fragment to reveal what it remembers.'},
-  {id:'decipher',label:'Old Marks, Older Roads',npc:'Old Jory',objective:'Find someone who can read the survey marks hidden inside the fragment.',hint:'Tessa can read Cells. She cannot read fifty-year-old road-surveyor shorthand.'},
-  {id:'route',label:'The Road Under the Road',npc:'Bram Kel',objective:'Follow the decoded route beneath the east road.',hint:'The route points into sealed survey tunnels that do not appear on modern maps.'},
-  {id:'seal',label:'The Door That Breathed',npc:'Tessa Orr',objective:'Investigate the Hollow Seal and decide whether to open it.',hint:'The Blackened Fragment fits the centre of the door exactly.'}
+  {id:'letter',label:'An Unwelcome Delivery',npc:'Bram Kel',objective:'Bram Kel has sent something he refuses to keep in his office.',hint:'The package hums faintly when a Cellbound adventurer stands near it.'},
+  {id:'bearer',label:'A Living Resonance',npc:'Tessa Orr',objective:'Tessa wants the shard kept close to one adventurer.',hint:'It reacts differently to each living Cell it approaches.'},
+  {id:'vault',label:'Make It Sing',npc:'Tessa Orr',objective:'Expose the fragment to a stronger Cell resonance.',hint:'The shard has begun producing marks beneath its surface.'},
+  {id:'decipher',label:'Old Marks, Older Roads',npc:'Old Jory',objective:'Find the person in Zeltira who still understands the old road marks.',hint:'Someone kept these roads before modern maps existed.'},
+  {id:'route',label:'The Road Under the Road',npc:'Bram Kel',objective:'Take Jory’s route into the tunnels beneath the east road.',hint:'Nobody has officially entered these tunnels in decades.'},
+  {id:'seal',label:'The Door That Breathed',npc:'Tessa Orr',objective:'Work out what the Blackened Fragment was trying to lead you toward.',hint:'The door reacts before the shard even touches it.'}
 ];
 
 const ITEMS={
@@ -228,25 +241,27 @@ async function startAshfall(){
   const a=ensure().ashfall;if(a.complete)return;
   if(!a.started){a.started=true;a.stage='warning';a.startedAt=new Date().toISOString();ashfallHistory('Warden Elara called the guild to Zeltira’s east gate.');await commit()}
   showDialogue('A Road Gone Quiet','Warden Elara Vey',[
-    'Three supply carts left Zeltira for the east farms yesterday. None came back. The road patrol found the first cart before dawn.',
-    'There was ash inside the wheel ruts even though it has not rained cinders here for years. Someone carried that ash down from the old forge.',
-    'Find the cart, work out which trail is real, and do not follow anything into the mountain unless your five are ready.'
-  ],()=>advanceAshfall('warning','tracks','Elara sent the guild to inspect an abandoned supply cart on the east road.'));
+    'One missing cart is theft. Three is a pattern.',
+    'Patrol found the first one on its side before dawn. Grain everywhere. Harness torn clean through. No driver. No blood.',
+    'There is one thing I cannot account for: black furnace ash ground into the wheel ruts.',
+    'The old forge has been cold for eighteen years.',
+    'Go look at the wreck. Do not bring me a theory. Bring me something I can act on.'
+  ],()=>advanceAshfall('warning','tracks','Elara sent the guild to reconstruct what happened on the east road.'));
 }
 function openAshfallTracks(){
   if(ashfallStage()!=='tracks')return;
   const q=ensure(),a=q.ashfall,root=puzzleRoot();root.hidden=false;document.body.classList.add('quest-puzzle-open');
   a.investigationMistakes=Number(a.investigationMistakes)||0;
   const evidence=[
-    {icon:'◫',title:'Axle & wheel',text:'The axle split outward. There are no impact scores on the cart, but the horse harness tore forward as if the animals bolted.'},
-    {icon:'⌁',title:'Tracks',text:'Hound pads and two different boot patterns enter from the north-east cut. Only the two boot patterns continue uphill.'},
-    {icon:'✦',title:'Ash sample',text:'The ash contains tiny beads of black furnace glass. Elara says that residue has only been found around the abandoned forge.'},
-    {icon:'↯',title:'Scorching',text:'Scorch marks sit on top of the spilled grain but beneath the bootprints. The fire came after the cart overturned, before the attackers left.'}
+    {icon:'◫',title:'Axle & wheel',text:'The axle burst outward after the wheel twisted. No weapon marks. The leather harness is torn forward, hard enough to pull the brass rings open.'},
+    {icon:'⌁',title:'Tracks',text:'Hound prints come out of the north-east scrub beside two sets of boots. At the wreck, the paws circle. The boots keep climbing.'},
+    {icon:'✦',title:'Ash sample',text:'The ash glitters with beads of melted black glass. You have seen the same residue fused into the stone around the abandoned forge.'},
+    {icon:'↯',title:'Scorching',text:'Scorching blackens the spilled grain, but boot heels cut cleanly through the burns. The cart fell first. The fire came next. Someone walked away last.'}
   ];
   const questions=[
-    {title:'What most likely caused the cart to crash?',answers:['A weapon smashed the axle','The hounds panicked the horses from the north-east cut','The driver deliberately overturned it'],correct:1,success:'The axle failed during the panic. The ambush began off-road, not with a direct strike on the cart.'},
-    {title:'Which trail should the party follow?',answers:['The horse tracks back toward Zeltira','The hound pads that stop beside the cart','The two boot patterns continuing uphill'],correct:2,success:'The animals stayed at the wreck. The human attackers withdrew uphill.'},
-    {title:'Where are the attackers most likely heading?',answers:['The abandoned forge','The river crossing','Back into Zeltira'],correct:0,success:'The furnace-glass residue ties the attackers to the old forge above the road.'}
+    {title:'What most likely caused the cart to crash?',answers:['A weapon smashed the axle','The hounds panicked the horses from the north-east cut','The driver deliberately overturned it'],correct:1,success:'The wreck was the result of the horses bolting. Whatever frightened them came out of the north-east cut.'},
+    {title:'Which trail should the party follow?',answers:['The horse tracks back toward Zeltira','The hound pads that stop beside the cart','The two boot patterns continuing uphill'],correct:2,success:'The hounds stayed with the wreck. Two people left it on foot, uphill.'},
+    {title:'Where are the attackers most likely heading?',answers:['The abandoned forge','The river crossing','Back into Zeltira'],correct:0,success:'The ash did not drift here. Someone brought it down from the old forge.'}
   ];
   let step=0;
   const draw=(note='')=>{
@@ -260,7 +275,7 @@ function openAshfallTracks(){
       const answer=Number(b.dataset.deduction);
       if(answer!==question.correct){
         a.investigationMistakes++;Game.save?.();
-        draw('That explanation conflicts with at least one piece of evidence. Re-read the timing of the tracks, ash and damage.');
+        draw('Something in that answer does not fit the scene. Check what happened before the cart fell — and what happened after.');
         return;
       }
       if(step<questions.length-1){step++;draw(question.success);return}
@@ -279,19 +294,19 @@ async function beginAshfallAmbush(){
   if(alertLevel>=2)enemies.push('Ashbound Scout');
   const won=await runQuest2DFight({
     quest:ASHFALL.title,title:'The Cinder Cart',location:'Old Forge Approach',
-    ambience:alertLevel>=2?'Your noisy investigation has drawn an extra sentry to the ambush.':'The party reaches the burnt cart before the sentries realise they were followed.',
+    ambience:alertLevel>=2?'A whistle answers from above the road. You were heard. Another sentry is already moving.':'The tracks end at a second cart, burnt down to its ironwork. Nobody is visible. That is the problem.',
     phases:['Ambush','Signal Flare','Cinder Breath'],enemies,eliteIndex:1,
     script:async api=>{
-      await api.phase(0,'The ambush closes from both sides.');
+      await api.phase(0,'Movement in the scrub. Too late to back out — the road closes behind you.');
       await api.tankEngage();
       await api.attack(1,2);
-      await api.phase(1,'The runner reaches for a flare.');
+      await api.phase(1,'The Ashbound Runner tears a flare from his belt and turns toward the forge.');
       await api.cast(1,'SIGNAL FLARE',1800,true);
       if(alertLevel>=2&&enemies.length>3){
         await api.cast(3,'ASH WHISTLE',1500,true);
         await api.attack(3,1);
       }
-      await api.phase(2,'A hound inhales a cone of burning cinders.');
+      await api.phase(2,'The nearest hound lowers its head. Orange light leaks between its teeth.');
       await api.cone(0,'CINDER BREATH');
       await api.attack(0,2);
       await api.attack(2,2);
@@ -305,9 +320,12 @@ async function beginAshfallAmbush(){
 async function finishAshfall(){
   if(ashfallStage()!=='key')return;
   showDialogue('The Old Forge Key','Warden Elara Vey',[
-    'That mark belonged to the keepers of the Ashen Vault. I thought every key was destroyed when the forge was sealed.',
-    'The Ashbound were not stealing supplies. They were feeding something behind that door.',
-    'Keep the key. If your guild is going in, you should decide when — not whatever is waking up below.'
+    'Put that on the table.',
+    '...I have not seen that seal since I was a recruit.',
+    'The Ashen Vault keepers carried keys like this. We melted every one we recovered after the forge was shut.',
+    'So either we missed one... or somebody made another.',
+    'Those carts were not being robbed. They were being emptied.',
+    'Keep the key. I will close the road. What you do with the door is your decision — but make it before whoever is behind it makes theirs.'
   ],()=>openGearReward({key:'ashfall-weapon',title:'A Door in the Mountain',slot:'Weapon',tier:1,source:ASHFALL.title+' · Completion',onClaim:completeAshfall}));
 }
 async function completeAshfall(){
@@ -317,7 +335,7 @@ async function completeAshfall(){
   ashfallHistory('The old forge key opened the route to The Ashen Vault.');s.activity.push('Quest complete: '+ASHFALL.title+'. The Ashen Vault was unlocked.');
   await commit();
   const root=document.createElement('div');root.className='quest-unlock-backdrop quest-complete-backdrop';
-  root.innerHTML='<section class="quest-complete-card"><div class="quest-complete-rune">♜</div><small>QUEST COMPLETE</small><h2>'+ASHFALL.title+'</h2><p>The road investigation has uncovered the old forge entrance and given your guild the equipment needed to begin the hunt.</p><div class="quest-complete-rewards"><article><span>GOLD</span><b>+120</b></article><article><span>RENOWN</span><b>+75</b></article><article><span>DUNGEON</span><b>UNLOCKED</b></article></div><div class="quest-complete-unlock"><small>PERMANENT UNLOCK</small><h3>The Ashen Vault</h3><p>Quest gear gives you a reliable starting point. Better versions now wait inside the dungeon.</p></div><button>OPEN DUNGEON JOURNAL →</button></section>';
+  root.innerHTML='<section class="quest-complete-card"><div class="quest-complete-rune">♜</div><small>QUEST COMPLETE</small><h2>'+ASHFALL.title+'</h2><p>The road is closed. The old forge is awake. And your guild now holds the only key anyone knows still exists.</p><div class="quest-complete-rewards"><article><span>GOLD</span><b>+120</b></article><article><span>RENOWN</span><b>+75</b></article><article><span>DUNGEON</span><b>UNLOCKED</b></article></div><div class="quest-complete-unlock"><small>PERMANENT UNLOCK</small><h3>The Ashen Vault</h3><p>Quest gear gives you a reliable starting point. Better versions now wait inside the dungeon.</p></div><button>OPEN DUNGEON JOURNAL →</button></section>';
   document.body.appendChild(root);root.querySelector('button').onclick=()=>{root.remove();Game.switchView?.('content')};
 }
 
@@ -331,13 +349,19 @@ async function startQuest(){
   }
   if(currentStage()!=='letter')return;
   showDialogue('The Letter in Glass','Bram Kel',[
-    'I’ll save you the official version. We were digging a drain, Derren swung a pick where I told him not to, and the road started humming.',
-    'We found a black shard inside solid stone. Warm to the touch. Derren says it whispered his name. Derren also once blamed a goat for stealing his boots, so make of that what you will.',
-    'I sent the thing to Tessa Orr. She looked at it for six seconds, stopped making jokes, and asked for your guild.'
+    'Before you ask: no, I did not dig it up on purpose.',
+    'Derren put a pick through the east-road bed and the stone underneath started humming. Not vibrating. Humming.',
+    'We cracked the slab and found this black shard sealed inside it. Warm as skin.',
+    'Derren swears it said his name. Derren also swears a goat once stole both his boots while he was wearing them, so I left that out of the report.',
+    'Then Tessa saw the shard and stopped smiling.',
+    'That is the part I thought you should know.'
   ],()=>showDialogue('Something That Should Be Dead','Tessa Orr',[
-    'Bram is dramatic. Unfortunately, this time he has earned it.',
-    'This resembles Cell glass, but there is no living structure inside it. My instruments see a dead stone.',
-    'Bring a Cellbound adventurer close and it begins producing a signal. I need one of your people to carry it. Someone you trust.'
+    'Bram makes everything sound worse than it is.',
+    'This is worse than he made it sound.',
+    'It is Cell glass. Or it was. There is no living lattice left inside it. By every test I have, this thing is dead.',
+    'And yet when one of your adventurers comes near...',
+    '...there. Again.',
+    'It is not waking up. It is recognising something.'
   ],async()=>{
     grantItem('blackened-fragment');
     await advance('letter','bearer','Tessa Orr placed the Blackened Fragment in the guild’s care.');
@@ -350,10 +374,13 @@ async function chooseBearer(id){
   q.bearerId=c.id;q.bearerName=c.name;q.ashTestStartedAt=new Date().toISOString();
   addHistory(c.name+' became the Bearer of the Blackened Fragment.');
   showDialogue('The Bearer','Tessa Orr',[
-    c.name+' will do. Keep the fragment wrapped when you are not studying it.',
-    'If they hear anything, feel anything, dream anything strange — write it down. Yes, even if it sounds ridiculous.',
-    'There is one place I want to test next. The Vaultheart in The Ashen Vault gives off a violent Cell resonance. Take the fragment there.'
-  ],()=>openGearReward({key:'echoes-head',title:'A Living Resonance',slot:'Head',tier:2,source:QUEST.title+' · A Living Resonance',onClaim:()=>advance('bearer','vault',c.name+' accepted the Blackened Fragment.')}));
+    c.name+'. Good. Hold it.',
+    'Do not squeeze it.',
+    '...There. The surface just changed temperature.',
+    'From now on, '+c.name+' keeps it close. If they hear a voice, dream of somewhere they have never been, or suddenly know a road they have never walked, I want every detail.',
+    'And before you ask — no, that list was not hypothetical.',
+    'We need a stronger resonance. Take it near the Vaultheart.'
+  ],()=>openGearReward({key:'echoes-head',title:'A Living Resonance',slot:'Head',tier:2,source:QUEST.title+' · A Living Resonance',onClaim:()=>advance('bearer','vault',c.name+' became the Bearer of the Blackened Fragment.')}));
 }
 
 function latestAshenClear(){
@@ -368,9 +395,13 @@ async function checkAshenProgress(detail){
   if(q._processingVault)return;q._processingVault=true;
   grantItem('resonance-map');
   showDialogue('The Fragment Remembers','Tessa Orr',[
-    (q.bearerName||'The Bearer')+' brought it back hot enough to scorch my bench. That is useful. Expensive, but useful.',
-    'These silver lines appeared when the Vaultheart died. They are not fractures — look at the repeated hooks and bars.',
-    'They are survey marks. Old ones. I can read Cells; I cannot read the scribbles of dead road workers. Find someone who can.'
+    'Put it down. Carefully.',
+    (q.bearerName||'The Bearer')+' has carried it back hot enough to mark the cloth.',
+    'Look beneath the black surface. Those silver lines were not there before the Vaultheart fell.',
+    'No — they are too regular to be cracks.',
+    'Hooks. Bars. Repeated spacing.',
+    'This is not writing. It is a route.',
+    'And I have absolutely no idea how to read it.'
   ],async()=>{
     q._processingVault=false;
     await advance('vault','decipher','The Vaultheart awakened a hidden survey map inside the Blackened Fragment.');
@@ -384,9 +415,12 @@ async function forceEchoesResonance(){
   if(currentStage()!=='vault'||averagePartyLevel()<3)return;
   const q=ensure();if(q._processingVault)return;q._processingVault=true;
   showDialogue('A Different Kind of Pressure','Tessa Orr',[
-    'You have outgrown the lesson I wanted the Vaultheart to teach. I can see it in the way your five hold Cells now.',
-    'We do not need another Vaultheart kill just to make this fragment speak. Your guild can generate enough resonance here.',
-    'Hold it steady. If this works, the glass will remember without sending you back to an old dungeon for permission.'
+    'Stop. We are not going back to the Vault.',
+    'Your five are carrying more Cell pressure now than the Vaultheart produced when I first designed this test.',
+    'Stand around the table. Nobody touch the shard yet.',
+    'On three, let the pressure rise together.',
+    'One... two—',
+    'There. It moved before three.'
   ],async()=>{
     grantItem('resonance-map');q._processingVault=false;
     await advance('vault','decipher','The active five forced the Blackened Fragment to reveal its survey markings through raw Cell resonance.');
@@ -402,10 +436,15 @@ function puzzleRoot(){
 async function meetJory(){
   if(currentStage()!=='decipher')return;
   showDialogue('The Old Surveyor','Old Jory',[
-    'Tessa sent you? Tell her my maps are not “decorative”. They are extremely practical and only slightly beautiful.',
-    'Those are east-road survey marks. Crews numbered permanent posts as they travelled away from Zeltira. Lower numbers are closer to town.',
-    'But do not blindly follow every symbol. Lantern marks are ventilation shafts, and the flood closed that shaft before this route was cut. Chain marks are sealed side-spurs — dead ends, not roads.',
-    'Here. This rubbing has the old post ledger. Match the symbols, discard anything that cannot belong to the route, then order what remains.'
+    'Tessa sent you.',
+    'No, do not answer. Nobody else in Zeltira still remembers I exist until a map starts frightening them.',
+    'Let me see the shard.',
+    '...Hah.',
+    'These are survey cuts. East-road crew marks. Older than half the buildings above us.',
+    'The numbers run outward from Zeltira. Small to large. That part is easy.',
+    'The rest is where young people get themselves buried.',
+    'A lantern is a vent, not a road. A chain is a sealed spur. If you follow either because the symbol looks important, I will deny knowing you.',
+    'Take the ledger. Work it out properly.'
   ],async()=>{
     grantItem('surveyor-rubbing');addHistory('Old Jory supplied the post ledger and explained how old survey routes were encoded.');
     await commit();openSurveyPuzzle();
@@ -636,9 +675,13 @@ async function beginInvestigation(){
 async function inspectSeal(){
   if(currentStage()!=='seal')return;
   showDialogue('The Door That Breathed','Tessa Orr',[
-    'I dislike doors that breathe. I especially dislike doors that breathe in rhythm with a dead piece of Cell glass.',
-    'The fragment fits the centre, but the seal has three turning rings around it. Forcing the fragment in without aligning them is exactly the sort of thing Bram would do.',
-    'The route you decoded is the key. The outer ring remembers where the survey began. The middle remembers what came immediately before the arch. The heart remembers the furthest surviving post.'
+    'Do you hear that?',
+    'Do not say “the wind”. The wind does not inhale.',
+    'The shard fits the centre socket exactly. I am not putting it in yet.',
+    'Three rings. Three memories in the route.',
+    'The outer ring wants the beginning. The middle wants the mark before the arch. The heart...',
+    '...the heart wants the last place the old surveyors reached.',
+    'Whatever built this expected someone to come back.'
   ],openSealPuzzle);
 }
 async function runSealGuardian(){
@@ -702,12 +745,18 @@ function openSealPuzzle(){
       root.hidden=true;document.body.classList.remove('quest-puzzle-open');
       addHistory('The guild aligned the Hollow Seal using the decoded survey route.');
       showDialogue('The Seal Opens','Tessa Orr',[
-        'That is it. The rings have stopped resisting the fragment.',
-        'Turn it now. Slowly.',
-        'There. The pressure is dropping — and the door is opening inward.'
+        'Wait.',
+        'The breathing stopped.',
+        'Turn the shard.',
+        'Slowly.',
+        '...That is not a door opening.',
+        'That is pressure equalising.',
+        'Whatever is on the other side has been sealed in long enough to have its own air.'
       ],()=>showDialogue('Bram’s Professional Opinion','Bram Kel',[
-        'For the record, my official recommendation remains “do not enter the ancient breathing hole under my road.”',
-        'My unofficial recommendation is that you tell me what is down there before the council notices the road has started humming again.'
+        'So the good news is you found the missing road.',
+        'The bad news is the missing road ends at a breathing underground ruin full of things that tried to kill you.',
+        'I am going to write “subsurface structural complication” on the council report.',
+        'If you go back in there, bring me something that proves I should retire.'
       ],completeQuest));
     };
   };
@@ -728,7 +777,7 @@ async function finalizeEchoes(){
   await commit();
 
   const root=document.createElement('div');root.className='quest-unlock-backdrop quest-complete-backdrop';
-  root.innerHTML='<section class="quest-complete-card"><div class="quest-complete-rune">⌁</div><small>QUEST COMPLETE</small><h2>'+QUEST.title+'</h2><p>The underroad mystery has led your guild to a sealed dungeon beneath Zeltira.</p><div class="quest-complete-rewards"><article><span>GOLD</span><b>+250</b></article><article><span>RENOWN</span><b>+150</b></article><article><span>DISCOVERY</span><b>PERMANENT</b></article></div><div class="quest-complete-unlock"><small>PERMANENT UNLOCK</small><h3>The Hollow Sanctum</h3><p>Void Crystal can now be recovered from the depths. A unique first-clear Relic waits inside.</p></div><button>OPEN DUNGEON JOURNAL →</button></section>';
+  root.innerHTML='<section class="quest-complete-card"><div class="quest-complete-rune">⌁</div><small>QUEST COMPLETE</small><h2>'+QUEST.title+'</h2><p>A forgotten survey route has opened into something older beneath Zeltira. The Hollow Sanctum is no longer sealed.</p><div class="quest-complete-rewards"><article><span>GOLD</span><b>+250</b></article><article><span>RENOWN</span><b>+150</b></article><article><span>DISCOVERY</span><b>PERMANENT</b></article></div><div class="quest-complete-unlock"><small>PERMANENT UNLOCK</small><h3>The Hollow Sanctum</h3><p>Void Crystal can now be recovered from the depths. A unique first-clear Relic waits inside.</p></div><button>OPEN DUNGEON JOURNAL →</button></section>';
   document.body.appendChild(root);
   root.querySelector('button').onclick=()=>{root.remove();Game.switchView?.('content');window.CellboundHollowSanctum?.renderCard?.()};
 }
