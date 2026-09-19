@@ -794,3 +794,5 @@
 
 /* Rolled equipment stats */
 .cb-slot-roll,.cb-current-roll,.cb-option-roll{display:block;margin-top:3px;color:#83bda9;font-size:.42rem;line-height:1.35}.cb-option-roll{font-weight:700}.cb-current-roll{font-style:normal}@media(max-width:720px){.cb-slot-roll,.cb-current-roll,.cb-option-roll{font-size:.52rem}}
+
+.cb-slot-prep{color:#d0b875!important;font-weight:800}
