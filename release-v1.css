@@ -11,3 +11,238 @@
 .release-gate button:disabled{opacity:.55}
 .release-gate em{display:block;margin-top:10px;color:#58645f;font-size:.43rem;font-style:normal}
 @media(max-width:560px){.release-builds{grid-template-columns:1fr}.release-gate section{padding:22px}.release-gate h2{font-size:1.55rem}}
+
+/* ==========================================================================
+   UI consolidation pass — September 2026
+   One shell, three workspaces, consistent page hierarchy.
+   ========================================================================== */
+:root{
+  --cb-surface:#091317;
+  --cb-surface-2:#0c181c;
+  --cb-panel-border:rgba(216,185,118,.085);
+  --cb-divider:rgba(255,255,255,.045);
+  --cb-gold:#d8b976;
+  --cb-gold-soft:#9b8558;
+  --cb-copy:#7b8a85;
+  --cb-copy-strong:#dfe5e1;
+}
+@media(min-width:1051px){
+  .app-shell{grid-template-columns:216px minmax(0,1fr)}
+  .sidebar{padding:20px 13px}
+}
+.sidebar{
+  border-right-color:rgba(216,185,118,.07);
+  background:
+    radial-gradient(circle at 40% 0,rgba(216,185,118,.035),transparent 24%),
+    linear-gradient(180deg,#071014,#060d11);
+}
+.brand{padding:4px 7px 21px;border-bottom:1px solid rgba(255,255,255,.035);margin-bottom:13px}
+.brand-mark{border-color:rgba(216,185,118,.38);color:#d8b976;box-shadow:inset 0 0 18px rgba(216,185,118,.05)}
+.brand strong{font-size:.88rem;color:#e8e4d8}.brand span{color:#5f6d68}
+.primary-nav{display:flex;flex-direction:column;gap:6px}
+.primary-nav .nav-btn{
+  min-height:48px;height:48px;
+  border:1px solid transparent;border-radius:2px;
+  padding:0 10px;
+  color:#73807c;
+  gap:10px;
+}
+.primary-nav .nav-btn>b{font-size:.68rem;font-weight:650;letter-spacing:.025em}
+.primary-nav .nav-btn>span{width:22px;color:#53635e}
+.primary-nav .nav-btn>em{
+  margin-left:auto;padding:2px 5px;
+  border-radius:9px;background:#17160f;
+  color:#9f8c5e;font-size:.37rem
+}
+.primary-nav .nav-btn:hover{
+  color:#d7dfda;
+  border-color:rgba(216,185,118,.08);
+  background:rgba(216,185,118,.025)
+}
+.primary-nav .nav-btn.active{
+  color:#eee8da;
+  border-color:rgba(216,185,118,.16);
+  background:linear-gradient(90deg,rgba(216,185,118,.09),rgba(14,28,31,.25))
+}
+.primary-nav .nav-btn.active:before{
+  left:-1px;top:8px;bottom:8px;width:2px;background:#d8b976
+}
+.primary-nav .nav-btn.active>span{color:#d8b976}
+.season-card{
+  margin-top:auto;padding:12px;
+  border-color:rgba(216,185,118,.08);
+  background:linear-gradient(180deg,rgba(25,24,17,.55),rgba(10,18,20,.68))
+}
+.season-card small{color:#9f895c;font-size:.42rem}.season-card b{font-size:.92rem}.season-card span{font-size:.55rem}
+.sign-out{color:#52605b;font-size:.54rem}
+
+/* Compact command header */
+.main{padding-left:24px;padding-right:24px}
+.topbar{
+  height:84px;
+  border-bottom-color:rgba(216,185,118,.065);
+}
+.topbar>div:first-child small{color:#8e7b57}
+.topbar h1{font-size:1.62rem;color:#e7e4da}
+.resource-strip{gap:5px}
+.resource-strip div{
+  min-width:84px;padding:7px 9px;
+  border-color:rgba(216,185,118,.07);
+  background:#081216
+}
+.resource-strip span{font-size:.4rem;color:#596963}.resource-strip b{font-size:.84rem;color:#ddd8ca}
+
+/* Workspace-level secondary navigation */
+.workspace-tabs{
+  display:flex;
+  align-items:center;
+  gap:3px;
+  min-height:46px;
+  margin:0;
+  padding:6px 0;
+  border-bottom:1px solid rgba(216,185,118,.06);
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+.workspace-tabs[hidden]{display:none!important}
+.workspace-tabs::-webkit-scrollbar{display:none}
+.workspace-tabs button{
+  position:relative;
+  flex:0 0 auto;
+  min-width:96px;height:34px;min-height:34px;
+  padding:0 13px;
+  border:1px solid transparent;
+  background:transparent;color:#63716c;
+  font-size:.51rem;font-weight:800;letter-spacing:.055em;
+}
+.workspace-tabs button:hover{color:#bfc8c3;background:rgba(255,255,255,.018)}
+.workspace-tabs button.active{
+  color:#e5dcc5;
+  border-color:rgba(216,185,118,.12);
+  background:#12170f
+}
+.workspace-tabs button.active:after{
+  content:"";position:absolute;left:14px;right:14px;bottom:-7px;height:2px;background:#d8b976
+}
+
+/* Shared page grammar */
+.view{padding-top:20px}
+.section-intro{margin-bottom:15px;align-items:center}
+.section-intro>div:first-child{min-width:0}
+.section-intro small{color:#8d7a55!important;font-size:.46rem!important}
+.section-intro h2{
+  margin:3px 0 4px;
+  color:#e8e4da;
+  font-size:1.72rem;
+  line-height:1.05
+}
+.section-intro p{max-width:760px;color:#71807b;font-size:.62rem;line-height:1.55}
+.panel{
+  border-color:var(--cb-panel-border);
+  background:linear-gradient(180deg,rgba(11,22,25,.96),rgba(7,14,17,.98));
+  box-shadow:0 12px 30px rgba(0,0,0,.19)
+}
+.panel-head{
+  min-height:59px;padding:12px 14px;
+  border-bottom-color:var(--cb-divider)
+}
+.panel-head small{color:#847451!important;font-size:.42rem!important}
+.panel-head h3{font-size:1rem;color:#dedbd1}
+.ghost-btn,.filter{
+  border-color:rgba(216,185,118,.1);
+  background:#0b1416;color:#76837e
+}
+.ghost-btn:hover,.filter:hover{border-color:rgba(216,185,118,.25);color:#d8cfb8}
+.filter.active{border-color:rgba(216,185,118,.28);background:#1b1a12;color:#d8c58c}
+.ui-search,.ui-select,input,select{
+  border-radius:0
+}
+
+/* Overview — less marketing, more command surface */
+#overview .hero-card{
+  min-height:218px;padding:27px 31px;
+  border-color:rgba(216,185,118,.09);
+  background:
+    linear-gradient(90deg,rgba(6,14,17,.96),rgba(9,24,27,.82)),
+    radial-gradient(circle at 75% 20%,rgba(216,185,118,.09),transparent 33%)
+}
+#overview .hero-card h2{font-size:2.15rem;max-width:680px}
+#overview .hero-card p{font-size:.68rem;max-width:610px}
+#overview .hero-card small{color:#95815a}
+#overview .hero-stat{padding:16px;border-left-color:rgba(216,185,118,.12)}
+#overview .hero-stat b{font-size:1.06rem}
+#overview .dashboard-grid{gap:12px;margin-top:12px}
+
+/* Roster */
+#roster .roster-intro{margin-bottom:12px}
+#roster .roster-role-filters{flex-wrap:wrap;justify-content:flex-end}
+#roster .char-card{transition:transform .15s,border-color .15s,box-shadow .15s}
+
+/* Bank */
+#bank .bank-intro-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+#bank .bank-summary{margin-bottom:9px}
+#bank .bank-command-bar{border-radius:0}
+
+/* Professions — clearer three-part workflow */
+#professions .profession-layout{gap:12px}
+#professions .profession-main{display:grid;gap:12px}
+#professions .profession-roster-panel{border-color:var(--cb-panel-border)}
+#professions .workshop-panel{min-height:360px}
+#professions .crafted-inventory{padding-bottom:4px}
+#professions .economy-badge{
+  padding:6px 8px;border:1px solid rgba(216,185,118,.12);
+  background:#12160f;color:#a99460;font-size:.4rem;letter-spacing:.08em
+}
+
+/* Trading — market is primary, selling is secondary */
+#trading .trading-layout{grid-template-columns:minmax(0,1.55fr) minmax(300px,.55fr);gap:12px}
+#trading .trading-side{display:grid;gap:12px;align-content:start}
+@media(min-width:1100px){#trading .trading-side{position:sticky;top:12px}}
+#trading .trade-filters{display:flex;gap:4px;flex-wrap:wrap}
+#trading .trade-listings{min-height:260px}
+
+/* Social */
+#chat .social-layout{gap:12px}
+#chat .chat-panel{min-height:610px}
+#chat .social-side{gap:12px}
+#chat .chat-tabs{border-bottom-color:var(--cb-divider)}
+
+/* Adventure */
+#world .world-boss-grid{gap:12px}
+#world .world-rules{margin-top:12px}
+#quests .quest-journal-shell{gap:10px}
+#quests .quest-journal-nav,#quests .quest-journal-detail,#quests .quest-journal-side{border-color:var(--cb-panel-border)}
+#content .dungeon-journal-hero{margin-bottom:12px}
+#content .dungeon-journal-layout{gap:12px}
+
+/* Party */
+#party .party-layout{gap:12px}
+#party .formation-panel,#party .selection-panel{min-height:520px}
+#party .party-slot{background:#081216}
+#party .party-choice{background:#091316}
+
+/* Reports */
+#reports .reports-list{max-width:1180px}
+#reports .report-card{border-color:var(--cb-panel-border);background:#091417}
+#reports .report-card:first-child{border-color:rgba(216,185,118,.15)}
+
+/* Admin */
+#admin .admin-shell{gap:12px}
+#admin .admin-card{border-color:var(--cb-panel-border)}
+
+/* Consistent empty states and focus */
+.roster-empty-state,.profession-empty,.bank-empty,.trade-empty,.quest-items-empty{
+  border-color:rgba(216,185,118,.09)!important;
+  background:#081114!important;
+  color:#65736e!important
+}
+button:focus-visible,input:focus-visible,select:focus-visible{
+  outline:1px solid rgba(216,185,118,.6);
+  outline-offset:2px
+}
+
+@media(max-width:1320px){
+  .resource-strip div{min-width:76px}
+  .resource-strip span{font-size:.36rem}
+  .resource-strip b{font-size:.78rem}
+}
