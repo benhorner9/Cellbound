@@ -282,6 +282,7 @@ async function completeAshfall(){
 
 async function startQuest(){
   const q=ensure();
+  if(!echoesUnlocked()){questToast('ADVENTURE LOCKED',QUEST.title,'Clear The Ashen Vault once or raise your active five to average Level 3.');return}
   if(!q.started){
     q.started=true;q.startedAt=new Date().toISOString();q.currentStage='letter';
     addHistory('A glass-sealed letter from Bram Kel arrived at the guild.');
@@ -311,7 +312,7 @@ async function chooseBearer(id){
     c.name+' will do. Keep the fragment wrapped when you are not studying it.',
     'If they hear anything, feel anything, dream anything strange — write it down. Yes, even if it sounds ridiculous.',
     'There is one place I want to test next. The Vaultheart in The Ashen Vault gives off a violent Cell resonance. Take the fragment there.'
-  ],()=>advance('bearer','vault',c.name+' accepted the Blackened Fragment.'));
+  ],()=>openGearReward({key:'echoes-head',title:'A Living Resonance',slot:'Head',tier:2,source:QUEST.title+' · A Living Resonance',onClaim:()=>advance('bearer','vault',c.name+' accepted the Blackened Fragment.')}));
 }
 
 function latestAshenClear(){
@@ -337,6 +338,18 @@ async function checkAshenProgress(detail){
 function openAshen(){
   const q=ensure();if(currentStage()==='vault'&&!q.ashTestStartedAt){q.ashTestStartedAt=new Date().toISOString();Game.save?.()}
   Game.switchView?.('content');
+}
+async function forceEchoesResonance(){
+  if(currentStage()!=='vault'||averagePartyLevel()<3)return;
+  const q=ensure();if(q._processingVault)return;q._processingVault=true;
+  showDialogue('A Different Kind of Pressure','Tessa Orr',[
+    'You have outgrown the lesson I wanted the Vaultheart to teach. I can see it in the way your five hold Cells now.',
+    'We do not need another Vaultheart kill just to make this fragment speak. Your guild can generate enough resonance here.',
+    'Hold it steady. If this works, the glass will remember without sending you back to an old dungeon for permission.'
+  ],async()=>{
+    grantItem('resonance-map');q._processingVault=false;
+    await advance('vault','decipher','The active five forced the Blackened Fragment to reveal its survey markings through raw Cell resonance.');
+  });
 }
 
 /* RuneScape-style clue/puzzle beat */
@@ -386,7 +399,7 @@ function openSurveyPuzzle(){
       addHistory('The survey marks resolved into a route beneath the old east road.');
       await commit();
       root.innerHTML='<section class="quest-puzzle solved"><div class="quest-puzzle-solved">⌁</div><small>ROUTE DECIPHERED</small><h2>The Road Under the Road</h2><p>The silver lines match a buried survey route leading from the old drainage works to a sealed chamber beneath Zeltira.</p><button data-continue>FOLLOW THE ROUTE →</button></section>';
-      root.querySelector('[data-continue]').onclick=async()=>{root.hidden=true;document.body.classList.remove('quest-puzzle-open');await advance('decipher','route','The underroad route was decoded using Old Jory’s survey rubbing.')};
+      root.querySelector('[data-continue]').onclick=async()=>{root.hidden=true;document.body.classList.remove('quest-puzzle-open');await openGearReward({key:'echoes-chest',title:'Old Marks, Older Roads',slot:'Chest',tier:2,source:QUEST.title+' · Old Marks, Older Roads',onClaim:()=>advance('decipher','route','The underroad route was decoded using Old Jory’s survey rubbing.')})};
     });
   };
   draw();
@@ -456,6 +469,10 @@ async function inspectSeal(){
 }
 
 async function completeQuest(){
+  if(complete())return;
+  await openGearReward({key:'echoes-weapon',title:'The Door That Breathed',slot:'Weapon',tier:2,source:QUEST.title+' · Completion',onClaim:finalizeEchoes});
+}
+async function finalizeEchoes(){
   const s=state(),q=ensure();if(complete())return;
   q.flags.hollowSanctumUnlocked=true;q.currentStage='complete';q.completedAt=new Date().toISOString();
   if(!q.stageDone.includes('seal'))q.stageDone.push('seal');
@@ -503,7 +520,7 @@ function actionHtml(){
     const activeIds=new Set(party().map(c=>c.id)),chars=(state().roster||[]).filter(c=>activeIds.has(c.id));
     return '<div class="quest-bearer-picker"><small>CHOOSE THE BEARER</small>'+chars.map(c=>'<button data-bearer="'+c.id+'"><span>'+esc(c.portrait||c.name.slice(0,2))+'</span><div><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></div></button>').join('')+(chars.length!==5?'<p>Your active five is incomplete. Build the party first.</p>':'')+'</div>';
   }
-  if(stage==='vault')return '<div class="quest-action-block"><div><span>BEARER</span><b>'+esc(q.bearerName||'Not assigned')+'</b></div><button class="quest-primary" data-ashen>OPEN THE ASHEN VAULT →</button><small>The clear only counts if '+esc(q.bearerName||'the Bearer')+' is in the five.</small></div>';
+  if(stage==='vault'){const bypass=averagePartyLevel()>=3;return '<div class="quest-action-block"><div><span>BEARER</span><b>'+esc(q.bearerName||'Not assigned')+'</b></div><button class="quest-primary" data-ashen>OPEN THE ASHEN VAULT →</button>'+(bypass?'<button class="quest-primary secondary" data-force-resonance>USE PARTY RESONANCE INSTEAD →</button>':'')+'<small>'+(bypass?'Your active five has out-levelled this progression check. You can continue without another Ashen Vault clear.':'Clear The Ashen Vault with '+esc(q.bearerName||'the Bearer')+' in the five, or reach average party Level 3.')+'</small></div>'}
   if(stage==='decipher')return hasItem('surveyor-rubbing')?'<button class="quest-primary" data-puzzle>EXAMINE JORY’S RUBBING →</button>':'<button class="quest-primary" data-jory>ASK AROUND ZELTIRA →</button>';
   if(stage==='route')return '<button class="quest-primary" data-route>FOLLOW THE UNDERROAD →</button>';
   if(stage==='seal')return '<button class="quest-primary danger" data-seal>INSPECT THE HOLLOW SEAL →</button>';
@@ -536,6 +553,7 @@ function bindActions(){
   $('[data-start]')?.addEventListener('click',startQuest);
   $$('[data-bearer]').forEach(b=>b.addEventListener('click',()=>chooseBearer(b.dataset.bearer)));
   $('[data-ashen]')?.addEventListener('click',openAshen);
+  $('[data-force-resonance]')?.addEventListener('click',forceEchoesResonance);
   $('[data-jory]')?.addEventListener('click',meetJory);
   $('[data-puzzle]')?.addEventListener('click',openSurveyPuzzle);
   $('[data-route]')?.addEventListener('click',beginInvestigation);
