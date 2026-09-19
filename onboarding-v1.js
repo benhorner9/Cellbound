@@ -101,6 +101,7 @@ function stageTitle(stage){
     'recovery-lesson':'After the Fight',
     'profession-choice':'Choose a Profession',
     'craft':'Craft Your First Item',
+    'profession-use':'Prepare for Battle',
     'quest-lesson':'Your First Adventure',
     'departure':'The Road Opens'
   };
@@ -117,7 +118,7 @@ function chrome(body,stage){
     ['quest-lesson','Quests'],
     ['departure','Adventure']
   ];
-  const order={'party-builder':0,'zeltira-arrival':0,'gear':1,'dungeon-briefing':2,'dungeon-running':2,'loot-review':3,'recovery-lesson':4,'profession-choice':5,'craft':5,'quest-lesson':6,'departure':7};
+  const order={'party-builder':0,'zeltira-arrival':0,'gear':1,'dungeon-briefing':2,'dungeon-running':2,'loot-review':3,'recovery-lesson':4,'profession-choice':5,'craft':5,'profession-use':5,'quest-lesson':6,'departure':7};
   const at=order[stage]??0;
   return '<section class="onboard-shell"><header class="onboard-head"><div><small>CELLBOUND · FIRST CHARTER</small><h1>'+esc(stageTitle(stage))+'</h1></div><div class="onboard-progress">'+steps.map((x,i)=>'<span class="'+(i<at?'done':i===at?'active':'')+'"><i>'+(i+1)+'</i>'+x[1]+'</span>').join('')+'</div></header>'+body+'</section>';
 }
@@ -654,7 +655,7 @@ function renderProfessionChoice(){
   const chars=s.roster.map(c=>'<button class="prof-char-choice '+(c.id===selectedChar?'active':'')+'" data-prof-char="'+c.id+'"><span>'+c.portrait+'</span><div><b>'+esc(c.name)+'</b><small>'+esc(c.race)+' · '+esc(c.class)+'</small></div></button>').join('');
   const profs=Object.entries(P.PROFESSIONS).map(([name,p])=>'<button class="prof-choice '+(name===selectedProf?'active':'')+'" data-prof="'+name+'"><strong>'+p.icon+'</strong><div><b>'+name+'</b><p>'+p.summary+'</p><small>FIRST RECIPE · '+esc(p.recipes[0].name)+'</small></div></button>').join('');
   const mats='<div class="loot-material"><i>'+(P?.materialArtHTML?P.materialArtHTML('faded-cell-fragment',34,'tutorial-material-art'):'◇')+'</i><span><b>Faded Cell Fragment ×'+(s.materials['faded-cell-fragment']||0)+'</b><small>Recovered from the Hollows</small></span></div><div class="loot-material"><i>'+(P?.materialArtHTML?P.materialArtHTML('zeltiran-iron',34,'tutorial-material-art'):'⬡')+'</i><span><b>Zeltiran Iron ×'+(s.materials['zeltiran-iron']||0)+'</b><small>Recovered from the Hollows</small></span></div>';
-  const body='<div class="profession-tutorial"><aside><small>DUNGEON LOOT</small><h2>These are reagents.</h2><p>Reagents are used by professions. Different professions turn the same dungeon drops into equipment, enhancements or consumables.</p>'+mats+'</aside><main><div class="builder-section-head"><div><small>01</small><h3>Who learns the profession?</h3></div><p>Every adventurer can learn a profession. Standard accounts begin with one profession slot per character.</p></div><div class="prof-char-grid">'+chars+'</div><div class="builder-section-head"><div><small>02</small><h3>Choose their first profession</h3></div><p>This choice becomes part of the character and persists after the tutorial.</p></div><div class="prof-grid">'+profs+'</div><button id="confirmProfession" class="on-primary" '+(selectedChar&&selectedProf?'':'disabled')+'>LEARN '+esc(selectedProf||'A PROFESSION')+' →</button></main></div>';
+  const body='<div class="profession-tutorial"><aside><small>DUNGEON LOOT</small><h2>These are reagents.</h2><p>Reagents are used by professions. Professions do not replace dungeon gear — they turn dungeon drops into temporary enhancements, flasks, runes and potions that are consumed through play.</p>'+mats+'</aside><main><div class="builder-section-head"><div><small>01</small><h3>Who learns the profession?</h3></div><p>Every adventurer can learn a profession. Standard accounts begin with one profession slot per character.</p></div><div class="prof-char-grid">'+chars+'</div><div class="builder-section-head"><div><small>02</small><h3>Choose their first profession</h3></div><p>This choice becomes part of the character and persists after the tutorial.</p></div><div class="prof-grid">'+profs+'</div><button id="confirmProfession" class="on-primary" '+(selectedChar&&selectedProf?'':'disabled')+'>LEARN '+esc(selectedProf||'A PROFESSION')+' →</button></main></div>';
   ensureRoot().innerHTML=chrome(body,'profession-choice');
   $$('[data-prof-char]').forEach(b=>b.onclick=()=>{s.onboarding.professionCharacterId=b.dataset.profChar;Game.save();renderProfessionChoice()});
   $$('[data-prof]').forEach(b=>b.onclick=()=>{s.onboarding.professionName=b.dataset.prof;Game.save();renderProfessionChoice()});
@@ -677,7 +678,7 @@ function renderCraft(){
   const s=state(),c=s.roster.find(x=>x.id===s.onboarding.professionCharacterId),prof=c?.professions?.[0],def=P.PROFESSIONS[prof?.name],recipe=def?.recipes?.[0];
   if(!c||!recipe){s.onboarding.stage='profession-choice';Game.save();render();return}
   const can=Object.entries(recipe.inputs).every(([k,q])=>(Number(s.materials[k])||0)>=q);
-  const body='<div class="craft-tutorial"><aside class="craft-character"><small>APPRENTICE</small><span class="craft-avatar">'+esc(c.portrait)+'</span><h2>'+esc(c.name)+'</h2><p>'+def.icon+' '+esc(prof.name)+' · Skill 1</p><div class="skill-preview"><i style="width:0%"></i></div><small>CRAFTING EARNS PROFESSION XP</small></aside><main><small>ZELTIRA · CRAFT ROW</small><h2>Craft your first item.</h2><p>The reagents from your dungeon are enough to complete a level 1 recipe. Crafting consumes the materials permanently and creates a real tradeable item.</p><article class="tutorial-recipe"><div class="recipe-title"><strong>'+def.icon+'</strong><div><small>SKILL 1 RECIPE</small><h3>'+esc(recipe.name)+'</h3><p>'+esc(prof.name)+'</p></div></div><div class="recipe-inputs">'+recipeInputs(recipe)+'</div><div class="craft-output"><span>CREATES</span><b>'+esc(recipe.output.name)+' ×'+(recipe.output.quantity||1)+'</b></div><button id="craftTutorialItem" class="on-primary" '+(can?'':'disabled')+'>CRAFT '+esc(recipe.output.name).toUpperCase()+' →</button></article></main></div>';
+  const body='<div class="craft-tutorial"><aside class="craft-character"><small>APPRENTICE</small><span class="craft-avatar">'+esc(c.portrait)+'</span><h2>'+esc(c.name)+'</h2><p>'+def.icon+' '+esc(prof.name)+' · Skill 1</p><div class="skill-preview"><i style="width:0%"></i></div><small>CRAFTING EARNS PROFESSION XP</small></aside><main><small>ZELTIRA · CRAFT ROW</small><h2>Craft your first preparation item.</h2><p>The reagents from your dungeon are enough to complete a level 1 recipe. The result is tradeable, useful and eventually consumed — exactly what keeps the profession economy moving.</p><article class="tutorial-recipe"><div class="recipe-title"><strong>'+def.icon+'</strong><div><small>SKILL 1 RECIPE</small><h3>'+esc(recipe.name)+'</h3><p>'+esc(prof.name)+'</p></div></div><div class="recipe-inputs">'+recipeInputs(recipe)+'</div><div class="craft-output"><span>CREATES</span><b>'+esc(recipe.output.name)+' ×'+(recipe.output.quantity||1)+'</b></div><button id="craftTutorialItem" class="on-primary" '+(can?'':'disabled')+'>CRAFT '+esc(recipe.output.name).toUpperCase()+' →</button></article></main></div>';
   ensureRoot().innerHTML=chrome(body,'craft');
   $('#craftTutorialItem')?.addEventListener('click',craftTutorialItem);
 }
@@ -697,12 +698,40 @@ async function craftTutorialItem(){
   }else if(out.category==='consumable')addTutorialConsumable(out,qty);
   else if(out.category==='material')Game.addMaterial(out.key,qty);
   prof.xp=(Number(prof.xp)||0)+(recipe.xp||0);
-  s.onboarding.craftedItem=out.name;s.onboarding.stage='quest-lesson';s.onboarding.professionComplete=true;
-  s.activity.push(c.name+' crafted '+out.name+' — the guild is ready for its first real quest.');
+  s.onboarding.craftedItem=out.name;s.onboarding.craftedKey=out.key;s.onboarding.stage='profession-use';s.onboarding.professionComplete=true;
+  s.activity.push(c.name+' crafted '+out.name+' — a profession preparation item is ready to use.');
   Game.save();await Game.persistState();
   if(db&&user)await db.from('characters').update({tutorial_stage:'tutorial_complete',last_played_at:new Date().toISOString()}).eq('user_id',user.id);
   render();
 }
+function renderProfessionUse(){
+  const s=state(),c=s.roster.find(x=>x.id===s.onboarding.professionCharacterId),key=s.onboarding.craftedKey,stack=s.consumables.find(x=>x.key===key),p=stack?.payload||{};
+  if(!c||!stack){s.onboarding.stage='quest-lesson';Game.save();render();return}
+  const bonus=P?.bonusText?.(p.bonuses)||'',charges=Number(p.charges)||3;
+  let actionTitle='Pack it for the next dungeon',actionCopy=p.description||'This crafted item will be consumed through play.',button='PACK FOR ADVENTURE →';
+  if(p.effect==='gear-enhancement'){actionTitle='Apply it to real equipment';actionCopy=(p.description||'')+' Applying another '+p.slot+' enhancement later will replace it.';button='APPLY TO '+String(p.slot||'ITEM').toUpperCase()+' →'}
+  if(p.effect==='character-flask'){actionTitle='Drink the flask';actionCopy=(p.description||'')+' A character can only have one active Flask at a time.';button='DRINK FLASK →'}
+  if(p.effect==='combat-potion'){actionTitle='Carry it into combat';actionCopy='This potion stays in crafted inventory until you press USE CONSUMABLE during a dungeon. It will automatically help the party member in the most danger.'}
+  const body='<div class="growth-school"><main><small>ZELTIRA · PROFESSION PREPARATION</small><h2>Crafting supports the gear you earn. It does not replace it.</h2><p>Your first crafted item now has a job and a lifespan.</p><article class="first-quest-preview"><div class="quest-preview-rune">'+(p.effect==='gear-enhancement'?'✥':'⚗')+'</div><div><small>'+esc((p.effect||'CRAFTED').replaceAll('-',' ').toUpperCase())+'</small><h3>'+esc(stack.name)+'</h3><p>'+esc(actionCopy)+'</p>'+(bonus?'<b>'+esc(bonus)+'</b>':'')+'</div></article><div class="progression-teach"><div><b>1 · EARN GEAR</b><span>Quest and dungeon equipment stays the valuable permanent object.</span></div><i>→</i><div><b>2 · PREPARE IT</b><span>Professions add temporary power for difficult content.</span></div><i>→</i><div><b>3 · CONSUME & REPLACE</b><span>Used items leave the economy, creating permanent marketplace demand.</span></div></div></main><aside class="z-guide"><small>USE YOUR FIRST CRAFT</small><h2>'+esc(actionTitle)+'</h2><p>'+esc(p.description||'Tradeable profession preparation item.')+'</p><button id="useTutorialCraft" class="on-primary">'+button+'</button><p id="tutorialCraftUseHint">'+(p.charges?'Duration: '+charges+' boss encounters.':'Single-use combat item.')+'</p></aside></div>';
+  ensureRoot().innerHTML=chrome(body,'profession-use');
+  $('#useTutorialCraft')?.addEventListener('click',async()=>{
+    if(p.effect==='gear-enhancement'){
+      const slot=p.slot,item=c.equipment?.[slot],signature=P?.itemSignature?.(item);
+      if(!item?.name||!signature){$('#tutorialCraftUseHint').textContent='This character needs an equipped '+slot+' item first.';return}
+      c.activeEnhancements=c.activeEnhancements&&typeof c.activeEnhancements==='object'?c.activeEnhancements:{};
+      c.activeEnhancements[slot]={key:stack.key,name:stack.name,slot,bonuses:{...(p.bonuses||{})},remainingBosses:charges,targetSignature:signature,appliedAt:new Date().toISOString()};
+      stack.quantity--;if(stack.quantity<=0)s.consumables=s.consumables.filter(x=>x!==stack);
+      s.activity.push(stack.name+' applied to '+c.name+'’s '+slot+' during training.');
+    }else if(p.effect==='character-flask'){
+      c.activeProfessionBuffs=(Array.isArray(c.activeProfessionBuffs)?c.activeProfessionBuffs:[]).filter(x=>x.kind!=='flask');
+      c.activeProfessionBuffs.push({kind:'flask',key:stack.key,name:stack.name,bonuses:{...(p.bonuses||{})},remainingBosses:charges,appliedAt:new Date().toISOString()});
+      stack.quantity--;if(stack.quantity<=0)s.consumables=s.consumables.filter(x=>x!==stack);
+      s.activity.push(c.name+' drank '+stack.name+' during training.');
+    }
+    s.onboarding.stage='quest-lesson';Game.save();await Game.persistState();render();
+  });
+}
+
 function renderQuestLesson(){
   const body='<div class="quest-school"><main><small>ZELTIRA · NOTICE BOARD</small><h2>This is how Cellbound moves forward.</h2><p>Your first real adventure is waiting outside the tutorial. Quests are not side chores: they discover locations, tell the story and provide reliable gear that prepares you for the next dungeon.</p><article class="first-quest-preview"><div class="quest-preview-rune">♜</div><div><small>NOVICE · MEDIUM ADVENTURE</small><h3>Ashes on the East Road</h3><p>Supply carts have vanished below the old forge. Investigate the road, earn reliable Tier 1 quest gear and uncover the entrance to The Ashen Vault.</p></div></article><div class="progression-teach"><div><b>1 · QUEST</b><span>Reliable equipment and dungeon access.</span></div><i>→</i><div><b>2 · DUNGEON</b><span>Stronger randomized gear and better rolls.</span></div><i>→</i><div><b>3 · NEXT QUEST</b><span>Catch-up gear moves the story forward even if drops were unlucky.</span></div></div><div class="gear-school-rule"><b>You are never meant to be trapped farming one dungeon</b><span>If your party out-levels old content, later progression checks can also be bypassed through character level.</span></div></main><aside class="z-guide"><small>ONE LAST CHECK</small><h2>Why would you still farm a dungeon after its quest gear?</h2><div class="tutorial-question" id="questLessonQuestion"><button data-quest-answer="wrong">Because quest gear is unusable</button><button data-quest-answer="correct">Because dungeon gear can roll stronger stats</button><button data-quest-answer="wrong">Because the next quest is permanently locked</button></div><p id="questLessonHint">Quest gear gives you the floor. Dungeon drops give you the ceiling.</p></aside></div>';
   ensureRoot().innerHTML=chrome(body,'quest-lesson');
@@ -739,6 +768,7 @@ function render(){
   else if(stage==='recovery-lesson')renderRecoveryLesson();
   else if(stage==='profession-choice')renderProfessionChoice();
   else if(stage==='craft')renderCraft();
+  else if(stage==='profession-use')renderProfessionUse();
   else if(stage==='quest-lesson')renderQuestLesson();
   else if(stage==='departure')renderDeparture();
   else{s.onboarding.stage='party-builder';Game.save();renderPartyBuilder()}
