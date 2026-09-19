@@ -34,7 +34,7 @@ async function processInbox(){
     const qty=Math.max(1,Number(d.quantity)||1);
     if(d.category==='material')Game.addMaterial(d.itemKey,qty);
     else if(d.category==='consumable')addConsumable({key:d.itemKey,name:d.itemName,payload:d.payload},qty);
-    else if(d.category==='gear'){const base=G.byId(d.itemKey)||G.byName(d.itemName)||{},gear={...base,...(d.payload||{})},source=d.payload?.source||'Trading Post';for(let i=0;i<qty;i++)Game.addBankItem({...gear,source});}
+    else if(d.category==='gear'){const base=G.byId(d.itemKey)||G.byName(d.itemName)||{},gear={...base,...(d.payload||{})},source=d.payload?.source||'Trading Post',worldBoss=['Gloamhide Behemoth','The Hollow Wyrm','Veyr, the Cell-Torn'].includes(source);for(let i=0;i<qty;i++){const delivered=worldBoss&&!gear.bonusStats?G.rollItemAffixes({...gear,source}):{...gear,source};Game.addBankItem(delivered);}}
     else if(d.category==='recipe'){const rid=d.payload?.recipeId||d.itemKey;if(rid){const x=s.recipeScrolls.find(v=>v.recipeId===rid);if(x)x.quantity=(x.quantity||1)+qty;else s.recipeScrolls.push({recipeId:rid,name:d.itemName||`Recipe: ${P.recipeById(rid)?.name||rid}`,quantity:qty});}}
     s.activity.push(`${d.payload?.source||'Trading Post'} delivery received: ${(G.byId(d.itemKey)?.name)||d.itemName} ×${qty}.`);
   }
