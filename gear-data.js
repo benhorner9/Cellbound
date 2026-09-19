@@ -102,6 +102,42 @@ function itemScoreFor(c,item){
   const roll=statLines(item).reduce((n,s)=>n+s.value*(ideal.has(s.key)?4:.5),0);
   return ilvl*100+roll;
 }
+function questProfileStats(c,profile='specialist',tier=1){
+  const count=TIER_META[Math.max(1,Math.min(4,Number(tier)||1))]?.statCount||1;
+  const ideal=idealStats(c),primary=c?.class==='Warrior'?'strength':['Hunter','Rogue'].includes(c?.class)?'agility':'intellect';
+  const defensive=['stamina',...(['Warrior','Paladin'].includes(c?.class)?['armour','block']:['haste','crit'])];
+  const swift=['haste','crit',primary];
+  const specialist=[...ideal,primary,'stamina'];
+  const source=profile==='sturdy'?defensive:profile==='swift'?swift:specialist;
+  return [...new Set(source)].slice(0,count);
+}
+function questStatValue(key,tier=1,slot='Head'){
+  const t=Math.max(1,Math.min(4,Number(tier)||1)),weapon=slot==='Weapon'?1:0;
+  if(key==='armour')return [8,13,21,30][t-1]+weapon*2;
+  if(STAT_DEFS[key]?.unit==='percent')return [1,2,4,6][t-1]+weapon;
+  return [2,4,7,10][t-1]+weapon;
+}
+function createQuestGear(c,slot,tier=1,profile='specialist',source='Quest Reward'){
+  if(!c)return null;
+  const base=items.find(x=>x.class===c.class&&x.tier===Math.max(1,Math.min(3,Number(tier)||1))&&x.slot===slot)||starterSet(c.class).find(x=>x.slot===slot);
+  if(!base)return null;
+  const keys=questProfileStats(c,profile,tier),profileName=profile==='sturdy'?'Stalwart':profile==='swift'?'Swift':'Specialist';
+  return {
+    ...base,
+    itemId:'quest-'+base.itemId+'-'+profile,
+    baseItemId:base.itemId,
+    name:profileName+' '+base.name,
+    tierLabel:'Quest Gear · Tier '+tier,
+    rarity:base.rarity,
+    dropEnabled:false,
+    bonusStats:keys.map(key=>({key,value:questStatValue(key,tier,slot)})),
+    rollId:'quest-'+slug(c.id||c.name||c.class)+'-'+slug(slot)+'-'+profile+'-'+Date.now().toString(36),
+    affixVersion:1,
+    questGear:true,
+    tradeState:'soulbound',
+    source
+  };
+}
 function artCoordinates(item,size=64){
   if(!item)return null;
   const canonical=byName(item.name)||byId(item.itemId)||item;
@@ -119,5 +155,5 @@ function artHTML(item,size=64,extra=''){
   const glyph=canonical.slot==='Head'?'⛑':canonical.slot==='Chest'?'▣':'⚔';
   return `<span class="gear-art tier-${canonical.tier||1} ${extra}" style="${artStyle(canonical,size)}" aria-label="${canonical.name}" title="${canonical.name}"><span class="gear-art-fallback" aria-hidden="true">${glyph}</span><img class="gear-art-sprite" src="./assets/gear/cellbound-gear-atlas.webp?v=3" alt="${canonical.name}" draggable="false" style="position:absolute;max-width:none;width:${21*size}px;height:${3*size}px;left:-${pos.col*size}px;top:-${pos.row*size}px"></span>`;
 }
-window.CellboundGear={CLASS_ORDER,SLOT_ORDER,TIER_META,STAT_DEFS,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,artStyle,artHTML};
+window.CellboundGear={CLASS_ORDER,SLOT_ORDER,TIER_META,STAT_DEFS,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,questProfileStats,createQuestGear,artStyle,artHTML};
 })();
