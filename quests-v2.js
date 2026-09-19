@@ -633,17 +633,84 @@ async function beginInvestigation(){
 
 async function inspectSeal(){
   if(currentStage()!=='seal')return;
-  const q=ensure();
   showDialogue('The Door That Breathed','Tessa Orr',[
     'I dislike doors that breathe. I especially dislike doors that breathe in rhythm with a dead piece of Cell glass.',
-    'This stone predates Zeltira’s first wall. The fragment fits that hollow in the centre so precisely that I am done calling any of this coincidence.',
-    'Turn the fragment and the seal opens. I cannot tell you what is below. I can tell you the door was built to stay closed.'
-  ],()=>showDialogue('One Last Opinion','Bram Kel',[
-    'For the record, my professional recommendation is “do not open the ancient breathing door under my road.”',
-    'My unofficial recommendation is that if you are opening it anyway, do it before the council notices and forms a committee.'
-  ],completeQuest));
+    'The fragment fits the centre, but the seal has three turning rings around it. Forcing the fragment in without aligning them is exactly the sort of thing Bram would do.',
+    'The route you decoded is the key. The outer ring remembers where the survey began. The middle remembers what came immediately before the arch. The heart remembers the furthest surviving post.'
+  ],openSealPuzzle);
 }
-
+async function runSealGuardian(){
+  return runQuest2DFight({
+    quest:QUEST.title,title:'Guardian of the Seal',location:'The Hollow Seal',
+    ambience:'The misaligned rings grind together. A shape peels itself out of the stone and blocks the chamber.',
+    phases:['Awakening','Sealbreaker'],enemies:['Hollow Sentinel'],eliteIndex:0,
+    completeText:'The Sentinel collapses into inert glass. The seal rings remain, waiting to be aligned correctly.',
+    script:async api=>{
+      await api.phase(0,'The Hollow Sentinel tears itself free from the door.');
+      await api.tankEngage();await api.cast(0,'STONE CHOIR',1800,true);
+      await api.phase(1,'Cracks of light race across the chamber floor.');
+      const target=party().find(c=>qRole(c)==='dps')||party()[0];
+      await api.line(0,target,'SEALBREAKER LINE');
+      await api.cone(0,'HOLLOW SWEEP');
+      await api.attack(0,4);await api.finishAll();
+    }
+  });
+}
+function openSealPuzzle(){
+  if(currentStage()!=='seal')return;
+  const q=ensure(),root=puzzleRoot();root.hidden=false;document.body.classList.add('quest-puzzle-open');
+  q.sealMistakes=Number(q.sealMistakes)||0;
+  const symbols=[
+    {id:'hammer',icon:'⚒',label:'Work'},
+    {id:'water',icon:'≈',label:'Water'},
+    {id:'arch',icon:'∩',label:'Arch'},
+    {id:'eye',icon:'◉',label:'Watcher'}
+  ];
+  const rings=[
+    {name:'OUTER',order:['water','eye','hammer','arch'],target:'hammer'},
+    {name:'MIDDLE',order:['arch','hammer','eye','water'],target:'water'},
+    {name:'HEART',order:['hammer','arch','water','eye'],target:'eye'}
+  ];
+  const pos=[0,0,0];
+  const current=i=>rings[i].order[pos[i]%rings[i].order.length];
+  const draw=(note='')=>{
+    root.innerHTML='<section class="quest-puzzle quest-seal-puzzle"><header><div><small>QUEST PUZZLE · THE HOLLOW SEAL</small><h2>Align the breathing door</h2></div><button data-close>×</button></header>'+
+      '<div class="quest-seal-layout"><aside><div class="quest-puzzle-clue"><span>TESSA’S READING</span><p>The outer ring remembers where the survey began. The middle remembers what came immediately before the arch. The heart remembers the furthest surviving post.</p></div>'+
+      '<div class="quest-puzzle-clue"><span>YOUR DECODED ROUTE</span><p>⚒ Work → ≈ Culvert → ∩ Arch → ◉ Inspection</p></div>'+
+      '<div class="quest-puzzle-clue"><span>WARNING</span><p>Testing a bad alignment feeds resonance back into the seal. Repeated mistakes can wake whatever was left to guard it.</p></div></aside>'+
+      '<main><div class="seal-rings">'+rings.map((r,i)=>{const sym=symbols.find(x=>x.id===current(i));return '<article><small>'+r.name+' RING</small><div class="seal-ring-visual"><i>'+sym.icon+'</i></div><b>'+sym.label+'</b><button data-rotate="'+i+'">ROTATE CLOCKWISE</button></article>'}).join('')+'</div>'+
+      '<div class="quest-resonance-meter seal-pressure"><span>SEAL PRESSURE</span><div><i style="width:'+Math.min(100,q.sealMistakes*50)+'%"></i></div><b>'+q.sealMistakes+'</b></div>'+
+      '<p id="questPuzzleHint" class="'+(note?'wrong':'')+'">'+(note||'All three rings must be correct at the same time. Use the decoded route rather than trial and error.')+'</p>'+
+      '<button class="quest-puzzle-confirm" data-test-seal>TEST ALIGNMENT</button></main></div></section>';
+    root.querySelector('[data-close]').onclick=()=>{root.hidden=true;document.body.classList.remove('quest-puzzle-open')};
+    root.querySelectorAll('[data-rotate]').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.rotate);pos[i]=(pos[i]+1)%rings[i].order.length;draw()});
+    root.querySelector('[data-test-seal]').onclick=async()=>{
+      const ok=rings.every((ring,i)=>current(i)===ring.target);
+      if(!ok){
+        q.sealMistakes++;Game.save?.();
+        if(q.sealMistakes%2===0){
+          root.hidden=true;document.body.classList.remove('quest-puzzle-open');
+          await runSealGuardian();
+          if(currentStage()==='seal')openSealPuzzle();
+          return;
+        }
+        draw('The fragment kicks violently in the socket. At least one ring contradicts the route you decoded.');
+        return;
+      }
+      root.hidden=true;document.body.classList.remove('quest-puzzle-open');
+      addHistory('The guild aligned the Hollow Seal using the decoded survey route.');
+      showDialogue('The Seal Opens','Tessa Orr',[
+        'That is it. The rings have stopped resisting the fragment.',
+        'Turn it now. Slowly.',
+        'There. The pressure is dropping — and the door is opening inward.'
+      ],()=>showDialogue('Bram’s Professional Opinion','Bram Kel',[
+        'For the record, my official recommendation remains “do not enter the ancient breathing hole under my road.”',
+        'My unofficial recommendation is that you tell me what is down there before the council notices the road has started humming again.'
+      ],completeQuest));
+    };
+  };
+  draw();
+}
 async function completeQuest(){
   if(complete())return;
   await openGearReward({key:'echoes-weapon',title:'The Door That Breathed',slot:'Weapon',tier:2,source:QUEST.title+' · Completion',onClaim:finalizeEchoes});
