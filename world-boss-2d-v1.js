@@ -52,11 +52,15 @@ function ensureShell(){
         <aside class="wb2d-raid-panel">
           <div class="wb2d-raid-head"><span>RAID FORCE</span><small>Live shared encounter</small></div>
           <div id="wb2dRaidList" class="wb2d-raid-list"></div>
+          <div class="wb2d-meter-stack">
+            <section class="wb2d-meter-panel"><div class="wb2d-meter-title"><span>DAMAGE METER</span><small>SERVER</small></div><div id="wb2dDamageMeter" class="wb2d-meter-list"></div></section>
+            <section class="wb2d-meter-panel threat"><div class="wb2d-meter-title"><span>THREAT METER</span><small>SERVER</small></div><div id="wb2dThreatMeter" class="wb2d-meter-list"></div></section>
+          </div>
           <div class="wb2d-feed-head"><span>COMBAT FEED</span></div>
           <div id="wb2dFeed" class="wb2d-feed"></div>
         </aside>
       </div>
-      <footer class="wb2d-footer"><span>Damage and boss health are server-authoritative. Other guild parties are represented in standard Tank / Healer / Damage formations.</span><button id="wb2dAttackNow">ATTACK NOW</button></footer>
+      <footer class="wb2d-footer"><span>Boss health, damage and party threat are server-authoritative. The highest-threat guild holds boss aggro; other guild parties are represented in standard Tank / Healer / Damage formations.</span><button id="wb2dAttackNow">ATTACK NOW</button></footer>
     </section>`;
   document.body.appendChild(root);
   root.querySelector('#wb2dClose').onclick=close;
@@ -122,7 +126,7 @@ function renderParticipants(parts){
   const nextKeys=new Set(),html=[];
   parts.forEach((p,index)=>{
     const anchor=groupAnchors[index%groupAnchors.length],members=groupParty(p,index),guild=String(p.guildLabel||'Unknown Guild');
-    html.push(`<article class="wb2d-raid-row ${p.isYou?'you':''}"><div><b>${esc(guild)}</b><small>Party iLvl ${Number(p.partyIlvl||0).toFixed(1)}${p.isYou?' · YOUR PARTY':''}</small></div><strong>${Number(p.damageDone||0).toLocaleString()}</strong></article>`);
+    html.push(`<article class="wb2d-raid-row ${p.isYou?'you':''} ${p.isAggro?'aggro':''}"><div><b>${esc(guild)}</b><small>Party iLvl ${Number(p.partyIlvl||0).toFixed(1)}${p.isYou?' · YOUR PARTY':''}${p.isAggro?' · BOSS AGGRO':''}</small></div><strong>${Number(p.damageDone||0).toLocaleString()}</strong></article>`);
     members.forEach((u,i)=>{
       const pos=unitPosition(anchor,u,i),key=u.key;nextKeys.add(key);
       let el=previous.get(key);
@@ -131,7 +135,7 @@ function renderParticipants(parts){
         el.dataset.unitKey=key;el.innerHTML='<span class="wb2d-unit-dot">'+(u.role==='tank'?'T':u.role==='healer'?'H':'D')+'</span><div class="wb2d-unit-hp"><i></i></div><small></small>';
         units.appendChild(el);
       }
-      el.className='wb2d-unit role-'+u.role+(u.own?' own':'')+(u.ranged?' ranged':' melee');
+      el.className='wb2d-unit role-'+u.role+(u.own?' own':'')+(u.ranged?' ranged':' melee')+(p.isAggro?' aggro':'');
       el.style.left=pos.x+'%';el.style.top=pos.y+'%';
       el.dataset.x=pos.x;el.dataset.y=pos.y;el.dataset.guild=guild;
       el.querySelector('small').textContent=u.own?u.name:(i===0?guild:'');
@@ -141,6 +145,21 @@ function renderParticipants(parts){
   previous.forEach((el,key)=>{if(!nextKeys.has(key))el.remove()});
   raid.innerHTML=html.join('')||'<div class="wb2d-empty">No commanders engaged.</div>';
   document.getElementById('wb2dPlayerCount').textContent=parts.length+' COMMANDER'+(parts.length===1?'':'S');
+}
+function renderCombatMeters(parts){
+  const damageRoot=document.getElementById('wb2dDamageMeter'),threatRoot=document.getElementById('wb2dThreatMeter');
+  const rows=Array.isArray(parts)?parts:[];
+  const meter=(root,key,isThreat=false)=>{
+    if(!root)return;
+    const sorted=[...rows].sort((a,b)=>(Number(b[key])||0)-(Number(a[key])||0));
+    if(!sorted.length){root.innerHTML='<div class="wb2d-meter-empty">No combat data yet.</div>';return}
+    const max=Math.max(1,...sorted.map(x=>Number(x[key])||0));
+    root.innerHTML=sorted.slice(0,6).map((p,i)=>{
+      const value=Number(p[key])||0,pct=value/max*100,aggro=isThreat&&p.isAggro;
+      return '<div class="wb2d-meter-row '+(p.isYou?'you ':'')+(aggro?'aggro':'')+'"><div><b>'+(i+1)+'. '+esc(p.guildLabel||'Unknown Guild')+(aggro?' <strong>AGGRO</strong>':'')+'</b><span>'+value.toLocaleString()+'</span></div><em><i style="width:'+pct+'%"></i></em></div>';
+    }).join('');
+  };
+  meter(damageRoot,'damageDone',false);meter(threatRoot,'threatDone',true);
 }
 function projectileFrom(el,role){
   const arena=document.getElementById('wb2dArena'),boss=document.getElementById('wb2dBoss'),fx=document.getElementById('wb2dEffects');
@@ -208,7 +227,7 @@ async function combatState(){
 async function refresh(){
   const data=await combatState();if(!data||!active)return;
   active.boss=data.boss||active.boss;const parts=Array.isArray(data.participants)?data.participants:[];
-  checkDamageChanges(parts);renderParticipants(parts);bossHealth(active.boss);
+  checkDamageChanges(parts);renderParticipants(parts);renderCombatMeters(parts);bossHealth(active.boss);
   document.getElementById('wb2dBossName').textContent=active.boss.name;
   document.getElementById('wb2dBossLabel').textContent=active.boss.name.toUpperCase();
   document.getElementById('wb2dStatus').textContent='Tier '+active.boss.tier+' · '+parts.length+'/'+active.boss.playerCap+' commanders engaged · Party attacks every 5 seconds';
@@ -227,7 +246,7 @@ async function attack(manual=false){
     if(data?.wiped){
       Game.applyPartyCellShock?.(25);await Game.persistState?.();wipeOwnParty();stopAttackTimer();
     }else{
-      const dmg=Number(data?.damage)||0;floatDamage(dmg,true);feed('Your party dealt '+dmg.toLocaleString()+' damage.','damage');
+      const dmg=Number(data?.damage)||0,threat=Number(data?.threat)||0;floatDamage(dmg,true);feed('Your party dealt '+dmg.toLocaleString()+' damage · +'+threat.toLocaleString()+' threat.','damage');
       if(data?.currentHp!=null){active.boss.currentHp=data.currentHp;active.boss.maxHp=data.maxHp||active.boss.maxHp;bossHealth(active.boss)}
     }
     if(data?.killed)victory();

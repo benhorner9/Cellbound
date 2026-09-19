@@ -399,3 +399,27 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 @media(max-width:480px){
  .cb2d-loot-currency{grid-template-columns:1fr 1fr}
 }
+
+
+/* Combat meters */
+.cb2d-combat-meters{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
+.cb2d-meter-panel{min-width:0;padding:9px;border:1px solid rgba(216,185,118,.08);background:#091316}
+.cb2d-meter-head{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-bottom:7px}
+.cb2d-meter-head small{color:#9a8864;font-size:.38rem;font-weight:900;letter-spacing:.09em}
+.cb2d-meter-head span{overflow:hidden;color:#60716b;font-size:.32rem;text-overflow:ellipsis;white-space:nowrap}
+.cb2d-meter-list{display:grid;gap:5px}
+.cb2d-meter-row{position:relative;min-width:0}
+.cb2d-meter-label{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:2px}
+.cb2d-meter-label b{min-width:0;overflow:hidden;color:#bfc9c4;font-size:.38rem;font-weight:800;text-overflow:ellipsis;white-space:nowrap}
+.cb2d-meter-label b strong{margin-left:3px;color:#e7c874;font-size:.27rem;letter-spacing:.05em}
+.cb2d-meter-label span{flex:0 0 auto;color:#697a74;font-size:.3rem}
+.cb2d-meter-row>em{display:block;height:5px;overflow:hidden;border-radius:2px;background:#162125}
+.cb2d-meter-row>em>i{display:block;height:100%;min-width:2px;background:#63c678;transition:width .22s ease}
+.cb2d-meter-row.tank>em>i{background:#c75a4f}.cb2d-meter-row.healer>em>i{background:#5d9fd6}
+.cb2d-meter-panel.threat .cb2d-meter-row>em>i{background:#b39a56}
+.cb2d-meter-panel.threat .cb2d-meter-row.aggro{padding:3px 4px;background:rgba(185,151,71,.055)}
+.cb2d-meter-panel.threat .cb2d-meter-row.danger{background:rgba(201,74,57,.08)}
+.cb2d-meter-panel.threat .cb2d-meter-row.danger>em>i{background:#c85243}
+.cb2d-meter-empty{padding:8px 2px;color:#586963;font-size:.34rem;text-align:center}
+@media(max-width:1050px){.cb2d-combat-meters{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.cb2d-combat-meters{grid-template-columns:1fr}.cb2d-meter-panel{padding:8px}}

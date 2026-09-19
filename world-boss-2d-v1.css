@@ -92,3 +92,25 @@ body.wb2d-open{overflow:hidden}
 .theme-cell-torn .wb2d-ground{background:radial-gradient(circle at 62% 50%,rgba(76,151,158,.11),transparent 22%),radial-gradient(circle at 62% 50%,rgba(132,71,158,.08),transparent 37%),linear-gradient(180deg,#10181b,#080c11)}.theme-cell-torn .wb2d-drift{background:#73b3b4}.theme-cell-torn .wb2d-boss{border-color:rgba(124,89,180,.5);background:radial-gradient(circle,#24172f,#0e0d12 72%)}
 @media(max-width:1000px){.wb2d-layout{grid-template-columns:1fr}.wb2d-arena-wrap{border-right:0}.wb2d-raid-panel{display:grid;grid-template-columns:1fr 1fr}.wb2d-raid-head,.wb2d-feed-head{grid-column:auto}.wb2d-raid-list,.wb2d-feed{height:180px;max-height:180px}.wb2d-arena{height:520px}}
 @media(max-width:700px){.wb2d-head{align-items:flex-start}.wb2d-head-actions{flex-direction:column;align-items:flex-end}.wb2d-arena{height:460px}.wb2d-raid-panel{display:block}.wb2d-raid-list,.wb2d-feed{height:160px}.wb2d-footer{align-items:flex-start;flex-direction:column}.wb2d-footer button{width:100%}}
+
+/* Combat meters */
+.wb2d-meter-stack{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:7px;border-top:1px solid rgba(216,185,118,.05);border-bottom:1px solid rgba(216,185,118,.05);background:#060d10}
+.wb2d-meter-panel{min-width:0;padding:7px;border:1px solid rgba(216,185,118,.07);background:#091316}
+.wb2d-meter-title{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px}
+.wb2d-meter-title span{color:#a08b5c;font-size:.3rem;font-weight:900;letter-spacing:.08em}
+.wb2d-meter-title small{color:#4f5d59;font-size:.24rem;font-weight:900;letter-spacing:.06em}
+.wb2d-meter-list{display:grid;gap:4px}
+.wb2d-meter-row>div{display:flex;align-items:center;justify-content:space-between;gap:5px;margin-bottom:2px}
+.wb2d-meter-row b{min-width:0;overflow:hidden;color:#aebbb6;font-size:.29rem;text-overflow:ellipsis;white-space:nowrap}
+.wb2d-meter-row b strong{margin-left:2px;color:#e1b963;font-size:.22rem;letter-spacing:.04em}
+.wb2d-meter-row span{flex:0 0 auto;color:#65736e;font-size:.26rem}
+.wb2d-meter-row>em{display:block;height:4px;overflow:hidden;background:#152023}
+.wb2d-meter-row>em>i{display:block;height:100%;min-width:2px;background:#b29a5a;transition:width .28s ease}
+.wb2d-meter-panel.threat .wb2d-meter-row>em>i{background:#a64f42}
+.wb2d-meter-row.you{padding:2px 3px;background:rgba(190,157,78,.055)}
+.wb2d-meter-row.aggro{padding:2px 3px;background:rgba(194,71,57,.09);box-shadow:inset 2px 0 #b94f40}
+.wb2d-meter-empty{padding:8px 2px;color:#52605b;font-size:.28rem;text-align:center}
+.wb2d-unit.aggro .wb2d-unit-dot{box-shadow:0 0 0 3px rgba(204,73,58,.62),0 0 18px rgba(204,73,58,.38)!important}
+.wb2d-raid-row.aggro{background:rgba(185,69,54,.07);box-shadow:inset 2px 0 #b94f40}
+@media(max-width:1000px){.wb2d-meter-stack{grid-column:1/-1;grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.wb2d-meter-stack{grid-template-columns:1fr}.wb2d-meter-panel{padding:8px}}

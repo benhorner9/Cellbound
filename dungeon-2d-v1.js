@@ -155,7 +155,7 @@ function briefing(){
  r.querySelector('[data-start]').onclick=start;
 }
 function start(){
- const p=party();token++;run={token:token,stage:0,speed:1,condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},xpGrowth:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0};
+ const p=party();token++;run={token:token,stage:0,speed:1,condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],damageDone:Object.fromEntries(p.map(c=>[c.id,0])),combatStartedAt:0,lastMeterAt:0,log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},xpGrowth:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0};
  drawViewer();seamless(token);
 }
 function route(){
@@ -166,7 +166,7 @@ function rows(){
 }
 function drawViewer(){
  const s=STAGES[run.stage],r=root();r.hidden=false;
- r.innerHTML='<section class="cb2d-shell"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LIVE 2D DUNGEON</small><h2 id="cb2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close>×</button></div></header><div class="cb2d-route" id="cb2dRoute">'+route()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena" id="cb2dArena"><div class="cb2d-floor"></div><div class="cb2d-environment" id="cb2dEnvironment"></div><div class="cb2d-room-tag" id="cb2dRoomTag"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div><div class="cb2d-caption"><span id="cb2dType">'+s.kind.toUpperCase()+'</span><b id="cb2dStatus">Entering encounter…</b></div></div><div class="cb2d-controls"><button data-override="focus"><b>FOCUS TARGET</b><small>Force priority damage.</small></button><button data-override="interrupt"><b>INTERRUPT NOW</b><small>Force the next interrupt.</small></button><button data-override="defensive"><b>DEFENSIVE</b><small>Stabilise the group.</small></button><button data-override="burn"><b>BURN BOSS</b><small>Commit damage cooldowns.</small></button><button data-override="consumable"><b>USE CONSUMABLE</b><small>Use available stock.</small></button></div><div class="cb2d-feed"><small>COMBAT FEED</small><p id="cb2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>PARTY CONDITION · ILVL '+ilvl()+'</small><div id="cb2dRows">'+rows()+'</div></div><div class="cb2d-plan"><small>PERSISTENT TACTICS</small><b>'+tactics.aggression.toUpperCase()+' · '+tactics.interrupts.toUpperCase()+' INTERRUPTS</b><span>'+tactics.defensives.toUpperCase()+' DEFENSIVES · '+tactics.adds.toUpperCase()+' ADDS</span></div></aside></div><div class="cb2d-end" id="cb2dEnd" hidden></div></section>';
+ r.innerHTML='<section class="cb2d-shell"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LIVE 2D DUNGEON</small><h2 id="cb2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close>×</button></div></header><div class="cb2d-route" id="cb2dRoute">'+route()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena" id="cb2dArena"><div class="cb2d-floor"></div><div class="cb2d-environment" id="cb2dEnvironment"></div><div class="cb2d-room-tag" id="cb2dRoomTag"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div><div class="cb2d-caption"><span id="cb2dType">'+s.kind.toUpperCase()+'</span><b id="cb2dStatus">Entering encounter…</b></div></div><div class="cb2d-controls"><button data-override="focus"><b>FOCUS TARGET</b><small>Force priority damage.</small></button><button data-override="interrupt"><b>INTERRUPT NOW</b><small>Force the next interrupt.</small></button><button data-override="defensive"><b>DEFENSIVE</b><small>Stabilise the group.</small></button><button data-override="burn"><b>BURN BOSS</b><small>Commit damage cooldowns.</small></button><button data-override="consumable"><b>USE CONSUMABLE</b><small>Use available stock.</small></button></div><div class="cb2d-feed"><small>COMBAT FEED</small><p id="cb2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="cb2dDamageTotal">0 total</span></div><div id="cb2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="cb2dThreatTarget">No target</span></div><div id="cb2dThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>PARTY CONDITION · ILVL '+ilvl()+'</small><div id="cb2dRows">'+rows()+'</div></div><div class="cb2d-plan"><small>PERSISTENT TACTICS</small><b>'+tactics.aggression.toUpperCase()+' · '+tactics.interrupts.toUpperCase()+' INTERRUPTS</b><span>'+tactics.defensives.toUpperCase()+' DEFENSIVES · '+tactics.adds.toUpperCase()+' ADDS</span></div></aside></div><div class="cb2d-end" id="cb2dEnd" hidden></div></section>';
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.resolved&&!confirm('Leave the Ashen Vault?'))return;close()};
  r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  r.querySelectorAll('[data-override]').forEach(b=>b.onclick=()=>override(b.dataset.override,b));
@@ -185,6 +185,34 @@ function updateRows(){
    const unit=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(unit)unit.style.width=hp(c.id)+'%';
    const marker=$('[data-unit="p-'+c.id+'"]');if(marker)marker.classList.toggle('dead',hp(c.id)<=0);
  })
+}
+function recordDamage(c,amount){
+ if(!run||!c)return;
+ const dealt=Math.max(0,Math.round(Number(amount)||0));if(!dealt)return;
+ run.damageDone=run.damageDone||{};run.damageDone[c.id]=(Number(run.damageDone[c.id])||0)+dealt;
+ renderCombatMeters();
+}
+function meterRole(c){const r=role(c);return r==='tank'?'tank':r==='healer'?'healer':'dps'}
+function renderCombatMeters(){
+ if(!run)return;
+ const damageRoot=$('#cb2dDamageMeter'),threatRoot=$('#cb2dThreatMeter');if(!damageRoot&&!threatRoot)return;
+ const p=party(),elapsed=run.combatStartedAt?Math.max(1,(performance.now()-run.combatStartedAt)/1000):1;
+ const damageRows=p.map(c=>({c,value:Number(run.damageDone?.[c.id])||0})).sort((a,b)=>b.value-a.value);
+ const maxDamage=Math.max(1,...damageRows.map(x=>x.value)),total=damageRows.reduce((n,x)=>n+x.value,0);
+ const totalEl=$('#cb2dDamageTotal');if(totalEl)totalEl.textContent=total.toLocaleString()+' total';
+ if(damageRoot)damageRoot.innerHTML=damageRows.map(({c,value},i)=>{
+   const pct=value/maxDamage*100,dps=Math.round(value/elapsed);
+   return '<div class="cb2d-meter-row '+meterRole(c)+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(c.name)+'</b><span>'+value.toLocaleString()+' · '+dps+' DPS</span></div><em><i style="width:'+pct+'%"></i></em></div>';
+ }).join('');
+ const targetIndex=enemyIndex(),table=targetIndex>=0?run.threat?.[targetIndex]:null,targetName=targetIndex>=0?STAGES[run.stage]?.enemies?.[targetIndex]:'';
+ const threatLabel=$('#cb2dThreatTarget');if(threatLabel)threatLabel.textContent=targetName||'No target';
+ if(!threatRoot)return;
+ if(!table){threatRoot.innerHTML='<div class="cb2d-meter-empty">Threat appears when combat begins.</div>';return}
+ const threatRows=p.map(c=>({c,value:Number(table[c.id])||0})).sort((a,b)=>b.value-a.value),maxThreat=Math.max(1,...threatRows.map(x=>x.value)),aggro=run.aggro?.[targetIndex];
+ threatRoot.innerHTML=threatRows.map(({c,value},i)=>{
+   const pct=value/maxThreat*100,hasAggro=c.id===aggro,danger=hasAggro&&combatProfile(c)!=='tank';
+   return '<div class="cb2d-meter-row '+meterRole(c)+(hasAggro?' aggro':'')+(danger?' danger':'')+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(c.name)+(hasAggro?' <strong>AGGRO</strong>':'')+'</b><span>'+Math.round(value).toLocaleString()+' · '+Math.round(pct)+'%</span></div><em><i style="width:'+pct+'%"></i></em></div>';
+ }).join('');
 }
 function addUnit(id,label,cls,x,y,size){
  const e=document.createElement('div');e.className='cb2d-unit '+cls+' '+(size||'');e.dataset.unit=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+'</span><em class="cb2d-unit-hp"><i></i></em>';$('#cb2dUnits').appendChild(e)
@@ -242,6 +270,7 @@ function spawn(s){
  run.enemyMax=s.enemies.map(()=>max);run.enemyHp=s.enemies.map(()=>max);
  run.threat=s.enemies.map(()=>Object.fromEntries(party().map(c=>[c.id,0])));
  run.aggro=s.enemies.map(()=>null);
+ run.damageDone=Object.fromEntries(party().map(c=>[c.id,0]));run.combatStartedAt=0;run.lastMeterAt=0;renderCombatMeters();
  const melee=party().filter(c=>combatProfile(c)==='melee');
  const ranged=party().filter(c=>combatProfile(c)==='ranged');
  party().forEach((c,i)=>{
@@ -324,7 +353,7 @@ function buildThreat(index,c,amount,source='damage'){
  else if(profile==='healer')value*=.55;
  else value*=1;
  run.threat[index][c.id]=(run.threat[index][c.id]||0)+value;
- updateAggro(index);
+ updateAggro(index);renderCombatMeters();
 }
 function updateAggro(index){
  const table=run?.threat?.[index];if(!table)return null;
@@ -433,11 +462,12 @@ function firePartyAttack(c,index,tok){
  const travel=kind==='melee'?180:(kind==='arrow'?280:350);
  scheduleImpact(()=>{
    if(run.enemyHp[index]<=0)return;
-   let next=run.enemyHp[index]-amount;
+   const before=run.enemyHp[index];let next=before-amount;
    if(!run.allowKill)next=Math.max(next,(run.enemyMax[index]||1)*.16);
    setEnemyHp(index,next);
-   hitReact('e-'+index,'hit');floating('e-'+index,'-'+amount,'damage');
-   buildThreat(index,c,amount,'damage');
+   const dealt=Math.max(0,before-run.enemyHp[index]);recordDamage(c,dealt);
+   hitReact('e-'+index,'hit');floating('e-'+index,'-'+Math.round(dealt),'damage');
+   buildThreat(index,c,dealt,'damage');
  },travel,tok);
 }
 function fireEnemyAttack(index,tok,s){
@@ -487,11 +517,12 @@ function fireHealerDamage(healer,index,tok){
  faceUnit('p-'+healer.id,'e-'+index);projectile('p-'+healer.id,'e-'+index,'magic',340);
  scheduleImpact(()=>{
    if(run.enemyHp[index]<=0)return;
-   let next=run.enemyHp[index]-amount;
+   const before=run.enemyHp[index];let next=before-amount;
    if(!run.allowKill)next=Math.max(next,(run.enemyMax[index]||1)*.16);
    setEnemyHp(index,next);
-   floating('e-'+index,'-'+amount,'damage');
-   buildThreat(index,healer,amount,'damage');
+   const dealt=Math.max(0,before-run.enemyHp[index]);recordDamage(healer,dealt);
+   floating('e-'+index,'-'+Math.round(dealt),'damage');
+   buildThreat(index,healer,dealt,'damage');
  },340,tok);
 }
 function microPosition(c,index){
@@ -509,7 +540,7 @@ function microPosition(c,index){
 }
 function combatLoop(s,tok){
  run.combatActive=true;
- const now=performance.now();
+ const now=performance.now();run.combatStartedAt=now;run.lastMeterAt=0;renderCombatMeters();
  run.rtParty=Object.fromEntries(party().map((c,i)=>[c.id,{
    nextAttack:now+180+i*120,
    nextMove:now+80+i*55,
@@ -533,6 +564,7 @@ function combatLoop(s,tok){
      if(tok!==token||!run||!run.combatActive){resolve();return}
 
      const now=performance.now();
+     if(!run.lastMeterAt||now-run.lastMeterAt>250){run.lastMeterAt=now;renderCombatMeters()}
      const targetIndex=enemyIndex();setFocusEnemy(targetIndex);
      if(targetIndex<0){run.combatActive=false;resolve();return}
 
