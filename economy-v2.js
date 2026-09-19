@@ -229,7 +229,8 @@ async function createListing(e){
   if(error){console.error(error);Game.replaceState(before);$('#tradeSellHint').textContent='Listing failed. Your item was returned.';return;}
   s.activity.push(`Listed ${item.name} ×${qty} for ${price} gold each.`);await commit();$('#tradeSellHint').textContent='Listing created.';renderSellOptions();await loadMarket();
 }
-function tradeArt(l){if(l.category==='gear'){const gear=G.byId(l.item_key)||G.byName(l.item_name)||l.payload;return G.artHTML(gear,48);}if(l.category==='material')return P?.materialArtHTML?P.materialArtHTML(l.item_key,46,'trade-material-art'):(P.MATERIALS[l.item_key]?.icon||'◇');if(l.category==='recipe')return'▤';return'⚗';}
+function craftedLabel(payload={}){return payload.effect==='gear-enhancement'?'ENHANCEMENT':payload.effect==='character-flask'?'FLASK':payload.effect==='combat-potion'?'POTION':payload.effect==='clear-cell-shock'?'RECOVERY':'CRAFTED'}
+function tradeArt(l){if(l.category==='gear'){const gear=G.byId(l.item_key)||G.byName(l.item_name)||l.payload;return G.artHTML(gear,48);}if(l.category==='material')return P?.materialArtHTML?P.materialArtHTML(l.item_key,46,'trade-material-art'):(P.MATERIALS[l.item_key]?.icon||'◇');if(l.category==='recipe')return'▤';if(l.payload?.effect==='gear-enhancement')return'✥';return'⚗';}
 async function loadMarket(){
   if(!db||!user)return;const {data,error}=await db.from('trading_post_listings').select('*').order('created_at',{ascending:false}).limit(100);
   if(error){console.error(error);market=[];}else market=data||[];
@@ -238,7 +239,7 @@ async function loadMarket(){
 function renderMarket(){
   const root=$('#tradeListings');if(!root)return;const rows=market.filter(l=>l.status==='active'&&(tradeFilter==='all'||l.category===tradeFilter));
   if(!rows.length){root.innerHTML='<div class="market-empty">No active listings in this category.</div>';return;}
-  root.innerHTML=rows.map(l=>{const base=l.category==='gear'?(G.byId(l.item_key)||G.byName(l.item_name)||{}):{},gear=l.category==='gear'?{...base,...(l.payload||{})}:null,roll=gear?(G.statLines?.(gear)||[]):[];return `<article class="trade-card"><div class="trade-art">${tradeArt(l)}</div><div><h4>${l.item_name}</h4><small>${l.category.toUpperCase()} · ×${l.quantity} · ${l.seller_label}</small>${roll.length?`<div class="trade-roll-stats">${roll.map(s=>`<span>${s.text}</span>`).join('')}</div>`:''}</div><div class="trade-price"><b>${Number(l.unit_price).toLocaleString()}g</b><small>each</small></div><button data-buy="${l.id}" ${l.seller_id===user.id?'disabled':''}>${l.seller_id===user.id?'YOUR LISTING':'BUY 1'}</button></article>`}).join('');
+  root.innerHTML=rows.map(l=>{const base=l.category==='gear'?(G.byId(l.item_key)||G.byName(l.item_name)||{}):{},gear=l.category==='gear'?{...base,...(l.payload||{})}:null,roll=gear?(G.statLines?.(gear)||[]):[];return `<article class="trade-card"><div class="trade-art">${tradeArt(l)}</div><div><h4>${l.item_name}</h4><small>${l.category==='consumable'?craftedLabel(l.payload||{}):l.category.toUpperCase()} · ×${l.quantity} · ${l.seller_label}</small>${roll.length?`<div class="trade-roll-stats">${roll.map(s=>`<span>${s.text}</span>`).join('')}</div>`:''}</div><div class="trade-price"><b>${Number(l.unit_price).toLocaleString()}g</b><small>each</small></div><button data-buy="${l.id}" ${l.seller_id===user.id?'disabled':''}>${l.seller_id===user.id?'YOUR LISTING':'BUY 1'}</button></article>`}).join('');
   root.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buyListing(b.dataset.buy));
 }
 function renderMyListings(){
