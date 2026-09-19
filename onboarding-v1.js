@@ -228,7 +228,7 @@ function renderGear(){
   const stats=item=>(G.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'No bonus stat';
   const body='<div class="gear-school"><main><small>ZELTIRA · QUARTERMASTER</small><h2>Item Level tells you how advanced an item is. The roll tells you who actually wants it.</h2><p>These two weapons are the <b>same Item Level</b>. One better suits '+esc(tank.name)+' as a '+esc(tank.spec)+' '+esc(tank.class)+'. Choose the one you would equip.</p><div class="gear-lesson-compare"><button data-training-gear="good">'+G.artHTML(good,82)+'<span><small>ITEM LEVEL '+(good.itemLevel||22)+'</small><b>'+esc(good.name)+'</b><em>'+esc(stats(good))+'</em></span></button><button data-training-gear="off">'+G.artHTML(off,82)+'<span><small>ITEM LEVEL '+(off.itemLevel||22)+'</small><b>'+esc(off.name)+'</b><em>'+esc(stats(off))+'</em></span></button></div><div class="gear-school-rule"><b>Remember</b><span>Higher Item Level usually means more power, but two items at the same level can be very different because their bonus stats roll differently.</span></div><p id="gearLessonHint">Look for a stat that matches what your Tank is trying to do.</p></main><aside class="z-guide"><small>YOUR TANK</small><div class="gear-student"><span>'+esc(tank.portrait)+'</span><div><h3>'+esc(tank.name)+'</h3><p>'+esc(tank.race)+' · '+esc(tank.class)+' · '+esc(tank.spec)+'</p></div></div><div class="role-lessons"><div><i class="on-role tank"></i><b>Tank wants</b><span>Threat, Block, Stamina and Armour are strong tank rolls.</span></div></div><p>The dungeon version of an item can roll stronger values than reliable quest gear. That is why you may keep farming the same boss later.</p></aside></div>';
   ensureRoot().innerHTML=chrome(body,'gear');
-  $('[data-training-gear]').forEach(b=>b.onclick=()=>{
+  $$('[data-training-gear]').forEach(b=>b.onclick=()=>{
     if(b.dataset.trainingGear!=='good'){
       const h=$('#gearLessonHint');if(h){h.textContent='That roll is usable, but it does not help this Tank control or survive the fight as directly. Try the other weapon.';h.classList.add('lesson-wrong')}return
     }
@@ -574,7 +574,7 @@ async function runTutorialDungeon(my){
   ];
   for(let i=0;i<encounters.length;i++){
     if(my!==tutorialToken)return;
-    $('[data-td-route]').forEach((x,j)=>x.classList.toggle('active',j===i));
+    $$('[data-td-route]').forEach((x,j)=>x.classList.toggle('active',j===i));
     const e=encounters[i];renderTdEnvironment(i);$('#tdEncounter').textContent=e.name;
     if(i===0){
       $('#tdCallout').textContent='Decide who starts the pull.';
@@ -623,7 +623,7 @@ function renderLootReview(){
   const stats=(G.statLines?.(item)||[]).map(x=>x.text).join(' · ')||'No bonus stats';
   const body='<div class="loot-school"><main><small>ZELTIRA · GUILD BANK</small><h2>The boss dropped an item. It does not equip itself.</h2><p>Drops are secured in the Guild Bank first. Read the roll, choose who benefits, then assign the item.</p><article class="tutorial-loot-card">'+G.artHTML(item,104)+'<div><small>'+esc(item.rarity||'GEAR')+' · '+esc(item.slot)+' · ITEM LEVEL '+(item.itemLevel||0)+'</small><h3>'+esc(item.name)+'</h3><div class="tutorial-loot-stats">'+(G.statLines?.(item)||[]).map(x=>'<span>'+esc(x.text)+'</span>').join('')+'</div><p>Dropped by the Hollow Warden · currently stored in the Guild Bank</p></div></article><div class="gear-school-rule"><b>Dungeon rolls are not fixed</b><span>If this same item drops again, its bonus stat can be different. A bad roll can be replaced later even when the Item Level is unchanged.</span></div></main><aside class="z-guide"><small>ASSIGN THE DROP</small><h2>Who should wear it?</h2><p>This item is restricted by class. The labels below compare its rolled stat against each compatible character’s current spec.</p><div class="tutorial-loot-characters">'+eligible.map(ch=>{const fit=G.rollFit?.(ch,item);return '<button data-tutorial-loot-char="'+ch.id+'"><span>'+esc(ch.portrait)+'</span><div><b>'+esc(ch.name)+'</b><small>'+esc(ch.class)+' · '+esc(ch.spec)+'</small><em class="'+esc(fit?.tone||'')+'">'+esc(fit?.label||'COMPATIBLE')+'</em></div></button>'}).join('')+'</div><p class="tutorial-roll-summary">'+esc(stats)+'</p></aside></div>';
   ensureRoot().innerHTML=chrome(body,'loot-review');
-  $('[data-tutorial-loot-char]').forEach(b=>b.onclick=()=>equipTutorialLoot(b.dataset.tutorialLootChar));
+  $$('[data-tutorial-loot-char]').forEach(b=>b.onclick=()=>equipTutorialLoot(b.dataset.tutorialLootChar));
 }
 async function equipTutorialLoot(charId){
   const s=state(),item=tutorialLootItem(),ch=s.roster.find(x=>x.id===charId);if(!item||!ch)return;
@@ -641,11 +641,11 @@ function renderRecoveryLesson(){
   const mins=Game.getEntitlements?.().recoveryMinutes||60;
   const body='<div class="growth-school"><main><small>ZELTIRA · AFTER-ACTION LESSON</small><h2>A dungeon teaches your guild even when it hurts.</h2><p>These three systems explain what happens between attempts.</p><div class="growth-cards"><article><strong>KNOWLEDGE</strong><b>Learn the encounter</b><p>Fighting bosses builds encounter knowledge. Even a wipe can teach your guild enough to improve the next attempt.</p></article><article><strong>CELL SHOCK</strong><b>Failure has pressure</b><p>Failed PvE attempts add Cell Shock. At 100%, that character becomes unavailable until recovery or another solution clears it.</p></article><article><strong>TALENT POINTS</strong><b>Levels change builds</b><p>Characters earn talent points as they level. Spend them from the character sheet to specialise how that adventurer performs.</p></article></div><div class="shock-example"><span>CELL SHOCK EXAMPLE</span><div><i style="width:75%"></i></div><b>75%</b><small>One more 25% wipe would reach 100%.</small></div></main><aside class="z-guide"><small>CHECK YOUR UNDERSTANDING</small><h2>Your Tank reaches 100% Cell Shock. What now?</h2><div class="tutorial-question" id="shockQuestion"><button data-shock-answer="wrong">Keep entering dungeons with them anyway</button><button data-shock-answer="correct">Rotate them out while they recover</button><button data-shock-answer="wrong">Destroy their equipment to clear it</button></div><p id="shockLessonHint">Standard recovery on this account is about '+mins+' minutes once a character reaches 100%.</p></aside></div>';
   ensureRoot().innerHTML=chrome(body,'recovery-lesson');
-  $('[data-shock-answer]').forEach(b=>b.onclick=async()=>{
+  $$('[data-shock-answer]').forEach(b=>b.onclick=async()=>{
     const h=$('#shockLessonHint');
     if(b.dataset.shockAnswer!=='correct'){if(h){h.textContent='Not quite. Cell Shock affects character availability, not equipment. Try again.';h.classList.add('lesson-wrong')}return}
     if(h){h.textContent='Correct. Your roster matters because a shocked character may need to be rotated out.';h.classList.remove('lesson-wrong');h.classList.add('lesson-correct')}
-    $('[data-shock-answer]').forEach(x=>x.disabled=true);await sleep(650);await setStage('profession-choice');
+    $$('[data-shock-answer]').forEach(x=>x.disabled=true);await sleep(650);await setStage('profession-choice');
   });
 }
 
@@ -706,11 +706,11 @@ async function craftTutorialItem(){
 function renderQuestLesson(){
   const body='<div class="quest-school"><main><small>ZELTIRA · NOTICE BOARD</small><h2>This is how Cellbound moves forward.</h2><p>Your first real adventure is waiting outside the tutorial. Quests are not side chores: they discover locations, tell the story and provide reliable gear that prepares you for the next dungeon.</p><article class="first-quest-preview"><div class="quest-preview-rune">♜</div><div><small>NOVICE · MEDIUM ADVENTURE</small><h3>Ashes on the East Road</h3><p>Supply carts have vanished below the old forge. Investigate the road, earn reliable Tier 1 quest gear and uncover the entrance to The Ashen Vault.</p></div></article><div class="progression-teach"><div><b>1 · QUEST</b><span>Reliable equipment and dungeon access.</span></div><i>→</i><div><b>2 · DUNGEON</b><span>Stronger randomized gear and better rolls.</span></div><i>→</i><div><b>3 · NEXT QUEST</b><span>Catch-up gear moves the story forward even if drops were unlucky.</span></div></div><div class="gear-school-rule"><b>You are never meant to be trapped farming one dungeon</b><span>If your party out-levels old content, later progression checks can also be bypassed through character level.</span></div></main><aside class="z-guide"><small>ONE LAST CHECK</small><h2>Why would you still farm a dungeon after its quest gear?</h2><div class="tutorial-question" id="questLessonQuestion"><button data-quest-answer="wrong">Because quest gear is unusable</button><button data-quest-answer="correct">Because dungeon gear can roll stronger stats</button><button data-quest-answer="wrong">Because the next quest is permanently locked</button></div><p id="questLessonHint">Quest gear gives you the floor. Dungeon drops give you the ceiling.</p></aside></div>';
   ensureRoot().innerHTML=chrome(body,'quest-lesson');
-  $('[data-quest-answer]').forEach(b=>b.onclick=async()=>{
+  $$('[data-quest-answer]').forEach(b=>b.onclick=async()=>{
     const h=$('#questLessonHint');
     if(b.dataset.questAnswer!=='correct'){if(h){h.textContent='Not quite. Quest gear is intentionally useful — it is just not the maximum possible roll.';h.classList.add('lesson-wrong')}return}
     if(h){h.textContent='Exactly. Story progression gets you ready; dungeon farming is where you chase stronger rolls.';h.classList.remove('lesson-wrong');h.classList.add('lesson-correct')}
-    $('[data-quest-answer]').forEach(x=>x.disabled=true);await sleep(700);await setStage('departure');
+    $$('[data-quest-answer]').forEach(x=>x.disabled=true);await sleep(700);await setStage('departure');
   });
 }
 function renderDeparture(){
