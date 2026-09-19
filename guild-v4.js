@@ -15,8 +15,8 @@ const PVE_WIPE_CELL_SHOCK=25;
 const STANDARD_RECOVERY_MINUTES=60;
 const MEMBER_RECOVERY_MINUTES=30;
 const ILVL_SLOTS=['Head','Chest','Weapon'];
-const SLOT_ITEM_LEVEL={Head:[18,26,34],Chest:[20,28,36],Weapon:[22,30,38]};
-const SLOT_POWER={Head:[2,5,9],Chest:[3,6,10],Weapon:[4,8,12]};
+const SLOT_ITEM_LEVEL={Head:[18,26,34,42],Chest:[20,28,36,44],Weapon:[22,30,38,46]};
+const SLOT_POWER={Head:[2,5,9,13],Chest:[3,6,10,15],Weapon:[4,8,12,18]};
 const authStorage={
   getItem:key=>localStorage.getItem(key)??sessionStorage.getItem(key),
   setItem(key,value){const keep=localStorage.getItem(REMEMBER_KEY)==='1';const a=keep?localStorage:sessionStorage,b=keep?sessionStorage:localStorage;a.setItem(key,value);b.removeItem(key)},
@@ -26,7 +26,7 @@ const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHA
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 
 G.items.forEach(item=>{
-  const tier=Math.max(1,Math.min(3,Number(item.tier)||1));
+  const tier=Math.max(1,Math.min(4,Number(item.tier)||1));
   const slot=item.slot;
   item.itemLevel=item.itemLevel||SLOT_ITEM_LEVEL[slot]?.[tier-1]||18+(tier-1)*8;
   item.power=item.power||SLOT_POWER[slot]?.[tier-1]||tier*3;
@@ -151,7 +151,7 @@ function normalizeCharacter(c,index=0){
   c.gear=characterItemLevel(c);return c;
 }
 function canonicalBank(raw){
-  const out=[];(Array.isArray(raw)?raw:[]).forEach(item=>{const canon=canonicalItem(item);if(!canon?.name)return;const found=out.find(x=>x.itemId===canon.itemId&&x.source===item.source);if(found)found.quantity+=(item.quantity||1);else out.push({...canon,id:item.id||`bank-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,quantity:item.quantity||1,source:item.source||'Previous loot'});});return out;
+  const out=[];(Array.isArray(raw)?raw:[]).forEach(item=>{const canon=canonicalItem(item);if(!canon?.name)return;const sig=G.rollSignature?.(canon)||'';const found=out.find(x=>x.itemId===canon.itemId&&(G.rollSignature?.(x)||'')===sig&&x.source===item.source);if(found)found.quantity+=(item.quantity||1);else out.push({...canon,id:item.id||`bank-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,quantity:item.quantity||1,source:item.source||'Previous loot'});});return out;
 }
 function removeInvalidPartyMembers(s){
   const allowed=new Set((s.roster||[]).filter((c,i)=>isRosterSlotUnlocked(i)&&!isUnavailable(c)).map(c=>c.id));
@@ -423,7 +423,7 @@ function openBankItem(id){
   }
 }
 function addBankItem(raw,record=true){
-  const canonical=canonicalItem(raw);if(!canonical)return;const existing=state.bank.find(x=>x.itemId===canonical.itemId);if(existing){existing.quantity=(existing.quantity||1)+1;existing.source=raw.source||existing.source;}else state.bank.push({...canonical,id:`bank-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,quantity:1,source:raw.source||'Unknown'});if(record)state.collectionHistory.push({itemId:canonical.itemId,name:canonical.name,tier:canonical.tier,itemLevel:canonical.itemLevel,source:raw.source||'Unknown',at:new Date().toISOString()});
+  const canonical=canonicalItem(raw);if(!canonical)return;const sig=G.rollSignature?.(canonical)||'';const existing=state.bank.find(x=>x.itemId===canonical.itemId&&(G.rollSignature?.(x)||'')===sig);if(existing){existing.quantity=(existing.quantity||1)+1;existing.source=raw.source||existing.source;}else state.bank.push({...canonical,id:`bank-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,quantity:1,source:raw.source||'Unknown'});if(record)state.collectionHistory.push({itemId:canonical.itemId,name:canonical.name,tier:canonical.tier,itemLevel:canonical.itemLevel,bonusStats:canonical.bonusStats||[],source:raw.source||'Unknown',at:new Date().toISOString()});
 }
 function addMaterial(key,quantity=1){if(!key||quantity<=0)return;state.materials[key]=(Number(state.materials[key])||0)+quantity;}
 function awardReagents(boss){if(!P)return[];const drops=P.rollReagents(boss.id);drops.forEach(d=>addMaterial(d.key,d.quantity));if(boss.id==='vaultheart'&&!state.discoveredRecipes.includes('enc-vault-glyph')&&!state.recipeScrolls.some(x=>x.recipeId==='enc-vault-glyph')&&Math.random()<.12){state.recipeScrolls.push({recipeId:'enc-vault-glyph',name:'Recipe: Vaultheart Glyph',quantity:1});drops.push({key:'recipe:enc-vault-glyph',quantity:1,recipe:true});state.activity.push('Rare recipe scroll dropped: Vaultheart Glyph.');}return drops;}
