@@ -121,3 +121,11 @@ body.wb2d-open{overflow:hidden}
 .wb2d-boss{border:3px solid #D7B45B!important;background:radial-gradient(circle,#5A171B 0,#2A1012 60%,#10090B 100%)!important;box-shadow:0 0 0 4px rgba(196,30,58,.38),0 0 42px rgba(196,30,58,.28),0 0 22px rgba(215,180,91,.2)!important}
 .wb2d-boss>span{color:#E95B68!important;text-shadow:0 0 18px rgba(196,30,58,.55)}
 .wb2d-boss>b{color:#E6C86C!important}
+
+/* Class-coloured personal threat meter */
+.wb2d-meter-row[class*="class-"] b{color:var(--combat-class,#AEBBB6)}
+.wb2d-meter-panel.threat .wb2d-meter-row[class*="class-"]>em>i{background:var(--combat-class,#7F8B88)!important;box-shadow:0 0 7px color-mix(in srgb,var(--combat-class,#7F8B88) 30%,transparent)}
+.wb2d-meter-row.aggro{box-shadow:inset 2px 0 #D7B45B!important}
+.wb2d-meter-row.aggro b strong{color:#E6C86C!important}
+.wb2d-meter-row.high{padding:2px 3px;background:rgba(194,71,57,.06);box-shadow:inset 2px 0 #C94A39}
+.wb2d-meter-row.high b strong{color:#E77A6A!important}
