@@ -251,7 +251,7 @@ async function issueStarterGear(trainingWeapon){
   render();
 }
 function renderDungeonBriefing(){
-  const body='<div class="dungeon-brief-layout"><main><div class="tutorial-dungeon-art"><span>THE ZELTIRAN HOLLOWS</span><h2>Your first dungeon.</h2><p>An abandoned tunnel beneath Zeltira has filled with Cell-sick creatures. It is deliberately forgiving: your job is to watch how Tank, Healer and Damage roles work together.</p><div class="tutorial-route"><div><i>1</i><b>Rootling Nest</b><small>Basic pack</small></div><div><i>2</i><b>Collapsed Gallery</b><small>Priority target</small></div><div><i>3</i><b>Hollow Warden</b><small>Training boss</small></div></div></div></main><aside class="z-guide"><small>ZELTIRA · DUNGEON TRAINING</small><h2>This run cannot fail.</h2><p>The Tank will establish threat. The Healer will react to damage. Your Damage characters will focus targets and finish the encounter.</p><div class="role-lessons"><div><i class="on-role tank"></i><b>Tank</b><span>Controls the fight.</span></div><div><i class="on-role healer"></i><b>Healer</b><span>Keeps the party alive.</span></div><div><i class="on-role dps"></i><b>Damage</b><span>Removes the threat.</span></div></div><p>Dungeon enemies also drop profession reagents. You will use these immediately after the boss.</p><button id="enterTutorialDungeon" class="on-primary">ENTER THE HOLLOWS →</button></aside></div>';
+  const body='<div class="dungeon-brief-layout"><main><div class="tutorial-dungeon-art"><span>THE ZELTIRAN HOLLOWS</span><h2>Your first dungeon is a lesson, not a cutscene.</h2><p>You will be asked to make the important calls yourself. Get one wrong and Warden Elara will explain why before you try again.</p><div class="tutorial-route"><div><i>1</i><b>Rootling Nest</b><small>Pull & threat</small></div><div><i>2</i><b>Collapsed Gallery</b><small>Healing & interrupt</small></div><div><i>3</i><b>Hollow Warden</b><small>Boss telegraph</small></div></div></div></main><aside class="z-guide"><small>ZELTIRA · DUNGEON TRAINING</small><h2>What you are learning.</h2><div class="role-lessons"><div><i class="on-role tank"></i><b>Tank</b><span>Pulls first, builds threat and aims dangerous attacks away.</span></div><div><i class="on-role healer"></i><b>Healer</b><span>Stabilises damage without standing in danger.</span></div><div><i class="on-role dps"></i><b>Damage</b><span>Prioritises dangerous enemies and interrupts key casts.</span></div></div><p>Real dungeons can wipe. This training run cannot, so use it to understand what the 2D combat is showing you.</p><button id="enterTutorialDungeon" class="on-primary">START COMBAT TRAINING →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'dungeon-briefing');
   $('#enterTutorialDungeon')?.addEventListener('click',async()=>{await setStage('dungeon-running');});
 }
@@ -300,10 +300,42 @@ function unitMarkup(c,i){
   return '<div class="td-unit party '+r+' profile-'+profile+'" data-td-party="'+c.id+'" style="left:'+pos[0]+'%;top:'+pos[1]+'%"><i></i><span>'+esc(c.name)+'</span><em><b style="width:100%"></b></em></div>';
 }
 function renderDungeonRunning(){
-  const body='<div class="td-wrap"><div class="td-top"><div><small>ZELTIRA TRAINING DUNGEON</small><h2 id="tdEncounter">Entering the Hollows…</h2></div><b class="td-safe">TRAINING RUN · GUARANTEED CLEAR</b></div><div class="td-route"><span class="active" data-td-route="0">1 · Rootling Nest</span><span data-td-route="1">2 · Collapsed Gallery</span><span data-td-route="2">3 · Hollow Warden</span></div><div class="td-arena theme-hollows room-rootling-nest" id="tdArena"><div class="td-floor"></div><div class="td-environment" id="tdEnvironment"></div><div class="td-room-tag" id="tdRoomTag"></div><div id="tdEnemies"></div><div id="tdParty">'+state().roster.map(unitMarkup).join('')+'</div><div class="td-callout" id="tdCallout">Your party advances together.</div></div><div class="td-bottom"><div class="td-actions"><div><i class="on-role tank"></i><b>Tank</b><span id="tdTankAction">Taking point</span></div><div><i class="on-role healer"></i><b>Healer</b><span id="tdHealAction">Following</span></div><div><i class="on-role dps"></i><b>Damage</b><span id="tdDpsAction">Acquiring targets</span></div></div><div class="td-feed" id="tdFeed">Zeltira gate closes behind the party.</div></div></div>';
+  const body='<div class="td-wrap"><div class="td-top"><div><small>ZELTIRA TRAINING DUNGEON</small><h2 id="tdEncounter">Entering the Hollows…</h2></div><b class="td-safe">TRAINING RUN · GUARANTEED CLEAR</b></div><div class="td-route"><span class="active" data-td-route="0">1 · Rootling Nest</span><span data-td-route="1">2 · Collapsed Gallery</span><span data-td-route="2">3 · Hollow Warden</span></div><div class="td-arena theme-hollows room-rootling-nest" id="tdArena"><div class="td-floor"></div><div class="td-environment" id="tdEnvironment"></div><div class="td-room-tag" id="tdRoomTag"></div><div id="tdEnemies"></div><div id="tdParty">'+state().roster.map(unitMarkup).join('')+'</div><div class="td-callout" id="tdCallout">Your party advances together.</div><div id="tdLesson" class="td-lesson" hidden></div></div><div class="td-bottom"><div class="td-actions"><div><i class="on-role tank"></i><b>Tank</b><span id="tdTankAction">Taking point</span></div><div><i class="on-role healer"></i><b>Healer</b><span id="tdHealAction">Following</span></div><div><i class="on-role dps"></i><b>Damage</b><span id="tdDpsAction">Acquiring targets</span></div></div><div class="td-feed" id="tdFeed">Zeltira gate closes behind the party.</div></div></div>';
   ensureRoot().innerHTML=chrome(body,'dungeon-running');
   const my=++tutorialToken;setTimeout(()=>runTutorialDungeon(my),350);
 }
+function tdLesson(title,text,options,correct,success){
+  return new Promise(resolve=>{
+    const root=$('#tdLesson');if(!root){resolve();return}
+    root.hidden=false;
+    const draw=(note='')=>{
+      root.innerHTML='<section><small>COMMAND DECISION</small><h3>'+esc(title)+'</h3><p>'+esc(text)+'</p><div>'+options.map((o,i)=>'<button data-td-answer="'+i+'">'+esc(o)+'</button>').join('')+'</div><em class="'+(note?'show':'')+'">'+esc(note||'Choose the response you would give your party.')+'</em></section>';
+      root.querySelectorAll('[data-td-answer]').forEach(b=>b.onclick=()=>{
+        const i=Number(b.dataset.tdAnswer);
+        if(i!==correct){draw('Not quite. Think about each role’s job in this moment.');return}
+        root.innerHTML='<section class="correct"><small>GOOD CALL</small><h3>'+esc(title)+'</h3><p>'+esc(success)+'</p></section>';
+        setTimeout(()=>{root.hidden=true;resolve()},700);
+      });
+    };
+    draw();
+  });
+}
+function tdBossFrontal(){
+  const arena=$('#tdArena'),enemy=$('[data-td-enemy="0"]');if(!arena||!enemy)return;
+  const p=tdPoint('[data-td-enemy="0"]');if(!p)return;
+  const cone=document.createElement('div');cone.className='td-training-cone';cone.style.left=p.x+'px';cone.style.top=p.y+'px';cone.innerHTML='<span>FRONTAL CLEAVE</span>';arena.appendChild(cone);
+  tdFeed('The Hollow Warden telegraphs a frontal attack. The Tank turns it away from the party.');
+  setTimeout(()=>cone.classList.add('impact'),550);setTimeout(()=>cone.remove(),1150);
+}
+function tdInterruptMoment(my){
+  const enemy=$('[data-td-enemy="0"]');if(!enemy)return;
+  const bar=document.createElement('strong');bar.className='td-training-cast';bar.innerHTML='<span>HOLLOW SCREAM</span><i></i>';enemy.appendChild(bar);
+  tdFeed('The Cell-Sick Marauder begins Hollow Scream.');
+  const dps=state().roster.find(c=>tdRole(c)==='dps');
+  if(dps)setTimeout(()=>{if(my!==tutorialToken)return;tdProjectile('[data-td-party="'+dps.id+'"]','[data-td-enemy="0"]','magic');tdAction('dps',dps.name+' interrupts Hollow Scream');bar.classList.add('interrupted');bar.querySelector('span').textContent='INTERRUPTED';},650);
+  setTimeout(()=>bar.remove(),1200);
+}
+
 function tdPoint(selector){
   const arena=$('#tdArena'),el=$(selector);if(!arena||!el)return null;
   const a=arena.getBoundingClientRect(),r=el.getBoundingClientRect();return{x:r.left-a.left+r.width/2,y:r.top-a.top+r.height/2};
