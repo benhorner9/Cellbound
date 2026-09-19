@@ -6,7 +6,7 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const G=window.CellboundGear;
 
-let Game=null,selectedTab='active',selectedAdventure='ashfall',encounterToken=0;
+let Game=null,selectedTab='active',selectedAdventure='ashfall',encounterToken=0,questFight=null;
 
 const QUEST={
   id:'echoes-beneath-zeltira',
@@ -403,97 +403,232 @@ async function meetJory(){
   if(currentStage()!=='decipher')return;
   showDialogue('The Old Surveyor','Old Jory',[
     'Tessa sent you? Tell her my maps are not “decorative”. They are extremely practical and only slightly beautiful.',
-    'Let me see that glass. Hah. East-road marks. Before the flood, before the new bridge, before Bram learned which end of a shovel goes down.',
-    'We read a route from its work mark: hammer first, then water, then the old arch, then the watchful eye. Never north to south. That mistake buried three inspectors.',
-    'Here. Take this rubbing. Put it beside your silver lines and read them the way a road crew would.'
+    'Those are east-road survey marks. Crews numbered permanent posts as they travelled away from Zeltira. Lower numbers are closer to town.',
+    'But do not blindly follow every symbol. Lantern marks are ventilation shafts, and the flood closed that shaft before this route was cut. Chain marks are sealed side-spurs — dead ends, not roads.',
+    'Here. This rubbing has the old post ledger. Match the symbols, discard anything that cannot belong to the route, then order what remains.'
   ],async()=>{
-    grantItem('surveyor-rubbing');addHistory('Old Jory explained the forgotten survey notation.');
+    grantItem('surveyor-rubbing');addHistory('Old Jory supplied the post ledger and explained how old survey routes were encoded.');
     await commit();openSurveyPuzzle();
   });
 }
 function openSurveyPuzzle(){
   if(currentStage()!=='decipher')return;
   if(!hasItem('surveyor-rubbing')){meetJory();return}
-  const root=puzzleRoot();root.hidden=false;document.body.classList.add('quest-puzzle-open');
-  const expected=['hammer','water','arch','eye'],shown=[
-    {id:'eye',icon:'◉',label:'Watchful Eye'},
-    {id:'hammer',icon:'⚒',label:'Work Mark'},
-    {id:'arch',icon:'∩',label:'Old Arch'},
-    {id:'water',icon:'≈',label:'Water Mark'}
+  const q=ensure(),root=puzzleRoot();root.hidden=false;document.body.classList.add('quest-puzzle-open');
+  q.surveyMistakes=Number(q.surveyMistakes)||0;
+  const expected=['hammer','water','arch','eye'];
+  const marks=[
+    {id:'hammer',icon:'⚒',label:'Work Mark',post:2},
+    {id:'water',icon:'≈',label:'Culvert',post:5},
+    {id:'chain',icon:'⛓',label:'Sealed Spur',post:6},
+    {id:'lantern',icon:'✧',label:'Vent Shaft',post:8},
+    {id:'arch',icon:'∩',label:'Old Arch',post:9},
+    {id:'eye',icon:'◉',label:'Inspection Post',post:12}
   ];
   let progress=[];
-  const draw=()=>{
-    root.innerHTML='<section class="quest-puzzle"><header><div><small>QUEST PUZZLE · JORY’S SURVEY RUBBING</small><h2>Read the route marks in survey order</h2></div><button data-close>×</button></header><div class="quest-puzzle-clue"><span>JORY’S NOTE</span><p>“A road starts where the work begins. Follow water. Pass beneath the old arch. End where the watcher keeps count.”</p></div><div class="quest-puzzle-board">'+shown.map(x=>'<button data-mark="'+x.id+'" class="'+(progress.includes(x.id)?'chosen':'')+'"><i>'+x.icon+'</i><b>'+x.label+'</b><small>'+(progress.includes(x.id)?'PLACED '+(progress.indexOf(x.id)+1):'SELECT')+'</small></button>').join('')+'</div><div class="quest-puzzle-route">'+expected.map((_,i)=>'<span class="'+(progress[i]?'filled':'')+'">'+(progress[i]?shown.find(x=>x.id===progress[i]).icon:(i+1))+'</span>').join('<i>→</i>')+'</div><p id="questPuzzleHint">Use Jory’s clue to place all four marks.</p><button class="quest-puzzle-confirm" data-confirm '+(progress.length===4?'':'disabled')+'>TRACE THE ROUTE</button></section>';
+  const draw=(note='')=>{
+    root.innerHTML='<section class="quest-puzzle quest-cipher"><header><div><small>QUEST PUZZLE · JORY’S SURVEY RUBBING</small><h2>Decode the underroad route</h2></div><button data-close>×</button></header>'+
+      '<div class="quest-cipher-layout"><aside><div class="quest-puzzle-clue"><span>SURVEY RULES</span><p>Permanent posts are numbered outward from Zeltira. Travel from the lowest surviving route post to the highest.</p></div>'+
+      '<div class="quest-puzzle-clue"><span>JORY’S WARNING</span><p>The lantern shaft was already flooded when this route was cut. A chain marks a sealed side-spur — a dead end, never part of the through-route.</p></div>'+
+      '<div class="quest-post-ledger"><small>OLD POST LEDGER</small>'+marks.map(m=>'<p><b>POST '+m.post+'</b><span>'+m.icon+' '+m.label+'</span></p>').join('')+'</div></aside>'+
+      '<main><small>BUILD A FOUR-MARK ROUTE</small><div class="quest-puzzle-board cipher-board">'+marks.map(x=>'<button data-mark="'+x.id+'" class="'+(progress.includes(x.id)?'chosen':'')+'"><i>'+x.icon+'</i><b>'+x.label+'</b><small>'+(progress.includes(x.id)?'POSITION '+(progress.indexOf(x.id)+1):'SELECT')+'</small></button>').join('')+'</div>'+
+      '<div class="quest-puzzle-route">'+[0,1,2,3].map(i=>'<span class="'+(progress[i]?'filled':'')+'">'+(progress[i]?marks.find(x=>x.id===progress[i]).icon:(i+1))+'</span>').join('<i>→</i>')+'</div>'+
+      '<div class="quest-cipher-actions"><button data-undo '+(progress.length?'':'disabled')+'>UNDO LAST</button><button data-reset '+(progress.length?'':'disabled')+'>CLEAR ROUTE</button></div>'+
+      '<p id="questPuzzleHint" class="'+(note?'wrong':'')+'">'+(note||'Two ledger marks are decoys. Use the route rules to exclude them, then order the remaining posts.')+'</p>'+
+      '<div class="quest-resonance-meter"><span>FRAGMENT INSTABILITY</span><div><i style="width:'+Math.min(100,q.surveyMistakes*34)+'%"></i></div><b>'+q.surveyMistakes+'</b></div>'+
+      '<button class="quest-puzzle-confirm" data-confirm '+(progress.length===4?'':'disabled')+'>TRACE THE ROUTE</button></main></div></section>';
     root.querySelector('[data-close]').onclick=()=>{root.hidden=true;document.body.classList.remove('quest-puzzle-open')};
-    root.querySelectorAll('[data-mark]').forEach(b=>b.onclick=()=>{
-      const id=b.dataset.mark;if(progress.includes(id))return;
-      progress.push(id);draw();
-    });
+    root.querySelectorAll('[data-mark]').forEach(b=>b.onclick=()=>{const id=b.dataset.mark;if(progress.includes(id)||progress.length>=4)return;progress.push(id);draw()});
+    root.querySelector('[data-undo]')?.addEventListener('click',()=>{progress.pop();draw()});
+    root.querySelector('[data-reset]')?.addEventListener('click',()=>{progress=[];draw()});
     root.querySelector('[data-confirm]')?.addEventListener('click',async()=>{
-      const ok=progress.join('|')===expected.join('|');
-      if(!ok){
-        progress=[];draw();
-        const hint=$('#questPuzzleHint');if(hint){hint.textContent='The marks do not form a valid survey route. Jory said the work mark comes first.';hint.classList.add('wrong')}
+      if(progress.join('|')!==expected.join('|')){
+        q.surveyMistakes++;Game.save?.();progress=[];
+        if(q.surveyMistakes%2===0){
+          root.hidden=true;document.body.classList.remove('quest-puzzle-open');
+          await runResonanceBacklash();
+          if(currentStage()==='decipher')openSurveyPuzzle();
+          return;
+        }
+        draw('The fragment rejects that route. At least one mark is a dead end, flooded shaft, or in the wrong post order.');
         return;
       }
       grantItem('decoded-route');setItemStatus('surveyor-rubbing','used');
-      addHistory('The survey marks resolved into a route beneath the old east road.');
+      addHistory('The guild decoded the survey ledger into a valid underroad route.');
       await commit();
-      root.innerHTML='<section class="quest-puzzle solved"><div class="quest-puzzle-solved">⌁</div><small>ROUTE DECIPHERED</small><h2>The Road Under the Road</h2><p>The silver lines match a buried survey route leading from the old drainage works to a sealed chamber beneath Zeltira.</p><button data-continue>FOLLOW THE ROUTE →</button></section>';
-      root.querySelector('[data-continue]').onclick=async()=>{root.hidden=true;document.body.classList.remove('quest-puzzle-open');await openGearReward({key:'echoes-chest',title:'Old Marks, Older Roads',slot:'Chest',tier:2,source:QUEST.title+' · Old Marks, Older Roads',onClaim:()=>advance('decipher','route','The underroad route was decoded using Old Jory’s survey rubbing.')})};
+      root.innerHTML='<section class="quest-puzzle solved"><div class="quest-puzzle-solved">⌁</div><small>ROUTE DECIPHERED</small><h2>The Road Under the Road</h2><p>The surviving survey posts form a continuous route from the old work camp through the culvert and arch to the inspection post beneath Zeltira.</p><button data-continue>FOLLOW THE ROUTE →</button></section>';
+      root.querySelector('[data-continue]').onclick=async()=>{root.hidden=true;document.body.classList.remove('quest-puzzle-open');await openGearReward({key:'echoes-chest',title:'Old Marks, Older Roads',slot:'Chest',tier:2,source:QUEST.title+' · Old Marks, Older Roads',onClaim:()=>advance('decipher','route','The underroad route was decoded using Old Jory’s survey ledger.')})};
     });
   };
   draw();
 }
 
-/* Bespoke quest encounter */
+/* Quest combat uses the same 2D language as dungeon combat. */
+function qRole(c){return Game.classes?.[c.class]?.specs?.[c.spec]?.role||'dps'}
+function qProfile(c){const r=qRole(c);if(r==='tank'||r==='healer')return r;if(['Rogue','Warrior','Paladin'].includes(c.class))return'melee';return'ranged'}
 function encounterRoot(){
   let r=$('#questEncounterBackdrop');
-  if(!r){r=document.createElement('div');r.id='questEncounterBackdrop';r.className='qe-backdrop';r.hidden=true;document.body.appendChild(r)}
+  if(!r){r=document.createElement('div');r.id='questEncounterBackdrop';r.className='cb2d-backdrop quest-cb2d-backdrop';r.hidden=true;document.body.appendChild(r)}
   return r;
 }
-function qeUnit(root,id,label,cls,x,y){
-  const e=document.createElement('div');e.className='qe-unit '+cls;e.dataset.qe=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+'</span><em><i></i></em>';root.appendChild(e);return e;
+function qRows(){
+  return party().map(c=>'<div class="cb2d-party-row"><i class="cb2d-dot '+qRole(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+qRole(c).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-q-side-hp="'+c.id+'" style="width:100%"></i></em></span><strong data-q-hp-text="'+c.id+'">100 HP</strong></div>').join('');
 }
-function qeMove(id,x,y,ms=650){const e=$('[data-qe="'+id+'"]');if(!e)return;e.style.transitionDuration=ms+'ms';e.style.left=x+'%';e.style.top=y+'%'}
-function qeFeed(text){const e=$('#qeFeed');if(e){const p=document.createElement('p');p.textContent=text;e.prepend(p);while(e.children.length>7)e.lastElementChild.remove()}}
-function qeTele(type,label){
-  const layer=$('#qeTelegraphs');if(!layer)return;
-  const e=document.createElement('div');e.className='qe-tele '+type;e.innerHTML='<span>'+esc(label)+'</span>';layer.appendChild(e);
-  setTimeout(()=>e.classList.add('impact'),900);setTimeout(()=>e.remove(),1450);
+function qRoute(){
+  return (questFight?.phases||[]).map((x,i)=>'<span class="'+(i<questFight.phase?'done':i===questFight.phase?'current':'')+'"><i>'+(i+1)+'</i>'+esc(x)+'</span>').join('');
+}
+function qLog(t){if(!questFight)return;questFight.log.push(t);questFight.log=questFight.log.slice(-30);const e=$('#q2dFeed');if(e)e.innerHTML=questFight.log.slice(-6).map(esc).join('<br>')}
+function qStatus(t){const e=$('#q2dStatus');if(e)e.textContent=t}
+function qAct(r,t){const e=$('[data-q-act="'+r+'"] em');if(e)e.textContent=t}
+function qAddUnit(id,label,cls,x,y,size=''){
+  const root=$('#q2dUnits');if(!root)return;
+  const e=document.createElement('div');e.className='cb2d-unit '+cls+' '+size;e.dataset.qUnit=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+'</span><em class="cb2d-unit-hp"><i style="width:100%"></i></em>';root.appendChild(e)
+}
+function qUnit(id){return $('[data-q-unit="'+id+'"]')}
+function qMove(id,x,y,ms=520){const e=qUnit(id);if(!e)return;const ox=parseFloat(e.style.left)||x,oy=parseFloat(e.style.top)||y;e.style.setProperty('--face-angle',(Math.atan2(y-oy,x-ox)*180/Math.PI)+'deg');e.style.transitionDuration=ms+'ms';requestAnimationFrame(()=>{e.style.left=x+'%';e.style.top=y+'%'})}
+function qPoint(id){const a=$('#q2dArena'),u=qUnit(id);if(!a||!u)return null;const ar=a.getBoundingClientRect(),r=u.getBoundingClientRect();return{x:r.left-ar.left+r.width/2,y:r.top-ar.top+r.height/2,w:ar.width,h:ar.height}}
+function qProjectile(from,to,kind='physical',ms=320){const arena=$('#q2dArena'),a=qPoint(from),b=qPoint(to);if(!arena||!a||!b)return;const e=document.createElement('i');e.className='cb2d-projectile '+kind;e.style.left=a.x+'px';e.style.top=a.y+'px';arena.appendChild(e);requestAnimationFrame(()=>{e.style.transitionDuration=ms+'ms';e.style.transform='translate('+(b.x-a.x)+'px,'+(b.y-a.y)+'px)'});setTimeout(()=>e.remove(),ms+130)}
+function qFloat(id,text,kind='damage'){const arena=$('#q2dArena'),p=qPoint(id);if(!arena||!p)return;const e=document.createElement('div');e.className='cb2d-number '+kind;e.textContent=text;e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),850)}
+function qSetEnemyHp(i,value){
+  if(!questFight)return;const max=questFight.enemyMax[i]||1,prev=questFight.enemyHp[i]||0,next=Math.max(0,Math.min(max,Math.round(value)));questFight.enemyHp[i]=next;
+  const u=qUnit('e-'+i),bar=u?.querySelector('.cb2d-unit-hp i');if(bar)bar.style.width=(next/max*100)+'%';
+  if(u&&prev>0&&next<=0)u.classList.add('dead')
+}
+function qSetPartyHp(c,value){if(!questFight)return;const next=Math.max(0,Math.min(100,Math.round(value)));questFight.partyHp[c.id]=next;const bar=$('[data-q-side-hp="'+c.id+'"]');if(bar)bar.style.width=next+'%';const txt=$('[data-q-hp-text="'+c.id+'"]');if(txt)txt.textContent=next+' HP'}
+function qRenderMeters(target=0){
+  if(!questFight)return;
+  const damageRoot=$('#q2dDamageMeter'),threatRoot=$('#q2dThreatMeter'),p=party();
+  const rows=p.map(c=>({c,value:Number(questFight.damage[c.id])||0})).sort((a,b)=>b.value-a.value),max=Math.max(1,...rows.map(x=>x.value)),total=rows.reduce((n,x)=>n+x.value,0);
+  const totalEl=$('#q2dDamageTotal');if(totalEl)totalEl.textContent=total+' total';
+  if(damageRoot)damageRoot.innerHTML=rows.map((x,i)=>'<div class="cb2d-meter-row '+qRole(x.c)+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(x.c.name)+'</b><span>'+x.value+' damage</span></div><em><i style="width:'+(x.value/max*100)+'%"></i></em></div>').join('');
+  const tank=p.find(c=>qRole(c)==='tank'),threatRows=p.map(c=>({c,value:qRole(c)==='tank'?100:Math.min(92,22+(questFight.damage[c.id]||0)/8)})).sort((a,b)=>b.value-a.value);
+  const label=$('#q2dThreatTarget');if(label)label.textContent=questFight.enemies[target]||'No target';
+  if(threatRoot)threatRoot.innerHTML=threatRows.map((x,i)=>'<div class="cb2d-meter-row '+qRole(x.c)+(tank&&x.c.id===tank.id?' aggro':'')+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(x.c.name)+(tank&&x.c.id===tank.id?' <strong>AGGRO</strong>':'')+'</b><span>'+Math.round(x.value)+'%</span></div><em><i style="width:'+x.value+'%"></i></em></div>').join('')
+}
+function qDraw(config,finish){
+  const root=encounterRoot();root.className='cb2d-backdrop quest-cb2d-backdrop';root.hidden=false;document.body.classList.add('quest-cb2d-open');
+  root.innerHTML='<section class="cb2d-shell quest-cb2d-shell"><header class="cb2d-head"><div><small>'+esc(config.quest.toUpperCase())+' · LIVE 2D QUEST</small><h2>'+esc(config.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-q-close>×</button></div></header>'+
+    '<div class="cb2d-route" id="q2dRoute">'+qRoute()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena quest-cb2d-arena" id="q2dArena"><div class="cb2d-floor"></div><div class="quest-cb2d-environment"></div><div class="cb2d-room-tag"><b>'+esc(config.location)+'</b><small>'+esc(config.ambience)+'</small></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="q2dTelegraphs"></div><div id="q2dUnits"></div><div class="cb2d-caption"><span>QUEST FIGHT</span><b id="q2dStatus">Entering encounter…</b></div></div>'+
+    '<div class="cb2d-controls"><button data-q-control="focus"><b>FOCUS TARGET</b><small>Push priority damage.</small></button><button data-q-control="interrupt"><b>INTERRUPT NOW</b><small>Force the current cast stop.</small></button><button data-q-control="defensive"><b>DEFENSIVE</b><small>Reduce incoming pressure.</small></button><button data-q-control="burn"><b>BURN</b><small>Commit damage cooldowns.</small></button></div>'+
+    '<div class="cb2d-feed"><small>COMBAT FEED</small><p id="q2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="q2dCastName">—</b><strong id="q2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="q2dCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="q2dDamageTotal">0 total</span></div><div id="q2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="q2dThreatTarget">No target</span></div><div id="q2dThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-q-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-q-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Holding range</em></div><div data-q-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>ACTIVE FIVE</small>'+qRows()+'</div></aside></div><div class="cb2d-end" id="q2dEnd" hidden></div></section>';
+  root.querySelector('[data-q-close]').onclick=()=>{if(!questFight?.finished&&!confirm('Leave this quest fight? It will restart.'))return;encounterToken++;root.hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)};
+  root.querySelectorAll('[data-q-control]').forEach(b=>b.onclick=()=>{const key=b.dataset.qControl;questFight[key]=true;b.classList.add('active');if(key==='interrupt')qLog('You order an immediate interrupt.');if(key==='defensive')qLog('The party braces for incoming damage.');if(key==='focus')qLog('Damage switches to the priority target.');if(key==='burn')qLog('The party commits offensive cooldowns.')});
+}
+function qSpawn(){
+  const p=party(),melee=p.filter(c=>qProfile(c)==='melee'),ranged=p.filter(c=>qProfile(c)==='ranged');
+  p.forEach((c,i)=>{qAddUnit('p-'+c.id,c.name,'party '+qRole(c)+' profile-'+qProfile(c),4,50+(i-2)*4);let x=16,y=50;if(qRole(c)==='tank'){x=30;y=50}else if(qProfile(c)==='melee'){x=23;y=43+melee.indexOf(c)*14}else if(qProfile(c)==='ranged'){x=17;y=28+ranged.indexOf(c)*44}else{x=12;y=61}setTimeout(()=>qMove('p-'+c.id,x,y,800),40)});
+  questFight.enemies.forEach((n,i)=>{const y=questFight.enemies.length===1?50:27+i*(46/Math.max(1,questFight.enemies.length-1)),big=i===questFight.eliteIndex||questFight.enemies.length===1;qAddUnit('e-'+i,n,big?'enemy big':'enemy',92,y,big?'big':'');setTimeout(()=>qMove('e-'+i,68,y,780),70)});
+  qRenderMeters(questFight.eliteIndex>=0?questFight.eliteIndex:0)
+}
+async function qPhase(i,text){if(!questFight)return;questFight.phase=i;const r=$('#q2dRoute');if(r)r.innerHTML=qRoute();qStatus(text);qLog(text);await wait(500)}
+async function qTankEngage(){
+  const tank=party().find(c=>qRole(c)==='tank');if(!tank)return;
+  qAct('tank',tank.name+' establishes threat');qMove('p-'+tank.id,52,50,480);
+  questFight.enemies.forEach((_,i)=>qMove('e-'+i,61,32+i*(36/Math.max(1,questFight.enemies.length-1)),450));
+  qLog(tank.name+' takes control of the pack.');await wait(650)
+}
+async function qAttack(index,rounds=1){
+  if(!questFight||questFight.enemyHp[index]<=0)return;
+  const p=party(),target='e-'+index;
+  for(let r=0;r<rounds;r++){
+    for(const c of p){
+      if(qRole(c)==='healer')continue;
+      if(questFight.enemyHp[index]<=0)break;
+      const kind=c.class==='Mage'?'magic':c.class==='Hunter'?'arrow':'slash',base=qRole(c)==='tank'?18:25,boost=(questFight.burn?8:0)+(questFight.focus?4:0),dmg=base+boost+Math.floor(Math.random()*8);
+      qProjectile('p-'+c.id,target,kind);questFight.damage[c.id]+=dmg;qSetEnemyHp(index,questFight.enemyHp[index]-dmg);qFloat(target,'-'+dmg,'damage');
+      qAct(qRole(c)==='tank'?'tank':'dps',c.name+' attacks '+questFight.enemies[index]);qRenderMeters(index);await wait(90)
+    }
+    await wait(300)
+  }
+}
+async function qEnemyHit(index,amount=14){
+  const tank=party().find(c=>qRole(c)==='tank'),healer=party().find(c=>qRole(c)==='healer');if(!tank||questFight.enemyHp[index]<=0)return;
+  qProjectile('e-'+index,'p-'+tank.id,'enemy');const hit=Math.max(4,amount-(questFight.defensive?7:0));qSetPartyHp(tank,questFight.partyHp[tank.id]-hit);qFloat('p-'+tank.id,'-'+hit,'incoming');qAct('tank',tank.name+' absorbs the hit');await wait(280);
+  if(healer){qProjectile('p-'+healer.id,'p-'+tank.id,'heal');const heal=Math.min(12,100-questFight.partyHp[tank.id]);qSetPartyHp(tank,questFight.partyHp[tank.id]+heal);qFloat('p-'+tank.id,'+'+heal,'heal');qAct('healer',healer.name+' restores '+tank.name);await wait(260)}
+}
+function qTelegraph(type,fromId,toId,label,size=145){
+  const root=$('#q2dTelegraphs'),a=qPoint(fromId),b=qPoint(toId);if(!root||!a||!b)return null;
+  const e=document.createElement('div');e.className='cb2d-tg '+type+' dynamic';
+  const s=document.createElement('span');s.className='cb2d-tg-label';s.textContent=label;e.appendChild(s);
+  if(type==='circle'){e.style.left=b.x+'px';e.style.top=b.y+'px';e.style.width=size+'px';e.style.height=size+'px';e.style.transform='translate(-50%,-50%)'}
+  else{const angle=Math.atan2(b.y-a.y,b.x-a.x),length=Math.max(190,Math.min(a.w*.62,360));e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.width=length+'px';e.style.height=(type==='line'?44:140)+'px';e.style.transform='translateY(-50%) rotate('+(angle*180/Math.PI)+'deg)'}
+  root.appendChild(e);requestAnimationFrame(()=>e.classList.add('show'));return e
+}
+async function qCone(index,label){
+  const tank=party().find(c=>qRole(c)==='tank');if(!tank)return;const e=qTelegraph('cone','e-'+index,'p-'+tank.id,label);qStatus(label+' · MOVE / FACE AWAY');qLog(questFight.enemies[index]+' begins '+label+'.');qAct('tank',tank.name+' turns the attack away from the group');
+  party().filter(c=>c.id!==tank.id).forEach((c,i)=>qMove('p-'+c.id,35,22+i*15,430));await wait(900);e?.classList.add('impact');await qEnemyHit(index,18);setTimeout(()=>e?.remove(),180);await wait(320)
+}
+async function qLine(index,target,label){
+  const e=qTelegraph('line','e-'+index,'p-'+target.id,label);qStatus(label+' · LINE ATTACK');qLog(questFight.enemies[index]+' draws a line through '+target.name+'.');
+  qMove('p-'+target.id,38,target===party()[0]?25:75,420);await wait(900);e?.classList.add('impact');setTimeout(()=>e?.remove(),180);await wait(300)
+}
+async function qCircle(target,label){
+  const e=qTelegraph('circle','e-'+(questFight.eliteIndex>=0?questFight.eliteIndex:0),'p-'+target.id,label,155);qStatus(label+' · SPREAD');qLog(target.name+' is marked by '+label+'.');
+  party().filter(c=>c.id!==target.id).forEach((c,i)=>qMove('p-'+c.id,26+i*6,20+i*14,430));await wait(900);e?.classList.add('impact');qFloat('p-'+target.id,'-6','incoming');qSetPartyHp(target,questFight.partyHp[target.id]-(questFight.defensive?2:6));setTimeout(()=>e?.remove(),180);await wait(300)
+}
+async function qCast(index,name,duration=1700,interruptible=true){
+  const n=$('#q2dCastName'),t=$('#q2dCastTime'),f=$('#q2dCastFill');if(n)n.textContent=name;if(t)t.textContent=(duration/1000).toFixed(1)+'s';if(f){f.style.transition='none';f.style.width='0';requestAnimationFrame(()=>{f.style.transition='width '+duration+'ms linear';f.style.width='100%'})}
+  qStatus(name+(interruptible?' · INTERRUPTIBLE':''));
+  qLog(questFight.enemies[index]+' begins '+name+'.');
+  const dps=party().find(c=>qRole(c)==='dps');const early=Math.round(duration*.55);await wait(early);
+  if(interruptible&&(questFight.interrupt||dps)){
+    if(dps)qProjectile('p-'+dps.id,'e-'+index,dps.class==='Hunter'?'arrow':'magic',260);
+    questFight.interrupt=false;qAct('dps',(dps?.name||'Damage')+' interrupts '+name);qLog(name+' is interrupted.');if(f){f.style.transition='none';f.style.width='58%';f.style.background='#69bd87'}if(n)n.textContent='INTERRUPTED';if(t)t.textContent='STOPPED';await wait(450);if(f)f.style.background='';return true
+  }
+  await wait(duration-early);qLog(name+' completes.');await qEnemyHit(index,20);return false
+}
+async function qFinishAll(){
+  for(let i=0;i<questFight.enemies.length;i++){
+    while(questFight.enemyHp[i]>0)await qAttack(i,1);
+  }
+}
+async function runQuest2DFight(config){
+  const p=party();if(p.length!==5)return false;
+  const tok=++encounterToken;
+  return await new Promise(resolve=>{
+    let settled=false;const finish=value=>{if(settled)return;settled=true;resolve(value)};
+    const max=config.enemies.map((_,i)=>i===config.eliteIndex?520:config.enemies.length===1?440:270);
+    questFight={token:tok,title:config.title,phases:config.phases||['Encounter'],phase:0,enemies:config.enemies,eliteIndex:Number.isInteger(config.eliteIndex)?config.eliteIndex:-1,enemyMax:max,enemyHp:[...max],partyHp:Object.fromEntries(p.map(c=>[c.id,100])),damage:Object.fromEntries(p.map(c=>[c.id,0])),log:[],focus:false,interrupt:false,defensive:false,burn:false,finished:false};
+    qDraw(config,finish);qSpawn();qLog(config.ambience);
+    (async()=>{
+      try{
+        await wait(700);if(tok!==encounterToken)return;
+        const api={phase:qPhase,tankEngage:qTankEngage,attack:qAttack,enemyHit:qEnemyHit,cone:qCone,line:qLine,circle:qCircle,cast:qCast,finishAll:qFinishAll,log:qLog,status:qStatus};
+        await config.script(api);if(tok!==encounterToken)return;
+        questFight.finished=true;qStatus('ENCOUNTER CLEAR');qLog('The party secures the area.');
+        const end=$('#q2dEnd');if(end){end.hidden=false;end.innerHTML='<div><small>QUEST FIGHT COMPLETE</small><h3>'+esc(config.title)+'</h3><p>'+esc(config.completeText||'The way forward is clear.')+'</p></div><button data-q-continue>CONTINUE QUEST →</button>';end.querySelector('[data-q-continue]').onclick=()=>{encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(true)}}
+      }catch(err){console.error('Quest combat failed',err);encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}
+    })();
+  });
+}
+async function runResonanceBacklash(){
+  const q=ensure(),bearer=party().find(c=>c.id===q.bearerId)||party()[0];
+  return runQuest2DFight({quest:QUEST.title,title:'Resonance Backlash',location:'Jory’s Workshop',ambience:'The Blackened Fragment rejects the false route and tears an echo out of the room.',phases:['Backlash'],enemies:['Resonance Echo'],eliteIndex:0,completeText:'The echo collapses back into the fragment. The cipher is still waiting.',script:async api=>{await api.phase(0,'The fragment manifests a hostile echo.');await api.tankEngage();await api.circle(bearer,'MEMORY BURST');await api.cast(0,'RESONANCE SHRIEK',1600,true);await api.attack(0,3);await api.finishAll()}});
 }
 async function beginInvestigation(){
   const q=ensure(),p=party();if(currentStage()!=='route')return;
   if(p.length!==5){alert('Build a complete five-character party before following the route.');Game.switchView?.('party');return}
-  const tok=++encounterToken,root=encounterRoot();root.hidden=false;document.body.classList.add('qe-open');
-  root.innerHTML='<section class="qe-shell"><header><div><small>QUEST ENCOUNTER · ECHOES BENEATH ZELTIRA</small><h2>The Road Under the Road</h2></div><button data-qe-close>×</button></header><div class="qe-body"><main><div class="qe-arena"><div class="qe-floor"></div><div class="qe-props"><i></i><i></i><i></i><i></i></div><div id="qeTelegraphs"></div><div id="qeUnits"></div><div class="qe-location"><b>Collapsed Survey Tunnels</b><small>Jory’s route continues beyond the fallen supports.</small></div></div><div class="qe-feed" id="qeFeed"></div></main><aside><small>INVESTIGATION PARTY</small><div class="qe-party">'+p.map(c=>'<div><i class="'+(Game.classes?.[c.class]?.specs?.[c.spec]?.role||'dps')+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span></div>').join('')+'</div><div class="qe-objective"><small>CURRENT OBJECTIVE</small><b id="qeObjective">Follow the survey marks.</b><p>The Blackened Fragment grows warmer as the tunnel descends.</p></div></aside></div></section>';
-  root.querySelector('[data-qe-close]').onclick=()=>{if(confirm('Leave the investigation? This encounter will restart.')){encounterToken++;root.hidden=true;document.body.classList.remove('qe-open')}};
-
-  const layer=$('#qeUnits'),roles=p.map(c=>Game.classes?.[c.class]?.specs?.[c.spec]?.role||'dps');
-  p.forEach((c,i)=>qeUnit(layer,'p'+i,c.name,'party '+roles[i],8,30+i*10));
-  qeFeed('Old Jory’s first mark is still visible beneath decades of dust.');
-  await wait(650);if(tok!==encounterToken)return;
-  p.forEach((c,i)=>qeMove('p'+i,27,30+i*10,850));$('#qeObjective').textContent='Reach the buried junction.';await wait(1200);
-
-  ['Hollow Scavenger','Hollow Scavenger','Resonance Husk'].forEach((n,i)=>qeUnit(layer,'e'+i,n,'enemy '+(i===2?'elite':''),92,35+i*15));
-  qeFeed('Three shapes pull themselves out of the old masonry.');
-  ['e0','e1','e2'].forEach((id,i)=>qeMove(id,68,35+i*15,650));p.forEach((c,i)=>qeMove('p'+i,42,30+i*10,650));
-  $('#qeObjective').textContent='Survive the buried things.';await wait(1100);
-  qeTele('line','RESONANCE LASH');qeFeed('The Husk tears a bright line through the tunnel. The party breaks formation.');
-  p.forEach((c,i)=>{if(i%2)qeMove('p'+i,46,18+i*12,480)});await wait(1450);
-  qeFeed((q.bearerName||'The Bearer')+' raises the fragment. The Husk turns toward it.');
-  qeTele('circle','CELL PULSE');await wait(1350);
-  ['e0','e1'].forEach(id=>{const e=$('[data-qe="'+id+'"]');if(e)e.classList.add('dead')});await wait(600);
-  p.forEach((c,i)=>qeMove('p'+i,56,30+i*10,480));qeMove('e2',64,50,380);await wait(850);
-  const elite=$('[data-qe="e2"]');if(elite)elite.classList.add('dead');
-  qeFeed('The Resonance Husk fractures. A final survey mark is cut into the wall behind it.');await wait(850);
-
-  $('#qeObjective').textContent='The route ends here.';
-  const door=document.createElement('div');door.className='qe-door';door.innerHTML='<b>THE HOLLOW SEAL</b><small>Something on the other side is breathing.</small>';$('.qe-arena').appendChild(door);
-  await wait(1200);if(tok!==encounterToken)return;
-  root.hidden=true;document.body.classList.remove('qe-open');
+  const bearer=p.find(c=>c.id===q.bearerId)||p[0],ranged=p.find(c=>qProfile(c)==='ranged')||p.find(c=>qRole(c)==='dps')||p[0];
+  const won=await runQuest2DFight({
+    quest:QUEST.title,title:'The Road Under the Road',location:'Collapsed Survey Tunnels',
+    ambience:'Jory’s decoded posts lead beneath the east road. The Blackened Fragment grows warmer with every step.',
+    phases:['Buried Junction','Resonance Husk','Hollow Seal'],enemies:['Hollow Scavenger','Hollow Scavenger','Resonance Husk'],eliteIndex:2,
+    completeText:'A final survey mark is cut into the wall behind the broken Husk. Beyond it waits the Hollow Seal.',
+    script:async api=>{
+      await api.phase(0,'Three shapes pull themselves out of the old masonry.');
+      await api.tankEngage();await api.attack(0,2);await api.attack(1,2);
+      await api.phase(1,'The Resonance Husk locks onto the Blackened Fragment.');
+      await api.line(2,ranged,'RESONANCE LASH');
+      await api.cast(2,'BINDING HUM',1850,true);
+      await api.circle(bearer,'CELL PULSE');
+      await api.attack(2,3);await api.finishAll();
+      await api.phase(2,'The tunnel falls silent. A sealed stone door breathes beyond the final post.');
+      api.log('The decoded route ends at the Hollow Seal.');
+    }
+  });
+  if(!won)return;
   setItemStatus('decoded-route','used');
-  await advance('route','seal','The guild followed the old survey route and discovered the Hollow Seal.');
+  await advance('route','seal','The guild fought through the buried survey tunnels and discovered the Hollow Seal.');
 }
 
 async function inspectSeal(){
