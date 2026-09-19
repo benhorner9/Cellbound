@@ -666,3 +666,109 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:1px solid 
   #roster .roster-command-bar,#bank .bank-command-bar{grid-template-columns:1fr}
   #roster .roster-company-summary,#roster .roster-command-bar .ui-search,#bank .bank-command-bar .ui-search{grid-column:auto}
 }
+
+
+/* Bank cleanup: vendor + dismantle */
+.bank-cleanup{
+  margin:0 18px 18px;
+  padding:15px;
+  border:1px solid rgba(216,185,118,.1);
+  background:linear-gradient(180deg,#0d171a,#081114);
+}
+.bank-cleanup-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;
+  padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.04)
+}
+.bank-cleanup-head small{
+  display:block;color:#8d7a52;font-size:.32rem;font-weight:900;letter-spacing:.11em
+}
+.bank-cleanup-head h3{
+  margin:3px 0 0;color:#ded8ca;font-family:Georgia,serif;font-size:.95rem;font-weight:400
+}
+.bank-cleanup-head>span{
+  padding:4px 6px;border:1px solid rgba(190,111,88,.18);
+  background:#191111;color:#bd7d70;font-size:.28rem;font-weight:900;letter-spacing:.08em
+}
+.bank-cleanup>p{
+  margin:10px 0 0;color:#667570;font-size:.42rem;line-height:1.5
+}
+.bank-cleanup-quantity{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:end;
+  margin-top:12px
+}
+.bank-cleanup-quantity label{display:grid;gap:4px}
+.bank-cleanup-quantity label span{
+  color:#63716c;font-size:.31rem;font-weight:900;letter-spacing:.06em;text-transform:uppercase
+}
+.bank-cleanup-quantity input{
+  width:100%;height:38px;padding:0 10px;
+  border:1px solid rgba(216,185,118,.12);background:#070d10;color:#dbe3df
+}
+.bank-cleanup-quantity>button{
+  height:38px;padding:0 12px;border:1px solid rgba(216,185,118,.13);
+  background:#17170f;color:#c9b781;font-size:.32rem;font-weight:900
+}
+.bank-cleanup-options{
+  display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px
+}
+.bank-cleanup-option{
+  display:flex;flex-direction:column;min-width:0;
+  padding:11px;border:1px solid rgba(255,255,255,.045);background:#081114
+}
+.bank-cleanup-option.vendor{border-color:rgba(216,185,118,.1)}
+.bank-cleanup-option.salvage{border-color:rgba(91,160,139,.11)}
+.bank-cleanup-option small{
+  display:block;color:#71664b;font-size:.28rem;font-weight:900;letter-spacing:.08em
+}
+.bank-cleanup-option.salvage small{color:#5f8177}
+.bank-cleanup-option h4{
+  margin:3px 0;color:#cfd6d2;font-family:Georgia,serif;font-size:.76rem;font-weight:400
+}
+.bank-cleanup-option p{
+  min-height:48px;margin:0;color:#586762;font-size:.34rem;line-height:1.45
+}
+.bank-cleanup-return{
+  margin-top:9px;padding:8px;border:1px solid rgba(216,185,118,.07);background:#0b1110
+}
+.bank-cleanup-return span{
+  display:block;color:#635d49;font-size:.27rem;font-weight:900;letter-spacing:.06em
+}
+.bank-cleanup-return b{
+  display:block;margin-top:3px;color:#d9bd70;font-family:Georgia,serif;font-size:.7rem;font-weight:400
+}
+.bank-salvage-preview{
+  display:flex;gap:5px;flex-wrap:wrap;margin-top:9px;min-height:51px
+}
+.bank-salvage-material{
+  display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:6px;align-items:center;
+  min-width:0;padding:6px;border:1px solid rgba(91,160,139,.09);background:#091310
+}
+.bank-salvage-material b{
+  overflow:hidden;color:#aebbb5;font-size:.3rem;text-overflow:ellipsis;white-space:nowrap
+}
+.bank-salvage-material em{color:#76ad94;font-size:.31rem;font-style:normal;font-weight:900}
+.bank-salvage-fallback{display:grid;place-items:center;width:30px;height:30px;color:#8eb5a3}
+.bank-cleanup-option>button{
+  width:100%;min-height:40px;margin-top:auto;padding:8px;
+  border:1px solid rgba(216,185,118,.16);background:#1d1a12;color:#dbc78f;
+  font-size:.32rem;font-weight:900;letter-spacing:.06em
+}
+.bank-cleanup-option.salvage>button{
+  border-color:rgba(92,169,143,.18);background:#0e1a16;color:#8fc5ae
+}
+.bank-cleanup-option>button:hover{filter:brightness(1.08)}
+.bank-cleanup-protected{
+  border-color:rgba(141,101,177,.13);
+  background:linear-gradient(180deg,#11131a,#090d12)
+}
+.bank-cleanup-protected .bank-cleanup-head>span{
+  border-color:rgba(141,101,177,.2);background:#17111d;color:#af8ac8
+}
+.bank-cleanup-protected>p{color:#74727c}
+
+@media(max-width:720px){
+  .bank-cleanup{margin:0 8px 10px;padding:11px}
+  .bank-cleanup-options{grid-template-columns:1fr}
+  .bank-cleanup-option p{min-height:0}
+  .bank-cleanup-option>button{min-height:48px}
+}
