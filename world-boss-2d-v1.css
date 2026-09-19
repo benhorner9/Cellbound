@@ -114,3 +114,10 @@ body.wb2d-open{overflow:hidden}
 .wb2d-raid-row.aggro{background:rgba(185,69,54,.07);box-shadow:inset 2px 0 #b94f40}
 @media(max-width:1000px){.wb2d-meter-stack{grid-column:1/-1;grid-template-columns:1fr 1fr}}
 @media(max-width:700px){.wb2d-meter-stack{grid-template-columns:1fr}.wb2d-meter-panel{padding:8px}}
+
+/* Class-coloured raid units and red/gold boss language */
+.wb2d-unit[class*="class-"] .wb2d-unit-dot{border-color:var(--combat-class,#7F8B88)!important;background:color-mix(in srgb,var(--combat-class,#7F8B88) 22%,#081114)!important;color:var(--combat-class,#7F8B88)!important;box-shadow:0 4px 12px rgba(0,0,0,.35),0 0 13px color-mix(in srgb,var(--combat-class,#7F8B88) 38%,transparent)}
+.wb2d-unit.own .wb2d-unit-dot{box-shadow:0 0 0 3px rgba(216,185,118,.55),0 5px 16px rgba(0,0,0,.4),0 0 16px color-mix(in srgb,var(--combat-class,#7F8B88) 34%,transparent)!important}
+.wb2d-boss{border:3px solid #D7B45B!important;background:radial-gradient(circle,#5A171B 0,#2A1012 60%,#10090B 100%)!important;box-shadow:0 0 0 4px rgba(196,30,58,.38),0 0 42px rgba(196,30,58,.28),0 0 22px rgba(215,180,91,.2)!important}
+.wb2d-boss>span{color:#E95B68!important;text-shadow:0 0 18px rgba(196,30,58,.55)}
+.wb2d-boss>b{color:#E6C86C!important}
