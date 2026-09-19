@@ -178,6 +178,108 @@ function showDialogue(title,speaker,beats,onDone){
   draw();root.hidden=false;
 }
 
+
+function rewardRoot(){
+  let r=$('#questGearReward');
+  if(!r){r=document.createElement('div');r.id='questGearReward';r.className='quest-gear-backdrop';r.hidden=true;document.body.appendChild(r)}
+  return r;
+}
+function rewardProfileText(c,profile,tier,slot){
+  const item=G?.createQuestGear?.(c,slot,tier,profile,'Quest preview');
+  return (G?.statLines?.(item)||[]).map(s=>s.text).join(' · ');
+}
+async function openGearReward({key,title,slot,tier,source,onClaim}){
+  const q=ensure();if(q.rewardClaims?.[key]){if(onClaim)await onClaim(q.rewardClaims[key]);return}
+  const chars=party();if(chars.length!==5){alert('Build a complete active five before claiming this quest reward.');Game.switchView?.('party');return}
+  const root=rewardRoot();root.hidden=false;document.body.classList.add('quest-gear-open');
+  let selected=chars[0]?.id,profile='specialist';
+  const profiles=[
+    ['specialist','SPECIALIST','Stats aimed at this character’s current spec.'],
+    ['sturdy','STALWART','Survivability-focused quest roll.'],
+    ['swift','SWIFT','Haste and critical-strike focused quest roll.']
+  ];
+  const draw=()=>{
+    const ch=chars.find(x=>x.id===selected)||chars[0];
+    root.innerHTML='<section class="quest-gear-card"><header><div><small>QUEST EQUIPMENT REWARD</small><h2>'+esc(title)+'</h2><p>Quest gear is reliable and useful, but its stat values are deliberately below dungeon-roll potential.</p></div><button data-qgr-close>×</button></header>'+
+      '<div class="quest-gear-body"><aside><small>CHOOSE ADVENTURER</small>'+chars.map(c=>'<button data-qgr-char="'+c.id+'" class="'+(c.id===ch.id?'active':'')+'"><span>'+esc(c.portrait||c.name.slice(0,2))+'</span><div><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></div></button>').join('')+'</aside>'+
+      '<main><small>'+esc(ch.name.toUpperCase())+' · '+esc(slot.toUpperCase())+'</small><h3>Choose the roll you want to take</h3><div class="quest-gear-options">'+profiles.map(p=>'<button data-qgr-profile="'+p[0]+'" class="'+(profile===p[0]?'active':'')+'"><b>'+p[1]+'</b><span>'+esc(rewardProfileText(ch,p[0],tier,slot))+'</span><em>'+p[2]+'</em></button>').join('')+'</div><div class="quest-gear-note"><b>Why dungeon gear is still better</b><span>Dungeon drops use the same tier but roll higher stat values. This reward gets you ready; farming gives you the ceiling.</span></div><button class="quest-gear-claim" data-qgr-claim>CLAIM '+esc(slot.toUpperCase())+' →</button></main></div></section>';
+    root.querySelector('[data-qgr-close]').onclick=()=>{root.hidden=true;document.body.classList.remove('quest-gear-open')};
+    root.querySelectorAll('[data-qgr-char]').forEach(b=>b.onclick=()=>{selected=b.dataset.qgrChar;draw()});
+    root.querySelectorAll('[data-qgr-profile]').forEach(b=>b.onclick=()=>{profile=b.dataset.qgrProfile;draw()});
+    root.querySelector('[data-qgr-claim]').onclick=async()=>{
+      const target=chars.find(x=>x.id===selected);if(!target)return;
+      const item=G?.createQuestGear?.(target,slot,tier,profile,source);if(!item)return;
+      Game.addBankItem?.(item);
+      q.rewardClaims[key]={characterId:target.id,characterName:target.name,profile,slot,tier,itemName:item.name,at:new Date().toISOString()};
+      state().activity.push('Quest reward: '+target.name+' received '+item.name+'.');
+      root.hidden=true;document.body.classList.remove('quest-gear-open');
+      await commit();questToast('QUEST REWARD',item.name,(G.statLines?.(item)||[]).map(s=>s.text).join(' · '));
+      if(onClaim)await onClaim(q.rewardClaims[key]);
+    };
+  };
+  draw();
+}
+async function advanceAshfall(done,next,note){
+  const a=ensure().ashfall;if(done&&!a.done.includes(done))a.done.push(done);a.stage=next;if(note)ashfallHistory(note);
+  await commit();
+  if(next!=='complete'){const d=ashfallDef(next);questToast('QUEST UPDATED',ASHFALL.title,d.objective)}
+}
+async function startAshfall(){
+  const a=ensure().ashfall;if(a.complete)return;
+  if(!a.started){a.started=true;a.stage='warning';a.startedAt=new Date().toISOString();ashfallHistory('Warden Elara called the guild to Zeltira’s east gate.');await commit()}
+  showDialogue('A Road Gone Quiet','Warden Elara Vey',[
+    'Three supply carts left Zeltira for the east farms yesterday. None came back. The road patrol found the first cart before dawn.',
+    'There was ash inside the wheel ruts even though it has not rained cinders here for years. Someone carried that ash down from the old forge.',
+    'Find the cart, work out which trail is real, and do not follow anything into the mountain unless your five are ready.'
+  ],()=>advanceAshfall('warning','tracks','Elara sent the guild to inspect an abandoned supply cart on the east road.'));
+}
+function openAshfallTracks(){
+  if(ashfallStage()!=='tracks')return;
+  const root=puzzleRoot();root.hidden=false;document.body.classList.add('quest-puzzle-open');
+  root.innerHTML='<section class="quest-puzzle"><header><div><small>QUEST INVESTIGATION · EAST ROAD</small><h2>Which sign belongs to the attackers?</h2></div><button data-close>×</button></header><div class="quest-puzzle-clue"><span>ABANDONED CART</span><p>The horse fled west. One wheel broke downhill. Three sets of bootprints are scorched around the edges and point uphill toward the forge.</p></div><div class="quest-puzzle-board ashfall-clues"><button data-ash-clue="wheel"><i>◯</i><b>Broken wheel</b><small>Fresh splintering</small></button><button data-ash-clue="hoof"><i>⌁</i><b>Horse tracks</b><small>Running toward Zeltira</small></button><button data-ash-clue="boots"><i>♟</i><b>Scorched boots</b><small>Heading toward the mountain</small></button></div><p id="questPuzzleHint">Choose the clue that identifies where the attackers went.</p></section>';
+  root.querySelector('[data-close]').onclick=()=>{root.hidden=true;document.body.classList.remove('quest-puzzle-open')};
+  root.querySelectorAll('[data-ash-clue]').forEach(b=>b.onclick=async()=>{
+    if(b.dataset.ashClue!=='boots'){const h=$('#questPuzzleHint');h.textContent='That explains the cart, not the attackers. Look for something moving toward the forge.';h.classList.add('wrong');return}
+    root.hidden=true;document.body.classList.remove('quest-puzzle-open');ashfallHistory('Scorched bootprints revealed the attackers travelled uphill toward the old forge.');
+    await openGearReward({key:'ashfall-head',title:'Tracks in the Cinders',slot:'Head',tier:1,source:ASHFALL.title+' · Tracks in the Cinders',onClaim:()=>advanceAshfall('tracks','ambush','The guild followed the scorched tracks toward the mountain.')});
+  });
+}
+async function beginAshfallAmbush(){
+  if(ashfallStage()!=='ambush')return;
+  const p=party();if(p.length!==5){alert('Build a complete five-character party before following the tracks.');Game.switchView?.('party');return}
+  const tok=++encounterToken,root=encounterRoot();root.hidden=false;document.body.classList.add('qe-open');
+  root.innerHTML='<section class="qe-shell"><header><div><small>QUEST ENCOUNTER · ASHES ON THE EAST ROAD</small><h2>The Cinder Cart</h2></div><button data-qe-close>×</button></header><div class="qe-body"><main><div class="qe-arena"><div class="qe-floor"></div><div id="qeTelegraphs"></div><div id="qeUnits"></div><div class="qe-location"><b>Old Forge Approach</b><small>A burnt cart blocks the road ahead.</small></div></div><div class="qe-feed" id="qeFeed"></div></main><aside><small>ACTIVE FIVE</small><div class="qe-party">'+p.map(c=>'<div><i class="'+(Game.classes?.[c.class]?.specs?.[c.spec]?.role||'dps')+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span></div>').join('')+'</div><div class="qe-objective"><small>CURRENT OBJECTIVE</small><b id="qeObjective">Reach the burnt cart.</b><p>The tracks disappear beneath fresh cinders.</p></div></aside></div></section>';
+  root.querySelector('[data-qe-close]').onclick=()=>{encounterToken++;root.hidden=true;document.body.classList.remove('qe-open')};
+  const layer=$('#qeUnits');p.forEach((c,i)=>qeUnit(layer,'ap'+i,c.name,'party '+(Game.classes?.[c.class]?.specs?.[c.spec]?.role||'dps'),8,30+i*10));
+  p.forEach((c,i)=>qeMove('ap'+i,33,30+i*10,700));qeFeed('The party follows the scorched tracks into a narrow cut below the forge.');await wait(900);if(tok!==encounterToken)return;
+  ['Cinder Hound','Ashbound Runner','Cinder Hound'].forEach((n,i)=>qeUnit(layer,'ae'+i,n,'enemy '+(i===1?'elite':''),92,35+i*15));
+  ['ae0','ae1','ae2'].forEach((id,i)=>qeMove(id,66,35+i*15,520));$('#qeObjective').textContent='Break the ambush.';qeFeed('Ashbound attackers spring from behind the cart.');await wait(850);
+  qeTele('cone','CINDER BREATH');p.forEach((c,i)=>{if(i>1)qeMove('ap'+i,38,18+i*12,420)});await wait(1100);
+  qeFeed('Your tank catches the hounds while the damage line collapses onto the runner.');await wait(700);
+  ['ae0','ae1','ae2'].forEach((id,i)=>setTimeout(()=>{const e=$('[data-qe="'+id+'"]');if(e)e.classList.add('dead')},i*130));await wait(800);
+  qeFeed('The runner drops a heavy iron key stamped with the old forge seal.');$('#qeObjective').textContent='Recover the forge key.';await wait(650);
+  root.hidden=true;document.body.classList.remove('qe-open');
+  await openGearReward({key:'ashfall-chest',title:'The Cinder Cart',slot:'Chest',tier:1,source:ASHFALL.title+' · The Cinder Cart',onClaim:()=>advanceAshfall('ambush','key','An Ashbound runner dropped a key bearing the old forge seal.')});
+}
+async function finishAshfall(){
+  if(ashfallStage()!=='key')return;
+  showDialogue('The Old Forge Key','Warden Elara Vey',[
+    'That mark belonged to the keepers of the Ashen Vault. I thought every key was destroyed when the forge was sealed.',
+    'The Ashbound were not stealing supplies. They were feeding something behind that door.',
+    'Keep the key. If your guild is going in, you should decide when — not whatever is waking up below.'
+  ],()=>openGearReward({key:'ashfall-weapon',title:'A Door in the Mountain',slot:'Weapon',tier:1,source:ASHFALL.title+' · Completion',onClaim:completeAshfall}));
+}
+async function completeAshfall(){
+  const s=state(),a=ensure().ashfall;if(a.complete)return;
+  a.complete=true;a.stage='complete';a.completedAt=new Date().toISOString();if(!a.done.includes('key'))a.done.push('key');
+  s.progression=s.progression||{};s.progression.ashenVaultUnlocked=true;s.gold=(Number(s.gold)||0)+120;s.renown=(Number(s.renown)||0)+75;
+  ashfallHistory('The old forge key opened the route to The Ashen Vault.');s.activity.push('Quest complete: '+ASHFALL.title+'. The Ashen Vault was unlocked.');
+  await commit();
+  const root=document.createElement('div');root.className='quest-unlock-backdrop quest-complete-backdrop';
+  root.innerHTML='<section class="quest-complete-card"><div class="quest-complete-rune">♜</div><small>QUEST COMPLETE</small><h2>'+ASHFALL.title+'</h2><p>The road investigation has uncovered the old forge entrance and given your guild the equipment needed to begin the hunt.</p><div class="quest-complete-rewards"><article><span>GOLD</span><b>+120</b></article><article><span>RENOWN</span><b>+75</b></article><article><span>DUNGEON</span><b>UNLOCKED</b></article></div><div class="quest-complete-unlock"><small>PERMANENT UNLOCK</small><h3>The Ashen Vault</h3><p>Quest gear gives you a reliable starting point. Better versions now wait inside the dungeon.</p></div><button>OPEN DUNGEON JOURNAL →</button></section>';
+  document.body.appendChild(root);root.querySelector('button').onclick=()=>{root.remove();Game.switchView?.('content')};
+}
+
 async function startQuest(){
   const q=ensure();
   if(!q.started){
