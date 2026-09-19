@@ -235,8 +235,8 @@ function switchView(id){
   $$('.view').forEach(v=>v.classList.toggle('active',v.id===id));
   const hub=VIEW_WORKSPACE[id]||id;
   $$('.nav-btn[data-hub]').forEach(b=>b.classList.toggle('active',b.dataset.hub===hub));
-  const labels={overview:'Command Overview',roster:'Roster',bank:'Guild Bank',professions:'Professions',trading:'Trading Post',chat:'Guild Social',world:'World Bosses',content:'Dungeons',quests:'Quest Journal',party:'Party Builder',reports:'Attempt Reports',admin:'Admin Control'};
-  if(ui.pageTitle)ui.pageTitle.textContent=labels[id]||'Cellbound';
+  const titles={overview:'Command Overview',guild:'Guild',adventure:'Adventure',economy:'Economy',admin:'Admin Control'};
+  if(ui.pageTitle)ui.pageTitle.textContent=titles[hub]||'Cellbound';
   renderWorkspaceTabs(id);
   if(id==='party')renderParty();
   if(id==='reports')renderReports();
