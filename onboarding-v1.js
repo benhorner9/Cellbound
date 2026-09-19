@@ -612,6 +612,43 @@ async function runTutorialDungeon(my){
   }
   render();
 }
+function tutorialLootItem(){
+  const s=state(),id=s?.onboarding?.tutorialLootBankId;
+  return (s?.bank||[]).find(x=>x.id===id)||null;
+}
+function renderLootReview(){
+  const s=state(),item=tutorialLootItem();
+  if(!item){s.onboarding.stage='recovery-lesson';Game.save();render();return}
+  const eligible=s.roster.filter(ch=>item.class===ch.class||item.classes==='all'||item.classes?.includes?.(ch.class));
+  const stats=(G.statLines?.(item)||[]).map(x=>x.text).join(' · ')||'No bonus stats';
+  const body='<div class="loot-school"><main><small>ZELTIRA · GUILD BANK</small><h2>The boss dropped an item. It does not equip itself.</h2><p>Drops are secured in the Guild Bank first. Read the roll, choose who benefits, then assign the item.</p><article class="tutorial-loot-card">'+G.artHTML(item,104)+'<div><small>'+esc(item.rarity||'GEAR')+' · '+esc(item.slot)+' · ITEM LEVEL '+(item.itemLevel||0)+'</small><h3>'+esc(item.name)+'</h3><div class="tutorial-loot-stats">'+(G.statLines?.(item)||[]).map(x=>'<span>'+esc(x.text)+'</span>').join('')+'</div><p>Dropped by the Hollow Warden · currently stored in the Guild Bank</p></div></article><div class="gear-school-rule"><b>Dungeon rolls are not fixed</b><span>If this same item drops again, its bonus stat can be different. A bad roll can be replaced later even when the Item Level is unchanged.</span></div></main><aside class="z-guide"><small>ASSIGN THE DROP</small><h2>Who should wear it?</h2><p>This item is restricted by class. The labels below compare its rolled stat against each compatible character’s current spec.</p><div class="tutorial-loot-characters">'+eligible.map(ch=>{const fit=G.rollFit?.(ch,item);return '<button data-tutorial-loot-char="'+ch.id+'"><span>'+esc(ch.portrait)+'</span><div><b>'+esc(ch.name)+'</b><small>'+esc(ch.class)+' · '+esc(ch.spec)+'</small><em class="'+esc(fit?.tone||'')+'">'+esc(fit?.label||'COMPATIBLE')+'</em></div></button>'}).join('')+'</div><p class="tutorial-roll-summary">'+esc(stats)+'</p></aside></div>';
+  ensureRoot().innerHTML=chrome(body,'loot-review');
+  $('[data-tutorial-loot-char]').forEach(b=>b.onclick=()=>equipTutorialLoot(b.dataset.tutorialLootChar));
+}
+async function equipTutorialLoot(charId){
+  const s=state(),item=tutorialLootItem(),ch=s.roster.find(x=>x.id===charId);if(!item||!ch)return;
+  const old=ch.equipment?.[item.slot];
+  if(old?.name)Game.addBankItem({...old,source:'Unequipped during Zeltira training'},false);
+  const incoming=Game.canonicalItem?.(item)||item,{id,quantity,...equipped}=incoming;
+  ch.equipment=ch.equipment||emptyEquipment();ch.equipment[item.slot]={...equipped,source:'Equipped'};
+  ch.gearItems=['Head','Chest','Weapon'].map(slot=>ch.equipment[slot]?.name||'Empty');
+  item.quantity=(Number(item.quantity)||1)-1;if(item.quantity<=0)s.bank=s.bank.filter(x=>x.id!==item.id);
+  s.onboarding.tutorialLootEquippedTo=ch.id;s.onboarding.stage='recovery-lesson';
+  s.activity.push(ch.name+' equipped '+item.name+' from the Zeltiran Hollows.');
+  Game.save();await Game.persistState();render();
+}
+function renderRecoveryLesson(){
+  const mins=Game.getEntitlements?.().recoveryMinutes||60;
+  const body='<div class="growth-school"><main><small>ZELTIRA · AFTER-ACTION LESSON</small><h2>A dungeon teaches your guild even when it hurts.</h2><p>These three systems explain what happens between attempts.</p><div class="growth-cards"><article><strong>KNOWLEDGE</strong><b>Learn the encounter</b><p>Fighting bosses builds encounter knowledge. Even a wipe can teach your guild enough to improve the next attempt.</p></article><article><strong>CELL SHOCK</strong><b>Failure has pressure</b><p>Failed PvE attempts add Cell Shock. At 100%, that character becomes unavailable until recovery or another solution clears it.</p></article><article><strong>TALENT POINTS</strong><b>Levels change builds</b><p>Characters earn talent points as they level. Spend them from the character sheet to specialise how that adventurer performs.</p></article></div><div class="shock-example"><span>CELL SHOCK EXAMPLE</span><div><i style="width:75%"></i></div><b>75%</b><small>One more 25% wipe would reach 100%.</small></div></main><aside class="z-guide"><small>CHECK YOUR UNDERSTANDING</small><h2>Your Tank reaches 100% Cell Shock. What now?</h2><div class="tutorial-question" id="shockQuestion"><button data-shock-answer="wrong">Keep entering dungeons with them anyway</button><button data-shock-answer="correct">Rotate them out while they recover</button><button data-shock-answer="wrong">Destroy their equipment to clear it</button></div><p id="shockLessonHint">Standard recovery on this account is about '+mins+' minutes once a character reaches 100%.</p></aside></div>';
+  ensureRoot().innerHTML=chrome(body,'recovery-lesson');
+  $('[data-shock-answer]').forEach(b=>b.onclick=async()=>{
+    const h=$('#shockLessonHint');
+    if(b.dataset.shockAnswer!=='correct'){if(h){h.textContent='Not quite. Cell Shock affects character availability, not equipment. Try again.';h.classList.add('lesson-wrong')}return}
+    if(h){h.textContent='Correct. Your roster matters because a shocked character may need to be rotated out.';h.classList.remove('lesson-wrong');h.classList.add('lesson-correct')}
+    $('[data-shock-answer]').forEach(x=>x.disabled=true);await sleep(650);await setStage('profession-choice');
+  });
+}
+
 function renderProfessionChoice(){
   const s=state(),selectedChar=s.onboarding.professionCharacterId||s.roster[0]?.id,selectedProf=s.onboarding.professionName||null;
   const chars=s.roster.map(c=>'<button class="prof-char-choice '+(c.id===selectedChar?'active':'')+'" data-prof-char="'+c.id+'"><span>'+c.portrait+'</span><div><b>'+esc(c.name)+'</b><small>'+esc(c.race)+' · '+esc(c.class)+'</small></div></button>').join('');
