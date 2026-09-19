@@ -10,13 +10,14 @@ permissions:
   contents: read
 
 concurrency:
-  group: cellbound-live-deploy
+  group: cellbound-live-deploy-v2
   cancel-in-progress: true
 
 jobs:
   build-and-deploy:
     name: Build and deploy via FTPS
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Check out Cellbound
