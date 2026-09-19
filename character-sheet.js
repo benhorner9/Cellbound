@@ -352,9 +352,9 @@ function changeSpec(spec){
   state.activity=state.activity||[];state.activity.push(`${c.name} changed specialisation to ${spec} (${roleLabel(roleOf(c))}).`);
   writeState(state);renderSheet();
 }
-function openCharacter(id){currentId=id;currentTab='overview';activeSlot=null;selectedTalentId=null;selectedTalentSpec=null;selectedTreeSpec=null;renderSheet()}
+function openCharacter(id){document.body.classList.add('character-sheet-open');currentId=id;currentTab='overview';activeSlot=null;selectedTalentId=null;selectedTalentSpec=null;selectedTreeSpec=null;renderSheet()}
 function closeCharacter(){
-  modal.hidden=true;activeSlot=null;
+  modal.hidden=true;document.body.classList.remove('character-sheet-open');activeSlot=null;
   const game=window.CellboundGame,next=dirty?readState():null;
   if(dirty&&next&&game?.replaceState){game.replaceState(next);dirty=false}
   else if(dirty){game?.renderAll?.();dirty=false}
