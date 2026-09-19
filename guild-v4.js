@@ -244,10 +244,95 @@ function renderBank(){
   ui.bankGrid.innerHTML=state.bank.map(item=>`<article class="bank-item gear-bank-item tier-${item.tier||1}"><div class="bank-icon gear-bank-icon">${G.artHTML(item,72)}</div><div class="bank-copy"><small>${tierText(item)} · ${item.class} · ${item.slot}</small><h3>${item.name}</h3><p>${item.source||'Guild Bank'}</p></div><div class="bank-qty">×${item.quantity||1}</div><button data-bank-item="${item.id}">MANAGE</button></article>`).join('');
   ui.bankGrid.querySelectorAll('[data-bank-item]').forEach(b=>b.addEventListener('click',()=>openBankItem(b.dataset.bankItem)));
 }
+function bankItemProtected(item){
+  const id=String(item?.itemId||'').toLowerCase(),label=String(item?.tierLabel||'').toLowerCase();
+  return Boolean(item?.questProtected)||id.startsWith('quest-')||label.includes('quest relic');
+}
+function bankVendorUnitValue(item){
+  const i=canonicalItem(item)||item||{},tier=Math.max(1,Number(i.tier)||1),ilvl=Math.max(0,Number(i.itemLevel)||0),power=Math.max(0,Number(i.power)||0);
+  const rarity=String(i.rarity||'Common'),mult=rarity==='Epic'?1.55:rarity==='Rare'?1.32:rarity==='Uncommon'?1.14:1;
+  return Math.max(5,Math.round((8+ilvl*.5+power*1.35+tier*6)*mult));
+}
+function bankDismantleYield(item,quantity=1){
+  const qty=Math.max(1,Math.floor(Number(quantity)||1)),tier=Math.max(1,Number(item?.tier)||1),rareBonus=['Rare','Epic'].includes(String(item?.rarity||''))?1:0;
+  const heavy=['Warrior','Paladin'].includes(item?.class),out={};
+  const add=(key,n)=>{out[key]=(out[key]||0)+n};
+  if(tier<=1){
+    add(heavy?'zeltiran-iron':'faded-cell-fragment',qty*(1+rareBonus));
+  }else if(tier===2){
+    add('ashen-soul-fragment',qty*(1+rareBonus));
+    add(heavy?'warden-iron':'faded-cell-fragment',qty);
+  }else{
+    add('ashen-soul-fragment',qty*(2+rareBonus));
+    add(heavy?'warden-iron':'faded-cell-fragment',qty);
+  }
+  return out;
+}
+function bankDismantleMarkup(yieldMap){
+  return Object.entries(yieldMap).map(([key,qty])=>{
+    const m=P?.MATERIALS?.[key],art=P?.materialArtHTML?P.materialArtHTML(key,30,'bank-salvage-art'):`<span class="bank-salvage-fallback">${m?.icon||'◇'}</span>`;
+    return `<span class="bank-salvage-material">${art}<b>${m?.name||key}</b><em>×${qty}</em></span>`;
+  }).join('');
+}
+function bankCleanupQuantity(item){
+  const input=$('#bankCleanupQty'),max=Math.max(1,Number(item?.quantity)||1),raw=Math.floor(Number(input?.value)||1),qty=Math.max(1,Math.min(max,raw));
+  if(input&&Number(input.value)!==qty)input.value=qty;
+  return qty;
+}
+function updateBankCleanupPreview(id){
+  const item=state.bank.find(x=>x.id===id);if(!item||bankItemProtected(item))return;
+  const qty=bankCleanupQuantity(item),gold=bankVendorUnitValue(item)*qty,yieldMap=bankDismantleYield(item,qty);
+  const vendor=$('#bankVendorPreview'),salvage=$('#bankDismantlePreview');
+  if(vendor)vendor.innerHTML=`<span>Quartermaster pays</span><b>+${gold.toLocaleString()} Gold</b>`;
+  if(salvage)salvage.innerHTML=bankDismantleMarkup(yieldMap);
+}
+function removeBankQuantity(item,quantity){
+  const qty=Math.max(1,Math.min(Number(item?.quantity)||1,Math.floor(Number(quantity)||1)));
+  item.quantity=(Number(item.quantity)||1)-qty;
+  if(item.quantity<=0)state.bank=state.bank.filter(x=>x.id!==item.id);
+  return qty;
+}
+function disposeBankItem(id,mode){
+  const item=state.bank.find(x=>x.id===id);if(!item||bankItemProtected(item))return;
+  const qty=bankCleanupQuantity(item),name=item.name||'item';
+  if(mode==='vendor'){
+    const gold=bankVendorUnitValue(item)*qty;
+    if(!confirm(`Sell ${qty} × ${name} to the Guild Quartermaster for ${gold.toLocaleString()} Gold?\n\nThis cannot be undone.`))return;
+    removeBankQuantity(item,qty);state.gold=(Number(state.gold)||0)+gold;
+    state.activity.push(`Sold ${qty} × ${name} to the Guild Quartermaster for ${gold} Gold.`);
+  }else if(mode==='dismantle'){
+    const yieldMap=bankDismantleYield(item,qty),summary=Object.entries(yieldMap).map(([key,n])=>`${P?.MATERIALS?.[key]?.name||key} ×${n}`).join(', ');
+    if(!confirm(`Dismantle ${qty} × ${name}?\n\nYou will receive: ${summary}.\n\nThis cannot be undone.`))return;
+    removeBankQuantity(item,qty);Object.entries(yieldMap).forEach(([key,n])=>addMaterial(key,n));
+    state.activity.push(`Dismantled ${qty} × ${name}: ${summary}.`);
+  }else return;
+  save();ui.bankModal.hidden=true;renderAll();switchView('bank');
+}
 function openBankItem(id){
-  const item=state.bank.find(x=>x.id===id);if(!item)return;const eligible=state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&canUseItem(c,item)&&!isUnavailable(c));
-  ui.bankDetail.innerHTML=`<div class="detail-hero gear-detail-hero"><div class="gear-detail-art">${G.artHTML(item,112)}</div><div><small>${tierText(item).toUpperCase()} · ${item.class.toUpperCase()} · ${item.slot.toUpperCase()}</small><h2>${item.name}</h2><p>Dropped by ${item.source||'Unknown source'}</p><p>Quantity in bank: ${item.quantity||1}</p></div></div><div class="bank-manage"><h3>Equip to an adventurer</h3><p>Equipment stays in the Guild Bank until you assign it.</p><div class="bank-character-list">${eligible.map(c=>`<button data-equip-char="${c.id}"><span class="avatar">${c.portrait}</span><span><b>${c.name}</b><small>${c.race||'Veyren'} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}</small></span><em>${c.equipment?.[item.slot]?.name?`Replace ${c.equipment[item.slot].name}`:'Empty slot'}</em></button>`).join('')||'<p>No available characters can use this item.</p>'}</div></div>`;
-  ui.bankModal.hidden=false;ui.bankDetail.querySelectorAll('[data-equip-char]').forEach(b=>b.addEventListener('click',()=>equipBankItem(id,b.dataset.equipChar)));
+  const item=state.bank.find(x=>x.id===id);if(!item)return;
+  const eligible=state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&canUseItem(c,item)&&!isUnavailable(c));
+  const protectedItem=bankItemProtected(item),qty=Math.max(1,Number(item.quantity)||1),unitValue=bankVendorUnitValue(item),oneYield=bankDismantleYield(item,1);
+  const cleanup=protectedItem
+    ?`<div class="bank-cleanup bank-cleanup-protected"><div class="bank-cleanup-head"><div><small>ITEM SAFETY</small><h3>Protected item</h3></div><span>LOCKED</span></div><p>Unique quest and story relics cannot be sold or dismantled. This prevents permanent rewards being destroyed accidentally.</p></div>`
+    :`<div class="bank-cleanup">
+        <div class="bank-cleanup-head"><div><small>BANK CLEANUP</small><h3>Sell or dismantle</h3></div><span>IRREVERSIBLE</span></div>
+        <p>Sell unwanted equipment for guaranteed Gold, or dismantle it into useful crafting materials.</p>
+        <div class="bank-cleanup-quantity"><label><span>Quantity</span><input id="bankCleanupQty" type="number" inputmode="numeric" min="1" max="${qty}" value="1"></label><button data-bank-cleanup-all type="button">ALL ×${qty}</button></div>
+        <div class="bank-cleanup-options">
+          <article class="bank-cleanup-option vendor"><div><small>GUILD QUARTERMASTER</small><h4>Sell equipment</h4><p>Fastest way to clear space. Vendor prices are intentionally below player-market value.</p></div><div id="bankVendorPreview" class="bank-cleanup-return"><span>Quartermaster pays</span><b>+${unitValue.toLocaleString()} Gold</b></div><button data-bank-vendor type="button">SELL TO QUARTERMASTER</button></article>
+          <article class="bank-cleanup-option salvage"><div><small>WORKBENCH</small><h4>Dismantle equipment</h4><p>Recover part of the equipment's crafting value. Boss-specific rare cores are never generated by dismantling.</p></div><div id="bankDismantlePreview" class="bank-salvage-preview">${bankDismantleMarkup(oneYield)}</div><button data-bank-dismantle type="button">DISMANTLE AT WORKBENCH</button></article>
+        </div>
+      </div>`;
+
+  ui.bankDetail.innerHTML=`<div class="detail-hero gear-detail-hero"><div class="gear-detail-art">${G.artHTML(item,112)}</div><div><small>${tierText(item).toUpperCase()} · ${String(item.class||'All').toUpperCase()} · ${String(item.slot||'Gear').toUpperCase()}</small><h2>${item.name}</h2><p>Dropped by ${item.source||'Unknown source'}</p><p>Quantity in bank: ${qty}</p></div></div><div class="bank-manage"><h3>Equip to an adventurer</h3><p>Equipment stays in the Guild Bank until you assign it.</p><div class="bank-character-list">${eligible.map(c=>`<button data-equip-char="${c.id}"><span class="avatar">${c.portrait}</span><span><b>${c.name}</b><small>${c.race||'Veyren'} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}</small></span><em>${c.equipment?.[item.slot]?.name?`Replace ${c.equipment[item.slot].name}`:'Empty slot'}</em></button>`).join('')||'<p>No available characters can use this item.</p>'}</div></div>${cleanup}`;
+  ui.bankModal.hidden=false;
+  ui.bankDetail.querySelectorAll('[data-equip-char]').forEach(b=>b.addEventListener('click',()=>equipBankItem(id,b.dataset.equipChar)));
+  if(!protectedItem){
+    $('#bankCleanupQty')?.addEventListener('input',()=>updateBankCleanupPreview(id));
+    $('[data-bank-cleanup-all]')?.addEventListener('click',()=>{const input=$('#bankCleanupQty');if(input)input.value=qty;updateBankCleanupPreview(id)});
+    $('[data-bank-vendor]')?.addEventListener('click',()=>disposeBankItem(id,'vendor'));
+    $('[data-bank-dismantle]')?.addEventListener('click',()=>disposeBankItem(id,'dismantle'));
+  }
 }
 function addBankItem(raw,record=true){
   const canonical=canonicalItem(raw);if(!canonical)return;const existing=state.bank.find(x=>x.itemId===canonical.itemId);if(existing){existing.quantity=(existing.quantity||1)+1;existing.source=raw.source||existing.source;}else state.bank.push({...canonical,id:`bank-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,quantity:1,source:raw.source||'Unknown'});if(record)state.collectionHistory.push({itemId:canonical.itemId,name:canonical.name,tier:canonical.tier,itemLevel:canonical.itemLevel,source:raw.source||'Unknown',at:new Date().toISOString()});
