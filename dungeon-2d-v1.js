@@ -318,8 +318,9 @@ function targetPulse(id){
 }
 function projectile(from,to,kind='physical',ms=320){
  const arena=$('#cb2dArena'),a=point(from),b=point(to);if(!arena||!a||!b)return;
- const e=document.createElement('i');e.className='cb2d-projectile '+kind;e.style.left=a.x+'px';e.style.top=a.y+'px';arena.appendChild(e);
- requestAnimationFrame(()=>{e.style.transitionDuration=Math.round(ms/((run&&run.speed)||1))+'ms';e.style.transform='translate('+(b.x-a.x)+'px,'+(b.y-a.y)+'px)'});
+ const dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI;
+ const e=document.createElement('i');e.className='cb2d-projectile '+kind;e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.transform='rotate('+angle+'deg)';arena.appendChild(e);
+ requestAnimationFrame(()=>{e.style.transitionDuration=Math.round(ms/((run&&run.speed)||1))+'ms';e.style.transform='translate('+dx+'px,'+dy+'px) rotate('+angle+'deg)'});
  setTimeout(()=>e.remove(),Math.round(ms/((run&&run.speed)||1))+120)
 }
 function pctPosition(id){
