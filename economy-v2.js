@@ -34,7 +34,7 @@ async function processInbox(){
     const qty=Math.max(1,Number(d.quantity)||1);
     if(d.category==='material')Game.addMaterial(d.itemKey,qty);
     else if(d.category==='consumable')addConsumable({key:d.itemKey,name:d.itemName,payload:d.payload},qty);
-    else if(d.category==='gear'){const gear=G.byId(d.itemKey)||G.byName(d.itemName)||d.payload,source=d.payload?.source||'Trading Post';for(let i=0;i<qty;i++)Game.addBankItem({...gear,source});}
+    else if(d.category==='gear'){const base=G.byId(d.itemKey)||G.byName(d.itemName)||{},gear={...base,...(d.payload||{})},source=d.payload?.source||'Trading Post';for(let i=0;i<qty;i++)Game.addBankItem({...gear,source});}
     else if(d.category==='recipe'){const rid=d.payload?.recipeId||d.itemKey;if(rid){const x=s.recipeScrolls.find(v=>v.recipeId===rid);if(x)x.quantity=(x.quantity||1)+qty;else s.recipeScrolls.push({recipeId:rid,name:d.itemName||`Recipe: ${P.recipeById(rid)?.name||rid}`,quantity:qty});}}
     s.activity.push(`${d.payload?.source||'Trading Post'} delivery received: ${(G.byId(d.itemKey)?.name)||d.itemName} ×${qty}.`);
   }
@@ -61,7 +61,7 @@ async function craft(recipeId){
   if(!recipe||!canCraft(recipe,prof))return;
   Object.entries(recipe.inputs).forEach(([k,q])=>s.materials[k]=Math.max(0,(Number(s.materials[k])||0)-q));
   const out=recipe.output,qty=out.quantity||1;
-  if(out.category==='gear'){const gear=G.byId(out.key)||G.byName(out.name);if(gear)for(let i=0;i<qty;i++)Game.addBankItem({...gear,source:`Crafted by ${c.name}`});}
+  if(out.category==='gear'){const gear=G.byId(out.key)||G.byName(out.name);if(gear)for(let i=0;i<qty;i++)Game.addBankItem({...G.rollItemAffixes({...gear,source:`Crafted by ${c.name}`}),source:`Crafted by ${c.name}`});}
   else if(out.category==='consumable')addConsumable(out,qty);
   else if(out.category==='material')Game.addMaterial(out.key,qty);
   professionLevelUp(prof,recipe.xp||0);
@@ -212,7 +212,7 @@ async function cancelListing(id){
   const l=market.find(x=>x.id===id&&x.seller_id===user.id&&x.status==='active');if(!l)return;
   const {error}=await db.from('trading_post_listings').update({status:'cancelled',updated_at:new Date().toISOString()}).eq('id',id).eq('seller_id',user.id);
   if(error){console.error(error);return;}
-  if(l.category==='gear'){const gear=G.byId(l.item_key)||G.byName(l.item_name)||l.payload;for(let i=0;i<l.quantity;i++)Game.addBankItem({...gear,source:'Trading Post cancellation'});}
+  if(l.category==='gear'){const base=G.byId(l.item_key)||G.byName(l.item_name)||{},gear={...base,...(l.payload||{})};for(let i=0;i<l.quantity;i++)Game.addBankItem({...gear,source:'Trading Post cancellation'});}
   else if(l.category==='material')Game.addMaterial(l.item_key,l.quantity);
   else if(l.category==='consumable')addConsumable({key:l.item_key,name:l.item_name,payload:l.payload},l.quantity);else if(l.category==='recipe'){const x=state().recipeScrolls.find(v=>v.recipeId===l.item_key);if(x)x.quantity=(x.quantity||1)+l.quantity;else state().recipeScrolls.push({recipeId:l.item_key,name:l.item_name,quantity:l.quantity});}
   state().activity.push(`Cancelled Trading Post listing: ${l.item_name}.`);await commit();await loadMarket();
