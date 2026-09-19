@@ -773,77 +773,23 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:1px solid 
   .bank-cleanup-option>button{min-height:48px}
 }
 
-/* Roster class identity — shared with combat palette */
+/* Roster class identity — single class-colour blip only */
 #roster .char-card[class*="class-"]{
   --roster-class:var(--combat-class,#7F8B88);
-  border-color:color-mix(in srgb,var(--roster-class) 20%,rgba(255,255,255,.04));
-  box-shadow:inset 0 2px 0 color-mix(in srgb,var(--roster-class) 68%,transparent),0 12px 28px rgba(0,0,0,.24);
-}
-#roster .char-card[class*="class-"]:hover{
-  border-color:color-mix(in srgb,var(--roster-class) 48%,rgba(255,255,255,.06));
-  box-shadow:inset 0 2px 0 var(--roster-class),0 18px 38px rgba(0,0,0,.32),0 0 24px color-mix(in srgb,var(--roster-class) 10%,transparent);
-}
-#roster .char-card[class*="class-"] .char-top{
-  background:
-    linear-gradient(180deg,rgba(255,255,255,.012),transparent),
-    radial-gradient(circle at 82% 4%,color-mix(in srgb,var(--roster-class) 62%,transparent),transparent 43%),
-    linear-gradient(90deg,color-mix(in srgb,var(--roster-class) 7%,transparent),transparent 42%);
-  border-bottom-color:color-mix(in srgb,var(--roster-class) 13%,rgba(255,255,255,.025));
 }
 #roster .char-card[class*="class-"]:before{
-  background:radial-gradient(circle,var(--roster-class),transparent 68%);
-  opacity:.2;
+  content:"";
+  position:absolute;
+  z-index:4;
+  right:12px;
+  top:12px;
+  width:9px;
+  height:9px;
+  border-radius:50%;
+  background:var(--roster-class);
+  opacity:1;
+  box-shadow:0 0 0 3px color-mix(in srgb,var(--roster-class) 12%,transparent),0 0 10px color-mix(in srgb,var(--roster-class) 28%,transparent);
 }
-#roster .char-card[class*="class-"] .char-portrait{
-  border-color:color-mix(in srgb,var(--roster-class) 52%,rgba(255,255,255,.08));
-  color:color-mix(in srgb,var(--roster-class) 72%,white);
-  box-shadow:inset 0 0 22px rgba(0,0,0,.72),0 0 15px color-mix(in srgb,var(--roster-class) 13%,transparent);
-}
-#roster .char-card[class*="class-"] .role-tag{
-  color:color-mix(in srgb,var(--roster-class) 82%,white);
-  border-color:color-mix(in srgb,var(--roster-class) 34%,rgba(255,255,255,.06));
-  background:color-mix(in srgb,var(--roster-class) 7%,rgba(7,14,17,.82));
-}
-#roster .char-card[class*="class-"]>.character-status:not(.danger){
-  color:color-mix(in srgb,var(--roster-class) 72%,white);
-  border-color:color-mix(in srgb,var(--roster-class) 22%,rgba(255,255,255,.04));
-}
-#roster .char-card[class*="class-"]>h3{
-  text-shadow:0 0 18px color-mix(in srgb,var(--roster-class) 12%,transparent);
-}
-#roster .char-card[class*="class-"]>.class{
-  color:color-mix(in srgb,var(--roster-class) 45%,#788681);
-}
-#roster .char-card[class*="class-"]>.char-stats b,
-#roster .char-card[class*="class-"] .knowledge-row b{
-  color:color-mix(in srgb,var(--roster-class) 58%,#e2ddd2);
-}
-#roster .char-card[class*="class-"] .knowledge-bar i{
-  background:linear-gradient(90deg,color-mix(in srgb,var(--roster-class) 58%,#172429),var(--roster-class));
-  box-shadow:0 0 8px color-mix(in srgb,var(--roster-class) 22%,transparent);
-}
-#roster .char-card[class*="class-"] .evo-roster-footer b{
-  color:color-mix(in srgb,var(--roster-class) 38%,#aeb9b3);
-}
-#roster .char-card[class*="class-"]>button{
-  border-color:color-mix(in srgb,var(--roster-class) 24%,rgba(255,255,255,.04));
-  background:color-mix(in srgb,var(--roster-class) 6%,rgba(20,23,20,.92));
-  color:color-mix(in srgb,var(--roster-class) 68%,#d8c89d);
-}
-#roster .char-card[class*="class-"]>button:hover{
-  border-color:color-mix(in srgb,var(--roster-class) 52%,rgba(255,255,255,.06));
-  background:color-mix(in srgb,var(--roster-class) 12%,#171b18);
-  color:color-mix(in srgb,var(--roster-class) 80%,white);
-}
-#roster .char-card[class*="class-"][data-active-party="1"]:after{
-  background:color-mix(in srgb,var(--roster-class) 72%,#17150f);
-  color:#f7f7f3;
-  box-shadow:0 2px 10px color-mix(in srgb,var(--roster-class) 18%,transparent);
-}
-#roster .char-card[class*="class-"][data-active-party="1"]{
-  border-color:color-mix(in srgb,var(--roster-class) 36%,rgba(255,255,255,.05));
-}
-#roster .char-card[class*="class-"][data-status="recovering"]{
-  border-color:rgba(200,100,83,.3);
-  box-shadow:inset 0 2px 0 color-mix(in srgb,var(--roster-class) 42%,transparent),0 12px 28px rgba(0,0,0,.24);
+#roster .char-card[data-active-party="1"]:before{
+  top:13px;
 }
