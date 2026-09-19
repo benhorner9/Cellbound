@@ -160,8 +160,10 @@ function bind(){
   $('#partyFinderForm')?.addEventListener('submit',createGroup);
   $('#refreshSocial')?.addEventListener('click',()=>refreshAll(true));
   $('#refreshWorld')?.addEventListener('click',loadWorld);
-  document.querySelector('.nav-btn[data-view="chat"]')?.addEventListener('click',()=>{loadChat(true);loadGroups();});
-  document.querySelector('.nav-btn[data-view="world"]')?.addEventListener('click',loadWorld);
+  window.addEventListener('cellbound:view-changed',e=>{
+    if(e.detail?.view==='chat'){loadChat(true);loadGroups();}
+    if(e.detail?.view==='world')loadWorld();
+  });
 }
 async function init(){
   Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,80);return;}
