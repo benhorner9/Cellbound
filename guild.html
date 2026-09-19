@@ -27,21 +27,12 @@
 <div class="app-shell">
   <aside class="sidebar">
     <div class="brand"><div class="brand-mark">◇</div><div><strong>CELLBOUND</strong><span>GUILD COMMAND</span></div></div>
-    <nav>
-      <button class="nav-btn active" data-view="overview"><span>⌂</span>Overview</button>
-      <button class="nav-btn" data-view="roster"><span>♟</span>Roster</button>
-      <button class="nav-btn" data-view="bank"><span>▦</span>Bank</button>
-      <button class="nav-btn" data-view="professions"><span>⚒</span>Professions</button>
-      <button class="nav-btn" data-view="trading"><span>⇄</span>Trading Post</button>
-      <button class="nav-btn" data-view="chat"><span>◌</span>Chat <em id="chatUnread"></em></button>
-      <button class="nav-btn" data-view="world"><span>✹</span>World <em id="worldActiveBadge"></em></button>
-      <button class="nav-btn" data-view="content"><span>⚔</span>Content</button>
-      <button class="nav-btn" data-view="quests"><span>⌁</span>Quests <em id="questNavBadge"></em></button>
-      <button class="nav-btn" data-view="party"><span>◆</span>Party Builder</button>
-      <button class="nav-btn" data-view="reports"><span>▤</span>Reports</button>
-      <button id="adminNav" class="nav-btn" data-view="admin" hidden><span>⚙</span>Admin <em>DEV</em></button>
-      <button class="nav-btn locked"><span>✦</span>Raids <em>LOCKED</em></button>
-      <button class="nav-btn locked"><span>◎</span>PvP <em>LOCKED</em></button>
+    <nav class="primary-nav" aria-label="Primary navigation">
+      <button class="nav-btn active" data-hub="overview" data-view="overview"><span>⌂</span><b>Overview</b></button>
+      <button class="nav-btn" data-hub="guild" data-view="roster"><span>♟</span><b>Guild</b><em>4</em></button>
+      <button class="nav-btn" data-hub="adventure" data-view="quests"><span>⌁</span><b>Adventure</b><em id="questNavBadge"></em></button>
+      <button class="nav-btn" data-hub="economy" data-view="bank"><span>▦</span><b>Economy</b></button>
+      <button id="adminNav" class="nav-btn" data-hub="admin" data-view="admin" hidden><span>⚙</span><b>Admin</b><em>DEV</em></button>
     </nav>
     <div class="season-card"><small>FOUNDING SEASON</small><b>Week 1</b><span>Build, gear and manage your first five.</span></div>
     <button id="signOut" class="sign-out">Sign out</button>
@@ -59,6 +50,7 @@
         <div><span>Bank</span><b id="bankCount">0</b></div>
       </div>
     </header>
+    <nav id="workspaceTabs" class="workspace-tabs" aria-label="Workspace navigation" hidden></nav>
     <div id="worldAlertBar" class="world-alert-bar" hidden></div>
 
     <section id="overview" class="view active">
