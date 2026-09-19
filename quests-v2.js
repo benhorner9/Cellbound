@@ -37,7 +37,6 @@ const ITEMS={
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
 const stageDef=id=>STAGES.find(x=>x.id===id)||STAGES[0];
-const stageIndex=id=>Math.max(0,STAGES.findIndex(x=>x.id===id));
 const complete=()=>Boolean(ensure()?.flags?.hollowSanctumUnlocked);
 const currentStage=()=>complete()?'complete':ensure()?.currentStage||'letter';
 
@@ -70,14 +69,12 @@ function migrate(q,s){
   q.started=Boolean(q.started||mapped.length||q.bearerId||q.flags?.hollowSanctumUnlocked);
   q.history=Array.isArray(q.history)?q.history:[];
   q.flags=q.flags||{};
-  q.questPointsAwarded=Boolean(q.questPointsAwarded);
 
   if(q.started||mapped.length)grantItemRaw(q,'blackened-fragment');
   if(mapped.includes('vault'))grantItemRaw(q,'resonance-map');
   if(mapped.includes('decipher'))grantItemRaw(q,'surveyor-rubbing');
   if(mapped.includes('route'))grantItemRaw(q,'decoded-route');
 
-  if(q.flags.hollowSanctumUnlocked)q.questPointsAwarded=Boolean(q.questPointsAwarded);
 }
 
 function ensure(){
@@ -86,7 +83,7 @@ function ensure(){
     s.questSystem={
       version:2,chain:QUEST.id,started:false,currentStage:'letter',stageDone:[],
       flags:{hollowSanctumUnlocked:false,hollowFirstClear:false},
-      bearerId:null,bearerName:null,items:{},history:[],startedAt:null,questPointsAwarded:false
+      bearerId:null,bearerName:null,items:{},history:[],startedAt:null
     };
   }
   const q=s.questSystem;
@@ -391,7 +388,7 @@ function renderDetail(){
   root.innerHTML='<div class="quest-v3-hero"><div><small>'+QUEST.difficulty.toUpperCase()+' · '+QUEST.length.toUpperCase()+' ADVENTURE</small><h2>'+QUEST.title+'</h2><p>'+esc(QUEST.start)+'</p></div><span class="quest-v3-status '+(complete()?'complete':'')+'">'+(complete()?'COMPLETE':q.started?'IN PROGRESS':'AVAILABLE')+'</span></div>'+
     '<div class="quest-v3-story"><p>'+QUEST.summary+'</p></div>'+
     '<section class="quest-v3-clue"><small>'+(complete()?'WHERE IT LED':'CURRENT CLUE')+'</small><h3>'+esc(complete()?'The Hollow Sanctum':d.label)+'</h3><p>'+esc(complete()?'The seal beneath Zeltira has been opened. What was once a rumour beneath the road is now a real place your guild can enter.':d.objective)+'</p>'+(complete()?'':'<em>'+esc(d.hint)+'</em>')+'</section>'+
-    '<section class="quest-v3-known"><div class="quest-v3-section-head"><span>WHAT YOUR GUILD KNOWS</span><small>Only discoveries made so far are recorded here.</small></div><div>'+facts.map(x=>'<p>'+esc(x)+'</p>').join('')+'</div></section>'+
+    '<section class="quest-v3-known"><div class="quest-v3-section-head"><span>WHAT YOUR GUILD KNOWS</span><small>Only discoveries made so far are recorded here.</small></div><div>'+(facts.length?facts.map(x=>'<p>'+esc(x)+'</p>').join(''):'<p class="quest-v3-unknown">Nothing yet. Start with Bram Kel’s letter.</p>')+'</div></section>'+
     '<div class="quest-detail-action">'+actionHtml()+'</div>';
 
   side.innerHTML=
@@ -422,7 +419,9 @@ function renderHome(){
 }
 function render(){
   if(!Game?.ready)return;const q=ensure();if(!q)return;
-  $$('.quest-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.questTab===selectedTab));
+  if(complete()&&selectedTab==='active')selectedTab='completed';
+  if(!complete()&&selectedTab==='completed')selectedTab='active';
+  $('.quest-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.questTab===selectedTab));
   const status=$('#questCampaignStatus');if(status)status.textContent=complete()?'ADVENTURE COMPLETE':q.started?'ADVENTURE IN PROGRESS':'ADVENTURE AVAILABLE';
   renderList();renderDetail();renderHome();window.CellboundHollowSanctum?.renderCard?.();
 }
