@@ -195,7 +195,7 @@ function recordDamage(c,amount){
  run.damageDone=run.damageDone||{};run.damageDone[c.id]=(Number(run.damageDone[c.id])||0)+dealt;
  renderCombatMeters();
 }
-function meterRole(c){const r=role(c);return r==='tank'?'tank':r==='healer'?'healer':'dps'}
+function meterRole(c){return classKey(c)}
 function renderCombatMeters(){
  if(!run)return;
  const damageRoot=$('#cb2dDamageMeter'),threatRoot=$('#cb2dThreatMeter');if(!damageRoot&&!threatRoot)return;
