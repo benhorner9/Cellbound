@@ -323,10 +323,10 @@ function tdLesson(title,text,options,correct,success){
   });
 }
 function tdBossFrontal(){
-  const arena=$('#tdArena'),enemy=$('[data-td-enemy="0"]');if(!arena||!enemy)return;
-  const p=tdPoint('[data-td-enemy="0"]');if(!p)return;
-  const cone=document.createElement('div');cone.className='td-training-cone';cone.style.left=p.x+'px';cone.style.top=p.y+'px';cone.innerHTML='<span>FRONTAL CLEAVE</span>';arena.appendChild(cone);
-  tdFeed('The Hollow Warden telegraphs a frontal attack. The Tank turns it away from the party.');
+  const arena=$('#tdArena'),enemy=$('[data-td-enemy="0"]'),tank=state().roster.find(c=>tdProfile(c)==='tank');if(!arena||!enemy||!tank)return;
+  const a=tdPoint('[data-td-enemy="0"]'),b=tdPoint('[data-td-party="'+tank.id+'"]');if(!a||!b)return;
+  const angle=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI,cone=document.createElement('div');cone.className='td-training-cone';cone.style.left=a.x+'px';cone.style.top=a.y+'px';cone.style.transform='translateY(-50%) rotate('+angle+'deg)';cone.innerHTML='<span>FRONTAL CLEAVE</span>';arena.appendChild(cone);
+  tdFeed('The Hollow Warden faces '+tank.name+' and telegraphs a frontal attack. The Tank keeps it pointed away from the group.');
   setTimeout(()=>cone.classList.add('impact'),550);setTimeout(()=>cone.remove(),1150);
 }
 function tdInterruptMoment(my){
@@ -348,7 +348,7 @@ function tdFloat(selector,text,kind){
 }
 function tdProjectile(from,to,kind){
   const arena=$('#tdArena'),a=tdPoint(from),b=tdPoint(to);if(!arena||!a||!b)return;
-  const e=document.createElement('i');e.className='td-shot '+(kind||'');e.style.left=a.x+'px';e.style.top=a.y+'px';arena.appendChild(e);requestAnimationFrame(()=>e.style.transform='translate('+(b.x-a.x)+'px,'+(b.y-a.y)+'px)');setTimeout(()=>e.remove(),430);
+  const dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI,e=document.createElement('i');e.className='td-shot '+(kind||'');e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.transform='rotate('+angle+'deg)';arena.appendChild(e);requestAnimationFrame(()=>e.style.transform='translate('+dx+'px,'+dy+'px) rotate('+angle+'deg)');setTimeout(()=>e.remove(),430);
 }
 function tdFeed(text){
   const e=$('#tdFeed');if(e)e.innerHTML=esc(text)+'<br>'+e.innerHTML.split('<br>').slice(0,3).join('<br>');
