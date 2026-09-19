@@ -637,3 +637,57 @@
     min-height:46px
   }
 }
+
+
+/* ==========================================================================
+   Consolidated navigation + UI tidy mobile refinements
+   ========================================================================== */
+@media(max-width:720px){
+  .sidebar nav.primary-nav{
+    display:grid!important;
+    grid-auto-flow:column;
+    grid-auto-columns:minmax(70px,1fr);
+    gap:2px;
+    overflow-x:auto
+  }
+  .primary-nav .nav-btn,.primary-nav .nav-btn.active,.primary-nav .nav-btn:not(.active){
+    width:auto!important;
+    min-width:70px!important;
+    flex:none!important
+  }
+  .primary-nav .nav-btn>b{
+    display:block;
+    font-size:.49rem!important;
+    font-weight:700
+  }
+  .primary-nav .nav-btn>em{
+    right:5px;top:4px
+  }
+  .workspace-tabs{
+    margin:0 -10px;
+    padding:6px 10px 7px;
+    min-height:48px;
+    background:#071014;
+    border-bottom:1px solid rgba(216,185,118,.07);
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch
+  }
+  .workspace-tabs button{
+    min-width:auto!important;
+    height:36px!important;
+    min-height:36px!important;
+    padding:0 12px!important;
+    font-size:.46rem!important
+  }
+  .workspace-tabs button.active:after{bottom:-7px}
+  .view{padding-top:10px!important}
+  .section-intro{align-items:flex-start!important}
+  .section-intro>div:first-child{width:100%}
+  #overview .hero-card{padding:19px 15px!important}
+  #overview .hero-card h2{font-size:1.65rem!important}
+  #overview .hero-card p{font-size:.7rem!important}
+  #trading .trading-layout,#chat .social-layout{grid-template-columns:1fr!important}
+  #trading .trading-side{position:static!important}
+  #chat .chat-panel{min-height:480px!important}
+  #reports .reports-list{max-width:none}
+}
