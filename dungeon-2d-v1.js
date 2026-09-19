@@ -77,6 +77,7 @@ let tactics={aggression:'balanced',interrupts:'important',defensives:'balanced',
 const party=()=>Game&&Game.getPartyCharacters?Game.getPartyCharacters():[];
 const state=()=>Game&&Game.getState?Game.getState():null;
 const role=c=>Game&&Game.classes&&Game.classes[c.class]&&Game.classes[c.class].specs[c.spec]?Game.classes[c.class].specs[c.spec].role:'dps';
+const classKey=c=>'class-'+String(c?.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const ilvl=()=>Number(Game&&Game.partyItemLevel?Game.partyItemLevel():0)||0;
 const ASHEN_VAULT_XP=420;
 function xpNeeded(level){return 800+Math.max(0,(Number(level)||1)-1)*250}
@@ -151,7 +152,7 @@ function briefing(){
    return;
  }
 
- r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · TACTICAL BRIEFING</small><h2>Set the plan once. Then watch the dungeon run.</h2></div><button data-close>×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">These tactics persist through the whole expedition. The party will move, react and fight automatically. Live overrides remain available without stopping combat.</p><h3>Aggression</h3>'+groupButtons('aggression',[['safe','SAFE','Prioritise stability.'],['balanced','BALANCED','Standard dungeon pace.'],['aggressive','AGGRESSIVE','Push damage windows.']])+'<h3>Interrupts</h3>'+groupButtons('interrupts',[['important','IMPORTANT','Stop dangerous casts.'],['high','HIGH','Interrupt aggressively.'],['conservative','CONSERVATIVE','Save for critical casts.']])+'<h3>Defensives</h3>'+groupButtons('defensives',[['early','EARLY','Use cooldowns sooner.'],['balanced','BALANCED','React to pressure.'],['save','SAVE','Hold for late bosses.']])+'<h3>Add Priority</h3>'+groupButtons('adds',[['dangerous','DANGEROUS','Swap to threatening adds.'],['full','FULL','Clear every add wave.'],['boss','BOSS','Stay on primary target.']])+'</main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+role(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span><strong>'+String(role(c)).toUpperCase()+'</strong></div>').join('')+'<div class="cb2d-prep-summary"><small>ACTIVE PROFESSION PREP</small>'+party().map(c=>{const fx=P?.activeEffects?.(c)||[];return fx.length?'<p><b>'+esc(c.name)+'</b><span>'+fx.map(x=>esc(x.name)+' · '+x.remainingBosses+' bosses').join('<br>')+'</span></p>':''}).join('')+'</div><button class="cb2d-start" data-start>BEGIN EXPEDITION →</button></aside></div></section>';
+ r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · TACTICAL BRIEFING</small><h2>Set the plan once. Then watch the dungeon run.</h2></div><button data-close>×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">These tactics persist through the whole expedition. The party will move, react and fight automatically. Live overrides remain available without stopping combat.</p><h3>Aggression</h3>'+groupButtons('aggression',[['safe','SAFE','Prioritise stability.'],['balanced','BALANCED','Standard dungeon pace.'],['aggressive','AGGRESSIVE','Push damage windows.']])+'<h3>Interrupts</h3>'+groupButtons('interrupts',[['important','IMPORTANT','Stop dangerous casts.'],['high','HIGH','Interrupt aggressively.'],['conservative','CONSERVATIVE','Save for critical casts.']])+'<h3>Defensives</h3>'+groupButtons('defensives',[['early','EARLY','Use cooldowns sooner.'],['balanced','BALANCED','React to pressure.'],['save','SAVE','Hold for late bosses.']])+'<h3>Add Priority</h3>'+groupButtons('adds',[['dangerous','DANGEROUS','Swap to threatening adds.'],['full','FULL','Clear every add wave.'],['boss','BOSS','Stay on primary target.']])+'</main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span><strong>'+String(role(c)).toUpperCase()+'</strong></div>').join('')+'<div class="cb2d-prep-summary"><small>ACTIVE PROFESSION PREP</small>'+party().map(c=>{const fx=P?.activeEffects?.(c)||[];return fx.length?'<p><b>'+esc(c.name)+'</b><span>'+fx.map(x=>esc(x.name)+' · '+x.remainingBosses+' bosses').join('<br>')+'</span></p>':''}).join('')+'</div><button class="cb2d-start" data-start>BEGIN EXPEDITION →</button></aside></div></section>';
  r.querySelector('[data-close]').onclick=close;
  r.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{const a=b.dataset.pick.split(':');tactics[a[0]]=a[1];r.querySelectorAll('[data-plan="'+a[0]+'"] button').forEach(x=>x.classList.toggle('active',x===b))});
  r.querySelector('[data-start]').onclick=start;
@@ -164,7 +165,7 @@ function route(){
  return STAGES.map((s,i)=>'<span class="'+(i<run.stage?'done':i===run.stage?'current':'')+'"><i>'+(i+1)+'</i>'+esc(s.title)+'</span>').join('');
 }
 function rows(){
- return party().map(c=>'<div class="cb2d-party-row" data-row="'+c.id+'"><i class="cb2d-dot '+role(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+String(role(c)).toUpperCase()+' · '+esc(c.spec)+' · Condition '+cond(c.id)+'%</small><em class="cb2d-side-hp"><i data-side-hp="'+c.id+'" style="width:'+hp(c.id)+'%"></i></em></span><strong>'+hp(c.id)+' HP</strong></div>').join('');
+ return party().map(c=>'<div class="cb2d-party-row" data-row="'+c.id+'"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+String(role(c)).toUpperCase()+' · '+esc(c.spec)+' · Condition '+cond(c.id)+'%</small><em class="cb2d-side-hp"><i data-side-hp="'+c.id+'" style="width:'+hp(c.id)+'%"></i></em></span><strong>'+hp(c.id)+' HP</strong></div>').join('');
 }
 function drawViewer(){
  const s=STAGES[run.stage],r=root();r.hidden=false;
@@ -277,7 +278,7 @@ function spawn(s){
  const melee=party().filter(c=>combatProfile(c)==='melee');
  const ranged=party().filter(c=>combatProfile(c)==='ranged');
  party().forEach((c,i)=>{
-   addUnit('p-'+c.id,c.name,'party '+role(c)+' profile-'+combatProfile(c),4,50+(i-2)*4,'');
+   addUnit('p-'+c.id,c.name,'party '+role(c)+' profile-'+combatProfile(c)+' '+classKey(c),4,50+(i-2)*4,'');
    let x=16,y=50;
    if(combatProfile(c)==='tank'){x=30;y=50}
    else if(combatProfile(c)==='melee'){x=23;y=43+(melee.indexOf(c)*14)}
