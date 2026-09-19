@@ -131,7 +131,7 @@ function bind(){
   $('#adminAutoToggle')?.addEventListener('click',toggleAuto);
   $('#adminRefresh')?.addEventListener('click',async()=>{await Promise.all([refreshStatus(),refreshRelease()]);clearLocalShock();message('Admin status refreshed.','ok')});
   $('#adminPublishUpdate')?.addEventListener('click',publishUpdate);
-  document.querySelector('.nav-btn[data-view="admin"]')?.addEventListener('click',()=>setTimeout(render,0));
+  window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='admin')setTimeout(render,0)});
 }
 async function init(){
   Game=window.CellboundGame;
