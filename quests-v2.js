@@ -12,11 +12,10 @@ const QUEST={
   title:'Echoes Beneath Zeltira',
   difficulty:'Intermediate',
   length:'Long',
-  questPoints:2,
   start:'Bram Kel · East Road Survey Camp',
   summary:'A road crew has found a piece of black Cell glass beneath Zeltira. It should be inert. Instead, it reacts to Cellbound adventurers — and appears to remember a road that no longer exists.',
-  rewards:['2 Quest Points','250 Gold','150 Guild Renown','The Hollow Sanctum unlocked','Void Crystal source discovered'],
-  requirements:['Zeltira tutorial completed','An active five-character party is required later','The Ashen Vault must be accessible']
+  rewards:['250 Gold','150 Guild Renown'],
+  requirements:['Zeltira tutorial completed','An active five-character party will be needed','Access to The Ashen Vault']
 };
 
 const STAGES=[
@@ -78,10 +77,7 @@ function migrate(q,s){
   if(mapped.includes('decipher'))grantItemRaw(q,'surveyor-rubbing');
   if(mapped.includes('route'))grantItemRaw(q,'decoded-route');
 
-  if(q.flags.hollowSanctumUnlocked&&!q.questPointsAwarded){
-    s.questPoints=(Number(s.questPoints)||0)+QUEST.questPoints;
-    q.questPointsAwarded=true;
-  }
+  if(q.flags.hollowSanctumUnlocked)q.questPointsAwarded=Boolean(q.questPointsAwarded);
 }
 
 function ensure(){
@@ -96,7 +92,6 @@ function ensure(){
   const q=s.questSystem;
   q.flags=q.flags||{};
   migrate(q,s);
-  s.questPoints=Math.max(0,Number(s.questPoints)||0);
   return q;
 }
 
@@ -333,15 +328,14 @@ async function completeQuest(){
   const s=state(),q=ensure();if(complete())return;
   q.flags.hollowSanctumUnlocked=true;q.currentStage='complete';q.completedAt=new Date().toISOString();
   if(!q.stageDone.includes('seal'))q.stageDone.push('seal');
-  if(!q.questPointsAwarded){s.questPoints=(Number(s.questPoints)||0)+QUEST.questPoints;q.questPointsAwarded=true}
   s.gold=(Number(s.gold)||0)+250;s.renown=(Number(s.renown)||0)+150;
   setItemStatus('blackened-fragment','used');setItemStatus('resonance-map','archived');
   addHistory('The Hollow Seal was opened. The Hollow Sanctum was discovered beneath Zeltira.');
-  s.activity.push('Quest complete: '+QUEST.title+' (+'+QUEST.questPoints+' Quest Points).');
+  s.activity.push('Quest complete: '+QUEST.title+'. The Hollow Sanctum was discovered.');
   await commit();
 
   const root=document.createElement('div');root.className='quest-unlock-backdrop quest-complete-backdrop';
-  root.innerHTML='<section class="quest-complete-card"><div class="quest-complete-rune">⌁</div><small>QUEST COMPLETE</small><h2>'+QUEST.title+'</h2><p>The underroad mystery has led your guild to a sealed dungeon beneath Zeltira.</p><div class="quest-complete-rewards"><article><span>QUEST POINTS</span><b>+'+QUEST.questPoints+'</b></article><article><span>GOLD</span><b>+250</b></article><article><span>RENOWN</span><b>+150</b></article></div><div class="quest-complete-unlock"><small>PERMANENT UNLOCK</small><h3>The Hollow Sanctum</h3><p>Void Crystal can now be recovered from the depths. A unique first-clear Relic waits inside.</p></div><button>OPEN DUNGEON JOURNAL →</button></section>';
+  root.innerHTML='<section class="quest-complete-card"><div class="quest-complete-rune">⌁</div><small>QUEST COMPLETE</small><h2>'+QUEST.title+'</h2><p>The underroad mystery has led your guild to a sealed dungeon beneath Zeltira.</p><div class="quest-complete-rewards"><article><span>GOLD</span><b>+250</b></article><article><span>RENOWN</span><b>+150</b></article><article><span>DISCOVERY</span><b>PERMANENT</b></article></div><div class="quest-complete-unlock"><small>PERMANENT UNLOCK</small><h3>The Hollow Sanctum</h3><p>Void Crystal can now be recovered from the depths. A unique first-clear Relic waits inside.</p></div><button>OPEN DUNGEON JOURNAL →</button></section>';
   document.body.appendChild(root);
   root.querySelector('button').onclick=()=>{root.remove();Game.switchView?.('content');window.CellboundHollowSanctum?.renderCard?.()};
 }
@@ -351,16 +345,27 @@ function requirementsHtml(){
 }
 function itemsHtml(q){
   const ids=Object.keys(q.items||{});
-  if(!ids.length)return '<p class="quest-items-empty">No quest items yet.</p>';
+  if(!ids.length)return '<p class="quest-items-empty">Nothing unusual is in the quest pouch yet.</p>';
   return ids.map(id=>{const d=ITEMS[id],x=q.items[id];if(!d)return'';return '<article class="quest-item '+esc(x.status||'active')+'"><i>'+d.icon+'</i><span><b>'+esc(d.name)+'</b><small>'+esc(d.desc)+'</small><em>'+esc((x.status||'active').toUpperCase())+'</em></span></article>'}).join('');
 }
-function stageTimeline(q){
-  const cur=currentStage(),curIndex=cur==='complete'?STAGES.length:stageIndex(cur);
-  return '<div class="quest-stage-track">'+STAGES.map((s,i)=>'<div class="'+(i<curIndex||q.stageDone.includes(s.id)?'done':i===curIndex?'current':'')+'"><i>'+(i<curIndex||q.stageDone.includes(s.id)?'✓':i+1)+'</i><span><b>'+esc(s.label)+'</b><small>'+esc(s.npc)+'</small></span></div>').join('')+'</div>';
+function knownFacts(q){
+  const facts=[];
+  if(q.started||q.stageDone.includes('letter'))facts.push('The black glass was found inside solid stone beneath Zeltira. It was warm when uncovered.');
+  if(q.stageDone.includes('letter')||currentStage()==='bearer')facts.push('The fragment appears dead to instruments but reacts when a Cellbound adventurer is nearby.');
+  if(q.bearerName)facts.push(q.bearerName+' is carrying the fragment as the guild’s Bearer.');
+  if(q.stageDone.includes('vault')||['decipher','route','seal','complete'].includes(currentStage()))facts.push('The Vaultheart awakened silver markings inside the fragment. They are old road-surveyor notation.');
+  if(q.stageDone.includes('decipher')||['route','seal','complete'].includes(currentStage()))facts.push('Old Jory identified the marks as a route from the east road into abandoned survey works.');
+  if(q.stageDone.includes('route')||['seal','complete'].includes(currentStage()))facts.push('The decoded route ends at a sealed stone door beneath Zeltira. The fragment fits its centre.');
+  if(complete())facts.push('The seal has been opened. The Hollow Sanctum now lies accessible beneath Zeltira.');
+  return facts;
+}
+function visibleRewards(){
+  if(complete())return ['250 Gold','150 Guild Renown','The Hollow Sanctum unlocked','Void Crystal source discovered'];
+  return ['250 Gold','150 Guild Renown','A permanent discovery','Further rewards unknown'];
 }
 function actionHtml(){
   const q=ensure(),stage=currentStage();
-  if(complete())return '<div class="quest-complete-stamp">QUEST COMPLETE · +'+QUEST.questPoints+' QP</div>';
+  if(complete())return '<div class="quest-complete-stamp">QUEST COMPLETE</div>';
   if(!q.started)return '<button class="quest-primary" data-start>START QUEST →</button>';
   if(stage==='letter')return '<button class="quest-primary" data-start>READ BRAM’S LETTER →</button>';
   if(stage==='bearer'){
@@ -368,24 +373,32 @@ function actionHtml(){
     return '<div class="quest-bearer-picker"><small>CHOOSE THE BEARER</small>'+chars.map(c=>'<button data-bearer="'+c.id+'"><span>'+esc(c.portrait||c.name.slice(0,2))+'</span><div><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></div></button>').join('')+(chars.length!==5?'<p>Your active five is incomplete. Build the party first.</p>':'')+'</div>';
   }
   if(stage==='vault')return '<div class="quest-action-block"><div><span>BEARER</span><b>'+esc(q.bearerName||'Not assigned')+'</b></div><button class="quest-primary" data-ashen>OPEN THE ASHEN VAULT →</button><small>The clear only counts if '+esc(q.bearerName||'the Bearer')+' is in the five.</small></div>';
-  if(stage==='decipher')return hasItem('surveyor-rubbing')?'<button class="quest-primary" data-puzzle>USE JORY’S RUBBING →</button>':'<button class="quest-primary" data-jory>ASK AROUND ZELTIRA →</button>';
+  if(stage==='decipher')return hasItem('surveyor-rubbing')?'<button class="quest-primary" data-puzzle>EXAMINE JORY’S RUBBING →</button>':'<button class="quest-primary" data-jory>ASK AROUND ZELTIRA →</button>';
   if(stage==='route')return '<button class="quest-primary" data-route>FOLLOW THE UNDERROAD →</button>';
   if(stage==='seal')return '<button class="quest-primary danger" data-seal>INSPECT THE HOLLOW SEAL →</button>';
   return '';
 }
-
 function renderList(){
   const root=$('#questJournalList');if(!root)return;const q=ensure();
-  const status=complete()?'COMPLETE':q.started?'IN PROGRESS':'NOT STARTED';
+  const status=complete()?'COMPLETE':q.started?'IN PROGRESS':'AVAILABLE';
   const shouldShow=selectedTab==='campaign'||(selectedTab==='active'&&!complete())||(selectedTab==='completed'&&complete());
-  if(!shouldShow){root.innerHTML='<div class="quest-list-empty">'+(selectedTab==='completed'?'No completed quests yet.':'No active quests.')+'</div>';return}
-  root.innerHTML='<button class="quest-v2-list-card selected"><div class="quest-v2-icon">⌁</div><span><small>'+status+' · '+QUEST.difficulty.toUpperCase()+'</small><b>'+QUEST.title+'</b><em>'+QUEST.length+' quest · '+QUEST.questPoints+' Quest Points</em></span></button>';
+  if(!shouldShow){root.innerHTML='<div class="quest-list-empty">'+(selectedTab==='completed'?'No completed adventures yet.':'No active adventures.')+'</div>';return}
+  root.innerHTML='<button class="quest-v2-list-card selected"><div class="quest-v2-icon">⌁</div><span><small>'+status+' · '+QUEST.difficulty.toUpperCase()+'</small><b>'+QUEST.title+'</b><em>'+QUEST.length+' adventure · Zeltira</em></span></button>';
 }
 function renderDetail(){
   const root=$('#questJournalDetail'),side=$('#questJournalSide');if(!root||!side)return;
-  const q=ensure(),stage=currentStage(),d=stage==='complete'?STAGES[STAGES.length-1]:stageDef(stage),progress=complete()?100:Math.round((q.stageDone.length/STAGES.length)*100);
-  root.innerHTML='<div class="quest-v2-hero"><div><small>'+QUEST.difficulty.toUpperCase()+' · '+QUEST.length.toUpperCase()+' QUEST</small><h2>'+QUEST.title+'</h2><p>Start: '+QUEST.start+'</p></div><div class="quest-points-medallion"><b>'+QUEST.questPoints+'</b><span>QP</span></div></div><div class="quest-v2-summary"><p>'+QUEST.summary+'</p><div class="quest-progress"><span><b>'+q.stageDone.length+' / '+STAGES.length+'</b> stages complete</span><div><i style="width:'+progress+'%"></i></div></div></div>'+stageTimeline(q)+'<div class="quest-current-step"><small>'+ (complete()?'QUEST COMPLETE':'CURRENT STEP · '+esc(d.npc))+'</small><h3>'+esc(complete()?'The Hollow Sanctum Discovered':d.label)+'</h3><p>'+esc(complete()?'The seal beneath Zeltira has been opened.':d.objective)+'</p>'+(complete()?'':'<em>'+esc(d.hint)+'</em>')+'</div><div class="quest-detail-action">'+actionHtml()+'</div>';
-  side.innerHTML='<section class="quest-v2-meta"><small>QUEST INFORMATION</small><div><span>Difficulty</span><b>'+QUEST.difficulty+'</b></div><div><span>Length</span><b>'+QUEST.length+'</b></div><div><span>Quest Points</span><b>'+QUEST.questPoints+'</b></div><div><span>Your Quest Points</span><b>'+Number(state().questPoints||0)+'</b></div></section><section><small>REQUIREMENTS</small><div class="quest-requirements">'+requirementsHtml()+'</div></section><section><small>QUEST ITEMS</small><div class="quest-items">'+itemsHtml(q)+'</div></section><section><small>REWARDS</small><div class="quest-reward-list">'+QUEST.rewards.map(x=>'<p>'+esc(x)+'</p>').join('')+'</div></section><section><small>QUEST JOURNAL</small><div class="quest-history">'+(q.history.slice(-5).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>No journal entries yet.</p>')+'</div></section>';
+  const q=ensure(),stage=currentStage(),d=stage==='complete'?STAGES[STAGES.length-1]:stageDef(stage),facts=knownFacts(q),rewards=visibleRewards();
+  root.innerHTML='<div class="quest-v3-hero"><div><small>'+QUEST.difficulty.toUpperCase()+' · '+QUEST.length.toUpperCase()+' ADVENTURE</small><h2>'+QUEST.title+'</h2><p>'+esc(QUEST.start)+'</p></div><span class="quest-v3-status '+(complete()?'complete':'')+'">'+(complete()?'COMPLETE':q.started?'IN PROGRESS':'AVAILABLE')+'</span></div>'+
+    '<div class="quest-v3-story"><p>'+QUEST.summary+'</p></div>'+
+    '<section class="quest-v3-clue"><small>'+(complete()?'WHERE IT LED':'CURRENT CLUE')+'</small><h3>'+esc(complete()?'The Hollow Sanctum':d.label)+'</h3><p>'+esc(complete()?'The seal beneath Zeltira has been opened. What was once a rumour beneath the road is now a real place your guild can enter.':d.objective)+'</p>'+(complete()?'':'<em>'+esc(d.hint)+'</em>')+'</section>'+
+    '<section class="quest-v3-known"><div class="quest-v3-section-head"><span>WHAT YOUR GUILD KNOWS</span><small>Only discoveries made so far are recorded here.</small></div><div>'+facts.map(x=>'<p>'+esc(x)+'</p>').join('')+'</div></section>'+
+    '<div class="quest-detail-action">'+actionHtml()+'</div>';
+
+  side.innerHTML=
+    (!q.started?'<section><small>BEFORE YOU BEGIN</small><div class="quest-requirements">'+requirementsHtml()+'</div></section>':'')+
+    '<section><small>QUEST ITEMS</small><div class="quest-items">'+itemsHtml(q)+'</div></section>'+
+    '<section><small>'+(complete()?'REWARDS':'POSSIBLE REWARDS')+'</small><div class="quest-reward-list">'+rewards.map(x=>'<p>'+esc(x)+'</p>').join('')+'</div></section>'+
+    '<section><small>ADVENTURE JOURNAL</small><div class="quest-history">'+(q.history.slice(-6).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>No journal entries yet.</p>')+'</div></section>';
   bindActions();
 }
 function bindActions(){
@@ -399,10 +412,10 @@ function bindActions(){
 }
 function renderHome(){
   const root=$('#questHomeObjective'),badge=$('#questNavBadge');if(!root)return;
-  const q=ensure(),stage=currentStage();let title='A glass-sealed letter has arrived from beneath Zeltira.',button='OPEN QUEST →',jump='quests',small='CURRENT QUEST';
-  if(q.started&&!complete()){const d=stageDef(stage);title=QUEST.title+': '+d.objective}
+  const q=ensure(),stage=currentStage();let title='A glass-sealed letter has arrived from beneath Zeltira.',button='OPEN ADVENTURE →',jump='quests',small='CURRENT ADVENTURE';
+  if(q.started&&!complete()){const d=stageDef(stage);title=d.objective}
   if(stage==='vault'){button='OPEN DUNGEON →';jump='content'}
-  if(complete()){small='QUEST COMPLETE · '+state().questPoints+' QP';title='The Hollow Sanctum is open beneath Zeltira.';button='VIEW DUNGEON →';jump='content'}
+  if(complete()){small='ADVENTURE COMPLETE';title='The Hollow Sanctum is open beneath Zeltira.';button='VIEW DUNGEON →';jump='content'}
   root.innerHTML='<span>'+small+'</span><b>'+esc(title)+'</b><button data-quest-home>'+button+'</button>';
   root.querySelector('[data-quest-home]').onclick=()=>Game.switchView?.(jump);
   if(badge){badge.textContent=!q.started?'NEW':(!complete()?'1':'');badge.hidden=complete()}
@@ -410,7 +423,7 @@ function renderHome(){
 function render(){
   if(!Game?.ready)return;const q=ensure();if(!q)return;
   $$('.quest-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.questTab===selectedTab));
-  const status=$('#questCampaignStatus');if(status)status.textContent=Number(state().questPoints||0)+' QUEST POINT'+(Number(state().questPoints||0)===1?'':'S');
+  const status=$('#questCampaignStatus');if(status)status.textContent=complete()?'ADVENTURE COMPLETE':q.started?'ADVENTURE IN PROGRESS':'ADVENTURE AVAILABLE';
   renderList();renderDetail();renderHome();window.CellboundHollowSanctum?.renderCard?.();
 }
 function bind(){
@@ -423,7 +436,7 @@ async function checkHistory(){if(currentStage()==='vault'&&latestAshenClear())aw
 function init(){
   Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,100);return}
   ensure();bind();render();checkHistory();setInterval(checkHistory,2500);
-  window.CellboundQuests={render,ensure,beginInvestigation,isHollowUnlocked:()=>Boolean(ensure()?.flags?.hollowSanctumUnlocked),questPoints:()=>Number(state()?.questPoints||0)};
+  window.CellboundQuests={render,ensure,beginInvestigation,isHollowUnlocked:()=>Boolean(ensure()?.flags?.hollowSanctumUnlocked)};
 }
 init();
 })();
