@@ -499,6 +499,9 @@ async function fightTdPack(names,boss,my){
   tdAction('dps','Melee closes in · ranged holds distance');
   await sleep(380);
 
+  if(names[0]==='Cell-Sick Marauder'){tdInterruptMoment(my);await sleep(1050)}
+  if(boss){tdBossFrontal();if(tank)tdAction('tank',tank.name+' turns the boss away from the group');await sleep(1050)}
+
   const now=performance.now();
   const actors=Object.fromEntries(roster.map((c,i)=>[c.id,{
     nextAttack:now+120+i*100,
@@ -571,21 +574,41 @@ async function runTutorialDungeon(my){
   ];
   for(let i=0;i<encounters.length;i++){
     if(my!==tutorialToken)return;
-    $$('[data-td-route]').forEach((x,j)=>x.classList.toggle('active',j===i));
-    const e=encounters[i];renderTdEnvironment(i);$('#tdEncounter').textContent=e.name;$('#tdCallout').textContent=i===0?'The Tank moves first.':i===1?'Damage swaps to the priority target.':'The party commits everything to the boss.';
+    $('[data-td-route]').forEach((x,j)=>x.classList.toggle('active',j===i));
+    const e=encounters[i];renderTdEnvironment(i);$('#tdEncounter').textContent=e.name;
+    if(i===0){
+      $('#tdCallout').textContent='Decide who starts the pull.';
+      await tdLesson('Who should enter first?','Two enemies are waiting ahead and neither has chosen a target yet.',['Send the Tank in first','Send the Healer in first','Let Damage race for the first hit'],0,'Exactly. The Tank establishes threat before everyone else commits.');
+    }else if(i===1){
+      $('#tdCallout').textContent='The Tank is taking damage.';
+      await tdLesson('Who stabilises the Tank?','The Tank is doing their job and absorbing repeated hits.',['The Healer restores them from a safe position','The Tank abandons the enemies','Damage stops attacking and waits'],0,'Correct. Healing keeps the pull stable while the Tank continues holding threat.');
+      await tdLesson('A dangerous cast begins','The Cell-Sick Marauder starts a long cast called Hollow Scream.',['Ignore it and heal through everything','Damage switches attention and interrupts it','The Healer runs into melee range'],1,'Correct. Interrupting dangerous casts prevents damage instead of forcing the Healer to repair it afterwards.');
+    }else{
+      $('#tdCallout').textContent='Read the boss telegraph.';
+      await tdLesson('The boss raises a frontal cleave','A wide attack is aimed through the Tank toward the group.',['Tank turns the boss away while the party stays behind it','Everyone stacks directly in front','Healer takes the attack instead'],0,'Correct. Positioning is part of tanking: control where the boss faces so avoidable damage never reaches the group.');
+    }
     tdFeed('Entering '+e.name+'.');await fightTdPack(e.mobs,e.boss,my);
   }
   if(my!==tutorialToken)return;
   $('#tdEncounter').textContent='Dungeon Clear';$('#tdCallout').textContent='The Zeltiran Hollows are secure.';
-  tdFeed('The Hollow Warden drops profession reagents.');await sleep(900);
+  tdFeed('The Hollow Warden drops gear and profession reagents.');await sleep(900);
   const s=state();
   if(s.onboarding.stage==='dungeon-running'&&!s.onboarding.tutorialDungeonComplete){
     s.materials['faded-cell-fragment']=(Number(s.materials['faded-cell-fragment'])||0)+4;
     s.materials['zeltiran-iron']=(Number(s.materials['zeltiran-iron'])||0)+2;
-    s.onboarding.tutorialDungeonComplete=true;s.onboarding.stage='profession-choice';
-    s.activity.push('The Zeltiran Hollows were cleared. Profession reagents recovered.');
+    const target=s.roster.find(x=>tdRole(x)==='dps')||s.roster[0];
+    const base=(G.items||[]).find(x=>x.class===target.class&&x.tier===1&&x.slot==='Head');
+    let loot=base?G.rollItemAffixes({...base,source:'Zeltiran Hollows · Hollow Warden'}):null;
+    for(let tries=0;loot&&G.rollFit?.(target,loot)?.matches===0&&tries<12;tries++)loot=G.rollItemAffixes({...base,source:'Zeltiran Hollows · Hollow Warden'});
+    if(loot){
+      Game.addBankItem(loot);
+      const bank=[...(s.bank||[])].reverse().find(x=>x.itemId===loot.itemId&&x.source==='Zeltiran Hollows · Hollow Warden');
+      s.onboarding.tutorialLootBankId=bank?.id||null;s.onboarding.tutorialLootCharacterId=target.id;
+    }
+    s.onboarding.tutorialDungeonComplete=true;s.onboarding.stage='loot-review';
+    s.activity.push('The Zeltiran Hollows were cleared. A gear drop and profession reagents were recovered.');
     Game.save();await Game.persistState();
-    if(db&&user)await db.from('characters').update({tutorial_stage:'choose_profession',last_played_at:new Date().toISOString()}).eq('user_id',user.id);
+    if(db&&user)await db.from('characters').update({tutorial_stage:'review_loot',last_played_at:new Date().toISOString()}).eq('user_id',user.id);
   }
   render();
 }
