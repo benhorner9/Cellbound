@@ -122,6 +122,8 @@ const SPECS={
 };
 
 const role=c=>ROLE_MAP[c?.class]?.[c?.spec]||'dps';
+const gearStats=c=>window.CellboundGear?.aggregateStats?.(c)||{};
+const primaryKey=c=>c?.class==='Warrior'?'strength':['Hunter','Rogue'].includes(c?.class)?'agility':'intellect';
 const getRace=id=>RACES[id]||RACES.Veyren;
 const getSpec=(klass,spec)=>SPECS[klass]?.[spec]||{title:'Adventurer',strength:'Flexible combatant.',tradeoff:'No defined specialisation.',damage:1,threat:1};
 const specFor=c=>getSpec(c?.class,c?.spec);
@@ -131,8 +133,10 @@ function rank(c,name){
 }
 function raceMod(c,key,fallback=1){const v=getRace(c?.race)?.modifiers?.[key];return v==null?fallback:Number(v)}
 function damageMultiplier(c,ctx={}){
-  const p=specFor(c);let m=Number(p.damage)||1;
+  const p=specFor(c),gear=gearStats(c);let m=Number(p.damage)||1;
   m*=raceMod(c,'damage',1);
+  m*=1+(Number(gear[primaryKey(c)])||0)*.0025;
+  if((Number(gear.crit)||0)>0&&Math.random()*100<Number(gear.crit))m*=1.5;
   if(c?.class==='Mage')m*=raceMod(c,'magicDamage',1);
   if(c?.race==='Emberkin'&&Number(ctx.healthPct)<45)m*=raceMod(c,'lowHealthDamage',1);
 
@@ -156,22 +160,27 @@ function damageMultiplier(c,ctx={}){
   return m;
 }
 function cooldownMultiplier(c){
-  const p=specFor(c);let m=(Number(p.cooldown)||1)*raceMod(c,'cooldown',1);
+  const p=specFor(c),gear=gearStats(c);let m=(Number(p.cooldown)||1)*raceMod(c,'cooldown',1);m/=1+(Number(gear.haste)||0)/100;
   if(c?.class==='Hunter')m*=Math.max(.78,1-rank(c,'Rapid Fire')*.035);
   if(c?.class==='Rogue')m*=Math.max(.78,1-rank(c,'Quick Recovery')*.03);
   if(c?.class==='Mage')m*=Math.max(.82,1-rank(c,'Arcane Flows')*.03);
   return m;
 }
 function incomingMultiplier(c,type='physical'){
-  const p=specFor(c);let m=Number(p[type==='magic'?'magicTaken':'physicalTaken'])||1;
+  const p=specFor(c),gear=gearStats(c);let m=Number(p[type==='magic'?'magicTaken':'physicalTaken'])||1;
   m*=raceMod(c,type==='magic'?'magicTaken':'physicalTaken',1);
+  m*=Math.max(.88,1-(Number(gear.stamina)||0)*.002);
+  if(type==='physical')m*=Math.max(.84,1-(Number(gear.armour)||0)*.001);
+  if(type==='physical'&&role(c)==='tank'&&(Number(gear.block)||0)>0&&Math.random()*100<Number(gear.block))m*=.72;
   if(c?.class==='Warrior'&&c?.spec==='Protection'&&type==='physical')m*=Math.max(.82,1-rank(c,'Shield Mastery')*.025);
   if(c?.class==='Paladin'&&c?.spec==='Protection'&&type==='physical')m*=Math.max(.85,1-rank(c,'Sacred Shield')*.02);
   if(c?.class==='Paladin'&&c?.spec==='Protection'&&type==='magic')m*=Math.max(.82,1-rank(c,'Divine Ward')*.03);
   return m;
 }
 function healingMultiplier(healer,target,ctx={}){
-  const p=specFor(healer);let m=(Number(p.healing)||1)*raceMod(healer,'healing',1)*raceMod(target,'healingReceived',1);
+  const p=specFor(healer),gear=gearStats(healer);let m=(Number(p.healing)||1)*raceMod(healer,'healing',1)*raceMod(target,'healingReceived',1);
+  m*=1+(Number(gear.healing)||0)/100+(Number(gear.intellect)||0)*.002;
+  if((Number(gear.crit)||0)>0&&Math.random()*100<Number(gear.crit))m*=1.5;
   if(healer?.class==='Paladin'&&healer?.spec==='Holy'){
     m*=1+rank(healer,'Divine Light')*.04;
     if(role(target)==='tank')m*=1.16;
@@ -183,15 +192,16 @@ function healingMultiplier(healer,target,ctx={}){
   if(healer?.class==='Druid')m*=1+rank(healer,'Rejuvenation')*.03;
   return m;
 }
-function healThreatMultiplier(c){return Number(specFor(c).healThreat)||1}
+function healThreatMultiplier(c){const gear=gearStats(c);return (Number(specFor(c).healThreat)||1)*(1+(Number(gear.threat)||0)/100)}
 function damageThreatMultiplier(c,ctx={}){
   const p=specFor(c);
+  const gear=gearStats(c),gearThreat=1+(Number(gear.threat)||0)/100;
   if(role(c)==='tank'){
     let m=Number(ctx.enemyCount)>1?(Number(p.packThreat)||2.4):(Number(p.singleThreat)||2.4);
     if(c?.class==='Paladin')m*=1+rank(c,'Guardian Oath')*.04;
-    return m;
+    return m*gearThreat;
   }
-  return Number(p.threat)||1;
+  return (Number(p.threat)||1)*gearThreat;
 }
 function groupThreatRatio(c){
   const p=specFor(c);let v=Number(p.groupThreat)||0;
