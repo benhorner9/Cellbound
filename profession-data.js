@@ -17,34 +17,75 @@ function materialArtHTML(key,size=64,extra=''){
   return `<span class="material-art ${extra}" style="width:${size}px;height:${size}px" aria-label="${m.name}" title="${m.name}"><span class="material-art-fallback" aria-hidden="true">${m.icon||'◇'}</span><img src="${MATERIAL_ATLAS}" alt="" draggable="false" style="width:${size*4}px;height:${size*2}px;left:-${col*size}px;top:-${row*size}px"></span>`;
 }
 const PROFESSIONS={
-  Alchemy:{icon:'⚗',summary:'Brew dungeon consumables and the end-game Cell Shock recovery potion.',recipes:[
-    {id:'alc-minor-tonic',name:'Minor Recovery Tonic',level:1,xp:18,inputs:{'faded-cell-fragment':2},output:{category:'consumable',key:'minor-recovery-tonic',name:'Minor Recovery Tonic',quantity:1,payload:{effect:'recovery-tonic'}}},
-    {id:'alc-ember-flask',name:'Emberward Flask',level:20,xp:28,inputs:{'ashen-soul-fragment':2,'ember-core':1},output:{category:'consumable',key:'emberward-flask',name:'Emberward Flask',quantity:1,payload:{effect:'emberward'}}},
-    {id:'alc-vault-tonic',name:'Vaultheart Tonic',level:50,xp:42,inputs:{'ashen-soul-fragment':3,'vaultheart-crystal':1},output:{category:'consumable',key:'vaultheart-tonic',name:'Vaultheart Tonic',quantity:1,payload:{effect:'vaultheart-tonic'}}},
-    {id:'alc-cell-shock',name:'Cell Shock Draught',level:100,xp:0,inputs:{'ancient-soul':3,'void-crystal':1},output:{category:'consumable',key:'cell-shock-draught',name:'Cell Shock Draught',quantity:1,payload:{effect:'clear-cell-shock'}},endgame:true}
+  Alchemy:{icon:'⚗',summary:'Brew potions and flasks that are consumed for temporary combat power.',recipes:[
+    {id:'alc-field-potion',name:'Field Recovery Potion',level:1,xp:18,inputs:{'faded-cell-fragment':2},output:{category:'consumable',key:'field-recovery-potion',name:'Field Recovery Potion',quantity:1,payload:{effect:'combat-potion',healHp:28,condition:12,description:'Used during combat. Restores 28 HP and 12 Condition to the party member in the most danger.'}}},
+    {id:'alc-quickmind-flask',name:'Quickmind Flask',level:20,xp:28,inputs:{'ashen-soul-fragment':2,'ember-core':1},output:{category:'consumable',key:'quickmind-flask',name:'Quickmind Flask',quantity:1,payload:{effect:'character-flask',bonuses:{haste:3},charges:3,description:'Drink before combat. +3% Haste for the next 3 boss encounters. Only one Flask can be active.'}}},
+    {id:'alc-ironblood-flask',name:'Ironblood Flask',level:50,xp:42,inputs:{'ashen-soul-fragment':3,'vaultheart-crystal':1},output:{category:'consumable',key:'ironblood-flask',name:'Ironblood Flask',quantity:1,payload:{effect:'character-flask',bonuses:{stamina:7},charges:3,description:'Drink before combat. +7 Stamina for the next 3 boss encounters. Only one Flask can be active.'}}},
+    {id:'alc-cell-shock',name:'Cell Shock Draught',level:100,xp:0,inputs:{'ancient-soul':3,'void-crystal':1},output:{category:'consumable',key:'cell-shock-draught',name:'Cell Shock Draught',quantity:1,payload:{effect:'clear-cell-shock',description:'Immediately clears one character’s Cell Shock.'}},endgame:true}
   ]},
-  Enchanting:{icon:'✥',summary:'Turn soul reagents into tradeable runes and rare magical enhancements.',recipes:[
-    {id:'enc-binding-rune',name:'Minor Binding Rune',level:1,xp:18,inputs:{'faded-cell-fragment':2},output:{category:'consumable',key:'minor-binding-rune',name:'Minor Binding Rune',quantity:1,payload:{effect:'enchant-token',tier:1}}},
-    {id:'enc-warden-rune',name:"Warden's Edge Rune",level:25,xp:30,inputs:{'ashen-soul-fragment':2,'warden-iron':1},output:{category:'consumable',key:'warden-edge-rune',name:"Warden's Edge Rune",quantity:1,payload:{effect:'enchant-token',tier:2}}},
-    {id:'enc-ember-sigil',name:'Ember Sigil',level:45,xp:38,inputs:{'ashen-soul-fragment':2,'ember-core':1},output:{category:'consumable',key:'ember-sigil',name:'Ember Sigil',quantity:1,payload:{effect:'enchant-token',tier:2}}},
-    {id:'enc-vault-glyph',name:'Vaultheart Glyph',level:70,xp:55,inputs:{'ashen-soul-fragment':4,'vaultheart-crystal':2},output:{category:'consumable',key:'vaultheart-glyph',name:'Vaultheart Glyph',quantity:1,payload:{effect:'enchant-token',tier:3}},requiresDiscovery:true}
+  Enchanting:{icon:'✥',summary:'Create temporary runes that add specialist stats to equipped items.',recipes:[
+    {id:'enc-binding-rune',name:'Binding Rune',level:1,xp:18,inputs:{'faded-cell-fragment':2},output:{category:'consumable',key:'binding-rune',name:'Binding Rune',quantity:1,payload:{effect:'gear-enhancement',slot:'Head',bonuses:{crit:2},charges:3,description:'Apply to an equipped Head item. +2% Critical Strike for the next 3 boss encounters.'}}},
+    {id:'enc-warden-rune',name:"Warden's Ward Rune",level:25,xp:30,inputs:{'ashen-soul-fragment':2,'warden-iron':1},output:{category:'consumable',key:'warden-ward-rune',name:"Warden's Ward Rune",quantity:1,payload:{effect:'gear-enhancement',slot:'Chest',bonuses:{block:3,stamina:3},charges:3,description:'Apply to an equipped Chest item. +3% Block and +3 Stamina for the next 3 boss encounters.'}}},
+    {id:'enc-vault-glyph',name:'Vaultheart Glyph',level:70,xp:55,inputs:{'ashen-soul-fragment':4,'vaultheart-crystal':2},output:{category:'consumable',key:'vaultheart-glyph',name:'Vaultheart Glyph',quantity:1,payload:{effect:'gear-enhancement',slot:'Weapon',bonuses:{haste:5},charges:3,description:'Apply to an equipped Weapon. +5% Haste for the next 3 boss encounters.'}},requiresDiscovery:true}
   ]},
-  Blacksmithing:{icon:'⚒',summary:'Forge Warrior and Paladin weapons and armour.',recipes:[
-    {id:'bs-training-sword',name:'Training Sword',level:1,xp:20,inputs:{'zeltiran-iron':2,'faded-cell-fragment':1},output:{category:'gear',key:'warrior-t1-weapon',name:'Training Sword',quantity:1}},
-    {id:'bs-ashguard-helm',name:'Ashguard Helm',level:25,xp:34,inputs:{'warden-iron':3,'ashen-soul-fragment':2},output:{category:'gear',key:'warrior-t2-head',name:'Ashguard Helm',quantity:1}},
-    {id:'bs-sunwarden-hammer',name:'Sunwarden Hammer',level:45,xp:46,inputs:{'warden-iron':3,'ember-core':2},output:{category:'gear',key:'paladin-t2-weapon',name:'Sunwarden Hammer',quantity:1}}
+  Blacksmithing:{icon:'⚒',summary:'Forge whetstones and armour kits that temporarily empower equipped metal gear.',recipes:[
+    {id:'bs-tempered-whetstone',name:'Tempered Whetstone',level:1,xp:20,inputs:{'zeltiran-iron':2,'faded-cell-fragment':1},output:{category:'consumable',key:'tempered-whetstone',name:'Tempered Whetstone',quantity:1,payload:{effect:'gear-enhancement',slot:'Weapon',bonuses:{damagePct:3},charges:3,description:'Apply to an equipped Weapon. +3% damage for the next 3 boss encounters.'}}},
+    {id:'bs-warden-plate',name:'Warden Plate Kit',level:25,xp:34,inputs:{'warden-iron':3,'ashen-soul-fragment':2},output:{category:'consumable',key:'warden-plate-kit',name:'Warden Plate Kit',quantity:1,payload:{effect:'gear-enhancement',slot:'Chest',bonuses:{armour:18},charges:3,description:'Apply to an equipped Chest item. +18 Armour for the next 3 boss encounters.'}}},
+    {id:'bs-ember-temper',name:'Ember Temper Stone',level:45,xp:46,inputs:{'warden-iron':3,'ember-core':2},output:{category:'consumable',key:'ember-temper-stone',name:'Ember Temper Stone',quantity:1,payload:{effect:'gear-enhancement',slot:'Weapon',bonuses:{damagePct:5},charges:3,description:'Apply to an equipped Weapon. +5% damage for the next 3 boss encounters.'}}}
   ]},
-  Leatherworking:{icon:'⌁',summary:'Craft Hunter and Rogue equipment from dungeon components.',recipes:[
-    {id:'lw-leather-jerkin',name:'Leather Jerkin',level:1,xp:20,inputs:{'faded-cell-fragment':2},output:{category:'gear',key:'hunter-t1-chest',name:'Leather Jerkin',quantity:1}},
-    {id:'lw-longshot-hood',name:'Longshot Hood',level:25,xp:34,inputs:{'ashen-soul-fragment':2,'ember-core':1},output:{category:'gear',key:'hunter-t2-head',name:'Longshot Hood',quantity:1}},
-    {id:'lw-venomshivs',name:'Venomshivs',level:45,xp:46,inputs:{'ashen-soul-fragment':3,'vaultheart-crystal':1},output:{category:'gear',key:'rogue-t2-weapon',name:'Venomshivs',quantity:1}}
+  Leatherworking:{icon:'⌁',summary:'Craft grips, harnesses and wraps that provide temporary speed and precision bonuses.',recipes:[
+    {id:'lw-balanced-grip',name:'Balanced Grip',level:1,xp:20,inputs:{'faded-cell-fragment':2},output:{category:'consumable',key:'balanced-grip',name:'Balanced Grip',quantity:1,payload:{effect:'gear-enhancement',slot:'Weapon',bonuses:{haste:2},charges:3,description:'Apply to an equipped Weapon. +2% Haste for the next 3 boss encounters.'}}},
+    {id:'lw-reinforced-harness',name:'Reinforced Harness',level:25,xp:34,inputs:{'ashen-soul-fragment':2,'ember-core':1},output:{category:'consumable',key:'reinforced-harness',name:'Reinforced Harness',quantity:1,payload:{effect:'gear-enhancement',slot:'Chest',bonuses:{stamina:5},charges:3,description:'Apply to an equipped Chest item. +5 Stamina for the next 3 boss encounters.'}}},
+    {id:'lw-predator-wrap',name:'Predator Wrap',level:45,xp:46,inputs:{'ashen-soul-fragment':3,'vaultheart-crystal':1},output:{category:'consumable',key:'predator-wrap',name:'Predator Wrap',quantity:1,payload:{effect:'gear-enhancement',slot:'Head',bonuses:{crit:4},charges:3,description:'Apply to an equipped Head item. +4% Critical Strike for the next 3 boss encounters.'}}}
   ]},
-  Tailoring:{icon:'✂',summary:'Create cloth and ritual gear for Priest, Mage and Druid characters.',recipes:[
-    {id:'tail-blueweave',name:'Blueweave Robe',level:1,xp:20,inputs:{'faded-cell-fragment':2},output:{category:'gear',key:'mage-t1-chest',name:'Blueweave Robe',quantity:1}},
-    {id:'tail-chapelweave',name:'Chapelweave Robe',level:25,xp:34,inputs:{'ashen-soul-fragment':2,'ember-core':1},output:{category:'gear',key:'priest-t2-chest',name:'Chapelweave Robe',quantity:1}},
-    {id:'tail-wildbloom',name:'Wildbloom Raiment',level:45,xp:46,inputs:{'ashen-soul-fragment':3,'vaultheart-crystal':1},output:{category:'gear',key:'druid-t2-chest',name:'Wildbloom Raiment',quantity:1}}
+  Tailoring:{icon:'✂',summary:'Weave spellthreads and linings that temporarily improve healing, casting and magical defence.',recipes:[
+    {id:'tail-focus-thread',name:'Focus Thread',level:1,xp:20,inputs:{'faded-cell-fragment':2},output:{category:'consumable',key:'focus-thread',name:'Focus Thread',quantity:1,payload:{effect:'gear-enhancement',slot:'Head',bonuses:{intellect:3},charges:3,description:'Apply to an equipped Head item. +3 Intellect for the next 3 boss encounters.'}}},
+    {id:'tail-mender-lining',name:"Mender's Lining",level:25,xp:34,inputs:{'ashen-soul-fragment':2,'ember-core':1},output:{category:'consumable',key:'mender-lining',name:"Mender's Lining",quantity:1,payload:{effect:'gear-enhancement',slot:'Chest',bonuses:{healing:4},charges:3,description:'Apply to an equipped Chest item. +4% Healing Power for the next 3 boss encounters.'}}},
+    {id:'tail-soulweave',name:'Soulweave Lining',level:45,xp:46,inputs:{'ashen-soul-fragment':3,'vaultheart-crystal':1},output:{category:'consumable',key:'soulweave-lining',name:'Soulweave Lining',quantity:1,payload:{effect:'gear-enhancement',slot:'Chest',bonuses:{magicWardPct:5},charges:3,description:'Apply to an equipped Chest item. 5% less magic damage taken for the next 3 boss encounters.'}}}
   ]}
 };
+function bonusText(bonuses={}){
+  const labels={strength:'Strength',agility:'Agility',intellect:'Intellect',stamina:'Stamina',armour:'Armour',block:'Block',threat:'Threat',healing:'Healing Power',crit:'Critical Strike',haste:'Haste',damagePct:'Damage',magicWardPct:'Magic Damage Taken'};
+  const percent=new Set(['block','threat','healing','crit','haste','damagePct','magicWardPct']);
+  return Object.entries(bonuses).map(([k,v])=>k==='magicWardPct'?'-'+v+'% '+(labels[k]||k):'+'+v+(percent.has(k)?'% ':' ')+(labels[k]||k)).join(' · ');
+}
+function itemSignature(item){return item?.rollId||item?.itemId||item?.name||null}
+function activeBonuses(c){
+  const totals={};
+  const add=src=>Object.entries(src||{}).forEach(([k,v])=>totals[k]=(Number(totals[k])||0)+(Number(v)||0));
+  Object.values(c?.activeEnhancements||{}).forEach(e=>{
+    const item=c?.equipment?.[e.slot];
+    if((Number(e.remainingBosses)||0)>0&&itemSignature(item)===e.targetSignature)add(e.bonuses);
+  });
+  (Array.isArray(c?.activeProfessionBuffs)?c.activeProfessionBuffs:[]).forEach(e=>{if((Number(e.remainingBosses)||0)>0)add(e.bonuses)});
+  return totals;
+}
+function activeEffects(c){
+  const out=[];
+  Object.values(c?.activeEnhancements||{}).forEach(e=>{
+    const item=c?.equipment?.[e.slot],active=(Number(e.remainingBosses)||0)>0&&itemSignature(item)===e.targetSignature;
+    if(active)out.push({kind:'enhancement',name:e.name,slot:e.slot,remainingBosses:e.remainingBosses,bonuses:e.bonuses});
+  });
+  (Array.isArray(c?.activeProfessionBuffs)?c.activeProfessionBuffs:[]).forEach(e=>{if((Number(e.remainingBosses)||0)>0)out.push({kind:e.kind||'flask',name:e.name,remainingBosses:e.remainingBosses,bonuses:e.bonuses})});
+  return out;
+}
+function consumeBossCharges(chars=[]){
+  const expired=[];
+  (chars||[]).forEach(c=>{
+    c.activeEnhancements=c.activeEnhancements&&typeof c.activeEnhancements==='object'?c.activeEnhancements:{};
+    Object.keys(c.activeEnhancements).forEach(slot=>{
+      const e=c.activeEnhancements[slot],item=c?.equipment?.[slot];
+      if((Number(e.remainingBosses)||0)>0&&itemSignature(item)===e.targetSignature){
+        e.remainingBosses--;if(e.remainingBosses<=0){expired.push(c.name+' · '+e.name);delete c.activeEnhancements[slot]}
+      }
+    });
+    c.activeProfessionBuffs=(Array.isArray(c.activeProfessionBuffs)?c.activeProfessionBuffs:[]).filter(e=>{
+      if((Number(e.remainingBosses)||0)<=0)return false;
+      e.remainingBosses--;if(e.remainingBosses<=0){expired.push(c.name+' · '+e.name);return false}return true
+    });
+  });
+  return expired;
+}
 const BOSS_REAGENTS={
   ashwarden:[{key:'ashen-soul-fragment',min:2,max:4},{key:'warden-iron',min:1,max:2}],
   embermaw:[{key:'ashen-soul-fragment',min:2,max:4},{key:'ember-core',min:1,max:2}],
@@ -53,5 +94,5 @@ const BOSS_REAGENTS={
 const recipeById=id=>Object.values(PROFESSIONS).flatMap(p=>p.recipes).find(r=>r.id===id)||null;
 const skillThreshold=level=>50+Math.max(1,level)*15;
 const rollReagents=bossId=>(BOSS_REAGENTS[bossId]||[]).map(r=>({key:r.key,quantity:r.min+Math.floor(Math.random()*(r.max-r.min+1))}));
-window.CellboundProfessions={MATERIALS,PROFESSIONS,BOSS_REAGENTS,recipeById,skillThreshold,rollReagents,materialArtHTML};
+window.CellboundProfessions={MATERIALS,PROFESSIONS,BOSS_REAGENTS,recipeById,skillThreshold,rollReagents,materialArtHTML,bonusText,itemSignature,activeBonuses,activeEffects,consumeBossCharges};
 })();
