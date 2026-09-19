@@ -214,12 +214,40 @@ Storage.prototype.setItem=function(key,value){
   }
 };
 
-function switchView(id){
-  $$('.view').forEach(v=>v.classList.toggle('active',v.id===id));$$('.nav-btn[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
-  const labels={overview:'Command Overview',roster:'Roster',bank:'Guild Bank',professions:'Professions',trading:'Trading Post',chat:'Chat',world:'Living World',content:'PvE Content',quests:'Quest Journal',party:'Party Builder',reports:'Attempt Reports',admin:'Admin Control'};if(ui.pageTitle)ui.pageTitle.textContent=labels[id]||'Cellbound';
-  if(id==='party')renderParty();if(id==='reports')renderReports();if(id==='bank')renderBank();if(id==='content'){renderBosses();window.CellboundHollowSanctum?.renderCard?.()}if(id==='roster')renderRoster();if(id==='quests')window.CellboundQuests?.render?.();
+const WORKSPACES={
+  overview:{label:'Overview',views:[['overview','Overview']]},
+  guild:{label:'Guild',views:[['roster','Roster'],['party','Party'],['chat','Social'],['reports','Reports']]},
+  adventure:{label:'Adventure',views:[['quests','Quests'],['content','Dungeons'],['world','World Bosses']]},
+  economy:{label:'Economy',views:[['bank','Bank'],['professions','Professions'],['trading','Trading Post']]},
+  admin:{label:'Admin',views:[['admin','Admin']]}
+};
+const VIEW_WORKSPACE={};
+Object.entries(WORKSPACES).forEach(([hub,data])=>data.views.forEach(([id])=>VIEW_WORKSPACE[id]=hub));
+function renderWorkspaceTabs(id){
+  const nav=$('#workspaceTabs'),hub=VIEW_WORKSPACE[id]||'overview',data=WORKSPACES[hub];
+  if(!nav)return;
+  if(!data||hub==='overview'||hub==='admin'||data.views.length<=1){nav.hidden=true;nav.innerHTML='';return}
+  nav.hidden=false;
+  nav.innerHTML=data.views.map(([view,label])=>'<button type="button" data-workspace-view="'+view+'" class="'+(view===id?'active':'')+'"><span>'+label+'</span></button>').join('');
+  nav.querySelectorAll('[data-workspace-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.workspaceView)));
 }
-$$('.nav-btn[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));$$('[data-jump]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.jump)));
+function switchView(id){
+  $$('.view').forEach(v=>v.classList.toggle('active',v.id===id));
+  const hub=VIEW_WORKSPACE[id]||id;
+  $$('.nav-btn[data-hub]').forEach(b=>b.classList.toggle('active',b.dataset.hub===hub));
+  const labels={overview:'Command Overview',roster:'Roster',bank:'Guild Bank',professions:'Professions',trading:'Trading Post',chat:'Guild Social',world:'World Bosses',content:'Dungeons',quests:'Quest Journal',party:'Party Builder',reports:'Attempt Reports',admin:'Admin Control'};
+  if(ui.pageTitle)ui.pageTitle.textContent=labels[id]||'Cellbound';
+  renderWorkspaceTabs(id);
+  if(id==='party')renderParty();
+  if(id==='reports')renderReports();
+  if(id==='bank')renderBank();
+  if(id==='content'){renderBosses();window.CellboundHollowSanctum?.renderCard?.()}
+  if(id==='roster')renderRoster();
+  if(id==='quests')window.CellboundQuests?.render?.();
+}
+$$('.nav-btn[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
+$$('[data-jump]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.jump)));
+
 
 function renderTop(){
   if(!state)return;const e=entitlements(),pi=partyItemLevel(),unlocked=Math.min(state.roster.length,e.rosterCap);
