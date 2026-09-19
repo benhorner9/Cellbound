@@ -423,3 +423,5 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 .cb2d-meter-empty{padding:8px 2px;color:#586963;font-size:.34rem;text-align:center}
 @media(max-width:1050px){.cb2d-combat-meters{grid-template-columns:1fr 1fr}}
 @media(max-width:620px){.cb2d-combat-meters{grid-template-columns:1fr}.cb2d-meter-panel{padding:8px}}
+
+.cb2d-loot-roll{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0}.cb2d-loot-roll span{padding:3px 5px;border:1px solid rgba(94,195,159,.14);background:#0b1816;color:#92cdb7;font-size:.38rem;font-weight:900}@media(max-width:720px){.cb2d-loot-roll span{font-size:.48rem}}
