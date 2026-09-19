@@ -693,19 +693,29 @@ async function craftTutorialItem(){
   Object.entries(recipe.inputs).forEach(([k,q])=>s.materials[k]=Math.max(0,(Number(s.materials[k])||0)-q));
   const out=recipe.output,qty=out.quantity||1;
   if(out.category==='gear'){
-    const gear=G.byId(out.key)||G.byName(out.name);if(gear)for(let i=0;i<qty;i++)Game.addBankItem({...gear,source:'Crafted in Zeltira'});
+    const gear=G.byId(out.key)||G.byName(out.name);if(gear)for(let i=0;i<qty;i++)Game.addBankItem({...G.rollItemAffixes({...gear,source:'Crafted in Zeltira'}),source:'Crafted in Zeltira'});
   }else if(out.category==='consumable')addTutorialConsumable(out,qty);
   else if(out.category==='material')Game.addMaterial(out.key,qty);
   prof.xp=(Number(prof.xp)||0)+(recipe.xp||0);
-  s.onboarding.craftedItem=out.name;s.onboarding.stage='departure';s.onboarding.professionComplete=true;
-  s.activity.push(c.name+' crafted '+out.name+' — the party is ready to leave Zeltira.');
+  s.onboarding.craftedItem=out.name;s.onboarding.stage='quest-lesson';s.onboarding.professionComplete=true;
+  s.activity.push(c.name+' crafted '+out.name+' — the guild is ready for its first real quest.');
   Game.save();await Game.persistState();
   if(db&&user)await db.from('characters').update({tutorial_stage:'tutorial_complete',last_played_at:new Date().toISOString()}).eq('user_id',user.id);
   render();
 }
+function renderQuestLesson(){
+  const body='<div class="quest-school"><main><small>ZELTIRA · NOTICE BOARD</small><h2>This is how Cellbound moves forward.</h2><p>Your first real adventure is waiting outside the tutorial. Quests are not side chores: they discover locations, tell the story and provide reliable gear that prepares you for the next dungeon.</p><article class="first-quest-preview"><div class="quest-preview-rune">♜</div><div><small>NOVICE · MEDIUM ADVENTURE</small><h3>Ashes on the East Road</h3><p>Supply carts have vanished below the old forge. Investigate the road, earn reliable Tier 1 quest gear and uncover the entrance to The Ashen Vault.</p></div></article><div class="progression-teach"><div><b>1 · QUEST</b><span>Reliable equipment and dungeon access.</span></div><i>→</i><div><b>2 · DUNGEON</b><span>Stronger randomized gear and better rolls.</span></div><i>→</i><div><b>3 · NEXT QUEST</b><span>Catch-up gear moves the story forward even if drops were unlucky.</span></div></div><div class="gear-school-rule"><b>You are never meant to be trapped farming one dungeon</b><span>If your party out-levels old content, later progression checks can also be bypassed through character level.</span></div></main><aside class="z-guide"><small>ONE LAST CHECK</small><h2>Why would you still farm a dungeon after its quest gear?</h2><div class="tutorial-question" id="questLessonQuestion"><button data-quest-answer="wrong">Because quest gear is unusable</button><button data-quest-answer="correct">Because dungeon gear can roll stronger stats</button><button data-quest-answer="wrong">Because the next quest is permanently locked</button></div><p id="questLessonHint">Quest gear gives you the floor. Dungeon drops give you the ceiling.</p></aside></div>';
+  ensureRoot().innerHTML=chrome(body,'quest-lesson');
+  $('[data-quest-answer]').forEach(b=>b.onclick=async()=>{
+    const h=$('#questLessonHint');
+    if(b.dataset.questAnswer!=='correct'){if(h){h.textContent='Not quite. Quest gear is intentionally useful — it is just not the maximum possible roll.';h.classList.add('lesson-wrong')}return}
+    if(h){h.textContent='Exactly. Story progression gets you ready; dungeon farming is where you chase stronger rolls.';h.classList.remove('lesson-wrong');h.classList.add('lesson-correct')}
+    $('[data-quest-answer]').forEach(x=>x.disabled=true);await sleep(700);await setStage('departure');
+  });
+}
 function renderDeparture(){
   const s=state(),c=s.roster.find(x=>x.id===s.onboarding.professionCharacterId),prof=s.onboarding.professionName;
-  const body='<div class="zeltira-layout departure"><main>'+zeltiraMap('road')+'</main><aside class="z-guide"><small>ZELTIRA · EASTERN ROAD</small><h2>The charter is yours now.</h2><p class="guide-quote">“You know how to form a party, wear what you earn, clear a dungeon and turn its spoils into something useful. From here, no one chooses the road for you.”</p><div class="tutorial-complete-list"><div><i>✓</i><span><b>Party formed</b><small>1 Tank · 1 Healer · 3 Damage</small></span></div><div><i>✓</i><span><b>Equipment issued</b><small>Tier 1 starter sets equipped</small></span></div><div><i>✓</i><span><b>First dungeon cleared</b><small>The Zeltiran Hollows</small></span></div><div><i>✓</i><span><b>Profession started</b><small>'+esc(c?.name||'Adventurer')+' · '+esc(prof||'Profession')+' · Crafted '+esc(s.onboarding.craftedItem||'first item')+'</small></span></div></div><button id="beginAdventure" class="on-primary">BEGIN YOUR ADVENTURE →</button></aside></div>';
+  const body='<div class="zeltira-layout departure"><main>'+zeltiraMap('road')+'</main><aside class="z-guide"><small>ZELTIRA · EASTERN ROAD</small><h2>The charter is yours now.</h2><p class="guide-quote">“Now you know what the colours, bars, rolls and warnings actually mean. The next decisions are yours.”</p><div class="tutorial-complete-list"><div><i>✓</i><span><b>Party roles understood</b><small>Tank · Healer · Damage and class/race identity</small></span></div><div><i>✓</i><span><b>Gear read correctly</b><small>Item Level, random stats, Bank assignment</small></span></div><div><i>✓</i><span><b>Combat commanded</b><small>Threat, healing, interrupts and telegraphs</small></span></div><div><i>✓</i><span><b>Growth systems learned</b><small>Knowledge, Cell Shock and talent points</small></span></div><div><i>✓</i><span><b>Profession started</b><small>'+esc(c?.name||'Adventurer')+' · '+esc(prof||'Profession')+' · Crafted '+esc(s.onboarding.craftedItem||'first item')+'</small></span></div><div><i>✓</i><span><b>Quest progression understood</b><small>Quest gear prepares you; dungeons improve it</small></span></div></div><button id="beginAdventure" class="on-primary">OPEN QUEST JOURNAL & BEGIN →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'departure');
   $('#beginAdventure')?.addEventListener('click',completeOnboarding);
 }
@@ -713,7 +723,7 @@ async function completeOnboarding(){
   const s=state();s.onboarding.complete=true;s.onboarding.stage='complete';s.onboarding.completedAt=new Date().toISOString();s.renown=Math.max(10,Number(s.renown)||0);s.activity.push('Zeltira training complete. The wider world is now open.');
   Game.save();await Game.persistState();
   if(db&&user)await db.from('characters').update({tutorial_complete:true,tutorial_stage:'complete',tutorial_reward_claimed:true,last_played_at:new Date().toISOString()}).eq('user_id',user.id);
-  hide();Game.renderAll();Game.switchView('overview');
+  hide();Game.renderAll();Game.switchView('quests');
 }
 function render(){
   const s=state();if(!s)return;
@@ -725,8 +735,11 @@ function render(){
   else if(stage==='gear')renderGear();
   else if(stage==='dungeon-briefing')renderDungeonBriefing();
   else if(stage==='dungeon-running')renderDungeonRunning();
+  else if(stage==='loot-review')renderLootReview();
+  else if(stage==='recovery-lesson')renderRecoveryLesson();
   else if(stage==='profession-choice')renderProfessionChoice();
   else if(stage==='craft')renderCraft();
+  else if(stage==='quest-lesson')renderQuestLesson();
   else if(stage==='departure')renderDeparture();
   else{s.onboarding.stage='party-builder';Game.save();renderPartyBuilder()}
 }
