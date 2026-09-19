@@ -129,3 +129,9 @@ body.wb2d-open{overflow:hidden}
 .wb2d-meter-row.aggro b strong{color:#E6C86C!important}
 .wb2d-meter-row.high{padding:2px 3px;background:rgba(194,71,57,.06);box-shadow:inset 2px 0 #C94A39}
 .wb2d-meter-row.high b strong{color:#E77A6A!important}
+
+/* Truthful source → target projectile orientation */
+.wb2d-projectile{transform-origin:center;--angle:0deg}
+.wb2d-projectile.melee{width:14px;height:3px}
+@keyframes wb2dProjectile{from{transform:rotate(var(--angle));opacity:1}to{transform:translate(var(--dx),var(--dy)) rotate(var(--angle));opacity:.1}}
+.wb2d-telegraph.line,.wb2d-telegraph.cone{transform-origin:left center}
