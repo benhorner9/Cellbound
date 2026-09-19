@@ -94,11 +94,14 @@ function stageTitle(stage){
   const labels={
     'party-builder':'Build Your Party',
     'zeltira-arrival':'Arrival in Zeltira',
-    'gear':'Quartermaster',
-    'dungeon-briefing':'Your First Dungeon',
+    'gear':'Reading Equipment',
+    'dungeon-briefing':'Combat School',
     'dungeon-running':'The Zeltiran Hollows',
+    'loot-review':'Your First Drop',
+    'recovery-lesson':'After the Fight',
     'profession-choice':'Choose a Profession',
     'craft':'Craft Your First Item',
+    'quest-lesson':'Your First Adventure',
     'departure':'The Road Opens'
   };
   return labels[stage]||'Zeltira';
@@ -106,13 +109,15 @@ function stageTitle(stage){
 function chrome(body,stage){
   const steps=[
     ['party-builder','Party'],
-    ['zeltira-arrival','Zeltira'],
-    ['gear','Equipment'],
-    ['dungeon-briefing','Dungeon'],
-    ['profession-choice','Profession'],
+    ['gear','Gear'],
+    ['dungeon-briefing','Combat'],
+    ['loot-review','Loot'],
+    ['recovery-lesson','Growth'],
+    ['profession-choice','Craft'],
+    ['quest-lesson','Quests'],
     ['departure','Adventure']
   ];
-  const order={'party-builder':0,'zeltira-arrival':1,'gear':2,'dungeon-briefing':3,'dungeon-running':3,'profession-choice':4,'craft':4,'departure':5};
+  const order={'party-builder':0,'zeltira-arrival':0,'gear':1,'dungeon-briefing':2,'dungeon-running':2,'loot-review':3,'recovery-lesson':4,'profession-choice':5,'craft':5,'quest-lesson':6,'departure':7};
   const at=order[stage]??0;
   return '<section class="onboard-shell"><header class="onboard-head"><div><small>CELLBOUND · FIRST CHARTER</small><h1>'+esc(stageTitle(stage))+'</h1></div><div class="onboard-progress">'+steps.map((x,i)=>'<span class="'+(i<at?'done':i===at?'active':'')+'"><i>'+(i+1)+'</i>'+x[1]+'</span>').join('')+'</div></header>'+body+'</section>';
 }
@@ -186,7 +191,7 @@ async function createParty(){
   }));
   const s=state();
   s.roster=roster;s.party={tank:ids[0],healer:ids[1],dps:ids.slice(2,5)};
-  s.renown=0;s.gold=250;s.bank=[];s.materials={};s.consumables=[];s.recipeScrolls=[];s.discoveredRecipes=[];s.tradeInbox=[];s.collectionHistory=[];s.reports=[];s.bossKills={ashwarden:false,embermaw:false,vaultheart:false};
+  s.renown=0;s.gold=250;s.bank=[];s.materials={};s.consumables=[];s.recipeScrolls=[];s.discoveredRecipes=[];s.tradeInbox=[];s.collectionHistory=[];s.reports=[];s.bossKills={ashwarden:false,embermaw:false,vaultheart:false};s.progression={ashenVaultUnlocked:false};s.questSystem=null;
   s.activity=['Your first party has been formed.','The road to Zeltira is open.'];
   s.onboarding={version:1,complete:false,stage:'zeltira-arrival',zone:'zeltira',startedAt:s.onboarding?.startedAt||new Date().toISOString(),partyCreatedAt:new Date().toISOString()};
   Game.replaceState(clone(s));await Game.persistState();await syncPartyCharacters(roster);render();
@@ -212,7 +217,7 @@ async function setStage(next,extra){
   Game.save();await Game.persistState();render();
 }
 function renderArrival(){
-  const body='<div class="zeltira-layout"><main>'+zeltiraMap('gate')+'</main><aside class="z-guide"><small>ZELTIRA · OUTER GATE</small><h2>Welcome to Zeltira.</h2><p class="guide-quote">“Five names on a fresh charter. Good. Zeltira has buried better parties than yours — but everyone starts somewhere.”</p><div class="guide-name"><b>Warden Elara Vey</b><span>Zeltira Pathfinder</span></div><p>Your first lesson is simple: a strong party is only as useful as the equipment it carries. The Quartermaster is waiting inside the walls.</p><div class="z-party-list">'+partySummary()+'</div><button id="toQuartermaster" class="on-primary">ENTER ZELTIRA →</button></aside></div>';
+  const body='<div class="zeltira-layout"><main>'+zeltiraMap('gate')+'</main><aside class="z-guide"><small>ZELTIRA · OUTER GATE</small><h2>Welcome to Zeltira.</h2><p class="guide-quote">“Five names on a fresh charter. Good. You are not one adventurer — you are the commander responsible for all five.”</p><div class="guide-name"><b>Warden Elara Vey</b><span>Zeltira Pathfinder</span></div><p>Before the road opens, you will actually use the systems your guild depends on.</p><div class="tutorial-learning-list"><span><i>1</i><b>Read equipment</b><small>Item Level, rolled stats and who should wear what.</small></span><span><i>2</i><b>Command a dungeon</b><small>Pulls, threat, healing, interrupts and boss telegraphs.</small></span><span><i>3</i><b>Manage what drops</b><small>Bank gear, character upgrades and reagents.</small></span><span><i>4</i><b>Grow the guild</b><small>Cell Shock, knowledge, professions and quests.</small></span></div><div class="z-party-list">'+partySummary()+'</div><button id="toQuartermaster" class="on-primary">START TRAINING →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'zeltira-arrival');
   $('#toQuartermaster')?.addEventListener('click',()=>setStage('gear'));
 }
