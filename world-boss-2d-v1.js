@@ -170,7 +170,7 @@ function renderCombatMeters(parts,partyThreat){
   const tank=chars.find(c=>roleOf(c)==='tank'),tankThreat=tank?Number(map[tank.id])||0:0;
   threatRoot.innerHTML=threatRows.length?threatRows.map(({c,value},i)=>{
     const pct=value/maxThreat*100,isBossTarget=ownGuildAggro&&c.id===leader,high=!isBossTarget&&roleOf(c)!=='tank'&&tankThreat>0&&value>=tankThreat*.85;
-    return '<div class="wb2d-meter-row '+(isBossTarget?'aggro ':'')+(high?'high ':'')+'"><div><b>'+(i+1)+'. '+esc(c.name)+(isBossTarget?' <strong>AGGRO</strong>':high?' <strong>HIGH</strong>':'')+'</b><span>'+Math.round(value).toLocaleString()+'</span></div><em><i style="width:'+pct+'%"></i></em></div>';
+    return '<div class="wb2d-meter-row '+classKey(c)+' '+(isBossTarget?'aggro ':'')+(high?'high ':'')+'"><div><b>'+(i+1)+'. '+esc(c.name)+(isBossTarget?' <strong>AGGRO</strong>':high?' <strong>HIGH</strong>':'')+'</b><span>'+Math.round(value).toLocaleString()+'</span></div><em><i style="width:'+pct+'%"></i></em></div>';
   }).join(''):'<div class="wb2d-meter-empty">Threat appears when your party attacks.</div>';
 }
 function projectileFrom(el,role){
