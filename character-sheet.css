@@ -791,3 +791,6 @@
 
 /* Combat identity refinement */
 .cb-identity-panel{grid-column:1/-1}.cb-identity-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cb-identity-grid article{padding:13px;border:1px solid rgba(255,255,255,.055);background:#081216}.cb-identity-grid small{display:block;color:#71817c;font-size:.42rem;font-weight:900;letter-spacing:.08em}.cb-identity-grid b{display:block;margin-top:5px;color:#d9d4c6;font-family:Georgia,serif;font-size:.95rem;font-weight:400}.cb-identity-grid p{margin:7px 0;color:#81908b;font-size:.55rem;line-height:1.5}.cb-identity-grid em{display:block;padding-top:7px;border-top:1px solid rgba(255,255,255,.04);color:#9b785f;font-size:.46rem;font-style:normal;line-height:1.45}@media(max-width:720px){.cb-identity-grid{grid-template-columns:1fr}.cb-identity-grid p{font-size:.65rem}.cb-identity-grid em{font-size:.56rem}}
+
+/* Rolled equipment stats */
+.cb-slot-roll,.cb-current-roll,.cb-option-roll{display:block;margin-top:3px;color:#83bda9;font-size:.42rem;line-height:1.35}.cb-option-roll{font-weight:700}.cb-current-roll{font-style:normal}@media(max-width:720px){.cb-slot-roll,.cb-current-roll,.cb-option-roll{font-size:.52rem}}
