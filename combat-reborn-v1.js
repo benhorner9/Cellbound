@@ -54,6 +54,8 @@ function enemyPressure(ctx,e,target){
  let mult=levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,target?.level||1)*(Number(e.damageScale)||1);
  if(hasAffix(ctx,'blood-moon')&&healthRatio(e)<=.30)mult*=1.25;
  if(Number(e.relentlessUntil)>ctx.time)mult*=1.18;
+ mult*=Math.max(1,Number(e.phaseDamageScale)||1);
+ if(e.hardEnraged)mult*=3.5;
  return mult
 }
 
@@ -224,7 +226,7 @@ function normaliseEnemies(encounter){
    id:'e-'+i,name,role:'enemy',kind:classification==='boss'||classification==='world-boss'?'boss':'enemy',classification,classificationLabel:rule.label,level,
    maxHealth,health:maxHealth,alive:true,position:{x:68,y:raw.length===1?50:30+i*(40/Math.max(1,raw.length-1))},facing:180,
    target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},movingUntil:0,moveToken:0,nextAttack:900+i*220,currentCast:null,
-   isAdd:false,priority:i===0?2:1,damageScale:rule.damage*damageMult
+   isAdd:false,priority:i===0?2:1,damageScale:rule.damage*damageMult,phaseDamageScale:1,hardEnraged:false
   }
  })
 }
@@ -1035,6 +1037,34 @@ function startMechanic(ctx,m){
  }
  schedule(ctx,ctx.time+duration,()=>resolveMechanic(ctx,enemy,m,token),'mechanic-resolve');
 }
+
+function checkBossPhases(ctx){
+ const boss=livingEnemies(ctx).find(e=>e.kind==='boss');if(!boss)return;
+ const hp=pct(boss.health,boss.maxHealth),phases=Array.isArray(ctx.encounter.phases)?ctx.encounter.phases:[];
+ ctx.phaseTriggered=ctx.phaseTriggered||{};
+ phases.forEach((phase,index)=>{
+  const key=phase.id||('phase-'+index),at=Number(phase.atPct);
+  if(ctx.phaseTriggered[key]||!Number.isFinite(at)||hp>at)return;
+  ctx.phaseTriggered[key]=true;
+  if(Number(phase.damageScale)>1)boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(phase.damageScale));
+  if(Array.isArray(phase.addMechanics)&&phase.addMechanics.length){
+   phase.addMechanics.forEach(m=>ctx.encounter.mechanics.push(Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}));
+  }
+  emit(ctx,'PHASE_CHANGE',{source:boss.id,target:boss.id,ability:phase.name||('Phase '+(index+2)),result:'phase',position:copy(boss.position),payload:{phaseId:key,atPct:at,healthPct:hp,damageScale:boss.phaseDamageScale}});
+  if(phase.spawnAdds)spawnAdds(ctx,boss);
+ });
+ const softPct=Number(ctx.encounter.softEnragePct);
+ if(!ctx.softEnraged&&Number.isFinite(softPct)&&hp<=softPct){
+  ctx.softEnraged=true;boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(ctx.encounter.softEnrageDamage)||1.22);
+  emit(ctx,'ENRAGE',{source:boss.id,target:boss.id,ability:'Soft Enrage',result:'soft',payload:{healthPct:hp,damageScale:boss.phaseDamageScale}})
+ }
+ const hardAt=Number(ctx.encounter.hardEnrageMs);
+ if(!ctx.hardEnraged&&Number.isFinite(hardAt)&&hardAt>0&&ctx.time>=hardAt){
+  ctx.hardEnraged=true;boss.hardEnraged=true;
+  emit(ctx,'ENRAGE',{source:boss.id,target:boss.id,ability:'Hard Enrage',result:'hard',payload:{timeMs:ctx.time,damageScale:3.5}})
+ }
+}
+
 function scheduleNextMechanic(ctx){
  if(ctx.finished)return;
  const list=ctx.encounter.mechanics||[];if(!list.length)return;
@@ -1056,7 +1086,7 @@ function buildSummary(ctx,outcome){
   outcome,durationMs:Math.round(ctx.time),durationSeconds:Math.round(duration*10)/10,
   deaths:ctx.stats.deaths,totalDamage:players.reduce((n,p)=>n+p.damage,0),
   totalHealing:players.reduce((n,p)=>n+p.healing,0),interrupts:copy(ctx.stats.interrupts),
-  mechanics:copy(ctx.stats.mechanics),mistakes:copy(ctx.stats.mistakes),battleResurrections:ctx.stats.battleResurrections,players
+  mechanics:copy(ctx.stats.mechanics),mistakes:copy(ctx.stats.mistakes),battleResurrections:ctx.stats.battleResurrections,phases:copy(ctx.phaseTriggered||{}),softEnraged:!!ctx.softEnraged,hardEnraged:!!ctx.hardEnraged,players
  };
 }
 function simulate(options={}){
@@ -1073,7 +1103,7 @@ function simulate(options={}){
   movementDiscipline:options.tactics?.movementDiscipline||'balanced'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:0,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
+ const ctx={time:0,rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:0,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,phaseTriggered:{},softEnraged:false,hardEnraged:false,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
  emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
  players.forEach(u=>emitResourceState(ctx,u,'initial'));
  const tank=players.find(p=>p.role==='tank')||players[0];
@@ -1085,7 +1115,7 @@ function simulate(options={}){
   processQueue(ctx);
   if(!livingEnemies(ctx).length&&ctx.pendingResurrections<=0&&ctx.pendingHazards<=0){outcome='victory';break}
   if(!livingPlayers(ctx).length){outcome='defeat';break}
-  tickCooldowns(ctx);passiveResources(ctx);
+  checkBossPhases(ctx);tickCooldowns(ctx);passiveResources(ctx);
   players.forEach(u=>playerAI(ctx,u));
   enemies.forEach(e=>{if(e.alive&&ctx.time>=e.nextAttack)enemyBasicAttack(ctx,e)});
   ctx.time+=TICK;
