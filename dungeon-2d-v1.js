@@ -1480,21 +1480,21 @@ function captureRebornResult(result){
  run.rebornHistory.push({stageId:result.stageId,stageTitle:result.stageTitle,startHp:result.startHp,replay:result.replay,summary:result.summary,outcome:result.outcome});
 }
 function rebornTotals(){
- const history=run?.rebornHistory||[],map={};let duration=0,deaths=0,damage=0,healing=0,damageTaken=0,avoidableDamage=0,attempts=0,interrupts=0,failed=0,avoided=0,mistakes=0,battleResurrections=0;
+ const history=run?.rebornHistory||[],map={};let duration=0,deaths=0,damage=0,healing=0,damageTaken=0,avoidableDamage=0,attempts=0,interrupts=0,missedInterrupts=0,failed=0,avoided=0,mistakes=0,battleResurrections=0,threatLosses=0;
  history.forEach(h=>{
   const s=h.summary||{};duration+=Number(s.durationSeconds)||0;deaths+=Number(s.deaths)||0;damage+=Number(s.totalDamage)||0;healing+=Number(s.totalHealing)||0;
-  attempts+=Number(s.interrupts?.attempts)||0;interrupts+=Number(s.interrupts?.success)||0;failed+=Number(s.mechanics?.failed)||0;avoided+=Number(s.mechanics?.avoided)||0;
+  attempts+=Number(s.interrupts?.attempts)||0;interrupts+=Number(s.interrupts?.success)||0;missedInterrupts+=Number(s.interrupts?.missedCritical)||0;failed+=Number(s.mechanics?.failed)||0;avoided+=Number(s.mechanics?.avoided)||0;
   mistakes+=Number(s.mistakes?.total)||0;battleResurrections+=Number(s.battleResurrections)||0;
   (s.players||[]).forEach(p=>{
    const x=map[p.id]||(map[p.id]={id:p.id,name:p.name,class:p.class,damage:0,healing:0,damageTaken:0,avoidableDamage:0,deaths:0,mistakes:0,mistakesByType:{},battleResurrections:0,interrupts:0,interruptAttempts:0,abilityDamage:{}});
    x.damage+=Number(p.damage)||0;x.healing+=Number(p.healing)||0;x.damageTaken+=Number(p.damageTaken)||0;x.avoidableDamage+=Number(p.avoidableDamage)||0;x.deaths+=Number(p.deaths)||0;x.mistakes+=Number(p.mistakes)||0;x.battleResurrections+=Number(p.battleResurrections)||0;
-   x.interrupts+=Number(p.interrupts)||0;x.interruptAttempts+=Number(p.interruptAttempts)||0;
+   x.interrupts+=Number(p.interrupts)||0;x.interruptAttempts+=Number(p.interruptAttempts)||0;threatLosses+=Number(p.threatLost)||0;
    Object.entries(p.mistakesByType||{}).forEach(([k,v])=>x.mistakesByType[k]=(x.mistakesByType[k]||0)+(Number(v)||0));
    Object.entries(p.abilityDamage||{}).forEach(([k,v])=>x.abilityDamage[k]=(x.abilityDamage[k]||0)+(Number(v)||0));
    damageTaken+=Number(p.damageTaken)||0;avoidableDamage+=Number(p.avoidableDamage)||0
   })
  });
- return{duration,deaths,damage,healing,damageTaken,avoidableDamage,attempts,interrupts,failed,avoided,mistakes,battleResurrections,outOfCombatRevives:Number(run?.outOfCombatRevives)||0,players:Object.values(map)}
+ return{duration,deaths,damage,healing,damageTaken,avoidableDamage,attempts,interrupts,missedInterrupts,threatLosses,failed,avoided,mistakes,battleResurrections,outOfCombatRevives:Number(run?.outOfCombatRevives)||0,players:Object.values(map)}
 }
 function rebornAnalysisHTML(){
  const t=rebornTotals();if(!run?.rebornHistory?.length)return'';
@@ -1529,7 +1529,7 @@ function endgameRunMetrics(){
  const t=rebornTotals(),combatMs=Math.round((Number(t.duration)||0)*1000);
  // Playback speed never affects this. Route time is simulated separately from presentation time.
  const pace=tactics.aggression==='aggressive'?.82:tactics.aggression==='safe'?1.20:1,routeMs=Math.round(STAGES.length*45000*pace),timeMs=Math.max(25000,combatMs*4+routeMs);
- return{timeMs,deaths:t.deaths,mechanicsFailed:t.failed,mistakes:t.mistakes||0,scorePreview:window.CellboundEndgameData?.scorePreview?.({difficulty:run?.endgame?.difficulty||'normal',tier:run?.endgame?.tier||0,timeMs,targetTimeMs:run?.endgame?.targetTimeMs||0,deaths:t.deaths,mechanicsFailed:t.failed,mistakes:t.mistakes||0})||0}
+ return{timeMs,deaths:t.deaths,mechanicsFailed:t.failed,mistakes:t.mistakes||0,missedInterrupts:t.missedInterrupts||0,threatLosses:t.threatLosses||0,avoidableDamage:t.avoidableDamage||0,battleResurrections:t.battleResurrections||0,scorePreview:window.CellboundEndgameData?.scorePreview?.({difficulty:run?.endgame?.difficulty||'normal',tier:run?.endgame?.tier||0,timeMs,targetTimeMs:run?.endgame?.targetTimeMs||0,deaths:t.deaths,mechanicsFailed:t.failed,mistakes:t.mistakes||0})||0}
 }
 
 async function seamlessFrom(startIndex,tok){
