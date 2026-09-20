@@ -839,34 +839,38 @@ function resolveMechanic(ctx,e,m,token){
 function startMechanic(ctx,m){
  const enemy=livingEnemies(ctx).find(x=>x.kind==='boss')||livingEnemies(ctx)[0];if(!enemy)return;
  const token='m'+(++ctx.mechanicSeq),duration=Math.max(700,Number(m.duration)||1600);
- const castState={token,enemy:enemy.id,name:m.name,type:m.type,interrupted:false,ends:ctx.time+duration,responses:{},targetId:null,targetIds:[]};
+ const castState={token,enemy:enemy.id,name:m.name,type:m.type,interrupted:false,ends:ctx.time+duration,responses:{},reactionMs:{},targetId:null,targetIds:[]};
  const live=livingPlayers(ctx);
+ ctx.activeEnemyCast=castState;
+
  if(m.type==='cone'){
   const tank=live.find(p=>p.role==='tank')||live[0];castState.targetId=tank?.id||null;castState.targetIds=tank?[tank.id]:[];
-  live.forEach(p=>{if(p.role==='tank')castState.responses[p.id]=true;else castState.responses[p.id]=ctx.rng()<reactionChance(ctx,p,'cone')});
+  let badFacing=false;
+  if(tank&&shouldMistake(ctx,tank,'tank',6000)){
+   badFacing=true;recordMistake(ctx,tank,'tank','turned the frontal through the group',{target:enemy.id,ability:m.name});
+  }
+  live.forEach(p=>{
+   if(p.role==='tank'){castState.responses[p.id]=true;castState.reactionMs[p.id]=0;return}
+   const plan=mechanicResponse(ctx,p,'cone',duration,enemy);castState.responses[p.id]=plan.success&&!badFacing;castState.reactionMs[p.id]=plan.reactionMs
+  });
  }else if(m.type==='circle'){
   castState.targetId=enemy.id;castState.targetIds=[enemy.id];
-  live.forEach(p=>castState.responses[p.id]=ctx.rng()<reactionChance(ctx,p,'circle'));
+  live.forEach(p=>{const plan=mechanicResponse(ctx,p,'circle',duration,enemy);castState.responses[p.id]=plan.success;castState.reactionMs[p.id]=plan.reactionMs});
  }else if(m.type==='circles'){
   castState.targetIds=live.map(p=>p.id);
-  live.forEach(p=>castState.responses[p.id]=ctx.rng()<reactionChance(ctx,p,'circles'));
+  live.forEach(p=>{const plan=mechanicResponse(ctx,p,'circles',duration,enemy);castState.responses[p.id]=plan.success;castState.reactionMs[p.id]=plan.reactionMs});
  }else if(m.type==='line'){
   const candidates=live.filter(p=>p.role!=='tank'),target=candidates[Math.floor(ctx.rng()*Math.max(1,candidates.length))]||live[0];
   castState.targetId=target?.id||null;castState.targetIds=target?[target.id]:[];
-  if(target)castState.responses[target.id]=ctx.rng()<reactionChance(ctx,target,'line');
+  if(target){const plan=mechanicResponse(ctx,target,'line',duration,enemy);castState.responses[target.id]=plan.success;castState.reactionMs[target.id]=plan.reactionMs}
  }
- emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:castState.targetId,ability:m.name,result:'telegraph',position:copy(enemy.position),payload:{mechanicType:m.type,duration,token,interruptible:m.type==='interrupt',targetId:castState.targetId,targetIds:copy(castState.targetIds),responses:copy(castState.responses)}});
+
+ emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:castState.targetId,ability:m.name,result:'telegraph',position:copy(enemy.position),payload:{mechanicType:m.type,duration,token,interruptible:m.type==='interrupt',targetId:castState.targetId,targetIds:copy(castState.targetIds),responses:copy(castState.responses),reactionMs:copy(castState.reactionMs)}});
  emit(ctx,'CAST_START',{source:enemy.id,target:castState.targetId,ability:m.name,result:'enemy',payload:{duration,interruptible:m.type==='interrupt',mechanicType:m.type,token,targetId:castState.targetId,targetIds:copy(castState.targetIds)}});
- ctx.activeEnemyCast=castState;
  if(m.type==='interrupt')tryInterrupt(ctx,enemy,m,token);
  else if(m.type==='cone'){
   const tank=getUnit(ctx,castState.targetId);
-  live.forEach(p=>{if(p.role==='tank'||castState.responses[p.id])planMovement(ctx,p,'cone',enemy)});
   if(tank){enemy.target=tank.id;updateFacing(enemy,tank)}
- }else if(m.type==='circle'||m.type==='circles'){
-  live.forEach(p=>{if(castState.responses[p.id])planMovement(ctx,p,m.type,enemy)});
- }else if(m.type==='line'){
-  const target=getUnit(ctx,castState.targetId);if(target&&castState.responses[target.id])planMovement(ctx,target,'line',enemy)
  }
  schedule(ctx,ctx.time+duration,()=>resolveMechanic(ctx,enemy,m,token),'mechanic-resolve');
 }
