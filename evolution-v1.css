@@ -793,3 +793,103 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:1px solid 
 #roster .char-card[data-active-party="1"]:before{
   top:13px;
 }
+
+
+/* ==========================================================================
+   DUNGEON BROWSER
+   Compact expedition cards first; one full journal can be expanded at a time.
+   ========================================================================== */
+.dungeon-browser-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+  margin-bottom:18px;
+}
+.dungeon-browser-slot{min-width:0}
+.dungeon-browser-card{
+  display:grid;
+  grid-template-columns:180px minmax(0,1fr);
+  min-height:188px;
+  overflow:hidden;
+  border:1px solid rgba(216,185,118,.12);
+  background:linear-gradient(180deg,#0d1719,#081013);
+  box-shadow:var(--cb-shadow);
+  transition:border-color .18s ease,transform .18s ease,background .18s ease;
+}
+.dungeon-browser-card:hover{border-color:rgba(216,185,118,.25);transform:translateY(-1px)}
+.dungeon-browser-card.active{border-color:rgba(216,185,118,.42);background:linear-gradient(180deg,#121a18,#0a1214);box-shadow:0 0 0 1px rgba(216,185,118,.08),var(--cb-shadow)}
+.dungeon-browser-card.locked{opacity:.58}
+.dungeon-browser-art{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  min-height:188px;
+  padding:16px;
+  overflow:hidden;
+  border-right:1px solid rgba(216,185,118,.08);
+  background:
+    radial-gradient(circle at 62% 45%,rgba(209,92,44,.28),transparent 19%),
+    linear-gradient(145deg,#2a1b13,#111719 62%);
+}
+.dungeon-browser-art:before{
+  content:"";
+  position:absolute;
+  right:-8px;
+  bottom:-34px;
+  width:124px;
+  height:160px;
+  border:12px solid rgba(92,73,56,.62);
+  border-bottom-width:45px;
+  clip-path:polygon(0 100%,12% 28%,35% 28%,50% 0,65% 28%,88% 28%,100% 100%);
+}
+.dungeon-browser-art>*{position:relative;z-index:2}
+.dungeon-browser-art>span{color:#b99e69;font-size:.42rem;font-weight:900;letter-spacing:.14em}
+.dungeon-browser-art>strong{align-self:flex-end;color:#df8a52;font-family:Georgia,serif;font-size:2.2rem;font-weight:400;text-shadow:0 0 22px rgba(224,109,57,.35)}
+.dungeon-browser-copy{display:flex;flex-direction:column;padding:17px 18px}
+.dungeon-browser-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.dungeon-browser-heading small{display:block;color:#83775d;font-size:.39rem;font-weight:900;letter-spacing:.12em}
+.dungeon-browser-heading h3{margin:3px 0 0;color:#eee7da;font-family:Georgia,serif;font-size:1.32rem;font-weight:400}
+.dungeon-browser-heading>b{flex:none;padding:5px 7px;border:1px solid rgba(216,185,118,.11);color:#ae9c72;font-size:.38rem;letter-spacing:.08em}
+.dungeon-browser-card.unlocked .dungeon-browser-heading>b{border-color:rgba(112,196,142,.14);color:#7eba91}
+.dungeon-browser-copy>p{margin:11px 0;color:#788681;font-size:.55rem;line-height:1.55}
+.dungeon-browser-meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:auto}
+.dungeon-browser-meta span{padding:4px 6px;border:1px solid rgba(255,255,255,.055);background:#081114;color:#697873;font-size:.4rem;text-transform:uppercase;letter-spacing:.05em}
+.dungeon-browser-actions{display:flex;justify-content:flex-end;margin-top:12px}
+.dungeon-browser-actions button{
+  min-width:116px;height:35px;padding:0 11px;border:1px solid rgba(216,185,118,.23);
+  background:#292318;color:#e5d39f;font-size:.45rem;font-weight:900;letter-spacing:.08em
+}
+.dungeon-browser-card.active .dungeon-browser-actions button{background:#3a3020;border-color:rgba(216,185,118,.34)}
+.dungeon-detail-panel{margin-top:4px;scroll-margin-top:18px}
+.dungeon-detail-panel[hidden]{display:none!important}
+.dungeon-detail-toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  margin-bottom:8px;padding:10px 12px;border:1px solid rgba(216,185,118,.09);background:#091215
+}
+.dungeon-detail-toolbar small{display:block;color:#83765a;font-size:.38rem;font-weight:900;letter-spacing:.13em}
+.dungeon-detail-toolbar b{display:block;margin-top:2px;color:#ddd5c5;font-family:Georgia,serif;font-weight:400}
+.dungeon-detail-toolbar button{
+  height:32px;padding:0 10px;border:1px solid rgba(255,255,255,.07);background:#0c1518;color:#889691;font-size:.4rem;font-weight:900;letter-spacing:.06em
+}
+.overview-dungeon-ilvl{display:block;margin-top:8px;color:#71807a;font-size:.45rem}
+.hollow-preview .dungeon-art{
+  background:
+    radial-gradient(circle at 62% 45%,rgba(147,89,178,.31),transparent 21%),
+    linear-gradient(145deg,#1b1723,#0c1518 65%)!important;
+}
+.hollow-preview .dungeon-art:before{border-color:rgba(111,78,130,.55)!important}
+.hollow-preview .dungeon-art span{color:#b698c8}
+
+@media(max-width:980px){
+  .dungeon-browser-grid{grid-template-columns:1fr}
+}
+@media(max-width:620px){
+  .dungeon-browser-card{grid-template-columns:112px minmax(0,1fr);min-height:168px}
+  .dungeon-browser-art{min-height:168px;padding:12px}
+  .dungeon-browser-art:before{width:92px;height:132px}
+  .dungeon-browser-copy{padding:14px}
+  .dungeon-browser-heading{display:block}
+  .dungeon-browser-heading>b{display:inline-block;margin-top:7px}
+  .dungeon-detail-toolbar{align-items:flex-start}
+}
