@@ -1010,11 +1010,11 @@ function rebornCastClear(label='—'){
  if(n)n.textContent=label;if(tm)tm.textContent='—';if(f){f.style.transition='none';f.style.width='0%'}
 }
 function rebornTelegraph(e){
- const type=e.payload?.mechanicType,tokenId=e.payload?.token||('tg-'+e.timestamp),source=e.source||'e-0';let v=null;
- if(type==='cone'){const tank=party().find(c=>role(c)==='tank');v=coneTelegraph(source,tank?'p-'+tank.id:'p-'+party()[0]?.id,'FRONTAL · TANK FACE AWAY')}
- else if(type==='line'){const targets=party().filter(c=>role(c)!=='tank'&&hp(c.id)>0),target=targets[0]||party()[0];v=lineTelegraph(source,'p-'+target.id,'LINE ATTACK · SIDESTEP')}
- else if(type==='circle')v=circleTelegraph(source,170,'GROUND AOE · MOVE OUT');
- else if(type==='circles'){const targets=party().filter(c=>role(c)!=='tank').slice(0,3);v=multiCircleTelegraph(targets.map(c=>'p-'+c.id),108,'TARGETED AOE · SPREAD')}
+ const type=e.payload?.mechanicType,tokenId=e.payload?.token||('tg-'+e.timestamp),source=e.source||'e-0',target=e.payload?.targetId||e.target;let v=null;
+ if(type==='cone')v=coneTelegraph(source,target||'p-'+party()[0]?.id,'FRONTAL · TANK FACE AWAY');
+ else if(type==='line')v=lineTelegraph(source,target||'p-'+party().find(c=>role(c)!=='tank')?.id,'LINE ATTACK · SIDESTEP');
+ else if(type==='circle')v=circleTelegraph(target||source,170,'GROUND AOE · MOVE OUT');
+ else if(type==='circles'){const ids=(e.payload?.targetIds||[]).filter(Boolean);v=multiCircleTelegraph(ids.length?ids:party().filter(c=>role(c)!=='tank').map(c=>'p-'+c.id),108,'TARGETED AOE · SPREAD')}
  else if(type==='adds')v=addTelegraph([{x:72,y:35},{x:72,y:65}],'ADDS INCOMING · PREPARE');
  else if(type==='interrupt')v=castTelegraph(source,'INTERRUPT '+String(e.ability||'CAST').toUpperCase());
  if(v){run.rebornTelegraphs=run.rebornTelegraphs||{};run.rebornTelegraphs[tokenId]=v}
