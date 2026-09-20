@@ -281,7 +281,7 @@ function addThreat(ctx,e,u,amount,reason='damage'){
  emit(ctx,'THREAT_GENERATED',{source:u.id,target:e.id,amount,result:reason,payload:{total:e.threat[u.id]}});
  setAggro(ctx,e,topThreatTarget(ctx,e),reason);
 }
-function taunt(ctx,u,e,a){
+function executeTaunt(ctx,u,e,a){
  const top=Math.max(0,...Object.values(e.threat).map(Number));
  e.threat[u.id]=Math.max(Number(e.threat[u.id])||0,top+120);
  e.forcedTarget=u.id;e.forcedUntil=ctx.time+3000;
@@ -300,8 +300,8 @@ function rollDamage(ctx,u,a,target){
  return{amount,crit:false};
 }
 function mitigation(target,damageType='physical'){
- if(target.role==='tank')return damageType==='magic'?.74:.68;
- return target.defensiveUntil>0?.75:1;
+ if(target.role==='tank')return damageType==='magic'?0.74:0.68;
+ return target.defensiveUntil>0?0.75:1;
 }
 function dealDamage(ctx,source,target,amount,ability,opts={}){
  if(!source?.alive||!target?.alive)return 0;
@@ -422,7 +422,7 @@ function playerAI(ctx,u){
   const loose=tankNeedsTaunt(ctx,u);
   if(loose){
    const taunt=u.abilities.find(a=>a.kind==='taunt'&&cooldownReady(u,a));
-   if(taunt&&inRange(u,loose,taunt.range||30)){taunt(ctx,u,loose,taunt);return}
+   if(taunt&&inRange(u,loose,taunt.range||30)){executeTaunt(ctx,u,loose,taunt);return}
   }
   if(u.health/u.maxHealth<.48&&u.defensiveUntil<=0){
    u.defensiveUntil=5000;
@@ -447,7 +447,7 @@ function enemyBasicAttack(ctx,e){
  e.nextAttack=ctx.time+(e.kind==='boss'?1650:2050)+Math.round(ctx.rng()*320);
 }
 function reactionChance(ctx,u,type){
- const safety=ctx.tactics.movementDiscipline==='safety'?1.14:ctx.tactics.movementDiscipline==='damage'?.86:1;
+ const safety=ctx.tactics.movementDiscipline==='safety'?1.14:ctx.tactics.movementDiscipline==='damage'?0.86:1;
  const knowledge=Object.values(u.knowledge||{}).reduce((n,v)=>n+(Number(v)||0),0)/Math.max(1,Object.keys(u.knowledge||{}).length||1);
  let base=.84*classMobility(u.original||u)*safety+Math.min(.1,knowledge/1000);
  if(type==='cone'&&u.role==='tank')base=.97;
