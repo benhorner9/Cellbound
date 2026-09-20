@@ -271,7 +271,7 @@ if(!window.CellboundCombatReborn){
 (()=>{
 'use strict';
 
-const VERSION='1.2.0';
+const VERSION='1.2.1';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -307,8 +307,8 @@ const LEVEL_RULES={
 const ENEMY_CLASS_RULES={
  trash:{label:'TRASH',health:1,damage:1},
  elite:{label:'ELITE',health:1.12,damage:1.08},
- boss:{label:'BOSS',health:1.22,damage:1.18},
- 'world-boss':{label:'WORLD BOSS',health:1.75,damage:1.35},
+ boss:{label:'BOSS',health:1.22,damage:1.28},
+ 'world-boss':{label:'WORLD BOSS',health:1.75,damage:1.48},
  add:{label:'ADD',health:.78,damage:.84}
 };
 function levelHealthScale(level){return 1+Math.max(0,(Number(level)||1)-1)*LEVEL_RULES.healthPerLevel}
@@ -1191,7 +1191,7 @@ function enemyBasicAttack(ctx,e){
   e.nextAttack=ctx.time+450;return;
  }
  updateFacing(e,target);
- const base=e.classification==='world-boss'?42:e.kind==='boss'?34:e.classification==='elite'?18:e.isAdd?12:14;
+ const base=e.classification==='world-boss'?46:e.kind==='boss'?36:e.classification==='elite'?18:e.isAdd?12:14;
  const levelPressure=enemyPressure(ctx,e,target);
  const ability=e.classification==='world-boss'?'Crushing Blow':e.kind==='boss'?'Heavy Swing':e.classification==='elite'?'Heavy Strike':'Attack';
  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability,result:'enemy'});
@@ -1323,7 +1323,7 @@ function resolveMechanic(ctx,e,m,token){
   const tank=livingPlayers(ctx).find(p=>p.role==='tank');if(tank){e.target=tank.id;updateFacing(e,tank)}
   let failed=false;
   livingPlayers(ctx).forEach(p=>{
-   if(p.role==='tank'){dealDamage(ctx,e,p,34*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:false});return}
+   if(p.role==='tank'){dealDamage(ctx,e,p,38*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:false});return}
    const success=cast.responses?.[p.id]!==false;
    if(!success){failed=true;dealDamage(ctx,e,p,28*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:true})}
   });
