@@ -408,12 +408,15 @@ function normalisePlayer(c,i){
  const power=Math.max(1,Number(c?.power)||1);
  const level=Math.max(1,Number(c?.level)||1);
  const maxHealth=Math.round(baseHp+(power*1.8)+(level-1)*3),startPct=clamp(c?._combatHealthPct==null?100:Number(c._combatHealthPct),0,100),startHealth=Math.round(maxHealth*startPct/100);
+ const carried=c?._combatResource,carriedValue=typeof carried==='number'?carried:Number(carried?.value);
+ const resourceValue=Number.isFinite(carriedValue)?clamp(carriedValue,0,res.max):res.start;
+ const resourceRegen=healer&&res.name==='Mana'?2.1:res.regen;
  return{
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:{x:tank?42:role==='healer'?18:28,y:26+i*12},facing:0,
-  target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:{},statuses:{},resource:{name:res.name,max:res.max,value:res.start,regen:res.regen},
+  target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:{},statuses:{},resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
   abilities:copy(abilityPool(c,role)),power,level,talents:talentRanks(c),knowledge:copy(c.knowledge||{}),
-  defensiveUntil:0,nextDecision:0,nextRegen:0,original:c
+  defensiveUntil:0,nextDecision:100+(i*200),nextRegen:0,original:c
  };
 }
 function normaliseEnemies(encounter){
@@ -1061,6 +1064,7 @@ function simulate(options={}){
  }
  if(ctx.time>MAX_COMBAT_MS)emit(ctx,'ENRAGE',{result:'timeout'});
  ctx.finished=true;ctx.queue.length=0;
+ players.filter(u=>u.alive).forEach(u=>emitResourceState(ctx,u,'final'));
  emit(ctx,'COMBAT_END',{result:outcome,payload:{durationMs:ctx.time}});
  ctx.stats.endedAt=ctx.time;
  const summary=buildSummary(ctx,outcome);
@@ -1143,6 +1147,43 @@ function runSelfTests(){
   return unique.size>=3
  });
  test('Resource Bars',()=>r.events.filter(e=>e.type==='RESOURCE_STATE'&&e.result==='initial').length===5);
+ r=simulate({party:[
+  {id:'rt',name:'Tank',class:'Warrior',spec:'Protection',power:10,level:10,_combatResource:{value:44}},
+  {id:'rh',name:'Healer',class:'Paladin',spec:'Holy',power:10,level:10,_combatResource:{value:37}},
+  {id:'rd1',name:'DPS One',class:'Warrior',spec:'Arms',power:10,level:10},
+  {id:'rd2',name:'DPS Two',class:'Rogue',spec:'Assassination',power:10,level:10},
+  {id:'rd3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:10,level:10}
+ ],encounter:{...base,enemyHealth:600},seed:'resource-persistence'});
+ test('Resource Persistence',()=>{
+  const initial=r.events.find(e=>e.type==='RESOURCE_STATE'&&e.source==='p-rh'&&e.result==='initial');
+  const healer=r.finalState.players.find(p=>p.id==='p-rh');
+  return initial?.payload?.value===37&&healer?.resource?.value<100
+ });
+
+ r=simulate({party:[
+  {id:'st',name:'Tank',class:'Warrior',spec:'Protection',power:18,level:10},
+  {id:'sh',name:'Healer',class:'Paladin',spec:'Holy',power:18,level:10},
+  {id:'sd1',name:'DPS One',class:'Warrior',spec:'Arms',power:18,level:10},
+  {id:'sd2',name:'DPS Two',class:'Warrior',spec:'Arms',power:18,level:10},
+  {id:'sd3',name:'DPS Three',class:'Warrior',spec:'Arms',power:18,level:10}
+ ],encounter:{...base,enemyHealth:900},seed:'action-stagger'});
+ test('Action Stagger',()=>{
+  const first={};
+  r.events.filter(e=>e.type==='ABILITY_START'&&String(e.source||'').startsWith('p-')).forEach(e=>{if(first[e.source]==null)first[e.source]=e.timestamp});
+  return new Set(Object.values(first)).size>=4
+ });
+ r=simulate({party:[
+  {id:'mt',name:'Tank',class:'Warrior',spec:'Protection',power:28,level:10},
+  {id:'mh',name:'Healer',class:'Paladin',spec:'Holy',power:28,level:10},
+  {id:'md1',name:'DPS One',class:'Warrior',spec:'Arms',power:28,level:10},
+  {id:'md2',name:'DPS Two',class:'Rogue',spec:'Assassination',power:28,level:10},
+  {id:'md3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:28,level:10}
+ ],encounter:{id:'mana-pressure',title:'Mana Pressure',kind:'boss',enemies:['Pressure Boss'],enemyHealth:1500,mechanics:[['Tank Cleave','cone',1400]]},seed:'mana-pressure'});
+ test('Healer Mana Pressure',()=>{
+  const healer=r.finalState.players.find(p=>p.id==='p-mh'),stats=r.summary.players.find(p=>p.id==='p-mh');
+  return !!healer&&healer.resource.value<88&&stats.resourcesSpent>=25
+ });
+
  r=simulate({party:[
   {id:'jt',name:'Tank',class:'Warrior',spec:'Protection',power:10,level:10},
   {id:'j1',name:'Melee One',class:'Warrior',spec:'Arms',power:10,level:10},
