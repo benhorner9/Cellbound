@@ -15,3 +15,13 @@
 .class-warlock{--combat-class:#8788EE}
 .class-warrior{--combat-class:#C69B6D}
 .class-unknown{--combat-class:#7F8B88}
+
+
+/* Level progression is separate from gear power. */
+.level-growth{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin:10px 0 4px;padding:8px 10px;border:1px solid rgba(255,255,255,.06);
+  background:rgba(255,255,255,.025);border-radius:7px
+}
+.level-growth span{color:#788b85;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.level-growth b{color:#b8c7c1;font-size:10px;text-align:right}
