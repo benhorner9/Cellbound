@@ -274,7 +274,7 @@ function handleEvent(e){
    renderMeters();return
  }
  if(e.type==='HEAL_RECEIVED'){if(String(e.source||'').startsWith('p-'))run.healing[e.source]=(Number(run.healing[e.source])||0)+(Number(e.amount)||0);if(String(e.target||'').startsWith('p-'))setPartyHp(e.target,e.payload?.targetHpPct);renderMeters();return}
- if(e.type==='THREAT_GENERATED'&&String(e.target||'').startsWith('tb-')){const bid=String(e.target).slice(3);run.threat[bid]=run.threat[bid]||{};run.threat[bid][e.source]=Number(e.payload?.total)||0;renderMeters();return}
+ if(e.type==='THREAT_GENERATED'&&String(e.target||'').startsWith('tb-')){const bid=String(e.target).slice(3);run.threat[bid]=run.threat[bid]||{};run.threat[bid][e.source]=(Number(run.threat[bid][e.source])||0)+(Number(e.amount)||0);renderMeters();return}
  if(e.type==='PLAYER_DEFEATED'){setPartyHp(e.target,0);feed((party().find(c=>'p-'+c.id===e.target)?.name||'An adventurer')+' has fallen.','danger');return}
  if(e.type==='MECHANIC_TELEGRAPH'){mechanicFlash(e);return}
  if(e.type==='CAST_START'&&e.result==='enemy'){castStart(e);return}
