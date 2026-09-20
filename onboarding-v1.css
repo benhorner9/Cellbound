@@ -269,3 +269,9 @@ linear-gradient(180deg,#142019,#09110e)}
 .td-unit{will-change:left,top;backface-visibility:hidden;transition-timing-function:cubic-bezier(.22,.61,.36,1)}
 .td-unit.party .cbr-resource>span{display:none!important}
 .td-unit.party .cbr-resource>i{transition:width .32s ease-out}
+
+
+.td-unit>span .td-unit-meta{
+  display:block;margin-top:2px;color:#aab8b1;font-size:7px;font-weight:900;line-height:1;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap
+}
+.td-unit.enemy>span .td-unit-meta{color:#d2b066}.td-unit.enemy.boss>span .td-unit-meta{color:#efd07e}
