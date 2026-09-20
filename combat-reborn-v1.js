@@ -149,7 +149,7 @@ function normalisePlayer(c,i){
  return{
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:{x:tank?42:role==='healer'?18:28,y:26+i*12},facing:0,
-  target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,cooldowns:{},statuses:{},resource:{name:res.name,max:res.max,value:res.start,regen:res.regen},
+  target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:{},statuses:{},resource:{name:res.name,max:res.max,value:res.start,regen:res.regen},
   abilities:copy(abilityPool(c,role)),power,level,talents:talentRanks(c),knowledge:copy(c.knowledge||{}),
   defensiveUntil:0,nextDecision:0,nextRegen:0,original:c
  };
@@ -235,17 +235,46 @@ function moveTo(ctx,u,pos,duration=420,reason='positioning'){
  },'movement-end');
  return false
 }
-function nearestMeleePoint(enemy,u){
- const angle=Math.atan2(u.position.y-enemy.position.y,u.position.x-enemy.position.x);
- return{x:enemy.position.x+Math.cos(angle)*4,y:enemy.position.y+Math.sin(angle)*4};
+function stableUnitIndex(ctx,u,list){
+ const idx=list.findIndex(x=>x.id===u.id);return idx<0?0:idx
+}
+function isMeleeCombatant(u){
+ return (u?.abilities||[]).some(a=>a.kind==='damage'&&(Number(a.range)||5)<=7)
+}
+function meleeFormationPoint(ctx,u,target){
+ const radius=u.role==='tank'?4.2:4.6;
+ if(u.role==='tank'){
+   // Tank owns the front of the enemy. With enemies entering from the right side of the arena,
+   // this places the tank on the party-facing side and keeps the boss facing away from melee DPS.
+   return{x:target.position.x-radius,y:target.position.y}
+ }
+ const melee=ctx.players.filter(p=>p.alive&&p.role!=='tank'&&isMeleeCombatant(p));
+ const slot=stableUnitIndex(ctx,u,melee);
+ // Rear arc slots: centre-rear first, then alternate upper/lower flanks.
+ const angles=[0,-0.62,0.62,-1.02,1.02,-1.34,1.34];
+ const angle=angles[slot%angles.length];
+ const ring=radius+(Math.floor(slot/angles.length)*1.15);
+ return{x:target.position.x+Math.cos(angle)*ring,y:target.position.y+Math.sin(angle)*ring}
+}
+function rangedFormationPoint(ctx,u,target,range){
+ const ranged=ctx.players.filter(p=>p.alive&&!isMeleeCombatant(p)&&p.role!=='tank');
+ const slot=stableUnitIndex(ctx,u,ranged);
+ const angles=[Math.PI,-2.55,2.55,-2.2,2.2];
+ const angle=angles[slot%angles.length],desired=Math.max(10,Math.min((Number(range)||25)*.72,22));
+ return{x:target.position.x+Math.cos(angle)*desired,y:target.position.y+Math.sin(angle)*desired}
 }
 function moveIntoRange(ctx,u,target,range){
- if(inRange(u,target,range))return true;
- const d=dist(u.position,target.position)||1;
- const desired=Math.max(2,range*.82);
- const ratio=Math.max(0,(d-desired)/d);
- moveTo(ctx,u,{x:u.position.x+(target.position.x-u.position.x)*ratio,y:u.position.y+(target.position.y-u.position.y)*ratio},420,'move into range');
- return false;
+ const r=Math.max(2,Number(range)||5);
+ if(r<=7){
+   const desired=meleeFormationPoint(ctx,u,target),closeToSlot=dist(u.position,desired)<=1.15;
+   if(closeToSlot&&inRange(u,target,r))return true;
+   moveTo(ctx,u,desired,420,u.role==='tank'?'tank positioning':'melee formation');
+   return false
+ }
+ if(inRange(u,target,r))return true;
+ const desired=rangedFormationPoint(ctx,u,target,r);
+ moveTo(ctx,u,desired,420,'move into range');
+ return false
 }
 function cooldownReady(u,a){return (u.cooldowns[a.id]||0)<=0}
 function spendResource(ctx,u,a){
@@ -268,12 +297,20 @@ function gainResource(ctx,u,a){
   emit(ctx,'RESOURCE_GAINED',{source:u.id,ability:a.name,amount:actual,result:u.resource.name,payload:{resource:u.resource.name,value:u.resource.value,max:u.resource.max}});
  }
 }
+function emitResourceState(ctx,u,result='state'){
+ emit(ctx,'RESOURCE_STATE',{source:u.id,target:u.id,result,payload:{resource:u.resource.name,value:u.resource.value,max:u.resource.max}})
+}
 function passiveResources(ctx){
  ctx.players.forEach(u=>{
   if(!u.alive)return;
   const perTick=(u.resource.regen||0)*(TICK/1000);
   if(perTick<=0||u.resource.value>=u.resource.max)return;
-  u.resource.value=clamp(u.resource.value+perTick,0,u.resource.max);
+  const before=u.resource.value;
+  u.resource.value=clamp(before+perTick,0,u.resource.max);
+  if(ctx.time>=u.nextResourceState||u.resource.value>=u.resource.max){
+   u.nextResourceState=ctx.time+500;
+   emitResourceState(ctx,u,'regeneration')
+  }
  });
 }
 function threatMultiplier(u,a){
@@ -639,6 +676,7 @@ function simulate(options={}){
  };
  const ctx={time:0,rng:rngFrom(seed),seed,encounter,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:0,mechanicSeq:0,addSeq:0,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
  emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics}});
+ players.forEach(u=>emitResourceState(ctx,u,'initial'));
  const tank=players.find(p=>p.role==='tank')||players[0];
  if(tank)enemies.forEach(e=>{e.threat[tank.id]=180;setAggro(ctx,e,tank,'pull')});
  scheduleNextMechanic(ctx);
@@ -724,6 +762,20 @@ function runSelfTests(){
  });
  r=simulate({party,encounter:base,seed:'replay'});
  test('Replay Foundation',()=>JSON.stringify(r.replay.events)===JSON.stringify(r.events));
+ r=simulate({party:[
+  {id:'mt',name:'Tank',class:'Warrior',spec:'Protection',power:8,level:10},
+  {id:'m1',name:'Melee One',class:'Warrior',spec:'Arms',power:8,level:10},
+  {id:'m2',name:'Melee Two',class:'Rogue',spec:'Assassination',power:8,level:10},
+  {id:'m3',name:'Melee Three',class:'Demon Hunter',spec:'Havoc',power:8,level:10},
+  {id:'mh',name:'Healer',class:'Priest',spec:'Holy',power:8,level:10}
+ ],encounter:{...base,enemyHealth:900},seed:'melee-formation'});
+ test('Melee Formation',()=>{
+  const ends=r.events.filter(e=>e.type==='MOVEMENT_END'&&e.result==='melee formation').map(e=>e.position);
+  const unique=new Set(ends.map(p=>p?Math.round(p.x*10)+'/'+Math.round(p.y*10):''));
+  return unique.size>=3
+ });
+ test('Resource Bars',()=>r.events.filter(e=>e.type==='RESOURCE_STATE'&&e.result==='initial').length===5);
+
  return{version:VERSION,passed:tests.filter(x=>x.pass).length,total:tests.length,tests};
 }
 
