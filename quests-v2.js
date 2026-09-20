@@ -950,7 +950,13 @@ function renderHome(){
     else title='A glass-sealed letter from Bram Kel begins the road toward your next dungeon.';
   }else{small='ADVENTURE COMPLETE';title='The Hollow Sanctum is open beneath Zeltira.';button='VIEW DUNGEON →';jump='content'}
   root.innerHTML='<span>'+small+'</span><b>'+esc(title)+'</b><button data-quest-home>'+button+'</button>';
-  root.querySelector('[data-quest-home]').onclick=()=>Game.switchView?.(jump);
+  root.querySelector('[data-quest-home]').onclick=()=>{
+    Game.switchView?.(jump);
+    if(jump==='content'){
+      const dungeon=complete()?'hollow-sanctum':'ashen-vault';
+      setTimeout(()=>window.CellboundDungeonBrowser?.open?.(dungeon),40)
+    }
+  };
   if(badge){const open=(!a.complete?1:0)+(!complete()&&echoesUnlocked()?1:0);badge.textContent=open?String(open):'';badge.hidden=!open}
 }
 function render(){
