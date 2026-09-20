@@ -1012,7 +1012,7 @@ function ensureCombatRebornEngine(){
      else reject(error||new Error('Combat Reborn engine failed to initialise'))
    };
    const script=document.createElement('script');
-   script.src='./combat-identities-v1.js?v=5&recover=1';
+   script.src='./combat-identities-v1.js?v=8&recover=1';
    script.async=true;
    script.dataset.combatRebornRecovery='1';
    script.onload=()=>finish(true);
@@ -1217,19 +1217,49 @@ async function rebornReplayWait(ms,tok){
  return run.replayRestartRequested?'restart':'ok'
 }
 async function playRebornTimeline(result,tok,{replayMode=false}={}){
- const events=result?.events||[];let last=0;run.combatActive=true;run.rebornTelegraphs={};ensureRebornHealingMeter();renderRebornHealingMeter();configureRebornViewer();
+ const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
+ run.combatActive=true;run.rebornTelegraphs={};ensureRebornHealingMeter();renderRebornHealingMeter();configureRebornViewer();
  if(replayMode)mountRebornReplayControls();
- for(const e of events){
-   if(tok!==token||!run)return'cancelled';
-   const gap=Math.max(0,Number(e.timestamp)-last);
-   if(gap){
-     if(replayMode){const state=await rebornReplayWait(gap,tok);if(state!=='ok')return state}
-     else await delay(Math.min(gap,1200));
-   }
-   if(replayMode&&run.replayRestartRequested)return'restart';
-   renderRebornEvent(e,result,replayMode);last=Number(e.timestamp)||last;
- }
- run.combatActive=false;return replayMode?'done':(result?.outcome==='victory'?'victory':'defeat')
+ if(!events.length){run.combatActive=false;return replayMode?'done':(result?.outcome==='victory'?'victory':'defeat')}
+
+ return await new Promise(resolve=>{
+   let index=0,simTime=0,lastFrame=performance.now(),finished=false;
+   const finishPlayback=value=>{
+     if(finished)return;finished=true;
+     if(run)run.combatActive=false;
+     resolve(value)
+   };
+   const frame=now=>{
+     if(finished)return;
+     if(tok!==token||!run){finishPlayback('cancelled');return}
+     if(replayMode&&run.replayRestartRequested){finishPlayback('restart');return}
+
+     // One continuous playback clock. Simulation events remain authoritative, but
+     // presentation no longer blocks on each individual event gap.
+     const rawDelta=Math.max(0,now-lastFrame);
+     lastFrame=now;
+     if(!(replayMode&&run.replayPaused)){
+       // Clamp only giant background-tab jumps. Normal frames retain their real timing.
+       const frameDelta=Math.min(rawDelta,100);
+       const speed=replayMode?Math.max(.25,Number(run.replaySpeed)||1):Math.max(.25,Number(run.speed)||1);
+       simTime+=frameDelta*speed
+     }
+
+     // Render every event that became due this frame. Actions with close timestamps
+     // now overlap naturally (movement/projectiles/casts/heals) instead of becoming slides.
+     while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4){
+       renderRebornEvent(events[index],result,replayMode);
+       index++
+     }
+
+     if(index>=events.length){
+       finishPlayback(replayMode?'done':(result?.outcome==='victory'?'victory':'defeat'));
+       return
+     }
+     requestAnimationFrame(frame)
+   };
+   requestAnimationFrame(frame)
+ })
 }
 function runRebornStage(s){
  const C=window.CellboundCombatReborn;if(!C?.simulate)throw new Error('Combat Reborn engine is unavailable');
