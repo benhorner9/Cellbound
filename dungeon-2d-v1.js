@@ -1091,7 +1091,7 @@ function loot(s){
  }
  const mode=run?.endgame?.difficulty||'normal',dropChance=s.kind==='final'?1:mode==='normal'?.45:mode==='heroic'?.68:.78;
  if(Math.random()<dropChance){
-   const rolled=window.CellboundEndgame?.rollPersonalLoot?.('ashen-vault')||(G&&G.rollDungeonLoot?G.rollDungeonLoot(boss.name,boss.tier2Chance):null);
+   const rolled=window.CellboundEndgame?.rollPersonalLoot?.('ashen-vault',s.bossId||s.id)||(G&&G.rollDungeonLoot?G.rollDungeonLoot(boss.name,boss.tier2Chance):null);
    if(rolled){
      const item=Object.assign({},rolled,{source:'The Ashen Vault · '+boss.name+' · '+(run?.endgame?.label||'Normal')});
      Game.addBankItem(item);run.loot.gear.push(item);return item
@@ -1327,6 +1327,8 @@ function renderRebornEvent(e,result,replayMode=false){
    }
    break;
   case'RESOURCE_SPENT':case'RESOURCE_GAINED':case'RESOURCE_STATE':rebornResourceVisual(e);break;
+  case'UNIQUE_EFFECT_TRIGGER':
+   if(srcChar){flash(String(e.ability||'UNIQUE EFFECT').toUpperCase(),false);floating(e.source,e.ability||'UNIQUE','heal');log(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');const rr=role(srcChar);act(rr==='tank'?'tank':rr==='healer'?'healer':'dps',srcChar.name+' · '+(e.ability||'Unique Effect'))}break;
   case'AFFIX_TRIGGER':
    log((e.ability||'Dungeon affix')+' · '+String(e.result||'triggered').replace(/-/g,' ')+'.');
    if(e.payload?.affix==='volatile-cells'&&e.result==='armed')flash('VOLATILE CELLS',true);
