@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.0.0';
+const VERSION='1.1.0';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -107,6 +107,7 @@ const ABILITIES={
   {id:'heal',name:'Heal',kind:'heal',role:'healer',range:30,heal:35,cost:13,gcd:1500,cast:1400,cd:0},
   {id:'flash-heal',name:'Flash Heal',kind:'heal',role:'healer',range:30,heal:29,cost:18,gcd:1500,cast:800,cd:0},
   {id:'prayer-healing',name:'Prayer of Healing',kind:'group-heal',role:'healer',range:30,heal:18,cost:22,gcd:1500,cast:1700,cd:6500},
+  {id:'soul-recall',name:'Soul Recall',kind:'battle-rez',role:'healer',range:30,cost:32,gcd:1500,cast:5000,cd:600000},
   {id:'smite',name:'Smite',kind:'damage',range:30,damage:13,cost:4,gcd:1500,cast:1200,cd:0},
   {id:'silence',name:'Silence',kind:'interrupt',range:30,cost:0,gcd:0,cd:30000}
  ],
@@ -177,12 +178,13 @@ function normalisePlayer(c,i){
  const carried=c?._combatResource,carriedValue=typeof carried==='number'?carried:Number(carried?.value);
  const resourceValue=Number.isFinite(carriedValue)?clamp(carriedValue,0,res.max):res.start;
  const resourceRegen=healer&&res.name==='Mana'?2.1:res.regen;
+ const itemLevel=Math.max(0,Number(c?._combatItemLevel??c?.itemLevel??c?.gear)||0),carriedCooldowns=copy(c?._combatCooldowns||{});
  return{
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:{x:tank?42:role==='healer'?18:28,y:26+i*12},facing:0,
-  target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:{},statuses:{},resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
-  abilities:copy(abilityPool(c,role)),power,level,baseStats:{baseHealth,healthScale,outputScale},talents:talentRanks(c),knowledge:copy(c.knowledge||{}),
-  defensiveUntil:0,nextDecision:100+(i*200),nextRegen:0,original:c
+  target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:{},resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
+  abilities:copy(abilityPool(c,role)),power,level,itemLevel,baseStats:{baseHealth,healthScale,outputScale},talents:talentRanks(c),knowledge:copy(c.knowledge||{}),
+  defensiveUntil:0,nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
 }
 function normaliseEnemies(encounter){
@@ -205,12 +207,12 @@ function normaliseEnemies(encounter){
 function makeStats(players){
  return{
   startedAt:0,endedAt:0,
-  players:Object.fromEntries(players.map(p=>[p.id,{id:p.id,name:p.name,class:p.class,role:p.role,level:p.level,damage:0,healing:0,overhealing:0,damageTaken:0,avoidableDamage:0,deaths:0,interruptAttempts:0,interrupts:0,duplicateInterrupts:0,threatLost:0,resourcesSpent:0,resourcesGained:0,abilityDamage:{},abilityHealing:{}}])),
-  interrupts:{attempts:0,success:0,missedCritical:0,duplicates:0},mechanics:{avoided:0,failed:0,byType:{}},deaths:0
+  players:Object.fromEntries(players.map(p=>[p.id,{id:p.id,name:p.name,class:p.class,role:p.role,level:p.level,itemLevel:p.itemLevel,damage:0,healing:0,overhealing:0,damageTaken:0,avoidableDamage:0,deaths:0,mistakes:0,mistakesByType:{},battleResurrections:0,interruptAttempts:0,interrupts:0,duplicateInterrupts:0,threatLost:0,resourcesSpent:0,resourcesGained:0,abilityDamage:{},abilityHealing:{}}])),
+  interrupts:{attempts:0,success:0,missedCritical:0,duplicates:0},mechanics:{avoided:0,failed:0,byType:{}},mistakes:{total:0,byType:{}},battleResurrections:0,deaths:0
  };
 }
 function audioCue(type,result){
- if(type==='ABILITY_START')return'ability-cast';if(type==='DAMAGE_DEALT')return result==='critical'?'critical-hit':'impact';if(type==='HEAL_RECEIVED')return'heal';if(type==='INTERRUPT')return'interrupt';if(type==='CAST_START')return'boss-warning';if(type==='PLAYER_DEFEATED')return'death';if(type==='COMBAT_END')return result==='victory'?'victory':'defeat';return null
+ if(type==='ABILITY_START')return'ability-cast';if(type==='DAMAGE_DEALT')return result==='critical'?'critical-hit':'impact';if(type==='HEAL_RECEIVED'||type==='PLAYER_REVIVED')return'heal';if(type==='INTERRUPT')return'interrupt';if(type==='CAST_START')return'boss-warning';if(type==='PLAYER_DEFEATED')return'death';if(type==='PLAYER_MISTAKE')return'boss-warning';if(type==='COMBAT_END')return result==='victory'?'victory':'defeat';return null
 }
 function emit(ctx,type,data={}){
  const payload=data.payload?copy(data.payload):{},cue=audioCue(type,data.result);if(cue&&!payload.audioCue)payload.audioCue=cue;
