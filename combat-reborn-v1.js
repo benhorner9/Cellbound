@@ -149,7 +149,7 @@ function normalisePlayer(c,i){
  return{
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:{x:tank?42:role==='healer'?18:28,y:26+i*12},facing:0,
-  target:null,focus:null,gcdUntil:0,currentCast:null,cooldowns:{},statuses:{},resource:{name:res.name,max:res.max,value:res.start,regen:res.regen},
+  target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,cooldowns:{},statuses:{},resource:{name:res.name,max:res.max,value:res.start,regen:res.regen},
   abilities:copy(abilityPool(c,role)),power,level,talents:talentRanks(c),knowledge:copy(c.knowledge||{}),
   defensiveUntil:0,nextDecision:0,nextRegen:0,original:c
  };
@@ -160,7 +160,7 @@ function normaliseEnemies(encounter){
  return names.map((name,i)=>({
   id:'e-'+i,name,role:'enemy',kind:(names.length===1&&(encounter.kind==='boss'||encounter.kind==='final'))?'boss':'enemy',
   maxHealth:max,health:max,alive:true,position:{x:68,y:names.length===1?50:30+i*(40/Math.max(1,names.length-1))},facing:180,
-  target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},nextAttack:900+i*220,currentCast:null,
+  target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},movingUntil:0,moveToken:0,nextAttack:900+i*220,currentCast:null,
   isAdd:false,priority:i===0?2:1
  }));
 }
@@ -219,16 +219,21 @@ function getUnit(ctx,id){return ctx.units[id]||null}
 function inRange(a,b,r){return dist(a.position,b.position)<=r}
 function updateFacing(a,b){if(!a||!b)return;a.facing=Math.atan2(b.position.y-a.position.y,b.position.x-a.position.x)}
 function moveTo(ctx,u,pos,duration=420,reason='positioning'){
- if(!u?.alive)return;
- const from=copy(u.position),to={x:clamp(Number(pos.x)||50,4,96),y:clamp(Number(pos.y)||50,5,95)};
- if(dist(from,to)<.5)return;
+ if(!u?.alive)return false;
+ const from=copy(u.position),to={x:clamp(Number(pos.x)||50,4,96),y:clamp(Number(pos.y)||50,5,95)},travel=Math.max(80,Number(duration)||420);
+ if(dist(from,to)<.5)return true;
  if(u.currentCast){
   emit(ctx,'CAST_CANCELLED',{source:u.id,target:u.currentCast.target,ability:u.currentCast.ability,result:'movement',position:from});
   u.currentCast=null;
  }
- emit(ctx,'MOVEMENT_START',{source:u.id,target:u.target,position:from,result:reason,payload:{to,duration}});
- u.position=to;
- emit(ctx,'MOVEMENT_END',{source:u.id,target:u.target,position:to,result:reason,payload:{from,duration}});
+ const token=++u.moveToken;u.movingUntil=ctx.time+travel;
+ emit(ctx,'MOVEMENT_START',{source:u.id,target:u.target,position:from,result:reason,payload:{to,duration:travel}});
+ schedule(ctx,ctx.time+travel,()=>{
+  if(!u.alive||u.moveToken!==token)return;
+  u.position=to;u.movingUntil=0;
+  emit(ctx,'MOVEMENT_END',{source:u.id,target:u.target,position:copy(to),result:reason,payload:{from,duration:travel}})
+ },'movement-end');
+ return false
 }
 function nearestMeleePoint(enemy,u){
  const angle=Math.atan2(u.position.y-enemy.position.y,u.position.x-enemy.position.x);
@@ -384,12 +389,12 @@ function chooseAbility(ctx,u,target){
  return{ability:usable,target};
 }
 function startAbility(ctx,u,a,target){
- if(!u.alive||!target?.alive||u.currentCast||ctx.time<u.gcdUntil||!cooldownReady(u,a))return false;
+ if(!u.alive||!target?.alive||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.gcdUntil||!cooldownReady(u,a))return false;
  if(!moveIntoRange(ctx,u,target,Number(a.range)||5))return false;
  if(!spendResource(ctx,u,a))return false;
  const cast=Math.max(0,Number(a.cast)||0),gcd=Math.max(0,Number(a.gcd)||0);
  u.gcdUntil=ctx.time+gcd;u.cooldowns[a.id]=Math.max(Number(a.cd)||0,gcd);
- updateFacing(u,target);
+ u.target=target.id;updateFacing(u,target);
  emit(ctx,'ABILITY_START',{source:u.id,target:target.id,ability:a.name,result:cast?'casting':'instant',position:copy(u.position),payload:{castTime:cast,range:a.range,kind:a.kind}});
  if(cast){
   u.currentCast={ability:a.name,target:target.id,ends:ctx.time+cast};
@@ -433,7 +438,7 @@ function tankNeedsTaunt(ctx,tank){
  });
 }
 function playerAI(ctx,u){
- if(!u.alive||u.currentCast||ctx.time<u.nextDecision||ctx.time<u.gcdUntil)return;
+ if(!u.alive||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.nextDecision||ctx.time<u.gcdUntil)return;
  u.nextDecision=ctx.time+160;
  const target=pickDamageTarget(ctx,u);
  if(!target)return;
@@ -452,7 +457,7 @@ function playerAI(ctx,u){
  if(pick)startAbility(ctx,u,pick.ability,pick.target);
 }
 function enemyBasicAttack(ctx,e){
- if(!e.alive)return;
+ if(!e.alive||ctx.time<e.movingUntil)return;
  const target=topThreatTarget(ctx,e)||livingPlayers(ctx)[0];if(!target)return;
  setAggro(ctx,e,target,'threat');
  if(!inRange(e,target,5)){
@@ -512,7 +517,7 @@ function spawnAdds(ctx,e){
  const base=ctx.enemies.length;
  for(let i=0;i<2;i++){
   const id='add-'+ctx.addSeq++,add={id,name:'Cave Spawn',role:'enemy',kind:'enemy',maxHealth:72,health:72,alive:true,position:{x:74,y:i?66:34},facing:180,target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},nextAttack:ctx.time+600+i*150,currentCast:null,isAdd:true,priority:3};
-  ctx.enemies.push(add);ctx.units[id]=add;ctx.players.forEach(p=>add.threat[p.id]=0);
+  add.movingUntil=0;add.moveToken=0;ctx.enemies.push(add);ctx.units[id]=add;ctx.players.forEach(p=>add.threat[p.id]=0);
   const random=livingPlayers(ctx)[Math.floor(ctx.rng()*livingPlayers(ctx).length)];if(random)add.threat[random.id]=120;
   setAggro(ctx,add,topThreatTarget(ctx,add),'spawn');
   emit(ctx,'ADD_SPAWNED',{source:e.id,target:add.id,ability:'Summon',result:'spawned',position:copy(add.position),payload:{name:add.name,maxHealth:add.maxHealth,target:add.target}});
