@@ -657,3 +657,13 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 .cbr-progress-earned>small{color:#68c9b9}.cbr-progress-earned>div{display:grid;gap:6px}.cbr-progress-earned span{display:flex;gap:8px;align-items:center;padding:8px;border:1px solid rgba(100,207,184,.1);background:#09191a}.cbr-progress-earned i{color:#78d9c4;font-style:normal}.cbr-progress-earned b{font-size:.56rem}
 .cb2d-loot-unique{display:block;margin:7px 0;padding:7px;border:1px solid rgba(176,108,255,.24);background:rgba(38,22,50,.72);color:#d5b8e9;font-size:.46rem;line-height:1.45}
 @media(max-width:640px){.cbr-failure-diagnosis,.cbr-progress-earned{padding:11px}.cbr-failure-diagnosis p,.cbr-progress-earned b{font-size:.6rem}}
+
+
+/* Shared dungeon meter hierarchy: run-long output on top, encounter threat below */
+.cb2d-combat-meters{grid-template-columns:1fr 1fr}
+.cb2d-combat-meters>.cb2d-meter-panel.threat{grid-column:1/-1}
+.cb2d-meter-panel.healing .cb2d-meter-head small{color:#79a9c8}
+@media(max-width:620px){
+  .cb2d-combat-meters{grid-template-columns:1fr}
+  .cb2d-combat-meters>.cb2d-meter-panel.threat{grid-column:auto}
+}
