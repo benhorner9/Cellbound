@@ -75,3 +75,9 @@
 .hs2d-unit{will-change:left,top;backface-visibility:hidden;transition-timing-function:cubic-bezier(.22,.61,.36,1)}
 .hs2d-unit.party .cbr-resource>span{display:none!important}
 .hs2d-unit.party .cbr-resource>i{transition:width .32s ease-out}
+
+
+.hs2d-unit>span .hs2d-unit-meta{
+  display:block;margin-top:2px;color:#b6c0bc;font-size:7px;font-weight:900;line-height:1;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap
+}
+.hs2d-unit.enemy>span .hs2d-unit-meta{color:#bea6d8}.hs2d-unit.enemy.boss>span .hs2d-unit-meta{color:#ddc6f2}
