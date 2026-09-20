@@ -205,7 +205,7 @@ function endgamePrepMarkup(){
 }
 function bindEndgamePrep(){
  const E=window.CellboundEndgame;
- $('[data-cb2d-mode]').forEach(b=>b.onclick=()=>{E?.choose?.('ashen-vault',b.dataset.cb2dMode);briefing()});
+ document.querySelectorAll('[data-cb2d-mode]').forEach(b=>b.onclick=()=>{E?.choose?.('ashen-vault',b.dataset.cb2dMode);briefing()});
  $('[data-cb2d-tier]')?.addEventListener('change',e=>{E?.choose?.('ashen-vault','cellbound',Number(e.target.value));briefing()})
 }
 
