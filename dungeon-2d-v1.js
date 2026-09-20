@@ -276,18 +276,17 @@ function resourceDefFor(c){
 }
 function updateResourceBarElement(bar,name,value,max){
  if(!bar)return;
- const resource=String(name||'Power'),limit=Math.max(1,Number(max)||100),current=clamp(Number(value)||0,0,limit),pctValue=current/limit*100;
- [...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));
- bar.classList.add(resourceClass(resource));bar.dataset.resource=resource;
- const fill=bar.querySelector('i'),label=bar.querySelector('span');
- if(fill)fill.style.width=pctValue+'%';
- if(label)label.textContent=resource+' '+Math.round(current)+'/'+Math.round(limit);
- bar.title=resource+' '+Math.round(current)+' / '+Math.round(limit)
+ const resource=String(name||'Power'),limit=Math.max(1,Number(max)||100),current=clamp(Number(value)||0,0,limit),pctValue=current/limit*100,key=resourceClass(resource);
+ if(bar.dataset.resource!==resource){
+   [...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));
+   bar.classList.add(key);bar.dataset.resource=resource;bar.title=resource
+ }
+ const fill=bar.querySelector('i');if(fill)fill.style.width=pctValue+'%'
 }
 function mountRebornResourceBar(c){
  const unit=$('[data-unit="p-'+c.id+'"]');if(!unit)return null;
  let bar=unit.querySelector('.cbr-resource');
- if(!bar){bar=document.createElement('small');bar.className='cbr-resource';bar.innerHTML='<i></i><span></span>';unit.appendChild(bar)}
+ if(!bar){bar=document.createElement('small');bar.className='cbr-resource';bar.innerHTML='<i></i>';unit.appendChild(bar)}
  const def=resourceDefFor(c);updateResourceBarElement(bar,def.name,def.start,def.max);return bar
 }
 
