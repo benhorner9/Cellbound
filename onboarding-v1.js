@@ -433,11 +433,10 @@ function tdSetPartyHpByEvent(c,pct){
 function tdResourceVisual(e){
   const sel=tdSelectorFor(e.source),u=sel?$(sel):null;if(!u||!u.classList.contains('party'))return;
   let bar=u.querySelector('.cbr-resource');
-  if(!bar){bar=document.createElement('small');bar.className='cbr-resource';bar.innerHTML='<i></i><span></span>';u.appendChild(bar)}
-  const name=String(e.payload?.resource||'Power'),max=Math.max(1,Number(e.payload?.max)||100),value=Math.max(0,Math.min(max,Number(e.payload?.value)||0));
-  [...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));
-  bar.classList.add('resource-'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-'));
-  const fill=bar.querySelector('i'),label=bar.querySelector('span');if(fill)fill.style.width=(value/max*100)+'%';if(label)label.textContent=name+' '+Math.round(value)+'/'+Math.round(max);bar.title=name+' '+Math.round(value)+' / '+Math.round(max)
+  if(!bar){bar=document.createElement('small');bar.className='cbr-resource';bar.innerHTML='<i></i>';u.appendChild(bar)}
+  const name=String(e.payload?.resource||'Power'),max=Math.max(1,Number(e.payload?.max)||100),value=Math.max(0,Math.min(max,Number(e.payload?.value)||0)),key='resource-'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+ if(bar.dataset.resource!==name){[...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));bar.classList.add(key);bar.dataset.resource=name;bar.title=name}
+ const fill=bar.querySelector('i');if(fill)fill.style.width=(value/max*100)+'%'
 }
 function tdCastBar(name,duration){
   const enemy=$('[data-td-enemy="0"]');if(!enemy)return null;
