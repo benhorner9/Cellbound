@@ -65,7 +65,7 @@ function hsEndgamePrepMarkup(){
 }
 function hsBindEndgamePrep(){
  const E=window.CellboundEndgame;
- $('[data-hs-mode]').forEach(b=>b.onclick=()=>{E?.choose?.('hollow-sanctum',b.dataset.hsMode);briefing()});
+ document.querySelectorAll('[data-hs-mode]').forEach(b=>b.onclick=()=>{E?.choose?.('hollow-sanctum',b.dataset.hsMode);briefing()});
  $('[data-hs-tier]')?.addEventListener('change',e=>{E?.choose?.('hollow-sanctum','cellbound',Number(e.target.value));briefing()})
 }
 
