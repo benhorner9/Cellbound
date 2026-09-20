@@ -336,3 +336,303 @@ body.tb-open{overflow:hidden}
   .tb-tomb{transform:rotate(var(--a)) translateY(-184px) rotate(calc(var(--a) * -1));width:64px;margin-left:-32px}
   .tb-world-actions{align-items:flex-start;flex-direction:column}
 }
+
+
+/* ==========================================================================
+   CANONICAL COMBAT REBUILD
+   The Twelve Below now uses the same fight-first geometry as dungeon combat.
+   Tombs are a tracker/environment detail, never the primary battlefield.
+   ========================================================================== */
+
+.tb-shell.cb2d-shell{
+  width:min(1420px,98vw);
+  max-height:96vh;
+  background:linear-gradient(180deg,#0d171b,#060b0e);
+}
+.tb-shell .tb-scorebar{
+  grid-template-columns:repeat(4,1fr);
+  min-height:43px;
+  background:#081115;
+}
+.tb-shell .tb-tomb-track{
+  display:grid;
+  grid-template-columns:repeat(12,minmax(54px,1fr));
+  gap:5px;
+  padding:7px 12px;
+  overflow-x:auto;
+  border-bottom:1px solid rgba(255,255,255,.045);
+  background:#071013;
+}
+.tb-shell .tb-tomb-track .tb-tomb{
+  position:relative!important;
+  left:auto!important;
+  top:auto!important;
+  width:auto!important;
+  height:34px!important;
+  min-width:58px;
+  margin:0!important;
+  padding:5px 6px!important;
+  transform:none!important;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:4px;
+  border:1px solid rgba(255,255,255,.05);
+  background:#0c1416;
+  box-shadow:none;
+}
+.tb-shell .tb-tomb-track .tb-tomb:after{inset:2px}
+.tb-shell .tb-tomb-track .tb-tomb i{font-size:.45rem}
+.tb-shell .tb-tomb-track .tb-tomb span{
+  overflow:hidden;
+  max-width:72px;
+  color:#5f6d68;
+  font-size:.26rem;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.tb-shell .tb-tomb-track .tb-tomb.open{
+  border-color:rgba(209,91,67,.38);
+  background:#221311;
+  box-shadow:inset 0 -2px rgba(209,91,67,.32),0 0 13px rgba(209,75,49,.09);
+}
+.tb-shell .tb-tomb-track .tb-tomb.open i,
+.tb-shell .tb-tomb-track .tb-tomb.open span{color:#dd8b6d}
+.tb-shell .tb-tomb-track .tb-tomb.defeated{
+  opacity:.55;
+  border-color:rgba(104,184,133,.16);
+  background:#0c1712;
+  filter:none;
+}
+.tb-shell .tb-tomb-track .tb-tomb.defeated i,
+.tb-shell .tb-tomb-track .tb-tomb.defeated span{color:#6ea982}
+.tb-shell .tb-tomb-track .tb-tomb.defeated:before{
+  right:2px;top:-2px;color:#7bc894;font-size:.55rem
+}
+
+/* Match dungeon shell proportions exactly. */
+.tb-shell .tb-layout.cb2d-layout{
+  grid-template-columns:minmax(0,1fr) 330px;
+  min-height:690px;
+}
+.tb-shell .tb-layout>main{
+  padding:14px;
+  background:linear-gradient(180deg,#091216,#071014);
+}
+.tb-shell .tb-layout>aside{
+  padding:14px;
+  border-left:1px solid rgba(216,185,118,.08);
+  background:#081115;
+}
+.tb-shell .tb-layout .tb-arena.cb2d-arena{
+  height:470px;
+  border:1px solid rgba(216,185,118,.1);
+  background:
+    radial-gradient(circle at 68% 48%,rgba(111,77,61,.12),transparent 20%),
+    linear-gradient(180deg,#121817,#091112);
+}
+
+/* Burial-ground environment, kept behind the combatants. */
+.tb-shell .tb-ground{
+  z-index:0;
+  background:
+    linear-gradient(90deg,rgba(0,0,0,.22),transparent 14% 86%,rgba(0,0,0,.22)),
+    repeating-linear-gradient(90deg,rgba(150,132,102,.022) 0 1px,transparent 1px 92px),
+    repeating-linear-gradient(0deg,rgba(150,132,102,.018) 0 1px,transparent 1px 74px),
+    radial-gradient(ellipse at 64% 51%,rgba(121,91,68,.11),transparent 35%),
+    linear-gradient(180deg,#151816,#0a0f0f);
+}
+.tb-shell .tb-ground:after{
+  content:"";
+  position:absolute;
+  left:48%;
+  top:12%;
+  width:42%;
+  height:76%;
+  border:1px solid rgba(156,128,91,.09);
+  border-radius:44%;
+  box-shadow:inset 0 0 44px rgba(0,0,0,.2),0 0 30px rgba(94,68,52,.05);
+}
+.tb-burial-architecture{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+}
+.tb-burial-architecture i{
+  position:absolute;
+  width:34px;
+  height:112px;
+  border:1px solid rgba(168,142,103,.1);
+  background:linear-gradient(90deg,#24251f,#151a18 65%,#101413);
+  box-shadow:0 15px 24px rgba(0,0,0,.34);
+}
+.tb-burial-architecture i:before,
+.tb-burial-architecture i:after{
+  content:"";
+  position:absolute;
+  left:-6px;
+  width:46px;
+  height:9px;
+  border:1px solid rgba(168,142,103,.08);
+  background:#24241e;
+}
+.tb-burial-architecture i:before{top:-5px}
+.tb-burial-architecture i:after{bottom:-5px}
+.tb-burial-architecture i:nth-child(1){left:8%;top:13%}
+.tb-burial-architecture i:nth-child(2){left:8%;bottom:13%}
+.tb-burial-architecture i:nth-child(3){right:8%;top:13%}
+.tb-burial-architecture i:nth-child(4){right:8%;bottom:13%}
+.tb-room-tag{
+  position:absolute;
+  z-index:18;
+  left:14px;
+  top:12px;
+  max-width:250px;
+  padding:8px 9px;
+  border:1px solid rgba(255,255,255,.05);
+  background:rgba(4,9,10,.78);
+}
+.tb-room-tag b{display:block;color:#c4b288;font-size:.4rem}
+.tb-room-tag small{display:block;margin-top:2px;color:#65736e;font-size:.3rem}
+
+/* Canonical player and enemy geometry. */
+.tb-arena .tb-unit.cb2d-unit{
+  z-index:7;
+  transform:translate(-50%,-50%);
+  transition-property:left,top,opacity,filter;
+  transition-timing-function:cubic-bezier(.22,.61,.36,1);
+  pointer-events:none;
+}
+.tb-arena .tb-unit.cb2d-unit>i{
+  display:block;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  box-shadow:0 0 0 3px rgba(255,255,255,.04),0 0 18px currentColor;
+}
+.tb-arena .tb-unit.cb2d-unit>span{
+  top:28px;
+  min-width:100px;
+  color:#aeb9b4;
+  font-size:.42rem;
+}
+.tb-arena .tb-unit.cb2d-unit>span small{
+  display:block;
+  margin-top:2px;
+  color:#697873;
+  font-size:.28rem;
+  font-weight:800;
+  letter-spacing:.06em;
+}
+.tb-arena .tb-unit.party.tank{color:#d85a4d}
+.tb-arena .tb-unit.party.tank>i{background:#d85a4d}
+.tb-arena .tb-unit.party.healer{color:#5aa7e8}
+.tb-arena .tb-unit.party.healer>i{background:#5aa7e8}
+.tb-arena .tb-unit.party.dps{color:#63c678}
+.tb-arena .tb-unit.party.dps>i{background:#63c678}
+.tb-arena .tb-unit.enemy{color:#d9c850}
+.tb-arena .tb-unit.enemy>i{
+  width:36px;
+  height:36px;
+  border:2px solid #b89555;
+  background:#d9c850;
+  box-shadow:0 0 0 5px rgba(217,200,80,.07),0 0 28px rgba(217,200,80,.34);
+}
+.tb-arena .tb-unit.enemy>span{
+  top:43px;
+  color:#e8d983;
+  font-size:.47rem;
+  font-weight:800;
+}
+.tb-arena .tb-unit .cb2d-unit-hp{
+  left:50%;
+  right:auto;
+  top:-10px;
+  width:44px;
+  height:5px;
+  transform:translateX(-50%);
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(0,0,0,.72);
+}
+.tb-arena .tb-unit.enemy .cb2d-unit-hp{
+  top:-14px;
+  width:72px;
+  height:6px;
+}
+.tb-arena .tb-unit.enemy .cb2d-unit-hp>i{
+  background:linear-gradient(90deg,#a33b2d,#d36a45);
+}
+.tb-arena .tb-unit.party .cb2d-unit-hp>i{
+  background:linear-gradient(90deg,#63c678,#9ed66b);
+}
+.tb-arena .tb-unit.dead{opacity:.15;filter:grayscale(1)}
+
+/* The event-specific telegraphs now sit in the same combat plane. */
+.tb-shell #tbTelegraphs,.tb-shell #tbBossUnits,.tb-shell #tbPartyUnits,.tb-shell #tbFx{
+  position:absolute;inset:0;pointer-events:none
+}
+.tb-shell #tbTelegraphs{z-index:3}
+.tb-shell #tbBossUnits,.tb-shell #tbPartyUnits{z-index:7}
+.tb-shell #tbFx{z-index:12}
+.tb-shell .tb-telegraph{z-index:3}
+
+/* Make the side party panel explicit so it cannot collapse to an empty box. */
+.tb-shell #tbPartyRows{display:block}
+.tb-shell .cb2d-party-row{
+  display:grid;
+  grid-template-columns:14px minmax(0,1fr) auto;
+  gap:9px;
+  align-items:center;
+  min-height:48px;
+  padding:8px 0;
+  border-bottom:1px solid rgba(255,255,255,.04);
+}
+.tb-shell .cb2d-party-row:last-child{border-bottom:0}
+.tb-shell .cb2d-party-row span>b{
+  display:block;
+  color:#d6ddd8;
+  font-size:.48rem;
+}
+.tb-shell .cb2d-party-row span>small{
+  display:block;
+  color:#64736e;
+  font-size:.34rem;
+}
+.tb-shell .cb2d-party-row>strong{
+  min-width:44px;
+  color:#d2c28f;
+  font-size:.4rem;
+  text-align:right;
+}
+.tb-shell .cb2d-actions{margin-top:10px}
+.tb-shell .tb-live-rule{margin-top:10px}
+
+/* Keep the unique countdown, but everything around it stays canonical. */
+.tb-shell .tb-scorebar span:nth-child(2) b{
+  color:#e5c36d;
+  text-shadow:0 0 12px rgba(229,195,109,.12);
+}
+.tb-shell .tb-controls button{cursor:default}
+
+/* Retire the old giant tomb-board geometry in live combat. */
+.tb-shell .tb-tombs,.tb-shell .tb-centre-seal{display:none!important}
+
+@media(max-width:1050px){
+  .tb-shell .tb-layout.cb2d-layout{grid-template-columns:1fr}
+  .tb-shell .tb-layout>aside{
+    border-left:0;
+    border-top:1px solid rgba(216,185,118,.08);
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px
+  }
+  .tb-shell .tb-tomb-track{grid-template-columns:repeat(12,70px)}
+}
+@media(max-width:760px){
+  .tb-shell.cb2d-shell{width:100%;max-height:100dvh}
+  .tb-shell .tb-layout .tb-arena.cb2d-arena{height:390px}
+  .tb-shell .tb-layout>aside{grid-template-columns:1fr}
+  .tb-shell .tb-scorebar{grid-template-columns:repeat(2,1fr)}
+  .tb-shell .tb-tomb-track{padding:6px 8px}
+}
