@@ -8,7 +8,7 @@ const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 
-let Game=null,db=null,user=null,server={season:D.SEASON,rotation:{},progress:[],weekly:{},recentRuns:[],achievements:[]},leaderboards={};
+let Game=null,db=null,user=null,server={season:D.SEASON,rotation:{},progress:[],weekly:{},recentRuns:[],achievements:[]},leaderboards={},attempts={};
 const selection={
  'ashen-vault':{difficulty:'normal',tier:1},
  'hollow-sanctum':{difficulty:'normal',tier:1}
@@ -184,24 +184,36 @@ function stageConfig(dungeonId,stage){
  }
  return out
 }
-async function recordRun(dungeonId,metrics){
- const cfg=currentConfig(dungeonId),before={...progressFor(dungeonId)};
- if(!db)return null;
- const payload={
+
+async function beginAttempt(dungeonId){
+ const cfg=currentConfig(dungeonId);if(!db)return{error:new Error('Endgame service unavailable')};
+ const {data,error}=await db.rpc('begin_dungeon_attempt',{
    p_dungeon_id:dungeonId,p_difficulty:cfg.difficulty,p_tier:cfg.tier,
+   p_dungeon_version:cfg.dungeon.version,p_season_id:cfg.seasonId
+ });
+ if(error){console.warn('Dungeon attempt could not start',error);return{error}}
+ attempts[dungeonId]=data;return data
+}
+
+async function recordRun(dungeonId,metrics){
+ const before={...progressFor(dungeonId)},attempt=attempts[dungeonId];
+ if(!db)return null;
+ if(!attempt?.attemptId)return{error:new Error('Missing server dungeon attempt'),reason:'missing-attempt'};
+ const payload={
+   p_attempt_id:attempt.attemptId,
    p_completion_time_ms:Math.max(1,Math.round(metrics.timeMs||0)),
-   p_target_time_ms:cfg.targetTimeMs,
    p_deaths:Math.max(0,Math.round(metrics.deaths||0)),
    p_mechanics_failed:Math.max(0,Math.round(metrics.mechanicsFailed||0)),
    p_mistakes:Math.max(0,Math.round(metrics.mistakes||0)),
-   p_dungeon_version:cfg.dungeon.version,p_season_id:cfg.seasonId,
    p_missed_interrupts:Math.max(0,Math.round(metrics.missedInterrupts||0)),
    p_threat_losses:Math.max(0,Math.round(metrics.threatLosses||0)),
    p_avoidable_damage:Math.max(0,Number(metrics.avoidableDamage)||0),
    p_battle_resurrections:Math.max(0,Math.round(metrics.battleResurrections||0))
  };
- const {data,error}=await db.rpc('record_dungeon_run_v2',payload);
+ const {data,error}=await db.rpc('record_dungeon_run_v3',payload);
  if(error){console.warn('Dungeon run was not recorded',error);return{error}}
+ delete attempts[dungeonId];
+ if(data?.valid===false){console.warn('Dungeon run failed integrity checks',data);return{error:new Error(data.reason||'Run integrity check failed'),...data}}
  await refresh();
  const after=progressFor(dungeonId),newUnlocks=[];
  if(!before.heroic_unlocked&&after.heroic_unlocked)newUnlocks.push('Heroic difficulty unlocked');
@@ -209,6 +221,7 @@ async function recordRun(dungeonId,metrics){
  if(Number(after.highest_tier)>Number(before.highest_tier)&&Number(before.highest_tier)>=1)newUnlocks.push('Cellbound+'+Number(after.highest_tier)+' unlocked');
  return{...(data||{}),newUnlocks}
 }
+
 function rarityTierFor(cfg){
  if(cfg.difficulty==='normal')return Math.random()<.72?1:2;
  if(cfg.difficulty==='heroic')return Math.random()<.68?2:3;
@@ -275,7 +288,7 @@ async function init(){
  window.addEventListener('cellbound:dungeon-complete',()=>refresh());
  await refresh();
  window.CellboundEndgame={
-   refresh,render,currentConfig,stageConfig,recordRun,rollPersonalLoot,shardReward,rollChase,
+   refresh,render,currentConfig,stageConfig,beginAttempt,recordRun,rollPersonalLoot,shardReward,rollChase,
    progressFor,difficultyUnlocked,choose,prepare,runSummaryLabel,achievementName,getSelection:id=>({...selection[id]})
  }
 }
