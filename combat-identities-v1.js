@@ -257,7 +257,7 @@ if(!window.CellboundCombatReborn){
 (()=>{
 'use strict';
 
-const VERSION='1.0.0';
+const VERSION='1.1.0';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -363,6 +363,7 @@ const ABILITIES={
   {id:'heal',name:'Heal',kind:'heal',role:'healer',range:30,heal:35,cost:13,gcd:1500,cast:1400,cd:0},
   {id:'flash-heal',name:'Flash Heal',kind:'heal',role:'healer',range:30,heal:29,cost:18,gcd:1500,cast:800,cd:0},
   {id:'prayer-healing',name:'Prayer of Healing',kind:'group-heal',role:'healer',range:30,heal:18,cost:22,gcd:1500,cast:1700,cd:6500},
+  {id:'soul-recall',name:'Soul Recall',kind:'battle-rez',role:'healer',range:30,cost:32,gcd:1500,cast:5000,cd:600000},
   {id:'smite',name:'Smite',kind:'damage',range:30,damage:13,cost:4,gcd:1500,cast:1200,cd:0},
   {id:'silence',name:'Silence',kind:'interrupt',range:30,cost:0,gcd:0,cd:30000}
  ],
@@ -433,12 +434,13 @@ function normalisePlayer(c,i){
  const carried=c?._combatResource,carriedValue=typeof carried==='number'?carried:Number(carried?.value);
  const resourceValue=Number.isFinite(carriedValue)?clamp(carriedValue,0,res.max):res.start;
  const resourceRegen=healer&&res.name==='Mana'?2.1:res.regen;
+ const itemLevel=Math.max(0,Number(c?._combatItemLevel??c?.itemLevel??c?.gear)||0),carriedCooldowns=copy(c?._combatCooldowns||{});
  return{
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:{x:tank?42:role==='healer'?18:28,y:26+i*12},facing:0,
-  target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:{},statuses:{},resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
-  abilities:copy(abilityPool(c,role)),power,level,baseStats:{baseHealth,healthScale,outputScale},talents:talentRanks(c),knowledge:copy(c.knowledge||{}),
-  defensiveUntil:0,nextDecision:100+(i*200),nextRegen:0,original:c
+  target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:{},resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
+  abilities:copy(abilityPool(c,role)),power,level,itemLevel,baseStats:{baseHealth,healthScale,outputScale},talents:talentRanks(c),knowledge:copy(c.knowledge||{}),
+  defensiveUntil:0,nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
 }
 function normaliseEnemies(encounter){
@@ -461,12 +463,12 @@ function normaliseEnemies(encounter){
 function makeStats(players){
  return{
   startedAt:0,endedAt:0,
-  players:Object.fromEntries(players.map(p=>[p.id,{id:p.id,name:p.name,class:p.class,role:p.role,level:p.level,damage:0,healing:0,overhealing:0,damageTaken:0,avoidableDamage:0,deaths:0,interruptAttempts:0,interrupts:0,duplicateInterrupts:0,threatLost:0,resourcesSpent:0,resourcesGained:0,abilityDamage:{},abilityHealing:{}}])),
-  interrupts:{attempts:0,success:0,missedCritical:0,duplicates:0},mechanics:{avoided:0,failed:0,byType:{}},deaths:0
+  players:Object.fromEntries(players.map(p=>[p.id,{id:p.id,name:p.name,class:p.class,role:p.role,level:p.level,itemLevel:p.itemLevel,damage:0,healing:0,overhealing:0,damageTaken:0,avoidableDamage:0,deaths:0,mistakes:0,mistakesByType:{},battleResurrections:0,interruptAttempts:0,interrupts:0,duplicateInterrupts:0,threatLost:0,resourcesSpent:0,resourcesGained:0,abilityDamage:{},abilityHealing:{}}])),
+  interrupts:{attempts:0,success:0,missedCritical:0,duplicates:0},mechanics:{avoided:0,failed:0,byType:{}},mistakes:{total:0,byType:{}},battleResurrections:0,deaths:0
  };
 }
 function audioCue(type,result){
- if(type==='ABILITY_START')return'ability-cast';if(type==='DAMAGE_DEALT')return result==='critical'?'critical-hit':'impact';if(type==='HEAL_RECEIVED')return'heal';if(type==='INTERRUPT')return'interrupt';if(type==='CAST_START')return'boss-warning';if(type==='PLAYER_DEFEATED')return'death';if(type==='COMBAT_END')return result==='victory'?'victory':'defeat';return null
+ if(type==='ABILITY_START')return'ability-cast';if(type==='DAMAGE_DEALT')return result==='critical'?'critical-hit':'impact';if(type==='HEAL_RECEIVED'||type==='PLAYER_REVIVED')return'heal';if(type==='INTERRUPT')return'interrupt';if(type==='CAST_START')return'boss-warning';if(type==='PLAYER_DEFEATED')return'death';if(type==='PLAYER_MISTAKE')return'boss-warning';if(type==='COMBAT_END')return result==='victory'?'victory':'defeat';return null
 }
 function emit(ctx,type,data={}){
  const payload=data.payload?copy(data.payload):{},cue=audioCue(type,data.result);if(cue&&!payload.audioCue)payload.audioCue=cue;
@@ -684,6 +686,61 @@ function passiveResources(ctx){
   }
  });
 }
+
+function deadPlayers(ctx){return ctx.players.filter(p=>!p.alive)}
+function encounterKnowledge(ctx,u){
+ const key=ctx.encounter.knowledgeKey;
+ if(key&&u.knowledge&&u.knowledge[key]!=null)return clamp(Number(u.knowledge[key])||0,0,100);
+ const vals=Object.values(u.knowledge||{}).map(Number).filter(Number.isFinite);
+ return vals.length?clamp(vals.reduce((a,b)=>a+b,0)/vals.length,0,100):0
+}
+function combatPressure(ctx){
+ const live=livingPlayers(ctx),dead=ctx.players.length-live.length;
+ const missing=live.length?live.reduce((n,p)=>n+(1-healthRatio(p)),0)/live.length:1;
+ const loose=livingEnemies(ctx).filter(e=>{const t=topThreatTarget(ctx,e);return t&&t.role!=='tank'}).length;
+ const adds=livingEnemies(ctx).filter(e=>e.isAdd).length;
+ const healer=live.find(p=>p.role==='healer');
+ const manaPressure=healer&&healer.resource?.name==='Mana'?clamp((35-healer.resource.value)/35,0,1):0;
+ return clamp(missing*.38+(dead/Math.max(1,ctx.players.length))*.52+Math.min(.22,loose*.11)+Math.min(.16,adds*.06)+(ctx.activeEnemyCast?.type?0.08:0)+manaPressure*.14,0,1)
+}
+function executionQuality(ctx,u){
+ const knowledge=encounterKnowledge(ctx,u)/100;
+ const levelDelta=(Number(u.level)||1)-(Number(ctx.encounter.level)||1);
+ const levelReadiness=clamp(.82+levelDelta*.08,.42,1);
+ const recIlvl=Math.max(0,Number(ctx.encounter.recommendedItemLevel)||0);
+ const gearReadiness=recIlvl>0?clamp((Number(u.itemLevel)||0)/recIlvl,.45,1.08):1;
+ const pressure=combatPressure(ctx);
+ return clamp(.44+knowledge*.30+levelReadiness*.13+Math.min(1,gearReadiness)*.13-pressure*.24,.12,.985)
+}
+function mistakeChance(ctx,u,type='general'){
+ const q=executionQuality(ctx,u),pressure=combatPressure(ctx);
+ const weights={movement:1.05,interrupt:1.0,threat:.82,triage:.72,tank:.68,defensive:.66};
+ return clamp((.018+Math.pow(1-q,2)*.5+pressure*.10)*(weights[type]||1),.01,.48)
+}
+function executionReaction(ctx,u,type='movement'){
+ const q=executionQuality(ctx,u),pressure=combatPressure(ctx);
+ const roleBias=u.role==='tank'&&type==='movement'?-90:u.class==='Demon Hunter'?-80:0;
+ return Math.max(220,Math.round(260+(1-q)*760+pressure*280+ctx.rng()*180+roleBias))
+}
+function recordMistake(ctx,u,type,detail,payload={}){
+ if(!u)return null;
+ const st=ctx.stats.players[u.id];if(st){st.mistakes++;st.mistakesByType[type]=(st.mistakesByType[type]||0)+1}
+ ctx.stats.mistakes.total++;ctx.stats.mistakes.byType[type]=(ctx.stats.mistakes.byType[type]||0)+1;
+ const token='err-'+(++ctx.mistakeSeq);u.lastMistakeToken=token;u.lastMistakeUntil=ctx.time+3500;
+ emit(ctx,'PLAYER_MISTAKE',{source:u.id,target:payload.target||null,ability:payload.ability||null,result:type,payload:{token,type,detail,quality:Math.round(executionQuality(ctx,u)*100),knowledge:Math.round(encounterKnowledge(ctx,u)),pressure:Math.round(combatPressure(ctx)*100),...payload}});
+ return token
+}
+function recentMistakeToken(ctx,u){
+ return u&&u.lastMistakeUntil>ctx.time?u.lastMistakeToken:null
+}
+function shouldMistake(ctx,u,type,lockMs=0){
+ if(!u?.alive)return false;
+ if(lockMs&&Number(u.mistakeLocks?.[type]||0)>ctx.time)return false;
+ const yes=ctx.rng()<mistakeChance(ctx,u,type);
+ if(yes&&lockMs){u.mistakeLocks=u.mistakeLocks||{};u.mistakeLocks[type]=ctx.time+lockMs}
+ return yes
+}
+
 function threatMultiplier(u,a){
  if(u.role==='tank')return Number(a.threat)||2.5;
  return 1;
@@ -726,7 +783,8 @@ function rollDamage(ctx,u,a,target){
  const talent=1+Math.min(.18,u.talents*.012);
  const power=1+Math.min(.35,u.power*.012),levelScale=u.baseStats?.outputScale||levelOutputScale(u.level),match=levelMatchMultiplier(u.level,target?.level||1);
  const variance=.9+ctx.rng()*.2;
- let amount=(Number(a.damage)||12)*talent*power*levelScale*match*variance;
+ const revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1;
+ let amount=(Number(a.damage)||12)*talent*power*levelScale*match*variance*revivePenalty;
  if(ctx.rng()<.12){amount*=1.5;return{amount,crit:true}}
  return{amount,crit:false};
 }
@@ -742,7 +800,7 @@ function dealDamage(ctx,source,target,amount,ability,opts={}){
  final=Math.max(1,Math.round(final));
  const before=target.health;target.health=clamp(target.health-final,0,target.maxHealth);
  const dealt=before-target.health;
- emit(ctx,'DAMAGE_DEALT',{source:source.id,target:target.id,ability,amount:dealt,result:opts.crit?'critical':'hit',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),avoidable:!!opts.avoidable,damageType:opts.damageType||'physical'}});
+ emit(ctx,'DAMAGE_DEALT',{source:source.id,target:target.id,ability,amount:dealt,result:opts.crit?'critical':'hit',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),avoidable:!!opts.avoidable,damageType:opts.damageType||'physical',mistakeToken:recentMistakeToken(ctx,target)}});
  if(source.role!=='enemy'){
   const st=ctx.stats.players[source.id];st.damage+=dealt;st.abilityDamage[ability]=(st.abilityDamage[ability]||0)+dealt;
   addThreat(ctx,target,source,dealt*threatMultiplier(source,opts.ability||{}),'damage');
@@ -769,9 +827,22 @@ function killUnit(ctx,target,source,ability){
  emit(ctx,target.role==='enemy'?(target.isAdd?'ADD_DEFEATED':'ENEMY_DEFEATED'):'PLAYER_DEFEATED',{source:source?.id||null,target:target.id,ability,result:'dead',position:copy(target.position)});
  if(target.role!=='enemy'){
   const st=ctx.stats.players[target.id];st.deaths++;ctx.stats.deaths++;
-  ctx.enemies.forEach(e=>{if(e.target===target.id)setAggro(ctx,e,topThreatTarget(ctx,e),'target died')});
+  ctx.enemies.forEach(e=>{e.threat[target.id]=0;if(e.target===target.id)setAggro(ctx,e,topThreatTarget(ctx,e),'target died')});
  }
 }
+
+function reviveUnit(ctx,healer,target,ability,{healthPct=35,resourcePct=20,combat=true}={}){
+ if(!healer?.alive||!target||target.alive)return false;
+ target.alive=true;target.health=Math.max(1,Math.round(target.maxHealth*healthPct/100));
+ target.resource.value=clamp(target.resource.max*resourcePct/100,0,target.resource.max);
+ target.currentCast=null;target.movingUntil=0;target.nextDecision=ctx.time+700;target.revivePenaltyUntil=ctx.time+(combat?30000:15000);
+ const st=ctx.stats.players[healer.id];if(st)st.battleResurrections++;
+ ctx.stats.battleResurrections++;
+ emit(ctx,'PLAYER_REVIVED',{source:healer.id,target:target.id,ability,result:combat?'battle-rez':'revive',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),resource:target.resource.name,resourceValue:target.resource.value,resourceMax:target.resource.max,penaltyMs:combat?30000:15000}});
+ emitResourceState(ctx,target,'revived');
+ return true
+}
+
 function pickDamageTarget(ctx,u){
  const adds=livingEnemies(ctx).filter(e=>e.isAdd);
  if(adds.length&&ctx.tactics.addPriority!=='boss'){
@@ -791,7 +862,17 @@ function healerTarget(ctx){
 function chooseAbility(ctx,u,target){
  const pool=u.abilities.filter(a=>a.kind!=='interrupt'&&a.kind!=='taunt'&&cooldownReady(u,a)&&(a.cost||0)<=u.resource.value);
  if(u.role==='healer'){
-  const alive=livingPlayers(ctx),tank=alive.find(p=>p.role==='tank'),low=healerTarget(ctx);
+  const alive=livingPlayers(ctx),tank=alive.find(p=>p.role==='tank'),low=healerTarget(ctx),dead=deadPlayers(ctx);
+  const battleRez=pool.find(a=>a.kind==='battle-rez');
+  if(battleRez&&dead.length){
+   const reviveTarget=[...dead].sort((a,b)=>(a.role==='tank'?-3:a.role==='healer'?-2:0)-(b.role==='tank'?-3:b.role==='healer'?-2:0)||b.power-a.power)[0];
+   const tankSafe=!tank||healthRatio(tank)>.58,pressure=combatPressure(ctx);
+   const badDecision=pressure>.78&&shouldMistake(ctx,u,'triage',7000);
+   if((tankSafe&&pressure<.86)||badDecision){
+    if(badDecision)recordMistake(ctx,u,'triage','committed to a combat resurrection under heavy pressure',{target:reviveTarget.id,ability:battleRez.name});
+    return{ability:battleRez,target:reviveTarget}
+   }
+  }
   const single=pool.filter(a=>a.kind==='heal').sort((a,b)=>(b.heal||0)-(a.heal||0));
   const group=pool.filter(a=>a.kind==='group-heal').sort((a,b)=>(b.heal||0)-(a.heal||0));
   const injured=alive.filter(p=>healthRatio(p)<.94),deep=alive.filter(p=>healthRatio(p)<.84);
@@ -807,9 +888,13 @@ function chooseAbility(ctx,u,target){
   const needsTank=tank&&tankRatio<((ctx.encounter.kind==='boss'||ctx.encounter.kind==='final')?.97:.92);
   const needsSingle=low&&healthRatio(low)<.90;
   if(single.length&&(needsTank||needsSingle)){
-   const healTarget=needsSingle&&low&&healthRatio(low)<tankRatio?low:(tank||low);
-   const ratio=healthRatio(healTarget);
-   const chosen=ratio<.58?single[0]:single[single.length-1];
+   let healTarget=needsSingle&&low&&healthRatio(low)<tankRatio?low:(tank||low);
+   let ratio=healthRatio(healTarget),chosen=ratio<.58?single[0]:single[single.length-1];
+   if(injured.length>=2&&shouldMistake(ctx,u,'triage',6500)){
+    const alternatives=alive.filter(p=>p.id!==healTarget?.id&&healthRatio(p)<.98).sort((a,b)=>healthRatio(b)-healthRatio(a));
+    if(alternatives.length){healTarget=alternatives[0];ratio=healthRatio(healTarget);chosen=single[0]}
+    recordMistake(ctx,u,'triage','prioritised the wrong heal target',{target:healTarget?.id||null,ability:chosen?.name||'Heal'});
+   }
    return{ability:chosen,target:healTarget}
   }
 
@@ -823,7 +908,8 @@ function chooseAbility(ctx,u,target){
  return{ability:usable,target};
 }
 function startAbility(ctx,u,a,target){
- if(!u.alive||!target?.alive||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.gcdUntil||!cooldownReady(u,a))return false;
+ const deadTarget=a?.kind==='battle-rez'&&target&&!target.alive;
+ if(!u.alive||(!target?.alive&&!deadTarget)||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.gcdUntil||!cooldownReady(u,a))return false;
  if(!moveIntoRange(ctx,u,target,Number(a.range)||5))return false;
  if(!spendResource(ctx,u,a))return false;
  const cast=Math.max(0,Number(a.cast)||0),gcd=Math.max(0,Number(a.gcd)||0);
@@ -838,13 +924,17 @@ function startAbility(ctx,u,a,target){
  return true;
 }
 function finishAbility(ctx,u,a,target){
- if(!u.alive||!target?.alive)return;
+ const deadTarget=a?.kind==='battle-rez'&&target&&!target.alive;
+ if(!u.alive||(!target?.alive&&!deadTarget))return;
  if(u.currentCast&&u.currentCast.ability!==a.name)return;
  u.currentCast=null;
  if(!hasLineOfSight(ctx,u,target)){emit(ctx,'ABILITY_FINISH',{source:u.id,target:target.id,ability:a.name,result:'failed-line-of-sight',position:copy(u.position),payload:{kind:a.kind,castTime:Number(a.cast)||0}});return}
  emit(ctx,'ABILITY_FINISH',{source:u.id,target:target.id,ability:a.name,result:'resolved',position:copy(u.position),payload:{kind:a.kind,castTime:Number(a.cast)||0}});
- if(a.kind==='heal'||a.kind==='group-heal'){
-  const amount=(a.heal||24)*(1+Math.min(.28,u.power*.01))*(u.baseStats?.outputScale||levelOutputScale(u.level))*(.92+ctx.rng()*.16);
+ if(a.kind==='battle-rez'){
+  reviveUnit(ctx,u,target,a.name,{healthPct:35,resourcePct:20,combat:true});
+ }else if(a.kind==='heal'||a.kind==='group-heal'){
+  const revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1;
+  const amount=(a.heal||24)*(1+Math.min(.28,u.power*.01))*(u.baseStats?.outputScale||levelOutputScale(u.level))*(.92+ctx.rng()*.16)*revivePenalty;
   if(a.kind==='group-heal')livingPlayers(ctx).filter(p=>hasLineOfSight(ctx,u,p)).forEach(p=>doHeal(ctx,u,p,amount,a.name));
   else doHeal(ctx,u,target,amount,a.name);
   if(a.hot){
@@ -854,6 +944,10 @@ function finishAbility(ctx,u,a,target){
  }else if(a.kind==='damage'){
   const rolled=rollDamage(ctx,u,a,target);
   const dealt=dealDamage(ctx,u,target,rolled.amount,a.name,{crit:rolled.crit,ability:a,damageType:u.class==='Mage'||u.class==='Evoker'?'magic':'physical'});
+  if(dealt>0&&target.alive&&u.role==='dps'&&shouldMistake(ctx,u,'threat',12000)){
+   recordMistake(ctx,u,'threat','overcommitted before threat was secure',{target:target.id,ability:a.name});
+   addThreat(ctx,target,u,dealt*(1.8+ctx.rng()*.8),'overcommit');
+  }
   gainResource(ctx,u,a);
   if(a.selfHeal&&u.alive)doHeal(ctx,u,u,a.selfHeal,a.name);
   if(a.cleave&&dealt>0){
@@ -882,11 +976,28 @@ function playerAI(ctx,u){
   const loose=tankNeedsTaunt(ctx,u);
   if(loose){
    const taunt=u.abilities.find(a=>a.kind==='taunt'&&cooldownReady(u,a));
-   if(taunt&&inRange(u,loose,taunt.range||30)&&hasLineOfSight(ctx,u,loose)){executeTaunt(ctx,u,loose,taunt);return}
-  }
-  if(u.health/u.maxHealth<.48&&u.defensiveUntil<=0){
-   u.defensiveUntil=5000;applyStatus(ctx,u,u,{id:'major-defensive',name:'Major Defensive',kind:'buff',duration:5000,effect:{damageReduction:.25}});
-   emit(ctx,'DEFENSIVE_ACTIVATED',{source:u.id,target:u.id,ability:'Major Defensive',result:'active',payload:{duration:5000}});
+   if(taunt&&inRange(u,loose,taunt.range||30)&&hasLineOfSight(ctx,u,loose)){
+    if(!u.pendingTaunt||u.pendingTaunt.target!==loose.id){
+     let reaction=executionReaction(ctx,u,'tank');
+     if(shouldMistake(ctx,u,'tank',5500)){
+      reaction+=Math.round(300+ctx.rng()*650);
+      recordMistake(ctx,u,'tank','was late reacting to lost threat',{target:loose.id,ability:taunt.name,reactionMs:reaction});
+     }
+     u.pendingTaunt={target:loose.id,readyAt:ctx.time+reaction}
+    }
+    if(ctx.time>=u.pendingTaunt.readyAt){u.pendingTaunt=null;executeTaunt(ctx,u,loose,taunt);return}
+   }
+  }else u.pendingTaunt=null;
+
+  const defensiveThreshold=ctx.tactics.defensiveUsage==='aggressive'?.62:ctx.tactics.defensiveUsage==='conservative'?.38:.50;
+  if(u.health/u.maxHealth<defensiveThreshold&&u.defensiveUntil<=0){
+   if(shouldMistake(ctx,u,'defensive',7000)){
+    recordMistake(ctx,u,'defensive','held a defensive too long',{target:u.id,ability:'Major Defensive'});
+    u.nextDecision=Math.max(u.nextDecision,ctx.time+650+Math.round(ctx.rng()*450));
+   }else{
+    u.defensiveUntil=5000;applyStatus(ctx,u,u,{id:'major-defensive',name:'Major Defensive',kind:'buff',duration:5000,effect:{damageReduction:.25}});
+    emit(ctx,'DEFENSIVE_ACTIVATED',{source:u.id,target:u.id,ability:'Major Defensive',result:'active',payload:{duration:5000}});
+   }
   }
  }
  const pick=chooseAbility(ctx,u,target);
@@ -907,13 +1018,6 @@ function enemyBasicAttack(ctx,e){
  dealDamage(ctx,e,target,base*levelPressure*(.85+ctx.rng()*.3),e.kind==='boss'?'Heavy Swing':'Attack',{damageType:'physical'});
  e.nextAttack=ctx.time+(e.kind==='boss'?1400:e.isAdd?1800:2050)+Math.round(ctx.rng()*(e.kind==='boss'?220:320));
 }
-function reactionChance(ctx,u,type){
- const safety=ctx.tactics.movementDiscipline==='safety'?1.14:ctx.tactics.movementDiscipline==='damage'?0.86:1;
- const knowledge=Object.values(u.knowledge||{}).reduce((n,v)=>n+(Number(v)||0),0)/Math.max(1,Object.keys(u.knowledge||{}).length||1);
- let base=.84*classMobility(u.original||u)*safety+Math.min(.1,knowledge/1000);
- if(type==='cone'&&u.role==='tank')base=.97;
- return clamp(base,.48,.99);
-}
 function mechanicStat(ctx,type,failed){
  const m=ctx.stats.mechanics;m.byType[type]=m.byType[type]||{avoided:0,failed:0};
  if(failed){m.failed++;m.byType[type].failed++}else{m.avoided++;m.byType[type].avoided++}
@@ -931,24 +1035,63 @@ function planMovement(ctx,u,type,anchor){
  }
  moveTo(ctx,u,to,320,'mechanic response');
 }
+function mechanicResponse(ctx,u,type,duration,enemy){
+ const baseReaction=executionReaction(ctx,u,'movement');
+ const error=shouldMistake(ctx,u,'movement',2200);
+ const hesitation=error?Math.round(260+ctx.rng()*520):0;
+ const reaction=baseReaction+hesitation;
+ const success=reaction+320<=Math.max(520,duration-40);
+ if(error){
+  recordMistake(ctx,u,'movement',reaction>duration?'reacted too late':'hesitated on the mechanic',{target:enemy?.id||null,ability:ctx.activeEnemyCast?.name||null,reactionMs:reaction});
+ }else if(!success){
+  recordMistake(ctx,u,'movement','reaction was too slow for the mechanic',{target:enemy?.id||null,ability:ctx.activeEnemyCast?.name||null,reactionMs:reaction});
+ }
+ // Even failed players try to move. If they are late, the impact can land while they are still escaping.
+ schedule(ctx,ctx.time+reaction,()=>{if(u.alive)planMovement(ctx,u,type,enemy)},'mechanic-reaction');
+ return{success,reactionMs:reaction}
+}
 function tryInterrupt(ctx,e,mechanic,castToken){
  const policy=ctx.tactics.interruptPriority;
- const candidates=livingPlayers(ctx).map(u=>({u,a:u.abilities.find(a=>a.kind==='interrupt'&&cooldownReady(u,a))})).filter(x=>x.a&&inRange(x.u,e,x.a.range||10)&&hasLineOfSight(ctx,x.u,e));
+ const candidates=livingPlayers(ctx).map(u=>({u,a:u.abilities.find(a=>a.kind==='interrupt'&&cooldownReady(u,a))}))
+  .filter(x=>x.a&&inRange(x.u,e,x.a.range||10)&&hasLineOfSight(ctx,x.u,e));
  ctx.stats.interrupts.attempts++;
  if(!candidates.length){ctx.stats.interrupts.missedCritical++;return}
- const chosen=candidates.sort((a,b)=>(a.a.cd||0)-(b.a.cd||0))[0],u=chosen.u,a=chosen.a;
+ candidates.sort((a,b)=>executionQuality(ctx,b.u)-executionQuality(ctx,a.u)||(a.a.cd||0)-(b.a.cd||0));
+ const chosen=candidates[0],u=chosen.u,a=chosen.a;
  const should=policy==='high'||policy==='standard'||(policy==='low'&&ctx.encounter.kind==='final');
  if(!should){ctx.stats.interrupts.missedCritical++;return}
- const reaction=policy==='high'?380:policy==='standard'?650:900;
- const when=ctx.time+reaction;
+ let reaction=executionReaction(ctx,u,'interrupt')+(policy==='high'?-120:policy==='low'?180:0);
+ const error=shouldMistake(ctx,u,'interrupt',5000);
+ if(error){
+  reaction+=Math.round(350+ctx.rng()*750);
+  recordMistake(ctx,u,'interrupt','late interrupt reaction',{target:e.id,ability:mechanic.name,reactionMs:reaction});
+ }
+ const when=ctx.time+Math.max(180,reaction);
  schedule(ctx,when,()=>{
   const cast=ctx.activeEnemyCast;
   const st=ctx.stats.players[u.id];st.interruptAttempts++;
   if(!cast||cast.token!==castToken||cast.interrupted){st.duplicateInterrupts++;ctx.stats.interrupts.duplicates++;emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'duplicate',payload:{interruptedAbility:mechanic.name,token:castToken}});return}
-  if(!u.alive||!inRange(u,e,a.range||10)||!hasLineOfSight(ctx,u,e)||!cooldownReady(u,a)){ctx.stats.interrupts.missedCritical++;emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'failed',payload:{interruptedAbility:mechanic.name,token:castToken}});return}
+  if(!u.alive||!inRange(u,e,a.range||10)||!hasLineOfSight(ctx,u,e)||!cooldownReady(u,a)||ctx.time>=cast.ends){
+   ctx.stats.interrupts.missedCritical++;emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'failed',payload:{interruptedAbility:mechanic.name,token:castToken}});return
+  }
   u.cooldowns[a.id]=a.cd||15000;cast.interrupted=true;ctx.activeEnemyCast=null;st.interrupts++;ctx.stats.interrupts.success++;
   emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'success',payload:{interruptedAbility:mechanic.name,token:castToken}});
  },'interrupt');
+ // Low knowledge / pressure can make a second player burn their interrupt a fraction later.
+ const backup=candidates[1];
+ if(backup&&ctx.rng()<mistakeChance(ctx,backup.u,'interrupt')*.55){
+  const delay=Math.max(220,reaction+120+Math.round(ctx.rng()*220));
+  recordMistake(ctx,backup.u,'interrupt','committed to the same interrupt',{target:e.id,ability:mechanic.name,reactionMs:delay});
+  schedule(ctx,ctx.time+delay,()=>{
+   const bu=backup.u,ba=backup.a,cast=ctx.activeEnemyCast,st=ctx.stats.players[bu.id];st.interruptAttempts++;
+   if(!bu.alive||!cooldownReady(bu,ba))return;
+   bu.cooldowns[ba.id]=ba.cd||15000;
+   if(!cast||cast.token!==castToken||cast.interrupted){
+    st.duplicateInterrupts++;ctx.stats.interrupts.duplicates++;
+    emit(ctx,'INTERRUPT',{source:bu.id,target:e.id,ability:ba.name,result:'duplicate',payload:{interruptedAbility:mechanic.name,token:castToken}})
+   }
+  },'duplicate-interrupt')
+ }
 }
 function spawnAdds(ctx,e){
  const base=ctx.enemies.length;
@@ -1006,34 +1149,38 @@ function resolveMechanic(ctx,e,m,token){
 function startMechanic(ctx,m){
  const enemy=livingEnemies(ctx).find(x=>x.kind==='boss')||livingEnemies(ctx)[0];if(!enemy)return;
  const token='m'+(++ctx.mechanicSeq),duration=Math.max(700,Number(m.duration)||1600);
- const castState={token,enemy:enemy.id,name:m.name,type:m.type,interrupted:false,ends:ctx.time+duration,responses:{},targetId:null,targetIds:[]};
+ const castState={token,enemy:enemy.id,name:m.name,type:m.type,interrupted:false,ends:ctx.time+duration,responses:{},reactionMs:{},targetId:null,targetIds:[]};
  const live=livingPlayers(ctx);
+ ctx.activeEnemyCast=castState;
+
  if(m.type==='cone'){
   const tank=live.find(p=>p.role==='tank')||live[0];castState.targetId=tank?.id||null;castState.targetIds=tank?[tank.id]:[];
-  live.forEach(p=>{if(p.role==='tank')castState.responses[p.id]=true;else castState.responses[p.id]=ctx.rng()<reactionChance(ctx,p,'cone')});
+  let badFacing=false;
+  if(tank&&shouldMistake(ctx,tank,'tank',6000)){
+   badFacing=true;recordMistake(ctx,tank,'tank','turned the frontal through the group',{target:enemy.id,ability:m.name});
+  }
+  live.forEach(p=>{
+   if(p.role==='tank'){castState.responses[p.id]=true;castState.reactionMs[p.id]=0;return}
+   const plan=mechanicResponse(ctx,p,'cone',duration,enemy);castState.responses[p.id]=plan.success&&!badFacing;castState.reactionMs[p.id]=plan.reactionMs
+  });
  }else if(m.type==='circle'){
   castState.targetId=enemy.id;castState.targetIds=[enemy.id];
-  live.forEach(p=>castState.responses[p.id]=ctx.rng()<reactionChance(ctx,p,'circle'));
+  live.forEach(p=>{const plan=mechanicResponse(ctx,p,'circle',duration,enemy);castState.responses[p.id]=plan.success;castState.reactionMs[p.id]=plan.reactionMs});
  }else if(m.type==='circles'){
   castState.targetIds=live.map(p=>p.id);
-  live.forEach(p=>castState.responses[p.id]=ctx.rng()<reactionChance(ctx,p,'circles'));
+  live.forEach(p=>{const plan=mechanicResponse(ctx,p,'circles',duration,enemy);castState.responses[p.id]=plan.success;castState.reactionMs[p.id]=plan.reactionMs});
  }else if(m.type==='line'){
   const candidates=live.filter(p=>p.role!=='tank'),target=candidates[Math.floor(ctx.rng()*Math.max(1,candidates.length))]||live[0];
   castState.targetId=target?.id||null;castState.targetIds=target?[target.id]:[];
-  if(target)castState.responses[target.id]=ctx.rng()<reactionChance(ctx,target,'line');
+  if(target){const plan=mechanicResponse(ctx,target,'line',duration,enemy);castState.responses[target.id]=plan.success;castState.reactionMs[target.id]=plan.reactionMs}
  }
- emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:castState.targetId,ability:m.name,result:'telegraph',position:copy(enemy.position),payload:{mechanicType:m.type,duration,token,interruptible:m.type==='interrupt',targetId:castState.targetId,targetIds:copy(castState.targetIds),responses:copy(castState.responses)}});
+
+ emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:castState.targetId,ability:m.name,result:'telegraph',position:copy(enemy.position),payload:{mechanicType:m.type,duration,token,interruptible:m.type==='interrupt',targetId:castState.targetId,targetIds:copy(castState.targetIds),responses:copy(castState.responses),reactionMs:copy(castState.reactionMs)}});
  emit(ctx,'CAST_START',{source:enemy.id,target:castState.targetId,ability:m.name,result:'enemy',payload:{duration,interruptible:m.type==='interrupt',mechanicType:m.type,token,targetId:castState.targetId,targetIds:copy(castState.targetIds)}});
- ctx.activeEnemyCast=castState;
  if(m.type==='interrupt')tryInterrupt(ctx,enemy,m,token);
  else if(m.type==='cone'){
   const tank=getUnit(ctx,castState.targetId);
-  live.forEach(p=>{if(p.role==='tank'||castState.responses[p.id])planMovement(ctx,p,'cone',enemy)});
   if(tank){enemy.target=tank.id;updateFacing(enemy,tank)}
- }else if(m.type==='circle'||m.type==='circles'){
-  live.forEach(p=>{if(castState.responses[p.id])planMovement(ctx,p,m.type,enemy)});
- }else if(m.type==='line'){
-  const target=getUnit(ctx,castState.targetId);if(target&&castState.responses[target.id])planMovement(ctx,target,'line',enemy)
  }
  schedule(ctx,ctx.time+duration,()=>resolveMechanic(ctx,enemy,m,token),'mechanic-resolve');
 }
@@ -1058,7 +1205,7 @@ function buildSummary(ctx,outcome){
   outcome,durationMs:Math.round(ctx.time),durationSeconds:Math.round(duration*10)/10,
   deaths:ctx.stats.deaths,totalDamage:players.reduce((n,p)=>n+p.damage,0),
   totalHealing:players.reduce((n,p)=>n+p.healing,0),interrupts:copy(ctx.stats.interrupts),
-  mechanics:copy(ctx.stats.mechanics),players
+  mechanics:copy(ctx.stats.mechanics),mistakes:copy(ctx.stats.mistakes),battleResurrections:ctx.stats.battleResurrections,players
  };
 }
 function simulate(options={}){
@@ -1075,7 +1222,7 @@ function simulate(options={}){
   movementDiscipline:options.tactics?.movementDiscipline||'balanced'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:0,mechanicSeq:0,addSeq:0,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
+ const ctx={time:0,rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:0,mechanicSeq:0,addSeq:0,mistakeSeq:0,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
  emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
  players.forEach(u=>emitResourceState(ctx,u,'initial'));
  const tank=players.find(p=>p.role==='tank')||players[0];
@@ -1271,6 +1418,34 @@ function runSelfTests(){
  test('Level Base Growth',()=>l10.maxHealth>l1.maxHealth*1.2&&d10>d1);
  r=simulate({party,encounter:{...base,level:8,enemyHealth:500,enemyTypes:['elite']},seed:'enemy-level-meta'});
  test('Enemy Level Metadata',()=>{const e=r.finalState.enemies[0];return e.level===8&&e.classification==='elite'&&e.classificationLabel==='ELITE'});
+ {
+  const encounter={id:'execution-check',kind:'boss',level:7,recommendedItemLevel:24,knowledgeKey:'danger',enemies:['Execution Boss'],enemyHealth:1800,mechanics:[['Pulse','circles',1400],['Scream','interrupt',1500],['Line','line',1400]]};
+  const makeExecutionParty=prepared=>[
+   {id:'xt',name:'Tank',class:'Warrior',spec:'Protection',power:22,level:prepared?7:2,_combatItemLevel:prepared?26:8,knowledge:{danger:prepared?100:0}},
+   {id:'xh',name:'Healer',class:'Priest',spec:'Holy',power:22,level:prepared?7:2,_combatItemLevel:prepared?26:8,knowledge:{danger:prepared?100:0}},
+   {id:'xd1',name:'DPS One',class:'Warrior',spec:'Arms',power:22,level:prepared?7:2,_combatItemLevel:prepared?26:8,knowledge:{danger:prepared?100:0}},
+   {id:'xd2',name:'DPS Two',class:'Rogue',spec:'Assassination',power:22,level:prepared?7:2,_combatItemLevel:prepared?26:8,knowledge:{danger:prepared?100:0}},
+   {id:'xd3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:22,level:prepared?7:2,_combatItemLevel:prepared?26:8,knowledge:{danger:prepared?100:0}}
+  ];
+  const low=simulate({party:makeExecutionParty(false),encounter,seed:'compare'}),high=simulate({party:makeExecutionParty(true),encounter,seed:'compare'});
+  test('Human Error Scaling',()=>low.summary.mistakes.total>high.summary.mistakes.total&&high.outcome==='victory');
+  test('Threat Mistake',()=>low.events.some(e=>e.type==='PLAYER_MISTAKE'&&e.result==='threat'));
+ }
+ {
+  const rezParty=[
+   {id:'brt',name:'Tank',class:'Warrior',spec:'Protection',power:30,level:8,_combatItemLevel:30,knowledge:{rez:100}},
+   {id:'brh',name:'Priest',class:'Priest',spec:'Holy',power:30,level:8,_combatItemLevel:30,knowledge:{rez:100}},
+   {id:'brd1',name:'Fallen DPS',class:'Warrior',spec:'Arms',power:30,level:8,_combatItemLevel:30,_combatHealthPct:0,knowledge:{rez:100}},
+   {id:'brd2',name:'DPS Two',class:'Rogue',spec:'Assassination',power:30,level:8,_combatItemLevel:30,knowledge:{rez:100}},
+   {id:'brd3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:30,level:8,_combatItemLevel:30,knowledge:{rez:100}}
+  ];
+  const rez=simulate({party:rezParty,encounter:{id:'rez',kind:'boss',level:8,recommendedItemLevel:28,knowledgeKey:'rez',enemies:['Resurrection Boss'],enemyHealth:2400,mechanics:[]},seed:'battle-rez-test'});
+  test('Priest Battle Resurrection',()=>{
+   const event=rez.events.find(e=>e.type==='PLAYER_REVIVED'&&e.target==='p-brd1'),priest=rez.finalState.players.find(p=>p.id==='p-brh');
+   return !!event&&rez.summary.battleResurrections===1&&Number(priest?.cooldowns?.['soul-recall'])>0
+  });
+ }
+
 
 
 
