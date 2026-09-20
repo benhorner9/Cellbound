@@ -60,3 +60,14 @@
 .eg-loot-pill.rarity-rare{border-color:rgba(75,159,255,.2)}.eg-loot-pill.rarity-rare i{color:#7cb7f5}
 .eg-loot-pill.rarity-uncommon{border-color:rgba(85,213,106,.18)}.eg-loot-pill.rarity-uncommon i{color:#72c984}
 @media(max-width:640px){.eg-loot-table>article{grid-template-columns:1fr}.eg-loot-pill{min-width:100%;box-sizing:border-box}}
+
+.eg-milestones{margin-top:14px;padding:14px}
+.eg-milestone-track{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.eg-milestone-track article{min-height:72px;padding:9px;border:1px solid rgba(255,255,255,.05);background:#091419;display:grid;grid-template-columns:42px 1fr;gap:8px}
+.eg-milestone-track i{font-style:normal;font-size:.4rem;font-weight:900;letter-spacing:.06em;color:#60736f}
+.eg-milestone-track span>*{display:block}.eg-milestone-track b{font-size:.52rem}.eg-milestone-track small{margin-top:4px;color:#61736f;font-size:.4rem;line-height:1.4;letter-spacing:0}
+.eg-milestone-track article.done{border-color:rgba(90,185,164,.2);background:#0b1b1a}.eg-milestone-track article.done i{color:#75cbb8}
+.eg-milestone-track article.next{border-color:rgba(213,176,91,.25);background:#1c1910}.eg-milestone-track article.next i{color:#e0bd72}
+.eg-milestones>p{margin:9px 0 0;color:#677a76;font-size:.5rem}.eg-milestones>p b{color:#a8bbb6}
+@media(max-width:900px){.eg-milestone-track{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.eg-milestone-track{grid-template-columns:1fr}.eg-milestones{padding:10px}}
