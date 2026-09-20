@@ -19,6 +19,7 @@ const roleOf=c=>Game?.classes?.[c.class]?.specs?.[c.spec]?.role||'dps';
 const classKey=c=>'class-'+String(c?.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const isRanged=c=>['Hunter','Mage','Priest'].includes(c.class)||(c.class==='Druid'&&c.spec!=='Feral');
 const party=()=>Game?.getPartyCharacters?.()||[];
+const worldBossLevel=b=>Math.max(1,Number(b?.level)||({1:8,2:12,3:16}[Number(b?.tier)]||8));
 
 function ensureShell(){
   let root=document.getElementById('worldBoss2dBackdrop');
@@ -307,8 +308,8 @@ async function refresh(){
   active.boss=data.boss||active.boss;const parts=Array.isArray(data.participants)?data.participants:[];
   active.partyThreat=data.yourPartyThreat||{};active.combatState=data.yourCombatState||active.combatState||{};checkDamageChanges(parts);renderParticipants(parts);renderCombatMeters(parts,active.partyThreat);bossHealth(active.boss);
   document.getElementById('wb2dBossName').textContent=active.boss.name;
-  document.getElementById('wb2dBossLabel').textContent=active.boss.name.toUpperCase();
-  document.getElementById('wb2dStatus').textContent='Tier '+active.boss.tier+' · '+parts.length+'/'+active.boss.playerCap+' commanders engaged · Party attacks every 5 seconds';
+  document.getElementById('wb2dBossLabel').textContent=active.boss.name.toUpperCase()+' · LV '+worldBossLevel(active.boss);
+  document.getElementById('wb2dStatus').textContent='Lv. '+worldBossLevel(active.boss)+' · WORLD BOSS · Tier '+active.boss.tier+' · '+parts.length+'/'+active.boss.playerCap+' commanders engaged · Party attacks every 5 seconds';
   if(active.combatState?.wiped){stopAttackTimer();const b=document.getElementById('wb2dAttackNow');if(b)b.disabled=true;document.getElementById('wb2dStatus').textContent='Your party has wiped · recover before rejoining combat';}
   if(active.boss.status==='dormant'||Number(active.boss.currentHp)<=0)victory();
 }
@@ -349,7 +350,7 @@ async function open(bossId){
   db=Game.getSupabase?.();if(!db)return;
   stopCombatTimers();participantDamage.clear();
   const root=ensureShell(),known=(window.CellboundSocial?.getWorldBosses?.()||[]).find(b=>b.id===bossId);
-  active={boss:known||{id:bossId,name:'World Boss',tier:1,currentHp:1,maxHp:1,status:'in_combat'},partyThreat:{},combatState:{}};
+  active={boss:known||{id:bossId,name:'World Boss',tier:1,level:8,currentHp:1,maxHp:1,status:'in_combat'},partyThreat:{},combatState:{}};
   root.hidden=false;document.body.classList.add('wb2d-open');
   document.getElementById('wb2dFeed').innerHTML='';
   document.getElementById('wb2dMessage').hidden=true;
