@@ -363,7 +363,7 @@ function closeDungeonDetails(){
   activeDungeonDetail=null;
   const ashen=$('#ashenDungeonDetail'),hollow=$('#hollowSanctumMount');
   if(ashen)ashen.hidden=true;if(hollow)hollow.hidden=true;
-  $('[data-dungeon-card]').forEach(card=>card.classList.remove('active'));
+  document.querySelectorAll('[data-dungeon-card]').forEach(card=>card.classList.remove('active'));
   renderDungeonBrowserStatus();
   $('#dungeonBrowser')?.scrollIntoView({behavior:'smooth',block:'start'})
 }
