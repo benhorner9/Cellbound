@@ -63,7 +63,7 @@
       </div>
       <div class="dashboard-grid">
         <article class="panel"><div class="panel-head"><div><small>ACTIVE ROSTER</small><h3>Your Adventurers</h3></div><b class="good">5 PARTY SLOTS</b></div><div id="overviewRoster" class="mini-roster"></div></article>
-        <article class="panel"><div class="panel-head"><div><small>NEXT CONTENT</small><h3>The Ashen Vault</h3></div><b>ITEM LEVEL GATED</b></div><div class="dungeon-preview"><div class="dungeon-art"><span>THE ASHEN VAULT</span></div><div><p>Dungeon access now checks the equipment strength of the whole active party, not one over-geared hero.</p><div class="boss-pips"><span class="active"></span><span></span><span></span></div><button data-jump="content">VIEW DUNGEON →</button></div></div></article>
+        <article class="panel" id="overviewNextDungeon"><div class="panel-head"><div><small>NEXT CONTENT</small><h3>Dungeon Expedition</h3></div><b>CHECKING</b></div><div class="dungeon-preview"><div class="dungeon-art"><span>DUNGEONS</span></div><div><p>Reviewing your unlocked expeditions…</p><button data-jump="content">VIEW DUNGEONS →</button></div></div></article>
         <article class="panel activity-panel"><div class="panel-head"><div><small>GUILD LOG</small><h3>Recent Activity</h3></div></div><div id="activityLog" class="activity-log"></div></article>
       </div>
     </section>
@@ -167,17 +167,35 @@
     </section>
 
     <section id="content" class="view">
-      <div class="section-intro dungeon-intro"><div><small>DUNGEON JOURNAL</small><h2>The Ashen Vault</h2><p>Five adventurers descend through a ruined forge where each encounter teaches the mechanics needed for the next.</p></div><div class="content-status"><span>Completion</span><b id="dungeonProgress">0 / 3 bosses</b></div></div>
-      <div class="dungeon-journal-hero">
-        <div class="dungeon-journal-art"><span class="journal-eyebrow">CURO HINTERLANDS · DUNGEON</span><h3>The Ashen Vault</h3><p>The old forge has begun breathing again. Ashbound cultists are feeding something beneath the mountain.</p><div class="journal-badges"><span>5 adventurers</span><span>10–15 min</span><span id="journalPartyIlvl">Party iLvl —</span></div></div>
-        <div class="journal-entry-panel"><small>ENTRY REQUIREMENT</small><b>Quest Access · Party Item Level 18</b><p id="journalEntryHint">Build a complete party before entering.</p><button id="enterDungeonBtn">ENTER THE ASHEN VAULT</button></div>
+      <div class="section-intro dungeon-intro"><div><small>DUNGEON JOURNAL</small><h2>Dungeons</h2><p>Choose an expedition. Open More Info when you want the full route, encounter intelligence, entry requirements and rewards.</p></div><div class="content-status"><span>Available</span><b id="dungeonBrowserStatus">Checking unlocks…</b></div></div>
+
+      <div id="dungeonBrowser" class="dungeon-browser-grid">
+        <article id="ashenDungeonCard" class="dungeon-browser-card ashen" data-dungeon-card="ashen-vault">
+          <div class="dungeon-browser-art"><span>CURO HINTERLANDS</span><strong>♨</strong></div>
+          <div class="dungeon-browser-copy">
+            <div class="dungeon-browser-heading"><div><small>DUNGEON</small><h3>The Ashen Vault</h3></div><b id="ashenDungeonStatus">CHECKING</b></div>
+            <p>A ruined forge of cultists, furnace passages and the living Vaultheart.</p>
+            <div class="dungeon-browser-meta"><span>7 stages</span><span>iLvl 18+</span><span id="ashenDungeonParty">Party iLvl —</span></div>
+            <div class="dungeon-browser-actions"><button type="button" data-dungeon-more="ashen-vault">MORE INFO →</button></div>
+          </div>
+        </article>
+        <div id="hollowDungeonCard" class="dungeon-browser-slot"></div>
       </div>
-      <div class="dungeon-journal-layout">
-        <article class="panel dungeon-route-panel"><div class="panel-head"><div><small>DUNGEON ROUTE</small><h3>Expedition Path</h3></div><b>7 STAGES</b></div><div id="dungeonRoute" class="dungeon-route"></div></article>
-        <aside class="panel dungeon-intel-panel"><div class="panel-head"><div><small>ENCOUNTER INTELLIGENCE</small><h3>What Your Guild Knows</h3></div></div><div id="dungeonIntel" class="dungeon-intel"></div></aside>
+
+      <div id="ashenDungeonDetail" class="dungeon-detail-panel" hidden>
+        <div class="dungeon-detail-toolbar"><div><small>DUNGEON JOURNAL</small><b>The Ashen Vault</b></div><button type="button" data-dungeon-close>CLOSE DETAILS ×</button></div>
+        <div class="dungeon-journal-hero">
+          <div class="dungeon-journal-art"><span class="journal-eyebrow">CURO HINTERLANDS · DUNGEON</span><h3>The Ashen Vault</h3><p>The old forge has begun breathing again. Ashbound cultists are feeding something beneath the mountain.</p><div class="journal-badges"><span>5 adventurers</span><span>10–15 min</span><span id="journalPartyIlvl">Party iLvl —</span></div></div>
+          <div class="journal-entry-panel"><small>ENTRY REQUIREMENT</small><b>Quest Access · Party Item Level 18</b><p id="journalEntryHint">Build a complete party before entering.</p><button id="enterDungeonBtn">ENTER THE ASHEN VAULT</button></div>
+        </div>
+        <div class="dungeon-journal-layout">
+          <article class="panel dungeon-route-panel"><div class="panel-head"><div><small>DUNGEON ROUTE</small><h3>Expedition Path</h3></div><b>7 STAGES</b></div><div id="dungeonRoute" class="dungeon-route"></div></article>
+          <aside class="panel dungeon-intel-panel"><div class="panel-head"><div><small>ENCOUNTER INTELLIGENCE</small><h3>What Your Guild Knows</h3></div></div><div id="dungeonIntel" class="dungeon-intel"></div></aside>
+        </div>
       </div>
+
       <div id="bossList" class="boss-list evolution-legacy-boss-list" hidden></div>
-      <div id="hollowSanctumMount" class="hollow-sanctum-mount"></div>
+      <div id="hollowSanctumMount" class="dungeon-detail-panel hollow-sanctum-mount" hidden></div>
     </section>
 
     <section id="party" class="view">
