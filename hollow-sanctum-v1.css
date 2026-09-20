@@ -733,3 +733,6 @@
   .hsenv-sentinel .hsenv-octagon{left:9%;right:4%}
   .hsenv-choir .hsenv-choir-bank{opacity:.5}
 }
+
+.hs2d-unified-shell .hs2d-environment>.hsenv{animation:hsRoomReveal .55s ease both}
+@keyframes hsRoomReveal{from{opacity:.15;filter:brightness(.72)}to{opacity:1;filter:brightness(1)}}
