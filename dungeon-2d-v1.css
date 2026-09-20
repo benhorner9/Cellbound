@@ -450,3 +450,172 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 .cb2d-meter-panel.threat .cb2d-meter-row.high{padding:3px 4px;background:rgba(201,74,57,.06);box-shadow:inset 2px 0 #C94A39}
 .cb2d-meter-panel.threat .cb2d-meter-row.high .cb2d-meter-label strong,.cb2d-meter-panel.threat .cb2d-meter-row.danger .cb2d-meter-label strong{color:#E77A6A}
 .cb2d-meter-panel.threat .cb2d-meter-row.danger>em>i{background:var(--combat-class,#7F8B88)!important}
+
+
+/* === BUNDLED COMBAT REBORN UI === */
+
+/* Cellbound — Combat Reborn */
+.cb2d-unit .cbr-resource{
+  position:absolute;left:50%;top:calc(100% + 17px);transform:translateX(-50%);
+  width:72px;height:5px;border:1px solid rgba(255,255,255,.16);border-radius:999px;
+  background:rgba(4,8,12,.78);overflow:visible;pointer-events:none;z-index:5
+}
+.cb2d-unit .cbr-resource>i{
+  display:block;height:100%;width:100%;border-radius:999px;background:var(--class-color,#72b9ff);
+  transition:width .18s linear
+}
+.cb2d-unit .cbr-resource>span{
+  position:absolute;top:7px;left:50%;transform:translateX(-50%);white-space:nowrap;
+  font-size:7px;line-height:1;color:rgba(230,238,248,.72);letter-spacing:.03em
+}
+.cb2d-unit.class-death-knight{--class-color:#C41E3A}
+.cb2d-unit.class-demon-hunter{--class-color:#A330C9}
+.cb2d-unit.class-druid{--class-color:#FF7C0A}
+.cb2d-unit.class-evoker{--class-color:#33937F}
+.cb2d-unit.class-hunter{--class-color:#AAD372}
+.cb2d-unit.class-mage{--class-color:#69CCF0}
+.cb2d-unit.class-warrior{--class-color:#C79C6E}
+.cb2d-unit.class-paladin{--class-color:#F58CBA}
+.cb2d-unit.class-priest{--class-color:#FFFFFF}
+.cb2d-unit.class-rogue{--class-color:#FFF569}
+.cb2d-number.crit{font-size:18px;font-weight:900;transform:translate(-50%,-8px) scale(1.12)}
+
+.cbr-analysis{
+  margin:18px 0 0;padding:18px;border:1px solid rgba(116,172,214,.22);border-radius:16px;
+  background:linear-gradient(180deg,rgba(15,27,39,.96),rgba(7,14,22,.98));text-align:left
+}
+.cbr-analysis-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:14px}
+.cbr-analysis-head small{display:block;color:#7fa8c5;font-size:10px;font-weight:800;letter-spacing:.12em}
+.cbr-analysis-head h4{margin:4px 0 0;color:#eef6fc;font-size:18px}
+.cbr-analysis-head button{
+  min-height:40px;padding:0 14px;border:1px solid rgba(120,185,229,.35);border-radius:9px;
+  background:rgba(62,126,169,.16);color:#d9f2ff;font-size:10px;font-weight:900;letter-spacing:.07em
+}
+.cbr-analysis-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.cbr-analysis-grid article{padding:10px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.025)}
+.cbr-analysis-grid span{display:block;color:#8294a4;font-size:8px;font-weight:800;letter-spacing:.08em}
+.cbr-analysis-grid b{display:block;margin-top:4px;color:#f4f7fa;font-size:16px}
+.cbr-analysis-list{display:grid;gap:6px}
+.cbr-analysis-row{
+  display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:9px;align-items:center;
+  padding:8px 9px;border-top:1px solid rgba(255,255,255,.06)
+}
+.cbr-analysis-row:first-child{border-top:0}
+.cbr-analysis-row span b{display:block;color:#edf3f8;font-size:12px}
+.cbr-analysis-row span small{display:block;margin-top:2px;color:#81909c;font-size:9px}
+.cbr-analysis-row strong{color:#d8e8f3;font-size:11px}
+
+.cbr-debug{
+  position:absolute;right:10px;bottom:10px;z-index:50;margin:0;max-width:260px;padding:9px 10px;
+  border:1px solid rgba(101,204,255,.35);border-radius:8px;background:rgba(0,7,12,.88);
+  color:#9ee0ff;font:10px/1.35 ui-monospace,SFMono-Regular,Menlo,monospace;pointer-events:none;white-space:pre-wrap
+}
+
+@media(max-width:900px){
+ .cbr-analysis-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:620px){
+ .cbr-analysis{margin-top:12px;padding:12px;border-radius:12px}
+ .cbr-analysis-head{display:block}
+ .cbr-analysis-head button{width:100%;margin-top:10px}
+ .cbr-analysis-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .cbr-analysis-row{grid-template-columns:10px minmax(0,1fr)}
+ .cbr-analysis-row strong{grid-column:2}
+ .cb2d-unit .cbr-resource{width:54px;top:calc(100% + 14px)}
+ .cb2d-unit .cbr-resource>span{display:none}
+ .cbr-debug{left:8px;right:8px;bottom:8px;max-width:none;font-size:9px}
+}
+
+
+.cb2d-controls.cbr-plan-lock{
+  display:block;padding:12px 14px;border:1px solid rgba(104,173,220,.18);
+  background:rgba(9,18,28,.72)
+}
+.cbr-plan-lock-copy small{display:block;color:#76b8e4;font-size:9px;font-weight:900;letter-spacing:.12em}
+.cbr-plan-lock-copy b{display:block;margin-top:3px;color:#e7f2f9;font-size:12px}
+.cbr-plan-lock-copy span{display:block;margin-top:4px;color:#8092a2;font-size:10px;line-height:1.45}
+
+.cbr-replay-controls{
+  position:absolute;left:12px;top:12px;z-index:60;display:flex;gap:6px;padding:6px;
+  border:1px solid rgba(129,193,231,.24);border-radius:10px;background:rgba(4,10,16,.86);
+  box-shadow:0 8px 24px rgba(0,0,0,.28)
+}
+.cbr-replay-controls button{
+  min-height:32px;padding:0 10px;border:1px solid rgba(255,255,255,.12);border-radius:7px;
+  background:rgba(255,255,255,.045);color:#dcebf5;font-size:9px;font-weight:900;letter-spacing:.07em
+}
+.cbr-replay-controls button:active{transform:translateY(1px)}
+
+@media(max-width:620px){
+ .cbr-replay-controls{left:8px;top:8px;right:8px;justify-content:space-between}
+ .cbr-replay-controls button{flex:1;padding:0 6px}
+ .cb2d-controls.cbr-plan-lock{padding:10px}
+}
+
+
+
+/* Combat Reborn overhead vitals — HP + class resource */
+.cb2d-unit.party .cb2d-unit-hp{
+  top:-24px;
+  width:54px;
+  height:5px;
+  z-index:8;
+  border-color:rgba(255,255,255,.11);
+  background:rgba(2,6,8,.9);
+  box-shadow:0 2px 5px rgba(0,0,0,.4)
+}
+.cb2d-unit.party .cbr-resource{
+  position:absolute;
+  left:50%;
+  top:-16px;
+  transform:translateX(-50%);
+  width:54px;
+  height:4px;
+  z-index:8;
+  overflow:visible;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:3px;
+  background:rgba(2,6,8,.9);
+  box-shadow:0 2px 5px rgba(0,0,0,.34);
+  pointer-events:none
+}
+.cb2d-unit.party .cbr-resource>i{
+  display:block;
+  width:100%;
+  height:100%;
+  border-radius:2px;
+  transition:width .18s linear;
+  background:#8fa1a8
+}
+.cb2d-unit.party .cbr-resource>span{
+  position:absolute;
+  left:calc(100% + 5px);
+  top:-2px;
+  transform:none;
+  min-width:max-content;
+  color:#8d9ca0;
+  font-size:6.5px;
+  font-weight:800;
+  line-height:1;
+  letter-spacing:.02em;
+  text-shadow:0 1px 3px #000
+}
+.cb2d-unit.party .cbr-resource.resource-mana>i{background:linear-gradient(90deg,#376fce,#6ca8ff);box-shadow:0 0 7px rgba(82,142,235,.26)}
+.cb2d-unit.party .cbr-resource.resource-rage>i{background:linear-gradient(90deg,#9c302d,#df5c4e);box-shadow:0 0 7px rgba(205,68,58,.25)}
+.cb2d-unit.party .cbr-resource.resource-energy>i{background:linear-gradient(90deg,#9f872a,#e2ca4f);box-shadow:0 0 7px rgba(219,193,63,.22)}
+.cb2d-unit.party .cbr-resource.resource-focus>i{background:linear-gradient(90deg,#9a6a27,#df9f44);box-shadow:0 0 7px rgba(215,143,50,.22)}
+.cb2d-unit.party .cbr-resource.resource-runic-power>i{background:linear-gradient(90deg,#258a9b,#62d8e4);box-shadow:0 0 7px rgba(69,195,210,.24)}
+.cb2d-unit.party .cbr-resource.resource-fury>i{background:linear-gradient(90deg,#7139a6,#b461df);box-shadow:0 0 7px rgba(166,78,211,.25)}
+.cb2d-unit.party .cbr-resource.resource-essence>i{background:linear-gradient(90deg,#237968,#4bc9aa);box-shadow:0 0 7px rgba(58,183,151,.24)}
+.cb2d-unit.party .cbr-resource.resource-power>i{background:linear-gradient(90deg,#667980,#9eafb5)}
+.cb2d-unit.party.dead .cbr-resource{opacity:.18}
+
+/* Make the separated melee formation read clearly when several players surround one target. */
+.cb2d-unit.party.profile-melee,
+.cb2d-unit.party.tank{z-index:9}
+
+@media(max-width:620px){
+  .cb2d-unit.party .cb2d-unit-hp{top:-21px;width:46px;height:4px}
+  .cb2d-unit.party .cbr-resource{top:-14px;width:46px;height:3px}
+  .cb2d-unit.party .cbr-resource>span{display:none}
+}
