@@ -245,6 +245,8 @@ function switchView(id){
   if(id==='party')renderParty();
   if(id==='reports')renderReports();
   if(id==='bank')renderBank();
+  if(id==='professions')window.CellboundEconomy?.renderProfessions?.();
+  if(id==='trading')window.CellboundEconomy?.renderTrading?.();
   if(id==='content'){renderBosses();window.CellboundHollowSanctum?.renderCard?.()}
   if(id==='endgame')window.CellboundEndgame?.render?.()
   if(id==='roster')renderRoster();
