@@ -338,11 +338,17 @@ function renderDungeonBrowserStatus(){
   if(status)status.textContent=(ashenOpen?1:0)+(hollowOpen?1:0)+' / 2 unlocked';
   const hollowCard=$('[data-dungeon-card="hollow-sanctum"]');if(hollowCard)hollowCard.classList.toggle('active',activeDungeonDetail==='hollow-sanctum');
   const hollowState=$('#hollowDungeonStatus');if(hollowState)hollowState.textContent=hollowOpen?(hollowDone?'FARMABLE':'NEWLY UNLOCKED'):'QUEST LOCKED';
+  $('[data-dungeon-more]').forEach(button=>{
+    const expanded=button.dataset.dungeonMore===activeDungeonDetail;
+    button.textContent=expanded?'LESS INFO ↑':'MORE INFO →';
+    button.setAttribute('aria-expanded',expanded?'true':'false');
+  });
 }
 
 function openDungeonDetail(id,options={}){
   const target=String(id||'');
   if(!['ashen-vault','hollow-sanctum'].includes(target))return;
+  if(activeDungeonDetail===target){closeDungeonDetails();return}
   if(target==='hollow-sanctum')window.CellboundHollowSanctum?.renderCard?.();
   activeDungeonDetail=target;
   const ashen=$('#ashenDungeonDetail'),hollow=$('#hollowSanctumMount');
