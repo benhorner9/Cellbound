@@ -246,7 +246,7 @@ function isMeleeCombatant(u){
  return (u?.abilities||[]).some(a=>a.kind==='damage'&&(Number(a.range)||5)<=7)
 }
 function meleeFormationPoint(ctx,u,target){
- const radius=u.role==='tank'?4.2:4.6;
+ const radius=u.role==='tank'?5.2:6.0;
  if(u.role==='tank'){
    // Tank owns the front of the enemy. With enemies entering from the right side of the arena,
    // this places the tank on the party-facing side and keeps the boss facing away from melee DPS.
@@ -255,7 +255,7 @@ function meleeFormationPoint(ctx,u,target){
  const melee=ctx.players.filter(p=>p.alive&&p.role!=='tank'&&isMeleeCombatant(p));
  const slot=stableUnitIndex(ctx,u,melee);
  // Rear arc slots: centre-rear first, then alternate upper/lower flanks.
- const angles=[0,-0.62,0.62,-1.02,1.02,-1.34,1.34];
+ const angles=[0,-1.02,1.02,-1.42,1.42,-0.58,0.58];
  const angle=angles[slot%angles.length];
  const ring=radius+(Math.floor(slot/angles.length)*1.15);
  return{x:target.position.x+Math.cos(angle)*ring,y:target.position.y+Math.sin(angle)*ring}
