@@ -629,3 +629,20 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 }
 .cb2d-unit.party .cbr-resource>span{display:none!important}
 .cb2d-unit.party .cbr-resource>i{transition:width .32s ease-out}
+
+
+/* Level & threat framework */
+.cb2d-unit>span .cb2d-unit-meta{
+  display:block;
+  margin-top:2px;
+  color:#b6c0bc;
+  font-size:7px;
+  font-weight:900;
+  line-height:1;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  white-space:nowrap;
+  opacity:.9
+}
+.cb2d-unit.enemy>span .cb2d-unit-meta{color:#d6b26d}
+.cb2d-unit.enemy.boss>span .cb2d-unit-meta{color:#f0c878;text-shadow:0 0 8px rgba(214,170,74,.32)}
