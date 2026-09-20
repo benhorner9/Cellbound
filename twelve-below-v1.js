@@ -86,9 +86,9 @@ function persistQuietly(){
 function partyReady(){
  const chars=party();if(chars.length!==5)return{ok:false,reason:'Build a complete active party first.'};
  if(chars.some(c=>Game.isUnavailable?.(c)))return{ok:false,reason:'A party member is recovering from Cell Shock.'};
- const roles=chars.map(roleOf);
- if(roles.filter(x=>x==='tank').length!==1||roles.filter(x=>x==='healer').length!==1||roles.filter(x=>x==='dps').length!==3)return{ok:false,reason:'The Twelve Below requires 1 Tank, 1 Healer and 3 Damage.'};
- return{ok:true,reason:'Your active five are ready.'}
+ const counts={tank:0,healer:0,dps:0};chars.forEach(c=>counts[roleOf(c)]=(counts[roleOf(c)]||0)+1);
+ const composition=[counts.tank?counts.tank+' Tank':'',counts.healer?counts.healer+' Healer':'',counts.dps?counts.dps+' Damage':''].filter(Boolean).join(' · ');
+ return{ok:true,reason:(composition||'Five adventurers')+' · any composition is allowed.'}
 }
 function rewardBand(kills){
  if(kills<=0)return{label:'BURIAL SCRAPS',tone:'scrap'};
