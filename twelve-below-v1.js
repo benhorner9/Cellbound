@@ -210,21 +210,61 @@ async function startRun(){
 function tombMarkup(){
  return BOSSES.map((b,i)=>'<div class="tb-tomb" data-tb-tomb="'+b.id+'" style="--i:'+i+'"><i>'+esc(b.rune)+'</i><span>'+esc(b.vice)+'</span></div>').join('')
 }
+function tbPartyFormation(c,i){
+ const r=roleOf(c);
+ if(r==='tank')return{x:39,y:50};
+ if(r==='healer')return{x:20,y:50};
+ const dps=[[28,32],[28,50],[28,68]];
+ return dps[Math.max(0,party().filter(x=>roleOf(x)==='dps').findIndex(x=>x.id===c.id))]||{x:28,y:32+i*9}
+}
+function tbSetPos(el,x,y,ms=500){
+ if(!el)return;el.dataset.x=String(x);el.dataset.y=String(y);el.style.transitionDuration=Math.max(80,ms/playSpeed)+'ms';el.style.left=x+'%';el.style.top=y+'%'
+}
+function tbUnitPos(id){
+ const el=$('[data-tb-unit="'+id+'"],[data-tb-boss="'+id+'"]');return el?{x:Number(el.dataset.x)||50,y:Number(el.dataset.y)||50}:null
+}
+function tbPartyIdFromCombat(id){return String(id||'').startsWith('p-')?String(id):null}
 function partyUnitMarkup(){
- return party().map((c,i)=>'<div class="tb-unit party '+classKey(c)+'" data-tb-unit="p-'+esc(c.id)+'" style="--row:'+i+'"><em><i></i></em><b></b><span>'+esc(c.name)+'</span></div>').join('')
+ return party().map((c,i)=>{const p=tbPartyFormation(c,i),r=roleOf(c);return'<div class="cb2d-unit tb-unit party '+r+' '+classKey(c)+'" data-tb-unit="p-'+esc(c.id)+'" data-x="'+p.x+'" data-y="'+p.y+'" style="left:'+p.x+'%;top:'+p.y+'%"><i></i><span>'+esc(c.name)+'<small class="cb2d-unit-meta">'+String(r).toUpperCase()+'</small></span><em class="cb2d-unit-hp"><i></i></em></div>'}).join('')
+}
+function tbBossSlots(count){
+ const layouts={
+  1:[[69,50]],2:[[69,38],[69,62]],3:[[68,30],[72,50],[68,70]],4:[[67,27],[74,41],[74,59],[67,73]]
+ };
+ if(layouts[count])return layouts[count];
+ return Array.from({length:count},(_,i)=>[68+(i%2)*7,22+(i/(Math.max(1,count-1)))*56])
+}
+function layoutBosses(ms=520){
+ const ids=[...run.activeBosses],slots=tbBossSlots(ids.length);
+ ids.forEach((id,i)=>{const el=$('[data-tb-boss="'+id+'"]'),p=slots[i]||[70,50];tbSetPos(el,p[0],p[1],ms)})
+}
+function tbLunge(source,target){
+ const src=String(source||''),el=src.startsWith('tb-')?$('[data-tb-boss="'+src.slice(3)+'"]'):$('[data-tb-unit="'+src+'"]'),tp=src.startsWith('tb-')?tbUnitPos(target):tbUnitPos(String(target||'').startsWith('tb-')?String(target).slice(3):target);
+ if(!el||!tp)return;
+ const ox=Number(el.dataset.x)||50,oy=Number(el.dataset.y)||50,dx=tp.x-ox,dy=tp.y-oy,len=Math.max(1,Math.hypot(dx,dy)),step=src.startsWith('tb-')?5:3.5;
+ tbSetPos(el,ox+dx/len*step,oy+dy/len*step,150);
+ setTimeout(()=>tbSetPos(el,ox,oy,220),Math.max(130,180/playSpeed))
+}
+function tbFloat(target,text,kind='damage'){
+ const arena=$('#tbArena'),id=String(target||''),el=id.startsWith('tb-')?$('[data-tb-boss="'+id.slice(3)+'"]'):$('[data-tb-unit="'+id+'"]');if(!arena||!el)return;
+ const p=tbUnitPos(id.startsWith('tb-')?id.slice(3):id);if(!p)return;
+ const n=document.createElement('i');n.className='cb2d-number '+kind;n.textContent=text;n.style.left=p.x+'%';n.style.top=p.y+'%';arena.appendChild(n);setTimeout(()=>n.remove(),900/playSpeed)
 }
 function renderLive(){
  const root=ensureBackdrop();root.hidden=false;
  root.innerHTML='<section class="cb2d-shell tb-shell"><header class="cb2d-head"><div><small>THE SEPULCHRE OF TWELVE · PRIVATE WORLD EVENT</small><h2>The Twelve Below</h2></div><div class="cb2d-live"><i></i>LIVE <button data-tb-speed>1×</button></div></header>'+
  '<div class="tb-scorebar"><span><small>DEFEATED</small><b id="tbKilled">0 / 12</b></span><span><small>NEXT TOMB</small><b id="tbCountdown">00:30</b></span><span><small>ATTEMPTS LEFT</small><b>'+attemptsLeft()+' / '+DAILY_ATTEMPTS+'</b></span><span><small>PERSONAL BEST</small><b>'+eventState().bestKills+' / 12</b></span></div>'+
- '<div class="cb2d-layout tb-layout"><main><div class="cb2d-arena tb-arena" id="tbArena"><div class="tb-ground"></div><div class="tb-tombs">'+tombMarkup()+'</div><div id="tbTelegraphs"></div><div id="tbBossUnits"></div><div id="tbPartyUnits">'+partyUnitMarkup()+'</div><div id="tbFx"></div><div class="tb-centre-seal">THE<br>TWELVE</div><div class="cb2d-caption"><span>ANCIENT BURIAL GROUND</span><b id="tbStatus">The first seal breaks…</b></div></div>'+
+ '<div class="tb-tomb-track">'+tombMarkup()+'</div>'+
+ '<div class="cb2d-layout tb-layout"><main><div class="cb2d-arena tb-arena" id="tbArena"><div class="cb2d-floor tb-ground"></div><div class="tb-burial-architecture"><i></i><i></i><i></i><i></i></div><div id="tbTelegraphs"></div><div id="tbBossUnits"></div><div id="tbPartyUnits">'+partyUnitMarkup()+'</div><div id="tbFx"></div><div class="cb2d-room-tag tb-room-tag"><b>Sepulchre Courtyard</b><small>Twelve sealed tombs surround the ancient fighting ground.</small></div><div class="cb2d-caption"><span>PRIVATE SURVIVAL EVENT</span><b id="tbStatus">The first seal breaks…</b></div></div>'+
+ '<div class="cb2d-controls tb-controls"><button><b>FOCUS TARGET</b><small>Party burns the active priority.</small></button><button><b>INTERRUPTS</b><small>Critical casts are covered.</small></button><button><b>DEFENSIVES</b><small>Tank stabilises incoming pressure.</small></button><button><b>BOSS CONTROL</b><small>Tank holds active vices together.</small></button><button><b>SURVIVE</b><small>Keep the five alive until the next tomb.</small></button></div>'+
  '<div class="cb2d-feed"><small>COMBAT FEED</small><div id="tbFeed"></div></div></main><aside>'+
  '<div class="cb2d-cast" id="tbCast"><small>ENEMY CAST</small><div><b id="tbCastName">—</b><strong id="tbCastTime">—</strong></div><div class="cb2d-castbar"><i id="tbCastFill"></i></div></div>'+
  '<div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="tbDamageTotal">0 total</span></div><div id="tbDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="tbHealingTotal">0 total</span></div><div id="tbHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT · PRIMARY BOSS</small><span id="tbThreatTarget">—</span></div><div id="tbThreatMeter" class="cb2d-meter-list"></div></section></div>'+
+ '<div class="cb2d-actions"><small>PARTY ACTIONS</small><div><i class="cb2d-dot tank"></i><b>Tank</b><em>Controlling active bosses</em></div><div><i class="cb2d-dot healer"></i><b>Healer</b><em>Maintaining the five</em></div><div><i class="cb2d-dot dps"></i><b>Damage</b><em>Burning the priority vice</em></div></div>'+
  '<div class="cb2d-party"><small>ACTIVE FIVE · PRIVATE INSTANCE</small><div id="tbPartyRows">'+party().map(c=>'<div class="cb2d-party-row"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+String(roleOf(c)).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-tb-side-hp="p-'+esc(c.id)+'" style="width:100%"></i></em></span><strong data-tb-side-text="p-'+esc(c.id)+'">100 HP</strong></div>').join('')+'</div></div>'+
  '<div class="tb-live-rule"><small>ESCALATION RULE</small><b>Another tomb opens every 30 seconds.</b><span>Surviving bosses remain active.</span></div></aside></div></section>';
  root.querySelector('[data-tb-speed]').onclick=e=>{playSpeed=playSpeed===1?2:playSpeed===2?4:1;e.currentTarget.textContent=playSpeed+'×';resetClockAnchor()}
- renderMeters()
+ requestAnimationFrame(()=>{party().forEach((ch,i)=>{const p=tbPartyFormation(ch,i),el=$('[data-tb-unit="p-'+ch.id+'"]');tbSetPos(el,p.x,p.y,0)});renderMeters()})
 }
 function feed(text,kind=''){
  const root=$('#tbFeed');if(!root)return;const p=document.createElement('p');p.className=kind;p.textContent=text;root.prepend(p);while(root.children.length>14)root.lastElementChild.remove()
@@ -232,13 +272,13 @@ function feed(text,kind=''){
 function bossDef(id){return BOSSES.find(b=>b.id===id)}
 function spawnBoss(id){
  const b=bossDef(id),root=$('#tbBossUnits');if(!b||!root||root.querySelector('[data-tb-boss="'+id+'"]'))return;
- const idx=BOSSES.findIndex(x=>x.id===id),slot=[{x:70,y:50},{x:66,y:33},{x:66,y:67},{x:77,y:37},{x:77,y:63},{x:58,y:25},{x:58,y:75},{x:82,y:50},{x:73,y:22},{x:73,y:78},{x:86,y:32},{x:86,y:68}][idx]||{x:70,y:50};
- root.insertAdjacentHTML('beforeend','<div class="tb-unit boss" data-tb-boss="'+id+'" style="left:'+slot.x+'%;top:'+slot.y+'%"><em><i style="width:100%"></i></em><b>'+esc(b.rune)+'</b><span>'+esc(b.vice)+'</span></div>');
- run.activeBosses.add(id);
+ const idx=BOSSES.findIndex(x=>x.id===id),entryY=24+(idx%5)*13;
+ root.insertAdjacentHTML('beforeend','<div class="cb2d-unit tb-unit enemy boss" data-tb-boss="'+id+'" data-x="96" data-y="'+entryY+'" style="left:96%;top:'+entryY+'%"><i></i><span>'+esc(b.vice)+'<small class="cb2d-unit-meta">'+esc(b.name)+'</small></span><em class="cb2d-unit-hp"><i style="width:100%"></i></em></div>');
+ run.activeBosses.add(id);layoutBosses(760);
  const tomb=$('[data-tb-tomb="'+id+'"]');tomb?.classList.add('open');feed(b.name+' rises from the tomb.','spawn');$('#tbStatus').textContent=b.name+' has entered the burial ground.'
 }
 function defeatBoss(id){
- run.activeBosses.delete(id);run.defeated.add(id);$('[data-tb-boss="'+id+'"]')?.classList.add('dead');const tomb=$('[data-tb-tomb="'+id+'"]');tomb?.classList.remove('open');tomb?.classList.add('defeated');$('#tbKilled').textContent=run.defeated.size+' / 12';feed((bossDef(id)?.name||id)+' has fallen.','kill')
+ run.activeBosses.delete(id);run.defeated.add(id);const dead=$('[data-tb-boss="'+id+'"]');if(dead){dead.classList.add('dead');setTimeout(()=>{dead.remove();layoutBosses(420)},420/playSpeed)}const tomb=$('[data-tb-tomb="'+id+'"]');tomb?.classList.remove('open');tomb?.classList.add('defeated');$('#tbKilled').textContent=run.defeated.size+' / 12';feed((bossDef(id)?.name||id)+' has fallen.','kill')
 }
 function setPartyHp(id,pct){
  const value=clamp(Number(pct)||0,0,100),u=$('[data-tb-unit="'+id+'"]');if(u){u.querySelector('em i').style.width=value+'%';u.classList.toggle('dead',value<=0)}const bar=$('[data-tb-side-hp="'+id+'"]'),txt=$('[data-tb-side-text="'+id+'"]');if(bar)bar.style.width=value+'%';if(txt)txt.textContent=Math.round(value)+' HP'
@@ -265,22 +305,25 @@ function castClear(){const name=$('#tbCastName'),time=$('#tbCastTime'),fill=$('#
 function handleEvent(e){
  run.elapsed=Math.max(run.elapsed,Number(e.timestamp)||0);
  if(e.type==='TOMB_OPEN'){spawnBoss(e.payload?.bossId);return}
+ if(e.type==='MOVEMENT_START'&&e.payload?.to){const el=String(e.source||'').startsWith('tb-')?$('[data-tb-boss="'+String(e.source).slice(3)+'"]'):$('[data-tb-unit="'+e.source+'"]');tbSetPos(el,e.payload.to.x,e.payload.to.y,e.payload.duration||420);return}
+ if(e.type==='ABILITY_START'){tbLunge(e.source,e.target);return}
  if(e.type==='VICE_DEFEATED'){defeatBoss(e.payload?.bossId);return}
  if(e.type==='ENEMY_DEFEATED'&&String(e.target||'').startsWith('tb-')){defeatBoss(String(e.target).slice(3));return}
  if(e.type==='DAMAGE_DEALT'){
    if(String(e.source||'').startsWith('p-'))run.damage[e.source]=(Number(run.damage[e.source])||0)+(Number(e.amount)||0);
    if(String(e.target||'').startsWith('p-'))setPartyHp(e.target,e.payload?.targetHpPct);
    if(String(e.target||'').startsWith('tb-'))setBossHp(String(e.target).slice(3),e.payload?.targetHpPct);
+   tbFloat(e.target,'-'+Math.round(Number(e.amount)||0),String(e.target||'').startsWith('p-')?'incoming':'damage');
    renderMeters();return
  }
- if(e.type==='HEAL_RECEIVED'){if(String(e.source||'').startsWith('p-'))run.healing[e.source]=(Number(run.healing[e.source])||0)+(Number(e.amount)||0);if(String(e.target||'').startsWith('p-'))setPartyHp(e.target,e.payload?.targetHpPct);renderMeters();return}
+ if(e.type==='HEAL_RECEIVED'){if(String(e.source||'').startsWith('p-'))run.healing[e.source]=(Number(run.healing[e.source])||0)+(Number(e.amount)||0);if(String(e.target||'').startsWith('p-'))setPartyHp(e.target,e.payload?.targetHpPct);tbFloat(e.target,'+'+Math.round(Number(e.amount)||0),'heal');renderMeters();return}
  if(e.type==='THREAT_GENERATED'&&String(e.target||'').startsWith('tb-')){const bid=String(e.target).slice(3);run.threat[bid]=run.threat[bid]||{};run.threat[bid][e.source]=(Number(run.threat[bid][e.source])||0)+(Number(e.amount)||0);renderMeters();return}
  if(e.type==='PLAYER_DEFEATED'){setPartyHp(e.target,0);feed((party().find(c=>'p-'+c.id===e.target)?.name||'An adventurer')+' has fallen.','danger');return}
  if(e.type==='MECHANIC_TELEGRAPH'){mechanicFlash(e);return}
  if(e.type==='CAST_START'&&e.result==='enemy'){castStart(e);return}
  if(e.type==='CAST_FINISH'||e.type==='INTERRUPT'){castClear();if(e.type==='INTERRUPT'&&e.result==='success')feed('Interrupt successful: '+(e.payload?.interruptedAbility||e.ability||'cast')+'.','good');return}
  if(e.type==='PLAYER_MISTAKE'){feed((party().find(c=>'p-'+c.id===e.source)?.name||'A party member')+' made a '+(e.result||'combat')+' mistake.','danger');return}
- if(e.type==='AGGRO_CHANGED'){const ch=party().find(c=>'p-'+c.id===e.target);if(ch&&roleOf(ch)!=='tank')feed(ch.name+' has boss aggro.','danger')}
+ if(e.type==='AGGRO_CHANGED'){layoutBosses(360);const ch=party().find(c=>'p-'+c.id===e.target);if(ch&&roleOf(ch)!=='tank')feed(ch.name+' has boss aggro.','danger')}
 }
 function resetClockAnchor(){playBaseMs=run?.elapsed||0;playStartedAt=performance.now()}
 function startClock(){
