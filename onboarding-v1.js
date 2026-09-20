@@ -261,7 +261,7 @@ function tdProfile(c){
   const r=tdRole(c);
   if(r==='tank')return'tank';
   if(r==='healer')return'healer';
-  if(['Rogue','Warrior','Paladin'].includes(c.class))return'melee';
+  if(['Rogue','Warrior','Paladin','Death Knight','Demon Hunter'].includes(c.class))return'melee';
   return'ranged';
 }
 const ZELTIRA_ROOMS=[
@@ -430,6 +430,15 @@ function tdSetPartyHpByEvent(c,pct){
   const el=$('[data-td-party="'+c.id+'"]'),bar=el?.querySelector('em b');if(bar)bar.style.width=Math.max(0,Math.min(100,pct))+'%';
   if(el)el.classList.toggle('dead',pct<=0)
 }
+function tdResourceVisual(e){
+  const sel=tdSelectorFor(e.source),u=sel?$(sel):null;if(!u||!u.classList.contains('party'))return;
+  let bar=u.querySelector('.cbr-resource');
+  if(!bar){bar=document.createElement('small');bar.className='cbr-resource';bar.innerHTML='<i></i><span></span>';u.appendChild(bar)}
+  const name=String(e.payload?.resource||'Power'),max=Math.max(1,Number(e.payload?.max)||100),value=Math.max(0,Math.min(max,Number(e.payload?.value)||0));
+  [...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));
+  bar.classList.add('resource-'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-'));
+  const fill=bar.querySelector('i'),label=bar.querySelector('span');if(fill)fill.style.width=(value/max*100)+'%';if(label)label.textContent=name+' '+Math.round(value)+'/'+Math.round(max);bar.title=name+' '+Math.round(value)+' / '+Math.round(max)
+}
 function tdCastBar(name,duration){
   const enemy=$('[data-td-enemy="0"]');if(!enemy)return null;
   enemy.querySelector('.td-training-cast')?.remove();
@@ -473,6 +482,7 @@ async function tdPlayCombat(result,my){
       case'HEAL_RECEIVED':
         if(targetChar&&targetSel){const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdSetPartyHpByEvent(targetChar,p);tdFloat(targetSel,'+'+Math.round(Number(e.amount)||0),'heal')}
         break;
+      case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':tdResourceVisual(e);break;
       case'AGGRO_CHANGED':
         if(/^e-\d+$/.test(String(e.source||''))&&targetChar){tdThreatLine(Number(String(e.source).slice(2)),targetChar);if(tdRole(targetChar)==='tank')tdAction('tank',targetChar.name+' holds threat')}
         break;
