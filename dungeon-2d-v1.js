@@ -1256,6 +1256,7 @@ function renderRebornEvent(e,result,replayMode=false){
    const actor=$('[data-unit="'+e.source+'"]');if(actor){actor.classList.remove('attacking');void actor.offsetWidth;actor.classList.add('attacking');setTimeout(()=>actor.classList.remove('attacking'),360)}
    if(srcChar){
      const r=role(srcChar);act(r==='tank'?'tank':r==='healer'?'healer':'dps',srcChar.name+' · '+(e.ability||'Action'));
+     if(e.payload?.kind==='battle-rez'){status(srcChar.name+' is attempting a combat resurrection');log(srcChar.name+' commits to '+(e.ability||'a combat resurrection')+'.')}
      if(e.target)faceUnit(e.source,e.target);
      if(!(e.payload?.castTime>0)&&e.payload?.kind==='damage'&&e.target)projectile(e.source,e.target,attackKind(srcChar),260);
    }else if(String(e.source||'').startsWith('e-')||String(e.source||'').startsWith('add-')){
@@ -1265,6 +1266,7 @@ function renderRebornEvent(e,result,replayMode=false){
   }
   case'CAST_START':
    if(String(e.source||'').startsWith('e-')){rebornCastStart(e);log((e.ability||'Enemy cast')+' begins.')}
+   else if(srcChar&&e.ability==='Soul Recall'){status('Soul Recall · 5.0s');act('healer',srcChar.name+' · Soul Recall')}
    break;
   case'CAST_CANCELLED':
    if(String(e.source||'').startsWith('e-'))rebornCastClear('INTERRUPTED');break;
@@ -1287,7 +1289,24 @@ function renderRebornEvent(e,result,replayMode=false){
    if(targetChar){setHp(targetChar.id,Number(e.payload?.targetHpPct)||hp(targetChar.id));updateRows();hitReact(e.target,'heal');floating(e.target,'+'+Math.round(Number(e.amount)||0),'heal')}
    if(srcChar)recordRebornHealing(srcChar,Number(e.amount)||0,Number(e.payload?.overhealing)||0);
    break;
+  case'PLAYER_REVIVED':
+   if(targetChar){
+    setHp(targetChar.id,Number(e.payload?.targetHpPct)||35);updateRows();restoreUnitVisual(targetChar);
+    const state={type:'RESOURCE_STATE',source:e.target,result:'revived',payload:{resource:e.payload?.resource,value:e.payload?.resourceValue,max:e.payload?.resourceMax}};
+    rebornResourceVisual(state);hitReact(e.target,'heal');floating(e.target,'BATTLE REZ','heal');flash('BATTLE REZ',false);
+    log(targetChar.name+' is brought back by '+(srcChar?.name||'the healer')+'.');status('Combat resurrection successful')
+   }
+   break;
   case'RESOURCE_SPENT':case'RESOURCE_GAINED':case'RESOURCE_STATE':rebornResourceVisual(e);break;
+  case'PLAYER_MISTAKE':{
+   if(srcChar){
+    const type=String(e.payload?.type||e.result||'mistake'),detail=e.payload?.detail||'made an execution mistake';
+    const rr=role(srcChar),label=type==='movement'?'LATE MOVE':type==='interrupt'?'INTERRUPT ERROR':type==='threat'?'THREAT ERROR':type==='tank'?'TANK ERROR':type==='triage'?'HEALING ERROR':type==='defensive'?'DEFENSIVE ERROR':'MISTAKE';
+    floating(e.source,label,'incoming');log(srcChar.name+' '+detail+'.');
+    act(rr==='tank'?'tank':rr==='healer'?'healer':'dps',srcChar.name+' · '+label);
+   }
+   break;
+  }
   case'THREAT_GENERATED':
    if(enemyIdx>=0&&srcChar&&run.threat?.[enemyIdx]){run.threat[enemyIdx][srcChar.id]=Number(e.payload?.total)||0;queueCombatMeterRender()}break;
   case'AGGRO_CHANGED':
@@ -1300,6 +1319,7 @@ function renderRebornEvent(e,result,replayMode=false){
   case'INTERRUPT':
    if(e.result==='success'){rebornCastClear('INTERRUPTED');clearRebornTelegraph(e.payload?.token,'safe');flash('INTERRUPTED',false);log((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');act('dps','Interrupt successful')}
    else if(e.result==='failed')log((srcChar?.name||'A player')+' misses an interrupt.');
+   else if(e.result==='duplicate')log((srcChar?.name||'A player')+' overlaps an interrupt that was already covered.');
    break;
   case'DEFENSIVE_ACTIVATED':
    flash('DEFENSIVE',false);log((srcChar?.name||'Tank')+' activates '+(e.ability||'a defensive')+'.');act('tank',(srcChar?.name||'Tank')+' · Defensive active');break;
@@ -1311,7 +1331,7 @@ function renderRebornEvent(e,result,replayMode=false){
    if(e.type==='ADD_DEFEATED')log('An add is defeated.');break;
   }
   case'PLAYER_DEFEATED':
-   if(targetChar){setHp(targetChar.id,0);updateRows();deathBurst(e.target);log(targetChar.name+' is defeated.')}break;
+   if(targetChar){setHp(targetChar.id,0);updateRows();const u=$('[data-unit="'+e.target+'"]');if(u){u.classList.add('dying');setTimeout(()=>u.classList.add('dead'),220)}deathBurst(e.target);log(targetChar.name+' is defeated.')}break;
   case'CAST_FINISH':
    rebornCastClear('CAST COMPLETE');if(String(e.source||'').startsWith('e-'))log((e.ability||'Enemy cast')+' completes.');break;
   case'COMBAT_END':
