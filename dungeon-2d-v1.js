@@ -1510,9 +1510,12 @@ function rebornFailureDiagnosisHTML(){
  return'<section class="cbr-failure-diagnosis"><small>WHY THE RUN FAILED</small><h4>Change the plan, not just the numbers.</h4><div>'+causes.slice(0,3).map((x,i)=>'<p><b>'+(i+1)+'</b>'+esc(x)+'</p>').join('')+'</div>'+(unique.length?'<strong>NEXT ATTEMPT</strong><ul>'+unique.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'</section>'
 }
 function endgameProgressHTML(){
- const record=run?.endgameRecord||{},unlocks=record.newUnlocks||[],achievements=record.newAchievements||[];
- if(!unlocks.length&&!achievements.length)return'';
- return'<section class="cbr-progress-earned"><small>NEW PROGRESSION</small><h4>Your clear opened new goals.</h4><div>'+unlocks.map(x=>'<span><i>↗</i><b>'+esc(x)+'</b></span>').join('')+achievements.map(id=>'<span><i>◆</i><b>Achievement: '+esc(window.CellboundEndgame?.achievementName?.(id)||id)+'</b></span>').join('')+'</div></section>'
+ const record=run?.endgameRecord||{},unlocks=record.newUnlocks||[],achievements=record.newAchievements||[],score=Number(record.score||run?.endgameMetrics?.scorePreview||0);
+ const comparison=record.isNewBest
+   ?'<span><i>★</i><b>NEW BEST · '+score.toLocaleString()+' score</b></span>'
+   :record.previousBestScore?'<span><i>↔</i><b>Previous best '+Number(record.previousBestScore).toLocaleString()+' · this run '+score.toLocaleString()+'</b></span>':'';
+ if(!unlocks.length&&!achievements.length&&!comparison)return'';
+ return'<section class="cbr-progress-earned"><small>RUN PROGRESSION</small><h4>What changed after this clear.</h4><div>'+comparison+unlocks.map(x=>'<span><i>↗</i><b>'+esc(x)+'</b></span>').join('')+achievements.map(id=>'<span><i>◆</i><b>Achievement: '+esc(window.CellboundEndgame?.achievementName?.(id)||id)+'</b></span>').join('')+'</div></section>'
 }
 
 function rebornAnalysisHTML(){
