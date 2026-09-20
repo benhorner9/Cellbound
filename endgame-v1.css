@@ -27,3 +27,19 @@
 .eg-prep-block{margin-top:14px;padding:13px;border:1px solid rgba(91,194,185,.14);background:rgba(11,31,34,.6)}.eg-prep-block>small{color:#68cbc3;font-size:.48rem;letter-spacing:.12em;font-weight:900}.eg-prep-tabs{display:flex;gap:5px;margin-top:9px}.eg-prep-tabs button{flex:1;min-height:34px;border:1px solid rgba(255,255,255,.07);background:#0a171b;color:#71847f;font-size:.49rem;font-weight:900}.eg-prep-tabs button.active{border-color:#4cbeb4;color:#c9faf5;background:#153633}.eg-prep-tabs button:disabled{opacity:.3}.eg-prep-detail{margin-top:9px;color:#71847f;font-size:.56rem;line-height:1.5}.eg-prep-detail b{color:#b8cac5}
 @media(max-width:900px){.eg-hero,.eg-weekly{grid-template-columns:1fr}.eg-season{border-left:0;border-top:1px solid var(--eg-line)}.eg-dungeon-grid{grid-template-columns:1fr}.eg-leaderboards{grid-template-columns:1fr}}
 @media(max-width:640px){.eg-hero{padding:20px}.eg-hero h2{font-size:1.8rem}.eg-dungeon-card>header{grid-template-columns:1fr}.eg-best{text-align:left}.eg-boss-strip{grid-template-columns:1fr}.eg-dungeon-card>footer{align-items:stretch;flex-direction:column}.eg-dungeon-card footer button{width:100%;min-height:44px}.eg-leader-list>div{grid-template-columns:30px 1fr 55px}.eg-leader-list>div strong{grid-column:2/-1;text-align:left}.eg-weekly{padding:15px}.eg-mode-tabs button{min-width:104px;min-height:40px}}
+
+.eg-achievements,.eg-collections{margin-top:14px;padding:14px}
+.eg-achievement-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.eg-achievement-grid article,.eg-collection-list article{min-height:72px;padding:10px;display:grid;grid-template-columns:30px 1fr;gap:9px;align-items:center;border:1px solid rgba(255,255,255,.055);background:#091419}
+.eg-achievement-grid article>i,.eg-collection-list article>i{width:28px;height:28px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.07);background:#102127;color:#627773;font-style:normal}
+.eg-achievement-grid article span>* ,.eg-collection-list article span>*{display:block}
+.eg-achievement-grid article b,.eg-collection-list article b{font-size:.61rem}
+.eg-achievement-grid article small,.eg-collection-list article small{margin:3px 0;color:#6f817d;font-size:.49rem;line-height:1.4;letter-spacing:0}
+.eg-achievement-grid article em,.eg-collection-list article em{color:#57716d;font-size:.43rem;font-style:normal}
+.eg-achievement-grid article.unlocked{border-color:rgba(91,198,174,.23);background:linear-gradient(120deg,#0a1919,#0b171c)}
+.eg-achievement-grid article.unlocked>i{border-color:rgba(93,204,178,.3);color:#8ee1c8;background:#102b25}
+.eg-achievement-grid article.locked{opacity:.58}
+.eg-collection-list{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.eg-collection-list article>i{color:#d1ac72;border-color:rgba(209,172,114,.18);background:#261f15}
+@media(max-width:900px){.eg-achievement-grid{grid-template-columns:repeat(2,1fr)}.eg-collection-list{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.eg-achievement-grid,.eg-collection-list{grid-template-columns:1fr}.eg-achievements,.eg-collections{padding:10px}}
