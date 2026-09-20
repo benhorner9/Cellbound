@@ -36,6 +36,34 @@ function state(){return Game?.getState?.()}
 function party(){return Game?.getPartyCharacters?.()||[]}
 function roleOf(c){return Game?.classes?.[c.class]?.specs?.[c.spec]?.role||'dps'}
 function classKey(c){return 'class-'+String(c?.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}
+function tbResourceDef(c){
+ return window.CellboundCombatReborn?.RESOURCE_DEFS?.[c?.class]||{name:'Power',max:100,start:100}
+}
+function tbResourceClass(name){
+ return 'resource-'+String(name||'Power').toLowerCase().replace(/[^a-z0-9]+/g,'-')
+}
+function tbInitialResource(c){
+ const d=tbResourceDef(c);return{name:d.name,max:Number(d.max)||100,value:Number(d.start??d.max??100)}
+}
+function tbSetResource(unitId,name,value,max){
+ const limit=Math.max(1,Number(max)||100),current=clamp(Number(value)||0,0,limit),pct=current/limit*100,key=tbResourceClass(name);
+ if(run?.resources)run.resources[unitId]={name:name||'Power',value:current,max:limit};
+ const unit=$('[data-tb-unit="'+unitId+'"]'),bar=unit?.querySelector('.cbr-resource');
+ if(bar){
+   [...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));
+   bar.classList.add(key);bar.dataset.resource=name||'Power';bar.title=(name||'Power')+' '+Math.round(current)+' / '+Math.round(limit);
+   const fill=bar.querySelector('i');if(fill)fill.style.width=pct+'%'
+ }
+ const side=$('[data-tb-side-resource="'+unitId+'"]');
+ if(side){
+   [...side.classList].filter(x=>x.startsWith('resource-')).forEach(x=>side.classList.remove(x));
+   side.classList.add(key);side.dataset.resource=name||'Power';side.title=(name||'Power')+' '+Math.round(current)+' / '+Math.round(limit);
+   const fill=side.querySelector('i');if(fill)fill.style.width=pct+'%'
+ }
+ const label=$('[data-tb-side-resource-label="'+unitId+'"]');
+ if(label)label.textContent=(name||'Power')+' '+Math.round(current)
+}
+
 function todayKey(){return new Date().toISOString().slice(0,10)}
 function eventState(){
  const s=state();if(!s)return null;
@@ -212,7 +240,7 @@ function startRun(){
   if(btn){btn.disabled=false;btn.textContent='BEGIN SURVIVAL →'}
   alert(error.message||'The burial ground could not be entered.');openBriefing();return
  }
- run={result,rewards:null,rewardsApplied:false,damage:{},healing:{},threat:{},activeBosses:new Set(),defeated:new Set(),elapsed:0};
+ run={result,rewards:null,rewardsApplied:false,damage:{},healing:{},threat:{},resources:Object.fromEntries(party().map(c=>['p-'+c.id,tbInitialResource(c)])),activeBosses:new Set(),defeated:new Set(),elapsed:0};
  renderLive();
  requestAnimationFrame(()=>playTimeline(result.timeline))
 }
@@ -235,7 +263,10 @@ function tbUnitPos(id){
 }
 function tbPartyIdFromCombat(id){return String(id||'').startsWith('p-')?String(id):null}
 function partyUnitMarkup(){
- return party().map((c,i)=>{const p=tbPartyFormation(c,i),r=roleOf(c);return'<div class="cb2d-unit tb-unit party '+r+' '+classKey(c)+'" data-tb-unit="p-'+esc(c.id)+'" data-x="'+p.x+'" data-y="'+p.y+'" style="left:'+p.x+'%;top:'+p.y+'%"><i></i><span>'+esc(c.name)+'<small class="cb2d-unit-meta">'+String(r).toUpperCase()+'</small></span><em class="cb2d-unit-hp"><i></i></em></div>'}).join('')
+ return party().map((c,i)=>{
+  const p=tbPartyFormation(c,i),r=roleOf(c),res=tbInitialResource(c),rk=tbResourceClass(res.name),rpct=clamp(res.value/res.max*100,0,100);
+  return'<div class="cb2d-unit tb-unit party '+r+' '+classKey(c)+'" data-tb-unit="p-'+esc(c.id)+'" data-x="'+p.x+'" data-y="'+p.y+'" style="left:'+p.x+'%;top:'+p.y+'%"><i></i><span>'+esc(c.name)+'<small class="cb2d-unit-meta">'+String(r).toUpperCase()+'</small></span><em class="cb2d-unit-hp"><i></i></em><small class="cbr-resource '+rk+'" data-resource="'+esc(res.name)+'" title="'+esc(res.name)+' '+Math.round(res.value)+' / '+Math.round(res.max)+'"><i style="width:'+rpct+'%"></i></small></div>'
+ }).join('')
 }
 function tbBossSlots(count){
  const layouts={
@@ -271,10 +302,10 @@ function renderLive(){
  '<div class="cb2d-cast" id="tbCast"><small>ENEMY CAST</small><div><b id="tbCastName">—</b><strong id="tbCastTime">—</strong></div><div class="cb2d-castbar"><i id="tbCastFill"></i></div></div>'+
  '<div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="tbDamageTotal">0 total</span></div><div id="tbDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="tbHealingTotal">0 total</span></div><div id="tbHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT · PRIMARY BOSS</small><span id="tbThreatTarget">—</span></div><div id="tbThreatMeter" class="cb2d-meter-list"></div></section></div>'+
  '<div class="cb2d-actions"><small>PARTY ACTIONS</small><div><i class="cb2d-dot tank"></i><b>Tank</b><em>Controlling active bosses</em></div><div><i class="cb2d-dot healer"></i><b>Healer</b><em>Maintaining the five</em></div><div><i class="cb2d-dot dps"></i><b>Damage</b><em>Burning the priority vice</em></div></div>'+
- '<div class="cb2d-party"><small>ACTIVE FIVE · PRIVATE INSTANCE</small><div id="tbPartyRows">'+party().map(c=>'<div class="cb2d-party-row"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+String(roleOf(c)).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-tb-side-hp="p-'+esc(c.id)+'" style="width:100%"></i></em></span><strong data-tb-side-text="p-'+esc(c.id)+'">100 HP</strong></div>').join('')+'</div></div>'+
+ '<div class="cb2d-party"><small>ACTIVE FIVE · PRIVATE INSTANCE</small><div id="tbPartyRows">'+party().map(c=>{const res=tbInitialResource(c),rk=tbResourceClass(res.name),rpct=clamp(res.value/res.max*100,0,100);return'<div class="cb2d-party-row"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+String(roleOf(c)).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-tb-side-hp="p-'+esc(c.id)+'" style="width:100%"></i></em><em class="tb-side-resource '+rk+'" data-tb-side-resource="p-'+esc(c.id)+'" title="'+esc(res.name)+' '+Math.round(res.value)+' / '+Math.round(res.max)+'"><i style="width:'+rpct+'%"></i></em></span><strong><span data-tb-side-text="p-'+esc(c.id)+'">100 HP</span><small data-tb-side-resource-label="p-'+esc(c.id)+'">'+esc(res.name)+' '+Math.round(res.value)+'</small></strong></div>'}).join('')+'</div></div>'+
  '<div class="tb-live-rule"><small>ESCALATION RULE</small><b>Another tomb opens every 30 seconds.</b><span>Surviving bosses remain active.</span></div></aside></div></section>';
  root.querySelector('[data-tb-speed]').onclick=e=>{playSpeed=playSpeed===1?2:playSpeed===2?4:1;e.currentTarget.textContent=playSpeed+'×';resetClockAnchor()}
- requestAnimationFrame(()=>{party().forEach((ch,i)=>{const p=tbPartyFormation(ch,i),el=$('[data-tb-unit="p-'+ch.id+'"]');tbSetPos(el,p.x,p.y,0)});renderMeters()})
+ requestAnimationFrame(()=>{party().forEach((ch,i)=>{const p=tbPartyFormation(ch,i),el=$('[data-tb-unit="p-'+ch.id+'"]');tbSetPos(el,p.x,p.y,0);const res=run.resources['p-'+ch.id]||tbInitialResource(ch);tbSetResource('p-'+ch.id,res.name,res.value,res.max)});renderMeters()})
 }
 function feed(text,kind=''){
  const root=$('#tbFeed');if(!root)return;const p=document.createElement('p');p.className=kind;p.textContent=text;root.prepend(p);while(root.children.length>14)root.lastElementChild.remove()
@@ -327,6 +358,12 @@ function handleEvent(e){
    renderMeters();return
  }
  if(e.type==='HEAL_RECEIVED'){if(String(e.source||'').startsWith('p-'))run.healing[e.source]=(Number(run.healing[e.source])||0)+(Number(e.amount)||0);if(String(e.target||'').startsWith('p-'))setPartyHp(e.target,e.payload?.targetHpPct);tbFloat(e.target,'+'+Math.round(Number(e.amount)||0),'heal');renderMeters();return}
+ if((e.type==='RESOURCE_SPENT'||e.type==='RESOURCE_GAINED'||e.type==='RESOURCE_STATE')&&String(e.source||'').startsWith('p-')){
+   const ch=party().find(c=>'p-'+c.id===e.source),fallback=ch?tbResourceDef(ch):{name:'Power',max:100,start:100};
+   const previous=run.resources?.[e.source]||{name:fallback.name,max:fallback.max,value:fallback.start};
+   tbSetResource(e.source,e.payload?.resource||previous.name||fallback.name,e.payload?.value??previous.value??fallback.start,e.payload?.max??previous.max??fallback.max);
+   return
+ }
  if(e.type==='THREAT_GENERATED'&&String(e.target||'').startsWith('tb-')){const bid=String(e.target).slice(3);run.threat[bid]=run.threat[bid]||{};run.threat[bid][e.source]=(Number(run.threat[bid][e.source])||0)+(Number(e.amount)||0);renderMeters();return}
  if(e.type==='PLAYER_DEFEATED'){setPartyHp(e.target,0);feed((party().find(c=>'p-'+c.id===e.target)?.name||'An adventurer')+' has fallen.','danger');return}
  if(e.type==='MECHANIC_TELEGRAPH'){mechanicFlash(e);return}
