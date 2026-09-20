@@ -808,6 +808,7 @@ function simulate(options={}){
  }
  if(ctx.time>MAX_COMBAT_MS)emit(ctx,'ENRAGE',{result:'timeout'});
  ctx.finished=true;ctx.queue.length=0;
+ players.filter(u=>u.alive).forEach(u=>emitResourceState(ctx,u,'final'));
  emit(ctx,'COMBAT_END',{result:outcome,payload:{durationMs:ctx.time}});
  ctx.stats.endedAt=ctx.time;
  const summary=buildSummary(ctx,outcome);
