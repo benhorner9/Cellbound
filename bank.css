@@ -48,3 +48,34 @@
 
 /* Rolled gear stats */
 .bank-roll-stats,.bank-detail-rolls{display:flex;flex-wrap:wrap;gap:4px;margin:7px 0}.bank-roll-stats span,.bank-detail-rolls span{padding:3px 5px;border:1px solid rgba(95,201,167,.13);background:#0b1a18;color:#91cdb8;font-size:.4rem;font-weight:800}.bank-roll-stats span.legacy,.bank-detail-rolls span.legacy{border-color:rgba(255,255,255,.06);background:#101719;color:#62726d}.bank-set-tag{display:inline-block;margin:2px 0 6px;padding:4px 7px;border:1px solid rgba(176,108,255,.25);background:#191225;color:#c9a5f4;font-size:.4rem;font-weight:900}.bank-character-list em.roll-fit{padding:3px 5px;border-radius:2px}.bank-character-list em.roll-fit.ideal{color:#8cd3a6;background:#102219}.bank-character-list em.roll-fit.mixed{color:#d7be75;background:#211d12}.bank-character-list em.roll-fit.off{color:#c68179;background:#221413}@media(max-width:760px){.bank-roll-stats span,.bank-detail-rolls span{font-size:.48rem}}
+
+
+/* Update 2 — loot mastery */
+.bank-item.is-favorite{border-color:rgba(229,196,103,.4);box-shadow:inset 0 0 0 1px rgba(229,196,103,.08)}
+.bank-item.is-junk{border-color:rgba(174,93,76,.28)}
+.bank-flag{position:absolute;z-index:4;top:8px;padding:3px 5px;border:1px solid rgba(255,255,255,.08);background:#0b1417;font-style:normal;font-size:.34rem;font-weight:900;letter-spacing:.06em}
+.bank-flag.favorite{left:8px;color:#ebd487;border-color:rgba(235,212,135,.28)}
+.bank-flag.junk{left:8px;color:#d69a8b;border-color:rgba(214,154,139,.24)}
+.bank-flag.favorite+.bank-flag.junk{left:36px}
+.bank-unique-effect{flex:1 1 100%;padding:5px 7px!important;border-color:rgba(176,108,255,.27)!important;background:rgba(36,20,49,.8)!important;color:#cfafe9!important;line-height:1.45}
+.bank-unique-detail{margin:9px 0;padding:9px 10px;border:1px solid rgba(176,108,255,.24);background:linear-gradient(110deg,rgba(39,21,53,.8),rgba(16,18,26,.7))}
+.bank-unique-detail small{display:block;color:#a97ad0;font-size:.4rem;font-weight:900;letter-spacing:.1em}
+.bank-unique-detail b{display:block;margin:4px 0;color:#ddc4f2;font-family:Georgia,serif;font-size:.88rem}
+.bank-unique-detail p{margin:0!important;color:#a99bb5!important;font-size:.54rem!important;line-height:1.5}
+.bank-item-flags{display:flex;gap:7px;padding:12px 18px 0}
+.bank-item-flags button{min-height:34px;padding:0 11px;border:1px solid rgba(255,255,255,.08);background:#0c171a;color:#788a86;font-size:.43rem;font-weight:900;letter-spacing:.07em}
+.bank-item-flags button.active{border-color:rgba(226,194,99,.35);background:#2a2618;color:#efd88c}
+.bank-item-flags button.active.junk{border-color:rgba(197,112,92,.34);background:#291714;color:#e0a08f}
+.bank-upgrade-box{margin:12px 18px 0;padding:12px;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;border:1px solid rgba(83,193,184,.18);background:linear-gradient(100deg,rgba(13,39,40,.8),rgba(9,22,26,.9))}
+.bank-upgrade-box small{color:#62c7be;font-size:.39rem;font-weight:900;letter-spacing:.11em}.bank-upgrade-box h3{margin:3px 0 4px;font-family:Georgia,serif;font-size:.88rem;font-weight:500}.bank-upgrade-box p{margin:0;color:#71847f;font-size:.5rem;line-height:1.5}
+.bank-upgrade-box>div:last-child{text-align:right}.bank-upgrade-box>div:last-child b,.bank-upgrade-box>div:last-child span{display:block}.bank-upgrade-box>div:last-child b{font-size:.68rem;color:#c7d8d4}.bank-upgrade-box>div:last-child span{margin:2px 0 7px;color:#6d817c;font-size:.43rem}
+.bank-upgrade-box button{min-height:34px;padding:0 12px;border:1px solid rgba(83,193,184,.27);background:#123330;color:#bdebe5;font-size:.42rem;font-weight:900;letter-spacing:.07em}.bank-upgrade-box button:disabled{opacity:.32}
+.bank-upgrade-box.capped{grid-template-columns:1fr auto;border-color:rgba(255,255,255,.06);background:#0b1518}
+.bank-comparison{grid-column:1/-1;display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:6px;margin-top:6px;padding-top:7px;border-top:1px solid rgba(255,255,255,.05)}
+.bank-comparison>span{display:block;min-width:0;padding:6px;background:rgba(5,13,16,.65)}.bank-comparison small,.bank-comparison b,.bank-comparison em{display:block}.bank-comparison small{font-size:.34rem!important;letter-spacing:.08em;color:#5f716d}.bank-comparison b{margin:2px 0;font-size:.46rem}.bank-comparison em{font-style:normal;font-size:.38rem;color:#71847f}
+.bank-compare-delta{display:flex!important;flex-wrap:wrap;gap:3px;align-content:start}.bank-compare-delta>strong{flex:1 1 100%;font-size:.48rem;color:#8da19c}.bank-compare-delta>span{display:flex;gap:3px;padding:2px 4px;border:1px solid rgba(255,255,255,.05);font-size:.34rem}.bank-compare-delta .gain,.bank-compare-delta.gain strong{color:#83cda3}.bank-compare-delta .loss,.bank-compare-delta.loss strong{color:#d28b80}.bank-compare-delta .same{color:#72827e}
+.bank-comparison p{margin:5px 0 0!important;font-size:.38rem!important;color:#a58db7!important}.bank-comparison p strong{display:block;color:#c9a6e1}
+@media(max-width:760px){
+ .bank-upgrade-box{grid-template-columns:1fr}.bank-upgrade-box>div:last-child{text-align:left}.bank-item-flags{display:grid;grid-template-columns:1fr 1fr}.bank-item-flags button,.bank-upgrade-box button{min-height:44px}
+ .bank-comparison{grid-template-columns:1fr}.bank-character-list>button{min-height:44px}
+}
