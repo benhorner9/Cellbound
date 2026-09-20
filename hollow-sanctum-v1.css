@@ -342,3 +342,394 @@
   top:-14px;
   height:6px;
 }
+
+
+/* ==========================================================================
+   HOLLOW SANCTUM — ROOM IDENTITY REBUILD
+   Architecture lives below combat units/telegraphs. Ashen remains the master
+   combat UI; these rules only define Hollow's physical dungeon spaces.
+   ========================================================================== */
+
+.hs2d-unified-shell .hs2d-unified-arena{
+  isolation:isolate;
+  background:#090d12!important;
+}
+.hs2d-unified-shell .hs2d-floor{
+  z-index:0;
+  opacity:1;
+}
+.hs2d-unified-shell .hs2d-environment{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  overflow:hidden;
+  pointer-events:none;
+}
+.hs2d-unified-shell #hs2dTelegraphs,
+.hs2d-unified-shell #hs2dUnits,
+.hs2d-unified-shell #hs2dFx{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+.hs2d-unified-shell #hs2dTelegraphs{z-index:3}
+.hs2d-unified-shell #hs2dUnits{z-index:6}
+.hs2d-unified-shell #hs2dFx{z-index:12}
+.hs2d-unified-shell .cb2d-ground-legend{z-index:18}
+.hs2d-unified-shell .hs2d-room.cb2d-room-tag{z-index:20}
+.hs2d-unified-shell .hs2d-caption.cb2d-caption{z-index:20}
+.hs2d-unified-shell .hs2d-room.cb2d-room-tag em{
+  display:block;
+  margin-bottom:3px;
+  color:#8d70a5;
+  font-size:.29rem;
+  font-style:normal;
+  font-weight:900;
+  letter-spacing:.14em;
+}
+
+/* Shared sanctum material language */
+.hsenv{position:absolute;inset:0}
+.hsenv:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  box-shadow:inset 0 0 85px rgba(0,0,0,.56);
+}
+.hsenv-crystal{
+  position:absolute;
+  width:15px;
+  height:58px;
+  clip-path:polygon(50% 0,100% 68%,72% 100%,28% 100%,0 68%);
+  background:linear-gradient(180deg,rgba(197,151,238,.68),rgba(91,55,122,.23) 58%,rgba(37,25,48,.12));
+  filter:drop-shadow(0 0 9px rgba(155,104,197,.3));
+  opacity:.78;
+}
+.hsenv-pillar{
+  position:absolute;
+  width:32px;
+  height:118px;
+  border:1px solid rgba(173,151,188,.11);
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.035),transparent 25% 72%,rgba(0,0,0,.22)),
+    linear-gradient(180deg,#25262d,#15181e 72%,#0f1217);
+  box-shadow:0 18px 28px rgba(0,0,0,.34),inset 0 0 18px rgba(150,114,178,.05);
+}
+.hsenv-pillar:before,.hsenv-pillar:after{
+  content:"";
+  position:absolute;
+  left:-7px;
+  width:46px;
+  height:10px;
+  border:1px solid rgba(173,151,188,.1);
+  background:#202229;
+}
+.hsenv-pillar:before{top:-6px}.hsenv-pillar:after{bottom:-6px}
+.hsenv-arch{
+  position:absolute;
+  width:70px;
+  height:170px;
+  border:13px solid rgba(48,48,57,.88);
+  border-bottom:0;
+  border-radius:40px 40px 0 0;
+  box-shadow:inset 0 0 14px rgba(151,106,181,.08),0 0 25px rgba(0,0,0,.3);
+}
+.hsenv-mirror{
+  position:absolute;
+  width:54px;
+  height:88px;
+  border:5px solid #25232c;
+  background:
+    linear-gradient(135deg,transparent 0 46%,rgba(207,173,232,.14) 47% 49%,transparent 50%),
+    linear-gradient(45deg,transparent 0 62%,rgba(196,160,225,.1) 63% 65%,transparent 66%),
+    linear-gradient(180deg,rgba(108,75,132,.18),rgba(20,24,30,.34));
+  box-shadow:inset 0 0 18px rgba(177,132,210,.08);
+}
+.hsenv-plinth{
+  position:absolute;
+  width:66px;
+  height:34px;
+  border:1px solid rgba(255,255,255,.06);
+  background:linear-gradient(180deg,#23242b,#111419);
+  box-shadow:0 10px 18px rgba(0,0,0,.35);
+}
+
+/* --------------------------------------------------------------------------
+   ROOM 1 — GALLERY OF ECHOES
+   Long ceremonial entrance hall with a readable central processional lane.
+   -------------------------------------------------------------------------- */
+.stage-gallery .hs2d-floor{
+  background:
+    linear-gradient(90deg,rgba(11,14,18,.92) 0 8%,transparent 8% 92%,rgba(11,14,18,.92) 92%),
+    repeating-linear-gradient(90deg,rgba(162,145,177,.035) 0 1px,transparent 1px 92px),
+    repeating-linear-gradient(0deg,rgba(162,145,177,.028) 0 1px,transparent 1px 74px),
+    radial-gradient(ellipse at 64% 50%,rgba(114,74,143,.15),transparent 38%),
+    linear-gradient(180deg,#16171d,#0a0d12)!important;
+}
+.hsenv-gallery .hsenv-depth-wall{
+  position:absolute;
+  left:8%;
+  right:8%;
+  top:13%;
+  bottom:13%;
+  border-top:2px solid rgba(126,105,142,.14);
+  border-bottom:2px solid rgba(126,105,142,.14);
+  box-shadow:inset 0 26px 40px rgba(0,0,0,.13),inset 0 -26px 40px rgba(0,0,0,.18);
+}
+.hsenv-gallery .hsenv-walkway{
+  position:absolute;
+  left:8%;
+  right:7%;
+  top:28%;
+  bottom:28%;
+  border:1px solid rgba(184,156,203,.11);
+  background:
+    repeating-linear-gradient(90deg,transparent 0 76px,rgba(205,183,216,.055) 77px 78px),
+    linear-gradient(180deg,rgba(72,60,82,.06),rgba(111,83,130,.055),rgba(32,34,41,.08));
+  box-shadow:inset 0 0 34px rgba(174,122,204,.055),0 0 0 1px rgba(0,0,0,.18);
+}
+.hsenv-gallery .hsenv-walkway:before,
+.hsenv-gallery .hsenv-walkway:after{
+  content:"";
+  position:absolute;
+  left:0;right:0;
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(178,147,199,.22),transparent);
+}
+.hsenv-gallery .hsenv-walkway:before{top:30%}
+.hsenv-gallery .hsenv-walkway:after{bottom:30%}
+.hsenv-gallery .hsenv-arch-entry{left:-25px;top:31%}
+.hsenv-gallery .hsenv-arch-exit{right:-24px;top:31%;transform:scaleX(-1)}
+.hsenv-gallery .hsenv-pillar.p1{left:13%;top:7%}
+.hsenv-gallery .hsenv-pillar.p2{left:38%;top:7%}
+.hsenv-gallery .hsenv-pillar.p3{left:63%;top:7%}
+.hsenv-gallery .hsenv-pillar.p4{left:13%;bottom:7%}
+.hsenv-gallery .hsenv-pillar.p5{left:38%;bottom:7%}
+.hsenv-gallery .hsenv-pillar.p6{left:63%;bottom:7%}
+.hsenv-gallery .hsenv-mirror.m1{left:48%;top:3%;transform:scale(.75)}
+.hsenv-gallery .hsenv-mirror.m2{left:48%;bottom:3%;transform:scale(.75)}
+.hsenv-gallery .hsenv-plinth.pl1{left:80%;top:13%}
+.hsenv-gallery .hsenv-plinth.pl2{left:80%;bottom:13%}
+.hsenv-gallery .hsenv-crystal.c1{left:18%;top:15%;transform:rotate(-14deg) scale(.82)}
+.hsenv-gallery .hsenv-crystal.c2{left:48%;bottom:10%;transform:rotate(12deg) scale(.72)}
+.hsenv-gallery .hsenv-crystal.c3{right:19%;top:10%;transform:rotate(8deg) scale(.95)}
+.hsenv-gallery .hsenv-crystal.c4{right:10%;bottom:10%;transform:rotate(-11deg) scale(.75)}
+
+/* --------------------------------------------------------------------------
+   ROOM 2 — GLASSJAW SENTINEL
+   Octagonal guardian chamber centred on a fractured relic pedestal.
+   -------------------------------------------------------------------------- */
+.stage-sentinel .hs2d-floor{
+  background:
+    radial-gradient(circle at 62% 50%,rgba(161,104,185,.12) 0 20%,transparent 42%),
+    repeating-conic-gradient(from 22.5deg at 62% 50%,rgba(186,155,201,.045) 0 1deg,transparent 1deg 45deg),
+    radial-gradient(circle at 62% 50%,transparent 0 29%,rgba(151,116,169,.08) 29.3% 29.8%,transparent 30.2%),
+    linear-gradient(180deg,#15141b,#090c11)!important;
+}
+.hsenv-sentinel .hsenv-octagon{
+  position:absolute;
+  left:16%;
+  right:9%;
+  top:7%;
+  bottom:7%;
+  clip-path:polygon(18% 0,82% 0,100% 18%,100% 82%,82% 100%,18% 100%,0 82%,0 18%);
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.018),transparent 30% 70%,rgba(109,73,133,.055)),
+    #101319;
+  box-shadow:inset 0 0 0 2px rgba(151,115,171,.12),inset 0 0 70px rgba(0,0,0,.35);
+}
+.hsenv-sentinel .hsenv-octagon:after{
+  content:"";
+  position:absolute;
+  inset:11px;
+  clip-path:inherit;
+  border:1px solid rgba(176,144,194,.09);
+}
+.hsenv-sentinel .hsenv-ring{
+  position:absolute;
+  left:67%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  border:1px solid rgba(174,132,196,.17);
+  border-radius:50%;
+}
+.hsenv-sentinel .ring1{width:245px;height:245px;box-shadow:0 0 36px rgba(130,83,157,.08)}
+.hsenv-sentinel .ring2{width:155px;height:155px;border-style:dashed;opacity:.75}
+.hsenv-sentinel .hsenv-pedestal{
+  position:absolute;
+  left:67%;
+  top:50%;
+  width:86px;
+  height:86px;
+  transform:translate(-50%,-50%);
+  border:2px solid rgba(191,151,214,.19);
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(130,87,159,.22),rgba(20,23,29,.92) 58%);
+  box-shadow:0 0 0 11px rgba(120,83,144,.04),0 0 45px rgba(145,92,179,.11);
+}
+.hsenv-sentinel .hsenv-pedestal i{
+  position:absolute;left:50%;top:50%;width:25px;height:65px;
+  transform:translate(-50%,-50%) rotate(8deg);
+  clip-path:polygon(50% 0,100% 63%,66% 100%,31% 100%,0 61%);
+  background:linear-gradient(180deg,#b98ada,#573869 66%,#1b1821);
+  filter:drop-shadow(0 0 12px rgba(174,113,211,.38));
+}
+.hsenv-sentinel .hsenv-pedestal b{
+  position:absolute;inset:17px;border:1px dashed rgba(196,161,215,.18);border-radius:50%
+}
+.hsenv-sentinel .hsenv-alcove{
+  position:absolute;
+  width:82px;height:70px;
+  border:8px solid #24242b;border-bottom:0;border-radius:45px 45px 0 0;
+  opacity:.82;
+}
+.hsenv-sentinel .a1{left:20%;top:5%}.hsenv-sentinel .a2{left:20%;bottom:5%;transform:rotate(180deg)}
+.hsenv-sentinel .a3{right:4%;top:5%}.hsenv-sentinel .a4{right:4%;bottom:5%;transform:rotate(180deg)}
+.hsenv-sentinel .hsenv-statue{
+  position:absolute;width:24px;height:66px;background:linear-gradient(180deg,#303038,#17191f);
+  clip-path:polygon(30% 0,70% 0,79% 25%,100% 41%,77% 48%,70% 100%,30% 100%,23% 48%,0 41%,21% 25%);
+  opacity:.65;
+}
+.hsenv-sentinel .s1{left:27%;top:16%}.hsenv-sentinel .s2{left:27%;bottom:16%;transform:scaleY(-1)}
+.hsenv-sentinel .hsenv-crystal.c1{left:49%;top:8%;transform:rotate(-8deg) scale(.75)}
+.hsenv-sentinel .hsenv-crystal.c2{right:14%;bottom:12%;transform:rotate(13deg) scale(.86)}
+.hsenv-sentinel .hsenv-crystal.c3{left:42%;bottom:8%;transform:rotate(7deg) scale(.62)}
+
+/* --------------------------------------------------------------------------
+   ROOM 3 — THE BOUND CHOIR
+   Large inner shrine/cathedral with processional steps and ritual dais.
+   -------------------------------------------------------------------------- */
+.stage-choir .hs2d-floor{
+  background:
+    radial-gradient(ellipse at 72% 50%,rgba(92,152,161,.07),transparent 21%),
+    radial-gradient(circle at 71% 50%,rgba(147,83,174,.17),transparent 34%),
+    linear-gradient(90deg,transparent 0 21%,rgba(139,110,155,.035) 21% 79%,transparent 79%),
+    repeating-linear-gradient(0deg,rgba(187,164,199,.022) 0 1px,transparent 1px 55px),
+    linear-gradient(180deg,#12171a,#080a0f)!important;
+}
+.hsenv-choir .hsenv-apse{
+  position:absolute;
+  right:-8%;
+  top:4%;
+  width:49%;
+  height:92%;
+  border:2px solid rgba(161,123,180,.13);
+  border-radius:52% 0 0 52%;
+  background:radial-gradient(ellipse at 66% 50%,rgba(120,75,145,.13),transparent 51%);
+  box-shadow:inset 22px 0 45px rgba(0,0,0,.2);
+}
+.hsenv-choir .hsenv-processional{
+  position:absolute;
+  left:8%;
+  right:29%;
+  top:38%;
+  bottom:38%;
+  border-top:1px solid rgba(179,151,193,.13);
+  border-bottom:1px solid rgba(179,151,193,.13);
+  background:
+    repeating-linear-gradient(90deg,transparent 0 68px,rgba(196,171,208,.045) 69px 70px),
+    linear-gradient(90deg,rgba(67,55,75,.04),rgba(119,81,137,.08));
+}
+.hsenv-choir .hsenv-steps{
+  position:absolute;
+  right:23%;
+  height:8%;
+  border:1px solid rgba(166,136,181,.1);
+  background:linear-gradient(180deg,#202129,#101319);
+  box-shadow:0 5px 8px rgba(0,0,0,.22);
+}
+.hsenv-choir .step1{top:31%;width:24%}
+.hsenv-choir .step2{top:39%;width:21%}
+.hsenv-choir .step3{top:47%;width:18%}
+.hsenv-choir .hsenv-dais{
+  position:absolute;
+  left:71%;
+  top:50%;
+  width:245px;
+  height:245px;
+  transform:translate(-50%,-50%);
+  border:2px solid rgba(177,137,197,.15);
+  border-radius:50%;
+  background:
+    radial-gradient(circle,rgba(109,68,131,.17) 0 32%,rgba(17,22,26,.93) 33% 66%,rgba(89,60,104,.08) 67%);
+  box-shadow:0 0 0 12px rgba(144,102,163,.025),0 0 55px rgba(138,84,168,.11);
+}
+.hsenv-choir .hsenv-ritual-ring{
+  position:absolute;left:71%;top:50%;transform:translate(-50%,-50%);border-radius:50%;
+  pointer-events:none;
+}
+.hsenv-choir .hsenv-ritual-ring.outer{
+  width:205px;height:205px;border:1px dashed rgba(191,145,211,.24);
+}
+.hsenv-choir .hsenv-ritual-ring.inner{
+  width:116px;height:116px;border:1px solid rgba(111,177,184,.16);
+  box-shadow:0 0 20px rgba(106,166,176,.06);
+}
+.hsenv-choir .hsenv-ritual-ring:before,
+.hsenv-choir .hsenv-ritual-ring:after{
+  content:"";position:absolute;left:50%;top:50%;background:rgba(183,147,199,.12);transform:translate(-50%,-50%)
+}
+.hsenv-choir .hsenv-ritual-ring:before{width:1px;height:100%}
+.hsenv-choir .hsenv-ritual-ring:after{width:100%;height:1px}
+.hsenv-choir .hsenv-choir-bank{
+  position:absolute;
+  right:1%;
+  width:31%;
+  height:15%;
+  border:1px solid rgba(175,146,187,.09);
+  background:
+    repeating-linear-gradient(90deg,#1b1d23 0 14px,#111419 15px 27px);
+  opacity:.73;
+  transform:skewX(-7deg);
+}
+.hsenv-choir .hsenv-choir-bank.left{top:7%}
+.hsenv-choir .hsenv-choir-bank.right{bottom:7%}
+.hsenv-choir .hsenv-reliquary{
+  position:absolute;right:5%;top:50%;width:86px;height:180px;transform:translateY(-50%);
+  border-left:2px solid rgba(136,105,151,.15);
+}
+.hsenv-choir .hsenv-reliquary i{
+  position:absolute;left:15px;width:17px;height:72px;
+  clip-path:polygon(50% 0,100% 70%,66% 100%,34% 100%,0 70%);
+  background:linear-gradient(180deg,rgba(163,112,193,.58),rgba(61,41,75,.16));
+  filter:drop-shadow(0 0 8px rgba(151,94,184,.26));
+}
+.hsenv-choir .hsenv-reliquary i:nth-child(1){top:1px;transform:rotate(-8deg)}
+.hsenv-choir .hsenv-reliquary i:nth-child(2){top:54px;left:42px;transform:rotate(10deg) scale(.8)}
+.hsenv-choir .hsenv-reliquary i:nth-child(3){bottom:0;left:9px;transform:rotate(5deg) scale(.9)}
+.hsenv-choir .hsenv-hanging{
+  position:absolute;top:-5px;width:2px;height:62px;background:rgba(105,90,115,.26)
+}
+.hsenv-choir .hsenv-hanging:after{
+  content:"";position:absolute;left:-8px;bottom:-22px;width:18px;height:30px;
+  clip-path:polygon(50% 0,100% 60%,67% 100%,32% 100%,0 60%);
+  background:linear-gradient(180deg,rgba(175,128,203,.5),rgba(69,46,82,.18));
+  filter:drop-shadow(0 0 8px rgba(153,96,185,.2));
+}
+.hsenv-choir .h1{left:48%;height:50px}.hsenv-choir .h2{left:59%;height:76px}
+.hsenv-choir .h3{left:75%;height:45px}.hsenv-choir .h4{left:88%;height:70px}
+.hsenv-choir .hsenv-crystal.c1{left:13%;top:12%;transform:rotate(-13deg) scale(.85)}
+.hsenv-choir .hsenv-crystal.c2{left:17%;bottom:10%;transform:rotate(15deg) scale(.75)}
+.hsenv-choir .hsenv-crystal.c3{left:48%;bottom:8%;transform:rotate(5deg) scale(.64)}
+.hsenv-choir .hsenv-crystal.c4{right:22%;top:8%;transform:rotate(-7deg) scale(.7)}
+
+/* Very subtle atmosphere, never above mechanics */
+.stage-gallery .hsenv:after,
+.stage-sentinel .hsenv:after,
+.stage-choir .hsenv:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:radial-gradient(ellipse at 62% 50%,rgba(186,139,211,.045),transparent 48%);
+  animation:hsSanctumBreath 5s ease-in-out infinite alternate;
+}
+.stage-choir .hsenv:after{background:radial-gradient(ellipse at 72% 50%,rgba(123,185,191,.045),transparent 22%),radial-gradient(ellipse at 72% 50%,rgba(184,116,210,.055),transparent 49%)}
+@keyframes hsSanctumBreath{from{opacity:.45}to{opacity:1}}
+
+@media(max-width:700px){
+  .hsenv-pillar{transform:scale(.82)}
+  .hsenv-gallery .hsenv-pillar.p3,.hsenv-gallery .hsenv-pillar.p6{display:none}
+  .hsenv-sentinel .hsenv-octagon{left:9%;right:4%}
+  .hsenv-choir .hsenv-choir-bank{opacity:.5}
+}
