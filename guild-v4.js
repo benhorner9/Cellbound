@@ -123,7 +123,13 @@ function characterItemLevel(c){
   const total=items.reduce((sum,item)=>sum+(Number(item?.itemLevel)||0),0);
   return Math.round(total/ILVL_SLOTS.length);
 }
-function flatPartyIds(){return [state?.party?.tank,state?.party?.healer,...(state?.party?.dps||[])].filter(Boolean);}
+function partySlotIds(){return [state?.party?.tank,state?.party?.healer,...(state?.party?.dps||[])].slice(0,5)}
+function writePartySlots(ids){
+  const slots=[...(ids||[])].slice(0,5);while(slots.length<5)slots.push(null);
+  state.party=state.party&&typeof state.party==='object'?state.party:{tank:null,healer:null,dps:[null,null,null]};
+  state.party.tank=slots[0]||null;state.party.healer=slots[1]||null;state.party.dps=[slots[2]||null,slots[3]||null,slots[4]||null]
+}
+function flatPartyIds(){return partySlotIds().filter(Boolean);}
 function partyCharacters(){return flatPartyIds().map(charById).filter(Boolean);}
 function partyItemLevel(){const chars=partyCharacters();return chars.length===5?Math.round(chars.reduce((sum,c)=>sum+characterItemLevel(c),0)/5):0;}
 function isRosterSlotUnlocked(index){return index<entitlements().rosterCap;}
@@ -593,24 +599,37 @@ $('#bankBulkClear')?.addEventListener('click',clearBankBulkSelection);
 $('#bankBulkSell')?.addEventListener('click',()=>disposeBankBulk('vendor'));
 $('#bankBulkDismantle')?.addEventListener('click',()=>disposeBankBulk('dismantle'));
 
-function removeChar(id){if(state.party.tank===id)state.party.tank=null;if(state.party.healer===id)state.party.healer=null;state.party.dps=state.party.dps.map(x=>x===id?null:x);}
-function assignChar(id){const c=charById(id);if(!c||!isCharacterRosterUnlocked(id)||isUnavailable(c))return;const role=roleOf(c);removeChar(id);if(role==='tank')state.party.tank=id;else if(role==='healer')state.party.healer=id;else{const idx=state.party.dps.findIndex(x=>!x);if(idx>=0)state.party.dps[idx]=id;else state.party.dps[0]=id;}save();renderAll();}
-function slotHtml(role,id,index=''){const c=id?charById(id):null,icon=role==='tank'?'🛡':role==='healer'?'✚':'⚔';return `<div class="party-slot ${c?'filled':''} ${c&&isUnavailable(c)?'shock-locked':''}"><div class="slot-role">${icon}</div><div>${c?`<b>${c.name}</b><small>Lv. ${c.level} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)} · Shock ${c.cellShock||0}%</small>`:`<b>${roleLabel(role)} Slot${role==='dps'?` ${Number(index)+1}`:''}</b><small>Select an available adventurer</small>`}</div>${c?`<button data-remove="${c.id}">×</button>`:''}</div>`;}
+function removeChar(id){writePartySlots(partySlotIds().map(x=>x===id?null:x))}
+function assignChar(id){
+  const c=charById(id);if(!c||!isCharacterRosterUnlocked(id)||isUnavailable(c))return;
+  const slots=partySlotIds();if(slots.includes(id))return;
+  const idx=slots.findIndex(x=>!x);if(idx<0)return;
+  slots[idx]=id;writePartySlots(slots);save();renderAll()
+}
+function partyComposition(chars=partyCharacters()){
+  const counts={tank:0,healer:0,dps:0};chars.forEach(c=>counts[roleOf(c)]=(counts[roleOf(c)]||0)+1);
+  const parts=[];if(counts.tank)parts.push(counts.tank+' Tank');if(counts.healer)parts.push(counts.healer+' Healer');if(counts.dps)parts.push(counts.dps+' Damage');
+  return parts.join(' · ')||'No roles assigned'
+}
+function slotHtml(index,id){
+  const c=id?charById(id):null,r=c?roleOf(c):null,icon=r==='tank'?'🛡':r==='healer'?'✚':r==='dps'?'⚔':'•';
+  return `<div class="party-slot ${c?'filled':''} ${c&&isUnavailable(c)?'shock-locked':''}"><div class="slot-role">${icon}</div><div>${c?`<b>${c.name}</b><small>Slot ${index+1} · ${roleLabel(r)} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)} · Shock ${c.cellShock||0}%</small>`:`<b>Party Slot ${index+1}</b><small>Any available adventurer · role comes from active spec</small>`}</div>${c?`<button data-remove="${c.id}">×</button>`:''}</div>`;
+}
 function partyReadiness(){
   const ids=flatPartyIds(),boss=bossById(ui.bossSelect?.value||'ashwarden');
-  if(ids.length<5)return{score:ids.length*12,ready:false,hint:'Assign 1 Tank, 1 Healer and 3 Damage characters.'};
+  if(ids.length<5)return{score:ids.length*12,ready:false,hint:'Fill all five party slots. Any role composition is allowed.'};
   const chars=ids.map(charById);if(chars.some(c=>!c||isUnavailable(c)))return{score:45,ready:false,hint:'A party member is recovering from 100% Cell Shock. Rotate them out before entering content.'};
   if(ids.some(id=>!isCharacterRosterUnlocked(id)))return{score:45,ready:false,hint:'A selected character is outside your currently unlocked roster slots.'};
   const pi=partyItemLevel();if(!currentBossProgressionUnlocked(boss))return{score:55,ready:false,hint:`Defeat the previous boss before challenging ${boss.name}.`};
   if(pi<boss.requiredItemLevel)return{score:Math.min(90,Math.round((pi/boss.requiredItemLevel)*80)),ready:false,hint:`Party Item Level ${pi}. ${boss.name} requires ${boss.requiredItemLevel}. Upgrade the lowest-geared characters first.`};
-  const avgLevel=Math.round(chars.reduce((s,c)=>s+Math.max(1,Number(c.level)||1),0)/5),avgPower=chars.reduce((s,c)=>s+c.power,0)/5,avgKnowledge=chars.reduce((s,c)=>s+(c.knowledge[boss.id]||0),0)/5;const score=Math.round(Math.min(100,55+(pi/boss.recommendedItemLevel)*25+avgKnowledge*.20));return{score,ready:true,hint:`Party Lv ${avgLevel} vs Boss Lv ${boss.level} · Party iLvl ${pi} · Required ${boss.requiredItemLevel} · Recommended ${boss.recommendedItemLevel} · Knowledge ${avgKnowledge.toFixed(0)}% · Power ${avgPower.toFixed(0)}`};
+  const avgLevel=Math.round(chars.reduce((s,c)=>s+Math.max(1,Number(c.level)||1),0)/5),avgPower=chars.reduce((s,c)=>s+c.power,0)/5,avgKnowledge=chars.reduce((s,c)=>s+(c.knowledge[boss.id]||0),0)/5;const score=Math.round(Math.min(100,55+(pi/boss.recommendedItemLevel)*25+avgKnowledge*.20)),composition=partyComposition(chars);return{score,ready:true,hint:`${composition} · Party Lv ${avgLevel} · iLvl ${pi} · Knowledge ${avgKnowledge.toFixed(0)}% · Power ${avgPower.toFixed(0)} · Unusual compositions are allowed.`};
 }
 function renderParty(){
-  ui.partySlots.innerHTML=slotHtml('tank',state.party.tank)+slotHtml('healer',state.party.healer)+state.party.dps.map((id,i)=>slotHtml('dps',id,i)).join('');ui.partySlots.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',()=>{removeChar(b.dataset.remove);save();renderAll();}));
-  const selected=new Set(flatPartyIds());ui.partyRoster.innerHTML=state.roster.map((c,i)=>{const slotLocked=!isRosterSlotUnlocked(i),shock=isUnavailable(c),disabled=selected.has(c.id)||slotLocked||shock;return `<button class="party-choice ${slotLocked?'roster-locked':''} ${shock?'shock-locked':''}" data-pick="${c.id}" ${disabled?'disabled':''}><div class="avatar">${c.portrait}</div><div><b>${c.name}</b><small>Lv. ${c.level} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}</small></div><em>${slotLocked?'Member slot':shock?`Recovering ${formatRemaining(c)}`:`${roleLabel(roleOf(c))} · Shock ${c.cellShock||0}%`}</em></button>`;}).join('');
+  const slots=partySlotIds();ui.partySlots.innerHTML=slots.map((id,i)=>slotHtml(i,id)).join('');ui.partySlots.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',()=>{removeChar(b.dataset.remove);save();renderAll();}));
+  const selected=new Set(flatPartyIds());ui.partyRoster.innerHTML=state.roster.map((c,i)=>{const slotLocked=!isRosterSlotUnlocked(i),shock=isUnavailable(c),disabled=selected.has(c.id)||slotLocked||shock||selected.size>=5;return `<button class="party-choice ${slotLocked?'roster-locked':''} ${shock?'shock-locked':''}" data-pick="${c.id}" ${disabled?'disabled':''}><div class="avatar">${c.portrait}</div><div><b>${c.name}</b><small>Lv. ${c.level} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}</small></div><em>${slotLocked?'Member slot':shock?`Recovering ${formatRemaining(c)}`:`${roleLabel(roleOf(c))} · Shock ${c.cellShock||0}%`}</em></button>`;}).join('');
   ui.partyRoster.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>assignChar(b.dataset.pick)));const r=partyReadiness();ui.readinessFill.style.width=`${r.score}%`;ui.readinessText.textContent=`${r.score}%`;ui.readinessLabel.textContent=r.ready?'READY':'NOT READY';ui.readinessLabel.className=r.ready?'good':'';ui.readinessHint.textContent=r.hint;ui.attemptBtn.disabled=!r.ready;
 }
-$('#autoFill')?.addEventListener('click',()=>{const available=state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&!isUnavailable(c));const best=role=>available.filter(c=>roleOf(c)===role).sort((a,b)=>characterItemLevel(b)-characterItemLevel(a)||b.power-a.power);state.party.tank=best('tank')[0]?.id||null;state.party.healer=best('healer')[0]?.id||null;state.party.dps=best('dps').slice(0,3).map(c=>c.id);while(state.party.dps.length<3)state.party.dps.push(null);save();renderAll();});ui.bossSelect?.addEventListener('change',renderParty);
+$('#autoFill')?.addEventListener('click',()=>{const available=state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&!isUnavailable(c)).sort((a,b)=>characterItemLevel(b)-characterItemLevel(a)||b.power-a.power).slice(0,5);writePartySlots(available.map(c=>c.id));save();renderAll();});ui.bossSelect?.addEventListener('change',renderParty);
 
 function applyCellShock(c,amount){
   if(!c)return;c.cellShock=Math.min(100,Math.max(0,(Number(c.cellShock)||0)+amount));if(c.cellShock>=100&&!c.cellShockLockedUntil){const mins=entitlements().recoveryMinutes;c.cellShock=100;c.cellShockLockedUntil=new Date(Date.now()+mins*60000).toISOString();state.activity.push(`${c.name} reached 100% Cell Shock and must recover for ${mins} minutes.`);removeChar(c.id);}
