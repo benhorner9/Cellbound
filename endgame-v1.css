@@ -48,3 +48,15 @@
 .eg-leader-filters button,.eg-leader-filters select{min-height:31px;padding:0 9px;border:1px solid rgba(255,255,255,.07);background:#091519;color:#71827e;font-size:.4rem;font-weight:900;letter-spacing:.07em;white-space:nowrap}
 .eg-leader-filters button.active{border-color:rgba(89,201,191,.3);background:#12302e;color:#b9e8e2}.eg-leader-filters select{margin-left:auto;color:#b5c6c2}
 @media(max-width:640px){.eg-leader-filters button,.eg-leader-filters select{min-height:40px}.eg-leader-filters select{margin-left:0}}
+
+.eg-loot-table{border-top:1px solid rgba(255,255,255,.045);background:#081318}
+.eg-loot-table>.panel-head{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04)}
+.eg-loot-table>.panel-head h4{margin:3px 0 0;font:500 .9rem Georgia,serif}.eg-loot-table>.panel-head>span{color:#5f736e;font-size:.45rem}
+.eg-loot-table>article{display:grid;grid-template-columns:180px 1fr;gap:12px;padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.035)}
+.eg-loot-table>article>div:first-child small,.eg-loot-table>article>div:first-child b{display:block}.eg-loot-table>article>div:first-child b{margin-top:3px;font-size:.58rem}
+.eg-loot-table>article>div:last-child{display:flex;flex-wrap:wrap;gap:6px}
+.eg-loot-pill{min-width:170px;padding:7px 8px;border:1px solid rgba(255,255,255,.06);background:#0b171c}.eg-loot-pill>*{display:block}.eg-loot-pill i{font-style:normal;font-size:.34rem;font-weight:900;letter-spacing:.08em;color:#677a76}.eg-loot-pill b{margin:2px 0;font-size:.5rem}.eg-loot-pill em{font-style:normal;color:#596d68;font-size:.38rem}
+.eg-loot-pill.rarity-epic{border-color:rgba(176,108,255,.26);background:rgba(39,20,52,.55)}.eg-loot-pill.rarity-epic i{color:#c596e6}
+.eg-loot-pill.rarity-rare{border-color:rgba(75,159,255,.2)}.eg-loot-pill.rarity-rare i{color:#7cb7f5}
+.eg-loot-pill.rarity-uncommon{border-color:rgba(85,213,106,.18)}.eg-loot-pill.rarity-uncommon i{color:#72c984}
+@media(max-width:640px){.eg-loot-table>article{grid-template-columns:1fr}.eg-loot-pill{min-width:100%;box-sizing:border-box}}
