@@ -1141,7 +1141,7 @@ function renderRebornEvent(e,result,replayMode=false){
   case'CAST_CANCELLED':
    if(String(e.source||'').startsWith('e-'))rebornCastClear('INTERRUPTED');break;
   case'ABILITY_FINISH':
-   if(srcChar&&e.target&&String(e.target).startsWith('e-')&&e.result==='resolved')projectile(e.source,e.target,attackKind(srcChar),220);
+   if(srcChar&&e.target&&String(e.target).startsWith('e-')&&e.result==='resolved'&&Number(e.payload?.castTime)>0)projectile(e.source,e.target,attackKind(srcChar),220);
    break;
   case'DAMAGE_DEALT':{
    if(enemyIdx>=0&&run.enemyHp?.[enemyIdx]!=null)setEnemyHp(enemyIdx,Number(e.payload?.targetHp)||0);
