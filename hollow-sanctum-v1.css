@@ -211,3 +211,134 @@
   .hs2d-unified-shell.cb2d-shell{width:100vw;max-height:100dvh;border-left:0;border-right:0}
   .hs2d-unified-shell .hs2d-unified-arena.cb2d-arena{height:410px}
 }
+
+
+/* --------------------------------------------------------------------------
+   PVE VISUAL PARITY — ASHEN VAULT IS THE MASTER COMBAT PRESENTATION
+   Hollow may change environment, enemy identity and encounter mechanics only.
+   -------------------------------------------------------------------------- */
+.hs2d-unified-shell .cb2d-cast[hidden]{display:block!important}
+.hs2d-unified-shell .cb2d-cast{
+  min-height:74px;
+}
+
+/* Match Ashen player markers exactly: solid class-colour combat dots. */
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.party{
+  width:auto;
+  height:auto;
+  color:var(--class-color,var(--combat-class,#7F8B88));
+}
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.party>i{
+  display:block;
+  width:22px;
+  height:22px;
+  border:0!important;
+  border-radius:50%;
+  background:var(--class-color,var(--combat-class,#7F8B88))!important;
+  box-shadow:0 0 0 3px rgba(255,255,255,.04),0 0 18px var(--class-color,var(--combat-class,#7F8B88))!important;
+}
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.party>span{
+  top:28px;
+  min-width:100px;
+  max-width:none;
+  color:#aeb9b4;
+  font-size:.42rem;
+  text-align:center;
+  text-shadow:0 1px 3px #000;
+}
+
+/* Match Ashen overhead HP/resource geometry. */
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.party>em{
+  left:50%;
+  right:auto;
+  top:-24px;
+  transform:translateX(-50%);
+  width:54px;
+  height:5px;
+  z-index:8;
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:4px;
+  background:rgba(2,6,8,.9);
+  box-shadow:0 2px 5px rgba(0,0,0,.4);
+}
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.party>em i{
+  background:linear-gradient(90deg,#63c678,#9ed66b);
+}
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.party .cbr-resource{
+  left:50%;
+  top:-16px;
+  transform:translateX(-50%);
+  width:54px;
+  height:4px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:3px;
+  background:rgba(2,6,8,.9);
+  box-shadow:0 2px 5px rgba(0,0,0,.34);
+}
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.party .cbr-resource>span{
+  left:calc(100% + 5px);
+  top:-2px;
+  transform:none;
+  font-size:6.5px;
+}
+
+/* Match Ashen hostile markers. Enemy identity/environment still differs. */
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.enemy{
+  width:auto;
+  height:auto;
+  color:#D4473E!important;
+}
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.enemy>i{
+  width:20px;
+  height:20px;
+  margin:0;
+  border:0!important;
+  border-radius:50%;
+  background:#D4473E!important;
+  box-shadow:0 0 0 3px rgba(255,255,255,.04),0 0 18px rgba(212,71,62,.42)!important;
+}
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.enemy.big>i,
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.enemy.boss>i{
+  width:36px;
+  height:36px;
+  margin:0;
+  border:2px solid #D7B45B!important;
+  background:#D4473E!important;
+  box-shadow:0 0 0 4px rgba(215,180,91,.18),0 0 28px rgba(212,71,62,.42)!important;
+}
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.enemy>span{
+  top:28px;
+  min-width:100px;
+  max-width:none;
+  color:#aeb9b4;
+  font-size:.42rem;
+  text-align:center;
+  text-shadow:0 1px 3px #000;
+}
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.enemy.big>span,
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.enemy.boss>span{
+  top:43px;
+  color:#E6C86C!important;
+  font-size:.48rem;
+  font-weight:800;
+}
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.enemy>em{
+  left:50%;
+  right:auto;
+  top:-10px;
+  transform:translateX(-50%);
+  width:44px;
+  height:5px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:4px;
+  background:rgba(0,0,0,.72);
+}
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.enemy>em i{
+  background:linear-gradient(90deg,#a33b2d,#d36a45)!important;
+}
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.enemy.big>em,
+.hs2d-unified-shell .hs2d-unit.cb2d-unit.enemy.boss>em{
+  width:72px;
+  top:-14px;
+  height:6px;
+}
