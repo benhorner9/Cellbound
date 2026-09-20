@@ -298,9 +298,12 @@ const ABILITIES={
   {id:'wrath',name:'Wrath',kind:'damage',range:30,damage:14,cost:4,gcd:1500,cast:1200,cd:0},
   {id:'rejuvenation',name:'Rejuvenation',kind:'heal',range:30,heal:22,cost:10,gcd:1500,cast:0,cd:0,hot:8},
   {id:'regrowth',name:'Regrowth',kind:'heal',range:30,heal:34,cost:18,gcd:1500,cast:1100,cd:0},
+  {id:'wild-growth',name:'Wild Growth',kind:'group-heal',role:'healer',range:30,heal:15,cost:22,gcd:1500,cast:0,cd:8000},
   {id:'skull-bash',name:'Skull Bash',kind:'interrupt',range:13,cost:0,gcd:0,cd:15000}
  ],
  Evoker:[
+  {id:'verdant-embrace',name:'Verdant Embrace',kind:'heal',role:'healer',range:25,heal:34,cost:1,gcd:1500,cast:900,cd:6000},
+  {id:'emerald-blossom',name:'Emerald Blossom',kind:'group-heal',role:'healer',range:25,heal:17,cost:2,gcd:1500,cast:1200,cd:8000},
   {id:'living-flame',name:'Living Flame',kind:'damage',range:25,damage:22,cost:1,gcd:1500,cast:1300,cd:0},
   {id:'azure-strike',name:'Azure Strike',kind:'damage',range:25,damage:12,cost:0,gcd:1500,cd:0},
   {id:'quell',name:'Quell',kind:'interrupt',range:25,cost:0,gcd:0,cd:40000}
@@ -330,12 +333,14 @@ const ABILITIES={
   {id:'judgement',name:'Judgement',kind:'damage',range:30,damage:17,cost:4,gcd:1500,cd:3500,threat:1.7},
   {id:'holy-light',name:'Holy Light',kind:'heal',role:'healer',range:30,heal:37,cost:14,gcd:1500,cast:1500,cd:0},
   {id:'holy-shock',name:'Holy Shock',kind:'heal',role:'healer',range:30,heal:25,cost:9,gcd:1500,cast:0,cd:6000},
+  {id:'light-of-dawn',name:'Light of Dawn',kind:'group-heal',role:'healer',range:30,heal:16,cost:18,gcd:1500,cast:0,cd:7000},
   {id:'rebuke',name:'Rebuke',kind:'interrupt',range:5,cost:0,gcd:0,cd:15000},
   {id:'hand-reckoning',name:'Hand of Reckoning',kind:'taunt',role:'tank',range:30,cost:0,gcd:0,cd:8000,threat:5}
  ],
  Priest:[
   {id:'heal',name:'Heal',kind:'heal',role:'healer',range:30,heal:35,cost:13,gcd:1500,cast:1400,cd:0},
   {id:'flash-heal',name:'Flash Heal',kind:'heal',role:'healer',range:30,heal:29,cost:18,gcd:1500,cast:800,cd:0},
+  {id:'prayer-healing',name:'Prayer of Healing',kind:'group-heal',role:'healer',range:30,heal:18,cost:22,gcd:1500,cast:1700,cd:6500},
   {id:'smite',name:'Smite',kind:'damage',range:30,damage:13,cost:4,gcd:1500,cast:1200,cd:0},
   {id:'silence',name:'Silence',kind:'interrupt',range:30,cost:0,gcd:0,cd:30000}
  ],
@@ -353,6 +358,7 @@ const ROLE_FALLBACKS={
  ],
  healer:[
   {id:'restore',name:'Restore',kind:'heal',range:30,heal:31,cost:10,gcd:1500,cast:1000,cd:0},
+  {id:'renewing-wave',name:'Renewing Wave',kind:'group-heal',range:30,heal:14,cost:18,gcd:1500,cast:1200,cd:8000},
   {id:'light-bolt',name:'Light Bolt',kind:'damage',range:30,damage:11,cost:3,gcd:1500,cast:900,cd:0}
  ],
  dps:[
@@ -623,8 +629,9 @@ function rollDamage(ctx,u,a,target){
  return{amount,crit:false};
 }
 function mitigation(target,damageType='physical'){
- if(target.role==='tank')return damageType==='magic'?0.74:0.68;
- return target.defensiveUntil>0?0.75:1;
+ let value=target.role==='tank'?(damageType==='magic'?0.74:0.68):1;
+ if(target.defensiveUntil>0)value*=target.role==='tank'?0.7:0.75;
+ return value;
 }
 function dealDamage(ctx,source,target,amount,ability,opts={}){
  if(!source?.alive||!target?.alive)return 0;
@@ -670,18 +677,43 @@ function pickDamageTarget(ctx,u){
  }
  return livingEnemies(ctx).sort((a,b)=>(b.priority||0)-(a.priority||0)||a.health-b.health)[0]||null;
 }
+function healthRatio(u){return u?.maxHealth>0?u.health/u.maxHealth:0}
 function healerTarget(ctx){
- return livingPlayers(ctx).sort((a,b)=>a.health/a.maxHealth-b.health/b.maxHealth)[0]||null;
+ const alive=livingPlayers(ctx);
+ return alive.sort((a,b)=>{
+   const ar=healthRatio(a),br=healthRatio(b);
+   const aw=ar-(a.role==='tank'?.035:0),bw=br-(b.role==='tank'?.035:0);
+   return aw-bw
+ })[0]||null
 }
 function chooseAbility(ctx,u,target){
- const now=ctx.time,pool=u.abilities.filter(a=>a.kind!=='interrupt'&&a.kind!=='taunt'&&cooldownReady(u,a)&&(a.cost||0)<=u.resource.value);
+ const pool=u.abilities.filter(a=>a.kind!=='interrupt'&&a.kind!=='taunt'&&cooldownReady(u,a)&&(a.cost||0)<=u.resource.value);
  if(u.role==='healer'){
-  const low=healerTarget(ctx);
-  if(low&&low.health/low.maxHealth<.86){
-   const heals=pool.filter(a=>a.kind==='heal').sort((a,b)=>(b.heal||0)-(a.heal||0));
-   if(heals.length)return{ability:(low.health/low.maxHealth<.45?heals[0]:heals[heals.length-1]),target:low};
+  const alive=livingPlayers(ctx),tank=alive.find(p=>p.role==='tank'),low=healerTarget(ctx);
+  const single=pool.filter(a=>a.kind==='heal').sort((a,b)=>(b.heal||0)-(a.heal||0));
+  const group=pool.filter(a=>a.kind==='group-heal').sort((a,b)=>(b.heal||0)-(a.heal||0));
+  const injured=alive.filter(p=>healthRatio(p)<.94),deep=alive.filter(p=>healthRatio(p)<.84);
+  const avg=alive.reduce((n,p)=>n+healthRatio(p),0)/Math.max(1,alive.length);
+  const tankRatio=tank?healthRatio(tank):1;
+
+  // Group pressure takes priority when mechanics/adds have hurt several players.
+  if(group.length&&(deep.length>=2||injured.length>=3||avg<.88)){
+   return{ability:group[0],target:low||u}
   }
-  const dmg=pool.find(a=>a.kind==='damage');return dmg?{ability:dmg,target}:null;
+
+  // Dungeon healers proactively maintain the tank instead of waiting for a crisis.
+  const needsTank=tank&&tankRatio<((ctx.encounter.kind==='boss'||ctx.encounter.kind==='final')?.97:.92);
+  const needsSingle=low&&healthRatio(low)<.90;
+  if(single.length&&(needsTank||needsSingle)){
+   const healTarget=needsSingle&&low&&healthRatio(low)<tankRatio?low:(tank||low);
+   const ratio=healthRatio(healTarget);
+   const chosen=ratio<.58?single[0]:single[single.length-1];
+   return{ability:chosen,target:healTarget}
+  }
+
+  // Healer preserves mana and watches incoming damage during safe windows.
+  // Damage contribution is intentionally not part of the default healer loop.
+  return null
  }
  const dmg=pool.filter(a=>a.kind==='damage').sort((a,b)=>(b.damage||0)-(a.damage||0));
  if(!dmg.length)return null;
@@ -708,9 +740,10 @@ function finishAbility(ctx,u,a,target){
  if(u.currentCast&&u.currentCast.ability!==a.name)return;
  u.currentCast=null;
  emit(ctx,'ABILITY_FINISH',{source:u.id,target:target.id,ability:a.name,result:'resolved',position:copy(u.position),payload:{kind:a.kind,castTime:Number(a.cast)||0}});
- if(a.kind==='heal'){
+ if(a.kind==='heal'||a.kind==='group-heal'){
   const amount=(a.heal||24)*(1+Math.min(.28,u.power*.01))*(.92+ctx.rng()*.16);
-  doHeal(ctx,u,target,amount,a.name);
+  if(a.kind==='group-heal')livingPlayers(ctx).forEach(p=>doHeal(ctx,u,p,amount,a.name));
+  else doHeal(ctx,u,target,amount,a.name);
   if(a.hot){
    applyStatus(ctx,u,target,{id:a.id+'-hot',name:a.name,kind:'buff',duration:3400,effect:{healingOverTime:a.hot}});
    [1600,3200].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)doHeal(ctx,u,target,a.hot,a.name+' (HoT)')},'hot'));
@@ -765,10 +798,10 @@ function enemyBasicAttack(ctx,e){
   e.nextAttack=ctx.time+450;return;
  }
  updateFacing(e,target);
- const base=e.kind==='boss'?13:e.isAdd?7:6;
+ const base=e.kind==='boss'?30:e.isAdd?11:8;
  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability:e.kind==='boss'?'Heavy Swing':'Attack',result:'enemy'});
  dealDamage(ctx,e,target,base*(.85+ctx.rng()*.3),e.kind==='boss'?'Heavy Swing':'Attack',{damageType:'physical'});
- e.nextAttack=ctx.time+(e.kind==='boss'?1650:2050)+Math.round(ctx.rng()*320);
+ e.nextAttack=ctx.time+(e.kind==='boss'?1400:e.isAdd?1800:2050)+Math.round(ctx.rng()*(e.kind==='boss'?220:320));
 }
 function reactionChance(ctx,u,type){
  const safety=ctx.tactics.movementDiscipline==='safety'?1.14:ctx.tactics.movementDiscipline==='damage'?0.86:1;
@@ -829,7 +862,7 @@ function resolveMechanic(ctx,e,m,token){
   if(!cast||cast.token!==token||cast.interrupted){scheduleNextMechanic(ctx);return}
   ctx.activeEnemyCast=null;
   emit(ctx,'CAST_FINISH',{source:e.id,ability:m.name,result:'completed'});
-  livingPlayers(ctx).forEach(p=>dealDamage(ctx,e,p,16,m.name,{damageType:'magic',avoidable:false}));
+  livingPlayers(ctx).forEach(p=>dealDamage(ctx,e,p,24,m.name,{damageType:'magic',avoidable:false}));
   ctx.stats.interrupts.missedCritical++;
   mechanicStat(ctx,'interrupt',true);scheduleNextMechanic(ctx);return;
  }
@@ -841,9 +874,9 @@ function resolveMechanic(ctx,e,m,token){
   const tank=livingPlayers(ctx).find(p=>p.role==='tank');if(tank){e.target=tank.id;updateFacing(e,tank)}
   let failed=false;
   livingPlayers(ctx).forEach(p=>{
-   if(p.role==='tank'){dealDamage(ctx,e,p,18,m.name,{damageType:'physical',avoidable:false});return}
+   if(p.role==='tank'){dealDamage(ctx,e,p,34,m.name,{damageType:'physical',avoidable:false});return}
    const success=cast.responses?.[p.id]!==false;
-   if(!success){failed=true;dealDamage(ctx,e,p,22,m.name,{damageType:'physical',avoidable:true})}
+   if(!success){failed=true;dealDamage(ctx,e,p,28,m.name,{damageType:'physical',avoidable:true})}
   });
   mechanicStat(ctx,'cone',failed);scheduleNextMechanic(ctx);return;
  }
@@ -851,7 +884,7 @@ function resolveMechanic(ctx,e,m,token){
   let failed=false;
   livingPlayers(ctx).forEach(p=>{
    const success=cast.responses?.[p.id]!==false;
-   if(!success){failed=true;dealDamage(ctx,e,p,m.type==='circles'?18:20,m.name,{damageType:'magic',avoidable:true})}
+   if(!success){failed=true;dealDamage(ctx,e,p,m.type==='circles'?24:28,m.name,{damageType:'magic',avoidable:true})}
   });
   mechanicStat(ctx,m.type,failed);scheduleNextMechanic(ctx);return;
  }
@@ -859,7 +892,7 @@ function resolveMechanic(ctx,e,m,token){
   const target=getUnit(ctx,cast.targetId);
   if(target?.alive){
    const success=cast.responses?.[target.id]!==false;
-   if(!success)dealDamage(ctx,e,target,26,m.name,{damageType:'physical',avoidable:true});
+   if(!success)dealDamage(ctx,e,target,32,m.name,{damageType:'physical',avoidable:true});
    mechanicStat(ctx,'line',!success);
   }else mechanicStat(ctx,'line',false);
   scheduleNextMechanic(ctx);return;
@@ -1046,6 +1079,29 @@ function runSelfTests(){
   {id:'jh',name:'Healer',class:'Priest',spec:'Holy',power:10,level:10}
  ],encounter:{...base,enemyHealth:1200,mechanics:[]},seed:'movement-smoothing'});
  test('Movement Smoothing',()=>r.events.filter(e=>e.type==='MOVEMENT_START'&&String(e.source||'').startsWith('p-')).length<45);
+ r=simulate({party:[
+  {id:'ht',name:'Tank',class:'Warrior',spec:'Protection',power:28,level:10},
+  {id:'hh',name:'Healer',class:'Paladin',spec:'Holy',power:28,level:10},
+  {id:'hd1',name:'DPS One',class:'Warrior',spec:'Arms',power:28,level:10},
+  {id:'hd2',name:'DPS Two',class:'Rogue',spec:'Assassination',power:28,level:10},
+  {id:'hd3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:28,level:10}
+ ],encounter:{id:'healer-role',title:'Healer Role',kind:'boss',enemies:['Pressure Boss'],enemyHealth:1200,mechanics:[['Tank Cleave','cone',1500]]},seed:'healer-role'});
+ test('Healer Role Priority',()=>{
+  const h=r.summary.players.find(p=>p.id==='p-hh'),tank=r.summary.players.find(p=>p.id==='p-ht');
+  return !!h&&h.damage===0&&h.healing>=100&&tank.damageTaken>=100
+ });
+ r=simulate({party:[
+  {id:'gt',name:'Tank',class:'Warrior',spec:'Protection',power:28,level:10},
+  {id:'gh',name:'Healer',class:'Paladin',spec:'Holy',power:28,level:10},
+  {id:'gd1',name:'DPS One',class:'Death Knight',spec:'Frost',power:28,level:10},
+  {id:'gd2',name:'DPS Two',class:'Death Knight',spec:'Frost',power:28,level:10},
+  {id:'gd3',name:'DPS Three',class:'Death Knight',spec:'Frost',power:28,level:10}
+ ],encounter:{id:'group-healing',title:'Group Healing',kind:'boss',enemies:['Pulse Boss'],enemyHealth:1500,mechanics:[['Raid Pulse','interrupt',1200]]},tactics:{interruptPriority:'low',movementDiscipline:'balanced'},seed:'group-healing'});
+ test('Group Healing',()=>{
+  const events=r.events.filter(e=>e.type==='HEAL_RECEIVED'&&e.source==='p-gh'&&e.ability==='Light of Dawn');
+  return new Set(events.map(e=>e.target)).size>=3
+ });
+
 
 
  return{version:VERSION,passed:tests.filter(x=>x.pass).length,total:tests.length,tests};
