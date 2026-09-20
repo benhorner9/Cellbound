@@ -23,6 +23,8 @@ function render(){
   if(view)view.dataset.adminReady='1';
   if(badge)badge.textContent=String(status.role||'admin').toUpperCase();
   if(auto)auto.textContent=status.auto_clear_cell_shock?'ENABLED':'DISABLED';
+  const twelve=$('#adminTwelveState'),tb=Game?.getState?.()?.twelveBelow||{},used=Math.max(0,Math.min(3,Number(tb.attemptsUsed)||0));
+  if(twelve)twelve.textContent=used+' / 3 used · '+(3-used)+' remaining';
   const rs=rosterStats();
   if(shock)shock.textContent=rs.affected?rs.affected+' affected · peak '+rs.peak+'%':'All clear · 0% Cell Shock';
   if(account)account.textContent=Game?.getUser?.()?.email||'Authenticated admin';
@@ -55,6 +57,27 @@ async function resetShock(){
   if(error){message(error.message||'Could not reset Cell Shock.','error');return}
   if(data&&typeof data==='object')Game.replaceState(data);
   message('Cell Shock cleared for your entire roster.','ok');render();
+}
+async function resetTwelveBelow(){
+  if(!status.is_admin||!Game?.ready)return;
+  const btn=$('#adminResetTwelve');
+  if(btn){btn.disabled=true;btn.firstChild.textContent='RESETTING…'}
+  try{
+    const s=Game.getState();
+    s.twelveBelow=s.twelveBelow&&typeof s.twelveBelow==='object'?s.twelveBelow:{};
+    s.twelveBelow.date=new Date().toISOString().slice(0,10);
+    s.twelveBelow.attemptsUsed=0;
+    Game.save?.();
+    await Game.persistState?.();
+    Game.renderAll?.();
+    window.CellboundTwelveBelow?.render?.();
+    message('The Twelve Below daily timer has been reset. 3 / 3 attempts are available again.','ok');
+  }catch(error){
+    message(error?.message||'Could not reset The Twelve Below timer.','error');
+  }finally{
+    if(btn){btn.disabled=false;btn.firstChild.textContent='RESET TWELVE BELOW TIMER'}
+    render();
+  }
 }
 async function freshStart(){
   const typed=prompt('This resets YOUR Cellbound testing account to a brand-new playable state.\n\nYour login and Admin access are preserved.\n\nType FRESH START to continue.');
@@ -127,6 +150,7 @@ async function publishUpdate(){
 function bind(){
   if(bound)return;bound=true;
   $('#adminResetShock')?.addEventListener('click',resetShock);
+  $('#adminResetTwelve')?.addEventListener('click',resetTwelveBelow);
   $('#adminFreshStart')?.addEventListener('click',freshStart);
   $('#adminAutoToggle')?.addEventListener('click',toggleAuto);
   $('#adminRefresh')?.addEventListener('click',async()=>{await Promise.all([refreshStatus(),refreshRelease()]);clearLocalShock();message('Admin status refreshed.','ok')});
