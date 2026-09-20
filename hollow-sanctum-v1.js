@@ -243,7 +243,7 @@ function spawnStage(s){
   setTimeout(()=>move('p'+i,target[0],target[1],780),40+i*20)
  });
  s.enemies.forEach((n,i)=>{
-  const m=hsEnemyMeta(s,i),big=m.type==='boss'||m.type==='world-boss',target=hsRoomPoint(room.enemies,i,[68,big?50:33+i*17]);
+  const m=hsEnemyMeta(s,i),big=m.type==='boss'||m.type==='world-boss'||(s.id==='sentinel'&&m.type==='elite'),target=hsRoomPoint(room.enemies,i,[68,big?50:33+i*17]);
   addUnit('e'+i,n,big?'enemy boss':'enemy',94,target[1],big,'Lv. '+m.level+' · '+m.label);
   setTimeout(()=>move('e'+i,target[0],target[1],820),90+i*30)
  })
