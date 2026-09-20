@@ -904,6 +904,30 @@ function runSelfTests(){
  });
 
  r=simulate({party:[
+  {id:'st',name:'Tank',class:'Warrior',spec:'Protection',power:18,level:10},
+  {id:'sh',name:'Healer',class:'Paladin',spec:'Holy',power:18,level:10},
+  {id:'sd1',name:'DPS One',class:'Warrior',spec:'Arms',power:18,level:10},
+  {id:'sd2',name:'DPS Two',class:'Warrior',spec:'Arms',power:18,level:10},
+  {id:'sd3',name:'DPS Three',class:'Warrior',spec:'Arms',power:18,level:10}
+ ],encounter:{...base,enemyHealth:900},seed:'action-stagger'});
+ test('Action Stagger',()=>{
+  const first={};
+  r.events.filter(e=>e.type==='ABILITY_START'&&String(e.source||'').startsWith('p-')).forEach(e=>{if(first[e.source]==null)first[e.source]=e.timestamp});
+  return new Set(Object.values(first)).size>=4
+ });
+ r=simulate({party:[
+  {id:'mt',name:'Tank',class:'Warrior',spec:'Protection',power:28,level:10},
+  {id:'mh',name:'Healer',class:'Paladin',spec:'Holy',power:28,level:10},
+  {id:'md1',name:'DPS One',class:'Warrior',spec:'Arms',power:28,level:10},
+  {id:'md2',name:'DPS Two',class:'Rogue',spec:'Assassination',power:28,level:10},
+  {id:'md3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:28,level:10}
+ ],encounter:{id:'mana-pressure',title:'Mana Pressure',kind:'boss',enemies:['Pressure Boss'],enemyHealth:1500,mechanics:[['Tank Cleave','cone',1400]]},seed:'mana-pressure'});
+ test('Healer Mana Pressure',()=>{
+  const healer=r.finalState.players.find(p=>p.id==='p-mh'),stats=r.summary.players.find(p=>p.id==='p-mh');
+  return !!healer&&healer.resource.value<88&&stats.resourcesSpent>=25
+ });
+
+ r=simulate({party:[
   {id:'jt',name:'Tank',class:'Warrior',spec:'Protection',power:10,level:10},
   {id:'j1',name:'Melee One',class:'Warrior',spec:'Arms',power:10,level:10},
   {id:'j2',name:'Melee Two',class:'Rogue',spec:'Assassination',power:10,level:10},
