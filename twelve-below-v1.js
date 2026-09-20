@@ -15,12 +15,12 @@ const BOSSES=[
  {id:'envy',name:'Envy, the Mirror Queen',rune:'◇',vice:'ENVY',health:980,mechanics:[{name:'Borrowed Reflection',type:'circles',duration:1500}]},
  {id:'gluttony',name:'Gluttony, the Devourer',rune:'●',vice:'GLUTTONY',health:1060,mechanics:[{name:'Feast of the Dead',type:'adds',duration:1200}]},
  {id:'lust',name:'Lust, the Grave Siren',rune:'☾',vice:'LUST',health:1150,mechanics:[{name:'Funeral Fascination',type:'line',duration:1500}]},
- {id:'sloth',name:'Sloth, the Ancient Sleeper',rune:'◌',vice:'SLOTH',health:1250,mechanics:[{name:'Weight of Ages',type:'circle',duration:1650}]},
- {id:'deceit',name:'Deceit, the Masked Priest',rune:'◈',vice:'DECEIT',health:1370,mechanics:[{name:'False Procession',type:'circles',duration:1450}]},
- {id:'cowardice',name:'Cowardice, the Buried Prince',rune:'♟',vice:'COWARDICE',health:1500,mechanics:[{name:'Call the Tombguard',type:'adds',duration:1200}]},
- {id:'cruelty',name:'Cruelty, the Bone Torturer',rune:'†',vice:'CRUELTY',health:1640,mechanics:[{name:'Agony Brand',type:'line',duration:1350}]},
- {id:'vanity',name:'Vanity, the Glass Empress',rune:'✧',vice:'VANITY',health:1800,mechanics:[{name:'Perfect Reflection',type:'cone',duration:1350}]},
- {id:'despair',name:'Despair, the Last Mourner',rune:'☍',vice:'DESPAIR',health:1980,mechanics:[{name:'No Hope Remains',type:'interrupt',duration:1850,priority:'critical'},{name:'Grief Without End',type:'circles',duration:1300}]}
+ {id:'sloth',name:'Sloth, the Ancient Sleeper',rune:'◌',vice:'SLOTH',health:1200,mechanics:[{name:'Weight of Ages',type:'circle',duration:1650}]},
+ {id:'deceit',name:'Deceit, the Masked Priest',rune:'◈',vice:'DECEIT',health:1260,mechanics:[{name:'False Procession',type:'circles',duration:1450}]},
+ {id:'cowardice',name:'Cowardice, the Buried Prince',rune:'♟',vice:'COWARDICE',health:1320,mechanics:[{name:'Call the Tombguard',type:'adds',duration:1200}]},
+ {id:'cruelty',name:'Cruelty, the Bone Torturer',rune:'†',vice:'CRUELTY',health:1400,mechanics:[{name:'Agony Brand',type:'line',duration:1350}]},
+ {id:'vanity',name:'Vanity, the Glass Empress',rune:'✧',vice:'VANITY',health:1480,mechanics:[{name:'Perfect Reflection',type:'cone',duration:1350}]},
+ {id:'despair',name:'Despair, the Last Mourner',rune:'☍',vice:'DESPAIR',health:1580,mechanics:[{name:'No Hope Remains',type:'interrupt',duration:1850,priority:'critical'},{name:'Grief Without End',type:'circles',duration:1300}]}
 ];
 
 const RELICS=[
@@ -134,7 +134,7 @@ function simulateRun(){
 
  const playSlice=(offset,maxDuration,cleanup=0)=>{
    const mechanics=aliveBosses.flatMap(b=>b.mechanics||[]),level=avgLevel+1+Math.floor((spawned.size-1)/3);
-   const encounter={id:'twelve-below-'+spawned.size+'-'+cleanup,kind:'world-boss',level,recommendedItemLevel:Math.max(24,26+Math.floor((spawned.size-1)/3)*2),enemies:aliveBosses.map(enemyInput),mechanics,mechanicIntervalMs:Math.max(2400,4300-aliveBosses.length*180),scaling:{enemyHealth:1,enemyDamage:(.48+Math.min(.30,(spawned.size-1)*.018))*(1+cleanup*.12)}};
+   const encounter={id:'twelve-below-'+spawned.size+'-'+cleanup,kind:'world-boss',level,recommendedItemLevel:Math.max(24,26+Math.floor((spawned.size-1)/3)*2),enemies:aliveBosses.map(enemyInput),mechanics,mechanicIntervalMs:Math.max(2400,4300-aliveBosses.length*180),scaling:{enemyHealth:1,enemyDamage:(.46+Math.min(.22,(spawned.size-1)*.014))*(1+cleanup*.08)}};
    const result=Combat.simulate({party:carried,encounter,tactics:{interruptPriority:'high',addPriority:'priority',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced',cooldownUse:'difficult'},seed:'twelve:'+todayKey()+':'+eventState().attemptsUsed+':'+offset,maxDurationMs:maxDuration,elapsedOffsetMs:offset});
    timeline.push(...remapEvents(result.events,aliveBosses,offset));
    segments.push(result);lastPlayers=result.finalState.players||[];
