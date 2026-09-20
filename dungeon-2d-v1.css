@@ -619,3 +619,13 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
   .cb2d-unit.party .cbr-resource{top:-14px;width:46px;height:3px}
   .cb2d-unit.party .cbr-resource>span{display:none}
 }
+
+
+/* Combat playback smoothing */
+.cb2d-unit{
+  will-change:left,top;
+  backface-visibility:hidden;
+  transition-timing-function:cubic-bezier(.22,.61,.36,1)
+}
+.cb2d-unit.party .cbr-resource>span{display:none!important}
+.cb2d-unit.party .cbr-resource>i{transition:width .32s ease-out}
