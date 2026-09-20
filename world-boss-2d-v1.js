@@ -62,7 +62,7 @@ function ensureShell(){
           <div id="wb2dFeed" class="wb2d-feed"></div>
         </aside>
       </div>
-      <footer class="wb2d-footer"><span>Boss health, damage and party threat are server-authoritative. The highest-threat guild holds boss aggro; other guild parties are represented in standard Tank / Healer / Damage formations.</span><button id="wb2dAttackNow">ATTACK NOW</button></footer>
+      <footer class="wb2d-footer"><span>Combat Reborn is server-authoritative here too. Boss health, mechanics, damage, healing and threat all come from the same combat engine used by dungeons.</span><button id="wb2dAttackNow">ATTACK NOW</button></footer>
     </section>`;
   document.body.appendChild(root);
   root.querySelector('#wb2dClose').onclick=close;
@@ -206,7 +206,21 @@ function ownUnitForCombatId(id){
 }
 function wbEventUnit(id){
   if(id==='boss')return document.getElementById('wb2dBoss');
+  if(String(id||'').startsWith('add-'))return document.querySelector('[data-unit-key="'+CSS.escape(String(id))+'"]');
   return ownUnitForCombatId(id)
+}
+function wbSpawnAdd(e){
+  const units=document.getElementById('wb2dUnits');if(!units||!e?.target||wbEventUnit(e.target))return;
+  const el=document.createElement('div'),idx=[...units.querySelectorAll('.wb2d-boss-add')].length;
+  el.className='wb2d-unit wb2d-boss-add role-dps';
+  el.dataset.unitKey=String(e.target);
+  el.style.left=(72+(idx%2)*8)+'%';el.style.top=(34+(idx%3)*16)+'%';
+  el.innerHTML='<span class="wb2d-unit-dot">A</span><div class="wb2d-unit-hp"><i></i></div><small>'+esc(e.payload?.name||'Boss Add')+'</small>';
+  units.appendChild(el)
+}
+function wbSetAddHp(id,pct){
+  const u=wbEventUnit(id);if(!u)return;const bar=u.querySelector('.wb2d-unit-hp i');if(bar)bar.style.width=clamp(Number(pct)||0,0,100)+'%';
+  if(Number(pct)<=0)u.classList.add('wiped')
 }
 function setOwnHp(id,pct){
   const u=ownUnitForCombatId(id);if(!u)return;const value=clamp(Number(pct)||0,0,100),bar=u.querySelector('.wb2d-unit-hp i');
@@ -256,6 +270,7 @@ function wbRenderServerEvent(e){
     case'DAMAGE_DEALT':
       if(e.target==='boss'){if(active?.boss&&e.payload?.targetHp!=null){active.boss.currentHp=Number(e.payload.targetHp);active.boss.maxHp=Number(e.payload.targetMax)||active.boss.maxHp;bossHealth(active.boss)}floatDamage(Number(e.amount)||0,true)}
       else if(targetChar){setOwnHp(e.target,Number(e.payload?.targetHpPct)||0);if(source)projectileBetween(source,target,'enemy');message((e.ability||'Boss attack')+' hits','danger')}
+      else if(String(e.target||'').startsWith('add-')){wbSetAddHp(e.target,Number(e.payload?.targetHpPct)||0);if(sourceChar&&source&&target)projectileBetween(source,target,'melee')}
       break;
     case'HEAL_RECEIVED':
       if(targetChar){setOwnHp(e.target,Number(e.payload?.targetHpPct)||0);if(source&&target)projectileBetween(source,target,'heal');feed((e.ability||'Heal')+' restores '+Math.round(Number(e.amount)||0)+' health.','heal')}
@@ -272,8 +287,14 @@ function wbRenderServerEvent(e){
     case'INTERRUPT':
       if(e.result==='success'){if(source)projectileBetween(source,document.getElementById('wb2dBoss'),'ranged');wbCastClear('INTERRUPTED');wbClearServerTelegraph(e.payload?.token,'safe');message('INTERRUPTED','victory');feed((e.payload?.interruptedAbility||'Boss cast')+' was interrupted.','cast')}
       break;
+    case'ADD_SPAWNED':wbSpawnAdd(e);message('ADDS JOIN THE FIGHT','danger');feed((e.payload?.name||'An add')+' joins the encounter.','cast');break;
+    case'ADD_DEFEATED':{const u=wbEventUnit(e.target);if(u){u.classList.add('wiped');setTimeout(()=>u.remove(),500)}break}
+    case'CROWD_CONTROL':if(target){target.classList.add('dodging');setTimeout(()=>target.classList.remove('dodging'),700);feed('Your party controls a dangerous add.','cast')}break;
+    case'PHASE_CHANGE':message(String(e.ability||'NEW PHASE').toUpperCase(),'danger');feed((e.ability||'A new boss phase')+' begins.','cast');break;
+    case'ENRAGE':message(e.result==='hard'?'HARD ENRAGE':'ENRAGE','danger');feed((e.ability||'Enrage')+' activates.','wipe');break;
+    case'UNIQUE_EFFECT_TRIGGER':feed((e.ability||'Unique item effect')+' activates.','heal');break;
     case'PLAYER_DEFEATED':if(targetChar){setOwnHp(e.target,0);feed('One of your adventurers has fallen.','wipe')}break;
-    case'ENEMY_DEFEATED':message('WORLD BOSS DEFEATED','victory');break;
+    case'ENEMY_DEFEATED':if(e.target==='boss')message('WORLD BOSS DEFEATED','victory');else{const u=wbEventUnit(e.target);if(u)setTimeout(()=>u.remove(),400)}break;
     case'COMBAT_END':break;
   }
 }
@@ -317,11 +338,14 @@ async function attack(manual=false){
   if(!active||attackBusy||!db)return;
   attackBusy=true;const btn=document.getElementById('wb2dAttackNow');if(btn)btn.disabled=true;
   try{
-    const {data,error}=await db.rpc('attack_world_boss',{p_boss_id:active.boss.id});
+    const {data,error}=await db.functions.invoke('world-boss-combat-reborn',{body:{bossId:active.boss.id}});
     if(error){
-      if(!String(error.message||'').toLowerCase().includes('regrouping'))feed(error.message||'Attack failed.','error');
+      const msg=String(error?.context?.body?.error||error?.message||'Attack failed.');
+      if(!msg.toLowerCase().includes('regrouping')&&!msg.toLowerCase().includes('already resolving'))feed(msg,'error');
       return;
     }
+    if(data?.error){const msg=String(data.error);if(!msg.toLowerCase().includes('regrouping'))feed(msg,'error');return}
+    if(data?.combatModel==='Combat Reborn')document.getElementById('wb2dStatus').textContent='Combat Reborn · server-authoritative world encounter';
     active.partyThreat=data?.threatBreakdown||active.partyThreat||{};
     if(data?.combatState)active.combatState=data.combatState;
     await playServerEvents(data?.events||[]);
@@ -331,7 +355,7 @@ async function attack(manual=false){
       Game.applyPartyCellShock?.(25);await Game.persistState?.();wipeOwnParty();stopAttackTimer();
     }else{
       const dmg=Number(data?.damage)||0,healing=Number(data?.healing)||0,healingThreat=Number(data?.healingThreat)||0,threat=Number(data?.threat)||0;
-      feed('Your party dealt '+dmg.toLocaleString()+' damage · healer restored '+healing.toLocaleString()+' · +'+healingThreat.toLocaleString()+' healing threat · +'+threat.toLocaleString()+' total threat.','damage');
+      feed('Combat Reborn '+(data?.engineVersion||'')+' · your party dealt '+dmg.toLocaleString()+' damage · '+healing.toLocaleString()+' healing · +'+threat.toLocaleString()+' threat.','damage');
       if(data?.currentHp!=null){active.boss.currentHp=data.currentHp;active.boss.maxHp=data.maxHp||active.boss.maxHp;bossHealth(active.boss)}
     }
     if(data?.killed)victory();
