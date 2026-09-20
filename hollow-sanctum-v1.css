@@ -48,3 +48,13 @@
 .hs2d-float{position:absolute;z-index:18;transform:translate(-50%,-50%);font-size:.56rem;font-weight:900;text-shadow:0 2px 4px #000;animation:hsFloatTruth .8s ease-out both}
 .hs2d-float.damage{color:#F0D37E}.hs2d-float.incoming{color:#EF765F}.hs2d-float.heal{color:#79DFA2}
 @keyframes hsFloatTruth{0%{opacity:0;transform:translate(-50%,-20%)}18%{opacity:1}100%{opacity:0;transform:translate(-50%,-130%)}}
+
+
+.hs2d-combat-summary{
+  margin:16px 0;padding:13px 14px;border:1px solid rgba(123,174,209,.2);border-radius:12px;
+  background:rgba(7,18,29,.72);text-align:left
+}
+.hs2d-combat-summary small{display:block;color:#82badc;font-size:9px;font-weight:900;letter-spacing:.12em}
+.hs2d-combat-summary b{display:block;margin-top:4px;color:#eef7fc;font-size:13px}
+.hs2d-combat-summary span{display:block;margin-top:4px;color:#8999a7;font-size:10px;line-height:1.4}
+@media(max-width:620px){.hs2d-combat-summary{margin:12px 0;padding:11px}}
