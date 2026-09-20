@@ -1402,13 +1402,11 @@ function captureRebornResult(result){
  if(Array.isArray(result?.finalState?.enemies)){run.enemyMax=result.finalState.enemies.filter(e=>!e.isAdd).map(e=>e.maxHealth);run.enemyHp=[...run.enemyMax]}
  (result?.finalState?.players||[]).forEach(p=>{
   const c=rebornPlayerByUnit(p.id);if(!c)return;
-  setHp(c.id,p.alive?Math.max(0,Number(p.health)/Math.max(1,Number(p.maxHealth))*100):0);
   if(p.resource)run.resources[c.id]={name:p.resource.name,max:p.resource.max,value:p.resource.value};
   run.cooldowns[c.id]=Object.fromEntries(Object.entries(copyObject(p.cooldowns||{})).filter(([,v])=>Number(v)>0));
   run.reviveSickness[c.id]=Math.max(0,(Number(p.revivePenaltyUntil)||0)-Number(result.durationMs||0));
  });
  run.expeditionTimeMs=(Number(run.expeditionTimeMs)||0)+Number(result.durationMs||0);
- updateRows();
  run.rebornHistory.push({stageId:result.stageId,stageTitle:result.stageTitle,startHp:result.startHp,replay:result.replay,summary:result.summary,outcome:result.outcome});
 }
 function rebornTotals(){
