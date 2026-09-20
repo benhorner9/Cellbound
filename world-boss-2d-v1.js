@@ -3,7 +3,7 @@
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-let Game=null,db=null,active=null,pollTimer=null,attackTimer=null,mechanicTimer=null,attackBusy=false,participantDamage=new Map(),mechanicSeq=0;
+let Game=null,db=null,active=null,pollTimer=null,attackTimer=null,attackBusy=false,participantDamage=new Map(),participantEventSeq=new Map();
 
 const bossThemes={
   'gloamhide':{cls:'gloamhide',subtitle:'GLOAM MARSH · WORLD ENCOUNTER',rune:'♜',mechanics:['Bog Slam','Rotting Charge','Spore Eruption']},
@@ -142,7 +142,7 @@ function renderParticipants(parts){
       el.style.left=pos.x+'%';el.style.top=pos.y+'%';
       el.dataset.x=pos.x;el.dataset.y=pos.y;el.dataset.guild=guild;
       el.querySelector('small').textContent=u.own?u.name:(i===0?guild:'');
-      const hp=el.querySelector('.wb2d-unit-hp i');if(hp&&!el.classList.contains('wiped'))hp.style.width='100%';
+      const hp=el.querySelector('.wb2d-unit-hp i'),serverHp=u.own?Math.max(0,Math.min(100,Number(active?.combatState?.hp?.[u.id]??100))):100;if(hp)hp.style.width=serverHp+'%';el.classList.toggle('wiped',u.own&&serverHp<=0);
     });
   });
   previous.forEach((el,key)=>{if(!nextKeys.has(key))el.remove()});
@@ -212,7 +212,7 @@ function floatDamage(amount,own=false){
 function checkDamageChanges(parts){
   parts.forEach(p=>{
     const key=p.guildLabel+(p.isYou?'|you':'|other'),now=Number(p.damageDone)||0,old=participantDamage.get(key);
-    if(old!=null&&now>old){floatDamage(now-old,p.isYou);pulseRaid(p)}
+    if(old!=null&&now>old&&!p.isYou)floatDamage(now-old,false);
     participantDamage.set(key,now);
   });
 }
@@ -221,41 +221,90 @@ function wbDodge(unit,dxPct=0,dyPct=12){
   unit.classList.add('dodging');unit.style.left=clamp(x+dxPct,6,94)+'%';unit.style.top=clamp(y+dyPct,7,93)+'%';
   setTimeout(()=>unit.classList.remove('dodging'),900);
 }
-function randomMechanic(){
-  if(!active)return;
-  const t=themeFor(active.boss.id),name=t.mechanics[mechanicSeq++%t.mechanics.length],types=['cone','circle','line'],type=types[mechanicSeq%types.length];
-  const cast=document.getElementById('wb2dCast'),tele=document.getElementById('wb2dTelegraphs'),boss=document.getElementById('wb2dBoss');
-  if(!cast||!tele||!boss)return;
-  const units=[...document.querySelectorAll('#wb2dUnits .wb2d-unit:not(.wiped)')],own=units.filter(u=>u.classList.contains('own'));
-  const tankTarget=units.find(u=>u.classList.contains('boss-target'))||own.find(u=>u.classList.contains('role-tank'))||units.find(u=>u.classList.contains('role-tank'))||units[0];
-  const nonTank=(own.length?own:units).filter(u=>!u.classList.contains('role-tank'));
-  const target=nonTank[Math.floor(Math.random()*Math.max(1,nonTank.length))]||tankTarget;
-  const bp=wbPoint(boss),tp=wbPoint(type==='cone'?tankTarget:target);
-  cast.hidden=false;cast.querySelector('b').textContent=name;const fill=cast.querySelector('i');fill.style.transition='none';fill.style.width='0%';void fill.offsetWidth;fill.style.transition='width 1.7s linear';fill.style.width='100%';
-  const tg=document.createElement('div');tg.className='wb2d-telegraph '+type;
-  if(bp&&tp){
-    if(type==='circle'){
-      tg.style.left=tp.x+'px';tg.style.top=tp.y+'px';
-      feed(active.boss.name+' marks '+(target?.querySelector('small')?.textContent||'a player')+' with '+name+'.','cast');
-      setTimeout(()=>wbDodge(target,10,target&&parseFloat(target.style.top)>50?-10:10),360);
-    }else{
-      const dx=tp.x-bp.x,dy=tp.y-bp.y,angle=Math.atan2(dy,dx)*180/Math.PI;
-      tg.style.left=bp.x+'px';tg.style.top=bp.y+'px';
-      tg.style.transform=(type==='cone'?'translateY(-50%) ':'')+'rotate('+angle+'deg)';
-      if(type==='cone'){
-        feed(active.boss.name+' faces '+(tankTarget?.querySelector('small')?.textContent||'the highest-threat Tank')+' for '+name+'.','cast');
-        own.filter(u=>u!==tankTarget).forEach((u,i)=>setTimeout(()=>wbDodge(u,0,(i%2?1:-1)*10),260+i*35));
-      }else{
-        feed(active.boss.name+' lines up '+(target?.querySelector('small')?.textContent||'a player')+' with '+name+'.','cast');
-        setTimeout(()=>wbDodge(target,0,parseFloat(target?.style.top||50)>50?-14:14),360);
+function ownUnitForCombatId(id){
+  const s=String(id||'');if(!s.startsWith('p-'))return null;
+  return document.querySelector('[data-unit-key="you-'+CSS.escape(s.slice(2))+'"]')
+}
+function wbEventUnit(id){
+  if(id==='boss')return document.getElementById('wb2dBoss');
+  return ownUnitForCombatId(id)
+}
+function setOwnHp(id,pct){
+  const u=ownUnitForCombatId(id);if(!u)return;const value=clamp(Number(pct)||0,0,100),bar=u.querySelector('.wb2d-unit-hp i');
+  if(bar)bar.style.width=value+'%';u.classList.toggle('wiped',value<=0)
+}
+function wbCastStart(e){
+  const cast=document.getElementById('wb2dCast');if(!cast)return;
+  const duration=Math.max(1,Number(e.payload?.duration)||1500);cast.hidden=false;cast.querySelector('b').textContent=e.ability||'Boss Cast';
+  const fill=cast.querySelector('i');if(fill){fill.style.transition='none';fill.style.width='0%';void fill.offsetWidth;requestAnimationFrame(()=>{fill.style.transition='width '+duration+'ms linear';fill.style.width='100%'})}
+}
+function wbCastClear(label=''){
+  const cast=document.getElementById('wb2dCast');if(!cast)return;
+  if(label)cast.querySelector('b').textContent=label;const fill=cast.querySelector('i');if(fill){fill.style.transition='none';fill.style.width='0%'}
+  setTimeout(()=>{if(cast)cast.hidden=true},220)
+}
+function wbServerTelegraph(e){
+  const tele=document.getElementById('wb2dTelegraphs'),boss=document.getElementById('wb2dBoss'),target=wbEventUnit(e.payload?.targetId||e.target),type=e.payload?.mechanicType;
+  if(!tele||!boss)return null;
+  const bp=wbPoint(boss),tp=wbPoint(target),tg=document.createElement('div');tg.className='wb2d-telegraph '+type;
+  if(type==='circle'){
+    if(!tp)return null;tg.style.left=tp.x+'px';tg.style.top=tp.y+'px'
+  }else if(type==='interrupt'){
+    if(!bp)return null;tg.className='wb2d-telegraph circle';tg.style.left=bp.x+'px';tg.style.top=bp.y+'px';tg.style.width='110px';tg.style.height='110px'
+  }else{
+    if(!bp||!tp)return null;const dx=tp.x-bp.x,dy=tp.y-bp.y,angle=Math.atan2(dy,dx)*180/Math.PI;
+    tg.style.left=bp.x+'px';tg.style.top=bp.y+'px';tg.style.transform=(type==='cone'?'translateY(-50%) ':'')+'rotate('+angle+'deg)'
+  }
+  tg.dataset.serverToken=e.payload?.token||String(e.timestamp);tele.appendChild(tg);return tg
+}
+function wbClearServerTelegraph(token,result=''){
+  const tg=document.querySelector('[data-server-token="'+CSS.escape(String(token||''))+'"]');if(!tg)return;
+  if(result)tg.classList.add(result);setTimeout(()=>tg.remove(),360)
+}
+function wbServerDodge(id){
+  const u=ownUnitForCombatId(id);if(!u)return;const y=parseFloat(u.style.top)||50;wbDodge(u,0,y>50?-13:13)
+}
+function wbRenderServerEvent(e){
+  const source=wbEventUnit(e.source),target=wbEventUnit(e.target),sourceChar=String(e.source||'').startsWith('p-'),targetChar=String(e.target||'').startsWith('p-');
+  switch(e.type){
+    case'COMBAT_START':break;
+    case'ABILITY_START':
+      if(sourceChar&&source){
+        if(e.target==='boss')projectileBetween(source,document.getElementById('wb2dBoss'),source.classList.contains('ranged')?'ranged':'melee');
+        else if(target)projectileBetween(source,target,'heal')
       }
-    }
-  }else feed(active.boss.name+' begins '+name+'.','cast');
-  tele.appendChild(tg);
-  setTimeout(()=>{
-    tg.classList.add('impact');message(name+' resolves','danger');
-    setTimeout(()=>{tg.remove();cast.hidden=true},430);
-  },1750);
+      break;
+    case'DAMAGE_DEALT':
+      if(e.target==='boss'){floatDamage(Number(e.amount)||0,true)}
+      else if(targetChar){setOwnHp(e.target,Number(e.payload?.targetHpPct)||0);if(source)projectileBetween(source,target,'enemy');message((e.ability||'Boss attack')+' hits','danger')}
+      break;
+    case'HEAL_RECEIVED':
+      if(targetChar){setOwnHp(e.target,Number(e.payload?.targetHpPct)||0);if(source&&target)projectileBetween(source,target,'heal');feed((e.ability||'Heal')+' restores '+Math.round(Number(e.amount)||0)+' health.','heal')}
+      break;
+    case'MOVEMENT_START':if(sourceChar)wbServerDodge(e.source);break;
+    case'MECHANIC_TELEGRAPH':
+      wbServerTelegraph(e);feed(active.boss.name+' begins '+(e.ability||'a mechanic')+'.','cast');break;
+    case'CAST_START':wbCastStart(e);break;
+    case'CAST_FINISH':wbCastClear('CAST COMPLETE');break;
+    case'MECHANIC_RESOLVE':
+      wbClearServerTelegraph(e.payload?.token,e.result==='avoided'||e.result==='interrupted'?'safe':'impact');
+      if(e.result==='avoided')message((e.ability||'Mechanic')+' avoided','victory');
+      break;
+    case'INTERRUPT':
+      if(e.result==='success'){if(source)projectileBetween(source,document.getElementById('wb2dBoss'),'ranged');wbCastClear('INTERRUPTED');wbClearServerTelegraph(e.payload?.token,'safe');message('INTERRUPTED','victory');feed((e.payload?.interruptedAbility||'Boss cast')+' was interrupted.','cast')}
+      break;
+    case'PLAYER_DEFEATED':if(targetChar){setOwnHp(e.target,0);feed('One of your adventurers has fallen.','wipe')}break;
+    case'ENEMY_DEFEATED':message('WORLD BOSS DEFEATED','victory');break;
+    case'COMBAT_END':break;
+  }
+}
+async function playServerEvents(events){
+  let last=0;
+  for(const e of Array.isArray(events)?events:[]){
+    if(!active)return;
+    const gap=Math.max(0,(Number(e.timestamp)||0)-last);if(gap)await new Promise(r=>setTimeout(r,gap));
+    wbRenderServerEvent(e);last=Number(e.timestamp)||last
+  }
 }
 function wipeOwnParty(){
   document.querySelectorAll('#wb2dUnits .wb2d-unit.own').forEach((u,i)=>setTimeout(()=>{u.classList.add('wiped');const hp=u.querySelector('.wb2d-unit-hp i');if(hp)hp.style.width='0%'},i*90));
@@ -276,7 +325,7 @@ async function combatState(){
 async function refresh(){
   const data=await combatState();if(!data||!active)return;
   active.boss=data.boss||active.boss;const parts=Array.isArray(data.participants)?data.participants:[];
-  active.partyThreat=data.yourPartyThreat||{};checkDamageChanges(parts);renderParticipants(parts);renderCombatMeters(parts,active.partyThreat);bossHealth(active.boss);
+  active.partyThreat=data.yourPartyThreat||{};active.combatState=data.yourCombatState||active.combatState||{};checkDamageChanges(parts);renderParticipants(parts);renderCombatMeters(parts,active.partyThreat);bossHealth(active.boss);
   document.getElementById('wb2dBossName').textContent=active.boss.name;
   document.getElementById('wb2dBossLabel').textContent=active.boss.name.toUpperCase();
   document.getElementById('wb2dStatus').textContent='Tier '+active.boss.tier+' · '+parts.length+'/'+active.boss.playerCap+' commanders engaged · Party attacks every 5 seconds';
@@ -291,13 +340,15 @@ async function attack(manual=false){
       if(!String(error.message||'').toLowerCase().includes('regrouping'))feed(error.message||'Attack failed.','error');
       return;
     }
-    pulseRaid();
+    active.partyThreat=data?.threatBreakdown||active.partyThreat||{};
+    if(data?.combatState)active.combatState=data.combatState;
+    await playServerEvents(data?.events||[]);
+    renderParticipants((await combatState())?.participants||[]);
     if(data?.wiped){
       Game.applyPartyCellShock?.(25);await Game.persistState?.();wipeOwnParty();stopAttackTimer();
     }else{
       const dmg=Number(data?.damage)||0,healing=Number(data?.healing)||0,healingThreat=Number(data?.healingThreat)||0,threat=Number(data?.threat)||0;
-      active.partyThreat=data?.threatBreakdown||active.partyThreat||{};
-      floatDamage(dmg,true);feed('Your party dealt '+dmg.toLocaleString()+' damage · healer restored '+healing.toLocaleString()+' · +'+healingThreat.toLocaleString()+' global healing threat · +'+threat.toLocaleString()+' total threat.','damage');
+      feed('Your party dealt '+dmg.toLocaleString()+' damage · healer restored '+healing.toLocaleString()+' · +'+healingThreat.toLocaleString()+' healing threat · +'+threat.toLocaleString()+' total threat.','damage');
       if(data?.currentHp!=null){active.boss.currentHp=data.currentHp;active.boss.maxHp=data.maxHp||active.boss.maxHp;bossHealth(active.boss)}
     }
     if(data?.killed)victory();
@@ -309,15 +360,14 @@ async function attack(manual=false){
 function stopAttackTimer(){if(attackTimer){clearInterval(attackTimer);attackTimer=null}}
 function stopCombatTimers(){
   if(pollTimer){clearInterval(pollTimer);pollTimer=null}
-  if(mechanicTimer){clearInterval(mechanicTimer);mechanicTimer=null}
   stopAttackTimer();
 }
 async function open(bossId){
   Game=window.CellboundGame;if(!Game?.ready)return;
   db=Game.getSupabase?.();if(!db)return;
-  stopCombatTimers();participantDamage.clear();mechanicSeq=0;
+  stopCombatTimers();participantDamage.clear();participantEventSeq.clear();
   const root=ensureShell(),known=(window.CellboundSocial?.getWorldBosses?.()||[]).find(b=>b.id===bossId);
-  active={boss:known||{id:bossId,name:'World Boss',tier:1,currentHp:1,maxHp:1,status:'in_combat'},partyThreat:{}};
+  active={boss:known||{id:bossId,name:'World Boss',tier:1,currentHp:1,maxHp:1,status:'in_combat'},partyThreat:{},combatState:{}};
   root.hidden=false;document.body.classList.add('wb2d-open');
   document.getElementById('wb2dFeed').innerHTML='';
   document.getElementById('wb2dMessage').hidden=true;
@@ -327,10 +377,8 @@ async function open(bossId){
   await refresh();
   if(!active)return;
   pollTimer=setInterval(refresh,2000);
-  mechanicTimer=setInterval(randomMechanic,4300);
   attackTimer=setInterval(()=>attack(false),5250);
   setTimeout(()=>attack(false),850);
-  setTimeout(randomMechanic,1800);
 }
 function close(){
   stopCombatTimers();active=null;document.body.classList.remove('wb2d-open');
