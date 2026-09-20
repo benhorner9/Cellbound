@@ -1405,11 +1405,13 @@ function checkBossPhases(ctx){
  const softPct=Number(ctx.encounter.softEnragePct);
  if(!ctx.softEnraged&&Number.isFinite(softPct)&&hp<=softPct){
   ctx.softEnraged=true;boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(ctx.encounter.softEnrageDamage)||1.22);
+  applyStatus(ctx,boss,boss,{id:'soft-enrage',name:'Soft Enrage',kind:'buff',duration:0,effect:{damageMultiplier:Math.max(0,boss.phaseDamageScale-1)}});
   emit(ctx,'ENRAGE',{source:boss.id,target:boss.id,ability:'Soft Enrage',result:'soft',payload:{healthPct:hp,damageScale:boss.phaseDamageScale}})
  }
  const hardAt=Number(ctx.encounter.hardEnrageMs);
  if(!ctx.hardEnraged&&Number.isFinite(hardAt)&&hardAt>0&&(ctx.elapsedOffsetMs+ctx.time)>=hardAt){
   ctx.hardEnraged=true;boss.hardEnraged=true;
+  applyStatus(ctx,boss,boss,{id:'hard-enrage',name:'Hard Enrage',kind:'buff',duration:0,effect:{damageMultiplier:2.5}});
   emit(ctx,'ENRAGE',{source:boss.id,target:boss.id,ability:'Hard Enrage',result:'hard',payload:{timeMs:ctx.elapsedOffsetMs+ctx.time,damageScale:3.5}})
  }
 }
