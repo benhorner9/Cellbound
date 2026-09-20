@@ -99,7 +99,7 @@ const ASHEN_ROOMS={
    ]
  }
 };
-let Game=null,G=null,P=null,run=null,token=0,rebornLoaderPromise=null;
+let Game=null,G=null,P=null,run=null,token=0,rebornLoaderPromise=null,requestedRunOptions=null;
 const I=window.CellboundIdentities;
 let tactics={aggression:'balanced',interrupts:'important',defensives:'balanced',adds:'dangerous',movement:'balanced',consumables:'danger'};
 const party=()=>Game&&Game.getPartyCharacters?Game.getPartyCharacters():[];
@@ -171,6 +171,29 @@ function readiness(){
 }
 function ready(){return readiness().ok}
 function groupButtons(key,items){return '<div class="cb2d-plan-row" data-plan="'+key+'">'+items.map(x=>'<button class="'+(tactics[key]===x[0]?'active':'')+'" data-pick="'+key+':'+x[0]+'"><b>'+x[1]+'</b><small>'+x[2]+'</small></button>').join('')+'</div>'}
+
+function endgameConfig(){
+ const E=window.CellboundEndgame;
+ if(E?.currentConfig)return E.currentConfig('ashen-vault');
+ return{difficulty:'normal',tier:0,diff:{name:'Normal',label:'NORMAL',description:'Learn the dungeon and its core mechanics.'},affixes:[],targetTimeMs:12*60*1000,recommendedItemLevel:18,dungeon:{version:2}}
+}
+function endgamePrepMarkup(){
+ const E=window.CellboundEndgame,cfg=endgameConfig(),p=E?.progressFor?.('ashen-vault')||{},tierMax=Math.max(1,Number(p.highest_tier)||1);
+ const buttons=['normal','heroic','cellbound'].map(mode=>{
+  const unlocked=E?.difficultyUnlocked?E.difficultyUnlocked('ashen-vault',mode,cfg.tier||1):mode==='normal';
+  const active=cfg.difficulty===mode,label=mode==='cellbound'?'CELLBOUND+':mode.toUpperCase();
+  return'<button type="button" data-cb2d-mode="'+mode+'" class="'+(active?'active':'')+'" '+(unlocked?'':'disabled')+'>'+label+'</button>'
+ }).join('');
+ const tier=cfg.difficulty==='cellbound'?'<label>Tier <select data-cb2d-tier>'+Array.from({length:tierMax},(_,i)=>i+1).map(t=>'<option value="'+t+'" '+(t===cfg.tier?'selected':'')+'>+'+t+'</option>').join('')+'</select></label>':'';
+ const affixes=(cfg.affixes||[]).map(id=>window.CellboundEndgameData?.AFFIXES?.[id]?.name||id).join(' · ')||'No affixes';
+ return'<div class="eg-prep-block"><small>DUNGEON DIFFICULTY</small><div class="eg-prep-tabs">'+buttons+'</div><div class="eg-prep-detail"><b>'+esc(cfg.diff?.name||'Normal')+'</b> · Recommended iLvl '+cfg.recommendedItemLevel+' · Target '+Math.floor(cfg.targetTimeMs/60000)+':'+String(Math.round(cfg.targetTimeMs/1000)%60).padStart(2,'0')+'<br>'+esc(affixes)+'<br>'+esc(cfg.diff?.description||'')+'</div>'+tier+'</div>'
+}
+function bindEndgamePrep(){
+ const E=window.CellboundEndgame;
+ $('[data-cb2d-mode]').forEach(b=>b.onclick=()=>{E?.choose?.('ashen-vault',b.dataset.cb2dMode);briefing()});
+ $('[data-cb2d-tier]')?.addEventListener('change',e=>{E?.choose?.('ashen-vault','cellbound',Number(e.target.value));briefing()})
+}
+
 function briefing(){
  const gate=readiness(),r=root();document.body.classList.add('cb2d-open');r.hidden=false;
  if(!gate.ok){
@@ -180,13 +203,14 @@ function briefing(){
    return;
  }
 
- r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LEVELS 3–5 · ILVL 18+ · TACTICAL BRIEFING</small><h2>Set the plan once. Then watch the dungeon run.</h2></div><button data-close>×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">These tactics persist through the whole expedition. The party will move, react and fight automatically. Live overrides remain available without stopping combat.</p><h3>Aggression</h3>'+groupButtons('aggression',[['safe','SAFE','Prioritise stability.'],['balanced','BALANCED','Standard dungeon pace.'],['aggressive','AGGRESSIVE','Push damage windows.']])+'<h3>Interrupts</h3>'+groupButtons('interrupts',[['important','IMPORTANT','Stop dangerous casts.'],['high','HIGH','Interrupt aggressively.'],['conservative','CONSERVATIVE','Save for critical casts.']])+'<h3>Defensives</h3>'+groupButtons('defensives',[['early','EARLY','Use cooldowns sooner.'],['balanced','BALANCED','React to pressure.'],['save','SAVE','Hold for late bosses.']])+'<h3>Add Priority</h3>'+groupButtons('adds',[['dangerous','DANGEROUS','Swap to threatening adds.'],['full','FULL','Clear every add wave.'],['boss','BOSS','Stay on primary target.']])+'<h3>Movement Discipline</h3>'+groupButtons('movement',[['safety','SAFETY FIRST','Move early and protect the run.'],['balanced','BALANCED','Respect mechanics without giving up free damage.'],['damage','MAX DAMAGE','Move later to preserve uptime.']])+'</main><aside><small>ACTIVE FIVE · PARTY LV '+partyLevel()+' · ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>Lv. '+Math.max(1,Number(c.level)||1)+' · '+esc(c.class)+' · '+esc(c.spec)+'</small></span><strong>'+String(role(c)).toUpperCase()+'</strong></div>').join('')+'<div class="cb2d-prep-summary"><small>ACTIVE PROFESSION PREP</small>'+party().map(c=>{const fx=P?.activeEffects?.(c)||[];return fx.length?'<p><b>'+esc(c.name)+'</b><span>'+fx.map(x=>esc(x.name)+' · '+x.remainingBosses+' bosses').join('<br>')+'</span></p>':''}).join('')+'</div><button class="cb2d-start" data-start>BEGIN EXPEDITION →</button></aside></div></section>';
+ r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LEVELS 3–5 · ILVL 18+ · TACTICAL BRIEFING</small><h2>Set the plan once. Then watch the dungeon run.</h2></div><button data-close>×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">These tactics persist through the whole expedition. The party will move, react and fight automatically. Difficulty changes the same Combat Reborn simulation rather than loading a separate combat model.</p>'+endgamePrepMarkup()+'<h3>Aggression</h3>'+groupButtons('aggression',[['safe','SAFE','Prioritise stability.'],['balanced','BALANCED','Standard dungeon pace.'],['aggressive','AGGRESSIVE','Push damage windows.']])+'<h3>Interrupts</h3>'+groupButtons('interrupts',[['important','IMPORTANT','Stop dangerous casts.'],['high','HIGH','Interrupt aggressively.'],['conservative','CONSERVATIVE','Save for critical casts.']])+'<h3>Defensives</h3>'+groupButtons('defensives',[['early','EARLY','Use cooldowns sooner.'],['balanced','BALANCED','React to pressure.'],['save','SAVE','Hold for late bosses.']])+'<h3>Add Priority</h3>'+groupButtons('adds',[['dangerous','DANGEROUS','Swap to threatening adds.'],['full','FULL','Clear every add wave.'],['boss','BOSS','Stay on primary target.']])+'<h3>Movement Discipline</h3>'+groupButtons('movement',[['safety','SAFETY FIRST','Move early and protect the run.'],['balanced','BALANCED','Respect mechanics without giving up free damage.'],['damage','MAX DAMAGE','Move later to preserve uptime.']])+'</main><aside><small>ACTIVE FIVE · PARTY LV '+partyLevel()+' · ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>Lv. '+Math.max(1,Number(c.level)||1)+' · '+esc(c.class)+' · '+esc(c.spec)+'</small></span><strong>'+String(role(c)).toUpperCase()+'</strong></div>').join('')+'<div class="cb2d-prep-summary"><small>ACTIVE PROFESSION PREP</small>'+party().map(c=>{const fx=P?.activeEffects?.(c)||[];return fx.length?'<p><b>'+esc(c.name)+'</b><span>'+fx.map(x=>esc(x.name)+' · '+x.remainingBosses+' bosses').join('<br>')+'</span></p>':''}).join('')+'</div><button class="cb2d-start" data-start>BEGIN EXPEDITION →</button></aside></div></section>';
  r.querySelector('[data-close]').onclick=close;
  r.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{const a=b.dataset.pick.split(':');tactics[a[0]]=a[1];r.querySelectorAll('[data-plan="'+a[0]+'"] button').forEach(x=>x.classList.toggle('active',x===b))});
+ bindEndgamePrep();
  r.querySelector('[data-start]').onclick=start;
 }
 function start(){
- const p=party(),resources=Object.fromEntries(p.map(c=>{const def=resourceDefFor(c);return[c.id,{name:def.name,max:def.max,value:def.start}]})),cooldowns=Object.fromEntries(p.map(c=>[c.id,{}])),reviveSickness=Object.fromEntries(p.map(c=>[c.id,0]));token++;run={token:token,stage:0,speed:1,resources,cooldowns,reviveSickness,expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],damageDone:Object.fromEntries(p.map(c=>[c.id,0])),healingDone:Object.fromEntries(p.map(c=>[c.id,0])),overhealing:Object.fromEntries(p.map(c=>[c.id,0])),hitCount:Object.fromEntries(p.map(c=>[c.id,0])),identityTimers:{},combatStartedAt:0,lastMeterAt:0,log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},xpGrowth:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0,rebornHistory:[],rebornReplay:null,rebornResult:null,rebornTelegraphs:{},rebornCastTimer:null};
+ const eg=endgameConfig(),p=party(),resources=Object.fromEntries(p.map(c=>{const def=resourceDefFor(c);return[c.id,{name:def.name,max:def.max,value:def.start}]})),cooldowns=Object.fromEntries(p.map(c=>[c.id,{}])),reviveSickness=Object.fromEntries(p.map(c=>[c.id,0]));token++;run={token:token,stage:0,speed:1,resources,cooldowns,reviveSickness,expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])]},condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],damageDone:Object.fromEntries(p.map(c=>[c.id,0])),healingDone:Object.fromEntries(p.map(c=>[c.id,0])),overhealing:Object.fromEntries(p.map(c=>[c.id,0])),hitCount:Object.fromEntries(p.map(c=>[c.id,0])),identityTimers:{},combatStartedAt:0,lastMeterAt:0,log:['The party enters The Ashen Vault · '+(eg.diff?.name||'Normal')+'.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},xpGrowth:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0,rebornHistory:[],rebornReplay:null,rebornResult:null,rebornTelegraphs:{},rebornCastTimer:null};
  drawViewer();seamless(token);
 }
 function route(){
@@ -1065,9 +1089,13 @@ function loot(s){
    const drops=P.rollReagents(s.bossId)||[];
    drops.forEach(d=>{Game.addMaterial(d.key,d.quantity);recordMaterialDrop(d,boss?.name||s.title)})
  }
- if((s.kind==='final'||Math.random()<.45)&&G&&G.rollDungeonLoot&&boss){
-   const x=G.rollDungeonLoot(boss.name,boss.tier2Chance),item=Object.assign({},x,{source:'The Ashen Vault · '+boss.name});
-   Game.addBankItem(item);run.loot.gear.push(item);return item
+ const mode=run?.endgame?.difficulty||'normal',dropChance=s.kind==='final'?1:mode==='normal'?.45:mode==='heroic'?.68:.78;
+ if(Math.random()<dropChance){
+   const rolled=window.CellboundEndgame?.rollPersonalLoot?.('ashen-vault')||(G&&G.rollDungeonLoot?G.rollDungeonLoot(boss.name,boss.tier2Chance):null);
+   if(rolled){
+     const item=Object.assign({},rolled,{source:'The Ashen Vault · '+boss.name+' · '+(run?.endgame?.label||'Normal')});
+     Game.addBankItem(item);run.loot.gear.push(item);return item
+   }
  }
  return null
 }
@@ -1181,7 +1209,8 @@ function rebornTactics(){
 function rebornEncounter(s){
  const room=ASHEN_ROOMS[s.id]||{};
  const recommendedItemLevel=s.level<=3?18:s.level===4?20:22;
- return{id:s.id,title:s.title,kind:s.kind,level:s.level||1,recommendedItemLevel,knowledgeKey:s.knowledge||s.id,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies:[...s.enemies],enemyHealth:s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120,mechanics:s.mechanics.map(m=>({name:m[0],type:m[1],duration:m[2]})),environment:{room:room.room||s.id,blockers:(room.blockers||[]).map(b=>({...b,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false}))}}
+ const base={id:s.id,title:s.title,kind:s.kind,level:s.level||1,recommendedItemLevel,knowledgeKey:s.knowledge||s.id,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies:[...s.enemies],enemyHealth:s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120,mechanics:s.mechanics.map(m=>Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}),environment:{room:room.room||s.id,blockers:(room.blockers||[]).map(b=>({...b,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false}))}};
+ return window.CellboundEndgame?.stageConfig?.('ashen-vault',base)||base
 }
 function copyObject(v){return JSON.parse(JSON.stringify(v||{}))}
 function rebornPlayerByUnit(id){return party().find(c=>'p-'+c.id===id)||null}
@@ -1298,6 +1327,15 @@ function renderRebornEvent(e,result,replayMode=false){
    }
    break;
   case'RESOURCE_SPENT':case'RESOURCE_GAINED':case'RESOURCE_STATE':rebornResourceVisual(e);break;
+  case'AFFIX_TRIGGER':
+   log((e.ability||'Dungeon affix')+' · '+String(e.result||'triggered').replace(/-/g,' ')+'.');
+   if(e.payload?.affix==='volatile-cells'&&e.result==='armed')flash('VOLATILE CELLS',true);
+   if(e.payload?.affix==='blood-moon')status('Blood Moon pressure');
+   break;
+  case'ENEMY_REVIVED':{
+   const u=$('[data-unit="'+e.target+'"]');if(u){u.classList.remove('dead','dying');const bar=u.querySelector('.cb2d-unit-hp i');if(bar)bar.style.width=(Number(e.payload?.targetHpPct)||35)+'%';hitReact(e.target,'heal');floating(e.target,'RETURNS','incoming')}
+   log('Necromantic returns '+(u?.querySelector('span')?.childNodes?.[0]?.textContent||'an enemy')+' to the fight.');break;
+  }
   case'PLAYER_MISTAKE':{
    if(srcChar){
     const type=String(e.payload?.type||e.result||'mistake'),detail=e.payload?.detail||'made an execution mistake';
@@ -1414,7 +1452,7 @@ function runRebornStage(s){
  const C=window.CellboundCombatReborn;if(!C?.simulate)throw new Error('Combat Reborn engine is unavailable');
  const startHp=Object.fromEntries(party().map(c=>[c.id,hp(c.id)]));
  const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:hp(c.id),_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_reviveSicknessMs:run.reviveSickness?.[c.id]||0}));
- const result=C.simulate({party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:['ashen-vault',run.token,run.stage,Date.now()].join(':')});
+ const result=C.simulate({party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:['ashen-vault',run.endgame?.difficulty||'normal',run.endgame?.tier||0,run.token,run.stage,Date.now()].join(':')});
  result.stageId=s.id;result.stageTitle=s.title;result.startHp=startHp;return result
 }
 function captureRebornResult(result){
@@ -1474,6 +1512,14 @@ async function replayFinalReborn(){
  }
  removeRebornReplayControls();if(end)end.hidden=false
 }
+
+function endgameRunMetrics(){
+ const t=rebornTotals(),combatMs=Math.round((Number(t.duration)||0)*1000);
+ // Playback speed never affects this. Route time is simulated separately from presentation time.
+ const routeMs=STAGES.length*45000,timeMs=Math.max(25000,combatMs*4+routeMs);
+ return{timeMs,deaths:t.deaths,mechanicsFailed:t.failed,mistakes:t.mistakes||0,scorePreview:window.CellboundEndgameData?.scorePreview?.({difficulty:run?.endgame?.difficulty||'normal',tier:run?.endgame?.tier||0,timeMs,targetTimeMs:run?.endgame?.targetTimeMs||0,deaths:t.deaths,mechanicsFailed:t.failed,mistakes:t.mistakes||0})||0}
+}
+
 async function seamlessFrom(startIndex,tok){
  try{
   for(let i=startIndex;i<STAGES.length;i++){
@@ -1490,7 +1536,14 @@ async function seamlessFrom(startIndex,tok){
    const recovered=await recoverFallenBetweenStages(tok);if(!recovered||tok!==token)return;
    if(i<STAGES.length-1){party().forEach(c=>{if(hp(c.id)>0)setHp(c.id,Math.min(100,hp(c.id)+6))});recoverDungeonResources();advanceDungeonCooldowns(5000);updateRows();flash('PATH CLEAR',false);await delay(420);await travelDeeper(STAGES[i+1],tok)}
   }
-  const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;st.gold+=120;st.renown+=60;run.loot.gold+=120;run.loot.renown+=60;run.loot.xp=ASHEN_VAULT_XP;run.xpGrowth=awardPartyXp(ASHEN_VAULT_XP);st.dungeonCompletions++;const completedPartyIds=party().map(c=>c.id);st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',partyIlvl:ilvl(),xpPerCharacter:ASHEN_VAULT_XP,partyIds:completedPartyIds,combatVersion:window.CellboundCombatReborn?.VERSION||'legacy'});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault cleared through Combat Reborn simulation. Each adventurer earned '+ASHEN_VAULT_XP+' XP.');run.xpGrowth.filter(x=>x.levels>0).forEach(x=>st.activity.push(x.name+' reached Level '+x.afterLevel+'.'));await Game.persistState();await syncPartyXpRecords(run.xpGrowth);window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'ashen-vault',partyIds:completedPartyIds}}));finish(true,STAGES[6]);appendRebornAnalysis($('#cb2dEnd'))
+  const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;
+  const mode=run.endgame?.difficulty||'normal',tier=Number(run.endgame?.tier)||0,gold=mode==='normal'?120:mode==='heroic'?190:220+tier*10,renown=mode==='normal'?60:mode==='heroic'?90:100+tier*4,xp=mode==='normal'?ASHEN_VAULT_XP:mode==='heroic'?480:500;
+  st.gold+=gold;st.renown+=renown;run.loot.gold+=gold;run.loot.renown+=renown;run.loot.xp=xp;
+  const shards=window.CellboundEndgame?.shardReward?.('ashen-vault')||0;if(shards){Game.addMaterial('cell-shards',shards);recordMaterialDrop({key:'cell-shards',quantity:shards},'Endgame Reward')}
+  const chase=window.CellboundEndgame?.rollChase?.('ashen-vault');if(chase){st.activity.push('Very rare collection reward: '+chase.name+'.');flash('LEGENDARY DROP',false)}
+  const metrics=endgameRunMetrics();run.endgameMetrics=metrics;
+  const record=await window.CellboundEndgame?.recordRun?.('ashen-vault',metrics);run.endgameRecord=record&&!record.error?record:null;
+  run.xpGrowth=awardPartyXp(xp);st.dungeonCompletions++;const completedPartyIds=party().map(c=>c.id);st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs,partyIlvl:ilvl(),xpPerCharacter:xp,partyIds:completedPartyIds,combatVersion:window.CellboundCombatReborn?.VERSION||'legacy',dungeonVersion:run.endgame?.dungeonVersion||2});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault · '+(run.endgame?.label||'Normal')+' cleared. Score '+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'. Each adventurer earned '+xp+' XP.');run.xpGrowth.filter(x=>x.levels>0).forEach(x=>st.activity.push(x.name+' reached Level '+x.afterLevel+'.'));await Game.persistState();await syncPartyXpRecords(run.xpGrowth);window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'ashen-vault',difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs,partyIds:completedPartyIds}}));finish(true,STAGES[6]);appendRebornAnalysis($('#cb2dEnd'))
  }catch(e){
    if(e&&e.message==='cancelled')return;
    const s=STAGES[run?.stage||0];
@@ -1535,6 +1588,7 @@ function animateXpGrowth(root){
    },220+index*90);
  })
 }
+function formatRunTime(ms){const t=Math.max(0,Math.round((Number(ms)||0)/1000)),m=Math.floor(t/60),s=t%60;return m+':'+String(s).padStart(2,'0')}
 function finish(ok,s){
  if(!run)return;run.resolved=true;const e=$('#cb2dEnd');e.hidden=false;
  if(!ok){
@@ -1544,8 +1598,8 @@ function finish(ok,s){
  const gear=run.loot?.gear||[],materials=Object.values(run.loot?.materials||{}),xpGrowth=run.xpGrowth||[];
  e.className='cb2d-end cb2d-loot-screen';
  e.innerHTML='<div class="cb2d-loot-wrap">'+
-   '<header class="cb2d-loot-head"><div><small>THE ASHEN VAULT · CLEARED</small><h3>Expedition Rewards</h3><p>The Vaultheart has fallen. Everything below has already been secured to your guild.</p></div><div class="cb2d-loot-complete">✓<span>DUNGEON<br>COMPLETE</span></div></header>'+
-   '<div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+Number(run.loot?.gold||0)+'</b><small>Added to Guild treasury</small></article><article><span>RENOWN</span><b>+'+Number(run.loot?.renown||0)+'</b><small>Guild reputation earned</small></article><article><span>PARTY XP</span><b>+'+Number(run.loot?.xp||0)+'</b><small>Earned by each adventurer</small></article><article><span>BOSS CHESTS</span><b>'+gear.length+'</b><small>Gear drops secured</small></article></div>'+
+   '<header class="cb2d-loot-head"><div><small>THE ASHEN VAULT · '+esc(run?.endgame?.label||'NORMAL').toUpperCase()+' · CLEARED</small><h3>Expedition Rewards</h3><p>The Vaultheart has fallen. Everything below has already been secured to your guild.</p></div><div class="cb2d-loot-complete">✓<span>DUNGEON<br>COMPLETE</span></div></header>'+
+   '<div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+Number(run.loot?.gold||0)+'</b><small>Added to Guild treasury</small></article><article><span>RENOWN</span><b>+'+Number(run.loot?.renown||0)+'</b><small>Guild reputation earned</small></article><article><span>PARTY XP</span><b>+'+Number(run.loot?.xp||0)+'</b><small>Earned by each adventurer</small></article><article><span>BOSS CHESTS</span><b>'+gear.length+'</b><small>Gear drops secured</small></article><article><span>RUN SCORE</span><b>'+Number(run.endgameRecord?.score||run.endgameMetrics?.scorePreview||0).toLocaleString()+'</b><small>'+formatRunTime(run.endgameMetrics?.timeMs||0)+' simulated time</small></article></div>'+
    '<section class="cb2d-loot-section cb2d-xp-section"><div class="cb2d-loot-title"><span>PARTY EXPERIENCE</span><small>Every member of the active five gains experience from the clear</small></div><div class="cb2d-xp-grid">'+(xpGrowth.length?xpGrowth.map(xpGrowthCard).join(''):'<div class="cb2d-loot-empty">No character XP was awarded.</div>')+'</div></section>'+
    '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>GEAR ACQUIRED</span><small>Stored automatically in the Guild Bank</small></div><div class="cb2d-loot-gear">'+(gear.length?gear.map(lootGearCard).join(''):'<div class="cb2d-loot-empty">No bonus gear dropped before the guaranteed Vaultheart reward.</div>')+'</div></section>'+
    '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>PROFESSION REAGENTS</span><small>Available immediately for crafting</small></div><div class="cb2d-loot-materials">'+(materials.length?materials.map(lootMaterialCard).join(''):'<div class="cb2d-loot-empty">No profession reagents recovered.</div>')+'</div></section>'+
@@ -1568,6 +1622,12 @@ async function override(t,b){
    x.quantity--;if(x.quantity<=0)st.consumables=st.consumables.filter(y=>y!==x);updateRows();log(x.name+' restores '+(target?.name||'the party')+'.');Game.save()
  }
 }
+function openDungeon(options){
+ requestedRunOptions=options||null;
+ if(options?.difficulty)window.CellboundEndgame?.choose?.('ashen-vault',options.difficulty,options.tier||1);
+ briefing()
+}
+
 function syncEntryButton(){
  const b=$('#enterDungeonBtn');if(!b||!Game?.ready)return;
  const gate=readiness();
@@ -1586,6 +1646,7 @@ function init(){
  document.documentElement.dataset.cb2d='ready';
  syncEntryButton();
  setInterval(syncEntryButton,400);
+ window.CellboundDungeon2D={open:openDungeon,briefing,currentRun:()=>run};
 }
 init();
 })();
