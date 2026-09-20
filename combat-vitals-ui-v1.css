@@ -1,0 +1,168 @@
+/* ==========================================================================
+   CELLBOUND SHARED COMBAT VITALS
+   Canonical order everywhere: HEALTH on top, class RESOURCE directly below.
+   This file is loaded after encounter-specific styles so local combat themes
+   cannot reverse or restyle the core vitals.
+   ========================================================================== */
+
+:root{
+  --cb-vitals-width:54px;
+  --cb-vitals-hp-height:5px;
+  --cb-vitals-resource-height:4px;
+  --cb-vitals-hp-top:-24px;
+  --cb-vitals-resource-top:-16px;
+}
+
+/* Ashen / canonical CB2D / The Twelve Below */
+.cb2d-unit.party .cb2d-unit-hp,
+.tb-unit.party .cb2d-unit-hp{
+  position:absolute!important;
+  left:50%!important;
+  right:auto!important;
+  top:var(--cb-vitals-hp-top)!important;
+  width:var(--cb-vitals-width)!important;
+  height:var(--cb-vitals-hp-height)!important;
+  transform:translateX(-50%)!important;
+  z-index:9!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.11)!important;
+  border-radius:4px!important;
+  background:rgba(2,6,8,.92)!important;
+  box-shadow:0 2px 5px rgba(0,0,0,.42)!important
+}
+.cb2d-unit.party .cb2d-unit-hp>i,
+.tb-unit.party .cb2d-unit-hp>i{
+  display:block!important;
+  width:100%;
+  height:100%;
+  background:linear-gradient(90deg,#4fa968,#7fd79a)!important;
+  transition:width .28s ease!important
+}
+.cb2d-unit.party .cbr-resource,
+.tb-unit.party .cbr-resource{
+  position:absolute!important;
+  left:50%!important;
+  top:var(--cb-vitals-resource-top)!important;
+  width:var(--cb-vitals-width)!important;
+  height:var(--cb-vitals-resource-height)!important;
+  transform:translateX(-50%)!important;
+  z-index:9!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.09)!important;
+  border-radius:3px!important;
+  background:rgba(2,6,8,.92)!important;
+  box-shadow:0 2px 5px rgba(0,0,0,.34)!important;
+  pointer-events:none!important
+}
+
+/* Hollow Sanctum uses <em> for the HP track. */
+.hs2d-unit.party>em{
+  position:absolute!important;
+  left:50%!important;
+  right:auto!important;
+  top:var(--cb-vitals-hp-top)!important;
+  width:var(--cb-vitals-width)!important;
+  height:var(--cb-vitals-hp-height)!important;
+  transform:translateX(-50%)!important;
+  z-index:9!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.11)!important;
+  border-radius:4px!important;
+  background:rgba(2,6,8,.92)!important;
+  box-shadow:0 2px 5px rgba(0,0,0,.42)!important
+}
+.hs2d-unit.party>em>i{
+  display:block!important;
+  width:100%;
+  height:100%;
+  background:linear-gradient(90deg,#4fa968,#7fd79a)!important;
+  transition:width .28s ease!important
+}
+.hs2d-unit.party .cbr-resource{
+  position:absolute!important;
+  left:50%!important;
+  top:var(--cb-vitals-resource-top)!important;
+  width:var(--cb-vitals-width)!important;
+  height:var(--cb-vitals-resource-height)!important;
+  transform:translateX(-50%)!important;
+  z-index:9!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.09)!important;
+  border-radius:3px!important;
+  background:rgba(2,6,8,.92)!important;
+  box-shadow:0 2px 5px rgba(0,0,0,.34)!important;
+  pointer-events:none!important
+}
+
+/* Shared World Bosses: your own five use the same overhead vitals. */
+.wb2d-unit.own .wb2d-unit-hp{
+  position:absolute!important;
+  left:50%!important;
+  right:auto!important;
+  top:var(--cb-vitals-hp-top)!important;
+  width:var(--cb-vitals-width)!important;
+  height:var(--cb-vitals-hp-height)!important;
+  transform:translateX(-50%)!important;
+  z-index:9!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.11)!important;
+  border-radius:4px!important;
+  background:rgba(2,6,8,.92)!important;
+  box-shadow:0 2px 5px rgba(0,0,0,.42)!important
+}
+.wb2d-unit.own .wb2d-unit-hp>i{
+  display:block!important;
+  width:100%;
+  height:100%;
+  background:linear-gradient(90deg,#4fa968,#7fd79a)!important;
+  transition:width .28s ease!important
+}
+.wb2d-unit.own .cbr-resource{
+  position:absolute!important;
+  left:50%!important;
+  top:var(--cb-vitals-resource-top)!important;
+  width:var(--cb-vitals-width)!important;
+  height:var(--cb-vitals-resource-height)!important;
+  transform:translateX(-50%)!important;
+  z-index:9!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.09)!important;
+  border-radius:3px!important;
+  background:rgba(2,6,8,.92)!important;
+  box-shadow:0 2px 5px rgba(0,0,0,.34)!important;
+  pointer-events:none!important
+}
+
+/* Shared class resource language */
+.cbr-resource>i{
+  display:block!important;
+  width:100%;
+  height:100%;
+  border-radius:2px!important;
+  transition:width .32s ease-out!important;
+  background:#8fa1a8
+}
+.cbr-resource.resource-mana>i{background:linear-gradient(90deg,#376fce,#6ca8ff)!important}
+.cbr-resource.resource-rage>i{background:linear-gradient(90deg,#9c302d,#df5c4e)!important}
+.cbr-resource.resource-energy>i{background:linear-gradient(90deg,#9f872a,#e2ca4f)!important}
+.cbr-resource.resource-focus>i{background:linear-gradient(90deg,#9a6a27,#df9f44)!important}
+.cbr-resource.resource-runic-power>i{background:linear-gradient(90deg,#258a9b,#62d8e4)!important}
+.cbr-resource.resource-fury>i{background:linear-gradient(90deg,#7139a6,#b461df)!important}
+.cbr-resource.resource-essence>i{background:linear-gradient(90deg,#237968,#4bc9aa)!important}
+.cbr-resource.resource-power>i{background:linear-gradient(90deg,#667980,#9eafb5)!important}
+.cbr-resource>span{display:none!important}
+
+/* Side-panel order also stays HP first, resource second. */
+.cb2d-side-hp{display:block!important;order:1}
+.tb-side-resource{display:block!important;order:2}
+
+/* Mobile keeps identical order, only smaller. */
+@media(max-width:620px){
+ :root{
+   --cb-vitals-width:46px;
+   --cb-vitals-hp-height:4px;
+   --cb-vitals-resource-height:3px;
+   --cb-vitals-hp-top:-21px;
+   --cb-vitals-resource-top:-14px
+ }
+}
