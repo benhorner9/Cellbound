@@ -401,11 +401,11 @@ function renderTdEnvironment(index){
   if(tag)tag.innerHTML='<b>'+esc(cfg.label)+'</b><small>'+esc(cfg.ambience)+'</small>'
 }
 
-function spawnTdEnemies(names,boss){
+function spawnTdEnemies(names,boss,maxHealth){
   const root=$('#tdEnemies');if(!root)return;
   root.innerHTML=names.map((n,i)=>{
     const y=names.length===1?50:36+i*(28/Math.max(1,names.length-1));
-    return '<div class="td-unit enemy '+(boss?'boss':'')+'" data-td-enemy="'+i+'" data-hp="'+(boss?260:95)+'" data-max="'+(boss?260:95)+'" style="left:72%;top:'+y+'%"><i></i><span>'+esc(n)+'</span><em><b style="width:100%"></b></em></div>';
+    return '<div class="td-unit enemy '+(boss?'boss':'')+'" data-td-enemy="'+i+'" data-hp="'+(Number(maxHealth)|| (boss?260:95))+'" data-max="'+(Number(maxHealth)|| (boss?260:95))+'" style="left:72%;top:'+y+'%"><i></i><span>'+esc(n)+'</span><em><b style="width:100%"></b></em></div>';
   }).join('');
 }
 function setTdHp(index,hp){
@@ -413,55 +413,6 @@ function setTdHp(index,hp){
   const max=Number(e.dataset.max)||100,next=Math.max(0,hp);e.dataset.hp=next;
   const bar=e.querySelector('em b');if(bar)bar.style.width=(next/max*100)+'%';
   if(next<=0)e.classList.add('dead');
-}
-
-function tdAttackCooldown(c){
-  const p=tdProfile(c);
-  if(p==='tank')return 980;
-  if(c.class==='Rogue')return 650;
-  if(c.class==='Hunter')return 980;
-  if(c.class==='Mage')return 1120;
-  if(c.class==='Warrior')return 820;
-  return 900;
-}
-function tdLivingEnemy(){
-  return $$('[data-td-enemy]').find(e=>Number(e.dataset.hp)>0)||null;
-}
-function tdFirePartyAttack(c,my){
-  if(my!==tutorialToken)return;
-  const living=tdLivingEnemy();if(!living)return;
-  const idx=Number(living.dataset.tdEnemy),profile=tdProfile(c),r=tdRole(c);
-  const desired=tdFormationPoint(c,idx);
-  tdMove('[data-td-party="'+c.id+'"]',desired.x,desired.y,profile==='melee'?170:340);
-  tdAction(r==='tank'?'tank':'dps',c.name+(profile==='melee'?' attacks from close range':' attacks from range'));
-  const shot=c.class==='Mage'?'magic':c.class==='Hunter'?'arrow':'slash';
-  setTimeout(()=>{if(my===tutorialToken)tdProjectile('[data-td-party="'+c.id+'"]','[data-td-enemy="'+idx+'"]',shot)},profile==='melee'?80:0);
-  const hit=(r==='tank'?18:26)+Math.floor(Math.random()*8);
-  setTimeout(()=>{
-    if(my!==tutorialToken)return;
-    const enemy=$('[data-td-enemy="'+idx+'"]');if(!enemy||Number(enemy.dataset.hp)<=0)return;
-    setTdHp(idx,Number(enemy.dataset.hp)-hit);tdFloat('[data-td-enemy="'+idx+'"]','-'+hit,'damage');
-  },profile==='melee'?170:300);
-}
-function tdFireEnemyAttack(idx,tank,healer,my){
-  if(my!==tutorialToken||!tank)return;
-  const enemy=$('[data-td-enemy="'+idx+'"]');if(!enemy||Number(enemy.dataset.hp)<=0)return;
-  const tp=tdPct('[data-td-party="'+tank.id+'"]');
-  tdMove('[data-td-enemy="'+idx+'"]',tp.x+8,tp.y+([-8,0,8][idx%3]||0),300);
-  tdThreatLine(idx,tank);
-  tdAction('tank',tank.name+' holds threat');
-  tdProjectile('[data-td-enemy="'+idx+'"]','[data-td-party="'+tank.id+'"]','enemy');
-  setTimeout(()=>{if(my===tutorialToken)tdFloat('[data-td-party="'+tank.id+'"]','-8','incoming')},260);
-  if(healer){
-    const hp=tdPct('[data-td-party="'+tank.id+'"]');
-    tdMove('[data-td-party="'+healer.id+'"]',Math.max(13,hp.x-39),Math.min(80,hp.y+14),330);
-  }
-}
-function tdFireHeal(healer,tank,my){
-  if(my!==tutorialToken||!healer||!tank)return;
-  tdAction('healer',healer.name+' heals '+tank.name+' from the backline');
-  tdProjectile('[data-td-party="'+healer.id+'"]','[data-td-party="'+tank.id+'"]','heal');
-  setTimeout(()=>{if(my===tutorialToken)tdFloat('[data-td-party="'+tank.id+'"]','+8','heal')},290);
 }
 
 function tdSelectorFor(unitId){
@@ -551,7 +502,7 @@ async function tdPlayCombat(result,my){
   return result.outcome==='victory'
 }
 async function fightTdPack(encounter,my){
-  spawnTdEnemies(encounter.mobs,encounter.boss);await sleep(350);
+  spawnTdEnemies(encounter.mobs,encounter.boss,encounter.enemyHealth);await sleep(350);
   const C=window.CellboundCombatReborn;if(!C?.simulate)throw new Error('Combat Reborn engine unavailable');
   const roster=state().roster;
   const combatParty=roster.map(c=>Object.assign({},c,{power:Math.max(Number(c.power)||1,30),_combatHealthPct:100}));
