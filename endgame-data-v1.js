@@ -86,6 +86,35 @@ const DUNGEONS={
  }
 };
 
+
+const BOSS_PHASES={
+ 'ashen-vault':{
+   kael:[
+     {id:'kael-guards',name:'Cinder Guard Reinforcements',atPct:70,spawnAdds:true},
+     {id:'kael-fury',name:"Warden's Fury",atPct:35,damageScale:1.16,addMechanics:[{name:'Burning Chains',type:'line',duration:1400}]}
+   ],
+   embermaw:[
+     {id:'embermaw-roar',name:'Furnace Awakening',atPct:65,addMechanics:[{name:'Furnace Eruption',type:'circles',duration:1450}]},
+     {id:'embermaw-fury',name:'Molten Rage',atPct:30,damageScale:1.18}
+   ],
+   vaultheart:[
+     {id:'vaultheart-fracture',name:'The Heart Fractures',atPct:70,spawnAdds:true},
+     {id:'vaultheart-collapse',name:'Vault Collapse',atPct:40,addMechanics:[{name:'Falling Vaultstone',type:'circles',duration:1350}]},
+     {id:'vaultheart-exposed',name:'Exposed Core',atPct:20,damageScale:1.22}
+   ]
+ },
+ 'hollow-sanctum':{
+   sentinel:[
+     {id:'sentinel-cracked',name:'Glassjaw Cracks',atPct:55,damageScale:1.14,addMechanics:[{name:'Shatter Lines',type:'line',duration:1300}]}
+   ],
+   choir:[
+     {id:'choir-echoes',name:'The Choir Multiplies',atPct:70,spawnAdds:true},
+     {id:'choir-discord',name:'Discordant Chamber',atPct:40,addMechanics:[{name:'Glass Rain',type:'circles',duration:1350}]},
+     {id:'choir-last-verse',name:'The Last Verse',atPct:20,damageScale:1.23}
+   ]
+ }
+};
+
 const UNIQUE_ITEMS={
  'frostbound-sigil':{
    itemId:'frostbound-sigil',name:'Frostbound Sigil',slot:'Relic',classes:'all',tier:4,rarity:'Epic',
@@ -158,5 +187,5 @@ function rewardBand(mode,tier=0){
  if(tier<10)return{label:'High-quality dungeon gear',powerCap:40};
  return{label:'Best dungeon power + prestige rewards',powerCap:42}
 }
-window.CellboundEndgameData={VERSION,SEASON,AFFIXES,DIFFICULTIES,DUNGEONS,UNIQUE_ITEMS,CHASE_REWARDS,difficultyConfig,affixesForTier,scorePreview,rewardBand};
+window.CellboundEndgameData={VERSION,SEASON,AFFIXES,DIFFICULTIES,DUNGEONS,BOSS_PHASES,UNIQUE_ITEMS,CHASE_REWARDS,difficultyConfig,affixesForTier,scorePreview,rewardBand};
 })();
