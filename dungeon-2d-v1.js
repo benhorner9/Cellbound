@@ -19,6 +19,10 @@ const ASHEN_ROOMS={
    props:[
      ['gate',86,48,0,1.05],['pillar-broken',9,18,-10,.9],['pillar-broken',11,82,13,.82],
      ['rubble',18,16,0,1],['rubble',18,84,0,.85],['chain',77,15,18,.9],['brazier',79,79,0,.8]
+   ],
+   blockers:[
+     {id:'broken-gate-door',x:86,y:48,w:11,h:38},{id:'broken-pillar-north',x:9,y:18,w:5,h:17},{id:'broken-pillar-south',x:11,y:82,w:5,h:16},
+     {id:'rubble-north',x:18,y:16,w:7,h:5,blocksLos:false},{id:'rubble-south',x:18,y:84,w:7,h:5,blocksLos:false}
    ]
  },
  'hall-embers':{
@@ -27,6 +31,11 @@ const ASHEN_ROOMS={
    props:[
      ['pillar',8,20,0,.95],['pillar',8,80,0,.95],['pillar',88,20,0,.95],['pillar',88,80,0,.95],
      ['brazier',18,24,0,.8],['brazier',18,76,0,.8],['vault-mark',72,50,0,1.1]
+   ],
+   blockers:[
+     {id:'hall-pillar-nw',x:8,y:20,w:5,h:21},{id:'hall-pillar-sw',x:8,y:80,w:5,h:21},
+     {id:'hall-pillar-ne',x:88,y:20,w:5,h:21},{id:'hall-pillar-se',x:88,y:80,w:5,h:21},
+     {id:'hall-brazier-n',x:18,y:24,w:4,h:7,blocksLos:false},{id:'hall-brazier-s',x:18,y:76,w:4,h:7,blocksLos:false}
    ]
  },
  'kael':{
@@ -35,6 +44,10 @@ const ASHEN_ROOMS={
    props:[
      ['seal-ring',66,50,0,1.05],['chain',87,23,-18,1],['chain',87,77,18,1],
      ['statue',10,22,0,.9],['statue',10,78,0,.9],['brazier',83,50,0,.95]
+   ],
+   blockers:[
+     {id:'warden-statue-n',x:10,y:22,w:5,h:16},{id:'warden-statue-s',x:10,y:78,w:5,h:16},
+     {id:'warden-brazier',x:83,y:50,w:4,h:7,blocksLos:false}
    ]
  },
  'furnace':{
@@ -43,6 +56,10 @@ const ASHEN_ROOMS={
    props:[
      ['furnace',88,50,0,1.05],['vent',70,22,0,.9],['vent',70,78,0,.9],
      ['pipe',10,16,8,1],['pipe',10,84,-8,1],['ember-crack',49,18,14,1.1],['ember-crack',53,83,-11,.9]
+   ],
+   blockers:[
+     {id:'furnace-main',x:88,y:50,w:10,h:25},{id:'furnace-pipe-n',x:10,y:16,w:16,h:5},{id:'furnace-pipe-s',x:10,y:84,w:16,h:5},
+     {id:'vent-n',x:70,y:22,w:5,h:8,blocksLos:false},{id:'vent-s',x:70,y:78,w:5,h:8,blocksLos:false}
    ]
  },
  'embermaw':{
@@ -51,6 +68,9 @@ const ASHEN_ROOMS={
    props:[
      ['forge-ring',66,50,0,1.12],['furnace',88,18,0,.85],['furnace',88,82,0,.85],
      ['chain',9,28,16,.9],['chain',9,72,-16,.9],['ember-crack',43,20,20,1.05],['ember-crack',45,80,-18,1]
+   ],
+   blockers:[
+     {id:'embermaw-furnace-n',x:88,y:18,w:9,h:21},{id:'embermaw-furnace-s',x:88,y:82,w:9,h:21}
    ]
  },
  'vault-depths':{
@@ -59,6 +79,10 @@ const ASHEN_ROOMS={
    props:[
      ['coffer',10,20,-8,.85],['coffer',10,80,7,.85],['coffer',88,16,9,.85],['coffer',88,84,-7,.85],
      ['soul-urn',78,30,0,.75],['soul-urn',78,70,0,.75],['vault-mark',65,50,0,.9]
+   ],
+   blockers:[
+     {id:'coffer-nw',x:10,y:20,w:8,h:6},{id:'coffer-sw',x:10,y:80,w:8,h:6},{id:'coffer-ne',x:88,y:16,w:8,h:6},{id:'coffer-se',x:88,y:84,w:8,h:6},
+     {id:'urn-n',x:78,y:30,w:4,h:9},{id:'urn-s',x:78,y:70,w:4,h:9}
    ]
  },
  'vaultheart':{
@@ -68,6 +92,10 @@ const ASHEN_ROOMS={
      ['vault-door',90,50,0,1.1],['heart-sigil',65,50,0,1.18],
      ['containment',9,22,0,.9],['containment',9,78,0,.9],['crystal',80,18,-8,.85],['crystal',80,82,8,.85],
      ['chain',86,28,-15,.9],['chain',86,72,15,.9]
+   ],
+   blockers:[
+     {id:'vaultheart-door',x:90,y:50,w:12,h:39},{id:'containment-n',x:9,y:22,w:5,h:18},{id:'containment-s',x:9,y:78,w:5,h:18},
+     {id:'crystal-n',x:80,y:18,w:4,h:10},{id:'crystal-s',x:80,y:82,w:4,h:10}
    ]
  }
 };
@@ -1059,7 +1087,8 @@ function rebornTactics(){
  }
 }
 function rebornEncounter(s){
- return{id:s.id,title:s.title,kind:s.kind,enemies:[...s.enemies],enemyHealth:s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120,mechanics:s.mechanics.map(m=>({name:m[0],type:m[1],duration:m[2]}))}
+ const room=ASHEN_ROOMS[s.id]||{};
+ return{id:s.id,title:s.title,kind:s.kind,enemies:[...s.enemies],enemyHealth:s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120,mechanics:s.mechanics.map(m=>({name:m[0],type:m[1],duration:m[2]})),environment:{room:room.room||s.id,blockers:(room.blockers||[]).map(b=>({...b,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false}))}}
 }
 function rebornPlayerByUnit(id){return party().find(c=>'p-'+c.id===id)||null}
 function rebornEnemyIndex(id){const m=String(id||'').match(/^e-(\d+)$/);return m?Number(m[1]):-1}
@@ -1125,7 +1154,9 @@ function renderRebornEvent(e,result,replayMode=false){
   case'COMBAT_START':
    status(replayMode?'Replay started':'Combat simulation live');log((replayMode?'Replay: ':'')+'Combat begins.');break;
   case'MOVEMENT_START':
-   if(e.payload?.to)move(e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||360);break;
+   if(e.payload?.to)move(e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||360);
+   if(srcChar&&e.result==='line of sight'){const rr=role(srcChar);act(rr==='tank'?'tank':rr==='healer'?'healer':'dps',srcChar.name+' · Repositioning for line of sight')}
+   break;
   case'ABILITY_START':
    if(srcChar){
      const r=role(srcChar);act(r==='tank'?'tank':r==='healer'?'healer':'dps',srcChar.name+' · '+(e.ability||'Action'));
