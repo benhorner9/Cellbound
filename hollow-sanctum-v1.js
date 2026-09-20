@@ -317,7 +317,14 @@ function hsResourceVisual(e){
  if(bar.dataset.resource!==name){[...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));bar.classList.add(key);bar.dataset.resource=name;bar.title=name}
  const fill=bar.querySelector('i');if(fill)fill.style.width=(value/max*100)+'%'
 }
+function hsStatusTargets(id){
+ const out=[],rid=hsRenderId(id),unit=rid?$('[data-hs="'+rid+'"]'):null;if(unit)out.push(unit);
+ const ch=hsCharacter(id),row=ch?document.querySelector('[data-hs-side-row="'+CSS.escape(String(ch.id))+'"]'):null,mirror=row?.querySelector('span');
+ if(mirror)out.push({el:mirror,mirror:true});
+ return out
+}
 function hsRenderRebornEvent(e){
+ if(window.CellboundCombatStatuses?.handle(e,{resolve:hsStatusTargets,speed:1}))return;
  const src=hsRenderId(e.source),target=hsRenderId(e.target),srcChar=hsCharacter(e.source),targetChar=hsCharacter(e.target);
  switch(e.type){
   case'COMBAT_START':setStatus('Combat simulation live.');feed('Combat begins.');break;
