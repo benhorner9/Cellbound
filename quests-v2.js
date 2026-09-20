@@ -607,7 +607,7 @@ function qSpawnAdd(e){
 }
 function qAnalysis(result){
   const s=result?.summary||{},ints=s.interrupts||{},m=s.mechanics||{};
-  return'<div class="cbr-analysis-grid quest-cbr-summary"><article><span>TIME</span><b>'+Math.round((Number(s.durationSeconds)||0)*10)/10+'s</b></article><article><span>DAMAGE</span><b>'+Math.round(Number(s.totalDamage)||0).toLocaleString()+'</b></article><article><span>HEALING</span><b>'+Math.round(Number(s.totalHealing)||0).toLocaleString()+'</b></article><article><span>DEATHS</span><b>'+Number(s.deaths||0)+'</b></article><article><span>INTERRUPTS</span><b>'+Number(ints.success||0)+'/'+Number(ints.attempts||0)+'</b></article><article><span>MECHANICS</span><b>'+Number(m.avoided||0)+'✓ · '+Number(m.failed||0)+'✕</b></article></div>'
+  return'<div class="cbr-analysis-grid quest-cbr-summary"><article><span>TIME</span><b>'+Math.round((Number(s.durationSeconds)||0)*10)/10+'s</b></article><article><span>DAMAGE</span><b>'+Math.round(Number(s.totalDamage)||0).toLocaleString()+'</b></article><article><span>HEALING</span><b>'+Math.round(Number(s.totalHealing)||0).toLocaleString()+'</b></article><article><span>DEATHS</span><b>'+Number(s.deaths||0)+'</b></article><article><span>MISTAKES</span><b>'+Number(s.mistakes?.total||0)+'</b></article><article><span>BATTLE REZ</span><b>'+Number(s.battleResurrections||0)+'</b></article><article><span>INTERRUPTS</span><b>'+Number(ints.success||0)+'/'+Number(ints.attempts||0)+'</b></article><article><span>MECHANICS</span><b>'+Number(m.avoided||0)+'✓ · '+Number(m.failed||0)+'✕</b></article></div>'
 }
 function qRenderRebornEvent(e){
   const srcChar=qEventCharacter(e.source),targetChar=qEventCharacter(e.target),enemyIndex=qEventEnemyIndex(e.target),sourceEnemy=qEventEnemyIndex(e.source);
@@ -630,6 +630,10 @@ function qRenderRebornEvent(e){
       break;
     case'HEAL_RECEIVED':
       if(targetChar){qSetPartyHp(targetChar,Number(e.payload?.targetHpPct)||0);qFloat(e.target,'+'+Math.round(Number(e.amount)||0),'heal')}
+      break;
+    case'PLAYER_MISTAKE':if(srcChar)qLog(srcChar.name+' '+(e.payload?.detail||'makes an execution mistake')+'.');break;
+    case'PLAYER_REVIVED':
+      if(targetChar){qSetPartyHp(targetChar,Number(e.payload?.targetHpPct)||35);const u=qUnit(e.target);if(u)u.classList.remove('dead');qFloat(e.target,'BATTLE REZ','heal');qLog(targetChar.name+' is brought back by '+(srcChar?.name||'the healer')+'.');qResourceVisual({source:e.target,payload:{resource:e.payload?.resource,value:e.payload?.resourceValue,max:e.payload?.resourceMax}})}
       break;
     case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':qResourceVisual(e);break;
     case'THREAT_GENERATED':
