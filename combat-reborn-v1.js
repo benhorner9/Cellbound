@@ -48,6 +48,15 @@ function levelMatchMultiplier(sourceLevel,targetLevel){
  return clamp(1+delta*LEVEL_RULES.levelDeltaPerLevel,LEVEL_RULES.minLevelDeltaMultiplier,LEVEL_RULES.maxLevelDeltaMultiplier)
 }
 function enemyClassRule(kind){return ENEMY_CLASS_RULES[kind]||ENEMY_CLASS_RULES.trash}
+function hasAffix(ctx,id){return Array.isArray(ctx?.encounter?.affixes)&&ctx.encounter.affixes.includes(id)}
+function scalingValue(ctx,key,fallback=1){const v=Number(ctx?.encounter?.scaling?.[key]);return Number.isFinite(v)&&v>0?v:fallback}
+function enemyPressure(ctx,e,target){
+ let mult=levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,target?.level||1)*(Number(e.damageScale)||1);
+ if(hasAffix(ctx,'blood-moon')&&healthRatio(e)<=.30)mult*=1.25;
+ if(Number(e.relentlessUntil)>ctx.time)mult*=1.18;
+ return mult
+}
+
 
 const ABILITIES={
  'Death Knight':[
@@ -195,12 +204,12 @@ function normaliseEnemies(encounter){
   const level=Math.max(1,Number(data.level)||Number(encounter.enemyLevels?.[i])||baseLevel);
   const inferred=data.classification||encounter.enemyTypes?.[i]||data.kind||((raw.length===1&&(encounter.kind==='boss'||encounter.kind==='final'))?'boss':(encounter.kind==='event'?'elite':'trash'));
   const classification=String(inferred||'trash').toLowerCase(),rule=enemyClassRule(classification);
-  const rawMax=Number(data.health)||baseHealth,maxHealth=Math.round(rawMax*levelHealthScale(level)*rule.health);
+  const rawMax=Number(data.health)||baseHealth,healthMult=Math.max(.25,Number(encounter.scaling?.enemyHealth)||1),damageMult=Math.max(.25,Number(encounter.scaling?.enemyDamage)||1),maxHealth=Math.round(rawMax*levelHealthScale(level)*rule.health*healthMult);
   return{
    id:'e-'+i,name,role:'enemy',kind:classification==='boss'||classification==='world-boss'?'boss':'enemy',classification,classificationLabel:rule.label,level,
    maxHealth,health:maxHealth,alive:true,position:{x:68,y:raw.length===1?50:30+i*(40/Math.max(1,raw.length-1))},facing:180,
    target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},movingUntil:0,moveToken:0,nextAttack:900+i*220,currentCast:null,
-   isAdd:false,priority:i===0?2:1,damageScale:rule.damage
+   isAdd:false,priority:i===0?2:1,damageScale:rule.damage*damageMult
   }
  })
 }
@@ -561,6 +570,14 @@ function doHeal(ctx,healer,target,amount,ability){
  target.health=clamp(before+raw,0,max);
  const effective=target.health-before,over=Math.max(0,raw-effective);
  const st=ctx.stats.players[healer.id];st.healing+=effective;st.overhealing+=over;st.abilityHealing[ability]=(st.abilityHealing[ability]||0)+effective;
+ if(over>0&&hasAffix(ctx,'overflow')&&healer.resource?.name==='Mana'){
+  const pressure=Math.min(4,Math.max(1,Math.round(over/12)));
+  healer.resource.value=clamp(healer.resource.value-pressure,0,healer.resource.max);
+  target.defensiveUntil=Math.max(Number(target.defensiveUntil)||0,1200);
+  emit(ctx,'AFFIX_TRIGGER',{source:healer.id,target:target.id,ability:'Overflow',amount:pressure,result:'overflow',payload:{affix:'overflow',overhealing:over,manaPressure:pressure}});
+  emitResourceState(ctx,healer,'overflow-pressure')
+ }
+
  emit(ctx,'HEAL_RECEIVED',{source:healer.id,target:target.id,ability,amount:effective,result:over?'overheal':'heal',position:copy(target.position),payload:{overhealing:over,targetHp:target.health,targetMax:max,targetHpPct:pct(target.health,max)}});
  livingEnemies(ctx).forEach(e=>addThreat(ctx,e,healer,effective*.5,'healing'));
  return effective;
@@ -569,6 +586,7 @@ function killUnit(ctx,target,source,ability){
  if(!target.alive)return;
  target.alive=false;target.health=0;target.currentCast=null;
  emit(ctx,target.role==='enemy'?(target.isAdd?'ADD_DEFEATED':'ENEMY_DEFEATED'):'PLAYER_DEFEATED',{source:source?.id||null,target:target.id,ability,result:'dead',position:copy(target.position)});
+ if(target.role==='enemy')onEnemyDeathAffixes(ctx,target);
  if(target.role!=='enemy'){
   const st=ctx.stats.players[target.id];st.deaths++;ctx.stats.deaths++;
   ctx.enemies.forEach(e=>{e.threat[target.id]=0;if(e.target===target.id)setAggro(ctx,e,topThreatTarget(ctx,e),'target died')});
@@ -585,6 +603,49 @@ function reviveUnit(ctx,healer,target,ability,{healthPct=35,resourcePct=20,comba
  emit(ctx,'PLAYER_REVIVED',{source:healer.id,target:target.id,ability,result:combat?'battle-rez':'revive',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),resource:target.resource.name,resourceValue:target.resource.value,resourceMax:target.resource.max,penaltyMs:combat?30000:15000}});
  emitResourceState(ctx,target,'revived');
  return true
+}
+
+
+function onEnemyDeathAffixes(ctx,target){
+ if(!target||target.role!=='enemy')return;
+ if(hasAffix(ctx,'volatile-cells')&&target.classification==='elite'){
+  const source={...target,alive:true};
+  emit(ctx,'AFFIX_TRIGGER',{source:target.id,ability:'Volatile Cells',result:'armed',position:copy(target.position),payload:{affix:'volatile-cells',delay:850}});
+  schedule(ctx,ctx.time+850,()=>{
+   emit(ctx,'AFFIX_TRIGGER',{source:target.id,ability:'Volatile Cells',result:'explode',position:copy(target.position),payload:{affix:'volatile-cells'}});
+   livingPlayers(ctx).forEach(p=>dealDamage(ctx,source,p,18*enemyPressure(ctx,target,p),'Volatile Cells',{damageType:'magic',avoidable:true}))
+  },'affix-volatile')
+ }
+ if(hasAffix(ctx,'relentless')){
+  livingEnemies(ctx).forEach(e=>{e.relentlessUntil=ctx.time+5000});
+  if(livingEnemies(ctx).length)emit(ctx,'AFFIX_TRIGGER',{source:target.id,ability:'Relentless',result:'empower',payload:{affix:'relentless',duration:5000,targets:livingEnemies(ctx).map(e=>e.id)}})
+ }
+ if(hasAffix(ctx,'necromantic')&&!target.necromanticUsed&&!target.isAdd&&target.classification!=='boss'&&target.classification!=='world-boss'){
+  target.necromanticUsed=true;ctx.pendingResurrections++;
+  emit(ctx,'AFFIX_TRIGGER',{source:target.id,ability:'Necromantic',result:'returning',position:copy(target.position),payload:{affix:'necromantic',delay:2400}});
+  schedule(ctx,ctx.time+2400,()=>{
+   ctx.pendingResurrections=Math.max(0,ctx.pendingResurrections-1);
+   if(ctx.finished)return;
+   target.alive=true;target.health=Math.max(1,Math.round(target.maxHealth*.35));target.currentCast=null;target.nextAttack=ctx.time+700;
+   emit(ctx,'ENEMY_REVIVED',{source:target.id,target:target.id,ability:'Necromantic',result:'revived',position:copy(target.position),payload:{affix:'necromantic',targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth)}})
+  },'affix-necromantic')
+ }
+}
+function scheduleUnstableGround(ctx){
+ if(!hasAffix(ctx,'unstable-ground'))return;
+ schedule(ctx,ctx.time+5200,()=>{
+  if(ctx.finished)return;
+  const live=livingPlayers(ctx),enemy=livingEnemies(ctx)[0];if(!live.length||!enemy)return;
+  const target=live[Math.floor(ctx.rng()*live.length)],duration=1250,token='affix-ground-'+(++ctx.mechanicSeq);
+  const plan=mechanicResponse(ctx,target,'circle',duration,enemy);
+  emit(ctx,'AFFIX_TRIGGER',{source:enemy.id,target:target.id,ability:'Unstable Ground',result:'telegraph',position:copy(target.position),payload:{affix:'unstable-ground',token,duration}});
+  emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:target.id,ability:'Unstable Ground',result:'telegraph',position:copy(target.position),payload:{mechanicType:'circle',duration,token,targetId:target.id,targetIds:[target.id],responses:{[target.id]:plan.success}}});
+  schedule(ctx,ctx.time+duration,()=>{
+   emit(ctx,'MECHANIC_RESOLVE',{source:enemy.id,target:target.id,ability:'Unstable Ground',result:'resolve',payload:{mechanicType:'circle',token}});
+   if(target.alive&&!plan.success)dealDamage(ctx,enemy,target,24*enemyPressure(ctx,enemy,target),'Unstable Ground',{damageType:'magic',avoidable:true});
+   scheduleUnstableGround(ctx)
+  },'affix-ground-resolve')
+ },'affix-ground-start')
 }
 
 function pickDamageTarget(ctx,u){
@@ -757,7 +818,7 @@ function enemyBasicAttack(ctx,e){
  }
  updateFacing(e,target);
  const base=e.kind==='boss'?30:e.isAdd?11:8;
- const levelPressure=levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,target.level||1)*(Number(e.damageScale)||1);
+ const levelPressure=enemyPressure(ctx,e,target);
  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability:e.kind==='boss'?'Heavy Swing':'Attack',result:'enemy'});
  dealDamage(ctx,e,target,base*levelPressure*(.85+ctx.rng()*.3),e.kind==='boss'?'Heavy Swing':'Attack',{damageType:'physical'});
  e.nextAttack=ctx.time+(e.kind==='boss'?1400:e.isAdd?1800:2050)+Math.round(ctx.rng()*(e.kind==='boss'?220:320));
@@ -839,8 +900,9 @@ function tryInterrupt(ctx,e,mechanic,castToken){
 }
 function spawnAdds(ctx,e){
  const base=ctx.enemies.length;
- for(let i=0;i<2;i++){
-  const id='add-'+ctx.addSeq++,level=Math.max(1,Number(e.level)||Number(ctx.encounter.level)||1),rule=enemyClassRule('add'),maxHealth=Math.round(72*levelHealthScale(level)*rule.health),add={id,name:'Cave Spawn',role:'enemy',kind:'enemy',classification:'add',classificationLabel:rule.label,level,maxHealth,health:maxHealth,alive:true,position:{x:74,y:i?66:34},facing:180,target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},nextAttack:ctx.time+600+i*150,currentCast:null,isAdd:true,priority:3,damageScale:rule.damage};
+ const count=2+Math.max(0,Math.min(2,Number(ctx.encounter.scaling?.addCountBonus)||0));
+ for(let i=0;i<count;i++){
+  const id='add-'+ctx.addSeq++,level=Math.max(1,Number(e.level)||Number(ctx.encounter.level)||1),rule=enemyClassRule('add'),maxHealth=Math.round(72*levelHealthScale(level)*rule.health*scalingValue(ctx,'enemyHealth',1)),add={id,name:'Cave Spawn',role:'enemy',kind:'enemy',classification:'add',classificationLabel:rule.label,level,maxHealth,health:maxHealth,alive:true,position:{x:74,y:i?66:34},facing:180,target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},nextAttack:ctx.time+600+i*150,currentCast:null,isAdd:true,priority:3,damageScale:rule.damage*scalingValue(ctx,'enemyDamage',1)};
   add.movingUntil=0;add.moveToken=0;ctx.enemies.push(add);ctx.units[id]=add;ctx.players.forEach(p=>add.threat[p.id]=0);
   const random=livingPlayers(ctx)[Math.floor(ctx.rng()*livingPlayers(ctx).length)];if(random)add.threat[random.id]=120;
   setAggro(ctx,add,topThreatTarget(ctx,add),'spawn');
@@ -853,7 +915,7 @@ function resolveMechanic(ctx,e,m,token){
   if(!cast||cast.token!==token||cast.interrupted){scheduleNextMechanic(ctx);return}
   ctx.activeEnemyCast=null;
   emit(ctx,'CAST_FINISH',{source:e.id,ability:m.name,result:'completed'});
-  livingPlayers(ctx).forEach(p=>dealDamage(ctx,e,p,24*levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,p.level||1)*(Number(e.damageScale)||1),m.name,{damageType:'magic',avoidable:false}));
+  livingPlayers(ctx).forEach(p=>dealDamage(ctx,e,p,24*enemyPressure(ctx,e,p),m.name,{damageType:'magic',avoidable:false}));
   ctx.stats.interrupts.missedCritical++;
   mechanicStat(ctx,'interrupt',true);scheduleNextMechanic(ctx);return;
  }
@@ -865,9 +927,9 @@ function resolveMechanic(ctx,e,m,token){
   const tank=livingPlayers(ctx).find(p=>p.role==='tank');if(tank){e.target=tank.id;updateFacing(e,tank)}
   let failed=false;
   livingPlayers(ctx).forEach(p=>{
-   if(p.role==='tank'){dealDamage(ctx,e,p,34*levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,p.level||1)*(Number(e.damageScale)||1),m.name,{damageType:'physical',avoidable:false});return}
+   if(p.role==='tank'){dealDamage(ctx,e,p,34*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:false});return}
    const success=cast.responses?.[p.id]!==false;
-   if(!success){failed=true;dealDamage(ctx,e,p,28*levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,p.level||1)*(Number(e.damageScale)||1),m.name,{damageType:'physical',avoidable:true})}
+   if(!success){failed=true;dealDamage(ctx,e,p,28*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:true})}
   });
   mechanicStat(ctx,'cone',failed);scheduleNextMechanic(ctx);return;
  }
@@ -875,7 +937,7 @@ function resolveMechanic(ctx,e,m,token){
   let failed=false;
   livingPlayers(ctx).forEach(p=>{
    const success=cast.responses?.[p.id]!==false;
-   if(!success){failed=true;dealDamage(ctx,e,p,(m.type==='circles'?24:28)*levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,p.level||1)*(Number(e.damageScale)||1),m.name,{damageType:'magic',avoidable:true})}
+   if(!success){failed=true;dealDamage(ctx,e,p,(m.type==='circles'?24:28)*enemyPressure(ctx,e,p),m.name,{damageType:'magic',avoidable:true})}
   });
   mechanicStat(ctx,m.type,failed);scheduleNextMechanic(ctx);return;
  }
@@ -883,7 +945,7 @@ function resolveMechanic(ctx,e,m,token){
   const target=getUnit(ctx,cast.targetId);
   if(target?.alive){
    const success=cast.responses?.[target.id]!==false;
-   if(!success)dealDamage(ctx,e,target,32*levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,target.level||1)*(Number(e.damageScale)||1),m.name,{damageType:'physical',avoidable:true});
+   if(!success)dealDamage(ctx,e,target,32*enemyPressure(ctx,e,target),m.name,{damageType:'physical',avoidable:true});
    mechanicStat(ctx,'line',!success);
   }else mechanicStat(ctx,'line',false);
   scheduleNextMechanic(ctx);return;
@@ -892,7 +954,7 @@ function resolveMechanic(ctx,e,m,token){
 }
 function startMechanic(ctx,m){
  const enemy=livingEnemies(ctx).find(x=>x.kind==='boss')||livingEnemies(ctx)[0];if(!enemy)return;
- const token='m'+(++ctx.mechanicSeq),duration=Math.max(700,Number(m.duration)||1600);
+ const token='m'+(++ctx.mechanicSeq),duration=Math.max(520,Math.round((Number(m.duration)||1600)*scalingValue(ctx,'castSpeed',1)));
  const castState={token,enemy:enemy.id,name:m.name,type:m.type,interrupted:false,ends:ctx.time+duration,responses:{},reactionMs:{},targetId:null,targetIds:[]};
  const live=livingPlayers(ctx);
  ctx.activeEnemyCast=castState;
@@ -931,7 +993,7 @@ function startMechanic(ctx,m){
 function scheduleNextMechanic(ctx){
  if(ctx.finished)return;
  const list=ctx.encounter.mechanics||[];if(!list.length)return;
- const delay=ctx.encounter.kind==='final'?3600:ctx.encounter.kind==='boss'?4200:5000;
+ const delay=Math.max(1700,Math.round((ctx.encounter.kind==='final'?3600:ctx.encounter.kind==='boss'?4200:5000)*scalingValue(ctx,'mechanicFrequency',1)));
  const m=list[ctx.mechanicIndex++%list.length];
  schedule(ctx,ctx.time+delay,()=>startMechanic(ctx,m),'mechanic-start');
 }
@@ -966,17 +1028,17 @@ function simulate(options={}){
   movementDiscipline:options.tactics?.movementDiscipline||'balanced'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:0,mechanicSeq:0,addSeq:0,mistakeSeq:0,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
- emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
+ const ctx={time:0,rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:0,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
+ emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
  players.forEach(u=>emitResourceState(ctx,u,'initial'));
  const tank=players.find(p=>p.role==='tank')||players[0];
  if(tank)enemies.forEach(e=>{e.threat[tank.id]=180;setAggro(ctx,e,tank,'pull')});
- scheduleNextMechanic(ctx);
+ scheduleNextMechanic(ctx);scheduleUnstableGround(ctx);
 
  let outcome='defeat';
  while(ctx.time<=MAX_COMBAT_MS){
   processQueue(ctx);
-  if(!livingEnemies(ctx).length){outcome='victory';break}
+  if(!livingEnemies(ctx).length&&ctx.pendingResurrections<=0){outcome='victory';break}
   if(!livingPlayers(ctx).length){outcome='defeat';break}
   tickCooldowns(ctx);passiveResources(ctx);
   players.forEach(u=>playerAI(ctx,u));
