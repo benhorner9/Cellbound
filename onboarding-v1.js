@@ -322,22 +322,6 @@ function tdLesson(title,text,options,correct,success){
     draw();
   });
 }
-function tdBossFrontal(){
-  const arena=$('#tdArena'),enemy=$('[data-td-enemy="0"]'),tank=state().roster.find(c=>tdProfile(c)==='tank');if(!arena||!enemy||!tank)return;
-  const a=tdPoint('[data-td-enemy="0"]'),b=tdPoint('[data-td-party="'+tank.id+'"]');if(!a||!b)return;
-  const angle=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI,cone=document.createElement('div');cone.className='td-training-cone';cone.style.left=a.x+'px';cone.style.top=a.y+'px';cone.style.transform='translateY(-50%) rotate('+angle+'deg)';cone.innerHTML='<span>FRONTAL CLEAVE</span>';arena.appendChild(cone);
-  tdFeed('The Hollow Warden faces '+tank.name+' and telegraphs a frontal attack. The Tank keeps it pointed away from the group.');
-  setTimeout(()=>cone.classList.add('impact'),550);setTimeout(()=>cone.remove(),1150);
-}
-function tdInterruptMoment(my){
-  const enemy=$('[data-td-enemy="0"]');if(!enemy)return;
-  const bar=document.createElement('strong');bar.className='td-training-cast';bar.innerHTML='<span>HOLLOW SCREAM</span><i></i>';enemy.appendChild(bar);
-  tdFeed('The Cell-Sick Marauder begins Hollow Scream.');
-  const dps=state().roster.find(c=>tdRole(c)==='dps');
-  if(dps)setTimeout(()=>{if(my!==tutorialToken)return;tdProjectile('[data-td-party="'+dps.id+'"]','[data-td-enemy="0"]','magic');tdAction('dps',dps.name+' interrupts Hollow Scream');bar.classList.add('interrupted');bar.querySelector('span').textContent='INTERRUPTED';},650);
-  setTimeout(()=>bar.remove(),1200);
-}
-
 function tdPoint(selector){
   const arena=$('#tdArena'),el=$(selector);if(!arena||!el)return null;
   const a=arena.getBoundingClientRect(),r=el.getBoundingClientRect();return{x:r.left-a.left+r.width/2,y:r.top-a.top+r.height/2};
