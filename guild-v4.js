@@ -420,6 +420,7 @@ function bankDismantleYield(item,quantity=1){
     add('ashen-soul-fragment',qty*(2+rareBonus));
     add(heavy?'warden-iron':'faded-cell-fragment',qty);
   }
+  add('cell-shards',qty*(tier===1?2:tier===2?4:tier===3?7:11));
   return out;
 }
 function bankDismantleMarkup(yieldMap){
@@ -461,6 +462,58 @@ function disposeBankItem(id,mode){
     state.activity.push(`Dismantled ${qty} × ${name}: ${summary}.`);
   }else return;
   save();ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open');renderAll();switchView('bank');
+}
+
+function bankUpgradeMax(item){
+  const tier=Math.max(1,Number(item?.tier)||1),steps=({1:2,2:3,3:3,4:4})[tier]||2;
+  const base=Number(item?.baseItemLevel)||Number(item?.itemLevel)||0;
+  return Math.max(Number(item?.itemLevel)||0,Math.min(42,base+steps*2));
+}
+function bankUpgradeCost(item){
+  const tier=Math.max(1,Number(item?.tier)||1),level=Math.max(0,Number(item?.upgradeLevel)||0);
+  return 4+tier*3+level*4;
+}
+function bankCanUpgrade(item){return (Number(item?.itemLevel)||0)<bankUpgradeMax(item);}
+function upgradeBankItem(id){
+  const item=state.bank.find(x=>x.id===id);if(!item||!bankCanUpgrade(item))return;
+  const cost=bankUpgradeCost(item),available=Number(state.materials?.['cell-shards'])||0,next=Math.min(bankUpgradeMax(item),(Number(item.itemLevel)||0)+2);
+  if(available<cost){alert('You need '+cost+' Cell Shards. You currently have '+available+'.');return;}
+  if(!confirm('Upgrade '+item.name+' from Item Level '+item.itemLevel+' to '+next+' for '+cost+' Cell Shards?'))return;
+  let target=item;
+  if((Number(item.quantity)||1)>1){
+    item.quantity--;
+    target={...item,id:'bank-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),quantity:1,favorite:false,junk:false};
+    state.bank.push(target);
+  }
+  target.baseItemLevel=Number(target.baseItemLevel)||Number(target.itemLevel)||0;
+  target.itemLevel=next;target.upgradeLevel=(Number(target.upgradeLevel)||0)+1;
+  if(target.upgradeLevel%2===0)target.power=(Number(target.power)||0)+1;
+  state.materials['cell-shards']=available-cost;
+  state.activity.push('Upgraded '+target.name+' to Item Level '+target.itemLevel+' for '+cost+' Cell Shards.');
+  save();ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open');renderAll();switchView('bank');
+}
+function toggleBankFlag(id,key){
+  const item=state.bank.find(x=>x.id===id);if(!item||!['favorite','junk'].includes(key))return;
+  item[key]=!item[key];
+  if(key==='favorite'&&item.favorite)item.junk=false;
+  if(key==='junk'&&item.junk)item.favorite=false;
+  bankBulkSelection();save();openBankItem(id);renderBank();
+}
+function bankStatMap(item){return Object.fromEntries((G.statLines?.(item)||[]).map(x=>[x.key,x]));}
+function bankCompareMarkup(ch,item){
+  const current=canonicalItem(ch?.equipment?.[item.slot]),incoming=bankStatMap(item),equipped=bankStatMap(current),keys=[...new Set([...Object.keys(incoming),...Object.keys(equipped)])];
+  const ilvlDelta=(Number(item.itemLevel)||0)-(Number(current?.itemLevel)||0);
+  const stats=keys.map(key=>{
+    const a=Number(incoming[key]?.value)||0,b=Number(equipped[key]?.value)||0,d=a-b,label=incoming[key]?.label||equipped[key]?.label||key,unit=(incoming[key]?.unit||equipped[key]?.unit)==='percent'?'%':'';
+    return '<span class="'+(d>0?'gain':d<0?'loss':'same')+'"><b>'+(d>0?'+':'')+d+unit+'</b>'+esc(label)+'</span>';
+  }).join('');
+  const effect=item.uniqueEffect?'<p><strong>'+esc(item.uniqueEffect.name)+'</strong>'+esc(item.uniqueEffect.description)+'</p>':'';
+  return '<div class="bank-comparison"><div><small>CURRENT</small><b>'+esc(current?.name||('Empty '+item.slot))+'</b><em>iLvl '+(Number(current?.itemLevel)||0)+'</em></div><div class="bank-compare-delta '+(ilvlDelta>0?'gain':ilvlDelta<0?'loss':'')+'"><strong>'+(ilvlDelta>0?'+':'')+ilvlDelta+' iLvl</strong>'+(stats||'<span class="same"><b>—</b>No stat delta</span>')+'</div><div><small>NEW</small><b>'+esc(item.name)+'</b><em>iLvl '+(Number(item.itemLevel)||0)+'</em>'+effect+'</div></div>';
+}
+function selectJunkForBulk(){
+  const junk=state.bank.filter(x=>x.junk&&!bankItemProtected(x));
+  if(!junk.length){alert('No unprotected junk items are marked in the Bank.');return;}
+  bankBulkMode=true;bankBulkSelected.clear();junk.forEach(x=>bankBulkSelected.add(x.id));renderBank();
 }
 function openBankItem(id){
   const item=state.bank.find(x=>x.id===id);if(!item)return;
