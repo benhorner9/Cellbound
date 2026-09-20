@@ -58,7 +58,7 @@ async function resetShock(){
   if(data&&typeof data==='object')Game.replaceState(data);
   message('Cell Shock cleared for your entire roster.','ok');render();
 }
-async function resetTwelveBelow(){
+function resetTwelveBelow(){
   if(!status.is_admin||!Game?.ready)return;
   const btn=$('#adminResetTwelve');
   if(btn){btn.disabled=true;btn.firstChild.textContent='RESETTING…'}
@@ -68,10 +68,13 @@ async function resetTwelveBelow(){
     s.twelveBelow.date=new Date().toISOString().slice(0,10);
     s.twelveBelow.attemptsUsed=0;
     Game.save?.();
-    await Game.persistState?.();
     Game.renderAll?.();
     window.CellboundTwelveBelow?.render?.();
     message('The Twelve Below daily timer has been reset. 3 / 3 attempts are available again.','ok');
+    try{
+      const task=Game.persistState?.();
+      if(task&&typeof task.catch==='function')task.catch(error=>console.warn('Twelve Below admin reset background save failed',error));
+    }catch(error){console.warn('Twelve Below admin reset background save failed',error)}
   }catch(error){
     message(error?.message||'Could not reset The Twelve Below timer.','error');
   }finally{
