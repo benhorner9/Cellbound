@@ -9,6 +9,58 @@ const STAGES=[
  {id:'sentinel',title:'Glassjaw Sentinel',kind:'MINI-BOSS',combatKind:'boss',level:7,enemyTypes:['elite'],enemyHealth:750,enemies:['Glassjaw Sentinel'],mechanic:'Fracture Line',mechanics:[['Fracture Line','line',1700],['Glassjaw Sweep','cone',1450]]},
  {id:'choir',title:'The Bound Choir',kind:'FINAL BOSS',combatKind:'final',level:8,enemyTypes:['boss'],enemyHealth:1000,enemies:['The Bound Choir'],mechanic:'Resonance Collapse',mechanics:[['Resonance Collapse','circle',2100],['Shattering Hymn','interrupt',2200],['Echo Choir','adds',1200]]}
 ];
+
+const HOLLOW_ROOMS={
+ gallery:{
+  zone:'ENTRANCE HALL',
+  description:'Collapsed entrance hall lined with crystal-veined stone.',
+  environment:
+   '<div class="hsenv hsenv-gallery">'+
+    '<div class="hsenv-depth-wall"></div>'+
+    '<div class="hsenv-walkway"></div>'+
+    '<div class="hsenv-arch hsenv-arch-entry"></div><div class="hsenv-arch hsenv-arch-exit"></div>'+
+    '<i class="hsenv-pillar p1"></i><i class="hsenv-pillar p2"></i><i class="hsenv-pillar p3"></i><i class="hsenv-pillar p4"></i><i class="hsenv-pillar p5"></i><i class="hsenv-pillar p6"></i>'+
+    '<i class="hsenv-plinth pl1"></i><i class="hsenv-plinth pl2"></i>'+
+    '<span class="hsenv-crystal c1"></span><span class="hsenv-crystal c2"></span><span class="hsenv-crystal c3"></span><span class="hsenv-crystal c4"></span>'+
+    '<div class="hsenv-mirror m1"></div><div class="hsenv-mirror m2"></div>'+
+   '</div>',
+  party:[[30,35],[30,50],[30,65],[21,42],[21,58]],
+  enemies:[[66,34],[72,50],[66,66]]
+ },
+ sentinel:{
+  zone:'GUARDIAN CHAMBER',
+  description:'A broken guardian chamber built around a fractured relic core.',
+  environment:
+   '<div class="hsenv hsenv-sentinel">'+
+    '<div class="hsenv-octagon"></div>'+
+    '<div class="hsenv-ring ring1"></div><div class="hsenv-ring ring2"></div>'+
+    '<div class="hsenv-pedestal"><i></i><b></b></div>'+
+    '<div class="hsenv-alcove a1"></div><div class="hsenv-alcove a2"></div><div class="hsenv-alcove a3"></div><div class="hsenv-alcove a4"></div>'+
+    '<div class="hsenv-statue s1"></div><div class="hsenv-statue s2"></div>'+
+    '<span class="hsenv-crystal c1"></span><span class="hsenv-crystal c2"></span><span class="hsenv-crystal c3"></span>'+
+   '</div>',
+  party:[[42,50],[31,34],[31,66],[25,43],[25,57]],
+  enemies:[[67,50]]
+ },
+ choir:{
+  zone:'INNER SHRINE',
+  description:'A shrine hall where the sanctum’s voices were chained into crystal.',
+  environment:
+   '<div class="hsenv hsenv-choir">'+
+    '<div class="hsenv-apse"></div>'+
+    '<div class="hsenv-processional"></div>'+
+    '<div class="hsenv-steps step1"></div><div class="hsenv-steps step2"></div><div class="hsenv-steps step3"></div>'+
+    '<div class="hsenv-dais"></div>'+
+    '<div class="hsenv-ritual-ring outer"></div><div class="hsenv-ritual-ring inner"></div>'+
+    '<div class="hsenv-choir-bank left"></div><div class="hsenv-choir-bank right"></div>'+
+    '<div class="hsenv-reliquary"><i></i><i></i><i></i></div>'+
+    '<span class="hsenv-hanging h1"></span><span class="hsenv-hanging h2"></span><span class="hsenv-hanging h3"></span><span class="hsenv-hanging h4"></span>'+
+    '<span class="hsenv-crystal c1"></span><span class="hsenv-crystal c2"></span><span class="hsenv-crystal c3"></span><span class="hsenv-crystal c4"></span>'+
+   '</div>',
+  party:[[45,50],[31,32],[31,68],[25,42],[25,58]],
+  enemies:[[71,50]]
+ }
+};
 const RELIC={itemId:'quest-blackglass-resonator',name:'Blackglass Resonator',class:'All',classes:'all',slot:'Relic',tier:3,rarity:'Rare',tierLabel:'Quest Relic',enabled:true,dropEnabled:false,itemLevel:30,power:10,tradeState:'soulbound',questArtMaterial:'void-crystal',lore:'Recovered from The Bound Choir beneath Zeltira.'};
 const XP=500;
 function rollHollowGear(){
@@ -173,12 +225,28 @@ function hsEnemyMeta(s,index){
  const labels={trash:'TRASH',elite:'ELITE',boss:'BOSS','world-boss':'WORLD BOSS',add:'ADD'};
  return{level,type,label:labels[type]||type.toUpperCase()}
 }
-function stageEnvironment(s){const arena=$('#hs2dArena');arena.className='cb2d-arena hs2d-arena hs2d-unified-arena stage-'+s.id;$('#hs2dRoom').innerHTML='<b>'+esc(s.title)+'</b><small>'+(s.id==='gallery'?'Cell glass whispers through the walls.':s.id==='sentinel'?'A guardian made of glass and bone blocks the descent.':'Several voices are speaking from one body.')+'</small>'}
+function stageEnvironment(s){
+ const room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery,arena=$('#hs2dArena'),environment=$('#hs2dEnvironment');
+ arena.className='cb2d-arena hs2d-arena hs2d-unified-arena stage-'+s.id;
+ if(environment)environment.innerHTML=room.environment||'';
+ const tag=$('#hs2dRoom');if(tag)tag.innerHTML='<em>'+esc(room.zone||'HOLLOW SANCTUM')+'</em><b>'+esc(s.title)+'</b><small>'+esc(room.description||'The sanctum closes around the party.')+'</small>'
+}
+function hsRoomPoint(room,index,fallback){
+ const p=room?.[index];return Array.isArray(p)&&p.length>=2?p:fallback
+}
 function spawnStage(s){
  stageEnvironment(s);$('#hs2dUnits').innerHTML='';$('#hs2dTelegraphs').innerHTML='';$('#hs2dFx').innerHTML='';
- const p=party(),melee=p.filter(c=>role(c)!=='healer'&&!['Hunter','Mage','Priest'].includes(c.class));
- p.forEach((c,i)=>{const r=role(c);addUnit('p'+i,c.name,'party '+r+' '+classKey(c),7,30+i*10);let x=r==='tank'?34:r==='healer'?19:(['Hunter','Mage','Priest'].includes(c.class)?22:29),y=31+i*9;setTimeout(()=>move('p'+i,x,y,750),40)});
- s.enemies.forEach((n,i)=>{const m=hsEnemyMeta(s,i),big=m.type==='boss'||m.type==='world-boss';addUnit('e'+i,n,big?'enemy boss':'enemy',93,big?50:33+i*17,big,'Lv. '+m.level+' · '+m.label);setTimeout(()=>move('e'+i,68,big?50:33+i*17,750),80)})
+ const p=party(),room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery;
+ p.forEach((c,i)=>{
+  const r=role(c),entryY=30+i*10,target=hsRoomPoint(room.party,i,[r==='tank'?40:r==='healer'?25:31,31+i*9]);
+  addUnit('p'+i,c.name,'party '+r+' '+classKey(c),7,entryY);
+  setTimeout(()=>move('p'+i,target[0],target[1],780),40+i*20)
+ });
+ s.enemies.forEach((n,i)=>{
+  const m=hsEnemyMeta(s,i),big=m.type==='boss'||m.type==='world-boss',target=hsRoomPoint(room.enemies,i,[68,big?50:33+i*17]);
+  addUnit('e'+i,n,big?'enemy boss':'enemy',94,target[1],big,'Lv. '+m.level+' · '+m.label);
+  setTimeout(()=>move('e'+i,target[0],target[1],820),90+i*30)
+ })
 }
 function hsRenderId(unitId){
  const id=String(unitId||'');
@@ -429,7 +497,7 @@ function draw(){
  const s=STAGES[run.stage],r=root();r.hidden=false;
  r.innerHTML='<section class="cb2d-shell hs2d-unified-shell"><header class="cb2d-head"><div><small>THE HOLLOW SANCTUM · LIVE 2D DUNGEON</small><h2 id="hs2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close>×</button></div></header>'+
  '<div class="cb2d-route hs2d-route">'+STAGES.map((x,i)=>'<span class="'+(i<run.stage?'done':i===run.stage?'current':'')+'"><i>'+(i+1)+'</i>'+esc(x.title)+'</span>').join('')+'</div>'+
- '<div class="cb2d-layout"><main><div class="cb2d-arena hs2d-arena hs2d-unified-arena" id="hs2dArena"><div class="cb2d-floor hs2d-floor"></div><div class="hs2d-crystals"><i></i><i></i><i></i><i></i><i></i></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="hs2dTelegraphs"></div><div id="hs2dUnits"></div><div id="hs2dFx"></div><div class="hs2d-room cb2d-room-tag" id="hs2dRoom"></div><div class="cb2d-caption hs2d-caption"><span>'+esc(s.kind)+'</span><b id="hs2dStatus">Descending…</b></div></div>'+
+ '<div class="cb2d-layout"><main><div class="cb2d-arena hs2d-arena hs2d-unified-arena" id="hs2dArena"><div class="cb2d-floor hs2d-floor"></div><div class="hs2d-environment" id="hs2dEnvironment"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="hs2dTelegraphs"></div><div id="hs2dUnits"></div><div id="hs2dFx"></div><div class="hs2d-room cb2d-room-tag" id="hs2dRoom"></div><div class="cb2d-caption hs2d-caption"><span>'+esc(s.kind)+'</span><b id="hs2dStatus">Descending…</b></div></div>'+
  '<div class="cb2d-controls"><button data-hs-override="focus"><b>FOCUS TARGET</b><small>Force priority damage.</small></button><button data-hs-override="interrupt"><b>INTERRUPT NOW</b><small>Raise interrupt priority.</small></button><button data-hs-override="defensive"><b>DEFENSIVE</b><small>Stabilise the group.</small></button><button data-hs-override="burn"><b>BURN BOSS</b><small>Commit damage cooldowns.</small></button><button data-hs-override="consumable"><b>USE CONSUMABLE</b><small>Use available stock.</small></button></div>'+
  '<div class="cb2d-feed hs2d-unified-feed"><small>COMBAT FEED</small><div id="hs2dFeed"></div></div></main>'+
  '<aside><div class="cb2d-cast" id="hs2dCastPanel"><small>ENEMY CAST</small><div><b id="hs2dCastName">—</b><strong id="hs2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="hs2dCastFill"></i></div></div>'+
@@ -441,7 +509,7 @@ function draw(){
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.done&&!confirm('Leave The Hollow Sanctum?'))return;close()};
  r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  r.querySelectorAll('[data-hs-override]').forEach(b=>b.onclick=()=>hsOverride(b.dataset.hsOverride,b));
- hsRenderMeters();hsUpdateSidebar();feed('The party enters The Hollow Sanctum.')
+ stageEnvironment(s);hsRenderMeters();hsUpdateSidebar();feed('The party enters The Hollow Sanctum.')
 }
 function hsRunMetrics(){
  const totals=run.history.reduce((o,r)=>{const s=r.summary||{};o.combat+=Number(r.durationMs)||0;o.deaths+=Number(s.deaths)||0;o.failed+=Number(s.mechanics?.failed)||0;o.mistakes+=Number(s.mistakes?.total)||0;o.missedInterrupts+=Number(s.interrupts?.missedCritical)||0;o.battleResurrections+=Number(s.battleResurrections)||0;(s.players||[]).forEach(p=>{o.threatLosses+=Number(p.threatLost)||0;o.avoidableDamage+=Number(p.avoidableDamage)||0});return o},{combat:0,deaths:0,failed:0,mistakes:0,missedInterrupts:0,threatLosses:0,avoidableDamage:0,battleResurrections:0});
