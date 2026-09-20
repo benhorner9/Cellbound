@@ -125,7 +125,7 @@ function combatProfile(c){
  const r=role(c);
  if(r==='tank')return'tank';
  if(r==='healer')return'healer';
- if(['Rogue','Warrior','Paladin'].includes(c.class))return'melee';
+ if(['Rogue','Warrior','Paladin','Death Knight','Demon Hunter'].includes(c.class))return'melee';
  return'ranged';
 }
 function root(){let r=$('#cb2dBackdrop');if(!r){r=document.createElement('div');r.id='cb2dBackdrop';r.className='cb2d-backdrop';r.hidden=true;document.body.appendChild(r)}return r}
