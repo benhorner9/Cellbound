@@ -539,21 +539,20 @@ function qSetPartyHp(c,value){if(!questFight)return;const next=Math.max(0,Math.m
 function qRenderMeters(target=0){
   if(!questFight)return;
   const damageRoot=$('#q2dDamageMeter'),threatRoot=$('#q2dThreatMeter'),p=party();
-  const rows=p.map(c=>({c,value:Number(questFight.damage[c.id])||0})).sort((a,b)=>b.value-a.value),max=Math.max(1,...rows.map(x=>x.value)),total=rows.reduce((n,x)=>n+x.value,0);
-  const totalEl=$('#q2dDamageTotal');if(totalEl)totalEl.textContent=total+' total';
-  if(damageRoot)damageRoot.innerHTML=rows.map((x,i)=>'<div class="cb2d-meter-row '+qClassKey(x.c)+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(x.c.name)+'</b><span>'+x.value+' damage</span></div><em><i style="width:'+(x.value/max*100)+'%"></i></em></div>').join('');
-  const tank=p.find(c=>qRole(c)==='tank'),threatRows=p.map(c=>({c,value:qRole(c)==='tank'?100:Math.min(92,22+(questFight.damage[c.id]||0)/8)})).sort((a,b)=>b.value-a.value);
+  const rows=p.map(c=>({c,value:Number(questFight.damage?.[c.id])||0})).sort((a,b)=>b.value-a.value),max=Math.max(1,...rows.map(x=>x.value)),total=rows.reduce((n,x)=>n+x.value,0);
+  const totalEl=$('#q2dDamageTotal');if(totalEl)totalEl.textContent=total.toLocaleString()+' total';
+  if(damageRoot)damageRoot.innerHTML=rows.map((x,i)=>'<div class="cb2d-meter-row '+qClassKey(x.c)+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(x.c.name)+'</b><span>'+x.value.toLocaleString()+' damage</span></div><em><i style="width:'+(x.value/max*100)+'%"></i></em></div>').join('');
+  const table=questFight.threat?.[target]||{},threatRows=p.map(c=>({c,value:Number(table[c.id])||0})).sort((a,b)=>b.value-a.value),maxThreat=Math.max(1,...threatRows.map(x=>x.value)),aggro=questFight.aggro?.[target]||null;
   const label=$('#q2dThreatTarget');if(label)label.textContent=questFight.enemies[target]||'No target';
-  if(threatRoot)threatRoot.innerHTML=threatRows.map((x,i)=>'<div class="cb2d-meter-row '+qClassKey(x.c)+(tank&&x.c.id===tank.id?' aggro':'')+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(x.c.name)+(tank&&x.c.id===tank.id?' <strong>AGGRO</strong>':'')+'</b><span>'+Math.round(x.value)+'%</span></div><em><i style="width:'+x.value+'%"></i></em></div>').join('')
+  if(threatRoot)threatRoot.innerHTML=threatRows.map((x,i)=>'<div class="cb2d-meter-row '+qClassKey(x.c)+(aggro===x.c.id?' aggro':'')+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(x.c.name)+(aggro===x.c.id?' <strong>AGGRO</strong>':'')+'</b><span>'+Math.round(x.value).toLocaleString()+'</span></div><em><i style="width:'+(x.value/maxThreat*100)+'%"></i></em></div>').join('')
 }
 function qDraw(config,finish){
   const root=encounterRoot();root.className='cb2d-backdrop quest-cb2d-backdrop';root.hidden=false;document.body.classList.add('quest-cb2d-open');
   root.innerHTML='<section class="cb2d-shell quest-cb2d-shell"><header class="cb2d-head"><div><small>'+esc(config.quest.toUpperCase())+' · LIVE 2D QUEST</small><h2>'+esc(config.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-q-close>×</button></div></header>'+
     '<div class="cb2d-route" id="q2dRoute">'+qRoute()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena quest-cb2d-arena" id="q2dArena"><div class="cb2d-floor"></div><div class="quest-cb2d-environment"></div><div class="cb2d-room-tag"><b>'+esc(config.location)+'</b><small>'+esc(config.ambience)+'</small></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="q2dTelegraphs"></div><div id="q2dUnits"></div><div class="cb2d-caption"><span>QUEST FIGHT</span><b id="q2dStatus">Entering encounter…</b></div></div>'+
-    '<div class="cb2d-controls"><button data-q-control="focus"><b>FOCUS TARGET</b><small>Push priority damage.</small></button><button data-q-control="interrupt"><b>INTERRUPT NOW</b><small>Force the current cast stop.</small></button><button data-q-control="defensive"><b>DEFENSIVE</b><small>Reduce incoming pressure.</small></button><button data-q-control="burn"><b>BURN</b><small>Commit damage cooldowns.</small></button></div>'+
+    '<div class="cb2d-controls cbr-plan-lock"><div class="cbr-plan-lock-copy"><small>COMBAT REBORN</small><b>This quest fight is simulation-driven.</b><span>Movement, targets, interrupts, threat, healing and deaths are produced by the combat timeline rather than viewer buttons.</span></div></div>'+
     '<div class="cb2d-feed"><small>COMBAT FEED</small><p id="q2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="q2dCastName">—</b><strong id="q2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="q2dCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="q2dDamageTotal">0 total</span></div><div id="q2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="q2dThreatTarget">No target</span></div><div id="q2dThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-q-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-q-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Holding range</em></div><div data-q-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>ACTIVE FIVE</small>'+qRows()+'</div></aside></div><div class="cb2d-end" id="q2dEnd" hidden></div></section>';
   root.querySelector('[data-q-close]').onclick=()=>{if(!questFight?.finished&&!confirm('Leave this quest fight? It will restart.'))return;encounterToken++;root.hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)};
-  root.querySelectorAll('[data-q-control]').forEach(b=>b.onclick=()=>{const key=b.dataset.qControl;questFight[key]=true;b.classList.add('active');if(key==='interrupt')qLog('You order an immediate interrupt.');if(key==='defensive')qLog('The party braces for incoming damage.');if(key==='focus')qLog('Damage switches to the priority target.');if(key==='burn')qLog('The party commits offensive cooldowns.')});
 }
 function qSpawn(){
   const p=party(),melee=p.filter(c=>qProfile(c)==='melee'),ranged=p.filter(c=>qProfile(c)==='ranged');
@@ -624,28 +623,143 @@ async function qFinishAll(){
     while(questFight.enemyHp[i]>0)await qAttack(i,1);
   }
 }
+
+function qEventCharacter(unitId){const id=String(unitId||'');return id.startsWith('p-')?party().find(c=>String(c.id)===id.slice(2)):null}
+function qEventEnemyIndex(unitId){const m=String(unitId||'').match(/^e-(\d+)$/);return m?Number(m[1]):-1}
+function qAttackKind(c){return c?.class==='Mage'?'magic':c?.class==='Hunter'?'arrow':['Priest','Druid','Evoker'].includes(c?.class)?'magic':'slash'}
+function qSetAddHp(id,pct){
+  const u=qUnit(id),bar=u?.querySelector('.cb2d-unit-hp i');if(bar)bar.style.width=Math.max(0,Math.min(100,pct))+'%';
+  if(u)u.classList.toggle('dead',pct<=0)
+}
+function qCastStart(e){
+  const n=$('#q2dCastName'),t=$('#q2dCastTime'),f=$('#q2dCastFill'),duration=Math.max(0,Number(e.payload?.duration)||0);
+  if(n)n.textContent=e.ability||'Enemy Cast';if(t)t.textContent=(duration/1000).toFixed(1)+'s';
+  if(f){f.style.background='';f.style.transition='none';f.style.width='0%';void f.offsetWidth;requestAnimationFrame(()=>{f.style.transition='width '+duration+'ms linear';f.style.width='100%'})}
+}
+function qCastClear(label='—'){
+  const n=$('#q2dCastName'),t=$('#q2dCastTime'),f=$('#q2dCastFill');if(n)n.textContent=label;if(t)t.textContent='—';if(f){f.style.transition='none';f.style.width='0%';f.style.background=''}
+}
+function qMechanicFromEvent(e){
+  const type=e.payload?.mechanicType,source=e.source||'e-0',target=e.payload?.targetId||e.target,token=e.payload?.token||('q-'+e.timestamp);let tg=null;
+  if(type==='cone')tg=qTelegraph('cone',source,target||'p-'+party()[0]?.id,e.ability||'FRONTAL');
+  else if(type==='line')tg=qTelegraph('line',source,target||'p-'+party().find(c=>qRole(c)!=='tank')?.id,e.ability||'LINE');
+  else if(type==='circle')tg=qTelegraph('circle',source,target||source,e.ability||'AREA',165);
+  else if(type==='circles'){
+    const ids=(e.payload?.targetIds||[]).filter(Boolean);const list=ids.length?ids:party().map(c=>'p-'+c.id),wrap=[];
+    list.forEach((id,i)=>{const x=qTelegraph('circle',source,id,i===0?(e.ability||'TARGETED AREA'):'',120);if(x)wrap.push(x)});
+    tg={classList:{add:k=>wrap.forEach(x=>x.classList.add(k))},remove:()=>wrap.forEach(x=>x.remove())}
+  }else if(type==='interrupt'){
+    tg=qTelegraph('circle',source,source,'INTERRUPT '+String(e.ability||'CAST').toUpperCase(),90)
+  }else if(type==='adds'){
+    const root=$('#q2dTelegraphs'),el=document.createElement('div');el.className='cb2d-tg circle dynamic';el.innerHTML='<span class="cb2d-tg-label">ADDS SPAWNING</span>';el.style.left='74%';el.style.top='50%';el.style.width='140px';el.style.height='140px';el.style.transform='translate(-50%,-50%)';root?.appendChild(el);tg=el
+  }
+  questFight.telegraphs[token]=tg;return tg
+}
+function qClearMechanic(token,impact=false){
+  const tg=questFight?.telegraphs?.[token];if(!tg)return;if(impact)tg.classList?.add?.('impact');setTimeout(()=>tg.remove?.(),250);delete questFight.telegraphs[token]
+}
+function qSpawnAdd(e){
+  if(qUnit(e.target))return;const p=e.position||{x:74,y:50};qAddUnit(e.target,e.payload?.name||'Add','enemy',p.x,p.y,'');qSetAddHp(e.target,100)
+}
+function qAnalysis(result){
+  const s=result?.summary||{},ints=s.interrupts||{},m=s.mechanics||{};
+  return'<div class="cbr-analysis-grid quest-cbr-summary"><article><span>TIME</span><b>'+Math.round((Number(s.durationSeconds)||0)*10)/10+'s</b></article><article><span>DAMAGE</span><b>'+Math.round(Number(s.totalDamage)||0).toLocaleString()+'</b></article><article><span>HEALING</span><b>'+Math.round(Number(s.totalHealing)||0).toLocaleString()+'</b></article><article><span>DEATHS</span><b>'+Number(s.deaths||0)+'</b></article><article><span>INTERRUPTS</span><b>'+Number(ints.success||0)+'/'+Number(ints.attempts||0)+'</b></article><article><span>MECHANICS</span><b>'+Number(m.avoided||0)+'✓ · '+Number(m.failed||0)+'✕</b></article></div>'
+}
+function qRenderRebornEvent(e){
+  const srcChar=qEventCharacter(e.source),targetChar=qEventCharacter(e.target),enemyIndex=qEventEnemyIndex(e.target),sourceEnemy=qEventEnemyIndex(e.source);
+  switch(e.type){
+    case'COMBAT_START':qStatus('Combat simulation live');qLog('Combat begins.');break;
+    case'MOVEMENT_START':if(e.payload?.to)qMove(e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
+    case'ABILITY_START':
+      if(e.source&&e.target){
+        if(srcChar){qFace(e.source,e.target);qProjectile(e.source,e.target,qAttackKind(srcChar),260);const r=qRole(srcChar);qAct(r==='tank'?'tank':r==='healer'?'healer':'dps',srcChar.name+' · '+(e.ability||'Action'))}
+        else if(String(e.source).startsWith('e-')||String(e.source).startsWith('add-')){qFace(e.source,e.target);qProjectile(e.source,e.target,'enemy',280)}
+      }
+      break;
+    case'DAMAGE_DEALT':
+      if(enemyIndex>=0){qSetEnemyHp(enemyIndex,Number(e.payload?.targetHp)||0)}
+      else if(String(e.target||'').startsWith('add-'))qSetAddHp(e.target,Number(e.payload?.targetHpPct)||0);
+      if(targetChar){qSetPartyHp(targetChar,Number(e.payload?.targetHpPct)||0)}
+      if(e.target)qFloat(e.target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':e.result==='critical'?'crit':'damage');
+      if(srcChar){questFight.damage[srcChar.id]=(Number(questFight.damage[srcChar.id])||0)+Math.round(Number(e.amount)||0);qRenderMeters(enemyIndex>=0?enemyIndex:0)}
+      if(e.payload?.avoidable)qLog((targetChar?.name||'A player')+' is hit by avoidable '+(e.ability||'damage')+'.');
+      break;
+    case'HEAL_RECEIVED':
+      if(targetChar){qSetPartyHp(targetChar,Number(e.payload?.targetHpPct)||0);qFloat(e.target,'+'+Math.round(Number(e.amount)||0),'heal')}
+      break;
+    case'THREAT_GENERATED':
+      if(enemyIndex>=0&&srcChar){questFight.threat[enemyIndex]=questFight.threat[enemyIndex]||{};questFight.threat[enemyIndex][srcChar.id]=Number(e.payload?.total)||0;qRenderMeters(enemyIndex)}
+      break;
+    case'AGGRO_CHANGED':
+      if(sourceEnemy>=0&&targetChar){questFight.aggro[sourceEnemy]=targetChar.id;qRenderMeters(sourceEnemy);if(qRole(targetChar)!=='tank')qLog(targetChar.name+' pulls aggro.')}break;
+    case'MECHANIC_TELEGRAPH':qMechanicFromEvent(e);qStatus((e.ability||'Mechanic')+' incoming');qLog((e.ability||'Mechanic')+' is telegraphed.');break;
+    case'MECHANIC_RESOLVE':qClearMechanic(e.payload?.token,true);break;
+    case'CAST_START':if(String(e.source||'').startsWith('e-'))qCastStart(e);break;
+    case'CAST_FINISH':if(String(e.source||'').startsWith('e-')){qCastClear('CAST COMPLETE');qLog((e.ability||'Enemy cast')+' completes.')}break;
+    case'INTERRUPT':
+      if(e.result==='success'){qCastClear('INTERRUPTED');qClearMechanic(e.payload?.token,false);qLog((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');qAct('dps','Interrupt successful')}
+      else if(e.result==='failed')qLog((srcChar?.name||'A player')+' misses an interrupt.');
+      break;
+    case'ADD_SPAWNED':qSpawnAdd(e);qLog((e.payload?.name||'An add')+' joins the fight.');break;
+    case'ADD_DEFEATED':case'ENEMY_DEFEATED':{
+      const u=qUnit(e.target);if(u)u.classList.add('dead');if(enemyIndex>=0)qSetEnemyHp(enemyIndex,0);else qSetAddHp(e.target,0);break;
+    }
+    case'PLAYER_DEFEATED':if(targetChar){qSetPartyHp(targetChar,0);qUnit(e.target)?.classList.add('dead');qLog(targetChar.name+' is defeated.')}break;
+    case'DEFENSIVE_ACTIVATED':if(srcChar)qLog(srcChar.name+' activates '+(e.ability||'a defensive')+'.');break;
+    case'COMBAT_END':qCastClear();qStatus(e.result==='victory'?'ENCOUNTER CLEAR':'PARTY DEFEATED');break;
+  }
+}
+async function qPlayReborn(result,tok){
+  let last=0;questFight.telegraphs={};
+  for(const e of result.events||[]){
+    if(tok!==encounterToken||!questFight)return false;
+    const gap=Math.max(0,(Number(e.timestamp)||0)-last);if(gap)await wait(gap);
+    qRenderRebornEvent(e);last=Number(e.timestamp)||last
+  }
+  return result.outcome==='victory'
+}
+function qEncounterFromConfig(config){
+  const meta=config.combat||{},kind=meta.kind||(config.enemies.length===1?'boss':'trash');
+  return{id:'quest-'+String(config.title||'fight').toLowerCase().replace(/[^a-z0-9]+/g,'-'),title:config.title,kind,enemies:[...config.enemies],enemyHealth:Number(meta.enemyHealth)|| (kind==='final'?900:kind==='boss'?700:330),mechanics:meta.mechanics||[]}
+}
 async function runQuest2DFight(config){
-  const p=party();if(p.length!==5)return false;
+  const p=party(),C=window.CellboundCombatReborn;if(p.length!==5||!C?.simulate)return false;
   const tok=++encounterToken;
   return await new Promise(resolve=>{
     let settled=false;const finish=value=>{if(settled)return;settled=true;resolve(value)};
-    const max=config.enemies.map((_,i)=>i===config.eliteIndex?520:config.enemies.length===1?440:270);
-    questFight={token:tok,title:config.title,phases:config.phases||['Encounter'],phase:0,enemies:config.enemies,eliteIndex:Number.isInteger(config.eliteIndex)?config.eliteIndex:-1,enemyMax:max,enemyHp:[...max],partyHp:Object.fromEntries(p.map(c=>[c.id,100])),damage:Object.fromEntries(p.map(c=>[c.id,0])),log:[],focus:false,interrupt:false,defensive:false,burn:false,finished:false};
+    const encounter=qEncounterFromConfig(config),max=config.enemies.map(()=>encounter.enemyHealth);
+    questFight={token:tok,title:config.title,phases:['Combat'],phase:0,enemies:config.enemies,eliteIndex:Number.isInteger(config.eliteIndex)?config.eliteIndex:-1,enemyMax:max,enemyHp:[...max],partyHp:Object.fromEntries(p.map(c=>[c.id,100])),damage:Object.fromEntries(p.map(c=>[c.id,0])),threat:max.map(()=>Object.fromEntries(p.map(c=>[c.id,0]))),aggro:max.map(()=>null),log:[],telegraphs:{},finished:false};
     qDraw(config,finish);qSpawn();qLog(config.ambience);
     (async()=>{
       try{
-        await wait(700);if(tok!==encounterToken)return;
-        const api={phase:qPhase,tankEngage:qTankEngage,attack:qAttack,enemyHit:qEnemyHit,cone:qCone,line:qLine,circle:qCircle,cast:qCast,finishAll:qFinishAll,log:qLog,status:qStatus};
-        await config.script(api);if(tok!==encounterToken)return;
-        questFight.finished=true;qStatus('ENCOUNTER CLEAR');qLog('The party secures the area.');
-        const end=$('#q2dEnd');if(end){end.hidden=false;end.innerHTML='<div><small>QUEST FIGHT COMPLETE</small><h3>'+esc(config.title)+'</h3><p>'+esc(config.completeText||'The way forward is clear.')+'</p></div><button data-q-continue>CONTINUE QUEST →</button>';end.querySelector('[data-q-continue]').onclick=()=>{encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(true)}}
-      }catch(err){console.error('Quest combat failed',err);encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}
+        await wait(600);if(tok!==encounterToken)return;
+        const result=C.simulate({
+          party:p.map(c=>Object.assign({},c,{_combatHealthPct:100})),
+          encounter,
+          tactics:{interruptPriority:'standard',addPriority:'immediate',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced'},
+          seed:['quest',tok,config.title,Date.now()].join(':')
+        });
+        questFight.result=result;
+        const won=await qPlayReborn(result,tok);if(tok!==encounterToken)return;
+        questFight.finished=true;
+        const end=$('#q2dEnd');if(!end)return;
+        end.hidden=false;
+        if(won){
+          qLog('The party secures the area.');
+          end.innerHTML='<div><small>QUEST FIGHT COMPLETE</small><h3>'+esc(config.title)+'</h3><p>'+esc(config.completeText||'The way forward is clear.')+'</p>'+qAnalysis(result)+'</div><button data-q-continue>CONTINUE QUEST →</button>';
+          end.querySelector('[data-q-continue]').onclick=()=>{encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(true)}
+        }else{
+          Game.applyPartyCellShock?.(25);await Game.persistState?.();
+          end.innerHTML='<div><small>QUEST FIGHT FAILED</small><h3>'+esc(config.title)+'</h3><p>The party was defeated by the combat simulation. Review what happened, recover, and return when ready.</p>'+qAnalysis(result)+'</div><button data-q-continue>RETURN TO QUEST →</button>';
+          end.querySelector('[data-q-continue]').onclick=()=>{encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}
+        }
+      }catch(err){console.error('Quest Combat Reborn failed',err);encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}
     })();
   });
 }
 async function runResonanceBacklash(){
   const q=ensure(),bearer=party().find(c=>c.id===q.bearerId)||party()[0];
-  return runQuest2DFight({quest:QUEST.title,title:'Resonance Backlash',location:'Jory’s Workshop',ambience:'The Blackened Fragment rejects the false route and tears an echo out of the room.',phases:['Backlash'],enemies:['Resonance Echo'],eliteIndex:0,completeText:'The echo collapses back into the fragment. The cipher is still waiting.',script:async api=>{await api.phase(0,'The fragment manifests a hostile echo.');await api.tankEngage();await api.circle(bearer,'MEMORY BURST');await api.cast(0,'RESONANCE SHRIEK',1600,true);await api.attack(0,3);await api.finishAll()}});
+  return runQuest2DFight({quest:QUEST.title,title:'Resonance Backlash',location:'Jory’s Workshop',ambience:'The Blackened Fragment rejects the false route and tears an echo out of the room.',phases:['Backlash'],enemies:['Resonance Echo'],eliteIndex:0,combat:{kind:'boss',enemyHealth:680,mechanics:[['Memory Burst','circles',1500],['Resonance Shriek','interrupt',1800]]},completeText:'The echo collapses back into the fragment. The cipher is still waiting.',script:async api=>{await api.phase(0,'The fragment manifests a hostile echo.');await api.tankEngage();await api.circle(bearer,'MEMORY BURST');await api.cast(0,'RESONANCE SHRIEK',1600,true);await api.attack(0,3);await api.finishAll()}});
 }
 async function beginInvestigation(){
   const q=ensure(),p=party();if(currentStage()!=='route')return;
@@ -654,7 +768,7 @@ async function beginInvestigation(){
   const won=await runQuest2DFight({
     quest:QUEST.title,title:'The Road Under the Road',location:'Collapsed Survey Tunnels',
     ambience:'Jory’s decoded posts lead beneath the east road. The Blackened Fragment grows warmer with every step.',
-    phases:['Buried Junction','Resonance Husk','Hollow Seal'],enemies:['Hollow Scavenger','Hollow Scavenger','Resonance Husk'],eliteIndex:2,
+    phases:['Buried Junction','Resonance Husk','Hollow Seal'],enemies:['Hollow Scavenger','Hollow Scavenger','Resonance Husk'],eliteIndex:2,combat:{kind:'boss',enemyHealth:460,mechanics:[['Resonance Lash','line',1600],['Binding Hum','interrupt',1850],['Cell Pulse','circles',1500]]},
     completeText:'A final survey mark is cut into the wall behind the broken Husk. Beyond it waits the Hollow Seal.',
     script:async api=>{
       await api.phase(0,'Three shapes pull themselves out of the old masonry.');
@@ -689,7 +803,7 @@ async function runSealGuardian(){
   return runQuest2DFight({
     quest:QUEST.title,title:'Guardian of the Seal',location:'The Hollow Seal',
     ambience:'The misaligned rings grind together. A shape peels itself out of the stone and blocks the chamber.',
-    phases:['Awakening','Sealbreaker'],enemies:['Hollow Sentinel'],eliteIndex:0,
+    phases:['Awakening','Sealbreaker'],enemies:['Hollow Sentinel'],eliteIndex:0,combat:{kind:'boss',enemyHealth:900,mechanics:[['Stone Choir','interrupt',1800],['Sealbreaker Line','line',1600],['Hollow Sweep','cone',1700]]},
     completeText:'The Sentinel collapses into inert glass. The seal rings remain, waiting to be aligned correctly.',
     script:async api=>{
       await api.phase(0,'The Hollow Sentinel tears itself free from the door.');
