@@ -100,9 +100,30 @@ function bossHealth(boss){
   document.getElementById('wb2dHpFill').style.width=pct+'%';
   const mini=document.querySelector('#wb2dBoss .wb2d-boss-mini i');if(mini)mini.style.width=pct+'%';
 }
+function wbResourceDef(c){
+  return window.CellboundCombatReborn?.RESOURCE_DEFS?.[c?.className||c?.class]||{name:'Power',max:100,start:100}
+}
+function wbResourceClass(name){return 'resource-'+String(name||'Power').toLowerCase().replace(/[^a-z0-9]+/g,'-')}
+function wbEnsureResource(el,u){
+  if(!el||!u?.own)return null;
+  let bar=el.querySelector('.cbr-resource');
+  const def=wbResourceDef(u);
+  if(!bar){
+    bar=document.createElement('div');bar.className='cbr-resource '+wbResourceClass(def.name);bar.dataset.resource=def.name;bar.innerHTML='<i style="width:'+Math.max(0,Math.min(100,(Number(def.start??def.max??100)/Math.max(1,Number(def.max)||100))*100))+'%"></i>';el.appendChild(bar)
+  }
+  return bar
+}
+function wbSetResource(id,name,value,max){
+  const el=ownUnitForCombatId(id);if(!el)return;
+  const ch=party().find(c=>'p-'+c.id===String(id)),def=wbResourceDef({className:ch?.class}),resource=name||def.name,limit=Math.max(1,Number(max)||def.max||100),current=Math.max(0,Math.min(limit,Number(value)||0)),bar=wbEnsureResource(el,{own:true,className:ch?.class});
+  if(!bar)return;
+  [...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));
+  bar.classList.add(wbResourceClass(resource));bar.dataset.resource=resource;bar.title=resource+' '+Math.round(current)+' / '+Math.round(limit);
+  const fill=bar.querySelector('i');if(fill)fill.style.width=(current/limit*100)+'%'
+}
 function groupParty(participant,index){
   if(participant.isYou){
-    return party().map((c,i)=>({key:'you-'+(c.id||i),id:c.id,name:c.name,role:roleOf(c),ranged:isRanged(c),own:true,classKey:classKey(c)}));
+    return party().map((c,i)=>({key:'you-'+(c.id||i),id:c.id,name:c.name,role:roleOf(c),ranged:isRanged(c),own:true,classKey:classKey(c),className:c.class}));
   }
   return [
     {key:'g'+index+'-t',name:'Tank',role:'tank',ranged:false},
@@ -136,13 +157,14 @@ function renderParticipants(parts){
       let el=previous.get(key);
       if(!el){
         el=document.createElement('div');el.className='wb2d-unit role-'+u.role+' '+(u.classKey||'class-unknown')+(u.own?' own':'');
-        el.dataset.unitKey=key;el.innerHTML='<span class="wb2d-unit-dot">'+(u.role==='tank'?'T':u.role==='healer'?'H':'D')+'</span><div class="wb2d-unit-hp"><i></i></div><small></small>';
+        el.dataset.unitKey=key;el.innerHTML='<span class="wb2d-unit-dot">'+(u.role==='tank'?'T':u.role==='healer'?'H':'D')+'</span><div class="wb2d-unit-hp"><i></i></div><small class="wb2d-unit-label"></small>';
         units.appendChild(el);
       }
       el.className='wb2d-unit role-'+u.role+' '+(u.classKey||'class-unknown')+(u.own?' own':'')+(u.ranged?' ranged':' melee')+(p.isAggro?' aggro':'')+(u.own&&ownGuildAggro&&u.id===topOwnId?' boss-target':'');
       el.style.left=pos.x+'%';el.style.top=pos.y+'%';
       el.dataset.x=pos.x;el.dataset.y=pos.y;el.dataset.guild=guild;
-      el.querySelector('small').textContent=u.own?u.name:(i===0?guild:'');
+      const unitLabel=el.querySelector('.wb2d-unit-label')||el.querySelector(':scope > small:not(.cbr-resource)');if(unitLabel)unitLabel.textContent=u.own?u.name:(i===0?guild:'');
+      if(u.own)wbEnsureResource(el,u);
       const hp=el.querySelector('.wb2d-unit-hp i'),serverHp=u.own?Math.max(0,Math.min(100,Number(active?.combatState?.hp?.[u.id]??100))):100;if(hp)hp.style.width=serverHp+'%';el.classList.toggle('wiped',u.own&&serverHp<=0);
     });
   });
@@ -280,6 +302,9 @@ function wbRenderServerEvent(e){
       break;
     case'HEAL_RECEIVED':
       if(targetChar){setOwnHp(e.target,Number(e.payload?.targetHpPct)||0);if(source&&target)projectileBetween(source,target,'heal');feed((e.ability||'Heal')+' restores '+Math.round(Number(e.amount)||0)+' health.','heal')}
+      break;
+    case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':
+      if(sourceChar)wbSetResource(e.source,e.payload?.resource,e.payload?.value,e.payload?.max);
       break;
     case'MOVEMENT_START':if(sourceChar)wbServerDodge(e.source);break;
     case'MECHANIC_TELEGRAPH':
