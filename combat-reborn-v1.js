@@ -191,7 +191,7 @@ function normaliseEnemies(encounter){
  return raw.map((entry,i)=>{
   const data=typeof entry==='object'&&entry?entry:{name:entry},name=data.name||('Enemy '+(i+1));
   const level=Math.max(1,Number(data.level)||Number(encounter.enemyLevels?.[i])||baseLevel);
-  const inferred=(raw.length===1&&(encounter.kind==='boss'||encounter.kind==='final'))?'boss':encounter.enemyTypes?.[i]||data.classification||data.kind||(encounter.kind==='event'?'elite':'trash');
+  const inferred=data.classification||encounter.enemyTypes?.[i]||data.kind||((raw.length===1&&(encounter.kind==='boss'||encounter.kind==='final'))?'boss':(encounter.kind==='event'?'elite':'trash'));
   const classification=String(inferred||'trash').toLowerCase(),rule=enemyClassRule(classification);
   const rawMax=Number(data.health)||baseHealth,maxHealth=Math.round(rawMax*levelHealthScale(level)*rule.health);
   return{
