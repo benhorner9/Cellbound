@@ -527,7 +527,8 @@ function rollDamage(ctx,u,a,target){
  const talent=1+Math.min(.18,u.talents*.012);
  const power=1+Math.min(.35,u.power*.012),levelScale=u.baseStats?.outputScale||levelOutputScale(u.level),match=levelMatchMultiplier(u.level,target?.level||1);
  const variance=.9+ctx.rng()*.2;
- let amount=(Number(a.damage)||12)*talent*power*levelScale*match*variance;
+ const revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1;
+ let amount=(Number(a.damage)||12)*talent*power*levelScale*match*variance*revivePenalty;
  if(ctx.rng()<.12){amount*=1.5;return{amount,crit:true}}
  return{amount,crit:false};
 }
@@ -570,9 +571,22 @@ function killUnit(ctx,target,source,ability){
  emit(ctx,target.role==='enemy'?(target.isAdd?'ADD_DEFEATED':'ENEMY_DEFEATED'):'PLAYER_DEFEATED',{source:source?.id||null,target:target.id,ability,result:'dead',position:copy(target.position)});
  if(target.role!=='enemy'){
   const st=ctx.stats.players[target.id];st.deaths++;ctx.stats.deaths++;
-  ctx.enemies.forEach(e=>{if(e.target===target.id)setAggro(ctx,e,topThreatTarget(ctx,e),'target died')});
+  ctx.enemies.forEach(e=>{e.threat[target.id]=0;if(e.target===target.id)setAggro(ctx,e,topThreatTarget(ctx,e),'target died')});
  }
 }
+
+function reviveUnit(ctx,healer,target,ability,{healthPct=35,resourcePct=20,combat=true}={}){
+ if(!healer?.alive||!target||target.alive)return false;
+ target.alive=true;target.health=Math.max(1,Math.round(target.maxHealth*healthPct/100));
+ target.resource.value=clamp(target.resource.max*resourcePct/100,0,target.resource.max);
+ target.currentCast=null;target.movingUntil=0;target.nextDecision=ctx.time+700;target.revivePenaltyUntil=ctx.time+(combat?30000:15000);
+ const st=ctx.stats.players[healer.id];if(st)st.battleResurrections++;
+ ctx.stats.battleResurrections++;
+ emit(ctx,'PLAYER_REVIVED',{source:healer.id,target:target.id,ability,result:combat?'battle-rez':'revive',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),resource:target.resource.name,resourceValue:target.resource.value,resourceMax:target.resource.max,penaltyMs:combat?30000:15000}});
+ emitResourceState(ctx,target,'revived');
+ return true
+}
+
 function pickDamageTarget(ctx,u){
  const adds=livingEnemies(ctx).filter(e=>e.isAdd);
  if(adds.length&&ctx.tactics.addPriority!=='boss'){
@@ -592,7 +606,17 @@ function healerTarget(ctx){
 function chooseAbility(ctx,u,target){
  const pool=u.abilities.filter(a=>a.kind!=='interrupt'&&a.kind!=='taunt'&&cooldownReady(u,a)&&(a.cost||0)<=u.resource.value);
  if(u.role==='healer'){
-  const alive=livingPlayers(ctx),tank=alive.find(p=>p.role==='tank'),low=healerTarget(ctx);
+  const alive=livingPlayers(ctx),tank=alive.find(p=>p.role==='tank'),low=healerTarget(ctx),dead=deadPlayers(ctx);
+  const battleRez=pool.find(a=>a.kind==='battle-rez');
+  if(battleRez&&dead.length){
+   const reviveTarget=[...dead].sort((a,b)=>(a.role==='tank'?-3:a.role==='healer'?-2:0)-(b.role==='tank'?-3:b.role==='healer'?-2:0)||b.power-a.power)[0];
+   const tankSafe=!tank||healthRatio(tank)>.58,pressure=combatPressure(ctx);
+   const badDecision=pressure>.78&&shouldMistake(ctx,u,'triage',7000);
+   if((tankSafe&&pressure<.86)||badDecision){
+    if(badDecision)recordMistake(ctx,u,'triage','committed to a combat resurrection under heavy pressure',{target:reviveTarget.id,ability:battleRez.name});
+    return{ability:battleRez,target:reviveTarget}
+   }
+  }
   const single=pool.filter(a=>a.kind==='heal').sort((a,b)=>(b.heal||0)-(a.heal||0));
   const group=pool.filter(a=>a.kind==='group-heal').sort((a,b)=>(b.heal||0)-(a.heal||0));
   const injured=alive.filter(p=>healthRatio(p)<.94),deep=alive.filter(p=>healthRatio(p)<.84);
@@ -608,9 +632,13 @@ function chooseAbility(ctx,u,target){
   const needsTank=tank&&tankRatio<((ctx.encounter.kind==='boss'||ctx.encounter.kind==='final')?.97:.92);
   const needsSingle=low&&healthRatio(low)<.90;
   if(single.length&&(needsTank||needsSingle)){
-   const healTarget=needsSingle&&low&&healthRatio(low)<tankRatio?low:(tank||low);
-   const ratio=healthRatio(healTarget);
-   const chosen=ratio<.58?single[0]:single[single.length-1];
+   let healTarget=needsSingle&&low&&healthRatio(low)<tankRatio?low:(tank||low);
+   let ratio=healthRatio(healTarget),chosen=ratio<.58?single[0]:single[single.length-1];
+   if(injured.length>=2&&shouldMistake(ctx,u,'triage',6500)){
+    const alternatives=alive.filter(p=>p.id!==healTarget?.id&&healthRatio(p)<.98).sort((a,b)=>healthRatio(b)-healthRatio(a));
+    if(alternatives.length){healTarget=alternatives[0];ratio=healthRatio(healTarget);chosen=single[0]}
+    recordMistake(ctx,u,'triage','prioritised the wrong heal target',{target:healTarget?.id||null,ability:chosen?.name||'Heal'});
+   }
    return{ability:chosen,target:healTarget}
   }
 
@@ -624,7 +652,8 @@ function chooseAbility(ctx,u,target){
  return{ability:usable,target};
 }
 function startAbility(ctx,u,a,target){
- if(!u.alive||!target?.alive||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.gcdUntil||!cooldownReady(u,a))return false;
+ const deadTarget=a?.kind==='battle-rez'&&target&&!target.alive;
+ if(!u.alive||(!target?.alive&&!deadTarget)||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.gcdUntil||!cooldownReady(u,a))return false;
  if(!moveIntoRange(ctx,u,target,Number(a.range)||5))return false;
  if(!spendResource(ctx,u,a))return false;
  const cast=Math.max(0,Number(a.cast)||0),gcd=Math.max(0,Number(a.gcd)||0);
@@ -639,13 +668,17 @@ function startAbility(ctx,u,a,target){
  return true;
 }
 function finishAbility(ctx,u,a,target){
- if(!u.alive||!target?.alive)return;
+ const deadTarget=a?.kind==='battle-rez'&&target&&!target.alive;
+ if(!u.alive||(!target?.alive&&!deadTarget))return;
  if(u.currentCast&&u.currentCast.ability!==a.name)return;
  u.currentCast=null;
  if(!hasLineOfSight(ctx,u,target)){emit(ctx,'ABILITY_FINISH',{source:u.id,target:target.id,ability:a.name,result:'failed-line-of-sight',position:copy(u.position),payload:{kind:a.kind,castTime:Number(a.cast)||0}});return}
  emit(ctx,'ABILITY_FINISH',{source:u.id,target:target.id,ability:a.name,result:'resolved',position:copy(u.position),payload:{kind:a.kind,castTime:Number(a.cast)||0}});
- if(a.kind==='heal'||a.kind==='group-heal'){
-  const amount=(a.heal||24)*(1+Math.min(.28,u.power*.01))*(u.baseStats?.outputScale||levelOutputScale(u.level))*(.92+ctx.rng()*.16);
+ if(a.kind==='battle-rez'){
+  reviveUnit(ctx,u,target,a.name,{healthPct:35,resourcePct:20,combat:true});
+ }else if(a.kind==='heal'||a.kind==='group-heal'){
+  const revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1;
+  const amount=(a.heal||24)*(1+Math.min(.28,u.power*.01))*(u.baseStats?.outputScale||levelOutputScale(u.level))*(.92+ctx.rng()*.16)*revivePenalty;
   if(a.kind==='group-heal')livingPlayers(ctx).filter(p=>hasLineOfSight(ctx,u,p)).forEach(p=>doHeal(ctx,u,p,amount,a.name));
   else doHeal(ctx,u,target,amount,a.name);
   if(a.hot){
