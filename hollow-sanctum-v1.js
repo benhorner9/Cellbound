@@ -377,9 +377,49 @@ function hsFailureDiagnosis(result){
 }
 function hsProgressEarned(){
  const record=run?.endgameRecord||{},unlocks=record.newUnlocks||[],achievements=record.newAchievements||[],score=Number(record.score||run?.endgameMetrics?.scorePreview||0);
- const comparison=record.isNewBest?'<p>★ NEW BEST · '+score.toLocaleString()+' score</p>':record.previousBestScore?'<p>↔ Previous best '+Number(record.previousBestScore).toLocaleString()+' · this run '+score.toLocaleString()+'</p>':'';
+ const comparison=record.isNewBest
+   ?'<span><i>★</i><b>NEW BEST · '+score.toLocaleString()+' score</b></span>'
+   :record.previousBestScore?'<span><i>↔</i><b>Previous best '+Number(record.previousBestScore).toLocaleString()+' · this run '+score.toLocaleString()+'</b></span>':'';
  if(!unlocks.length&&!achievements.length&&!comparison)return'';
- return'<div class="hs2d-progress-earned"><small>RUN PROGRESSION</small>'+comparison+unlocks.map(x=>'<p>↗ '+esc(x)+'</p>').join('')+achievements.map(id=>'<p>◆ Achievement: '+esc(window.CellboundEndgame?.achievementName?.(id)||id)+'</p>').join('')+'</div>'
+ return'<section class="cbr-progress-earned"><small>RUN PROGRESSION</small><h4>What changed after this clear.</h4><div>'+comparison+unlocks.map(x=>'<span><i>↗</i><b>'+esc(x)+'</b></span>').join('')+achievements.map(id=>'<span><i>◆</i><b>Achievement: '+esc(window.CellboundEndgame?.achievementName?.(id)||id)+'</b></span>').join('')+'</div></section>'
+}
+
+
+function hsCombatTotals(){
+ const history=run?.history||[],map={};let duration=0,deaths=0,damage=0,healing=0,damageTaken=0,avoidableDamage=0,attempts=0,interrupts=0,missedInterrupts=0,failed=0,avoided=0,mistakes=0,battleResurrections=0,threatLosses=0;
+ history.forEach(h=>{
+  const s=h?.summary||{};duration+=Number(s.durationSeconds)||((Number(h?.durationMs)||0)/1000);deaths+=Number(s.deaths)||0;damage+=Number(s.totalDamage)||0;healing+=Number(s.totalHealing)||0;
+  attempts+=Number(s.interrupts?.attempts)||0;interrupts+=Number(s.interrupts?.success)||0;missedInterrupts+=Number(s.interrupts?.missedCritical)||0;failed+=Number(s.mechanics?.failed)||0;avoided+=Number(s.mechanics?.avoided)||0;
+  mistakes+=Number(s.mistakes?.total)||0;battleResurrections+=Number(s.battleResurrections)||0;
+  (s.players||[]).forEach(p=>{
+   const x=map[p.id]||(map[p.id]={id:p.id,name:p.name,class:p.class,damage:0,healing:0,damageTaken:0,avoidableDamage:0,deaths:0,mistakes:0,mistakesByType:{},battleResurrections:0,interrupts:0,interruptAttempts:0,abilityDamage:{}});
+   x.damage+=Number(p.damage)||0;x.healing+=Number(p.healing)||0;x.damageTaken+=Number(p.damageTaken)||0;x.avoidableDamage+=Number(p.avoidableDamage)||0;x.deaths+=Number(p.deaths)||0;x.mistakes+=Number(p.mistakes)||0;x.battleResurrections+=Number(p.battleResurrections)||0;
+   x.interrupts+=Number(p.interrupts)||0;x.interruptAttempts+=Number(p.interruptAttempts)||0;threatLosses+=Number(p.threatLost)||0;
+   Object.entries(p.mistakesByType||{}).forEach(([k,v])=>x.mistakesByType[k]=(x.mistakesByType[k]||0)+(Number(v)||0));
+   Object.entries(p.abilityDamage||{}).forEach(([k,v])=>x.abilityDamage[k]=(x.abilityDamage[k]||0)+(Number(v)||0));
+   damageTaken+=Number(p.damageTaken)||0;avoidableDamage+=Number(p.avoidableDamage)||0
+  })
+ });
+ return{duration,deaths,damage,healing,damageTaken,avoidableDamage,attempts,interrupts,missedInterrupts,threatLosses,failed,avoided,mistakes,battleResurrections,outOfCombatRevives:Number(run?.outOfCombatRevives)||0,players:Object.values(map)}
+}
+function hsCombatAnalysisHTML(){
+ const t=hsCombatTotals();if(!run?.history?.length)return'';
+ const mins=Math.floor(t.duration/60),secs=Math.round(t.duration%60),time=(mins?mins+'m ':'')+secs+'s';
+ const mistakeLabels={movement:'movement',interrupt:'interrupt',threat:'threat',tank:'tank',triage:'triage',defensive:'defensive'};
+ const rows=t.players.sort((a,b)=>b.damage-a.damage).map(p=>{
+  const mistakeTop=Object.entries(p.mistakesByType||{}).sort((a,b)=>b[1]-a[1])[0],mistakeCopy=p.mistakes?(p.mistakes+' mistake'+(p.mistakes===1?'':'s')+(mistakeTop?' · '+(mistakeLabels[mistakeTop[0]]||mistakeTop[0])+' '+mistakeTop[1]:'')):'Clean execution';
+  return'<div class="cbr-analysis-row"><i class="cb2d-dot '+('class-'+String(p.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-'))+'"></i><span><b>'+esc(p.name)+'</b><small>'+esc(p.class)+' · '+mistakeCopy+' · Avoidable '+Math.round(p.avoidableDamage)+' · Interrupts '+p.interrupts+'/'+p.interruptAttempts+(p.battleResurrections?' · Battle rez '+p.battleResurrections:'')+'</small></span><strong>'+Math.round(p.damage).toLocaleString()+' dmg</strong></div>'
+ }).join('');
+ return'<section class="cbr-analysis"><div class="cbr-analysis-head"><div><small>COMBAT REBORN · RUN ANALYSIS</small><h4>Execution, mistakes and recovery shaped this run.</h4></div><button type="button" data-hs-replay>REPLAY FINAL FIGHT</button></div><div class="cbr-analysis-grid"><article><span>TIME</span><b>'+time+'</b></article><article><span>DAMAGE</span><b>'+Math.round(t.damage).toLocaleString()+'</b></article><article><span>HEALING</span><b>'+Math.round(t.healing).toLocaleString()+'</b></article><article><span>AVOIDABLE</span><b>'+Math.round(t.avoidableDamage).toLocaleString()+'</b></article><article><span>MISTAKES</span><b>'+t.mistakes+'</b></article><article><span>DEATHS</span><b>'+t.deaths+'</b></article><article><span>COMBAT REZ</span><b>'+t.battleResurrections+'</b></article><article><span>OOC REVIVES</span><b>'+t.outOfCombatRevives+'</b></article><article><span>INTERRUPTS</span><b>'+t.interrupts+'/'+t.attempts+'</b></article><article><span>MECHANICS</span><b>'+t.avoided+'✓ · '+t.failed+'✕</b></article></div><div class="cbr-analysis-list">'+rows+'</div></section>'
+}
+async function hsReplayFinalFight(){
+ const h=(run?.history||[]).slice(-1)[0];if(!h?.events?.length)return;
+ const s=STAGES.find(x=>x.id===h.stageId)||STAGES[STAGES.length-1],end=$('#hs2dEnd'),savedHp={...run.hp};
+ if(end)end.hidden=true;
+ Object.entries(h.startHp||{}).forEach(([id,v])=>run.hp[id]=Number(v)||0);
+ spawnStage(s);hsUpdateSidebar();setStatus('Replay · stored combat timeline');feed('Replay uses the original combat events. No RNG is rerun.');
+ await hsPlayTimeline(h,token);
+ run.hp=savedHp;hsUpdateSidebar();if(end)end.hidden=false
 }
 
 async function hsFail(s,result){
@@ -543,8 +583,10 @@ async function complete(){
  '<section class="cb2d-loot-section cb2d-xp-section"><div class="cb2d-loot-title"><span>PARTY EXPERIENCE</span><small>Every member of the active five gains experience from the clear</small></div><div class="cb2d-xp-grid">'+gains.map(hsXpCard).join('')+'</div></section>'+
  '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>GEAR ACQUIRED</span><small>Stored automatically in the Guild Bank</small></div><div class="cb2d-loot-gear">'+(lootGear.length?lootGear.map((item,i)=>hsLootGearCard(item,i===1?'FIRST-CLEAR RELIC':'DUNGEON DROP')).join(''):'<div class="cb2d-loot-empty">No gear dropped.</div>')+'</div></section>'+
  '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>PROFESSION REAGENTS</span><small>Available immediately for crafting</small></div><div class="cb2d-loot-materials">'+materials.map(hsLootMaterialCard).join('')+'</div></section>'+
+ hsCombatAnalysisHTML()+
  '<footer class="cb2d-loot-actions"><button data-loot-bank>VIEW GUILD BANK</button><button class="primary" data-return>RETURN TO DUNGEON JOURNAL →</button></footer></div>';
  hsAnimateXp(end);
+ end.querySelector('[data-hs-replay]')?.addEventListener('click',hsReplayFinalFight);
  end.querySelector('[data-loot-bank]').onclick=()=>{close();Game.switchView?.('bank')};
  end.querySelector('[data-return]').onclick=()=>{close();Game.renderAll?.();renderCard()}
 }
