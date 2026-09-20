@@ -257,7 +257,13 @@ function wbClearServerTelegraph(token,result=''){
 function wbServerDodge(id){
   const u=ownUnitForCombatId(id);if(!u)return;const y=parseFloat(u.style.top)||50;wbDodge(u,0,y>50?-13:13)
 }
+function wbStatusTargets(id){
+  const s=String(id||'');
+  const unit=/^e-\d+$/.test(s)?document.getElementById('wb2dBoss'):wbEventUnit(s);
+  return unit?[unit]:[]
+}
 function wbRenderServerEvent(e){
+  if(window.CellboundCombatStatuses?.handle(e,{resolve:wbStatusTargets,speed:1}))return;
   const source=wbEventUnit(e.source),target=wbEventUnit(e.target),sourceChar=String(e.source||'').startsWith('p-'),targetChar=String(e.target||'').startsWith('p-');
   switch(e.type){
     case'COMBAT_START':break;
