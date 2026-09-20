@@ -636,3 +636,50 @@ body.tb-open{overflow:hidden}
   .tb-shell .tb-scorebar{grid-template-columns:repeat(2,1fr)}
   .tb-shell .tb-tomb-track{padding:6px 8px}
 }
+
+
+/* Live class resources — mirrors dungeon Combat Reborn vitals. */
+.tb-shell .tb-side-resource{
+  display:block;
+  width:100%;
+  height:4px;
+  margin-top:3px;
+  border-radius:3px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.07);
+  background:#10181b;
+}
+.tb-shell .tb-side-resource>i{
+  display:block;
+  height:100%;
+  width:100%;
+  transition:width .32s ease-out;
+  background:#8fa1a8;
+}
+.tb-shell .tb-side-resource.resource-mana>i{background:linear-gradient(90deg,#376fce,#6ca8ff)}
+.tb-shell .tb-side-resource.resource-rage>i{background:linear-gradient(90deg,#9c302d,#df5c4e)}
+.tb-shell .tb-side-resource.resource-energy>i{background:linear-gradient(90deg,#9f872a,#e2ca4f)}
+.tb-shell .tb-side-resource.resource-focus>i{background:linear-gradient(90deg,#9a6a27,#df9f44)}
+.tb-shell .tb-side-resource.resource-runic-power>i{background:linear-gradient(90deg,#258a9b,#62d8e4)}
+.tb-shell .tb-side-resource.resource-fury>i{background:linear-gradient(90deg,#7139a6,#b461df)}
+.tb-shell .tb-side-resource.resource-essence>i{background:linear-gradient(90deg,#237968,#4bc9aa)}
+.tb-shell .tb-side-resource.resource-power>i{background:linear-gradient(90deg,#667980,#9eafb5)}
+
+.tb-shell .cb2d-party-row>strong{
+  display:flex;
+  min-width:64px;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:2px;
+}
+.tb-shell .cb2d-party-row>strong>span{
+  color:#d2c28f;
+  font-size:.4rem;
+  font-weight:900;
+}
+.tb-shell .cb2d-party-row>strong>small{
+  color:#677671;
+  font-size:.3rem;
+  font-weight:800;
+  white-space:nowrap;
+}
