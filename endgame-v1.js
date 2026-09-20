@@ -185,7 +185,7 @@ function stageConfig(dungeonId,stage){
  return out
 }
 async function recordRun(dungeonId,metrics){
- const cfg=currentConfig(dungeonId);
+ const cfg=currentConfig(dungeonId),before={...progressFor(dungeonId)};
  if(!db)return null;
  const payload={
    p_dungeon_id:dungeonId,p_difficulty:cfg.difficulty,p_tier:cfg.tier,
@@ -202,7 +202,12 @@ async function recordRun(dungeonId,metrics){
  };
  const {data,error}=await db.rpc('record_dungeon_run_v2',payload);
  if(error){console.warn('Dungeon run was not recorded',error);return{error}}
- await refresh();return data
+ await refresh();
+ const after=progressFor(dungeonId),newUnlocks=[];
+ if(!before.heroic_unlocked&&after.heroic_unlocked)newUnlocks.push('Heroic difficulty unlocked');
+ if(!before.cellbound_unlocked&&after.cellbound_unlocked)newUnlocks.push('Cellbound+1 unlocked');
+ if(Number(after.highest_tier)>Number(before.highest_tier)&&Number(before.highest_tier)>=1)newUnlocks.push('Cellbound+'+Number(after.highest_tier)+' unlocked');
+ return{...(data||{}),newUnlocks}
 }
 function rarityTierFor(cfg){
  if(cfg.difficulty==='normal')return Math.random()<.72?1:2;
@@ -259,6 +264,7 @@ async function claimWeekly(){
  Game.addMaterial?.('cell-shards',quality==='epic'?40:quality==='rare'?28:quality==='uncommon'?18:10);
  Game.save?.();await Game.persistState?.();await refresh()
 }
+function achievementName(id){return ACHIEVEMENT_DEFS[id]?.name||String(id||'Achievement').replace(/-/g,' ')}
 function runSummaryLabel(dungeonId){
  const cfg=currentConfig(dungeonId);return cfg.difficulty==='cellbound'?'Cellbound+'+cfg.tier:cfg.diff.name
 }
@@ -270,7 +276,7 @@ async function init(){
  await refresh();
  window.CellboundEndgame={
    refresh,render,currentConfig,stageConfig,recordRun,rollPersonalLoot,shardReward,rollChase,
-   progressFor,difficultyUnlocked,choose,prepare,runSummaryLabel,getSelection:id=>({...selection[id]})
+   progressFor,difficultyUnlocked,choose,prepare,runSummaryLabel,achievementName,getSelection:id=>({...selection[id]})
  }
 }
 init();
