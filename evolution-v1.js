@@ -12,6 +12,7 @@ let worldEncounterId=null;
 let dockChannel='world',dockTimer=null,dockMinimized=true;
 let bankObserver=null,rosterObserver=null,professionObserver=null,worldObserver=null,reportsObserver=null;
 let bankEnhancing=false,bankEnhanceQueued=false;
+let activeDungeonDetail=null;
 
 const state=()=>Game?.getState?.();
 const ent=()=>Game?.getEntitlements?.()||{rosterCap:5};
@@ -320,7 +321,55 @@ function renderDungeonJournal(){
   if($('#journalPartyIlvl'))$('#journalPartyIlvl').textContent=`Party iLvl ${pi||'—'}`;
   if($('#journalEntryHint'))$('#journalEntryHint').textContent=!questOpen?'Complete Ashes on the East Road to discover the old forge entrance.':!completeParty()?'Build a complete 5-character party first.':!partyAvailable()?'A party member is unavailable due to Cell Shock.':pi<DUNGEON.requiredIlvl?`Party iLvl ${pi}. You need ${DUNGEON.requiredIlvl}.`:`Ready. Quest access secured · recommended iLvl ${DUNGEON.recommendedIlvl}.`;
   if($('#enterDungeonBtn'))$('#enterDungeonBtn').disabled=!ready;
+  renderDungeonBrowserStatus();
 }
+
+function renderDungeonBrowserStatus(){
+  const s=state();if(!s)return;
+  const ashenOpen=s?.progression?.ashenVaultUnlocked!==false,hollowOpen=Boolean(s?.questSystem?.flags?.hollowSanctumUnlocked),hollowDone=Boolean(s?.questSystem?.flags?.hollowFirstClear),pi=partyIlvl();
+  const ashenCard=$('#ashenDungeonCard'),ashenStatus=$('#ashenDungeonStatus'),ashenParty=$('#ashenDungeonParty'),status=$('#dungeonBrowserStatus');
+  if(ashenCard){
+    ashenCard.classList.toggle('locked',!ashenOpen);
+    ashenCard.classList.toggle('unlocked',ashenOpen);
+    ashenCard.classList.toggle('active',activeDungeonDetail==='ashen-vault');
+  }
+  if(ashenStatus)ashenStatus.textContent=ashenOpen?((Number(s.dungeonCompletions)||0)>0?'FARMABLE':'AVAILABLE'):'QUEST LOCKED';
+  if(ashenParty)ashenParty.textContent='Party iLvl '+(pi||'—');
+  if(status)status.textContent=(ashenOpen?1:0)+(hollowOpen?1:0)+' / 2 unlocked';
+  const hollowCard=$('[data-dungeon-card="hollow-sanctum"]');if(hollowCard)hollowCard.classList.toggle('active',activeDungeonDetail==='hollow-sanctum');
+  const hollowState=$('#hollowDungeonStatus');if(hollowState)hollowState.textContent=hollowOpen?(hollowDone?'FARMABLE':'NEWLY UNLOCKED'):'QUEST LOCKED';
+}
+
+function openDungeonDetail(id,options={}){
+  const target=String(id||'');
+  if(!['ashen-vault','hollow-sanctum'].includes(target))return;
+  if(target==='hollow-sanctum')window.CellboundHollowSanctum?.renderCard?.();
+  activeDungeonDetail=target;
+  const ashen=$('#ashenDungeonDetail'),hollow=$('#hollowSanctumMount');
+  if(ashen)ashen.hidden=target!=='ashen-vault';
+  if(hollow)hollow.hidden=target!=='hollow-sanctum';
+  $('[data-dungeon-card]').forEach(card=>card.classList.toggle('active',card.dataset.dungeonCard===target));
+  renderDungeonBrowserStatus();
+  const panel=target==='ashen-vault'?ashen:hollow;
+  if(options.scroll!==false&&panel)setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'start'}),20)
+}
+function closeDungeonDetails(){
+  activeDungeonDetail=null;
+  const ashen=$('#ashenDungeonDetail'),hollow=$('#hollowSanctumMount');
+  if(ashen)ashen.hidden=true;if(hollow)hollow.hidden=true;
+  $('[data-dungeon-card]').forEach(card=>card.classList.remove('active'));
+  renderDungeonBrowserStatus();
+  $('#dungeonBrowser')?.scrollIntoView({behavior:'smooth',block:'start'})
+}
+function bindDungeonBrowser(){
+  document.addEventListener('click',e=>{
+    const more=e.target.closest?.('[data-dungeon-more]');
+    if(more){e.preventDefault();openDungeonDetail(more.dataset.dungeonMore);return}
+    const close=e.target.closest?.('[data-dungeon-close]');
+    if(close){e.preventDefault();closeDungeonDetails()}
+  });
+}
+
 function expeditionCondition(id){return expedition?.condition?.[id]??100}
 function commandLabel(id){return ({focus:['FOCUS PRIORITY','Burn the most dangerous target first.'],interrupt:['INTERRUPT','Hold control for the key cast.'],defend:['DEFENSIVE STANCE','Trade damage for stability.'],aggressive:['COMMIT DAMAGE','Push through the danger window.']})[id]}
 function dungeonConsumable(){
@@ -557,7 +606,7 @@ function queueEnhance(){
 function bindGlobal(){
   window.addEventListener('cellbound:view-changed',e=>{
     const view=e.detail?.view;
-    if(view==='content')setTimeout(renderDungeonJournal,0);
+    if(view==='content')setTimeout(()=>{renderDungeonJournal();window.CellboundHollowSanctum?.renderCard?.();renderDungeonBrowserStatus()},0);
     if(view==='roster')setTimeout(enhanceRoster,0);
     if(view==='bank')setTimeout(enhanceBank,0);
     if(view==='professions')setTimeout(enhanceProfessions,0);
@@ -570,10 +619,11 @@ async function init(){
   Game=window.CellboundGame;
   if(!Game?.ready){setTimeout(init,80);return}
   G=window.CellboundGear;P=window.CellboundProfessions;db=Game.getSupabase();user=Game.getUser();ensureState();
-  bindRoster();bindBank();bindProfessions();bindWorldEnhancement();bindReportEnhancement();bindGlobal();interceptWorldActions();dock();queueEnhance();enhanceWorldCards();
+  bindRoster();bindBank();bindProfessions();bindWorldEnhancement();bindReportEnhancement();bindGlobal();bindDungeonBrowser();interceptWorldActions();dock();queueEnhance();enhanceWorldCards();
   clearInterval(dockTimer);dockTimer=setInterval(()=>{if(!dockMinimized)loadDockChat()},8000);
   window.addEventListener('beforeunload',()=>clearInterval(dockTimer),{once:true});
   window.CellboundEvolution={renderDungeonJournal,startExpedition,enhanceRoster,enhanceBank,openWorldEncounter};
+  window.CellboundDungeonBrowser={open:openDungeonDetail,close:closeDungeonDetails,refresh:renderDungeonBrowserStatus};
 }
 init();
 })();
