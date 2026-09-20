@@ -34,6 +34,6 @@ for(const file of files){
   fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,contents)
 }
 for(const file of assets){const src=path.join(__dirname,file),dest=path.join(out,file);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest)}
-for(const htmlFile of ['index.html','guild.html']){const html=fs.readFileSync(path.join(out,htmlFile),'utf8');const refs=[...html.matchAll(/(?:src|href)=\"\.\\/([^\"?]+\\.(?:js|css))(?:\\?[^\"]*)?\"/g)].map(m=>m[1]);for(const ref of refs){if(!fs.existsSync(path.join(out,ref)))throw new Error(`Built ${htmlFile} references missing asset: ${ref}`)}}
+for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing required Update 2 production asset: ${file}`)}
 console.log('Cellbound build complete.');
 console.log('Build verification passed: scripts parse and required UI hooks/assets are present.');
