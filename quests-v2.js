@@ -564,11 +564,10 @@ function qResourceVisual(e){
   if(!e?.source||!String(e.source).startsWith('p-'))return;
   const u=qUnit(e.source);if(!u)return;
   let bar=u.querySelector('.cbr-resource');
-  if(!bar){bar=document.createElement('small');bar.className='cbr-resource';bar.innerHTML='<i></i><span></span>';u.appendChild(bar)}
-  const name=String(e.payload?.resource||'Power'),max=Math.max(1,Number(e.payload?.max)||100),value=Math.max(0,Math.min(max,Number(e.payload?.value)||0));
-  [...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));
-  bar.classList.add('resource-'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-'));
-  const fill=bar.querySelector('i'),label=bar.querySelector('span');if(fill)fill.style.width=(value/max*100)+'%';if(label)label.textContent=name+' '+Math.round(value)+'/'+Math.round(max);bar.title=name+' '+Math.round(value)+' / '+Math.round(max)
+  if(!bar){bar=document.createElement('small');bar.className='cbr-resource';bar.innerHTML='<i></i>';u.appendChild(bar)}
+  const name=String(e.payload?.resource||'Power'),max=Math.max(1,Number(e.payload?.max)||100),value=Math.max(0,Math.min(max,Number(e.payload?.value)||0)),key='resource-'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+ if(bar.dataset.resource!==name){[...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));bar.classList.add(key);bar.dataset.resource=name;bar.title=name}
+ const fill=bar.querySelector('i');if(fill)fill.style.width=(value/max*100)+'%'
 }
 function qCastStart(e){
   const n=$('#q2dCastName'),t=$('#q2dCastTime'),f=$('#q2dCastFill'),duration=Math.max(0,Number(e.payload?.duration)||0);
