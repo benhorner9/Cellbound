@@ -174,6 +174,21 @@ function classMobility(c){
  if(c.class==='Death Knight')return .86;
  return 1;
 }
+
+function equippedUniqueEffects(c){
+ const out=[];
+ Object.values(c?.equipment||{}).forEach(item=>{
+  const effect=item?.uniqueEffect;
+  if(effect?.id&&!out.some(x=>x.id===effect.id))out.push(copy(effect))
+ });
+ return out
+}
+function hasUnique(u,id){return Array.isArray(u?.uniqueEffects)&&u.uniqueEffects.some(x=>x.id===id)}
+function triggerUnique(ctx,u,id,name,payload={}){
+ if(!u)return;
+ emit(ctx,'UNIQUE_EFFECT_TRIGGER',{source:u.id,target:payload.target||u.id,ability:name,result:id,payload:{effectId:id,...payload}})
+}
+
 function abilityPool(c,role){
  const pool=(ABILITIES[c.class]||ROLE_FALLBACKS[role]||ROLE_FALLBACKS.dps).filter(a=>!a.role||a.role===role);
  return pool.length?pool:ROLE_FALLBACKS[role]||ROLE_FALLBACKS.dps;
@@ -192,8 +207,8 @@ function normalisePlayer(c,i){
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:{x:tank?42:role==='healer'?18:28,y:26+i*12},facing:0,
   target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:{},resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
-  abilities:copy(abilityPool(c,role)),power,level,itemLevel,baseStats:{baseHealth,healthScale,outputScale},talents:talentRanks(c),knowledge:copy(c.knowledge||{}),
-  defensiveUntil:0,nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
+  abilities:copy(abilityPool(c,role)),power,level,itemLevel,baseStats:{baseHealth,healthScale,outputScale},talents:talentRanks(c),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),
+  defensiveUntil:0,frenzyUntil:0,uniqueUsed:{},nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
 }
 function normaliseEnemies(encounter){
@@ -537,7 +552,8 @@ function rollDamage(ctx,u,a,target){
  const power=1+Math.min(.35,u.power*.012),levelScale=u.baseStats?.outputScale||levelOutputScale(u.level),match=levelMatchMultiplier(u.level,target?.level||1);
  const variance=.9+ctx.rng()*.2;
  const revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1;
- let amount=(Number(a.damage)||12)*talent*power*levelScale*match*variance*revivePenalty;
+ const frenzy=u.frenzyUntil>ctx.time?1.15:1;
+ let amount=(Number(a.damage)||12)*talent*power*levelScale*match*variance*revivePenalty*frenzy;
  if(ctx.rng()<.12){amount*=1.5;return{amount,crit:true}}
  return{amount,crit:false};
 }
@@ -549,7 +565,16 @@ function mitigation(target,damageType='physical'){
 function dealDamage(ctx,source,target,amount,ability,opts={}){
  if(!source?.alive||!target?.alive)return 0;
  let final=Math.max(0,amount);
- if(target.role!=='enemy')final*=mitigation(target,opts.damageType||'physical');
+ if(target.role!=='enemy'){
+  const projected=Math.max(1,Math.round(final*mitigation(target,opts.damageType||'physical')));
+  const crossesLastStand=healthRatio(target)>.20&&((target.health-projected)/Math.max(1,target.maxHealth))<.20;
+  if(crossesLastStand&&hasUnique(target,'guardian-last-stand')&&!target.uniqueUsed?.['guardian-last-stand']){
+   target.uniqueUsed['guardian-last-stand']=true;target.defensiveUntil=Math.max(Number(target.defensiveUntil)||0,6000);
+   applyStatus(ctx,target,target,{id:'guardian-last-stand',name:"Guardian's Last Stand",kind:'buff',duration:6000,effect:{damageReduction:.30}});
+   triggerUnique(ctx,target,'guardian-last-stand',"Guardian's Last Stand",{target:target.id,duration:6000});
+  }
+  final*=mitigation(target,opts.damageType||'physical')
+ }
  final=Math.max(1,Math.round(final));
  const before=target.health;target.health=clamp(target.health-final,0,target.maxHealth);
  const dealt=before-target.health;
@@ -749,6 +774,19 @@ function finishAbility(ctx,u,a,target){
  }else if(a.kind==='damage'){
   const rolled=rollDamage(ctx,u,a,target);
   const dealt=dealDamage(ctx,u,target,rolled.amount,a.name,{crit:rolled.crit,ability:a,damageType:u.class==='Mage'||u.class==='Evoker'?'magic':'physical'});
+  if(dealt>0&&rolled.crit&&hasUnique(u,'heart-troll-king')&&ctx.rng()<.28){
+   u.frenzyUntil=Math.max(Number(u.frenzyUntil)||0,ctx.time+6000);
+   applyStatus(ctx,u,u,{id:'blood-frenzy',name:'Blood Frenzy',kind:'buff',duration:6000,effect:{damageMultiplier:.15}});
+   triggerUnique(ctx,u,'heart-troll-king','Blood Frenzy',{target:u.id,duration:6000,trigger:'critical'})
+  }
+  if(dealt>0&&u.class==='Mage'&&hasUnique(u,'embercore-staff')&&ctx.rng()<.32){
+   const splash=livingEnemies(ctx).filter(e=>e.alive&&e.id!==target.id).sort((a,b)=>dist(target.position,a.position)-dist(target.position,b.position))[0];
+   if(splash&&dist(target.position,splash.position)<=18){
+    const splashDamage=Math.max(1,Math.round(dealt*.38));
+    triggerUnique(ctx,u,'embercore-staff','Living Ember',{target:splash.id,trigger:'spell-hit'});
+    dealDamage(ctx,u,splash,splashDamage,'Living Ember',{ability:a,damageType:'magic'})
+   }
+  }
   if(dealt>0&&target.alive&&u.role==='dps'&&shouldMistake(ctx,u,'threat',12000)){
    recordMistake(ctx,u,'threat','overcommitted before threat was secure',{target:target.id,ability:a.name});
    addThreat(ctx,target,u,dealt*(1.8+ctx.rng()*.8),'overcommit');
@@ -764,6 +802,7 @@ function tickCooldowns(ctx){
  ctx.players.forEach(u=>{
   Object.keys(u.cooldowns).forEach(k=>u.cooldowns[k]=Math.max(0,u.cooldowns[k]-TICK));
   if(u.defensiveUntil>0)u.defensiveUntil=Math.max(0,u.defensiveUntil-TICK);
+  if(u.frenzyUntil>0&&u.frenzyUntil<=ctx.time)u.frenzyUntil=0;
  });
  ctx.enemies.forEach(e=>Object.keys(e.cooldowns).forEach(k=>e.cooldowns[k]=Math.max(0,e.cooldowns[k]-TICK)));
 }
@@ -881,6 +920,11 @@ function tryInterrupt(ctx,e,mechanic,castToken){
   }
   u.cooldowns[a.id]=a.cd||15000;cast.interrupted=true;ctx.activeEnemyCast=null;st.interrupts++;ctx.stats.interrupts.success++;
   emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'success',payload:{interruptedAbility:mechanic.name,token:castToken}});
+  if(hasUnique(u,'frostbound-sigil')){
+   u.defensiveUntil=Math.max(Number(u.defensiveUntil)||0,3500);
+   applyStatus(ctx,u,u,{id:'frostbound-sigil-shield',name:'Frozen Response',kind:'buff',duration:3500,effect:{damageReduction:.25}});
+   triggerUnique(ctx,u,'frostbound-sigil','Frozen Response',{target:u.id,duration:3500,trigger:'interrupt'})
+  }
  },'interrupt');
  // Low knowledge / pressure can make a second player burn their interrupt a fraction later.
  const backup=candidates[1];
@@ -1075,7 +1119,7 @@ function debugSnapshot(result){
  if(!result)return null;
  return{
   version:result.version,seed:result.seed,outcome:result.outcome,durationMs:result.durationMs,
-  finalPlayers:(result.finalState?.players||[]).map(p=>({id:p.id,name:p.name,target:p.target,hp:p.health,resource:p.resource,cooldowns:p.cooldowns,position:p.position,statuses:p.statuses,currentCast:p.currentCast})),
+  finalPlayers:(result.finalState?.players||[]).map(p=>({id:p.id,name:p.name,target:p.target,hp:p.health,resource:p.resource,cooldowns:p.cooldowns,uniqueEffects:p.uniqueEffects,uniqueUsed:p.uniqueUsed,position:p.position,statuses:p.statuses,currentCast:p.currentCast})),
   finalEnemies:(result.finalState?.enemies||[]).map(e=>({id:e.id,name:e.name,target:e.target,hp:e.health,threat:e.threat,position:e.position,statuses:e.statuses,currentCast:e.currentCast})),
   events:result.events?.length||0,summary:copy(result.summary||{})
  };
