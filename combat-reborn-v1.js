@@ -634,9 +634,10 @@ function reviveUnit(ctx,healer,target,ability,{healthPct=35,resourcePct=20,comba
 function onEnemyDeathAffixes(ctx,target){
  if(!target||target.role!=='enemy')return;
  if(hasAffix(ctx,'volatile-cells')&&target.classification==='elite'){
-  const source={...target,alive:true};
+  const source={...target,alive:true};ctx.pendingHazards=(Number(ctx.pendingHazards)||0)+1;
   emit(ctx,'AFFIX_TRIGGER',{source:target.id,ability:'Volatile Cells',result:'armed',position:copy(target.position),payload:{affix:'volatile-cells',delay:850}});
   schedule(ctx,ctx.time+850,()=>{
+   ctx.pendingHazards=Math.max(0,(Number(ctx.pendingHazards)||0)-1);
    emit(ctx,'AFFIX_TRIGGER',{source:target.id,ability:'Volatile Cells',result:'explode',position:copy(target.position),payload:{affix:'volatile-cells'}});
    livingPlayers(ctx).forEach(p=>dealDamage(ctx,source,p,18*enemyPressure(ctx,target,p),'Volatile Cells',{damageType:'magic',avoidable:true}))
   },'affix-volatile')
@@ -1072,7 +1073,7 @@ function simulate(options={}){
   movementDiscipline:options.tactics?.movementDiscipline||'balanced'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:0,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
+ const ctx={time:0,rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:0,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
  emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
  players.forEach(u=>emitResourceState(ctx,u,'initial'));
  const tank=players.find(p=>p.role==='tank')||players[0];
@@ -1082,7 +1083,7 @@ function simulate(options={}){
  let outcome='defeat';
  while(ctx.time<=MAX_COMBAT_MS){
   processQueue(ctx);
-  if(!livingEnemies(ctx).length&&ctx.pendingResurrections<=0){outcome='victory';break}
+  if(!livingEnemies(ctx).length&&ctx.pendingResurrections<=0&&ctx.pendingHazards<=0){outcome='victory';break}
   if(!livingPlayers(ctx).length){outcome='defeat';break}
   tickCooldowns(ctx);passiveResources(ctx);
   players.forEach(u=>playerAI(ctx,u));
@@ -1295,6 +1296,22 @@ function runSelfTests(){
    return !!event&&rez.summary.battleResurrections===1&&Number(priest?.cooldowns?.['soul-recall'])>0
   });
  }
+ {
+  const sigilParty=[{id:'sigil',name:'Sigil Tank',class:'Warrior',spec:'Protection',power:24,level:8,_combatItemLevel:30,equipment:{Relic:{uniqueEffect:{id:'frostbound-sigil',name:'Frozen Response'}}}}];
+  const sigil=simulate({party:sigilParty,encounter:{id:'sigil-test',kind:'boss',level:8,enemies:['Caster'],enemyHealth:900,mechanics:[['Dangerous Cast','interrupt',2400]]},tactics:{interruptPriority:'high'},seed:'sigil-effect'});
+  test('Unique Frostbound Sigil',()=>sigil.events.some(e=>e.type==='UNIQUE_EFFECT_TRIGGER'&&e.result==='frostbound-sigil'));
+
+  const standParty=[{id:'stand',name:'Last Stand Tank',class:'Warrior',spec:'Protection',power:8,level:2,_combatItemLevel:8,equipment:{Trinket1:{uniqueEffect:{id:'guardian-last-stand',name:"Guardian's Last Stand"}}}}];
+  const stand=simulate({party:standParty,encounter:{id:'stand-test',kind:'boss',level:9,enemies:['Crusher'],enemyHealth:5000,scaling:{enemyDamage:1.35},mechanics:[]},seed:'last-stand-effect'});
+  test("Unique Guardian's Last Stand",()=>stand.events.some(e=>e.type==='UNIQUE_EFFECT_TRIGGER'&&e.result==='guardian-last-stand'));
+
+  const scaled=simulate({party,encounter:{...base,enemyHealth:420,scaling:{enemyHealth:1.75,enemyDamage:1.3}},seed:'difficulty-scaling'});
+  test('Difficulty Scaling',()=>scaled.finalState.enemies[0].maxHealth>700);
+
+  const volatile=simulate({party,encounter:{id:'volatile-test',kind:'event',level:10,enemies:[{name:'Volatile Elite',classification:'elite'}],enemyHealth:180,affixes:['volatile-cells']},seed:'volatile-affix'});
+  test('Volatile Cells Affix',()=>volatile.events.some(e=>e.type==='AFFIX_TRIGGER'&&e.payload?.affix==='volatile-cells'&&e.result==='explode'));
+ }
+
 
 
 
