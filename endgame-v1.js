@@ -127,6 +127,13 @@ function collectionMarkup(){
  return '<section class="eg-collections panel"><div class="panel-head"><div><small>COLLECTION HOOKS</small><h3>Rare Finds</h3></div><b>'+list.length+' FOUND</b></div><div class="eg-collection-list">'+(list.length?list.slice(-8).reverse().map(x=>'<article><i>'+((x.kind==='mount'?'♞':x.kind==='pet'?'◆':x.kind==='cell'?'◈':'◇'))+'</i><span><b>'+esc(x.name)+'</b><small>'+esc(String(x.rarity||'Rare').toUpperCase())+' · '+esc(x.kind||'collection')+'</small><em>'+esc(x.source||'Endgame')+'</em></span></article>').join(''):'<p class="eg-empty">Rare mounts, pets and Cells can drop from endgame dungeons. Power progression never depends on these drops.</p>')+'</div></section>'
 }
 
+
+function milestoneMarkup(){
+ const party=Game?.getPartyCharacters?.()||[],levels=party.map(c=>Math.max(1,Number(c.level)||1)),avg=levels.length?Math.round(levels.reduce((a,b)=>a+b,0)/levels.length):1;
+ const milestones=D.LEVEL_MILESTONES||[],next=milestones.find(m=>m.level>avg)||milestones[milestones.length-1];
+ return '<section class="eg-milestones panel"><div class="panel-head"><div><small>LEVEL MILESTONES</small><h3>Party development</h3></div><b>AVG LV '+avg+'</b></div><div class="eg-milestone-track">'+milestones.map(m=>'<article class="'+(avg>=m.level?'done':m===next?'next':'future')+'"><i>LV '+m.level+'</i><span><b>'+esc(m.name)+'</b><small>'+esc(m.description)+'</small></span></article>').join('')+'</div>'+(next?'<p>Next milestone: <b>Level '+next.level+' · '+esc(next.name)+'</b></p>':'')+'</section>'
+}
+
 function weeklyMarkup(){
  const w=server.weekly||{},points=Number(w.progress_points)||0,highest=Number(w.highest_tier)||0,pct=clamp(points/60*100,0,100),claimed=Boolean(w.reward_claimed);
  return'<article class="eg-weekly panel"><div><small>WEEKLY ENDGAME</small><h3>Weekly Vault</h3><p>Dungeon clears build one weekly reward. Missing a day does not matter.</p></div><div class="eg-weekly-progress"><span><b>'+points+' / 60 points</b><em>Highest Cellbound+ '+highest+'</em></span><div><i style="width:'+pct+'%"></i></div><button data-eg-weekly '+(points>=60&&!claimed?'':'disabled')+'>'+(claimed?'CLAIMED':points>=60?'CLAIM WEEKLY REWARD':'KEEP PLAYING')+'</button></div></article>'
@@ -143,7 +150,7 @@ function render(){
  const rotation=server.rotation||{},minor=D.AFFIXES[rotation.minor_affix],major=D.AFFIXES[rotation.major_affix];
  root.innerHTML=
  '<section class="eg-hero"><div><small>UPDATE 2 · ENDGAME HUB</small><h2>Dungeon mastery now has somewhere to go.</h2><p>Normal teaches the dungeon. Heroic changes it. Cellbound+ turns it into a scalable endgame challenge with weekly modifiers, persistent scores and targeted rewards.</p></div><div class="eg-season"><span>SEASON</span><b>'+esc(server.season?.name||D.SEASON.name)+'</b><small>'+esc(minor?.name||'No minor affix')+' · '+esc(major?.name||'No major affix')+'</small></div></section>'+
- weeklyMarkup()+achievementMarkup()+collectionMarkup()+
+ weeklyMarkup()+milestoneMarkup()+achievementMarkup()+collectionMarkup()+
  '<div class="eg-content">'+dungeonCard('ashen-vault')+dungeonCard('hollow-sanctum')+'</div>'+
  '<div class="eg-leaderboards">'+leaderboardMarkup('ashen-vault')+leaderboardMarkup('hollow-sanctum')+'</div>';
  bind()
