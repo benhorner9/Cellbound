@@ -4,7 +4,7 @@
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-const SPAWN_MS=30000,DAILY_ATTEMPTS=3;
+const SPAWN_MS=20000,DAILY_ATTEMPTS=3;
 
 let Game=null,run=null,playToken=0,playSpeed=1,clockTimer=null,playStartedAt=0,playBaseMs=0;
 
@@ -106,7 +106,7 @@ function renderCard(){
  const e=eventState(),gate=partyReady(),left=attemptsLeft(),best=e.bestKills||0;
  root.innerHTML='<article class="tb-world-card">'+
   '<div class="tb-world-art"><div class="tb-world-ring">'+BOSSES.map((b,i)=>'<i style="--i:'+i+'">'+esc(b.rune)+'</i>').join('')+'</div><span>ANCIENT BURIAL GROUND</span><b>THE TWELVE BELOW</b></div>'+
-  '<div class="tb-world-copy"><div class="tb-world-kicker"><span>PRIVATE WORLD EVENT</span><em>5-CHARACTER GUILD PARTY</em></div><h3>The Twelve Below</h3><p>One tomb opens immediately. Every 30 seconds another vice rises. Kill quickly or the battlefield fills with bosses.</p>'+
+  '<div class="tb-world-copy"><div class="tb-world-kicker"><span>PRIVATE WORLD EVENT</span><em>5-CHARACTER GUILD PARTY</em></div><h3>The Twelve Below</h3><p>One tomb opens immediately. Every 20 seconds another vice rises. Kill quickly or the battlefield fills with bosses.</p>'+
   '<div class="tb-world-stats"><span><small>ATTEMPTS TODAY</small><b>'+left+' / '+DAILY_ATTEMPTS+'</b></span><span><small>PERSONAL BEST</small><b>'+best+' / 12</b></span><span><small>CHASE REWARD</small><b>RELICS</b></span></div>'+
   '<div class="tb-world-actions"><button data-tb-open '+(!gate.ok||left<=0?'disabled':'')+'>ENTER THE SEPULCHRE →</button><small>'+(left<=0?'Daily attempts exhausted.':esc(gate.reason))+'</small></div></div></article>';
  root.querySelector('[data-tb-open]')?.addEventListener('click',openBriefing)
@@ -126,7 +126,7 @@ function openBriefing(){
  const gate=partyReady(),left=attemptsLeft(),root=ensureBackdrop(),chars=party();
  root.hidden=false;document.body.classList.add('tb-open');
  root.innerHTML='<section class="cb2d-shell cb2d-brief tb-brief"><header class="cb2d-head"><div><small>THE SEPULCHRE OF TWELVE · PRIVATE WORLD EVENT</small><h2>The Twelve Below</h2></div><button data-tb-close>×</button></header>'+
- '<div class="tb-brief-grid"><main><p class="cb2d-intro">Your guild enters alone. One tomb opens now; another opens every 30 seconds. Any boss still alive remains in the arena when the next one rises.</p>'+
+ '<div class="tb-brief-grid"><main><p class="cb2d-intro">Your guild enters alone. One tomb opens now; another opens every 20 seconds. Any boss still alive remains in the arena when the next one rises.</p>'+
  '<div class="tb-tomb-preview">'+BOSSES.map((b,i)=>'<span><i>'+esc(b.rune)+'</i><b>'+(i+1)+'. '+esc(b.vice)+'</b><small>'+esc(b.name)+'</small></span>').join('')+'</div>'+
  '<div class="tb-relic-intro"><small>CHASE SYSTEM · RELICS</small><h3>Specialise beyond Item Level.</h3><p>Relics occupy the existing Relic slot and push a character deeper into a role: threat, survival, healing throughput, burst or tempo.</p></div></main>'+
  '<aside><div class="tb-attempt-box"><small>DAILY ATTEMPTS</small><b>'+left+' / '+DAILY_ATTEMPTS+'</b><span>Consumed when the burial ground is entered.</span></div>'+
@@ -295,7 +295,7 @@ function tbFloat(target,text,kind='damage'){
 function renderLive(){
  const root=ensureBackdrop();root.hidden=false;
  root.innerHTML='<section class="cb2d-shell tb-shell"><header class="cb2d-head"><div><small>THE SEPULCHRE OF TWELVE · PRIVATE WORLD EVENT</small><h2>The Twelve Below</h2></div><div class="cb2d-live"><i></i>LIVE <button data-tb-speed>1×</button></div></header>'+
- '<div class="tb-scorebar"><span><small>DEFEATED</small><b id="tbKilled">0 / 12</b></span><span><small>NEXT TOMB</small><b id="tbCountdown">00:30</b></span><span><small>ATTEMPTS LEFT</small><b>'+attemptsLeft()+' / '+DAILY_ATTEMPTS+'</b></span><span><small>PERSONAL BEST</small><b>'+eventState().bestKills+' / 12</b></span></div>'+
+ '<div class="tb-scorebar"><span><small>DEFEATED</small><b id="tbKilled">0 / 12</b></span><span><small>NEXT TOMB</small><b id="tbCountdown">00:20</b></span><span><small>ATTEMPTS LEFT</small><b>'+attemptsLeft()+' / '+DAILY_ATTEMPTS+'</b></span><span><small>PERSONAL BEST</small><b>'+eventState().bestKills+' / 12</b></span></div>'+
  '<div class="tb-tomb-track">'+tombMarkup()+'</div>'+
  '<div class="cb2d-layout tb-layout"><main><div class="cb2d-arena tb-arena" id="tbArena"><div class="cb2d-floor tb-ground"></div><div class="tb-burial-architecture"><i></i><i></i><i></i><i></i></div><div id="tbTelegraphs"></div><div id="tbBossUnits"></div><div id="tbPartyUnits">'+partyUnitMarkup()+'</div><div id="tbFx"></div><div class="cb2d-room-tag tb-room-tag"><b>Sepulchre Courtyard</b><small>Twelve sealed tombs surround the ancient fighting ground.</small></div><div class="cb2d-caption"><span>PRIVATE SURVIVAL EVENT</span><b id="tbStatus">The first seal breaks…</b></div></div>'+
  '<div class="cb2d-controls tb-controls"><button><b>FOCUS TARGET</b><small>Party burns the active priority.</small></button><button><b>INTERRUPTS</b><small>Critical casts are covered.</small></button><button><b>DEFENSIVES</b><small>Tank stabilises incoming pressure.</small></button><button><b>BOSS CONTROL</b><small>Tank holds active vices together.</small></button><button><b>SURVIVE</b><small>Keep the five alive until the next tomb.</small></button></div>'+
@@ -304,7 +304,7 @@ function renderLive(){
  '<div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="tbDamageTotal">0 total</span></div><div id="tbDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="tbHealingTotal">0 total</span></div><div id="tbHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT · PRIMARY BOSS</small><span id="tbThreatTarget">—</span></div><div id="tbThreatMeter" class="cb2d-meter-list"></div></section></div>'+
  '<div class="cb2d-actions"><small>PARTY ACTIONS</small><div><i class="cb2d-dot tank"></i><b>Tank</b><em>Controlling active bosses</em></div><div><i class="cb2d-dot healer"></i><b>Healer</b><em>Maintaining the five</em></div><div><i class="cb2d-dot dps"></i><b>Damage</b><em>Burning the priority vice</em></div></div>'+
  '<div class="cb2d-party"><small>ACTIVE FIVE · PRIVATE INSTANCE</small><div id="tbPartyRows">'+party().map(c=>{const res=tbInitialResource(c),rk=tbResourceClass(res.name),rpct=clamp(res.value/res.max*100,0,100);return'<div class="cb2d-party-row"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+String(roleOf(c)).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-tb-side-hp="p-'+esc(c.id)+'" style="width:100%"></i></em><em class="tb-side-resource '+rk+'" data-tb-side-resource="p-'+esc(c.id)+'" title="'+esc(res.name)+' '+Math.round(res.value)+' / '+Math.round(res.max)+'"><i style="width:'+rpct+'%"></i></em></span><strong><span data-tb-side-text="p-'+esc(c.id)+'">100 HP</span><small data-tb-side-resource-label="p-'+esc(c.id)+'">'+esc(res.name)+' '+Math.round(res.value)+'</small></strong></div>'}).join('')+'</div></div>'+
- '<div class="tb-live-rule"><small>ESCALATION RULE</small><b>Another tomb opens every 30 seconds.</b><span>Surviving bosses remain active.</span></div></aside></div></section>';
+ '<div class="tb-live-rule"><small>ESCALATION RULE</small><b>Another tomb opens every 20 seconds.</b><span>Surviving bosses remain active.</span></div></aside></div></section>';
  root.querySelector('[data-tb-speed]').onclick=e=>{playSpeed=playSpeed===1?2:playSpeed===2?4:1;e.currentTarget.textContent=playSpeed+'×';resetClockAnchor()}
  requestAnimationFrame(()=>{party().forEach((ch,i)=>{const p=tbPartyFormation(ch,i),el=$('[data-tb-unit="p-'+ch.id+'"]');tbSetPos(el,p.x,p.y,0);const res=run.resources['p-'+ch.id]||tbInitialResource(ch);tbSetResource('p-'+ch.id,res.name,res.value,res.max)});renderMeters()})
 }
