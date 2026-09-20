@@ -688,6 +688,10 @@ function finishAbility(ctx,u,a,target){
  }else if(a.kind==='damage'){
   const rolled=rollDamage(ctx,u,a,target);
   const dealt=dealDamage(ctx,u,target,rolled.amount,a.name,{crit:rolled.crit,ability:a,damageType:u.class==='Mage'||u.class==='Evoker'?'magic':'physical'});
+  if(dealt>0&&target.alive&&u.role==='dps'&&shouldMistake(ctx,u,'threat',12000)){
+   recordMistake(ctx,u,'threat','overcommitted before threat was secure',{target:target.id,ability:a.name});
+   addThreat(ctx,target,u,dealt*(1.8+ctx.rng()*.8),'overcommit');
+  }
   gainResource(ctx,u,a);
   if(a.selfHeal&&u.alive)doHeal(ctx,u,u,a.selfHeal,a.name);
   if(a.cleave&&dealt>0){
@@ -716,11 +720,28 @@ function playerAI(ctx,u){
   const loose=tankNeedsTaunt(ctx,u);
   if(loose){
    const taunt=u.abilities.find(a=>a.kind==='taunt'&&cooldownReady(u,a));
-   if(taunt&&inRange(u,loose,taunt.range||30)&&hasLineOfSight(ctx,u,loose)){executeTaunt(ctx,u,loose,taunt);return}
-  }
-  if(u.health/u.maxHealth<.48&&u.defensiveUntil<=0){
-   u.defensiveUntil=5000;applyStatus(ctx,u,u,{id:'major-defensive',name:'Major Defensive',kind:'buff',duration:5000,effect:{damageReduction:.25}});
-   emit(ctx,'DEFENSIVE_ACTIVATED',{source:u.id,target:u.id,ability:'Major Defensive',result:'active',payload:{duration:5000}});
+   if(taunt&&inRange(u,loose,taunt.range||30)&&hasLineOfSight(ctx,u,loose)){
+    if(!u.pendingTaunt||u.pendingTaunt.target!==loose.id){
+     let reaction=executionReaction(ctx,u,'tank');
+     if(shouldMistake(ctx,u,'tank',5500)){
+      reaction+=Math.round(300+ctx.rng()*650);
+      recordMistake(ctx,u,'tank','was late reacting to lost threat',{target:loose.id,ability:taunt.name,reactionMs:reaction});
+     }
+     u.pendingTaunt={target:loose.id,readyAt:ctx.time+reaction}
+    }
+    if(ctx.time>=u.pendingTaunt.readyAt){u.pendingTaunt=null;executeTaunt(ctx,u,loose,taunt);return}
+   }
+  }else u.pendingTaunt=null;
+
+  const defensiveThreshold=ctx.tactics.defensiveUsage==='aggressive'?.62:ctx.tactics.defensiveUsage==='conservative'?.38:.50;
+  if(u.health/u.maxHealth<defensiveThreshold&&u.defensiveUntil<=0){
+   if(shouldMistake(ctx,u,'defensive',7000)){
+    recordMistake(ctx,u,'defensive','held a defensive too long',{target:u.id,ability:'Major Defensive'});
+    u.nextDecision=Math.max(u.nextDecision,ctx.time+650+Math.round(ctx.rng()*450));
+   }else{
+    u.defensiveUntil=5000;applyStatus(ctx,u,u,{id:'major-defensive',name:'Major Defensive',kind:'buff',duration:5000,effect:{damageReduction:.25}});
+    emit(ctx,'DEFENSIVE_ACTIVATED',{source:u.id,target:u.id,ability:'Major Defensive',result:'active',payload:{duration:5000}});
+   }
   }
  }
  const pick=chooseAbility(ctx,u,target);
@@ -928,7 +949,7 @@ function buildSummary(ctx,outcome){
   outcome,durationMs:Math.round(ctx.time),durationSeconds:Math.round(duration*10)/10,
   deaths:ctx.stats.deaths,totalDamage:players.reduce((n,p)=>n+p.damage,0),
   totalHealing:players.reduce((n,p)=>n+p.healing,0),interrupts:copy(ctx.stats.interrupts),
-  mechanics:copy(ctx.stats.mechanics),players
+  mechanics:copy(ctx.stats.mechanics),mistakes:copy(ctx.stats.mistakes),battleResurrections:ctx.stats.battleResurrections,players
  };
 }
 function simulate(options={}){
