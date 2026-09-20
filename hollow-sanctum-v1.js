@@ -23,6 +23,14 @@ const role=c=>Game?.classes?.[c.class]?.specs?.[c.spec]?.role||'dps';
 const classKey=c=>'class-'+String(c?.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const ilvl=()=>Number(Game?.partyItemLevel?.())||0;
 const partyLevel=()=>{const p=party();return p.length?Math.round(p.reduce((n,c)=>n+Math.max(1,Number(c.level)||1),0)/p.length):1};
+function hsResourceDef(c){return window.CellboundCombatReborn?.RESOURCE_DEFS?.[c?.class]||{name:'Power',max:100,start:100}}
+function hsAdvanceCooldowns(ms){
+ const amount=Math.max(0,Number(ms)||0);if(!run)return;
+ Object.values(run.cooldowns||{}).forEach(map=>Object.keys(map||{}).forEach(k=>map[k]=Math.max(0,(Number(map[k])||0)-amount)));
+ Object.keys(run.reviveSickness||{}).forEach(id=>run.reviveSickness[id]=Math.max(0,(Number(run.reviveSickness[id])||0)-amount));
+ run.expeditionTimeMs=(Number(run.expeditionTimeMs)||0)+amount
+}
+
 function qstate(){return state()?.questSystem}
 function unlocked(){return Boolean(qstate()?.flags?.hollowSanctumUnlocked)}
 function firstCleared(){return Boolean(qstate()?.flags?.hollowFirstClear)}
@@ -126,7 +134,7 @@ function hsRenderId(unitId){
 }
 function hsCharacter(unitId){const id=String(unitId||'');return id.startsWith('p-')?party().find(x=>String(x.id)===id.slice(2)):null}
 function hsAttackKind(c){return c?.class==='Hunter'?'arrow':['Mage','Priest','Druid','Evoker'].includes(c?.class)?'magic':'slash'}
-function hsRebornEncounter(s){return{id:s.id,title:s.title,kind:s.combatKind||'trash',level:s.level||1,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies:[...s.enemies],enemyHealth:s.enemyHealth,mechanics:s.mechanics||[]}}
+function hsRebornEncounter(s){return{id:s.id,title:s.title,kind:s.combatKind||'trash',level:s.level||1,recommendedItemLevel:s.level<=6?24:s.level===7?26:28,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies:[...s.enemies],enemyHealth:s.enemyHealth,mechanics:s.mechanics||[]}}
 function hsResultHealth(result){
  (result?.finalState?.players||[]).forEach(p=>{const c=party().find(x=>String(x.id)===String(p.characterId));if(c)run.hp[c.id]=Math.max(0,Math.min(100,p.maxHealth?Math.round(p.health/p.maxHealth*100):0))})
 }
@@ -221,15 +229,43 @@ async function hsFail(s,result){
  run.done=true;Game.applyPartyCellShock?.(25);const st=state();st.activity.push('The guild wiped in The Hollow Sanctum at '+s.title+'. All five gained 25% Cell Shock.');Game.save?.();await Game.persistState?.();
  const end=$('#hs2dEnd');end.hidden=false;end.innerHTML='<section class="hs2d-rewards"><small>EXPEDITION FAILED</small><h2>'+esc(s.title)+'</h2><p>The simulation ended when the party could no longer continue. Combat knowledge and the cause of the wipe remain visible below.</p>'+hsStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button></section>';end.querySelector('[data-return]').onclick=close
 }
+async function hsRecoverFallen(tok){
+ let fallen=party().filter(c=>(Number(run.hp[c.id])||0)<=0);if(!fallen.length)return true;
+ let healer=party().find(c=>role(c)==='healer'&&(Number(run.hp[c.id])||0)>0);
+ if(!healer){
+   healer=party().find(c=>role(c)==='healer');if(!healer)return false;
+   feed(healer.name+' releases and returns from the previous checkpoint.');setStatus('Healer returning to the group…');await wait(550);if(tok!==token)return false;
+   hsAdvanceCooldowns(15000);run.hp[healer.id]=35;run.reviveSickness[healer.id]=15000;const hid=hsRenderId('p-'+healer.id),hel=$('[data-hs="'+hid+'"]');hel?.classList.remove('dead');hsBar(hid,35);
+   fallen=party().filter(c=>(Number(run.hp[c.id])||0)<=0)
+ }
+ for(const member of fallen){
+   if(member.id===healer.id)continue;
+   const now=Number(run.expeditionTimeMs)||0,ready=Number(run.reviveReadyAt)||0;
+   if(ready>now){feed('The party regroups while Revive recharges.');await wait(450);hsAdvanceCooldowns(ready-now)}
+   setStatus(healer.name+' is reviving '+member.name+'…');feed(healer.name+' begins Revive on '+member.name+'.');await wait(700);if(tok!==token)return false;
+   run.hp[member.id]=35;run.reviveSickness[member.id]=15000;const id=hsRenderId('p-'+member.id),el=$('[data-hs="'+id+'"]');el?.classList.remove('dead');hsBar(id,35);hsFloat(id,'REVIVED','heal');
+   run.outOfCombatRevives=(Number(run.outOfCombatRevives)||0)+1;hsAdvanceCooldowns(4000);run.reviveReadyAt=run.expeditionTimeMs+45000;feed(member.name+' is back on their feet.')
+ }
+ return true
+}
 async function fightStage(s,tok,index){
  spawnStage(s);setStatus('Entering '+s.title+'…');feed('The party enters '+s.title+'.');await wait(650);if(tok!==token)return false;
  const C=window.CellboundCombatReborn;if(!C?.simulate)throw new Error('Combat Reborn engine unavailable');
- const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:run.hp[c.id]}));
+ const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:run.hp[c.id],_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_reviveSicknessMs:run.reviveSickness?.[c.id]||0}));
  const result=C.simulate({party:combatParty,encounter:hsRebornEncounter(s),tactics:{interruptPriority:'standard',addPriority:'immediate',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced'},seed:['hollow-sanctum',tok,index,Date.now()].join(':')});
  result.stageId=s.id;result.stageTitle=s.title;result.startHp={...run.hp};run.history.push(result);
  const won=await hsPlayTimeline(result,tok);hsResultHealth(result);
+ (result?.finalState?.players||[]).forEach(p=>{
+  const ch=party().find(x=>String(x.id)===String(p.characterId));if(!ch)return;
+  if(p.resource)run.resources[ch.id]={name:p.resource.name,max:p.resource.max,value:p.resource.value};
+  run.cooldowns[ch.id]=Object.fromEntries(Object.entries(p.cooldowns||{}).filter(([,v])=>Number(v)>0));
+  run.reviveSickness[ch.id]=Math.max(0,(Number(p.revivePenaltyUntil)||0)-Number(result.durationMs||0))
+ });
+ run.expeditionTimeMs=(Number(run.expeditionTimeMs)||0)+Number(result.durationMs||0);
  if(!won){await hsFail(s,result);return false}
- party().forEach(c=>run.hp[c.id]=Math.min(100,(run.hp[c.id]||0)+6));
+ if(!await hsRecoverFallen(tok))return false;
+ party().forEach(c=>{if((run.hp[c.id]||0)>0)run.hp[c.id]=Math.min(100,(run.hp[c.id]||0)+6)});
+ hsAdvanceCooldowns(5000);
  feed(s.title+' is clear.');setStatus('Path clear.');await wait(600);return true
 }
 function draw(){
@@ -238,7 +274,7 @@ function draw(){
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.done&&!confirm('Leave The Hollow Sanctum?'))return;close()}
 }
 async function start(){
- token++;const tok=token;run={stage:0,done:false,log:[],hp:Object.fromEntries(party().map(c=>[c.id,100])),history:[],telegraphs:{}};draw();
+ token++;const tok=token,p=party();run={stage:0,done:false,log:[],hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=hsResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{}};draw();
  for(let i=0;i<STAGES.length;i++){if(tok!==token)return;run.stage=i;const s=STAGES[i];$('#hs2dTitle').textContent=s.title;$('.hs2d-route').innerHTML=STAGES.map((x,j)=>'<span class="'+(j<i?'done':j===i?'current':'')+'"><i>'+(j+1)+'</i>'+esc(x.title)+'</span>').join('');if(!await fightStage(s,tok,i))return}
  if(tok!==token)return;await complete();
 }
