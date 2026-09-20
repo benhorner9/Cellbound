@@ -393,7 +393,7 @@ function renderBank(){
     const action=bankBulkMode
       ?`<button data-bank-select="${item.id}" aria-pressed="${selected?'true':'false'}" ${protectedItem?'disabled':''}>${protectedItem?'PROTECTED':selected?'✓ SELECTED':'SELECT ITEM'}</button>`
       :`<button data-bank-item="${item.id}">MANAGE</button>`;
-    const stats=G.statLines?.(item)||[];return`<article class="bank-item gear-bank-item tier-${item.tier||1} ${selected?'bank-item-selected':''} ${protectedItem?'bank-item-protected':''}"><div class="bank-icon gear-bank-icon">${G.artHTML(item,72)}</div><div class="bank-copy"><small>${tierText(item)} · ${item.class} · ${item.slot}</small><h3>${item.name}</h3><div class="bank-roll-stats">${stats.length?stats.map(s=>`<span>${s.text}</span>`).join(''):'<span class="legacy">Legacy item · no rolled stats</span>'}</div><p>${item.source||'Guild Bank'}</p></div><div class="bank-qty">×${item.quantity||1}</div>${action}</article>`;
+    const stats=G.statLines?.(item)||[],uniqueEffect=item.uniqueEffect?'<span class="bank-unique-effect">'+esc(item.uniqueEffect.name)+' · '+esc(item.uniqueEffect.description)+'</span>':'',flags=(item.favorite?'<i class="bank-flag favorite">★</i>':'')+(item.junk?'<i class="bank-flag junk">JUNK</i>':'');return`<article class="bank-item gear-bank-item tier-${item.tier||1} ${selected?'bank-item-selected':''} ${protectedItem?'bank-item-protected':''} ${item.favorite?'is-favorite':''} ${item.junk?'is-junk':''}">${flags}<div class="bank-icon gear-bank-icon">${G.artHTML(item,72)}</div><div class="bank-copy"><small>${tierText(item)} · ${item.class} · ${item.slot}</small><h3>${item.name}</h3><div class="bank-roll-stats">${stats.length?stats.map(s=>`<span>${s.text}</span>`).join(''):'<span class="legacy">No rolled stats</span>'}${uniqueEffect}</div><p>${item.source||'Guild Bank'}${Number(item.upgradeLevel)>0?' · Upgrade '+Number(item.upgradeLevel):''}</p></div><div class="bank-qty">×${item.quantity||1}</div>${action}</article>`;
   }).join('');
   ui.bankGrid.querySelectorAll('[data-bank-item]').forEach(b=>b.addEventListener('click',()=>openBankItem(b.dataset.bankItem)));
   ui.bankGrid.querySelectorAll('[data-bank-select]').forEach(b=>b.addEventListener('click',()=>toggleBankBulkItem(b.dataset.bankSelect)));
@@ -508,7 +508,7 @@ function bankCompareMarkup(ch,item){
     return '<span class="'+(d>0?'gain':d<0?'loss':'same')+'"><b>'+(d>0?'+':'')+d+unit+'</b>'+esc(label)+'</span>';
   }).join('');
   const effect=item.uniqueEffect?'<p><strong>'+esc(item.uniqueEffect.name)+'</strong>'+esc(item.uniqueEffect.description)+'</p>':'';
-  return '<div class="bank-comparison"><div><small>CURRENT</small><b>'+esc(current?.name||('Empty '+item.slot))+'</b><em>iLvl '+(Number(current?.itemLevel)||0)+'</em></div><div class="bank-compare-delta '+(ilvlDelta>0?'gain':ilvlDelta<0?'loss':'')+'"><strong>'+(ilvlDelta>0?'+':'')+ilvlDelta+' iLvl</strong>'+(stats||'<span class="same"><b>—</b>No stat delta</span>')+'</div><div><small>NEW</small><b>'+esc(item.name)+'</b><em>iLvl '+(Number(item.itemLevel)||0)+'</em>'+effect+'</div></div>';
+  return '<span class="bank-comparison"><span><small>CURRENT</small><b>'+esc(current?.name||('Empty '+item.slot))+'</b><em>iLvl '+(Number(current?.itemLevel)||0)+'</em></span><span class="bank-compare-delta '+(ilvlDelta>0?'gain':ilvlDelta<0?'loss':'')+'"><strong>'+(ilvlDelta>0?'+':'')+ilvlDelta+' iLvl</strong>'+(stats||'<span class="same"><b>—</b>No stat delta</span>')+'</span><span><small>NEW</small><b>'+esc(item.name)+'</b><em>iLvl '+(Number(item.itemLevel)||0)+'</em>'+effect+'</span></span>';
 }
 function selectJunkForBulk(){
   const junk=state.bank.filter(x=>x.junk&&!bankItemProtected(x));
@@ -518,9 +518,12 @@ function selectJunkForBulk(){
 function openBankItem(id){
   const item=state.bank.find(x=>x.id===id);if(!item)return;
   const eligible=state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&canUseItem(c,item)&&!isUnavailable(c));
-  const protectedItem=bankItemProtected(item),qty=Math.max(1,Number(item.quantity)||1),unitValue=bankVendorUnitValue(item),oneYield=bankDismantleYield(item,1);
+  const protectedItem=bankItemProtected(item),qty=Math.max(1,Number(item.quantity)||1),unitValue=bankVendorUnitValue(item),oneYield=bankDismantleYield(item,1),shards=Number(state.materials?.['cell-shards'])||0,upgradeCost=bankUpgradeCost(item),upgradeMax=bankUpgradeMax(item);
+  const protectionCopy=item.favorite?'This item is marked as favourite. Remove the favourite mark before selling or dismantling it.':'Unique quest and story relics cannot be sold or dismantled. This prevents permanent rewards being destroyed accidentally.';
+  const upgrade=bankCanUpgrade(item)?`<div class="bank-upgrade-box"><div><small>ITEM UPGRADE</small><h3>Item Level ${item.itemLevel} → ${Math.min(upgradeMax,(Number(item.itemLevel)||0)+2)}</h3><p>Spend Cell Shards to keep a valued item relevant. Upgrades are capped and cannot scale forever.</p></div><div><b>${shards} shards</b><span>${upgradeCost} required</span><button data-bank-upgrade type="button" ${shards<upgradeCost?'disabled':''}>UPGRADE ITEM</button></div></div>`:`<div class="bank-upgrade-box capped"><div><small>ITEM UPGRADE</small><h3>Upgrade cap reached</h3><p>This item has reached its current dungeon-power ceiling.</p></div><b>iLvl ${item.itemLevel}</b></div>`;
+  const flags=`<div class="bank-item-flags"><button data-bank-favorite type="button" class="${item.favorite?'active':''}">${item.favorite?'★ FAVOURITE':'☆ MARK FAVOURITE'}</button><button data-bank-junk type="button" class="${item.junk?'active junk':''}">${item.junk?'✓ JUNK':'MARK AS JUNK'}</button></div>`;
   const cleanup=protectedItem
-    ?`<div class="bank-cleanup bank-cleanup-protected"><div class="bank-cleanup-head"><div><small>ITEM SAFETY</small><h3>Protected item</h3></div><span>LOCKED</span></div><p>Unique quest and story relics cannot be sold or dismantled. This prevents permanent rewards being destroyed accidentally.</p></div>`
+    ?`<div class="bank-cleanup bank-cleanup-protected"><div class="bank-cleanup-head"><div><small>ITEM SAFETY</small><h3>Protected item</h3></div><span>LOCKED</span></div><p>${protectionCopy}</p></div>`
     :`<div class="bank-cleanup">
         <div class="bank-cleanup-head"><div><small>BANK CLEANUP</small><h3>Sell or dismantle</h3></div><span>IRREVERSIBLE</span></div>
         <p>Sell unwanted equipment for guaranteed Gold, or dismantle it into useful crafting materials.</p>
@@ -531,9 +534,12 @@ function openBankItem(id){
         </div>
       </div>`;
 
-  const stats=G.statLines?.(item)||[];ui.bankDetail.innerHTML=`<div class="detail-hero gear-detail-hero"><div class="gear-detail-art">${G.artHTML(item,112)}</div><div><small>${tierText(item).toUpperCase()} · ${String(item.class||'All').toUpperCase()} · ${String(item.slot||'Gear').toUpperCase()}</small><h2>${item.name}</h2><div class="bank-detail-rolls">${stats.length?stats.map(s=>`<span>${s.text}</span>`).join(''):'<span class="legacy">Legacy item · no rolled stats</span>'}</div>${item.setName?`<div class="bank-set-tag">SET · ${item.setName}</div>`:''}<p>Dropped by ${item.source||'Unknown source'}</p><p>Quantity in bank: ${qty}</p></div></div><div class="bank-manage"><h3>Equip to an adventurer</h3><p>Same Item Level can still be an upgrade if the roll better suits that character's spec.</p><div class="bank-character-list">${eligible.map(ch=>{const fit=G.rollFit?.(ch,item);return`<button data-equip-char="${ch.id}"><span class="avatar">${ch.portrait}</span><span><b>${ch.name}</b><small>${ch.race||'Veyren'} · ${ch.class} · ${ch.spec} · iLvl ${characterItemLevel(ch)}</small></span><em class="roll-fit ${fit?.tone||''}">${fit?.label||''}</em></button>`}).join('')||'<p>No available characters can use this item.</p>'}</div></div>${cleanup}`;
+  const stats=G.statLines?.(item)||[];ui.bankDetail.innerHTML=`<div class="detail-hero gear-detail-hero"><div class="gear-detail-art">${G.artHTML(item,112)}</div><div><small>${tierText(item).toUpperCase()} · ${String(item.class||'All').toUpperCase()} · ${String(item.slot||'Gear').toUpperCase()}</small><h2>${item.name}</h2><div class="bank-detail-rolls">${stats.length?stats.map(s=>`<span>${s.text}</span>`).join(''):'<span class="legacy">Legacy item · no rolled stats</span>'}</div>${item.setName?`<div class="bank-set-tag">SET · ${item.setName}</div>`:''}${item.uniqueEffect?`<div class="bank-unique-detail"><small>UNIQUE EFFECT</small><b>${esc(item.uniqueEffect.name)}</b><p>${esc(item.uniqueEffect.description)}</p></div>`:''}<p>Dropped by ${item.source||'Unknown source'}</p><p>Quantity in bank: ${qty}</p></div></div>${flags}${upgrade}<div class="bank-manage"><h3>Equip to an adventurer</h3><p>Same Item Level can still be an upgrade if the roll better suits that character's spec.</p><div class="bank-character-list">${eligible.map(ch=>{const fit=G.rollFit?.(ch,item);return`<button data-equip-char="${ch.id}"><span class="avatar">${ch.portrait}</span><span><b>${ch.name}</b><small>${ch.race||'Veyren'} · ${ch.class} · ${ch.spec} · iLvl ${characterItemLevel(ch)}</small></span><em class="roll-fit ${fit?.tone||''}">${fit?.label||''}</em>${bankCompareMarkup(ch,item)}</button>`}).join('')||'<p>No available characters can use this item.</p>'}</div></div>${cleanup}`;
   document.body.classList.add('bank-manage-open');ui.bankModal.hidden=false;
   ui.bankDetail.querySelectorAll('[data-equip-char]').forEach(b=>b.addEventListener('click',()=>equipBankItem(id,b.dataset.equipChar)));
+  $('[data-bank-favorite]')?.addEventListener('click',()=>toggleBankFlag(id,'favorite'));
+  $('[data-bank-junk]')?.addEventListener('click',()=>toggleBankFlag(id,'junk'));
+  $('[data-bank-upgrade]')?.addEventListener('click',()=>upgradeBankItem(id));
   if(!protectedItem){
     $('#bankCleanupQty')?.addEventListener('input',()=>updateBankCleanupPreview(id));
     $('[data-bank-cleanup-all]')?.addEventListener('click',()=>{const input=$('#bankCleanupQty');if(input)input.value=qty;updateBankCleanupPreview(id)});
@@ -555,6 +561,9 @@ function equipBankItem(itemId,charId){
 }
 $('[data-bank-close]')?.addEventListener('click',()=>{ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open')});ui.bankModal?.addEventListener('click',e=>{if(e.target===ui.bankModal){ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open')}});
 $('#bankBulkToggle')?.addEventListener('click',()=>setBankBulkMode());
+$('#bankSelectJunk')?.addEventListener('click',selectJunkForBulk);
+$('#bankSearch')?.addEventListener('input',renderBank);
+['bankCategory','bankClass','bankRarity','bankTrade','bankSort'].forEach(id=>$('#'+id)?.addEventListener('change',renderBank));
 $('#bankBulkClear')?.addEventListener('click',clearBankBulkSelection);
 $('#bankBulkSell')?.addEventListener('click',()=>disposeBankBulk('vendor'));
 $('#bankBulkDismantle')?.addEventListener('click',()=>disposeBankBulk('dismantle'));
