@@ -708,13 +708,6 @@ function enemyBasicAttack(ctx,e){
  dealDamage(ctx,e,target,base*levelPressure*(.85+ctx.rng()*.3),e.kind==='boss'?'Heavy Swing':'Attack',{damageType:'physical'});
  e.nextAttack=ctx.time+(e.kind==='boss'?1400:e.isAdd?1800:2050)+Math.round(ctx.rng()*(e.kind==='boss'?220:320));
 }
-function reactionChance(ctx,u,type){
- const safety=ctx.tactics.movementDiscipline==='safety'?1.14:ctx.tactics.movementDiscipline==='damage'?0.86:1;
- const knowledge=Object.values(u.knowledge||{}).reduce((n,v)=>n+(Number(v)||0),0)/Math.max(1,Object.keys(u.knowledge||{}).length||1);
- let base=.84*classMobility(u.original||u)*safety+Math.min(.1,knowledge/1000);
- if(type==='cone'&&u.role==='tank')base=.97;
- return clamp(base,.48,.99);
-}
 function mechanicStat(ctx,type,failed){
  const m=ctx.stats.mechanics;m.byType[type]=m.byType[type]||{avoided:0,failed:0};
  if(failed){m.failed++;m.byType[type].failed++}else{m.avoided++;m.byType[type].avoided++}
@@ -732,24 +725,63 @@ function planMovement(ctx,u,type,anchor){
  }
  moveTo(ctx,u,to,320,'mechanic response');
 }
+function mechanicResponse(ctx,u,type,duration,enemy){
+ const baseReaction=executionReaction(ctx,u,'movement');
+ const error=shouldMistake(ctx,u,'movement',2200);
+ const hesitation=error?Math.round(260+ctx.rng()*520):0;
+ const reaction=baseReaction+hesitation;
+ const success=reaction+320<=Math.max(520,duration-40);
+ if(error){
+  recordMistake(ctx,u,'movement',reaction>duration?'reacted too late':'hesitated on the mechanic',{target:enemy?.id||null,ability:ctx.activeEnemyCast?.name||null,reactionMs:reaction});
+ }else if(!success){
+  recordMistake(ctx,u,'movement','reaction was too slow for the mechanic',{target:enemy?.id||null,ability:ctx.activeEnemyCast?.name||null,reactionMs:reaction});
+ }
+ // Even failed players try to move. If they are late, the impact can land while they are still escaping.
+ schedule(ctx,ctx.time+reaction,()=>{if(u.alive)planMovement(ctx,u,type,enemy)},'mechanic-reaction');
+ return{success,reactionMs:reaction}
+}
 function tryInterrupt(ctx,e,mechanic,castToken){
  const policy=ctx.tactics.interruptPriority;
- const candidates=livingPlayers(ctx).map(u=>({u,a:u.abilities.find(a=>a.kind==='interrupt'&&cooldownReady(u,a))})).filter(x=>x.a&&inRange(x.u,e,x.a.range||10)&&hasLineOfSight(ctx,x.u,e));
+ const candidates=livingPlayers(ctx).map(u=>({u,a:u.abilities.find(a=>a.kind==='interrupt'&&cooldownReady(u,a))}))
+  .filter(x=>x.a&&inRange(x.u,e,x.a.range||10)&&hasLineOfSight(ctx,x.u,e));
  ctx.stats.interrupts.attempts++;
  if(!candidates.length){ctx.stats.interrupts.missedCritical++;return}
- const chosen=candidates.sort((a,b)=>(a.a.cd||0)-(b.a.cd||0))[0],u=chosen.u,a=chosen.a;
+ candidates.sort((a,b)=>executionQuality(ctx,b.u)-executionQuality(ctx,a.u)||(a.a.cd||0)-(b.a.cd||0));
+ const chosen=candidates[0],u=chosen.u,a=chosen.a;
  const should=policy==='high'||policy==='standard'||(policy==='low'&&ctx.encounter.kind==='final');
  if(!should){ctx.stats.interrupts.missedCritical++;return}
- const reaction=policy==='high'?380:policy==='standard'?650:900;
- const when=ctx.time+reaction;
+ let reaction=executionReaction(ctx,u,'interrupt')+(policy==='high'?-120:policy==='low'?180:0);
+ const error=shouldMistake(ctx,u,'interrupt',5000);
+ if(error){
+  reaction+=Math.round(350+ctx.rng()*750);
+  recordMistake(ctx,u,'interrupt','late interrupt reaction',{target:e.id,ability:mechanic.name,reactionMs:reaction});
+ }
+ const when=ctx.time+Math.max(180,reaction);
  schedule(ctx,when,()=>{
   const cast=ctx.activeEnemyCast;
   const st=ctx.stats.players[u.id];st.interruptAttempts++;
   if(!cast||cast.token!==castToken||cast.interrupted){st.duplicateInterrupts++;ctx.stats.interrupts.duplicates++;emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'duplicate',payload:{interruptedAbility:mechanic.name,token:castToken}});return}
-  if(!u.alive||!inRange(u,e,a.range||10)||!hasLineOfSight(ctx,u,e)||!cooldownReady(u,a)){ctx.stats.interrupts.missedCritical++;emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'failed',payload:{interruptedAbility:mechanic.name,token:castToken}});return}
+  if(!u.alive||!inRange(u,e,a.range||10)||!hasLineOfSight(ctx,u,e)||!cooldownReady(u,a)||ctx.time>=cast.ends){
+   ctx.stats.interrupts.missedCritical++;emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'failed',payload:{interruptedAbility:mechanic.name,token:castToken}});return
+  }
   u.cooldowns[a.id]=a.cd||15000;cast.interrupted=true;ctx.activeEnemyCast=null;st.interrupts++;ctx.stats.interrupts.success++;
   emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'success',payload:{interruptedAbility:mechanic.name,token:castToken}});
  },'interrupt');
+ // Low knowledge / pressure can make a second player burn their interrupt a fraction later.
+ const backup=candidates[1];
+ if(backup&&ctx.rng()<mistakeChance(ctx,backup.u,'interrupt')*.55){
+  const delay=Math.max(220,reaction+120+Math.round(ctx.rng()*220));
+  recordMistake(ctx,backup.u,'interrupt','committed to the same interrupt',{target:e.id,ability:mechanic.name,reactionMs:delay});
+  schedule(ctx,ctx.time+delay,()=>{
+   const bu=backup.u,ba=backup.a,cast=ctx.activeEnemyCast,st=ctx.stats.players[bu.id];st.interruptAttempts++;
+   if(!bu.alive||!cooldownReady(bu,ba))return;
+   bu.cooldowns[ba.id]=ba.cd||15000;
+   if(!cast||cast.token!==castToken||cast.interrupted){
+    st.duplicateInterrupts++;ctx.stats.interrupts.duplicates++;
+    emit(ctx,'INTERRUPT',{source:bu.id,target:e.id,ability:ba.name,result:'duplicate',payload:{interruptedAbility:mechanic.name,token:castToken}})
+   }
+  },'duplicate-interrupt')
+ }
 }
 function spawnAdds(ctx,e){
  const base=ctx.enemies.length;
