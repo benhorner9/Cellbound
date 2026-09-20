@@ -235,6 +235,10 @@ function moveTo(ctx,u,pos,duration=420,reason='positioning'){
  },'movement-end');
  return false
 }
+function nearestMeleePoint(enemy,u){
+ const angle=Math.atan2(u.position.y-enemy.position.y,u.position.x-enemy.position.x);
+ return{x:enemy.position.x+Math.cos(angle)*4,y:enemy.position.y+Math.sin(angle)*4}
+}
 function stableUnitIndex(ctx,u,list){
  const idx=list.findIndex(x=>x.id===u.id);return idx<0?0:idx
 }
