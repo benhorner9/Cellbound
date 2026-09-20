@@ -186,7 +186,7 @@ function briefing(){
  r.querySelector('[data-start]').onclick=start;
 }
 function start(){
- const p=party();token++;run={token:token,stage:0,speed:1,condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],damageDone:Object.fromEntries(p.map(c=>[c.id,0])),healingDone:Object.fromEntries(p.map(c=>[c.id,0])),overhealing:Object.fromEntries(p.map(c=>[c.id,0])),hitCount:Object.fromEntries(p.map(c=>[c.id,0])),identityTimers:{},combatStartedAt:0,lastMeterAt:0,log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},xpGrowth:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0,rebornHistory:[],rebornReplay:null,rebornResult:null,rebornTelegraphs:{},rebornCastTimer:null};
+ const p=party(),resources=Object.fromEntries(p.map(c=>{const def=resourceDefFor(c);return[c.id,{name:def.name,max:def.max,value:def.start}]}));token++;run={token:token,stage:0,speed:1,condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),resources,enemyHp:[],enemyMax:[],threat:[],aggro:[],damageDone:Object.fromEntries(p.map(c=>[c.id,0])),healingDone:Object.fromEntries(p.map(c=>[c.id,0])),overhealing:Object.fromEntries(p.map(c=>[c.id,0])),hitCount:Object.fromEntries(p.map(c=>[c.id,0])),identityTimers:{},combatStartedAt:0,lastMeterAt:0,log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},xpGrowth:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0,rebornHistory:[],rebornReplay:null,rebornResult:null,rebornTelegraphs:{},rebornCastTimer:null};
  drawViewer();seamless(token);
 }
 function route(){
@@ -259,16 +259,30 @@ function renderCombatMeters(){
    return '<div class="cb2d-meter-row '+meterRole(c)+(hasAggro?' aggro':'')+(danger?' danger':'')+(high?' high':'')+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(c.name)+(hasAggro?' <strong>AGGRO</strong>':high?' <strong>HIGH</strong>':'')+'</b><span>'+Math.round(value).toLocaleString()+' · '+Math.round(pct)+'%</span></div><em><i style="width:'+pct+'%"></i></em></div>';
  }).join('');
 }
+function unitPixelPosition(x,y){
+ const arena=$('#cb2dArena');if(!arena)return{x:0,y:0};
+ return{x:(clamp(Number(x)||0,0,100)/100)*arena.clientWidth,y:(clamp(Number(y)||0,0,100)/100)*arena.clientHeight}
+}
+function applyUnitPosition(e,x,y,instant=false){
+ if(!e)return;
+ const p=unitPixelPosition(x,y);e.dataset.x=String(x);e.dataset.y=String(y);
+ if(instant)e.style.transitionDuration='0ms';
+ e.style.setProperty('--unit-x',p.x+'px');e.style.setProperty('--unit-y',p.y+'px')
+}
 function addUnit(id,label,cls,x,y,size){
- const e=document.createElement('div');e.className='cb2d-unit '+cls+' '+(size||'');e.dataset.unit=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+'</span><em class="cb2d-unit-hp"><i></i></em>';$('#cb2dUnits').appendChild(e)
+ const e=document.createElement('div');e.className='cb2d-unit '+cls+' '+(size||'');e.dataset.unit=id;e.innerHTML='<i></i><span>'+esc(label)+'</span><em class="cb2d-unit-hp"><i></i></em>';$('#cb2dUnits').appendChild(e);applyUnitPosition(e,x,y,true)
 }
 function move(id,x,y,ms){
  const e=$('[data-unit="'+id+'"]');if(!e)return;
- const ox=parseFloat(e.style.left)||x,oy=parseFloat(e.style.top)||y,dx=x-ox,dy=y-oy;
+ const ox=Number(e.dataset.x)||x,oy=Number(e.dataset.y)||y,dx=x-ox,dy=y-oy;
  if(Math.hypot(dx,dy)>.8)e.style.setProperty('--face-angle',(Math.atan2(dy,dx)*180/Math.PI)+'deg');
  e.style.transitionDuration=Math.round(ms/((run&&run.speed)||1))+'ms';
- requestAnimationFrame(()=>{e.style.left=x+'%';e.style.top=y+'%'})
+ requestAnimationFrame(()=>applyUnitPosition(e,x,y,false))
 }
+function syncUnitPixelPositions(){
+ $('[data-unit]').forEach(e=>applyUnitPosition(e,Number(e.dataset.x)||50,Number(e.dataset.y)||50,true))
+}
+window.addEventListener('resize',()=>{if(run)requestAnimationFrame(syncUnitPixelPositions)},{passive:true});
 function faceUnit(id,targetId){
  const e=$('[data-unit="'+id+'"]'),a=pctPosition(id),b=pctPosition(targetId);if(!e||!a||!b)return;
  e.style.setProperty('--face-angle',(Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI)+'deg')
@@ -315,20 +329,42 @@ function resourceClass(name){
 function resourceDefFor(c){
  return window.CellboundCombatReborn?.RESOURCE_DEFS?.[c?.class]||{name:'Power',max:100,start:100}
 }
-function updateResourceBarElement(bar,name,value,max){
+function updateResourceBarElement(bar,name,value,max,mode='state',reason=''){
  if(!bar)return;
  const resource=String(name||'Power'),limit=Math.max(1,Number(max)||100),current=clamp(Number(value)||0,0,limit),pctValue=current/limit*100,key=resourceClass(resource);
  if(bar.dataset.resource!==resource){
    [...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));
    bar.classList.add(key);bar.dataset.resource=resource;bar.title=resource
  }
- const fill=bar.querySelector('i');if(fill)fill.style.width=pctValue+'%'
+ const fill=bar.querySelector('i');if(!fill)return;
+ if(mode==='RESOURCE_SPENT'){
+   fill.style.transition='none';fill.style.width=pctValue+'%';void fill.offsetWidth;
+   requestAnimationFrame(()=>{fill.style.transition='width .3s linear'})
+ }else if(mode==='RESOURCE_STATE'&&reason==='regeneration'){
+   fill.style.transition='width .9s linear';fill.style.width=pctValue+'%'
+ }else if(mode==='RESOURCE_GAINED'){
+   fill.style.transition='width .22s ease-out';fill.style.width=pctValue+'%'
+ }else{
+   fill.style.transition='none';fill.style.width=pctValue+'%';requestAnimationFrame(()=>{fill.style.transition='width .3s linear'})
+ }
 }
 function mountRebornResourceBar(c){
  const unit=$('[data-unit="p-'+c.id+'"]');if(!unit)return null;
  let bar=unit.querySelector('.cbr-resource');
  if(!bar){bar=document.createElement('small');bar.className='cbr-resource';bar.innerHTML='<i></i>';unit.appendChild(bar)}
- const def=resourceDefFor(c);updateResourceBarElement(bar,def.name,def.start,def.max);return bar
+ const def=resourceDefFor(c),state=run?.resources?.[c.id]||{name:def.name,max:def.max,value:def.start};
+ updateResourceBarElement(bar,state.name||def.name,state.value??def.start,state.max||def.max,'initial');return bar
+}
+function recoverDungeonResources(){
+ if(!run?.resources)return;
+ party().forEach(c=>{
+   const def=resourceDefFor(c),r=run.resources[c.id]||{name:def.name,max:def.max,value:def.start};
+   const max=Math.max(1,Number(r.max)||def.max||100),name=r.name||def.name;let value=clamp(Number(r.value)||0,0,max);
+   if(name==='Mana')value=Math.min(max,value+(max*.14));
+   else if(name==='Energy'||name==='Focus'||name==='Essence')value=max;
+   else value=Math.max(Number(def.start)||0,value-(max*.18));
+   run.resources[c.id]={name,max,value}
+ })
 }
 
 function spawn(s){
@@ -388,7 +424,7 @@ function projectile(from,to,kind='physical',ms=320){
 }
 function pctPosition(id){
  const el=$('[data-unit="'+id+'"]');if(!el)return{x:50,y:50};
- return{x:parseFloat(el.style.left)||50,y:parseFloat(el.style.top)||50};
+ return{x:Number(el.dataset.x)||50,y:Number(el.dataset.y)||50};
 }
 function enemyPosition(index){return pctPosition('e-'+index)}
 function formationPoint(c,index){
@@ -1113,8 +1149,9 @@ function rebornResourceVisual(e){
  const c=rebornPlayerByUnit(e.source),unit=$('[data-unit="'+e.source+'"]');if(!unit)return;
  let bar=unit.querySelector('.cbr-resource');if(!bar&&c)bar=mountRebornResourceBar(c);
  if(!bar)return;
- const fallback=c?resourceDefFor(c):{name:'Power',max:100,start:100};
- updateResourceBarElement(bar,e.payload?.resource||fallback.name,e.payload?.value??fallback.start,e.payload?.max??fallback.max)
+ const fallback=c?resourceDefFor(c):{name:'Power',max:100,start:100},name=e.payload?.resource||fallback.name,max=e.payload?.max??fallback.max,value=e.payload?.value??fallback.start;
+ if(c&&run?.resources)run.resources[c.id]={name,max,value};
+ updateResourceBarElement(bar,name,value,max,e.type,e.result||'')
 }
 function rebornCastStart(e){
  const n=$('#cb2dCastName'),tm=$('#cb2dCastTime'),f=$('#cb2dCastFill'),duration=Math.max(0,Number(e.payload?.duration)||0);
@@ -1157,7 +1194,8 @@ function renderRebornEvent(e,result,replayMode=false){
    if(e.payload?.to)move(e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||360);
    if(srcChar&&e.result==='line of sight'){const rr=role(srcChar);act(rr==='tank'?'tank':rr==='healer'?'healer':'dps',srcChar.name+' · Repositioning for line of sight')}
    break;
-  case'ABILITY_START':
+  case'ABILITY_START':{
+   const actor=$('[data-unit="'+e.source+'"]');if(actor){actor.classList.remove('attacking');void actor.offsetWidth;actor.classList.add('attacking');setTimeout(()=>actor.classList.remove('attacking'),360)}
    if(srcChar){
      const r=role(srcChar);act(r==='tank'?'tank':r==='healer'?'healer':'dps',srcChar.name+' · '+(e.ability||'Action'));
      if(e.target)faceUnit(e.source,e.target);
@@ -1166,6 +1204,7 @@ function renderRebornEvent(e,result,replayMode=false){
      if(e.target){faceUnit(e.source,e.target);projectile(e.source,e.target,'enemy',260)}
    }
    break;
+  }
   case'CAST_START':
    if(String(e.source||'').startsWith('e-')){rebornCastStart(e);log((e.ability||'Enemy cast')+' begins.')}
    break;
@@ -1186,6 +1225,7 @@ function renderRebornEvent(e,result,replayMode=false){
    break;
   }
   case'HEAL_RECEIVED':
+   if(srcChar&&e.target)projectile(e.source,e.target,'heal',240);
    if(targetChar){setHp(targetChar.id,Number(e.payload?.targetHpPct)||hp(targetChar.id));updateRows();hitReact(e.target,'heal');floating(e.target,'+'+Math.round(Number(e.amount)||0),'heal')}
    if(srcChar)recordRebornHealing(srcChar,Number(e.amount)||0,Number(e.payload?.overhealing)||0);
    break;
@@ -1295,12 +1335,13 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
 function runRebornStage(s){
  const C=window.CellboundCombatReborn;if(!C?.simulate)throw new Error('Combat Reborn engine is unavailable');
  const startHp=Object.fromEntries(party().map(c=>[c.id,hp(c.id)]));
- const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:hp(c.id)}));
+ const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:hp(c.id),_combatResource:run.resources?.[c.id]||null}));
  const result=C.simulate({party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:['ashen-vault',run.token,run.stage,Date.now()].join(':')});
  result.stageId=s.id;result.stageTitle=s.title;result.startHp=startHp;return result
 }
 function captureRebornResult(result){
  run.rebornResult=result;run.rebornReplay=result?.replay||null;run.rebornHistory=run.rebornHistory||[];
+ (result?.finalState?.players||[]).forEach(p=>{const c=rebornPlayerByUnit(p.id);if(c&&p.resource)run.resources[c.id]={name:p.resource.name,max:p.resource.max,value:p.resource.value}});
  run.rebornHistory.push({stageId:result.stageId,stageTitle:result.stageTitle,startHp:result.startHp,replay:result.replay,summary:result.summary,outcome:result.outcome});
 }
 function rebornTotals(){
@@ -1344,7 +1385,7 @@ async function seamlessFrom(startIndex,tok){
    captureRebornResult(result);run.stageOutcome=result.outcome==='victory';run.allowKill=true;
    await playRebornTimeline(result,tok);
    if(!await resolveStage(s)||tok!==token)return;
-   if(i<STAGES.length-1){party().forEach(c=>setHp(c.id,Math.min(100,hp(c.id)+6)));updateRows();flash('PATH CLEAR',false);await delay(420);await travelDeeper(STAGES[i+1],tok)}
+   if(i<STAGES.length-1){party().forEach(c=>setHp(c.id,Math.min(100,hp(c.id)+6)));recoverDungeonResources();updateRows();flash('PATH CLEAR',false);await delay(420);await travelDeeper(STAGES[i+1],tok)}
   }
   const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;st.gold+=120;st.renown+=60;run.loot.gold+=120;run.loot.renown+=60;run.loot.xp=ASHEN_VAULT_XP;run.xpGrowth=awardPartyXp(ASHEN_VAULT_XP);st.dungeonCompletions++;const completedPartyIds=party().map(c=>c.id);st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',partyIlvl:ilvl(),xpPerCharacter:ASHEN_VAULT_XP,partyIds:completedPartyIds,combatVersion:window.CellboundCombatReborn?.VERSION||'legacy'});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault cleared through Combat Reborn simulation. Each adventurer earned '+ASHEN_VAULT_XP+' XP.');run.xpGrowth.filter(x=>x.levels>0).forEach(x=>st.activity.push(x.name+' reached Level '+x.afterLevel+'.'));await Game.persistState();await syncPartyXpRecords(run.xpGrowth);window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'ashen-vault',partyIds:completedPartyIds}}));finish(true,STAGES[6]);appendRebornAnalysis($('#cb2dEnd'))
  }catch(e){
