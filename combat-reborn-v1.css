@@ -70,3 +70,29 @@
  .cb2d-unit .cbr-resource>span{display:none}
  .cbr-debug{left:8px;right:8px;bottom:8px;max-width:none;font-size:9px}
 }
+
+
+.cb2d-controls.cbr-plan-lock{
+  display:block;padding:12px 14px;border:1px solid rgba(104,173,220,.18);
+  background:rgba(9,18,28,.72)
+}
+.cbr-plan-lock-copy small{display:block;color:#76b8e4;font-size:9px;font-weight:900;letter-spacing:.12em}
+.cbr-plan-lock-copy b{display:block;margin-top:3px;color:#e7f2f9;font-size:12px}
+.cbr-plan-lock-copy span{display:block;margin-top:4px;color:#8092a2;font-size:10px;line-height:1.45}
+
+.cbr-replay-controls{
+  position:absolute;left:12px;top:12px;z-index:60;display:flex;gap:6px;padding:6px;
+  border:1px solid rgba(129,193,231,.24);border-radius:10px;background:rgba(4,10,16,.86);
+  box-shadow:0 8px 24px rgba(0,0,0,.28)
+}
+.cbr-replay-controls button{
+  min-height:32px;padding:0 10px;border:1px solid rgba(255,255,255,.12);border-radius:7px;
+  background:rgba(255,255,255,.045);color:#dcebf5;font-size:9px;font-weight:900;letter-spacing:.07em
+}
+.cbr-replay-controls button:active{transform:translateY(1px)}
+
+@media(max-width:620px){
+ .cbr-replay-controls{left:8px;top:8px;right:8px;justify-content:space-between}
+ .cbr-replay-controls button{flex:1;padding:0 6px}
+ .cb2d-controls.cbr-plan-lock{padding:10px}
+}
