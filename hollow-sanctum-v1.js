@@ -144,6 +144,16 @@ function hsAddSpawn(e){
  const id=e.target,p=e.position||{x:75,y:50};if($('[data-hs="'+id+'"]'))return;
  addUnit(id,e.payload?.name||'Echo Add','enemy',p.x,p.y,false);const bar=$('[data-hs="'+id+'"] > em i');if(bar)bar.style.width='100%'
 }
+function hsResourceVisual(e){
+ const id=hsRenderId(e.source);if(!id)return;
+ const u=$('[data-hs="'+id+'"]');if(!u||!u.classList.contains('party'))return;
+ let bar=u.querySelector('.cbr-resource');
+ if(!bar){bar=document.createElement('small');bar.className='cbr-resource';bar.innerHTML='<i></i><span></span>';u.appendChild(bar)}
+ const name=String(e.payload?.resource||'Power'),max=Math.max(1,Number(e.payload?.max)||100),value=Math.max(0,Math.min(max,Number(e.payload?.value)||0));
+ [...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));
+ bar.classList.add('resource-'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-'));
+ const fill=bar.querySelector('i'),label=bar.querySelector('span');if(fill)fill.style.width=(value/max*100)+'%';if(label)label.textContent=name+' '+Math.round(value)+'/'+Math.round(max);bar.title=name+' '+Math.round(value)+' / '+Math.round(max)
+}
 function hsRenderRebornEvent(e){
  const src=hsRenderId(e.source),target=hsRenderId(e.target),srcChar=hsCharacter(e.source),targetChar=hsCharacter(e.target);
  switch(e.type){
@@ -163,6 +173,7 @@ function hsRenderRebornEvent(e){
   case'HEAL_RECEIVED':
    if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));run.hp[targetChar.id]=pct;hsBar(target,pct);hsFloat(target,'+'+Math.round(Number(e.amount)||0),'heal')}
    break;
+  case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':hsResourceVisual(e);break;
   case'AGGRO_CHANGED':
    if(targetChar&&role(targetChar)!=='tank')feed(targetChar.name+' pulls aggro from the Tank.');
    break;
