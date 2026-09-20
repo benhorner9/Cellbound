@@ -4,9 +4,9 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 let Game=null,db=null,run=null,token=0;
 const STAGES=[
- {id:'gallery',title:'Gallery of Echoes',kind:'TRASH',combatKind:'trash',enemyHealth:145,enemies:['Hollowed Surveyor','Hollowed Surveyor','Glass Mite'],mechanic:'Echo Burst',mechanics:[['Echo Burst','circles',1500]]},
- {id:'sentinel',title:'Glassjaw Sentinel',kind:'MINI-BOSS',combatKind:'boss',enemyHealth:750,enemies:['Glassjaw Sentinel'],mechanic:'Fracture Line',mechanics:[['Fracture Line','line',1700],['Glassjaw Sweep','cone',1450]]},
- {id:'choir',title:'The Bound Choir',kind:'FINAL BOSS',combatKind:'final',enemyHealth:1000,enemies:['The Bound Choir'],mechanic:'Resonance Collapse',mechanics:[['Resonance Collapse','circle',2100],['Shattering Hymn','interrupt',2200],['Echo Choir','adds',1200]]}
+ {id:'gallery',title:'Gallery of Echoes',kind:'TRASH',combatKind:'trash',level:6,enemyTypes:['trash','trash','trash'],enemyHealth:145,enemies:['Hollowed Surveyor','Hollowed Surveyor','Glass Mite'],mechanic:'Echo Burst',mechanics:[['Echo Burst','circles',1500]]},
+ {id:'sentinel',title:'Glassjaw Sentinel',kind:'MINI-BOSS',combatKind:'boss',level:7,enemyTypes:['elite'],enemyHealth:750,enemies:['Glassjaw Sentinel'],mechanic:'Fracture Line',mechanics:[['Fracture Line','line',1700],['Glassjaw Sweep','cone',1450]]},
+ {id:'choir',title:'The Bound Choir',kind:'FINAL BOSS',combatKind:'final',level:8,enemyTypes:['boss'],enemyHealth:1000,enemies:['The Bound Choir'],mechanic:'Resonance Collapse',mechanics:[['Resonance Collapse','circle',2100],['Shattering Hymn','interrupt',2200],['Echo Choir','adds',1200]]}
 ];
 const RELIC={itemId:'quest-blackglass-resonator',name:'Blackglass Resonator',class:'All',classes:'all',slot:'Relic',tier:3,rarity:'Rare',tierLabel:'Quest Relic',enabled:true,dropEnabled:false,itemLevel:30,power:10,tradeState:'soulbound',questArtMaterial:'void-crystal',lore:'Recovered from The Bound Choir beneath Zeltira.'};
 const XP=500;
@@ -22,6 +22,7 @@ const party=()=>Game?.getPartyCharacters?.()||[];
 const role=c=>Game?.classes?.[c.class]?.specs?.[c.spec]?.role||'dps';
 const classKey=c=>'class-'+String(c?.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const ilvl=()=>Number(Game?.partyItemLevel?.())||0;
+const partyLevel=()=>{const p=party();return p.length?Math.round(p.reduce((n,c)=>n+Math.max(1,Number(c.level)||1),0)/p.length):1};
 function qstate(){return state()?.questSystem}
 function unlocked(){return Boolean(qstate()?.flags?.hollowSanctumUnlocked)}
 function firstCleared(){return Boolean(qstate()?.flags?.hollowFirstClear)}
@@ -36,7 +37,7 @@ function readiness(){
 function renderCard(){
  const mount=$('#hollowSanctumMount');if(!mount||!Game?.ready)return;
  const q=qstate(),open=Boolean(q?.flags?.hollowSanctumUnlocked),done=Boolean(q?.flags?.hollowFirstClear);
- mount.innerHTML='<article class="hs-journal '+(open?'unlocked':'locked')+'"><div class="hs-journal-art"><span>'+(open?'HOLLOW DEEP · DUNGEON':'SEALED SIGNAL · LOCATION UNKNOWN')+'</span><h3>'+(open?'The Hollow Sanctum':'Undiscovered Location')+'</h3><p>'+(open?'A sealed complex beneath Zeltira where Cell glass has grown through the stone like roots.':'Your guild has detected something beneath the old east road, but no route to it has been confirmed.')+'</p><div>'+(open?'<b>5 Adventurers</b><b>3 Stages</b><b>iLvl 24+</b>':'<b>Quest Discovery Required</b>')+'</div></div><div class="hs-journal-entry"><small>'+(open?(done?'DISCOVERED · FARMABLE':'NEWLY DISCOVERED'):'UNDISCOVERED')+'</small><h4>'+(open?'The Hollow Seal is broken.':'The map ends at sealed stone.')+'</h4><p>'+(open?'Void Crystal can be recovered here. The first clear awards the Blackglass Resonator Relic.':'Continue Echoes Beneath Zeltira to learn what is hidden here.')+'</p><button '+(open?'data-hs-enter':'data-hs-quests')+'>'+(open?'ENTER THE HOLLOW SANCTUM':'FOLLOW THE QUEST CHAIN →')+'</button></div></article>';
+ mount.innerHTML='<article class="hs-journal '+(open?'unlocked':'locked')+'"><div class="hs-journal-art"><span>'+(open?'HOLLOW DEEP · DUNGEON':'SEALED SIGNAL · LOCATION UNKNOWN')+'</span><h3>'+(open?'The Hollow Sanctum':'Undiscovered Location')+'</h3><p>'+(open?'A sealed complex beneath Zeltira where Cell glass has grown through the stone like roots.':'Your guild has detected something beneath the old east road, but no route to it has been confirmed.')+'</p><div>'+(open?'<b>5 Adventurers</b><b>Levels 6–8</b><b>iLvl 24+</b>':'<b>Quest Discovery Required</b>')+'</div></div><div class="hs-journal-entry"><small>'+(open?(done?'DISCOVERED · FARMABLE':'NEWLY DISCOVERED'):'UNDISCOVERED')+'</small><h4>'+(open?'The Hollow Seal is broken.':'The map ends at sealed stone.')+'</h4><p>'+(open?'Void Crystal can be recovered here. The first clear awards the Blackglass Resonator Relic.':'Continue Echoes Beneath Zeltira to learn what is hidden here.')+'</p><button '+(open?'data-hs-enter':'data-hs-quests')+'>'+(open?'ENTER THE HOLLOW SANCTUM':'FOLLOW THE QUEST CHAIN →')+'</button></div></article>';
  mount.querySelector('[data-hs-enter]')?.addEventListener('click',openDungeon);
  mount.querySelector('[data-hs-quests]')?.addEventListener('click',()=>Game.switchView?.('quests'));
 }
@@ -46,21 +47,21 @@ function briefing(){
    r.innerHTML='<section class="hs2d-shell hs2d-brief"><header><div><small>THE HOLLOW SANCTUM · ENTRY CHECK</small><h2>The seal is open, but the party is not ready.</h2></div><button data-close>×</button></header><div class="hs2d-blocked"><b>ENTRY BLOCKED</b><p>'+esc(gate.reason)+'</p><button data-action>'+(unlocked()?'OPEN PARTY BUILDER':'OPEN QUEST JOURNAL')+' →</button></div></section>';
    r.querySelector('[data-close]').onclick=close;r.querySelector('[data-action]').onclick=()=>{close();Game.switchView?.(unlocked()?'party':'quests')};return;
  }
- r.innerHTML='<section class="hs2d-shell hs2d-brief"><header><div><small>THE HOLLOW SANCTUM · EXPEDITION BRIEFING</small><h2>The door beneath Zeltira is breathing.</h2></div><button data-close>×</button></header><div class="hs2d-brief-grid"><main><div class="hs2d-relic-preview"><div>◆</div><span><small>FIRST-CLEAR RELIC</small><b>Blackglass Resonator</b><p>Rare · Relic · Item Level 30 · +10 Power</p></span></div><h3>What the guild knows</h3><p>Cell glass has spread through the buried masonry. The things inside react to movement and sound, then answer with violent resonance.</p><div class="hs2d-intel"><span><b>Gallery of Echoes</b><small>Moving packs and pulse damage</small></span><span><b>Glassjaw Sentinel</b><small>Line fractures across the chamber</small></span><span><b>The Bound Choir</b><small>Large resonance zones</small></span></div></main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div><i class="'+role(c)+' '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span></div>').join('')+'<button data-start>BEGIN DESCENT →</button></aside></div></section>';
+ r.innerHTML='<section class="hs2d-shell hs2d-brief"><header><div><small>THE HOLLOW SANCTUM · EXPEDITION BRIEFING</small><h2>The door beneath Zeltira is breathing.</h2></div><button data-close>×</button></header><div class="hs2d-brief-grid"><main><div class="hs2d-relic-preview"><div>◆</div><span><small>FIRST-CLEAR RELIC</small><b>Blackglass Resonator</b><p>Rare · Relic · Item Level 30 · +10 Power</p></span></div><h3>What the guild knows</h3><p>Cell glass has spread through the buried masonry. The things inside react to movement and sound, then answer with violent resonance.</p><div class="hs2d-intel"><span><b>Gallery of Echoes</b><small>Moving packs and pulse damage</small></span><span><b>Glassjaw Sentinel</b><small>Line fractures across the chamber</small></span><span><b>The Bound Choir</b><small>Large resonance zones</small></span></div></main><aside><small>ACTIVE FIVE · PARTY LV '+partyLevel()+' · ILVL '+ilvl()+'</small>'+party().map(c=>'<div><i class="'+role(c)+' '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>Lv. '+Math.max(1,Number(c.level)||1)+' · '+esc(c.class)+' · '+esc(c.spec)+'</small></span></div>').join('')+'<button data-start>BEGIN DESCENT →</button></aside></div></section>';
  r.querySelector('[data-close]').onclick=close;r.querySelector('[data-start]').onclick=start;
 }
 function openDungeon(){Game=window.CellboundGame;if(!Game?.ready)return;db=Game.getSupabase?.();briefing()}
 function close(){token++;run=null;document.body.classList.remove('hs2d-open');const r=root();r.hidden=true;Game?.switchView?.('content');renderCard()}
 function hpNeed(level){return 800+Math.max(0,(Number(level)||1)-1)*250}
 function awardXp(){
- return party().map(c=>{const beforeLevel=Math.max(1,Number(c.level)||1),beforeXp=Math.max(0,Number(c.xp)||0),beforeNeed=hpNeed(beforeLevel);let level=beforeLevel,xp=beforeXp+XP,levels=0;while(xp>=hpNeed(level)){xp-=hpNeed(level);level++;levels++}c.level=level;c.xp=xp;if(levels){c.talent=(Number(c.talent)||0)+levels;c.power=(Number(c.power)||1)+levels*2}return{name:c.name,beforeLevel,beforeXp,beforeNeed,afterLevel:level,afterXp:xp,afterNeed:hpNeed(level),levels}})
+ return party().map(c=>{const beforeLevel=Math.max(1,Number(c.level)||1),beforeXp=Math.max(0,Number(c.xp)||0),beforeNeed=hpNeed(beforeLevel);let level=beforeLevel,xp=beforeXp+XP,levels=0;while(xp>=hpNeed(level)){xp-=hpNeed(level);level++;levels++}c.level=level;c.xp=xp;if(levels){c.talent=(Number(c.talent)||0)+levels}return{name:c.name,beforeLevel,beforeXp,beforeNeed,afterLevel:level,afterXp:xp,afterNeed:hpNeed(level),levels}})
 }
 async function syncXp(gains){
  if(!db)return;const user=Game.getUser?.();if(!user)return;try{await Promise.all(gains.map(x=>db.from('characters').update({level:x.afterLevel,xp:x.afterXp,last_played_at:new Date().toISOString()}).eq('user_id',user.id).eq('name',x.name)))}catch(e){console.warn('Hollow XP sync failed',e)}
 }
 function setStatus(text){const e=$('#hs2dStatus');if(e)e.textContent=text}
 function feed(text){if(!run)return;run.log.push(text);const e=$('#hs2dFeed');if(e)e.innerHTML=run.log.slice(-7).reverse().map(x=>'<p>'+esc(x)+'</p>').join('')}
-function addUnit(id,label,cls,x,y,big=false){const e=document.createElement('div');e.className='hs2d-unit '+cls+(big?' big':'');e.dataset.hs=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+'</span><em><i></i></em>';$('#hs2dUnits').appendChild(e)}
+function addUnit(id,label,cls,x,y,big=false,meta=''){const e=document.createElement('div');e.className='hs2d-unit '+cls+(big?' big':'');e.dataset.hs=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="hs2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em><i></i></em>';$('#hs2dUnits').appendChild(e)}
 function move(id,x,y,ms=550){const e=$('[data-hs="'+id+'"]');if(!e)return;e.style.transitionDuration=ms+'ms';e.style.left=x+'%';e.style.top=y+'%'}
 function hsPoint(id){const arena=$('#hs2dArena'),e=$('[data-hs="'+id+'"]');if(!arena||!e)return null;const ar=arena.getBoundingClientRect(),r=e.getBoundingClientRect();return{x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,w:ar.width,h:ar.height}}
 function projectile(fromId,toId,kind='magic',ms=420){
@@ -104,12 +105,18 @@ async function hsMechanic(s,index){
  feed('An echo locks onto '+target.c.name+'.');const y=parseFloat($('[data-hs="p'+target.i+'"]')?.style.top)||50;move('p'+target.i,24,y>50?22:78,420);
  await wait(820);tg?.classList.add('impact');await wait(260);tg?.remove();
 }
+function hsEnemyMeta(s,index){
+ const level=Math.max(1,Number(s?.enemyLevels?.[index])||Number(s?.level)||1);
+ const type=String(s?.enemyTypes?.[index]||((s?.enemies?.length===1&&(s?.combatKind==='boss'||s?.combatKind==='final'))?'boss':'trash')).toLowerCase();
+ const labels={trash:'TRASH',elite:'ELITE',boss:'BOSS','world-boss':'WORLD BOSS',add:'ADD'};
+ return{level,type,label:labels[type]||type.toUpperCase()}
+}
 function stageEnvironment(s){const arena=$('#hs2dArena');arena.className='hs2d-arena stage-'+s.id;$('#hs2dRoom').innerHTML='<b>'+esc(s.title)+'</b><small>'+(s.id==='gallery'?'Cell glass whispers through the walls.':s.id==='sentinel'?'A guardian made of glass and bone blocks the descent.':'Several voices are speaking from one body.')+'</small>'}
 function spawnStage(s){
  stageEnvironment(s);$('#hs2dUnits').innerHTML='';$('#hs2dTelegraphs').innerHTML='';$('#hs2dFx').innerHTML='';
  const p=party(),melee=p.filter(c=>role(c)!=='healer'&&!['Hunter','Mage','Priest'].includes(c.class));
  p.forEach((c,i)=>{const r=role(c);addUnit('p'+i,c.name,'party '+r+' '+classKey(c),7,30+i*10);let x=r==='tank'?34:r==='healer'?19:(['Hunter','Mage','Priest'].includes(c.class)?22:29),y=31+i*9;setTimeout(()=>move('p'+i,x,y,750),40)});
- s.enemies.forEach((n,i)=>{const big=s.enemies.length===1;addUnit('e'+i,n,big?'enemy boss':'enemy',93,big?50:33+i*17,big);setTimeout(()=>move('e'+i,68,big?50:33+i*17,750),80)})
+ s.enemies.forEach((n,i)=>{const m=hsEnemyMeta(s,i),big=m.type==='boss'||m.type==='world-boss';addUnit('e'+i,n,big?'enemy boss':'enemy',93,big?50:33+i*17,big,'Lv. '+m.level+' · '+m.label);setTimeout(()=>move('e'+i,68,big?50:33+i*17,750),80)})
 }
 function hsRenderId(unitId){
  const id=String(unitId||'');
@@ -119,7 +126,7 @@ function hsRenderId(unitId){
 }
 function hsCharacter(unitId){const id=String(unitId||'');return id.startsWith('p-')?party().find(x=>String(x.id)===id.slice(2)):null}
 function hsAttackKind(c){return c?.class==='Hunter'?'arrow':['Mage','Priest','Druid','Evoker'].includes(c?.class)?'magic':'slash'}
-function hsRebornEncounter(s){return{id:s.id,title:s.title,kind:s.combatKind||'trash',enemies:[...s.enemies],enemyHealth:s.enemyHealth,mechanics:s.mechanics||[]}}
+function hsRebornEncounter(s){return{id:s.id,title:s.title,kind:s.combatKind||'trash',level:s.level||1,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies:[...s.enemies],enemyHealth:s.enemyHealth,mechanics:s.mechanics||[]}}
 function hsResultHealth(result){
  (result?.finalState?.players||[]).forEach(p=>{const c=party().find(x=>String(x.id)===String(p.characterId));if(c)run.hp[c.id]=Math.max(0,Math.min(100,p.maxHealth?Math.round(p.health/p.maxHealth*100):0))})
 }
@@ -142,7 +149,7 @@ function hsMechanicFromEvent(e){
 function hsClearMechanic(tokenId,impact=false){const tg=run?.telegraphs?.[tokenId];if(!tg)return;if(impact)tg.classList?.add?.('impact');setTimeout(()=>tg.remove?.(),260);delete run.telegraphs[tokenId]}
 function hsAddSpawn(e){
  const id=e.target,p=e.position||{x:75,y:50};if($('[data-hs="'+id+'"]'))return;
- addUnit(id,e.payload?.name||'Echo Add','enemy',p.x,p.y,false);const bar=$('[data-hs="'+id+'"] > em i');if(bar)bar.style.width='100%'
+ addUnit(id,e.payload?.name||'Echo Add','enemy',p.x,p.y,false,'Lv. '+(e.payload?.level||STAGES[run.stage]?.level||1)+' · '+(e.payload?.classificationLabel||'ADD'));const bar=$('[data-hs="'+id+'"] > em i');if(bar)bar.style.width='100%'
 }
 function hsResourceVisual(e){
  const id=hsRenderId(e.source);if(!id)return;
@@ -223,7 +230,7 @@ async function fightStage(s,tok,index){
 }
 function draw(){
  const s=STAGES[run.stage],r=root();r.hidden=false;
- r.innerHTML='<section class="hs2d-shell"><header><div><small>THE HOLLOW SANCTUM · LIVE 2D DUNGEON</small><h2 id="hs2dTitle">'+esc(s.title)+'</h2></div><div class="hs2d-live"><i></i>LIVE <button data-close>×</button></div></header><div class="hs2d-route">'+STAGES.map((x,i)=>'<span class="'+(i<run.stage?'done':i===run.stage?'current':'')+'"><i>'+(i+1)+'</i>'+esc(x.title)+'</span>').join('')+'</div><div class="hs2d-layout"><main><div class="hs2d-arena" id="hs2dArena"><div class="hs2d-floor"></div><div class="hs2d-crystals"><i></i><i></i><i></i><i></i><i></i></div><div id="hs2dTelegraphs"></div><div id="hs2dUnits"></div><div id="hs2dFx"></div><div class="hs2d-room" id="hs2dRoom"></div><div class="hs2d-caption"><span>EXPEDITION</span><b id="hs2dStatus">Descending…</b></div></div><div class="hs2d-feed" id="hs2dFeed"></div></main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="hs2d-member"><i class="'+role(c)+' '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span></div>').join('')+'<div class="hs2d-loot-intel"><small>KNOWN REWARDS</small><b>Tier 3 randomized equipment</b><span>Void Crystal · '+(!firstCleared()?'Blackglass Resonator first clear':'unique Relic already recovered')+'</span></div></aside></div><div id="hs2dEnd" class="hs2d-end" hidden></div></section>';
+ r.innerHTML='<section class="hs2d-shell"><header><div><small>THE HOLLOW SANCTUM · LEVELS 6–8 · LIVE 2D DUNGEON</small><h2 id="hs2dTitle">'+esc(s.title)+'</h2></div><div class="hs2d-live"><i></i>LIVE <button data-close>×</button></div></header><div class="hs2d-route">'+STAGES.map((x,i)=>'<span class="'+(i<run.stage?'done':i===run.stage?'current':'')+'"><i>'+(i+1)+'</i>'+esc(x.title)+'</span>').join('')+'</div><div class="hs2d-layout"><main><div class="hs2d-arena" id="hs2dArena"><div class="hs2d-floor"></div><div class="hs2d-crystals"><i></i><i></i><i></i><i></i><i></i></div><div id="hs2dTelegraphs"></div><div id="hs2dUnits"></div><div id="hs2dFx"></div><div class="hs2d-room" id="hs2dRoom"></div><div class="hs2d-caption"><span>EXPEDITION</span><b id="hs2dStatus">Descending…</b></div></div><div class="hs2d-feed" id="hs2dFeed"></div></main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="hs2d-member"><i class="'+role(c)+' '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span></div>').join('')+'<div class="hs2d-loot-intel"><small>KNOWN REWARDS</small><b>Tier 3 randomized equipment</b><span>Void Crystal · '+(!firstCleared()?'Blackglass Resonator first clear':'unique Relic already recovered')+'</span></div></aside></div><div id="hs2dEnd" class="hs2d-end" hidden></div></section>';
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.done&&!confirm('Leave The Hollow Sanctum?'))return;close()}
 }
 async function start(){
