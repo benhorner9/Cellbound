@@ -156,6 +156,7 @@ function remapEvents(events,aliveBosses,offset){
  return (events||[]).map(e=>{
   const x=JSON.parse(JSON.stringify(e));x.timestamp=(Number(x.timestamp)||0)+offset;
   if(map[x.source])x.source=map[x.source];if(map[x.target])x.target=map[x.target];
+  if(Array.isArray(x.statusEffects))x.statusEffects=x.statusEffects.map(st=>({...st,source:map[st?.source]||st?.source,expiresAt:Number(st?.expiresAt)>0?Number(st.expiresAt)+offset:st?.expiresAt}));
   return x
  })
 }
