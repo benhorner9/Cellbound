@@ -220,7 +220,7 @@ Storage.prototype.setItem=function(key,value){
 const WORKSPACES={
   overview:{label:'Overview',views:[['overview','Overview']]},
   guild:{label:'Guild',views:[['roster','Roster'],['party','Party'],['chat','Social'],['reports','Reports']]},
-  adventure:{label:'Adventure',views:[['quests','Quests'],['content','Dungeons'],['world','World Bosses']]},
+  adventure:{label:'Adventure',views:[['quests','Quests'],['content','Dungeons'],['endgame','Endgame'],['world','World Bosses']]},
   economy:{label:'Economy',views:[['bank','Bank'],['professions','Professions'],['trading','Trading Post']]},
   admin:{label:'Admin',views:[['admin','Admin']]}
 };
@@ -245,6 +245,7 @@ function switchView(id){
   if(id==='reports')renderReports();
   if(id==='bank')renderBank();
   if(id==='content'){renderBosses();window.CellboundHollowSanctum?.renderCard?.()}
+  if(id==='endgame')window.CellboundEndgame?.render?.()
   if(id==='roster')renderRoster();
   if(id==='quests')window.CellboundQuests?.render?.();
   window.dispatchEvent(new CustomEvent('cellbound:view-changed',{detail:{view:id,workspace:hub}}));
