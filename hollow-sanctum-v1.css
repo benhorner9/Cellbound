@@ -70,3 +70,8 @@
 .hs2d-unit.party .cbr-resource.resource-runic-power>i{background:#4ec8d5}.hs2d-unit.party .cbr-resource.resource-fury>i{background:#ab58da}
 .hs2d-unit.party .cbr-resource.resource-essence>i{background:#48bea2}
 @media(max-width:620px){.hs2d-unit.party .cbr-resource>span{display:none}}
+
+
+.hs2d-unit{will-change:left,top;backface-visibility:hidden;transition-timing-function:cubic-bezier(.22,.61,.36,1)}
+.hs2d-unit.party .cbr-resource>span{display:none!important}
+.hs2d-unit.party .cbr-resource>i{transition:width .32s ease-out}
