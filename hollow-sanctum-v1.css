@@ -736,3 +736,57 @@
 
 .hs2d-unified-shell .hs2d-environment>.hsenv{animation:hsRoomReveal .55s ease both}
 @keyframes hsRoomReveal{from{opacity:.15;filter:brightness(.72)}to{opacity:1;filter:brightness(1)}}
+
+
+/* Hollow Sanctum journal theme inside the shared dungeon browser */
+.dungeon-browser-card.hollow .hollow-art{
+  background:
+    radial-gradient(circle at 61% 44%,rgba(160,104,193,.25),transparent 20%),
+    radial-gradient(circle at 72% 68%,rgba(86,154,160,.08),transparent 22%),
+    linear-gradient(145deg,#1d1826,#0c1318 64%);
+}
+.dungeon-browser-card.hollow .hollow-art:before{
+  content:"";
+  position:absolute;
+  right:19px;
+  bottom:19px;
+  width:58px;
+  height:118px;
+  border:0;
+  clip-path:polygon(50% 0,100% 68%,70% 100%,30% 100%,0 68%);
+  background:linear-gradient(180deg,rgba(193,146,224,.7),rgba(93,61,113,.16));
+  filter:drop-shadow(0 0 17px rgba(160,101,194,.28));
+  transform:rotate(8deg);
+}
+.dungeon-browser-card.hollow .hollow-art:after{
+  content:"";
+  position:absolute;
+  right:72px;
+  bottom:12px;
+  width:29px;
+  height:72px;
+  clip-path:polygon(50% 0,100% 68%,70% 100%,30% 100%,0 68%);
+  background:linear-gradient(180deg,rgba(125,180,187,.38),rgba(60,78,87,.08));
+  transform:rotate(-10deg);
+}
+.dungeon-browser-card.hollow .hollow-art>strong{color:#bd92d4;text-shadow:0 0 22px rgba(171,110,205,.38)}
+.hollow-journal-hero{border-color:rgba(157,111,184,.17)}
+.hollow-journal-art{
+  background:
+    linear-gradient(90deg,rgba(6,10,13,.92),rgba(16,13,21,.34)),
+    radial-gradient(circle at 74% 46%,rgba(160,102,190,.29),transparent 17%),
+    radial-gradient(circle at 68% 58%,rgba(83,142,150,.08),transparent 23%),
+    linear-gradient(180deg,#17141d,#0a1115)!important;
+}
+.hollow-journal-art:before{
+  right:8%!important;bottom:-13%!important;width:43%!important;height:91%!important;
+  border:10px solid rgba(82,67,94,.64)!important;border-bottom-width:58px!important;
+  clip-path:polygon(22% 100%,22% 36%,36% 36%,36% 18%,50% 0,64% 18%,64% 36%,78% 36%,78% 100%)!important;
+  filter:drop-shadow(0 0 34px rgba(155,100,186,.13))!important;
+}
+.hollow-journal-art:after{
+  right:27%!important;top:14%!important;width:11px!important;height:52%!important;
+  background:linear-gradient(180deg,transparent,#a875c5,rgba(105,171,177,.65),transparent)!important;
+  box-shadow:0 0 28px rgba(166,111,197,.38)!important;
+}
+.hollow-journal-art .journal-eyebrow{color:#b79ac7}
