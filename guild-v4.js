@@ -290,9 +290,7 @@ function renderOverview(){
   }
 }
 function renderBosses(){
-  const pi=partyItemLevel();
-  ui.bossList.innerHTML=bosses.map((b,i)=>{const progression=currentBossProgressionUnlocked(b),ilvlOk=pi>=b.requiredItemLevel,known=Math.round(state.roster.reduce((s,c)=>s+(c.knowledge[b.id]||0),0)/Math.max(1,state.roster.length));const gate=state.bossKills[b.id]?'DEFEATED · FARMABLE':!progression?'LOCKED — DEFEAT PREVIOUS BOSS':!ilvlOk?`ITEM LEVEL REQUIRED — ${pi} / ${b.requiredItemLevel}`:'AVAILABLE';return `<article class="boss-card ${(!progression||!ilvlOk)?'boss-gated':''}"><div class="boss-visual" data-rune="${b.rune}" style="--boss-glow:${b.glow}"><span class="boss-number">BOSS ${i+1}</span></div><div class="boss-body"><div class="boss-title-row"><h3>${b.name}</h3><span class="ilvl-badge">Lv. ${b.level} · iLvl ${b.requiredItemLevel}+</span></div><p>${b.mechanic}</p><div class="boss-meta"><div><span>Your Party</span><b>iLvl ${pi||'—'}</b></div><div><span>Recommended</span><b>iLvl ${b.recommendedItemLevel}</b></div><div><span>Guild Knowledge</span><b>${known}%</b></div><div><span>Gear Drops</span><b>T1 / T2</b></div></div><div class="boss-lock">${gate}</div></div></article>`;}).join('');
-  ui.bossSelect.innerHTML=bosses.map((b,i)=>`<option value="${b.id}" ${i>0&&!state.bossKills[bosses[i-1].id]?'disabled':''}>${b.name} · Lv. ${b.level} · iLvl ${b.requiredItemLevel}${state.bossKills[b.id]?' — Farm':''}</option>`).join('');
+  if(ui.bossSelect)ui.bossSelect.innerHTML=bosses.map((b,i)=>`<option value="${b.id}" ${i>0&&!state.bossKills[bosses[i-1].id]?'disabled':''}>${b.name} · Lv. ${b.level} · iLvl ${b.requiredItemLevel}${state.bossKills[b.id]?' — Farm':''}</option>`).join('');
 }
 function bankBulkSelection(){
   [...bankBulkSelected].forEach(id=>{
