@@ -1,0 +1,86 @@
+/* Cellbound shared combat buffs & debuffs */
+.cbs-host{position:relative}
+.cbs-strip{
+  position:absolute;left:50%;top:-46px;z-index:35;
+  display:flex;align-items:center;justify-content:center;gap:3px;
+  min-width:max-content;transform:translateX(-50%);
+  pointer-events:auto
+}
+.cbs-strip[hidden]{display:none!important}
+.cbs-group{display:flex;gap:2px;align-items:center}
+.cbs-icon{
+  position:relative;width:24px;height:24px;padding:0;
+  display:grid;place-items:center;
+  border:1px solid rgba(255,255,255,.12);border-radius:5px;
+  background:rgba(5,10,12,.94);color:#dfe9e5;
+  font:900 10px/1 system-ui,sans-serif;
+  box-shadow:0 3px 8px rgba(0,0,0,.35);
+  pointer-events:auto;touch-action:manipulation
+}
+.cbs-icon.buff{border-color:rgba(92,190,128,.48);background:linear-gradient(180deg,rgba(32,88,54,.94),rgba(8,22,15,.96));color:#a9e8bd}
+.cbs-icon.debuff{border-color:rgba(214,91,75,.55);background:linear-gradient(180deg,rgba(105,39,31,.95),rgba(28,10,9,.97));color:#f1a08f}
+.cbs-icon>i{font-style:normal;font-size:11px}
+.cbs-icon>small{
+  position:absolute;right:2px;bottom:1px;
+  color:#eef3f0;font-size:6px;font-weight:900;line-height:1;
+  text-shadow:0 1px 2px #000
+}
+.cbs-icon>b{
+  position:absolute;right:-4px;top:-5px;min-width:12px;height:12px;padding:0 2px;
+  display:grid;place-items:center;border-radius:8px;
+  background:#e6d59e;color:#121816;font-size:7px
+}
+.cbs-more{
+  min-width:20px;height:20px;padding:0 3px;
+  display:grid;place-items:center;border-radius:4px;
+  font-size:7px;font-weight:900;
+  background:#11191b;border:1px solid rgba(255,255,255,.09)
+}
+.cbs-more.buff{color:#89cda0}.cbs-more.debuff{color:#df8b7a}
+
+/* Player overhead: above HP/resource stack. */
+.cb2d-unit.party>.cbs-strip,.hs2d-unit.party>.cbs-strip{top:-49px}
+.cb2d-unit.enemy>.cbs-strip,.hs2d-unit.enemy>.cbs-strip{top:-50px}
+.wb2d-unit>.cbs-strip{top:-40px}
+#wb2dBoss>.cbs-strip{top:-36px}
+.tb-unit.party>.cbs-strip{top:-49px}.tb-unit.enemy>.cbs-strip{top:-50px}
+
+/* Readable mirror inside party rows. */
+.cbs-strip.mirror{
+  position:static;left:auto;top:auto;
+  width:100%;min-width:0;margin-top:5px;
+  justify-content:flex-start;transform:none
+}
+.cbs-strip.mirror .cbs-icon{width:22px;height:22px}
+.cbs-strip.mirror .cbs-icon>small{font-size:6px}
+
+/* Tap tooltip. */
+.cbs-tooltip{
+  position:fixed;z-index:9999;width:min(280px,calc(100vw - 16px));
+  padding:11px;border:1px solid rgba(255,255,255,.13);border-radius:9px;
+  background:rgba(5,11,14,.98);color:#dce7e2;
+  box-shadow:0 12px 34px rgba(0,0,0,.48);
+  pointer-events:auto
+}
+.cbs-tooltip[hidden]{display:none!important}
+.cbs-tooltip-head{display:flex;gap:9px;align-items:center}
+.cbs-tooltip-head>i{
+  width:32px;height:32px;display:grid;place-items:center;border-radius:6px;
+  border:1px solid rgba(255,255,255,.12);font-style:normal;font-weight:900
+}
+.cbs-tooltip-head>i.buff{color:#9be0b1;background:#113020;border-color:rgba(92,190,128,.4)}
+.cbs-tooltip-head>i.debuff{color:#efa08f;background:#351512;border-color:rgba(214,91,75,.45)}
+.cbs-tooltip-head span{min-width:0}
+.cbs-tooltip-head small{display:block;color:#758782;font-size:8px;font-weight:900;letter-spacing:.11em}
+.cbs-tooltip-head b{display:block;margin-top:2px;color:#f0f4f2;font-size:13px}
+.cbs-tooltip>p{margin:9px 0;color:#9bada7;font-size:10px;line-height:1.5}
+.cbs-tooltip>div:last-child{display:grid;grid-template-columns:1fr auto;gap:3px 12px;color:#71827d;font-size:9px}
+.cbs-tooltip>div:last-child span:first-child{grid-column:1/-1}
+.cbs-tooltip>div:last-child b{color:#d9e2de}
+
+@media(max-width:620px){
+ .cbs-icon{width:21px;height:21px}
+ .cbs-strip{gap:2px;top:-43px}
+ .cb2d-unit.party>.cbs-strip,.hs2d-unit.party>.cbs-strip,.tb-unit.party>.cbs-strip{top:-43px}
+ .cbs-strip.mirror .cbs-icon{width:21px;height:21px}
+}
