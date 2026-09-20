@@ -1107,9 +1107,9 @@ function checkBossPhases(ctx){
   emit(ctx,'ENRAGE',{source:boss.id,target:boss.id,ability:'Soft Enrage',result:'soft',payload:{healthPct:hp,damageScale:boss.phaseDamageScale}})
  }
  const hardAt=Number(ctx.encounter.hardEnrageMs);
- if(!ctx.hardEnraged&&Number.isFinite(hardAt)&&hardAt>0&&ctx.time>=hardAt){
+ if(!ctx.hardEnraged&&Number.isFinite(hardAt)&&hardAt>0&&(ctx.elapsedOffsetMs+ctx.time)>=hardAt){
   ctx.hardEnraged=true;boss.hardEnraged=true;
-  emit(ctx,'ENRAGE',{source:boss.id,target:boss.id,ability:'Hard Enrage',result:'hard',payload:{timeMs:ctx.time,damageScale:3.5}})
+  emit(ctx,'ENRAGE',{source:boss.id,target:boss.id,ability:'Hard Enrage',result:'hard',payload:{timeMs:ctx.elapsedOffsetMs+ctx.time,damageScale:3.5}})
  }
 }
 
@@ -1155,10 +1155,21 @@ function simulate(options={}){
   crowdControl:options.tactics?.crowdControl||'disabled'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
+ const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
  emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
  players.forEach(u=>emitResourceState(ctx,u,'initial'));
- if(ctx.hardEnraged){const boss=enemies.find(e=>e.kind==='boss');if(boss)boss.hardEnraged=true}
+ {
+  const boss=enemies.find(e=>e.kind==='boss');
+  if(boss){
+   const phases=Array.isArray(encounter.phases)?encounter.phases:[];
+   phases.forEach((phase,index)=>{
+    const key=phase.id||('phase-'+index);
+    if(ctx.phaseTriggered[key]&&Number(phase.damageScale)>1)boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(phase.damageScale))
+   });
+   if(ctx.softEnraged)boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(encounter.softEnrageDamage)||1.22);
+   if(ctx.hardEnraged)boss.hardEnraged=true
+  }
+ }
  const tank=players.find(p=>p.role==='tank')||players[0];
  if(tank)enemies.forEach(e=>{e.threat[tank.id]=ctx.tactics.pullStyle==='safe'?250:ctx.tactics.pullStyle==='aggressive'?125:180;setAggro(ctx,e,tank,'pull')});
  maybeApplyCrowdControl(ctx);
@@ -1187,7 +1198,7 @@ function simulate(options={}){
  return{
   version:VERSION,seed,outcome,durationMs:ctx.time,events:ctx.events,summary,
   finalState:{players:copy(players),enemies:copy(enemies)},
-  continuation:{phaseTriggered:copy(ctx.phaseTriggered||{}),softEnraged:!!ctx.softEnraged,hardEnraged:!!ctx.hardEnraged,mechanicIndex:ctx.mechanicIndex,interruptCursor:ctx.interruptCursor},
+  continuation:{phaseTriggered:copy(ctx.phaseTriggered||{}),softEnraged:!!ctx.softEnraged,hardEnraged:!!ctx.hardEnraged,mechanicIndex:ctx.mechanicIndex,interruptCursor:ctx.interruptCursor,elapsedMs:ctx.elapsedOffsetMs+ctx.time},
   replay:{version:VERSION,seed,encounter:copy(encounter),events:copy(ctx.events),summary:copy(summary)}
  };
 }
