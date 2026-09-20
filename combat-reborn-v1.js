@@ -421,9 +421,6 @@ function pickDamageTarget(ctx,u){
  }
  return livingEnemies(ctx).sort((a,b)=>(b.priority||0)-(a.priority||0)||a.health-b.health)[0]||null;
 }
-function healerTarget(ctx){
- return livingPlayers(ctx).sort((a,b)=>a.health/a.maxHealth-b.health/b.maxHealth)[0]||null;
-}
 function healthRatio(u){return u?.maxHealth>0?u.health/u.maxHealth:0}
 function healerTarget(ctx){
  const alive=livingPlayers(ctx);
@@ -826,6 +823,29 @@ function runSelfTests(){
   {id:'jh',name:'Healer',class:'Priest',spec:'Holy',power:10,level:10}
  ],encounter:{...base,enemyHealth:1200,mechanics:[]},seed:'movement-smoothing'});
  test('Movement Smoothing',()=>r.events.filter(e=>e.type==='MOVEMENT_START'&&String(e.source||'').startsWith('p-')).length<45);
+ r=simulate({party:[
+  {id:'ht',name:'Tank',class:'Warrior',spec:'Protection',power:28,level:10},
+  {id:'hh',name:'Healer',class:'Paladin',spec:'Holy',power:28,level:10},
+  {id:'hd1',name:'DPS One',class:'Warrior',spec:'Arms',power:28,level:10},
+  {id:'hd2',name:'DPS Two',class:'Rogue',spec:'Assassination',power:28,level:10},
+  {id:'hd3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:28,level:10}
+ ],encounter:{id:'healer-role',title:'Healer Role',kind:'boss',enemies:['Pressure Boss'],enemyHealth:1200,mechanics:[['Tank Cleave','cone',1500]]},seed:'healer-role'});
+ test('Healer Role Priority',()=>{
+  const h=r.summary.players.find(p=>p.id==='p-hh'),tank=r.summary.players.find(p=>p.id==='p-ht');
+  return !!h&&h.damage===0&&h.healing>=100&&tank.damageTaken>=100
+ });
+ r=simulate({party:[
+  {id:'gt',name:'Tank',class:'Warrior',spec:'Protection',power:28,level:10},
+  {id:'gh',name:'Healer',class:'Paladin',spec:'Holy',power:28,level:10},
+  {id:'gd1',name:'DPS One',class:'Death Knight',spec:'Frost',power:28,level:10},
+  {id:'gd2',name:'DPS Two',class:'Death Knight',spec:'Frost',power:28,level:10},
+  {id:'gd3',name:'DPS Three',class:'Death Knight',spec:'Frost',power:28,level:10}
+ ],encounter:{id:'group-healing',title:'Group Healing',kind:'boss',enemies:['Pulse Boss'],enemyHealth:1500,mechanics:[['Raid Pulse','interrupt',1200]]},tactics:{interruptPriority:'low',movementDiscipline:'balanced'},seed:'group-healing'});
+ test('Group Healing',()=>{
+  const events=r.events.filter(e=>e.type==='HEAL_RECEIVED'&&e.source==='p-gh'&&e.ability==='Light of Dawn');
+  return new Set(events.map(e=>e.target)).size>=3
+ });
+
 
 
  return{version:VERSION,passed:tests.filter(x=>x.pass).length,total:tests.length,tests};
