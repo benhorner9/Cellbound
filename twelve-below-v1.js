@@ -9,18 +9,18 @@ const SPAWN_MS=30000,DAILY_ATTEMPTS=3;
 let Game=null,run=null,playToken=0,playSpeed=1,clockTimer=null,playStartedAt=0,playBaseMs=0;
 
 const BOSSES=[
- {id:'wrath',name:'Wrath, the Blood King',rune:'✦',vice:'WRATH',health:1080,mechanics:[{name:'Bloodrage Cleave',type:'cone',duration:1500}]},
- {id:'greed',name:'Greed, the Gilded Miser',rune:'◆',vice:'GREED',health:1160,mechanics:[{name:'Claim the Living',type:'interrupt',duration:2100,priority:'critical'}]},
- {id:'pride',name:'Pride, the Fallen Champion',rune:'♜',vice:'PRIDE',health:1240,mechanics:[{name:'Royal Fixation',type:'line',duration:1600}]},
- {id:'envy',name:'Envy, the Mirror Queen',rune:'◇',vice:'ENVY',health:1320,mechanics:[{name:'Borrowed Reflection',type:'circles',duration:1500}]},
- {id:'gluttony',name:'Gluttony, the Devourer',rune:'●',vice:'GLUTTONY',health:1400,mechanics:[{name:'Feast of the Dead',type:'adds',duration:1200}]},
- {id:'lust',name:'Lust, the Grave Siren',rune:'☾',vice:'LUST',health:1480,mechanics:[{name:'Funeral Fascination',type:'line',duration:1500}]},
- {id:'sloth',name:'Sloth, the Ancient Sleeper',rune:'◌',vice:'SLOTH',health:1560,mechanics:[{name:'Weight of Ages',type:'circle',duration:1650}]},
- {id:'deceit',name:'Deceit, the Masked Priest',rune:'◈',vice:'DECEIT',health:1660,mechanics:[{name:'False Procession',type:'circles',duration:1450}]},
- {id:'cowardice',name:'Cowardice, the Buried Prince',rune:'♟',vice:'COWARDICE',health:1760,mechanics:[{name:'Call the Tombguard',type:'adds',duration:1200}]},
- {id:'cruelty',name:'Cruelty, the Bone Torturer',rune:'†',vice:'CRUELTY',health:1880,mechanics:[{name:'Agony Brand',type:'line',duration:1350}]},
- {id:'vanity',name:'Vanity, the Glass Empress',rune:'✧',vice:'VANITY',health:2020,mechanics:[{name:'Perfect Reflection',type:'cone',duration:1350}]},
- {id:'despair',name:'Despair, the Last Mourner',rune:'☍',vice:'DESPAIR',health:2200,mechanics:[{name:'No Hope Remains',type:'interrupt',duration:1850,priority:'critical'},{name:'Grief Without End',type:'circles',duration:1300}]}
+ {id:'wrath',name:'Wrath, the Blood King',rune:'✦',vice:'WRATH',health:800,mechanics:[{name:'Bloodrage Cleave',type:'cone',duration:1500}]},
+ {id:'greed',name:'Greed, the Gilded Miser',rune:'◆',vice:'GREED',health:850,mechanics:[{name:'Claim the Living',type:'interrupt',duration:2100,priority:'critical'}]},
+ {id:'pride',name:'Pride, the Fallen Champion',rune:'♜',vice:'PRIDE',health:910,mechanics:[{name:'Royal Fixation',type:'line',duration:1600}]},
+ {id:'envy',name:'Envy, the Mirror Queen',rune:'◇',vice:'ENVY',health:980,mechanics:[{name:'Borrowed Reflection',type:'circles',duration:1500}]},
+ {id:'gluttony',name:'Gluttony, the Devourer',rune:'●',vice:'GLUTTONY',health:1060,mechanics:[{name:'Feast of the Dead',type:'adds',duration:1200}]},
+ {id:'lust',name:'Lust, the Grave Siren',rune:'☾',vice:'LUST',health:1150,mechanics:[{name:'Funeral Fascination',type:'line',duration:1500}]},
+ {id:'sloth',name:'Sloth, the Ancient Sleeper',rune:'◌',vice:'SLOTH',health:1250,mechanics:[{name:'Weight of Ages',type:'circle',duration:1650}]},
+ {id:'deceit',name:'Deceit, the Masked Priest',rune:'◈',vice:'DECEIT',health:1370,mechanics:[{name:'False Procession',type:'circles',duration:1450}]},
+ {id:'cowardice',name:'Cowardice, the Buried Prince',rune:'♟',vice:'COWARDICE',health:1500,mechanics:[{name:'Call the Tombguard',type:'adds',duration:1200}]},
+ {id:'cruelty',name:'Cruelty, the Bone Torturer',rune:'†',vice:'CRUELTY',health:1640,mechanics:[{name:'Agony Brand',type:'line',duration:1350}]},
+ {id:'vanity',name:'Vanity, the Glass Empress',rune:'✧',vice:'VANITY',health:1800,mechanics:[{name:'Perfect Reflection',type:'cone',duration:1350}]},
+ {id:'despair',name:'Despair, the Last Mourner',rune:'☍',vice:'DESPAIR',health:1980,mechanics:[{name:'No Hope Remains',type:'interrupt',duration:1850,priority:'critical'},{name:'Grief Without End',type:'circles',duration:1300}]}
 ];
 
 const RELICS=[
@@ -102,14 +102,14 @@ function openBriefing(){
  root.querySelector('[data-tb-start]')?.addEventListener('click',startRun)
 }
 
-function carryParty(base,finalPlayers,downtimeSec=0){
+function carryParty(base,finalPlayers,downtimeSec=0,elapsedMs=0){
  return base.map(c=>{
   const p=finalPlayers.find(x=>x.characterId===c.id),next={...c,_combatItemLevel:Game.characterItemLevel(c)};
   if(!p)return next;
   const pct=p.maxHealth?clamp(p.health/p.maxHealth*100,0,100):0;
   next._combatHealthPct=clamp(pct+downtimeSec*.75,0,100);
   next._combatResource={value:p.resource?.value};
-  next._combatCooldowns=Object.fromEntries(Object.entries(p.cooldowns||{}).map(([k,v])=>[k,Math.max(0,(Number(v)||0))]));
+  next._combatCooldowns=Object.fromEntries(Object.entries(p.cooldowns||{}).map(([k,v])=>[k,Math.max(0,(Number(v)||0)-elapsedMs)]));
   next._combatUniqueUsed={...(p.uniqueUsed||{})};
   return next
  })
@@ -134,7 +134,7 @@ function simulateRun(){
 
  const playSlice=(offset,maxDuration,cleanup=0)=>{
    const mechanics=aliveBosses.flatMap(b=>b.mechanics||[]),level=avgLevel+1+Math.floor((spawned.size-1)/3);
-   const encounter={id:'twelve-below-'+spawned.size+'-'+cleanup,kind:'world-boss',level,recommendedItemLevel:Math.max(24,26+Math.floor((spawned.size-1)/3)*2),enemies:aliveBosses.map(enemyInput),mechanics,mechanicIntervalMs:Math.max(2400,4300-aliveBosses.length*180),scaling:{enemyHealth:1,enemyDamage:(.74+Math.min(.34,(spawned.size-1)*.025))*(1+cleanup*.12)}};
+   const encounter={id:'twelve-below-'+spawned.size+'-'+cleanup,kind:'world-boss',level,recommendedItemLevel:Math.max(24,26+Math.floor((spawned.size-1)/3)*2),enemies:aliveBosses.map(enemyInput),mechanics,mechanicIntervalMs:Math.max(2400,4300-aliveBosses.length*180),scaling:{enemyHealth:1,enemyDamage:(.48+Math.min(.30,(spawned.size-1)*.018))*(1+cleanup*.12)}};
    const result=Combat.simulate({party:carried,encounter,tactics:{interruptPriority:'high',addPriority:'priority',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced',cooldownUse:'difficult'},seed:'twelve:'+todayKey()+':'+eventState().attemptsUsed+':'+offset,maxDurationMs:maxDuration,elapsedOffsetMs:offset});
    timeline.push(...remapEvents(result.events,aliveBosses,offset));
    segments.push(result);lastPlayers=result.finalState.players||[];
@@ -146,7 +146,7 @@ function simulateRun(){
    });
    aliveBosses=next;
    const downtime=result.outcome==='victory'?Math.max(0,(maxDuration-result.durationMs)/1000):0;
-   carried=carryParty(carried,result.finalState.players||[],downtime);
+   carried=carryParty(carried,result.finalState.players||[],downtime,result.durationMs);
    endMs=offset+Math.min(maxDuration,result.durationMs);
    return result
  };
