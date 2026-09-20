@@ -367,6 +367,55 @@ function recoverDungeonResources(){
  })
 }
 
+
+function advanceDungeonCooldowns(ms){
+ if(!run?.cooldowns)return;
+ const amount=Math.max(0,Number(ms)||0);
+ Object.values(run.cooldowns).forEach(map=>Object.keys(map||{}).forEach(k=>map[k]=Math.max(0,(Number(map[k])||0)-amount)));
+ Object.keys(run.reviveSickness||{}).forEach(id=>run.reviveSickness[id]=Math.max(0,(Number(run.reviveSickness[id])||0)-amount));
+ run.expeditionTimeMs=(Number(run.expeditionTimeMs)||0)+amount
+}
+function reviveResourceState(c,pctValue=20){
+ const def=resourceDefFor(c),cur=run.resources?.[c.id]||{name:def.name,max:def.max,value:def.start},max=Math.max(1,Number(cur.max)||def.max||100);
+ const value=Math.max(0,Math.min(max,max*pctValue/100));run.resources[c.id]={name:cur.name||def.name,max,value};
+ const bar=mountRebornResourceBar(c);if(bar)updateResourceBarElement(bar,cur.name||def.name,value,max,'PLAYER_REVIVED')
+}
+function restoreUnitVisual(c){
+ const u=$('[data-unit="p-'+c.id+'"]');if(!u)return;
+ u.classList.remove('dead','dying','wiped');u.style.opacity='';
+ const hpBar=u.querySelector('.cb2d-unit-hp i');if(hpBar)hpBar.style.width=hp(c.id)+'%'
+}
+async function recoverFallenBetweenStages(tok){
+ if(tok!==token||!run)return false;
+ let fallen=party().filter(c=>hp(c.id)<=0);if(!fallen.length)return true;
+ let healer=party().find(c=>role(c)==='healer'&&hp(c.id)>0);
+ if(!healer){
+   healer=party().find(c=>role(c)==='healer');
+   if(!healer)return false;
+   status('Healer returning from checkpoint…');log(healer.name+' releases and runs back from the last checkpoint.');
+   act('healer',healer.name+' · Returning to the group');await delay(700);
+   if(tok!==token||!run)return false;
+   advanceDungeonCooldowns(15000);setHp(healer.id,35);reviveResourceState(healer,25);run.reviveSickness[healer.id]=15000;restoreUnitVisual(healer);updateRows();
+   fallen=party().filter(c=>hp(c.id)<=0)
+ }
+ for(const c of fallen){
+   if(c.id===healer.id)continue;
+   const now=Number(run.expeditionTimeMs)||0,ready=Number(run.reviveReadyAt)||0;
+   if(ready>now){
+     const wait=ready-now;status('Revive recharging · party regroups');log('The party waits '+Math.ceil(wait/1000)+'s for Revive to recover.');
+     act('healer',healer.name+' · Revive cooldown');await delay(600);advanceDungeonCooldowns(wait)
+   }
+   const targetPos=pctPosition('p-'+c.id),from=pctPosition('p-'+healer.id);
+   move('p-'+healer.id,Math.max(6,targetPos.x-5),targetPos.y,520);status('Revive · 4.0s');act('healer',healer.name+' · Reviving '+c.name);log(healer.name+' begins Revive on '+c.name+'.');
+   await delay(700);if(tok!==token||!run)return false;
+   projectile('p-'+healer.id,'p-'+c.id,'heal',320);await delay(650);if(tok!==token||!run)return false;
+   setHp(c.id,35);reviveResourceState(c,20);run.reviveSickness[c.id]=15000;restoreUnitVisual(c);updateRows();hitReact('p-'+c.id,'heal');floating('p-'+c.id,'REVIVED','heal');flash('REVIVED',false);
+   log(c.name+' returns at 35% health with resurrection sickness.');run.outOfCombatRevives=(Number(run.outOfCombatRevives)||0)+1;
+   advanceDungeonCooldowns(4000);run.reviveReadyAt=run.expeditionTimeMs+45000
+ }
+ return party().every(c=>hp(c.id)>0)
+}
+
 function stageEnemyMeta(s,index){
  const level=Math.max(1,Number(s?.enemyLevels?.[index])||Number(s?.level)||1);
  const type=String(s?.enemyTypes?.[index]||((s?.enemies?.length===1&&(s?.kind==='boss'||s?.kind==='final'))?'boss':(s?.kind==='event'?'elite':'trash'))).toLowerCase();
@@ -1355,7 +1404,7 @@ function captureRebornResult(result){
   const c=rebornPlayerByUnit(p.id);if(!c)return;
   setHp(c.id,p.alive?Math.max(0,Number(p.health)/Math.max(1,Number(p.maxHealth))*100):0);
   if(p.resource)run.resources[c.id]={name:p.resource.name,max:p.resource.max,value:p.resource.value};
-  run.cooldowns[c.id]=copyObject(p.cooldowns||{});
+  run.cooldowns[c.id]=Object.fromEntries(Object.entries(copyObject(p.cooldowns||{})).filter(([,v])=>Number(v)>0));
   run.reviveSickness[c.id]=Math.max(0,(Number(p.revivePenaltyUntil)||0)-Number(result.durationMs||0));
  });
  run.expeditionTimeMs=(Number(run.expeditionTimeMs)||0)+Number(result.durationMs||0);
@@ -1403,7 +1452,7 @@ async function seamlessFrom(startIndex,tok){
    captureRebornResult(result);run.stageOutcome=result.outcome==='victory';run.allowKill=true;
    await playRebornTimeline(result,tok);
    if(!await resolveStage(s)||tok!==token)return;
-   if(i<STAGES.length-1){party().forEach(c=>setHp(c.id,Math.min(100,hp(c.id)+6)));recoverDungeonResources();updateRows();flash('PATH CLEAR',false);await delay(420);await travelDeeper(STAGES[i+1],tok)}
+   if(i<STAGES.length-1){const recovered=await recoverFallenBetweenStages(tok);if(!recovered||tok!==token)return;party().forEach(c=>{if(hp(c.id)>0)setHp(c.id,Math.min(100,hp(c.id)+6))});recoverDungeonResources();advanceDungeonCooldowns(5000);updateRows();flash('PATH CLEAR',false);await delay(420);await travelDeeper(STAGES[i+1],tok)}
   }
   const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;st.gold+=120;st.renown+=60;run.loot.gold+=120;run.loot.renown+=60;run.loot.xp=ASHEN_VAULT_XP;run.xpGrowth=awardPartyXp(ASHEN_VAULT_XP);st.dungeonCompletions++;const completedPartyIds=party().map(c=>c.id);st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',partyIlvl:ilvl(),xpPerCharacter:ASHEN_VAULT_XP,partyIds:completedPartyIds,combatVersion:window.CellboundCombatReborn?.VERSION||'legacy'});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault cleared through Combat Reborn simulation. Each adventurer earned '+ASHEN_VAULT_XP+' XP.');run.xpGrowth.filter(x=>x.levels>0).forEach(x=>st.activity.push(x.name+' reached Level '+x.afterLevel+'.'));await Game.persistState();await syncPartyXpRecords(run.xpGrowth);window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'ashen-vault',partyIds:completedPartyIds}}));finish(true,STAGES[6]);appendRebornAnalysis($('#cb2dEnd'))
  }catch(e){
