@@ -189,11 +189,24 @@ function updateRows(){
    const marker=$('[data-unit="p-'+c.id+'"]');if(marker)marker.classList.toggle('dead',hp(c.id)<=0);
  })
 }
+function queueCombatMeterRender(includeHealing=false){
+ if(!run)return;
+ if(includeHealing)run.pendingHealingMeter=true;
+ if(run.meterRenderPending)return;
+ const since=performance.now()-(Number(run.lastMeterAt)||0),wait=Math.max(0,110-since);
+ run.meterRenderPending=true;
+ setTimeout(()=>requestAnimationFrame(()=>{
+   if(!run)return;
+   run.meterRenderPending=false;run.lastMeterAt=performance.now();
+   renderCombatMeters();
+   if(run.pendingHealingMeter){run.pendingHealingMeter=false;renderRebornHealingMeter()}
+ }),wait)
+}
 function recordDamage(c,amount){
  if(!run||!c)return;
  const dealt=Math.max(0,Math.round(Number(amount)||0));if(!dealt)return;
  run.damageDone=run.damageDone||{};run.damageDone[c.id]=(Number(run.damageDone[c.id])||0)+dealt;
- renderCombatMeters();
+ queueCombatMeterRender();
 }
 function meterRole(c){return classKey(c)}
 function renderCombatMeters(){
@@ -1064,7 +1077,7 @@ function renderRebornHealingMeter(){
 function recordRebornHealing(c,amount,over=0){
  if(!run||!c)return;run.healingDone=run.healingDone||{};run.overhealing=run.overhealing||{};
  run.healingDone[c.id]=(Number(run.healingDone[c.id])||0)+Math.max(0,Math.round(Number(amount)||0));
- run.overhealing[c.id]=(Number(run.overhealing[c.id])||0)+Math.max(0,Math.round(Number(over)||0));renderRebornHealingMeter()
+ run.overhealing[c.id]=(Number(run.overhealing[c.id])||0)+Math.max(0,Math.round(Number(over)||0));queueCombatMeterRender(true)
 }
 function rebornResourceVisual(e){
  if(!e?.source||!String(e.source).startsWith('p-'))return;
@@ -1147,9 +1160,9 @@ function renderRebornEvent(e,result,replayMode=false){
    break;
   case'RESOURCE_SPENT':case'RESOURCE_GAINED':case'RESOURCE_STATE':rebornResourceVisual(e);break;
   case'THREAT_GENERATED':
-   if(enemyIdx>=0&&srcChar&&run.threat?.[enemyIdx]){run.threat[enemyIdx][srcChar.id]=Number(e.payload?.total)||0;renderCombatMeters()}break;
+   if(enemyIdx>=0&&srcChar&&run.threat?.[enemyIdx]){run.threat[enemyIdx][srcChar.id]=Number(e.payload?.total)||0;queueCombatMeterRender()}break;
   case'AGGRO_CHANGED':
-   if(sourceEnemyIdx>=0&&targetChar){run.aggro[sourceEnemyIdx]=targetChar.id;showThreatLink(sourceEnemyIdx,targetChar);renderCombatMeters();if(role(targetChar)!=='tank')log(targetChar.name+' pulls aggro.')}
+   if(sourceEnemyIdx>=0&&targetChar){run.aggro[sourceEnemyIdx]=targetChar.id;showThreatLink(sourceEnemyIdx,targetChar);queueCombatMeterRender();if(role(targetChar)!=='tank')log(targetChar.name+' pulls aggro.')}
    break;
   case'MECHANIC_TELEGRAPH':
    rebornTelegraph(e);status((e.ability||'Mechanic')+' incoming');break;
