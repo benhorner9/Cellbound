@@ -145,10 +145,10 @@ function normalisePlayer(c,i){
  const baseHp=tank?185:healer?115:125;
  const power=Math.max(1,Number(c?.power)||1);
  const level=Math.max(1,Number(c?.level)||1);
- const maxHealth=Math.round(baseHp+(power*1.8)+(level-1)*3);
+ const maxHealth=Math.round(baseHp+(power*1.8)+(level-1)*3),startPct=clamp(c?._combatHealthPct==null?100:Number(c._combatHealthPct),0,100),startHealth=Math.round(maxHealth*startPct/100);
  return{
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
-  maxHealth,health:maxHealth,alive:true,position:{x:tank?42:role==='healer'?18:28,y:26+i*12},facing:0,
+  maxHealth,health:startHealth,alive:startHealth>0,position:{x:tank?42:role==='healer'?18:28,y:26+i*12},facing:0,
   target:null,focus:null,gcdUntil:0,currentCast:null,cooldowns:{},statuses:{},resource:{name:res.name,max:res.max,value:res.start,regen:res.regen},
   abilities:copy(abilityPool(c,role)),power,level,talents:talentRanks(c),knowledge:copy(c.knowledge||{}),
   defensiveUntil:0,nextDecision:0,nextRegen:0,original:c
