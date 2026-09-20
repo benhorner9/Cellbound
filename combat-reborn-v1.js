@@ -53,6 +53,8 @@ function scalingValue(ctx,key,fallback=1){const v=Number(ctx?.encounter?.scaling
 function enemyPressure(ctx,e,target){
  let mult=levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,target?.level||1)*(Number(e.damageScale)||1);
  if(hasAffix(ctx,'blood-moon')&&healthRatio(e)<=.30)mult*=1.25;
+ if(ctx.tactics?.pullStyle==='aggressive'&&e.classification!=='boss'&&e.classification!=='world-boss')mult*=1.10;
+ if(ctx.tactics?.pullStyle==='safe'&&e.classification!=='boss'&&e.classification!=='world-boss')mult*=.94;
  if(Number(e.relentlessUntil)>ctx.time)mult*=1.18;
  mult*=Math.max(1,Number(e.phaseDamageScale)||1);
  if(e.hardEnraged)mult*=3.5;
@@ -676,6 +678,26 @@ function scheduleUnstableGround(ctx){
  },'affix-ground-start')
 }
 
+
+function isCrowdControlled(u){
+ return Object.values(u?.statuses||{}).some(s=>s?.cc&&Number(s.expiresAt)>0);
+}
+function maybeApplyCrowdControl(ctx){
+ const policy=ctx.tactics?.crowdControl||'disabled';
+ if(policy==='disabled'||ctx.ccApplied)return;
+ const candidates=livingEnemies(ctx).filter(e=>e.kind!=='boss'&&e.classification!=='world-boss');
+ if(!candidates.length)return;
+ const target=(policy==='priority-elites'?candidates.filter(e=>e.classification==='elite'||e.isAdd):candidates)
+   .sort((a,b)=>(b.priority||0)-(a.priority||0)||b.maxHealth-a.maxHealth)[0];
+ if(!target)return;
+ const controller=livingPlayers(ctx).filter(p=>p.role==='dps').sort((a,b)=>executionQuality(ctx,b)-executionQuality(ctx,a))[0];
+ if(!controller)return;
+ ctx.ccApplied=true;
+ const duration=policy==='enabled'?1800:2600;
+ applyStatus(ctx,controller,target,{id:'tactical-control',name:'Tactical Crowd Control',kind:'debuff',duration,cc:'stun',breakOnDamage:false});
+ emit(ctx,'CROWD_CONTROL',{source:controller.id,target:target.id,ability:'Tactical Crowd Control',result:'applied',payload:{duration,policy}});
+}
+
 function pickDamageTarget(ctx,u){
  const adds=livingEnemies(ctx).filter(e=>e.isAdd);
  if(adds.length&&ctx.tactics.addPriority!=='boss'){
@@ -693,7 +715,16 @@ function healerTarget(ctx){
  })[0]||null
 }
 function chooseAbility(ctx,u,target){
- const pool=u.abilities.filter(a=>a.kind!=='interrupt'&&a.kind!=='taunt'&&cooldownReady(u,a)&&(a.cost||0)<=u.resource.value);
+ let pool=u.abilities.filter(a=>a.kind!=='interrupt'&&a.kind!=='taunt'&&cooldownReady(u,a)&&(a.cost||0)<=u.resource.value);
+ const cdPolicy=ctx.tactics?.cooldownUse||'difficult';
+ if(u.role!=='healer'){
+   const long=a=>(Number(a.cd)||0)>=6000;
+   if(cdPolicy==='bosses'&&!['boss','final'].includes(ctx.encounter.kind)){
+     const held=pool.filter(a=>!long(a));if(held.length)pool=held
+   }else if(cdPolicy==='difficult'&&!['boss','final','event'].includes(ctx.encounter.kind)&&combatPressure(ctx)<.55){
+     const held=pool.filter(a=>!long(a));if(held.length)pool=held
+   }
+ }
  if(u.role==='healer'){
   const alive=livingPlayers(ctx),tank=alive.find(p=>p.role==='tank'),low=healerTarget(ctx),dead=deadPlayers(ctx);
   const battleRez=pool.find(a=>a.kind==='battle-rez');
@@ -851,7 +882,7 @@ function playerAI(ctx,u){
  if(pick)startAbility(ctx,u,pick.ability,pick.target);
 }
 function enemyBasicAttack(ctx,e){
- if(!e.alive||ctx.time<e.movingUntil)return;
+ if(!e.alive||ctx.time<e.movingUntil||isCrowdControlled(e))return;
  const target=topThreatTarget(ctx,e)||livingPlayers(ctx)[0];if(!target)return;
  setAggro(ctx,e,target,'threat');
  if(!inRange(e,target,5)||!hasLineOfSight(ctx,e,target)){
@@ -903,9 +934,20 @@ function tryInterrupt(ctx,e,mechanic,castToken){
   .filter(x=>x.a&&inRange(x.u,e,x.a.range||10)&&hasLineOfSight(ctx,x.u,e));
  ctx.stats.interrupts.attempts++;
  if(!candidates.length){ctx.stats.interrupts.missedCritical++;return}
- candidates.sort((a,b)=>executionQuality(ctx,b.u)-executionQuality(ctx,a.u)||(a.a.cd||0)-(b.a.cd||0));
+ const assignment=ctx.tactics?.interruptAssignment||'best';
+ if(assignment==='tank'){
+   candidates.sort((a,b)=>(a.u.role==='tank'?-1:0)-(b.u.role==='tank'?-1:0)||executionQuality(ctx,b.u)-executionQuality(ctx,a.u))
+ }else if(assignment==='dps-rotation'){
+   const dps=candidates.filter(x=>x.u.role==='dps');
+   if(dps.length){
+     dps.sort((a,b)=>String(a.u.id).localeCompare(String(b.u.id)));
+     const pick=dps[(ctx.interruptCursor||0)%dps.length];ctx.interruptCursor=(ctx.interruptCursor||0)+1;
+     candidates.splice(0,candidates.length,pick,...candidates.filter(x=>x!==pick))
+   }else candidates.sort((a,b)=>executionQuality(ctx,b.u)-executionQuality(ctx,a.u))
+ }else candidates.sort((a,b)=>executionQuality(ctx,b.u)-executionQuality(ctx,a.u)||(a.a.cd||0)-(b.a.cd||0));
  const chosen=candidates[0],u=chosen.u,a=chosen.a;
- const should=policy==='high'||policy==='standard'||(policy==='low'&&ctx.encounter.kind==='final');
+ const danger=mechanic?.priority==='critical'||mechanic?.danger==='high'||/heal|fatal|wipe|obliterate|cataclysm|surge/i.test(String(mechanic?.name||''));
+ const should=policy==='high'||policy==='standard'||(policy==='low'&&(ctx.encounter.kind==='final'||danger))||(policy==='danger-only'&&danger);
  if(!should){ctx.stats.interrupts.missedCritical++;return}
  let reaction=executionReaction(ctx,u,'interrupt')+(policy==='high'?-120:policy==='low'?180:0);
  const error=shouldMistake(ctx,u,'interrupt',5000);
@@ -954,6 +996,10 @@ function spawnAdds(ctx,e){
   const random=livingPlayers(ctx)[Math.floor(ctx.rng()*livingPlayers(ctx).length)];if(random)add.threat[random.id]=120;
   setAggro(ctx,add,topThreatTarget(ctx,add),'spawn');
   emit(ctx,'ADD_SPAWNED',{source:e.id,target:add.id,ability:'Summon',result:'spawned',position:copy(add.position),payload:{name:add.name,maxHealth:add.maxHealth,target:add.target,level:add.level,classification:add.classification,classificationLabel:add.classificationLabel}});
+  if(ctx.tactics?.crowdControl==='priority-elites'){
+    const controller=livingPlayers(ctx).filter(p=>p.role==='dps').sort((a,b)=>executionQuality(ctx,b)-executionQuality(ctx,a))[0];
+    if(controller&&i===0){applyStatus(ctx,controller,add,{id:'tactical-control-add-'+id,name:'Tactical Crowd Control',kind:'debuff',duration:1800,cc:'stun'});emit(ctx,'CROWD_CONTROL',{source:controller.id,target:add.id,ability:'Tactical Crowd Control',result:'applied',payload:{duration:1800,policy:'priority-elites'}})}
+  }
  }
 }
 function resolveMechanic(ctx,e,m,token){
@@ -1000,7 +1046,7 @@ function resolveMechanic(ctx,e,m,token){
  mechanicStat(ctx,m.type||'unknown',false);scheduleNextMechanic(ctx);
 }
 function startMechanic(ctx,m){
- const enemy=livingEnemies(ctx).find(x=>x.kind==='boss')||livingEnemies(ctx)[0];if(!enemy)return;
+ const enemy=livingEnemies(ctx).find(x=>x.kind==='boss')||livingEnemies(ctx).find(x=>!isCrowdControlled(x))||livingEnemies(ctx)[0];if(!enemy)return;
  const token='m'+(++ctx.mechanicSeq),duration=Math.max(520,Math.round((Number(m.duration)||1600)*scalingValue(ctx,'castSpeed',1)));
  const castState={token,enemy:enemy.id,name:m.name,type:m.type,interrupted:false,ends:ctx.time+duration,responses:{},reactionMs:{},targetId:null,targetIds:[]};
  const live=livingPlayers(ctx);
@@ -1074,7 +1120,7 @@ function scheduleNextMechanic(ctx){
 }
 function normaliseMechanics(encounter){
  return (encounter.mechanics||[]).map(x=>Array.isArray(x)?{name:x[0],type:x[1],duration:x[2]}:{
-  name:x.name||'Mechanic',type:x.type||'circle',duration:x.duration||x.cast||1600
+  name:x.name||'Mechanic',type:x.type||'circle',duration:x.duration||x.cast||1600,priority:x.priority||null,danger:x.danger||null
  });
 }
 function buildSummary(ctx,outcome){
@@ -1100,14 +1146,18 @@ function simulate(options={}){
   addPriority:options.tactics?.addPriority||options.tactics?.adds||'balanced',
   defensiveUsage:options.tactics?.defensiveUsage||options.tactics?.defensives||'standard',
   pullStyle:options.tactics?.pullStyle||options.tactics?.aggression||'normal',
-  movementDiscipline:options.tactics?.movementDiscipline||'balanced'
+  movementDiscipline:options.tactics?.movementDiscipline||'balanced',
+  cooldownUse:options.tactics?.cooldownUse||'difficult',
+  interruptAssignment:options.tactics?.interruptAssignment||'best',
+  crowdControl:options.tactics?.crowdControl||'disabled'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:0,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,phaseTriggered:{},softEnraged:false,hardEnraged:false,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
+ const ctx={time:0,rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:0,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:0,ccApplied:false,phaseTriggered:{},softEnraged:false,hardEnraged:false,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
  emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
  players.forEach(u=>emitResourceState(ctx,u,'initial'));
  const tank=players.find(p=>p.role==='tank')||players[0];
- if(tank)enemies.forEach(e=>{e.threat[tank.id]=180;setAggro(ctx,e,tank,'pull')});
+ if(tank)enemies.forEach(e=>{e.threat[tank.id]=ctx.tactics.pullStyle==='safe'?250:ctx.tactics.pullStyle==='aggressive'?125:180;setAggro(ctx,e,tank,'pull')});
+ maybeApplyCrowdControl(ctx);
  scheduleNextMechanic(ctx);scheduleUnstableGround(ctx);
 
  let outcome='defeat';
