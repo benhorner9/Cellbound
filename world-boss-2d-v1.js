@@ -302,6 +302,7 @@ async function combatState(){
   return data;
 }
 async function refresh(){
+  if(attackBusy)return;
   const data=await combatState();if(!data||!active)return;
   active.boss=data.boss||active.boss;const parts=Array.isArray(data.participants)?data.participants:[];
   active.partyThreat=data.yourPartyThreat||{};active.combatState=data.yourCombatState||active.combatState||{};checkDamageChanges(parts);renderParticipants(parts);renderCombatMeters(parts,active.partyThreat);bossHealth(active.boss);
