@@ -206,6 +206,8 @@ function hsRenderRebornEvent(e){
   case'HEAL_RECEIVED':
    if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));run.hp[targetChar.id]=pct;hsBar(target,pct);hsFloat(target,'+'+Math.round(Number(e.amount)||0),'heal')}
    break;
+  case'PHASE_CHANGE':feed((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');setStatus(e.ability||'Phase change');break;
+  case'ENRAGE':feed((e.ability||'The boss enrages')+'.');setStatus(e.result==='hard'?'HARD ENRAGE — finish now':(e.ability||'Enrage'));break;
   case'UNIQUE_EFFECT_TRIGGER':if(srcChar){feed(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');hsFloat(src,e.ability||'UNIQUE','heal');setStatus((e.ability||'Unique effect')+' activated.')}break;
   case'AFFIX_TRIGGER':feed((e.ability||'Dungeon affix')+' · '+String(e.result||'triggered').replace(/-/g,' ')+'.');break;
   case'ENEMY_REVIVED':if(target){const el=$('[data-hs="'+target+'"]');if(el)el.classList.remove('dead');hsBar(target,Number(e.payload?.targetHpPct)||35);hsFloat(target,'RETURNS','incoming');feed('Necromantic returns an enemy to the fight.')}break;
