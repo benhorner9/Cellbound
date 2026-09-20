@@ -50,7 +50,7 @@ const DUNGEONS={
  'ashen-vault':{
    id:'ashen-vault',name:'The Ashen Vault',version:2,theme:'Ashbound Forge',
    faction:'Ashbound Cult',levelRange:[3,5],normalItemLevel:18,heroicItemLevel:22,cellboundItemLevel:24,
-   timerMs:28*60*1000,
+   timerMs:12*60*1000,
    identity:'Fire, forge hazards, add control and interrupt pressure.',
    bosses:[
      {id:'ashwarden',name:'Ash Warden Kael',signature:'Frontal control and Cinder Guard adds.'},
@@ -62,13 +62,14 @@ const DUNGEONS={
      embermaw:[{name:'Scorching Wake',type:'circles',duration:1500}],
      vaultheart:[{name:'Heartfire Surge',type:'interrupt',duration:1500},{name:'Molten Fracture',type:'circles',duration:1500}]
    },
-   lootTable:['ashguard-helm','embercleaver','vaultforged-cuirass','frostbound-sigil','guardian-last-stand'],
+   lootTable:['warrior-t2-head','warrior-t2-weapon','warrior-t3-chest','frostbound-sigil','guardian-last-stand'],
+   bossDrops:{ashwarden:['warrior-t2-head','frostbound-sigil'],embermaw:['warrior-t2-weapon'],vaultheart:['warrior-t3-chest','guardian-last-stand']},
    chase:['cellbound-emberwing','ancient-vault-cell']
  },
  'hollow-sanctum':{
    id:'hollow-sanctum',name:'The Hollow Sanctum',version:2,theme:'Cellglass Catacomb',
    faction:'The Hollowed',levelRange:[6,8],normalItemLevel:24,heroicItemLevel:28,cellboundItemLevel:30,
-   timerMs:30*60*1000,
+   timerMs:15*60*1000,
    identity:'Resonance hazards, line attacks, glass adds and movement discipline.',
    bosses:[
      {id:'gallery',name:'Gallery of Echoes',signature:'Pulse damage and dangerous packs.'},
@@ -79,7 +80,8 @@ const DUNGEONS={
      sentinel:[{name:'Shatterstep',type:'circles',duration:1350}],
      choir:[{name:'Discordant Mend',type:'interrupt',duration:1450},{name:'Glass Rain',type:'circles',duration:1450}]
    },
-   lootTable:['saintglass-vestments','stormflight-longbow','celestine-staff','embercore-staff','heart-troll-king'],
+   lootTable:['priest-t3-chest','hunter-t3-weapon','mage-t3-weapon','embercore-staff','heart-troll-king'],
+   bossDrops:{gallery:['priest-t3-chest'],sentinel:['hunter-t3-weapon'],choir:['mage-t3-weapon','embercore-staff','heart-troll-king']},
    chase:['hollow-glassling','corrupted-choir-cell']
  }
 };
