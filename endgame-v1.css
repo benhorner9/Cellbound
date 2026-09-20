@@ -71,3 +71,12 @@
 .eg-milestones>p{margin:9px 0 0;color:#677a76;font-size:.5rem}.eg-milestones>p b{color:#a8bbb6}
 @media(max-width:900px){.eg-milestone-track{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:640px){.eg-milestone-track{grid-template-columns:1fr}.eg-milestones{padding:10px}}
+
+#endgame{min-width:0;overflow-x:hidden}
+@media(max-width:760px){
+ #endgame{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+ .eg-prep-tabs button,.eg-mode-tabs button,.eg-leader-filters button,.eg-leader-filters select,
+ .eg-weekly button,.eg-dungeon-card footer button{min-height:44px}
+ .eg-content,.eg-dungeon-card,.eg-loot-table,.eg-leaderboards{min-width:0;max-width:100%}
+ .eg-loot-table>article>div:last-child{min-width:0}
+}
