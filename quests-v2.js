@@ -296,23 +296,8 @@ async function beginAshfallAmbush(){
     quest:ASHFALL.title,title:'The Cinder Cart',location:'Old Forge Approach',
     ambience:alertLevel>=2?'A whistle answers from above the road. You were heard. Another sentry is already moving.':'The tracks end at a second cart, burnt down to its ironwork. Nobody is visible. That is the problem.',
     phases:['Ambush','Signal Flare','Cinder Breath'],enemies,eliteIndex:1,
-    script:async api=>{
-      await api.phase(0,'Movement in the scrub. Too late to back out — the road closes behind you.');
-      await api.tankEngage();
-      await api.attack(1,2);
-      await api.phase(1,'The Ashbound Runner tears a flare from his belt and turns toward the forge.');
-      await api.cast(1,'SIGNAL FLARE',1800,true);
-      if(alertLevel>=2&&enemies.length>3){
-        await api.cast(3,'ASH WHISTLE',1500,true);
-        await api.attack(3,1);
-      }
-      await api.phase(2,'The nearest hound lowers its head. Orange light leaks between its teeth.');
-      await api.cone(0,'CINDER BREATH');
-      await api.attack(0,2);
-      await api.attack(2,2);
-      await api.finishAll();
-      api.log('The Ashbound Runner drops a heavy iron key stamped with the old forge seal.');
-    }
+    combat:{kind:'boss',enemyHealth:520,mechanics:alertLevel>=2?[['Signal Flare','interrupt',1800],['Ash Whistle','interrupt',1500],['Cinder Breath','cone',1700]]:[['Signal Flare','interrupt',1800],['Cinder Breath','cone',1700]]},
+    completeText:'The ambush is broken. The Ashbound Runner drops a heavy iron key stamped with the old forge seal.'
   });
   if(!won)return;
   await openGearReward({key:'ashfall-chest',title:'The Cinder Cart',slot:'Chest',tier:1,source:ASHFALL.title+' · The Cinder Cart',onClaim:()=>advanceAshfall('ambush','key','An Ashbound runner dropped a key bearing the old forge seal.')});
@@ -703,7 +688,7 @@ async function runQuest2DFight(config){
 }
 async function runResonanceBacklash(){
   const q=ensure(),bearer=party().find(c=>c.id===q.bearerId)||party()[0];
-  return runQuest2DFight({quest:QUEST.title,title:'Resonance Backlash',location:'Jory’s Workshop',ambience:'The Blackened Fragment rejects the false route and tears an echo out of the room.',phases:['Backlash'],enemies:['Resonance Echo'],eliteIndex:0,combat:{kind:'boss',enemyHealth:680,mechanics:[['Memory Burst','circles',1500],['Resonance Shriek','interrupt',1800]]},completeText:'The echo collapses back into the fragment. The cipher is still waiting.',script:async api=>{await api.phase(0,'The fragment manifests a hostile echo.');await api.tankEngage();await api.circle(bearer,'MEMORY BURST');await api.cast(0,'RESONANCE SHRIEK',1600,true);await api.attack(0,3);await api.finishAll()}});
+  return runQuest2DFight({quest:QUEST.title,title:'Resonance Backlash',location:'Jory’s Workshop',ambience:'The Blackened Fragment rejects the false route and tears an echo out of the room.',phases:['Backlash'],enemies:['Resonance Echo'],eliteIndex:0,combat:{kind:'boss',enemyHealth:680,mechanics:[['Memory Burst','circles',1500],['Resonance Shriek','interrupt',1800]]},completeText:'The echo collapses back into the fragment. The cipher is still waiting.'});
 }
 async function beginInvestigation(){
   const q=ensure(),p=party();if(currentStage()!=='route')return;
@@ -713,18 +698,7 @@ async function beginInvestigation(){
     quest:QUEST.title,title:'The Road Under the Road',location:'Collapsed Survey Tunnels',
     ambience:'Jory’s decoded posts lead beneath the east road. The Blackened Fragment grows warmer with every step.',
     phases:['Buried Junction','Resonance Husk','Hollow Seal'],enemies:['Hollow Scavenger','Hollow Scavenger','Resonance Husk'],eliteIndex:2,combat:{kind:'boss',enemyHealth:460,mechanics:[['Resonance Lash','line',1600],['Binding Hum','interrupt',1850],['Cell Pulse','circles',1500]]},
-    completeText:'A final survey mark is cut into the wall behind the broken Husk. Beyond it waits the Hollow Seal.',
-    script:async api=>{
-      await api.phase(0,'Three shapes pull themselves out of the old masonry.');
-      await api.tankEngage();await api.attack(0,2);await api.attack(1,2);
-      await api.phase(1,'The Resonance Husk locks onto the Blackened Fragment.');
-      await api.line(2,ranged,'RESONANCE LASH');
-      await api.cast(2,'BINDING HUM',1850,true);
-      await api.circle(bearer,'CELL PULSE');
-      await api.attack(2,3);await api.finishAll();
-      await api.phase(2,'The tunnel falls silent. A sealed stone door breathes beyond the final post.');
-      api.log('The decoded route ends at the Hollow Seal.');
-    }
+    completeText:'A final survey mark is cut into the wall behind the broken Husk. Beyond it waits the Hollow Seal.'
   });
   if(!won)return;
   setItemStatus('decoded-route','used');
@@ -748,16 +722,7 @@ async function runSealGuardian(){
     quest:QUEST.title,title:'Guardian of the Seal',location:'The Hollow Seal',
     ambience:'The misaligned rings grind together. A shape peels itself out of the stone and blocks the chamber.',
     phases:['Awakening','Sealbreaker'],enemies:['Hollow Sentinel'],eliteIndex:0,combat:{kind:'boss',enemyHealth:1350,mechanics:[['Stone Choir','interrupt',1800],['Sealbreaker Line','line',1600],['Hollow Sweep','cone',1700]]},
-    completeText:'The Sentinel collapses into inert glass. The seal rings remain, waiting to be aligned correctly.',
-    script:async api=>{
-      await api.phase(0,'The Hollow Sentinel tears itself free from the door.');
-      await api.tankEngage();await api.cast(0,'STONE CHOIR',1800,true);
-      await api.phase(1,'Cracks of light race across the chamber floor.');
-      const target=party().find(c=>qRole(c)==='dps')||party()[0];
-      await api.line(0,target,'SEALBREAKER LINE');
-      await api.cone(0,'HOLLOW SWEEP');
-      await api.attack(0,4);await api.finishAll();
-    }
+    completeText:'The Sentinel collapses into inert glass. The seal rings remain, waiting to be aligned correctly.'
   });
 }
 function openSealPuzzle(){
