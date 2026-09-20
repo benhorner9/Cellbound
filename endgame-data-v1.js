@@ -4,6 +4,33 @@
 const VERSION=1;
 const SEASON={id:'foundations-1',name:'Foundations'};
 
+
+const LOOT_RULES={
+  uniqueChance:{normal:.002,heroic:.025,cellboundBase:.035,cellboundPerTier:.0035,cellboundCap:.09},
+  targetedBossChance:.55,
+  rarityWeights:{
+    normal:{1:.72,2:.28},
+    heroic:{2:.68,3:.32},
+    cellboundLow:{2:.35,3:.65},
+    cellboundMid:{3:.88,4:.12},
+    cellboundHigh:{3:.80,4:.20}
+  },
+  chasePityStep:.00025,
+  chasePityCap:.02,
+  powerCeiling:42
+};
+const SET_BONUS_FOUNDATION={
+  pieces2:{name:'Resonant Pair',description:'Two matching set pieces improve core role output by 5%.'},
+  pieces3:{name:'Cellbound Ensemble',description:'Three matching set pieces improve resource recovery by 12%.'}
+};
+const LEVEL_MILESTONES=[
+  {level:5,name:'Specialisation Established',description:'Your first meaningful build identity should be taking shape.'},
+  {level:10,name:'Class Mastery I',description:'Class-specific progression hooks can unlock here.'},
+  {level:15,name:'Signature Technique',description:'Future class quests and signature ability rewards hook here.'},
+  {level:20,name:'Advanced Talent Tier',description:'A deeper build milestone for future talent expansion.'},
+  {level:25,name:'Endgame Readiness',description:'The game begins recommending Heroic and scalable dungeon goals based on actual clears and gear.'}
+];
+
 const AFFIXES={
  'volatile-cells':{
    id:'volatile-cells',name:'Volatile Cells',tier:'minor',
