@@ -275,7 +275,7 @@ function wbRenderServerEvent(e){
       }
       break;
     case'DAMAGE_DEALT':
-      if(e.target==='boss'){floatDamage(Number(e.amount)||0,true)}
+      if(e.target==='boss'){if(active?.boss&&e.payload?.targetHp!=null){active.boss.currentHp=Number(e.payload.targetHp);active.boss.maxHp=Number(e.payload.targetMax)||active.boss.maxHp;bossHealth(active.boss)}floatDamage(Number(e.amount)||0,true)}
       else if(targetChar){setOwnHp(e.target,Number(e.payload?.targetHpPct)||0);if(source)projectileBetween(source,target,'enemy');message((e.ability||'Boss attack')+' hits','danger')}
       break;
     case'HEAL_RECEIVED':
@@ -311,6 +311,7 @@ function wipeOwnParty(){
   message('YOUR PARTY WIPED','wipe');feed('Your party was overwhelmed. All five adventurers gained 25% Cell Shock.','wipe');
 }
 function victory(){
+  if(active?.boss)active.boss.status='dormant';
   stopCombatTimers();message('WORLD BOSS DEFEATED','victory');feed(active.boss.name+' has fallen. Personal rewards have been issued.','victory');
   document.getElementById('wb2dAttackNow').disabled=true;
   document.getElementById('wb2dStatus').textContent='Encounter complete · personal reward available';
@@ -329,6 +330,7 @@ async function refresh(){
   document.getElementById('wb2dBossName').textContent=active.boss.name;
   document.getElementById('wb2dBossLabel').textContent=active.boss.name.toUpperCase();
   document.getElementById('wb2dStatus').textContent='Tier '+active.boss.tier+' · '+parts.length+'/'+active.boss.playerCap+' commanders engaged · Party attacks every 5 seconds';
+  if(active.combatState?.wiped){stopAttackTimer();const b=document.getElementById('wb2dAttackNow');if(b)b.disabled=true;document.getElementById('wb2dStatus').textContent='Your party has wiped · recover before rejoining combat';}
   if(active.boss.status==='dormant'||Number(active.boss.currentHp)<=0)victory();
 }
 async function attack(manual=false){
@@ -343,7 +345,8 @@ async function attack(manual=false){
     active.partyThreat=data?.threatBreakdown||active.partyThreat||{};
     if(data?.combatState)active.combatState=data.combatState;
     await playServerEvents(data?.events||[]);
-    renderParticipants((await combatState())?.participants||[]);
+    const latest=await combatState();
+    if(latest&&active){active.boss=latest.boss||active.boss;active.partyThreat=latest.yourPartyThreat||active.partyThreat;active.combatState=latest.yourCombatState||active.combatState;const parts=Array.isArray(latest.participants)?latest.participants:[];checkDamageChanges(parts);renderParticipants(parts);renderCombatMeters(parts,active.partyThreat);bossHealth(active.boss)}
     if(data?.wiped){
       Game.applyPartyCellShock?.(25);await Game.persistState?.();wipeOwnParty();stopAttackTimer();
     }else{
@@ -354,7 +357,7 @@ async function attack(manual=false){
     if(data?.killed)victory();
     window.CellboundSocial?.loadWorld?.();
   }finally{
-    attackBusy=false;if(btn&&active&&active.boss.status!=='dormant')btn.disabled=false;
+    attackBusy=false;if(btn&&active&&active.boss.status!=='dormant'&&!active.combatState?.wiped)btn.disabled=false;
   }
 }
 function stopAttackTimer(){if(attackTimer){clearInterval(attackTimer);attackTimer=null}}
@@ -377,6 +380,7 @@ async function open(bossId){
   await refresh();
   if(!active)return;
   pollTimer=setInterval(refresh,2000);
+  if(active.combatState?.wiped)return;
   attackTimer=setInterval(()=>attack(false),5250);
   setTimeout(()=>attack(false),850);
 }
