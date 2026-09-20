@@ -302,7 +302,7 @@ function unitMarkup(c,i){
   return '<div class="td-unit party '+r+' profile-'+profile+' '+tutorialClassKey(c)+'" data-td-party="'+c.id+'" style="left:'+pos[0]+'%;top:'+pos[1]+'%"><i></i><span>'+esc(c.name)+'</span><em><b style="width:100%"></b></em></div>';
 }
 function renderDungeonRunning(){
-  const body='<div class="td-wrap"><div class="td-top"><div><small>ZELTIRA TRAINING DUNGEON</small><h2 id="tdEncounter">Entering the Hollows…</h2></div><b class="td-safe">TRAINING RUN · GUARANTEED CLEAR</b></div><div class="td-route"><span class="active" data-td-route="0">1 · Rootling Nest</span><span data-td-route="1">2 · Collapsed Gallery</span><span data-td-route="2">3 · Hollow Warden</span></div><div class="td-arena theme-hollows room-rootling-nest" id="tdArena"><div class="td-floor"></div><div class="td-environment" id="tdEnvironment"></div><div class="td-room-tag" id="tdRoomTag"></div><div id="tdEnemies"></div><div id="tdParty">'+state().roster.map(unitMarkup).join('')+'</div><div class="td-callout" id="tdCallout">Your party advances together.</div><div id="tdLesson" class="td-lesson" hidden></div></div><div class="td-bottom"><div class="td-actions"><div><i class="on-role tank"></i><b>Tank</b><span id="tdTankAction">Taking point</span></div><div><i class="on-role healer"></i><b>Healer</b><span id="tdHealAction">Following</span></div><div><i class="on-role dps"></i><b>Damage</b><span id="tdDpsAction">Acquiring targets</span></div></div><div class="td-feed" id="tdFeed">Zeltira gate closes behind the party.</div></div></div>';
+  const body='<div class="td-wrap"><div class="td-top"><div><small>ZELTIRA TRAINING DUNGEON</small><h2 id="tdEncounter">Entering the Hollows…</h2></div><b class="td-safe">COMBAT REBORN · TRAINING PROTECTIONS</b></div><div class="td-route"><span class="active" data-td-route="0">1 · Rootling Nest</span><span data-td-route="1">2 · Collapsed Gallery</span><span data-td-route="2">3 · Hollow Warden</span></div><div class="td-arena theme-hollows room-rootling-nest" id="tdArena"><div class="td-floor"></div><div class="td-environment" id="tdEnvironment"></div><div class="td-room-tag" id="tdRoomTag"></div><div id="tdEnemies"></div><div id="tdParty">'+state().roster.map(unitMarkup).join('')+'</div><div class="td-callout" id="tdCallout">Your party advances together.</div><div id="tdLesson" class="td-lesson" hidden></div></div><div class="td-bottom"><div class="td-actions"><div><i class="on-role tank"></i><b>Tank</b><span id="tdTankAction">Taking point</span></div><div><i class="on-role healer"></i><b>Healer</b><span id="tdHealAction">Following</span></div><div><i class="on-role dps"></i><b>Damage</b><span id="tdDpsAction">Acquiring targets</span></div></div><div class="td-feed" id="tdFeed">Zeltira gate closes behind the party.</div></div></div>';
   ensureRoot().innerHTML=chrome(body,'dungeon-running');
   const my=++tutorialToken;setTimeout(()=>runTutorialDungeon(my),350);
 }
@@ -479,100 +479,123 @@ function tdFireHeal(healer,tank,my){
   tdProjectile('[data-td-party="'+healer.id+'"]','[data-td-party="'+tank.id+'"]','heal');
   setTimeout(()=>{if(my===tutorialToken)tdFloat('[data-td-party="'+tank.id+'"]','+8','heal')},290);
 }
-async function fightTdPack(names,boss,my){
-  spawnTdEnemies(names,boss);await sleep(350);
-  const roster=state().roster,tank=roster.find(c=>tdProfile(c)==='tank'),healer=roster.find(c=>tdProfile(c)==='healer');
 
-  if(tank){
-    tdAction('tank',tank.name+' runs in first and pulls the pack');
-    tdMove('[data-td-party="'+tank.id+'"]',55,50,430);
-    await sleep(220);
-    $$('[data-td-enemy]').forEach((e,i)=>{
-      const y=names.length===1?50:40+i*(20/Math.max(1,names.length-1));
-      tdMove('[data-td-enemy="'+i+'"]',64,y,380);
-      setTimeout(()=>tdThreatLine(i,tank),180);
-    });
-    tdFeed(tank.name+' establishes threat on the pack.');
-    await sleep(360);
+function tdSelectorFor(unitId){
+  const id=String(unitId||'');
+  if(id.startsWith('p-'))return '[data-td-party="'+id.slice(2)+'"]';
+  if(/^e-\d+$/.test(id))return '[data-td-enemy="'+Number(id.slice(2))+'"]';
+  return null;
+}
+function tdEventCharacter(unitId){
+  const id=String(unitId||'');return id.startsWith('p-')?state().roster.find(c=>String(c.id)===id.slice(2)):null;
+}
+function tdCombatKind(c){return c?.class==='Mage'?'magic':c?.class==='Hunter'?'arrow':['Priest','Druid','Evoker'].includes(c?.class)?'magic':'slash'}
+function tdEnemyName(index){return $('[data-td-enemy="'+index+'"] span')?.textContent||'Enemy'}
+function tdSetPartyHpByEvent(c,pct){
+  const el=$('[data-td-party="'+c.id+'"]'),bar=el?.querySelector('em b');if(bar)bar.style.width=Math.max(0,Math.min(100,pct))+'%';
+  if(el)el.classList.toggle('dead',pct<=0)
+}
+function tdCastBar(name,duration){
+  const enemy=$('[data-td-enemy="0"]');if(!enemy)return null;
+  enemy.querySelector('.td-training-cast')?.remove();
+  const bar=document.createElement('strong');bar.className='td-training-cast';bar.innerHTML='<span>'+esc(name||'ENEMY CAST')+'</span><i></i>';enemy.appendChild(bar);
+  const fill=bar.querySelector('i');if(fill){fill.style.transition='none';fill.style.width='0%';void fill.offsetWidth;requestAnimationFrame(()=>{fill.style.transition='width '+Math.max(1,duration)+'ms linear';fill.style.width='100%'})}
+  return bar
+}
+function tdMechanicTelegraph(e){
+  const type=e.payload?.mechanicType,source=tdSelectorFor(e.source),target=tdSelectorFor(e.payload?.targetId||e.target);
+  if(type==='cone'){
+    const arena=$('#tdArena'),a=tdPoint(source),b=tdPoint(target);if(!arena||!a||!b)return null;
+    const angle=Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI,cone=document.createElement('div');cone.className='td-training-cone';cone.style.left=a.x+'px';cone.style.top=a.y+'px';cone.style.transform='translateY(-50%) rotate('+angle+'deg)';cone.innerHTML='<span>'+esc(e.ability||'FRONTAL')+'</span>';arena.appendChild(cone);return cone
   }
-
-  tdMovePartyIntoPositions(0);
-  if(healer)tdAction('healer',healer.name+' stays deep but keeps the party in range');
-  tdAction('dps','Melee closes in · ranged holds distance');
-  await sleep(380);
-
-  if(names[0]==='Cell-Sick Marauder'){tdInterruptMoment(my);await sleep(1050)}
-  if(boss){tdBossFrontal();if(tank)tdAction('tank',tank.name+' turns the boss away from the group');await sleep(1050)}
-
-  const now=performance.now();
-  const actors=Object.fromEntries(roster.map((c,i)=>[c.id,{
-    nextAttack:now+120+i*100,
-    nextMove:now+70+i*50,
-    nextHeal:now+760
-  }]));
-  const enemies=names.map((_,i)=>({nextAttack:now+620+i*180,nextMove:now+100+i*60}));
-
-  await new Promise(resolve=>{
-    const tick=()=>{
-      if(my!==tutorialToken){resolve();return}
-      const living=tdLivingEnemy();
-      if(!living){resolve();return}
-
-      const now=performance.now(),targetIdx=Number(living.dataset.tdEnemy);
-
-      roster.forEach(c=>{
-        const rt=actors[c.id],profile=tdProfile(c);
-        if(now>=rt.nextMove){
-          const p=tdFormationPoint(c,targetIdx);
-          const drift=profile==='ranged'||profile==='healer'?Math.random()*4-2:Math.random()*2-1;
-          tdMove('[data-td-party="'+c.id+'"]',p.x,p.y+drift,profile==='melee'?220:360);
-          rt.nextMove=now+(profile==='melee'?260:420);
+  if(type==='interrupt')return tdCastBar(e.ability,Number(e.payload?.duration)||1600);
+  return null
+}
+async function tdPlayCombat(result,my){
+  let last=0;const telegraphs={};
+  for(const e of result.events||[]){
+    if(my!==tutorialToken)return false;
+    const gap=Math.max(0,(Number(e.timestamp)||0)-last);if(gap)await sleep(gap);
+    const srcSel=tdSelectorFor(e.source),targetSel=tdSelectorFor(e.target),srcChar=tdEventCharacter(e.source),targetChar=tdEventCharacter(e.target);
+    switch(e.type){
+      case'COMBAT_START':tdFeed('Combat simulation begins.');break;
+      case'MOVEMENT_START':
+        if(srcSel&&e.payload?.to)tdMove(srcSel,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
+      case'ABILITY_START':
+        if(srcSel&&targetSel){
+          if(srcChar)tdProjectile(srcSel,targetSel,tdCombatKind(srcChar));
+          else tdProjectile(srcSel,targetSel,'enemy');
         }
-
-        if(profile==='healer'){
-          if(now>=rt.nextHeal){
-            tdFireHeal(c,tank,my);
-            rt.nextHeal=now+1050+Math.random()*250;
-          }
-          return;
+        if(srcChar){const r=tdRole(srcChar);tdAction(r==='tank'?'tank':r==='healer'?'healer':'dps',srcChar.name+' · '+(e.ability||'Action'))}
+        break;
+      case'DAMAGE_DEALT':
+        if(targetSel){
+          const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdFloat(targetSel,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');
+          if(targetChar)tdSetPartyHpByEvent(targetChar,p);
+          else{const idx=Number(String(e.target||'').slice(2));if(Number.isInteger(idx))setTdHp(idx,(Number(e.payload?.targetHp)||0))}
         }
-
-        if(now>=rt.nextAttack){
-          tdFirePartyAttack(c,my);
-          rt.nextAttack=now+tdAttackCooldown(c)+(Math.random()*140-70);
+        break;
+      case'HEAL_RECEIVED':
+        if(targetChar&&targetSel){const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdSetPartyHpByEvent(targetChar,p);tdFloat(targetSel,'+'+Math.round(Number(e.amount)||0),'heal')}
+        break;
+      case'AGGRO_CHANGED':
+        if(/^e-\d+$/.test(String(e.source||''))&&targetChar){tdThreatLine(Number(String(e.source).slice(2)),targetChar);if(tdRole(targetChar)==='tank')tdAction('tank',targetChar.name+' holds threat')}
+        break;
+      case'MECHANIC_TELEGRAPH':{
+        const tg=tdMechanicTelegraph(e);telegraphs[e.payload?.token||e.timestamp]=tg;tdFeed((e.ability||'Mechanic')+' is telegraphed.');break;
+      }
+      case'MECHANIC_RESOLVE':{
+        const k=e.payload?.token,el=telegraphs[k];if(el){el.classList?.add?.('impact');setTimeout(()=>el.remove?.(),350);delete telegraphs[k]}break;
+      }
+      case'CAST_START':
+        if(e.payload?.interruptible)tdFeed((e.ability||'Dangerous cast')+' begins and can be interrupted.');break;
+      case'INTERRUPT':
+        if(e.result==='success'){
+          const bar=$('.td-training-cast');if(bar){bar.classList.add('interrupted');const s=bar.querySelector('span');if(s)s.textContent='INTERRUPTED';setTimeout(()=>bar.remove(),500)}
+          if(srcChar)tdAction('dps',srcChar.name+' interrupts '+(e.payload?.interruptedAbility||'the cast'));
+          tdFeed((e.payload?.interruptedAbility||'Dangerous cast')+' is interrupted.');
         }
-      });
-
-      $$('[data-td-enemy]').forEach((enemy,i)=>{
-        if(Number(enemy.dataset.hp)<=0)return;
-        const rt=enemies[i];
-        if(now>=rt.nextMove&&tank){
-          const tp=tdPct('[data-td-party="'+tank.id+'"]');
-          tdMove('[data-td-enemy="'+i+'"]',tp.x+8,tp.y+([-9,0,9][i%3]||0),300);
-          rt.nextMove=now+260+Math.random()*100;
-        }
-        if(now>=rt.nextAttack){
-          tdFireEnemyAttack(i,tank,healer,my);
-          rt.nextAttack=now+(boss?900:1150)+Math.random()*220;
-        }
-      });
-
-      setTimeout(tick,70);
-    };
-    tick();
+        break;
+      case'PLAYER_DEFEATED':
+        if(targetChar){tdSetPartyHpByEvent(targetChar,0);tdFeed(targetChar.name+' is defeated.')}break;
+      case'ENEMY_DEFEATED':
+        if(/^e-\d+$/.test(String(e.target||''))){const idx=Number(String(e.target).slice(2));setTdHp(idx,0);tdFeed(tdEnemyName(idx)+' is defeated.')}break;
+      case'COMBAT_END':tdFeed(e.result==='victory'?'Encounter clear.':'Training party defeated.');break;
+    }
+    last=Number(e.timestamp)||last;
+  }
+  return result.outcome==='victory'
+}
+async function fightTdPack(encounter,my){
+  spawnTdEnemies(encounter.mobs,encounter.boss);await sleep(350);
+  const C=window.CellboundCombatReborn;if(!C?.simulate)throw new Error('Combat Reborn engine unavailable');
+  const roster=state().roster;
+  const combatParty=roster.map(c=>Object.assign({},c,{power:Math.max(Number(c.power)||1,30),_combatHealthPct:100}));
+  const result=C.simulate({
+    party:combatParty,
+    encounter:{
+      id:encounter.id,title:encounter.name,kind:encounter.boss?'boss':'trash',
+      enemies:[...encounter.mobs],enemyHealth:encounter.enemyHealth,
+      mechanics:encounter.mechanics||[]
+    },
+    tactics:{interruptPriority:'high',addPriority:'immediate',defensiveUsage:'aggressive',pullStyle:'safe',movementDiscipline:'safety'},
+    seed:['zeltira-training',my,encounter.id].join(':')
   });
-
-  tdFeed((boss?'Boss defeated: ':'Pack cleared: ')+names.join(', '));
+  const won=await tdPlayCombat(result,my);
+  if(!won){
+    tdFeed('Warden Elara resets the training encounter. Review the lesson and try again.');
+    return false
+  }
   tdRegroup();tdAction('tank','Leading the party onward');tdAction('healer','Following at safe range');tdAction('dps','Returning to travel formation');
-  await sleep(650);
+  await sleep(650);return true
 }
 
 async function runTutorialDungeon(my){
   if(my!==tutorialToken||onboarding().stage!=='dungeon-running')return;
   const encounters=[
-    {name:'Rootling Nest',mobs:['Rootling','Rootling'],boss:false},
-    {name:'Collapsed Gallery',mobs:['Cell-Sick Marauder'],boss:false},
-    {name:'Hollow Warden',mobs:['The Hollow Warden'],boss:true}
+    {id:'rootling-nest',name:'Rootling Nest',mobs:['Rootling','Rootling'],boss:false,enemyHealth:105,mechanics:[]},
+    {id:'collapsed-gallery',name:'Collapsed Gallery',mobs:['Cell-Sick Marauder'],boss:false,enemyHealth:260,mechanics:[['Hollow Scream','interrupt',1800]]},
+    {id:'hollow-warden',name:'Hollow Warden',mobs:['The Hollow Warden'],boss:true,enemyHealth:520,mechanics:[['Rootbound Cleave','cone',1700]]}
   ];
   for(let i=0;i<encounters.length;i++){
     if(my!==tutorialToken)return;
@@ -589,7 +612,7 @@ async function runTutorialDungeon(my){
       $('#tdCallout').textContent='Read the boss telegraph.';
       await tdLesson('The boss raises a frontal cleave','A wide attack is aimed through the Tank toward the group.',['Tank turns the boss away while the party stays behind it','Everyone stacks directly in front','Healer takes the attack instead'],0,'Correct. Positioning is part of tanking: control where the boss faces so avoidable damage never reaches the group.');
     }
-    tdFeed('Entering '+e.name+'.');await fightTdPack(e.mobs,e.boss,my);
+    tdFeed('Entering '+e.name+'.');const won=await fightTdPack(e,my);if(!won){i--;await sleep(700);continue}
   }
   if(my!==tutorialToken)return;
   $('#tdEncounter').textContent='Dungeon Clear';$('#tdCallout').textContent='The Zeltiran Hollows are secure.';
