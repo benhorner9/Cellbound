@@ -43,3 +43,8 @@
 .eg-collection-list article>i{color:#d1ac72;border-color:rgba(209,172,114,.18);background:#261f15}
 @media(max-width:900px){.eg-achievement-grid{grid-template-columns:repeat(2,1fr)}.eg-collection-list{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:640px){.eg-achievement-grid,.eg-collection-list{grid-template-columns:1fr}.eg-achievements,.eg-collections{padding:10px}}
+
+.eg-leader-filters{display:flex;gap:5px;padding:8px;border-bottom:1px solid rgba(255,255,255,.045);overflow:auto}
+.eg-leader-filters button,.eg-leader-filters select{min-height:31px;padding:0 9px;border:1px solid rgba(255,255,255,.07);background:#091519;color:#71827e;font-size:.4rem;font-weight:900;letter-spacing:.07em;white-space:nowrap}
+.eg-leader-filters button.active{border-color:rgba(89,201,191,.3);background:#12302e;color:#b9e8e2}.eg-leader-filters select{margin-left:auto;color:#b5c6c2}
+@media(max-width:640px){.eg-leader-filters button,.eg-leader-filters select{min-height:40px}.eg-leader-filters select{margin-left:0}}
