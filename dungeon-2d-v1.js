@@ -1327,6 +1327,10 @@ function renderRebornEvent(e,result,replayMode=false){
    }
    break;
   case'RESOURCE_SPENT':case'RESOURCE_GAINED':case'RESOURCE_STATE':rebornResourceVisual(e);break;
+  case'PHASE_CHANGE':
+   flash(String(e.ability||'PHASE CHANGE').toUpperCase(),true);status(e.ability||'Boss phase changed');log((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');break;
+  case'ENRAGE':
+   flash(e.result==='hard'?'HARD ENRAGE':'ENRAGE',true);status(e.result==='hard'?'Hard enrage — finish the boss now':(e.ability||'Boss enraged'));log((e.ability||'The boss enrages')+'.');break;
   case'UNIQUE_EFFECT_TRIGGER':
    if(srcChar){flash(String(e.ability||'UNIQUE EFFECT').toUpperCase(),false);floating(e.source,e.ability||'UNIQUE','heal');log(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');const rr=role(srcChar);act(rr==='tank'?'tank':rr==='healer'?'healer':'dps',srcChar.name+' · '+(e.ability||'Unique Effect'))}break;
   case'AFFIX_TRIGGER':
