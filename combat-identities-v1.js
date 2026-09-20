@@ -167,17 +167,31 @@ function cooldownMultiplier(c){
   if(c?.class==='Mage')m*=Math.max(.82,1-rank(c,'Arcane Flows')*.03);
   return m;
 }
+function defenceProfile(c){
+  const p=specFor(c),gear=gearStats(c),stamina=Math.max(0,Number(gear.stamina)||0),armour=Math.max(0,Number(gear.armour)||0),ward=Math.max(0,Number(gear.magicWardPct)||0);
+  let physical=Number(p.physicalTaken)||1,magic=Number(p.magicTaken)||1;
+  physical*=raceMod(c,'physicalTaken',1);magic*=raceMod(c,'magicTaken',1);
+  const staminaReduction=Math.max(.86,1-stamina*.0025);
+  physical*=staminaReduction;magic*=staminaReduction;
+  physical*=Math.max(.80,1-armour*.00125);
+  magic*=Math.max(.72,1-ward/100);
+  if(c?.class==='Warrior'&&c?.spec==='Protection')physical*=Math.max(.80,1-rank(c,'Shield Mastery')*.025);
+  if(c?.class==='Paladin'&&c?.spec==='Protection'&&c?.class==='Paladin'){
+    physical*=Math.max(.84,1-rank(c,'Sacred Shield')*.02);
+    magic*=Math.max(.80,1-rank(c,'Divine Ward')*.03);
+  }
+  return{
+    physicalTaken:Math.max(.56,physical),
+    magicTaken:Math.max(.56,magic),
+    blockChance:role(c)==='tank'?Math.max(0,Math.min(45,Number(gear.block)||0)):0,
+    blockMultiplier:.72,
+    healthMultiplier:1+Math.min(.22,stamina*.003),
+    stamina,armour,magicWardPct:ward
+  };
+}
 function incomingMultiplier(c,type='physical'){
-  const p=specFor(c),gear=gearStats(c);let m=Number(p[type==='magic'?'magicTaken':'physicalTaken'])||1;
-  m*=raceMod(c,type==='magic'?'magicTaken':'physicalTaken',1);
-  m*=Math.max(.88,1-(Number(gear.stamina)||0)*.002);
-  if(type==='physical')m*=Math.max(.84,1-(Number(gear.armour)||0)*.001);
-  if(type==='magic')m*=Math.max(.75,1-(Number(gear.magicWardPct)||0)/100);
-  if(type==='physical'&&role(c)==='tank'&&(Number(gear.block)||0)>0&&Math.random()*100<Number(gear.block))m*=.72;
-  if(c?.class==='Warrior'&&c?.spec==='Protection'&&type==='physical')m*=Math.max(.82,1-rank(c,'Shield Mastery')*.025);
-  if(c?.class==='Paladin'&&c?.spec==='Protection'&&type==='physical')m*=Math.max(.85,1-rank(c,'Sacred Shield')*.02);
-  if(c?.class==='Paladin'&&c?.spec==='Protection'&&type==='magic')m*=Math.max(.82,1-rank(c,'Divine Ward')*.03);
-  return m;
+  const d=defenceProfile(c);
+  return type==='magic'?d.magicTaken:d.physicalTaken;
 }
 function healingMultiplier(healer,target,ctx={}){
   const p=specFor(healer),gear=gearStats(healer);let m=(Number(p.healing)||1)*raceMod(healer,'healing',1)*raceMod(target,'healingReceived',1);
@@ -246,7 +260,7 @@ function summary(c){
 
 window.CellboundIdentities={
   RACES,SPECS,ROLE_MAP,role,getRace,getSpec,specFor,rank,summary,
-  damageMultiplier,cooldownMultiplier,incomingMultiplier,healingMultiplier,
+  damageMultiplier,cooldownMultiplier,incomingMultiplier,defenceProfile,healingMultiplier,
   healThreatMultiplier,damageThreatMultiplier,groupThreatRatio,tauntLead,
   cleaveRatio,groupHealRatio,groupHealTargets,hotRatio,beaconRatio,passiveRegen,knowledgeMultiplier
 };
@@ -257,7 +271,7 @@ if(!window.CellboundCombatReborn){
 (()=>{
 'use strict';
 
-const VERSION='1.1.0';
+const VERSION='1.2.0';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -469,8 +483,9 @@ function normalisePlayer(c,i){
  const role=inferredRole(c),res=resourceDef(c),tank=role==='tank',healer=role==='healer';
  const baseHp=tank?185:healer?115:125;
  const power=Math.max(1,Number(c?.power)||1);
+ const defence=window.CellboundIdentities?.defenceProfile?.(c)||{physicalTaken:1,magicTaken:1,blockChance:0,blockMultiplier:.72,healthMultiplier:1};
  const level=Math.max(1,Number(c?.level)||1),baseHealth=Math.round(baseHp+(power*1.8)),healthScale=levelHealthScale(level),outputScale=levelOutputScale(level);
- const maxHealth=Math.round(baseHealth*healthScale),startPct=clamp(c?._combatHealthPct==null?100:Number(c._combatHealthPct),0,100),startHealth=Math.round(maxHealth*startPct/100);
+ const maxHealth=Math.round(baseHealth*healthScale*Math.max(1,Number(defence.healthMultiplier)||1)),startPct=clamp(c?._combatHealthPct==null?100:Number(c._combatHealthPct),0,100),startHealth=Math.round(maxHealth*startPct/100);
  const carried=c?._combatResource,carriedValue=typeof carried==='number'?carried:Number(carried?.value);
  const resourceValue=Number.isFinite(carriedValue)?clamp(carriedValue,0,res.max):res.start;
  const setState=gearSetState(c),resourceRegen=(healer&&res.name==='Mana'?2.1:res.regen)*setState.resourceRegen;
@@ -479,7 +494,7 @@ function normalisePlayer(c,i){
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:{x:tank?42:role==='healer'?18:28,y:26+i*12},facing:0,
   target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:{},resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
-  abilities:copy(abilityPool(c,role)),power,level,itemLevel,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),
+  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),
   defensiveUntil:Math.max(0,Number(c?._combatDefensiveMs)||0),frenzyUntil:Math.max(0,Number(c?._combatFrenzyMs)||0),uniqueUsed:copy(c?._combatUniqueUsed||{}),nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
 }
@@ -831,28 +846,44 @@ function rollDamage(ctx,u,a,target){
  if(ctx.rng()<.12){amount*=1.5;return{amount,crit:true}}
  return{amount,crit:false};
 }
-function mitigation(target,damageType='physical'){
- let value=target.role==='tank'?(damageType==='magic'?0.74:0.68):1;
- if(target.defensiveUntil>0)value*=target.role==='tank'?0.7:0.75;
- return value;
+function itemLevelIncomingMultiplier(ctx,target){
+ const recommended=Math.max(0,Number(ctx?.encounter?.recommendedItemLevel)||0),itemLevel=Math.max(0,Number(target?.itemLevel)||0);
+ if(!recommended)return 1;
+ if(!itemLevel)return 1.18;
+ const delta=itemLevel-recommended;
+ if(delta<0)return Math.min(1.55,1+Math.abs(delta)*.045);
+ return Math.max(.82,1-delta*.018);
+}
+function mitigation(ctx,target,damageType='physical',opts={}){
+ const profile=target?.defence||{},gearTaken=damageType==='magic'?(Number(profile.magicTaken)||1):(Number(profile.physicalTaken)||1);
+ let value=target.role==='tank'?(damageType==='magic'?.82:.72):1;
+ value*=gearTaken;
+ value*=itemLevelIncomingMultiplier(ctx,target);
+ if(opts.aggroHit&&target.role!=='tank')value*=target.role==='healer'?1.28:1.22;
+ if(damageType==='physical'&&target.role==='tank'&&(Number(profile.blockChance)||0)>0&&ctx?.rng&&ctx.rng()*100<Number(profile.blockChance)){
+   value*=Number(profile.blockMultiplier)||.72;
+   opts.blocked=true;
+ }
+ if(target.defensiveUntil>0)value*=target.role==='tank'?.66:.74;
+ return Math.max(.34,value);
 }
 function dealDamage(ctx,source,target,amount,ability,opts={}){
  if(!source?.alive||!target?.alive)return 0;
  let final=Math.max(0,amount);
  if(target.role!=='enemy'){
-  const projected=Math.max(1,Math.round(final*mitigation(target,opts.damageType||'physical')));
+  const projected=Math.max(1,Math.round(final*mitigation(ctx,target,opts.damageType||'physical',{...opts})));
   const crossesLastStand=healthRatio(target)>.20&&((target.health-projected)/Math.max(1,target.maxHealth))<.20;
   if(crossesLastStand&&hasUnique(target,'guardian-last-stand')&&!target.uniqueUsed?.['guardian-last-stand']){
    target.uniqueUsed['guardian-last-stand']=true;target.defensiveUntil=Math.max(Number(target.defensiveUntil)||0,6000);
    applyStatus(ctx,target,target,{id:'guardian-last-stand',name:"Guardian's Last Stand",kind:'buff',duration:6000,effect:{damageReduction:.30}});
    triggerUnique(ctx,target,'guardian-last-stand',"Guardian's Last Stand",{target:target.id,duration:6000});
   }
-  final*=mitigation(target,opts.damageType||'physical')
+  const mitigationOpts={...opts};final*=mitigation(ctx,target,opts.damageType||'physical',mitigationOpts);if(mitigationOpts.blocked)opts.blocked=true
  }
  final=Math.max(1,Math.round(final));
  const before=target.health;target.health=clamp(target.health-final,0,target.maxHealth);
  const dealt=before-target.health;
- emit(ctx,'DAMAGE_DEALT',{source:source.id,target:target.id,ability,amount:dealt,result:opts.crit?'critical':'hit',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),avoidable:!!opts.avoidable,damageType:opts.damageType||'physical',mistakeToken:recentMistakeToken(ctx,target)}});
+ emit(ctx,'DAMAGE_DEALT',{source:source.id,target:target.id,ability,amount:dealt,result:opts.blocked?'blocked':opts.crit?'critical':'hit',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),avoidable:!!opts.avoidable,blocked:!!opts.blocked,damageType:opts.damageType||'physical',mistakeToken:recentMistakeToken(ctx,target)}});
  if(source.role!=='enemy'){
   const st=ctx.stats.players[source.id];st.damage+=dealt;st.abilityDamage[ability]=(st.abilityDamage[ability]||0)+dealt;
   addThreat(ctx,target,source,dealt*threatMultiplier(source,opts.ability||{}),'damage');
@@ -1160,11 +1191,13 @@ function enemyBasicAttack(ctx,e){
   e.nextAttack=ctx.time+450;return;
  }
  updateFacing(e,target);
- const base=e.kind==='boss'?30:e.isAdd?11:8;
+ const base=e.classification==='world-boss'?42:e.kind==='boss'?34:e.classification==='elite'?18:e.isAdd?12:14;
  const levelPressure=enemyPressure(ctx,e,target);
- emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability:e.kind==='boss'?'Heavy Swing':'Attack',result:'enemy'});
- dealDamage(ctx,e,target,base*levelPressure*(.85+ctx.rng()*.3),e.kind==='boss'?'Heavy Swing':'Attack',{damageType:'physical'});
- e.nextAttack=ctx.time+(e.kind==='boss'?1400:e.isAdd?1800:2050)+Math.round(ctx.rng()*(e.kind==='boss'?220:320));
+ const ability=e.classification==='world-boss'?'Crushing Blow':e.kind==='boss'?'Heavy Swing':e.classification==='elite'?'Heavy Strike':'Attack';
+ emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability,result:'enemy'});
+ dealDamage(ctx,e,target,base*levelPressure*(.88+ctx.rng()*.24),ability,{damageType:'physical',aggroHit:true});
+ const cadence=e.classification==='world-boss'?1325:e.kind==='boss'?1450:e.classification==='elite'?1850:e.isAdd?1800:2050;
+ e.nextAttack=ctx.time+cadence+Math.round(ctx.rng()*(e.kind==='boss'?220:320));
 }
 function mechanicStat(ctx,type,failed){
  const m=ctx.stats.mechanics;m.byType[type]=m.byType[type]||{avoided:0,failed:0};
