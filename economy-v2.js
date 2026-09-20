@@ -263,7 +263,7 @@ async function cancelListing(id){
   state().activity.push(`Cancelled Trading Post listing: ${l.item_name}.`);await commit();await loadMarket();
 }
 function bind(){
-  $('.nav-btn[data-view="professions"]').forEach(b=>b.addEventListener('click',renderProfessions));
+  document.querySelectorAll('.nav-btn[data-view="professions"]').forEach(b=>b.addEventListener('click',renderProfessions));
   window.addEventListener('cellbound:view-changed',e=>{
     if(e.detail?.view==='professions')renderProfessions();
     if(e.detail?.view==='trading'){renderSellOptions();loadMarket();}
@@ -274,7 +274,7 @@ function bind(){
   $('#tradeSellItem')?.addEventListener('change',renderSellPreview);
   $('#tradeSellQuantity')?.addEventListener('input',renderSellPreview);
   $('#tradeSellPrice')?.addEventListener('input',renderSellPreview);
-  $('#tradeFilters [data-trade-filter]').forEach(b=>b.addEventListener('click',()=>{$('#tradeFilters [data-trade-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');tradeFilter=b.dataset.tradeFilter;renderMarket();}));
+  document.querySelectorAll('#tradeFilters [data-trade-filter]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#tradeFilters [data-trade-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');tradeFilter=b.dataset.tradeFilter;renderMarket();}));
 }
 async function init(){
   Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,80);return;}P&&normalise();db=Game.getSupabase();user=Game.getUser();if(!db||!user)return;
