@@ -350,13 +350,45 @@ function disposeBankBulk(mode){
   renderAll();
   switchView('bank');
 }
+
+function bankRarityRank(item){
+  const order={Common:1,Uncommon:2,Rare:3,Epic:4,Legendary:5,Ancient:6,Mythic:6};
+  return order[String(item?.rarity||'Common')]||0;
+}
+function bankFilteredItems(){
+  const search=String($('#bankSearch')?.value||'').trim().toLowerCase();
+  const category=$('#bankCategory')?.value||'all',klass=$('#bankClass')?.value||'all',rarity=$('#bankRarity')?.value||'all',trade=$('#bankTrade')?.value||'all',sort=$('#bankSort')?.value||'newest';
+  let items=[...state.bank];
+  items=items.filter(item=>{
+    const text=[item.name,item.source,item.class,item.slot,item.rarity,item.uniqueEffect?.name,item.uniqueEffect?.description].filter(Boolean).join(' ').toLowerCase();
+    if(search&&!text.includes(search))return false;
+    if(category==='favorite'&&!item.favorite)return false;
+    if(category==='junk'&&!item.junk)return false;
+    if(category==='Armour'&&!['Head','Chest','Shoulders','Hands','Waist','Legs','Feet'].includes(item.slot))return false;
+    if(!['all','favorite','junk','Armour'].includes(category)&&item.slot!==category)return false;
+    if(klass!=='all'&&item.class!==klass&&item.classes!=='all'&&!(Array.isArray(item.classes)&&item.classes.includes(klass)))return false;
+    if(rarity!=='all'&&String(item.rarity)!==rarity)return false;
+    if(trade!=='all'&&String(item.tradeState||'tradeable')!==trade)return false;
+    return true;
+  });
+  items.sort((a,b)=>{
+    if(sort==='ilvl-desc')return(Number(b.itemLevel)||0)-(Number(a.itemLevel)||0);
+    if(sort==='ilvl-asc')return(Number(a.itemLevel)||0)-(Number(b.itemLevel)||0);
+    if(sort==='rarity')return bankRarityRank(b)-bankRarityRank(a)||(Number(b.itemLevel)||0)-(Number(a.itemLevel)||0);
+    if(sort==='name')return String(a.name||'').localeCompare(String(b.name||''));
+    return state.bank.indexOf(b)-state.bank.indexOf(a);
+  });
+  return items;
+}
 function renderBank(){
   bankBulkSelection();
-  const total=bankTotal(),unique=state.bank.length,t1=state.bank.filter(x=>x.tier===1).reduce((a,b)=>a+(b.quantity||1),0),t2=state.bank.filter(x=>x.tier===2).reduce((a,b)=>a+(b.quantity||1),0);
-  ui.bankSummary.innerHTML=`<div><span>Stored Items</span><b>${total}</b></div><div><span>Unique Items</span><b>${unique}</b></div><div><span>Tier 1 / Tier 2</span><b>${t1} / ${t2}</b></div>`;
+  const total=bankTotal(),unique=state.bank.length,shards=Number(state.materials?.['cell-shards'])||0;
+  ui.bankSummary.innerHTML=`<div><span>Stored Items</span><b>${total}</b></div><div><span>Unique Stacks</span><b>${unique}</b></div><div><span>Cell Shards</span><b>${shards}</b></div>`;
   updateBankBulkControls();
   if(!state.bank.length){ui.bankGrid.innerHTML='<div class="bank-empty"><span>◇</span><h3>Your bank is empty.</h3><p>Dungeon victories award equipment here before you decide who receives it.</p></div>';return;}
-  ui.bankGrid.innerHTML=state.bank.map(item=>{
+  const visible=bankFilteredItems();
+  if(!visible.length){ui.bankGrid.innerHTML='<div class="bank-empty"><span>⌕</span><h3>No items match those filters.</h3><p>Change the search or filters to see the rest of your vault.</p></div>';return;}
+  ui.bankGrid.innerHTML=visible.map(item=>{
     const protectedItem=bankItemProtected(item),selected=bankBulkSelected.has(item.id);
     const action=bankBulkMode
       ?`<button data-bank-select="${item.id}" aria-pressed="${selected?'true':'false'}" ${protectedItem?'disabled':''}>${protectedItem?'PROTECTED':selected?'✓ SELECTED':'SELECT ITEM'}</button>`
@@ -368,7 +400,7 @@ function renderBank(){
 }
 function bankItemProtected(item){
   const id=String(item?.itemId||'').toLowerCase(),label=String(item?.tierLabel||'').toLowerCase();
-  return Boolean(item?.questProtected)||id.startsWith('quest-')||label.includes('quest relic');
+  return Boolean(item?.favorite)||Boolean(item?.questProtected)||id.startsWith('quest-')||label.includes('quest relic');
 }
 function bankVendorUnitValue(item){
   const i=canonicalItem(item)||item||{},tier=Math.max(1,Number(i.tier)||1),ilvl=Math.max(0,Number(i.itemLevel)||0),power=Math.max(0,Number(i.power)||0);
