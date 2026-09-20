@@ -71,7 +71,7 @@ const ASHEN_ROOMS={
    ]
  }
 };
-let Game=null,G=null,P=null,run=null,token=0;
+let Game=null,G=null,P=null,run=null,token=0,rebornLoaderPromise=null;
 const I=window.CellboundIdentities;
 let tactics={aggression:'balanced',interrupts:'important',defensives:'balanced',adds:'dangerous',movement:'balanced',consumables:'danger'};
 const party=()=>Game&&Game.getPartyCharacters?Game.getPartyCharacters():[];
@@ -960,6 +960,66 @@ async function resolveStage(s){
  Game.applyPartyCellShock(25);const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonHistory.unshift({at:new Date().toISOString(),result:'wipe',stage:s.id,partyIlvl:ilvl()});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The guild wiped at '+s.title+'. All five gained 25% Cell Shock.');await Game.persistState();finish(false,s);return false
 }
 
+
+function combatRebornReady(){
+ return !!(window.CellboundCombatReborn&&typeof window.CellboundCombatReborn.simulate==='function')
+}
+function ensureCombatRebornEngine(){
+ if(combatRebornReady())return Promise.resolve(window.CellboundCombatReborn);
+ if(rebornLoaderPromise)return rebornLoaderPromise;
+ status('Loading Combat Reborn engine…');
+ log('Combat engine is not ready yet. Reloading the Combat Reborn runtime.');
+ rebornLoaderPromise=new Promise((resolve,reject)=>{
+   let settled=false;
+   const finish=(ok,error)=>{
+     if(settled)return;settled=true;clearTimeout(timeout);
+     if(ok&&combatRebornReady())resolve(window.CellboundCombatReborn);
+     else reject(error||new Error('Combat Reborn engine failed to initialise'))
+   };
+   const script=document.createElement('script');
+   script.src='./combat-reborn-v1.js?v=7&recover=1';
+   script.async=true;
+   script.dataset.combatRebornRecovery='1';
+   script.onload=()=>finish(true);
+   script.onerror=()=>finish(false,new Error('Combat Reborn runtime could not be loaded'));
+   document.head.appendChild(script);
+   const timeout=setTimeout(()=>finish(false,new Error('Combat Reborn runtime timed out while loading')),8000);
+ }).finally(()=>{rebornLoaderPromise=null});
+ return rebornLoaderPromise
+}
+function showRebornStartupFailure(error,s,tok){
+ if(tok!==token||!run)return;
+ console.error('Ashen Vault Combat Reborn startup',error);
+ run.combatActive=false;
+ const message=String(error?.message||error||'Unknown combat engine error');
+ status('Combat engine failed to start');
+ log('Combat Reborn could not start: '+message);
+ act('tank','Waiting');act('healer','Waiting');act('dps','Waiting');
+ const arena=$('#cb2dArena');if(!arena)return;
+ let panel=$('#cbrStartupError');
+ if(!panel){
+   panel=document.createElement('div');panel.id='cbrStartupError';panel.className='cbr-startup-error';
+   panel.innerHTML='<small>COMBAT REBORN</small><b>Combat failed to initialise.</b><span data-cbr-error></span><button type="button" data-cbr-retry>RETRY COMBAT</button>';
+   arena.appendChild(panel)
+ }
+ const copy=panel.querySelector('[data-cbr-error]');if(copy)copy.textContent='The encounter has not started or changed state. '+message;
+ const button=panel.querySelector('[data-cbr-retry]');
+ if(button)button.onclick=async()=>{
+   button.disabled=true;button.textContent='RETRYING…';panel.remove();
+   try{
+     await ensureCombatRebornEngine();
+     if(tok!==token||!run)return;
+     const result=runRebornStage(s);captureRebornResult(result);run.stageOutcome=result.outcome==='victory';run.allowKill=true;
+     await playRebornTimeline(result,tok);
+     if(!await resolveStage(s)||tok!==token)return;
+     if(run.stage<STAGES.length-1){
+       const current=run.stage;party().forEach(c=>setHp(c.id,Math.min(100,hp(c.id)+6)));updateRows();flash('PATH CLEAR',false);await delay(420);await travelDeeper(STAGES[current+1],tok);
+       seamlessFrom(current+1,tok)
+     }
+   }catch(err){showRebornStartupFailure(err,s,tok)}
+ }
+}
+
 function rebornTactics(){
  return{
    interruptPriority:tactics.interrupts==='high'?'high':tactics.interrupts==='conservative'?'low':'standard',
@@ -1144,7 +1204,7 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
  run.combatActive=false;return replayMode?'done':(result?.outcome==='victory'?'victory':'defeat')
 }
 function runRebornStage(s){
- const C=window.CellboundCombatReborn;if(!C?.simulate)return null;
+ const C=window.CellboundCombatReborn;if(!C?.simulate)throw new Error('Combat Reborn engine is unavailable');
  const startHp=Object.fromEntries(party().map(c=>[c.id,hp(c.id)]));
  const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:hp(c.id)}));
  const result=C.simulate({party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:['ashen-vault',run.token,run.stage,Date.now()].join(':')});
@@ -1182,22 +1242,29 @@ async function replayFinalReborn(){
  }
  removeRebornReplayControls();if(end)end.hidden=false
 }
-async function seamless(tok){
+async function seamlessFrom(startIndex,tok){
  try{
-  for(let i=0;i<STAGES.length;i++){
-   if(tok!==token)return;run.stage=i;run.override=0;run.rebornResult=null;const s=STAGES[i];
+  for(let i=startIndex;i<STAGES.length;i++){
+   if(tok!==token||!run)return;run.stage=i;run.override=0;run.rebornResult=null;const s=STAGES[i];
    $('#cb2dTitle').textContent=s.title;$('#cb2dRoute').innerHTML=route();$('#cb2dType').textContent=s.kind==='final'?'FINAL BOSS':s.kind==='boss'?'BOSS':s.kind==='event'?'EVENT':'HOSTILE PACK';
    spawn(s);status('Combat Reborn simulation preparing…');log('Entering '+s.title+'.');act('tank','Taking point');act('healer','Following formation');act('dps','Acquiring targets');await delay(650);
+   await ensureCombatRebornEngine();
+   if(tok!==token||!run)return;
+   status('Combat Reborn simulation ready');
    const result=runRebornStage(s);
-   if(!result){throw new Error('Combat Reborn engine unavailable')}
    captureRebornResult(result);run.stageOutcome=result.outcome==='victory';run.allowKill=true;
    await playRebornTimeline(result,tok);
    if(!await resolveStage(s)||tok!==token)return;
    if(i<STAGES.length-1){party().forEach(c=>setHp(c.id,Math.min(100,hp(c.id)+6)));updateRows();flash('PATH CLEAR',false);await delay(420);await travelDeeper(STAGES[i+1],tok)}
   }
   const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;st.gold+=120;st.renown+=60;run.loot.gold+=120;run.loot.renown+=60;run.loot.xp=ASHEN_VAULT_XP;run.xpGrowth=awardPartyXp(ASHEN_VAULT_XP);st.dungeonCompletions++;const completedPartyIds=party().map(c=>c.id);st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',partyIlvl:ilvl(),xpPerCharacter:ASHEN_VAULT_XP,partyIds:completedPartyIds,combatVersion:window.CellboundCombatReborn?.VERSION||'legacy'});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault cleared through Combat Reborn simulation. Each adventurer earned '+ASHEN_VAULT_XP+' XP.');run.xpGrowth.filter(x=>x.levels>0).forEach(x=>st.activity.push(x.name+' reached Level '+x.afterLevel+'.'));await Game.persistState();await syncPartyXpRecords(run.xpGrowth);window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'ashen-vault',partyIds:completedPartyIds}}));finish(true,STAGES[6]);appendRebornAnalysis($('#cb2dEnd'))
- }catch(e){if(e&&e.message!=='cancelled')console.error('Ashen Vault Combat Reborn runtime',e)}
+ }catch(e){
+   if(e&&e.message==='cancelled')return;
+   const s=STAGES[run?.stage||0];
+   showRebornStartupFailure(e,s,tok)
+ }
 }
+async function seamless(tok){return seamlessFrom(0,tok)}
 
 function lootRarityClass(item){return 'rarity-'+String(item?.rarity||'common').toLowerCase().replace(/[^a-z0-9-]/g,'')}
 function lootGearCard(item){
