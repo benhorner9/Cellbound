@@ -135,3 +135,7 @@ body.wb2d-open{overflow:hidden}
 .wb2d-projectile.melee{width:14px;height:3px}
 @keyframes wb2dProjectile{from{transform:rotate(var(--angle));opacity:1}to{transform:translate(var(--dx),var(--dy)) rotate(var(--angle));opacity:.1}}
 .wb2d-telegraph.line,.wb2d-telegraph.cone{transform-origin:left center}
+
+.wb2d-unit.wb2d-boss-add .wb2d-unit-dot{border-color:#d6b64d;background:#5a4812;color:#fff2a7;box-shadow:0 0 15px rgba(214,182,77,.35)}
+.wb2d-unit.wb2d-boss-add small{color:#d7c67f}
+.wb2d-unit.wb2d-boss-add.wiped{opacity:.2;transform:translate(-50%,-50%) scale(.82)}
