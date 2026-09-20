@@ -141,7 +141,7 @@ function simulateRun(){
    const next=[];
    aliveBosses.forEach((b,i)=>{
      const e=result.finalState.enemies?.[i],hp=Math.max(0,Number(e?.health)||0);
-     if(hp<=0){if(!defeated.has(b.id)){defeated.add(b.id);timeline.push({timestamp:offset+Math.min(maxDuration,result.durationMs),type:'VICE_DEFEATED',source:'tb-'+b.id,target:'tb-'+b.id,ability:b.name,payload:{bossId:b.id,name:b.name}})}}
+     if(hp<=0){if(!defeated.has(b.id))defeated.add(b.id)}
      else next.push({...b,currentHealth:hp,maxHealth:Number(e?.maxHealth)||b.maxHealth||b.health})
    });
    aliveBosses=next;
@@ -266,6 +266,7 @@ function handleEvent(e){
  run.elapsed=Math.max(run.elapsed,Number(e.timestamp)||0);
  if(e.type==='TOMB_OPEN'){spawnBoss(e.payload?.bossId);return}
  if(e.type==='VICE_DEFEATED'){defeatBoss(e.payload?.bossId);return}
+ if(e.type==='ENEMY_DEFEATED'&&String(e.target||'').startsWith('tb-')){defeatBoss(String(e.target).slice(3));return}
  if(e.type==='DAMAGE_DEALT'){
    if(String(e.source||'').startsWith('p-'))run.damage[e.source]=(Number(run.damage[e.source])||0)+(Number(e.amount)||0);
    if(String(e.target||'').startsWith('p-'))setPartyHp(e.target,e.payload?.targetHpPct);
