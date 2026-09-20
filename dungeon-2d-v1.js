@@ -268,6 +268,29 @@ function renderDungeonEnvironment(s){
  if(tag)tag.innerHTML='<b>'+esc(cfg.label)+'</b><small>'+esc(cfg.ambience)+'</small>'
 }
 
+function resourceClass(name){
+ return 'resource-'+String(name||'power').toLowerCase().replace(/[^a-z0-9]+/g,'-')
+}
+function resourceDefFor(c){
+ return window.CellboundCombatReborn?.RESOURCE_DEFS?.[c?.class]||{name:'Power',max:100,start:100}
+}
+function updateResourceBarElement(bar,name,value,max){
+ if(!bar)return;
+ const resource=String(name||'Power'),limit=Math.max(1,Number(max)||100),current=clamp(Number(value)||0,0,limit),pctValue=current/limit*100;
+ [...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));
+ bar.classList.add(resourceClass(resource));bar.dataset.resource=resource;
+ const fill=bar.querySelector('i'),label=bar.querySelector('span');
+ if(fill)fill.style.width=pctValue+'%';
+ if(label)label.textContent=resource+' '+Math.round(current)+'/'+Math.round(limit);
+ bar.title=resource+' '+Math.round(current)+' / '+Math.round(limit)
+}
+function mountRebornResourceBar(c){
+ const unit=$('[data-unit="p-'+c.id+'"]');if(!unit)return null;
+ let bar=unit.querySelector('.cbr-resource');
+ if(!bar){bar=document.createElement('small');bar.className='cbr-resource';bar.innerHTML='<i></i><span></span>';unit.appendChild(bar)}
+ const def=resourceDefFor(c);updateResourceBarElement(bar,def.name,def.start,def.max);return bar
+}
+
 function spawn(s){
  renderDungeonEnvironment(s);$('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
  const max=s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120;
@@ -278,7 +301,7 @@ function spawn(s){
  const melee=party().filter(c=>combatProfile(c)==='melee');
  const ranged=party().filter(c=>combatProfile(c)==='ranged');
  party().forEach((c,i)=>{
-   addUnit('p-'+c.id,c.name,'party '+role(c)+' profile-'+combatProfile(c)+' '+classKey(c),4,50+(i-2)*4,'');
+   addUnit('p-'+c.id,c.name,'party '+role(c)+' profile-'+combatProfile(c)+' '+classKey(c),4,50+(i-2)*4,'');mountRebornResourceBar(c);
    let x=16,y=50;
    if(combatProfile(c)==='tank'){x=30;y=50}
    else if(combatProfile(c)==='melee'){x=23;y=43+(melee.indexOf(c)*14)}
@@ -1046,12 +1069,11 @@ function recordRebornHealing(c,amount,over=0){
 }
 function rebornResourceVisual(e){
  if(!e?.source||!String(e.source).startsWith('p-'))return;
- const unit=$('[data-unit="'+e.source+'"]');if(!unit)return;
- let r=unit.querySelector('.cbr-resource');
- if(!r){r=document.createElement('small');r.className='cbr-resource';r.innerHTML='<i></i><span></span>';unit.appendChild(r)}
- const value=Number(e.payload?.value)||0,max=Math.max(1,Number(e.payload?.max)||100),fill=r.querySelector('i'),label=r.querySelector('span');
- if(fill)fill.style.width=clamp(value/max*100,0,100)+'%';
- if(label)label.textContent=(e.payload?.resource||'Resource')+' '+Math.round(value);
+ const c=rebornPlayerByUnit(e.source),unit=$('[data-unit="'+e.source+'"]');if(!unit)return;
+ let bar=unit.querySelector('.cbr-resource');if(!bar&&c)bar=mountRebornResourceBar(c);
+ if(!bar)return;
+ const fallback=c?resourceDefFor(c):{name:'Power',max:100,start:100};
+ updateResourceBarElement(bar,e.payload?.resource||fallback.name,e.payload?.value??fallback.start,e.payload?.max??fallback.max)
 }
 function rebornCastStart(e){
  const n=$('#cb2dCastName'),tm=$('#cb2dCastTime'),f=$('#cb2dCastFill'),duration=Math.max(0,Number(e.payload?.duration)||0);
@@ -1124,7 +1146,7 @@ function renderRebornEvent(e,result,replayMode=false){
    if(targetChar){setHp(targetChar.id,Number(e.payload?.targetHpPct)||hp(targetChar.id));updateRows();hitReact(e.target,'heal');floating(e.target,'+'+Math.round(Number(e.amount)||0),'heal')}
    if(srcChar)recordRebornHealing(srcChar,Number(e.amount)||0,Number(e.payload?.overhealing)||0);
    break;
-  case'RESOURCE_SPENT':case'RESOURCE_GAINED':rebornResourceVisual(e);break;
+  case'RESOURCE_SPENT':case'RESOURCE_GAINED':case'RESOURCE_STATE':rebornResourceVisual(e);break;
   case'THREAT_GENERATED':
    if(enemyIdx>=0&&srcChar&&run.threat?.[enemyIdx]){run.threat[enemyIdx][srcChar.id]=Number(e.payload?.total)||0;renderCombatMeters()}break;
   case'AGGRO_CHANGED':
