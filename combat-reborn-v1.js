@@ -509,37 +509,35 @@ function resolveMechanic(ctx,e,m,token){
   ctx.stats.interrupts.missedCritical++;
   mechanicStat(ctx,'interrupt',true);scheduleNextMechanic(ctx);return;
  }
+ if(!cast||cast.token!==token){scheduleNextMechanic(ctx);return}
+ ctx.activeEnemyCast=null;
  emit(ctx,'MECHANIC_RESOLVE',{source:e.id,ability:m.name,result:'resolve',payload:{mechanicType:m.type,token}});
  if(m.type==='adds'){spawnAdds(ctx,e);mechanicStat(ctx,'adds',false);scheduleNextMechanic(ctx);return}
  if(m.type==='cone'){
   const tank=livingPlayers(ctx).find(p=>p.role==='tank');if(tank){e.target=tank.id;updateFacing(e,tank)}
   let failed=false;
   livingPlayers(ctx).forEach(p=>{
-   const isTank=p.role==='tank';
-   if(isTank){dealDamage(ctx,e,p,18,m.name,{damageType:'physical',avoidable:false});return}
-   const success=ctx.rng()<reactionChance(ctx,p,'cone');
-   if(success)planMovement(ctx,p,'cone',e);
-   else{failed=true;dealDamage(ctx,e,p,22,m.name,{damageType:'physical',avoidable:true})}
+   if(p.role==='tank'){dealDamage(ctx,e,p,18,m.name,{damageType:'physical',avoidable:false});return}
+   const success=cast.responses?.[p.id]!==false;
+   if(!success){failed=true;dealDamage(ctx,e,p,22,m.name,{damageType:'physical',avoidable:true})}
   });
   mechanicStat(ctx,'cone',failed);scheduleNextMechanic(ctx);return;
  }
  if(m.type==='circle'||m.type==='circles'){
   let failed=false;
   livingPlayers(ctx).forEach(p=>{
-   const success=ctx.rng()<reactionChance(ctx,p,m.type);
-   if(success)planMovement(ctx,p,m.type,e);
-   else{failed=true;dealDamage(ctx,e,p,m.type==='circles'?18:20,m.name,{damageType:'magic',avoidable:true})}
+   const success=cast.responses?.[p.id]!==false;
+   if(!success){failed=true;dealDamage(ctx,e,p,m.type==='circles'?18:20,m.name,{damageType:'magic',avoidable:true})}
   });
   mechanicStat(ctx,m.type,failed);scheduleNextMechanic(ctx);return;
  }
  if(m.type==='line'){
-  const candidates=livingPlayers(ctx).filter(p=>p.role!=='tank'),target=candidates[Math.floor(ctx.rng()*Math.max(1,candidates.length))]||livingPlayers(ctx)[0];
-  if(target){
-   const success=ctx.rng()<reactionChance(ctx,target,'line');
-   if(success)planMovement(ctx,target,'line',e);
-   else dealDamage(ctx,e,target,26,m.name,{damageType:'physical',avoidable:true});
+  const target=getUnit(ctx,cast.targetId);
+  if(target?.alive){
+   const success=cast.responses?.[target.id]!==false;
+   if(!success)dealDamage(ctx,e,target,26,m.name,{damageType:'physical',avoidable:true});
    mechanicStat(ctx,'line',!success);
-  }
+  }else mechanicStat(ctx,'line',false);
   scheduleNextMechanic(ctx);return;
  }
  mechanicStat(ctx,m.type||'unknown',false);scheduleNextMechanic(ctx);
@@ -547,14 +545,24 @@ function resolveMechanic(ctx,e,m,token){
 function startMechanic(ctx,m){
  const e=livingEnemies(ctx).find(x=>x.kind==='boss')||livingEnemies(ctx)[0];if(!e)return;
  const token='m'+(++ctx.mechanicSeq),duration=Math.max(700,Number(m.duration)||1600);
+ const castState={token,enemy:e.id,name:m.name,type:m.type,interrupted:false,ends:ctx.time+duration,responses:{},targetId:null};
  emit(ctx,'MECHANIC_TELEGRAPH',{source:e.id,ability:m.name,result:'telegraph',position:copy(e.position),payload:{mechanicType:m.type,duration,token,interruptible:m.type==='interrupt'}});
  emit(ctx,'CAST_START',{source:e.id,ability:m.name,result:'enemy',payload:{duration,interruptible:m.type==='interrupt',mechanicType:m.type,token}});
- ctx.activeEnemyCast={token,enemy:e.id,name:m.name,type:m.type,interrupted:false,ends:ctx.time+duration};
+ ctx.activeEnemyCast=castState;
  if(m.type==='interrupt')tryInterrupt(ctx,e,m,token);
- else{
+ else if(m.type==='cone'){
+  const tank=livingPlayers(ctx).find(p=>p.role==='tank');
   livingPlayers(ctx).forEach(p=>{
-   if(ctx.rng()<reactionChance(ctx,p,m.type))planMovement(ctx,p,m.type,e);
+   if(p.role==='tank'){castState.responses[p.id]=true;planMovement(ctx,p,'cone',e);return}
+   const success=ctx.rng()<reactionChance(ctx,p,'cone');castState.responses[p.id]=success;if(success)planMovement(ctx,p,'cone',e);
   });
+  if(tank){e.target=tank.id;updateFacing(e,tank)}
+ }else if(m.type==='circle'||m.type==='circles'){
+  livingPlayers(ctx).forEach(p=>{const success=ctx.rng()<reactionChance(ctx,p,m.type);castState.responses[p.id]=success;if(success)planMovement(ctx,p,m.type,e)});
+ }else if(m.type==='line'){
+  const candidates=livingPlayers(ctx).filter(p=>p.role!=='tank'),target=candidates[Math.floor(ctx.rng()*Math.max(1,candidates.length))]||livingPlayers(ctx)[0];
+  castState.targetId=target?.id||null;
+  if(target){const success=ctx.rng()<reactionChance(ctx,target,'line');castState.responses[target.id]=success;if(success)planMovement(ctx,target,'line',e)}
  }
  schedule(ctx,ctx.time+duration,()=>resolveMechanic(ctx,e,m,token),'mechanic-resolve');
 }
@@ -669,10 +677,10 @@ function runSelfTests(){
  r=simulate({party,encounter:{...base,mechanics:[['Ground AoE','circle',1500]]},tactics:{movementDiscipline:'safety'},seed:'ground'});
  test('Ground AoE',()=>r.events.some(e=>e.type==='MOVEMENT_START'&&e.result==='mechanic response'));
  const weak=mockParty().map(x=>({...x,power:1,level:1}));
- r=simulate({party:weak,encounter:{...base,enemyHealth:1800,mechanics:[['Pulse','circle',800]]},seed:'death'});
- test('Player Death',()=>r.events.some(e=>e.type==='PLAYER_DEFEATED'));
- r=simulate({party,encounter:base,seed:'healer'});
- test('Healer Logic',()=>r.events.some(e=>e.type==='HEAL_RECEIVED'));
+ r=simulate({party:[{id:'solo',name:'Solo Mage',class:'Mage',spec:'Arcane',power:1,level:1}],encounter:{...base,kind:'final',enemyHealth:5000,mechanics:[['Pulse','circle',700]]},seed:'death'});
+ test('Player Death',()=>{const death=r.events.find(e=>e.type==='PLAYER_DEFEATED');if(!death)return false;return !r.events.some(e=>e.type==='ABILITY_START'&&e.source===death.target&&e.timestamp>death.timestamp)});
+ r=simulate({party,encounter:{...base,kind:'final',enemyHealth:1600},seed:'healer'});
+ test('Healer Logic',()=>r.events.some(e=>e.type==='HEAL_RECEIVED'&&e.source==='p-heal'));
  const mageOnly=[{id:'m',name:'Mage',class:'Mage',spec:'Arcane',power:2,level:2}];
  r=simulate({party:mageOnly,encounter:{...base,enemyHealth:900},seed:'resource'});
  test('Resource Starvation',()=>r.events.some(e=>e.type==='RESOURCE_SPENT'));
