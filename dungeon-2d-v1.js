@@ -1081,7 +1081,7 @@ function renderRebornEvent(e,result,replayMode=false){
   case'MECHANIC_RESOLVE':
    clearRebornTelegraph(e.payload?.token,'impact');break;
   case'INTERRUPT':
-   if(e.result==='success'){rebornCastClear('INTERRUPTED');flash('INTERRUPTED',false);log((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');act('dps','Interrupt successful')}
+   if(e.result==='success'){rebornCastClear('INTERRUPTED');clearRebornTelegraph(e.payload?.token,'safe');flash('INTERRUPTED',false);log((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');act('dps','Interrupt successful')}
    else if(e.result==='failed')log((srcChar?.name||'A player')+' misses an interrupt.');
    break;
   case'DEFENSIVE_ACTIVATED':
