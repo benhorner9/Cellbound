@@ -304,6 +304,19 @@ function levelMatchMultiplier(sourceLevel,targetLevel){
  return clamp(1+delta*LEVEL_RULES.levelDeltaPerLevel,LEVEL_RULES.minLevelDeltaMultiplier,LEVEL_RULES.maxLevelDeltaMultiplier)
 }
 function enemyClassRule(kind){return ENEMY_CLASS_RULES[kind]||ENEMY_CLASS_RULES.trash}
+function hasAffix(ctx,id){return Array.isArray(ctx?.encounter?.affixes)&&ctx.encounter.affixes.includes(id)}
+function scalingValue(ctx,key,fallback=1){const v=Number(ctx?.encounter?.scaling?.[key]);return Number.isFinite(v)&&v>0?v:fallback}
+function enemyPressure(ctx,e,target){
+ let mult=levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,target?.level||1)*(Number(e.damageScale)||1);
+ if(hasAffix(ctx,'blood-moon')&&healthRatio(e)<=.30)mult*=1.25;
+ if(ctx.tactics?.pullStyle==='aggressive'&&e.classification!=='boss'&&e.classification!=='world-boss')mult*=1.10;
+ if(ctx.tactics?.pullStyle==='safe'&&e.classification!=='boss'&&e.classification!=='world-boss')mult*=.94;
+ if(Number(e.relentlessUntil)>ctx.time)mult*=1.18;
+ mult*=Math.max(1,Number(e.phaseDamageScale)||1);
+ if(e.hardEnraged)mult*=3.5;
+ return mult
+}
+
 
 const ABILITIES={
  'Death Knight':[
@@ -421,6 +434,33 @@ function classMobility(c){
  if(c.class==='Death Knight')return .86;
  return 1;
 }
+
+
+function gearSetState(c){
+ const counts={};
+ Object.values(c?.equipment||{}).forEach(item=>{if(item?.setId)counts[item.setId]=(counts[item.setId]||0)+1});
+ const sets=Object.entries(counts).map(([id,pieces])=>({id,pieces,name:Object.values(c?.equipment||{}).find(x=>x?.setId===id)?.setName||id}));
+ return{
+   sets,
+   outputScale:sets.some(s=>s.pieces>=2)?1.05:1,
+   resourceRegen:sets.some(s=>s.pieces>=3)?1.12:1
+ }
+}
+
+function equippedUniqueEffects(c){
+ const out=[];
+ Object.values(c?.equipment||{}).forEach(item=>{
+  const effect=item?.uniqueEffect;
+  if(effect?.id&&!out.some(x=>x.id===effect.id))out.push(copy(effect))
+ });
+ return out
+}
+function hasUnique(u,id){return Array.isArray(u?.uniqueEffects)&&u.uniqueEffects.some(x=>x.id===id)}
+function triggerUnique(ctx,u,id,name,payload={}){
+ if(!u)return;
+ emit(ctx,'UNIQUE_EFFECT_TRIGGER',{source:u.id,target:payload.target||u.id,ability:name,result:id,payload:{effectId:id,...payload}})
+}
+
 function abilityPool(c,role){
  const pool=(ABILITIES[c.class]||ROLE_FALLBACKS[role]||ROLE_FALLBACKS.dps).filter(a=>!a.role||a.role===role);
  return pool.length?pool:ROLE_FALLBACKS[role]||ROLE_FALLBACKS.dps;
@@ -433,14 +473,14 @@ function normalisePlayer(c,i){
  const maxHealth=Math.round(baseHealth*healthScale),startPct=clamp(c?._combatHealthPct==null?100:Number(c._combatHealthPct),0,100),startHealth=Math.round(maxHealth*startPct/100);
  const carried=c?._combatResource,carriedValue=typeof carried==='number'?carried:Number(carried?.value);
  const resourceValue=Number.isFinite(carriedValue)?clamp(carriedValue,0,res.max):res.start;
- const resourceRegen=healer&&res.name==='Mana'?2.1:res.regen;
+ const setState=gearSetState(c),resourceRegen=(healer&&res.name==='Mana'?2.1:res.regen)*setState.resourceRegen;
  const itemLevel=Math.max(0,Number(c?._combatItemLevel??c?.itemLevel??c?.gear)||0),carriedCooldowns=copy(c?._combatCooldowns||{});
  return{
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:{x:tank?42:role==='healer'?18:28,y:26+i*12},facing:0,
   target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:{},resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
-  abilities:copy(abilityPool(c,role)),power,level,itemLevel,baseStats:{baseHealth,healthScale,outputScale},talents:talentRanks(c),knowledge:copy(c.knowledge||{}),
-  defensiveUntil:0,nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
+  abilities:copy(abilityPool(c,role)),power,level,itemLevel,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),
+  defensiveUntil:Math.max(0,Number(c?._combatDefensiveMs)||0),frenzyUntil:Math.max(0,Number(c?._combatFrenzyMs)||0),uniqueUsed:copy(c?._combatUniqueUsed||{}),nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
 }
 function normaliseEnemies(encounter){
@@ -451,12 +491,14 @@ function normaliseEnemies(encounter){
   const level=Math.max(1,Number(data.level)||Number(encounter.enemyLevels?.[i])||baseLevel);
   const inferred=data.classification||encounter.enemyTypes?.[i]||data.kind||((raw.length===1&&(encounter.kind==='boss'||encounter.kind==='final'))?'boss':(encounter.kind==='event'?'elite':'trash'));
   const classification=String(inferred||'trash').toLowerCase(),rule=enemyClassRule(classification);
-  const rawMax=Number(data.health)||baseHealth,maxHealth=Math.round(rawMax*levelHealthScale(level)*rule.health);
+  const absoluteHealth=Boolean(data.absoluteHealth),rawMax=Number(data.maxHealth)||Number(data.health)||baseHealth,healthMult=Math.max(.25,Number(encounter.scaling?.enemyHealth)||1),damageMult=Math.max(.25,Number(encounter.scaling?.enemyDamage)||1);
+  const maxHealth=absoluteHealth?Math.max(1,Math.round(rawMax)):Math.round(rawMax*levelHealthScale(level)*rule.health*healthMult);
+  const currentHealth=data.currentHealth==null?maxHealth:clamp(Math.round(Number(data.currentHealth)||0),0,maxHealth);
   return{
    id:'e-'+i,name,role:'enemy',kind:classification==='boss'||classification==='world-boss'?'boss':'enemy',classification,classificationLabel:rule.label,level,
-   maxHealth,health:maxHealth,alive:true,position:{x:68,y:raw.length===1?50:30+i*(40/Math.max(1,raw.length-1))},facing:180,
+   maxHealth,health:currentHealth,alive:currentHealth>0,position:{x:68,y:raw.length===1?50:30+i*(40/Math.max(1,raw.length-1))},facing:180,
    target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},movingUntil:0,moveToken:0,nextAttack:900+i*220,currentCast:null,
-   isAdd:false,priority:i===0?2:1,damageScale:rule.damage
+   isAdd:false,priority:i===0?2:1,damageScale:rule.damage*damageMult,phaseDamageScale:1,hardEnraged:false
   }
  })
 }
@@ -784,7 +826,8 @@ function rollDamage(ctx,u,a,target){
  const power=1+Math.min(.35,u.power*.012),levelScale=u.baseStats?.outputScale||levelOutputScale(u.level),match=levelMatchMultiplier(u.level,target?.level||1);
  const variance=.9+ctx.rng()*.2;
  const revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1;
- let amount=(Number(a.damage)||12)*talent*power*levelScale*match*variance*revivePenalty;
+ const frenzy=u.frenzyUntil>ctx.time?1.15:1;
+ let amount=(Number(a.damage)||12)*talent*power*levelScale*match*variance*revivePenalty*frenzy;
  if(ctx.rng()<.12){amount*=1.5;return{amount,crit:true}}
  return{amount,crit:false};
 }
@@ -796,7 +839,16 @@ function mitigation(target,damageType='physical'){
 function dealDamage(ctx,source,target,amount,ability,opts={}){
  if(!source?.alive||!target?.alive)return 0;
  let final=Math.max(0,amount);
- if(target.role!=='enemy')final*=mitigation(target,opts.damageType||'physical');
+ if(target.role!=='enemy'){
+  const projected=Math.max(1,Math.round(final*mitigation(target,opts.damageType||'physical')));
+  const crossesLastStand=healthRatio(target)>.20&&((target.health-projected)/Math.max(1,target.maxHealth))<.20;
+  if(crossesLastStand&&hasUnique(target,'guardian-last-stand')&&!target.uniqueUsed?.['guardian-last-stand']){
+   target.uniqueUsed['guardian-last-stand']=true;target.defensiveUntil=Math.max(Number(target.defensiveUntil)||0,6000);
+   applyStatus(ctx,target,target,{id:'guardian-last-stand',name:"Guardian's Last Stand",kind:'buff',duration:6000,effect:{damageReduction:.30}});
+   triggerUnique(ctx,target,'guardian-last-stand',"Guardian's Last Stand",{target:target.id,duration:6000});
+  }
+  final*=mitigation(target,opts.damageType||'physical')
+ }
  final=Math.max(1,Math.round(final));
  const before=target.health;target.health=clamp(target.health-final,0,target.maxHealth);
  const dealt=before-target.health;
@@ -817,6 +869,14 @@ function doHeal(ctx,healer,target,amount,ability){
  target.health=clamp(before+raw,0,max);
  const effective=target.health-before,over=Math.max(0,raw-effective);
  const st=ctx.stats.players[healer.id];st.healing+=effective;st.overhealing+=over;st.abilityHealing[ability]=(st.abilityHealing[ability]||0)+effective;
+ if(over>0&&hasAffix(ctx,'overflow')&&healer.resource?.name==='Mana'){
+  const pressure=Math.min(4,Math.max(1,Math.round(over/12)));
+  healer.resource.value=clamp(healer.resource.value-pressure,0,healer.resource.max);
+  target.defensiveUntil=Math.max(Number(target.defensiveUntil)||0,1200);
+  emit(ctx,'AFFIX_TRIGGER',{source:healer.id,target:target.id,ability:'Overflow',amount:pressure,result:'overflow',payload:{affix:'overflow',overhealing:over,manaPressure:pressure}});
+  emitResourceState(ctx,healer,'overflow-pressure')
+ }
+
  emit(ctx,'HEAL_RECEIVED',{source:healer.id,target:target.id,ability,amount:effective,result:over?'overheal':'heal',position:copy(target.position),payload:{overhealing:over,targetHp:target.health,targetMax:max,targetHpPct:pct(target.health,max)}});
  livingEnemies(ctx).forEach(e=>addThreat(ctx,e,healer,effective*.5,'healing'));
  return effective;
@@ -825,6 +885,7 @@ function killUnit(ctx,target,source,ability){
  if(!target.alive)return;
  target.alive=false;target.health=0;target.currentCast=null;
  emit(ctx,target.role==='enemy'?(target.isAdd?'ADD_DEFEATED':'ENEMY_DEFEATED'):'PLAYER_DEFEATED',{source:source?.id||null,target:target.id,ability,result:'dead',position:copy(target.position)});
+ if(target.role==='enemy')onEnemyDeathAffixes(ctx,target);
  if(target.role!=='enemy'){
   const st=ctx.stats.players[target.id];st.deaths++;ctx.stats.deaths++;
   ctx.enemies.forEach(e=>{e.threat[target.id]=0;if(e.target===target.id)setAggro(ctx,e,topThreatTarget(ctx,e),'target died')});
@@ -841,6 +902,70 @@ function reviveUnit(ctx,healer,target,ability,{healthPct=35,resourcePct=20,comba
  emit(ctx,'PLAYER_REVIVED',{source:healer.id,target:target.id,ability,result:combat?'battle-rez':'revive',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),resource:target.resource.name,resourceValue:target.resource.value,resourceMax:target.resource.max,penaltyMs:combat?30000:15000}});
  emitResourceState(ctx,target,'revived');
  return true
+}
+
+
+function onEnemyDeathAffixes(ctx,target){
+ if(!target||target.role!=='enemy')return;
+ if(hasAffix(ctx,'volatile-cells')&&target.classification==='elite'){
+  const source={...target,alive:true};ctx.pendingHazards=(Number(ctx.pendingHazards)||0)+1;
+  emit(ctx,'AFFIX_TRIGGER',{source:target.id,ability:'Volatile Cells',result:'armed',position:copy(target.position),payload:{affix:'volatile-cells',delay:850}});
+  schedule(ctx,ctx.time+850,()=>{
+   ctx.pendingHazards=Math.max(0,(Number(ctx.pendingHazards)||0)-1);
+   emit(ctx,'AFFIX_TRIGGER',{source:target.id,ability:'Volatile Cells',result:'explode',position:copy(target.position),payload:{affix:'volatile-cells'}});
+   livingPlayers(ctx).forEach(p=>dealDamage(ctx,source,p,18*enemyPressure(ctx,target,p),'Volatile Cells',{damageType:'magic',avoidable:true}))
+  },'affix-volatile')
+ }
+ if(hasAffix(ctx,'relentless')){
+  livingEnemies(ctx).forEach(e=>{e.relentlessUntil=ctx.time+5000});
+  if(livingEnemies(ctx).length)emit(ctx,'AFFIX_TRIGGER',{source:target.id,ability:'Relentless',result:'empower',payload:{affix:'relentless',duration:5000,targets:livingEnemies(ctx).map(e=>e.id)}})
+ }
+ if(hasAffix(ctx,'necromantic')&&!target.necromanticUsed&&!target.isAdd&&target.classification!=='boss'&&target.classification!=='world-boss'){
+  target.necromanticUsed=true;ctx.pendingResurrections++;
+  emit(ctx,'AFFIX_TRIGGER',{source:target.id,ability:'Necromantic',result:'returning',position:copy(target.position),payload:{affix:'necromantic',delay:2400}});
+  schedule(ctx,ctx.time+2400,()=>{
+   ctx.pendingResurrections=Math.max(0,ctx.pendingResurrections-1);
+   if(ctx.finished)return;
+   target.alive=true;target.health=Math.max(1,Math.round(target.maxHealth*.35));target.currentCast=null;target.nextAttack=ctx.time+700;
+   emit(ctx,'ENEMY_REVIVED',{source:target.id,target:target.id,ability:'Necromantic',result:'revived',position:copy(target.position),payload:{affix:'necromantic',targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth)}})
+  },'affix-necromantic')
+ }
+}
+function scheduleUnstableGround(ctx){
+ if(!hasAffix(ctx,'unstable-ground'))return;
+ schedule(ctx,ctx.time+5200,()=>{
+  if(ctx.finished)return;
+  const live=livingPlayers(ctx),enemy=livingEnemies(ctx)[0];if(!live.length||!enemy)return;
+  const target=live[Math.floor(ctx.rng()*live.length)],duration=1250,token='affix-ground-'+(++ctx.mechanicSeq);
+  const plan=mechanicResponse(ctx,target,'circle',duration,enemy);
+  emit(ctx,'AFFIX_TRIGGER',{source:enemy.id,target:target.id,ability:'Unstable Ground',result:'telegraph',position:copy(target.position),payload:{affix:'unstable-ground',token,duration}});
+  emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:target.id,ability:'Unstable Ground',result:'telegraph',position:copy(target.position),payload:{mechanicType:'circle',duration,token,targetId:target.id,targetIds:[target.id],responses:{[target.id]:plan.success}}});
+  schedule(ctx,ctx.time+duration,()=>{
+   emit(ctx,'MECHANIC_RESOLVE',{source:enemy.id,target:target.id,ability:'Unstable Ground',result:'resolve',payload:{mechanicType:'circle',token}});
+   if(target.alive&&!plan.success)dealDamage(ctx,enemy,target,24*enemyPressure(ctx,enemy,target),'Unstable Ground',{damageType:'magic',avoidable:true});
+   scheduleUnstableGround(ctx)
+  },'affix-ground-resolve')
+ },'affix-ground-start')
+}
+
+
+function isCrowdControlled(u){
+ return Object.values(u?.statuses||{}).some(s=>s?.cc&&Number(s.expiresAt)>0);
+}
+function maybeApplyCrowdControl(ctx){
+ const policy=ctx.tactics?.crowdControl||'disabled';
+ if(policy==='disabled'||ctx.ccApplied)return;
+ const candidates=livingEnemies(ctx).filter(e=>e.kind!=='boss'&&e.classification!=='world-boss');
+ if(!candidates.length)return;
+ const target=(policy==='priority-elites'?candidates.filter(e=>e.classification==='elite'||e.isAdd):candidates)
+   .sort((a,b)=>(b.priority||0)-(a.priority||0)||b.maxHealth-a.maxHealth)[0];
+ if(!target)return;
+ const controller=livingPlayers(ctx).filter(p=>p.role==='dps').sort((a,b)=>executionQuality(ctx,b)-executionQuality(ctx,a))[0];
+ if(!controller)return;
+ ctx.ccApplied=true;
+ const duration=policy==='enabled'?1800:2600;
+ applyStatus(ctx,controller,target,{id:'tactical-control',name:'Tactical Crowd Control',kind:'debuff',duration,cc:'stun',breakOnDamage:false});
+ emit(ctx,'CROWD_CONTROL',{source:controller.id,target:target.id,ability:'Tactical Crowd Control',result:'applied',payload:{duration,policy}});
 }
 
 function pickDamageTarget(ctx,u){
@@ -860,7 +985,16 @@ function healerTarget(ctx){
  })[0]||null
 }
 function chooseAbility(ctx,u,target){
- const pool=u.abilities.filter(a=>a.kind!=='interrupt'&&a.kind!=='taunt'&&cooldownReady(u,a)&&(a.cost||0)<=u.resource.value);
+ let pool=u.abilities.filter(a=>a.kind!=='interrupt'&&a.kind!=='taunt'&&cooldownReady(u,a)&&(a.cost||0)<=u.resource.value);
+ const cdPolicy=ctx.tactics?.cooldownUse||'difficult';
+ if(u.role!=='healer'){
+   const long=a=>(Number(a.cd)||0)>=6000;
+   if(cdPolicy==='bosses'&&!['boss','final'].includes(ctx.encounter.kind)){
+     const held=pool.filter(a=>!long(a));if(held.length)pool=held
+   }else if(cdPolicy==='difficult'&&!['boss','final','event'].includes(ctx.encounter.kind)&&combatPressure(ctx)<.55){
+     const held=pool.filter(a=>!long(a));if(held.length)pool=held
+   }
+ }
  if(u.role==='healer'){
   const alive=livingPlayers(ctx),tank=alive.find(p=>p.role==='tank'),low=healerTarget(ctx),dead=deadPlayers(ctx);
   const battleRez=pool.find(a=>a.kind==='battle-rez');
@@ -944,6 +1078,19 @@ function finishAbility(ctx,u,a,target){
  }else if(a.kind==='damage'){
   const rolled=rollDamage(ctx,u,a,target);
   const dealt=dealDamage(ctx,u,target,rolled.amount,a.name,{crit:rolled.crit,ability:a,damageType:u.class==='Mage'||u.class==='Evoker'?'magic':'physical'});
+  if(dealt>0&&rolled.crit&&hasUnique(u,'heart-troll-king')&&ctx.rng()<.28){
+   u.frenzyUntil=Math.max(Number(u.frenzyUntil)||0,ctx.time+6000);
+   applyStatus(ctx,u,u,{id:'blood-frenzy',name:'Blood Frenzy',kind:'buff',duration:6000,effect:{damageMultiplier:.15}});
+   triggerUnique(ctx,u,'heart-troll-king','Blood Frenzy',{target:u.id,duration:6000,trigger:'critical'})
+  }
+  if(dealt>0&&u.class==='Mage'&&hasUnique(u,'embercore-staff')&&ctx.rng()<.32){
+   const splash=livingEnemies(ctx).filter(e=>e.alive&&e.id!==target.id).sort((a,b)=>dist(target.position,a.position)-dist(target.position,b.position))[0];
+   if(splash&&dist(target.position,splash.position)<=18){
+    const splashDamage=Math.max(1,Math.round(dealt*.38));
+    triggerUnique(ctx,u,'embercore-staff','Living Ember',{target:splash.id,trigger:'spell-hit'});
+    dealDamage(ctx,u,splash,splashDamage,'Living Ember',{ability:a,damageType:'magic'})
+   }
+  }
   if(dealt>0&&target.alive&&u.role==='dps'&&shouldMistake(ctx,u,'threat',12000)){
    recordMistake(ctx,u,'threat','overcommitted before threat was secure',{target:target.id,ability:a.name});
    addThreat(ctx,target,u,dealt*(1.8+ctx.rng()*.8),'overcommit');
@@ -959,6 +1106,7 @@ function tickCooldowns(ctx){
  ctx.players.forEach(u=>{
   Object.keys(u.cooldowns).forEach(k=>u.cooldowns[k]=Math.max(0,u.cooldowns[k]-TICK));
   if(u.defensiveUntil>0)u.defensiveUntil=Math.max(0,u.defensiveUntil-TICK);
+  if(u.frenzyUntil>0&&u.frenzyUntil<=ctx.time)u.frenzyUntil=0;
  });
  ctx.enemies.forEach(e=>Object.keys(e.cooldowns).forEach(k=>e.cooldowns[k]=Math.max(0,e.cooldowns[k]-TICK)));
 }
@@ -1004,7 +1152,7 @@ function playerAI(ctx,u){
  if(pick)startAbility(ctx,u,pick.ability,pick.target);
 }
 function enemyBasicAttack(ctx,e){
- if(!e.alive||ctx.time<e.movingUntil)return;
+ if(!e.alive||ctx.time<e.movingUntil||isCrowdControlled(e))return;
  const target=topThreatTarget(ctx,e)||livingPlayers(ctx)[0];if(!target)return;
  setAggro(ctx,e,target,'threat');
  if(!inRange(e,target,5)||!hasLineOfSight(ctx,e,target)){
@@ -1013,7 +1161,7 @@ function enemyBasicAttack(ctx,e){
  }
  updateFacing(e,target);
  const base=e.kind==='boss'?30:e.isAdd?11:8;
- const levelPressure=levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,target.level||1)*(Number(e.damageScale)||1);
+ const levelPressure=enemyPressure(ctx,e,target);
  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability:e.kind==='boss'?'Heavy Swing':'Attack',result:'enemy'});
  dealDamage(ctx,e,target,base*levelPressure*(.85+ctx.rng()*.3),e.kind==='boss'?'Heavy Swing':'Attack',{damageType:'physical'});
  e.nextAttack=ctx.time+(e.kind==='boss'?1400:e.isAdd?1800:2050)+Math.round(ctx.rng()*(e.kind==='boss'?220:320));
@@ -1056,9 +1204,20 @@ function tryInterrupt(ctx,e,mechanic,castToken){
   .filter(x=>x.a&&inRange(x.u,e,x.a.range||10)&&hasLineOfSight(ctx,x.u,e));
  ctx.stats.interrupts.attempts++;
  if(!candidates.length){ctx.stats.interrupts.missedCritical++;return}
- candidates.sort((a,b)=>executionQuality(ctx,b.u)-executionQuality(ctx,a.u)||(a.a.cd||0)-(b.a.cd||0));
+ const assignment=ctx.tactics?.interruptAssignment||'best';
+ if(assignment==='tank'){
+   candidates.sort((a,b)=>(a.u.role==='tank'?-1:0)-(b.u.role==='tank'?-1:0)||executionQuality(ctx,b.u)-executionQuality(ctx,a.u))
+ }else if(assignment==='dps-rotation'){
+   const dps=candidates.filter(x=>x.u.role==='dps');
+   if(dps.length){
+     dps.sort((a,b)=>String(a.u.id).localeCompare(String(b.u.id)));
+     const pick=dps[(ctx.interruptCursor||0)%dps.length];ctx.interruptCursor=(ctx.interruptCursor||0)+1;
+     candidates.splice(0,candidates.length,pick,...candidates.filter(x=>x!==pick))
+   }else candidates.sort((a,b)=>executionQuality(ctx,b.u)-executionQuality(ctx,a.u))
+ }else candidates.sort((a,b)=>executionQuality(ctx,b.u)-executionQuality(ctx,a.u)||(a.a.cd||0)-(b.a.cd||0));
  const chosen=candidates[0],u=chosen.u,a=chosen.a;
- const should=policy==='high'||policy==='standard'||(policy==='low'&&ctx.encounter.kind==='final');
+ const danger=mechanic?.priority==='critical'||mechanic?.danger==='high'||/heal|fatal|wipe|obliterate|cataclysm|surge/i.test(String(mechanic?.name||''));
+ const should=policy==='high'||policy==='standard'||(policy==='low'&&(ctx.encounter.kind==='final'||danger))||(policy==='danger-only'&&danger);
  if(!should){ctx.stats.interrupts.missedCritical++;return}
  let reaction=executionReaction(ctx,u,'interrupt')+(policy==='high'?-120:policy==='low'?180:0);
  const error=shouldMistake(ctx,u,'interrupt',5000);
@@ -1076,6 +1235,11 @@ function tryInterrupt(ctx,e,mechanic,castToken){
   }
   u.cooldowns[a.id]=a.cd||15000;cast.interrupted=true;ctx.activeEnemyCast=null;st.interrupts++;ctx.stats.interrupts.success++;
   emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'success',payload:{interruptedAbility:mechanic.name,token:castToken}});
+  if(hasUnique(u,'frostbound-sigil')){
+   u.defensiveUntil=Math.max(Number(u.defensiveUntil)||0,3500);
+   applyStatus(ctx,u,u,{id:'frostbound-sigil-shield',name:'Frozen Response',kind:'buff',duration:3500,effect:{damageReduction:.25}});
+   triggerUnique(ctx,u,'frostbound-sigil','Frozen Response',{target:u.id,duration:3500,trigger:'interrupt'})
+  }
  },'interrupt');
  // Low knowledge / pressure can make a second player burn their interrupt a fraction later.
  const backup=candidates[1];
@@ -1095,12 +1259,17 @@ function tryInterrupt(ctx,e,mechanic,castToken){
 }
 function spawnAdds(ctx,e){
  const base=ctx.enemies.length;
- for(let i=0;i<2;i++){
-  const id='add-'+ctx.addSeq++,level=Math.max(1,Number(e.level)||Number(ctx.encounter.level)||1),rule=enemyClassRule('add'),maxHealth=Math.round(72*levelHealthScale(level)*rule.health),add={id,name:'Cave Spawn',role:'enemy',kind:'enemy',classification:'add',classificationLabel:rule.label,level,maxHealth,health:maxHealth,alive:true,position:{x:74,y:i?66:34},facing:180,target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},nextAttack:ctx.time+600+i*150,currentCast:null,isAdd:true,priority:3,damageScale:rule.damage};
+ const count=2+Math.max(0,Math.min(2,Number(ctx.encounter.scaling?.addCountBonus)||0));
+ for(let i=0;i<count;i++){
+  const id='add-'+ctx.addSeq++,level=Math.max(1,Number(e.level)||Number(ctx.encounter.level)||1),rule=enemyClassRule('add'),maxHealth=Math.round(72*levelHealthScale(level)*rule.health*scalingValue(ctx,'enemyHealth',1)),add={id,name:'Cave Spawn',role:'enemy',kind:'enemy',classification:'add',classificationLabel:rule.label,level,maxHealth,health:maxHealth,alive:true,position:{x:74,y:i?66:34},facing:180,target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},nextAttack:ctx.time+600+i*150,currentCast:null,isAdd:true,priority:3,damageScale:rule.damage*scalingValue(ctx,'enemyDamage',1)};
   add.movingUntil=0;add.moveToken=0;ctx.enemies.push(add);ctx.units[id]=add;ctx.players.forEach(p=>add.threat[p.id]=0);
   const random=livingPlayers(ctx)[Math.floor(ctx.rng()*livingPlayers(ctx).length)];if(random)add.threat[random.id]=120;
   setAggro(ctx,add,topThreatTarget(ctx,add),'spawn');
   emit(ctx,'ADD_SPAWNED',{source:e.id,target:add.id,ability:'Summon',result:'spawned',position:copy(add.position),payload:{name:add.name,maxHealth:add.maxHealth,target:add.target,level:add.level,classification:add.classification,classificationLabel:add.classificationLabel}});
+  if(ctx.tactics?.crowdControl==='priority-elites'){
+    const controller=livingPlayers(ctx).filter(p=>p.role==='dps').sort((a,b)=>executionQuality(ctx,b)-executionQuality(ctx,a))[0];
+    if(controller&&i===0){applyStatus(ctx,controller,add,{id:'tactical-control-add-'+id,name:'Tactical Crowd Control',kind:'debuff',duration:1800,cc:'stun'});emit(ctx,'CROWD_CONTROL',{source:controller.id,target:add.id,ability:'Tactical Crowd Control',result:'applied',payload:{duration:1800,policy:'priority-elites'}})}
+  }
  }
 }
 function resolveMechanic(ctx,e,m,token){
@@ -1109,7 +1278,7 @@ function resolveMechanic(ctx,e,m,token){
   if(!cast||cast.token!==token||cast.interrupted){scheduleNextMechanic(ctx);return}
   ctx.activeEnemyCast=null;
   emit(ctx,'CAST_FINISH',{source:e.id,ability:m.name,result:'completed'});
-  livingPlayers(ctx).forEach(p=>dealDamage(ctx,e,p,24*levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,p.level||1)*(Number(e.damageScale)||1),m.name,{damageType:'magic',avoidable:false}));
+  livingPlayers(ctx).forEach(p=>dealDamage(ctx,e,p,24*enemyPressure(ctx,e,p),m.name,{damageType:'magic',avoidable:false}));
   ctx.stats.interrupts.missedCritical++;
   mechanicStat(ctx,'interrupt',true);scheduleNextMechanic(ctx);return;
  }
@@ -1121,9 +1290,9 @@ function resolveMechanic(ctx,e,m,token){
   const tank=livingPlayers(ctx).find(p=>p.role==='tank');if(tank){e.target=tank.id;updateFacing(e,tank)}
   let failed=false;
   livingPlayers(ctx).forEach(p=>{
-   if(p.role==='tank'){dealDamage(ctx,e,p,34*levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,p.level||1)*(Number(e.damageScale)||1),m.name,{damageType:'physical',avoidable:false});return}
+   if(p.role==='tank'){dealDamage(ctx,e,p,34*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:false});return}
    const success=cast.responses?.[p.id]!==false;
-   if(!success){failed=true;dealDamage(ctx,e,p,28*levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,p.level||1)*(Number(e.damageScale)||1),m.name,{damageType:'physical',avoidable:true})}
+   if(!success){failed=true;dealDamage(ctx,e,p,28*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:true})}
   });
   mechanicStat(ctx,'cone',failed);scheduleNextMechanic(ctx);return;
  }
@@ -1131,7 +1300,7 @@ function resolveMechanic(ctx,e,m,token){
   let failed=false;
   livingPlayers(ctx).forEach(p=>{
    const success=cast.responses?.[p.id]!==false;
-   if(!success){failed=true;dealDamage(ctx,e,p,(m.type==='circles'?24:28)*levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,p.level||1)*(Number(e.damageScale)||1),m.name,{damageType:'magic',avoidable:true})}
+   if(!success){failed=true;dealDamage(ctx,e,p,(m.type==='circles'?24:28)*enemyPressure(ctx,e,p),m.name,{damageType:'magic',avoidable:true})}
   });
   mechanicStat(ctx,m.type,failed);scheduleNextMechanic(ctx);return;
  }
@@ -1139,7 +1308,7 @@ function resolveMechanic(ctx,e,m,token){
   const target=getUnit(ctx,cast.targetId);
   if(target?.alive){
    const success=cast.responses?.[target.id]!==false;
-   if(!success)dealDamage(ctx,e,target,32*levelOutputScale(e.level||1)*levelMatchMultiplier(e.level||1,target.level||1)*(Number(e.damageScale)||1),m.name,{damageType:'physical',avoidable:true});
+   if(!success)dealDamage(ctx,e,target,32*enemyPressure(ctx,e,target),m.name,{damageType:'physical',avoidable:true});
    mechanicStat(ctx,'line',!success);
   }else mechanicStat(ctx,'line',false);
   scheduleNextMechanic(ctx);return;
@@ -1147,8 +1316,8 @@ function resolveMechanic(ctx,e,m,token){
  mechanicStat(ctx,m.type||'unknown',false);scheduleNextMechanic(ctx);
 }
 function startMechanic(ctx,m){
- const enemy=livingEnemies(ctx).find(x=>x.kind==='boss')||livingEnemies(ctx)[0];if(!enemy)return;
- const token='m'+(++ctx.mechanicSeq),duration=Math.max(700,Number(m.duration)||1600);
+ const enemy=livingEnemies(ctx).find(x=>x.kind==='boss')||livingEnemies(ctx).find(x=>!isCrowdControlled(x))||livingEnemies(ctx)[0];if(!enemy)return;
+ const token='m'+(++ctx.mechanicSeq),duration=Math.max(520,Math.round((Number(m.duration)||1600)*scalingValue(ctx,'castSpeed',1)));
  const castState={token,enemy:enemy.id,name:m.name,type:m.type,interrupted:false,ends:ctx.time+duration,responses:{},reactionMs:{},targetId:null,targetIds:[]};
  const live=livingPlayers(ctx);
  ctx.activeEnemyCast=castState;
@@ -1184,16 +1353,45 @@ function startMechanic(ctx,m){
  }
  schedule(ctx,ctx.time+duration,()=>resolveMechanic(ctx,enemy,m,token),'mechanic-resolve');
 }
+
+function checkBossPhases(ctx){
+ const boss=livingEnemies(ctx).find(e=>e.kind==='boss');if(!boss)return;
+ const hp=pct(boss.health,boss.maxHealth),phases=Array.isArray(ctx.encounter.phases)?ctx.encounter.phases:[];
+ ctx.phaseTriggered=ctx.phaseTriggered||{};
+ phases.forEach((phase,index)=>{
+  const key=phase.id||('phase-'+index),at=Number(phase.atPct);
+  if(ctx.phaseTriggered[key]||!Number.isFinite(at)||hp>at)return;
+  ctx.phaseTriggered[key]=true;
+  if(Number(phase.damageScale)>1)boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(phase.damageScale));
+  if(Array.isArray(phase.addMechanics)&&phase.addMechanics.length){
+   phase.addMechanics.forEach(m=>ctx.encounter.mechanics.push(Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}));
+  }
+  emit(ctx,'PHASE_CHANGE',{source:boss.id,target:boss.id,ability:phase.name||('Phase '+(index+2)),result:'phase',position:copy(boss.position),payload:{phaseId:key,atPct:at,healthPct:hp,damageScale:boss.phaseDamageScale}});
+  if(phase.spawnAdds)spawnAdds(ctx,boss);
+ });
+ const softPct=Number(ctx.encounter.softEnragePct);
+ if(!ctx.softEnraged&&Number.isFinite(softPct)&&hp<=softPct){
+  ctx.softEnraged=true;boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(ctx.encounter.softEnrageDamage)||1.22);
+  emit(ctx,'ENRAGE',{source:boss.id,target:boss.id,ability:'Soft Enrage',result:'soft',payload:{healthPct:hp,damageScale:boss.phaseDamageScale}})
+ }
+ const hardAt=Number(ctx.encounter.hardEnrageMs);
+ if(!ctx.hardEnraged&&Number.isFinite(hardAt)&&hardAt>0&&(ctx.elapsedOffsetMs+ctx.time)>=hardAt){
+  ctx.hardEnraged=true;boss.hardEnraged=true;
+  emit(ctx,'ENRAGE',{source:boss.id,target:boss.id,ability:'Hard Enrage',result:'hard',payload:{timeMs:ctx.elapsedOffsetMs+ctx.time,damageScale:3.5}})
+ }
+}
+
 function scheduleNextMechanic(ctx){
  if(ctx.finished)return;
  const list=ctx.encounter.mechanics||[];if(!list.length)return;
- const delay=ctx.encounter.kind==='final'?3600:ctx.encounter.kind==='boss'?4200:5000;
+ const baseDelay=Number(ctx.encounter.mechanicIntervalMs)||(ctx.encounter.kind==='final'?3600:ctx.encounter.kind==='boss'?4200:ctx.encounter.kind==='world-boss'?2500:5000);
+ const delay=Math.max(900,Math.round(baseDelay*scalingValue(ctx,'mechanicFrequency',1)));
  const m=list[ctx.mechanicIndex++%list.length];
  schedule(ctx,ctx.time+delay,()=>startMechanic(ctx,m),'mechanic-start');
 }
 function normaliseMechanics(encounter){
  return (encounter.mechanics||[]).map(x=>Array.isArray(x)?{name:x[0],type:x[1],duration:x[2]}:{
-  name:x.name||'Mechanic',type:x.type||'circle',duration:x.duration||x.cast||1600
+  name:x.name||'Mechanic',type:x.type||'circle',duration:x.duration||x.cast||1600,priority:x.priority||null,danger:x.danger||null
  });
 }
 function buildSummary(ctx,outcome){
@@ -1205,7 +1403,7 @@ function buildSummary(ctx,outcome){
   outcome,durationMs:Math.round(ctx.time),durationSeconds:Math.round(duration*10)/10,
   deaths:ctx.stats.deaths,totalDamage:players.reduce((n,p)=>n+p.damage,0),
   totalHealing:players.reduce((n,p)=>n+p.healing,0),interrupts:copy(ctx.stats.interrupts),
-  mechanics:copy(ctx.stats.mechanics),mistakes:copy(ctx.stats.mistakes),battleResurrections:ctx.stats.battleResurrections,players
+  mechanics:copy(ctx.stats.mechanics),mistakes:copy(ctx.stats.mistakes),battleResurrections:ctx.stats.battleResurrections,phases:copy(ctx.phaseTriggered||{}),softEnraged:!!ctx.softEnraged,hardEnraged:!!ctx.hardEnraged,players
  };
 }
 function simulate(options={}){
@@ -1219,27 +1417,47 @@ function simulate(options={}){
   addPriority:options.tactics?.addPriority||options.tactics?.adds||'balanced',
   defensiveUsage:options.tactics?.defensiveUsage||options.tactics?.defensives||'standard',
   pullStyle:options.tactics?.pullStyle||options.tactics?.aggression||'normal',
-  movementDiscipline:options.tactics?.movementDiscipline||'balanced'
+  movementDiscipline:options.tactics?.movementDiscipline||'balanced',
+  cooldownUse:options.tactics?.cooldownUse||'difficult',
+  interruptAssignment:options.tactics?.interruptAssignment||'best',
+  crowdControl:options.tactics?.crowdControl||'disabled'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:0,mechanicSeq:0,addSeq:0,mistakeSeq:0,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
- emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
+ const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
+ emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
  players.forEach(u=>emitResourceState(ctx,u,'initial'));
+ {
+  const boss=enemies.find(e=>e.kind==='boss');
+  if(boss){
+   const phases=Array.isArray(encounter.phases)?encounter.phases:[];
+   phases.forEach((phase,index)=>{
+    const key=phase.id||('phase-'+index);
+    if(ctx.phaseTriggered[key]&&Number(phase.damageScale)>1)boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(phase.damageScale))
+   });
+   if(ctx.softEnraged)boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(encounter.softEnrageDamage)||1.22);
+   if(ctx.hardEnraged)boss.hardEnraged=true
+  }
+ }
  const tank=players.find(p=>p.role==='tank')||players[0];
- if(tank)enemies.forEach(e=>{e.threat[tank.id]=180;setAggro(ctx,e,tank,'pull')});
- scheduleNextMechanic(ctx);
+ if(tank)enemies.forEach(e=>{e.threat[tank.id]=ctx.tactics.pullStyle==='safe'?250:ctx.tactics.pullStyle==='aggressive'?125:180;setAggro(ctx,e,tank,'pull')});
+ maybeApplyCrowdControl(ctx);
+ scheduleNextMechanic(ctx);scheduleUnstableGround(ctx);
 
+ const requestedMax=Number(options.maxDurationMs),sliceMode=Number.isFinite(requestedMax)&&requestedMax>0&&requestedMax<MAX_COMBAT_MS,maxDuration=sliceMode?Math.max(TICK,Math.round(requestedMax)):MAX_COMBAT_MS;
  let outcome='defeat';
- while(ctx.time<=MAX_COMBAT_MS){
+ while(ctx.time<=maxDuration){
   processQueue(ctx);
-  if(!livingEnemies(ctx).length){outcome='victory';break}
+  if(!livingEnemies(ctx).length&&ctx.pendingResurrections<=0&&ctx.pendingHazards<=0){outcome='victory';break}
   if(!livingPlayers(ctx).length){outcome='defeat';break}
-  tickCooldowns(ctx);passiveResources(ctx);
+  checkBossPhases(ctx);tickCooldowns(ctx);passiveResources(ctx);
   players.forEach(u=>playerAI(ctx,u));
   enemies.forEach(e=>{if(e.alive&&ctx.time>=e.nextAttack)enemyBasicAttack(ctx,e)});
   ctx.time+=TICK;
  }
- if(ctx.time>MAX_COMBAT_MS)emit(ctx,'ENRAGE',{result:'timeout'});
+ if(ctx.time>maxDuration){
+  if(sliceMode&&livingPlayers(ctx).length&&livingEnemies(ctx).length)outcome='ongoing';
+  else if(!sliceMode)emit(ctx,'ENRAGE',{result:'timeout'});
+ }
  ctx.finished=true;ctx.queue.length=0;
  players.filter(u=>u.alive).forEach(u=>emitResourceState(ctx,u,'final'));
  emit(ctx,'COMBAT_END',{result:outcome,payload:{durationMs:ctx.time}});
@@ -1248,6 +1466,7 @@ function simulate(options={}){
  return{
   version:VERSION,seed,outcome,durationMs:ctx.time,events:ctx.events,summary,
   finalState:{players:copy(players),enemies:copy(enemies)},
+  continuation:{phaseTriggered:copy(ctx.phaseTriggered||{}),softEnraged:!!ctx.softEnraged,hardEnraged:!!ctx.hardEnraged,mechanicIndex:ctx.mechanicIndex,interruptCursor:ctx.interruptCursor,elapsedMs:ctx.elapsedOffsetMs+ctx.time},
   replay:{version:VERSION,seed,encounter:copy(encounter),events:copy(ctx.events),summary:copy(summary)}
  };
 }
@@ -1269,7 +1488,7 @@ function debugSnapshot(result){
  if(!result)return null;
  return{
   version:result.version,seed:result.seed,outcome:result.outcome,durationMs:result.durationMs,
-  finalPlayers:(result.finalState?.players||[]).map(p=>({id:p.id,name:p.name,target:p.target,hp:p.health,resource:p.resource,cooldowns:p.cooldowns,position:p.position,statuses:p.statuses,currentCast:p.currentCast})),
+  finalPlayers:(result.finalState?.players||[]).map(p=>({id:p.id,name:p.name,target:p.target,hp:p.health,resource:p.resource,cooldowns:p.cooldowns,uniqueEffects:p.uniqueEffects,uniqueUsed:p.uniqueUsed,position:p.position,statuses:p.statuses,currentCast:p.currentCast})),
   finalEnemies:(result.finalState?.enemies||[]).map(e=>({id:e.id,name:e.name,target:e.target,hp:e.health,threat:e.threat,position:e.position,statuses:e.statuses,currentCast:e.currentCast})),
   events:result.events?.length||0,summary:copy(result.summary||{})
  };
@@ -1445,6 +1664,65 @@ function runSelfTests(){
    return !!event&&rez.summary.battleResurrections===1&&Number(priest?.cooldowns?.['soul-recall'])>0
   });
  }
+ {
+  const sigilParty=[{id:'sigil',name:'Sigil Tank',class:'Warrior',spec:'Protection',power:24,level:8,_combatItemLevel:30,equipment:{Relic:{uniqueEffect:{id:'frostbound-sigil',name:'Frozen Response'}}}}];
+  const sigil=simulate({party:sigilParty,encounter:{id:'sigil-test',kind:'boss',level:8,enemies:['Caster'],enemyHealth:900,mechanics:[['Dangerous Cast','interrupt',2400]]},tactics:{interruptPriority:'high'},seed:'sigil-effect'});
+  test('Unique Frostbound Sigil',()=>sigil.events.some(e=>e.type==='UNIQUE_EFFECT_TRIGGER'&&e.result==='frostbound-sigil'));
+
+  const standParty=[{id:'stand',name:'Last Stand Tank',class:'Warrior',spec:'Protection',power:8,level:2,_combatItemLevel:8,equipment:{Trinket1:{uniqueEffect:{id:'guardian-last-stand',name:"Guardian's Last Stand"}}}}];
+  const stand=simulate({party:standParty,encounter:{id:'stand-test',kind:'boss',level:9,enemies:['Crusher'],enemyHealth:5000,scaling:{enemyDamage:1.35},mechanics:[]},seed:'last-stand-effect'});
+  test("Unique Guardian's Last Stand",()=>stand.events.some(e=>e.type==='UNIQUE_EFFECT_TRIGGER'&&e.result==='guardian-last-stand'));
+
+  const scaled=simulate({party,encounter:{...base,enemyHealth:420,scaling:{enemyHealth:1.75,enemyDamage:1.3}},seed:'difficulty-scaling'});
+  test('Difficulty Scaling',()=>scaled.finalState.enemies[0].maxHealth>700);
+
+  const volatile=simulate({party,encounter:{id:'volatile-test',kind:'event',level:10,enemies:[{name:'Volatile Elite',classification:'elite'}],enemyHealth:180,affixes:['volatile-cells']},seed:'volatile-affix'});
+  test('Volatile Cells Affix',()=>volatile.events.some(e=>e.type==='AFFIX_TRIGGER'&&e.payload?.affix==='volatile-cells'&&e.result==='explode'));
+ }
+ {
+  const phased=simulate({party,encounter:{...base,enemyHealth:1500,phases:[{id:'p70',name:'Phase Two',atPct:70,damageScale:1.15,spawnAdds:true}],softEnragePct:20,hardEnrageMs:1000},seed:'phase-enrage'});
+  test('Boss Phase Transition',()=>phased.events.some(e=>e.type==='PHASE_CHANGE'&&e.payload?.phaseId==='p70'));
+  test('Hard Enrage',()=>phased.events.some(e=>e.type==='ENRAGE'&&e.result==='hard'));
+ }
+ {
+  const sliced=simulate({
+   party,
+   encounter:{id:'slice',kind:'world-boss',level:10,enemies:[{name:'Persistent Boss',classification:'world-boss',absoluteHealth:true,maxHealth:120000,currentHealth:73500}],mechanics:[['World Slam','cone',1200]],mechanicIntervalMs:1800},
+   seed:'slice-test',maxDurationMs:4800
+  });
+  test('Time Slice Ongoing',()=>sliced.outcome==='ongoing'&&sliced.durationMs<=5000&&sliced.events.some(e=>e.type==='COMBAT_END'&&e.result==='ongoing'));
+  test('Absolute Boss Health',()=>{
+   const enemy=sliced.finalState.enemies.find(e=>e.name==='Persistent Boss');
+   return enemy?.maxHealth===120000&&enemy.health<73500&&enemy.health>0
+  });
+ }
+ {
+  const persisted=simulate({
+   party,
+   encounter:{id:'persist-phase',kind:'world-boss',level:10,enemies:[{name:'Persistent Phase Boss',classification:'world-boss',absoluteHealth:true,maxHealth:100000,currentHealth:65000}],phases:[{id:'p70',name:'Phase Two',atPct:70,damageScale:1.2}],mechanics:[]},
+   seed:'persist-phase',maxDurationMs:1200,initialPhaseTriggered:{p70:true},elapsedOffsetMs:50000
+  });
+  const pb=persisted.finalState.enemies.find(e=>e.name==='Persistent Phase Boss');
+  test('Persistent Boss Phase',()=>pb?.phaseDamageScale>=1.2&&!persisted.events.some(e=>e.type==='PHASE_CHANGE'&&e.payload?.phaseId==='p70'));
+
+  const setParty=party.map((p,i)=>i===0?{...p,equipment:{
+    Head:{setId:'test-set',setName:'Test Set'},Chest:{setId:'test-set',setName:'Test Set'},Weapon:{setId:'test-set',setName:'Test Set'}
+  }}:p);
+  const setRun=simulate({party:setParty,encounter:{...base,enemyHealth:420},seed:'set-foundation'});
+  const setTank=setRun.finalState.players.find(p=>p.characterId===setParty[0].id);
+  test('Gear Set Foundation',()=>setTank?.setBonuses?.sets?.[0]?.pieces===3&&setTank?.setBonuses?.outputScale>1&&setTank?.setBonuses?.resourceRegen>1);
+
+  const cc=simulate({
+    party,
+    encounter:{id:'cc-test',kind:'trash',level:4,enemies:[{name:'Elite Controller',classification:'elite'},{name:'Trash Mob',classification:'trash'}],enemyHealth:300,mechanics:[]},
+    tactics:{crowdControl:'priority-elites'},seed:'cc-strategy'
+  });
+  test('Strategy Crowd Control',()=>cc.events.some(e=>e.type==='CROWD_CONTROL'&&e.result==='applied'));
+ }
+
+
+
+
 
 
 
