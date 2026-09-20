@@ -374,7 +374,7 @@ function hsAct(r,text){const e=document.querySelector('[data-hs-act="'+r+'"] em'
 function hsRenderMeters(){
  if(!run)return;
  const damageRoot=$('#hs2dDamageMeter'),healingRoot=$('#hs2dHealingMeter'),threatRoot=$('#hs2dThreatMeter'),chars=party();
- const elapsed=Math.max(1,(Number(run.expeditionTimeMs)||0)/1000);
+ const elapsed=Math.max(1,(run.history||[]).reduce((n,h)=>n+(Number(h.durationMs)||0),0)/1000);
 
  const damageRows=chars.map(ch=>({ch,value:Number(run.damageDone?.[ch.id])||0})).sort((a,b)=>b.value-a.value);
  const maxDamage=Math.max(1,...damageRows.map(x=>x.value)),damageTotal=damageRows.reduce((n,x)=>n+x.value,0);
