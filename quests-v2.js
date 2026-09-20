@@ -631,6 +631,7 @@ function qRenderRebornEvent(e){
     case'HEAL_RECEIVED':
       if(targetChar){qSetPartyHp(targetChar,Number(e.payload?.targetHpPct)||0);qFloat(e.target,'+'+Math.round(Number(e.amount)||0),'heal')}
       break;
+    case'UNIQUE_EFFECT_TRIGGER':if(srcChar){qLog(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');qFloat(e.source,e.ability||'UNIQUE','heal')}break;
     case'PLAYER_MISTAKE':if(srcChar)qLog(srcChar.name+' '+(e.payload?.detail||'makes an execution mistake')+'.');break;
     case'PLAYER_REVIVED':
       if(targetChar){qSetPartyHp(targetChar,Number(e.payload?.targetHpPct)||35);const u=qUnit(e.target);if(u)u.classList.remove('dead');qFloat(e.target,'BATTLE REZ','heal');qLog(targetChar.name+' is brought back by '+(srcChar?.name||'the healer')+'.');qResourceVisual({source:e.target,payload:{resource:e.payload?.resource,value:e.payload?.resourceValue,max:e.payload?.resourceMax}})}
