@@ -430,6 +430,61 @@ function passiveResources(ctx){
   }
  });
 }
+
+function deadPlayers(ctx){return ctx.players.filter(p=>!p.alive)}
+function encounterKnowledge(ctx,u){
+ const key=ctx.encounter.knowledgeKey;
+ if(key&&u.knowledge&&u.knowledge[key]!=null)return clamp(Number(u.knowledge[key])||0,0,100);
+ const vals=Object.values(u.knowledge||{}).map(Number).filter(Number.isFinite);
+ return vals.length?clamp(vals.reduce((a,b)=>a+b,0)/vals.length,0,100):0
+}
+function combatPressure(ctx){
+ const live=livingPlayers(ctx),dead=ctx.players.length-live.length;
+ const missing=live.length?live.reduce((n,p)=>n+(1-healthRatio(p)),0)/live.length:1;
+ const loose=livingEnemies(ctx).filter(e=>{const t=topThreatTarget(ctx,e);return t&&t.role!=='tank'}).length;
+ const adds=livingEnemies(ctx).filter(e=>e.isAdd).length;
+ const healer=live.find(p=>p.role==='healer');
+ const manaPressure=healer&&healer.resource?.name==='Mana'?clamp((35-healer.resource.value)/35,0,1):0;
+ return clamp(missing*.38+(dead/Math.max(1,ctx.players.length))*.52+Math.min(.22,loose*.11)+Math.min(.16,adds*.06)+(ctx.activeEnemyCast?.type?0.08:0)+manaPressure*.14,0,1)
+}
+function executionQuality(ctx,u){
+ const knowledge=encounterKnowledge(ctx,u)/100;
+ const levelDelta=(Number(u.level)||1)-(Number(ctx.encounter.level)||1);
+ const levelReadiness=clamp(.82+levelDelta*.08,.42,1);
+ const recIlvl=Math.max(0,Number(ctx.encounter.recommendedItemLevel)||0);
+ const gearReadiness=recIlvl>0?clamp((Number(u.itemLevel)||0)/recIlvl,.45,1.08):1;
+ const pressure=combatPressure(ctx);
+ return clamp(.44+knowledge*.30+levelReadiness*.13+Math.min(1,gearReadiness)*.13-pressure*.24,.12,.985)
+}
+function mistakeChance(ctx,u,type='general'){
+ const q=executionQuality(ctx,u),pressure=combatPressure(ctx);
+ const weights={movement:1.05,interrupt:1.0,threat:.82,triage:.72,tank:.68,defensive:.66};
+ return clamp((.018+Math.pow(1-q,2)*.5+pressure*.10)*(weights[type]||1),.01,.48)
+}
+function executionReaction(ctx,u,type='movement'){
+ const q=executionQuality(ctx,u),pressure=combatPressure(ctx);
+ const roleBias=u.role==='tank'&&type==='movement'?-90:u.class==='Demon Hunter'?-80:0;
+ return Math.max(220,Math.round(260+(1-q)*760+pressure*280+ctx.rng()*180+roleBias))
+}
+function recordMistake(ctx,u,type,detail,payload={}){
+ if(!u)return null;
+ const st=ctx.stats.players[u.id];if(st){st.mistakes++;st.mistakesByType[type]=(st.mistakesByType[type]||0)+1}
+ ctx.stats.mistakes.total++;ctx.stats.mistakes.byType[type]=(ctx.stats.mistakes.byType[type]||0)+1;
+ const token='err-'+(++ctx.mistakeSeq);u.lastMistakeToken=token;u.lastMistakeUntil=ctx.time+3500;
+ emit(ctx,'PLAYER_MISTAKE',{source:u.id,target:payload.target||null,ability:payload.ability||null,result:type,payload:{token,type,detail,quality:Math.round(executionQuality(ctx,u)*100),knowledge:Math.round(encounterKnowledge(ctx,u)),pressure:Math.round(combatPressure(ctx)*100),...payload}});
+ return token
+}
+function recentMistakeToken(ctx,u){
+ return u&&u.lastMistakeUntil>ctx.time?u.lastMistakeToken:null
+}
+function shouldMistake(ctx,u,type,lockMs=0){
+ if(!u?.alive)return false;
+ if(lockMs&&Number(u.mistakeLocks?.[type]||0)>ctx.time)return false;
+ const yes=ctx.rng()<mistakeChance(ctx,u,type);
+ if(yes&&lockMs){u.mistakeLocks=u.mistakeLocks||{};u.mistakeLocks[type]=ctx.time+lockMs}
+ return yes
+}
+
 function threatMultiplier(u,a){
  if(u.role==='tank')return Number(a.threat)||2.5;
  return 1;
@@ -488,7 +543,7 @@ function dealDamage(ctx,source,target,amount,ability,opts={}){
  final=Math.max(1,Math.round(final));
  const before=target.health;target.health=clamp(target.health-final,0,target.maxHealth);
  const dealt=before-target.health;
- emit(ctx,'DAMAGE_DEALT',{source:source.id,target:target.id,ability,amount:dealt,result:opts.crit?'critical':'hit',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),avoidable:!!opts.avoidable,damageType:opts.damageType||'physical'}});
+ emit(ctx,'DAMAGE_DEALT',{source:source.id,target:target.id,ability,amount:dealt,result:opts.crit?'critical':'hit',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),avoidable:!!opts.avoidable,damageType:opts.damageType||'physical',mistakeToken:recentMistakeToken(ctx,target)}});
  if(source.role!=='enemy'){
   const st=ctx.stats.players[source.id];st.damage+=dealt;st.abilityDamage[ability]=(st.abilityDamage[ability]||0)+dealt;
   addThreat(ctx,target,source,dealt*threatMultiplier(source,opts.ability||{}),'damage');
@@ -821,7 +876,7 @@ function simulate(options={}){
   movementDiscipline:options.tactics?.movementDiscipline||'balanced'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:0,mechanicSeq:0,addSeq:0,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
+ const ctx={time:0,rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:0,mechanicSeq:0,addSeq:0,mistakeSeq:0,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
  emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
  players.forEach(u=>emitResourceState(ctx,u,'initial'));
  const tank=players.find(p=>p.role==='tank')||players[0];
