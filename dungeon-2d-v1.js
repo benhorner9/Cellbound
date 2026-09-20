@@ -1160,7 +1160,7 @@ function ensureCombatRebornEngine(){
      else reject(error||new Error('Combat Reborn engine failed to initialise'))
    };
    const script=document.createElement('script');
-   script.src='./combat-identities-v1.js?v=14&recover=1';
+   script.src='./combat-identities-v1.js?v=15&recover=1';
    script.async=true;
    script.dataset.combatRebornRecovery='1';
    script.onload=()=>finish(true);
