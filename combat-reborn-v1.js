@@ -451,7 +451,7 @@ function finishAbility(ctx,u,a,target){
  if(!u.alive||!target?.alive)return;
  if(u.currentCast&&u.currentCast.ability!==a.name)return;
  u.currentCast=null;
- emit(ctx,'ABILITY_FINISH',{source:u.id,target:target.id,ability:a.name,result:'resolved',position:copy(u.position)});
+ emit(ctx,'ABILITY_FINISH',{source:u.id,target:target.id,ability:a.name,result:'resolved',position:copy(u.position),payload:{kind:a.kind,castTime:Number(a.cast)||0}});
  if(a.kind==='heal'){
   const amount=(a.heal||24)*(1+Math.min(.28,u.power*.01))*(.92+ctx.rng()*.16);
   doHeal(ctx,u,target,amount,a.name);
