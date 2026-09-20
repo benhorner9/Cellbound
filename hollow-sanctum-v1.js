@@ -291,9 +291,10 @@ function hsFailureDiagnosis(result){
  return'<div class="hs2d-failure-causes"><small>PRIMARY CAUSES</small>'+causes.slice(0,3).map((x,i)=>'<p><b>'+(i+1)+'</b>'+esc(x)+'</p>').join('')+'<strong>NEXT ATTEMPT</strong>'+[...new Set(changes)].slice(0,2).map(x=>'<span>'+esc(x)+'</span>').join('')+'</div>'
 }
 function hsProgressEarned(){
- const record=run?.endgameRecord||{},unlocks=record.newUnlocks||[],achievements=record.newAchievements||[];
- if(!unlocks.length&&!achievements.length)return'';
- return'<div class="hs2d-progress-earned"><small>NEW PROGRESSION</small>'+unlocks.map(x=>'<p>↗ '+esc(x)+'</p>').join('')+achievements.map(id=>'<p>◆ Achievement: '+esc(window.CellboundEndgame?.achievementName?.(id)||id)+'</p>').join('')+'</div>'
+ const record=run?.endgameRecord||{},unlocks=record.newUnlocks||[],achievements=record.newAchievements||[],score=Number(record.score||run?.endgameMetrics?.scorePreview||0);
+ const comparison=record.isNewBest?'<p>★ NEW BEST · '+score.toLocaleString()+' score</p>':record.previousBestScore?'<p>↔ Previous best '+Number(record.previousBestScore).toLocaleString()+' · this run '+score.toLocaleString()+'</p>':'';
+ if(!unlocks.length&&!achievements.length&&!comparison)return'';
+ return'<div class="hs2d-progress-earned"><small>RUN PROGRESSION</small>'+comparison+unlocks.map(x=>'<p>↗ '+esc(x)+'</p>').join('')+achievements.map(id=>'<p>◆ Achievement: '+esc(window.CellboundEndgame?.achievementName?.(id)||id)+'</p>').join('')+'</div>'
 }
 
 async function hsFail(s,result){
