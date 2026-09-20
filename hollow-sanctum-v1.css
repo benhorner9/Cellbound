@@ -89,3 +89,125 @@
 .hs2d-progress-earned{border-color:rgba(88,195,174,.18);background:#0a1d1d}.hs2d-progress-earned>small{color:#69cbb9}.hs2d-progress-earned p{margin:5px 0;padding:6px 8px;border:1px solid rgba(88,195,174,.1);color:#b8d8d1;font-size:.53rem}
 .hs-strategy-tabs button small{display:block;margin-top:2px;font-size:.36rem;opacity:.65}
 @media(max-width:640px){.hs2d-failure-causes,.hs2d-progress-earned{padding:10px}.hs-strategy-tabs{display:grid!important;grid-template-columns:1fr 1fr 1fr}}
+
+
+/* --------------------------------------------------------------------------
+   CANONICAL PVE PRESENTATION
+   Ashen Vault defines the shared combat/reward UI. Hollow Sanctum may change
+   environment art, rooms, mobs and mechanics only — not the combat chrome.
+   -------------------------------------------------------------------------- */
+.hs2d-unified-shell.cb2d-shell{
+  width:min(1420px,98vw);
+  max-height:96vh;
+  overflow:auto;
+  border:1px solid rgba(216,185,118,.2);
+  background:linear-gradient(180deg,#0d171b,#060b0e);
+  box-shadow:0 34px 110px #000e;
+  color:#dfe5e1;
+}
+.hs2d-unified-shell .hs2d-route.cb2d-route{
+  display:flex;
+  grid-template-columns:none;
+  gap:6px;
+  padding:8px 12px;
+  border-bottom:1px solid rgba(255,255,255,.045);
+  overflow:auto;
+  background:#081115;
+}
+.hs2d-unified-shell .hs2d-route.cb2d-route span{
+  min-width:136px;
+  padding:7px 8px;
+  border:1px solid rgba(255,255,255,.05);
+  border-right:1px solid rgba(255,255,255,.05);
+  color:#5d6c67;
+  font-size:.43rem;
+}
+.hs2d-unified-shell .hs2d-route.cb2d-route span.current{
+  border-color:rgba(216,185,118,.28);
+  background:#211d14;
+  color:#e4d19b;
+}
+.hs2d-unified-shell .hs2d-route.cb2d-route span.done{color:#76b98d}
+.hs2d-unified-shell .hs2d-route.cb2d-route span i{
+  width:18px;height:18px;border:0;background:#111a1d;
+}
+.hs2d-unified-shell .hs2d-route.cb2d-route span.done i{background:#122018;color:#79c895}
+.hs2d-unified-shell .hs2d-unified-arena.cb2d-arena{
+  height:470px;
+  border:1px solid rgba(216,185,118,.1);
+  background:
+    radial-gradient(circle at 67% 48%,rgba(117,74,151,.16),transparent 19%),
+    linear-gradient(180deg,#12151b,#090d12);
+}
+.hs2d-unified-shell .hs2d-caption.cb2d-caption{
+  left:14px;bottom:12px;padding:7px 9px;
+  background:rgba(4,9,11,.8);
+  border:1px solid rgba(255,255,255,.05);
+}
+.hs2d-unified-shell .hs2d-caption.cb2d-caption span{color:#b79561;font-size:.42rem}
+.hs2d-unified-shell .hs2d-caption.cb2d-caption b{color:#aebbb5;font-size:.5rem}
+.hs2d-unified-shell .hs2d-room.cb2d-room-tag{
+  position:absolute;
+  z-index:4;
+  left:14px;
+  top:12px;
+  max-width:300px;
+  padding:8px 10px;
+  border:1px solid rgba(255,255,255,.05);
+  background:rgba(5,9,12,.75);
+}
+.hs2d-unified-shell .hs2d-room.cb2d-room-tag b{display:block;color:#c6b58b;font-size:.42rem}
+.hs2d-unified-shell .hs2d-room.cb2d-room-tag small{display:block;margin-top:2px;color:#71807a;font-size:.31rem}
+.hs2d-unified-shell .hs2d-unified-feed{
+  height:auto;
+  min-height:86px;
+  padding:10px 12px;
+  border-top:1px solid rgba(255,255,255,.035);
+  background:#070b0f;
+}
+.hs2d-unified-shell .hs2d-unified-feed>small{
+  display:block;
+  margin-bottom:6px;
+  color:#a08b5c;
+  font-size:.34rem;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+.hs2d-unified-shell #hs2dFeed p{
+  margin:0 0 3px;
+  color:#71807a;
+  font-size:.38rem;
+  line-height:1.4;
+}
+.hs2d-unified-shell .hs2d-crystals{opacity:.56}
+.hs2d-unified-shell .hs2d-unit>span{color:#aeb9b4}
+.hs2d-unified-shell .hs2d-unit.enemy>i{
+  border-color:#d9c850!important;
+  background:#d9c850!important;
+  box-shadow:0 0 0 3px rgba(255,255,255,.04),0 0 18px rgba(217,200,80,.38)!important;
+}
+.hs2d-unified-shell .hs2d-unit.enemy.boss>i{
+  border-color:#d9c850!important;
+  background:#d9c850!important;
+  box-shadow:0 0 0 5px rgba(217,200,80,.07),0 0 28px rgba(217,200,80,.4)!important;
+}
+.hs2d-unified-shell .hs2d-unit.enemy.boss>span{color:#e8d983!important}
+.hs2d-unified-shell .cb2d-plan b{color:#d8c58b}
+.hs2d-unified-shell .cb2d-meter-row.aggro{background:rgba(194,71,57,.08);box-shadow:inset 2px 0 #b94f40}
+.hs2d-unified-shell .cb2d-controls button.active{border-color:rgba(216,185,118,.42);background:#292315}
+.hs2d-backdrop:has(.hs2d-unified-shell){
+  z-index:170;
+  padding:16px;
+  background:rgba(1,4,6,.9);
+  backdrop-filter:blur(10px);
+}
+@media(max-width:850px){
+  .hs2d-unified-shell .cb2d-layout{grid-template-columns:1fr}
+  .hs2d-unified-shell .cb2d-layout>aside{display:block;border-left:0;border-top:1px solid rgba(216,185,118,.08)}
+  .hs2d-unified-shell .hs2d-unified-arena.cb2d-arena{height:440px}
+}
+@media(max-width:700px){
+  .hs2d-backdrop:has(.hs2d-unified-shell){padding:0}
+  .hs2d-unified-shell.cb2d-shell{width:100vw;max-height:100dvh;border-left:0;border-right:0}
+  .hs2d-unified-shell .hs2d-unified-arena.cb2d-arena{height:410px}
+}
