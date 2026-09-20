@@ -1496,6 +1496,25 @@ function rebornTotals(){
  });
  return{duration,deaths,damage,healing,damageTaken,avoidableDamage,attempts,interrupts,missedInterrupts,threatLosses,failed,avoided,mistakes,battleResurrections,outOfCombatRevives:Number(run?.outOfCombatRevives)||0,players:Object.values(map)}
 }
+
+function rebornFailureDiagnosisHTML(){
+ const t=rebornTotals(),causes=[],changes=[];
+ if(t.missedInterrupts>0){causes.push(t.missedInterrupts+' critical interrupt'+(t.missedInterrupts===1?' was':'s were')+' missed');changes.push('Raise Interrupt Priority or use DPS Rotation.')}
+ if(t.failed>0){causes.push(t.failed+' boss mechanic'+(t.failed===1?' was':'s were')+' failed');changes.push('Use Safety First movement if positioning is breaking down.')}
+ if(t.threatLosses>0){causes.push(t.threatLosses+' threat loss'+(t.threatLosses===1?'':'es')+' destabilised the pull');changes.push('Use Safe pulls or Tank Priority interrupts to reduce opening pressure.')}
+ if(t.avoidableDamage>0){causes.push(Math.round(t.avoidableDamage).toLocaleString()+' avoidable damage was taken')}
+ const dead=[...t.players].filter(p=>p.deaths>0).sort((a,b)=>b.deaths-a.deaths)[0];
+ if(dead)causes.push(dead.name+' died '+dead.deaths+' time'+(dead.deaths===1?'':'s'));
+ if(!causes.length){causes.push('The party was overwhelmed by the raw damage / healing check');changes.push('Improve gear, upgrade key items or use earlier defensives.')}
+ const unique=[...new Set(changes)].slice(0,2);
+ return'<section class="cbr-failure-diagnosis"><small>WHY THE RUN FAILED</small><h4>Change the plan, not just the numbers.</h4><div>'+causes.slice(0,3).map((x,i)=>'<p><b>'+(i+1)+'</b>'+esc(x)+'</p>').join('')+'</div>'+(unique.length?'<strong>NEXT ATTEMPT</strong><ul>'+unique.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'')+'</section>'
+}
+function endgameProgressHTML(){
+ const record=run?.endgameRecord||{},unlocks=record.newUnlocks||[],achievements=record.newAchievements||[];
+ if(!unlocks.length&&!achievements.length)return'';
+ return'<section class="cbr-progress-earned"><small>NEW PROGRESSION</small><h4>Your clear opened new goals.</h4><div>'+unlocks.map(x=>'<span><i>↗</i><b>'+esc(x)+'</b></span>').join('')+achievements.map(id=>'<span><i>◆</i><b>Achievement: '+esc(window.CellboundEndgame?.achievementName?.(id)||id)+'</b></span>').join('')+'</div></section>'
+}
+
 function rebornAnalysisHTML(){
  const t=rebornTotals();if(!run?.rebornHistory?.length)return'';
  const mins=Math.floor(t.duration/60),secs=Math.round(t.duration%60),time=(mins?mins+'m ':'')+secs+'s';
@@ -1567,7 +1586,7 @@ async function seamless(tok){return seamlessFrom(0,tok)}
 function lootRarityClass(item){return 'rarity-'+String(item?.rarity||'common').toLowerCase().replace(/[^a-z0-9-]/g,'')}
 function lootGearCard(item){
  const art=G?.artHTML?G.artHTML(item,78):(item.icon||'◇');
- const stats=G?.statLines?.(item)||[];return '<article class="cb2d-loot-item '+lootRarityClass(item)+'"><div class="cb2d-loot-art">'+art+'</div><div><small>'+esc(String(item.rarity||'GEAR').toUpperCase())+' · '+esc(item.slot||'ITEM')+'</small><h4>'+esc(item.name||'Unknown Item')+'</h4><p>Item Level '+(Number(item.itemLevel)||0)+(item.power?' · +'+Number(item.power)+' Power':'')+'</p><div class="cb2d-loot-roll">'+stats.map(s=>'<span>'+esc(s.text)+'</span>').join('')+'</div><em>Sent to Guild Bank</em></div></article>'
+ const stats=G?.statLines?.(item)||[],effect=item.uniqueEffect?'<strong class="cb2d-loot-unique">'+esc(item.uniqueEffect.name)+' · '+esc(item.uniqueEffect.description)+'</strong>':'';return '<article class="cb2d-loot-item '+lootRarityClass(item)+'"><div class="cb2d-loot-art">'+art+'</div><div><small>'+esc(String(item.rarity||'GEAR').toUpperCase())+' · '+esc(item.slot||'ITEM')+'</small><h4>'+esc(item.name||'Unknown Item')+'</h4><p>Item Level '+(Number(item.itemLevel)||0)+(item.power?' · +'+Number(item.power)+' Power':'')+'</p><div class="cb2d-loot-roll">'+stats.map(s=>'<span>'+esc(s.text)+'</span>').join('')+'</div>'+effect+'<em>Sent to Guild Bank</em></div></article>'
 }
 function lootMaterialCard(m){
  const art=P?.materialArtHTML?P.materialArtHTML(m.key,44,'cb2d-material-art'):esc(m.icon||'◇');
@@ -1604,7 +1623,7 @@ function formatRunTime(ms){const t=Math.max(0,Math.round((Number(ms)||0)/1000)),
 function finish(ok,s){
  if(!run)return;run.resolved=true;const e=$('#cb2dEnd');e.hidden=false;
  if(!ok){
-   e.className='cb2d-end';e.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Knowledge earned during the run is retained.</p></div><button>RETURN TO GUILD →</button>';
+   e.className='cb2d-end';e.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Knowledge earned during the run is retained.</p></div>'+rebornFailureDiagnosisHTML()+'<button>RETURN TO GUILD →</button>';
    appendRebornAnalysis(e);e.querySelector('button').onclick=()=>{close();Game.switchView('content')};return
  }
  const gear=run.loot?.gear||[],materials=Object.values(run.loot?.materials||{}),xpGrowth=run.xpGrowth||[];
@@ -1612,7 +1631,7 @@ function finish(ok,s){
  e.innerHTML='<div class="cb2d-loot-wrap">'+
    '<header class="cb2d-loot-head"><div><small>THE ASHEN VAULT · '+esc(run?.endgame?.label||'NORMAL').toUpperCase()+' · CLEARED</small><h3>Expedition Rewards</h3><p>The Vaultheart has fallen. Everything below has already been secured to your guild.</p></div><div class="cb2d-loot-complete">✓<span>DUNGEON<br>COMPLETE</span></div></header>'+
    '<div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+Number(run.loot?.gold||0)+'</b><small>Added to Guild treasury</small></article><article><span>RENOWN</span><b>+'+Number(run.loot?.renown||0)+'</b><small>Guild reputation earned</small></article><article><span>PARTY XP</span><b>+'+Number(run.loot?.xp||0)+'</b><small>Earned by each adventurer</small></article><article><span>BOSS CHESTS</span><b>'+gear.length+'</b><small>Gear drops secured</small></article><article><span>RUN SCORE</span><b>'+Number(run.endgameRecord?.score||run.endgameMetrics?.scorePreview||0).toLocaleString()+'</b><small>'+formatRunTime(run.endgameMetrics?.timeMs||0)+' simulated time</small></article></div>'+
-   '<section class="cb2d-loot-section cb2d-xp-section"><div class="cb2d-loot-title"><span>PARTY EXPERIENCE</span><small>Every member of the active five gains experience from the clear</small></div><div class="cb2d-xp-grid">'+(xpGrowth.length?xpGrowth.map(xpGrowthCard).join(''):'<div class="cb2d-loot-empty">No character XP was awarded.</div>')+'</div></section>'+
+   endgameProgressHTML()+'<section class="cb2d-loot-section cb2d-xp-section"><div class="cb2d-loot-title"><span>PARTY EXPERIENCE</span><small>Every member of the active five gains experience from the clear</small></div><div class="cb2d-xp-grid">'+(xpGrowth.length?xpGrowth.map(xpGrowthCard).join(''):'<div class="cb2d-loot-empty">No character XP was awarded.</div>')+'</div></section>'+
    '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>GEAR ACQUIRED</span><small>Stored automatically in the Guild Bank</small></div><div class="cb2d-loot-gear">'+(gear.length?gear.map(lootGearCard).join(''):'<div class="cb2d-loot-empty">No bonus gear dropped before the guaranteed Vaultheart reward.</div>')+'</div></section>'+
    '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>PROFESSION REAGENTS</span><small>Available immediately for crafting</small></div><div class="cb2d-loot-materials">'+(materials.length?materials.map(lootMaterialCard).join(''):'<div class="cb2d-loot-empty">No profession reagents recovered.</div>')+'</div></section>'+
    '<footer class="cb2d-loot-actions"><button data-loot-bank>VIEW GUILD BANK</button><button class="primary" data-loot-return>RETURN TO GUILD →</button></footer>'+
