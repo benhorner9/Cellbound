@@ -363,8 +363,8 @@ function investTalent(spec,nodeId){
 function changeSpec(spec){
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));
   if(!state||!c||!specs[c.class]?.[spec]||c.spec===spec)return;
-  c.spec=spec;selectedTreeSpec=spec;selectedTalentId=null;selectedTalentSpec=spec;removeFromParty(state,c.id);
-  state.activity=state.activity||[];state.activity.push(`${c.name} changed specialisation to ${spec} (${roleLabel(roleOf(c))}).`);
+  c.spec=spec;selectedTreeSpec=spec;selectedTalentId=null;selectedTalentSpec=spec;
+  state.activity=state.activity||[];state.activity.push(`${c.name} changed specialisation to ${spec} (${roleLabel(roleOf(c))}). Active-party role updated automatically.`);
   writeState(state);renderSheet();
 }
 function openCharacter(id){document.body.classList.add('character-sheet-open');currentId=id;currentTab='overview';activeSlot=null;selectedTalentId=null;selectedTalentSpec=null;selectedTreeSpec=null;renderSheet()}
