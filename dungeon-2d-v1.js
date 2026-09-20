@@ -129,7 +129,7 @@ function combatProfile(c){
  return'ranged';
 }
 function root(){let r=$('#cb2dBackdrop');if(!r){r=document.createElement('div');r.id='cb2dBackdrop';r.className='cb2d-backdrop';r.hidden=true;document.body.appendChild(r)}return r}
-function close(){token++;run=null;document.body.classList.remove('cb2d-open');const r=root();r.hidden=true;r.innerHTML=''}
+function close(){token++;removeRebornReplayControls();run=null;document.body.classList.remove('cb2d-open');const r=root();r.hidden=true;r.innerHTML=''}
 function knowledge(key){const p=party();return p.length?Math.round(p.reduce((n,c)=>n+(Number(c.knowledge&&c.knowledge[key])||0),0)/p.length):0}
 function readiness(){
  const p=party(),s=state();
@@ -1101,14 +1101,47 @@ function renderRebornEvent(e,result,replayMode=false){
    rebornCastClear();status(e.result==='victory'?'Encounter cleared':'Party defeated');run.stageOutcome=e.result==='victory';break;
  }
 }
+function configureRebornViewer(){
+ const controls=$('.cb2d-controls');if(!controls||controls.dataset.reborn==='1')return;
+ controls.dataset.reborn='1';controls.classList.add('cbr-plan-lock');
+ controls.innerHTML='<div class="cbr-plan-lock-copy"><small>COMBAT REBORN</small><b>Pre-dungeon tactics are authoritative.</b><span>Live override buttons are disabled because they would not be allowed to cosmetically change an already-simulated event timeline.</span></div>'
+}
+function removeRebornReplayControls(){const x=$('#cbrReplayControls');if(x)x.remove()}
+function mountRebornReplayControls(){
+ removeRebornReplayControls();const arena=$('#cb2dArena');if(!arena)return;
+ run.replayPaused=false;run.replaySpeed=1;run.replayRestartRequested=false;
+ const el=document.createElement('div');el.id='cbrReplayControls';el.className='cbr-replay-controls';
+ el.innerHTML='<button type="button" data-cbr-pause>PAUSE</button><button type="button" data-cbr-speed>1×</button><button type="button" data-cbr-restart>RESTART</button>';
+ arena.appendChild(el);
+ el.querySelector('[data-cbr-pause]').onclick=e=>{run.replayPaused=!run.replayPaused;e.currentTarget.textContent=run.replayPaused?'PLAY':'PAUSE'};
+ el.querySelector('[data-cbr-speed]').onclick=e=>{const speeds=[.5,1,2],i=speeds.indexOf(run.replaySpeed),next=speeds[(i+1)%speeds.length];run.replaySpeed=next;e.currentTarget.textContent=next+'×'};
+ el.querySelector('[data-cbr-restart]').onclick=()=>{run.replayRestartRequested=true;run.replayPaused=false;const p=el.querySelector('[data-cbr-pause]');if(p)p.textContent='PAUSE'}
+}
+async function rebornReplayWait(ms,tok){
+ let remaining=Math.max(0,Number(ms)||0);
+ while(remaining>0){
+  if(tok!==token||!run)return'cancelled';
+  if(run.replayRestartRequested)return'restart';
+  if(run.replayPaused){await new Promise(r=>setTimeout(r,70));continue}
+  const step=Math.min(70,remaining),speed=Math.max(.25,Number(run.replaySpeed)||1);
+  await new Promise(r=>setTimeout(r,Math.max(8,Math.round(step/speed))));remaining-=step
+ }
+ return run.replayRestartRequested?'restart':'ok'
+}
 async function playRebornTimeline(result,tok,{replayMode=false}={}){
- const events=result?.events||[];let last=0;run.combatActive=true;run.rebornTelegraphs={};ensureRebornHealingMeter();renderRebornHealingMeter();
+ const events=result?.events||[];let last=0;run.combatActive=true;run.rebornTelegraphs={};ensureRebornHealingMeter();renderRebornHealingMeter();configureRebornViewer();
+ if(replayMode)mountRebornReplayControls();
  for(const e of events){
-   if(tok!==token||!run)return false;
-   const gap=Math.max(0,Number(e.timestamp)-last);if(gap)await delay(Math.min(gap,1200));
+   if(tok!==token||!run)return'cancelled';
+   const gap=Math.max(0,Number(e.timestamp)-last);
+   if(gap){
+     if(replayMode){const state=await rebornReplayWait(gap,tok);if(state!=='ok')return state}
+     else await delay(Math.min(gap,1200));
+   }
+   if(replayMode&&run.replayRestartRequested)return'restart';
    renderRebornEvent(e,result,replayMode);last=Number(e.timestamp)||last;
  }
- run.combatActive=false;return result?.outcome==='victory'
+ run.combatActive=false;return replayMode?'done':(result?.outcome==='victory'?'victory':'defeat')
 }
 function runRebornStage(s){
  const C=window.CellboundCombatReborn;if(!C?.simulate)return null;
@@ -1122,14 +1155,15 @@ function captureRebornResult(result){
  run.rebornHistory.push({stageId:result.stageId,stageTitle:result.stageTitle,startHp:result.startHp,replay:result.replay,summary:result.summary,outcome:result.outcome});
 }
 function rebornTotals(){
- const history=run?.rebornHistory||[],map={};let duration=0,deaths=0,damage=0,healing=0,attempts=0,interrupts=0,failed=0,avoided=0;
- history.forEach(h=>{const s=h.summary||{};duration+=Number(s.durationSeconds)||0;deaths+=Number(s.deaths)||0;damage+=Number(s.totalDamage)||0;healing+=Number(s.totalHealing)||0;attempts+=Number(s.interrupts?.attempts)||0;interrupts+=Number(s.interrupts?.success)||0;failed+=Number(s.mechanics?.failed)||0;avoided+=Number(s.mechanics?.avoided)||0;(s.players||[]).forEach(p=>{const x=map[p.id]||(map[p.id]={id:p.id,name:p.name,class:p.class,damage:0,healing:0,avoidableDamage:0,deaths:0,interrupts:0,interruptAttempts:0});x.damage+=Number(p.damage)||0;x.healing+=Number(p.healing)||0;x.avoidableDamage+=Number(p.avoidableDamage)||0;x.deaths+=Number(p.deaths)||0;x.interrupts+=Number(p.interrupts)||0;x.interruptAttempts+=Number(p.interruptAttempts)||0})});
- return{duration,deaths,damage,healing,attempts,interrupts,failed,avoided,players:Object.values(map)}
+ const history=run?.rebornHistory||[],map={};let duration=0,deaths=0,damage=0,healing=0,damageTaken=0,avoidableDamage=0,attempts=0,interrupts=0,failed=0,avoided=0;
+ history.forEach(h=>{const s=h.summary||{};duration+=Number(s.durationSeconds)||0;deaths+=Number(s.deaths)||0;damage+=Number(s.totalDamage)||0;healing+=Number(s.totalHealing)||0;attempts+=Number(s.interrupts?.attempts)||0;interrupts+=Number(s.interrupts?.success)||0;failed+=Number(s.mechanics?.failed)||0;avoided+=Number(s.mechanics?.avoided)||0;(s.players||[]).forEach(p=>{const x=map[p.id]||(map[p.id]={id:p.id,name:p.name,class:p.class,damage:0,healing:0,damageTaken:0,avoidableDamage:0,deaths:0,interrupts:0,interruptAttempts:0,abilityDamage:{}});x.damage+=Number(p.damage)||0;x.healing+=Number(p.healing)||0;x.damageTaken+=Number(p.damageTaken)||0;x.avoidableDamage+=Number(p.avoidableDamage)||0;x.deaths+=Number(p.deaths)||0;x.interrupts+=Number(p.interrupts)||0;x.interruptAttempts+=Number(p.interruptAttempts)||0;Object.entries(p.abilityDamage||{}).forEach(([k,v])=>x.abilityDamage[k]=(x.abilityDamage[k]||0)+(Number(v)||0));damageTaken+=Number(p.damageTaken)||0;avoidableDamage+=Number(p.avoidableDamage)||0})});
+ return{duration,deaths,damage,healing,damageTaken,avoidableDamage,attempts,interrupts,failed,avoided,players:Object.values(map)}
 }
 function rebornAnalysisHTML(){
  const t=rebornTotals();if(!run?.rebornHistory?.length)return'';
- const rows=t.players.sort((a,b)=>b.damage-a.damage).map(p=>'<div class="cbr-analysis-row"><i class="cb2d-dot '+('class-'+String(p.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-'))+'"></i><span><b>'+esc(p.name)+'</b><small>'+esc(p.class)+' · Avoidable '+Math.round(p.avoidableDamage)+' · Interrupts '+p.interrupts+'/'+p.interruptAttempts+'</small></span><strong>'+Math.round(p.damage).toLocaleString()+' dmg</strong></div>').join('');
- return'<section class="cbr-analysis"><div class="cbr-analysis-head"><div><small>COMBAT REBORN · RUN ANALYSIS</small><h4>The simulation decided this result.</h4></div><button type="button" data-cbr-replay>REPLAY FINAL FIGHT</button></div><div class="cbr-analysis-grid"><article><span>DAMAGE</span><b>'+Math.round(t.damage).toLocaleString()+'</b></article><article><span>HEALING</span><b>'+Math.round(t.healing).toLocaleString()+'</b></article><article><span>DEATHS</span><b>'+t.deaths+'</b></article><article><span>INTERRUPTS</span><b>'+t.interrupts+'/'+t.attempts+'</b></article><article><span>MECHANICS AVOIDED</span><b>'+t.avoided+'</b></article><article><span>MECHANICS FAILED</span><b>'+t.failed+'</b></article></div><div class="cbr-analysis-list">'+rows+'</div></section>'
+ const mins=Math.floor(t.duration/60),secs=Math.round(t.duration%60),time=(mins?mins+'m ':'')+secs+'s';
+ const rows=t.players.sort((a,b)=>b.damage-a.damage).map(p=>{const top=Object.entries(p.abilityDamage||{}).sort((a,b)=>b[1]-a[1])[0],share=top&&p.damage?Math.round(top[1]/p.damage*100):0;return'<div class="cbr-analysis-row"><i class="cb2d-dot '+('class-'+String(p.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-'))+'"></i><span><b>'+esc(p.name)+'</b><small>'+esc(p.class)+' · '+(top?esc(top[0])+' '+share+'% · ':'')+'Avoidable '+Math.round(p.avoidableDamage)+' · Interrupts '+p.interrupts+'/'+p.interruptAttempts+'</small></span><strong>'+Math.round(p.damage).toLocaleString()+' dmg</strong></div>'}).join('');
+ return'<section class="cbr-analysis"><div class="cbr-analysis-head"><div><small>COMBAT REBORN · RUN ANALYSIS</small><h4>The simulation decided this result.</h4></div><button type="button" data-cbr-replay>REPLAY FINAL FIGHT</button></div><div class="cbr-analysis-grid"><article><span>TIME</span><b>'+time+'</b></article><article><span>DAMAGE</span><b>'+Math.round(t.damage).toLocaleString()+'</b></article><article><span>HEALING</span><b>'+Math.round(t.healing).toLocaleString()+'</b></article><article><span>DAMAGE TAKEN</span><b>'+Math.round(t.damageTaken).toLocaleString()+'</b></article><article><span>AVOIDABLE</span><b>'+Math.round(t.avoidableDamage).toLocaleString()+'</b></article><article><span>DEATHS</span><b>'+t.deaths+'</b></article><article><span>INTERRUPTS</span><b>'+t.interrupts+'/'+t.attempts+'</b></article><article><span>MECHANICS</span><b>'+t.avoided+'✓ · '+t.failed+'✕</b></article></div><div class="cbr-analysis-list">'+rows+'</div></section>'
 }
 function appendRebornAnalysis(rootEl){
  if(!rootEl||rootEl.querySelector('.cbr-analysis')||!run?.rebornHistory?.length)return;
@@ -1140,10 +1174,13 @@ function appendRebornAnalysis(rootEl){
 async function replayFinalReborn(){
  const h=(run?.rebornHistory||[]).slice(-1)[0];if(!h?.replay)return;
  const s=STAGES.find(x=>x.id===h.stageId)||STAGES[run.stage],end=$('#cb2dEnd');if(end)end.hidden=true;
- Object.entries(h.startHp||{}).forEach(([id,v])=>setHp(id,v));updateRows();spawn(s);status('Replay · stored combat timeline');log('Replay uses the original combat events. No RNG is rerun.');
  const replayResult={events:h.replay.events,outcome:h.replay.summary?.outcome||h.outcome,summary:h.replay.summary,version:h.replay.version};
- await playRebornTimeline(replayResult,token,{replayMode:true});
- if(end)end.hidden=false
+ let state='restart';
+ while(state==='restart'&&run){
+   Object.entries(h.startHp||{}).forEach(([id,v])=>setHp(id,v));updateRows();spawn(s);status('Replay · stored combat timeline');log('Replay uses the original combat events. No RNG is rerun.');
+   state=await playRebornTimeline(replayResult,token,{replayMode:true});
+ }
+ removeRebornReplayControls();if(end)end.hidden=false
 }
 async function seamless(tok){
  try{
