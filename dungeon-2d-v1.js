@@ -186,7 +186,7 @@ function briefing(){
  r.querySelector('[data-start]').onclick=start;
 }
 function start(){
- const p=party(),resources=Object.fromEntries(p.map(c=>{const def=resourceDefFor(c);return[c.id,{name:def.name,max:def.max,value:def.start}]}));token++;run={token:token,stage:0,speed:1,condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),resources,enemyHp:[],enemyMax:[],threat:[],aggro:[],damageDone:Object.fromEntries(p.map(c=>[c.id,0])),healingDone:Object.fromEntries(p.map(c=>[c.id,0])),overhealing:Object.fromEntries(p.map(c=>[c.id,0])),hitCount:Object.fromEntries(p.map(c=>[c.id,0])),identityTimers:{},combatStartedAt:0,lastMeterAt:0,log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},xpGrowth:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0,rebornHistory:[],rebornReplay:null,rebornResult:null,rebornTelegraphs:{},rebornCastTimer:null};
+ const p=party(),resources=Object.fromEntries(p.map(c=>{const def=resourceDefFor(c);return[c.id,{name:def.name,max:def.max,value:def.start}]})),cooldowns=Object.fromEntries(p.map(c=>[c.id,{}])),reviveSickness=Object.fromEntries(p.map(c=>[c.id,0]));token++;run={token:token,stage:0,speed:1,resources,cooldowns,reviveSickness,expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],damageDone:Object.fromEntries(p.map(c=>[c.id,0])),healingDone:Object.fromEntries(p.map(c=>[c.id,0])),overhealing:Object.fromEntries(p.map(c=>[c.id,0])),hitCount:Object.fromEntries(p.map(c=>[c.id,0])),identityTimers:{},combatStartedAt:0,lastMeterAt:0,log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},xpGrowth:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0,rebornHistory:[],rebornReplay:null,rebornResult:null,rebornTelegraphs:{},rebornCastTimer:null};
  drawViewer();seamless(token);
 }
 function route(){
@@ -1131,8 +1131,10 @@ function rebornTactics(){
 }
 function rebornEncounter(s){
  const room=ASHEN_ROOMS[s.id]||{};
- return{id:s.id,title:s.title,kind:s.kind,level:s.level||1,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies:[...s.enemies],enemyHealth:s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120,mechanics:s.mechanics.map(m=>({name:m[0],type:m[1],duration:m[2]})),environment:{room:room.room||s.id,blockers:(room.blockers||[]).map(b=>({...b,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false}))}}
+ const recommendedItemLevel=s.level<=3?18:s.level===4?20:22;
+ return{id:s.id,title:s.title,kind:s.kind,level:s.level||1,recommendedItemLevel,knowledgeKey:s.knowledge||s.id,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies:[...s.enemies],enemyHealth:s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120,mechanics:s.mechanics.map(m=>({name:m[0],type:m[1],duration:m[2]})),environment:{room:room.room||s.id,blockers:(room.blockers||[]).map(b=>({...b,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false}))}}
 }
+function copyObject(v){return JSON.parse(JSON.stringify(v||{}))}
 function rebornPlayerByUnit(id){return party().find(c=>'p-'+c.id===id)||null}
 function rebornEnemyIndex(id){const m=String(id||'').match(/^e-(\d+)$/);return m?Number(m[1]):-1}
 function ensureRebornHealingMeter(){
@@ -1342,14 +1344,22 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
 function runRebornStage(s){
  const C=window.CellboundCombatReborn;if(!C?.simulate)throw new Error('Combat Reborn engine is unavailable');
  const startHp=Object.fromEntries(party().map(c=>[c.id,hp(c.id)]));
- const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:hp(c.id),_combatResource:run.resources?.[c.id]||null}));
+ const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:hp(c.id),_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_reviveSicknessMs:run.reviveSickness?.[c.id]||0}));
  const result=C.simulate({party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:['ashen-vault',run.token,run.stage,Date.now()].join(':')});
  result.stageId=s.id;result.stageTitle=s.title;result.startHp=startHp;return result
 }
 function captureRebornResult(result){
  run.rebornResult=result;run.rebornReplay=result?.replay||null;run.rebornHistory=run.rebornHistory||[];
  if(Array.isArray(result?.finalState?.enemies)){run.enemyMax=result.finalState.enemies.filter(e=>!e.isAdd).map(e=>e.maxHealth);run.enemyHp=[...run.enemyMax]}
- (result?.finalState?.players||[]).forEach(p=>{const c=rebornPlayerByUnit(p.id);if(c&&p.resource)run.resources[c.id]={name:p.resource.name,max:p.resource.max,value:p.resource.value}});
+ (result?.finalState?.players||[]).forEach(p=>{
+  const c=rebornPlayerByUnit(p.id);if(!c)return;
+  setHp(c.id,p.alive?Math.max(0,Number(p.health)/Math.max(1,Number(p.maxHealth))*100):0);
+  if(p.resource)run.resources[c.id]={name:p.resource.name,max:p.resource.max,value:p.resource.value};
+  run.cooldowns[c.id]=copyObject(p.cooldowns||{});
+  run.reviveSickness[c.id]=Math.max(0,(Number(p.revivePenaltyUntil)||0)-Number(result.durationMs||0));
+ });
+ run.expeditionTimeMs=(Number(run.expeditionTimeMs)||0)+Number(result.durationMs||0);
+ updateRows();
  run.rebornHistory.push({stageId:result.stageId,stageTitle:result.stageTitle,startHp:result.startHp,replay:result.replay,summary:result.summary,outcome:result.outcome});
 }
 function rebornTotals(){
