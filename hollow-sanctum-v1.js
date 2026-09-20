@@ -3,7 +3,7 @@
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 let Game=null,db=null,run=null,token=0,requestedRunOptions=null;
-let hsTactics={pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced',bossPlan:'balanced'};
+let hsTactics={strategyPreset:'balanced',pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced',bossPlan:'balanced'};
 const STAGES=[
  {id:'gallery',title:'Gallery of Echoes',kind:'TRASH',combatKind:'trash',level:6,enemyTypes:['trash','trash','trash'],enemyHealth:145,enemies:['Hollowed Surveyor','Hollowed Surveyor','Glass Mite'],mechanic:'Echo Burst',mechanics:[['Echo Burst','circles',1500]]},
  {id:'sentinel',title:'Glassjaw Sentinel',kind:'MINI-BOSS',combatKind:'boss',level:7,enemyTypes:['elite'],enemyHealth:750,enemies:['Glassjaw Sentinel'],mechanic:'Fracture Line',mechanics:[['Fracture Line','line',1700],['Glassjaw Sweep','cone',1450]]},
@@ -73,25 +73,32 @@ function hsBindEndgamePrep(){
 function hsStrategyButtons(key,items){
  return '<div class="eg-prep-tabs hs-strategy-tabs" data-hs-plan="'+key+'">'+items.map(x=>'<button type="button" data-hs-pick="'+key+'|'+x[0]+'" class="'+(hsTactics[key]===x[0]?'active':'')+'"><b>'+x[1]+'</b><small>'+x[2]+'</small></button>').join('')+'</div>';
 }
+function applyHsStrategyPreset(value){
+ hsTactics.strategyPreset=value;
+ if(value==='safe'){
+   Object.assign(hsTactics,{pullStyle:'safe',cooldownUse:'difficult',interruptPriority:'high',interruptAssignment:'best',crowdControl:'enabled',defensiveUsage:'aggressive',addPriority:'immediate',movementDiscipline:'safe',bossPlan:'control'});
+ }else if(value==='aggressive'){
+   Object.assign(hsTactics,{pullStyle:'aggressive',cooldownUse:'free',interruptPriority:'standard',interruptAssignment:'best',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'boss',movementDiscipline:'damage',bossPlan:'burn'});
+ }else{
+   Object.assign(hsTactics,{pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced',bossPlan:'balanced'});
+ }
+}
 function hsStrategyMarkup(){
- return '<div class="eg-prep-block"><small>EXPEDITION STRATEGY</small>'+
- '<div class="eg-prep-detail"><b>Pull Style</b> · Pace changes both opening pressure and simulated route time.</div>'+hsStrategyButtons('pullStyle',[['safe','SAFE','Control'],['normal','BALANCED','Standard'],['aggressive','AGGRESSIVE','Fast']])+
- '<div class="eg-prep-detail"><b>Cooldown Use</b></div>'+hsStrategyButtons('cooldownUse',[['bosses','BOSSES','Hold'],['difficult','DIFFICULT','React'],['free','FREE','Spend']])+
- '<div class="eg-prep-detail"><b>Interrupt Assignment</b></div>'+hsStrategyButtons('interruptAssignment',[['tank','TANK','First'],['dps-rotation','DPS ROTATION','Rotate'],['best','BEST','Quality']])+
- '<div class="eg-prep-detail"><b>Crowd Control</b></div>'+hsStrategyButtons('crowdControl',[['priority-elites','ELITES','Priority'],['enabled','ENABLED','Packs'],['disabled','OFF','None']])+
- '<div class="eg-prep-detail"><b>Boss Plan</b></div>'+hsStrategyButtons('bossPlan',[['control','CONTROL','Survive'],['balanced','BALANCED','Flexible'],['burn','BURN','Commit']])+
+ return '<div class="eg-prep-block"><small>EXPEDITION STYLE</small>'+
+ '<div class="eg-prep-detail">Choose one overall plan. Interrupts, crowd control, cooldowns, adds, defensives and movement are handled automatically.</div>'+
+ hsStrategyButtons('strategyPreset',[['safe','SAFE','Control'],['balanced','BALANCED','Standard'],['aggressive','AGGRESSIVE','Fast']])+
  '</div>';
 }
 function hsBindStrategy(){
  $$('[data-hs-pick]').forEach(b=>b.addEventListener('click',()=>{
-  const [key,value]=b.dataset.hsPick.split('|');hsTactics[key]=value;
-  if(key==='bossPlan'){
-    if(value==='control'){hsTactics.interruptPriority='high';hsTactics.addPriority='immediate';hsTactics.defensiveUsage='aggressive'}
-    else if(value==='burn'){hsTactics.cooldownUse='free';hsTactics.addPriority='boss'}
-    else{hsTactics.interruptPriority='standard';hsTactics.addPriority='immediate';hsTactics.defensiveUsage='standard'}
-  }
+  const [key,value]=b.dataset.hsPick.split('|');
+  if(key==='strategyPreset')applyHsStrategyPreset(value);else hsTactics[key]=value;
   $$('[data-hs-plan="'+key+'"] button').forEach(x=>x.classList.toggle('active',x===b));
  }))
+}
+async function hsWaitForEndgame(){
+ for(let i=0;i<20;i++){if(window.CellboundEndgame?.beginAttempt)return window.CellboundEndgame;await new Promise(r=>setTimeout(r,100))}
+ return null
 }
 
 function briefing(){
@@ -354,7 +361,9 @@ function hsRunMetrics(){
 function hsFormatTime(ms){const t=Math.max(0,Math.round((Number(ms)||0)/1000)),m=Math.floor(t/60),s=t%60;return m+':'+String(s).padStart(2,'0')}
 
 async function start(){
- const eg=hsEndgameConfig(),attempt=await window.CellboundEndgame?.beginAttempt?.('hollow-sanctum');if(!attempt||attempt.error){alert(attempt?.error?.message||'Unable to start a validated dungeon run.');return}token++;const tok=token,p=party();run={stage:0,done:false,log:[],endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=hsResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{}};draw();
+ const startButton=root().querySelector('[data-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
+ await Game.persistState?.();
+ const service=await hsWaitForEndgame(),eg=hsEndgameConfig(),attempt=await service?.beginAttempt?.('hollow-sanctum');if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN DESCENT →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Descent again.');return}token++;const tok=token,p=party();run={stage:0,done:false,log:[],endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=hsResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{}};draw();
  for(let i=0;i<STAGES.length;i++){if(tok!==token)return;run.stage=i;const s=STAGES[i];$('#hs2dTitle').textContent=s.title;$('.hs2d-route').innerHTML=STAGES.map((x,j)=>'<span class="'+(j<i?'done':j===i?'current':'')+'"><i>'+(j+1)+'</i>'+esc(x.title)+'</span>').join('');if(!await fightStage(s,tok,i))return}
  if(tok!==token)return;await complete();
 }
