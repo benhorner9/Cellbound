@@ -13,6 +13,10 @@ const selection={
  'ashen-vault':{difficulty:'normal',tier:1},
  'hollow-sanctum':{difficulty:'normal',tier:1}
 };
+const leaderboardView={
+ 'ashen-vault':{scope:'overall',klass:null},
+ 'hollow-sanctum':{scope:'overall',klass:null}
+};
 
 const progressFor=id=>(server.progress||[]).find(x=>x.dungeon_id===id)||{
  dungeon_id:id,normal_clears:0,heroic_unlocked:false,heroic_clears:0,cellbound_unlocked:false,highest_tier:0,cellbound_clears:0,best_score:0,best_time_ms:null
@@ -112,8 +116,11 @@ function weeklyMarkup(){
  return'<article class="eg-weekly panel"><div><small>WEEKLY ENDGAME</small><h3>Weekly Vault</h3><p>Dungeon clears build one weekly reward. Missing a day does not matter.</p></div><div class="eg-weekly-progress"><span><b>'+points+' / 60 points</b><em>Highest Cellbound+ '+highest+'</em></span><div><i style="width:'+pct+'%"></i></div><button data-eg-weekly '+(points>=60&&!claimed?'':'disabled')+'>'+(claimed?'CLAIMED':points>=60?'CLAIM WEEKLY REWARD':'KEEP PLAYING')+'</button></div></article>'
 }
 function leaderboardMarkup(id){
- const rows=leaderboards[id]||[];
- return'<section class="eg-leader panel"><div class="panel-head"><div><small>SEASON LEADERBOARD</small><h3>'+esc(D.DUNGEONS[id].name)+'</h3></div><b>'+esc(server.season?.name||D.SEASON.name)+'</b></div><div class="eg-leader-list">'+(rows.length?rows.slice(0,10).map(r=>'<div><b>#'+r.rank+'</b><span>'+esc(r.guild_label)+'<small>'+esc(r.difficulty==='cellbound'?'Cellbound+'+r.tier:r.difficulty.toUpperCase())+' · '+r.deaths+' deaths</small></span><em>'+formatTime(r.completion_time_ms)+'</em><strong>'+Number(r.score).toLocaleString()+'</strong></div>').join(''):'<p class="eg-empty">No validated runs recorded yet.</p>')+'</div></section>'
+ const rows=leaderboards[id]||[],view=leaderboardView[id]||{scope:'overall'},cfg=currentConfig(id),partyClasses=[...new Set((Game?.getPartyCharacters?.()||[]).map(c=>c.class))];
+ if(!view.klass&&partyClasses.length)view.klass=partyClasses[0];
+ const scopes=[['overall','OVERALL'],['tier','TIER +'+Math.max(1,cfg.tier||progressFor(id).highest_tier||1)],['class','CLASS'],['party','MY PARTY']];
+ const filters='<div class="eg-leader-filters">'+scopes.map(x=>'<button data-eg-lb-scope="'+id+'|'+x[0]+'" class="'+(view.scope===x[0]?'active':'')+'">'+x[1]+'</button>').join('')+(view.scope==='class'?'<select data-eg-lb-class="'+id+'">'+partyClasses.map(k=>'<option '+(k===view.klass?'selected':'')+'>'+esc(k)+'</option>').join('')+'</select>':'')+'</div>';
+ return'<section class="eg-leader panel"><div class="panel-head"><div><small>SEASON LEADERBOARD</small><h3>'+esc(D.DUNGEONS[id].name)+'</h3></div><b>'+esc(server.season?.name||D.SEASON.name)+'</b></div>'+filters+'<div class="eg-leader-list">'+(rows.length?rows.slice(0,10).map(r=>'<div><b>#'+r.rank+'</b><span>'+esc(r.guild_label)+'<small>'+esc(r.difficulty==='cellbound'?'Cellbound+'+r.tier:r.difficulty.toUpperCase())+' · '+r.deaths+' deaths · '+esc((r.party_classes||[]).join(' / '))+'</small></span><em>'+formatTime(r.completion_time_ms)+'</em><strong>'+Number(r.score).toLocaleString()+'</strong></div>').join(''):'<p class="eg-empty">No validated runs recorded for this scope yet.</p>')+'</div></section>'
 }
 function render(){
  const root=$('#endgameHub');if(!root||!Game?.ready)return;
@@ -129,11 +136,17 @@ function bind(){
  document.querySelectorAll('[data-eg-mode]').forEach(b=>b.onclick=()=>{const[id,mode]=b.dataset.egMode.split('|');choose(id,mode)});
  document.querySelectorAll('[data-eg-tier]').forEach(s=>s.onchange=()=>choose(s.dataset.egTier,'cellbound',Number(s.value)));
  document.querySelectorAll('[data-eg-prepare]').forEach(b=>b.onclick=()=>prepare(b.dataset.egPrepare));
- $('[data-eg-weekly]')?.addEventListener('click',claimWeekly)
+ $('[data-eg-weekly]')?.addEventListener('click',claimWeekly);
+ document.querySelectorAll('[data-eg-lb-scope]').forEach(b=>b.onclick=async()=>{const[id,scope]=b.dataset.egLbScope.split('|');leaderboardView[id].scope=scope;await loadLeaderboard(id);render()});
+ document.querySelectorAll('[data-eg-lb-class]').forEach(s=>s.onchange=async()=>{leaderboardView[s.dataset.egLbClass].klass=s.value;await loadLeaderboard(s.dataset.egLbClass);render()})
 }
 async function loadLeaderboard(id){
  if(!db)return;
- const {data,error}=await db.rpc('get_dungeon_leaderboard',{p_dungeon_id:id,p_season_id:server.season?.id||D.SEASON.id,p_limit:20});
+ const view=leaderboardView[id]||{scope:'overall'},cfg=currentConfig(id),tier=Math.max(1,Number(cfg.tier)||Number(progressFor(id).highest_tier)||1);
+ const {data,error}=await db.rpc('get_dungeon_leaderboard_v2',{
+   p_dungeon_id:id,p_season_id:server.season?.id||D.SEASON.id,p_scope:view.scope,
+   p_tier:view.scope==='tier'?tier:null,p_class:view.scope==='class'?view.klass:null,p_limit:20
+ });
  if(!error)leaderboards[id]=data||[];else console.warn('Leaderboard load failed',error)
 }
 async function refresh(){
