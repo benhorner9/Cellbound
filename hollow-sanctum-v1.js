@@ -2,7 +2,7 @@
 'use strict';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-let Game=null,db=null,run=null,token=0,requestedRunOptions=null;
+let Game=null,db=null,G=null,P=null,run=null,token=0,requestedRunOptions=null;
 let hsTactics={strategyPreset:'balanced',pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced',bossPlan:'balanced'};
 const STAGES=[
  {id:'gallery',title:'Gallery of Echoes',kind:'TRASH',combatKind:'trash',level:6,enemyTypes:['trash','trash','trash'],enemyHealth:145,enemies:['Hollowed Surveyor','Hollowed Surveyor','Glass Mite'],mechanic:'Echo Burst',mechanics:[['Echo Burst','circles',1500]]},
@@ -17,7 +17,7 @@ function rollHollowGear(){
  const base=pool[Math.floor(Math.random()*pool.length)];
  return G.rollItemAffixes?.({...base,source:'The Hollow Sanctum · The Bound Choir'})||{...base,source:'The Hollow Sanctum · The Bound Choir'};
 }
-const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const wait=ms=>new Promise(r=>setTimeout(r,Math.round(ms/((run&&run.speed)||1))));
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
 const role=c=>Game?.classes?.[c.class]?.specs?.[c.spec]?.role||'dps';
@@ -171,7 +171,7 @@ function hsEnemyMeta(s,index){
  const labels={trash:'TRASH',elite:'ELITE',boss:'BOSS','world-boss':'WORLD BOSS',add:'ADD'};
  return{level,type,label:labels[type]||type.toUpperCase()}
 }
-function stageEnvironment(s){const arena=$('#hs2dArena');arena.className='hs2d-arena stage-'+s.id;$('#hs2dRoom').innerHTML='<b>'+esc(s.title)+'</b><small>'+(s.id==='gallery'?'Cell glass whispers through the walls.':s.id==='sentinel'?'A guardian made of glass and bone blocks the descent.':'Several voices are speaking from one body.')+'</small>'}
+function stageEnvironment(s){const arena=$('#hs2dArena');arena.className='cb2d-arena hs2d-arena hs2d-unified-arena stage-'+s.id;$('#hs2dRoom').innerHTML='<b>'+esc(s.title)+'</b><small>'+(s.id==='gallery'?'Cell glass whispers through the walls.':s.id==='sentinel'?'A guardian made of glass and bone blocks the descent.':'Several voices are speaking from one body.')+'</small>'}
 function spawnStage(s){
  stageEnvironment(s);$('#hs2dUnits').innerHTML='';$('#hs2dTelegraphs').innerHTML='';$('#hs2dFx').innerHTML='';
  const p=party(),melee=p.filter(c=>role(c)!=='healer'&&!['Hunter','Mage','Priest'].includes(c.class));
@@ -226,6 +226,7 @@ function hsRenderRebornEvent(e){
   case'COMBAT_START':setStatus('Combat simulation live.');feed('Combat begins.');break;
   case'MOVEMENT_START':if(src&&e.payload?.to)move(src,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
   case'ABILITY_START':
+   if(srcChar)hsAct(role(srcChar),srcChar.name+' · '+(e.ability||'Ability'));
    if(srcChar&&target){projectile(src,target,hsAttackKind(srcChar),260)}
    else if(src&&target&&(String(e.source||'').startsWith('e-')||String(e.source||'').startsWith('add-')))projectile(src,target,'enemy',300);
    break;
@@ -234,10 +235,12 @@ function hsRenderRebornEvent(e){
      const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));hsBar(target,pct);hsFloat(target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');
      if(targetChar)run.hp[targetChar.id]=pct;
    }
+   if(srcChar){run.damageDone[srcChar.id]=(Number(run.damageDone?.[srcChar.id])||0)+(Number(e.amount)||0);hsRenderMeters()}
+   if(targetChar)hsUpdateSidebar();
    if(e.payload?.avoidable)feed((targetChar?.name||'A player')+' is hit by avoidable '+(e.ability||'damage')+'.');
    break;
   case'HEAL_RECEIVED':
-   if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));run.hp[targetChar.id]=pct;hsBar(target,pct);hsFloat(target,'+'+Math.round(Number(e.amount)||0),'heal')}
+   if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));run.hp[targetChar.id]=pct;hsBar(target,pct);hsFloat(target,'+'+Math.round(Number(e.amount)||0),'heal');hsUpdateSidebar()}
    break;
   case'PHASE_CHANGE':feed((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');setStatus(e.ability||'Phase change');break;
   case'ENRAGE':feed((e.ability||'The boss enrages')+'.');setStatus(e.result==='hard'?'HARD ENRAGE — finish now':(e.ability||'Enrage'));break;
@@ -252,24 +255,28 @@ function hsRenderRebornEvent(e){
    if(target&&targetChar){const pct=Math.max(1,Math.min(100,Number(e.payload?.targetHpPct)||35)),el=$('[data-hs="'+target+'"]');if(el)el.classList.remove('dead');run.hp[targetChar.id]=pct;hsBar(target,pct);hsFloat(target,'BATTLE REZ','heal');feed(targetChar.name+' is brought back by '+(srcChar?.name||'the healer')+'.');hsResourceVisual({source:e.target,payload:{resource:e.payload?.resource,value:e.payload?.resourceValue,max:e.payload?.resourceMax}})}
    break;
   case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':hsResourceVisual(e);break;
+  case'THREAT_GENERATED':
+   if(srcChar){run.threat[srcChar.id]=Number(e.payload?.total)||0;hsRenderMeters()}break;
   case'AGGRO_CHANGED':
+   run.aggro=targetChar?.id||null;if(e.payload?.threat&&typeof e.payload.threat==='object'){Object.entries(e.payload.threat).forEach(([id,v])=>{const ch=hsCharacter(id);if(ch)run.threat[ch.id]=Number(v)||0})}hsRenderMeters();
    if(targetChar&&role(targetChar)!=='tank')feed(targetChar.name+' pulls aggro from the Tank.');
    break;
   case'MECHANIC_TELEGRAPH':
    setStatus((e.ability||'Mechanic')+' incoming…');feed((e.ability||'A mechanic')+' is telegraphed.');hsMechanicFromEvent(e);break;
   case'MECHANIC_RESOLVE':hsClearMechanic(e.payload?.token,true);break;
-  case'CAST_START':if(e.payload?.interruptible)feed((e.ability||'Cast')+' can be interrupted.');break;
+  case'CAST_START':if(String(e.result||'')==='enemy'){hsCastStart(e.ability||'Enemy Cast',e.payload?.duration)}if(e.payload?.interruptible)feed((e.ability||'Cast')+' can be interrupted.');break;
+  case'CAST_FINISH':hsCastClear();break;
   case'INTERRUPT':
-   if(e.result==='success'){feed((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');setStatus('Interrupt successful.');hsClearMechanic(e.payload?.token,false)}
+   if(e.result==='success'){feed((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');setStatus('Interrupt successful.');hsCastClear();hsClearMechanic(e.payload?.token,false)}
    break;
   case'ADD_SPAWNED':hsAddSpawn(e);feed((e.payload?.name||'An add')+' enters the encounter.');break;
   case'ADD_DEFEATED':case'ENEMY_DEFEATED':
    if(target){const el=$('[data-hs="'+target+'"]');if(el){el.classList.add('dead');hsBar(target,0)}}break;
   case'PLAYER_DEFEATED':
-   if(target){const el=$('[data-hs="'+target+'"]');if(el)el.classList.add('dead');hsBar(target,0);if(targetChar){run.hp[targetChar.id]=0;feed(targetChar.name+' is defeated.')}}
+   if(target){const el=$('[data-hs="'+target+'"]');if(el)el.classList.add('dead');hsBar(target,0);if(targetChar){run.hp[targetChar.id]=0;feed(targetChar.name+' is defeated.');hsUpdateSidebar()}}
    break;
   case'DEFENSIVE_ACTIVATED':if(srcChar)feed(srcChar.name+' activates a defensive.');break;
-  case'COMBAT_END':setStatus(e.result==='victory'?'Path clear.':'Party defeated.');break;
+  case'COMBAT_END':hsCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');break;
  }
 }
 async function hsPlayTimeline(result,tok){
@@ -347,12 +354,82 @@ async function fightStage(s,tok,index){
  hsAdvanceCooldowns(5000);
  feed(s.title+' is clear.');setStatus('Path clear.');await wait(600);return true
 }
-function draw(){
- const s=STAGES[run.stage],r=root();r.hidden=false;
- r.innerHTML='<section class="hs2d-shell"><header><div><small>THE HOLLOW SANCTUM · LEVELS 6–8 · LIVE 2D DUNGEON</small><h2 id="hs2dTitle">'+esc(s.title)+'</h2></div><div class="hs2d-live"><i></i>LIVE <button data-close>×</button></div></header><div class="hs2d-route">'+STAGES.map((x,i)=>'<span class="'+(i<run.stage?'done':i===run.stage?'current':'')+'"><i>'+(i+1)+'</i>'+esc(x.title)+'</span>').join('')+'</div><div class="hs2d-layout"><main><div class="hs2d-arena" id="hs2dArena"><div class="hs2d-floor"></div><div class="hs2d-crystals"><i></i><i></i><i></i><i></i><i></i></div><div id="hs2dTelegraphs"></div><div id="hs2dUnits"></div><div id="hs2dFx"></div><div class="hs2d-room" id="hs2dRoom"></div><div class="hs2d-caption"><span>EXPEDITION</span><b id="hs2dStatus">Descending…</b></div></div><div class="hs2d-feed" id="hs2dFeed"></div></main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="hs2d-member"><i class="'+role(c)+' '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span></div>').join('')+'<div class="hs2d-loot-intel"><small>KNOWN REWARDS</small><b>Tier 3 randomized equipment</b><span>Void Crystal · '+(!firstCleared()?'Blackglass Resonator first clear':'unique Relic already recovered')+'</span></div></aside></div><div id="hs2dEnd" class="hs2d-end" hidden></div></section>';
- r.querySelector('[data-close]').onclick=()=>{if(run&&!run.done&&!confirm('Leave The Hollow Sanctum?'))return;close()}
+
+function hsPartyRows(){
+ return party().map(c=>'<div class="cb2d-party-row" data-hs-side-row="'+esc(c.id)+'"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+String(role(c)).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-hs-side-hp="'+esc(c.id)+'" style="width:'+(Number(run?.hp?.[c.id])||100)+'%"></i></em></span><strong>'+(Number(run?.hp?.[c.id])||100)+' HP</strong></div>').join('')
+}
+function hsUpdateSidebar(){
+ party().forEach(c=>{
+  const row=document.querySelector('[data-hs-side-row="'+CSS.escape(String(c.id))+'"]');if(!row)return;
+  const hpv=Math.max(0,Math.min(100,Number(run?.hp?.[c.id])||0)),strong=row.querySelector('strong'),bar=row.querySelector('[data-hs-side-hp]');
+  if(strong)strong.textContent=Math.round(hpv)+' HP';if(bar)bar.style.width=hpv+'%'
+ })
+}
+function hsAct(r,text){const e=document.querySelector('[data-hs-act="'+r+'"] em');if(e)e.textContent=text}
+function hsRenderMeters(){
+ if(!run)return;
+ const damageRoot=$('#hs2dDamageMeter'),threatRoot=$('#hs2dThreatMeter'),chars=party();
+ const damageRows=chars.map(ch=>({ch,value:Number(run.damageDone?.[ch.id])||0})).sort((a,b)=>b.value-a.value);
+ const maxDamage=Math.max(1,...damageRows.map(x=>x.value)),total=damageRows.reduce((n,x)=>n+x.value,0);
+ const totalEl=$('#hs2dDamageTotal');if(totalEl)totalEl.textContent=total.toLocaleString()+' total';
+ if(damageRoot)damageRoot.innerHTML=damageRows.map(({ch,value},i)=>'<div class="cb2d-meter-row '+classKey(ch)+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(ch.name)+'</b><span>'+Math.round(value).toLocaleString()+'</span></div><em><i style="width:'+(value/maxDamage*100)+'%"></i></em></div>').join('');
+ const threatMap=run.threat||{},threatRows=chars.map(ch=>({ch,value:Number(threatMap[ch.id])||0})).sort((a,b)=>b.value-a.value),maxThreat=Math.max(1,...threatRows.map(x=>x.value));
+ const target=$('#hs2dThreatTarget');if(target)target.textContent=run.aggro?(chars.find(ch=>String(ch.id)===String(run.aggro))?.name||'Party target'):'No target';
+ if(threatRoot)threatRoot.innerHTML=threatRows.some(x=>x.value>0)?threatRows.map(({ch,value},i)=>'<div class="cb2d-meter-row '+classKey(ch)+(String(ch.id)===String(run.aggro)?' aggro':'')+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(ch.name)+'</b><span>'+Math.round(value).toLocaleString()+'</span></div><em><i style="width:'+(value/maxThreat*100)+'%"></i></em></div>').join(''):'<div class="cb2d-meter-empty">Threat appears when combat begins.</div>'
+}
+function hsCastStart(name,duration){
+ const panel=$('#hs2dCastPanel'),label=$('#hs2dCastName'),time=$('#hs2dCastTime'),fill=$('#hs2dCastFill');if(panel)panel.hidden=false;if(label)label.textContent=name||'Enemy cast';if(time)time.textContent=((Number(duration)||0)/1000).toFixed(1)+'s';if(fill){fill.style.transition='none';fill.style.width='0%';void fill.offsetWidth;fill.style.transition='width '+Math.max(.1,(Number(duration)||500)/1000/(run?.speed||1))+'s linear';fill.style.width='100%'}
+}
+function hsCastClear(){const panel=$('#hs2dCastPanel'),fill=$('#hs2dCastFill');if(fill){fill.style.transition='none';fill.style.width='0%'}if(panel)panel.hidden=true}
+function hsOverride(kind,button){
+ if(!run)return;if(button){button.classList.add('active');setTimeout(()=>button.classList.remove('active'),450)}
+ if(kind==='focus'){hsTactics.bossPlan='burn';hsAct('dps','Focusing priority target');feed('Override: focus priority target.')}
+ if(kind==='interrupt'){hsTactics.interruptPriority='high';hsAct('dps','Interrupt priority raised');feed('Override: interrupt priority raised.')}
+ if(kind==='defensive'){party().forEach(ch=>run.hp[ch.id]=Math.min(100,(Number(run.hp[ch.id])||0)+5));hsUpdateSidebar();hsAct('tank','Defensives committed');feed('Override: defensive cooldowns committed.')}
+ if(kind==='burn'){hsTactics.bossPlan='burn';hsAct('dps','Damage cooldowns committed');feed('Override: burn boss.')}
+ if(kind==='consumable'){
+   const st=state(),list=(st?.consumables||[]).filter(x=>(x.quantity||0)>0),item=list.find(x=>x.payload?.effect==='combat-potion')||list[0];
+   if(!item){feed('No combat consumables remain.');return}
+   const target=[...party()].sort((a,b)=>(Number(run.hp[a.id])||0)-(Number(run.hp[b.id])||0))[0],heal=Math.max(0,Number(item.payload?.healHp)||18);
+   if(target)run.hp[target.id]=Math.min(100,(Number(run.hp[target.id])||0)+heal);
+   item.quantity--;if(item.quantity<=0)st.consumables=st.consumables.filter(x=>x!==item);Game.save?.();hsUpdateSidebar();feed(item.name+' used on '+(target?.name||'the party')+'.')
+ }
+}
+function hsLootRarityClass(item){return 'rarity-'+String(item?.rarity||'common').toLowerCase().replace(/[^a-z0-9-]/g,'')}
+function hsLootGearCard(item,label='DUNGEON DROP'){
+ const art=G?.artHTML?G.artHTML(item,78):(item?.icon||'◇'),stats=G?.statLines?.(item)||[],effect=item?.uniqueEffect?'<strong class="cb2d-loot-unique">'+esc(item.uniqueEffect.name)+' · '+esc(item.uniqueEffect.description)+'</strong>':'';
+ return '<article class="cb2d-loot-item '+hsLootRarityClass(item)+'"><div class="cb2d-loot-art">'+art+'</div><div><small>'+esc(String(item?.rarity||label).toUpperCase())+' · '+esc(item?.slot||'ITEM')+'</small><h4>'+esc(item?.name||'Unknown Item')+'</h4><p>Item Level '+(Number(item?.itemLevel)||0)+(item?.power?' · +'+Number(item.power)+' Power':'')+'</p><div class="cb2d-loot-roll">'+stats.map(s=>'<span>'+esc(s.text)+'</span>').join('')+'</div>'+effect+'<em>Sent to Guild Bank</em></div></article>'
+}
+function hsLootMaterialCard(m){
+ const art=P?.materialArtHTML?P.materialArtHTML(m.key,44,'cb2d-material-art'):'◇';
+ return '<article class="cb2d-loot-material"><strong class="cb2d-loot-material-art">'+art+'</strong><div><small>'+esc(String(m.rarity||'MATERIAL').toUpperCase())+'</small><h4>'+esc(m.name)+'</h4><p>'+esc(m.source||'The Hollow Sanctum')+'</p></div><b>×'+Number(m.quantity||0)+'</b></article>'
+}
+function hsXpCard(x){
+ const ch=party().find(c=>c.name===x.name),portrait=ch?.portrait||String(x.name||'?').slice(0,2).toUpperCase(),start=Math.max(0,Math.min(100,x.beforeXp/Math.max(1,x.beforeNeed)*100)),end=Math.max(0,Math.min(100,x.afterXp/Math.max(1,x.afterNeed)*100));
+ return '<article class="cb2d-xp-card" data-hs-xp data-start="'+start.toFixed(2)+'" data-end="'+end.toFixed(2)+'" data-levels="'+Number(x.levels||0)+'"><div class="cb2d-xp-avatar">'+esc(portrait)+'</div><div class="cb2d-xp-copy"><div><span><b>'+esc(x.name)+'</b><small>Level '+x.beforeLevel+(x.afterLevel!==x.beforeLevel?' → '+x.afterLevel:'')+'</small></span>'+(x.levels?'<em class="cb2d-level-up">LEVEL UP</em>':'<em>+'+XP+' XP</em>')+'</div><div class="cb2d-xp-bar"><i style="width:'+start.toFixed(2)+'%"></i></div><p><span>'+x.beforeXp+' / '+x.beforeNeed+' XP</span><strong>+'+XP+' XP</strong><span>'+x.afterXp+' / '+x.afterNeed+' XP</span></p></div></article>'
+}
+function hsAnimateXp(rootEl){
+ [...(rootEl?.querySelectorAll('[data-hs-xp]')||[])].forEach((row,index)=>{const bar=row.querySelector('.cb2d-xp-bar i'),end=Number(row.dataset.end)||0,levels=Number(row.dataset.levels)||0;if(!bar)return;setTimeout(()=>{if(!levels){bar.style.width=end+'%';return}bar.style.width='100%';setTimeout(()=>{row.classList.add('levelled');bar.style.transition='none';bar.style.width='0%';void bar.offsetWidth;bar.style.transition='width .8s cubic-bezier(.2,.75,.25,1)';bar.style.width=end+'%'},760)},220+index*90)})
 }
 
+function draw(){
+ const s=STAGES[run.stage],r=root();r.hidden=false;
+ r.innerHTML='<section class="cb2d-shell hs2d-unified-shell"><header class="cb2d-head"><div><small>THE HOLLOW SANCTUM · LIVE 2D DUNGEON</small><h2 id="hs2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close>×</button></div></header>'+
+ '<div class="cb2d-route hs2d-route">'+STAGES.map((x,i)=>'<span class="'+(i<run.stage?'done':i===run.stage?'current':'')+'"><i>'+(i+1)+'</i>'+esc(x.title)+'</span>').join('')+'</div>'+
+ '<div class="cb2d-layout"><main><div class="cb2d-arena hs2d-arena hs2d-unified-arena" id="hs2dArena"><div class="cb2d-floor hs2d-floor"></div><div class="hs2d-crystals"><i></i><i></i><i></i><i></i><i></i></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="hs2dTelegraphs"></div><div id="hs2dUnits"></div><div id="hs2dFx"></div><div class="hs2d-room cb2d-room-tag" id="hs2dRoom"></div><div class="cb2d-caption hs2d-caption"><span>'+esc(s.kind)+'</span><b id="hs2dStatus">Descending…</b></div></div>'+
+ '<div class="cb2d-controls"><button data-hs-override="focus"><b>FOCUS TARGET</b><small>Force priority damage.</small></button><button data-hs-override="interrupt"><b>INTERRUPT NOW</b><small>Raise interrupt priority.</small></button><button data-hs-override="defensive"><b>DEFENSIVE</b><small>Stabilise the group.</small></button><button data-hs-override="burn"><b>BURN BOSS</b><small>Commit damage cooldowns.</small></button><button data-hs-override="consumable"><b>USE CONSUMABLE</b><small>Use available stock.</small></button></div>'+
+ '<div class="cb2d-feed hs2d-unified-feed"><small>COMBAT FEED</small><div id="hs2dFeed"></div></div></main>'+
+ '<aside><div class="cb2d-cast" id="hs2dCastPanel" hidden><small>ENEMY CAST</small><div><b id="hs2dCastName">—</b><strong id="hs2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="hs2dCastFill"></i></div></div>'+
+ '<div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="hs2dDamageTotal">0 total</span></div><div id="hs2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="hs2dThreatTarget">No target</span></div><div id="hs2dThreatMeter" class="cb2d-meter-list"></div></section></div>'+
+ '<div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-hs-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-hs-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-hs-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div>'+
+ '<div class="cb2d-party"><small>PARTY CONDITION · ILVL '+ilvl()+'</small><div id="hs2dRows">'+hsPartyRows()+'</div></div>'+
+ '<div class="cb2d-plan"><small>EXPEDITION STYLE</small><b>'+esc(String(hsTactics.strategyPreset||'balanced').toUpperCase())+'</b><span>Same combat rules · Hollow Sanctum encounter mechanics</span></div></aside></div>'+
+ '<div id="hs2dEnd" class="cb2d-end" hidden></div></section>';
+ r.querySelector('[data-close]').onclick=()=>{if(run&&!run.done&&!confirm('Leave The Hollow Sanctum?'))return;close()};
+ r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
+ r.querySelectorAll('[data-hs-override]').forEach(b=>b.onclick=()=>hsOverride(b.dataset.hsOverride,b));
+ hsRenderMeters();hsUpdateSidebar();feed('The party enters The Hollow Sanctum.')
+}
 function hsRunMetrics(){
  const totals=run.history.reduce((o,r)=>{const s=r.summary||{};o.combat+=Number(r.durationMs)||0;o.deaths+=Number(s.deaths)||0;o.failed+=Number(s.mechanics?.failed)||0;o.mistakes+=Number(s.mistakes?.total)||0;o.missedInterrupts+=Number(s.interrupts?.missedCritical)||0;o.battleResurrections+=Number(s.battleResurrections)||0;(s.players||[]).forEach(p=>{o.threatLosses+=Number(p.threatLost)||0;o.avoidableDamage+=Number(p.avoidableDamage)||0});return o},{combat:0,deaths:0,failed:0,mistakes:0,missedInterrupts:0,threatLosses:0,avoidableDamage:0,battleResurrections:0});
  const pace=hsTactics.pullStyle==='aggressive'?.82:hsTactics.pullStyle==='safe'?1.20:1,timeMs=Math.max(35000,totals.combat*4+Math.round(STAGES.length*60000*pace));
@@ -363,7 +440,7 @@ function hsFormatTime(ms){const t=Math.max(0,Math.round((Number(ms)||0)/1000)),m
 async function start(){
  const startButton=root().querySelector('[data-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
  await Game.persistState?.();
- const service=await hsWaitForEndgame(),eg=hsEndgameConfig(),attempt=await service?.beginAttempt?.('hollow-sanctum');if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN DESCENT →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Descent again.');return}token++;const tok=token,p=party();run={stage:0,done:false,log:[],endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=hsResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{}};draw();
+ const service=await hsWaitForEndgame(),eg=hsEndgameConfig(),attempt=await service?.beginAttempt?.('hollow-sanctum');if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN DESCENT →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Descent again.');return}token++;const tok=token,p=party();run={stage:0,done:false,speed:1,log:[],damageDone:Object.fromEntries(p.map(ch=>[ch.id,0])),threat:Object.fromEntries(p.map(ch=>[ch.id,0])),aggro:null,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=hsResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{}};draw();
  for(let i=0;i<STAGES.length;i++){if(tok!==token)return;run.stage=i;const s=STAGES[i];$('#hs2dTitle').textContent=s.title;$('.hs2d-route').innerHTML=STAGES.map((x,j)=>'<span class="'+(j<i?'done':j===i?'current':'')+'"><i>'+(j+1)+'</i>'+esc(x.title)+'</span>').join('');if(!await fightStage(s,tok,i))return}
  if(tok!==token)return;await complete();
 }
@@ -373,9 +450,23 @@ async function complete(){
  if(first)Game.addBankItem?.({...RELIC,source:'The Bound Choir · First Clear'});
  s.activity.push('The Hollow Sanctum · '+(run.endgame?.label||'Normal')+' cleared. Score '+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'. Each adventurer earned '+XP+' XP.'+(gear?' '+gear.name+' was sent to the Guild Bank.':'')+(first?' Blackglass Resonator added to the Guild Bank.':''));
  Game.save?.();await Game.persistState?.();await syncXp(gains);run.done=true;window.dispatchEvent(new CustomEvent('cellbound:hollow-complete',{detail:{firstClear:first,difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs}}));window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'hollow-sanctum',difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs}}));
- const end=$('#hs2dEnd');end.hidden=false;end.innerHTML='<section class="hs2d-rewards"><small>DUNGEON COMPLETE · '+esc(run.endgame?.label||'NORMAL').toUpperCase()+'</small><h2>The Hollow Sanctum</h2><p>The voices beneath Zeltira have fallen silent — for now.</p><div class="hs2d-reward-grid"><article><span>GOLD</span><b>+'+gold+'</b></article><article><span>RENOWN</span><b>+'+renown+'</b></article><article><span>PARTY XP</span><b>+'+XP+'</b></article><article><span>VOID CRYSTAL</span><b>+'+(first?2:1)+'</b></article><article><span>RUN SCORE</span><b>'+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'</b></article><article><span>TIME</span><b>'+hsFormatTime(metrics.timeMs)+'</b></article></div>'+(gear?'<div class="hs2d-first-relic"><div>'+window.CellboundGear.artHTML(gear,76)+'</div><span><small>TIER 3 DUNGEON DROP</small><h3>'+esc(gear.name)+'</h3><p>'+(window.CellboundGear.statLines?.(gear)||[]).map(x=>esc(x.text)).join(' · ')+(gear.uniqueEffect?' · '+esc(gear.uniqueEffect.name)+': '+esc(gear.uniqueEffect.description):'')+'</p><em>Sent to the Guild Bank</em></span></div>':'')+(first?'<div class="hs2d-first-relic"><div>'+window.CellboundGear.artHTML(RELIC,76)+'</div><span><small>FIRST-CLEAR RELIC</small><h3>Blackglass Resonator</h3><p>Rare · Relic · Item Level 30 · +10 Power</p><em>Sent to the Guild Bank</em></span></div>':'')+hsProgressEarned()+'<div class="hs2d-xp-list">'+gains.map(x=>'<div><span><b>'+esc(x.name)+'</b><small>Level '+x.beforeLevel+(x.afterLevel!==x.beforeLevel?' → '+x.afterLevel:'')+'</small></span><strong>+'+XP+' XP</strong></div>').join('')+'</div><button data-return>RETURN TO DUNGEON JOURNAL →</button></section>';
+ const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end cb2d-loot-screen';
+ const lootGear=[gear,...(first?[RELIC]:[])].filter(Boolean),materials=[
+   {key:'void-crystal',name:'Void Crystal',quantity:first?2:1,source:'The Hollow Sanctum',rarity:'Rare'},
+   ...(shards?[{key:'cell-shards',name:'Cell Shards',quantity:shards,source:'Endgame Reward',rarity:'Rare'}]:[])
+ ];
+ end.innerHTML='<div class="cb2d-loot-wrap">'+
+ '<header class="cb2d-loot-head"><div><small>THE HOLLOW SANCTUM · '+esc(run.endgame?.label||'NORMAL').toUpperCase()+' · CLEARED</small><h3>Expedition Rewards</h3><p>The Bound Choir has fallen. Everything below has already been secured to your guild.</p></div><div class="cb2d-loot-complete">✓<span>DUNGEON<br>COMPLETE</span></div></header>'+
+ '<div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+gold+'</b><small>Added to Guild treasury</small></article><article><span>RENOWN</span><b>+'+renown+'</b><small>Guild reputation earned</small></article><article><span>PARTY XP</span><b>+'+XP+'</b><small>Earned by each adventurer</small></article><article><span>BOSS CHESTS</span><b>'+lootGear.length+'</b><small>Gear drops secured</small></article><article><span>RUN SCORE</span><b>'+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'</b><small>'+hsFormatTime(metrics.timeMs)+' simulated time</small></article></div>'+
+ hsProgressEarned()+
+ '<section class="cb2d-loot-section cb2d-xp-section"><div class="cb2d-loot-title"><span>PARTY EXPERIENCE</span><small>Every member of the active five gains experience from the clear</small></div><div class="cb2d-xp-grid">'+gains.map(hsXpCard).join('')+'</div></section>'+
+ '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>GEAR ACQUIRED</span><small>Stored automatically in the Guild Bank</small></div><div class="cb2d-loot-gear">'+(lootGear.length?lootGear.map((item,i)=>hsLootGearCard(item,i===1?'FIRST-CLEAR RELIC':'DUNGEON DROP')).join(''):'<div class="cb2d-loot-empty">No gear dropped.</div>')+'</div></section>'+
+ '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>PROFESSION REAGENTS</span><small>Available immediately for crafting</small></div><div class="cb2d-loot-materials">'+materials.map(hsLootMaterialCard).join('')+'</div></section>'+
+ '<footer class="cb2d-loot-actions"><button data-loot-bank>VIEW GUILD BANK</button><button class="primary" data-return>RETURN TO DUNGEON JOURNAL →</button></footer></div>';
+ hsAnimateXp(end);
+ end.querySelector('[data-loot-bank]').onclick=()=>{close();Game.switchView?.('bank')};
  end.querySelector('[data-return]').onclick=()=>{close();Game.renderAll?.();renderCard()}
 }
-function init(){Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,100);return}db=Game.getSupabase?.();renderCard();document.querySelector('.nav-btn[data-view="content"]')?.addEventListener('click',renderCard);window.CellboundHollowSanctum={open:openDungeon,renderCard,relic:RELIC}}
+function init(){Game=window.CellboundGame;G=window.CellboundGear;P=window.CellboundProfessions;if(!Game?.ready){setTimeout(init,100);return}db=Game.getSupabase?.();renderCard();document.querySelector('.nav-btn[data-view="content"]')?.addEventListener('click',renderCard);window.CellboundHollowSanctum={open:openDungeon,renderCard,relic:RELIC}}
 init();
 })();
