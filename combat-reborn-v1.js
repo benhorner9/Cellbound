@@ -171,14 +171,18 @@ function makeStats(players){
   interrupts:{attempts:0,success:0,missedCritical:0,duplicates:0},mechanics:{avoided:0,failed:0,byType:{}},deaths:0
  };
 }
+function audioCue(type,result){
+ if(type==='ABILITY_START')return'ability-cast';if(type==='DAMAGE_DEALT')return result==='critical'?'critical-hit':'impact';if(type==='HEAL_RECEIVED')return'heal';if(type==='INTERRUPT')return'interrupt';if(type==='CAST_START')return'boss-warning';if(type==='PLAYER_DEFEATED')return'death';if(type==='COMBAT_END')return result==='victory'?'victory':'defeat';return null
+}
 function emit(ctx,type,data={}){
+ const payload=data.payload?copy(data.payload):{},cue=audioCue(type,data.result);if(cue&&!payload.audioCue)payload.audioCue=cue;
  const e={
   timestamp:Math.round(ctx.time),type,
   source:data.source||null,target:data.target||null,ability:data.ability||null,
   amount:data.amount==null?null:Math.round(data.amount*100)/100,
   position:data.position?copy(data.position):null,result:data.result||null,
   statusEffects:data.statusEffects?copy(data.statusEffects):null,
-  payload:data.payload?copy(data.payload):{}
+  payload
  };
  ctx.events.push(e);
  if(ctx.onEvent)ctx.onEvent(e);
@@ -194,6 +198,20 @@ function processQueue(ctx){
   const item=ctx.queue.shift();
   item.fn();
  }
+}
+function removeStatus(ctx,target,id,reason='expired'){
+ const current=target?.statuses?.[id];if(!current)return;
+ delete target.statuses[id];
+ emit(ctx,current.kind==='debuff'?'DEBUFF_REMOVED':'BUFF_REMOVED',{source:current.source||null,target:target.id,ability:current.name,result:reason,statusEffects:[copy(current)]})
+}
+function applyStatus(ctx,source,target,status={}){
+ if(!target?.alive)return null;
+ const id=status.id||String(status.name||'status').toLowerCase().replace(/[^a-z0-9]+/g,'-'),duration=Math.max(0,Number(status.duration)||0);
+ const current=target.statuses[id],st={id,name:status.name||id,kind:status.kind==='debuff'?'debuff':'buff',source:source?.id||status.source||null,stacks:clamp((current?.stacks||0)+(Number(status.stacks)||1),1,99),duration,expiresAt:ctx.time+duration,effect:copy(status.effect||{}),cc:status.cc||null,breakOnDamage:!!status.breakOnDamage};
+ target.statuses[id]=st;
+ emit(ctx,st.kind==='debuff'?'DEBUFF_APPLIED':'BUFF_APPLIED',{source:st.source,target:target.id,ability:st.name,result:'applied',statusEffects:[copy(st)]});
+ if(duration>0)schedule(ctx,ctx.time+duration,()=>removeStatus(ctx,target,id,'expired'),'status-expire');
+ return st
 }
 function livingPlayers(ctx){return ctx.players.filter(x=>x.alive)}
 function livingEnemies(ctx){return ctx.enemies.filter(x=>x.alive)}
@@ -389,6 +407,7 @@ function finishAbility(ctx,u,a,target){
   const amount=(a.heal||24)*(1+Math.min(.28,u.power*.01))*(.92+ctx.rng()*.16);
   doHeal(ctx,u,target,amount,a.name);
   if(a.hot){
+   applyStatus(ctx,u,target,{id:a.id+'-hot',name:a.name,kind:'buff',duration:3400,effect:{healingOverTime:a.hot}});
    [1600,3200].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)doHeal(ctx,u,target,a.hot,a.name+' (HoT)')},'hot'));
   }
  }else if(a.kind==='damage'){
@@ -425,7 +444,7 @@ function playerAI(ctx,u){
    if(taunt&&inRange(u,loose,taunt.range||30)){executeTaunt(ctx,u,loose,taunt);return}
   }
   if(u.health/u.maxHealth<.48&&u.defensiveUntil<=0){
-   u.defensiveUntil=5000;
+   u.defensiveUntil=5000;applyStatus(ctx,u,u,{id:'major-defensive',name:'Major Defensive',kind:'buff',duration:5000,effect:{damageReduction:.25}});
    emit(ctx,'DEFENSIVE_ACTIVATED',{source:u.id,target:u.id,ability:'Major Defensive',result:'active',payload:{duration:5000}});
   }
  }
