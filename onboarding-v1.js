@@ -483,6 +483,7 @@ async function tdPlayCombat(result,my){
       case'HEAL_RECEIVED':
         if(targetChar&&targetSel){const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdSetPartyHpByEvent(targetChar,p);tdFloat(targetSel,'+'+Math.round(Number(e.amount)||0),'heal')}
         break;
+      case'UNIQUE_EFFECT_TRIGGER':if(srcChar){tdFeed(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');if(srcSel)tdFloat(srcSel,e.ability||'UNIQUE','heal')}break;
       case'PLAYER_MISTAKE':if(srcChar)tdFeed(srcChar.name+' '+(e.payload?.detail||'makes an execution mistake')+'.');break;
       case'PLAYER_REVIVED':
         if(targetChar&&targetSel){tdSetPartyHpByEvent(targetChar,Number(e.payload?.targetHpPct)||35);targetSel.classList?.remove?.('dead');tdFloat(targetSel,'BATTLE REZ','heal');tdFeed(targetChar.name+' is brought back by '+(srcChar?.name||'the healer')+'.');tdResourceVisual({source:e.target,payload:{resource:e.payload?.resource,value:e.payload?.resourceValue,max:e.payload?.resourceMax}})}
