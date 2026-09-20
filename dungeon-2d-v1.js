@@ -1291,9 +1291,18 @@ function rebornDebugEvent(e,result){
  const snap=window.CellboundCombatReborn?.debugSnapshot?.(result)||{};
  panel.textContent=['COMBAT REBORN '+(snap.version||''),'t '+(e?.timestamp||0)+'ms · '+(e?.type||'event'),(e?.source||'—')+' → '+(e?.target||'—'),e?.ability||e?.result||'', 'Events '+(snap.events||0)].join('\n');
 }
+function cbrStatusTargets(id){
+ const out=[],unit=$('[data-unit="'+id+'"]');if(unit)out.push(unit);
+ if(String(id||'').startsWith('p-')){
+  const ch=rebornPlayerByUnit(id),row=ch?$('[data-row="'+ch.id+'"]'):null,mirror=row?.querySelector('span');
+  if(mirror)out.push({el:mirror,mirror:true})
+ }
+ return out
+}
 function renderRebornEvent(e,result,replayMode=false){
  if(!run||!e)return;
  rebornDebugEvent(e,result);
+ if(window.CellboundCombatStatuses?.handle(e,{resolve:cbrStatusTargets,speed:()=>run?.speed||1}))return;
  const srcChar=rebornPlayerByUnit(e.source),targetChar=rebornPlayerByUnit(e.target),enemyIdx=rebornEnemyIndex(e.target),sourceEnemyIdx=rebornEnemyIndex(e.source);
  switch(e.type){
   case'COMBAT_START':
