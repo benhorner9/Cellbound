@@ -82,11 +82,11 @@
     </section>
 
     <section id="bank" class="view">
-      <div class="section-intro"><div><small>GUILD VAULT</small><h2>Bank</h2><p>Sort the guild's spoils, identify upgrades, equip what matters and sell or dismantle equipment you no longer need.</p></div><div class="bank-intro-actions"><div id="bankUpgradeLegend" class="bank-upgrade-legend">UPGRADES ARE CALCULATED AGAINST YOUR ROSTER</div><button id="bankBulkToggle" class="ghost-btn" type="button" aria-pressed="false">SELECT ITEMS</button></div></div>
+      <div class="section-intro"><div><small>GUILD VAULT</small><h2>Bank</h2><p>Sort the guild's spoils, identify upgrades, equip what matters and sell or dismantle equipment you no longer need.</p></div><div class="bank-intro-actions"><div id="bankUpgradeLegend" class="bank-upgrade-legend">UPGRADES ARE CALCULATED AGAINST YOUR ROSTER</div><button id="bankSelectJunk" class="ghost-btn" type="button">SELECT JUNK</button><button id="bankBulkToggle" class="ghost-btn" type="button" aria-pressed="false">SELECT ITEMS</button></div></div>
       <div id="bankSummary" class="bank-summary"></div>
       <div class="bank-command-bar panel">
         <label class="ui-search"><span>⌕</span><input id="bankSearch" type="search" placeholder="Search the vault"></label>
-        <select id="bankCategory" class="ui-select"><option value="all">Everything</option><option value="Weapon">Weapons</option><option value="Armour">Armour</option><option value="Head">Head</option><option value="Chest">Chest</option><option value="Reagent">Reagents</option><option value="Consumable">Consumables</option><option value="Recipe">Recipes</option></select>
+        <select id="bankCategory" class="ui-select"><option value="all">Everything</option><option value="favorite">Favourites</option><option value="junk">Junk</option><option value="Weapon">Weapons</option><option value="Armour">Armour</option><option value="Head">Head</option><option value="Chest">Chest</option><option value="Reagent">Reagents</option><option value="Consumable">Consumables</option><option value="Recipe">Recipes</option></select>
         <select id="bankClass" class="ui-select"><option value="all">All classes</option><option>Warrior</option><option>Paladin</option><option>Priest</option><option>Druid</option><option>Hunter</option><option>Rogue</option><option>Mage</option></select>
         <select id="bankRarity" class="ui-select"><option value="all">All rarities</option><option>Common</option><option>Uncommon</option><option>Rare</option><option>Epic</option></select>
         <select id="bankTrade" class="ui-select"><option value="all">Any binding</option><option value="tradeable">Tradeable</option><option value="soulbound">Soulbound</option></select>
