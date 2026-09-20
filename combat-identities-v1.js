@@ -526,14 +526,17 @@ function rangedFormationPoint(ctx,u,target,range){
 function moveIntoRange(ctx,u,target,range){
  const r=Math.max(2,Number(range)||5);
  if(r<=7){
-   const desired=meleeFormationPoint(ctx,u,target),closeToSlot=dist(u.position,desired)<=1.15;
-   if(closeToSlot&&inRange(u,target,r))return true;
-   moveTo(ctx,u,desired,420,u.role==='tank'?'tank positioning':'melee formation');
+   const desired=meleeFormationPoint(ctx,u,target),slotDistance=dist(u.position,desired),combatRange=inRange(u,target,r);
+   const tolerance=u.role==='tank'?1.75:2.25;
+   if(combatRange&&slotDistance<=tolerance)return true;
+   if(combatRange&&target.movingUntil>ctx.time&&slotDistance<=3.25)return true;
+   moveTo(ctx,u,desired,520,u.role==='tank'?'tank positioning':'melee formation');
    return false
  }
- if(inRange(u,target,r))return true;
  const desired=rangedFormationPoint(ctx,u,target,r);
- moveTo(ctx,u,desired,420,'move into range');
+ if(inRange(u,target,r)&&dist(u.position,desired)<=3.5)return true;
+ if(inRange(u,target,r)&&target.movingUntil>ctx.time)return true;
+ moveTo(ctx,u,desired,520,'move into range');
  return false
 }
 function cooldownReady(u,a){return (u.cooldowns[a.id]||0)<=0}
@@ -568,7 +571,7 @@ function passiveResources(ctx){
   const before=u.resource.value;
   u.resource.value=clamp(before+perTick,0,u.resource.max);
   if(ctx.time>=u.nextResourceState||u.resource.value>=u.resource.max){
-   u.nextResourceState=ctx.time+500;
+   u.nextResourceState=ctx.time+1200;
    emitResourceState(ctx,u,'regeneration')
   }
  });
@@ -1035,6 +1038,15 @@ function runSelfTests(){
   return unique.size>=3
  });
  test('Resource Bars',()=>r.events.filter(e=>e.type==='RESOURCE_STATE'&&e.result==='initial').length===5);
+ r=simulate({party:[
+  {id:'jt',name:'Tank',class:'Warrior',spec:'Protection',power:10,level:10},
+  {id:'j1',name:'Melee One',class:'Warrior',spec:'Arms',power:10,level:10},
+  {id:'j2',name:'Melee Two',class:'Rogue',spec:'Assassination',power:10,level:10},
+  {id:'j3',name:'Melee Three',class:'Demon Hunter',spec:'Havoc',power:10,level:10},
+  {id:'jh',name:'Healer',class:'Priest',spec:'Holy',power:10,level:10}
+ ],encounter:{...base,enemyHealth:1200,mechanics:[]},seed:'movement-smoothing'});
+ test('Movement Smoothing',()=>r.events.filter(e=>e.type==='MOVEMENT_START'&&String(e.source||'').startsWith('p-')).length<45);
+
 
  return{version:VERSION,passed:tests.filter(x=>x.pass).length,total:tests.length,tests};
 }
