@@ -3,7 +3,7 @@
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-let Game=null,db=null,active=null,pollTimer=null,attackTimer=null,attackBusy=false,participantDamage=new Map(),participantEventSeq=new Map();
+let Game=null,db=null,active=null,pollTimer=null,attackTimer=null,attackBusy=false,participantDamage=new Map();
 
 const bossThemes={
   'gloamhide':{cls:'gloamhide',subtitle:'GLOAM MARSH · WORLD ENCOUNTER',rune:'♜',mechanics:['Bog Slam','Rotting Charge','Spore Eruption']},
@@ -183,28 +183,6 @@ function projectileBetween(fromEl,toEl,kind){
   const dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI,p=document.createElement('i');
   p.className='wb2d-projectile '+kind;p.style.left=a.x+'px';p.style.top=a.y+'px';p.style.setProperty('--dx',dx+'px');p.style.setProperty('--dy',dy+'px');p.style.setProperty('--angle',angle+'deg');fx.appendChild(p);setTimeout(()=>p.remove(),620);
 }
-function projectileFrom(el,role){
-  const boss=document.getElementById('wb2dBoss');if(!boss||!el)return;
-  projectileBetween(el,boss,role);
-}
-function pulseRaid(participant){
-  const guild=String(participant?.guildLabel||''),units=[...document.querySelectorAll('#wb2dUnits .wb2d-unit')].filter(u=>u.dataset.guild===guild);
-  if(!units.length)return;
-  const tank=units.find(u=>u.classList.contains('role-tank'));
-  units.forEach((u,i)=>{
-    setTimeout(()=>{
-      if(!active||u.classList.contains('wiped'))return;
-      if(u.classList.contains('role-healer')){
-        const target=tank||units.find(x=>x!==u&&!x.classList.contains('wiped'));if(!target)return;
-        u.classList.add('attacking');setTimeout(()=>u.classList.remove('attacking'),450);
-        projectileBetween(u,target,'heal');
-        return;
-      }
-      u.classList.add('attacking');setTimeout(()=>u.classList.remove('attacking'),450);
-      projectileFrom(u,u.classList.contains('ranged')?'ranged':'melee');
-    },(i%5)*70);
-  });
-}
 function floatDamage(amount,own=false){
   const fx=document.getElementById('wb2dEffects');if(!fx||!amount)return;
   const el=document.createElement('b');el.className='wb2d-float-damage'+(own?' own':'');el.textContent='−'+Number(amount).toLocaleString();el.style.left=(58+Math.random()*9)+'%';el.style.top=(38+Math.random()*17)+'%';fx.appendChild(el);setTimeout(()=>el.remove(),1000);
@@ -368,7 +346,7 @@ function stopCombatTimers(){
 async function open(bossId){
   Game=window.CellboundGame;if(!Game?.ready)return;
   db=Game.getSupabase?.();if(!db)return;
-  stopCombatTimers();participantDamage.clear();participantEventSeq.clear();
+  stopCombatTimers();participantDamage.clear();
   const root=ensureShell(),known=(window.CellboundSocial?.getWorldBosses?.()||[]).find(b=>b.id===bossId);
   active={boss:known||{id:bossId,name:'World Boss',tier:1,currentHp:1,maxHp:1,status:'in_combat'},partyThreat:{},combatState:{}};
   root.hidden=false;document.body.classList.add('wb2d-open');
