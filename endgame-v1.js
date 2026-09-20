@@ -8,7 +8,7 @@ const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 
-let Game=null,db=null,user=null,server={season:D.SEASON,rotation:{},progress:[],weekly:{},recentRuns:[]},leaderboards={};
+let Game=null,db=null,user=null,server={season:D.SEASON,rotation:{},progress:[],weekly:{},recentRuns:[],achievements:[]},leaderboards={};
 const selection={
  'ashen-vault':{difficulty:'normal',tier:1},
  'hollow-sanctum':{difficulty:'normal',tier:1}
@@ -87,6 +87,26 @@ function dungeonCard(id){
    (runs.length?'<div class="eg-recent">'+runs.map(r=>'<span><b>'+esc(r.difficulty==='cellbound'?'+'+r.tier:r.difficulty.toUpperCase())+'</b><em>'+formatTime(r.completion_time_ms)+'</em><strong>'+Number(r.score).toLocaleString()+'</strong></span>').join('')+'</div>':'')+
  '</article>'
 }
+
+const ACHIEVEMENT_DEFS={
+ 'first-heroic':{name:'Into Heroic',description:'Complete your first Heroic dungeon.',reward:'Title hook · Heroic Delver'},
+ 'cellbound-10':{name:'Bound Beyond Ten',description:'Complete Cellbound+10 or higher.',reward:'Prestige cosmetic hook'},
+ 'deathless':{name:'Untouched',description:'Complete a dungeon without a death.',reward:'Achievement'},
+ 'clean-mechanics':{name:'Perfect Execution',description:'Complete Heroic or Cellbound+ without failing a boss mechanic.',reward:'Achievement'},
+ 'perfect-interrupts':{name:'Not On My Watch',description:'Miss no critical interrupts in Heroic or Cellbound+.',reward:'Achievement'},
+ 'in-time':{name:'Ahead of the Cell',description:'Complete a Cellbound+ dungeon within its target time.',reward:'Achievement'}
+};
+function achievementMarkup(){
+ const unlocked=new Map((server.achievements||[]).map(a=>[a.achievement_id,a]));
+ return '<section class="eg-achievements panel"><div class="panel-head"><div><small>ENDGAME ACHIEVEMENTS</small><h3>Dungeon Mastery</h3></div><b>'+unlocked.size+' / '+Object.keys(ACHIEVEMENT_DEFS).length+' UNLOCKED</b></div><div class="eg-achievement-grid">'+Object.entries(ACHIEVEMENT_DEFS).map(([id,a])=>{
+   const row=unlocked.get(id);return '<article class="'+(row?'unlocked':'locked')+'"><i>'+(row?'✓':'◇')+'</i><span><b>'+esc(a.name)+'</b><small>'+esc(a.description)+'</small><em>'+(row?'Unlocked '+new Date(row.unlocked_at).toLocaleDateString():esc(a.reward))+'</em></span></article>'
+ }).join('')+'</div></section>'
+}
+function collectionMarkup(){
+ const list=Game?.getState?.()?.collections||[];
+ return '<section class="eg-collections panel"><div class="panel-head"><div><small>COLLECTION HOOKS</small><h3>Rare Finds</h3></div><b>'+list.length+' FOUND</b></div><div class="eg-collection-list">'+(list.length?list.slice(-8).reverse().map(x=>'<article><i>'+((x.kind==='mount'?'♞':x.kind==='pet'?'◆':x.kind==='cell'?'◈':'◇'))+'</i><span><b>'+esc(x.name)+'</b><small>'+esc(String(x.rarity||'Rare').toUpperCase())+' · '+esc(x.kind||'collection')+'</small><em>'+esc(x.source||'Endgame')+'</em></span></article>').join(''):'<p class="eg-empty">Rare mounts, pets and Cells can drop from endgame dungeons. Power progression never depends on these drops.</p>')+'</div></section>'
+}
+
 function weeklyMarkup(){
  const w=server.weekly||{},points=Number(w.progress_points)||0,highest=Number(w.highest_tier)||0,pct=clamp(points/60*100,0,100),claimed=Boolean(w.reward_claimed);
  return'<article class="eg-weekly panel"><div><small>WEEKLY ENDGAME</small><h3>Weekly Vault</h3><p>Dungeon clears build one weekly reward. Missing a day does not matter.</p></div><div class="eg-weekly-progress"><span><b>'+points+' / 60 points</b><em>Highest Cellbound+ '+highest+'</em></span><div><i style="width:'+pct+'%"></i></div><button data-eg-weekly '+(points>=60&&!claimed?'':'disabled')+'>'+(claimed?'CLAIMED':points>=60?'CLAIM WEEKLY REWARD':'KEEP PLAYING')+'</button></div></article>'
@@ -100,7 +120,7 @@ function render(){
  const rotation=server.rotation||{},minor=D.AFFIXES[rotation.minor_affix],major=D.AFFIXES[rotation.major_affix];
  root.innerHTML=
  '<section class="eg-hero"><div><small>UPDATE 2 · ENDGAME HUB</small><h2>Dungeon mastery now has somewhere to go.</h2><p>Normal teaches the dungeon. Heroic changes it. Cellbound+ turns it into a scalable endgame challenge with weekly modifiers, persistent scores and targeted rewards.</p></div><div class="eg-season"><span>SEASON</span><b>'+esc(server.season?.name||D.SEASON.name)+'</b><small>'+esc(minor?.name||'No minor affix')+' · '+esc(major?.name||'No major affix')+'</small></div></section>'+
- weeklyMarkup()+
+ weeklyMarkup()+achievementMarkup()+collectionMarkup()+
  '<div class="eg-content">'+dungeonCard('ashen-vault')+dungeonCard('hollow-sanctum')+'</div>'+
  '<div class="eg-leaderboards">'+leaderboardMarkup('ashen-vault')+leaderboardMarkup('hollow-sanctum')+'</div>';
  bind()
@@ -174,9 +194,13 @@ async function recordRun(dungeonId,metrics){
    p_deaths:Math.max(0,Math.round(metrics.deaths||0)),
    p_mechanics_failed:Math.max(0,Math.round(metrics.mechanicsFailed||0)),
    p_mistakes:Math.max(0,Math.round(metrics.mistakes||0)),
-   p_dungeon_version:cfg.dungeon.version,p_season_id:cfg.seasonId
+   p_dungeon_version:cfg.dungeon.version,p_season_id:cfg.seasonId,
+   p_missed_interrupts:Math.max(0,Math.round(metrics.missedInterrupts||0)),
+   p_threat_losses:Math.max(0,Math.round(metrics.threatLosses||0)),
+   p_avoidable_damage:Math.max(0,Number(metrics.avoidableDamage)||0),
+   p_battle_resurrections:Math.max(0,Math.round(metrics.battleResurrections||0))
  };
- const {data,error}=await db.rpc('record_dungeon_run',payload);
+ const {data,error}=await db.rpc('record_dungeon_run_v2',payload);
  if(error){console.warn('Dungeon run was not recorded',error);return{error}}
  await refresh();return data
 }
