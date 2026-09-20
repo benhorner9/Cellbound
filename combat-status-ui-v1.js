@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const ACTIVE_TYPES=new Set(['BUFF_APPLIED','DEBUFF_APPLIED','BUFF_REMOVED','DEBUFF_REMOVED']);
+const ACTIVE_TYPES=new Set(['BUFF_APPLIED','DEBUFF_APPLIED','BUFF_REFRESHED','DEBUFF_REFRESHED','BUFF_STACKED','DEBUFF_STACKED','BUFF_REMOVED','DEBUFF_REMOVED','BUFF_EXPIRED','DEBUFF_EXPIRED','BUFF_CLEANSED','DEBUFF_CLEANSED']);
 const hosts=new Set();
 let tooltip=null,ticker=null;
 
@@ -104,7 +104,7 @@ function targetsFor(id,opts={}){
 }
 function handle(e,opts={}){
  if(!e||!ACTIVE_TYPES.has(e.type))return false;
- const st=normaliseStatus(e),remove=e.type.endsWith('_REMOVED'),speed=Math.max(.25,Number(opts.speed?.()??opts.speed)||1);
+ const st=normaliseStatus(e),remove=/(?:_REMOVED|_EXPIRED|_CLEANSED)$/.test(e.type),speed=Math.max(.25,Number(opts.speed?.()??opts.speed)||1);
  targetsFor(e.target,opts).forEach(({el,mirror})=>{
   const map=statusMap(el);
   if(remove)map.delete(st.id);
