@@ -81,3 +81,11 @@
   display:block;margin-top:2px;color:#b6c0bc;font-size:7px;font-weight:900;line-height:1;letter-spacing:.09em;text-transform:uppercase;white-space:nowrap
 }
 .hs2d-unit.enemy>span .hs2d-unit-meta{color:#bea6d8}.hs2d-unit.enemy.boss>span .hs2d-unit-meta{color:#ddc6f2}
+
+.hs2d-failure-causes,.hs2d-progress-earned{margin:12px 0;padding:12px;border:1px solid rgba(255,255,255,.07);background:#091519}
+.hs2d-failure-causes>small,.hs2d-progress-earned>small{display:block;color:#d58f80;font-size:.4rem;font-weight:900;letter-spacing:.12em;margin-bottom:8px}
+.hs2d-failure-causes p{margin:4px 0;display:grid;grid-template-columns:22px 1fr;gap:7px;color:#aebfba;font-size:.53rem}.hs2d-failure-causes p b{display:grid;place-items:center;border:1px solid rgba(208,121,101,.2);color:#db9584}
+.hs2d-failure-causes strong{display:block;margin-top:10px;color:#667b76;font-size:.4rem;letter-spacing:.1em}.hs2d-failure-causes span{display:block;margin-top:4px;color:#8da19c;font-size:.5rem}
+.hs2d-progress-earned{border-color:rgba(88,195,174,.18);background:#0a1d1d}.hs2d-progress-earned>small{color:#69cbb9}.hs2d-progress-earned p{margin:5px 0;padding:6px 8px;border:1px solid rgba(88,195,174,.1);color:#b8d8d1;font-size:.53rem}
+.hs-strategy-tabs button small{display:block;margin-top:2px;font-size:.36rem;opacity:.65}
+@media(max-width:640px){.hs2d-failure-causes,.hs2d-progress-earned{padding:10px}.hs-strategy-tabs{display:grid!important;grid-template-columns:1fr 1fr 1fr}}
