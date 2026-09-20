@@ -343,8 +343,20 @@ function castStart(e){
  const p=$('#tbCast'),name=$('#tbCastName'),time=$('#tbCastTime'),fill=$('#tbCastFill'),duration=Number(e.payload?.duration)||1200;if(p)p.hidden=false;if(name)name.textContent=e.ability||'Enemy Cast';if(time)time.textContent=(duration/1000).toFixed(1)+'s';if(fill){fill.style.transition='none';fill.style.width='0%';void fill.offsetWidth;fill.style.transition='width '+Math.max(.1,duration/1000/playSpeed)+'s linear';fill.style.width='100%'}
 }
 function castClear(){const name=$('#tbCastName'),time=$('#tbCastTime'),fill=$('#tbCastFill');if(name)name.textContent='—';if(time)time.textContent='—';if(fill){fill.style.transition='none';fill.style.width='0%'}}
+function tbStatusTargets(id){
+ const s=String(id||''),out=[];
+ if(s.startsWith('p-')){
+  const unit=$('[data-tb-unit="'+s+'"]');if(unit)out.push(unit);
+  const hp=$('[data-tb-side-hp="'+s+'"]'),mirror=hp?.closest('span');if(mirror)out.push({el:mirror,mirror:true})
+ }else{
+  const bid=s.startsWith('tb-')?s.slice(3):s.startsWith('e-')?BOSSES[Number(s.slice(2))]?.id:s;
+  const boss=bid?$('[data-tb-boss="'+bid+'"]'):null;if(boss)out.push(boss)
+ }
+ return out
+}
 function handleEvent(e){
  run.elapsed=Math.max(run.elapsed,Number(e.timestamp)||0);
+ if(window.CellboundCombatStatuses?.handle(e,{resolve:tbStatusTargets,speed:()=>playSpeed}))return;
  if(e.type==='TOMB_OPEN'){spawnBoss(e.payload?.bossId);return}
  if(e.type==='MOVEMENT_START'&&e.payload?.to){const el=String(e.source||'').startsWith('tb-')?$('[data-tb-boss="'+String(e.source).slice(3)+'"]'):$('[data-tb-unit="'+e.source+'"]');tbSetPos(el,e.payload.to.x,e.payload.to.y,e.payload.duration||420);return}
  if(e.type==='ABILITY_START'){tbLunge(e.source,e.target);return}
