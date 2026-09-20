@@ -1391,6 +1391,12 @@ function runSelfTests(){
   const volatile=simulate({party,encounter:{id:'volatile-test',kind:'event',level:10,enemies:[{name:'Volatile Elite',classification:'elite'}],enemyHealth:180,affixes:['volatile-cells']},seed:'volatile-affix'});
   test('Volatile Cells Affix',()=>volatile.events.some(e=>e.type==='AFFIX_TRIGGER'&&e.payload?.affix==='volatile-cells'&&e.result==='explode'));
  }
+ {
+  const phased=simulate({party,encounter:{...base,enemyHealth:1500,phases:[{id:'p70',name:'Phase Two',atPct:70,damageScale:1.15,spawnAdds:true}],softEnragePct:20,hardEnrageMs:1000},seed:'phase-enrage'});
+  test('Boss Phase Transition',()=>phased.events.some(e=>e.type==='PHASE_CHANGE'&&e.payload?.phaseId==='p70'));
+  test('Hard Enrage',()=>phased.events.some(e=>e.type==='ENRAGE'&&e.result==='hard'));
+ }
+
 
 
 
