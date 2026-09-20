@@ -4,13 +4,13 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const STAGES=[
- {id:'broken-gate',title:'The Broken Gate',kind:'trash',knowledge:'ashwarden',base:86,enemies:['Ash Cultist','Cinder Hound','Cinder Hound'],mechanics:[['Searing Bolt','interrupt',1600],['Hound Rush','line',1200]]},
- {id:'hall-embers',title:'Hall of Embers',kind:'trash',knowledge:'ashwarden',base:82,enemies:['Ash Guardian','Ember Acolyte','Ember Acolyte'],mechanics:[['Ember Channel','interrupt',1800],['Guardian Sweep','cone',1500]]},
- {id:'kael',title:'Ash Warden Kael',kind:'boss',bossId:'ashwarden',knowledge:'ashwarden',base:78,enemies:['Ash Warden Kael'],mechanics:[['Warden Cleave','cone',2100],['Cinder Guard','adds',1400],['Execution Arc','cone',1800]]},
- {id:'furnace',title:'The Furnace Passage',kind:'event',knowledge:'embermaw',base:80,enemies:['Cinder Hound','Furnace Wisp'],mechanics:[['Furnace Vents','circles',1700],['Cinder Rush','line',1200]]},
- {id:'embermaw',title:'Embermaw',kind:'boss',bossId:'embermaw',knowledge:'embermaw',base:74,enemies:['Embermaw'],mechanics:[['Ember Roar','interrupt',2400],['Flame Burst','circle',1900],['Tail Furnace','cone',1700]]},
- {id:'vault-depths',title:'The Vault Depths',kind:'trash',knowledge:'vaultheart',base:78,enemies:['Soul Binder','Ash Guardian','Ash Guardian'],mechanics:[['Soul Bind','interrupt',2000],['Guardian Reinforcements','adds',1400]]},
- {id:'vaultheart',title:'The Vaultheart',kind:'final',bossId:'vaultheart',knowledge:'vaultheart',base:70,enemies:['The Vaultheart'],mechanics:[['Core Pulse','circle',2100],['Fracture Spawn','adds',1500],['Rupture Beam','line',1800],['Core Collapse','circle',2600]]}
+ {id:'broken-gate',title:'The Broken Gate',kind:'trash',level:3,enemyTypes:['trash','trash','trash'],knowledge:'ashwarden',base:86,enemies:['Ash Cultist','Cinder Hound','Cinder Hound'],mechanics:[['Searing Bolt','interrupt',1600],['Hound Rush','line',1200]]},
+ {id:'hall-embers',title:'Hall of Embers',kind:'trash',level:3,enemyTypes:['elite','trash','trash'],knowledge:'ashwarden',base:82,enemies:['Ash Guardian','Ember Acolyte','Ember Acolyte'],mechanics:[['Ember Channel','interrupt',1800],['Guardian Sweep','cone',1500]]},
+ {id:'kael',title:'Ash Warden Kael',kind:'boss',level:4,enemyTypes:['boss'],bossId:'ashwarden',knowledge:'ashwarden',base:78,enemies:['Ash Warden Kael'],mechanics:[['Warden Cleave','cone',2100],['Cinder Guard','adds',1400],['Execution Arc','cone',1800]]},
+ {id:'furnace',title:'The Furnace Passage',kind:'event',level:4,enemyTypes:['trash','elite'],knowledge:'embermaw',base:80,enemies:['Cinder Hound','Furnace Wisp'],mechanics:[['Furnace Vents','circles',1700],['Cinder Rush','line',1200]]},
+ {id:'embermaw',title:'Embermaw',kind:'boss',level:4,enemyTypes:['boss'],bossId:'embermaw',knowledge:'embermaw',base:74,enemies:['Embermaw'],mechanics:[['Ember Roar','interrupt',2400],['Flame Burst','circle',1900],['Tail Furnace','cone',1700]]},
+ {id:'vault-depths',title:'The Vault Depths',kind:'trash',level:4,enemyTypes:['elite','trash','trash'],knowledge:'vaultheart',base:78,enemies:['Soul Binder','Ash Guardian','Ash Guardian'],mechanics:[['Soul Bind','interrupt',2000],['Guardian Reinforcements','adds',1400]]},
+ {id:'vaultheart',title:'The Vaultheart',kind:'final',level:5,enemyTypes:['boss'],bossId:'vaultheart',knowledge:'vaultheart',base:70,enemies:['The Vaultheart'],mechanics:[['Core Pulse','circle',2100],['Fracture Spawn','adds',1500],['Rupture Beam','line',1800],['Core Collapse','circle',2600]]}
 ];
 const ASHEN_ROOMS={
  'broken-gate':{
@@ -107,6 +107,7 @@ const state=()=>Game&&Game.getState?Game.getState():null;
 const role=c=>Game&&Game.classes&&Game.classes[c.class]&&Game.classes[c.class].specs[c.spec]?Game.classes[c.class].specs[c.spec].role:'dps';
 const classKey=c=>'class-'+String(c?.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const ilvl=()=>Number(Game&&Game.partyItemLevel?Game.partyItemLevel():0)||0;
+const partyLevel=()=>{const p=party();return p.length?Math.round(p.reduce((n,c)=>n+Math.max(1,Number(c.level)||1),0)/p.length):1};
 const ASHEN_VAULT_XP=420;
 function xpNeeded(level){return 800+Math.max(0,(Number(level)||1)-1)*250}
 function awardPartyXp(amount){
@@ -124,7 +125,6 @@ function awardPartyXp(amount){
    c.level=level;c.xp=xp;
    if(levels>0){
      c.talent=(Number(c.talent)||0)+levels;
-     c.power=(Number(c.power)||1)+(levels*2);
    }
    gains.push({
      id:c.id,name:c.name,portrait:c.portrait||String(c.name||'?').slice(0,2).toUpperCase(),
@@ -180,7 +180,7 @@ function briefing(){
    return;
  }
 
- r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · TACTICAL BRIEFING</small><h2>Set the plan once. Then watch the dungeon run.</h2></div><button data-close>×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">These tactics persist through the whole expedition. The party will move, react and fight automatically. Live overrides remain available without stopping combat.</p><h3>Aggression</h3>'+groupButtons('aggression',[['safe','SAFE','Prioritise stability.'],['balanced','BALANCED','Standard dungeon pace.'],['aggressive','AGGRESSIVE','Push damage windows.']])+'<h3>Interrupts</h3>'+groupButtons('interrupts',[['important','IMPORTANT','Stop dangerous casts.'],['high','HIGH','Interrupt aggressively.'],['conservative','CONSERVATIVE','Save for critical casts.']])+'<h3>Defensives</h3>'+groupButtons('defensives',[['early','EARLY','Use cooldowns sooner.'],['balanced','BALANCED','React to pressure.'],['save','SAVE','Hold for late bosses.']])+'<h3>Add Priority</h3>'+groupButtons('adds',[['dangerous','DANGEROUS','Swap to threatening adds.'],['full','FULL','Clear every add wave.'],['boss','BOSS','Stay on primary target.']])+'<h3>Movement Discipline</h3>'+groupButtons('movement',[['safety','SAFETY FIRST','Move early and protect the run.'],['balanced','BALANCED','Respect mechanics without giving up free damage.'],['damage','MAX DAMAGE','Move later to preserve uptime.']])+'</main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span><strong>'+String(role(c)).toUpperCase()+'</strong></div>').join('')+'<div class="cb2d-prep-summary"><small>ACTIVE PROFESSION PREP</small>'+party().map(c=>{const fx=P?.activeEffects?.(c)||[];return fx.length?'<p><b>'+esc(c.name)+'</b><span>'+fx.map(x=>esc(x.name)+' · '+x.remainingBosses+' bosses').join('<br>')+'</span></p>':''}).join('')+'</div><button class="cb2d-start" data-start>BEGIN EXPEDITION →</button></aside></div></section>';
+ r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LEVELS 3–5 · ILVL 18+ · TACTICAL BRIEFING</small><h2>Set the plan once. Then watch the dungeon run.</h2></div><button data-close>×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">These tactics persist through the whole expedition. The party will move, react and fight automatically. Live overrides remain available without stopping combat.</p><h3>Aggression</h3>'+groupButtons('aggression',[['safe','SAFE','Prioritise stability.'],['balanced','BALANCED','Standard dungeon pace.'],['aggressive','AGGRESSIVE','Push damage windows.']])+'<h3>Interrupts</h3>'+groupButtons('interrupts',[['important','IMPORTANT','Stop dangerous casts.'],['high','HIGH','Interrupt aggressively.'],['conservative','CONSERVATIVE','Save for critical casts.']])+'<h3>Defensives</h3>'+groupButtons('defensives',[['early','EARLY','Use cooldowns sooner.'],['balanced','BALANCED','React to pressure.'],['save','SAVE','Hold for late bosses.']])+'<h3>Add Priority</h3>'+groupButtons('adds',[['dangerous','DANGEROUS','Swap to threatening adds.'],['full','FULL','Clear every add wave.'],['boss','BOSS','Stay on primary target.']])+'<h3>Movement Discipline</h3>'+groupButtons('movement',[['safety','SAFETY FIRST','Move early and protect the run.'],['balanced','BALANCED','Respect mechanics without giving up free damage.'],['damage','MAX DAMAGE','Move later to preserve uptime.']])+'</main><aside><small>ACTIVE FIVE · PARTY LV '+partyLevel()+' · ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>Lv. '+Math.max(1,Number(c.level)||1)+' · '+esc(c.class)+' · '+esc(c.spec)+'</small></span><strong>'+String(role(c)).toUpperCase()+'</strong></div>').join('')+'<div class="cb2d-prep-summary"><small>ACTIVE PROFESSION PREP</small>'+party().map(c=>{const fx=P?.activeEffects?.(c)||[];return fx.length?'<p><b>'+esc(c.name)+'</b><span>'+fx.map(x=>esc(x.name)+' · '+x.remainingBosses+' bosses').join('<br>')+'</span></p>':''}).join('')+'</div><button class="cb2d-start" data-start>BEGIN EXPEDITION →</button></aside></div></section>';
  r.querySelector('[data-close]').onclick=close;
  r.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{const a=b.dataset.pick.split(':');tactics[a[0]]=a[1];r.querySelectorAll('[data-plan="'+a[0]+'"] button').forEach(x=>x.classList.toggle('active',x===b))});
  r.querySelector('[data-start]').onclick=start;
@@ -269,8 +269,8 @@ function applyUnitPosition(e,x,y,instant=false){
  if(instant)e.style.transitionDuration='0ms';
  e.style.setProperty('--unit-x',p.x+'px');e.style.setProperty('--unit-y',p.y+'px')
 }
-function addUnit(id,label,cls,x,y,size){
- const e=document.createElement('div');e.className='cb2d-unit '+cls+' '+(size||'');e.dataset.unit=id;e.innerHTML='<i></i><span>'+esc(label)+'</span><em class="cb2d-unit-hp"><i></i></em>';$('#cb2dUnits').appendChild(e);applyUnitPosition(e,x,y,true)
+function addUnit(id,label,cls,x,y,size,meta=''){
+ const e=document.createElement('div');e.className='cb2d-unit '+cls+' '+(size||'');e.dataset.unit=id;e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="cb2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em class="cb2d-unit-hp"><i></i></em>';$('#cb2dUnits').appendChild(e);applyUnitPosition(e,x,y,true)
 }
 function move(id,x,y,ms){
  const e=$('[data-unit="'+id+'"]');if(!e)return;
@@ -367,6 +367,13 @@ function recoverDungeonResources(){
  })
 }
 
+function stageEnemyMeta(s,index){
+ const level=Math.max(1,Number(s?.enemyLevels?.[index])||Number(s?.level)||1);
+ const type=String(s?.enemyTypes?.[index]||((s?.enemies?.length===1&&(s?.kind==='boss'||s?.kind==='final'))?'boss':(s?.kind==='event'?'elite':'trash'))).toLowerCase();
+ const labels={trash:'TRASH',elite:'ELITE',boss:'BOSS','world-boss':'WORLD BOSS',add:'ADD'};
+ return{level,type,label:labels[type]||type.toUpperCase()}
+}
+function enemyMetaText(s,index){const m=stageEnemyMeta(s,index);return'Lv. '+m.level+' · '+m.label}
 function spawn(s){
  renderDungeonEnvironment(s);$('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
  const max=s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120;
@@ -385,7 +392,7 @@ function spawn(s){
    else{x=12;y=61}
    setTimeout(()=>{move('p-'+c.id,x,y,900);const bar=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(bar)bar.style.width=hp(c.id)+'%'},40)
  });
- s.enemies.forEach((n,i)=>{const boss=s.enemies.length===1&&(s.kind==='boss'||s.kind==='final');const y=s.enemies.length===1?50:30+i*(40/Math.max(1,s.enemies.length-1));addUnit('e-'+i,n,boss?'enemy boss':'enemy',92,y,boss?'big':'');setTimeout(()=>move('e-'+i,68,y,850),60)});
+ s.enemies.forEach((n,i)=>{const meta=stageEnemyMeta(s,i),boss=meta.type==='boss'||meta.type==='world-boss';const y=s.enemies.length===1?50:30+i*(40/Math.max(1,s.enemies.length-1));addUnit('e-'+i,n,boss?'enemy boss':'enemy',92,y,boss?'big':'',enemyMetaText(s,i));setTimeout(()=>move('e-'+i,68,y,850),60)});
 }
 
 function point(id){
@@ -1124,7 +1131,7 @@ function rebornTactics(){
 }
 function rebornEncounter(s){
  const room=ASHEN_ROOMS[s.id]||{};
- return{id:s.id,title:s.title,kind:s.kind,enemies:[...s.enemies],enemyHealth:s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120,mechanics:s.mechanics.map(m=>({name:m[0],type:m[1],duration:m[2]})),environment:{room:room.room||s.id,blockers:(room.blockers||[]).map(b=>({...b,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false}))}}
+ return{id:s.id,title:s.title,kind:s.kind,level:s.level||1,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies:[...s.enemies],enemyHealth:s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120,mechanics:s.mechanics.map(m=>({name:m[0],type:m[1],duration:m[2]})),environment:{room:room.room||s.id,blockers:(room.blockers||[]).map(b=>({...b,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false}))}}
 }
 function rebornPlayerByUnit(id){return party().find(c=>'p-'+c.id===id)||null}
 function rebornEnemyIndex(id){const m=String(id||'').match(/^e-(\d+)$/);return m?Number(m[1]):-1}
@@ -1246,7 +1253,7 @@ function renderRebornEvent(e,result,replayMode=false){
   case'DEFENSIVE_ACTIVATED':
    flash('DEFENSIVE',false);log((srcChar?.name||'Tank')+' activates '+(e.ability||'a defensive')+'.');act('tank',(srcChar?.name||'Tank')+' · Defensive active');break;
   case'ADD_SPAWNED':
-   if(!$('[data-unit="'+e.target+'"]')){const p=e.position||{x:76,y:50};addUnit(e.target,e.payload?.name||'Add','enemy small',p.x,p.y,'small');const bar=$('[data-unit="'+e.target+'"] .cb2d-unit-hp i');if(bar)bar.style.width='100%'}
+   if(!$('[data-unit="'+e.target+'"]')){const p=e.position||{x:76,y:50};addUnit(e.target,e.payload?.name||'Add','enemy small',p.x,p.y,'small','Lv. '+(e.payload?.level||STAGES[run.stage]?.level||1)+' · '+(e.payload?.classificationLabel||'ADD'));const bar=$('[data-unit="'+e.target+'"] .cb2d-unit-hp i');if(bar)bar.style.width='100%'}
    flash('ADDS SPAWN',true);log((e.payload?.name||'Adds')+' enter the fight.');break;
   case'ADD_DEFEATED':case'ENEMY_DEFEATED':{
    const u=$('[data-unit="'+e.target+'"]');if(u){u.classList.add('dying');deathBurst(e.target);setTimeout(()=>u.classList.add('dead'),240)}
@@ -1341,6 +1348,7 @@ function runRebornStage(s){
 }
 function captureRebornResult(result){
  run.rebornResult=result;run.rebornReplay=result?.replay||null;run.rebornHistory=run.rebornHistory||[];
+ if(Array.isArray(result?.finalState?.enemies)){run.enemyMax=result.finalState.enemies.filter(e=>!e.isAdd).map(e=>e.maxHealth);run.enemyHp=[...run.enemyMax]}
  (result?.finalState?.players||[]).forEach(p=>{const c=rebornPlayerByUnit(p.id);if(c&&p.resource)run.resources[c.id]={name:p.resource.name,max:p.resource.max,value:p.resource.value}});
  run.rebornHistory.push({stageId:result.stageId,stageTitle:result.stageTitle,startHp:result.startHp,replay:result.replay,summary:result.summary,outcome:result.outcome});
 }
