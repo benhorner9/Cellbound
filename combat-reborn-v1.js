@@ -1440,6 +1440,30 @@ function runSelfTests(){
    return enemy?.maxHealth===120000&&enemy.health<73500&&enemy.health>0
   });
  }
+ {
+  const persisted=simulate({
+   party,
+   encounter:{id:'persist-phase',kind:'world-boss',level:10,enemies:[{name:'Persistent Phase Boss',classification:'world-boss',absoluteHealth:true,maxHealth:100000,currentHealth:65000}],phases:[{id:'p70',name:'Phase Two',atPct:70,damageScale:1.2}],mechanics:[]},
+   seed:'persist-phase',maxDurationMs:1200,initialPhaseTriggered:{p70:true},elapsedOffsetMs:50000
+  });
+  const pb=persisted.finalState.enemies.find(e=>e.name==='Persistent Phase Boss');
+  test('Persistent Boss Phase',()=>pb?.phaseDamageScale>=1.2&&!persisted.events.some(e=>e.type==='PHASE_CHANGE'&&e.payload?.phaseId==='p70'));
+
+  const setParty=party.map((p,i)=>i===0?{...p,equipment:{
+    Head:{setId:'test-set',setName:'Test Set'},Chest:{setId:'test-set',setName:'Test Set'},Weapon:{setId:'test-set',setName:'Test Set'}
+  }}:p);
+  const setRun=simulate({party:setParty,encounter:{...base,enemyHealth:420},seed:'set-foundation'});
+  const setTank=setRun.finalState.players.find(p=>p.characterId===setParty[0].id);
+  test('Gear Set Foundation',()=>setTank?.setBonuses?.sets?.[0]?.pieces===3&&setTank?.setBonuses?.outputScale>1&&setTank?.setBonuses?.resourceRegen>1);
+
+  const cc=simulate({
+    party,
+    encounter:{id:'cc-test',kind:'trash',level:4,enemies:[{name:'Elite Controller',classification:'elite'},{name:'Trash Mob',classification:'trash'}],enemyHealth:300,mechanics:[]},
+    tactics:{crowdControl:'priority-elites'},seed:'cc-strategy'
+  });
+  test('Strategy Crowd Control',()=>cc.events.some(e=>e.type==='CROWD_CONTROL'&&e.result==='applied'));
+ }
+
 
 
 
