@@ -149,6 +149,16 @@ function stageConfig(dungeonId,stage){
  out.affixes=[...cfg.affixes];out.difficulty=cfg.difficulty;out.cellboundTier=cfg.tier;out.recommendedItemLevel=cfg.recommendedItemLevel;
  const extras=cfg.difficulty==='normal'?[]:(cfg.dungeon.heroicAdds?.[stage.id]||[]);
  if(extras.length)out.mechanics=[...(out.mechanics||[]),...extras];
+ if(cfg.difficulty!=='normal'){
+   const phases=D.BOSS_PHASES?.[dungeonId]?.[stage.id]||[];
+   if(phases.length)out.phases=phases.map(x=>({...x,addMechanics:(x.addMechanics||[]).map(m=>({...m}))}));
+   if(stage.kind==='boss'||stage.kind==='final'){
+     out.softEnragePct=20;out.softEnrageDamage=cfg.difficulty==='cellbound'?1.28:1.22;
+     out.hardEnrageMs=cfg.difficulty==='cellbound'
+       ?Math.max(55000,90000-(cfg.tier*1500))
+       :105000;
+   }
+ }
  if(cfg.difficulty==='cellbound'&&cfg.tier>=10&&stage.kind==='final'){
    out.mechanics=[...(out.mechanics||[]),{name:'Cellbound Overload',type:'circles',duration:1350}]
  }
