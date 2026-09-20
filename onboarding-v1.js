@@ -574,7 +574,7 @@ async function fightTdPack(encounter,my){
   const result=C.simulate({
     party:combatParty,
     encounter:{
-      id:encounter.id,title:encounter.name,kind:encounter.boss?'boss':'trash',
+      id:encounter.id,title:encounter.name,kind:encounter.combatKind||(encounter.boss?'boss':'trash'),
       enemies:[...encounter.mobs],enemyHealth:encounter.enemyHealth,
       mechanics:encounter.mechanics||[]
     },
@@ -594,7 +594,7 @@ async function runTutorialDungeon(my){
   if(my!==tutorialToken||onboarding().stage!=='dungeon-running')return;
   const encounters=[
     {id:'rootling-nest',name:'Rootling Nest',mobs:['Rootling','Rootling'],boss:false,enemyHealth:105,mechanics:[]},
-    {id:'collapsed-gallery',name:'Collapsed Gallery',mobs:['Cell-Sick Marauder'],boss:false,enemyHealth:260,mechanics:[['Hollow Scream','interrupt',1800]]},
+    {id:'collapsed-gallery',name:'Collapsed Gallery',mobs:['Cell-Sick Marauder'],boss:false,combatKind:'boss',enemyHealth:420,mechanics:[['Hollow Scream','interrupt',1800]]},
     {id:'hollow-warden',name:'Hollow Warden',mobs:['The Hollow Warden'],boss:true,enemyHealth:520,mechanics:[['Rootbound Cleave','cone',1700]]}
   ];
   for(let i=0;i<encounters.length;i++){
