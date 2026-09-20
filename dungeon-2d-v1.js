@@ -977,11 +977,11 @@ function ensureCombatRebornEngine(){
      else reject(error||new Error('Combat Reborn engine failed to initialise'))
    };
    const script=document.createElement('script');
-   script.src='./combat-reborn-v1.js?v=7&recover=1';
+   script.src='./combat-identities-v1.js?v=5&recover=1';
    script.async=true;
    script.dataset.combatRebornRecovery='1';
    script.onload=()=>finish(true);
-   script.onerror=()=>finish(false,new Error('Combat Reborn runtime could not be loaded'));
+   script.onerror=()=>finish(false,new Error('Combat core asset could not be loaded'));
    document.head.appendChild(script);
    const timeout=setTimeout(()=>finish(false,new Error('Combat Reborn runtime timed out while loading')),8000);
  }).finally(()=>{rebornLoaderPromise=null});
