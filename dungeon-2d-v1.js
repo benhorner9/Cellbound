@@ -1009,13 +1009,7 @@ function showRebornStartupFailure(error,s,tok){
    try{
      await ensureCombatRebornEngine();
      if(tok!==token||!run)return;
-     const result=runRebornStage(s);captureRebornResult(result);run.stageOutcome=result.outcome==='victory';run.allowKill=true;
-     await playRebornTimeline(result,tok);
-     if(!await resolveStage(s)||tok!==token)return;
-     if(run.stage<STAGES.length-1){
-       const current=run.stage;party().forEach(c=>setHp(c.id,Math.min(100,hp(c.id)+6)));updateRows();flash('PATH CLEAR',false);await delay(420);await travelDeeper(STAGES[current+1],tok);
-       seamlessFrom(current+1,tok)
-     }
+     await seamlessFrom(run.stage,tok)
    }catch(err){showRebornStartupFailure(err,s,tok)}
  }
 }
