@@ -263,7 +263,11 @@ async function cancelListing(id){
   state().activity.push(`Cancelled Trading Post listing: ${l.item_name}.`);await commit();await loadMarket();
 }
 function bind(){
-  $$('.nav-btn[data-view="professions"]').forEach(b=>b.addEventListener('click',renderProfessions));
+  $('.nav-btn[data-view="professions"]').forEach(b=>b.addEventListener('click',renderProfessions));
+  window.addEventListener('cellbound:view-changed',e=>{
+    if(e.detail?.view==='professions')renderProfessions();
+    if(e.detail?.view==='trading'){renderSellOptions();loadMarket();}
+  });
   $$('.nav-btn[data-view="trading"]').forEach(b=>b.addEventListener('click',()=>{renderSellOptions();loadMarket();}));
   $('#refreshTrading')?.addEventListener('click',loadMarket);
   $('#tradeSellForm')?.addEventListener('submit',createListing);
@@ -277,7 +281,7 @@ async function init(){
   const claimed=await claimProceeds();if(claimed>0){location.reload();return;}
   const delivered=await processInbox();if(delivered){Game.renderAll();}
   bind();renderProfessions();renderSellOptions();
-  window.CellboundEconomy={renderProfessions,loadMarket};
+  window.CellboundEconomy={renderProfessions,loadMarket,renderTrading:()=>{renderSellOptions();loadMarket();}};
 }
 init();
 })();
