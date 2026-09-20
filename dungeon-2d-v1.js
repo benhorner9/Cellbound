@@ -158,7 +158,7 @@ function briefing(){
  r.querySelector('[data-start]').onclick=start;
 }
 function start(){
- const p=party();token++;run={token:token,stage:0,speed:1,condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],damageDone:Object.fromEntries(p.map(c=>[c.id,0])),hitCount:Object.fromEntries(p.map(c=>[c.id,0])),identityTimers:{},combatStartedAt:0,lastMeterAt:0,log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},xpGrowth:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0};
+ const p=party();token++;run={token:token,stage:0,speed:1,condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],damageDone:Object.fromEntries(p.map(c=>[c.id,0])),hitCount:Object.fromEntries(p.map(c=>[c.id,0])),identityTimers:{},combatStartedAt:0,lastMeterAt:0,log:['The party enters The Ashen Vault.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},xpGrowth:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0,rebornHistory:[],rebornReplay:null,rebornResult:null,rebornTelegraphs:{},rebornCastTimer:null};
  drawViewer();seamless(token);
 }
 function route(){
@@ -937,8 +937,12 @@ async function playWipeVisual(s){
 }
 
 async function resolveStage(s){
- const ok=run.stageOutcome,dmg=ok?(s.kind==='boss'||s.kind==='final'?5:3):(s.kind==='boss'||s.kind==='final'?22:10);
- party().forEach(c=>{const hit=Math.max(1,dmg-Math.floor(Math.random()*4));setCond(c.id,cond(c.id)-hit);if(!ok)setHp(c.id,hp(c.id)-Math.ceil(hit/2))});updateRows();
+ const ok=run.stageOutcome;
+ if(!run.rebornResult){
+   const dmg=ok?(s.kind==='boss'||s.kind==='final'?5:3):(s.kind==='boss'||s.kind==='final'?22:10);
+   party().forEach(c=>{const hit=Math.max(1,dmg-Math.floor(Math.random()*4));setCond(c.id,cond(c.id)-hit);if(!ok)setHp(c.id,hp(c.id)-Math.ceil(hit/2))});
+ }
+ updateRows();
  if(ok){
    const k=learn(s,true),item=loot(s);if(s.bossId){
      state().bossKills[s.bossId]=true;
@@ -952,25 +956,195 @@ async function resolveStage(s){
  }
  learn(s,false);const wipe=s.kind==='boss'||s.kind==='final'||party().some(c=>hp(c.id)<=0||cond(c.id)<=0);
  if(!wipe){log(s.title+' hurts the group, but the party keeps moving.');Game.save();await Game.persistState();return true}
- await playWipeVisual(s);
+ if(!run.rebornResult)await playWipeVisual(s);
  Game.applyPartyCellShock(25);const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonHistory.unshift({at:new Date().toISOString(),result:'wipe',stage:s.id,partyIlvl:ilvl()});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The guild wiped at '+s.title+'. All five gained 25% Cell Shock.');await Game.persistState();finish(false,s);return false
+}
+
+function rebornTactics(){
+ return{
+   interruptPriority:tactics.interrupts==='high'?'high':tactics.interrupts==='conservative'?'low':'standard',
+   addPriority:tactics.adds==='full'?'immediate':tactics.adds==='boss'?'boss':'balanced',
+   defensiveUsage:tactics.defensives==='early'?'aggressive':tactics.defensives==='save'?'conservative':'standard',
+   pullStyle:tactics.aggression==='aggressive'?'aggressive':tactics.aggression==='safe'?'safe':'normal',
+   movementDiscipline:tactics.aggression==='safe'?'safety':tactics.aggression==='aggressive'?'damage':'balanced'
+ }
+}
+function rebornEncounter(s){
+ return{id:s.id,title:s.title,kind:s.kind,enemies:[...s.enemies],enemyHealth:s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120,mechanics:s.mechanics.map(m=>({name:m[0],type:m[1],duration:m[2]}))}
+}
+function rebornPlayerByUnit(id){return party().find(c=>'p-'+c.id===id)||null}
+function rebornEnemyIndex(id){const m=String(id||'').match(/^e-(\d+)$/);return m?Number(m[1]):-1}
+function rebornResourceVisual(e){
+ if(!e?.source||!String(e.source).startsWith('p-'))return;
+ const unit=$('[data-unit="'+e.source+'"]');if(!unit)return;
+ let r=unit.querySelector('.cbr-resource');
+ if(!r){r=document.createElement('small');r.className='cbr-resource';r.innerHTML='<i></i><span></span>';unit.appendChild(r)}
+ const value=Number(e.payload?.value)||0,max=Math.max(1,Number(e.payload?.max)||100),fill=r.querySelector('i'),label=r.querySelector('span');
+ if(fill)fill.style.width=clamp(value/max*100,0,100)+'%';
+ if(label)label.textContent=(e.payload?.resource||'Resource')+' '+Math.round(value);
+}
+function rebornCastStart(e){
+ const n=$('#cb2dCastName'),tm=$('#cb2dCastTime'),f=$('#cb2dCastFill'),duration=Math.max(0,Number(e.payload?.duration)||0);
+ if(n)n.textContent=e.ability||'Enemy Cast';if(tm)tm.textContent=(duration/1000).toFixed(1)+'s';
+ if(f){f.style.transition='none';f.style.width='0%';void f.offsetWidth;requestAnimationFrame(()=>{f.style.transition='width '+Math.max(1,Math.round(duration/(run?.speed||1)))+'ms linear';f.style.width='100%'})}
+ clearTimeout(run.rebornCastTimer);run.rebornCastTimer=setTimeout(()=>{if(tm)tm.textContent='—'},Math.max(1,Math.round(duration/(run?.speed||1))));
+}
+function rebornCastClear(label='—'){
+ const n=$('#cb2dCastName'),tm=$('#cb2dCastTime'),f=$('#cb2dCastFill');clearTimeout(run?.rebornCastTimer);
+ if(n)n.textContent=label;if(tm)tm.textContent='—';if(f){f.style.transition='none';f.style.width='0%'}
+}
+function rebornTelegraph(e){
+ const type=e.payload?.mechanicType,tokenId=e.payload?.token||('tg-'+e.timestamp),source=e.source||'e-0';let v=null;
+ if(type==='cone'){const tank=party().find(c=>role(c)==='tank');v=coneTelegraph(source,tank?'p-'+tank.id:'p-'+party()[0]?.id,'FRONTAL · TANK FACE AWAY')}
+ else if(type==='line'){const targets=party().filter(c=>role(c)!=='tank'&&hp(c.id)>0),target=targets[0]||party()[0];v=lineTelegraph(source,'p-'+target.id,'LINE ATTACK · SIDESTEP')}
+ else if(type==='circle')v=circleTelegraph(source,170,'GROUND AOE · MOVE OUT');
+ else if(type==='circles'){const targets=party().filter(c=>role(c)!=='tank').slice(0,3);v=multiCircleTelegraph(targets.map(c=>'p-'+c.id),108,'TARGETED AOE · SPREAD')}
+ else if(type==='adds')v=addTelegraph([{x:72,y:35},{x:72,y:65}],'ADDS INCOMING · PREPARE');
+ else if(type==='interrupt')v=castTelegraph(source,'INTERRUPT '+String(e.ability||'CAST').toUpperCase());
+ if(v){run.rebornTelegraphs=run.rebornTelegraphs||{};run.rebornTelegraphs[tokenId]=v}
+ return v
+}
+function clearRebornTelegraph(tokenId,result='safe'){
+ const v=run?.rebornTelegraphs?.[tokenId];if(v){clearTelegraph(v,result);delete run.rebornTelegraphs[tokenId]}
+}
+function rebornDebugEvent(e,result){
+ if(!(/[?&]combatDebug=1\b/.test(location.search)||localStorage.getItem('cellboundCombatDebug')==='1'))return;
+ let panel=$('#cbrDebugPanel');if(!panel){panel=document.createElement('pre');panel.id='cbrDebugPanel';panel.className='cbr-debug';$('#cb2dArena')?.appendChild(panel)}
+ const snap=window.CellboundCombatReborn?.debugSnapshot?.(result)||{};
+ panel.textContent=['COMBAT REBORN '+(snap.version||''),'t '+(e?.timestamp||0)+'ms · '+(e?.type||'event'),(e?.source||'—')+' → '+(e?.target||'—'),e?.ability||e?.result||'', 'Events '+(snap.events||0)].join('\n');
+}
+function renderRebornEvent(e,result,replayMode=false){
+ if(!run||!e)return;
+ rebornDebugEvent(e,result);
+ const srcChar=rebornPlayerByUnit(e.source),targetChar=rebornPlayerByUnit(e.target),enemyIdx=rebornEnemyIndex(e.target),sourceEnemyIdx=rebornEnemyIndex(e.source);
+ switch(e.type){
+  case'COMBAT_START':
+   status(replayMode?'Replay started':'Combat simulation live');log((replayMode?'Replay: ':'')+'Combat begins.');break;
+  case'MOVEMENT_START':
+   if(e.payload?.to)move(e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||360);break;
+  case'ABILITY_START':
+   if(srcChar){
+     const r=role(srcChar);act(r==='tank'?'tank':r==='healer'?'healer':'dps',srcChar.name+' · '+(e.ability||'Action'));
+     if(e.target)faceUnit(e.source,e.target);
+     if(!(e.payload?.castTime>0)&&e.payload?.kind==='damage'&&e.target)projectile(e.source,e.target,attackKind(srcChar),260);
+   }else if(String(e.source||'').startsWith('e-')||String(e.source||'').startsWith('add-')){
+     if(e.target){faceUnit(e.source,e.target);projectile(e.source,e.target,'enemy',260)}
+   }
+   break;
+  case'CAST_START':
+   if(String(e.source||'').startsWith('e-')){rebornCastStart(e);log((e.ability||'Enemy cast')+' begins.')}
+   break;
+  case'CAST_CANCELLED':
+   if(String(e.source||'').startsWith('e-'))rebornCastClear('INTERRUPTED');break;
+  case'ABILITY_FINISH':
+   if(srcChar&&e.target&&String(e.target).startsWith('e-')&&e.result==='resolved')projectile(e.source,e.target,attackKind(srcChar),220);
+   break;
+  case'DAMAGE_DEALT':{
+   if(enemyIdx>=0&&run.enemyHp?.[enemyIdx]!=null)setEnemyHp(enemyIdx,Number(e.payload?.targetHp)||0);
+   else if(String(e.target||'').startsWith('add-')){
+     const u=$('[data-unit="'+e.target+'"]'),bar=u?.querySelector('.cb2d-unit-hp i');if(bar)bar.style.width=clamp(Number(e.payload?.targetHpPct)||0,0,100)+'%';
+   }
+   if(targetChar){setHp(targetChar.id,Number(e.payload?.targetHpPct)||0);setCond(targetChar.id,cond(targetChar.id)-Math.max(1,Math.round((Number(e.amount)||0)/8)));updateRows()}
+   if(srcChar)recordDamage(srcChar,Number(e.amount)||0);
+   if(e.target){hitReact(e.target,'hit');floating(e.target,'-'+Math.round(Number(e.amount)||0),e.result==='critical'?'crit':targetChar?'incoming':'damage')}
+   if(e.payload?.avoidable){log((targetChar?.name||'A player')+' is hit by avoidable '+(e.ability||'damage')+'.')}
+   break;
+  }
+  case'HEAL_RECEIVED':
+   if(targetChar){setHp(targetChar.id,Number(e.payload?.targetHpPct)||hp(targetChar.id));updateRows();hitReact(e.target,'heal');floating(e.target,'+'+Math.round(Number(e.amount)||0),'heal')}
+   break;
+  case'RESOURCE_SPENT':case'RESOURCE_GAINED':rebornResourceVisual(e);break;
+  case'THREAT_GENERATED':
+   if(enemyIdx>=0&&srcChar&&run.threat?.[enemyIdx]){run.threat[enemyIdx][srcChar.id]=Number(e.payload?.total)||0;renderCombatMeters()}break;
+  case'AGGRO_CHANGED':
+   if(sourceEnemyIdx>=0&&targetChar){run.aggro[sourceEnemyIdx]=targetChar.id;showThreatLink(sourceEnemyIdx,targetChar);renderCombatMeters();if(role(targetChar)!=='tank')log(targetChar.name+' pulls aggro.')}
+   break;
+  case'MECHANIC_TELEGRAPH':
+   rebornTelegraph(e);status((e.ability||'Mechanic')+' incoming');break;
+  case'MECHANIC_RESOLVE':
+   clearRebornTelegraph(e.payload?.token,'impact');break;
+  case'INTERRUPT':
+   if(e.result==='success'){rebornCastClear('INTERRUPTED');flash('INTERRUPTED',false);log((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');act('dps','Interrupt successful')}
+   else if(e.result==='failed')log((srcChar?.name||'A player')+' misses an interrupt.');
+   break;
+  case'DEFENSIVE_ACTIVATED':
+   flash('DEFENSIVE',false);log((srcChar?.name||'Tank')+' activates '+(e.ability||'a defensive')+'.');act('tank',(srcChar?.name||'Tank')+' · Defensive active');break;
+  case'ADD_SPAWNED':
+   if(!$('[data-unit="'+e.target+'"]')){const p=e.position||{x:76,y:50};addUnit(e.target,e.payload?.name||'Add','enemy small',p.x,p.y,'small');const bar=$('[data-unit="'+e.target+'"] .cb2d-unit-hp i');if(bar)bar.style.width='100%'}
+   flash('ADDS SPAWN',true);log((e.payload?.name||'Adds')+' enter the fight.');break;
+  case'ADD_DEFEATED':case'ENEMY_DEFEATED':{
+   const u=$('[data-unit="'+e.target+'"]');if(u){u.classList.add('dying');deathBurst(e.target);setTimeout(()=>u.classList.add('dead'),240)}
+   if(e.type==='ADD_DEFEATED')log('An add is defeated.');break;
+  }
+  case'PLAYER_DEFEATED':
+   if(targetChar){setHp(targetChar.id,0);updateRows();deathBurst(e.target);log(targetChar.name+' is defeated.')}break;
+  case'CAST_FINISH':
+   rebornCastClear('CAST COMPLETE');if(String(e.source||'').startsWith('e-'))log((e.ability||'Enemy cast')+' completes.');break;
+  case'COMBAT_END':
+   rebornCastClear();status(e.result==='victory'?'Encounter cleared':'Party defeated');run.stageOutcome=e.result==='victory';break;
+ }
+}
+async function playRebornTimeline(result,tok,{replayMode=false}={}){
+ const events=result?.events||[];let last=0;run.combatActive=true;run.rebornTelegraphs={};
+ for(const e of events){
+   if(tok!==token||!run)return false;
+   const gap=Math.max(0,Number(e.timestamp)-last);if(gap)await delay(Math.min(gap,1200));
+   renderRebornEvent(e,result,replayMode);last=Number(e.timestamp)||last;
+ }
+ run.combatActive=false;return result?.outcome==='victory'
+}
+function runRebornStage(s){
+ const C=window.CellboundCombatReborn;if(!C?.simulate)return null;
+ const startHp=Object.fromEntries(party().map(c=>[c.id,hp(c.id)]));
+ const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:hp(c.id)}));
+ const result=C.simulate({party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:['ashen-vault',run.token,run.stage,Date.now()].join(':')});
+ result.stageId=s.id;result.stageTitle=s.title;result.startHp=startHp;return result
+}
+function captureRebornResult(result){
+ run.rebornResult=result;run.rebornReplay=result?.replay||null;run.rebornHistory=run.rebornHistory||[];
+ run.rebornHistory.push({stageId:result.stageId,stageTitle:result.stageTitle,startHp:result.startHp,replay:result.replay,summary:result.summary,outcome:result.outcome});
+}
+function rebornTotals(){
+ const history=run?.rebornHistory||[],map={};let duration=0,deaths=0,damage=0,healing=0,attempts=0,interrupts=0,failed=0,avoided=0;
+ history.forEach(h=>{const s=h.summary||{};duration+=Number(s.durationSeconds)||0;deaths+=Number(s.deaths)||0;damage+=Number(s.totalDamage)||0;healing+=Number(s.totalHealing)||0;attempts+=Number(s.interrupts?.attempts)||0;interrupts+=Number(s.interrupts?.success)||0;failed+=Number(s.mechanics?.failed)||0;avoided+=Number(s.mechanics?.avoided)||0;(s.players||[]).forEach(p=>{const x=map[p.id]||(map[p.id]={id:p.id,name:p.name,class:p.class,damage:0,healing:0,avoidableDamage:0,deaths:0,interrupts:0,interruptAttempts:0});x.damage+=Number(p.damage)||0;x.healing+=Number(p.healing)||0;x.avoidableDamage+=Number(p.avoidableDamage)||0;x.deaths+=Number(p.deaths)||0;x.interrupts+=Number(p.interrupts)||0;x.interruptAttempts+=Number(p.interruptAttempts)||0})});
+ return{duration,deaths,damage,healing,attempts,interrupts,failed,avoided,players:Object.values(map)}
+}
+function rebornAnalysisHTML(){
+ const t=rebornTotals();if(!run?.rebornHistory?.length)return'';
+ const rows=t.players.sort((a,b)=>b.damage-a.damage).map(p=>'<div class="cbr-analysis-row"><i class="cb2d-dot '+('class-'+String(p.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-'))+'"></i><span><b>'+esc(p.name)+'</b><small>'+esc(p.class)+' · Avoidable '+Math.round(p.avoidableDamage)+' · Interrupts '+p.interrupts+'/'+p.interruptAttempts+'</small></span><strong>'+Math.round(p.damage).toLocaleString()+' dmg</strong></div>').join('');
+ return'<section class="cbr-analysis"><div class="cbr-analysis-head"><div><small>COMBAT REBORN · RUN ANALYSIS</small><h4>The simulation decided this result.</h4></div><button type="button" data-cbr-replay>REPLAY FINAL FIGHT</button></div><div class="cbr-analysis-grid"><article><span>DAMAGE</span><b>'+Math.round(t.damage).toLocaleString()+'</b></article><article><span>HEALING</span><b>'+Math.round(t.healing).toLocaleString()+'</b></article><article><span>DEATHS</span><b>'+t.deaths+'</b></article><article><span>INTERRUPTS</span><b>'+t.interrupts+'/'+t.attempts+'</b></article><article><span>MECHANICS AVOIDED</span><b>'+t.avoided+'</b></article><article><span>MECHANICS FAILED</span><b>'+t.failed+'</b></article></div><div class="cbr-analysis-list">'+rows+'</div></section>'
+}
+function appendRebornAnalysis(rootEl){
+ if(!rootEl||rootEl.querySelector('.cbr-analysis')||!run?.rebornHistory?.length)return;
+ const wrap=document.createElement('div');wrap.innerHTML=rebornAnalysisHTML();const node=wrap.firstElementChild;if(!node)return;
+ const actions=rootEl.querySelector('.cb2d-loot-actions');if(actions)rootEl.querySelector('.cb2d-loot-wrap')?.insertBefore(node,actions);else rootEl.appendChild(node);
+ node.querySelector('[data-cbr-replay]')?.addEventListener('click',()=>replayFinalReborn())
+}
+async function replayFinalReborn(){
+ const h=(run?.rebornHistory||[]).slice(-1)[0];if(!h?.replay)return;
+ const s=STAGES.find(x=>x.id===h.stageId)||STAGES[run.stage],end=$('#cb2dEnd');if(end)end.hidden=true;
+ Object.entries(h.startHp||{}).forEach(([id,v])=>setHp(id,v));updateRows();spawn(s);status('Replay · stored combat timeline');log('Replay uses the original combat events. No RNG is rerun.');
+ const replayResult={events:h.replay.events,outcome:h.replay.summary?.outcome||h.outcome,summary:h.replay.summary,version:h.replay.version};
+ await playRebornTimeline(replayResult,token,{replayMode:true});
+ if(end)end.hidden=false
 }
 async function seamless(tok){
  try{
   for(let i=0;i<STAGES.length;i++){
-   if(tok!==token)return;run.stage=i;run.override=0;const s=STAGES[i];
+   if(tok!==token)return;run.stage=i;run.override=0;run.rebornResult=null;const s=STAGES[i];
    $('#cb2dTitle').textContent=s.title;$('#cb2dRoute').innerHTML=route();$('#cb2dType').textContent=s.kind==='final'?'FINAL BOSS':s.kind==='boss'?'BOSS':s.kind==='event'?'EVENT':'HOSTILE PACK';
-   spawn(s);run.stageOutcome=Math.random()*100<chance(s);run.allowKill=false;run.mechanicActive=false;status('Party moving into position…');log('Entering '+s.title+'.');act('tank','Taking point');act('healer','Following formation');act('dps','Acquiring targets');await delay(1050);
-   act('tank','Establishing threat');act('healer','Holding healing range');act('dps','Moving into role positions');settleFormation(0);await delay(350);
-   const combat=combatLoop(s,tok);await delay(420);
-   for(const m of s.mechanics){await mechanic(s,m,tok);await delay(220)}
-   run.mechanicActive=false;status('Finishing encounter…');await finishCombat(s,tok);await combat;
+   spawn(s);status('Combat Reborn simulation preparing…');log('Entering '+s.title+'.');act('tank','Taking point');act('healer','Following formation');act('dps','Acquiring targets');await delay(650);
+   const result=runRebornStage(s);
+   if(!result){throw new Error('Combat Reborn engine unavailable')}
+   captureRebornResult(result);run.stageOutcome=result.outcome==='victory';run.allowKill=true;
+   await playRebornTimeline(result,tok);
    if(!await resolveStage(s)||tok!==token)return;
-   if(i<STAGES.length-1){party().forEach(c=>setHp(c.id,hp(c.id)+6));updateRows();flash('PATH CLEAR',false);await delay(420);await travelDeeper(STAGES[i+1],tok)}
+   if(i<STAGES.length-1){party().forEach(c=>setHp(c.id,Math.min(100,hp(c.id)+6)));updateRows();flash('PATH CLEAR',false);await delay(420);await travelDeeper(STAGES[i+1],tok)}
   }
-  const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;st.gold+=120;st.renown+=60;run.loot.gold+=120;run.loot.renown+=60;run.loot.xp=ASHEN_VAULT_XP;run.xpGrowth=awardPartyXp(ASHEN_VAULT_XP);st.dungeonCompletions++;const completedPartyIds=party().map(c=>c.id);st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',partyIlvl:ilvl(),xpPerCharacter:ASHEN_VAULT_XP,partyIds:completedPartyIds});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault cleared. The Vaultheart has fallen. Each adventurer earned '+ASHEN_VAULT_XP+' XP.');run.xpGrowth.filter(x=>x.levels>0).forEach(x=>st.activity.push(x.name+' reached Level '+x.afterLevel+'.'));await Game.persistState();await syncPartyXpRecords(run.xpGrowth);window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'ashen-vault',partyIds:completedPartyIds}}));finish(true,STAGES[6])
- }catch(e){if(e&&e.message!=='cancelled')console.error('Ashen Vault 2D runtime',e)}
+  const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;st.gold+=120;st.renown+=60;run.loot.gold+=120;run.loot.renown+=60;run.loot.xp=ASHEN_VAULT_XP;run.xpGrowth=awardPartyXp(ASHEN_VAULT_XP);st.dungeonCompletions++;const completedPartyIds=party().map(c=>c.id);st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',partyIlvl:ilvl(),xpPerCharacter:ASHEN_VAULT_XP,partyIds:completedPartyIds,combatVersion:window.CellboundCombatReborn?.VERSION||'legacy'});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault cleared through Combat Reborn simulation. Each adventurer earned '+ASHEN_VAULT_XP+' XP.');run.xpGrowth.filter(x=>x.levels>0).forEach(x=>st.activity.push(x.name+' reached Level '+x.afterLevel+'.'));await Game.persistState();await syncPartyXpRecords(run.xpGrowth);window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'ashen-vault',partyIds:completedPartyIds}}));finish(true,STAGES[6]);appendRebornAnalysis($('#cb2dEnd'))
+ }catch(e){if(e&&e.message!=='cancelled')console.error('Ashen Vault Combat Reborn runtime',e)}
 }
+
 function lootRarityClass(item){return 'rarity-'+String(item?.rarity||'common').toLowerCase().replace(/[^a-z0-9-]/g,'')}
 function lootGearCard(item){
  const art=G?.artHTML?G.artHTML(item,78):(item.icon||'◇');
@@ -1023,7 +1197,7 @@ function finish(ok,s){
    '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>PROFESSION REAGENTS</span><small>Available immediately for crafting</small></div><div class="cb2d-loot-materials">'+(materials.length?materials.map(lootMaterialCard).join(''):'<div class="cb2d-loot-empty">No profession reagents recovered.</div>')+'</div></section>'+
    '<footer class="cb2d-loot-actions"><button data-loot-bank>VIEW GUILD BANK</button><button class="primary" data-loot-return>RETURN TO GUILD →</button></footer>'+
    '</div>';
- animateXpGrowth(e);e.querySelector('[data-loot-bank]').onclick=()=>{close();Game.switchView('bank')};
+ animateXpGrowth(e);appendRebornAnalysis(e);e.querySelector('[data-loot-bank]').onclick=()=>{close();Game.switchView('bank')};
  e.querySelector('[data-loot-return]').onclick=()=>{close();Game.switchView('content')}
 }
 async function override(t,b){
