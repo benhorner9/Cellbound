@@ -299,10 +299,10 @@ function unitMarkup(c,i){
   else if(profile==='melee')pos=[27,42+melee.indexOf(c)*16];
   else if(profile==='ranged')pos=[21,30+ranged.indexOf(c)*40];
   else pos=[15,64];
-  return '<div class="td-unit party '+r+' profile-'+profile+' '+tutorialClassKey(c)+'" data-td-party="'+c.id+'" style="left:'+pos[0]+'%;top:'+pos[1]+'%"><i></i><span>'+esc(c.name)+'</span><em><b style="width:100%"></b></em></div>';
+  return '<div class="td-unit party '+r+' profile-'+profile+' '+tutorialClassKey(c)+'" data-td-party="'+c.id+'" style="left:'+pos[0]+'%;top:'+pos[1]+'%"><i></i><span>'+esc(c.name)+'<small class="td-unit-meta">Lv. '+Math.max(1,Number(c.level)||1)+'</small></span><em><b style="width:100%"></b></em></div>';
 }
 function renderDungeonRunning(){
-  const body='<div class="td-wrap"><div class="td-top"><div><small>ZELTIRA TRAINING DUNGEON</small><h2 id="tdEncounter">Entering the Hollows…</h2></div><b class="td-safe">COMBAT REBORN · TRAINING PROTECTIONS</b></div><div class="td-route"><span class="active" data-td-route="0">1 · Rootling Nest</span><span data-td-route="1">2 · Collapsed Gallery</span><span data-td-route="2">3 · Hollow Warden</span></div><div class="td-arena theme-hollows room-rootling-nest" id="tdArena"><div class="td-floor"></div><div class="td-environment" id="tdEnvironment"></div><div class="td-room-tag" id="tdRoomTag"></div><div id="tdEnemies"></div><div id="tdParty">'+state().roster.map(unitMarkup).join('')+'</div><div class="td-callout" id="tdCallout">Your party advances together.</div><div id="tdLesson" class="td-lesson" hidden></div></div><div class="td-bottom"><div class="td-actions"><div><i class="on-role tank"></i><b>Tank</b><span id="tdTankAction">Taking point</span></div><div><i class="on-role healer"></i><b>Healer</b><span id="tdHealAction">Following</span></div><div><i class="on-role dps"></i><b>Damage</b><span id="tdDpsAction">Acquiring targets</span></div></div><div class="td-feed" id="tdFeed">Zeltira gate closes behind the party.</div></div></div>';
+  const body='<div class="td-wrap"><div class="td-top"><div><small>ZELTIRA TRAINING DUNGEON · LEVEL 1</small><h2 id="tdEncounter">Entering the Hollows…</h2></div><b class="td-safe">COMBAT REBORN · TRAINING PROTECTIONS</b></div><div class="td-route"><span class="active" data-td-route="0">1 · Rootling Nest</span><span data-td-route="1">2 · Collapsed Gallery</span><span data-td-route="2">3 · Hollow Warden</span></div><div class="td-arena theme-hollows room-rootling-nest" id="tdArena"><div class="td-floor"></div><div class="td-environment" id="tdEnvironment"></div><div class="td-room-tag" id="tdRoomTag"></div><div id="tdEnemies"></div><div id="tdParty">'+state().roster.map(unitMarkup).join('')+'</div><div class="td-callout" id="tdCallout">Your party advances together.</div><div id="tdLesson" class="td-lesson" hidden></div></div><div class="td-bottom"><div class="td-actions"><div><i class="on-role tank"></i><b>Tank</b><span id="tdTankAction">Taking point</span></div><div><i class="on-role healer"></i><b>Healer</b><span id="tdHealAction">Following</span></div><div><i class="on-role dps"></i><b>Damage</b><span id="tdDpsAction">Acquiring targets</span></div></div><div class="td-feed" id="tdFeed">Zeltira gate closes behind the party.</div></div></div>';
   ensureRoot().innerHTML=chrome(body,'dungeon-running');
   const my=++tutorialToken;setTimeout(()=>runTutorialDungeon(my),350);
 }
@@ -401,11 +401,13 @@ function renderTdEnvironment(index){
   if(tag)tag.innerHTML='<b>'+esc(cfg.label)+'</b><small>'+esc(cfg.ambience)+'</small>'
 }
 
-function spawnTdEnemies(names,boss,maxHealth){
+function spawnTdEnemies(encounter){
   const root=$('#tdEnemies');if(!root)return;
+  const names=encounter.mobs||[],baseLevel=Math.max(1,Number(encounter.level)||1),types=encounter.enemyTypes||[];
   root.innerHTML=names.map((n,i)=>{
-    const y=names.length===1?50:36+i*(28/Math.max(1,names.length-1));
-    return '<div class="td-unit enemy '+(boss?'boss':'')+'" data-td-enemy="'+i+'" data-hp="'+(Number(maxHealth)|| (boss?260:95))+'" data-max="'+(Number(maxHealth)|| (boss?260:95))+'" style="left:72%;top:'+y+'%"><i></i><span>'+esc(n)+'</span><em><b style="width:100%"></b></em></div>';
+    const y=names.length===1?50:36+i*(28/Math.max(1,names.length-1)),type=String(types[i]||((encounter.boss||encounter.combatKind==='boss')?'boss':'trash')).toLowerCase();
+    const labels={trash:'TRASH',elite:'ELITE',boss:'BOSS',add:'ADD'},meta='Lv. '+baseLevel+' · '+(labels[type]||type.toUpperCase()),isBoss=type==='boss';
+    return '<div class="td-unit enemy '+(isBoss?'boss':'')+'" data-td-enemy="'+i+'" data-hp="'+(Number(encounter.enemyHealth)|| (isBoss?260:95))+'" data-max="'+(Number(encounter.enemyHealth)|| (isBoss?260:95))+'" style="left:72%;top:'+y+'%"><i></i><span>'+esc(n)+'<small class="td-unit-meta">'+esc(meta)+'</small></span><em><b style="width:100%"></b></em></div>';
   }).join('');
 }
 function setTdHp(index,hp){
@@ -511,7 +513,7 @@ async function tdPlayCombat(result,my){
   return result.outcome==='victory'
 }
 async function fightTdPack(encounter,my){
-  spawnTdEnemies(encounter.mobs,encounter.boss,encounter.enemyHealth);await sleep(350);
+  spawnTdEnemies(encounter);await sleep(350);
   const C=window.CellboundCombatReborn;if(!C?.simulate)throw new Error('Combat Reborn engine unavailable');
   const roster=state().roster;
   const combatParty=roster.map(c=>Object.assign({},c,{power:Math.max(Number(c.power)||1,30),_combatHealthPct:100}));
@@ -519,7 +521,7 @@ async function fightTdPack(encounter,my){
     party:combatParty,
     encounter:{
       id:encounter.id,title:encounter.name,kind:encounter.combatKind||(encounter.boss?'boss':'trash'),
-      enemies:[...encounter.mobs],enemyHealth:encounter.enemyHealth,
+      level:encounter.level||1,enemyTypes:encounter.enemyTypes||null,enemies:[...encounter.mobs],enemyHealth:encounter.enemyHealth,
       mechanics:encounter.mechanics||[]
     },
     tactics:{interruptPriority:'high',addPriority:'immediate',defensiveUsage:'aggressive',pullStyle:'safe',movementDiscipline:'safety'},
@@ -537,9 +539,9 @@ async function fightTdPack(encounter,my){
 async function runTutorialDungeon(my){
   if(my!==tutorialToken||onboarding().stage!=='dungeon-running')return;
   const encounters=[
-    {id:'rootling-nest',name:'Rootling Nest',mobs:['Rootling','Rootling'],boss:false,enemyHealth:105,mechanics:[]},
-    {id:'collapsed-gallery',name:'Collapsed Gallery',mobs:['Cell-Sick Marauder'],boss:false,combatKind:'boss',enemyHealth:420,mechanics:[['Hollow Scream','interrupt',1800]]},
-    {id:'hollow-warden',name:'Hollow Warden',mobs:['The Hollow Warden'],boss:true,enemyHealth:520,mechanics:[['Rootbound Cleave','cone',1700]]}
+    {id:'rootling-nest',name:'Rootling Nest',level:1,enemyTypes:['trash','trash'],mobs:['Rootling','Rootling'],boss:false,enemyHealth:105,mechanics:[]},
+    {id:'collapsed-gallery',name:'Collapsed Gallery',level:1,enemyTypes:['elite'],mobs:['Cell-Sick Marauder'],boss:false,combatKind:'boss',enemyHealth:420,mechanics:[['Hollow Scream','interrupt',1800]]},
+    {id:'hollow-warden',name:'Hollow Warden',level:1,enemyTypes:['boss'],mobs:['The Hollow Warden'],boss:true,enemyHealth:520,mechanics:[['Rootbound Cleave','cone',1700]]}
   ];
   for(let i=0;i<encounters.length;i++){
     if(my!==tutorialToken)return;
