@@ -60,11 +60,8 @@ function readyGuidance(cfg){
  return'Party is '+Math.abs(gap)+' Item Levels below the recommendation. You may still attempt unlocked content, but mistakes will be more punishing.'
 }
 function lootNames(id){
- const d=D.DUNGEONS[id],unique=(d.lootTable||[]).map(key=>D.UNIQUE_ITEMS[key]).filter(Boolean);
- const base=id==='ashen-vault'
-   ?['Ashguard equipment','Vaultforged equipment']
-   :['Saintglass / Hawkeye / Starweave equipment'];
- return [...base,...unique.map(x=>x.name)].slice(0,5)
+ const d=D.DUNGEONS[id];
+ return (d.lootTable||[]).map(key=>D.UNIQUE_ITEMS[key]?.name||G.byId?.(key)?.name||key).slice(0,5)
 }
 function recentFor(id){return(server.recentRuns||[]).filter(x=>x.dungeon_id===id).slice(0,5)}
 function dungeonCard(id){
@@ -183,15 +180,17 @@ function compatibleUnique(item,party){
  if(!item)return false;if(item.classes==='all'||!item.classes)return true;
  return party.some(c=>Array.isArray(item.classes)&&item.classes.includes(c.class))
 }
-function rollPersonalLoot(dungeonId){
- const cfg=currentConfig(dungeonId),party=Game?.getPartyCharacters?.()||[],uniqueKeys=cfg.dungeon.lootTable.filter(x=>D.UNIQUE_ITEMS[x]);
+function rollPersonalLoot(dungeonId,bossId=null){
+ const cfg=currentConfig(dungeonId),party=Game?.getPartyCharacters?.()||[],sourceKeys=(bossId&&cfg.dungeon.bossDrops?.[bossId])||cfg.dungeon.lootTable||[],uniqueKeys=sourceKeys.filter(x=>D.UNIQUE_ITEMS[x]);
  const uniqueChance=cfg.difficulty==='normal'?.002:cfg.difficulty==='heroic'?.025:Math.min(.09,.035+cfg.tier*.0035);
  if(uniqueKeys.length&&Math.random()<uniqueChance){
    const candidates=uniqueKeys.map(x=>D.UNIQUE_ITEMS[x]).filter(x=>compatibleUnique(x,party));
    if(candidates.length)return{...candidates[Math.floor(Math.random()*candidates.length)],rollId:'unique-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),unique:true}
  }
+ const fixed=sourceKeys.map(key=>G.byId?.(key)).filter(Boolean).filter(item=>party.some(c=>item.class===c.class));
  const tier=rarityTierFor(cfg),pool=G.items.filter(x=>x.tier===tier&&x.enabled&&party.some(c=>x.class===c.class));
- const base=pool[Math.floor(Math.random()*Math.max(1,pool.length))]||G.items.find(x=>x.tier===tier&&x.enabled);
+ const targetChance=bossId&&fixed.length?.55:0;
+ const base=(targetChance&&Math.random()<targetChance?fixed[Math.floor(Math.random()*fixed.length)]:null)||pool[Math.floor(Math.random()*Math.max(1,pool.length))]||G.items.find(x=>x.tier===tier&&x.enabled);
  if(!base)return null;
  const item=G.rollItemAffixes({...base,source:cfg.dungeon.name+' · '+cfg.diff.name});
  const cap=D.rewardBand(cfg.difficulty,cfg.tier).powerCap;
