@@ -567,28 +567,38 @@ function resolveMechanic(ctx,e,m,token){
  mechanicStat(ctx,m.type||'unknown',false);scheduleNextMechanic(ctx);
 }
 function startMechanic(ctx,m){
- const e=livingEnemies(ctx).find(x=>x.kind==='boss')||livingEnemies(ctx)[0];if(!e)return;
+ const enemy=livingEnemies(ctx).find(x=>x.kind==='boss')||livingEnemies(ctx)[0];if(!enemy)return;
  const token='m'+(++ctx.mechanicSeq),duration=Math.max(700,Number(m.duration)||1600);
- const castState={token,enemy:e.id,name:m.name,type:m.type,interrupted:false,ends:ctx.time+duration,responses:{},targetId:null};
- emit(ctx,'MECHANIC_TELEGRAPH',{source:e.id,ability:m.name,result:'telegraph',position:copy(e.position),payload:{mechanicType:m.type,duration,token,interruptible:m.type==='interrupt'}});
- emit(ctx,'CAST_START',{source:e.id,ability:m.name,result:'enemy',payload:{duration,interruptible:m.type==='interrupt',mechanicType:m.type,token}});
- ctx.activeEnemyCast=castState;
- if(m.type==='interrupt')tryInterrupt(ctx,e,m,token);
- else if(m.type==='cone'){
-  const tank=livingPlayers(ctx).find(p=>p.role==='tank');
-  livingPlayers(ctx).forEach(p=>{
-   if(p.role==='tank'){castState.responses[p.id]=true;planMovement(ctx,p,'cone',e);return}
-   const success=ctx.rng()<reactionChance(ctx,p,'cone');castState.responses[p.id]=success;if(success)planMovement(ctx,p,'cone',e);
-  });
-  if(tank){e.target=tank.id;updateFacing(e,tank)}
- }else if(m.type==='circle'||m.type==='circles'){
-  livingPlayers(ctx).forEach(p=>{const success=ctx.rng()<reactionChance(ctx,p,m.type);castState.responses[p.id]=success;if(success)planMovement(ctx,p,m.type,e)});
+ const castState={token,enemy:enemy.id,name:m.name,type:m.type,interrupted:false,ends:ctx.time+duration,responses:{},targetId:null,targetIds:[]};
+ const live=livingPlayers(ctx);
+ if(m.type==='cone'){
+  const tank=live.find(p=>p.role==='tank')||live[0];castState.targetId=tank?.id||null;castState.targetIds=tank?[tank.id]:[];
+  live.forEach(p=>{if(p.role==='tank')castState.responses[p.id]=true;else castState.responses[p.id]=ctx.rng()<reactionChance(ctx,p,'cone')});
+ }else if(m.type==='circle'){
+  castState.targetId=enemy.id;castState.targetIds=[enemy.id];
+  live.forEach(p=>castState.responses[p.id]=ctx.rng()<reactionChance(ctx,p,'circle'));
+ }else if(m.type==='circles'){
+  castState.targetIds=live.map(p=>p.id);
+  live.forEach(p=>castState.responses[p.id]=ctx.rng()<reactionChance(ctx,p,'circles'));
  }else if(m.type==='line'){
-  const candidates=livingPlayers(ctx).filter(p=>p.role!=='tank'),target=candidates[Math.floor(ctx.rng()*Math.max(1,candidates.length))]||livingPlayers(ctx)[0];
-  castState.targetId=target?.id||null;
-  if(target){const success=ctx.rng()<reactionChance(ctx,target,'line');castState.responses[target.id]=success;if(success)planMovement(ctx,target,'line',e)}
+  const candidates=live.filter(p=>p.role!=='tank'),target=candidates[Math.floor(ctx.rng()*Math.max(1,candidates.length))]||live[0];
+  castState.targetId=target?.id||null;castState.targetIds=target?[target.id]:[];
+  if(target)castState.responses[target.id]=ctx.rng()<reactionChance(ctx,target,'line');
  }
- schedule(ctx,ctx.time+duration,()=>resolveMechanic(ctx,e,m,token),'mechanic-resolve');
+ emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:castState.targetId,ability:m.name,result:'telegraph',position:copy(enemy.position),payload:{mechanicType:m.type,duration,token,interruptible:m.type==='interrupt',targetId:castState.targetId,targetIds:copy(castState.targetIds),responses:copy(castState.responses)}});
+ emit(ctx,'CAST_START',{source:enemy.id,target:castState.targetId,ability:m.name,result:'enemy',payload:{duration,interruptible:m.type==='interrupt',mechanicType:m.type,token,targetId:castState.targetId,targetIds:copy(castState.targetIds)}});
+ ctx.activeEnemyCast=castState;
+ if(m.type==='interrupt')tryInterrupt(ctx,enemy,m,token);
+ else if(m.type==='cone'){
+  const tank=getUnit(ctx,castState.targetId);
+  live.forEach(p=>{if(p.role==='tank'||castState.responses[p.id])planMovement(ctx,p,'cone',enemy)});
+  if(tank){enemy.target=tank.id;updateFacing(enemy,tank)}
+ }else if(m.type==='circle'||m.type==='circles'){
+  live.forEach(p=>{if(castState.responses[p.id])planMovement(ctx,p,m.type,enemy)});
+ }else if(m.type==='line'){
+  const target=getUnit(ctx,castState.targetId);if(target&&castState.responses[target.id])planMovement(ctx,target,'line',enemy)
+ }
+ schedule(ctx,ctx.time+duration,()=>resolveMechanic(ctx,enemy,m,token),'mechanic-resolve');
 }
 function scheduleNextMechanic(ctx){
  if(ctx.finished)return;
