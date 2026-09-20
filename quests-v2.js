@@ -803,7 +803,7 @@ async function runSealGuardian(){
   return runQuest2DFight({
     quest:QUEST.title,title:'Guardian of the Seal',location:'The Hollow Seal',
     ambience:'The misaligned rings grind together. A shape peels itself out of the stone and blocks the chamber.',
-    phases:['Awakening','Sealbreaker'],enemies:['Hollow Sentinel'],eliteIndex:0,combat:{kind:'boss',enemyHealth:900,mechanics:[['Stone Choir','interrupt',1800],['Sealbreaker Line','line',1600],['Hollow Sweep','cone',1700]]},
+    phases:['Awakening','Sealbreaker'],enemies:['Hollow Sentinel'],eliteIndex:0,combat:{kind:'boss',enemyHealth:1350,mechanics:[['Stone Choir','interrupt',1800],['Sealbreaker Line','line',1600],['Hollow Sweep','cone',1700]]},
     completeText:'The Sentinel collapses into inert glass. The seal rings remain, waiting to be aligned correctly.',
     script:async api=>{
       await api.phase(0,'The Hollow Sentinel tears itself free from the door.');
