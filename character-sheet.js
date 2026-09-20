@@ -219,7 +219,11 @@ function possibleSlots(item){
   if(item.slot==='Weapon')return ['Weapon','OffHand'];
   return [item.slot];
 }
-function canUse(c,item){return item.classes==='all'||!item.classes||item.classes.includes(c.class)}
+function canUse(c,item){
+  const classOk=item.classes==='all'||!item.classes||item.classes.includes(c.class);
+  const roleOk=!item.relicRole||roleOf(c)===item.relicRole;
+  return classOk&&roleOk
+}
 function slotPicker(state,c,slot){
   const candidates=(state.bank||[]).filter(item=>canUse(c,item)&&possibleSlots(item).includes(slot));
   const current=c.equipment?.[slot];
