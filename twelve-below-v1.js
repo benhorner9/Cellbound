@@ -49,6 +49,12 @@ function eventState(){
  return s.twelveBelow
 }
 function attemptsLeft(){const e=eventState();return e?Math.max(0,DAILY_ATTEMPTS-e.attemptsUsed):0}
+function persistQuietly(){
+ try{
+  const task=Game.persistState?.();
+  if(task&&typeof task.catch==='function')task.catch(error=>console.warn('Twelve Below background save failed',error))
+ }catch(error){console.warn('Twelve Below background save failed',error)}
+}
 function partyReady(){
  const chars=party();if(chars.length!==5)return{ok:false,reason:'Build a complete active party first.'};
  if(chars.some(c=>Game.isUnavailable?.(c)))return{ok:false,reason:'A party member is recovering from Cell Shock.'};
@@ -182,7 +188,7 @@ function chooseRelic(){
  const roles=new Set(party().map(roleOf)),pool=RELICS.filter(r=>roles.has(r.relicRole));
  return pool[Math.floor(Math.random()*Math.max(1,pool.length))]||RELICS[0]
 }
-async function applyRewards(result){
+function applyRewards(result){
  const e=eventState(),kills=result.kills,band=rewardBand(kills),gold=kills*42+(kills>=6?80:0)+(kills>=10?120:0),renown=kills*11+(kills===12?60:0),shards=kills*2+Math.floor(kills/3)*3;
  state().gold=(Number(state().gold)||0)+gold;state().renown=(Number(state().renown)||0)+renown;if(shards)Game.addMaterial?.('cell-shards',shards);
  let relic=null;const firstFull=kills===12&&!e.firstFullClear;
@@ -192,19 +198,23 @@ async function applyRewards(result){
  e.history.unshift(e.lastRun);e.history=e.history.slice(0,20);
  state().activity.push('The Twelve Below: '+kills+'/12 defeated · '+band.label+(relic?' · '+relic.name+' recovered.':'.'));
  if(result.outcome==='defeat')Game.applyPartyCellShock?.(25);
- Game.save?.();await Game.persistState?.();
+ Game.save?.();persistQuietly();
  return{band,gold,renown,shards,relic}
 }
 
-async function startRun(){
+function startRun(){
  const gate=partyReady();if(!gate.ok||attemptsLeft()<=0)return;
- const e=eventState();e.attemptsUsed++;Game.save?.();await Game.persistState?.();
  const root=ensureBackdrop(),btn=root.querySelector('[data-tb-start]');if(btn){btn.disabled=true;btn.textContent='OPENING THE FIRST TOMB…'}
+ const e=eventState();e.attemptsUsed++;Game.save?.();persistQuietly();
  let result;
- try{result=simulateRun()}catch(error){console.error(error);e.attemptsUsed=Math.max(0,e.attemptsUsed-1);Game.save?.();await Game.persistState?.();alert(error.message||'The burial ground could not be entered.');openBriefing();return}
- const rewards=await applyRewards(result);
- run={result,rewards,damage:{},healing:{},threat:{},activeBosses:new Set(),defeated:new Set(),elapsed:0};
- renderLive();playTimeline(result.timeline)
+ try{result=simulateRun()}catch(error){
+  console.error(error);e.attemptsUsed=Math.max(0,e.attemptsUsed-1);Game.save?.();persistQuietly();
+  if(btn){btn.disabled=false;btn.textContent='BEGIN SURVIVAL →'}
+  alert(error.message||'The burial ground could not be entered.');openBriefing();return
+ }
+ run={result,rewards:null,rewardsApplied:false,damage:{},healing:{},threat:{},activeBosses:new Set(),defeated:new Set(),elapsed:0};
+ renderLive();
+ requestAnimationFrame(()=>playTimeline(result.timeline))
 }
 
 function tombMarkup(){
@@ -340,7 +350,9 @@ async function playTimeline(events){
   const wait=Math.max(0,(Number(e.timestamp||0)-last)/playSpeed);if(wait)await new Promise(r=>setTimeout(r,wait));
   if(token!==playToken)return;run.elapsed=Number(e.timestamp)||0;resetClockAnchor();handleEvent(e);last=Number(e.timestamp)||0
  }
- stopClock();showResults()
+ stopClock();
+ if(run&&!run.rewardsApplied){run.rewards=applyRewards(run.result);run.rewardsApplied=true}
+ showResults()
 }
 function resultPlayerRows(){
  const map=run.result.totals.players;return party().map(c=>{const p=map['p-'+c.id]||{damage:0,healing:0,damageTaken:0,deaths:0};return'<div class="cbr-analysis-row"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+' · '+Math.round(p.damageTaken).toLocaleString()+' damage taken · '+p.deaths+' deaths</small></span><strong>'+Math.round(p.damage).toLocaleString()+' dmg</strong></div>'}).join('')
