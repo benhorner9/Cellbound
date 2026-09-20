@@ -584,11 +584,11 @@ async function complete(){
  '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>GEAR ACQUIRED</span><small>Stored automatically in the Guild Bank</small></div><div class="cb2d-loot-gear">'+(lootGear.length?lootGear.map((item,i)=>hsLootGearCard(item,i===1?'FIRST-CLEAR RELIC':'DUNGEON DROP')).join(''):'<div class="cb2d-loot-empty">No gear dropped.</div>')+'</div></section>'+
  '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>PROFESSION REAGENTS</span><small>Available immediately for crafting</small></div><div class="cb2d-loot-materials">'+materials.map(hsLootMaterialCard).join('')+'</div></section>'+
  hsCombatAnalysisHTML()+
- '<footer class="cb2d-loot-actions"><button data-loot-bank>VIEW GUILD BANK</button><button class="primary" data-return>RETURN TO DUNGEON JOURNAL →</button></footer></div>';
+ '<footer class="cb2d-loot-actions"><button data-loot-bank>VIEW GUILD BANK</button><button class="primary" data-loot-return>RETURN TO GUILD →</button></footer></div>';
  hsAnimateXp(end);
  end.querySelector('[data-hs-replay]')?.addEventListener('click',hsReplayFinalFight);
  end.querySelector('[data-loot-bank]').onclick=()=>{close();Game.switchView?.('bank')};
- end.querySelector('[data-return]').onclick=()=>{close();Game.renderAll?.();renderCard()}
+ end.querySelector('[data-loot-return]').onclick=()=>{close();Game.switchView?.('content')}
 }
 function init(){Game=window.CellboundGame;G=window.CellboundGear;P=window.CellboundProfessions;if(!Game?.ready){setTimeout(init,100);return}db=Game.getSupabase?.();renderCard();document.querySelector('.nav-btn[data-view="content"]')?.addEventListener('click',renderCard);window.CellboundHollowSanctum={open:openDungeon,renderCard,relic:RELIC}}
 init();
