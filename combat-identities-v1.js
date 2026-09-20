@@ -480,20 +480,90 @@ function livingEnemies(ctx){return ctx.enemies.filter(x=>x.alive)}
 function getUnit(ctx,id){return ctx.units[id]||null}
 function inRange(a,b,r){return dist(a.position,b.position)<=r}
 function updateFacing(a,b){if(!a||!b)return;a.facing=Math.atan2(b.position.y-a.position.y,b.position.x-a.position.x)}
+
+function environmentBlockers(ctx){return Array.isArray(ctx?.environment?.blockers)?ctx.environment.blockers:[]}
+function blockerBounds(b,pad=0){
+ const w=Math.max(0,Number(b?.w)||0)/2+pad,h=Math.max(0,Number(b?.h)||0)/2+pad,x=Number(b?.x)||0,y=Number(b?.y)||0;
+ return{left:x-w,right:x+w,top:y-h,bottom:y+h}
+}
+function pointInRect(p,r){return !!p&&p.x>=r.left&&p.x<=r.right&&p.y>=r.top&&p.y<=r.bottom}
+function segmentsCross(a,b,c,d){
+ const cross=(p,q,r)=>(q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x);
+ const on=(p,q,r)=>Math.min(p.x,r.x)-.0001<=q.x&&q.x<=Math.max(p.x,r.x)+.0001&&Math.min(p.y,r.y)-.0001<=q.y&&q.y<=Math.max(p.y,r.y)+.0001;
+ const o1=cross(a,b,c),o2=cross(a,b,d),o3=cross(c,d,a),o4=cross(c,d,b);
+ if(((o1>0&&o2<0)||(o1<0&&o2>0))&&((o3>0&&o4<0)||(o3<0&&o4>0)))return true;
+ if(Math.abs(o1)<.0001&&on(a,c,b))return true;if(Math.abs(o2)<.0001&&on(a,d,b))return true;
+ if(Math.abs(o3)<.0001&&on(c,a,d))return true;if(Math.abs(o4)<.0001&&on(c,b,d))return true;
+ return false
+}
+function lineHitsRect(a,b,r){
+ if(pointInRect(a,r)||pointInRect(b,r))return true;
+ const tl={x:r.left,y:r.top},tr={x:r.right,y:r.top},br={x:r.right,y:r.bottom},bl={x:r.left,y:r.bottom};
+ return segmentsCross(a,b,tl,tr)||segmentsCross(a,b,tr,br)||segmentsCross(a,b,br,bl)||segmentsCross(a,b,bl,tl)
+}
+function segmentBlocker(ctx,a,b,kind='movement',pad=0){
+ return environmentBlockers(ctx).find(blocker=>{
+   if(kind==='los'&&blocker.blocksLos===false)return false;
+   if(kind==='movement'&&blocker.blocksMovement===false)return false;
+   return lineHitsRect(a,b,blockerBounds(blocker,pad))
+ })||null
+}
+function hasLineOfSight(ctx,a,b){
+ const ap=a?.position||a,bp=b?.position||b;if(!ap||!bp)return false;
+ return !segmentBlocker(ctx,ap,bp,'los',0)
+}
+function openPosition(ctx,pos,pad=1.35){
+ let p={x:clamp(Number(pos?.x)||50,4,96),y:clamp(Number(pos?.y)||50,5,95)};
+ for(const blocker of environmentBlockers(ctx)){
+   if(blocker.blocksMovement===false)continue;
+   const r=blockerBounds(blocker,pad);if(!pointInRect(p,r))continue;
+   const options=[
+    {x:r.left-.2,y:p.y},{x:r.right+.2,y:p.y},{x:p.x,y:r.top-.2},{x:p.x,y:r.bottom+.2}
+   ].map(q=>({x:clamp(q.x,4,96),y:clamp(q.y,5,95)}));
+   p=options.sort((a,b)=>dist(a,pos)-dist(b,pos))[0]
+ }
+ return p
+}
+function navigationWaypoint(ctx,from,destination){
+ const dest=openPosition(ctx,destination,1.35),hit=segmentBlocker(ctx,from,dest,'movement',1.25);
+ if(!hit)return{point:dest,pathing:false,final:dest};
+ const r=blockerBounds(hit,2.2),corners=[
+  {x:r.left,y:r.top},{x:r.left,y:r.bottom},{x:r.right,y:r.top},{x:r.right,y:r.bottom}
+ ].map(p=>({x:clamp(p.x,4,96),y:clamp(p.y,5,95)}))
+  .filter(p=>!environmentBlockers(ctx).some(b=>b.blocksMovement!==false&&pointInRect(p,blockerBounds(b,.7))))
+  .filter(p=>!segmentBlocker(ctx,from,p,'movement',.65));
+ if(!corners.length)return{point:dest,pathing:false,final:dest};
+ const point=corners.sort((a,b)=>{
+   const ap=dist(from,a)+dist(a,dest)+(segmentBlocker(ctx,a,dest,'movement',.65)?18:0);
+   const bp=dist(from,b)+dist(b,dest)+(segmentBlocker(ctx,b,dest,'movement',.65)?18:0);
+   return ap-bp
+ })[0];
+ return{point,pathing:true,final:dest,blocker:hit.id||'environment'}
+}
+function visibleCastPoint(ctx,u,target,range,preferred){
+ const maxRange=Math.max(2,Number(range)||5),pref=openPosition(ctx,preferred||u.position,1.35);
+ const valid=p=>dist(p,target.position)<=maxRange&&!segmentBlocker(ctx,p,target.position,'los',0)&&!environmentBlockers(ctx).some(b=>b.blocksMovement!==false&&pointInRect(p,blockerBounds(b,1.1)));
+ if(valid(pref))return pref;
+ const base=Math.atan2(u.position.y-target.position.y,u.position.x-target.position.x),radius=maxRange<=7?Math.min(4.35,maxRange-.35):Math.min(20,Math.max(8,maxRange*.68));
+ const offsets=[0,.38,-.38,.76,-.76,1.15,-1.15,1.55,-1.55,2.1,-2.1,Math.PI];
+ const candidates=offsets.map(off=>openPosition(ctx,{x:target.position.x+Math.cos(base+off)*radius,y:target.position.y+Math.sin(base+off)*radius},1.35)).filter(valid);
+ return candidates.sort((a,b)=>dist(u.position,a)-dist(u.position,b))[0]||pref
+}
+
 function moveTo(ctx,u,pos,duration=420,reason='positioning'){
  if(!u?.alive)return false;
- const from=copy(u.position),to={x:clamp(Number(pos.x)||50,4,96),y:clamp(Number(pos.y)||50,5,95)},travel=Math.max(80,Number(duration)||420);
+ const from=copy(u.position),route=navigationWaypoint(ctx,from,pos),to=route.point,travel=Math.max(80,Number(duration)||420);
  if(dist(from,to)<.5)return true;
  if(u.currentCast){
   emit(ctx,'CAST_CANCELLED',{source:u.id,target:u.currentCast.target,ability:u.currentCast.ability,result:'movement',position:from});
   u.currentCast=null;
  }
  const token=++u.moveToken;u.movingUntil=ctx.time+travel;
- emit(ctx,'MOVEMENT_START',{source:u.id,target:u.target,position:from,result:reason,payload:{to,duration:travel}});
+ emit(ctx,'MOVEMENT_START',{source:u.id,target:u.target,position:from,result:reason,payload:{to,duration:travel,navigation:route.pathing?'waypoint':'direct',finalTo:route.final,blocker:route.blocker||null}});
  schedule(ctx,ctx.time+travel,()=>{
   if(!u.alive||u.moveToken!==token)return;
   u.position=to;u.movingUntil=0;
-  emit(ctx,'MOVEMENT_END',{source:u.id,target:u.target,position:copy(to),result:reason,payload:{from,duration:travel}})
+  emit(ctx,'MOVEMENT_END',{source:u.id,target:u.target,position:copy(to),result:reason,payload:{from,duration:travel,navigation:route.pathing?'waypoint':'direct',finalTo:route.final,blocker:route.blocker||null}})
  },'movement-end');
  return false
 }
@@ -530,19 +600,19 @@ function rangedFormationPoint(ctx,u,target,range){
  return{x:target.position.x+Math.cos(angle)*desired,y:target.position.y+Math.sin(angle)*desired}
 }
 function moveIntoRange(ctx,u,target,range){
- const r=Math.max(2,Number(range)||5);
+ const r=Math.max(2,Number(range)||5),los=hasLineOfSight(ctx,u,target);
  if(r<=7){
-   const desired=meleeFormationPoint(ctx,u,target),slotDistance=dist(u.position,desired),combatRange=inRange(u,target,r);
+   const formation=meleeFormationPoint(ctx,u,target),desired=visibleCastPoint(ctx,u,target,r,formation),slotDistance=dist(u.position,desired),combatRange=inRange(u,target,r);
    const tolerance=u.role==='tank'?1.75:2.25;
-   if(combatRange&&slotDistance<=tolerance)return true;
-   if(combatRange&&target.movingUntil>ctx.time&&slotDistance<=3.25)return true;
-   moveTo(ctx,u,desired,520,u.role==='tank'?'tank positioning':'melee formation');
+   if(combatRange&&los&&slotDistance<=tolerance)return true;
+   if(combatRange&&los&&target.movingUntil>ctx.time&&slotDistance<=3.25)return true;
+   moveTo(ctx,u,desired,520,!los?'line of sight':u.role==='tank'?'tank positioning':'melee formation');
    return false
  }
- const desired=rangedFormationPoint(ctx,u,target,r);
- if(inRange(u,target,r)&&dist(u.position,desired)<=3.5)return true;
- if(inRange(u,target,r)&&target.movingUntil>ctx.time)return true;
- moveTo(ctx,u,desired,520,'move into range');
+ const formation=rangedFormationPoint(ctx,u,target,r),desired=visibleCastPoint(ctx,u,target,r,formation);
+ if(inRange(u,target,r)&&los&&dist(u.position,desired)<=3.5)return true;
+ if(inRange(u,target,r)&&los&&target.movingUntil>ctx.time)return true;
+ moveTo(ctx,u,desired,520,!los?'line of sight':'move into range');
  return false
 }
 function cooldownReady(u,a){return (u.cooldowns[a.id]||0)<=0}
@@ -739,10 +809,11 @@ function finishAbility(ctx,u,a,target){
  if(!u.alive||!target?.alive)return;
  if(u.currentCast&&u.currentCast.ability!==a.name)return;
  u.currentCast=null;
+ if(!hasLineOfSight(ctx,u,target)){emit(ctx,'ABILITY_FINISH',{source:u.id,target:target.id,ability:a.name,result:'failed-line-of-sight',position:copy(u.position),payload:{kind:a.kind,castTime:Number(a.cast)||0}});return}
  emit(ctx,'ABILITY_FINISH',{source:u.id,target:target.id,ability:a.name,result:'resolved',position:copy(u.position),payload:{kind:a.kind,castTime:Number(a.cast)||0}});
  if(a.kind==='heal'||a.kind==='group-heal'){
   const amount=(a.heal||24)*(1+Math.min(.28,u.power*.01))*(.92+ctx.rng()*.16);
-  if(a.kind==='group-heal')livingPlayers(ctx).forEach(p=>doHeal(ctx,u,p,amount,a.name));
+  if(a.kind==='group-heal')livingPlayers(ctx).filter(p=>hasLineOfSight(ctx,u,p)).forEach(p=>doHeal(ctx,u,p,amount,a.name));
   else doHeal(ctx,u,target,amount,a.name);
   if(a.hot){
    applyStatus(ctx,u,target,{id:a.id+'-hot',name:a.name,kind:'buff',duration:3400,effect:{healingOverTime:a.hot}});
@@ -779,7 +850,7 @@ function playerAI(ctx,u){
   const loose=tankNeedsTaunt(ctx,u);
   if(loose){
    const taunt=u.abilities.find(a=>a.kind==='taunt'&&cooldownReady(u,a));
-   if(taunt&&inRange(u,loose,taunt.range||30)){executeTaunt(ctx,u,loose,taunt);return}
+   if(taunt&&inRange(u,loose,taunt.range||30)&&hasLineOfSight(ctx,u,loose)){executeTaunt(ctx,u,loose,taunt);return}
   }
   if(u.health/u.maxHealth<.48&&u.defensiveUntil<=0){
    u.defensiveUntil=5000;applyStatus(ctx,u,u,{id:'major-defensive',name:'Major Defensive',kind:'buff',duration:5000,effect:{damageReduction:.25}});
@@ -793,8 +864,8 @@ function enemyBasicAttack(ctx,e){
  if(!e.alive||ctx.time<e.movingUntil)return;
  const target=topThreatTarget(ctx,e)||livingPlayers(ctx)[0];if(!target)return;
  setAggro(ctx,e,target,'threat');
- if(!inRange(e,target,5)){
-  moveTo(ctx,e,nearestMeleePoint(target,e),320,'chase target');
+ if(!inRange(e,target,5)||!hasLineOfSight(ctx,e,target)){
+  moveTo(ctx,e,nearestMeleePoint(target,e),320,!hasLineOfSight(ctx,e,target)?'line of sight':'chase target');
   e.nextAttack=ctx.time+450;return;
  }
  updateFacing(e,target);
@@ -829,7 +900,7 @@ function planMovement(ctx,u,type,anchor){
 }
 function tryInterrupt(ctx,e,mechanic,castToken){
  const policy=ctx.tactics.interruptPriority;
- const candidates=livingPlayers(ctx).map(u=>({u,a:u.abilities.find(a=>a.kind==='interrupt'&&cooldownReady(u,a))})).filter(x=>x.a&&inRange(x.u,e,x.a.range||10));
+ const candidates=livingPlayers(ctx).map(u=>({u,a:u.abilities.find(a=>a.kind==='interrupt'&&cooldownReady(u,a))})).filter(x=>x.a&&inRange(x.u,e,x.a.range||10)&&hasLineOfSight(ctx,x.u,e));
  ctx.stats.interrupts.attempts++;
  if(!candidates.length){ctx.stats.interrupts.missedCritical++;return}
  const chosen=candidates.sort((a,b)=>(a.a.cd||0)-(b.a.cd||0))[0],u=chosen.u,a=chosen.a;
@@ -841,7 +912,7 @@ function tryInterrupt(ctx,e,mechanic,castToken){
   const cast=ctx.activeEnemyCast;
   const st=ctx.stats.players[u.id];st.interruptAttempts++;
   if(!cast||cast.token!==castToken||cast.interrupted){st.duplicateInterrupts++;ctx.stats.interrupts.duplicates++;emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'duplicate',payload:{interruptedAbility:mechanic.name,token:castToken}});return}
-  if(!u.alive||!inRange(u,e,a.range||10)||!cooldownReady(u,a)){ctx.stats.interrupts.missedCritical++;emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'failed',payload:{interruptedAbility:mechanic.name,token:castToken}});return}
+  if(!u.alive||!inRange(u,e,a.range||10)||!hasLineOfSight(ctx,u,e)||!cooldownReady(u,a)){ctx.stats.interrupts.missedCritical++;emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'failed',payload:{interruptedAbility:mechanic.name,token:castToken}});return}
   u.cooldowns[a.id]=a.cd||15000;cast.interrupted=true;ctx.activeEnemyCast=null;st.interrupts++;ctx.stats.interrupts.success++;
   emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'success',payload:{interruptedAbility:mechanic.name,token:castToken}});
  },'interrupt');
@@ -970,7 +1041,8 @@ function simulate(options={}){
   pullStyle:options.tactics?.pullStyle||options.tactics?.aggression||'normal',
   movementDiscipline:options.tactics?.movementDiscipline||'balanced'
  };
- const ctx={time:0,rng:rngFrom(seed),seed,encounter,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:0,mechanicSeq:0,addSeq:0,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
+ const environment=copy(encounter.environment||{blockers:[]});
+ const ctx={time:0,rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:0,mechanicSeq:0,addSeq:0,activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
  emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics}});
  players.forEach(u=>emitResourceState(ctx,u,'initial'));
  const tank=players.find(p=>p.role==='tank')||players[0];
@@ -1101,6 +1173,27 @@ function runSelfTests(){
   const events=r.events.filter(e=>e.type==='HEAL_RECEIVED'&&e.source==='p-gh'&&e.ability==='Light of Dawn');
   return new Set(events.map(e=>e.target)).size>=3
  });
+ r=simulate({party:[
+  {id:'lt',name:'Tank',class:'Warrior',spec:'Protection',power:24,level:10},
+  {id:'lh',name:'Healer',class:'Paladin',spec:'Holy',power:24,level:10},
+  {id:'ld1',name:'DPS One',class:'Warrior',spec:'Arms',power:24,level:10},
+  {id:'ld2',name:'DPS Two',class:'Rogue',spec:'Assassination',power:24,level:10},
+  {id:'ld3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:24,level:10}
+ ],encounter:{id:'los-healing',title:'LOS Healing',kind:'boss',enemies:['Wall Boss'],enemyHealth:1400,mechanics:[['Tank Cleave','cone',1400]],environment:{blockers:[{id:'stone-wall',x:30,y:32,w:5,h:24,blocksLos:true,blocksMovement:true}]}},seed:'los-healing'});
+ test('Environment Line of Sight',()=>{
+  const firstHeal=r.events.find(e=>e.type==='HEAL_RECEIVED'&&e.source==='p-lh');
+  const losMove=r.events.find(e=>e.type==='MOVEMENT_START'&&e.source==='p-lh'&&e.result==='line of sight');
+  return !!firstHeal&&!!losMove&&losMove.timestamp<firstHeal.timestamp
+ });
+ r=simulate({party:[
+  {id:'pt',name:'Tank',class:'Warrior',spec:'Protection',power:24,level:10},
+  {id:'ph',name:'Healer',class:'Priest',spec:'Holy',power:24,level:10},
+  {id:'pd1',name:'DPS One',class:'Warrior',spec:'Arms',power:24,level:10},
+  {id:'pd2',name:'DPS Two',class:'Rogue',spec:'Assassination',power:24,level:10},
+  {id:'pd3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:24,level:10}
+ ],encounter:{id:'wall-pathing',title:'Wall Pathing',kind:'boss',enemies:['Path Boss'],enemyHealth:900,mechanics:[],environment:{blockers:[{id:'central-wall',x:53,y:38,w:8,h:34,blocksLos:true,blocksMovement:true}]}},seed:'wall-pathing'});
+ test('Environment Pathing',()=>r.events.some(e=>e.type==='MOVEMENT_START'&&e.payload?.navigation==='waypoint'));
+
 
 
 
