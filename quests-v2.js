@@ -490,7 +490,7 @@ function openSurveyPuzzle(){
 /* Quest combat uses the same 2D language as dungeon combat. */
 function qRole(c){return Game.classes?.[c.class]?.specs?.[c.spec]?.role||'dps'}
 function qClassKey(c){return 'class-'+String(c?.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}
-function qProfile(c){const r=qRole(c);if(r==='tank'||r==='healer')return r;if(['Rogue','Warrior','Paladin'].includes(c.class))return'melee';return'ranged'}
+function qProfile(c){const r=qRole(c);if(r==='tank'||r==='healer')return r;if(['Rogue','Warrior','Paladin','Death Knight','Demon Hunter'].includes(c.class))return'melee';return'ranged'}
 function encounterRoot(){
   let r=$('#questEncounterBackdrop');
   if(!r){r=document.createElement('div');r.id='questEncounterBackdrop';r.className='cb2d-backdrop quest-cb2d-backdrop';r.hidden=true;document.body.appendChild(r)}
@@ -520,7 +520,7 @@ function qSetEnemyHp(i,value){
   const u=qUnit('e-'+i),bar=u?.querySelector('.cb2d-unit-hp i');if(bar)bar.style.width=(next/max*100)+'%';
   if(u&&prev>0&&next<=0)u.classList.add('dead')
 }
-function qSetPartyHp(c,value){if(!questFight)return;const next=Math.max(0,Math.min(100,Math.round(value)));questFight.partyHp[c.id]=next;const bar=$('[data-q-side-hp="'+c.id+'"]');if(bar)bar.style.width=next+'%';const txt=$('[data-q-hp-text="'+c.id+'"]');if(txt)txt.textContent=next+' HP'}
+function qSetPartyHp(c,value){if(!questFight)return;const next=Math.max(0,Math.min(100,Math.round(value)));questFight.partyHp[c.id]=next;const bar=$('[data-q-side-hp="'+c.id+'"]');if(bar)bar.style.width=next+'%';const txt=$('[data-q-hp-text="'+c.id+'"]');if(txt)txt.textContent=next+' HP';const overhead=qUnit('p-'+c.id)?.querySelector('.cb2d-unit-hp i');if(overhead)overhead.style.width=next+'%'}
 function qRenderMeters(target=0){
   if(!questFight)return;
   const damageRoot=$('#q2dDamageMeter'),threatRoot=$('#q2dThreatMeter'),p=party();
@@ -559,6 +559,16 @@ function qAttackKind(c){return c?.class==='Mage'?'magic':c?.class==='Hunter'?'ar
 function qSetAddHp(id,pct){
   const u=qUnit(id),bar=u?.querySelector('.cb2d-unit-hp i');if(bar)bar.style.width=Math.max(0,Math.min(100,pct))+'%';
   if(u)u.classList.toggle('dead',pct<=0)
+}
+function qResourceVisual(e){
+  if(!e?.source||!String(e.source).startsWith('p-'))return;
+  const u=qUnit(e.source);if(!u)return;
+  let bar=u.querySelector('.cbr-resource');
+  if(!bar){bar=document.createElement('small');bar.className='cbr-resource';bar.innerHTML='<i></i><span></span>';u.appendChild(bar)}
+  const name=String(e.payload?.resource||'Power'),max=Math.max(1,Number(e.payload?.max)||100),value=Math.max(0,Math.min(max,Number(e.payload?.value)||0));
+  [...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));
+  bar.classList.add('resource-'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-'));
+  const fill=bar.querySelector('i'),label=bar.querySelector('span');if(fill)fill.style.width=(value/max*100)+'%';if(label)label.textContent=name+' '+Math.round(value)+'/'+Math.round(max);bar.title=name+' '+Math.round(value)+' / '+Math.round(max)
 }
 function qCastStart(e){
   const n=$('#q2dCastName'),t=$('#q2dCastTime'),f=$('#q2dCastFill'),duration=Math.max(0,Number(e.payload?.duration)||0);
@@ -616,6 +626,7 @@ function qRenderRebornEvent(e){
     case'HEAL_RECEIVED':
       if(targetChar){qSetPartyHp(targetChar,Number(e.payload?.targetHpPct)||0);qFloat(e.target,'+'+Math.round(Number(e.amount)||0),'heal')}
       break;
+    case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':qResourceVisual(e);break;
     case'THREAT_GENERATED':
       if(enemyIndex>=0&&srcChar){questFight.threat[enemyIndex]=questFight.threat[enemyIndex]||{};questFight.threat[enemyIndex][srcChar.id]=Number(e.payload?.total)||0;qRenderMeters(enemyIndex)}
       break;
