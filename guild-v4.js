@@ -139,7 +139,11 @@ function isUnavailable(c){if(!c)return true;refreshRecovery(c);return Boolean(c.
 function formatRemaining(c){
   const ms=recoveryRemainingMs(c);if(ms<=0)return'';const total=Math.ceil(ms/1000),m=Math.floor(total/60),s=total%60;return `${m}:${String(s).padStart(2,'0')}`;
 }
-function canUseItem(c,item){return item?.class===c.class||item?.classes==='all'||item?.classes?.includes?.(c.class);}
+function canUseItem(c,item){
+  const classOk=item?.class===c.class||item?.classes==='all'||item?.classes?.includes?.(c.class);
+  const roleOk=!item?.relicRole||roleOf(c)===item.relicRole;
+  return classOk&&roleOk;
+}
 function tierText(item){return `Tier ${item?.tier||1} · ${item?.rarity||'Common'} · iLvl ${item?.itemLevel||0}`;}
 function currentBossProgressionUnlocked(boss){const i=bosses.findIndex(b=>b.id===boss.id);return i<=0||Boolean(state.bossKills[bosses[i-1].id]);}
 
