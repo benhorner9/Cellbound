@@ -58,3 +58,15 @@
 .hs2d-combat-summary b{display:block;margin-top:4px;color:#eef7fc;font-size:13px}
 .hs2d-combat-summary span{display:block;margin-top:4px;color:#8999a7;font-size:10px;line-height:1.4}
 @media(max-width:620px){.hs2d-combat-summary{margin:12px 0;padding:11px}}
+
+
+/* Combat Reborn overhead HP + resource */
+.hs2d-unit.party>em{top:-20px;left:50%;right:auto;transform:translateX(-50%);width:48px;height:4px;background:#111719;border:1px solid rgba(255,255,255,.08)}
+.hs2d-unit.party .cbr-resource{position:absolute;left:50%;top:-13px;transform:translateX(-50%);width:48px;height:3px;border:1px solid rgba(255,255,255,.08);border-radius:3px;background:#111719;overflow:visible;z-index:8}
+.hs2d-unit.party .cbr-resource>i{display:block;width:100%;height:100%;border-radius:2px;background:#8fa1a8;transition:width .18s linear}
+.hs2d-unit.party .cbr-resource>span{position:absolute;left:calc(100% + 4px);top:-2px;min-width:max-content;color:#879792;font-size:6px;font-style:normal;font-weight:800;line-height:1;text-shadow:0 1px 3px #000}
+.hs2d-unit.party .cbr-resource.resource-mana>i{background:#5c98ef}.hs2d-unit.party .cbr-resource.resource-rage>i{background:#cf5147}
+.hs2d-unit.party .cbr-resource.resource-energy>i{background:#d7c249}.hs2d-unit.party .cbr-resource.resource-focus>i{background:#d99a42}
+.hs2d-unit.party .cbr-resource.resource-runic-power>i{background:#4ec8d5}.hs2d-unit.party .cbr-resource.resource-fury>i{background:#ab58da}
+.hs2d-unit.party .cbr-resource.resource-essence>i{background:#48bea2}
+@media(max-width:620px){.hs2d-unit.party .cbr-resource>span{display:none}}
