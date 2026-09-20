@@ -560,33 +560,6 @@ function qSpawn(){
   questFight.enemies.forEach((n,i)=>{const y=questFight.enemies.length===1?50:27+i*(46/Math.max(1,questFight.enemies.length-1)),big=i===questFight.eliteIndex||questFight.enemies.length===1,boss=questFight.enemies.length===1;qAddUnit('e-'+i,n,boss?'enemy boss':big?'enemy big':'enemy',92,y,big?'big':'');setTimeout(()=>qMove('e-'+i,68,y,780),70)});
   qRenderMeters(questFight.eliteIndex>=0?questFight.eliteIndex:0)
 }
-async function qPhase(i,text){if(!questFight)return;questFight.phase=i;const r=$('#q2dRoute');if(r)r.innerHTML=qRoute();qStatus(text);qLog(text);await wait(500)}
-async function qTankEngage(){
-  const tank=party().find(c=>qRole(c)==='tank');if(!tank)return;
-  qAct('tank',tank.name+' establishes threat');qMove('p-'+tank.id,52,50,480);
-  questFight.enemies.forEach((_,i)=>qMove('e-'+i,61,32+i*(36/Math.max(1,questFight.enemies.length-1)),450));
-  qLog(tank.name+' takes control of the pack.');await wait(650)
-}
-async function qAttack(index,rounds=1){
-  if(!questFight||questFight.enemyHp[index]<=0)return;
-  const p=party(),target='e-'+index;
-  for(let r=0;r<rounds;r++){
-    for(const c of p){
-      if(qRole(c)==='healer')continue;
-      if(questFight.enemyHp[index]<=0)break;
-      const kind=c.class==='Mage'?'magic':c.class==='Hunter'?'arrow':'slash',base=qRole(c)==='tank'?18:25,boost=(questFight.burn?8:0)+(questFight.focus?4:0),prep=window.CellboundProfessions?.activeBonuses?.(c)||{};
-      let dmg=base+boost+Math.floor(Math.random()*8);dmg=Math.round(dmg*(1+(Number(prep.damagePct)||0)/100));if((Number(prep.crit)||0)>0&&Math.random()*100<Number(prep.crit))dmg=Math.round(dmg*1.5);
-      qFace('p-'+c.id,target);qProjectile('p-'+c.id,target,kind);questFight.damage[c.id]+=dmg;qSetEnemyHp(index,questFight.enemyHp[index]-dmg);qFloat(target,'-'+dmg,'damage');
-      qAct(qRole(c)==='tank'?'tank':'dps',c.name+' attacks '+questFight.enemies[index]);qRenderMeters(index);await wait(90)
-    }
-    await wait(300)
-  }
-}
-async function qEnemyHit(index,amount=14){
-  const tank=party().find(c=>qRole(c)==='tank'),healer=party().find(c=>qRole(c)==='healer');if(!tank||questFight.enemyHp[index]<=0)return;
-  qFace('e-'+index,'p-'+tank.id);qProjectile('e-'+index,'p-'+tank.id,'enemy');const hit=Math.max(4,amount-(questFight.defensive?7:0));qSetPartyHp(tank,questFight.partyHp[tank.id]-hit);qFloat('p-'+tank.id,'-'+hit,'incoming');qAct('tank',tank.name+' absorbs the hit');await wait(280);
-  if(healer){qFace('p-'+healer.id,'p-'+tank.id);qProjectile('p-'+healer.id,'p-'+tank.id,'heal');const heal=Math.min(12,100-questFight.partyHp[tank.id]);qSetPartyHp(tank,questFight.partyHp[tank.id]+heal);qFloat('p-'+tank.id,'+'+heal,'heal');qAct('healer',healer.name+' restores '+tank.name);await wait(260)}
-}
 function qTelegraph(type,fromId,toId,label,size=145){
   const root=$('#q2dTelegraphs'),a=qPoint(fromId),b=qPoint(toId);if(!root||!a||!b)return null;
   const e=document.createElement('div');e.className='cb2d-tg '+type+' dynamic';
@@ -595,35 +568,6 @@ function qTelegraph(type,fromId,toId,label,size=145){
   else{const angle=Math.atan2(b.y-a.y,b.x-a.x),length=Math.max(190,Math.min(a.w*.62,360));e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.width=length+'px';e.style.height=(type==='line'?44:140)+'px';e.style.transform='translateY(-50%) rotate('+(angle*180/Math.PI)+'deg)'}
   root.appendChild(e);requestAnimationFrame(()=>e.classList.add('show'));return e
 }
-async function qCone(index,label){
-  const tank=party().find(c=>qRole(c)==='tank');if(!tank)return;const e=qTelegraph('cone','e-'+index,'p-'+tank.id,label);qStatus(label+' · MOVE / FACE AWAY');qLog(questFight.enemies[index]+' begins '+label+'.');qAct('tank',tank.name+' turns the attack away from the group');
-  party().filter(c=>c.id!==tank.id).forEach((c,i)=>qMove('p-'+c.id,35,22+i*15,430));await wait(900);e?.classList.add('impact');await qEnemyHit(index,18);setTimeout(()=>e?.remove(),180);await wait(320)
-}
-async function qLine(index,target,label){
-  const e=qTelegraph('line','e-'+index,'p-'+target.id,label);qStatus(label+' · LINE ATTACK');qLog(questFight.enemies[index]+' draws a line through '+target.name+'.');
-  qMove('p-'+target.id,38,target===party()[0]?25:75,420);await wait(900);e?.classList.add('impact');setTimeout(()=>e?.remove(),180);await wait(300)
-}
-async function qCircle(target,label){
-  const e=qTelegraph('circle','e-'+(questFight.eliteIndex>=0?questFight.eliteIndex:0),'p-'+target.id,label,155);qStatus(label+' · SPREAD');qLog(target.name+' is marked by '+label+'.');
-  party().filter(c=>c.id!==target.id).forEach((c,i)=>qMove('p-'+c.id,26+i*6,20+i*14,430));await wait(900);e?.classList.add('impact');qFloat('p-'+target.id,'-6','incoming');qSetPartyHp(target,questFight.partyHp[target.id]-(questFight.defensive?2:6));setTimeout(()=>e?.remove(),180);await wait(300)
-}
-async function qCast(index,name,duration=1700,interruptible=true){
-  const n=$('#q2dCastName'),t=$('#q2dCastTime'),f=$('#q2dCastFill');if(n)n.textContent=name;if(t)t.textContent=(duration/1000).toFixed(1)+'s';if(f){f.style.transition='none';f.style.width='0';requestAnimationFrame(()=>{f.style.transition='width '+duration+'ms linear';f.style.width='100%'})}
-  qStatus(name+(interruptible?' · INTERRUPTIBLE':''));
-  qLog(questFight.enemies[index]+' begins '+name+'.');
-  const dps=party().find(c=>qRole(c)==='dps');const early=Math.round(duration*.55);await wait(early);
-  if(interruptible&&(questFight.interrupt||dps)){
-    if(dps)qProjectile('p-'+dps.id,'e-'+index,dps.class==='Hunter'?'arrow':'magic',260);
-    questFight.interrupt=false;qAct('dps',(dps?.name||'Damage')+' interrupts '+name);qLog(name+' is interrupted.');if(f){f.style.transition='none';f.style.width='58%';f.style.background='#69bd87'}if(n)n.textContent='INTERRUPTED';if(t)t.textContent='STOPPED';await wait(450);if(f)f.style.background='';return true
-  }
-  await wait(duration-early);qLog(name+' completes.');await qEnemyHit(index,20);return false
-}
-async function qFinishAll(){
-  for(let i=0;i<questFight.enemies.length;i++){
-    while(questFight.enemyHp[i]>0)await qAttack(i,1);
-  }
-}
-
 function qEventCharacter(unitId){const id=String(unitId||'');return id.startsWith('p-')?party().find(c=>String(c.id)===id.slice(2)):null}
 function qEventEnemyIndex(unitId){const m=String(unitId||'').match(/^e-(\d+)$/);return m?Number(m[1]):-1}
 function qAttackKind(c){return c?.class==='Mage'?'magic':c?.class==='Hunter'?'arrow':['Priest','Druid','Evoker'].includes(c?.class)?'magic':'slash'}
