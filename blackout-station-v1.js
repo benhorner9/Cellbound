@@ -206,13 +206,19 @@ function setStatus(t){const e=$('#bsStatus');if(e)e.textContent=t}
 function feed(t){if(!run)return;run.log.push(t);const e=$('#bsFeed');if(e)e.innerHTML=run.log.slice(-8).reverse().map(x=>'<p>'+esc(x)+'</p>').join('')}
 function statusTargets(id){
  const out=[],rid=renderId(id),unit=rid?$('[data-bs="'+rid+'"]'):null;if(unit)out.push(unit);
- const c=charFor(id),row=c?$('[data-bs-side="'+CSS.escape(String(c.id))+'"]'):null;if(row)out.push({el:row,mirror:true});
+ const c=charFor(id),row=c?$('[data-bs-side]').find(x=>x.dataset.bsSide===String(c.id)):null;if(row)out.push({el:row,mirror:true});
  return out
 }
 function renderPartyRows(){
- const e=$('#bsParty');if(!e)return;
- e.innerHTML=party().map((c,i)=>'<div class="bs-party-row '+classKey(c)+'" data-bs-party="'+esc(c.id)+'"><i></i><span data-bs-side="'+esc(c.id)+'"><b>'+esc(c.name)+'</b><small>'+role(c).toUpperCase()+' · '+esc(c.class)+'</small></span><strong id="bsHp'+i+'">100%</strong></div>').join('')
+ const e=$('#bsRows');if(!e)return;
+ e.innerHTML=party().map(c=>'<div class="cb2d-party-row" data-bs-side-row="'+esc(c.id)+'"><i class="cb2d-dot '+classKey(c)+'"></i><span data-bs-side="'+esc(c.id)+'"><b>'+esc(c.name)+'</b><small>'+role(c).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-bs-side-hp="'+esc(c.id)+'" style="width:'+(Number(run?.hp?.[c.id])||100)+'%"></i></em></span><strong data-bs-side-text="'+esc(c.id)+'">'+Math.round(Number(run?.hp?.[c.id])||100)+' HP</strong></div>').join('')
 }
+function updateSideHp(c,pct){
+ if(!c)return;const id=String(c.id),row=$('[data-bs-side-row]').find(x=>x.dataset.bsSideRow===id);if(!row)return;
+ const strong=$('[data-bs-side-text]').find(x=>x.dataset.bsSideText===id),hp=$('[data-bs-side-hp]').find(x=>x.dataset.bsSideHp===id);
+ if(strong)strong.textContent=Math.round(pct)+' HP';if(hp)hp.style.width=pct+'%'
+}
+function bsAct(r,text){const e=document.querySelector('[data-bs-act="'+r+'"] em');if(e)e.textContent=text}
 function renderMeters(){
  if(!run)return;const chars=party(),elapsed=Math.max(1,Number(run.combatElapsed||1)/1000);
  const damage=chars.map(c=>({c,v:Number(run.damage?.[c.id])||0})).sort((a,b)=>b.v-a.v),dm=Math.max(1,...damage.map(x=>x.v));
@@ -233,20 +239,22 @@ function showRoleZones(zones){
 }
 function hideRoleZones(){const l=$('#bsRoleZones');if(l)l.innerHTML='';$('#bsArena')?.classList.remove('blackout')}
 function eventRender(e){
- if(window.CellboundCombatStatuses?.handle(e,{resolve:statusTargets,speed:1}))return;
+ try{if(window.CellboundCombatStatuses?.handle(e,{resolve:statusTargets,speed:()=>run?.speed||1}))return}catch(error){console.warn('Blackout Station status UI skipped',e?.type,error)}
+
  const src=renderId(e.source),target=renderId(e.target),srcChar=charFor(e.source),targetChar=charFor(e.target);
  switch(e.type){
   case'COMBAT_START':{const oc=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT;setStatus('Generator hall combat live'+(oc?' · CALDER OVERCHARGE +'+oc+'%':'')+'.');feed('Dr. Vex Calder steps into the restored light.'+(oc?' Diagnostics have increased his maximum health by '+oc+'%.':''));break}
   case'MOVEMENT_START':if(src&&e.payload?.to)move(src,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
   case'ABILITY_START':
    if(src&&target)projectile(src,target,String(e.source||'').startsWith('e-'));
+   if(srcChar)bsAct(srcChar.role,(e.ability||'Acting')+'…');
    break;
   case'DAMAGE_DEALT':
-   if(target){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);floatText(target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');if(targetChar){run.hp[targetChar.id]=pct;const idx=party().findIndex(c=>c.id===targetChar.id),x=$('#bsHp'+idx);if(x)x.textContent=Math.round(pct)+'%'}}
+   if(target){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);floatText(target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');if(targetChar){run.hp[targetChar.id]=pct;updateSideHp(targetChar,pct)}}
    if(srcChar){run.damage[srcChar.id]=(Number(run.damage[srcChar.id])||0)+(Number(e.amount)||0);renderMeters()}
    break;
   case'HEAL_RECEIVED':
-   if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);run.hp[targetChar.id]=pct;floatText(target,'+'+Math.round(Number(e.amount)||0),'heal');const idx=party().findIndex(c=>c.id===targetChar.id),x=$('#bsHp'+idx);if(x)x.textContent=Math.round(pct)+'%'}
+   if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);run.hp[targetChar.id]=pct;floatText(target,'+'+Math.round(Number(e.amount)||0),'heal');updateSideHp(targetChar,pct)}
    if(srcChar){run.healing[srcChar.id]=(Number(run.healing[srcChar.id])||0)+(Number(e.amount)||0);renderMeters()}
    break;
   case'THREAT_GENERATED':if(srcChar){run.threat[srcChar.id]=Number(e.payload?.total)||0;renderMeters()}break;
@@ -263,7 +271,7 @@ function eventRender(e){
   case'MECHANIC_SAFE':if(target){floatText(target,'PROTECTED','heal')}break;
   case'ROLE_SHOCKWAVE':
    $('#bsArena')?.classList.add('shockwave');setStatus(e.result==='casualties'?'SHOCKWAVE — CASUALTIES':'SHOCKWAVE SURVIVED');feed(e.result==='casualties'?'The shockwave catches someone outside their correct circuit.':'The party is grounded inside the correct role circuits.');setTimeout(()=>{$('#bsArena')?.classList.remove('shockwave');hideRoleZones()},650);break;
-  case'PLAYER_DEFEATED':if(target){$('[data-bs="'+target+'"]')?.classList.add('dead');bar(target,0);floatText(target,'DEFEATED','incoming')}break;
+  case'PLAYER_DEFEATED':if(target){$('[data-bs="'+target+'"]')?.classList.add('dead');bar(target,0);floatText(target,'DEFEATED','incoming');if(targetChar){run.hp[targetChar.id]=0;updateSideHp(targetChar,0)}}break;
   case'PLAYER_REVIVED':if(target){$('[data-bs="'+target+'"]')?.classList.remove('dead');bar(target,Number(e.payload?.targetHpPct)||35);floatText(target,'REVIVED','heal')}break;
   case'ENEMY_DEFEATED':if(target){$('[data-bs="'+target+'"]')?.classList.add('dead');bar(target,0);feed('Dr. Vex Calder collapses beside the overloaded generator.')}break;
   case'PLAYER_MISTAKE':if(srcChar)feed(srcChar.name+' '+(e.payload?.detail||'hesitates')+'.');break;
@@ -271,22 +279,51 @@ function eventRender(e){
  }
 }
 async function playTimeline(result,tok){
- let last=0;for(const e of result.events||[]){if(tok!==token||!run)return false;const stamp=Math.max(last,Number(e.timestamp)||last),gap=stamp-last;if(gap)await wait(gap);eventRender(e);last=stamp;run.combatElapsed=stamp}
+ let last=0,visualErrors=0;
+ for(const e of result.events||[]){
+  if(tok!==token||!run)return false;
+  const stamp=Math.max(last,Number(e.timestamp)||last),gap=stamp-last;
+  if(gap)await wait(gap);
+  try{eventRender(e)}catch(error){visualErrors++;console.warn('Blackout Station visual event skipped',e?.type,error);if(visualErrors===1)feed('Combat continues while a display event is recovered.')}
+  last=stamp;run.combatElapsed=stamp
+ }
  return result.outcome==='victory'
 }
 function drawCombat(){
- const r=root();r.innerHTML='<section class="cb2d-shell bs2d-shell"><header class="cb2d-head"><div><small>BLACKOUT STATION · GENERATOR HALL</small><h2 id="bsTitle">Dr. Vex Calder</h2></div><div><span id="bsStatus">Power restored.</span><button data-bs-close>×</button></div></header><div class="bs-combat-grid"><main><div id="bsArena" class="bs-arena"><div class="bs-station-env"><div class="bs-generator g1"></div><div class="bs-generator g2"></div><div class="bs-transformer t1"></div><div class="bs-transformer t2"></div><div class="bs-cable-floor"></div></div><div id="bsRoleZones" class="bs-role-zones"></div><div id="bsTelegraphs"></div><div id="bsUnits"></div><div id="bsFx"></div></div><div id="bsCast" class="cb2d-cast"><small>ENEMY CAST</small><b id="bsCastName">—</b><span id="bsCastTime">—</span><em><i id="bsCastFill"></i></em></div><div class="cb2d-feed"><small>COMBAT FEED</small><div id="bsFeed"></div></div></main><aside><div class="cb2d-party"><small>ACTIVE FIVE</small><div id="bsParty"></div></div><div class="cb2d-meter"><div class="cb2d-meter-head"><b>Damage</b></div><div id="bsDamage"></div></div><div class="cb2d-meter"><div class="cb2d-meter-head"><b>Healing</b></div><div id="bsHealing"></div></div><div class="cb2d-meter"><div class="cb2d-meter-head"><b>Threat</b></div><div id="bsThreat"></div></div></aside></div><div id="bsEnd" class="cb2d-end" hidden></div></section>';
+ const r=root(),oc=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT;r.hidden=false;
+ r.innerHTML='<section class="cb2d-shell bs2d-shell">'+
+ '<header class="cb2d-head"><div><small>BLACKOUT STATION · LIVE 2D DUNGEON</small><h2 id="bsTitle">Dr. Vex Calder</h2></div><div class="cb2d-live"><i></i>LIVE <button data-bs-speed>'+run.speed+'×</button><button data-bs-close>×</button></div></header>'+
+ '<div class="cb2d-route bs2d-route"><span class="done"><i>1</i>Grid Alignment</span><span class="current"><i>2</i>Dr. Vex Calder</span></div>'+
+ '<div class="cb2d-layout"><main>'+
+ '<div id="bsArena" class="cb2d-arena bs-arena"><div class="cb2d-floor bs-station-env"><div class="bs-generator g1"></div><div class="bs-generator g2"></div><div class="bs-transformer t1"></div><div class="bs-transformer t2"></div><div class="bs-cable-floor"></div></div><div class="cb2d-ground-legend"><span class="danger">RED · TANK</span><span class="spawn">YELLOW · DAMAGE</span><span class="aggro">BLUE · HEALER</span></div><div id="bsRoleZones" class="bs-role-zones"></div><div id="bsTelegraphs"></div><div id="bsUnits"></div><div id="bsFx"></div><div class="cb2d-room-tag"><small>GENERATOR HALL</small><b>Main turbine chamber</b></div><div class="cb2d-caption"><span>FINAL BOSS</span><b id="bsStatus">Power restored. Calder engages.</b></div></div>'+
+ '<div class="cb2d-controls bs-authority"><div><b>COMBAT REBORN</b><small>Pre-dungeon tactics are authoritative. Calder\'s role circuits use live arena positions.</small></div><div><b>CALDER OVERCHARGE</b><small>+'+oc+'% maximum health from diagnostics used.</small></div></div>'+
+ '<div class="cb2d-feed"><small>COMBAT FEED</small><div id="bsFeed"></div></div></main>'+
+ '<aside><div class="cb2d-cast" id="bsCast"><small>ENEMY CAST</small><div><b id="bsCastName">—</b><strong id="bsCastTime">—</strong></div><div class="cb2d-castbar"><i id="bsCastFill"></i></div></div>'+
+ '<div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span>LIVE</span></div><div id="bsDamage" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span>LIVE</span></div><div id="bsHealing" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span>Calder</span></div><div id="bsThreat" class="cb2d-meter-list"></div></section></div>'+
+ '<div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-bs-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-bs-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-bs-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring target</em></div></div>'+
+ '<div class="cb2d-party"><small>PARTY CONDITION · ILVL '+ilvl()+'</small><div id="bsRows"></div></div>'+
+ '<div class="cb2d-plan"><small>ENCOUNTER RULE</small><b>ROLE CIRCUITS</b><span>Red Tank · Yellow Damage · Blue Healer · wrong zone is lethal</span></div></aside></div>'+
+ '<div id="bsEnd" class="cb2d-end" hidden></div></section>';
  r.querySelector('[data-bs-close]').onclick=close;
+ r.querySelector('[data-bs-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  renderPartyRows();
  const p=party();p.forEach((c,i)=>addUnit('p'+i,c.name,'party '+role(c)+' '+classKey(c),role(c)==='tank'?38:role(c)==='healer'?18:26,24+i*13));
- addUnit('e0','Dr. Vex Calder','enemy boss',68,50,true);renderMeters()
+ addUnit('e0','Dr. Vex Calder','enemy boss',68,50,true);renderMeters();
+ feed('Power restored. Dr. Vex Calder enters the generator hall.')
 }
 async function startBoss(){
- if(!run)return;drawCombat();const tok=token,C=window.CellboundCombatReborn;if(!C?.simulate){alert('Combat Reborn engine unavailable.');return}
- const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:100,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0}));
- const result=C.simulate({party:combatParty,encounter:bossEncounter(),tactics:{pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced'},seed:'blackout-station:'+run.seed});
- run.result=result;const won=await playTimeline(result,tok);if(tok!==token||!run)return;
- if(won)await complete();else fail()
+ if(!run)return;drawCombat();const tok=token,C=window.CellboundCombatReborn;if(!C?.simulate){setStatus('Combat Reborn unavailable');feed('Combat engine unavailable.');return}
+ try{
+  const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:100,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0}));
+  let result=C.simulate({party:combatParty,encounter:bossEncounter(),tactics:{pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced'},seed:'blackout-station:'+run.seed});
+  const hasCombat=(result.events||[]).some(e=>e.type==='DAMAGE_DEALT'||e.type==='HEAL_RECEIVED'||e.type==='ABILITY_START');
+  if(!hasCombat)throw new Error('Combat Reborn produced no actionable events.');
+  run.result=result;
+  const won=await playTimeline(result,tok);if(tok!==token||!run)return;
+  if(won)await complete();else fail()
+ }catch(error){
+  console.error('Blackout Station boss runtime',error);setStatus('Encounter runtime interrupted');feed('Boss runtime error: '+String(error?.message||error))
+ }
 }
 function hpNeed(level){return 800+Math.max(0,(Number(level)||1)-1)*250}
 function awardXp(){
