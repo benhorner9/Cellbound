@@ -464,7 +464,16 @@ async function hsRecoverFallen(tok){
  let fallen=party().filter(c=>(Number(run.hp[c.id])||0)<=0);if(!fallen.length)return true;
  let healer=party().find(c=>role(c)==='healer'&&(Number(run.hp[c.id])||0)>0);
  if(!healer){
-   healer=party().find(c=>role(c)==='healer');if(!healer)return false;
+   healer=party().find(c=>role(c)==='healer');
+   if(!healer){
+     feed('No healer is present. Fallen adventurers release and return from the previous checkpoint.');setStatus('Party returning from checkpoint…');await wait(650);if(tok!==token||!run)return false;
+     hsAdvanceCooldowns(15000);
+     fallen.forEach(member=>{
+       run.hp[member.id]=35;run.reviveSickness[member.id]=15000;
+       const id=hsRenderId('p-'+member.id),el=$('[data-hs="'+id+'"]');el?.classList.remove('dead');hsBar(id,35)
+     });
+     run.outOfCombatRevives=(Number(run.outOfCombatRevives)||0)+fallen.length;hsUpdateSidebar();feed('The fallen regroup at 35% health with resurrection sickness.');return true
+   }
    feed(healer.name+' releases and returns from the previous checkpoint.');setStatus('Healer returning to the group…');await wait(550);if(tok!==token)return false;
    hsAdvanceCooldowns(15000);run.hp[healer.id]=35;run.reviveSickness[healer.id]=15000;const hid=hsRenderId('p-'+healer.id),hel=$('[data-hs="'+hid+'"]');hel?.classList.remove('dead');hsBar(hid,35);
    fallen=party().filter(c=>(Number(run.hp[c.id])||0)<=0);hsUpdateSidebar()
