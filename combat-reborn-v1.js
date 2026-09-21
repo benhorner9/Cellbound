@@ -1018,6 +1018,17 @@ function spawnAdds(ctx,e){
 }
 function resolveMechanic(ctx,e,m,token){
  const cast=ctx.activeEnemyCast;
+ if(m.type==='self-heal'){
+  if(!cast||cast.token!==token||cast.interrupted){scheduleNextMechanic(ctx);return}
+  ctx.activeEnemyCast=null;
+  const before=e.health,healPct=Math.max(.01,Math.min(.35,Number(m.healPct)||.08));
+  e.health=Math.min(e.maxHealth,e.health+Math.max(1,Math.round(e.maxHealth*healPct)));
+  const amount=Math.max(0,e.health-before);
+  emit(ctx,'CAST_FINISH',{source:e.id,target:e.id,ability:m.name,result:'completed'});
+  if(amount)emit(ctx,'HEAL_RECEIVED',{source:e.id,target:e.id,ability:m.name,amount,result:'enemy-heal',payload:{enemyHeal:true,targetHp:e.health,targetMaxHealth:e.maxHealth,targetHpPct:pct(e.health,e.maxHealth),overhealing:0}});
+  ctx.stats.interrupts.missedCritical++;
+  mechanicStat(ctx,'self-heal',true);scheduleNextMechanic(ctx);return;
+ }
  if(m.type==='interrupt'){
   if(!cast||cast.token!==token||cast.interrupted){scheduleNextMechanic(ctx);return}
   ctx.activeEnemyCast=null;
@@ -1088,9 +1099,9 @@ function startMechanic(ctx,m){
   if(target){const plan=mechanicResponse(ctx,target,'line',duration,enemy);castState.responses[target.id]=plan.success;castState.reactionMs[target.id]=plan.reactionMs}
  }
 
- emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:castState.targetId,ability:m.name,result:'telegraph',position:copy(enemy.position),payload:{mechanicType:m.type,duration,token,interruptible:m.type==='interrupt',targetId:castState.targetId,targetIds:copy(castState.targetIds),responses:copy(castState.responses),reactionMs:copy(castState.reactionMs)}});
- emit(ctx,'CAST_START',{source:enemy.id,target:castState.targetId,ability:m.name,result:'enemy',payload:{duration,interruptible:m.type==='interrupt',mechanicType:m.type,token,targetId:castState.targetId,targetIds:copy(castState.targetIds)}});
- if(m.type==='interrupt')tryInterrupt(ctx,enemy,m,token);
+ emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:castState.targetId,ability:m.name,result:'telegraph',position:copy(enemy.position),payload:{mechanicType:m.type,duration,token,interruptible:m.type==='interrupt'||m.type==='self-heal',targetId:castState.targetId,targetIds:copy(castState.targetIds),responses:copy(castState.responses),reactionMs:copy(castState.reactionMs)}});
+ emit(ctx,'CAST_START',{source:enemy.id,target:castState.targetId,ability:m.name,result:'enemy',payload:{duration,interruptible:m.type==='interrupt'||m.type==='self-heal',mechanicType:m.type,token,targetId:castState.targetId,targetIds:copy(castState.targetIds)}});
+ if(m.type==='interrupt'||m.type==='self-heal')tryInterrupt(ctx,enemy,m,token);
  else if(m.type==='cone'){
   const tank=getUnit(ctx,castState.targetId);
   if(tank){enemy.target=tank.id;updateFacing(enemy,tank)}
@@ -1135,7 +1146,7 @@ function scheduleNextMechanic(ctx){
 }
 function normaliseMechanics(encounter){
  return (encounter.mechanics||[]).map(x=>Array.isArray(x)?{name:x[0],type:x[1],duration:x[2]}:{
-  name:x.name||'Mechanic',type:x.type||'circle',duration:x.duration||x.cast||1600,priority:x.priority||null,danger:x.danger||null
+  name:x.name||'Mechanic',type:x.type||'circle',duration:x.duration||x.cast||1600,priority:x.priority||null,danger:x.danger||null,healPct:x.healPct==null?null:Number(x.healPct)
  });
 }
 function buildSummary(ctx,outcome){
