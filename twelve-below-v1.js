@@ -26,8 +26,8 @@ const BOSSES=[
 
 const TWELVE_BALANCE={
  baseBossLevel:10,
- bossHealthScale:1.15,
- pressureScale:1.08,
+ bossHealthScale:1.30,
+ pressureScale:1.16,
  baseRecommendedItemLevel:28
 };
 
