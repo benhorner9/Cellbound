@@ -904,10 +904,15 @@ function enemyBasicAttack(ctx,e){
   e.nextAttack=ctx.time+450;return;
  }
  updateFacing(e,target);
- const base=e.kind==='boss'?30:e.isAdd?11:8;
- const levelPressure=enemyPressure(ctx,e,target);
- emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability:e.kind==='boss'?'Heavy Swing':'Attack',result:'enemy'});
- dealDamage(ctx,e,target,base*levelPressure*(.85+ctx.rng()*.3),e.kind==='boss'?'Heavy Swing':'Attack',{damageType:'physical'});
+ const base=e.kind==='boss'?30:e.isAdd?11:8,roll=.85+ctx.rng()*.3;
+ if(e.allAttacksAoe&&e.kind==='boss'){
+  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability:'Wild Wrath',result:'enemy-aoe',payload:{aoe:true}});
+  livingPlayers(ctx).forEach(p=>dealDamage(ctx,e,p,base*.66*enemyPressure(ctx,e,p)*roll,'Wild Wrath',{damageType:'magic',avoidable:false,aoe:true}));
+ }else{
+  const levelPressure=enemyPressure(ctx,e,target);
+  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability:e.kind==='boss'?'Heavy Swing':'Attack',result:'enemy'});
+  dealDamage(ctx,e,target,base*levelPressure*roll,e.kind==='boss'?'Heavy Swing':'Attack',{damageType:'physical'});
+ }
  e.nextAttack=ctx.time+(e.kind==='boss'?1400:e.isAdd?1800:2050)+Math.round(ctx.rng()*(e.kind==='boss'?220:320));
 }
 function mechanicStat(ctx,type,failed){
@@ -1118,10 +1123,11 @@ function checkBossPhases(ctx){
   if(ctx.phaseTriggered[key]||!Number.isFinite(at)||hp>at)return;
   ctx.phaseTriggered[key]=true;
   if(Number(phase.damageScale)>1)boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(phase.damageScale));
+  if(phase.allAttacksAoe)boss.allAttacksAoe=true;
   if(Array.isArray(phase.addMechanics)&&phase.addMechanics.length){
    phase.addMechanics.forEach(m=>ctx.encounter.mechanics.push(Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}));
   }
-  emit(ctx,'PHASE_CHANGE',{source:boss.id,target:boss.id,ability:phase.name||('Phase '+(index+2)),result:'phase',position:copy(boss.position),payload:{phaseId:key,atPct:at,healthPct:hp,damageScale:boss.phaseDamageScale}});
+  emit(ctx,'PHASE_CHANGE',{source:boss.id,target:boss.id,ability:phase.name||('Phase '+(index+2)),result:'phase',position:copy(boss.position),payload:{phaseId:key,atPct:at,healthPct:hp,damageScale:boss.phaseDamageScale,allAttacksAoe:!!boss.allAttacksAoe}});
   if(phase.spawnAdds)spawnAdds(ctx,boss);
  });
  const softPct=Number(ctx.encounter.softEnragePct);
