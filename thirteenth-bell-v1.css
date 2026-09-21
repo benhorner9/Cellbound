@@ -135,3 +135,13 @@ body.bell-open{overflow:hidden}
   .bell-bells{grid-template-columns:repeat(4,1fr)}.bell-shard-slots{grid-template-columns:repeat(3,1fr)}
   .bell-complete>div:not(.bell-complete-mark){grid-template-columns:repeat(2,1fr)}
 }
+
+.bell-gears button.aligned>i{
+  border-color:#789477;
+  box-shadow:0 0 22px rgba(104,194,126,.12)
+}
+.bell-gears button.aligned>i:after{
+  background:#83d49b;
+  box-shadow:0 0 12px rgba(131,212,155,.5)
+}
+.bell-gears button.aligned span{color:#83d49b}
