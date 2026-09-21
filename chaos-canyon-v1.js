@@ -418,7 +418,15 @@ async function ccRecoverFallen(tok){
 
 function ccRouteMarkup(current,puzzle=false){return ROUTE.map((x,i)=>{const currentIndex=puzzle?3:ROUTE.findIndex(r=>r.id===current);return'<span class="'+(i<currentIndex?'done':i===currentIndex?'current':'')+'"><i>'+(i+1)+'</i>'+esc(x.title)+'</span>'}).join('')}
 function ccScarPct(){return Math.min(40,Math.max(0,Number(run?.chaosScar)||0)*5)}
-function ccUpdateScar(){const e=$('#cc2dScar');if(!e)return;const pct=ccScarPct();e.hidden=!pct;e.innerHTML=pct?'<small>CHAOS SCAR</small><b>+'+pct+'% DAMAGE TAKEN</b><span>Ends when the Chaos Warden falls</span>':''}
+function ccUpdateScar(){const e=$('#cc2dScar');if(!e)return;const pct=ccScarPct();e.hidden=!pct;e.innerHTML=pct?'<small>CHAOS SCAR · DEBUFF</small><b>+'+pct+'% DAMAGE TAKEN</b><span>Ends when the Chaos Warden falls</span>':''}
+function ccApplyScarStatus(){
+ const scar=ccScarPct();if(!run||!scar)return;
+ party().forEach(ch=>{
+  const current=Array.isArray(run.statuses?.[ch.id])?run.statuses[ch.id].filter(s=>s?.id!=='chaos-scar'):[];
+  current.push({id:'chaos-scar',name:'Chaos Scar',kind:'debuff',source:null,duration:600000,remainingMs:600000,effect:{incomingDamageIncrease:scar/100},persistAcrossEncounters:false});
+  run.statuses[ch.id]=current
+ })
+}
 function ccHash(text){let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
 function ccCorrectStone(step){return ccHash(String(run?.endgame?.seed||'chaos-canyon')+':crossing:'+step)%3}
 function ccPuzzleMarkup(step,remaining){const progress=Array.from({length:7},(_,i)=>'<i class="'+(i<step?'done':i===step?'current':'')+'">'+(i+1)+'</i>').join(''),names=['LEFT','CENTRE','RIGHT'];return'<div class="cc2d-puzzle"><div class="cc2d-puzzle-head"><small>CHAOS CROSSING · STEP '+(step+1)+' / 7</small><h3>Choose the next stone</h3><p>Wrong choices collapse. Every fall adds <b>+5% damage taken</b> for the next boss.</p><div class="cc2d-puzzle-progress">'+progress+'</div></div><div class="cc2d-stone-row">'+remaining.map(i=>'<button type="button" data-cc-stone="'+i+'"><span></span><b>'+names[i]+'</b><small>STEP ON STONE</small></button>').join('')+'</div><div class="cc2d-puzzle-risk"><span>CHAOS SCAR</span><b>+'+ccScarPct()+'%</b><small>Maximum +40%</small></div></div>'}
@@ -436,6 +444,7 @@ async function fightStage(s,tok,index){
  run.threat=Object.fromEntries(party().map(ch=>[ch.id,0]));run.aggro=null;ccRenderMeters();
  spawnStage(s);setStatus('Entering '+s.title+'…');feed('The party enters '+s.title+'.');await wait(650);if(tok!==token)return false;
  const C=window.CellboundCombatReborn;if(!C?.simulate)throw new Error('Combat Reborn engine unavailable');
+ if(s.id==='warden'&&run?.chaosScar)ccApplyScarStatus();
  const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:run.hp[c.id],_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0}));
  const tactics={...ccTactics,interruptPriority:ccTactics.bossPlan==='control'?'high':ccTactics.interruptPriority,addPriority:ccTactics.bossPlan==='burn'?'boss':ccTactics.addPriority,defensiveUsage:ccTactics.bossPlan==='control'?'aggressive':ccTactics.defensiveUsage,cooldownUse:ccTactics.bossPlan==='burn'?'free':ccTactics.cooldownUse};const result=C.simulate({party:combatParty,encounter:ccRebornEncounter(s),tactics,seed:[run.endgame?.seed||'chaos-canyon',s.id,index].join(':')});
  result.stageId=s.id;result.stageTitle=s.title;result.startHp={...run.hp};run.history.push(result);
