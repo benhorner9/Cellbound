@@ -132,7 +132,7 @@ function projectile(fromId,toId,kind='magic',ms=420){
 }
 function ccFloat(id,text,kind='damage'){const p=ccPoint(id),arena=$('#cc2dArena');if(!p||!arena)return;const e=document.createElement('b');e.className='cc2d-float '+kind;e.textContent=text;e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),800)}
 function ccBar(id,pct){const bar=$('[data-cc="'+id+'"] > em i');if(bar)bar.style.width=Math.max(0,Math.min(100,pct))+'%'}
-function livingEnemyIds(){return $$('[data-cc^="e"]').filter(e=>!e.classList.contains('dead')).map(e=>e.dataset.hs)}
+function livingEnemyIds(){return $$('[data-cc^="e"]').filter(e=>!e.classList.contains('dead')).map(e=>e.dataset.cc)}
 function primaryEnemy(){return livingEnemyIds()[0]||null}
 function partyIndexes(){return party().map((c,i)=>({c,i,role:role(c)}))}
 function tankEntry(){return partyIndexes().find(x=>x.role==='tank')||partyIndexes()[0]}
