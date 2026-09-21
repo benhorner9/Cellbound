@@ -494,12 +494,12 @@ function equipSkill(skillId){
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));if(!state||!c)return;
   const pool=skillPoolFor(c,c.spec),skill=pool.find(s=>s.id===skillId);if(!skill||(Number(skill.unlockLevel)||1)>Math.max(1,Number(c.level)||1))return;
   const slot=Math.max(0,Math.min(3,Number(activeSkillSlot)||0));
+  activeSkillSlot=(slot+1)%4;
   saveSkillLoadout((loadout,ch)=>{
     const existing=loadout.indexOf(skillId),previous=loadout[slot]||null;
     if(existing>=0&&existing!==slot)loadout[existing]=previous;
     loadout[slot]=skillId
-  },ch=>ch.name+' equipped '+skill.name+' in combat skill slot '+(slot+1)+'.');
-  activeSkillSlot=(slot+1)%4
+  },ch=>ch.name+' equipped '+skill.name+' in combat skill slot '+(slot+1)+'.')
 }
 function clearSkillSlot(slotIndex){
   const slot=Math.max(0,Math.min(3,Number(slotIndex)||0));
