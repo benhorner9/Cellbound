@@ -132,7 +132,11 @@ function feed(text){if(!run)return;run.log.push(text);const e=$('#cc2dFeed');if(
 function ccArenaScale(){return STAGES[run?.stage]?.id==='vorran'?[1,.78,.55,.30][Math.max(0,Math.min(3,Number(run?.vorranShrink)||0))]:1}
 function ccArenaPoint(x,y){const scale=ccArenaScale();return{x:50+(Number(x)-50)*scale,y:50+(Number(y)-50)*scale}}
 function addUnit(id,label,cls,x,y,big=false,meta=''){const e=document.createElement('div');e.className='cc2d-unit cb2d-unit '+cls+(big?' big':'');e.dataset.cc=id;e.dataset.rawX=x;e.dataset.rawY=y;const p=ccArenaPoint(x,y);e.style.left=p.x+'%';e.style.top=p.y+'%';e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="cc2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em><i></i></em>';$('#cc2dUnits').appendChild(e)}
-function move(id,x,y,ms=550){const e=$('[data-cc="'+id+'"]');if(!e)return;e.dataset.rawX=x;e.dataset.rawY=y;const p=ccArenaPoint(x,y);e.style.transitionDuration=ms+'ms';e.style.left=p.x+'%';e.style.top=p.y+'%'}
+function ccSafePoint(id,x,y){
+ const partyUnit=String(id||'').startsWith('p'),minX=partyUnit?7:58,maxX=partyUnit?58:93;
+ return{x:Math.max(minX,Math.min(maxX,Number(x)||50)),y:Math.max(11,Math.min(89,Number(y)||50))}
+}
+function move(id,x,y,ms=550){const e=$('[data-cc="'+id+'"]');if(!e)return;const safe=ccSafePoint(id,x,y);e.dataset.rawX=safe.x;e.dataset.rawY=safe.y;const p=ccArenaPoint(safe.x,safe.y);e.style.transitionDuration=ms+'ms';e.style.left=p.x+'%';e.style.top=p.y+'%'}
 function ccReflowArena(ms=760){$('[data-cc]').forEach(e=>{const x=Number(e.dataset.rawX),y=Number(e.dataset.rawY);if(Number.isFinite(x)&&Number.isFinite(y))move(e.dataset.cc,x,y,ms)})}
 function ccPoint(id){const arena=$('#cc2dArena'),e=$('[data-cc="'+id+'"]');if(!arena||!e)return null;const ar=arena.getBoundingClientRect(),r=e.getBoundingClientRect();return{x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,w:ar.width,h:ar.height}}
 function projectile(fromId,toId,kind='magic',ms=420){
@@ -204,6 +208,10 @@ function spawnStage(s){
   addUnit('e'+i,n,big?'enemy boss':'enemy',94,target[1],big,'Lv. '+m.level+' · '+m.label);
   setTimeout(()=>move('e'+i,target[0],target[1],820),90+i*30)
  })
+}
+function ccRegroup(ms=380){
+ const s=STAGES[run?.stage],room=CANYON_ROOMS[s?.id]||CANYON_ROOMS['canyon-mouth'];
+ party().forEach((ch,i)=>{if((Number(run?.hp?.[ch.id])||0)<=0)return;const r=role(ch),p=ccRoomPoint(room.party,i,[r==='tank'?40:r==='healer'?25:31,31+i*9]);move('p'+i,p[0],p[1],ms)})
 }
 function ccRenderId(unitId){
  const id=String(unitId||'');
@@ -299,7 +307,7 @@ function ccRenderRebornEvent(e){
    break;
   case'MECHANIC_TELEGRAPH':
    setStatus((e.ability||'Mechanic')+' incoming…');feed((e.ability||'A mechanic')+' is telegraphed.');ccMechanicFromEvent(e);break;
-  case'MECHANIC_RESOLVE':ccClearMechanic(e.payload?.token,true);break;
+  case'MECHANIC_RESOLVE':ccClearMechanic(e.payload?.token,true);requestAnimationFrame(()=>ccRegroup());break;
   case'CAST_START':if(String(e.result||'')==='enemy'){ccCastStart(e.ability||'Enemy Cast',e.payload?.duration)}if(e.payload?.interruptible)feed((e.ability||'Cast')+' can be interrupted.');break;
   case'CAST_FINISH':ccCastClear();break;
   case'INTERRUPT':
@@ -312,7 +320,7 @@ function ccRenderRebornEvent(e){
    if(target){const el=$('[data-cc="'+target+'"]');if(el)el.classList.add('dead');ccBar(target,0);if(targetChar){run.hp[targetChar.id]=0;feed(targetChar.name+' is defeated.');ccUpdateSidebar()}}
    break;
   case'DEFENSIVE_ACTIVATED':if(srcChar)feed(srcChar.name+' activates a defensive.');break;
-  case'COMBAT_END':ccCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');break;
+  case'COMBAT_END':ccCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');ccRegroup(260);break;
  }
 }
 async function ccPlayTimeline(result,tok){
@@ -402,7 +410,7 @@ async function ccReplayFinalFight(){
 
 async function ccFail(s,result){
  run.done=true;Game.applyPartyCellShock?.(25);const st=state();st.activity.push('The guild wiped in Chaos Canyon at '+s.title+'. All five gained 25% Cell Shock.');Game.save?.();await Game.persistState?.();
- const end=$('#cc2dEnd');end.hidden=false;end.className='cb2d-end';end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Combat knowledge and the cause of the wipe are retained.</p></div>'+ccFailureDiagnosis(result)+ccStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
+ const end=$('#cc2dEnd');end.hidden=false;end.className='cb2d-end cb2d-results-screen';$('.cc2d-shell')?.classList.add('results-mode');end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Combat knowledge and the cause of the wipe are retained.</p></div>'+ccFailureDiagnosis(result)+ccStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
 }
 async function ccRecoverFallen(tok){
  let fallen=party().filter(c=>(Number(run.hp[c.id])||0)<=0);if(!fallen.length)return true;
@@ -574,7 +582,7 @@ async function complete(){
  const gold=mode==='normal'?280:mode==='heroic'?370:420+tier*14,renown=mode==='normal'?120:mode==='heroic'?160:180+tier*6;s.gold=(Number(s.gold)||0)+gold;s.renown=(Number(s.renown)||0)+renown;s.chaosCanyonCompletions=(Number(s.chaosCanyonCompletions)||0)+1;const shards=window.CellboundEndgame?.shardReward?.('chaos-canyon')||0;if(shards)Game.addMaterial?.('cell-shards',shards);if(gear)Game.addBankItem?.(gear);
  s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push('Chaos Canyon · '+(run.endgame?.label||'Normal')+' cleared. Archdruid Vorran defeated. Score '+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'. Each adventurer earned '+XP+' XP.'+(gear?' '+gear.name+' was sent to the Guild Bank.':''));
  Game.save?.();await Game.persistState?.();await syncXp(gains);run.done=true;window.dispatchEvent(new CustomEvent('cellbound:chaos-canyon-complete',{detail:{difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs}}));window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'chaos-canyon',difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs}}));
- const end=$('#cc2dEnd');end.hidden=false;end.className='cb2d-end cb2d-loot-screen';const lootGear=[gear].filter(Boolean),materials=shards?[{key:'cell-shards',name:'Cell Shards',quantity:shards,source:'Endgame Reward',rarity:'Rare'}]:[];
+ const end=$('#cc2dEnd');end.hidden=false;end.className='cb2d-end cb2d-loot-screen cb2d-results-screen';$('.cc2d-shell')?.classList.add('results-mode');const lootGear=[gear].filter(Boolean),materials=shards?[{key:'cell-shards',name:'Cell Shards',quantity:shards,source:'Endgame Reward',rarity:'Rare'}]:[];
  end.innerHTML='<div class="cb2d-loot-wrap"><header class="cb2d-loot-head"><div><small>CHAOS CANYON · '+esc(run.endgame?.label||'NORMAL').toUpperCase()+' · CLEARED</small><h3>Expedition Rewards</h3><p>Vorran has fallen and the canyon is quiet. Everything below has already been secured to your guild.</p></div><div class="cb2d-loot-complete">✓<span>DUNGEON<br>COMPLETE</span></div></header><div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+gold+'</b><small>Added to Guild treasury</small></article><article><span>RENOWN</span><b>+'+renown+'</b><small>Guild reputation earned</small></article><article><span>PARTY XP</span><b>+'+XP+'</b><small>Earned by each adventurer</small></article><article><span>GEAR DROPS</span><b>'+lootGear.length+'</b><small>Stored in Guild Bank</small></article><article><span>RUN SCORE</span><b>'+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'</b><small>'+ccFormatTime(metrics.timeMs)+' simulated time</small></article></div>'+ccProgressEarned()+'<section class="cb2d-loot-section cb2d-xp-section"><div class="cb2d-loot-title"><span>PARTY EXPERIENCE</span><small>Every member of the active five gains experience from the clear</small></div><div class="cb2d-xp-grid">'+gains.map(ccXpCard).join('')+'</div></section><section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>GEAR ACQUIRED</span><small>Stored automatically in the Guild Bank</small></div><div class="cb2d-loot-gear">'+(lootGear.length?lootGear.map(item=>ccLootGearCard(item,'DUNGEON DROP')).join(''):'<div class="cb2d-loot-empty">No gear dropped.</div>')+'</div></section>'+(materials.length?'<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>ENDGAME MATERIALS</span><small>Available immediately</small></div><div class="cb2d-loot-materials">'+materials.map(ccLootMaterialCard).join('')+'</div></section>':'')+ccCombatAnalysisHTML()+'<footer class="cb2d-loot-actions"><button data-loot-bank>VIEW GUILD BANK</button><button class="primary" data-loot-return>RETURN TO GUILD →</button></footer></div>';
  ccAnimateXp(end);end.querySelector('[data-cc-replay]')?.addEventListener('click',ccReplayFinalFight);end.querySelector('[data-loot-bank]').onclick=()=>{close();Game.switchView?.('bank')};end.querySelector('[data-loot-return]').onclick=()=>{close();Game.switchView?.('content')}
 }
