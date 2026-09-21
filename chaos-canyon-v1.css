@@ -771,32 +771,56 @@
 }
 .dungeon-browser-card.hollow .chaos-canyon-art>strong{color:#bd92d4;text-shadow:0 0 22px rgba(171,110,205,.38)}
 .chaos-canyon-journal-hero{border-color:rgba(157,111,184,.17)}
+/* Chaos Canyon journal art — deliberately separate from the Hollow Sanctum crystal-shrine silhouette. */
 .chaos-canyon-journal-art{
+  overflow:hidden;
   background:
-    linear-gradient(90deg,rgba(6,10,13,.92),rgba(16,13,21,.34)),
-    radial-gradient(circle at 74% 46%,rgba(160,102,190,.29),transparent 17%),
-    radial-gradient(circle at 68% 58%,rgba(83,142,150,.08),transparent 23%),
-    linear-gradient(180deg,#17141d,#0a1115)!important;
+    linear-gradient(90deg,rgba(8,12,9,.94) 0%,rgba(12,18,13,.72) 37%,rgba(20,24,14,.16) 72%),
+    radial-gradient(circle at 82% 17%,rgba(245,190,94,.32) 0 5%,rgba(245,190,94,.08) 6% 13%,transparent 14%),
+    linear-gradient(180deg,#30484a 0 31%,#6d5432 32% 58%,#2b2a19 59% 100%)!important;
 }
 .chaos-canyon-journal-art:before{
-  right:8%!important;bottom:-13%!important;width:43%!important;height:91%!important;
-  border:10px solid rgba(82,67,94,.64)!important;border-bottom-width:58px!important;
-  clip-path:polygon(22% 100%,22% 36%,36% 36%,36% 18%,50% 0,64% 18%,64% 36%,78% 36%,78% 100%)!important;
-  filter:drop-shadow(0 0 34px rgba(155,100,186,.13))!important;
+  content:""!important;
+  position:absolute!important;
+  right:-5%!important;left:auto!important;top:-3%!important;bottom:-8%!important;
+  width:57%!important;height:auto!important;
+  border:0!important;
+  clip-path:polygon(20% 0,100% 0,100% 100%,2% 100%,12% 88%,6% 73%,20% 60%,10% 47%,26% 33%,14% 19%)!important;
+  background:
+    linear-gradient(90deg,rgba(47,33,20,.92),rgba(116,77,39,.96) 55%,rgba(61,41,23,.98))!important;
+  filter:drop-shadow(-18px 8px 22px rgba(0,0,0,.38))!important;
+  box-shadow:inset 18px 0 28px rgba(0,0,0,.24)!important;
 }
 .chaos-canyon-journal-art:after{
-  right:27%!important;top:14%!important;width:11px!important;height:52%!important;
-  background:linear-gradient(180deg,transparent,#a875c5,rgba(105,171,177,.65),transparent)!important;
-  box-shadow:0 0 28px rgba(166,111,197,.38)!important;
+  content:""!important;
+  position:absolute!important;
+  right:10%!important;left:auto!important;top:auto!important;bottom:-3%!important;
+  width:43%!important;height:71%!important;
+  clip-path:polygon(42% 0,58% 0,82% 100%,8% 100%)!important;
+  background:
+    linear-gradient(90deg,rgba(62,44,25,.92),rgba(139,101,56,.9) 46%,rgba(77,56,31,.94))!important;
+  box-shadow:
+    inset 0 12px 24px rgba(0,0,0,.22),
+    0 0 0 1px rgba(191,150,87,.08)!important;
+  filter:none!important;
 }
-.chaos-canyon-journal-art .journal-eyebrow{color:#b79ac7}
-
+.chaos-canyon-journal-art .journal-eyebrow{color:#b9d58d}
+.chaos-canyon-journal-art h3{color:#eef0df}
+.chaos-canyon-journal-art p{color:#aeb7a5}
 
 /* Chaos Canyon visual identity. Combat layout intentionally remains the shared cb2d structure. */
 .dungeon-browser-card.chaos-canyon{border-color:rgba(113,151,83,.32)}
-.chaos-canyon-art,.chaos-canyon-journal-art{background:
- radial-gradient(circle at 72% 25%,rgba(102,220,156,.16),transparent 28%),
- linear-gradient(145deg,rgba(33,46,25,.96),rgba(78,52,30,.9) 58%,rgba(19,25,18,.98))}
+.chaos-canyon-art{
+ background:
+  linear-gradient(90deg,rgba(11,16,10,.92),rgba(25,31,17,.30)),
+  radial-gradient(circle at 78% 20%,rgba(235,174,86,.22),transparent 18%),
+  linear-gradient(145deg,rgba(47,59,30,.96),rgba(104,70,36,.92) 58%,rgba(22,28,18,.98))!important
+}
+.chaos-canyon-art:before{
+ content:"";position:absolute;right:-8%;bottom:-14%;width:54%;height:92%;
+ background:linear-gradient(90deg,#4b3522,#75502d);
+ clip-path:polygon(18% 0,100% 8%,100% 100%,0 100%,15% 79%,7% 62%,21% 43%,11% 25%)
+}
 .chaos-canyon-art strong{color:#9dcc76;text-shadow:0 0 24px rgba(123,218,125,.3)}
 .chaos-canyon-journal-hero{border-color:rgba(126,168,89,.28)}
 
