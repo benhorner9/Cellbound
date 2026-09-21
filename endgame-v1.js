@@ -11,11 +11,13 @@ const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 let Game=null,db=null,user=null,server={season:D.SEASON,rotation:{},progress:[],weekly:{},recentRuns:[],achievements:[]},leaderboards={},attempts={};
 const selection={
  'ashen-vault':{difficulty:'normal',tier:1},
- 'hollow-sanctum':{difficulty:'normal',tier:1}
+ 'hollow-sanctum':{difficulty:'normal',tier:1},
+ 'chaos-canyon':{difficulty:'normal',tier:1}
 };
 const leaderboardView={
  'ashen-vault':{scope:'overall',klass:null},
- 'hollow-sanctum':{scope:'overall',klass:null}
+ 'hollow-sanctum':{scope:'overall',klass:null},
+ 'chaos-canyon':{scope:'overall',klass:null}
 };
 
 const progressFor=id=>(server.progress||[]).find(x=>x.dungeon_id===id)||{
@@ -194,6 +196,9 @@ function prepare(id){
  }else if(id==='hollow-sanctum'){
    Game.switchView?.('content');
    setTimeout(()=>window.CellboundHollowSanctum?.open?.({difficulty:cfg.difficulty,tier:cfg.tier}),80)
+ }else if(id==='chaos-canyon'){
+   Game.switchView?.('content');
+   setTimeout(()=>window.CellboundChaosCanyon?.open?.({difficulty:cfg.difficulty,tier:cfg.tier}),80)
  }
 }
 function stageConfig(dungeonId,stage){
