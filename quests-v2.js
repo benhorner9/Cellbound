@@ -1,5 +1,6 @@
 (()=>{
 'use strict';
+window.CellboundCombatStandard?.register?.('quest-encounters',{kind:'quest-combat',execution:'local',ui:'shared-cb2d'});
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -673,7 +674,7 @@ function qEncounterFromConfig(config){
   return{id:'quest-'+String(config.title||'fight').toLowerCase().replace(/[^a-z0-9]+/g,'-'),title:config.title,kind,level:Math.max(1,Number(meta.level)||1),enemyLevels:meta.enemyLevels||null,enemyTypes:meta.enemyTypes||null,enemies:[...config.enemies],enemyHealth:Number(meta.enemyHealth)|| (kind==='final'?900:kind==='boss'?700:330),mechanics:meta.mechanics||[]}
 }
 async function runQuest2DFight(config){
-  const p=party(),C=window.CellboundCombatReborn;if(p.length!==5||!C?.simulate)return false;
+  const p=party(),C=window.CellboundCombatStandard;if(p.length!==5||!C?.simulate)return false;
   const tok=++encounterToken;
   return await new Promise(resolve=>{
     let settled=false;const finish=value=>{if(settled)return;settled=true;resolve(value)};
@@ -688,7 +689,7 @@ async function runQuest2DFight(config){
           encounter,
           tactics:{interruptPriority:'standard',addPriority:'immediate',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced'},
           seed:['quest',tok,config.title,Date.now()].join(':')
-        });
+        },{zone:'quest-encounters'});
         questFight.result=result;
         if(Array.isArray(result?.finalState?.enemies)){const main=result.finalState.enemies.filter(e=>!e.isAdd);questFight.enemyMax=main.map(e=>e.maxHealth);questFight.enemyHp=[...questFight.enemyMax]}
         const won=await qPlayReborn(result,tok);if(tok!==encounterToken)return;
