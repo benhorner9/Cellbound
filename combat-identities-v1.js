@@ -1526,6 +1526,7 @@ function resolveMechanic(ctx,e,m,token){
   scheduleNextMechanic(ctx);return;
  }
  if(m.type==='role-circles'){
+  e.movingUntil=0;e.nextAttack=Math.max(Number(e.nextAttack)||0,ctx.time+650);
   let failed=false;const zones=cast.zones||{};
   livingPlayers(ctx).slice().forEach(p=>{
    const zone=zones[p.role]||zones.dps,radius=Math.max(3,Number(zone?.radius)||10),inside=zone&&dist(p.position,{x:Number(zone.x)||50,y:Number(zone.y)||50})<=radius;
@@ -1568,6 +1569,7 @@ function startMechanic(ctx,m){
  }else if(m.type==='role-circles'){
   const defaults={tank:{x:34,y:29,radius:10,color:'red',label:'TANK'},dps:{x:62,y:50,radius:13,color:'yellow',label:'DAMAGE'},healer:{x:34,y:71,radius:10,color:'blue',label:'HEALER'}};
   castState.zones={...defaults,...copy(m.zones||{})};castState.targetIds=live.map(p=>p.id);
+  enemy.movingUntil=Math.max(Number(enemy.movingUntil)||0,ctx.time+duration);enemy.nextAttack=Math.max(Number(enemy.nextAttack)||0,ctx.time+duration+650);
   live.forEach(p=>{
    const zone=castState.zones[p.role]||castState.zones.dps,baseReaction=executionReaction(ctx,p,'movement'),error=shouldMistake(ctx,p,'movement',2600);
    const hesitation=error?Math.round(350+ctx.rng()*850):0,reaction=baseReaction+hesitation,travel=520;
