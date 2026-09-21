@@ -1191,11 +1191,16 @@ function enemyBasicAttack(ctx,e){
   e.nextAttack=ctx.time+450;return;
  }
  updateFacing(e,target);
- const base=e.classification==='world-boss'?46:e.kind==='boss'?36:e.classification==='elite'?18:e.isAdd?12:14;
- const levelPressure=enemyPressure(ctx,e,target);
+ const base=e.classification==='world-boss'?46:e.kind==='boss'?36:e.classification==='elite'?18:e.isAdd?12:14,roll=.88+ctx.rng()*.24;
  const ability=e.classification==='world-boss'?'Crushing Blow':e.kind==='boss'?'Heavy Swing':e.classification==='elite'?'Heavy Strike':'Attack';
- emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability,result:'enemy'});
- dealDamage(ctx,e,target,base*levelPressure*(.88+ctx.rng()*.24),ability,{damageType:'physical',aggroHit:true});
+ if(e.allAttacksAoe&&e.kind==='boss'){
+  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability:'Wild Wrath',result:'enemy-aoe',payload:{aoe:true}});
+  livingPlayers(ctx).forEach(p=>dealDamage(ctx,e,p,base*.62*enemyPressure(ctx,e,p)*roll,'Wild Wrath',{damageType:'magic',avoidable:false,aoe:true,aggroHit:true}));
+ }else{
+  const levelPressure=enemyPressure(ctx,e,target);
+  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability,result:'enemy'});
+  dealDamage(ctx,e,target,base*levelPressure*roll,ability,{damageType:'physical',aggroHit:true});
+ }
  const cadence=e.classification==='world-boss'?1325:e.kind==='boss'?1450:e.classification==='elite'?1850:e.isAdd?1800:2050;
  e.nextAttack=ctx.time+cadence+Math.round(ctx.rng()*(e.kind==='boss'?220:320));
 }
@@ -1406,10 +1411,11 @@ function checkBossPhases(ctx){
   if(ctx.phaseTriggered[key]||!Number.isFinite(at)||hp>at)return;
   ctx.phaseTriggered[key]=true;
   if(Number(phase.damageScale)>1)boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(phase.damageScale));
+  if(phase.allAttacksAoe)boss.allAttacksAoe=true;
   if(Array.isArray(phase.addMechanics)&&phase.addMechanics.length){
    phase.addMechanics.forEach(m=>ctx.encounter.mechanics.push(Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}));
   }
-  emit(ctx,'PHASE_CHANGE',{source:boss.id,target:boss.id,ability:phase.name||('Phase '+(index+2)),result:'phase',position:copy(boss.position),payload:{phaseId:key,atPct:at,healthPct:hp,damageScale:boss.phaseDamageScale}});
+  emit(ctx,'PHASE_CHANGE',{source:boss.id,target:boss.id,ability:phase.name||('Phase '+(index+2)),result:'phase',position:copy(boss.position),payload:{phaseId:key,atPct:at,healthPct:hp,damageScale:boss.phaseDamageScale,allAttacksAoe:!!boss.allAttacksAoe}});
   if(phase.spawnAdds)spawnAdds(ctx,boss);
  });
  const softPct=Number(ctx.encounter.softEnragePct);
