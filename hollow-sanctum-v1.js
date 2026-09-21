@@ -509,7 +509,7 @@ async function hsFail(s,result){
 }
 async function hsFailNoHealer(s,result){
  run.done=true;Game.applyPartyCellShock?.(25);const st=state();st.activity.push('The Hollow Sanctum expedition ended after '+s.title+' because the party had no healer to revive fallen adventurers. All five gained 25% Cell Shock.');Game.save?.();await Game.persistState?.();
- const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end';end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>No healer available after '+esc(s.title)+'.</h3><p>A fallen adventurer cannot be recovered without a healer. The expedition ends here and all five gain 25% Cell Shock.</p></div>'+hsFailureDiagnosis(result)+hsStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
+ const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end cb2d-results-screen';$('.hs2d-shell')?.classList.add('results-mode');end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>No healer available after '+esc(s.title)+'.</h3><p>A fallen adventurer cannot be recovered without a healer. The expedition ends here and all five gain 25% Cell Shock.</p></div>'+hsFailureDiagnosis(result)+hsStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
 }
 async function hsRecoverFallen(tok){
  let fallen=party().filter(c=>(Number(run.hp[c.id])||0)<=0);if(!fallen.length)return true;
