@@ -330,10 +330,22 @@ function renderTop(){
 }
 function shockMarkup(c){const pct=Math.round(c.cellShock||0),locked=isUnavailable(c);return `<div class="cell-shock-row"><div><span>Cell Shock</span><b>${pct}%${locked?` · ${formatRemaining(c)}`:''}</b></div><div class="cell-shock-bar"><i style="width:${pct}%"></i></div></div>`;}
 function rosterCard(c,index){
-  const role=roleOf(c),unlocked=isRosterSlotUnlocked(index),locked=isUnavailable(c),ilvl=characterItemLevel(c),status=!unlocked?'MEMBERSHIP SLOT':locked?'RECOVERING':'READY',classKey=combatClassKey(c);
-  return `<article class="char-card ${classKey} ${!unlocked?'roster-locked':''} ${locked?'shock-locked':''}" data-role="${role}" data-class-name="${c.class}" style="--glow:var(--combat-class,#7F8B88)"><div class="char-top"><div class="char-portrait">${c.portrait}</div><span class="role-tag role-${role}">${roleLabel(role)}</span></div><div class="character-status ${locked?'danger':''}">${status}${locked?` · ${formatRemaining(c)}`:''}</div><h3>${c.name}</h3><div class="class">${c.race||'Veyren'} · ${c.class} · ${c.spec} · Level ${c.level}</div><div class="char-stats"><div><span>Power</span><b>${c.power}</b></div><div><span>Item Level</span><b>${ilvl}</b></div><div><span>Talent Points</span><b>${c.talent}</b></div></div><div class="level-growth"><span>Level Growth</span><b>+${levelHpBonus(c)}% Base HP · +${levelOutputBonus(c)}% Base Damage / Healing</b></div>${shockMarkup(c)}<div class="knowledge-row"><div><span>Avg. Knowledge</span><b>${averageKnowledge(c)}%</b></div><div class="knowledge-bar"><i style="width:${averageKnowledge(c)}%"></i></div></div><button data-char="${c.id}" ${!unlocked?'disabled':''}>${unlocked?'VIEW CHARACTER':'MEMBERSHIP REQUIRED'}</button></article>`;
+  const role=roleOf(c),unlocked=isRosterSlotUnlocked(index),locked=isUnavailable(c),ilvl=characterItemLevel(c),status=!unlocked?'MEMBERSHIP LOCKED':locked?'RECOVERING':'READY',classKey=combatClassKey(c);
+  return `<article class="char-card ${classKey} ${!unlocked?'roster-locked':''} ${locked?'shock-locked':''}" data-role="${role}" data-class-name="${c.class}" style="--glow:var(--combat-class,#7F8B88)">${!unlocked?'<div class="member-slot-ribbon">MEMBERSHIP SLOT '+(index+1)+'</div>':''}<div class="char-top"><div class="char-portrait">${c.portrait}</div><span class="role-tag role-${role}">${roleLabel(role)}</span></div><div class="character-status ${locked||!unlocked?'danger':''}">${status}${locked&&unlocked?` · ${formatRemaining(c)}`:''}</div><h3>${c.name}</h3><div class="class">${c.race||'Veyren'} · ${c.class} · ${c.spec} · Level ${c.level}</div><div class="char-stats"><div><span>Power</span><b>${c.power}</b></div><div><span>Item Level</span><b>${ilvl}</b></div><div><span>Talent Points</span><b>${c.talent}</b></div></div><div class="level-growth"><span>Level Growth</span><b>+${levelHpBonus(c)}% Base HP · +${levelOutputBonus(c)}% Base Damage / Healing</b></div>${shockMarkup(c)}<div class="knowledge-row"><div><span>Avg. Knowledge</span><b>${averageKnowledge(c)}%</b></div><div class="knowledge-bar"><i style="width:${averageKnowledge(c)}%"></i></div></div><button data-char="${c.id}">${unlocked?'VIEW CHARACTER':'VIEW LOCKED CHARACTER'}</button></article>`;
 }
-function renderRoster(filter='all'){if(!ui.rosterGrid)return;ui.rosterGrid.innerHTML=state.roster.filter(c=>filter==='all'||roleOf(c)===filter).map(c=>rosterCard(c,state.roster.indexOf(c))).join('');}
+function recruitSlotCard(index){
+  return `<article class="char-card recruit-slot-card"><div class="recruit-slot-number">SLOT ${index+1}</div><div class="recruit-plus">+</div><h3>Recruit Adventurer</h3><div class="class">Membership roster slot · Empty</div><p>Bring another Level 1 adventurer into your guild. Choose any available class and specialisation.</p><button data-recruit-slot="${index}">RECRUIT ADVENTURER</button></article>`;
+}
+function renderRoster(filter='all'){
+  if(!ui.rosterGrid)return;
+  const rows=state.roster.map((c,index)=>({c,index})).filter(x=>filter==='all'||roleOf(x.c)===filter);
+  let html=rows.map(x=>rosterCard(x.c,x.index)).join('');
+  if(filter==='all'&&entitlements().member&&state.onboarding?.complete&&(state.roster?.length||0)<10){
+    for(let i=state.roster.length;i<10;i++)html+=recruitSlotCard(i);
+  }
+  ui.rosterGrid.innerHTML=html;
+  ui.rosterGrid.querySelectorAll('[data-recruit-slot]').forEach(b=>b.onclick=()=>openRecruit(Number(b.dataset.recruitSlot)));
+}
 $$('#roster .filter[data-filter]').forEach(b=>b.addEventListener('click',()=>{$$('#roster .filter[data-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderRoster(b.dataset.filter);}));
 function renderOverview(){
   if(!ui.overviewRoster)return;
