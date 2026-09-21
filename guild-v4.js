@@ -101,8 +101,9 @@ function initialState(){
 }
 function entitlementFromAccount(a){
   const until=a?.membership_active_until?new Date(a.membership_active_until).getTime():0;
-  const member=Boolean(a?.membership_override)||(until>Date.now());
-  return {member,rosterCap:member?10:5,professionSlots:member?2:1,recoveryMinutes:member?MEMBER_RECOVERY_MINUTES:STANDARD_RECOVERY_MINUTES,membershipActiveUntil:a?.membership_active_until||null};
+  const staffMember=Boolean(a?.staff_member);
+  const member=staffMember||Boolean(a?.membership_override)||(until>Date.now());
+  return {member,staffMember,chatBadge:a?.chat_badge||'player',playerModDiscountEligible:Boolean(a?.player_mod_discount_eligible),rosterCap:member?10:5,professionSlots:member?2:1,recoveryMinutes:member?MEMBER_RECOVERY_MINUTES:STANDARD_RECOVERY_MINUTES,membershipActiveUntil:a?.membership_active_until||null};
 }
 function entitlements(){return entitlementFromAccount(account);}
 function classDef(c){return classes[c.class]||classes.Warrior;}
@@ -207,9 +208,18 @@ async function persistState(){
 function save(){writeLocal();clearTimeout(syncTimer);syncTimer=setTimeout(()=>persistState(),120);return saveSerial;}
 async function loadAccount(user){
   currentUser=user;setSync('Loading…','busy');
-  const {data,error}=await supabaseClient.from('guild_accounts').select('user_id,game_state,membership_active_until,membership_override,updated_at').eq('user_id',user.id).maybeSingle();
-  if(error){console.error('Cellbound account load failed',error);account={user_id:user.id,membership_active_until:null,membership_override:false};state=migrateState(localCandidate(user.id)||initialState());setSync('Local fallback','error');writeLocal();return;}
-  account=data||{user_id:user.id,membership_active_until:null,membership_override:false};
+  const [accountResult,identityResult]=await Promise.all([
+    supabaseClient.from('guild_accounts').select('user_id,game_state,membership_active_until,membership_override,updated_at').eq('user_id',user.id).maybeSingle(),
+    supabaseClient.rpc('cellbound_social_identity')
+  ]);
+  const {data,error}=accountResult,identity=identityResult?.data;
+  if(error){
+    console.error('Cellbound account load failed',error);
+    account={user_id:user.id,membership_active_until:null,membership_override:false,staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible)};
+    state=migrateState(localCandidate(user.id)||initialState());setSync('Local fallback','error');writeLocal();return;
+  }
+  if(identityResult?.error)console.warn('Cellbound social identity unavailable',identityResult.error);
+  account={...(data||{user_id:user.id,membership_active_until:null,membership_override:false}),staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible)};
   state=migrateState(data?.game_state&&Object.keys(data.game_state).length?data.game_state:(localCandidate(user.id)||initialState()));
   removeInvalidPartyMembers(state);nativeLocalSet.call(localStorage,LOCAL_OWNER,user.id);writeLocal();
   if(!data){await supabaseClient.from('guild_accounts').insert({user_id:user.id,game_state:state,updated_at:new Date().toISOString()});}
