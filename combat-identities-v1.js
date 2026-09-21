@@ -271,7 +271,7 @@ if(!window.CellboundCombatReborn){
 (()=>{
 'use strict';
 
-const VERSION='1.2.1';
+const VERSION='1.3.0';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -535,12 +535,196 @@ function triggerUnique(ctx,u,id,name,payload={}){
  emit(ctx,'UNIQUE_EFFECT_TRIGGER',{source:u.id,target:payload.target||u.id,ability:name,result:id,payload:{effectId:id,...payload}})
 }
 
+
+const TALENT_SKILL_REQUIREMENTS={
+  'mortal-strike':'Mortal Strike','overpower':'Overpower','sweeping-strike':'Sweeping Blows',
+  'consecration':'Consecration','ardent-defender':'Ardent Defender','holy-shock':'Holy Shock','radiant-wave':'Radiance',
+  'guardian-spirit':'Guardian Spirit','divine-hymn':'Divine Hymn',
+  'wild-growth':'Wild Growth','tranquility':'Tranquility',
+  'kill-shot':'Kill Shot','garrote':'Garrote','envenom':'Envenom','arcane-barrage':'Barrage'
+};
+const TALENT_RULES={
+ 'Shield Mastery':'More block chance and physical mitigation per rank.',
+ 'Last Stand':'Once per encounter, falling dangerously low restores health and grants brief protection.',
+ 'Iron Discipline':'Reduces physical damage taken.',
+ 'Taunt Mastery':'Taunts hold enemies longer and create a larger threat lead.',
+ 'Hold the Line':'Blocking grants a short damage-reduction buff.',
+ 'Vengeance':'Taking damage briefly increases outgoing damage.',
+ 'Bulwark':'Using a major defensive also protects the party.',
+ 'Fortress':'Reduces damage taken during boss encounters.',
+ 'Unbroken':'Once per encounter, a lethal hit leaves the Warrior standing at 1 HP.',
+ 'Weapon Mastery':'Increases weapon damage.',
+ 'Deep Wounds':'Critical weapon hits cause a real damage-over-time bleed.',
+ 'Battle Rhythm':'Successful attacks build a short damage and haste buff.',
+ 'Overpower':'Deals extra damage to casting or recently interrupted enemies.',
+ 'Sweeping Blows':'Single-target attacks splash damage to another enemy.',
+ 'Executioner':'Increases damage against low-health enemies.',
+ 'Mortal Strike':'Unlocks Mortal Strike and makes it hit harder.',
+ 'Blood Frenzy':'Bleeding a target grants haste.',
+ 'Bladestorm':'Against groups, periodically unleashes a real party-visible area attack.',
+ 'Sacred Shield':'Increases block and physical mitigation.',
+ 'Guardian Oath':'Increases threat and reduces damage taken.',
+ 'Righteous Guard':'Blocking grants additional short mitigation.',
+ 'Hammer of Justice':'Improves interrupt recovery and briefly controls non-boss enemies.',
+ 'Consecration':'Unlocks Consecration and improves its damage and group threat.',
+ 'Divine Ward':'Reduces magical damage taken.',
+ 'Ardent Defender':'Unlocks and strengthens Ardent Defender.',
+ 'Holy Bastion':'Increases block during boss encounters.',
+ 'Divine Guardian':'A major defensive also grants party-wide protection.',
+ 'Divine Light':'Increases direct healing.',
+ 'Grace':'Reduces mana costs of healing skills.',
+ 'Holy Shock':'Unlocks Holy Shock and increases its healing.',
+ 'Infusion':'Direct heals can trigger a short haste buff.',
+ 'Beacon':'Single-target healing echoes onto the tank.',
+ 'Sacred Hands':'Heals low-health allies for more.',
+ 'Aura Mastery':'Makes Blessing of Resolve stronger and last longer.',
+ 'Radiance':'Unlocks Radiant Wave and causes direct heals to splash to nearby allies.',
+ 'Divine Hymn':'Empowers major party healing.',
+ 'Renew':'Direct heals leave a real healing-over-time effect.',
+ 'Serenity':'Increases direct healing.',
+ 'Prayer of Mending':'Direct heals jump to additional injured allies.',
+ 'Focused Will':'Reduces damage taken while the Priest is under pressure.',
+ 'Circle of Healing':'Increases party-wide healing.',
+ 'Spirit of Redemption':'On defeat, releases a final heal across surviving allies.',
+ 'Guardian Spirit':'Unlocks Guardian Spirit and can prevent a lethal hit on an ally.',
+ 'Divine Insight':'Direct heals can echo for extra healing.',
+ 'Rejuvenation':'Improves Rejuvenation and its healing-over-time ticks.',
+ 'Lifebloom':'Focused healing plants additional healing ticks.',
+ 'Wild Growth':'Unlocks Wild Growth and improves party healing.',
+ 'Natural Swiftness':'Periodically makes a casted heal instant.',
+ 'Living Seed':'Direct healing can plant a delayed heal.',
+ 'Ironbark':'Automatically protects a critically injured ally on a cooldown.',
+ 'Tree of Life':'Under heavy pressure, temporarily boosts healing and haste.',
+ 'Flourish':'Party heals extend restoration with an additional healing pulse.',
+ 'Tranquility':'Unlocks and strengthens Tranquility.',
+ 'True Aim':'Increases ranged damage.',
+ 'Rapid Fire':'Reduces Hunter ability cooldowns.',
+ 'Steady Focus':'Increases damage while the Hunter is stationary.',
+ 'Concussive Shot':'Damaging attacks can briefly control non-boss enemies.',
+ 'Piercing Shots':'Critical shots cause a bleed.',
+ 'Trueshot Aura':'Increases party ranged damage.',
+ 'Careful Aim':'Deals extra damage to healthy enemies.',
+ 'Killer Instinct':'Deals extra damage to weakened enemies.',
+ 'Kill Shot':'Unlocks Kill Shot and improves its execute threshold and damage.',
+ 'Ambush':'Increases opening damage.',
+ 'Venom':'Adds poison damage to attacks.',
+ 'Garrote':'Unlocks Garrote and strengthens its bleed.',
+ 'Quick Recovery':'Increases Energy regeneration.',
+ 'Mutilate':'Strengthens Mutilate.',
+ 'Envenom':'Unlocks and strengthens Envenom.',
+ 'Master Poisoner':'Improves poison damage.',
+ 'Cut to the Chase':'Envenom grants a short haste buff.',
+ 'Eviscerate':'Strengthens Eviscerate as a finisher.',
+ 'Arcane Focus':'Increases spell damage.',
+ 'Surge':'Repeated spell hits can trigger a short damage surge.',
+ 'Clearcasting':'Spells can cost no Mana.',
+ 'Spell Impact':'Increases spell critical damage.',
+ 'Presence of Mind':'Periodically makes a casted spell instant.',
+ 'Arcane Flows':'Reduces Mage cooldowns.',
+ 'Arcane Power':'Automatically triggers a major damage cooldown in difficult combat.',
+ 'Nether Precision':'Increases spell critical chance.',
+ 'Barrage':'Unlocks Arcane Barrage and makes it hit harder with splash damage.'
+};
+function characterTalentRank(c,name){return Math.max(0,Number(c?.talents?.[c?.spec]?.[name])||0)}
+function talentRank(u,name){return Math.max(0,Number(u?.talentTree?.[name]??u?.original?.talents?.[u?.spec]?.[name])||0)}
+function talentReady(ctx,u,key){return Number(u?.talentTimers?.[key]||0)<=ctx.time}
+function talentSetCooldown(ctx,u,key,ms){u.talentTimers=u.talentTimers||{};u.talentTimers[key]=ctx.time+Math.max(0,Number(ms)||0)}
+function talentTrigger(ctx,u,name,target=u,payload={}){
+ emit(ctx,'TALENT_TRIGGER',{source:u?.id||null,target:target?.id||null,ability:name,result:'triggered',position:copy(target?.position||u?.position),payload:{talent:name,...payload}})
+}
+function talentDamageScale(ctx,u,a,target){
+ let m=1,rank=0,hp=healthRatio(target);
+ if(u.class==='Warrior'&&u.spec==='Arms'){
+  m*=1+talentRank(u,'Weapon Mastery')*.03;
+  if((target?.currentCast||Number(target?.interruptedUntil)>ctx.time)&&(rank=talentRank(u,'Overpower')))m*=1+rank*.06;
+  if(hp<.35&&(rank=talentRank(u,'Executioner')))m*=1+rank*.07;
+  if(a.id==='mortal-strike'&&talentRank(u,'Mortal Strike'))m*=1.25;
+ }
+ if(u.class==='Paladin'){
+  if(a.id==='consecration'&&(rank=talentRank(u,'Consecration')))m*=1+rank*.22;
+ }
+ if(u.class==='Hunter'){
+  m*=1+talentRank(u,'True Aim')*.03;
+  if(ctx.time>=Number(u.movingUntil||0))m*=1+talentRank(u,'Steady Focus')*.025;
+  if(hp>.80)m*=1+talentRank(u,'Careful Aim')*.055;
+  if(hp<.30)m*=1+talentRank(u,'Killer Instinct')*.065;
+  if(a.id==='kill-shot'&&talentRank(u,'Kill Shot'))m*=1.30;
+ }
+ if(u.class==='Rogue'){
+  if(Number(u.damageActions||0)<1)m*=1+talentRank(u,'Ambush')*.08;
+  if(a.id==='mutilate'&&talentRank(u,'Mutilate'))m*=1.18;
+  if(a.id==='envenom'&&(rank=talentRank(u,'Envenom')))m*=1+rank*.10;
+  if(a.id==='eviscerate'&&talentRank(u,'Eviscerate'))m*=hp<.35?1.35:1.20;
+ }
+ if(u.class==='Mage'){
+  m*=1+talentRank(u,'Arcane Focus')*.03;
+  if(a.id==='arcane-barrage'&&talentRank(u,'Barrage'))m*=1.28;
+ }
+ const aura=livingPlayers(ctx).find(p=>p.class==='Hunter'&&talentRank(p,'Trueshot Aura')>0);
+ if(aura&&['Hunter','Mage'].includes(u.class))m*=1.05;
+ return m
+}
+function talentCritBonus(u){return u.class==='Mage'?talentRank(u,'Nether Precision')*.03:0}
+function talentCritMultiplier(u){return u.class==='Mage'?1+talentRank(u,'Spell Impact')*.12:1}
+function talentHealingScale(ctx,u,a,target){
+ let m=1,rank=0,hp=healthRatio(target);
+ if(u.class==='Paladin'&&u.spec==='Holy'){
+  if(a.kind==='heal')m*=1+talentRank(u,'Divine Light')*.04;
+  if(a.id==='holy-shock'&&talentRank(u,'Holy Shock'))m*=1.25;
+  if(hp<.50)m*=1+talentRank(u,'Sacred Hands')*.06;
+  if(a.kind==='group-heal')m*=1+talentRank(u,'Divine Hymn')*.10;
+  if(a.id==='radiant-wave'&&talentRank(u,'Divine Hymn'))m*=1.25;
+ }
+ if(u.class==='Priest'){
+  if(a.kind==='heal')m*=1+talentRank(u,'Serenity')*.04;
+  if(a.kind==='group-heal')m*=1+talentRank(u,'Circle of Healing')*.12;
+  if(a.id==='divine-hymn'&&talentRank(u,'Divine Hymn'))m*=1.30;
+ }
+ if(u.class==='Druid'){
+  if(a.id==='rejuvenation')m*=1+talentRank(u,'Rejuvenation')*.08;
+  if(a.kind==='group-heal')m*=1+talentRank(u,'Wild Growth')*.08;
+  if(a.id==='tranquility'&&talentRank(u,'Tranquility'))m*=1.30;
+ }
+ return m
+}
+function talentCooldownScale(u,a){
+ let m=1;
+ if(u.class==='Hunter')m*=Math.max(.78,1-talentRank(u,'Rapid Fire')*.06);
+ if(u.class==='Mage')m*=Math.max(.78,1-talentRank(u,'Arcane Flows')*.06);
+ if(u.class==='Paladin'&&a.kind==='interrupt')m*=Math.max(.75,1-talentRank(u,'Hammer of Justice')*.10);
+ return m
+}
+function talentResourceRegenScale(u){
+ if(u.class==='Rogue')return 1+talentRank(u,'Quick Recovery')*.08;
+ return 1
+}
+function talentCost(ctx,u,a,cost){
+ let value=cost;
+ if(u.class==='Paladin'&&u.spec==='Holy'&&(a.kind==='heal'||a.kind==='group-heal'))value*=Math.max(.70,1-talentRank(u,'Grace')*.06);
+ if(u.class==='Mage'&&value>0){
+  const r=talentRank(u,'Clearcasting');
+  if(r&&ctx.rng()<r*.08){talentTrigger(ctx,u,'Clearcasting',u,{saved:Math.round(value)});value=0}
+ }
+ return Math.max(0,value)
+}
+function talentCastTime(ctx,u,a,cast){
+ if(cast<=0)return cast;
+ if(u.class==='Druid'&&(a.kind==='heal'||a.kind==='group-heal')&&talentRank(u,'Natural Swiftness')&&talentReady(ctx,u,'natural-swiftness')){
+  talentSetCooldown(ctx,u,'natural-swiftness',30000);talentTrigger(ctx,u,'Natural Swiftness',u,{originalCast:cast});return 0
+ }
+ if(u.class==='Mage'&&a.kind==='damage'&&talentRank(u,'Presence of Mind')&&talentReady(ctx,u,'presence-of-mind')){
+  talentSetCooldown(ctx,u,'presence-of-mind',30000);talentTrigger(ctx,u,'Presence of Mind',u,{originalCast:cast});return 0
+ }
+ return cast
+}
+Object.values(ABILITIES).flat().forEach(a=>{if(TALENT_SKILL_REQUIREMENTS[a.id])a.talentReq=TALENT_SKILL_REQUIREMENTS[a.id]});
+
 function classSkillPool(c,role){
  return (ABILITIES[c?.class]||[]).filter(a=>!a.role||a.role===role)
 }
 function unlockedSkillPool(c,role){
  const level=Math.max(1,Number(c?.level)||1);
- return classSkillPool(c,role).filter(a=>(Number(a.unlockLevel)||1)<=level)
+ return classSkillPool(c,role).filter(a=>(Number(a.unlockLevel)||1)<=level&&(!a.talentReq||characterTalentRank(c,a.talentReq)>0))
 }
 function defaultSkillLoadout(c,role){
  const pool=unlockedSkillPool(c,role),picked=[];
@@ -585,7 +769,7 @@ function normalisePlayer(c,i){
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:{x:tank?42:role==='healer'?18:28,y:26+i*12},facing:0,
   target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:carriedStatuses(c),resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
-  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),
+  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:{},talentFlags:{},talentCounters:{},damageActions:0,knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),
   defensiveUntil:Math.max(0,Number(c?._combatDefensiveMs)||0),frenzyUntil:Math.max(0,Number(c?._combatFrenzyMs)||0),uniqueUsed:copy(c?._combatUniqueUsed||{}),nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
 }
