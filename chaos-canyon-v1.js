@@ -131,11 +131,8 @@ function setStatus(text){const e=$('#cc2dStatus');if(e)e.textContent=text}
 function feed(text){if(!run)return;run.log.push(text);const e=$('#cc2dFeed');if(e)e.innerHTML=run.log.slice(-7).reverse().map(x=>'<p>'+esc(x)+'</p>').join('')}
 function ccArenaScale(){return STAGES[run?.stage]?.id==='vorran'?[1,.78,.55,.30][Math.max(0,Math.min(3,Number(run?.vorranShrink)||0))]:1}
 function ccArenaPoint(x,y){const scale=ccArenaScale();return{x:50+(Number(x)-50)*scale,y:50+(Number(y)-50)*scale}}
-function addUnit(id,label,cls,x,y,big=false,meta=''){const e=document.createElement('div');e.className='cc2d-unit cb2d-unit '+cls+(big?' big':'');e.dataset.cc=id;e.dataset.rawX=x;e.dataset.rawY=y;const p=ccArenaPoint(x,y);e.style.left=p.x+'%';e.style.top=p.y+'%';e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="cc2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em><i></i></em>';$('#cc2dUnits').appendChild(e)}
-function ccSafePoint(id,x,y){
- const partyUnit=String(id||'').startsWith('p'),minX=partyUnit?7:58,maxX=partyUnit?58:93;
- return{x:Math.max(minX,Math.min(maxX,Number(x)||50)),y:Math.max(11,Math.min(89,Number(y)||50))}
-}
+function addUnit(id,label,cls,x,y,big=false,meta=''){const e=document.createElement('div'),safe=ccSafePoint(id,x,y);e.className='cc2d-unit cb2d-unit '+cls+(big?' big':'');e.dataset.cc=id;e.dataset.rawX=safe.x;e.dataset.rawY=safe.y;const p=ccArenaPoint(safe.x,safe.y);e.style.left=p.x+'%';e.style.top=p.y+'%';e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="cc2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em><i></i></em>';$('#cc2dUnits').appendChild(e)}
+function ccSafePoint(id,x,y){return{x:Math.max(7,Math.min(93,Number(x)||50)),y:Math.max(11,Math.min(89,Number(y)||50))}}
 function move(id,x,y,ms=550){const e=$('[data-cc="'+id+'"]');if(!e)return;const safe=ccSafePoint(id,x,y);e.dataset.rawX=safe.x;e.dataset.rawY=safe.y;const p=ccArenaPoint(safe.x,safe.y);e.style.transitionDuration=ms+'ms';e.style.left=p.x+'%';e.style.top=p.y+'%'}
 function ccReflowArena(ms=760){$('[data-cc]').forEach(e=>{const x=Number(e.dataset.rawX),y=Number(e.dataset.rawY);if(Number.isFinite(x)&&Number.isFinite(y))move(e.dataset.cc,x,y,ms)})}
 function ccPoint(id){const arena=$('#cc2dArena'),e=$('[data-cc="'+id+'"]');if(!arena||!e)return null;const ar=arena.getBoundingClientRect(),r=e.getBoundingClientRect();return{x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,w:ar.width,h:ar.height}}
