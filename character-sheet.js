@@ -336,7 +336,7 @@ function talentTree(c,spec){
     </div>
   </div>`;
 }
-function knowledgePanel(c){return `<div class="cb-knowledge-grid">${Object.entries(c.knowledge||{}).map(([id,val])=>`<article><div><span>${id.replace(/([a-z])([A-Z])/g,'$1 $2')}</span><b>${val}%</b></div><div class="cb-knowledge-bar"><i style="width:${val}%"></i></div></article>`).join('')}</div>`}
+function knowledgePanel(c){return `<div class="cb-mastery-intro"><small>ENCOUNTER MASTERY</small><h3>Experience, not hidden power.</h3><p>Mastery records how much this adventurer has experienced an encounter. It can support journals, achievements and future cosmetic rewards, but it does not alter damage, healing, survivability, interrupts or mechanic success.</p></div><div class="cb-knowledge-grid">${Object.entries(c.knowledge||{}).map(([id,val])=>`<article><div><span>${id.replace(/([a-z])([A-Z])/g,'$1 $2')}</span><b>${val}%</b></div><div class="cb-knowledge-bar"><i style="width:${val}%"></i></div></article>`).join('')}</div>`}
 function specTabs(c){const browsing=selectedTreeSpec&&specs[c.class]?.[selectedTreeSpec]?selectedTreeSpec:c.spec;return Object.keys(specs[c.class]||{}).map(spec=>`<button class="cb-spec-tab ${browsing===spec?'active':''}" data-spec-tab="${spec}">${spec}<small>${roleLabel(specs[c.class][spec])}${c.spec===spec?' · ACTIVE':''}</small></button>`).join('')}
 function combatIdentityPanel(c){
   const info=I?.summary?.(c),race=info?.race,spec=info?.spec;
