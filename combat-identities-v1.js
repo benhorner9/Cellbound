@@ -1980,15 +1980,20 @@ function startMechanic(ctx,m){
   castState.zones={...defaults,...copy(m.zones||{})};castState.targetIds=live.map(p=>p.id);
   enemy.movingUntil=Math.max(Number(enemy.movingUntil)||0,ctx.time+duration);enemy.nextAttack=Math.max(Number(enemy.nextAttack)||0,ctx.time+duration+650);
   live.forEach(p=>{
-   const zone=castState.zones[p.role]||castState.zones.dps,baseReaction=executionReaction(ctx,p,'movement'),error=shouldMistake(ctx,p,'movement',2600);
+   const correct=castState.zones[p.role]||castState.zones.dps,baseReaction=executionReaction(ctx,p,'movement'),error=shouldMistake(ctx,p,'movement',2600);
    const hesitation=error?Math.round(350+ctx.rng()*850):0,reaction=baseReaction+hesitation,travel=520;
-   castState.reactionMs[p.id]=reaction;castState.responses[p.id]=reaction+travel<=Math.max(800,duration-80);
-   if(error)recordMistake(ctx,p,'movement','hesitated during the role circuit',{target:enemy.id,ability:m.name,reactionMs:reaction});
+   let destination=correct;
+   if(error&&m.strict){
+    const wrong=Object.entries(castState.zones).filter(([key,z])=>key!==p.role&&z&&Number.isFinite(Number(z.x))&&Number.isFinite(Number(z.y)));
+    if(wrong.length)destination=wrong[Math.floor(ctx.rng()*wrong.length)][1]
+   }
+   castState.reactionMs[p.id]=reaction;castState.responses[p.id]=destination===correct&&reaction+travel<=Math.max(800,duration-80);
+   if(error)recordMistake(ctx,p,'movement',m.strict&&destination!==correct?'committed to the wrong role circuit':'hesitated during the role circuit',{target:enemy.id,ability:m.name,reactionMs:reaction});
    schedule(ctx,ctx.time+reaction,()=>{
     if(!p.alive)return;
     p.mechanicHoldUntil=ctx.time+Math.max(0,duration-reaction);
-    p.mechanicHoldPosition={x:zone.x,y:zone.y};
-    moveTo(ctx,p,{x:zone.x,y:zone.y},travel,'role circuit')
+    p.mechanicHoldPosition={x:destination.x,y:destination.y};
+    moveTo(ctx,p,{x:destination.x,y:destination.y},travel,m.strict&&destination!==correct?'wrong role circuit':'role circuit')
    },'role-circle-reaction')
   })
  }
