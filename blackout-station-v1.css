@@ -357,3 +357,42 @@ body.bs2d-open{overflow:hidden}
   .cb2d-arena.bs-arena{height:420px;min-height:420px}
   .bs-authority{grid-template-columns:1fr!important}
 }
+
+
+/* Canonical combat vitals / failure feedback */
+.bs-unit.cb2d-unit.party .cb2d-unit-hp{
+  top:-24px;
+  width:54px;
+  height:5px;
+  z-index:9;
+}
+.bs-unit.cb2d-unit.enemy .cb2d-unit-hp{
+  top:-17px;
+  width:66px;
+  height:6px;
+  z-index:9;
+}
+.bs-unit.cb2d-unit.party .cbr-resource{
+  top:-16px;
+  width:54px;
+  height:4px;
+  z-index:9;
+}
+.bs-wipe-report{
+  align-items:flex-start!important;
+  border-top-color:rgba(207,83,69,.25)!important;
+  background:linear-gradient(90deg,#21100e,#0b1517)!important;
+}
+.bs-wipe-report h3{color:#efb0a3}
+.bs-wipe-report p{
+  max-width:760px;
+  color:#c3cfcb!important;
+  font-size:.68rem!important;
+  line-height:1.55!important
+}
+.bs-wipe-report strong{
+  display:block;
+  margin-top:8px;
+  color:#d18b7c;
+  font-size:.58rem
+}
