@@ -25,7 +25,13 @@ const HOLLOW_ROOMS={
     '<div class="hsenv-mirror m1"></div><div class="hsenv-mirror m2"></div>'+
    '</div>',
   party:[[30,35],[30,50],[30,65],[21,42],[21,58]],
-  enemies:[[66,34],[72,50],[66,66]]
+  enemies:[[66,34],[72,50],[66,66]],
+  blockers:[
+   {id:'gallery-pillar-1',x:15,y:14,w:5,h:16},{id:'gallery-pillar-2',x:40,y:14,w:5,h:16},{id:'gallery-pillar-3',x:65,y:14,w:5,h:16},
+   {id:'gallery-pillar-4',x:15,y:86,w:5,h:16},{id:'gallery-pillar-5',x:40,y:86,w:5,h:16},{id:'gallery-pillar-6',x:65,y:86,w:5,h:16},
+   {id:'gallery-plinth-n',x:82,y:20,w:7,h:12},{id:'gallery-plinth-s',x:82,y:80,w:7,h:12}
+  ],
+  bounds:{left:5,right:95,top:6,bottom:94}
  },
  sentinel:{
   zone:'GUARDIAN CHAMBER',
@@ -40,7 +46,12 @@ const HOLLOW_ROOMS={
     '<span class="hsenv-crystal c1"></span><span class="hsenv-crystal c2"></span><span class="hsenv-crystal c3"></span>'+
    '</div>',
   party:[[42,50],[31,34],[31,66],[25,43],[25,57]],
-  enemies:[[67,50]]
+  enemies:[[67,50]],
+  blockers:[
+   {id:'sentinel-statue-n',x:29,y:25,w:5,h:16},{id:'sentinel-statue-s',x:29,y:75,w:5,h:16},
+   {id:'sentinel-pedestal',x:67,y:50,w:10,h:14,blocksLos:true,blocksMovement:true}
+  ],
+  bounds:{left:8,right:94,top:8,bottom:92}
  },
  choir:{
   zone:'INNER SHRINE',
@@ -58,7 +69,12 @@ const HOLLOW_ROOMS={
     '<span class="hsenv-crystal c1"></span><span class="hsenv-crystal c2"></span><span class="hsenv-crystal c3"></span><span class="hsenv-crystal c4"></span>'+
    '</div>',
   party:[[45,50],[31,32],[31,68],[25,42],[25,58]],
-  enemies:[[71,50]]
+  enemies:[[71,50]],
+  blockers:[
+   {id:'choir-bank-n',x:84,y:15,w:27,h:13},{id:'choir-bank-s',x:84,y:85,w:27,h:13},
+   {id:'choir-reliquary',x:92,y:50,w:8,h:34}
+  ],
+  bounds:{left:6,right:94,top:6,bottom:94}
  }
 };
 const RELIC={itemId:'quest-blackglass-resonator',name:'Blackglass Resonator',class:'All',classes:'all',slot:'Relic',tier:3,rarity:'Rare',tierLabel:'Quest Relic',enabled:true,dropEnabled:false,itemLevel:30,power:10,tradeState:'soulbound',questArtMaterial:'void-crystal',lore:'Recovered from The Bound Choir beneath Zeltira.'};
@@ -288,7 +304,7 @@ function hsRenderId(unitId){
 }
 function hsCharacter(unitId){const id=String(unitId||'');return id.startsWith('p-')?party().find(x=>String(x.id)===id.slice(2)):null}
 function hsAttackKind(c){return c?.class==='Hunter'?'arrow':['Mage','Priest','Druid','Evoker'].includes(c?.class)?'magic':'slash'}
-function hsRebornEncounter(s){const base={id:s.id,title:s.title,kind:s.combatKind||'trash',level:s.level||1,recommendedItemLevel:s.level<=6?24:s.level===7?26:28,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies:[...s.enemies],enemyHealth:s.enemyHealth,mechanics:(s.mechanics||[]).map(m=>Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m})};return window.CellboundEndgame?.stageConfig?.('hollow-sanctum',base)||base}
+function hsRebornEncounter(s){const room=HOLLOW_ROOMS[s.id]||{},base={id:s.id,title:s.title,kind:s.combatKind||'trash',level:s.level||1,recommendedItemLevel:s.level<=6?24:s.level===7?26:28,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies:[...s.enemies],enemyHealth:s.enemyHealth,mechanics:(s.mechanics||[]).map(m=>Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}),environment:{room:s.id,bounds:{...(room.bounds||{})},blockers:(room.blockers||[]).map(b=>({...b,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false}))}};return window.CellboundEndgame?.stageConfig?.('hollow-sanctum',base)||base}
 function hsResultHealth(result){
  (result?.finalState?.players||[]).forEach(p=>{const c=party().find(x=>String(x.id)===String(p.characterId));if(c)run.hp[c.id]=Math.max(0,Math.min(100,p.maxHealth?Math.round(p.health/p.maxHealth*100):0))})
 }
