@@ -271,7 +271,7 @@ if(!window.CellboundCombatReborn){
 (()=>{
 'use strict';
 
-const VERSION='1.3.1';
+const VERSION='1.3.2';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
