@@ -119,13 +119,16 @@ function skillPoolFor(c,spec=c?.spec){
   if(engine?.skills?.classSkillPool)return engine.skills.classSkillPool(copyChar,role);
   return (engine?.ABILITIES?.[c?.class]||[]).filter(a=>!a.role||a.role===role)
 }
+function skillTalentMet(c,skill,spec=c?.spec){return !skill?.talentReq||Math.max(0,Number(c?.talents?.[spec]?.[skill.talentReq])||0)>0}
+function skillAvailable(c,skill,spec=c?.spec){return (Number(skill?.unlockLevel)||1)<=Math.max(1,Number(c?.level)||1)&&skillTalentMet(c,skill,spec)}
 function defaultSkillIds(c,spec=c?.spec){
   const engine=combatEngine(),role=specs[c?.class]?.[spec]||'dps',copyChar={...c,spec};
   const ids=engine?.skills?.defaultSkillLoadout?.(copyChar,role)||skillPoolFor(copyChar,spec).filter(a=>(Number(a.unlockLevel)||1)<=Math.max(1,Number(c?.level)||1)).slice(0,4).map(a=>a.id);
   return ids.slice(0,4)
 }
 function equippedSkillIds(c,spec=c?.spec){
-  const explicit=Array.isArray(c?.skillLoadouts?.[spec])?c.skillLoadouts[spec]:defaultSkillIds(c,spec),out=explicit.slice(0,4);
+  const pool=skillPoolFor(c,spec),byId=new Map(pool.map(s=>[s.id,s]));
+  const explicit=Array.isArray(c?.skillLoadouts?.[spec])?c.skillLoadouts[spec]:defaultSkillIds(c,spec),out=explicit.slice(0,4).map(id=>{const skill=byId.get(id);return skill&&skillAvailable(c,skill,spec)?id:null});
   while(out.length<4)out.push(null);
   return out
 }
@@ -306,9 +309,10 @@ function talentInspector(c,spec,node){
   const s=treeNodeState(c,spec,node),reason=talentLockReason(c,spec,node,s);
   const canInvest=s.available&&!s.complete&&(c.talent>0);
   const nextCopy=s.complete?'This talent is fully ranked.':node.max===1?'Spending one point unlocks this talent effect.':`Spending one point advances this talent to Rank ${s.rank+1} of ${node.max}.`;
+  const combatRule=window.CellboundCombatReborn?.talents?.rules?.[node.id]||node.desc;
   return `<aside class="cb-talent-inspector ${canInvest?'investable':''}">
     <div class="cb-talent-inspector-head"><span class="cb-inspector-icon">${node.icon}</span><div><small>TIER ${node.tier+1} · ${spec.toUpperCase()}</small><h3>${node.id}</h3><p>Rank ${s.rank} / ${node.max}</p></div></div>
-    <section><small>WHAT IT DOES</small><p>${node.desc}</p></section>
+    <section><small>COMBAT EFFECT</small><p>${combatRule}</p></section>
     <section><small>NEXT INVESTMENT</small><p>${nextCopy} Each point also grants <b>+1 Power</b>.</p></section>
     <div class="cb-talent-requirements">
       <div><span>Tree requirement</span><b>${node.tier?node.tier*2+' points spent':'Available from Tier 1'}</b></div>
@@ -350,21 +354,21 @@ function overviewPanel(c,state){
 function skillsPanel(c){
   const engine=combatEngine(),spec=c.spec,role=roleOf(c),pool=skillPoolFor(c,spec),level=Math.max(1,Number(c.level)||1),equipped=equippedSkillIds(c,spec),selected=Math.max(0,Math.min(3,Number(activeSkillSlot)||0));
   const byId=new Map(pool.map(s=>[s.id,s])),buff=engine?.CLASS_BUFFS?.[c.class]||null;
-  const unlockedCount=pool.filter(s=>(Number(s.unlockLevel)||1)<=level).length,nextUnlock=pool.filter(s=>(Number(s.unlockLevel)||1)>level).sort((a,b)=>(a.unlockLevel||1)-(b.unlockLevel||1))[0];
+  const unlockedCount=pool.filter(s=>skillAvailable(c,s,spec)).length,nextUnlock=pool.filter(s=>(Number(s.unlockLevel)||1)>level).sort((a,b)=>(a.unlockLevel||1)-(b.unlockLevel||1))[0];
   const slotCards=equipped.map((id,i)=>{
     const skill=byId.get(id);
     return '<button type="button" class="cb-skill-slot '+(i===selected?'active ':'')+(skill?'filled':'empty')+'" data-skill-slot="'+i+'"><small>SLOT '+(i+1)+'</small><i>'+skillIcon(skill?.kind)+'</i><span><b>'+escHtml(skill?.name||'Empty Skill Slot')+'</b><em>'+(skill?skillKindLabel(skill.kind)+' · '+skillCooldownText(skill):'Tap this slot, then choose a skill')+'</em></span></button>'
   }).join('');
   const library=pool.slice().sort((a,b)=>{
-    const al=(Number(a.unlockLevel)||1)<=level?0:1,bl=(Number(b.unlockLevel)||1)<=level?0:1;
+    const al=skillAvailable(c,a,spec)?0:1,bl=skillAvailable(c,b,spec)?0:1;
     return al-bl||(Number(a.unlockLevel)||1)-(Number(b.unlockLevel)||1)||String(a.name).localeCompare(String(b.name))
   }).map(skill=>{
-    const unlock=Math.max(1,Number(skill.unlockLevel)||1),locked=unlock>level,slot=equipped.indexOf(skill.id),isEquipped=slot>=0;
-    const cost=Number(skill.cost)||0,range=Number(skill.range)||0;
+    const unlock=Math.max(1,Number(skill.unlockLevel)||1),levelLocked=unlock>level,talentLocked=!skillTalentMet(c,skill,spec),locked=levelLocked||talentLocked,slot=equipped.indexOf(skill.id),isEquipped=slot>=0;
+    const cost=Number(skill.cost)||0,range=Number(skill.range)||0,lockTitle=talentLocked?'REQUIRES '+String(skill.talentReq||'TALENT').toUpperCase():'LEVEL '+unlock,lockCopy=talentLocked?'Learn the '+skill.talentReq+' talent to use this skill.':'Unlocks as this character levels up.';
     return '<article class="cb-skill-card kind-'+escHtml(skill.kind)+' '+(locked?'locked ':'')+(isEquipped?'equipped':'')+'">'+
       '<div class="cb-skill-card-icon">'+skillIcon(skill.kind)+'</div><div class="cb-skill-card-copy"><div><small>'+skillKindLabel(skill.kind)+'</small><h4>'+escHtml(skill.name)+'</h4></div><p>'+escHtml(skill.desc||'Combat skill.')+'</p>'+
       '<div class="cb-skill-meta"><span>'+skillCooldownText(skill)+'</span>'+(cost?'<span>Cost '+cost+'</span>':'')+(range?'<span>Range '+range+'</span>':'')+'</div></div>'+
-      (locked?'<div class="cb-skill-lock"><b>LEVEL '+unlock+'</b><span>Unlocks as this character levels up.</span></div>':'<button type="button" class="cb-skill-equip '+(isEquipped?'equipped':'')+'" data-equip-skill="'+escHtml(skill.id)+'">'+(isEquipped?'MOVE TO SLOT '+(selected+1):'EQUIP TO SLOT '+(selected+1))+'</button>')+
+      (locked?'<div class="cb-skill-lock"><b>'+escHtml(lockTitle)+'</b><span>'+escHtml(lockCopy)+'</span></div>':'<button type="button" class="cb-skill-equip '+(isEquipped?'equipped':'')+'" data-equip-skill="'+escHtml(skill.id)+'">'+(isEquipped?'MOVE TO SLOT '+(selected+1):'EQUIP TO SLOT '+(selected+1))+'</button>')+
     '</article>'
   }).join('');
   const buffEffect=buff?Object.entries(buff.effect||{}).map(([key,value])=>{
@@ -500,7 +504,7 @@ function saveSkillLoadout(mutator,activity){
 }
 function equipSkill(skillId){
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));if(!state||!c)return;
-  const pool=skillPoolFor(c,c.spec),skill=pool.find(s=>s.id===skillId);if(!skill||(Number(skill.unlockLevel)||1)>Math.max(1,Number(c.level)||1))return;
+  const pool=skillPoolFor(c,c.spec),skill=pool.find(s=>s.id===skillId);if(!skill||!skillAvailable(c,skill,c.spec))return;
   const slot=Math.max(0,Math.min(3,Number(activeSkillSlot)||0));
   activeSkillSlot=(slot+1)%4;
   saveSkillLoadout((loadout,ch)=>{
