@@ -9,7 +9,9 @@ const ROLE_ZONES={
  dps:{x:48,y:74,radius:14,color:'yellow',label:'DAMAGE'},
  healer:{x:73,y:27,radius:9,color:'blue',label:'HEALER'}
 };
-const CABLES=['h','h','h','sw','v','h','h','nw','ne','h','h','sw','v','h','h'];
+const CABLES=['se','sw','se','sw','nw','v','v','v','se','nw','v','ne','ne','h','nw'];
+const CABLE_LINKS={h:['w','e'],v:['n','s'],ne:['n','e'],nw:['n','w'],se:['s','e'],sw:['s','w']};
+const GRID_INPUT_INDEX=4,GRID_BREAKER_INDEX=11;
 
 let Game=null,G=null,db=null,run=null,token=0;
 
@@ -76,19 +78,41 @@ function shuffledBoard(){
  if(board.every((v,i)=>v===(i===15?null:i)))return shuffledBoard();
  return board
 }
-function puzzleSolved(){return run?.board?.every((v,i)=>v===(i===15?null:i))}
+function cableType(board,pos){const tile=board?.[pos];return tile==null?null:CABLES[tile]||null}
+function circuitState(board){
+ const connected=new Set(),startType=cableType(board,GRID_INPUT_INDEX);
+ if(!startType||!CABLE_LINKS[startType]?.includes('w'))return{connected,progress:0,complete:false};
+ const queue=[GRID_INPUT_INDEX],opposite={n:'s',s:'n',e:'w',w:'e'},delta={n:-4,s:4,e:1,w:-1};
+ connected.add(GRID_INPUT_INDEX);
+ while(queue.length){
+  const pos=queue.shift(),type=cableType(board,pos),links=CABLE_LINKS[type]||[],row=Math.floor(pos/4),col=pos%4;
+  links.forEach(dir=>{
+   if((dir==='n'&&row===0)||(dir==='s'&&row===3)||(dir==='w'&&col===0)||(dir==='e'&&col===3))return;
+   const next=pos+delta[dir],nextType=cableType(board,next);
+   if(!nextType||!CABLE_LINKS[nextType]?.includes(opposite[dir])||connected.has(next))return;
+   connected.add(next);queue.push(next)
+  })
+ }
+ const breakerType=cableType(board,GRID_BREAKER_INDEX),breakerLive=connected.has(GRID_BREAKER_INDEX)&&CABLE_LINKS[breakerType]?.includes('e');
+ const progress=Math.round((connected.size/15)*100),complete=breakerLive&&connected.size===15;
+ return{connected,progress:complete?100:progress,complete}
+}
+function puzzleSolved(){return !!run&&circuitState(run.board).complete}
 function cableMarkup(type){return '<i class="bs-cable '+type+'"><u></u><u></u></i>'}
 function renderPuzzle(){
- if(!run)return;const r=root(),blank=run.board.indexOf(null);
- r.innerHTML='<section class="bs-puzzle-shell '+(run.powered?'powered':'')+'"><header><div><small>BLACKOUT STATION · GRID CONTROL</small><h2>Main Distribution Board</h2><p>Slide a cable section into the empty slot. Restore the circuit to bring the station back online.</p></div><button data-bs-close>×</button></header><div class="bs-puzzle-layout"><main><div class="bs-grid-frame"><div class="bs-grid-source"><span>GRID<br>INPUT</span></div><div class="bs-grid-board">'+run.board.map((tile,pos)=>tile==null?'<div class="bs-grid-empty" data-pos="'+pos+'"><span>EMPTY</span></div>':'<button class="bs-grid-tile" data-tile-pos="'+pos+'" data-cable="'+CABLES[tile]+'" aria-label="Cable tile">'+cableMarkup(CABLES[tile])+'</button>').join('')+'</div><div class="bs-grid-breaker"><span>MAIN<br>BREAKER</span></div></div><div class="bs-puzzle-readout"><span>MOVES <b>'+run.moves+'</b></span><span>GRID STATUS <b>'+ (run.powered?'ONLINE':'NO POWER') +'</b></span><button data-bs-reset>RESHUFFLE</button></div></main><aside><small>POWER RESTORATION</small><div class="bs-station-schematic"><i></i><i></i><i></i><i></i><strong>0%</strong></div><h3>The station is dark.</h3><p>Only tiles beside the empty slot can move. When the original cable layout is restored, the main breaker will close automatically.</p><div class="bs-puzzle-log">'+run.log.slice(-4).reverse().map(x=>'<span>'+esc(x)+'</span>').join('')+'</div></aside></div></section>';
+ if(!run)return;const r=root(),blank=run.board.indexOf(null),circuit=circuitState(run.board),progress=circuit.progress;
+ const gridState=run.powered?'ONLINE':progress>0?'RESTORING '+progress+'%':'NO POWER';
+ const stationTitle=run.powered?'Station online.':progress>0?'Current is flowing.':'The station is dark.';
+ const stationCopy=run.powered?'The main breaker is closed and the generator hall is live.':progress>0?'Connected cable sections glow as power travels from the grid input. Keep building the route to the main breaker.':'Only tiles beside the empty slot can move. Build one continuous cable route from GRID INPUT to MAIN BREAKER.';
+ r.innerHTML='<section class="bs-puzzle-shell '+(run.powered?'powered':'')+'"><header><div><small>BLACKOUT STATION · GRID CONTROL</small><h2>Main Distribution Board</h2><p>Slide the cable sections until one continuous circuit runs from the grid input to the main breaker.</p></div><button data-bs-close>×</button></header><div class="bs-puzzle-layout"><main><div class="bs-grid-frame '+(circuit.complete?'solved':'')+'"><div class="bs-grid-source '+(progress>0?'live':'')+'"><span>GRID<br>INPUT</span></div><div class="bs-grid-board">'+run.board.map((tile,pos)=>tile==null?'<div class="bs-grid-empty" data-pos="'+pos+'"><span>EMPTY</span></div>':'<button class="bs-grid-tile '+(circuit.connected.has(pos)?'live':'')+'" data-tile-pos="'+pos+'" data-cable="'+CABLES[tile]+'" aria-label="Cable tile">'+cableMarkup(CABLES[tile])+'</button>').join('')+'</div><div class="bs-grid-breaker '+(circuit.complete?'live':'')+'"><span>MAIN<br>BREAKER</span></div></div><div class="bs-puzzle-readout"><span>MOVES <b>'+run.moves+'</b></span><span>GRID STATUS <b>'+gridState+'</b></span><button data-bs-reset>RESHUFFLE</button></div></main><aside><small>POWER RESTORATION</small><div class="bs-station-schematic '+(circuit.complete?'online':'')+'"><i></i><i></i><i></i><i></i><strong>'+progress+'%</strong></div><h3>'+stationTitle+'</h3><p>'+stationCopy+'</p><div class="bs-puzzle-log">'+run.log.slice(-4).reverse().map(x=>'<span>'+esc(x)+'</span>').join('')+'</div></aside></div></section>';
  r.querySelector('[data-bs-close]').onclick=close;
  r.querySelector('[data-bs-reset]').onclick=()=>{run.board=shuffledBoard();run.moves=0;run.log.push('The board was reshuffled.');renderPuzzle()};
  r.querySelectorAll('[data-tile-pos]').forEach(b=>b.onclick=()=>slideTile(Number(b.dataset.tilePos),blank))
 }
 async function slideTile(pos,blank){
  if(!run||!neighbours(blank).includes(pos))return;
- run.board[blank]=run.board[pos];run.board[pos]=null;run.moves++;renderPuzzle();
- if(puzzleSolved())await powerOn()
+ run.board[blank]=run.board[pos];run.board[pos]=null;run.moves++;const solved=puzzleSolved();renderPuzzle();
+ if(solved)await powerOn()
 }
 async function powerOn(){
  if(!run||run.powered)return;run.powered=true;run.log.push('Circuit complete. Main breaker closing.');
