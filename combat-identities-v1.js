@@ -2318,7 +2318,7 @@ function runSelfTests(){
  {
   const rezParty=[
    {id:'brt',name:'Tank',class:'Warrior',spec:'Protection',power:30,level:8,_combatItemLevel:30,knowledge:{rez:100}},
-   {id:'brh',name:'Priest',class:'Priest',spec:'Holy',power:30,level:8,_combatItemLevel:30,knowledge:{rez:100}},
+   {id:'brh',name:'Priest',class:'Priest',spec:'Holy',power:30,level:8,_combatItemLevel:30,knowledge:{rez:100},skillLoadouts:{Holy:['heal','prayer-healing','silence','soul-recall']}},
    {id:'brd1',name:'Fallen DPS',class:'Warrior',spec:'Arms',power:30,level:8,_combatItemLevel:30,_combatHealthPct:0,knowledge:{rez:100}},
    {id:'brd2',name:'DPS Two',class:'Rogue',spec:'Assassination',power:30,level:8,_combatItemLevel:30,knowledge:{rez:100}},
    {id:'brd3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:30,level:8,_combatItemLevel:30,knowledge:{rez:100}}
@@ -2385,6 +2385,34 @@ function runSelfTests(){
   test('Strategy Crowd Control',()=>cc.events.some(e=>e.type==='CROWD_CONTROL'&&e.result==='applied'));
  }
 
+
+
+ {
+  const prayerParty=[
+   {id:'pom-t',name:'Tank',class:'Warrior',spec:'Protection',power:24,level:10,_combatHealthPct:38},
+   {id:'pom-h',name:'Priest',class:'Priest',spec:'Holy',power:24,level:10,_combatHealthPct:100,talents:{Holy:{Renew:1,'Prayer of Mending':2}},skillLoadouts:{Holy:['heal','flash-heal','prayer-healing','silence']}},
+   {id:'pom-1',name:'DPS One',class:'Warrior',spec:'Arms',power:24,level:10,_combatHealthPct:55},
+   {id:'pom-2',name:'DPS Two',class:'Rogue',spec:'Assassination',power:24,level:10,_combatHealthPct:62},
+   {id:'pom-3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:24,level:10,_combatHealthPct:70}
+  ];
+  const prayer=simulate({party:prayerParty,encounter:{id:'prayer-test',kind:'boss',level:10,enemies:['Prayer Dummy'],enemyHealth:2400,mechanics:[]},seed:'prayer-of-mending'});
+  const jumps=prayer.events.filter(e=>e.type==='HEAL_RECEIVED'&&e.source==='p-pom-h'&&e.ability==='Prayer of Mending');
+  test('Prayer of Mending Talent',()=>jumps.length>=1&&new Set(jumps.map(e=>e.target)).size>=1&&prayer.events.some(e=>e.type==='TALENT_TRIGGER'&&e.ability==='Prayer of Mending'));
+ }
+ {
+  const noTalent={id:'skill-gate-a',name:'Arms',class:'Warrior',spec:'Arms',power:20,level:10,talents:{Arms:{}},skillLoadouts:{Arms:['mortal-strike','slam']}};
+  const withTalent={...noTalent,id:'skill-gate-b',talents:{Arms:{'Mortal Strike':1}}};
+  const gateA=simulate({party:[noTalent],encounter:{id:'gate-a',kind:'trash',level:5,enemies:['Dummy'],enemyHealth:500,mechanics:[]},seed:'gate-a',maxDurationMs:1200});
+  const gateB=simulate({party:[withTalent],encounter:{id:'gate-b',kind:'trash',level:5,enemies:['Dummy'],enemyHealth:500,mechanics:[]},seed:'gate-b',maxDurationMs:1200});
+  const a=gateA.finalState.players[0]?.abilities||[],b=gateB.finalState.players[0]?.abilities||[];
+  test('Talent Gated Skill',()=>!a.some(x=>x.id==='mortal-strike')&&b.some(x=>x.id==='mortal-strike'));
+ }
+ {
+  const loadoutParty=[{id:'loadout',name:'Loadout Test',class:'Mage',spec:'Arcane',power:20,level:10,skillLoadouts:{Arcane:['fireball']}}];
+  const loadout=simulate({party:loadoutParty,encounter:{id:'loadout-test',kind:'trash',level:5,enemies:['Dummy'],enemyHealth:900,mechanics:[]},seed:'loadout',maxDurationMs:5000});
+  const damageStarts=loadout.events.filter(e=>e.type==='ABILITY_START'&&e.source==='p-loadout'&&e.payload?.kind==='damage');
+  test('Equipped Skills Are Authoritative',()=>damageStarts.length>0&&damageStarts.every(e=>e.ability==='Fireball'));
+ }
 
 
 
