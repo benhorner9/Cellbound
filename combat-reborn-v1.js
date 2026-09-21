@@ -1028,6 +1028,7 @@ function useDefensiveSkill(ctx,u,a){
 }
 function playerAI(ctx,u){
  if(!u.alive||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.nextDecision||ctx.time<u.gcdUntil)return;
+ if(Number(u.mechanicHoldUntil)>ctx.time)return;
  u.nextDecision=ctx.time+160;
  const buff=classBuffFor(u);if(buff&&activateClassBuff(ctx,u,buff))return;
  const defensiveThreshold=ctx.tactics.defensiveUsage==='aggressive'?.62:ctx.tactics.defensiveUsage==='conservative'?.38:.50;
@@ -1237,6 +1238,17 @@ function resolveMechanic(ctx,e,m,token){
   }else mechanicStat(ctx,'line',false);
   scheduleNextMechanic(ctx);return;
  }
+ if(m.type==='role-circles'){
+  let failed=false;const zones=cast.zones||{};
+  livingPlayers(ctx).slice().forEach(p=>{
+   const zone=zones[p.role]||zones.dps,radius=Math.max(3,Number(zone?.radius)||10),inside=zone&&dist(p.position,{x:Number(zone.x)||50,y:Number(zone.y)||50})<=radius;
+   p.mechanicHoldUntil=0;p.mechanicHoldPosition=null;
+   if(!inside){failed=true;dealDamage(ctx,e,p,p.maxHealth*50,m.name,{damageType:'magic',avoidable:true})}
+   else emit(ctx,'MECHANIC_SAFE',{source:e.id,target:p.id,ability:m.name,result:'protected',position:copy(p.position),payload:{role:p.role,zone:copy(zone)}})
+  });
+  emit(ctx,'ROLE_SHOCKWAVE',{source:e.id,ability:m.name,result:failed?'casualties':'survived',position:copy(e.position),payload:{zones:copy(zones)}});
+  mechanicStat(ctx,'role-circles',failed);scheduleNextMechanic(ctx);return;
+ }
  mechanicStat(ctx,m.type||'unknown',false);scheduleNextMechanic(ctx);
 }
 function startMechanic(ctx,m){
@@ -1266,9 +1278,24 @@ function startMechanic(ctx,m){
   const candidates=live.filter(p=>p.role!=='tank'),target=candidates[Math.floor(ctx.rng()*Math.max(1,candidates.length))]||live[0];
   castState.targetId=target?.id||null;castState.targetIds=target?[target.id]:[];
   if(target){const plan=mechanicResponse(ctx,target,'line',duration,enemy);castState.responses[target.id]=plan.success;castState.reactionMs[target.id]=plan.reactionMs}
+ }else if(m.type==='role-circles'){
+  const defaults={tank:{x:34,y:29,radius:10,color:'red',label:'TANK'},dps:{x:62,y:50,radius:13,color:'yellow',label:'DAMAGE'},healer:{x:34,y:71,radius:10,color:'blue',label:'HEALER'}};
+  castState.zones={...defaults,...copy(m.zones||{})};castState.targetIds=live.map(p=>p.id);
+  live.forEach(p=>{
+   const zone=castState.zones[p.role]||castState.zones.dps,baseReaction=executionReaction(ctx,p,'movement'),error=shouldMistake(ctx,p,'movement',2600);
+   const hesitation=error?Math.round(350+ctx.rng()*850):0,reaction=baseReaction+hesitation,travel=520;
+   castState.reactionMs[p.id]=reaction;castState.responses[p.id]=reaction+travel<=Math.max(800,duration-80);
+   if(error)recordMistake(ctx,p,'movement','hesitated during the role circuit',{target:enemy.id,ability:m.name,reactionMs:reaction});
+   schedule(ctx,ctx.time+reaction,()=>{
+    if(!p.alive)return;
+    p.mechanicHoldUntil=ctx.time+Math.max(0,duration-reaction);
+    p.mechanicHoldPosition={x:zone.x,y:zone.y};
+    moveTo(ctx,p,{x:zone.x,y:zone.y},travel,'role circuit')
+   },'role-circle-reaction')
+  })
  }
 
- emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:castState.targetId,ability:m.name,result:'telegraph',position:copy(enemy.position),payload:{mechanicType:m.type,duration,token,interruptible:m.type==='interrupt'||m.type==='self-heal',targetId:castState.targetId,targetIds:copy(castState.targetIds),responses:copy(castState.responses),reactionMs:copy(castState.reactionMs)}});
+ emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:castState.targetId,ability:m.name,result:'telegraph',position:copy(enemy.position),payload:{mechanicType:m.type,duration,token,interruptible:m.type==='interrupt'||m.type==='self-heal',targetId:castState.targetId,targetIds:copy(castState.targetIds),responses:copy(castState.responses),reactionMs:copy(castState.reactionMs),zones:copy(castState.zones||null)}});
  emit(ctx,'CAST_START',{source:enemy.id,target:castState.targetId,ability:m.name,result:'enemy',payload:{duration,interruptible:m.type==='interrupt'||m.type==='self-heal',mechanicType:m.type,token,targetId:castState.targetId,targetIds:copy(castState.targetIds)}});
  if(m.type==='interrupt'||m.type==='self-heal')tryInterrupt(ctx,enemy,m,token);
  else if(m.type==='cone'){
@@ -1296,6 +1323,7 @@ function checkBossPhases(ctx){
   }
   emit(ctx,'PHASE_CHANGE',{source:boss.id,target:boss.id,ability:phase.name||('Phase '+(index+2)),result:'phase',position:copy(boss.position),payload:{phaseId:key,atPct:at,healthPct:hp,damageScale:boss.phaseDamageScale,allAttacksAoe:!!boss.allAttacksAoe,arenaBounds:copy(ctx.environment.bounds||{}),arena:copy(ctx.environment.arena||null)}});
   if(phase.spawnAdds)spawnAdds(ctx,boss);
+  if(phase.triggerMechanic)schedule(ctx,ctx.time+180,()=>startMechanic(ctx,copy(phase.triggerMechanic)),'phase-trigger-mechanic');
  });
  const softPct=Number(ctx.encounter.softEnragePct);
  if(!ctx.softEnraged&&Number.isFinite(softPct)&&hp<=softPct){
@@ -1319,7 +1347,7 @@ function scheduleNextMechanic(ctx){
 }
 function normaliseMechanics(encounter){
  return (encounter.mechanics||[]).map(x=>Array.isArray(x)?{name:x[0],type:x[1],duration:x[2]}:{
-  name:x.name||'Mechanic',type:x.type||'circle',duration:x.duration||x.cast||1600,priority:x.priority||null,danger:x.danger||null,healPct:x.healPct==null?null:Number(x.healPct)
+  ...copy(x),name:x.name||'Mechanic',type:x.type||'circle',duration:x.duration||x.cast||1600,priority:x.priority||null,danger:x.danger||null,healPct:x.healPct==null?null:Number(x.healPct)
  });
 }
 function buildSummary(ctx,outcome){
