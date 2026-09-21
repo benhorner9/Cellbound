@@ -166,3 +166,81 @@
    --cb-vitals-resource-top:-14px
  }
 }
+
+
+/* Blackout Station uses the canonical CB2D vitals but its units are positioned
+   by the encounter layer, so lock visibility here in the final-loaded stylesheet. */
+.bs2d-shell .bs-unit{
+  overflow:visible!important;
+}
+.bs2d-shell .bs-unit.party .cb2d-unit-hp{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:absolute!important;
+  left:50%!important;
+  top:-27px!important;
+  width:68px!important;
+  height:7px!important;
+  transform:translateX(-50%)!important;
+  z-index:20!important;
+  overflow:hidden!important;
+  border:1px solid rgba(233,244,238,.28)!important;
+  border-radius:4px!important;
+  background:#07100d!important;
+  box-shadow:0 2px 7px rgba(0,0,0,.72),0 0 8px rgba(88,200,120,.14)!important
+}
+.bs2d-shell .bs-unit.party .cb2d-unit-hp>i{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  height:100%!important;
+  min-width:0!important;
+  background:linear-gradient(90deg,#48a663,#86dd9d)!important
+}
+.bs2d-shell .bs-unit.party .cbr-resource{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:absolute!important;
+  left:50%!important;
+  top:-17px!important;
+  width:68px!important;
+  height:5px!important;
+  transform:translateX(-50%)!important;
+  z-index:20!important;
+  overflow:hidden!important;
+  border:1px solid rgba(233,244,238,.18)!important;
+  border-radius:3px!important;
+  background:#07100d!important;
+  box-shadow:0 2px 6px rgba(0,0,0,.66)!important
+}
+.bs2d-shell .bs-unit.enemy .cb2d-unit-hp{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:absolute!important;
+  left:50%!important;
+  top:-25px!important;
+  width:88px!important;
+  height:8px!important;
+  transform:translateX(-50%)!important;
+  z-index:20!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,220,207,.24)!important;
+  border-radius:4px!important;
+  background:#120907!important;
+  box-shadow:0 2px 7px rgba(0,0,0,.72),0 0 9px rgba(209,73,61,.16)!important
+}
+.bs2d-shell .bs-unit.enemy .cb2d-unit-hp>i{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  height:100%!important;
+  background:linear-gradient(90deg,#9f332c,#dc5b4e)!important
+}
+@media(max-width:620px){
+  .bs2d-shell .bs-unit.party .cb2d-unit-hp{width:58px!important;height:6px!important;top:-24px!important}
+  .bs2d-shell .bs-unit.party .cbr-resource{width:58px!important;height:4px!important;top:-15px!important}
+  .bs2d-shell .bs-unit.enemy .cb2d-unit-hp{width:76px!important;height:7px!important;top:-22px!important}
+}
