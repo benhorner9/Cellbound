@@ -594,6 +594,26 @@
 }
 .cb-slot-options{grid-template-columns:1fr}
 .cb-slot-options button{min-height:66px}
+.cb-current-actions{
+  display:grid;grid-template-columns:1fr 1fr;gap:7px;
+  margin:8px 0 2px
+}
+.cb-current-actions button{
+  min-height:38px;padding:0 10px;
+  border:1px solid rgba(255,255,255,.08);
+  background:#0b1518;color:#9eafaa;
+  font-size:.4rem;font-weight:900;letter-spacing:.07em
+}
+.cb-current-actions .cb-unequip-btn{
+  border-color:rgba(208,144,105,.24);background:#241814;color:#e0b099
+}
+.cb-current-actions .cb-upgrade-equipped-btn{
+  border-color:rgba(83,193,184,.27);background:#123330;color:#bdebe5
+}
+.cb-current-actions button:disabled{opacity:.34;cursor:not-allowed}
+.cb-current-actions>small{
+  grid-column:1/-1;color:#657873;font-size:.39rem;line-height:1.4
+}
 
 /* Keep old mannequin/loadout layers fully out of the new armoury */
 .cb-armoury-stage .cb-worn-layer,
