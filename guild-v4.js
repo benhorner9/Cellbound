@@ -347,6 +347,71 @@ function renderRoster(filter='all'){
   ui.rosterGrid.querySelectorAll('[data-recruit-slot]').forEach(b=>b.onclick=()=>openRecruit(Number(b.dataset.recruitSlot)));
 }
 $$('#roster .filter[data-filter]').forEach(b=>b.addEventListener('click',()=>{$$('#roster .filter[data-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderRoster(b.dataset.filter);}));
+
+function recruitInitials(name){return String(name||'??').split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'??'}
+function recruitRandomName(race){
+  const used=new Set((state.roster||[]).map(c=>String(c.name||'').toLowerCase()));
+  const pool=RECRUIT_NAMES[race]||RECRUIT_NAMES.Veyren,free=pool.filter(x=>!used.has(x.toLowerCase()));
+  return (free.length?free:pool)[Math.floor(Math.random()*(free.length?free.length:pool.length))]
+}
+function recruitUid(){return globalThis.crypto?.randomUUID?'recruit-'+crypto.randomUUID():'recruit-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,9)}
+function ensureRecruitModal(){
+  let root=$('#recruitAdventurerModal');if(root)return root;
+  root=document.createElement('div');root.id='recruitAdventurerModal';root.className='modal-backdrop recruit-modal-backdrop';root.hidden=true;document.body.appendChild(root);return root
+}
+function openRecruit(slotIndex){
+  if(!entitlements().member||!state.onboarding?.complete||state.roster.length>=10||slotIndex!==state.roster.length)return;
+  const klass=Object.keys(classes)[0],spec=Object.keys(classes[klass]?.specs||{})[0];
+  recruitDraft={race:'Veyren',klass,spec,name:recruitRandomName('Veyren')};renderRecruitModal()
+}
+function closeRecruit(){
+  const root=$('#recruitAdventurerModal');if(root)root.hidden=true;document.body.classList.remove('recruit-adventurer-open');recruitDraft=null
+}
+function renderRecruitModal(){
+  const root=ensureRecruitModal();if(!recruitDraft)return;
+  const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],specs=Object.entries(classes[recruitDraft.klass]?.specs||{}),role=classes[recruitDraft.klass]?.specs?.[recruitDraft.spec]?.role||'dps';
+  root.hidden=false;document.body.classList.add('recruit-adventurer-open');
+  root.innerHTML='<section class="recruit-modal"><button class="modal-close" data-close-recruit>×</button>'+
+    '<header><small>MEMBERSHIP ROSTER · SLOT '+(state.roster.length+1)+' OF 10</small><h2>Recruit Adventurer</h2><p>Membership unlocks five additional roster positions. Recruit one character at a time; you never have to fill every slot.</p></header>'+
+    '<div class="recruit-body">'+
+      '<label><span>Race</span><select id="recruitRace">'+RECRUIT_RACES.map(r=>'<option value="'+r.id+'" '+(r.id===recruitDraft.race?'selected':'')+'>'+r.icon+' '+r.id+' · '+r.trait+'</option>').join('')+'</select></label>'+
+      '<label><span>Class</span><select id="recruitClass">'+Object.entries(classes).map(([name,d])=>'<option value="'+name+'" '+(name===recruitDraft.klass?'selected':'')+'>'+d.icon+' '+name+'</option>').join('')+'</select></label>'+
+      '<label><span>Specialisation</span><select id="recruitSpec">'+specs.map(([name,d])=>'<option value="'+name+'" '+(name===recruitDraft.spec?'selected':'')+'>'+name+' · '+roleLabel(d.role)+'</option>').join('')+'</select></label>'+
+      '<label class="recruit-name-label"><span>Name</span><div class="recruit-name"><input id="recruitName" maxlength="24" autocomplete="off" value="'+esc(recruitDraft.name)+'"><button type="button" data-random-recruit>RANDOMISE</button></div></label>'+
+    '</div>'+
+    '<div class="recruit-preview"><i>'+race.icon+'</i><div><small>NEW LEVEL 1 ADVENTURER</small><b>'+esc(recruitDraft.name||'Unnamed')+'</b><span>'+race.id+' · '+recruitDraft.klass+' · '+recruitDraft.spec+' · '+roleLabel(role)+'</span></div></div>'+
+    '<footer><small>Starts with basic equipment · 0% Cell Shock · independent talents and professions</small><button class="on-primary" data-confirm-recruit>CONFIRM RECRUIT →</button></footer></section>';
+  root.querySelector('[data-close-recruit]').onclick=closeRecruit;
+  root.querySelector('#recruitRace').onchange=e=>{recruitDraft.race=e.target.value;recruitDraft.name=recruitRandomName(recruitDraft.race);renderRecruitModal()};
+  root.querySelector('#recruitClass').onchange=e=>{recruitDraft.klass=e.target.value;recruitDraft.spec=Object.keys(classes[recruitDraft.klass]?.specs||{})[0];renderRecruitModal()};
+  root.querySelector('#recruitSpec').onchange=e=>{recruitDraft.spec=e.target.value;renderRecruitModal()};
+  root.querySelector('#recruitName').oninput=e=>{recruitDraft.name=e.target.value};
+  root.querySelector('[data-random-recruit]').onclick=()=>{recruitDraft.name=recruitRandomName(recruitDraft.race);renderRecruitModal()};
+  root.querySelector('[data-confirm-recruit]').onclick=createRecruit;
+}
+async function createRecruit(){
+  if(!recruitDraft)return;
+  await refreshMembershipStatus({render:false,silent:true});
+  if(!entitlements().member||state.roster.length>=10){closeRecruit();renderAll();return}
+  const name=String(recruitDraft.name||'').trim().replace(/\s+/g,' ');
+  if(name.length<2||name.length>24||state.roster.some(c=>String(c.name||'').toLowerCase()===name.toLowerCase())){
+    const input=$('#recruitName');if(input){input.setCustomValidity('Use a unique name between 2 and 24 characters.');input.reportValidity();setTimeout(()=>input.setCustomValidity(''),1800)}return
+  }
+  const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],klass=recruitDraft.klass,spec=recruitDraft.spec,role=classes[klass]?.specs?.[spec]?.role||'dps',equipment=starterEquipment(klass);
+  const ch=normalizeCharacter({
+    id:recruitUid(),name,race:race.id,raceTrait:window.CellboundIdentities?.getRace?.(race.id)?.trait||race.trait,class:klass,spec,role,
+    level:1,xp:0,power:role==='tank'?30:role==='healer'?27:29,talent:1,portrait:recruitInitials(name),
+    knowledge:{ashwarden:0,embermaw:0,vaultheart:0},equipment,gearItems:ILVL_SLOTS.map(slot=>equipment[slot]?.name||'Empty'),
+    talents:talentState(klass),cellShock:0,cellShockLockedUntil:null,professions:[null,null],recruitedAt:new Date().toISOString()
+  },state.roster.length);
+  state.roster.push(ch);state.activity.push(name+' joined the guild in membership roster slot '+state.roster.length+'.');
+  closeRecruit();writeLocal();await persistState();
+  const combatStyle=['Mage','Priest','Druid','Hunter'].includes(ch.class)?'ranged':'melee';
+  const mirror=await supabaseClient.from('characters').insert({user_id:currentUser.id,name:ch.name,combat_style:combatStyle,tutorial_complete:true,creation_complete:true,appearance:{race:ch.race,class:ch.class,spec:ch.spec,role,roster_slot:state.roster.length-1,recruited:true},level:1,xp:0,current_hp:100,max_hp:100,current_location:'zeltira',tutorial_stage:'complete',tutorial_reward_claimed:true,last_played_at:new Date().toISOString()});
+  if(mirror.error)console.warn('Recruit character mirror record skipped',mirror.error);
+  renderAll()
+}
+
 function renderOverview(){
   if(!ui.overviewRoster)return;
   const active=new Set(flatPartyIds());
