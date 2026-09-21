@@ -24,3 +24,11 @@
 .chat-message.from-player-mod{border-left:2px solid rgba(76,196,185,.24);padding-left:8px}
 .chat-message.from-mod .chat-meta>b,.chat-message.from-mod .chat-speaker>b{color:#e4c978}
 .chat-message.from-player-mod .chat-meta>b,.chat-message.from-player-mod .chat-speaker>b{color:#79d0c7}
+
+
+/* Chat safety note */
+.chat-safety-note{
+  display:flex;align-items:center;gap:6px;padding:0 11px 10px;
+  color:#536864;font-size:.34rem;font-weight:800;letter-spacing:.065em
+}
+.chat-safety-note i{color:#6ab9ad;font-size:.32rem;font-style:normal}
