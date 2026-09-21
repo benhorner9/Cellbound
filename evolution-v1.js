@@ -338,7 +338,7 @@ function renderDungeonBrowserStatus(){
   const chaosState=$('#chaosCanyonStatus');if(chaosState)chaosState.textContent=(Number(s.chaosCanyonCompletions)||0)>0?'FARMABLE':'AVAILABLE';
   const blackoutCard=$('[data-dungeon-card="blackout-station"]');if(blackoutCard)blackoutCard.classList.toggle('active',activeDungeonDetail==='blackout-station');
   const blackoutState=$('#blackoutStationStatus');if(blackoutState)blackoutState.textContent=(Number(s.blackoutStationCompletions)||0)>0?'FARMABLE':'AVAILABLE';
-  $('[data-dungeon-more]').forEach(button=>{const expanded=button.dataset.dungeonMore===activeDungeonDetail;button.textContent=expanded?'LESS INFO ↑':'MORE INFO →';button.setAttribute('aria-expanded',expanded?'true':'false')})
+  $$('[data-dungeon-more]').forEach(button=>{const expanded=button.dataset.dungeonMore===activeDungeonDetail;button.textContent=expanded?'LESS INFO ↑':'MORE INFO →';button.setAttribute('aria-expanded',expanded?'true':'false')})
 }
 
 function openDungeonDetail(id,options={}){
