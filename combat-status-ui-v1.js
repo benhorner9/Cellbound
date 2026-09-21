@@ -90,8 +90,9 @@ function statusMap(host){
  return host.__cellboundStatuses
 }
 function harmfulStatus(raw,e){
- const effect=raw?.effect||{},name=String(raw?.name||e?.ability||'').toLowerCase();
+ const effect=raw?.effect||{},name=String(raw?.name||e?.ability||'').toLowerCase(),source=String(raw?.source||e?.source||''),target=String(e?.target||'');
  if(raw?.kind==='debuff'||e?.type?.startsWith?.('DEBUFF'))return true;
+ if((source.startsWith('e-')||source.startsWith('add-'))&&target.startsWith('p-')&&raw?.kind!=='buff')return true;
  if(raw?.cc)return true;
  if(/chaos scar|curse|vulner|poison|venom|bleed|burn|wound|agony|despair|sickness|disease|weak|frail|slow|stun|root|silence|snare/.test(name))return true;
  if((Number(effect.damageReduction)||0)<0||(Number(effect.incomingDamageReduction)||0)<0)return true;
@@ -161,5 +162,5 @@ function startTicker(){
  },250)
 }
 
-window.CellboundCombatStatuses={handle,clear,renderHost,version:'1.1.0'};
+window.CellboundCombatStatuses={handle,clear,renderHost,version:'1.2.0'};
 })();
