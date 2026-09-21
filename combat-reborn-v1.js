@@ -399,13 +399,27 @@ function arenaBounds(ctx){
  return{left:clamp(Math.min(left,right-4),0,98),right:clamp(Math.max(right,left+4),2,100),top:clamp(Math.min(top,bottom-4),0,98),bottom:clamp(Math.max(bottom,top+4),2,100)}
 }
 function pointInsideArena(ctx,p,pad=0){
- const b=arenaBounds(ctx);return !!p&&p.x>=b.left+pad&&p.x<=b.right-pad&&p.y>=b.top+pad&&p.y<=b.bottom-pad
+ if(!p)return false;
+ const b=arenaBounds(ctx);
+ if(!(p.x>=b.left+pad&&p.x<=b.right-pad&&p.y>=b.top+pad&&p.y<=b.bottom-pad))return false;
+ const arena=ctx?.environment?.arena;
+ if(arena?.shape==='ellipse'){
+  const cx=Number(arena.cx)||50,cy=Number(arena.cy)||50,rx=Math.max(3,(Number(arena.rx)||((b.right-b.left)/2))-pad),ry=Math.max(3,(Number(arena.ry)||((b.bottom-b.top)/2))-pad);
+  const dx=(p.x-cx)/rx,dy=(p.y-cy)/ry;
+  return dx*dx+dy*dy<=1.0001
+ }
+ return true
 }
 function constrainToArena(ctx,pos,pad=1.35){
  const b=arenaBounds(ctx),minX=b.left+pad,maxX=b.right-pad,minY=b.top+pad,maxY=b.bottom-pad;
- const x=minX<=maxX?clamp(Number(pos?.x)||50,minX,maxX):(b.left+b.right)/2;
- const y=minY<=maxY?clamp(Number(pos?.y)||50,minY,maxY):(b.top+b.bottom)/2;
- return{x,y}
+ let p={x:minX<=maxX?clamp(Number(pos?.x)||50,minX,maxX):(b.left+b.right)/2,y:minY<=maxY?clamp(Number(pos?.y)||50,minY,maxY):(b.top+b.bottom)/2};
+ const arena=ctx?.environment?.arena;
+ if(arena?.shape==='ellipse'){
+  const cx=Number(arena.cx)||50,cy=Number(arena.cy)||50,rx=Math.max(3,(Number(arena.rx)||((b.right-b.left)/2))-pad),ry=Math.max(3,(Number(arena.ry)||((b.bottom-b.top)/2))-pad);
+  const dx=p.x-cx,dy=p.y-cy,norm=Math.sqrt((dx*dx)/(rx*rx)+(dy*dy)/(ry*ry));
+  if(norm>1){const scale=.985/norm;p={x:cx+dx*scale,y:cy+dy*scale}}
+ }
+ return p
 }
 function enforceArenaBounds(ctx,reason='arena boundary'){
  [...ctx.players,...ctx.enemies].filter(u=>u?.alive).forEach(u=>{
@@ -1274,14 +1288,13 @@ function checkBossPhases(ctx){
   ctx.phaseTriggered[key]=true;
   if(Number(phase.damageScale)>1)boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(phase.damageScale));
   if(phase.allAttacksAoe)boss.allAttacksAoe=true;
-  if(phase.arenaBounds&&typeof phase.arenaBounds==='object'){
-   ctx.environment.bounds={...arenaBounds(ctx),...copy(phase.arenaBounds)};
-   enforceArenaBounds(ctx,'arena contraction')
-  }
+  if(phase.arenaBounds&&typeof phase.arenaBounds==='object')ctx.environment.bounds={...arenaBounds(ctx),...copy(phase.arenaBounds)};
+  if(phase.arena&&typeof phase.arena==='object')ctx.environment.arena=copy(phase.arena);
+  if((phase.arenaBounds&&typeof phase.arenaBounds==='object')||(phase.arena&&typeof phase.arena==='object'))enforceArenaBounds(ctx,'arena contraction');
   if(Array.isArray(phase.addMechanics)&&phase.addMechanics.length){
    phase.addMechanics.forEach(m=>ctx.encounter.mechanics.push(Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}));
   }
-  emit(ctx,'PHASE_CHANGE',{source:boss.id,target:boss.id,ability:phase.name||('Phase '+(index+2)),result:'phase',position:copy(boss.position),payload:{phaseId:key,atPct:at,healthPct:hp,damageScale:boss.phaseDamageScale,allAttacksAoe:!!boss.allAttacksAoe,arenaBounds:copy(ctx.environment.bounds||{})}});
+  emit(ctx,'PHASE_CHANGE',{source:boss.id,target:boss.id,ability:phase.name||('Phase '+(index+2)),result:'phase',position:copy(boss.position),payload:{phaseId:key,atPct:at,healthPct:hp,damageScale:boss.phaseDamageScale,allAttacksAoe:!!boss.allAttacksAoe,arenaBounds:copy(ctx.environment.bounds||{}),arena:copy(ctx.environment.arena||null)}});
   if(phase.spawnAdds)spawnAdds(ctx,boss);
  });
  const softPct=Number(ctx.encounter.softEnragePct);
@@ -1357,7 +1370,8 @@ function simulate(options={}){
     const key=phase.id||('phase-'+index);
     if(ctx.phaseTriggered[key]){
      if(Number(phase.damageScale)>1)boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(phase.damageScale));
-     if(phase.arenaBounds&&typeof phase.arenaBounds==='object')ctx.environment.bounds={...arenaBounds(ctx),...copy(phase.arenaBounds)}
+     if(phase.arenaBounds&&typeof phase.arenaBounds==='object')ctx.environment.bounds={...arenaBounds(ctx),...copy(phase.arenaBounds)};
+     if(phase.arena&&typeof phase.arena==='object')ctx.environment.arena=copy(phase.arena)
     }
    });
    enforceArenaBounds(ctx,'arena boundary');
