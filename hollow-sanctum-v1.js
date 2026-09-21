@@ -460,6 +460,10 @@ async function hsFail(s,result){
  run.done=true;Game.applyPartyCellShock?.(25);const st=state();st.activity.push('The guild wiped in The Hollow Sanctum at '+s.title+'. All five gained 25% Cell Shock.');Game.save?.();await Game.persistState?.();
  const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end';end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Combat knowledge and the cause of the wipe are retained.</p></div>'+hsFailureDiagnosis(result)+hsStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
 }
+async function hsFailNoHealer(s,result){
+ run.done=true;Game.applyPartyCellShock?.(25);const st=state();st.activity.push('The Hollow Sanctum expedition ended after '+s.title+' because the party had no healer to revive fallen adventurers. All five gained 25% Cell Shock.');Game.save?.();await Game.persistState?.();
+ const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end';end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>No healer available after '+esc(s.title)+'.</h3><p>A fallen adventurer cannot be recovered without a healer. The expedition ends here and all five gain 25% Cell Shock.</p></div>'+hsFailureDiagnosis(result)+hsStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
+}
 async function hsRecoverFallen(tok){
  let fallen=party().filter(c=>(Number(run.hp[c.id])||0)<=0);if(!fallen.length)return true;
  let healer=party().find(c=>role(c)==='healer'&&(Number(run.hp[c.id])||0)>0);
@@ -499,7 +503,7 @@ async function fightStage(s,tok,index){
  });
  run.expeditionTimeMs=(Number(run.expeditionTimeMs)||0)+Number(result.durationMs||0);
  if(!won){await hsFail(s,result);return false}
- if(!await hsRecoverFallen(tok))return false;
+ if(!await hsRecoverFallen(tok)){if(tok===token&&run)await hsFailNoHealer(s,result);return false}
  party().forEach(c=>{if((run.hp[c.id]||0)>0)run.hp[c.id]=Math.min(100,(run.hp[c.id]||0)+6)});
  hsAdvanceCooldowns(5000);
  feed(s.title+' is clear.');setStatus('Path clear.');await wait(600);return true
