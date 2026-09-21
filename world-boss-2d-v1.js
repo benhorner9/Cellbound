@@ -331,11 +331,15 @@ function wbRenderServerEvent(e){
   }
 }
 async function playServerEvents(events){
-  let last=0;
+  let last=0,frameBudgetStarted=performance.now(),burstCount=0;
   for(const e of Array.isArray(events)?events:[]){
     if(!active)return;
-    const gap=Math.max(0,(Number(e.timestamp)||0)-last);if(gap)await new Promise(r=>setTimeout(r,gap));
-    wbRenderServerEvent(e);last=Number(e.timestamp)||last
+    const gap=Math.max(0,(Number(e.timestamp)||0)-last);
+    if(gap){await new Promise(r=>setTimeout(r,gap));frameBudgetStarted=performance.now();burstCount=0}
+    wbRenderServerEvent(e);last=Number(e.timestamp)||last;burstCount++;
+    if(burstCount>=12||performance.now()-frameBudgetStarted>7){
+      await new Promise(r=>requestAnimationFrame(r));frameBudgetStarted=performance.now();burstCount=0
+    }
   }
 }
 function wipeOwnParty(){
