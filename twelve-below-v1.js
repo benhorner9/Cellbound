@@ -7,7 +7,7 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 const SPAWN_MS=20000,DAILY_ATTEMPTS=3;
 
-let Game=null,run=null,playToken=0,playSpeed=1,clockTimer=null,playStartedAt=0,playBaseMs=0;
+let Game=null,run=null,playToken=0,playSpeed=1,clockTimer=null,playStartedAt=0,playBaseMs=0,meterRenderPending=false,lastMeterRenderAt=0;
 
 const BOSSES=[
  {id:'wrath',name:'Wrath, the Blood King',rune:'✦',vice:'WRATH',health:800,action:'FRONTAL',journal:'Bloodrage Cleave · Tank holds the boss facing away. Everyone else must clear the frontal cone.',mechanics:[{name:'Bloodrage Cleave',type:'cone',duration:1500}]},
@@ -355,11 +355,22 @@ function renderMeters(){
  rows(run.damage,'#tbDamageMeter','#tbDamageTotal','DPS');rows(run.healing,'#tbHealingMeter','#tbHealingTotal','HPS');
  const bid=currentThreatBoss(),map=bid?(run.threat[bid]||{}):{},data=chars.map(c=>({c,value:Number(map['p-'+c.id])||0})).sort((a,b)=>b.value-a.value),max=Math.max(1,...data.map(x=>x.value)),root=$('#tbThreatMeter'),label=$('#tbThreatTarget');if(label)label.textContent=bid?(bossDef(bid)?.vice||bid):'—';if(root)root.innerHTML=data.some(x=>x.value>0)?data.map(({c,value},i)=>'<div class="cb2d-meter-row '+classKey(c)+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(c.name)+'</b><span>'+Math.round(value).toLocaleString()+'</span></div><em><i style="width:'+(value/max*100)+'%"></i></em></div>').join(''):'<div class="cb2d-meter-empty">Threat appears when the next vice engages.</div>'
 }
+function queueMeterRender(){
+ if(!run||meterRenderPending)return;
+ const wait=Math.max(0,120-(performance.now()-lastMeterRenderAt));
+ meterRenderPending=true;
+ setTimeout(()=>requestAnimationFrame(()=>{
+  meterRenderPending=false;
+  if(!run)return;
+  lastMeterRenderAt=performance.now();
+  renderMeters()
+ }),wait)
+}
 function mechanicFlash(e){
  const root=$('#tbTelegraphs');if(!root)return;const x=document.createElement('i'),type=e.payload?.mechanicType||'circle';x.className='tb-telegraph '+type;root.appendChild(x);setTimeout(()=>x.remove(),Math.max(500,Number(e.payload?.duration)||1200)/playSpeed)
 }
 function castStart(e){
- const p=$('#tbCast'),name=$('#tbCastName'),time=$('#tbCastTime'),fill=$('#tbCastFill'),duration=Number(e.payload?.duration)||1200;if(p)p.hidden=false;if(name)name.textContent=e.ability||'Enemy Cast';if(time)time.textContent=(duration/1000).toFixed(1)+'s';if(fill){fill.style.transition='none';fill.style.width='0%';void fill.offsetWidth;fill.style.transition='width '+Math.max(.1,duration/1000/playSpeed)+'s linear';fill.style.width='100%'}
+ const p=$('#tbCast'),name=$('#tbCastName'),time=$('#tbCastTime'),fill=$('#tbCastFill'),duration=Number(e.payload?.duration)||1200;if(p)p.hidden=false;if(name)name.textContent=e.ability||'Enemy Cast';if(time)time.textContent=(duration/1000).toFixed(1)+'s';if(fill){fill.style.transition='none';fill.style.width='0%';requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!fill.isConnected)return;fill.style.transition='width '+Math.max(.1,duration/1000/playSpeed)+'s linear';fill.style.width='100%'}))}
 }
 function castClear(){const name=$('#tbCastName'),time=$('#tbCastTime'),fill=$('#tbCastFill');if(name)name.textContent='—';if(time)time.textContent='—';if(fill){fill.style.transition='none';fill.style.width='0%'}}
 function tbStatusTargets(id){
@@ -386,16 +397,16 @@ function handleEvent(e){
    if(String(e.target||'').startsWith('p-'))setPartyHp(e.target,e.payload?.targetHpPct);
    if(String(e.target||'').startsWith('tb-'))setBossHp(String(e.target).slice(3),e.payload?.targetHpPct);
    tbFloat(e.target,'-'+Math.round(Number(e.amount)||0),String(e.target||'').startsWith('p-')?'incoming':'damage');
-   renderMeters();return
+   queueMeterRender();return
  }
- if(e.type==='HEAL_RECEIVED'){if(String(e.source||'').startsWith('p-'))run.healing[e.source]=(Number(run.healing[e.source])||0)+(Number(e.amount)||0);if(String(e.target||'').startsWith('p-'))setPartyHp(e.target,e.payload?.targetHpPct);tbFloat(e.target,'+'+Math.round(Number(e.amount)||0),'heal');renderMeters();return}
+ if(e.type==='HEAL_RECEIVED'){if(String(e.source||'').startsWith('p-'))run.healing[e.source]=(Number(run.healing[e.source])||0)+(Number(e.amount)||0);if(String(e.target||'').startsWith('p-'))setPartyHp(e.target,e.payload?.targetHpPct);tbFloat(e.target,'+'+Math.round(Number(e.amount)||0),'heal');queueMeterRender();return}
  if((e.type==='RESOURCE_SPENT'||e.type==='RESOURCE_GAINED'||e.type==='RESOURCE_STATE')&&String(e.source||'').startsWith('p-')){
    const ch=party().find(c=>'p-'+c.id===e.source),fallback=ch?tbResourceDef(ch):{name:'Power',max:100,start:100};
    const previous=run.resources?.[e.source]||{name:fallback.name,max:fallback.max,value:fallback.start};
    tbSetResource(e.source,e.payload?.resource||previous.name||fallback.name,e.payload?.value??previous.value??fallback.start,e.payload?.max??previous.max??fallback.max);
    return
  }
- if(e.type==='THREAT_GENERATED'&&String(e.target||'').startsWith('tb-')){const bid=String(e.target).slice(3);run.threat[bid]=run.threat[bid]||{};run.threat[bid][e.source]=(Number(run.threat[bid][e.source])||0)+(Number(e.amount)||0);renderMeters();return}
+ if(e.type==='THREAT_GENERATED'&&String(e.target||'').startsWith('tb-')){const bid=String(e.target).slice(3);run.threat[bid]=run.threat[bid]||{};run.threat[bid][e.source]=(Number(run.threat[bid][e.source])||0)+(Number(e.amount)||0);queueMeterRender();return}
  if(e.type==='PLAYER_DEFEATED'){setPartyHp(e.target,0);feed((party().find(c=>'p-'+c.id===e.target)?.name||'An adventurer')+' has fallen.','danger');return}
  if(e.type==='MECHANIC_TELEGRAPH'){mechanicFlash(e);return}
  if(e.type==='CAST_START'&&e.result==='enemy'){castStart(e);return}
@@ -408,15 +419,16 @@ function startClock(){
  stopClock();resetClockAnchor();clockTimer=setInterval(()=>{
   if(!run)return;const sim=playBaseMs+(performance.now()-playStartedAt)*playSpeed;run.elapsed=Math.max(run.elapsed,sim);
   const nextIndex=Math.floor(sim/SPAWN_MS)+1,nextAt=nextIndex*SPAWN_MS,left=Math.max(0,nextAt-sim),el=$('#tbCountdown');if(el)el.textContent=nextIndex>=12?'ALL TOMBS OPEN':formatTime(left);
- },100)
+ },250)
 }
 function stopClock(){if(clockTimer){clearInterval(clockTimer);clockTimer=null}}
 async function playTimeline(events){
- const token=++playToken;startClock();let last=0;
+ const token=++playToken;startClock();let last=0,frameBudgetStarted=performance.now();
  for(const e of events){
   if(token!==playToken)return;
   const wait=Math.max(0,(Number(e.timestamp||0)-last)/playSpeed);if(wait)await new Promise(r=>setTimeout(r,wait));
-  if(token!==playToken)return;run.elapsed=Number(e.timestamp)||0;resetClockAnchor();handleEvent(e);last=Number(e.timestamp)||0
+  if(token!==playToken)return;run.elapsed=Number(e.timestamp)||0;resetClockAnchor();handleEvent(e);last=Number(e.timestamp)||0;
+  if(performance.now()-frameBudgetStarted>8){await new Promise(r=>requestAnimationFrame(r));frameBudgetStarted=performance.now()}
  }
  stopClock();
  if(run&&!run.rewardsApplied){run.rewards=applyRewards(run.result);run.rewardsApplied=true}
