@@ -296,15 +296,25 @@ function eventRender(e){
  }
 }
 async function playTimeline(result,tok){
- let last=0,visualErrors=0;
- for(const e of result.events||[]){
-  if(tok!==token||!run)return false;
-  const stamp=Math.max(last,Number(e.timestamp)||last),gap=stamp-last;
-  if(gap)await wait(gap);
-  try{eventRender(e)}catch(error){visualErrors++;console.warn('Blackout Station visual event skipped',e?.type,error);if(visualErrors===1)feed('Combat continues while a display event is recovered.')}
-  last=stamp;run.combatElapsed=stamp
- }
- return result.outcome==='victory'
+ const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
+ if(!run)return false;if(!events.length)return result?.outcome==='victory';
+ return await new Promise(resolve=>{
+  let index=0,simTime=0,lastFrame=performance.now(),finished=false,visualErrors=0;
+  const finish=value=>{if(finished)return;finished=true;resolve(value)};
+  const frame=now=>{
+   if(finished)return;
+   if(tok!==token||!run){finish(false);return}
+   const delta=Math.min(Math.max(0,now-lastFrame),100);lastFrame=now;
+   simTime+=delta*Math.max(.25,Number(run.speed)||1);run.combatElapsed=simTime;
+   while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4){
+    const e=events[index++];
+    try{eventRender(e)}catch(error){visualErrors++;console.warn('Blackout Station combat visual recovered',e?.type,e?.ability,error);if(visualErrors===1)feed('A display event was recovered without interrupting combat.')}
+   }
+   if(index>=events.length){finish(result?.outcome==='victory');return}
+   requestAnimationFrame(frame)
+  };
+  requestAnimationFrame(frame)
+ })
 }
 function drawCombat(){
  const r=root(),oc=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT;r.hidden=false;
@@ -332,7 +342,7 @@ function drawCombat(){
 async function startBoss(){
  if(!run)return;drawCombat();const tok=token,C=window.CellboundCombatReborn;if(!C?.simulate){setStatus('Combat Reborn unavailable');feed('Combat engine unavailable.');return}
  try{
-  const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:100,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0}));
+  const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:100,_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0}));
   let result=C.simulate({party:combatParty,encounter:bossEncounter(),tactics:{pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced'},seed:'blackout-station:'+run.seed});
   const hasCombat=(result.events||[]).some(e=>e.type==='DAMAGE_DEALT'||e.type==='HEAL_RECEIVED'||e.type==='ABILITY_START');
   if(!hasCombat)throw new Error('Combat Reborn produced no actionable events.');
