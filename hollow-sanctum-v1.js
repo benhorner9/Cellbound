@@ -502,7 +502,7 @@ async function hsReplayFinalFight(){
 
 async function hsFail(s,result){
  run.done=true;Game.applyPartyCellShock?.(25);const st=state();st.activity.push('The guild wiped in The Hollow Sanctum at '+s.title+'. All five gained 25% Cell Shock.');Game.save?.();await Game.persistState?.();
- const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end cb2d-results-screen';$('.hs2d-shell')?.classList.add('results-mode');end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Combat knowledge and the cause of the wipe are retained.</p></div>'+hsFailureDiagnosis(result)+hsStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
+ const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end cb2d-results-screen';$('.hs2d-shell')?.classList.add('results-mode');end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Mastery records and the cause of the wipe are retained.</p></div>'+hsFailureDiagnosis(result)+hsStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
 }
 async function hsFailNoHealer(s,result){
  run.done=true;Game.applyPartyCellShock?.(25);const st=state();st.activity.push('The Hollow Sanctum expedition ended after '+s.title+' because the party had no healer to revive fallen adventurers. All five gained 25% Cell Shock.');Game.save?.();await Game.persistState?.();
