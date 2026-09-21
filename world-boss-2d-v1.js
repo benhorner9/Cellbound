@@ -252,7 +252,7 @@ function setOwnHp(id,pct){
 function wbCastStart(e){
   const cast=document.getElementById('wb2dCast');if(!cast)return;
   const duration=Math.max(1,Number(e.payload?.duration)||1500);cast.hidden=false;cast.querySelector('b').textContent=e.ability||'Boss Cast';
-  const fill=cast.querySelector('i');if(fill){fill.style.transition='none';fill.style.width='0%';void fill.offsetWidth;requestAnimationFrame(()=>{fill.style.transition='width '+duration+'ms linear';fill.style.width='100%'})}
+  const fill=cast.querySelector('i');if(fill){fill.style.transition='none';fill.style.width='0%';requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!fill.isConnected)return;fill.style.transition='width '+duration+'ms linear';fill.style.width='100%'}))}
 }
 function wbCastClear(label=''){
   const cast=document.getElementById('wb2dCast');if(!cast)return;
