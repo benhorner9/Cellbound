@@ -326,33 +326,36 @@ function renderDungeonJournal(){
 
 function renderDungeonBrowserStatus(){
   const s=state();if(!s)return;
-  const ashenOpen=s?.progression?.ashenVaultUnlocked!==false,hollowOpen=Boolean(s?.questSystem?.flags?.hollowSanctumUnlocked),hollowDone=Boolean(s?.questSystem?.flags?.hollowFirstClear),chaosOpen=true,pi=partyIlvl();
+  const ashenOpen=s?.progression?.ashenVaultUnlocked!==false,hollowOpen=Boolean(s?.questSystem?.flags?.hollowSanctumUnlocked),hollowDone=Boolean(s?.questSystem?.flags?.hollowFirstClear),chaosOpen=true,blackoutOpen=true,pi=partyIlvl();
   const ashenCard=$('#ashenDungeonCard'),ashenStatus=$('#ashenDungeonStatus'),ashenParty=$('#ashenDungeonParty'),status=$('#dungeonBrowserStatus');
   if(ashenCard){ashenCard.classList.toggle('locked',!ashenOpen);ashenCard.classList.toggle('unlocked',ashenOpen);ashenCard.classList.toggle('active',activeDungeonDetail==='ashen-vault')}
   if(ashenStatus)ashenStatus.textContent=ashenOpen?((Number(s.dungeonCompletions)||0)>0?'FARMABLE':'AVAILABLE'):'QUEST LOCKED';
   if(ashenParty)ashenParty.textContent='Party iLvl '+(pi||'—');
-  if(status)status.textContent=(ashenOpen?1:0)+(hollowOpen?1:0)+(chaosOpen?1:0)+' / 3 unlocked';
+  if(status)status.textContent=(ashenOpen?1:0)+(hollowOpen?1:0)+(chaosOpen?1:0)+(blackoutOpen?1:0)+' / 4 unlocked';
   const hollowCard=$('[data-dungeon-card="hollow-sanctum"]');if(hollowCard)hollowCard.classList.toggle('active',activeDungeonDetail==='hollow-sanctum');
   const hollowState=$('#hollowDungeonStatus');if(hollowState)hollowState.textContent=hollowOpen?(hollowDone?'FARMABLE':'NEWLY UNLOCKED'):'QUEST LOCKED';
   const chaosCard=$('[data-dungeon-card="chaos-canyon"]');if(chaosCard)chaosCard.classList.toggle('active',activeDungeonDetail==='chaos-canyon');
   const chaosState=$('#chaosCanyonStatus');if(chaosState)chaosState.textContent=(Number(s.chaosCanyonCompletions)||0)>0?'FARMABLE':'AVAILABLE';
-  $$('[data-dungeon-more]').forEach(button=>{const expanded=button.dataset.dungeonMore===activeDungeonDetail;button.textContent=expanded?'LESS INFO ↑':'MORE INFO →';button.setAttribute('aria-expanded',expanded?'true':'false')})
+  const blackoutCard=$('[data-dungeon-card="blackout-station"]');if(blackoutCard)blackoutCard.classList.toggle('active',activeDungeonDetail==='blackout-station');
+  const blackoutState=$('#blackoutStationStatus');if(blackoutState)blackoutState.textContent=(Number(s.blackoutStationCompletions)||0)>0?'FARMABLE':'AVAILABLE';
+  $('[data-dungeon-more]').forEach(button=>{const expanded=button.dataset.dungeonMore===activeDungeonDetail;button.textContent=expanded?'LESS INFO ↑':'MORE INFO →';button.setAttribute('aria-expanded',expanded?'true':'false')})
 }
 
 function openDungeonDetail(id,options={}){
-  const target=String(id||'');if(!['ashen-vault','hollow-sanctum','chaos-canyon'].includes(target))return;
+  const target=String(id||'');if(!['ashen-vault','hollow-sanctum','chaos-canyon','blackout-station'].includes(target))return;
   if(activeDungeonDetail===target){closeDungeonDetails();return}
   if(target==='hollow-sanctum')window.CellboundHollowSanctum?.renderCard?.();
   if(target==='chaos-canyon')window.CellboundChaosCanyon?.renderCard?.();
+  if(target==='blackout-station')window.CellboundBlackoutStation?.renderCard?.();
   activeDungeonDetail=target;
-  const ashen=$('#ashenDungeonDetail'),hollow=$('#hollowSanctumMount'),chaos=$('#chaosCanyonMount');
-  if(ashen)ashen.hidden=target!=='ashen-vault';if(hollow)hollow.hidden=target!=='hollow-sanctum';if(chaos)chaos.hidden=target!=='chaos-canyon';
-  $$('[data-dungeon-card]').forEach(card=>card.classList.toggle('active',card.dataset.dungeonCard===target));renderDungeonBrowserStatus();
-  const panel=target==='ashen-vault'?ashen:target==='hollow-sanctum'?hollow:chaos;if(options.scroll!==false&&panel)setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'start'}),20)
+  const mounts={['ashen-vault']:$('#ashenDungeonDetail'),['hollow-sanctum']:$('#hollowSanctumMount'),['chaos-canyon']:$('#chaosCanyonMount'),['blackout-station']:$('#blackoutStationMount')};
+  Object.entries(mounts).forEach(([key,panel])=>{if(panel)panel.hidden=key!==target});
+  $('[data-dungeon-card]').forEach(card=>card.classList.toggle('active',card.dataset.dungeonCard===target));renderDungeonBrowserStatus();
+  const panel=mounts[target];if(options.scroll!==false&&panel)setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'start'}),20)
 }
 function closeDungeonDetails(){
-  activeDungeonDetail=null;const ashen=$('#ashenDungeonDetail'),hollow=$('#hollowSanctumMount'),chaos=$('#chaosCanyonMount');
-  if(ashen)ashen.hidden=true;if(hollow)hollow.hidden=true;if(chaos)chaos.hidden=true;
+  activeDungeonDetail=null;
+  [$('#ashenDungeonDetail'),$('#hollowSanctumMount'),$('#chaosCanyonMount'),$('#blackoutStationMount')].forEach(panel=>{if(panel)panel.hidden=true});
   document.querySelectorAll('[data-dungeon-card]').forEach(card=>card.classList.remove('active'));renderDungeonBrowserStatus();$('#dungeonBrowser')?.scrollIntoView({behavior:'smooth',block:'start'})
 }
 function bindDungeonBrowser(){
@@ -600,7 +603,7 @@ function queueEnhance(){
 function bindGlobal(){
   window.addEventListener('cellbound:view-changed',e=>{
     const view=e.detail?.view;
-    if(view==='content')setTimeout(()=>{renderDungeonJournal();window.CellboundHollowSanctum?.renderCard?.();renderDungeonBrowserStatus()},0);
+    if(view==='content')setTimeout(()=>{renderDungeonJournal();window.CellboundHollowSanctum?.renderCard?.();window.CellboundChaosCanyon?.renderCard?.();window.CellboundBlackoutStation?.renderCard?.();renderDungeonBrowserStatus()},0);
     if(view==='roster')setTimeout(enhanceRoster,0);
     if(view==='bank')setTimeout(enhanceBank,0);
     if(view==='professions')setTimeout(enhanceProfessions,0);
