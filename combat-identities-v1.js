@@ -271,7 +271,7 @@ if(!window.CellboundCombatReborn){
 (()=>{
 'use strict';
 
-const VERSION='1.3.0';
+const VERSION='1.3.1';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -1072,13 +1072,17 @@ function combatPressure(ctx){
  return clamp(missing*.38+(dead/Math.max(1,ctx.players.length))*.52+Math.min(.22,loose*.11)+Math.min(.16,adds*.06)+(ctx.activeEnemyCast?.type?0.08:0)+manaPressure*.14,0,1)
 }
 function executionQuality(ctx,u){
- const knowledge=encounterKnowledge(ctx,u)/100;
  const levelDelta=(Number(u.level)||1)-(Number(ctx.encounter.level)||1);
- const levelReadiness=clamp(.82+levelDelta*.08,.42,1);
+ const levelReadiness=clamp(.82+levelDelta*.08,.42,1.06);
  const recIlvl=Math.max(0,Number(ctx.encounter.recommendedItemLevel)||0);
  const gearReadiness=recIlvl>0?clamp((Number(u.itemLevel)||0)/recIlvl,.45,1.08):1;
+ const equipped=Array.isArray(u.abilities)?u.abilities.filter(a=>!a.hiddenFallback):[];
+ const filled=Math.min(1,equipped.length/4);
+ const hasRoleTool=u.role==='tank'?equipped.some(a=>a.kind==='taunt'):u.role==='healer'?equipped.some(a=>a.kind==='heal'||a.kind==='group-heal'):equipped.some(a=>a.kind==='damage');
+ const hasInterrupt=equipped.some(a=>a.kind==='interrupt');
+ const skillReadiness=clamp(.55+filled*.25+(hasRoleTool?.12:0)+(hasInterrupt?.08:0),.45,1);
  const pressure=combatPressure(ctx);
- return clamp(.44+knowledge*.30+levelReadiness*.13+Math.min(1,gearReadiness)*.13-pressure*.24,.12,.985)
+ return clamp(.50+levelReadiness*.20+Math.min(1,gearReadiness)*.20+skillReadiness*.10-pressure*.20,.18,.985)
 }
 function mistakeChance(ctx,u,type='general'){
  const q=executionQuality(ctx,u),pressure=combatPressure(ctx);
@@ -1095,7 +1099,7 @@ function recordMistake(ctx,u,type,detail,payload={}){
  const st=ctx.stats.players[u.id];if(st){st.mistakes++;st.mistakesByType[type]=(st.mistakesByType[type]||0)+1}
  ctx.stats.mistakes.total++;ctx.stats.mistakes.byType[type]=(ctx.stats.mistakes.byType[type]||0)+1;
  const token='err-'+(++ctx.mistakeSeq);u.lastMistakeToken=token;u.lastMistakeUntil=ctx.time+3500;
- emit(ctx,'PLAYER_MISTAKE',{source:u.id,target:payload.target||null,ability:payload.ability||null,result:type,payload:{token,type,detail,quality:Math.round(executionQuality(ctx,u)*100),knowledge:Math.round(encounterKnowledge(ctx,u)),pressure:Math.round(combatPressure(ctx)*100),...payload}});
+ emit(ctx,'PLAYER_MISTAKE',{source:u.id,target:payload.target||null,ability:payload.ability||null,result:type,payload:{token,type,detail,quality:Math.round(executionQuality(ctx,u)*100),pressure:Math.round(combatPressure(ctx)*100),...payload}});
  return token
 }
 function recentMistakeToken(ctx,u){
@@ -1848,7 +1852,7 @@ function tryInterrupt(ctx,e,mechanic,castToken){
    triggerUnique(ctx,u,'frostbound-sigil','Frozen Response',{target:u.id,duration:3500,trigger:'interrupt'})
   }
  },'interrupt');
- // Low knowledge / pressure can make a second player burn their interrupt a fraction later.
+ // Pressure and execution quality can make a second player burn their interrupt a fraction later.
  const backup=candidates[1];
  if(backup&&ctx.rng()<mistakeChance(ctx,backup.u,'interrupt')*.55){
   const delay=Math.max(220,reaction+120+Math.round(ctx.rng()*220));
@@ -2412,6 +2416,21 @@ function runSelfTests(){
   const loadout=simulate({party:loadoutParty,encounter:{id:'loadout-test',kind:'trash',level:5,enemies:['Dummy'],enemyHealth:900,mechanics:[]},seed:'loadout',maxDurationMs:5000});
   const damageStarts=loadout.events.filter(e=>e.type==='ABILITY_START'&&e.source==='p-loadout'&&e.payload?.kind==='damage');
   test('Equipped Skills Are Authoritative',()=>damageStarts.length>0&&damageStarts.every(e=>e.ability==='Fireball'));
+ }
+
+
+ {
+  const masteryBase=[
+   {id:'mk-t',name:'Tank',class:'Warrior',spec:'Protection',power:20,level:8,_combatItemLevel:28},
+   {id:'mk-h',name:'Healer',class:'Priest',spec:'Holy',power:20,level:8,_combatItemLevel:28},
+   {id:'mk-1',name:'DPS One',class:'Warrior',spec:'Arms',power:20,level:8,_combatItemLevel:28},
+   {id:'mk-2',name:'DPS Two',class:'Rogue',spec:'Assassination',power:20,level:8,_combatItemLevel:28},
+   {id:'mk-3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:20,level:8,_combatItemLevel:28}
+  ];
+  const low=masteryBase.map(x=>({...x,knowledge:{mastery:0}})),high=masteryBase.map(x=>({...x,knowledge:{mastery:100}}));
+  const encounter={id:'mastery-neutral',kind:'boss',level:8,recommendedItemLevel:28,knowledgeKey:'mastery',enemies:['Mastery Dummy'],enemyHealth:1800,mechanics:[['Pulse','circles',1400],['Cast','interrupt',1600]]};
+  const a=simulate({party:low,encounter,seed:'mastery-neutral'}),b=simulate({party:high,encounter,seed:'mastery-neutral'});
+  test('Mastery Does Not Affect Combat',()=>a.outcome===b.outcome&&a.summary.totalDamage===b.summary.totalDamage&&a.summary.totalHealing===b.summary.totalHealing&&a.summary.mistakes.total===b.summary.mistakes.total);
  }
 
 
