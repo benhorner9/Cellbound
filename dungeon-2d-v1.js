@@ -305,9 +305,7 @@ function unitPixelPosition(x,y){
  return{x:(clamp(Number(x)||0,0,100)/100)*arena.clientWidth,y:(clamp(Number(y)||0,0,100)/100)*arena.clientHeight}
 }
 function combatSafePoint(id,x,y){
- const key=String(id||''),partyUnit=key.startsWith('p-');
- const minX=partyUnit?8:60,maxX=partyUnit?57:92,minY=13,maxY=87;
- return{x:clamp(Number(x)||50,minX,maxX),y:clamp(Number(y)||50,minY,maxY)}
+ return{x:clamp(Number(x)||50,8,92),y:clamp(Number(y)||50,12,88)}
 }
 function applyUnitPosition(e,x,y,instant=false){
  if(!e)return;
@@ -569,11 +567,11 @@ function pctPosition(id){
 function enemyPosition(index){return pctPosition('e-'+index)}
 function formationPoint(c,index){
  const ep=enemyPosition(index),profile=combatProfile(c),p=party();
- if(profile==='tank')return{x:clamp(ep.x-8,40,61),y:clamp(ep.y,15,85)};
+ if(profile==='tank')return{x:clamp(ep.x-10,34,68),y:clamp(ep.y,15,85)};
  if(profile==='melee'){
    const melees=p.filter(x=>combatProfile(x)==='melee'),i=Math.max(0,melees.indexOf(c));
-   const offsets=[-9,9,-14,14];
-   return{x:clamp(ep.x+6,50,78),y:clamp(ep.y+(offsets[i]||0),12,88)};
+   const offsets=[-10,10,-16,16];
+   return{x:clamp(ep.x-14-(i%2)*2,30,66),y:clamp(ep.y+(offsets[i]||0),14,86)};
  }
  if(profile==='ranged'){
    const ranged=p.filter(x=>combatProfile(x)==='ranged'),i=Math.max(0,ranged.indexOf(c));
