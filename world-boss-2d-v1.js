@@ -141,7 +141,7 @@ function unitPosition(anchor,u,i){
   else if(u.role==='healer'){forward=-7;side=8}
   else if(u.ranged){forward=-3;side=(i%2?11:-11)}
   else{forward=7;side=(i%2?7:-7)}
-  return{x:clamp(anchor.x+nx*forward+px*side,5,93),y:clamp(anchor.y+ny*forward+py*side,7,93)};
+  return{x:clamp(anchor.x+nx*forward+px*side,7,93),y:clamp(anchor.y+ny*forward+py*side,9,91)};
 }
 function renderParticipants(parts){
   const units=document.getElementById('wb2dUnits'),raid=document.getElementById('wb2dRaidList');
