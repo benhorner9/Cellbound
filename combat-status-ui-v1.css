@@ -84,3 +84,19 @@
  .cb2d-unit.party>.cbs-strip,.hs2d-unit.party>.cbs-strip,.tb-unit.party>.cbs-strip{top:-43px}
  .cbs-strip.mirror .cbs-icon{width:21px;height:21px}
 }
+
+
+/* Harmful-status hard override */
+.cbs-icon.debuff{
+  border-color:rgba(244,72,61,.95)!important;
+  background:linear-gradient(180deg,rgba(136,28,24,.98),rgba(46,7,7,.99))!important;
+  color:#ffb0a6!important;
+  box-shadow:0 0 0 1px rgba(244,72,61,.16),0 4px 12px rgba(0,0,0,.45)!important
+}
+.cbs-icon.debuff small,.cbs-icon.debuff b{color:#ffd0c9!important}
+.cbs-group.debuffs .cbs-more{color:#ff9184!important;border-color:rgba(244,72,61,.55)!important}
+.cbs-tooltip-head>i.debuff{
+  color:#ffb0a6!important;
+  background:#4d0e0b!important;
+  border-color:rgba(244,72,61,.8)!important
+}
