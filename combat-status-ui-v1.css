@@ -2,13 +2,14 @@
 /* Status hosts must never change a combatant's positioning model.
    Combat units are already positioned containers (absolute); changing them to
    relative detaches the whole character from its arena coordinates. */
-.cbs-host:not(.cb2d-unit):not(.hs2d-unit):not(.cc2d-unit):not(.bs-unit):not(.tb-unit):not(.wb2d-unit){position:relative}
+.cbs-host:not(.cb2d-unit):not(.hs2d-unit):not(.cc2d-unit):not(.bs-unit):not(.tb-unit):not(.wb2d-unit):not(.td-unit){position:relative}
 .cb2d-unit.cbs-host,
 .hs2d-unit.cbs-host,
 .cc2d-unit.cbs-host,
 .bs-unit.cbs-host,
 .tb-unit.cbs-host,
-.wb2d-unit.cbs-host{position:absolute!important}
+.wb2d-unit.cbs-host,
+.td-unit.cbs-host{position:absolute!important}
 .cbs-strip{
   position:absolute;left:50%;top:-46px;z-index:35;
   display:flex;align-items:center;justify-content:center;gap:3px;
@@ -48,7 +49,7 @@
 .cbs-more.buff{color:#89cda0}.cbs-more.debuff{color:#ff8f80;border-color:rgba(235,76,64,.4)}
 
 /* Player overhead: above HP/resource stack. */
-.cb2d-unit.party>.cbs-strip,.hs2d-unit.party>.cbs-strip{top:-49px}
+.cb2d-unit.party>.cbs-strip,.hs2d-unit.party>.cbs-strip,.td-unit.party>.cbs-strip{top:-49px}
 .cb2d-unit.party>.cbs-strip{transform:translateX(calc(-50% + var(--status-shift-x,0px)))}
 .cb2d-unit.enemy>.cbs-strip,.hs2d-unit.enemy>.cbs-strip{top:-50px}
 .wb2d-unit>.cbs-strip{top:-40px}
