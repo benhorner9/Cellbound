@@ -1,5 +1,6 @@
 (()=>{
 'use strict';
+window.CellboundCombatStandard?.register?.('world-bosses',{kind:'world-boss',execution:'server',ui:'world-boss-shared-vitals'});
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -376,6 +377,7 @@ async function attack(manual=false){
       return;
     }
     if(data?.error){const msg=String(data.error);if(!msg.toLowerCase().includes('regrouping'))feed(msg,'error');return}
+    window.CellboundCombatStandard?.assertServerPayload?.(data,'world-bosses');
     if(data?.combatModel==='Combat Reborn')document.getElementById('wb2dStatus').textContent='Combat Reborn · server-authoritative world encounter';
     active.partyThreat=data?.threatBreakdown||active.partyThreat||{};
     if(data?.combatState)active.combatState=data.combatState;
