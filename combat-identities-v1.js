@@ -297,6 +297,19 @@ const RESOURCE_DEFS={
  Rogue:{name:'Energy',max:100,start:100,regen:13}
 };
 
+const CLASS_BUFFS={
+ 'Death Knight':{id:'class-buff-runic-ascendance',name:'Runic Ascendance',scope:'self',duration:60000,cooldown:180000,effect:{outgoingDamage:.12,incomingDamageReduction:.12,resourceRegen:.15}},
+ 'Demon Hunter':{id:'class-buff-demonic-momentum',name:'Demonic Momentum',scope:'self',duration:60000,cooldown:180000,effect:{outgoingDamage:.15,haste:.10,resourceRegen:.15}},
+ Hunter:{id:'class-buff-predators-focus',name:"Predator's Focus",scope:'self',duration:60000,cooldown:180000,effect:{outgoingDamage:.15,haste:.10,resourceRegen:.10}},
+ Rogue:{id:'class-buff-killing-tempo',name:'Killing Tempo',scope:'self',duration:60000,cooldown:180000,effect:{outgoingDamage:.15,critBonus:.10}},
+ Warrior:{id:'class-buff-battle-fury',name:'Battle Fury',scope:'self',duration:60000,cooldown:180000,effect:{outgoingDamage:.15,threatBonus:.15,incomingDamageReduction:.10}},
+ Mage:{id:'class-buff-arcane-empowerment',name:'Arcane Empowerment',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.05}},
+ Priest:{id:'class-buff-divine-inspiration',name:'Divine Inspiration',scope:'party',duration:60000,cooldown:180000,effect:{outgoingHealing:.05,incomingHealing:.05}},
+ Druid:{id:'class-buff-wild-communion',name:'Wild Communion',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04,outgoingHealing:.04,resourceRegen:.04}},
+ Paladin:{id:'class-buff-blessing-resolve',name:'Blessing of Resolve',scope:'party',duration:60000,cooldown:180000,effect:{incomingDamageReduction:.06}},
+ Evoker:{id:'class-buff-draconic-resonance',name:'Draconic Resonance',scope:'party',duration:60000,cooldown:180000,effect:{haste:.06}}
+};
+
 const LEVEL_RULES={
  healthPerLevel:.03,
  outputPerLevel:.02,
@@ -438,6 +451,19 @@ function inferredRole(c){
 function resourceDef(c){
  return RESOURCE_DEFS[c?.class]||{name:'Power',max:100,start:100,regen:8};
 }
+function carriedStatuses(c){
+ const input=Array.isArray(c?._combatStatuses)?c._combatStatuses:[],out={};
+ input.forEach(raw=>{
+  const remaining=Math.max(0,Number(raw?.remainingMs??raw?.duration)||0);if(!remaining)return;
+  const id=raw.id||String(raw.name||'status').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  out[id]={id,name:raw.name||id,kind:raw.kind==='debuff'?'debuff':'buff',source:raw.source||null,stacks:Math.max(1,Number(raw.stacks)||1),duration:remaining,expiresAt:remaining,effect:copy(raw.effect||{}),cc:raw.cc||null,breakOnDamage:!!raw.breakOnDamage,persistAcrossEncounters:!!raw.persistAcrossEncounters}
+ });
+ return out
+}
+function statusBonus(u,key){
+ return Object.values(u?.statuses||{}).reduce((n,s)=>n+(Number(s?.effect?.[key])||0),0)
+}
+function classBuffFor(u){return CLASS_BUFFS[u?.class]||null}
 function talentRanks(c){
  const tree=c?.talents?.[c?.spec]||{};
  return Object.values(tree).reduce((n,v)=>n+Math.max(0,Number(v)||0),0);
@@ -493,7 +519,7 @@ function normalisePlayer(c,i){
  return{
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:{x:tank?42:role==='healer'?18:28,y:26+i*12},facing:0,
-  target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:{},resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
+  target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:carriedStatuses(c),resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
   abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),
   defensiveUntil:Math.max(0,Number(c?._combatDefensiveMs)||0),frenzyUntil:Math.max(0,Number(c?._combatFrenzyMs)||0),uniqueUsed:copy(c?._combatUniqueUsed||{}),nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
@@ -560,7 +586,7 @@ function removeStatus(ctx,target,id,reason='expired'){
 function applyStatus(ctx,source,target,status={}){
  if(!target?.alive)return null;
  const id=status.id||String(status.name||'status').toLowerCase().replace(/[^a-z0-9]+/g,'-'),duration=Math.max(0,Number(status.duration)||0);
- const current=target.statuses[id],st={id,name:status.name||id,kind:status.kind==='debuff'?'debuff':'buff',source:source?.id||status.source||null,stacks:clamp((current?.stacks||0)+(Number(status.stacks)||1),1,99),duration,expiresAt:ctx.time+duration,effect:copy(status.effect||{}),cc:status.cc||null,breakOnDamage:!!status.breakOnDamage};
+ const current=target.statuses[id],st={id,name:status.name||id,kind:status.kind==='debuff'?'debuff':'buff',source:source?.id||status.source||null,stacks:clamp((current?.stacks||0)+(Number(status.stacks)||1),1,99),duration,expiresAt:ctx.time+duration,effect:copy(status.effect||{}),cc:status.cc||null,breakOnDamage:!!status.breakOnDamage,persistAcrossEncounters:!!status.persistAcrossEncounters};
  target.statuses[id]=st;
  emit(ctx,st.kind==='debuff'?'DEBUFF_APPLIED':'BUFF_APPLIED',{source:st.source,target:target.id,ability:st.name,result:'applied',statusEffects:[copy(st)]});
  if(duration>0)schedule(ctx,ctx.time+duration,()=>removeStatus(ctx,target,id,'expired'),'status-expire');
@@ -733,7 +759,7 @@ function emitResourceState(ctx,u,result='state'){
 function passiveResources(ctx){
  ctx.players.forEach(u=>{
   if(!u.alive)return;
-  const perTick=(u.resource.regen||0)*(TICK/1000);
+  const perTick=(u.resource.regen||0)*Math.max(.1,1+statusBonus(u,'resourceRegen'))*(TICK/1000);
   if(perTick<=0||u.resource.value>=u.resource.max)return;
   const before=u.resource.value;
   u.resource.value=clamp(before+perTick,0,u.resource.max);
@@ -799,8 +825,8 @@ function shouldMistake(ctx,u,type,lockMs=0){
 }
 
 function threatMultiplier(u,a){
- if(u.role==='tank')return Number(a.threat)||2.5;
- return 1;
+ const base=u.role==='tank'?(Number(a.threat)||2.5):1;
+ return base*Math.max(.1,1+statusBonus(u,'threatBonus'))
 }
 function topThreatTarget(ctx,e){
  const live=livingPlayers(ctx);
@@ -842,8 +868,9 @@ function rollDamage(ctx,u,a,target){
  const variance=.9+ctx.rng()*.2;
  const revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1;
  const frenzy=u.frenzyUntil>ctx.time?1.15:1;
- let amount=(Number(a.damage)||12)*talent*power*levelScale*match*variance*revivePenalty*frenzy;
- if(ctx.rng()<.12){amount*=1.5;return{amount,crit:true}}
+ let amount=(Number(a.damage)||12)*talent*power*levelScale*match*variance*revivePenalty*frenzy*Math.max(.1,1+statusBonus(u,'outgoingDamage'));
+ const critChance=clamp(.12+statusBonus(u,'critBonus'),0,.80);
+ if(ctx.rng()<critChance){amount*=1.5;return{amount,crit:true}}
  return{amount,crit:false};
 }
 function itemLevelIncomingMultiplier(ctx,target){
@@ -865,6 +892,7 @@ function mitigation(ctx,target,damageType='physical',opts={}){
    opts.blocked=true;
  }
  if(target.defensiveUntil>0)value*=target.role==='tank'?.66:.74;
+ value*=1-clamp(statusBonus(target,'incomingDamageReduction'),0,.70);
  return Math.max(.34,value);
 }
 function dealDamage(ctx,source,target,amount,ability,opts={}){
@@ -896,7 +924,8 @@ function dealDamage(ctx,source,target,amount,ability,opts={}){
 function doHeal(ctx,healer,target,amount,ability){
  if(!healer?.alive||!target?.alive)return 0;
  const before=target.health,max=target.maxHealth;
- const raw=Math.max(1,Math.round(amount));
+ const healingScale=Math.max(.1,1+statusBonus(healer,'outgoingHealing'))*Math.max(.1,1+statusBonus(target,'incomingHealing'));
+ const raw=Math.max(1,Math.round(amount*healingScale));
  target.health=clamp(before+raw,0,max);
  const effective=target.health-before,over=Math.max(0,raw-effective);
  const st=ctx.stats.players[healer.id];st.healing+=effective;st.overhealing+=over;st.abilityHealing[ability]=(st.abilityHealing[ability]||0)+effective;
@@ -1077,7 +1106,8 @@ function startAbility(ctx,u,a,target){
  if(!u.alive||(!target?.alive&&!deadTarget)||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.gcdUntil||!cooldownReady(u,a))return false;
  if(!moveIntoRange(ctx,u,target,Number(a.range)||5))return false;
  if(!spendResource(ctx,u,a))return false;
- const cast=Math.max(0,Number(a.cast)||0),gcd=Math.max(0,Number(a.gcd)||0);
+ const haste=clamp(statusBonus(u,'haste'),0,.60),speed=1+haste;
+ const cast=Math.max(0,Math.round((Number(a.cast)||0)/speed)),gcd=Math.max(0,Math.round((Number(a.gcd)||0)/speed));
  u.gcdUntil=ctx.time+gcd;u.cooldowns[a.id]=Math.max(Number(a.cd)||0,gcd);
  u.target=target.id;updateFacing(u,target);
  emit(ctx,'ABILITY_START',{source:u.id,target:target.id,ability:a.name,result:cast?'casting':'instant',position:copy(u.position),payload:{castTime:cast,range:a.range,kind:a.kind}});
@@ -1146,9 +1176,29 @@ function tankNeedsTaunt(ctx,tank){
   const t=topThreatTarget(ctx,e);return t&&t.id!==tank.id;
  });
 }
+function classBuffUseAllowed(ctx,u,buff){
+ if(!buff||!u?.alive||(Number(u.cooldowns?.[buff.id])||0)>0)return false;
+ if(ctx.time<500+(ctx.players.indexOf(u)*120))return false;
+ if(buff.scope==='party'&&ctx.players.some(p=>p.statuses?.[buff.id]))return false;
+ const policy=ctx.tactics?.cooldownUse||'difficult',bossLike=['boss','final','world-boss','event'].includes(ctx.encounter.kind);
+ if(policy==='free')return true;
+ if(policy==='bosses')return bossLike;
+ if(policy==='difficult')return bossLike||combatPressure(ctx)>=.68;
+ return bossLike
+}
+function activateClassBuff(ctx,u,buff){
+ if(!classBuffUseAllowed(ctx,u,buff))return false;
+ u.cooldowns[buff.id]=buff.cooldown;u.gcdUntil=Math.max(u.gcdUntil,ctx.time+500);
+ emit(ctx,'ABILITY_START',{source:u.id,target:u.id,ability:buff.name,result:'class-buff',position:copy(u.position),payload:{kind:'buff',scope:buff.scope,duration:buff.duration,cooldown:buff.cooldown}});
+ const targets=buff.scope==='party'?livingPlayers(ctx):[u];
+ targets.forEach(target=>applyStatus(ctx,u,target,{id:buff.id,name:buff.name,kind:'buff',duration:buff.duration,effect:buff.effect,persistAcrossEncounters:true}));
+ emit(ctx,'ABILITY_FINISH',{source:u.id,target:u.id,ability:buff.name,result:'class-buff',position:copy(u.position),payload:{kind:'buff',scope:buff.scope,duration:buff.duration}});
+ return true
+}
 function playerAI(ctx,u){
  if(!u.alive||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.nextDecision||ctx.time<u.gcdUntil)return;
  u.nextDecision=ctx.time+160;
+ const buff=classBuffFor(u);if(buff&&activateClassBuff(ctx,u,buff))return;
  const target=pickDamageTarget(ctx,u);
  if(!target)return;
  if(u.role==='tank'){
@@ -1476,7 +1526,15 @@ function simulate(options={}){
  const environment=copy(encounter.environment||{blockers:[]});
  const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
  emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
- players.forEach(u=>emitResourceState(ctx,u,'initial'));
+ players.forEach(u=>{
+  Object.values(u.statuses||{}).forEach(st=>{
+   if(Number(st.expiresAt)>0){
+    emit(ctx,st.kind==='debuff'?'DEBUFF_APPLIED':'BUFF_APPLIED',{source:st.source||u.id,target:u.id,ability:st.name,result:'carried',statusEffects:[copy(st)]});
+    schedule(ctx,Number(st.expiresAt),()=>removeStatus(ctx,u,st.id,'expired'),'carried-status-expire')
+   }
+  });
+  emitResourceState(ctx,u,'initial')
+ });
  {
   const boss=enemies.find(e=>e.kind==='boss');
   if(boss){
@@ -1784,7 +1842,7 @@ function runSelfTests(){
 }
 
 window.CellboundCombatReborn={
- VERSION,CLASS_COLORS,RESOURCE_DEFS,ABILITIES,LEVEL_RULES,ENEMY_CLASS_RULES,simulate,replay,debugSnapshot,
+ VERSION,CLASS_COLORS,RESOURCE_DEFS,CLASS_BUFFS,ABILITIES,LEVEL_RULES,ENEMY_CLASS_RULES,simulate,replay,debugSnapshot,
  tests:{run:runSelfTests},utils:{hashSeed,rngFrom,levelHealthScale,levelOutputScale,levelMatchMultiplier}
 };
 })();
