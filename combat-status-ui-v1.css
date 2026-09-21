@@ -111,3 +111,20 @@
   background:#4d0e0b!important;
   border-color:rgba(244,72,61,.8)!important
 }
+
+
+/* Talent proc labels */
+.cbs-talent-proc{
+  position:absolute;left:50%;top:-68px;z-index:9;
+  transform:translate(-50%,4px) scale(.96);
+  max-width:150px;padding:3px 7px;border:1px solid rgba(224,190,103,.28);
+  background:rgba(24,20,12,.92);color:#efd98d;
+  box-shadow:0 5px 18px rgba(0,0,0,.45);
+  font-size:.34rem;font-weight:900;letter-spacing:.06em;line-height:1.15;
+  white-space:nowrap;pointer-events:none;opacity:0;
+  transition:opacity .16s ease,transform .16s ease
+}
+.cbs-talent-proc.show{opacity:1;transform:translate(-50%,0) scale(1)}
+.cb2d-unit.big>.cbs-talent-proc,
+.hs2d-unit.big>.cbs-talent-proc,
+.cc2d-unit.big>.cbs-talent-proc{top:-76px}
