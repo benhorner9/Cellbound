@@ -137,13 +137,16 @@ function openBriefing(){
 }
 
 function carryParty(base,finalPlayers,downtimeSec=0,elapsedMs=0){
+ const downtimeMs=Math.max(0,Number(downtimeSec)||0)*1000,elapsed=Math.max(0,Number(elapsedMs)||0);
  return base.map(c=>{
   const p=finalPlayers.find(x=>x.characterId===c.id),next={...c,_combatItemLevel:Game.characterItemLevel(c)};
   if(!p)return next;
   const pct=p.maxHealth?clamp(p.health/p.maxHealth*100,0,100):0;
   next._combatHealthPct=clamp(pct+downtimeSec*.75,0,100);
   next._combatResource={value:p.resource?.value};
-  next._combatCooldowns=Object.fromEntries(Object.entries(p.cooldowns||{}).map(([k,v])=>[k,Math.max(0,(Number(v)||0)-elapsedMs)]));
+  // Combat Reborn already ticks cooldowns during the slice; only the quiet time before the next tomb opens is extra.
+  next._combatCooldowns=Object.fromEntries(Object.entries(p.cooldowns||{}).map(([k,v])=>[k,Math.max(0,(Number(v)||0)-downtimeMs)]).filter(([,v])=>v>0));
+  next._combatStatuses=Object.values(p.statuses||{}).filter(s=>s?.persistAcrossEncounters&&Number(s.expiresAt)>elapsed).map(s=>({...s,effect:{...(s.effect||{})},remainingMs:Math.max(0,Number(s.expiresAt)-elapsed-downtimeMs)})).filter(s=>s.remainingMs>0);
   next._combatUniqueUsed={...(p.uniqueUsed||{})};
   return next
  })
