@@ -981,7 +981,7 @@ async function checkHistory(){if(currentStage()==='vault'&&latestAshenClear())aw
 function init(){
   Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,100);return}
   const q=ensure();if(q.started&&!complete())selectedAdventure='echoes';else if(q.ashfall?.complete&&echoesUnlocked())selectedAdventure='echoes';bind();render();checkHistory();setInterval(checkHistory,2500);
-  window.CellboundQuests={render,ensure,beginInvestigation,runQuest2DFight,isHollowUnlocked:()=>Boolean(ensure()?.flags?.hollowSanctumUnlocked)};
+  window.CellboundQuests={render,ensure,startAshfall,beginInvestigation,runQuest2DFight,isHollowUnlocked:()=>Boolean(ensure()?.flags?.hollowSanctumUnlocked)};
 }
 init();
 })();
