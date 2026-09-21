@@ -1070,7 +1070,7 @@ async function cast(name,ms,tok){
  return new Promise((res,rej)=>{const q=setInterval(()=>{if(tok!==token){clearInterval(q);rej(new Error('cancelled'));return}const p=clamp((Date.now()-start)/total,0,1);if(f)f.style.width=(p*100)+'%';if(tm)tm.textContent=Math.max(0,(total-(Date.now()-start))/1000).toFixed(1)+'s';if(p>=1){clearInterval(q);res()}},45)})
 }
 function interruptSpecialist(){return party().find(c=>hp(c.id)>0&&(c.class==='Rogue'||c.class==='Hunter'||(c.class==='Warrior'&&c.spec==='Arms')))||party().find(c=>hp(c.id)>0&&combatProfile(c)!=='healer')}
-function interruptOK(s){if(run.forceInterrupt){run.forceInterrupt=false;return true}const specialist=Boolean(interruptSpecialist());if(tactics.interrupts==='high')return true;if(tactics.interrupts==='important')return s.kind==='boss'||s.kind==='final'||knowledge(s.knowledge)>=25||(specialist&&knowledge(s.knowledge)>=10);return s.kind==='final'||knowledge(s.knowledge)>=70}
+function interruptOK(s){if(run.forceInterrupt){run.forceInterrupt=false;return true}const specialist=Boolean(interruptSpecialist());if(tactics.interrupts==='high')return true;if(tactics.interrupts==='important')return s.kind==='boss'||s.kind==='final'||specialist;return s.kind==='final'}
 function regroup(){
  const index=enemyIndex();
  if(index>=0){settleFormation(index);return}
@@ -1133,7 +1133,7 @@ function professionPrepBonus(){
    (Number(b.armour)||0)*.015+(Number(b.magicWardPct)||0)*.2},0);
  return clamp(score,0,8)
 }
-function chance(s){const avg=party().reduce((n,c)=>n+cond(c.id),0)/5;return clamp(Math.round(s.base+(ilvl()-18)*2+knowledge(s.knowledge)*.12+(avg-75)*.1+bonus(s)+professionPrepBonus()),35,97)}
+function chance(s){const avg=party().reduce((n,c)=>n+cond(c.id),0)/5,avgLevel=party().reduce((n,c)=>n+Math.max(1,Number(c.level)||1),0)/Math.max(1,party().length);return clamp(Math.round(s.base+(ilvl()-18)*2+(avgLevel-(s.level||1))*2.5+(avg-75)*.1+bonus(s)+professionPrepBonus()),35,97)}
 function learn(s,ok){const a=ok?(s.kind==='trash'||s.kind==='event'?3:7):5;party().forEach(c=>{c.knowledge=c.knowledge||{};const gain=Math.max(1,Math.round(a*(I?.knowledgeMultiplier?.(c)||1)));c.knowledge[s.knowledge]=clamp((Number(c.knowledge[s.knowledge])||0)+gain,0,100)});return a}
 function recordMaterialDrop(drop,bossName){
  if(!run?.loot||!drop)return;
@@ -1192,7 +1192,7 @@ async function resolveStage(s){
    }
    if(s.id==='kael'){state().gold+=35;run.loot.gold+=35}
    if(s.id==='embermaw'){state().gold+=55;run.loot.gold+=55}
-   state().activity.push(s.title+' cleared during The Ashen Vault.');log(s.title+' cleared. Knowledge +'+k+'%.');if(item){run.rewards.push(item.name);flash('LOOT ACQUIRED',false);log(item.name+' sent to the Guild Bank.')}
+   state().activity.push(s.title+' cleared during The Ashen Vault.');log(s.title+' cleared. Mastery +'+k+'%.');if(item){run.rewards.push(item.name);flash('LOOT ACQUIRED',false);log(item.name+' sent to the Guild Bank.')}
    Game.save();await Game.persistState();return true
  }
  learn(s,false);const wipe=s.kind==='boss'||s.kind==='final'||party().some(c=>hp(c.id)<=0||cond(c.id)<=0);
@@ -1711,7 +1711,7 @@ function formatRunTime(ms){const t=Math.max(0,Math.round((Number(ms)||0)/1000)),
 function finish(ok,s){
  if(!run)return;run.resolved=true;const e=$('#cb2dEnd');e.hidden=false;
  if(!ok){
-   e.className='cb2d-end cb2d-results-screen';e.innerHTML='<div class="cb2d-failure-wrap"><section class="cb2d-failure-main"><div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Knowledge earned during the run is retained.</p></div>'+rebornFailureDiagnosisHTML()+'<button data-failure-return>RETURN TO GUILD →</button></section><aside class="cb2d-failure-analysis"></aside></div>';
+   e.className='cb2d-end cb2d-results-screen';e.innerHTML='<div class="cb2d-failure-wrap"><section class="cb2d-failure-main"><div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Mastery earned during the run is retained.</p></div>'+rebornFailureDiagnosisHTML()+'<button data-failure-return>RETURN TO GUILD →</button></section><aside class="cb2d-failure-analysis"></aside></div>';
    appendRebornAnalysis(e);enterResultsMode();e.querySelector('[data-failure-return]').onclick=()=>{close();Game.switchView('content')};return
  }
  const gear=run.loot?.gear||[],materials=Object.values(run.loot?.materials||{}),xpGrowth=run.xpGrowth||[];
