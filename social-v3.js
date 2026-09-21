@@ -15,7 +15,7 @@ async function saveState(){Game.save();await Game.persistState();}
 
 async function loadChat(markSeen=false){
   if(!db||!user)return;
-  const {data,error}=await db.from('chat_messages').select('id,user_id,guild_label,channel,body,created_at').eq('channel',channel).order('created_at',{ascending:false}).limit(80);
+  const {data,error}=await db.from('chat_messages').select('id,user_id,guild_label,channel,body,sender_badge,created_at').eq('channel',channel).order('created_at',{ascending:false}).limit(80);
   if(error){console.warn(error);return;}
   chatRows=(data||[]).reverse();renderChat();
   const newest=chatRows.length?new Date(chatRows[chatRows.length-1].created_at).getTime():0;
@@ -23,15 +23,24 @@ async function loadChat(markSeen=false){
   if(markSeen||active){lastChatNewest=Math.max(lastChatNewest,newest);$('#chatUnread').textContent='';}
   else if(newest>lastChatNewest)$('#chatUnread').textContent='NEW';
 }
+function chatRankBadge(role){
+  if(role==='mod')return'<span class="chat-rank mod" title="Cellbound Moderator"><i>◆</i> MOD</span>';
+  if(role==='player_mod')return'<span class="chat-rank player-mod" title="Cellbound Player Moderator"><i>◇</i> PLAYER MOD</span>';
+  return'';
+}
 function renderChat(){
   const root=$('#chatMessages');if(!root)return;
-  root.innerHTML=chatRows.length?chatRows.map(m=>`<div class="chat-message"><div class="chat-meta"><b>${esc(m.guild_label)}</b><span>${timeLabel(m.created_at)}</span></div><p>${esc(m.body)}</p></div>`).join(''):'<div class="social-empty">No messages in this channel yet.</div>';
+  root.innerHTML=chatRows.length?chatRows.map(m=>`<div class="chat-message ${m.sender_badge==='mod'?'from-mod':m.sender_badge==='player_mod'?'from-player-mod':''}"><div class="chat-meta"><div class="chat-speaker"><b>${esc(m.guild_label)}</b>${chatRankBadge(m.sender_badge)}</div><span>${timeLabel(m.created_at)}</span></div><p>${esc(m.body)}</p></div>`).join(''):'<div class="social-empty">No messages in this channel yet.</div>';
   root.scrollTop=root.scrollHeight;
 }
 async function sendChat(e){
   e.preventDefault();const input=$('#chatInput'),body=input?.value?.trim();if(!body)return;
   const {error}=await db.rpc('post_chat_message',{p_channel:channel,p_body:body});
-  if(error){input.setCustomValidity(error.message||'Message could not be sent');input.reportValidity();setTimeout(()=>input.setCustomValidity(''),1200);return;}
+  if(error){
+    const blocked=String(error.message||'').toLowerCase().includes('chat filter');
+    input.setCustomValidity(blocked?'That message contains language blocked by the Cellbound chat filter. Please reword it.':(error.message||'Message could not be sent'));
+    input.reportValidity();setTimeout(()=>input.setCustomValidity(''),2400);return;
+  }
   input.value='';await loadChat(true);
 }
 function setChannel(next){
