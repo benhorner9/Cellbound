@@ -219,9 +219,9 @@ function checkDamageChanges(parts){
   });
 }
 function wbDodge(unit,dxPct=0,dyPct=12){
-  if(!unit)return;const x=parseFloat(unit.style.left)||50,y=parseFloat(unit.style.top)||50;
-  unit.classList.add('dodging');unit.style.left=clamp(x+dxPct,6,94)+'%';unit.style.top=clamp(y+dyPct,7,93)+'%';
-  setTimeout(()=>unit.classList.remove('dodging'),900);
+  if(!unit)return;const x=clamp(parseFloat(unit.style.left)||50,7,93),y=clamp(parseFloat(unit.style.top)||50,9,91);
+  unit.classList.add('dodging');unit.style.left=clamp(x+dxPct,7,93)+'%';unit.style.top=clamp(y+dyPct,9,91)+'%';
+  setTimeout(()=>{if(!unit.isConnected)return;unit.classList.remove('dodging');unit.style.left=x+'%';unit.style.top=y+'%'},900);
 }
 function ownUnitForCombatId(id){
   const s=String(id||'');if(!s.startsWith('p-'))return null;
