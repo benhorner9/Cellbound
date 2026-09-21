@@ -225,7 +225,11 @@ async function syncXp(gains){
 function setStatus(text){const e=$('#hs2dStatus');if(e)e.textContent=text}
 function feed(text){if(!run)return;run.log.push(text);const e=$('#hs2dFeed');if(e)e.innerHTML=run.log.slice(-7).reverse().map(x=>'<p>'+esc(x)+'</p>').join('')}
 function addUnit(id,label,cls,x,y,big=false,meta=''){const e=document.createElement('div');e.className='hs2d-unit cb2d-unit '+cls+(big?' big':'');e.dataset.hs=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="hs2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em><i></i></em>';$('#hs2dUnits').appendChild(e)}
-function move(id,x,y,ms=550){const e=$('[data-hs="'+id+'"]');if(!e)return;e.style.transitionDuration=ms+'ms';e.style.left=x+'%';e.style.top=y+'%'}
+function hsSafePoint(id,x,y){
+ const partyUnit=String(id||'').startsWith('p'),minX=partyUnit?7:58,maxX=partyUnit?58:93;
+ return{x:Math.max(minX,Math.min(maxX,Number(x)||50)),y:Math.max(11,Math.min(89,Number(y)||50))}
+}
+function move(id,x,y,ms=550){const e=$('[data-hs="'+id+'"]');if(!e)return;const p=hsSafePoint(id,x,y);e.style.transitionDuration=ms+'ms';e.style.left=p.x+'%';e.style.top=p.y+'%'}
 function hsPoint(id){const arena=$('#hs2dArena'),e=$('[data-hs="'+id+'"]');if(!arena||!e)return null;const ar=arena.getBoundingClientRect(),r=e.getBoundingClientRect();return{x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,w:ar.width,h:ar.height}}
 function projectile(fromId,toId,kind='magic',ms=420){
  const a=hsPoint(fromId),b=hsPoint(toId),fx=$('#hs2dFx');if(!a||!b||!fx)return;
@@ -296,6 +300,10 @@ function spawnStage(s){
   addUnit('e'+i,n,big?'enemy boss':'enemy',94,target[1],big,'Lv. '+m.level+' · '+m.label);
   setTimeout(()=>move('e'+i,target[0],target[1],820),90+i*30)
  })
+}
+function hsRegroup(ms=380){
+ const s=STAGES[run?.stage],room=HOLLOW_ROOMS[s?.id]||HOLLOW_ROOMS.gallery;
+ party().forEach((ch,i)=>{if((Number(run?.hp?.[ch.id])||0)<=0)return;const r=role(ch),p=hsRoomPoint(room.party,i,[r==='tank'?40:r==='healer'?25:31,31+i*9]);move('p'+i,p[0],p[1],ms)})
 }
 function hsRenderId(unitId){
  const id=String(unitId||'');
@@ -392,7 +400,7 @@ function hsRenderRebornEvent(e){
    break;
   case'MECHANIC_TELEGRAPH':
    setStatus((e.ability||'Mechanic')+' incoming…');feed((e.ability||'A mechanic')+' is telegraphed.');hsMechanicFromEvent(e);break;
-  case'MECHANIC_RESOLVE':hsClearMechanic(e.payload?.token,true);break;
+  case'MECHANIC_RESOLVE':hsClearMechanic(e.payload?.token,true);requestAnimationFrame(()=>hsRegroup());break;
   case'CAST_START':if(String(e.result||'')==='enemy'){hsCastStart(e.ability||'Enemy Cast',e.payload?.duration)}if(e.payload?.interruptible)feed((e.ability||'Cast')+' can be interrupted.');break;
   case'CAST_FINISH':hsCastClear();break;
   case'INTERRUPT':
@@ -405,7 +413,7 @@ function hsRenderRebornEvent(e){
    if(target){const el=$('[data-hs="'+target+'"]');if(el)el.classList.add('dead');hsBar(target,0);if(targetChar){run.hp[targetChar.id]=0;feed(targetChar.name+' is defeated.');hsUpdateSidebar()}}
    break;
   case'DEFENSIVE_ACTIVATED':if(srcChar)feed(srcChar.name+' activates a defensive.');break;
-  case'COMBAT_END':hsCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');break;
+  case'COMBAT_END':hsCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');hsRegroup(260);break;
  }
 }
 async function hsPlayTimeline(result,tok){
@@ -497,7 +505,7 @@ async function hsReplayFinalFight(){
 
 async function hsFail(s,result){
  run.done=true;Game.applyPartyCellShock?.(25);const st=state();st.activity.push('The guild wiped in The Hollow Sanctum at '+s.title+'. All five gained 25% Cell Shock.');Game.save?.();await Game.persistState?.();
- const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end';end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Combat knowledge and the cause of the wipe are retained.</p></div>'+hsFailureDiagnosis(result)+hsStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
+ const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end cb2d-results-screen';$('.hs2d-shell')?.classList.add('results-mode');end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Combat knowledge and the cause of the wipe are retained.</p></div>'+hsFailureDiagnosis(result)+hsStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
 }
 async function hsFailNoHealer(s,result){
  run.done=true;Game.applyPartyCellShock?.(25);const st=state();st.activity.push('The Hollow Sanctum expedition ended after '+s.title+' because the party had no healer to revive fallen adventurers. All five gained 25% Cell Shock.');Game.save?.();await Game.persistState?.();
@@ -652,7 +660,7 @@ async function complete(){
  if(first)Game.addBankItem?.({...RELIC,source:'The Bound Choir · First Clear'});
  s.activity.push('The Hollow Sanctum · '+(run.endgame?.label||'Normal')+' cleared. Score '+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'. Each adventurer earned '+XP+' XP.'+(gear?' '+gear.name+' was sent to the Guild Bank.':'')+(first?' Blackglass Resonator added to the Guild Bank.':''));
  Game.save?.();await Game.persistState?.();await syncXp(gains);run.done=true;window.dispatchEvent(new CustomEvent('cellbound:hollow-complete',{detail:{firstClear:first,difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs}}));window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'hollow-sanctum',difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs}}));
- const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end cb2d-loot-screen';
+ const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end cb2d-loot-screen cb2d-results-screen';$('.hs2d-shell')?.classList.add('results-mode');
  const lootGear=[gear,...(first?[RELIC]:[])].filter(Boolean),materials=[
    {key:'void-crystal',name:'Void Crystal',quantity:first?2:1,source:'The Hollow Sanctum',rarity:'Rare'},
    ...(shards?[{key:'cell-shards',name:'Cell Shards',quantity:shards,source:'Endgame Reward',rarity:'Rare'}]:[])
