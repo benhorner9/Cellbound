@@ -330,7 +330,7 @@ function faceUnit(id,targetId){
 }
 function hitReact(id,kind='hit'){
  const e=$('[data-unit="'+id+'"]');if(!e)return;
- e.classList.remove('hit','healed');void e.offsetWidth;e.classList.add(kind==='heal'?'healed':'hit');
+ e.classList.remove('hit','healed');requestAnimationFrame(()=>{if(e.isConnected)e.classList.add(kind==='heal'?'healed':'hit')});
  setTimeout(()=>e.classList.remove('hit','healed'),320)
 }
 function deathBurst(id){
@@ -379,8 +379,8 @@ function updateResourceBarElement(bar,name,value,max,mode='state',reason=''){
  }
  const fill=bar.querySelector('i');if(!fill)return;
  if(mode==='RESOURCE_SPENT'){
-   fill.style.transition='none';fill.style.width=pctValue+'%';void fill.offsetWidth;
-   requestAnimationFrame(()=>{fill.style.transition='width .3s linear'})
+   fill.style.transition='none';fill.style.width=pctValue+'%';
+   requestAnimationFrame(()=>requestAnimationFrame(()=>{if(fill.isConnected)fill.style.transition='width .3s linear'}))
  }else if(mode==='RESOURCE_STATE'&&reason==='regeneration'){
    fill.style.transition='width .9s linear';fill.style.width=pctValue+'%'
  }else if(mode==='RESOURCE_GAINED'){
@@ -592,7 +592,7 @@ function buildThreat(index,c,amount,source='damage'){
    const lead=I?.tauntLead?.(c)||1.15;
    const snap=Math.max(Number(table[c.id])||0,highest*lead+Math.max(70,value*.6));
    table[c.id]=snap;
-   updateAggro(index);renderCombatMeters();return;
+   updateAggro(index);queueCombatMeterRender();return;
  }
  if(value<=0)return;
  const enemyCount=run.enemyHp.filter(v=>v>0).length;
@@ -600,7 +600,7 @@ function buildThreat(index,c,amount,source='damage'){
  else if(source==='group')value*=1;
  else value*=I?.damageThreatMultiplier?.(c,{enemyCount})||(profile==='tank'?2.4:1);
  table[c.id]=(Number(table[c.id])||0)+value;
- updateAggro(index);renderCombatMeters();
+ updateAggro(index);queueCombatMeterRender();
 }
 function updateAggro(index){
  const table=run?.threat?.[index];if(!table)return null;
@@ -1300,7 +1300,7 @@ function rebornResourceVisual(e){
 function rebornCastStart(e){
  const n=$('#cb2dCastName'),tm=$('#cb2dCastTime'),f=$('#cb2dCastFill'),duration=Math.max(0,Number(e.payload?.duration)||0);
  if(n)n.textContent=e.ability||'Enemy Cast';if(tm)tm.textContent=(duration/1000).toFixed(1)+'s';
- if(f){f.style.transition='none';f.style.width='0%';void f.offsetWidth;requestAnimationFrame(()=>{f.style.transition='width '+Math.max(1,Math.round(duration/(run?.speed||1)))+'ms linear';f.style.width='100%'})}
+ if(f){f.style.transition='none';f.style.width='0%';requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!f.isConnected)return;f.style.transition='width '+Math.max(1,Math.round(duration/(run?.speed||1)))+'ms linear';f.style.width='100%'}))}
  clearTimeout(run.rebornCastTimer);run.rebornCastTimer=setTimeout(()=>{if(tm)tm.textContent='—'},Math.max(1,Math.round(duration/(run?.speed||1))));
 }
 function rebornCastClear(label='—'){
@@ -1348,7 +1348,7 @@ function renderRebornEvent(e,result,replayMode=false){
    if(srcChar&&e.result==='line of sight'){const rr=role(srcChar);act(rr==='tank'?'tank':rr==='healer'?'healer':'dps',srcChar.name+' · Repositioning for line of sight')}
    break;
   case'ABILITY_START':{
-   const actor=$('[data-unit="'+e.source+'"]');if(actor){actor.classList.remove('attacking');void actor.offsetWidth;actor.classList.add('attacking');setTimeout(()=>actor.classList.remove('attacking'),360)}
+   const actor=$('[data-unit="'+e.source+'"]');if(actor){actor.classList.remove('attacking');requestAnimationFrame(()=>{if(actor.isConnected)actor.classList.add('attacking')});setTimeout(()=>actor.classList.remove('attacking'),360)}
    if(srcChar){
      const r=role(srcChar);act(r==='tank'?'tank':r==='healer'?'healer':'dps',srcChar.name+' · '+(e.ability||'Action'));
      if(e.payload?.kind==='battle-rez'){status(srcChar.name+' is attempting a combat resurrection');log(srcChar.name+' commits to '+(e.ability||'a combat resurrection')+'.')}
@@ -1697,8 +1697,8 @@ function animateXpGrowth(root){
      bar.style.width='100%';
      setTimeout(()=>{
        row.classList.add('levelled');
-       bar.style.transition='none';bar.style.width='0%';void bar.offsetWidth;
-       bar.style.transition='width .8s cubic-bezier(.2,.75,.25,1)';bar.style.width=end+'%';
+       bar.style.transition='none';bar.style.width='0%';
+       requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!bar.isConnected)return;bar.style.transition='width .8s cubic-bezier(.2,.75,.25,1)';bar.style.width=end+'%'}));
      },760);
    },220+index*90);
  })
