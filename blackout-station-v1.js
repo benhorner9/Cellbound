@@ -318,8 +318,9 @@ async function playTimeline(result,tok){
    if(tok!==token||!run){finish(false);return}
    const delta=Math.min(Math.max(0,now-lastFrame),100);lastFrame=now;
    simTime+=delta*Math.max(.25,Number(run.speed)||1);run.combatElapsed=simTime;
-   while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4){
-    const e=events[index++];
+   const frameStarted=performance.now();let handled=0;
+   while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<12&&performance.now()-frameStarted<7){
+    const e=events[index++];handled++;
     try{eventRender(e)}catch(error){visualErrors++;console.warn('Blackout Station combat visual recovered',e?.type,e?.ability,error);if(visualErrors===1)feed('A display event was recovered without interrupting combat.')}
    }
    if(index>=events.length){finish(result?.outcome==='victory');return}
