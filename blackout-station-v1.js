@@ -12,6 +12,14 @@ const ROLE_ZONES={
 const CABLES=['se','sw','se','sw','nw','v','v','v','se','nw','v','ne','ne','h','nw'];
 const CABLE_LINKS={h:['w','e'],v:['n','s'],ne:['n','e'],nw:['n','w'],se:['s','e'],sw:['s','w']};
 const GRID_INPUT_INDEX=4,GRID_BREAKER_INDEX=11;
+const CLUE_GROUPS=[
+ [GRID_INPUT_INDEX,GRID_BREAKER_INDEX],
+ [0,1,5,9],
+ [2,3,6,10],
+ [7,8,12,13,14],
+ [...Array(15).keys()]
+];
+const CLUE_HP_PCT=8;
 
 let Game=null,G=null,db=null,run=null,token=0;
 
@@ -99,14 +107,45 @@ function circuitState(board){
 }
 function puzzleSolved(){return !!run&&circuitState(run.board).complete}
 function cableMarkup(type){return '<i class="bs-cable '+type+'"><u></u><u></u></i>'}
+function cluePositions(level=run?.cluesUsed||0){
+ const shown=new Set();
+ for(let i=0;i<Math.min(5,Number(level)||0);i++)CLUE_GROUPS[i].forEach(pos=>shown.add(pos));
+ return shown
+}
+function clueGhost(pos,currentType){
+ const shown=cluePositions();if(!shown.has(pos))return'';
+ const target=CABLES[pos],correct=currentType===target;
+ return '<span class="bs-clue-ghost '+(correct?'correct':'')+'"><small>'+(correct?'MATCH':'TARGET')+'</small>'+cableMarkup(target)+'</span>'
+}
+function useClue(){
+ if(!run||run.powered||run.cluesUsed>=5)return;
+ run.cluesUsed++;run.cluesRemaining=Math.max(0,5-run.cluesUsed);
+ const overcharge=run.cluesUsed*CLUE_HP_PCT;
+ const messages=[
+  'Diagnostic 1 reveals the required cable at the GRID INPUT and MAIN BREAKER.',
+  'Diagnostic 2 maps the first section of the restored circuit.',
+  'Diagnostic 3 maps the centre section of the restored circuit.',
+  'Diagnostic 4 maps the lower section of the restored circuit.',
+  'Diagnostic 5 exposes the complete target cable layout.'
+ ];
+ run.log.push(messages[run.cluesUsed-1]+' Calder Overcharge rises to +'+overcharge+'% max health.');
+ renderPuzzle()
+}
 function renderPuzzle(){
- if(!run)return;const r=root(),blank=run.board.indexOf(null),circuit=circuitState(run.board),progress=circuit.progress;
+ if(!run)return;const r=root(),blank=run.board.indexOf(null),circuit=circuitState(run.board),progress=circuit.progress,overcharge=(Number(run.cluesUsed)||0)*CLUE_HP_PCT;
  const gridState=run.powered?'ONLINE':progress>0?'RESTORING '+progress+'%':'NO POWER';
  const stationTitle=run.powered?'Station online.':progress>0?'Current is flowing.':'The station is dark.';
  const stationCopy=run.powered?'The main breaker is closed and the generator hall is live.':progress>0?'Connected cable sections glow as power travels from the grid input. Keep building the route to the main breaker.':'Only tiles beside the empty slot can move. Build one continuous cable route from GRID INPUT to MAIN BREAKER.';
- r.innerHTML='<section class="bs-puzzle-shell '+(run.powered?'powered':'')+'"><header><div><small>BLACKOUT STATION · GRID CONTROL</small><h2>Main Distribution Board</h2><p>Slide the cable sections until one continuous circuit runs from the grid input to the main breaker.</p></div><button data-bs-close>×</button></header><div class="bs-puzzle-layout"><main><div class="bs-grid-frame '+(circuit.complete?'solved':'')+'"><div class="bs-grid-source '+(progress>0?'live':'')+'"><span>GRID<br>INPUT</span></div><div class="bs-grid-board">'+run.board.map((tile,pos)=>tile==null?'<div class="bs-grid-empty" data-pos="'+pos+'"><span>EMPTY</span></div>':'<button class="bs-grid-tile '+(circuit.connected.has(pos)?'live':'')+'" data-tile-pos="'+pos+'" data-cable="'+CABLES[tile]+'" aria-label="Cable tile">'+cableMarkup(CABLES[tile])+'</button>').join('')+'</div><div class="bs-grid-breaker '+(circuit.complete?'live':'')+'"><span>MAIN<br>BREAKER</span></div></div><div class="bs-puzzle-readout"><span>MOVES <b>'+run.moves+'</b></span><span>GRID STATUS <b>'+gridState+'</b></span><button data-bs-reset>RESHUFFLE</button></div></main><aside><small>POWER RESTORATION</small><div class="bs-station-schematic '+(circuit.complete?'online':'')+'"><i></i><i></i><i></i><i></i><strong>'+progress+'%</strong></div><h3>'+stationTitle+'</h3><p>'+stationCopy+'</p><div class="bs-puzzle-log">'+run.log.slice(-4).reverse().map(x=>'<span>'+esc(x)+'</span>').join('')+'</div></aside></div></section>';
+ const cells=run.board.map((tile,pos)=>{
+  const type=tile==null?null:CABLES[tile],ghost=clueGhost(pos,type);
+  return tile==null
+   ?'<div class="bs-grid-empty '+(cluePositions().has(pos)?'clue':'')+'" data-pos="'+pos+'"><span>EMPTY</span>'+ghost+'</div>'
+   :'<button class="bs-grid-tile '+(circuit.connected.has(pos)?'live ':'')+(cluePositions().has(pos)?'clue ':'')+(cluePositions().has(pos)&&type===CABLES[pos]?'clue-correct':'')+'" data-tile-pos="'+pos+'" data-cable="'+type+'" aria-label="Cable tile">'+cableMarkup(type)+ghost+'</button>'
+ }).join('');
+ r.innerHTML='<section class="bs-puzzle-shell '+(run.powered?'powered':'')+'"><header><div><small>BLACKOUT STATION · GRID CONTROL</small><h2>Main Distribution Board</h2><p>Slide the cable sections until one continuous circuit runs from the grid input to the main breaker.</p></div><button data-bs-close>×</button></header><div class="bs-puzzle-layout"><main><div class="bs-grid-frame '+(circuit.complete?'solved':'')+'"><div class="bs-grid-source '+(progress>0?'live':'')+'"><span>GRID<br>INPUT</span></div><div class="bs-grid-board">'+cells+'</div><div class="bs-grid-breaker '+(circuit.complete?'live':'')+'"><span>MAIN<br>BREAKER</span></div></div><div class="bs-puzzle-readout"><span>MOVES <b>'+run.moves+'</b></span><span>GRID STATUS <b>'+gridState+'</b></span><span>CALDER OVERCHARGE <b>+'+overcharge+'%</b></span><button data-bs-reset>RESHUFFLE</button></div></main><aside><small>POWER RESTORATION</small><div class="bs-station-schematic '+(circuit.complete?'online':'')+'"><i></i><i></i><i></i><i></i><strong>'+progress+'%</strong></div><h3>'+stationTitle+'</h3><p>'+stationCopy+'</p><div class="bs-diagnostics"><div><span>EMERGENCY DIAGNOSTICS</span><b>'+run.cluesRemaining+' / 5</b></div><p>Each diagnostic reveals more of the target circuit, but increases Dr. Vex Calder\'s maximum health by <strong>8%</strong>.</p><button data-bs-clue '+(run.cluesRemaining<=0||run.powered?'disabled':'')+'>USE DIAGNOSTIC · +8% BOSS HP</button></div><div class="bs-puzzle-log">'+run.log.slice(-5).reverse().map(x=>'<span>'+esc(x)+'</span>').join('')+'</div></aside></div></section>';
  r.querySelector('[data-bs-close]').onclick=close;
- r.querySelector('[data-bs-reset]').onclick=()=>{run.board=shuffledBoard();run.moves=0;run.log.push('The board was reshuffled.');renderPuzzle()};
+ r.querySelector('[data-bs-reset]').onclick=()=>{run.board=shuffledBoard();run.moves=0;run.log.push('The board was reshuffled. Diagnostics already used remain active.');renderPuzzle()};
+ r.querySelector('[data-bs-clue]')?.addEventListener('click',useClue);
  r.querySelectorAll('[data-tile-pos]').forEach(b=>b.onclick=()=>slideTile(Number(b.dataset.tilePos),blank))
 }
 async function slideTile(pos,blank){
@@ -126,9 +165,10 @@ async function powerOn(){
 
 function bossEncounter(){
  const overload={name:'Emergency Overload',type:'role-circles',duration:5000,danger:'fatal',zones:ROLE_ZONES};
+ const overcharge=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT,bossHealth=Math.round(2450*(1+overcharge/100));
  return{
   id:'vex-calder',title:'Dr. Vex Calder',kind:'final',level:BOSS_LEVEL,recommendedItemLevel:ENTRY_ILVL,
-  enemies:['Dr. Vex Calder'],enemyTypes:['boss'],enemyHealth:2450,mechanics:[],
+  enemies:['Dr. Vex Calder'],enemyTypes:['boss'],enemyHealth:bossHealth,calderOvercharge:overcharge,mechanics:[],
   phases:[
    {id:'calder-overload-75',name:'Calder Cuts the Power',atPct:75,triggerMechanic:overload},
    {id:'calder-overload-50',name:'Emergency Grid Failure',atPct:50,damageScale:1.05,triggerMechanic:overload},
@@ -196,7 +236,7 @@ function eventRender(e){
  if(window.CellboundCombatStatuses?.handle(e,{resolve:statusTargets,speed:1}))return;
  const src=renderId(e.source),target=renderId(e.target),srcChar=charFor(e.source),targetChar=charFor(e.target);
  switch(e.type){
-  case'COMBAT_START':setStatus('Generator hall combat live.');feed('Dr. Vex Calder steps into the restored light.');break;
+  case'COMBAT_START':{const oc=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT;setStatus('Generator hall combat live'+(oc?' · CALDER OVERCHARGE +'+oc+'%':'')+'.');feed('Dr. Vex Calder steps into the restored light.'+(oc?' Diagnostics have increased his maximum health by '+oc+'%.':''));break}
   case'MOVEMENT_START':if(src&&e.payload?.to)move(src,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
   case'ABILITY_START':
    if(src&&target)projectile(src,target,String(e.source||'').startsWith('e-'));
@@ -273,7 +313,7 @@ function fail(){
  Game.applyPartyCellShock?.(25);const e=$('#bsEnd');if(!e)return;e.hidden=false;e.className='cb2d-end';e.innerHTML='<div><small>BLACKOUT STATION · EXPEDITION FAILED</small><h3>The generator hall claims the party.</h3><p>Calder\'s shockwave or sustained electrical damage overwhelmed the active five. Each adventurer gained 25% Cell Shock.</p></div><button data-bs-return>RETURN TO DUNGEONS →</button>';e.querySelector('[data-bs-return]').onclick=()=>{close();Game.switchView?.('content')}
 }
 function startRun(){
- const gate=readiness();if(!gate.ok)return;token++;run={speed:1,seed:Date.now().toString(36),board:shuffledBoard(),moves:0,powered:false,log:['The party enters the powerless station.'],damage:Object.fromEntries(party().map(c=>[c.id,0])),healing:Object.fromEntries(party().map(c=>[c.id,0])),threat:Object.fromEntries(party().map(c=>[c.id,0])),hp:Object.fromEntries(party().map(c=>[c.id,100])),aggro:null,combatElapsed:0,result:null};renderPuzzle()
+ const gate=readiness();if(!gate.ok)return;token++;run={speed:1,seed:Date.now().toString(36),board:shuffledBoard(),moves:0,powered:false,cluesUsed:0,cluesRemaining:5,log:['The party enters the powerless station.'],damage:Object.fromEntries(party().map(c=>[c.id,0])),healing:Object.fromEntries(party().map(c=>[c.id,0])),threat:Object.fromEntries(party().map(c=>[c.id,0])),hp:Object.fromEntries(party().map(c=>[c.id,100])),aggro:null,combatElapsed:0,result:null};renderPuzzle()
 }
 function init(){
  Game=window.CellboundGame;G=window.CellboundGear;if(!Game?.ready){setTimeout(init,100);return}db=Game.getSupabase?.();renderCard();
