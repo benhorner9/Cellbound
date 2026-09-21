@@ -24,6 +24,13 @@ const BOSSES=[
  {id:'despair',name:'Despair, the Last Mourner',rune:'☍',vice:'DESPAIR',health:1400,action:'INTERRUPT + SPREAD',journal:'No Hope Remains must be interrupted or the party takes group damage. Grief Without End marks everyone with circles.',mechanics:[{name:'No Hope Remains',type:'interrupt',duration:1850,priority:'critical'},{name:'Grief Without End',type:'circles',duration:1300}]}
 ];
 
+const TWELVE_BALANCE={
+ baseBossLevel:10,
+ bossHealthScale:1.15,
+ pressureScale:1.08,
+ baseRecommendedItemLevel:28
+};
+
 const RELICS=[
  {itemId:'relic-oathstone-dominion',name:'Oathstone of Dominion',slot:'Relic',classes:'all',relicRole:'tank',tier:4,tierLabel:'Ancient Relic',rarity:'Epic',itemLevel:36,power:8,icon:'⬟',bonusStats:[{key:'threat',value:18},{key:'block',value:5}],uniqueEffect:{id:'oathstone-dominion',name:'Dominion',description:'Pushes a tank toward threat control: +18% threat generation and +5% block.'}},
  {itemId:'relic-heart-unbroken',name:'Heart of the Unbroken',slot:'Relic',classes:'all',relicRole:'tank',tier:4,tierLabel:'Ancient Relic',rarity:'Epic',itemLevel:36,power:8,icon:'◆',bonusStats:[{key:'stamina',value:12},{key:'armour',value:28}],uniqueEffect:{id:'heart-unbroken',name:'Unbroken',description:'Pushes a tank toward survival with additional stamina and armour.'}},
@@ -127,7 +134,7 @@ function openBriefing(){
  const gate=partyReady(),left=attemptsLeft(),root=ensureBackdrop(),chars=party();
  root.hidden=false;document.body.classList.add('tb-open');
  root.innerHTML='<section class="cb2d-shell cb2d-brief tb-brief"><header class="cb2d-head"><div><small>THE SEPULCHRE OF TWELVE · PRIVATE WORLD EVENT</small><h2>The Twelve Below</h2></div><button data-tb-close>×</button></header>'+
- '<div class="tb-brief-grid"><main><p class="cb2d-intro">Your guild enters alone. One tomb opens now; another opens every 20 seconds. Any boss still alive remains in the arena when the next one rises.</p>'+
+ '<div class="tb-brief-grid"><main><p class="cb2d-intro">Your guild enters alone. One tomb opens now; another opens every 20 seconds. Any boss still alive remains in the arena when the next one rises. The Sepulchre has a fixed endgame difficulty and never scales down to your party.</p>'+
  '<div class="tb-tomb-preview">'+BOSSES.map((b,i)=>'<span class="tb-boss-preview"><i>'+esc(b.rune)+'</i><b>'+(i+1)+'. '+esc(b.vice)+'</b><small class="tb-boss-name">'+esc(b.name)+'</small><strong class="tb-boss-action">'+esc(b.action)+'</strong><p>'+esc(b.journal)+'</p></span>').join('')+'</div>'+
  '<div class="tb-relic-intro"><small>CHASE SYSTEM · RELICS</small><h3>Specialise beyond Item Level.</h3><p>Relics occupy the existing Relic slot and push a character deeper into a role: threat, survival, healing throughput, burst or tempo.</p></div></main>'+
  '<aside><div class="tb-attempt-box"><small>DAILY ATTEMPTS</small><b>'+left+' / '+DAILY_ATTEMPTS+'</b><span>Consumed when the burial ground is entered.</span></div>'+
@@ -166,14 +173,14 @@ function remapEvents(events,aliveBosses,offset){
 }
 function simulateRun(){
  const Combat=window.CellboundCombatStandard;if(!Combat?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
- const original=party(),avgLevel=Math.round(original.reduce((n,c)=>n+(Number(c.level)||1),0)/5),pi=Game.partyItemLevel();
+ const original=party(),pi=Game.partyItemLevel();
  let carried=original.map(c=>({...c,_combatItemLevel:Game.characterItemLevel(c)})),aliveBosses=[],defeated=new Set(),timeline=[],segments=[],endMs=0,outcome='overrun';
  const spawned=new Set();
  let lastPlayers=[];
 
  const playSlice=(offset,maxDuration,cleanup=0)=>{
-   const mechanics=aliveBosses.flatMap(b=>b.mechanics||[]),level=avgLevel+1+Math.floor((spawned.size-1)/3);
-   const encounter={id:'twelve-below-'+spawned.size+'-'+cleanup,kind:'world-boss',level,recommendedItemLevel:Math.max(24,26+Math.floor((spawned.size-1)/3)*2),enemies:aliveBosses.map(enemyInput),mechanics,mechanicIntervalMs:Math.max(2400,4300-aliveBosses.length*180),scaling:{enemyHealth:1,enemyDamage:(.46+Math.min(.17,(spawned.size-1)*.013))*(1+cleanup*.07)}};
+   const mechanics=aliveBosses.flatMap(b=>b.mechanics||[]),level=TWELVE_BALANCE.baseBossLevel+Math.floor((spawned.size-1)/3);
+   const encounter={id:'twelve-below-'+spawned.size+'-'+cleanup,kind:'world-boss',level,recommendedItemLevel:TWELVE_BALANCE.baseRecommendedItemLevel+Math.floor((spawned.size-1)/3)*2,enemies:aliveBosses.map(enemyInput),mechanics,mechanicIntervalMs:Math.max(2400,4300-aliveBosses.length*180),scaling:{enemyHealth:1,enemyDamage:(.46+Math.min(.17,(spawned.size-1)*.013))*(1+cleanup*.07)*TWELVE_BALANCE.pressureScale}};
    const result=Combat.simulate({party:carried,encounter,tactics:{interruptPriority:'high',addPriority:'priority',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced',cooldownUse:'difficult'},seed:'twelve:'+todayKey()+':'+eventState().attemptsUsed+':'+offset,maxDurationMs:maxDuration,elapsedOffsetMs:offset},{zone:'twelve-below'});
    timeline.push(...remapEvents(result.events,aliveBosses,offset));
    segments.push(result);lastPlayers=result.finalState.players||[];
@@ -191,7 +198,7 @@ function simulateRun(){
  };
 
  for(let i=0;i<BOSSES.length;i++){
-   const boss={...BOSSES[i],maxHealth:BOSSES[i].health,level:avgLevel+1+Math.floor(i/3)};
+   const boss={...BOSSES[i],maxHealth:Math.round(BOSSES[i].health*TWELVE_BALANCE.bossHealthScale),level:TWELVE_BALANCE.baseBossLevel+Math.floor(i/3)};
    spawned.add(boss.id);aliveBosses.push(boss);
    const offset=i*SPAWN_MS;
    timeline.push({timestamp:offset,type:'TOMB_OPEN',source:'tb-'+boss.id,target:'tb-'+boss.id,ability:boss.name,payload:{bossId:boss.id,name:boss.name,index:i,vice:boss.vice,rune:boss.rune}});
@@ -455,7 +462,7 @@ function init(){
  if(!Game?.ready){setTimeout(init,100);return}
  eventState();renderCard();
  window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='world')renderCard()});
- window.CellboundTwelveBelow={render:renderCard,open:openBriefing,debugSimulate:simulateRun,relics:RELICS,bosses:BOSSES}
+ window.CellboundTwelveBelow={render:renderCard,open:openBriefing,debugSimulate:simulateRun,relics:RELICS,bosses:BOSSES,balance:TWELVE_BALANCE}
 }
 init();
 })();
