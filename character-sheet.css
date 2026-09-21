@@ -985,3 +985,13 @@
   .cb-membership-lock-banner{align-items:flex-start;flex-direction:column}
   .cb-membership-lock-banner span{text-align:left}
 }
+
+
+/* Encounter Mastery */
+.cb-mastery-intro{
+  margin-bottom:14px;padding:14px 16px;border:1px solid rgba(116,183,149,.14);
+  background:linear-gradient(120deg,rgba(14,38,31,.62),rgba(8,18,22,.72))
+}
+.cb-mastery-intro small{display:block;color:#6eb596;font-size:.4rem;font-weight:900;letter-spacing:.12em}
+.cb-mastery-intro h3{margin:4px 0 5px;color:#d8e4df;font:400 1rem Georgia,serif}
+.cb-mastery-intro p{margin:0;color:#70827b;font-size:.48rem;line-height:1.55}
