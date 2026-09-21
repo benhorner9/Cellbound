@@ -239,10 +239,9 @@ function rows(){
 }
 function drawViewer(){
  const s=STAGES[run.stage],r=root();r.hidden=false;
- r.innerHTML='<section class="cb2d-shell"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LIVE 2D DUNGEON</small><h2 id="cb2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close>×</button></div></header><div class="cb2d-route" id="cb2dRoute">'+route()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena" id="cb2dArena"><div class="cb2d-floor"></div><div class="cb2d-environment" id="cb2dEnvironment"></div><div class="cb2d-room-tag" id="cb2dRoomTag"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div><div class="cb2d-caption"><span id="cb2dType">'+s.kind.toUpperCase()+'</span><b id="cb2dStatus">Entering encounter…</b></div></div><div class="cb2d-controls"><button data-override="focus"><b>FOCUS TARGET</b><small>Force priority damage.</small></button><button data-override="interrupt"><b>INTERRUPT NOW</b><small>Force the next interrupt.</small></button><button data-override="defensive"><b>DEFENSIVE</b><small>Stabilise the group.</small></button><button data-override="burn"><b>BURN BOSS</b><small>Commit damage cooldowns.</small></button><button data-override="consumable"><b>USE CONSUMABLE</b><small>Use available stock.</small></button></div><div class="cb2d-feed"><small>COMBAT FEED</small><p id="cb2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="cb2dDamageTotal">0 total</span></div><div id="cb2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="cb2dHealingTotal">0 total</span></div><div id="cb2dHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="cb2dThreatTarget">No target</span></div><div id="cb2dThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>PARTY CONDITION · ILVL '+ilvl()+'</small><div id="cb2dRows">'+rows()+'</div></div><div class="cb2d-plan"><small>PERSISTENT TACTICS</small><b>'+tactics.aggression.toUpperCase()+' PULLS · '+tactics.cooldowns.toUpperCase()+' COOLDOWNS</b><span>'+tactics.interruptAssignment.toUpperCase()+' INTERRUPTS · '+tactics.cc.toUpperCase()+' CC · '+tactics.bossPlan.toUpperCase()+' BOSSES</span></div></aside></div><div class="cb2d-end" id="cb2dEnd" hidden></div></section>';
+ r.innerHTML='<section class="cb2d-shell"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LIVE 2D DUNGEON</small><h2 id="cb2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close>×</button></div></header><div class="cb2d-route" id="cb2dRoute">'+route()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena" id="cb2dArena"><div class="cb2d-floor"></div><div class="cb2d-environment" id="cb2dEnvironment"></div><div class="cb2d-room-tag" id="cb2dRoomTag"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div><div class="cb2d-caption"><span id="cb2dType">'+s.kind.toUpperCase()+'</span><b id="cb2dStatus">Entering encounter…</b></div></div><div class="cb2d-controls cbr-plan-lock" data-reborn="1"><div class="cbr-plan-lock-copy"><small>COMBAT REBORN</small><b>Pre-dungeon tactics are authoritative.</b><span>The live viewer displays the authoritative simulation. Encounter-specific override buttons are not used.</span></div></div><div class="cb2d-feed"><small>COMBAT FEED</small><p id="cb2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="cb2dDamageTotal">0 total</span></div><div id="cb2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="cb2dHealingTotal">0 total</span></div><div id="cb2dHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="cb2dThreatTarget">No target</span></div><div id="cb2dThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>PARTY CONDITION · ILVL '+ilvl()+'</small><div id="cb2dRows">'+rows()+'</div></div><div class="cb2d-plan"><small>PERSISTENT TACTICS</small><b>'+tactics.aggression.toUpperCase()+' PULLS · '+tactics.cooldowns.toUpperCase()+' COOLDOWNS</b><span>'+tactics.interruptAssignment.toUpperCase()+' INTERRUPTS · '+tactics.cc.toUpperCase()+' CC · '+tactics.bossPlan.toUpperCase()+' BOSSES</span></div></aside></div><div class="cb2d-end" id="cb2dEnd" hidden></div></section>';
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.resolved&&!confirm('Leave the Ashen Vault?'))return;close()};
  r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
- r.querySelectorAll('[data-override]').forEach(b=>b.onclick=()=>override(b.dataset.override,b));
  feed();renderCombatMeters();renderRebornHealingMeter();
 }
 function feed(){const e=$('#cb2dFeed');if(e&&run)e.innerHTML=run.log.slice(-6).map(esc).join('<br>')}
@@ -473,8 +472,35 @@ function stageEnemyMeta(s,index){
  return{level,type,label:labels[type]||type.toUpperCase()}
 }
 function enemyMetaText(s,index){const m=stageEnemyMeta(s,index);return'Lv. '+m.level+' · '+m.label}
+function clearArenaEphemera(){
+ const arena=$('#cb2dArena');if(!arena)return;
+ arena.classList.remove('travelling','between-stages','stage-cleared');
+ arena.querySelectorAll('.cb2d-projectile,.cb2d-number,.cb2d-threat-line,.cb2d-travel-banner,.cb2d-stage-clear,.cb2d-death-burst').forEach(x=>x.remove())
+}
+function enterResultsMode(){
+ const shell=$('.cb2d-shell');if(shell)shell.classList.add('results-mode');
+ const end=$('#cb2dEnd');if(end){end.hidden=false;requestAnimationFrame(()=>{const shell=$('.cb2d-shell');if(shell)shell.scrollTop=Math.max(0,end.offsetTop-8)})}
+}
+function exitResultsMode(){
+ const shell=$('.cb2d-shell');if(shell){shell.classList.remove('results-mode');shell.scrollTop=0}
+}
+async function stageClearTransition(s,nextStage,tok){
+ if(tok!==token||!run)return;
+ run.combatActive=false;run.mechanicActive=false;
+ rebornCastClear();
+ const arena=$('#cb2dArena');if(!arena)return;
+ arena.classList.add('between-stages','stage-cleared');
+ $('#cb2dTelegraphs').innerHTML='';
+ arena.querySelectorAll('.cb2d-projectile,.cb2d-number,.cb2d-threat-line').forEach(x=>x.remove());
+ status('Stage cleared · regrouping');
+ act('tank','Regrouping');act('healer','Recovering the party');act('dps','Preparing next pull');
+ const banner=document.createElement('div');banner.className='cb2d-stage-clear';banner.innerHTML='<small>STAGE CLEAR</small><b>'+esc(s.title)+'</b>'+(nextStage?'<span>Next · '+esc(nextStage.title)+'</span>':'');
+ arena.appendChild(banner);
+ await delay(650);
+ banner.remove();arena.classList.remove('stage-cleared')
+}
 function spawn(s){
- renderDungeonEnvironment(s);$('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
+ clearArenaEphemera();renderDungeonEnvironment(s);$('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
  const max=s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120;
  run.enemyMax=s.enemies.map(()=>max);run.enemyHp=s.enemies.map(()=>max);
  run.threat=s.enemies.map(()=>Object.fromEntries(party().map(c=>[c.id,0])));
@@ -485,6 +511,7 @@ function spawn(s){
  const ranged=party().filter(c=>combatProfile(c)==='ranged');
  party().forEach((c,i)=>{
    addUnit('p-'+c.id,c.name,'party '+role(c)+' profile-'+combatProfile(c)+' '+classKey(c),4,50+(i-2)*4,'');mountRebornResourceBar(c);
+   const unit=$('[data-unit="p-'+c.id+'"]');if(unit){unit.dataset.uiSlot=String(i);unit.style.setProperty('--label-shift-x',(i===0?-12:i===1?12:i===2?-20:i===3?20:0)+'px');unit.style.setProperty('--status-shift-x',(i===0?-10:i===1?10:i===2?-18:i===3?18:0)+'px')}
    let x=16,y=50;
    if(combatProfile(c)==='tank'){x=30;y=50}
    else if(combatProfile(c)==='melee'){x=23;y=43+(melee.indexOf(c)*14)}
@@ -1569,19 +1596,22 @@ function rebornAnalysisHTML(){
 function appendRebornAnalysis(rootEl){
  if(!rootEl||rootEl.querySelector('.cbr-analysis')||!run?.rebornHistory?.length)return;
  const wrap=document.createElement('div');wrap.innerHTML=rebornAnalysisHTML();const node=wrap.firstElementChild;if(!node)return;
- const actions=rootEl.querySelector('.cb2d-loot-actions');if(actions)rootEl.querySelector('.cb2d-loot-wrap')?.insertBefore(node,actions);else rootEl.appendChild(node);
+ const failureTarget=rootEl.querySelector('.cb2d-failure-analysis'),actions=rootEl.querySelector('.cb2d-loot-actions');
+ if(failureTarget)failureTarget.appendChild(node);
+ else if(actions)rootEl.querySelector('.cb2d-loot-wrap')?.insertBefore(node,actions);
+ else rootEl.appendChild(node);
  node.querySelector('[data-cbr-replay]')?.addEventListener('click',()=>replayFinalReborn())
 }
 async function replayFinalReborn(){
  const h=(run?.rebornHistory||[]).slice(-1)[0];if(!h?.replay)return;
- const s=STAGES.find(x=>x.id===h.stageId)||STAGES[run.stage],end=$('#cb2dEnd');if(end)end.hidden=true;
+ const s=STAGES.find(x=>x.id===h.stageId)||STAGES[run.stage],end=$('#cb2dEnd');if(end)end.hidden=true;exitResultsMode();
  const replayResult={events:h.replay.events,outcome:h.replay.summary?.outcome||h.outcome,summary:h.replay.summary,version:h.replay.version};
  let state='restart';
  while(state==='restart'&&run){
    Object.entries(h.startHp||{}).forEach(([id,v])=>setHp(id,v));updateRows();spawn(s);status('Replay · stored combat timeline');log('Replay uses the original combat events. No RNG is rerun.');
    state=await playRebornTimeline(replayResult,token,{replayMode:true});
  }
- removeRebornReplayControls();if(end)end.hidden=false
+ removeRebornReplayControls();if(end)end.hidden=false;enterResultsMode()
 }
 
 function endgameRunMetrics(){
@@ -1608,11 +1638,11 @@ async function seamlessFrom(startIndex,tok){
    if(!recovered||tok!==token){
      if(tok===token&&run){
        Game.applyPartyCellShock(25);const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonHistory.unshift({at:new Date().toISOString(),result:'no-healer',stage:s.id,partyIlvl:ilvl()});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The expedition ended after '+s.title+' because no healer was available to revive fallen adventurers. All five gained 25% Cell Shock.');await Game.persistState();
-       const e=$('#cb2dEnd');e.hidden=false;e.className='cb2d-end';e.innerHTML='<div><small>EXPEDITION FAILED</small><h3>No healer available after '+esc(s.title)+'.</h3><p>A fallen adventurer cannot be recovered without a healer. The expedition ends here and all five gain 25% Cell Shock.</p></div>'+rebornFailureDiagnosisHTML()+'<button>RETURN TO GUILD →</button>';appendRebornAnalysis(e);e.querySelector('button').onclick=()=>{close();Game.switchView('content')}
+       const e=$('#cb2dEnd');e.className='cb2d-end cb2d-results-screen';e.innerHTML='<div class="cb2d-failure-wrap"><section class="cb2d-failure-main"><div><small>EXPEDITION FAILED</small><h3>No healer available after '+esc(s.title)+'.</h3><p>A fallen adventurer cannot be recovered without a healer. The expedition ends here and all five gain 25% Cell Shock.</p></div>'+rebornFailureDiagnosisHTML()+'<button data-failure-return>RETURN TO GUILD →</button></section><aside class="cb2d-failure-analysis"></aside></div>';appendRebornAnalysis(e);enterResultsMode();e.querySelector('[data-failure-return]').onclick=()=>{close();Game.switchView('content')}
      }
      return
    }
-   if(i<STAGES.length-1){party().forEach(c=>{if(hp(c.id)>0)setHp(c.id,Math.min(100,hp(c.id)+6))});recoverDungeonResources();advanceDungeonCooldowns(5000);updateRows();flash('PATH CLEAR',false);await delay(420);await travelDeeper(STAGES[i+1],tok)}
+   if(i<STAGES.length-1){party().forEach(c=>{if(hp(c.id)>0)setHp(c.id,Math.min(100,hp(c.id)+6))});recoverDungeonResources();advanceDungeonCooldowns(5000);updateRows();await stageClearTransition(s,STAGES[i+1],tok);await travelDeeper(STAGES[i+1],tok)}
   }
   const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;
   const mode=run.endgame?.difficulty||'normal',tier=Number(run.endgame?.tier)||0,gold=mode==='normal'?120:mode==='heroic'?190:220+tier*10,renown=mode==='normal'?60:mode==='heroic'?90:100+tier*4,xp=mode==='normal'?ASHEN_VAULT_XP:mode==='heroic'?480:500;
@@ -1677,11 +1707,11 @@ function formatRunTime(ms){const t=Math.max(0,Math.round((Number(ms)||0)/1000)),
 function finish(ok,s){
  if(!run)return;run.resolved=true;const e=$('#cb2dEnd');e.hidden=false;
  if(!ok){
-   e.className='cb2d-end';e.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Knowledge earned during the run is retained.</p></div>'+rebornFailureDiagnosisHTML()+'<button>RETURN TO GUILD →</button>';
-   appendRebornAnalysis(e);e.querySelector('button').onclick=()=>{close();Game.switchView('content')};return
+   e.className='cb2d-end cb2d-results-screen';e.innerHTML='<div class="cb2d-failure-wrap"><section class="cb2d-failure-main"><div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Knowledge earned during the run is retained.</p></div>'+rebornFailureDiagnosisHTML()+'<button data-failure-return>RETURN TO GUILD →</button></section><aside class="cb2d-failure-analysis"></aside></div>';
+   appendRebornAnalysis(e);enterResultsMode();e.querySelector('[data-failure-return]').onclick=()=>{close();Game.switchView('content')};return
  }
  const gear=run.loot?.gear||[],materials=Object.values(run.loot?.materials||{}),xpGrowth=run.xpGrowth||[];
- e.className='cb2d-end cb2d-loot-screen';
+ e.className='cb2d-end cb2d-loot-screen';enterResultsMode();
  e.innerHTML='<div class="cb2d-loot-wrap">'+
    '<header class="cb2d-loot-head"><div><small>THE ASHEN VAULT · '+esc(run?.endgame?.label||'NORMAL').toUpperCase()+' · CLEARED</small><h3>Expedition Rewards</h3><p>The Vaultheart has fallen. Everything below has already been secured to your guild.</p></div><div class="cb2d-loot-complete">✓<span>DUNGEON<br>COMPLETE</span></div></header>'+
    '<div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+Number(run.loot?.gold||0)+'</b><small>Added to Guild treasury</small></article><article><span>RENOWN</span><b>+'+Number(run.loot?.renown||0)+'</b><small>Guild reputation earned</small></article><article><span>PARTY XP</span><b>+'+Number(run.loot?.xp||0)+'</b><small>Earned by each adventurer</small></article><article><span>BOSS CHESTS</span><b>'+gear.length+'</b><small>Gear drops secured</small></article><article><span>RUN SCORE</span><b>'+Number(run.endgameRecord?.score||run.endgameMetrics?.scorePreview||0).toLocaleString()+'</b><small>'+formatRunTime(run.endgameMetrics?.timeMs||0)+' simulated time</small></article></div>'+
