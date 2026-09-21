@@ -1597,7 +1597,14 @@ async function seamlessFrom(startIndex,tok){
    captureRebornResult(result);run.stageOutcome=result.outcome==='victory';run.allowKill=true;
    await playRebornTimeline(result,tok);
    if(!await resolveStage(s)||tok!==token)return;
-   const recovered=await recoverFallenBetweenStages(tok);if(!recovered||tok!==token)return;
+   const recovered=await recoverFallenBetweenStages(tok);
+   if(!recovered||tok!==token){
+     if(tok===token&&run){
+       Game.applyPartyCellShock(25);const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonHistory.unshift({at:new Date().toISOString(),result:'no-healer',stage:s.id,partyIlvl:ilvl()});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The expedition ended after '+s.title+' because no healer was available to revive fallen adventurers. All five gained 25% Cell Shock.');await Game.persistState();
+       const e=$('#cb2dEnd');e.hidden=false;e.className='cb2d-end';e.innerHTML='<div><small>EXPEDITION FAILED</small><h3>No healer available after '+esc(s.title)+'.</h3><p>A fallen adventurer cannot be recovered without a healer. The expedition ends here and all five gain 25% Cell Shock.</p></div>'+rebornFailureDiagnosisHTML()+'<button>RETURN TO GUILD →</button>';appendRebornAnalysis(e);e.querySelector('button').onclick=()=>{close();Game.switchView('content')}
+     }
+     return
+   }
    if(i<STAGES.length-1){party().forEach(c=>{if(hp(c.id)>0)setHp(c.id,Math.min(100,hp(c.id)+6))});recoverDungeonResources();advanceDungeonCooldowns(5000);updateRows();flash('PATH CLEAR',false);await delay(420);await travelDeeper(STAGES[i+1],tok)}
   }
   const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;
