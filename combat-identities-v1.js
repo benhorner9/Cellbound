@@ -543,7 +543,21 @@ function unlockedSkillPool(c,role){
  return classSkillPool(c,role).filter(a=>(Number(a.unlockLevel)||1)<=level)
 }
 function defaultSkillLoadout(c,role){
- return unlockedSkillPool(c,role).slice(0,4).map(a=>a.id)
+ const pool=unlockedSkillPool(c,role),picked=[];
+ const add=a=>{if(a&&!picked.includes(a)&&picked.length<4)picked.push(a)};
+ if(role==='healer'){
+  pool.filter(a=>a.kind==='heal'||a.kind==='group-heal').slice(0,3).forEach(add);
+  add(pool.find(a=>a.kind==='interrupt'));
+ }else if(role==='tank'){
+  pool.filter(a=>a.kind==='damage').slice(0,2).forEach(add);
+  add(pool.find(a=>a.kind==='taunt'));
+  add(pool.find(a=>a.kind==='interrupt'));
+ }else{
+  pool.filter(a=>a.kind==='damage').slice(0,3).forEach(add);
+  add(pool.find(a=>a.kind==='interrupt'));
+ }
+ pool.forEach(add);
+ return picked.slice(0,4).map(a=>a.id)
 }
 function abilityPool(c,role){
  const unlocked=unlockedSkillPool(c,role),configured=Array.isArray(c?.skillLoadouts?.[c?.spec])?c.skillLoadouts[c.spec]:null;
