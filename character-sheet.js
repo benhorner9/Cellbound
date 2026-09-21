@@ -110,6 +110,7 @@ const slotIcons={Head:'⛑',Shoulders:'⌃',Chest:'▣',Hands:'✋',Waist:'═',
 function readState(){try{return JSON.parse(localStorage.getItem(STORAGE))}catch{return null}}
 function writeState(state){localStorage.setItem(STORAGE,JSON.stringify(state));dirty=true}
 function getCharacter(state,id){return state?.roster?.find(c=>c.id===id)}
+function characterEditable(){const game=window.CellboundGame;return !game?.isCharacterRosterUnlocked||game.isCharacterRosterUnlocked(currentId)}
 function roleOf(c){return specs[c.class]?.[c.spec]||'dps'}
 function roleLabel(role){return role==='dps'?'Damage':role[0].toUpperCase()+role.slice(1)}
 function combatEngine(){return window.CellboundCombatReborn||null}
@@ -398,10 +399,11 @@ function sheetBody(state,c){
 function renderSheet(){
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));
   if(!state||!c)return;
-  const meta=classMeta[c.class]||{icon:'◇',accent:'#58d7cf'};
+  const editable=characterEditable(),meta=classMeta[c.class]||{icon:'◇',accent:'#58d7cf'};
   const roles=[...new Set(Object.values(specs[c.class]||{}).map(roleLabel))].join(' / ');
-  detail.innerHTML=`<div class="cb-sheet" style="--cb-accent:${meta.accent}">
+  detail.innerHTML=`<div class="cb-sheet ${editable?'':'member-slot-locked'}" style="--cb-accent:${meta.accent}">
     <header class="cb-sheet-header"><div class="cb-header-crest">${meta.icon}</div><div><small>LEVEL ${c.level} · ${roles}</small><h2>${c.name}</h2><p>${c.race||'Veyren'} · ${c.class} · ${c.spec} · Power ${c.power} · Gear ${c.gear}</p></div><div class="cb-header-points"><b>${c.talent||0}</b><span>Talent points</span></div></header>
+    ${editable?'':'<div class="cb-membership-lock-banner"><b>MEMBERSHIP SLOT LOCKED</b><span>This adventurer is safely stored. You can inspect everything, but equipment, talents, skills, specialisation and progression are read-only until membership returns.</span></div>'}
     <nav class="cb-character-tabs"><button data-sheet-tab="overview" class="${currentTab==='overview'?'active':''}">Overview</button><button data-sheet-tab="equipment" class="${currentTab==='equipment'?'active':''}">Equipment</button><button data-sheet-tab="talents" class="${currentTab==='talents'?'active':''}">Talents</button><button data-sheet-tab="skills" class="${currentTab==='skills'?'active':''}">Skills</button><button data-sheet-tab="professions" class="${currentTab==='professions'?'active':''}">Professions</button><button data-sheet-tab="knowledge" class="${currentTab==='knowledge'?'active':''}">Knowledge</button><button data-sheet-tab="history" class="${currentTab==='history'?'active':''}">History</button></nav>
     <main class="cb-sheet-body">${sheetBody(state,c)}</main>
   </div>`;
@@ -414,6 +416,7 @@ function removeFromParty(state,id){
   if(Array.isArray(state.party.dps))state.party.dps=state.party.dps.map(x=>x===id?null:x);
 }
 function equipItem(bankId,slot){
+  if(!characterEditable())return;
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId)),item=state?.bank?.find(x=>x.id===bankId);
   if(!state||!c||!item||!canUse(c,item))return;
   const old=c.equipment[slot];
@@ -433,6 +436,7 @@ function equipItem(bankId,slot){
   writeState(state);activeSlot=null;renderSheet();
 }
 function unequipItem(slot){
+  if(!characterEditable())return;
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId)),item=c?.equipment?.[slot];
   if(!state||!c||!item)return;
   state.bank=Array.isArray(state.bank)?state.bank:[];
@@ -447,6 +451,7 @@ function unequipItem(slot){
   writeState(state);activeSlot=null;renderSheet();
 }
 function upgradeEquippedItem(slot){
+  if(!characterEditable())return;
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId)),item=c?.equipment?.[slot];
   if(!state||!c||!item||!equippedCanUpgrade(item))return;
   state.materials=state.materials&&typeof state.materials==='object'?state.materials:{};
@@ -467,6 +472,7 @@ function upgradeEquippedItem(slot){
   writeState(state);renderSheet();
 }
 function investTalent(spec,nodeId){
+  if(!characterEditable())return;
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));
   if(!state||!c||!(c.talent>0))return;
   const node=(trees[c.class]?.[spec]||[]).find(n=>n.id===nodeId);if(!node)return;
@@ -477,6 +483,7 @@ function investTalent(spec,nodeId){
   writeState(state);renderSheet();
 }
 function changeSpec(spec){
+  if(!characterEditable())return;
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));
   if(!state||!c||!specs[c.class]?.[spec]||c.spec===spec)return;
   c.spec=spec;selectedTreeSpec=spec;selectedTalentId=null;selectedTalentSpec=spec;activeSkillSlot=0;
@@ -484,6 +491,7 @@ function changeSpec(spec){
   writeState(state);renderSheet();
 }
 function saveSkillLoadout(mutator,activity){
+  if(!characterEditable())return;
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));if(!state||!c)return;
   const spec=c.spec,loadout=equippedSkillIds(c,spec);mutator(loadout,c);
   c.skillLoadouts[spec]=loadout.slice(0,4);while(c.skillLoadouts[spec].length<4)c.skillLoadouts[spec].push(null);
@@ -507,6 +515,7 @@ function clearSkillSlot(slotIndex){
   activeSkillSlot=slot
 }
 function resetSkills(){
+  if(!characterEditable())return;
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));if(!state||!c)return;
   const ids=defaultSkillIds(c,c.spec);while(ids.length<4)ids.push(null);c.skillLoadouts[c.spec]=ids.slice(0,4);
   state.activity=state.activity||[];state.activity.push(c.name+' reset '+c.spec+' combat skills to the recommended defaults.');
