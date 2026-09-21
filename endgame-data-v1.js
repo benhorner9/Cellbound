@@ -165,7 +165,7 @@ const BOSS_PHASES={
    vorran:[
      {id:'vorran-close-one',name:'The Canyon Closes',atPct:75,damageScale:1.06},
      {id:'vorran-close-two',name:'Roots Close In',atPct:50,damageScale:1.12},
-     {id:'vorran-unbound',name:'True Chaos',atPct:25,damageScale:1.22,addMechanics:[{name:'Wild Wrath: Unbound',type:'circles',duration:1150}]}
+     {id:'vorran-unbound',name:'True Chaos',atPct:25,damageScale:1.22,allAttacksAoe:true,addMechanics:[{name:'Wild Wrath: Unbound',type:'circles',duration:1150}]}
    ]
  }
 };
