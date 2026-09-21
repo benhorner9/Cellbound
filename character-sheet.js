@@ -15,6 +15,7 @@ let activeSlot=null;
 let selectedTalentId=null;
 let selectedTalentSpec=null;
 let selectedTreeSpec=null;
+let activeSkillSlot=0;
 
 const classMeta={
   Warrior:{icon:'⚔',accent:'#b86b55',primary:'Strength'},
@@ -111,12 +112,41 @@ function writeState(state){localStorage.setItem(STORAGE,JSON.stringify(state));d
 function getCharacter(state,id){return state?.roster?.find(c=>c.id===id)}
 function roleOf(c){return specs[c.class]?.[c.spec]||'dps'}
 function roleLabel(role){return role==='dps'?'Damage':role[0].toUpperCase()+role.slice(1)}
+function combatEngine(){return window.CellboundCombatReborn||null}
+function skillPoolFor(c,spec=c?.spec){
+  const engine=combatEngine(),role=specs[c?.class]?.[spec]||'dps',copyChar={...c,spec};
+  if(engine?.skills?.classSkillPool)return engine.skills.classSkillPool(copyChar,role);
+  return (engine?.ABILITIES?.[c?.class]||[]).filter(a=>!a.role||a.role===role)
+}
+function defaultSkillIds(c,spec=c?.spec){
+  const engine=combatEngine(),role=specs[c?.class]?.[spec]||'dps',copyChar={...c,spec};
+  const ids=engine?.skills?.defaultSkillLoadout?.(copyChar,role)||skillPoolFor(copyChar,spec).filter(a=>(Number(a.unlockLevel)||1)<=Math.max(1,Number(c?.level)||1)).slice(0,4).map(a=>a.id);
+  return ids.slice(0,4)
+}
+function equippedSkillIds(c,spec=c?.spec){
+  const explicit=Array.isArray(c?.skillLoadouts?.[spec])?c.skillLoadouts[spec]:defaultSkillIds(c,spec),out=explicit.slice(0,4);
+  while(out.length<4)out.push(null);
+  return out
+}
+function skillKindLabel(kind){
+  return ({damage:'Damage',heal:'Healing','group-heal':'Group Heal',interrupt:'Interrupt',taunt:'Taunt',defensive:'Defensive','battle-rez':'Battle Rez'})[kind]||'Utility'
+}
+function skillIcon(kind){
+  return ({damage:'⚔',heal:'✚','group-heal':'✥',interrupt:'!',taunt:'◎',defensive:'◆','battle-rez':'♰'})[kind]||'◇'
+}
+function skillCooldownText(skill){
+  const ms=Math.max(0,Number(skill?.cd)||0);if(!ms)return'No cooldown';
+  if(ms>=60000)return(ms/60000).toFixed(ms%60000?1:0)+'m cooldown';
+  return(Math.round(ms/100)/10)+'s cooldown'
+}
 function ensureCharacter(c){
   c.equipment=c.equipment||{};
   if(c.equipment.Trinket&&!c.equipment.Trinket1){c.equipment.Trinket1=c.equipment.Trinket;delete c.equipment.Trinket}
   [...leftSlots,...rightSlots].forEach(slot=>{if(!(slot in c.equipment))c.equipment[slot]=null});
   c.talents=c.talents||{};
   Object.keys(specs[c.class]||{}).forEach(spec=>{c.talents[spec]=c.talents[spec]||{}});
+  c.skillLoadouts=c.skillLoadouts&&typeof c.skillLoadouts==='object'?c.skillLoadouts:{};
+  const buff=combatEngine()?.CLASS_BUFFS?.[c.class];if(buff&&!c.buffSkill)c.buffSkill=buff.id;
   return c;
 }
 function rarityClass(item){return `cb-rarity-${String(item?.rarity||'starter').toLowerCase()}`}
@@ -316,6 +346,37 @@ function overviewPanel(c,state){
   const avg=Object.values(c.knowledge||{});const knowledge=avg.length?Math.round(avg.reduce((a,b)=>a+(Number(b)||0),0)/avg.length):0;
   return `<div class="cb-profile-overview"><section class="cb-profile-panel"><h3>Adventurer Overview</h3><div class="cb-profile-stats"><div><span>Role</span><b>${role}</b></div><div><span>Item Level</span><b>${ilvl}</b></div><div><span>Cell Shock</span><b>${Math.round(c.cellShock||0)}%</b></div><div><span>Knowledge</span><b>${knowledge}%</b></div><div><span>${meta.primary}</span><b>${stats[meta.primary]}</b></div><div><span>Stamina</span><b>${stats.Stamina}</b></div><div><span>Armour</span><b>${stats.Armour}</b></div><div><span>Status</span><b>${active?'Active Five':'Reserve'}</b></div></div><p>${c.name} is a Level ${c.level} ${c.race||'Veyren'} ${c.class} specialising in ${c.spec}. Race, class, talents, equipment and encounter knowledge now all affect how they behave in combat.</p></section><section class="cb-profile-panel"><h3>Current Loadout</h3>${['Head','Chest','Weapon'].map(slot=>{const item=c.equipment?.[slot];return `<div class="cb-history-entry"><b>${slot}</b><br>${item?.name||'Empty'} · iLvl ${item?.itemLevel||0}</div>`}).join('')}</section>${combatIdentityPanel(c)}</div>`;
 }
+function skillsPanel(c){
+  const engine=combatEngine(),spec=c.spec,role=roleOf(c),pool=skillPoolFor(c,spec),level=Math.max(1,Number(c.level)||1),equipped=equippedSkillIds(c,spec),selected=Math.max(0,Math.min(3,Number(activeSkillSlot)||0));
+  const byId=new Map(pool.map(s=>[s.id,s])),buff=engine?.CLASS_BUFFS?.[c.class]||null;
+  const unlockedCount=pool.filter(s=>(Number(s.unlockLevel)||1)<=level).length,nextUnlock=pool.filter(s=>(Number(s.unlockLevel)||1)>level).sort((a,b)=>(a.unlockLevel||1)-(b.unlockLevel||1))[0];
+  const slotCards=equipped.map((id,i)=>{
+    const skill=byId.get(id);
+    return '<button type="button" class="cb-skill-slot '+(i===selected?'active ':'')+(skill?'filled':'empty')+'" data-skill-slot="'+i+'"><small>SLOT '+(i+1)+'</small><i>'+skillIcon(skill?.kind)+'</i><span><b>'+escHtml(skill?.name||'Empty Skill Slot')+'</b><em>'+(skill?skillKindLabel(skill.kind)+' · '+skillCooldownText(skill):'Tap this slot, then choose a skill')+'</em></span></button>'
+  }).join('');
+  const library=pool.slice().sort((a,b)=>{
+    const al=(Number(a.unlockLevel)||1)<=level?0:1,bl=(Number(b.unlockLevel)||1)<=level?0:1;
+    return al-bl||(Number(a.unlockLevel)||1)-(Number(b.unlockLevel)||1)||String(a.name).localeCompare(String(b.name))
+  }).map(skill=>{
+    const unlock=Math.max(1,Number(skill.unlockLevel)||1),locked=unlock>level,slot=equipped.indexOf(skill.id),isEquipped=slot>=0;
+    const cost=Number(skill.cost)||0,range=Number(skill.range)||0;
+    return '<article class="cb-skill-card kind-'+escHtml(skill.kind)+' '+(locked?'locked ':'')+(isEquipped?'equipped':'')+'">'+
+      '<div class="cb-skill-card-icon">'+skillIcon(skill.kind)+'</div><div class="cb-skill-card-copy"><div><small>'+skillKindLabel(skill.kind)+'</small><h4>'+escHtml(skill.name)+'</h4></div><p>'+escHtml(skill.desc||'Combat skill.')+'</p>'+
+      '<div class="cb-skill-meta"><span>'+skillCooldownText(skill)+'</span>'+(cost?'<span>Cost '+cost+'</span>':'')+(range?'<span>Range '+range+'</span>':'')+'</div></div>'+
+      (locked?'<div class="cb-skill-lock"><b>LEVEL '+unlock+'</b><span>Unlocks as this character levels up.</span></div>':'<button type="button" class="cb-skill-equip '+(isEquipped?'equipped':'')+'" data-equip-skill="'+escHtml(skill.id)+'">'+(isEquipped?'MOVE TO SLOT '+(selected+1):'EQUIP TO SLOT '+(selected+1))+'</button>')+
+    '</article>'
+  }).join('');
+  const buffEffect=buff?Object.entries(buff.effect||{}).map(([key,value])=>{
+    const labels={outgoingDamage:'Damage',incomingDamageReduction:'Damage taken reduction',resourceRegen:'Resource regeneration',haste:'Haste',critBonus:'Critical chance',threatBonus:'Threat',outgoingHealing:'Healing done',incomingHealing:'Healing received'};
+    return (labels[key]||key)+' '+(key==='incomingDamageReduction'?'−':'+')+Math.round(Number(value)*100)+'%'
+  }).join(' · '):'No class buff configured.';
+  return '<div class="cb-skills-screen">'+
+   '<section class="cb-skills-hero"><div><small>COMBAT LOADOUT · '+escHtml(spec.toUpperCase())+'</small><h3>4 Skills + 1 Class Buff</h3><p>Only these four skills enter Combat Reborn. Removing an interrupt, taunt, heal or defensive really removes it from the character’s dungeon toolkit.</p></div><div class="cb-skill-progress"><span>UNLOCKED</span><b>'+unlockedCount+' / '+pool.length+'</b><small>'+(nextUnlock?'Next: '+escHtml(nextUnlock.name)+' at Level '+nextUnlock.unlockLevel:'All current skills unlocked')+'</small></div></section>'+
+   '<section class="cb-loadout-panel"><div class="cb-loadout-head"><div><small>ACTIVE SKILLS</small><h4>Select a slot, then choose a skill.</h4></div><button type="button" data-reset-skills>RESET DEFAULTS</button></div><div class="cb-skill-slots">'+slotCards+'</div><div class="cb-slot-actions"><span>Editing Slot '+(selected+1)+'</span>'+(equipped[selected]?'<button type="button" data-clear-skill="'+selected+'">CLEAR SLOT '+(selected+1)+'</button>':'<em>Slot '+(selected+1)+' is empty</em>')+'</div></section>'+
+   '<section class="cb-buff-slot-panel"><div class="cb-buff-slot-icon">▲</div><div><small>DEDICATED BUFF SLOT</small><h4>'+escHtml(buff?.name||'No Class Buff')+'</h4><p>'+escHtml(buffEffect)+'</p></div><strong>'+(buff?Math.round((buff.duration||60000)/1000)+'s ACTIVE · '+Math.round((buff.cooldown||180000)/60000)+'m CD':'UNAVAILABLE')+'</strong></section>'+
+   '<section class="cb-skill-library"><div class="cb-skill-library-head"><div><small>AVAILABLE SKILLS</small><h4>'+escHtml(c.class)+' · '+escHtml(spec)+'</h4></div><span>Level '+level+'</span></div><div class="cb-skill-grid">'+library+'</div></section>'+
+  '</div>'
+}
 function professionsPanel(c){
   const ent=window.CellboundGame?.getEntitlements?.()||{professionSlots:1,member:false};
   return `<div class="cb-profession-profile">${[0,1].map(i=>{const p=c.professions?.[i],locked=i>=ent.professionSlots;return `<article><small>PROFESSION ${i+1}</small><b>${locked?'Membership Slot':p?.name||'Unlearned'}</b><span>${locked?'Unlocks with membership':p?`Skill ${p.level}/100`:'Visit Professions to learn a trade.'}</span></article>`}).join('')}</div>`;
@@ -329,6 +390,7 @@ function sheetBody(state,c){
   if(currentTab==='overview')return overviewPanel(c,state);
   if(currentTab==='equipment')return `${paperDoll(c,state)}${activeSlot?slotPicker(state,c,activeSlot):''}`;
   if(currentTab==='talents'){const treeSpec=selectedTreeSpec&&specs[c.class]?.[selectedTreeSpec]?selectedTreeSpec:c.spec;return `<div class="cb-spec-tabs">${specTabs(c)}</div>${talentTree(c,treeSpec)}`}
+  if(currentTab==='skills')return skillsPanel(c);
   if(currentTab==='professions')return professionsPanel(c);
   if(currentTab==='history')return historyPanel(c,state);
   return knowledgePanel(c);
@@ -340,7 +402,7 @@ function renderSheet(){
   const roles=[...new Set(Object.values(specs[c.class]||{}).map(roleLabel))].join(' / ');
   detail.innerHTML=`<div class="cb-sheet" style="--cb-accent:${meta.accent}">
     <header class="cb-sheet-header"><div class="cb-header-crest">${meta.icon}</div><div><small>LEVEL ${c.level} · ${roles}</small><h2>${c.name}</h2><p>${c.race||'Veyren'} · ${c.class} · ${c.spec} · Power ${c.power} · Gear ${c.gear}</p></div><div class="cb-header-points"><b>${c.talent||0}</b><span>Talent points</span></div></header>
-    <nav class="cb-character-tabs"><button data-sheet-tab="overview" class="${currentTab==='overview'?'active':''}">Overview</button><button data-sheet-tab="equipment" class="${currentTab==='equipment'?'active':''}">Equipment</button><button data-sheet-tab="talents" class="${currentTab==='talents'?'active':''}">Talents</button><button data-sheet-tab="professions" class="${currentTab==='professions'?'active':''}">Professions</button><button data-sheet-tab="knowledge" class="${currentTab==='knowledge'?'active':''}">Knowledge</button><button data-sheet-tab="history" class="${currentTab==='history'?'active':''}">History</button></nav>
+    <nav class="cb-character-tabs"><button data-sheet-tab="overview" class="${currentTab==='overview'?'active':''}">Overview</button><button data-sheet-tab="equipment" class="${currentTab==='equipment'?'active':''}">Equipment</button><button data-sheet-tab="talents" class="${currentTab==='talents'?'active':''}">Talents</button><button data-sheet-tab="skills" class="${currentTab==='skills'?'active':''}">Skills</button><button data-sheet-tab="professions" class="${currentTab==='professions'?'active':''}">Professions</button><button data-sheet-tab="knowledge" class="${currentTab==='knowledge'?'active':''}">Knowledge</button><button data-sheet-tab="history" class="${currentTab==='history'?'active':''}">History</button></nav>
     <main class="cb-sheet-body">${sheetBody(state,c)}</main>
   </div>`;
   modal.hidden=false;
@@ -417,11 +479,40 @@ function investTalent(spec,nodeId){
 function changeSpec(spec){
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));
   if(!state||!c||!specs[c.class]?.[spec]||c.spec===spec)return;
-  c.spec=spec;selectedTreeSpec=spec;selectedTalentId=null;selectedTalentSpec=spec;
+  c.spec=spec;selectedTreeSpec=spec;selectedTalentId=null;selectedTalentSpec=spec;activeSkillSlot=0;
   state.activity=state.activity||[];state.activity.push(`${c.name} changed specialisation to ${spec} (${roleLabel(roleOf(c))}). Active-party role updated automatically.`);
   writeState(state);renderSheet();
 }
-function openCharacter(id){document.body.classList.add('character-sheet-open');currentId=id;currentTab='overview';activeSlot=null;selectedTalentId=null;selectedTalentSpec=null;selectedTreeSpec=null;renderSheet()}
+function saveSkillLoadout(mutator,activity){
+  const state=readState(),c=ensureCharacter(getCharacter(state,currentId));if(!state||!c)return;
+  const spec=c.spec,loadout=equippedSkillIds(c,spec);mutator(loadout,c);
+  c.skillLoadouts[spec]=loadout.slice(0,4);while(c.skillLoadouts[spec].length<4)c.skillLoadouts[spec].push(null);
+  if(activity){state.activity=state.activity||[];state.activity.push(activity(c))}
+  writeState(state);renderSheet()
+}
+function equipSkill(skillId){
+  const state=readState(),c=ensureCharacter(getCharacter(state,currentId));if(!state||!c)return;
+  const pool=skillPoolFor(c,c.spec),skill=pool.find(s=>s.id===skillId);if(!skill||(Number(skill.unlockLevel)||1)>Math.max(1,Number(c.level)||1))return;
+  const slot=Math.max(0,Math.min(3,Number(activeSkillSlot)||0));
+  saveSkillLoadout((loadout,ch)=>{
+    const existing=loadout.indexOf(skillId),previous=loadout[slot]||null;
+    if(existing>=0&&existing!==slot)loadout[existing]=previous;
+    loadout[slot]=skillId
+  },ch=>ch.name+' equipped '+skill.name+' in combat skill slot '+(slot+1)+'.');
+  activeSkillSlot=(slot+1)%4
+}
+function clearSkillSlot(slotIndex){
+  const slot=Math.max(0,Math.min(3,Number(slotIndex)||0));
+  saveSkillLoadout(loadout=>{loadout[slot]=null},c=>c.name+' cleared combat skill slot '+(slot+1)+'.');
+  activeSkillSlot=slot
+}
+function resetSkills(){
+  const state=readState(),c=ensureCharacter(getCharacter(state,currentId));if(!state||!c)return;
+  const ids=defaultSkillIds(c,c.spec);while(ids.length<4)ids.push(null);c.skillLoadouts[c.spec]=ids.slice(0,4);
+  state.activity=state.activity||[];state.activity.push(c.name+' reset '+c.spec+' combat skills to the recommended defaults.');
+  activeSkillSlot=0;writeState(state);renderSheet()
+}
+function openCharacter(id){document.body.classList.add('character-sheet-open');currentId=id;currentTab='overview';activeSlot=null;activeSkillSlot=0;selectedTalentId=null;selectedTalentSpec=null;selectedTreeSpec=null;renderSheet()}
 function closeCharacter(){
   modal.hidden=true;document.body.classList.remove('character-sheet-open');activeSlot=null;
   const game=window.CellboundGame,next=dirty?readState():null;
@@ -436,6 +527,10 @@ document.addEventListener('click',event=>{
   if(charBtn){event.preventDefault();event.stopImmediatePropagation();openCharacter(charBtn.dataset.char);return}
   if(!modal.hidden){
     const tab=event.target.closest('[data-sheet-tab]');if(tab){currentTab=tab.dataset.sheetTab;activeSlot=null;renderSheet();return}
+    const skillSlot=event.target.closest('[data-skill-slot]');if(skillSlot){activeSkillSlot=Math.max(0,Math.min(3,Number(skillSlot.dataset.skillSlot)||0));renderSheet();return}
+    const equipSkillBtn=event.target.closest('[data-equip-skill]');if(equipSkillBtn){equipSkill(equipSkillBtn.dataset.equipSkill);return}
+    const clearSkill=event.target.closest('[data-clear-skill]');if(clearSkill){clearSkillSlot(clearSkill.dataset.clearSkill);return}
+    const resetSkill=event.target.closest('[data-reset-skills]');if(resetSkill){resetSkills();return}
     const slot=event.target.closest('[data-slot]');if(slot){activeSlot=slot.dataset.slot;renderSheet();return}
     const closeSlot=event.target.closest('[data-close-slot]');if(closeSlot){activeSlot=null;renderSheet();return}
     const unequip=event.target.closest('[data-unequip-slot]');if(unequip){unequipItem(unequip.dataset.unequipSlot);return}
