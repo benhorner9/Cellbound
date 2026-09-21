@@ -1,5 +1,6 @@
 (()=>{
 'use strict';
+window.CellboundCombatStandard?.register?.('blackout-station',{kind:'dungeon',execution:'local',ui:'shared-cb2d'});
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -340,10 +341,10 @@ function drawCombat(){
  feed('Power restored. Dr. Vex Calder enters the generator hall.')
 }
 async function startBoss(){
- if(!run)return;drawCombat();const tok=token,C=window.CellboundCombatReborn;if(!C?.simulate){setStatus('Combat Reborn unavailable');feed('Combat engine unavailable.');return}
+ if(!run)return;drawCombat();const tok=token,C=window.CellboundCombatStandard;if(!C?.simulate){setStatus('Combat Reborn unavailable');feed('Combat standard gateway unavailable.');return}
  try{
   const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:100,_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0}));
-  let result=C.simulate({party:combatParty,encounter:bossEncounter(),tactics:{pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced'},seed:'blackout-station:'+run.seed});
+  let result=C.simulate({party:combatParty,encounter:bossEncounter(),tactics:{pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced'},seed:'blackout-station:'+run.seed},{zone:'blackout-station'});
   const hasCombat=(result.events||[]).some(e=>e.type==='DAMAGE_DEALT'||e.type==='HEAL_RECEIVED'||e.type==='ABILITY_START');
   if(!hasCombat)throw new Error('Combat Reborn produced no actionable events.');
   run.result=result;
