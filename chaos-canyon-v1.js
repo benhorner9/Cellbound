@@ -307,12 +307,22 @@ function ccRenderRebornEvent(e){
 }
 async function ccPlayTimeline(result,tok){
  let last=0;run.telegraphs={};
- for(const e of result.events||[]){
+ const events=Array.isArray(result?.events)?result.events:[];
+ for(const e of events){
    if(tok!==token||!run)return false;
-   const gap=Math.max(0,(Number(e.timestamp)||0)-last);if(gap)await wait(gap);
-   ccRenderRebornEvent(e);last=Number(e.timestamp)||last
+   const rawStamp=Number(e?.timestamp),stamp=Number.isFinite(rawStamp)?Math.max(last,rawStamp):last;
+   const gap=Math.max(0,stamp-last);
+   // A malformed replay event must never leave the live dungeon looking frozen.
+   // Normal Combat Reborn timelines emit frequently, so this only caps abnormal dead-air gaps.
+   if(gap)await wait(Math.min(gap,2500));
+   try{
+     ccRenderRebornEvent(e);
+   }catch(error){
+     console.error('Chaos Canyon timeline render failed',e?.type||'UNKNOWN_EVENT',error);
+   }
+   last=stamp
  }
- return result.outcome==='victory'
+ return result?.outcome==='victory'
 }
 function ccStageSummary(result){
  const s=result?.summary||{},ints=s.interrupts||{},m=s.mechanics||{};
