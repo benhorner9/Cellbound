@@ -139,8 +139,22 @@ function targetsFor(id,opts={}){
  return arr
 }
 function handle(e,opts={}){
- if(!e||!ACTIVE_TYPES.has(e.type))return false;
- const st=normaliseStatus(e),remove=/(?:_REMOVED|_EXPIRED|_CLEANSED)$/.test(e.type),speed=Math.max(.25,Number(opts.speed?.()??opts.speed)||1);
+ if(!e)return false;
+ const speed=Math.max(.25,Number(opts.speed?.()??opts.speed)||1);
+ if(e.type==='TALENT_TRIGGER'){
+  const target=e.target||e.source;
+  targetsFor(target,opts).forEach(({el})=>{
+   if(!el)return;
+   let proc=el.querySelector(':scope > .cbs-talent-proc');
+   if(!proc){proc=document.createElement('span');proc.className='cbs-talent-proc';el.appendChild(proc)}
+   proc.textContent=e.ability||e.payload?.talent||'Talent';
+   proc.classList.remove('show');requestAnimationFrame(()=>proc.classList.add('show'));
+   clearTimeout(proc.__hideTimer);proc.__hideTimer=setTimeout(()=>proc?.classList.remove('show'),Math.max(450,1100/speed))
+  });
+  return true
+ }
+ if(!ACTIVE_TYPES.has(e.type))return false;
+ const st=normaliseStatus(e),remove=/(?:_REMOVED|_EXPIRED|_CLEANSED)$/.test(e.type);
  targetsFor(e.target,opts).forEach(({el,mirror})=>{
   const map=statusMap(el);
   if(remove)map.delete(st.id);
@@ -168,5 +182,5 @@ function startTicker(){
  },1000)
 }
 
-window.CellboundCombatStatuses={handle,clear,renderHost,version:'1.2.0'};
+window.CellboundCombatStatuses={handle,clear,renderHost,version:'1.3.0'};
 })();
