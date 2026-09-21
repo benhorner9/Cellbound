@@ -1,5 +1,6 @@
 (()=>{
 'use strict';
+window.CellboundCombatStandard?.register?.('ashen-vault',{kind:'dungeon',execution:'local',ui:'shared-cb2d'});
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -1496,10 +1497,10 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
  })
 }
 function runRebornStage(s){
- const C=window.CellboundCombatReborn;if(!C?.simulate)throw new Error('Combat Reborn engine is unavailable');
+ const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway is unavailable');
  const startHp=Object.fromEntries(party().map(c=>[c.id,hp(c.id)]));
  const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:hp(c.id),_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0}));
- const result=C.simulate({party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:[run.endgame?.seed||'ashen-vault',s.id,run.stage].join(':')});
+ const result=C.simulate({party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:[run.endgame?.seed||'ashen-vault',s.id,run.stage].join(':')},{zone:'ashen-vault'});
  result.stageId=s.id;result.stageTitle=s.title;result.startHp=startHp;return result
 }
 function captureRebornResult(result){
