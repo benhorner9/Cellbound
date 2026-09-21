@@ -433,11 +433,8 @@ async function recoverFallenBetweenStages(tok){
  if(!healer){
    healer=party().find(c=>role(c)==='healer');
    if(!healer){
-     status('Party returning from checkpoint…');log('No healer is present. Fallen adventurers release and run back from the last checkpoint.');
-     await delay(700);if(tok!==token||!run)return false;
-     advanceDungeonCooldowns(15000);
-     fallen.forEach(c=>{setHp(c.id,35);reviveResourceState(c,20);run.reviveSickness[c.id]=15000;restoreUnitVisual(c)});
-     run.outOfCombatRevives=(Number(run.outOfCombatRevives)||0)+fallen.length;updateRows();log('The fallen regroup at 35% health with resurrection sickness.');return true
+     status('No healer · expedition cannot continue.');log('No healer is present. Fallen adventurers cannot be revived.');
+     return false
    }
    status('Healer returning from checkpoint…');log(healer.name+' releases and runs back from the last checkpoint.');
    act('healer',healer.name+' · Returning to the group');await delay(700);
