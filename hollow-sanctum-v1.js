@@ -420,8 +420,9 @@ async function hsPlayTimeline(result,tok){
    if(tok!==token||!run){finish(false);return}
    const delta=Math.min(Math.max(0,now-lastFrame),100);lastFrame=now;
    simTime+=delta*Math.max(.25,Number(run.speed)||1);
-   while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4){
-    const event=events[index++];
+   const frameStarted=performance.now();let handled=0;
+   while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<12&&performance.now()-frameStarted<7){
+    const event=events[index++];handled++;
     try{hsRenderRebornEvent(event)}
     catch(error){console.error('Hollow Sanctum combat visual recovered',event?.type,event?.ability,error)}
    }
