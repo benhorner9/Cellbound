@@ -257,7 +257,7 @@ function switchView(id){
   if(id==='bank')renderBank();
   if(id==='professions')window.CellboundEconomy?.renderProfessions?.();
   if(id==='trading')window.CellboundEconomy?.renderTrading?.();
-  if(id==='content'){renderBosses();window.CellboundHollowSanctum?.renderCard?.();window.CellboundChaosCanyon?.renderCard?.();window.CellboundBlackoutStation?.renderCard?.()}
+  if(id==='content'){renderBosses();safeFeatureRender('hollow-sanctum',()=>window.CellboundHollowSanctum?.renderCard?.());safeFeatureRender('chaos-canyon',()=>window.CellboundChaosCanyon?.renderCard?.());safeFeatureRender('blackout-station',()=>window.CellboundBlackoutStation?.renderCard?.())}
   if(id==='endgame')window.CellboundEndgame?.render?.()
   if(id==='roster')renderRoster();
   if(id==='quests')window.CellboundQuests?.render?.();
@@ -650,7 +650,8 @@ function renderReports(){
   if(!state.reports.length){ui.reportsList.innerHTML='<div class="panel" style="padding:30px;color:#657874">No attempts yet. Build a party and enter The Ashen Vault.</div>';return;}
   ui.reportsList.innerHTML=state.reports.map(r=>{const b=bossById(r.boss),loot=G.byId(r.lootItemId)||G.byName(r.loot);return `<article class="report-card"><div><div class="report-result ${r.success?'kill':'wipe'}">${r.success?'VICTORY':'WIPE'}</div><small>${new Date(r.at).toLocaleString()}</small></div><div><h3>${b?.name||'Encounter'}</h3><p>${r.success?'The party defeated the encounter. PvE victories do not clear Cell Shock.':`The party gained ${r.cellShockGain||PVE_WIPE_CELL_SHOCK}% Cell Shock and encounter knowledge.`}${loot?` Loot: ${loot.name} · iLvl ${r.lootItemLevel||loot.itemLevel||'—'} → Guild Bank.`:''}${r.reagents?.length?` Reagents: ${r.reagents.map(d=>`${P?.MATERIALS?.[d.key]?.name||'Recipe'} ×${d.quantity}`).join(', ')}.`:''}</p></div><div class="report-gain"><b>Knowledge gained</b>${r.knowledgeGain.map(k=>`<span>${k.name} +${k.gain}%</span>`).join('')}</div></article>`;}).join('');
 }
-function renderAll(){if(!state)return;state.roster.forEach(c=>{refreshRecovery(c);c.gear=characterItemLevel(c);});renderTop();renderOverview();renderRoster();renderBosses();renderParty();renderBank();renderReports();writeLocal();window.CellboundQuests?.render?.();window.CellboundHollowSanctum?.renderCard?.();window.CellboundChaosCanyon?.renderCard?.();window.CellboundBlackoutStation?.renderCard?.();}
+function safeFeatureRender(label,fn){try{fn?.()}catch(error){console.warn('Cellbound UI refresh isolated:',label,error)}}
+function renderAll(){if(!state)return;state.roster.forEach(c=>{refreshRecovery(c);c.gear=characterItemLevel(c);});renderTop();renderOverview();renderRoster();renderBosses();renderParty();renderBank();renderReports();writeLocal();safeFeatureRender('quests',()=>window.CellboundQuests?.render?.());safeFeatureRender('hollow-sanctum',()=>window.CellboundHollowSanctum?.renderCard?.());safeFeatureRender('chaos-canyon',()=>window.CellboundChaosCanyon?.renderCard?.());safeFeatureRender('blackout-station',()=>window.CellboundBlackoutStation?.renderCard?.());}
 function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(c=>{if(refreshRecovery(c)){state.activity.push(`${c.name} has fully recovered from Cell Shock.`);changed=true;}});if(changed)save();if(state.roster.some(c=>isUnavailable(c)))renderAll();}
 
 window.CellboundGame={
