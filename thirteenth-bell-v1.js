@@ -187,7 +187,7 @@ function watchmaker(){
   const draw=(msg='')=>{
     puzzleFrame('MINI-GAME · WATCHMAKER',TheQuoted('Make the clock run backwards'),
       '<div class="bell-puzzle-note"><small>NOTE IN THE DRAWER</small><p>“Three hands. Twelve teeth. One missing hour.”</p><p>The mechanism refuses to advance beyond <strong>12:13</strong>.</p></div><div class="bell-puzzle-note"><small>OBSERVATION</small><p>Each gear has a brass notch. Align every notch with its scratched witness mark, then reverse the escapement.</p></div>',
-      '<div class="bell-gears">'+pos.map((p,i)=>'<button data-gear="'+i+'" style="--turn:'+(p*90)+'deg"><i>'+Array.from({length:12},(_,n)=>'<u style="--n:'+n+'"></u>').join('')+'</i><b>GEAR '+(i+1)+'</b><span>TURN</span></button>').join('')+'</div><p class="bell-puzzle-feedback">'+esc(msg||'Tap each gear to rotate it 90°. The brass notch must meet the witness mark.')+'</p><button class="bell-confirm" data-test-gears>REVERSE THE ESCAPEMENT</button>'
+      '<div class="bell-gears">'+pos.map((p,i)=>'<button data-gear="'+i+'" class="'+(p===target[i]?'aligned':'')+'" style="--turn:'+(p*90)+'deg"><i>'+Array.from({length:12},(_,n)=>'<u style="--n:'+n+'"></u>').join('')+'</i><b>GEAR '+(i+1)+'</b><span>WITNESS '+['WEST','SOUTH','EAST','NORTH'][target[i]]+' · TURN</span></button>').join('')+'</div><p class="bell-puzzle-feedback">'+esc(msg||'Tap each gear to rotate it 90°. Match its brass notch to the named witness mark, then reverse the escapement.')+'</p><button class="bell-confirm" data-test-gears>REVERSE THE ESCAPEMENT</button>'
     );
     root.querySelectorAll('[data-gear]').forEach(x=>x.onclick=()=>{pos[Number(x.dataset.gear)]=(pos[Number(x.dataset.gear)]+1)%4;draw()});
     root.querySelector('[data-test-gears]').onclick=()=>{
@@ -302,7 +302,7 @@ function renderFinalRun(msg=''){
   root.querySelectorAll('[data-final-step]').forEach(btn=>btn.onclick=async()=>{
     const id=btn.dataset.finalStep,expected=FINAL_SEQUENCE[b.finalSequence.length];
     if(id!==expected){
-      b.finalMistakes++;b.finalSequence=[];b.stage='loops';b.loop++;b.minute=0;
+      b.finalMistakes++;b.finalSequence=[];b.stage='loops';b.minute=0;
       history('The final sequence broke at '+FINAL_STEPS[id].place+'. The bell took the village again.');
       await save(false);triggerReset('One wrong move was enough. The final loop collapses.');return
     }
