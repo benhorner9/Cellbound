@@ -24,8 +24,16 @@ function effectText(st){
  const e=st?.effect||{},bits=[];
  if(Number(e.damageReduction))bits.push('Damage taken −'+pct(e.damageReduction)+'%');
  if(Number(e.damageMultiplier))bits.push('Damage +'+pct(e.damageMultiplier)+'%');
+ if(Number(e.outgoingDamage))bits.push('Damage +'+pct(e.outgoingDamage)+'%');
+ if(Number(e.incomingDamageReduction))bits.push('Damage taken −'+pct(e.incomingDamageReduction)+'%');
+ if(Number(e.critBonus))bits.push('Critical chance +'+pct(e.critBonus)+'%');
+ if(Number(e.haste))bits.push('Haste +'+pct(e.haste)+'%');
+ if(Number(e.resourceRegen))bits.push('Resource regeneration +'+pct(e.resourceRegen)+'%');
+ if(Number(e.outgoingHealing))bits.push('Healing done +'+pct(e.outgoingHealing)+'%');
+ if(Number(e.incomingHealing))bits.push('Healing received +'+pct(e.incomingHealing)+'%');
  if(Number(e.healingMultiplier))bits.push('Healing +'+pct(e.healingMultiplier)+'%');
  if(Number(e.healingReduction))bits.push('Healing received −'+pct(e.healingReduction)+'%');
+ if(Number(e.threatBonus))bits.push('Threat +'+pct(e.threatBonus)+'%');
  if(Number(e.threatMultiplier))bits.push('Threat +'+pct(e.threatMultiplier)+'%');
  if(Number(e.healingOverTime))bits.push('Restores '+Number(e.healingOverTime)+' health periodically');
  if(st?.cc)bits.push(String(st.cc).replace(/-/g,' '));
