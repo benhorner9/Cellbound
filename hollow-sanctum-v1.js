@@ -224,11 +224,8 @@ async function syncXp(gains){
 }
 function setStatus(text){const e=$('#hs2dStatus');if(e)e.textContent=text}
 function feed(text){if(!run)return;run.log.push(text);const e=$('#hs2dFeed');if(e)e.innerHTML=run.log.slice(-7).reverse().map(x=>'<p>'+esc(x)+'</p>').join('')}
-function addUnit(id,label,cls,x,y,big=false,meta=''){const e=document.createElement('div');e.className='hs2d-unit cb2d-unit '+cls+(big?' big':'');e.dataset.hs=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="hs2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em><i></i></em>';$('#hs2dUnits').appendChild(e)}
-function hsSafePoint(id,x,y){
- const partyUnit=String(id||'').startsWith('p'),minX=partyUnit?7:58,maxX=partyUnit?58:93;
- return{x:Math.max(minX,Math.min(maxX,Number(x)||50)),y:Math.max(11,Math.min(89,Number(y)||50))}
-}
+function addUnit(id,label,cls,x,y,big=false,meta=''){const e=document.createElement('div'),p=hsSafePoint(id,x,y);e.className='hs2d-unit cb2d-unit '+cls+(big?' big':'');e.dataset.hs=id;e.style.left=p.x+'%';e.style.top=p.y+'%';e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="hs2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em><i></i></em>';$('#hs2dUnits').appendChild(e)}
+function hsSafePoint(id,x,y){return{x:Math.max(7,Math.min(93,Number(x)||50)),y:Math.max(11,Math.min(89,Number(y)||50))}}
 function move(id,x,y,ms=550){const e=$('[data-hs="'+id+'"]');if(!e)return;const p=hsSafePoint(id,x,y);e.style.transitionDuration=ms+'ms';e.style.left=p.x+'%';e.style.top=p.y+'%'}
 function hsPoint(id){const arena=$('#hs2dArena'),e=$('[data-hs="'+id+'"]');if(!arena||!e)return null;const ar=arena.getBoundingClientRect(),r=e.getBoundingClientRect();return{x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,w:ar.width,h:ar.height}}
 function projectile(fromId,toId,kind='magic',ms=420){
