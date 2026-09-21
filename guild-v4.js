@@ -54,6 +54,22 @@ const classes={
   Mage:{icon:'✦',glow:'#6da7df',specs:{Arcane:{role:'dps',talents:['Arcane Focus','Surge','Barrage']}}}
 };
 
+const RECRUIT_RACES=[
+  {id:'Veyren',icon:'◇',trait:'Adaptable'},
+  {id:'Stoneborn',icon:'⬡',trait:'Unyielding'},
+  {id:'Aelari',icon:'✧',trait:'Soul Attuned'},
+  {id:'Thornkin',icon:'❈',trait:'Living Guard'},
+  {id:'Emberkin',icon:'◆',trait:'Fierce Blood'},
+  {id:'Nymari',icon:'✦',trait:'Quickmind'}
+];
+const RECRUIT_NAMES={
+  Veyren:['Aren Vale','Tessa Renn','Corin Hale','Mira Venn','Joren Pell','Sera Noll'],
+  Stoneborn:['Bram Korr','Dara Flint','Hald Brenn','Kessa Dorn','Torren Crag','Mara Keld'],
+  Aelari:['Aeris Lume','Selene Var','Ilyra Sen','Cael Eryn','Nyra Vale','Elion Sor'],
+  Thornkin:['Briar Fen','Rowan Moss','Ashen Reed','Willow Tarn','Thorne Vale','Iris Root'],
+  Emberkin:['Kael Pyre','Rhea Ash','Doran Cinder','Vessa Flare','Korin Brand','Tala Ember'],
+  Nymari:['Ori Quill','Nima Voss','Tali Renn','Perrin Vox','Lumi Pell','Caro Venn']
+};
 const bosses=[
   {id:'ashwarden',name:'Ash Warden Kael',level:4,rune:'♜',glow:'#8c4e35',requiredItemLevel:18,recommendedItemLevel:20,recommendedPower:42,mechanic:'Tank pressure and frontal cleave.',tier2Chance:.35},
   {id:'embermaw',name:'Embermaw',level:4,rune:'♨',glow:'#b66232',requiredItemLevel:22,recommendedItemLevel:24,recommendedPower:56,mechanic:'Heavy group damage and interrupt checks.',tier2Chance:.40},
@@ -68,6 +84,9 @@ const bankBulkSelected=new Set();
 let saveSerial=Promise.resolve();
 let syncTimer=null;
 let recoveringTicker=null;
+let membershipTicker=null;
+let lastMembershipMember=null;
+let recruitDraft=null;
 const nativeLocalSet=Storage.prototype.setItem;
 
 function talentState(className){
@@ -131,7 +150,7 @@ function writePartySlots(ids){
   state.party.tank=slots[0]||null;state.party.healer=slots[1]||null;state.party.dps=[slots[2]||null,slots[3]||null,slots[4]||null]
 }
 function flatPartyIds(){return partySlotIds().filter(Boolean);}
-function partyCharacters(){return flatPartyIds().map(charById).filter(Boolean);}
+function partyCharacters(){return flatPartyIds().map(charById).filter(c=>c&&isCharacterRosterUnlocked(c.id));}
 function partyItemLevel(){const chars=partyCharacters();return chars.length===5?Math.round(chars.reduce((sum,c)=>sum+characterItemLevel(c),0)/5):0;}
 function isRosterSlotUnlocked(index){return index<entitlements().rosterCap;}
 function isCharacterRosterUnlocked(id){const i=state?.roster?.findIndex(c=>c.id===id)??-1;return i>=0&&isRosterSlotUnlocked(i);}
@@ -224,7 +243,35 @@ async function loadAccount(user){
   removeInvalidPartyMembers(state);nativeLocalSet.call(localStorage,LOCAL_OWNER,user.id);writeLocal();
   if(!data){await supabaseClient.from('guild_accounts').insert({user_id:user.id,game_state:state,updated_at:new Date().toISOString()});}
   else await persistState();
+  lastMembershipMember=entitlements().member;
   setSync('Saved','ok');
+}
+async function refreshMembershipStatus({render=true,silent=false}={}){
+  if(!currentUser||!supabaseClient)return entitlements().member;
+  const before=lastMembershipMember===null?entitlements().member:lastMembershipMember;
+  const partyBefore=JSON.stringify(partySlotIds());
+  const results=await Promise.all([
+    supabaseClient.from('guild_accounts').select('membership_active_until,membership_override').eq('user_id',currentUser.id).maybeSingle(),
+    supabaseClient.rpc('cellbound_social_identity')
+  ]);
+  const accountResult=results[0],identityResult=results[1];
+  if(accountResult.error){if(!silent)console.warn('Membership refresh failed',accountResult.error);return entitlements().member}
+  const identity=identityResult&&identityResult.data?identityResult.data:{};
+  account=Object.assign({},account||{},accountResult.data||{}, {staff_member:Boolean(identity.staff_member),chat_badge:identity.chat_badge||(account&&account.chat_badge)||'player',player_mod_discount_eligible:Boolean(identity.player_mod_discount_eligible)});
+  const after=entitlements().member;
+  removeInvalidPartyMembers(state);
+  const partyChanged=partyBefore!==JSON.stringify(partySlotIds());
+  if(before!==after){
+    if(after)state.activity.push('Membership activated. Roster slots 6–10 and second profession slots are now available.');
+    else {
+      const stored=Math.max(0,(state.roster&&state.roster.length||0)-5);
+      state.activity.push('Membership ended. Roster slots 6–10 are locked'+(stored?' with '+stored+' adventurer'+(stored===1?'':'s')+' safely stored.':'.'));
+    }
+  }
+  lastMembershipMember=after;
+  if(before!==after||partyChanged){writeLocal();await persistState()}
+  if(render&&(before!==after||partyChanged))renderAll();
+  return after;
 }
 function replaceState(next){state=migrateState(next);removeInvalidPartyMembers(state);writeLocal();persistState();renderAll();}
 
@@ -665,15 +712,19 @@ function renderAll(){if(!state)return;state.roster.forEach(c=>{refreshRecovery(c
 function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(c=>{if(refreshRecovery(c)){state.activity.push(`${c.name} has fully recovered from Cell Shock.`);changed=true;}});if(changed)save();if(state.roster.some(c=>isUnavailable(c)))renderAll();}
 
 window.CellboundGame={
-  ready:false,getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,
+  ready:false,getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,
   characterItemLevel,partyItemLevel,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,
   addBankItem,addMaterial,renderAll,switchView,starterEquipment,
-  getPartyCharacters:()=>flatPartyIds().map(charById).filter(Boolean),
+  getPartyCharacters:()=>partyCharacters(),
   applyPartyCellShock:(amount=PVE_WIPE_CELL_SHOCK)=>{flatPartyIds().map(charById).filter(Boolean).forEach(ch=>applyCellShock(ch,amount));save();renderAll();return flatPartyIds().map(charById).filter(Boolean).map(ch=>({id:ch.id,name:ch.name,cellShock:ch.cellShock}));}
 };
 $('#signOut')?.addEventListener('click',async()=>{clearTimeout(syncTimer);await persistState();await supabaseClient.auth.signOut();location.replace('./index.html');});
 (async()=>{
   const {data,error}=await supabaseClient.auth.getSession();if(error||!data.session?.user){location.replace('./index.html');return;}
   await loadAccount(data.session.user);window.CellboundGame.ready=true;renderAll();recoveringTicker=setInterval(tickRecovery,1000);
+  membershipTicker=setInterval(()=>refreshMembershipStatus({render:true,silent:true}),30000);
+  window.addEventListener('focus',()=>refreshMembershipStatus({render:true,silent:true}));
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshMembershipStatus({render:true,silent:true})});
+  window.addEventListener('beforeunload',()=>{if(membershipTicker)clearInterval(membershipTicker)},{once:true});
 })();
 })();
