@@ -664,6 +664,25 @@ function inRange(a,b,r){return dist(a.position,b.position)<=r}
 function updateFacing(a,b){if(!a||!b)return;a.facing=Math.atan2(b.position.y-a.position.y,b.position.x-a.position.x)}
 
 function environmentBlockers(ctx){return Array.isArray(ctx?.environment?.blockers)?ctx.environment.blockers:[]}
+function arenaBounds(ctx){
+ const raw=ctx?.environment?.bounds||{},left=Number.isFinite(Number(raw.left))?Number(raw.left):4,right=Number.isFinite(Number(raw.right))?Number(raw.right):96,top=Number.isFinite(Number(raw.top))?Number(raw.top):5,bottom=Number.isFinite(Number(raw.bottom))?Number(raw.bottom):95;
+ return{left:clamp(Math.min(left,right-4),0,98),right:clamp(Math.max(right,left+4),2,100),top:clamp(Math.min(top,bottom-4),0,98),bottom:clamp(Math.max(bottom,top+4),2,100)}
+}
+function pointInsideArena(ctx,p,pad=0){
+ const b=arenaBounds(ctx);return !!p&&p.x>=b.left+pad&&p.x<=b.right-pad&&p.y>=b.top+pad&&p.y<=b.bottom-pad
+}
+function constrainToArena(ctx,pos,pad=1.35){
+ const b=arenaBounds(ctx),minX=b.left+pad,maxX=b.right-pad,minY=b.top+pad,maxY=b.bottom-pad;
+ const x=minX<=maxX?clamp(Number(pos?.x)||50,minX,maxX):(b.left+b.right)/2;
+ const y=minY<=maxY?clamp(Number(pos?.y)||50,minY,maxY):(b.top+b.bottom)/2;
+ return{x,y}
+}
+function enforceArenaBounds(ctx,reason='arena boundary'){
+ [...ctx.players,...ctx.enemies].filter(u=>u?.alive).forEach(u=>{
+  const safe=constrainToArena(ctx,u.position,1.7);
+  if(dist(u.position,safe)>.35)moveTo(ctx,u,safe,320,reason)
+ })
+}
 function blockerBounds(b,pad=0){
  const w=Math.max(0,Number(b?.w)||0)/2+pad,h=Math.max(0,Number(b?.h)||0)/2+pad,x=Number(b?.x)||0,y=Number(b?.y)||0;
  return{left:x-w,right:x+w,top:y-h,bottom:y+h}
@@ -692,26 +711,29 @@ function segmentBlocker(ctx,a,b,kind='movement',pad=0){
 }
 function hasLineOfSight(ctx,a,b){
  const ap=a?.position||a,bp=b?.position||b;if(!ap||!bp)return false;
+ if(!pointInsideArena(ctx,ap,0)||!pointInsideArena(ctx,bp,0))return false;
  return !segmentBlocker(ctx,ap,bp,'los',0)
 }
 function openPosition(ctx,pos,pad=1.35){
- let p={x:clamp(Number(pos?.x)||50,4,96),y:clamp(Number(pos?.y)||50,5,95)};
+ let p=constrainToArena(ctx,pos,pad);
  for(const blocker of environmentBlockers(ctx)){
    if(blocker.blocksMovement===false)continue;
    const r=blockerBounds(blocker,pad);if(!pointInRect(p,r))continue;
    const options=[
     {x:r.left-.2,y:p.y},{x:r.right+.2,y:p.y},{x:p.x,y:r.top-.2},{x:p.x,y:r.bottom+.2}
-   ].map(q=>({x:clamp(q.x,4,96),y:clamp(q.y,5,95)}));
-   p=options.sort((a,b)=>dist(a,pos)-dist(b,pos))[0]
+   ].map(q=>constrainToArena(ctx,q,pad))
+    .filter(q=>!environmentBlockers(ctx).some(b=>b.blocksMovement!==false&&pointInRect(q,blockerBounds(b,pad*.7))));
+   if(options.length)p=options.sort((a,b)=>dist(a,pos)-dist(b,pos))[0]
  }
- return p
+ return constrainToArena(ctx,p,pad)
 }
 function navigationWaypoint(ctx,from,destination){
  const dest=openPosition(ctx,destination,1.35),hit=segmentBlocker(ctx,from,dest,'movement',1.25);
  if(!hit)return{point:dest,pathing:false,final:dest};
  const r=blockerBounds(hit,2.2),corners=[
   {x:r.left,y:r.top},{x:r.left,y:r.bottom},{x:r.right,y:r.top},{x:r.right,y:r.bottom}
- ].map(p=>({x:clamp(p.x,4,96),y:clamp(p.y,5,95)}))
+ ].map(p=>constrainToArena(ctx,p,1.35))
+  .filter(p=>pointInsideArena(ctx,p,1))
   .filter(p=>!environmentBlockers(ctx).some(b=>b.blocksMovement!==false&&pointInRect(p,blockerBounds(b,.7))))
   .filter(p=>!segmentBlocker(ctx,from,p,'movement',.65));
  if(!corners.length)return{point:dest,pathing:false,final:dest};
@@ -1189,7 +1211,9 @@ function finishAbility(ctx,u,a,target){
  if(!u.alive||(!target?.alive&&!deadTarget))return;
  if(u.currentCast&&u.currentCast.ability!==a.name)return;
  u.currentCast=null;
+ if(!pointInsideArena(ctx,u.position,0)||!pointInsideArena(ctx,target.position,0)){emit(ctx,'ABILITY_FINISH',{source:u.id,target:target.id,ability:a.name,result:'failed-arena-boundary',position:copy(u.position),payload:{kind:a.kind,castTime:Number(a.cast)||0}});return}
  if(!hasLineOfSight(ctx,u,target)){emit(ctx,'ABILITY_FINISH',{source:u.id,target:target.id,ability:a.name,result:'failed-line-of-sight',position:copy(u.position),payload:{kind:a.kind,castTime:Number(a.cast)||0}});return}
+ if(!inRange(u,target,Number(a.range)||5)){emit(ctx,'ABILITY_FINISH',{source:u.id,target:target.id,ability:a.name,result:'failed-range',position:copy(u.position),payload:{kind:a.kind,castTime:Number(a.cast)||0}});return}
  emit(ctx,'ABILITY_FINISH',{source:u.id,target:target.id,ability:a.name,result:'resolved',position:copy(u.position),payload:{kind:a.kind,castTime:Number(a.cast)||0}});
  if(a.kind==='battle-rez'){
   reviveUnit(ctx,u,target,a.name,{healthPct:35,resourcePct:20,combat:true});
@@ -1537,10 +1561,14 @@ function checkBossPhases(ctx){
   ctx.phaseTriggered[key]=true;
   if(Number(phase.damageScale)>1)boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(phase.damageScale));
   if(phase.allAttacksAoe)boss.allAttacksAoe=true;
+  if(phase.arenaBounds&&typeof phase.arenaBounds==='object'){
+   ctx.environment.bounds={...arenaBounds(ctx),...copy(phase.arenaBounds)};
+   enforceArenaBounds(ctx,'arena contraction')
+  }
   if(Array.isArray(phase.addMechanics)&&phase.addMechanics.length){
    phase.addMechanics.forEach(m=>ctx.encounter.mechanics.push(Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}));
   }
-  emit(ctx,'PHASE_CHANGE',{source:boss.id,target:boss.id,ability:phase.name||('Phase '+(index+2)),result:'phase',position:copy(boss.position),payload:{phaseId:key,atPct:at,healthPct:hp,damageScale:boss.phaseDamageScale,allAttacksAoe:!!boss.allAttacksAoe}});
+  emit(ctx,'PHASE_CHANGE',{source:boss.id,target:boss.id,ability:phase.name||('Phase '+(index+2)),result:'phase',position:copy(boss.position),payload:{phaseId:key,atPct:at,healthPct:hp,damageScale:boss.phaseDamageScale,allAttacksAoe:!!boss.allAttacksAoe,arenaBounds:copy(ctx.environment.bounds||{})}});
   if(phase.spawnAdds)spawnAdds(ctx,boss);
  });
  const softPct=Number(ctx.encounter.softEnragePct);
@@ -1616,8 +1644,12 @@ function simulate(options={}){
    const phases=Array.isArray(encounter.phases)?encounter.phases:[];
    phases.forEach((phase,index)=>{
     const key=phase.id||('phase-'+index);
-    if(ctx.phaseTriggered[key]&&Number(phase.damageScale)>1)boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(phase.damageScale))
+    if(ctx.phaseTriggered[key]){
+     if(Number(phase.damageScale)>1)boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(phase.damageScale));
+     if(phase.arenaBounds&&typeof phase.arenaBounds==='object')ctx.environment.bounds={...arenaBounds(ctx),...copy(phase.arenaBounds)}
+    }
    });
+   enforceArenaBounds(ctx,'arena boundary');
    if(ctx.softEnraged)boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(encounter.softEnrageDamage)||1.22);
    if(ctx.hardEnraged)boss.hardEnraged=true
   }
