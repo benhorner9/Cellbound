@@ -304,9 +304,15 @@ function unitPixelPosition(x,y){
  const arena=$('#cb2dArena');if(!arena)return{x:0,y:0};
  return{x:(clamp(Number(x)||0,0,100)/100)*arena.clientWidth,y:(clamp(Number(y)||0,0,100)/100)*arena.clientHeight}
 }
+function combatSafePoint(id,x,y){
+ const key=String(id||''),partyUnit=key.startsWith('p-');
+ const minX=partyUnit?8:60,maxX=partyUnit?57:92,minY=13,maxY=87;
+ return{x:clamp(Number(x)||50,minX,maxX),y:clamp(Number(y)||50,minY,maxY)}
+}
 function applyUnitPosition(e,x,y,instant=false){
  if(!e)return;
- const p=unitPixelPosition(x,y);e.dataset.x=String(x);e.dataset.y=String(y);
+ const safe=combatSafePoint(e.dataset.unit,x,y),p=unitPixelPosition(safe.x,safe.y);
+ e.dataset.x=String(safe.x);e.dataset.y=String(safe.y);
  if(instant)e.style.transitionDuration='0ms';
  e.style.setProperty('--unit-x',p.x+'px');e.style.setProperty('--unit-y',p.y+'px')
 }
@@ -478,8 +484,8 @@ function clearArenaEphemera(){
  arena.querySelectorAll('.cb2d-projectile,.cb2d-number,.cb2d-threat-line,.cb2d-travel-banner,.cb2d-stage-clear,.cb2d-death-burst').forEach(x=>x.remove())
 }
 function enterResultsMode(){
- const shell=$('.cb2d-shell');if(shell)shell.classList.add('results-mode');
- const end=$('#cb2dEnd');if(end){end.hidden=false;requestAnimationFrame(()=>{const shell=$('.cb2d-shell');if(shell)shell.scrollTop=Math.max(0,end.offsetTop-8)})}
+ const shell=$('.cb2d-shell');if(shell){shell.classList.add('results-mode');shell.scrollTop=0}
+ const end=$('#cb2dEnd');if(end){end.hidden=false;end.scrollTop=0}
 }
 function exitResultsMode(){
  const shell=$('.cb2d-shell');if(shell){shell.classList.remove('results-mode');shell.scrollTop=0}
@@ -1428,7 +1434,7 @@ function renderRebornEvent(e,result,replayMode=false){
   case'MECHANIC_TELEGRAPH':
    rebornTelegraph(e);status((e.ability||'Mechanic')+' incoming');break;
   case'MECHANIC_RESOLVE':
-   clearRebornTelegraph(e.payload?.token,'impact');break;
+   clearRebornTelegraph(e.payload?.token,'impact');requestAnimationFrame(()=>{if(run){const i=enemyIndex();if(i>=0)settleFormation(i);else regroup()}});break;
   case'INTERRUPT':
    if(e.result==='success'){rebornCastClear('INTERRUPTED');clearRebornTelegraph(e.payload?.token,'safe');flash('INTERRUPTED',false);log((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');act('dps','Interrupt successful')}
    else if(e.result==='failed')log((srcChar?.name||'A player')+' misses an interrupt.');
@@ -1448,7 +1454,7 @@ function renderRebornEvent(e,result,replayMode=false){
   case'CAST_FINISH':
    rebornCastClear('CAST COMPLETE');if(String(e.source||'').startsWith('e-'))log((e.ability||'Enemy cast')+' completes.');break;
   case'COMBAT_END':
-   rebornCastClear();status(e.result==='victory'?'Encounter cleared':'Party defeated');run.stageOutcome=e.result==='victory';break;
+   rebornCastClear();status(e.result==='victory'?'Encounter cleared':'Party defeated');run.stageOutcome=e.result==='victory';regroup();break;
  }
 }
 function configureRebornViewer(){
