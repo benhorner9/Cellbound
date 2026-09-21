@@ -1,5 +1,6 @@
 (()=>{
 'use strict';
+window.CellboundCombatStandard?.register?.('twelve-below',{kind:'endgame-event',execution:'local',ui:'shared-combat-vitals'});
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -164,7 +165,7 @@ function remapEvents(events,aliveBosses,offset){
  })
 }
 function simulateRun(){
- const Combat=window.CellboundCombatReborn;if(!Combat?.simulate)throw new Error('Combat engine unavailable');
+ const Combat=window.CellboundCombatStandard;if(!Combat?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
  const original=party(),avgLevel=Math.round(original.reduce((n,c)=>n+(Number(c.level)||1),0)/5),pi=Game.partyItemLevel();
  let carried=original.map(c=>({...c,_combatItemLevel:Game.characterItemLevel(c)})),aliveBosses=[],defeated=new Set(),timeline=[],segments=[],endMs=0,outcome='overrun';
  const spawned=new Set();
@@ -173,7 +174,7 @@ function simulateRun(){
  const playSlice=(offset,maxDuration,cleanup=0)=>{
    const mechanics=aliveBosses.flatMap(b=>b.mechanics||[]),level=avgLevel+1+Math.floor((spawned.size-1)/3);
    const encounter={id:'twelve-below-'+spawned.size+'-'+cleanup,kind:'world-boss',level,recommendedItemLevel:Math.max(24,26+Math.floor((spawned.size-1)/3)*2),enemies:aliveBosses.map(enemyInput),mechanics,mechanicIntervalMs:Math.max(2400,4300-aliveBosses.length*180),scaling:{enemyHealth:1,enemyDamage:(.46+Math.min(.17,(spawned.size-1)*.013))*(1+cleanup*.07)}};
-   const result=Combat.simulate({party:carried,encounter,tactics:{interruptPriority:'high',addPriority:'priority',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced',cooldownUse:'difficult'},seed:'twelve:'+todayKey()+':'+eventState().attemptsUsed+':'+offset,maxDurationMs:maxDuration,elapsedOffsetMs:offset});
+   const result=Combat.simulate({party:carried,encounter,tactics:{interruptPriority:'high',addPriority:'priority',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced',cooldownUse:'difficult'},seed:'twelve:'+todayKey()+':'+eventState().attemptsUsed+':'+offset,maxDurationMs:maxDuration,elapsedOffsetMs:offset},{zone:'twelve-below'});
    timeline.push(...remapEvents(result.events,aliveBosses,offset));
    segments.push(result);lastPlayers=result.finalState.players||[];
    const next=[];
