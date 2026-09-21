@@ -93,7 +93,9 @@ function enhanceRoster(){
   const chars=s.roster.slice(0,ent().rosterCap);
   const byId=new Map(chars.map(c=>[c.id,c]));
   const cards=[...root.querySelectorAll('.char-card')];
-  cards.forEach(card=>{
+  const recruitCards=cards.filter(card=>card.classList.contains('recruit-slot-card'));
+  const characterCards=cards.filter(card=>!card.classList.contains('recruit-slot-card'));
+  characterCards.forEach(card=>{
     const id=card.querySelector('[data-char]')?.dataset.char;
     const c=byId.get(id);if(!c)return;
     card.dataset.charId=id;
@@ -111,7 +113,7 @@ function enhanceRoster(){
     if(!footer){footer=document.createElement('div');footer.className='evo-roster-footer';const action=card.querySelector('[data-char]');action?.insertAdjacentElement('beforebegin',footer)}
     if(footer)footer.innerHTML=`<div><span>Professions</span><b>${professions.length?professions.map(p=>`${esc(p.name)} ${p.level}`).join(' · '):'Untrained'}</b></div><div><span>Weakest Gear</span><b>${esc(weakest?.slot||'—')} · iLvl ${weakest?.item?.itemLevel||0}</b></div>`;
   });
-  const filtered=cards.filter(card=>{
+  const filtered=characterCards.filter(card=>{
     const c=byId.get(card.dataset.charId);if(!c)return false;
     const roleOk=rosterRole==='all'||roleOf(c)===rosterRole;
     const q=rosterSearch.toLowerCase();
@@ -130,16 +132,21 @@ function enhanceRoster(){
     if(rosterSort==='shock')return (cb.cellShock||0)-(ca.cellShock||0);
     return charIlvl(cb)-charIlvl(ca);
   });
-  cards.forEach(c=>c.style.display='none');
-  const currentOrder=[...root.querySelectorAll('.char-card')].filter(c=>filtered.includes(c)).map(c=>c.dataset.charId).join('|');
-  const targetOrder=filtered.map(c=>c.dataset.charId).join('|');
-  filtered.forEach(c=>{c.style.display=''});
-  if(currentOrder!==targetOrder)filtered.forEach(c=>root.appendChild(c));
+  characterCards.forEach(card=>card.style.display='none');
+  const showRecruitCards=ent().member&&
+    rosterRole==='all'&&rosterStatus==='all'&&rosterClass==='all'&&rosterProfession==='all'&&!rosterSearch.trim();
+  recruitCards.forEach(card=>card.style.display=showRecruitCards?'':'none');
+  const currentOrder=[...root.querySelectorAll('.char-card')].filter(card=>filtered.includes(card)).map(card=>card.dataset.charId).join('|');
+  const targetOrder=filtered.map(card=>card.dataset.charId).join('|');
+  filtered.forEach(card=>{card.style.display=''});
+  if(currentOrder!==targetOrder)filtered.forEach(card=>root.appendChild(card));
+  if(showRecruitCards)recruitCards.forEach(card=>root.appendChild(card));
   let empty=root.querySelector('.roster-empty-state');
-  if(!filtered.length){if(!empty){empty=document.createElement('div');empty.className='roster-empty-state';empty.textContent='No adventurers match these filters.';root.appendChild(empty)}}else empty?.remove();
-  const recovering=chars.filter(c=>Game.isUnavailable(c)).length;
-  if($('#rosterActiveSummary'))$('#rosterActiveSummary').textContent=`${ids.size} / 5 deployed`;
-  if($('#rosterRecoverySummary'))$('#rosterRecoverySummary').textContent=recovering?`${recovering} recovering from Cell Shock`:'All adventurers available';
+  if(!filtered.length&&!showRecruitCards){if(!empty){empty=document.createElement('div');empty.className='roster-empty-state';empty.textContent='No adventurers match these filters.';root.appendChild(empty)}}else empty?.remove();
+  const recovering=chars.filter(c=>Game.isUnavailable(c)).length,cap=ent().rosterCap,recruited=chars.length,open=Math.max(0,cap-recruited);
+  if($('#rosterActiveSummary'))$('#rosterActiveSummary').textContent=`${recruited} / ${cap} recruited`;
+  if($('#rosterRecoverySummary'))$('#rosterRecoverySummary').textContent=
+    `${ids.size} active${open?' · '+open+' open slot'+(open===1?'':'s'):''}${recovering?' · '+recovering+' recovering':''}`;
 }
 function bindRoster(){
   $('#rosterSearch')?.addEventListener('input',e=>{rosterSearch=e.target.value;enhanceRoster()});
