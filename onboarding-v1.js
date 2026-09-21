@@ -592,6 +592,7 @@ async function fightTdPack(encounter,my){
   spawnTdEnemies(encounter);await sleep(350);
   const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
   const roster=state().roster;
+  roster.forEach(c=>tdSetPartyHpByEvent(c,100));
   const combatParty=roster.map(c=>Object.assign({},c,{power:Math.max(Number(c.power)||1,30),_combatHealthPct:100}));
   if(tutorialCombatStats){tutorialCombatStats.threat=Object.fromEntries(roster.map(c=>[c.id,0]));tutorialCombatStats.aggro=null;tutorialCombatStats.currentEnemy=encounter.name;tdRenderMeters()}
   const result=C.simulate({
@@ -638,7 +639,7 @@ async function runTutorialDungeon(my){
     tdFeed('Entering '+e.name+'.');const won=await fightTdPack(e,my);if(!won){i--;await sleep(700);continue}
   }
   if(my!==tutorialToken)return;
-  $('#tdEncounter').textContent='Dungeon Clear';$('#tdCallout').textContent='The Zeltiran Hollows are secure.';
+  $('#tdEncounter').textContent='First Expedition Complete';$('#tdCallout').textContent='The resonance beneath Zeltira has gone silent.';
   tdFeed('The Hollow Warden falls. Something in the chamber stops answering the Cell Well. Gear and reagents remain among the roots.');await sleep(900);
   const s=state();
   if(s.onboarding.stage==='dungeon-running'&&!s.onboarding.tutorialDungeonComplete){
