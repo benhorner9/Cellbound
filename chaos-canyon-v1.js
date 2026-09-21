@@ -407,7 +407,7 @@ async function ccReplayFinalFight(){
 
 async function ccFail(s,result){
  run.done=true;Game.applyPartyCellShock?.(25);const st=state();st.activity.push('The guild wiped in Chaos Canyon at '+s.title+'. All five gained 25% Cell Shock.');Game.save?.();await Game.persistState?.();
- const end=$('#cc2dEnd');end.hidden=false;end.className='cb2d-end cb2d-results-screen';$('.cc2d-shell')?.classList.add('results-mode');end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Combat knowledge and the cause of the wipe are retained.</p></div>'+ccFailureDiagnosis(result)+ccStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
+ const end=$('#cc2dEnd');end.hidden=false;end.className='cb2d-end cb2d-results-screen';$('.cc2d-shell')?.classList.add('results-mode');end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Mastery records and the cause of the wipe are retained.</p></div>'+ccFailureDiagnosis(result)+ccStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
 }
 async function ccRecoverFallen(tok){
  let fallen=party().filter(c=>(Number(run.hp[c.id])||0)<=0);if(!fallen.length)return true;
