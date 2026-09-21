@@ -296,3 +296,64 @@ body.bs2d-open{overflow:hidden}
 .bs-puzzle-readout span:nth-child(3) b{
   color:#e3bd68
 }
+
+
+/* Dungeon 4 combat uses the same shared Combat Reborn shell as every other dungeon. */
+.cb2d-arena.bs-arena{
+  height:470px;
+  min-height:470px;
+}
+.bs2d-route span{
+  min-width:0;
+}
+.bs-authority{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+}
+.bs-authority>div{
+  min-height:58px;
+  padding:9px 10px;
+  border:1px solid rgba(216,185,118,.10);
+  background:#0d1618;
+}
+.bs-authority>div b{
+  display:block;
+  color:#c9d0cc;
+  font-size:.54rem;
+}
+.bs-authority>div small{
+  display:block;
+  margin-top:4px;
+  color:#71817b;
+  font-size:.44rem!important;
+  line-height:1.35!important;
+}
+.bs-authority>div:last-child{
+  border-color:rgba(226,190,83,.18);
+  background:rgba(42,35,17,.45);
+}
+.bs-authority>div:last-child b{color:#e0c56d}
+.bs-station-env.cb2d-floor{
+  position:absolute;
+  inset:0;
+}
+.bs-station-env.cb2d-floor:before{
+  z-index:2;
+}
+.bs-arena .cb2d-room-tag{
+  z-index:9;
+}
+.bs-arena .cb2d-caption{
+  z-index:10;
+}
+#bsRoleZones{z-index:5}
+#bsUnits{z-index:6}
+#bsFx{z-index:8}
+#bsTelegraphs{z-index:4}
+
+@media(max-width:900px){
+  .cb2d-arena.bs-arena{height:470px;min-height:470px}
+}
+@media(max-width:620px){
+  .cb2d-arena.bs-arena{height:420px;min-height:420px}
+  .bs-authority{grid-template-columns:1fr!important}
+}
