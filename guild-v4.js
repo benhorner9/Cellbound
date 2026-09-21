@@ -131,7 +131,7 @@ function roleOf(c){return specDef(c)?.role||'dps';}
 function roleLabel(role){return role==='dps'?'Damage':role[0].toUpperCase()+role.slice(1);}
 function levelHpBonus(c){return Math.round(Math.max(0,(Number(c?.level)||1)-1)*3)}
 function levelOutputBonus(c){return Math.round(Math.max(0,(Number(c?.level)||1)-1)*2)}
-function partyAverageLevel(){const p=flatPartyIds().map(charById).filter(Boolean);return p.length?Math.round(p.reduce((n,c)=>n+Math.max(1,Number(c.level)||1),0)/p.length):1}
+function partyAverageLevel(){const p=partyCharacters();return p.length?Math.round(p.reduce((n,c)=>n+Math.max(1,Number(c.level)||1),0)/p.length):1}
 function combatClassKey(c){return 'class-'+String(c?.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}
 function charById(id){return state?.roster?.find(c=>c.id===id)||null;}
 function bossById(id){return bosses.find(b=>b.id===id)||bosses[0];}
@@ -793,7 +793,7 @@ window.CellboundGame={
   characterItemLevel,partyItemLevel,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,
   addBankItem,addMaterial,renderAll,switchView,starterEquipment,
   getPartyCharacters:()=>partyCharacters(),
-  applyPartyCellShock:(amount=PVE_WIPE_CELL_SHOCK)=>{flatPartyIds().map(charById).filter(Boolean).forEach(ch=>applyCellShock(ch,amount));save();renderAll();return flatPartyIds().map(charById).filter(Boolean).map(ch=>({id:ch.id,name:ch.name,cellShock:ch.cellShock}));}
+  applyPartyCellShock:(amount=PVE_WIPE_CELL_SHOCK)=>{const chars=partyCharacters();chars.forEach(ch=>applyCellShock(ch,amount));save();renderAll();return chars.map(ch=>({id:ch.id,name:ch.name,cellShock:ch.cellShock}));}
 };
 $('#signOut')?.addEventListener('click',async()=>{clearTimeout(syncTimer);await persistState();await supabaseClient.auth.signOut();location.replace('./index.html');});
 (async()=>{
