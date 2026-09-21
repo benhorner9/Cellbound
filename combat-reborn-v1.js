@@ -77,70 +77,104 @@ function enemyPressure(ctx,e,target){
 
 const ABILITIES={
  'Death Knight':[
-  {id:'death-strike',name:'Death Strike',kind:'damage',range:5,damage:24,cost:35,gcd:1500,cd:4500,selfHeal:10,threat:1.35},
-  {id:'heart-strike',name:'Heart Strike',kind:'damage',range:5,damage:15,cost:20,gcd:1500,cd:0,threat:1.5},
-  {id:'death-grip',name:'Death Grip',kind:'taunt',range:30,cost:0,gcd:0,cd:18000,threat:4}
+  {id:'death-strike',name:'Death Strike',kind:'damage',unlockLevel:1,desc:'A heavy strike that restores some of the wielder’s health.',range:5,damage:24,cost:35,gcd:1500,cd:4500,selfHeal:10,threat:1.35},
+  {id:'heart-strike',name:'Heart Strike',kind:'damage',role:'tank',unlockLevel:1,desc:'Reliable melee damage with increased threat.',range:5,damage:15,cost:20,gcd:1500,cd:0,threat:1.5},
+  {id:'obliterate',name:'Obliterate',kind:'damage',role:'dps',unlockLevel:1,desc:'A hard-hitting melee attack for sustained pressure.',range:5,damage:26,cost:28,gcd:1500,cd:4500},
+  {id:'mind-freeze',name:'Mind Freeze',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast.',range:10,cost:0,gcd:0,cd:15000},
+  {id:'death-grip',name:'Death Grip',kind:'taunt',role:'tank',unlockLevel:4,desc:'Force an enemy to focus the Death Knight.',range:30,cost:0,gcd:0,cd:18000,threat:4},
+  {id:'icebound-fortitude',name:'Icebound Fortitude',kind:'defensive',unlockLevel:8,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.30,gcd:0,cd:90000},
+  {id:'death-and-decay',name:'Death and Decay',kind:'damage',unlockLevel:12,desc:'Strike the target and nearby enemies.',range:20,damage:18,cost:25,gcd:1500,cd:10000,cleave:3}
  ],
  'Demon Hunter':[
-  {id:'chaos-strike',name:'Chaos Strike',kind:'damage',range:5,damage:27,cost:30,gcd:1000,cd:0},
-  {id:'demons-bite',name:"Demon's Bite",kind:'damage',range:5,damage:13,cost:0,gain:22,gcd:1000,cd:0},
-  {id:'disrupt',name:'Disrupt',kind:'interrupt',range:10,cost:0,gcd:0,cd:15000}
+  {id:'demons-bite',name:"Demon's Bite",kind:'damage',unlockLevel:1,desc:'Generate Fury with a quick melee strike.',range:5,damage:13,cost:0,gain:22,gcd:1000,cd:0},
+  {id:'chaos-strike',name:'Chaos Strike',kind:'damage',unlockLevel:1,desc:'Spend Fury for a powerful melee attack.',range:5,damage:27,cost:30,gcd:1000,cd:0},
+  {id:'blade-dance',name:'Blade Dance',kind:'damage',unlockLevel:1,desc:'Spin through the target and nearby enemies.',range:5,damage:18,cost:25,gcd:1000,cd:8000,cleave:2},
+  {id:'disrupt',name:'Disrupt',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast.',range:10,cost:0,gcd:0,cd:15000},
+  {id:'fel-barrage',name:'Fel Barrage',kind:'damage',unlockLevel:6,desc:'Burst through several enemies at once.',range:18,damage:32,cost:35,gcd:1000,cd:15000,cleave:3},
+  {id:'blur',name:'Blur',kind:'defensive',unlockLevel:10,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.30,gcd:0,cd:75000}
  ],
  Druid:[
-  {id:'wrath',name:'Wrath',kind:'damage',range:30,damage:14,cost:4,gcd:1500,cast:1200,cd:0},
-  {id:'rejuvenation',name:'Rejuvenation',kind:'heal',range:30,heal:22,cost:10,gcd:1500,cast:0,cd:0,hot:8},
-  {id:'regrowth',name:'Regrowth',kind:'heal',range:30,heal:34,cost:18,gcd:1500,cast:1100,cd:0},
-  {id:'wild-growth',name:'Wild Growth',kind:'group-heal',role:'healer',range:30,heal:15,cost:22,gcd:1500,cast:0,cd:8000},
-  {id:'skull-bash',name:'Skull Bash',kind:'interrupt',range:13,cost:0,gcd:0,cd:15000}
+  {id:'rejuvenation',name:'Rejuvenation',kind:'heal',role:'healer',unlockLevel:1,desc:'An efficient heal with a short healing-over-time effect.',range:30,heal:22,cost:10,gcd:1500,cast:0,cd:0,hot:8},
+  {id:'regrowth',name:'Regrowth',kind:'heal',role:'healer',unlockLevel:1,desc:'A stronger direct heal for injured allies.',range:30,heal:34,cost:18,gcd:1500,cast:1100,cd:0},
+  {id:'wild-growth',name:'Wild Growth',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Restore health to the whole party.',range:30,heal:15,cost:22,gcd:1500,cast:0,cd:8000},
+  {id:'skull-bash',name:'Skull Bash',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast.',range:13,cost:0,gcd:0,cd:15000},
+  {id:'wrath',name:'Wrath',kind:'damage',unlockLevel:4,desc:'A ranged nature attack for safe damage windows.',range:30,damage:14,cost:4,gcd:1500,cast:1200,cd:0},
+  {id:'barkskin',name:'Barkskin',kind:'defensive',unlockLevel:8,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.20,gcd:0,cd:60000},
+  {id:'tranquility',name:'Tranquility',kind:'group-heal',role:'healer',unlockLevel:14,desc:'A powerful emergency party heal with a long cooldown.',range:30,heal:30,cost:32,gcd:1500,cast:2500,cd:30000}
  ],
  Evoker:[
-  {id:'verdant-embrace',name:'Verdant Embrace',kind:'heal',role:'healer',range:25,heal:34,cost:1,gcd:1500,cast:900,cd:6000},
-  {id:'emerald-blossom',name:'Emerald Blossom',kind:'group-heal',role:'healer',range:25,heal:17,cost:2,gcd:1500,cast:1200,cd:8000},
-  {id:'living-flame',name:'Living Flame',kind:'damage',range:25,damage:22,cost:1,gcd:1500,cast:1300,cd:0},
-  {id:'azure-strike',name:'Azure Strike',kind:'damage',range:25,damage:12,cost:0,gcd:1500,cd:0},
-  {id:'quell',name:'Quell',kind:'interrupt',range:25,cost:0,gcd:0,cd:40000}
+  {id:'verdant-embrace',name:'Verdant Embrace',kind:'heal',role:'healer',unlockLevel:1,desc:'A strong focused heal.',range:25,heal:34,cost:1,gcd:1500,cast:900,cd:6000},
+  {id:'emerald-blossom',name:'Emerald Blossom',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Restore health across the party.',range:25,heal:17,cost:2,gcd:1500,cast:1200,cd:8000},
+  {id:'living-flame',name:'Living Flame',kind:'damage',unlockLevel:1,desc:'A ranged magical attack.',range:25,damage:22,cost:1,gcd:1500,cast:1300,cd:0},
+  {id:'azure-strike',name:'Azure Strike',kind:'damage',unlockLevel:1,desc:'A fast ranged strike with no resource cost.',range:25,damage:12,cost:0,gcd:1500,cd:0},
+  {id:'quell',name:'Quell',kind:'interrupt',unlockLevel:4,desc:'Interrupt an enemy cast.',range:25,cost:0,gcd:0,cd:40000},
+  {id:'obsidian-scales',name:'Obsidian Scales',kind:'defensive',unlockLevel:8,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000},
+  {id:'dream-breath',name:'Dream Breath',kind:'group-heal',role:'healer',unlockLevel:14,desc:'A powerful party-wide healing breath.',range:25,heal:27,cost:3,gcd:1500,cast:1800,cd:22000}
  ],
  Hunter:[
-  {id:'aimed-shot',name:'Aimed Shot',kind:'damage',range:35,damage:31,cost:35,gcd:1500,cast:1500,cd:7000},
-  {id:'arcane-shot',name:'Arcane Shot',kind:'damage',range:35,damage:17,cost:20,gcd:1500,cd:0},
-  {id:'steady-shot',name:'Steady Shot',kind:'damage',range:35,damage:11,cost:0,gain:18,gcd:1500,cast:900,cd:0},
-  {id:'counter-shot',name:'Counter Shot',kind:'interrupt',range:35,cost:0,gcd:0,cd:24000}
+  {id:'aimed-shot',name:'Aimed Shot',kind:'damage',unlockLevel:1,desc:'A slow, heavy ranged shot.',range:35,damage:31,cost:35,gcd:1500,cast:1500,cd:7000},
+  {id:'arcane-shot',name:'Arcane Shot',kind:'damage',unlockLevel:1,desc:'Reliable ranged damage.',range:35,damage:17,cost:20,gcd:1500,cd:0},
+  {id:'steady-shot',name:'Steady Shot',kind:'damage',unlockLevel:1,desc:'Generate Focus while maintaining ranged pressure.',range:35,damage:11,cost:0,gain:18,gcd:1500,cast:900,cd:0},
+  {id:'counter-shot',name:'Counter Shot',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast from range.',range:35,cost:0,gcd:0,cd:24000},
+  {id:'multi-shot',name:'Multi-Shot',kind:'damage',unlockLevel:5,desc:'Strike the target and nearby enemies.',range:35,damage:14,cost:30,gcd:1500,cd:6000,cleave:2},
+  {id:'kill-shot',name:'Kill Shot',kind:'damage',unlockLevel:9,desc:'A finishing attack that is strongest against weakened enemies.',range:35,damage:24,cost:20,gcd:1500,cd:10000,executeBelow:.20,executeMultiplier:1.85},
+  {id:'survival-instincts',name:'Survival Instincts',kind:'defensive',unlockLevel:13,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.20,gcd:0,cd:75000}
  ],
  Mage:[
-  {id:'pyroblast',name:'Pyroblast',kind:'damage',range:35,damage:36,cost:14,gcd:1500,cast:2200,cd:8000},
-  {id:'fireball',name:'Fireball',kind:'damage',range:35,damage:24,cost:8,gcd:1500,cast:1700,cd:0},
-  {id:'fire-blast',name:'Fire Blast',kind:'damage',range:35,damage:16,cost:4,gcd:0,cast:0,cd:9000},
-  {id:'counterspell',name:'Counterspell',kind:'interrupt',range:35,cost:0,gcd:0,cd:24000}
+  {id:'pyroblast',name:'Pyroblast',kind:'damage',unlockLevel:1,desc:'A slow, devastating ranged spell.',range:35,damage:36,cost:14,gcd:1500,cast:2200,cd:8000},
+  {id:'fireball',name:'Fireball',kind:'damage',unlockLevel:1,desc:'Reliable ranged spell damage.',range:35,damage:24,cost:8,gcd:1500,cast:1700,cd:0},
+  {id:'fire-blast',name:'Fire Blast',kind:'damage',unlockLevel:1,desc:'An instant burst of damage.',range:35,damage:16,cost:4,gcd:0,cast:0,cd:9000},
+  {id:'counterspell',name:'Counterspell',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast from range.',range:35,cost:0,gcd:0,cd:24000},
+  {id:'arcane-barrage',name:'Arcane Barrage',kind:'damage',unlockLevel:5,desc:'An instant ranged attack with a short cooldown.',range:35,damage:25,cost:12,gcd:1500,cd:5000},
+  {id:'arcane-ward',name:'Arcane Ward',kind:'defensive',unlockLevel:9,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000},
+  {id:'arcane-nova',name:'Arcane Nova',kind:'damage',unlockLevel:13,desc:'Burst the target and nearby enemies with arcane energy.',range:25,damage:22,cost:18,gcd:1500,cd:10000,cleave:3}
  ],
  Warrior:[
-  {id:'shield-slam',name:'Shield Slam',kind:'damage',role:'tank',range:5,damage:21,cost:20,gain:8,gcd:1500,cd:6000,threat:3},
-  {id:'revenge',name:'Revenge',kind:'damage',role:'tank',range:5,damage:16,cost:15,gcd:1500,cd:3000,threat:2.5},
-  {id:'mortal-strike',name:'Mortal Strike',kind:'damage',role:'dps',range:5,damage:29,cost:30,gcd:1500,cd:6000},
-  {id:'slam',name:'Slam',kind:'damage',role:'dps',range:5,damage:18,cost:18,gcd:1500,cd:0},
-  {id:'pummel',name:'Pummel',kind:'interrupt',range:5,cost:0,gcd:0,cd:15000},
-  {id:'taunt',name:'Taunt',kind:'taunt',role:'tank',range:30,cost:0,gcd:0,cd:8000,threat:5}
+  {id:'shield-slam',name:'Shield Slam',kind:'damage',role:'tank',unlockLevel:1,desc:'High-threat melee strike.',range:5,damage:21,cost:20,gain:8,gcd:1500,cd:6000,threat:3},
+  {id:'revenge',name:'Revenge',kind:'damage',role:'tank',unlockLevel:1,desc:'Reliable tank damage with increased threat.',range:5,damage:16,cost:15,gcd:1500,cd:3000,threat:2.5},
+  {id:'taunt',name:'Taunt',kind:'taunt',role:'tank',unlockLevel:1,desc:'Force an enemy to attack the Warrior.',range:30,cost:0,gcd:0,cd:8000,threat:5},
+  {id:'mortal-strike',name:'Mortal Strike',kind:'damage',role:'dps',unlockLevel:1,desc:'Heavy single-target weapon damage.',range:5,damage:29,cost:30,gcd:1500,cd:6000},
+  {id:'slam',name:'Slam',kind:'damage',role:'dps',unlockLevel:1,desc:'Reliable melee damage.',range:5,damage:18,cost:18,gcd:1500,cd:0},
+  {id:'execute',name:'Execute',kind:'damage',role:'dps',unlockLevel:1,desc:'A finishing strike that becomes deadly against weakened enemies.',range:5,damage:22,cost:25,gcd:1500,cd:7000,executeBelow:.25,executeMultiplier:1.9},
+  {id:'pummel',name:'Pummel',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast.',range:5,cost:0,gcd:0,cd:15000},
+  {id:'shield-wall',name:'Shield Wall',kind:'defensive',role:'tank',unlockLevel:6,desc:'Greatly reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.40,gcd:0,cd:90000},
+  {id:'sweeping-strike',name:'Sweeping Strike',kind:'damage',role:'dps',unlockLevel:6,desc:'Strike the target and nearby enemies.',range:5,damage:20,cost:24,gcd:1500,cd:9000,cleave:2},
+  {id:'thunder-clap',name:'Thunder Clap',kind:'damage',role:'tank',unlockLevel:10,desc:'Damage several enemies while generating extra threat.',range:8,damage:17,cost:18,gcd:1500,cd:8000,cleave:3,threat:2.7},
+  {id:'rallying-guard',name:'Rallying Guard',kind:'defensive',role:'dps',unlockLevel:10,desc:'Brace for danger and reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.20,gcd:0,cd:75000},
+  {id:'overpower',name:'Overpower',kind:'damage',role:'dps',unlockLevel:14,desc:'A powerful strike with a short cooldown.',range:5,damage:27,cost:18,gcd:1500,cd:5000}
  ],
  Paladin:[
-  {id:'avengers-shield',name:"Avenger's Shield",kind:'damage',role:'tank',range:30,damage:20,cost:5,gcd:1500,cd:6000,threat:3,cleave:2},
-  {id:'judgement',name:'Judgement',kind:'damage',range:30,damage:17,cost:4,gcd:1500,cd:3500,threat:1.7},
-  {id:'holy-light',name:'Holy Light',kind:'heal',role:'healer',range:30,heal:37,cost:14,gcd:1500,cast:1500,cd:0},
-  {id:'holy-shock',name:'Holy Shock',kind:'heal',role:'healer',range:30,heal:25,cost:9,gcd:1500,cast:0,cd:6000},
-  {id:'light-of-dawn',name:'Light of Dawn',kind:'group-heal',role:'healer',range:30,heal:16,cost:18,gcd:1500,cast:0,cd:7000},
-  {id:'rebuke',name:'Rebuke',kind:'interrupt',range:5,cost:0,gcd:0,cd:15000},
-  {id:'hand-reckoning',name:'Hand of Reckoning',kind:'taunt',role:'tank',range:30,cost:0,gcd:0,cd:8000,threat:5}
+  {id:'avengers-shield',name:"Avenger's Shield",kind:'damage',role:'tank',unlockLevel:1,desc:'Ranged tank attack with strong threat and cleave.',range:30,damage:20,cost:5,gcd:1500,cd:6000,threat:3,cleave:2},
+  {id:'judgement',name:'Judgement',kind:'damage',unlockLevel:1,desc:'A reliable ranged holy attack.',range:30,damage:17,cost:4,gcd:1500,cd:3500,threat:1.7},
+  {id:'hand-reckoning',name:'Hand of Reckoning',kind:'taunt',role:'tank',unlockLevel:1,desc:'Force an enemy to attack the Paladin.',range:30,cost:0,gcd:0,cd:8000,threat:5},
+  {id:'holy-light',name:'Holy Light',kind:'heal',role:'healer',unlockLevel:1,desc:'A strong efficient direct heal.',range:30,heal:37,cost:14,gcd:1500,cast:1500,cd:0},
+  {id:'holy-shock',name:'Holy Shock',kind:'heal',role:'healer',unlockLevel:1,desc:'An instant heal with a short cooldown.',range:30,heal:25,cost:9,gcd:1500,cast:0,cd:6000},
+  {id:'light-of-dawn',name:'Light of Dawn',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Restore health to the whole party.',range:30,heal:16,cost:18,gcd:1500,cast:0,cd:7000},
+  {id:'rebuke',name:'Rebuke',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast.',range:5,cost:0,gcd:0,cd:15000},
+  {id:'ardent-defender',name:'Ardent Defender',kind:'defensive',role:'tank',unlockLevel:6,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.30,gcd:0,cd:75000},
+  {id:'flash-of-light',name:'Flash of Light',kind:'heal',role:'healer',unlockLevel:6,desc:'A fast emergency heal at a higher mana cost.',range:30,heal:30,cost:19,gcd:1500,cast:800,cd:0},
+  {id:'divine-protection',name:'Divine Protection',kind:'defensive',unlockLevel:10,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.20,gcd:0,cd:60000},
+  {id:'consecration',name:'Consecration',kind:'damage',role:'tank',unlockLevel:10,desc:'Damage the target and nearby enemies.',range:8,damage:16,cost:10,gcd:1500,cd:9000,cleave:3,threat:2.2},
+  {id:'radiant-wave',name:'Radiant Wave',kind:'group-heal',role:'healer',unlockLevel:14,desc:'A powerful emergency party heal.',range:30,heal:27,cost:30,gcd:1500,cast:1800,cd:22000}
  ],
  Priest:[
-  {id:'heal',name:'Heal',kind:'heal',role:'healer',range:30,heal:35,cost:13,gcd:1500,cast:1400,cd:0},
-  {id:'flash-heal',name:'Flash Heal',kind:'heal',role:'healer',range:30,heal:29,cost:18,gcd:1500,cast:800,cd:0},
-  {id:'prayer-healing',name:'Prayer of Healing',kind:'group-heal',role:'healer',range:30,heal:18,cost:22,gcd:1500,cast:1700,cd:6500},
-  {id:'soul-recall',name:'Soul Recall',kind:'battle-rez',role:'healer',range:30,cost:32,gcd:1500,cast:5000,cd:600000},
-  {id:'smite',name:'Smite',kind:'damage',range:30,damage:13,cost:4,gcd:1500,cast:1200,cd:0},
-  {id:'silence',name:'Silence',kind:'interrupt',range:30,cost:0,gcd:0,cd:30000}
+  {id:'heal',name:'Heal',kind:'heal',role:'healer',unlockLevel:1,desc:'Efficient direct healing.',range:30,heal:35,cost:13,gcd:1500,cast:1400,cd:0},
+  {id:'flash-heal',name:'Flash Heal',kind:'heal',role:'healer',unlockLevel:1,desc:'Fast emergency healing.',range:30,heal:29,cost:18,gcd:1500,cast:800,cd:0},
+  {id:'prayer-healing',name:'Prayer of Healing',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Restore health to the whole party.',range:30,heal:18,cost:22,gcd:1500,cast:1700,cd:6500},
+  {id:'silence',name:'Silence',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast from range.',range:30,cost:0,gcd:0,cd:30000},
+  {id:'smite',name:'Smite',kind:'damage',unlockLevel:4,desc:'A ranged holy attack for safe damage windows.',range:30,damage:13,cost:4,gcd:1500,cast:1200,cd:0},
+  {id:'soul-recall',name:'Soul Recall',kind:'battle-rez',role:'healer',unlockLevel:8,desc:'Return a fallen ally to combat. Very long cooldown.',range:30,cost:32,gcd:1500,cast:5000,cd:600000},
+  {id:'guardian-spirit',name:'Guardian Spirit',kind:'defensive',role:'healer',unlockLevel:12,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:90000},
+  {id:'divine-hymn',name:'Divine Hymn',kind:'group-heal',role:'healer',unlockLevel:16,desc:'A major emergency heal for the entire party.',range:30,heal:32,cost:34,gcd:1500,cast:2600,cd:35000}
  ],
  Rogue:[
-  {id:'mutilate',name:'Mutilate',kind:'damage',range:5,damage:18,cost:35,gcd:1000,cd:0},
-  {id:'eviscerate',name:'Eviscerate',kind:'damage',range:5,damage:30,cost:50,gcd:1000,cd:5000},
-  {id:'kick',name:'Kick',kind:'interrupt',range:5,cost:0,gcd:0,cd:15000}
+  {id:'mutilate',name:'Mutilate',kind:'damage',unlockLevel:1,desc:'Reliable melee damage.',range:5,damage:18,cost:35,gcd:1000,cd:0},
+  {id:'eviscerate',name:'Eviscerate',kind:'damage',unlockLevel:1,desc:'A hard-hitting finishing attack.',range:5,damage:30,cost:50,gcd:1000,cd:5000},
+  {id:'garrote',name:'Garrote',kind:'damage',unlockLevel:1,desc:'A sharp opening attack with a short cooldown.',range:5,damage:21,cost:30,gcd:1000,cd:7000},
+  {id:'kick',name:'Kick',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast.',range:5,cost:0,gcd:0,cd:15000},
+  {id:'envenom',name:'Envenom',kind:'damage',unlockLevel:5,desc:'Spend Energy for a heavy poisoned strike.',range:5,damage:28,cost:45,gcd:1000,cd:6500},
+  {id:'fan-of-knives',name:'Fan of Knives',kind:'damage',unlockLevel:9,desc:'Strike the target and nearby enemies.',range:8,damage:15,cost:35,gcd:1000,cd:7000,cleave:3},
+  {id:'feint',name:'Feint',kind:'defensive',unlockLevel:13,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.20,gcd:0,cd:60000}
  ]
 };
 
@@ -232,9 +266,26 @@ function triggerUnique(ctx,u,id,name,payload={}){
  emit(ctx,'UNIQUE_EFFECT_TRIGGER',{source:u.id,target:payload.target||u.id,ability:name,result:id,payload:{effectId:id,...payload}})
 }
 
+function classSkillPool(c,role){
+ return (ABILITIES[c?.class]||[]).filter(a=>!a.role||a.role===role)
+}
+function unlockedSkillPool(c,role){
+ const level=Math.max(1,Number(c?.level)||1);
+ return classSkillPool(c,role).filter(a=>(Number(a.unlockLevel)||1)<=level)
+}
+function defaultSkillLoadout(c,role){
+ return unlockedSkillPool(c,role).slice(0,4).map(a=>a.id)
+}
 function abilityPool(c,role){
- const pool=(ABILITIES[c.class]||ROLE_FALLBACKS[role]||ROLE_FALLBACKS.dps).filter(a=>!a.role||a.role===role);
- return pool.length?pool:ROLE_FALLBACKS[role]||ROLE_FALLBACKS.dps;
+ const unlocked=unlockedSkillPool(c,role),configured=Array.isArray(c?.skillLoadouts?.[c?.spec])?c.skillLoadouts[c.spec]:null;
+ let pool;
+ if(configured){
+  const byId=new Map(unlocked.map(a=>[a.id,a]));
+  pool=[...new Set(configured)].slice(0,4).map(id=>byId.get(id)).filter(Boolean)
+ }else pool=defaultSkillLoadout(c,role).map(id=>unlocked.find(a=>a.id===id)).filter(Boolean);
+ if(role==='healer'&&!pool.some(a=>a.kind==='heal'||a.kind==='group-heal'))pool.push({id:'basic-caster-attack',name:'Basic Attack',kind:'damage',range:25,damage:9,cost:0,gcd:1500,cd:0,hiddenFallback:true});
+ if(role!=='healer'&&!pool.some(a=>a.kind==='damage'))pool.push({id:'basic-attack',name:'Basic Attack',kind:'damage',range:5,damage:10,cost:0,gcd:1500,cd:0,hiddenFallback:true});
+ return pool.length?pool:(ROLE_FALLBACKS[role]||ROLE_FALLBACKS.dps)
 }
 function normalisePlayer(c,i){
  const role=inferredRole(c),res=resourceDef(c),tank=role==='tank',healer=role==='healer';
@@ -599,6 +650,7 @@ function rollDamage(ctx,u,a,target){
  const revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1;
  const frenzy=u.frenzyUntil>ctx.time?1.15:1;
  let amount=(Number(a.damage)||12)*talent*power*levelScale*match*variance*revivePenalty*frenzy*Math.max(.1,1+statusBonus(u,'outgoingDamage'));
+ if(Number(a.executeBelow)>0&&healthRatio(target)<=Number(a.executeBelow))amount*=Math.max(1,Number(a.executeMultiplier)||1.5);
  const critChance=clamp(.12+statusBonus(u,'critBonus'),0,.80);
  if(ctx.rng()<critChance){amount*=1.5;return{amount,crit:true}}
  return{amount,crit:false};
@@ -909,10 +961,29 @@ function activateClassBuff(ctx,u,buff){
  emit(ctx,'ABILITY_FINISH',{source:u.id,ability:buff.name,result:'class-buff',position:copy(u.position),payload:{kind:'buff',scope:buff.scope,duration:buff.duration}});
  return true
 }
+function useDefensiveSkill(ctx,u,a){
+ if(!a||a.kind!=='defensive'||!cooldownReady(u,a))return false;
+ const duration=Math.max(1000,Number(a.duration)||8000),reduction=clamp(Number(a.damageReduction)||.20,0,.70);
+ u.cooldowns[a.id]=Math.max(1000,Number(a.cd)||60000);u.gcdUntil=Math.max(u.gcdUntil,ctx.time+300);
+ emit(ctx,'ABILITY_START',{source:u.id,target:u.id,ability:a.name,result:'defensive',position:copy(u.position),payload:{kind:'defensive',duration}});
+ if(Number(a.selfHealPct)>0){
+  const before=u.health;u.health=clamp(u.health+Math.round(u.maxHealth*Number(a.selfHealPct)),0,u.maxHealth);
+  emit(ctx,'HEAL_RECEIVED',{source:u.id,target:u.id,ability:a.name,amount:u.health-before,result:'self-heal',position:copy(u.position),payload:{targetHp:u.health,targetMax:u.maxHealth,targetHpPct:pct(u.health,u.maxHealth),overhealing:0}})
+ }
+ applyStatus(ctx,u,u,{id:a.id,name:a.name,kind:'buff',duration,effect:{incomingDamageReduction:reduction}});
+ emit(ctx,'ABILITY_FINISH',{source:u.id,target:u.id,ability:a.name,result:'defensive',position:copy(u.position),payload:{kind:'defensive',duration}});
+ return true
+}
 function playerAI(ctx,u){
  if(!u.alive||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.nextDecision||ctx.time<u.gcdUntil)return;
  u.nextDecision=ctx.time+160;
  const buff=classBuffFor(u);if(buff&&activateClassBuff(ctx,u,buff))return;
+ const defensiveThreshold=ctx.tactics.defensiveUsage==='aggressive'?.62:ctx.tactics.defensiveUsage==='conservative'?.38:.50;
+ const defensive=u.abilities.find(a=>a.kind==='defensive'&&cooldownReady(u,a));
+ if(defensive&&healthRatio(u)<defensiveThreshold){
+  if(shouldMistake(ctx,u,'defensive',7000))u.nextDecision=Math.max(u.nextDecision,ctx.time+650+Math.round(ctx.rng()*450));
+  else if(useDefensiveSkill(ctx,u,defensive))return
+ }
  const target=pickDamageTarget(ctx,u);
  if(!target)return;
  if(u.role==='tank'){
@@ -932,16 +1003,6 @@ function playerAI(ctx,u){
    }
   }else u.pendingTaunt=null;
 
-  const defensiveThreshold=ctx.tactics.defensiveUsage==='aggressive'?.62:ctx.tactics.defensiveUsage==='conservative'?.38:.50;
-  if(u.health/u.maxHealth<defensiveThreshold&&u.defensiveUntil<=0){
-   if(shouldMistake(ctx,u,'defensive',7000)){
-    recordMistake(ctx,u,'defensive','held a defensive too long',{target:u.id,ability:'Major Defensive'});
-    u.nextDecision=Math.max(u.nextDecision,ctx.time+650+Math.round(ctx.rng()*450));
-   }else{
-    u.defensiveUntil=5000;applyStatus(ctx,u,u,{id:'major-defensive',name:'Major Defensive',kind:'buff',duration:5000,effect:{damageReduction:.25}});
-    emit(ctx,'DEFENSIVE_ACTIVATED',{source:u.id,target:u.id,ability:'Major Defensive',result:'active',payload:{duration:5000}});
-   }
-  }
  }
  const pick=chooseAbility(ctx,u,target);
  if(pick)startAbility(ctx,u,pick.ability,pick.target);
@@ -1554,6 +1615,7 @@ function runSelfTests(){
 
 window.CellboundCombatReborn={
  VERSION,CLASS_COLORS,RESOURCE_DEFS,CLASS_BUFFS,ABILITIES,LEVEL_RULES,ENEMY_CLASS_RULES,simulate,replay,debugSnapshot,
+ skills:{classSkillPool,unlockedSkillPool,defaultSkillLoadout},
  tests:{run:runSelfTests},utils:{hashSeed,rngFrom,levelHealthScale,levelOutputScale,levelMatchMultiplier}
 };
 })();
