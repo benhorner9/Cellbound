@@ -1186,7 +1186,7 @@ function ensureCombatRebornEngine(){
      else reject(error||new Error('Combat Reborn engine failed to initialise'))
    };
    const script=document.createElement('script');
-   script.src='./combat-identities-v1.js?v=16&recover=1';
+   script.src='./combat-identities-v1.js?v=23&recover=1';
    script.async=true;
    script.dataset.combatRebornRecovery='1';
    script.onload=()=>finish(true);
@@ -1623,7 +1623,14 @@ async function seamlessFrom(startIndex,tok){
   run.xpGrowth=awardPartyXp(xp);st.dungeonCompletions++;const completedPartyIds=party().map(c=>c.id);st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs,partyIlvl:ilvl(),xpPerCharacter:xp,partyIds:completedPartyIds,combatVersion:window.CellboundCombatReborn?.VERSION||'legacy',dungeonVersion:run.endgame?.dungeonVersion||2});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault · '+(run.endgame?.label||'Normal')+' cleared. Score '+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'. Each adventurer earned '+xp+' XP.');run.xpGrowth.filter(x=>x.levels>0).forEach(x=>st.activity.push(x.name+' reached Level '+x.afterLevel+'.'));await Game.persistState();await syncPartyXpRecords(run.xpGrowth);window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'ashen-vault',difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs,partyIds:completedPartyIds}}));finish(true,STAGES[6]);appendRebornAnalysis($('#cb2dEnd'))
  }catch(e){
    if(e&&e.message==='cancelled')return;
-   const s=STAGES[run?.stage||0];
+   const s=STAGES[run?.stage||0],message=String(e?.message||e||'');
+   if(run?.rebornResult){
+     console.error('Ashen Vault encounter runtime',e);
+     status('Encounter UI interrupted');
+     log('Encounter runtime issue: '+message);
+     const panel=$('#cbrStartupError');if(panel)panel.remove();
+     const end=$('#cb2dEnd');if(end&&!end.hidden)return;
+   }
    showRebornStartupFailure(e,s,tok)
  }
 }
