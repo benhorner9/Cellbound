@@ -275,7 +275,11 @@ function tbPartyFormation(c,i){
  return dps[Math.max(0,party().filter(x=>roleOf(x)==='dps').findIndex(x=>x.id===c.id))]||{x:28,y:32+i*9}
 }
 function tbSetPos(el,x,y,ms=500){
- if(!el)return;el.dataset.x=String(x);el.dataset.y=String(y);el.style.transitionDuration=Math.max(80,ms/playSpeed)+'ms';el.style.left=x+'%';el.style.top=y+'%'
+ if(!el)return;
+ const partyUnit=el.hasAttribute('data-tb-unit'),bossUnit=el.hasAttribute('data-tb-boss');
+ const minX=partyUnit?7:bossUnit?57:7,maxX=partyUnit?60:bossUnit?93:93;
+ const safeX=clamp(Number(x)||50,minX,maxX),safeY=clamp(Number(y)||50,10,90);
+ el.dataset.x=String(safeX);el.dataset.y=String(safeY);el.style.transitionDuration=Math.max(80,ms/playSpeed)+'ms';el.style.left=safeX+'%';el.style.top=safeY+'%'
 }
 function tbUnitPos(id){
  const el=$('[data-tb-unit="'+id+'"],[data-tb-boss="'+id+'"]');return el?{x:Number(el.dataset.x)||50,y:Number(el.dataset.y)||50}:null
