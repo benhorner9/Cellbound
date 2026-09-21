@@ -110,6 +110,25 @@ const DUNGEONS={
    lootTable:['priest-t3-chest','hunter-t3-weapon','mage-t3-weapon','embercore-staff','heart-troll-king'],
    bossDrops:{gallery:['priest-t3-chest'],sentinel:['hunter-t3-weapon'],choir:['mage-t3-weapon','embercore-staff','heart-troll-king']},
    chase:['hollow-glassling','corrupted-choir-cell']
+ },
+ 'chaos-canyon':{
+   id:'chaos-canyon',name:'Chaos Canyon',version:2,theme:'Wild Canyon',
+   faction:'Vorran\'s Wildbound',levelRange:[9,11],normalItemLevel:30,heroicItemLevel:34,cellboundItemLevel:36,
+   timerMs:18*60*1000,
+   identity:'Interactive traversal, mistake-driven damage pressure, self-healing bosses and a collapsing final arena.',
+   bosses:[
+     {id:'sentinel',name:'The Canyon Sentinel',signature:'Stone slams, fractures and root control.'},
+     {id:'warden',name:'The Chaos Warden',signature:'Incoming damage scales with Chaos Crossing failures.'},
+     {id:'vorran',name:'Archdruid Vorran',signature:'Interruptible self-healing and a steadily shrinking arena.'}
+   ],
+   heroicAdds:{
+     sentinel:[{name:'Canyon Roar',type:'circles',duration:1400}],
+     warden:[{name:'Frenzied Growth',type:'circles',duration:1350}],
+     vorran:[{name:'Wild Wrath',type:'circles',duration:1350}]
+   },
+   lootTable:['priest-t3-chest','hunter-t3-weapon','mage-t3-weapon','warrior-t3-chest','heart-troll-king'],
+   bossDrops:{sentinel:['warrior-t3-chest'],warden:['hunter-t3-weapon','priest-t3-chest'],vorran:['mage-t3-weapon','heart-troll-king']},
+   chase:[]
  }
 };
 
@@ -138,6 +157,15 @@ const BOSS_PHASES={
      {id:'choir-echoes',name:'The Choir Multiplies',atPct:70,spawnAdds:true},
      {id:'choir-discord',name:'Discordant Chamber',atPct:40,addMechanics:[{name:'Glass Rain',type:'circles',duration:1350}]},
      {id:'choir-last-verse',name:'The Last Verse',atPct:20,damageScale:1.23}
+   ]
+ },
+ 'chaos-canyon':{
+   sentinel:[{id:'sentinel-fracture',name:'The Basin Fractures',atPct:45,damageScale:1.12}],
+   warden:[{id:'warden-frenzy',name:'Frenzied Growth',atPct:40,damageScale:1.15}],
+   vorran:[
+     {id:'vorran-close-one',name:'The Canyon Closes',atPct:75,damageScale:1.06},
+     {id:'vorran-close-two',name:'Roots Close In',atPct:50,damageScale:1.12},
+     {id:'vorran-unbound',name:'True Chaos',atPct:25,damageScale:1.22,addMechanics:[{name:'Wild Wrath: Unbound',type:'circles',duration:1150}]}
    ]
  }
 };
