@@ -6,7 +6,7 @@ let Game=null,db=null,G=null,P=null,run=null,token=0,requestedRunOptions=null;
 let hsTactics={strategyPreset:'balanced',pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced',bossPlan:'balanced'};
 const STAGES=[
  {id:'gallery',title:'Gallery of Echoes',kind:'TRASH',combatKind:'trash',level:6,enemyTypes:['trash','trash','trash'],enemyHealth:145,enemies:['Hollowed Surveyor','Hollowed Surveyor','Glass Mite'],mechanic:'Echo Burst',mechanics:[['Echo Burst','circles',1500]]},
- {id:'sentinel',title:'Glassjaw Sentinel',kind:'MINI-BOSS',combatKind:'boss',level:7,enemyTypes:['elite'],enemyHealth:750,enemies:['Glassjaw Sentinel'],mechanic:'Fracture Line',mechanics:[['Fracture Line','line',1700],['Glassjaw Sweep','cone',1450]]},
+ {id:'sentinel',title:'Glassjaw Sentinel',kind:'MINI-BOSS',combatKind:'boss',level:7,enemyTypes:['boss'],enemyHealth:750,enemies:['Glassjaw Sentinel'],mechanic:'Fracture Line',mechanics:[['Fracture Line','line',1700],['Glassjaw Sweep','cone',1450]]},
  {id:'choir',title:'The Bound Choir',kind:'FINAL BOSS',combatKind:'final',level:8,enemyTypes:['boss'],enemyHealth:1000,enemies:['The Bound Choir'],mechanic:'Resonance Collapse',mechanics:[['Resonance Collapse','circle',2100],['Shattering Hymn','interrupt',2200],['Echo Choir','adds',1200]]}
 ];
 
@@ -324,7 +324,9 @@ function hsStatusTargets(id){
  return out
 }
 function hsRenderRebornEvent(e){
- if(window.CellboundCombatStatuses?.handle(e,{resolve:hsStatusTargets,speed:1}))return;
+ try{
+  if(window.CellboundCombatStatuses?.handle(e,{resolve:hsStatusTargets,speed:()=>run?.speed||1}))return;
+ }catch(error){console.warn('Hollow Sanctum status visual skipped',e?.type,error)}
  const src=hsRenderId(e.source),target=hsRenderId(e.target),srcChar=hsCharacter(e.source),targetChar=hsCharacter(e.target);
  switch(e.type){
   case'COMBAT_START':setStatus('Combat simulation live.');feed('Combat begins.');break;
@@ -385,13 +387,27 @@ function hsRenderRebornEvent(e){
  }
 }
 async function hsPlayTimeline(result,tok){
- let last=0;run.telegraphs={};
- for(const e of result.events||[]){
-   if(tok!==token||!run)return false;
-   const gap=Math.max(0,(Number(e.timestamp)||0)-last);if(gap)await wait(gap);
-   hsRenderRebornEvent(e);last=Number(e.timestamp)||last
- }
- return result.outcome==='victory'
+ const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
+ if(!run)return false;run.telegraphs={};
+ if(!events.length)return result?.outcome==='victory';
+ return await new Promise(resolve=>{
+  let index=0,simTime=0,lastFrame=performance.now(),finished=false;
+  const finish=value=>{if(finished)return;finished=true;resolve(value)};
+  const frame=now=>{
+   if(finished)return;
+   if(tok!==token||!run){finish(false);return}
+   const delta=Math.min(Math.max(0,now-lastFrame),100);lastFrame=now;
+   simTime+=delta*Math.max(.25,Number(run.speed)||1);
+   while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4){
+    const event=events[index++];
+    try{hsRenderRebornEvent(event)}
+    catch(error){console.error('Hollow Sanctum combat visual recovered',event?.type,event?.ability,error)}
+   }
+   if(index>=events.length){finish(result?.outcome==='victory');return}
+   requestAnimationFrame(frame)
+  };
+  requestAnimationFrame(frame)
+ })
 }
 function hsStageSummary(result){
  const s=result?.summary||{},ints=s.interrupts||{},m=s.mechanics||{};
@@ -578,7 +594,7 @@ function draw(){
  const s=STAGES[run.stage],r=root();r.hidden=false;
  r.innerHTML='<section class="cb2d-shell hs2d-unified-shell"><header class="cb2d-head"><div><small>THE HOLLOW SANCTUM · LIVE 2D DUNGEON</small><h2 id="hs2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close>×</button></div></header>'+
  '<div class="cb2d-route hs2d-route">'+STAGES.map((x,i)=>'<span class="'+(i<run.stage?'done':i===run.stage?'current':'')+'"><i>'+(i+1)+'</i>'+esc(x.title)+'</span>').join('')+'</div>'+
- '<div class="cb2d-layout"><main><div class="cb2d-arena hs2d-arena hs2d-unified-arena" id="hs2dArena"><div class="cb2d-floor hs2d-floor"></div><div class="hs2d-environment" id="hs2dEnvironment"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="hs2dTelegraphs"></div><div id="hs2dUnits"></div><div id="hs2dFx"></div><div class="hs2d-room cb2d-room-tag" id="hs2dRoom"></div><div class="cb2d-caption hs2d-caption"><span>'+esc(s.kind)+'</span><b id="hs2dStatus">Descending…</b></div></div>'+
+ '<div class="cb2d-layout"><main><div class="cb2d-arena hs2d-arena hs2d-unified-arena" id="hs2dArena"><div class="cb2d-floor hs2d-floor"></div><div class="hs2d-environment" id="hs2dEnvironment"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="hs2dTelegraphs"></div><div id="hs2dUnits"></div><div id="hs2dFx"></div><div class="hs2d-room cb2d-room-tag" id="hs2dRoom"></div><div class="cb2d-caption hs2d-caption"><span id="hs2dType">'+esc(s.kind)+'</span><b id="hs2dStatus">Descending…</b></div></div>'+
  '<div class="cb2d-controls"><button data-hs-override="focus"><b>FOCUS TARGET</b><small>Force priority damage.</small></button><button data-hs-override="interrupt"><b>INTERRUPT NOW</b><small>Raise interrupt priority.</small></button><button data-hs-override="defensive"><b>DEFENSIVE</b><small>Stabilise the group.</small></button><button data-hs-override="burn"><b>BURN BOSS</b><small>Commit damage cooldowns.</small></button><button data-hs-override="consumable"><b>USE CONSUMABLE</b><small>Use available stock.</small></button></div>'+
  '<div class="cb2d-feed hs2d-unified-feed"><small>COMBAT FEED</small><div id="hs2dFeed"></div></div></main>'+
  '<aside><div class="cb2d-cast" id="hs2dCastPanel"><small>ENEMY CAST</small><div><b id="hs2dCastName">—</b><strong id="hs2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="hs2dCastFill"></i></div></div>'+
@@ -603,7 +619,7 @@ async function start(){
  const startButton=root().querySelector('[data-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
  await Game.persistState?.();
  const service=await hsWaitForEndgame(),eg=hsEndgameConfig(),attempt=await service?.beginAttempt?.('hollow-sanctum');if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN EXPEDITION →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Descent again.');return}token++;const tok=token,p=party();run={stage:0,done:false,speed:1,log:[],damageDone:Object.fromEntries(p.map(ch=>[ch.id,0])),healingDone:Object.fromEntries(p.map(ch=>[ch.id,0])),overhealing:Object.fromEntries(p.map(ch=>[ch.id,0])),threat:Object.fromEntries(p.map(ch=>[ch.id,0])),aggro:null,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=hsResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{}};draw();
- for(let i=0;i<STAGES.length;i++){if(tok!==token)return;run.stage=i;const s=STAGES[i];$('#hs2dTitle').textContent=s.title;$('.hs2d-route').innerHTML=STAGES.map((x,j)=>'<span class="'+(j<i?'done':j===i?'current':'')+'"><i>'+(j+1)+'</i>'+esc(x.title)+'</span>').join('');if(!await fightStage(s,tok,i))return}
+ for(let i=0;i<STAGES.length;i++){if(tok!==token)return;run.stage=i;const s=STAGES[i];$('#hs2dTitle').textContent=s.title;const type=$('#hs2dType');if(type)type.textContent=s.kind;$('.hs2d-route').innerHTML=STAGES.map((x,j)=>'<span class="'+(j<i?'done':j===i?'current':'')+'"><i>'+(j+1)+'</i>'+esc(x.title)+'</span>').join('');if(!await fightStage(s,tok,i))return}
  if(tok!==token)return;await complete();
 }
 async function complete(){
