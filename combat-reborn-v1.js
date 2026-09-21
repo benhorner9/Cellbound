@@ -81,7 +81,7 @@ const ABILITIES={
   {id:'heart-strike',name:'Heart Strike',kind:'damage',role:'tank',unlockLevel:1,desc:'Reliable melee damage with increased threat.',range:5,damage:15,cost:20,gcd:1500,cd:0,threat:1.5},
   {id:'obliterate',name:'Obliterate',kind:'damage',role:'dps',unlockLevel:1,desc:'A hard-hitting melee attack for sustained pressure.',range:5,damage:26,cost:28,gcd:1500,cd:4500},
   {id:'mind-freeze',name:'Mind Freeze',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast.',range:10,cost:0,gcd:0,cd:15000},
-  {id:'death-grip',name:'Death Grip',kind:'taunt',role:'tank',unlockLevel:4,desc:'Force an enemy to focus the Death Knight.',range:30,cost:0,gcd:0,cd:18000,threat:4},
+  {id:'death-grip',name:'Death Grip',kind:'taunt',role:'tank',unlockLevel:1,desc:'Force an enemy to focus the Death Knight.',range:30,cost:0,gcd:0,cd:18000,threat:4},
   {id:'icebound-fortitude',name:'Icebound Fortitude',kind:'defensive',unlockLevel:8,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.30,gcd:0,cd:90000},
   {id:'death-and-decay',name:'Death and Decay',kind:'damage',unlockLevel:12,desc:'Strike the target and nearby enemies.',range:20,damage:18,cost:25,gcd:1500,cd:10000,cleave:3}
  ],
