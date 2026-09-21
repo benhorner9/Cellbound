@@ -826,3 +826,30 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
   .cb2d-failure-main{padding:14px}
   .cb2d-failure-analysis .cbr-analysis-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+
+/* Combat performance pass — keep active viewers on composited, isolated surfaces. */
+#cb2dBackdrop,
+#cc2dBackdrop,
+#hs2dBackdrop,
+#bs2dBackdrop,
+#tbBackdrop,
+#worldBoss2dBackdrop{
+  -webkit-backdrop-filter:none!important;
+  backdrop-filter:none!important;
+}
+#cb2dArena,
+#cc2dArena,
+#hs2dArena,
+#bsArena,
+#tbArena,
+#worldBoss2dArena{
+  contain:layout paint style;
+}
+#cb2dArena .cb2d-unit{
+  will-change:transform;
+  backface-visibility:hidden;
+}
+.cb2d-meter-list{
+  contain:content;
+}
