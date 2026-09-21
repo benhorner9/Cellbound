@@ -194,10 +194,21 @@ function renderId(id){
 }
 function charFor(id){const s=String(id||'');return s.startsWith('p-')?party().find(c=>String(c.id)===s.slice(2)):null}
 function addUnit(id,label,cls,x,y,big=false){
- const e=document.createElement('div');e.className='bs-unit cb2d-unit '+cls+(big?' big':'');e.dataset.bs=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+'</span><em><i></i></em>';$('#bsUnits')?.appendChild(e)
+ const e=document.createElement('div');e.className='bs-unit cb2d-unit '+cls+(big?' big':'');e.dataset.bs=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+'</span><em class="cb2d-unit-hp"><i></i></em>';$('#bsUnits')?.appendChild(e)
 }
-function move(id,x,y,ms=420){const e=$('[data-bs="'+id+'"]');if(!e)return;e.style.transitionDuration=ms+'ms';e.style.left=x+'%';e.style.top=y+'%'}
-function bar(id,pct){const e=$('[data-bs="'+id+'"] > em i');if(e)e.style.width=Math.max(0,Math.min(100,pct))+'%'}
+function move(id,x,y,ms=420){const e=$('[data-bs="'+id+'"]');if(!e)return;e.style.transitionDuration=Math.round(ms/Math.max(.25,Number(run?.speed)||1))+'ms';e.style.left=x+'%';e.style.top=y+'%'}
+function bar(id,pct){const e=$('[data-bs="'+id+'"] .cb2d-unit-hp i');if(e)e.style.width=Math.max(0,Math.min(100,pct))+'%'}
+function resourceDef(c){return window.CellboundCombatReborn?.RESOURCE_DEFS?.[c?.class]||{name:'Power',max:100,start:100}}
+function resourceClass(name){return'resource-'+String(name||'power').toLowerCase().replace(/[^a-z0-9]+/g,'-')}
+function updateResource(c,name,value,max,mode='state'){
+ if(!c)return;const i=party().findIndex(x=>String(x.id)===String(c.id)),u=$('[data-bs="p'+i+'"]');if(!u)return;
+ let el=u.querySelector('.cbr-resource');if(!el){el=document.createElement('small');el.className='cbr-resource';el.innerHTML='<i></i>';u.appendChild(el)}
+ const def=resourceDef(c),resource=String(name||def.name||'Power'),limit=Math.max(1,Number(max)||def.max||100),val=Math.max(0,Math.min(limit,Number(value)||0)),key=resourceClass(resource);
+ [...el.classList].filter(x=>x.startsWith('resource-')).forEach(x=>el.classList.remove(x));el.classList.add(key);el.dataset.resource=resource;el.title=resource;
+ const fill=el.querySelector('i');if(fill){fill.style.transition=mode==='RESOURCE_STATE'?'width .7s linear':'width .25s ease-out';fill.style.width=(val/limit*100)+'%'}
+ run.resources=run.resources||{};run.resources[c.id]={name:resource,max:limit,value:val}
+}
+function mountResource(c){const d=run?.resources?.[c.id]||resourceDef(c);updateResource(c,d.name,d.value??d.start,d.max,'initial')}
 function point(id){const arena=$('#bsArena'),e=$('[data-bs="'+id+'"]');if(!arena||!e)return null;const a=arena.getBoundingClientRect(),r=e.getBoundingClientRect();return{x:r.left+r.width/2-a.left,y:r.top+r.height/2-a.top}}
 function floatText(id,text,kind='damage'){
  const p=point(id),arena=$('#bsArena');if(!p||!arena)return;const e=document.createElement('b');e.className='bs-float '+kind;e.textContent=text;e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),850)
@@ -214,7 +225,7 @@ function statusTargets(id){
 }
 function renderPartyRows(){
  const e=$('#bsRows');if(!e)return;
- e.innerHTML=party().map(c=>'<div class="cb2d-party-row" data-bs-side-row="'+esc(c.id)+'"><i class="cb2d-dot '+classKey(c)+'"></i><span data-bs-side="'+esc(c.id)+'"><b>'+esc(c.name)+'</b><small>'+role(c).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-bs-side-hp="'+esc(c.id)+'" style="width:'+(Number(run?.hp?.[c.id])||100)+'%"></i></em></span><strong data-bs-side-text="'+esc(c.id)+'">'+Math.round(Number(run?.hp?.[c.id])||100)+' HP</strong></div>').join('')
+ e.innerHTML=party().map(c=>'<div class="cb2d-party-row" data-bs-side-row="'+esc(c.id)+'"><i class="cb2d-dot '+classKey(c)+'"></i><span data-bs-side="'+esc(c.id)+'"><b>'+esc(c.name)+'</b><small>'+role(c).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-bs-side-hp="'+esc(c.id)+'" style="width:'+(run?.hp?.[c.id]!=null?Number(run.hp[c.id]):100)+'%"></i></em></span><strong data-bs-side-text="'+esc(c.id)+'">'+Math.round(run?.hp?.[c.id]!=null?Number(run.hp[c.id]):100)+' HP</strong></div>').join('')
 }
 function updateSideHp(c,pct){
  if(!c)return;const id=String(c.id),row=Array.from(document.querySelectorAll('[data-bs-side-row]')).find(x=>x.dataset.bsSideRow===id);if(!row)return;
@@ -253,12 +264,15 @@ function eventRender(e){
    if(srcChar)bsAct(srcChar.role,(e.ability||'Acting')+'…');
    break;
   case'DAMAGE_DEALT':
-   if(target){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);floatText(target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');if(targetChar){run.hp[targetChar.id]=pct;updateSideHp(targetChar,pct)}}
+   if(target){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);floatText(target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');if(targetChar){run.hp[targetChar.id]=pct;updateSideHp(targetChar,pct);if(Number(e.amount)>0&&pct<=35)feed(targetChar.name+' drops to '+Math.round(pct)+'% HP from '+(e.ability||'incoming damage')+'.')}}
    if(srcChar){run.damage[srcChar.id]=(Number(run.damage[srcChar.id])||0)+(Number(e.amount)||0);renderMeters()}
    break;
   case'HEAL_RECEIVED':
    if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);run.hp[targetChar.id]=pct;floatText(target,'+'+Math.round(Number(e.amount)||0),'heal');updateSideHp(targetChar,pct)}
    if(srcChar){run.healing[srcChar.id]=(Number(run.healing[srcChar.id])||0)+(Number(e.amount)||0);renderMeters()}
+   break;
+  case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':
+   if(srcChar)updateResource(srcChar,e.payload?.resource,e.payload?.value,e.payload?.max,e.type);
    break;
   case'THREAT_GENERATED':if(srcChar){run.threat[srcChar.id]=Number(e.payload?.total)||0;renderMeters()}break;
   case'AGGRO_CHANGED':
@@ -273,12 +287,12 @@ function eventRender(e){
   case'CAST_FINISH':case'INTERRUPT':castClear();break;
   case'MECHANIC_SAFE':if(target){floatText(target,'PROTECTED','heal')}break;
   case'ROLE_SHOCKWAVE':
-   $('#bsArena')?.classList.add('shockwave');setStatus(e.result==='casualties'?'SHOCKWAVE — CASUALTIES':'SHOCKWAVE SURVIVED');feed(e.result==='casualties'?'The shockwave catches someone outside their correct circuit.':'The party is grounded inside the correct role circuits.');setTimeout(()=>{$('#bsArena')?.classList.remove('shockwave');hideRoleZones()},650);break;
-  case'PLAYER_DEFEATED':if(target){$('[data-bs="'+target+'"]')?.classList.add('dead');bar(target,0);floatText(target,'DEFEATED','incoming');if(targetChar){run.hp[targetChar.id]=0;updateSideHp(targetChar,0)}}break;
-  case'PLAYER_REVIVED':if(target){$('[data-bs="'+target+'"]')?.classList.remove('dead');bar(target,Number(e.payload?.targetHpPct)||35);floatText(target,'REVIVED','heal')}break;
+   $('#bsArena')?.classList.add('shockwave');setStatus(e.result==='casualties'?'SHOCKWAVE — WRONG ROLE CIRCUIT':'SHOCKWAVE SURVIVED');feed(e.result==='casualties'?'Emergency Overload resolves: anyone outside their correct role circle is killed instantly.':'Emergency Overload resolves safely. Every living character reached the correct role circuit.');setTimeout(()=>{$('#bsArena')?.classList.remove('shockwave');hideRoleZones()},650);break;
+  case'PLAYER_DEFEATED':if(target){$('[data-bs="'+target+'"]')?.classList.add('dead');bar(target,0);floatText(target,'DEFEATED','incoming');if(targetChar){run.hp[targetChar.id]=0;updateSideHp(targetChar,0);feed(targetChar.name+' is defeated by '+(e.ability||'Dr. Vex Calder')+'.')}}break;
+  case'PLAYER_REVIVED':if(target){const pct=Number(e.payload?.targetHpPct)||35;$('[data-bs="'+target+'"]')?.classList.remove('dead');bar(target,pct);floatText(target,'REVIVED','heal');if(targetChar){run.hp[targetChar.id]=pct;updateSideHp(targetChar,pct);updateResource(targetChar,e.payload?.resource,e.payload?.resourceValue,e.payload?.resourceMax,'PLAYER_REVIVED')}}break;
   case'ENEMY_DEFEATED':if(target){$('[data-bs="'+target+'"]')?.classList.add('dead');bar(target,0);feed('Dr. Vex Calder collapses beside the overloaded generator.')}break;
   case'PLAYER_MISTAKE':if(srcChar)feed(srcChar.name+' '+(e.payload?.detail||'hesitates')+'.');break;
-  case'COMBAT_END':castClear();hideRoleZones();break
+  case'COMBAT_END':castClear();hideRoleZones();setStatus(e.result==='victory'?'Dr. Vex Calder defeated.':'PARTY WIPED');feed(e.result==='victory'?'Combat complete. Calder is down.':'Combat ends in a party wipe. Review the failure report below.');break
  }
 }
 async function playTimeline(result,tok){
@@ -311,6 +325,7 @@ function drawCombat(){
  r.querySelector('[data-bs-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  renderPartyRows();
  const p=party();p.forEach((c,i)=>addUnit('p'+i,c.name,'party '+role(c)+' '+classKey(c),role(c)==='tank'?38:role(c)==='healer'?18:26,24+i*13));
+ p.forEach(c=>mountResource(c));
  addUnit('e0','Dr. Vex Calder','enemy boss',68,50,true);renderMeters();
  feed('Power restored. Dr. Vex Calder enters the generator hall.')
 }
@@ -349,12 +364,19 @@ async function complete(){
  e.querySelector('[data-bs-bank]').onclick=()=>{close();Game.switchView?.('bank')};e.querySelector('[data-bs-return]').onclick=()=>{close();Game.switchView?.('content')};
  renderCard()
 }
+function failureDiagnosis(){
+ const events=run?.result?.events||[],summary=run?.result?.summary||{},shockDeaths=events.filter(e=>e.type==='PLAYER_DEFEATED'&&/overload/i.test(String(e.ability||''))),deaths=events.filter(e=>e.type==='PLAYER_DEFEATED'),failed=Number(summary.mechanics?.failed)||0;
+ if(shockDeaths.length)return shockDeaths.length+' character'+(shockDeaths.length===1?' was':'s were')+' killed by Emergency Overload after missing the correct role circuit.';
+ if(failed)return failed+' encounter mechanic'+(failed===1?' was':'s were')+' failed before the party collapsed.';
+ if(deaths.length)return 'The party was overwhelmed by Calder\'s sustained damage before the boss could be finished.';
+ return 'The party failed the encounter damage / healing check.'
+}
 function fail(){
- Game.applyPartyCellShock?.(25);const e=$('#bsEnd');if(!e)return;e.hidden=false;e.className='cb2d-end';e.innerHTML='<div><small>BLACKOUT STATION · EXPEDITION FAILED</small><h3>The generator hall claims the party.</h3><p>Calder\'s shockwave or sustained electrical damage overwhelmed the active five. Each adventurer gained 25% Cell Shock.</p></div><button data-bs-return>RETURN TO DUNGEONS →</button>';e.querySelector('[data-bs-return]').onclick=()=>{close();Game.switchView?.('content')}
+ Game.applyPartyCellShock?.(25);const e=$('#bsEnd');if(!e)return;e.hidden=false;e.className='cb2d-end bs-wipe-report';e.innerHTML='<div><small>BLACKOUT STATION · EXPEDITION FAILED</small><h3>Party Wiped</h3><p>'+esc(failureDiagnosis())+'</p><strong>Every adventurer gained 25% Cell Shock.</strong></div><button data-bs-return>RETURN TO DUNGEONS →</button>';e.querySelector('[data-bs-return]').onclick=()=>{close();Game.switchView?.('content')}
 }
 function startRun(){
  const gate=readiness();if(!gate.ok)return;const quickReconnect=(Number(state()?.blackoutStationCompletions)||0)>0;token++;
- run={speed:1,seed:Date.now().toString(36),board:shuffledBoard(),moves:0,powered:false,quickReconnect,cluesUsed:0,cluesRemaining:5,log:[quickReconnect?'Previous clear recognised. Quick reconnect authorised: only one continuous path to the breaker is required.':'First-clear protocol active. Restore all 15 cable tiles before the breaker will close.'],damage:Object.fromEntries(party().map(c=>[c.id,0])),healing:Object.fromEntries(party().map(c=>[c.id,0])),threat:Object.fromEntries(party().map(c=>[c.id,0])),hp:Object.fromEntries(party().map(c=>[c.id,100])),aggro:null,combatElapsed:0,result:null};renderPuzzle()
+ run={speed:1,seed:Date.now().toString(36),board:shuffledBoard(),moves:0,powered:false,quickReconnect,cluesUsed:0,cluesRemaining:5,log:[quickReconnect?'Previous clear recognised. Quick reconnect authorised: only one continuous path to the breaker is required.':'First-clear protocol active. Restore all 15 cable tiles before the breaker will close.'],damage:Object.fromEntries(party().map(c=>[c.id,0])),healing:Object.fromEntries(party().map(c=>[c.id,0])),threat:Object.fromEntries(party().map(c=>[c.id,0])),hp:Object.fromEntries(party().map(c=>[c.id,100])),resources:Object.fromEntries(party().map(c=>{const d=resourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),aggro:null,combatElapsed:0,result:null};renderPuzzle()
 }
 function init(){
  Game=window.CellboundGame;G=window.CellboundGear;if(!Game?.ready){setTimeout(init,100);return}db=Game.getSupabase?.();renderCard();
