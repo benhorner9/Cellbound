@@ -350,7 +350,7 @@ function openDungeonDetail(id,options={}){
   activeDungeonDetail=target;
   const mounts={['ashen-vault']:$('#ashenDungeonDetail'),['hollow-sanctum']:$('#hollowSanctumMount'),['chaos-canyon']:$('#chaosCanyonMount'),['blackout-station']:$('#blackoutStationMount')};
   Object.entries(mounts).forEach(([key,panel])=>{if(panel)panel.hidden=key!==target});
-  $('[data-dungeon-card]').forEach(card=>card.classList.toggle('active',card.dataset.dungeonCard===target));renderDungeonBrowserStatus();
+  $$('[data-dungeon-card]').forEach(card=>card.classList.toggle('active',card.dataset.dungeonCard===target));renderDungeonBrowserStatus();
   const panel=mounts[target];if(options.scroll!==false&&panel)setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'start'}),20)
 }
 function closeDungeonDetails(){
