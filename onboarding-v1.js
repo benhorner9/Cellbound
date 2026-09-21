@@ -38,7 +38,7 @@ const ROLE_DESC={
 };
 
 let Game=null,G=null,P=null,db=null,user=null;
-let draft=[],activeSlot=0,tutorialToken=0;
+let draft=[],activeSlot=0,tutorialToken=0,tutorialCombatStats=null;
 
 const state=()=>Game?.getState?.();
 const onboarding=()=>state()?.onboarding||{};
@@ -82,7 +82,7 @@ function restoreDraft(){
 }
 function saveDraft(){
   const s=state();if(!s)return;
-  s.onboarding=s.onboarding||{version:1,complete:false,stage:'party-builder',zone:'zeltira'};
+  s.onboarding=s.onboarding||{version:2,complete:false,stage:'party-builder',zone:'zeltira'};
   s.onboarding.draft=clone(draft);Game.save();
 }
 function ensureRoot(){
@@ -93,34 +93,35 @@ function ensureRoot(){
 function stageTitle(stage){
   const labels={
     'party-builder':'Build Your Party',
-    'zeltira-arrival':'Arrival in Zeltira',
-    'gear':'Reading Equipment',
-    'dungeon-briefing':'Combat School',
+    'zeltira-arrival':'The Gate at Dusk',
+    'first-expedition':'The First Resonance',
+    'gear':'Arm the Five',
+    'dungeon-briefing':'Below Zeltira',
     'dungeon-running':'The Zeltiran Hollows',
-    'loot-review':'Your First Drop',
-    'recovery-lesson':'After the Fight',
-    'profession-choice':'Choose a Profession',
-    'craft':'Craft Your First Item',
-    'profession-use':'Prepare for Battle',
-    'quest-lesson':'Your First Adventure',
-    'departure':'The Road Opens'
+    'loot-review':'What the Warden Kept',
+    'recovery-lesson':'The Cost of Failure',
+    'profession-choice':'Use What You Found',
+    'craft':'Your First Craft',
+    'profession-use':'Prepare the Party',
+    'quest-lesson':'The East Road',
+    'departure':'Your First Contract'
   };
   return labels[stage]||'Zeltira';
 }
 function chrome(body,stage){
   const steps=[
     ['party-builder','Party'],
+    ['first-expedition','Signal'],
     ['gear','Gear'],
-    ['dungeon-briefing','Combat'],
+    ['dungeon-briefing','Expedition'],
     ['loot-review','Loot'],
-    ['recovery-lesson','Growth'],
+    ['recovery-lesson','Shock'],
     ['profession-choice','Craft'],
-    ['quest-lesson','Quests'],
-    ['departure','Adventure']
+    ['departure','Road']
   ];
-  const order={'party-builder':0,'zeltira-arrival':0,'gear':1,'dungeon-briefing':2,'dungeon-running':2,'loot-review':3,'recovery-lesson':4,'profession-choice':5,'craft':5,'profession-use':5,'quest-lesson':6,'departure':7};
+  const order={'party-builder':0,'zeltira-arrival':1,'first-expedition':1,'gear':2,'dungeon-briefing':3,'dungeon-running':3,'loot-review':4,'recovery-lesson':5,'profession-choice':6,'craft':6,'profession-use':6,'quest-lesson':7,'departure':7};
   const at=order[stage]??0;
-  return '<section class="onboard-shell"><header class="onboard-head"><div><small>CELLBOUND · FIRST CHARTER</small><h1>'+esc(stageTitle(stage))+'</h1></div><div class="onboard-progress">'+steps.map((x,i)=>'<span class="'+(i<at?'done':i===at?'active':'')+'"><i>'+(i+1)+'</i>'+x[1]+'</span>').join('')+'</div></header>'+body+'</section>';
+  return '<section class="onboard-shell"><header class="onboard-head"><div><small>CELLBOUND · FIRST EXPEDITION</small><h1>'+esc(stageTitle(stage))+'</h1></div><div class="onboard-progress">'+steps.map((x,i)=>'<span class="'+(i<at?'done':i===at?'active':'')+'"><i>'+(i+1)+'</i>'+x[1]+'</span>').join('')+'</div></header>'+body+'</section>';
 }
 function show(){
   const root=ensureRoot();root.hidden=false;document.documentElement.dataset.onboarding='1';
@@ -194,7 +195,7 @@ async function createParty(){
   s.roster=roster;s.party={tank:ids[0],healer:ids[1],dps:ids.slice(2,5)};
   s.renown=0;s.gold=250;s.bank=[];s.materials={};s.consumables=[];s.recipeScrolls=[];s.discoveredRecipes=[];s.tradeInbox=[];s.collectionHistory=[];s.reports=[];s.bossKills={ashwarden:false,embermaw:false,vaultheart:false};s.progression={ashenVaultUnlocked:false};s.questSystem=null;
   s.activity=['Your first party has been formed.','The road to Zeltira is open.'];
-  s.onboarding={version:1,complete:false,stage:'zeltira-arrival',zone:'zeltira',startedAt:s.onboarding?.startedAt||new Date().toISOString(),partyCreatedAt:new Date().toISOString()};
+  s.onboarding={version:2,complete:false,stage:'zeltira-arrival',zone:'zeltira',startedAt:s.onboarding?.startedAt||new Date().toISOString(),partyCreatedAt:new Date().toISOString(),firstExpeditionClues:[]};
   Game.replaceState(clone(s));await Game.persistState();await syncPartyCharacters(roster);render();
 }
 
@@ -203,13 +204,14 @@ function partySummary(){
 }
 function zeltiraMap(active){
   const spots=[
-    ['gate','Arrival Gate','Your party enters Zeltira.'],
-    ['quartermaster','Quartermaster','Learn equipment and gear.'],
-    ['hollows','Zeltiran Hollows','Your first dungeon.'],
-    ['workshop','Craft Row','Choose a profession and craft.'],
-    ['road','Open Road','Leave the tutorial and adventure.']
+    ['gate','Arrival Gate','Your charter enters Zeltira.'],
+    ['resonance','West Wall','Something beneath the city answers the Cell Well.'],
+    ['quartermaster','Quartermaster','Arm the five before going below.'],
+    ['hollows','Zeltiran Hollows','Follow the resonance underground.'],
+    ['workshop','Craft Row','Turn recovered reagents into preparation.'],
+    ['road','East Road','Take the first real contract.']
   ];
-  const order=['gate','quartermaster','hollows','workshop','road'],at=Math.max(0,order.indexOf(active));
+  const order=['gate','resonance','quartermaster','hollows','workshop','road'],at=Math.max(0,order.indexOf(active));
   return '<div class="z-map"><div class="z-map-road"></div>'+spots.map((s,i)=>'<div class="z-map-node '+(i<at?'done':i===at?'active':'')+'" data-node="'+s[0]+'"><i>'+(i<at?'✓':i+1)+'</i><b>'+s[1]+'</b><small>'+s[2]+'</small></div>').join('')+'<div class="z-well">◇<span>THE CELL WELL</span></div></div>';
 }
 async function setStage(next,extra){
@@ -218,16 +220,41 @@ async function setStage(next,extra){
   Game.save();await Game.persistState();render();
 }
 function renderArrival(){
-  const body='<div class="zeltira-layout"><main>'+zeltiraMap('gate')+'</main><aside class="z-guide"><small>ZELTIRA · OUTER GATE</small><h2>Welcome to Zeltira.</h2><p class="guide-quote">“Five names on a fresh charter. Good. You are not one adventurer — you are the commander responsible for all five.”</p><div class="guide-name"><b>Warden Elara Vey</b><span>Zeltira Pathfinder</span></div><p>Before the road opens, you need to prove you can run the guild.</p><div class="tutorial-learning-list"><span><i>1</i><b>Read equipment</b><small>Item Level, rolled stats and who should wear what.</small></span><span><i>2</i><b>Command a dungeon</b><small>Pulls, threat, healing, interrupts and boss telegraphs.</small></span><span><i>3</i><b>Manage what drops</b><small>Bank gear, character upgrades and reagents.</small></span><span><i>4</i><b>Grow the guild</b><small>Cell Shock, knowledge, professions and quests.</small></span></div><div class="z-party-list">'+partySummary()+'</div><button id="toQuartermaster" class="on-primary">START TRAINING →</button></aside></div>';
+  const body='<div class="zeltira-layout"><main>'+zeltiraMap('gate')+'</main><aside class="z-guide"><small>ZELTIRA · OUTER GATE</small><h2>Your charter arrives at the wrong moment.</h2><p class="guide-quote">“Five names, fresh ink. I was going to give you a quiet first night.”</p><div class="guide-name"><b>Warden Elara Vey</b><span>Zeltira Pathfinder</span></div><p>The Cell Well flashed twice before sunset. A wardstone beneath the west wall answered it. That stone has been dead longer than anyone here has been alive.</p><div class="first-expedition-hook"><span>NEW CONTRACT</span><b>The First Resonance</b><small>Inspect the west wall before whatever is below it reaches the city proper.</small></div><div class="z-party-list">'+partySummary()+'</div><button id="answerResonance" class="on-primary">GO TO THE WEST WALL →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'zeltira-arrival');
-  $('#toQuartermaster')?.addEventListener('click',()=>setStage('gear'));
+  $('#answerResonance')?.addEventListener('click',()=>setStage('first-expedition'));
+}
+function renderFirstExpedition(){
+  const s=state();s.onboarding=s.onboarding||{};
+  const seen=new Set(Array.isArray(s.onboarding.firstExpeditionClues)?s.onboarding.firstExpeditionClues:[]);
+  const clues=[
+    {id:'fracture',icon:'⌁',title:'Fresh fracture',text:'A crack runs beneath the wall. Pale roots are growing out of it, away from something deeper underground.'},
+    {id:'lantern',icon:'◌',title:'Dead patrol lantern',text:'The lantern still has oil. Its Cell filament has been drained completely white rather than burned out.'},
+    {id:'ward',icon:'◇',title:'Old wardstone',text:'The stone is warm. Every few seconds its carved line brightens in the direction of the Zeltiran Hollows.'}
+  ];
+  const cards=clues.map(x=>'<button class="resonance-clue '+(seen.has(x.id)?'seen':'')+'" data-resonance-clue="'+x.id+'"><i>'+x.icon+'</i><span><small>'+(seen.has(x.id)?'INSPECTED':'UNKNOWN')+'</small><b>'+x.title+'</b><p>'+(seen.has(x.id)?x.text:'Inspect this part of the scene.')+'</p></span></button>').join('');
+  const ready=seen.size===clues.length;
+  const deduction=ready?'<section class="resonance-deduction"><small>FIELD DEDUCTION</small><h3>What connects the three signs?</h3><button data-resonance-answer="wrong">The west wall is simply failing from age.</button><button data-resonance-answer="correct">Something below Zeltira is drawing Cell energy and the wardstone is pointing toward the Hollows.</button><button data-resonance-answer="wrong">The patrol deliberately disabled the wardstone.</button><p id="resonanceHint">Elara asked for evidence, not a guess.</p></section>':'<section class="resonance-deduction locked"><small>FIELD DEDUCTION</small><h3>Inspect all three signs first.</h3><p>Nothing here is dramatic on its own. The pattern matters.</p></section>';
+  const body='<div class="first-expedition-layout"><main><div class="resonance-scene"><div class="resonance-scene-head"><small>WEST WALL · AFTER SUNSET</small><h2>The First Resonance</h2><p>The street has been cleared. The Cell Well is quiet now, but the old stone beneath your feet is not.</p></div><div class="resonance-clue-grid">'+cards+'</div>'+deduction+'</div></main><aside class="z-guide"><small>WARDEN ELARA VEY</small><h2>Read the scene before you move.</h2><p class="guide-quote">“Do not tell me what you think is down there. Tell me what the stone is doing.”</p><div class="resonance-progress"><span>Evidence found</span><b>'+seen.size+' / '+clues.length+'</b><div><i style="width:'+(seen.size/clues.length*100)+'%"></i></div></div><p>Cellbound is a management game, but your decisions come from what the world shows you. This is the first one.</p></aside></div>';
+  ensureRoot().innerHTML=chrome(body,'first-expedition');
+  $$('[data-resonance-clue]').forEach(b=>b.onclick=()=>{
+    const set=new Set(Array.isArray(s.onboarding.firstExpeditionClues)?s.onboarding.firstExpeditionClues:[]);
+    set.add(b.dataset.resonanceClue);s.onboarding.firstExpeditionClues=[...set];Game.save();renderFirstExpedition();
+  });
+  $$('[data-resonance-answer]').forEach(b=>b.onclick=async()=>{
+    const h=$('#resonanceHint');
+    if(b.dataset.resonanceAnswer!=='correct'){if(h){h.textContent='That does not explain the drained Cell filament and the direction of the ward pulse. Try again.';h.classList.add('lesson-wrong')}return}
+    if(h){h.textContent='That is enough for Elara to act on.';h.classList.remove('lesson-wrong');h.classList.add('lesson-correct')}
+    $$('[data-resonance-answer]').forEach(x=>x.disabled=true);
+    s.onboarding.firstResonanceSolved=true;s.activity.push('The guild traced an unexplained Cell resonance from Zeltira’s west wall toward the Hollows.');Game.save();await Game.persistState();await sleep(650);await setStage('gear');
+  });
 }
 function renderGear(){
   const tank=state().roster.find(c=>Game.classes?.[c.class]?.specs?.[c.spec]?.role==='tank')||state().roster[0];
   const good=G.createQuestGear?.(tank,'Weapon',1,'specialist','Zeltira Training')||G.starterSet(tank.class).find(x=>x.slot==='Weapon');
   const off=G.createQuestGear?.(tank,'Weapon',1,'swift','Zeltira Training')||good;
   const stats=item=>(G.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'No bonus stat';
-  const body='<div class="gear-school"><main><small>ZELTIRA · QUARTERMASTER</small><h2>Item Level tells you how advanced an item is. The roll tells you who actually wants it.</h2><p>These two weapons are the <b>same Item Level</b>. One better suits '+esc(tank.name)+' as a '+esc(tank.spec)+' '+esc(tank.class)+'. Choose the one you would equip.</p><div class="gear-lesson-compare"><button data-training-gear="good">'+G.artHTML(good,82)+'<span><small>ITEM LEVEL '+(good.itemLevel||22)+'</small><b>'+esc(good.name)+'</b><em>'+esc(stats(good))+'</em></span></button><button data-training-gear="off">'+G.artHTML(off,82)+'<span><small>ITEM LEVEL '+(off.itemLevel||22)+'</small><b>'+esc(off.name)+'</b><em>'+esc(stats(off))+'</em></span></button></div><div class="gear-school-rule"><b>Remember</b><span>Higher Item Level usually means more power, but two items at the same level can be very different because their bonus stats roll differently.</span></div><p id="gearLessonHint">Look for a stat that matches what your Tank is trying to do.</p></main><aside class="z-guide"><small>YOUR TANK</small><div class="gear-student"><span>'+esc(tank.portrait)+'</span><div><h3>'+esc(tank.name)+'</h3><p>'+esc(tank.race)+' · '+esc(tank.class)+' · '+esc(tank.spec)+'</p></div></div><div class="role-lessons"><div><i class="on-role tank"></i><b>Tank wants</b><span>Threat, Block, Stamina and Armour are strong tank rolls.</span></div></div><p>The dungeon version of an item can roll stronger values than reliable quest gear. That is why you may keep farming the same boss later.</p></aside></div>';
+  const body='<div class="gear-school"><main><small>ZELTIRA · QUARTERMASTER · EMERGENCY ISSUE</small><h2>Elara will not send an unarmed charter below the city.</h2><p>The Quartermaster puts two weapons on the counter. They are the <b>same Item Level</b>, but only one roll properly supports '+esc(tank.name)+' as a '+esc(tank.spec)+' '+esc(tank.class)+'. Pick what you would trust at the front of the formation.</p><div class="gear-lesson-compare"><button data-training-gear="good">'+G.artHTML(good,82)+'<span><small>ITEM LEVEL '+(good.itemLevel||22)+'</small><b>'+esc(good.name)+'</b><em>'+esc(stats(good))+'</em></span></button><button data-training-gear="off">'+G.artHTML(off,82)+'<span><small>ITEM LEVEL '+(off.itemLevel||22)+'</small><b>'+esc(off.name)+'</b><em>'+esc(stats(off))+'</em></span></button></div><div class="gear-school-rule"><b>Remember</b><span>Higher Item Level usually means more power, but two items at the same level can be very different because their bonus stats roll differently.</span></div><p id="gearLessonHint">Look for a stat that matches what your Tank is trying to do.</p></main><aside class="z-guide"><small>YOUR TANK</small><div class="gear-student"><span>'+esc(tank.portrait)+'</span><div><h3>'+esc(tank.name)+'</h3><p>'+esc(tank.race)+' · '+esc(tank.class)+' · '+esc(tank.spec)+'</p></div></div><div class="role-lessons"><div><i class="on-role tank"></i><b>Tank wants</b><span>Threat, Block, Stamina and Armour are strong tank rolls.</span></div></div><p>Item Level tells you how advanced the piece is. The roll tells you who actually wants it. You will use that distinction constantly once dungeon drops start arriving.</p></aside></div>';
   ensureRoot().innerHTML=chrome(body,'gear');
   $$('[data-training-gear]').forEach(b=>b.onclick=()=>{
     if(b.dataset.trainingGear!=='good'){
@@ -252,7 +279,7 @@ async function issueStarterGear(trainingWeapon){
   render();
 }
 function renderDungeonBriefing(){
-  const body='<div class="dungeon-brief-layout"><main><div class="tutorial-dungeon-art"><span>THE ZELTIRAN HOLLOWS</span><h2>Your first dungeon is a lesson, not a cutscene.</h2><p>You will be asked to make the important calls yourself. Get one wrong and Warden Elara will explain why before you try again.</p><div class="tutorial-route"><div><i>1</i><b>Rootling Nest</b><small>Pull & threat</small></div><div><i>2</i><b>Collapsed Gallery</b><small>Healing & interrupt</small></div><div><i>3</i><b>Hollow Warden</b><small>Boss telegraph</small></div></div></div></main><aside class="z-guide"><small>ZELTIRA · DUNGEON TRAINING</small><h2>What you are learning.</h2><div class="role-lessons"><div><i class="on-role tank"></i><b>Tank</b><span>Pulls first, builds threat and aims dangerous attacks away.</span></div><div><i class="on-role healer"></i><b>Healer</b><span>Stabilises damage without standing in danger.</span></div><div><i class="on-role dps"></i><b>Damage</b><span>Prioritises dangerous enemies and interrupts key casts.</span></div></div><p>Real dungeons can wipe. This training run cannot, so use it to understand what the 2D combat is showing you.</p><button id="enterTutorialDungeon" class="on-primary">START COMBAT TRAINING →</button></aside></div>';
+  const body='<div class="dungeon-brief-layout"><main><div class="tutorial-dungeon-art"><span>FIRST EXPEDITION · THE ZELTIRAN HOLLOWS</span><h2>The resonance ends below the oldest part of the city.</h2><p>Elara has put a Pathfinder ward on your charter. It can pull the party out if all five fall, but it cannot fight for them. The combat you watch is the same Combat Reborn simulation used by the rest of Cellbound.</p><div class="tutorial-route"><div><i>1</i><b>Rootling Nest</b><small>Threat & formation</small></div><div><i>2</i><b>Collapsed Gallery</b><small>Healing & interrupts</small></div><div><i>3</i><b>Hollow Warden</b><small>Telegraphs & boss pressure</small></div></div></div></main><aside class="z-guide"><small>WARDEN ELARA · LAST WORD</small><h2>Watch what the party actually does.</h2><div class="role-lessons"><div><i class="on-role tank"></i><b>Tank</b><span>Establishes threat and controls where dangerous enemies face.</span></div><div><i class="on-role healer"></i><b>Healer</b><span>Repairs damage while keeping a safe position.</span></div><div><i class="on-role dps"></i><b>Damage</b><span>Burns priority targets and covers dangerous interrupts.</span></div></div><p>The right side of the combat screen will show the same HP, resources, damage, healing, threat and status information used in later dungeons.</p><button id="enterTutorialDungeon" class="on-primary">DESCEND INTO THE HOLLOWS →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'dungeon-briefing');
   $('#enterTutorialDungeon')?.addEventListener('click',async()=>{await setStage('dungeon-running');});
 }
@@ -301,9 +328,20 @@ function unitMarkup(c,i){
   else pos=[15,64];
   return '<div class="td-unit party '+r+' profile-'+profile+' '+tutorialClassKey(c)+'" data-td-party="'+c.id+'" style="left:'+pos[0]+'%;top:'+pos[1]+'%"><i></i><span>'+esc(c.name)+'<small class="td-unit-meta">Lv. '+Math.max(1,Number(c.level)||1)+'</small></span><em><b style="width:100%"></b></em></div>';
 }
+function tdInitialResource(c){
+  const d=window.CellboundCombatReborn?.RESOURCE_DEFS?.[c?.class]||{name:'Power',max:100,start:100};
+  return{name:d.name||'Power',max:Math.max(1,Number(d.max)||100),value:Number(d.start??d.max??100)}
+}
+function tdResourceClass(name){return'resource-'+String(name||'power').toLowerCase().replace(/[^a-z0-9]+/g,'-')}
+function tdSideRows(){
+  return state().roster.map(c=>{const r=tdInitialResource(c),pct=Math.max(0,Math.min(100,r.value/r.max*100));return'<div class="cb2d-party-row td-party-row"><i class="cb2d-dot '+tutorialClassKey(c)+'"></i><span class="td-side-copy" data-td-side="'+c.id+'"><b>'+esc(c.name)+'</b><small>'+tdRole(c).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-td-side-hp="'+c.id+'" style="width:100%"></i></em><em class="td-side-resource '+tdResourceClass(r.name)+'" data-td-side-resource="'+c.id+'" title="'+esc(r.name)+'"><i style="width:'+pct+'%"></i></em></span><strong data-td-side-text="'+c.id+'">100 HP</strong></div>'}).join('')
+}
 function renderDungeonRunning(){
-  const body='<div class="td-wrap"><div class="td-top"><div><small>ZELTIRA TRAINING DUNGEON · LEVEL 1</small><h2 id="tdEncounter">Entering the Hollows…</h2></div><b class="td-safe">COMBAT REBORN · TRAINING PROTECTIONS</b></div><div class="td-route"><span class="active" data-td-route="0">1 · Rootling Nest</span><span data-td-route="1">2 · Collapsed Gallery</span><span data-td-route="2">3 · Hollow Warden</span></div><div class="td-arena theme-hollows room-rootling-nest" id="tdArena"><div class="td-floor"></div><div class="td-environment" id="tdEnvironment"></div><div class="td-room-tag" id="tdRoomTag"></div><div id="tdEnemies"></div><div id="tdParty">'+state().roster.map(unitMarkup).join('')+'</div><div class="td-callout" id="tdCallout">Your party advances together.</div><div id="tdLesson" class="td-lesson" hidden></div></div><div class="td-bottom"><div class="td-actions"><div><i class="on-role tank"></i><b>Tank</b><span id="tdTankAction">Taking point</span></div><div><i class="on-role healer"></i><b>Healer</b><span id="tdHealAction">Following</span></div><div><i class="on-role dps"></i><b>Damage</b><span id="tdDpsAction">Acquiring targets</span></div></div><div class="td-feed" id="tdFeed">Zeltira gate closes behind the party.</div></div></div>';
+  const roster=state().roster;
+  tutorialCombatStats={damage:Object.fromEntries(roster.map(c=>[c.id,0])),healing:Object.fromEntries(roster.map(c=>[c.id,0])),threat:Object.fromEntries(roster.map(c=>[c.id,0])),aggro:null,elapsed:0,currentEnemy:'—'};
+  const body='<div class="td-wrap"><div class="td-top"><div><small>FIRST EXPEDITION · ZELTIRAN HOLLOWS · LEVEL 1</small><h2 id="tdEncounter">Descending below Zeltira…</h2></div><b class="td-safe">COMBAT REBORN · PATHFINDER WARD ACTIVE</b></div><div class="td-route"><span class="active" data-td-route="0">1 · Rootling Nest</span><span data-td-route="1">2 · Collapsed Gallery</span><span data-td-route="2">3 · Hollow Warden</span></div><div class="td-live-layout"><main><div class="td-arena theme-hollows room-rootling-nest" id="tdArena"><div class="td-floor"></div><div class="td-environment" id="tdEnvironment"></div><div class="td-room-tag" id="tdRoomTag"></div><div id="tdEnemies"></div><div id="tdParty">'+roster.map(unitMarkup).join('')+'</div><div class="td-callout" id="tdCallout">Your party advances together.</div><div id="tdLesson" class="td-lesson" hidden></div></div><div class="td-bottom"><div class="td-actions"><div><i class="on-role tank"></i><b>Tank</b><span id="tdTankAction">Taking point</span></div><div><i class="on-role healer"></i><b>Healer</b><span id="tdHealAction">Following formation</span></div><div><i class="on-role dps"></i><b>Damage</b><span id="tdDpsAction">Acquiring targets</span></div></div><div class="td-feed" id="tdFeed">The Pathfinder ward closes behind the five.</div></div></main><aside class="td-live-hud"><div class="cb2d-cast td-cast-panel" id="tdCastPanel"><small>ENEMY CAST</small><div><b id="tdCastName">—</b><strong id="tdCastTime">—</strong></div><div class="cb2d-castbar"><i id="tdCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="tdDamageTotal">0 total</span></div><div id="tdDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="tdHealingTotal">0 total</span></div><div id="tdHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="tdThreatTarget">—</span></div><div id="tdThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-party td-party-panel"><small>PARTY CONDITION · ACTIVE FIVE</small><div id="tdPartyRows">'+tdSideRows()+'</div></div><div class="td-hud-note"><b>WATCH THE FIGHT</b><span>HP sits above class resource. Buffs and debuffs appear on the unit. Threat resets each encounter; damage and healing continue through the expedition.</span></div></aside></div></div>';
   ensureRoot().innerHTML=chrome(body,'dungeon-running');
+  tdRenderMeters();
   const my=++tutorialToken;setTimeout(()=>runTutorialDungeon(my),350);
 }
 function tdLesson(title,text,options,correct,success){
@@ -341,7 +379,7 @@ function tdAction(role,text){
   const id=role==='tank'?'tdTankAction':role==='healer'?'tdHealAction':'tdDpsAction';const e=$('#'+id);if(e)e.textContent=text;
 }
 function tdMove(selector,x,y,ms=360){
-  const e=$(selector);if(!e)return;e.style.transitionDuration=ms+'ms';requestAnimationFrame(()=>{e.style.left=x+'%';e.style.top=y+'%'});
+  const e=$(selector);if(!e)return;const sx=Math.max(8,Math.min(92,Number(x)||50)),sy=Math.max(12,Math.min(88,Number(y)||50));e.style.transitionDuration=ms+'ms';requestAnimationFrame(()=>{e.style.left=sx+'%';e.style.top=sy+'%'});
 }
 function tdPct(selector){
   const e=$(selector);return e?{x:parseFloat(e.style.left)||50,y:parseFloat(e.style.top)||50}:{x:50,y:50};
@@ -352,7 +390,7 @@ function tdFormationPoint(c,index){
   if(profile==='tank')return{x:ep.x-9,y:ep.y};
   if(profile==='melee'){
     const m=state().roster.filter(x=>tdProfile(x)==='melee'),i=Math.max(0,m.indexOf(c)),offset=[-10,10,-15][i]||0;
-    return{x:ep.x+6,y:ep.y+offset};
+    return{x:ep.x-14-(i%2)*2,y:ep.y+offset};
   }
   if(profile==='ranged'){
     const r=state().roster.filter(x=>tdProfile(x)==='ranged'),i=Math.max(0,r.indexOf(c));
@@ -429,22 +467,41 @@ function tdEventCharacter(unitId){
 function tdCombatKind(c){return c?.class==='Mage'?'magic':c?.class==='Hunter'?'arrow':['Priest','Druid','Evoker'].includes(c?.class)?'magic':'slash'}
 function tdEnemyName(index){return $('[data-td-enemy="'+index+'"] span')?.textContent||'Enemy'}
 function tdSetPartyHpByEvent(c,pct){
-  const el=$('[data-td-party="'+c.id+'"]'),bar=el?.querySelector('em b');if(bar)bar.style.width=Math.max(0,Math.min(100,pct))+'%';
-  if(el)el.classList.toggle('dead',pct<=0)
+  const value=Math.max(0,Math.min(100,Number(pct)||0)),el=$('[data-td-party="'+c.id+'"]'),bar=el?.querySelector('em b');if(bar)bar.style.width=value+'%';
+  if(el)el.classList.toggle('dead',value<=0);
+  const side=$('[data-td-side-hp="'+c.id+'"]'),txt=$('[data-td-side-text="'+c.id+'"]');if(side)side.style.width=value+'%';if(txt)txt.textContent=Math.round(value)+' HP'
+}
+function tdStatusTargets(id){
+  const c=tdEventCharacter(id),sel=tdSelectorFor(id),unit=sel?$(sel):null,out=[];if(unit)out.push(unit);
+  const side=c?$('[data-td-side="'+c.id+'"]'):null;if(side)out.push({el:side,mirror:true});
+  return out
+}
+function tdRenderMeters(){
+  if(!tutorialCombatStats)return;const chars=state().roster,elapsed=Math.max(1,Number(tutorialCombatStats.elapsed||0)/1000);
+  const render=(map,rootId,totalId,label)=>{const rows=chars.map(c=>({c,value:Number(map?.[c.id])||0})).sort((a,b)=>b.value-a.value),max=Math.max(1,...rows.map(x=>x.value)),total=rows.reduce((n,x)=>n+x.value,0),root=$(rootId),tot=$(totalId);if(tot)tot.textContent=Math.round(total).toLocaleString()+' total';if(root)root.innerHTML=rows.map(({c,value},i)=>'<div class="cb2d-meter-row '+tutorialClassKey(c)+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(c.name)+'</b><span>'+Math.round(value).toLocaleString()+' · '+Math.round(value/elapsed)+' '+label+'</span></div><em><i style="width:'+(value/max*100)+'%"></i></em></div>').join('')};
+  render(tutorialCombatStats.damage,'#tdDamageMeter','#tdDamageTotal','DPS');render(tutorialCombatStats.healing,'#tdHealingMeter','#tdHealingTotal','HPS');
+  const threat=chars.map(c=>({c,value:Number(tutorialCombatStats.threat?.[c.id])||0})).sort((a,b)=>b.value-a.value),max=Math.max(1,...threat.map(x=>x.value)),root=$('#tdThreatMeter'),label=$('#tdThreatTarget');if(label)label.textContent=tutorialCombatStats.currentEnemy||'—';if(root)root.innerHTML=threat.some(x=>x.value>0)?threat.map(({c,value},i)=>'<div class="cb2d-meter-row '+tutorialClassKey(c)+(String(c.id)===String(tutorialCombatStats.aggro)?' aggro':'')+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(c.name)+(String(c.id)===String(tutorialCombatStats.aggro)?' <strong>AGGRO</strong>':'')+'</b><span>'+Math.round(value).toLocaleString()+'</span></div><em><i style="width:'+(value/max*100)+'%"></i></em></div>').join(''):'<div class="cb2d-meter-empty">Threat appears when combat begins.</div>'
+}
+function tdGlobalCastStart(name,duration){
+  const panel=$('#tdCastPanel'),n=$('#tdCastName'),time=$('#tdCastTime'),fill=$('#tdCastFill'),ms=Math.max(300,Number(duration)||1500);if(panel)panel.hidden=false;if(n)n.textContent=name||'Enemy Cast';if(time)time.textContent=(ms/1000).toFixed(1)+'s';if(fill){fill.style.transition='none';fill.style.width='0%';requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!fill.isConnected)return;fill.style.transition='width '+ms+'ms linear';fill.style.width='100%'}))}
+}
+function tdGlobalCastClear(label='—'){
+  const n=$('#tdCastName'),time=$('#tdCastTime'),fill=$('#tdCastFill');if(n)n.textContent=label;if(time)time.textContent='—';if(fill){fill.style.transition='none';fill.style.width='0%'}
 }
 function tdResourceVisual(e){
-  const sel=tdSelectorFor(e.source),u=sel?$(sel):null;if(!u||!u.classList.contains('party'))return;
+  const sel=tdSelectorFor(e.source),u=sel?$(sel):null,c=tdEventCharacter(e.source);if(!u||!u.classList.contains('party'))return;
   let bar=u.querySelector('.cbr-resource');
   if(!bar){bar=document.createElement('small');bar.className='cbr-resource';bar.innerHTML='<i></i>';u.appendChild(bar)}
-  const name=String(e.payload?.resource||'Power'),max=Math.max(1,Number(e.payload?.max)||100),value=Math.max(0,Math.min(max,Number(e.payload?.value)||0)),key='resource-'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-');
- if(bar.dataset.resource!==name){[...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));bar.classList.add(key);bar.dataset.resource=name;bar.title=name}
- const fill=bar.querySelector('i');if(fill)fill.style.width=(value/max*100)+'%'
+  const name=String(e.payload?.resource||'Power'),max=Math.max(1,Number(e.payload?.max)||100),value=Math.max(0,Math.min(max,Number(e.payload?.value)||0)),key=tdResourceClass(name),pct=value/max*100;
+  if(bar.dataset.resource!==name){[...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));bar.classList.add(key);bar.dataset.resource=name;bar.title=name}
+  const fill=bar.querySelector('i');if(fill)fill.style.width=pct+'%';
+  const side=c?$('[data-td-side-resource="'+c.id+'"]'):null;if(side){[...side.classList].filter(x=>x.startsWith('resource-')).forEach(x=>side.classList.remove(x));side.classList.add(key);side.title=name;const sf=side.querySelector('i');if(sf)sf.style.width=pct+'%'}
 }
 function tdCastBar(name,duration){
-  const enemy=$('[data-td-enemy="0"]');if(!enemy)return null;
+  const enemy=$('[data-td-enemy="0"]');tdGlobalCastStart(name,duration);if(!enemy)return null;
   enemy.querySelector('.td-training-cast')?.remove();
   const bar=document.createElement('strong');bar.className='td-training-cast';bar.innerHTML='<span>'+esc(name||'ENEMY CAST')+'</span><i></i>';enemy.appendChild(bar);
-  const fill=bar.querySelector('i');if(fill){fill.style.transition='none';fill.style.width='0%';void fill.offsetWidth;requestAnimationFrame(()=>{fill.style.transition='width '+Math.max(1,duration)+'ms linear';fill.style.width='100%'})}
+  const fill=bar.querySelector('i');if(fill){fill.style.transition='none';fill.style.width='0%';requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!fill.isConnected)return;fill.style.transition='width '+Math.max(1,duration)+'ms linear';fill.style.width='100%'}))}
   return bar
 }
 function tdMechanicTelegraph(e){
@@ -461,7 +518,9 @@ async function tdPlayCombat(result,my){
   for(const e of result.events||[]){
     if(my!==tutorialToken)return false;
     const gap=Math.max(0,(Number(e.timestamp)||0)-last);if(gap)await sleep(gap);
+    if(tutorialCombatStats)tutorialCombatStats.elapsed=Math.max(Number(tutorialCombatStats.elapsed)||0,Number(e.timestamp)||0);
     const srcSel=tdSelectorFor(e.source),targetSel=tdSelectorFor(e.target),srcChar=tdEventCharacter(e.source),targetChar=tdEventCharacter(e.target);
+    try{if(window.CellboundCombatStatuses?.handle(e,{resolve:tdStatusTargets,speed:1})){last=Number(e.timestamp)||last;continue}}catch(error){console.warn('First Expedition status UI skipped',e?.type,error)}
     switch(e.type){
       case'COMBAT_START':tdFeed('The pull begins.');break;
       case'MOVEMENT_START':
@@ -479,17 +538,26 @@ async function tdPlayCombat(result,my){
           if(targetChar)tdSetPartyHpByEvent(targetChar,p);
           else{const idx=Number(String(e.target||'').slice(2));if(Number.isInteger(idx))setTdHp(idx,(Number(e.payload?.targetHp)||0))}
         }
+        if(srcChar&&tutorialCombatStats){tutorialCombatStats.damage[srcChar.id]=(Number(tutorialCombatStats.damage[srcChar.id])||0)+(Number(e.amount)||0);tdRenderMeters()}
         break;
       case'HEAL_RECEIVED':
         if(targetChar&&targetSel){const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdSetPartyHpByEvent(targetChar,p);tdFloat(targetSel,'+'+Math.round(Number(e.amount)||0),'heal')}
+        if(srcChar&&tutorialCombatStats){tutorialCombatStats.healing[srcChar.id]=(Number(tutorialCombatStats.healing[srcChar.id])||0)+(Number(e.amount)||0);tdRenderMeters()}
         break;
+      case'THREAT_GENERATED':
+        if(srcChar&&tutorialCombatStats){tutorialCombatStats.threat[srcChar.id]=Number(e.payload?.total)||0;tdRenderMeters()}break;
       case'UNIQUE_EFFECT_TRIGGER':if(srcChar){tdFeed(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');if(srcSel)tdFloat(srcSel,e.ability||'UNIQUE','heal')}break;
       case'PLAYER_MISTAKE':if(srcChar)tdFeed(srcChar.name+' '+(e.payload?.detail||'makes an execution mistake')+'.');break;
       case'PLAYER_REVIVED':
-        if(targetChar&&targetSel){tdSetPartyHpByEvent(targetChar,Number(e.payload?.targetHpPct)||35);targetSel.classList?.remove?.('dead');tdFloat(targetSel,'BATTLE REZ','heal');tdFeed(targetChar.name+' is brought back by '+(srcChar?.name||'the healer')+'.');tdResourceVisual({source:e.target,payload:{resource:e.payload?.resource,value:e.payload?.resourceValue,max:e.payload?.resourceMax}})}
+        if(targetChar&&targetSel){tdSetPartyHpByEvent(targetChar,Number(e.payload?.targetHpPct)||35);$(targetSel)?.classList?.remove?.('dead');tdFloat(targetSel,'BATTLE REZ','heal');tdFeed(targetChar.name+' is brought back by '+(srcChar?.name||'the healer')+'.');tdResourceVisual({source:e.target,payload:{resource:e.payload?.resource,value:e.payload?.resourceValue,max:e.payload?.resourceMax}})}
         break;
       case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':tdResourceVisual(e);break;
       case'AGGRO_CHANGED':
+        if(tutorialCombatStats){
+          tutorialCombatStats.aggro=targetChar?.id||null;
+          if(e.payload?.threat&&typeof e.payload.threat==='object')Object.entries(e.payload.threat).forEach(([id,v])=>{const ch=tdEventCharacter(id);if(ch)tutorialCombatStats.threat[ch.id]=Number(v)||0});
+          tdRenderMeters()
+        }
         if(/^e-\d+$/.test(String(e.source||''))&&targetChar){tdThreatLine(Number(String(e.source).slice(2)),targetChar);if(tdRole(targetChar)==='tank')tdAction('tank',targetChar.name+' holds threat')}
         break;
       case'MECHANIC_TELEGRAPH':{
@@ -499,10 +567,13 @@ async function tdPlayCombat(result,my){
         const k=e.payload?.token,el=telegraphs[k];if(el){el.classList?.add?.('impact');setTimeout(()=>el.remove?.(),350);delete telegraphs[k]}break;
       }
       case'CAST_START':
+        tdGlobalCastStart(e.ability||'Enemy Cast',Number(e.payload?.duration)||1500);
         if(e.payload?.interruptible)tdFeed((e.ability||'Dangerous cast')+' begins and can be interrupted.');break;
+      case'CAST_FINISH':tdGlobalCastClear('CAST COMPLETE');break;
       case'INTERRUPT':
         if(e.result==='success'){
           const bar=$('.td-training-cast');if(bar){bar.classList.add('interrupted');const s=bar.querySelector('span');if(s)s.textContent='INTERRUPTED';setTimeout(()=>bar.remove(),500)}
+          tdGlobalCastClear('INTERRUPTED');
           if(srcChar)tdAction('dps',srcChar.name+' interrupts '+(e.payload?.interruptedAbility||'the cast'));
           tdFeed((e.payload?.interruptedAbility||'Dangerous cast')+' is interrupted.');
         }
@@ -511,7 +582,7 @@ async function tdPlayCombat(result,my){
         if(targetChar){tdSetPartyHpByEvent(targetChar,0);tdFeed(targetChar.name+' is defeated.')}break;
       case'ENEMY_DEFEATED':
         if(/^e-\d+$/.test(String(e.target||''))){const idx=Number(String(e.target).slice(2));setTdHp(idx,0);tdFeed(tdEnemyName(idx)+' is defeated.')}break;
-      case'COMBAT_END':tdFeed(e.result==='victory'?'Encounter clear.':'Training party defeated.');break;
+      case'COMBAT_END':tdGlobalCastClear();tdFeed(e.result==='victory'?'Encounter clear.':'The Pathfinder ward pulls the party clear.');break;
     }
     last=Number(e.timestamp)||last;
   }
@@ -519,9 +590,10 @@ async function tdPlayCombat(result,my){
 }
 async function fightTdPack(encounter,my){
   spawnTdEnemies(encounter);await sleep(350);
-  const C=window.CellboundCombatReborn;if(!C?.simulate)throw new Error('Combat Reborn engine unavailable');
+  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
   const roster=state().roster;
   const combatParty=roster.map(c=>Object.assign({},c,{power:Math.max(Number(c.power)||1,30),_combatHealthPct:100}));
+  if(tutorialCombatStats){tutorialCombatStats.threat=Object.fromEntries(roster.map(c=>[c.id,0]));tutorialCombatStats.aggro=null;tutorialCombatStats.currentEnemy=encounter.name;tdRenderMeters()}
   const result=C.simulate({
     party:combatParty,
     encounter:{
@@ -530,11 +602,11 @@ async function fightTdPack(encounter,my){
       mechanics:encounter.mechanics||[]
     },
     tactics:{interruptPriority:'high',addPriority:'immediate',defensiveUsage:'aggressive',pullStyle:'safe',movementDiscipline:'safety'},
-    seed:['zeltira-training',my,encounter.id].join(':')
-  });
+    seed:['zeltira-first-expedition',my,encounter.id].join(':')
+  },{zone:'zeltira-first-expedition'});
   const won=await tdPlayCombat(result,my);
   if(!won){
-    tdFeed('Warden Elara resets the training encounter. Review the lesson and try again.');
+    tdFeed('The Pathfinder ward pulls the five back from the brink. Elara resets the approach.');
     return false
   }
   tdRegroup();tdAction('tank','Leading the party onward');tdAction('healer','Following at safe range');tdAction('dps','Returning to travel formation');
@@ -567,7 +639,7 @@ async function runTutorialDungeon(my){
   }
   if(my!==tutorialToken)return;
   $('#tdEncounter').textContent='Dungeon Clear';$('#tdCallout').textContent='The Zeltiran Hollows are secure.';
-  tdFeed('The Hollow Warden drops gear and profession reagents.');await sleep(900);
+  tdFeed('The Hollow Warden falls. Something in the chamber stops answering the Cell Well. Gear and reagents remain among the roots.');await sleep(900);
   const s=state();
   if(s.onboarding.stage==='dungeon-running'&&!s.onboarding.tutorialDungeonComplete){
     s.materials['faded-cell-fragment']=(Number(s.materials['faded-cell-fragment'])||0)+4;
@@ -582,7 +654,7 @@ async function runTutorialDungeon(my){
       s.onboarding.tutorialLootBankId=bank?.id||null;s.onboarding.tutorialLootCharacterId=target.id;
     }
     s.onboarding.tutorialDungeonComplete=true;s.onboarding.stage='loot-review';
-    s.activity.push('The Zeltiran Hollows were cleared. A gear drop and profession reagents were recovered.');
+    s.activity.push('The First Resonance ended with the Hollow Warden’s defeat. A gear drop and profession reagents were recovered from the chamber.');
     Game.save();await Game.persistState();
     if(db&&user)await db.from('characters').update({tutorial_stage:'review_loot',last_played_at:new Date().toISOString()}).eq('user_id',user.id);
   }
@@ -614,14 +686,21 @@ async function equipTutorialLoot(charId){
   Game.save();await Game.persistState();render();
 }
 function renderRecoveryLesson(){
-  const mins=Game.getEntitlements?.().recoveryMinutes||60;
-  const body='<div class="growth-school"><main><small>ZELTIRA · AFTER-ACTION LESSON</small><h2>A dungeon teaches your guild even when it hurts.</h2><p>Three things matter between attempts.</p><div class="growth-cards"><article><strong>KNOWLEDGE</strong><b>Learn the encounter</b><p>Fighting bosses builds encounter knowledge. Even a wipe can teach your guild enough to improve the next attempt.</p></article><article><strong>CELL SHOCK</strong><b>Failure has pressure</b><p>Failed PvE attempts add Cell Shock. At 100%, that character becomes unavailable until recovery or another solution clears it.</p></article><article><strong>LEVELS & TALENTS</strong><b>The adventurer gets stronger</b><p>Each level increases base health by 3% and base damage/healing by 2%, then awards a talent point. Gear does not cause this growth — Item Level and Power come from equipment.</p></article></div><div class="shock-example"><span>CELL SHOCK EXAMPLE</span><div><i style="width:75%"></i></div><b>75%</b><small>One more 25% wipe would reach 100%.</small></div></main><aside class="z-guide"><small>CHECK YOUR UNDERSTANDING</small><h2>Your Tank reaches 100% Cell Shock. What now?</h2><div class="tutorial-question" id="shockQuestion"><button data-shock-answer="wrong">Keep entering dungeons with them anyway</button><button data-shock-answer="correct">Rotate them out while they recover</button><button data-shock-answer="wrong">Destroy their equipment to clear it</button></div><p id="shockLessonHint">Standard recovery on this account is about '+mins+' minutes once a character reaches 100%.</p></aside></div>';
+  const mins=Game.getEntitlements?.().recoveryMinutes||60,lead=state().roster.find(c=>tdRole(c)==='tank')||state().roster[0];
+  const body='<div class="growth-school shock-story"><main><small>ZELTIRA · PATHFINDER WARD</small><h2>The ward saved the party from the penalty. Elara wants you to see what it absorbed.</h2><p>Real failed PvE attempts add Cell Shock to every participating character. This demonstration changes <b>nothing</b> on your roster.</p><div class="shock-simulation" id="shockSimulation"><div class="shock-sim-character"><span>'+esc(lead?.portrait||'??')+'</span><div><b>'+esc(lead?.name||'Your Tank')+'</b><small>TRAINING PROJECTION · NOT REAL SHOCK</small></div></div><div class="shock-sim-meter"><div><i id="shockSimFill" style="width:0%"></i></div><strong id="shockSimValue">0%</strong></div><p id="shockSimCopy">Run the ward record to see how repeated wipes create recovery pressure.</p><button id="runShockSimulation" class="on-primary">PLAY FAILURE RECORD →</button><button id="clearShockSimulation" class="on-primary" hidden>DISCHARGE THE WARD & CONTINUE →</button></div></main><aside class="z-guide"><small>CELL SHOCK</small><h2>Failure changes roster decisions.</h2><div class="growth-cards compact"><article><strong>25% PER WIPE</strong><b>Pressure accumulates</b><p>A failed PvE run adds shock instead of deleting progress.</p></article><article><strong>100%</strong><b>Character unavailable</b><p>At the cap, that adventurer must recover before entering again.</p></article><article><strong>'+mins+' MIN</strong><b>Your current recovery</b><p>The exact recovery time follows the account’s entitlement rules.</p></article></div><p>The point is not to avoid failure forever. It is to make your roster, preparation and decision-making matter between attempts.</p></aside></div>';
   ensureRoot().innerHTML=chrome(body,'recovery-lesson');
-  $$('[data-shock-answer]').forEach(b=>b.onclick=async()=>{
-    const h=$('#shockLessonHint');
-    if(b.dataset.shockAnswer!=='correct'){if(h){h.textContent='Not quite. Cell Shock affects character availability, not equipment. Try again.';h.classList.add('lesson-wrong')}return}
-    if(h){h.textContent='Correct. Your roster matters because a shocked character may need to be rotated out.';h.classList.remove('lesson-wrong');h.classList.add('lesson-correct')}
-    $$('[data-shock-answer]').forEach(x=>x.disabled=true);await sleep(650);await setStage('profession-choice');
+  $('#runShockSimulation')?.addEventListener('click',async e=>{
+    e.currentTarget.disabled=true;
+    const fill=$('#shockSimFill'),value=$('#shockSimValue'),copy=$('#shockSimCopy');
+    const messages={25:'One wipe. The character can still enter.',50:'Two wipes. Pressure is building.',75:'Three wipes. One more failure reaches the cap.',100:'100% Cell Shock. This character would now be unavailable.'};
+    for(const pct of [25,50,75,100]){
+      if(fill)fill.style.width=pct+'%';if(value)value.textContent=pct+'%';if(copy)copy.textContent=messages[pct];await sleep(520)
+    }
+    const clear=$('#clearShockSimulation');if(clear)clear.hidden=false;
+  });
+  $('#clearShockSimulation')?.addEventListener('click',async()=>{
+    const fill=$('#shockSimFill'),value=$('#shockSimValue'),copy=$('#shockSimCopy');if(fill)fill.style.width='0%';if(value)value.textContent='0%';if(copy)copy.textContent='Training ward discharged. Your real roster remains at its actual Cell Shock values.';
+    await sleep(500);await setStage('profession-choice',{shockLessonComplete:true});
   });
 }
 
@@ -708,26 +787,22 @@ function renderProfessionUse(){
 }
 
 function renderQuestLesson(){
-  const body='<div class="quest-school"><main><small>ZELTIRA · NOTICE BOARD</small><h2>Your first real adventure starts here.</h2><p>Quests open new locations, move the story forward and give you reliable gear for the next dungeon.</p><article class="first-quest-preview"><div class="quest-preview-rune">♜</div><div><small>NOVICE · MEDIUM ADVENTURE</small><h3>Ashes on the East Road</h3><p>Supply carts have vanished below the old forge. Investigate the road, earn reliable Tier 1 quest gear and uncover the entrance to The Ashen Vault.</p></div></article><div class="progression-teach"><div><b>1 · QUEST</b><span>Reliable equipment and dungeon access.</span></div><i>→</i><div><b>2 · DUNGEON</b><span>Stronger randomized gear and better rolls.</span></div><i>→</i><div><b>3 · NEXT QUEST</b><span>Catch-up gear moves the story forward even if drops were unlucky.</span></div></div><div class="gear-school-rule"><b>You are never meant to be trapped farming one dungeon</b><span>If your party out-levels old content, later progression checks can also be bypassed through character level.</span></div></main><aside class="z-guide"><small>ONE LAST CHECK</small><h2>Why would you still farm a dungeon after its quest gear?</h2><div class="tutorial-question" id="questLessonQuestion"><button data-quest-answer="wrong">Because quest gear is unusable</button><button data-quest-answer="correct">Because dungeon gear can roll stronger stats</button><button data-quest-answer="wrong">Because the next quest is permanently locked</button></div><p id="questLessonHint">Quest gear gives you the floor. Dungeon drops give you the ceiling.</p></aside></div>';
+  const body='<div class="quest-school first-contract"><main><small>ZELTIRA · EAST GATE · DAWN</small><h2>Before the city fully wakes, Elara sends for your charter again.</h2><p>The disturbance below the west wall is over. Three supply carts on the east road are now missing. Patrols found furnace ash in the wheel ruts from a forge that has been cold for eighteen years.</p><article class="first-quest-preview"><div class="quest-preview-rune">♜</div><div><small>NOVICE · STORY ADVENTURE</small><h3>Ashes on the East Road</h3><p>Inspect the first wreck, reconstruct the ambush and discover why someone is moving through the abandoned forge above Zeltira.</p><b>Rewards · Tier 1 quest gear · 120 Gold · 75 Renown · The Ashen Vault access</b></div></article><div class="progression-teach"><div><b>QUEST</b><span>Story, puzzles and reliable gear.</span></div><i>→</i><div><b>DUNGEON</b><span>Randomised drops, better rolls and harder combat.</span></div><i>→</i><div><b>ENDGAME</b><span>Heroic, Cellbound+ and long-term progression.</span></div></div></main><aside class="z-guide"><small>WARDEN ELARA VEY</small><h2>No more training contract.</h2><p class="guide-quote">“The ward comes off here. If you make a bad call on the road, it belongs to you. If you make a good one, so does that.”</p><p>The wider Guild Command will open after you accept. The Quest Journal will take you straight into the first investigation.</p><button id="acceptFirstContract" class="on-primary">ACCEPT ASHES ON THE EAST ROAD →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'quest-lesson');
-  $$('[data-quest-answer]').forEach(b=>b.onclick=async()=>{
-    const h=$('#questLessonHint');
-    if(b.dataset.questAnswer!=='correct'){if(h){h.textContent='Not quite. Quest gear is intentionally useful — it is just not the maximum possible roll.';h.classList.add('lesson-wrong')}return}
-    if(h){h.textContent='Exactly. Quest gear gets you ready; dungeons are where you chase stronger rolls.';h.classList.remove('lesson-wrong');h.classList.add('lesson-correct')}
-    $$('[data-quest-answer]').forEach(x=>x.disabled=true);await sleep(700);await setStage('departure');
-  });
+  $('#acceptFirstContract')?.addEventListener('click',()=>setStage('departure',{firstContractReady:true}));
 }
 function renderDeparture(){
   const s=state(),c=s.roster.find(x=>x.id===s.onboarding.professionCharacterId),prof=s.onboarding.professionName;
-  const body='<div class="zeltira-layout departure"><main>'+zeltiraMap('road')+'</main><aside class="z-guide"><small>ZELTIRA · EASTERN ROAD</small><h2>The charter is yours now.</h2><p class="guide-quote">“Now you know what the colours, bars, rolls and warnings actually mean. The next decisions are yours.”</p><div class="tutorial-complete-list"><div><i>✓</i><span><b>Party roles understood</b><small>Tank · Healer · Damage and class/race identity</small></span></div><div><i>✓</i><span><b>Gear read correctly</b><small>Item Level, random stats, Bank assignment</small></span></div><div><i>✓</i><span><b>Combat commanded</b><small>Threat, healing, interrupts and telegraphs</small></span></div><div><i>✓</i><span><b>Growth systems learned</b><small>Knowledge, Cell Shock, base-stat growth and talent points</small></span></div><div><i>✓</i><span><b>Profession started</b><small>'+esc(c?.name||'Adventurer')+' · '+esc(prof||'Profession')+' · Crafted '+esc(s.onboarding.craftedItem||'first item')+'</small></span></div><div><i>✓</i><span><b>Quest progression understood</b><small>Quest gear prepares you; dungeons improve it</small></span></div></div><button id="beginAdventure" class="on-primary">OPEN QUEST JOURNAL & BEGIN →</button></aside></div>';
+  const body='<div class="zeltira-layout departure"><main>'+zeltiraMap('road')+'</main><aside class="z-guide"><small>ZELTIRA · EASTERN ROAD</small><h2>Your first expedition is over. Your first real contract is not.</h2><p class="guide-quote">“You have five people, a little gear and enough experience to know what can go wrong. That is more than most charters get.”</p><div class="tutorial-complete-list"><div><i>✓</i><span><b>Active five formed</b><small>Tank · Healer · Damage and flexible class identities</small></span></div><div><i>✓</i><span><b>Combat Reborn read live</b><small>HP · resources · threat · healing · interrupts · telegraphs · statuses</small></span></div><div><i>✓</i><span><b>Loot handled</b><small>Item Level · random rolls · Guild Bank assignment</small></span></div><div><i>✓</i><span><b>Cell Shock witnessed</b><small>Failure creates roster pressure without deleting progress</small></span></div><div><i>✓</i><span><b>Profession started</b><small>'+esc(c?.name||'Adventurer')+' · '+esc(prof||'Profession')+' · '+esc(s.onboarding.craftedItem||'first craft')+'</small></span></div></div><button id="beginAdventure" class="on-primary">LEAVE ZELTIRA · BEGIN THE EAST ROAD →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'departure');
   $('#beginAdventure')?.addEventListener('click',completeOnboarding);
 }
 async function completeOnboarding(){
-  const s=state();s.onboarding.complete=true;s.onboarding.stage='complete';s.onboarding.completedAt=new Date().toISOString();s.renown=Math.max(10,Number(s.renown)||0);s.activity.push('Zeltira training complete. The wider world is now open.');
+  const s=state();s.onboarding.complete=true;s.onboarding.stage='complete';s.onboarding.completedAt=new Date().toISOString();s.renown=Math.max(10,Number(s.renown)||0);s.activity.push('The First Expedition is complete. The guild accepted Ashes on the East Road.');
   Game.save();await Game.persistState();
   if(db&&user)await db.from('characters').update({tutorial_complete:true,tutorial_stage:'complete',tutorial_reward_claimed:true,last_played_at:new Date().toISOString()}).eq('user_id',user.id);
   hide();Game.renderAll();Game.switchView('quests');
+  setTimeout(()=>window.CellboundQuests?.startAshfall?.(),120);
 }
 function render(){
   const s=state();if(!s)return;
@@ -736,6 +811,7 @@ function render(){
   const stage=s.onboarding?.stage||'party-builder';
   if(stage==='party-builder')renderPartyBuilder();
   else if(stage==='zeltira-arrival')renderArrival();
+  else if(stage==='first-expedition')renderFirstExpedition();
   else if(stage==='gear')renderGear();
   else if(stage==='dungeon-briefing')renderDungeonBriefing();
   else if(stage==='dungeon-running')renderDungeonRunning();
@@ -753,6 +829,7 @@ async function init(){
   if(!Game?.ready){setTimeout(init,100);return}
   G=window.CellboundGear;P=window.CellboundProfessions;db=Game.getSupabase?.();user=Game.getUser?.();
   if(!G||!P)return;
+  window.CellboundCombatStandard?.register?.('zeltira-first-expedition',{kind:'onboarding-dungeon',execution:'local',ui:'shared-combat-contract'});
   render();
   window.CellboundOnboarding={render,RACES};
 }
