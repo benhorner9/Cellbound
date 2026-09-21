@@ -88,8 +88,8 @@ function shuffledBoard(){
 }
 function cableType(board,pos){const tile=board?.[pos];return tile==null?null:CABLES[tile]||null}
 function circuitState(board){
- const connected=new Set(),startType=cableType(board,GRID_INPUT_INDEX);
- if(!startType||!CABLE_LINKS[startType]?.includes('w'))return{connected,progress:0,complete:false};
+ const connected=new Set(),startType=cableType(board,GRID_INPUT_INDEX),quick=!!run?.quickReconnect;
+ if(!startType||!CABLE_LINKS[startType]?.includes('w'))return{connected,progress:0,complete:false,breakerLive:false,quick};
  const queue=[GRID_INPUT_INDEX],opposite={n:'s',s:'n',e:'w',w:'e'},delta={n:-4,s:4,e:1,w:-1};
  connected.add(GRID_INPUT_INDEX);
  while(queue.length){
@@ -102,8 +102,9 @@ function circuitState(board){
   })
  }
  const breakerType=cableType(board,GRID_BREAKER_INDEX),breakerLive=connected.has(GRID_BREAKER_INDEX)&&CABLE_LINKS[breakerType]?.includes('e');
- const progress=Math.round((connected.size/15)*100),complete=breakerLive&&connected.size===15;
- return{connected,progress:complete?100:progress,complete}
+ const complete=breakerLive&&(quick||connected.size===15);
+ const progress=complete?100:Math.round((connected.size/15)*100);
+ return{connected,progress,complete,breakerLive,quick}
 }
 function puzzleSolved(){return !!run&&circuitState(run.board).complete}
 function cableMarkup(type){return '<i class="bs-cable '+type+'"><u></u><u></u></i>'}
@@ -132,17 +133,19 @@ function useClue(){
  renderPuzzle()
 }
 function renderPuzzle(){
- if(!run)return;const r=root(),blank=run.board.indexOf(null),circuit=circuitState(run.board),progress=circuit.progress,overcharge=(Number(run.cluesUsed)||0)*CLUE_HP_PCT;
+ if(!run)return;const r=root(),blank=run.board.indexOf(null),circuit=circuitState(run.board),progress=circuit.progress,overcharge=(Number(run.cluesUsed)||0)*CLUE_HP_PCT,quick=!!run.quickReconnect;
  const gridState=run.powered?'ONLINE':progress>0?'RESTORING '+progress+'%':'NO POWER';
- const stationTitle=run.powered?'Station online.':progress>0?'Current is flowing.':'The station is dark.';
- const stationCopy=run.powered?'The main breaker is closed and the generator hall is live.':progress>0?'Connected cable sections glow as power travels from the grid input. Keep building the route to the main breaker.':'Only tiles beside the empty slot can move. Build one continuous cable route from GRID INPUT to MAIN BREAKER.';
+ const modeLabel=quick?'QUICK RECONNECT':'FULL RESTORATION';
+ const headerCopy=quick?'You have already secured this station once. Create any continuous powered route from GRID INPUT to MAIN BREAKER — unused tiles can remain disconnected.':'First clear protocol: restore the entire 15-tile circuit so every cable section is powered before the main breaker will close.';
+ const stationTitle=run.powered?'Station online.':circuit.breakerLive&&quick?'Breaker path found.':progress>0?'Current is flowing.':'The station is dark.';
+ const stationCopy=run.powered?'The main breaker is closed and the generator hall is live.':quick?(progress>0?'Only the live path matters on repeat runs. Reach the main breaker and the station will start.':'Repeat-run rule: one valid path from GRID INPUT to MAIN BREAKER is enough. You do not need to use all 15 tiles.'):(progress>0?'Connected cable sections glow as power travels from the grid input. Every tile must be part of the powered circuit on your first clear.':'First-clear rule: all 15 cable tiles must form one continuous powered circuit from GRID INPUT to MAIN BREAKER.');
  const cells=run.board.map((tile,pos)=>{
   const type=tile==null?null:CABLES[tile],ghost=clueGhost(pos,type);
   return tile==null
    ?'<div class="bs-grid-empty '+(cluePositions().has(pos)?'clue':'')+'" data-pos="'+pos+'"><span>EMPTY</span>'+ghost+'</div>'
    :'<button class="bs-grid-tile '+(circuit.connected.has(pos)?'live ':'')+(cluePositions().has(pos)?'clue ':'')+(cluePositions().has(pos)&&type===CABLES[pos]?'clue-correct':'')+'" data-tile-pos="'+pos+'" data-cable="'+type+'" aria-label="Cable tile">'+cableMarkup(type)+ghost+'</button>'
  }).join('');
- r.innerHTML='<section class="bs-puzzle-shell '+(run.powered?'powered':'')+'"><header><div><small>BLACKOUT STATION · GRID CONTROL</small><h2>Main Distribution Board</h2><p>Slide the cable sections until one continuous circuit runs from the grid input to the main breaker.</p></div><button data-bs-close>×</button></header><div class="bs-puzzle-layout"><main><div class="bs-grid-frame '+(circuit.complete?'solved':'')+'"><div class="bs-grid-source '+(progress>0?'live':'')+'"><span>GRID<br>INPUT</span></div><div class="bs-grid-board">'+cells+'</div><div class="bs-grid-breaker '+(circuit.complete?'live':'')+'"><span>MAIN<br>BREAKER</span></div></div><div class="bs-puzzle-readout"><span>MOVES <b>'+run.moves+'</b></span><span>GRID STATUS <b>'+gridState+'</b></span><span>CALDER OVERCHARGE <b>+'+overcharge+'%</b></span><button data-bs-reset>RESHUFFLE</button></div></main><aside><small>POWER RESTORATION</small><div class="bs-station-schematic '+(circuit.complete?'online':'')+'"><i></i><i></i><i></i><i></i><strong>'+progress+'%</strong></div><h3>'+stationTitle+'</h3><p>'+stationCopy+'</p><div class="bs-diagnostics"><div><span>EMERGENCY DIAGNOSTICS</span><b>'+run.cluesRemaining+' / 5</b></div><p>Each diagnostic reveals more of the target circuit, but increases Dr. Vex Calder\'s maximum health by <strong>8%</strong>.</p><button data-bs-clue '+(run.cluesRemaining<=0||run.powered?'disabled':'')+'>USE DIAGNOSTIC · +8% BOSS HP</button></div><div class="bs-puzzle-log">'+run.log.slice(-5).reverse().map(x=>'<span>'+esc(x)+'</span>').join('')+'</div></aside></div></section>';
+ r.innerHTML='<section class="bs-puzzle-shell '+(run.powered?'powered':'')+'"><header><div><small>BLACKOUT STATION · GRID CONTROL · '+modeLabel+'</small><h2>Main Distribution Board</h2><p>'+headerCopy+'</p></div><button data-bs-close>×</button></header><div class="bs-puzzle-layout"><main><div class="bs-grid-frame '+(circuit.complete?'solved':'')+'"><div class="bs-grid-source '+(progress>0?'live':'')+'"><span>GRID<br>INPUT</span></div><div class="bs-grid-board">'+cells+'</div><div class="bs-grid-breaker '+(circuit.complete?'live':'')+'"><span>MAIN<br>BREAKER</span></div></div><div class="bs-puzzle-readout"><span>MOVES <b>'+run.moves+'</b></span><span>GRID STATUS <b>'+gridState+'</b></span><span>RULE <b>'+modeLabel+'</b></span><span>CALDER OVERCHARGE <b>+'+overcharge+'%</b></span><button data-bs-reset>RESHUFFLE</button></div></main><aside><small>POWER RESTORATION</small><div class="bs-station-schematic '+(circuit.complete?'online':'')+'"><i></i><i></i><i></i><i></i><strong>'+progress+'%</strong></div><h3>'+stationTitle+'</h3><p>'+stationCopy+'</p><div class="bs-diagnostics"><div><span>EMERGENCY DIAGNOSTICS</span><b>'+run.cluesRemaining+' / 5</b></div><p>Each diagnostic reveals more of the original full-grid layout, but increases Dr. Vex Calder\'s maximum health by <strong>8%</strong>.</p><button data-bs-clue '+(run.cluesRemaining<=0||run.powered?'disabled':'')+'>USE DIAGNOSTIC · +8% BOSS HP</button></div><div class="bs-puzzle-log">'+run.log.slice(-5).reverse().map(x=>'<span>'+esc(x)+'</span>').join('')+'</div></aside></div></section>';
  r.querySelector('[data-bs-close]').onclick=close;
  r.querySelector('[data-bs-reset]').onclick=()=>{run.board=shuffledBoard();run.moves=0;run.log.push('The board was reshuffled. Diagnostics already used remain active.');renderPuzzle()};
  r.querySelector('[data-bs-clue]')?.addEventListener('click',useClue);
@@ -154,7 +157,7 @@ async function slideTile(pos,blank){
  if(solved)await powerOn()
 }
 async function powerOn(){
- if(!run||run.powered)return;run.powered=true;run.log.push('Circuit complete. Main breaker closing.');
+ if(!run||run.powered)return;run.powered=true;run.log.push(run.quickReconnect?'Valid bridge established. Main breaker closing.':'Full circuit complete. Main breaker closing.');
  const board=$('.bs-grid-frame');board?.classList.add('solved');const schematic=$('.bs-station-schematic');if(schematic)schematic.classList.add('online');
  const label=$('.bs-station-schematic strong');if(label)label.textContent='100%';
  await wait(500);
@@ -206,7 +209,7 @@ function setStatus(t){const e=$('#bsStatus');if(e)e.textContent=t}
 function feed(t){if(!run)return;run.log.push(t);const e=$('#bsFeed');if(e)e.innerHTML=run.log.slice(-8).reverse().map(x=>'<p>'+esc(x)+'</p>').join('')}
 function statusTargets(id){
  const out=[],rid=renderId(id),unit=rid?$('[data-bs="'+rid+'"]'):null;if(unit)out.push(unit);
- const c=charFor(id),row=c?$('[data-bs-side]').find(x=>x.dataset.bsSide===String(c.id)):null;if(row)out.push({el:row,mirror:true});
+ const c=charFor(id),row=c?Array.from(document.querySelectorAll('[data-bs-side]')).find(x=>x.dataset.bsSide===String(c.id)):null;if(row)out.push({el:row,mirror:true});
  return out
 }
 function renderPartyRows(){
@@ -214,8 +217,8 @@ function renderPartyRows(){
  e.innerHTML=party().map(c=>'<div class="cb2d-party-row" data-bs-side-row="'+esc(c.id)+'"><i class="cb2d-dot '+classKey(c)+'"></i><span data-bs-side="'+esc(c.id)+'"><b>'+esc(c.name)+'</b><small>'+role(c).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-bs-side-hp="'+esc(c.id)+'" style="width:'+(Number(run?.hp?.[c.id])||100)+'%"></i></em></span><strong data-bs-side-text="'+esc(c.id)+'">'+Math.round(Number(run?.hp?.[c.id])||100)+' HP</strong></div>').join('')
 }
 function updateSideHp(c,pct){
- if(!c)return;const id=String(c.id),row=$('[data-bs-side-row]').find(x=>x.dataset.bsSideRow===id);if(!row)return;
- const strong=$('[data-bs-side-text]').find(x=>x.dataset.bsSideText===id),hp=$('[data-bs-side-hp]').find(x=>x.dataset.bsSideHp===id);
+ if(!c)return;const id=String(c.id),row=Array.from(document.querySelectorAll('[data-bs-side-row]')).find(x=>x.dataset.bsSideRow===id);if(!row)return;
+ const strong=Array.from(document.querySelectorAll('[data-bs-side-text]')).find(x=>x.dataset.bsSideText===id),hp=Array.from(document.querySelectorAll('[data-bs-side-hp]')).find(x=>x.dataset.bsSideHp===id);
  if(strong)strong.textContent=Math.round(pct)+' HP';if(hp)hp.style.width=pct+'%'
 }
 function bsAct(r,text){const e=document.querySelector('[data-bs-act="'+r+'"] em');if(e)e.textContent=text}
@@ -350,7 +353,8 @@ function fail(){
  Game.applyPartyCellShock?.(25);const e=$('#bsEnd');if(!e)return;e.hidden=false;e.className='cb2d-end';e.innerHTML='<div><small>BLACKOUT STATION · EXPEDITION FAILED</small><h3>The generator hall claims the party.</h3><p>Calder\'s shockwave or sustained electrical damage overwhelmed the active five. Each adventurer gained 25% Cell Shock.</p></div><button data-bs-return>RETURN TO DUNGEONS →</button>';e.querySelector('[data-bs-return]').onclick=()=>{close();Game.switchView?.('content')}
 }
 function startRun(){
- const gate=readiness();if(!gate.ok)return;token++;run={speed:1,seed:Date.now().toString(36),board:shuffledBoard(),moves:0,powered:false,cluesUsed:0,cluesRemaining:5,log:['The party enters the powerless station.'],damage:Object.fromEntries(party().map(c=>[c.id,0])),healing:Object.fromEntries(party().map(c=>[c.id,0])),threat:Object.fromEntries(party().map(c=>[c.id,0])),hp:Object.fromEntries(party().map(c=>[c.id,100])),aggro:null,combatElapsed:0,result:null};renderPuzzle()
+ const gate=readiness();if(!gate.ok)return;const quickReconnect=(Number(state()?.blackoutStationCompletions)||0)>0;token++;
+ run={speed:1,seed:Date.now().toString(36),board:shuffledBoard(),moves:0,powered:false,quickReconnect,cluesUsed:0,cluesRemaining:5,log:[quickReconnect?'Previous clear recognised. Quick reconnect authorised: only one continuous path to the breaker is required.':'First-clear protocol active. Restore all 15 cable tiles before the breaker will close.'],damage:Object.fromEntries(party().map(c=>[c.id,0])),healing:Object.fromEntries(party().map(c=>[c.id,0])),threat:Object.fromEntries(party().map(c=>[c.id,0])),hp:Object.fromEntries(party().map(c=>[c.id,100])),aggro:null,combatElapsed:0,result:null};renderPuzzle()
 }
 function init(){
  Game=window.CellboundGame;G=window.CellboundGear;if(!Game?.ready){setTimeout(init,100);return}db=Game.getSupabase?.();renderCard();
