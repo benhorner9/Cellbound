@@ -475,3 +475,26 @@ Do not create another combat engine.
 If a future mechanic cannot be expressed by Combat Reborn, extend Combat Reborn itself and then expose the new event/mechanic to every encounter.
 
 **One engine. One combat language. One visual standard. Many different encounters.**
+
+
+## Arena Containment & Results Standard
+
+All current and future combat viewers must follow these rules.
+
+### Arena containment
+- Every combat unit is clamped to a hard outer safe area before a visual position is applied.
+- No player, enemy, add or boss may be rendered beyond the playable arena edge.
+- Encounter mechanics may temporarily reposition characters anywhere inside the legal arena; do not impose a generic half-arena wall that can break mechanics.
+- When a mechanic resolves, living party members return to their encounter/role formation anchors.
+- Tanks, melee, ranged and healers should use distinct formation anchors so labels, health bars and status icons remain readable.
+- Temporary lunges and dodges must return to the original/formation position after the visual action completes.
+- A combat viewer must remain readable even if multiple movement events arrive in the same simulation timestamp.
+
+### End-of-run results
+- Victory, wipe and no-healer outcomes use a dedicated results mode rather than remaining positioned inside the live combat grid.
+- The combat route and live encounter layout are hidden while results are open.
+- The results panel is an in-flow, centred modal capped to the viewport, with its own vertical scrolling.
+- The page behind the combat modal must not scroll while results are open.
+- Loot, currency, XP, analysis and action buttons must never rely on the previous combat layout height.
+- Action buttons remain accessible at the bottom of long results screens.
+- The same results behaviour applies to Ashen Vault, Hollow Sanctum, Chaos Canyon, Blackout Station and future dungeon-style combat content.
