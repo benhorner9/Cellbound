@@ -7,6 +7,8 @@ let Game=null,db=null,user=null,selectedChar=null,selectedSlot=0,tradeFilter='al
 const clone=x=>JSON.parse(JSON.stringify(x));
 const state=()=>Game?.getState?.();
 const ent=()=>Game?.getEntitlements?.()||{professionSlots:1};
+const usableRoster=()=>state()?.roster?.filter(c=>Game?.isCharacterRosterUnlocked?.(c.id)!==false)||[];
+const characterUsable=id=>Game?.isCharacterRosterUnlocked?.(id)!==false;
 const materialName=k=>P?.MATERIALS?.[k]?.name||k;
 const professionDef=n=>P?.PROFESSIONS?.[n]||null;
 
@@ -58,7 +60,7 @@ function canCraft(recipe,prof){
 function recipeInputs(recipe){return Object.entries(recipe.inputs).map(([k,q])=>`${materialName(k)} ×${q}`).join(' · ');}
 async function craft(recipeId){
   const s=state(),c=s.roster.find(x=>x.id===selectedChar),prof=c?.professions?.[selectedSlot],def=professionDef(prof?.name),recipe=def?.recipes.find(r=>r.id===recipeId);
-  if(!recipe||!canCraft(recipe,prof))return;
+  if(!c||!characterUsable(c.id)||!recipe||!canCraft(recipe,prof))return;
   Object.entries(recipe.inputs).forEach(([k,q])=>s.materials[k]=Math.max(0,(Number(s.materials[k])||0)-q));
   const out=recipe.output,qty=out.quantity||1;
   if(out.category==='consumable')addConsumable(out,qty);
@@ -70,14 +72,14 @@ async function craft(recipeId){
 }
 async function learnProfession(charId,slot,name){
   const s=state(),c=s.roster.find(x=>x.id===charId),slots=ent().professionSlots;
-  if(!c||slot>=slots||!P.PROFESSIONS[name]||c.professions.some(p=>p?.name===name))return;
+  if(!c||!characterUsable(c.id)||slot>=slots||!P.PROFESSIONS[name]||c.professions.some(p=>p?.name===name))return;
   c.professions[slot]={name,level:1,xp:0};selectedChar=charId;selectedSlot=slot;s.activity.push(`${c.name} learned ${name}.`);await commit();
 }
 function renderProfessions(){
   if(!Game?.ready)return;normalise();const s=state(),list=$('#professionCharacterList'),work=$('#professionWorkshop'),grid=$('#reagentGrid');if(!list||!work||!grid)return;
-  if(!selectedChar||!s.roster.some(c=>c.id===selectedChar))selectedChar=s.roster[0]?.id||null;
+  const usable=usableRoster();if(!selectedChar||!usable.some(c=>c.id===selectedChar))selectedChar=usable[0]?.id||null;
   grid.innerHTML=Object.entries(P.MATERIALS).map(([k,m])=>`<div class="reagent-card" data-endgame="${m.endgame?'1':'0'}"><div class="reagent-icon">${m.icon}</div><div><b>${m.name}</b><small>${m.source}</small></div><strong>${Number(s.materials[k])||0}</strong></div>`).join('');
-  list.innerHTML=s.roster.slice(0,ent().rosterCap).map(c=>{const ps=c.professions.filter(Boolean);return `<button class="profession-char ${c.id===selectedChar?'active':''}" data-prof-char="${c.id}"><span class="avatar">${c.portrait}</span><span><b>${c.name}</b><small>${c.class} · ${c.spec}</small></span><em>${ps.length?ps.map(p=>`${p.name} ${p.level}`).join(' / '):'Untrained'}</em></button>`;}).join('');
+  list.innerHTML=usable.map(c=>{const ps=c.professions.filter(Boolean);return `<button class="profession-char ${c.id===selectedChar?'active':''}" data-prof-char="${c.id}"><span class="avatar">${c.portrait}</span><span><b>${c.name}</b><small>${c.class} · ${c.spec}</small></span><em>${ps.length?ps.map(p=>`${p.name} ${p.level}`).join(' / '):'Untrained'}</em></button>`;}).join('');
   list.querySelectorAll('[data-prof-char]').forEach(b=>b.onclick=()=>{selectedChar=b.dataset.profChar;selectedSlot=0;lastCraftMessage='';renderProfessions();});
   const c=s.roster.find(x=>x.id===selectedChar);if(!c){work.innerHTML='<div class="profession-empty">No adventurer selected.</div>';return;}
   const slots=ent().professionSlots;$('#workshopTitle').textContent=`${c.name}'s Workshop`;
@@ -105,7 +107,7 @@ function consumeStack(key){
 function equippedTargetKey(c,slot){return P?.itemSignature?.(c?.equipment?.[slot])||null}
 async function applyGearEnhancement(key,charId){
   const s=state(),stack=s.consumables.find(x=>x.key===key),payload=stack?.payload||{},c=s.roster.find(x=>x.id===charId),slot=payload.slot;
-  if(!stack||payload.effect!=='gear-enhancement'||!c||!slot)return;
+  if(!stack||payload.effect!=='gear-enhancement'||!c||!characterUsable(c.id)||!slot)return;
   const item=c.equipment?.[slot],signature=equippedTargetKey(c,slot);if(!item?.name||!signature){lastCraftMessage=c.name+' has no equipped '+slot+' item.';renderCrafted();return}
   c.activeEnhancements=c.activeEnhancements&&typeof c.activeEnhancements==='object'?c.activeEnhancements:{};
   c.activeEnhancements[slot]={key:stack.key,name:stack.name,slot,bonuses:{...(payload.bonuses||{})},remainingBosses:Math.max(1,Number(payload.charges)||3),targetSignature:signature,appliedAt:new Date().toISOString()};
@@ -113,13 +115,13 @@ async function applyGearEnhancement(key,charId){
 }
 async function drinkFlask(key,charId){
   const s=state(),stack=s.consumables.find(x=>x.key===key),payload=stack?.payload||{},c=s.roster.find(x=>x.id===charId);
-  if(!stack||payload.effect!=='character-flask'||!c)return;
+  if(!stack||payload.effect!=='character-flask'||!c||!characterUsable(c.id))return;
   c.activeProfessionBuffs=Array.isArray(c.activeProfessionBuffs)?c.activeProfessionBuffs.filter(x=>x.kind!=='flask'):[];
   c.activeProfessionBuffs.push({kind:'flask',key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},remainingBosses:Math.max(1,Number(payload.charges)||3),appliedAt:new Date().toISOString()});
   consumeStack(key);s.activity.push(c.name+' drank '+stack.name+'.');lastCraftMessage=c.name+' gained '+stack.name+' for '+(payload.charges||3)+' boss encounters.';await commit();
 }
 async function useCellShockDraught(key,charId){
-  const s=state(),stack=s.consumables.find(x=>x.key===key),c=s.roster.find(x=>x.id===charId);if(!stack||!c)return;
+  const s=state(),stack=s.consumables.find(x=>x.key===key),c=s.roster.find(x=>x.id===charId);if(!stack||!c||!characterUsable(c.id))return;
   c.cellShock=0;c.cellShockLockedUntil=null;consumeStack(key);s.activity.push(c.name+'’s Cell Shock was cleared with '+stack.name+'.');lastCraftMessage=c.name+' is fully recovered.';await commit();
 }
 function activeEffectText(c){
@@ -134,11 +136,11 @@ function renderCrafted(){
     const p=x.payload||{},desc=p.description||P?.bonusText?.(p.bonuses)||'Tradeable crafted item';
     let action='';
     if(p.effect==='gear-enhancement'){
-      action='<select data-craft-target="'+x.key+'">'+s.roster.map(c=>'<option value="'+c.id+'">'+c.name+' · '+(c.equipment?.[p.slot]?.name||'No '+p.slot)+'</option>').join('')+'</select><button data-apply-enhancement="'+x.key+'">APPLY TO '+String(p.slot||'ITEM').toUpperCase()+'</button>';
+      action='<select data-craft-target="'+x.key+'">'+usableRoster().map(c=>'<option value="'+c.id+'">'+c.name+' · '+(c.equipment?.[p.slot]?.name||'No '+p.slot)+'</option>').join('')+'</select><button data-apply-enhancement="'+x.key+'">APPLY TO '+String(p.slot||'ITEM').toUpperCase()+'</button>';
     }else if(p.effect==='character-flask'){
-      action='<select data-craft-target="'+x.key+'">'+s.roster.map(c=>'<option value="'+c.id+'">'+c.name+'</option>').join('')+'</select><button data-drink-flask="'+x.key+'">DRINK FLASK</button>';
+      action='<select data-craft-target="'+x.key+'">'+usableRoster().map(c=>'<option value="'+c.id+'">'+c.name+'</option>').join('')+'</select><button data-drink-flask="'+x.key+'">DRINK FLASK</button>';
     }else if(p.effect==='clear-cell-shock'){
-      action='<select data-craft-target="'+x.key+'">'+s.roster.map(c=>'<option value="'+c.id+'">'+c.name+' · Shock '+(c.cellShock||0)+'%</option>').join('')+'</select><button data-clear-shock="'+x.key+'">USE</button>';
+      action='<select data-craft-target="'+x.key+'">'+usableRoster().map(c=>'<option value="'+c.id+'">'+c.name+' · Shock '+(c.cellShock||0)+'%</option>').join('')+'</select><button data-clear-shock="'+x.key+'">USE</button>';
     }else if(p.effect==='combat-potion'){
       action='<em>Use during a dungeon with the USE CONSUMABLE combat command.</em>';
     }
