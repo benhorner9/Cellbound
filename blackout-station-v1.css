@@ -203,3 +203,96 @@ body.bs2d-open{overflow:hidden}
   .bs-arena{min-height:420px;height:55vh}
   .bs-run-summary{grid-template-columns:1fr 1fr 1fr}
 }
+
+
+/* Emergency Diagnostics / clue system */
+.bs-diagnostics{
+  margin-top:14px;
+  padding:12px;
+  border:1px solid rgba(230,196,91,.16);
+  background:linear-gradient(180deg,rgba(47,42,20,.22),rgba(10,16,17,.72))
+}
+.bs-diagnostics>div{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px
+}
+.bs-diagnostics span{
+  color:#c8b875;
+  font-size:.56rem;
+  font-weight:900;
+  letter-spacing:.09em
+}
+.bs-diagnostics b{
+  color:#eadb86;
+  font-size:.8rem
+}
+.bs-diagnostics p{
+  margin:7px 0 10px!important;
+  color:#8fa09b!important;
+  font-size:.6rem!important;
+  line-height:1.5!important
+}
+.bs-diagnostics p strong{color:#e2c85d}
+.bs-diagnostics button{
+  width:100%;
+  min-height:38px;
+  border:1px solid rgba(229,198,91,.28);
+  background:#2c2718;
+  color:#e9d783;
+  font-size:.55rem;
+  font-weight:900;
+  letter-spacing:.06em
+}
+.bs-diagnostics button:disabled{
+  opacity:.42;
+  cursor:not-allowed
+}
+
+.bs-grid-tile.clue,
+.bs-grid-empty.clue{
+  outline:1px dashed rgba(235,207,94,.62);
+  outline-offset:-5px
+}
+.bs-grid-tile.clue-correct{
+  outline:2px solid rgba(106,215,143,.7);
+  box-shadow:inset 0 0 0 2px rgba(106,215,143,.08),0 0 14px rgba(106,215,143,.12)
+}
+.bs-clue-ghost{
+  position:absolute;
+  inset:7px;
+  z-index:5;
+  pointer-events:none;
+  opacity:.38;
+  border:1px dashed rgba(235,207,94,.38);
+  background:rgba(36,31,14,.12)
+}
+.bs-clue-ghost.correct{
+  opacity:.16;
+  border-color:rgba(106,215,143,.45)
+}
+.bs-clue-ghost>small{
+  position:absolute;
+  left:4px;
+  top:3px;
+  z-index:3;
+  color:#e4cf72;
+  font-size:.33rem!important;
+  font-weight:900;
+  letter-spacing:.08em
+}
+.bs-clue-ghost.correct>small{color:#7edb9f}
+.bs-clue-ghost .bs-cable{
+  inset:0;
+  opacity:.72;
+  filter:drop-shadow(0 0 4px rgba(233,208,96,.35))
+}
+.bs-clue-ghost .bs-cable:before,
+.bs-clue-ghost .bs-cable:after{
+  background:#d5c35f!important;
+  box-shadow:0 0 5px rgba(228,206,92,.45)!important
+}
+.bs-puzzle-readout span:nth-child(3) b{
+  color:#e3bd68
+}
