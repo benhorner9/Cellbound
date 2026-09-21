@@ -9,18 +9,18 @@ const SPAWN_MS=20000,DAILY_ATTEMPTS=3;
 let Game=null,run=null,playToken=0,playSpeed=1,clockTimer=null,playStartedAt=0,playBaseMs=0;
 
 const BOSSES=[
- {id:'wrath',name:'Wrath, the Blood King',rune:'✦',vice:'WRATH',health:800,mechanics:[{name:'Bloodrage Cleave',type:'cone',duration:1500}]},
- {id:'greed',name:'Greed, the Gilded Miser',rune:'◆',vice:'GREED',health:850,mechanics:[{name:'Claim the Living',type:'interrupt',duration:2100,priority:'critical'}]},
- {id:'pride',name:'Pride, the Fallen Champion',rune:'♜',vice:'PRIDE',health:910,mechanics:[{name:'Royal Fixation',type:'line',duration:1600}]},
- {id:'envy',name:'Envy, the Mirror Queen',rune:'◇',vice:'ENVY',health:980,mechanics:[{name:'Borrowed Reflection',type:'circles',duration:1500}]},
- {id:'gluttony',name:'Gluttony, the Devourer',rune:'●',vice:'GLUTTONY',health:1060,mechanics:[{name:'Feast of the Dead',type:'adds',duration:1200}]},
- {id:'lust',name:'Lust, the Grave Siren',rune:'☾',vice:'LUST',health:1150,mechanics:[{name:'Funeral Fascination',type:'line',duration:1500}]},
- {id:'sloth',name:'Sloth, the Ancient Sleeper',rune:'◌',vice:'SLOTH',health:1200,mechanics:[{name:'Weight of Ages',type:'circle',duration:1650}]},
- {id:'deceit',name:'Deceit, the Masked Priest',rune:'◈',vice:'DECEIT',health:1180,mechanics:[{name:'False Procession',type:'circles',duration:1450}]},
- {id:'cowardice',name:'Cowardice, the Buried Prince',rune:'♟',vice:'COWARDICE',health:1220,mechanics:[{name:'Call the Tombguard',type:'adds',duration:1200}]},
- {id:'cruelty',name:'Cruelty, the Bone Torturer',rune:'†',vice:'CRUELTY',health:1260,mechanics:[{name:'Agony Brand',type:'line',duration:1350}]},
- {id:'vanity',name:'Vanity, the Glass Empress',rune:'✧',vice:'VANITY',health:1320,mechanics:[{name:'Perfect Reflection',type:'cone',duration:1350}]},
- {id:'despair',name:'Despair, the Last Mourner',rune:'☍',vice:'DESPAIR',health:1400,mechanics:[{name:'No Hope Remains',type:'interrupt',duration:1850,priority:'critical'},{name:'Grief Without End',type:'circles',duration:1300}]}
+ {id:'wrath',name:'Wrath, the Blood King',rune:'✦',vice:'WRATH',health:800,action:'FRONTAL',journal:'Bloodrage Cleave · Tank holds the boss facing away. Everyone else must clear the frontal cone.',mechanics:[{name:'Bloodrage Cleave',type:'cone',duration:1500}]},
+ {id:'greed',name:'Greed, the Gilded Miser',rune:'◆',vice:'GREED',health:850,action:'INTERRUPT',journal:'Claim the Living · Stop the cast. If it completes, the whole party takes magic damage.',mechanics:[{name:'Claim the Living',type:'interrupt',duration:2100,priority:'critical'}]},
+ {id:'pride',name:'Pride, the Fallen Champion',rune:'♜',vice:'PRIDE',health:910,action:'MOVE',journal:'Royal Fixation · Locks a non-tank into a line attack. The targeted player must move clear.',mechanics:[{name:'Royal Fixation',type:'line',duration:1600}]},
+ {id:'envy',name:'Envy, the Mirror Queen',rune:'◇',vice:'ENVY',health:980,action:'SPREAD',journal:'Borrowed Reflection · Marks the party with ground circles. Spread and move out before they resolve.',mechanics:[{name:'Borrowed Reflection',type:'circles',duration:1500}]},
+ {id:'gluttony',name:'Gluttony, the Devourer',rune:'●',vice:'GLUTTONY',health:1060,action:'ADDS',journal:'Feast of the Dead · Summons extra enemies into the arena. Pick them up and kill them quickly.',mechanics:[{name:'Feast of the Dead',type:'adds',duration:1200}]},
+ {id:'lust',name:'Lust, the Grave Siren',rune:'☾',vice:'LUST',health:1150,action:'MOVE',journal:'Funeral Fascination · Targets a non-tank with a line attack. Step out of its path before it lands.',mechanics:[{name:'Funeral Fascination',type:'line',duration:1500}]},
+ {id:'sloth',name:'Sloth, the Ancient Sleeper',rune:'◌',vice:'SLOTH',health:1200,action:'MOVE',journal:'Weight of Ages · Creates a large danger zone around the boss. Move clear before the impact.',mechanics:[{name:'Weight of Ages',type:'circle',duration:1650}]},
+ {id:'deceit',name:'Deceit, the Masked Priest',rune:'◈',vice:'DECEIT',health:1180,action:'SPREAD',journal:'False Procession · Multiple party members are marked by ground circles. Spread and keep moving.',mechanics:[{name:'False Procession',type:'circles',duration:1450}]},
+ {id:'cowardice',name:'Cowardice, the Buried Prince',rune:'♟',vice:'COWARDICE',health:1220,action:'ADDS',journal:'Call the Tombguard · Brings additional enemies into the fight. Control them before the arena snowballs.',mechanics:[{name:'Call the Tombguard',type:'adds',duration:1200}]},
+ {id:'cruelty',name:'Cruelty, the Bone Torturer',rune:'†',vice:'CRUELTY',health:1260,action:'MOVE',journal:'Agony Brand · Fires a line attack at a non-tank target. Move out before the cast resolves.',mechanics:[{name:'Agony Brand',type:'line',duration:1350}]},
+ {id:'vanity',name:'Vanity, the Glass Empress',rune:'✧',vice:'VANITY',health:1320,action:'FRONTAL',journal:'Perfect Reflection · Heavy frontal attack. The tank keeps her turned away while the party clears the cone.',mechanics:[{name:'Perfect Reflection',type:'cone',duration:1350}]},
+ {id:'despair',name:'Despair, the Last Mourner',rune:'☍',vice:'DESPAIR',health:1400,action:'INTERRUPT + SPREAD',journal:'No Hope Remains must be interrupted or the party takes group damage. Grief Without End marks everyone with circles.',mechanics:[{name:'No Hope Remains',type:'interrupt',duration:1850,priority:'critical'},{name:'Grief Without End',type:'circles',duration:1300}]}
 ];
 
 const RELICS=[
@@ -127,7 +127,7 @@ function openBriefing(){
  root.hidden=false;document.body.classList.add('tb-open');
  root.innerHTML='<section class="cb2d-shell cb2d-brief tb-brief"><header class="cb2d-head"><div><small>THE SEPULCHRE OF TWELVE · PRIVATE WORLD EVENT</small><h2>The Twelve Below</h2></div><button data-tb-close>×</button></header>'+
  '<div class="tb-brief-grid"><main><p class="cb2d-intro">Your guild enters alone. One tomb opens now; another opens every 20 seconds. Any boss still alive remains in the arena when the next one rises.</p>'+
- '<div class="tb-tomb-preview">'+BOSSES.map((b,i)=>'<span><i>'+esc(b.rune)+'</i><b>'+(i+1)+'. '+esc(b.vice)+'</b><small>'+esc(b.name)+'</small></span>').join('')+'</div>'+
+ '<div class="tb-tomb-preview">'+BOSSES.map((b,i)=>'<span class="tb-boss-preview"><i>'+esc(b.rune)+'</i><b>'+(i+1)+'. '+esc(b.vice)+'</b><small class="tb-boss-name">'+esc(b.name)+'</small><strong class="tb-boss-action">'+esc(b.action)+'</strong><p>'+esc(b.journal)+'</p></span>').join('')+'</div>'+
  '<div class="tb-relic-intro"><small>CHASE SYSTEM · RELICS</small><h3>Specialise beyond Item Level.</h3><p>Relics occupy the existing Relic slot and push a character deeper into a role: threat, survival, healing throughput, burst or tempo.</p></div></main>'+
  '<aside><div class="tb-attempt-box"><small>DAILY ATTEMPTS</small><b>'+left+' / '+DAILY_ATTEMPTS+'</b><span>Consumed when the burial ground is entered.</span></div>'+
  chars.map(c=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>Lv. '+c.level+' · '+esc(c.class)+' · '+esc(c.spec)+' · iLvl '+Game.characterItemLevel(c)+'</small></span><strong>'+String(roleOf(c)).toUpperCase()+'</strong></div>').join('')+
