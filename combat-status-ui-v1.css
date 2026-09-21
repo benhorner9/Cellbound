@@ -18,7 +18,7 @@
   pointer-events:auto;touch-action:manipulation
 }
 .cbs-icon.buff{border-color:rgba(92,190,128,.48);background:linear-gradient(180deg,rgba(32,88,54,.94),rgba(8,22,15,.96));color:#a9e8bd}
-.cbs-icon.debuff{border-color:rgba(214,91,75,.55);background:linear-gradient(180deg,rgba(105,39,31,.95),rgba(28,10,9,.97));color:#f1a08f}
+.cbs-icon.debuff{border-color:rgba(235,76,64,.82);background:linear-gradient(180deg,rgba(128,34,28,.98),rgba(42,8,7,.99));color:#ffab9f;box-shadow:0 0 0 1px rgba(235,76,64,.12),0 4px 10px rgba(0,0,0,.42)}
 .cbs-icon>i{font-style:normal;font-size:11px}
 .cbs-icon>small{
   position:absolute;right:2px;bottom:1px;
@@ -36,7 +36,7 @@
   font-size:7px;font-weight:900;
   background:#11191b;border:1px solid rgba(255,255,255,.09)
 }
-.cbs-more.buff{color:#89cda0}.cbs-more.debuff{color:#df8b7a}
+.cbs-more.buff{color:#89cda0}.cbs-more.debuff{color:#ff8f80;border-color:rgba(235,76,64,.4)}
 
 /* Player overhead: above HP/resource stack. */
 .cb2d-unit.party>.cbs-strip,.hs2d-unit.party>.cbs-strip{top:-49px}
@@ -69,7 +69,7 @@
   border:1px solid rgba(255,255,255,.12);font-style:normal;font-weight:900
 }
 .cbs-tooltip-head>i.buff{color:#9be0b1;background:#113020;border-color:rgba(92,190,128,.4)}
-.cbs-tooltip-head>i.debuff{color:#efa08f;background:#351512;border-color:rgba(214,91,75,.45)}
+.cbs-tooltip-head>i.debuff{color:#ffab9f;background:#48100d;border-color:rgba(235,76,64,.7)}
 .cbs-tooltip-head span{min-width:0}
 .cbs-tooltip-head small{display:block;color:#758782;font-size:8px;font-weight:900;letter-spacing:.11em}
 .cbs-tooltip-head b{display:block;margin-top:2px;color:#f0f4f2;font-size:13px}
