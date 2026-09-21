@@ -22,17 +22,27 @@ function iconFor(name,kind){
 }
 function effectText(st){
  const e=st?.effect||{},bits=[];
- if(Number(e.damageReduction))bits.push('Damage taken −'+pct(e.damageReduction)+'%');
+ const damageReduction=Number(e.damageReduction)||0,incomingReduction=Number(e.incomingDamageReduction)||0;
+ if(damageReduction>0)bits.push('Damage taken −'+pct(damageReduction)+'%');
+ if(damageReduction<0)bits.push('Damage taken +'+pct(Math.abs(damageReduction))+'%');
+ if(Number(e.damageTakenIncrease)>0)bits.push('Damage taken +'+pct(e.damageTakenIncrease)+'%');
+ if(Number(e.incomingDamageIncrease)>0)bits.push('Damage taken +'+pct(e.incomingDamageIncrease)+'%');
+ if(Number(e.damageReceivedIncrease)>0)bits.push('Damage taken +'+pct(e.damageReceivedIncrease)+'%');
+ if(Number(e.incomingDamageMultiplier)>1)bits.push('Damage taken +'+pct(Number(e.incomingDamageMultiplier)-1)+'%');
  if(Number(e.damageMultiplier))bits.push('Damage +'+pct(e.damageMultiplier)+'%');
  if(Number(e.outgoingDamage))bits.push('Damage +'+pct(e.outgoingDamage)+'%');
- if(Number(e.incomingDamageReduction))bits.push('Damage taken −'+pct(e.incomingDamageReduction)+'%');
+ if(incomingReduction>0)bits.push('Damage taken −'+pct(incomingReduction)+'%');
+ if(incomingReduction<0)bits.push('Damage taken +'+pct(Math.abs(incomingReduction))+'%');
  if(Number(e.critBonus))bits.push('Critical chance +'+pct(e.critBonus)+'%');
  if(Number(e.haste))bits.push('Haste +'+pct(e.haste)+'%');
  if(Number(e.resourceRegen))bits.push('Resource regeneration +'+pct(e.resourceRegen)+'%');
  if(Number(e.outgoingHealing))bits.push('Healing done +'+pct(e.outgoingHealing)+'%');
  if(Number(e.incomingHealing))bits.push('Healing received +'+pct(e.incomingHealing)+'%');
  if(Number(e.healingMultiplier))bits.push('Healing +'+pct(e.healingMultiplier)+'%');
- if(Number(e.healingReduction))bits.push('Healing received −'+pct(e.healingReduction)+'%');
+ if(Number(e.healingReduction)>0)bits.push('Healing received −'+pct(e.healingReduction)+'%');
+ if(Number(e.outgoingDamageReduction)>0)bits.push('Damage dealt −'+pct(e.outgoingDamageReduction)+'%');
+ if(Number(e.outgoingHealingReduction)>0)bits.push('Healing done −'+pct(e.outgoingHealingReduction)+'%');
+ if(Number(e.hasteReduction)>0)bits.push('Haste −'+pct(e.hasteReduction)+'%');
  if(Number(e.threatBonus))bits.push('Threat +'+pct(e.threatBonus)+'%');
  if(Number(e.threatMultiplier))bits.push('Threat +'+pct(e.threatMultiplier)+'%');
  if(Number(e.healingOverTime))bits.push('Restores '+Number(e.healingOverTime)+' health periodically');
@@ -79,9 +89,20 @@ function statusMap(host){
  if(!host.__cellboundStatuses)host.__cellboundStatuses=new Map();
  return host.__cellboundStatuses
 }
+function harmfulStatus(raw,e){
+ const effect=raw?.effect||{},name=String(raw?.name||e?.ability||'').toLowerCase();
+ if(raw?.kind==='debuff'||e?.type?.startsWith?.('DEBUFF'))return true;
+ if(raw?.cc)return true;
+ if(/chaos scar|curse|vulner|poison|venom|bleed|burn|wound|agony|despair|sickness|disease|weak|frail|slow|stun|root|silence|snare/.test(name))return true;
+ if((Number(effect.damageReduction)||0)<0||(Number(effect.incomingDamageReduction)||0)<0)return true;
+ if(Number(effect.damageTakenIncrease)>0||Number(effect.incomingDamageIncrease)>0||Number(effect.damageReceivedIncrease)>0)return true;
+ if(Number(effect.incomingDamageMultiplier)>1||Number(effect.healingReduction)>0)return true;
+ if(Number(effect.outgoingDamageReduction)>0||Number(effect.outgoingHealingReduction)>0||Number(effect.hasteReduction)>0)return true;
+ return false
+}
 function normaliseStatus(e){
  const raw=Array.isArray(e.statusEffects)&&e.statusEffects[0]?e.statusEffects[0]:{};
- const kind=e.type.startsWith('DEBUFF')?'debuff':e.type.startsWith('BUFF')?'buff':(raw.kind==='debuff'?'debuff':'buff');
+ const kind=harmfulStatus(raw,e)?'debuff':(raw.kind==='buff'||e.type.startsWith('BUFF')?'buff':'debuff');
  return{
   id:raw.id||slug(e.ability||'status'),name:raw.name||e.ability||'Status',kind,
   stacks:Math.max(1,Number(raw.stacks)||1),duration:Math.max(0,Number(raw.duration)||0),
@@ -140,5 +161,5 @@ function startTicker(){
  },250)
 }
 
-window.CellboundCombatStatuses={handle,clear,renderHost,version:'1.0.0'};
+window.CellboundCombatStatuses={handle,clear,renderHost,version:'1.1.0'};
 })();
