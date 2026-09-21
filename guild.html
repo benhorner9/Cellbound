@@ -35,7 +35,7 @@
       <button class="nav-btn active" data-hub="overview" data-view="overview"><span>⌂</span><b>Overview</b></button>
       <button class="nav-btn" data-hub="guild" data-view="roster"><span>♟</span><b>Guild</b></button>
       <button class="nav-btn" data-hub="adventure" data-view="quests"><span>⌁</span><b>Adventure</b><em id="questNavBadge"></em></button>
-      <button class="nav-btn" data-hub="economy" data-view="bank"><span>▦</span><b>Economy</b></button>
+      <button class="nav-btn" data-hub="economy" data-view="bank"><span>▦</span><b>Supplies</b></button>
       <button id="adminNav" class="nav-btn" data-hub="admin" data-view="admin" hidden><span>⚙</span><b>Admin</b><em>DEV</em></button>
     </nav>
     <div class="season-card"><small>FOUNDING SEASON</small><b>Week 1</b><span>Build, gear and manage your first five.</span></div>
@@ -66,7 +66,7 @@
       </div>
       <div class="dashboard-grid">
         <article class="panel"><div class="panel-head"><div><small>ACTIVE ROSTER</small><h3>Your Adventurers</h3></div><b class="good">5 PARTY SLOTS</b></div><div id="overviewRoster" class="mini-roster"></div></article>
-        <article class="panel" id="overviewNextDungeon"><div class="panel-head"><div><small>NEXT CONTENT</small><h3>Dungeon Expedition</h3></div><b>CHECKING</b></div><div class="dungeon-preview"><div class="dungeon-art"><span>DUNGEONS</span></div><div><p>Reviewing your unlocked expeditions…</p><button data-jump="content">VIEW DUNGEONS →</button></div></div></article>
+        <article class="panel" id="overviewNextDungeon"><div class="panel-head"><div><small>NEXT DUNGEON</small><h3>Dungeon Expedition</h3></div><b>CHECKING</b></div><div class="dungeon-preview"><div class="dungeon-art"><span>DUNGEONS</span></div><div><p>Reviewing your unlocked expeditions…</p><button data-jump="content">VIEW DUNGEONS →</button></div></div></article>
         <article class="panel activity-panel"><div class="panel-head"><div><small>GUILD LOG</small><h3>Recent Activity</h3></div></div><div id="activityLog" class="activity-log"></div></article>
       </div>
     </section>
@@ -104,7 +104,7 @@
     </section>
 
     <section id="professions" class="view">
-      <div class="section-intro"><div><small>CRAFTING & PREPARATION</small><h2>Professions</h2><p>Dungeons provide permanent equipment. Professions turn their reagents into tradeable potions, flasks, runes and temporary item enhancements that are consumed through play.</p></div><b class="economy-badge">SKILL 1–100</b></div>
+      <div class="section-intro"><div><small>CRAFTING & PREPARATION</small><h2>Professions</h2><p>Use reagents from dungeons to craft tradeable potions, flasks, runes and temporary item enhancements.</p></div><b class="economy-badge">SKILL 1–100</b></div>
       <div class="profession-layout">
         <aside class="panel profession-roster-panel"><div class="panel-head"><div><small>ADVENTURERS</small><h3>Profession Slots</h3></div></div><div id="professionCharacterList" class="profession-character-list"></div></aside>
         <div class="profession-main">
@@ -116,7 +116,7 @@
     </section>
 
     <section id="trading" class="view">
-      <div class="section-intro"><div><small>PLAYER ECONOMY</small><h2>Trading Post</h2><p>Buy and sell tradeable gear, reagents and crafted goods. A 5% sale tax removes gold from the economy.</p></div><button id="refreshTrading" class="ghost-btn">REFRESH MARKET</button></div>
+      <div class="section-intro"><div><small>TRADING POST</small><h2>Trading Post</h2><p>Buy and sell tradeable gear, reagents and crafted goods. The Trading Post takes a 5% fee from each sale.</p></div><button id="refreshTrading" class="ghost-btn">REFRESH MARKET</button></div>
       <div class="trading-layout">
         <div class="trading-main">
           <article class="panel trading-market"><div class="panel-head"><div><small>LIVE LISTINGS</small><h3>Market</h3></div><div id="tradeFilters" class="trade-filters"><button class="filter active" data-trade-filter="all">All</button><button class="filter" data-trade-filter="gear">Gear</button><button class="filter" data-trade-filter="material">Reagents</button><button class="filter" data-trade-filter="consumable">Crafted</button><button class="filter" data-trade-filter="recipe">Recipes</button></div></div><div id="tradeListings" class="trade-listings"></div></article>
@@ -129,7 +129,7 @@
     </section>
 
     <section id="chat" class="view">
-      <div class="section-intro"><div><small>PLAYER NETWORK</small><h2>Chat</h2><p>Talk with other guildmasters, advertise trades and find groups for shared content.</p></div><button id="refreshSocial" class="ghost-btn">REFRESH</button></div>
+      <div class="section-intro"><div><small>PLAYER NETWORK</small><h2>Chat</h2><p>Talk with other guildmasters, advertise trades and find groups for dungeons and world bosses.</p></div><button id="refreshSocial" class="ghost-btn">REFRESH</button></div>
       <div class="social-layout">
         <div class="panel chat-panel">
           <div class="chat-tabs"><button class="active" data-chat-channel="world">WORLD</button><button data-chat-channel="trade">TRADE</button><button data-chat-channel="party">PARTY FINDER</button></div>
@@ -139,7 +139,7 @@
         <aside class="social-side">
           <article class="panel identity-panel"><div class="panel-head"><div><small>SOCIAL IDENTITY</small><h3>Your Guild Name</h3></div></div><form id="guildNameForm" class="guild-name-form"><input id="guildNameInput" maxlength="24" placeholder="Choose a guild name"><button type="submit">SAVE NAME</button><p>This name is shown in chat, Party Finder and world bosses.</p></form></article>
           <article class="panel party-finder-panel"><div class="panel-head"><div><small>GROUP FINDER</small><h3>Party Finder</h3></div><b id="partyFinderCount">0 GROUPS</b></div>
-            <form id="partyFinderForm" class="party-finder-form"><label>Content<select id="partyFinderTarget"></select></label><label>Players<select id="partyFinderCap"><option value="2">2 players</option><option value="3">3 players</option><option value="4" selected>4 players</option><option value="6">6 players</option><option value="8">8 players</option></select></label><label>Note<input id="partyFinderNote" maxlength="180" placeholder="Need one more commander…"></label><button type="submit">CREATE GROUP</button></form>
+            <form id="partyFinderForm" class="party-finder-form"><label>Activity<select id="partyFinderTarget"></select></label><label>Players<select id="partyFinderCap"><option value="2">2 players</option><option value="3">3 players</option><option value="4" selected>4 players</option><option value="6">6 players</option><option value="8">8 players</option></select></label><label>Note<input id="partyFinderNote" maxlength="180" placeholder="Need one more commander…"></label><button type="submit">CREATE GROUP</button></form>
             <div id="partyFinderListings" class="party-finder-listings"></div>
           </article>
         </aside>
@@ -159,7 +159,7 @@
     </section>
 
     <section id="quests" class="view">
-      <div class="section-intro quest-intro"><div><small>ADVENTURES & MYSTERIES</small><h2>Quest Journal</h2><p>Follow leads, talk to people, carry strange items and discover what your guild would never find by staying at home.</p></div><div id="questCampaignStatus" class="quest-campaign-status">ADVENTURE AVAILABLE</div></div>
+      <div class="section-intro quest-intro"><div><small>ADVENTURES & MYSTERIES</small><h2>Quest Journal</h2><p>Follow leads, question locals, carry strange items and uncover places your guild would otherwise miss.</p></div><div id="questCampaignStatus" class="quest-campaign-status">ADVENTURE AVAILABLE</div></div>
       <div class="quest-journal-shell">
         <aside class="panel quest-journal-nav">
           <div class="quest-tabs"><button class="active" data-quest-tab="active">ACTIVE</button><button data-quest-tab="campaign">ADVENTURES</button><button data-quest-tab="completed">COMPLETED</button></div>
@@ -171,7 +171,7 @@
     </section>
 
     <section id="content" class="view">
-      <div class="section-intro dungeon-intro"><div><small>DUNGEON JOURNAL</small><h2>Dungeons</h2><p>Choose an expedition. Open More Info when you want the full route, encounter intelligence, entry requirements and rewards.</p></div><div class="content-status"><span>Available</span><b id="dungeonBrowserStatus">Checking unlocks…</b></div></div>
+      <div class="section-intro dungeon-intro"><div><small>DUNGEON JOURNAL</small><h2>Dungeons</h2><p>Choose a dungeon. Open More Info for the route, bosses, entry requirements and rewards.</p></div><div class="content-status"><span>Available</span><b id="dungeonBrowserStatus">Checking unlocks…</b></div></div>
 
       <div id="dungeonBrowser" class="dungeon-browser-grid">
         <article id="ashenDungeonCard" class="dungeon-browser-card ashen" data-dungeon-card="ashen-vault">
@@ -202,14 +202,14 @@
     </section>
 
     <section id="party" class="view">
-      <div class="section-intro"><div><small>GROUP MANAGEMENT</small><h2>Party Builder</h2><p>Choose any five adventurers. Their active specialisation determines their combat role, so unusual compositions are fully allowed.</p></div><button id="autoFill" class="ghost-btn">AUTO-FILL</button></div>
+      <div class="section-intro"><div><small>ACTIVE PARTY</small><h2>Party Builder</h2><p>Build any five-character party. Each adventurer’s active specialisation decides their combat role, so unusual compositions are allowed.</p></div><button id="autoFill" class="ghost-btn">AUTO-FILL</button></div>
       <div class="party-layout">
         <div class="formation-panel panel">
           <div class="panel-head"><div><small>FORMATION</small><h3>Active Five</h3></div><b id="readinessLabel">NOT READY</b></div>
           <div id="partySlots" class="party-slots"></div>
           <div class="readiness"><div class="readiness-line"><span>Party Readiness</span><b id="readinessText">0%</b></div><div class="readiness-bar"><i id="readinessFill"></i></div><p id="readinessHint">Assign 1 Tank, 1 Healer and 3 Damage characters.</p></div>
           <div class="attempt-controls evolution-legacy-attempt"><label>Target boss<select id="bossSelect"></select></label><button id="attemptBtn" disabled>BEGIN ATTEMPT</button></div>
-          <div class="party-dungeon-cta"><div><small>DUNGEON READY</small><b>The Ashen Vault now runs as a complete expedition.</b><span>Trash packs, mini-bosses, an elite encounter and a final boss.</span></div><button data-jump="content">OPEN DUNGEON JOURNAL →</button></div>
+          <div class="party-dungeon-cta"><div><small>DUNGEON READY</small><b>The Ashen Vault is ready.</b><span>Fight through trash packs, mini-bosses, an elite encounter and the final boss.</span></div><button data-jump="content">OPEN DUNGEON JOURNAL →</button></div>
         </div>
         <div class="selection-panel panel"><div class="panel-head"><div><small>AVAILABLE</small><h3>Choose Adventurers</h3></div></div><div id="partyRoster" class="party-roster"></div></div>
       </div>
@@ -258,7 +258,7 @@
     </section>
 
     <section id="reports" class="view">
-      <div class="section-intro"><div><small>ENCOUNTER HISTORY</small><h2>Attempt Reports</h2><p>Wipes teach encounter knowledge but now also add Cell Shock. PvE victories do not remove it.</p></div></div>
+      <div class="section-intro"><div><small>ENCOUNTER HISTORY</small><h2>Attempt Reports</h2><p>Wipes build encounter knowledge and add Cell Shock. Victories do not clear existing Cell Shock.</p></div></div>
       <div id="reportsList" class="reports-list"></div>
     </section>
   </main>

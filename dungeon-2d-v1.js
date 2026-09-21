@@ -218,7 +218,7 @@ function briefing(){
    return;
  }
 
- r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LEVELS 3–5 · ILVL 18+ · TACTICAL BRIEFING</small><h2>Set the plan once. Then watch the dungeon run.</h2></div><button data-close>×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">These tactics persist through the whole expedition. The party will move, react and fight automatically. Difficulty changes the same Combat Reborn simulation rather than loading a separate combat model.</p>'+endgamePrepMarkup()+'<h3>Expedition Style</h3><p class="cb2d-intro">Choose the overall approach. Your party handles interrupts, crowd control, cooldowns, adds, defensives and movement automatically from this plan.</p>'+groupButtons('preset',[['safe','SAFE','Slower pulls, earlier defensives and stronger mechanic control.'],['balanced','BALANCED','Standard pace with sensible reactions to danger.'],['aggressive','AGGRESSIVE','Faster pulls, freer cooldown use and more boss pressure.']])+'</main><aside><small>ACTIVE FIVE · PARTY LV '+partyLevel()+' · ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>Lv. '+Math.max(1,Number(c.level)||1)+' · '+esc(c.class)+' · '+esc(c.spec)+'</small></span><strong>'+String(role(c)).toUpperCase()+'</strong></div>').join('')+'<div class="cb2d-prep-summary"><small>ACTIVE PROFESSION PREP</small>'+party().map(c=>{const fx=P?.activeEffects?.(c)||[];return fx.length?'<p><b>'+esc(c.name)+'</b><span>'+fx.map(x=>esc(x.name)+' · '+x.remainingBosses+' bosses').join('<br>')+'</span></p>':''}).join('')+'</div><button class="cb2d-start" data-start>BEGIN EXPEDITION →</button></aside></div></section>';
+ r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LEVELS 3–5 · ILVL 18+ · TACTICAL BRIEFING</small><h2>Set the plan once. Then watch the dungeon run.</h2></div><button data-close>×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">These tactics stay in place for the whole run. Your party will move, react and fight automatically; your job is to choose the approach before the pull.</p>'+endgamePrepMarkup()+'<h3>Expedition Style</h3><p class="cb2d-intro">Choose the overall approach. Your party handles interrupts, crowd control, cooldowns, adds, defensives and movement automatically from this plan.</p>'+groupButtons('preset',[['safe','SAFE','Slower pulls, earlier defensives and stronger mechanic control.'],['balanced','BALANCED','Standard pace with sensible reactions to danger.'],['aggressive','AGGRESSIVE','Faster pulls, freer cooldown use and more boss pressure.']])+'</main><aside><small>ACTIVE FIVE · PARTY LV '+partyLevel()+' · ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>Lv. '+Math.max(1,Number(c.level)||1)+' · '+esc(c.class)+' · '+esc(c.spec)+'</small></span><strong>'+String(role(c)).toUpperCase()+'</strong></div>').join('')+'<div class="cb2d-prep-summary"><small>ACTIVE PROFESSION PREP</small>'+party().map(c=>{const fx=P?.activeEffects?.(c)||[];return fx.length?'<p><b>'+esc(c.name)+'</b><span>'+fx.map(x=>esc(x.name)+' · '+x.remainingBosses+' bosses').join('<br>')+'</span></p>':''}).join('')+'</div><button class="cb2d-start" data-start>BEGIN EXPEDITION →</button></aside></div></section>';
  r.querySelector('[data-close]').onclick=close;
  r.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{const a=b.dataset.pick.split(':');if(a[0]==='preset')applyTacticsPreset(a[1]);else tactics[a[0]]=a[1];r.querySelectorAll('[data-plan="'+a[0]+'"] button').forEach(x=>x.classList.toggle('active',x===b))});
  r.querySelector('[data-start]').onclick=start;
@@ -1306,7 +1306,7 @@ function renderRebornEvent(e,result,replayMode=false){
  const srcChar=rebornPlayerByUnit(e.source),targetChar=rebornPlayerByUnit(e.target),enemyIdx=rebornEnemyIndex(e.target),sourceEnemyIdx=rebornEnemyIndex(e.source);
  switch(e.type){
   case'COMBAT_START':
-   status(replayMode?'Replay started':'Combat simulation live');log((replayMode?'Replay: ':'')+'Combat begins.');break;
+   status(replayMode?'Replay started':'Combat live');log((replayMode?'Replay: ':'')+'Combat begins.');break;
   case'MOVEMENT_START':
    if(e.payload?.to)move(e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||360);
    if(srcChar&&e.result==='line of sight'){const rr=role(srcChar);act(rr==='tank'?'tank':rr==='healer'?'healer':'dps',srcChar.name+' · Repositioning for line of sight')}
@@ -1542,7 +1542,7 @@ function endgameProgressHTML(){
    ?'<span><i>★</i><b>NEW BEST · '+score.toLocaleString()+' score</b></span>'
    :record.previousBestScore?'<span><i>↔</i><b>Previous best '+Number(record.previousBestScore).toLocaleString()+' · this run '+score.toLocaleString()+'</b></span>':'';
  if(!unlocks.length&&!achievements.length&&!comparison)return'';
- return'<section class="cbr-progress-earned"><small>RUN PROGRESSION</small><h4>What changed after this clear.</h4><div>'+comparison+unlocks.map(x=>'<span><i>↗</i><b>'+esc(x)+'</b></span>').join('')+achievements.map(id=>'<span><i>◆</i><b>Achievement: '+esc(window.CellboundEndgame?.achievementName?.(id)||id)+'</b></span>').join('')+'</div></section>'
+ return'<section class="cbr-progress-earned"><small>AFTER THE CLEAR</small><h4>What you earned and unlocked.</h4><div>'+comparison+unlocks.map(x=>'<span><i>↗</i><b>'+esc(x)+'</b></span>').join('')+achievements.map(id=>'<span><i>◆</i><b>Achievement: '+esc(window.CellboundEndgame?.achievementName?.(id)||id)+'</b></span>').join('')+'</div></section>'
 }
 
 function rebornAnalysisHTML(){
@@ -1586,10 +1586,10 @@ async function seamlessFrom(startIndex,tok){
   for(let i=startIndex;i<STAGES.length;i++){
    if(tok!==token||!run)return;run.stage=i;run.override=0;run.rebornResult=null;const s=STAGES[i];
    $('#cb2dTitle').textContent=s.title;$('#cb2dRoute').innerHTML=route();$('#cb2dType').textContent=s.kind==='final'?'FINAL BOSS':s.kind==='boss'?'BOSS':s.kind==='event'?'EVENT':'HOSTILE PACK';
-   spawn(s);status('Combat Reborn simulation preparing…');log('Entering '+s.title+'.');act('tank','Taking point');act('healer','Following formation');act('dps','Acquiring targets');await delay(650);
+   spawn(s);status('Preparing encounter…');log('Entering '+s.title+'.');act('tank','Taking point');act('healer','Following formation');act('dps','Acquiring targets');await delay(650);
    await ensureCombatRebornEngine();
    if(tok!==token||!run)return;
-   status('Combat Reborn simulation ready');
+   status('Encounter ready');
    const result=runRebornStage(s);
    captureRebornResult(result);run.stageOutcome=result.outcome==='victory';run.allowKill=true;
    await playRebornTimeline(result,tok);

@@ -58,10 +58,10 @@ function progressCopy(id){
 function readyGuidance(cfg){
  const pi=Number(Game?.partyItemLevel?.())||0,p=progressFor(cfg.dungeon.id);
  const gap=pi-cfg.recommendedItemLevel;
- if(!difficultyUnlocked(cfg.dungeon.id,cfg.difficulty,cfg.tier))return'Complete the previous progression step first.';
+ if(!difficultyUnlocked(cfg.dungeon.id,cfg.difficulty,cfg.tier))return'Clear the previous difficulty first.';
  if(gap>=4)return'Party appears comfortably geared. Execution and strategy are now the main gains.';
  if(gap>=0)return'Party appears ready. Review affixes and strategy before entering.';
- return'Party is '+Math.abs(gap)+' Item Levels below the recommendation. You may still attempt unlocked content, but mistakes will be more punishing.'
+ return'Party is '+Math.abs(gap)+' Item Levels below the recommended level. You can still enter, but mistakes will hurt more.'
 }
 function lootNames(id){
  const d=D.DUNGEONS[id];
@@ -124,7 +124,7 @@ function achievementMarkup(){
 }
 function collectionMarkup(){
  const list=Game?.getState?.()?.collections||[];
- return '<section class="eg-collections panel"><div class="panel-head"><div><small>COLLECTION HOOKS</small><h3>Rare Finds</h3></div><b>'+list.length+' FOUND</b></div><div class="eg-collection-list">'+(list.length?list.slice(-8).reverse().map(x=>'<article><i>'+((x.kind==='mount'?'♞':x.kind==='pet'?'◆':x.kind==='cell'?'◈':'◇'))+'</i><span><b>'+esc(x.name)+'</b><small>'+esc(String(x.rarity||'Rare').toUpperCase())+' · '+esc(x.kind||'collection')+'</small><em>'+esc(x.source||'Endgame')+'</em></span></article>').join(''):'<p class="eg-empty">Rare mounts, pets and Cells can drop from endgame dungeons. Power progression never depends on these drops.</p>')+'</div></section>'
+ return '<section class="eg-collections panel"><div class="panel-head"><div><small>RARE DROPS</small><h3>Rare Finds</h3></div><b>'+list.length+' FOUND</b></div><div class="eg-collection-list">'+(list.length?list.slice(-8).reverse().map(x=>'<article><i>'+((x.kind==='mount'?'♞':x.kind==='pet'?'◆':x.kind==='cell'?'◈':'◇'))+'</i><span><b>'+esc(x.name)+'</b><small>'+esc(String(x.rarity||'Rare').toUpperCase())+' · '+esc(x.kind||'collection')+'</small><em>'+esc(x.source||'Endgame')+'</em></span></article>').join(''):'<p class="eg-empty">Rare mounts, pets and Cells can drop from endgame dungeons. These drops are collectible; they do not increase combat power.</p>')+'</div></section>'
 }
 
 

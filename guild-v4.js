@@ -232,7 +232,7 @@ const WORKSPACES={
   overview:{label:'Overview',views:[['overview','Overview']]},
   guild:{label:'Guild',views:[['roster','Roster'],['party','Party'],['chat','Social'],['reports','Reports']]},
   adventure:{label:'Adventure',views:[['quests','Quests'],['content','Dungeons'],['endgame','Endgame'],['world','World Bosses']]},
-  economy:{label:'Economy',views:[['bank','Bank'],['professions','Professions'],['trading','Trading Post']]},
+  economy:{label:'Supplies',views:[['bank','Bank'],['professions','Professions'],['trading','Trading Post']]},
   admin:{label:'Admin',views:[['admin','Admin']]}
 };
 const VIEW_WORKSPACE={};
@@ -249,7 +249,7 @@ function switchView(id){
   $$('.view').forEach(v=>v.classList.toggle('active',v.id===id));
   const hub=VIEW_WORKSPACE[id]||id;
   $$('.nav-btn[data-hub]').forEach(b=>b.classList.toggle('active',b.dataset.hub===hub));
-  const titles={overview:'Command Overview',guild:'Guild',adventure:'Adventure',economy:'Economy',admin:'Admin Control'};
+  const titles={overview:'Command Overview',guild:'Guild',adventure:'Adventure',economy:'Supplies',admin:'Admin Control'};
   if(ui.pageTitle)ui.pageTitle.textContent=titles[hub]||'Cellbound';
   renderWorkspaceTabs(id);
   if(id==='party')renderParty();
@@ -274,7 +274,7 @@ function renderTop(){
 function shockMarkup(c){const pct=Math.round(c.cellShock||0),locked=isUnavailable(c);return `<div class="cell-shock-row"><div><span>Cell Shock</span><b>${pct}%${locked?` · ${formatRemaining(c)}`:''}</b></div><div class="cell-shock-bar"><i style="width:${pct}%"></i></div></div>`;}
 function rosterCard(c,index){
   const role=roleOf(c),unlocked=isRosterSlotUnlocked(index),locked=isUnavailable(c),ilvl=characterItemLevel(c),status=!unlocked?'MEMBERSHIP SLOT':locked?'RECOVERING':'READY',classKey=combatClassKey(c);
-  return `<article class="char-card ${classKey} ${!unlocked?'roster-locked':''} ${locked?'shock-locked':''}" data-role="${role}" data-class-name="${c.class}" style="--glow:var(--combat-class,#7F8B88)"><div class="char-top"><div class="char-portrait">${c.portrait}</div><span class="role-tag role-${role}">${roleLabel(role)}</span></div><div class="character-status ${locked?'danger':''}">${status}${locked?` · ${formatRemaining(c)}`:''}</div><h3>${c.name}</h3><div class="class">${c.race||'Veyren'} · ${c.class} · ${c.spec} · Level ${c.level}</div><div class="char-stats"><div><span>Power</span><b>${c.power}</b></div><div><span>Item Level</span><b>${ilvl}</b></div><div><span>Points</span><b>${c.talent}</b></div></div><div class="level-growth"><span>Level Growth</span><b>+${levelHpBonus(c)}% Base HP · +${levelOutputBonus(c)}% Base Damage / Healing</b></div>${shockMarkup(c)}<div class="knowledge-row"><div><span>Avg. Knowledge</span><b>${averageKnowledge(c)}%</b></div><div class="knowledge-bar"><i style="width:${averageKnowledge(c)}%"></i></div></div><button data-char="${c.id}" ${!unlocked?'disabled':''}>${unlocked?'VIEW CHARACTER':'MEMBERSHIP REQUIRED'}</button></article>`;
+  return `<article class="char-card ${classKey} ${!unlocked?'roster-locked':''} ${locked?'shock-locked':''}" data-role="${role}" data-class-name="${c.class}" style="--glow:var(--combat-class,#7F8B88)"><div class="char-top"><div class="char-portrait">${c.portrait}</div><span class="role-tag role-${role}">${roleLabel(role)}</span></div><div class="character-status ${locked?'danger':''}">${status}${locked?` · ${formatRemaining(c)}`:''}</div><h3>${c.name}</h3><div class="class">${c.race||'Veyren'} · ${c.class} · ${c.spec} · Level ${c.level}</div><div class="char-stats"><div><span>Power</span><b>${c.power}</b></div><div><span>Item Level</span><b>${ilvl}</b></div><div><span>Talent Points</span><b>${c.talent}</b></div></div><div class="level-growth"><span>Level Growth</span><b>+${levelHpBonus(c)}% Base HP · +${levelOutputBonus(c)}% Base Damage / Healing</b></div>${shockMarkup(c)}<div class="knowledge-row"><div><span>Avg. Knowledge</span><b>${averageKnowledge(c)}%</b></div><div class="knowledge-bar"><i style="width:${averageKnowledge(c)}%"></i></div></div><button data-char="${c.id}" ${!unlocked?'disabled':''}>${unlocked?'VIEW CHARACTER':'MEMBERSHIP REQUIRED'}</button></article>`;
 }
 function renderRoster(filter='all'){if(!ui.rosterGrid)return;ui.rosterGrid.innerHTML=state.roster.filter(c=>filter==='all'||roleOf(c)===filter).map(c=>rosterCard(c,state.roster.indexOf(c))).join('');}
 $$('#roster .filter[data-filter]').forEach(b=>b.addEventListener('click',()=>{$$('#roster .filter[data-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderRoster(b.dataset.filter);}));
@@ -294,7 +294,7 @@ function renderOverview(){
       ?{id:'hollow-sanctum',name:'The Hollow Sanctum',tag:hollowDone?'FARMABLE':'NEWLY UNLOCKED',art:'THE HOLLOW SANCTUM',copy:'Descend beneath Zeltira into a crystal-grown shrine of echoes, guardians and the Bound Choir.',pips:3,active:Math.min(3,hollowDone?3:1),req:24}
       :{id:'ashen-vault',name:'The Ashen Vault',tag:ashenOpen?'AVAILABLE':'QUEST LOCKED',art:'THE ASHEN VAULT',copy:'Enter the ruined forge, break through its furnace halls and reach the living Vaultheart.',pips:3,active:Math.min(3,Object.values(state?.bossKills||{}).filter(Boolean).length||1),req:18};
     next.dataset.dungeon=dungeon.id;
-    next.innerHTML=`<div class="panel-head"><div><small>NEXT CONTENT</small><h3>${dungeon.name}</h3></div><b>${dungeon.tag}</b></div><div class="dungeon-preview ${dungeon.id==='hollow-sanctum'?'hollow-preview':''}"><div class="dungeon-art"><span>${dungeon.art}</span></div><div><p>${dungeon.copy}</p><div class="boss-pips">${Array.from({length:dungeon.pips},(_,i)=>`<span class="${i<dungeon.active?'active':''}"></span>`).join('')}</div><small class="overview-dungeon-ilvl">Party iLvl ${pi||'—'} · Entry iLvl ${dungeon.req}+</small><button type="button" data-overview-dungeon="${dungeon.id}">VIEW DUNGEON →</button></div></div>`;
+    next.innerHTML=`<div class="panel-head"><div><small>NEXT DUNGEON</small><h3>${dungeon.name}</h3></div><b>${dungeon.tag}</b></div><div class="dungeon-preview ${dungeon.id==='hollow-sanctum'?'hollow-preview':''}"><div class="dungeon-art"><span>${dungeon.art}</span></div><div><p>${dungeon.copy}</p><div class="boss-pips">${Array.from({length:dungeon.pips},(_,i)=>`<span class="${i<dungeon.active?'active':''}"></span>`).join('')}</div><small class="overview-dungeon-ilvl">Party iLvl ${pi||'—'} · Entry iLvl ${dungeon.req}+</small><button type="button" data-overview-dungeon="${dungeon.id}">VIEW DUNGEON →</button></div></div>`;
     next.querySelector('[data-overview-dungeon]')?.addEventListener('click',()=>{
       switchView('content');
       setTimeout(()=>window.CellboundDungeonBrowser?.open?.(dungeon.id),40)
@@ -618,7 +618,7 @@ function slotHtml(index,id){
 function partyReadiness(){
   const ids=flatPartyIds(),boss=bossById(ui.bossSelect?.value||'ashwarden');
   if(ids.length<5)return{score:ids.length*12,ready:false,hint:'Fill all five party slots. Any role composition is allowed.'};
-  const chars=ids.map(charById);if(chars.some(c=>!c||isUnavailable(c)))return{score:45,ready:false,hint:'A party member is recovering from 100% Cell Shock. Rotate them out before entering content.'};
+  const chars=ids.map(charById);if(chars.some(c=>!c||isUnavailable(c)))return{score:45,ready:false,hint:'A party member is recovering from 100% Cell Shock. Rotate them out before entering a dungeon.'};
   if(ids.some(id=>!isCharacterRosterUnlocked(id)))return{score:45,ready:false,hint:'A selected character is outside your currently unlocked roster slots.'};
   const pi=partyItemLevel();if(!currentBossProgressionUnlocked(boss))return{score:55,ready:false,hint:`Defeat the previous boss before challenging ${boss.name}.`};
   if(pi<boss.requiredItemLevel)return{score:Math.min(90,Math.round((pi/boss.requiredItemLevel)*80)),ready:false,hint:`Party Item Level ${pi}. ${boss.name} requires ${boss.requiredItemLevel}. Upgrade the lowest-geared characters first.`};
