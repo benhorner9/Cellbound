@@ -214,8 +214,22 @@ function simulateRun(){
 }
 
 function chooseRelic(){
- const roles=new Set(party().map(roleOf)),pool=RELICS.filter(r=>roles.has(r.relicRole));
- return pool[Math.floor(Math.random()*Math.max(1,pool.length))]||RELICS[0]
+ const roles=new Set(party().map(roleOf)),eligible=RELICS.filter(r=>roles.has(r.relicRole));
+ if(!eligible.length)return RELICS[Math.floor(Math.random()*RELICS.length)]||RELICS[0];
+
+ // Collection protection: prefer relics this account has never recovered before.
+ const collected=new Set((state()?.collectionHistory||[]).map(x=>x?.itemId||x?.name).filter(Boolean));
+ let pool=eligible.filter(r=>!collected.has(r.itemId)&&!collected.has(r.name));
+ if(!pool.length)pool=[...eligible];
+
+ // Once the collection is exhausted, repeats are allowed, but never repeat the
+ // immediately previous Twelve Below relic when another eligible option exists.
+ const last=eventState()?.lastRun?.relicItemId||eventState()?.lastRun?.relic||null;
+ if(last&&pool.length>1){
+   const alternatives=pool.filter(r=>r.itemId!==last&&r.name!==last);
+   if(alternatives.length)pool=alternatives
+ }
+ return pool[Math.floor(Math.random()*pool.length)]||eligible[0]||RELICS[0]
 }
 function applyRewards(result){
  const e=eventState(),kills=result.kills,band=rewardBand(kills),gold=kills*42+(kills>=6?80:0)+(kills>=10?120:0),renown=kills*11+(kills===12?60:0),shards=kills*2+Math.floor(kills/3)*3;
@@ -223,7 +237,7 @@ function applyRewards(result){
  let relic=null;const firstFull=kills===12&&!e.firstFullClear;
  if(firstFull||Math.random()<relicChance(kills)){relic={...chooseRelic(),source:'The Twelve Below',tradeState:'soulbound'};Game.addBankItem?.(relic)}
  e.bestKills=Math.max(e.bestKills||0,kills);if(kills===12){e.fullClears=(e.fullClears||0)+1;e.firstFullClear=true}
- e.lastRun={at:new Date().toISOString(),kills,outcome:result.outcome,band:band.label,gold,renown,shards,relic:relic?.name||null,durationMs:result.endMs};
+ e.lastRun={at:new Date().toISOString(),kills,outcome:result.outcome,band:band.label,gold,renown,shards,relic:relic?.name||null,relicItemId:relic?.itemId||null,durationMs:result.endMs};
  e.history.unshift(e.lastRun);e.history=e.history.slice(0,20);
  state().activity.push('The Twelve Below: '+kills+'/12 defeated · '+band.label+(relic?' · '+relic.name+' recovered.':'.'));
  if(result.outcome==='defeat')Game.applyPartyCellShock?.(25);
