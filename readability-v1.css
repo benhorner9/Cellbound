@@ -1,0 +1,250 @@
+/* ==========================================================================
+   Cellbound Readability Pass v1
+   Goal: preserve the dense MMO-management aesthetic while removing
+   sub-legible text, especially on iPad/desktop landscape.
+   Loaded last so feature-specific styles retain layout but inherit a clearer
+   type hierarchy and stronger secondary-text contrast.
+   ========================================================================== */
+
+:root{
+  --cb-text:#e4ece8;
+  --cb-text-2:#a9b8b3;
+  --cb-text-3:#82948e;
+  --cb-text-4:#667a74;
+  --cb-gold-text:#cdb77d;
+}
+
+body{color:var(--cb-text);-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+
+/* Core shell */
+.brand span{font-size:.56rem;color:#81928d}
+.nav-btn{font-size:.78rem;color:#8b9c97}
+.nav-btn em{font-size:.5rem;color:#88958f}
+.season-card small{font-size:.54rem}
+.season-card span{font-size:.68rem;color:#82948e}
+.sign-out{font-size:.68rem;color:#71847f}
+.topbar small,.section-intro small,.panel-head small{font-size:.58rem;color:#78d8d0}
+.resource-strip span{font-size:.54rem;color:#7c8f8a}
+.section-intro p{font-size:.76rem;line-height:1.55;color:#8a9b96}
+.panel-head>b{font-size:.58rem}
+.hero-card p{font-size:.82rem;color:#9aaba6}
+.hero-stat span{font-size:.6rem;color:#81958f}
+.dungeon-preview p{font-size:.75rem;color:#8b9c97}
+.activity-entry{font-size:.7rem}
+.activity-entry span{color:#738681}
+.activity-entry b{color:#c1cfcb}
+.mini-row b{font-size:.76rem}
+.mini-row small{font-size:.58rem;color:#778985}
+.role-tag{font-size:.5rem}
+.filter{font-size:.62rem;color:#788a85}
+.char-card .class{font-size:.64rem;color:#82948e}
+.char-stats span{font-size:.5rem;color:#71837e}
+.char-stats b{font-size:.76rem}
+.knowledge-row>div{font-size:.56rem;color:#81928d}
+button,select,input,textarea{letter-spacing:.01em}
+
+/* Character sheet shell */
+.cb-sheet-header small{font-size:.6rem;color:#b2a283}
+.cb-sheet-header p{font-size:.75rem;color:#8ea09a}
+.cb-header-points span,.cb-header-points small{font-size:.54rem;color:#83938e}
+.cb-character-tabs button{
+  min-width:128px;
+  font-size:.68rem;
+  color:#879893;
+}
+.cb-character-tabs button.active{color:#f3e2b1}
+.cb-profile-overview p{font-size:.72rem!important;line-height:1.6;color:#93a39e!important}
+.cb-history-entry{font-size:.66rem;line-height:1.5;color:#9aaaa5}
+.cb-history-entry b{color:#d6dfdc}
+
+/* Skills: this is the benchmark for the new readable hierarchy */
+.cb-skills-hero small,.cb-loadout-head small,.cb-buff-slot-panel small,.cb-skill-library-head small{
+  font-size:.48rem;
+  color:#b29a65
+}
+.cb-skills-hero h3{font-size:1.48rem}
+.cb-skills-hero p{font-size:.66rem;line-height:1.6;color:#91a19c}
+.cb-skill-progress span{font-size:.45rem;color:#82928d}
+.cb-skill-progress small{font-size:.5rem;color:#82928d}
+.cb-loadout-head h4,.cb-skill-library-head h4{font-size:.72rem;color:#e0ddd1}
+.cb-loadout-head>button{font-size:.47rem}
+.cb-skill-slot{min-height:106px;padding:12px}
+.cb-skill-slot small{font-size:.44rem;color:#778782}
+.cb-skill-slot b{font-size:.7rem;color:#e5ece9}
+.cb-skill-slot em{font-size:.52rem;line-height:1.45;color:#879893}
+.cb-slot-actions{font-size:.5rem;color:#83938e}
+.cb-slot-actions>span{font-size:.5rem}
+.cb-slot-actions>button{font-size:.44rem}
+.cb-buff-slot-panel h4{font-size:.76rem}
+.cb-buff-slot-panel p{font-size:.55rem;line-height:1.5;color:#8fad98}
+.cb-buff-slot-panel>strong{font-size:.45rem}
+.cb-skill-library-head>span{font-size:.52rem}
+.cb-skill-card{min-height:130px;padding:12px}
+.cb-skill-card-copy small{font-size:.42rem;color:#7d8f89}
+.cb-skill-card-copy h4{font-size:.72rem;color:#e2e9e6}
+.cb-skill-card-copy p{font-size:.58rem;line-height:1.55;color:#91a19c}
+.cb-skill-meta span{font-size:.43rem;color:#81928d}
+.cb-skill-equip{min-width:112px;min-height:38px;font-size:.43rem}
+.cb-skill-lock b{font-size:.48rem}
+.cb-skill-lock span{font-size:.44rem;color:#74847f}
+
+/* Equipment / stats / talents */
+.cb-slot-copy small{font-size:.48rem!important;color:#768782!important}
+.cb-slot-copy b{font-size:.66rem!important}
+.cb-slot-copy em{font-size:.5rem!important}
+.cb-slot-ilvl,.cb-slot-roll{font-size:.46rem!important;color:#73837e!important}
+.cb-armoury-heading small,.cb-stat-vitals span,.cb-stat-grid span{font-size:.46rem}
+.cb-armoury-heading p{font-size:.56rem;color:#84958f}
+.cb-stat-vitals small{font-size:.44rem;color:#71817c}
+.cb-stat-section-head span{font-size:.46rem}
+.cb-stat-section-head small{font-size:.44rem;color:#71817c}
+.cb-tree-shell small,.cb-talent-inspector small{color:#82938e}
+
+/* Dungeon / combat shell */
+.cb2d-head small,.cb2d-live{font-size:.56rem}
+.cb2d-route span{font-size:.52rem;color:#71827d}
+.cb2d-unit>span{font-size:.52rem;color:#c3cfca}
+.cb2d-unit.enemy.big>span,.cb2d-unit.enemy.boss>span{font-size:.58rem}
+.cb2d-caption span{font-size:.5rem}
+.cb2d-caption b{font-size:.58rem}
+.cb2d-tg-label{font-size:.48rem}
+.cb2d-flash{font-size:.62rem}
+.cb2d-controls b{font-size:.62rem}
+.cb2d-controls small{font-size:.5rem;color:#82928d}
+.cb2d-feed small{font-size:.5rem}
+.cb2d-feed p{font-size:.6rem;color:#91a19c}
+.cb2d-cast>small,.cb2d-actions>small,.cb2d-party>small,.cb2d-plan>small{font-size:.5rem}
+.cb2d-cast b{font-size:.72rem}
+
+/* Hollow Sanctum + Chaos Canyon */
+.hs-journal-art>span,.cc2d-journal-art>span{font-size:.48rem}
+.hs-journal-art p{font-size:.6rem;color:#95a49f}
+.hs-journal-art>div b{font-size:.44rem}
+.hs-journal-entry>small{font-size:.44rem}
+.hs-journal-entry p{font-size:.56rem;color:#8b9a95}
+.hs-journal-entry button{font-size:.48rem}
+.hs2d-shell header small,.cc2d-shell header small{font-size:.44rem}
+.hs2d-brief-grid main>p,.cc2d-brief-grid main>p{font-size:.58rem;color:#8d9c97}
+.hs2d-brief-grid aside>small,.cc2d-brief-grid aside>small{font-size:.43rem}
+.hs2d-brief-grid aside b,.cc2d-brief-grid aside b{font-size:.5rem}
+.hs2d-brief-grid aside span small,.cc2d-brief-grid aside span small{font-size:.42rem;color:#71817c}
+.hs2d-brief-grid aside>button,.cc2d-brief-grid aside>button{font-size:.48rem}
+.hs2d-relic-preview small,.cc2d-relic-preview small{font-size:.42rem}
+.hs2d-relic-preview p,.cc2d-relic-preview p{font-size:.48rem!important;color:#82928d!important}
+.hs2d-intel b,.cc2d-intel b{font-size:.5rem}
+.hs2d-intel small,.cc2d-intel small{font-size:.42rem;color:#71817c}
+.hs2d-loot-intel small,.cc2d-loot-intel small{font-size:.42rem}
+.hs2d-loot-intel b,.cc2d-loot-intel b{font-size:.52rem}
+.hs2d-loot-intel span,.cc2d-loot-intel span{font-size:.44rem;color:#71817c}
+.hs2d-route span,.cc2d-route span{font-size:.46rem;color:#70807b}
+
+/* Twelve Below */
+.tb-world-art>span{font-size:.5rem}
+.tb-world-kicker span,.tb-world-kicker em{font-size:.48rem}
+.tb-world-copy>p{font-size:.7rem;color:#93a29d}
+.tb-world-stats small{font-size:.45rem;color:#71817c}
+.tb-world-actions button{font-size:.52rem}
+.tb-world-actions small{font-size:.52rem;color:#7c8c87}
+.tb-tomb-preview b{font-size:.55rem}
+.tb-tomb-preview .tb-boss-name{font-size:.48rem;color:#82928d}
+.tb-boss-action{font-size:.42rem}
+.tb-tomb-preview p{font-size:.5rem;line-height:1.5;color:#96a59f}
+.tb-relic-intro>small{font-size:.44rem}
+.tb-relic-intro p{font-size:.56rem;color:#879792}
+.tb-attempt-box small{font-size:.44rem}
+.tb-attempt-box span,.tb-gate-copy{font-size:.5rem;color:#7c8c87}
+.tb-scorebar small{font-size:.42rem}
+.tb-scorebar b{font-size:.66rem}
+
+/* Endgame */
+.eg-hero small,.eg-weekly small,.eg-dungeon-card small{font-size:.58rem}
+.eg-season span{font-size:.54rem;color:#748984}
+.eg-weekly p{font-size:.7rem;color:#849994}
+.eg-dungeon-card header p{font-size:.7rem;color:#849994}
+.eg-mode-tabs button{font-size:.58rem}
+.eg-tier-select{font-size:.62rem}
+.eg-dungeon-grid p{font-size:.66rem;color:#81928d}
+.eg-dungeon-grid strong{font-size:.6rem}
+.eg-affix{font-size:.52rem}
+.eg-boss-strip b{font-size:.68rem}
+.eg-boss-strip small{font-size:.55rem;color:#778b85}
+.eg-dungeon-card footer span{font-size:.6rem;color:#778b85}
+.eg-recent span{font-size:.56rem}
+.eg-leader-list>div{font-size:.64rem}
+.eg-leader-list span small{font-size:.52rem;color:#718681}
+
+/* Quests */
+.quest-v2-list-card small{font-size:.45rem}
+.quest-v2-list-card b{font-size:.88rem}
+.quest-v2-list-card em{font-size:.5rem;color:#74837e}
+.quest-v2-hero small{font-size:.46rem}
+.quest-v2-hero p{font-size:.58rem;color:#82918c}
+.quest-points-medallion span{font-size:.4rem}
+.quest-v2-summary>p{font-size:.72rem}
+.quest-progress>span{font-size:.48rem}
+.quest-stage-track b{font-size:.52rem}
+.quest-stage-track small{font-size:.42rem;color:#71807b}
+.quest-current-step>small{font-size:.43rem}
+.quest-current-step p{font-size:.58rem;color:#8d9b96}
+.quest-current-step em{font-size:.48rem;color:#71807b}
+.quest-v2-meta span{font-size:.44rem;color:#71807b}
+.quest-v2-meta b{font-size:.46rem}
+.quest-requirement span{font-size:.46rem;color:#81908b}
+.quest-item b{font-size:.48rem}
+.quest-item small{font-size:.42rem;color:#71807b}
+.quest-item em{font-size:.38rem}
+.quest-reward-list p{font-size:.45rem!important}
+.quest-puzzle header small{font-size:.44rem}
+.quest-puzzle-clue span{font-size:.42rem}
+.quest-puzzle-clue p{font-size:.62rem}
+.quest-puzzle-board b{font-size:.5rem}
+.quest-puzzle-board small{font-size:.42rem}
+#questPuzzleHint{font-size:.5rem}
+.quest-puzzle-confirm{font-size:.48rem}
+
+/* Economy, social and forms */
+.economy-badge{font-size:.56rem}
+.profession-char small,.profession-char em{font-size:.54rem;color:#7e918b}
+.reagent-card b,.crafted-card b{font-size:.72rem}
+.reagent-card small,.crafted-card small{font-size:.52rem;color:#778a84}
+.profession-slot-card small{font-size:.5rem}
+.profession-slot-card p{font-size:.6rem;color:#7f918b}
+.profession-choice small{font-size:.56rem;color:#768984}
+.recipe-card small{font-size:.52rem}
+.recipe-card p{font-size:.6rem;color:#778a84}
+.recipe-card button{font-size:.56rem}
+.skill-line{font-size:.58rem}
+.trade-card small{font-size:.52rem;color:#778a84}
+.trade-card button{font-size:.56rem}
+.trade-sell-form label{font-size:.54rem}
+.trade-sell-form>button{font-size:.6rem}
+.trade-sell-form p{font-size:.56rem}
+.chat-tabs button{font-size:.56rem}
+.chat-message .chat-meta{font-size:.52rem;color:#73847f}
+.chat-message .chat-meta b{font-size:.58rem}
+.chat-message p{font-size:.72rem;line-height:1.55}
+
+/* Tablet: keep density, but never return to microscopic labels */
+@media (min-width:721px) and (max-width:1180px){
+  .main{padding-left:20px;padding-right:20px}
+  .cb-character-tabs button{min-width:112px;padding-left:15px;padding-right:15px}
+  .cb-skill-card-copy p{font-size:.6rem}
+  .cb-skill-grid{grid-template-columns:1fr 1fr}
+}
+
+/* Phone: slightly larger than the old compressed mobile type scale */
+@media (max-width:720px){
+  .topbar small{font-size:.46rem!important}
+  .resource-strip span{font-size:.4rem!important}
+  .resource-strip b{font-size:.78rem!important}
+  .section-intro small,.panel-head small{font-size:.47rem!important}
+  .nav-btn{font-size:.6rem!important}
+  .cb-sheet-header small{font-size:.44rem!important}
+  .cb-sheet-header p{font-size:.56rem!important}
+  .cb-character-tabs button{font-size:.62rem!important}
+  .cb-skill-slot b{font-size:.66rem}
+  .cb-skill-slot em{font-size:.5rem}
+  .cb-skill-card-copy h4{font-size:.7rem}
+  .cb-skill-card-copy p{font-size:.58rem}
+  .cb-skill-meta span{font-size:.42rem}
+}
