@@ -22,7 +22,7 @@ const CLUE_GROUPS=[
 ];
 const CLUE_HP_PCT=8;
 
-let Game=null,G=null,db=null,run=null,token=0;
+let Game=null,G=null,db=null,run=null,token=0,meterRenderPending=false,lastMeterRenderAt=0;
 
 const wait=ms=>new Promise(r=>setTimeout(r,Math.max(0,Math.round(ms/((run&&run.speed)||1)))));
 const state=()=>Game?.getState?.();
@@ -243,8 +243,19 @@ function renderMeters(){
  const h=$('#bsHealing');if(h)h.innerHTML=heal.map(({c,v},i)=>'<div class="cb2d-meter-row '+classKey(c)+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(c.name)+'</b><span>'+Math.round(v)+' · '+Math.round(v/elapsed)+' HPS</span></div><em><i style="width:'+(v/hm*100)+'%"></i></em></div>').join('');
  const t=$('#bsThreat');if(t)t.innerHTML=threat.map(({c,v},i)=>'<div class="cb2d-meter-row '+classKey(c)+(String(c.id)===String(run.aggro)?' aggro':'')+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(c.name)+(String(c.id)===String(run.aggro)?' <strong>AGGRO</strong>':'')+'</b><span>'+Math.round(v)+' · '+Math.round(v/tm*100)+'%</span></div><em><i style="width:'+(v/tm*100)+'%"></i></em></div>').join('')
 }
+function queueMeterRender(){
+ if(!run||meterRenderPending)return;
+ const wait=Math.max(0,120-(performance.now()-lastMeterRenderAt));
+ meterRenderPending=true;
+ setTimeout(()=>requestAnimationFrame(()=>{
+  meterRenderPending=false;
+  if(!run)return;
+  lastMeterRenderAt=performance.now();
+  renderMeters()
+ }),wait)
+}
 function castStart(name,duration){
- const p=$('#bsCast');if(p)p.hidden=false;const n=$('#bsCastName'),time=$('#bsCastTime'),fill=$('#bsCastFill');if(n)n.textContent=name;if(time)time.textContent=(duration/1000).toFixed(1)+'s';if(fill){fill.style.transition='none';fill.style.width='0%';void fill.offsetWidth;fill.style.transition='width '+Math.max(.1,duration/1000)+'s linear';fill.style.width='100%'}
+ const p=$('#bsCast');if(p)p.hidden=false;const n=$('#bsCastName'),time=$('#bsCastTime'),fill=$('#bsCastFill');if(n)n.textContent=name;if(time)time.textContent=(duration/1000).toFixed(1)+'s';if(fill){fill.style.transition='none';fill.style.width='0%';requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!fill.isConnected)return;fill.style.transition='width '+Math.max(.1,duration/1000)+'s linear';fill.style.width='100%'}))}
 }
 function castClear(){const n=$('#bsCastName'),time=$('#bsCastTime'),fill=$('#bsCastFill');if(n)n.textContent='—';if(time)time.textContent='—';if(fill){fill.style.transition='none';fill.style.width='0%'}}
 function showRoleZones(zones){
@@ -266,20 +277,20 @@ function eventRender(e){
    break;
   case'DAMAGE_DEALT':
    if(target){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);floatText(target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');if(targetChar){run.hp[targetChar.id]=pct;updateSideHp(targetChar,pct);if(Number(e.amount)>0&&pct<=35)feed(targetChar.name+' drops to '+Math.round(pct)+'% HP from '+(e.ability||'incoming damage')+'.')}}
-   if(srcChar){run.damage[srcChar.id]=(Number(run.damage[srcChar.id])||0)+(Number(e.amount)||0);renderMeters()}
+   if(srcChar){run.damage[srcChar.id]=(Number(run.damage[srcChar.id])||0)+(Number(e.amount)||0);queueMeterRender()}
    break;
   case'HEAL_RECEIVED':
    if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);run.hp[targetChar.id]=pct;floatText(target,'+'+Math.round(Number(e.amount)||0),'heal');updateSideHp(targetChar,pct)}
-   if(srcChar){run.healing[srcChar.id]=(Number(run.healing[srcChar.id])||0)+(Number(e.amount)||0);renderMeters()}
+   if(srcChar){run.healing[srcChar.id]=(Number(run.healing[srcChar.id])||0)+(Number(e.amount)||0);queueMeterRender()}
    break;
   case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':
    if(srcChar)updateResource(srcChar,e.payload?.resource,e.payload?.value,e.payload?.max,e.type);
    break;
-  case'THREAT_GENERATED':if(srcChar){run.threat[srcChar.id]=Number(e.payload?.total)||0;renderMeters()}break;
+  case'THREAT_GENERATED':if(srcChar){run.threat[srcChar.id]=Number(e.payload?.total)||0;queueMeterRender()}break;
   case'AGGRO_CHANGED':
    run.aggro=targetChar?.id||null;
    if(e.payload?.threat)Object.entries(e.payload.threat).forEach(([id,v])=>{const ch=charFor(id);if(ch)run.threat[ch.id]=Number(v)||0});
-   renderMeters();break;
+   queueMeterRender();break;
   case'PHASE_CHANGE':setStatus(e.ability||'Power instability');feed((e.ability||'Calder changes phase')+'. The station lights begin to fail.');break;
   case'MECHANIC_TELEGRAPH':
    if(e.payload?.mechanicType==='role-circles'){showRoleZones(e.payload.zones);setStatus('ROLE CIRCUITS — RED TANK · YELLOW DAMAGE · BLUE HEALER');feed('Calder pulls the power. Get every character into the correct coloured circuit.')}
