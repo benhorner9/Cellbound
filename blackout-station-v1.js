@@ -168,11 +168,11 @@ async function powerOn(){
 }
 
 function bossEncounter(){
- const overload={name:'Emergency Overload',type:'role-circles',duration:5000,danger:'fatal',zones:ROLE_ZONES};
+ const overload={name:'Emergency Overload',type:'role-circles',duration:5000,danger:'fatal',strict:true,zones:ROLE_ZONES};
  const overcharge=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT,bossHealth=Math.round(2450*(1+overcharge/100));
  return{
   id:'vex-calder',title:'Dr. Vex Calder',kind:'final',level:BOSS_LEVEL,recommendedItemLevel:ENTRY_ILVL,
-  enemies:['Dr. Vex Calder'],enemyTypes:['boss'],enemyHealth:bossHealth,calderOvercharge:overcharge,mechanics:[],
+  enemies:['Dr. Vex Calder'],enemyTypes:['boss'],enemyHealth:bossHealth,calderOvercharge:overcharge,mechanicIntervalMs:4600,mechanics:[{name:'Turbine Cleave',type:'cone',duration:1700},{name:'Core Siphon',type:'interrupt',duration:1950,priority:'critical'},{name:'Static Cascade',type:'circles',duration:1500}],
   phases:[
    {id:'calder-overload-75',name:'Calder Cuts the Power',atPct:75,triggerMechanic:overload},
    {id:'calder-overload-50',name:'Emergency Grid Failure',atPct:50,damageScale:1.05,triggerMechanic:overload},
