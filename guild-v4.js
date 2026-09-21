@@ -338,9 +338,16 @@ function recruitSlotCard(index){
 }
 function renderRoster(filter='all'){
   if(!ui.rosterGrid)return;
+  const e=entitlements(),rosterCount=Math.min(state.roster.length,e.rosterCap),activeCount=flatPartyIds().filter(id=>isCharacterRosterUnlocked(id)).length,openCount=Math.max(0,e.rosterCap-rosterCount);
+  const activeSummary=$('#rosterActiveSummary'),recoverySummary=$('#rosterRecoverySummary');
+  if(activeSummary)activeSummary.textContent=rosterCount+' / '+e.rosterCap+' recruited';
+  if(recoverySummary){
+    const recovering=state.roster.slice(0,e.rosterCap).filter(isUnavailable).length;
+    recoverySummary.textContent=(activeCount+' active')+(openCount?' · '+openCount+' open slot'+(openCount===1?'':'s'):'')+(recovering?' · '+recovering+' recovering':'');
+  }
   const rows=state.roster.map((c,index)=>({c,index})).filter(x=>filter==='all'||roleOf(x.c)===filter);
   let html=rows.map(x=>rosterCard(x.c,x.index)).join('');
-  if(filter==='all'&&entitlements().member&&state.onboarding?.complete&&(state.roster?.length||0)<10){
+  if(filter==='all'&&e.member&&state.onboarding?.complete&&state.roster.length<10){
     for(let i=state.roster.length;i<10;i++)html+=recruitSlotCard(i);
   }
   ui.rosterGrid.innerHTML=html;
