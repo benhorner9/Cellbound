@@ -149,7 +149,7 @@ function renderCard(){
   '</div>';
  mount.querySelector('[data-hs-enter]')?.addEventListener('click',openDungeon);
  mount.querySelector('[data-hs-quests]')?.addEventListener('click',()=>Game.switchView?.('quests'));
- window.CellboundDungeonBrowser?.refresh?.()
+ try{window.CellboundDungeonBrowser?.refresh?.()}catch(error){console.warn('hollow-sanctum-v1 browser refresh isolated',error)}
 }
 function hsEndgameConfig(){
  const E=window.CellboundEndgame;
