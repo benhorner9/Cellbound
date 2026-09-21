@@ -224,13 +224,33 @@ function canUse(c,item){
   const roleOk=!item.relicRole||roleOf(c)===item.relicRole;
   return classOk&&roleOk
 }
+function equippedUpgradeMax(item){
+  const tier=Math.max(1,Number(item?.tier)||1),steps=({1:2,2:3,3:3,4:4})[tier]||2;
+  const base=Number(item?.baseItemLevel)||Number(item?.itemLevel)||0;
+  return Math.max(Number(item?.itemLevel)||0,Math.min(42,base+steps*2));
+}
+function equippedUpgradeCost(item){
+  const tier=Math.max(1,Number(item?.tier)||1),level=Math.max(0,Number(item?.upgradeLevel)||0);
+  return 4+tier*3+level*4;
+}
+function equippedCanUpgrade(item){return Boolean(item)&&(Number(item?.itemLevel)||0)<equippedUpgradeMax(item)}
 function slotPicker(state,c,slot){
   const candidates=(state.bank||[]).filter(item=>canUse(c,item)&&possibleSlots(item).includes(slot));
   const current=c.equipment?.[slot];
   const currentIlvl=Number(current?.itemLevel)||0;
+  const shards=Number(state?.materials?.['cell-shards'])||0;
+  const upgradeCost=current?equippedUpgradeCost(current):0;
+  const upgradeMax=current?equippedUpgradeMax(current):0;
+  const nextIlvl=current?Math.min(upgradeMax,currentIlvl+2):0;
+  const currentActions=current?`<div class="cb-current-actions">
+    <button type="button" class="cb-unequip-btn" data-unequip-slot="${slot}">UNEQUIP TO BANK</button>
+    <button type="button" class="cb-upgrade-equipped-btn" data-upgrade-equipped="${slot}" ${equippedCanUpgrade(current)&&shards>=upgradeCost?'':'disabled'}>${equippedCanUpgrade(current)?`UPGRADE TO ILVL ${nextIlvl}`:'UPGRADE CAP REACHED'}</button>
+    <small>${equippedCanUpgrade(current)?`${upgradeCost} Cell Shards required · ${shards} available`:`Maximum Item Level ${upgradeMax}`}</small>
+  </div>`:'';
   return `<button class="cb-slot-drawer-backdrop" data-close-slot aria-label="Close equipment drawer"></button><div class="cb-slot-drawer">
     <div class="cb-slot-drawer-head"><div><small>${slot}</small><h3>${current?.name||'Empty slot'}</h3></div><button data-close-slot>×</button></div>
-    ${current?`<div class="cb-current-item ${rarityClass(current)}"><span>${G?.artHTML?.(current,56)||current.icon||slotIcons[slot]}</span><div><b>${current.name}</b><small>${current.rarity||'Starter'} · iLvl ${currentIlvl}${current.power?` · +${current.power} power`:''}</small><em class="cb-current-roll">${(G?.statLines?.(current)||[]).map(s=>s.text).join(' · ')||'Legacy roll'}</em></div></div>`:''}
+    ${current?`<div class="cb-current-item ${rarityClass(current)}"><span>${G?.artHTML?.(current,56)||current.icon||slotIcons[slot]}</span><div><b>${current.name}</b><small>${current.rarity||'Starter'} · iLvl ${currentIlvl}${current.power?` · +${current.power} power`:''}${Number(current.upgradeLevel)>0?` · Upgrade ${Number(current.upgradeLevel)}`:''}</small><em class="cb-current-roll">${(G?.statLines?.(current)||[]).map(s=>s.text).join(' · ')||'Legacy roll'}</em></div></div>`:''}
+    ${currentActions}
     <p>Compatible Guild Bank items</p>
     <div class="cb-slot-options">${candidates.length?candidates.sort((a,b)=>(b.itemLevel||0)-(a.itemLevel||0)).map(item=>{const delta=(Number(item.itemLevel)||0)-currentIlvl,fit=G?.rollFit?.(c,item),stats=(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll';return `<button data-equip-bank="${item.id}" data-equip-slot="${slot}" class="${rarityClass(item)}"><span>${G?.artHTML?.(item,48)||item.icon||'◇'}</span><div><b>${item.name}</b><small>${item.rarity} · iLvl ${item.itemLevel||0} · ×${item.quantity||1}</small><strong class="cb-option-roll">${stats}</strong><em class="${delta>0?'upgrade':delta<0?'downgrade':''}">${fit?.label||''}${delta===0?' · Same Item Level':delta>0?` · +${delta} Item Level`:` · ${delta} Item Level`}</em></div></button>`}).join(''):'<div class="cb-no-items">No compatible items are currently stored in the Bank.</div>'}</div>
   </div>`;
@@ -350,6 +370,40 @@ function equipItem(bankId,slot){
   state.activity.push(`${c.name} equipped ${item.name} from the Guild Bank.`);
   writeState(state);activeSlot=null;renderSheet();
 }
+function unequipItem(slot){
+  const state=readState(),c=ensureCharacter(getCharacter(state,currentId)),item=c?.equipment?.[slot];
+  if(!state||!c||!item)return;
+  state.bank=Array.isArray(state.bank)?state.bank:[];
+  const returned={...item,id:`bank-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,quantity:1,source:`Unequipped from ${c.name}`,slot:item.slot==='Trinket1'||item.slot==='Trinket2'?'Trinket':item.slot==='Ring1'||item.slot==='Ring2'?'Ring':item.slot};
+  state.bank.push(returned);
+  c.equipment[slot]=null;
+  c.power=Math.max(1,(Number(c.power)||1)-(Number(item.power)||0));
+  c.gearItems=[...leftSlots,...rightSlots].map(s=>c.equipment?.[s]?.name||'Empty');
+  c.gear=window.CellboundGame?.characterItemLevel?.(c)||0;
+  state.activity=state.activity||[];
+  state.activity.push(`${c.name} unequipped ${item.name} to the Guild Bank.`);
+  writeState(state);activeSlot=null;renderSheet();
+}
+function upgradeEquippedItem(slot){
+  const state=readState(),c=ensureCharacter(getCharacter(state,currentId)),item=c?.equipment?.[slot];
+  if(!state||!c||!item||!equippedCanUpgrade(item))return;
+  state.materials=state.materials&&typeof state.materials==='object'?state.materials:{};
+  const available=Number(state.materials['cell-shards'])||0,cost=equippedUpgradeCost(item),beforeIlvl=Number(item.itemLevel)||0,next=Math.min(equippedUpgradeMax(item),beforeIlvl+2);
+  if(available<cost){alert(`You need ${cost} Cell Shards. You currently have ${available}.`);return}
+  if(!confirm(`Upgrade ${item.name} from Item Level ${beforeIlvl} to ${next} for ${cost} Cell Shards?`))return;
+  const oldPower=Number(item.power)||0;
+  item.baseItemLevel=Number(item.baseItemLevel)||beforeIlvl;
+  item.itemLevel=next;
+  item.upgradeLevel=(Number(item.upgradeLevel)||0)+1;
+  if(item.upgradeLevel%2===0)item.power=oldPower+1;
+  c.power=Math.max(1,(Number(c.power)||1)+(Number(item.power)||0)-oldPower);
+  c.gear=window.CellboundGame?.characterItemLevel?.(c)||0;
+  c.gearItems=[...leftSlots,...rightSlots].map(s=>c.equipment?.[s]?.name||'Empty');
+  state.materials['cell-shards']=available-cost;
+  state.activity=state.activity||[];
+  state.activity.push(`Upgraded ${c.name}'s equipped ${item.name} to Item Level ${item.itemLevel} for ${cost} Cell Shards.`);
+  writeState(state);renderSheet();
+}
 function investTalent(spec,nodeId){
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));
   if(!state||!c||!(c.talent>0))return;
@@ -384,6 +438,8 @@ document.addEventListener('click',event=>{
     const tab=event.target.closest('[data-sheet-tab]');if(tab){currentTab=tab.dataset.sheetTab;activeSlot=null;renderSheet();return}
     const slot=event.target.closest('[data-slot]');if(slot){activeSlot=slot.dataset.slot;renderSheet();return}
     const closeSlot=event.target.closest('[data-close-slot]');if(closeSlot){activeSlot=null;renderSheet();return}
+    const unequip=event.target.closest('[data-unequip-slot]');if(unequip){unequipItem(unequip.dataset.unequipSlot);return}
+    const upgradeEquipped=event.target.closest('[data-upgrade-equipped]');if(upgradeEquipped){upgradeEquippedItem(upgradeEquipped.dataset.upgradeEquipped);return}
     const equip=event.target.closest('[data-equip-bank]');if(equip){equipItem(equip.dataset.equipBank,equip.dataset.equipSlot);return}
     const node=event.target.closest('[data-talent-node]');if(node){selectedTalentId=node.dataset.talentNode;selectedTalentSpec=node.dataset.treeSpec;renderSheet();return}
     const invest=event.target.closest('[data-invest-talent]');if(invest){investTalent(invest.dataset.treeSpec,invest.dataset.investTalent);return}
