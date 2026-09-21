@@ -40,6 +40,7 @@
 
 /* Player overhead: above HP/resource stack. */
 .cb2d-unit.party>.cbs-strip,.hs2d-unit.party>.cbs-strip{top:-49px}
+.cb2d-unit.party>.cbs-strip{transform:translateX(calc(-50% + var(--status-shift-x,0px)))}
 .cb2d-unit.enemy>.cbs-strip,.hs2d-unit.enemy>.cbs-strip{top:-50px}
 .wb2d-unit>.cbs-strip{top:-40px}
 #wb2dBoss>.cbs-strip{top:-36px}
