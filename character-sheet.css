@@ -960,3 +960,28 @@
   .cb-skill-equip,.cb-skill-lock{grid-column:1/-1;width:100%;min-width:0;text-align:center}
   .cb-slot-actions{align-items:flex-start;flex-direction:column}
 }
+
+
+/* Membership-locked character sheet */
+.cb-membership-lock-banner{
+  position:relative;z-index:12;display:flex;justify-content:space-between;gap:16px;align-items:center;
+  padding:10px 16px;border-bottom:1px solid rgba(211,165,78,.17);
+  background:linear-gradient(90deg,rgba(66,47,20,.84),rgba(24,26,23,.84))
+}
+.cb-membership-lock-banner b{color:#e0bd73;font-size:.48rem;letter-spacing:.12em}
+.cb-membership-lock-banner span{color:#8d8066;font-size:.45rem;line-height:1.45;text-align:right}
+.cb-sheet.member-slot-locked [data-equip-bank],
+.cb-sheet.member-slot-locked [data-unequip-slot],
+.cb-sheet.member-slot-locked [data-upgrade-equipped],
+.cb-sheet.member-slot-locked [data-invest-talent],
+.cb-sheet.member-slot-locked [data-activate-spec],
+.cb-sheet.member-slot-locked [data-equip-skill],
+.cb-sheet.member-slot-locked [data-clear-skill],
+.cb-sheet.member-slot-locked [data-reset-skills]{
+  pointer-events:none!important;opacity:.32!important;filter:grayscale(.7)
+}
+.cb-sheet.member-slot-locked .cb-header-points{opacity:.55}
+@media(max-width:720px){
+  .cb-membership-lock-banner{align-items:flex-start;flex-direction:column}
+  .cb-membership-lock-banner span{text-align:left}
+}
