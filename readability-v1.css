@@ -70,8 +70,8 @@ button,select,input,textarea{letter-spacing:.01em}
 .cb-loadout-head>button{font-size:.47rem}
 .cb-skill-slot{min-height:106px;padding:12px}
 .cb-skill-slot small{font-size:.44rem;color:#778782}
-.cb-skill-slot b{font-size:.7rem;color:#e5ece9}
-.cb-skill-slot em{font-size:.52rem;line-height:1.45;color:#879893}
+.cb-skill-slot b{font-size:.72rem;color:#e5ece9}
+.cb-skill-slot em{font-size:.6rem;line-height:1.5;color:#9aa9a4}
 .cb-slot-actions{font-size:.5rem;color:#83938e}
 .cb-slot-actions>span{font-size:.5rem}
 .cb-slot-actions>button{font-size:.44rem}
@@ -81,9 +81,9 @@ button,select,input,textarea{letter-spacing:.01em}
 .cb-skill-library-head>span{font-size:.52rem}
 .cb-skill-card{min-height:130px;padding:12px}
 .cb-skill-card-copy small{font-size:.42rem;color:#7d8f89}
-.cb-skill-card-copy h4{font-size:.72rem;color:#e2e9e6}
-.cb-skill-card-copy p{font-size:.58rem;line-height:1.55;color:#91a19c}
-.cb-skill-meta span{font-size:.43rem;color:#81928d}
+.cb-skill-card-copy h4{font-size:.76rem;color:#e2e9e6}
+.cb-skill-card-copy p{font-size:.68rem;line-height:1.62;color:#a5b3ae}
+.cb-skill-meta span{font-size:.46rem;color:#8c9c97}
 .cb-skill-equip{min-width:112px;min-height:38px;font-size:.43rem}
 .cb-skill-lock b{font-size:.48rem}
 .cb-skill-lock span{font-size:.44rem;color:#74847f}
@@ -228,7 +228,7 @@ button,select,input,textarea{letter-spacing:.01em}
 @media (min-width:721px) and (max-width:1180px){
   .main{padding-left:20px;padding-right:20px}
   .cb-character-tabs button{min-width:112px;padding-left:15px;padding-right:15px}
-  .cb-skill-card-copy p{font-size:.6rem}
+  .cb-skill-card-copy p{font-size:.7rem}
   .cb-skill-grid{grid-template-columns:1fr 1fr}
 }
 
@@ -245,6 +245,6 @@ button,select,input,textarea{letter-spacing:.01em}
   .cb-skill-slot b{font-size:.66rem}
   .cb-skill-slot em{font-size:.5rem}
   .cb-skill-card-copy h4{font-size:.7rem}
-  .cb-skill-card-copy p{font-size:.58rem}
+  .cb-skill-card-copy p{font-size:.66rem}
   .cb-skill-meta span{font-size:.42rem}
 }
