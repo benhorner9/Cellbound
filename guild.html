@@ -303,9 +303,8 @@
         <div class="formation-panel panel">
           <div class="panel-head"><div><small>FORMATION</small><h3>Active Five</h3></div><b id="readinessLabel">NOT READY</b></div>
           <div id="partySlots" class="party-slots"></div>
-          <div class="readiness"><div class="readiness-line"><span>Party Readiness</span><b id="readinessText">0%</b></div><div class="readiness-bar"><i id="readinessFill"></i></div><p id="readinessHint">Assign 1 Tank, 1 Healer and 3 Damage characters.</p></div>
-          <div class="attempt-controls evolution-legacy-attempt"><label>Target boss<select id="bossSelect"></select></label><button id="attemptBtn" disabled>BEGIN ATTEMPT</button></div>
-          <div class="party-dungeon-cta"><div><small>DUNGEON READY</small><b>The Ashen Vault is ready.</b><span>Fight through trash packs, mini-bosses, an elite encounter and the final boss.</span></div><button data-jump="content">OPEN DUNGEON JOURNAL →</button></div>
+          <div class="readiness"><div class="readiness-line"><span>Party Readiness</span><b id="readinessText">0%</b></div><div class="readiness-bar"><i id="readinessFill"></i></div><p id="readinessHint">Fill all five party slots. Any role composition is allowed.</p></div>
+          <div class="party-dungeon-cta"><div><small>COMBAT ENTRY</small><b>Choose the expedition in the Dungeon Journal.</b><span>All dungeon combat now runs through the authoritative Combat Reborn encounter engine.</span></div><button id="partyOpenDungeons" type="button">OPEN DUNGEON JOURNAL →</button></div>
         </div>
         <div class="selection-panel panel"><div class="panel-head"><div><small>AVAILABLE</small><h3>Choose Adventurers</h3></div></div><div id="partyRoster" class="party-roster"></div></div>
       </div>
@@ -374,7 +373,6 @@
 
 <div id="characterModal" class="modal-backdrop" hidden><section class="character-modal"><button class="modal-close" data-close>×</button><div id="characterDetail"></div></section></div>
 <div id="bankModal" class="modal-backdrop" hidden><section class="character-modal bank-modal"><button class="modal-close" data-bank-close>×</button><div id="bankDetail"></div></section></div>
-<div id="attemptModal" class="modal-backdrop" hidden><section class="attempt-modal"><div id="attemptStage"></div></section></div>
 
 <script>window.CELLBOUND_BUILD='__CELLBOUND_BUILD__';window.CELLBOUND_BUILD_NUMBER='__CELLBOUND_BUILD_NUMBER__';</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
