@@ -80,6 +80,7 @@ async function dungeonComplete(detail){
   q.keys[id]={foundAt:new Date().toISOString(),attempt};
   history(def.name+' was recovered from '+def.place+'.');
   notify('QUEST ITEM FOUND',def.name,'The lockbox reacts the moment the key enters your possession.');
+  window.CellboundFX?.quest?.({eyebrow:'QUEST ITEM FOUND',title:def.name,copy:'Recovered from '+def.place+'.',icon:def.icon,tone:'arcane',duration:1500});
   state().activity=Array.isArray(state().activity)?state().activity:[];state().activity.push('Quest item found: '+def.name+' · '+def.place+'.');
   if(keyCount(q)===4)q.stage='box'
  }
@@ -90,7 +91,8 @@ async function insertKey(id){
  q.inserted[id]=true;
  await commit(def.name+' turned once inside the lockbox.');
  notify('LOCKBOX',def.name,'One of the four mechanisms unlocks.');
- if(insertCount(q)===4){q.stage='box';await commit('All four mechanisms inside the lockbox are unlocked.')}
+ window.CellboundFX?.key?.(def.name);window.CellboundFX?.pulse?.('.fourfold-lockbox');
+ if(insertCount(q)===4){q.stage='box';await commit('All four mechanisms inside the lockbox are unlocked.');window.CellboundFX?.callout?.({eyebrow:'FOUR LOCKS OPEN',title:'The lockbox is ready.',tone:'arcane'})}
 }
 function puzzleRoot(){
  let e=$('#fourfoldPuzzle');if(e)return e;e=document.createElement('div');e.id='fourfoldPuzzle';e.className='fourfold-puzzle-backdrop';e.hidden=true;document.body.appendChild(e);return e
@@ -98,6 +100,7 @@ function puzzleRoot(){
 async function openBox(){
  const q=ensure();if(insertCount(q)!==4)return;
  q.boxOpened=true;q.stage='map';await commit('The Fourfold Lock opened. Inside was a parchment map that did not show a single fixed time.');
+ window.CellboundFX?.callout?.({eyebrow:'THE FOURFOLD LOCK OPENS',title:'Something inside is moving.',tone:'story',duration:1450});
  openMap()
 }
 function mapEra(id,label,year,options){
@@ -140,14 +143,14 @@ function openMap(){
  root.querySelector('[data-trace]').onclick=async()=>{
   const ok=selected.ancient==='river'&&selected.medieval==='fortress'&&selected.frontier==='station'&&selected.future==='array',result=$('#chronoResult');
   if(!ok){
-   q.mapMistakes++;root.querySelector('.chronomap').classList.add('wrong');setTimeout(()=>root.querySelector('.chronomap')?.classList.remove('wrong'),520);
+   q.mapMistakes++;root.querySelector('.chronomap').classList.add('wrong');window.CellboundFX?.shake?.('soft');window.CellboundFX?.flash?.('danger');setTimeout(()=>root.querySelector('.chronomap')?.classList.remove('wrong'),520);
    result.querySelector('span').textContent='The ink runs backward. One or more anchors belong to a different place.';
    await commit();return
   }
   root.querySelector('.chronomap').classList.add('solved');
   result.innerHTML='<strong>⌛</strong><b>YOU FOUND ME.</b><span>The roads vanish. The map is becoming ash.</span>';
   q.mapSolved=true;q.stage='return';history('The living map revealed one location repeated through four ages, then disintegrated.');
-  await commit();
+  await commit();window.CellboundFX?.callout?.({eyebrow:'THE MAP REMEMBERS',title:'YOU FOUND ME.',tone:'story',duration:1800});
   setTimeout(()=>{root.classList.add('disintegrating')},850);
   setTimeout(()=>{root.hidden=true;root.classList.remove('disintegrating');document.body.classList.remove('fourfold-puzzle-open');Game.switchView?.('quests')},2100)
  }
@@ -166,6 +169,7 @@ async function finish(){
   const s=state();s.progression.fracturedAgesUnlocked=true;s.gold=(Number(s.gold)||0)+400;s.renown=(Number(s.renown)||0)+250;
   s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push('Quest complete: The Fourfold Lock. The Fractured Ages was unlocked.');
   await commit('The Strange Old Man opened a route into The Fractured Ages.');
+  window.CellboundFX?.unlock?.('The Fractured Ages','A fifth dungeon has appeared beyond the normal world.');
   completion()
  },'FOLLOW THE OLD MAN')
 }
