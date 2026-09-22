@@ -303,7 +303,7 @@ Storage.prototype.setItem=function(key,value){
 const WORKSPACES={
   overview:{label:'Overview',views:[['overview','Overview']]},
   guild:{label:'Guild',views:[['roster','Roster'],['party','Party'],['chat','Social'],['reports','Reports']]},
-  adventure:{label:'Adventure',views:[['quests','Quests'],['content','Dungeons'],['endgame','Endgame'],['world','World Bosses']]},
+  adventure:{label:'Adventure',views:[['quests','Quests'],['content','Dungeons'],['endgame','Endgame'],['world','World Event']]},
   economy:{label:'Supplies',views:[['bank','Bank'],['professions','Professions'],['trading','Trading Post']]},
   admin:{label:'Admin',views:[['admin','Admin']]}
 };

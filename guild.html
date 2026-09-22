@@ -18,7 +18,6 @@
 <link rel="stylesheet" href="./dungeon-2d-v1.css?v=18">
 <link rel="stylesheet" href="./combat-status-ui-v1.css?v=8">
 <link rel="stylesheet" href="./endgame-v1.css?v=4">
-<link rel="stylesheet" href="./world-boss-2d-v1.css?v=6">
 <link rel="stylesheet" href="./twelve-below-v1.css?v=3">
 <link rel="stylesheet" href="./admin-v1.css?v=4">
 <link rel="stylesheet" href="./release-v1.css?v=2">
@@ -219,7 +218,7 @@
     </section>
 
     <section id="chat" class="view">
-      <div class="section-intro"><div><small>PLAYER NETWORK</small><h2>Chat</h2><p>Talk with other guildmasters, advertise trades and find groups for dungeons and world bosses.</p></div><button id="refreshSocial" class="ghost-btn">REFRESH</button></div>
+      <div class="section-intro"><div><small>PLAYER NETWORK</small><h2>Chat</h2><p>Talk with other guildmasters, advertise trades and find groups for dungeons.</p></div><button id="refreshSocial" class="ghost-btn">REFRESH</button></div>
       <div class="social-layout">
         <div class="panel chat-panel">
           <div class="chat-tabs"><button class="active" data-chat-channel="world">WORLD</button><button data-chat-channel="trade">TRADE</button><button data-chat-channel="party">PARTY FINDER</button></div>
@@ -227,7 +226,7 @@
           <form id="chatForm" class="chat-form"><input id="chatInput" maxlength="300" autocomplete="off" placeholder="Message World…" aria-describedby="chatSafetyNote"><button type="submit">SEND</button></form><small id="chatSafetyNote" class="chat-safety-note"><i>◆</i> CHAT FILTER ACTIVE · staff badges are server verified</small>
         </div>
         <aside class="social-side">
-          <article class="panel identity-panel"><div class="panel-head"><div><small>SOCIAL IDENTITY</small><h3>Your Guild Name</h3></div></div><form id="guildNameForm" class="guild-name-form"><input id="guildNameInput" maxlength="24" placeholder="Choose a guild name"><button type="submit">SAVE NAME</button><p>This name is shown in chat, Party Finder and world bosses.</p></form></article>
+          <article class="panel identity-panel"><div class="panel-head"><div><small>SOCIAL IDENTITY</small><h3>Your Guild Name</h3></div></div><form id="guildNameForm" class="guild-name-form"><input id="guildNameInput" maxlength="24" placeholder="Choose a guild name"><button type="submit">SAVE NAME</button><p>This name is shown in chat and Party Finder.</p></form></article>
           <article class="panel party-finder-panel"><div class="panel-head"><div><small>GROUP FINDER</small><h3>Party Finder</h3></div><b id="partyFinderCount">0 GROUPS</b></div>
             <form id="partyFinderForm" class="party-finder-form"><label>Activity<select id="partyFinderTarget"></select></label><label>Players<select id="partyFinderCap"><option value="2">2 players</option><option value="3">3 players</option><option value="4" selected>4 players</option><option value="6">6 players</option><option value="8">8 players</option></select></label><label>Note<input id="partyFinderNote" maxlength="180" placeholder="Need one more commander…"></label><button type="submit">CREATE GROUP</button></form>
             <div id="partyFinderListings" class="party-finder-listings"></div>
@@ -241,11 +240,8 @@
     </section>
 
     <section id="world" class="view">
-      <div class="section-intro"><div><small>WORLD ENCOUNTERS</small><h2>World Bosses</h2><p>Some encounters are shared across commanders. Special world events such as The Twelve Below are private to your active five.</p></div><button id="refreshWorld" class="ghost-btn">REFRESH WORLD</button></div>
+      <div class="section-intro"><div><small>WORLD EVENT</small><h2>The Twelve Below</h2><p>The Sepulchre of Twelve is the current world-scale challenge. Bring your active five, survive the rising vices and chase class relics.</p></div></div>
       <div id="twelveBelowMount"></div>
-      <div id="worldBossRewards" class="world-boss-rewards"></div>
-      <div id="worldBossGrid" class="world-boss-grid"></div>
-      <article class="panel world-rules"><div class="panel-head"><div><small>SHARED WORLD BOSS RULES</small><h3>Shared Encounter Rules</h3></div></div><div class="world-rule-grid"><span>Each commander brings their normal 5-character party.</span><span>Every participating player earns one personal item when the boss dies.</span><span>A party wipe adds Cell Shock to all five participating characters.</span><span>After a kill, the next spawn is hidden and randomly set between 10 minutes and 8 hours.</span></div></article>
     </section>
 
     <section id="quests" class="view">
@@ -391,7 +387,6 @@
 <script src="./economy-v2.js?v=12"></script>
 <script src="./trading-post-v3.js?v=6"></script>
 <script src="./social-v3.js?v=5"></script>
-<script src="./world-boss-2d-v1.js?v=12"></script>
 <script src="./twelve-below-v1.js?v=12"></script>
 <script src="./evolution-v1.js?v=18"></script>
 <script src="./dungeon-2d-v1.js?v=46"></script>

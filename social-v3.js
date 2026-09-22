@@ -2,8 +2,7 @@
 'use strict';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-let Game=null,db=null,user=null,channel='world',chatRows=[],groups=[],groupMembers=[],worldBosses=[],rewards=[],timer=null,lastChatNewest=0;
-const combatNotes={};
+let Game=null,db=null,user=null,channel='world',chatRows=[],groups=[],groupMembers=[],timer=null,lastChatNewest=0;
 const state=()=>Game?.getState?.();
 const partyIlvl=()=>Math.round((Number(Game?.partyItemLevel?.())||0)*10)/10;
 const partyChars=()=>Game?.getPartyCharacters?.()||[];
@@ -52,7 +51,7 @@ async function saveGuildName(e){
   e.preventDefault();const input=$('#guildNameInput'),name=(input?.value||'').trim().replace(/\s+/g,' ');
   if(name.length<3||name.length>24){input.setCustomValidity('Use 3–24 characters');input.reportValidity();setTimeout(()=>input.setCustomValidity(''),1200);return;}
   state().socialDisplayName=name;state().activity.push(`Your guild is now known as ${name}.`);await saveState();
-  input.value=name;await Promise.all([loadChat(true),loadGroups(),loadWorld()]);
+  input.value=name;await Promise.all([loadChat(true),loadGroups()]);
 }
 function renderTargetOptions(){
   const sel=$('#partyFinderTarget');if(!sel)return;
@@ -62,15 +61,14 @@ function renderTargetOptions(){
   options.push({type:'dungeon',id:'chaos-canyon',label:'Chaos Canyon'});
   options.push({type:'dungeon',id:'blackout-station',label:'Blackout Station'});
   if(s?.progression?.fracturedAgesUnlocked)options.push({type:'dungeon',id:'fractured-ages',label:'The Fractured Ages'});
-  worldBosses.forEach(b=>options.push({type:'world_boss',id:b.id,label:b.name}));
   const before=sel.value;
-  sel.innerHTML=options.map(o=>`<option value="${o.type}|${o.id}|${esc(o.label)}">${o.type==='world_boss'?'World Boss · ':'Dungeon · '}${esc(o.label)}</option>`).join('');
+  sel.innerHTML=options.map(o=>`<option value="${o.type}|${o.id}|${esc(o.label)}">Dungeon · ${esc(o.label)}</option>`).join('');
   if([...sel.options].some(o=>o.value===before))sel.value=before;
 }
 async function loadGroups(){
   if(!db||!user)return;
   const now=new Date().toISOString();
-  const {data,error}=await db.from('party_finder_listings').select('*').in('status',['open','full']).gt('expires_at',now).order('created_at',{ascending:false}).limit(40);
+  const {data,error}=await db.from('party_finder_listings').select('*').eq('content_type','dungeon').in('status',['open','full']).gt('expires_at',now).order('created_at',{ascending:false}).limit(40);
   if(error){console.warn(error);groups=[];groupMembers=[];renderGroups();return;}
   groups=data||[];
   if(groups.length){
@@ -86,7 +84,7 @@ function renderGroups(){
   if(!groups.length){root.innerHTML='<div class="social-empty">No groups looking for players.</div>';return;}
   root.innerHTML=groups.map(g=>{
     const members=groupMembers.filter(m=>m.listing_id===g.id),joined=members.some(m=>m.user_id===user.id),leader=g.leader_id===user.id,full=members.length>=g.player_cap;
-    return `<article class="pf-card"><div class="pf-card-head"><div><h4>${esc(g.target_label)}</h4><small>${g.content_type==='world_boss'?'WORLD BOSS':'DUNGEON'} · Leader ${esc(g.guild_label)} · Party iLvl ${Number(g.party_ilvl).toFixed(1)}</small></div><b class="pf-count">${members.length}/${g.player_cap}</b></div><p>${esc(g.note||'Looking for other commanders.')}</p><div class="pf-members">${members.map(m=>`<span>${esc(m.guild_label)} · iLvl ${Number(m.party_ilvl).toFixed(1)}</span>`).join('')}</div><div class="pf-actions">${leader?`<button class="secondary" data-pf-leave="${g.id}">CLOSE GROUP</button>`:joined?`<button class="secondary" data-pf-leave="${g.id}">LEAVE</button>`:`<button data-pf-join="${g.id}" ${full?'disabled':''}>${full?'FULL':'JOIN GROUP'}</button>`}</div></article>`;
+    return `<article class="pf-card"><div class="pf-card-head"><div><h4>${esc(g.target_label)}</h4><small>DUNGEON · Leader ${esc(g.guild_label)} · Party iLvl ${Number(g.party_ilvl).toFixed(1)}</small></div><b class="pf-count">${members.length}/${g.player_cap}</b></div><p>${esc(g.note||'Looking for other commanders.')}</p><div class="pf-members">${members.map(m=>`<span>${esc(m.guild_label)} · iLvl ${Number(m.party_ilvl).toFixed(1)}</span>`).join('')}</div><div class="pf-actions">${leader?`<button class="secondary" data-pf-leave="${g.id}">CLOSE GROUP</button>`:joined?`<button class="secondary" data-pf-leave="${g.id}">LEAVE</button>`:`<button data-pf-join="${g.id}" ${full?'disabled':''}>${full?'FULL':'JOIN GROUP'}</button>`}</div></article>`;
   }).join('');
   root.querySelectorAll('[data-pf-join]').forEach(b=>b.onclick=()=>joinGroup(b.dataset.pfJoin));
   root.querySelectorAll('[data-pf-leave]').forEach(b=>b.onclick=()=>leaveGroup(b.dataset.pfLeave));
@@ -105,82 +103,15 @@ async function joinGroup(id){
 }
 async function leaveGroup(id){const {error}=await db.rpc('leave_party_finder_listing',{p_listing_id:id});if(error){alert(error.message);return;}await loadGroups();}
 
-function bossStatus(b){
-  if(b.status==='in_combat')return{label:'IN COMBAT',cls:'combat'};
-  if(b.status==='active')return{label:'ACTIVE',cls:'active'};
-  const recent=b.last_killed_at&&(Date.now()-new Date(b.last_killed_at).getTime()<300000);
-  return{label:recent?'DEFEATED':'DORMANT',cls:''};
-}
-function bossRune(tier){return tier===1?'♜':tier===2?'♨':'✦';}
-function worldBossLevel(b){return Math.max(1,Number(b?.level)||({1:8,2:12,3:16}[Number(b?.tier)]||8))}
-function bossGlow(tier){return tier===1?'rgba(150,92,50,.28)':tier===2?'rgba(174,67,38,.3)':'rgba(112,71,168,.3)';}
-async function loadWorld(){
-  if(!db||!user)return;
-  const [{data,error},{data:r,error:re}]=await Promise.all([db.rpc('get_world_bosses'),db.rpc('get_world_boss_rewards')]);
-  if(!error)worldBosses=data||[];else console.warn(error);
-  if(!re)rewards=r||[];else console.warn(re);
-  renderTargetOptions();renderWorld();renderWorldRewards();updateWorldAlert();
-}
-function updateWorldAlert(){
-  const active=worldBosses.filter(b=>b.status==='active'||b.status==='in_combat'),bar=$('#worldAlertBar'),badge=$('#worldActiveBadge');
-  if(badge)badge.textContent=active.length?String(active.length):'';
-  if(!bar)return;
-  if(!active.length){bar.hidden=true;return;}
-  bar.hidden=false;bar.innerHTML=`<b>A powerful presence has emerged.</b> ${active.map(b=>esc(b.name)).join(' · ')}`;
-}
-function renderWorld(){
-  const root=$('#worldBossGrid');if(!root)return;
-  if(!worldBosses.length){root.innerHTML='<div class="social-empty">The world is quiet.</div>';return;}
-  const pi=partyIlvl(),ready=partyReady();
-  root.innerHTML=worldBosses.map(b=>{
-    const s=bossStatus(b),hp=b.max_hp?Math.max(0,Math.round((b.current_hp/b.max_hp)*100)):0,active=b.status==='active'||b.status==='in_combat',full=Number(b.participant_count)>=b.player_cap,canJoin=active&&!b.joined&&!full&&ready&&pi>=b.required_party_ilvl,note=combatNotes[b.id]||'';
-    return `<article class="world-boss-card" style="--boss-glow:${bossGlow(b.tier)}"><div class="world-boss-top"><span class="world-tier">LV ${worldBossLevel(b)} · TIER ${b.tier} WORLD BOSS</span><span class="world-status ${s.cls}">${s.label}</span><h3>${esc(b.name)}</h3><span class="boss-sub">Level ${worldBossLevel(b)} · Required Party iLvl ${b.required_party_ilvl} · ${b.player_cap}-player cap</span></div><div class="world-boss-body"><div class="world-boss-rune">${bossRune(b.tier)}</div>${active?`<div class="world-hp-line"><span>Boss Health</span><b>${Number(b.current_hp).toLocaleString()} / ${Number(b.max_hp).toLocaleString()}</b></div><div class="world-hp"><i style="width:${hp}%"></i></div><div class="world-cap-line"><span>Commanders Engaged</span><b>${b.participant_count} / ${b.player_cap}</b></div><p class="world-boss-copy">${b.joined?'Your five-character party is committed to this encounter.':!ready?'Complete your active party before joining.':pi<b.required_party_ilvl?`Your Party iLvl is ${pi}; ${b.required_party_ilvl} is required.`:'Join while space remains. The boss stays in the world until players kill it.'}</p><div class="world-actions"><button ${b.joined?`data-world-leave="${b.id}"`:`data-world-join="${b.id}"`} ${b.joined||canJoin?'': 'disabled'}>${b.joined?'LEAVE BOSS':full?'FULL':'JOIN BOSS'}</button><button class="attack" data-world-fight="${b.id}" ${b.joined&&b.status==='in_combat'&&ready?'':'disabled'}>ENTER FIGHT</button></div><div class="world-combat-log">${esc(note||'Shared encounter state is live. Coordinate with other commanders in World or Party Finder chat.')}</div>`:`<div class="world-dormant">No active signal. Its next appearance is unknown.<br>The hidden respawn can occur at any point between 10 minutes and 8 hours after a kill.</div>`}</div></article>`;
-  }).join('');
-  root.querySelectorAll('[data-world-join]').forEach(b=>b.onclick=()=>joinBoss(b.dataset.worldJoin));
-  root.querySelectorAll('[data-world-leave]').forEach(b=>b.onclick=()=>leaveBoss(b.dataset.worldLeave));
-  root.querySelectorAll('[data-world-fight]').forEach(b=>b.onclick=()=>window.CellboundWorldBoss2D?.open?.(b.dataset.worldFight));
-}
-async function joinBoss(id){
-  if(!partyReady()){alert('Build a complete available five-character party first.');return;}
-  const {error}=await db.rpc('join_world_boss',{p_boss_id:id,p_party_ilvl:partyIlvl()});if(error){alert(error.message||'Could not join world boss');return;}
-  combatNotes[id]=`${guildLabel()} entered the encounter with five adventurers.`;await loadWorld();
-}
-async function leaveBoss(id){const {error}=await db.rpc('leave_world_boss',{p_boss_id:id});if(error){alert(error.message||'Could not leave world boss');return;}combatNotes[id]='Your party withdrew from the encounter.';await loadWorld();}
-async function attackBoss(id,button){
-  button.disabled=true;
-  const {data,error}=await db.rpc('attack_world_boss',{p_boss_id:id});
-  if(error){combatNotes[id]=error.message||'Your party could not attack.';renderWorld();setTimeout(()=>loadWorld(),1000);return;}
-  if(data?.wiped){
-    Game.applyPartyCellShock(25);await Game.persistState();
-    combatNotes[id]='Your party was overwhelmed. All five adventurers gained 25% Cell Shock.';
-  }else combatNotes[id]=`Your party dealt ${Number(data?.damage||0).toLocaleString()} damage.`;
-  if(data?.killed)combatNotes[id]+=' The world boss has fallen. Every participating commander earned one personal item.';
-  await loadWorld();
-  setTimeout(()=>loadWorld(),5200);
-}
-function renderWorldRewards(){
-  const root=$('#worldBossRewards');if(!root)return;
-  if(!rewards.length){root.innerHTML='';return;}
-  root.innerHTML=rewards.map(r=>{const item=window.CellboundGear?.byId(r.item_key);return `<div class="world-reward-banner"><div>${item?window.CellboundGear.artHTML(item,50):'◆'}</div><div><h4>Personal World Boss Reward</h4><small>${esc(r.boss_name)} · Tier ${r.item_tier} · ${esc(item?.name||r.item_key)}</small></div><button data-claim-world="${r.id}">CLAIM ITEM</button></div>`;}).join('');
-  root.querySelectorAll('[data-claim-world]').forEach(b=>b.onclick=()=>claimReward(b.dataset.claimWorld));
-}
-async function claimReward(id){
-  const {data,error}=await db.rpc('claim_world_boss_reward',{p_reward_id:id});if(error){alert(error.message||'Reward could not be claimed');return;}
-  await Game.refreshStateFromServer?.({render:true});
-  await loadWorld();
-  window.CellboundFX?.loot?.({name:data?.item_name||'World Boss Reward',rarity:data?.rarity||'Rare'});
-}
-async function refreshAll(markSeen=false){await Promise.all([loadChat(markSeen),loadGroups(),loadWorld()]);}
+async function refreshAll(markSeen=false){await Promise.all([loadChat(markSeen),loadGroups()]);renderTargetOptions();}
 function bind(){
   $$('[data-chat-channel]').forEach(b=>b.addEventListener('click',()=>setChannel(b.dataset.chatChannel)));
   $('#chatForm')?.addEventListener('submit',sendChat);
   $('#guildNameForm')?.addEventListener('submit',saveGuildName);
   $('#partyFinderForm')?.addEventListener('submit',createGroup);
   $('#refreshSocial')?.addEventListener('click',()=>refreshAll(true));
-  $('#refreshWorld')?.addEventListener('click',loadWorld);
   window.addEventListener('cellbound:view-changed',e=>{
     if(e.detail?.view==='chat'){loadChat(true);loadGroups();}
-    if(e.detail?.view==='world')loadWorld();
   });
 }
 async function init(){
@@ -190,7 +121,7 @@ async function init(){
   bind();await refreshAll(false);
   timer=setInterval(()=>refreshAll(false),5000);
   window.addEventListener('beforeunload',()=>clearInterval(timer),{once:true});
-  window.CellboundSocial={refreshAll,loadWorld,loadGroups,loadChat,getWorldBosses:()=>worldBosses.slice()};
+  window.CellboundSocial={refreshAll,loadGroups,loadChat};
 }
 init();
 })();
