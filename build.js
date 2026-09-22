@@ -21,6 +21,10 @@ for(const file of files){
     if(!contents.includes('dataset.zoneEpoch')||!contents.includes('hideRoleZones(false)'))throw new Error('Blackout role circuits must clear on shockwave resolution');
     if(!contents.includes('dataset.shockEpoch'))throw new Error('Blackout shockwave cleanup must protect against stale timers');
   }
+  if(file==='blackout-station-v1.js'){
+    if(contents.includes('cb2d-loot-gear-card'))throw new Error('Blackout completion screen must not use the broken one-off loot card');
+    if(!contents.includes('function bsLootGearCard')||!contents.includes('cb2d-loot-item')||!contents.includes('cb2d-loot-roll'))throw new Error('Blackout completion gear must use the shared visual loot card');
+  }
   if(file==='trading-post-v3.js'){
     if(/location\.reload\s*\(/.test(contents))throw new Error('Trading Post must not hard-reload the page after market actions');
     if((contents.match(/function timeLeft\s*\(/g)||[]).length!==1)throw new Error('Trading Post timeLeft helper must be defined exactly once');
@@ -66,6 +70,10 @@ for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readab
 {
   const blackoutCss=fs.readFileSync(path.join(out,'blackout-station-v1.css'),'utf8');
   if(!blackoutCss.includes('.bs-role-zones.resolving .bs-role-zone'))throw new Error('Resolved Blackout role-circle fade is missing');
+}
+{
+  const blackoutCss=fs.readFileSync(path.join(out,'blackout-station-v1.css'),'utf8');
+  if(!blackoutCss.includes('.bs2d-shell.results-mode .cb2d-loot-gear'))throw new Error('Blackout completion loot layout is missing');
 }
 {
   const statusCss=fs.readFileSync(path.join(out,'combat-status-ui-v1.css'),'utf8');
