@@ -63,7 +63,7 @@ async function start(){
  ],async()=>{
   q.started=true;q.stage='keys';q.startedAt=new Date().toISOString();
   await commit('A strange old man in Zeltira Marketplace gave the guild a four-key lockbox.');
-  Game.switchView?.('quests')
+  window.CellboundQuests?.selectAdventure?.('fourfold-lock');Game.switchView?.('quests')
  },'TAKE THE LOCKBOX')
 }
 function keyCount(q=ensure()){return Object.keys(KEY_SOURCES).filter(id=>q.keys[id]).length}
@@ -223,7 +223,7 @@ function homeState(){
  const q=ensure();if(!q||q.complete||(!q.started&&!available()))return{active:false};
  const [label,copy]=stageCopy(q);return{active:true,small:'MYSTERY ADVENTURE',title:q.started?copy:'A strange old man is waiting in Zeltira Marketplace.',label}
 }
-function open(){Game.switchView?.('quests')}
+function open(){window.CellboundQuests?.selectAdventure?.('fourfold-lock');Game.switchView?.('quests')}
 function renderMarketplace(){
  const host=$('#trading');if(!host||!Game?.ready)return;let mount=$('#fourfoldMarketEncounter');
  if(!mount){mount=document.createElement('div');mount.id='fourfoldMarketEncounter';const intro=host.querySelector('.section-intro');intro?.insertAdjacentElement('afterend',mount)}
