@@ -81,7 +81,7 @@ function renderCategories(){
     consumable:knownCommodities().filter(x=>x.category==='consumable').length,
     recipe:knownCommodities().filter(x=>x.category==='recipe').length
   };
-  $document.querySelectorAll('#tpCategories [data-category]').forEach(b=>{const k=b.dataset.category;b.classList.toggle('active',k===activeCategory);const e=b.querySelector('em');if(e)e.textContent=counts[k]||0});
+  document.querySelectorAll('#tpCategories [data-category]').forEach(b=>{const k=b.dataset.category;b.classList.toggle('active',k===activeCategory);const e=b.querySelector('em');if(e)e.textContent=counts[k]||0});
 }
 function sortGear(rows,sort){
   rows=[...rows];
@@ -294,7 +294,7 @@ function renderWatchlist(){
     else{const x=knownCommodities().find(v=>v.category===w.category&&v.key===w.item_key),q=quoteFor(w.category,w.item_key);price=q.sell||q.avg7||0;art=commodityArt(w.category,w.item_key,46);rarity=x?.rarity||'Common'}
     return'<article class="tp-watch-card rarity-'+slug(rarity)+'"><div>'+art+'</div><div><h4>'+esc(w.item_name)+'</h4><small>'+esc(w.category)+' · '+esc(rarity)+'</small></div><strong>'+(price?gold(price):'—')+'</strong><button type="button" data-remove-watch="'+esc(w.category)+'|'+esc(w.item_key)+'">REMOVE</button></article>'
   }).join(''):'<div class="tp-empty">Your watchlist is empty. Watch an item from the market inspector.</div>';
-  $('[data-remove-watch]',root).forEach(b=>b.onclick=async()=>{if(actionBusy)return;const[c,k]=b.dataset.removeWatch.split('|'),y=window.scrollY;actionBusy=true;try{const {error}=await db.from('market_watchlist').delete().eq('user_id',user.id).eq('category',c).eq('item_key',k);if(error)throw error;await refreshAll(false,false);renderWatchlist();renderInspector();restoreMarketScroll(y)}catch(error){alert(error.message||'Could not remove watchlist item')}finally{actionBusy=false}});
+  $$('[data-remove-watch]',root).forEach(b=>b.onclick=async()=>{if(actionBusy)return;const[c,k]=b.dataset.removeWatch.split('|'),y=window.scrollY;actionBusy=true;try{const {error}=await db.from('market_watchlist').delete().eq('user_id',user.id).eq('category',c).eq('item_key',k);if(error)throw error;await refreshAll(false,false);renderWatchlist();renderInspector();restoreMarketScroll(y)}catch(error){alert(error.message||'Could not remove watchlist item')}finally{actionBusy=false}});
 }
 function renderHistory(){
   const root=$('#tpHistory');if(!root)return;
@@ -373,7 +373,7 @@ function renderSaved(){
   const root=$('#tpSavedSearches');if(!root)return;
   root.innerHTML=savedSearches.length?savedSearches.map(s=>'<div class="tp-saved-item"><button type="button" data-saved="'+esc(s.id)+'">'+esc(s.name)+'</button><button type="button" data-delete-saved="'+esc(s.id)+'">×</button></div>').join(''):'<div class="tp-empty">No saved searches.</div>';
   $$('[data-saved]',root).forEach(b=>b.onclick=()=>applySaved(b.dataset.saved));
-  $('[data-delete-saved]',root).forEach(b=>b.onclick=async()=>{if(actionBusy)return;const y=window.scrollY;actionBusy=true;try{const {error}=await db.from('market_saved_searches').delete().eq('id',b.dataset.deleteSaved).eq('user_id',user.id);if(error)throw error;await refreshAll(false,false);renderSaved();restoreMarketScroll(y)}catch(error){alert(error.message||'Could not delete saved search')}finally{actionBusy=false}});
+  $$('[data-delete-saved]',root).forEach(b=>b.onclick=async()=>{if(actionBusy)return;const y=window.scrollY;actionBusy=true;try{const {error}=await db.from('market_saved_searches').delete().eq('id',b.dataset.deleteSaved).eq('user_id',user.id);if(error)throw error;await refreshAll(false,false);renderSaved();restoreMarketScroll(y)}catch(error){alert(error.message||'Could not delete saved search')}finally{actionBusy=false}});
 }
 async function saveSearch(){
   const f=filterState(),name=prompt('Name this saved search',f.q||'Market search');if(!name)return;
@@ -395,7 +395,7 @@ function applySaved(id){
 }
 function setTab(tab){
   activeTab=tab;
-  $document.querySelectorAll('#tpTabs [data-tp-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tpTab===tab));
+  document.querySelectorAll('#tpTabs [data-tp-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tpTab===tab));
   $$('.tp-view').forEach(v=>v.hidden=v.dataset.tpView!==tab);
   if(tab==='browse')renderBrowse();
   if(tab==='my')renderMyTrading();
