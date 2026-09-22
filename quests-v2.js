@@ -657,8 +657,10 @@ function qRenderRebornEvent(e){
       const u=qUnit(e.target);if(u)u.classList.add('dead');if(enemyIndex>=0)qSetEnemyHp(enemyIndex,0);else qSetAddHp(e.target,0);break;
     }
     case'PLAYER_DEFEATED':if(targetChar){qSetPartyHp(targetChar,0);qUnit(e.target)?.classList.add('dead');qLog(targetChar.name+' is defeated.')}break;
+    case'PHASE_CHANGE':window.CellboundFX?.phase?.(e.ability||'Boss phase',e.payload?.healthPct);qStatus(e.ability||'PHASE CHANGE');qLog((e.ability||'A new phase')+' begins.');break;
+    case'ENRAGE':if(e.result==='hard')window.CellboundFX?.shake?.('hard');else window.CellboundFX?.flash?.('danger');qStatus(e.result==='hard'?'HARD ENRAGE':(e.ability||'ENRAGE'));qLog((e.ability||'The enemy enrages')+'.');break;
     case'DEFENSIVE_ACTIVATED':if(srcChar)qLog(srcChar.name+' activates '+(e.ability||'a defensive')+'.');break;
-    case'COMBAT_END':qCastClear();qStatus(e.result==='victory'?'ENCOUNTER CLEAR':'PARTY DEFEATED');break;
+    case'COMBAT_END':qCastClear();qStatus(e.result==='victory'?'ENCOUNTER CLEAR':'PARTY DEFEATED');if(e.result!=='victory')window.CellboundFX?.wipe?.('The quest encounter has overwhelmed the party.');break;
   }
 }
 async function qPlayReborn(result,tok){
@@ -682,6 +684,7 @@ async function runQuest2DFight(config){
     const encounter=qEncounterFromConfig(config),entries=config.enemies||[],names=entries.map(x=>typeof x==='object'&&x?x.name||'Unknown Enemy':x),max=entries.map(x=>typeof x==='object'&&x&&Number(x.maxHealth||x.health)>0?Number(x.maxHealth||x.health):encounter.enemyHealth);
     questFight={token:tok,title:config.title,phases:['Combat'],phase:0,enemies:names,level:encounter.level,enemyLevels:encounter.enemyLevels,enemyTypes:encounter.enemyTypes,eliteIndex:Number.isInteger(config.eliteIndex)?config.eliteIndex:-1,enemyMax:max,enemyHp:[...max],partyHp:Object.fromEntries(p.map(c=>[c.id,100])),damage:Object.fromEntries(p.map(c=>[c.id,0])),threat:max.map(()=>Object.fromEntries(p.map(c=>[c.id,0]))),aggro:max.map(()=>null),log:[],telegraphs:{},finished:false};
     qDraw(config,finish);qSpawn();qLog(config.ambience);
+    if(encounter.kind==='boss'||encounter.kind==='final')window.CellboundFX?.boss?.(config.title,config.location||'');
     (async()=>{
       try{
         await wait(600);if(tok!==encounterToken)return;
