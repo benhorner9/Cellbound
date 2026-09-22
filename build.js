@@ -55,8 +55,16 @@ for(const file of files){
     if(!contents.includes("if(!data?.id)throw new Error('The listing was not confirmed by the Trading Post.')"))throw new Error('Trading Post listing creation must verify the server response');
     if(!contents.includes('function isUtilityItem')||!contents.includes('UTILITY EFFECT')||!contents.includes('function utilityArtHTML'))throw new Error('Trading Post must preserve visual utility-item trading support');
   }
+  if(file==='evolution-v1.js'){
+    if(contents.includes("db.rpc('command_world_boss'")||/location\.reload\s*\(/.test(contents))throw new Error('Legacy Evolution world-boss combat path must remain retired');
+    if(!contents.includes('CellboundWorldBoss2D?.open?.(id)'))throw new Error('Evolution world-boss actions must route to the authoritative viewer');
+  }
   if(file==='endgame-v1.js'){
     if(!contents.includes("dungeonCard('chaos-canyon')")||!contents.includes("leaderboardMarkup('chaos-canyon')"))throw new Error('Chaos Canyon must remain visible in the Endgame Hub');
+  }
+  if(file==='twelve-below-v1.js'){
+    if(contents.includes("toISOString().slice(0,10)"))throw new Error('Twelve Below daily reset must use local calendar time');
+    if(!contents.includes('requestAnimationFrame(frame)'))throw new Error('Twelve Below playback must use the continuous frame clock');
   }
   if(file==='social-v3.js'){
     for(const id of ['hollow-sanctum','chaos-canyon','blackout-station','fractured-ages'])if(!contents.includes("id:'"+id+"'"))throw new Error('Party Finder is missing dungeon target '+id);
@@ -66,9 +74,18 @@ for(const file of files){
   if(file==='release-v1.js'){
     for(const id of ['#cc2dBackdrop','#bs2dBackdrop','#fracturedAgesBackdrop','#twelveBelowBackdrop','#thirteenthBellRoot','#fourfoldPuzzle'])if(!contents.includes(id))throw new Error('Release gate is missing active-gameplay protection for '+id);
   }
+  if(file==='dungeon-2d-v1.js'){
+    if(!contents.includes("$('[data-unit]').forEach"))throw new Error('Ashen Vault arena reflow selector regression detected');
+    if(!contents.includes("script.src='./combat-reborn-v1.js"))throw new Error('Ashen Vault recovery loader must reload the canonical combat engine');
+  }
   if(file==='chaos-canyon-v1.js'){
+    if(!contents.includes("$('[data-cc]').forEach"))throw new Error('Chaos Canyon arena reflow selector regression detected');
     if(!contents.includes('async function ccFailNoHealer')||!contents.includes('await ccFailNoHealer(s,result)'))throw new Error('Chaos Canyon must surface healerless recovery failure instead of silently ending');
     if(!contents.includes('requestAnimationFrame(frame)'))throw new Error('Chaos Canyon combat playback must use the continuous frame clock');
+  }
+  if(file==='fractured-ages-v1.js'){
+    if(!contents.includes('function carryCombatState')||!contents.includes('combatState:run?.combatState'))throw new Error('Fractured Ages must carry combat state across eras');
+    if(!contents.includes('async function failRecovery'))throw new Error('Fractured Ages must handle healerless between-fight recovery');
   }
   if(file==='quests-v2.js'){
     if(!contents.includes('async function qPlayReborn')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('Quest combat must use continuous Combat Reborn playback');
@@ -81,6 +98,9 @@ for(const file of files){
   }
   if(file==='guild.html'){
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
+    if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
+    if(!contents.includes('combat-reborn-v1.js'))throw new Error('Canonical Combat Reborn engine is not linked from guild.html');
+
     const required=['rosterGrid','bankGrid','professionWorkshop','chatMessages','worldBossGrid','dungeonRoute','dungeonIntel','enterDungeonBtn','partySlots'];
     for(const id of required)if(!contents.includes(`id="${id}"`))throw new Error(`Missing required Evolution hook: ${id}`);
     if(!contents.includes('evolution-v1.css')||!contents.includes('evolution-v1.js'))throw new Error('Evolution Pass assets are not linked from guild.html');
