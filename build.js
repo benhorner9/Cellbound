@@ -17,6 +17,10 @@ for(const file of files){
     if(!contents.includes("maxVisible=mirror?8:(host.classList.contains('big')?4:3)"))throw new Error('Combat overhead statuses must stay capped at three for normal units');
     if(!contents.includes('statusPriority')||!contents.includes('is-fresh')||!contents.includes('is-expiring'))throw new Error('Combat status attention states are missing');
   }
+  if(file==='blackout-station-v1.js'){
+    if(!contents.includes('dataset.zoneEpoch')||!contents.includes('hideRoleZones(false)'))throw new Error('Blackout role circuits must clear on shockwave resolution');
+    if(!contents.includes('dataset.shockEpoch'))throw new Error('Blackout shockwave cleanup must protect against stale timers');
+  }
   if(file==='trading-post-v3.js'){
     if(/location\.reload\s*\(/.test(contents))throw new Error('Trading Post must not hard-reload the page after market actions');
     if((contents.match(/function timeLeft\s*\(/g)||[]).length!==1)throw new Error('Trading Post timeLeft helper must be defined exactly once');
@@ -59,6 +63,10 @@ for(const file of files){
 }
 for(const file of assets){const src=path.join(__dirname,file),dest=path.join(out,file);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest)}
 for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readability-v1.css','ui-readability-v2.css','blackout-station-v1.css','blackout-station-v1.js','trading-post-v3.css','trading-post-v3.js','combat-status-ui-v1.css','combat-status-ui-v1.js']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing required production asset: ${file}`)}
+{
+  const blackoutCss=fs.readFileSync(path.join(out,'blackout-station-v1.css'),'utf8');
+  if(!blackoutCss.includes('.bs-role-zones.resolving .bs-role-zone'))throw new Error('Resolved Blackout role-circle fade is missing');
+}
 {
   const statusCss=fs.readFileSync(path.join(out,'combat-status-ui-v1.css'),'utf8');
   if(!statusCss.includes('opacity:.42')||!statusCss.includes('.is-fresh')||!statusCss.includes('.is-expiring'))throw new Error('Smart compact combat status styling is missing');
