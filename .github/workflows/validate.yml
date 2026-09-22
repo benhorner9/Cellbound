@@ -1,0 +1,45 @@
+name: Validate Cellbound
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cellbound-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Production build validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out Cellbound
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build and run regressions
+        run: npm run build
+
+      - name: Verify deployment package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f dist/index.html
+          test -f dist/guild.html
+          test -f dist/auth.js
+          test -f dist/guild-v4.js
+          test -f dist/combat-reborn-v1.js
+          test -f dist/assets/gear/cellbound-gear-atlas.webp
+          test -f dist/assets/combat/status-icons-v1.webp
+          ! grep -R --line-number -E 'href="/|src="/' dist/*.html

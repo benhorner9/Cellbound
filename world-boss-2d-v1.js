@@ -331,16 +331,28 @@ function wbRenderServerEvent(e){
   }
 }
 async function playServerEvents(events){
-  let last=0,frameBudgetStarted=performance.now(),burstCount=0;
-  for(const e of Array.isArray(events)?events:[]){
-    if(!active)return;
-    const gap=Math.max(0,(Number(e.timestamp)||0)-last);
-    if(gap){await new Promise(r=>setTimeout(r,gap));frameBudgetStarted=performance.now();burstCount=0}
-    wbRenderServerEvent(e);last=Number(e.timestamp)||last;burstCount++;
-    if(burstCount>=12||performance.now()-frameBudgetStarted>7){
-      await new Promise(r=>requestAnimationFrame(r));frameBudgetStarted=performance.now();burstCount=0
-    }
-  }
+  const timeline=(Array.isArray(events)?events:[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
+  if(!timeline.length||!active)return;
+  const bossId=active.boss?.id;
+  return await new Promise(resolve=>{
+    let index=0,simTime=0,lastFrame=performance.now(),finished=false;
+    const finish=()=>{if(finished)return;finished=true;resolve()};
+    const frame=now=>{
+      if(finished)return;
+      if(!active||active.boss?.id!==bossId){finish();return}
+      const rawDelta=Math.max(0,now-lastFrame);lastFrame=now;
+      simTime+=Math.min(rawDelta,100);
+      const frameStarted=performance.now();let handled=0;
+      while(index<timeline.length&&(Number(timeline[index].timestamp)||0)<=simTime+4&&handled<18&&performance.now()-frameStarted<8){
+        const event=timeline[index++];handled++;
+        try{wbRenderServerEvent(event)}
+        catch(error){console.warn('World boss combat visual recovered',event?.type,event?.ability,error)}
+      }
+      if(index>=timeline.length){finish();return}
+      requestAnimationFrame(frame)
+    };
+    requestAnimationFrame(frame)
+  })
 }
 function wipeOwnParty(){
   document.querySelectorAll('#wb2dUnits .wb2d-unit.own').forEach((u,i)=>setTimeout(()=>{u.classList.add('wiped');const hp=u.querySelector('.wb2d-unit-hp i');if(hp)hp.style.width='0%'},i*90));

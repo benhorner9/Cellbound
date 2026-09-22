@@ -473,11 +473,11 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 .cb2d-unit.class-druid{--class-color:#FF7C0A}
 .cb2d-unit.class-evoker{--class-color:#33937F}
 .cb2d-unit.class-hunter{--class-color:#AAD372}
-.cb2d-unit.class-mage{--class-color:#69CCF0}
-.cb2d-unit.class-warrior{--class-color:#C79C6E}
-.cb2d-unit.class-paladin{--class-color:#F58CBA}
+.cb2d-unit.class-mage{--class-color:#3FC7EB}
+.cb2d-unit.class-warrior{--class-color:#C69B6D}
+.cb2d-unit.class-paladin{--class-color:#F48CBA}
 .cb2d-unit.class-priest{--class-color:#FFFFFF}
-.cb2d-unit.class-rogue{--class-color:#FFF569}
+.cb2d-unit.class-rogue{--class-color:#FFF468}
 .cb2d-number.crit{font-size:18px;font-weight:900;transform:translate(-50%,-8px) scale(1.12)}
 
 .cbr-analysis{
