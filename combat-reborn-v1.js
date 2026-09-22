@@ -10,8 +10,8 @@ const pct=(v,max)=>max>0?clamp(v/max*100,0,100):0;
 
 const CLASS_COLORS={
  'Death Knight':'#C41E3A','Demon Hunter':'#A330C9','Druid':'#FF7C0A','Evoker':'#33937F',
- 'Hunter':'#AAD372','Mage':'#69CCF0','Warrior':'#C79C6E','Paladin':'#F58CBA',
- 'Priest':'#FFFFFF','Rogue':'#FFF569'
+ 'Hunter':'#AAD372','Mage':'#3FC7EB','Warrior':'#C69B6D','Paladin':'#F48CBA',
+ 'Priest':'#FFFFFF','Rogue':'#FFF468'
 };
 
 const RESOURCE_DEFS={
