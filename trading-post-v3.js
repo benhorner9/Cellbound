@@ -131,7 +131,7 @@ function gearCard(l){
     '<div class="tp-result-copy"><small><span class="tp-rarity-'+slug(rarity)+'">'+esc(rarity)+'</span> · '+esc(l.item_class||g.class||'Any')+' · '+esc(l.slot||g.slot||'Gear')+'</small>'+
     '<h4>'+esc(l.item_name)+'</h4><p>Item Level '+ilvl+' · '+esc(l.seller_label||'Player Guild')+' · '+age(l.created_at)+'</p>'+
     (stats.length?'<div class="tp-stat-chips">'+stats.slice(0,4).map(s=>'<span>'+esc(s.text)+'</span>').join('')+'</div>':'')+'</div>'+
-    '<div class="tp-price"><b>'+gold(l.unit_price)+'</b><small>'+ (mine(l.seller_id)?'Your listing':'Buy now') +'</small></div></article>';
+    '<div class="tp-price"><b>'+gold(l.unit_price)+'</b><small>'+ (l.is_own?'Your listing':'Buy now') +'</small></div></article>';
 }
 function commodityCard(x){
   const q=quoteFor(x.category,x.key),rarity=x.rarity||'Common',tx=itemTransactions(x.category,x.key,7);
@@ -182,7 +182,7 @@ function gearInspector(l){
     '<div class="tp-inspector-section"><small>ITEM ROLL</small><div class="tp-stat-chips">'+(stats.length?stats.map(s=>'<span>'+esc(s.text)+'</span>').join(''):'<span>No rolled stats</span>')+'</div>'+(g.uniqueEffect?'<p>'+esc(g.uniqueEffect.name)+' · '+esc(g.uniqueEffect.description)+'</p>':'')+'</div>'+
     '<div class="tp-inspector-section"><small>YOUR COMPARISON</small>'+compatibleCompare(g)+'</div></div>'+
     '<div><div class="tp-inspector-section"><small>MARKET ACTIONS</small><div class="tp-action-row">'+
-    (mine(l.seller_id)?'<button class="danger" data-cancel-gear="'+esc(l.id)+'">CANCEL LISTING</button>':'<button data-buy-gear="'+esc(l.id)+'">BUY FOR '+gold(l.unit_price)+'</button>')+
+    (l.is_own?'<button class="danger" data-cancel-gear="'+esc(l.id)+'">CANCEL LISTING</button>':'<button data-buy-gear="'+esc(l.id)+'">BUY FOR '+gold(l.unit_price)+'</button>')+
     '<button class="tp-watch '+(isWatched('gear',l.item_key)?'active':'')+'" data-watch="gear|'+esc(l.item_key)+'|'+esc(l.item_name)+'">'+(isWatched('gear',l.item_key)?'★ WATCHING':'☆ WATCH')+'</button></div></div>'+
     '<div class="tp-inspector-section"><small>RECENT SALES</small>'+historyChart('gear',l.item_key)+'</div></div></div>';
 }
@@ -221,7 +221,7 @@ function bindInspector(){
   const form=$('#tpCommodityForm');if(form)form.onsubmit=placeCommodityOrder;
 }
 async function buyGear(id){
-  const l=listings.find(x=>x.id===id);if(!l||mine(l.seller_id))return;
+  const l=listings.find(x=>x.id===id);if(!l||l.is_own)return;
   if(currentGold()<Number(l.unit_price)){alert('Not enough Gold.');return}
   const {error}=await db.rpc('purchase_trading_listing',{p_listing_id:id,p_quantity:1});
   if(error){alert(error.message||'Purchase failed');await refreshAll();return}
@@ -268,12 +268,12 @@ function renderWatchlist(){
 function renderHistory(){
   const root=$('#tpHistory');if(!root)return;
   root.innerHTML=transactions.length?transactions.slice(0,120).map(t=>{
-    const role=mine(t.buyer_id)?'BOUGHT':mine(t.seller_id)?'SOLD':'MARKET';
+    const role=t.bought_by_me?'BOUGHT':t.sold_by_me?'SOLD':'MARKET';
     return'<div class="tp-history-row"><div><b>'+esc(t.item_name)+' ×'+qty(t.quantity)+'</b><small>'+role+' · '+esc(t.category)+' · '+age(t.created_at)+' · '+gold(t.unit_price)+' each</small></div><strong>'+gold(t.gross_gold)+'</strong></div>'
   }).join(''):'<div class="tp-empty">No completed market trades yet.</div>';
 }
-function myGearListings(){return activeGear().filter(l=>mine(l.seller_id))}
-function myOrders(){return orders.filter(o=>mine(o.user_id)&&o.status==='active')}
+function myGearListings(){return activeGear().filter(l=>l.is_own)}
+function myOrders(){return orders.filter(o=>o.is_own&&o.status==='active')}
 function renderMyTrading(){
   const gearRoot=$('#tpMyGear'),orderRoot=$('#tpMyOrders');if(!gearRoot||!orderRoot)return;
   const gl=myGearListings();
@@ -354,27 +354,29 @@ function setTab(tab){
 }
 async function refreshAll(showBusy=true){
   if(!db||!user)return;
-  const b=$('#tpRefresh');if(showBusy&&b){b.disabled=true;b.textContent='REFRESHING…'}
+  const button=$('#tpRefresh');
+  if(showBusy&&button){button.disabled=true;button.textContent='REFRESHING…'}
+  const root=$('#tpBrowseResults');
   try{
     const sweep=await db.rpc('market_sweep_my_expired');
-    if(sweep.error)console.warn('Market expiry sweep unavailable',sweep.error);
+    if(sweep.error)console.warn('Market expiry sweep failed',sweep.error);
     const [l,o,t,w,s,p]=await Promise.all([
-      db.from('trading_post_listings').select('*').order('created_at',{ascending:false}).limit(300),
-      db.from('market_commodity_orders').select('*').order('created_at',{ascending:false}).limit(600),
-      db.from('market_transactions').select('*').order('created_at',{ascending:false}).limit(300),
+      db.from('market_gear_listings').select('*').order('created_at',{ascending:false}).limit(300),
+      db.from('market_order_book').select('*').order('created_at',{ascending:false}).limit(600),
+      db.from('market_trade_history').select('*').order('created_at',{ascending:false}).limit(300),
       db.from('market_watchlist').select('*').eq('user_id',user.id),
       db.from('market_saved_searches').select('*').eq('user_id',user.id).order('created_at',{ascending:false}),
       db.from('trading_post_proceeds').select('*').eq('seller_id',user.id).order('created_at',{ascending:false}).limit(200)
     ]);
-    const failed=[l,o,t,w,s,p].find(x=>x.error);
-    if(failed?.error)throw failed.error;
+    const failures=[l,o,t,w,s,p].filter(x=>x.error);
+    if(failures.length)throw new Error(failures[0].error?.message||'Market data could not be loaded');
     listings=l.data||[];orders=o.data||[];transactions=t.data||[];watchlist=w.data||[];savedSearches=s.data||[];proceeds=p.data||[];
     loaded=true;renderGold();renderDelivery();renderSaved();renderCategories();setTab(activeTab);renderInspector();
   }catch(error){
     console.error('Trading Post refresh failed',error);
-    const root=$('#tpBrowseResults');if(root)root.innerHTML='<div class="tp-empty">Trading Post data could not be loaded. Try Refresh Market again.</div>';
+    if(root)root.innerHTML='<div class="tp-empty">The market could not be loaded. Refresh the Trading Post and try again.</div>';
   }finally{
-    if(b){b.disabled=false;b.textContent='REFRESH MARKET'}
+    if(button){button.disabled=false;button.textContent='REFRESH MARKET'}
   }
 }
 function bind(){
@@ -396,7 +398,7 @@ async function init(){
   db=Game.getSupabase?.();user=Game.getUser?.();if(!db||!user)return;
   bind();renderGold();renderDelivery();renderGearSellOptions();
   if($('#trading')?.classList.contains('active'))await refreshAll();
-  window.CellboundTradingPostV3={refresh:refreshAll,selectCommodity:(category,key)=>{selected={kind:'commodity',category,key};setTab('browse');renderInspector()}};
+  window.CellboundTradingPostV3={refresh:refreshAll,selectCommodity:(category,key)=>{selected={kind:'commodity',category,key};setTab('browse');renderInspector()}};window.CellboundMarket={load:refreshAll,render:()=>refreshAll(false),renderSell:renderGearSellOptions};
 }
 init();
 })();
