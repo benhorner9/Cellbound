@@ -272,8 +272,10 @@ function lootProfile(dungeonId,difficulty='normal',tier=0){
  return D.lootProfileFor?.(dungeonId,difficulty,tier)||{tiers:D.LOOT_RULES?.rarityWeights?.normal||{1:.7,2:.3},itemLevel:{Head:18,Chest:20,Weapon:22}}
 }
 function rarityTierFor(dungeonId,difficulty='normal',tier=0){return weightedTier(lootProfile(dungeonId,difficulty,tier).tiers)}
-function compatibleUnique(item,party){
+function compatibleUnique(item,party,difficulty='normal'){
  if(!item||Number(item.tier)>=Number(D.LOOT_RULES?.raidExclusiveTier||5))return false;
+ const rank={normal:0,heroic:1,cellbound:2},required=rank[item.minDifficulty||'normal']??0;
+ if((rank[difficulty]??0)<required)return false;
  if(item.classes==='all'||!item.classes)return true;
  return party.some(c=>Array.isArray(item.classes)&&item.classes.includes(c.class))
 }
@@ -296,7 +298,7 @@ function rollPersonalLoot(dungeonId,bossId=null){
  const cfg=currentConfig(dungeonId),party=Game?.getPartyCharacters?.()||[],sourceKeys=(bossId&&cfg.dungeon.bossDrops?.[bossId])||cfg.dungeon.lootTable||[],uniqueKeys=sourceKeys.filter(x=>D.UNIQUE_ITEMS[x]);
  const lr=D.LOOT_RULES||{},uniqueChance=cfg.difficulty==='normal'?(lr.uniqueChance?.normal??.002):cfg.difficulty==='heroic'?(lr.uniqueChance?.heroic??.025):Math.min(lr.uniqueChance?.cellboundCap??.09,(lr.uniqueChance?.cellboundBase??.035)+cfg.tier*(lr.uniqueChance?.cellboundPerTier??.0035));
  if(uniqueKeys.length&&Math.random()<uniqueChance){
-   const candidates=uniqueKeys.map(x=>D.UNIQUE_ITEMS[x]).filter(x=>compatibleUnique(x,party));
+   const candidates=uniqueKeys.map(x=>D.UNIQUE_ITEMS[x]).filter(x=>compatibleUnique(x,party,cfg.difficulty));
    if(candidates.length)return{...candidates[Math.floor(Math.random()*candidates.length)],rollId:'unique-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),unique:true}
  }
  const fixed=sourceKeys.map(key=>G.byId?.(key)).filter(Boolean);
