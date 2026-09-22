@@ -28,7 +28,7 @@ const STATUS_ICON={
  'frostbound-sigil-shield':ICONS.DEF_ARCANE,'soft-enrage':ICONS.OFF_RAGE,'hard-enrage':ICONS.OFF_RAGE,'blood-frenzy':ICONS.OFF_RAGE,
  'shield-wall':ICONS.DEF_SHIELD,'ardent-defender':ICONS.DEF_ARMOR,'divine-protection':ICONS.DEF_SHIELD,'barkskin':ICONS.DEF_THORNS,
  'blur':ICONS.DEF_DODGE,'obsidian-scales':ICONS.DEF_ARMOR,'arcane-ward':ICONS.DEF_ARCANE,'feint':ICONS.DEF_DODGE,'icebound-fortitude':ICONS.DEF_ARCANE,
- 'guardian-spirit':ICONS.DEF_GUARDIAN,'hammer-of-justice':ICONS.PLAYER_STUN,'concussive-shot':ICONS.PLAYER_STUN,'tactical-control':ICONS.PLAYER_ROOT,'chaos-scar':ICONS.ENEMY_VULNERABLE
+ 'guardian-spirit':ICONS.DEF_GUARDIAN,'hammer-of-justice':ICONS.PLAYER_STUN,'concussive-shot':ICONS.PLAYER_STUN,'tactical-control':ICONS.PLAYER_ROOT,'chaos-scar':ICONS.ENEMY_VULNERABLE,'deep-wounds':ICONS.PLAYER_BLEED,'piercing-shots':ICONS.PLAYER_BLEED,'garrote-bleed':ICONS.PLAYER_BLEED,'venom':ICONS.ENEMY_POISON
 };
 function enemyApplied(st){const s=String(st?.source||''),t=String(st?.target||'');return(st?.kind==='debuff')&&(s.startsWith('e-')||s.startsWith('add-'))&&t.startsWith('p-')}
 function playerApplied(st){const s=String(st?.source||''),t=String(st?.target||'');return(st?.kind==='debuff')&&s.startsWith('p-')&&(t.startsWith('e-')||t.startsWith('add-'))}
@@ -79,7 +79,8 @@ function iconIndex(st){
   return ICONS.ENEMY_CURSE
  }
  if(playerApplied(st)){
-  if(/bleed|blood|wound|garrote/.test(name))return ICONS.PLAYER_BLEED;
+  if(/poison|venom|toxin/.test(name))return ICONS.ENEMY_POISON;
+  if(/bleed|blood|wound|garrote|piercing/.test(name))return ICONS.PLAYER_BLEED;
   if(/burn|fire|flame/.test(name))return ICONS.PLAYER_BURN;
   if(/freeze|frost|ice/.test(name))return ICONS.PLAYER_FREEZE;
   if(/shock|lightning|storm/.test(name))return ICONS.PLAYER_SHOCK;
@@ -129,6 +130,7 @@ function effectText(st){
  if(Number(e.threatBonus))bits.push('Threat +'+pct(e.threatBonus)+'%');
  if(Number(e.threatMultiplier))bits.push('Threat +'+pct(e.threatMultiplier)+'%');
  if(Number(e.healingOverTime))bits.push('Restores '+Number(e.healingOverTime)+' health periodically');
+ if(Number(e.damageOverTime))bits.push('Deals '+Number(e.damageOverTime)+' damage periodically');
  if(st?.cc)bits.push(String(st.cc).replace(/-/g,' '));
  if(st?.breakOnDamage)bits.push('Breaks on damage');
  return bits.length?bits.join(' · '):(st?.kind==='debuff'?'Harmful combat effect':'Beneficial combat effect')
@@ -265,5 +267,5 @@ function startTicker(){
  },1000)
 }
 
-window.CellboundCombatStatuses={handle,clear,renderHost,iconIndex,iconStyle,catalog:{...ICONS},version:'2.0.1'};
+window.CellboundCombatStatuses={handle,clear,renderHost,iconIndex,iconStyle,catalog:{...ICONS},version:'2.0.2'};
 })();
