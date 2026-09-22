@@ -18,6 +18,8 @@ for(const file of files){
     if(!contents.includes("eq('status','active').gt('quantity',0)"))throw new Error('Trading Post gear query must exclude inactive or empty listings');
     if(!contents.includes("eq('status','active').gt('quantity_remaining',0)"))throw new Error('Trading Post order query must exclude inactive or empty orders');
     if(!contents.includes('refreshStateFromServer'))throw new Error('Trading Post must resync authoritative game state after server mutations');
+    if(/\$document\./.test(contents)||/(^|[^$])\$\([^\n]*\)\.forEach/m.test(contents))throw new Error('Trading Post contains an invalid single-element forEach selector');
+    if(!contents.includes('market_sweep_my_expired')||!contents.includes('await syncMarketState()'))throw new Error('Trading Post expiry sweep must resync returned items and refunded gold');
   }
   if(file==='guild.html'){
     const required=['rosterGrid','bankGrid','professionWorkshop','chatMessages','worldBossGrid','dungeonRoute','dungeonIntel','enterDungeonBtn','partySlots'];
