@@ -47,6 +47,7 @@ function playerBusy(){
     visible('#questDialogue')||
     visible('#questEncounterBackdrop')||
     visible('#questPuzzle')||
+    visible('#questGearReward')||
     visible('#fourfoldStory')||
     visible('#fourfoldPuzzle')||
     visible('#thirteenthBellRoot')||
