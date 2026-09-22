@@ -12,6 +12,13 @@ for(const file of files){
   const src=path.join(__dirname,file),dest=path.join(out,file);
   let contents=fs.readFileSync(src,'utf8');
   if(file.endsWith('.js')){try{new Function(contents)}catch(err){throw new Error(`Syntax check failed for ${file}: ${err.message}`)}}
+  if(file==='trading-post-v3.js'){
+    if(/location\.reload\s*\(/.test(contents))throw new Error('Trading Post must not hard-reload the page after market actions');
+    if((contents.match(/function timeLeft\s*\(/g)||[]).length!==1)throw new Error('Trading Post timeLeft helper must be defined exactly once');
+    if(!contents.includes("eq('status','active').gt('quantity',0)"))throw new Error('Trading Post gear query must exclude inactive or empty listings');
+    if(!contents.includes("eq('status','active').gt('quantity_remaining',0)"))throw new Error('Trading Post order query must exclude inactive or empty orders');
+    if(!contents.includes('refreshStateFromServer'))throw new Error('Trading Post must resync authoritative game state after server mutations');
+  }
   if(file==='guild.html'){
     const required=['rosterGrid','bankGrid','professionWorkshop','chatMessages','worldBossGrid','dungeonRoute','dungeonIntel','enterDungeonBtn','partySlots'];
     for(const id of required)if(!contents.includes(`id="${id}"`))throw new Error(`Missing required Evolution hook: ${id}`);
