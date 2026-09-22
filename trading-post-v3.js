@@ -80,7 +80,7 @@ function renderCategories(){
     consumable:knownCommodities().filter(x=>x.category==='consumable').length,
     recipe:knownCommodities().filter(x=>x.category==='recipe').length
   };
-  $$('#tpCategories [data-category]').forEach(b=>{const k=b.dataset.category;b.classList.toggle('active',k===activeCategory);const e=b.querySelector('em');if(e)e.textContent=counts[k]||0});
+  $document.querySelectorAll('#tpCategories [data-category]').forEach(b=>{const k=b.dataset.category;b.classList.toggle('active',k===activeCategory);const e=b.querySelector('em');if(e)e.textContent=counts[k]||0});
 }
 function sortGear(rows,sort){
   rows=[...rows];
@@ -391,7 +391,7 @@ function applySaved(id){
 }
 function setTab(tab){
   activeTab=tab;
-  $$('#tpTabs [data-tp-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tpTab===tab));
+  $document.querySelectorAll('#tpTabs [data-tp-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tpTab===tab));
   $$('.tp-view').forEach(v=>v.hidden=v.dataset.tpView!==tab);
   if(tab==='browse')renderBrowse();
   if(tab==='my')renderMyTrading();
@@ -431,8 +431,8 @@ function bind(){
   $('#tpRefresh')?.addEventListener('click',e=>{e.preventDefault();refreshAll(true,true)});
   $('#tpSearch')?.addEventListener('input',renderBrowse);
   ['tpClass','tpSlot','tpRarity','tpMinIlvl','tpMaxPrice','tpSort'].forEach(id=>$('#'+id)?.addEventListener('change',renderBrowse));
-  $('#tpCategories [data-category]').forEach(b=>b.onclick=e=>{e.preventDefault();const y=window.scrollY;activeCategory=b.dataset.category;renderBrowse();restoreMarketScroll(y)});
-  $('#tpTabs [data-tp-tab]').forEach(b=>b.onclick=e=>{e.preventDefault();const y=window.scrollY;setTab(b.dataset.tpTab);restoreMarketScroll(y)});
+  document.querySelectorAll('#tpCategories [data-category]').forEach(b=>b.onclick=e=>{e.preventDefault();const y=window.scrollY;activeCategory=b.dataset.category;renderBrowse();restoreMarketScroll(y)});
+  document.querySelectorAll('#tpTabs [data-tp-tab]').forEach(b=>b.onclick=e=>{e.preventDefault();const y=window.scrollY;setTab(b.dataset.tpTab);restoreMarketScroll(y)});
   $('#tpSaveSearch')?.addEventListener('click',saveSearch);
   $('#tpClearFilters')?.addEventListener('click',()=>{activeCategory='all';['tpSearch','tpMinIlvl','tpMaxPrice'].forEach(id=>{if($('#'+id))$('#'+id).value=''});['tpClass','tpSlot','tpRarity'].forEach(id=>{if($('#'+id))$('#'+id).value='all'});if($('#tpSort'))$('#tpSort').value='price';renderBrowse()});
   $('#tpGearSellForm')?.addEventListener('submit',submitGearListing);
