@@ -132,12 +132,18 @@ function rank(c,name){
   return Math.max(0,Number(tree[name])||0);
 }
 function raceMod(c,key,fallback=1){const v=getRace(c?.race)?.modifiers?.[key];return v==null?fallback:Number(v)}
+// Full Gear Combat Rebalance: secondary ratings use diminishing returns once a full 14-slot loadout is assembled.
+function ratingCurve(value,softCap=20,postCapRate=.35,hardCap=45){
+  const v=Math.max(0,Number(value)||0);if(v<=softCap)return v;
+  return Math.min(hardCap,softCap+(v-softCap)*postCapRate)
+}
+function primaryCurve(value){const v=Math.max(0,Number(value)||0);return v<=45?v:45+(v-45)*.5}
 function damageMultiplier(c,ctx={}){
   const p=specFor(c),gear=gearStats(c);let m=Number(p.damage)||1;
   m*=raceMod(c,'damage',1);
-  m*=1+(Number(gear[primaryKey(c)])||0)*.0025;
-  m*=1+(Number(gear.damagePct)||0)/100;
-  if((Number(gear.crit)||0)>0&&Math.random()*100<Number(gear.crit))m*=1.5;
+  m*=1+primaryCurve(gear[primaryKey(c)])*.0022;
+  m*=1+ratingCurve(gear.damagePct,18,.40,42)/100;
+  const crit=ratingCurve(gear.crit,20,.35,45);if(crit>0&&Math.random()*100<crit)m*=1.5;
   if(c?.class==='Mage')m*=raceMod(c,'magicDamage',1);
   if(c?.race==='Emberkin'&&Number(ctx.healthPct)<45)m*=raceMod(c,'lowHealthDamage',1);
 
@@ -161,14 +167,14 @@ function damageMultiplier(c,ctx={}){
   return m;
 }
 function cooldownMultiplier(c){
-  const p=specFor(c),gear=gearStats(c);let m=(Number(p.cooldown)||1)*raceMod(c,'cooldown',1);m/=1+(Number(gear.haste)||0)/100;
+  const p=specFor(c),gear=gearStats(c);let m=(Number(p.cooldown)||1)*raceMod(c,'cooldown',1);m/=1+ratingCurve(gear.haste,20,.30,40)/100;
   if(c?.class==='Hunter')m*=Math.max(.78,1-rank(c,'Rapid Fire')*.035);
   if(c?.class==='Rogue')m*=Math.max(.78,1-rank(c,'Quick Recovery')*.03);
   if(c?.class==='Mage')m*=Math.max(.82,1-rank(c,'Arcane Flows')*.03);
   return m;
 }
 function defenceProfile(c){
-  const p=specFor(c),gear=gearStats(c),stamina=Math.max(0,Number(gear.stamina)||0),armour=Math.max(0,Number(gear.armour)||0),ward=Math.max(0,Number(gear.magicWardPct)||0);
+  const p=specFor(c),gear=gearStats(c),stamina=primaryCurve(gear.stamina),armour=primaryCurve(gear.armour),ward=ratingCurve(gear.magicWardPct,20,.40,45);
   let physical=Number(p.physicalTaken)||1,magic=Number(p.magicTaken)||1;
   physical*=raceMod(c,'physicalTaken',1);magic*=raceMod(c,'magicTaken',1);
   const staminaReduction=Math.max(.86,1-stamina*.0025);
@@ -195,8 +201,8 @@ function incomingMultiplier(c,type='physical'){
 }
 function healingMultiplier(healer,target,ctx={}){
   const p=specFor(healer),gear=gearStats(healer);let m=(Number(p.healing)||1)*raceMod(healer,'healing',1)*raceMod(target,'healingReceived',1);
-  m*=1+(Number(gear.healing)||0)/100+(Number(gear.intellect)||0)*.002;
-  if((Number(gear.crit)||0)>0&&Math.random()*100<Number(gear.crit))m*=1.5;
+  m*=1+ratingCurve(gear.healing,24,.40,55)/100+primaryCurve(gear.intellect)*.0018;
+  const crit=ratingCurve(gear.crit,20,.35,45);if(crit>0&&Math.random()*100<crit)m*=1.5;
   if(healer?.class==='Paladin'&&healer?.spec==='Holy'){
     m*=1+rank(healer,'Divine Light')*.04;
     if(role(target)==='tank')m*=1.16;
@@ -208,10 +214,10 @@ function healingMultiplier(healer,target,ctx={}){
   if(healer?.class==='Druid')m*=1+rank(healer,'Rejuvenation')*.03;
   return m;
 }
-function healThreatMultiplier(c){const gear=gearStats(c);return (Number(specFor(c).healThreat)||1)*(1+(Number(gear.threat)||0)/100)}
+function healThreatMultiplier(c){const gear=gearStats(c);return (Number(specFor(c).healThreat)||1)*(1+ratingCurve(gear.threat,24,.45,60)/100)}
 function damageThreatMultiplier(c,ctx={}){
   const p=specFor(c);
-  const gear=gearStats(c),gearThreat=1+(Number(gear.threat)||0)/100;
+  const gear=gearStats(c),gearThreat=1+ratingCurve(gear.threat,24,.45,60)/100;
   if(role(c)==='tank'){
     let m=Number(ctx.enemyCount)>1?(Number(p.packThreat)||2.4):(Number(p.singleThreat)||2.4);
     if(c?.class==='Paladin')m*=1+rank(c,'Guardian Oath')*.04;
@@ -262,7 +268,8 @@ window.CellboundIdentities={
   RACES,SPECS,ROLE_MAP,role,getRace,getSpec,specFor,rank,summary,
   damageMultiplier,cooldownMultiplier,incomingMultiplier,defenceProfile,healingMultiplier,
   healThreatMultiplier,damageThreatMultiplier,groupThreatRatio,tauntLead,
-  cleaveRatio,groupHealRatio,groupHealTargets,hotRatio,beaconRatio,passiveRegen,knowledgeMultiplier
+  cleaveRatio,groupHealRatio,groupHealTargets,hotRatio,beaconRatio,passiveRegen,knowledgeMultiplier,
+  balance:{ratingCurve,primaryCurve}
 };
 })();
 
