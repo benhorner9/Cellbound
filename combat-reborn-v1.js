@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.1.0';
+const VERSION='1.3.4';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -50,8 +50,8 @@ const LEVEL_RULES={
 const ENEMY_CLASS_RULES={
  trash:{label:'TRASH',health:1,damage:1},
  elite:{label:'ELITE',health:1.12,damage:1.08},
- boss:{label:'BOSS',health:1.22,damage:1.18},
- 'world-boss':{label:'WORLD BOSS',health:1.75,damage:1.35},
+ boss:{label:'BOSS',health:1.22,damage:1.28},
+ 'world-boss':{label:'WORLD BOSS',health:1.75,damage:1.48},
  add:{label:'ADD',health:.78,damage:.84}
 };
 function levelHealthScale(level){return 1+Math.max(0,(Number(level)||1)-1)*LEVEL_RULES.healthPerLevel}
@@ -228,7 +228,6 @@ function statusBonus(u,key){
  return Object.values(u?.statuses||{}).reduce((n,s)=>n+(Number(s?.effect?.[key])||0),0)
 }
 function classBuffFor(u){return CLASS_BUFFS[u?.class]||null}
-
 function talentRanks(c){
  const tree=c?.talents?.[c?.spec]||{};
  return Object.values(tree).reduce((n,v)=>n+Math.max(0,Number(v)||0),0);
@@ -266,12 +265,196 @@ function triggerUnique(ctx,u,id,name,payload={}){
  emit(ctx,'UNIQUE_EFFECT_TRIGGER',{source:u.id,target:payload.target||u.id,ability:name,result:id,payload:{effectId:id,...payload}})
 }
 
+
+const TALENT_SKILL_REQUIREMENTS={
+  'mortal-strike':'Mortal Strike','overpower':'Overpower','sweeping-strike':'Sweeping Blows',
+  'consecration':'Consecration','ardent-defender':'Ardent Defender','holy-shock':'Holy Shock','radiant-wave':'Radiance',
+  'guardian-spirit':'Guardian Spirit','divine-hymn':'Divine Hymn',
+  'wild-growth':'Wild Growth','tranquility':'Tranquility',
+  'kill-shot':'Kill Shot','garrote':'Garrote','envenom':'Envenom','arcane-barrage':'Barrage'
+};
+const TALENT_RULES={
+ 'Shield Mastery':'More block chance and physical mitigation per rank.',
+ 'Last Stand':'Once per encounter, falling dangerously low restores health and grants brief protection.',
+ 'Iron Discipline':'Reduces physical damage taken.',
+ 'Taunt Mastery':'Taunts hold enemies longer and create a larger threat lead.',
+ 'Hold the Line':'Blocking grants a short damage-reduction buff.',
+ 'Vengeance':'Taking damage briefly increases outgoing damage.',
+ 'Bulwark':'Using a major defensive also protects the party.',
+ 'Fortress':'Reduces damage taken during boss encounters.',
+ 'Unbroken':'Once per encounter, a lethal hit leaves the Warrior standing at 1 HP.',
+ 'Weapon Mastery':'Increases weapon damage.',
+ 'Deep Wounds':'Critical weapon hits cause a real damage-over-time bleed.',
+ 'Battle Rhythm':'Successful attacks build a short damage and haste buff.',
+ 'Overpower':'Deals extra damage to casting or recently interrupted enemies.',
+ 'Sweeping Blows':'Single-target attacks splash damage to another enemy.',
+ 'Executioner':'Increases damage against low-health enemies.',
+ 'Mortal Strike':'Unlocks Mortal Strike and makes it hit harder.',
+ 'Blood Frenzy':'Bleeding a target grants haste.',
+ 'Bladestorm':'Against groups, periodically unleashes a real party-visible area attack.',
+ 'Sacred Shield':'Increases block and physical mitigation.',
+ 'Guardian Oath':'Increases threat and reduces damage taken.',
+ 'Righteous Guard':'Blocking grants additional short mitigation.',
+ 'Hammer of Justice':'Improves interrupt recovery and briefly controls non-boss enemies.',
+ 'Consecration':'Unlocks Consecration and improves its damage and group threat.',
+ 'Divine Ward':'Reduces magical damage taken.',
+ 'Ardent Defender':'Unlocks and strengthens Ardent Defender.',
+ 'Holy Bastion':'Increases block during boss encounters.',
+ 'Divine Guardian':'A major defensive also grants party-wide protection.',
+ 'Divine Light':'Increases direct healing.',
+ 'Grace':'Reduces mana costs of healing skills.',
+ 'Holy Shock':'Unlocks Holy Shock and increases its healing.',
+ 'Infusion':'Direct heals can trigger a short haste buff.',
+ 'Beacon':'Single-target healing echoes onto the tank.',
+ 'Sacred Hands':'Heals low-health allies for more.',
+ 'Aura Mastery':'Makes Blessing of Resolve stronger and last longer.',
+ 'Radiance':'Unlocks Radiant Wave and causes direct heals to splash to nearby allies.',
+ 'Divine Hymn':'Empowers major party healing.',
+ 'Renew':'Direct heals leave a real healing-over-time effect.',
+ 'Serenity':'Increases direct healing.',
+ 'Prayer of Mending':'Direct heals jump to additional injured allies.',
+ 'Focused Will':'Reduces damage taken while the Priest is under pressure.',
+ 'Circle of Healing':'Increases party-wide healing.',
+ 'Spirit of Redemption':'On defeat, releases a final heal across surviving allies.',
+ 'Guardian Spirit':'Unlocks Guardian Spirit and can prevent a lethal hit on an ally.',
+ 'Divine Insight':'Direct heals can echo for extra healing.',
+ 'Rejuvenation':'Improves Rejuvenation and its healing-over-time ticks.',
+ 'Lifebloom':'Focused healing plants additional healing ticks.',
+ 'Wild Growth':'Unlocks Wild Growth and improves party healing.',
+ 'Natural Swiftness':'Periodically makes a casted heal instant.',
+ 'Living Seed':'Direct healing can plant a delayed heal.',
+ 'Ironbark':'Automatically protects a critically injured ally on a cooldown.',
+ 'Tree of Life':'Under heavy pressure, temporarily boosts healing and haste.',
+ 'Flourish':'Party heals extend restoration with an additional healing pulse.',
+ 'Tranquility':'Unlocks and strengthens Tranquility.',
+ 'True Aim':'Increases ranged damage.',
+ 'Rapid Fire':'Reduces Hunter ability cooldowns.',
+ 'Steady Focus':'Increases damage while the Hunter is stationary.',
+ 'Concussive Shot':'Damaging attacks can briefly control non-boss enemies.',
+ 'Piercing Shots':'Critical shots cause a bleed.',
+ 'Trueshot Aura':'Increases party ranged damage.',
+ 'Careful Aim':'Deals extra damage to healthy enemies.',
+ 'Killer Instinct':'Deals extra damage to weakened enemies.',
+ 'Kill Shot':'Unlocks Kill Shot and improves its execute threshold and damage.',
+ 'Ambush':'Increases opening damage.',
+ 'Venom':'Adds poison damage to attacks.',
+ 'Garrote':'Unlocks Garrote and strengthens its bleed.',
+ 'Quick Recovery':'Increases Energy regeneration.',
+ 'Mutilate':'Strengthens Mutilate.',
+ 'Envenom':'Unlocks and strengthens Envenom.',
+ 'Master Poisoner':'Improves poison damage.',
+ 'Cut to the Chase':'Envenom grants a short haste buff.',
+ 'Eviscerate':'Strengthens Eviscerate as a finisher.',
+ 'Arcane Focus':'Increases spell damage.',
+ 'Surge':'Repeated spell hits can trigger a short damage surge.',
+ 'Clearcasting':'Spells can cost no Mana.',
+ 'Spell Impact':'Increases spell critical damage.',
+ 'Presence of Mind':'Periodically makes a casted spell instant.',
+ 'Arcane Flows':'Reduces Mage cooldowns.',
+ 'Arcane Power':'Automatically triggers a major damage cooldown in difficult combat.',
+ 'Nether Precision':'Increases spell critical chance.',
+ 'Barrage':'Unlocks Arcane Barrage and makes it hit harder with splash damage.'
+};
+function characterTalentRank(c,name){return Math.max(0,Number(c?.talents?.[c?.spec]?.[name])||0)}
+function talentRank(u,name){return Math.max(0,Number(u?.talentTree?.[name]??u?.original?.talents?.[u?.spec]?.[name])||0)}
+function talentReady(ctx,u,key){return Number(u?.talentTimers?.[key]||0)<=ctx.time}
+function talentSetCooldown(ctx,u,key,ms){u.talentTimers=u.talentTimers||{};u.talentTimers[key]=ctx.time+Math.max(0,Number(ms)||0)}
+function talentTrigger(ctx,u,name,target=u,payload={}){
+ emit(ctx,'TALENT_TRIGGER',{source:u?.id||null,target:target?.id||null,ability:name,result:'triggered',position:copy(target?.position||u?.position),payload:{talent:name,...payload}})
+}
+function talentDamageScale(ctx,u,a,target){
+ let m=1,rank=0,hp=healthRatio(target);
+ if(u.class==='Warrior'&&u.spec==='Arms'){
+  m*=1+talentRank(u,'Weapon Mastery')*.03;
+  if((target?.currentCast||Number(target?.interruptedUntil)>ctx.time)&&(rank=talentRank(u,'Overpower')))m*=1+rank*.06;
+  if(hp<.35&&(rank=talentRank(u,'Executioner')))m*=1+rank*.07;
+  if(a.id==='mortal-strike'&&talentRank(u,'Mortal Strike'))m*=1.25;
+ }
+ if(u.class==='Paladin'){
+  if(a.id==='consecration'&&(rank=talentRank(u,'Consecration')))m*=1+rank*.22;
+ }
+ if(u.class==='Hunter'){
+  m*=1+talentRank(u,'True Aim')*.03;
+  if(ctx.time>=Number(u.movingUntil||0))m*=1+talentRank(u,'Steady Focus')*.025;
+  if(hp>.80)m*=1+talentRank(u,'Careful Aim')*.055;
+  if(hp<.30)m*=1+talentRank(u,'Killer Instinct')*.065;
+  if(a.id==='kill-shot'&&talentRank(u,'Kill Shot'))m*=1.30;
+ }
+ if(u.class==='Rogue'){
+  if(Number(u.damageActions||0)<1)m*=1+talentRank(u,'Ambush')*.08;
+  if(a.id==='mutilate'&&talentRank(u,'Mutilate'))m*=1.18;
+  if(a.id==='envenom'&&(rank=talentRank(u,'Envenom')))m*=1+rank*.10;
+  if(a.id==='eviscerate'&&talentRank(u,'Eviscerate'))m*=hp<.35?1.35:1.20;
+ }
+ if(u.class==='Mage'){
+  m*=1+talentRank(u,'Arcane Focus')*.03;
+  if(a.id==='arcane-barrage'&&talentRank(u,'Barrage'))m*=1.28;
+ }
+ const aura=livingPlayers(ctx).find(p=>p.class==='Hunter'&&talentRank(p,'Trueshot Aura')>0);
+ if(aura&&['Hunter','Mage'].includes(u.class))m*=1.05;
+ return m
+}
+function talentCritBonus(u){return u.class==='Mage'?talentRank(u,'Nether Precision')*.03:0}
+function talentCritMultiplier(u){return u.class==='Mage'?1+talentRank(u,'Spell Impact')*.12:1}
+function talentHealingScale(ctx,u,a,target){
+ let m=1,rank=0,hp=healthRatio(target);
+ if(u.class==='Paladin'&&u.spec==='Holy'){
+  if(a.kind==='heal')m*=1+talentRank(u,'Divine Light')*.04;
+  if(a.id==='holy-shock'&&talentRank(u,'Holy Shock'))m*=1.25;
+  if(hp<.50)m*=1+talentRank(u,'Sacred Hands')*.06;
+  if(a.kind==='group-heal')m*=1+talentRank(u,'Divine Hymn')*.10;
+  if(a.id==='radiant-wave'&&talentRank(u,'Divine Hymn'))m*=1.25;
+ }
+ if(u.class==='Priest'){
+  if(a.kind==='heal')m*=1+talentRank(u,'Serenity')*.04;
+  if(a.kind==='group-heal')m*=1+talentRank(u,'Circle of Healing')*.12;
+  if(a.id==='divine-hymn'&&talentRank(u,'Divine Hymn'))m*=1.30;
+ }
+ if(u.class==='Druid'){
+  if(a.id==='rejuvenation')m*=1+talentRank(u,'Rejuvenation')*.08;
+  if(a.kind==='group-heal')m*=1+talentRank(u,'Wild Growth')*.08;
+  if(a.id==='tranquility'&&talentRank(u,'Tranquility'))m*=1.30;
+ }
+ return m
+}
+function talentCooldownScale(u,a){
+ let m=1;
+ if(u.class==='Hunter')m*=Math.max(.78,1-talentRank(u,'Rapid Fire')*.06);
+ if(u.class==='Mage')m*=Math.max(.78,1-talentRank(u,'Arcane Flows')*.06);
+ if(u.class==='Paladin'&&a.kind==='interrupt')m*=Math.max(.75,1-talentRank(u,'Hammer of Justice')*.10);
+ return m
+}
+function talentResourceRegenScale(u){
+ if(u.class==='Rogue')return 1+talentRank(u,'Quick Recovery')*.08;
+ return 1
+}
+function talentCost(ctx,u,a,cost){
+ let value=cost;
+ if(u.class==='Paladin'&&u.spec==='Holy'&&(a.kind==='heal'||a.kind==='group-heal'))value*=Math.max(.70,1-talentRank(u,'Grace')*.06);
+ if(u.class==='Mage'&&value>0){
+  const r=talentRank(u,'Clearcasting');
+  if(r&&ctx.rng()<r*.08){talentTrigger(ctx,u,'Clearcasting',u,{saved:Math.round(value)});value=0}
+ }
+ return Math.max(0,value)
+}
+function talentCastTime(ctx,u,a,cast){
+ if(cast<=0)return cast;
+ if(u.class==='Druid'&&(a.kind==='heal'||a.kind==='group-heal')&&talentRank(u,'Natural Swiftness')&&talentReady(ctx,u,'natural-swiftness')){
+  talentSetCooldown(ctx,u,'natural-swiftness',30000);talentTrigger(ctx,u,'Natural Swiftness',u,{originalCast:cast});return 0
+ }
+ if(u.class==='Mage'&&a.kind==='damage'&&talentRank(u,'Presence of Mind')&&talentReady(ctx,u,'presence-of-mind')){
+  talentSetCooldown(ctx,u,'presence-of-mind',30000);talentTrigger(ctx,u,'Presence of Mind',u,{originalCast:cast});return 0
+ }
+ return cast
+}
+Object.values(ABILITIES).flat().forEach(a=>{if(TALENT_SKILL_REQUIREMENTS[a.id])a.talentReq=TALENT_SKILL_REQUIREMENTS[a.id]});
+
 function classSkillPool(c,role){
  return (ABILITIES[c?.class]||[]).filter(a=>!a.role||a.role===role)
 }
 function unlockedSkillPool(c,role){
  const level=Math.max(1,Number(c?.level)||1);
- return classSkillPool(c,role).filter(a=>(Number(a.unlockLevel)||1)<=level)
+ return classSkillPool(c,role).filter(a=>(Number(a.unlockLevel)||1)<=level&&(!a.talentReq||characterTalentRank(c,a.talentReq)>0))
 }
 function defaultSkillLoadout(c,role){
  const pool=unlockedSkillPool(c,role),picked=[];
@@ -313,8 +496,9 @@ function normalisePlayer(c,i){
  const role=inferredRole(c),res=resourceDef(c),tank=role==='tank',healer=role==='healer';
  const baseHp=tank?185:healer?115:125;
  const power=Math.max(1,Number(c?.power)||1);
+ const defence=window.CellboundIdentities?.defenceProfile?.(c)||{physicalTaken:1,magicTaken:1,blockChance:0,blockMultiplier:.72,healthMultiplier:1};
  const level=Math.max(1,Number(c?.level)||1),baseHealth=Math.round(baseHp+(power*1.8)),healthScale=levelHealthScale(level),outputScale=levelOutputScale(level);
- const maxHealth=Math.round(baseHealth*healthScale),startPct=clamp(c?._combatHealthPct==null?100:Number(c._combatHealthPct),0,100),startHealth=Math.round(maxHealth*startPct/100);
+ const maxHealth=Math.round(baseHealth*healthScale*Math.max(1,Number(defence.healthMultiplier)||1)),startPct=clamp(c?._combatHealthPct==null?100:Number(c._combatHealthPct),0,100),startHealth=Math.round(maxHealth*startPct/100);
  const carried=c?._combatResource,carriedValue=typeof carried==='number'?carried:Number(carried?.value);
  const resourceValue=Number.isFinite(carriedValue)?clamp(carriedValue,0,res.max):res.start;
  const setState=gearSetState(c),resourceRegen=(healer&&res.name==='Mana'?2.1:res.regen)*setState.resourceRegen;
@@ -323,7 +507,7 @@ function normalisePlayer(c,i){
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:{x:tank?42:role==='healer'?18:28,y:26+i*12},facing:0,
   target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:carriedStatuses(c),resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
-  abilities:copy(abilityPool(c,role)),power,level,itemLevel,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),
+  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:{},talentFlags:{},talentCounters:{},damageActions:0,knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),
   defensiveUntil:Math.max(0,Number(c?._combatDefensiveMs)||0),frenzyUntil:Math.max(0,Number(c?._combatFrenzyMs)||0),uniqueUsed:copy(c?._combatUniqueUsed||{}),nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
 }
@@ -342,7 +526,8 @@ function normaliseEnemies(encounter){
    id:'e-'+i,name,role:'enemy',kind:classification==='boss'||classification==='world-boss'?'boss':'enemy',classification,classificationLabel:rule.label,level,
    maxHealth,health:currentHealth,alive:currentHealth>0,position:{x:68,y:raw.length===1?50:30+i*(40/Math.max(1,raw.length-1))},facing:180,
    target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},movingUntil:0,moveToken:0,nextAttack:900+i*220,currentCast:null,
-   isAdd:false,priority:i===0?2:1,damageScale:rule.damage*damageMult,phaseDamageScale:1,hardEnraged:false
+   isAdd:false,priority:i===0?2:1,damageScale:rule.damage*damageMult,phaseDamageScale:1,hardEnraged:false,
+   targeting:String(data.targeting||'threat').toLowerCase(),attackRange:Math.max(2,Number(data.attackRange)||5),attackName:data.attackName||null,damageType:data.damageType||'physical',allAttacksAoe:Boolean(data.allAttacksAoe)
   }
  })
 }
@@ -573,12 +758,12 @@ function moveIntoRange(ctx,u,target,range){
 }
 function cooldownReady(u,a){return (u.cooldowns[a.id]||0)<=0}
 function spendResource(ctx,u,a){
- const cost=Math.max(0,Number(a.cost)||0);
+ const baseCost=Math.max(0,Number(a.cost)||0),cost=talentCost(ctx,u,a,baseCost);
  if(cost>u.resource.value+.0001)return false;
  if(cost){
   u.resource.value=clamp(u.resource.value-cost,0,u.resource.max);
   ctx.stats.players[u.id].resourcesSpent+=cost;
-  emit(ctx,'RESOURCE_SPENT',{source:u.id,ability:a.name,amount:cost,result:u.resource.name,payload:{resource:u.resource.name,value:u.resource.value,max:u.resource.max}});
+  emit(ctx,'RESOURCE_SPENT',{source:u.id,ability:a.name,amount:cost,result:u.resource.name,payload:{resource:u.resource.name,value:u.resource.value,max:u.resource.max,baseCost}});
  }
  return true;
 }
@@ -598,7 +783,7 @@ function emitResourceState(ctx,u,result='state'){
 function passiveResources(ctx){
  ctx.players.forEach(u=>{
   if(!u.alive)return;
-  const perTick=(u.resource.regen||0)*Math.max(.1,1+statusBonus(u,'resourceRegen'))*(TICK/1000);
+  const perTick=(u.resource.regen||0)*talentResourceRegenScale(u)*Math.max(.1,1+statusBonus(u,'resourceRegen'))*(TICK/1000);
   if(perTick<=0||u.resource.value>=u.resource.max)return;
   const before=u.resource.value;
   u.resource.value=clamp(before+perTick,0,u.resource.max);
@@ -626,13 +811,17 @@ function combatPressure(ctx){
  return clamp(missing*.38+(dead/Math.max(1,ctx.players.length))*.52+Math.min(.22,loose*.11)+Math.min(.16,adds*.06)+(ctx.activeEnemyCast?.type?0.08:0)+manaPressure*.14,0,1)
 }
 function executionQuality(ctx,u){
- const knowledge=encounterKnowledge(ctx,u)/100;
  const levelDelta=(Number(u.level)||1)-(Number(ctx.encounter.level)||1);
- const levelReadiness=clamp(.82+levelDelta*.08,.42,1);
+ const levelReadiness=clamp(.82+levelDelta*.08,.42,1.06);
  const recIlvl=Math.max(0,Number(ctx.encounter.recommendedItemLevel)||0);
  const gearReadiness=recIlvl>0?clamp((Number(u.itemLevel)||0)/recIlvl,.45,1.08):1;
+ const equipped=Array.isArray(u.abilities)?u.abilities.filter(a=>!a.hiddenFallback):[];
+ const filled=Math.min(1,equipped.length/4);
+ const hasRoleTool=u.role==='tank'?equipped.some(a=>a.kind==='taunt'):u.role==='healer'?equipped.some(a=>a.kind==='heal'||a.kind==='group-heal'):equipped.some(a=>a.kind==='damage');
+ const hasInterrupt=equipped.some(a=>a.kind==='interrupt');
+ const skillReadiness=clamp(.55+filled*.25+(hasRoleTool?.12:0)+(hasInterrupt?.08:0),.45,1);
  const pressure=combatPressure(ctx);
- return clamp(.44+knowledge*.30+levelReadiness*.13+Math.min(1,gearReadiness)*.13-pressure*.24,.12,.985)
+ return clamp(.50+levelReadiness*.20+Math.min(1,gearReadiness)*.20+skillReadiness*.10-pressure*.20,.18,.985)
 }
 function mistakeChance(ctx,u,type='general'){
  const q=executionQuality(ctx,u),pressure=combatPressure(ctx);
@@ -649,7 +838,7 @@ function recordMistake(ctx,u,type,detail,payload={}){
  const st=ctx.stats.players[u.id];if(st){st.mistakes++;st.mistakesByType[type]=(st.mistakesByType[type]||0)+1}
  ctx.stats.mistakes.total++;ctx.stats.mistakes.byType[type]=(ctx.stats.mistakes.byType[type]||0)+1;
  const token='err-'+(++ctx.mistakeSeq);u.lastMistakeToken=token;u.lastMistakeUntil=ctx.time+3500;
- emit(ctx,'PLAYER_MISTAKE',{source:u.id,target:payload.target||null,ability:payload.ability||null,result:type,payload:{token,type,detail,quality:Math.round(executionQuality(ctx,u)*100),knowledge:Math.round(encounterKnowledge(ctx,u)),pressure:Math.round(combatPressure(ctx)*100),...payload}});
+ emit(ctx,'PLAYER_MISTAKE',{source:u.id,target:payload.target||null,ability:payload.ability||null,result:type,payload:{token,type,detail,quality:Math.round(executionQuality(ctx,u)*100),pressure:Math.round(combatPressure(ctx)*100),...payload}});
  return token
 }
 function recentMistakeToken(ctx,u){
@@ -664,9 +853,12 @@ function shouldMistake(ctx,u,type,lockMs=0){
 }
 
 function threatMultiplier(u,a){
- const base=u.role==='tank'?(Number(a.threat)||2.5):1;
+ let base=u.role==='tank'?(Number(a.threat)||2.5):1;
+ if(u.class==='Paladin'&&u.spec==='Protection')base*=1+talentRank(u,'Guardian Oath')*.12+(a.id==='consecration'?talentRank(u,'Consecration')*.15:0);
+ if(u.class==='Warrior'&&u.spec==='Protection')base*=1+talentRank(u,'Taunt Mastery')*.05;
  return base*Math.max(.1,1+statusBonus(u,'threatBonus'))
 }
+
 function topThreatTarget(ctx,e){
  const live=livingPlayers(ctx);
  if(!live.length)return null;
@@ -692,59 +884,282 @@ function addThreat(ctx,e,u,amount,reason='damage'){
  setAggro(ctx,e,topThreatTarget(ctx,e),reason);
 }
 function executeTaunt(ctx,u,e,a){
- const top=Math.max(0,...Object.values(e.threat).map(Number));
- e.threat[u.id]=Math.max(Number(e.threat[u.id])||0,top+120);
- e.forcedTarget=u.id;e.forcedUntil=ctx.time+3000;
- u.cooldowns[a.id]=Number(a.cd)||8000;
+ const top=Math.max(0,...Object.values(e.threat).map(Number)),rank=talentRank(u,'Taunt Mastery');
+ e.threat[u.id]=Math.max(Number(e.threat[u.id])||0,top+120*(1+rank*.30));
+ e.forcedTarget=u.id;e.forcedUntil=ctx.time+3000+rank*750;
+ u.cooldowns[a.id]=Math.round((Number(a.cd)||8000)*talentCooldownScale(u,a));
  emit(ctx,'ABILITY_START',{source:u.id,target:e.id,ability:a.name,result:'taunt',position:copy(u.position)});
- addThreat(ctx,e,u,80,'taunt');
+ addThreat(ctx,e,u,80*(1+rank*.25),'taunt');
+ if(rank)talentTrigger(ctx,u,'Taunt Mastery',e,{forcedDuration:3000+rank*750});
  setAggro(ctx,e,u,'taunt');
  emit(ctx,'ABILITY_FINISH',{source:u.id,target:e.id,ability:a.name,result:'taunt'});
 }
+
+function talentAfterDamage(ctx,u,a,target,dealt,crit){
+ if(!u?.alive||!target||dealt<=0)return;
+ u.damageActions=(Number(u.damageActions)||0)+1;
+ let r=0;
+ if(u.class==='Warrior'&&u.spec==='Arms'){
+  if((r=talentRank(u,'Battle Rhythm'))){
+   applyStatus(ctx,u,u,{id:'battle-rhythm',name:'Battle Rhythm',kind:'buff',duration:4200,effect:{outgoingDamage:.018*r,haste:.018*r}});
+  }
+  if(crit&&(r=talentRank(u,'Deep Wounds'))&&target.alive){
+   const tick=Math.max(1,Math.round(dealt*(.045*r)));
+   applyStatus(ctx,u,target,{id:'deep-wounds',name:'Deep Wounds',kind:'debuff',duration:2800,effect:{damageOverTime:tick}});
+   talentTrigger(ctx,u,'Deep Wounds',target,{ticks:2,damagePerTick:tick});
+   [1300,2600].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)dealDamage(ctx,u,target,tick,'Deep Wounds',{damageType:'physical'})},'talent-deep-wounds'));
+   if((r=talentRank(u,'Blood Frenzy')))applyStatus(ctx,u,u,{id:'blood-frenzy-talent',name:'Blood Frenzy',kind:'buff',duration:5200,effect:{haste:.05*r}});
+  }
+  if((r=talentRank(u,'Sweeping Blows'))&&target.alive){
+   const extra=livingEnemies(ctx).filter(e=>e.id!==target.id).sort((x,y)=>dist(target.position,x.position)-dist(target.position,y.position))[0];
+   if(extra&&dist(target.position,extra.position)<=12){
+    const splash=Math.max(1,Math.round(dealt*(.18+.12*r)));
+    talentTrigger(ctx,u,'Sweeping Blows',extra,{damage:splash});
+    dealDamage(ctx,u,extra,splash,'Sweeping Blows',{damageType:'physical'})
+   }
+  }
+ }
+ if(u.class==='Hunter'){
+  if(crit&&(r=talentRank(u,'Piercing Shots'))&&target.alive){
+   const tick=Math.max(1,Math.round(dealt*.04*r));
+   applyStatus(ctx,u,target,{id:'piercing-shots',name:'Piercing Shots',kind:'debuff',duration:2600,effect:{damageOverTime:tick}});
+   talentTrigger(ctx,u,'Piercing Shots',target,{ticks:2,damagePerTick:tick});
+   [1200,2400].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)dealDamage(ctx,u,target,tick,'Piercing Shots',{damageType:'physical'})},'talent-piercing-shots'))
+  }
+  if((r=talentRank(u,'Concussive Shot'))&&target.alive&&!['boss','world-boss'].includes(target.classification)&&ctx.rng()<.18*r){
+   applyStatus(ctx,u,target,{id:'concussive-shot',name:'Concussive Shot',kind:'debuff',duration:900,cc:'stun'});
+   talentTrigger(ctx,u,'Concussive Shot',target,{duration:900})
+  }
+ }
+ if(u.class==='Rogue'){
+  const venom=talentRank(u,'Venom'),master=talentRank(u,'Master Poisoner');
+  if((venom||master)&&target.alive){
+   const tick=Math.max(1,Math.round(dealt*(venom*.018+master*.025)));
+   if(tick>0){
+    applyStatus(ctx,u,target,{id:'venom',name:'Venom',kind:'debuff',duration:1300,effect:{damageOverTime:tick}});
+    schedule(ctx,ctx.time+1100,()=>{if(u.alive&&target.alive)dealDamage(ctx,u,target,tick,'Venom',{damageType:'magic'})},'talent-venom')
+   }
+  }
+  if(a.id==='garrote'&&(r=talentRank(u,'Garrote'))&&target.alive){
+   const tick=Math.max(1,Math.round(dealt*.06*r));
+   applyStatus(ctx,u,target,{id:'garrote-bleed',name:'Garrote Bleed',kind:'debuff',duration:2600,effect:{damageOverTime:tick}});
+   talentTrigger(ctx,u,'Garrote',target,{ticks:2,damagePerTick:tick});
+   [1200,2400].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)dealDamage(ctx,u,target,tick,'Garrote Bleed',{damageType:'physical'})},'talent-garrote'))
+  }
+  if(a.id==='envenom'&&(r=talentRank(u,'Cut to the Chase'))){
+   applyStatus(ctx,u,u,{id:'cut-to-the-chase',name:'Cut to the Chase',kind:'buff',duration:6000,effect:{haste:.04*r,outgoingDamage:.025*r}});
+   talentTrigger(ctx,u,'Cut to the Chase',u,{duration:6000})
+  }
+ }
+ if(u.class==='Mage'){
+  const surge=talentRank(u,'Surge');
+  if(surge&&u.damageActions%4===0){
+   applyStatus(ctx,u,u,{id:'arcane-surge-talent',name:'Surge',kind:'buff',duration:6000,effect:{outgoingDamage:.05*surge}});
+   talentTrigger(ctx,u,'Surge',u,{duration:6000})
+  }
+  if(a.id==='arcane-barrage'&&talentRank(u,'Barrage')&&target.alive){
+   const extra=livingEnemies(ctx).filter(e=>e.id!==target.id).slice(0,2);
+   extra.forEach(e=>dealDamage(ctx,u,e,Math.max(1,Math.round(dealt*.22)),'Arcane Barrage Splash',{damageType:'magic'}));
+   if(extra.length)talentTrigger(ctx,u,'Barrage',extra[0],{targets:extra.length})
+  }
+ }
+}
+function talentAfterHeal(ctx,u,a,target,effective){
+ if(!u?.alive||!target?.alive||effective<=0||a.kind!=='heal')return;
+ let r=0;
+ if(u.class==='Priest'){
+  if((r=talentRank(u,'Prayer of Mending'))){
+   const others=livingPlayers(ctx).filter(p=>p.id!==target.id&&hasLineOfSight(ctx,u,p)).sort((x,y)=>healthRatio(x)-healthRatio(y)).slice(0,Math.min(2,r));
+   const ratio=.18+(r-1)*.06;
+   others.forEach(p=>doHeal(ctx,u,p,Math.max(1,Math.round(effective*ratio)),'Prayer of Mending'));
+   if(others.length)talentTrigger(ctx,u,'Prayer of Mending',others[0],{jumps:others.length,ratio})
+  }
+  if((r=talentRank(u,'Renew'))){
+   const tick=Math.max(1,Math.round(effective*.045*r));
+   applyStatus(ctx,u,target,{id:'renew-talent',name:'Renew',kind:'buff',duration:3300,effect:{healingOverTime:tick}});
+   [1500,3000].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)doHeal(ctx,u,target,tick,'Renew')},'talent-renew'))
+  }
+  if((r=talentRank(u,'Divine Insight'))&&ctx.rng()<.10*r){
+   const echo=Math.max(1,Math.round(effective*.45));
+   talentTrigger(ctx,u,'Divine Insight',target,{healing:echo});
+   schedule(ctx,ctx.time+250,()=>{if(u.alive&&target.alive)doHeal(ctx,u,target,echo,'Divine Insight')},'talent-divine-insight')
+  }
+ }
+ if(u.class==='Paladin'&&u.spec==='Holy'){
+  if(talentRank(u,'Beacon')){
+   const tank=livingPlayers(ctx).find(p=>p.role==='tank');
+   if(tank&&tank.id!==target.id){
+    const echo=Math.max(1,Math.round(effective*.40));
+    doHeal(ctx,u,tank,echo,'Beacon');
+    talentTrigger(ctx,u,'Beacon',tank,{healing:echo})
+   }
+  }
+  if((r=talentRank(u,'Radiance'))){
+   const others=livingPlayers(ctx).filter(p=>p.id!==target.id&&hasLineOfSight(ctx,u,p)).sort((x,y)=>healthRatio(x)-healthRatio(y)).slice(0,2);
+   others.forEach(p=>doHeal(ctx,u,p,Math.max(1,Math.round(effective*.10*r)),'Radiance'));
+   if(others.length)talentTrigger(ctx,u,'Radiance',others[0],{targets:others.length})
+  }
+  if((r=talentRank(u,'Infusion'))&&ctx.rng()<.10*r){
+   applyStatus(ctx,u,u,{id:'infusion',name:'Infusion',kind:'buff',duration:5000,effect:{haste:.08*r}});
+   talentTrigger(ctx,u,'Infusion',u,{duration:5000})
+  }
+ }
+ if(u.class==='Druid'&&u.spec==='Restoration'){
+  if((r=talentRank(u,'Lifebloom'))){
+   const tick=Math.max(1,Math.round(effective*.035*r));
+   [1400,2800].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)doHeal(ctx,u,target,tick,'Lifebloom')},'talent-lifebloom'))
+  }
+  if((r=talentRank(u,'Living Seed'))&&ctx.rng()<.12*r){
+   const seed=Math.max(1,Math.round(effective*.30));
+   talentTrigger(ctx,u,'Living Seed',target,{healing:seed});
+   schedule(ctx,ctx.time+1500,()=>{if(u.alive&&target.alive)doHeal(ctx,u,target,seed,'Living Seed')},'talent-living-seed')
+  }
+ }
+}
+function talentAfterGroupHeal(ctx,u,a,totalEffective){
+ if(!u?.alive||totalEffective<=0)return;
+ if(u.class==='Druid'&&talentRank(u,'Flourish')){
+  const pulse=Math.max(1,Math.round(totalEffective*.04));
+  talentTrigger(ctx,u,'Flourish',u,{healingPerTarget:pulse});
+  schedule(ctx,ctx.time+1400,()=>livingPlayers(ctx).filter(p=>hasLineOfSight(ctx,u,p)).forEach(p=>doHeal(ctx,u,p,pulse,'Flourish')),'talent-flourish')
+ }
+}
+function useTalentUtility(ctx,u){
+ if(!u?.alive)return false;
+ if(u.class==='Druid'&&u.spec==='Restoration'){
+  const low=[...livingPlayers(ctx)].sort((a,b)=>healthRatio(a)-healthRatio(b))[0];
+  if(talentRank(u,'Ironbark')&&low&&healthRatio(low)<.45&&talentReady(ctx,u,'ironbark')){
+   talentSetCooldown(ctx,u,'ironbark',45000);applyStatus(ctx,u,low,{id:'ironbark-talent',name:'Ironbark',kind:'buff',duration:8000,effect:{incomingDamageReduction:.25}});
+   talentTrigger(ctx,u,'Ironbark',low,{duration:8000});u.gcdUntil=Math.max(u.gcdUntil,ctx.time+300);return true
+  }
+  if(talentRank(u,'Tree of Life')&&combatPressure(ctx)>.52&&talentReady(ctx,u,'tree-of-life')){
+   talentSetCooldown(ctx,u,'tree-of-life',60000);applyStatus(ctx,u,u,{id:'tree-of-life',name:'Tree of Life',kind:'buff',duration:10000,effect:{outgoingHealing:.22,haste:.10}});
+   talentTrigger(ctx,u,'Tree of Life',u,{duration:10000});return true
+  }
+ }
+ if(u.class==='Mage'&&talentRank(u,'Arcane Power')&&talentReady(ctx,u,'arcane-power')&&(['boss','final','world-boss','event'].includes(ctx.encounter.kind)||combatPressure(ctx)>.55)){
+  talentSetCooldown(ctx,u,'arcane-power',60000);applyStatus(ctx,u,u,{id:'arcane-power',name:'Arcane Power',kind:'buff',duration:10000,effect:{outgoingDamage:.22,haste:.08}});
+  talentTrigger(ctx,u,'Arcane Power',u,{duration:10000});return true
+ }
+ if(u.class==='Warrior'&&u.spec==='Arms'&&talentRank(u,'Bladestorm')&&talentReady(ctx,u,'bladestorm')&&livingEnemies(ctx).length>=2){
+  talentSetCooldown(ctx,u,'bladestorm',30000);u.gcdUntil=Math.max(u.gcdUntil,ctx.time+1500);
+  emit(ctx,'ABILITY_START',{source:u.id,target:livingEnemies(ctx)[0]?.id,ability:'Bladestorm',result:'talent',position:copy(u.position),payload:{kind:'damage'}});
+  const amount=20*(1+Math.min(.35,u.power*.012))*(u.baseStats?.outputScale||1);
+  livingEnemies(ctx).forEach(e=>dealDamage(ctx,u,e,amount,'Bladestorm',{damageType:'physical'}));
+  talentTrigger(ctx,u,'Bladestorm',u,{targets:livingEnemies(ctx).length});
+  emit(ctx,'ABILITY_FINISH',{source:u.id,target:livingEnemies(ctx)[0]?.id,ability:'Bladestorm',result:'resolved',position:copy(u.position),payload:{kind:'damage'}});
+  return true
+ }
+ return false
+}
 function rollDamage(ctx,u,a,target){
- const talent=1+Math.min(.18,u.talents*.012);
  const power=1+Math.min(.35,u.power*.012),levelScale=u.baseStats?.outputScale||levelOutputScale(u.level),match=levelMatchMultiplier(u.level,target?.level||1);
- const variance=.9+ctx.rng()*.2;
- const revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1;
- const frenzy=u.frenzyUntil>ctx.time?1.15:1;
- let amount=(Number(a.damage)||12)*talent*power*levelScale*match*variance*revivePenalty*frenzy*Math.max(.1,1+statusBonus(u,'outgoingDamage'));
- if(Number(a.executeBelow)>0&&healthRatio(target)<=Number(a.executeBelow))amount*=Math.max(1,Number(a.executeMultiplier)||1.5);
- const critChance=clamp(.12+statusBonus(u,'critBonus'),0,.80);
- if(ctx.rng()<critChance){amount*=1.5;return{amount,crit:true}}
+ const variance=.9+ctx.rng()*.2,revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1,frenzy=u.frenzyUntil>ctx.time?1.15:1;
+ let amount=(Number(a.damage)||12)*power*levelScale*match*variance*revivePenalty*frenzy*Math.max(.1,1+statusBonus(u,'outgoingDamage'))*talentDamageScale(ctx,u,a,target);
+ let executeBelow=Number(a.executeBelow)||0,executeMultiplier=Math.max(1,Number(a.executeMultiplier)||1.5);
+ if(u.class==='Hunter'&&a.id==='kill-shot'&&talentRank(u,'Kill Shot')){executeBelow=Math.max(executeBelow,.35);executeMultiplier=Math.max(executeMultiplier,2.05)}
+ if(executeBelow>0&&healthRatio(target)<=executeBelow)amount*=executeMultiplier;
+ const critChance=clamp(.12+statusBonus(u,'critBonus')+talentCritBonus(u),0,.80);
+ if(ctx.rng()<critChance){amount*=1.5*talentCritMultiplier(u);return{amount,crit:true}}
  return{amount,crit:false};
 }
-function mitigation(target,damageType='physical'){
- let value=target.role==='tank'?(damageType==='magic'?0.74:0.68):1;
- if(target.defensiveUntil>0)value*=target.role==='tank'?0.7:0.75;
- value*=1-clamp(statusBonus(target,'incomingDamageReduction'),0,.70);
- return value;
+
+function itemLevelIncomingMultiplier(ctx,target){
+ const recommended=Math.max(0,Number(ctx?.encounter?.recommendedItemLevel)||0),itemLevel=Math.max(0,Number(target?.itemLevel)||0);
+ if(!recommended)return 1;
+ if(!itemLevel)return 1.18;
+ const delta=itemLevel-recommended;
+ if(delta<0)return Math.min(1.55,1+Math.abs(delta)*.045);
+ return Math.max(.82,1-delta*.018);
 }
+function mitigation(ctx,target,damageType='physical',opts={}){
+ const profile=target?.defence||{},gearTaken=damageType==='magic'?(Number(profile.magicTaken)||1):(Number(profile.physicalTaken)||1);
+ let value=target.role==='tank'?(damageType==='magic'?.82:.72):1;
+ value*=gearTaken;value*=itemLevelIncomingMultiplier(ctx,target);
+ if(opts.aggroHit&&target.role!=='tank')value*=target.role==='healer'?1.28:1.22;
+ let blockChance=Number(profile.blockChance)||0;
+ if(target.class==='Warrior'&&target.spec==='Protection')blockChance+=talentRank(target,'Shield Mastery')*4;
+ if(target.class==='Paladin'&&target.spec==='Protection'){
+  blockChance+=talentRank(target,'Sacred Shield')*4;
+  if(['boss','final','world-boss'].includes(ctx.encounter.kind))blockChance+=talentRank(target,'Holy Bastion')*4;
+ }
+ if(damageType==='physical'&&target.role==='tank'&&blockChance>0&&ctx?.rng&&ctx.rng()*100<blockChance){value*=Number(profile.blockMultiplier)||.72;opts.blocked=true}
+ if(target.class==='Warrior'&&target.spec==='Protection'){
+  if(damageType==='physical')value*=Math.max(.76,1-talentRank(target,'Iron Discipline')*.025);
+  if(['boss','final','world-boss'].includes(ctx.encounter.kind))value*=Math.max(.78,1-talentRank(target,'Fortress')*.035)
+ }
+ if(target.class==='Paladin'&&target.spec==='Protection'){
+  value*=Math.max(.88,1-talentRank(target,'Guardian Oath')*.04);
+  if(damageType==='magic')value*=Math.max(.76,1-talentRank(target,'Divine Ward')*.04)
+ }
+ if(target.class==='Priest'&&healthRatio(target)<.55)value*=Math.max(.82,1-talentRank(target,'Focused Will')*.05);
+ if(target.defensiveUntil>0)value*=target.role==='tank'?.66:.74;
+ value*=1-clamp(statusBonus(target,'incomingDamageReduction'),0,.70);
+ return Math.max(.28,value);
+}
+
 function dealDamage(ctx,source,target,amount,ability,opts={}){
  if(!source?.alive||!target?.alive)return 0;
  let final=Math.max(0,amount);
  if(target.role!=='enemy'){
-  const projected=Math.max(1,Math.round(final*mitigation(target,opts.damageType||'physical')));
-  const crossesLastStand=healthRatio(target)>.20&&((target.health-projected)/Math.max(1,target.maxHealth))<.20;
+  const mitigationOpts={...opts};final*=mitigation(ctx,target,opts.damageType||'physical',mitigationOpts);if(mitigationOpts.blocked)opts.blocked=true;
+  final=Math.max(1,Math.round(final));
+  const projectedHp=target.health-final;
+  const crossesLow=healthRatio(target)>.30&&(projectedHp/Math.max(1,target.maxHealth))<.30;
+  if(target.class==='Warrior'&&target.spec==='Protection'&&talentRank(target,'Last Stand')&&!target.talentFlags.lastStand&&crossesLow){
+   target.talentFlags.lastStand=true;const heal=Math.round(target.maxHealth*.22);target.health=clamp(target.health+heal,0,target.maxHealth);
+   applyStatus(ctx,target,target,{id:'last-stand-talent',name:'Last Stand',kind:'buff',duration:6000,effect:{incomingDamageReduction:.15}});
+   talentTrigger(ctx,target,'Last Stand',target,{healing:heal,duration:6000})
+  }
+  if(final>=target.health){
+   const priest=livingPlayers(ctx).find(p=>p.class==='Priest'&&talentRank(p,'Guardian Spirit')>0&&talentReady(ctx,p,'guardian-spirit-talent'));
+   if(priest){
+    talentSetCooldown(ctx,priest,'guardian-spirit-talent',90000);final=Math.max(0,target.health-1);
+    talentTrigger(ctx,priest,'Guardian Spirit',target,{preventedLethal:true});
+    schedule(ctx,ctx.time+1,()=>{if(priest.alive&&target.alive)doHeal(ctx,priest,target,target.maxHealth*.30,'Guardian Spirit')},'talent-guardian-spirit')
+   }else if(target.class==='Warrior'&&target.spec==='Protection'&&talentRank(target,'Unbroken')&&!target.talentFlags.unbroken){
+    target.talentFlags.unbroken=true;final=Math.max(0,target.health-1);
+    applyStatus(ctx,target,target,{id:'unbroken',name:'Unbroken',kind:'buff',duration:4000,effect:{incomingDamageReduction:.40}});
+    talentTrigger(ctx,target,'Unbroken',target,{preventedLethal:true,duration:4000})
+   }else if(target.class==='Priest'&&talentRank(target,'Spirit of Redemption')&&!target.talentFlags.spiritRedemption){
+    target.talentFlags.spiritRedemption=true;const allies=livingPlayers(ctx).filter(p=>p.id!==target.id);
+    const burst=Math.max(1,Math.round(target.maxHealth*.18));
+    allies.forEach(p=>doHeal(ctx,target,p,burst,'Spirit of Redemption'));
+    talentTrigger(ctx,target,'Spirit of Redemption',target,{targets:allies.length,healing:burst})
+   }
+  }
+  const crossesLastStand=healthRatio(target)>.20&&((target.health-final)/Math.max(1,target.maxHealth))<.20;
   if(crossesLastStand&&hasUnique(target,'guardian-last-stand')&&!target.uniqueUsed?.['guardian-last-stand']){
    target.uniqueUsed['guardian-last-stand']=true;target.defensiveUntil=Math.max(Number(target.defensiveUntil)||0,6000);
    applyStatus(ctx,target,target,{id:'guardian-last-stand',name:"Guardian's Last Stand",kind:'buff',duration:6000,effect:{damageReduction:.30}});
    triggerUnique(ctx,target,'guardian-last-stand',"Guardian's Last Stand",{target:target.id,duration:6000});
   }
-  final*=mitigation(target,opts.damageType||'physical')
- }
- final=Math.max(1,Math.round(final));
+ }else final=Math.max(1,Math.round(final));
+ final=Math.max(0,Math.round(final));
  const before=target.health;target.health=clamp(target.health-final,0,target.maxHealth);
  const dealt=before-target.health;
- emit(ctx,'DAMAGE_DEALT',{source:source.id,target:target.id,ability,amount:dealt,result:opts.crit?'critical':'hit',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),avoidable:!!opts.avoidable,damageType:opts.damageType||'physical',mistakeToken:recentMistakeToken(ctx,target)}});
+ emit(ctx,'DAMAGE_DEALT',{source:source.id,target:target.id,ability,amount:dealt,result:opts.blocked?'blocked':opts.crit?'critical':'hit',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),avoidable:!!opts.avoidable,blocked:!!opts.blocked,damageType:opts.damageType||'physical',mistakeToken:recentMistakeToken(ctx,target)}});
  if(source.role!=='enemy'){
   const st=ctx.stats.players[source.id];st.damage+=dealt;st.abilityDamage[ability]=(st.abilityDamage[ability]||0)+dealt;
   addThreat(ctx,target,source,dealt*threatMultiplier(source,opts.ability||{}),'damage');
  }else{
   const st=ctx.stats.players[target.id];if(st){st.damageTaken+=dealt;if(opts.avoidable)st.avoidableDamage+=dealt}
+  if(target.alive&&dealt>0&&target.class==='Warrior'&&target.spec==='Protection'&&talentRank(target,'Vengeance')){
+   const r=talentRank(target,'Vengeance');applyStatus(ctx,target,target,{id:'vengeance-talent',name:'Vengeance',kind:'buff',duration:4500,effect:{outgoingDamage:.04*r}})
+  }
+ }
+ if(opts.blocked&&target.alive){
+  if(target.class==='Warrior'&&target.spec==='Protection'&&talentRank(target,'Hold the Line')){
+   const r=talentRank(target,'Hold the Line');applyStatus(ctx,target,target,{id:'hold-the-line',name:'Hold the Line',kind:'buff',duration:3200,effect:{incomingDamageReduction:.045*r}});talentTrigger(ctx,target,'Hold the Line',target,{duration:3200})
+  }
+  if(target.class==='Paladin'&&target.spec==='Protection'&&talentRank(target,'Righteous Guard')){
+   const r=talentRank(target,'Righteous Guard');applyStatus(ctx,target,target,{id:'righteous-guard',name:'Righteous Guard',kind:'buff',duration:3200,effect:{incomingDamageReduction:.04*r}});talentTrigger(ctx,target,'Righteous Guard',target,{duration:3200})
+  }
  }
  if(target.health<=0)killUnit(ctx,target,source,ability);
  return dealt;
 }
+
 function doHeal(ctx,healer,target,amount,ability){
  if(!healer?.alive||!target?.alive)return 0;
  const before=target.health,max=target.maxHealth;
@@ -931,10 +1346,11 @@ function startAbility(ctx,u,a,target){
  if(!moveIntoRange(ctx,u,target,Number(a.range)||5))return false;
  if(!spendResource(ctx,u,a))return false;
  const haste=clamp(statusBonus(u,'haste'),0,.60),speed=1+haste;
- const cast=Math.max(0,Math.round((Number(a.cast)||0)/speed)),gcd=Math.max(0,Math.round((Number(a.gcd)||0)/speed));
- u.gcdUntil=ctx.time+gcd;u.cooldowns[a.id]=Math.max(Number(a.cd)||0,gcd);
+ let cast=Math.max(0,Math.round((Number(a.cast)||0)/speed));cast=talentCastTime(ctx,u,a,cast);
+ const gcd=Math.max(0,Math.round((Number(a.gcd)||0)/speed)),cd=Math.max(0,Math.round((Number(a.cd)||0)*talentCooldownScale(u,a)));
+ u.gcdUntil=ctx.time+gcd;u.cooldowns[a.id]=Math.max(cd,gcd);
  u.target=target.id;updateFacing(u,target);
- emit(ctx,'ABILITY_START',{source:u.id,target:target.id,ability:a.name,result:cast?'casting':'instant',position:copy(u.position),payload:{castTime:cast,range:a.range,kind:a.kind}});
+ emit(ctx,'ABILITY_START',{source:u.id,target:target.id,ability:a.name,result:cast?'casting':'instant',position:copy(u.position),payload:{castTime:cast,range:a.range,kind:a.kind,talentRequirement:a.talentReq||null}});
  if(cast){
   u.currentCast={ability:a.name,target:target.id,ends:ctx.time+cast};
   emit(ctx,'CAST_START',{source:u.id,target:target.id,ability:a.name,result:'player',payload:{duration:cast,interruptible:false}});
@@ -942,6 +1358,7 @@ function startAbility(ctx,u,a,target){
  }else finishAbility(ctx,u,a,target);
  return true;
 }
+
 function finishAbility(ctx,u,a,target){
  const deadTarget=a?.kind==='battle-rez'&&target&&!target.alive;
  if(!u.alive||(!target?.alive&&!deadTarget))return;
@@ -955,16 +1372,21 @@ function finishAbility(ctx,u,a,target){
   reviveUnit(ctx,u,target,a.name,{healthPct:35,resourcePct:20,combat:true});
  }else if(a.kind==='heal'||a.kind==='group-heal'){
   const revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1;
-  const amount=(a.heal||24)*(1+Math.min(.28,u.power*.01))*(u.baseStats?.outputScale||levelOutputScale(u.level))*(.92+ctx.rng()*.16)*revivePenalty;
-  if(a.kind==='group-heal')livingPlayers(ctx).filter(p=>hasLineOfSight(ctx,u,p)).forEach(p=>doHeal(ctx,u,p,amount,a.name));
-  else doHeal(ctx,u,target,amount,a.name);
+  const base=(a.heal||24)*(1+Math.min(.28,u.power*.01))*(u.baseStats?.outputScale||levelOutputScale(u.level))*(.92+ctx.rng()*.16)*revivePenalty;
+  if(a.kind==='group-heal'){
+   let total=0;livingPlayers(ctx).filter(p=>hasLineOfSight(ctx,u,p)).forEach(p=>{total+=doHeal(ctx,u,p,base*talentHealingScale(ctx,u,a,p),a.name)});talentAfterGroupHeal(ctx,u,a,total)
+  }else{
+   const effective=doHeal(ctx,u,target,base*talentHealingScale(ctx,u,a,target),a.name);talentAfterHeal(ctx,u,a,target,effective)
+  }
   if(a.hot){
-   applyStatus(ctx,u,target,{id:a.id+'-hot',name:a.name,kind:'buff',duration:3400,effect:{healingOverTime:a.hot}});
-   [1600,3200].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)doHeal(ctx,u,target,a.hot,a.name+' (HoT)')},'hot'));
+   const hotScale=u.class==='Druid'?1+talentRank(u,'Rejuvenation')*.18:1,hot=Math.max(1,a.hot*hotScale);
+   applyStatus(ctx,u,target,{id:a.id+'-hot',name:a.name,kind:'buff',duration:3400,effect:{healingOverTime:hot}});
+   [1600,3200].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)doHeal(ctx,u,target,hot,a.name+' (HoT)')},'hot'));
   }
  }else if(a.kind==='damage'){
   const rolled=rollDamage(ctx,u,a,target);
   const dealt=dealDamage(ctx,u,target,rolled.amount,a.name,{crit:rolled.crit,ability:a,damageType:u.class==='Mage'||u.class==='Evoker'?'magic':'physical'});
+  if(dealt>0)talentAfterDamage(ctx,u,a,target,dealt,rolled.crit);
   if(dealt>0&&rolled.crit&&hasUnique(u,'heart-troll-king')&&ctx.rng()<.28){
    u.frenzyUntil=Math.max(Number(u.frenzyUntil)||0,ctx.time+6000);
    applyStatus(ctx,u,u,{id:'blood-frenzy',name:'Blood Frenzy',kind:'buff',duration:6000,effect:{damageMultiplier:.15}});
@@ -973,22 +1395,17 @@ function finishAbility(ctx,u,a,target){
   if(dealt>0&&u.class==='Mage'&&hasUnique(u,'embercore-staff')&&ctx.rng()<.32){
    const splash=livingEnemies(ctx).filter(e=>e.alive&&e.id!==target.id).sort((a,b)=>dist(target.position,a.position)-dist(target.position,b.position))[0];
    if(splash&&dist(target.position,splash.position)<=18){
-    const splashDamage=Math.max(1,Math.round(dealt*.38));
-    triggerUnique(ctx,u,'embercore-staff','Living Ember',{target:splash.id,trigger:'spell-hit'});
+    const splashDamage=Math.max(1,Math.round(dealt*.38));triggerUnique(ctx,u,'embercore-staff','Living Ember',{target:splash.id,trigger:'spell-hit'});
     dealDamage(ctx,u,splash,splashDamage,'Living Ember',{ability:a,damageType:'magic'})
    }
   }
-  if(dealt>0&&target.alive&&u.role==='dps'&&shouldMistake(ctx,u,'threat',12000)){
-   recordMistake(ctx,u,'threat','overcommitted before threat was secure',{target:target.id,ability:a.name});
-   addThreat(ctx,target,u,dealt*(1.8+ctx.rng()*.8),'overcommit');
-  }
+  if(dealt>0&&target.alive&&u.role==='dps'&&shouldMistake(ctx,u,'threat',12000)){recordMistake(ctx,u,'threat','overcommitted before threat was secure',{target:target.id,ability:a.name});addThreat(ctx,target,u,dealt*(1.8+ctx.rng()*.8),'overcommit')}
   gainResource(ctx,u,a);
   if(a.selfHeal&&u.alive)doHeal(ctx,u,u,a.selfHeal,a.name);
-  if(a.cleave&&dealt>0){
-   livingEnemies(ctx).filter(e=>e.id!==target.id).slice(0,a.cleave).forEach(e=>dealDamage(ctx,u,e,dealt*.42,a.name+' cleave',{ability:a,damageType:'magic'}));
-  }
+  if(a.cleave&&dealt>0)livingEnemies(ctx).filter(e=>e.id!==target.id).slice(0,a.cleave).forEach(e=>dealDamage(ctx,u,e,dealt*.42,a.name+' cleave',{ability:a,damageType:u.class==='Mage'?'magic':'physical'}));
  }
 }
+
 function tickCooldowns(ctx){
  ctx.players.forEach(u=>{
   Object.keys(u.cooldowns).forEach(k=>u.cooldowns[k]=Math.max(0,u.cooldowns[k]-TICK));
@@ -1014,31 +1431,45 @@ function classBuffUseAllowed(ctx,u,buff){
 }
 function activateClassBuff(ctx,u,buff){
  if(!classBuffUseAllowed(ctx,u,buff))return false;
+ let duration=buff.duration,effect=copy(buff.effect||{});
+ if(u.class==='Paladin'&&u.spec==='Holy'&&talentRank(u,'Aura Mastery')){
+  duration=Math.round(duration*1.5);Object.keys(effect).forEach(k=>effect[k]=Number(effect[k])*1.35);talentTrigger(ctx,u,'Aura Mastery',u,{duration})
+ }
  u.cooldowns[buff.id]=buff.cooldown;u.gcdUntil=Math.max(u.gcdUntil,ctx.time+500);
- emit(ctx,'ABILITY_START',{source:u.id,ability:buff.name,result:'class-buff',position:copy(u.position),payload:{kind:'buff',scope:buff.scope,duration:buff.duration,cooldown:buff.cooldown}});
+ emit(ctx,'ABILITY_START',{source:u.id,target:u.id,ability:buff.name,result:'class-buff',position:copy(u.position),payload:{kind:'buff',scope:buff.scope,duration,cooldown:buff.cooldown}});
  const targets=buff.scope==='party'?livingPlayers(ctx):[u];
- targets.forEach(target=>applyStatus(ctx,u,target,{id:buff.id,name:buff.name,kind:'buff',duration:buff.duration,effect:buff.effect,persistAcrossEncounters:true}));
- emit(ctx,'ABILITY_FINISH',{source:u.id,ability:buff.name,result:'class-buff',position:copy(u.position),payload:{kind:'buff',scope:buff.scope,duration:buff.duration}});
+ targets.forEach(target=>applyStatus(ctx,u,target,{id:buff.id,name:buff.name,kind:'buff',duration,effect,persistAcrossEncounters:true}));
+ emit(ctx,'ABILITY_FINISH',{source:u.id,target:u.id,ability:buff.name,result:'class-buff',position:copy(u.position),payload:{kind:'buff',scope:buff.scope,duration}});
  return true
 }
+
 function useDefensiveSkill(ctx,u,a){
  if(!a||a.kind!=='defensive'||!cooldownReady(u,a))return false;
- const duration=Math.max(1000,Number(a.duration)||8000),reduction=clamp(Number(a.damageReduction)||.20,0,.70);
- u.cooldowns[a.id]=Math.max(1000,Number(a.cd)||60000);u.gcdUntil=Math.max(u.gcdUntil,ctx.time+300);
+ let duration=Math.max(1000,Number(a.duration)||8000),reduction=clamp(Number(a.damageReduction)||.20,0,.70);
+ if(u.class==='Paladin'&&a.id==='ardent-defender'&&talentRank(u,'Ardent Defender')){duration+=2000;reduction=Math.min(.70,reduction+.10)}
+ u.cooldowns[a.id]=Math.max(1000,Math.round((Number(a.cd)||60000)*talentCooldownScale(u,a)));u.gcdUntil=Math.max(u.gcdUntil,ctx.time+300);
  emit(ctx,'ABILITY_START',{source:u.id,target:u.id,ability:a.name,result:'defensive',position:copy(u.position),payload:{kind:'defensive',duration}});
  if(Number(a.selfHealPct)>0){
   const before=u.health;u.health=clamp(u.health+Math.round(u.maxHealth*Number(a.selfHealPct)),0,u.maxHealth);
   emit(ctx,'HEAL_RECEIVED',{source:u.id,target:u.id,ability:a.name,amount:u.health-before,result:'self-heal',position:copy(u.position),payload:{targetHp:u.health,targetMax:u.maxHealth,targetHpPct:pct(u.health,u.maxHealth),overhealing:0}})
  }
  applyStatus(ctx,u,u,{id:a.id,name:a.name,kind:'buff',duration,effect:{incomingDamageReduction:reduction}});
+ if(u.class==='Warrior'&&u.spec==='Protection'&&talentRank(u,'Bulwark')){
+  livingPlayers(ctx).filter(p=>p.id!==u.id).forEach(p=>applyStatus(ctx,u,p,{id:'bulwark-party',name:'Bulwark',kind:'buff',duration:6000,effect:{incomingDamageReduction:.10}}));talentTrigger(ctx,u,'Bulwark',u,{targets:Math.max(0,livingPlayers(ctx).length-1),duration:6000})
+ }
+ if(u.class==='Paladin'&&u.spec==='Protection'&&talentRank(u,'Divine Guardian')){
+  livingPlayers(ctx).filter(p=>p.id!==u.id).forEach(p=>applyStatus(ctx,u,p,{id:'divine-guardian-party',name:'Divine Guardian',kind:'buff',duration:6000,effect:{incomingDamageReduction:.12}}));talentTrigger(ctx,u,'Divine Guardian',u,{targets:Math.max(0,livingPlayers(ctx).length-1),duration:6000})
+ }
  emit(ctx,'ABILITY_FINISH',{source:u.id,target:u.id,ability:a.name,result:'defensive',position:copy(u.position),payload:{kind:'defensive',duration}});
  return true
 }
+
 function playerAI(ctx,u){
  if(!u.alive||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.nextDecision||ctx.time<u.gcdUntil)return;
  if(Number(u.mechanicHoldUntil)>ctx.time)return;
  u.nextDecision=ctx.time+160;
  const buff=classBuffFor(u);if(buff&&activateClassBuff(ctx,u,buff))return;
+ if(useTalentUtility(ctx,u))return;
  const defensiveThreshold=ctx.tactics.defensiveUsage==='aggressive'?.62:ctx.tactics.defensiveUsage==='conservative'?.38:.50;
  const defensive=u.abilities.find(a=>a.kind==='defensive'&&cooldownReady(u,a));
  if(defensive&&healthRatio(u)<defensiveThreshold){
@@ -1070,23 +1501,28 @@ function playerAI(ctx,u){
 }
 function enemyBasicAttack(ctx,e){
  if(!e.alive||ctx.time<e.movingUntil||isCrowdControlled(e))return;
- const target=topThreatTarget(ctx,e)||livingPlayers(ctx)[0];if(!target)return;
- setAggro(ctx,e,target,'threat');
- if(!inRange(e,target,5)||!hasLineOfSight(ctx,e,target)){
-  moveTo(ctx,e,nearestMeleePoint(target,e),320,!hasLineOfSight(ctx,e,target)?'line of sight':'chase target');
+ const live=livingPlayers(ctx);if(!live.length)return;
+ const randomTarget=e.targeting==='random',target=randomTarget?live[Math.floor(ctx.rng()*live.length)]:(topThreatTarget(ctx,e)||live[0]);if(!target)return;
+ setAggro(ctx,e,target,randomTarget?'random targeting':'threat');
+ const range=Math.max(2,Number(e.attackRange)||5);
+ if(!inRange(e,target,range)||!hasLineOfSight(ctx,e,target)){
+  const destination=range>7?visibleCastPoint(ctx,e,target,range,e.position):nearestMeleePoint(target,e);
+  moveTo(ctx,e,destination,320,!hasLineOfSight(ctx,e,target)?'line of sight':range>7?'ranged position':'chase target');
   e.nextAttack=ctx.time+450;return;
  }
  updateFacing(e,target);
- const base=e.kind==='boss'?30:e.isAdd?11:8,roll=.85+ctx.rng()*.3;
+ const base=e.classification==='world-boss'?46:e.kind==='boss'?36:e.classification==='elite'?18:e.isAdd?12:14,roll=.88+ctx.rng()*.24;
+ const ability=e.attackName||(e.classification==='world-boss'?'Crushing Blow':e.kind==='boss'?'Heavy Swing':e.classification==='elite'?'Heavy Strike':'Attack');
  if(e.allAttacksAoe&&e.kind==='boss'){
   emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability:'Wild Wrath',result:'enemy-aoe',payload:{aoe:true}});
-  livingPlayers(ctx).forEach(p=>dealDamage(ctx,e,p,base*.66*enemyPressure(ctx,e,p)*roll,'Wild Wrath',{damageType:'magic',avoidable:false,aoe:true}));
+  livingPlayers(ctx).forEach(p=>dealDamage(ctx,e,p,base*.62*enemyPressure(ctx,e,p)*roll,'Wild Wrath',{damageType:'magic',avoidable:false,aoe:true,aggroHit:true}));
  }else{
   const levelPressure=enemyPressure(ctx,e,target);
-  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability:e.kind==='boss'?'Heavy Swing':'Attack',result:'enemy'});
-  dealDamage(ctx,e,target,base*levelPressure*roll,e.kind==='boss'?'Heavy Swing':'Attack',{damageType:'physical'});
+  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability,result:randomTarget?'enemy-random':'enemy',payload:{randomTargeting:randomTarget,attackRange:range}});
+  dealDamage(ctx,e,target,base*levelPressure*roll,ability,{damageType:e.damageType||'physical',aggroHit:!randomTarget});
  }
- e.nextAttack=ctx.time+(e.kind==='boss'?1400:e.isAdd?1800:2050)+Math.round(ctx.rng()*(e.kind==='boss'?220:320));
+ const cadence=e.classification==='world-boss'?1325:e.kind==='boss'?1450:e.classification==='elite'?1850:e.isAdd?1800:2050;
+ e.nextAttack=ctx.time+cadence+Math.round(ctx.rng()*(e.kind==='boss'?220:320));
 }
 function mechanicStat(ctx,type,failed){
  const m=ctx.stats.mechanics;m.byType[type]=m.byType[type]||{avoided:0,failed:0};
@@ -1155,15 +1591,16 @@ function tryInterrupt(ctx,e,mechanic,castToken){
   if(!u.alive||!inRange(u,e,a.range||10)||!hasLineOfSight(ctx,u,e)||!cooldownReady(u,a)||ctx.time>=cast.ends){
    ctx.stats.interrupts.missedCritical++;emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'failed',payload:{interruptedAbility:mechanic.name,token:castToken}});return
   }
-  u.cooldowns[a.id]=a.cd||15000;cast.interrupted=true;ctx.activeEnemyCast=null;st.interrupts++;ctx.stats.interrupts.success++;
+  u.cooldowns[a.id]=Math.round((a.cd||15000)*talentCooldownScale(u,a));cast.interrupted=true;ctx.activeEnemyCast=null;e.interruptedUntil=ctx.time+2600;st.interrupts++;ctx.stats.interrupts.success++;
   emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'success',payload:{interruptedAbility:mechanic.name,token:castToken}});
+  if(u.class==='Paladin'&&talentRank(u,'Hammer of Justice')&&!['boss','world-boss'].includes(e.classification)){applyStatus(ctx,u,e,{id:'hammer-of-justice',name:'Hammer of Justice',kind:'debuff',duration:900,cc:'stun'});talentTrigger(ctx,u,'Hammer of Justice',e,{duration:900})}
   if(hasUnique(u,'frostbound-sigil')){
    u.defensiveUntil=Math.max(Number(u.defensiveUntil)||0,3500);
    applyStatus(ctx,u,u,{id:'frostbound-sigil-shield',name:'Frozen Response',kind:'buff',duration:3500,effect:{damageReduction:.25}});
    triggerUnique(ctx,u,'frostbound-sigil','Frozen Response',{target:u.id,duration:3500,trigger:'interrupt'})
   }
  },'interrupt');
- // Low knowledge / pressure can make a second player burn their interrupt a fraction later.
+ // Pressure and execution quality can make a second player burn their interrupt a fraction later.
  const backup=candidates[1];
  if(backup&&ctx.rng()<mistakeChance(ctx,backup.u,'interrupt')*.55){
   const delay=Math.max(220,reaction+120+Math.round(ctx.rng()*220));
@@ -1179,11 +1616,12 @@ function tryInterrupt(ctx,e,mechanic,castToken){
   },'duplicate-interrupt')
  }
 }
-function spawnAdds(ctx,e){
+function spawnAdds(ctx,e,mechanic={}){
  const base=ctx.enemies.length;
- const count=2+Math.max(0,Math.min(2,Number(ctx.encounter.scaling?.addCountBonus)||0));
+ const requested=Number(mechanic.addCount),count=Number.isFinite(requested)?Math.max(1,Math.min(5,Math.round(requested))):2+Math.max(0,Math.min(2,Number(ctx.encounter.scaling?.addCountBonus)||0));
+ const addName=String(mechanic.addName||'Cave Spawn');
  for(let i=0;i<count;i++){
-  const id='add-'+ctx.addSeq++,level=Math.max(1,Number(e.level)||Number(ctx.encounter.level)||1),rule=enemyClassRule('add'),maxHealth=Math.round(72*levelHealthScale(level)*rule.health*scalingValue(ctx,'enemyHealth',1)),add={id,name:'Cave Spawn',role:'enemy',kind:'enemy',classification:'add',classificationLabel:rule.label,level,maxHealth,health:maxHealth,alive:true,position:{x:74,y:i?66:34},facing:180,target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},nextAttack:ctx.time+600+i*150,currentCast:null,isAdd:true,priority:3,damageScale:rule.damage*scalingValue(ctx,'enemyDamage',1)};
+  const id='add-'+ctx.addSeq++,level=Math.max(1,Number(e.level)||Number(ctx.encounter.level)||1),rule=enemyClassRule('add'),maxHealth=Math.round(72*levelHealthScale(level)*rule.health*scalingValue(ctx,'enemyHealth',1)),add={id,name:addName,role:'enemy',kind:'enemy',classification:'add',classificationLabel:rule.label,level,maxHealth,health:maxHealth,alive:true,position:{x:74,y:i?66:34},facing:180,target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},nextAttack:ctx.time+600+i*150,currentCast:null,isAdd:true,priority:3,damageScale:rule.damage*scalingValue(ctx,'enemyDamage',1)};
   add.movingUntil=0;add.moveToken=0;ctx.enemies.push(add);ctx.units[id]=add;ctx.players.forEach(p=>add.threat[p.id]=0);
   const random=livingPlayers(ctx)[Math.floor(ctx.rng()*livingPlayers(ctx).length)];if(random)add.threat[random.id]=120;
   setAggro(ctx,add,topThreatTarget(ctx,add),'spawn');
@@ -1193,6 +1631,15 @@ function spawnAdds(ctx,e){
     if(controller&&i===0){applyStatus(ctx,controller,add,{id:'tactical-control-add-'+id,name:'Tactical Crowd Control',kind:'debuff',duration:1800,cc:'stun'});emit(ctx,'CROWD_CONTROL',{source:controller.id,target:add.id,ability:'Tactical Crowd Control',result:'applied',payload:{duration:1800,policy:'priority-elites'}})}
   }
  }
+}
+function mechanicStatusDefinition(m){
+ const raw=m?.status;
+ return raw&&typeof raw==='object'?raw:null
+}
+function applyMechanicStatus(ctx,enemy,m,target){
+ const raw=mechanicStatusDefinition(m);if(!raw||!target?.alive)return null;
+ const name=raw.name||m?.name||'Enemy Effect',id=raw.id||String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+ return applyStatus(ctx,enemy,target,{...copy(raw),id,name,kind:raw.kind==='buff'?'buff':'debuff'})
 }
 function resolveMechanic(ctx,e,m,token){
  const cast=ctx.activeEnemyCast;
@@ -1204,28 +1651,27 @@ function resolveMechanic(ctx,e,m,token){
   const amount=Math.max(0,e.health-before);
   emit(ctx,'CAST_FINISH',{source:e.id,target:e.id,ability:m.name,result:'completed'});
   if(amount)emit(ctx,'HEAL_RECEIVED',{source:e.id,target:e.id,ability:m.name,amount,result:'enemy-heal',payload:{enemyHeal:true,targetHp:e.health,targetMaxHealth:e.maxHealth,targetHpPct:pct(e.health,e.maxHealth),overhealing:0}});
-  ctx.stats.interrupts.missedCritical++;
-  mechanicStat(ctx,'self-heal',true);scheduleNextMechanic(ctx);return;
+  ctx.stats.interrupts.missedCritical++;mechanicStat(ctx,'self-heal',true);scheduleNextMechanic(ctx);return;
  }
  if(m.type==='interrupt'){
   if(!cast||cast.token!==token||cast.interrupted){scheduleNextMechanic(ctx);return}
   ctx.activeEnemyCast=null;
   emit(ctx,'CAST_FINISH',{source:e.id,ability:m.name,result:'completed'});
-  livingPlayers(ctx).forEach(p=>dealDamage(ctx,e,p,24*enemyPressure(ctx,e,p),m.name,{damageType:'magic',avoidable:false}));
+  livingPlayers(ctx).forEach(p=>{dealDamage(ctx,e,p,24*enemyPressure(ctx,e,p),m.name,{damageType:'magic',avoidable:false});applyMechanicStatus(ctx,e,m,p)});
   ctx.stats.interrupts.missedCritical++;
   mechanicStat(ctx,'interrupt',true);scheduleNextMechanic(ctx);return;
  }
  if(!cast||cast.token!==token){scheduleNextMechanic(ctx);return}
  ctx.activeEnemyCast=null;
  emit(ctx,'MECHANIC_RESOLVE',{source:e.id,ability:m.name,result:'resolve',payload:{mechanicType:m.type,token}});
- if(m.type==='adds'){spawnAdds(ctx,e);mechanicStat(ctx,'adds',false);scheduleNextMechanic(ctx);return}
+ if(m.type==='adds'){spawnAdds(ctx,e,m);mechanicStat(ctx,'adds',false);scheduleNextMechanic(ctx);return}
  if(m.type==='cone'){
   const tank=livingPlayers(ctx).find(p=>p.role==='tank');if(tank){e.target=tank.id;updateFacing(e,tank)}
   let failed=false;
   livingPlayers(ctx).forEach(p=>{
-   if(p.role==='tank'){dealDamage(ctx,e,p,34*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:false});return}
+   if(p.role==='tank'){dealDamage(ctx,e,p,38*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:false});applyMechanicStatus(ctx,e,m,p);return}
    const success=cast.responses?.[p.id]!==false;
-   if(!success){failed=true;dealDamage(ctx,e,p,28*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:true})}
+   if(!success){failed=true;dealDamage(ctx,e,p,28*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:true});applyMechanicStatus(ctx,e,m,p)}
   });
   mechanicStat(ctx,'cone',failed);scheduleNextMechanic(ctx);return;
  }
@@ -1233,7 +1679,7 @@ function resolveMechanic(ctx,e,m,token){
   let failed=false;
   livingPlayers(ctx).forEach(p=>{
    const success=cast.responses?.[p.id]!==false;
-   if(!success){failed=true;dealDamage(ctx,e,p,(m.type==='circles'?24:28)*enemyPressure(ctx,e,p),m.name,{damageType:'magic',avoidable:true})}
+   if(!success){failed=true;dealDamage(ctx,e,p,(m.type==='circles'?24:28)*enemyPressure(ctx,e,p),m.name,{damageType:'magic',avoidable:true});applyMechanicStatus(ctx,e,m,p)}
   });
   mechanicStat(ctx,m.type,failed);scheduleNextMechanic(ctx);return;
  }
@@ -1241,7 +1687,7 @@ function resolveMechanic(ctx,e,m,token){
   const target=getUnit(ctx,cast.targetId);
   if(target?.alive){
    const success=cast.responses?.[target.id]!==false;
-   if(!success)dealDamage(ctx,e,target,32*enemyPressure(ctx,e,target),m.name,{damageType:'physical',avoidable:true});
+   if(!success){dealDamage(ctx,e,target,32*enemyPressure(ctx,e,target),m.name,{damageType:'physical',avoidable:true});applyMechanicStatus(ctx,e,m,target)}
    mechanicStat(ctx,'line',!success);
   }else mechanicStat(ctx,'line',false);
   scheduleNextMechanic(ctx);return;
@@ -1252,7 +1698,7 @@ function resolveMechanic(ctx,e,m,token){
   livingPlayers(ctx).slice().forEach(p=>{
    const zone=zones[p.role]||zones.dps,radius=Math.max(3,Number(zone?.radius)||10),inside=zone&&dist(p.position,{x:Number(zone.x)||50,y:Number(zone.y)||50})<=radius;
    p.mechanicHoldUntil=0;p.mechanicHoldPosition=null;
-   if(!inside){failed=true;dealDamage(ctx,e,p,p.maxHealth*50,m.name,{damageType:'magic',avoidable:true})}
+   if(!inside){failed=true;applyMechanicStatus(ctx,e,m,p);dealDamage(ctx,e,p,p.maxHealth*50,m.name,{damageType:'magic',avoidable:true})}
    else emit(ctx,'MECHANIC_SAFE',{source:e.id,target:p.id,ability:m.name,result:'protected',position:copy(p.position),payload:{role:p.role,zone:copy(zone)}})
   });
   emit(ctx,'ROLE_SHOCKWAVE',{source:e.id,ability:m.name,result:failed?'casualties':'survived',position:copy(e.position),payload:{zones:copy(zones)}});
@@ -1292,15 +1738,20 @@ function startMechanic(ctx,m){
   castState.zones={...defaults,...copy(m.zones||{})};castState.targetIds=live.map(p=>p.id);
   enemy.movingUntil=Math.max(Number(enemy.movingUntil)||0,ctx.time+duration);enemy.nextAttack=Math.max(Number(enemy.nextAttack)||0,ctx.time+duration+650);
   live.forEach(p=>{
-   const zone=castState.zones[p.role]||castState.zones.dps,baseReaction=executionReaction(ctx,p,'movement'),error=shouldMistake(ctx,p,'movement',2600);
+   const correct=castState.zones[p.role]||castState.zones.dps,baseReaction=executionReaction(ctx,p,'movement'),error=shouldMistake(ctx,p,'movement',2600);
    const hesitation=error?Math.round(350+ctx.rng()*850):0,reaction=baseReaction+hesitation,travel=520;
-   castState.reactionMs[p.id]=reaction;castState.responses[p.id]=reaction+travel<=Math.max(800,duration-80);
-   if(error)recordMistake(ctx,p,'movement','hesitated during the role circuit',{target:enemy.id,ability:m.name,reactionMs:reaction});
+   let destination=correct;
+   if(error&&m.strict){
+    const wrong=Object.entries(castState.zones).filter(([key,z])=>key!==p.role&&z&&Number.isFinite(Number(z.x))&&Number.isFinite(Number(z.y)));
+    if(wrong.length)destination=wrong[Math.floor(ctx.rng()*wrong.length)][1]
+   }
+   castState.reactionMs[p.id]=reaction;castState.responses[p.id]=destination===correct&&reaction+travel<=Math.max(800,duration-80);
+   if(error)recordMistake(ctx,p,'movement',m.strict&&destination!==correct?'committed to the wrong role circuit':'hesitated during the role circuit',{target:enemy.id,ability:m.name,reactionMs:reaction});
    schedule(ctx,ctx.time+reaction,()=>{
     if(!p.alive)return;
     p.mechanicHoldUntil=ctx.time+Math.max(0,duration-reaction);
-    p.mechanicHoldPosition={x:zone.x,y:zone.y};
-    moveTo(ctx,p,{x:zone.x,y:zone.y},travel,'role circuit')
+    p.mechanicHoldPosition={x:destination.x,y:destination.y};
+    moveTo(ctx,p,{x:destination.x,y:destination.y},travel,m.strict&&destination!==correct?'wrong role circuit':'role circuit')
    },'role-circle-reaction')
   })
  }
@@ -1338,11 +1789,13 @@ function checkBossPhases(ctx){
  const softPct=Number(ctx.encounter.softEnragePct);
  if(!ctx.softEnraged&&Number.isFinite(softPct)&&hp<=softPct){
   ctx.softEnraged=true;boss.phaseDamageScale=Math.max(Number(boss.phaseDamageScale)||1,Number(ctx.encounter.softEnrageDamage)||1.22);
+  applyStatus(ctx,boss,boss,{id:'soft-enrage',name:'Soft Enrage',kind:'buff',duration:0,effect:{damageMultiplier:Math.max(0,boss.phaseDamageScale-1)}});
   emit(ctx,'ENRAGE',{source:boss.id,target:boss.id,ability:'Soft Enrage',result:'soft',payload:{healthPct:hp,damageScale:boss.phaseDamageScale}})
  }
  const hardAt=Number(ctx.encounter.hardEnrageMs);
  if(!ctx.hardEnraged&&Number.isFinite(hardAt)&&hardAt>0&&(ctx.elapsedOffsetMs+ctx.time)>=hardAt){
   ctx.hardEnraged=true;boss.hardEnraged=true;
+  applyStatus(ctx,boss,boss,{id:'hard-enrage',name:'Hard Enrage',kind:'buff',duration:0,effect:{damageMultiplier:2.5}});
   emit(ctx,'ENRAGE',{source:boss.id,target:boss.id,ability:'Hard Enrage',result:'hard',payload:{timeMs:ctx.elapsedOffsetMs+ctx.time,damageScale:3.5}})
  }
 }
@@ -1426,6 +1879,14 @@ function simulate(options={}){
  let outcome='defeat';
  while(ctx.time<=maxDuration){
   processQueue(ctx);
+  const resolvePct=Math.max(0,Math.min(.95,Number(ctx.encounter.resolveAtBossHealthPct)||0));
+  if(resolvePct>0){
+   const boss=ctx.enemies.find(e=>e.kind==='boss'&&e.alive),remainingRivals=ctx.enemies.filter(e=>e.alive&&!e.isAdd&&e!==boss);
+   if(boss&&healthRatio(boss)<=resolvePct&&!remainingRivals.length){
+    emit(ctx,'ENCOUNTER_RESOLVED',{source:boss.id,ability:ctx.encounter.resolveLabel||'Encounter Resolution',result:'escaped',position:copy(boss.position),payload:{bossHealthPct:pct(boss.health,boss.maxHealth),thresholdPct:Math.round(resolvePct*100)}});
+    outcome='victory';break
+   }
+  }
   if(!livingEnemies(ctx).length&&ctx.pendingResurrections<=0&&ctx.pendingHazards<=0){outcome='victory';break}
   if(!livingPlayers(ctx).length){outcome='defeat';break}
   checkBossPhases(ctx);tickCooldowns(ctx);passiveResources(ctx);
@@ -1632,7 +2093,7 @@ function runSelfTests(){
  {
   const rezParty=[
    {id:'brt',name:'Tank',class:'Warrior',spec:'Protection',power:30,level:8,_combatItemLevel:30,knowledge:{rez:100}},
-   {id:'brh',name:'Priest',class:'Priest',spec:'Holy',power:30,level:8,_combatItemLevel:30,knowledge:{rez:100}},
+   {id:'brh',name:'Priest',class:'Priest',spec:'Holy',power:30,level:8,_combatItemLevel:30,knowledge:{rez:100},skillLoadouts:{Holy:['heal','prayer-healing','silence','soul-recall']}},
    {id:'brd1',name:'Fallen DPS',class:'Warrior',spec:'Arms',power:30,level:8,_combatItemLevel:30,_combatHealthPct:0,knowledge:{rez:100}},
    {id:'brd2',name:'DPS Two',class:'Rogue',spec:'Assassination',power:30,level:8,_combatItemLevel:30,knowledge:{rez:100}},
    {id:'brd3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:30,level:8,_combatItemLevel:30,knowledge:{rez:100}}
@@ -1701,6 +2162,47 @@ function runSelfTests(){
 
 
 
+ {
+  const prayerParty=[
+   {id:'pom-t',name:'Tank',class:'Warrior',spec:'Protection',power:24,level:10,_combatHealthPct:38},
+   {id:'pom-h',name:'Priest',class:'Priest',spec:'Holy',power:24,level:10,_combatHealthPct:100,talents:{Holy:{Renew:1,'Prayer of Mending':2}},skillLoadouts:{Holy:['heal','flash-heal','prayer-healing','silence']}},
+   {id:'pom-1',name:'DPS One',class:'Warrior',spec:'Arms',power:24,level:10,_combatHealthPct:55},
+   {id:'pom-2',name:'DPS Two',class:'Rogue',spec:'Assassination',power:24,level:10,_combatHealthPct:62},
+   {id:'pom-3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:24,level:10,_combatHealthPct:70}
+  ];
+  const prayer=simulate({party:prayerParty,encounter:{id:'prayer-test',kind:'boss',level:10,enemies:['Prayer Dummy'],enemyHealth:2400,mechanics:[]},seed:'prayer-of-mending'});
+  const jumps=prayer.events.filter(e=>e.type==='HEAL_RECEIVED'&&e.source==='p-pom-h'&&e.ability==='Prayer of Mending');
+  test('Prayer of Mending Talent',()=>jumps.length>=1&&new Set(jumps.map(e=>e.target)).size>=1&&prayer.events.some(e=>e.type==='TALENT_TRIGGER'&&e.ability==='Prayer of Mending'));
+ }
+ {
+  const noTalent={id:'skill-gate-a',name:'Arms',class:'Warrior',spec:'Arms',power:20,level:10,talents:{Arms:{}},skillLoadouts:{Arms:['mortal-strike','slam']}};
+  const withTalent={...noTalent,id:'skill-gate-b',talents:{Arms:{'Mortal Strike':1}}};
+  const gateA=simulate({party:[noTalent],encounter:{id:'gate-a',kind:'trash',level:5,enemies:['Dummy'],enemyHealth:500,mechanics:[]},seed:'gate-a',maxDurationMs:1200});
+  const gateB=simulate({party:[withTalent],encounter:{id:'gate-b',kind:'trash',level:5,enemies:['Dummy'],enemyHealth:500,mechanics:[]},seed:'gate-b',maxDurationMs:1200});
+  const a=gateA.finalState.players[0]?.abilities||[],b=gateB.finalState.players[0]?.abilities||[];
+  test('Talent Gated Skill',()=>!a.some(x=>x.id==='mortal-strike')&&b.some(x=>x.id==='mortal-strike'));
+ }
+ {
+  const loadoutParty=[{id:'loadout',name:'Loadout Test',class:'Mage',spec:'Arcane',power:20,level:10,skillLoadouts:{Arcane:['fireball']}}];
+  const loadout=simulate({party:loadoutParty,encounter:{id:'loadout-test',kind:'trash',level:5,enemies:['Dummy'],enemyHealth:900,mechanics:[]},seed:'loadout',maxDurationMs:5000});
+  const damageStarts=loadout.events.filter(e=>e.type==='ABILITY_START'&&e.source==='p-loadout'&&e.payload?.kind==='damage');
+  test('Equipped Skills Are Authoritative',()=>damageStarts.length>0&&damageStarts.every(e=>e.ability==='Fireball'));
+ }
+
+
+ {
+  const masteryBase=[
+   {id:'mk-t',name:'Tank',class:'Warrior',spec:'Protection',power:20,level:8,_combatItemLevel:28},
+   {id:'mk-h',name:'Healer',class:'Priest',spec:'Holy',power:20,level:8,_combatItemLevel:28},
+   {id:'mk-1',name:'DPS One',class:'Warrior',spec:'Arms',power:20,level:8,_combatItemLevel:28},
+   {id:'mk-2',name:'DPS Two',class:'Rogue',spec:'Assassination',power:20,level:8,_combatItemLevel:28},
+   {id:'mk-3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:20,level:8,_combatItemLevel:28}
+  ];
+  const low=masteryBase.map(x=>({...x,knowledge:{mastery:0}})),high=masteryBase.map(x=>({...x,knowledge:{mastery:100}}));
+  const encounter={id:'mastery-neutral',kind:'boss',level:8,recommendedItemLevel:28,knowledgeKey:'mastery',enemies:['Mastery Dummy'],enemyHealth:1800,mechanics:[['Pulse','circles',1400],['Cast','interrupt',1600]]};
+  const a=simulate({party:low,encounter,seed:'mastery-neutral'}),b=simulate({party:high,encounter,seed:'mastery-neutral'});
+  test('Mastery Does Not Affect Combat',()=>a.outcome===b.outcome&&a.summary.totalDamage===b.summary.totalDamage&&a.summary.totalHealing===b.summary.totalHealing&&a.summary.mistakes.total===b.summary.mistakes.total);
+ }
 
 
 
@@ -1708,12 +2210,20 @@ function runSelfTests(){
 
 
 
+
+
+ {
+  const noInterrupt=Array.from({length:5},(_,i)=>({id:'status-'+i,name:'Status Tester '+i,class:'Mage',spec:'Arcane',power:8,level:8,_combatItemLevel:28,skillLoadouts:{Arcane:['fireball']}}));
+  const statusRun=simulate({party:noInterrupt,encounter:{id:'enemy-status-test',kind:'boss',level:8,enemies:['Rot Caster'],enemyHealth:6000,mechanicIntervalMs:500,mechanics:[{name:'Arcane Rot',type:'interrupt',duration:600,priority:'critical',status:{id:'arcane-rot',name:'Arcane Rot',duration:3500,effect:{outgoingDamageReduction:.10}}}]},seed:'enemy-status-effect',maxDurationMs:2600});
+  test('Enemy Mechanics Emit Status Effects',()=>statusRun.events.some(e=>e.type==='DEBUFF_APPLIED'&&e.ability==='Arcane Rot'&&String(e.source||'').startsWith('e-')&&String(e.target||'').startsWith('p-')));
+ }
  return{version:VERSION,passed:tests.filter(x=>x.pass).length,total:tests.length,tests};
 }
 
 window.CellboundCombatReborn={
  VERSION,CLASS_COLORS,RESOURCE_DEFS,CLASS_BUFFS,ABILITIES,LEVEL_RULES,ENEMY_CLASS_RULES,simulate,replay,debugSnapshot,
  skills:{classSkillPool,unlockedSkillPool,defaultSkillLoadout},
+ talents:{rules:TALENT_RULES,skillRequirements:TALENT_SKILL_REQUIREMENTS,rank:characterTalentRank},
  tests:{run:runSelfTests},utils:{hashSeed,rngFrom,levelHealthScale,levelOutputScale,levelMatchMultiplier}
 };
 })();
