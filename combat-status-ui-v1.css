@@ -11,24 +11,44 @@
 .wb2d-unit.cbs-host,
 .td-unit.cbs-host{position:absolute!important}
 .cbs-strip{
-  position:absolute;left:50%;top:-46px;z-index:35;
-  display:flex;align-items:center;justify-content:center;gap:3px;
+  position:absolute;left:50%;top:-40px;z-index:35;
+  display:flex;align-items:center;justify-content:center;gap:2px;
   min-width:max-content;transform:translateX(-50%);
   pointer-events:auto
 }
 .cbs-strip[hidden]{display:none!important}
 .cbs-group{display:flex;gap:2px;align-items:center}
 .cbs-icon{
-  position:relative;width:24px;height:24px;padding:1px;
-  display:grid;place-items:center;overflow:hidden;
-  border:1px solid rgba(255,255,255,.12);border-radius:5px;
-  background:#071012;color:#dfe9e5;
-  font:900 10px/1 system-ui,sans-serif;
-  box-shadow:0 3px 8px rgba(0,0,0,.42);
+  position:relative;width:15px;height:15px;padding:1px;
+  display:grid;place-items:center;overflow:visible;
+  border:1px solid rgba(255,255,255,.08);border-radius:4px;
+  background:rgba(7,16,18,.58);color:#dfe9e5;
+  font:900 8px/1 system-ui,sans-serif;
+  box-shadow:0 2px 5px rgba(0,0,0,.25);
+  opacity:.42;transform:scale(.94);
+  transition:width .16s ease,height .16s ease,opacity .16s ease,transform .16s ease,filter .16s ease,box-shadow .16s ease;
   pointer-events:auto;touch-action:manipulation
 }
-.cbs-icon.buff{border-color:rgba(92,190,128,.62);background:#07120e;color:#a9e8bd}
-.cbs-icon.debuff{border-color:rgba(235,76,64,.88);background:#180807;color:#ffab9f;box-shadow:0 0 0 1px rgba(235,76,64,.12),0 4px 10px rgba(0,0,0,.42)}
+.cbs-icon.buff{border-color:rgba(92,190,128,.32);background:rgba(7,18,14,.58);color:#a9e8bd}
+.cbs-icon.debuff{border-color:rgba(235,76,64,.55);background:rgba(24,8,7,.62);color:#ffab9f;box-shadow:0 0 0 1px rgba(235,76,64,.08),0 2px 6px rgba(0,0,0,.28)}
+.cbs-strip:not(.mirror) .cbs-icon.is-fresh,
+.cbs-strip:not(.mirror) .cbs-icon.is-expiring{
+  width:21px;height:21px;opacity:1;transform:scale(1);z-index:4;
+  box-shadow:0 0 0 1px rgba(255,255,255,.12),0 4px 11px rgba(0,0,0,.42)
+}
+.cbs-strip:not(.mirror) .cbs-icon.is-fresh{animation:cbs-status-pop .28s ease-out}
+.cbs-strip:not(.mirror) .cbs-icon.is-expiring{animation:cbs-status-expiring .72s ease-in-out infinite}
+.cbs-strip:not(.mirror) .cbs-icon:not(.is-fresh):not(.is-expiring)>small{opacity:0;transform:scale(.8)}
+.cbs-strip:not(.mirror) .cbs-icon:not(.is-fresh):not(.is-expiring)>b{opacity:.7}
+@keyframes cbs-status-pop{
+  0%{transform:scale(.72);opacity:.2}
+  65%{transform:scale(1.14);opacity:1}
+  100%{transform:scale(1);opacity:1}
+}
+@keyframes cbs-status-expiring{
+  0%,100%{transform:scale(1);filter:brightness(1)}
+  50%{transform:scale(1.08);filter:brightness(1.2)}
+}
 .cbs-art,.cbs-tooltip-art{
   display:block;
   background-image:url('./assets/combat/status-icons-v1.webp');
@@ -43,31 +63,31 @@
   filter:saturate(1.05) contrast(1.03)
 }
 .cbs-icon>small{
-  position:absolute;right:2px;bottom:1px;z-index:3;
+  position:absolute;right:-2px;bottom:-2px;z-index:3;
   min-width:8px;padding:1px 2px;border-radius:3px;
-  background:rgba(0,0,0,.68);color:#fff;font-size:6px;font-weight:900;line-height:1;
-  text-shadow:0 1px 2px #000
+  background:rgba(0,0,0,.74);color:#fff;font-size:6px;font-weight:900;line-height:1;
+  text-shadow:0 1px 2px #000;transition:opacity .14s ease,transform .14s ease
 }
 .cbs-icon>b{
-  position:absolute;right:-3px;top:-4px;z-index:4;min-width:12px;height:12px;padding:0 2px;
+  position:absolute;right:-4px;top:-5px;z-index:4;min-width:10px;height:10px;padding:0 2px;
   display:grid;place-items:center;border-radius:8px;
-  background:#e6d59e;color:#121816;font-size:7px
+  background:#e6d59e;color:#121816;font-size:6px;transition:opacity .14s ease
 }
 .cbs-more{
-  min-width:20px;height:20px;padding:0 3px;
+  min-width:17px;height:15px;padding:0 3px;
   display:grid;place-items:center;border-radius:4px;
-  font-size:7px;font-weight:900;
-  background:#11191b;border:1px solid rgba(255,255,255,.09)
+  font-size:6px;font-weight:900;opacity:.62;
+  background:rgba(17,25,27,.75);border:1px solid rgba(255,255,255,.07)
 }
 .cbs-more.buff{color:#89cda0}.cbs-more.debuff{color:#ff8f80;border-color:rgba(235,76,64,.4)}
 
 /* Player overhead: above HP/resource stack. */
-.cb2d-unit.party>.cbs-strip,.hs2d-unit.party>.cbs-strip,.td-unit.party>.cbs-strip{top:-49px}
+.cb2d-unit.party>.cbs-strip,.hs2d-unit.party>.cbs-strip,.td-unit.party>.cbs-strip{top:-41px}
 .cb2d-unit.party>.cbs-strip{transform:translateX(calc(-50% + var(--status-shift-x,0px)))}
-.cb2d-unit.enemy>.cbs-strip,.hs2d-unit.enemy>.cbs-strip{top:-50px}
+.cb2d-unit.enemy>.cbs-strip,.hs2d-unit.enemy>.cbs-strip{top:-43px}
 .wb2d-unit>.cbs-strip{top:-40px}
 #wb2dBoss>.cbs-strip{top:-36px}
-.tb-unit.party>.cbs-strip{top:-49px}.tb-unit.enemy>.cbs-strip{top:-50px}
+.tb-unit.party>.cbs-strip{top:-41px}.tb-unit.enemy>.cbs-strip{top:-43px}
 
 /* Readable mirror inside party rows. */
 .cbs-strip.mirror{
@@ -75,7 +95,7 @@
   width:100%;min-width:0;margin-top:5px;
   justify-content:flex-start;transform:none
 }
-.cbs-strip.mirror .cbs-icon{width:22px;height:22px}
+.cbs-strip.mirror .cbs-icon{width:20px;height:20px;opacity:.9;transform:none;overflow:hidden}
 .cbs-strip.mirror .cbs-icon>small{font-size:6px}
 
 /* Tap tooltip. */
@@ -103,18 +123,24 @@
 .cbs-tooltip>div:last-child b{color:#d9e2de}
 
 @media(max-width:620px){
- .cbs-icon{width:21px;height:21px}
- .cbs-strip{gap:2px;top:-43px}
- .cb2d-unit.party>.cbs-strip,.hs2d-unit.party>.cbs-strip,.tb-unit.party>.cbs-strip{top:-43px}
- .cbs-strip.mirror .cbs-icon{width:21px;height:21px}
+ .cbs-icon{width:14px;height:14px}
+ .cbs-strip{gap:1px;top:-39px}
+ .cb2d-unit.party>.cbs-strip,.hs2d-unit.party>.cbs-strip,.tb-unit.party>.cbs-strip{top:-39px}
+ .cbs-strip:not(.mirror) .cbs-icon.is-fresh,.cbs-strip:not(.mirror) .cbs-icon.is-expiring{width:20px;height:20px}
+ .cbs-strip.mirror .cbs-icon{width:19px;height:19px}
 }
 
 
 /* Harmful-status hard override */
 .cbs-icon.debuff{
-  border-color:rgba(244,72,61,.95)!important;
-  background:#180807!important;
+  border-color:rgba(244,72,61,.58)!important;
+  background:rgba(24,8,7,.64)!important;
   color:#ffb0a6!important;
+  box-shadow:0 0 0 1px rgba(244,72,61,.08),0 2px 7px rgba(0,0,0,.3)!important
+}
+.cbs-strip:not(.mirror) .cbs-icon.debuff.is-fresh,
+.cbs-strip:not(.mirror) .cbs-icon.debuff.is-expiring{
+  border-color:rgba(244,72,61,.95)!important;
   box-shadow:0 0 0 1px rgba(244,72,61,.16),0 4px 12px rgba(0,0,0,.45)!important
 }
 .cbs-icon.debuff small{color:#ffd0c9!important}
