@@ -175,34 +175,42 @@ const DUNGEONS={
 };
 
 
+function gearBand(head,chest,weapon){
+ const h=Number(head)||0,c=Number(chest)||h,w=Number(weapon)||c;
+ return{
+  Head:h,Shoulders:h,Chest:c,Hands:h,Waist:h,Legs:c,Feet:h,
+  Weapon:w,OffHand:Math.max(h,w-1),Ring:Math.max(h,Math.min(w,h+1)),
+  Trinket:c,Relic:Math.max(h,w-1)
+ }
+}
 const LOOT_PROFILES={
  'ashen-vault':{
-   normal:{tiers:{1:.70,2:.30},itemLevel:{Head:18,Chest:20,Weapon:22}},
-   heroic:{tiers:{2:.70,3:.30},itemLevel:{Head:26,Chest:28,Weapon:30}}
+   normal:{tiers:{1:.70,2:.30},itemLevel:gearBand(18,20,22)},
+   heroic:{tiers:{2:.70,3:.30},itemLevel:gearBand(26,28,30)}
  },
  'hollow-sanctum':{
-   normal:{tiers:{2:.85,3:.15},itemLevel:{Head:24,Chest:26,Weapon:28}},
-   heroic:{tiers:{2:.25,3:.73,4:.02},itemLevel:{Head:30,Chest:32,Weapon:34}}
+   normal:{tiers:{2:.85,3:.15},itemLevel:gearBand(24,26,28)},
+   heroic:{tiers:{2:.25,3:.73,4:.02},itemLevel:gearBand(30,32,34)}
  },
  'chaos-canyon':{
-   normal:{tiers:{2:.35,3:.65},itemLevel:{Head:30,Chest:32,Weapon:34}},
-   heroic:{tiers:{3:.95,4:.05},itemLevel:{Head:34,Chest:36,Weapon:38}}
+   normal:{tiers:{2:.35,3:.65},itemLevel:gearBand(30,32,34)},
+   heroic:{tiers:{3:.95,4:.05},itemLevel:gearBand(34,36,38)}
  },
  'blackout-station':{
-   normal:{tiers:{3:1},itemLevel:{Head:34,Chest:36,Weapon:38}},
-   heroic:{tiers:{3:.92,4:.08},itemLevel:{Head:38,Chest:40,Weapon:42}}
+   normal:{tiers:{3:1},itemLevel:gearBand(34,36,38)},
+   heroic:{tiers:{3:.92,4:.08},itemLevel:gearBand(38,40,42)}
  },
  'fractured-ages':{
-   normal:{tiers:{3:1},itemLevel:{Head:38,Chest:39,Weapon:40}},
-   heroic:{tiers:{3:.90,4:.10},itemLevel:{Head:42,Chest:43,Weapon:44}}
+   normal:{tiers:{3:1},itemLevel:gearBand(38,39,40)},
+   heroic:{tiers:{3:.90,4:.10},itemLevel:gearBand(42,43,44)}
  }
 };
 function cellboundLootProfile(tier=1){
  const t=Math.max(1,Math.min(20,Number(tier)||1));
- if(t>=15)return{tiers:{3:.55,4:.45},itemLevel:{Head:42,Chest:43,Weapon:44},band:'Peak Cellbound'};
- if(t>=10)return{tiers:{3:.70,4:.30},itemLevel:{Head:40,Chest:41,Weapon:42},band:'High Cellbound'};
- if(t>=5)return{tiers:{3:.85,4:.15},itemLevel:{Head:38,Chest:39,Weapon:40},band:'Mid Cellbound'};
- return{tiers:{3:.95,4:.05},itemLevel:{Head:36,Chest:37,Weapon:38},band:'Entry Cellbound'}
+ if(t>=15)return{tiers:{3:.55,4:.45},itemLevel:gearBand(42,43,44),band:'Peak Cellbound'};
+ if(t>=10)return{tiers:{3:.70,4:.30},itemLevel:gearBand(40,41,42),band:'High Cellbound'};
+ if(t>=5)return{tiers:{3:.85,4:.15},itemLevel:gearBand(38,39,40),band:'Mid Cellbound'};
+ return{tiers:{3:.95,4:.05},itemLevel:gearBand(36,37,38),band:'Entry Cellbound'}
 }
 function lootProfileFor(dungeonId,difficulty='normal',tier=0){
  if(difficulty==='cellbound'){
@@ -212,7 +220,7 @@ function lootProfileFor(dungeonId,difficulty='normal',tier=0){
  }
  return LOOT_PROFILES[dungeonId]?.[difficulty]||LOOT_PROFILES[dungeonId]?.normal||{
    tiers:difficulty==='heroic'?LOOT_RULES.rarityWeights.heroic:LOOT_RULES.rarityWeights.normal,
-   itemLevel:{Head:18,Chest:20,Weapon:22}
+   itemLevel:gearBand(18,20,22)
  }
 }
 
