@@ -40,6 +40,8 @@ for(const file of files){
     if(!contents.includes('mobile-v1.css')||!contents.includes('mobile-v1.js'))throw new Error('Mobile UX assets are not linked from guild.html');
     if(!contents.includes('ui-readability-v2.css'))throw new Error('UI readability stylesheet is not linked from guild.html');
     if(!contents.includes('trading-post-v3.css')||!contents.includes('trading-post-v3.js')||!contents.includes('id="tpBrowseResults"'))throw new Error('Trading Post v3 assets or hooks are not linked from guild.html');
+    if(!contents.includes('id="tpGearSellPicker"')||!contents.includes('id="tpGearSellSelected"')||!contents.includes('id="tpGearSellItem" type="hidden"'))throw new Error('Trading Post visual sell picker hooks are missing from guild.html');
+    if(contents.includes('<select id="tpGearSellItem"'))throw new Error('Trading Post regressed to the name-only equipment dropdown');
   }
   if(file.endsWith('.html')){
     contents=contents.replace(/__CELLBOUND_BUILD__/g,buildId);
