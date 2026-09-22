@@ -277,8 +277,16 @@ function defaultSkillLoadout(c,role){
  const pool=unlockedSkillPool(c,role),picked=[];
  const add=a=>{if(a&&!picked.includes(a)&&picked.length<4)picked.push(a)};
  if(role==='healer'){
-  pool.filter(a=>a.kind==='heal'||a.kind==='group-heal').slice(0,3).forEach(add);
-  add(pool.find(a=>a.kind==='interrupt'));
+  const heals=pool.filter(a=>a.kind==='heal'||a.kind==='group-heal'),battleRez=pool.find(a=>a.kind==='battle-rez');
+  if(battleRez){
+   add(heals.find(a=>a.kind==='heal'));
+   add(heals.find(a=>a.kind==='group-heal')||heals.find(a=>a.kind==='heal'&&!picked.includes(a)));
+   add(pool.find(a=>a.kind==='interrupt'));
+   add(battleRez);
+  }else{
+   heals.slice(0,3).forEach(add);
+   add(pool.find(a=>a.kind==='interrupt'));
+  }
  }else if(role==='tank'){
   pool.filter(a=>a.kind==='damage').slice(0,2).forEach(add);
   add(pool.find(a=>a.kind==='taunt'));
