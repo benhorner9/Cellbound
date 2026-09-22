@@ -327,25 +327,69 @@ async function cancelOrder(id){
   }catch(error){alert(error.message||'Could not cancel order');await refreshAll(false,false);restoreMarketScroll(scrollY)}
   finally{actionBusy=false}
 }
+function tradeableBankItems(){
+  return (state().bank||[]).filter(x=>x&&x.id&&(x.tradeState||'tradeable')!=='soulbound'&&Number(x.quantity||1)>0);
+}
+function sellItemArt(item,size){
+  return G?.artHTML?.(item,size||62,'tp-sell-art')||'◇';
+}
 function renderGearSellOptions(){
-  const sel=$('#tpGearSellItem');if(!sel)return;
-  const items=(state().bank||[]).filter(x=>(x.tradeState||'tradeable')!=='soulbound');
-  sel.innerHTML=items.length?items.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+' · '+esc(x.rarity||'Common')+' · iLvl '+Number(x.itemLevel||0)+' · ×'+Number(x.quantity||1)+'</option>').join(''):'<option value="">No tradeable equipment in Bank</option>';
+  const input=$('#tpGearSellItem'),picker=$('#tpGearSellPicker'),selectedRoot=$('#tpGearSellSelected'),toggle=$('#tpGearPickerToggle'),listButton=$('#tpGearListButton'),qtyInput=$('#tpGearSellQty');
+  if(!input||!picker||!selectedRoot||!toggle)return;
+  const items=tradeableBankItems();
+  let selected=items.find(x=>x.id===input.value)||items[0]||null;
+  input.value=selected?.id||'';
+  if(!selected){
+    selectedRoot.innerHTML='<div class="tp-sell-empty">No tradeable equipment is currently in your Bank.</div>';
+    picker.innerHTML='';
+    picker.hidden=true;
+    toggle.disabled=true;toggle.textContent='NO ITEMS AVAILABLE';
+    if(listButton)listButton.disabled=true;
+    if(qtyInput){qtyInput.value='1';qtyInput.max='1';qtyInput.disabled=true}
+    return;
+  }
+  toggle.disabled=false;toggle.textContent=picker.hidden?'CHANGE ITEM':'CLOSE ITEMS';
+  if(listButton)listButton.disabled=false;
+  if(qtyInput){
+    const maxQty=Math.max(1,Number(selected.quantity)||1);
+    qtyInput.disabled=false;qtyInput.max=String(maxQty);
+    qtyInput.value=String(Math.max(1,Math.min(maxQty,Number(qtyInput.value)||1)));
+  }
+  selectedRoot.innerHTML='<article class="tp-sell-selected-card rarity-'+slug(selected.rarity||'Common')+'">'+
+    '<div class="tp-sell-selected-art">'+sellItemArt(selected,68)+'</div>'+
+    '<div class="tp-sell-selected-copy"><small>'+esc(selected.rarity||'Common')+' · '+esc(selected.class||'Any')+'</small><b>'+esc(selected.name||'Unknown item')+'</b><span>'+esc(selected.slot||'Gear')+' · Item Level '+Number(selected.itemLevel||0)+' · ×'+Number(selected.quantity||1)+' in Bank</span></div>'+
+    '</article>';
+  picker.innerHTML=items.map(item=>'<button type="button" class="tp-sell-choice rarity-'+slug(item.rarity||'Common')+(item.id===selected.id?' active':'')+'" data-sell-item="'+esc(item.id)+'">'+
+    '<span class="tp-sell-choice-art">'+sellItemArt(item,58)+'</span>'+
+    '<span class="tp-sell-choice-copy"><small>'+esc(item.rarity||'Common')+' · '+esc(item.slot||'Gear')+'</small><b>'+esc(item.name||'Unknown item')+'</b><em>iLvl '+Number(item.itemLevel||0)+' · ×'+Number(item.quantity||1)+'</em></span>'+
+    '<strong>'+(item.id===selected.id?'SELECTED':'CHOOSE')+'</strong></button>').join('');
+  $('[data-sell-item]',picker).forEach(button=>button.onclick=()=>{
+    input.value=button.dataset.sellItem;
+    picker.hidden=true;
+    renderGearSellOptions();
+  });
+  toggle.onclick=()=>{picker.hidden=!picker.hidden;toggle.textContent=picker.hidden?'CHANGE ITEM':'CLOSE ITEMS'};
 }
 async function submitGearListing(e){
   e.preventDefault();if(actionBusy)return;
-  const id=$('#tpGearSellItem')?.value,item=(state().bank||[]).find(x=>x.id===id);if(!item)return;
-  const price=Math.max(1,Math.floor(Number($('#tpGearSellPrice')?.value)||1)),quantity=Math.max(1,Math.min(Number(item.quantity)||1,Math.floor(Number($('#tpGearSellQty')?.value)||1))),duration=Math.max(24,Math.min(72,Number($('#tpGearDuration')?.value)||48));
-  const scrollY=window.scrollY;actionBusy=true;
+  const id=$('#tpGearSellItem')?.value,item=tradeableBankItems().find(x=>x.id===id);
+  if(!item){alert('Choose an item from your Bank before listing it.');renderGearSellOptions();return}
+  const price=Math.max(1,Math.floor(Number($('#tpGearSellPrice')?.value)||1));
+  const quantity=Math.max(1,Math.min(Number(item.quantity)||1,Math.floor(Number($('#tpGearSellQty')?.value)||1)));
+  const duration=Math.max(24,Math.min(72,Number($('#tpGearDuration')?.value)||48));
+  const scrollY=window.scrollY,button=$('#tpGearListButton');actionBusy=true;
+  if(button){button.disabled=true;button.textContent='LISTING…'}
   try{
     await Game?.persistState?.();
-    const {error}=await db.rpc('market_create_listing',{
+    const {data,error}=await db.rpc('market_create_listing',{
       p_category:'gear',p_item_id:item.id,p_item_key:item.itemId||item.name,p_item_name:item.name,p_quantity:quantity,p_unit_price:price,p_payload:item,p_duration_hours:duration
     });
     if(error)throw error;
+    if(!data?.id)throw new Error('The listing was not confirmed by the Trading Post.');
     await finishMarketMutation('my',scrollY);
-  }catch(error){alert(error.message||'Listing failed');await refreshAll(false,false);restoreMarketScroll(scrollY)}
-  finally{actionBusy=false}
+    if(!listings.some(x=>x.id===data.id&&x.is_own===true))throw new Error('The item was listed but the market did not return it. Refresh Market and check My Trading.');
+  }catch(error){alert(error.message||'Listing failed');await syncMarketState();await refreshAll(false,false);restoreMarketScroll(scrollY)}
+  finally{actionBusy=false;if(button){button.disabled=false;button.textContent='LIST EQUIPMENT'}renderGearSellOptions()}
 }
 function renderDelivery(){
   const count=(state().tradeInbox||[]).length,pending=proceeds.filter(p=>!p.claimed).reduce((n,p)=>n+Number(p.net_gold||0),0);
