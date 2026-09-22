@@ -432,16 +432,35 @@ function startClock(){
 }
 function stopClock(){if(clockTimer){clearInterval(clockTimer);clockTimer=null}}
 async function playTimeline(events){
- const token=++playToken;startClock();let last=0,frameBudgetStarted=performance.now();
- for(const e of events){
-  if(token!==playToken)return;
-  const wait=Math.max(0,(Number(e.timestamp||0)-last)/playSpeed);if(wait)await new Promise(r=>setTimeout(r,wait));
-  if(token!==playToken)return;run.elapsed=Number(e.timestamp)||0;resetClockAnchor();handleEvent(e);last=Number(e.timestamp)||0;
-  if(performance.now()-frameBudgetStarted>8){await new Promise(r=>requestAnimationFrame(r));frameBudgetStarted=performance.now()}
- }
- stopClock();
- if(run&&!run.rewardsApplied){run.rewards=applyRewards(run.result);run.rewardsApplied=true}
- showResults()
+ const token=++playToken,timeline=(Array.isArray(events)?events:[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
+ startClock();
+ if(!timeline.length){stopClock();if(run&&!run.rewardsApplied){run.rewards=applyRewards(run.result);run.rewardsApplied=true}showResults();return}
+ return await new Promise(resolve=>{
+  let index=0,simTime=0,lastFrame=performance.now(),finished=false;
+  const finish=()=>{
+   if(finished)return;finished=true;stopClock();
+   if(token===playToken&&run){
+    if(!run.rewardsApplied){run.rewards=applyRewards(run.result);run.rewardsApplied=true}
+    showResults()
+   }
+   resolve()
+  };
+  const frame=now=>{
+   if(finished)return;
+   if(token!==playToken||!run){finish();return}
+   const rawDelta=Math.max(0,now-lastFrame);lastFrame=now;
+   simTime+=Math.min(rawDelta,100)*Math.max(1,Number(playSpeed)||1);
+   run.elapsed=Math.max(Number(run.elapsed)||0,simTime);
+   const frameStarted=performance.now();let handled=0;
+   while(index<timeline.length&&(Number(timeline[index].timestamp)||0)<=simTime+4&&handled<18&&performance.now()-frameStarted<8){
+    const event=timeline[index++];handled++;
+    try{handleEvent(event)}catch(error){console.warn('Twelve Below combat visual recovered',event?.type,event?.ability,error)}
+   }
+   if(index>=timeline.length){finish();return}
+   requestAnimationFrame(frame)
+  };
+  requestAnimationFrame(frame)
+ })
 }
 function resultPlayerRows(){
  const map=run.result.totals.players;return party().map(c=>{const p=map['p-'+c.id]||{damage:0,healing:0,damageTaken:0,deaths:0};return'<div class="cbr-analysis-row"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+' · '+Math.round(p.damageTaken).toLocaleString()+' damage taken · '+p.deaths+' deaths</small></span><strong>'+Math.round(p.damage).toLocaleString()+' dmg</strong></div>'}).join('')
