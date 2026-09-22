@@ -1878,11 +1878,12 @@ function tryInterrupt(ctx,e,mechanic,castToken){
   },'duplicate-interrupt')
  }
 }
-function spawnAdds(ctx,e){
+function spawnAdds(ctx,e,mechanic={}){
  const base=ctx.enemies.length;
- const count=2+Math.max(0,Math.min(2,Number(ctx.encounter.scaling?.addCountBonus)||0));
+ const requested=Number(mechanic.addCount),count=Number.isFinite(requested)?Math.max(1,Math.min(5,Math.round(requested))):2+Math.max(0,Math.min(2,Number(ctx.encounter.scaling?.addCountBonus)||0));
+ const addName=String(mechanic.addName||'Cave Spawn');
  for(let i=0;i<count;i++){
-  const id='add-'+ctx.addSeq++,level=Math.max(1,Number(e.level)||Number(ctx.encounter.level)||1),rule=enemyClassRule('add'),maxHealth=Math.round(72*levelHealthScale(level)*rule.health*scalingValue(ctx,'enemyHealth',1)),add={id,name:'Cave Spawn',role:'enemy',kind:'enemy',classification:'add',classificationLabel:rule.label,level,maxHealth,health:maxHealth,alive:true,position:{x:74,y:i?66:34},facing:180,target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},nextAttack:ctx.time+600+i*150,currentCast:null,isAdd:true,priority:3,damageScale:rule.damage*scalingValue(ctx,'enemyDamage',1)};
+  const id='add-'+ctx.addSeq++,level=Math.max(1,Number(e.level)||Number(ctx.encounter.level)||1),rule=enemyClassRule('add'),maxHealth=Math.round(72*levelHealthScale(level)*rule.health*scalingValue(ctx,'enemyHealth',1)),add={id,name:addName,role:'enemy',kind:'enemy',classification:'add',classificationLabel:rule.label,level,maxHealth,health:maxHealth,alive:true,position:{x:74,y:i?66:34},facing:180,target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},nextAttack:ctx.time+600+i*150,currentCast:null,isAdd:true,priority:3,damageScale:rule.damage*scalingValue(ctx,'enemyDamage',1)};
   add.movingUntil=0;add.moveToken=0;ctx.enemies.push(add);ctx.units[id]=add;ctx.players.forEach(p=>add.threat[p.id]=0);
   const random=livingPlayers(ctx)[Math.floor(ctx.rng()*livingPlayers(ctx).length)];if(random)add.threat[random.id]=120;
   setAggro(ctx,add,topThreatTarget(ctx,add),'spawn');
@@ -1925,7 +1926,7 @@ function resolveMechanic(ctx,e,m,token){
  if(!cast||cast.token!==token){scheduleNextMechanic(ctx);return}
  ctx.activeEnemyCast=null;
  emit(ctx,'MECHANIC_RESOLVE',{source:e.id,ability:m.name,result:'resolve',payload:{mechanicType:m.type,token}});
- if(m.type==='adds'){spawnAdds(ctx,e);mechanicStat(ctx,'adds',false);scheduleNextMechanic(ctx);return}
+ if(m.type==='adds'){spawnAdds(ctx,e,m);mechanicStat(ctx,'adds',false);scheduleNextMechanic(ctx);return}
  if(m.type==='cone'){
   const tank=livingPlayers(ctx).find(p=>p.role==='tank');if(tank){e.target=tank.id;updateFacing(e,tank)}
   let failed=false;
