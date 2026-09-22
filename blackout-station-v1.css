@@ -186,6 +186,8 @@ body.bs2d-open{overflow:hidden}
 }
 .bs-party-row>i{width:8px;height:8px;border-radius:50%;background:var(--combat-class,#83928e)}
 .bs-party-row span{min-width:0}.bs-party-row b{display:block;color:#dce5e2;font-size:.64rem}.bs-party-row small{display:block;color:#7e908a;font-size:.52rem!important}.bs-party-row>strong{color:#a9b9b3;font-size:.6rem}
+.bs2d-shell.results-mode .cb2d-loot-gear{grid-template-columns:minmax(0,680px);justify-content:start}
+.bs2d-shell.results-mode .cb2d-loot-item{width:100%;box-sizing:border-box}
 .bs-run-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
 .bs-run-summary article{padding:12px;border:1px solid rgba(255,255,255,.055);background:#091214;text-align:center}
 .bs-run-summary b{display:block;color:#e3d078;font-size:1.05rem}.bs-run-summary span{color:#83958f;font-size:.56rem}
