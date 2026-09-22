@@ -565,39 +565,8 @@ function worldPhase(b){
   if(ratio>.35)return{n:2,name:'Escalation',mechanic:'Rupture Cast',best:'interrupt',desc:'A dangerous cast is building. Command an interruption before it lands.'};
   return{n:3,name:'Cellstorm',mechanic:'Unstable Cell Surge',best:'cell',desc:'The creature is destabilising. Commit your Cell power to finish the fight.'};
 }
-async function openWorldEncounter(id){
-  worldEncounterId=id;
-  const [{data,error},{data:detail}]=await Promise.all([db.rpc('get_world_bosses'),db.rpc('get_world_boss_detail',{p_boss_id:id})]);if(error)return;
-  const b=(data||[]).find(x=>x.id===id);if(!b||!b.joined)return;
-  b.participants=Array.isArray(detail?.participants)?detail.participants:[];
-  renderWorldEncounter(b);
-}
-function renderWorldEncounter(b,note=''){
-  const root=worldBackdrop(),phase=worldPhase(b),pct=clamp(Math.round(Number(b.current_hp)/Math.max(1,Number(b.max_hp))*100),0,100);
-  root.hidden=false;
-  root.innerHTML=`<section class="evo-world-encounter"><header class="evo-world-head"><div><small>TIER ${b.tier} WORLD ENCOUNTER · ${phase.name.toUpperCase()}</small><h2>${esc(b.name)}</h2></div><button data-world-evo-close>×</button></header><div class="evo-world-body"><div class="evo-world-arena"><div class="evo-world-boss-mark">${b.tier===1?'♜':b.tier===2?'♨':'✦'}</div><div class="evo-world-phase"><span>Phase ${phase.n} · ${phase.name}</span><b>${Number(b.current_hp).toLocaleString()} / ${Number(b.max_hp).toLocaleString()}</b></div><div class="evo-world-hp"><i style="width:${pct}%"></i></div><div class="evo-world-mechanic"><small>MAJOR THREAT</small><b>${phase.mechanic}</b><p>${phase.desc}</p></div><div class="evo-world-command">${[['attack','ATTACK','Commit steady damage.'],['defend','DEFEND','Brace through heavy pressure.'],['interrupt','INTERRUPT','Stop a dangerous cast.'],['cell','CELL ABILITY','Spend Cell power for a burst.']].map(([id,a,d])=>`<button data-world-command="${id}"><b>${a}</b><small>${d}</small></button>`).join('')}</div><div class="evo-expedition-log">${esc(note||'Coordinate with the other commanders. The encounter state is shared for everyone.')}</div></div><aside class="evo-world-side"><h3>Your Company</h3><p>${party().length} adventurers · Party iLvl ${partyIlvl()} · ${b.participant_count}/${b.player_cap} commanders engaged</p>${party().map(c=>`<div class="evo-party-member"><span class="avatar">${esc(c.portrait)}</span><div><b>${esc(c.name)}</b><small>${esc(c.class)} · ${esc(c.spec)}</small></div><strong>Shock ${c.cellShock||0}%</strong></div>`).join('')}<h3 class="evo-commanders-title">Commanders Engaged</h3><div class="evo-commanders">${(b.participants||[]).map((p,i)=>`<div><span>${i+1}. ${esc(p.guildLabel)}</span><b>iLvl ${Number(p.partyIlvl||0).toFixed(1)}</b><small>${Number(p.damageDone||0).toLocaleString()} damage</small></div>`).join('')||'<p>No commander data available.</p>'}</div><p>Correct tactical calls reduce wipe risk and improve damage. Commands are resolved against the same shared boss for everyone.</p></aside></div></section>`;
-  root.querySelector('[data-world-evo-close]').addEventListener('click',()=>{root.hidden=true;worldEncounterId=null});
-  root.querySelectorAll('[data-world-command]').forEach(btn=>btn.addEventListener('click',()=>commandWorldBoss(b,btn.dataset.worldCommand,btn)));
-}
-async function commandWorldBoss(b,action,button){
-  button.disabled=true;
-  const {data,error}=await db.rpc('command_world_boss',{p_boss_id:b.id,p_action:action});
-  if(error){renderWorldEncounter(b,error.message||'Your party could not act.');return}
-  let note='';
-  if(data.wiped){
-    Game.applyPartyCellShock(25);await Game.persistState();
-    await db.rpc('leave_world_boss',{p_boss_id:b.id});
-    note='The command failed under pressure. Your company was forced out and all five gain 25% Cell Shock.';
-    worldBackdrop().hidden=true;worldEncounterId=null;
-    window.CellboundSocial?.loadWorld?.();
-    return;
-  }else{
-    const right=data.action===data.recommended;
-    note=`${right?'Tactical call executed cleanly.':'The party forces the action through.'} ${Number(data.damage||0).toLocaleString()} damage dealt.`;
-  }
-  if(data.killed){note+=' The world boss has fallen. Personal rewards have been issued.';worldBackdrop().hidden=true;worldEncounterId=null;setTimeout(()=>location.reload(),650);return}
-  const [{data:fresh},{data:detail}]=await Promise.all([db.rpc('get_world_bosses'),db.rpc('get_world_boss_detail',{p_boss_id:b.id})]);const next=(fresh||[]).find(x=>x.id===b.id);
-  if(next){next.participants=Array.isArray(detail?.participants)?detail.participants:[];renderWorldEncounter(next,note);}
+function openWorldEncounter(id){
+  return window.CellboundWorldBoss2D?.open?.(id)
 }
 function interceptWorldActions(){
   document.addEventListener('click',e=>{
