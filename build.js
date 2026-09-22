@@ -38,6 +38,7 @@ for(const file of files){
   }
   if(file==='combat-reborn-v1.js'){
     if(!contents.includes("const VERSION='1.3.4'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
+    if(!contents.includes('resourceRegen:sets.some(s=>s.pieces>=4)?1.12:1'))throw new Error('T4 full-set combat bonus must remain a four-piece bonus');
   }
   if(file==='combat-status-ui-v1.js'){
     if(!contents.includes("version:'2.1.0'"))throw new Error('Combat status UI smart-overhead version is missing');
