@@ -1398,14 +1398,13 @@ function renderRebornEvent(e,result,replayMode=false){
    break;
   case'RESOURCE_SPENT':case'RESOURCE_GAINED':case'RESOURCE_STATE':rebornResourceVisual(e);break;
   case'PHASE_CHANGE':
-   flash(String(e.ability||'PHASE CHANGE').toUpperCase(),true);status(e.ability||'Boss phase changed');log((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');break;
+   flash(String(e.ability||'PHASE CHANGE').toUpperCase(),true);window.CellboundFX?.phase?.(e.ability||'Boss phase changed',e.payload?.healthPct);status(e.ability||'Boss phase changed');log((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');break;
   case'ENRAGE':
    flash(e.result==='hard'?'HARD ENRAGE':'ENRAGE',true);status(e.result==='hard'?'Hard enrage — finish the boss now':(e.ability||'Boss enraged'));log((e.ability||'The boss enrages')+'.');break;
   case'UNIQUE_EFFECT_TRIGGER':
    if(srcChar){flash(String(e.ability||'UNIQUE EFFECT').toUpperCase(),false);floating(e.source,e.ability||'UNIQUE','heal');log(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');const rr=role(srcChar);act(rr==='tank'?'tank':rr==='healer'?'healer':'dps',srcChar.name+' · '+(e.ability||'Unique Effect'))}break;
   case'CROWD_CONTROL':if(srcChar){log(srcChar.name+' controls a priority enemy.');floating(e.target,'CONTROLLED','heal')}break;
-  case'PHASE_CHANGE':flash(String(e.ability||'PHASE CHANGE').toUpperCase(),true);status(e.ability||'Boss phase changed');log((e.ability||'A new phase')+' begins.');break;
-  case'ENRAGE':flash(e.result==='hard'?'HARD ENRAGE':'ENRAGE',true);status(e.result==='hard'?'Hard enrage active':'Boss enraged');log((e.ability||'Enrage')+' activates.');break;
+
   case'AFFIX_TRIGGER':
    log((e.ability||'Dungeon affix')+' · '+String(e.result||'triggered').replace(/-/g,' ')+'.');
    if(e.payload?.affix==='volatile-cells'&&e.result==='armed')flash('VOLATILE CELLS',true);
@@ -1452,7 +1451,7 @@ function renderRebornEvent(e,result,replayMode=false){
   case'CAST_FINISH':
    rebornCastClear('CAST COMPLETE');if(String(e.source||'').startsWith('e-'))log((e.ability||'Enemy cast')+' completes.');break;
   case'COMBAT_END':
-   rebornCastClear();status(e.result==='victory'?'Encounter cleared':'Party defeated');run.stageOutcome=e.result==='victory';regroup();break;
+   rebornCastClear();status(e.result==='victory'?'Encounter cleared':'Party defeated');run.stageOutcome=e.result==='victory';if(e.result!=='victory')window.CellboundFX?.wipe?.('The expedition has collapsed inside The Ashen Vault.');regroup();break;
  }
 }
 function configureRebornViewer(){
@@ -1629,6 +1628,7 @@ async function seamlessFrom(startIndex,tok){
  try{
   for(let i=startIndex;i<STAGES.length;i++){
    if(tok!==token||!run)return;run.stage=i;run.override=0;run.rebornResult=null;const s=STAGES[i];
+   if(s.kind==='boss'||s.kind==='final')window.CellboundFX?.boss?.(s.title);
    $('#cb2dTitle').textContent=s.title;$('#cb2dRoute').innerHTML=route();$('#cb2dType').textContent=s.kind==='final'?'FINAL BOSS':s.kind==='boss'?'BOSS':s.kind==='event'?'EVENT':'HOSTILE PACK';
    spawn(s);status('Preparing encounter…');log('Entering '+s.title+'.');act('tank','Taking point');act('healer','Following formation');act('dps','Acquiring targets');await delay(650);
    await ensureCombatRebornEngine();
