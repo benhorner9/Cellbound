@@ -788,7 +788,8 @@ function normaliseEnemies(encounter){
    id:'e-'+i,name,role:'enemy',kind:classification==='boss'||classification==='world-boss'?'boss':'enemy',classification,classificationLabel:rule.label,level,
    maxHealth,health:currentHealth,alive:currentHealth>0,position:{x:68,y:raw.length===1?50:30+i*(40/Math.max(1,raw.length-1))},facing:180,
    target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},movingUntil:0,moveToken:0,nextAttack:900+i*220,currentCast:null,
-   isAdd:false,priority:i===0?2:1,damageScale:rule.damage*damageMult,phaseDamageScale:1,hardEnraged:false
+   isAdd:false,priority:i===0?2:1,damageScale:rule.damage*damageMult,phaseDamageScale:1,hardEnraged:false,
+   targeting:String(data.targeting||'threat').toLowerCase(),attackRange:Math.max(2,Number(data.attackRange)||5),attackName:data.attackName||null,damageType:data.damageType||'physical',allAttacksAoe:Boolean(data.allAttacksAoe)
   }
  })
 }
@@ -1762,22 +1763,25 @@ function playerAI(ctx,u){
 }
 function enemyBasicAttack(ctx,e){
  if(!e.alive||ctx.time<e.movingUntil||isCrowdControlled(e))return;
- const target=topThreatTarget(ctx,e)||livingPlayers(ctx)[0];if(!target)return;
- setAggro(ctx,e,target,'threat');
- if(!inRange(e,target,5)||!hasLineOfSight(ctx,e,target)){
-  moveTo(ctx,e,nearestMeleePoint(target,e),320,!hasLineOfSight(ctx,e,target)?'line of sight':'chase target');
+ const live=livingPlayers(ctx);if(!live.length)return;
+ const randomTarget=e.targeting==='random',target=randomTarget?live[Math.floor(ctx.rng()*live.length)]:(topThreatTarget(ctx,e)||live[0]);if(!target)return;
+ setAggro(ctx,e,target,randomTarget?'random targeting':'threat');
+ const range=Math.max(2,Number(e.attackRange)||5);
+ if(!inRange(e,target,range)||!hasLineOfSight(ctx,e,target)){
+  const destination=range>7?visibleCastPoint(ctx,e,target,range,e.position):nearestMeleePoint(target,e);
+  moveTo(ctx,e,destination,320,!hasLineOfSight(ctx,e,target)?'line of sight':range>7?'ranged position':'chase target');
   e.nextAttack=ctx.time+450;return;
  }
  updateFacing(e,target);
  const base=e.classification==='world-boss'?46:e.kind==='boss'?36:e.classification==='elite'?18:e.isAdd?12:14,roll=.88+ctx.rng()*.24;
- const ability=e.classification==='world-boss'?'Crushing Blow':e.kind==='boss'?'Heavy Swing':e.classification==='elite'?'Heavy Strike':'Attack';
+ const ability=e.attackName||(e.classification==='world-boss'?'Crushing Blow':e.kind==='boss'?'Heavy Swing':e.classification==='elite'?'Heavy Strike':'Attack');
  if(e.allAttacksAoe&&e.kind==='boss'){
   emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability:'Wild Wrath',result:'enemy-aoe',payload:{aoe:true}});
   livingPlayers(ctx).forEach(p=>dealDamage(ctx,e,p,base*.62*enemyPressure(ctx,e,p)*roll,'Wild Wrath',{damageType:'magic',avoidable:false,aoe:true,aggroHit:true}));
  }else{
   const levelPressure=enemyPressure(ctx,e,target);
-  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability,result:'enemy'});
-  dealDamage(ctx,e,target,base*levelPressure*roll,ability,{damageType:'physical',aggroHit:true});
+  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability,result:randomTarget?'enemy-random':'enemy',payload:{randomTargeting:randomTarget,attackRange:range}});
+  dealDamage(ctx,e,target,base*levelPressure*roll,ability,{damageType:e.damageType||'physical',aggroHit:!randomTarget});
  }
  const cadence=e.classification==='world-boss'?1325:e.kind==='boss'?1450:e.classification==='elite'?1850:e.isAdd?1800:2050;
  e.nextAttack=ctx.time+cadence+Math.round(ctx.rng()*(e.kind==='boss'?220:320));
@@ -1874,11 +1878,12 @@ function tryInterrupt(ctx,e,mechanic,castToken){
   },'duplicate-interrupt')
  }
 }
-function spawnAdds(ctx,e){
+function spawnAdds(ctx,e,mechanic={}){
  const base=ctx.enemies.length;
- const count=2+Math.max(0,Math.min(2,Number(ctx.encounter.scaling?.addCountBonus)||0));
+ const requested=Number(mechanic.addCount),count=Number.isFinite(requested)?Math.max(1,Math.min(5,Math.round(requested))):2+Math.max(0,Math.min(2,Number(ctx.encounter.scaling?.addCountBonus)||0));
+ const addName=String(mechanic.addName||'Cave Spawn');
  for(let i=0;i<count;i++){
-  const id='add-'+ctx.addSeq++,level=Math.max(1,Number(e.level)||Number(ctx.encounter.level)||1),rule=enemyClassRule('add'),maxHealth=Math.round(72*levelHealthScale(level)*rule.health*scalingValue(ctx,'enemyHealth',1)),add={id,name:'Cave Spawn',role:'enemy',kind:'enemy',classification:'add',classificationLabel:rule.label,level,maxHealth,health:maxHealth,alive:true,position:{x:74,y:i?66:34},facing:180,target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},nextAttack:ctx.time+600+i*150,currentCast:null,isAdd:true,priority:3,damageScale:rule.damage*scalingValue(ctx,'enemyDamage',1)};
+  const id='add-'+ctx.addSeq++,level=Math.max(1,Number(e.level)||Number(ctx.encounter.level)||1),rule=enemyClassRule('add'),maxHealth=Math.round(72*levelHealthScale(level)*rule.health*scalingValue(ctx,'enemyHealth',1)),add={id,name:addName,role:'enemy',kind:'enemy',classification:'add',classificationLabel:rule.label,level,maxHealth,health:maxHealth,alive:true,position:{x:74,y:i?66:34},facing:180,target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},nextAttack:ctx.time+600+i*150,currentCast:null,isAdd:true,priority:3,damageScale:rule.damage*scalingValue(ctx,'enemyDamage',1)};
   add.movingUntil=0;add.moveToken=0;ctx.enemies.push(add);ctx.units[id]=add;ctx.players.forEach(p=>add.threat[p.id]=0);
   const random=livingPlayers(ctx)[Math.floor(ctx.rng()*livingPlayers(ctx).length)];if(random)add.threat[random.id]=120;
   setAggro(ctx,add,topThreatTarget(ctx,add),'spawn');
@@ -1921,7 +1926,7 @@ function resolveMechanic(ctx,e,m,token){
  if(!cast||cast.token!==token){scheduleNextMechanic(ctx);return}
  ctx.activeEnemyCast=null;
  emit(ctx,'MECHANIC_RESOLVE',{source:e.id,ability:m.name,result:'resolve',payload:{mechanicType:m.type,token}});
- if(m.type==='adds'){spawnAdds(ctx,e);mechanicStat(ctx,'adds',false);scheduleNextMechanic(ctx);return}
+ if(m.type==='adds'){spawnAdds(ctx,e,m);mechanicStat(ctx,'adds',false);scheduleNextMechanic(ctx);return}
  if(m.type==='cone'){
   const tank=livingPlayers(ctx).find(p=>p.role==='tank');if(tank){e.target=tank.id;updateFacing(e,tank)}
   let failed=false;
@@ -2136,6 +2141,14 @@ function simulate(options={}){
  let outcome='defeat';
  while(ctx.time<=maxDuration){
   processQueue(ctx);
+  const resolvePct=Math.max(0,Math.min(.95,Number(ctx.encounter.resolveAtBossHealthPct)||0));
+  if(resolvePct>0){
+   const boss=ctx.enemies.find(e=>e.kind==='boss'&&e.alive),remainingRivals=ctx.enemies.filter(e=>e.alive&&!e.isAdd&&e!==boss);
+   if(boss&&healthRatio(boss)<=resolvePct&&!remainingRivals.length){
+    emit(ctx,'ENCOUNTER_RESOLVED',{source:boss.id,ability:ctx.encounter.resolveLabel||'Encounter Resolution',result:'escaped',position:copy(boss.position),payload:{bossHealthPct:pct(boss.health,boss.maxHealth),thresholdPct:Math.round(resolvePct*100)}});
+    outcome='victory';break
+   }
+  }
   if(!livingEnemies(ctx).length&&ctx.pendingResurrections<=0&&ctx.pendingHazards<=0){outcome='victory';break}
   if(!livingPlayers(ctx).length){outcome='defeat';break}
   checkBossPhases(ctx);tickCooldowns(ctx);passiveResources(ctx);
