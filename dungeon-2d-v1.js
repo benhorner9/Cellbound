@@ -1673,7 +1673,7 @@ async function seamless(tok){return seamlessFrom(0,tok)}
 
 function lootRarityClass(item){return 'rarity-'+String(item?.rarity||'common').toLowerCase().replace(/[^a-z0-9-]/g,'')}
 function lootGearCard(item){
- const art=G?.artHTML?G.artHTML(item,78):(item.icon||'◇');
+ const art=G?.artHTML?G.artHTML(item,72):(item.icon||'◇');
  const stats=G?.statLines?.(item)||[],effect=item.uniqueEffect?'<strong class="cb2d-loot-unique">'+esc(item.uniqueEffect.name)+' · '+esc(item.uniqueEffect.description)+'</strong>':'';return '<article class="cb2d-loot-item '+lootRarityClass(item)+'"><div class="cb2d-loot-art">'+art+'</div><div><small>'+esc(String(item.rarity||'GEAR').toUpperCase())+' · '+esc(item.slot||'ITEM')+'</small><h4>'+esc(item.name||'Unknown Item')+'</h4><p>Item Level '+(Number(item.itemLevel)||0)+(item.power?' · +'+Number(item.power)+' Power':'')+'</p><div class="cb2d-loot-roll">'+stats.map(s=>'<span>'+esc(s.text)+'</span>').join('')+'</div>'+effect+'<em>Sent to Guild Bank</em></div></article>'
 }
 function lootMaterialCard(m){
