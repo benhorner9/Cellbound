@@ -27,3 +27,12 @@
 
 .admin-actions .admin-danger-action{border-color:rgba(205,103,83,.28);background:#211310;color:#e0a092}
 .admin-actions .admin-danger-action:hover{border-color:rgba(222,116,91,.48);background:#2b1713;color:#efb0a2}
+
+.admin-market-card{grid-column:1/-1}
+.admin-market-top{display:grid;gap:5px;margin-top:12px}
+.admin-market-top>span{display:block;padding:10px;border:1px dashed rgba(255,255,255,.06);color:#61716c;font-size:.45rem}
+.admin-market-top div{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:8px 10px;border:1px solid rgba(255,255,255,.045);background:#081115}
+.admin-market-top div span{overflow:hidden;color:#9ca9a4;font-size:.43rem;text-overflow:ellipsis;white-space:nowrap}
+.admin-market-top div b{color:#7f8f89;font-size:.4rem}
+.admin-market-top div em{color:#d7bd74;font-family:Georgia,serif;font-size:.5rem;font-style:normal}
+@media(max-width:900px){.admin-market-card{grid-column:auto}}
