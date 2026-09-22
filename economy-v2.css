@@ -37,7 +37,7 @@
   display:grid;
   place-items:center;
   width:82px;height:82px;
-  overflow:hidden;
+  overflow:visible;
   border:1px solid rgba(216,185,118,.1);
   border-radius:6px;
   background:
