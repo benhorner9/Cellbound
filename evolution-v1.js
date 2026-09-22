@@ -8,9 +8,8 @@ let rosterRole='all',rosterStatus='all',rosterClass='all',rosterProfession='all'
 let bankSearch='',bankCategory='all',bankClass='all',bankRarity='all',bankTrade='all',bankSort='newest';
 let profRecipeFilter='all';
 let expedition=null;
-let worldEncounterId=null;
 let dockChannel='world',dockTimer=null,dockMinimized=true;
-let bankObserver=null,rosterObserver=null,professionObserver=null,worldObserver=null,reportsObserver=null;
+let bankObserver=null,rosterObserver=null,professionObserver=null,reportsObserver=null;
 let bankEnhancing=false,bankEnhanceQueued=false;
 let activeDungeonDetail=null;
 
@@ -27,12 +26,6 @@ const roleOf=c=>Game?.classes?.[c?.class]?.specs?.[c?.spec]?.role||'dps';
 const charIlvl=c=>Game?.characterItemLevel?.(c)||0;
 const completeParty=()=>party().length===5;
 const partyAvailable=()=>completeParty()&&!party().some(c=>Game.isUnavailable(c));
-
-const WORLD_BOSS_META={
-  'Gloamhide Behemoth':{lore:'A hulking relic of the old forest, its hide has fused with corrupted Cell growth.',reward:'Tier 1 equipment · personal drop on victory'},
-  'The Hollow Wyrm':{lore:'An ember-fed wyrm nesting beneath the shattered trade road. Its roar destabilises entire formations.',reward:'Tier 2 equipment · personal drop on victory'},
-  'Veyr, the Cell-Torn':{lore:'A commander once consumed by unstable Cells, now held together by raw arcane fracture.',reward:'Tier 3 equipment · personal drop on victory'}
-};
 
 const DUNGEON={
   id:'ashen-vault',name:'The Ashen Vault',requiredIlvl:18,recommendedIlvl:23,
@@ -522,62 +515,10 @@ async function sendDockChat(e){
   input.value='';await loadDockChat();
 }
 
-/* ---------- World screen presentation ---------- */
-/* ---------- World boss encounter ---------- */
-function enhanceWorldCards(){
-  const root=$('#worldBossGrid');if(!root)return;
-  root.querySelectorAll('.world-boss-card').forEach(card=>{
-    if(card.querySelector('.evo-world-preview'))return;
-    const name=card.querySelector('h3')?.textContent?.trim(),meta=WORLD_BOSS_META[name];if(!meta)return;
-    const preview=document.createElement('div');preview.className='evo-world-preview';
-    preview.innerHTML=`<p>${esc(meta.lore)}</p><span>${esc(meta.reward)}</span>`;
-    const body=card.querySelector('.world-boss-body');if(body)body.insertBefore(preview,body.querySelector('.world-actions')||body.lastChild);
-  });
-}
-function bindWorldEnhancement(){
-  const root=$('#worldBossGrid');if(!root)return;
-  worldObserver=new MutationObserver(()=>requestAnimationFrame(enhanceWorldCards));
-  worldObserver.observe(root,{childList:true,subtree:true});
-  document.querySelector('.nav-btn[data-view="world"]')?.addEventListener('click',()=>setTimeout(enhanceWorldCards,0));
-  enhanceWorldCards();
-}
-function renderDungeonHistory(){
-  const root=$('#reportsList'),s=state();if(!root||!s)return;
-  let wrap=root.querySelector('.evo-dungeon-history');
-  const rows=(s.dungeonHistory||[]).slice(0,12);
-  if(!rows.length){wrap?.remove();return;}
-  if(!wrap){wrap=document.createElement('section');wrap.className='evo-dungeon-history';root.prepend(wrap);}
-  wrap.innerHTML=`<div class="evo-history-head"><small>DUNGEON EXPEDITIONS</small><h3>The Ashen Vault</h3></div><div class="evo-history-list">${rows.map(r=>`<article><b>${r.result==='complete'?'CLEARED':'FAILED'} · ${new Date(r.at).toLocaleString()}</b><span>Party iLvl ${Math.round(r.partyIlvl||0)}${r.stage?` · Ended at ${esc(DUNGEON.stages.find(s=>s.id===r.stage)?.title||r.stage)}`:''}</span></article>`).join('')}</div>`;
-}
-function bindReportEnhancement(){
-  const root=$('#reportsList');if(!root)return;
-  reportsObserver=new MutationObserver(()=>requestAnimationFrame(renderDungeonHistory));
-  reportsObserver.observe(root,{childList:true});
-  renderDungeonHistory();
-}
-
-function worldBackdrop(){
-  let root=$('#evoWorldBackdrop');if(!root){root=document.createElement('div');root.id='evoWorldBackdrop';root.className='evo-world-backdrop';root.hidden=true;document.body.appendChild(root)}return root;
-}
-function worldPhase(b){
-  const ratio=Number(b.current_hp)/Math.max(1,Number(b.max_hp));
-  if(ratio>.70)return{n:1,name:'Breaking the Line',mechanic:'Crushing Sweep',best:'defend',desc:'The boss is testing every frontline. Brace before committing damage.'};
-  if(ratio>.35)return{n:2,name:'Escalation',mechanic:'Rupture Cast',best:'interrupt',desc:'A dangerous cast is building. Command an interruption before it lands.'};
-  return{n:3,name:'Cellstorm',mechanic:'Unstable Cell Surge',best:'cell',desc:'The creature is destabilising. Commit your Cell power to finish the fight.'};
-}
-function openWorldEncounter(id){
-  return window.CellboundWorldBoss2D?.open?.(id)
-}
-function interceptWorldActions(){
-  document.addEventListener('click',e=>{
-    const btn=e.target.closest('[data-world-attack]');if(!btn)return;
-    e.preventDefault();e.stopImmediatePropagation();openWorldEncounter(btn.dataset.worldAttack);
-  },true);
-}
-
+/* ---------- Reports / character shell ---------- */
 /* ---------- Character shell additions ---------- */
 function queueEnhance(){
-  requestAnimationFrame(()=>{enhanceRoster();enhanceBank();enhanceProfessions();renderDungeonJournal();renderDungeonHistory();enhanceWorldCards()});
+  requestAnimationFrame(()=>{enhanceRoster();enhanceBank();enhanceProfessions();renderDungeonJournal();renderDungeonHistory()});
 }
 function bindGlobal(){
   window.addEventListener('cellbound:view-changed',e=>{
@@ -586,7 +527,6 @@ function bindGlobal(){
     if(view==='roster')setTimeout(enhanceRoster,0);
     if(view==='bank')setTimeout(enhanceBank,0);
     if(view==='professions')setTimeout(enhanceProfessions,0);
-    if(view==='world')setTimeout(enhanceWorldCards,0);
   });
   window.addEventListener('resize',()=>{if(innerWidth<720&&dockMinimized===false){}});
 }
@@ -595,10 +535,10 @@ async function init(){
   Game=window.CellboundGame;
   if(!Game?.ready){setTimeout(init,80);return}
   G=window.CellboundGear;P=window.CellboundProfessions;db=Game.getSupabase();user=Game.getUser();ensureState();
-  bindRoster();bindBank();bindProfessions();bindWorldEnhancement();bindReportEnhancement();bindGlobal();bindDungeonBrowser();interceptWorldActions();dock();queueEnhance();enhanceWorldCards();
+  bindRoster();bindBank();bindProfessions();bindReportEnhancement();bindGlobal();bindDungeonBrowser();dock();queueEnhance();
   clearInterval(dockTimer);dockTimer=setInterval(()=>{if(!dockMinimized)loadDockChat()},8000);
   window.addEventListener('beforeunload',()=>clearInterval(dockTimer),{once:true});
-  window.CellboundEvolution={renderDungeonJournal,startExpedition,enhanceRoster,enhanceBank,openWorldEncounter};
+  window.CellboundEvolution={renderDungeonJournal,startExpedition,enhanceRoster,enhanceBank};
   window.CellboundDungeonBrowser={open:openDungeonDetail,close:closeDungeonDetails,refresh:renderDungeonBrowserStatus};
 }
 init();
