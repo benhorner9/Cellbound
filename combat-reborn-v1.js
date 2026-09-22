@@ -247,7 +247,7 @@ function gearSetState(c){
  return{
    sets,
    outputScale:sets.some(s=>s.pieces>=2)?1.05:1,
-   resourceRegen:sets.some(s=>s.pieces>=3)?1.12:1
+   resourceRegen:sets.some(s=>s.pieces>=4)?1.12:1
  }
 }
 
