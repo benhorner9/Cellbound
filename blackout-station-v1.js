@@ -459,7 +459,7 @@ async function syncXp(gains){
  if(!db)return;const user=Game.getUser?.();if(!user)return;try{await Promise.all(gains.map(x=>db.from('characters').update({level:x.level,xp:x.xp,last_played_at:new Date().toISOString()}).eq('user_id',user.id).eq('name',x.name)))}catch(e){console.warn('Blackout Station XP sync failed',e)}
 }
 function rollGear(){
- const pool=(G?.items||[]).filter(x=>x.enabled&&Number(x.tier)>=3);if(!pool.length)return null;const base=pool[Math.floor(Math.random()*pool.length)];return G.rollItemAffixes?.({...base,source:'Blackout Station · Dr. Vex Calder'})||{...base,source:'Blackout Station · Dr. Vex Calder'}
+ return window.CellboundEndgame?.rollChapterLoot?.('blackout-station',{difficulty:'normal',source:'Blackout Station · Dr. Vex Calder'})||null
 }
 function bsLootRarityClass(item){return'rarity-'+String(item?.rarity||'common').toLowerCase().replace(/[^a-z0-9-]/g,'')}
 function bsLootGearCard(item){
@@ -468,7 +468,7 @@ function bsLootGearCard(item){
  return '<article class="cb2d-loot-item '+bsLootRarityClass(item)+'"><div class="cb2d-loot-art">'+art+'</div><div><small>'+esc(String(item?.rarity||'GEAR').toUpperCase())+' · '+esc(String(item?.slot||'EQUIPMENT').toUpperCase())+'</small><h4>'+esc(item?.name||'Unknown Item')+'</h4><p>Item Level '+Number(item?.itemLevel||0)+(item?.power?' · +'+Number(item.power)+' Power':'')+'</p><div class="cb2d-loot-roll">'+stats.map(s=>'<span>'+esc(s.text)+'</span>').join('')+'</div>'+effect+'<em>Sent to Guild Bank</em></div></article>'
 }
 async function complete(){
- const s=state(),result=run.result,summary=result?.summary||{},gains=awardXp(),gear=rollGear(),overrideDrop=Math.random()<GRID_OVERRIDE_DROP_CHANCE?createGridOverrideModule():null,gold=320,renown=140,shards=10;
+ const s=state(),result=run.result,summary=result?.summary||{},gains=awardXp(),gear=window.CellboundEndgame?.rollClearLoot?.('blackout-station',null,.80,{difficulty:'normal',source:'Blackout Station · Dr. Vex Calder'})||null,overrideDrop=Math.random()<GRID_OVERRIDE_DROP_CHANCE?createGridOverrideModule():null,gold=320,renown=140,shards=10;
  s.gold=(Number(s.gold)||0)+gold;s.renown=(Number(s.renown)||0)+renown;s.blackoutStationCompletions=(Number(s.blackoutStationCompletions)||0)+1;s.activity=Array.isArray(s.activity)?s.activity:[];
  Game.addMaterial?.('cell-shards',shards);if(gear)Game.addBankItem?.(gear);if(overrideDrop)Game.addBankItem?.(overrideDrop);
  s.activity.push('Blackout Station cleared. Dr. Vex Calder defeated after the grid restoration. Each adventurer earned '+XP+' XP.'+(gear?' '+gear.name+' was sent to the Guild Bank.':'')+(overrideDrop?' Rare drop: Grid Override Module (5 uses).':''));
