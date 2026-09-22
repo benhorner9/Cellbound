@@ -28,7 +28,7 @@ const STATUS_ICON={
  'frostbound-sigil-shield':ICONS.DEF_ARCANE,'soft-enrage':ICONS.OFF_RAGE,'hard-enrage':ICONS.OFF_RAGE,'blood-frenzy':ICONS.OFF_RAGE,
  'shield-wall':ICONS.DEF_SHIELD,'ardent-defender':ICONS.DEF_ARMOR,'divine-protection':ICONS.DEF_SHIELD,'barkskin':ICONS.DEF_THORNS,
  'blur':ICONS.DEF_DODGE,'obsidian-scales':ICONS.DEF_ARMOR,'arcane-ward':ICONS.DEF_ARCANE,'feint':ICONS.DEF_DODGE,'icebound-fortitude':ICONS.DEF_ARCANE,
- 'guardian-spirit':ICONS.DEF_GUARDIAN,'hammer-of-justice':ICONS.PLAYER_STUN,'concussive-shot':ICONS.PLAYER_STUN,'tactical-control':ICONS.PLAYER_ROOT
+ 'guardian-spirit':ICONS.DEF_GUARDIAN,'hammer-of-justice':ICONS.PLAYER_STUN,'concussive-shot':ICONS.PLAYER_STUN,'tactical-control':ICONS.PLAYER_ROOT,'chaos-scar':ICONS.ENEMY_VULNERABLE
 };
 function enemyApplied(st){const s=String(st?.source||''),t=String(st?.target||'');return(st?.kind==='debuff')&&(s.startsWith('e-')||s.startsWith('add-'))&&t.startsWith('p-')}
 function playerApplied(st){const s=String(st?.source||''),t=String(st?.target||'');return(st?.kind==='debuff')&&s.startsWith('p-')&&(t.startsWith('e-')||t.startsWith('add-'))}
@@ -265,5 +265,5 @@ function startTicker(){
  },1000)
 }
 
-window.CellboundCombatStatuses={handle,clear,renderHost,iconIndex,iconStyle,version:'2.0.0'};
+window.CellboundCombatStatuses={handle,clear,renderHost,iconIndex,iconStyle,catalog:{...ICONS},version:'2.0.1'};
 })();
