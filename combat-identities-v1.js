@@ -271,7 +271,7 @@ if(!window.CellboundCombatReborn){
 (()=>{
 'use strict';
 
-const VERSION='1.3.2';
+const VERSION='1.3.3';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -1883,6 +1883,15 @@ function spawnAdds(ctx,e){
   }
  }
 }
+function mechanicStatusDefinition(m){
+ const raw=m?.status;
+ return raw&&typeof raw==='object'?raw:null
+}
+function applyMechanicStatus(ctx,enemy,m,target){
+ const raw=mechanicStatusDefinition(m);if(!raw||!target?.alive)return null;
+ const name=raw.name||m?.name||'Enemy Effect',id=raw.id||String(name).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+ return applyStatus(ctx,enemy,target,{...copy(raw),id,name,kind:raw.kind==='buff'?'buff':'debuff'})
+}
 function resolveMechanic(ctx,e,m,token){
  const cast=ctx.activeEnemyCast;
  if(m.type==='self-heal'){
@@ -1899,7 +1908,7 @@ function resolveMechanic(ctx,e,m,token){
   if(!cast||cast.token!==token||cast.interrupted){scheduleNextMechanic(ctx);return}
   ctx.activeEnemyCast=null;
   emit(ctx,'CAST_FINISH',{source:e.id,ability:m.name,result:'completed'});
-  livingPlayers(ctx).forEach(p=>dealDamage(ctx,e,p,24*enemyPressure(ctx,e,p),m.name,{damageType:'magic',avoidable:false}));
+  livingPlayers(ctx).forEach(p=>{dealDamage(ctx,e,p,24*enemyPressure(ctx,e,p),m.name,{damageType:'magic',avoidable:false});applyMechanicStatus(ctx,e,m,p)});
   ctx.stats.interrupts.missedCritical++;
   mechanicStat(ctx,'interrupt',true);scheduleNextMechanic(ctx);return;
  }
@@ -1911,9 +1920,9 @@ function resolveMechanic(ctx,e,m,token){
   const tank=livingPlayers(ctx).find(p=>p.role==='tank');if(tank){e.target=tank.id;updateFacing(e,tank)}
   let failed=false;
   livingPlayers(ctx).forEach(p=>{
-   if(p.role==='tank'){dealDamage(ctx,e,p,38*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:false});return}
+   if(p.role==='tank'){dealDamage(ctx,e,p,38*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:false});applyMechanicStatus(ctx,e,m,p);return}
    const success=cast.responses?.[p.id]!==false;
-   if(!success){failed=true;dealDamage(ctx,e,p,28*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:true})}
+   if(!success){failed=true;dealDamage(ctx,e,p,28*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:true});applyMechanicStatus(ctx,e,m,p)}
   });
   mechanicStat(ctx,'cone',failed);scheduleNextMechanic(ctx);return;
  }
@@ -1921,7 +1930,7 @@ function resolveMechanic(ctx,e,m,token){
   let failed=false;
   livingPlayers(ctx).forEach(p=>{
    const success=cast.responses?.[p.id]!==false;
-   if(!success){failed=true;dealDamage(ctx,e,p,(m.type==='circles'?24:28)*enemyPressure(ctx,e,p),m.name,{damageType:'magic',avoidable:true})}
+   if(!success){failed=true;dealDamage(ctx,e,p,(m.type==='circles'?24:28)*enemyPressure(ctx,e,p),m.name,{damageType:'magic',avoidable:true});applyMechanicStatus(ctx,e,m,p)}
   });
   mechanicStat(ctx,m.type,failed);scheduleNextMechanic(ctx);return;
  }
@@ -1929,7 +1938,7 @@ function resolveMechanic(ctx,e,m,token){
   const target=getUnit(ctx,cast.targetId);
   if(target?.alive){
    const success=cast.responses?.[target.id]!==false;
-   if(!success)dealDamage(ctx,e,target,32*enemyPressure(ctx,e,target),m.name,{damageType:'physical',avoidable:true});
+   if(!success){dealDamage(ctx,e,target,32*enemyPressure(ctx,e,target),m.name,{damageType:'physical',avoidable:true});applyMechanicStatus(ctx,e,m,target)}
    mechanicStat(ctx,'line',!success);
   }else mechanicStat(ctx,'line',false);
   scheduleNextMechanic(ctx);return;
@@ -1940,7 +1949,7 @@ function resolveMechanic(ctx,e,m,token){
   livingPlayers(ctx).slice().forEach(p=>{
    const zone=zones[p.role]||zones.dps,radius=Math.max(3,Number(zone?.radius)||10),inside=zone&&dist(p.position,{x:Number(zone.x)||50,y:Number(zone.y)||50})<=radius;
    p.mechanicHoldUntil=0;p.mechanicHoldPosition=null;
-   if(!inside){failed=true;dealDamage(ctx,e,p,p.maxHealth*50,m.name,{damageType:'magic',avoidable:true})}
+   if(!inside){failed=true;applyMechanicStatus(ctx,e,m,p);dealDamage(ctx,e,p,p.maxHealth*50,m.name,{damageType:'magic',avoidable:true})}
    else emit(ctx,'MECHANIC_SAFE',{source:e.id,target:p.id,ability:m.name,result:'protected',position:copy(p.position),payload:{role:p.role,zone:copy(zone)}})
   });
   emit(ctx,'ROLE_SHOCKWAVE',{source:e.id,ability:m.name,result:failed?'casualties':'survived',position:copy(e.position),payload:{zones:copy(zones)}});
@@ -2446,6 +2455,11 @@ function runSelfTests(){
 
 
 
+ {
+  const noInterrupt=Array.from({length:5},(_,i)=>({id:'status-'+i,name:'Status Tester '+i,class:'Mage',spec:'Arcane',power:8,level:8,_combatItemLevel:28,skillLoadouts:{Arcane:['fireball']}}));
+  const statusRun=simulate({party:noInterrupt,encounter:{id:'enemy-status-test',kind:'boss',level:8,enemies:['Rot Caster'],enemyHealth:6000,mechanicIntervalMs:500,mechanics:[{name:'Arcane Rot',type:'interrupt',duration:600,priority:'critical',status:{id:'arcane-rot',name:'Arcane Rot',duration:3500,effect:{outgoingDamageReduction:.10}}}]},seed:'enemy-status-effect',maxDurationMs:2600});
+  test('Enemy Mechanics Emit Status Effects',()=>statusRun.events.some(e=>e.type==='DEBUFF_APPLIED'&&e.ability==='Arcane Rot'&&String(e.source||'').startsWith('e-')&&String(e.target||'').startsWith('p-')));
+ }
  return{version:VERSION,passed:tests.filter(x=>x.pass).length,total:tests.length,tests};
 }
 
