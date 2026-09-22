@@ -437,7 +437,7 @@ function equipItem(bankId,slot){
   if(item.quantity<=0)state.bank=state.bank.filter(x=>x.id!==bankId);
   state.activity=state.activity||[];
   state.activity.push(`${c.name} equipped ${item.name} from the Guild Bank.`);
-  writeState(state);activeSlot=null;renderSheet();
+  writeState(state);activeSlot=null;renderSheet();window.CellboundFX?.micro?.(item.name+' equipped','gold');window.CellboundFX?.pulse?.('.cb-current-item');
 }
 function unequipItem(slot){
   if(!characterEditable())return;
@@ -452,7 +452,7 @@ function unequipItem(slot){
   c.gear=window.CellboundGame?.characterItemLevel?.(c)||0;
   state.activity=state.activity||[];
   state.activity.push(`${c.name} unequipped ${item.name} to the Guild Bank.`);
-  writeState(state);activeSlot=null;renderSheet();
+  writeState(state);activeSlot=null;renderSheet();window.CellboundFX?.micro?.(item.name+' returned to the Guild Bank','cell');
 }
 function upgradeEquippedItem(slot){
   if(!characterEditable())return;
@@ -473,7 +473,7 @@ function upgradeEquippedItem(slot){
   state.materials['cell-shards']=available-cost;
   state.activity=state.activity||[];
   state.activity.push(`Upgraded ${c.name}'s equipped ${item.name} to Item Level ${item.itemLevel} for ${cost} Cell Shards.`);
-  writeState(state);renderSheet();
+  writeState(state);renderSheet();window.CellboundFX?.callout?.({eyebrow:'ITEM UPGRADED',title:item.name+' · Item Level '+item.itemLevel,tone:'gold'});window.CellboundFX?.flash?.('gold');
 }
 function investTalent(spec,nodeId){
   if(!characterEditable())return;
@@ -484,7 +484,7 @@ function investTalent(spec,nodeId){
   c.talents[spec][node.id]=(c.talents[spec][node.id]||0)+1;
   c.talent--;c.power=(c.power||0)+1;
   state.activity=state.activity||[];state.activity.push(`${c.name} invested a point in ${spec}: ${node.id}.`);
-  writeState(state);renderSheet();
+  writeState(state);renderSheet();window.CellboundFX?.callout?.({eyebrow:'TALENT LEARNED',title:node.id,tone:'arcane'});window.CellboundFX?.flash?.('arcane');
 }
 function changeSpec(spec){
   if(!characterEditable())return;
@@ -492,7 +492,7 @@ function changeSpec(spec){
   if(!state||!c||!specs[c.class]?.[spec]||c.spec===spec)return;
   c.spec=spec;selectedTreeSpec=spec;selectedTalentId=null;selectedTalentSpec=spec;activeSkillSlot=0;
   state.activity=state.activity||[];state.activity.push(`${c.name} changed specialisation to ${spec} (${roleLabel(roleOf(c))}). Active-party role updated automatically.`);
-  writeState(state);renderSheet();
+  writeState(state);renderSheet();window.CellboundFX?.quest?.({eyebrow:'SPECIALISATION CHANGED',title:spec,copy:roleLabel(roleOf(c))+' role is now active for this character.',tone:'story',duration:1250});
 }
 function saveSkillLoadout(mutator,activity){
   if(!characterEditable())return;
