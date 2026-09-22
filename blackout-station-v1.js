@@ -174,18 +174,19 @@ async function useGridOverride(){
  if(!run.quickReconnect){alert('Complete Blackout Station manually once before using a Grid Override Module.');return}
  const module=activeGridOverride();if(!module){alert('No Grid Override Module with charges remaining is in your Guild Bank.');renderPuzzle();return}
  if(!confirm('Use one Grid Override charge?\n\nThe grid will auto-complete with no Calder Overcharge penalty.'))return;
- run.overrideInProgress=true;run.overrideUsed=true;
+ const tok=token;run.overrideInProgress=true;run.overrideUsed=true;
  module.charges=Math.max(0,(Number(module.charges)||0)-1);
  const usedFrom=Math.max(0,Number(module.charges)||0);
  if(module.charges<=0)state().bank=state().bank.filter(x=>x.id!==module.id);
  state().activity=Array.isArray(state().activity)?state().activity:[];
  state().activity.push('Grid Override Module used in Blackout Station. '+usedFrom+' charge'+(usedFrom===1?'':'s')+' remain on that module.');
  Game.save?.();await Game.persistState?.();
+ if(tok!==token||!run)return;
  run.log.push('Grid Override accepted. Calder control code is forcing the distribution board online.');
  run.board=solvedBoard();renderPuzzle();
  const shell=$('.bs-puzzle-shell'),tiles=[...document.querySelectorAll('.bs-grid-tile')];shell?.classList.add('override-active');
- for(let i=0;i<tiles.length;i++){tiles[i].classList.add('override-lit');await wait(45)}
- await wait(260);run.overrideInProgress=false;
+ for(let i=0;i<tiles.length;i++){if(tok!==token||!run)return;tiles[i].classList.add('override-lit');await wait(45)}
+ await wait(260);if(tok!==token||!run)return;run.overrideInProgress=false;
  await powerOn(true)
 }
 async function slideTile(pos,blank){
