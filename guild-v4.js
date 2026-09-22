@@ -246,6 +246,17 @@ async function loadAccount(user){
   lastMembershipMember=entitlements().member;
   setSync('Saved','ok');
 }
+async function refreshStateFromServer({render=true}={}){
+  if(!currentUser||!supabaseClient)return false;
+  clearTimeout(syncTimer);
+  try{
+    await saveSerial;
+    const {data,error}=await supabaseClient.from('guild_accounts').select('game_state,updated_at').eq('user_id',currentUser.id).maybeSingle();
+    if(error||!data?.game_state){if(error)console.warn('Cellbound state refresh failed',error);return false;}
+    state=migrateState(data.game_state);removeInvalidPartyMembers(state);nativeLocalSet.call(localStorage,LOCAL_OWNER,currentUser.id);writeLocal();
+    if(render)renderAll();setSync('Saved','ok');return true;
+  }catch(err){console.warn('Cellbound state refresh failed',err);return false;}
+}
 async function refreshMembershipStatus({render=true,silent=false}={}){
   if(!currentUser||!supabaseClient)return entitlements().member;
   const before=lastMembershipMember===null?entitlements().member:lastMembershipMember;
@@ -796,7 +807,7 @@ function renderAll(){if(!state)return;state.roster.forEach(c=>{refreshRecovery(c
 function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(c=>{if(refreshRecovery(c)){state.activity.push(`${c.name} has fully recovered from Cell Shock.`);changed=true;}});if(changed)save();if(state.roster.some(c=>isUnavailable(c)))renderAll();}
 
 window.CellboundGame={
-  ready:false,getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,
+  ready:false,getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,refreshStateFromServer,
   characterItemLevel,partyItemLevel,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,
   addBankItem,addMaterial,renderAll,switchView,starterEquipment,
   getPartyCharacters:()=>partyCharacters(),
