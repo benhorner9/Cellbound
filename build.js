@@ -48,7 +48,32 @@ for(const file of files){
     if(!contents.includes("if(!data?.id)throw new Error('The listing was not confirmed by the Trading Post.')"))throw new Error('Trading Post listing creation must verify the server response');
     if(!contents.includes('function isUtilityItem')||!contents.includes('UTILITY EFFECT')||!contents.includes('function utilityArtHTML'))throw new Error('Trading Post must preserve visual utility-item trading support');
   }
+  if(file==='endgame-v1.js'){
+    if(!contents.includes("dungeonCard('chaos-canyon')")||!contents.includes("leaderboardMarkup('chaos-canyon')"))throw new Error('Chaos Canyon must remain visible in the Endgame Hub');
+  }
+  if(file==='social-v3.js'){
+    for(const id of ['hollow-sanctum','chaos-canyon','blackout-station','fractured-ages'])if(!contents.includes("id:'"+id+"'"))throw new Error('Party Finder is missing dungeon target '+id);
+    if(/location\.reload\s*\(/.test(contents))throw new Error('Social/world reward flows must not hard-reload the game');
+    if(!contents.includes('refreshStateFromServer'))throw new Error('World Boss reward claims must refresh authoritative game state');
+  }
+  if(file==='release-v1.js'){
+    for(const id of ['#cc2dBackdrop','#bs2dBackdrop','#fracturedAgesBackdrop','#twelveBelowBackdrop','#thirteenthBellRoot','#fourfoldPuzzle'])if(!contents.includes(id))throw new Error('Release gate is missing active-gameplay protection for '+id);
+  }
+  if(file==='chaos-canyon-v1.js'){
+    if(!contents.includes('async function ccFailNoHealer')||!contents.includes('await ccFailNoHealer(s,result)'))throw new Error('Chaos Canyon must surface healerless recovery failure instead of silently ending');
+    if(!contents.includes('requestAnimationFrame(frame)'))throw new Error('Chaos Canyon combat playback must use the continuous frame clock');
+  }
+  if(file==='quests-v2.js'){
+    if(!contents.includes('async function qPlayReborn')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('Quest combat must use continuous Combat Reborn playback');
+  }
+  if(file==='onboarding-v1.js'){
+    if(!contents.includes('function tdRenderCombatEvent')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('First Expedition combat must use continuous playback');
+  }
+  if(file==='guild-v4.js'){
+    if(!contents.includes("id:'chaos-canyon',name:'Chaos Canyon'")||!contents.includes("id:'blackout-station',name:'Blackout Station'")||!contents.includes("id:'fractured-ages',name:'The Fractured Ages'"))throw new Error('Overview Next Dungeon ladder must cover current dungeon progression');
+  }
   if(file==='guild.html'){
+    if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     const required=['rosterGrid','bankGrid','professionWorkshop','chatMessages','worldBossGrid','dungeonRoute','dungeonIntel','enterDungeonBtn','partySlots'];
     for(const id of required)if(!contents.includes(`id="${id}"`))throw new Error(`Missing required Evolution hook: ${id}`);
     if(!contents.includes('evolution-v1.css')||!contents.includes('evolution-v1.js'))throw new Error('Evolution Pass assets are not linked from guild.html');
