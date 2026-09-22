@@ -183,12 +183,18 @@
             <section class="tp-view" data-tp-view="my" hidden>
               <article class="tp-panel">
                 <div class="tp-panel-head"><div><small>SELL EQUIPMENT</small><h3>Create Equipment Listing</h3></div></div>
-                <form id="tpGearSellForm" class="tp-panel-body tp-action-form">
-                  <label>Bank item<select id="tpGearSellItem"></select></label>
+                <form id="tpGearSellForm" class="tp-panel-body tp-action-form tp-sell-form">
+                  <div class="tp-sell-picker-field">
+                    <span class="tp-sell-label">Bank item</span>
+                    <input id="tpGearSellItem" type="hidden" value="">
+                    <div id="tpGearSellSelected" class="tp-sell-selected"></div>
+                    <button id="tpGearPickerToggle" type="button" class="tp-picker-toggle">CHOOSE ITEM</button>
+                    <div id="tpGearSellPicker" class="tp-sell-picker" hidden></div>
+                  </div>
                   <label>Quantity<input id="tpGearSellQty" type="number" min="1" value="1"></label>
                   <label>Price each<input id="tpGearSellPrice" type="number" min="1" value="100"></label>
                   <label>Duration<select id="tpGearDuration"><option value="24">24 hours</option><option value="48" selected>48 hours</option><option value="72">72 hours</option></select></label>
-                  <button type="submit">LIST EQUIPMENT</button>
+                  <button id="tpGearListButton" type="submit">LIST EQUIPMENT</button>
                 </form>
               </article>
               <article class="tp-panel"><div class="tp-panel-head"><div><small>EQUIPMENT</small><h3>My Listings</h3></div></div><div id="tpMyGear" class="tp-panel-body tp-my-list"></div></article>
