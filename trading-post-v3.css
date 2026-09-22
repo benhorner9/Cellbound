@@ -81,6 +81,42 @@
 .tp-action-form label{display:grid;gap:4px;color:#697974;font-size:.29rem;text-transform:uppercase}
 .tp-action-form input,.tp-action-form select{height:34px;border:1px solid rgba(255,255,255,.07);background:#071216;color:#c5d0cc;padding:0 7px}
 .tp-action-form button{grid-column:1/-1;height:38px;border:1px solid rgba(216,185,118,.22);background:#272113;color:#ead79f;font-size:.38rem;font-weight:900;letter-spacing:.06em}
+.tp-sell-form{align-items:start}
+.tp-sell-picker-field{grid-column:1/-1;display:grid;gap:7px}
+.tp-sell-label{color:#697974;font-size:.29rem;text-transform:uppercase}
+.tp-sell-selected{min-height:84px}
+.tp-sell-selected-card{position:relative;display:grid;grid-template-columns:74px minmax(0,1fr);gap:10px;align-items:center;padding:8px;border:1px solid rgba(255,255,255,.06);background:linear-gradient(135deg,#0b171b,#081115);overflow:hidden}
+.tp-sell-selected-card:before,.tp-sell-choice:before{content:"";position:absolute;inset:0;pointer-events:none;border:1px solid transparent}
+.tp-sell-selected-card.rarity-uncommon:before,.tp-sell-choice.rarity-uncommon:before{border-color:rgba(58,186,94,.35)}
+.tp-sell-selected-card.rarity-rare:before,.tp-sell-choice.rarity-rare:before{border-color:rgba(70,133,224,.38)}
+.tp-sell-selected-card.rarity-epic:before,.tp-sell-choice.rarity-epic:before{border-color:rgba(164,92,218,.4)}
+.tp-sell-selected-card.rarity-legendary:before,.tp-sell-choice.rarity-legendary:before{border-color:rgba(218,163,67,.45)}
+.tp-sell-selected-art,.tp-sell-choice-art{display:grid;place-items:center;min-width:0}
+.tp-sell-selected-art{width:68px;height:68px}
+.tp-sell-selected-copy{min-width:0}
+.tp-sell-selected-copy small,.tp-sell-choice-copy small{display:block;color:#7b8984;font-size:.31rem;text-transform:uppercase}
+.tp-sell-selected-copy b,.tp-sell-choice-copy b{display:block;margin-top:2px;color:#d6ded9;font-family:Georgia,serif;font-weight:500}
+.tp-sell-selected-copy b{font-size:.68rem}
+.tp-sell-selected-copy span{display:block;margin-top:4px;color:#71807b;font-size:.35rem}
+.tp-picker-toggle{grid-column:1/-1!important;height:34px!important;background:#0c2225!important;border-color:rgba(89,198,187,.18)!important;color:#a9ddd8!important}
+.tp-picker-toggle:disabled{opacity:.45}
+.tp-sell-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;max-height:360px;overflow:auto;padding:2px}
+.tp-sell-picker[hidden]{display:none!important}
+.tp-sell-choice{position:relative!important;grid-column:auto!important;display:grid!important;grid-template-columns:60px minmax(0,1fr) auto!important;gap:8px!important;align-items:center!important;height:auto!important;min-height:76px!important;padding:7px!important;text-align:left!important;background:#081317!important;border:1px solid rgba(255,255,255,.055)!important;color:#cbd4d0!important;letter-spacing:0!important}
+.tp-sell-choice.active{background:#102225!important;border-color:rgba(89,198,187,.28)!important}
+.tp-sell-choice-art{width:58px;height:58px}
+.tp-sell-choice-copy{min-width:0}
+.tp-sell-choice-copy b{font-size:.52rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tp-sell-choice-copy em{display:block;margin-top:3px;color:#697873;font-size:.32rem;font-style:normal}
+.tp-sell-choice strong{color:#7aaea7;font-size:.29rem}
+.tp-sell-choice.active strong{color:#e1c97e}
+.tp-sell-empty{display:grid;place-items:center;min-height:76px;padding:10px;border:1px dashed rgba(255,255,255,.08);background:#081216;color:#687772;font-size:.38rem;text-align:center}
+.tp-sell-art{max-width:100%;max-height:100%}
+@media(max-width:720px){
+  .tp-sell-picker{grid-template-columns:1fr;max-height:420px}
+  .tp-sell-selected-card{grid-template-columns:70px minmax(0,1fr)}
+  .tp-sell-choice{grid-template-columns:58px minmax(0,1fr) auto!important;min-height:74px!important}
+}
 .tp-action-row{display:flex;gap:6px}
 .tp-action-row button{flex:1;height:36px;border:1px solid rgba(89,198,187,.18);background:#0c2527;color:#a9e0da;font-size:.36rem;font-weight:900}
 .tp-action-row .danger{border-color:rgba(187,98,98,.18);background:#241414;color:#d9a1a1}
