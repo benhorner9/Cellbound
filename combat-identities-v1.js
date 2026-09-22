@@ -271,7 +271,7 @@ if(!window.CellboundCombatReborn){
 (()=>{
 'use strict';
 
-const VERSION='1.3.3';
+const VERSION='1.3.4';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -1166,6 +1166,7 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
   }
   if(crit&&(r=talentRank(u,'Deep Wounds'))&&target.alive){
    const tick=Math.max(1,Math.round(dealt*(.045*r)));
+   applyStatus(ctx,u,target,{id:'deep-wounds',name:'Deep Wounds',kind:'debuff',duration:2800,effect:{damageOverTime:tick}});
    talentTrigger(ctx,u,'Deep Wounds',target,{ticks:2,damagePerTick:tick});
    [1300,2600].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)dealDamage(ctx,u,target,tick,'Deep Wounds',{damageType:'physical'})},'talent-deep-wounds'));
    if((r=talentRank(u,'Blood Frenzy')))applyStatus(ctx,u,u,{id:'blood-frenzy-talent',name:'Blood Frenzy',kind:'buff',duration:5200,effect:{haste:.05*r}});
@@ -1182,6 +1183,7 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
  if(u.class==='Hunter'){
   if(crit&&(r=talentRank(u,'Piercing Shots'))&&target.alive){
    const tick=Math.max(1,Math.round(dealt*.04*r));
+   applyStatus(ctx,u,target,{id:'piercing-shots',name:'Piercing Shots',kind:'debuff',duration:2600,effect:{damageOverTime:tick}});
    talentTrigger(ctx,u,'Piercing Shots',target,{ticks:2,damagePerTick:tick});
    [1200,2400].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)dealDamage(ctx,u,target,tick,'Piercing Shots',{damageType:'physical'})},'talent-piercing-shots'))
   }
@@ -1194,10 +1196,14 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
   const venom=talentRank(u,'Venom'),master=talentRank(u,'Master Poisoner');
   if((venom||master)&&target.alive){
    const tick=Math.max(1,Math.round(dealt*(venom*.018+master*.025)));
-   if(tick>0)schedule(ctx,ctx.time+1100,()=>{if(u.alive&&target.alive)dealDamage(ctx,u,target,tick,'Venom',{damageType:'magic'})},'talent-venom')
+   if(tick>0){
+    applyStatus(ctx,u,target,{id:'venom',name:'Venom',kind:'debuff',duration:1300,effect:{damageOverTime:tick}});
+    schedule(ctx,ctx.time+1100,()=>{if(u.alive&&target.alive)dealDamage(ctx,u,target,tick,'Venom',{damageType:'magic'})},'talent-venom')
+   }
   }
   if(a.id==='garrote'&&(r=talentRank(u,'Garrote'))&&target.alive){
    const tick=Math.max(1,Math.round(dealt*.06*r));
+   applyStatus(ctx,u,target,{id:'garrote-bleed',name:'Garrote Bleed',kind:'debuff',duration:2600,effect:{damageOverTime:tick}});
    talentTrigger(ctx,u,'Garrote',target,{ticks:2,damagePerTick:tick});
    [1200,2400].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)dealDamage(ctx,u,target,tick,'Garrote Bleed',{damageType:'physical'})},'talent-garrote'))
   }
