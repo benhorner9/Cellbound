@@ -2141,6 +2141,14 @@ function simulate(options={}){
  let outcome='defeat';
  while(ctx.time<=maxDuration){
   processQueue(ctx);
+  const resolvePct=Math.max(0,Math.min(.95,Number(ctx.encounter.resolveAtBossHealthPct)||0));
+  if(resolvePct>0){
+   const boss=ctx.enemies.find(e=>e.kind==='boss'&&e.alive),remainingRivals=ctx.enemies.filter(e=>e.alive&&!e.isAdd&&e!==boss);
+   if(boss&&healthRatio(boss)<=resolvePct&&!remainingRivals.length){
+    emit(ctx,'ENCOUNTER_RESOLVED',{source:boss.id,ability:ctx.encounter.resolveLabel||'Encounter Resolution',result:'escaped',position:copy(boss.position),payload:{bossHealthPct:pct(boss.health,boss.maxHealth),thresholdPct:Math.round(resolvePct*100)}});
+    outcome='victory';break
+   }
+  }
   if(!livingEnemies(ctx).length&&ctx.pendingResurrections<=0&&ctx.pendingHazards<=0){outcome='victory';break}
   if(!livingPlayers(ctx).length){outcome='defeat';break}
   checkBossPhases(ctx);tickCooldowns(ctx);passiveResources(ctx);
