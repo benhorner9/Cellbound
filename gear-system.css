@@ -81,3 +81,45 @@
     transform-origin:center!important;
   }
 }
+
+
+/* Reagent rarity frames */
+.material-art{
+  box-sizing:border-box;
+}
+.material-art:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:6;
+  border-radius:inherit;
+  pointer-events:none;
+  box-sizing:border-box;
+}
+.material-art.material-rarity-common:after{
+  box-shadow:inset 0 0 0 1px rgba(205,210,208,.62);
+}
+.material-art.material-rarity-uncommon:after{
+  box-shadow:
+    inset 0 0 0 2px #49c864,
+    inset 0 0 7px rgba(73,200,100,.10);
+}
+.material-art.material-rarity-rare:after{
+  box-shadow:
+    inset 0 0 0 2px #3e9fff,
+    inset 0 0 8px rgba(62,159,255,.12);
+}
+.material-art.material-rarity-epic:after{
+  box-shadow:
+    inset 0 0 0 2px #a45cff,
+    inset 0 0 9px rgba(164,92,255,.14);
+}
+.material-art.material-rarity-legendary:after{
+  box-shadow:
+    inset 0 0 0 2px #f0a13f,
+    inset 0 0 10px rgba(240,161,63,.16);
+}
+.material-art.material-rarity-uncommon{box-shadow:inset 0 0 0 1px rgba(155,247,165,.10),0 0 10px rgba(53,216,74,.12),0 5px 14px #0007}
+.material-art.material-rarity-rare{box-shadow:inset 0 0 0 1px rgba(183,221,255,.12),0 0 11px rgba(50,142,255,.14),0 5px 14px #0007}
+.material-art.material-rarity-epic{box-shadow:inset 0 0 0 1px rgba(224,199,255,.12),0 0 12px rgba(164,92,255,.15),0 5px 14px #0007}
+.material-art.material-rarity-legendary{box-shadow:inset 0 0 0 1px rgba(255,221,181,.13),0 0 13px rgba(240,161,63,.16),0 5px 14px #0007}
