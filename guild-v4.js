@@ -15,8 +15,8 @@ const PVE_WIPE_CELL_SHOCK=25;
 const STANDARD_RECOVERY_MINUTES=60;
 const MEMBER_RECOVERY_MINUTES=30;
 const ILVL_SLOTS=['Head','Chest','Weapon'];
-const SLOT_ITEM_LEVEL={Head:[18,26,34,42],Chest:[20,28,36,44],Weapon:[22,30,38,46]};
-const SLOT_POWER={Head:[2,5,9,13],Chest:[3,6,10,15],Weapon:[4,8,12,18]};
+const SLOT_ITEM_LEVEL=G.ITEM_LEVELS||{Head:[18,24,32,40,46],Chest:[20,26,34,42,48],Weapon:[22,28,36,44,50]};
+const SLOT_POWER={Head:[2,5,9,13,17],Chest:[3,6,10,15,20],Weapon:[4,8,12,18,24]};
 const authStorage={
   getItem:key=>localStorage.getItem(key)??sessionStorage.getItem(key),
   setItem(key,value){const keep=localStorage.getItem(REMEMBER_KEY)==='1';const a=keep?localStorage:sessionStorage,b=keep?sessionStorage:localStorage;a.setItem(key,value);b.removeItem(key)},
@@ -27,7 +27,7 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[m]));
 
 G.items.forEach(item=>{
-  const tier=Math.max(1,Math.min(4,Number(item.tier)||1));
+  const tier=Math.max(1,Math.min(5,Number(item.tier)||1));
   const slot=item.slot;
   item.itemLevel=item.itemLevel||SLOT_ITEM_LEVEL[slot]?.[tier-1]||18+(tier-1)*8;
   item.power=item.power||SLOT_POWER[slot]?.[tier-1]||tier*3;
@@ -660,9 +660,10 @@ function disposeBankItem(id,mode){
 }
 
 function bankUpgradeMax(item){
-  const tier=Math.max(1,Number(item?.tier)||1),steps=({1:2,2:3,3:3,4:4})[tier]||2;
-  const base=Number(item?.baseItemLevel)||Number(item?.itemLevel)||0;
-  return Math.max(Number(item?.itemLevel)||0,Math.min(42,base+steps*2));
+  const tier=Math.max(1,Number(item?.tier)||1),base=Number(item?.baseItemLevel)||Number(item?.itemLevel)||0,current=Number(item?.itemLevel)||0;
+  if(tier>=5)return current;
+  const steps=({1:2,2:3,3:3,4:4})[tier]||2,ceiling=({1:26,2:32,3:40,4:44})[tier]||44;
+  return Math.max(current,Math.min(ceiling,base+steps*2));
 }
 function bankUpgradeCost(item){
   const tier=Math.max(1,Number(item?.tier)||1),level=Math.max(0,Number(item?.upgradeLevel)||0);

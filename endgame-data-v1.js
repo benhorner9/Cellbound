@@ -1,23 +1,27 @@
 (()=>{
 'use strict';
 
-const VERSION=1;
+const VERSION=2;
 const SEASON={id:'foundations-1',name:'Foundations'};
 
 
 const LOOT_RULES={
-  uniqueChance:{normal:.002,heroic:.025,cellboundBase:.035,cellboundPerTier:.0035,cellboundCap:.09},
+  uniqueChance:{normal:0,heroic:.025,cellboundBase:.035,cellboundPerTier:.0035,cellboundCap:.09},
   targetedBossChance:.55,
+  clearPityGuaranteeAfter:2,
   rarityWeights:{
-    normal:{1:.72,2:.28},
-    heroic:{2:.68,3:.32},
-    cellboundLow:{2:.35,3:.65},
-    cellboundMid:{3:.88,4:.12},
-    cellboundHigh:{3:.80,4:.20}
+    normal:{1:.70,2:.30},
+    heroic:{2:.35,3:.65},
+    cellboundLow:{3:.95,4:.05},
+    cellboundMid:{3:.85,4:.15},
+    cellboundHigh:{3:.70,4:.30},
+    cellboundPeak:{3:.55,4:.45}
   },
   chasePityStep:.00025,
   chasePityCap:.02,
-  powerCeiling:42
+  powerCeiling:44,
+  dungeonTierCeiling:4,
+  raidExclusiveTier:5
 };
 const SET_BONUS_FOUNDATION={
   pieces2:{name:'Resonant Pair',description:'Two matching set pieces improve core role output by 5%.'},
@@ -63,13 +67,13 @@ const DIFFICULTIES={
    id:'normal',name:'Normal',label:'NORMAL',
    description:'Forgiving introduction to the dungeon. Learn the route, bosses and core mechanics.',
    enemyHealth:1,enemyDamage:1,castSpeed:1,mechanicFrequency:1,addCountBonus:0,
-   lootTier:[1,2],cellShardBase:4
+   lootTier:[1,2,3],cellShardBase:4
  },
  heroic:{
    id:'heroic',name:'Heroic',label:'HEROIC',
    description:'Faster casts, heavier damage and additional encounter mechanics.',
    enemyHealth:1.42,enemyDamage:1.34,castSpeed:.84,mechanicFrequency:.84,addCountBonus:0,
-   lootTier:[2,3],cellShardBase:10
+   lootTier:[2,3,4],cellShardBase:10
  }
 };
 
@@ -133,6 +137,42 @@ const DUNGEONS={
 };
 
 
+const LOOT_PROFILES={
+ 'ashen-vault':{
+   normal:{tiers:{1:.70,2:.30},itemLevel:{Head:18,Chest:20,Weapon:22}},
+   heroic:{tiers:{2:.70,3:.30},itemLevel:{Head:26,Chest:28,Weapon:30}}
+ },
+ 'hollow-sanctum':{
+   normal:{tiers:{2:.85,3:.15},itemLevel:{Head:24,Chest:26,Weapon:28}},
+   heroic:{tiers:{2:.25,3:.73,4:.02},itemLevel:{Head:30,Chest:32,Weapon:34}}
+ },
+ 'chaos-canyon':{
+   normal:{tiers:{2:.35,3:.65},itemLevel:{Head:30,Chest:32,Weapon:34}},
+   heroic:{tiers:{3:.95,4:.05},itemLevel:{Head:34,Chest:36,Weapon:38}}
+ },
+ 'blackout-station':{
+   normal:{tiers:{3:1},itemLevel:{Head:34,Chest:36,Weapon:38}}
+ },
+ 'fractured-ages':{
+   normal:{tiers:{3:1},itemLevel:{Head:38,Chest:39,Weapon:40}}
+ }
+};
+function cellboundLootProfile(tier=1){
+ const t=Math.max(1,Math.min(20,Number(tier)||1));
+ if(t>=15)return{tiers:{3:.55,4:.45},itemLevel:{Head:42,Chest:43,Weapon:44},band:'Peak Cellbound'};
+ if(t>=10)return{tiers:{3:.70,4:.30},itemLevel:{Head:40,Chest:41,Weapon:42},band:'High Cellbound'};
+ if(t>=5)return{tiers:{3:.85,4:.15},itemLevel:{Head:38,Chest:39,Weapon:40},band:'Mid Cellbound'};
+ return{tiers:{3:.95,4:.05},itemLevel:{Head:36,Chest:37,Weapon:38},band:'Entry Cellbound'}
+}
+function lootProfileFor(dungeonId,difficulty='normal',tier=0){
+ if(difficulty==='cellbound')return cellboundLootProfile(tier);
+ return LOOT_PROFILES[dungeonId]?.[difficulty]||LOOT_PROFILES[dungeonId]?.normal||{
+   tiers:difficulty==='heroic'?LOOT_RULES.rarityWeights.heroic:LOOT_RULES.rarityWeights.normal,
+   itemLevel:{Head:18,Chest:20,Weapon:22}
+ }
+}
+
+
 const BOSS_PHASES={
  'ashen-vault':{
    kael:[
@@ -173,25 +213,25 @@ const BOSS_PHASES={
 const UNIQUE_ITEMS={
  'frostbound-sigil':{
    itemId:'frostbound-sigil',name:'Frostbound Sigil',slot:'Relic',classes:'all',tier:4,rarity:'Epic',
-   itemLevel:32,power:8,questArtMaterial:'void-crystal',
+   itemLevel:40,power:8,minDifficulty:'heroic',questArtMaterial:'void-crystal',
    uniqueEffect:{id:'frostbound-sigil',name:'Frozen Response',description:'Successful interrupts grant a short defensive shield.'},
    source:'Ash Warden Kael · Heroic / Cellbound+'
  },
  'guardian-last-stand':{
    itemId:'guardian-last-stand',name:"Guardian's Last Stand",slot:'Trinket1',classes:['Warrior','Paladin','Death Knight','Demon Hunter','Druid'],tier:4,rarity:'Epic',
-   itemLevel:34,power:9,questArtMaterial:'warden-iron',
+   itemLevel:40,power:9,minDifficulty:'heroic',questArtMaterial:'warden-iron',
    uniqueEffect:{id:'guardian-last-stand',name:'Last Stand',description:'Dropping below 20% health automatically triggers a powerful defensive once per encounter.'},
    source:'The Vaultheart · Heroic / Cellbound+'
  },
  'embercore-staff':{
    itemId:'embercore-staff',name:'Embercore Staff',slot:'Weapon',classes:['Mage'],tier:4,rarity:'Epic',
-   itemLevel:36,power:12,questArtMaterial:'ashen-soul-fragment',
+   itemLevel:42,power:12,minDifficulty:'cellbound',questArtMaterial:'ashen-soul-fragment',
    uniqueEffect:{id:'embercore-staff',name:'Living Ember',description:'Fire and arcane attacks can splash additional damage into a nearby enemy.'},
    source:'The Bound Choir · Cellbound+'
  },
  'heart-troll-king':{
    itemId:'heart-troll-king',name:'Heart of the Troll King',slot:'Trinket1',classes:'all',tier:4,rarity:'Epic',
-   itemLevel:35,power:10,questArtMaterial:'faded-cell-fragment',
+   itemLevel:40,power:10,minDifficulty:'heroic',questArtMaterial:'faded-cell-fragment',
    uniqueEffect:{id:'heart-troll-king',name:'Blood Frenzy',description:'Critical strikes can trigger a short burst of increased damage.'},
    source:'Rare endgame boss drop'
  }
@@ -217,7 +257,7 @@ function difficultyConfig(mode='normal',tier=0){
    castSpeed:clamp(.82-(t-1)*.012,.57,.82),
    mechanicFrequency:clamp(.82-(t-1)*.012,.58,.82),
    addCountBonus:t>=15?2:t>=8?1:0,
-   lootTier:t>=10?[3,4]:t>=5?[2,3]:[2,3],
+   lootTier:[3,4],
    cellShardBase:12+t*2
  }
 }
@@ -235,12 +275,14 @@ function scorePreview({difficulty='normal',tier=0,timeMs=0,targetTimeMs=0,deaths
    :Math.max(0,180-Math.round((Number(timeMs)||0)/1000));
  return Math.max(0,base+timeBonus-(Number(deaths)||0)*50-(Number(mechanicsFailed)||0)*22-(Number(mistakes)||0)*8)
 }
-function rewardBand(mode,tier=0){
- if(mode==='normal')return{label:'Starter progression',powerCap:28};
- if(mode==='heroic')return{label:'Improved dungeon gear',powerCap:34};
- if(tier<5)return{label:'Upgrade materials + strong gear',powerCap:36};
- if(tier<10)return{label:'High-quality dungeon gear',powerCap:40};
- return{label:'Best dungeon power + prestige rewards',powerCap:42}
+function rewardBand(mode,tier=0,dungeonId='ashen-vault'){
+ const profile=lootProfileFor(dungeonId,mode,tier),cap=Math.max(...Object.values(profile.itemLevel||{}).map(Number).filter(Number.isFinite),0);
+ if(mode==='normal')return{label:'Chapter 1 dungeon progression',powerCap:cap};
+ if(mode==='heroic')return{label:'Strong Tier 2–3 gear · rare early Tier 4',powerCap:cap};
+ if(tier<5)return{label:'Tier 3 endgame gear · rare Tier 4',powerCap:cap};
+ if(tier<10)return{label:'Tier 3 with growing Tier 4 chance',powerCap:cap};
+ if(tier<15)return{label:'High-quality Tier 3–4 gear',powerCap:cap};
+ return{label:'Best Chapter 1 dungeon gear · Tier 4 ceiling',powerCap:cap}
 }
-window.CellboundEndgameData={VERSION,SEASON,AFFIXES,DIFFICULTIES,DUNGEONS,BOSS_PHASES,UNIQUE_ITEMS,CHASE_REWARDS,difficultyConfig,affixesForTier,scorePreview,rewardBand};
+window.CellboundEndgameData={VERSION,SEASON,LOOT_RULES,LOOT_PROFILES,AFFIXES,DIFFICULTIES,DUNGEONS,BOSS_PHASES,UNIQUE_ITEMS,CHASE_REWARDS,difficultyConfig,affixesForTier,scorePreview,rewardBand,lootProfileFor,cellboundLootProfile};
 })();

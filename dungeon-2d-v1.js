@@ -1147,9 +1147,10 @@ function loot(s){
    const drops=P.rollReagents(s.bossId)||[];
    drops.forEach(d=>{Game.addMaterial(d.key,d.quantity);recordMaterialDrop(d,boss?.name||s.title)})
  }
- const mode=run?.endgame?.difficulty||'normal',dropChance=s.kind==='final'?1:mode==='normal'?.45:mode==='heroic'?.68:.78;
- if(Math.random()<dropChance){
-   const rolled=window.CellboundEndgame?.rollPersonalLoot?.('ashen-vault',s.bossId||s.id)||(G&&G.rollDungeonLoot?G.rollDungeonLoot(boss.name,boss.tier2Chance):null);
+ const mode=run?.endgame?.difficulty||'normal',rates=mode==='normal'?{ashwarden:.20,embermaw:.25,vaultheart:.50}:mode==='heroic'?{ashwarden:.25,embermaw:.35,vaultheart:.60}:{ashwarden:.30,embermaw:.40,vaultheart:.70},dropChance=Number(rates[s.bossId])||.20;
+ const pityFinal=s.kind==='final'&&run.loot.gear.length===0&&window.CellboundEndgame?.clearLootGuaranteed?.('ashen-vault');
+ if(pityFinal||Math.random()<dropChance){
+   const rolled=window.CellboundEndgame?.rollPersonalLoot?.('ashen-vault',s.bossId||s.id);
    if(rolled){
      const item=Object.assign({},rolled,{source:'The Ashen Vault · '+boss.name+' · '+(run?.endgame?.label||'Normal')});
      Game.addBankItem(item);run.loot.gear.push(item);return item
@@ -1655,6 +1656,7 @@ async function seamlessFrom(startIndex,tok){
   const chase=window.CellboundEndgame?.rollChase?.('ashen-vault');if(chase){st.activity.push('Very rare collection reward: '+chase.name+'.');flash('LEGENDARY DROP',false)}
   const metrics=endgameRunMetrics();run.endgameMetrics=metrics;
   const record=await window.CellboundEndgame?.recordRun?.('ashen-vault',metrics);run.endgameRecord=record&&!record.error?record:null;
+  window.CellboundEndgame?.recordClearLootOutcome?.('ashen-vault',(run.loot?.gear||[]).length>0);
   run.xpGrowth=awardPartyXp(xp);st.dungeonCompletions++;const completedPartyIds=party().map(c=>c.id);st.dungeonHistory.unshift({at:new Date().toISOString(),result:'complete',difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs,partyIlvl:ilvl(),xpPerCharacter:xp,partyIds:completedPartyIds,combatVersion:window.CellboundCombatReborn?.VERSION||'legacy',dungeonVersion:run.endgame?.dungeonVersion||2});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The Ashen Vault · '+(run.endgame?.label||'Normal')+' cleared. Score '+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'. Each adventurer earned '+xp+' XP.');run.xpGrowth.filter(x=>x.levels>0).forEach(x=>st.activity.push(x.name+' reached Level '+x.afterLevel+'.'));await Game.persistState();await syncPartyXpRecords(run.xpGrowth);window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'ashen-vault',difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs,partyIds:completedPartyIds}}));finish(true,STAGES[6]);appendRebornAnalysis($('#cb2dEnd'))
  }catch(e){
    if(e&&e.message==='cancelled')return;

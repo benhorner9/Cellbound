@@ -102,7 +102,7 @@ function dungeonCard(id){
    '<div class="eg-dungeon-grid">'+
      '<section><small>SELECTED RUN</small><h4>'+esc(cfg.diff.name)+'</h4><p>'+esc(cfg.diff.description)+'</p><div class="eg-affixes">'+affixMarkup(cfg.affixes)+'</div></section>'+
      '<section><small>READINESS</small><h4>iLvl '+cfg.recommendedItemLevel+' recommended</h4><p>'+esc(readyGuidance(cfg))+'</p><strong>'+esc(progressCopy(id))+'</strong></section>'+
-     '<section><small>REWARDS</small><h4>'+esc(D.rewardBand(cfg.difficulty,cfg.tier).label)+'</h4><p>'+lootNames(id).map(esc).join(' · ')+'</p><strong>Cell Shards · boss loot · rare collection hooks</strong></section>'+
+     '<section><small>REWARDS</small><h4>'+esc(D.rewardBand(cfg.difficulty,cfg.tier,id).label)+'</h4><p>'+lootNames(id).map(esc).join(' · ')+'</p><strong>Cell Shards · boss loot · rare collection hooks</strong></section>'+
    '</div>'+
    '<div class="eg-boss-strip">'+cfg.dungeon.bosses.map(b=>'<span><b>'+esc(b.name)+'</b><small>'+esc(b.signature)+'</small></span>').join('')+'</div>'+bossLootMarkup(id)+
    '<footer><div><small>TARGET TIME</small><b>'+formatTime(cfg.targetTimeMs)+'</b><span>Score improves through tier, time, deaths and mechanical execution.</span></div><button data-eg-prepare="'+id+'" '+(difficultyUnlocked(id,cfg.difficulty,cfg.tier)?'':'disabled')+'>PREPARE '+esc(cfg.diff.label)+' →</button></footer>'+
@@ -268,35 +268,59 @@ function weightedTier(weights){
  for(const [tier,w] of entries){acc+=w;if(r<=acc)return tier}
  return entries[entries.length-1]?.[0]||1
 }
-function rarityTierFor(cfg){
- const rules=D.LOOT_RULES?.rarityWeights||{};
- if(cfg.difficulty==='normal')return weightedTier(rules.normal||{1:.72,2:.28});
- if(cfg.difficulty==='heroic')return weightedTier(rules.heroic||{2:.68,3:.32});
- if(cfg.tier>=10)return weightedTier(rules.cellboundHigh||{3:.8,4:.2});
- if(cfg.tier>=5)return weightedTier(rules.cellboundMid||{3:.88,4:.12});
- return weightedTier(rules.cellboundLow||{2:.35,3:.65})
+function lootProfile(dungeonId,difficulty='normal',tier=0){
+ return D.lootProfileFor?.(dungeonId,difficulty,tier)||{tiers:D.LOOT_RULES?.rarityWeights?.normal||{1:.7,2:.3},itemLevel:{Head:18,Chest:20,Weapon:22}}
 }
-function compatibleUnique(item,party){
- if(!item)return false;if(item.classes==='all'||!item.classes)return true;
+function rarityTierFor(dungeonId,difficulty='normal',tier=0){return weightedTier(lootProfile(dungeonId,difficulty,tier).tiers)}
+function compatibleUnique(item,party,difficulty='normal'){
+ if(!item||Number(item.tier)>=Number(D.LOOT_RULES?.raidExclusiveTier||5))return false;
+ const rank={normal:0,heroic:1,cellbound:2},required=rank[item.minDifficulty||'normal']??0;
+ if((rank[difficulty]??0)<required)return false;
+ if(item.classes==='all'||!item.classes)return true;
  return party.some(c=>Array.isArray(item.classes)&&item.classes.includes(c.class))
+}
+function profileItem(dungeonId,{difficulty='normal',tier=0,party=[],source='Dungeon',bossId=null,fixed=[]}={}){
+ const profile=lootProfile(dungeonId,difficulty,tier),rolledTier=rarityTierFor(dungeonId,difficulty,tier),allowed=new Set(Object.entries(profile.tiers||{}).filter(([,w])=>Number(w)>0).map(([k])=>Number(k)));
+ const eligibleFixed=fixed.filter(item=>allowed.has(Number(item.tier))&&Number(item.tier)<Number(D.LOOT_RULES?.raidExclusiveTier||5)&&party.some(c=>item.class===c.class));
+ const pool=G.items.filter(x=>Number(x.tier)===rolledTier&&x.enabled&&!x.raidExclusive&&Number(x.tier)<Number(D.LOOT_RULES?.raidExclusiveTier||5)&&party.some(c=>x.class===c.class));
+ const targetChance=bossId&&eligibleFixed.length?(D.LOOT_RULES?.targetedBossChance??.55):0;
+ const base=(targetChance&&Math.random()<targetChance?eligibleFixed[Math.floor(Math.random()*eligibleFixed.length)]:null)||pool[Math.floor(Math.random()*Math.max(1,pool.length))]||null;
+ if(!base)return null;
+ const item=G.rollItemAffixes({...base,source}),ilvl=Number(profile.itemLevel?.[item.slot])||Number(item.itemLevel)||0;
+ item.itemLevel=Math.min(Number(D.LOOT_RULES?.powerCeiling)||44,ilvl);item.baseItemLevel=item.itemLevel;
+ return item
+}
+function rollChapterLoot(dungeonId,opts={}){
+ const party=Game?.getPartyCharacters?.()||[],difficulty=opts.difficulty||'normal',tier=Number(opts.tier)||0,source=opts.source||dungeonId;
+ return profileItem(dungeonId,{difficulty,tier,party,source,bossId:opts.bossId||null,fixed:[]})
 }
 function rollPersonalLoot(dungeonId,bossId=null){
  const cfg=currentConfig(dungeonId),party=Game?.getPartyCharacters?.()||[],sourceKeys=(bossId&&cfg.dungeon.bossDrops?.[bossId])||cfg.dungeon.lootTable||[],uniqueKeys=sourceKeys.filter(x=>D.UNIQUE_ITEMS[x]);
  const lr=D.LOOT_RULES||{},uniqueChance=cfg.difficulty==='normal'?(lr.uniqueChance?.normal??.002):cfg.difficulty==='heroic'?(lr.uniqueChance?.heroic??.025):Math.min(lr.uniqueChance?.cellboundCap??.09,(lr.uniqueChance?.cellboundBase??.035)+cfg.tier*(lr.uniqueChance?.cellboundPerTier??.0035));
  if(uniqueKeys.length&&Math.random()<uniqueChance){
-   const candidates=uniqueKeys.map(x=>D.UNIQUE_ITEMS[x]).filter(x=>compatibleUnique(x,party));
+   const candidates=uniqueKeys.map(x=>D.UNIQUE_ITEMS[x]).filter(x=>compatibleUnique(x,party,cfg.difficulty));
    if(candidates.length)return{...candidates[Math.floor(Math.random()*candidates.length)],rollId:'unique-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,7),unique:true}
  }
- const fixed=sourceKeys.map(key=>G.byId?.(key)).filter(Boolean).filter(item=>party.some(c=>item.class===c.class));
- const tier=rarityTierFor(cfg),pool=G.items.filter(x=>x.tier===tier&&x.enabled&&party.some(c=>x.class===c.class));
- const targetChance=bossId&&fixed.length?(D.LOOT_RULES?.targetedBossChance??.55):0;
- const base=(targetChance&&Math.random()<targetChance?fixed[Math.floor(Math.random()*fixed.length)]:null)||pool[Math.floor(Math.random()*Math.max(1,pool.length))]||G.items.find(x=>x.tier===tier&&x.enabled);
- if(!base)return null;
- const item=G.rollItemAffixes({...base,source:cfg.dungeon.name+' · '+cfg.diff.name});
- const cap=Math.min(D.LOOT_RULES?.powerCeiling||42,D.rewardBand(cfg.difficulty,cfg.tier).powerCap);
- const bonus=cfg.difficulty==='normal'?0:cfg.difficulty==='heroic'?4:6+Math.min(8,Math.floor(cfg.tier/2));
- item.itemLevel=Math.min(cap,Math.max(Number(item.itemLevel)||0,(Number(item.itemLevel)||0)+bonus));
- item.power=Math.max(Number(item.power)||0,Math.floor(bonus/2));return item
+ const fixed=sourceKeys.map(key=>G.byId?.(key)).filter(Boolean);
+ return profileItem(dungeonId,{difficulty:cfg.difficulty,tier:cfg.tier,party,source:cfg.dungeon.name+' · '+cfg.diff.name,bossId,fixed})
+}
+function lootPity(){
+ const state=Game?.getState?.();if(!state)return null;
+ state.dungeonLootPity=state.dungeonLootPity&&typeof state.dungeonLootPity==='object'?state.dungeonLootPity:{};
+ return state.dungeonLootPity
+}
+function clearLootGuaranteed(dungeonId){
+ const pity=lootPity();return Boolean(pity&&Number(pity[dungeonId]||0)>=Number(D.LOOT_RULES?.clearPityGuaranteeAfter??2))
+}
+function recordClearLootOutcome(dungeonId,gotGear){
+ const pity=lootPity();if(!pity)return;
+ pity[dungeonId]=gotGear?0:(Number(pity[dungeonId])||0)+1
+}
+function rollClearLoot(dungeonId,bossId=null,chance=.7,opts={}){
+ const guaranteed=clearLootGuaranteed(dungeonId),hit=guaranteed||Math.random()<Math.max(0,Math.min(1,Number(chance)||0));
+ if(!hit){recordClearLootOutcome(dungeonId,false);return null}
+ const item=D.DUNGEONS[dungeonId]?rollPersonalLoot(dungeonId,bossId):rollChapterLoot(dungeonId,opts);
+ recordClearLootOutcome(dungeonId,Boolean(item));return item
 }
 function shardReward(dungeonId){
  const cfg=currentConfig(dungeonId);return Math.max(1,Math.round(cfg.diff.cellShardBase+(cfg.difficulty==='cellbound'?cfg.tier:0)))
@@ -319,7 +343,7 @@ async function claimWeekly(){
  if(!db||!Game)return;
  const {data,error}=await db.rpc('claim_weekly_dungeon_reward');
  if(error){alert(error.message||'Weekly reward is not ready.');return}
- const quality=data?.quality||'starter',tier=quality==='epic'?3:quality==='rare'?3:quality==='uncommon'?2:1;
+ const quality=data?.quality||'starter',tier=quality==='epic'?4:quality==='rare'?3:quality==='uncommon'?2:1;
  const pool=G.items.filter(x=>x.tier===tier&&x.enabled),base=pool[Math.floor(Math.random()*Math.max(1,pool.length))];
  if(base)Game.addBankItem?.(G.rollItemAffixes({...base,source:'Weekly Endgame Vault'}));
  Game.addMaterial?.('cell-shards',quality==='epic'?40:quality==='rare'?28:quality==='uncommon'?18:10);
@@ -334,7 +358,7 @@ function debugSnapshot(dungeonId='ashen-vault'){
    dungeon:{id:dungeonId,version:cfg.dungeon.version,difficulty:cfg.difficulty,tier:cfg.tier,targetTimeMs:cfg.targetTimeMs,recommendedItemLevel:cfg.recommendedItemLevel},
    scaling:{...cfg.diff},
    affixes:[...cfg.affixes],
-   rewardBand:D.rewardBand(cfg.difficulty,cfg.tier),
+   rewardBand:D.rewardBand(cfg.difficulty,cfg.tier,dungeonId),
    lootRules:D.LOOT_RULES,
    progress:{...progressFor(dungeonId)},
    weekly:{...(server.weekly||{})},
@@ -352,7 +376,7 @@ async function init(){
  window.addEventListener('cellbound:dungeon-complete',()=>refresh());
  await refresh();
  window.CellboundEndgame={
-   refresh,render,currentConfig,stageConfig,beginAttempt,recordRun,rollPersonalLoot,shardReward,rollChase,
+   refresh,render,currentConfig,stageConfig,beginAttempt,recordRun,rollPersonalLoot,rollChapterLoot,rollClearLoot,clearLootGuaranteed,recordClearLootOutcome,shardReward,rollChase,
    progressFor,difficultyUnlocked,choose,prepare,runSummaryLabel,achievementName,debugSnapshot,getSelection:id=>({...selection[id]})
  }
 }

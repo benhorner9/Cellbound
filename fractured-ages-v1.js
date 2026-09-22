@@ -209,9 +209,7 @@ async function syncXp(gains){
  try{await Promise.all(gains.map(x=>db.from('characters').update({level:x.afterLevel,xp:x.afterXp,last_played_at:new Date().toISOString()}).eq('user_id',user.id).eq('name',x.name)))}catch(e){console.warn('Fractured Ages XP sync failed',e)}
 }
 function rollTemporalGear(){
- const pool=(G?.items||[]).filter(x=>x.enabled&&Number(x.tier)===3);if(!pool.length)return null;
- const base=pool[Math.floor(Math.random()*pool.length)];
- return G.rollItemAffixes?.({...base,dropEnabled:true,rarity:'Rare',tierLabel:'Tier 3',itemLevel:42,power:0,source:'The Fractured Ages · Funhouse Escape'})||{...base,itemLevel:42,source:'The Fractured Ages · Funhouse Escape'}
+ return window.CellboundEndgame?.rollChapterLoot?.('fractured-ages',{difficulty:'normal',source:'The Fractured Ages · Funhouse Escape'})||null
 }
 function gearCard(item){
  if(!item)return'<div class="cb2d-loot-empty">No temporal equipment recovered.</div>';
@@ -220,7 +218,7 @@ function gearCard(item){
 }
 async function completeRun(){
  if(!run||run.done)return;run.done=true;
- const s=state(),gains=awardXp(),gear=rollTemporalGear(),gold=500,renown=250,shards=15;
+ const s=state(),gains=awardXp(),gear=window.CellboundEndgame?.rollClearLoot?.('fractured-ages',null,.85,{difficulty:'normal',source:'The Fractured Ages · Funhouse Escape'})||null,gold=500,renown=250,shards=15;
  s.gold=(Number(s.gold)||0)+gold;s.renown=(Number(s.renown)||0)+renown;s.fracturedAgesCompletions=(Number(s.fracturedAgesCompletions)||0)+1;
  s.progression=s.progression||{};const first=!s.progression.fracturedAgesFirstClear;s.progression.fracturedAgesFirstClear=true;
  Game.addMaterial?.('cell-shards',shards);if(gear)Game.addBankItem?.(gear);s.activity=Array.isArray(s.activity)?s.activity:[];
