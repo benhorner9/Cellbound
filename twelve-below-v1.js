@@ -72,7 +72,7 @@ function tbSetResource(unitId,name,value,max){
  if(label)label.textContent=(name||'Power')+' '+Math.round(current)
 }
 
-function todayKey(){return new Date().toISOString().slice(0,10)}
+function todayKey(){const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
 function eventState(){
  const s=state();if(!s)return null;
  const today=todayKey();
