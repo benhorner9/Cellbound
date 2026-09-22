@@ -169,7 +169,7 @@ function sellPreviewArt(item){
   if(!item)return'';
   if(item.type==='gear'){
     const gear=G.byId(item.key)||G.byName(item.name)||item.payload;
-    return G.artHTML(gear,82,'trade-sell-gear-art');
+    return G.artHTML(gear,74,'trade-sell-gear-art');
   }
   if(item.type==='material')return P?.materialArtHTML?P.materialArtHTML(item.key,76,'trade-sell-material-art'):(P?.MATERIALS?.[item.key]?.icon||'◇');
   if(item.type==='recipe')return'<span class="trade-preview-symbol">▤</span>';
