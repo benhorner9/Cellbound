@@ -54,7 +54,7 @@ for(const file of files){
     if(!contents.includes("GRID_OVERRIDE_DROP_CHANCE=.10")||!contents.includes('GRID_OVERRIDE_MAX_CHARGES=5'))throw new Error('Grid Override Module must remain a 10% five-charge Blackout drop');
     if(!contents.includes('async function useGridOverride()')||!contents.includes("if(!run.quickReconnect)"))throw new Error('Grid Override must remain gated behind a manual first clear');
     if(!contents.includes("tradeState:'tradeable'")||!contents.includes('nonStackable:true'))throw new Error('Grid Override Module must remain tradeable and non-stackable');
-    if(!contents.includes("gear=rollGear(),overrideDrop=Math.random()<GRID_OVERRIDE_DROP_CHANCE"))throw new Error('Grid Override drop must remain independent from the normal gear roll');
+    if(!contents.includes("overrideDrop=Math.random()<GRID_OVERRIDE_DROP_CHANCE?createGridOverrideModule():null"))throw new Error('Grid Override drop must remain an independent 10% roll from equipment loot');
   }
   if(file==='trading-post-v3.js'){
     if(/location\.reload\s*\(/.test(contents))throw new Error('Trading Post must not hard-reload the page after market actions');
