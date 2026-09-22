@@ -14,7 +14,8 @@ const SAVE_VERSION=5;
 const PVE_WIPE_CELL_SHOCK=25;
 const STANDARD_RECOVERY_MINUTES=60;
 const MEMBER_RECOVERY_MINUTES=30;
-const ILVL_SLOTS=['Head','Chest','Weapon'];
+const LEGACY_ILVL_SLOTS=['Head','Chest','Weapon'];
+const ILVL_SLOTS=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic'];
 const SLOT_ITEM_LEVEL=G.ITEM_LEVELS||{Head:[18,24,32,40,46],Chest:[20,26,34,42,48],Weapon:[22,28,36,44,50]};
 const SLOT_POWER={Head:[2,5,9,13,17],Chest:[3,6,10,15,20],Weapon:[4,8,12,18,24]};
 const authStorage={
@@ -142,8 +143,12 @@ function isBankUtility(item){return Boolean(item?.category==='utility'||item?.ut
 function bankUtilityArt(item,size=66){const icon=esc(item?.icon||'⚡');return `<span class="bank-utility-art rarity-${String(item?.rarity||'rare').toLowerCase()}" style="width:${size}px;height:${size}px" aria-label="${esc(item?.name||'Utility item')}"><i>${icon}</i></span>`}
 function bankItemArt(item,size=66){return isBankUtility(item)?bankUtilityArt(item,size):G.artHTML(item,size)}
 function characterItemLevel(c){
-  const items=ILVL_SLOTS.map(slot=>canonicalItem(c?.equipment?.[slot]));
-  const total=items.reduce((sum,item)=>sum+(Number(item?.itemLevel)||0),0);
+  const core=LEGACY_ILVL_SLOTS.map(slot=>canonicalItem(c?.equipment?.[slot])).filter(Boolean);
+  const legacyBaseline=core.length?core.reduce((sum,item)=>sum+(Number(item?.itemLevel)||0),0)/core.length:0;
+  const total=ILVL_SLOTS.reduce((sum,slot)=>{
+    const item=canonicalItem(c?.equipment?.[slot]),level=Number(item?.itemLevel)||0;
+    return sum+(LEGACY_ILVL_SLOTS.includes(slot)?level:Math.max(legacyBaseline,level));
+  },0);
   return Math.round(total/ILVL_SLOTS.length);
 }
 function partySlotIds(){return [state?.party?.tank,state?.party?.healer,...(state?.party?.dps||[])].slice(0,5)}
