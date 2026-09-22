@@ -412,6 +412,11 @@ async function ccFail(s,result){
  run.done=true;Game.applyPartyCellShock?.(25);const st=state();st.activity.push('The guild wiped in Chaos Canyon at '+s.title+'. All five gained 25% Cell Shock.');Game.save?.();await Game.persistState?.();
  const end=$('#cc2dEnd');end.hidden=false;end.className='cb2d-end cb2d-results-screen';$('.cc2d-shell')?.classList.add('results-mode');end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Mastery records and the cause of the wipe are retained.</p></div>'+ccFailureDiagnosis(result)+ccStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
 }
+async function ccFailNoHealer(s,result){
+ run.done=true;Game.applyPartyCellShock?.(25);const st=state();st.activity.push('The Chaos Canyon expedition ended after '+s.title+' because no healer was available to revive fallen adventurers. All five gained 25% Cell Shock.');Game.save?.();await Game.persistState?.();
+ const end=$('#cc2dEnd');if(!end)return;end.hidden=false;end.className='cb2d-end cb2d-results-screen';$('.cc2d-shell')?.classList.add('results-mode');end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>No healer available after '+esc(s.title)+'.</h3><p>The encounter was won, but fallen adventurers could not be revived between fights. All five gained 25% Cell Shock.</p></div>'+ccFailureDiagnosis(result)+ccStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
+}
+
 async function ccRecoverFallen(tok){
  let fallen=party().filter(c=>(Number(run.hp[c.id])||0)<=0);if(!fallen.length)return true;
  let healer=party().find(c=>role(c)==='healer'&&(Number(run.hp[c.id])||0)>0);
@@ -474,7 +479,7 @@ async function fightStage(s,tok,index){
  });
  run.expeditionTimeMs=(Number(run.expeditionTimeMs)||0)+Number(result.durationMs||0);
  if(!won){await ccFail(s,result);return false}
- if(!await ccRecoverFallen(tok))return false;
+ if(!await ccRecoverFallen(tok)){if(tok===token&&run)await ccFailNoHealer(s,result);return false}
  party().forEach(c=>{if((run.hp[c.id]||0)>0)run.hp[c.id]=Math.min(100,(run.hp[c.id]||0)+6)});
  ccAdvanceCooldowns(5000);
  if(s.id==='warden'&&run.chaosScar){const scar=ccScarPct();feed('The Chaos Warden falls. Chaos Scar +'+scar+'% is removed.');run.chaosScar=0;ccUpdateScar()}feed(s.title+' is clear.');setStatus('Path clear.');await wait(600);return true
