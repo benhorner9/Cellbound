@@ -404,3 +404,28 @@ body.bs2d-open{overflow:hidden}
   color:#d18b7c;
   font-size:.58rem
 }
+
+.bs-override-panel{margin-top:10px;padding:12px;border:1px solid rgba(82,186,255,.12);background:linear-gradient(135deg,rgba(10,27,31,.92),rgba(8,16,19,.94))}
+.bs-override-panel>div{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.bs-override-panel span{color:#79a9c8;font-size:.4rem;font-weight:900;letter-spacing:.09em}
+.bs-override-panel b{color:#6ec8ff;font-size:.5rem}
+.bs-override-panel p{margin:7px 0;color:#80918c;font-size:.5rem;line-height:1.45}
+.bs-override-panel button{width:100%;min-height:39px;border:1px solid rgba(82,186,255,.22);background:#0b2027;color:#9edaff;font-size:.43rem;font-weight:900;letter-spacing:.06em}
+.bs-override-panel.ready{border-color:rgba(82,186,255,.32);box-shadow:inset 0 0 28px rgba(62,152,194,.06)}
+.bs-override-panel.ready button{background:linear-gradient(180deg,#12303a,#0a2229);box-shadow:0 0 18px rgba(82,186,255,.09)}
+.bs-override-panel button:disabled{opacity:.42;box-shadow:none}
+.bs-override-panel>small{display:block;margin-top:6px;color:#61736d;font-size:.36rem}
+.bs-puzzle-shell.override-active .bs-grid-frame{box-shadow:0 0 0 1px rgba(82,186,255,.18),0 0 34px rgba(82,186,255,.08)}
+.bs-puzzle-shell.override-active .bs-grid-tile{opacity:.58}
+.bs-puzzle-shell.override-active .bs-grid-tile.override-lit{opacity:1;filter:brightness(1.45);box-shadow:inset 0 0 18px rgba(82,186,255,.25),0 0 12px rgba(82,186,255,.14)}
+.bs-override-art{display:grid;place-items:center;flex:0 0 auto;border:1px solid rgba(82,186,255,.28);border-radius:10px;background:
+ radial-gradient(circle at 50% 45%,rgba(82,186,255,.2),transparent 44%),linear-gradient(145deg,#10242b,#071115);box-shadow:inset 0 0 18px rgba(82,186,255,.08),0 6px 18px rgba(0,0,0,.35)}
+.bs-override-art i{display:grid;place-items:center;width:58%;height:58%;border:1px solid rgba(216,185,118,.24);border-radius:50%;background:#0a161a;color:#6fd0ff;font-size:1.3rem;font-style:normal;text-shadow:0 0 12px rgba(82,186,255,.8)}
+.bs-override-drop-section{animation:bsOverrideDrop .5s .16s ease both}
+.bs-override-drop-card{display:grid;grid-template-columns:82px minmax(0,1fr);gap:14px;align-items:center;max-width:680px;padding:12px;border:1px solid rgba(82,186,255,.18);background:linear-gradient(135deg,#0c1c21,#091214);position:relative;overflow:hidden}
+.bs-override-drop-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#629bd0;box-shadow:0 0 14px rgba(98,155,208,.32)}
+.bs-override-drop-card small{display:block;color:#729fc7;font-size:.39rem;font-weight:900;letter-spacing:.08em}
+.bs-override-drop-card h4{margin:3px 0;color:#dce7e8;font-family:Georgia,serif;font-size:.82rem;font-weight:500}
+.bs-override-drop-card p{margin:0;color:#7d8f8b;font-size:.45rem;line-height:1.45}
+.bs-override-drop-card em{display:inline-block;margin-top:7px;padding:4px 6px;border:1px solid rgba(105,199,139,.14);background:rgba(22,52,33,.2);color:#82be98;font-size:.35rem;font-style:normal;font-weight:900;letter-spacing:.05em}
+@keyframes bsOverrideDrop{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
