@@ -288,6 +288,18 @@
 /* Quest fights intentionally inherit the core cb2d dungeon viewer. */
 
 /* Full dungeon-standard quest combat HUD */
+
+.quest-cb2d-shell .cb2d-unit{
+  will-change:left,top,transform;
+  backface-visibility:hidden;
+  transition-property:left,top,transform,opacity,filter;
+  transition-timing-function:cubic-bezier(.22,.61,.36,1);
+}
+.quest-cb2d-shell .cb2d-unit.attacking>i{animation:cb2dAttackPulse .42s ease-out}
+.quest-cb2d-shell .cb2d-unit.hit>i{animation:cb2dHitReact .28s ease-out}
+.quest-cb2d-shell .cb2d-unit.healed>i{animation:cb2dHealReact .32s ease-out}
+.quest-cb2d-shell .cb2d-unit.dying>i{animation:cb2dDying .3s ease-in forwards}
+
 .quest-cb2d-shell .q2d-side-resource{
   display:block;height:4px;margin-top:4px;overflow:hidden;border-radius:2px;background:#151e22;
 }
