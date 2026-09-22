@@ -524,80 +524,97 @@ function tdMechanicTelegraph(e){
   if(type==='interrupt')return tdCastBar(e.ability,Number(e.payload?.duration)||1600);
   return null
 }
-async function tdPlayCombat(result,my){
-  let last=0;const telegraphs={};
-  for(const e of result.events||[]){
-    if(my!==tutorialToken)return false;
-    const gap=Math.max(0,(Number(e.timestamp)||0)-last);if(gap)await sleep(gap);
-    if(tutorialCombatStats)tutorialCombatStats.elapsed=Math.max(Number(tutorialCombatStats.elapsed)||0,Number(e.timestamp)||0);
-    const srcSel=tdSelectorFor(e.source),targetSel=tdSelectorFor(e.target),srcChar=tdEventCharacter(e.source),targetChar=tdEventCharacter(e.target);
-    try{if(window.CellboundCombatStatuses?.handle(e,{resolve:tdStatusTargets,speed:1})){last=Number(e.timestamp)||last;continue}}catch(error){console.warn('First Expedition status UI skipped',e?.type,error)}
-    switch(e.type){
-      case'COMBAT_START':tdFeed('The pull begins.');break;
-      case'MOVEMENT_START':
-        if(srcSel&&e.payload?.to)tdMove(srcSel,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
-      case'ABILITY_START':
-        if(srcSel&&targetSel){
-          if(srcChar)tdProjectile(srcSel,targetSel,tdCombatKind(srcChar));
-          else tdProjectile(srcSel,targetSel,'enemy');
-        }
-        if(srcChar){const r=tdRole(srcChar);tdAction(r==='tank'?'tank':r==='healer'?'healer':'dps',srcChar.name+' · '+(e.ability||'Action'))}
-        break;
-      case'DAMAGE_DEALT':
-        if(targetSel){
-          const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdFloat(targetSel,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');
-          if(targetChar)tdSetPartyHpByEvent(targetChar,p);
-          else{const idx=Number(String(e.target||'').slice(2));if(Number.isInteger(idx))setTdHp(idx,(Number(e.payload?.targetHp)||0))}
-        }
-        if(srcChar&&tutorialCombatStats){tutorialCombatStats.damage[srcChar.id]=(Number(tutorialCombatStats.damage[srcChar.id])||0)+(Number(e.amount)||0);tdRenderMeters()}
-        break;
-      case'HEAL_RECEIVED':
-        if(targetChar&&targetSel){const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdSetPartyHpByEvent(targetChar,p);tdFloat(targetSel,'+'+Math.round(Number(e.amount)||0),'heal')}
-        if(srcChar&&tutorialCombatStats){tutorialCombatStats.healing[srcChar.id]=(Number(tutorialCombatStats.healing[srcChar.id])||0)+(Number(e.amount)||0);tdRenderMeters()}
-        break;
-      case'THREAT_GENERATED':
-        if(srcChar&&tutorialCombatStats){tutorialCombatStats.threat[srcChar.id]=Number(e.payload?.total)||0;tdRenderMeters()}break;
-      case'UNIQUE_EFFECT_TRIGGER':if(srcChar){tdFeed(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');if(srcSel)tdFloat(srcSel,e.ability||'UNIQUE','heal')}break;
-      case'PLAYER_MISTAKE':if(srcChar)tdFeed(srcChar.name+' '+(e.payload?.detail||'makes an execution mistake')+'.');break;
-      case'PLAYER_REVIVED':
-        if(targetChar&&targetSel){tdSetPartyHpByEvent(targetChar,Number(e.payload?.targetHpPct)||35);$(targetSel)?.classList?.remove?.('dead');tdFloat(targetSel,'BATTLE REZ','heal');tdFeed(targetChar.name+' is brought back by '+(srcChar?.name||'the healer')+'.');tdResourceVisual({source:e.target,payload:{resource:e.payload?.resource,value:e.payload?.resourceValue,max:e.payload?.resourceMax}})}
-        break;
-      case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':tdResourceVisual(e);break;
-      case'AGGRO_CHANGED':
-        if(tutorialCombatStats){
-          tutorialCombatStats.aggro=targetChar?.id||null;
-          if(e.payload?.threat&&typeof e.payload.threat==='object')Object.entries(e.payload.threat).forEach(([id,v])=>{const ch=tdEventCharacter(id);if(ch)tutorialCombatStats.threat[ch.id]=Number(v)||0});
-          tdRenderMeters()
-        }
-        if(/^e-\d+$/.test(String(e.source||''))&&targetChar){tdThreatLine(Number(String(e.source).slice(2)),targetChar);if(tdRole(targetChar)==='tank')tdAction('tank',targetChar.name+' holds threat')}
-        break;
-      case'MECHANIC_TELEGRAPH':{
-        const tg=tdMechanicTelegraph(e);telegraphs[e.payload?.token||e.timestamp]=tg;tdFeed((e.ability||'Mechanic')+' is telegraphed.');break;
+function tdRenderCombatEvent(e,telegraphs){
+  if(tutorialCombatStats)tutorialCombatStats.elapsed=Math.max(Number(tutorialCombatStats.elapsed)||0,Number(e.timestamp)||0);
+  const srcSel=tdSelectorFor(e.source),targetSel=tdSelectorFor(e.target),srcChar=tdEventCharacter(e.source),targetChar=tdEventCharacter(e.target);
+  try{if(window.CellboundCombatStatuses?.handle(e,{resolve:tdStatusTargets,speed:1}))return}catch(error){console.warn('First Expedition status UI skipped',e?.type,error)}
+  switch(e.type){
+    case'COMBAT_START':tdFeed('The pull begins.');break;
+    case'MOVEMENT_START':
+      if(srcSel&&e.payload?.to)tdMove(srcSel,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
+    case'ABILITY_START':
+      if(srcSel&&targetSel){
+        if(srcChar)tdProjectile(srcSel,targetSel,tdCombatKind(srcChar));
+        else tdProjectile(srcSel,targetSel,'enemy');
       }
-      case'MECHANIC_RESOLVE':{
-        const k=e.payload?.token,el=telegraphs[k];if(el){el.classList?.add?.('impact');setTimeout(()=>el.remove?.(),350);delete telegraphs[k]}break;
+      if(srcChar){const r=tdRole(srcChar);tdAction(r==='tank'?'tank':r==='healer'?'healer':'dps',srcChar.name+' · '+(e.ability||'Action'))}
+      break;
+    case'DAMAGE_DEALT':
+      if(targetSel){
+        const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdFloat(targetSel,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');
+        if(targetChar)tdSetPartyHpByEvent(targetChar,p);
+        else{const idx=Number(String(e.target||'').slice(2));if(Number.isInteger(idx))setTdHp(idx,(Number(e.payload?.targetHp)||0))}
       }
-      case'CAST_START':
-        tdGlobalCastStart(e.ability||'Enemy Cast',Number(e.payload?.duration)||1500);
-        if(e.payload?.interruptible)tdFeed((e.ability||'Dangerous cast')+' begins and can be interrupted.');break;
-      case'CAST_FINISH':tdGlobalCastClear('CAST COMPLETE');break;
-      case'INTERRUPT':
-        if(e.result==='success'){
-          const bar=$('.td-training-cast');if(bar){bar.classList.add('interrupted');const s=bar.querySelector('span');if(s)s.textContent='INTERRUPTED';setTimeout(()=>bar.remove(),500)}
-          tdGlobalCastClear('INTERRUPTED');
-          if(srcChar)tdAction('dps',srcChar.name+' interrupts '+(e.payload?.interruptedAbility||'the cast'));
-          tdFeed((e.payload?.interruptedAbility||'Dangerous cast')+' is interrupted.');
-        }
-        break;
-      case'PLAYER_DEFEATED':
-        if(targetChar){tdSetPartyHpByEvent(targetChar,0);tdFeed(targetChar.name+' is defeated.')}break;
-      case'ENEMY_DEFEATED':
-        if(/^e-\d+$/.test(String(e.target||''))){const idx=Number(String(e.target).slice(2));setTdHp(idx,0);tdFeed(tdEnemyName(idx)+' is defeated.')}break;
-      case'COMBAT_END':tdGlobalCastClear();tdFeed(e.result==='victory'?'Encounter clear.':'The Pathfinder ward pulls the party clear.');break;
+      if(srcChar&&tutorialCombatStats){tutorialCombatStats.damage[srcChar.id]=(Number(tutorialCombatStats.damage[srcChar.id])||0)+(Number(e.amount)||0);tdRenderMeters()}
+      break;
+    case'HEAL_RECEIVED':
+      if(targetChar&&targetSel){const p=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));tdSetPartyHpByEvent(targetChar,p);tdFloat(targetSel,'+'+Math.round(Number(e.amount)||0),'heal')}
+      if(srcChar&&tutorialCombatStats){tutorialCombatStats.healing[srcChar.id]=(Number(tutorialCombatStats.healing[srcChar.id])||0)+(Number(e.amount)||0);tdRenderMeters()}
+      break;
+    case'THREAT_GENERATED':
+      if(srcChar&&tutorialCombatStats){tutorialCombatStats.threat[srcChar.id]=Number(e.payload?.total)||0;tdRenderMeters()}break;
+    case'UNIQUE_EFFECT_TRIGGER':if(srcChar){tdFeed(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');if(srcSel)tdFloat(srcSel,e.ability||'UNIQUE','heal')}break;
+    case'PLAYER_MISTAKE':if(srcChar)tdFeed(srcChar.name+' '+(e.payload?.detail||'makes an execution mistake')+'.');break;
+    case'PLAYER_REVIVED':
+      if(targetChar&&targetSel){tdSetPartyHpByEvent(targetChar,Number(e.payload?.targetHpPct)||35);$(targetSel)?.classList?.remove?.('dead');tdFloat(targetSel,'BATTLE REZ','heal');tdFeed(targetChar.name+' is brought back by '+(srcChar?.name||'the healer')+'.');tdResourceVisual({source:e.target,payload:{resource:e.payload?.resource,value:e.payload?.resourceValue,max:e.payload?.resourceMax}})}
+      break;
+    case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':tdResourceVisual(e);break;
+    case'AGGRO_CHANGED':
+      if(tutorialCombatStats){
+        tutorialCombatStats.aggro=targetChar?.id||null;
+        if(e.payload?.threat&&typeof e.payload.threat==='object')Object.entries(e.payload.threat).forEach(([id,v])=>{const ch=tdEventCharacter(id);if(ch)tutorialCombatStats.threat[ch.id]=Number(v)||0});
+        tdRenderMeters()
+      }
+      if(/^e-\d+$/.test(String(e.source||''))&&targetChar){tdThreatLine(Number(String(e.source).slice(2)),targetChar);if(tdRole(targetChar)==='tank')tdAction('tank',targetChar.name+' holds threat')}
+      break;
+    case'MECHANIC_TELEGRAPH':{
+      const tg=tdMechanicTelegraph(e);telegraphs[e.payload?.token||e.timestamp]=tg;tdFeed((e.ability||'Mechanic')+' is telegraphed.');break;
     }
-    last=Number(e.timestamp)||last;
+    case'MECHANIC_RESOLVE':{
+      const k=e.payload?.token,el=telegraphs[k];if(el){el.classList?.add?.('impact');setTimeout(()=>el.remove?.(),350);delete telegraphs[k]}break;
+    }
+    case'CAST_START':
+      tdGlobalCastStart(e.ability||'Enemy Cast',Number(e.payload?.duration)||1500);
+      if(e.payload?.interruptible)tdFeed((e.ability||'Dangerous cast')+' begins and can be interrupted.');break;
+    case'CAST_FINISH':tdGlobalCastClear('CAST COMPLETE');break;
+    case'INTERRUPT':
+      if(e.result==='success'){
+        const bar=$('.td-training-cast');if(bar){bar.classList.add('interrupted');const s=bar.querySelector('span');if(s)s.textContent='INTERRUPTED';setTimeout(()=>bar.remove(),500)}
+        tdGlobalCastClear('INTERRUPTED');
+        if(srcChar)tdAction('dps',srcChar.name+' interrupts '+(e.payload?.interruptedAbility||'the cast'));
+        tdFeed((e.payload?.interruptedAbility||'Dangerous cast')+' is interrupted.');
+      }
+      break;
+    case'PLAYER_DEFEATED':
+      if(targetChar){tdSetPartyHpByEvent(targetChar,0);tdFeed(targetChar.name+' is defeated.')}break;
+    case'ENEMY_DEFEATED':
+      if(/^e-\d+$/.test(String(e.target||''))){const idx=Number(String(e.target).slice(2));setTdHp(idx,0);tdFeed(tdEnemyName(idx)+' is defeated.')}break;
+    case'PHASE_CHANGE':window.CellboundFX?.phase?.(e.ability||'Encounter phase',e.payload?.healthPct);tdFeed((e.ability||'The encounter changes')+'.');break;
+    case'COMBAT_END':tdGlobalCastClear();tdFeed(e.result==='victory'?'Encounter clear.':'The Pathfinder ward pulls the party clear.');break;
   }
-  return result.outcome==='victory'
+}
+async function tdPlayCombat(result,my){
+  const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0)),telegraphs={};
+  if(!events.length)return result?.outcome==='victory';
+  return await new Promise(resolve=>{
+    let index=0,simTime=0,lastFrame=performance.now(),finished=false;
+    const finish=value=>{if(finished)return;finished=true;resolve(value)};
+    const frame=now=>{
+      if(finished)return;
+      if(my!==tutorialToken){finish(false);return}
+      const rawDelta=Math.max(0,now-lastFrame);lastFrame=now;
+      simTime+=Math.min(rawDelta,100);
+      const frameStarted=performance.now();let handled=0;
+      while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<18&&performance.now()-frameStarted<8){
+        const event=events[index++];handled++;
+        try{tdRenderCombatEvent(event,telegraphs)}
+        catch(error){console.warn('First Expedition combat visual recovered',event?.type,event?.ability,error)}
+      }
+      if(index>=events.length){finish(result?.outcome==='victory');return}
+      requestAnimationFrame(frame)
+    };
+    requestAnimationFrame(frame)
+  })
 }
 async function fightTdPack(encounter,my){
   spawnTdEnemies(encounter);await sleep(350);
