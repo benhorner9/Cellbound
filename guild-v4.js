@@ -45,13 +45,13 @@ const ui={
 };
 
 const classes={
-  Warrior:{icon:'⚔',glow:'#b86b55',specs:{Protection:{role:'tank',talents:['Shield Mastery','Last Stand','Bulwark']},Arms:{role:'dps',talents:['Weapon Mastery','Deep Wounds','Execute']}}},
-  Paladin:{icon:'✥',glow:'#d8b65d',specs:{Protection:{role:'tank',talents:['Sacred Shield','Guardian Oath','Consecration']},Holy:{role:'healer',talents:['Divine Light','Grace','Beacon']}}},
-  Priest:{icon:'✚',glow:'#e2d9c5',specs:{Holy:{role:'healer',talents:['Renew','Serenity','Divine Hymn']}}},
-  Druid:{icon:'❈',glow:'#7fc47a',specs:{Restoration:{role:'healer',talents:['Rejuvenation','Lifebloom','Tranquility']}}},
-  Hunter:{icon:'➶',glow:'#9abe68',specs:{Marksman:{role:'dps',talents:['True Aim','Rapid Fire','Kill Shot']}}},
-  Rogue:{icon:'◆',glow:'#d9c86c',specs:{Assassination:{role:'dps',talents:['Ambush','Venom','Eviscerate']}}},
-  Mage:{icon:'✦',glow:'#6da7df',specs:{Arcane:{role:'dps',talents:['Arcane Focus','Surge','Barrage']}}}
+  Warrior:{icon:'⚔',glow:'#C69B6D',specs:{Protection:{role:'tank',talents:['Shield Mastery','Last Stand','Bulwark']},Arms:{role:'dps',talents:['Weapon Mastery','Deep Wounds','Execute']}}},
+  Paladin:{icon:'✥',glow:'#F48CBA',specs:{Protection:{role:'tank',talents:['Sacred Shield','Guardian Oath','Consecration']},Holy:{role:'healer',talents:['Divine Light','Grace','Beacon']}}},
+  Priest:{icon:'✚',glow:'#FFFFFF',specs:{Holy:{role:'healer',talents:['Renew','Serenity','Divine Hymn']}}},
+  Druid:{icon:'❈',glow:'#FF7C0A',specs:{Restoration:{role:'healer',talents:['Rejuvenation','Lifebloom','Tranquility']}}},
+  Hunter:{icon:'➶',glow:'#AAD372',specs:{Marksman:{role:'dps',talents:['True Aim','Rapid Fire','Kill Shot']}}},
+  Rogue:{icon:'◆',glow:'#FFF468',specs:{Assassination:{role:'dps',talents:['Ambush','Venom','Eviscerate']}}},
+  Mage:{icon:'✦',glow:'#3FC7EB',specs:{Arcane:{role:'dps',talents:['Arcane Focus','Surge','Barrage']}}}
 };
 
 const RECRUIT_RACES=[

@@ -1,6 +1,7 @@
 const fs=require('fs');
 const path=require('path');
-const files=['index.html','styles.css','auth.js','guild.html','guild.css','bank.css','character-sheet.css','gear-system.css','foundations.css','presentation-fx-v1.css','economy-v2.css','trading-post-v3.css','social-v3.css','evolution-v1.css','dungeon-2d-v1.css','combat-status-ui-v1.css','combat-vitals-ui-v1.css','endgame-v1.css','world-boss-2d-v1.css','twelve-below-v1.css','admin-v1.css','release-v1.css','onboarding-v1.css','hollow-sanctum-v1.css','chaos-canyon-v1.css','blackout-station-v1.css','thirteenth-bell-v1.css','fourfold-lock-v1.css','fractured-ages-v1.css','quests-v1.css','quests-v2.css','mobile-v1.css','readability-v1.css','ui-readability-v2.css','gear-data.js','profession-data.js','combat-identities-v1.js','combat-standard-v1.js','combat-status-ui-v1.js','endgame-data-v1.js','presentation-fx-v1.js','guild-v4.js','character-sheet.js','gear-character-patch.js','character-foundations-patch.js','economy-v2.js','trading-post-v3.js','social-v3.js','evolution-v1.js','dungeon-2d-v1.js','world-boss-2d-v1.js','twelve-below-v1.js','admin-v1.js','release-v1.js','onboarding-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','thirteenth-bell-v1.js','endgame-v1.js','quests-v2.js','fourfold-lock-v1.js','fractured-ages-v1.js','mobile-v1.js'];
+const vm=require('vm');
+const files=['index.html','styles.css','auth.js','guild.html','guild.css','bank.css','character-sheet.css','gear-system.css','foundations.css','presentation-fx-v1.css','economy-v2.css','trading-post-v3.css','social-v3.css','evolution-v1.css','dungeon-2d-v1.css','combat-status-ui-v1.css','combat-vitals-ui-v1.css','endgame-v1.css','world-boss-2d-v1.css','twelve-below-v1.css','admin-v1.css','release-v1.css','onboarding-v1.css','hollow-sanctum-v1.css','chaos-canyon-v1.css','blackout-station-v1.css','thirteenth-bell-v1.css','fourfold-lock-v1.css','fractured-ages-v1.css','quests-v1.css','quests-v2.css','mobile-v1.css','readability-v1.css','ui-readability-v2.css','gear-data.js','profession-data.js','combat-identities-v1.js','combat-reborn-v1.js','combat-standard-v1.js','combat-status-ui-v1.js','endgame-data-v1.js','presentation-fx-v1.js','guild-v4.js','character-sheet.js','gear-character-patch.js','character-foundations-patch.js','economy-v2.js','trading-post-v3.js','social-v3.js','evolution-v1.js','dungeon-2d-v1.js','world-boss-2d-v1.js','twelve-below-v1.js','admin-v1.js','release-v1.js','onboarding-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','thirteenth-bell-v1.js','endgame-v1.js','quests-v2.js','fourfold-lock-v1.js','fractured-ages-v1.js','mobile-v1.js'];
 const assets=['assets/gear/cellbound-gear-atlas.webp','assets/combat/status-icons-v1.webp'];
 const out=path.join(__dirname,'dist');
 const buildId=String(process.env.GITHUB_SHA||process.env.CELLBOUND_BUILD||'local-dev').trim();
@@ -14,6 +15,12 @@ for(const file of files){
   if(file.endsWith('.js')){try{new Function(contents)}catch(err){throw new Error(`Syntax check failed for ${file}: ${err.message}`)}}
   if(file==='guild-v4.js'){
     if(!contents.includes('function isBankUtility')||!contents.includes('!canonical.nonStackable&&state.bank.find')||!contents.includes('!canon.nonStackable&&out.find'))throw new Error('Guild Bank must preserve non-stackable charge-bearing utility items');
+  }
+  if(file==='combat-identities-v1.js'){
+    if(contents.includes('COMBAT REBORN BUNDLED FALLBACK')||contents.includes('window.CellboundCombatReborn='))throw new Error('Combat identities must not bundle a second Combat Reborn engine');
+  }
+  if(file==='combat-reborn-v1.js'){
+    if(!contents.includes("const VERSION='1.3.4'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
   }
   if(file==='combat-status-ui-v1.js'){
     if(!contents.includes("version:'2.1.0'"))throw new Error('Combat status UI smart-overhead version is missing');
@@ -48,8 +55,16 @@ for(const file of files){
     if(!contents.includes("if(!data?.id)throw new Error('The listing was not confirmed by the Trading Post.')"))throw new Error('Trading Post listing creation must verify the server response');
     if(!contents.includes('function isUtilityItem')||!contents.includes('UTILITY EFFECT')||!contents.includes('function utilityArtHTML'))throw new Error('Trading Post must preserve visual utility-item trading support');
   }
+  if(file==='evolution-v1.js'){
+    if(contents.includes("db.rpc('command_world_boss'")||/location\.reload\s*\(/.test(contents))throw new Error('Legacy Evolution world-boss combat path must remain retired');
+    if(!contents.includes('CellboundWorldBoss2D?.open?.(id)'))throw new Error('Evolution world-boss actions must route to the authoritative viewer');
+  }
   if(file==='endgame-v1.js'){
     if(!contents.includes("dungeonCard('chaos-canyon')")||!contents.includes("leaderboardMarkup('chaos-canyon')"))throw new Error('Chaos Canyon must remain visible in the Endgame Hub');
+  }
+  if(file==='twelve-below-v1.js'){
+    if(contents.includes("toISOString().slice(0,10)"))throw new Error('Twelve Below daily reset must use local calendar time');
+    if(!contents.includes('requestAnimationFrame(frame)'))throw new Error('Twelve Below playback must use the continuous frame clock');
   }
   if(file==='social-v3.js'){
     for(const id of ['hollow-sanctum','chaos-canyon','blackout-station','fractured-ages'])if(!contents.includes("id:'"+id+"'"))throw new Error('Party Finder is missing dungeon target '+id);
@@ -59,9 +74,18 @@ for(const file of files){
   if(file==='release-v1.js'){
     for(const id of ['#cc2dBackdrop','#bs2dBackdrop','#fracturedAgesBackdrop','#twelveBelowBackdrop','#thirteenthBellRoot','#fourfoldPuzzle'])if(!contents.includes(id))throw new Error('Release gate is missing active-gameplay protection for '+id);
   }
+  if(file==='dungeon-2d-v1.js'){
+    if(!contents.includes("$('[data-unit]').forEach"))throw new Error('Ashen Vault arena reflow selector regression detected');
+    if(!contents.includes("script.src='./combat-reborn-v1.js"))throw new Error('Ashen Vault recovery loader must reload the canonical combat engine');
+  }
   if(file==='chaos-canyon-v1.js'){
+    if(!contents.includes("$('[data-cc]').forEach"))throw new Error('Chaos Canyon arena reflow selector regression detected');
     if(!contents.includes('async function ccFailNoHealer')||!contents.includes('await ccFailNoHealer(s,result)'))throw new Error('Chaos Canyon must surface healerless recovery failure instead of silently ending');
     if(!contents.includes('requestAnimationFrame(frame)'))throw new Error('Chaos Canyon combat playback must use the continuous frame clock');
+  }
+  if(file==='fractured-ages-v1.js'){
+    if(!contents.includes('function carryCombatState')||!contents.includes('combatState:run?.combatState'))throw new Error('Fractured Ages must carry combat state across eras');
+    if(!contents.includes('async function failRecovery'))throw new Error('Fractured Ages must handle healerless between-fight recovery');
   }
   if(file==='quests-v2.js'){
     if(!contents.includes('async function qPlayReborn')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('Quest combat must use continuous Combat Reborn playback');
@@ -74,6 +98,9 @@ for(const file of files){
   }
   if(file==='guild.html'){
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
+    if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
+    if(!contents.includes('combat-reborn-v1.js'))throw new Error('Canonical Combat Reborn engine is not linked from guild.html');
+
     const required=['rosterGrid','bankGrid','professionWorkshop','chatMessages','worldBossGrid','dungeonRoute','dungeonIntel','enterDungeonBtn','partySlots'];
     for(const id of required)if(!contents.includes(`id="${id}"`))throw new Error(`Missing required Evolution hook: ${id}`);
     if(!contents.includes('evolution-v1.css')||!contents.includes('evolution-v1.js'))throw new Error('Evolution Pass assets are not linked from guild.html');
@@ -123,6 +150,17 @@ for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readab
   if(!statusCss.includes('opacity:.42')||!statusCss.includes('.is-fresh')||!statusCss.includes('.is-expiring'))throw new Error('Smart compact combat status styling is missing');
   if(!statusCss.includes("background-image:url('./assets/combat/status-icons-v1.webp')"))throw new Error('Combat status sprite reference is missing');
   if(!fs.existsSync(path.join(out,'assets/combat/status-icons-v1.webp')))throw new Error('Combat status icon sprite is missing from production package');
+}
+{
+  const combatCode=fs.readFileSync(path.join(__dirname,'combat-reborn-v1.js'),'utf8');
+  const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;
+  vm.createContext(sandbox);vm.runInContext(combatCode,sandbox,{filename:'combat-reborn-v1.js'});
+  const result=sandbox.CellboundCombatReborn?.tests?.run?.();
+  if(!result||result.passed!==result.total){
+    const failed=(result?.tests||[]).filter(x=>!x.pass).map(x=>x.name+(x.error?' · '+x.error:'')).join(', ');
+    throw new Error('Combat Reborn self-tests failed: '+(failed||'test runtime unavailable'));
+  }
+  console.log('Combat Reborn self-tests passed: '+result.passed+'/'+result.total+'.');
 }
 console.log('Cellbound build complete.');
 console.log('Build verification passed: scripts parse and required UI hooks/assets are present.');

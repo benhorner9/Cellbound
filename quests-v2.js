@@ -703,8 +703,16 @@ async function runQuest2DFight(config){
     (async()=>{
       try{
         await wait(600);if(tok!==encounterToken)return;
+        const carried=config.combatState&&typeof config.combatState==='object'?config.combatState:{};
         const result=C.simulate({
-          party:p.map(c=>Object.assign({},c,{_combatHealthPct:100})),
+          party:p.map(c=>{const x=carried[c.id]||{};return Object.assign({},c,{
+            _combatHealthPct:x.healthPct==null?100:Number(x.healthPct),
+            _combatResource:x.resource||null,
+            _combatCooldowns:x.cooldowns||{},
+            _combatStatuses:Array.isArray(x.statuses)?x.statuses:[],
+            _reviveSicknessMs:Number(x.reviveSicknessMs)||0,
+            _combatUniqueUsed:x.uniqueUsed||{}
+          })}),
           encounter,
           tactics:{interruptPriority:'standard',addPriority:'immediate',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced'},
           seed:['quest',tok,config.title,Date.now()].join(':')
@@ -712,6 +720,7 @@ async function runQuest2DFight(config){
         questFight.result=result;
         if(Array.isArray(result?.finalState?.enemies)){const main=result.finalState.enemies.filter(e=>!e.isAdd);questFight.enemyMax=main.map(e=>e.maxHealth);questFight.enemyHp=[...questFight.enemyMax]}
         const won=await qPlayReborn(result,tok);if(tok!==encounterToken)return;
+        if(typeof config.onResult==='function')await config.onResult(result);
         questFight.finished=true;
         const end=$('#q2dEnd');if(!end)return;
         end.hidden=false;

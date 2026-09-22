@@ -76,7 +76,7 @@ function resetTwelveBelow(){
   try{
     const s=Game.getState();
     s.twelveBelow=s.twelveBelow&&typeof s.twelveBelow==='object'?s.twelveBelow:{};
-    s.twelveBelow.date=new Date().toISOString().slice(0,10);
+    {const d=new Date();s.twelveBelow.date=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');}
     s.twelveBelow.attemptsUsed=0;
     Game.save?.();
     Game.renderAll?.();
