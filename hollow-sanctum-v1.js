@@ -376,12 +376,11 @@ function hsRenderRebornEvent(e){
    if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));run.hp[targetChar.id]=pct;hsBar(target,pct);hsFloat(target,'+'+Math.round(Number(e.amount)||0),'heal');hsUpdateSidebar()}
    if(srcChar){run.healingDone[srcChar.id]=(Number(run.healingDone?.[srcChar.id])||0)+(Number(e.amount)||0);run.overhealing[srcChar.id]=(Number(run.overhealing?.[srcChar.id])||0)+(Number(e.payload?.overhealing)||0);hsRenderMeters()}
    break;
-  case'PHASE_CHANGE':feed((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');setStatus(e.ability||'Phase change');break;
+  case'PHASE_CHANGE':window.CellboundFX?.phase?.(e.ability||'Boss phase',e.payload?.healthPct);feed((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');setStatus(e.ability||'Phase change');break;
   case'ENRAGE':feed((e.ability||'The boss enrages')+'.');setStatus(e.result==='hard'?'HARD ENRAGE — finish now':(e.ability||'Enrage'));break;
   case'UNIQUE_EFFECT_TRIGGER':if(srcChar){feed(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');hsFloat(src,e.ability||'UNIQUE','heal');setStatus((e.ability||'Unique effect')+' activated.')}break;
   case'CROWD_CONTROL':if(srcChar){feed(srcChar.name+' controls a priority enemy.');if(target)hsFloat(target,'CONTROLLED','heal')}break;
-  case'PHASE_CHANGE':setStatus((e.ability||'Boss phase')+' begins.');feed((e.ability||'A new phase')+' begins.');break;
-  case'ENRAGE':setStatus(e.result==='hard'?'HARD ENRAGE':'Boss enraged');feed((e.ability||'Enrage')+' activates.');break;
+
   case'AFFIX_TRIGGER':feed((e.ability||'Dungeon affix')+' · '+String(e.result||'triggered').replace(/-/g,' ')+'.');break;
   case'ENEMY_REVIVED':if(target){const el=$('[data-hs="'+target+'"]');if(el)el.classList.remove('dead');hsBar(target,Number(e.payload?.targetHpPct)||35);hsFloat(target,'RETURNS','incoming');feed('Necromantic returns an enemy to the fight.')}break;
   case'PLAYER_MISTAKE':if(srcChar)feed(srcChar.name+' '+(e.payload?.detail||'makes an execution mistake')+'.');break;
@@ -410,7 +409,7 @@ function hsRenderRebornEvent(e){
    if(target){const el=$('[data-hs="'+target+'"]');if(el)el.classList.add('dead');hsBar(target,0);if(targetChar){run.hp[targetChar.id]=0;feed(targetChar.name+' is defeated.');hsUpdateSidebar()}}
    break;
   case'DEFENSIVE_ACTIVATED':if(srcChar)feed(srcChar.name+' activates a defensive.');break;
-  case'COMBAT_END':hsCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');hsRegroup(260);break;
+  case'COMBAT_END':hsCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');if(e.result!=='victory')window.CellboundFX?.wipe?.('The party has fallen inside The Hollow Sanctum.');hsRegroup(260);break;
  }
 }
 async function hsPlayTimeline(result,tok){
@@ -648,7 +647,7 @@ async function start(){
  const startButton=root().querySelector('[data-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
  await Game.persistState?.();
  const service=await hsWaitForEndgame(),eg=hsEndgameConfig(),attempt=await service?.beginAttempt?.('hollow-sanctum');if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN EXPEDITION →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Descent again.');return}token++;const tok=token,p=party();run={stage:0,done:false,speed:1,log:[],damageDone:Object.fromEntries(p.map(ch=>[ch.id,0])),healingDone:Object.fromEntries(p.map(ch=>[ch.id,0])),overhealing:Object.fromEntries(p.map(ch=>[ch.id,0])),threat:Object.fromEntries(p.map(ch=>[ch.id,0])),aggro:null,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=hsResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),statuses:Object.fromEntries(p.map(c=>[c.id,[]])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{}};draw();
- for(let i=0;i<STAGES.length;i++){if(tok!==token)return;run.stage=i;const s=STAGES[i];$('#hs2dTitle').textContent=s.title;const type=$('#hs2dType');if(type)type.textContent=s.kind;$('.hs2d-route').innerHTML=STAGES.map((x,j)=>'<span class="'+(j<i?'done':j===i?'current':'')+'"><i>'+(j+1)+'</i>'+esc(x.title)+'</span>').join('');if(!await fightStage(s,tok,i))return}
+ for(let i=0;i<STAGES.length;i++){if(tok!==token)return;run.stage=i;const s=STAGES[i];if(/boss/i.test(String(s.kind||s.combatKind||'')))window.CellboundFX?.boss?.(s.title);$('#hs2dTitle').textContent=s.title;const type=$('#hs2dType');if(type)type.textContent=s.kind;$('.hs2d-route').innerHTML=STAGES.map((x,j)=>'<span class="'+(j<i?'done':j===i?'current':'')+'"><i>'+(j+1)+'</i>'+esc(x.title)+'</span>').join('');if(!await fightStage(s,tok,i))return}
  if(tok!==token)return;await complete();
 }
 async function complete(){
