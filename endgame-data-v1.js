@@ -25,7 +25,7 @@ const LOOT_RULES={
 };
 const SET_BONUS_FOUNDATION={
   pieces2:{name:'Resonant Pair',description:'Two matching set pieces improve core role output by 5%.'},
-  pieces3:{name:'Cellbound Ensemble',description:'Three matching set pieces improve resource recovery by 12%.'}
+  pieces4:{name:'Cellbound Ensemble',description:'Four matching set pieces improve resource recovery by 12%.'}
 };
 const LEVEL_MILESTONES=[
   {level:5,name:'Specialisation Established',description:'Your first meaningful build identity should be taking shape.'},
@@ -72,7 +72,7 @@ const DIFFICULTIES={
  heroic:{
    id:'heroic',name:'Heroic',label:'HEROIC',
    description:'Faster casts, heavier damage and additional encounter mechanics.',
-   enemyHealth:1.42,enemyDamage:1.34,castSpeed:.84,mechanicFrequency:.84,addCountBonus:0,
+   enemyHealth:1.50,enemyDamage:1.38,castSpeed:.82,mechanicFrequency:.82,addCountBonus:0,
    lootTier:[2,3,4],cellShardBase:10
  }
 };
@@ -304,10 +304,10 @@ function difficultyConfig(mode='normal',tier=0){
  return{
    id:'cellbound',name:'Cellbound+'+t,label:'CELLBOUND+'+t,tier:t,
    description:'Scalable endgame difficulty. Better execution, strategy and party preparation are required.',
-   enemyHealth:1.48*(1+(t-1)*.075),
-   enemyDamage:1.38*(1+(t-1)*.06),
-   castSpeed:clamp(.82-(t-1)*.012,.57,.82),
-   mechanicFrequency:clamp(.82-(t-1)*.012,.58,.82),
+   enemyHealth:1.60*(1+(t-1)*.08),
+   enemyDamage:1.44*(1+(t-1)*.062),
+   castSpeed:clamp(.80-(t-1)*.012,.55,.80),
+   mechanicFrequency:clamp(.80-(t-1)*.012,.56,.80),
    addCountBonus:t>=15?2:t>=8?1:0,
    lootTier:[3,4],
    cellShardBase:12+t*2
