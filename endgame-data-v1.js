@@ -6,7 +6,7 @@ const SEASON={id:'foundations-1',name:'Foundations'};
 
 
 const LOOT_RULES={
-  uniqueChance:{normal:.002,heroic:.025,cellboundBase:.035,cellboundPerTier:.0035,cellboundCap:.09},
+  uniqueChance:{normal:0,heroic:.025,cellboundBase:.035,cellboundPerTier:.0035,cellboundCap:.09},
   targetedBossChance:.55,
   clearPityGuaranteeAfter:2,
   rarityWeights:{
@@ -213,25 +213,25 @@ const BOSS_PHASES={
 const UNIQUE_ITEMS={
  'frostbound-sigil':{
    itemId:'frostbound-sigil',name:'Frostbound Sigil',slot:'Relic',classes:'all',tier:4,rarity:'Epic',
-   itemLevel:32,power:8,questArtMaterial:'void-crystal',
+   itemLevel:40,power:8,minDifficulty:'heroic',questArtMaterial:'void-crystal',
    uniqueEffect:{id:'frostbound-sigil',name:'Frozen Response',description:'Successful interrupts grant a short defensive shield.'},
    source:'Ash Warden Kael · Heroic / Cellbound+'
  },
  'guardian-last-stand':{
    itemId:'guardian-last-stand',name:"Guardian's Last Stand",slot:'Trinket1',classes:['Warrior','Paladin','Death Knight','Demon Hunter','Druid'],tier:4,rarity:'Epic',
-   itemLevel:34,power:9,questArtMaterial:'warden-iron',
+   itemLevel:40,power:9,minDifficulty:'heroic',questArtMaterial:'warden-iron',
    uniqueEffect:{id:'guardian-last-stand',name:'Last Stand',description:'Dropping below 20% health automatically triggers a powerful defensive once per encounter.'},
    source:'The Vaultheart · Heroic / Cellbound+'
  },
  'embercore-staff':{
    itemId:'embercore-staff',name:'Embercore Staff',slot:'Weapon',classes:['Mage'],tier:4,rarity:'Epic',
-   itemLevel:36,power:12,questArtMaterial:'ashen-soul-fragment',
+   itemLevel:42,power:12,minDifficulty:'cellbound',questArtMaterial:'ashen-soul-fragment',
    uniqueEffect:{id:'embercore-staff',name:'Living Ember',description:'Fire and arcane attacks can splash additional damage into a nearby enemy.'},
    source:'The Bound Choir · Cellbound+'
  },
  'heart-troll-king':{
    itemId:'heart-troll-king',name:'Heart of the Troll King',slot:'Trinket1',classes:'all',tier:4,rarity:'Epic',
-   itemLevel:35,power:10,questArtMaterial:'faded-cell-fragment',
+   itemLevel:40,power:10,minDifficulty:'heroic',questArtMaterial:'faded-cell-fragment',
    uniqueEffect:{id:'heart-troll-king',name:'Blood Frenzy',description:'Critical strikes can trigger a short burst of increased damage.'},
    source:'Rare endgame boss drop'
  }
