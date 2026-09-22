@@ -788,7 +788,8 @@ function normaliseEnemies(encounter){
    id:'e-'+i,name,role:'enemy',kind:classification==='boss'||classification==='world-boss'?'boss':'enemy',classification,classificationLabel:rule.label,level,
    maxHealth,health:currentHealth,alive:currentHealth>0,position:{x:68,y:raw.length===1?50:30+i*(40/Math.max(1,raw.length-1))},facing:180,
    target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},movingUntil:0,moveToken:0,nextAttack:900+i*220,currentCast:null,
-   isAdd:false,priority:i===0?2:1,damageScale:rule.damage*damageMult,phaseDamageScale:1,hardEnraged:false
+   isAdd:false,priority:i===0?2:1,damageScale:rule.damage*damageMult,phaseDamageScale:1,hardEnraged:false,
+   targeting:String(data.targeting||'threat').toLowerCase(),attackRange:Math.max(2,Number(data.attackRange)||5),attackName:data.attackName||null,damageType:data.damageType||'physical',allAttacksAoe:Boolean(data.allAttacksAoe)
   }
  })
 }
@@ -1762,22 +1763,25 @@ function playerAI(ctx,u){
 }
 function enemyBasicAttack(ctx,e){
  if(!e.alive||ctx.time<e.movingUntil||isCrowdControlled(e))return;
- const target=topThreatTarget(ctx,e)||livingPlayers(ctx)[0];if(!target)return;
- setAggro(ctx,e,target,'threat');
- if(!inRange(e,target,5)||!hasLineOfSight(ctx,e,target)){
-  moveTo(ctx,e,nearestMeleePoint(target,e),320,!hasLineOfSight(ctx,e,target)?'line of sight':'chase target');
+ const live=livingPlayers(ctx);if(!live.length)return;
+ const randomTarget=e.targeting==='random',target=randomTarget?live[Math.floor(ctx.rng()*live.length)]:(topThreatTarget(ctx,e)||live[0]);if(!target)return;
+ setAggro(ctx,e,target,randomTarget?'random targeting':'threat');
+ const range=Math.max(2,Number(e.attackRange)||5);
+ if(!inRange(e,target,range)||!hasLineOfSight(ctx,e,target)){
+  const destination=range>7?visibleCastPoint(ctx,e,target,range,e.position):nearestMeleePoint(target,e);
+  moveTo(ctx,e,destination,320,!hasLineOfSight(ctx,e,target)?'line of sight':range>7?'ranged position':'chase target');
   e.nextAttack=ctx.time+450;return;
  }
  updateFacing(e,target);
  const base=e.classification==='world-boss'?46:e.kind==='boss'?36:e.classification==='elite'?18:e.isAdd?12:14,roll=.88+ctx.rng()*.24;
- const ability=e.classification==='world-boss'?'Crushing Blow':e.kind==='boss'?'Heavy Swing':e.classification==='elite'?'Heavy Strike':'Attack';
+ const ability=e.attackName||(e.classification==='world-boss'?'Crushing Blow':e.kind==='boss'?'Heavy Swing':e.classification==='elite'?'Heavy Strike':'Attack');
  if(e.allAttacksAoe&&e.kind==='boss'){
   emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability:'Wild Wrath',result:'enemy-aoe',payload:{aoe:true}});
   livingPlayers(ctx).forEach(p=>dealDamage(ctx,e,p,base*.62*enemyPressure(ctx,e,p)*roll,'Wild Wrath',{damageType:'magic',avoidable:false,aoe:true,aggroHit:true}));
  }else{
   const levelPressure=enemyPressure(ctx,e,target);
-  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability,result:'enemy'});
-  dealDamage(ctx,e,target,base*levelPressure*roll,ability,{damageType:'physical',aggroHit:true});
+  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability,result:randomTarget?'enemy-random':'enemy',payload:{randomTargeting:randomTarget,attackRange:range}});
+  dealDamage(ctx,e,target,base*levelPressure*roll,ability,{damageType:e.damageType||'physical',aggroHit:!randomTarget});
  }
  const cadence=e.classification==='world-boss'?1325:e.kind==='boss'?1450:e.classification==='elite'?1850:e.isAdd?1800:2050;
  e.nextAttack=ctx.time+cadence+Math.round(ctx.rng()*(e.kind==='boss'?220:320));
