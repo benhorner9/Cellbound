@@ -28,6 +28,7 @@ function gearFor(l){const base=G?.byId?.(l.item_key)||G?.byName?.(l.item_name)||
 function gearArt(l,size){const item=gearFor(l);return G?.artHTML?.(item,size||62,'tp-gear-art')||'◇'}
 function currentGold(){return Number(state().gold)||0}
 function restoreMarketScroll(y){requestAnimationFrame(()=>window.scrollTo({top:Math.max(0,Number(y)||0),left:0,behavior:'auto'}))}
+function rerenderBrowseInPlace(){const y=window.scrollY;renderBrowse();restoreMarketScroll(y)}
 async function syncMarketState(){return Game?.refreshStateFromServer?.({render:true})??false}
 async function finishMarketMutation(tab,scrollY){
   if(tab)activeTab=tab;
@@ -190,8 +191,8 @@ function gearInspector(l){
     '<div class="tp-inspector-section"><small>ITEM ROLL</small><div class="tp-stat-chips">'+(stats.length?stats.map(s=>'<span>'+esc(s.text)+'</span>').join(''):'<span>No rolled stats</span>')+'</div>'+(g.uniqueEffect?'<p>'+esc(g.uniqueEffect.name)+' · '+esc(g.uniqueEffect.description)+'</p>':'')+'</div>'+
     '<div class="tp-inspector-section"><small>YOUR COMPARISON</small>'+compatibleCompare(g)+'</div></div>'+
     '<div><div class="tp-inspector-section"><small>MARKET ACTIONS</small><div class="tp-action-row">'+
-    (l.is_own?'<button class="danger" data-cancel-gear="'+esc(l.id)+'">CANCEL LISTING</button>':'<button data-buy-gear="'+esc(l.id)+'">BUY FOR '+gold(l.unit_price)+'</button>')+
-    '<button class="tp-watch '+(isWatched('gear',l.item_key)?'active':'')+'" data-watch="gear|'+esc(l.item_key)+'|'+esc(l.item_name)+'">'+(isWatched('gear',l.item_key)?'★ WATCHING':'☆ WATCH')+'</button></div></div>'+
+    (l.is_own?'<button type="button" class="danger" data-cancel-gear="'+esc(l.id)+'">CANCEL LISTING</button>':'<button type="button" data-buy-gear="'+esc(l.id)+'">BUY FOR '+gold(l.unit_price)+'</button>')+
+    '<button type="button" class="tp-watch '+(isWatched('gear',l.item_key)?'active':'')+'" data-watch="gear|'+esc(l.item_key)+'|'+esc(l.item_name)+'">'+(isWatched('gear',l.item_key)?'★ WATCHING':'☆ WATCH')+'</button></div></div>'+
     '<div class="tp-inspector-section"><small>RECENT SALES</small>'+historyChart('gear',l.item_key)+'</div></div></div>';
 }
 function commodityInspector(x){
@@ -202,7 +203,7 @@ function commodityInspector(x){
     '<div class="tp-inspector-section"><small>ORDER BOOK</small><div class="tp-orderbook"><div class="tp-orderbook-column"><h5>Sellers</h5>'+orderLevels(q.sells,'sell')+'</div><div class="tp-orderbook-column"><h5>Buyers</h5>'+orderLevels(q.buys,'buy')+'</div></div></div></div>'+
     '<div><div class="tp-inspector-section"><small>PLACE ORDER</small><form id="tpCommodityForm" class="tp-action-form" data-category="'+esc(x.category)+'" data-key="'+esc(x.key)+'"><label>Order<select id="tpOrderSide"><option value="buy">Buy</option><option value="sell">Sell</option></select></label><label>Quantity<input id="tpOrderQty" type="number" min="1" value="1"></label><label>Gold each<input id="tpOrderPrice" type="number" min="1" value="'+(q.sell||q.buy||q.avg7||1)+'"></label><label>Owned / Gold<input disabled value="'+qty(owned)+' / '+gold(currentGold())+'"></label><button type="submit">PLACE ORDER</button></form></div>'+
     '<div class="tp-inspector-section"><small>30 DAY PRICE ACTIVITY</small>'+historyChart(x.category,x.key)+'</div>'+
-    '<div class="tp-inspector-section"><div class="tp-action-row"><button class="tp-watch '+(isWatched(x.category,x.key)?'active':'')+'" data-watch="'+esc(x.category)+'|'+esc(x.key)+'|'+esc(x.name)+'">'+(isWatched(x.category,x.key)?'★ WATCHING':'☆ WATCH')+'</button></div></div></div></div>';
+    '<div class="tp-inspector-section"><div class="tp-action-row"><button type="button" class="tp-watch '+(isWatched(x.category,x.key)?'active':'')+'" data-watch="'+esc(x.category)+'|'+esc(x.key)+'|'+esc(x.name)+'">'+(isWatched(x.category,x.key)?'★ WATCHING':'☆ WATCH')+'</button></div></div></div></div>';
 }
 function renderInspector(){
   const root=$('#tpInspector');if(!root)return;
@@ -273,14 +274,17 @@ async function placeCommodityOrder(e){
   finally{actionBusy=false}
 }
 async function toggleWatch(raw){
-  const parts=raw.split('|'),category=parts[0],key=parts[1],name=parts.slice(2).join('|');
-  const existing=watchlist.find(w=>w.category===category&&w.item_key===key);
-  if(existing){
-    await db.from('market_watchlist').delete().eq('user_id',user.id).eq('category',category).eq('item_key',key);
-  }else{
-    await db.from('market_watchlist').insert({user_id:user.id,category,item_key:key,item_name:name});
-  }
-  await refreshAll(false);renderInspector();renderWatchlist();
+  if(actionBusy)return;
+  const parts=raw.split('|'),category=parts[0],key=parts[1],name=parts.slice(2).join('|'),scrollY=window.scrollY;
+  const existing=watchlist.find(w=>w.category===category&&w.item_key===key);actionBusy=true;
+  try{
+    const result=existing
+      ?await db.from('market_watchlist').delete().eq('user_id',user.id).eq('category',category).eq('item_key',key)
+      :await db.from('market_watchlist').insert({user_id:user.id,category,item_key:key,item_name:name});
+    if(result.error)throw result.error;
+    await refreshAll(false,false);renderInspector();renderWatchlist();restoreMarketScroll(scrollY);
+  }catch(error){alert(error.message||'Could not update watchlist')}
+  finally{actionBusy=false}
 }
 function renderWatchlist(){
   const root=$('#tpWatchlist');if(!root)return;
@@ -288,9 +292,9 @@ function renderWatchlist(){
     let price=0,art='◇',rarity='Common';
     if(w.category==='gear'){const ls=activeGear().filter(l=>l.item_key===w.item_key).sort((a,b)=>a.unit_price-b.unit_price);price=ls[0]?.unit_price||0;art=ls[0]?gearArt(ls[0],46):'◇';rarity=ls[0]?rarityOf(ls[0]):'Common'}
     else{const x=knownCommodities().find(v=>v.category===w.category&&v.key===w.item_key),q=quoteFor(w.category,w.item_key);price=q.sell||q.avg7||0;art=commodityArt(w.category,w.item_key,46);rarity=x?.rarity||'Common'}
-    return'<article class="tp-watch-card rarity-'+slug(rarity)+'"><div>'+art+'</div><div><h4>'+esc(w.item_name)+'</h4><small>'+esc(w.category)+' · '+esc(rarity)+'</small></div><strong>'+(price?gold(price):'—')+'</strong><button data-remove-watch="'+esc(w.category)+'|'+esc(w.item_key)+'">REMOVE</button></article>'
+    return'<article class="tp-watch-card rarity-'+slug(rarity)+'"><div>'+art+'</div><div><h4>'+esc(w.item_name)+'</h4><small>'+esc(w.category)+' · '+esc(rarity)+'</small></div><strong>'+(price?gold(price):'—')+'</strong><button type="button" data-remove-watch="'+esc(w.category)+'|'+esc(w.item_key)+'">REMOVE</button></article>'
   }).join(''):'<div class="tp-empty">Your watchlist is empty. Watch an item from the market inspector.</div>';
-  $$('[data-remove-watch]',root).forEach(b=>b.onclick=async()=>{const[c,k]=b.dataset.removeWatch.split('|');await db.from('market_watchlist').delete().eq('user_id',user.id).eq('category',c).eq('item_key',k);await refreshAll(false);renderWatchlist();renderInspector()});
+  $('[data-remove-watch]',root).forEach(b=>b.onclick=async()=>{if(actionBusy)return;const[c,k]=b.dataset.removeWatch.split('|'),y=window.scrollY;actionBusy=true;try{const {error}=await db.from('market_watchlist').delete().eq('user_id',user.id).eq('category',c).eq('item_key',k);if(error)throw error;await refreshAll(false,false);renderWatchlist();renderInspector();restoreMarketScroll(y)}catch(error){alert(error.message||'Could not remove watchlist item')}finally{actionBusy=false}});
 }
 function renderHistory(){
   const root=$('#tpHistory');if(!root)return;
@@ -304,9 +308,9 @@ function myOrders(){return activeOrders().filter(o=>o.is_own===true)}
 function renderMyTrading(){
   const gearRoot=$('#tpMyGear'),orderRoot=$('#tpMyOrders');if(!gearRoot||!orderRoot)return;
   const gl=myGearListings();
-  gearRoot.innerHTML=gl.length?gl.map(l=>'<div class="tp-my-row"><div><b>'+esc(l.item_name)+'</b><small>'+qty(l.quantity)+' listed · '+gold(l.unit_price)+' each · '+age(l.created_at)+'</small></div><button data-cancel-my-gear="'+esc(l.id)+'">CANCEL</button></div>').join(''):'<div class="tp-empty">No equipment listings.</div>';
+  gearRoot.innerHTML=gl.length?gl.map(l=>'<div class="tp-my-row"><div><b>'+esc(l.item_name)+'</b><small>'+qty(l.quantity)+' listed · '+gold(l.unit_price)+' each · '+age(l.created_at)+'</small></div><button type="button" data-cancel-my-gear="'+esc(l.id)+'">CANCEL</button></div>').join(''):'<div class="tp-empty">No equipment listings.</div>';
   const os=myOrders();
-  orderRoot.innerHTML=os.length?os.map(o=>'<div class="tp-my-row"><div><b>'+esc(o.item_name)+' · '+o.side.toUpperCase()+'</b><small>'+qty(o.quantity_remaining)+' / '+qty(o.quantity_initial)+' remaining · '+gold(o.unit_price)+' each</small></div><button data-cancel-order="'+esc(o.id)+'">CANCEL</button></div>').join(''):'<div class="tp-empty">No active commodity orders.</div>';
+  orderRoot.innerHTML=os.length?os.map(o=>'<div class="tp-my-row"><div><b>'+esc(o.item_name)+' · '+o.side.toUpperCase()+'</b><small>'+qty(o.quantity_remaining)+' / '+qty(o.quantity_initial)+' remaining · '+gold(o.unit_price)+' each</small></div><button type="button" data-cancel-order="'+esc(o.id)+'">CANCEL</button></div>').join(''):'<div class="tp-empty">No active commodity orders.</div>';
   $$('[data-cancel-my-gear]',gearRoot).forEach(b=>b.onclick=()=>cancelGear(b.dataset.cancelMyGear));
   $$('[data-cancel-order]',orderRoot).forEach(b=>b.onclick=()=>cancelOrder(b.dataset.cancelOrder));
   renderGearSellOptions();
@@ -367,15 +371,15 @@ async function claimGold(){
 }
 function renderSaved(){
   const root=$('#tpSavedSearches');if(!root)return;
-  root.innerHTML=savedSearches.length?savedSearches.map(s=>'<div class="tp-saved-item"><button data-saved="'+esc(s.id)+'">'+esc(s.name)+'</button><button data-delete-saved="'+esc(s.id)+'">×</button></div>').join(''):'<div class="tp-empty">No saved searches.</div>';
+  root.innerHTML=savedSearches.length?savedSearches.map(s=>'<div class="tp-saved-item"><button type="button" data-saved="'+esc(s.id)+'">'+esc(s.name)+'</button><button type="button" data-delete-saved="'+esc(s.id)+'">×</button></div>').join(''):'<div class="tp-empty">No saved searches.</div>';
   $$('[data-saved]',root).forEach(b=>b.onclick=()=>applySaved(b.dataset.saved));
-  $$('[data-delete-saved]',root).forEach(b=>b.onclick=async()=>{await db.from('market_saved_searches').delete().eq('id',b.dataset.deleteSaved).eq('user_id',user.id);await refreshAll(false);renderSaved()});
+  $('[data-delete-saved]',root).forEach(b=>b.onclick=async()=>{if(actionBusy)return;const y=window.scrollY;actionBusy=true;try{const {error}=await db.from('market_saved_searches').delete().eq('id',b.dataset.deleteSaved).eq('user_id',user.id);if(error)throw error;await refreshAll(false,false);renderSaved();restoreMarketScroll(y)}catch(error){alert(error.message||'Could not delete saved search')}finally{actionBusy=false}});
 }
 async function saveSearch(){
   const f=filterState(),name=prompt('Name this saved search',f.q||'Market search');if(!name)return;
   const {error}=await db.from('market_saved_searches').insert({user_id:user.id,name:name.slice(0,50),filters:{...f,category:activeCategory}});
   if(error){alert(error.message||'Could not save search');return}
-  await refreshAll(false);renderSaved();
+  await refreshAll(false,false);renderSaved();restoreMarketScroll(window.scrollY);
 }
 function applySaved(id){
   const s=savedSearches.find(x=>x.id===id);if(!s)return;const f=s.filters||{};
@@ -387,7 +391,7 @@ function applySaved(id){
   if($('#tpMinIlvl'))$('#tpMinIlvl').value=f.minIlvl||'';
   if($('#tpMaxPrice'))$('#tpMaxPrice').value=f.maxPrice||'';
   if($('#tpSort'))$('#tpSort').value=f.sort||'price';
-  setTab('browse');renderBrowse();
+  const y=window.scrollY;setTab('browse');restoreMarketScroll(y);
 }
 function setTab(tab){
   activeTab=tab;
@@ -407,6 +411,7 @@ async function refreshAll(showBusy=true,preserveScroll=false){
   try{
     const sweep=await db.rpc('market_sweep_my_expired');
     if(sweep.error)console.warn('Market expiry sweep failed',sweep.error);
+    else if(sweep.data&&(Number(sweep.data.gearListingsExpired)||Number(sweep.data.commodityOrdersExpired)||Number(sweep.data.goldRefunded)||Number(sweep.data.itemsReturned)))await syncMarketState();
     const [l,o,t,w,s,p]=await Promise.all([
       db.from('market_gear_listings').select('*').eq('status','active').gt('quantity',0).order('created_at',{ascending:false}).limit(300),
       db.from('market_order_book').select('*').eq('status','active').gt('quantity_remaining',0).order('created_at',{ascending:false}).limit(600),
@@ -429,12 +434,12 @@ async function refreshAll(showBusy=true,preserveScroll=false){
 }
 function bind(){
   $('#tpRefresh')?.addEventListener('click',e=>{e.preventDefault();refreshAll(true,true)});
-  $('#tpSearch')?.addEventListener('input',renderBrowse);
-  ['tpClass','tpSlot','tpRarity','tpMinIlvl','tpMaxPrice','tpSort'].forEach(id=>$('#'+id)?.addEventListener('change',renderBrowse));
-  document.querySelectorAll('#tpCategories [data-category]').forEach(b=>b.onclick=e=>{e.preventDefault();const y=window.scrollY;activeCategory=b.dataset.category;renderBrowse();restoreMarketScroll(y)});
+  $('#tpSearch')?.addEventListener('input',rerenderBrowseInPlace);
+  ['tpClass','tpSlot','tpRarity','tpMinIlvl','tpMaxPrice','tpSort'].forEach(id=>$('#'+id)?.addEventListener('change',rerenderBrowseInPlace));
+  document.querySelectorAll('#tpCategories [data-category]').forEach(b=>b.onclick=e=>{e.preventDefault();activeCategory=b.dataset.category;rerenderBrowseInPlace()});
   document.querySelectorAll('#tpTabs [data-tp-tab]').forEach(b=>b.onclick=e=>{e.preventDefault();const y=window.scrollY;setTab(b.dataset.tpTab);restoreMarketScroll(y)});
   $('#tpSaveSearch')?.addEventListener('click',saveSearch);
-  $('#tpClearFilters')?.addEventListener('click',()=>{activeCategory='all';['tpSearch','tpMinIlvl','tpMaxPrice'].forEach(id=>{if($('#'+id))$('#'+id).value=''});['tpClass','tpSlot','tpRarity'].forEach(id=>{if($('#'+id))$('#'+id).value='all'});if($('#tpSort'))$('#tpSort').value='price';renderBrowse()});
+  $('#tpClearFilters')?.addEventListener('click',e=>{e.preventDefault();activeCategory='all';['tpSearch','tpMinIlvl','tpMaxPrice'].forEach(id=>{if($('#'+id))$('#'+id).value=''});['tpClass','tpSlot','tpRarity'].forEach(id=>{if($('#'+id))$('#'+id).value='all'});if($('#tpSort'))$('#tpSort').value='price';rerenderBrowseInPlace()});
   $('#tpGearSellForm')?.addEventListener('submit',submitGearListing);
   $('#tpClaimItems')?.addEventListener('click',claimItems);
   $('#tpClaimGold')?.addEventListener('click',claimGold);
