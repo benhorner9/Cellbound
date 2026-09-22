@@ -14,8 +14,8 @@ const MATERIALS={
 };
 function materialArtHTML(key,size=64,extra=''){
   const m=MATERIALS[key];if(!m||!Number.isInteger(m.artIndex))return `<span class="material-art material-art-empty ${extra}" style="display:inline-grid;width:${size}px;height:${size}px;place-items:center">${m?.icon||'◇'}</span>`;
-  const col=m.artIndex%4,row=Math.floor(m.artIndex/4);
-  return `<span class="material-art ${extra}" style="width:${size}px;height:${size}px" aria-label="${m.name}" title="${m.name}"><span class="material-art-fallback" aria-hidden="true">${m.icon||'◇'}</span><img src="${MATERIAL_ATLAS}" alt="" draggable="false" style="width:${size*4}px;height:${size*2}px;left:-${col*size}px;top:-${row*size}px"></span>`;
+  const col=m.artIndex%4,row=Math.floor(m.artIndex/4),fit=.86,cell=Math.max(1,Math.round(size*fit)),inset=Math.round((size-cell)/2);
+  return `<span class="material-art ${extra}" style="width:${size}px;height:${size}px" aria-label="${m.name}" title="${m.name}"><span class="material-art-fallback" aria-hidden="true">${m.icon||'◇'}</span><span class="material-art-cell" aria-hidden="true" style="position:absolute;overflow:hidden;width:${cell}px;height:${cell}px;left:${inset}px;top:${inset}px"><img src="${MATERIAL_ATLAS}" alt="" draggable="false" onerror="this.style.display='none'" style="width:${cell*4}px;height:${cell*2}px;left:-${col*cell}px;top:-${row*cell}px"></span></span>`;
 }
 const PROFESSIONS={
   Alchemy:{icon:'⚗',summary:'Brew potions and flasks that are consumed for temporary combat power.',recipes:[
