@@ -19,24 +19,37 @@
 .cbs-strip[hidden]{display:none!important}
 .cbs-group{display:flex;gap:2px;align-items:center}
 .cbs-icon{
-  position:relative;width:24px;height:24px;padding:0;
-  display:grid;place-items:center;
+  position:relative;width:24px;height:24px;padding:1px;
+  display:grid;place-items:center;overflow:hidden;
   border:1px solid rgba(255,255,255,.12);border-radius:5px;
-  background:rgba(5,10,12,.94);color:#dfe9e5;
+  background:#071012;color:#dfe9e5;
   font:900 10px/1 system-ui,sans-serif;
-  box-shadow:0 3px 8px rgba(0,0,0,.35);
+  box-shadow:0 3px 8px rgba(0,0,0,.42);
   pointer-events:auto;touch-action:manipulation
 }
-.cbs-icon.buff{border-color:rgba(92,190,128,.48);background:linear-gradient(180deg,rgba(32,88,54,.94),rgba(8,22,15,.96));color:#a9e8bd}
-.cbs-icon.debuff{border-color:rgba(235,76,64,.82);background:linear-gradient(180deg,rgba(128,34,28,.98),rgba(42,8,7,.99));color:#ffab9f;box-shadow:0 0 0 1px rgba(235,76,64,.12),0 4px 10px rgba(0,0,0,.42)}
-.cbs-icon>i{font-style:normal;font-size:11px}
+.cbs-icon.buff{border-color:rgba(92,190,128,.62);background:#07120e;color:#a9e8bd}
+.cbs-icon.debuff{border-color:rgba(235,76,64,.88);background:#180807;color:#ffab9f;box-shadow:0 0 0 1px rgba(235,76,64,.12),0 4px 10px rgba(0,0,0,.42)}
+.cbs-art,.cbs-tooltip-art{
+  display:block;
+  background-image:url('./assets/combat/status-icons-v1.webp');
+  background-size:800% 900%;
+  background-position:var(--cbs-bg-x,0%) var(--cbs-bg-y,0%);
+  background-repeat:no-repeat;
+  image-rendering:auto
+}
+.cbs-icon>i.cbs-art{
+  width:100%;height:100%;border-radius:3px;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
+  filter:saturate(1.05) contrast(1.03)
+}
 .cbs-icon>small{
-  position:absolute;right:2px;bottom:1px;
-  color:#eef3f0;font-size:6px;font-weight:900;line-height:1;
+  position:absolute;right:2px;bottom:1px;z-index:3;
+  min-width:8px;padding:1px 2px;border-radius:3px;
+  background:rgba(0,0,0,.68);color:#fff;font-size:6px;font-weight:900;line-height:1;
   text-shadow:0 1px 2px #000
 }
 .cbs-icon>b{
-  position:absolute;right:-4px;top:-5px;min-width:12px;height:12px;padding:0 2px;
+  position:absolute;right:-3px;top:-4px;z-index:4;min-width:12px;height:12px;padding:0 2px;
   display:grid;place-items:center;border-radius:8px;
   background:#e6d59e;color:#121816;font-size:7px
 }
@@ -76,11 +89,11 @@
 .cbs-tooltip[hidden]{display:none!important}
 .cbs-tooltip-head{display:flex;gap:9px;align-items:center}
 .cbs-tooltip-head>i{
-  width:32px;height:32px;display:grid;place-items:center;border-radius:6px;
-  border:1px solid rgba(255,255,255,.12);font-style:normal;font-weight:900
+  width:38px;height:38px;display:block;flex:0 0 38px;border-radius:6px;
+  border:1px solid rgba(255,255,255,.12)
 }
-.cbs-tooltip-head>i.buff{color:#9be0b1;background:#113020;border-color:rgba(92,190,128,.4)}
-.cbs-tooltip-head>i.debuff{color:#ffab9f;background:#48100d;border-color:rgba(235,76,64,.7)}
+.cbs-tooltip-head>i.buff{border-color:rgba(92,190,128,.55)}
+.cbs-tooltip-head>i.debuff{border-color:rgba(235,76,64,.8)}
 .cbs-tooltip-head span{min-width:0}
 .cbs-tooltip-head small{display:block;color:#758782;font-size:8px;font-weight:900;letter-spacing:.11em}
 .cbs-tooltip-head b{display:block;margin-top:2px;color:#f0f4f2;font-size:13px}
@@ -100,7 +113,7 @@
 /* Harmful-status hard override */
 .cbs-icon.debuff{
   border-color:rgba(244,72,61,.95)!important;
-  background:linear-gradient(180deg,rgba(136,28,24,.98),rgba(46,7,7,.99))!important;
+  background:#180807!important;
   color:#ffb0a6!important;
   box-shadow:0 0 0 1px rgba(244,72,61,.16),0 4px 12px rgba(0,0,0,.45)!important
 }
@@ -108,7 +121,6 @@
 .cbs-group.debuffs .cbs-more{color:#ff9184!important;border-color:rgba(244,72,61,.55)!important}
 .cbs-tooltip-head>i.debuff{
   color:#ffb0a6!important;
-  background:#4d0e0b!important;
   border-color:rgba(244,72,61,.8)!important
 }
 
@@ -128,3 +140,18 @@
 .cb2d-unit.big>.cbs-talent-proc,
 .hs2d-unit.big>.cbs-talent-proc,
 .cc2d-unit.big>.cbs-talent-proc{top:-76px}
+
+
+/* Generated combat status icon sizing */
+.cbs-icon.buff>.cbs-art{box-shadow:inset 0 0 0 1px rgba(118,223,154,.12)}
+.cbs-icon.debuff>.cbs-art{box-shadow:inset 0 0 0 1px rgba(255,108,92,.16)}
+.cbs-tooltip-art{
+  background-color:#071012;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 3px 10px rgba(0,0,0,.35)
+}
+.cbs-tooltip-art.buff{background-color:#08150f}
+.cbs-tooltip-art.debuff{background-color:#180807}
+@media(max-width:620px){
+  .cbs-icon{padding:1px}
+  .cbs-icon>small{right:1px;bottom:1px}
+}
