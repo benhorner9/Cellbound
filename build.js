@@ -20,6 +20,9 @@ for(const file of files){
     if(!contents.includes('refreshStateFromServer'))throw new Error('Trading Post must resync authoritative game state after server mutations');
     if(/\$document\./.test(contents)||/(^|[^$])\$\([^\n]*\)\.forEach/m.test(contents))throw new Error('Trading Post contains an invalid single-element forEach selector');
     if(!contents.includes('market_sweep_my_expired')||!contents.includes('await syncMarketState()'))throw new Error('Trading Post expiry sweep must resync returned items and refunded gold');
+    if(!contents.includes('tpGearSellPicker')||!contents.includes('data-sell-item'))throw new Error('Trading Post equipment seller must use the visual Bank item picker');
+    if(contents.includes("<select id=\"tpGearSellItem\""))throw new Error('Trading Post must not regress to the name-only equipment dropdown');
+    if(!contents.includes("if(!data?.id)throw new Error('The listing was not confirmed by the Trading Post.')"))throw new Error('Trading Post listing creation must verify the server response');
   }
   if(file==='guild.html'){
     const required=['rosterGrid','bankGrid','professionWorkshop','chatMessages','worldBossGrid','dungeonRoute','dungeonIntel','enterDungeonBtn','partySlots'];
