@@ -2146,11 +2146,11 @@ function runSelfTests(){
   test('Persistent Boss Phase',()=>pb?.phaseDamageScale>=1.2&&!persisted.events.some(e=>e.type==='PHASE_CHANGE'&&e.payload?.phaseId==='p70'));
 
   const setParty=party.map((p,i)=>i===0?{...p,equipment:{
-    Head:{setId:'test-set',setName:'Test Set'},Chest:{setId:'test-set',setName:'Test Set'},Weapon:{setId:'test-set',setName:'Test Set'}
+    Head:{setId:'test-set',setName:'Test Set'},Shoulders:{setId:'test-set',setName:'Test Set'},Chest:{setId:'test-set',setName:'Test Set'},Weapon:{setId:'test-set',setName:'Test Set'}
   }}:p);
   const setRun=simulate({party:setParty,encounter:{...base,enemyHealth:420},seed:'set-foundation'});
   const setTank=setRun.finalState.players.find(p=>p.characterId===setParty[0].id);
-  test('Gear Set Foundation',()=>setTank?.setBonuses?.sets?.[0]?.pieces===3&&setTank?.setBonuses?.outputScale>1&&setTank?.setBonuses?.resourceRegen>1);
+  test('Gear Set Foundation',()=>setTank?.setBonuses?.sets?.[0]?.pieces===4&&setTank?.setBonuses?.outputScale>1&&setTank?.setBonuses?.resourceRegen>1);
 
   const cc=simulate({
     party,
