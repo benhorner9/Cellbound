@@ -88,8 +88,11 @@ for(const file of files){
   }
   if(file==='quests-v2.js'){
     if(!contents.includes('async function qPlayReborn')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('Quest combat must use continuous Combat Reborn playback');
-    for(const hook of ['data-q-speed','q2dHealingMeter','function qStatusTargets','CellboundCombatStatuses?.handle','data-q-side-resource','function qResourceDef'])if(!contents.includes(hook))throw new Error('Quest combat HUD is missing '+hook);
+    for(const hook of ['data-q-speed','q2dHealingMeter','function qStatusTargets','CellboundCombatStatuses?.handle','data-q-side-resource','function qResourceDef','function qPulseUnit'])if(!contents.includes(hook))throw new Error('Quest combat HUD is missing '+hook);
     if(!contents.includes("simTime+=Math.min(rawDelta,100)*Math.max(.25,Number(questFight?.speed)||1)"))throw new Error('Quest combat playback speed must control the authoritative timeline');
+  }
+  if(file==='quests-v2.css'){
+    if(!contents.includes('transition-property:left,top,transform,opacity,filter'))throw new Error('Quest combat units must animate left/top movement instead of snapping');
   }
   if(file==='onboarding-v1.js'){
     if(!contents.includes('function tdRenderCombatEvent')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('First Expedition combat must use continuous playback');
