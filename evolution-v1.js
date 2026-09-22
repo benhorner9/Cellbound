@@ -515,6 +515,21 @@ async function sendDockChat(e){
   input.value='';await loadDockChat();
 }
 
+function renderDungeonHistory(){
+  const root=$('#reportsList'),s=state();if(!root||!s)return;
+  let wrap=root.querySelector('.evo-dungeon-history');
+  const rows=(s.dungeonHistory||[]).slice(0,12);
+  if(!rows.length){wrap?.remove();return}
+  if(!wrap){wrap=document.createElement('section');wrap.className='evo-dungeon-history';root.prepend(wrap)}
+  wrap.innerHTML='<div class="evo-history-head"><small>DUNGEON EXPEDITIONS</small><h3>The Ashen Vault</h3></div><div class="evo-history-list">'+rows.map(r=>'<article><b>'+(r.result==='complete'?'CLEARED':'FAILED')+' · '+new Date(r.at).toLocaleString()+'</b><span>Party iLvl '+Math.round(r.partyIlvl||0)+(r.stage?' · Ended at '+esc(DUNGEON.stages.find(s=>s.id===r.stage)?.title||r.stage):'')+'</span></article>').join('')+'</div>'
+}
+function bindReportEnhancement(){
+  const root=$('#reportsList');if(!root)return;
+  reportsObserver=new MutationObserver(()=>requestAnimationFrame(renderDungeonHistory));
+  reportsObserver.observe(root,{childList:true});
+  renderDungeonHistory()
+}
+
 /* ---------- Reports / character shell ---------- */
 /* ---------- Character shell additions ---------- */
 function queueEnhance(){
