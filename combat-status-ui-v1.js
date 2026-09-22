@@ -196,22 +196,42 @@ function normaliseStatus(e){
   cc:raw.cc||null,breakOnDamage:!!raw.breakOnDamage
  }
 }
+function statusPriority(st,now){
+ let score=st.kind==='debuff'?100:0;
+ if(st.cc)score+=80;
+ const e=st.effect||{},name=String(st.name||'').toLowerCase();
+ if(Number(e.damageTakenIncrease)>0||Number(e.incomingDamageIncrease)>0||Number(e.healingReduction)>0)score+=70;
+ if(Number(e.damageReduction)>0||Number(e.incomingDamageReduction)>0||Number(e.incomingHealing)>0)score+=45;
+ if(/shield|barrier|immun|taunt|vulner|curse|bleed|poison|burn|stun|root|silence|enrage|radiance/.test(name))score+=50;
+ const remain=st.endReal?Math.max(0,st.endReal-now):Infinity;
+ if(st.appliedReal&&now-st.appliedReal<=1250)score+=35;
+ if(Number.isFinite(remain)&&remain<=Math.max(900,Number(st.expiringRealMs)||3000))score+=55;
+ return score
+}
+function statusUiState(st,now){
+ const remain=st.endReal?Math.max(0,st.endReal-now):0;
+ const fresh=!!st.appliedReal&&now-st.appliedReal<=1250;
+ const expiring=!!st.endReal&&remain<=Math.max(900,Number(st.expiringRealMs)||3000);
+ return{remain,fresh,expiring}
+}
 function renderHost(host,opts={}){
  const map=statusMap(host),strip=stripFor(host,!!opts.mirror),now=performance.now();
  const all=[...map.values()].filter(x=>!x.endReal||x.endReal>now);
  map.forEach((v,k)=>{if(v.endReal&&v.endReal<=now)map.delete(k)});
+ const mirror=strip.classList.contains('mirror');
+ const maxVisible=mirror?8:(host.classList.contains('big')?4:3);
+ const ranked=all.slice().sort((a,b)=>statusPriority(b,now)-statusPriority(a,now)||(a.endReal||Infinity)-(b.endReal||Infinity));
+ const visible=ranked.slice(0,maxVisible),overflow=Math.max(0,ranked.length-visible.length);
  const draw=(kind,root)=>{
-  const list=all.filter(x=>x.kind===kind).sort((a,b)=>(a.endReal||Infinity)-(b.endReal||Infinity)),shown=list.slice(0,4);
-  const rendered=shown.map(st=>{
-   const remain=st.endReal?Math.max(0,st.endReal-now):0,sec=st.endReal?Math.max(1,Math.ceil(remain/1000)):'∞';
-   return{st,remain,sec}
-  });
-  const signature=rendered.map(x=>x.st.id+':'+x.st.stacks+':'+x.sec).join('|')+'|more:'+(list.length>4?list.length-4:0);
+  const shown=visible.filter(x=>x.kind===kind);
+  const rendered=shown.map(st=>({st,...statusUiState(st,now)}));
+  const signature=rendered.map(x=>x.st.id+':'+x.st.stacks+':'+Math.ceil(x.remain/1000)+':'+(x.fresh?'n':'')+':'+(x.expiring?'e':'')).join('|')+'|more:'+(kind==='debuff'?overflow:0);
   if(root.dataset.cbsSignature===signature)return;
   root.dataset.cbsSignature=signature;
-  root.innerHTML=rendered.map(({st,remain,sec})=>{
-   return '<button type="button" class="cbs-icon '+kind+'" data-cbs-id="'+esc(st.id)+'" data-remaining="'+remain+'" aria-label="'+esc(st.name)+'"><i class="cbs-art" style="'+iconStyle(st)+'"></i><small>'+sec+'</small>'+(st.stacks>1?'<b>'+st.stacks+'</b>':'')+'</button>'
-  }).join('')+(list.length>4?'<span class="cbs-more '+kind+'">+'+(list.length-4)+'</span>':'');
+  root.innerHTML=rendered.map(({st,remain,fresh,expiring})=>{
+   const sec=st.endReal?Math.max(1,Math.ceil(remain/1000)):'∞',attention=fresh?' is-fresh':expiring?' is-expiring':'';
+   return '<button type="button" class="cbs-icon '+kind+attention+'" data-cbs-id="'+esc(st.id)+'" data-remaining="'+remain+'" aria-label="'+esc(st.name)+'"><i class="cbs-art" style="'+iconStyle(st)+'"></i><small>'+sec+'</small>'+(st.stacks>1?'<b>'+st.stacks+'</b>':'')+'</button>'
+  }).join('')+(kind==='debuff'&&overflow?'<span class="cbs-more '+kind+'">+'+overflow+'</span>':'');
   root.querySelectorAll('.cbs-icon').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation();const st=map.get(b.dataset.cbsId);if(st)showTooltip(b,st)}))
  };
  draw('buff',strip.querySelector('.buffs'));draw('debuff',strip.querySelector('.debuffs'));
@@ -245,7 +265,9 @@ function handle(e,opts={}){
   if(remove)map.delete(st.id);
   else{
    const remaining=st.expiresAt?Math.max(0,st.expiresAt-Number(e.timestamp||0)):st.duration;
-   map.set(st.id,{...st,sourceLabel:sourceName(st.source,opts),endReal:remaining>0?performance.now()+remaining/speed:0})
+   const previous=map.get(st.id),realNow=performance.now();
+   map.set(st.id,{...st,sourceLabel:sourceName(st.source,opts),endReal:remaining>0?realNow+remaining/speed:0,
+    appliedReal:previous?.appliedReal||realNow,expiringRealMs:Math.max(900,3000/speed)})
   }
   renderHost(el,{...opts,mirror})
  });
@@ -267,5 +289,5 @@ function startTicker(){
  },1000)
 }
 
-window.CellboundCombatStatuses={handle,clear,renderHost,iconIndex,iconStyle,catalog:{...ICONS},version:'2.0.2'};
+window.CellboundCombatStatuses={handle,clear,renderHost,iconIndex,iconStyle,catalog:{...ICONS},version:'2.1.0'};
 })();
