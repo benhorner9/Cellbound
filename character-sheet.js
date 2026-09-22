@@ -18,13 +18,13 @@ let selectedTreeSpec=null;
 let activeSkillSlot=0;
 
 const classMeta={
-  Warrior:{icon:'⚔',accent:'#b86b55',primary:'Strength'},
-  Paladin:{icon:'✥',accent:'#d8b65d',primary:'Strength'},
-  Priest:{icon:'✚',accent:'#e2d9c5',primary:'Intellect'},
-  Druid:{icon:'❈',accent:'#7fc47a',primary:'Intellect'},
-  Hunter:{icon:'➶',accent:'#9abe68',primary:'Agility'},
-  Rogue:{icon:'◆',accent:'#d9c86c',primary:'Agility'},
-  Mage:{icon:'✦',accent:'#6da7df',primary:'Intellect'}
+  Warrior:{icon:'⚔',accent:'#C69B6D',primary:'Strength'},
+  Paladin:{icon:'✥',accent:'#F48CBA',primary:'Strength'},
+  Priest:{icon:'✚',accent:'#FFFFFF',primary:'Intellect'},
+  Druid:{icon:'❈',accent:'#FF7C0A',primary:'Intellect'},
+  Hunter:{icon:'➶',accent:'#AAD372',primary:'Agility'},
+  Rogue:{icon:'◆',accent:'#FFF468',primary:'Agility'},
+  Mage:{icon:'✦',accent:'#3FC7EB',primary:'Intellect'}
 };
 
 const specs={
