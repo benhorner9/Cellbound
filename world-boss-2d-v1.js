@@ -322,11 +322,11 @@ function wbRenderServerEvent(e){
     case'ADD_SPAWNED':wbSpawnAdd(e);message('ADDS JOIN THE FIGHT','danger');feed((e.payload?.name||'An add')+' joins the encounter.','cast');break;
     case'ADD_DEFEATED':{const u=wbEventUnit(e.target);if(u){u.classList.add('wiped');setTimeout(()=>u.remove(),500)}break}
     case'CROWD_CONTROL':if(target){target.classList.add('dodging');setTimeout(()=>target.classList.remove('dodging'),700);feed('Your party controls a dangerous add.','cast')}break;
-    case'PHASE_CHANGE':message(String(e.ability||'NEW PHASE').toUpperCase(),'danger');feed((e.ability||'A new boss phase')+' begins.','cast');break;
+    case'PHASE_CHANGE':window.CellboundFX?.phase?.(e.ability||'World boss phase',e.payload?.healthPct);message(String(e.ability||'NEW PHASE').toUpperCase(),'danger');feed((e.ability||'A new boss phase')+' begins.','cast');break;
     case'ENRAGE':message(e.result==='hard'?'HARD ENRAGE':'ENRAGE','danger');feed((e.ability||'Enrage')+' activates.','wipe');break;
     case'UNIQUE_EFFECT_TRIGGER':feed((e.ability||'Unique item effect')+' activates.','heal');break;
     case'PLAYER_DEFEATED':if(targetChar){setOwnHp(e.target,0);feed('One of your adventurers has fallen.','wipe')}break;
-    case'ENEMY_DEFEATED':if(e.target==='boss')message('WORLD BOSS DEFEATED','victory');else{const u=wbEventUnit(e.target);if(u)setTimeout(()=>u.remove(),400)}break;
+    case'ENEMY_DEFEATED':if(e.target==='boss'){message('WORLD BOSS DEFEATED','victory');window.CellboundFX?.victory?.({eyebrow:'WORLD BOSS DEFEATED',title:active?.boss?.name||'World Boss',copy:'Your party helped bring down a shared world threat.'})}else{const u=wbEventUnit(e.target);if(u)setTimeout(()=>u.remove(),400)}break;
     case'COMBAT_END':break;
   }
 }
@@ -417,7 +417,7 @@ async function open(bossId){
   document.getElementById('wb2dMessage').hidden=true;
   document.getElementById('wb2dAttackNow').disabled=false;
   const env=document.getElementById('wb2dEnvironment');if(env){env.dataset.theme='';env.innerHTML=''}
-  setArenaTheme(active.boss);feed('Your party enters the shared encounter.','system');
+  setArenaTheme(active.boss);window.CellboundFX?.boss?.(active.boss.name||'World Boss','Shared world encounter');feed('Your party enters the shared encounter.','system');
   await refresh();
   if(!active)return;
   pollTimer=setInterval(refresh,2000);
