@@ -133,6 +133,44 @@ const DUNGEONS={
    lootTable:['priest-t3-chest','hunter-t3-weapon','mage-t3-weapon','warrior-t3-chest','heart-troll-king'],
    bossDrops:{sentinel:['warrior-t3-chest'],warden:['hunter-t3-weapon','priest-t3-chest'],vorran:['mage-t3-weapon','heart-troll-king']},
    chase:[]
+ },
+ 'blackout-station':{
+   id:'blackout-station',name:'Blackout Station',version:2,theme:'Abandoned Grid',
+   faction:'Calder Gridworks',levelRange:[12,14],normalItemLevel:34,heroicItemLevel:38,cellboundItemLevel:40,
+   timerMs:14*60*1000,
+   identity:'Grid restoration, role circuits and lethal overload positioning.',
+   bosses:[
+     {id:'vex-calder',name:'Dr. Vex Calder',signature:'Power failures, role circuits and Emergency Overload.'}
+   ],
+   heroicAdds:{
+     'vex-calder':[{name:'Arc Flash',type:'circles',duration:1250},{name:'Grid Surge',type:'interrupt',duration:1450}]
+   },
+   lootTable:[],
+   bossDrops:{'vex-calder':[]},
+   chase:[]
+ },
+ 'fractured-ages':{
+   id:'fractured-ages',name:'The Fractured Ages',version:2,theme:'Broken Timeline',
+   faction:'The Keeper of Ages',levelRange:[14,18],normalItemLevel:38,heroicItemLevel:42,cellboundItemLevel:44,
+   timerMs:22*60*1000,
+   identity:'Five linked boss encounters across collapsing eras with persistent party condition.',
+   bosses:[
+     {id:'high-noon',name:'Deadeye Mercer',signature:'Random-target crossfire and interrupt pressure.'},
+     {id:'iron-kingdom',name:'The Hollow Knight',signature:'Heavy cleaves, armour reforging and execution lines.'},
+     {id:'first-kingdom',name:'Amun-Rael',signature:'Solar hazards, adds and role-safe zones.'},
+     {id:'silent-frontier',name:'Commander Veyra',signature:'Ranged pressure, mines, drones and orbital barrages.'},
+     {id:'funhouse',name:'The Old Man — Keeper of Ages',signature:'Five-enemy finale, time control and the Mask Falls resolution.'}
+   ],
+   heroicAdds:{
+     'high-noon':[{name:'Crossfire',type:'line',duration:1150}],
+     'iron-kingdom':[{name:'Falling Masonry',type:'circles',duration:1300}],
+     'first-kingdom':[{name:'Solar Rupture',type:'circles',duration:1250}],
+     'silent-frontier':[{name:'Orbital Lock',type:'line',duration:1100}],
+     'funhouse':[{name:'Fracture Cascade',type:'circles',duration:1200}]
+   },
+   lootTable:[],
+   bossDrops:{'high-noon':[],'iron-kingdom':[],'first-kingdom':[],'silent-frontier':[],funhouse:[]},
+   chase:[]
  }
 };
 
@@ -151,10 +189,12 @@ const LOOT_PROFILES={
    heroic:{tiers:{3:.95,4:.05},itemLevel:{Head:34,Chest:36,Weapon:38}}
  },
  'blackout-station':{
-   normal:{tiers:{3:1},itemLevel:{Head:34,Chest:36,Weapon:38}}
+   normal:{tiers:{3:1},itemLevel:{Head:34,Chest:36,Weapon:38}},
+   heroic:{tiers:{3:.92,4:.08},itemLevel:{Head:38,Chest:40,Weapon:42}}
  },
  'fractured-ages':{
-   normal:{tiers:{3:1},itemLevel:{Head:38,Chest:39,Weapon:40}}
+   normal:{tiers:{3:1},itemLevel:{Head:38,Chest:39,Weapon:40}},
+   heroic:{tiers:{3:.90,4:.10},itemLevel:{Head:42,Chest:43,Weapon:44}}
  }
 };
 function cellboundLootProfile(tier=1){
@@ -165,7 +205,11 @@ function cellboundLootProfile(tier=1){
  return{tiers:{3:.95,4:.05},itemLevel:{Head:36,Chest:37,Weapon:38},band:'Entry Cellbound'}
 }
 function lootProfileFor(dungeonId,difficulty='normal',tier=0){
- if(difficulty==='cellbound')return cellboundLootProfile(tier);
+ if(difficulty==='cellbound'){
+   const profile=cellboundLootProfile(tier),normal=LOOT_PROFILES[dungeonId]?.normal?.itemLevel||{};
+   profile.itemLevel=Object.fromEntries(Object.entries(profile.itemLevel||{}).map(([slot,value])=>[slot,Math.min(LOOT_RULES.powerCeiling,Math.max(Number(value)||0,(Number(normal[slot])||0)+2))]));
+   return profile
+ }
  return LOOT_PROFILES[dungeonId]?.[difficulty]||LOOT_PROFILES[dungeonId]?.normal||{
    tiers:difficulty==='heroic'?LOOT_RULES.rarityWeights.heroic:LOOT_RULES.rarityWeights.normal,
    itemLevel:{Head:18,Chest:20,Weapon:22}

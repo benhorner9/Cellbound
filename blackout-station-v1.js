@@ -57,6 +57,28 @@ function readiness(){
  if(ilvl()<ENTRY_ILVL)return{ok:false,reason:'Party Item Level '+ilvl()+'. Blackout Station requires Item Level '+ENTRY_ILVL+'.'};
  return{ok:true,reason:'The station is ready to investigate.'}
 }
+function bsEndgameConfig(){
+ const E=window.CellboundEndgame;
+ if(E?.currentConfig)return E.currentConfig('blackout-station');
+ return{difficulty:'normal',tier:0,diff:{name:'Normal',label:'NORMAL',description:'Restore the station and defeat Dr. Vex Calder.'},affixes:[],targetTimeMs:14*60*1000,recommendedItemLevel:34,dungeon:{version:2}}
+}
+function bsEndgamePrepMarkup(){
+ const E=window.CellboundEndgame,cfg=bsEndgameConfig(),p=E?.progressFor?.('blackout-station')||{},tierMax=Math.max(1,Number(p.highest_tier)||1);
+ const buttons=['normal','heroic','cellbound'].map(mode=>{const unlocked=E?.difficultyUnlocked?E.difficultyUnlocked('blackout-station',mode,cfg.tier||1):mode==='normal';return'<button type="button" data-bs-mode="'+mode+'" class="'+(cfg.difficulty===mode?'active':'')+'" '+(unlocked?'':'disabled')+'>'+(mode==='cellbound'?'CELLBOUND+':mode.toUpperCase())+'</button>'}).join('');
+ const tier=cfg.difficulty==='cellbound'?'<label>Tier <select data-bs-tier>'+Array.from({length:tierMax},(_,i)=>i+1).map(t=>'<option value="'+t+'" '+(t===cfg.tier?'selected':'')+'>+'+t+'</option>').join('')+'</select></label>':'';
+ const affixes=(cfg.affixes||[]).map(id=>window.CellboundEndgameData?.AFFIXES?.[id]?.name||id).join(' · ')||'No affixes';
+ return'<div class="eg-prep-block"><small>DUNGEON DIFFICULTY</small><div class="eg-prep-tabs">'+buttons+'</div><div class="eg-prep-detail"><b>'+esc(cfg.diff?.name||'Normal')+'</b> · Recommended iLvl '+cfg.recommendedItemLevel+' · Target '+Math.floor(cfg.targetTimeMs/60000)+':'+String(Math.round(cfg.targetTimeMs/1000)%60).padStart(2,'0')+'<br>'+esc(affixes)+'<br>'+esc(cfg.diff?.description||'')+'</div>'+tier+'</div>'
+}
+function bsBindEndgamePrep(){
+ const E=window.CellboundEndgame;
+ document.querySelectorAll('[data-bs-mode]').forEach(b=>b.onclick=()=>{E?.choose?.('blackout-station',b.dataset.bsMode);briefing()});
+ $('[data-bs-tier]')?.addEventListener('change',e=>{E?.choose?.('blackout-station','cellbound',Number(e.target.value));briefing()})
+}
+async function bsWaitForEndgame(){
+ for(let i=0;i<20;i++){if(window.CellboundEndgame?.beginAttempt)return window.CellboundEndgame;await new Promise(r=>setTimeout(r,100))}
+ return null
+}
+
 function renderCard(){
  const card=$('#blackoutStationCard'),mount=$('#blackoutStationMount');if((!card&&!mount)||!Game?.ready)return;
  const s=state(),clears=Number(s?.blackoutStationCompletions)||0,gate=readiness(),pi=ilvl();
@@ -77,11 +99,12 @@ function renderCard(){
 }
 function briefing(){
  const gate=readiness(),r=root();r.hidden=false;document.body.classList.add('bs2d-open');
- r.innerHTML='<section class="cb2d-shell cb2d-brief bs2d-shell"><header class="cb2d-head"><div><small>BLACKOUT STATION · DUNGEON 4 · ILVL '+ENTRY_ILVL+'+</small><h2>Restore the grid. Survive the overload.</h2></div><button data-bs-close>×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">There are no trash packs here. The expedition begins at a dead control board. Solve the sliding cable puzzle and the station powers up, revealing Dr. Vex Calder in the generator hall.</p><div class="bs-brief-rules"><article><span>1</span><div><b>ALIGN THE GRID</b><p>Slide adjacent cable tiles into the empty space until every section returns to the correct circuit layout.</p></div></article><article><span>2</span><div><b>WATCH THE LIGHTS</b><p>At 75%, 50% and 25% boss health, Calder pulls the power and the room goes dark.</p></div></article><article><span>3</span><div><b>GET TO YOUR ROLE CIRCUIT</b><p><strong class="bs-red">RED = TANK</strong> · <strong class="bs-yellow">YELLOW = DAMAGE</strong> · <strong class="bs-blue">BLUE = HEALER</strong>. The shockwave is lethal outside the correct colour.</p></div></article></div></main><aside><small>ACTIVE FIVE · PARTY ILVL '+(ilvl()||'—')+'</small>'+party().map(ch=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(ch)+'"></i><span><b>'+esc(ch.name)+'</b><small>'+esc(ch.class)+' · '+esc(ch.spec)+' · '+role(ch).toUpperCase()+'</small></span></div>').join('')+'<button data-bs-start '+(!gate.ok?'disabled':'')+'>BEGIN RESTORATION →</button><p>'+esc(gate.reason)+'</p></aside></div></section>';
+ r.innerHTML='<section class="cb2d-shell cb2d-brief bs2d-shell"><header class="cb2d-head"><div><small>BLACKOUT STATION · DUNGEON 4 · ILVL '+ENTRY_ILVL+'+</small><h2>Restore the grid. Survive the overload.</h2></div><button data-bs-close>×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">There are no trash packs here. The expedition begins at a dead control board. Solve the sliding cable puzzle and the station powers up, revealing Dr. Vex Calder in the generator hall.</p>'+bsEndgamePrepMarkup()+'<div class="bs-brief-rules"><article><span>1</span><div><b>ALIGN THE GRID</b><p>Slide adjacent cable tiles into the empty space until every section returns to the correct circuit layout.</p></div></article><article><span>2</span><div><b>WATCH THE LIGHTS</b><p>At 75%, 50% and 25% boss health, Calder pulls the power and the room goes dark.</p></div></article><article><span>3</span><div><b>GET TO YOUR ROLE CIRCUIT</b><p><strong class="bs-red">RED = TANK</strong> · <strong class="bs-yellow">YELLOW = DAMAGE</strong> · <strong class="bs-blue">BLUE = HEALER</strong>. The shockwave is lethal outside the correct colour.</p></div></article></div></main><aside><small>ACTIVE FIVE · PARTY ILVL '+(ilvl()||'—')+'</small>'+party().map(ch=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(ch)+'"></i><span><b>'+esc(ch.name)+'</b><small>'+esc(ch.class)+' · '+esc(ch.spec)+' · '+role(ch).toUpperCase()+'</small></span></div>').join('')+'<button data-bs-start '+(!gate.ok?'disabled':'')+'>BEGIN RESTORATION →</button><p>'+esc(gate.reason)+'</p></aside></div></section>';
  r.querySelector('[data-bs-close]').onclick=close;
- r.querySelector('[data-bs-start]')?.addEventListener('click',startRun)
+ r.querySelector('[data-bs-start]')?.addEventListener('click',startRun);
+ try{bsBindEndgamePrep()}catch(error){console.warn('Blackout Station difficulty controls failed to bind',error)}
 }
-function openDungeon(){Game=window.CellboundGame;if(!Game?.ready)return;db=Game.getSupabase?.();briefing()}
+function openDungeon(options){Game=window.CellboundGame;if(!Game?.ready)return;db=Game.getSupabase?.();if(options?.difficulty)window.CellboundEndgame?.choose?.('blackout-station',options.difficulty,options.tier||1);briefing()}
 function close(){
  token++;run=null;document.body.classList.remove('bs2d-open');const r=root();r.hidden=true;Game?.switchView?.('content');renderCard()
 }
@@ -207,7 +230,7 @@ async function powerOn(overridden=false){
 function bossEncounter(){
  const overload={name:'Emergency Overload',type:'role-circles',duration:5000,danger:'fatal',strict:true,zones:ROLE_ZONES};
  const overcharge=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT,bossHealth=Math.round(2450*(1+overcharge/100));
- return{
+ const base={
   id:'vex-calder',title:'Dr. Vex Calder',kind:'final',level:BOSS_LEVEL,recommendedItemLevel:ENTRY_ILVL,
   enemies:['Dr. Vex Calder'],enemyTypes:['boss'],enemyHealth:bossHealth,calderOvercharge:overcharge,mechanicIntervalMs:4600,mechanics:[{name:'Turbine Cleave',type:'cone',duration:1700},{name:'Core Siphon',type:'interrupt',duration:1950,priority:'critical'},{name:'Static Cascade',type:'circles',duration:1500}],
   phases:[
@@ -223,6 +246,7 @@ function bossEncounter(){
    ]
   }
  }
+ return window.CellboundEndgame?.stageConfig?.('blackout-station',base)||base
 }
 function renderId(id){
  const s=String(id||'');
@@ -468,14 +492,21 @@ function bsLootGearCard(item){
  return '<article class="cb2d-loot-item '+bsLootRarityClass(item)+'"><div class="cb2d-loot-art">'+art+'</div><div><small>'+esc(String(item?.rarity||'GEAR').toUpperCase())+' · '+esc(String(item?.slot||'EQUIPMENT').toUpperCase())+'</small><h4>'+esc(item?.name||'Unknown Item')+'</h4><p>Item Level '+Number(item?.itemLevel||0)+(item?.power?' · +'+Number(item.power)+' Power':'')+'</p><div class="cb2d-loot-roll">'+stats.map(s=>'<span>'+esc(s.text)+'</span>').join('')+'</div>'+effect+'<em>Sent to Guild Bank</em></div></article>'
 }
 async function complete(){
- const s=state(),result=run.result,summary=result?.summary||{},gains=awardXp(),gear=window.CellboundEndgame?.rollClearLoot?.('blackout-station',null,.80,{difficulty:'normal',source:'Blackout Station · Dr. Vex Calder'})||null,overrideDrop=Math.random()<GRID_OVERRIDE_DROP_CHANCE?createGridOverrideModule():null,gold=320,renown=140,shards=10;
+ const s=state(),result=run.result,summary=result?.summary||{},mode=run.endgame?.difficulty||'normal',tier=Number(run.endgame?.tier)||0;
+ const floor=mode==='normal'?90000:mode==='heroic'?100000:110000,timeMs=Math.max(floor,Date.now()-Number(run.startedAt||Date.now()));
+ const metrics={timeMs,deaths:Number(summary.deaths)||0,mechanicsFailed:Number(summary.mechanics?.failed)||0,mistakes:Number(summary.mistakes)||0,missedInterrupts:Number(summary.missedInterrupts)||0,threatLosses:Number(summary.threatLosses)||0,avoidableDamage:Number(summary.avoidableDamage)||0,battleResurrections:Number(summary.battleResurrections)||0};
+ const record=await window.CellboundEndgame?.recordRun?.('blackout-station',metrics);run.endgameRecord=record&&!record?.error?record:null;
+ const gains=awardXp(),gear=window.CellboundEndgame?.rollClearLoot?.('blackout-station','vex-calder',mode==='normal'?.80:mode==='heroic'?.86:.90)||null,overrideDrop=Math.random()<GRID_OVERRIDE_DROP_CHANCE?createGridOverrideModule():null;
+ const gold=mode==='normal'?320:mode==='heroic'?420:470+tier*15,renown=mode==='normal'?140:mode==='heroic'?185:205+tier*6,shards=window.CellboundEndgame?.shardReward?.('blackout-station')||10;
  s.gold=(Number(s.gold)||0)+gold;s.renown=(Number(s.renown)||0)+renown;s.blackoutStationCompletions=(Number(s.blackoutStationCompletions)||0)+1;s.activity=Array.isArray(s.activity)?s.activity:[];
  Game.addMaterial?.('cell-shards',shards);if(gear)Game.addBankItem?.(gear);if(overrideDrop)Game.addBankItem?.(overrideDrop);
- s.activity.push('Blackout Station cleared. Dr. Vex Calder defeated after the grid restoration. Each adventurer earned '+XP+' XP.'+(gear?' '+gear.name+' was sent to the Guild Bank.':'')+(overrideDrop?' Rare drop: Grid Override Module (5 uses).':''));
+ s.activity.push('Blackout Station '+(mode==='cellbound'?'Cellbound+'+tier:mode)+' cleared. Dr. Vex Calder defeated after the grid restoration. Each adventurer earned '+XP+' XP.'+(gear?' '+gear.name+' was sent to the Guild Bank.':'')+(overrideDrop?' Rare drop: Grid Override Module (5 uses).':''));
  Game.save?.();await Game.persistState?.();await syncXp(gains);
- const deaths=Number(summary.deaths)||0,failed=Number(summary.mechanics?.failed)||0,timeMs=Number(result.durationMs)||0,score=Math.max(0,760-Math.round(timeMs/1000)*2-deaths*60-failed*35);
- window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'blackout-station',score,timeMs}}));
- const e=$('#bsEnd');if(!e)return;e.hidden=false;e.className='cb2d-end cb2d-loot-screen cb2d-results-screen';$('.bs2d-shell')?.classList.add('results-mode');e.innerHTML='<div class="cb2d-loot-wrap"><header class="cb2d-loot-head"><div><small>BLACKOUT STATION · CLEARED</small><h3>Grid Secured</h3><p>The generator hall falls silent. The station is powered, Calder is down, and the recovered equipment has been secured.</p></div><div class="cb2d-loot-complete">✓<span>DUNGEON<br>COMPLETE</span></div></header><div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+gold+'</b><small>Added to Guild treasury</small></article><article><span>RENOWN</span><b>+'+renown+'</b><small>Guild reputation earned</small></article><article><span>PARTY XP</span><b>+'+XP+'</b><small>Each adventurer</small></article><article><span>CELL SHARDS</span><b>+'+shards+'</b><small>Recovered from the grid</small></article><article><span>RUN SCORE</span><b>'+score+'</b><small>'+Math.round(timeMs/1000)+'s boss combat</small></article></div><section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>GEAR ACQUIRED</span><small>Stored automatically in the Guild Bank</small></div><div class="cb2d-loot-gear">'+(gear?bsLootGearCard(gear):'<div class="cb2d-loot-empty">No equipment recovered.</div>')+'</div></section>'+(overrideDrop?'<section class="cb2d-loot-section bs-override-drop-section"><div class="cb2d-loot-title"><span>RARE UTILITY DROP</span><small>10% chance · separate from equipment loot</small></div><article class="bs-override-drop-card">'+gridOverrideArt(72)+'<div><small>RARE · UTILITY</small><h4>Grid Override Module</h4><p>5 / 5 uses · Automatically restores the Blackout Station grid after your first manual clear.</p><em>TRADEABLE · SENT TO GUILD BANK</em></div></article></section>':'')+'<section class="bs-run-summary"><article><b>'+run.moves+'</b><span>Puzzle moves</span></article><article><b>'+deaths+'</b><span>Deaths</span></article><article><b>'+failed+'</b><span>Failed mechanics</span></article></section><footer class="cb2d-loot-actions"><button data-bs-bank>VIEW GUILD BANK</button><button class="primary" data-bs-return>RETURN TO DUNGEONS →</button></footer></div>';
+ const deaths=metrics.deaths,failed=metrics.mechanicsFailed,score=Number(record?.score)||window.CellboundEndgameData?.scorePreview?.({difficulty:mode,tier,timeMs,targetTimeMs:run.endgame?.targetTimeMs||0,deaths,mechanicsFailed:failed,mistakes:metrics.mistakes})||0;
+ window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'blackout-station',difficulty:mode,tier,score,timeMs}}));
+ const e=$('#bsEnd');if(!e)return;e.hidden=false;e.className='cb2d-end cb2d-loot-screen cb2d-results-screen';$('.bs2d-shell')?.classList.add('results-mode');
+ const unlocks=(record?.newUnlocks||[]).map(x=>'<span><i>↗</i><b>'+esc(x)+'</b></span>').join('');
+ e.innerHTML='<div class="cb2d-loot-wrap"><header class="cb2d-loot-head"><div><small>BLACKOUT STATION · '+esc(mode==='cellbound'?'CELLBOUND+'+tier:mode.toUpperCase())+' · CLEARED</small><h3>Grid Secured</h3><p>The generator hall falls silent. The station is powered, Calder is down, and the recovered equipment has been secured.</p></div><div class="cb2d-loot-complete">✓<span>DUNGEON<br>COMPLETE</span></div></header><div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+gold+'</b><small>Added to Guild treasury</small></article><article><span>RENOWN</span><b>+'+renown+'</b><small>Guild reputation earned</small></article><article><span>PARTY XP</span><b>+'+XP+'</b><small>Each adventurer</small></article><article><span>CELL SHARDS</span><b>+'+shards+'</b><small>Recovered from the grid</small></article><article><span>RUN SCORE</span><b>'+score+'</b><small>'+Math.round(timeMs/1000)+'s expedition</small></article></div>'+(unlocks?'<section class="eg-unlock-panel"><small>PROGRESSION</small><div>'+unlocks+'</div></section>':'')+'<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>GEAR ACQUIRED</span><small>Stored automatically in the Guild Bank</small></div><div class="cb2d-loot-gear">'+(gear?bsLootGearCard(gear):'<div class="cb2d-loot-empty">No equipment recovered.</div>')+'</div></section>'+(overrideDrop?'<section class="cb2d-loot-section bs-override-drop-section"><div class="cb2d-loot-title"><span>RARE UTILITY DROP</span><small>10% chance · separate from equipment loot</small></div><article class="bs-override-drop-card">'+gridOverrideArt(72)+'<div><small>RARE · UTILITY</small><h4>Grid Override Module</h4><p>5 / 5 uses · Automatically restores the Blackout Station grid after your first manual clear.</p><em>TRADEABLE · SENT TO GUILD BANK</em></div></article></section>':'')+'<section class="bs-run-summary"><article><b>'+run.moves+'</b><span>Puzzle moves</span></article><article><b>'+deaths+'</b><span>Deaths</span></article><article><b>'+failed+'</b><span>Failed mechanics</span></article></section><footer class="cb2d-loot-actions"><button data-bs-bank>VIEW GUILD BANK</button><button class="primary" data-bs-return>RETURN TO DUNGEONS →</button></footer></div>';
  e.querySelector('[data-bs-bank]').onclick=()=>{close();Game.switchView?.('bank')};e.querySelector('[data-bs-return]').onclick=()=>{close();Game.switchView?.('content')};
  renderCard()
 }
@@ -489,9 +520,14 @@ function failureDiagnosis(){
 function fail(){
  Game.applyPartyCellShock?.(25);const e=$('#bsEnd');if(!e)return;e.hidden=false;e.className='cb2d-end bs-wipe-report cb2d-results-screen';$('.bs2d-shell')?.classList.add('results-mode');e.innerHTML='<div><small>BLACKOUT STATION · EXPEDITION FAILED</small><h3>Party Wiped</h3><p>'+esc(failureDiagnosis())+'</p><strong>Every adventurer gained 25% Cell Shock.</strong></div><button data-bs-return>RETURN TO DUNGEONS →</button>';e.querySelector('[data-bs-return]').onclick=()=>{close();Game.switchView?.('content')}
 }
-function startRun(){
- const gate=readiness();if(!gate.ok)return;const quickReconnect=(Number(state()?.blackoutStationCompletions)||0)>0;token++;
- run={speed:1,seed:Date.now().toString(36),board:shuffledBoard(),moves:0,powered:false,quickReconnect,overrideInProgress:false,overrideUsed:false,cluesUsed:0,cluesRemaining:5,log:[quickReconnect?'Previous clear recognised. Quick reconnect authorised: only one continuous path to the breaker is required.':'First-clear protocol active. Restore all 15 cable tiles before the breaker will close.'],damage:Object.fromEntries(party().map(c=>[c.id,0])),healing:Object.fromEntries(party().map(c=>[c.id,0])),threat:Object.fromEntries(party().map(c=>[c.id,0])),hp:Object.fromEntries(party().map(c=>[c.id,100])),resources:Object.fromEntries(party().map(c=>{const d=resourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),aggro:null,combatElapsed:0,movementEpoch:{},result:null};renderPuzzle()
+async function startRun(){
+ const gate=readiness();if(!gate.ok)return;
+ const startButton=root().querySelector('[data-bs-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
+ await Game.persistState?.();
+ const service=await bsWaitForEndgame(),eg=bsEndgameConfig(),attempt=await service?.beginAttempt?.('blackout-station');
+ if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN RESTORATION →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Restoration again.');return}
+ const quickReconnect=(Number(state()?.blackoutStationCompletions)||0)>0;token++;
+ run={speed:1,seed:attempt.seed||Date.now().toString(36),startedAt:Date.now(),endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId},board:shuffledBoard(),moves:0,powered:false,quickReconnect,overrideInProgress:false,overrideUsed:false,cluesUsed:0,cluesRemaining:5,log:[quickReconnect?'Previous clear recognised. Quick reconnect authorised: only one continuous path to the breaker is required.':'First-clear protocol active. Restore all 15 cable tiles before the breaker will close.'],damage:Object.fromEntries(party().map(c=>[c.id,0])),healing:Object.fromEntries(party().map(c=>[c.id,0])),threat:Object.fromEntries(party().map(c=>[c.id,0])),hp:Object.fromEntries(party().map(c=>[c.id,100])),resources:Object.fromEntries(party().map(c=>{const d=resourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),aggro:null,combatElapsed:0,movementEpoch:{},result:null};renderPuzzle()
 }
 function init(){
  Game=window.CellboundGame;G=window.CellboundGear;if(!Game?.ready){setTimeout(init,100);return}db=Game.getSupabase?.();renderCard();

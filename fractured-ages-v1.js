@@ -87,6 +87,28 @@ const STAGES=[
   environment:'<div class="fa-env-funhouse"><span class="fa-clock k1">Ⅻ</span><span class="fa-clock k2">Ⅳ</span><span class="fa-clock k3">?</span><i class="fa-mirror m1"></i><i class="fa-mirror m2"></i><i class="fa-door"></i><span class="fa-confetti"></span></div>'
  }
 ];
+function faEndgameConfig(){
+ const E=window.CellboundEndgame;
+ if(E?.currentConfig)return E.currentConfig('fractured-ages');
+ return{difficulty:'normal',tier:0,diff:{name:'Normal',label:'NORMAL',description:'Survive all five fractures and escape the Funhouse.'},affixes:[],targetTimeMs:22*60*1000,recommendedItemLevel:38,dungeon:{version:2}}
+}
+function faEndgamePrepMarkup(){
+ const E=window.CellboundEndgame,cfg=faEndgameConfig(),p=E?.progressFor?.('fractured-ages')||{},tierMax=Math.max(1,Number(p.highest_tier)||1);
+ const buttons=['normal','heroic','cellbound'].map(mode=>{const unlocked=E?.difficultyUnlocked?E.difficultyUnlocked('fractured-ages',mode,cfg.tier||1):mode==='normal';return'<button type="button" data-fa-mode="'+mode+'" class="'+(cfg.difficulty===mode?'active':'')+'" '+(unlocked?'':'disabled')+'>'+(mode==='cellbound'?'CELLBOUND+':mode.toUpperCase())+'</button>'}).join('');
+ const tier=cfg.difficulty==='cellbound'?'<label>Tier <select data-fa-tier>'+Array.from({length:tierMax},(_,i)=>i+1).map(t=>'<option value="'+t+'" '+(t===cfg.tier?'selected':'')+'>+'+t+'</option>').join('')+'</select></label>':'';
+ const affixes=(cfg.affixes||[]).map(id=>window.CellboundEndgameData?.AFFIXES?.[id]?.name||id).join(' · ')||'No affixes';
+ return'<div class="eg-prep-block"><small>DUNGEON DIFFICULTY</small><div class="eg-prep-tabs">'+buttons+'</div><div class="eg-prep-detail"><b>'+esc(cfg.diff?.name||'Normal')+'</b> · Recommended iLvl '+cfg.recommendedItemLevel+' · Target '+Math.floor(cfg.targetTimeMs/60000)+':'+String(Math.round(cfg.targetTimeMs/1000)%60).padStart(2,'0')+'<br>'+esc(affixes)+'<br>'+esc(cfg.diff?.description||'')+'</div>'+tier+'</div>'
+}
+function faBindEndgamePrep(){
+ const E=window.CellboundEndgame;
+ document.querySelectorAll('[data-fa-mode]').forEach(b=>b.onclick=()=>{E?.choose?.('fractured-ages',b.dataset.faMode);briefing()});
+ $('[data-fa-tier]')?.addEventListener('change',e=>{E?.choose?.('fractured-ages','cellbound',Number(e.target.value));briefing()})
+}
+async function faWaitForEndgame(){
+ for(let i=0;i<20;i++){if(window.CellboundEndgame?.beginAttempt)return window.CellboundEndgame;await new Promise(r=>setTimeout(r,100))}
+ return null
+}
+
 function root(){let e=$('#fracturedAgesBackdrop');if(e)return e;e=document.createElement('div');e.id='fracturedAgesBackdrop';e.className='fa-backdrop';e.hidden=true;document.body.appendChild(e);return e}
 function readiness(){
  if(!unlocked())return{ok:false,reason:'Complete The Fourfold Lock to discover this dungeon.'};
@@ -114,17 +136,22 @@ function renderCard(){
  mount.querySelector('[data-fa-quests]')?.addEventListener('click',()=>Game.switchView?.('quests'));
  try{window.CellboundDungeonBrowser?.refresh?.()}catch(e){}
 }
-function openDungeon(){Game=window.CellboundGame;if(!Game?.ready)return;db=Game.getSupabase?.();briefing()}
+function openDungeon(options){Game=window.CellboundGame;if(!Game?.ready)return;db=Game.getSupabase?.();if(options?.difficulty)window.CellboundEndgame?.choose?.('fractured-ages',options.difficulty,options.tier||1);briefing()}
 function close(){run=null;const r=root();r.hidden=true;document.body.classList.remove('fa-open');Game?.switchView?.('content');renderCard()}
 function briefing(){
  const gate=readiness(),r=root();r.hidden=false;document.body.classList.add('fa-open');
  if(!gate.ok){r.innerHTML='<section class="fa-shell fa-brief"><header><div><small>THE FRACTURED AGES · ENTRY CHECK</small><h2>The timeline will not open.</h2></div><button data-fa-close>×</button></header><div class="fa-blocked"><b>NOT READY</b><p>'+esc(gate.reason)+'</p><button data-fa-party>OPEN PARTY BUILDER →</button></div></section>';r.querySelector('[data-fa-close]').onclick=close;r.querySelector('[data-fa-party]').onclick=()=>{close();Game.switchView?.('party')};return}
- r.innerHTML='<section class="fa-shell fa-brief"><header><div><small>THE FRACTURED AGES · LEVELS 14–18 · ILVL '+ENTRY_ILVL+'+</small><h2>A journey through five impossible encounters.</h2></div><button data-fa-close>×</button></header><div class="fa-brief-grid"><main><p>The Chronomap tears open five fractures. Every combat encounter uses the same authoritative Cellbound combat engine: real movement, threat, resources, healing, interrupts, deaths and mechanics.</p><div class="fa-era-strip">'+STAGES.map((s,i)=>'<span><i>'+(i+1)+'</i><b>'+esc(s.era)+'</b><small>'+esc(s.boss)+'</small></span>').join('')+'</div><div class="fa-warning"><b>THE FINAL FRACTURE</b><span>The Old Man does not fight alone. Your active five will face five enemies at once.</span></div></main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="fa-party"><span>'+esc(c.portrait||c.name.slice(0,2))+'</span><div><b>'+esc(c.name)+'</b><small>Lv. '+Math.max(1,Number(c.level)||1)+' · '+esc(c.class)+' · '+esc(c.spec)+'</small></div></div>').join('')+'<button class="fa-start" data-fa-start>STEP THROUGH THE FIRST FRACTURE →</button></aside></div></section>';
- r.querySelector('[data-fa-close]').onclick=close;r.querySelector('[data-fa-start]').onclick=startRun
+ r.innerHTML='<section class="fa-shell fa-brief"><header><div><small>THE FRACTURED AGES · LEVELS 14–18 · ILVL '+ENTRY_ILVL+'+</small><h2>A journey through five impossible encounters.</h2></div><button data-fa-close>×</button></header><div class="fa-brief-grid"><main><p>The Chronomap tears open five fractures. Every combat encounter uses the same authoritative Cellbound combat engine: real movement, threat, resources, healing, interrupts, deaths and mechanics.</p>'+faEndgamePrepMarkup()+'<div class="fa-era-strip">'+STAGES.map((s,i)=>'<span><i>'+(i+1)+'</i><b>'+esc(s.era)+'</b><small>'+esc(s.boss)+'</small></span>').join('')+'</div><div class="fa-warning"><b>THE FINAL FRACTURE</b><span>The Old Man does not fight alone. Your active five will face five enemies at once.</span></div></main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="fa-party"><span>'+esc(c.portrait||c.name.slice(0,2))+'</span><div><b>'+esc(c.name)+'</b><small>Lv. '+Math.max(1,Number(c.level)||1)+' · '+esc(c.class)+' · '+esc(c.spec)+'</small></div></div>').join('')+'<button class="fa-start" data-fa-start>STEP THROUGH THE FIRST FRACTURE →</button></aside></div></section>';
+ r.querySelector('[data-fa-close]').onclick=close;r.querySelector('[data-fa-start]').onclick=startRun;
+ try{faBindEndgamePrep()}catch(error){console.warn('Fractured Ages difficulty controls failed to bind',error)}
 }
-function startRun(){
+async function startRun(){
+ const startButton=root().querySelector('[data-fa-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
+ await Game.persistState?.();
+ const service=await faWaitForEndgame(),eg=faEndgameConfig(),attempt=await service?.beginAttempt?.('fractured-ages');
+ if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='STEP THROUGH THE FIRST FRACTURE →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try again.');return}
  const combatState=Object.fromEntries(party().map(c=>[c.id,{healthPct:100,resource:null,cooldowns:{},statuses:[],reviveSicknessMs:0,uniqueUsed:{}}]));
- run={stage:0,startedAt:Date.now(),results:[],done:false,combatState,recoveries:0};
+ run={stage:0,startedAt:Date.now(),results:[],done:false,combatState,recoveries:0,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed}};
  transition()
 }
 function carryCombatState(result){
@@ -173,10 +200,11 @@ async function fightStage(s){
  root().hidden=true;
  const Q=window.CellboundQuests;if(!Q?.runQuest2DFight){root().hidden=false;return}
  let combatResult=null;
+ const combat=window.CellboundEndgame?.stageConfig?.('fractured-ages',{id:s.id,...s.combat})||{id:s.id,...s.combat};
  const won=await Q.runQuest2DFight({
   quest:'The Fractured Ages',title:s.boss,location:s.era,ambience:s.intro,
   presentationKind:'dungeon',phases:STAGES.map(x=>x.era),phaseIndex:run.stage,partyLabel:'PARTY CONDITION · ILVL '+ilvl(),
-  enemies:s.enemies,eliteIndex:s.id==='funhouse'?1:0,visualClass:s.visual,environmentMarkup:s.environment,combat:s.combat,
+  enemies:s.enemies,eliteIndex:s.id==='funhouse'?1:0,visualClass:s.visual,environmentMarkup:s.environment,combat,
   combatState:run?.combatState||null,onResult:result=>{combatResult=result},
   completeText:s.id==='funhouse'?'The echoes fall. At exactly twenty percent health, the Old Man lifts one finger. Everything stops.':'The fracture shudders. A new door opens where no door existed before.'
  });
@@ -184,7 +212,7 @@ async function fightStage(s){
  if(!won){showFailure(s);return}
  const carry=carryCombatState(combatResult);
  if(!carry.ok){await failRecovery(s,carry.reason);return}
- run.results.push({id:s.id,boss:s.boss});
+ run.results.push({id:s.id,boss:s.boss,combatResult});
  if(s.id==='funhouse'){showMaskFall();return}
  run.stage++;transition()
 }
@@ -218,14 +246,21 @@ function gearCard(item){
 }
 async function completeRun(){
  if(!run||run.done)return;run.done=true;
- const s=state(),gains=awardXp(),gear=window.CellboundEndgame?.rollClearLoot?.('fractured-ages',null,.85,{difficulty:'normal',source:'The Fractured Ages · Funhouse Escape'})||null,gold=500,renown=250,shards=15;
+ const mode=run.endgame?.difficulty||'normal',tier=Number(run.endgame?.tier)||0,summaries=(run.results||[]).map(x=>x.combatResult).filter(Boolean);
+ const floor=mode==='normal'?90000:mode==='heroic'?100000:110000,timeMs=Math.max(floor,summaries.reduce((n,x)=>n+(Number(x.durationMs)||0),0),Date.now()-Number(run.startedAt||Date.now()));
+ const metrics={timeMs,deaths:summaries.reduce((n,x)=>n+(Number(x.summary?.deaths)||0),0),mechanicsFailed:summaries.reduce((n,x)=>n+(Number(x.summary?.mechanics?.failed)||0),0),mistakes:summaries.reduce((n,x)=>n+(Number(x.summary?.mistakes)||0),0),missedInterrupts:summaries.reduce((n,x)=>n+(Number(x.summary?.missedInterrupts)||0),0),threatLosses:summaries.reduce((n,x)=>n+(Number(x.summary?.threatLosses)||0),0),avoidableDamage:summaries.reduce((n,x)=>n+(Number(x.summary?.avoidableDamage)||0),0),battleResurrections:summaries.reduce((n,x)=>n+(Number(x.summary?.battleResurrections)||0),0)};
+ const record=await window.CellboundEndgame?.recordRun?.('fractured-ages',metrics);run.endgameRecord=record&&!record?.error?record:null;
+ const s=state(),gains=awardXp(),gear=window.CellboundEndgame?.rollClearLoot?.('fractured-ages','funhouse',mode==='normal'?.85:mode==='heroic'?.90:.93)||null;
+ const gold=mode==='normal'?500:mode==='heroic'?640:720+tier*18,renown=mode==='normal'?250:mode==='heroic'?325:360+tier*8,shards=window.CellboundEndgame?.shardReward?.('fractured-ages')||15;
  s.gold=(Number(s.gold)||0)+gold;s.renown=(Number(s.renown)||0)+renown;s.fracturedAgesCompletions=(Number(s.fracturedAgesCompletions)||0)+1;
  s.progression=s.progression||{};const first=!s.progression.fracturedAgesFirstClear;s.progression.fracturedAgesFirstClear=true;
  Game.addMaterial?.('cell-shards',shards);if(gear)Game.addBankItem?.(gear);s.activity=Array.isArray(s.activity)?s.activity:[];
- s.activity.push('The Fractured Ages cleared. The Old Man escaped at 20% health. Each adventurer earned '+XP+' XP.'+(gear?' '+gear.name+' was recovered from the collapsing Funhouse.':''));
+ s.activity.push('The Fractured Ages '+(mode==='cellbound'?'Cellbound+'+tier:mode)+' cleared. The Old Man escaped at 20% health. Each adventurer earned '+XP+' XP.'+(gear?' '+gear.name+' was recovered from the collapsing Funhouse.':''));
  Game.save?.();await Game.persistState?.();await syncXp(gains);
- window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'fractured-ages',timeMs:Date.now()-run.startedAt,firstClear:first}}));
- const r=root();r.hidden=false;r.innerHTML='<section class="fa-shell fa-results cb2d-loot-screen"><div class="cb2d-loot-wrap"><header class="cb2d-loot-head"><div><small>THE FRACTURED AGES · CLEARED</small><h3>You survived the story.</h3><p>The Old Man survived too. Whatever he is, this was not the end of him.</p></div><div class="cb2d-loot-complete">⌛<span>DUNGEON<br>COMPLETE</span></div></header><div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+gold+'</b><small>Guild treasury</small></article><article><span>RENOWN</span><b>+'+renown+'</b><small>Guild reputation</small></article><article><span>PARTY XP</span><b>+'+XP+'</b><small>Each adventurer</small></article><article><span>CELL SHARDS</span><b>+'+shards+'</b><small>Recovered from fractures</small></article><article><span>ERAS SURVIVED</span><b>5 / 5</b><small>Including the Funhouse</small></article></div><section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>TEMPORAL EQUIPMENT</span><small>Recovered as the Funhouse collapsed</small></div><div class="cb2d-loot-gear">'+gearCard(gear)+'</div></section><section class="fa-mystery-log"><small>FINAL RECORD</small><b>Enemy nameplate changed to “???” at 20% health.</b><p>No death was recorded. No portal signature was detected. The Old Man simply stopped being present.</p></section><footer class="cb2d-loot-actions"><button data-fa-bank>VIEW GUILD BANK</button><button class="primary" data-fa-return>RETURN TO DUNGEONS →</button></footer></div></section>';
+ const score=Number(record?.score)||window.CellboundEndgameData?.scorePreview?.({difficulty:mode,tier,timeMs,targetTimeMs:run.endgame?.targetTimeMs||0,deaths:metrics.deaths,mechanicsFailed:metrics.mechanicsFailed,mistakes:metrics.mistakes})||0;
+ window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'fractured-ages',difficulty:mode,tier,score,timeMs,firstClear:first}}));
+ const unlocks=(record?.newUnlocks||[]).map(x=>'<span><i>↗</i><b>'+esc(x)+'</b></span>').join('');
+ const r=root();r.hidden=false;r.innerHTML='<section class="fa-shell fa-results cb2d-loot-screen"><div class="cb2d-loot-wrap"><header class="cb2d-loot-head"><div><small>THE FRACTURED AGES · '+esc(mode==='cellbound'?'CELLBOUND+'+tier:mode.toUpperCase())+' · CLEARED</small><h3>You survived the story.</h3><p>The Old Man survived too. Whatever he is, this was not the end of him.</p></div><div class="cb2d-loot-complete">⌛<span>DUNGEON<br>COMPLETE</span></div></header><div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+gold+'</b><small>Guild treasury</small></article><article><span>RENOWN</span><b>+'+renown+'</b><small>Guild reputation</small></article><article><span>PARTY XP</span><b>+'+XP+'</b><small>Each adventurer</small></article><article><span>CELL SHARDS</span><b>+'+shards+'</b><small>Recovered from fractures</small></article><article><span>RUN SCORE</span><b>'+score+'</b><small>'+Math.round(timeMs/1000)+'s expedition</small></article></div>'+(unlocks?'<section class="eg-unlock-panel"><small>PROGRESSION</small><div>'+unlocks+'</div></section>':'')+'<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>TEMPORAL EQUIPMENT</span><small>Recovered as the Funhouse collapsed</small></div><div class="cb2d-loot-gear">'+gearCard(gear)+'</div></section><section class="fa-mystery-log"><small>FINAL RECORD</small><b>Enemy nameplate changed to “???” at 20% health.</b><p>No death was recorded. No portal signature was detected. The Old Man simply stopped being present.</p></section><footer class="cb2d-loot-actions"><button data-fa-bank>VIEW GUILD BANK</button><button class="primary" data-fa-return>RETURN TO DUNGEONS →</button></footer></div></section>';
  r.querySelector('[data-fa-bank]').onclick=()=>{close();Game.switchView?.('bank')};r.querySelector('[data-fa-return]').onclick=close;renderCard()
 }
 function init(){

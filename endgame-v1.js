@@ -12,12 +12,16 @@ let Game=null,db=null,user=null,server={season:D.SEASON,rotation:{},progress:[],
 const selection={
  'ashen-vault':{difficulty:'normal',tier:1},
  'hollow-sanctum':{difficulty:'normal',tier:1},
- 'chaos-canyon':{difficulty:'normal',tier:1}
+ 'chaos-canyon':{difficulty:'normal',tier:1},
+ 'blackout-station':{difficulty:'normal',tier:1},
+ 'fractured-ages':{difficulty:'normal',tier:1}
 };
 const leaderboardView={
  'ashen-vault':{scope:'overall',klass:null},
  'hollow-sanctum':{scope:'overall',klass:null},
- 'chaos-canyon':{scope:'overall',klass:null}
+ 'chaos-canyon':{scope:'overall',klass:null},
+ 'blackout-station':{scope:'overall',klass:null},
+ 'fractured-ages':{scope:'overall',klass:null}
 };
 
 const progressFor=id=>(server.progress||[]).find(x=>x.dungeon_id===id)||{
@@ -199,6 +203,12 @@ function prepare(id){
  }else if(id==='chaos-canyon'){
    Game.switchView?.('content');
    setTimeout(()=>window.CellboundChaosCanyon?.open?.({difficulty:cfg.difficulty,tier:cfg.tier}),80)
+ }else if(id==='blackout-station'){
+   Game.switchView?.('content');
+   setTimeout(()=>window.CellboundBlackoutStation?.open?.({difficulty:cfg.difficulty,tier:cfg.tier}),80)
+ }else if(id==='fractured-ages'){
+   Game.switchView?.('content');
+   setTimeout(()=>window.CellboundFracturedAges?.open?.({difficulty:cfg.difficulty,tier:cfg.tier}),80)
  }
 }
 function stageConfig(dungeonId,stage){
