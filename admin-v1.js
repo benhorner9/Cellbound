@@ -7,6 +7,7 @@ let db=null;
 let status={is_admin:false,role:null,auto_clear_cell_shock:false};
 let bound=false;
 let releaseStatus=null;
+let marketStatus=null;
 
 window.CellboundAdmin={autoClear:false,role:null,isAdmin:false};
 
@@ -34,6 +35,16 @@ function render(){
   }
   if(build)build.textContent=String(window.CELLBOUND_BUILD||'development').slice(0,12)+' · #'+(Number(window.CELLBOUND_BUILD_NUMBER||0)||'—');
   if(published)published.textContent=releaseStatus?.build_id?(String(releaseStatus.build_id).slice(0,12)+' · #'+(releaseStatus.build_number||'—')):'Not published yet';
+  const mg=$('#adminMarketGear'),mo=$('#adminMarketOrders'),mt=$('#adminMarketTrades'),mv=$('#adminMarketVolume'),mx=$('#adminMarketTax'),top=$('#adminMarketTop');
+  if(mg)mg.textContent=marketStatus?String(Number(marketStatus.active_gear)||0):'—';
+  if(mo)mo.textContent=marketStatus?((Number(marketStatus.buy_orders)||0)+' buy · '+(Number(marketStatus.sell_orders)||0)+' sell'):'—';
+  if(mt)mt.textContent=marketStatus?String(Number(marketStatus.trades_24)||0):'—';
+  if(mv)mv.textContent=marketStatus?(Number(marketStatus.volume_24)||0).toLocaleString()+'g':'—';
+  if(mx)mx.textContent=marketStatus?(Number(marketStatus.tax_24)||0).toLocaleString()+'g':'—';
+  if(top){
+    const rows=Array.isArray(marketStatus?.top_items)?marketStatus.top_items:[];
+    top.innerHTML=rows.length?rows.map((x,i)=>'<div><span>#'+(i+1)+' '+String(x.item_name||x.item_key||'Item')+'</span><b>'+Number(x.units||0).toLocaleString()+' units</b><em>'+Number(x.volume||0).toLocaleString()+'g</em></div>').join(''):'<span>No market history yet.</span>';
+  }
 }
 function message(text,tone='ok'){
   const el=$('#adminMessage');if(!el)return;
@@ -132,6 +143,13 @@ async function refreshRelease(){
   releaseStatus=data||null;
   render();
 }
+async function refreshMarket(){
+  if(!status.is_admin)return;
+  const {data,error}=await db.rpc('cellbound_admin_market_summary');
+  if(error){console.warn('Market analytics unavailable',error);return}
+  marketStatus=data||null;
+  render();
+}
 async function publishUpdate(){
   const btn=$('#adminPublishUpdate'),input=$('#adminUpdateMessage');
   const build=String(window.CELLBOUND_BUILD||'').trim();
@@ -156,7 +174,7 @@ function bind(){
   $('#adminResetTwelve')?.addEventListener('click',resetTwelveBelow);
   $('#adminFreshStart')?.addEventListener('click',freshStart);
   $('#adminAutoToggle')?.addEventListener('click',toggleAuto);
-  $('#adminRefresh')?.addEventListener('click',async()=>{await Promise.all([refreshStatus(),refreshRelease()]);clearLocalShock();message('Admin status refreshed.','ok')});
+  $('#adminRefresh')?.addEventListener('click',async()=>{await refreshStatus();await Promise.all([refreshRelease(),refreshMarket()]);clearLocalShock();message('Admin status refreshed.','ok')});
   $('#adminPublishUpdate')?.addEventListener('click',publishUpdate);
   window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='admin')setTimeout(render,0)});
 }
@@ -166,7 +184,8 @@ async function init(){
   db=Game.getSupabase?.();
   if(!db)return;
   bind();
-  await Promise.all([refreshStatus(),refreshRelease()]);
+  await refreshStatus();
+  await Promise.all([refreshRelease(),refreshMarket()]);
   setInterval(()=>{if(status.auto_clear_cell_shock)clearLocalShock()},500);
 }
 init();
