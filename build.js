@@ -20,12 +20,13 @@ for(const file of files){
   if(file==='gear-data.js'){
     if(!contents.includes("5:{rarity:'Epic',label:'Tier 5'")||!contents.includes('raidExclusive:true'))throw new Error('Tier 5 must remain explicitly reserved for raid gear');
     if(!contents.includes('CHAPTER_GEAR={chapter:1,levelCap:15,dungeonTierCeiling:4,raidExclusiveTier:5}'))throw new Error('Chapter 1 gear contract is missing');
+    if(!contents.includes("SLOT_ORDER=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring','Trinket','Relic']"))throw new Error('Full Chapter 1 equipment slot catalogue is missing');
     if(!contents.includes('[1,2,3,4].forEach(tier=>'))throw new Error('Generic gear catalogue must stop at Tier 4');
   }
   if(file==='endgame-data-v1.js'){
     if(!contents.includes('raidExclusiveTier:5')||!contents.includes('powerCeiling:44'))throw new Error('Dungeon loot must stop below raid-exclusive Tier 5');
-    if(!contents.includes("'fractured-ages':")||!contents.includes("itemLevel:{Head:38,Chest:39,Weapon:40}"))throw new Error('Fractured Ages Normal loot must remain below Cellbound+ Tier 4 power');
-    if(!contents.includes("return{tiers:{3:.55,4:.45},itemLevel:{Head:42,Chest:43,Weapon:44}"))throw new Error('Peak Cellbound+ loot must cap at Item Level 44');
+    if(!contents.includes("'fractured-ages':")||!contents.includes("itemLevel:gearBand(38,39,40)"))throw new Error('Fractured Ages Normal loot must remain below Cellbound+ Tier 4 power');
+    if(!contents.includes("return{tiers:{3:.55,4:.45},itemLevel:gearBand(42,43,44)"))throw new Error('Peak Cellbound+ loot must cap at Item Level 44');
     if(!contents.includes('uniqueChance:{normal:0'))throw new Error('Tier 4 uniques must not leak into Normal difficulty');
   }
   if(file==='combat-identities-v1.js'){
@@ -182,6 +183,8 @@ for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readab
   vm.runInContext(fs.readFileSync(path.join(__dirname,'endgame-data-v1.js'),'utf8'),sandbox,{filename:'endgame-data-v1.js'});
   const G=sandbox.CellboundGear,D=sandbox.CellboundEndgameData;
   if(!G||!D)throw new Error('Chapter 1 gear validation runtime failed to load');
+  const requiredSlots=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring','Trinket','Relic'];
+  for(const klass of G.CLASS_ORDER)for(let tier=1;tier<=4;tier++)for(const slot of requiredSlots)if(!G.items.some(x=>x.class===klass&&x.tier===tier&&x.slot===slot))throw new Error('Missing gear catalogue item: '+klass+' T'+tier+' '+slot);
   if(G.items.some(x=>Number(x.tier)>=5))throw new Error('Generic gear catalogue contains raid-exclusive Tier 5 items');
   if(G.items.filter(x=>Number(x.tier)===4).length!==21)throw new Error('Tier 4 catalogue must contain 3 slots for all 7 current classes');
   if(!G.TIER_META?.[5]?.raidExclusive)throw new Error('Tier 5 is not marked raid-exclusive');
