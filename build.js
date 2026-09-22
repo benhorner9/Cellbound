@@ -12,6 +12,9 @@ for(const file of files){
   const src=path.join(__dirname,file),dest=path.join(out,file);
   let contents=fs.readFileSync(src,'utf8');
   if(file.endsWith('.js')){try{new Function(contents)}catch(err){throw new Error(`Syntax check failed for ${file}: ${err.message}`)}}
+  if(file==='guild-v4.js'){
+    if(!contents.includes('function isBankUtility')||!contents.includes('!canonical.nonStackable&&state.bank.find')||!contents.includes('!canon.nonStackable&&out.find'))throw new Error('Guild Bank must preserve non-stackable charge-bearing utility items');
+  }
   if(file==='combat-status-ui-v1.js'){
     if(!contents.includes("version:'2.1.0'"))throw new Error('Combat status UI smart-overhead version is missing');
     if(!contents.includes("maxVisible=mirror?8:(host.classList.contains('big')?4:3)"))throw new Error('Combat overhead statuses must stay capped at three for normal units');
@@ -25,6 +28,12 @@ for(const file of files){
     if(contents.includes('cb2d-loot-gear-card'))throw new Error('Blackout completion screen must not use the broken one-off loot card');
     if(!contents.includes('function bsLootGearCard')||!contents.includes('cb2d-loot-item')||!contents.includes('cb2d-loot-roll'))throw new Error('Blackout completion gear must use the shared visual loot card');
   }
+  if(file==='blackout-station-v1.js'){
+    if(!contents.includes("GRID_OVERRIDE_DROP_CHANCE=.10")||!contents.includes('GRID_OVERRIDE_MAX_CHARGES=5'))throw new Error('Grid Override Module must remain a 10% five-charge Blackout drop');
+    if(!contents.includes('async function useGridOverride()')||!contents.includes("if(!run.quickReconnect)"))throw new Error('Grid Override must remain gated behind a manual first clear');
+    if(!contents.includes("tradeState:'tradeable'")||!contents.includes('nonStackable:true'))throw new Error('Grid Override Module must remain tradeable and non-stackable');
+    if(!contents.includes("gear=rollGear(),overrideDrop=Math.random()<GRID_OVERRIDE_DROP_CHANCE"))throw new Error('Grid Override drop must remain independent from the normal gear roll');
+  }
   if(file==='trading-post-v3.js'){
     if(/location\.reload\s*\(/.test(contents))throw new Error('Trading Post must not hard-reload the page after market actions');
     if((contents.match(/function timeLeft\s*\(/g)||[]).length!==1)throw new Error('Trading Post timeLeft helper must be defined exactly once');
@@ -37,6 +46,7 @@ for(const file of files){
     if(!contents.includes('tpGearSellPicker')||!contents.includes('data-sell-item'))throw new Error('Trading Post equipment seller must use the visual Bank item picker');
     if(contents.includes("<select id=\"tpGearSellItem\""))throw new Error('Trading Post must not regress to the name-only equipment dropdown');
     if(!contents.includes("if(!data?.id)throw new Error('The listing was not confirmed by the Trading Post.')"))throw new Error('Trading Post listing creation must verify the server response');
+    if(!contents.includes('function isUtilityItem')||!contents.includes('UTILITY EFFECT')||!contents.includes('function utilityArtHTML'))throw new Error('Trading Post must preserve visual utility-item trading support');
   }
   if(file==='guild.html'){
     const required=['rosterGrid','bankGrid','professionWorkshop','chatMessages','worldBossGrid','dungeonRoute','dungeonIntel','enterDungeonBtn','partySlots'];
@@ -74,6 +84,14 @@ for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readab
 {
   const blackoutCss=fs.readFileSync(path.join(out,'blackout-station-v1.css'),'utf8');
   if(!blackoutCss.includes('.bs2d-shell.results-mode .cb2d-loot-gear'))throw new Error('Blackout completion loot layout is missing');
+}
+{
+  const blackoutCss=fs.readFileSync(path.join(out,'blackout-station-v1.css'),'utf8');
+  if(!blackoutCss.includes('.bs-override-panel')||!blackoutCss.includes('.bs-override-drop-card'))throw new Error('Grid Override puzzle/drop presentation is missing');
+  const bankCss=fs.readFileSync(path.join(out,'bank.css'),'utf8');
+  if(!bankCss.includes('.bank-utility-art')||!bankCss.includes('.bank-utility-chargebar'))throw new Error('Guild Bank utility-item presentation is missing');
+  const tradeCss=fs.readFileSync(path.join(out,'trading-post-v3.css'),'utf8');
+  if(!tradeCss.includes('.tp-utility-art'))throw new Error('Trading Post utility-item artwork is missing');
 }
 {
   const statusCss=fs.readFileSync(path.join(out,'combat-status-ui-v1.css'),'utf8');
