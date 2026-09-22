@@ -25,19 +25,20 @@ const BOSSES=[
 ];
 
 const TWELVE_BALANCE={
- baseBossLevel:10,
- bossHealthScale:1.30,
- pressureScale:1.16,
- baseRecommendedItemLevel:28
+ baseBossLevel:14,
+ bossHealthScale:1.55,
+ pressureScale:1.24,
+ minimumItemLevel:38,
+ baseRecommendedItemLevel:40
 };
 
 const RELICS=[
- {itemId:'relic-oathstone-dominion',name:'Oathstone of Dominion',slot:'Relic',classes:'all',relicRole:'tank',tier:4,tierLabel:'Ancient Relic',rarity:'Epic',itemLevel:36,power:8,icon:'⬟',bonusStats:[{key:'threat',value:18},{key:'block',value:5}],uniqueEffect:{id:'oathstone-dominion',name:'Dominion',description:'Pushes a tank toward threat control: +18% threat generation and +5% block.'}},
- {itemId:'relic-heart-unbroken',name:'Heart of the Unbroken',slot:'Relic',classes:'all',relicRole:'tank',tier:4,tierLabel:'Ancient Relic',rarity:'Epic',itemLevel:36,power:8,icon:'◆',bonusStats:[{key:'stamina',value:12},{key:'armour',value:28}],uniqueEffect:{id:'heart-unbroken',name:'Unbroken',description:'Pushes a tank toward survival with additional stamina and armour.'}},
- {itemId:'relic-chalice-mercy',name:'Chalice of Mercy',slot:'Relic',classes:'all',relicRole:'healer',tier:4,tierLabel:'Ancient Relic',rarity:'Epic',itemLevel:36,power:8,icon:'♢',bonusStats:[{key:'healing',value:14},{key:'crit',value:5}],uniqueEffect:{id:'chalice-mercy',name:'Mercy',description:'Pushes a healer toward emergency throughput with stronger healing and critical recovery.'}},
- {itemId:'relic-bell-renewal',name:'Bell of Renewal',slot:'Relic',classes:'all',relicRole:'healer',tier:4,tierLabel:'Ancient Relic',rarity:'Epic',itemLevel:36,power:8,icon:'◉',bonusStats:[{key:'healing',value:10},{key:'haste',value:7}],uniqueEffect:{id:'bell-renewal',name:'Renewal',description:'Pushes a healer toward sustained throughput through healing and haste.'}},
- {itemId:'relic-fang-wrath',name:'Fang of Wrath',slot:'Relic',classes:'all',relicRole:'dps',tier:4,tierLabel:'Ancient Relic',rarity:'Epic',itemLevel:36,power:8,icon:'⟁',bonusStats:[{key:'damagePct',value:10},{key:'crit',value:5}],uniqueEffect:{id:'fang-wrath',name:'Bloodrush',description:'Pushes a damage build toward burst with increased damage and critical strike.'}},
- {itemId:'relic-mirror-envy',name:'Mirror of Envy',slot:'Relic',classes:'all',relicRole:'dps',tier:4,tierLabel:'Ancient Relic',rarity:'Epic',itemLevel:36,power:8,icon:'◇',bonusStats:[{key:'damagePct',value:7},{key:'haste',value:8}],uniqueEffect:{id:'mirror-envy',name:'Imitation',description:'Pushes a damage build toward tempo with increased damage and haste.'}}
+ {itemId:'relic-oathstone-dominion',name:'Oathstone of Dominion',slot:'Relic',classes:'all',relicRole:'tank',tier:4,tierLabel:'Ancient Relic',rarity:'Epic',itemLevel:42,power:10,statBudgetMultiplier:1,icon:'⬟',bonusStats:[{key:'threat',value:18},{key:'block',value:5}],uniqueEffect:{id:'oathstone-dominion',name:'Dominion',description:'Pushes a tank toward threat control: +18% threat generation and +5% block.'}},
+ {itemId:'relic-heart-unbroken',name:'Heart of the Unbroken',slot:'Relic',classes:'all',relicRole:'tank',tier:4,tierLabel:'Ancient Relic',rarity:'Epic',itemLevel:42,power:10,statBudgetMultiplier:1,icon:'◆',bonusStats:[{key:'stamina',value:12},{key:'armour',value:28}],uniqueEffect:{id:'heart-unbroken',name:'Unbroken',description:'Pushes a tank toward survival with additional stamina and armour.'}},
+ {itemId:'relic-chalice-mercy',name:'Chalice of Mercy',slot:'Relic',classes:'all',relicRole:'healer',tier:4,tierLabel:'Ancient Relic',rarity:'Epic',itemLevel:42,power:10,statBudgetMultiplier:1,icon:'♢',bonusStats:[{key:'healing',value:14},{key:'crit',value:5}],uniqueEffect:{id:'chalice-mercy',name:'Mercy',description:'Pushes a healer toward emergency throughput with stronger healing and critical recovery.'}},
+ {itemId:'relic-bell-renewal',name:'Bell of Renewal',slot:'Relic',classes:'all',relicRole:'healer',tier:4,tierLabel:'Ancient Relic',rarity:'Epic',itemLevel:42,power:10,statBudgetMultiplier:1,icon:'◉',bonusStats:[{key:'healing',value:10},{key:'haste',value:7}],uniqueEffect:{id:'bell-renewal',name:'Renewal',description:'Pushes a healer toward sustained throughput through healing and haste.'}},
+ {itemId:'relic-fang-wrath',name:'Fang of Wrath',slot:'Relic',classes:'all',relicRole:'dps',tier:4,tierLabel:'Ancient Relic',rarity:'Epic',itemLevel:42,power:10,statBudgetMultiplier:1,icon:'⟁',bonusStats:[{key:'damagePct',value:10},{key:'crit',value:5}],uniqueEffect:{id:'fang-wrath',name:'Bloodrush',description:'Pushes a damage build toward burst with increased damage and critical strike.'}},
+ {itemId:'relic-mirror-envy',name:'Mirror of Envy',slot:'Relic',classes:'all',relicRole:'dps',tier:4,tierLabel:'Ancient Relic',rarity:'Epic',itemLevel:42,power:10,statBudgetMultiplier:1,icon:'◇',bonusStats:[{key:'damagePct',value:7},{key:'haste',value:8}],uniqueEffect:{id:'mirror-envy',name:'Imitation',description:'Pushes a damage build toward tempo with increased damage and haste.'}}
 ];
 
 function state(){return Game?.getState?.()}
@@ -94,9 +95,10 @@ function persistQuietly(){
 function partyReady(){
  const chars=party();if(chars.length!==5)return{ok:false,reason:'Build a complete active party first.'};
  if(chars.some(c=>Game.isUnavailable?.(c)))return{ok:false,reason:'A party member is recovering from Cell Shock.'};
+ const pi=Math.round(Number(Game.partyItemLevel?.())||0);if(pi<TWELVE_BALANCE.minimumItemLevel)return{ok:false,reason:'Party Item Level '+pi+'. The Twelve Below requires Item Level '+TWELVE_BALANCE.minimumItemLevel+'+'};
  const counts={tank:0,healer:0,dps:0};chars.forEach(c=>counts[roleOf(c)]=(counts[roleOf(c)]||0)+1);
  const composition=[counts.tank?counts.tank+' Tank':'',counts.healer?counts.healer+' Healer':'',counts.dps?counts.dps+' Damage':''].filter(Boolean).join(' · ');
- return{ok:true,reason:(composition||'Five adventurers')+' · any composition is allowed.'}
+ return{ok:true,reason:(composition||'Five adventurers')+' · iLvl '+pi+' · recommended '+TWELVE_BALANCE.baseRecommendedItemLevel+'+'}
 }
 function rewardBand(kills){
  if(kills<=0)return{label:'BURIAL SCRAPS',tone:'scrap'};
@@ -115,7 +117,7 @@ function renderCard(){
  root.innerHTML='<article class="tb-world-card">'+
   '<div class="tb-world-art"><div class="tb-world-ring">'+BOSSES.map((b,i)=>'<i style="--i:'+i+'">'+esc(b.rune)+'</i>').join('')+'</div><span>ANCIENT BURIAL GROUND</span><b>THE TWELVE BELOW</b></div>'+
   '<div class="tb-world-copy"><div class="tb-world-kicker"><span>PRIVATE WORLD EVENT</span><em>5-CHARACTER GUILD PARTY</em></div><h3>The Twelve Below</h3><p>One tomb opens immediately. Every 20 seconds another vice rises. Kill quickly or the battlefield fills with bosses.</p>'+
-  '<div class="tb-world-stats"><span><small>ATTEMPTS TODAY</small><b>'+left+' / '+DAILY_ATTEMPTS+'</b></span><span><small>PERSONAL BEST</small><b>'+best+' / 12</b></span><span><small>CHASE REWARD</small><b>RELICS</b></span></div>'+
+  '<div class="tb-world-stats"><span><small>ATTEMPTS TODAY</small><b>'+left+' / '+DAILY_ATTEMPTS+'</b></span><span><small>PERSONAL BEST</small><b>'+best+' / 12</b></span><span><small>ENTRY / RECOMMENDED</small><b>'+TWELVE_BALANCE.minimumItemLevel+' / '+TWELVE_BALANCE.baseRecommendedItemLevel+'+</b></span><span><small>CHASE REWARD</small><b>T4 RELICS · ILVL 42</b></span></div>'+
   '<div class="tb-world-actions"><button data-tb-open '+(!gate.ok||left<=0?'disabled':'')+'>ENTER THE SEPULCHRE →</button><small>'+(left<=0?'Daily attempts exhausted.':esc(gate.reason))+'</small></div></div></article>';
  root.querySelector('[data-tb-open]')?.addEventListener('click',openBriefing)
 }
@@ -136,7 +138,7 @@ function openBriefing(){
  root.innerHTML='<section class="cb2d-shell cb2d-brief tb-brief"><header class="cb2d-head"><div><small>THE SEPULCHRE OF TWELVE · PRIVATE WORLD EVENT</small><h2>The Twelve Below</h2></div><button data-tb-close>×</button></header>'+
  '<div class="tb-brief-grid"><main><p class="cb2d-intro">Your guild enters alone. One tomb opens now; another opens every 20 seconds. Any boss still alive remains in the arena when the next one rises. The Sepulchre has a fixed endgame difficulty and never scales down to your party.</p>'+
  '<div class="tb-tomb-preview">'+BOSSES.map((b,i)=>'<span class="tb-boss-preview"><i>'+esc(b.rune)+'</i><b>'+(i+1)+'. '+esc(b.vice)+'</b><small class="tb-boss-name">'+esc(b.name)+'</small><strong class="tb-boss-action">'+esc(b.action)+'</strong><p>'+esc(b.journal)+'</p></span>').join('')+'</div>'+
- '<div class="tb-relic-intro"><small>CHASE SYSTEM · RELICS</small><h3>Specialise beyond Item Level.</h3><p>Relics occupy the existing Relic slot and push a character deeper into a role: threat, survival, healing throughput, burst or tempo.</p></div></main>'+
+ '<div class="tb-relic-intro"><small>CHASE SYSTEM · T4 RELICS · ILVL 42</small><h3>Specialise beyond Item Level.</h3><p>Relics occupy the existing Relic slot and push a character deeper into a role: threat, survival, healing throughput, burst or tempo. Their stat budget is deliberately stronger than a generic Relic because they are endgame chase pieces.</p></div></main>'+
  '<aside><div class="tb-attempt-box"><small>DAILY ATTEMPTS</small><b>'+left+' / '+DAILY_ATTEMPTS+'</b><span>Consumed when the burial ground is entered.</span></div>'+
  chars.map(c=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>Lv. '+c.level+' · '+esc(c.class)+' · '+esc(c.spec)+' · iLvl '+Game.characterItemLevel(c)+'</small></span><strong>'+String(roleOf(c)).toUpperCase()+'</strong></div>').join('')+
  '<button class="cb2d-start" data-tb-start '+(!gate.ok||left<=0?'disabled':'')+'>BEGIN SURVIVAL →</button><p class="tb-gate-copy">'+(left<=0?'No attempts remain today.':esc(gate.reason))+'</p></aside></div></section>';
