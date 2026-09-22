@@ -5,7 +5,7 @@ const G=window.CellboundGear,P=window.CellboundProfessions;
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 let Game=null,db=null,user=null;
 let listings=[],orders=[],transactions=[],watchlist=[],savedSearches=[],proceeds=[];
-let activeTab='browse',activeCategory='all',selected=null,loaded=false;
+let activeTab='browse',activeCategory='all',selected=null,loaded=false,actionBusy=false;
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const slug=v=>String(v||'common').toLowerCase().replace(/[^a-z0-9]+/g,'-');
@@ -15,7 +15,6 @@ const now=()=>Date.now();
 const state=()=>Game?.getState?.()||{};
 const mine=id=>user&&id===user.id;
 function age(ts){const n=Math.max(0,now()-new Date(ts).getTime()),m=Math.floor(n/60000);if(m<1)return'now';if(m<60)return m+'m';const h=Math.floor(m/60);if(h<24)return h+'h';return Math.floor(h/24)+'d'}
-function timeLeft(ts){if(!ts)return'—';const d=new Date(ts).getTime()-now();if(d<=0)return'Expired';const m=Math.ceil(d/60000);if(m<60)return m+'m';const h=Math.ceil(m/60);if(h<24)return h+'h';return Math.ceil(h/24)+'d'}
 function timeLeft(ts){const n=Math.max(0,new Date(ts).getTime()-now()),m=Math.ceil(n/60000);if(m<=0)return'Expired';if(m<60)return m+'m';const h=Math.ceil(m/60);if(h<24)return h+'h';return Math.ceil(h/24)+'d'}
 function rarityOf(x){return x?.rarity||x?.payload?.rarity||(x?.category==='material'&&P?.MATERIALS?.[x.item_key]?.rarity)||'Common'}
 function commodityKey(c,k){return c+'|'+k}
@@ -28,6 +27,15 @@ function commodityArt(category,key,size){
 function gearFor(l){const base=G?.byId?.(l.item_key)||G?.byName?.(l.item_name)||{};return {...base,...(l.payload||{})}}
 function gearArt(l,size){const item=gearFor(l);return G?.artHTML?.(item,size||62,'tp-gear-art')||'◇'}
 function currentGold(){return Number(state().gold)||0}
+function restoreMarketScroll(y){requestAnimationFrame(()=>window.scrollTo({top:Math.max(0,Number(y)||0),left:0,behavior:'auto'}))}
+async function syncMarketState(){return Game?.refreshStateFromServer?.({render:true})??false}
+async function finishMarketMutation(tab,scrollY){
+  if(tab)activeTab=tab;
+  await syncMarketState();
+  selected=null;
+  await refreshAll(false,false);
+  restoreMarketScroll(scrollY);
+}
 function activeOrders(){return orders.filter(o=>o.status==='active'&&Number(o.quantity_remaining)>0&&new Date(o.expires_at).getTime()>now())}
 function activeGear(){return listings.filter(l=>l.status==='active'&&Number(l.quantity)>0&&(!l.expires_at||new Date(l.expires_at).getTime()>now()))}
 function itemTransactions(category,key,days){
@@ -221,30 +229,48 @@ function bindInspector(){
   const form=$('#tpCommodityForm');if(form)form.onsubmit=placeCommodityOrder;
 }
 async function buyGear(id){
+  if(actionBusy)return;
   const l=listings.find(x=>x.id===id);if(!l||l.is_own)return;
   if(currentGold()<Number(l.unit_price)){alert('Not enough Gold.');return}
-  const {data,error}=await db.rpc('purchase_trading_listing',{p_listing_id:id,p_quantity:1});
-  if(error){alert(error.message||'Purchase failed');await refreshAll();return}
-  if(data?.ok===false){alert(data.message||'This listing is no longer available.');await refreshAll();return}
-  location.reload();
+  const scrollY=window.scrollY;actionBusy=true;
+  try{
+    await Game?.persistState?.();
+    const {data,error}=await db.rpc('purchase_trading_listing',{p_listing_id:id,p_quantity:1});
+    if(error)throw error;
+    if(data?.ok===false)throw new Error(data.message||'This listing is no longer available.');
+    await finishMarketMutation('browse',scrollY);
+  }catch(error){alert(error.message||'Purchase failed');await refreshAll(false,false);restoreMarketScroll(scrollY)}
+  finally{actionBusy=false}
 }
 async function cancelGear(id){
-  const {error}=await db.rpc('market_cancel_listing',{p_listing_id:id});
-  if(error){alert(error.message||'Could not cancel listing');return}
-  location.reload();
+  if(actionBusy)return;
+  const l=listings.find(x=>x.id===id);if(!l||!l.is_own)return;
+  const scrollY=window.scrollY;actionBusy=true;
+  try{
+    await Game?.persistState?.();
+    const {error}=await db.rpc('market_cancel_listing',{p_listing_id:id});
+    if(error)throw error;
+    await finishMarketMutation(activeTab==='my'?'my':'browse',scrollY);
+  }catch(error){alert(error.message||'Could not cancel listing');await refreshAll(false,false);restoreMarketScroll(scrollY)}
+  finally{actionBusy=false}
 }
 async function placeCommodityOrder(e){
-  e.preventDefault();
+  e.preventDefault();if(actionBusy)return;
   const form=e.currentTarget,category=form.dataset.category,key=form.dataset.key;
   const x=knownCommodities().find(v=>v.category===category&&v.key===key);if(!x)return;
   const side=$('#tpOrderSide')?.value||'buy',quantity=Math.max(1,Math.floor(Number($('#tpOrderQty')?.value)||1)),price=Math.max(1,Math.floor(Number($('#tpOrderPrice')?.value)||1));
   if(side==='sell'&&quantity>ownedCommodity(category,key)){alert('You do not own that quantity.');return}
   if(side==='buy'&&quantity*price>currentGold()){alert('Not enough Gold to reserve this order.');return}
-  const {error}=await db.rpc('market_place_commodity_order',{
-    p_side:side,p_category:category,p_item_key:key,p_item_name:x.name,p_quantity:quantity,p_unit_price:price,p_payload:x.payload||{},p_rarity:x.rarity||'Common'
-  });
-  if(error){alert(error.message||'Order failed');return}
-  location.reload();
+  const scrollY=window.scrollY;actionBusy=true;
+  try{
+    await Game?.persistState?.();
+    const {error}=await db.rpc('market_place_commodity_order',{
+      p_side:side,p_category:category,p_item_key:key,p_item_name:x.name,p_quantity:quantity,p_unit_price:price,p_payload:x.payload||{},p_rarity:x.rarity||'Common'
+    });
+    if(error)throw error;
+    await finishMarketMutation('browse',scrollY);
+  }catch(error){alert(error.message||'Order failed');await refreshAll(false,false);restoreMarketScroll(scrollY)}
+  finally{actionBusy=false}
 }
 async function toggleWatch(raw){
   const parts=raw.split('|'),category=parts[0],key=parts[1],name=parts.slice(2).join('|');
@@ -273,8 +299,8 @@ function renderHistory(){
     return'<div class="tp-history-row"><div><b>'+esc(t.item_name)+' ×'+qty(t.quantity)+'</b><small>'+role+' · '+esc(t.category)+' · '+age(t.created_at)+' · '+gold(t.unit_price)+' each</small></div><strong>'+gold(t.gross_gold)+'</strong></div>'
   }).join(''):'<div class="tp-empty">No completed market trades yet.</div>';
 }
-function myGearListings(){return activeGear().filter(l=>l.is_own)}
-function myOrders(){return orders.filter(o=>o.is_own&&o.status==='active')}
+function myGearListings(){return activeGear().filter(l=>l.is_own===true)}
+function myOrders(){return activeOrders().filter(o=>o.is_own===true)}
 function renderMyTrading(){
   const gearRoot=$('#tpMyGear'),orderRoot=$('#tpMyOrders');if(!gearRoot||!orderRoot)return;
   const gl=myGearListings();
@@ -286,9 +312,16 @@ function renderMyTrading(){
   renderGearSellOptions();
 }
 async function cancelOrder(id){
-  const {error}=await db.rpc('market_cancel_commodity_order',{p_order_id:id});
-  if(error){alert(error.message||'Could not cancel order');return}
-  location.reload();
+  if(actionBusy)return;
+  const o=orders.find(x=>x.id===id);if(!o||!o.is_own)return;
+  const scrollY=window.scrollY;actionBusy=true;
+  try{
+    await Game?.persistState?.();
+    const {error}=await db.rpc('market_cancel_commodity_order',{p_order_id:id});
+    if(error)throw error;
+    await finishMarketMutation('my',scrollY);
+  }catch(error){alert(error.message||'Could not cancel order');await refreshAll(false,false);restoreMarketScroll(scrollY)}
+  finally{actionBusy=false}
 }
 function renderGearSellOptions(){
   const sel=$('#tpGearSellItem');if(!sel)return;
@@ -296,14 +329,19 @@ function renderGearSellOptions(){
   sel.innerHTML=items.length?items.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.name)+' · '+esc(x.rarity||'Common')+' · iLvl '+Number(x.itemLevel||0)+' · ×'+Number(x.quantity||1)+'</option>').join(''):'<option value="">No tradeable equipment in Bank</option>';
 }
 async function submitGearListing(e){
-  e.preventDefault();
+  e.preventDefault();if(actionBusy)return;
   const id=$('#tpGearSellItem')?.value,item=(state().bank||[]).find(x=>x.id===id);if(!item)return;
   const price=Math.max(1,Math.floor(Number($('#tpGearSellPrice')?.value)||1)),quantity=Math.max(1,Math.min(Number(item.quantity)||1,Math.floor(Number($('#tpGearSellQty')?.value)||1))),duration=Math.max(24,Math.min(72,Number($('#tpGearDuration')?.value)||48));
-  const {error}=await db.rpc('market_create_listing',{
-    p_category:'gear',p_item_id:item.id,p_item_key:item.itemId||item.name,p_item_name:item.name,p_quantity:quantity,p_unit_price:price,p_payload:item,p_duration_hours:duration
-  });
-  if(error){alert(error.message||'Listing failed');return}
-  location.reload();
+  const scrollY=window.scrollY;actionBusy=true;
+  try{
+    await Game?.persistState?.();
+    const {error}=await db.rpc('market_create_listing',{
+      p_category:'gear',p_item_id:item.id,p_item_key:item.itemId||item.name,p_item_name:item.name,p_quantity:quantity,p_unit_price:price,p_payload:item,p_duration_hours:duration
+    });
+    if(error)throw error;
+    await finishMarketMutation('my',scrollY);
+  }catch(error){alert(error.message||'Listing failed');await refreshAll(false,false);restoreMarketScroll(scrollY)}
+  finally{actionBusy=false}
 }
 function renderDelivery(){
   const count=(state().tradeInbox||[]).length,pending=proceeds.filter(p=>!p.claimed).reduce((n,p)=>n+Number(p.net_gold||0),0);
@@ -313,12 +351,19 @@ function renderDelivery(){
   if(claimGold){claimGold.disabled=!pending;claimGold.textContent=pending?'CLAIM '+gold(pending):'NO GOLD TO CLAIM'}
 }
 async function claimItems(){
+  if(actionBusy)return;
   const fn=window.CellboundEconomy?.processInbox;if(!fn){alert('Delivery service is still loading.');return}
-  const did=await fn();if(did)location.reload();
+  const scrollY=window.scrollY;actionBusy=true;
+  try{const did=await fn();if(did){Game?.renderAll?.();await refreshAll(false,false);restoreMarketScroll(scrollY)}}finally{actionBusy=false}
 }
 async function claimGold(){
+  if(actionBusy)return;
   const fn=window.CellboundEconomy?.claimProceeds;if(!fn){alert('Trading service is still loading.');return}
-  const n=await fn();if(n>0)location.reload();
+  const scrollY=window.scrollY;actionBusy=true;
+  try{
+    await Game?.persistState?.();
+    const n=await fn();if(n>0){await finishMarketMutation(activeTab,scrollY)}
+  }finally{actionBusy=false}
 }
 function renderSaved(){
   const root=$('#tpSavedSearches');if(!root)return;
@@ -353,8 +398,9 @@ function setTab(tab){
   if(tab==='watch')renderWatchlist();
   if(tab==='history')renderHistory();
 }
-async function refreshAll(showBusy=true){
+async function refreshAll(showBusy=true,preserveScroll=false){
   if(!db||!user)return;
+  const scrollY=preserveScroll?window.scrollY:null;
   const button=$('#tpRefresh');
   if(showBusy&&button){button.disabled=true;button.textContent='REFRESHING…'}
   const root=$('#tpBrowseResults');
@@ -362,8 +408,8 @@ async function refreshAll(showBusy=true){
     const sweep=await db.rpc('market_sweep_my_expired');
     if(sweep.error)console.warn('Market expiry sweep failed',sweep.error);
     const [l,o,t,w,s,p]=await Promise.all([
-      db.from('market_gear_listings').select('*').order('created_at',{ascending:false}).limit(300),
-      db.from('market_order_book').select('*').order('created_at',{ascending:false}).limit(600),
+      db.from('market_gear_listings').select('*').eq('status','active').gt('quantity',0).order('created_at',{ascending:false}).limit(300),
+      db.from('market_order_book').select('*').eq('status','active').gt('quantity_remaining',0).order('created_at',{ascending:false}).limit(600),
       db.from('market_trade_history').select('*').order('created_at',{ascending:false}).limit(300),
       db.from('market_watchlist').select('*').eq('user_id',user.id),
       db.from('market_saved_searches').select('*').eq('user_id',user.id).order('created_at',{ascending:false}),
@@ -378,27 +424,28 @@ async function refreshAll(showBusy=true){
     if(root)root.innerHTML='<div class="tp-empty">The market could not be loaded. Refresh the Trading Post and try again.</div>';
   }finally{
     if(button){button.disabled=false;button.textContent='REFRESH MARKET'}
+    if(preserveScroll)restoreMarketScroll(scrollY)
   }
 }
 function bind(){
-  $('#tpRefresh')?.addEventListener('click',()=>refreshAll());
+  $('#tpRefresh')?.addEventListener('click',e=>{e.preventDefault();refreshAll(true,true)});
   $('#tpSearch')?.addEventListener('input',renderBrowse);
   ['tpClass','tpSlot','tpRarity','tpMinIlvl','tpMaxPrice','tpSort'].forEach(id=>$('#'+id)?.addEventListener('change',renderBrowse));
-  $$('#tpCategories [data-category]').forEach(b=>b.onclick=()=>{activeCategory=b.dataset.category;renderBrowse()});
-  $$('#tpTabs [data-tp-tab]').forEach(b=>b.onclick=()=>setTab(b.dataset.tpTab));
+  $('#tpCategories [data-category]').forEach(b=>b.onclick=e=>{e.preventDefault();const y=window.scrollY;activeCategory=b.dataset.category;renderBrowse();restoreMarketScroll(y)});
+  $('#tpTabs [data-tp-tab]').forEach(b=>b.onclick=e=>{e.preventDefault();const y=window.scrollY;setTab(b.dataset.tpTab);restoreMarketScroll(y)});
   $('#tpSaveSearch')?.addEventListener('click',saveSearch);
   $('#tpClearFilters')?.addEventListener('click',()=>{activeCategory='all';['tpSearch','tpMinIlvl','tpMaxPrice'].forEach(id=>{if($('#'+id))$('#'+id).value=''});['tpClass','tpSlot','tpRarity'].forEach(id=>{if($('#'+id))$('#'+id).value='all'});if($('#tpSort'))$('#tpSort').value='price';renderBrowse()});
   $('#tpGearSellForm')?.addEventListener('submit',submitGearListing);
   $('#tpClaimItems')?.addEventListener('click',claimItems);
   $('#tpClaimGold')?.addEventListener('click',claimGold);
-  window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='trading')refreshAll()});
+  window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='trading')refreshAll(true,false)});
 }
 async function init(){
   Game=window.CellboundGame;
   if(!Game?.ready){setTimeout(init,80);return}
   db=Game.getSupabase?.();user=Game.getUser?.();if(!db||!user)return;
   bind();renderGold();renderDelivery();renderGearSellOptions();
-  if($('#trading')?.classList.contains('active'))await refreshAll();
+  if($('#trading')?.classList.contains('active'))await refreshAll(true,false);
   window.CellboundTradingPostV3={refresh:refreshAll,selectCommodity:(category,key)=>{selected={kind:'commodity',category,key};setTab('browse');renderInspector()}};window.CellboundMarket={load:refreshAll,render:()=>refreshAll(false),renderSell:renderGearSellOptions};
 }
 init();
