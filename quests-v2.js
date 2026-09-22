@@ -948,11 +948,11 @@ function bindActions(){
 }
 function renderHome(){
   const root=$('#questHomeObjective'),badge=$('#questNavBadge');if(!root)return;
-  const q=ensure(),a=q.ashfall,stage=currentStage();let title='',button='OPEN ADVENTURE →',jump='quests',small='CURRENT ADVENTURE';
+  const q=ensure(),a=q.ashfall,stage=currentStage();let title='',button='OPEN ADVENTURE →',jump='quests',small='CURRENT ADVENTURE',homeAdventure=selectedAdventure;
   const bellHome=window.CellboundThirteenthBell?.homeState?.(),fourfoldHome=window.CellboundFourfoldLock?.homeState?.();
-  if(bellHome?.active){title=bellHome.title;button='OPEN GREYWAKE →';small=bellHome.small||'CURRENT ADVENTURE';selectedAdventure='thirteenth-bell'}
-  else if(fourfoldHome?.active){title=fourfoldHome.title;button='OPEN THE FOURFOLD LOCK →';small=fourfoldHome.small||'CURRENT ADVENTURE';selectedAdventure='fourfold-lock'}
-  else if(!a.complete){title=a.started?ashfallDef(ashfallStage()).objective:'Warden Elara needs your guild on the east road.';selectedAdventure=selectedAdventure||'ashfall'}
+  if(bellHome?.active){title=bellHome.title;button='OPEN GREYWAKE →';small=bellHome.small||'CURRENT ADVENTURE';homeAdventure='thirteenth-bell'}
+  else if(fourfoldHome?.active){title=fourfoldHome.title;button='OPEN THE FOURFOLD LOCK →';small=fourfoldHome.small||'CURRENT ADVENTURE';homeAdventure='fourfold-lock'}
+  else if(!a.complete){title=a.started?ashfallDef(ashfallStage()).objective:'Warden Elara needs your guild on the east road.';homeAdventure=homeAdventure||'ashfall'}
   else if(!complete()){
     if(!echoesUnlocked()){small='NEXT ADVENTURE';title='Grow stronger in The Ashen Vault or reach average party Level 3 to continue the story.'}
     else if(q.started){title=stageDef(stage).objective;if(stage==='vault'){button='OPEN DUNGEON →';jump='content'}}
@@ -960,6 +960,7 @@ function renderHome(){
   }else{small='ADVENTURE COMPLETE';title='The Hollow Sanctum is open beneath Zeltira.';button='VIEW DUNGEON →';jump='content'}
   root.innerHTML='<span>'+small+'</span><b>'+esc(title)+'</b><button data-quest-home>'+button+'</button>';
   root.querySelector('[data-quest-home]').onclick=()=>{
+    if(jump==='quests'&&homeAdventure)selectedAdventure=homeAdventure;
     Game.switchView?.(jump);
     if(jump==='content'){
       const dungeon=complete()?'hollow-sanctum':'ashen-vault';
