@@ -7,7 +7,7 @@ const SEASON={id:'foundations-1',name:'Foundations'};
 
 const LOOT_RULES={
   uniqueChance:{normal:0,heroic:.025,cellboundBase:.035,cellboundPerTier:.0035,cellboundCap:.09},
-  targetedBossChance:.55,
+  targetedBossChance:.35,
   clearPityGuaranteeAfter:2,
   rarityWeights:{
     normal:{1:.70,2:.30},
@@ -214,8 +214,8 @@ function cellboundLootProfile(tier=1){
 }
 function lootProfileFor(dungeonId,difficulty='normal',tier=0){
  if(difficulty==='cellbound'){
-   const profile=cellboundLootProfile(tier),normal=LOOT_PROFILES[dungeonId]?.normal?.itemLevel||{};
-   profile.itemLevel=Object.fromEntries(Object.entries(profile.itemLevel||{}).map(([slot,value])=>[slot,Math.min(LOOT_RULES.powerCeiling,Math.max(Number(value)||0,(Number(normal[slot])||0)+2))]));
+   const profile=cellboundLootProfile(tier),heroic=LOOT_PROFILES[dungeonId]?.heroic?.itemLevel||LOOT_PROFILES[dungeonId]?.normal?.itemLevel||{};
+   profile.itemLevel=Object.fromEntries(Object.entries(profile.itemLevel||{}).map(([slot,value])=>[slot,Math.min(LOOT_RULES.powerCeiling,Math.max(Number(value)||0,Number(heroic[slot])||0))]));
    return profile
  }
  return LOOT_PROFILES[dungeonId]?.[difficulty]||LOOT_PROFILES[dungeonId]?.normal||{
