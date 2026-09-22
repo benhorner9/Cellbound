@@ -368,7 +368,7 @@ function eventRender(e){
    run.aggro=targetChar?.id||null;
    if(e.payload?.threat)Object.entries(e.payload.threat).forEach(([id,v])=>{const ch=charFor(id);if(ch)run.threat[ch.id]=Number(v)||0});
    queueMeterRender();break;
-  case'PHASE_CHANGE':hideRoleZones(true);setStatus(e.ability||'Power instability');feed((e.ability||'Calder changes phase')+'. The station lights begin to fail.');break;
+  case'PHASE_CHANGE':window.CellboundFX?.phase?.(e.ability||'Power instability',e.payload?.healthPct);hideRoleZones(true);setStatus(e.ability||'Power instability');feed((e.ability||'Calder changes phase')+'. The station lights begin to fail.');break;
   case'MECHANIC_TELEGRAPH':
    if(e.payload?.mechanicType==='role-circles'){showRoleZones(e.payload.zones);setStatus('ROLE CIRCUITS — RED TANK · YELLOW DAMAGE · BLUE HEALER');feed('Calder pulls the power. Get every character into the correct coloured circuit.')}
    else if($('#bsRoleZones')?.childElementCount)hideRoleZones(true);
@@ -389,7 +389,7 @@ function eventRender(e){
   case'PLAYER_REVIVED':if(target){const pct=Number(e.payload?.targetHpPct)||35;$('[data-bs="'+target+'"]')?.classList.remove('dead');bar(target,pct);floatText(target,'REVIVED','heal');if(targetChar){run.hp[targetChar.id]=pct;updateSideHp(targetChar,pct);updateResource(targetChar,e.payload?.resource,e.payload?.resourceValue,e.payload?.resourceMax,'PLAYER_REVIVED')}}break;
   case'ENEMY_DEFEATED':if(target){$('[data-bs="'+target+'"]')?.classList.add('dead');bar(target,0);feed('Dr. Vex Calder collapses beside the overloaded generator.')}break;
   case'PLAYER_MISTAKE':if(srcChar)feed(srcChar.name+' '+(e.payload?.detail||'hesitates')+'.');break;
-  case'COMBAT_END':castClear();hideRoleZones(true);$('#bsArena')?.classList.remove('shockwave');setStatus(e.result==='victory'?'Dr. Vex Calder defeated.':'PARTY WIPED');feed(e.result==='victory'?'Combat complete. Calder is down.':'Combat ends in a party wipe. Review the failure report below.');break
+  case'COMBAT_END':castClear();hideRoleZones(true);$('#bsArena')?.classList.remove('shockwave');setStatus(e.result==='victory'?'Dr. Vex Calder defeated.':'PARTY WIPED');if(e.result!=='victory')window.CellboundFX?.wipe?.('Emergency power overwhelms the party inside Blackout Station.');feed(e.result==='victory'?'Combat complete. Calder is down.':'Combat ends in a party wipe. Review the failure report below.');break
  }
 }
 async function playTimeline(result,tok){
@@ -438,7 +438,7 @@ function drawCombat(){
  feed('Power restored. Dr. Vex Calder enters the generator hall.')
 }
 async function startBoss(){
- if(!run)return;drawCombat();const tok=token,C=window.CellboundCombatStandard;if(!C?.simulate){setStatus('Combat Reborn unavailable');feed('Combat standard gateway unavailable.');return}
+ if(!run)return;drawCombat();window.CellboundFX?.boss?.('Dr. Vex Calder','Restore the grid. Survive the role circuits.');const tok=token,C=window.CellboundCombatStandard;if(!C?.simulate){setStatus('Combat Reborn unavailable');feed('Combat standard gateway unavailable.');return}
  try{
   const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:100,_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0}));
   let result=C.simulate({party:combatParty,encounter:bossEncounter(),tactics:{pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced'},seed:'blackout-station:'+run.seed},{zone:'blackout-station'});
