@@ -6,6 +6,7 @@ const ENTRY_ILVL=38,XP=900;
 let Game=null,G=null,db=null,run=null;
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
+const roleOf=c=>Game?.classes?.[c?.class]?.specs?.[c?.spec]?.role||'dps';
 const ilvl=()=>Math.round(Number(Game?.partyItemLevel?.())||0);
 const unlocked=()=>Boolean(state()?.progression?.fracturedAgesUnlocked);
 const clearCount=()=>Number(state()?.fracturedAgesCompletions)||0;
@@ -121,7 +122,47 @@ function briefing(){
  r.innerHTML='<section class="fa-shell fa-brief"><header><div><small>THE FRACTURED AGES · LEVELS 14–18 · ILVL '+ENTRY_ILVL+'+</small><h2>A journey through five impossible encounters.</h2></div><button data-fa-close>×</button></header><div class="fa-brief-grid"><main><p>The Chronomap tears open five fractures. Every combat encounter uses the same authoritative Cellbound combat engine: real movement, threat, resources, healing, interrupts, deaths and mechanics.</p><div class="fa-era-strip">'+STAGES.map((s,i)=>'<span><i>'+(i+1)+'</i><b>'+esc(s.era)+'</b><small>'+esc(s.boss)+'</small></span>').join('')+'</div><div class="fa-warning"><b>THE FINAL FRACTURE</b><span>The Old Man does not fight alone. Your active five will face five enemies at once.</span></div></main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="fa-party"><span>'+esc(c.portrait||c.name.slice(0,2))+'</span><div><b>'+esc(c.name)+'</b><small>Lv. '+Math.max(1,Number(c.level)||1)+' · '+esc(c.class)+' · '+esc(c.spec)+'</small></div></div>').join('')+'<button class="fa-start" data-fa-start>STEP THROUGH THE FIRST FRACTURE →</button></aside></div></section>';
  r.querySelector('[data-fa-close]').onclick=close;r.querySelector('[data-fa-start]').onclick=startRun
 }
-function startRun(){run={stage:0,startedAt:Date.now(),results:[],done:false};transition()}
+function startRun(){
+ const combatState=Object.fromEntries(party().map(c=>[c.id,{healthPct:100,resource:null,cooldowns:{},statuses:[],reviveSicknessMs:0,uniqueUsed:{}}]));
+ run={stage:0,startedAt:Date.now(),results:[],done:false,combatState,recoveries:0};
+ transition()
+}
+function carryCombatState(result){
+ if(!run||!result?.finalState?.players)return{ok:false,reason:'Combat state could not be recovered.'};
+ const duration=Math.max(0,Number(result.durationMs)||0),downtime=5000,next={};
+ for(const p of result.finalState.players){
+  const id=p.characterId;if(!id)continue;
+  const hp=p.maxHealth?Math.max(0,Math.min(100,p.health/p.maxHealth*100)):0;
+  const statuses=Object.values(p.statuses||{}).filter(st=>st?.persistAcrossEncounters).map(st=>({
+   ...st,
+   remainingMs:Math.max(0,(Number(st.expiresAt)||0)-duration-downtime)
+  })).filter(st=>st.remainingMs>0);
+  next[id]={
+   healthPct:hp>0?Math.min(100,hp+6):0,
+   resource:p.resource?{name:p.resource.name,max:p.resource.max,value:p.resource.value}:null,
+   cooldowns:Object.fromEntries(Object.entries(p.cooldowns||{}).map(([k,v])=>[k,Math.max(0,(Number(v)||0)-downtime)]).filter(([,v])=>v>0)),
+   statuses,
+   reviveSicknessMs:Math.max(0,(Number(p.revivePenaltyUntil)||0)-duration-downtime),
+   uniqueUsed:{...(p.uniqueUsed||{})}
+  }
+ }
+ party().forEach(c=>{if(!next[c.id])next[c.id]=run.combatState?.[c.id]||{healthPct:100,resource:null,cooldowns:{},statuses:[],reviveSicknessMs:0,uniqueUsed:{}}});
+ const fallen=party().filter(c=>(Number(next[c.id]?.healthPct)||0)<=0);
+ if(fallen.length){
+  const healer=party().find(c=>roleOf(c)==='healer');
+  if(!healer)return{ok:false,reason:'No healer survived the fracture chain to recover fallen adventurers.'};
+  const revive=x=>{
+   const st=next[x.id]||(next[x.id]={healthPct:0,resource:null,cooldowns:{},statuses:[],reviveSicknessMs:0,uniqueUsed:{}});
+   st.healthPct=35;st.statuses=[];st.reviveSicknessMs=15000;
+   if(st.resource?.max!=null)st.resource={...st.resource,value:Math.max(0,Number(st.resource.max)||0)*.2}
+  };
+  if((Number(next[healer.id]?.healthPct)||0)<=0)revive(healer);
+  fallen.filter(c=>c.id!==healer.id).forEach(revive);
+  run.recoveries=(Number(run.recoveries)||0)+fallen.length
+ }
+ run.combatState=next;
+ return{ok:true}
+}
 function transition(){
  if(!run)return;const s=STAGES[run.stage],r=root();r.hidden=false;document.body.classList.add('fa-open');
  r.innerHTML='<section class="fa-shell fa-transition '+s.visual+'"><header><div><small>FRACTURE '+(run.stage+1)+' / '+STAGES.length+' · '+esc(s.era)+'</small><h2>'+esc(s.boss)+'</h2></div><button data-fa-close>×</button></header><div class="fa-transition-scene"><div class="fa-transition-art">'+s.environment+'</div><div class="fa-transition-copy"><small>'+esc(s.subtitle.toUpperCase())+'</small><h3>'+esc(s.era)+'</h3><p>'+esc(s.intro)+'</p><div><b>ENCOUNTER INTELLIGENCE</b><span>'+esc(s.blurb)+'</span></div><button data-fa-fight>'+(run.stage===4?'ENTER THE FUNHOUSE →':'ENTER '+esc(s.era)+' →')+'</button></div></div></section>';
@@ -131,19 +172,28 @@ function transition(){
 async function fightStage(s){
  root().hidden=true;
  const Q=window.CellboundQuests;if(!Q?.runQuest2DFight){root().hidden=false;return}
+ let combatResult=null;
  const won=await Q.runQuest2DFight({
   quest:'The Fractured Ages',title:s.boss,location:s.era,ambience:s.intro,
   enemies:s.enemies,eliteIndex:s.id==='funhouse'?1:0,visualClass:s.visual,environmentMarkup:s.environment,combat:s.combat,
+  combatState:run?.combatState||null,onResult:result=>{combatResult=result},
   completeText:s.id==='funhouse'?'The echoes fall. At exactly twenty percent health, the Old Man lifts one finger. Everything stops.':'The fracture shudders. A new door opens where no door existed before.'
  });
  if(!run)return;
  if(!won){showFailure(s);return}
+ const carry=carryCombatState(combatResult);
+ if(!carry.ok){await failRecovery(s,carry.reason);return}
  run.results.push({id:s.id,boss:s.boss});
  if(s.id==='funhouse'){showMaskFall();return}
  run.stage++;transition()
 }
 function showFailure(s){
  const r=root();r.hidden=false;r.innerHTML='<section class="fa-shell fa-failed"><small>THE FRACTURED AGES · RUN ENDED</small><h2>The timeline rejects the party.</h2><p>Your guild was defeated by '+esc(s.boss)+'. Cell Shock has been applied by the combat engine. The Fourfold Lock remains open, so you can return when the party has recovered.</p><button data-fa-return>RETURN TO DUNGEONS →</button></section>';r.querySelector('[data-fa-return]').onclick=close
+}
+async function failRecovery(s,reason){
+ if(!run||run.done)return;run.done=true;
+ Game.applyPartyCellShock?.(25);await Game.persistState?.();
+ const r=root();r.hidden=false;r.innerHTML='<section class="fa-shell fa-failed"><small>THE FRACTURED AGES · EXPEDITION FAILED</small><h2>The party cannot continue beyond '+esc(s.boss)+'.</h2><p>'+esc(reason||'Fallen adventurers could not be recovered between fractures.')+' All five adventurers gained 25% Cell Shock.</p><button data-fa-return>RETURN TO DUNGEONS →</button></section>';r.querySelector('[data-fa-return]').onclick=close
 }
 function showMaskFall(){
  const r=root();r.hidden=false;r.innerHTML='<section class="fa-shell fa-reveal"><div class="fa-reveal-stage"><div class="fa-mask">⌛</div><small>20% HEALTH · COMBAT HALTED</small><h2>The music stops.</h2><p>The colours drain from the room. Every clock freezes between seconds. The Old Man reaches up and removes the smiling mask.</p><div class="fa-name-shift"><span>THE OLD MAN — KEEPER OF AGES</span><i>→</i><b>???</b></div><p class="fa-quote">“Good. You can survive the story. Now see if you can survive what is true.”</p><p>He is not defeated. He steps backward through a door that was not there a moment ago. The Funhouse collapses around the party.</p><button data-fa-resolve>ESCAPE THE FUNHOUSE →</button></div></section>';
