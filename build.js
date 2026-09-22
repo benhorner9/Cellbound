@@ -1,7 +1,7 @@
 const fs=require('fs');
 const path=require('path');
 const files=['index.html','styles.css','auth.js','guild.html','guild.css','bank.css','character-sheet.css','gear-system.css','foundations.css','economy-v2.css','trading-post-v3.css','social-v3.css','evolution-v1.css','dungeon-2d-v1.css','combat-status-ui-v1.css','combat-vitals-ui-v1.css','endgame-v1.css','world-boss-2d-v1.css','twelve-below-v1.css','admin-v1.css','release-v1.css','onboarding-v1.css','hollow-sanctum-v1.css','chaos-canyon-v1.css','blackout-station-v1.css','thirteenth-bell-v1.css','quests-v1.css','quests-v2.css','mobile-v1.css','readability-v1.css','ui-readability-v2.css','gear-data.js','profession-data.js','combat-identities-v1.js','combat-standard-v1.js','combat-status-ui-v1.js','endgame-data-v1.js','guild-v4.js','character-sheet.js','gear-character-patch.js','character-foundations-patch.js','economy-v2.js','trading-post-v3.js','social-v3.js','evolution-v1.js','dungeon-2d-v1.js','world-boss-2d-v1.js','twelve-below-v1.js','admin-v1.js','release-v1.js','onboarding-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','thirteenth-bell-v1.js','endgame-v1.js','quests-v2.js','mobile-v1.js'];
-const assets=['assets/gear/cellbound-gear-atlas.webp'];
+const assets=['assets/gear/cellbound-gear-atlas.webp','assets/combat/status-icons-v1.webp'];
 const out=path.join(__dirname,'dist');
 const buildId=String(process.env.GITHUB_SHA||process.env.CELLBOUND_BUILD||'local-dev').trim();
 const buildNumber=String(process.env.GITHUB_RUN_NUMBER||process.env.CELLBOUND_BUILD_NUMBER||'0').trim();
@@ -61,6 +61,8 @@ for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readab
 {
   const statusCss=fs.readFileSync(path.join(out,'combat-status-ui-v1.css'),'utf8');
   if(!statusCss.includes('opacity:.42')||!statusCss.includes('.is-fresh')||!statusCss.includes('.is-expiring'))throw new Error('Smart compact combat status styling is missing');
+  if(!statusCss.includes("background-image:url('./assets/combat/status-icons-v1.webp')"))throw new Error('Combat status sprite reference is missing');
+  if(!fs.existsSync(path.join(out,'assets/combat/status-icons-v1.webp')))throw new Error('Combat status icon sprite is missing from production package');
 }
 console.log('Cellbound build complete.');
 console.log('Build verification passed: scripts parse and required UI hooks/assets are present.');
