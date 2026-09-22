@@ -37,9 +37,9 @@ G.items.forEach(item=>{
 
 const ui={
   pageTitle:$('#pageTitle'),rosterGrid:$('#rosterGrid'),overviewRoster:$('#overviewRoster'),partyRoster:$('#partyRoster'),partySlots:$('#partySlots'),
-  readinessFill:$('#readinessFill'),readinessText:$('#readinessText'),readinessLabel:$('#readinessLabel'),readinessHint:$('#readinessHint'),bossSelect:$('#bossSelect'),
-  attemptBtn:$('#attemptBtn'),bossList:$('#bossList'),reportsList:$('#reportsList'),activityLog:$('#activityLog'),
-  attemptModal:$('#attemptModal'),attemptStage:$('#attemptStage'),bankModal:$('#bankModal'),bankDetail:$('#bankDetail'),bankGrid:$('#bankGrid'),bankSummary:$('#bankSummary'),
+  readinessFill:$('#readinessFill'),readinessText:$('#readinessText'),readinessLabel:$('#readinessLabel'),readinessHint:$('#readinessHint'),
+  bossList:$('#bossList'),reportsList:$('#reportsList'),activityLog:$('#activityLog'),
+  bankModal:$('#bankModal'),bankDetail:$('#bankDetail'),bankGrid:$('#bankGrid'),bankSummary:$('#bankSummary'),
   renown:$('#renown'),gold:$('#gold'),rosterCount:$('#rosterCount'),bankCount:$('#bankCount'),dungeonProgress:$('#dungeonProgress'),
   partyIlvlTop:$('#partyItemLevelTop'),membershipStatus:$('#membershipStatus'),syncStatus:$('#syncStatus')
 };
@@ -445,10 +445,21 @@ function renderOverview(){
     const hollowOpen=Boolean(state?.questSystem?.flags?.hollowSanctumUnlocked);
     const hollowDone=Boolean(state?.questSystem?.flags?.hollowFirstClear);
     const ashenOpen=state?.progression?.ashenVaultUnlocked!==false;
+    const ashenDone=(Number(state?.dungeonCompletions)||0)>0;
+    const chaosDone=(Number(state?.chaosCanyonCompletions)||0)>0;
+    const blackoutDone=(Number(state?.blackoutStationCompletions)||0)>0;
+    const fracturedOpen=Boolean(state?.progression?.fracturedAgesUnlocked);
+    const fracturedDone=(Number(state?.fracturedAgesCompletions)||0)>0;
     const pi=partyItemLevel();
-    const dungeon=hollowOpen
-      ?{id:'hollow-sanctum',name:'The Hollow Sanctum',tag:hollowDone?'FARMABLE':'NEWLY UNLOCKED',art:'THE HOLLOW SANCTUM',copy:'Descend beneath Zeltira into a crystal-grown shrine of echoes, guardians and the Bound Choir.',pips:3,active:Math.min(3,hollowDone?3:1),req:24}
-      :{id:'ashen-vault',name:'The Ashen Vault',tag:ashenOpen?'AVAILABLE':'QUEST LOCKED',art:'THE ASHEN VAULT',copy:'Enter the ruined forge, break through its furnace halls and reach the living Vaultheart.',pips:3,active:Math.min(3,Object.values(state?.bossKills||{}).filter(Boolean).length||1),req:18};
+    let dungeon;
+    if(!ashenOpen||!ashenDone)dungeon={id:'ashen-vault',name:'The Ashen Vault',tag:ashenOpen?'AVAILABLE':'QUEST LOCKED',art:'THE ASHEN VAULT',copy:'Enter the ruined forge, break through its furnace halls and reach the living Vaultheart.',pips:3,active:Math.min(3,Object.values(state?.bossKills||{}).filter(Boolean).length||1),req:18};
+    else if(hollowOpen&&!hollowDone)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:'NEWLY UNLOCKED',art:'THE HOLLOW SANCTUM',copy:'Descend beneath Zeltira into a crystal-grown shrine of echoes, guardians and the Bound Choir.',pips:3,active:1,req:24};
+    else if(!chaosDone)dungeon={id:'chaos-canyon',name:'Chaos Canyon',tag:'AVAILABLE',art:'CHAOS CANYON',copy:'Cross Vorran’s living canyon, survive the stepping-stone trial and break the Druid at its heart.',pips:3,active:1,req:30};
+    else if(!blackoutDone)dungeon={id:'blackout-station',name:'Blackout Station',tag:'AVAILABLE',art:'BLACKOUT STATION',copy:'Restore the dead grid, solve the station puzzle and survive Dr. Vex Calder’s role circuits.',pips:2,active:1,req:34};
+    else if(fracturedOpen&&!fracturedDone)dungeon={id:'fractured-ages',name:'The Fractured Ages',tag:'NEWLY UNLOCKED',art:'THE FRACTURED AGES',copy:'Follow the Strange Old Man through impossible eras and survive the Funhouse at the end of time.',pips:5,active:1,req:38};
+    else if(fracturedOpen)dungeon={id:'fractured-ages',name:'The Fractured Ages',tag:'FARMABLE',art:'THE FRACTURED AGES',copy:'The timeline remains open. Return for temporal equipment and another encounter with the Old Man’s mystery.',pips:5,active:5,req:38};
+    else if(hollowOpen)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:hollowDone?'FARMABLE':'AVAILABLE',art:'THE HOLLOW SANCTUM',copy:'Your known dungeon route is clear. Continue questing to uncover the next hidden expedition.',pips:3,active:hollowDone?3:1,req:24};
+    else dungeon={id:'ashen-vault',name:'The Ashen Vault',tag:'FARMABLE',art:'THE ASHEN VAULT',copy:'Keep building your party while the next quest route is uncovered.',pips:3,active:3,req:18};
     next.dataset.dungeon=dungeon.id;
     next.innerHTML=`<div class="panel-head"><div><small>NEXT DUNGEON</small><h3>${dungeon.name}</h3></div><b>${dungeon.tag}</b></div><div class="dungeon-preview ${dungeon.id==='hollow-sanctum'?'hollow-preview':''}"><div class="dungeon-art"><span>${dungeon.art}</span></div><div><p>${dungeon.copy}</p><div class="boss-pips">${Array.from({length:dungeon.pips},(_,i)=>`<span class="${i<dungeon.active?'active':''}"></span>`).join('')}</div><small class="overview-dungeon-ilvl">Party iLvl ${pi||'—'} · Entry iLvl ${dungeon.req}+</small><button type="button" data-overview-dungeon="${dungeon.id}">VIEW DUNGEON →</button></div></div>`;
     next.querySelector('[data-overview-dungeon]')?.addEventListener('click',()=>{
@@ -456,9 +467,6 @@ function renderOverview(){
       setTimeout(()=>window.CellboundDungeonBrowser?.open?.(dungeon.id),40)
     })
   }
-}
-function renderBosses(){
-  if(ui.bossSelect)ui.bossSelect.innerHTML=bosses.map((b,i)=>`<option value="${b.id}" ${i>0&&!state.bossKills[bosses[i-1].id]?'disabled':''}>${b.name} · Lv. ${b.level} · iLvl ${b.requiredItemLevel}${state.bossKills[b.id]?' — Farm':''}</option>`).join('');
 }
 function bankBulkSelection(){
   [...bankBulkSelected].forEach(id=>{
@@ -777,42 +785,31 @@ function slotHtml(index,id){
   return `<div class="party-slot ${c?'filled':''} ${c&&isUnavailable(c)?'shock-locked':''}"><div class="slot-role">${icon}</div><div>${c?`<b>${c.name}</b><small>Slot ${index+1} · ${roleLabel(r)} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)} · Shock ${c.cellShock||0}%</small>`:`<b>Party Slot ${index+1}</b><small>Any available adventurer · role comes from active spec</small>`}</div>${c?`<button data-remove="${c.id}">×</button>`:''}</div>`;
 }
 function partyReadiness(){
-  const ids=flatPartyIds(),boss=bossById(ui.bossSelect?.value||'ashwarden');
-  if(ids.length<5)return{score:ids.length*12,ready:false,hint:'Fill all five party slots. Any role composition is allowed.'};
-  const chars=ids.map(charById);if(chars.some(c=>!c||isUnavailable(c)))return{score:45,ready:false,hint:'A party member is recovering from 100% Cell Shock. Rotate them out before entering a dungeon.'};
-  if(ids.some(id=>!isCharacterRosterUnlocked(id)))return{score:45,ready:false,hint:'A selected character is outside your currently unlocked roster slots.'};
-  const pi=partyItemLevel();if(!currentBossProgressionUnlocked(boss))return{score:55,ready:false,hint:`Defeat the previous boss before challenging ${boss.name}.`};
-  if(pi<boss.requiredItemLevel)return{score:Math.min(90,Math.round((pi/boss.requiredItemLevel)*80)),ready:false,hint:`Party Item Level ${pi}. ${boss.name} requires ${boss.requiredItemLevel}. Upgrade the lowest-geared characters first.`};
-  const avgLevel=Math.round(chars.reduce((s,c)=>s+Math.max(1,Number(c.level)||1),0)/5),avgPower=chars.reduce((s,c)=>s+c.power,0)/5;const levelRatio=Math.max(.65,Math.min(1.15,avgLevel/Math.max(1,boss.level||1))),score=Math.round(Math.min(100,48+(pi/boss.recommendedItemLevel)*30+levelRatio*18)),composition=partyComposition(chars);return{score,ready:true,hint:`${composition} · Party Lv ${avgLevel} · iLvl ${pi} · Power ${avgPower.toFixed(0)} · Builds, gear and equipped skills decide the fight.`};
+  const ids=flatPartyIds();
+  if(ids.length<5)return{score:ids.length*20,ready:false,hint:'Fill all five party slots. Any role composition is allowed.'};
+  const chars=ids.map(charById);
+  if(chars.some(c=>!c||isUnavailable(c)))return{score:60,ready:false,hint:'A party member is recovering from 100% Cell Shock. Rotate them out before entering combat.'};
+  if(ids.some(id=>!isCharacterRosterUnlocked(id)))return{score:60,ready:false,hint:'A selected character is outside your currently unlocked roster slots.'};
+  const pi=partyItemLevel(),avgLevel=Math.round(chars.reduce((s,c)=>s+Math.max(1,Number(c.level)||1),0)/5),composition=partyComposition(chars);
+  return{score:100,ready:true,hint:`${composition} · Party Lv ${avgLevel} · iLvl ${pi}. Choose a dungeon to check its specific entry requirement.`};
 }
 function renderParty(){
   const slots=partySlotIds();ui.partySlots.innerHTML=slots.map((id,i)=>slotHtml(i,id)).join('');ui.partySlots.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',()=>{removeChar(b.dataset.remove);save();renderAll();}));
   const selected=new Set(flatPartyIds());ui.partyRoster.innerHTML=state.roster.map((c,i)=>{const slotLocked=!isRosterSlotUnlocked(i),shock=isUnavailable(c),disabled=selected.has(c.id)||slotLocked||shock||selected.size>=5;return `<button class="party-choice ${slotLocked?'roster-locked':''} ${shock?'shock-locked':''}" data-pick="${c.id}" ${disabled?'disabled':''}><div class="avatar">${c.portrait}</div><div><b>${c.name}</b><small>Lv. ${c.level} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}</small></div><em>${slotLocked?'Member slot':shock?`Recovering ${formatRemaining(c)}`:`${roleLabel(roleOf(c))} · Shock ${c.cellShock||0}%`}</em></button>`;}).join('');
-  ui.partyRoster.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>assignChar(b.dataset.pick)));const r=partyReadiness();ui.readinessFill.style.width=`${r.score}%`;ui.readinessText.textContent=`${r.score}%`;ui.readinessLabel.textContent=r.ready?'READY':'NOT READY';ui.readinessLabel.className=r.ready?'good':'';ui.readinessHint.textContent=r.hint;ui.attemptBtn.disabled=!r.ready;
+  ui.partyRoster.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>assignChar(b.dataset.pick)));const r=partyReadiness();ui.readinessFill.style.width=`${r.score}%`;ui.readinessText.textContent=`${r.score}%`;ui.readinessLabel.textContent=r.ready?'READY':'NOT READY';ui.readinessLabel.className=r.ready?'good':'';ui.readinessHint.textContent=r.hint;
 }
-$('#autoFill')?.addEventListener('click',()=>{const available=state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&!isUnavailable(c)).sort((a,b)=>characterItemLevel(b)-characterItemLevel(a)||b.power-a.power).slice(0,5);writePartySlots(available.map(c=>c.id));save();renderAll();});ui.bossSelect?.addEventListener('change',renderParty);
+$('#autoFill')?.addEventListener('click',()=>{const available=state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&!isUnavailable(c)).sort((a,b)=>characterItemLevel(b)-characterItemLevel(a)||b.power-a.power).slice(0,5);writePartySlots(available.map(c=>c.id));save();renderAll();});
+$('#partyOpenDungeons')?.addEventListener('click',()=>switchView('content'));
 
 function applyCellShock(c,amount){
   if(!c)return;c.cellShock=Math.min(100,Math.max(0,(Number(c.cellShock)||0)+amount));if(c.cellShock>=100&&!c.cellShockLockedUntil){const mins=entitlements().recoveryMinutes;c.cellShock=100;c.cellShockLockedUntil=new Date(Date.now()+mins*60000).toISOString();state.activity.push(`${c.name} reached 100% Cell Shock and must recover for ${mins} minutes.`);removeChar(c.id);}
 }
-function simulateAttempt(){
-  const ids=flatPartyIds(),readiness=partyReadiness();if(ids.length!==5||!readiness.ready)return;const boss=bossById(ui.bossSelect.value),party=ids.map(charById),pi=partyItemLevel(),avgLevel=party.reduce((s,c)=>s+Math.max(1,Number(c.level)||1),0)/5,roleBonus=(party.filter(c=>roleOf(c)==='tank').length===1&&party.filter(c=>roleOf(c)==='healer').length===1&&party.filter(c=>roleOf(c)==='dps').length===3)?8:-18,levelBonus=(avgLevel-(boss.level||1))*3,chance=Math.max(8,Math.min(92,38+(pi/boss.recommendedItemLevel)*28+levelBonus+roleBonus)),success=Math.random()*100<chance;
-  ui.attemptModal.hidden=false;ui.attemptStage.innerHTML=`<div class="attempt-head"><div><small>THE ASHEN VAULT · PARTY ILVL ${pi}</small><h2>${boss.name}</h2></div><b>${Math.round(chance)}% projected chance</b></div><div class="attempt-body"><div class="attempt-raid"><div class="party-column">${party.map(c=>`<div class="sim-unit"><b>${c.name}</b><span>${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)} · Shock ${c.cellShock||0}%</span><div class="sim-bar sim-party"><i style="width:100%"></i></div></div>`).join('')}</div><div class="versus">VS</div><div class="boss-column"><div class="sim-unit"><b>${boss.name}</b><span>${boss.mechanic}</span><div class="sim-bar sim-boss"><i id="bossSimBar" style="width:100%"></i></div></div></div></div><div class="attempt-log">Party enters combat...<br>${party[0].name} establishes threat.<br>${party[1].name} begins the healing rotation.<br>The team starts reading the encounter...</div><div id="attemptResult"></div></div>`;
-  const bar=$('#bossSimBar');setTimeout(()=>{if(bar)bar.style.width=success?'0%':`${Math.max(8,Math.round(100-readiness.score*.72))}%`;},300);setTimeout(()=>resolveAttempt(boss,party,success,$('#attemptResult')),1100);
-}
-function resolveAttempt(boss,party,success,result){
-  const knowledgeGain=party.map(c=>{const before=c.knowledge[boss.id]||0,gain=success?Math.floor(5+Math.random()*6):Math.floor(7+Math.random()*9),after=Math.min(100,before+gain);c.knowledge[boss.id]=after;return{name:c.name,before,after,gain};});let loot=null,reagents=[];
-  if(success){state.bossKills[boss.id]=true;state.renown+=25;state.gold+=120;loot=canonicalItem(G.rollDungeonLoot(boss.name,boss.tier2Chance));addBankItem({...loot,source:boss.name});reagents=awardReagents(boss);state.activity.push(`${loot.name} (${loot.tierLabel}, iLvl ${loot.itemLevel}) dropped from ${boss.name}.`);state.activity.push(`${boss.name} was defeated in The Ashen Vault.`);}else{party.forEach(c=>applyCellShock(c,PVE_WIPE_CELL_SHOCK));state.activity.push(`The guild wiped on ${boss.name}. Each participating character gained ${PVE_WIPE_CELL_SHOCK}% Cell Shock.`);}
-  state.reports.unshift({id:Date.now(),boss:boss.id,success,knowledgeGain,loot:loot?.name||null,lootItemId:loot?.itemId||null,lootTier:loot?.tier||null,lootItemLevel:loot?.itemLevel||null,reagents,cellShockGain:success?0:PVE_WIPE_CELL_SHOCK,partyItemLevel:party.reduce((s,c)=>s+characterItemLevel(c),0)/5,at:new Date().toISOString()});save();renderAll();
-  result.innerHTML=`<div class="attempt-result"><h3>${success?'VICTORY':'WIPE — CELL SHOCK GAINED'}</h3><p>${success?'Boss defeated. PvE victories do not reduce Cell Shock.':'The group wiped. Each participating character gained Cell Shock; Mastery was still recorded.'}</p>${loot?`<div class="loot-drop gear-loot-drop">${G.artHTML(loot,80)}<div><small>${loot.tierLabel.toUpperCase()} · ILVL ${loot.itemLevel} · ${loot.rarity.toUpperCase()} · ${loot.class}</small><b>${loot.name}</b><span>Stored in the Guild Bank</span></div></div>`:''}${reagents.length?`<div class="reagent-reward"><small>REAGENTS RECOVERED</small>${reagents.map(d=>`<span>${P?.MATERIALS?.[d.key]?.name||'Recipe: Vaultheart Glyph'} ×${d.quantity}</span>`).join('')}</div>`:''}<p>${knowledgeGain.map(k=>`${k.name}: ${k.before}% → ${k.after}%${success?'':` · Shock ${charById(party.find(p=>p.name===k.name)?.id)?.cellShock||0}%`}`).join('<br>')}</p><button id="closeAttempt">RETURN TO GUILD</button></div>`;$('#closeAttempt')?.addEventListener('click',()=>ui.attemptModal.hidden=true);
-}
-ui.attemptBtn?.addEventListener('click',simulateAttempt);ui.attemptModal?.addEventListener('click',e=>{if(e.target===ui.attemptModal)ui.attemptModal.hidden=true;});
 function renderReports(){
   if(!state.reports.length){ui.reportsList.innerHTML='<div class="panel" style="padding:30px;color:#657874">No attempts yet. Build a party and enter The Ashen Vault.</div>';return;}
   ui.reportsList.innerHTML=state.reports.map(r=>{const b=bossById(r.boss),loot=G.byId(r.lootItemId)||G.byName(r.loot);return `<article class="report-card"><div><div class="report-result ${r.success?'kill':'wipe'}">${r.success?'VICTORY':'WIPE'}</div><small>${new Date(r.at).toLocaleString()}</small></div><div><h3>${b?.name||'Encounter'}</h3><p>${r.success?'The party defeated the encounter. PvE victories do not clear Cell Shock.':`The party gained ${r.cellShockGain||PVE_WIPE_CELL_SHOCK}% Cell Shock and Mastery.`}${loot?` Loot: ${loot.name} · iLvl ${r.lootItemLevel||loot.itemLevel||'—'} → Guild Bank.`:''}${r.reagents?.length?` Reagents: ${r.reagents.map(d=>`${P?.MATERIALS?.[d.key]?.name||'Recipe'} ×${d.quantity}`).join(', ')}.`:''}</p></div><div class="report-gain"><b>Mastery gained</b>${r.knowledgeGain.map(k=>`<span>${k.name} +${k.gain}%</span>`).join('')}</div></article>`;}).join('');
 }
 function safeFeatureRender(label,fn){try{fn?.()}catch(error){console.warn('Cellbound UI refresh isolated:',label,error)}}
-function renderAll(){if(!state)return;state.roster.forEach(c=>{refreshRecovery(c);c.gear=characterItemLevel(c);});renderTop();renderOverview();renderRoster();renderBosses();renderParty();renderBank();renderReports();writeLocal();safeFeatureRender('quests',()=>window.CellboundQuests?.render?.());safeFeatureRender('hollow-sanctum',()=>window.CellboundHollowSanctum?.renderCard?.());safeFeatureRender('chaos-canyon',()=>window.CellboundChaosCanyon?.renderCard?.());safeFeatureRender('blackout-station',()=>window.CellboundBlackoutStation?.renderCard?.());safeFeatureRender('fractured-ages',()=>window.CellboundFracturedAges?.renderCard?.());}
+function renderAll(){if(!state)return;state.roster.forEach(c=>{refreshRecovery(c);c.gear=characterItemLevel(c);});renderTop();renderOverview();renderRoster();renderParty();renderBank();renderReports();writeLocal();safeFeatureRender('quests',()=>window.CellboundQuests?.render?.());safeFeatureRender('hollow-sanctum',()=>window.CellboundHollowSanctum?.renderCard?.());safeFeatureRender('chaos-canyon',()=>window.CellboundChaosCanyon?.renderCard?.());safeFeatureRender('blackout-station',()=>window.CellboundBlackoutStation?.renderCard?.());safeFeatureRender('fractured-ages',()=>window.CellboundFracturedAges?.renderCard?.());}
 function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(c=>{if(refreshRecovery(c)){state.activity.push(`${c.name} has fully recovered from Cell Shock.`);changed=true;}});if(changed)save();if(state.roster.some(c=>isUnavailable(c)))renderAll();}
 
 window.CellboundGame={

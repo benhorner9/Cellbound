@@ -664,13 +664,28 @@ function qRenderRebornEvent(e){
   }
 }
 async function qPlayReborn(result,tok){
-  let last=0;questFight.telegraphs={};
-  for(const e of result.events||[]){
-    if(tok!==encounterToken||!questFight)return false;
-    const gap=Math.max(0,(Number(e.timestamp)||0)-last);if(gap)await wait(gap);
-    qRenderRebornEvent(e);last=Number(e.timestamp)||last
-  }
-  return result.outcome==='victory'
+  const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
+  if(!questFight)return false;questFight.telegraphs={};
+  if(!events.length)return result?.outcome==='victory';
+  return await new Promise(resolve=>{
+    let index=0,simTime=0,lastFrame=performance.now(),finished=false;
+    const finish=value=>{if(finished)return;finished=true;resolve(value)};
+    const frame=now=>{
+      if(finished)return;
+      if(tok!==encounterToken||!questFight){finish(false);return}
+      const rawDelta=Math.max(0,now-lastFrame);lastFrame=now;
+      simTime+=Math.min(rawDelta,100);
+      const frameStarted=performance.now();let handled=0;
+      while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<18&&performance.now()-frameStarted<8){
+        const event=events[index++];handled++;
+        try{qRenderRebornEvent(event)}
+        catch(error){console.warn('Quest combat visual recovered',event?.type,event?.ability,error)}
+      }
+      if(index>=events.length){finish(result?.outcome==='victory');return}
+      requestAnimationFrame(frame)
+    };
+    requestAnimationFrame(frame)
+  })
 }
 function qEncounterFromConfig(config){
   const meta=config.combat||{},kind=meta.kind||(config.enemies.length===1?'boss':'trash');

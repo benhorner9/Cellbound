@@ -153,8 +153,8 @@ function render(){
  root.innerHTML=
  '<section class="eg-hero"><div><small>UPDATE 2 · ENDGAME HUB</small><h2>Dungeon mastery now has somewhere to go.</h2><p>Normal teaches the dungeon. Heroic changes it. Cellbound+ turns it into a scalable endgame challenge with weekly modifiers, persistent scores and targeted rewards.</p></div><div class="eg-season"><span>SEASON</span><b>'+esc(server.season?.name||D.SEASON.name)+'</b><small>'+esc(minor?.name||'No minor affix')+' · '+esc(major?.name||'No major affix')+'</small></div></section>'+
  weeklyMarkup()+milestoneMarkup()+achievementMarkup()+collectionMarkup()+
- '<div class="eg-content">'+dungeonCard('ashen-vault')+dungeonCard('hollow-sanctum')+'</div>'+
- '<div class="eg-leaderboards">'+leaderboardMarkup('ashen-vault')+leaderboardMarkup('hollow-sanctum')+'</div>';
+ '<div class="eg-content">'+dungeonCard('ashen-vault')+dungeonCard('hollow-sanctum')+dungeonCard('chaos-canyon')+'</div>'+
+ '<div class="eg-leaderboards">'+leaderboardMarkup('ashen-vault')+leaderboardMarkup('hollow-sanctum')+leaderboardMarkup('chaos-canyon')+'</div>';
  bind()
 }
 function bind(){

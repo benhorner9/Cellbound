@@ -55,7 +55,13 @@ async function saveGuildName(e){
   input.value=name;await Promise.all([loadChat(true),loadGroups(),loadWorld()]);
 }
 function renderTargetOptions(){
-  const sel=$('#partyFinderTarget');if(!sel)return;const options=[{type:'dungeon',id:'ashen-vault',label:'The Ashen Vault'}];
+  const sel=$('#partyFinderTarget');if(!sel)return;
+  const s=state()||{},options=[];
+  if(s?.progression?.ashenVaultUnlocked!==false)options.push({type:'dungeon',id:'ashen-vault',label:'The Ashen Vault'});
+  if(s?.questSystem?.flags?.hollowSanctumUnlocked)options.push({type:'dungeon',id:'hollow-sanctum',label:'The Hollow Sanctum'});
+  options.push({type:'dungeon',id:'chaos-canyon',label:'Chaos Canyon'});
+  options.push({type:'dungeon',id:'blackout-station',label:'Blackout Station'});
+  if(s?.progression?.fracturedAgesUnlocked)options.push({type:'dungeon',id:'fractured-ages',label:'The Fractured Ages'});
   worldBosses.forEach(b=>options.push({type:'world_boss',id:b.id,label:b.name}));
   const before=sel.value;
   sel.innerHTML=options.map(o=>`<option value="${o.type}|${o.id}|${esc(o.label)}">${o.type==='world_boss'?'World Boss · ':'Dungeon · '}${esc(o.label)}</option>`).join('');
@@ -160,7 +166,9 @@ function renderWorldRewards(){
 }
 async function claimReward(id){
   const {data,error}=await db.rpc('claim_world_boss_reward',{p_reward_id:id});if(error){alert(error.message||'Reward could not be claimed');return;}
-  location.reload();
+  await Game.refreshStateFromServer?.({render:true});
+  await loadWorld();
+  window.CellboundFX?.loot?.({name:data?.item_name||'World Boss Reward',rarity:data?.rarity||'Rare'});
 }
 async function refreshAll(markSeen=false){await Promise.all([loadChat(markSeen),loadGroups(),loadWorld()]);}
 function bind(){
