@@ -15,6 +15,7 @@ const now=()=>Date.now();
 const state=()=>Game?.getState?.()||{};
 const mine=id=>user&&id===user.id;
 function age(ts){const n=Math.max(0,now()-new Date(ts).getTime()),m=Math.floor(n/60000);if(m<1)return'now';if(m<60)return m+'m';const h=Math.floor(m/60);if(h<24)return h+'h';return Math.floor(h/24)+'d'}
+function timeLeft(ts){const n=Math.max(0,new Date(ts).getTime()-now()),m=Math.ceil(n/60000);if(m<=0)return'Expired';if(m<60)return m+'m';const h=Math.ceil(m/60);if(h<24)return h+'h';return Math.ceil(h/24)+'d'}
 function rarityOf(x){return x?.rarity||x?.payload?.rarity||(x?.category==='material'&&P?.MATERIALS?.[x.item_key]?.rarity)||'Common'}
 function commodityKey(c,k){return c+'|'+k}
 function materialByKey(k){return P?.MATERIALS?.[k]||null}
@@ -176,7 +177,7 @@ function gearInspector(l){
   const g=gearFor(l),rarity=rarityOf(l),stats=G?.statLines?.(g)||[];
   return '<div class="tp-inspector-content">'+
     '<div class="tp-inspector-hero"><div class="tp-inspector-art">'+gearArt(l,76)+'</div><div><small class="tp-rarity-'+slug(rarity)+'">'+esc(rarity)+' · '+esc(l.item_class||g.class||'Any')+'</small><h3>'+esc(l.item_name)+'</h3><p>'+esc(l.slot||g.slot||'Gear')+' · Item Level '+Number(l.item_level||g.itemLevel||0)+' · '+esc(l.seller_label||'Player Guild')+'</p></div></div>'+
-    '<div><div class="tp-quote-grid"><div><span>Price</span><b>'+gold(l.unit_price)+'</b></div><div><span>Time left</span><b>'+(l.expires_at?age(l.expires_at).replace(/^/,''):'48h')+'</b></div></div>'+
+    '<div><div class="tp-quote-grid"><div><span>Price</span><b>'+gold(l.unit_price)+'</b></div><div><span>Time left</span><b>'+(l.expires_at?timeLeft(l.expires_at):'48h')+'</b></div></div>'+
     '<div class="tp-inspector-section"><small>ITEM ROLL</small><div class="tp-stat-chips">'+(stats.length?stats.map(s=>'<span>'+esc(s.text)+'</span>').join(''):'<span>No rolled stats</span>')+'</div>'+(g.uniqueEffect?'<p>'+esc(g.uniqueEffect.name)+' · '+esc(g.uniqueEffect.description)+'</p>':'')+'</div>'+
     '<div class="tp-inspector-section"><small>YOUR COMPARISON</small>'+compatibleCompare(g)+'</div></div>'+
     '<div><div class="tp-inspector-section"><small>MARKET ACTIONS</small><div class="tp-action-row">'+
@@ -270,7 +271,7 @@ function renderHistory(){
     return'<div class="tp-history-row"><div><b>'+esc(t.item_name)+' ×'+qty(t.quantity)+'</b><small>'+role+' · '+esc(t.category)+' · '+age(t.created_at)+' · '+gold(t.unit_price)+' each</small></div><strong>'+gold(t.gross_gold)+'</strong></div>'
   }).join(''):'<div class="tp-empty">No completed market trades yet.</div>';
 }
-function myGearListings(){return listings.filter(l=>mine(l.seller_id)&&l.status==='active')}
+function myGearListings(){return activeGear().filter(l=>mine(l.seller_id))}
 function myOrders(){return orders.filter(o=>mine(o.user_id)&&o.status==='active')}
 function renderMyTrading(){
   const gearRoot=$('#tpMyGear'),orderRoot=$('#tpMyOrders');if(!gearRoot||!orderRoot)return;
@@ -353,6 +354,7 @@ function setTab(tab){
 async function refreshAll(showBusy=true){
   if(!db||!user)return;
   if(showBusy){const b=$('#tpRefresh');if(b){b.disabled=true;b.textContent='REFRESHING…'}}
+  await db.rpc('market_sweep_my_expired');
   const [l,o,t,w,s,p]=await Promise.all([
     db.from('trading_post_listings').select('*').order('created_at',{ascending:false}).limit(300),
     db.from('market_commodity_orders').select('*').order('created_at',{ascending:false}).limit(600),
