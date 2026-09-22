@@ -15,6 +15,18 @@ for(const file of files){
   if(file.endsWith('.js')){try{new Function(contents)}catch(err){throw new Error(`Syntax check failed for ${file}: ${err.message}`)}}
   if(file==='guild-v4.js'){
     if(!contents.includes('function isBankUtility')||!contents.includes('!canonical.nonStackable&&state.bank.find')||!contents.includes('!canon.nonStackable&&out.find'))throw new Error('Guild Bank must preserve non-stackable charge-bearing utility items');
+    if(!contents.includes("ceiling=({1:26,2:32,3:40,4:44})")||!contents.includes('if(tier>=5)return current'))throw new Error('Cell Shard upgrades must stop at the Chapter 1 tier ceiling and never create Tier 5 power');
+  }
+  if(file==='gear-data.js'){
+    if(!contents.includes("5:{rarity:'Epic',label:'Tier 5'")||!contents.includes('raidExclusive:true'))throw new Error('Tier 5 must remain explicitly reserved for raid gear');
+    if(!contents.includes('CHAPTER_GEAR={chapter:1,levelCap:15,dungeonTierCeiling:4,raidExclusiveTier:5}'))throw new Error('Chapter 1 gear contract is missing');
+    if(!contents.includes('[1,2,3,4].forEach(tier=>'))throw new Error('Generic gear catalogue must stop at Tier 4');
+  }
+  if(file==='endgame-data-v1.js'){
+    if(!contents.includes('raidExclusiveTier:5')||!contents.includes('powerCeiling:44'))throw new Error('Dungeon loot must stop below raid-exclusive Tier 5');
+    if(!contents.includes("'fractured-ages':")||!contents.includes("itemLevel:{Head:38,Chest:39,Weapon:40}"))throw new Error('Fractured Ages Normal loot must remain below Cellbound+ Tier 4 power');
+    if(!contents.includes("return{tiers:{3:.55,4:.45},itemLevel:{Head:42,Chest:43,Weapon:44}"))throw new Error('Peak Cellbound+ loot must cap at Item Level 44');
+    if(!contents.includes('uniqueChance:{normal:0'))throw new Error('Tier 4 uniques must not leak into Normal difficulty');
   }
   if(file==='combat-identities-v1.js'){
     if(contents.includes('COMBAT REBORN BUNDLED FALLBACK')||contents.includes('window.CellboundCombatReborn='))throw new Error('Combat identities must not bundle a second Combat Reborn engine');
@@ -26,6 +38,9 @@ for(const file of files){
     if(!contents.includes("version:'2.1.0'"))throw new Error('Combat status UI smart-overhead version is missing');
     if(!contents.includes("maxVisible=mirror?8:(host.classList.contains('big')?4:3)"))throw new Error('Combat overhead statuses must stay capped at three for normal units');
     if(!contents.includes('statusPriority')||!contents.includes('is-fresh')||!contents.includes('is-expiring'))throw new Error('Combat status attention states are missing');
+  }
+  if(file==='blackout-station-v1.js'){
+    if(!contents.includes("rollClearLoot?.('blackout-station'"))throw new Error('Blackout Station must use Chapter 1 clear-loot pacing');
   }
   if(file==='blackout-station-v1.js'){
     if(!contents.includes('dataset.zoneEpoch')||!contents.includes('hideRoleZones(false)'))throw new Error('Blackout role circuits must clear on shockwave resolution');
@@ -61,6 +76,9 @@ for(const file of files){
   }
   if(file==='endgame-v1.js'){
     if(!contents.includes("dungeonCard('chaos-canyon')")||!contents.includes("leaderboardMarkup('chaos-canyon')"))throw new Error('Chaos Canyon must remain visible in the Endgame Hub');
+    if(!contents.includes('function rollClearLoot')||!contents.includes('function clearLootGuaranteed'))throw new Error('Dungeon clear loot must retain bad-luck protection');
+    if(!contents.includes("Number(x.tier)<Number(D.LOOT_RULES?.raidExclusiveTier||5)"))throw new Error('Dungeon loot pools must exclude raid-exclusive Tier 5');
+    if(contents.includes("quality==='epic'?5"))throw new Error('Weekly rewards must never create Tier 5 gear');
   }
   if(file==='twelve-below-v1.js'){
     if(contents.includes("toISOString().slice(0,10)"))throw new Error('Twelve Below daily reset must use local calendar time');
@@ -85,6 +103,8 @@ for(const file of files){
   if(file==='fractured-ages-v1.js'){
     if(!contents.includes('function carryCombatState')||!contents.includes('combatState:run?.combatState'))throw new Error('Fractured Ages must carry combat state across eras');
     if(!contents.includes('async function failRecovery'))throw new Error('Fractured Ages must handle healerless between-fight recovery');
+    if(contents.includes('itemLevel:42'))throw new Error('Fractured Ages Normal must not hand out old Item Level 42 gear');
+    if(!contents.includes("rollClearLoot?.('fractured-ages'"))throw new Error('Fractured Ages must use Chapter 1 clear-loot pacing');
   }
   if(file==='quests-v2.js'){
     if(!contents.includes('async function qPlayReborn')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('Quest combat must use continuous Combat Reborn playback');
@@ -154,6 +174,21 @@ for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readab
   if(!statusCss.includes('opacity:.42')||!statusCss.includes('.is-fresh')||!statusCss.includes('.is-expiring'))throw new Error('Smart compact combat status styling is missing');
   if(!statusCss.includes("background-image:url('./assets/combat/status-icons-v1.webp')"))throw new Error('Combat status sprite reference is missing');
   if(!fs.existsSync(path.join(out,'assets/combat/status-icons-v1.webp')))throw new Error('Combat status icon sprite is missing from production package');
+}
+{
+  const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;sandbox.globalThis=sandbox;
+  vm.createContext(sandbox);
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'gear-data.js'),'utf8'),sandbox,{filename:'gear-data.js'});
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'endgame-data-v1.js'),'utf8'),sandbox,{filename:'endgame-data-v1.js'});
+  const G=sandbox.CellboundGear,D=sandbox.CellboundEndgameData;
+  if(!G||!D)throw new Error('Chapter 1 gear validation runtime failed to load');
+  if(G.items.some(x=>Number(x.tier)>=5))throw new Error('Generic gear catalogue contains raid-exclusive Tier 5 items');
+  if(G.items.filter(x=>Number(x.tier)===4).length!==21)throw new Error('Tier 4 catalogue must contain 3 slots for all 7 current classes');
+  if(!G.TIER_META?.[5]?.raidExclusive)throw new Error('Tier 5 is not marked raid-exclusive');
+  const fractured=D.lootProfileFor('fractured-ages','normal',0),peak=D.lootProfileFor('chaos-canyon','cellbound',20);
+  if(fractured.itemLevel?.Weapon!==40||Math.max(...Object.keys(fractured.tiers||{}).map(Number))>4)throw new Error('Fractured Ages loot profile exceeds Chapter 1 Normal ceiling');
+  if(peak.itemLevel?.Weapon!==44||Number(peak.tiers?.[5]||0)>0)throw new Error('Cellbound+ exceeds Tier 4 / Item Level 44 ceiling');
+  console.log('Chapter 1 gear ladder validation passed.');
 }
 {
   const combatCode=fs.readFileSync(path.join(__dirname,'combat-reborn-v1.js'),'utf8');
