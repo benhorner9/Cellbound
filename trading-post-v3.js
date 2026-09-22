@@ -39,6 +39,7 @@ async function finishMarketMutation(tab,scrollY){
   selected=null;
   await refreshAll(false,false);
   restoreMarketScroll(scrollY);
+  window.CellboundFX?.micro?.('Trading Post updated','gold');
 }
 function activeOrders(){return orders.filter(o=>o.status==='active'&&Number(o.quantity_remaining)>0&&new Date(o.expires_at).getTime()>now())}
 function activeGear(){return listings.filter(l=>l.status==='active'&&Number(l.quantity)>0&&(!l.expires_at||new Date(l.expires_at).getTime()>now()))}
