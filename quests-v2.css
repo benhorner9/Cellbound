@@ -286,6 +286,25 @@
 .quest-seal-puzzle{width:min(980px,96vw)}.quest-seal-layout{display:grid;grid-template-columns:300px 1fr;gap:14px;margin-top:14px}.quest-seal-layout>aside{display:grid;gap:8px;align-content:start}.seal-rings{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.seal-rings article{padding:13px;border:1px solid rgba(216,185,118,.08);background:#081114;text-align:center}.seal-rings small{display:block;color:#806d4c;font-size:.28rem;font-weight:900;letter-spacing:.1em}.seal-ring-visual{display:grid;place-items:center;width:96px;height:96px;margin:12px auto;border:1px solid rgba(216,185,118,.18);border-radius:50%;background:radial-gradient(circle,#171810,#091114 64%);box-shadow:inset 0 0 0 10px rgba(216,185,118,.025),inset 0 0 0 20px rgba(216,185,118,.015)}.seal-ring-visual i{color:#d2b875;font-size:2rem;font-style:normal}.seal-rings b{display:block;color:#d2d9d5;font-size:.42rem}.seal-rings button{width:100%;min-height:38px;margin-top:10px;border:1px solid rgba(216,185,118,.12);background:#15150f;color:#bba876;font-size:.29rem;font-weight:900}.seal-pressure{margin-bottom:9px}
 
 /* Quest fights intentionally inherit the core cb2d dungeon viewer. */
+
+/* Full dungeon-standard quest combat HUD */
+.quest-cb2d-shell .q2d-side-resource{
+  display:block;height:4px;margin-top:4px;overflow:hidden;border-radius:2px;background:#151e22;
+}
+.quest-cb2d-shell .q2d-side-resource>i{
+  display:block;height:100%;min-width:1px;background:#8a9da4;transition:width .28s ease-out;
+}
+.quest-cb2d-shell .q2d-side-resource.resource-mana>i{background:linear-gradient(90deg,#376fce,#6ca8ff)}
+.quest-cb2d-shell .q2d-side-resource.resource-rage>i{background:linear-gradient(90deg,#9c302d,#df5c4e)}
+.quest-cb2d-shell .q2d-side-resource.resource-energy>i{background:linear-gradient(90deg,#9f872a,#e2ca4f)}
+.quest-cb2d-shell .q2d-side-resource.resource-focus>i{background:linear-gradient(90deg,#9a6a27,#df9f44)}
+.quest-cb2d-shell .q2d-side-resource.resource-runic-power>i{background:linear-gradient(90deg,#258a9b,#62d8e4)}
+.quest-cb2d-shell .q2d-side-resource.resource-fury>i{background:linear-gradient(90deg,#7139a6,#b461df)}
+.quest-cb2d-shell .q2d-side-resource.resource-essence>i{background:linear-gradient(90deg,#237968,#4bc9aa)}
+.quest-cb2d-shell .cb2d-party-row>span{overflow:visible}
+.quest-cb2d-shell .cb2d-party-row .cbs-strip.mirror{margin-top:6px}
+.quest-cb2d-shell .cb2d-meter-panel.healing .cb2d-meter-head small{color:#79a9c8}
+
 .quest-cb2d-backdrop{z-index:1750}.quest-cb2d-shell .cb2d-head{background:linear-gradient(90deg,#17170f,#091518)}.quest-cb2d-arena{background:radial-gradient(circle at 68% 52%,rgba(113,90,49,.12),transparent 22%),linear-gradient(180deg,#101819,#081114)}
 .quest-cb2d-environment{position:absolute;inset:0;z-index:1;pointer-events:none;background:
 linear-gradient(90deg,transparent 0 13%,rgba(136,117,77,.035) 13% 14%,transparent 14% 34%,rgba(136,117,77,.025) 34% 35%,transparent 35%),
