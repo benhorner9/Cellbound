@@ -223,8 +223,9 @@ function bindInspector(){
 async function buyGear(id){
   const l=listings.find(x=>x.id===id);if(!l||l.is_own)return;
   if(currentGold()<Number(l.unit_price)){alert('Not enough Gold.');return}
-  const {error}=await db.rpc('purchase_trading_listing',{p_listing_id:id,p_quantity:1});
+  const {data,error}=await db.rpc('purchase_trading_listing',{p_listing_id:id,p_quantity:1});
   if(error){alert(error.message||'Purchase failed');await refreshAll();return}
+  if(data?.ok===false){alert(data.message||'This listing is no longer available.');await refreshAll();return}
   location.reload();
 }
 async function cancelGear(id){
