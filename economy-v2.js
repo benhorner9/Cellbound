@@ -154,137 +154,25 @@ function renderCrafted(){
   root.querySelectorAll('[data-drink-flask]').forEach(b=>b.onclick=()=>{const sel=root.querySelector('[data-craft-target="'+b.dataset.drinkFlask+'"]');drinkFlask(b.dataset.drinkFlask,sel?.value)});
   root.querySelectorAll('[data-clear-shock]').forEach(b=>b.onclick=()=>{const sel=root.querySelector('[data-craft-target="'+b.dataset.clearShock+'"]');useCellShockDraught(b.dataset.clearShock,sel?.value)});
 }
-function sellOptions(){
-  const s=state(),out=[];
-  s.bank.filter(x=>x.tradeState!=='soulbound').forEach(x=>out.push({type:'gear',id:x.id,key:x.itemId,name:x.name,qty:x.quantity||1,payload:Game.canonicalItem(x)}));
-  Object.entries(s.materials).filter(([,q])=>Number(q)>0).forEach(([k,q])=>out.push({type:'material',id:k,key:k,name:materialName(k),qty:Number(q),payload:P.MATERIALS[k]}));
-  s.consumables.filter(x=>(x.quantity||0)>0).forEach(x=>out.push({type:'consumable',id:x.key,key:x.key,name:x.name,qty:x.quantity||1,payload:x.payload||{}}));
-  s.recipeScrolls.filter(x=>(x.quantity||0)>0).forEach(x=>out.push({type:'recipe',id:x.recipeId,key:x.recipeId,name:x.name,qty:x.quantity||1,payload:{recipeId:x.recipeId}}));
-  return out;
-}
-function selectedSellOption(){
-  const sel=$('#tradeSellItem'),[type,id]=(sel?.value||'').split('|');
-  return sellOptions().find(o=>o.type===type&&o.id===id)||null;
-}
-function sellPreviewArt(item){
-  if(!item)return'';
-  if(item.type==='gear'){
-    const gear=G.byId(item.key)||G.byName(item.name)||item.payload;
-    return G.artHTML(gear,74,'trade-sell-gear-art');
-  }
-  if(item.type==='material')return P?.materialArtHTML?P.materialArtHTML(item.key,76,'trade-sell-material-art'):(P?.MATERIALS?.[item.key]?.icon||'◇');
-  if(item.type==='recipe')return'<span class="trade-preview-symbol">▤</span>';
-  return'<span class="trade-preview-symbol">⚗</span>';
-}
-function sellPreviewMeta(item){
-  const p=item?.payload||{};
-  if(!item)return{eyebrow:'',detail:'',sub:''};
-  if(item.type==='gear'){
-    const base=G.byId(item.key)||G.byName(item.name)||{},gear={...base,...p};
-    const rarity=gear.rarity||'Common',slot=gear.slot||'Gear',ilvl=Number(gear.itemLevel)||0,power=Number(gear.power)||0;
-    const classes=gear.classes==='all'||!gear.classes?'All classes':Array.isArray(gear.classes)?gear.classes.join(', '):String(gear.classes);
-    const roll=(G.statLines?.(gear)||[]).map(s=>s.text).join(' · ');
-    return{eyebrow:`${rarity} · ${slot}`,detail:`Item Level ${ilvl}${power?` · +${power} Power`:''}${roll?` · ${roll}`:''}`,sub:`${classes}${gear.source?` · ${gear.source}`:''}`};
-  }
-  if(item.type==='material'){
-    const mat=P?.MATERIALS?.[item.key]||p;
-    return{eyebrow:`${mat?.rarity||'Common'} · Reagent`,detail:mat?.source||'Dungeon reagent',sub:'Tradeable profession material'};
-  }
-  if(item.type==='recipe'){
-    const recipe=P?.recipeById?.(item.key);
-    return{eyebrow:'Rare · Recipe Scroll',detail:recipe?.name||item.name,sub:recipe?`Required skill ${recipe.level||1}`:'Tradeable crafting recipe'};
-  }
-  return{eyebrow:p.effect==='gear-enhancement'?'Crafted · Item Enhancement':p.effect==='character-flask'?'Crafted · Flask':'Crafted · Consumable',detail:p.description||p.effect||'Tradeable crafted item',sub:p.charges?'Consumed after '+p.charges+' boss encounters':'Created through a profession'};
-}
-function renderSellPreview(){
-  const root=$('#tradeSellPreview'),summary=$('#tradeSellSummary'),qtyInput=$('#tradeSellQuantity'),priceInput=$('#tradeSellPrice');
-  if(!root||!summary)return;
-  const item=selectedSellOption();
-  if(!item){
-    root.innerHTML='<div class="trade-preview-empty">Choose an item to preview the listing.</div>';
-    summary.innerHTML='';if(qtyInput)qtyInput.max='1';return;
-  }
-  const meta=sellPreviewMeta(item),qty=Math.max(1,Math.min(item.qty,Number(qtyInput?.value)||1)),price=Math.max(1,Number(priceInput?.value)||1);
-  if(qtyInput){qtyInput.max=String(item.qty);if(Number(qtyInput.value)!==qty)qtyInput.value=String(qty)}
-  const gross=qty*price,tax=Math.ceil(gross*.05),net=Math.max(0,gross-tax);
-  root.innerHTML=`<article class="trade-preview-card trade-preview-${item.type}">
-    <div class="trade-preview-art">${sellPreviewArt(item)}</div>
-    <div class="trade-preview-copy"><small>${meta.eyebrow}</small><h4>${item.name}</h4><p>${meta.detail}</p><em>${meta.sub}</em></div>
-    <div class="trade-preview-owned"><span>OWNED</span><b>×${item.qty}</b></div>
-  </article>`;
-  summary.innerHTML=`<div><span>Listing value</span><b>${gross.toLocaleString()}g</b></div><div><span>5% sale tax</span><b>−${tax.toLocaleString()}g</b></div><div class="net"><span>Expected proceeds</span><b>${net.toLocaleString()}g</b></div>`;
-}
-function renderSellOptions(){
-  const sel=$('#tradeSellItem');if(!sel||!state())return;const opts=sellOptions(),previous=sel.value;
-  sel.innerHTML=opts.length?opts.map(o=>`<option value="${o.type}|${o.id}">${o.name} · ${o.type} · ×${o.qty}</option>`).join(''):'<option value="">No tradeable items available</option>';
-  if(previous&&opts.some(o=>`${o.type}|${o.id}`===previous))sel.value=previous;
-  renderSellPreview();
-}
-async function createListing(e){
-  e.preventDefault();const s=state(),sel=$('#tradeSellItem'),qty=Math.max(1,Number($('#tradeSellQuantity')?.value)||1),price=Math.max(1,Number($('#tradeSellPrice')?.value)||1),[type,id]=(sel?.value||'').split('|'),item=sellOptions().find(o=>o.type===type&&o.id===id);
-  if(!item||qty>item.qty)return;
-  const before=clone(s);
-  if(type==='gear'){const x=s.bank.find(v=>v.id===id);x.quantity=(x.quantity||1)-qty;if(x.quantity<=0)s.bank=s.bank.filter(v=>v.id!==id);}
-  else if(type==='material')s.materials[id]-=qty;
-  else if(type==='consumable'){const x=s.consumables.find(v=>v.key===id);x.quantity-=qty;if(x.quantity<=0)s.consumables=s.consumables.filter(v=>v!==x);}else if(type==='recipe'){const x=s.recipeScrolls.find(v=>v.recipeId===id);x.quantity-=qty;if(x.quantity<=0)s.recipeScrolls=s.recipeScrolls.filter(v=>v!==x);}
-  await commit(false);
-  const {error}=await db.from('trading_post_listings').insert({seller_id:user.id,seller_label:`Guild ${user.id.slice(0,4).toUpperCase()}`,category:type,item_key:item.key,item_name:item.name,payload:item.payload||{},quantity:qty,unit_price:price});
-  if(error){console.error(error);Game.replaceState(before);$('#tradeSellHint').textContent='Listing failed. Your item was returned.';return;}
-  s.activity.push(`Listed ${item.name} ×${qty} for ${price} gold each.`);await commit();$('#tradeSellHint').textContent='Listing created.';renderSellOptions();await loadMarket();
-}
-function craftedLabel(payload={}){return payload.effect==='gear-enhancement'?'ENHANCEMENT':payload.effect==='character-flask'?'FLASK':payload.effect==='combat-potion'?'POTION':payload.effect==='clear-cell-shock'?'RECOVERY':'CRAFTED'}
-function tradeArt(l){if(l.category==='gear'){const gear=G.byId(l.item_key)||G.byName(l.item_name)||l.payload;return G.artHTML(gear,48);}if(l.category==='material')return P?.materialArtHTML?P.materialArtHTML(l.item_key,46,'trade-material-art'):(P.MATERIALS[l.item_key]?.icon||'◇');if(l.category==='recipe')return'▤';if(l.payload?.effect==='gear-enhancement')return'✥';return'⚗';}
-async function loadMarket(){
-  if(!db||!user)return;const {data,error}=await db.from('trading_post_listings').select('*').order('created_at',{ascending:false}).limit(100);
-  if(error){console.error(error);market=[];}else market=data||[];
-  renderMarket();renderMyListings();
-}
-function renderMarket(){
-  const root=$('#tradeListings');if(!root)return;const rows=market.filter(l=>l.status==='active'&&(tradeFilter==='all'||l.category===tradeFilter));
-  if(!rows.length){root.innerHTML='<div class="market-empty">No active listings in this category.</div>';return;}
-  root.innerHTML=rows.map(l=>{const base=l.category==='gear'?(G.byId(l.item_key)||G.byName(l.item_name)||{}):{},gear=l.category==='gear'?{...base,...(l.payload||{})}:null,roll=gear?(G.statLines?.(gear)||[]):[];return `<article class="trade-card"><div class="trade-art">${tradeArt(l)}</div><div><h4>${l.item_name}</h4><small>${l.category==='consumable'?craftedLabel(l.payload||{}):l.category.toUpperCase()} · ×${l.quantity} · ${l.seller_label}</small>${roll.length?`<div class="trade-roll-stats">${roll.map(s=>`<span>${s.text}</span>`).join('')}</div>`:''}</div><div class="trade-price"><b>${Number(l.unit_price).toLocaleString()}g</b><small>each</small></div><button data-buy="${l.id}" ${l.seller_id===user.id?'disabled':''}>${l.seller_id===user.id?'YOUR LISTING':'BUY 1'}</button></article>`}).join('');
-  root.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>buyListing(b.dataset.buy));
-}
-function renderMyListings(){
-  const root=$('#myTradeListings');if(!root)return;const rows=market.filter(l=>l.seller_id===user.id&&l.status==='active');
-  root.innerHTML=rows.length?rows.map(l=>`<div class="trade-card"><div class="trade-art">${tradeArt(l)}</div><div><h4>${l.item_name}</h4><small>×${l.quantity} · ${l.unit_price}g each</small></div><button data-cancel-listing="${l.id}">CANCEL</button></div>`).join(''):'<div class="market-empty">No active listings.</div>';
-  root.querySelectorAll('[data-cancel-listing]').forEach(b=>b.onclick=()=>cancelListing(b.dataset.cancelListing));
-}
-async function buyListing(id){
-  const listing=market.find(x=>x.id===id);if(!listing||listing.seller_id===user.id)return;
-  const {data,error}=await db.rpc('purchase_trading_listing',{p_listing_id:id,p_quantity:1});
-  if(error){alert(error.message||'Purchase failed');await loadMarket();return;}
-  location.reload();
-}
-async function cancelListing(id){
-  const l=market.find(x=>x.id===id&&x.seller_id===user.id&&x.status==='active');if(!l)return;
-  const {error}=await db.from('trading_post_listings').update({status:'cancelled',updated_at:new Date().toISOString()}).eq('id',id).eq('seller_id',user.id);
-  if(error){console.error(error);return;}
-  if(l.category==='gear'){const base=G.byId(l.item_key)||G.byName(l.item_name)||{},gear={...base,...(l.payload||{})};for(let i=0;i<l.quantity;i++)Game.addBankItem({...gear,source:'Trading Post cancellation'});}
-  else if(l.category==='material')Game.addMaterial(l.item_key,l.quantity);
-  else if(l.category==='consumable')addConsumable({key:l.item_key,name:l.item_name,payload:l.payload},l.quantity);else if(l.category==='recipe'){const x=state().recipeScrolls.find(v=>v.recipeId===l.item_key);if(x)x.quantity=(x.quantity||1)+l.quantity;else state().recipeScrolls.push({recipeId:l.item_key,name:l.item_name,quantity:l.quantity});}
-  state().activity.push(`Cancelled Trading Post listing: ${l.item_name}.`);await commit();await loadMarket();
-}
+function renderSellOptions(){window.CellboundMarket?.renderSell?.()}
+async function loadMarket(){return window.CellboundMarket?.load?.()}
 function bind(){
   document.querySelectorAll('.nav-btn[data-view="professions"]').forEach(b=>b.addEventListener('click',renderProfessions));
   window.addEventListener('cellbound:view-changed',e=>{
     if(e.detail?.view==='professions')renderProfessions();
-    if(e.detail?.view==='trading'){renderSellOptions();loadMarket();}
   });
-  $$('.nav-btn[data-view="trading"]').forEach(b=>b.addEventListener('click',()=>{renderSellOptions();loadMarket();}));
-  $('#refreshTrading')?.addEventListener('click',loadMarket);
-  $('#tradeSellForm')?.addEventListener('submit',createListing);
-  $('#tradeSellItem')?.addEventListener('change',renderSellPreview);
-  $('#tradeSellQuantity')?.addEventListener('input',renderSellPreview);
-  $('#tradeSellPrice')?.addEventListener('input',renderSellPreview);
-  document.querySelectorAll('#tradeFilters [data-trade-filter]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#tradeFilters [data-trade-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');tradeFilter=b.dataset.tradeFilter;renderMarket();}));
 }
 async function init(){
   Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,80);return;}P&&normalise();db=Game.getSupabase();user=Game.getUser();if(!db||!user)return;
-  const claimed=await claimProceeds();if(claimed>0){location.reload();return;}
-  const delivered=await processInbox();if(delivered){Game.renderAll();}
-  bind();renderProfessions();renderSellOptions();
-  window.CellboundEconomy={renderProfessions,loadMarket,renderTrading:()=>{renderSellOptions();loadMarket();}};
+  bind();renderProfessions();renderCrafted();
+  window.CellboundEconomy={
+    renderProfessions,
+    loadMarket,
+    renderTrading:()=>window.CellboundMarket?.render?.(),
+    processInbox,
+    claimProceeds,
+    renderCrafted
+  };
 }
 init();
 })();
