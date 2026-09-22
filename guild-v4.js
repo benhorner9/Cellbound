@@ -445,10 +445,21 @@ function renderOverview(){
     const hollowOpen=Boolean(state?.questSystem?.flags?.hollowSanctumUnlocked);
     const hollowDone=Boolean(state?.questSystem?.flags?.hollowFirstClear);
     const ashenOpen=state?.progression?.ashenVaultUnlocked!==false;
+    const ashenDone=(Number(state?.dungeonCompletions)||0)>0;
+    const chaosDone=(Number(state?.chaosCanyonCompletions)||0)>0;
+    const blackoutDone=(Number(state?.blackoutStationCompletions)||0)>0;
+    const fracturedOpen=Boolean(state?.progression?.fracturedAgesUnlocked);
+    const fracturedDone=(Number(state?.fracturedAgesCompletions)||0)>0;
     const pi=partyItemLevel();
-    const dungeon=hollowOpen
-      ?{id:'hollow-sanctum',name:'The Hollow Sanctum',tag:hollowDone?'FARMABLE':'NEWLY UNLOCKED',art:'THE HOLLOW SANCTUM',copy:'Descend beneath Zeltira into a crystal-grown shrine of echoes, guardians and the Bound Choir.',pips:3,active:Math.min(3,hollowDone?3:1),req:24}
-      :{id:'ashen-vault',name:'The Ashen Vault',tag:ashenOpen?'AVAILABLE':'QUEST LOCKED',art:'THE ASHEN VAULT',copy:'Enter the ruined forge, break through its furnace halls and reach the living Vaultheart.',pips:3,active:Math.min(3,Object.values(state?.bossKills||{}).filter(Boolean).length||1),req:18};
+    let dungeon;
+    if(!ashenOpen||!ashenDone)dungeon={id:'ashen-vault',name:'The Ashen Vault',tag:ashenOpen?'AVAILABLE':'QUEST LOCKED',art:'THE ASHEN VAULT',copy:'Enter the ruined forge, break through its furnace halls and reach the living Vaultheart.',pips:3,active:Math.min(3,Object.values(state?.bossKills||{}).filter(Boolean).length||1),req:18};
+    else if(hollowOpen&&!hollowDone)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:'NEWLY UNLOCKED',art:'THE HOLLOW SANCTUM',copy:'Descend beneath Zeltira into a crystal-grown shrine of echoes, guardians and the Bound Choir.',pips:3,active:1,req:24};
+    else if(!chaosDone)dungeon={id:'chaos-canyon',name:'Chaos Canyon',tag:'AVAILABLE',art:'CHAOS CANYON',copy:'Cross Vorran’s living canyon, survive the stepping-stone trial and break the Druid at its heart.',pips:3,active:1,req:30};
+    else if(!blackoutDone)dungeon={id:'blackout-station',name:'Blackout Station',tag:'AVAILABLE',art:'BLACKOUT STATION',copy:'Restore the dead grid, solve the station puzzle and survive Dr. Vex Calder’s role circuits.',pips:2,active:1,req:34};
+    else if(fracturedOpen&&!fracturedDone)dungeon={id:'fractured-ages',name:'The Fractured Ages',tag:'NEWLY UNLOCKED',art:'THE FRACTURED AGES',copy:'Follow the Strange Old Man through impossible eras and survive the Funhouse at the end of time.',pips:5,active:1,req:38};
+    else if(fracturedOpen)dungeon={id:'fractured-ages',name:'The Fractured Ages',tag:'FARMABLE',art:'THE FRACTURED AGES',copy:'The timeline remains open. Return for temporal equipment and another encounter with the Old Man’s mystery.',pips:5,active:5,req:38};
+    else if(hollowOpen)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:hollowDone?'FARMABLE':'AVAILABLE',art:'THE HOLLOW SANCTUM',copy:'Your known dungeon route is clear. Continue questing to uncover the next hidden expedition.',pips:3,active:hollowDone?3:1,req:24};
+    else dungeon={id:'ashen-vault',name:'The Ashen Vault',tag:'FARMABLE',art:'THE ASHEN VAULT',copy:'Keep building your party while the next quest route is uncovered.',pips:3,active:3,req:18};
     next.dataset.dungeon=dungeon.id;
     next.innerHTML=`<div class="panel-head"><div><small>NEXT DUNGEON</small><h3>${dungeon.name}</h3></div><b>${dungeon.tag}</b></div><div class="dungeon-preview ${dungeon.id==='hollow-sanctum'?'hollow-preview':''}"><div class="dungeon-art"><span>${dungeon.art}</span></div><div><p>${dungeon.copy}</p><div class="boss-pips">${Array.from({length:dungeon.pips},(_,i)=>`<span class="${i<dungeon.active?'active':''}"></span>`).join('')}</div><small class="overview-dungeon-ilvl">Party iLvl ${pi||'—'} · Entry iLvl ${dungeon.req}+</small><button type="button" data-overview-dungeon="${dungeon.id}">VIEW DUNGEON →</button></div></div>`;
     next.querySelector('[data-overview-dungeon]')?.addEventListener('click',()=>{
