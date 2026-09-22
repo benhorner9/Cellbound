@@ -457,9 +457,9 @@ async function refreshAll(showBusy=true,preserveScroll=false){
     if(sweep.error)console.warn('Market expiry sweep failed',sweep.error);
     else if(sweep.data&&(Number(sweep.data.gearListingsExpired)||Number(sweep.data.commodityOrdersExpired)||Number(sweep.data.goldRefunded)||Number(sweep.data.itemsReturned)))await syncMarketState();
     const [l,o,t,w,s,p]=await Promise.all([
-      db.from('market_gear_listings').select('*').eq('status','active').gt('quantity',0).order('created_at',{ascending:false}).limit(300),
-      db.from('market_order_book').select('*').eq('status','active').gt('quantity_remaining',0).order('created_at',{ascending:false}).limit(600),
-      db.from('market_trade_history').select('*').order('created_at',{ascending:false}).limit(300),
+      db.rpc('market_get_gear_listings',{p_limit:300}),
+      db.rpc('market_get_order_book',{p_limit:600}),
+      db.rpc('market_get_trade_history',{p_limit:300}),
       db.from('market_watchlist').select('*').eq('user_id',user.id),
       db.from('market_saved_searches').select('*').eq('user_id',user.id).order('created_at',{ascending:false}),
       db.from('trading_post_proceeds').select('*').eq('seller_id',user.id).order('created_at',{ascending:false}).limit(200)
