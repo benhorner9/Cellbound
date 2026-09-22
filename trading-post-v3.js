@@ -308,9 +308,9 @@ function myOrders(){return activeOrders().filter(o=>o.is_own===true)}
 function renderMyTrading(){
   const gearRoot=$('#tpMyGear'),orderRoot=$('#tpMyOrders');if(!gearRoot||!orderRoot)return;
   const gl=myGearListings();
-  gearRoot.innerHTML=gl.length?gl.map(l=>'<div class="tp-my-row"><div><b>'+esc(l.item_name)+'</b><small>'+qty(l.quantity)+' listed · '+gold(l.unit_price)+' each · '+age(l.created_at)+'</small></div><button type="button" data-cancel-my-gear="'+esc(l.id)+'">CANCEL</button></div>').join(''):'<div class="tp-empty">No equipment listings.</div>';
+  gearRoot.innerHTML=gl.length?gl.map(l=>'<div class="tp-my-row tp-my-visual-row rarity-'+slug(rarityOf(l))+'"><div class="tp-my-art">'+gearArt(l,46)+'</div><div><b>'+esc(l.item_name)+'</b><small>'+esc(rarityOf(l))+' · '+qty(l.quantity)+' listed · '+gold(l.unit_price)+' each · '+age(l.created_at)+'</small></div><button type="button" data-cancel-my-gear="'+esc(l.id)+'">CANCEL</button></div>').join(''):'<div class="tp-empty">No equipment listings.</div>';
   const os=myOrders();
-  orderRoot.innerHTML=os.length?os.map(o=>'<div class="tp-my-row"><div><b>'+esc(o.item_name)+' · '+o.side.toUpperCase()+'</b><small>'+qty(o.quantity_remaining)+' / '+qty(o.quantity_initial)+' remaining · '+gold(o.unit_price)+' each</small></div><button type="button" data-cancel-order="'+esc(o.id)+'">CANCEL</button></div>').join(''):'<div class="tp-empty">No active commodity orders.</div>';
+  orderRoot.innerHTML=os.length?os.map(o=>'<div class="tp-my-row tp-my-visual-row rarity-'+slug(o.rarity||'Common')+'"><div class="tp-my-art">'+commodityArt(o.category,o.item_key,46)+'</div><div><b>'+esc(o.item_name)+' · '+o.side.toUpperCase()+'</b><small>'+esc(o.rarity||'Common')+' · '+qty(o.quantity_remaining)+' / '+qty(o.quantity_initial)+' remaining · '+gold(o.unit_price)+' each</small></div><button type="button" data-cancel-order="'+esc(o.id)+'">CANCEL</button></div>').join(''):'<div class="tp-empty">No active commodity orders.</div>';
   $$('[data-cancel-my-gear]',gearRoot).forEach(b=>b.onclick=()=>cancelGear(b.dataset.cancelMyGear));
   $$('[data-cancel-order]',orderRoot).forEach(b=>b.onclick=()=>cancelOrder(b.dataset.cancelOrder));
   renderGearSellOptions();
