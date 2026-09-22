@@ -57,6 +57,7 @@ for(const file of files){
   }
   if(file==='evolution-v1.js'){
     if(/worldBossGrid|CellboundWorldBoss2D|WORLD_BOSS_META/.test(contents))throw new Error('Legacy shared World Boss presentation must remain removed');
+    for(const hook of ['function renderDungeonHistory','function bindReportEnhancement','function bindDungeonBrowser','bindReportEnhancement();bindGlobal();bindDungeonBrowser()'])if(!contents.includes(hook))throw new Error('Dungeon browser startup dependency missing: '+hook);
   }
   if(file==='endgame-v1.js'){
     if(!contents.includes("dungeonCard('chaos-canyon')")||!contents.includes("leaderboardMarkup('chaos-canyon')"))throw new Error('Chaos Canyon must remain visible in the Endgame Hub');
