@@ -117,7 +117,8 @@
   color:#ffb0a6!important;
   box-shadow:0 0 0 1px rgba(244,72,61,.16),0 4px 12px rgba(0,0,0,.45)!important
 }
-.cbs-icon.debuff small,.cbs-icon.debuff b{color:#ffd0c9!important}
+.cbs-icon.debuff small{color:#ffd0c9!important}
+.cbs-icon.debuff>b{color:#121816!important}
 .cbs-group.debuffs .cbs-more{color:#ff9184!important;border-color:rgba(244,72,61,.55)!important}
 .cbs-tooltip-head>i.debuff{
   color:#ffb0a6!important;
