@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="./gear-system.css?v=10">
 <link rel="stylesheet" href="./foundations.css?v=1">
 <link rel="stylesheet" href="./economy-v2.css?v=7">
+<link rel="stylesheet" href="./trading-post-v3.css?v=1">
 <link rel="stylesheet" href="./market-v3.css?v=1">
 <link rel="stylesheet" href="./social-v3.css?v=3">
 <link rel="stylesheet" href="./evolution-v1.css?v=7">
@@ -122,91 +123,92 @@
     </section>
 
     <section id="trading" class="view">
-      <div class="market-hero">
-        <div>
-          <small>THE CELLBOUND EXCHANGE</small>
-          <h2>Trading Post</h2>
-          <p>Trade rolled equipment directly or use the Commodity Exchange for reagents, consumables and recipes.</p>
+      <div class="section-intro"><div><small>PLAYER ECONOMY</small><h2>Trading Post</h2><p>Browse rolled equipment, trade commodities through live buy and sell orders, follow price history and manage your market activity.</p></div></div>
+
+      <div class="tp-shell">
+        <div class="tp-market-bar">
+          <label class="tp-search"><span>⌕</span><input id="tpSearch" type="search" placeholder="Search equipment, reagents, recipes, stats…"></label>
+          <div class="tp-market-gold"><small>Available Gold</small><b id="tpGold">0g</b></div>
+          <button id="tpRefresh" class="tp-refresh" type="button">REFRESH MARKET</button>
         </div>
-        <div class="market-hero-actions">
-          <button id="marketClaimAll" class="market-delivery-btn"><span>DELIVERIES</span><b id="marketDeliveryCount">0</b><em id="marketDeliveryGold">0g waiting</em></button>
-          <button id="refreshTrading" class="ghost-btn">REFRESH MARKET</button>
+
+        <div class="tp-delivery">
+          <div class="tp-delivery-copy"><small>TRADING POST DELIVERY</small><b id="tpDeliveryCount">0 deliveries waiting</b><span id="tpPendingGold">No sale proceeds waiting</span></div>
+          <div class="tp-delivery-actions"><button id="tpClaimItems" type="button">NO DELIVERIES</button><button id="tpClaimGold" type="button">NO GOLD TO CLAIM</button></div>
         </div>
-      </div>
-      <div id="marketStats" class="market-stat-strip">
-        <article><span>ACTIVE GEAR</span><b>—</b><small>live listings</small></article>
-        <article><span>BUY ORDERS</span><b>—</b><small>commodity demand</small></article>
-        <article><span>SELL ORDERS</span><b>—</b><small>commodity supply</small></article>
-        <article><span>24H VOLUME</span><b>—</b><small>gold traded</small></article>
-      </div>
-      <nav id="marketTabs" class="market-tabs" aria-label="Trading Post sections">
-        <button class="active" data-market-tab="browse">BROWSE</button>
-        <button data-market-tab="orders">MY TRADING <em id="marketOrderBadge"></em></button>
-        <button data-market-tab="history">HISTORY</button>
-        <button data-market-tab="watchlist">WATCHLIST <em id="marketWatchBadge"></em></button>
-      </nav>
-      <div id="marketBrowse" class="market-screen">
-        <aside class="market-nav panel">
-          <div class="market-nav-head"><small>MARKET</small><b>Browse</b></div>
-          <div id="marketCategoryNav" class="market-category-nav">
-            <button class="active" data-market-category="all"><span>◇</span><b>All Goods</b></button>
-            <button data-market-category="gear"><span>⚔</span><b>Equipment</b></button>
-            <button data-market-category="material"><span>✦</span><b>Reagents</b></button>
-            <button data-market-category="consumable"><span>⚗</span><b>Consumables</b></button>
-            <button data-market-category="recipe"><span>▤</span><b>Recipes</b></button>
-          </div>
-          <div class="market-saved-head"><small>SAVED SEARCHES</small><button id="marketSaveSearch">＋</button></div>
-          <div id="marketSavedSearches" class="market-saved-list"><span>No saved searches yet.</span></div>
-          <button id="marketOpenSell" class="market-sell-entry">SELL AN ITEM</button>
-        </aside>
-        <main class="market-results panel">
-          <div class="market-search-row">
-            <label class="market-search"><span>⌕</span><input id="marketSearch" type="search" placeholder="Search items, reagents, recipes…"></label>
-            <select id="marketSort"><option value="price-asc">Lowest Price</option><option value="price-desc">Highest Price</option><option value="newest">Newest</option><option value="ilvl-desc">Highest iLvl</option><option value="volume">Most Traded</option></select>
-          </div>
-          <div id="marketAdvancedFilters" class="market-filter-row">
-            <select id="marketClass"><option value="all">All classes</option><option>Warrior</option><option>Paladin</option><option>Priest</option><option>Druid</option><option>Hunter</option><option>Rogue</option><option>Mage</option></select>
-            <select id="marketSlot"><option value="all">All slots</option><option>Head</option><option>Chest</option><option>Weapon</option></select>
-            <select id="marketRarity"><option value="all">All rarities</option><option>Common</option><option>Uncommon</option><option>Rare</option><option>Epic</option></select>
-            <label>MIN ILVL<input id="marketMinIlvl" type="number" min="0" inputmode="numeric" placeholder="0"></label>
-            <label>MAX PRICE<input id="marketMaxPrice" type="number" min="1" inputmode="numeric" placeholder="Any"></label>
-            <button id="marketClearFilters">CLEAR</button>
-          </div>
-          <div class="market-results-head"><div><small>LIVE MARKET</small><b id="marketResultCount">0 results</b></div><span id="marketResultHint">Select an item to inspect the market.</span></div>
-          <div id="tradeListings" class="market-list"></div>
-        </main>
-        <aside id="marketInspector" class="market-inspector panel">
-          <div class="market-inspector-empty"><span>◇</span><h3>Select an item</h3><p>Inspect live prices, recent sales, stat rolls and the order book.</p></div>
-        </aside>
-      </div>
-      <div id="marketOrders" class="market-screen market-secondary" hidden>
-        <div class="market-secondary-head"><div><small>YOUR MARKET ACTIVITY</small><h3>My Trading</h3><p>Track equipment listings and commodity orders. Reserved gold and goods are returned when an active order is cancelled.</p></div><button id="marketOrdersSell">SELL AN ITEM</button></div>
-        <div id="myTradeListings" class="market-my-orders"></div>
-      </div>
-      <div id="marketHistory" class="market-screen market-secondary" hidden>
-        <div class="market-secondary-head"><div><small>LEDGER</small><h3>Transaction History</h3><p>Your completed purchases and sales.</p></div></div>
-        <div id="marketHistoryList" class="market-history-list"></div>
-      </div>
-      <div id="marketWatchlist" class="market-screen market-secondary" hidden>
-        <div class="market-secondary-head"><div><small>WATCHLIST</small><h3>Market Watch</h3><p>Keep an eye on items you care about and see their current market price at a glance.</p></div></div>
-        <div id="marketWatchList" class="market-watch-list"></div>
-      </div>
-      <div id="marketSellDrawer" class="market-sell-backdrop" hidden>
-        <section class="market-sell-drawer">
-          <header><div><small>CREATE MARKET ORDER</small><h3>Sell from Supplies</h3></div><button id="marketCloseSell">×</button></header>
-          <form id="tradeSellForm" class="market-sell-form">
-            <label>ITEM<select id="tradeSellItem"></select></label>
-            <div id="tradeSellPreview" class="trade-sell-preview" aria-live="polite"></div>
-            <div class="market-sell-fields">
-              <label>QUANTITY<input id="tradeSellQuantity" type="number" min="1" value="1"></label>
-              <label>PRICE EACH<input id="tradeSellPrice" type="number" min="1" value="50"></label>
-              <label id="marketListingDurationWrap">DURATION<select id="marketListingDuration"><option value="24">24 hours</option><option value="48" selected>48 hours</option><option value="72">72 hours</option></select></label>
+
+        <nav id="tpTabs" class="tp-tabs" aria-label="Trading Post sections">
+          <button class="active" data-tp-tab="browse">Browse Market</button>
+          <button data-tp-tab="my">My Trading</button>
+          <button data-tp-tab="watch">Watchlist</button>
+          <button data-tp-tab="history">Market History</button>
+        </nav>
+
+        <div class="tp-layout">
+          <aside class="tp-panel tp-category-panel">
+            <div class="tp-panel-head"><div><small>MARKET</small><h3>Categories</h3></div></div>
+            <div id="tpCategories" class="tp-category-list">
+              <button class="active" data-category="all"><span>Everything</span><em>0</em></button>
+              <button data-category="gear"><span>Equipment</span><em>0</em></button>
+              <button data-category="material"><span>Reagents</span><em>0</em></button>
+              <button data-category="consumable"><span>Consumables</span><em>0</em></button>
+              <button data-category="recipe"><span>Recipes</span><em>0</em></button>
             </div>
-            <div id="tradeSellSummary" class="trade-sell-summary"></div>
-            <button type="submit" class="market-primary">CREATE LISTING</button>
-            <p id="tradeSellHint">Equipment creates a timed listing. Stackable goods enter the Commodity Exchange.</p>
-          </form>
-        </section>
+            <div class="tp-saved">
+              <h4>Saved Searches</h4>
+              <div id="tpSavedSearches" class="tp-saved-list"></div>
+            </div>
+          </aside>
+
+          <main class="tp-main-stack">
+            <section class="tp-view" data-tp-view="browse">
+              <article class="tp-panel">
+                <div class="tp-panel-head"><div><small>FIND EXACTLY WHAT YOU NEED</small><h3>Market Filters</h3></div></div>
+                <div class="tp-panel-body">
+                  <div class="tp-filters">
+                    <select id="tpClass"><option value="all">All classes</option><option>Warrior</option><option>Paladin</option><option>Priest</option><option>Druid</option><option>Hunter</option><option>Rogue</option><option>Mage</option></select>
+                    <select id="tpSlot"><option value="all">All slots</option><option>Head</option><option>Chest</option><option>Weapon</option></select>
+                    <select id="tpRarity"><option value="all">All rarities</option><option>Common</option><option>Uncommon</option><option>Rare</option><option>Epic</option><option>Legendary</option></select>
+                    <input id="tpMinIlvl" type="number" min="0" placeholder="Min iLvl">
+                    <input id="tpMaxPrice" type="number" min="0" placeholder="Max price">
+                    <select id="tpSort"><option value="price">Lowest price</option><option value="price-desc">Highest price</option><option value="ilvl">Highest iLvl</option><option value="new">Newest</option></select>
+                  </div>
+                  <div class="tp-filter-actions"><button id="tpSaveSearch" type="button">SAVE SEARCH</button><button id="tpClearFilters" type="button">CLEAR FILTERS</button></div>
+                </div>
+              </article>
+
+              <div id="tpMarketStats" class="tp-market-stats"></div>
+              <article class="tp-panel"><div class="tp-panel-head"><div><small>LIVE MARKET</small><h3>Listings & Commodities</h3></div></div><div id="tpBrowseResults" class="tp-panel-body tp-results"><div class="tp-empty">Loading market…</div></div></article>
+            </section>
+
+            <section class="tp-view" data-tp-view="my" hidden>
+              <article class="tp-panel">
+                <div class="tp-panel-head"><div><small>SELL EQUIPMENT</small><h3>Create Equipment Listing</h3></div></div>
+                <form id="tpGearSellForm" class="tp-panel-body tp-action-form">
+                  <label>Bank item<select id="tpGearSellItem"></select></label>
+                  <label>Quantity<input id="tpGearSellQty" type="number" min="1" value="1"></label>
+                  <label>Price each<input id="tpGearSellPrice" type="number" min="1" value="100"></label>
+                  <label>Duration<select id="tpGearDuration"><option value="24">24 hours</option><option value="48" selected>48 hours</option><option value="72">72 hours</option></select></label>
+                  <button type="submit">LIST EQUIPMENT</button>
+                </form>
+              </article>
+              <article class="tp-panel"><div class="tp-panel-head"><div><small>EQUIPMENT</small><h3>My Listings</h3></div></div><div id="tpMyGear" class="tp-panel-body tp-my-list"></div></article>
+              <article class="tp-panel"><div class="tp-panel-head"><div><small>COMMODITY EXCHANGE</small><h3>My Buy & Sell Orders</h3></div></div><div id="tpMyOrders" class="tp-panel-body tp-my-list"></div></article>
+            </section>
+
+            <section class="tp-view" data-tp-view="watch" hidden>
+              <article class="tp-panel"><div class="tp-panel-head"><div><small>PERSONAL MARKET DASHBOARD</small><h3>Watchlist</h3></div></div><div id="tpWatchlist" class="tp-panel-body tp-watch-grid"></div></article>
+            </section>
+
+            <section class="tp-view" data-tp-view="history" hidden>
+              <article class="tp-panel"><div class="tp-panel-head"><div><small>COMPLETED TRADES</small><h3>Market History</h3></div></div><div id="tpHistory" class="tp-panel-body tp-history-list"></div></article>
+            </section>
+          </main>
+
+          <aside id="tpInspector" class="tp-panel tp-inspector"><div class="tp-inspector-empty">Select equipment or a commodity to inspect its price, order book, history and trading actions.</div></aside>
+        </div>
+      </div>
+    </section>
       </div>
     </section>
 
@@ -379,6 +381,7 @@
 <script src="./gear-character-patch.js?v=6"></script>
 <script src="./character-foundations-patch.js?v=3"></script>
 <script src="./economy-v2.js?v=11"></script>
+<script src="./trading-post-v3.js?v=1"></script>
 <script src="./market-v3.js?v=1"></script>
 <script src="./social-v3.js?v=5"></script>
 <script src="./world-boss-2d-v1.js?v=12"></script>
