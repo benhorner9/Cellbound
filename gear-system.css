@@ -42,3 +42,20 @@
   transform:none!important;
   transform-origin:center!important
 }
+
+
+/* Material art cell viewport */
+.material-art-cell{
+  display:block;
+  border-radius:5px;
+  background:radial-gradient(circle at 50% 42%,rgba(36,50,53,.72),rgba(6,10,12,.96) 76%);
+  z-index:1
+}
+.material-art-cell img{
+  position:absolute;
+  display:block;
+  max-width:none!important;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none
+}
