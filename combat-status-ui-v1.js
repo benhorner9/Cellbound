@@ -8,17 +8,100 @@ let tooltip=null,ticker=null;
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const slug=v=>String(v||'status').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const pct=v=>Math.round(Number(v||0)*100);
-function iconFor(name,kind){
- const n=String(name||'').toLowerCase();
- if(/shield|defensive|guard|barrier|fortif|stand/.test(n))return'◆';
- if(/renew|heal|mercy|rejuven|regen/.test(n))return'✚';
- if(/frenzy|rage|blood|wrath/.test(n))return'✦';
- if(/stun|control|root|slow|snare/.test(n))return'⛓';
- if(/poison|venom|toxin/.test(n))return'☠';
- if(/burn|fire|flame|ember/.test(n))return'♨';
- if(/bleed|wound|agony/.test(n))return'†';
- if(/weak|vulner|frail|curse|despair/.test(n))return'▼';
- return kind==='debuff'?'▼':'▲'
+const ICONS={
+ OFF_BLADE:0,OFF_SPEED:1,OFF_CRIT:2,OFF_IMPACT:3,OFF_POWER:4,OFF_FURY:5,OFF_BLOOD:6,OFF_TOXIN:7,OFF_ARCANE:8,OFF_CLEAVE:9,OFF_RAGE:10,OFF_ASCEND:11,OFF_ELIXIR:12,
+ DEF_SHIELD:13,DEF_ARMOR:14,DEF_PARRY:15,DEF_DODGE:16,DEF_WARD:17,DEF_REDUCTION:18,DEF_THORNS:19,DEF_HEALWARD:20,DEF_REGEN:21,DEF_GUARDIAN:22,DEF_FORTRESS:23,DEF_BARRIER:24,DEF_ARCANE:25,DEF_RECOVERY:26,
+ SUP_NATURE:27,SUP_GROUP_HEAL:28,SUP_HOT:29,SUP_HOLY:30,SUP_RESOURCE:31,SUP_HASTE:32,SUP_EMPOWER_HEAL:33,SUP_RADIANCE:34,SUP_SPEED:35,SUP_PARTY_GUARD:36,
+ ENEMY_POISON:37,ENEMY_BLEED:38,ENEMY_BURN:39,ENEMY_CURSE:40,ENEMY_FEAR:41,ENEMY_SILENCE:42,ENEMY_DAZE:43,ENEMY_FREEZE:44,ENEMY_ROOT:45,ENEMY_VULNERABLE:46,ENEMY_ARMOR_BREAK:47,
+ ENEMY_HEAL_REDUCE:48,ENEMY_SHADOW:49,ENEMY_MARK:50,ENEMY_MIND:51,ENEMY_TERROR:52,ENEMY_DISPLACE:53,ENEMY_ADDS:54,ENEMY_GROUND:55,ENEMY_DOOM:56,ENEMY_DEMONIC:57,
+ PLAYER_WEAKEN:58,PLAYER_ARMOR_BREAK:59,PLAYER_BLEED:60,PLAYER_STUN:61,PLAYER_ROOT:62,PLAYER_MARK:63,PLAYER_SILENCE:64,PLAYER_BURN:65,PLAYER_FREEZE:66,PLAYER_SHOCK:67
+};
+const STATUS_ICON={
+ 'class-buff-runic-ascendance':ICONS.OFF_ARCANE,'class-buff-demonic-momentum':ICONS.OFF_SPEED,'class-buff-predators-focus':ICONS.OFF_CRIT,
+ 'class-buff-killing-tempo':ICONS.OFF_CLEAVE,'class-buff-battle-fury':ICONS.OFF_RAGE,'class-buff-arcane-empowerment':ICONS.OFF_ARCANE,
+ 'class-buff-divine-inspiration':ICONS.SUP_RADIANCE,'class-buff-wild-communion':ICONS.SUP_NATURE,'class-buff-blessing-resolve':ICONS.DEF_SHIELD,
+ 'class-buff-draconic-resonance':ICONS.SUP_HASTE,'battle-rhythm':ICONS.OFF_SPEED,'blood-frenzy-talent':ICONS.OFF_RAGE,
+ 'cut-to-the-chase':ICONS.SUP_SPEED,'arcane-surge-talent':ICONS.OFF_ASCEND,'renew-talent':ICONS.SUP_HOT,'infusion':ICONS.SUP_HASTE,
+ 'ironbark-talent':ICONS.DEF_THORNS,'tree-of-life':ICONS.SUP_NATURE,'arcane-power':ICONS.OFF_ARCANE,'last-stand-talent':ICONS.DEF_GUARDIAN,
+ 'unbroken':ICONS.DEF_GUARDIAN,'guardian-last-stand':ICONS.DEF_GUARDIAN,'vengeance-talent':ICONS.OFF_FURY,'hold-the-line':ICONS.DEF_PARRY,
+ 'righteous-guard':ICONS.DEF_SHIELD,'bulwark-party':ICONS.SUP_PARTY_GUARD,'divine-guardian-party':ICONS.SUP_PARTY_GUARD,
+ 'frostbound-sigil-shield':ICONS.DEF_ARCANE,'soft-enrage':ICONS.OFF_RAGE,'hard-enrage':ICONS.OFF_RAGE,'blood-frenzy':ICONS.OFF_RAGE,
+ 'shield-wall':ICONS.DEF_SHIELD,'ardent-defender':ICONS.DEF_ARMOR,'divine-protection':ICONS.DEF_SHIELD,'barkskin':ICONS.DEF_THORNS,
+ 'blur':ICONS.DEF_DODGE,'obsidian-scales':ICONS.DEF_ARMOR,'arcane-ward':ICONS.DEF_ARCANE,'feint':ICONS.DEF_DODGE,'icebound-fortitude':ICONS.DEF_ARCANE,
+ 'guardian-spirit':ICONS.DEF_GUARDIAN,'hammer-of-justice':ICONS.PLAYER_STUN,'concussive-shot':ICONS.PLAYER_STUN,'tactical-control':ICONS.PLAYER_ROOT
+};
+function enemyApplied(st){const s=String(st?.source||''),t=String(st?.target||'');return(st?.kind==='debuff')&&(s.startsWith('e-')||s.startsWith('add-'))&&t.startsWith('p-')}
+function playerApplied(st){const s=String(st?.source||''),t=String(st?.target||'');return(st?.kind==='debuff')&&s.startsWith('p-')&&(t.startsWith('e-')||t.startsWith('add-'))}
+function iconIndex(st){
+ const id=String(st?.id||''),name=String(st?.name||'').toLowerCase(),e=st?.effect||{},cc=String(st?.cc||'').toLowerCase();
+ if(STATUS_ICON[id]!=null)return STATUS_ICON[id];
+ if(id.startsWith('tactical-control-add-'))return ICONS.PLAYER_ROOT;
+ if(id.endsWith('-hot')||Number(e.healingOverTime)>0)return ICONS.SUP_HOT;
+ if(st?.kind==='buff'){
+  if(/renew|rejuven|lifebloom|regrowth/.test(name))return ICONS.SUP_HOT;
+  if(/guardian|last stand|unbroken|spirit/.test(name))return ICONS.DEF_GUARDIAN;
+  if(/shield wall|shield|resolve|bulwark/.test(name))return ICONS.DEF_SHIELD;
+  if(/armor|fortress|scales|fortitude|defender/.test(name))return ICONS.DEF_ARMOR;
+  if(/barrier|ward|frozen response/.test(name))return ICONS.DEF_ARCANE;
+  if(/bark|thorn|ironbark/.test(name))return ICONS.DEF_THORNS;
+  if(/blur|dodge|feint/.test(name))return ICONS.DEF_DODGE;
+  if(Number(e.incomingDamageReduction)>0||Number(e.damageReduction)>0)return ICONS.DEF_REDUCTION;
+  if(Number(e.outgoingHealing)>0||Number(e.incomingHealing)>0)return /nature|wild|tree/.test(name)?ICONS.SUP_NATURE:ICONS.SUP_RADIANCE;
+  if(Number(e.resourceRegen)>0&&!Number(e.outgoingDamage))return ICONS.SUP_RESOURCE;
+  if(Number(e.haste)>0&&!Number(e.outgoingDamage))return ICONS.SUP_HASTE;
+  if(Number(e.critBonus)>0||/focus|precision|aim/.test(name))return ICONS.OFF_CRIT;
+  if(Number(e.threatBonus)>0)return ICONS.OFF_ASCEND;
+  if(/frenzy|rage|vengeance|enrage|fury/.test(name))return ICONS.OFF_RAGE;
+  if(/cleave|sweep|tempo/.test(name))return ICONS.OFF_CLEAVE;
+  if(/arcane|runic|surge/.test(name))return ICONS.OFF_ARCANE;
+  if(Number(e.outgoingDamage)>0||Number(e.damageMultiplier)>0)return ICONS.OFF_BLADE;
+  return ICONS.OFF_ASCEND
+ }
+ if(enemyApplied(st)){
+  if(/poison|venom|toxin|disease|sickness/.test(name))return ICONS.ENEMY_POISON;
+  if(/bleed|blood|wound|agony/.test(name))return ICONS.ENEMY_BLEED;
+  if(/burn|fire|flame|ember|scorch/.test(name))return ICONS.ENEMY_BURN;
+  if(/fear|terror|panic|scream/.test(name)||cc==='fear')return ICONS.ENEMY_FEAR;
+  if(/silence|mute/.test(name)||cc==='silence')return ICONS.ENEMY_SILENCE;
+  if(/stun|daze|disorient/.test(name)||cc==='stun')return ICONS.ENEMY_DAZE;
+  if(/freeze|frost|ice/.test(name)||cc==='freeze')return ICONS.ENEMY_FREEZE;
+  if(/root|snare|vine|thorn/.test(name)||cc==='root')return ICONS.ENEMY_ROOT;
+  if(Number(e.healingReduction)>0||/mortal|healing/.test(name))return ICONS.ENEMY_HEAL_REDUCE;
+  if(/armor|sunder|shatter/.test(name))return ICONS.ENEMY_ARMOR_BREAK;
+  if(/vulner|frail|crack|scar|exposed/.test(name)||Number(e.damageTakenIncrease)>0||Number(e.incomingDamageIncrease)>0)return ICONS.ENEMY_VULNERABLE;
+  if(/mark|gaze|eye/.test(name))return ICONS.ENEMY_MARK;
+  if(/mind|charm|control/.test(name))return ICONS.ENEMY_MIND;
+  if(/add|summon|reinforcement/.test(name))return ICONS.ENEMY_ADDS;
+  if(/ground|pool|zone|eruption/.test(name))return ICONS.ENEMY_GROUND;
+  if(/doom|warning|fatal/.test(name))return ICONS.ENEMY_DOOM;
+  if(/demon|corrupt/.test(name))return ICONS.ENEMY_DEMONIC;
+  if(/shadow|curse|despair|hex/.test(name))return ICONS.ENEMY_SHADOW;
+  return ICONS.ENEMY_CURSE
+ }
+ if(playerApplied(st)){
+  if(/bleed|blood|wound|garrote/.test(name))return ICONS.PLAYER_BLEED;
+  if(/burn|fire|flame/.test(name))return ICONS.PLAYER_BURN;
+  if(/freeze|frost|ice/.test(name))return ICONS.PLAYER_FREEZE;
+  if(/shock|lightning|storm/.test(name))return ICONS.PLAYER_SHOCK;
+  if(/stun|daze|hammer/.test(name)||cc==='stun')return ICONS.PLAYER_STUN;
+  if(/root|chain|snare|control/.test(name)||cc==='root')return ICONS.PLAYER_ROOT;
+  if(/silence|interrupt|lock/.test(name)||cc==='silence')return ICONS.PLAYER_SILENCE;
+  if(/armor|sunder|shatter/.test(name))return ICONS.PLAYER_ARMOR_BREAK;
+  if(/mark|death|target/.test(name))return ICONS.PLAYER_MARK;
+  return ICONS.PLAYER_WEAKEN
+ }
+ if(/poison|venom|toxin/.test(name))return ICONS.ENEMY_POISON;
+ if(/bleed|blood|wound|agony/.test(name))return ICONS.ENEMY_BLEED;
+ if(/burn|fire|flame|ember/.test(name))return ICONS.ENEMY_BURN;
+ if(/freeze|frost|ice/.test(name))return ICONS.ENEMY_FREEZE;
+ if(/root|snare/.test(name)||cc==='root')return ICONS.ENEMY_ROOT;
+ if(/stun|daze/.test(name)||cc==='stun')return ICONS.ENEMY_DAZE;
+ if(/silence/.test(name)||cc==='silence')return ICONS.ENEMY_SILENCE;
+ return ICONS.ENEMY_CURSE
+}
+function iconStyle(st){
+ const idx=iconIndex(st),x=idx%8,y=Math.floor(idx/8);
+ return'--cbs-bg-x:'+(x/7*100).toFixed(4)+'%;--cbs-bg-y:'+(y/8*100).toFixed(4)+'%'
 }
 function effectText(st){
  const e=st?.effect||{},bits=[];
@@ -69,7 +152,7 @@ function ensureTooltip(){
 }
 function showTooltip(button,st){
  const tip=ensureTooltip(),remaining=Math.max(0,Number(button.dataset.remaining)||0);
- tip.innerHTML='<div class="cbs-tooltip-head"><i class="'+st.kind+'">'+esc(iconFor(st.name,st.kind))+'</i><span><small>'+esc(st.kind.toUpperCase())+'</small><b>'+esc(st.name)+'</b></span></div><p>'+esc(effectText(st))+'</p><div><span>Source <b>'+esc(st.sourceLabel||'Unknown')+'</b></span><span>Stacks <b>'+Math.max(1,Number(st.stacks)||1)+'</b></span><span>Remaining <b>'+((remaining/1000).toFixed(1))+'s</b></span></div>';
+ tip.innerHTML='<div class="cbs-tooltip-head"><i class="cbs-tooltip-art '+st.kind+'" style="'+iconStyle(st)+'"></i><span><small>'+esc(st.kind.toUpperCase())+'</small><b>'+esc(st.name)+'</b></span></div><p>'+esc(effectText(st))+'</p><div><span>Source <b>'+esc(st.sourceLabel||'Unknown')+'</b></span><span>Stacks <b>'+Math.max(1,Number(st.stacks)||1)+'</b></span><span>Remaining <b>'+((remaining/1000).toFixed(1))+'s</b></span></div>';
  const r=button.getBoundingClientRect();tip.hidden=false;
  requestAnimationFrame(()=>{
   const w=tip.offsetWidth||250,h=tip.offsetHeight||120;
@@ -105,7 +188,7 @@ function normaliseStatus(e){
  const raw=Array.isArray(e.statusEffects)&&e.statusEffects[0]?e.statusEffects[0]:{};
  const kind=harmfulStatus(raw,e)?'debuff':(raw.kind==='buff'||e.type.startsWith('BUFF')?'buff':'debuff');
  return{
-  id:raw.id||slug(e.ability||'status'),name:raw.name||e.ability||'Status',kind,
+  id:raw.id||slug(e.ability||'status'),name:raw.name||e.ability||'Status',kind,target:e.target||null,
   stacks:Math.max(1,Number(raw.stacks)||1),duration:Math.max(0,Number(raw.duration)||0),
   expiresAt:Number(raw.expiresAt)||0,source:raw.source||e.source||null,effect:raw.effect||{},
   cc:raw.cc||null,breakOnDamage:!!raw.breakOnDamage
@@ -125,7 +208,7 @@ function renderHost(host,opts={}){
   if(root.dataset.cbsSignature===signature)return;
   root.dataset.cbsSignature=signature;
   root.innerHTML=rendered.map(({st,remain,sec})=>{
-   return '<button type="button" class="cbs-icon '+kind+'" data-cbs-id="'+esc(st.id)+'" data-remaining="'+remain+'" aria-label="'+esc(st.name)+'"><i>'+esc(iconFor(st.name,kind))+'</i><small>'+sec+'</small>'+(st.stacks>1?'<b>'+st.stacks+'</b>':'')+'</button>'
+   return '<button type="button" class="cbs-icon '+kind+'" data-cbs-id="'+esc(st.id)+'" data-remaining="'+remain+'" aria-label="'+esc(st.name)+'"><i class="cbs-art" style="'+iconStyle(st)+'"></i><small>'+sec+'</small>'+(st.stacks>1?'<b>'+st.stacks+'</b>':'')+'</button>'
   }).join('')+(list.length>4?'<span class="cbs-more '+kind+'">+'+(list.length-4)+'</span>':'');
   root.querySelectorAll('.cbs-icon').forEach(b=>b.addEventListener('click',ev=>{ev.stopPropagation();const st=map.get(b.dataset.cbsId);if(st)showTooltip(b,st)}))
  };
@@ -182,5 +265,5 @@ function startTicker(){
  },1000)
 }
 
-window.CellboundCombatStatuses={handle,clear,renderHost,version:'1.3.0'};
+window.CellboundCombatStatuses={handle,clear,renderHost,iconIndex,iconStyle,version:'2.0.0'};
 })();
