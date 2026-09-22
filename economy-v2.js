@@ -154,8 +154,8 @@ function renderCrafted(){
   root.querySelectorAll('[data-drink-flask]').forEach(b=>b.onclick=()=>{const sel=root.querySelector('[data-craft-target="'+b.dataset.drinkFlask+'"]');drinkFlask(b.dataset.drinkFlask,sel?.value)});
   root.querySelectorAll('[data-clear-shock]').forEach(b=>b.onclick=()=>{const sel=root.querySelector('[data-craft-target="'+b.dataset.clearShock+'"]');useCellShockDraught(b.dataset.clearShock,sel?.value)});
 }
-function renderSellOptions(){window.CellboundMarket?.renderSell?.()}
-async function loadMarket(){return window.CellboundMarket?.load?.()}
+function renderSellOptions(){return window.CellboundTradingPostV3?.refresh?.(false)}
+async function loadMarket(){return window.CellboundTradingPostV3?.refresh?.()}
 function bind(){
   document.querySelectorAll('.nav-btn[data-view="professions"]').forEach(b=>b.addEventListener('click',renderProfessions));
   window.addEventListener('cellbound:view-changed',e=>{
@@ -168,7 +168,7 @@ async function init(){
   window.CellboundEconomy={
     renderProfessions,
     loadMarket,
-    renderTrading:()=>window.CellboundMarket?.render?.(),
+    renderTrading:()=>window.CellboundTradingPostV3?.refresh?.(),
     processInbox,
     claimProceeds,
     renderCrafted
