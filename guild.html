@@ -121,15 +121,91 @@
     </section>
 
     <section id="trading" class="view">
-      <div class="section-intro"><div><small>TRADING POST</small><h2>Trading Post</h2><p>Buy and sell tradeable gear, reagents and crafted goods. The Trading Post takes a 5% fee from each sale.</p></div><button id="refreshTrading" class="ghost-btn">REFRESH MARKET</button></div>
-      <div class="trading-layout">
-        <div class="trading-main">
-          <article class="panel trading-market"><div class="panel-head"><div><small>LIVE LISTINGS</small><h3>Market</h3></div><div id="tradeFilters" class="trade-filters"><button class="filter active" data-trade-filter="all">All</button><button class="filter" data-trade-filter="gear">Gear</button><button class="filter" data-trade-filter="material">Reagents</button><button class="filter" data-trade-filter="consumable">Crafted</button><button class="filter" data-trade-filter="recipe">Recipes</button></div></div><div id="tradeListings" class="trade-listings"></div></article>
+      <div class="market-hero">
+        <div>
+          <small>THE CELLBOUND EXCHANGE</small>
+          <h2>Trading Post</h2>
+          <p>Trade rolled equipment directly or use the Commodity Exchange for reagents, consumables and recipes.</p>
         </div>
-        <aside class="trading-side">
-          <article class="panel sell-panel"><div class="panel-head"><div><small>SELL</small><h3>Create Listing</h3></div></div><form id="tradeSellForm" class="trade-sell-form"><label>Item<select id="tradeSellItem"></select></label><div id="tradeSellPreview" class="trade-sell-preview" aria-live="polite"></div><div class="trade-sell-fields"><label>Quantity<input id="tradeSellQuantity" type="number" min="1" value="1"></label><label>Price per item<input id="tradeSellPrice" type="number" min="1" value="50"></label></div><div id="tradeSellSummary" class="trade-sell-summary"></div><button type="submit">LIST ITEM</button><p id="tradeSellHint">Choose an item from your Bank, reagent vault or crafted stock.</p></form></article>
-          <article class="panel"><div class="panel-head"><div><small>YOUR SALES</small><h3>My Listings</h3></div></div><div id="myTradeListings" class="my-trade-listings"></div></article>
+        <div class="market-hero-actions">
+          <button id="marketClaimAll" class="market-delivery-btn"><span>DELIVERIES</span><b id="marketDeliveryCount">0</b><em id="marketDeliveryGold">0g waiting</em></button>
+          <button id="refreshTrading" class="ghost-btn">REFRESH MARKET</button>
+        </div>
+      </div>
+      <div id="marketStats" class="market-stat-strip">
+        <article><span>ACTIVE GEAR</span><b>—</b><small>live listings</small></article>
+        <article><span>BUY ORDERS</span><b>—</b><small>commodity demand</small></article>
+        <article><span>SELL ORDERS</span><b>—</b><small>commodity supply</small></article>
+        <article><span>24H VOLUME</span><b>—</b><small>gold traded</small></article>
+      </div>
+      <nav id="marketTabs" class="market-tabs" aria-label="Trading Post sections">
+        <button class="active" data-market-tab="browse">BROWSE</button>
+        <button data-market-tab="orders">MY TRADING <em id="marketOrderBadge"></em></button>
+        <button data-market-tab="history">HISTORY</button>
+        <button data-market-tab="watchlist">WATCHLIST <em id="marketWatchBadge"></em></button>
+      </nav>
+      <div id="marketBrowse" class="market-screen">
+        <aside class="market-nav panel">
+          <div class="market-nav-head"><small>MARKET</small><b>Browse</b></div>
+          <div id="marketCategoryNav" class="market-category-nav">
+            <button class="active" data-market-category="all"><span>◇</span><b>All Goods</b></button>
+            <button data-market-category="gear"><span>⚔</span><b>Equipment</b></button>
+            <button data-market-category="material"><span>✦</span><b>Reagents</b></button>
+            <button data-market-category="consumable"><span>⚗</span><b>Consumables</b></button>
+            <button data-market-category="recipe"><span>▤</span><b>Recipes</b></button>
+          </div>
+          <div class="market-saved-head"><small>SAVED SEARCHES</small><button id="marketSaveSearch">＋</button></div>
+          <div id="marketSavedSearches" class="market-saved-list"><span>No saved searches yet.</span></div>
+          <button id="marketOpenSell" class="market-sell-entry">SELL AN ITEM</button>
         </aside>
+        <main class="market-results panel">
+          <div class="market-search-row">
+            <label class="market-search"><span>⌕</span><input id="marketSearch" type="search" placeholder="Search items, reagents, recipes…"></label>
+            <select id="marketSort"><option value="price-asc">Lowest Price</option><option value="price-desc">Highest Price</option><option value="newest">Newest</option><option value="ilvl-desc">Highest iLvl</option><option value="volume">Most Traded</option></select>
+          </div>
+          <div id="marketAdvancedFilters" class="market-filter-row">
+            <select id="marketClass"><option value="all">All classes</option><option>Warrior</option><option>Paladin</option><option>Priest</option><option>Druid</option><option>Hunter</option><option>Rogue</option><option>Mage</option></select>
+            <select id="marketSlot"><option value="all">All slots</option><option>Head</option><option>Chest</option><option>Weapon</option></select>
+            <select id="marketRarity"><option value="all">All rarities</option><option>Common</option><option>Uncommon</option><option>Rare</option><option>Epic</option></select>
+            <label>MIN ILVL<input id="marketMinIlvl" type="number" min="0" inputmode="numeric" placeholder="0"></label>
+            <label>MAX PRICE<input id="marketMaxPrice" type="number" min="1" inputmode="numeric" placeholder="Any"></label>
+            <button id="marketClearFilters">CLEAR</button>
+          </div>
+          <div class="market-results-head"><div><small>LIVE MARKET</small><b id="marketResultCount">0 results</b></div><span id="marketResultHint">Select an item to inspect the market.</span></div>
+          <div id="tradeListings" class="market-list"></div>
+        </main>
+        <aside id="marketInspector" class="market-inspector panel">
+          <div class="market-inspector-empty"><span>◇</span><h3>Select an item</h3><p>Inspect live prices, recent sales, stat rolls and the order book.</p></div>
+        </aside>
+      </div>
+      <div id="marketOrders" class="market-screen market-secondary" hidden>
+        <div class="market-secondary-head"><div><small>YOUR MARKET ACTIVITY</small><h3>My Trading</h3><p>Track equipment listings and commodity orders. Reserved gold and goods are returned when an active order is cancelled.</p></div><button id="marketOrdersSell">SELL AN ITEM</button></div>
+        <div id="myTradeListings" class="market-my-orders"></div>
+      </div>
+      <div id="marketHistory" class="market-screen market-secondary" hidden>
+        <div class="market-secondary-head"><div><small>LEDGER</small><h3>Transaction History</h3><p>Your completed purchases and sales.</p></div></div>
+        <div id="marketHistoryList" class="market-history-list"></div>
+      </div>
+      <div id="marketWatchlist" class="market-screen market-secondary" hidden>
+        <div class="market-secondary-head"><div><small>WATCHLIST</small><h3>Market Watch</h3><p>Keep an eye on items you care about and see their current market price at a glance.</p></div></div>
+        <div id="marketWatchList" class="market-watch-list"></div>
+      </div>
+      <div id="marketSellDrawer" class="market-sell-backdrop" hidden>
+        <section class="market-sell-drawer">
+          <header><div><small>CREATE MARKET ORDER</small><h3>Sell from Supplies</h3></div><button id="marketCloseSell">×</button></header>
+          <form id="tradeSellForm" class="market-sell-form">
+            <label>ITEM<select id="tradeSellItem"></select></label>
+            <div id="tradeSellPreview" class="trade-sell-preview" aria-live="polite"></div>
+            <div class="market-sell-fields">
+              <label>QUANTITY<input id="tradeSellQuantity" type="number" min="1" value="1"></label>
+              <label>PRICE EACH<input id="tradeSellPrice" type="number" min="1" value="50"></label>
+              <label id="marketListingDurationWrap">DURATION<select id="marketListingDuration"><option value="24">24 hours</option><option value="48" selected>48 hours</option><option value="72">72 hours</option></select></label>
+            </div>
+            <div id="tradeSellSummary" class="trade-sell-summary"></div>
+            <button type="submit" class="market-primary">CREATE LISTING</button>
+            <p id="tradeSellHint">Equipment creates a timed listing. Stackable goods enter the Commodity Exchange.</p>
+          </form>
+        </section>
       </div>
     </section>
 
