@@ -363,7 +363,7 @@ function renderGearSellOptions(){
     '<span class="tp-sell-choice-art">'+sellItemArt(item,58)+'</span>'+
     '<span class="tp-sell-choice-copy"><small>'+esc(item.rarity||'Common')+' · '+esc(item.slot||'Gear')+'</small><b>'+esc(item.name||'Unknown item')+'</b><em>iLvl '+Number(item.itemLevel||0)+' · ×'+Number(item.quantity||1)+'</em></span>'+
     '<strong>'+(item.id===selected.id?'SELECTED':'CHOOSE')+'</strong></button>').join('');
-  $('[data-sell-item]',picker).forEach(button=>button.onclick=()=>{
+  $$('[data-sell-item]',picker).forEach(button=>button.onclick=()=>{
     input.value=button.dataset.sellItem;
     picker.hidden=true;
     renderGearSellOptions();
