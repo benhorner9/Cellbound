@@ -497,8 +497,13 @@ function encounterRoot(){
   if(!r){r=document.createElement('div');r.id='questEncounterBackdrop';r.className='cb2d-backdrop quest-cb2d-backdrop';r.hidden=true;document.body.appendChild(r)}
   return r;
 }
+function qResourceDef(c){return window.CellboundCombatReborn?.RESOURCE_DEFS?.[c?.class]||{name:'Power',max:100,start:100}}
+function qResourceClass(name){return 'resource-'+String(name||'power').toLowerCase().replace(/[^a-z0-9]+/g,'-')}
 function qRows(){
-  return party().map(c=>'<div class="cb2d-party-row"><i class="cb2d-dot '+qClassKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+'Lv. '+Math.max(1,Number(c.level)||1)+' · '+qRole(c).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-q-side-hp="'+c.id+'" style="width:100%"></i></em></span><strong data-q-hp-text="'+c.id+'">100 HP</strong></div>').join('');
+  return party().map(c=>{
+    const hp=Math.max(0,Math.min(100,Number(questFight?.partyHp?.[c.id])||0)),def=qResourceDef(c),r=questFight?.resources?.[c.id]||def,max=Math.max(1,Number(r.max)||Number(def.max)||100),value=Math.max(0,Math.min(max,Number(r.value??def.start)||0)),name=r.name||def.name||'Power';
+    return '<div class="cb2d-party-row" data-q-row="'+c.id+'"><i class="cb2d-dot '+qClassKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+'Lv. '+Math.max(1,Number(c.level)||1)+' · '+qRole(c).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-q-side-hp="'+c.id+'" style="width:'+hp+'%"></i></em><em class="q2d-side-resource '+qResourceClass(name)+'" data-q-side-resource="'+c.id+'" title="'+esc(name)+'"><i style="width:'+(value/max*100)+'%"></i></em></span><strong data-q-hp-text="'+c.id+'">'+Math.round(hp)+' HP</strong></div>'
+  }).join('');
 }
 function qRoute(){
   return (questFight?.phases||[]).map((x,i)=>'<span class="'+(i<questFight.phase?'done':i===questFight.phase?'current':'')+'"><i>'+(i+1)+'</i>'+esc(x)+'</span>').join('');
@@ -511,10 +516,10 @@ function qAddUnit(id,label,cls,x,y,size='',meta=''){
   const e=document.createElement('div');e.className='cb2d-unit '+cls+' '+size;e.dataset.qUnit=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="cb2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em class="cb2d-unit-hp"><i style="width:100%"></i></em>';root.appendChild(e)
 }
 function qUnit(id){return $('[data-q-unit="'+id+'"]')}
-function qMove(id,x,y,ms=520){const e=qUnit(id);if(!e)return;const ox=parseFloat(e.style.left)||x,oy=parseFloat(e.style.top)||y;e.style.setProperty('--face-angle',(Math.atan2(y-oy,x-ox)*180/Math.PI)+'deg');e.style.transitionDuration=ms+'ms';requestAnimationFrame(()=>{e.style.left=x+'%';e.style.top=y+'%'})}
+function qMove(id,x,y,ms=520){const e=qUnit(id);if(!e)return;const ox=parseFloat(e.style.left)||x,oy=parseFloat(e.style.top)||y,speed=Math.max(.25,Number(questFight?.speed)||1);e.style.setProperty('--face-angle',(Math.atan2(y-oy,x-ox)*180/Math.PI)+'deg');e.style.transitionDuration=Math.max(1,Math.round(ms/speed))+'ms';requestAnimationFrame(()=>{e.style.left=x+'%';e.style.top=y+'%'})}
 function qPoint(id){const a=$('#q2dArena'),u=qUnit(id);if(!a||!u)return null;const ar=a.getBoundingClientRect(),r=u.getBoundingClientRect();return{x:r.left-ar.left+r.width/2,y:r.top-ar.top+r.height/2,w:ar.width,h:ar.height}}
 function qFace(id,targetId){const e=qUnit(id),a=qPoint(id),b=qPoint(targetId);if(!e||!a||!b)return;e.style.setProperty('--face-angle',(Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI)+'deg')}
-function qProjectile(from,to,kind='physical',ms=320){const arena=$('#q2dArena'),a=qPoint(from),b=qPoint(to);if(!arena||!a||!b)return;const dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI,e=document.createElement('i');e.className='cb2d-projectile '+kind;e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.transform='rotate('+angle+'deg)';arena.appendChild(e);requestAnimationFrame(()=>{e.style.transitionDuration=ms+'ms';e.style.transform='translate('+dx+'px,'+dy+'px) rotate('+angle+'deg)'});setTimeout(()=>e.remove(),ms+130)}
+function qProjectile(from,to,kind='physical',ms=320){const arena=$('#q2dArena'),a=qPoint(from),b=qPoint(to);if(!arena||!a||!b)return;const speed=Math.max(.25,Number(questFight?.speed)||1),dur=Math.max(1,Math.round(ms/speed)),dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI,e=document.createElement('i');e.className='cb2d-projectile '+kind;e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.transform='rotate('+angle+'deg)';arena.appendChild(e);requestAnimationFrame(()=>{e.style.transitionDuration=dur+'ms';e.style.transform='translate('+dx+'px,'+dy+'px) rotate('+angle+'deg)'});setTimeout(()=>e.remove(),dur+130)}
 function qFloat(id,text,kind='damage'){const arena=$('#q2dArena'),p=qPoint(id);if(!arena||!p)return;const e=document.createElement('div');e.className='cb2d-number '+kind;e.textContent=text;e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),850)}
 function qSetEnemyHp(i,value){
   if(!questFight)return;const max=questFight.enemyMax[i]||1,prev=questFight.enemyHp[i]||0,next=Math.max(0,Math.min(max,Math.round(value)));questFight.enemyHp[i]=next;
@@ -524,22 +529,26 @@ function qSetEnemyHp(i,value){
 function qSetPartyHp(c,value){if(!questFight)return;const next=Math.max(0,Math.min(100,Math.round(value)));questFight.partyHp[c.id]=next;const bar=$('[data-q-side-hp="'+c.id+'"]');if(bar)bar.style.width=next+'%';const txt=$('[data-q-hp-text="'+c.id+'"]');if(txt)txt.textContent=next+' HP';const overhead=qUnit('p-'+c.id)?.querySelector('.cb2d-unit-hp i');if(overhead)overhead.style.width=next+'%'}
 function qRenderMeters(target=0){
   if(!questFight)return;
-  const damageRoot=$('#q2dDamageMeter'),threatRoot=$('#q2dThreatMeter'),p=party();
+  const damageRoot=$('#q2dDamageMeter'),healingRoot=$('#q2dHealingMeter'),threatRoot=$('#q2dThreatMeter'),p=party(),elapsed=Math.max(1,(Number(questFight.elapsedMs)||0)/1000);
   const rows=p.map(c=>({c,value:Number(questFight.damage?.[c.id])||0})).sort((a,b)=>b.value-a.value),max=Math.max(1,...rows.map(x=>x.value)),total=rows.reduce((n,x)=>n+x.value,0);
   const totalEl=$('#q2dDamageTotal');if(totalEl)totalEl.textContent=total.toLocaleString()+' total';
-  if(damageRoot)damageRoot.innerHTML=rows.map((x,i)=>'<div class="cb2d-meter-row '+qClassKey(x.c)+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(x.c.name)+'</b><span>'+x.value.toLocaleString()+' damage</span></div><em><i style="width:'+(x.value/max*100)+'%"></i></em></div>').join('');
+  if(damageRoot)damageRoot.innerHTML=rows.map((x,i)=>'<div class="cb2d-meter-row '+qClassKey(x.c)+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(x.c.name)+'</b><span>'+x.value.toLocaleString()+' · '+Math.round(x.value/elapsed)+' DPS</span></div><em><i style="width:'+(x.value/max*100)+'%"></i></em></div>').join('');
+  const heals=p.map(c=>({c,value:Number(questFight.healing?.[c.id])||0,over:Number(questFight.overhealing?.[c.id])||0})).sort((a,b)=>b.value-a.value),maxHeal=Math.max(1,...heals.map(x=>x.value)),healTotal=heals.reduce((n,x)=>n+x.value,0),healTotalEl=$('#q2dHealingTotal');if(healTotalEl)healTotalEl.textContent=healTotal.toLocaleString()+' total';
+  if(healingRoot)healingRoot.innerHTML=heals.map((x,i)=>'<div class="cb2d-meter-row '+qClassKey(x.c)+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(x.c.name)+'</b><span>'+x.value.toLocaleString()+' · '+Math.round(x.value/elapsed)+' HPS</span></div><em><i style="width:'+(x.value/maxHeal*100)+'%"></i></em></div>').join('');
   const table=questFight.threat?.[target]||{},threatRows=p.map(c=>({c,value:Number(table[c.id])||0})).sort((a,b)=>b.value-a.value),maxThreat=Math.max(1,...threatRows.map(x=>x.value)),aggro=questFight.aggro?.[target]||null;
   const label=$('#q2dThreatTarget');if(label)label.textContent=questFight.enemies[target]||'No target';
-  if(threatRoot)threatRoot.innerHTML=threatRows.map((x,i)=>'<div class="cb2d-meter-row '+qClassKey(x.c)+(aggro===x.c.id?' aggro':'')+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(x.c.name)+(aggro===x.c.id?' <strong>AGGRO</strong>':'')+'</b><span>'+Math.round(x.value).toLocaleString()+'</span></div><em><i style="width:'+(x.value/maxThreat*100)+'%"></i></em></div>').join('')
+  if(threatRoot)threatRoot.innerHTML=threatRows.map((x,i)=>{const pct=x.value/maxThreat*100,hasAggro=aggro===x.c.id,tank=p.find(y=>qRole(y)==='tank'),tankThreat=tank?Number(table[tank.id])||0:0,high=!hasAggro&&qRole(x.c)!=='tank'&&tankThreat>0&&x.value>=tankThreat*.85;return '<div class="cb2d-meter-row '+qClassKey(x.c)+(hasAggro?' aggro':'')+(high?' high':'')+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(x.c.name)+(hasAggro?' <strong>AGGRO</strong>':high?' <strong>HIGH</strong>':'')+'</b><span>'+Math.round(x.value).toLocaleString()+' · '+Math.round(pct)+'%</span></div><em><i style="width:'+pct+'%"></i></em></div>'}).join('')
 }
 function qDraw(config,finish){
   const root=encounterRoot();root.className='cb2d-backdrop quest-cb2d-backdrop';root.hidden=false;document.body.classList.add('quest-cb2d-open');
   const visualClass=String(config.visualClass||'').replace(/[^a-z0-9-_ ]/gi,'').trim(),environmentMarkup=String(config.environmentMarkup||'');
-  root.innerHTML='<section class="cb2d-shell quest-cb2d-shell '+esc(visualClass)+'"><header class="cb2d-head"><div><small>'+esc(config.quest.toUpperCase())+' · LV '+Math.max(1,Number(config.combat?.level)||1)+' · LIVE 2D QUEST</small><h2>'+esc(config.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-q-close>×</button></div></header>'+
+  const liveKind=config.presentationKind==='dungeon'?'LIVE 2D DUNGEON':'LIVE 2D QUEST',partyLabel=config.partyLabel||'ACTIVE FIVE';
+  root.innerHTML='<section class="cb2d-shell quest-cb2d-shell '+esc(visualClass)+'"><header class="cb2d-head"><div><small>'+esc(config.quest.toUpperCase())+' · LV '+Math.max(1,Number(config.combat?.level)||1)+' · '+liveKind+'</small><h2>'+esc(config.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-q-speed>1×</button><button data-q-close>×</button></div></header>'+
     '<div class="cb2d-route" id="q2dRoute">'+qRoute()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena quest-cb2d-arena" id="q2dArena"><div class="cb2d-floor"></div><div class="quest-cb2d-environment">'+environmentMarkup+'</div><div class="cb2d-room-tag"><b>'+esc(config.location)+'</b><small>'+esc(config.ambience)+'</small></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="q2dTelegraphs"></div><div id="q2dUnits"></div><div class="cb2d-caption"><span>QUEST FIGHT</span><b id="q2dStatus">Entering encounter…</b></div></div>'+
     '<div class="cb2d-controls cbr-plan-lock"><div class="cbr-plan-lock-copy"><small>COMBAT REBORN</small><b>This quest fight is simulation-driven.</b><span>Movement, targets, interrupts, threat, healing and deaths are produced by the combat timeline rather than viewer buttons.</span></div></div>'+
-    '<div class="cb2d-feed"><small>COMBAT FEED</small><p id="q2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="q2dCastName">—</b><strong id="q2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="q2dCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="q2dDamageTotal">0 total</span></div><div id="q2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="q2dThreatTarget">No target</span></div><div id="q2dThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-q-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-q-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Holding range</em></div><div data-q-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>ACTIVE FIVE</small>'+qRows()+'</div></aside></div><div class="cb2d-end" id="q2dEnd" hidden></div></section>';
-  root.querySelector('[data-q-close]').onclick=()=>{if(!questFight?.finished&&!confirm('Leave this quest fight? It will restart.'))return;encounterToken++;root.hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)};
+    '<div class="cb2d-feed"><small>COMBAT FEED</small><p id="q2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="q2dCastName">—</b><strong id="q2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="q2dCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="q2dDamageTotal">0 total</span></div><div id="q2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="q2dHealingTotal">0 total</span></div><div id="q2dHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="q2dThreatTarget">No target</span></div><div id="q2dThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-q-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-q-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Holding range</em></div><div data-q-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>'+esc(partyLabel)+'</small>'+qRows()+'</div></aside></div><div class="cb2d-end" id="q2dEnd" hidden></div></section>';
+  root.querySelector('[data-q-speed]').onclick=e=>{if(!questFight)return;questFight.speed=questFight.speed===2?1:2;e.currentTarget.textContent=questFight.speed+'×'};
+  root.querySelector('[data-q-close]').onclick=()=>{if(!questFight?.finished&&!confirm('Leave this quest fight? It will restart.'))return;encounterToken++;window.CellboundCombatStatuses?.clear?.(root);root.hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)};
 }
 function qEnemyMeta(index){
  const level=Math.max(1,Number(questFight?.enemyLevels?.[index])||Number(questFight?.level)||1);
@@ -551,6 +560,7 @@ function qSpawn(){
   const p=party(),melee=p.filter(c=>qProfile(c)==='melee'),ranged=p.filter(c=>qProfile(c)==='ranged');
   p.forEach((c,i)=>{qAddUnit('p-'+c.id,c.name,'party '+qRole(c)+' profile-'+qProfile(c)+' '+qClassKey(c),4,50+(i-2)*4);let x=16,y=50;if(qRole(c)==='tank'){x=30;y=50}else if(qProfile(c)==='melee'){x=23;y=43+melee.indexOf(c)*14}else if(qProfile(c)==='ranged'){x=17;y=28+ranged.indexOf(c)*44}else{x=12;y=61}setTimeout(()=>qMove('p-'+c.id,x,y,800),40)});
   questFight.enemies.forEach((n,i)=>{const y=questFight.enemies.length===1?50:27+i*(46/Math.max(1,questFight.enemies.length-1)),m=qEnemyMeta(i),big=m.type==='elite'||m.type==='boss'||m.type==='world-boss',boss=m.type==='boss'||m.type==='world-boss';qAddUnit('e-'+i,n,boss?'enemy boss':big?'enemy big':'enemy',92,y,big?'big':'','Lv. '+m.level+' · '+m.label);setTimeout(()=>qMove('e-'+i,68,y,780),70)});
+  p.forEach(c=>{qSetPartyHp(c,questFight.partyHp?.[c.id]??100);const r=questFight.resources?.[c.id],def=qResourceDef(c);qResourceVisual({type:'RESOURCE_STATE',source:'p-'+c.id,payload:{resource:r?.name||def.name,max:r?.max||def.max,value:r?.value??def.start}})});
   qRenderMeters(questFight.eliteIndex>=0?questFight.eliteIndex:0)
 }
 function qTelegraph(type,fromId,toId,label,size=145){
@@ -570,17 +580,23 @@ function qSetAddHp(id,pct){
 }
 function qResourceVisual(e){
   if(!e?.source||!String(e.source).startsWith('p-'))return;
-  const u=qUnit(e.source);if(!u)return;
-  let bar=u.querySelector('.cbr-resource');
-  if(!bar){bar=document.createElement('small');bar.className='cbr-resource';bar.innerHTML='<i></i>';u.appendChild(bar)}
-  const name=String(e.payload?.resource||'Power'),max=Math.max(1,Number(e.payload?.max)||100),value=Math.max(0,Math.min(max,Number(e.payload?.value)||0)),key='resource-'+name.toLowerCase().replace(/[^a-z0-9]+/g,'-');
- if(bar.dataset.resource!==name){[...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));bar.classList.add(key);bar.dataset.resource=name;bar.title=name}
- const fill=bar.querySelector('i');if(fill)fill.style.width=(value/max*100)+'%'
+  const id=String(e.source).slice(2),c=party().find(x=>String(x.id)===id),def=c?qResourceDef(c):{name:'Power',max:100,start:100},u=qUnit(e.source);
+  const name=String(e.payload?.resource||def.name||'Power'),max=Math.max(1,Number(e.payload?.max??def.max)||100),value=Math.max(0,Math.min(max,Number(e.payload?.value??def.start)||0)),key=qResourceClass(name);
+  if(questFight?.resources)questFight.resources[id]={name,max,value};
+  if(u){
+    let bar=u.querySelector('.cbr-resource');if(!bar){bar=document.createElement('small');bar.className='cbr-resource';bar.innerHTML='<i></i>';u.appendChild(bar)}
+    if(bar.dataset.resource!==name){[...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));bar.classList.add(key);bar.dataset.resource=name;bar.title=name}
+    const fill=bar.querySelector('i');if(fill)fill.style.width=(value/max*100)+'%'
+  }
+  const side=$('[data-q-side-resource="'+id+'"]');if(side){
+    [...side.classList].filter(x=>x.startsWith('resource-')).forEach(x=>side.classList.remove(x));side.classList.add(key);side.dataset.resource=name;side.title=name;
+    const fill=side.querySelector('i');if(fill)fill.style.width=(value/max*100)+'%'
+  }
 }
 function qCastStart(e){
-  const n=$('#q2dCastName'),t=$('#q2dCastTime'),f=$('#q2dCastFill'),duration=Math.max(0,Number(e.payload?.duration)||0);
+  const n=$('#q2dCastName'),t=$('#q2dCastTime'),f=$('#q2dCastFill'),duration=Math.max(0,Number(e.payload?.duration)||0),realDuration=Math.max(1,Math.round(duration/Math.max(.25,Number(questFight?.speed)||1)));
   if(n)n.textContent=e.ability||'Enemy Cast';if(t)t.textContent=(duration/1000).toFixed(1)+'s';
-  if(f){f.style.background='';f.style.transition='none';f.style.width='0%';void f.offsetWidth;requestAnimationFrame(()=>{f.style.transition='width '+duration+'ms linear';f.style.width='100%'})}
+  if(f){f.style.background='';f.style.transition='none';f.style.width='0%';void f.offsetWidth;requestAnimationFrame(()=>{f.style.transition='width '+realDuration+'ms linear';f.style.width='100%'})}
 }
 function qCastClear(label='—'){
   const n=$('#q2dCastName'),t=$('#q2dCastTime'),f=$('#q2dCastFill');if(n)n.textContent=label;if(t)t.textContent='—';if(f){f.style.transition='none';f.style.width='0%';f.style.background=''}
@@ -611,7 +627,17 @@ function qAnalysis(result){
   const s=result?.summary||{},ints=s.interrupts||{},m=s.mechanics||{};
   return'<div class="cbr-analysis-grid quest-cbr-summary"><article><span>TIME</span><b>'+Math.round((Number(s.durationSeconds)||0)*10)/10+'s</b></article><article><span>DAMAGE</span><b>'+Math.round(Number(s.totalDamage)||0).toLocaleString()+'</b></article><article><span>HEALING</span><b>'+Math.round(Number(s.totalHealing)||0).toLocaleString()+'</b></article><article><span>DEATHS</span><b>'+Number(s.deaths||0)+'</b></article><article><span>MISTAKES</span><b>'+Number(s.mistakes?.total||0)+'</b></article><article><span>BATTLE REZ</span><b>'+Number(s.battleResurrections||0)+'</b></article><article><span>INTERRUPTS</span><b>'+Number(ints.success||0)+'/'+Number(ints.attempts||0)+'</b></article><article><span>MECHANICS</span><b>'+Number(m.avoided||0)+'✓ · '+Number(m.failed||0)+'✕</b></article></div>'
 }
+function qStatusTargets(id){
+  const out=[],unit=qUnit(id);if(unit)out.push(unit);
+  if(String(id||'').startsWith('p-')){
+    const c=qEventCharacter(id),row=c?$('[data-q-row="'+c.id+'"]'):null,mirror=row?.querySelector('span');
+    if(mirror)out.push({el:mirror,mirror:true})
+  }
+  return out
+}
 function qRenderRebornEvent(e){
+  if(!questFight||!e)return;questFight.elapsedMs=Math.max(Number(questFight.elapsedMs)||0,Number(e.timestamp)||0);
+  if(window.CellboundCombatStatuses?.handle(e,{resolve:qStatusTargets,speed:()=>questFight?.speed||1}))return;
   const srcChar=qEventCharacter(e.source),targetChar=qEventCharacter(e.target),enemyIndex=qEventEnemyIndex(e.target),sourceEnemy=qEventEnemyIndex(e.source);
   switch(e.type){
     case'COMBAT_START':qStatus('Combat simulation live');qLog('Combat begins.');break;
@@ -632,6 +658,7 @@ function qRenderRebornEvent(e){
       break;
     case'HEAL_RECEIVED':
       if(targetChar){qSetPartyHp(targetChar,Number(e.payload?.targetHpPct)||0);qFloat(e.target,'+'+Math.round(Number(e.amount)||0),'heal')}
+      if(srcChar){questFight.healing[srcChar.id]=(Number(questFight.healing?.[srcChar.id])||0)+Math.max(0,Math.round(Number(e.amount)||0));questFight.overhealing[srcChar.id]=(Number(questFight.overhealing?.[srcChar.id])||0)+Math.max(0,Math.round(Number(e.payload?.overhealing)||0));qRenderMeters(enemyIndex>=0?enemyIndex:0)}
       break;
     case'UNIQUE_EFFECT_TRIGGER':if(srcChar){qLog(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');qFloat(e.source,e.ability||'UNIQUE','heal')}break;
     case'PLAYER_MISTAKE':if(srcChar)qLog(srcChar.name+' '+(e.payload?.detail||'makes an execution mistake')+'.');break;
@@ -674,7 +701,7 @@ async function qPlayReborn(result,tok){
       if(finished)return;
       if(tok!==encounterToken||!questFight){finish(false);return}
       const rawDelta=Math.max(0,now-lastFrame);lastFrame=now;
-      simTime+=Math.min(rawDelta,100);
+      simTime+=Math.min(rawDelta,100)*Math.max(.25,Number(questFight?.speed)||1);
       const frameStarted=performance.now();let handled=0;
       while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<18&&performance.now()-frameStarted<8){
         const event=events[index++];handled++;
@@ -696,14 +723,13 @@ async function runQuest2DFight(config){
   const tok=++encounterToken;
   return await new Promise(resolve=>{
     let settled=false;const finish=value=>{if(settled)return;settled=true;resolve(value)};
-    const encounter=qEncounterFromConfig(config),entries=config.enemies||[],names=entries.map(x=>typeof x==='object'&&x?x.name||'Unknown Enemy':x),max=entries.map(x=>typeof x==='object'&&x&&Number(x.maxHealth||x.health)>0?Number(x.maxHealth||x.health):encounter.enemyHealth);
-    questFight={token:tok,title:config.title,phases:['Combat'],phase:0,enemies:names,level:encounter.level,enemyLevels:encounter.enemyLevels,enemyTypes:encounter.enemyTypes,eliteIndex:Number.isInteger(config.eliteIndex)?config.eliteIndex:-1,enemyMax:max,enemyHp:[...max],partyHp:Object.fromEntries(p.map(c=>[c.id,100])),damage:Object.fromEntries(p.map(c=>[c.id,0])),threat:max.map(()=>Object.fromEntries(p.map(c=>[c.id,0]))),aggro:max.map(()=>null),log:[],telegraphs:{},finished:false};
+    const encounter=qEncounterFromConfig(config),entries=config.enemies||[],names=entries.map(x=>typeof x==='object'&&x?x.name||'Unknown Enemy':x),max=entries.map(x=>typeof x==='object'&&x&&Number(x.maxHealth||x.health)>0?Number(x.maxHealth||x.health):encounter.enemyHealth),carried=config.combatState&&typeof config.combatState==='object'?config.combatState:{};
+    questFight={token:tok,title:config.title,phases:Array.isArray(config.phases)&&config.phases.length?config.phases:['Combat'],phase:Math.max(0,Number(config.phaseIndex)||0),speed:1,elapsedMs:0,enemies:names,level:encounter.level,enemyLevels:encounter.enemyLevels,enemyTypes:encounter.enemyTypes,eliteIndex:Number.isInteger(config.eliteIndex)?config.eliteIndex:-1,enemyMax:max,enemyHp:[...max],partyHp:Object.fromEntries(p.map(c=>[c.id,carried[c.id]?.healthPct==null?100:Number(carried[c.id].healthPct)])),resources:Object.fromEntries(p.map(c=>{const def=qResourceDef(c),r=carried[c.id]?.resource||def;return[c.id,{name:r.name||def.name,max:Number(r.max)||Number(def.max)||100,value:r.value==null?(Number(def.start)||0):Number(r.value)}]})),damage:Object.fromEntries(p.map(c=>[c.id,0])),healing:Object.fromEntries(p.map(c=>[c.id,0])),overhealing:Object.fromEntries(p.map(c=>[c.id,0])),threat:max.map(()=>Object.fromEntries(p.map(c=>[c.id,0]))),aggro:max.map(()=>null),log:[],telegraphs:{},finished:false};
     qDraw(config,finish);qSpawn();qLog(config.ambience);
     if(encounter.kind==='boss'||encounter.kind==='final')window.CellboundFX?.boss?.(config.title,config.location||'');
     (async()=>{
       try{
         await wait(600);if(tok!==encounterToken)return;
-        const carried=config.combatState&&typeof config.combatState==='object'?config.combatState:{};
         const result=C.simulate({
           party:p.map(c=>{const x=carried[c.id]||{};return Object.assign({},c,{
             _combatHealthPct:x.healthPct==null?100:Number(x.healthPct),
@@ -727,11 +753,11 @@ async function runQuest2DFight(config){
         if(won){
           qLog('The party secures the area.');
           end.innerHTML='<div><small>QUEST FIGHT COMPLETE</small><h3>'+esc(config.title)+'</h3><p>'+esc(config.completeText||'The way forward is clear.')+'</p>'+qAnalysis(result)+'</div><button data-q-continue>CONTINUE QUEST →</button>';
-          end.querySelector('[data-q-continue]').onclick=()=>{encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(true)}
+          end.querySelector('[data-q-continue]').onclick=()=>{window.CellboundCombatStatuses?.clear?.(encounterRoot());encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(true)}
         }else{
           Game.applyPartyCellShock?.(25);await Game.persistState?.();
           end.innerHTML='<div><small>QUEST FIGHT FAILED</small><h3>'+esc(config.title)+'</h3><p>The party was defeated by the combat simulation. Review what happened, recover, and return when ready.</p>'+qAnalysis(result)+'</div><button data-q-continue>RETURN TO QUEST →</button>';
-          end.querySelector('[data-q-continue]').onclick=()=>{encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}
+          end.querySelector('[data-q-continue]').onclick=()=>{window.CellboundCombatStatuses?.clear?.(encounterRoot());encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}
         }
       }catch(err){console.error('Quest Combat Reborn failed',err);encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}
     })();

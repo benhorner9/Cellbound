@@ -175,6 +175,7 @@ async function fightStage(s){
  let combatResult=null;
  const won=await Q.runQuest2DFight({
   quest:'The Fractured Ages',title:s.boss,location:s.era,ambience:s.intro,
+  presentationKind:'dungeon',phases:STAGES.map(x=>x.era),phaseIndex:run.stage,partyLabel:'PARTY CONDITION · ILVL '+ilvl(),
   enemies:s.enemies,eliteIndex:s.id==='funhouse'?1:0,visualClass:s.visual,environmentMarkup:s.environment,combat:s.combat,
   combatState:run?.combatState||null,onResult:result=>{combatResult=result},
   completeText:s.id==='funhouse'?'The echoes fall. At exactly twenty percent health, the Old Man lifts one finger. Everything stops.':'The fracture shudders. A new door opens where no door existed before.'
