@@ -15,6 +15,7 @@ const now=()=>Date.now();
 const state=()=>Game?.getState?.()||{};
 const mine=id=>user&&id===user.id;
 function age(ts){const n=Math.max(0,now()-new Date(ts).getTime()),m=Math.floor(n/60000);if(m<1)return'now';if(m<60)return m+'m';const h=Math.floor(m/60);if(h<24)return h+'h';return Math.floor(h/24)+'d'}
+function timeLeft(ts){if(!ts)return'—';const d=new Date(ts).getTime()-now();if(d<=0)return'Expired';const m=Math.ceil(d/60000);if(m<60)return m+'m';const h=Math.ceil(m/60);if(h<24)return h+'h';return Math.ceil(h/24)+'d'}
 function timeLeft(ts){const n=Math.max(0,new Date(ts).getTime()-now()),m=Math.ceil(n/60000);if(m<=0)return'Expired';if(m<60)return m+'m';const h=Math.ceil(m/60);if(h<24)return h+'h';return Math.ceil(h/24)+'d'}
 function rarityOf(x){return x?.rarity||x?.payload?.rarity||(x?.category==='material'&&P?.MATERIALS?.[x.item_key]?.rarity)||'Common'}
 function commodityKey(c,k){return c+'|'+k}
@@ -353,19 +354,28 @@ function setTab(tab){
 }
 async function refreshAll(showBusy=true){
   if(!db||!user)return;
-  if(showBusy){const b=$('#tpRefresh');if(b){b.disabled=true;b.textContent='REFRESHING…'}}
-  await db.rpc('market_sweep_my_expired');
-  const [l,o,t,w,s,p]=await Promise.all([
-    db.from('trading_post_listings').select('*').order('created_at',{ascending:false}).limit(300),
-    db.from('market_commodity_orders').select('*').order('created_at',{ascending:false}).limit(600),
-    db.from('market_transactions').select('*').order('created_at',{ascending:false}).limit(300),
-    db.from('market_watchlist').select('*').eq('user_id',user.id),
-    db.from('market_saved_searches').select('*').eq('user_id',user.id).order('created_at',{ascending:false}),
-    db.from('trading_post_proceeds').select('*').eq('seller_id',user.id).order('created_at',{ascending:false}).limit(200)
-  ]);
-  listings=l.data||[];orders=o.data||[];transactions=t.data||[];watchlist=w.data||[];savedSearches=s.data||[];proceeds=p.data||[];
-  loaded=true;renderGold();renderDelivery();renderSaved();renderCategories();setTab(activeTab);renderInspector();
-  const b=$('#tpRefresh');if(b){b.disabled=false;b.textContent='REFRESH MARKET'}
+  const b=$('#tpRefresh');if(showBusy&&b){b.disabled=true;b.textContent='REFRESHING…'}
+  try{
+    const sweep=await db.rpc('market_sweep_my_expired');
+    if(sweep.error)console.warn('Market expiry sweep unavailable',sweep.error);
+    const [l,o,t,w,s,p]=await Promise.all([
+      db.from('trading_post_listings').select('*').order('created_at',{ascending:false}).limit(300),
+      db.from('market_commodity_orders').select('*').order('created_at',{ascending:false}).limit(600),
+      db.from('market_transactions').select('*').order('created_at',{ascending:false}).limit(300),
+      db.from('market_watchlist').select('*').eq('user_id',user.id),
+      db.from('market_saved_searches').select('*').eq('user_id',user.id).order('created_at',{ascending:false}),
+      db.from('trading_post_proceeds').select('*').eq('seller_id',user.id).order('created_at',{ascending:false}).limit(200)
+    ]);
+    const failed=[l,o,t,w,s,p].find(x=>x.error);
+    if(failed?.error)throw failed.error;
+    listings=l.data||[];orders=o.data||[];transactions=t.data||[];watchlist=w.data||[];savedSearches=s.data||[];proceeds=p.data||[];
+    loaded=true;renderGold();renderDelivery();renderSaved();renderCategories();setTab(activeTab);renderInspector();
+  }catch(error){
+    console.error('Trading Post refresh failed',error);
+    const root=$('#tpBrowseResults');if(root)root.innerHTML='<div class="tp-empty">Trading Post data could not be loaded. Try Refresh Market again.</div>';
+  }finally{
+    if(b){b.disabled=false;b.textContent='REFRESH MARKET'}
+  }
 }
 function bind(){
   $('#tpRefresh')?.addEventListener('click',()=>refreshAll());
