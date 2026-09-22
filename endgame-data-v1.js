@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION=1;
+const VERSION=2;
 const SEASON={id:'foundations-1',name:'Foundations'};
 
 
@@ -67,13 +67,13 @@ const DIFFICULTIES={
    id:'normal',name:'Normal',label:'NORMAL',
    description:'Forgiving introduction to the dungeon. Learn the route, bosses and core mechanics.',
    enemyHealth:1,enemyDamage:1,castSpeed:1,mechanicFrequency:1,addCountBonus:0,
-   lootTier:[1,2],cellShardBase:4
+   lootTier:[1,2,3],cellShardBase:4
  },
  heroic:{
    id:'heroic',name:'Heroic',label:'HEROIC',
    description:'Faster casts, heavier damage and additional encounter mechanics.',
    enemyHealth:1.42,enemyDamage:1.34,castSpeed:.84,mechanicFrequency:.84,addCountBonus:0,
-   lootTier:[2,3],cellShardBase:10
+   lootTier:[2,3,4],cellShardBase:10
  }
 };
 
@@ -257,7 +257,7 @@ function difficultyConfig(mode='normal',tier=0){
    castSpeed:clamp(.82-(t-1)*.012,.57,.82),
    mechanicFrequency:clamp(.82-(t-1)*.012,.58,.82),
    addCountBonus:t>=15?2:t>=8?1:0,
-   lootTier:t>=10?[3,4]:t>=5?[2,3]:[2,3],
+   lootTier:[3,4],
    cellShardBase:12+t*2
  }
 }
