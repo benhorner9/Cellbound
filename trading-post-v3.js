@@ -25,7 +25,10 @@ function commodityArt(category,key,size){
   return '<span class="trade-preview-symbol">⚗</span>';
 }
 function gearFor(l){const base=G?.byId?.(l.item_key)||G?.byName?.(l.item_name)||{};return {...base,...(l.payload||{})}}
-function gearArt(l,size){const item=gearFor(l);return G?.artHTML?.(item,size||62,'tp-gear-art')||'◇'}
+function isUtilityItem(item){return Boolean(item?.category==='utility'||item?.utilityType)}
+function utilityArtHTML(item,size=62,extra=''){return '<span class="tp-utility-art '+extra+'" style="width:'+size+'px;height:'+size+'px" aria-label="'+esc(item?.name||'Utility item')+'"><i>'+esc(item?.icon||'⚡')+'</i></span>'}
+function itemArtHTML(item,size=62,extra=''){return isUtilityItem(item)?utilityArtHTML(item,size,extra):(G?.artHTML?.(item,size,extra)||'◇')}
+function gearArt(l,size){const item=gearFor(l);return itemArtHTML(item,size||62,'tp-gear-art')}
 function currentGold(){return Number(state().gold)||0}
 function restoreMarketScroll(y){requestAnimationFrame(()=>window.scrollTo({top:Math.max(0,Number(y)||0),left:0,behavior:'auto'}))}
 function rerenderBrowseInPlace(){const y=window.scrollY;renderBrowse();restoreMarketScroll(y)}
@@ -134,12 +137,13 @@ function renderStats(rows){
   root.innerHTML='<div><span>Results</span><b>'+qty(rows.length)+'</b></div><div><span>Equipment</span><b>'+qty(gearCount)+'</b></div><div><span>Commodities</span><b>'+qty(commCount)+'</b></div><div><span>24h Trade Value</span><b>'+gold(volume)+'</b><small>'+trades+' trades</small></div>';
 }
 function gearCard(l){
-  const g=gearFor(l),stats=G?.statLines?.(g)||[],rarity=rarityOf(l),ilvl=Number(l.item_level||g.itemLevel)||0;
+  const g=gearFor(l),utility=isUtilityItem(g),stats=G?.statLines?.(g)||[],rarity=rarityOf(l),ilvl=Number(l.item_level||g.itemLevel)||0;
+  const meta=utility?'<span class="tp-rarity-'+slug(rarity)+'">'+esc(rarity)+'</span> · Utility':'<span class="tp-rarity-'+slug(rarity)+'">'+esc(rarity)+'</span> · '+esc(l.item_class||g.class||'Any')+' · '+esc(l.slot||g.slot||'Gear');
+  const detail=utility?Math.max(0,Number(g.charges)||0)+' / '+Math.max(1,Number(g.maxCharges)||5)+' uses · '+esc(l.seller_label||'Player Guild')+' · '+age(l.created_at):'Item Level '+ilvl+' · '+esc(l.seller_label||'Player Guild')+' · '+age(l.created_at);
   return '<article class="tp-result-card rarity-'+slug(rarity)+(selected?.kind==='gear'&&selected.id===l.id?' selected':'')+'" data-gear-id="'+esc(l.id)+'">'+
     '<div class="tp-result-art">'+gearArt(l,58)+'</div>'+
-    '<div class="tp-result-copy"><small><span class="tp-rarity-'+slug(rarity)+'">'+esc(rarity)+'</span> · '+esc(l.item_class||g.class||'Any')+' · '+esc(l.slot||g.slot||'Gear')+'</small>'+
-    '<h4>'+esc(l.item_name)+'</h4><p>Item Level '+ilvl+' · '+esc(l.seller_label||'Player Guild')+' · '+age(l.created_at)+'</p>'+
-    (stats.length?'<div class="tp-stat-chips">'+stats.slice(0,4).map(s=>'<span>'+esc(s.text)+'</span>').join('')+'</div>':'')+'</div>'+
+    '<div class="tp-result-copy"><small>'+meta+'</small><h4>'+esc(l.item_name)+'</h4><p>'+detail+'</p>'+
+    (utility?'<div class="tp-stat-chips"><span>Blackout grid auto-complete</span></div>':stats.length?'<div class="tp-stat-chips">'+stats.slice(0,4).map(s=>'<span>'+esc(s.text)+'</span>').join('')+'</div>':'')+'</div>'+
     '<div class="tp-price"><b>'+gold(l.unit_price)+'</b><small>'+ (l.is_own?'Your listing':'Buy now') +'</small></div></article>';
 }
 function commodityCard(x){
@@ -171,6 +175,7 @@ function orderLevels(rows,side){
   return arr.length?arr.map(([p,q])=>'<div class="tp-order-row"><b>'+gold(p)+'</b><span>×'+qty(q)+'</span></div>').join(''):'<div class="tp-order-row"><span>No orders</span><span>—</span></div>';
 }
 function compatibleCompare(g){
+  if(isUtilityItem(g))return'<div class="tp-empty">Utility item · not equipped. Charges are consumed when used in its encounter.</div>';
   const roster=(state().roster||[]).filter(c=>c.class===g.class&&c.equipment);
   if(!roster.length)return'<div class="tp-empty">No compatible adventurer on your roster.</div>';
   let best=roster[0],current=best.equipment?.[g.slot];
@@ -184,12 +189,15 @@ function compatibleCompare(g){
 }
 function isWatched(category,key){return watchlist.some(w=>w.category===category&&w.item_key===key)}
 function gearInspector(l){
-  const g=gearFor(l),rarity=rarityOf(l),stats=G?.statLines?.(g)||[];
+  const g=gearFor(l),utility=isUtilityItem(g),rarity=rarityOf(l),stats=G?.statLines?.(g)||[];
+  const heroMeta=utility?esc(rarity)+' · Utility':esc(rarity)+' · '+esc(l.item_class||g.class||'Any');
+  const heroDetail=utility?Math.max(0,Number(g.charges)||0)+' / '+Math.max(1,Number(g.maxCharges)||5)+' uses · '+esc(l.seller_label||'Player Guild'):esc(l.slot||g.slot||'Gear')+' · Item Level '+Number(l.item_level||g.itemLevel||0)+' · '+esc(l.seller_label||'Player Guild');
+  const itemSection=utility?'<div class="tp-inspector-section"><small>UTILITY EFFECT</small><div class="tp-stat-chips"><span>Blackout Station grid override</span><span>'+Math.max(0,Number(g.charges)||0)+'/'+Math.max(1,Number(g.maxCharges)||5)+' uses remaining</span></div><p>'+esc(g.description||'Automatically restores the Blackout Station grid after your first manual clear.')+'</p></div>':'<div class="tp-inspector-section"><small>ITEM ROLL</small><div class="tp-stat-chips">'+(stats.length?stats.map(s=>'<span>'+esc(s.text)+'</span>').join(''):'<span>No rolled stats</span>')+'</div>'+(g.uniqueEffect?'<p>'+esc(g.uniqueEffect.name)+' · '+esc(g.uniqueEffect.description)+'</p>':'')+'</div>';
   return '<div class="tp-inspector-content">'+
-    '<div class="tp-inspector-hero"><div class="tp-inspector-art">'+gearArt(l,76)+'</div><div><small class="tp-rarity-'+slug(rarity)+'">'+esc(rarity)+' · '+esc(l.item_class||g.class||'Any')+'</small><h3>'+esc(l.item_name)+'</h3><p>'+esc(l.slot||g.slot||'Gear')+' · Item Level '+Number(l.item_level||g.itemLevel||0)+' · '+esc(l.seller_label||'Player Guild')+'</p></div></div>'+
+    '<div class="tp-inspector-hero"><div class="tp-inspector-art">'+gearArt(l,76)+'</div><div><small class="tp-rarity-'+slug(rarity)+'">'+heroMeta+'</small><h3>'+esc(l.item_name)+'</h3><p>'+heroDetail+'</p></div></div>'+
     '<div><div class="tp-quote-grid"><div><span>Price</span><b>'+gold(l.unit_price)+'</b></div><div><span>Time left</span><b>'+(l.expires_at?timeLeft(l.expires_at):'48h')+'</b></div></div>'+
-    '<div class="tp-inspector-section"><small>ITEM ROLL</small><div class="tp-stat-chips">'+(stats.length?stats.map(s=>'<span>'+esc(s.text)+'</span>').join(''):'<span>No rolled stats</span>')+'</div>'+(g.uniqueEffect?'<p>'+esc(g.uniqueEffect.name)+' · '+esc(g.uniqueEffect.description)+'</p>':'')+'</div>'+
-    '<div class="tp-inspector-section"><small>YOUR COMPARISON</small>'+compatibleCompare(g)+'</div></div>'+
+    itemSection+
+    '<div class="tp-inspector-section"><small>'+ (utility?'USAGE':'YOUR COMPARISON') +'</small>'+compatibleCompare(g)+'</div></div>'+
     '<div><div class="tp-inspector-section"><small>MARKET ACTIONS</small><div class="tp-action-row">'+
     (l.is_own?'<button type="button" class="danger" data-cancel-gear="'+esc(l.id)+'">CANCEL LISTING</button>':'<button type="button" data-buy-gear="'+esc(l.id)+'">BUY FOR '+gold(l.unit_price)+'</button>')+
     '<button type="button" class="tp-watch '+(isWatched('gear',l.item_key)?'active':'')+'" data-watch="gear|'+esc(l.item_key)+'|'+esc(l.item_name)+'">'+(isWatched('gear',l.item_key)?'★ WATCHING':'☆ WATCH')+'</button></div></div>'+
@@ -331,7 +339,7 @@ function tradeableBankItems(){
   return (state().bank||[]).filter(x=>x&&x.id&&(x.tradeState||'tradeable')!=='soulbound'&&Number(x.quantity||1)>0);
 }
 function sellItemArt(item,size){
-  return G?.artHTML?.(item,size||62,'tp-sell-art')||'◇';
+  return itemArtHTML(item,size||62,'tp-sell-art');
 }
 function renderGearSellOptions(){
   const input=$('#tpGearSellItem'),picker=$('#tpGearSellPicker'),selectedRoot=$('#tpGearSellSelected'),toggle=$('#tpGearPickerToggle'),listButton=$('#tpGearListButton'),qtyInput=$('#tpGearSellQty');
@@ -340,7 +348,7 @@ function renderGearSellOptions(){
   let selected=items.find(x=>x.id===input.value)||items[0]||null;
   input.value=selected?.id||'';
   if(!selected){
-    selectedRoot.innerHTML='<div class="tp-sell-empty">No tradeable equipment is currently in your Bank.</div>';
+    selectedRoot.innerHTML='<div class="tp-sell-empty">No tradeable equipment or utility items are currently in your Bank.</div>';
     picker.innerHTML='';
     picker.hidden=true;
     toggle.disabled=true;toggle.textContent='NO ITEMS AVAILABLE';
@@ -355,13 +363,19 @@ function renderGearSellOptions(){
     qtyInput.disabled=false;qtyInput.max=String(maxQty);
     qtyInput.value=String(Math.max(1,Math.min(maxQty,Number(qtyInput.value)||1)));
   }
+  const selectedUtility=isUtilityItem(selected),selectedMeta=selectedUtility
+    ?esc(selected.rarity||'Rare')+' · Utility'
+    :esc(selected.rarity||'Common')+' · '+esc(selected.class||'Any');
+  const selectedDetail=selectedUtility
+    ?Math.max(0,Number(selected.charges)||0)+' / '+Math.max(1,Number(selected.maxCharges)||5)+' uses · Tradeable'
+    :esc(selected.slot||'Gear')+' · Item Level '+Number(selected.itemLevel||0)+' · ×'+Number(selected.quantity||1)+' in Bank';
   selectedRoot.innerHTML='<article class="tp-sell-selected-card rarity-'+slug(selected.rarity||'Common')+'">'+
     '<div class="tp-sell-selected-art">'+sellItemArt(selected,68)+'</div>'+
-    '<div class="tp-sell-selected-copy"><small>'+esc(selected.rarity||'Common')+' · '+esc(selected.class||'Any')+'</small><b>'+esc(selected.name||'Unknown item')+'</b><span>'+esc(selected.slot||'Gear')+' · Item Level '+Number(selected.itemLevel||0)+' · ×'+Number(selected.quantity||1)+' in Bank</span></div>'+
+    '<div class="tp-sell-selected-copy"><small>'+selectedMeta+'</small><b>'+esc(selected.name||'Unknown item')+'</b><span>'+selectedDetail+'</span></div>'+
     '</article>';
   picker.innerHTML=items.map(item=>'<button type="button" class="tp-sell-choice rarity-'+slug(item.rarity||'Common')+(item.id===selected.id?' active':'')+'" data-sell-item="'+esc(item.id)+'">'+
     '<span class="tp-sell-choice-art">'+sellItemArt(item,58)+'</span>'+
-    '<span class="tp-sell-choice-copy"><small>'+esc(item.rarity||'Common')+' · '+esc(item.slot||'Gear')+'</small><b>'+esc(item.name||'Unknown item')+'</b><em>iLvl '+Number(item.itemLevel||0)+' · ×'+Number(item.quantity||1)+'</em></span>'+
+    '<span class="tp-sell-choice-copy"><small>'+esc(item.rarity||'Common')+' · '+esc(isUtilityItem(item)?'Utility':(item.slot||'Gear'))+'</small><b>'+esc(item.name||'Unknown item')+'</b><em>'+(isUtilityItem(item)?Math.max(0,Number(item.charges)||0)+'/'+Math.max(1,Number(item.maxCharges)||5)+' uses · Tradeable':'iLvl '+Number(item.itemLevel||0)+' · ×'+Number(item.quantity||1))+'</em></span>'+
     '<strong>'+(item.id===selected.id?'SELECTED':'CHOOSE')+'</strong></button>').join('');
   $$('[data-sell-item]',picker).forEach(button=>button.onclick=()=>{
     input.value=button.dataset.sellItem;
@@ -389,7 +403,7 @@ async function submitGearListing(e){
     await finishMarketMutation('my',scrollY);
     if(!listings.some(x=>x.id===data.id&&x.is_own===true))throw new Error('The item was listed but the market did not return it. Refresh Market and check My Trading.');
   }catch(error){alert(error.message||'Listing failed');await syncMarketState();await refreshAll(false,false);restoreMarketScroll(scrollY)}
-  finally{actionBusy=false;if(button){button.disabled=false;button.textContent='LIST EQUIPMENT'}renderGearSellOptions()}
+  finally{actionBusy=false;if(button){button.disabled=false;button.textContent='LIST ITEM'}renderGearSellOptions()}
 }
 function renderDelivery(){
   const count=(state().tradeInbox||[]).length,pending=proceeds.filter(p=>!p.claimed).reduce((n,p)=>n+Number(p.net_gold||0),0);
