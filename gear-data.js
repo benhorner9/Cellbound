@@ -138,22 +138,38 @@ function createQuestGear(c,slot,tier=1,profile='specialist',source='Quest Reward
     source
   };
 }
+const ART_FIT={
+  Head:{default:.91,Priest:.88,Druid:.89,Mage:.88},
+  Chest:{default:.86,Priest:.82,Druid:.83,Mage:.82,Hunter:.87,Rogue:.88},
+  Weapon:{default:.76,Warrior:.80,Paladin:.78,Priest:.70,Druid:.72,Hunter:.68,Rogue:.82,Mage:.70}
+};
+function artFit(item){
+  const canonical=byName(item?.name)||byId(item?.itemId)||item||{};
+  const slot=canonical.slot||'Head',klass=canonical.class||'',tier=Math.max(1,Math.min(4,Number(canonical.tier)||1));
+  const base=Number(ART_FIT[slot]?.[klass]??ART_FIT[slot]?.default??.86);
+  const tierAdjust=tier>=3?.95:tier===2?.98:1;
+  return Math.max(.64,Math.min(1,base*tierAdjust));
+}
 function artCoordinates(item,size=64){
   if(!item)return null;
   const canonical=byName(item.name)||byId(item.itemId)||item;
   const classIndex=Number.isInteger(canonical.classIndex)?canonical.classIndex:CLASS_ORDER.indexOf(canonical.class);
   const slotIndex=Number.isInteger(canonical.slotIndex)?canonical.slotIndex:SLOT_ORDER.indexOf(canonical.slot);
   const rowIndex=Number.isInteger(canonical.rowIndex)?canonical.rowIndex:Math.max(0,(canonical.tier||1)-1);
-  if(classIndex<0||slotIndex<0)return null;
+  if(classIndex<0||slotIndex<0||rowIndex<0||rowIndex>2)return null;
   return {canonical,col:classIndex*3+slotIndex,row:rowIndex,size};
 }
-function artStyle(item,size=64){const pos=artCoordinates(item,size);return pos?`display:inline-block;position:relative;overflow:hidden;width:${size}px;height:${size}px;min-width:${size}px;min-height:${size}px;background:#070b0e;`:''}
+function artStyle(item,size=64){
+  const pos=artCoordinates(item,size);
+  return pos?`display:inline-block;position:relative;overflow:hidden;width:${size}px;height:${size}px;min-width:${size}px;min-height:${size}px;background:#070b0e;`:''
+}
 function artHTML(item,size=64,extra=''){
   if(item?.questArtMaterial&&window.CellboundProfessions?.materialArtHTML)return window.CellboundProfessions.materialArtHTML(item.questArtMaterial,size,'gear-art quest-gear-art '+extra);
   const pos=artCoordinates(item,size),canonical=pos?.canonical||byName(item?.name)||byId(item?.itemId)||item;
   if(!pos||!canonical)return`<span class="gear-art gear-art-empty ${extra}" style="display:inline-grid;width:${size}px;height:${size}px;place-items:center">◇</span>`;
-  const glyph=canonical.slot==='Head'?'⛑':canonical.slot==='Chest'?'▣':'⚔';
-  return `<span class="gear-art tier-${canonical.tier||1} ${extra}" style="${artStyle(canonical,size)}" aria-label="${canonical.name}" title="${canonical.name}"><span class="gear-art-fallback" aria-hidden="true">${glyph}</span><img class="gear-art-sprite" src="./assets/gear/cellbound-gear-atlas.webp?v=3" alt="${canonical.name}" draggable="false" style="position:absolute;max-width:none;width:${21*size}px;height:${3*size}px;left:-${pos.col*size}px;top:-${pos.row*size}px"></span>`;
+  const glyph=canonical.slot==='Head'?'⛑':canonical.slot==='Chest'?'▣':'⚔',fit=artFit(canonical),cell=Math.max(1,Math.round(size*fit)),inset=Math.round((size-cell)/2);
+  const slotClass='gear-slot-'+slug(canonical.slot||'item'),classClass='gear-class-'+slug(canonical.class||'all');
+  return `<span class="gear-art tier-${canonical.tier||1} ${slotClass} ${classClass} ${extra}" data-gear-fit="${fit.toFixed(3)}" style="${artStyle(canonical,size)}" aria-label="${canonical.name}" title="${canonical.name}"><span class="gear-art-fallback" aria-hidden="true">${glyph}</span><span class="gear-art-cell" aria-hidden="true" style="position:absolute;overflow:hidden;width:${cell}px;height:${cell}px;left:${inset}px;top:${inset}px"><img class="gear-art-sprite" src="./assets/gear/cellbound-gear-atlas.webp?v=4" alt="" draggable="false" onerror="this.style.display='none'" style="position:absolute;max-width:none;width:${21*cell}px;height:${3*cell}px;left:-${pos.col*cell}px;top:-${pos.row*cell}px"></span></span>`;
 }
-window.CellboundGear={CLASS_ORDER,SLOT_ORDER,TIER_META,STAT_DEFS,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,questProfileStats,createQuestGear,artStyle,artHTML};
+window.CellboundGear={CLASS_ORDER,SLOT_ORDER,TIER_META,STAT_DEFS,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,questProfileStats,createQuestGear,artFit,artStyle,artHTML};
 })();
