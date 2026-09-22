@@ -283,12 +283,11 @@ function ccRenderRebornEvent(e){
    if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));run.hp[targetChar.id]=pct;ccBar(target,pct);ccFloat(target,'+'+Math.round(Number(e.amount)||0),'heal');ccUpdateSidebar()}
    if(srcChar){run.healingDone[srcChar.id]=(Number(run.healingDone?.[srcChar.id])||0)+(Number(e.amount)||0);run.overhealing[srcChar.id]=(Number(run.overhealing?.[srcChar.id])||0)+(Number(e.payload?.overhealing)||0);ccRenderMeters()}
    break;
-  case'PHASE_CHANGE':{feed((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');setStatus(e.ability||'Phase change');if(STAGES[run.stage]?.id==='vorran'){run.vorranShrink=Math.min(3,(Number(run.vorranShrink)||0)+1);const arena=$('#cc2dArena');if(arena)arena.classList.add('vorran-shrink-'+run.vorranShrink);ccReflowArena();feed(run.vorranShrink>=3?'There is nowhere left to run. Vorran forces the entire party into the centre.':'The canyon closes further around the party.');}break;}
+  case'PHASE_CHANGE':{window.CellboundFX?.phase?.(e.ability||'Boss phase',e.payload?.healthPct);feed((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');setStatus(e.ability||'Phase change');if(STAGES[run.stage]?.id==='vorran'){run.vorranShrink=Math.min(3,(Number(run.vorranShrink)||0)+1);const arena=$('#cc2dArena');if(arena)arena.classList.add('vorran-shrink-'+run.vorranShrink);ccReflowArena();feed(run.vorranShrink>=3?'There is nowhere left to run. Vorran forces the entire party into the centre.':'The canyon closes further around the party.');}break;}
   case'ENRAGE':feed((e.ability||'The boss enrages')+'.');setStatus(e.result==='hard'?'HARD ENRAGE — finish now':(e.ability||'Enrage'));break;
   case'UNIQUE_EFFECT_TRIGGER':if(srcChar){feed(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');ccFloat(src,e.ability||'UNIQUE','heal');setStatus((e.ability||'Unique effect')+' activated.')}break;
   case'CROWD_CONTROL':if(srcChar){feed(srcChar.name+' controls a priority enemy.');if(target)ccFloat(target,'CONTROLLED','heal')}break;
-  case'PHASE_CHANGE':setStatus((e.ability||'Boss phase')+' begins.');feed((e.ability||'A new phase')+' begins.');break;
-  case'ENRAGE':setStatus(e.result==='hard'?'HARD ENRAGE':'Boss enraged');feed((e.ability||'Enrage')+' activates.');break;
+
   case'AFFIX_TRIGGER':feed((e.ability||'Dungeon affix')+' · '+String(e.result||'triggered').replace(/-/g,' ')+'.');break;
   case'ENEMY_REVIVED':if(target){const el=$('[data-cc="'+target+'"]');if(el)el.classList.remove('dead');ccBar(target,Number(e.payload?.targetHpPct)||35);ccFloat(target,'RETURNS','incoming');feed('Necromantic returns an enemy to the fight.')}break;
   case'PLAYER_MISTAKE':if(srcChar)feed(srcChar.name+' '+(e.payload?.detail||'makes an execution mistake')+'.');break;
@@ -317,7 +316,7 @@ function ccRenderRebornEvent(e){
    if(target){const el=$('[data-cc="'+target+'"]');if(el)el.classList.add('dead');ccBar(target,0);if(targetChar){run.hp[targetChar.id]=0;feed(targetChar.name+' is defeated.');ccUpdateSidebar()}}
    break;
   case'DEFENSIVE_ACTIVATED':if(srcChar)feed(srcChar.name+' activates a defensive.');break;
-  case'COMBAT_END':ccCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');ccRegroup(260);break;
+  case'COMBAT_END':ccCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');if(e.result!=='victory')window.CellboundFX?.wipe?.('The party has fallen inside Chaos Canyon.');ccRegroup(260);break;
  }
 }
 async function ccPlayTimeline(result,tok){
@@ -571,7 +570,7 @@ async function start(){
  const startButton=root().querySelector('[data-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
  await Game.persistState?.();
  const service=await ccWaitForEndgame(),eg=ccEndgameConfig(),attempt=await service?.beginAttempt?.('chaos-canyon');if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN EXPEDITION →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Descent again.');return}token++;const tok=token,p=party();run={stage:0,done:false,speed:1,log:[],damageDone:Object.fromEntries(p.map(ch=>[ch.id,0])),healingDone:Object.fromEntries(p.map(ch=>[ch.id,0])),overhealing:Object.fromEntries(p.map(ch=>[ch.id,0])),threat:Object.fromEntries(p.map(ch=>[ch.id,0])),aggro:null,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=ccResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),statuses:Object.fromEntries(p.map(c=>[c.id,[]])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{},chaosScar:0,vorranShrink:0};draw();
- for(let i=0;i<STAGES.length;i++){if(tok!==token)return;run.stage=i;const s=STAGES[i];$('#cc2dTitle').textContent=s.title;$('.cc2d-route').innerHTML=ccRouteMarkup(s.id,false);if(!await fightStage(s,tok,i))return;if(i===2){if(!await runChaosCrossing(tok))return}}
+ for(let i=0;i<STAGES.length;i++){if(tok!==token)return;run.stage=i;const s=STAGES[i];if(/boss/i.test(String(s.kind||s.combatKind||'')))window.CellboundFX?.boss?.(s.title);$('#cc2dTitle').textContent=s.title;$('.cc2d-route').innerHTML=ccRouteMarkup(s.id,false);if(!await fightStage(s,tok,i))return;if(i===2){if(!await runChaosCrossing(tok))return}}
  if(tok!==token)return;await complete();
 }
 async function complete(){

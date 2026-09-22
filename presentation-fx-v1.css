@@ -1,0 +1,74 @@
+/* Cellbound Presentation FX v1
+   Shared visual language for navigation, story beats, combat milestones and rewards. */
+:root{
+  --cbfx-cell:91,211,198;
+  --cbfx-gold:224,180,92;
+  --cbfx-danger:224,83,83;
+  --cbfx-arcane:148,112,220;
+}
+#cellboundFxRoot{position:fixed;inset:0;z-index:99996;pointer-events:none;overflow:hidden;isolation:isolate}
+.cbfx-flash{position:absolute;inset:0;opacity:0;background:radial-gradient(circle at 50% 45%,rgba(var(--cbfx-rgb),.28),rgba(var(--cbfx-rgb),.05) 35%,transparent 72%);mix-blend-mode:screen}
+.cbfx-flash.show{animation:cbfx-flash .55s ease-out}
+.cbfx-vignette{position:absolute;inset:-8%;opacity:0;background:radial-gradient(circle at center,transparent 38%,rgba(var(--cbfx-rgb),.18) 72%,rgba(0,0,0,.52) 100%)}
+.cbfx-vignette.show{animation:cbfx-vignette .85s ease-out}
+.cbfx-card-wrap{position:absolute;inset:0;display:grid;place-items:center;padding:24px;opacity:0}
+.cbfx-card-wrap.show{animation:cbfx-wrap 1.45s ease both}
+.cbfx-card{position:relative;width:min(620px,88vw);padding:24px 28px;text-align:center;border:1px solid rgba(var(--cbfx-rgb),.3);background:linear-gradient(180deg,rgba(11,21,27,.94),rgba(5,12,16,.96));box-shadow:0 22px 80px rgba(0,0,0,.58),0 0 60px rgba(var(--cbfx-rgb),.09);overflow:hidden}
+.cbfx-card:before{content:"";position:absolute;left:12%;right:12%;top:0;height:1px;background:linear-gradient(90deg,transparent,rgba(var(--cbfx-rgb),.95),transparent)}
+.cbfx-card:after{content:"";position:absolute;inset:-45%;background:radial-gradient(circle,rgba(var(--cbfx-rgb),.12),transparent 55%);animation:cbfx-drift 3.6s linear infinite}
+.cbfx-card>*{position:relative;z-index:1}
+.cbfx-icon{display:block;margin:0 auto 9px;font-size:2rem;line-height:1;color:rgb(var(--cbfx-rgb));text-shadow:0 0 24px rgba(var(--cbfx-rgb),.55)}
+.cbfx-card small{display:block;color:rgb(var(--cbfx-rgb));font-size:.54rem;font-weight:900;letter-spacing:.2em;text-transform:uppercase}
+.cbfx-card h2{margin:7px 0 6px;color:#edf6f4;font-family:Georgia,serif;font-size:clamp(1.55rem,5vw,2.35rem);font-weight:500;letter-spacing:.01em}
+.cbfx-card p{margin:0 auto;max-width:520px;color:#8fa7a3;font-size:.72rem;line-height:1.55}
+.cbfx-card[data-compact="1"]{width:min(520px,86vw);padding:17px 22px}
+.cbfx-card[data-compact="1"] .cbfx-icon{font-size:1.35rem;margin-bottom:6px}
+.cbfx-card[data-compact="1"] h2{font-size:1.35rem;margin:4px 0}
+.cbfx-callout{position:absolute;left:50%;top:max(18px,env(safe-area-inset-top));transform:translate(-50%,-16px);min-width:min(540px,86vw);max-width:86vw;padding:12px 18px;text-align:center;border:1px solid rgba(var(--cbfx-rgb),.28);background:rgba(7,16,20,.9);box-shadow:0 14px 44px rgba(0,0,0,.42);opacity:0}
+.cbfx-callout.show{animation:cbfx-callout 1.35s ease both}
+.cbfx-callout small{display:block;color:rgb(var(--cbfx-rgb));font-size:.48rem;font-weight:900;letter-spacing:.17em;text-transform:uppercase}
+.cbfx-callout b{display:block;margin-top:3px;color:#e9f3f1;font-family:Georgia,serif;font-size:1.03rem;font-weight:500}
+.cbfx-particles{position:absolute;inset:0;overflow:hidden}
+.cbfx-particle{position:absolute;left:var(--x);top:55%;width:3px;height:3px;border-radius:50%;background:rgb(var(--cbfx-rgb));box-shadow:0 0 12px rgba(var(--cbfx-rgb),.9);opacity:0;animation:cbfx-particle var(--d) ease-out var(--delay) forwards}
+.cbfx-view-enter{animation:cbfx-view .34s cubic-bezier(.2,.72,.2,1)}
+.cbfx-press{animation:cbfx-press .16s ease-out}
+.cbfx-pulse{animation:cbfx-pulse .55s ease-out}
+body.cbfx-shake-soft .app-shell{animation:cbfx-shake-soft .26s linear}
+body.cbfx-shake-hard .app-shell{animation:cbfx-shake-hard .36s linear}
+.modal-backdrop:not([hidden])>.character-modal,
+.modal-backdrop:not([hidden])>.attempt-modal,
+.fourfold-story-backdrop:not([hidden])>section,
+.fourfold-puzzle-backdrop:not([hidden])>section,
+.bell-backdrop:not([hidden])>.bell-shell{animation:cbfx-modal .34s cubic-bezier(.18,.78,.22,1)}
+@keyframes cbfx-flash{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
+@keyframes cbfx-vignette{0%{opacity:0}30%{opacity:1}100%{opacity:0}}
+@keyframes cbfx-wrap{0%{opacity:0;transform:scale(.985)}12%,72%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.012)}}
+@keyframes cbfx-drift{from{transform:translate3d(-2%,0,0) rotate(0)}to{transform:translate3d(2%,0,0) rotate(12deg)}}
+@keyframes cbfx-callout{0%{opacity:0;transform:translate(-50%,-18px)}14%,70%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-8px)}}
+@keyframes cbfx-particle{0%{opacity:0;transform:translate3d(0,20px,0) scale(.4)}20%{opacity:.8}100%{opacity:0;transform:translate3d(var(--dx),-120px,0) scale(1.4)}}
+@keyframes cbfx-view{0%{opacity:.2;transform:translateY(7px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes cbfx-press{0%{transform:scale(1)}45%{transform:scale(.975)}100%{transform:scale(1)}}
+@keyframes cbfx-pulse{0%{filter:brightness(1)}35%{filter:brightness(1.5);box-shadow:0 0 0 1px rgba(var(--cbfx-cell),.28),0 0 30px rgba(var(--cbfx-cell),.12)}100%{filter:brightness(1);box-shadow:none}}
+@keyframes cbfx-shake-soft{0%,100%{transform:none}25%{transform:translate(-2px,1px)}50%{transform:translate(2px,-1px)}75%{transform:translate(-1px,1px)}}
+@keyframes cbfx-shake-hard{0%,100%{transform:none}15%{transform:translate(-5px,2px)}30%{transform:translate(4px,-3px)}50%{transform:translate(-3px,3px)}70%{transform:translate(3px,-1px)}85%{transform:translate(-2px,1px)}}
+@keyframes cbfx-modal{0%{opacity:0;transform:translateY(12px) scale(.985)}100%{opacity:1;transform:translateY(0) scale(1)}}
+
+/* Shared reward staging */
+.cb2d-loot-screen .cb2d-loot-currency>article,
+.cb2d-loot-screen .cb2d-loot-item,
+.cb2d-loot-screen .cb2d-loot-material,
+.cb2d-loot-screen .tb-relic-drop,
+.cb2d-loot-screen .bs-override-drop-card{animation:cbfx-loot-rise .46s cubic-bezier(.18,.78,.22,1) both}
+.cb2d-loot-screen .cb2d-loot-currency>article:nth-child(2){animation-delay:.05s}
+.cb2d-loot-screen .cb2d-loot-currency>article:nth-child(3){animation-delay:.1s}
+.cb2d-loot-screen .cb2d-loot-currency>article:nth-child(4){animation-delay:.15s}
+.cb2d-loot-screen .cb2d-loot-currency>article:nth-child(5){animation-delay:.2s}
+.cb2d-loot-screen .cb2d-loot-item:nth-child(2),.cb2d-loot-screen .cb2d-loot-material:nth-child(2){animation-delay:.08s}
+.cb2d-loot-screen .cb2d-loot-item:nth-child(3),.cb2d-loot-screen .cb2d-loot-material:nth-child(3){animation-delay:.16s}
+.cb2d-loot-screen .cb2d-loot-item:nth-child(4),.cb2d-loot-screen .cb2d-loot-material:nth-child(4){animation-delay:.24s}
+@keyframes cbfx-loot-rise{0%{opacity:0;transform:translateY(12px) scale(.985);filter:brightness(.7)}100%{opacity:1;transform:translateY(0) scale(1);filter:brightness(1)}}
+@media(max-width:700px){.cbfx-card{padding:20px 18px}.cbfx-card p{font-size:.65rem}.cbfx-callout{top:max(10px,env(safe-area-inset-top))}}
+@media(prefers-reduced-motion:reduce){
+  .cbfx-card-wrap.show,.cbfx-callout.show,.cbfx-flash.show,.cbfx-vignette.show,.cbfx-particle,.cbfx-view-enter,.cbfx-press,.cbfx-pulse,body.cbfx-shake-soft .app-shell,body.cbfx-shake-hard .app-shell,.modal-backdrop:not([hidden])>*,
+  .fourfold-story-backdrop:not([hidden])>section,.fourfold-puzzle-backdrop:not([hidden])>section,.bell-backdrop:not([hidden])>.bell-shell{animation-duration:.01ms!important;animation-iteration-count:1!important}
+}

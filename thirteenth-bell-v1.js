@@ -281,6 +281,7 @@ function lockedHouse(){
 }
 async function triggerReset(reason){
   const b=ensure();b.loop++;b.minute=0;history('Loop '+(b.loop-1)+' ended at midnight. The guild remembered.');await save(false);
+  window.CellboundFX?.shake?.('hard');window.CellboundFX?.callout?.({eyebrow:'MIDNIGHT · LOOP '+(b.loop-1),title:'THE THIRTEENTH BELL RINGS',tone:'story',duration:1600});
   let count=0;
   const draw=()=>{
     root.innerHTML=chrome('MIDNIGHT · LOOP '+(b.loop-1),'The bell rings',
@@ -291,7 +292,7 @@ async function triggerReset(reason){
   };draw()
 }
 function beginFinalRun(){
-  const b=ensure();if(!b.solved.house)return;b.stage='final-run';b.finalSequence=[];history('The guild finally understood the loop and prepared to execute the final thirteen minutes.');save(false).then(renderFinalRun)
+  const b=ensure();if(!b.solved.house)return;b.stage='final-run';b.finalSequence=[];history('The guild finally understood the loop and prepared to execute the final thirteen minutes.');save(false).then(()=>{renderFinalRun();window.CellboundFX?.story?.('The Final Loop','Thirteen minutes. Six actions. No room for a wrong move.',{eyebrow:'GREYWAKE · 11:47 PM',tone:'story',duration:1550})})
 }
 function renderFinalRun(msg=''){
   const b=ensure(),used=new Set(b.finalSequence),nextIndex=b.finalSequence.length;
@@ -313,9 +314,10 @@ function renderFinalRun(msg=''){
 }
 function revealAliveVillage(){
   const b=ensure();b.stage='boss';save(false);
+  window.CellboundFX?.flash?.('gold',true);
   root.innerHTML=chrome('GREYWAKE · 11:59 PM','The final thirteen minutes',
     '<div class="bell-alive-reveal"><div class="bell-alive-town"><span>THE INN</span><span>THE FORGE</span><span>THE CHAPEL</span><span>THE WELL</span><strong>THE CLOCKTOWER</strong></div><div><small>GREYWAKE · ALIVE</small><h3>Everything you explored as a ruin is suddenly full of people.</h3><p>The inn is roaring. The blacksmith is shouting over his forge. Children cross the square you have walked through empty again and again.</p><p>Above them, Edrin Vale is climbing the clocktower with his daughter in his arms.</p><button data-climb-tower>CLIMB THE CLOCKTOWER →</button></div></div>'
-  );bindClose();root.querySelector('[data-climb-tower]').onclick=renderBossPrelude
+  );bindClose();window.CellboundFX?.callout?.({eyebrow:'GREYWAKE · ALIVE',title:'The village was never empty.',tone:'gold',duration:1700});root.querySelector('[data-climb-tower]').onclick=renderBossPrelude
 }
 function renderBossPrelude(){
   const b=ensure();b.stage='boss';save(false);
@@ -349,7 +351,7 @@ async function fightEdrin(){
   });
   root.hidden=false;document.body.classList.add('bell-open');
   if(!won){renderBossPrelude();return}
-  b.bossWon=true;b.stage='choice';history('Edrin Vale was defeated beneath the Thirteenth Bell. Midnight continued.');await save(false);renderChoice()
+  b.bossWon=true;b.stage='choice';history('Edrin Vale was defeated beneath the Thirteenth Bell. Midnight continued.');await save(false);renderChoice();window.CellboundFX?.callout?.({eyebrow:'12:01 AM',title:'Midnight continued.',tone:'gold',duration:1600})
 }
 function renderChoice(){
   const b=ensure();
@@ -370,7 +372,7 @@ async function finish(ending){
   s.relics=s.relics&&typeof s.relics==='object'?s.relics:{};s.relics.thirteenthChime={name:'The Thirteenth Chime',unlockedAt:new Date().toISOString(),effect:'Once per dungeon, fatal damage may rewind the bearer to a survivable moment. Combat integration reserved for the relic system.'};
   s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push('Quest complete: '+TITLE+'. Greywake returned to the world.');
   history('The guild chose to '+({break:'break the Bell and return Greywake cleanly',complete:'complete the Bell and stabilise Greywake',silence:'silence the Thirteenth Hour itself'}[ending])+'.');
-  await save(false);renderCompletion()
+  await save(false);renderCompletion();window.CellboundFX?.victory?.({eyebrow:'QUEST COMPLETE',title:TITLE,copy:'Greywake has returned to the world.'})
 }
 function renderCompletion(){
   const b=ensure(),ending={break:'The Bell was broken.',complete:'The Bell was completed.',silence:'The Thirteenth Hour was silenced.'}[b.ending]||'The loop ended.';
