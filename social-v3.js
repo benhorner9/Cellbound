@@ -166,7 +166,9 @@ function renderWorldRewards(){
 }
 async function claimReward(id){
   const {data,error}=await db.rpc('claim_world_boss_reward',{p_reward_id:id});if(error){alert(error.message||'Reward could not be claimed');return;}
-  location.reload();
+  await Game.refreshStateFromServer?.({render:true});
+  await loadWorld();
+  window.CellboundFX?.loot?.({name:data?.item_name||'World Boss Reward',rarity:data?.rarity||'Rare'});
 }
 async function refreshAll(markSeen=false){await Promise.all([loadChat(markSeen),loadGroups(),loadWorld()]);}
 function bind(){
