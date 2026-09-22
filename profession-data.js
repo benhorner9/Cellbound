@@ -12,10 +12,12 @@ const MATERIALS={
   'void-crystal':{name:'Void Crystal',rarity:'Epic',source:'The Hollow Sanctum',icon:'◆',artIndex:7,endgame:true},
   'cell-shards':{name:'Cell Shards',rarity:'Uncommon',source:'Dungeons, Cellbound+ and dismantling equipment',icon:'✧',artIndex:2,endgame:true}
 };
+function materialRarityClass(rarity='Common'){return 'material-rarity-'+String(rarity||'Common').toLowerCase().replace(/[^a-z0-9]+/g,'-')}
 function materialArtHTML(key,size=64,extra=''){
-  const m=MATERIALS[key];if(!m||!Number.isInteger(m.artIndex))return `<span class="material-art material-art-empty ${extra}" style="display:inline-grid;width:${size}px;height:${size}px;place-items:center">${m?.icon||'◇'}</span>`;
+  const m=MATERIALS[key],rarity=m?.rarity||'Common',rarityClass=materialRarityClass(rarity);
+  if(!m||!Number.isInteger(m.artIndex))return `<span class="material-art material-art-empty ${rarityClass} ${extra}" data-rarity="${rarity}" style="display:inline-grid;width:${size}px;height:${size}px;place-items:center" aria-label="${m?.name||key}" title="${m?.name||key} · ${rarity}">${m?.icon||'◇'}</span>`;
   const col=m.artIndex%4,row=Math.floor(m.artIndex/4),fit=.86,cell=Math.max(1,Math.round(size*fit)),inset=Math.round((size-cell)/2);
-  return `<span class="material-art ${extra}" style="width:${size}px;height:${size}px" aria-label="${m.name}" title="${m.name}"><span class="material-art-fallback" aria-hidden="true">${m.icon||'◇'}</span><span class="material-art-cell" aria-hidden="true" style="position:absolute;overflow:hidden;width:${cell}px;height:${cell}px;left:${inset}px;top:${inset}px"><img src="${MATERIAL_ATLAS}" alt="" draggable="false" onerror="this.style.display='none'" style="width:${cell*4}px;height:${cell*2}px;left:-${col*cell}px;top:-${row*cell}px"></span></span>`;
+  return `<span class="material-art ${rarityClass} ${extra}" data-rarity="${rarity}" style="width:${size}px;height:${size}px" aria-label="${m.name}" title="${m.name} · ${rarity}"><span class="material-art-fallback" aria-hidden="true">${m.icon||'◇'}</span><span class="material-art-cell" aria-hidden="true" style="position:absolute;overflow:hidden;width:${cell}px;height:${cell}px;left:${inset}px;top:${inset}px"><img src="${MATERIAL_ATLAS}" alt="" draggable="false" onerror="this.style.display='none'" style="width:${cell*4}px;height:${cell*2}px;left:-${col*cell}px;top:-${row*cell}px"></span></span>`;
 }
 const PROFESSIONS={
   Alchemy:{icon:'⚗',summary:'Brew potions and flasks that are consumed for temporary combat power.',recipes:[
@@ -95,5 +97,5 @@ const BOSS_REAGENTS={
 const recipeById=id=>Object.values(PROFESSIONS).flatMap(p=>p.recipes).find(r=>r.id===id)||null;
 const skillThreshold=level=>50+Math.max(1,level)*15;
 const rollReagents=bossId=>(BOSS_REAGENTS[bossId]||[]).map(r=>({key:r.key,quantity:r.min+Math.floor(Math.random()*(r.max-r.min+1))}));
-window.CellboundProfessions={MATERIALS,PROFESSIONS,BOSS_REAGENTS,recipeById,skillThreshold,rollReagents,materialArtHTML,bonusText,itemSignature,activeBonuses,activeEffects,consumeBossCharges};
+window.CellboundProfessions={MATERIALS,PROFESSIONS,BOSS_REAGENTS,recipeById,skillThreshold,rollReagents,materialRarityClass,materialArtHTML,bonusText,itemSignature,activeBonuses,activeEffects,consumeBossCharges};
 })();
