@@ -267,7 +267,7 @@ function startRun(){
   alert(error.message||'The burial ground could not be entered.');openBriefing();return
  }
  run={result,rewards:null,rewardsApplied:false,damage:{},healing:{},threat:{},resources:Object.fromEntries(party().map(c=>['p-'+c.id,tbInitialResource(c)])),activeBosses:new Set(),defeated:new Set(),elapsed:0};
- renderLive();
+ renderLive();window.CellboundFX?.story?.('The Sepulchre of Twelve','One tomb opens now. Another follows every twenty seconds.',{eyebrow:'PRIVATE WORLD EVENT',tone:'danger',duration:1450});
  requestAnimationFrame(()=>playTimeline(result.timeline))
 }
 
@@ -344,7 +344,7 @@ function spawnBoss(id){
  const idx=BOSSES.findIndex(x=>x.id===id),entryY=24+(idx%5)*13;
  root.insertAdjacentHTML('beforeend','<div class="cb2d-unit tb-unit enemy boss" data-tb-boss="'+id+'" data-x="96" data-y="'+entryY+'" style="left:96%;top:'+entryY+'%"><i></i><span>'+esc(b.vice)+'<small class="cb2d-unit-meta">'+esc(b.name)+'</small></span><em class="cb2d-unit-hp"><i style="width:100%"></i></em></div>');
  run.activeBosses.add(id);layoutBosses(760);
- const tomb=$('[data-tb-tomb="'+id+'"]');tomb?.classList.add('open');feed(b.name+' rises from the tomb.','spawn');$('#tbStatus').textContent=b.name+' has entered the burial ground.'
+ const tomb=$('[data-tb-tomb="'+id+'"]');tomb?.classList.add('open');window.CellboundFX?.callout?.({eyebrow:'TOMB OPENED · '+b.vice,title:b.name,tone:'danger',duration:1200});feed(b.name+' rises from the tomb.','spawn');$('#tbStatus').textContent=b.name+' has entered the burial ground.'
 }
 function defeatBoss(id){
  run.activeBosses.delete(id);run.defeated.add(id);const dead=$('[data-tb-boss="'+id+'"]');if(dead){dead.classList.add('dead');setTimeout(()=>{dead.remove();layoutBosses(420)},420/playSpeed)}const tomb=$('[data-tb-tomb="'+id+'"]');tomb?.classList.remove('open');tomb?.classList.add('defeated');$('#tbKilled').textContent=run.defeated.size+' / 12';feed((bossDef(id)?.name||id)+' has fallen.','kill')
@@ -454,7 +454,11 @@ function showResults(){
  (w.relic?'<section class="tb-relic-drop"><div class="tb-relic-icon">'+esc(w.relic.icon||'◇')+'</div><div><small>ANCIENT RELIC · '+String(w.relic.relicRole).toUpperCase()+'</small><h3>'+esc(w.relic.name)+'</h3><p>'+esc(w.relic.uniqueEffect.description)+'</p><span>Sent to Guild Bank</span></div></section>':'<section class="tb-no-relic"><small>RELIC ROLL</small><h3>No relic recovered this attempt.</h3><p>Higher boss counts dramatically improve the relic chance. A 12/12 clear guarantees one.</p></section>')+
  '<section class="cbr-analysis"><div class="cbr-analysis-head"><div><small>COMBAT REBORN · RUN ANALYSIS</small><h4>How long your five held the burial ground.</h4></div></div><div class="cbr-analysis-grid"><article><span>TIME</span><b>'+formatTime(r.endMs)+'</b></article><article><span>DAMAGE</span><b>'+Math.round(r.totals.damage).toLocaleString()+'</b></article><article><span>HEALING</span><b>'+Math.round(r.totals.healing).toLocaleString()+'</b></article><article><span>AVOIDABLE</span><b>'+Math.round(r.totals.avoidable).toLocaleString()+'</b></article><article><span>MISTAKES</span><b>'+r.totals.mistakes+'</b></article><article><span>DEATHS</span><b>'+r.totals.deaths+'</b></article><article><span>INTERRUPTS</span><b>'+r.totals.interrupts+'/'+r.totals.interruptAttempts+'</b></article><article><span>TOMBS OPENED</span><b>'+Math.min(12,Math.floor(r.endMs/SPAWN_MS)+1)+'</b></article></div><div class="cbr-analysis-list">'+resultPlayerRows()+'</div></section>'+
  '<footer class="cb2d-loot-actions"><button data-tb-close>RETURN TO WORLD BOSSES →</button></footer></section>';
- root.querySelectorAll('[data-tb-close]').forEach(b=>b.onclick=close);renderCard()
+ root.querySelectorAll('[data-tb-close]').forEach(b=>b.onclick=close);renderCard();
+ if(r.kills===12)window.CellboundFX?.victory?.({eyebrow:'THE TWELVE BELOW · FULL CLEAR',title:'All Twelve Defeated',copy:'No vice remains buried beneath the Sepulchre.'});
+ else if(r.outcome==='defeat')window.CellboundFX?.wipe?.('The Sepulchre claimed the party after '+r.kills+' of 12 vices.');
+ else window.CellboundFX?.callout?.({eyebrow:'SURVIVAL ATTEMPT COMPLETE',title:r.kills+' of 12 defeated',tone:'gold'});
+ if(w.relic)setTimeout(()=>window.CellboundFX?.loot?.({name:w.relic.name,rarity:'Epic'}),900)
 }
 
 function init(){
