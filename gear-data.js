@@ -1,7 +1,9 @@
 (()=>{
 'use strict';
 const CLASS_ORDER=['Warrior','Paladin','Priest','Druid','Hunter','Rogue','Mage'];
-const SLOT_ORDER=['Head','Chest','Weapon'];
+const CORE_SLOT_ORDER=['Head','Chest','Weapon'];
+const SLOT_ORDER=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring','Trinket','Relic'];
+const EQUIPMENT_POSITION_ORDER=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic'];
 const TIER_META={
   1:{rarity:'Common',label:'Tier 1',dropEnabled:true,color:'#e7e7df',statCount:1,chapter:1},
   2:{rarity:'Uncommon',label:'Tier 2',dropEnabled:true,color:'#55d56a',statCount:2,chapter:1},
@@ -11,8 +13,17 @@ const TIER_META={
 };
 const ITEM_LEVELS={
   Head:[18,24,32,40,46],
+  Shoulders:[18,24,32,40,46],
   Chest:[20,26,34,42,48],
-  Weapon:[22,28,36,44,50]
+  Hands:[18,24,32,40,46],
+  Waist:[18,24,32,40,46],
+  Legs:[20,26,34,42,48],
+  Feet:[18,24,32,40,46],
+  Weapon:[22,28,36,44,50],
+  OffHand:[21,27,35,43,49],
+  Ring:[19,25,33,41,47],
+  Trinket:[20,26,34,42,48],
+  Relic:[21,27,35,43,49]
 };
 const CHAPTER_GEAR={chapter:1,levelCap:15,dungeonTierCeiling:4,raidExclusiveTier:5};
 const STAT_DEFS={
@@ -48,15 +59,42 @@ const NAMES={
   Rogue:[['Shadowcap','Duskleather Tunic','Twin Knives'],['Nightfang Hood','Nightfang Jerkin','Venomshivs'],['Shadecoil Mask','Shadecoil Vest','Ghostfang Daggers'],['Shadecoil Cowl','Shadecoil Leathers','Shadecoil Blades']],
   Mage:[['Novice Circlet','Blueweave Robe','Crystal Wand'],['Spellforge Circlet','Spellforge Mantle','Arcglass Rod'],['Starweave Crown','Starweave Vestment','Celestine Staff'],['Starweave Diadem','Starweave Robe','Starweave Focus']]
 };
+const TIER_PREFIX={
+  Warrior:['Militia','Ashguard','Vaultforged','Warlord'],
+  Paladin:['Oathbound','Sunwarden','Radiant Aegis','Sunward'],
+  Priest:['Acolyte','Chapelweave','Saintglass','Ascendant'],
+  Druid:['Rootwoven','Wildbloom','Moonbark','Elder Moonbark'],
+  Hunter:['Tracker','Longshot','Hawkeye','Storm Hawkeye'],
+  Rogue:['Shadow','Nightfang','Shadecoil','Master Shadecoil'],
+  Mage:['Novice','Spellforge','Starweave','Ascendant Starweave']
+};
+const ARMOUR_NOUNS={
+  plate:{Shoulders:'Shoulderguards',Hands:'Gauntlets',Waist:'Warbelt',Legs:'Legplates',Feet:'Greaves'},
+  leather:{Shoulders:'Spaulders',Hands:'Grips',Waist:'Belt',Legs:'Legguards',Feet:'Boots'},
+  cloth:{Shoulders:'Mantle',Hands:'Gloves',Waist:'Sash',Legs:'Leggings',Feet:'Slippers'}
+};
+const OFFHAND_NOUN={Warrior:'Shield',Paladin:'Bulwark',Priest:'Scripture',Druid:'Idol',Hunter:'Quiver',Rogue:'Parrying Blade',Mage:'Grimoire'};
+const RELIC_NOUN={Warrior:'Crest',Paladin:'Libram',Priest:'Icon',Druid:'Totem',Hunter:'Trophy',Rogue:'Token',Mage:'Focus'};
+const SLOT_GLYPHS={Head:'⛑',Shoulders:'⌃',Chest:'▣',Hands:'✋',Waist:'═',Legs:'║',Feet:'♟',Weapon:'⚔',OffHand:'🛡',Ring:'◉',Trinket:'◆',Relic:'◇'};
+function armourFamily(klass){return ['Warrior','Paladin'].includes(klass)?'plate':['Priest','Mage'].includes(klass)?'cloth':'leather'}
+function nameFor(klass,tier,slot){
+  const core=CORE_SLOT_ORDER.indexOf(slot);if(core>=0)return NAMES[klass][tier-1][core];
+  const prefix=TIER_PREFIX[klass]?.[tier-1]||klass;
+  if(slot==='OffHand')return prefix+' '+(OFFHAND_NOUN[klass]||'Off-Hand');
+  if(slot==='Ring')return prefix+' Band';
+  if(slot==='Trinket')return prefix+' Charm';
+  if(slot==='Relic')return prefix+' '+(RELIC_NOUN[klass]||'Relic');
+  return prefix+' '+(ARMOUR_NOUNS[armourFamily(klass)]?.[slot]||slot)
+}
 const slug=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const items=[];
 CLASS_ORDER.forEach((klass,classIndex)=>{[1,2,3,4].forEach(tier=>{SLOT_ORDER.forEach((slot,slotIndex)=>{
   const meta=TIER_META[tier],itemLevel=ITEM_LEVELS[slot]?.[tier-1]||18+(tier-1)*8;
-  items.push({itemId:`${slug(klass)}-t${tier}-${slug(slot)}`,name:NAMES[klass][tier-1][slotIndex],class:klass,classes:[klass],slot,tier,rarity:meta.rarity,tierLabel:meta.label,enabled:true,dropEnabled:meta.dropEnabled,itemLevel,power:0,classIndex,slotIndex,rowIndex:tier-1});
+  items.push({itemId:`${slug(klass)}-t${tier}-${slug(slot)}`,name:nameFor(klass,tier,slot),class:klass,classes:[klass],slot,tier,rarity:meta.rarity,tierLabel:meta.label,enabled:true,dropEnabled:meta.dropEnabled,itemLevel,power:0,classIndex,slotIndex,rowIndex:tier-1});
 })})});
 const byId=id=>items.find(x=>x.itemId===id)||null;
 const byName=name=>items.find(x=>x.name===name)||null;
-const starterSet=klass=>SLOT_ORDER.map(slot=>items.find(x=>x.class===klass&&x.tier===1&&x.slot===slot));
+const starterSet=klass=>CORE_SLOT_ORDER.map(slot=>items.find(x=>x.class===klass&&x.tier===1&&x.slot===slot));
 const poolForTier=tier=>items.filter(x=>x.tier===tier&&x.enabled&&x.dropEnabled);
 const rand=(min,max)=>min+Math.floor(Math.random()*(max-min+1));
 function statRange(key,tier){
@@ -66,7 +104,7 @@ function statRange(key,tier){
   return [[3,6],[5,9],[8,13],[12,18],[16,23]][t-1];
 }
 function rollValue(key,tier,slot){
-  const [min,max]=statRange(key,tier),mult=slot==='Weapon'?1.12:slot==='Chest'?1.06:1;
+  const [min,max]=statRange(key,tier),mult=slot==='Weapon'?1.12:['Chest','Legs','Trinket'].includes(slot)?1.06:['OffHand','Relic'].includes(slot)?1.04:1;
   return Math.max(1,Math.round(rand(min,max)*mult));
 }
 function rollId(){return globalThis.crypto?.randomUUID?crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10)}
@@ -162,7 +200,7 @@ function artCoordinates(item,size=64){
   if(!item)return null;
   const canonical=byName(item.name)||byId(item.itemId)||item;
   const classIndex=Number.isInteger(canonical.classIndex)?canonical.classIndex:CLASS_ORDER.indexOf(canonical.class);
-  const slotIndex=Number.isInteger(canonical.slotIndex)?canonical.slotIndex:SLOT_ORDER.indexOf(canonical.slot);
+  const slotIndex=CORE_SLOT_ORDER.indexOf(canonical.slot);
   const rawRow=Number.isInteger(canonical.rowIndex)?canonical.rowIndex:Math.max(0,(canonical.tier||1)-1),rowIndex=Math.min(2,rawRow);
   if(classIndex<0||slotIndex<0||rawRow<0)return null;
   return {canonical,col:classIndex*3+slotIndex,row:rowIndex,size};
@@ -174,10 +212,11 @@ function artStyle(item,size=64){
 function artHTML(item,size=64,extra=''){
   if(item?.questArtMaterial&&window.CellboundProfessions?.materialArtHTML)return window.CellboundProfessions.materialArtHTML(item.questArtMaterial,size,'gear-art quest-gear-art '+extra);
   const pos=artCoordinates(item,size),canonical=pos?.canonical||byName(item?.name)||byId(item?.itemId)||item;
-  if(!pos||!canonical)return`<span class="gear-art gear-art-empty ${extra}" style="display:inline-grid;width:${size}px;height:${size}px;place-items:center">◇</span>`;
-  const glyph=canonical.slot==='Head'?'⛑':canonical.slot==='Chest'?'▣':'⚔',fit=artFit(canonical),cell=Math.max(1,Math.round(size*fit)),inset=Math.round((size-cell)/2);
+  if(!canonical)return`<span class="gear-art gear-art-empty ${extra}" style="display:inline-grid;width:${size}px;height:${size}px;place-items:center">◇</span>`;
+  if(!pos){const glyph=SLOT_GLYPHS[canonical.slot]||'◇';return`<span class="gear-art gear-art-fallback gear-slot-${slug(canonical.slot||'item')} ${extra}" style="display:inline-grid;width:${size}px;height:${size}px;place-items:center;font-size:${Math.max(18,Math.round(size*.42))}px" aria-label="${canonical.name||canonical.slot}" title="${canonical.name||canonical.slot}">${glyph}</span>`}
+  const glyph=SLOT_GLYPHS[canonical.slot]||'◇',fit=artFit(canonical),cell=Math.max(1,Math.round(size*fit)),inset=Math.round((size-cell)/2);
   const slotClass='gear-slot-'+slug(canonical.slot||'item'),classClass='gear-class-'+slug(canonical.class||'all');
   return `<span class="gear-art tier-${canonical.tier||1} ${slotClass} ${classClass} ${extra}" data-gear-fit="${fit.toFixed(3)}" style="${artStyle(canonical,size)}" aria-label="${canonical.name}" title="${canonical.name}"><span class="gear-art-fallback" aria-hidden="true">${glyph}</span><span class="gear-art-cell" aria-hidden="true" style="position:absolute;overflow:hidden;width:${cell}px;height:${cell}px;left:${inset}px;top:${inset}px"><img class="gear-art-sprite" src="./assets/gear/cellbound-gear-atlas.webp?v=4" alt="" draggable="false" onerror="this.style.display='none'" style="position:absolute;max-width:none;width:${21*cell}px;height:${3*cell}px;left:-${pos.col*cell}px;top:-${pos.row*cell}px"></span></span>`;
 }
-window.CellboundGear={CLASS_ORDER,SLOT_ORDER,TIER_META,ITEM_LEVELS,CHAPTER_GEAR,STAT_DEFS,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,questProfileStats,createQuestGear,artFit,artStyle,artHTML};
+window.CellboundGear={CLASS_ORDER,CORE_SLOT_ORDER,SLOT_ORDER,EQUIPMENT_POSITION_ORDER,SLOT_GLYPHS,TIER_META,ITEM_LEVELS,CHAPTER_GEAR,STAT_DEFS,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,questProfileStats,createQuestGear,artFit,artStyle,artHTML};
 })();
