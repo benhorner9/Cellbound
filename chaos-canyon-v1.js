@@ -259,7 +259,7 @@ function ccStatusTargets(id){
  return out
 }
 function ccRenderRebornEvent(e){
- if(window.CellboundCombatStatuses?.handle(e,{resolve:ccStatusTargets,speed:1}))return;
+ if(window.CellboundCombatStatuses?.handle(e,{resolve:ccStatusTargets,speed:()=>run?.speed||1}))return;
  const src=ccRenderId(e.source),target=ccRenderId(e.target),srcChar=ccCharacter(e.source),targetChar=ccCharacter(e.target);
  switch(e.type){
   case'COMBAT_START':setStatus('Combat simulation live.');feed('Combat begins.');break;
@@ -320,26 +320,30 @@ function ccRenderRebornEvent(e){
  }
 }
 async function ccPlayTimeline(result,tok){
- let last=0,frameBudgetStarted=performance.now(),burstCount=0;run.telegraphs={};
- const events=Array.isArray(result?.events)?result.events:[];
- for(const e of events){
-   if(tok!==token||!run)return false;
-   const rawStamp=Number(e?.timestamp),stamp=Number.isFinite(rawStamp)?Math.max(last,rawStamp):last;
-   const gap=Math.max(0,stamp-last);
-   // A malformed replay event must never leave the live dungeon looking frozen.
-   // Normal Combat Reborn timelines emit frequently, so this only caps abnormal dead-air gaps.
-   if(gap){await wait(Math.min(gap,2500));frameBudgetStarted=performance.now();burstCount=0}
-   try{
-     ccRenderRebornEvent(e);
-   }catch(error){
-     console.error('Chaos Canyon timeline render failed',e?.type||'UNKNOWN_EVENT',error);
-   }
-   last=stamp;burstCount++;
-   if(burstCount>=12||performance.now()-frameBudgetStarted>7){
-     await new Promise(r=>requestAnimationFrame(r));frameBudgetStarted=performance.now();burstCount=0
-   }
- }
- return result?.outcome==='victory'
+ const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
+ if(!run)return false;run.telegraphs={};
+ if(!events.length)return result?.outcome==='victory';
+ return await new Promise(resolve=>{
+   let index=0,simTime=0,lastFrame=performance.now(),finished=false;
+   const finish=value=>{if(finished)return;finished=true;resolve(value)};
+   const frame=now=>{
+     if(finished)return;
+     if(tok!==token||!run){finish(false);return}
+     const rawDelta=Math.max(0,now-lastFrame);lastFrame=now;
+     // Keep the viewer on one continuous clock, matching the standard dungeon
+     // presentation. Clamp only background-tab jumps, not normal combat timing.
+     simTime+=Math.min(rawDelta,100)*Math.max(.25,Number(run.speed)||1);
+     const frameStarted=performance.now();let handled=0;
+     while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<18&&performance.now()-frameStarted<8){
+       const event=events[index++];handled++;
+       try{ccRenderRebornEvent(event)}
+       catch(error){console.error('Chaos Canyon combat visual recovered',event?.type||'UNKNOWN_EVENT',event?.ability||'',error)}
+     }
+     if(index>=events.length){finish(result?.outcome==='victory');return}
+     requestAnimationFrame(frame)
+   };
+   requestAnimationFrame(frame)
+ })
 }
 function ccStageSummary(result){
  const s=result?.summary||{},ints=s.interrupts||{},m=s.mechanics||{};
