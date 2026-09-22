@@ -27,31 +27,32 @@ async function loadUpdate(){
   location.replace(url.href);
 }
 function playerBusy(){
-  const dungeon=$('#cb2dBackdrop');
-  const legacyAttempt=$('#attemptModal');
-  const legacyDungeon=$('#evoExpeditionBackdrop');
-  const character=$('#characterModal');
-  const bank=$('#bankModal');
-  const onboarding=$('#cellboundOnboarding');
-  const worldBoss=$('#worldBoss2dBackdrop');
-  const questDialogue=$('#questDialogue');
-  const questEncounter=$('#questEncounterBackdrop');
-  const questPuzzle=$('#questPuzzle');
-  const hollow=$('#hs2dBackdrop');
-  const questUnlock=$('.quest-unlock-backdrop');
+  const visible=selector=>{
+    const el=$(selector);
+    return Boolean(el&&!el.hidden)
+  };
   return Boolean(
-    (dungeon&&!dungeon.hidden)||
-    (legacyAttempt&&!legacyAttempt.hidden)||
-    (legacyDungeon&&!legacyDungeon.hidden)||
-    (character&&!character.hidden)||
-    (bank&&!bank.hidden)||
-    (onboarding&&!onboarding.hidden)||
-    (worldBoss&&!worldBoss.hidden)||
-    (questDialogue&&!questDialogue.hidden)||
-    (questEncounter&&!questEncounter.hidden)||
-    (questPuzzle&&!questPuzzle.hidden)||
-    (hollow&&!hollow.hidden)||
-    Boolean(questUnlock)
+    visible('#cb2dBackdrop')||
+    visible('#hs2dBackdrop')||
+    visible('#cc2dBackdrop')||
+    visible('#bs2dBackdrop')||
+    visible('#fracturedAgesBackdrop')||
+    visible('#twelveBelowBackdrop')||
+    visible('#worldBoss2dBackdrop')||
+    visible('#attemptModal')||
+    visible('#evoExpeditionBackdrop')||
+    visible('#characterModal')||
+    visible('#bankModal')||
+    visible('#cellboundOnboarding')||
+    visible('#questDialogue')||
+    visible('#questEncounterBackdrop')||
+    visible('#questPuzzle')||
+    visible('#fourfoldStory')||
+    visible('#fourfoldPuzzle')||
+    visible('#thirteenthBellRoot')||
+    Boolean($('.quest-unlock-backdrop'))||
+    Boolean($('.quest-complete-backdrop'))||
+    Boolean($('.fourfold-complete-backdrop'))
   );
 }
 function showGate(info){
