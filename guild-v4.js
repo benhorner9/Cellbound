@@ -310,6 +310,7 @@ const WORKSPACES={
   guild:{label:'Guild',views:[['roster','Roster'],['party','Party'],['chat','Social'],['reports','Reports']]},
   adventure:{label:'Adventure',views:[['quests','Quests'],['content','Dungeons'],['endgame','Endgame'],['world','World Event']]},
   economy:{label:'Supplies',views:[['bank','Bank'],['professions','Professions'],['trading','Trading Post']]},
+  pvp:{label:'PvP',views:[['pvp','The Crucible']]},
   admin:{label:'Admin',views:[['admin','Admin']]}
 };
 const VIEW_WORKSPACE={};
@@ -326,7 +327,7 @@ function switchView(id){
   $$('.view').forEach(v=>v.classList.toggle('active',v.id===id));
   const hub=VIEW_WORKSPACE[id]||id;
   $$('.nav-btn[data-hub]').forEach(b=>b.classList.toggle('active',b.dataset.hub===hub));
-  const titles={overview:'Command Overview',guild:'Guild',adventure:'Adventure',economy:'Supplies',admin:'Admin Control'};
+  const titles={overview:'Command Overview',guild:'Guild',adventure:'Adventure',economy:'Supplies',pvp:'PvP Command',admin:'Admin Control'};
   if(ui.pageTitle)ui.pageTitle.textContent=titles[hub]||'Cellbound';
   renderWorkspaceTabs(id);
   if(id==='party')renderParty();
