@@ -236,12 +236,12 @@ function beginVisual(match,result,finish){
   if(flow?.play){flow.play({match,result,onResolved:finish});return}
   const stage=$('#pvpMatchStage');if(!stage){finish();return}
   const viewer=window.CellboundPvPViewer;
-  if(!viewer?.play){stage.innerHTML='<article class="pvp-panel pvp-result defeat"><p>PvP combat viewer failed to load.</p></article>';matchRunning=false;return}
+  if(!viewer?.play){stage.innerHTML='<article class="pvp-panel pvp-result defeat"><p>PvP failed to load. Reload Cellbound and try again.</p></article>';matchRunning=false;return}
   viewer.play({stage,match,result,onComplete:finish})
 }
 function runBattleground(){
   if(matchRunning)return;const p=ensureState(),chars=activeParty(),ready=squadStatus(chars);if(!ready.ok)return;
-  const engine=window.CellboundPvPCombat;if(!engine?.simulate){alert('PvP combat engine is unavailable. Reload Cellbound and try again.');return}
+  const engine=window.CellboundPvPCombat;if(!engine?.simulate){alert('PvP failed to load. Reload Cellbound and try again.');return}
   matchRunning=true;render();
   const playerCore=chars.map(pvpCombatInput),avgPower=playerCore.reduce((n,x)=>n+x.pvpPower,0)/Math.max(1,playerCore.length),avgDef=playerCore.reduce((n,x)=>n+(x.pvpDefence||0),0)/Math.max(1,playerCore.length),avgControl=playerCore.reduce((n,x)=>n+(x.controlResistance||0),0)/Math.max(1,playerCore.length);
   const allies=makeAlliedUnits(battlegroundSize-5,avgPower,avgDef,avgControl),enemyScale=.94+Math.random()*.12,enemies=makeEnemyUnits(battlegroundSize,avgPower*enemyScale,avgDef,avgControl),blue=[...playerCore,...allies];
@@ -258,7 +258,7 @@ function runBattleground(){
 }
 function runArena(){
   if(matchRunning)return;const p=ensureState();if(!arenaUnlocked(p))return;
-  const engine=window.CellboundPvPCombat;if(!engine?.simulate){alert('PvP combat engine is unavailable. Reload Cellbound and try again.');return}
+  const engine=window.CellboundPvPCombat;if(!engine?.simulate){alert('PvP failed to load. Reload Cellbound and try again.');return}
   const chars=arenaSelection.map(id=>state()?.roster?.find(c=>c.id===id)).filter(c=>c&&!game()?.isUnavailable?.(c));if(chars.length!==arenaSize)return;
   matchRunning=true;render();
   const blue=chars.map(pvpCombatInput),own=teamPower(chars,'arena'),oppRating=Math.max(700,Math.round(p.arenaRating-110+Math.random()*220)),expected=1/(1+Math.pow(10,(oppRating-p.arenaRating)/400)),avgPower=blue.reduce((n,x)=>n+x.pvpPower,0)/Math.max(1,blue.length),avgDef=blue.reduce((n,x)=>n+(x.pvpDefence||0),0)/Math.max(1,blue.length),avgControl=blue.reduce((n,x)=>n+(x.controlResistance||0),0)/Math.max(1,blue.length),ratingScale=clamp(1+(oppRating-p.arenaRating)/1800,.88,1.14),red=makeEnemyUnits(arenaSize,avgPower*ratingScale,avgDef*ratingScale,avgControl);
