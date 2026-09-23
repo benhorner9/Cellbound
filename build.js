@@ -312,7 +312,22 @@ for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readab
   const fractured=D.lootProfileFor('fractured-ages','normal',0),peak=D.lootProfileFor('chaos-canyon','cellbound',20);
   if(fractured.itemLevel?.Weapon!==40||Math.max(...Object.keys(fractured.tiers||{}).map(Number))>4)throw new Error('Fractured Ages loot profile exceeds Chapter 1 Normal ceiling');
   if(peak.itemLevel?.Weapon!==44||Number(peak.tiers?.[5]||0)>0)throw new Error('Cellbound+ exceeds Tier 4 / Item Level 44 ceiling');
-  console.log('Chapter 1 gear ladder validation passed.');
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'profession-data.js'),'utf8'),sandbox,{filename:'profession-data.js'});
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'item-art-v1.js'),'utf8'),sandbox,{filename:'item-art-v1.js'});
+  const P=sandbox.CellboundProfessions,IA=sandbox.CellboundItemArt;
+  if(!P||!IA)throw new Error('Complete item artwork runtime failed to load');
+  const missingGearArt=G.items.filter(x=>!G.artHTML(x,64).includes('<svg'));
+  if(missingGearArt.length)throw new Error('Equipment missing full item artwork: '+missingGearArt.slice(0,5).map(x=>x.itemId).join(', '));
+  const missingMaterialArt=Object.keys(P.MATERIALS||{}).filter(key=>!P.materialArtHTML(key,64).includes('<svg'));
+  if(missingMaterialArt.length)throw new Error('Materials missing full item artwork: '+missingMaterialArt.join(', '));
+  const craftOutputs=Object.values(P.PROFESSIONS||{}).flatMap(x=>x.recipes||[]).map(x=>x.output).filter(x=>x?.category==='consumable');
+  const missingCraftArt=craftOutputs.filter(x=>!P.consumableArtHTML(x.key,64).includes('<svg'));
+  if(missingCraftArt.length)throw new Error('Crafted items missing full item artwork: '+missingCraftArt.map(x=>x.key).join(', '));
+  const missingUniqueArt=Object.values(D.UNIQUE_ITEMS||{}).filter(x=>!IA.artHTML(x,64).includes('<svg'));
+  if(missingUniqueArt.length)throw new Error('Unique items missing full item artwork: '+missingUniqueArt.map(x=>x.itemId).join(', '));
+  const missingCollectionArt=Object.values(D.CHASE_REWARDS||{}).filter(x=>!IA.collectionHTML(x,64).includes('<svg'));
+  if(missingCollectionArt.length)throw new Error('Collection rewards missing full item artwork: '+missingCollectionArt.map(x=>x.id).join(', '));
+  console.log('Chapter 1 gear ladder validation passed. Full item artwork coverage passed: '+G.items.length+' gear, '+Object.keys(P.MATERIALS||{}).length+' materials, '+craftOutputs.length+' crafted items.');
 }
 {
   const combatCode=fs.readFileSync(path.join(__dirname,'combat-reborn-v1.js'),'utf8');
