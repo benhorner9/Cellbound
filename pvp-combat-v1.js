@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.5.0';
+const VERSION='1.6.0';
 const TICK=250;
 const MAX_ARENA_MS=90000;
 const MAX_BG_MS=120000;
@@ -59,6 +59,41 @@ const PVP_MAPS={
       {x:27,y:82},{x:35,y:82},{x:50,y:82},{x:65,y:82},{x:73,y:82},
       {x:73,y:42},{x:73,y:58},{x:82,y:50}
     ]
+  },
+  'shifting-court':{
+    id:'shifting-court',name:'The Shifting Court',mode:'king-of-the-hill',
+    bounds:{left:5,right:95,top:8,bottom:92},
+    hills:[
+      {id:'central-nexus',name:'CENTRAL NEXUS',x:50,y:50,radius:12},
+      {id:'north-gallery',name:'NORTH GALLERY',x:50,y:17,radius:11},
+      {id:'east-works',name:'EAST WORKS',x:82,y:50,radius:11},
+      {id:'south-vault',name:'SOUTH VAULT',x:50,y:83,radius:11},
+      {id:'west-ruins',name:'WEST RUINS',x:18,y:50,radius:11}
+    ],
+    areas:[
+      {id:'north-gallery',name:'NORTH GALLERY',x:31,y:8,w:38,h:18,kind:'gallery'},
+      {id:'west-ruins',name:'WEST RUINS',x:5,y:34,w:25,h:32,kind:'ruins'},
+      {id:'central-nexus',name:'CENTRAL NEXUS',x:36,y:36,w:28,h:28,kind:'nexus'},
+      {id:'east-works',name:'EAST WORKS',x:70,y:34,w:25,h:32,kind:'works'},
+      {id:'south-vault',name:'SOUTH VAULT',x:31,y:74,w:38,h:18,kind:'vault'}
+    ],
+    blockers:[
+      {id:'north-west-wall',x:35,y:29,w:18,h:5},{id:'north-east-wall',x:65,y:29,w:18,h:5},
+      {id:'south-west-wall',x:35,y:71,w:18,h:5},{id:'south-east-wall',x:65,y:71,w:18,h:5},
+      {id:'west-upper-wall',x:29,y:40,w:5,h:14},{id:'west-lower-wall',x:29,y:60,w:5,h:14},
+      {id:'east-upper-wall',x:71,y:40,w:5,h:14},{id:'east-lower-wall',x:71,y:60,w:5,h:14},
+      {id:'nexus-north-pillar',x:50,y:39,w:7,h:7},{id:'nexus-south-pillar',x:50,y:61,w:7,h:7},
+      {id:'nexus-west-pillar',x:39,y:50,w:7,h:7},{id:'nexus-east-pillar',x:61,y:50,w:7,h:7}
+    ],
+    nav:[
+      {x:17,y:50},{x:23,y:32},{x:23,y:68},
+      {x:34,y:17},{x:50,y:17},{x:66,y:17},
+      {x:35,y:36},{x:50,y:32},{x:65,y:36},
+      {x:32,y:50},{x:44,y:44},{x:50,y:50},{x:56,y:56},{x:68,y:50},
+      {x:35,y:64},{x:50,y:68},{x:65,y:64},
+      {x:34,y:83},{x:50,y:83},{x:66,y:83},
+      {x:77,y:32},{x:83,y:50},{x:77,y:68}
+    ]
   }
 };
 
@@ -91,7 +126,7 @@ function normalize(raw,team,index,count,opts){
     id:unitId(team,raw,index),characterId:raw?.id||raw?.characterId||null,name:raw?.name||('Combatant '+(index+1)),portrait:raw?.portrait||'◆',class:raw?.class||'Warrior',spec:raw?.spec||'',role,team,
     level,pvpPower,pvpDefence,controlResistance:control,maxHealth,health:maxHealth,alive:true,position,resource:{name:r.name,max:r.max,value:r.start,regen:r.regen},
     nextAction:500+index*85,nextControl:5000+index*300,nextDefensive:9000+index*500,disabledUntil:0,guardedUntil:0,guardSource:null,defensiveUntil:0,
-    respawnAt:0,kills:0,deaths:0,damage:0,healing:0,interrupts:0,cc:0,objectives:0,carryingFlag:null,flagIntent:null,objectiveRole:null,ctfSlot:index,lastObjectiveNotice:0
+    respawnAt:0,kills:0,deaths:0,damage:0,healing:0,interrupts:0,cc:0,objectives:0,carryingFlag:null,flagIntent:null,objectiveRole:null,ctfSlot:index,kothSlot:index,objectiveEpoch:0,lastObjectiveNotice:0
   }
 }
 function emit(ctx,type,data={}){ctx.events.push({timestamp:Math.max(0,Math.round(ctx.time)),type,...data})}
@@ -310,6 +345,7 @@ function damageAction(ctx,u,target){
 }
 function act(ctx,u){
   if(!u.alive||ctx.time<u.disabledUntil||ctx.time<u.nextAction)return;
+  if(ctx.mode==='king-of-the-hill'&&kothAct(ctx,u))return;
   if(ctx.mode==='capture-the-flag'&&ctfAct(ctx,u))return;
   maybeDefensive(ctx,u);maybeGuard(ctx,u);
   let acted=false;if(u.role==='healer')acted=healerAction(ctx,u);
@@ -354,7 +390,7 @@ function nearestToPoint(list,p){return list.slice().sort((a,b)=>pvpDistanceToPoi
 function nearbyEnemies(ctx,u,radius=18){return enemies(ctx,u).filter(e=>distance(u,e)<=radius)}
 function objectiveTravel(ctx,u,to,reason,onArrive=null){
   if(!u?.alive||u.flagIntent)return false;
-  const end=openMapPoint(ctx,to,1.1),path=findMapPath(ctx,u.position,end,u);
+  const epoch=++u.objectiveEpoch,end=openMapPoint(ctx,to,1.1),path=findMapPath(ctx,u.position,end,u);
   if(path.length<2||pvpDistanceToPoint(u,end)<2){onArrive?.();return true}
   u.flagIntent=reason;
   let elapsed=0,current=copy(u.position);
@@ -364,7 +400,7 @@ function objectiveTravel(ctx,u,to,reason,onArrive=null){
     elapsed+=duration;
     const isLast=i===path.length-1;
     ctx.scheduled.push({at:ctx.time+elapsed,fn:()=>{
-      if(!u.alive)return;
+      if(!u.alive||u.objectiveEpoch!==epoch)return;
       u.position=copy(point);
       if(isLast){u.flagIntent=null;u.nextAction=Math.max(u.nextAction,ctx.time+150);onArrive?.()}
     }});
@@ -467,11 +503,58 @@ function ctfAct(ctx,u){
   const point=ctfRolePoint(u);if(pvpDistanceToPoint(u,point)>7)objectiveTravel(ctx,u,point,'hold battleground lane');else u.nextAction=ctx.time+900;
   return true
 }
+function kothSite(ctx){return ctx?.map?.hills?.[Number(ctx?.objective?.activeIndex)||0]||{id:'central-nexus',name:'CENTRAL NEXUS',x:50,y:50,radius:12}}
+function kothDistance(u,p){return Math.hypot((u.position.x-p.x),(u.position.y-p.y))}
+function assignKothRoles(ctx,team){
+  const units=ctx.units.filter(u=>u.team===team);
+  units.forEach((u,i)=>{u.kothSlot=i;u.objectiveRole=u.role==='tank'?'anchor':u.role==='healer'?'support':'assault'});
+  const dps=units.filter(u=>u.role==='dps');
+  dps.forEach((u,i)=>u.objectiveRole=i===dps.length-1&&dps.length>1?'flanker':'assault');
+  emit(ctx,'OBJECTIVE_UPDATE',{result:'hill-roles',payload:{team,anchors:units.filter(u=>u.objectiveRole==='anchor').map(u=>u.id),supports:units.filter(u=>u.objectiveRole==='support').map(u=>u.id),flankers:units.filter(u=>u.objectiveRole==='flanker').map(u=>u.id)}})
+}
+function kothRolePoint(ctx,u,site=kothSite(ctx)){
+  const slot=Number(u.kothSlot)||0,side=u.team==='blue'?-1:1;
+  if(u.objectiveRole==='anchor')return openMapPoint(ctx,{x:site.x+side*2,y:site.y+(slot%2?3:-3)},1.1);
+  if(u.objectiveRole==='support')return openMapPoint(ctx,{x:site.x+side*9,y:site.y+(slot%2?7:-7)},1.1);
+  if(u.objectiveRole==='flanker')return openMapPoint(ctx,{x:site.x-side*2,y:site.y+(slot%2?10:-10)},1.1);
+  const offsets=[-8,-4,4,8],oy=offsets[slot%offsets.length];
+  return openMapPoint(ctx,{x:site.x+side*4,y:site.y+oy},1.1)
+}
+function rotateHill(ctx,initial=false){
+  const hills=ctx.map?.hills||[];if(!hills.length)return;
+  if(!initial)ctx.objective.activeIndex=(Number(ctx.objective.activeIndex)+1)%hills.length;
+  const site=kothSite(ctx);ctx.objective.owner=null;ctx.objective.rotations=(Number(ctx.objective.rotations)||0)+(initial?0:1);ctx.objective.nextRotation=ctx.time+18000;
+  emit(ctx,'OBJECTIVE_UPDATE',{result:'hill-rotate',payload:{mode:ctx.mode,index:ctx.objective.activeIndex,total:hills.length,site:site.id,name:site.name,x:site.x,y:site.y,radius:site.radius,blue:ctx.objective.blue,red:ctx.objective.red,nextRotationMs:ctx.objective.nextRotation}});
+  for(const u of ctx.units){
+    if(!u.alive)continue;
+    u.objectiveEpoch++;u.flagIntent=null;
+    objectiveTravel(ctx,u,kothRolePoint(ctx,u,site),initial?'move to opening hill':'rotate to active hill')
+  }
+}
+function kothAct(ctx,u){
+  if(u.flagIntent)return true;
+  const site=kothSite(ctx),point=kothRolePoint(ctx,u,site),dist=kothDistance(u,site),roleDist=kothDistance(u,point);
+  if(roleDist>5){objectiveTravel(ctx,u,point,'move to active hill');return true}
+  maybeDefensive(ctx,u);maybeGuard(ctx,u);
+  if(u.role==='healer'){
+    if(healerAction(ctx,u)){u.nextAction=ctx.time+1200;return true}
+    const nearEnemy=enemies(ctx,u).filter(e=>kothDistance(e,site)<=site.radius+12).sort((a,b)=>distance(u,a)-distance(u,b))[0];
+    if(nearEnemy){damageAction(ctx,u,nearEnemy);u.nextAction=ctx.time+1250;return true}
+    u.nextAction=ctx.time+800;return true
+  }
+  const contesters=enemies(ctx,u).filter(e=>kothDistance(e,site)<=site.radius+8).sort((a,b)=>(a.role==='healer'?-16:0)-(b.role==='healer'?-16:0)||kothDistance(a,site)-kothDistance(b,site));
+  const target=contesters[0]||enemies(ctx,u).filter(e=>distance(u,e)<=22).sort((a,b)=>distance(u,a)-distance(u,b))[0];
+  if(target){damageAction(ctx,u,target);u.nextAction=ctx.time+1050+Math.round(ctx.rng()*260);return true}
+  if(dist>site.radius*.8){objectiveTravel(ctx,u,point,'reclaim active hill');return true}
+  u.nextAction=ctx.time+750;return true
+}
 function setupObjective(ctx){
   if(ctx.kind==='arena'){ctx.objective={type:'arena',blue:0,red:0};return}
   if(ctx.mode==='king-of-the-hill'){
-    ctx.objective={type:'king-of-the-hill',blue:0,red:0,owner:null};
-    ctx.units.forEach((u,i)=>move(ctx,u,{x:50+(u.team==='blue'?-5:5),y:26+(i%(Math.max(1,ctx.size/2)))*Math.min(9,48/Math.max(1,ctx.size/2))},700,'contest hill'))
+    ctx.objective={type:'king-of-the-hill',blue:0,red:0,owner:null,activeIndex:0,rotations:0,nextRotation:18000};
+    assignKothRoles(ctx,'blue');assignKothRoles(ctx,'red');
+    ctx.units.forEach((u,i)=>{u.nextAction=Math.max(u.nextAction,1650+i*35)});
+    ctx.scheduled.push({at:600,fn:()=>rotateHill(ctx,true)})
   }else{
     ctx.objective={type:'capture-the-flag',blue:0,red:0};
     ctx.flag={
@@ -490,11 +573,23 @@ function setupObjective(ctx){
   }
 }
 function hillTick(ctx){
-  if(ctx.time%1000!==0)return;
-  const centre={x:50,y:50},count=team=>living(ctx,team).reduce((n,u)=>n+(distance(u,{position:centre})<=26?(u.role==='tank'?1.35:u.role==='healer'?1.1:1):0),0);
-  const b=count('blue'),r=count('red');let owner=null;if(b>r+.35)owner='blue';else if(r>b+.35)owner='red';
-  if(owner){ctx.objective[owner]=Math.min(100,ctx.objective[owner]+2);living(ctx,owner).forEach(u=>{if(distance(u,{position:centre})<=26)u.objectives++});if(ctx.objective.owner!==owner){ctx.objective.owner=owner;emit(ctx,'OBJECTIVE_UPDATE',{result:'hill-control',payload:{mode:ctx.mode,owner,blue:ctx.objective.blue,red:ctx.objective.red}})}}
-  if(ctx.time%5000===0)emit(ctx,'OBJECTIVE_UPDATE',{result:'hill-score',payload:{mode:ctx.mode,owner:ctx.objective.owner,blue:ctx.objective.blue,red:ctx.objective.red}})
+  if(ctx.time<1000||ctx.time%1000!==0)return;
+  if(ctx.time>=Number(ctx.objective.nextRotation||Infinity))rotateHill(ctx,false);
+  const site=kothSite(ctx),inside=team=>living(ctx,team).filter(u=>kothDistance(u,site)<=site.radius),weight=list=>list.reduce((n,u)=>n+(u.role==='tank'?1.2:u.role==='healer'?1.05:1),0);
+  const blueInside=inside('blue'),redInside=inside('red'),b=weight(blueInside),r=weight(redInside);
+  let owner=null;if(b>r+.25)owner='blue';else if(r>b+.25)owner='red';
+  if(owner){
+    ctx.objective[owner]=Math.min(100,ctx.objective[owner]+3);
+    inside(owner).forEach(u=>u.objectives++);
+    if(ctx.objective.owner!==owner){
+      ctx.objective.owner=owner;
+      emit(ctx,'OBJECTIVE_UPDATE',{result:'hill-control',payload:{mode:ctx.mode,owner,site:site.id,name:site.name,x:site.x,y:site.y,radius:site.radius,blue:ctx.objective.blue,red:ctx.objective.red}})
+    }
+  }else if(ctx.objective.owner!==null){
+    ctx.objective.owner=null;
+    emit(ctx,'OBJECTIVE_UPDATE',{result:'hill-contested',payload:{mode:ctx.mode,site:site.id,name:site.name,x:site.x,y:site.y,radius:site.radius,blue:ctx.objective.blue,red:ctx.objective.red}})
+  }
+  if(ctx.time%4000===0)emit(ctx,'OBJECTIVE_UPDATE',{result:'hill-score',payload:{mode:ctx.mode,owner:ctx.objective.owner,site:site.id,name:site.name,x:site.x,y:site.y,radius:site.radius,blue:ctx.objective.blue,red:ctx.objective.red,nextRotationMs:ctx.objective.nextRotation}})
 }
 function chooseCarrier(ctx,team){
   return living(ctx,team).filter(u=>!u.carryingFlag&&u.role!=='healer').sort((a,b)=>(b.role==='tank'?1:0)-(a.role==='tank'?1:0)||healthRatio(b)-healthRatio(a))[0]||living(ctx,team).find(u=>!u.carryingFlag)||null
@@ -576,7 +671,7 @@ function winner(ctx){
 }
 function simulate({blue=[],red=[],kind='arena',mode='arena',size=null,seed='cellbound-pvp'}={}){
   if(!Array.isArray(blue)||!Array.isArray(red)||!blue.length||!red.length)throw new Error('PvP combat requires two non-empty teams.');
-  const ctx={kind,mode,size:Number(size)||Math.max(blue.length,red.length),time:0,rng:rngFrom(seed),events:[],scheduled:[],units:[],byId:{},map:mode==='capture-the-flag'?PVP_MAPS['cellwind-bastion']:null,stats:{blue:{kills:0,deaths:0,damage:0,healing:0,objectives:0},red:{kills:0,deaths:0,damage:0,healing:0,objectives:0}},objective:null,flag:{blue:{carrier:null},red:{carrier:null}}};
+  const ctx={kind,mode,size:Number(size)||Math.max(blue.length,red.length),time:0,rng:rngFrom(seed),events:[],scheduled:[],units:[],byId:{},map:mode==='capture-the-flag'?PVP_MAPS['cellwind-bastion']:mode==='king-of-the-hill'?PVP_MAPS['shifting-court']:null,stats:{blue:{kills:0,deaths:0,damage:0,healing:0,objectives:0},red:{kills:0,deaths:0,damage:0,healing:0,objectives:0}},objective:null,flag:{blue:{carrier:null},red:{carrier:null}}};
   ctx.units=[...blue.map((u,i)=>normalize(u,'blue',i,blue.length,{kind,mode})),...red.map((u,i)=>normalize(u,'red',i,red.length,{kind,mode}))];ctx.units.forEach(u=>ctx.byId[u.id]=u);
   emit(ctx,'COMBAT_START',{result:'pvp',payload:{kind,mode,size:ctx.size}});
   ctx.units.forEach(u=>emit(ctx,'RESOURCE_STATE',{source:u.id,target:u.id,result:'initial',payload:{resource:u.resource.name,value:u.resource.value,max:u.resource.max}}));
