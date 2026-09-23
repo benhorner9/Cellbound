@@ -19,7 +19,7 @@
 .app-shell .section-intro button,
 .app-shell .panel button,
 .app-shell .hero-card button{
-  min-height:40px
+  min-height:44px
 }
 
 .app-shell :is(button,a,[role="button"],input,select,textarea):focus-visible{
@@ -100,3 +100,47 @@
     transition-duration:.01ms!important
   }
 }
+
+
+/* Tablet/iPad resilience: keep dense utility screens usable without widening the page. */
+html,body{max-width:100%;overscroll-behavior-x:none}
+.app-shell{max-width:100vw}
+.main{min-width:0}
+.view{max-width:100%}
+.app-shell :is(button,.nav-btn,.workspace-tabs button){line-height:1.15}
+.app-shell button{white-space:normal}
+.app-shell :is(.filters,.panel-head,.dungeon-browser-actions,.cb2d-loot-actions,.admin-actions){
+  min-width:0
+}
+.app-shell :is(.filters,.dungeon-browser-actions,.cb2d-loot-actions,.admin-actions){
+  flex-wrap:wrap
+}
+
+/* Long labels should wrap inside their control instead of forcing horizontal page scroll. */
+.app-shell :is(button,b,strong,em,small){min-width:0}
+.app-shell :is(.panel-head b,.character-status,.role-tag,.dungeon-stage-tag){white-space:normal}
+
+/* Keep overlays inside the visible viewport, including iPad browser chrome. */
+:is(.modal-backdrop,.recruit-modal-backdrop){
+  padding-top:max(10px,env(safe-area-inset-top));
+  padding-right:max(10px,env(safe-area-inset-right));
+  padding-bottom:max(10px,env(safe-area-inset-bottom));
+  padding-left:max(10px,env(safe-area-inset-left))
+}
+:is(.character-sheet,.recruit-modal){
+  max-height:calc(100dvh - 20px)
+}
+
+/* Better keyboard/touch target separation without changing the visual design language. */
+@media(hover:none) and (pointer:coarse){
+  .app-shell :is(button,[role="button"],select,input[type="checkbox"]){min-height:44px}
+  .app-shell :is(button,.nav-btn,.workspace-tabs button){-webkit-tap-highlight-color:rgba(116,204,198,.12)}
+}
+
+/* Stable scrolling prevents panels shifting when a scrollbar appears. */
+.app-shell :is(.workspace-tabs,.resource-strip,.activity-log,.cb2d-feed,.tp-results,.tp-inspector){
+  scrollbar-gutter:stable
+}
+
+/* Modern heading wrapping: keeps hero and modal headings compact on narrow screens. */
+.app-shell :is(h1,h2,h3){text-wrap:balance}
