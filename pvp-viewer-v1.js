@@ -159,6 +159,15 @@ function updateHill(root,payload={},state='neutral'){
   const label=hill.querySelector('b');if(label)label.textContent=name;
   $$(root,'[data-pvp2d-hill-site]').forEach(node=>node.classList.toggle('active',node.getAttribute('data-pvp2d-hill-site')===site))
 }
+function updateArenaStorm(root,payload={}){
+  const storm=$(root,'#pvp2dArenaStorm'),ring=$(root,'#pvp2dStormRing');if(!storm||!ring)return;
+  const x=clamp(Number(payload.x)||50,8,92),y=clamp(Number(payload.y)||50,10,90),radius=clamp(Number(payload.radius)||44,8,48),damage=Math.max(0,Number(payload.damagePct)||0);
+  const fog=storm.querySelector('.pvp2d-storm-fog');
+  if(fog)fog.style.background='radial-gradient(circle at '+x+'% '+y+'%, transparent 0 '+radius+'%, rgba(39,52,57,.28) '+Math.min(49,radius+2)+'%, rgba(17,28,32,.78) 100%)';
+  ring.style.left=x+'%';ring.style.top=y+'%';ring.style.width=(radius*2)+'%';ring.style.height=(radius*2)+'%';
+  const label=ring.querySelector('b');if(label)label.textContent=damage?('CELLSTORM · '+damage+'%'):'CELLSTORM';
+  ring.classList.remove('phase-pulse');void ring.offsetWidth;ring.classList.add('phase-pulse')
+}
 function combatant(pb,id){return pb.unitMap[id]}
 function attackKind(u,ability){
   if(/heal|rejuven|regrowth|renew|riptide|vivify|embrace|blossom|mend/i.test(String(ability||'')))return'heal';
