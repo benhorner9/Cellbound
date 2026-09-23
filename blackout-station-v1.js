@@ -464,7 +464,7 @@ function drawCombat(){
  feed('Power restored. Dr. Vex Calder enters the generator hall.')
 }
 async function startBoss(){
- if(!run)return;await window.CellboundExpeditionPresentation?.room?.('blackout-station',{title:'Generator Hall · Dr. Vex Calder',index:1,total:2,kind:'FINAL BOSS',force:true,long:true});drawCombat();window.CellboundFX?.boss?.('Dr. Vex Calder','Restore the grid. Survive the role circuits.');const tok=token,C=window.CellboundCombatStandard;if(!C?.simulate){setStatus('Combat failed to start');feed('The encounter could not start. Reload and try again.');return}
+ if(!run)return;await window.CellboundBossDossier?.show?.('vex-calder');drawCombat();window.CellboundFX?.boss?.('Dr. Vex Calder','Restore the grid. Survive the role circuits.');const tok=token,C=window.CellboundCombatStandard;if(!C?.simulate){setStatus('Combat failed to start');feed('The encounter could not start. Reload and try again.');return}
  try{
   const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:100,_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0}));
   let result=C.simulate({party:combatParty,encounter:bossEncounter(),tactics:{pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced'},seed:'blackout-station:'+run.seed},{zone:'blackout-station'});
