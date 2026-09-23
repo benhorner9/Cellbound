@@ -1447,7 +1447,7 @@ function renderRebornEvent(e,result,replayMode=false){
    if(!$('[data-unit="'+e.target+'"]')){const p=e.position||{x:76,y:50};addUnit(e.target,e.payload?.name||'Add','enemy small',p.x,p.y,'small','Lv. '+(e.payload?.level||STAGES[run.stage]?.level||1)+' · '+(e.payload?.classificationLabel||'ADD'));const bar=$('[data-unit="'+e.target+'"] .cb2d-unit-hp i');if(bar)bar.style.width='100%'}
    flash('ADDS SPAWN',true);window.CellboundCombatFX?.spawn?.($('[data-unit="'+e.target+'"]')||$('#cb2dArena'));log((e.payload?.name||'Adds')+' enter the fight.');break;
   case'ADD_DEFEATED':case'ENEMY_DEFEATED':{
-   const u=$('[data-unit="'+e.target+'"]');if(u){u.classList.add('dying');deathBurst(e.target);window.CellboundCombatFX?.death?.(u);setTimeout(()=>u.classList.add('dead'),240)}
+   const u=$('[data-unit="'+e.target+'"]');if(u){u.classList.add('dying');deathBurst(e.target);window.CellboundCombatFX?.death?.(u,{boss:e.type==='ENEMY_DEFEATED'&&['boss','final'].includes(String(STAGES[run.stage]?.kind||''))});setTimeout(()=>u.classList.add('dead'),240)}
    if(e.type==='ADD_DEFEATED')log('An add is defeated.');break;
   }
   case'PLAYER_DEFEATED':
