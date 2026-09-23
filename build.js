@@ -1,7 +1,7 @@
 const fs=require('fs');
 const path=require('path');
 const vm=require('vm');
-const files=['index.html','styles.css','auth.js','guild.html','guild.css','bank.css','character-sheet.css','gear-system.css','foundations.css','presentation-fx-v1.css','economy-v2.css','trading-post-v3.css','social-v3.css','pvp-v1.css','evolution-v1.css','dungeon-2d-v1.css','combat-status-ui-v1.css','combat-vitals-ui-v1.css','endgame-v1.css','twelve-below-v1.css','admin-v1.css','release-v1.css','onboarding-v1.css','hollow-sanctum-v1.css','chaos-canyon-v1.css','blackout-station-v1.css','thirteenth-bell-v1.css','fourfold-lock-v1.css','fractured-ages-v1.css','quests-v1.css','quests-v2.css','mobile-v1.css','readability-v1.css','ui-readability-v2.css','gear-data.js','profession-data.js','combat-identities-v1.js','combat-reborn-v1.js','combat-standard-v1.js','combat-status-ui-v1.js','endgame-data-v1.js','presentation-fx-v1.js','guild-v4.js','character-sheet.js','gear-character-patch.js','character-foundations-patch.js','economy-v2.js','trading-post-v3.js','social-v3.js','pvp-v1.js','evolution-v1.js','dungeon-2d-v1.js','twelve-below-v1.js','admin-v1.js','release-v1.js','onboarding-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','thirteenth-bell-v1.js','endgame-v1.js','quests-v2.js','fourfold-lock-v1.js','fractured-ages-v1.js','mobile-v1.js'];
+const files=['index.html','styles.css','auth.js','guild.html','guild.css','bank.css','character-sheet.css','gear-system.css','foundations.css','presentation-fx-v1.css','economy-v2.css','trading-post-v3.css','social-v3.css','pvp-v1.css','pvp-viewer-v1.css','evolution-v1.css','dungeon-2d-v1.css','combat-status-ui-v1.css','combat-vitals-ui-v1.css','endgame-v1.css','twelve-below-v1.css','admin-v1.css','release-v1.css','onboarding-v1.css','hollow-sanctum-v1.css','chaos-canyon-v1.css','blackout-station-v1.css','thirteenth-bell-v1.css','fourfold-lock-v1.css','fractured-ages-v1.css','quests-v1.css','quests-v2.css','mobile-v1.css','readability-v1.css','ui-readability-v2.css','gear-data.js','profession-data.js','combat-identities-v1.js','combat-reborn-v1.js','combat-standard-v1.js','combat-status-ui-v1.js','endgame-data-v1.js','presentation-fx-v1.js','guild-v4.js','character-sheet.js','gear-character-patch.js','character-foundations-patch.js','economy-v2.js','trading-post-v3.js','social-v3.js','pvp-combat-v1.js','pvp-viewer-v1.js','pvp-v1.js','evolution-v1.js','dungeon-2d-v1.js','twelve-below-v1.js','admin-v1.js','release-v1.js','onboarding-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','thirteenth-bell-v1.js','endgame-v1.js','quests-v2.js','fourfold-lock-v1.js','fractured-ages-v1.js','mobile-v1.js'];
 const assets=['assets/gear/cellbound-gear-atlas.webp','assets/combat/status-icons-v1.webp'];
 const out=path.join(__dirname,'dist');
 const buildId=String(process.env.GITHUB_SHA||process.env.CELLBOUND_BUILD||'local-dev').trim();
@@ -76,8 +76,14 @@ for(const file of files){
     if(!contents.includes("if(!data?.id)throw new Error('The listing was not confirmed by the Trading Post.')"))throw new Error('Trading Post listing creation must verify the server response');
     if(!contents.includes('function isUtilityItem')||!contents.includes('UTILITY EFFECT')||!contents.includes('function utilityArtHTML'))throw new Error('Trading Post must preserve visual utility-item trading support');
   }
+  if(file==='pvp-combat-v1.js'){
+    for(const hook of ["const VERSION='1.0.0'","function simulate(","'PLAYER_DEFEATED'","'OBJECTIVE_UPDATE'","window.CellboundPvPCombat"])if(!contents.includes(hook))throw new Error('PvP combat engine is missing '+hook);
+  }
+  if(file==='pvp-viewer-v1.js'){
+    for(const hook of ["requestAnimationFrame(frame)","'DAMAGE_DEALT'","'HEAL_RECEIVED'","'PLAYER_DEFEATED'","window.CellboundPvPViewer"])if(!contents.includes(hook))throw new Error('PvP 2D viewer is missing '+hook);
+  }
   if(file==='pvp-v1.js'){
-    for(const hook of ["'capture-the-flag'","'king-of-the-hill'","const ARENA_UNLOCK_RANK=5","pvpEquipment","seasonCrests","window.CellboundPvP"])if(!contents.includes(hook))throw new Error('PvP foundation is missing '+hook);
+    for(const hook of ["'capture-the-flag'","'king-of-the-hill'","const ARENA_UNLOCK_RANK=5","pvpEquipment","seasonCrests","CellboundPvPCombat","CellboundPvPViewer","window.CellboundPvP"])if(!contents.includes(hook))throw new Error('PvP foundation is missing '+hook);
     if(contents.includes('characterItemLevel(c)'))throw new Error('PvP equipment must remain isolated from PvE Item Level');
   }
   if(file==='evolution-v1.js'){
@@ -140,7 +146,7 @@ for(const file of files){
     const required=['rosterGrid','bankGrid','professionWorkshop','chatMessages','twelveBelowMount','dungeonRoute','dungeonIntel','enterDungeonBtn','partySlots'];
     for(const id of required)if(!contents.includes(`id="${id}"`))throw new Error(`Missing required Evolution hook: ${id}`);
     if(!contents.includes('evolution-v1.css')||!contents.includes('evolution-v1.js'))throw new Error('Evolution Pass assets are not linked from guild.html');
-    if(!contents.includes('pvp-v1.css')||!contents.includes('pvp-v1.js')||!contents.includes('id="pvpMount"')||!contents.includes('data-hub="pvp"'))throw new Error('PvP assets or mount are not linked from guild.html');
+    if(!contents.includes('pvp-v1.css')||!contents.includes('pvp-viewer-v1.css')||!contents.includes('pvp-combat-v1.js')||!contents.includes('pvp-viewer-v1.js')||!contents.includes('pvp-v1.js')||!contents.includes('id="pvpMount"')||!contents.includes('data-hub="pvp"'))throw new Error('PvP assets or mount are not linked from guild.html');
     if(!contents.includes('dungeon-2d-v1.css')||!contents.includes('dungeon-2d-v1.js'))throw new Error('Ashen Vault 2D viewer assets are not linked from guild.html');
     if(!contents.includes('chaos-canyon-v1.css')||!contents.includes('chaos-canyon-v1.js')||!contents.includes('id="chaosCanyonMount"'))throw new Error('Chaos Canyon assets or mount are not linked from guild.html');
     if(!contents.includes('blackout-station-v1.css')||!contents.includes('blackout-station-v1.js')||!contents.includes('id="blackoutStationMount"'))throw new Error('Blackout Station assets or mount are not linked from guild.html');
@@ -165,7 +171,7 @@ for(const file of files){
   fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,contents)
 }
 for(const file of assets){const src=path.join(__dirname,file),dest=path.join(out,file);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest)}
-for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readability-v1.css','ui-readability-v2.css','blackout-station-v1.css','blackout-station-v1.js','trading-post-v3.css','trading-post-v3.js','combat-status-ui-v1.css','combat-status-ui-v1.js','pvp-v1.css','pvp-v1.js']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing required production asset: ${file}`)}
+for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readability-v1.css','ui-readability-v2.css','blackout-station-v1.css','blackout-station-v1.js','trading-post-v3.css','trading-post-v3.js','combat-status-ui-v1.css','combat-status-ui-v1.js','pvp-v1.css','pvp-viewer-v1.css','pvp-combat-v1.js','pvp-viewer-v1.js','pvp-v1.js']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing required production asset: ${file}`)}
 {
   const blackoutCss=fs.readFileSync(path.join(out,'blackout-station-v1.css'),'utf8');
   if(!blackoutCss.includes('.bs-role-zones.resolving .bs-role-zone'))throw new Error('Resolved Blackout role-circle fade is missing');
@@ -215,6 +221,17 @@ for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readab
     throw new Error('Combat Reborn self-tests failed: '+(failed||'test runtime unavailable'));
   }
   console.log('Combat Reborn self-tests passed: '+result.passed+'/'+result.total+'.');
+}
+{
+  const pvpCode=fs.readFileSync(path.join(__dirname,'pvp-combat-v1.js'),'utf8');
+  const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;sandbox.globalThis=sandbox;
+  vm.createContext(sandbox);vm.runInContext(pvpCode,sandbox,{filename:'pvp-combat-v1.js'});
+  const result=sandbox.CellboundPvPCombat?.tests?.run?.();
+  if(!result||result.passed!==result.total){
+    const failed=(result?.tests||[]).filter(x=>!x.pass).map(x=>x.name).join(', ');
+    throw new Error('PvP combat self-tests failed: '+(failed||'test runtime unavailable'));
+  }
+  console.log('PvP combat self-tests passed: '+result.passed+'/'+result.total+'.');
 }
 console.log('Cellbound build complete.');
 console.log('Build verification passed: scripts parse and required UI hooks/assets are present.');
