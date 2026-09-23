@@ -694,14 +694,20 @@ function selfTest(){
   const blue=[{id:'b1',name:'Blue Tank',class:'Warrior',spec:'Protection',role:'tank',level:10,pvpPower:130},{id:'b2',name:'Blue Healer',class:'Priest',spec:'Holy',role:'healer',level:10,pvpPower:130},{id:'b3',name:'Blue DPS',class:'Rogue',spec:'Assassination',role:'dps',level:10,pvpPower:130}];
   const red=[{id:'r1',name:'Red Tank',class:'Paladin',spec:'Protection',role:'tank',level:10,pvpPower:128},{id:'r2',name:'Red Healer',class:'Druid',spec:'Restoration',role:'healer',level:10,pvpPower:128},{id:'r3',name:'Red DPS',class:'Hunter',spec:'Marksman',role:'dps',level:10,pvpPower:128}];
   const a=simulate({blue,red,kind:'arena',mode:'arena',size:3,seed:'self-arena'}),b=simulate({blue:[...blue,...blue.map((x,i)=>({...x,id:'ba'+i,name:'Ally '+i}))],red:[...red,...red.map((x,i)=>({...x,id:'ra'+i,name:'Enemy '+i}))],kind:'battleground',mode:'king-of-the-hill',size:6,seed:'self-bg'}),c=simulate({blue:[...blue,...blue.map((x,i)=>({...x,id:'bc'+i,name:'Blue CTF '+i}))],red:[...red,...red.map((x,i)=>({...x,id:'rc'+i,name:'Red CTF '+i}))],kind:'battleground',mode:'capture-the-flag',size:6,seed:'self-ctf'});
-  const flagEvents=c.events.filter(e=>e.type==='FLAG_STATE'),ctfMap=PVP_MAPS['cellwind-bastion'],mapCtx={map:ctfMap};
+  const flagEvents=c.events.filter(e=>e.type==='FLAG_STATE'),ctfMap=PVP_MAPS['cellwind-bastion'],mapCtx={map:ctfMap},kothMap=PVP_MAPS['shifting-court'],kothCtx={map:kothMap};
   const movementEvents=c.events.filter(e=>e.type==='MOVEMENT_START'&&e.payload?.from&&e.payload?.to);
+  const kothRotations=b.events.filter(e=>e.type==='OBJECTIVE_UPDATE'&&e.result==='hill-rotate'),kothMoves=b.events.filter(e=>e.type==='MOVEMENT_START'&&/hill/.test(String(e.result||''))&&e.payload?.from&&e.payload?.to);
   const tests=[
     {name:'Arena resolves',pass:['blue','red'].includes(a.winner)&&a.events.some(e=>e.type==='DAMAGE_DEALT')},
     {name:'Healing events',pass:a.events.some(e=>e.type==='HEAL_RECEIVED')},
     {name:'Movement events',pass:a.events.some(e=>e.type==='MOVEMENT_START')},
     {name:'PvP deaths',pass:a.events.some(e=>e.type==='PLAYER_DEFEATED')},
     {name:'Objective events',pass:b.events.some(e=>e.type==='OBJECTIVE_UPDATE')},
+    {name:'KOTH uses the Shifting Court terrain map',pass:b.map?.id==='shifting-court'&&Array.isArray(kothMap?.blockers)&&kothMap.blockers.length>=10},
+    {name:'KOTH exposes five rotating control areas',pass:Array.isArray(kothMap?.hills)&&kothMap.hills.length===5&&new Set(kothRotations.map(e=>e.payload?.site)).size>=5},
+    {name:'KOTH rotations drive real movement',pass:kothRotations.length>=5&&kothMoves.length>=b.finalState.units.length},
+    {name:'KOTH objective movement respects walls',pass:kothMoves.every(e=>!segmentBlocked(kothCtx,e.payload.from,e.payload.to,.55,'movement'))},
+    {name:'KOTH reports named contested/control states',pass:b.events.some(e=>e.type==='OBJECTIVE_UPDATE'&&['hill-control','hill-contested'].includes(e.result)&&e.payload?.name)},
     {name:'Resources',pass:a.events.some(e=>e.type==='RESOURCE_SPENT')},
     {name:'CTF flag pickup is physical',pass:flagEvents.some(e=>e.result==='picked-up'&&e.source&&Number.isFinite(Number(e.payload?.x))&&Number.isFinite(Number(e.payload?.y)))},
     {name:'CTF flag lifecycle resolves',pass:flagEvents.some(e=>['captured','returned','dropped'].includes(e.result))||c.events.some(e=>e.type==='OBJECTIVE_UPDATE'&&e.result==='ctf-standoff')},
