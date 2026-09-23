@@ -80,14 +80,14 @@ function homeState(){
 }
 function renderDetail(main,side){
   const b=ensure(),c=card(),facts=b?.facts||[],count=solvedCount();
-  main.innerHTML='<div class="quest-v3-hero bell-journal-hero"><div><small>MASTERWORK · INTERACTIVE ADVENTURE</small><h2>'+TITLE+'</h2><p>Greywake · A village erased from every living map</p></div><span class="quest-v3-status '+(b.complete?'complete':'')+'">'+c.status+'</span></div>'+
+  main.innerHTML='<div class="quest-v3-hero bell-journal-hero"><div><small>MASTERWORK · GREYWAKE</small><h2>'+TITLE+'</h2><p>Greywake · A village erased from every living map</p></div><span class="quest-v3-status '+(b.complete?'complete':'')+'">'+c.status+'</span></div>'+
     '<div class="quest-v3-story bell-story"><p>A letter reaches the guild with seven words: <strong>“When the thirteenth bell rings, forget us.”</strong> The village named on the seal no longer exists. An older map says it once did.</p></div>'+
     '<section class="quest-v3-clue"><small>'+(!b.started?'UNOPENED LETTER':b.complete?'AFTERMATH':'CURRENT THREAD')+'</small><h3>'+esc(!b.started?'A Village Missing From The Map':b.complete?'Greywake Returned':stageText())+'</h3><p>'+esc(!b.started?'Take the letter to the old road and look for the village of Greywake.':b.complete?'The loop has ended. What remains depends on the choice your guild made beneath the clocktower.':'Loop '+b.loop+' · '+formatClock(b.minute)+' · '+count+'/6 major discoveries secured.')+'</p></section>'+
     '<section class="bell-evidence-board"><div class="quest-v3-section-head"><span>GREYWAKE INVESTIGATION</span><small>Knowledge survives the bell.</small></div><div class="bell-clue-grid">'+(facts.length?facts.slice(-8).map((f,i)=>'<article><i>'+(i+1)+'</i><p>'+esc(f.text)+'</p></article>').join(''):'<p class="quest-v3-unknown">No evidence yet. The clock in Greywake is waiting at 11:47 PM.</p>')+'</div></section>'+
     '<div class="quest-detail-action">'+actionHtml(b,c)+'</div>';
-  side.innerHTML='<section><small>QUEST STRUCTURE</small><div class="quest-reward-list"><p>Persistent time-loop investigation</p><p>5 interactive puzzle types</p><p>Evidence-board deductions</p><p>Final 13-minute execution sequence</p><p>Combat Reborn final boss</p></div></section>'+
+  side.innerHTML='<section><small>WHAT TO EXPECT</small><div class="quest-reward-list"><p>Investigate Greywake across repeated loops</p><p>Solve five distinct puzzles</p><p>Connect evidence between loops</p><p>Finish the final loop before midnight</p><p>Face the Bellkeeper</p></div></section>'+
     '<section><small>DISCOVERIES</small><div class="bell-side-progress">'+SOLVE_ORDER.map(id=>'<p class="'+(b.solved[id]?'done':'')+'"><i>'+(b.solved[id]?'✓':'·')+'</i><span>'+esc(LOCATION_META[id].name)+'</span></p>').join('')+'</div></section>'+
-    '<section><small>REWARDS</small><div class="quest-reward-list"><p>500 Gold</p><p>300 Guild Renown</p><p>The Thirteenth Chime relic</p><p>Greywake world location</p><p>Bellfoundry access</p></div></section>'+
+    '<section><small>REWARDS</small><div class="quest-reward-list"><p>500 Gold</p><p>300 Guild Renown</p><p>The Thirteenth Chime relic</p><p>Greywake world location</p><p>Bellfoundry clue</p></div></section>'+
     '<section><small>LOOP RECORD</small><div class="quest-history">'+(b.history.slice(-6).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>No loop has been entered yet.</p>')+'</div></section>';
   main.querySelector('[data-bell-action]')?.addEventListener('click',()=>{
     if(c.locked){alert('Continue the main adventure until your guild has opened the deeper roads beneath Zeltira.');return}
@@ -369,7 +369,7 @@ async function finish(ending){
   b.complete=true;b.stage='complete';b.ending=ending;b.completedAt=new Date().toISOString();
   s.gold=(Number(s.gold)||0)+500;s.renown=(Number(s.renown)||0)+300;
   s.worldUnlocks=s.worldUnlocks&&typeof s.worldUnlocks==='object'?s.worldUnlocks:{};s.worldUnlocks.greywake=true;
-  s.relics=s.relics&&typeof s.relics==='object'?s.relics:{};s.relics.thirteenthChime={name:'The Thirteenth Chime',unlockedAt:new Date().toISOString(),effect:'Once per dungeon, fatal damage may rewind the bearer to a survivable moment. Combat integration reserved for the relic system.'};
+  s.relics=s.relics&&typeof s.relics==='object'?s.relics:{};s.relics.thirteenthChime={name:'The Thirteenth Chime',unlockedAt:new Date().toISOString(),effect:'A bell-bound relic carrying one echo of the final loop. Its deeper power has not awakened.'};
   s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push('Quest complete: '+TITLE+'. Greywake returned to the world.');
   history('The guild chose to '+({break:'break the Bell and return Greywake cleanly',complete:'complete the Bell and stabilise Greywake',silence:'silence the Thirteenth Hour itself'}[ending])+'.');
   await save(false);renderCompletion();window.CellboundFX?.victory?.({eyebrow:'QUEST COMPLETE',title:TITLE,copy:'Greywake has returned to the world.'})
