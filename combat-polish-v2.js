@@ -50,10 +50,10 @@ function point(arena,target){
 function burst(target,kind='damage',opts={}){
   const arena=mount(arenaFor(target));if(!arena||reduce())return;
   const p=point(arena,target),events=arena.querySelector('.cbvfx-events');if(!events)return;
-  const el=document.createElement('i');el.className='cbvfx-burst '+kind+(opts.critical?' critical':'');
+  const el=document.createElement('i');el.className='cbvfx-burst '+kind+(opts.critical?' critical':'')+(opts.boss?' boss-death':'');
   el.style.left=p.x+'%';el.style.top=p.y+'%';
   if(opts.scale)el.style.setProperty('--cbvfx-scale',String(opts.scale));
-  events.appendChild(el);setTimeout(()=>el.remove(),kind==='death'?1050:760)
+  events.appendChild(el);setTimeout(()=>el.remove(),kind==='death'?(opts.boss?1450:1050):760)
 }
 function impact(target,opts={}){burst(target,opts.kind||'damage',opts)}
 function heal(target,opts={}){burst(target,'heal',opts)}
