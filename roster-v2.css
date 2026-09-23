@@ -1,0 +1,264 @@
+/* Cellbound Roster v2 — Guild personnel command */
+#roster{--roster-line:rgba(216,185,118,.12);--roster-gold:#d8b976;--roster-copy:#87958f}
+#roster>.roster-intro{margin-bottom:10px}
+#roster .roster-intro-actions{position:relative;z-index:2;display:flex;align-items:center}
+#roster .roster-intro-actions .ghost-btn{width:auto;min-width:190px;border-color:rgba(216,185,118,.28);color:#e8d6a2;background:linear-gradient(180deg,rgba(62,50,29,.7),rgba(27,27,21,.7))}
+
+/* Summary */
+.roster-overview-strip{
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+  margin-bottom:10px;border:1px solid var(--roster-line);
+  background:#081115;box-shadow:0 16px 38px rgba(0,0,0,.22)
+}
+.roster-overview-strip article{min-width:0;padding:13px 15px;border-right:1px solid rgba(255,255,255,.04)}
+.roster-overview-strip article:last-child{border-right:0}
+.roster-overview-strip span{display:block;color:#756c56;font-size:.48rem;font-weight:900;letter-spacing:.11em}
+.roster-overview-strip b{display:block;margin-top:4px;color:#ece5d6;font:500 1.18rem Georgia,serif}
+.roster-overview-strip small{display:block;margin-top:4px;overflow:hidden;color:#5f706a;font-size:.5rem!important;text-overflow:ellipsis;white-space:nowrap}
+
+/* Filter console */
+#roster .roster-command-v2{
+  display:grid!important;grid-template-columns:1fr!important;gap:0!important;
+  margin-bottom:12px;padding:0!important;overflow:hidden;
+  border-color:var(--roster-line)!important;
+  background:linear-gradient(180deg,#0d181c,#081115)!important
+}
+.roster-filter-primary{
+  display:grid;grid-template-columns:minmax(280px,1fr) auto;gap:10px;align-items:center;
+  padding:10px 11px;border-bottom:1px solid rgba(216,185,118,.07)
+}
+#roster .roster-search{height:44px!important;min-height:44px;margin:0}
+#roster .roster-role-filters{
+  display:grid;grid-template-columns:repeat(4,minmax(74px,1fr));gap:5px;
+  flex-wrap:nowrap!important
+}
+#roster .roster-role-filters .filter{
+  min-width:0;min-height:40px;padding:0 10px;
+  border:1px solid rgba(255,255,255,.055);background:#091317;color:#6f807a;
+  font-size:.54rem;font-weight:850;letter-spacing:.04em
+}
+#roster .roster-role-filters .filter.active{
+  border-color:rgba(216,185,118,.31)!important;
+  background:linear-gradient(180deg,#2d271b,#151b1b)!important;color:#ead8a6!important
+}
+.roster-filter-secondary{
+  display:grid;grid-template-columns:repeat(4,minmax(130px,1fr)) 86px;gap:7px;
+  padding:9px 11px
+}
+#roster .roster-filter-secondary .ui-select{width:100%;height:40px!important;min-height:40px}
+.roster-clear-filters{
+  min-height:40px;border:1px solid rgba(216,185,118,.14);background:#111615;color:#aa9a70;
+  font-size:.48rem;font-weight:900;letter-spacing:.08em
+}
+.roster-clear-filters:hover:not(:disabled){border-color:rgba(216,185,118,.3);background:#211f18;color:#e2cf9d}
+.roster-clear-filters:disabled{opacity:.32;cursor:default}
+.roster-filter-meta{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:8px 12px;border-top:1px solid rgba(255,255,255,.035);
+  background:#071014;color:#63736d;font-size:.49rem
+}
+.roster-filter-meta span{color:#ad9a6c;font-weight:850;letter-spacing:.05em}
+.roster-filter-meta em{font-style:normal}
+
+/* Cards */
+#roster .roster-grid-v2{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:11px!important;align-items:start
+}
+#roster .roster-character-card{
+  position:relative;min-width:0;min-height:332px!important;padding:0!important;
+  display:flex;flex-direction:column;
+  border:1px solid rgba(216,185,118,.09)!important;
+  background:
+    radial-gradient(circle at 92% -5%,color-mix(in srgb,var(--roster-accent) 14%,transparent),transparent 33%),
+    linear-gradient(180deg,#0e191d,#081115 68%)!important;
+  box-shadow:0 15px 38px rgba(0,0,0,.23)!important;
+  overflow:hidden;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease
+}
+#roster .roster-character-card:before{
+  content:"";position:absolute;left:0;right:0;top:0;height:2px;
+  background:linear-gradient(90deg,var(--roster-accent),color-mix(in srgb,var(--roster-accent) 18%,transparent),transparent);
+  opacity:.68
+}
+#roster .roster-character-card:hover{
+  transform:translateY(-2px)!important;
+  border-color:color-mix(in srgb,var(--roster-accent) 34%,rgba(216,185,118,.16))!important;
+  box-shadow:0 22px 54px rgba(0,0,0,.32)!important
+}
+#roster .roster-character-card.is-active{
+  border-color:color-mix(in srgb,var(--roster-accent) 28%,rgba(216,185,118,.18))!important
+}
+#roster .roster-character-card.is-recovering{
+  background:
+    radial-gradient(circle at 92% -5%,rgba(176,73,59,.13),transparent 34%),
+    linear-gradient(180deg,#171516,#0a1013 68%)!important
+}
+#roster .member-slot-ribbon{
+  margin:0!important;padding:7px 12px!important;
+  border-bottom:1px solid rgba(216,185,118,.12)!important;
+  background:rgba(49,39,22,.78)!important;color:#cdb16f!important
+}
+.roster-card-head{
+  position:relative;z-index:2;display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;
+  padding:15px 14px 12px
+}
+.roster-card-portrait{
+  position:relative;width:62px;height:62px;display:grid;place-items:center;
+  border:1px solid color-mix(in srgb,var(--roster-accent) 28%,rgba(255,255,255,.06));
+  background:linear-gradient(180deg,#122126,#0a1418);
+  box-shadow:inset 0 0 22px rgba(0,0,0,.42)
+}
+.roster-card-portrait>span{font:500 1.25rem Georgia,serif;color:#e8efec}
+.roster-card-portrait>i{
+  position:absolute;right:-5px;bottom:-5px;display:grid;place-items:center;width:24px;height:24px;
+  border:1px solid color-mix(in srgb,var(--roster-accent) 32%,rgba(216,185,118,.14));
+  border-radius:50%;background:#081115;color:var(--roster-accent);font-size:.62rem;font-style:normal
+}
+.roster-card-identity{min-width:0}
+.roster-card-flags{display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-height:19px}
+#roster .roster-card-flags .role-tag{
+  position:static;padding:4px 6px;border-radius:0;font-size:.38rem!important;letter-spacing:.07em
+}
+.roster-state{
+  display:inline-flex;align-items:center;min-height:20px;padding:3px 6px;
+  border:1px solid rgba(255,255,255,.055);background:#081216;
+  color:#71827c;font-size:.36rem;font-style:normal;font-weight:900;letter-spacing:.06em
+}
+.roster-state.active{border-color:rgba(82,187,130,.18);color:#79ca9b}
+.roster-state.ready{color:#7d9089}
+.roster-state.recovering{border-color:rgba(203,92,73,.23);color:#db8877}
+.roster-state.locked{border-color:rgba(216,185,118,.18);color:#c7aa68}
+#roster .roster-card-identity h3{
+  margin:8px 0 2px!important;overflow:hidden;color:#eee8dc!important;
+  font:500 1.12rem/1.05 Georgia,serif!important;text-overflow:ellipsis;white-space:nowrap
+}
+.roster-card-identity p{
+  margin:0!important;overflow:hidden;color:#778883!important;
+  font-size:.56rem!important;text-overflow:ellipsis;white-space:nowrap
+}
+.roster-card-identity>small{display:block;margin-top:4px;color:#596a65;font-size:.46rem!important}
+
+.roster-card-metrics{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  margin:0 14px;border:1px solid rgba(255,255,255,.045);background:#071014
+}
+.roster-card-metrics>div{min-width:0;padding:10px 7px;border-right:1px solid rgba(255,255,255,.035)}
+.roster-card-metrics>div:last-child{border-right:0}
+.roster-card-metrics span{display:block;color:#566660;font-size:.35rem;font-weight:900;letter-spacing:.07em}
+.roster-card-metrics b{display:block;margin-top:4px;color:#e0dbcf;font:500 .83rem Georgia,serif}
+.roster-card-metrics b.danger{color:#dd8877}
+
+.roster-shock-line{margin:11px 14px 0}
+.roster-shock-line>div{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.roster-shock-line span,.roster-shock-line b{font-size:.38rem;font-weight:900;letter-spacing:.06em}
+.roster-shock-line span{color:#53645f}
+.roster-shock-line b{color:#7d8e88}
+.roster-shock-line>i{display:block;height:4px;margin-top:5px;background:#182226;overflow:hidden}
+.roster-shock-line>i>em{display:block;height:100%;background:linear-gradient(90deg,#8e7140,#c86f58);font-style:normal}
+
+#roster .evo-roster-footer{
+  display:grid!important;grid-template-columns:1fr 1fr!important;gap:0!important;
+  margin:11px 14px 0!important;border:1px solid rgba(255,255,255,.04)!important;
+  background:rgba(7,16,20,.7)!important
+}
+#roster .evo-roster-footer>div{
+  min-width:0;padding:8px 9px!important;border:0!important;background:transparent!important
+}
+#roster .evo-roster-footer>div+div{border-left:1px solid rgba(255,255,255,.04)!important}
+#roster .evo-roster-footer span{display:block;color:#586862;font-size:.35rem!important;font-weight:900;letter-spacing:.07em}
+#roster .evo-roster-footer b{
+  display:block;margin-top:3px!important;overflow:hidden;color:#a7b2ad;
+  font-size:.46rem!important;text-overflow:ellipsis;white-space:nowrap
+}
+
+#roster .roster-card-actions{margin-top:auto;padding:11px 14px 14px}
+#roster .roster-card-actions>button{
+  position:static!important;display:block!important;width:100%!important;height:38px!important;min-height:38px!important;
+  margin:0!important;border:1px solid rgba(216,185,118,.18)!important;
+  background:linear-gradient(180deg,rgba(59,49,29,.64),rgba(28,28,22,.72))!important;
+  color:#e1cd98!important;font-size:.48rem!important;font-weight:900;letter-spacing:.07em
+}
+#roster .roster-card-actions>button:hover{
+  border-color:rgba(216,185,118,.38)!important;background:#2d281b!important
+}
+
+/* Membership / recruitment */
+#roster .roster-character-card.roster-locked{opacity:.7;filter:saturate(.5)}
+#roster .roster-recruit-card{
+  min-height:332px!important;padding:22px 18px!important;
+  border:1px dashed rgba(216,185,118,.16)!important;
+  background:
+    radial-gradient(circle at 50% 28%,rgba(216,185,118,.07),transparent 25%),
+    linear-gradient(180deg,#0c171a,#081115)!important
+}
+#roster .roster-recruit-card .recruit-slot-number{color:#8e7b54}
+#roster .roster-recruit-card .recruit-plus{
+  width:58px;height:58px;margin:24px auto 10px;display:grid;place-items:center;
+  border:1px solid rgba(216,185,118,.18);background:#091317;color:#c9ad69;font:400 1.45rem Georgia,serif
+}
+#roster .roster-recruit-card h3{font-size:1.05rem}
+#roster .roster-recruit-card p{max-width:260px;margin:8px auto 58px;color:#6f7f79;font-size:.58rem;line-height:1.5}
+#roster .roster-recruit-card>button{
+  position:absolute!important;left:18px!important;right:18px!important;bottom:16px!important;
+  width:auto!important;height:38px!important;border-color:rgba(216,185,118,.2)!important;
+  background:#181912!important;color:#d2bd82!important
+}
+
+#roster .roster-empty-state{
+  grid-column:1/-1;min-height:180px;padding:36px;display:grid;place-items:center;align-content:center;
+  border:1px dashed rgba(216,185,118,.12);background:#081115;text-align:center
+}
+#roster .roster-empty-state b{color:#d8d3c8;font:500 1rem Georgia,serif}
+#roster .roster-empty-state span{margin-top:6px;color:#687872;font-size:.6rem}
+
+/* Tablet / iPad */
+@media(max-width:1180px){
+  #roster .roster-grid-v2{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .roster-overview-strip{grid-template-columns:repeat(5,minmax(120px,1fr));overflow-x:auto}
+  .roster-filter-primary{grid-template-columns:1fr}
+  #roster .roster-role-filters{grid-template-columns:repeat(4,1fr)}
+  .roster-filter-secondary{grid-template-columns:repeat(3,minmax(120px,1fr))}
+  .roster-clear-filters{grid-column:auto}
+}
+
+/* Phone */
+@media(max-width:720px){
+  #roster>.roster-intro{gap:12px}
+  #roster .roster-intro-actions{width:100%}
+  #roster .roster-intro-actions .ghost-btn{width:100%;min-width:0}
+  .roster-overview-strip{
+    grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;
+    margin-bottom:8px
+  }
+  .roster-overview-strip article{padding:10px 11px;border-bottom:1px solid rgba(255,255,255,.035)}
+  .roster-overview-strip article:nth-child(2n){border-right:0}
+  .roster-overview-strip article:last-child{grid-column:1/-1;border-bottom:0}
+  .roster-overview-strip b{font-size:.98rem}
+  .roster-overview-strip small{font-size:.42rem!important}
+  .roster-filter-primary{display:block;padding:7px}
+  #roster .roster-search{width:100%;margin-bottom:6px}
+  #roster .roster-role-filters{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+  #roster .roster-role-filters .filter{min-height:38px;padding:0 4px;font-size:.48rem}
+  .roster-filter-secondary{grid-template-columns:1fr 1fr;gap:6px;padding:7px}
+  #roster .roster-filter-secondary .ui-select,.roster-clear-filters{height:44px!important;min-height:44px}
+  .roster-clear-filters{grid-column:1/-1}
+  .roster-filter-meta{align-items:flex-start;flex-direction:column;gap:3px;padding:7px 9px}
+  .roster-filter-meta em{display:none}
+  #roster .roster-grid-v2{grid-template-columns:1fr!important;gap:8px!important}
+  #roster .roster-character-card{min-height:308px!important}
+  .roster-card-head{grid-template-columns:58px minmax(0,1fr);padding:12px 11px 10px}
+  .roster-card-portrait{width:56px;height:56px}
+  .roster-card-metrics{margin:0 11px}
+  .roster-card-metrics>div{padding:8px 5px}
+  .roster-card-metrics span{font-size:.31rem}
+  .roster-card-metrics b{font-size:.72rem}
+  .roster-shock-line{margin:9px 11px 0}
+  #roster .evo-roster-footer{margin:9px 11px 0!important}
+  #roster .roster-card-actions{padding:9px 11px 11px}
+  #roster .roster-card-actions>button{height:44px!important;min-height:44px!important;font-size:.55rem!important}
+  #roster .roster-recruit-card{min-height:290px!important}
+}
+
+@media(prefers-reduced-motion:reduce){
+  #roster .roster-character-card:hover{transform:none!important}
+}

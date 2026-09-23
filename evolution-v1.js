@@ -88,28 +88,40 @@ function enhanceRoster(){
   const cards=[...root.querySelectorAll('.char-card')];
   const recruitCards=cards.filter(card=>card.classList.contains('recruit-slot-card'));
   const characterCards=cards.filter(card=>!card.classList.contains('recruit-slot-card'));
+  const gearOrder=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic'];
+
   characterCards.forEach(card=>{
     const id=card.querySelector('[data-char]')?.dataset.char;
     const c=byId.get(id);if(!c)return;
+    const active=ids.has(id),recovering=Game.isUnavailable(c);
     card.dataset.charId=id;
-    card.dataset.activeParty=ids.has(id)?'1':'0';
-    card.dataset.status=Game.isUnavailable(c)?'recovering':'available';
+    card.dataset.activeParty=active?'1':'0';
+    card.dataset.status=recovering?'recovering':'available';
     card.dataset.ilvl=String(charIlvl(c));
     card.dataset.level=String(c.level||1);
     card.dataset.shock=String(c.cellShock||0);
     card.dataset.name=(c.name||'').toLowerCase();
     card.dataset.class=(c.class||'').toLowerCase();
-    const gearSlots=['Head','Chest','Weapon'].map(slot=>({slot,item:Game.canonicalItem(c.equipment?.[slot])}));
+    card.classList.toggle('is-active',active);
+    card.classList.toggle('is-recovering',recovering);
+
+    const gearSlots=gearOrder.map(slot=>({slot,item:Game.canonicalItem(c.equipment?.[slot])}));
     gearSlots.sort((a,b)=>(Number(a.item?.itemLevel)||0)-(Number(b.item?.itemLevel)||0));
     const weakest=gearSlots[0],professions=(c.professions||[]).filter(Boolean);
     let footer=card.querySelector('.evo-roster-footer');
-    if(!footer){footer=document.createElement('div');footer.className='evo-roster-footer';const action=card.querySelector('[data-char]');action?.insertAdjacentElement('beforebegin',footer)}
-    if(footer)footer.innerHTML=`<div><span>Professions</span><b>${professions.length?professions.map(p=>`${esc(p.name)} ${p.level}`).join(' · '):'Untrained'}</b></div><div><span>Weakest Gear</span><b>${esc(weakest?.slot||'—')} · iLvl ${weakest?.item?.itemLevel||0}</b></div>`;
+    if(!footer){
+      footer=document.createElement('div');footer.className='evo-roster-footer';
+      const actions=card.querySelector('.roster-card-actions'),action=card.querySelector('[data-char]');
+      if(actions)actions.insertAdjacentElement('beforebegin',footer);
+      else action?.insertAdjacentElement('beforebegin',footer);
+    }
+    if(footer)footer.innerHTML=`<div><span>Professions</span><b>${professions.length?professions.map(p=>`${esc(p.name)} ${p.level}`).join(' · '):'Untrained'}</b></div><div><span>Gear Watch</span><b>${esc(weakest?.slot?.replace(/(\d)/,' $1')||'—')} · iLvl ${weakest?.item?.itemLevel||0}</b></div>`;
   });
+
   const filtered=characterCards.filter(card=>{
     const c=byId.get(card.dataset.charId);if(!c)return false;
     const roleOk=rosterRole==='all'||roleOf(c)===rosterRole;
-    const q=rosterSearch.toLowerCase();
+    const q=rosterSearch.toLowerCase().trim();
     const searchOk=!q||[c.name,c.class,c.spec,...(c.professions||[]).filter(Boolean).map(p=>p.name)].join(' ').toLowerCase().includes(q);
     const isActive=ids.has(c.id),recovering=Game.isUnavailable(c);
     const statusOk=rosterStatus==='all'||(rosterStatus==='active'&&isActive)||(rosterStatus==='reserve'&&!isActive)||(rosterStatus==='available'&&!recovering)||(rosterStatus==='recovering'&&recovering);
@@ -118,6 +130,7 @@ function enhanceRoster(){
     const professionOk=rosterProfession==='all'||(rosterProfession==='untrained'&&!profs.length)||profs.includes(rosterProfession);
     return roleOk&&searchOk&&statusOk&&classOk&&professionOk;
   });
+
   filtered.sort((a,b)=>{
     const ca=byId.get(a.dataset.charId),cb=byId.get(b.dataset.charId);
     if(rosterSort==='name')return ca.name.localeCompare(cb.name);
@@ -125,21 +138,38 @@ function enhanceRoster(){
     if(rosterSort==='shock')return (cb.cellShock||0)-(ca.cellShock||0);
     return charIlvl(cb)-charIlvl(ca);
   });
+
   characterCards.forEach(card=>card.style.display='none');
-  const showRecruitCards=ent().member&&
-    rosterRole==='all'&&rosterStatus==='all'&&rosterClass==='all'&&rosterProfession==='all'&&!rosterSearch.trim();
+  const filtersClear=rosterRole==='all'&&rosterStatus==='all'&&rosterClass==='all'&&rosterProfession==='all'&&!rosterSearch.trim();
+  const showRecruitCards=ent().member&&filtersClear;
   recruitCards.forEach(card=>card.style.display=showRecruitCards?'':'none');
+
   const currentOrder=[...root.querySelectorAll('.char-card')].filter(card=>filtered.includes(card)).map(card=>card.dataset.charId).join('|');
   const targetOrder=filtered.map(card=>card.dataset.charId).join('|');
   filtered.forEach(card=>{card.style.display=''});
   if(currentOrder!==targetOrder)filtered.forEach(card=>root.appendChild(card));
   if(showRecruitCards)recruitCards.forEach(card=>root.appendChild(card));
+
   let empty=root.querySelector('.roster-empty-state');
-  if(!filtered.length&&!showRecruitCards){if(!empty){empty=document.createElement('div');empty.className='roster-empty-state';empty.textContent='No adventurers match these filters.';root.appendChild(empty)}}else empty?.remove();
+  if(!filtered.length&&!showRecruitCards){
+    if(!empty){
+      empty=document.createElement('div');
+      empty.className='roster-empty-state';
+      empty.innerHTML='<b>No adventurers found.</b><span>Change or reset the filters to show more of your roster.</span>';
+      root.appendChild(empty)
+    }
+  }else empty?.remove();
+
   const recovering=chars.filter(c=>Game.isUnavailable(c)).length,cap=ent().rosterCap,recruited=chars.length,open=Math.max(0,cap-recruited);
-  if($('#rosterActiveSummary'))$('#rosterActiveSummary').textContent=`${recruited} / ${cap} recruited`;
-  if($('#rosterRecoverySummary'))$('#rosterRecoverySummary').textContent=
-    `${ids.size} active${open?' · '+open+' open slot'+(open===1?'':'s'):''}${recovering?' · '+recovering+' recovering':''}`;
+  const available=Math.max(0,recruited-recovering),avgIlvl=recruited?Math.round(chars.reduce((sum,c)=>sum+charIlvl(c),0)/recruited):0;
+  if($('#rosterActiveSummary'))$('#rosterActiveSummary').textContent=`${recruited} / ${cap}`;
+  if($('#rosterRecoverySummary'))$('#rosterRecoverySummary').textContent=open?`${open} open slot${open===1?'':'s'}`:'Roster capacity filled';
+  if($('#rosterMetricActive'))$('#rosterMetricActive').textContent=`${ids.size} / 5`;
+  if($('#rosterMetricAvailable'))$('#rosterMetricAvailable').textContent=String(available);
+  if($('#rosterMetricRecovering'))$('#rosterMetricRecovering').textContent=String(recovering);
+  if($('#rosterMetricIlvl'))$('#rosterMetricIlvl').textContent=String(avgIlvl);
+  if($('#rosterResultsLabel'))$('#rosterResultsLabel').textContent=`Showing ${filtered.length} of ${recruited} adventurer${recruited===1?'':'s'}`;
+  const clear=$('#rosterClearFilters');if(clear)clear.disabled=filtersClear;
 }
 function bindRoster(){
   $('#rosterSearch')?.addEventListener('input',e=>{rosterSearch=e.target.value;enhanceRoster()});
@@ -148,6 +178,13 @@ function bindRoster(){
   $('#rosterProfessionFilter')?.addEventListener('change',e=>{rosterProfession=e.target.value;enhanceRoster()});
   $('#rosterSort')?.addEventListener('change',e=>{rosterSort=e.target.value;enhanceRoster()});
   $$('.roster-role-filters [data-filter]').forEach(b=>b.addEventListener('click',()=>{rosterRole=b.dataset.filter;setTimeout(enhanceRoster,0)}));
+  $('#rosterClearFilters')?.addEventListener('click',()=>{
+    rosterRole='all';rosterStatus='all';rosterClass='all';rosterProfession='all';rosterSearch='';rosterSort='ilvl';
+    const search=$('#rosterSearch'),status=$('#rosterStatusFilter'),klass=$('#rosterClassFilter'),profession=$('#rosterProfessionFilter'),sort=$('#rosterSort');
+    if(search)search.value='';if(status)status.value='all';if(klass)klass.value='all';if(profession)profession.value='all';if(sort)sort.value='ilvl';
+    $$('.roster-role-filters [data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter==='all'));
+    Game?.renderAll?.();setTimeout(enhanceRoster,0)
+  });
   const root=$('#rosterGrid');if(root){rosterObserver=new MutationObserver(()=>requestAnimationFrame(enhanceRoster));rosterObserver.observe(root,{childList:true})}
 }
 

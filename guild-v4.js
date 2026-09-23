@@ -347,30 +347,69 @@ function renderTop(){
 }
 function shockMarkup(c){const pct=Math.round(c.cellShock||0),locked=isUnavailable(c);return `<div class="cell-shock-row"><div><span>Cell Shock</span><b>${pct}%${locked?` · ${formatRemaining(c)}`:''}</b></div><div class="cell-shock-bar"><i style="width:${pct}%"></i></div></div>`;}
 function rosterCard(c,index){
-  const role=roleOf(c),unlocked=isRosterSlotUnlocked(index),locked=isUnavailable(c),ilvl=characterItemLevel(c),status=!unlocked?'MEMBERSHIP LOCKED':locked?'RECOVERING':'READY',classKey=combatClassKey(c);
-  return `<article class="char-card ${classKey} ${!unlocked?'roster-locked':''} ${locked?'shock-locked':''}" data-role="${role}" data-class-name="${c.class}" style="--glow:var(--combat-class,#7F8B88)">${!unlocked?'<div class="member-slot-ribbon">MEMBERSHIP SLOT '+(index+1)+'</div>':''}<div class="char-top"><div class="char-portrait">${c.portrait}</div><span class="role-tag role-${role}">${roleLabel(role)}</span></div><div class="character-status ${locked||!unlocked?'danger':''}">${status}${locked&&unlocked?` · ${formatRemaining(c)}`:''}</div><h3>${c.name}</h3><div class="class">${c.race||'Veyren'} · ${c.class} · ${c.spec} · Level ${c.level}</div><div class="char-stats"><div><span>Power</span><b>${c.power}</b></div><div><span>Item Level</span><b>${ilvl}</b></div><div><span>Talent Points</span><b>${c.talent}</b></div></div><div class="level-growth"><span>Level Growth</span><b>+${levelHpBonus(c)}% Base HP · +${levelOutputBonus(c)}% Base Damage / Healing</b></div>${shockMarkup(c)}<div class="knowledge-row"><div><span>Mastery</span><b>${averageMastery(c)}%</b></div><div class="knowledge-bar"><i style="width:${averageMastery(c)}%"></i></div></div><button data-char="${c.id}">${unlocked?'VIEW CHARACTER':'VIEW LOCKED CHARACTER'}</button></article>`;
+  const role=roleOf(c),unlocked=isRosterSlotUnlocked(index),recovering=isUnavailable(c),ilvl=characterItemLevel(c),classKey=combatClassKey(c),active=flatPartyIds().includes(c.id);
+  const shock=Math.round(Number(c.cellShock)||0),meta=classDef(c),status=!unlocked?'MEMBERSHIP LOCKED':recovering?'RECOVERING':active?'ACTIVE PARTY':'AVAILABLE';
+  const statusClass=!unlocked?'locked':recovering?'recovering':active?'active':'ready';
+  return `<article class="char-card roster-character-card ${classKey} ${!unlocked?'roster-locked':''} ${recovering?'shock-locked':''} ${active?'is-active':''}" data-role="${role}" data-class-name="${c.class}" style="--roster-accent:${meta?.glow||'#7F8B88'};--glow:${meta?.glow||'#7F8B88'}">
+    ${!unlocked?'<div class="member-slot-ribbon">MEMBERSHIP SLOT '+(index+1)+'</div>':''}
+    <div class="roster-card-head">
+      <div class="roster-card-portrait"><span>${c.portrait}</span><i>${meta?.icon||'◇'}</i></div>
+      <div class="roster-card-identity">
+        <div class="roster-card-flags"><span class="role-tag role-${role}">${roleLabel(role)}</span><em class="roster-state ${statusClass}">${status}${recovering&&unlocked?` · ${formatRemaining(c)}`:''}</em></div>
+        <h3>${c.name}</h3>
+        <p>${c.race||'Veyren'} · ${c.class} · ${c.spec}</p>
+        <small>Level ${c.level}</small>
+      </div>
+    </div>
+    <div class="roster-card-metrics">
+      <div><span>ITEM LEVEL</span><b>${ilvl}</b></div>
+      <div><span>POWER</span><b>${c.power||0}</b></div>
+      <div><span>CELL SHOCK</span><b class="${shock>=75?'danger':''}">${shock}%</b></div>
+      <div><span>TALENT POINTS</span><b>${c.talent||0}</b></div>
+    </div>
+    <div class="roster-shock-line"><div><span>CELL SHOCK</span><b>${recovering?'RECOVERING':shock?shock+'%':'CLEAR'}</b></div><i><em style="width:${shock}%"></em></i></div>
+    <div class="roster-card-actions"><button type="button" data-char="${c.id}">${unlocked?'OPEN CHARACTER':'VIEW LOCKED CHARACTER'} →</button></div>
+  </article>`;
 }
+
 function recruitSlotCard(index){
-  return `<article class="char-card recruit-slot-card"><div class="recruit-slot-number">SLOT ${index+1}</div><div class="recruit-plus">+</div><h3>Recruit Adventurer</h3><div class="class">Membership roster slot · Empty</div><p>Recruit a Level 1 adventurer. Choose any available class and specialisation.</p><button data-recruit-slot="${index}">RECRUIT ADVENTURER</button></article>`;
+  return `<article class="char-card recruit-slot-card roster-recruit-card">
+    <div class="recruit-slot-number">MEMBERSHIP SLOT ${index+1}</div>
+    <div class="recruit-plus">+</div>
+    <h3>Recruit Adventurer</h3>
+    <div class="class">Open roster position</div>
+    <p>Add a Level 1 adventurer and choose their class, specialisation and identity.</p>
+    <button type="button" data-recruit-slot="${index}">RECRUIT ADVENTURER →</button>
+  </article>`;
 }
+
 function renderRoster(filter='all'){
   if(!ui.rosterGrid)return;
-  const e=entitlements(),rosterCount=Math.min(state.roster.length,e.rosterCap),activeCount=flatPartyIds().filter(id=>isCharacterRosterUnlocked(id)).length,openCount=Math.max(0,e.rosterCap-rosterCount);
+  const e=entitlements(),chars=state.roster.slice(0,e.rosterCap),rosterCount=chars.length,activeCount=flatPartyIds().filter(id=>isCharacterRosterUnlocked(id)).length,openCount=Math.max(0,e.rosterCap-rosterCount);
+  const recovering=chars.filter(isUnavailable).length,available=Math.max(0,rosterCount-recovering);
+  const avgIlvl=rosterCount?Math.round(chars.reduce((sum,c)=>sum+characterItemLevel(c),0)/rosterCount):0;
   const activeSummary=$('#rosterActiveSummary'),recoverySummary=$('#rosterRecoverySummary');
-  if(activeSummary)activeSummary.textContent=rosterCount+' / '+e.rosterCap+' recruited';
-  if(recoverySummary){
-    const recovering=state.roster.slice(0,e.rosterCap).filter(isUnavailable).length;
-    recoverySummary.textContent=(activeCount+' active')+(openCount?' · '+openCount+' open slot'+(openCount===1?'':'s'):'')+(recovering?' · '+recovering+' recovering':'');
-  }
-  const rows=state.roster.map((c,index)=>({c,index})).filter(x=>filter==='all'||roleOf(x.c)===filter);
-  let html=rows.map(x=>rosterCard(x.c,x.index)).join('');
-  if(filter==='all'&&e.member&&state.onboarding?.complete&&state.roster.length<10){
+  if(activeSummary)activeSummary.textContent=rosterCount+' / '+e.rosterCap;
+  if(recoverySummary)recoverySummary.textContent=openCount?openCount+' open slot'+(openCount===1?'':'s'):'Roster capacity filled';
+  if($('#rosterMetricActive'))$('#rosterMetricActive').textContent=activeCount+' / 5';
+  if($('#rosterMetricAvailable'))$('#rosterMetricAvailable').textContent=String(available);
+  if($('#rosterMetricRecovering'))$('#rosterMetricRecovering').textContent=String(recovering);
+  if($('#rosterMetricIlvl'))$('#rosterMetricIlvl').textContent=String(avgIlvl);
+
+  // Always keep the complete roster in the DOM. Evolution handles combined role,
+  // status, class, profession, search and sort filters without destroying cards.
+  let html=state.roster.map((c,index)=>rosterCard(c,index)).join('');
+  if(e.member&&state.onboarding?.complete&&state.roster.length<10){
     for(let i=state.roster.length;i<10;i++)html+=recruitSlotCard(i);
   }
   ui.rosterGrid.innerHTML=html;
   ui.rosterGrid.querySelectorAll('[data-recruit-slot]').forEach(b=>b.onclick=()=>openRecruit(Number(b.dataset.recruitSlot)));
 }
-$$('#roster .filter[data-filter]').forEach(b=>b.addEventListener('click',()=>{$$('#roster .filter[data-filter]').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderRoster(b.dataset.filter);}));
+$$('#roster .filter[data-filter]').forEach(b=>b.addEventListener('click',()=>{
+  $$('#roster .filter[data-filter]').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  renderRoster('all');
+}));
 
 function recruitInitials(name){return String(name||'??').split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'??'}
 function recruitRandomName(race){
