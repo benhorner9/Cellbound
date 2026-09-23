@@ -25,7 +25,63 @@
 [data-cbvfx-theme="blackout"]{--cbvfx-a:rgba(61,190,178,.34);--cbvfx-b:rgba(218,194,67,.17)}
 [data-cbvfx-theme="fractured"],[data-cbvfx-theme="quest"]{--cbvfx-a:rgba(143,91,196,.35);--cbvfx-b:rgba(207,164,75,.20)}
 [data-cbvfx-theme="world"]{--cbvfx-a:rgba(193,73,74,.31);--cbvfx-b:rgba(222,165,69,.18)}
+
 [data-cbvfx-theme="pvp"]{--cbvfx-a:rgba(69,169,163,.25);--cbvfx-b:rgba(99,124,154,.17)}
+
+/* Each combat space gets its own ambient motion language. */
+[data-cbvfx-theme="ashen"] .cbvfx-motes{
+  opacity:.30;
+  background-image:radial-gradient(circle,rgba(255,149,73,.65) 0 1px,transparent 1.7px);
+  background-size:61px 77px;
+  animation-duration:12s
+}
+[data-cbvfx-theme="ashen"] .cbvfx-sweep{opacity:.055;background:linear-gradient(90deg,transparent,rgba(255,111,49,.78),transparent)}
+[data-cbvfx-theme="hollow"] .cbvfx-motes{
+  opacity:.20;
+  background-image:radial-gradient(circle,rgba(177,189,255,.5) 0 1px,transparent 1.6px);
+  background-size:82px 68px;
+  animation:cbvfxHollowDrift 20s ease-in-out infinite alternate
+}
+[data-cbvfx-theme="hollow"] .cbvfx-sweep{opacity:.035;background:linear-gradient(90deg,transparent,rgba(151,126,224,.7),transparent)}
+[data-cbvfx-theme="chaos"] .cbvfx-motes{
+  opacity:.17;
+  background-image:radial-gradient(ellipse,rgba(221,176,101,.42) 0 1px,transparent 1.8px);
+  background-size:49px 43px;
+  animation:cbvfxDust 15s linear infinite
+}
+[data-cbvfx-theme="chaos"] .cbvfx-haze.h2{background:radial-gradient(ellipse,rgba(89,127,66,.3),transparent 68%)}
+[data-cbvfx-theme="blackout"] .cbvfx-motes{
+  opacity:.12;
+  background-image:linear-gradient(90deg,transparent 48%,rgba(90,232,220,.34) 49% 51%,transparent 52%);
+  background-size:97px 100%;
+  animation:cbvfxGridScan 8s linear infinite
+}
+[data-cbvfx-theme="blackout"] .cbvfx-sweep{opacity:.075;background:linear-gradient(90deg,transparent,rgba(78,221,211,.8),transparent);animation-duration:8s}
+[data-cbvfx-theme="fractured"] .cbvfx-motes,
+[data-cbvfx-theme="quest"] .cbvfx-motes{
+  opacity:.22;
+  background-image:
+    linear-gradient(42deg,transparent 48%,rgba(181,132,230,.28) 49% 50%,transparent 51%),
+    radial-gradient(circle,rgba(226,188,100,.36) 0 1px,transparent 1.6px);
+  background-size:113px 113px,79px 67px;
+  animation:cbvfxFracture 17s ease-in-out infinite alternate
+}
+[data-cbvfx-theme="world"] .cbvfx-motes{
+  opacity:.20;
+  background-image:radial-gradient(circle,rgba(235,137,91,.46) 0 1px,transparent 1.8px);
+  background-size:67px 83px;
+  animation-duration:13s
+}
+[data-cbvfx-theme="pvp"] .cbvfx-motes{opacity:.10;background-size:94px 78px}
+@keyframes cbvfxHollowDrift{to{transform:translate3d(-5%,9%,0) scale(1.06)}}
+@keyframes cbvfxDust{to{transform:translate3d(13%,-4%,0)}}
+@keyframes cbvfxGridScan{to{transform:translateX(97px)}}
+@keyframes cbvfxFracture{to{transform:translate3d(4%,-5%,0) rotate(.8deg)}}
+
+/* Boss pressure subtly tightens the arena without covering mechanics. */
+[data-cbvfx-boss]>.cbvfx-layer .cbvfx-haze{opacity:.16}
+[data-cbvfx-boss]>.cbvfx-layer .cbvfx-motes{filter:brightness(1.12)}
+
 
 /* Ambience stays behind gameplay; impact events render independently above units. */
 /* Local impact effects. */
