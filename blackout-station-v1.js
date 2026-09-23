@@ -368,7 +368,7 @@ function eventRender(e){
 
  const src=renderId(e.source),target=renderId(e.target),srcChar=charFor(e.source),targetChar=charFor(e.target);
  switch(e.type){
-  case'COMBAT_START':{hideRoleZones(true);$('#bsArena')?.classList.remove('shockwave');const oc=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT;setStatus('Generator hall combat live'+(oc?' · CALDER OVERCHARGE +'+oc+'%':'')+'.');feed('Dr. Vex Calder steps into the restored light.'+(oc?' Diagnostics have increased his maximum health by '+oc+'%.':''));break}
+  case'COMBAT_START':{hideRoleZones(true);$('#bsArena')?.classList.remove('shockwave');window.CellboundCombatFX?.boss?.($('#bsArena'),'Dr. Vex Calder');const oc=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT;setStatus('Generator hall combat live'+(oc?' · CALDER OVERCHARGE +'+oc+'%':'')+'.');feed('Dr. Vex Calder steps into the restored light.'+(oc?' Diagnostics have increased his maximum health by '+oc+'%.':''));break}
   case'MOVEMENT_START':
    if(src&&e.payload?.to){run.movementEpoch=run.movementEpoch||{};run.movementEpoch[src]=(Number(run.movementEpoch[src])||0)+1;move(src,e.payload.to.x,e.payload.to.y,e.payload.duration||420)}
    break;
@@ -377,11 +377,11 @@ function eventRender(e){
    if(srcChar)bsAct(srcChar.role,(e.ability||'Acting')+'…');
    break;
   case'DAMAGE_DEALT':
-   if(target){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);floatText(target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');if(targetChar){run.hp[targetChar.id]=pct;updateSideHp(targetChar,pct);if(Number(e.amount)>0&&pct<=35)feed(targetChar.name+' drops to '+Math.round(pct)+'% HP from '+(e.ability||'incoming damage')+'.')}}
+   if(target){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);floatText(target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');window.CellboundCombatFX?.impact?.($('[data-bs="'+target+'"]'),{critical:e.result==='critical'});if(targetChar){run.hp[targetChar.id]=pct;updateSideHp(targetChar,pct);if(Number(e.amount)>0&&pct<=35)feed(targetChar.name+' drops to '+Math.round(pct)+'% HP from '+(e.ability||'incoming damage')+'.')}}
    if(srcChar){run.damage[srcChar.id]=(Number(run.damage[srcChar.id])||0)+(Number(e.amount)||0);queueMeterRender()}
    break;
   case'HEAL_RECEIVED':
-   if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);run.hp[targetChar.id]=pct;floatText(target,'+'+Math.round(Number(e.amount)||0),'heal');updateSideHp(targetChar,pct)}
+   if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));bar(target,pct);run.hp[targetChar.id]=pct;floatText(target,'+'+Math.round(Number(e.amount)||0),'heal');window.CellboundCombatFX?.heal?.($('[data-bs="'+target+'"]'));updateSideHp(targetChar,pct)}
    if(srcChar){run.healing[srcChar.id]=(Number(run.healing[srcChar.id])||0)+(Number(e.amount)||0);queueMeterRender()}
    break;
   case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':
@@ -392,13 +392,15 @@ function eventRender(e){
    run.aggro=targetChar?.id||null;
    if(e.payload?.threat)Object.entries(e.payload.threat).forEach(([id,v])=>{const ch=charFor(id);if(ch)run.threat[ch.id]=Number(v)||0});
    queueMeterRender();break;
-  case'PHASE_CHANGE':window.CellboundFX?.phase?.(e.ability||'Power instability',e.payload?.healthPct);hideRoleZones(true);setStatus(e.ability||'Power instability');feed((e.ability||'Calder changes phase')+'. The station lights begin to fail.');break;
+  case'PHASE_CHANGE':window.CellboundCombatFX?.phase?.($('#bsArena'));window.CellboundFX?.phase?.(e.ability||'Power instability',e.payload?.healthPct);hideRoleZones(true);setStatus(e.ability||'Power instability');feed((e.ability||'Calder changes phase')+'. The station lights begin to fail.');break;
   case'MECHANIC_TELEGRAPH':
+   window.CellboundCombatFX?.mechanic?.($('#bsArena'),'warning');
    if(e.payload?.mechanicType==='role-circles'){showRoleZones(e.payload.zones);setStatus('ROLE CIRCUITS — RED TANK · YELLOW DAMAGE · BLUE HEALER');feed('Calder pulls the power. Get every character into the correct coloured circuit.')}
    else if($('#bsRoleZones')?.childElementCount)hideRoleZones(true);
    break;
   case'CAST_START':castStart(e.ability||'Enemy cast',Number(e.payload?.duration)||0);break;
-  case'CAST_FINISH':case'INTERRUPT':castClear();break;
+  case'CAST_FINISH':castClear();break;
+  case'INTERRUPT':castClear();if(e.result==='success')window.CellboundCombatFX?.interrupt?.($('[data-bs="'+target+'"]')||$('#bsArena'));break;
   case'MECHANIC_SAFE':if(target){floatText(target,'PROTECTED','heal')}break;
   case'ROLE_SHOCKWAVE':{
    const arena=$('#bsArena');hideRoleZones(false);
@@ -409,9 +411,9 @@ function eventRender(e){
    setTimeout(()=>{if(!run)return;if(arena&&Number(arena.dataset.shockEpoch)===shockEpoch)arena.classList.remove('shockwave');bsRegroup(360,epochs)},delay);
    break;
   }
-  case'PLAYER_DEFEATED':if(target){$('[data-bs="'+target+'"]')?.classList.add('dead');bar(target,0);floatText(target,'DEFEATED','incoming');if(targetChar){run.hp[targetChar.id]=0;updateSideHp(targetChar,0);feed(targetChar.name+' is defeated by '+(e.ability||'Dr. Vex Calder')+'.')}}break;
+  case'PLAYER_DEFEATED':if(target){const fallen=$('[data-bs="'+target+'"]');fallen?.classList.add('dead');window.CellboundCombatFX?.death?.(fallen);bar(target,0);floatText(target,'DEFEATED','incoming');if(targetChar){run.hp[targetChar.id]=0;updateSideHp(targetChar,0);feed(targetChar.name+' is defeated by '+(e.ability||'Dr. Vex Calder')+'.')}}break;
   case'PLAYER_REVIVED':if(target){const pct=Number(e.payload?.targetHpPct)||35;$('[data-bs="'+target+'"]')?.classList.remove('dead');bar(target,pct);floatText(target,'REVIVED','heal');if(targetChar){run.hp[targetChar.id]=pct;updateSideHp(targetChar,pct);updateResource(targetChar,e.payload?.resource,e.payload?.resourceValue,e.payload?.resourceMax,'PLAYER_REVIVED')}}break;
-  case'ENEMY_DEFEATED':if(target){$('[data-bs="'+target+'"]')?.classList.add('dead');bar(target,0);feed('Dr. Vex Calder collapses beside the overloaded generator.')}break;
+  case'ENEMY_DEFEATED':if(target){const defeated=$('[data-bs="'+target+'"]');defeated?.classList.add('dead');window.CellboundCombatFX?.death?.(defeated,{boss:true});window.CellboundCombatFX?.victory?.($('#bsArena'));bar(target,0);feed('Dr. Vex Calder collapses beside the overloaded generator.')}break;
   case'PLAYER_MISTAKE':if(srcChar)feed(srcChar.name+' '+(e.payload?.detail||'hesitates')+'.');break;
   case'COMBAT_END':castClear();hideRoleZones(true);$('#bsArena')?.classList.remove('shockwave');setStatus(e.result==='victory'?'Dr. Vex Calder defeated.':'PARTY WIPED');if(e.result!=='victory')window.CellboundFX?.wipe?.('Emergency power overwhelms the party inside Blackout Station.');feed(e.result==='victory'?'Combat complete. Calder is down.':'Combat ends in a party wipe. Review the failure report below.');break
  }
