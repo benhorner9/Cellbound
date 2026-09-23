@@ -215,30 +215,33 @@ function enhanceBank(){
     ...(s.consumables||[]).filter(x=>(x.quantity||0)>0).map(x=>({key:`con:${x.key}`,name:x.name,category:'Consumable',rarity:'Uncommon',quantity:x.quantity||1,source:'Crafted stock',icon:'⚗',tradeState:'tradeable'})),
     ...(s.recipeScrolls||[]).filter(x=>(x.quantity||0)>0).map(x=>({key:`rec:${x.recipeId}`,name:x.name,category:'Recipe',rarity:'Rare',quantity:x.quantity||1,source:'Rare recipe scroll',icon:'▤',tradeState:'tradeable'}))
   ];
+
   const resourceSignature=resourceModels.map(x=>`${x.key}:${x.quantity}`).join('|');
   if(root.dataset.resourceSignature!==resourceSignature||root.querySelectorAll('.evo-bank-resource').length!==resourceModels.length){
     root.dataset.resourceSignature=resourceSignature;
     root.querySelectorAll('.evo-bank-resource').forEach(x=>x.remove());
-    if(resourceModels.length)root.querySelector('.bank-empty')?.remove();
+    if(resourceModels.length)root.querySelectorAll('.bank-empty').forEach(x=>x.remove());
     resourceModels.forEach(item=>{
       const card=document.createElement('article');
-      card.className=`bank-item evo-bank-resource rarity-${String(item.rarity).toLowerCase()}`;
+      card.className=`bank-item evo-bank-resource bank-card-v2 bank-resource-card rarity-${String(item.rarity).toLowerCase()}`;
       card.dataset.evoKey=item.key;
       const art=item.materialKey&&P?.materialArtHTML?P.materialArtHTML(item.materialKey,66,'evo-resource-art'):`<span class="evo-resource-icon">${esc(item.icon)}</span>`;
-      card.innerHTML=`<div class="bank-icon gear-bank-icon">${art}</div><div class="bank-copy"><small>${esc(item.category.toUpperCase())} · ${esc(item.rarity.toUpperCase())}</small><h3>${esc(item.name)}</h3><p>${esc(item.source)}</p></div><div class="bank-qty">×${item.quantity}</div><button data-resource-jump="professions">OPEN PROFESSIONS</button>`;
+      card.innerHTML=`<div class="bank-card-main"><div class="bank-icon gear-bank-icon">${art}</div><div class="bank-copy"><small>${esc(item.category.toUpperCase())} · ${esc(item.rarity.toUpperCase())}</small><h3>${esc(item.name)}</h3><div class="bank-card-preview"><span>${esc(item.source)}</span></div></div><div class="bank-qty">×${item.quantity}</div></div><div class="bank-card-foot"><span>Shared crafting stock</span><button class="bank-card-action" data-resource-jump="professions">OPEN PROFESSIONS →</button></div>`;
       root.appendChild(card);
     });
     root.querySelectorAll('[data-resource-jump]').forEach(btn=>btn.addEventListener('click',()=>Game.switchView('professions')));
   }
 
-  const gearCards=[...root.querySelectorAll('[data-bank-item]')].map(b=>b.closest('.bank-item')).filter(Boolean);
+  const gearCards=[...root.querySelectorAll('[data-bank-item],[data-bank-select]')].map(b=>b.closest('.bank-item')).filter(Boolean);
   gearCards.forEach(card=>{
-    const id=card.querySelector('[data-bank-item]')?.dataset.bankItem,item=byId.get(id);if(!item)return;
+    const id=(card.querySelector('[data-bank-item]')||card.querySelector('[data-bank-select]'))?.dataset.bankItem||(card.querySelector('[data-bank-select]')?.dataset.bankSelect);
+    const item=byId.get(id);if(!item)return;
     card.dataset.itemId=id;card.dataset.evoKey=`gear:${id}`;
     const upgrades=bankUpgradeCount(item);
     let chip=card.querySelector('.bank-upgrade-chip');
     if(!chip){chip=document.createElement('span');chip.className='bank-upgrade-chip';card.appendChild(chip)}
-    chip.classList.toggle('none',upgrades===0);chip.textContent=upgrades?`UPGRADE FOR ${upgrades}`:'NO DIRECT UPGRADE';
+    chip.classList.toggle('none',upgrades===0);chip.textContent=upgrades?`UPGRADE FOR ${upgrades}`:'';
+    chip.hidden=upgrades===0;
   });
 
   const resourceByKey=new Map(resourceModels.map(x=>[x.key,x]));
@@ -248,13 +251,14 @@ function enhanceBank(){
   ].filter(x=>x.item);
 
   const visible=entries.filter(({item,category})=>{
-    const q=bankSearch.toLowerCase();
-    const searchOk=!q||[item.name,item.class,item.slot,item.source,item.category].filter(Boolean).join(' ').toLowerCase().includes(q);
+    const q=bankSearch.toLowerCase().trim();
+    const searchOk=!q||[item.name,item.class,item.slot,item.source,item.category,item.rarity].filter(Boolean).join(' ').toLowerCase().includes(q);
     let categoryOk=bankCategory==='all';
-    if(!categoryOk&&category==='Gear'){
-      categoryOk=bankCategory==='Armour'?['Head','Chest','Shoulders','Hands','Waist','Legs','Feet'].includes(item.slot):item.slot===bankCategory;
-    }else if(!categoryOk)categoryOk=category===bankCategory;
-    const classOk=bankClass==='all'||(category==='Gear'&&(item.class===bankClass||item.classes==='all'||item.classes?.includes?.(bankClass)));
+    if(bankCategory==='Gear')categoryOk=category==='Gear';
+    else if(bankCategory==='favorite')categoryOk=category==='Gear'&&Boolean(item.favorite);
+    else if(bankCategory==='junk')categoryOk=category==='Gear'&&Boolean(item.junk);
+    else if(!categoryOk)categoryOk=category===bankCategory;
+    const classOk=bankClass==='all'||category!=='Gear'||item.class===bankClass||item.classes==='all'||item.classes?.includes?.(bankClass);
     const rarityOk=bankRarity==='all'||item.rarity===bankRarity;
     const tradeOk=bankTrade==='all'||(item.tradeState||'tradeable')===bankTrade;
     return searchOk&&categoryOk&&classOk&&rarityOk&&tradeOk;
@@ -265,7 +269,7 @@ function enhanceBank(){
     if(bankSort==='ilvl-desc')return (ib.itemLevel||0)-(ia.itemLevel||0);
     if(bankSort==='ilvl-asc')return (ia.itemLevel||0)-(ib.itemLevel||0);
     if(bankSort==='rarity')return (rarityRank[ib.rarity]||0)-(rarityRank[ia.rarity]||0);
-    if(bankSort==='name')return ia.name.localeCompare(ib.name);
+    if(bankSort==='name')return String(ia.name||'').localeCompare(String(ib.name||''));
     return b.order-a.order;
   });
 
@@ -275,12 +279,28 @@ function enhanceBank(){
   visible.forEach(x=>x.card.dataset.hidden='0');
   if(currentOrder!==targetOrder)visible.forEach(x=>root.appendChild(x.card));
 
-  const craftTotal=resourceModels.reduce((n,x)=>n+x.quantity,0),summary=$('#bankSummary');
-  if(summary){
-    let box=summary.querySelector('.evo-bank-summary');
-    if(!box){box=document.createElement('div');box.className='evo-bank-summary';summary.appendChild(box)}
-    box.innerHTML=`<span>Crafting Stock</span><b>${craftTotal}</b>`;
-  }
+  let empty=root.querySelector('.bank-filter-empty-v2');
+  if(!visible.length){
+    root.querySelectorAll('.bank-empty').forEach(x=>x.remove());
+    if(!empty){empty=document.createElement('div');empty.className='bank-empty bank-filter-empty-v2';empty.innerHTML='<span>⌕</span><h3>Nothing in this view.</h3><p>Try another category or reset the filters.</p>';root.appendChild(empty)}
+  }else empty?.remove();
+
+  const craftTotal=resourceModels.reduce((n,x)=>n+x.quantity,0);
+  if($('#bankMetricCrafting'))$('#bankMetricCrafting').textContent=String(craftTotal);
+
+  const counts={
+    all:entries.length,
+    Gear:s.bank.length,
+    Reagent:resourceModels.filter(x=>x.category==='Reagent').length,
+    Consumable:resourceModels.filter(x=>x.category==='Consumable').length,
+    Recipe:resourceModels.filter(x=>x.category==='Recipe').length,
+    favorite:s.bank.filter(x=>x.favorite).length,
+    junk:s.bank.filter(x=>x.junk).length
+  };
+  Object.entries(counts).forEach(([key,value])=>{const el=document.querySelector('[data-bank-count="'+key+'"]');if(el)el.textContent=String(value)});
+  if($('#bankResultsLabel'))$('#bankResultsLabel').textContent=`Showing ${visible.length} of ${entries.length} stored entr${entries.length===1?'y':'ies'}`;
+
+  $$('.bank-category-tabs [data-bank-category]').forEach(b=>b.classList.toggle('active',b.dataset.bankCategory===bankCategory));
   }finally{
     bankEnhancing=false;
     if(root&&bankObserver)bankObserver.observe(root,{childList:true});
@@ -289,6 +309,7 @@ function enhanceBank(){
 function bindBank(){
   const pairs=[['bankSearch','input',v=>bankSearch=v],['bankCategory','change',v=>bankCategory=v],['bankClass','change',v=>bankClass=v],['bankRarity','change',v=>bankRarity=v],['bankTrade','change',v=>bankTrade=v],['bankSort','change',v=>bankSort=v]];
   pairs.forEach(([id,ev,set])=>$('#'+id)?.addEventListener(ev,e=>{set(e.target.value);scheduleBankEnhance()}));
+  $('#bankClearFilters')?.addEventListener('click',()=>{bankSearch='';bankCategory='all';bankClass='all';bankRarity='all';bankTrade='all';bankSort='newest';scheduleBankEnhance()});
   const root=$('#bankGrid');if(root){bankObserver=new MutationObserver(scheduleBankEnhance);bankObserver.observe(root,{childList:true})}
 }
 

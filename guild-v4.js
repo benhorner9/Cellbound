@@ -590,7 +590,7 @@ function bankBulkTotals(){
 function updateBankBulkControls(){
   const toggle=$('#bankBulkToggle'),bar=$('#bankBulkBar'),count=$('#bankBulkCount'),hint=$('#bankBulkHint'),returns=$('#bankBulkReturns'),sell=$('#bankBulkSell'),dismantle=$('#bankBulkDismantle'),clear=$('#bankBulkClear');
   if(toggle){
-    toggle.textContent=bankBulkMode?'DONE SELECTING':'SELECT ITEMS';
+    toggle.textContent=bankBulkMode?'DONE CLEANING':'CLEAN UP BANK';
     toggle.setAttribute('aria-pressed',bankBulkMode?'true':'false');
   }
   if(bar)bar.hidden=!bankBulkMode;
@@ -654,10 +654,10 @@ function bankFilteredItems(){
   items=items.filter(item=>{
     const text=[item.name,item.source,item.class,item.slot,item.rarity,item.uniqueEffect?.name,item.uniqueEffect?.description].filter(Boolean).join(' ').toLowerCase();
     if(search&&!text.includes(search))return false;
+    if(['Reagent','Consumable','Recipe'].includes(category))return false;
     if(category==='favorite'&&!item.favorite)return false;
     if(category==='junk'&&!item.junk)return false;
-    if(category==='Armour'&&!['Head','Chest','Shoulders','Hands','Waist','Legs','Feet'].includes(item.slot))return false;
-    if(!['all','favorite','junk','Armour'].includes(category)&&item.slot!==category)return false;
+    if(!['all','Gear','favorite','junk'].includes(category)&&item.slot!==category)return false;
     if(klass!=='all'&&item.class!==klass&&item.classes!=='all'&&!(Array.isArray(item.classes)&&item.classes.includes(klass)))return false;
     if(rarity!=='all'&&String(item.rarity)!==rarity)return false;
     if(trade!=='all'&&String(item.tradeState||'tradeable')!==trade)return false;
@@ -674,19 +674,56 @@ function bankFilteredItems(){
 }
 function renderBank(){
   bankBulkSelection();
-  const total=bankTotal(),unique=state.bank.length,shards=Number(state.materials?.['cell-shards'])||0;
-  ui.bankSummary.innerHTML=`<div><span>Stored Items</span><b>${total}</b></div><div><span>Unique Stacks</span><b>${unique}</b></div><div><span>Cell Shards</span><b>${shards}</b></div>`;
+  const gearStacks=state.bank.length,shards=Number(state.materials?.['cell-shards'])||0;
+  const favourites=state.bank.filter(x=>x.favorite).length,junk=state.bank.filter(x=>x.junk).length;
+  if($('#bankMetricGear'))$('#bankMetricGear').textContent=String(gearStacks);
+  if($('#bankMetricShards'))$('#bankMetricShards').textContent=String(shards);
+  if($('#bankMetricFavorites'))$('#bankMetricFavorites').textContent=String(favourites);
+  if($('#bankMetricJunk'))$('#bankMetricJunk').textContent=String(junk);
   updateBankBulkControls();
-  if(!state.bank.length){ui.bankGrid.innerHTML='<div class="bank-empty"><span>◇</span><h3>Your bank is empty.</h3><p>Dungeon victories award equipment here before you decide who receives it.</p></div>';return;}
+
   const visible=bankFilteredItems();
-  if(!visible.length){ui.bankGrid.innerHTML='<div class="bank-empty"><span>⌕</span><h3>No items match those filters.</h3><p>Change the search or filters to see the rest of your vault.</p></div>';return;}
+  const resourceCategory=['Reagent','Consumable','Recipe'].includes($('#bankCategory')?.value||'all');
+  if(!visible.length&&!resourceCategory&&($('#bankCategory')?.value||'all')!=='all'){
+    ui.bankGrid.innerHTML='<div class="bank-empty"><span>⌕</span><h3>No equipment matches this view.</h3><p>Change the category or reset the filters to return to the full vault.</p></div>';
+    return;
+  }
+  if(!state.bank.length&&!resourceCategory&&($('#bankCategory')?.value||'all')!=='all'){
+    ui.bankGrid.innerHTML='<div class="bank-empty"><span>◇</span><h3>No equipment stored yet.</h3><p>Dungeon rewards appear here before you decide who receives them.</p></div>';
+    return;
+  }
+
   ui.bankGrid.innerHTML=visible.map(item=>{
-    const protectedItem=bankItemProtected(item),selected=bankBulkSelected.has(item.id);
+    const protectedItem=bankItemProtected(item),selected=bankBulkSelected.has(item.id),utility=isBankUtility(item);
     const action=bankBulkMode
-      ?`<button data-bank-select="${item.id}" aria-pressed="${selected?'true':'false'}" ${protectedItem?'disabled':''}>${protectedItem?'PROTECTED':selected?'✓ SELECTED':'SELECT ITEM'}</button>`
-      :`<button data-bank-item="${item.id}">MANAGE</button>`;
-    const stats=G.statLines?.(item)||[],utility=isBankUtility(item),uniqueEffect=item.uniqueEffect?'<span class="bank-unique-effect">'+esc(item.uniqueEffect.name)+' · '+esc(item.uniqueEffect.description)+'</span>':'',flags=(item.favorite?'<i class="bank-flag favorite">★</i>':'')+(item.junk?'<i class="bank-flag junk">JUNK</i>':'');const meta=utility?`${item.rarity||'Rare'} · Utility · ${Math.max(0,Number(item.charges)||0)}/${Math.max(1,Number(item.maxCharges)||5)} uses`:`${tierText(item)} · ${item.class} · ${item.slot}`;const roll=utility?`<span class="bank-utility-description">${esc(item.description||'Encounter utility item.')}</span>`:(stats.length?stats.map(s=>`<span>${s.text}</span>`).join(''):'<span class="legacy">No rolled stats</span>')+uniqueEffect;return`<article class="bank-item gear-bank-item tier-${item.tier||1} ${utility?'bank-utility-item':''} ${selected?'bank-item-selected':''} ${protectedItem?'bank-item-protected':''} ${item.favorite?'is-favorite':''} ${item.junk?'is-junk':''}">${flags}<div class="bank-icon gear-bank-icon">${bankItemArt(item,66)}</div><div class="bank-copy"><small>${meta}</small><h3>${item.name}</h3><div class="bank-roll-stats">${roll}</div><p>${item.source||'Guild Bank'}${Number(item.upgradeLevel)>0?' · Upgrade '+Number(item.upgradeLevel):''}</p></div><div class="bank-qty">${utility?`${Math.max(0,Number(item.charges)||0)}/${Math.max(1,Number(item.maxCharges)||5)}`:`×${item.quantity||1}`}</div>${action}</article>`;
+      ?`<button class="bank-card-action select" data-bank-select="${item.id}" aria-pressed="${selected?'true':'false'}" ${protectedItem?'disabled':''}>${protectedItem?'PROTECTED':selected?'✓ SELECTED':'SELECT'}</button>`
+      :`<button class="bank-card-action" data-bank-item="${item.id}">OPEN ITEM →</button>`;
+    const stats=G.statLines?.(item)||[];
+    const preview=utility
+      ?`<span>${esc(item.description||'Encounter utility item.')}</span>`
+      :stats.slice(0,2).map(s=>`<span>${s.text}</span>`).join('')||'<span class="legacy">No rolled stats</span>';
+    const effect=item.uniqueEffect?`<span class="bank-effect-chip">✦ ${esc(item.uniqueEffect.name)}</span>`:'';
+    const flags=(item.favorite?'<i class="bank-flag favorite">★</i>':'')+(item.junk?'<i class="bank-flag junk">JUNK</i>':'');
+    const qty=utility?`${Math.max(0,Number(item.charges)||0)}/${Math.max(1,Number(item.maxCharges)||5)} uses`:`×${item.quantity||1}`;
+    const meta=utility
+      ?`${item.rarity||'Rare'} · Utility`
+      :`${String(item.rarity||'Common')} · ${item.slot||'Gear'} · iLvl ${item.itemLevel||0}`;
+
+    return `<article class="bank-item gear-bank-item bank-card-v2 tier-${item.tier||1} ${utility?'bank-utility-item':''} ${selected?'bank-item-selected':''} ${protectedItem?'bank-item-protected':''} ${item.favorite?'is-favorite':''} ${item.junk?'is-junk':''}">
+      ${flags}
+      <div class="bank-card-main">
+        <div class="bank-icon gear-bank-icon">${bankItemArt(item,66)}</div>
+        <div class="bank-copy">
+          <small>${meta}</small>
+          <h3>${esc(item.name)}</h3>
+          <div class="bank-card-preview">${preview}${effect}</div>
+        </div>
+        <div class="bank-qty">${qty}</div>
+      </div>
+      <div class="bank-card-foot"><span>${esc(item.source||'Guild Bank')}${Number(item.upgradeLevel)>0?' · Upgrade '+Number(item.upgradeLevel):''}</span>${action}</div>
+    </article>`;
   }).join('');
+
   ui.bankGrid.querySelectorAll('[data-bank-item]').forEach(b=>b.addEventListener('click',()=>openBankItem(b.dataset.bankItem)));
   ui.bankGrid.querySelectorAll('[data-bank-select]').forEach(b=>b.addEventListener('click',()=>toggleBankBulkItem(b.dataset.bankSelect)));
 }
@@ -858,10 +895,24 @@ function equipBankItem(itemId,charId){
   c.gearItems=ILVL_SLOTS.map(s=>c.equipment?.[s]?.name||'Empty');c.gear=characterItemLevel(c);item.quantity=(item.quantity||1)-1;if(item.quantity<=0)state.bank=state.bank.filter(x=>x.id!==item.id);state.activity.push(`${c.name} equipped ${item.name} (iLvl ${item.itemLevel}).`);save();ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open');renderAll();switchView('bank');
 }
 $('[data-bank-close]')?.addEventListener('click',()=>{ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open')});ui.bankModal?.addEventListener('click',e=>{if(e.target===ui.bankModal){ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open')}});
+function setBankCategory(value){
+  const select=$('#bankCategory');if(!select)return;
+  select.value=value;
+  $('.bank-category-tabs [data-bank-category]').forEach(b=>b.classList.toggle('active',b.dataset.bankCategory===value));
+  select.dispatchEvent(new Event('change',{bubbles:true}));
+}
 $('#bankBulkToggle')?.addEventListener('click',()=>setBankBulkMode());
 $('#bankSelectJunk')?.addEventListener('click',selectJunkForBulk);
 $('#bankSearch')?.addEventListener('input',renderBank);
 ['bankCategory','bankClass','bankRarity','bankTrade','bankSort'].forEach(id=>$('#'+id)?.addEventListener('change',renderBank));
+$('.bank-category-tabs [data-bank-category]').forEach(b=>b.addEventListener('click',()=>setBankCategory(b.dataset.bankCategory)));
+$('#bankClearFilters')?.addEventListener('click',()=>{
+  const search=$('#bankSearch');if(search)search.value='';
+  for(const id of ['bankClass','bankRarity','bankTrade']){const el=$('#'+id);if(el){el.value='all';el.dispatchEvent(new Event('change',{bubbles:true}))}}
+  const sort=$('#bankSort');if(sort){sort.value='newest';sort.dispatchEvent(new Event('change',{bubbles:true}))}
+  const searchEvent=new Event('input',{bubbles:true});search?.dispatchEvent(searchEvent);
+  setBankCategory('all');
+});
 $('#bankBulkClear')?.addEventListener('click',clearBankBulkSelection);
 $('#bankBulkSell')?.addEventListener('click',()=>disposeBankBulk('vendor'));
 $('#bankBulkDismantle')?.addEventListener('click',()=>disposeBankBulk('dismantle'));

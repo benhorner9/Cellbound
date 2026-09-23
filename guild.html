@@ -45,6 +45,7 @@
   <link rel="stylesheet" href="./home-v2.css?v=1">
   <link rel="stylesheet" href="./command-ui-v1.css?v=1">
   <link rel="stylesheet" href="./roster-v2.css?v=1">
+  <link rel="stylesheet" href="./bank-v2.css?v=1">
   <link rel="stylesheet" href="./character-command-v1.css?v=1">
   <link rel="stylesheet" href="./character-talents-v2.css?v=1">
 </head>
@@ -180,22 +181,49 @@
     </section>
 
     <section id="bank" class="view">
-      <div class="section-intro"><div><small>GUILD VAULT</small><h2>Bank</h2><p>Equip upgrades, protect favourites, and clear out gear you no longer need.</p></div><div class="bank-intro-actions"><div id="bankUpgradeLegend" class="bank-upgrade-legend">UPGRADES ARE CALCULATED AGAINST YOUR ROSTER</div><button id="bankSelectJunk" class="ghost-btn" type="button">SELECT JUNK</button><button id="bankBulkToggle" class="ghost-btn" type="button" aria-pressed="false">SELECT ITEMS</button></div></div>
-      <div id="bankSummary" class="bank-summary"></div>
-      <div class="bank-command-bar panel">
-        <label class="ui-search"><span>⌕</span><input id="bankSearch" type="search" placeholder="Search the vault"></label>
-        <select id="bankCategory" class="ui-select"><option value="all">Everything</option><option value="favorite">Favourites</option><option value="junk">Junk</option><option value="Weapon">Weapons</option><option value="Armour">Armour</option><option value="Head">Head</option><option value="Chest">Chest</option><option value="Reagent">Reagents</option><option value="Consumable">Consumables</option><option value="Recipe">Recipes</option></select>
-        <select id="bankClass" class="ui-select"><option value="all">All classes</option><option>Warrior</option><option>Paladin</option><option>Priest</option><option>Druid</option><option>Hunter</option><option>Rogue</option><option>Mage</option></select>
-        <select id="bankRarity" class="ui-select"><option value="all">All rarities</option><option>Common</option><option>Uncommon</option><option>Rare</option><option>Epic</option></select>
-        <select id="bankTrade" class="ui-select"><option value="all">Any binding</option><option value="tradeable">Tradeable</option><option value="soulbound">Soulbound</option></select>
-        <select id="bankSort" class="ui-select"><option value="newest">Newest</option><option value="ilvl-desc">Highest Item Level</option><option value="ilvl-asc">Lowest Item Level</option><option value="rarity">Rarity</option><option value="name">Name A–Z</option></select>
+      <div class="section-intro bank-intro">
+        <div><small>GUILD VAULT</small><h2>Bank</h2><p>Your shared storage for equipment, crafting materials and preparation items.</p></div>
+        <div class="bank-intro-actions"><button id="bankBulkToggle" class="ghost-btn" type="button" aria-pressed="false">CLEAN UP BANK</button></div>
       </div>
-      <div id="bankBulkBar" class="bank-bulk-bar panel" hidden>
-        <div class="bank-bulk-copy"><small>BULK CLEANUP</small><b id="bankBulkCount">0 stacks selected · 0 items</b><span id="bankBulkHint">Select unwanted equipment below. Protected quest and story items cannot be selected.</span></div>
+
+      <section id="bankSummary" class="bank-overview-strip" aria-label="Bank summary">
+        <article><span>EQUIPMENT</span><b id="bankMetricGear">0</b><small>Gear stacks</small></article>
+        <article><span>CRAFTING STOCK</span><b id="bankMetricCrafting">0</b><small>Materials & consumables</small></article>
+        <article><span>CELL SHARDS</span><b id="bankMetricShards">0</b><small>Upgrade currency</small></article>
+        <article><span>FAVOURITES</span><b id="bankMetricFavorites">0</b><small>Protected gear</small></article>
+        <article><span>MARKED JUNK</span><b id="bankMetricJunk">0</b><small>Ready for cleanup</small></article>
+      </section>
+
+      <nav class="bank-category-tabs" aria-label="Bank categories">
+        <button class="active" type="button" data-bank-category="all"><span>◇</span><b>All Items</b><em data-bank-count="all">0</em></button>
+        <button type="button" data-bank-category="Gear"><span>▦</span><b>Equipment</b><em data-bank-count="Gear">0</em></button>
+        <button type="button" data-bank-category="Reagent"><span>◆</span><b>Materials</b><em data-bank-count="Reagent">0</em></button>
+        <button type="button" data-bank-category="Consumable"><span>⚗</span><b>Consumables</b><em data-bank-count="Consumable">0</em></button>
+        <button type="button" data-bank-category="Recipe"><span>▤</span><b>Recipes</b><em data-bank-count="Recipe">0</em></button>
+        <button type="button" data-bank-category="favorite"><span>★</span><b>Favourites</b><em data-bank-count="favorite">0</em></button>
+        <button type="button" data-bank-category="junk"><span>×</span><b>Junk</b><em data-bank-count="junk">0</em></button>
+      </nav>
+
+      <section class="bank-command-bar bank-command-v2 panel" aria-label="Bank search and filters">
+        <select id="bankCategory" hidden aria-hidden="true"><option value="all">All Items</option><option value="Gear">Equipment</option><option value="Reagent">Materials</option><option value="Consumable">Consumables</option><option value="Recipe">Recipes</option><option value="favorite">Favourites</option><option value="junk">Junk</option></select>
+        <label class="ui-search bank-search"><span>⌕</span><input id="bankSearch" type="search" placeholder="Search item name, slot, source or effect"></label>
+        <div class="bank-filter-row">
+          <select id="bankClass" class="ui-select" aria-label="Class"><option value="all">Any class</option><option>Warrior</option><option>Paladin</option><option>Priest</option><option>Druid</option><option>Hunter</option><option>Rogue</option><option>Mage</option></select>
+          <select id="bankRarity" class="ui-select" aria-label="Rarity"><option value="all">Any rarity</option><option>Common</option><option>Uncommon</option><option>Rare</option><option>Epic</option></select>
+          <select id="bankTrade" class="ui-select" aria-label="Binding"><option value="all">Any binding</option><option value="tradeable">Tradeable</option><option value="soulbound">Soulbound</option></select>
+          <select id="bankSort" class="ui-select" aria-label="Sort bank"><option value="newest">Newest first</option><option value="ilvl-desc">Highest Item Level</option><option value="ilvl-asc">Lowest Item Level</option><option value="rarity">Highest rarity</option><option value="name">Name A–Z</option></select>
+          <button id="bankClearFilters" class="bank-clear-filters" type="button">RESET</button>
+        </div>
+        <div class="bank-filter-meta"><span id="bankResultsLabel">Showing vault</span><em id="bankUpgradeLegend">Green upgrade markers mean at least one roster character can improve that slot.</em></div>
+      </section>
+
+      <section id="bankBulkBar" class="bank-bulk-bar bank-bulk-v2 panel" hidden>
+        <div class="bank-bulk-copy"><small>CLEANUP MODE</small><b id="bankBulkCount">0 stacks selected · 0 items</b><span id="bankBulkHint">Select unwanted equipment below. Favourites, utilities and protected rewards cannot be selected.</span></div>
         <div id="bankBulkReturns" class="bank-bulk-returns"><div class="bank-bulk-empty">Nothing selected yet.</div></div>
-        <div class="bank-bulk-actions"><button id="bankBulkClear" type="button" disabled>CLEAR</button><button id="bankBulkSell" type="button" disabled>SELL SELECTED</button><button id="bankBulkDismantle" type="button" disabled>DISMANTLE SELECTED</button></div>
-      </div>
-      <div id="bankGrid" class="bank-grid"></div>
+        <div class="bank-bulk-actions"><button id="bankSelectJunk" type="button">SELECT MARKED JUNK</button><button id="bankBulkClear" type="button" disabled>CLEAR</button><button id="bankBulkSell" type="button" disabled>SELL</button><button id="bankBulkDismantle" type="button" disabled>DISMANTLE</button></div>
+      </section>
+
+      <div id="bankGrid" class="bank-grid bank-grid-v2"></div>
     </section>
 
     <section id="professions" class="view">
@@ -473,7 +501,7 @@
 <script src="./endgame-data-v1.js?v=5"></script>
 <script src="./presentation-fx-v1.js?v=1"></script>
 <script src="./combat-polish-v2.js?v=1"></script>
-<script src="./guild-v4.js?v=40"></script>
+<script src="./guild-v4.js?v=41"></script>
 <script src="./pvp-combat-v1.js?v=2"></script>
 <script src="./pvp-viewer-v1.js?v=2"></script>
 <script src="./pvp-match-v1.js?v=1"></script>
@@ -485,7 +513,7 @@
 <script src="./trading-post-v3.js?v=6"></script>
 <script src="./social-v3.js?v=5"></script>
 <script src="./twelve-below-v1.js?v=14"></script>
-<script src="./evolution-v1.js?v=19"></script>
+<script src="./evolution-v1.js?v=20"></script>
 <script src="./expedition-presentation-v1.js?v=1"></script>
 <script src="./boss-dossier-v1.js?v=3"></script>
 <script src="./dungeon-2d-v1.js?v=46"></script>
