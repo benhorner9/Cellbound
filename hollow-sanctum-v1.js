@@ -356,7 +356,7 @@ function hsRenderRebornEvent(e){
  }catch(error){console.warn('Hollow Sanctum status visual skipped',e?.type,error)}
  const src=hsRenderId(e.source),target=hsRenderId(e.target),srcChar=hsCharacter(e.source),targetChar=hsCharacter(e.target);
  switch(e.type){
-  case'COMBAT_START':setStatus('Combat simulation live.');feed('Combat begins.');break;
+  case'COMBAT_START':{const arena=$('#hs2dArena');window.CellboundCombatFX?.mount?.(arena);if(['boss','final'].includes(String(STAGES[run.stage]?.kind||'')))window.CellboundCombatFX?.boss?.(arena,STAGES[run.stage]?.title||'Boss');setStatus('Combat simulation live.');feed('Combat begins.');break;}
   case'MOVEMENT_START':if(src&&e.payload?.to)move(src,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
   case'ABILITY_START':
    if(srcChar)hsAct(role(srcChar),srcChar.name+' · '+(e.ability||'Ability'));
@@ -406,10 +406,10 @@ function hsRenderRebornEvent(e){
   case'ADD_DEFEATED':case'ENEMY_DEFEATED':
    if(target){const el=$('[data-hs="'+target+'"]');if(el){el.classList.add('dead');window.CellboundCombatFX?.death?.(el);hsBar(target,0)}}break;
   case'PLAYER_DEFEATED':
-   if(target){const el=$('[data-hs="'+target+'"]');if(el)el.classList.add('dead');hsBar(target,0);if(targetChar){run.hp[targetChar.id]=0;feed(targetChar.name+' is defeated.');hsUpdateSidebar()}}
+   if(target){const el=$('[data-hs="'+target+'"]');if(el){el.classList.add('dead');window.CellboundCombatFX?.death?.(el)}hsBar(target,0);if(targetChar){run.hp[targetChar.id]=0;feed(targetChar.name+' is defeated.');hsUpdateSidebar()}}
    break;
   case'DEFENSIVE_ACTIVATED':if(srcChar)feed(srcChar.name+' activates a defensive.');break;
-  case'COMBAT_END':hsCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');if(e.result!=='victory')window.CellboundFX?.wipe?.('The party has fallen inside The Hollow Sanctum.');hsRegroup(260);break;
+  case'COMBAT_END':hsCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');if(e.result==='victory')window.CellboundCombatFX?.victory?.($('#hs2dArena'));else window.CellboundFX?.wipe?.('The party has fallen inside The Hollow Sanctum.');hsRegroup(260);break;
  }
 }
 async function hsPlayTimeline(result,tok){
