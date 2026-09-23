@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.0.0';
+const VERSION='1.1.0';
 const $=(root,s)=>root?.querySelector(s);
 const $$=(root,s)=>[...(root?.querySelectorAll(s)||[])];
 const esc=v=>String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[m]));
@@ -44,7 +44,7 @@ function shellMarkup(match,units){
   const blue=units.filter(x=>x.team==='blue'),red=units.filter(x=>x.team==='red');
   const label=match.kind==='arena'?match.size+'v'+match.size+' RATED ARENA':match.size+'v'+match.size+' · '+(match.mode==='capture-the-flag'?'CAPTURE THE FLAG':'KING OF THE HILL');
   return '<div class="pvp2d-shell">'+
-    '<header class="pvp2d-head"><div><small>LIVE PVP COMBAT</small><h3>'+esc(label)+'</h3></div><div class="pvp2d-head-center"><b id="pvp2dScore">0–0</b><span id="pvp2dObjective">'+(match.kind==='arena'?'Eliminate the opposing squad':match.mode==='capture-the-flag'?'First to 3 captures':'First to 100 control')+'</span></div><div class="pvp2d-controls"><span id="pvp2dTimer">0:00</span><button type="button" data-pvp-speed="1" class="active">1×</button><button type="button" data-pvp-speed="2">2×</button></div></header>'+
+    '<header class="pvp2d-head"><div><small>LIVE PVP COMBAT</small><h3>'+esc(label)+'</h3></div><div class="pvp2d-head-center"><b id="pvp2dScore">0–0</b><span id="pvp2dObjective">'+(match.kind==='arena'?'Eliminate the opposing squad':match.mode==='capture-the-flag'?'First to 3 captures':'First to 100 control')+'</span></div><div class="pvp2d-controls"><span id="pvp2dTimer">0:00</span><b>REAL TIME</b></div></header>'+
     '<div class="pvp2d-layout"><aside>'+rosterMarkup(blue,'blue')+'</aside>'+
     '<main class="pvp2d-arena" id="pvp2dArena"><div class="pvp2d-floor"></div><div class="pvp2d-grid"></div>'+objectiveMarkup(match)+'<div id="pvp2dUnits" class="pvp2d-units">'+units.map(unitMarkup).join('')+'</div><div id="pvp2dFx" class="pvp2d-fx"></div><div id="pvp2dBanner" class="pvp2d-banner"></div></main>'+
     '<aside>'+rosterMarkup(red,'red')+'</aside></div>'+
@@ -80,15 +80,15 @@ function setResource(root,id,name,value,max){
 function pulse(root,id,kind='attack'){
   const u=$(root,'[data-pvp2d-unit="'+CSS.escape(String(id))+'"]');if(!u)return;u.classList.remove('attacking','healing','hit');u.classList.add(kind==='heal'?'healing':kind==='hit'?'hit':'attacking');setTimeout(()=>u.classList.remove('attacking','healing','hit'),360)
 }
-function statusPill(root,id,label,kind='buff',duration=1800,speed=1){
+function statusPill(root,id,label,kind='buff',duration=1800){
   const u=$(root,'[data-pvp2d-unit="'+CSS.escape(String(id))+'"]'),box=u?.querySelector('.pvp2d-statuses');if(!box)return;
-  const e=document.createElement('i');e.className=kind;e.textContent=label;box.appendChild(e);setTimeout(()=>e.remove(),Math.max(250,duration/Math.max(.25,speed)))
+  const e=document.createElement('i');e.className=kind;e.textContent=label;box.appendChild(e);setTimeout(()=>e.remove(),Math.max(250,duration))
 }
 function feed(pb,text){
   if(!text)return;pb.feed.push(text);const root=pb.root,e=$(root,'#pvp2dFeed');if(e)e.innerHTML=pb.feed.slice(-7).reverse().map(x=>'<p>'+esc(x)+'</p>').join('')
 }
 function setStatus(pb,text){const e=$(pb.root,'#pvp2dStatus');if(e)e.textContent=text}
-function banner(pb,text,tone=''){const e=$(pb.root,'#pvp2dBanner');if(!e)return;e.textContent=text;e.className='pvp2d-banner show '+tone;setTimeout(()=>{if(e.isConnected)e.className='pvp2d-banner'},900/Math.max(.5,pb.speed))}
+function banner(pb,text,tone=''){const e=$(pb.root,'#pvp2dBanner');if(!e)return;e.textContent=text;e.className='pvp2d-banner show '+tone;setTimeout(()=>{if(e.isConnected)e.className='pvp2d-banner'},900)}
 function updateScore(pb,blue,red,copyText){
   const score=$(pb.root,'#pvp2dScore'),obj=$(pb.root,'#pvp2dObjective');if(score)score.textContent=Math.round(Number(blue)||0)+'–'+Math.round(Number(red)||0);if(obj&&copyText)obj.textContent=copyText
 }
@@ -121,13 +121,13 @@ function handleEvent(pb,e){
       break;
     case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':if(src)setResource(root,src.id,e.payload?.resource,e.payload?.value,e.payload?.max);break;
     case'CROWD_CONTROL':
-      if(target){statusPill(root,target.id,'CC','debuff',Number(e.payload?.duration)||1800,pb.speed);floatText(root,target.id,e.ability||'CONTROL','control');feed(pb,(src?.name||'A player')+' controls '+target.name+' with '+(e.ability||'crowd control')+'.')}
+      if(target){statusPill(root,target.id,'CC','debuff',Number(e.payload?.duration)||1800);floatText(root,target.id,e.ability||'CONTROL','control');feed(pb,(src?.name||'A player')+' controls '+target.name+' with '+(e.ability||'crowd control')+'.')}
       break;
     case'INTERRUPT':
-      if(target){floatText(root,target.id,'INTERRUPT','control');statusPill(root,target.id,'LOCK','debuff',900,pb.speed);feed(pb,(src?.name||'A player')+' interrupts '+target.name+'\'s '+(e.payload?.interruptedAbility||'cast')+'.')}
+      if(target){floatText(root,target.id,'INTERRUPT','control');statusPill(root,target.id,'LOCK','debuff',900);feed(pb,(src?.name||'A player')+' interrupts '+target.name+'\'s '+(e.payload?.interruptedAbility||'cast')+'.')}
       break;
     case'DEFENSIVE_ACTIVATED':{
-      const t=target||src;if(t){statusPill(root,t.id,e.result==='guard'?'GUARD':'DEF','buff',Number(e.payload?.duration)||4500,pb.speed);floatText(root,t.id,e.result==='guard'?'GUARDED':'DEFENSIVE','guard')}
+      const t=target||src;if(t){statusPill(root,t.id,e.result==='guard'?'GUARD':'DEF','buff',Number(e.payload?.duration)||4500);floatText(root,t.id,e.result==='guard'?'GUARDED':'DEFENSIVE','guard')}
       if(e.result==='guard'&&src&&target)feed(pb,src.name+' guards '+target.name+'.');break
     }
     case'PLAYER_DEFEATED':
@@ -160,13 +160,12 @@ function stop(){if(activePlayback){activePlayback.cancelled=true;cancelAnimation
 function play({stage,match,result,onComplete}={}){
   if(!stage||!match||!result){onComplete?.();return}stop();
   const units=buildUnits(match);stage.innerHTML=shellMarkup(match,units);stage.scrollIntoView?.({behavior:'smooth',block:'nearest'});
-  const pb={root:stage,match,result,units,unitMap:Object.fromEntries(units.map(u=>[u.id,u])),stats:Object.fromEntries(units.map(u=>[u.id,{damage:0,healing:0,kills:0,deaths:0}])),feed:[],speed:1,cancelled:false,raf:0,meterDirty:false,lastMeterAt:0};
+  const pb={root:stage,match,result,units,unitMap:Object.fromEntries(units.map(u=>[u.id,u])),stats:Object.fromEntries(units.map(u=>[u.id,{damage:0,healing:0,kills:0,deaths:0}])),feed:[],cancelled:false,raf:0,meterDirty:false,lastMeterAt:0};
   activePlayback=pb;
-  $$(stage,'[data-pvp-speed]').forEach(b=>b.addEventListener('click',()=>{pb.speed=Number(b.dataset.pvpSpeed)||1;$$(stage,'[data-pvp-speed]').forEach(x=>x.classList.toggle('active',x===b))}));
   const events=(result.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));let index=0,simTime=0,last=performance.now();
   const frame=now=>{
     if(pb.cancelled||!stage.isConnected)return;
-    const delta=Math.min(100,Math.max(0,now-last));last=now;simTime+=delta*pb.speed;
+    const delta=Math.min(100,Math.max(0,now-last));last=now;simTime+=delta;
     const timer=$(stage,'#pvp2dTimer');if(timer){const sec=Math.floor(simTime/1000);timer.textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0')}
     let handled=0;while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<220){handleEvent(pb,events[index]);index++;handled++}
     if(pb.meterDirty&&now-pb.lastMeterAt>120){pb.meterDirty=false;pb.lastMeterAt=now;updateMeters(pb)}
