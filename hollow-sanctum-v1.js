@@ -131,12 +131,12 @@ function renderCard(){
  if(!mount)return;
  const route=[
   ['gallery','Gallery of Echoes','trash','⌁','Collapsed ceremonial entrance hall where Hollowed Surveyors guard the processional route.','ENEMY PACK'],
-  ['sentinel','Glassjaw Sentinel','boss','◇','A guardian chamber built around a fractured relic core. Fracture Line and Glassjaw Sweep punish poor positioning.','ENCOUNTER'],
-  ['choir','The Bound Choir','final','✦','The inner shrine. Resonance Collapse, Shattering Hymn and Echo Choir define the final fight.','FINAL BOSS']
+  ['sentinel','Glassjaw Sentinel','boss','◇','A guardian chamber built around a fractured relic core. Fracture Line and Glassjaw Sweep punish bad positioning.','ENCOUNTER'],
+  ['choir','The Bound Choir','final','✦','The inner shrine. Survive Resonance Collapse, Shattering Hymn and the Echo Choir.','FINAL BOSS']
  ];
  mount.innerHTML='<div class="dungeon-detail-toolbar"><div><small>DUNGEON JOURNAL</small><b>'+(open?'The Hollow Sanctum':'Undiscovered Dungeon')+'</b></div><button type="button" data-dungeon-close>CLOSE DETAILS ×</button></div>'+
   '<div class="dungeon-journal-hero hollow-journal-hero">'+
-   '<div class="dungeon-journal-art hollow-journal-art"><span class="journal-eyebrow">'+(open?'ZELTIRA UNDERDEEP · DUNGEON':'SEALED LOCATION · UNKNOWN')+'</span><h3>'+(open?'The Hollow Sanctum':'The Sealed Underroad')+'</h3><p>'+(open?'A buried ceremonial complex where Cell glass has grown through ancient stone. The deeper chambers still answer to voices that should have died centuries ago.':'The route beneath Zeltira has not yet been opened. Complete Echoes Beneath Zeltira to discover what lies beyond the Hollow Seal.')+'</p><div class="journal-badges"><span>5 adventurers</span><span>3 stages</span><span>Party iLvl '+(pi||'—')+'</span></div></div>'+
+   '<div class="dungeon-journal-art hollow-journal-art"><span class="journal-eyebrow">'+(open?'ZELTIRA UNDERDEEP · DUNGEON':'SEALED LOCATION · UNKNOWN')+'</span><h3>'+(open?'The Hollow Sanctum':'The Sealed Underroad')+'</h3><p>'+(open?'A buried ceremonial complex where Cell glass has grown through ancient stone. Voices still answer from the deeper chambers.':'The route beneath Zeltira has not yet been opened. Complete Echoes Beneath Zeltira to discover what lies beyond the Hollow Seal.')+'</p><div class="journal-badges"><span>5 adventurers</span><span>3 stages</span><span>Party iLvl '+(pi||'—')+'</span></div></div>'+
    '<div class="journal-entry-panel"><small>ENTRY REQUIREMENT</small><b>'+(open?'Quest Access · Party Item Level 24':'Echoes Beneath Zeltira')+'</b><p>'+(open?esc(gate.reason):'Follow the investigation beneath Zeltira and break the Hollow Seal.')+'</p><button '+(open?'data-hs-enter':'data-hs-quests')+' '+(open&&!gate.ok?'disabled':'')+'>'+(open?'ENTER THE HOLLOW SANCTUM':'OPEN QUEST JOURNAL →')+'</button></div>'+
   '</div>'+
   '<div class="dungeon-journal-layout">'+
@@ -144,7 +144,7 @@ function renderCard(){
    '<aside class="panel dungeon-intel-panel"><div class="panel-head"><div><small>ENCOUNTER INTELLIGENCE</small><h3>What Your Guild Knows</h3></div></div><div class="dungeon-intel">'+
     '<article class="intel-card"><div class="intel-card-head"><b>Glassjaw Sentinel</b><span>'+(done?'FIELD NOTES':'DISCOVERED')+'</span></div><p>Fracture Line targets a lane through the chamber while Glassjaw Sweep pressures the tank. Position the group around the guardian rather than stacking behind the target.</p></article>'+
     '<article class="intel-card"><div class="intel-card-head"><b>The Bound Choir</b><span>'+(done?'FIELD NOTES':'DISCOVERED')+'</span></div><p>Resonance Collapse controls space, Shattering Hymn must be interrupted, and Echo Choir adds force target swaps during the ritual.</p></article>'+
-    '<article class="intel-card"><div class="intel-card-head"><b>Expedition Record</b><span>'+clears+' clear'+(clears===1?'':'s')+'</span></div><p>'+(clears?'The Hollow Seal has been breached repeatedly. The Bound Choir remains farmable across unlocked difficulties.':'No successful expedition has been recorded yet.')+'</p></article>'+
+    '<article class="intel-card"><div class="intel-card-head"><b>Expedition Record</b><span>'+clears+' clear'+(clears===1?'':'s')+'</span></div><p>'+(clears?'The Hollow Seal is open. The Bound Choir can be challenged again on any unlocked difficulty.':'No successful expedition has been recorded yet.')+'</p></article>'+
     '<article class="intel-card"><div class="intel-card-head"><b>Known Rewards</b><span>TIER 3</span></div><p>Class equipment and Void Crystals can be recovered here. The first clear awards the Blackglass Resonator relic, with endgame rewards expanding on higher difficulties.</p></article>'+
    '</div></aside>'+
   '</div>';
