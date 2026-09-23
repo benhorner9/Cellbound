@@ -644,7 +644,7 @@ function qRenderRebornEvent(e){
   if(window.CellboundCombatStatuses?.handle(e,{resolve:qStatusTargets,speed:()=>questFight?.speed||1}))return;
   const srcChar=qEventCharacter(e.source),targetChar=qEventCharacter(e.target),enemyIndex=qEventEnemyIndex(e.target),sourceEnemy=qEventEnemyIndex(e.source);
   switch(e.type){
-    case'COMBAT_START':{const arena=document.querySelector('.quest-cb2d-arena');window.CellboundCombatFX?.mount?.(arena);qStatus('Combat simulation live');qLog('Combat begins.');break;}
+    case'COMBAT_START':{const arena=document.querySelector('.quest-cb2d-arena');window.CellboundCombatFX?.mount?.(arena);if(String(questFight?.config?.presentationKind||'')==='dungeon')window.CellboundCombatFX?.boss?.(arena,questFight?.config?.title||'Boss');qStatus('Combat simulation live');qLog('Combat begins.');break;}
     case'MOVEMENT_START':if(e.payload?.to)qMove(e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
     case'ABILITY_START':
       if(e.source&&e.target){
@@ -686,7 +686,7 @@ function qRenderRebornEvent(e){
       break;
     case'ADD_SPAWNED':qSpawnAdd(e);window.CellboundCombatFX?.spawn?.(qUnit(e.target)||document.querySelector('.quest-cb2d-arena'));qLog((e.payload?.name||'An add')+' joins the fight.');break;
     case'ADD_DEFEATED':case'ENEMY_DEFEATED':{
-      const u=qUnit(e.target);if(u){u.classList.add('dead');window.CellboundCombatFX?.death?.(u);}if(enemyIndex>=0)qSetEnemyHp(enemyIndex,0);else qSetAddHp(e.target,0);break;
+      const u=qUnit(e.target);if(u){u.classList.add('dead');const cfg=questFight?.config||{};window.CellboundCombatFX?.death?.(u,{boss:e.type==='ENEMY_DEFEATED'&&String(cfg.presentationKind||'')==='dungeon'&&enemyIndex===Math.max(0,Number(cfg.eliteIndex)||0)});}if(enemyIndex>=0)qSetEnemyHp(enemyIndex,0);else qSetAddHp(e.target,0);break;
     }
     case'PLAYER_DEFEATED':if(targetChar){window.CellboundCombatFX?.death?.(qUnit(e.target));qPulseUnit(e.target,'dying',360);qSetPartyHp(targetChar,0);setTimeout(()=>qUnit(e.target)?.classList.add('dead'),Math.max(120,Math.round(300/Math.max(.25,Number(questFight?.speed)||1))));qLog(targetChar.name+' is defeated.')}break;
     case'PHASE_CHANGE':window.CellboundCombatFX?.phase?.(document.querySelector('.quest-cb2d-arena'));window.CellboundFX?.phase?.(e.ability||'Boss phase',e.payload?.healthPct);qStatus(e.ability||'PHASE CHANGE');qLog((e.ability||'A new phase')+' begins.');break;
