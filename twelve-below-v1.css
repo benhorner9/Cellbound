@@ -694,3 +694,382 @@ body.tb-open{overflow:hidden}
   font-weight:800;
   white-space:nowrap;
 }
+
+
+/* ==========================================================================
+   TWELVE BELOW — SEPULCHRE VISUAL REBORN
+   Cold burial-ground identity, animated tombs, soul flame and pressure FX.
+   Combat telegraph colours remain canonical for readability.
+   ========================================================================== */
+
+.tb-backdrop{
+  background:
+    radial-gradient(circle at 50% 18%,rgba(68,137,163,.12),transparent 34%),
+    radial-gradient(circle at 50% 78%,rgba(47,75,94,.12),transparent 35%),
+    rgba(1,5,8,.96);
+}
+.tb-shell.cb2d-shell{
+  --tb-ice:#72c8ef;
+  --tb-soul:#69d7e5;
+  --tb-stone:#18252b;
+  --tb-gold:#c7b27e;
+  border-color:rgba(107,181,204,.16);
+  background:linear-gradient(180deg,#08131a,#04090d)!important;
+  box-shadow:0 28px 95px rgba(0,0,0,.7),0 0 56px rgba(68,137,163,.08);
+}
+.tb-shell .cb2d-head{
+  border-bottom-color:rgba(104,185,210,.14)!important;
+  background:
+    linear-gradient(90deg,rgba(20,48,60,.74),rgba(8,20,27,.95) 48%,rgba(6,13,18,.98))!important;
+  box-shadow:inset 0 -1px rgba(103,201,226,.07);
+}
+.tb-shell .cb2d-head small{color:#79c5da!important}
+.tb-shell .cb2d-head h2{color:#e0e9e9;text-shadow:0 0 20px rgba(109,192,216,.08)}
+.tb-shell .tb-scorebar{
+  border-bottom-color:rgba(89,169,193,.11);
+  background:linear-gradient(180deg,#08151b,#061014);
+}
+.tb-shell .tb-scorebar span{border-right-color:rgba(113,180,199,.07)}
+.tb-shell .tb-scorebar small{color:#65818a}
+.tb-shell .tb-scorebar b{color:#b9dce1}
+.tb-shell .tb-scorebar span:nth-child(2) b{
+  color:#8ee1ec;
+  text-shadow:0 0 14px rgba(92,205,222,.18)
+}
+.tb-shell .tb-tomb-track{
+  border-bottom-color:rgba(93,176,199,.09);
+  background:linear-gradient(180deg,#061116,#050d12)
+}
+.tb-shell .tb-tomb-track .tb-tomb{
+  border-color:rgba(105,158,174,.08);
+  background:linear-gradient(180deg,#0b171c,#071015);
+}
+.tb-shell .tb-tomb-track .tb-tomb i{color:#657e86}
+.tb-shell .tb-tomb-track .tb-tomb.open{
+  border-color:rgba(92,210,224,.44);
+  background:linear-gradient(180deg,rgba(28,76,87,.78),#0a1920);
+  box-shadow:inset 0 -2px rgba(96,216,229,.34),0 0 18px rgba(87,204,221,.13);
+}
+.tb-shell .tb-tomb-track .tb-tomb.open i,
+.tb-shell .tb-tomb-track .tb-tomb.open span{color:#93e6ee}
+.tb-shell .tb-tomb-track .tb-tomb.defeated{
+  border-color:rgba(115,158,169,.09);
+  background:#071114;
+  opacity:.42
+}
+.tb-shell .tb-tomb-track .tb-tomb.defeated i,
+.tb-shell .tb-tomb-track .tb-tomb.defeated span{color:#597078}
+
+.tb-shell .tb-layout>main{
+  background:
+    radial-gradient(circle at 50% 0,rgba(69,131,151,.05),transparent 34%),
+    linear-gradient(180deg,#071116,#050c10)!important
+}
+.tb-shell .tb-layout>aside{
+  border-left-color:rgba(98,176,199,.1);
+  background:linear-gradient(180deg,#071318,#050d11)!important
+}
+.tb-shell .tb-layout .tb-arena.cb2d-arena{
+  --tb-pressure:0;
+  --tb-active:0;
+  height:500px;
+  border-color:rgba(91,178,201,.16)!important;
+  background:
+    radial-gradient(circle at 50% 45%,rgba(77,153,178,.10),transparent 25%),
+    linear-gradient(180deg,#0b1720,#050b10)!important;
+  box-shadow:
+    inset 0 0 95px rgba(0,0,0,.58),
+    inset 0 -46px 90px rgba(17,50,64,.08),
+    0 0 32px rgba(70,149,173,.08);
+  transition:box-shadow .8s ease,filter .8s ease
+}
+.tb-shell .tb-arena.tb-high-pressure{
+  box-shadow:
+    inset 0 0 110px rgba(0,0,0,.68),
+    inset 0 -60px 100px rgba(39,100,119,.14),
+    0 0 42px rgba(76,167,193,.13)
+}
+.tb-shell .tb-arena.tb-final-phase{filter:saturate(1.12) contrast(1.04)}
+
+/* Deep crypt silhouette behind the fighting plane. */
+.tb-depth-backdrop{
+  position:absolute;z-index:0;inset:0;overflow:hidden;pointer-events:none;
+  background:
+    linear-gradient(180deg,rgba(6,20,29,.56),transparent 36%),
+    radial-gradient(ellipse at 50% 112%,rgba(68,139,162,.1),transparent 52%)
+}
+.tb-depth-backdrop:before{
+  content:"";position:absolute;left:5%;right:5%;top:-7%;height:43%;
+  opacity:.56;
+  background:
+    repeating-linear-gradient(90deg,
+      transparent 0 7%,
+      rgba(82,124,137,.07) 7.2% 7.6%,
+      rgba(7,14,19,.44) 7.8% 12%,
+      transparent 12.2% 18%);
+  clip-path:polygon(0 0,100% 0,100% 78%,96% 67%,92% 80%,87% 64%,82% 78%,76% 61%,70% 79%,64% 62%,58% 80%,52% 60%,46% 80%,40% 61%,34% 79%,28% 62%,22% 79%,16% 64%,10% 79%,4% 66%,0 78%)
+}
+.tb-depth-backdrop>i{
+  position:absolute;top:0;bottom:0;width:26%;
+  background:linear-gradient(90deg,rgba(3,9,13,.58),transparent);
+  opacity:.48
+}
+.tb-depth-backdrop>i:nth-child(1){left:0}
+.tb-depth-backdrop>i:nth-child(2){right:0;transform:scaleX(-1)}
+.tb-depth-backdrop>i:nth-child(3){
+  left:37%;top:-16%;bottom:auto;height:42%;width:26%;
+  border:1px solid rgba(109,171,188,.05);
+  border-radius:48% 48% 8% 8%;
+  background:radial-gradient(ellipse at 50% 100%,rgba(65,138,161,.08),rgba(1,6,9,.58) 68%);
+  box-shadow:0 22px 48px rgba(0,0,0,.45)
+}
+
+/* Frozen rune floor. */
+.tb-shell .tb-ground{
+  background:
+    repeating-radial-gradient(circle at 50% 52%,transparent 0 62px,rgba(97,165,184,.024) 63px 64px,transparent 65px 108px),
+    repeating-linear-gradient(117deg,transparent 0 66px,rgba(124,179,190,.02) 67px 68px),
+    radial-gradient(circle at 50% 52%,rgba(62,141,168,.12),transparent 31%),
+    linear-gradient(180deg,#0e1a1e,#071014)!important
+}
+.tb-shell .tb-ground:before{
+  content:"";position:absolute;inset:0;
+  opacity:.22;pointer-events:none;
+  background:
+    linear-gradient(30deg,transparent 48%,rgba(111,189,205,.08) 49% 49.4%,transparent 50%),
+    linear-gradient(-23deg,transparent 48%,rgba(111,189,205,.055) 49% 49.4%,transparent 50%);
+  background-size:176px 132px,213px 158px;
+  animation:tbIceGlint 10s linear infinite
+}
+.tb-shell .tb-ground:after{
+  left:15%;top:8%;width:70%;height:84%;
+  border:1px solid rgba(111,177,193,.10);
+  border-radius:50%;
+  box-shadow:
+    inset 0 0 70px rgba(0,0,0,.28),
+    0 0 34px rgba(67,148,173,.05)
+}
+@keyframes tbIceGlint{50%{opacity:.34;transform:translate3d(3px,-2px,0)}}
+
+/* Central seal beneath combat. */
+.tb-floor-seal{
+  position:absolute;z-index:1;left:50%;top:52%;
+  width:148px;height:148px;transform:translate(-50%,-50%) rotate(0deg);
+  display:grid;place-items:center;border:1px solid rgba(104,202,218,.11);
+  border-radius:50%;pointer-events:none;
+  box-shadow:0 0 0 22px rgba(85,166,185,.015),0 0 45px rgba(77,165,187,.07);
+  animation:tbSealTurn 26s linear infinite
+}
+.tb-floor-seal:before,.tb-floor-seal:after{
+  content:"";position:absolute;border-radius:50%;
+  border:1px dashed rgba(105,192,208,.1)
+}
+.tb-floor-seal:before{inset:16px}.tb-floor-seal:after{inset:39px}
+.tb-floor-seal i{
+  position:absolute;width:1px;height:100%;
+  background:linear-gradient(transparent,rgba(104,197,215,.10),transparent);
+  box-shadow:36px 0 rgba(104,197,215,.045),-36px 0 rgba(104,197,215,.045)
+}
+.tb-floor-seal b{color:rgba(121,215,228,.13);font:400 1.1rem Georgia,serif}
+@keyframes tbSealTurn{to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+/* Twelve physical crypt stones around the arena. */
+.tb-crypt-ring{position:absolute;z-index:2;inset:0;pointer-events:none}
+.tb-crypt-marker{
+  --a:calc(var(--i) * 30deg);
+  position:absolute;left:50%;top:52%;
+  width:38px;height:54px;margin:-27px -19px;
+  transform:rotate(var(--a)) translateY(-205px) rotate(calc(var(--a) * -1));
+  display:flex;align-items:center;justify-content:center;flex-direction:column;
+  border:1px solid rgba(113,150,157,.14);
+  border-radius:14px 14px 3px 3px;
+  background:linear-gradient(90deg,#111c20,#1b292b 52%,#0d171a);
+  box-shadow:0 8px 16px rgba(0,0,0,.46),inset 0 0 18px rgba(82,149,162,.025);
+  color:#61777c;
+  transition:border-color .3s,box-shadow .3s,filter .3s,opacity .3s
+}
+.tb-crypt-marker:before{
+  content:"";position:absolute;left:6px;right:6px;top:8px;height:27px;
+  border:1px solid rgba(115,157,164,.09);
+  border-radius:10px 10px 2px 2px;
+  box-shadow:inset 0 0 12px rgba(0,0,0,.5)
+}
+.tb-crypt-marker span{position:relative;z-index:2;color:#6c858b;font:400 .55rem Georgia,serif}
+.tb-crypt-marker small{position:absolute;bottom:3px;color:#475b61;font-size:.18rem;font-weight:900;letter-spacing:.06em}
+.tb-crypt-marker.open{
+  border-color:color-mix(in srgb,var(--tb-vice) 65%,#fff 5%);
+  box-shadow:0 0 20px color-mix(in srgb,var(--tb-vice) 28%,transparent),0 9px 17px rgba(0,0,0,.5);
+  color:var(--tb-vice)
+}
+.tb-crypt-marker.open span{color:var(--tb-vice);text-shadow:0 0 9px var(--tb-vice)}
+.tb-crypt-marker.opening{animation:tbCryptWake .72s ease}
+.tb-crypt-marker.defeated{opacity:.24;filter:grayscale(1) brightness(.72)}
+.tb-crypt-marker.defeated:after{
+  content:"×";position:absolute;z-index:4;right:3px;top:1px;color:#77a7ac;font-size:.62rem
+}
+@keyframes tbCryptWake{
+  0%{filter:brightness(.7);transform:rotate(var(--a)) translateY(-205px) rotate(calc(var(--a) * -1)) scale(.9)}
+  45%{filter:brightness(1.8);box-shadow:0 0 34px var(--tb-vice);transform:rotate(var(--a)) translateY(-205px) rotate(calc(var(--a) * -1)) scale(1.12)}
+  100%{filter:none}
+}
+
+/* Pillars / braziers. */
+.tb-burial-architecture i{
+  width:38px;height:122px;
+  border-color:rgba(105,151,160,.13);
+  background:linear-gradient(90deg,#142126,#203036 57%,#0c161a);
+  box-shadow:0 18px 28px rgba(0,0,0,.48),0 0 15px rgba(69,135,150,.035)
+}
+.tb-burial-architecture i:before,.tb-burial-architecture i:after{
+  border-color:rgba(110,156,164,.1);
+  background:#1a292d
+}
+.tb-soul-braziers{position:absolute;z-index:3;inset:0;pointer-events:none}
+.tb-soul-braziers i{
+  position:absolute;width:12px;height:12px;border-radius:50%;
+  background:#8cebf1;
+  box-shadow:0 0 8px #79dce7,0 0 22px rgba(69,193,211,.48),0 12px 30px rgba(56,156,178,.22);
+  animation:tbSoulFlame .66s ease-in-out infinite alternate
+}
+.tb-soul-braziers i:before{
+  content:"";position:absolute;left:3px;bottom:5px;width:6px;height:22px;
+  border-radius:50% 50% 46% 46%;
+  background:linear-gradient(180deg,rgba(132,245,247,.78),rgba(45,151,189,.08));
+  filter:blur(.6px);transform-origin:50% 100%
+}
+.tb-soul-braziers i:nth-child(1){left:9.5%;top:18%}
+.tb-soul-braziers i:nth-child(2){left:9.5%;bottom:18%}
+.tb-soul-braziers i:nth-child(3){right:9.5%;top:18%}
+.tb-soul-braziers i:nth-child(4){right:9.5%;bottom:18%}
+.tb-soul-braziers i:nth-child(2n){animation-delay:-.31s}
+@keyframes tbSoulFlame{
+  from{transform:scale(.86) translateY(1px);filter:brightness(.85)}
+  to{transform:scale(1.15) translateY(-2px);filter:brightness(1.25)}
+}
+
+/* Fog moves under units, never obscuring core combat readability. */
+.tb-grave-fog{
+  position:absolute;z-index:2;left:-18%;right:-18%;height:42%;
+  pointer-events:none;opacity:calc(.18 + var(--tb-pressure) * .18);
+  filter:blur(13px);
+  background:
+    radial-gradient(ellipse at 16% 52%,rgba(108,180,194,.11),transparent 25%),
+    radial-gradient(ellipse at 49% 58%,rgba(126,180,190,.09),transparent 29%),
+    radial-gradient(ellipse at 83% 48%,rgba(85,157,177,.12),transparent 25%);
+  transition:opacity .8s ease
+}
+.tb-grave-fog.fog-a{bottom:-5%;animation:tbFogA 14s ease-in-out infinite alternate}
+.tb-grave-fog.fog-b{top:1%;opacity:calc(.09 + var(--tb-pressure) * .11);animation:tbFogB 19s ease-in-out infinite alternate}
+@keyframes tbFogA{to{transform:translate3d(9%,2%,0) scale(1.05)}}
+@keyframes tbFogB{to{transform:translate3d(-8%,-1%,0) scale(1.08)}}
+
+/* Occasional spectral silhouettes crossing the far background. */
+.tb-spectral-pass{position:absolute;z-index:2;inset:0;overflow:hidden;pointer-events:none}
+.tb-spectral-pass i{
+  position:absolute;left:-10%;width:8px;height:26px;border-radius:55% 55% 40% 40%;
+  opacity:0;background:linear-gradient(180deg,rgba(133,219,228,.14),transparent);
+  box-shadow:0 0 12px rgba(98,186,203,.08);
+  animation:tbSpectre 16s linear infinite
+}
+.tb-spectral-pass i:nth-child(1){top:24%;animation-delay:1s}
+.tb-spectral-pass i:nth-child(2){top:61%;animation-delay:6.5s}
+.tb-spectral-pass i:nth-child(3){top:42%;animation-delay:11s}
+@keyframes tbSpectre{
+  0%,12%{left:-7%;opacity:0}
+  18%{opacity:.22}
+  72%{opacity:.1}
+  86%,100%{left:106%;opacity:0}
+}
+
+/* Tomb-opening and death pulses. */
+.tb-soul-burst{
+  position:absolute;z-index:9;width:18px;height:18px;
+  transform:translate(-50%,-50%);border:2px solid rgba(111,224,235,.65);
+  border-radius:50%;pointer-events:none;
+  box-shadow:0 0 24px rgba(92,208,222,.32);
+  animation:tbBurstOpen 1.05s ease-out forwards
+}
+.tb-soul-burst:before,.tb-soul-burst:after{
+  content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  border:1px solid rgba(118,224,232,.38);border-radius:50%
+}
+.tb-soul-burst:before{width:35px;height:35px}.tb-soul-burst:after{width:8px;height:76px;border-radius:0;border-top:0;border-bottom:0}
+.tb-soul-burst.death{border-color:rgba(126,169,176,.34);box-shadow:0 0 19px rgba(106,167,179,.18);animation-name:tbBurstDeath}
+@keyframes tbBurstOpen{
+  0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}
+  24%{opacity:1}
+  100%{opacity:0;transform:translate(-50%,-50%) scale(5)}
+}
+@keyframes tbBurstDeath{
+  from{opacity:.75;transform:translate(-50%,-50%) scale(2.6)}
+  to{opacity:0;transform:translate(-50%,-50%) scale(.25)}
+}
+
+/* Bosses inherit a vice-specific soul aura instead of identical yellow dots. */
+.tb-arena .tb-unit.enemy{
+  color:var(--tb-boss-accent,#76c9db)
+}
+.tb-arena .tb-unit.enemy>i{
+  border-color:color-mix(in srgb,var(--tb-boss-accent,#76c9db) 70%,#d7c58e 30%);
+  background:
+    radial-gradient(circle at 38% 34%,#e8f7f5 0 8%,var(--tb-boss-accent,#76c9db) 9% 42%,#172329 44% 100%);
+  box-shadow:
+    0 0 0 5px color-mix(in srgb,var(--tb-boss-accent,#76c9db) 9%,transparent),
+    0 0 26px color-mix(in srgb,var(--tb-boss-accent,#76c9db) 36%,transparent)
+}
+.tb-arena .tb-unit.enemy>span{
+  color:color-mix(in srgb,var(--tb-boss-accent,#76c9db) 78%,#f0dfb0 22%);
+  text-shadow:0 1px 8px rgba(0,0,0,.9)
+}
+.tb-arena .tb-unit.enemy .cb2d-unit-hp>i{
+  background:linear-gradient(90deg,#8e3441,var(--tb-boss-accent,#76c9db))
+}
+.tb-arena.tb-high-pressure .tb-unit.enemy>i{
+  animation:tbBossPressure 1.2s ease-in-out infinite alternate
+}
+@keyframes tbBossPressure{to{filter:brightness(1.2);transform:scale(1.06)}}
+
+/* Event telegraphs pick up an icy outer glow without changing danger red. */
+.tb-shell .tb-telegraph{
+  box-shadow:0 0 24px rgba(83,178,201,.12);
+  backdrop-filter:blur(.6px)
+}
+.tb-shell .tb-telegraph.circle,
+.tb-shell .tb-telegraph.circles{
+  box-shadow:0 0 0 1px rgba(108,203,220,.07),0 0 27px rgba(83,178,201,.10)
+}
+
+/* Side HUD / feed follows the sepulchre palette. */
+.tb-shell :is(.cb2d-cast,.cb2d-meter-panel,.cb2d-actions,.cb2d-party,.tb-live-rule,.cb2d-feed){
+  border-color:rgba(95,171,192,.09)!important;
+  background:linear-gradient(180deg,#08151a,#061014)!important
+}
+.tb-shell :is(.cb2d-cast,.cb2d-meter-head,.cb2d-actions,.cb2d-party,.tb-live-rule,.cb2d-feed)>small{
+  color:#6ca9b8!important
+}
+.tb-shell .tb-room-tag{
+  border-color:rgba(95,183,204,.13);
+  background:rgba(3,11,16,.82);
+  box-shadow:0 8px 22px rgba(0,0,0,.25)
+}
+.tb-shell .tb-room-tag b{color:#9fd5df}
+.tb-shell .tb-room-tag small{color:#65848a}
+
+@media(max-width:1050px){
+  .tb-crypt-marker{transform:rotate(var(--a)) translateY(-184px) rotate(calc(var(--a) * -1))}
+  @keyframes tbCryptWake{
+    0%{filter:brightness(.7);transform:rotate(var(--a)) translateY(-184px) rotate(calc(var(--a) * -1)) scale(.9)}
+    45%{filter:brightness(1.8);box-shadow:0 0 34px var(--tb-vice);transform:rotate(var(--a)) translateY(-184px) rotate(calc(var(--a) * -1)) scale(1.12)}
+    100%{filter:none}
+  }
+}
+@media(max-width:760px){
+  .tb-shell .tb-layout .tb-arena.cb2d-arena{height:430px}
+  .tb-crypt-marker{width:31px;height:45px;margin:-22px -15px;transform:rotate(var(--a)) translateY(-164px) rotate(calc(var(--a) * -1))}
+  .tb-crypt-marker span{font-size:.42rem}.tb-crypt-marker small{display:none}
+  .tb-floor-seal{width:112px;height:112px}
+  .tb-spectral-pass{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .tb-floor-seal,.tb-ground:before,.tb-soul-braziers i,.tb-grave-fog,.tb-spectral-pass i,.tb-unit.enemy>i{animation:none!important}
+}
