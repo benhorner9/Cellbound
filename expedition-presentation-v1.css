@@ -1,5 +1,6 @@
 body.cbx-transition-open,body.cbx-expedition-active{overflow:hidden}
 .cbx-transition{position:fixed;z-index:30000;inset:0;display:grid;place-items:center;overflow:hidden;background:#05090b;color:#e3e9e6;isolation:isolate}
+.cbx-enter{place-items:center}
 .cbx-transition:before{content:"";position:absolute;z-index:-3;inset:-8%;background:radial-gradient(circle at 50% 46%,rgba(113,128,119,.13),transparent 34%),linear-gradient(180deg,#0a1114,#04080a);transform:scale(1.08);transition:transform 2.6s cubic-bezier(.2,.75,.2,1)}
 .cbx-transition.moving:before{transform:scale(1)}
 .cbx-scene{position:absolute;z-index:-1;inset:0;overflow:hidden;perspective:650px}
