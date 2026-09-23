@@ -1,0 +1,17 @@
+.cb-item-art{display:inline-grid;position:relative;place-items:center;flex:0 0 auto;overflow:hidden;border-radius:8px;background:#071014;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07),0 7px 18px rgba(0,0,0,.38);vertical-align:middle;isolation:isolate}
+.cb-item-art svg{display:block;width:100%;height:100%;overflow:hidden}
+.cb-item-art.rarity-uncommon{box-shadow:inset 0 0 0 1px rgba(101,220,134,.28),0 7px 18px rgba(0,0,0,.38)}
+.cb-item-art.rarity-rare{box-shadow:inset 0 0 0 1px rgba(90,168,255,.32),0 0 13px rgba(53,126,214,.16),0 7px 18px rgba(0,0,0,.38)}
+.cb-item-art.rarity-epic{box-shadow:inset 0 0 0 1px rgba(201,135,255,.38),0 0 16px rgba(159,86,214,.2),0 7px 18px rgba(0,0,0,.4)}
+.cb-item-art.rarity-legendary{box-shadow:inset 0 0 0 1px rgba(242,196,109,.45),0 0 18px rgba(216,153,61,.25),0 7px 18px rgba(0,0,0,.42)}
+.gear-art.cb-item-art{overflow:hidden!important;padding:0!important;background:#071014!important}
+.gear-art.cb-item-art:after{z-index:5}
+.material-art.cb-item-art{display:inline-grid!important;position:relative!important;padding:0!important;background:#071014!important}
+.recipe-card{position:relative}
+.recipe-card>.recipe-output-art{margin-right:10px;align-self:center}
+.crafted-card>.crafted-item-art{float:left;margin:0 10px 8px 0}
+.pvp-shop-item-art,.pvp-equipped-item-art{border-radius:7px}
+.pvp-shop-grid button>span:has(.cb-item-art),.pvp-equipped-grid>div>span:has(.cb-item-art){display:grid!important;place-items:center!important;width:auto!important;height:auto!important;background:none!important}
+.eg-collection-list article>i:has(.cb-item-art){width:52px!important;height:52px!important;display:grid!important;place-items:center!important;background:none!important}
+.tp-consumable-art{border-radius:7px}
+@media(max-width:760px){.cb-item-art{border-radius:7px}.recipe-card>.recipe-output-art{width:42px!important;height:42px!important}.crafted-card>.crafted-item-art{width:44px!important;height:44px!important}}
