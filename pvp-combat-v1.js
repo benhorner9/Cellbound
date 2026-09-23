@@ -588,7 +588,8 @@ function selfTest(){
   const blue=[{id:'b1',name:'Blue Tank',class:'Warrior',spec:'Protection',role:'tank',level:10,pvpPower:130},{id:'b2',name:'Blue Healer',class:'Priest',spec:'Holy',role:'healer',level:10,pvpPower:130},{id:'b3',name:'Blue DPS',class:'Rogue',spec:'Assassination',role:'dps',level:10,pvpPower:130}];
   const red=[{id:'r1',name:'Red Tank',class:'Paladin',spec:'Protection',role:'tank',level:10,pvpPower:128},{id:'r2',name:'Red Healer',class:'Druid',spec:'Restoration',role:'healer',level:10,pvpPower:128},{id:'r3',name:'Red DPS',class:'Hunter',spec:'Marksman',role:'dps',level:10,pvpPower:128}];
   const a=simulate({blue,red,kind:'arena',mode:'arena',size:3,seed:'self-arena'}),b=simulate({blue:[...blue,...blue.map((x,i)=>({...x,id:'ba'+i,name:'Ally '+i}))],red:[...red,...red.map((x,i)=>({...x,id:'ra'+i,name:'Enemy '+i}))],kind:'battleground',mode:'king-of-the-hill',size:6,seed:'self-bg'}),c=simulate({blue:[...blue,...blue.map((x,i)=>({...x,id:'bc'+i,name:'Blue CTF '+i}))],red:[...red,...red.map((x,i)=>({...x,id:'rc'+i,name:'Red CTF '+i}))],kind:'battleground',mode:'capture-the-flag',size:6,seed:'self-ctf'});
-  const flagEvents=c.events.filter(e=>e.type==='FLAG_STATE');
+  const flagEvents=c.events.filter(e=>e.type==='FLAG_STATE'),ctfMap=PVP_MAPS['cellwind-bastion'],mapCtx={map:ctfMap};
+  const movementEvents=c.events.filter(e=>e.type==='MOVEMENT_START'&&e.payload?.from&&e.payload?.to);
   const tests=[
     {name:'Arena resolves',pass:['blue','red'].includes(a.winner)&&a.events.some(e=>e.type==='DAMAGE_DEALT')},
     {name:'Healing events',pass:a.events.some(e=>e.type==='HEAL_RECEIVED')},
@@ -598,8 +599,12 @@ function selfTest(){
     {name:'Resources',pass:a.events.some(e=>e.type==='RESOURCE_SPENT')},
     {name:'CTF flag pickup is physical',pass:flagEvents.some(e=>e.result==='picked-up'&&e.source&&Number.isFinite(Number(e.payload?.x))&&Number.isFinite(Number(e.payload?.y)))},
     {name:'CTF flag lifecycle resolves',pass:flagEvents.some(e=>['captured','returned','dropped'].includes(e.result))||c.events.some(e=>e.type==='OBJECTIVE_UPDATE'&&e.result==='ctf-standoff')},
-    {name:'CTF carriers hold during a flag standoff',pass:!c.events.some((e,i)=>e.type==='MOVEMENT_START'&&e.result==='flag carrier retreat'&&c.events.slice(Math.max(0,i-6),i).some(x=>x.type==='MOVEMENT_START'&&x.source===e.source&&x.result==='flag carrier hold'))}
+    {name:'CTF carriers hold during a flag standoff',pass:!c.events.some((e,i)=>e.type==='MOVEMENT_START'&&e.result==='flag carrier retreat'&&c.events.slice(Math.max(0,i-6),i).some(x=>x.type==='MOVEMENT_START'&&x.source===e.source&&x.result==='flag carrier hold'))},
+    {name:'Cellwind Bastion map is attached to CTF',pass:c.map?.id==='cellwind-bastion'&&Array.isArray(c.map?.blockers)&&c.map.blockers.length>=8},
+    {name:'CTF movement respects solid geometry',pass:movementEvents.every(e=>!segmentBlocked(mapCtx,e.payload.from,e.payload.to,.55,'movement'))},
+    {name:'PvP walls block line of sight',pass:!hasLineOfSight(mapCtx,{position:{x:34,y:36}},{position:{x:66,y:36}})},
+    {name:'CTF exposes alternate routes',pass:new Set(movementEvents.map(e=>e.payload?.route).filter(Boolean)).size>=2}
   ];return{version:VERSION,passed:tests.filter(x=>x.pass).length,total:tests.length,tests}
 }
-window.CellboundPvPCombat={VERSION,CLASS_COLORS,simulate,tests:{run:selfTest}};
+window.CellboundPvPCombat={VERSION,CLASS_COLORS,MAPS:PVP_MAPS,simulate,tests:{run:selfTest}};
 })();
