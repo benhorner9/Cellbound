@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.2.0';
+const VERSION='1.3.0';
 const TICK=250;
 const MAX_ARENA_MS=90000;
 const MAX_BG_MS=120000;
@@ -64,7 +64,7 @@ function normalize(raw,team,index,count,opts){
     id:unitId(team,raw,index),characterId:raw?.id||raw?.characterId||null,name:raw?.name||('Combatant '+(index+1)),portrait:raw?.portrait||'◆',class:raw?.class||'Warrior',spec:raw?.spec||'',role,team,
     level,pvpPower,pvpDefence,controlResistance:control,maxHealth,health:maxHealth,alive:true,position,resource:{name:r.name,max:r.max,value:r.start,regen:r.regen},
     nextAction:500+index*85,nextControl:5000+index*300,nextDefensive:9000+index*500,disabledUntil:0,guardedUntil:0,guardSource:null,defensiveUntil:0,
-    respawnAt:0,kills:0,deaths:0,damage:0,healing:0,interrupts:0,cc:0,objectives:0,carryingFlag:null,flagIntent:null
+    respawnAt:0,kills:0,deaths:0,damage:0,healing:0,interrupts:0,cc:0,objectives:0,carryingFlag:null,flagIntent:null,objectiveRole:null,ctfSlot:index,lastObjectiveNotice:0
   }
 }
 function emit(ctx,type,data={}){ctx.events.push({timestamp:Math.max(0,Math.round(ctx.time)),type,...data})}
@@ -193,6 +193,7 @@ function damageAction(ctx,u,target){
 }
 function act(ctx,u){
   if(!u.alive||ctx.time<u.disabledUntil||ctx.time<u.nextAction)return;
+  if(ctx.mode==='capture-the-flag'&&ctfAct(ctx,u))return;
   maybeDefensive(ctx,u);maybeGuard(ctx,u);
   let acted=false;if(u.role==='healer')acted=healerAction(ctx,u);
   if(!acted)acted=damageAction(ctx,u,selectTarget(ctx,u));
@@ -202,6 +203,144 @@ function regen(ctx){
   ctx.units.forEach(u=>{if(!u.alive)return;const gain=(u.resource.regen||0)*(TICK/1000);if(gain>0&&u.resource.value<u.resource.max){u.resource.value=clamp(u.resource.value+gain,0,u.resource.max);if(ctx.time%1000===0)emit(ctx,'RESOURCE_STATE',{source:u.id,target:u.id,result:'regeneration',payload:{resource:u.resource.name,value:u.resource.value,max:u.resource.max}})}})
 }
 function teamCentroid(list){if(!list.length)return{x:50,y:50};return{x:list.reduce((n,u)=>n+u.position.x,0)/list.length,y:list.reduce((n,u)=>n+u.position.y,0)/list.length}}
+function assignCtfRoles(ctx,team){
+  const units=ctx.units.filter(u=>u.team===team),available=[...units];
+  available.forEach((u,i)=>{u.objectiveRole='skirmisher';u.ctfSlot=i});
+  const tanks=available.filter(u=>u.role==='tank'),healers=available.filter(u=>u.role==='healer'),nonHealers=available.filter(u=>u.role!=='healer');
+  const runner=tanks[0]||nonHealers.slice().sort((a,b)=>(b.pvpDefence+b.maxHealth/250)-(a.pvpDefence+a.maxHealth/250))[0]||available[0];
+  if(runner)runner.objectiveRole='runner';
+  const remaining=available.filter(u=>u!==runner&&u.role!=='healer');
+  const defenderCount=Math.max(1,Math.round(available.length*.2));
+  remaining.slice().sort((a,b)=>(b.role==='tank'?2:0)+(b.pvpDefence||0)/30-((a.role==='tank'?2:0)+(a.pvpDefence||0)/30)).slice(0,defenderCount).forEach(u=>u.objectiveRole='defender');
+  healers.forEach(u=>u.objectiveRole='support');
+  remaining.filter(u=>u.objectiveRole==='skirmisher').forEach((u,i)=>u.objectiveRole=i%2===0?'escort':'skirmisher');
+  emit(ctx,'OBJECTIVE_UPDATE',{result:'ctf-roles',payload:{team,runner:runner?.id||null,defenders:available.filter(u=>u.objectiveRole==='defender').map(u=>u.id),supports:healers.map(u=>u.id)}})
+}
+function ctfHomePoint(team){return team==='blue'?{x:16,y:50}:{x:84,y:50}}
+function ctfHoldPoint(u){
+  const x=u.team==='blue'?20:80,y=clamp(35+(Number(u.ctfSlot)||0)%3*15,22,78);return{x,y}
+}
+function ctfRolePoint(u){
+  const side=u.team==='blue'?1:-1;
+  if(u.objectiveRole==='defender')return{x:u.team==='blue'?23:77,y:clamp(35+(u.ctfSlot%3)*15,22,78)};
+  if(u.objectiveRole==='runner')return{x:u.team==='blue'?40:60,y:clamp(42+(u.ctfSlot%2)*12,24,76)};
+  if(u.objectiveRole==='support')return{x:u.team==='blue'?32:68,y:clamp(54+(u.ctfSlot%2)*12,24,80)};
+  if(u.objectiveRole==='escort')return{x:u.team==='blue'?38:62,y:clamp(30+(u.ctfSlot%4)*14,18,82)};
+  return{x:50-side*5,y:clamp(24+(u.ctfSlot%5)*13,16,84)}
+}
+function ctfRunner(ctx,team){
+  const alive=living(ctx,team),assigned=alive.find(u=>u.objectiveRole==='runner');
+  if(assigned)return assigned;
+  const replacement=chooseCarrier(ctx,team);if(replacement)replacement.objectiveRole='runner';return replacement
+}
+function nearestToPoint(list,p){return list.slice().sort((a,b)=>pvpDistanceToPoint(a,p)-pvpDistanceToPoint(b,p))[0]||null}
+function nearbyEnemies(ctx,u,radius=18){return enemies(ctx,u).filter(e=>distance(u,e)<=radius)}
+function objectiveTravel(ctx,u,to,reason,onArrive=null){
+  if(!u?.alive||u.flagIntent)return false;
+  const end={x:clamp(Number(to.x)||50,5,95),y:clamp(Number(to.y)||50,8,92)},dist=pvpDistanceToPoint(u,end);
+  if(dist<2){onArrive?.();return true}
+  const duration=Math.round(clamp(450+dist*34,650,3200)),from=copy(u.position);
+  u.flagIntent=reason;u.nextAction=Math.max(u.nextAction,ctx.time+duration+100);
+  emit(ctx,'MOVEMENT_START',{source:u.id,result:reason,payload:{from,to:copy(end),duration,pvpObjective:true,pvpFlag:/flag/i.test(reason)}});
+  ctx.scheduled.push({at:ctx.time+duration,fn:()=>{
+    if(!u.alive)return;
+    u.position=end;u.flagIntent=null;u.nextAction=Math.max(u.nextAction,ctx.time+150);onArrive?.()
+  }});
+  return true
+}
+function ctfCarrierAct(ctx,u){
+  const stolen=ctx.flag?.[u.carryingFlag],own=ctx.flag?.[u.team];if(!stolen)return false;
+  const home=flagBase(u.team);
+  if(pvpDistanceToPoint(u,home)>4){
+    objectiveTravel(ctx,u,home,'flag carrier retreat',()=>{if(u.alive&&u.carryingFlag)stolen.position=copy(u.position)});
+    return true
+  }
+  if(own?.state==='base'){
+    captureFlag(ctx,u,stolen);u.nextAction=ctx.time+1700;return true
+  }
+  const hold=ctfHoldPoint(u);
+  if(pvpDistanceToPoint(u,hold)>5){objectiveTravel(ctx,u,hold,'flag carrier hold');return true}
+  maybeDefensive(ctx,u);
+  const threat=nearbyEnemies(ctx,u,9).sort((a,b)=>healthRatio(a)-healthRatio(b))[0];
+  if(threat&&ctx.time>=u.nextControl)maybeControl(ctx,u,threat);
+  if(ctx.time-u.lastObjectiveNotice>=3500){
+    u.lastObjectiveNotice=ctx.time;
+    emit(ctx,'OBJECTIVE_UPDATE',{source:u.id,result:'ctf-standoff',payload:{team:u.team,carrier:u.id,waitingFor:u.team,blue:ctx.objective.blue,red:ctx.objective.red}})
+  }
+  u.nextAction=ctx.time+850;return true
+}
+function ctfAct(ctx,u){
+  if(u.flagIntent)return true;
+  if(u.carryingFlag)return ctfCarrierAct(ctx,u);
+  const own=ctx.flag?.[u.team],enemyFlag=ctx.flag?.[flagEnemy(u.team)];
+  if(!own||!enemyFlag)return false;
+
+  if(own.state==='carried'){
+    const enemyCarrier=ctx.byId[own.carrier];
+    if(enemyCarrier?.alive){
+      if(u.role==='healer'){
+        if(healerAction(ctx,u)){u.nextAction=ctx.time+1250;return true}
+        const chaser=living(ctx,u.team).filter(x=>x.id!==u.id&&!x.carryingFlag).sort((a,b)=>distance(a,enemyCarrier)-distance(b,enemyCarrier))[0];
+        if(chaser&&distance(u,chaser)>12)objectiveTravel(ctx,u,{x:chaser.position.x+(u.team==='blue'?-5:5),y:chaser.position.y},'support flag recovery');
+        else u.nextAction=ctx.time+800;
+        return true
+      }
+      maybeDefensive(ctx,u);maybeGuard(ctx,u);damageAction(ctx,u,enemyCarrier);u.nextAction=ctx.time+1050+Math.round(ctx.rng()*250);return true
+    }
+  }
+
+  if(own.state==='dropped'){
+    const returner=nearestToPoint(living(ctx,u.team).filter(x=>!x.carryingFlag),own.position);
+    if(returner?.id===u.id){
+      own.state='contested';own.contester=u.id;
+      objectiveTravel(ctx,u,own.position,'return dropped flag',()=>{if(u.alive&&own.state==='contested'&&own.contester===u.id)resetFlag(ctx,own,'returned',u)});
+      return true
+    }
+  }
+
+  if(enemyFlag.state==='dropped'){
+    const recoverer=nearestToPoint(living(ctx,u.team).filter(x=>!x.carryingFlag&&x.objectiveRole!=='defender'),enemyFlag.position);
+    if(recoverer?.id===u.id){
+      enemyFlag.state='contested';enemyFlag.contester=u.id;
+      objectiveTravel(ctx,u,enemyFlag.position,'recover dropped flag',()=>{if(u.alive&&enemyFlag.state==='contested'&&enemyFlag.contester===u.id){enemyFlag.state='dropped';enemyFlag.contester=null;carryFlagHome(ctx,u,enemyFlag,'ground')}});
+      return true
+    }
+  }
+
+  if(u.objectiveRole==='defender'){
+    const base=flagBase(u.team),intruder=enemies(ctx,u).filter(e=>pvpDistanceToPoint(e,base)<=25).sort((a,b)=>pvpDistanceToPoint(a,base)-pvpDistanceToPoint(b,base))[0];
+    if(intruder){maybeDefensive(ctx,u);damageAction(ctx,u,intruder);u.nextAction=ctx.time+1100+Math.round(ctx.rng()*250);return true}
+    const hold=ctfRolePoint(u);if(pvpDistanceToPoint(u,hold)>6)objectiveTravel(ctx,u,hold,'defend flag room');else u.nextAction=ctx.time+850;return true
+  }
+
+  if(u.objectiveRole==='runner'&&enemyFlag.state==='base'){
+    const base=flagBase(enemyFlag.owner);
+    objectiveTravel(ctx,u,base,'attack enemy flag',()=>{if(u.alive&&enemyFlag.state==='base')carryFlagHome(ctx,u,enemyFlag,'base')});
+    return true
+  }
+
+  if(u.objectiveRole==='support'){
+    if(healerAction(ctx,u)){u.nextAction=ctx.time+1250;return true}
+    const runner=ctfRunner(ctx,u.team),anchor=runner?.carryingFlag?runner:living(ctx,u.team).find(x=>x.objectiveRole==='escort')||runner;
+    if(anchor&&distance(u,anchor)>15)objectiveTravel(ctx,u,{x:anchor.position.x+(u.team==='blue'?-6:6),y:anchor.position.y+5},'support objective group');
+    else u.nextAction=ctx.time+800;
+    return true
+  }
+
+  if(u.objectiveRole==='escort'){
+    const runner=ctfRunner(ctx,u.team);
+    if(runner&&(runner.flagIntent||runner.carryingFlag)){
+      const threats=enemies(ctx,u).filter(e=>distance(e,runner)<=24).sort((a,b)=>distance(a,runner)-distance(b,runner));
+      if(threats[0]){damageAction(ctx,u,threats[0]);u.nextAction=ctx.time+1050+Math.round(ctx.rng()*250);return true}
+      if(distance(u,runner)>13){objectiveTravel(ctx,u,{x:runner.position.x+(u.team==='blue'?-7:7),y:runner.position.y+(u.ctfSlot%2?7:-7)},'escort flag runner');return true}
+    }
+  }
+
+  const midfield=enemies(ctx,u).filter(e=>e.objectiveRole!=='defender'||distance(u,e)<20).sort((a,b)=>distance(u,a)-distance(u,b))[0]||selectTarget(ctx,u);
+  if(midfield){maybeDefensive(ctx,u);maybeGuard(ctx,u);damageAction(ctx,u,midfield);u.nextAction=ctx.time+1100+Math.round(ctx.rng()*300);return true}
+  const point=ctfRolePoint(u);if(pvpDistanceToPoint(u,point)>7)objectiveTravel(ctx,u,point,'hold battleground lane');else u.nextAction=ctx.time+900;
+  return true
+}
 function setupObjective(ctx){
   if(ctx.kind==='arena'){ctx.objective={type:'arena',blue:0,red:0};return}
   if(ctx.mode==='king-of-the-hill'){
@@ -215,22 +354,11 @@ function setupObjective(ctx){
     };
     emit(ctx,'FLAG_STATE',{result:'reset',payload:{team:'blue',owner:'blue',x:12,y:50}});
     emit(ctx,'FLAG_STATE',{result:'reset',payload:{team:'red',owner:'red',x:88,y:50}});
+    assignCtfRoles(ctx,'blue');assignCtfRoles(ctx,'red');
     // Let the battlefield render before the opening push so movement is visible.
-    ctx.units.forEach((u,i)=>{u.nextAction=Math.max(u.nextAction,1700+i*45)});
+    ctx.units.forEach((u,i)=>{u.nextAction=Math.max(u.nextAction,1800+i*45)});
     ctx.scheduled.push({at:650,fn:()=>{
-      const byTeam={blue:ctx.units.filter(u=>u.team==='blue'),red:ctx.units.filter(u=>u.team==='red')};
-      for(const team of ['blue','red']){
-        const teamUnits=byTeam[team],dir=team==='blue'?1:-1;
-        teamUnits.forEach((u,i)=>{
-          const lane=18+(i%Math.max(1,Math.min(8,teamUnits.length)))*(64/Math.max(1,Math.min(8,teamUnits.length)-1||1));
-          let x=team==='blue'?29:71;
-          if(u.role==='tank')x=team==='blue'?34:66;
-          else if(u.role==='healer')x=team==='blue'?24:76;
-          else if(i%3===0)x=team==='blue'?38:62;
-          const y=clamp(lane+(i%2?2:-2),12,88);
-          move(ctx,u,{x,y},900,'ctf opening push')
-        })
-      }
+      for(const u of ctx.units)move(ctx,u,ctfRolePoint(u),900,'ctf opening push');
       emit(ctx,'OBJECTIVE_UPDATE',{result:'ctf-opening',payload:{mode:'capture-the-flag',blue:0,red:0}})
     }})
   }
@@ -249,14 +377,7 @@ function flagBase(team){return team==='blue'?{x:12,y:50}:{x:88,y:50}}
 function flagEnemy(team){return team==='blue'?'red':'blue'}
 function pvpDistanceToPoint(u,p){return Math.hypot((u.position.x-p.x),(u.position.y-p.y))}
 function travelFlagRunner(ctx,u,to,duration,reason,onArrive){
-  if(!u?.alive)return false;
-  const from=copy(u.position),end={x:clamp(Number(to.x)||50,5,95),y:clamp(Number(to.y)||50,8,92)};
-  u.flagIntent=reason;u.nextAction=Math.max(u.nextAction,ctx.time+duration);
-  emit(ctx,'MOVEMENT_START',{source:u.id,result:reason,payload:{from,to:copy(end),duration,pvpFlag:true}});
-  ctx.scheduled.push({at:ctx.time+duration,fn:()=>{
-    if(!u.alive)return;u.position=end;u.flagIntent=null;onArrive?.()
-  }});
-  return true
+  return objectiveTravel(ctx,u,to,reason,onArrive)
 }
 function resetFlag(ctx,flag,reason='returned',source=null){
   if(!flag)return;
@@ -268,8 +389,8 @@ function carryFlagHome(ctx,u,flag,from='base'){
   if(!u?.alive||!flag||u.team===flag.owner||u.carryingFlag)return false;
   flag.carrier=u.id;flag.contester=null;flag.state='carried';flag.position=copy(u.position);flag.lastActionAt=ctx.time;u.carryingFlag=flag.owner;u.objectives++;
   emit(ctx,'FLAG_STATE',{source:u.id,result:'picked-up',payload:{team:flag.owner,owner:flag.owner,carrier:u.id,from,x:u.position.x,y:u.position.y}});
-  const home=flagBase(u.team);
-  travelFlagRunner(ctx,u,home,2800,'carry flag home',()=>{flag.position=copy(u.position)});
+  emit(ctx,'OBJECTIVE_UPDATE',{source:u.id,result:'ctf-carrier',payload:{team:u.team,carrier:u.id,flag:flag.owner,blue:ctx.objective.blue,red:ctx.objective.red}});
+  objectiveTravel(ctx,u,flagBase(u.team),'flag carrier retreat',()=>{if(u.alive&&u.carryingFlag===flag.owner)flag.position=copy(u.position)});
   return true
 }
 function captureFlag(ctx,u,flag){
@@ -278,50 +399,35 @@ function captureFlag(ctx,u,flag){
   u.carryingFlag=null;flag.carrier=null;flag.contester=null;flag.state='base';flag.position=flagBase(flag.owner);flag.lastActionAt=ctx.time;
   ctx.objective[u.team]++;ctx.stats[u.team].objectives++;
   emit(ctx,'FLAG_STATE',{source:u.id,result:'captured',payload:{team:flag.owner,owner:flag.owner,scoringTeam:u.team,blue:ctx.objective.blue,red:ctx.objective.red,x:flag.position.x,y:flag.position.y}});
+  emit(ctx,'OBJECTIVE_UPDATE',{source:u.id,result:'ctf-score',payload:{team:u.team,blue:ctx.objective.blue,red:ctx.objective.red}});
+  u.nextAction=Math.max(u.nextAction,ctx.time+1700);
   return true
 }
 function resolveDroppedFlag(ctx,flag){
   if(!flag||flag.state!=='dropped')return;
-  const p=flag.position,defender=living(ctx,flag.owner).sort((a,b)=>pvpDistanceToPoint(a,p)-pvpDistanceToPoint(b,p))[0],attackingTeam=flagEnemy(flag.owner),attacker=living(ctx,attackingTeam).filter(u=>!u.carryingFlag).sort((a,b)=>pvpDistanceToPoint(a,p)-pvpDistanceToPoint(b,p))[0];
+  const p=flag.position,defender=nearestToPoint(living(ctx,flag.owner).filter(u=>!u.carryingFlag),p),attackingTeam=flagEnemy(flag.owner),attacker=nearestToPoint(living(ctx,attackingTeam).filter(u=>!u.carryingFlag&&u.objectiveRole!=='defender'),p);
   if(!defender&&!attacker){flag.lastActionAt=ctx.time;return}
   const defenderDist=defender?pvpDistanceToPoint(defender,p):999,attackerDist=attacker?pvpDistanceToPoint(attacker,p):999;
-  const returnWins=defender&&(!attacker||defenderDist<=attackerDist+4);
-  const actor=returnWins?defender:attacker;if(!actor)return;
+  const returnWins=defender&&(!attacker||defenderDist<=attackerDist+3),actor=returnWins?defender:attacker;if(!actor)return;
   flag.state='contested';flag.contester=actor.id;flag.lastActionAt=ctx.time;
-  travelFlagRunner(ctx,actor,p,700,returnWins?'return dropped flag':'recover dropped flag',()=>{
-    if(flag.state!=='contested'||!actor.alive)return;
+  objectiveTravel(ctx,actor,p,returnWins?'return dropped flag':'recover dropped flag',()=>{
+    if(flag.state!=='contested'||flag.contester!==actor.id||!actor.alive)return;
     if(returnWins)resetFlag(ctx,flag,'returned',actor);
-    else{flag.state='dropped';carryFlagHome(ctx,actor,flag,'ground')}
+    else{flag.state='dropped';flag.contester=null;carryFlagHome(ctx,actor,flag,'ground')}
   })
 }
 function flagTick(ctx){
-  if(ctx.time<2500||ctx.time%500!==0)return;
+  if(ctx.time<1800||ctx.time%500!==0)return;
   for(const owner of ['blue','red']){
     const flag=ctx.flag[owner];if(!flag)continue;
     if(flag.state==='carried'){
       const carrier=ctx.byId[flag.carrier];
       if(!carrier?.alive)continue;
       flag.position=copy(carrier.position);
-      const home=flagBase(carrier.team);
-      if(pvpDistanceToPoint(carrier,home)<=4)captureFlag(ctx,carrier,flag);
+      if(pvpDistanceToPoint(carrier,flagBase(carrier.team))<=4&&ctx.flag[carrier.team]?.state==='base')captureFlag(ctx,carrier,flag);
       continue
     }
-    if(flag.state==='dropped'){
-      if(ctx.time-flag.lastActionAt>=850)resolveDroppedFlag(ctx,flag);
-      continue
-    }
-    if(flag.state==='contested')continue;
-    if(flag.state!=='base'||ctx.time-flag.lastActionAt<3200)continue;
-    const attackingTeam=flagEnemy(owner),alive=living(ctx,attackingTeam),defenders=living(ctx,owner);if(!alive.length)continue;
-    const pressure=(alive.length-defenders.length)*.045+alive.filter(x=>x.role==='tank').length*.02;
-    if(ctx.rng()>clamp(.22+pressure,.12,.48))continue;
-    const runner=chooseCarrier(ctx,attackingTeam);if(!runner)continue;
-    flag.lastActionAt=ctx.time;
-    const base=flagBase(owner);
-    travelFlagRunner(ctx,runner,base,1900,'attack enemy flag',()=>{
-      if(!runner.alive||flag.state!=='base')return;
-      runner.position=copy(base);carryFlagHome(ctx,runner,flag,'base')
-    })
+    if(flag.state==='dropped'&&ctx.time-flag.lastActionAt>=700)resolveDroppedFlag(ctx,flag)
   }
 }
 function objectiveTick(ctx){if(ctx.mode==='king-of-the-hill')hillTick(ctx);else if(ctx.mode==='capture-the-flag')flagTick(ctx)}
