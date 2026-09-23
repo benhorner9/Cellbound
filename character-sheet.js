@@ -16,6 +16,17 @@ let selectedTalentId=null;
 let selectedTalentSpec=null;
 let selectedTreeSpec=null;
 let activeSkillSlot=0;
+let returnView='roster';
+
+const CHARACTER_TABS=[
+  ['overview','◇','Overview','Snapshot'],
+  ['equipment','▦','Equipment','Gear & stats'],
+  ['talents','✦','Talents','Build'],
+  ['skills','⚔','Skills','Combat loadout'],
+  ['professions','⚒','Professions','Trades'],
+  ['knowledge','⌁','Mastery','Encounters'],
+  ['history','▤','History','Record']
+];
 
 const classMeta={
   Warrior:{icon:'⚔',accent:'#C69B6D',primary:'Strength'},
@@ -336,7 +347,20 @@ function talentTree(c,spec){
     </div>
   </div>`;
 }
-function knowledgePanel(c){return `<div class="cb-mastery-intro"><small>ENCOUNTER MASTERY</small><h3>Experience, not hidden power.</h3><p>Mastery records how much this adventurer has experienced an encounter. It can support journals, achievements and future cosmetic rewards, but it does not alter damage, healing, survivability, interrupts or mechanic success.</p></div><div class="cb-knowledge-grid">${Object.entries(c.knowledge||{}).map(([id,val])=>`<article><div><span>${id.replace(/([a-z])([A-Z])/g,'$1 $2')}</span><b>${val}%</b></div><div class="cb-knowledge-bar"><i style="width:${val}%"></i></div></article>`).join('')}</div>`}
+function knowledgePanel(c){
+  const entries=Object.entries(c.knowledge||{}),values=entries.map(([,v])=>Math.max(0,Math.min(100,Number(v)||0)));
+  const average=values.length?Math.round(values.reduce((a,b)=>a+b,0)/values.length):0;
+  const complete=values.filter(v=>v>=100).length,experienced=values.filter(v=>v>0).length;
+  return `<div class="cb-mastery-command">
+    <section class="cb-character-tab-hero cb-mastery-hero">
+      <div><small>ENCOUNTER MASTERY</small><h3>Experience, not hidden power.</h3><p>Mastery records what this adventurer has experienced. It supports records, achievements and future cosmetic rewards without changing combat output.</p></div>
+      <div class="cb-character-tab-stat"><span>AVERAGE MASTERY</span><b>${average}%</b><small>${experienced} encountered · ${complete} mastered</small></div>
+    </section>
+    <div class="cb-mastery-summary"><div><span>ENCOUNTERS TRACKED</span><b>${entries.length}</b></div><div><span>EXPERIENCED</span><b>${experienced}</b></div><div><span>FULLY MASTERED</span><b>${complete}</b></div></div>
+    <div class="cb-knowledge-grid">${entries.length?entries.map(([id,val])=>{const pct=Math.max(0,Math.min(100,Number(val)||0));return `<article><div><span>${id.replace(/([a-z])([A-Z])/g,'$1 $2')}</span><b>${pct}%</b></div><div class="cb-knowledge-bar"><i style="width:${pct}%"></i></div><small>${pct>=100?'Mastered':pct>=60?'Experienced':pct>0?'Learning':'Unseen'}</small></article>`}).join(''):'<div class="cb-no-items">No encounter mastery recorded yet.</div>'}</div>
+  </div>`
+}
+
 function specTabs(c){const browsing=selectedTreeSpec&&specs[c.class]?.[selectedTreeSpec]?selectedTreeSpec:c.spec;return Object.keys(specs[c.class]||{}).map(spec=>`<button class="cb-spec-tab ${browsing===spec?'active':''}" data-spec-tab="${spec}">${spec}<small>${roleLabel(specs[c.class][spec])}${c.spec===spec?' · ACTIVE':''}</small></button>`).join('')}
 function combatIdentityPanel(c){
   const info=I?.summary?.(c),race=info?.race,spec=info?.spec;
@@ -345,12 +369,59 @@ function combatIdentityPanel(c){
 }
 function escHtml(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function overviewPanel(c,state){
-  const meta=classMeta[c.class]||{primary:'Strength'},stats=statBlock(c),role=roleLabel(roleOf(c));
+  const meta=classMeta[c.class]||{primary:'Strength',icon:'◇',accent:'#58d7cf'},stats=statBlock(c),role=roleLabel(roleOf(c));
   const ilvl=window.CellboundGame?.characterItemLevel?.(c)||c.gear||0;
   const active=[state?.party?.tank,state?.party?.healer,...(state?.party?.dps||[])].includes(c.id);
-  const avg=Object.values(c.knowledge||{});const knowledge=avg.length?Math.round(avg.reduce((a,b)=>a+(Number(b)||0),0)/avg.length):0;
-  return `<div class="cb-profile-overview"><section class="cb-profile-panel"><h3>Adventurer Overview</h3><div class="cb-profile-stats"><div><span>Role</span><b>${role}</b></div><div><span>Item Level</span><b>${ilvl}</b></div><div><span>Cell Shock</span><b>${Math.round(c.cellShock||0)}%</b></div><div><span>Mastery</span><b>${knowledge}%</b></div><div><span>${meta.primary}</span><b>${stats[meta.primary]}</b></div><div><span>Stamina</span><b>${stats.Stamina}</b></div><div><span>Armour</span><b>${stats.Armour}</b></div><div><span>Status</span><b>${active?'Active Five':'Reserve'}</b></div></div><p>${c.name} is a Level ${c.level} ${c.race||'Veyren'} ${c.class} specialising in ${c.spec}. Level, gear, class, talents and equipped skills determine combat performance. Mastery is a record of experience and does not grant combat power.</p></section><section class="cb-profile-panel"><h3>Current Loadout</h3>${[...leftSlots,...rightSlots].map(slot=>{const item=c.equipment?.[slot];return `<div class="cb-history-entry"><b>${slot.replace(/(\d)/,' $1')}</b><br>${item?.name||'Empty'} · iLvl ${item?.itemLevel||0}</div>`}).join('')}</section>${combatIdentityPanel(c)}</div>`;
+  const recovering=window.CellboundGame?.isUnavailable?.(c)||false;
+  const knowledgeValues=Object.values(c.knowledge||{}).map(Number).filter(Number.isFinite);
+  const mastery=knowledgeValues.length?Math.round(knowledgeValues.reduce((a,b)=>a+b,0)/knowledgeValues.length):0;
+  const allSlots=[...leftSlots,...rightSlots],equipped=allSlots.filter(slot=>c.equipment?.[slot]).length;
+  const upgrades=allSlots.filter(slot=>bestBankUpgrade(state,c,slot)).length;
+  const primary=stats[meta.primary]??0;
+  const professionCount=(Array.isArray(c.professions)?c.professions:[]).filter(Boolean).length;
+  const loadout=allSlots.map(slot=>{
+    const item=c.equipment?.[slot],label=slot.replace(/(\d)/,' $1');
+    return `<button type="button" class="cb-overview-gear-item ${item?'filled':'empty'}" data-sheet-tab="equipment"><span>${label}</span><b>${item?.name||'Empty'}</b><em>${item?'iLvl '+(item.itemLevel||0):'Open slot'}</em></button>`
+  }).join('');
+  return `<div class="cb-command-overview">
+    <section class="cb-overview-hero">
+      <div class="cb-overview-identity">
+        <small>COMBAT PROFILE</small>
+        <div class="cb-overview-title"><span>${meta.icon}</span><div><h3>${c.class} · ${c.spec}</h3><p>Level ${c.level} ${c.race||'Veyren'} · ${role} · ${active?'Active Party':'Reserve'}</p></div></div>
+        <div class="cb-overview-badges"><span class="${recovering?'danger':'ready'}">${recovering?'RECOVERING':'READY FOR DUTY'}</span><span>${equipped}/14 GEAR SLOTS</span>${upgrades?`<span class="upgrade">${upgrades} BANK UPGRADE${upgrades===1?'':'S'}</span>`:''}</div>
+      </div>
+      <div class="cb-overview-vitals">
+        <article><span>ITEM LEVEL</span><b>${ilvl}</b><small>Average gear</small></article>
+        <article><span>POWER</span><b>${c.power||0}</b><small>Combat power</small></article>
+        <article class="${Number(c.cellShock||0)>=75?'danger':''}"><span>CELL SHOCK</span><b>${Math.round(c.cellShock||0)}%</b><small>${recovering?'Unavailable':'Current pressure'}</small></article>
+        <article><span>MASTERY</span><b>${mastery}%</b><small>Encounter record</small></article>
+      </div>
+    </section>
+
+    <div class="cb-overview-grid">
+      <section class="cb-profile-panel cb-overview-stats-panel">
+        <header><div><small>CORE PROFILE</small><h3>Combat Readiness</h3></div><button type="button" data-sheet-tab="talents">VIEW BUILD →</button></header>
+        <div class="cb-overview-stat-grid">
+          <div><span>${meta.primary.toUpperCase()}</span><b>${primary}</b></div>
+          <div><span>STAMINA</span><b>${stats.Stamina}</b></div>
+          <div><span>ARMOUR</span><b>${stats.Armour}</b></div>
+          <div><span>TALENT POINTS</span><b>${c.talent||0}</b></div>
+          <div><span>PROFESSIONS</span><b>${professionCount}</b></div>
+          <div><span>STATUS</span><b>${active?'ACTIVE FIVE':'RESERVE'}</b></div>
+        </div>
+        <p>Level, equipment, talents and equipped combat skills determine performance. Mastery records experience but does not add hidden combat power.</p>
+      </section>
+
+      <section class="cb-profile-panel cb-overview-loadout-panel">
+        <header><div><small>ARMOURY</small><h3>Current Loadout</h3></div><button type="button" data-sheet-tab="equipment">OPEN EQUIPMENT →</button></header>
+        <div class="cb-overview-gear-grid">${loadout}</div>
+      </section>
+    </div>
+
+    ${combatIdentityPanel(c)}
+  </div>`;
 }
+
 function skillsPanel(c){
   const engine=combatEngine(),spec=c.spec,role=roleOf(c),pool=skillPoolFor(c,spec),level=Math.max(1,Number(c.level)||1),equipped=equippedSkillIds(c,spec),selected=Math.max(0,Math.min(3,Number(activeSkillSlot)||0));
   const byId=new Map(pool.map(s=>[s.id,s])),buff=engine?.CLASS_BUFFS?.[c.class]||null;
@@ -384,13 +455,40 @@ function skillsPanel(c){
 }
 function professionsPanel(c){
   const ent=window.CellboundGame?.getEntitlements?.()||{professionSlots:1,member:false};
-  return `<div class="cb-profession-profile">${[0,1].map(i=>{const p=c.professions?.[i],locked=i>=ent.professionSlots;return `<article><small>PROFESSION ${i+1}</small><b>${locked?'Membership Slot':p?.name||'Unlearned'}</b><span>${locked?'Unlocks with membership':p?`Skill ${p.level}/100`:'Visit Professions to learn a trade.'}</span></article>`}).join('')}</div>`;
+  const slots=[0,1].map(i=>{
+    const p=c.professions?.[i],locked=i>=ent.professionSlots,level=Math.max(0,Math.min(100,Number(p?.level)||0));
+    return `<article class="cb-profession-command-card ${locked?'locked':p?'trained':'empty'}">
+      <div class="cb-profession-command-icon">${locked?'◇':p?'⚒':'+'}</div>
+      <div><small>PROFESSION ${i+1}</small><h4>${locked?'Membership Slot':p?.name||'Unlearned'}</h4><p>${locked?'A second profession slot is available with membership.':p?'Keep crafting to raise this profession toward Skill 100.':'Choose a profession in the Guild Workshop.'}</p></div>
+      <div class="cb-profession-level"><span>${locked?'LOCKED':'SKILL'}</span><b>${locked?'—':level+'/100'}</b>${!locked?`<i><em style="width:${level}%"></em></i>`:''}</div>
+    </article>`
+  }).join('');
+  return `<div class="cb-profession-command">
+    <section class="cb-character-tab-hero">
+      <div><small>CRAFTING PROFILE</small><h3>Professions</h3><p>Profession assignments belong to this adventurer. Recipes, materials and crafting stay in the shared Guild Workshop.</p></div>
+      <div class="cb-character-tab-stat"><span>AVAILABLE SLOTS</span><b>${ent.professionSlots||1} / 2</b><small>${ent.member?'Membership active':'Standard account'}</small></div>
+    </section>
+    <div class="cb-profession-command-grid">${slots}</div>
+    <section class="cb-character-action-banner"><div><small>GUILD WORKSHOP</small><b>Crafting happens at guild level.</b><span>Open Professions to manage recipes, reagents and preparation items without losing this character's assignments.</span></div><button type="button" data-char-jump="professions">OPEN GUILD WORKSHOP →</button></section>
+  </div>`;
 }
+
 function historyPanel(c,state){
-  const entries=(state?.activity||[]).filter(x=>String(x).includes(c.name)).slice(-14).reverse();
-  const reports=(state?.reports||[]).filter(r=>(r.knowledgeGain||[]).some(k=>k.name===c.name)).slice(0,6);
-  return `<div class="cb-character-history">${entries.map(x=>`<div class="cb-history-entry"><b>Guild Record</b><br>${x}</div>`).join('')}${reports.map(r=>`<div class="cb-history-entry"><b>${r.success?'Victory':'Wipe'} · ${new Date(r.at).toLocaleDateString()}</b><br>Party iLvl ${Math.round(r.partyItemLevel||0)} · Mastery gained ${r.knowledgeGain.find(k=>k.name===c.name)?.gain||0}%.</div>`).join('')||(!entries.length?'<div class="cb-no-items">No notable history recorded yet.</div>':'')}</div>`;
+  const entries=(state?.activity||[]).filter(x=>String(x).includes(c.name)).slice(-12).reverse();
+  const reports=(state?.reports||[]).filter(r=>(r.knowledgeGain||[]).some(k=>k.name===c.name)).slice(-8).reverse();
+  const wins=reports.filter(r=>r.success).length;
+  return `<div class="cb-history-command">
+    <section class="cb-character-tab-hero">
+      <div><small>ADVENTURER RECORD</small><h3>History</h3><p>A readable record of this character's recent guild changes and expedition experience.</p></div>
+      <div class="cb-character-tab-stat"><span>RECORDED RUNS</span><b>${reports.length}</b><small>${wins} victories · ${reports.length-wins} wipes</small></div>
+    </section>
+    <div class="cb-history-columns">
+      <section class="cb-history-section"><header><small>GUILD ACTIVITY</small><h4>Recent Changes</h4></header><div class="cb-history-timeline">${entries.length?entries.map((x,i)=>`<article><i>${i===0?'NOW':'•'}</i><div><b>Guild Record</b><p>${x}</p></div></article>`).join(''):'<div class="cb-no-items">No notable guild activity recorded yet.</div>'}</div></section>
+      <section class="cb-history-section"><header><small>EXPEDITIONS</small><h4>Combat Record</h4></header><div class="cb-history-timeline">${reports.length?reports.map(r=>{const gain=(r.knowledgeGain||[]).find(k=>k.name===c.name)?.gain||0;return `<article class="${r.success?'victory':'wipe'}"><i>${r.success?'✓':'×'}</i><div><b>${r.success?'Victory':'Wipe'} · ${new Date(r.at).toLocaleDateString()}</b><p>Party iLvl ${Math.round(r.partyItemLevel||0)} · Mastery +${gain}%.</p></div></article>`}).join(''):'<div class="cb-no-items">No expedition reports recorded yet.</div>'}</div></section>
+    </div>
+  </div>`;
 }
+
 function sheetBody(state,c){
   if(currentTab==='overview')return overviewPanel(c,state);
   if(currentTab==='equipment')return `${paperDoll(c,state)}${activeSlot?slotPicker(state,c,activeSlot):''}`;
@@ -404,15 +502,28 @@ function renderSheet(){
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));
   if(!state||!c)return;
   const editable=characterEditable(),meta=classMeta[c.class]||{icon:'◇',accent:'#58d7cf'};
-  const roles=[...new Set(Object.values(specs[c.class]||{}).map(roleLabel))].join(' / ');
-  detail.innerHTML=`<div class="cb-sheet ${editable?'':'member-slot-locked'}" style="--cb-accent:${meta.accent}">
-    <header class="cb-sheet-header"><div class="cb-header-crest">${meta.icon}</div><div><small>LEVEL ${c.level} · ${roles}</small><h2>${c.name}</h2><p>${c.race||'Veyren'} · ${c.class} · ${c.spec} · Power ${c.power} · Gear ${c.gear}</p></div><div class="cb-header-points"><b>${c.talent||0}</b><span>Talent points</span></div></header>
+  const role=roleLabel(roleOf(c)),ilvl=window.CellboundGame?.characterItemLevel?.(c)||c.gear||0;
+  const active=[state?.party?.tank,state?.party?.healer,...(state?.party?.dps||[])].includes(c.id);
+  const recovering=window.CellboundGame?.isUnavailable?.(c)||false,shock=Math.round(Number(c.cellShock)||0);
+  const tabs=CHARACTER_TABS.map(([id,icon,label,sub])=>`<button type="button" data-sheet-tab="${id}" class="${currentTab===id?'active':''}" aria-current="${currentTab===id?'page':'false'}"><i>${icon}</i><span><b>${label}</b><small>${sub}</small></span></button>`).join('');
+  detail.innerHTML=`<div class="cb-sheet cb-command-sheet ${editable?'':'member-slot-locked'}" style="--cb-accent:${meta.accent}">
+    <header class="cb-sheet-header cb-command-character-header">
+      <div class="cb-header-crest">${meta.icon}</div>
+      <div class="cb-header-identity"><div class="cb-header-eyebrow"><span>LEVEL ${c.level} · ${c.race||'Veyren'}</span><em class="${recovering?'recovering':active?'active':'reserve'}">${recovering?'RECOVERING':active?'ACTIVE PARTY':'RESERVE'}</em></div><h2>${c.name}</h2><div class="cb-header-subtitle">${c.class} · ${c.spec} · ${role}</div></div>
+      <div class="cb-header-metrics">
+        <div><span>ITEM LEVEL</span><b>${ilvl}</b></div>
+        <div><span>POWER</span><b>${c.power||0}</b></div>
+        <div class="${shock>=75?'danger':''}"><span>CELL SHOCK</span><b>${shock}%</b></div>
+        <div><span>TALENTS</span><b>${c.talent||0}</b></div>
+      </div>
+    </header>
     ${editable?'':'<div class="cb-membership-lock-banner"><b>MEMBERSHIP SLOT LOCKED</b><span>You can inspect this adventurer, but changes are locked until membership returns.</span></div>'}
-    <nav class="cb-character-tabs"><button data-sheet-tab="overview" class="${currentTab==='overview'?'active':''}">Overview</button><button data-sheet-tab="equipment" class="${currentTab==='equipment'?'active':''}">Equipment</button><button data-sheet-tab="talents" class="${currentTab==='talents'?'active':''}">Talents</button><button data-sheet-tab="skills" class="${currentTab==='skills'?'active':''}">Skills</button><button data-sheet-tab="professions" class="${currentTab==='professions'?'active':''}">Professions</button><button data-sheet-tab="knowledge" class="${currentTab==='knowledge'?'active':''}">Mastery</button><button data-sheet-tab="history" class="${currentTab==='history'?'active':''}">History</button></nav>
-    <main class="cb-sheet-body">${sheetBody(state,c)}</main>
+    <nav class="cb-character-tabs" aria-label="${c.name} character sections">${tabs}</nav>
+    <main class="cb-sheet-body" data-character-section="${currentTab}">${sheetBody(state,c)}</main>
   </div>`;
   modal.hidden=false;
 }
+
 function removeFromParty(state,id){
   if(!state.party)return;
   if(state.party.tank===id)state.party.tank=null;
@@ -525,14 +636,19 @@ function resetSkills(){
   state.activity=state.activity||[];state.activity.push(c.name+' reset '+c.spec+' combat skills to the recommended defaults.');
   activeSkillSlot=0;writeState(state);renderSheet()
 }
-function openCharacter(id){document.body.classList.add('character-sheet-open');currentId=id;currentTab='overview';activeSlot=null;activeSkillSlot=0;selectedTalentId=null;selectedTalentSpec=null;selectedTreeSpec=null;renderSheet()}
-function closeCharacter(){
+function openCharacter(id){
+  document.body.classList.add('character-sheet-open');
+  returnView=document.querySelector('.view.active')?.id||'roster';
+  currentId=id;currentTab='overview';activeSlot=null;activeSkillSlot=0;selectedTalentId=null;selectedTalentSpec=null;selectedTreeSpec=null;renderSheet()
+}
+function closeCharacter(targetView=returnView){
   modal.hidden=true;document.body.classList.remove('character-sheet-open');activeSlot=null;
   const game=window.CellboundGame,next=dirty?readState():null;
   if(dirty&&next&&game?.replaceState){game.replaceState(next);dirty=false}
   else if(dirty){game?.renderAll?.();dirty=false}
-  if(game?.switchView)game.switchView('roster');
-  else document.querySelector('[data-view="roster"]')?.click()
+  const view=targetView||'roster';
+  if(game?.switchView)game.switchView(view);
+  else document.querySelector('[data-view="'+view+'"]')?.click()
 }
 
 document.addEventListener('click',event=>{
@@ -540,6 +656,7 @@ document.addEventListener('click',event=>{
   if(charBtn){event.preventDefault();event.stopImmediatePropagation();openCharacter(charBtn.dataset.char);return}
   if(!modal.hidden){
     const tab=event.target.closest('[data-sheet-tab]');if(tab){currentTab=tab.dataset.sheetTab;activeSlot=null;renderSheet();return}
+    const charJump=event.target.closest('[data-char-jump]');if(charJump){closeCharacter(charJump.dataset.charJump);return}
     const skillSlot=event.target.closest('[data-skill-slot]');if(skillSlot){activeSkillSlot=Math.max(0,Math.min(3,Number(skillSlot.dataset.skillSlot)||0));renderSheet();return}
     const equipSkillBtn=event.target.closest('[data-equip-skill]');if(equipSkillBtn){equipSkill(equipSkillBtn.dataset.equipSkill);return}
     const clearSkill=event.target.closest('[data-clear-skill]');if(clearSkill){clearSkillSlot(clearSkill.dataset.clearSkill);return}
