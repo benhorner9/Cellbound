@@ -1612,7 +1612,7 @@ async function replayFinalReborn(){
  const replayResult={events:h.replay.events,outcome:h.replay.summary?.outcome||h.outcome,summary:h.replay.summary,version:h.replay.version};
  let state='restart';
  while(state==='restart'&&run){
-   Object.entries(h.startHp||{}).forEach(([id,v])=>setHp(id,v));updateRows();spawn(s);status('Replay · stored combat timeline');log('Replay uses the original combat events. No RNG is rerun.');
+   Object.entries(h.startHp||{}).forEach(([id,v])=>setHp(id,v));updateRows();spawn(s);status('Replay · final fight');log('Replay uses the original fight.');
    state=await playRebornTimeline(replayResult,token,{replayMode:true});
  }
  removeRebornReplayControls();if(end)end.hidden=false;enterResultsMode()
