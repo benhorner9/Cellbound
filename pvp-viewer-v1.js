@@ -181,6 +181,7 @@ function handleEvent(pb,e){
   const root=pb.root,src=combatant(pb,e.source),target=combatant(pb,e.target);
   switch(e.type){
     case'COMBAT_START':
+      window.CellboundCombatFX?.mount?.(root.querySelector('.pvp2d-arena'));
       setStatus(pb,pb.result?.map?.name?pb.result.map.name+' · combat live':'Combat live');
       if(pb.match?.kind==='arena')feed(pb,'The Veilspire gates close. The Cellstorm will keep shrinking until one team falls.');
       else feed(pb,pb.result?.map?.name?'The gates of '+pb.result.map.name+' open. Multiple routes are live.':'The gates open. PvP combat begins.');
@@ -190,13 +191,13 @@ function handleEvent(pb,e){
       if(src){pulse(root,e.source,e.payload?.kind==='heal'?'heal':'attack');if(e.target&&target)projectile(root,e.source,e.target,attackKind(src,e.ability),src.role==='dps'?280:330)}
       break;
     case'DAMAGE_DEALT':{
-      const pct=clamp(Number(e.payload?.targetHpPct)||0,0,100);if(target){setHp(root,target.id,pct);pulse(root,target.id,'hit');floatText(root,target.id,'-'+Math.round(Number(e.amount)||0),e.result==='critical'?'crit':'damage')}
+      const pct=clamp(Number(e.payload?.targetHpPct)||0,0,100);if(target){setHp(root,target.id,pct);pulse(root,target.id,'hit');floatText(root,target.id,'-'+Math.round(Number(e.amount)||0),e.result==='critical'?'crit':'damage');window.CellboundCombatFX?.impact?.(unitNode(root,target.id),{critical:e.result==='critical'})}
       if(src){pb.stats[src.id].damage+=(Number(e.amount)||0);pb.meterDirty=true}
       if(e.payload?.redirected)feed(pb,(target?.name||'A guard')+' absorbs redirected pressure.');
       break
     }
     case'HEAL_RECEIVED':
-      if(target){setHp(root,target.id,Number(e.payload?.targetHpPct)||0);pulse(root,target.id,'heal');floatText(root,target.id,'+'+Math.round(Number(e.amount)||0),'heal')}
+      if(target){setHp(root,target.id,Number(e.payload?.targetHpPct)||0);pulse(root,target.id,'heal');floatText(root,target.id,'+'+Math.round(Number(e.amount)||0),'heal');window.CellboundCombatFX?.heal?.(unitNode(root,target.id))}
       if(src){pb.stats[src.id].healing+=(Number(e.amount)||0);pb.meterDirty=true}
       break;
     case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':if(src)setResource(root,src.id,e.payload?.resource,e.payload?.value,e.payload?.max);break;
@@ -214,7 +215,7 @@ function handleEvent(pb,e){
       if(target){statusPill(root,target.id,'CC','debuff',Number(e.payload?.duration)||1800);floatText(root,target.id,e.ability||'CONTROL','control');feed(pb,(src?.name||'A player')+' controls '+target.name+' with '+(e.ability||'crowd control')+'.')}
       break;
     case'INTERRUPT':
-      if(target){floatText(root,target.id,'INTERRUPT','control');statusPill(root,target.id,'LOCK','debuff',900);feed(pb,(src?.name||'A player')+' interrupts '+target.name+'\'s '+(e.payload?.interruptedAbility||'cast')+'.')}
+      if(target){floatText(root,target.id,'INTERRUPT','control');window.CellboundCombatFX?.interrupt?.(unitNode(root,target.id));statusPill(root,target.id,'LOCK','debuff',900);feed(pb,(src?.name||'A player')+' interrupts '+target.name+'\'s '+(e.payload?.interruptedAbility||'cast')+'.')}
       break;
     case'DEFENSIVE_ACTIVATED':{
       const t=target||src;if(t){statusPill(root,t.id,e.result==='guard'?'GUARD':'DEF','buff',Number(e.payload?.duration)||4500);floatText(root,t.id,e.result==='guard'?'GUARDED':'DEFENSIVE','guard')}
@@ -222,7 +223,7 @@ function handleEvent(pb,e){
     }
     case'PLAYER_DEFEATED':
       if(target){
-        target.alive=false;const u=unitNode(root,target.id);u?.classList.add('dead');setHp(root,target.id,0);pb.stats[target.id].deaths++;if(src)pb.stats[src.id].kills++;
+        target.alive=false;const u=unitNode(root,target.id);window.CellboundCombatFX?.death?.(u);u?.classList.add('dead');setHp(root,target.id,0);pb.stats[target.id].deaths++;if(src)pb.stats[src.id].kills++;
         feed(pb,target.name+' is defeated'+(src?' by '+src.name:e.ability==='Cellstorm'?' by the Cellstorm':'')+'.');
         if(pb.match?.kind==='arena')updateScore(pb,pb.units.filter(x=>x.team==='blue'&&x.alive).length,pb.units.filter(x=>x.team==='red'&&x.alive).length,'Eliminate the opposing squad');
         banner(pb,src?((src.team==='blue'?'BLUE':'RED')+' TAKEDOWN'):'CELLSTORM TAKEDOWN',src?.team||'')
@@ -233,7 +234,7 @@ function handleEvent(pb,e){
       break;
     case'OBJECTIVE_UPDATE':
       if(e.result==='hill-rotate'){
-        updateHill(root,e.payload,'rotating');
+        window.CellboundCombatFX?.mechanic?.(root.querySelector('.pvp2d-arena'),'warning');updateHill(root,e.payload,'rotating');
         updateScore(pb,e.payload?.blue,e.payload?.red,(e.payload?.name||'New node')+' is now active');
         setStatus(pb,'Rotate · '+(e.payload?.name||'new control zone'));
         banner(pb,'NODE ROTATES','');
@@ -306,7 +307,7 @@ function handleEvent(pb,e){
       if(e.result==='storm-progress'){
         updateArenaStorm(root,e.payload,false);
       }else if(e.result==='storm-phase'){
-        updateArenaStorm(root,e.payload,true);
+        window.CellboundCombatFX?.mechanic?.(root.querySelector('.pvp2d-arena'),'warning');updateArenaStorm(root,e.payload,true);
         const phase=Number(e.payload?.phase)||0;
         setStatus(pb,(e.payload?.label||'Cellstorm')+' · safe ring '+Math.round(Number(e.payload?.radius)||0));
         if(phase>0){banner(pb,e.payload?.label||'CELLSTORM CLOSING','');feed(pb,'The Cellstorm closes and shifts position. Move inside the new safe ring.')}
