@@ -225,7 +225,7 @@ function enhanceBank(){
       const card=document.createElement('article');
       card.className=`bank-item evo-bank-resource bank-card-v2 bank-resource-card rarity-${String(item.rarity).toLowerCase()}`;
       card.dataset.evoKey=item.key;
-      const art=item.materialKey&&P?.materialArtHTML?P.materialArtHTML(item.materialKey,66,'evo-resource-art'):`<span class="evo-resource-icon">${esc(item.icon)}</span>`;
+      const art=item.materialKey&&P?.materialArtHTML?P.materialArtHTML(item.materialKey,66,'evo-resource-art'):item.category==='Consumable'&&P?.consumableArtHTML?P.consumableArtHTML(String(item.key).replace(/^con:/,''),66,'evo-resource-art'):item.category==='Recipe'&&window.CellboundItemArt?.artHTML?window.CellboundItemArt.artHTML({id:String(item.key).replace(/^rec:/,'recipe-'),name:item.name,category:'recipe',rarity:item.rarity},66,'evo-resource-art'):`<span class="evo-resource-icon">${esc(item.icon)}</span>`;
       card.innerHTML=`<div class="bank-card-main"><div class="bank-icon gear-bank-icon">${art}</div><div class="bank-copy"><small>${esc(item.category.toUpperCase())} · ${esc(item.rarity.toUpperCase())}</small><h3>${esc(item.name)}</h3><div class="bank-card-preview"><span>${esc(item.source)}</span></div></div><div class="bank-qty">×${item.quantity}</div></div><div class="bank-card-foot"><span>Shared crafting stock</span><button class="bank-card-action" data-resource-jump="professions">OPEN PROFESSIONS →</button></div>`;
       root.appendChild(card);
     });
@@ -324,7 +324,7 @@ function enhanceProfessions(){
     if(recipe&&!card.querySelector('.evo-recipe-art')){
       const output=recipe.output||{},gear=output.category==='gear'?(G.byId(output.key)||G.byName(output.name)):null;
       const art=document.createElement('span');art.className='evo-recipe-art';
-      art.innerHTML=gear?G.artHTML(gear,54):(output.category==='consumable'?'⚗':'◇');
+      art.innerHTML=gear?G.artHTML(gear,54):(output.category==='consumable'&&P?.consumableArtHTML?P.consumableArtHTML(output.key,54,'evo-recipe-output-art'):'◇');
       card.prepend(art);card.classList.add('has-art');
     }
     if(recipe&&!card.querySelector('.evo-recipe-owned')){
