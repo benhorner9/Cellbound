@@ -4,9 +4,9 @@ const media=window.matchMedia('(max-width:720px)');
 let observer=null;
 
 const GROUPS=[
-  ['Guild',[['roster','♟','Roster'],['chat','◌','Social']]],
-  ['Adventure',[['endgame','◇','Endgame'],['world','✦','Twelve Below']]],
-  ['Supplies',[['professions','⚒','Professions'],['trading','⇄','Trading Post']]],
+  ['Guild',[['roster','♟','Roster'],['chat','◌','Social'],['professions','⚒','Professions']]],
+  ['Adventure',[['endgame','◇','Endgame'],['world','✦','Events']]],
+  ['Market',[['trading','⇄','Trading Post']]],
   ['Combat',[['pvp','⚔','PvP']]]
 ];
 

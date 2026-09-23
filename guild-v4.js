@@ -307,9 +307,9 @@ Storage.prototype.setItem=function(key,value){
 
 const WORKSPACES={
   overview:{label:'Home',views:[['overview','Home']]},
-  guild:{label:'Guild',views:[['roster','Roster'],['party','Active Party'],['chat','Social']]},
-  adventure:{label:'Adventure',views:[['quests','Quests'],['content','Dungeons'],['endgame','Endgame'],['world','Twelve Below']]},
-  economy:{label:'Supplies',views:[['bank','Bank'],['professions','Professions'],['trading','Trading Post']]},
+  guild:{label:'Guild',views:[['roster','Roster'],['party','Active Party'],['chat','Social'],['bank','Bank'],['professions','Professions']]},
+  adventure:{label:'Adventure',views:[['quests','Quests'],['content','Dungeons'],['endgame','Endgame'],['world','Events']]},
+  market:{label:'Market',views:[['trading','Trading Post']]},
   pvp:{label:'Combat',views:[['pvp','PvP']]},
   admin:{label:'Admin',views:[['admin','Admin']]}
 };

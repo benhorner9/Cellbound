@@ -213,6 +213,8 @@ for(const file of files){
     if(contents.includes('id="workspaceTabs"'))throw new Error('Redundant workspace navigation strip must remain removed');
     if(contents.includes('data-view="reports"'))throw new Error('Run Reports must stay incorporated into Endgame rather than return as a separate destination');
     if(!contents.includes('id="endgameHub"')||!contents.includes('class="endgame-run-history"')||!contents.includes('id="reportsList"'))throw new Error('Endgame must include the integrated Run Reports history');
+    if(contents.includes('<div class="nav-section-label">SUPPLIES</div>'))throw new Error('Bank and Professions must remain in the Guild section');
+    for(const hook of ['data-hub="guild" data-view="bank"','data-hub="guild" data-view="professions"','<div class="nav-section-label">MARKET</div>','data-hub="market" data-view="trading"','data-view="world"><span>✦</span><b>Events</b>'])if(!contents.includes(hook))throw new Error('Navigation regrouping is missing '+hook);
     if(!contents.includes('dungeon-2d-v1.css')||!contents.includes('dungeon-2d-v1.js'))throw new Error('Ashen Vault 2D viewer assets are not linked from guild.html');
     if(!contents.includes('chaos-canyon-v1.css')||!contents.includes('chaos-canyon-v1.js')||!contents.includes('id="chaosCanyonMount"'))throw new Error('Chaos Canyon assets or mount are not linked from guild.html');
     if(!contents.includes('blackout-station-v1.css')||!contents.includes('blackout-station-v1.js')||!contents.includes('id="blackoutStationMount"'))throw new Error('Blackout Station assets or mount are not linked from guild.html');
