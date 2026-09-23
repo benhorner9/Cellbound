@@ -311,7 +311,7 @@ function ccRenderRebornEvent(e){
    break;
   case'ADD_SPAWNED':ccAddSpawn(e);window.CellboundCombatFX?.spawn?.($('[data-cc="'+target+'"]')||$('#cc2dArena'));feed((e.payload?.name||'An add')+' enters the encounter.');break;
   case'ADD_DEFEATED':case'ENEMY_DEFEATED':
-   if(target){const el=$('[data-cc="'+target+'"]');if(el){el.classList.add('dead');window.CellboundCombatFX?.death?.(el);ccBar(target,0)}}break;
+   if(target){const el=$('[data-cc="'+target+'"]');if(el){el.classList.add('dead');window.CellboundCombatFX?.death?.(el,{boss:e.type==='ENEMY_DEFEATED'&&['boss','final'].includes(String(STAGES[run.stage]?.kind||''))});ccBar(target,0)}}break;
   case'PLAYER_DEFEATED':
    if(target){const el=$('[data-cc="'+target+'"]');if(el){el.classList.add('dead');window.CellboundCombatFX?.death?.(el)}ccBar(target,0);if(targetChar){run.hp[targetChar.id]=0;feed(targetChar.name+' is defeated.');ccUpdateSidebar()}}
    break;
