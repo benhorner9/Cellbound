@@ -644,7 +644,7 @@ function qRenderRebornEvent(e){
   if(window.CellboundCombatStatuses?.handle(e,{resolve:qStatusTargets,speed:()=>questFight?.speed||1}))return;
   const srcChar=qEventCharacter(e.source),targetChar=qEventCharacter(e.target),enemyIndex=qEventEnemyIndex(e.target),sourceEnemy=qEventEnemyIndex(e.source);
   switch(e.type){
-    case'COMBAT_START':qStatus('Combat simulation live');qLog('Combat begins.');break;
+    case'COMBAT_START':{const arena=document.querySelector('.quest-cb2d-arena');window.CellboundCombatFX?.mount?.(arena);qStatus('Combat simulation live');qLog('Combat begins.');break;}
     case'MOVEMENT_START':if(e.payload?.to)qMove(e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
     case'ABILITY_START':
       if(e.source&&e.target){
@@ -692,7 +692,7 @@ function qRenderRebornEvent(e){
     case'PHASE_CHANGE':window.CellboundCombatFX?.phase?.(document.querySelector('.quest-cb2d-arena'));window.CellboundFX?.phase?.(e.ability||'Boss phase',e.payload?.healthPct);qStatus(e.ability||'PHASE CHANGE');qLog((e.ability||'A new phase')+' begins.');break;
     case'ENRAGE':if(e.result==='hard')window.CellboundFX?.shake?.('hard');else window.CellboundFX?.flash?.('danger');qStatus(e.result==='hard'?'HARD ENRAGE':(e.ability||'ENRAGE'));qLog((e.ability||'The enemy enrages')+'.');break;
     case'DEFENSIVE_ACTIVATED':if(srcChar)qLog(srcChar.name+' activates '+(e.ability||'a defensive')+'.');break;
-    case'COMBAT_END':qCastClear();qStatus(e.result==='victory'?'ENCOUNTER CLEAR':'PARTY DEFEATED');if(e.result!=='victory')window.CellboundFX?.wipe?.('The quest encounter has overwhelmed the party.');break;
+    case'COMBAT_END':qCastClear();qStatus(e.result==='victory'?'ENCOUNTER CLEAR':'PARTY DEFEATED');if(e.result==='victory')window.CellboundCombatFX?.victory?.(document.querySelector('.quest-cb2d-arena'));else window.CellboundFX?.wipe?.('The quest encounter has overwhelmed the party.');break;
   }
 }
 async function qPlayReborn(result,tok){
