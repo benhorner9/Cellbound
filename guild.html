@@ -59,7 +59,7 @@
 
   <main class="main">
     <header class="topbar">
-      <div><small>THE GUILDMASTER'S DESK</small><h1 id="pageTitle">Overview</h1><span id="syncStatus" class="sync-status">Loading…</span></div>
+      <div><small>THE GUILDMASTER'S DESK</small><h1 id="pageTitle">Overview</h1><span id="syncStatus" class="sync-status" role="status" aria-live="polite">Loading…</span></div>
       <div class="resource-strip">
         <div><span>Guild Renown</span><b id="renown">120</b></div>
         <div><span>Gold</span><b id="gold">1,840</b></div>
@@ -70,9 +70,9 @@
       </div>
     </header>
     <nav id="workspaceTabs" class="workspace-tabs" aria-label="Workspace navigation" hidden></nav>
-    <span id="chatUnread" class="ui-state-proxy" hidden></span>
+    <span id="chatUnread" class="ui-state-proxy" aria-live="polite" hidden></span>
     <span id="worldActiveBadge" class="ui-state-proxy" hidden></span>
-    <div id="worldAlertBar" class="world-alert-bar" hidden></div>
+    <div id="worldAlertBar" class="world-alert-bar" role="status" aria-live="polite" hidden></div>
 
     <section id="overview" class="view active">
       <div class="hero-card">
