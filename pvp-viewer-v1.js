@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.4.0';
+const VERSION='1.5.0';
 const $=(root,s)=>root?.querySelector(s);
 const $$=(root,s)=>[...(root?.querySelectorAll(s)||[])];
 const esc=v=>String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[m]));
@@ -39,7 +39,7 @@ function unitMarkup(u){
     '<div class="pvp2d-name"><b>'+esc(u.name)+'</b><small>'+esc(String(u.role||'dps').toUpperCase())+' · '+esc(u.class||'Adventurer')+'</small></div>'+
     '<em class="pvp2d-hp"><i style="width:100%"></i></em>'+
     '<em class="pvp2d-resource '+resourceClass(u.resource)+'" title="'+esc(u.resource)+'"><i style="width:100%"></i></em>'+
-    '<div class="pvp2d-statuses"></div>'+
+    '<div class="pvp2d-objective-role"></div><div class="pvp2d-statuses"></div>'+
   '</div>'
 }
 function rosterMarkup(list,team){
@@ -124,6 +124,10 @@ function feed(pb,text){
   if(!text)return;pb.feed.push(text);const root=pb.root,e=$(root,'#pvp2dFeed');if(e)e.innerHTML=pb.feed.slice(-7).reverse().map(x=>'<p>'+esc(x)+'</p>').join('')
 }
 function setStatus(pb,text){const e=$(pb.root,'#pvp2dStatus');if(e)e.textContent=text}
+function objectiveBadge(root,id,label,tone=''){
+  const u=unitNode(root,id),badge=u?.querySelector('.pvp2d-objective-role');if(!badge)return;
+  badge.textContent=label||'';badge.className='pvp2d-objective-role '+tone
+}
 function banner(pb,text,tone=''){const e=$(pb.root,'#pvp2dBanner');if(!e)return;e.textContent=text;e.className='pvp2d-banner show '+tone;setTimeout(()=>{if(e.isConnected)e.className='pvp2d-banner'},900)}
 function updateScore(pb,blue,red,copyText){
   const score=$(pb.root,'#pvp2dScore'),obj=$(pb.root,'#pvp2dObjective');if(score)score.textContent=Math.round(Number(blue)||0)+'–'+Math.round(Number(red)||0);if(obj&&copyText)obj.textContent=copyText
@@ -173,28 +177,51 @@ function handleEvent(pb,e){
       if(target){const u=unitNode(root,target.id);u?.classList.remove('dead');setHp(root,target.id,Number(e.payload?.targetHpPct)||100);setResource(root,target.id,e.payload?.resource,e.payload?.resourceValue,e.payload?.resourceMax);floatText(root,target.id,e.result==='respawn'?'RESPAWN':'REVIVED','heal');feed(pb,target.name+' returns to the battleground.')}
       break;
     case'OBJECTIVE_UPDATE':
-      if(e.result==='hill-control'){updateScore(pb,e.payload?.blue,e.payload?.red,(e.payload?.owner==='blue'?'Blue':'Red')+' controls the Cell node');banner(pb,(e.payload?.owner==='blue'?'BLUE':'RED')+' TAKES THE NODE',e.payload?.owner)}
-      else if(e.result==='ctf-opening'){updateScore(pb,0,0,'Both teams advance from their bases');setStatus(pb,'Opening push · teams moving into lanes');feed(pb,'Both teams leave their bases and spread into the battleground.')}
-      else updateScore(pb,e.payload?.blue,e.payload?.red,pb.match?.mode==='capture-the-flag'?'Capture the enemy Cell Standard':'Cell node control');
+      if(e.result==='hill-control'){
+        updateScore(pb,e.payload?.blue,e.payload?.red,(e.payload?.owner==='blue'?'Blue':'Red')+' controls the Cell node');
+        banner(pb,(e.payload?.owner==='blue'?'BLUE':'RED')+' TAKES THE NODE',e.payload?.owner)
+      }else if(e.result==='ctf-roles'){
+        if(e.payload?.runner)objectiveBadge(root,e.payload.runner,'RUNNER','runner');
+        (e.payload?.defenders||[]).forEach(id=>objectiveBadge(root,id,'DEFENCE','defender'));
+        (e.payload?.supports||[]).forEach(id=>objectiveBadge(root,id,'SUPPORT','support'));
+      }else if(e.result==='ctf-opening'){
+        updateScore(pb,0,0,'Capture the enemy flag and return it to your base');
+        setStatus(pb,'Opening push · runners, escorts and defenders taking position');
+        feed(pb,'Both teams establish offence, midfield and flag defence.')
+      }else if(e.result==='ctf-carrier'){
+        if(src)objectiveBadge(root,src.id,'FLAG CARRIER','carrier');
+        setStatus(pb,(src?.name||'Carrier')+' escaping with the enemy flag');
+        feed(pb,(src?.name||'A runner')+' has the flag — teammates switch to escort while defenders chase.')
+      }else if(e.result==='ctf-standoff'){
+        updateScore(pb,e.payload?.blue,e.payload?.red,'Flag standoff · your own flag must be returned before you can score');
+        setStatus(pb,'Flag standoff · carrier holding near base');
+        banner(pb,'FLAG STANDOFF',e.payload?.team||'');
+        if(src)feed(pb,src.name+' is holding the enemy flag near base while the recovery team hunts your missing flag.')
+      }else if(e.result==='ctf-score'){
+        updateScore(pb,e.payload?.blue,e.payload?.red,'First to 3 captures');
+        setStatus(pb,(e.payload?.team==='blue'?'Blue':'Red')+' scores · teams reset for the next flag run')
+      }else{
+        updateScore(pb,e.payload?.blue,e.payload?.red,pb.match?.mode==='capture-the-flag'?'Capture the enemy Cell Standard':'Cell node control');
+      }
       break;
     case'FLAG_STATE':{
       const owner=e.payload?.owner||e.payload?.team;
       if(e.result==='reset'){
         if(owner)resetFlagVisual(root,owner);
       }else if(e.result==='picked-up'){
-        if(owner&&src)carryFlagVisual(root,owner,src.id);
+        if(owner&&src)carryFlagVisual(root,owner,src.id);if(src)objectiveBadge(root,src.id,'FLAG CARRIER','carrier');
         setStatus(pb,(src?.name||'A carrier')+' has the '+(owner==='blue'?'Blue':'Red')+' Standard');
         banner(pb,e.payload?.from==='ground'?'FLAG RECOVERED':'FLAG TAKEN',src?.team||'');
         feed(pb,(src?.name||'A player')+(e.payload?.from==='ground'?' recovers ':' steals the ')+(owner==='blue'?'Blue':'Red')+' Cell Standard.');
       }else if(e.result==='dropped'){
-        if(owner)setFlagAt(root,owner,e.payload?.x,e.payload?.y,'dropped');
+        if(owner)setFlagAt(root,owner,e.payload?.x,e.payload?.y,'dropped');if(src)objectiveBadge(root,src.id,src.role==='tank'?'RUNNER':'','runner');
         banner(pb,'FLAG DROPPED','');feed(pb,(src?.name||'A carrier')+' drops the '+(owner==='blue'?'Blue':'Red')+' Cell Standard.');
       }else if(e.result==='returned'){
         if(owner)resetFlagVisual(root,owner);
         banner(pb,(owner==='blue'?'BLUE':'RED')+' FLAG RETURNED',owner);
         feed(pb,(src?.name||'A defender')+' returns the '+(owner==='blue'?'Blue':'Red')+' Cell Standard to base.');
       }else if(e.result==='captured'){
-        if(owner)resetFlagVisual(root,owner);
+        if(owner)resetFlagVisual(root,owner);if(src)objectiveBadge(root,src.id,'RUNNER','runner');
         updateScore(pb,e.payload?.blue,e.payload?.red,'First to 3 captures');
         banner(pb,(e.payload?.scoringTeam==='blue'?'BLUE':'RED')+' CAPTURES',e.payload?.scoringTeam);
         feed(pb,(src?.name||'A carrier')+' carries the '+(owner==='blue'?'Blue':'Red')+' Cell Standard home for a capture.');
