@@ -589,7 +589,7 @@ function hillTick(ctx){
     ctx.objective.owner=null;
     emit(ctx,'OBJECTIVE_UPDATE',{result:'hill-contested',payload:{mode:ctx.mode,site:site.id,name:site.name,x:site.x,y:site.y,radius:site.radius,blue:ctx.objective.blue,red:ctx.objective.red}})
   }
-  if(ctx.time%4000===0)emit(ctx,'OBJECTIVE_UPDATE',{result:'hill-score',payload:{mode:ctx.mode,owner:ctx.objective.owner,site:site.id,name:site.name,x:site.x,y:site.y,radius:site.radius,blue:ctx.objective.blue,red:ctx.objective.red,nextRotationMs:ctx.objective.nextRotation}})
+  emit(ctx,'OBJECTIVE_UPDATE',{result:'hill-score',payload:{mode:ctx.mode,owner:ctx.objective.owner,site:site.id,name:site.name,x:site.x,y:site.y,radius:site.radius,blue:ctx.objective.blue,red:ctx.objective.red,nextRotationMs:ctx.objective.nextRotation}})
 }
 function chooseCarrier(ctx,team){
   return living(ctx,team).filter(u=>!u.carryingFlag&&u.role!=='healer').sort((a,b)=>(b.role==='tank'?1:0)-(a.role==='tank'?1:0)||healthRatio(b)-healthRatio(a))[0]||living(ctx,team).find(u=>!u.carryingFlag)||null
