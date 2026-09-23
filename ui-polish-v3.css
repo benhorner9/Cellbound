@@ -1,0 +1,102 @@
+/* Cellbound global UI/UX polish v3
+   Shared interface rules only. Combat viewers keep their own presentation. */
+
+.app-shell,
+.app-shell .main,
+.app-shell .view,
+.app-shell .panel,
+.app-shell .section-intro,
+.app-shell .dashboard-grid,
+.app-shell .content-layout,
+.app-shell .party-layout{min-width:0}
+
+.app-shell :is(h1,h2,h3,p,span,b,small,em,strong){overflow-wrap:anywhere}
+.app-shell :is(.section-intro p,.hero-card p,.panel p,.dungeon-preview p,.admin-card p){max-width:72ch;line-height:1.55}
+
+.primary-nav .nav-btn,
+.workspace-tabs button,
+.app-shell .filters button,
+.app-shell .section-intro button,
+.app-shell .panel button,
+.app-shell .hero-card button{
+  min-height:40px
+}
+
+.app-shell :is(button,a,[role="button"],input,select,textarea):focus-visible{
+  outline:2px solid rgba(116,204,198,.72);
+  outline-offset:2px
+}
+
+.app-shell button:disabled{
+  cursor:not-allowed;
+  filter:saturate(.55);
+  opacity:.48
+}
+
+.workspace-tabs{
+  min-width:0;
+  overflow-x:auto;
+  overflow-y:hidden;
+  scrollbar-width:thin;
+  -webkit-overflow-scrolling:touch
+}
+.workspace-tabs button{flex:0 0 auto;white-space:nowrap}
+
+.resource-strip{
+  min-width:0;
+  overflow-x:auto;
+  scrollbar-width:thin;
+  -webkit-overflow-scrolling:touch
+}
+.resource-strip>div{flex:0 0 auto}
+
+.section-intro{
+  align-items:flex-end;
+  gap:20px
+}
+.section-intro>div:first-child{min-width:0}
+.section-intro h2{margin-bottom:6px}
+.section-intro p{margin-top:0}
+
+.panel-head{gap:12px}
+.panel-head>div{min-width:0}
+.panel-head h3{line-height:1.2}
+
+.app-shell :is(.ui-search input,.ui-select,input[type="search"],input[type="text"],select,textarea){
+  min-width:0
+}
+
+.app-shell :is(.roster-command-bar,.tp-market-bar,.social-toolbar,.bank-toolbar){
+  min-width:0
+}
+
+/* Prevent dense utility bars from forcing the whole game wider than the viewport. */
+@media(max-width:1180px){
+  .topbar{align-items:flex-start;gap:12px}
+  .resource-strip{max-width:100%}
+  .roster-command-bar{grid-template-columns:minmax(180px,1fr) repeat(2,minmax(140px,.65fr))}
+}
+
+@media(max-width:900px){
+  .section-intro{align-items:flex-start;flex-direction:column}
+  .roster-command-bar{grid-template-columns:1fr 1fr}
+  .roster-company-summary,.ui-search{grid-column:1/-1}
+}
+
+@media(max-width:680px){
+  .app-shell :is(.panel,.hero-card,.section-intro){min-width:0}
+  .workspace-tabs{margin-left:-4px;margin-right:-4px;padding-left:4px;padding-right:4px}
+  .roster-command-bar{grid-template-columns:1fr}
+  .roster-company-summary,.ui-search{grid-column:auto}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .app-shell *,
+  .app-shell *:before,
+  .app-shell *:after{
+    scroll-behavior:auto!important;
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important
+  }
+}
