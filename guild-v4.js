@@ -307,7 +307,7 @@ Storage.prototype.setItem=function(key,value){
 
 const WORKSPACES={
   overview:{label:'Overview',views:[['overview','Overview']]},
-  guild:{label:'Guild',views:[['roster','Roster'],['party','Party'],['chat','Social'],['reports','Reports']]},
+  guild:{label:'Guild',views:[['roster','Roster'],['party','Party'],['chat','Social'],['reports','Run Reports']]},
   adventure:{label:'Adventure',views:[['quests','Quests'],['content','Dungeons'],['endgame','Endgame'],['world','World Event']]},
   economy:{label:'Supplies',views:[['bank','Bank'],['professions','Professions'],['trading','Trading Post']]},
   pvp:{label:'PvP',views:[['pvp','The Crucible']]},
@@ -327,7 +327,7 @@ function switchView(id){
   $$('.view').forEach(v=>v.classList.toggle('active',v.id===id));
   const hub=VIEW_WORKSPACE[id]||id;
   $$('.nav-btn[data-hub]').forEach(b=>b.classList.toggle('active',b.dataset.hub===hub));
-  const titles={overview:'Command Overview',guild:'Guild',adventure:'Adventure',economy:'Supplies',pvp:'PvP Command',admin:'Admin Control'};
+  const titles={overview:'Overview',guild:'Guild',adventure:'Adventure',economy:'Supplies',pvp:'PvP',admin:'Admin'};
   if(ui.pageTitle)ui.pageTitle.textContent=titles[hub]||'Cellbound';
   renderWorkspaceTabs(id);
   if(id==='party')renderParty();
@@ -355,7 +355,7 @@ function rosterCard(c,index){
   return `<article class="char-card ${classKey} ${!unlocked?'roster-locked':''} ${locked?'shock-locked':''}" data-role="${role}" data-class-name="${c.class}" style="--glow:var(--combat-class,#7F8B88)">${!unlocked?'<div class="member-slot-ribbon">MEMBERSHIP SLOT '+(index+1)+'</div>':''}<div class="char-top"><div class="char-portrait">${c.portrait}</div><span class="role-tag role-${role}">${roleLabel(role)}</span></div><div class="character-status ${locked||!unlocked?'danger':''}">${status}${locked&&unlocked?` · ${formatRemaining(c)}`:''}</div><h3>${c.name}</h3><div class="class">${c.race||'Veyren'} · ${c.class} · ${c.spec} · Level ${c.level}</div><div class="char-stats"><div><span>Power</span><b>${c.power}</b></div><div><span>Item Level</span><b>${ilvl}</b></div><div><span>Talent Points</span><b>${c.talent}</b></div></div><div class="level-growth"><span>Level Growth</span><b>+${levelHpBonus(c)}% Base HP · +${levelOutputBonus(c)}% Base Damage / Healing</b></div>${shockMarkup(c)}<div class="knowledge-row"><div><span>Mastery</span><b>${averageMastery(c)}%</b></div><div class="knowledge-bar"><i style="width:${averageMastery(c)}%"></i></div></div><button data-char="${c.id}">${unlocked?'VIEW CHARACTER':'VIEW LOCKED CHARACTER'}</button></article>`;
 }
 function recruitSlotCard(index){
-  return `<article class="char-card recruit-slot-card"><div class="recruit-slot-number">SLOT ${index+1}</div><div class="recruit-plus">+</div><h3>Recruit Adventurer</h3><div class="class">Membership roster slot · Empty</div><p>Bring another Level 1 adventurer into your guild. Choose any available class and specialisation.</p><button data-recruit-slot="${index}">RECRUIT ADVENTURER</button></article>`;
+  return `<article class="char-card recruit-slot-card"><div class="recruit-slot-number">SLOT ${index+1}</div><div class="recruit-plus">+</div><h3>Recruit Adventurer</h3><div class="class">Membership roster slot · Empty</div><p>Recruit a Level 1 adventurer. Choose any available class and specialisation.</p><button data-recruit-slot="${index}">RECRUIT ADVENTURER</button></article>`;
 }
 function renderRoster(filter='all'){
   if(!ui.rosterGrid)return;
@@ -400,7 +400,7 @@ function renderRecruitModal(){
   const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],specs=Object.entries(classes[recruitDraft.klass]?.specs||{}),role=classes[recruitDraft.klass]?.specs?.[recruitDraft.spec]?.role||'dps';
   root.hidden=false;document.body.classList.add('recruit-adventurer-open');
   root.innerHTML='<section class="recruit-modal"><button class="modal-close" data-close-recruit>×</button>'+
-    '<header><small>MEMBERSHIP ROSTER · SLOT '+(state.roster.length+1)+' OF 10</small><h2>Recruit Adventurer</h2><p>Membership unlocks five additional roster positions. Recruit one character at a time; you never have to fill every slot.</p></header>'+
+    '<header><small>MEMBERSHIP ROSTER · SLOT '+(state.roster.length+1)+' OF 10</small><h2>Recruit Adventurer</h2><p>Membership adds five roster slots. Recruit them whenever you need them.</p></header>'+
     '<div class="recruit-body">'+
       '<label><span>Race</span><select id="recruitRace">'+RECRUIT_RACES.map(r=>'<option value="'+r.id+'" '+(r.id===recruitDraft.race?'selected':'')+'>'+r.icon+' '+r.id+' · '+r.trait+'</option>').join('')+'</select></label>'+
       '<label><span>Class</span><select id="recruitClass">'+Object.entries(classes).map(([name,d])=>'<option value="'+name+'" '+(name===recruitDraft.klass?'selected':'')+'>'+d.icon+' '+name+'</option>').join('')+'</select></label>'+
@@ -463,9 +463,9 @@ function renderOverview(){
     else if(!chaosDone)dungeon={id:'chaos-canyon',name:'Chaos Canyon',tag:'AVAILABLE',art:'CHAOS CANYON',copy:'Cross Vorran’s living canyon, survive the stepping-stone trial and break the Druid at its heart.',pips:3,active:1,req:30};
     else if(!blackoutDone)dungeon={id:'blackout-station',name:'Blackout Station',tag:'AVAILABLE',art:'BLACKOUT STATION',copy:'Restore the dead grid, solve the station puzzle and survive Dr. Vex Calder’s role circuits.',pips:2,active:1,req:34};
     else if(fracturedOpen&&!fracturedDone)dungeon={id:'fractured-ages',name:'The Fractured Ages',tag:'NEWLY UNLOCKED',art:'THE FRACTURED AGES',copy:'Follow the Strange Old Man through impossible eras and survive the Funhouse at the end of time.',pips:5,active:1,req:38};
-    else if(fracturedOpen)dungeon={id:'fractured-ages',name:'The Fractured Ages',tag:'FARMABLE',art:'THE FRACTURED AGES',copy:'The timeline remains open. Return for temporal equipment and another encounter with the Old Man’s mystery.',pips:5,active:5,req:38};
-    else if(hollowOpen)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:hollowDone?'FARMABLE':'AVAILABLE',art:'THE HOLLOW SANCTUM',copy:'Your known dungeon route is clear. Continue questing to uncover the next hidden expedition.',pips:3,active:hollowDone?3:1,req:24};
-    else dungeon={id:'ashen-vault',name:'The Ashen Vault',tag:'FARMABLE',art:'THE ASHEN VAULT',copy:'Keep building your party while the next quest route is uncovered.',pips:3,active:3,req:18};
+    else if(fracturedOpen)dungeon={id:'fractured-ages',name:'The Fractured Ages',tag:'CLEARED',art:'THE FRACTURED AGES',copy:'The timeline remains open. Return for temporal gear or another encounter with the Old Man.',pips:5,active:5,req:38};
+    else if(hollowOpen)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:hollowDone?'CLEARED':'AVAILABLE',art:'THE HOLLOW SANCTUM',copy:hollowDone?'The Hollow Sanctum remains open for repeat runs.':'The Hollow Sanctum is open. Enter when your party is ready.',pips:3,active:hollowDone?3:1,req:24};
+    else dungeon={id:'ashen-vault',name:'The Ashen Vault',tag:'CLEARED',art:'THE ASHEN VAULT',copy:'The Ashen Vault remains open while you follow the next lead.',pips:3,active:3,req:18};
     next.dataset.dungeon=dungeon.id;
     next.innerHTML=`<div class="panel-head"><div><small>NEXT DUNGEON</small><h3>${dungeon.name}</h3></div><b>${dungeon.tag}</b></div><div class="dungeon-preview ${dungeon.id==='hollow-sanctum'?'hollow-preview':''}"><div class="dungeon-art"><span>${dungeon.art}</span></div><div><p>${dungeon.copy}</p><div class="boss-pips">${Array.from({length:dungeon.pips},(_,i)=>`<span class="${i<dungeon.active?'active':''}"></span>`).join('')}</div><small class="overview-dungeon-ilvl">Party iLvl ${pi||'—'} · Entry iLvl ${dungeon.req}+</small><button type="button" data-overview-dungeon="${dungeon.id}">VIEW DUNGEON →</button></div></div>`;
     next.querySelector('[data-overview-dungeon]')?.addEventListener('click',()=>{
@@ -813,7 +813,7 @@ function applyCellShock(c,amount){
 }
 function renderReports(){
   if(!state.reports.length){ui.reportsList.innerHTML='<div class="panel" style="padding:30px;color:#657874">No attempts yet. Build a party and enter The Ashen Vault.</div>';return;}
-  ui.reportsList.innerHTML=state.reports.map(r=>{const b=bossById(r.boss),loot=G.byId(r.lootItemId)||G.byName(r.loot);return `<article class="report-card"><div><div class="report-result ${r.success?'kill':'wipe'}">${r.success?'VICTORY':'WIPE'}</div><small>${new Date(r.at).toLocaleString()}</small></div><div><h3>${b?.name||'Encounter'}</h3><p>${r.success?'The party defeated the encounter. PvE victories do not clear Cell Shock.':`The party gained ${r.cellShockGain||PVE_WIPE_CELL_SHOCK}% Cell Shock and Mastery.`}${loot?` Loot: ${loot.name} · iLvl ${r.lootItemLevel||loot.itemLevel||'—'} → Guild Bank.`:''}${r.reagents?.length?` Reagents: ${r.reagents.map(d=>`${P?.MATERIALS?.[d.key]?.name||'Recipe'} ×${d.quantity}`).join(', ')}.`:''}</p></div><div class="report-gain"><b>Mastery gained</b>${r.knowledgeGain.map(k=>`<span>${k.name} +${k.gain}%</span>`).join('')}</div></article>`;}).join('');
+  ui.reportsList.innerHTML=state.reports.map(r=>{const b=bossById(r.boss),loot=G.byId(r.lootItemId)||G.byName(r.loot);return `<article class="report-card"><div><div class="report-result ${r.success?'kill':'wipe'}">${r.success?'VICTORY':'WIPE'}</div><small>${new Date(r.at).toLocaleString()}</small></div><div><h3>${b?.name||'Encounter'}</h3><p>${r.success?'The party won. Existing Cell Shock remains.':`The party gained ${r.cellShockGain||PVE_WIPE_CELL_SHOCK}% Cell Shock and Mastery.`}${loot?` Loot: ${loot.name} · iLvl ${r.lootItemLevel||loot.itemLevel||'—'} → Guild Bank.`:''}${r.reagents?.length?` Reagents: ${r.reagents.map(d=>`${P?.MATERIALS?.[d.key]?.name||'Recipe'} ×${d.quantity}`).join(', ')}.`:''}</p></div><div class="report-gain"><b>Mastery gained</b>${r.knowledgeGain.map(k=>`<span>${k.name} +${k.gain}%</span>`).join('')}</div></article>`;}).join('');
 }
 function safeFeatureRender(label,fn){try{fn?.()}catch(error){console.warn('Cellbound UI refresh isolated:',label,error)}}
 function renderAll(){if(!state)return;state.roster.forEach(c=>{refreshRecovery(c);c.gear=characterItemLevel(c);});renderTop();renderOverview();renderRoster();renderParty();renderBank();renderReports();writeLocal();safeFeatureRender('quests',()=>window.CellboundQuests?.render?.());safeFeatureRender('hollow-sanctum',()=>window.CellboundHollowSanctum?.renderCard?.());safeFeatureRender('chaos-canyon',()=>window.CellboundChaosCanyon?.renderCard?.());safeFeatureRender('blackout-station',()=>window.CellboundBlackoutStation?.renderCard?.());safeFeatureRender('fractured-ages',()=>window.CellboundFracturedAges?.renderCard?.());}
