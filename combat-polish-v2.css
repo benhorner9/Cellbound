@@ -1,0 +1,98 @@
+/* Cellbound Combat VFX v2 — shared polish layer.
+   Presentation only: no gameplay, targeting, damage, healing or mechanic logic. */
+
+:where(.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena){
+  isolation:isolate;
+  overflow:hidden
+}
+.cbvfx-layer{position:absolute;z-index:1;inset:0;overflow:hidden;pointer-events:none;opacity:0;transition:opacity .45s ease}
+.cbvfx-ready>.cbvfx-layer{opacity:1}
+.cbvfx-events{position:absolute;z-index:20;inset:0;pointer-events:none}
+.cbvfx-haze,.cbvfx-motes,.cbvfx-sweep{position:absolute;pointer-events:none}
+.cbvfx-haze{width:56%;height:46%;border-radius:50%;filter:blur(28px);opacity:.11;animation:cbvfxHaze 11s ease-in-out infinite alternate}
+.cbvfx-haze.h1{left:-14%;bottom:-16%;background:radial-gradient(ellipse,var(--cbvfx-a,rgba(89,205,197,.34)),transparent 68%)}
+.cbvfx-haze.h2{right:-17%;top:-18%;background:radial-gradient(ellipse,var(--cbvfx-b,rgba(170,134,214,.26)),transparent 68%);animation-delay:-4.7s}
+.cbvfx-motes{inset:-10%;opacity:.18;background-image:radial-gradient(circle,rgba(225,239,234,.38) 0 1px,transparent 1.4px);background-size:73px 61px;animation:cbvfxMotes 18s linear infinite}
+.cbvfx-sweep{left:-18%;top:0;width:23%;height:100%;opacity:.045;background:linear-gradient(90deg,transparent,rgba(240,250,247,.7),transparent);transform:skewX(-14deg);animation:cbvfxSweep 14s ease-in-out infinite}
+@keyframes cbvfxHaze{to{transform:translate3d(18%,9%,0) scale(1.12)}}
+@keyframes cbvfxMotes{to{transform:translate3d(6%,-8%,0)}}
+@keyframes cbvfxSweep{0%,22%{transform:translateX(-20vw) skewX(-14deg)}55%,100%{transform:translateX(120vw) skewX(-14deg)}}
+
+/* Per-scene atmosphere. */
+[data-cbvfx-theme="ashen"]{--cbvfx-a:rgba(225,92,38,.43);--cbvfx-b:rgba(223,158,69,.24)}
+[data-cbvfx-theme="hollow"]{--cbvfx-a:rgba(104,125,205,.38);--cbvfx-b:rgba(132,92,190,.30)}
+[data-cbvfx-theme="chaos"]{--cbvfx-a:rgba(170,119,55,.35);--cbvfx-b:rgba(101,135,69,.26)}
+[data-cbvfx-theme="blackout"]{--cbvfx-a:rgba(61,190,178,.34);--cbvfx-b:rgba(218,194,67,.17)}
+[data-cbvfx-theme="fractured"],[data-cbvfx-theme="quest"]{--cbvfx-a:rgba(143,91,196,.35);--cbvfx-b:rgba(207,164,75,.20)}
+[data-cbvfx-theme="world"]{--cbvfx-a:rgba(193,73,74,.31);--cbvfx-b:rgba(222,165,69,.18)}
+[data-cbvfx-theme="pvp"]{--cbvfx-a:rgba(69,169,163,.25);--cbvfx-b:rgba(99,124,154,.17)}
+
+/* Keep gameplay and units above ambience. */
+:where(.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena)>:not(.cbvfx-layer){position:relative;z-index:2}
+
+/* Local impact effects. */
+.cbvfx-burst{--cbvfx-scale:1;position:absolute;z-index:30;width:18px;height:18px;transform:translate(-50%,-50%) scale(var(--cbvfx-scale));border-radius:50%;pointer-events:none}
+.cbvfx-burst:before,.cbvfx-burst:after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
+.cbvfx-burst.damage{border:1px solid rgba(255,102,91,.62);box-shadow:0 0 16px rgba(255,79,67,.33);animation:cbvfxImpact .62s ease-out forwards}
+.cbvfx-burst.damage:before{width:5px;height:34px;background:linear-gradient(transparent,rgba(255,156,125,.75),transparent);transform:translate(-50%,-50%) rotate(42deg)}
+.cbvfx-burst.damage:after{width:34px;height:5px;background:linear-gradient(90deg,transparent,rgba(255,142,118,.7),transparent);transform:translate(-50%,-50%) rotate(-27deg)}
+.cbvfx-burst.damage.critical{border-color:rgba(255,214,118,.9);box-shadow:0 0 24px rgba(255,185,82,.5);animation-name:cbvfxCrit}
+.cbvfx-burst.heal{border:2px solid rgba(102,239,163,.64);box-shadow:0 0 20px rgba(79,221,145,.30);animation:cbvfxHeal .72s ease-out forwards}
+.cbvfx-burst.heal:before{width:3px;height:24px;background:rgba(133,255,189,.52);box-shadow:0 0 9px rgba(100,238,164,.34)}
+.cbvfx-burst.heal:after{width:24px;height:3px;background:rgba(133,255,189,.52);box-shadow:0 0 9px rgba(100,238,164,.34)}
+.cbvfx-burst.interrupt{border:2px solid rgba(97,210,231,.78);box-shadow:0 0 22px rgba(83,194,220,.4);animation:cbvfxInterrupt .66s ease-out forwards}
+.cbvfx-burst.interrupt:before,.cbvfx-burst.interrupt:after{width:3px;height:42px;background:linear-gradient(transparent,rgba(130,231,245,.78),transparent)}
+.cbvfx-burst.interrupt:before{transform:translate(-50%,-50%) rotate(45deg)}.cbvfx-burst.interrupt:after{transform:translate(-50%,-50%) rotate(-45deg)}
+.cbvfx-burst.spawn{border:2px solid rgba(177,126,222,.68);box-shadow:0 0 28px rgba(151,97,199,.36);animation:cbvfxSpawn .82s ease-out forwards}
+.cbvfx-burst.spawn:before{width:36px;height:36px;border:1px dashed rgba(190,147,226,.48);border-radius:50%;animation:cbvfxSpin .72s linear infinite}
+.cbvfx-burst.death{border:1px solid rgba(177,199,197,.45);box-shadow:0 0 25px rgba(123,183,186,.22);animation:cbvfxDeath .96s ease-out forwards}
+.cbvfx-burst.death:before{width:8px;height:52px;border-radius:50%;background:linear-gradient(180deg,rgba(184,231,230,.4),transparent);filter:blur(2px)}
+.cbvfx-burst.death:after{width:42px;height:42px;border:1px solid rgba(155,205,203,.24);border-radius:50%}
+@keyframes cbvfxImpact{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(2.7) rotate(12deg)}}
+@keyframes cbvfxCrit{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}25%{opacity:1;filter:brightness(1.6)}100%{opacity:0;transform:translate(-50%,-50%) scale(3.7) rotate(-18deg)}}
+@keyframes cbvfxHeal{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}28%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(3.1) translateY(-4px)}}
+@keyframes cbvfxInterrupt{0%{opacity:0;transform:translate(-50%,-50%) scale(.5) rotate(-12deg)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(2.8) rotate(18deg)}}
+@keyframes cbvfxSpawn{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}35%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(4.1)}}
+@keyframes cbvfxDeath{0%{opacity:.9;transform:translate(-50%,-50%) scale(.65)}100%{opacity:0;transform:translate(-50%,-68%) scale(3.4);filter:blur(3px)}}
+@keyframes cbvfxSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+.cbvfx-fallen{filter:grayscale(.7) brightness(.7)!important;transition:filter .35s ease!important}
+
+/* Arena-wide pulses. */
+.cbvfx-mechanic-pulse{animation:cbvfxMechanicPulse .58s ease}
+.cbvfx-safe-pulse{animation:cbvfxSafePulse .58s ease}
+.cbvfx-interrupt-pulse{animation:cbvfxInterruptPulse .45s ease}
+.cbvfx-phase-pulse{animation:cbvfxPhasePulse .82s ease}
+.cbvfx-boss-pulse{animation:cbvfxBossPulse .92s ease}
+.cbvfx-victory-pulse{animation:cbvfxVictoryPulse .9s ease}
+@keyframes cbvfxMechanicPulse{45%{box-shadow:inset 0 0 70px rgba(218,68,68,.14),0 0 35px rgba(205,73,73,.10)}}
+@keyframes cbvfxSafePulse{45%{box-shadow:inset 0 0 65px rgba(75,213,156,.12),0 0 30px rgba(75,213,156,.08)}}
+@keyframes cbvfxInterruptPulse{45%{filter:brightness(1.13);box-shadow:inset 0 0 55px rgba(93,204,227,.12)}}
+@keyframes cbvfxPhasePulse{0%{filter:brightness(.82)}45%{filter:brightness(1.18) saturate(1.18)}100%{filter:none}}
+@keyframes cbvfxBossPulse{0%{filter:brightness(.7)}50%{filter:brightness(1.22) contrast(1.06)}100%{filter:none}}
+@keyframes cbvfxVictoryPulse{45%{filter:brightness(1.15);box-shadow:inset 0 0 75px rgba(225,190,103,.12)}}
+
+.cbvfx-boss-ring{position:absolute;z-index:25;left:50%;top:50%;width:35%;aspect-ratio:1;transform:translate(-50%,-50%);border:1px solid rgba(221,91,91,.42);border-radius:50%;box-shadow:0 0 45px rgba(207,74,74,.15);animation:cbvfxBossRing 1.05s ease-out forwards}
+.cbvfx-boss-ring:before{content:"";position:absolute;inset:13%;border:1px dashed rgba(234,122,100,.28);border-radius:50%}
+@keyframes cbvfxBossRing{0%{opacity:0;transform:translate(-50%,-50%) scale(.55)}28%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.6)}}
+
+.cbvfx-spark{--a:calc(var(--i) * 36deg);position:absolute;z-index:30;left:50%;top:50%;width:4px;height:18px;border-radius:3px;background:linear-gradient(#f7dfa1,transparent);box-shadow:0 0 9px rgba(241,198,104,.45);transform-origin:50% 110px;transform:translate(-50%,-50%) rotate(var(--a));animation:cbvfxSpark 1.1s ease-out forwards}
+@keyframes cbvfxSpark{0%{opacity:0;transform:translate(-50%,-50%) rotate(var(--a)) translateY(0) scale(.4)}25%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) rotate(var(--a)) translateY(-115px) scale(1.2)}}
+
+/* Result/loot reveal polish shared across PvE. */
+.cb2d-loot-screen .cb2d-loot-wrap{animation:cbvfxLootReveal .48s cubic-bezier(.2,.75,.25,1)}
+.cb2d-loot-screen .cb2d-loot-currency>article{animation:cbvfxRewardRise .48s ease both}
+.cb2d-loot-screen .cb2d-loot-currency>article:nth-child(2){animation-delay:.04s}
+.cb2d-loot-screen .cb2d-loot-currency>article:nth-child(3){animation-delay:.08s}
+.cb2d-loot-screen .cb2d-loot-currency>article:nth-child(4){animation-delay:.12s}
+.cb2d-loot-screen .cb2d-loot-currency>article:nth-child(5){animation-delay:.16s}
+.cb2d-loot-item{transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+@media(hover:hover){.cb2d-loot-item:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,0,0,.22)}}
+@keyframes cbvfxLootReveal{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes cbvfxRewardRise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+@media(prefers-reduced-motion:reduce){
+  .cbvfx-layer *,.cbvfx-burst,.cbvfx-boss-ring,.cbvfx-spark,
+  .cbvfx-mechanic-pulse,.cbvfx-safe-pulse,.cbvfx-interrupt-pulse,.cbvfx-phase-pulse,.cbvfx-boss-pulse,.cbvfx-victory-pulse,
+  .cb2d-loot-screen .cb2d-loot-wrap,.cb2d-loot-screen .cb2d-loot-currency>article{animation:none!important;transition:none!important}
+}
