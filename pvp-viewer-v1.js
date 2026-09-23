@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.8.0';
+const VERSION='1.9.0';
 const $=(root,s)=>root?.querySelector(s);
 const $$=(root,s)=>[...(root?.querySelectorAll(s)||[])];
 const esc=v=>String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[m]));
@@ -182,7 +182,8 @@ function handleEvent(pb,e){
   switch(e.type){
     case'COMBAT_START':
       setStatus(pb,pb.result?.map?.name?pb.result.map.name+' · combat live':'Combat live');
-      feed(pb,pb.result?.map?.name?'The gates of '+pb.result.map.name+' open. Three routes are live.':'The gates open. PvP combat begins.');
+      if(pb.match?.kind==='arena')feed(pb,'The Veilspire gates close. The Cellstorm will keep shrinking until one team falls.');
+      else feed(pb,pb.result?.map?.name?'The gates of '+pb.result.map.name+' open. Multiple routes are live.':'The gates open. PvP combat begins.');
       break;
     case'MOVEMENT_START':if(e.payload?.to)move(root,e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||420,e.payload?.from||null);break;
     case'ABILITY_START':
@@ -293,6 +294,22 @@ function handleEvent(pb,e){
         updateScore(pb,e.payload?.blue,e.payload?.red,'First to 3 captures');
         banner(pb,(e.payload?.scoringTeam==='blue'?'BLUE':'RED')+' CAPTURES',e.payload?.scoringTeam);
         feed(pb,(src?.name||'A carrier')+' carries the '+(owner==='blue'?'Blue':'Red')+' Cell Standard home for a capture.');
+      }
+      break;
+    }
+    case'ARENA_STATE':{
+      if(e.result==='storm-phase'){
+        updateArenaStorm(root,e.payload);
+        const phase=Number(e.payload?.phase)||0;
+        setStatus(pb,(e.payload?.label||'Cellstorm')+' · safe ring '+Math.round(Number(e.payload?.radius)||0));
+        if(phase>0){banner(pb,e.payload?.label||'CELLSTORM CLOSING','');feed(pb,'The Cellstorm closes and shifts position. Move inside the new safe ring.')}
+      }else if(e.result==='storm-damage'){
+        if(target){pulse(root,target.id,'hit');floatText(root,target.id,'STORM','control')}
+      }else if(e.result==='dampening'){
+        const pct=Math.round(Number(e.payload?.dampeningPct)||0);
+        setStatus(pb,'Battle Fatigue · healing reduced '+pct+'%');
+        banner(pb,'HEALING -'+pct+'%','');
+        feed(pb,'Battle Fatigue rises: all arena healing is reduced by '+pct+'%.')
       }
       break;
     }
