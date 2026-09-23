@@ -77,7 +77,7 @@ for(const file of files){
     if(!contents.includes('function isUtilityItem')||!contents.includes('UTILITY EFFECT')||!contents.includes('function utilityArtHTML'))throw new Error('Trading Post must preserve visual utility-item trading support');
   }
   if(file==='pvp-viewer-v1.css'){
-    for(const hook of [".pvp2d-lower{","height:132px","max-height:132px",".pvp2d-feed{","overflow-y:auto","height:264px",".pvp2d-map{",".pvp2d-map-block",".pvp2d-map-area.tunnel"])if(!contents.includes(hook))throw new Error('PvP combat feed/map presentation is missing '+hook);
+    for(const hook of [".pvp2d-lower{","height:132px","max-height:132px",".pvp2d-feed{","overflow-y:auto","height:264px","grid-template-columns:repeat(3,minmax(0,1fr))",".pvp2d-map{",".pvp2d-map-block",".pvp2d-map-area.tunnel"])if(!contents.includes(hook))throw new Error('PvP combat feed/map/healing-meter presentation is missing '+hook);
   }
   if(file==='pvp-combat-v1.js'){
     for(const hook of ["const VERSION='1.5.0'","cellwind-bastion","PVP_MAPS","findMapPath","hasLineOfSight","LOS_BLOCKED","assignCtfRoles","ctfCarrierAct","ctfAct","ctf-standoff","carryFlagHome","resolveDroppedFlag","window.CellboundPvPCombat"])if(!contents.includes(hook))throw new Error('PvP combat engine is missing '+hook);
