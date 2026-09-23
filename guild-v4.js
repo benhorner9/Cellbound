@@ -438,43 +438,92 @@ async function createRecruit(){
 
 function renderOverview(){
   if(!ui.overviewRoster)return;
-  const active=new Set(flatPartyIds());
-  ui.overviewRoster.innerHTML=state.roster.slice(0,entitlements().rosterCap).map(c=>`<div class="mini-row ${isUnavailable(c)?'shock-mini':''}"><div class="avatar">${c.portrait}</div><div><b>${c.name}</b><small>Lv. ${c.level} · ${c.race||'Veyren'} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}${active.has(c.id)?' · ACTIVE':''}</small></div><span class="role-tag role-${roleOf(c)}">${isUnavailable(c)?formatRemaining(c):roleLabel(roleOf(c))}</span></div>`).join('');
-  if(ui.activityLog)ui.activityLog.innerHTML=state.activity.slice(-6).reverse().map((a,i)=>`<div class="activity-entry"><span>${i===0?'Latest':`${i} event${i>1?'s':''} ago`}</span><b>${a}</b></div>`).join('');
+  const party=partyCharacters(),activeIds=new Set(party.map(c=>c.id)),cap=entitlements().rosterCap;
+  const recovering=party.filter(c=>isUnavailable(c)).length;
+  const pi=partyItemLevel();
+
+  ui.overviewRoster.innerHTML=party.length
+    ?party.map(c=>`<div class="home-party-member ${isUnavailable(c)?'recovering':''}" style="--party-class:${classDef(c)?.glow||'#77d7cf'}"><div class="home-party-portrait">${c.portrait}</div><div class="home-party-copy"><b>${c.name}</b><small>${c.class} · ${c.spec}</small><span>${roleLabel(roleOf(c))} · iLvl ${characterItemLevel(c)}</span></div><em>${isUnavailable(c)?formatRemaining(c):'READY'}</em></div>`).join('')
+    :'<div class="home-party-empty"><b>No active party yet.</b><span>Build your first five to begin.</span></div>';
+
+  if(ui.activityLog){
+    const activity=state.activity.slice(-5).reverse();
+    ui.activityLog.innerHTML=activity.length
+      ?activity.map((a,i)=>`<div class="activity-entry"><span>${i===0?'Latest':i===1?'Previous':'Earlier'}</span><b>${a}</b></div>`).join('')
+      :'<div class="home-activity-empty">Your guild activity will appear here.</div>';
+  }
+
+  const hollowOpen=Boolean(state?.questSystem?.flags?.hollowSanctumUnlocked);
+  const hollowDone=Boolean(state?.questSystem?.flags?.hollowFirstClear);
+  const ashenOpen=state?.progression?.ashenVaultUnlocked!==false;
+  const ashenDone=(Number(state?.dungeonCompletions)||0)>0;
+  const chaosDone=(Number(state?.chaosCanyonCompletions)||0)>0;
+  const blackoutDone=(Number(state?.blackoutStationCompletions)||0)>0;
+  const fracturedOpen=Boolean(state?.progression?.fracturedAgesUnlocked);
+  const fracturedDone=(Number(state?.fracturedAgesCompletions)||0)>0;
+  const dungeonImages={
+    'ashen-vault':'./assets/dungeons/ashen-vault.webp',
+    'hollow-sanctum':'./assets/dungeons/hollow-sanctum.webp',
+    'chaos-canyon':'./assets/dungeons/chaos-canyon.webp',
+    'blackout-station':'./assets/dungeons/blackout-station.webp',
+    'fractured-ages':'./assets/dungeons/fractured-ages.webp'
+  };
+  let dungeon;
+  if(!ashenOpen||!ashenDone)dungeon={id:'ashen-vault',name:'The Ashen Vault',tag:ashenOpen?'AVAILABLE':'QUEST LOCKED',copy:'Break through the furnace halls and reach the living Vaultheart.',pips:3,active:Math.min(3,Object.values(state?.bossKills||{}).filter(Boolean).length||1),req:18};
+  else if(hollowOpen&&!hollowDone)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:'NEWLY UNLOCKED',copy:'Descend beneath Zeltira and face the Bound Choir.',pips:3,active:1,req:24};
+  else if(!chaosDone)dungeon={id:'chaos-canyon',name:'Chaos Canyon',tag:'AVAILABLE',copy:'Cross Vorran’s living canyon and break the Druid at its heart.',pips:3,active:1,req:30};
+  else if(!blackoutDone)dungeon={id:'blackout-station',name:'Blackout Station',tag:'AVAILABLE',copy:'Restore the dead grid and survive Dr. Vex Calder’s role circuits.',pips:2,active:1,req:34};
+  else if(fracturedOpen&&!fracturedDone)dungeon={id:'fractured-ages',name:'The Fractured Ages',tag:'NEWLY UNLOCKED',copy:'Follow the Strange Old Man through impossible eras.',pips:5,active:1,req:38};
+  else if(fracturedOpen)dungeon={id:'fractured-ages',name:'The Fractured Ages',tag:'CLEARED',copy:'Return for temporal gear, stronger rolls and another encounter with the Old Man.',pips:5,active:5,req:38};
+  else if(hollowOpen)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:hollowDone?'CLEARED':'AVAILABLE',copy:hollowDone?'Return to the Sanctum for another run.':'The Hollow Sanctum is open when your party is ready.',pips:3,active:hollowDone?3:1,req:24};
+  else dungeon={id:'ashen-vault',name:'The Ashen Vault',tag:'CLEARED',copy:'The Ashen Vault remains open while you follow the next lead.',pips:3,active:3,req:18};
 
   const next=$('#overviewNextDungeon');
   if(next){
-    const hollowOpen=Boolean(state?.questSystem?.flags?.hollowSanctumUnlocked);
-    const hollowDone=Boolean(state?.questSystem?.flags?.hollowFirstClear);
-    const ashenOpen=state?.progression?.ashenVaultUnlocked!==false;
-    const ashenDone=(Number(state?.dungeonCompletions)||0)>0;
-    const chaosDone=(Number(state?.chaosCanyonCompletions)||0)>0;
-    const blackoutDone=(Number(state?.blackoutStationCompletions)||0)>0;
-    const fracturedOpen=Boolean(state?.progression?.fracturedAgesUnlocked);
-    const fracturedDone=(Number(state?.fracturedAgesCompletions)||0)>0;
-    const pi=partyItemLevel();
-    const dungeonImages={
-      'ashen-vault':'./assets/dungeons/ashen-vault.webp',
-      'hollow-sanctum':'./assets/dungeons/hollow-sanctum.webp',
-      'chaos-canyon':'./assets/dungeons/chaos-canyon.webp',
-      'blackout-station':'./assets/dungeons/blackout-station.webp',
-      'fractured-ages':'./assets/dungeons/fractured-ages.webp'
-    };
-    let dungeon;
-    if(!ashenOpen||!ashenDone)dungeon={id:'ashen-vault',name:'The Ashen Vault',tag:ashenOpen?'AVAILABLE':'QUEST LOCKED',art:'THE ASHEN VAULT',copy:'Enter the ruined forge, break through its furnace halls and reach the living Vaultheart.',pips:3,active:Math.min(3,Object.values(state?.bossKills||{}).filter(Boolean).length||1),req:18};
-    else if(hollowOpen&&!hollowDone)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:'NEWLY UNLOCKED',art:'THE HOLLOW SANCTUM',copy:'Descend beneath Zeltira into a crystal-grown shrine of echoes, guardians and the Bound Choir.',pips:3,active:1,req:24};
-    else if(!chaosDone)dungeon={id:'chaos-canyon',name:'Chaos Canyon',tag:'AVAILABLE',art:'CHAOS CANYON',copy:'Cross Vorran’s living canyon, survive the stepping-stone trial and break the Druid at its heart.',pips:3,active:1,req:30};
-    else if(!blackoutDone)dungeon={id:'blackout-station',name:'Blackout Station',tag:'AVAILABLE',art:'BLACKOUT STATION',copy:'Restore the dead grid, solve the station puzzle and survive Dr. Vex Calder’s role circuits.',pips:2,active:1,req:34};
-    else if(fracturedOpen&&!fracturedDone)dungeon={id:'fractured-ages',name:'The Fractured Ages',tag:'NEWLY UNLOCKED',art:'THE FRACTURED AGES',copy:'Follow the Strange Old Man through impossible eras and survive the Funhouse at the end of time.',pips:5,active:1,req:38};
-    else if(fracturedOpen)dungeon={id:'fractured-ages',name:'The Fractured Ages',tag:'CLEARED',art:'THE FRACTURED AGES',copy:'The timeline remains open. Return for temporal gear or another encounter with the Old Man.',pips:5,active:5,req:38};
-    else if(hollowOpen)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:hollowDone?'CLEARED':'AVAILABLE',art:'THE HOLLOW SANCTUM',copy:hollowDone?'The Hollow Sanctum remains open for repeat runs.':'The Hollow Sanctum is open. Enter when your party is ready.',pips:3,active:hollowDone?3:1,req:24};
-    else dungeon={id:'ashen-vault',name:'The Ashen Vault',tag:'CLEARED',art:'THE ASHEN VAULT',copy:'The Ashen Vault remains open while you follow the next lead.',pips:3,active:3,req:18};
+    const partyState=party.length<5?party.length+'/5 PARTY':recovering?recovering+' RECOVERING':pi<dungeon.req?'iLvl '+pi+' · ENTRY '+dungeon.req+'+':'PARTY READY';
+    const primaryLabel=!ashenOpen&&dungeon.id==='ashen-vault'?'CONTINUE QUEST':party.length<5?'BUILD ACTIVE PARTY':'OPEN DUNGEON';
     next.dataset.dungeon=dungeon.id;
-    next.innerHTML=`<div class="panel-head"><div><small>NEXT DUNGEON</small><h3>${dungeon.name}</h3></div><b>${dungeon.tag}</b></div><div class="dungeon-preview ${dungeon.id==='hollow-sanctum'?'hollow-preview':''}"><div class="dungeon-art has-image" data-dungeon-art="${dungeon.id}"><img src="${dungeonImages[dungeon.id]}" alt="" aria-hidden="true"><span>${dungeon.art}</span></div><div><p>${dungeon.copy}</p><div class="boss-pips">${Array.from({length:dungeon.pips},(_,i)=>`<span class="${i<dungeon.active?'active':''}"></span>`).join('')}</div><small class="overview-dungeon-ilvl">Party iLvl ${pi||'—'} · Entry iLvl ${dungeon.req}+</small><button type="button" data-overview-dungeon="${dungeon.id}">VIEW DUNGEON →</button></div></div>`;
-    next.querySelector('[data-overview-dungeon]')?.addEventListener('click',()=>{
+    next.innerHTML=`
+      <div class="home-continue-art"><img src="${dungeonImages[dungeon.id]}" alt="" aria-hidden="true" decoding="async"><i></i></div>
+      <div class="home-continue-copy">
+        <div class="home-continue-eyebrow"><span>CONTINUE EXPEDITION</span><em>${dungeon.tag}</em></div>
+        <h2>${dungeon.name}</h2>
+        <p>${dungeon.copy}</p>
+        <div class="home-continue-meta"><span>Party iLvl <b>${pi||'—'}</b></span><span>Entry <b>${dungeon.req}+</b></span><span class="${party.length===5&&!recovering&&pi>=dungeon.req?'ready':''}">${partyState}</span></div>
+        <div class="boss-pips">${Array.from({length:dungeon.pips},(_,i)=>`<span class="${i<dungeon.active?'active':''}"></span>`).join('')}</div>
+        <div class="home-continue-actions"><button type="button" data-home-primary>${primaryLabel} →</button><button type="button" data-home-party>MANAGE PARTY</button></div>
+      </div>`;
+    next.querySelector('[data-home-primary]')?.addEventListener('click',()=>{
+      if(!ashenOpen&&dungeon.id==='ashen-vault'){switchView('quests');return}
+      if(party.length<5){switchView('party');return}
       switchView('content');
       setTimeout(()=>window.CellboundDungeonBrowser?.open?.(dungeon.id),40)
-    })
+    });
+    next.querySelector('[data-home-party]')?.addEventListener('click',()=>switchView('party'));
+  }
+
+  const today=(()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')})();
+  const tb=state.twelveBelow&&typeof state.twelveBelow==='object'?state.twelveBelow:{};
+  const attemptsUsed=tb.date===today?Math.max(0,Number(tb.attemptsUsed)||0):0;
+  const attemptsLeft=Math.max(0,3-attemptsUsed),bestKills=Math.max(0,Number(tb.bestKills)||0);
+  const eventStatus=$('#homeEventStatus');if(eventStatus)eventStatus.textContent=attemptsLeft+' entr'+(attemptsLeft===1?'y':'ies')+' today · Best '+bestKills+'/12';
+  const dungeonStatus=$('#homeDungeonStatus');if(dungeonStatus)dungeonStatus.textContent=dungeon.name;
+  const endgameStatus=$('#homeEndgameStatus');
+  if(endgameStatus)endgameStatus.textContent=fracturedDone?'Cellbound+ · rewards · reports':blackoutDone?'Heroic & Cellbound+ progression':'Progression & run reports';
+
+  const pulse=$('#overviewGuildPulse');
+  if(pulse){
+    const assignedProfessions=state.roster.slice(0,cap).reduce((n,c)=>n+(Array.isArray(c.professions)?c.professions.filter(Boolean).length:0),0);
+    const recoveringRoster=state.roster.slice(0,cap).filter(c=>isUnavailable(c)).length;
+    pulse.innerHTML=`
+      <button type="button" data-pulse="party"><span>PARTY</span><b>${party.length}/5</b><small>${recovering?'Recovery needed':party.length===5?'Active five set':'Slots open'}</small></button>
+      <button type="button" data-pulse="bank"><span>BANK</span><b>${bankTotal()}</b><small>Items stored</small></button>
+      <button type="button" data-pulse="professions"><span>PROFESSIONS</span><b>${assignedProfessions}</b><small>Assignments</small></button>
+      <button type="button" data-pulse="roster"><span>ROSTER</span><b>${Math.min(state.roster.length,cap)}/${cap}</b><small>${recoveringRoster?recoveringRoster+' recovering':'All available'}</small></button>`;
+    pulse.querySelector('[data-pulse="party"]')?.addEventListener('click',()=>switchView('party'));
+    pulse.querySelector('[data-pulse="bank"]')?.addEventListener('click',()=>switchView('bank'));
+    pulse.querySelector('[data-pulse="professions"]')?.addEventListener('click',()=>switchView('professions'));
+    pulse.querySelector('[data-pulse="roster"]')?.addEventListener('click',()=>switchView('roster'));
   }
 }
 function bankBulkSelection(){
