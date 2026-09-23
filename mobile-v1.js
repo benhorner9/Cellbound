@@ -4,10 +4,11 @@ const media=window.matchMedia('(max-width:720px)');
 let observer=null;
 
 const GROUPS=[
-  ['Guild',[['roster','♟','Roster'],['chat','◌','Social'],['professions','⚒','Professions']]],
+  ['Guild',[['roster','♟','Roster'],['professions','⚒','Professions']]],
   ['Adventure',[['endgame','◇','Endgame'],['world','✦','Events']]],
   ['Market',[['trading','⇄','Trading Post']]],
-  ['Combat',[['pvp','⚔','PvP']]]
+  ['Combat',[['pvp','⚔','PvP']]],
+  ['Social',[['chat','◌','Social']]]
 ];
 
 function nav(){return document.querySelector('.sidebar nav')}

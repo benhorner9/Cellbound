@@ -215,6 +215,9 @@ for(const file of files){
     if(!contents.includes('id="endgameHub"')||!contents.includes('class="endgame-run-history"')||!contents.includes('id="reportsList"'))throw new Error('Endgame must include the integrated Run Reports history');
     if(contents.includes('<div class="nav-section-label">SUPPLIES</div>'))throw new Error('Bank and Professions must remain in the Guild section');
     for(const hook of ['data-hub="guild" data-view="bank"','data-hub="guild" data-view="professions"','<div class="nav-section-label">MARKET</div>','data-hub="market" data-view="trading"','data-view="world"><span>✦</span><b>Events</b>'])if(!contents.includes(hook))throw new Error('Navigation regrouping is missing '+hook);
+    if(contents.includes('data-hub="guild" data-view="chat"'))throw new Error('Social must remain separate from the Guild section');
+    const socialNav=contents.indexOf('<div class="nav-section-label">SOCIAL</div>'),combatNav=contents.indexOf('<div class="nav-section-label">COMBAT</div>'),adminNav=contents.indexOf('id="adminNav"');
+    if(socialNav<0||combatNav<0||adminNav<0||!(combatNav<socialNav&&socialNav<adminNav)||!contents.includes('data-hub="social" data-view="chat"'))throw new Error('Social must be the final player-facing sidebar section');
     if(!contents.includes('dungeon-2d-v1.css')||!contents.includes('dungeon-2d-v1.js'))throw new Error('Ashen Vault 2D viewer assets are not linked from guild.html');
     if(!contents.includes('chaos-canyon-v1.css')||!contents.includes('chaos-canyon-v1.js')||!contents.includes('id="chaosCanyonMount"'))throw new Error('Chaos Canyon assets or mount are not linked from guild.html');
     if(!contents.includes('blackout-station-v1.css')||!contents.includes('blackout-station-v1.js')||!contents.includes('id="blackoutStationMount"'))throw new Error('Blackout Station assets or mount are not linked from guild.html');
