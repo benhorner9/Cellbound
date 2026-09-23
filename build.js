@@ -76,6 +76,9 @@ for(const file of files){
     if(!contents.includes("if(!data?.id)throw new Error('The listing was not confirmed by the Trading Post.')"))throw new Error('Trading Post listing creation must verify the server response');
     if(!contents.includes('function isUtilityItem')||!contents.includes('UTILITY EFFECT')||!contents.includes('function utilityArtHTML'))throw new Error('Trading Post must preserve visual utility-item trading support');
   }
+  if(file==='pvp-viewer-v1.css'){
+    for(const hook of [".pvp2d-lower{","height:132px","max-height:132px",".pvp2d-feed{","overflow-y:auto","height:264px"])if(!contents.includes(hook))throw new Error('PvP combat feed/HUD lock is missing '+hook);
+  }
   if(file==='pvp-combat-v1.js'){
     for(const hook of ["const VERSION='1.4.0'","function simulate(","'PLAYER_DEFEATED'","'OBJECTIVE_UPDATE'","'FLAG_STATE'","assignCtfRoles","ctfCarrierAct","ctfAct","ctf-standoff","carryFlagHome","resolveDroppedFlag","window.CellboundPvPCombat"])if(!contents.includes(hook))throw new Error('PvP combat engine is missing '+hook);
     if(/THREAT_GENERATED|AGGRO_CHANGED|threatTable|\bthreat\b/i.test(contents))throw new Error('PvP combat must never use PvE threat or aggro');
