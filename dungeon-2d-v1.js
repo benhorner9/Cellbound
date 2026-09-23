@@ -1380,13 +1380,13 @@ function renderRebornEvent(e,result,replayMode=false){
    }
    if(targetChar){setHp(targetChar.id,Number(e.payload?.targetHpPct)||0);setCond(targetChar.id,cond(targetChar.id)-Math.max(1,Math.round((Number(e.amount)||0)/8)));updateRows()}
    if(srcChar)recordDamage(srcChar,Number(e.amount)||0);
-   if(e.target){hitReact(e.target,'hit');floating(e.target,'-'+Math.round(Number(e.amount)||0),e.result==='critical'?'crit':targetChar?'incoming':'damage')}
+   if(e.target){hitReact(e.target,'hit');floating(e.target,'-'+Math.round(Number(e.amount)||0),e.result==='critical'?'crit':targetChar?'incoming':'damage');window.CellboundCombatFX?.impact?.($('[data-unit="'+e.target+'"]'),{critical:e.result==='critical'})}
    if(e.payload?.avoidable){log((targetChar?.name||'A player')+' is hit by avoidable '+(e.ability||'damage')+'.')}
    break;
   }
   case'HEAL_RECEIVED':
    if(srcChar&&e.target)projectile(e.source,e.target,'heal',240);
-   if(targetChar){setHp(targetChar.id,Number(e.payload?.targetHpPct)||hp(targetChar.id));updateRows();hitReact(e.target,'heal');floating(e.target,'+'+Math.round(Number(e.amount)||0),'heal')}
+   if(targetChar){setHp(targetChar.id,Number(e.payload?.targetHpPct)||hp(targetChar.id));updateRows();hitReact(e.target,'heal');floating(e.target,'+'+Math.round(Number(e.amount)||0),'heal');window.CellboundCombatFX?.heal?.($('[data-unit="'+e.target+'"]'))}
    if(srcChar)recordRebornHealing(srcChar,Number(e.amount)||0,Number(e.payload?.overhealing)||0);
    break;
   case'PLAYER_REVIVED':
@@ -1399,7 +1399,7 @@ function renderRebornEvent(e,result,replayMode=false){
    break;
   case'RESOURCE_SPENT':case'RESOURCE_GAINED':case'RESOURCE_STATE':rebornResourceVisual(e);break;
   case'PHASE_CHANGE':
-   flash(String(e.ability||'PHASE CHANGE').toUpperCase(),true);window.CellboundFX?.phase?.(e.ability||'Boss phase changed',e.payload?.healthPct);status(e.ability||'Boss phase changed');log((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');break;
+   flash(String(e.ability||'PHASE CHANGE').toUpperCase(),true);window.CellboundCombatFX?.phase?.($('#cb2dArena'));window.CellboundFX?.phase?.(e.ability||'Boss phase changed',e.payload?.healthPct);status(e.ability||'Boss phase changed');log((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');break;
   case'ENRAGE':
    flash(e.result==='hard'?'HARD ENRAGE':'ENRAGE',true);status(e.result==='hard'?'Hard enrage — finish the boss now':(e.ability||'Boss enraged'));log((e.ability||'The boss enrages')+'.');break;
   case'UNIQUE_EFFECT_TRIGGER':
@@ -1434,7 +1434,7 @@ function renderRebornEvent(e,result,replayMode=false){
   case'MECHANIC_RESOLVE':
    clearRebornTelegraph(e.payload?.token,'impact');requestAnimationFrame(()=>{if(run){const i=enemyIndex();if(i>=0)settleFormation(i);else regroup()}});break;
   case'INTERRUPT':
-   if(e.result==='success'){rebornCastClear('INTERRUPTED');clearRebornTelegraph(e.payload?.token,'safe');flash('INTERRUPTED',false);log((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');act('dps','Interrupt successful')}
+   if(e.result==='success'){rebornCastClear('INTERRUPTED');clearRebornTelegraph(e.payload?.token,'safe');flash('INTERRUPTED',false);window.CellboundCombatFX?.interrupt?.($('[data-unit="'+e.target+'"]')||$('#cb2dArena'));log((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');act('dps','Interrupt successful')}
    else if(e.result==='failed')log((srcChar?.name||'A player')+' misses an interrupt.');
    else if(e.result==='duplicate')log((srcChar?.name||'A player')+' overlaps an interrupt that was already covered.');
    break;
@@ -1442,13 +1442,13 @@ function renderRebornEvent(e,result,replayMode=false){
    flash('DEFENSIVE',false);log((srcChar?.name||'Tank')+' activates '+(e.ability||'a defensive')+'.');act('tank',(srcChar?.name||'Tank')+' · Defensive active');break;
   case'ADD_SPAWNED':
    if(!$('[data-unit="'+e.target+'"]')){const p=e.position||{x:76,y:50};addUnit(e.target,e.payload?.name||'Add','enemy small',p.x,p.y,'small','Lv. '+(e.payload?.level||STAGES[run.stage]?.level||1)+' · '+(e.payload?.classificationLabel||'ADD'));const bar=$('[data-unit="'+e.target+'"] .cb2d-unit-hp i');if(bar)bar.style.width='100%'}
-   flash('ADDS SPAWN',true);log((e.payload?.name||'Adds')+' enter the fight.');break;
+   flash('ADDS SPAWN',true);window.CellboundCombatFX?.spawn?.($('[data-unit="'+e.target+'"]')||$('#cb2dArena'));log((e.payload?.name||'Adds')+' enter the fight.');break;
   case'ADD_DEFEATED':case'ENEMY_DEFEATED':{
-   const u=$('[data-unit="'+e.target+'"]');if(u){u.classList.add('dying');deathBurst(e.target);setTimeout(()=>u.classList.add('dead'),240)}
+   const u=$('[data-unit="'+e.target+'"]');if(u){u.classList.add('dying');deathBurst(e.target);window.CellboundCombatFX?.death?.(u);setTimeout(()=>u.classList.add('dead'),240)}
    if(e.type==='ADD_DEFEATED')log('An add is defeated.');break;
   }
   case'PLAYER_DEFEATED':
-   if(targetChar){setHp(targetChar.id,0);updateRows();const u=$('[data-unit="'+e.target+'"]');if(u){u.classList.add('dying');setTimeout(()=>u.classList.add('dead'),220)}deathBurst(e.target);log(targetChar.name+' is defeated.')}break;
+   if(targetChar){setHp(targetChar.id,0);updateRows();const u=$('[data-unit="'+e.target+'"]');if(u){u.classList.add('dying');window.CellboundCombatFX?.death?.(u);setTimeout(()=>u.classList.add('dead'),220)}deathBurst(e.target);log(targetChar.name+' is defeated.')}break;
   case'CAST_FINISH':
    rebornCastClear('CAST COMPLETE');if(String(e.source||'').startsWith('e-'))log((e.ability||'Enemy cast')+' completes.');break;
   case'COMBAT_END':
