@@ -191,7 +191,7 @@ function carryCombatState(result){
  return{ok:true}
 }
 function transition(){
- if(!run)return;const s=STAGES[run.stage],r=root();r.hidden=false;document.body.classList.add('fa-open');
+ if(!run)return;const s=STAGES[run.stage],r=root();if(s.id==='funhouse'){if(run.finalDossierPending)return;run.finalDossierPending=true;r.hidden=true;Promise.resolve(window.CellboundBossDossier?.show?.('old-man')??true).then(()=>{if(!run||run.stage!==4)return;run.finalDossierPending=false;fightStage(s)});return}r.hidden=false;document.body.classList.add('fa-open');
  r.innerHTML='<section class="fa-shell fa-transition '+s.visual+'"><header><div><small>FRACTURE '+(run.stage+1)+' / '+STAGES.length+' · '+esc(s.era)+'</small><h2>'+esc(s.boss)+'</h2></div><button data-fa-close aria-label="Close dungeon">×</button></header><div class="fa-transition-scene"><div class="fa-transition-art">'+s.environment+'</div><div class="fa-transition-copy"><small>'+esc(s.subtitle.toUpperCase())+'</small><h3>'+esc(s.era)+'</h3><p>'+esc(s.intro)+'</p><div><b>ENCOUNTER INTELLIGENCE</b><span>'+esc(s.blurb)+'</span></div><button data-fa-fight>'+(run.stage===4?'ENTER THE FUNHOUSE →':'ENTER '+esc(s.era)+' →')+'</button></div></div></section>';
  r.querySelector('[data-fa-close]').onclick=()=>{if(confirm('Abandon this Fractured Ages run?'))close()};
  r.querySelector('[data-fa-fight]').onclick=()=>fightStage(s)
