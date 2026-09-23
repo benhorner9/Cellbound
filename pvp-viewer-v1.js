@@ -80,7 +80,7 @@ function shellMarkup(match,units,map=null){
 function flagBasePoint(owner){return owner==='blue'?{x:12,y:50}:{x:88,y:50}}
 function flagElement(root,owner){return flagNode(root,owner)}
 function clearCarrierFlagClass(root,owner){
-  $(root,'.pvp2d-unit.carrying-flag').forEach(u=>{if(!owner||u.dataset.flagOwner===owner){u.classList.remove('carrying-flag');delete u.dataset.flagOwner}})
+  $$(root,'.pvp2d-unit.carrying-flag').forEach(u=>{if(!owner||u.dataset.flagOwner===owner){u.classList.remove('carrying-flag');delete u.dataset.flagOwner}})
 }
 function setFlagAt(root,owner,x,y,state='dropped'){
   const flag=flagElement(root,owner),arena=$(root,'#pvp2dArena');if(!flag||!arena)return;
@@ -156,7 +156,7 @@ function updateHill(root,payload={},state='neutral'){
   const x=clamp(Number(payload.x)||50,5,95),y=clamp(Number(payload.y)||50,8,92),name=String(payload.name||'CELL NODE'),site=String(payload.site||'');
   hill.style.left=x+'%';hill.style.top=y+'%';hill.dataset.site=site;hill.className='pvp2d-hill '+state;
   const label=hill.querySelector('b');if(label)label.textContent=name;
-  $(root,'[data-pvp2d-hill-site]').forEach(node=>node.classList.toggle('active',node.getAttribute('data-pvp2d-hill-site')===site))
+  $$(root,'[data-pvp2d-hill-site]').forEach(node=>node.classList.toggle('active',node.getAttribute('data-pvp2d-hill-site')===site))
 }
 function combatant(pb,id){return pb.unitMap[id]}
 function attackKind(u,ability){
