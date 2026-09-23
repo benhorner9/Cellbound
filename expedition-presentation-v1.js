@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const VERSION='1.0.0';
+const VERSION='1.1.0';
 const PROFILES={
   'ashen-vault':{name:'The Ashen Vault',eyebrow:'CURO HINTERLANDS · DUNGEON',tag:'THE OLD FORGE BREATHES AGAIN',theme:'ashen',motion:'forge',entry:'The party passes beneath the sealed forge doors and descends into the heat below.'},
   'hollow-sanctum':{name:'The Hollow Sanctum',eyebrow:'BLACKGLASS DEPTHS · DUNGEON',tag:'DESCEND BENEATH THE SANCTUM',theme:'hollow',motion:'descent',entry:'The seal gives way. Cold blackglass walls close around the party as the descent begins.'},
@@ -30,10 +30,13 @@ async function enter(id,options={}){
   remove()
 }
 async function room(id,options={}){
+  const rawKind=String(options.kind||'NEXT AREA'),isBoss=/boss|final/i.test(rawKind);
   if(options.index===0&&!options.force)return;
-  const my=++token;remove();const p=profile(id),title=String(options.title||'Deeper within'),kind=String(options.kind||'NEXT AREA'),index=Math.max(0,Number(options.index)||0),total=Math.max(index+1,Number(options.total)||index+1);
-  const root=document.createElement('div');root.className='cbx-transition cbx-room theme-'+p.theme;root.dataset.expedition=id;
-  root.innerHTML='<div class="cbx-room-motion"><i></i><i></i><i></i></div><div class="cbx-room-copy"><small>'+esc(p.name.toUpperCase())+' · '+esc(kind.toUpperCase())+'</small><h2>'+esc(title)+'</h2><span>AREA '+(index+1)+' / '+total+'</span></div>';
+  if(!isBoss&&!options.force)return;
+  const my=++token;remove();const p=profile(id),title=String(options.title||'Boss encounter'),index=Math.max(0,Number(options.index)||0),total=Math.max(index+1,Number(options.total)||index+1);
+  const kind=isBoss?(/final/i.test(rawKind)?'FINAL BOSS':'BOSS AHEAD'):rawKind;
+  const root=document.createElement('div');root.className='cbx-transition cbx-room cbx-boss-warning theme-'+p.theme;root.dataset.expedition=id;
+  root.innerHTML='<div class="cbx-room-motion"><i></i><i></i><i></i></div><div class="cbx-room-copy"><small>'+esc(p.name.toUpperCase())+' · '+esc(kind)+'</small><h2>'+esc(title)+'</h2><span>'+(isBoss?'ENCOUNTER '+(index+1)+' / '+total+' · PREPARE':'AREA '+(index+1)+' / '+total)+'</span></div>';
   document.body.appendChild(root);active=root;document.body.classList.add('cbx-transition-open');
   requestAnimationFrame(()=>requestAnimationFrame(()=>root.classList.add('moving')));
   await wait(options.long?1100:720);if(my!==token)return;root.classList.add('arriving');
