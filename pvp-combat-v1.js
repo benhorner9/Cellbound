@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.1.0';
+const VERSION='1.2.0';
 const TICK=250;
 const MAX_ARENA_MS=90000;
 const MAX_BG_MS=120000;
@@ -74,8 +74,8 @@ function enemies(ctx,u){return living(ctx,u.team==='blue'?'red':'blue')}
 function healthRatio(u){return u.maxHealth?u.health/u.maxHealth:0}
 function distance(a,b){return Math.hypot((a.position.x-b.position.x),(a.position.y-b.position.y))}
 function move(ctx,u,to,duration=500,reason='position'){
-  const end={x:clamp(Number(to.x)||50,5,95),y:clamp(Number(to.y)||50,8,92)};
-  u.position=end;emit(ctx,'MOVEMENT_START',{source:u.id,result:reason,payload:{to:copy(end),duration}})
+  const from=copy(u.position),end={x:clamp(Number(to.x)||50,5,95),y:clamp(Number(to.y)||50,8,92)};
+  u.position=end;emit(ctx,'MOVEMENT_START',{source:u.id,result:reason,payload:{from,to:copy(end),duration}})
 }
 function actionRange(u){return ['Hunter','Mage','Priest','Druid','Evoker','Shaman','Warlock'].includes(u.class)?30:6}
 function rolePriority(target,attacker){
@@ -215,7 +215,24 @@ function setupObjective(ctx){
     };
     emit(ctx,'FLAG_STATE',{result:'reset',payload:{team:'blue',owner:'blue',x:12,y:50}});
     emit(ctx,'FLAG_STATE',{result:'reset',payload:{team:'red',owner:'red',x:88,y:50}});
-    ctx.units.forEach((u,i)=>move(ctx,u,{x:u.team==='blue'?30:70,y:20+(i%10)*6.5},700,'advance'))
+    // Let the battlefield render before the opening push so movement is visible.
+    ctx.units.forEach((u,i)=>{u.nextAction=Math.max(u.nextAction,1700+i*45)});
+    ctx.scheduled.push({at:650,fn:()=>{
+      const byTeam={blue:ctx.units.filter(u=>u.team==='blue'),red:ctx.units.filter(u=>u.team==='red')};
+      for(const team of ['blue','red']){
+        const teamUnits=byTeam[team],dir=team==='blue'?1:-1;
+        teamUnits.forEach((u,i)=>{
+          const lane=18+(i%Math.max(1,Math.min(8,teamUnits.length)))*(64/Math.max(1,Math.min(8,teamUnits.length)-1||1));
+          let x=team==='blue'?29:71;
+          if(u.role==='tank')x=team==='blue'?34:66;
+          else if(u.role==='healer')x=team==='blue'?24:76;
+          else if(i%3===0)x=team==='blue'?38:62;
+          const y=clamp(lane+(i%2?2:-2),12,88);
+          move(ctx,u,{x,y},900,'ctf opening push')
+        })
+      }
+      emit(ctx,'OBJECTIVE_UPDATE',{result:'ctf-opening',payload:{mode:'capture-the-flag',blue:0,red:0}})
+    }})
   }
 }
 function hillTick(ctx){
@@ -233,9 +250,9 @@ function flagEnemy(team){return team==='blue'?'red':'blue'}
 function pvpDistanceToPoint(u,p){return Math.hypot((u.position.x-p.x),(u.position.y-p.y))}
 function travelFlagRunner(ctx,u,to,duration,reason,onArrive){
   if(!u?.alive)return false;
-  const end={x:clamp(Number(to.x)||50,5,95),y:clamp(Number(to.y)||50,8,92)};
+  const from=copy(u.position),end={x:clamp(Number(to.x)||50,5,95),y:clamp(Number(to.y)||50,8,92)};
   u.flagIntent=reason;u.nextAction=Math.max(u.nextAction,ctx.time+duration);
-  emit(ctx,'MOVEMENT_START',{source:u.id,result:reason,payload:{to:copy(end),duration,pvpFlag:true}});
+  emit(ctx,'MOVEMENT_START',{source:u.id,result:reason,payload:{from,to:copy(end),duration,pvpFlag:true}});
   ctx.scheduled.push({at:ctx.time+duration,fn:()=>{
     if(!u.alive)return;u.position=end;u.flagIntent=null;onArrive?.()
   }});
