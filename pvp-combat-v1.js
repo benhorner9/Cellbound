@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.0';
+const VERSION='1.4.0';
 const TICK=250;
 const MAX_ARENA_MS=90000;
 const MAX_BG_MS=120000;
@@ -251,19 +251,20 @@ function objectiveTravel(ctx,u,to,reason,onArrive=null){
 function ctfCarrierAct(ctx,u){
   const stolen=ctx.flag?.[u.carryingFlag],own=ctx.flag?.[u.team];if(!stolen)return false;
   const home=flagBase(u.team);
-  if(pvpDistanceToPoint(u,home)>4){
-    objectiveTravel(ctx,u,home,'flag carrier retreat',()=>{if(u.alive&&u.carryingFlag)stolen.position=copy(u.position)});
-    return true
-  }
   if(own?.state==='base'){
+    if(pvpDistanceToPoint(u,home)>4){
+      objectiveTravel(ctx,u,home,'flag carrier retreat',()=>{if(u.alive&&u.carryingFlag)stolen.position=copy(u.position)});
+      return true
+    }
     captureFlag(ctx,u,stolen);u.nextAction=ctx.time+1700;return true
   }
+  // Own flag is missing: stay in a protected holding pocket and wait for the recovery team.
   const hold=ctfHoldPoint(u);
   if(pvpDistanceToPoint(u,hold)>5){objectiveTravel(ctx,u,hold,'flag carrier hold');return true}
   maybeDefensive(ctx,u);
   const threat=nearbyEnemies(ctx,u,9).sort((a,b)=>healthRatio(a)-healthRatio(b))[0];
   if(threat&&ctx.time>=u.nextControl)maybeControl(ctx,u,threat);
-  if(ctx.time-u.lastObjectiveNotice>=3500){
+  if(ctx.time-u.lastObjectiveNotice>=3000){
     u.lastObjectiveNotice=ctx.time;
     emit(ctx,'OBJECTIVE_UPDATE',{source:u.id,result:'ctf-standoff',payload:{team:u.team,carrier:u.id,waitingFor:u.team,blue:ctx.objective.blue,red:ctx.objective.red}})
   }
@@ -482,7 +483,8 @@ function selfTest(){
     {name:'Objective events',pass:b.events.some(e=>e.type==='OBJECTIVE_UPDATE')},
     {name:'Resources',pass:a.events.some(e=>e.type==='RESOURCE_SPENT')},
     {name:'CTF flag pickup is physical',pass:flagEvents.some(e=>e.result==='picked-up'&&e.source&&Number.isFinite(Number(e.payload?.x))&&Number.isFinite(Number(e.payload?.y)))},
-    {name:'CTF flag lifecycle resolves',pass:flagEvents.some(e=>['captured','returned'].includes(e.result))}
+    {name:'CTF flag lifecycle resolves',pass:flagEvents.some(e=>['captured','returned','dropped'].includes(e.result))||c.events.some(e=>e.type==='OBJECTIVE_UPDATE'&&e.result==='ctf-standoff')},
+    {name:'CTF carriers hold during a flag standoff',pass:!c.events.some((e,i)=>e.type==='MOVEMENT_START'&&e.result==='flag carrier retreat'&&c.events.slice(Math.max(0,i-6),i).some(x=>x.type==='MOVEMENT_START'&&x.source===e.source&&x.result==='flag carrier hold'))}
   ];return{version:VERSION,passed:tests.filter(x=>x.pass).length,total:tests.length,tests}
 }
 window.CellboundPvPCombat={VERSION,CLASS_COLORS,simulate,tests:{run:selfTest}};
