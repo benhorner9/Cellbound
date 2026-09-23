@@ -310,17 +310,17 @@ function regen(ctx){
 }
 function teamCentroid(list){if(!list.length)return{x:50,y:50};return{x:list.reduce((n,u)=>n+u.position.x,0)/list.length,y:list.reduce((n,u)=>n+u.position.y,0)/list.length}}
 function assignCtfRoles(ctx,team){
-  const units=ctx.units.filter(u=>u.team===team),available=[...units];
-  available.forEach((u,i)=>{u.objectiveRole='skirmisher';u.ctfSlot=i});
+  const units=ctx.units.filter(u=>u.team===team),available=[...units],routes=['top','mid','bottom'];
+  available.forEach((u,i)=>{u.objectiveRole='skirmisher';u.ctfSlot=i;u.routePreference=routes[(i+(team==='red'?1:0))%routes.length]});
   const tanks=available.filter(u=>u.role==='tank'),healers=available.filter(u=>u.role==='healer'),nonHealers=available.filter(u=>u.role!=='healer');
   const runner=tanks[0]||nonHealers.slice().sort((a,b)=>(b.pvpDefence+b.maxHealth/250)-(a.pvpDefence+a.maxHealth/250))[0]||available[0];
-  if(runner)runner.objectiveRole='runner';
+  if(runner){runner.objectiveRole='runner';runner.routePreference=routes[Math.floor(ctx.rng()*routes.length)]}
   const remaining=available.filter(u=>u!==runner&&u.role!=='healer');
   const defenderCount=Math.max(1,Math.round(available.length*.2));
-  remaining.slice().sort((a,b)=>(b.role==='tank'?2:0)+(b.pvpDefence||0)/30-((a.role==='tank'?2:0)+(a.pvpDefence||0)/30)).slice(0,defenderCount).forEach(u=>u.objectiveRole='defender');
-  healers.forEach(u=>u.objectiveRole='support');
-  remaining.filter(u=>u.objectiveRole==='skirmisher').forEach((u,i)=>u.objectiveRole=i%2===0?'escort':'skirmisher');
-  emit(ctx,'OBJECTIVE_UPDATE',{result:'ctf-roles',payload:{team,runner:runner?.id||null,defenders:available.filter(u=>u.objectiveRole==='defender').map(u=>u.id),supports:healers.map(u=>u.id)}})
+  remaining.slice().sort((a,b)=>(b.role==='tank'?2:0)+(b.pvpDefence||0)/30-((a.role==='tank'?2:0)+(a.pvpDefence||0)/30)).slice(0,defenderCount).forEach(u=>{u.objectiveRole='defender';u.routePreference='mid'});
+  healers.forEach(u=>{u.objectiveRole='support';u.routePreference=runner?.routePreference||'mid'});
+  remaining.filter(u=>u.objectiveRole==='skirmisher').forEach((u,i)=>{u.objectiveRole=i%2===0?'escort':'skirmisher';if(u.objectiveRole==='escort')u.routePreference=runner?.routePreference||u.routePreference});
+  emit(ctx,'OBJECTIVE_UPDATE',{result:'ctf-roles',payload:{team,runner:runner?.id||null,runnerRoute:runner?.routePreference||'mid',defenders:available.filter(u=>u.objectiveRole==='defender').map(u=>u.id),supports:healers.map(u=>u.id),escorts:available.filter(u=>u.objectiveRole==='escort').map(u=>u.id)}})
 }
 function ctfHomePoint(team){return team==='blue'?{x:16,y:50}:{x:84,y:50}}
 function ctfHoldPoint(u){
@@ -343,15 +343,23 @@ function nearestToPoint(list,p){return list.slice().sort((a,b)=>pvpDistanceToPoi
 function nearbyEnemies(ctx,u,radius=18){return enemies(ctx,u).filter(e=>distance(u,e)<=radius)}
 function objectiveTravel(ctx,u,to,reason,onArrive=null){
   if(!u?.alive||u.flagIntent)return false;
-  const end={x:clamp(Number(to.x)||50,5,95),y:clamp(Number(to.y)||50,8,92)},dist=pvpDistanceToPoint(u,end);
-  if(dist<2){onArrive?.();return true}
-  const duration=Math.round(clamp(450+dist*34,650,3200)),from=copy(u.position);
-  u.flagIntent=reason;u.nextAction=Math.max(u.nextAction,ctx.time+duration+100);
-  emit(ctx,'MOVEMENT_START',{source:u.id,result:reason,payload:{from,to:copy(end),duration,pvpObjective:true,pvpFlag:/flag/i.test(reason)}});
-  ctx.scheduled.push({at:ctx.time+duration,fn:()=>{
-    if(!u.alive)return;
-    u.position=end;u.flagIntent=null;u.nextAction=Math.max(u.nextAction,ctx.time+150);onArrive?.()
-  }});
+  const end=openMapPoint(ctx,to,1.1),path=findMapPath(ctx,u.position,end,u);
+  if(path.length<2||pvpDistanceToPoint(u,end)<2){onArrive?.();return true}
+  u.flagIntent=reason;
+  let elapsed=0,current=copy(u.position);
+  for(let i=1;i<path.length;i++){
+    const point=path[i],segment=Math.hypot(point.x-current.x,point.y-current.y),duration=Math.round(clamp(280+segment*38,480,2100)),startAt=ctx.time+elapsed,from=copy(current);
+    ctx.events.push({timestamp:Math.round(startAt),type:'MOVEMENT_START',source:u.id,result:reason,payload:{from,to:copy(point),final:copy(end),duration,pvpObjective:true,pvpFlag:/flag/i.test(reason),pathIndex:i,pathLength:path.length-1,route:u.routePreference||'mid'}});
+    elapsed+=duration;
+    const isLast=i===path.length-1;
+    ctx.scheduled.push({at:ctx.time+elapsed,fn:()=>{
+      if(!u.alive)return;
+      u.position=copy(point);
+      if(isLast){u.flagIntent=null;u.nextAction=Math.max(u.nextAction,ctx.time+150);onArrive?.()}
+    }});
+    current=point
+  }
+  u.nextAction=Math.max(u.nextAction,ctx.time+elapsed+100);
   return true
 }
 function ctfCarrierAct(ctx,u){
@@ -557,7 +565,7 @@ function winner(ctx){
 }
 function simulate({blue=[],red=[],kind='arena',mode='arena',size=null,seed='cellbound-pvp'}={}){
   if(!Array.isArray(blue)||!Array.isArray(red)||!blue.length||!red.length)throw new Error('PvP combat requires two non-empty teams.');
-  const ctx={kind,mode,size:Number(size)||Math.max(blue.length,red.length),time:0,rng:rngFrom(seed),events:[],scheduled:[],units:[],byId:{},stats:{blue:{kills:0,deaths:0,damage:0,healing:0,objectives:0},red:{kills:0,deaths:0,damage:0,healing:0,objectives:0}},objective:null,flag:{blue:{carrier:null},red:{carrier:null}}};
+  const ctx={kind,mode,size:Number(size)||Math.max(blue.length,red.length),time:0,rng:rngFrom(seed),events:[],scheduled:[],units:[],byId:{},map:mode==='capture-the-flag'?PVP_MAPS['cellwind-bastion']:null,stats:{blue:{kills:0,deaths:0,damage:0,healing:0,objectives:0},red:{kills:0,deaths:0,damage:0,healing:0,objectives:0}},objective:null,flag:{blue:{carrier:null},red:{carrier:null}}};
   ctx.units=[...blue.map((u,i)=>normalize(u,'blue',i,blue.length,{kind,mode})),...red.map((u,i)=>normalize(u,'red',i,red.length,{kind,mode}))];ctx.units.forEach(u=>ctx.byId[u.id]=u);
   emit(ctx,'COMBAT_START',{result:'pvp',payload:{kind,mode,size:ctx.size}});
   ctx.units.forEach(u=>emit(ctx,'RESOURCE_STATE',{source:u.id,target:u.id,result:'initial',payload:{resource:u.resource.name,value:u.resource.value,max:u.resource.max}}));
@@ -572,7 +580,7 @@ function simulate({blue=[],red=[],kind='arena',mode='arena',size=null,seed='cell
   emit(ctx,'COMBAT_END',{result:win==='blue'?'victory':'defeat',payload:{winner:win,kind,mode,score:copy(score)}});
   const finalUnits=ctx.units.map(u=>({id:u.id,characterId:u.characterId,name:u.name,class:u.class,spec:u.spec,role:u.role,team:u.team,health:u.health,maxHealth:u.maxHealth,alive:u.alive,position:copy(u.position),kills:u.kills,deaths:u.deaths,damage:u.damage,healing:u.healing,objectives:u.objectives}));
   return{
-    version:VERSION,kind,mode,size:ctx.size,winner:win,outcome:win==='blue'?'victory':'defeat',durationMs:ctx.time,events:ctx.events.sort((a,b)=>a.timestamp-b.timestamp),
+    version:VERSION,kind,mode,size:ctx.size,map:ctx.map?copy(ctx.map):null,winner:win,outcome:win==='blue'?'victory':'defeat',durationMs:ctx.time,events:ctx.events.sort((a,b)=>a.timestamp-b.timestamp),
     score,scoreText:score.blue+'–'+score.red,objective:copy(ctx.objective),summary:{blue:ctx.stats.blue,red:ctx.stats.red},finalState:{units:finalUnits}
   }
 }
