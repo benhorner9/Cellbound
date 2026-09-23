@@ -205,7 +205,7 @@ function actionHtml(q){
 function keysMarkup(q){
  return Object.entries(KEY_SOURCES).map(([id,k])=>{
   const found=Boolean(q.keys[id]),inserted=Boolean(q.inserted[id]),attempt=Number(q.attempts[id])||0;
-  return'<article class="fourfold-key '+(inserted?'inserted':found?'found':'')+'"><i>'+k.icon+'</i><div><small>'+esc(k.place.toUpperCase())+'</small><b>'+esc(found?k.name:'Unknown Key')+'</b><p>'+esc(found?k.copy:'The lockbox offers no clue beyond the shape of this keyhole.')+'</p><em>'+(inserted?'KEY INSERTED':found?'KEY RECOVERED':attempt?attempt+' eligible clear'+(attempt===1?'':'s')+' searched':'NOT YET FOUND')+'</em></div>'+(found&&!inserted?'<button data-insert-key="'+id+'">USE KEY</button>':'')+'</article>'
+  const keyArt=found&&window.CellboundItemArt?.artHTML?window.CellboundItemArt.artHTML({id:k.id,itemId:k.id,name:k.name,category:'key',rarity:'Rare'},48,'fourfold-key-art'):k.icon;return'<article class="fourfold-key '+(inserted?'inserted':found?'found':'')+'"><i>'+keyArt+'</i><div><small>'+esc(k.place.toUpperCase())+'</small><b>'+esc(found?k.name:'Unknown Key')+'</b><p>'+esc(found?k.copy:'The lockbox offers no clue beyond the shape of this keyhole.')+'</p><em>'+(inserted?'KEY INSERTED':found?'KEY RECOVERED':attempt?attempt+' eligible clear'+(attempt===1?'':'s')+' searched':'NOT YET FOUND')+'</em></div>'+(found&&!inserted?'<button data-insert-key="'+id+'">USE KEY</button>':'')+'</article>'
  }).join('')
 }
 function renderDetail(root,side){
