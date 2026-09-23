@@ -457,6 +457,13 @@ function renderOverview(){
     const fracturedOpen=Boolean(state?.progression?.fracturedAgesUnlocked);
     const fracturedDone=(Number(state?.fracturedAgesCompletions)||0)>0;
     const pi=partyItemLevel();
+    const dungeonImages={
+      'ashen-vault':'./assets/dungeons/ashen-vault.webp',
+      'hollow-sanctum':'./assets/dungeons/hollow-sanctum.webp',
+      'chaos-canyon':'./assets/dungeons/chaos-canyon.webp',
+      'blackout-station':'./assets/dungeons/blackout-station.webp',
+      'fractured-ages':'./assets/dungeons/fractured-ages.webp'
+    };
     let dungeon;
     if(!ashenOpen||!ashenDone)dungeon={id:'ashen-vault',name:'The Ashen Vault',tag:ashenOpen?'AVAILABLE':'QUEST LOCKED',art:'THE ASHEN VAULT',copy:'Enter the ruined forge, break through its furnace halls and reach the living Vaultheart.',pips:3,active:Math.min(3,Object.values(state?.bossKills||{}).filter(Boolean).length||1),req:18};
     else if(hollowOpen&&!hollowDone)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:'NEWLY UNLOCKED',art:'THE HOLLOW SANCTUM',copy:'Descend beneath Zeltira into a crystal-grown shrine of echoes, guardians and the Bound Choir.',pips:3,active:1,req:24};
@@ -467,7 +474,7 @@ function renderOverview(){
     else if(hollowOpen)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:hollowDone?'CLEARED':'AVAILABLE',art:'THE HOLLOW SANCTUM',copy:hollowDone?'The Hollow Sanctum remains open for repeat runs.':'The Hollow Sanctum is open. Enter when your party is ready.',pips:3,active:hollowDone?3:1,req:24};
     else dungeon={id:'ashen-vault',name:'The Ashen Vault',tag:'CLEARED',art:'THE ASHEN VAULT',copy:'The Ashen Vault remains open while you follow the next lead.',pips:3,active:3,req:18};
     next.dataset.dungeon=dungeon.id;
-    next.innerHTML=`<div class="panel-head"><div><small>NEXT DUNGEON</small><h3>${dungeon.name}</h3></div><b>${dungeon.tag}</b></div><div class="dungeon-preview ${dungeon.id==='hollow-sanctum'?'hollow-preview':''}"><div class="dungeon-art"><span>${dungeon.art}</span></div><div><p>${dungeon.copy}</p><div class="boss-pips">${Array.from({length:dungeon.pips},(_,i)=>`<span class="${i<dungeon.active?'active':''}"></span>`).join('')}</div><small class="overview-dungeon-ilvl">Party iLvl ${pi||'—'} · Entry iLvl ${dungeon.req}+</small><button type="button" data-overview-dungeon="${dungeon.id}">VIEW DUNGEON →</button></div></div>`;
+    next.innerHTML=`<div class="panel-head"><div><small>NEXT DUNGEON</small><h3>${dungeon.name}</h3></div><b>${dungeon.tag}</b></div><div class="dungeon-preview ${dungeon.id==='hollow-sanctum'?'hollow-preview':''}"><div class="dungeon-art has-image" data-dungeon-art="${dungeon.id}"><img src="${dungeonImages[dungeon.id]}" alt="" aria-hidden="true"><span>${dungeon.art}</span></div><div><p>${dungeon.copy}</p><div class="boss-pips">${Array.from({length:dungeon.pips},(_,i)=>`<span class="${i<dungeon.active?'active':''}"></span>`).join('')}</div><small class="overview-dungeon-ilvl">Party iLvl ${pi||'—'} · Entry iLvl ${dungeon.req}+</small><button type="button" data-overview-dungeon="${dungeon.id}">VIEW DUNGEON →</button></div></div>`;
     next.querySelector('[data-overview-dungeon]')?.addEventListener('click',()=>{
       switchView('content');
       setTimeout(()=>window.CellboundDungeonBrowser?.open?.(dungeon.id),40)
