@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#0b1015">
 <title>Cellbound — Guild Command</title>
-<link rel="stylesheet" href="./guild.css?v=10">
+<link rel="stylesheet" href="./guild.css?v=11">
 <link rel="stylesheet" href="./bank.css?v=9">
 <link rel="stylesheet" href="./character-sheet.css?v=14">
 <link rel="stylesheet" href="./gear-system.css?v=10">
@@ -54,7 +54,6 @@
       <button class="nav-btn" data-hub="guild" data-view="roster"><span>♟</span><b>Roster</b></button>
       <button class="nav-btn" data-hub="guild" data-view="party" data-mobile-core><span>◆</span><b>Active Party</b></button>
       <button class="nav-btn" data-hub="guild" data-view="chat"><span>◌</span><b>Social</b><em id="chatNavBadge"></em></button>
-      <button class="nav-btn" data-hub="guild" data-view="reports"><span>▤</span><b>Run Reports</b></button>
 
       <div class="nav-section-label">ADVENTURE</div>
       <button class="nav-btn" data-hub="adventure" data-view="quests" data-mobile-core><span>⌁</span><b>Quests</b><em id="questNavBadge"></em></button>
@@ -268,6 +267,10 @@
 
     <section id="endgame" class="view">
       <div id="endgameHub"></div>
+      <section class="endgame-run-history">
+        <div class="section-intro"><div><small>EXPEDITION HISTORY</small><h2>Run Reports</h2><p>Review clears, wipes, Cell Shock gains, encounter mastery and recent dungeon expeditions in the same place as your endgame progression.</p></div></div>
+        <div id="reportsList" class="reports-list"></div>
+      </section>
     </section>
 
     <section id="world" class="view">
@@ -391,10 +394,6 @@
       </div>
     </section>
 
-    <section id="reports" class="view">
-      <div class="section-intro"><div><small>ENCOUNTER HISTORY</small><h2>Run Reports</h2><p>Wipes add Cell Shock and build encounter knowledge. Victory does not remove existing Cell Shock.</p></div></div>
-      <div id="reportsList" class="reports-list"></div>
-    </section>
   </main>
 </div>
 
@@ -412,7 +411,7 @@
 <script src="./endgame-data-v1.js?v=5"></script>
 <script src="./presentation-fx-v1.js?v=1"></script>
 <script src="./combat-polish-v2.js?v=1"></script>
-<script src="./guild-v4.js?v=33"></script>
+<script src="./guild-v4.js?v=34"></script>
 <script src="./pvp-combat-v1.js?v=2"></script>
 <script src="./pvp-viewer-v1.js?v=2"></script>
 <script src="./pvp-match-v1.js?v=1"></script>
@@ -438,7 +437,7 @@
 <script src="./fourfold-lock-v1.js?v=1"></script>
 <script src="./fractured-ages-v1.js?v=3"></script>
 <script src="./admin-v1.js?v=7"></script>
-<script src="./mobile-v1.js?v=2"></script>
+<script src="./mobile-v1.js?v=3"></script>
 <script src="./release-v1.js?v=3"></script>
 </body>
 </html>

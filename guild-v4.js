@@ -307,7 +307,7 @@ Storage.prototype.setItem=function(key,value){
 
 const WORKSPACES={
   overview:{label:'Home',views:[['overview','Home']]},
-  guild:{label:'Guild',views:[['roster','Roster'],['party','Active Party'],['chat','Social'],['reports','Run Reports']]},
+  guild:{label:'Guild',views:[['roster','Roster'],['party','Active Party'],['chat','Social']]},
   adventure:{label:'Adventure',views:[['quests','Quests'],['content','Dungeons'],['endgame','Endgame'],['world','Twelve Below']]},
   economy:{label:'Supplies',views:[['bank','Bank'],['professions','Professions'],['trading','Trading Post']]},
   pvp:{label:'Combat',views:[['pvp','PvP']]},
@@ -327,12 +327,11 @@ function switchView(id){
   if(ui.pageTitle)ui.pageTitle.textContent=VIEW_LABELS[id]||'Cellbound';
   renderWorkspaceTabs();
   if(id==='party')renderParty();
-  if(id==='reports')renderReports();
   if(id==='bank')renderBank();
   if(id==='professions')window.CellboundEconomy?.renderProfessions?.();
   if(id==='trading')window.CellboundEconomy?.renderTrading?.();
   if(id==='content'){renderBosses();safeFeatureRender('hollow-sanctum',()=>window.CellboundHollowSanctum?.renderCard?.());safeFeatureRender('chaos-canyon',()=>window.CellboundChaosCanyon?.renderCard?.());safeFeatureRender('blackout-station',()=>window.CellboundBlackoutStation?.renderCard?.());safeFeatureRender('fractured-ages',()=>window.CellboundFracturedAges?.renderCard?.())}
-  if(id==='endgame')window.CellboundEndgame?.render?.()
+  if(id==='endgame'){window.CellboundEndgame?.render?.();renderReports()}
   if(id==='roster')renderRoster();
   if(id==='quests')window.CellboundQuests?.render?.();
   window.dispatchEvent(new CustomEvent('cellbound:view-changed',{detail:{view:id,workspace:hub}}));

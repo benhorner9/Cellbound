@@ -4,7 +4,7 @@ const media=window.matchMedia('(max-width:720px)');
 let observer=null;
 
 const GROUPS=[
-  ['Guild',[['roster','♟','Roster'],['chat','◌','Social'],['reports','▤','Run Reports']]],
+  ['Guild',[['roster','♟','Roster'],['chat','◌','Social']]],
   ['Adventure',[['endgame','◇','Endgame'],['world','✦','Twelve Below']]],
   ['Supplies',[['professions','⚒','Professions'],['trading','⇄','Trading Post']]],
   ['Combat',[['pvp','⚔','PvP']]]

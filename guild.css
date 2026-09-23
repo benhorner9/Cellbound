@@ -249,3 +249,26 @@ body.recruit-adventurer-open{overflow:hidden}
   .season-card{padding:10px 12px}
   .season-card span{display:none}
 }
+
+
+/* Endgame + expedition history live as one destination. */
+.endgame-run-history{
+  margin-top:22px;
+  padding-top:22px;
+  border-top:1px solid rgba(113,188,181,.12);
+}
+.endgame-run-history .section-intro{
+  margin-bottom:12px;
+}
+.endgame-run-history .section-intro h2{
+  margin-top:4px;
+}
+.endgame-run-history .reports-list{
+  margin-top:0;
+}
+@media(max-width:720px){
+  .endgame-run-history{
+    margin-top:16px;
+    padding-top:16px;
+  }
+}
