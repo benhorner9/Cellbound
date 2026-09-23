@@ -24,6 +24,11 @@
 [data-cbvfx-theme="chaos"]{--cbvfx-a:rgba(170,119,55,.35);--cbvfx-b:rgba(101,135,69,.26)}
 [data-cbvfx-theme="blackout"]{--cbvfx-a:rgba(61,190,178,.34);--cbvfx-b:rgba(218,194,67,.17)}
 [data-cbvfx-theme="fractured"],[data-cbvfx-theme="quest"]{--cbvfx-a:rgba(143,91,196,.35);--cbvfx-b:rgba(207,164,75,.20)}
+[data-cbvfx-theme="fractured-west"]{--cbvfx-a:rgba(211,116,56,.34);--cbvfx-b:rgba(231,177,91,.22)}
+[data-cbvfx-theme="fractured-iron"]{--cbvfx-a:rgba(91,111,132,.30);--cbvfx-b:rgba(164,58,72,.20)}
+[data-cbvfx-theme="fractured-sun"]{--cbvfx-a:rgba(231,177,75,.32);--cbvfx-b:rgba(176,119,48,.19)}
+[data-cbvfx-theme="fractured-moon"]{--cbvfx-a:rgba(72,111,157,.30);--cbvfx-b:rgba(129,164,196,.18)}
+[data-cbvfx-theme="fractured-funhouse"]{--cbvfx-a:rgba(157,77,191,.34);--cbvfx-b:rgba(220,87,124,.22)}
 [data-cbvfx-theme="world"]{--cbvfx-a:rgba(193,73,74,.31);--cbvfx-b:rgba(222,165,69,.18)}
 
 [data-cbvfx-theme="pvp"]{--cbvfx-a:rgba(69,169,163,.25);--cbvfx-b:rgba(99,124,154,.17)}
@@ -57,6 +62,33 @@
   animation:cbvfxGridScan 8s linear infinite
 }
 [data-cbvfx-theme="blackout"] .cbvfx-sweep{opacity:.075;background:linear-gradient(90deg,transparent,rgba(78,221,211,.8),transparent);animation-duration:8s}
+
+[data-cbvfx-theme="fractured-west"] .cbvfx-motes{
+  opacity:.24;background-image:radial-gradient(ellipse,rgba(240,183,117,.46) 0 1px,transparent 1.8px);background-size:43px 37px;animation:cbvfxDust 11s linear infinite
+}
+[data-cbvfx-theme="fractured-west"] .cbvfx-sweep{opacity:.055;background:linear-gradient(90deg,transparent,rgba(255,199,121,.7),transparent)}
+[data-cbvfx-theme="fractured-iron"] .cbvfx-motes{
+  opacity:.20;background-image:radial-gradient(circle,rgba(195,88,75,.5) 0 1px,transparent 1.7px);background-size:57px 73px;animation:cbvfxMotes 12s linear infinite
+}
+[data-cbvfx-theme="fractured-iron"] .cbvfx-sweep{opacity:.045;background:linear-gradient(90deg,transparent,rgba(141,167,187,.66),transparent)}
+[data-cbvfx-theme="fractured-sun"] .cbvfx-motes{
+  opacity:.23;background-image:radial-gradient(circle,rgba(255,220,137,.55) 0 1px,transparent 1.6px);background-size:76px 59px;animation:cbvfxHollowDrift 18s ease-in-out infinite alternate
+}
+[data-cbvfx-theme="fractured-sun"] .cbvfx-haze.h1{filter:blur(34px);opacity:.14}
+[data-cbvfx-theme="fractured-moon"] .cbvfx-motes{
+  opacity:.28;background-image:radial-gradient(circle,rgba(204,226,255,.68) 0 1px,transparent 1.5px);background-size:91px 78px;animation:cbvfxStarDrift 24s linear infinite
+}
+[data-cbvfx-theme="fractured-moon"] .cbvfx-sweep{opacity:.028;background:linear-gradient(90deg,transparent,rgba(156,195,235,.8),transparent)}
+[data-cbvfx-theme="fractured-funhouse"] .cbvfx-motes{
+  opacity:.24;background-image:
+    linear-gradient(45deg,transparent 48%,rgba(213,110,232,.30) 49% 51%,transparent 52%),
+    linear-gradient(-45deg,transparent 48%,rgba(236,108,135,.24) 49% 51%,transparent 52%);
+  background-size:67px 67px,97px 97px;animation:cbvfxFunhouse 8s ease-in-out infinite alternate
+}
+[data-cbvfx-theme="fractured-funhouse"] .cbvfx-sweep{opacity:.075;background:linear-gradient(90deg,transparent,rgba(224,114,235,.76),rgba(255,116,143,.58),transparent);animation-duration:7s}
+@keyframes cbvfxStarDrift{to{transform:translate3d(-4%,7%,0)}}
+@keyframes cbvfxFunhouse{to{transform:translate3d(5%,-4%,0) rotate(1.8deg) scale(1.03)}}
+
 [data-cbvfx-theme="fractured"] .cbvfx-motes,
 [data-cbvfx-theme="quest"] .cbvfx-motes{
   opacity:.22;
