@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.7.0';
+const VERSION='1.8.0';
 const TICK=250;
 const MAX_ARENA_MS=90000;
 const MAX_BG_MS=120000;
@@ -285,7 +285,7 @@ function applyDamage(ctx,source,target,raw,ability,critical=false){
 }
 function arenaDampening(ctx){
   if(ctx?.kind!=='arena'||ctx.time<45000)return 0;
-  return clamp((Math.floor((ctx.time-45000)/15000)+1)*.10,0,.30)
+  return clamp((Math.floor((ctx.time-45000)/15000)+1)*.20,0,.60)
 }
 function applyHeal(ctx,source,target,raw,ability){
   if(!source?.alive||!target?.alive||!hasLineOfSight(ctx,source,target))return 0;
@@ -541,6 +541,12 @@ const ARENA_STORM_PHASES=[
 function arenaPhaseForTime(time){
   let index=0;for(let i=0;i<ARENA_STORM_PHASES.length;i++)if(time>=ARENA_STORM_PHASES[i].at)index=i;return index
 }
+function arenaStormAtTime(time){
+  const index=arenaPhaseForTime(time),a=ARENA_STORM_PHASES[index],b=ARENA_STORM_PHASES[Math.min(index+1,ARENA_STORM_PHASES.length-1)];
+  if(!b||a===b)return{...a,phase:index};
+  const span=Math.max(1,b.at-a.at),t=clamp((time-a.at)/span,0,1),lerp=(x,y)=>x+(y-x)*t;
+  return{...a,phase:index,radius:lerp(a.radius,b.radius),x:lerp(a.x,b.x),y:lerp(a.y,b.y),damage:lerp(a.damage,b.damage)}
+}
 function arenaState(ctx){return ctx?.objective?.storm||{...ARENA_STORM_PHASES[0],phase:0}}
 function arenaDistance(u,storm=arenaState({})){return Math.hypot(u.position.x-storm.x,u.position.y-storm.y)}
 function arenaSafePoint(ctx,u,storm=arenaState(ctx)){
@@ -592,7 +598,9 @@ function arenaTick(ctx){
   const wanted=arenaPhaseForTime(ctx.time);
   if(wanted!==Number(ctx.objective.stormPhase||0))arenaSetPhase(ctx,wanted,false);
   if(ctx.time%1000!==0)return;
+  ctx.objective.storm=arenaStormAtTime(ctx.time);
   const storm=arenaState(ctx);
+  emit(ctx,'ARENA_STATE',{result:'storm-progress',payload:{phase:storm.phase,radius:Number(storm.radius.toFixed(2)),x:Number(storm.x.toFixed(2)),y:Number(storm.y.toFixed(2)),damagePct:Math.round(storm.damage*100),dampeningPct:Math.round(arenaDampening(ctx)*100)}});
   for(const u of ctx.units){
     if(!u.alive)continue;
     const outside=arenaDistance(u,storm)>storm.radius;
