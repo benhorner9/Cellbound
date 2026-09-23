@@ -197,20 +197,26 @@ function bind(){
 function toggleArenaChar(id){
   if(arenaSelection.includes(id))arenaSelection=arenaSelection.filter(x=>x!==id);else if(arenaSelection.length<arenaSize)arenaSelection.push(id);render()
 }
-function makeEnemyUnits(count){
-  const names=['Vex','Rook','Nyra','Kade','Mara','Thorn','Iris','Vale','Ash','Renn'];
-  return Array.from({length:count},(_,i)=>({id:`enemy-${i}`,name:names[i%names.length]+(i>=names.length?` ${Math.floor(i/names.length)+1}`:''),portrait:'◆'}))
+const PVP_RIVAL_TEMPLATES=[
+  {class:'Warrior',spec:'Protection',role:'tank'},{class:'Priest',spec:'Holy',role:'healer'},{class:'Rogue',spec:'Assassination',role:'dps'},
+  {class:'Hunter',spec:'Marksman',role:'dps'},{class:'Mage',spec:'Arcane',role:'dps'},{class:'Paladin',spec:'Holy',role:'healer'},
+  {class:'Paladin',spec:'Protection',role:'tank'},{class:'Druid',spec:'Restoration',role:'healer'}
+];
+function pvpCombatInput(c){
+  const g=pvpGearScore(c);
+  return {...c,role:classRole(c),pvpPower:characterPvpPower(c),pvpDefence:g.defence,controlResistance:g.control}
 }
-function makeAlliedUnits(count){
-  return Array.from({length:Math.max(0,count)},(_,i)=>({id:`ally-${i}`,name:`Allied ${Math.floor(i/5)+2} · ${i%5+1}`,portrait:'◇'}))
+function makeEnemyUnits(count,power=125,defence=12,control=6){
+  const names=['Vex','Rook','Nyra','Kade','Mara','Thorn','Iris','Vale','Ash','Renn','Cinder','Orin','Tessa','Bram','Selene','Doran','Lumi','Corin','Rhea','Aeris'];
+  return Array.from({length:count},(_,i)=>{const t=PVP_RIVAL_TEMPLATES[i%PVP_RIVAL_TEMPLATES.length],variance=.92+Math.random()*.16;return{id:`enemy-${i}`,name:names[i%names.length]+(i>=names.length?` ${Math.floor(i/names.length)+1}`:''),portrait:'◆',...t,level:Math.max(1,Math.round(availableRoster()[0]?.level||10)),pvpPower:Math.round(power*variance),pvpDefence:Math.round(defence*variance),controlResistance:Math.round(control*variance)}})
 }
-function battlegroundObjective(mode,win){
-  if(mode==='capture-the-flag'){
-    const ours=win?3:Math.floor(Math.random()*3),theirs=win?Math.floor(Math.random()*Math.max(1,ours)):Math.max(3,ours+1);
-    return {ours,theirs,text:`${ours}–${theirs}`,objectives:ours,summary:win?`Your commanders broke the enemy defence and returned ${ours} Cell Standard${ours===1?'':'s'}.`:`The opposition controlled the flag routes and shut down your final push.`}
-  }
-  const ours=win?100:Math.floor(45+Math.random()*50),theirs=win?Math.floor(45+Math.random()*50):100;
-  return {ours,theirs,text:`${ours}–${theirs}`,objectives:Math.max(1,Math.round(ours/25)),summary:win?'Your parties held the Cell node through the final pressure window.':'The enemy forced your parties off the Cell node before the final scoring pulse.'}
+function makeAlliedUnits(count,power=125,defence=10,control=5){
+  return Array.from({length:Math.max(0,count)},(_,i)=>{const t=PVP_RIVAL_TEMPLATES[i%PVP_RIVAL_TEMPLATES.length];return{id:`ally-${i}`,name:`Allied ${Math.floor(i/5)+2} · ${i%5+1}`,portrait:'◇',...t,level:Math.max(1,Math.round(availableRoster()[0]?.level||10)),pvpPower:Math.round(power*(.94+Math.random()*.12)),pvpDefence:defence,controlResistance:control}})
+}
+function pvpSummary(kind,mode,win,result){
+  if(kind==='arena')return win?'Your squad wins the final exchange and eliminates the opposing team.':'The opposing squad survives the final pressure window and finishes your team.';
+  if(mode==='capture-the-flag')return win?`Your side wins the flag war ${result.scoreText}, converting pressure into successful Cell Standard captures.`:`The opposition controls the flag routes and wins ${result.scoreText}.`;
+  return win?`Your side controls the Cell node and wins the hill ${result.scoreText}.`:`The opposition forces your side off the Cell node and wins ${result.scoreText}.`
 }
 function applyShock(chars,delta){
   const e=game()?.getEntitlements?.()||{recoveryMinutes:60};
@@ -219,45 +225,41 @@ function applyShock(chars,delta){
     if(c.cellShock>=100&&!c.cellShockLockedUntil)c.cellShockLockedUntil=new Date(Date.now()+Number(e.recoveryMinutes||60)*60000).toISOString();
   })
 }
-function beginVisual(match,finish){
+function beginVisual(match,result,finish){
   const stage=$('#pvpMatchStage');if(!stage){finish();return}
-  stage.innerHTML=matchStageMarkup(match);stage.scrollIntoView?.({behavior:'smooth',block:'nearest'});
-  const log=$('#pvpLiveLog'),blue=$('#pvpBlueBar'),red=$('#pvpRedBar');
-  const events=match.kind==='arena'?[`The ${match.size}v${match.size} gates close.`,`Opening cooldowns are committed.`,`Both squads trade control and defensive abilities.`,`A target drops into execute range.`,`The final exchange decides the round.`]:match.mode==='capture-the-flag'?['The gates open. Both sides split attack and defence.','Your flag carrier crosses midfield under pressure.','A counter-push hits the return route.','Defenders collapse around the Cell Standard.','The final flag run begins.']:['Both teams crash into the central Cell node.','The first control pulse is contested.','Healers stabilise through the mid-field pressure.','A coordinated push clears the hill.','Final scoring pulse incoming.'];
-  let i=0;const timer=setInterval(()=>{
-    if(log)log.textContent=events[Math.min(i,events.length-1)];
-    const progress=(i+1)/events.length;
-    if(blue)blue.style.width=`${clamp(100-progress*(match.win?28:72),18,100)}%`;
-    if(red)red.style.width=`${clamp(100-progress*(match.win?72:28),18,100)}%`;
-    i++;if(i>=events.length){clearInterval(timer);setTimeout(finish,350)}
-  },360)
+  const viewer=window.CellboundPvPViewer;
+  if(!viewer?.play){stage.innerHTML='<article class="pvp-panel pvp-result defeat"><p>PvP combat viewer failed to load.</p></article>';matchRunning=false;return}
+  viewer.play({stage,match,result,onComplete:finish})
 }
 function runBattleground(){
   if(matchRunning)return;const p=ensureState(),chars=activeParty(),ready=squadStatus(chars);if(!ready.ok)return;
+  const engine=window.CellboundPvPCombat;if(!engine?.simulate){alert('PvP combat engine is unavailable. Reload Cellbound and try again.');return}
   matchRunning=true;render();
-  const commanderCount=BG_SIZES[battlegroundSize].commanders,own=teamPower(chars,battlegroundMode)*commanderCount,difficulty=own*(.92+Math.random()*.16),objectiveBias=battlegroundMode==='king-of-the-hill'?chars.filter(c=>['tank','healer'].includes(classRole(c))).length*.018:chars.filter(c=>classRole(c)==='dps').length*.012;
-  const chance=clamp(.5+(own-difficulty)/Math.max(1,own)*.75+objectiveBias-.035,.28,.72),win=Math.random()<chance,obj=battlegroundObjective(battlegroundMode,win),rewards=BG_SIZES[battlegroundSize];
-  const bonus=Math.min(Math.round(rewards.winMarks*.35),obj.objectives*4),currency=(win?rewards.winMarks:rewards.lossMarks)+bonus,rankXp=(win?rewards.winXp:rewards.lossXp)+obj.objectives*8,shockDelta=win?-2:2;
-  const match={kind:'battleground',mode:battlegroundMode,size:battlegroundSize,win,scoreText:obj.text,currency,rankXp,objectives:obj.objectives,shockDelta,summary:obj.summary,playerUnits:[...chars,...makeAlliedUnits(battlegroundSize-5)],enemyUnits:makeEnemyUnits(battlegroundSize)};
-  beginVisual(match,()=>{
-    p.warMarks+=currency;p.bgXp+=rankXp;p.bgObjectives+=obj.objectives;if(win)p.bgWins++;else p.bgLosses++;applyShock(chars,shockDelta);
-    p.matchHistory.unshift({at:nowIso(),kind:'battleground',mode:battlegroundMode,size:battlegroundSize,win,currency,rankXp,score:obj.text});p.matchHistory=p.matchHistory.slice(0,40);
-    state().activity?.push?.(`${win?'Won':'Lost'} ${battlegroundSize}v${battlegroundSize} ${MODE_DEFS[battlegroundMode].name}: ${obj.text}.`);
+  const playerCore=chars.map(pvpCombatInput),avgPower=playerCore.reduce((n,x)=>n+x.pvpPower,0)/Math.max(1,playerCore.length),avgDef=playerCore.reduce((n,x)=>n+(x.pvpDefence||0),0)/Math.max(1,playerCore.length),avgControl=playerCore.reduce((n,x)=>n+(x.controlResistance||0),0)/Math.max(1,playerCore.length);
+  const allies=makeAlliedUnits(battlegroundSize-5,avgPower,avgDef,avgControl),enemyScale=.94+Math.random()*.12,enemies=makeEnemyUnits(battlegroundSize,avgPower*enemyScale,avgDef,avgControl),blue=[...playerCore,...allies];
+  const result=engine.simulate({blue,red:enemies,kind:'battleground',mode:battlegroundMode,size:battlegroundSize,seed:[currentUser?.id||'guild',p.matchHistory.length,battlegroundMode,battlegroundSize,Date.now()].join(':')});
+  const win=result.outcome==='victory',rewards=BG_SIZES[battlegroundSize],objectives=battlegroundMode==='capture-the-flag'?Number(result.score?.blue)||0:Math.max(1,Math.round((Number(result.score?.blue)||0)/25)),bonus=Math.min(Math.round(rewards.winMarks*.35),objectives*4),currency=(win?rewards.winMarks:rewards.lossMarks)+bonus,rankXp=(win?rewards.winXp:rewards.lossXp)+objectives*8,shockDelta=win?-2:2;
+  const match={kind:'battleground',mode:battlegroundMode,size:battlegroundSize,win,scoreText:result.scoreText,currency,rankXp,objectives,shockDelta,summary:pvpSummary('battleground',battlegroundMode,win,result),playerUnits:blue,enemyUnits:enemies};
+  beginVisual(match,result,()=>{
+    p.warMarks+=currency;p.bgXp+=rankXp;p.bgObjectives+=objectives;if(win)p.bgWins++;else p.bgLosses++;applyShock(chars,shockDelta);
+    p.matchHistory.unshift({at:nowIso(),kind:'battleground',mode:battlegroundMode,size:battlegroundSize,win,currency,rankXp,score:result.scoreText,kills:result.summary?.blue?.kills||0,deaths:result.summary?.blue?.deaths||0});p.matchHistory=p.matchHistory.slice(0,40);
+    state().activity?.push?.(`${win?'Won':'Lost'} ${battlegroundSize}v${battlegroundSize} ${MODE_DEFS[battlegroundMode].name}: ${result.scoreText}.`);
     if(arenaUnlocked(p)&&!p.arenaUnlockedAt){p.arenaUnlockedAt=nowIso();state().activity?.push?.('The Arena has opened. Rated PvP is now available.')}
     lastMatch=match;matchRunning=false;game()?.save?.();game()?.renderAll?.();render()
   })
 }
 function runArena(){
   if(matchRunning)return;const p=ensureState();if(!arenaUnlocked(p))return;
+  const engine=window.CellboundPvPCombat;if(!engine?.simulate){alert('PvP combat engine is unavailable. Reload Cellbound and try again.');return}
   const chars=arenaSelection.map(id=>state()?.roster?.find(c=>c.id===id)).filter(c=>c&&!game()?.isUnavailable?.(c));if(chars.length!==arenaSize)return;
   matchRunning=true;render();
-  const own=teamPower(chars,'arena'),oppRating=Math.max(700,Math.round(p.arenaRating-110+Math.random()*220)),oppPower=own*(.90+Math.random()*.20)*(1+(oppRating-p.arenaRating)/5000),expected=1/(1+Math.pow(10,(oppRating-p.arenaRating)/400)),powerAdj=clamp((own-oppPower)/Math.max(1,own)*.7,-.12,.12),win=Math.random()<clamp(expected+powerAdj,.22,.78);
+  const blue=chars.map(pvpCombatInput),own=teamPower(chars,'arena'),oppRating=Math.max(700,Math.round(p.arenaRating-110+Math.random()*220)),expected=1/(1+Math.pow(10,(oppRating-p.arenaRating)/400)),avgPower=blue.reduce((n,x)=>n+x.pvpPower,0)/Math.max(1,blue.length),avgDef=blue.reduce((n,x)=>n+(x.pvpDefence||0),0)/Math.max(1,blue.length),avgControl=blue.reduce((n,x)=>n+(x.controlResistance||0),0)/Math.max(1,blue.length),ratingScale=clamp(1+(oppRating-p.arenaRating)/1800,.88,1.14),red=makeEnemyUnits(arenaSize,avgPower*ratingScale,avgDef*ratingScale,avgControl);
+  const result=engine.simulate({blue,red,kind:'arena',mode:'arena',size:arenaSize,seed:[currentUser?.id||'guild',p.matchHistory.length,'arena',arenaSize,Date.now()].join(':')}),win=result.outcome==='victory';
   const k=32,ratingDelta=Math.round(k*((win?1:0)-expected)),ratingBefore=Math.round(p.arenaRating),ratingAfter=Math.max(0,ratingBefore+ratingDelta),reward=win?ARENA_FORMATS[arenaSize].win:ARENA_FORMATS[arenaSize].loss,shockDelta=win?-4:4;
-  const ownAlive=win?Math.max(1,Math.ceil(arenaSize*(.35+Math.random()*.65))):Math.floor(Math.random()*Math.max(1,arenaSize)),enemyAlive=win?Math.floor(Math.random()*Math.max(1,arenaSize)):Math.max(1,Math.ceil(arenaSize*(.35+Math.random()*.65)));
-  const match={kind:'arena',size:arenaSize,win,scoreText:`${ownAlive}–${enemyAlive} standing`,currency:reward,rankXp:0,objectives:0,shockDelta,ratingDelta,ratingBefore,ratingAfter,summary:win?'Your selected squad controlled the decisive target and closed the round.':'The opposing guild survived the pressure window and finished your remaining squad.',playerUnits:chars,enemyUnits:makeEnemyUnits(arenaSize)};
-  beginVisual(match,()=>{
+  const match={kind:'arena',size:arenaSize,win,scoreText:result.scoreText+' standing',currency:reward,rankXp:0,objectives:0,shockDelta,ratingDelta,ratingBefore,ratingAfter,summary:pvpSummary('arena','arena',win,result),playerUnits:blue,enemyUnits:red};
+  beginVisual(match,result,()=>{
     p.arenaSeals+=reward;p.arenaRating=ratingAfter;if(win){p.arenaWins++;p.season.wins++}else{p.arenaLosses++;p.season.losses++}p.season.bestRating=Math.max(Number(p.season.bestRating)||1000,ratingAfter);applyShock(chars,shockDelta);
-    p.matchHistory.unshift({at:nowIso(),kind:'arena',size:arenaSize,win,reward,ratingDelta,ratingAfter});p.matchHistory=p.matchHistory.slice(0,40);state().activity?.push?.(`${win?'Won':'Lost'} ${arenaSize}v${arenaSize} Arena · rating ${ratingBefore} → ${ratingAfter}.`);
+    p.matchHistory.unshift({at:nowIso(),kind:'arena',size:arenaSize,win,reward,ratingDelta,ratingAfter,kills:result.summary?.blue?.kills||0,deaths:result.summary?.blue?.deaths||0});p.matchHistory=p.matchHistory.slice(0,40);state().activity?.push?.(`${win?'Won':'Lost'} ${arenaSize}v${arenaSize} Arena · rating ${ratingBefore} → ${ratingAfter}.`);
     lastMatch=match;matchRunning=false;game()?.save?.();game()?.renderAll?.();render()
   })
 }
@@ -271,7 +273,7 @@ function buyGear(tier,slot){
   game()?.save?.();render()
 }
 
-window.CellboundPvP={version:'1.0.0',render,arenaUnlocked,getRank:()=>bgRank(ensureState()),getState:()=>ensureState()};
+window.CellboundPvP={version:'1.1.0',render,arenaUnlocked,getRank:()=>bgRank(ensureState()),getState:()=>ensureState()};
 window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='pvp')render()});
 let bootTries=0;const boot=setInterval(()=>{bootTries++;if(game()?.ready){clearInterval(boot);ensureState();if($('#pvp')?.classList.contains('active'))render()}else if(bootTries>80)clearInterval(boot)},125);
 })();
