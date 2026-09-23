@@ -39,6 +39,7 @@
 <link rel="stylesheet" href="./combat-vitals-ui-v1.css?v=2">
   <link rel="stylesheet" href="./readability-v1.css?v=2">
   <link rel="stylesheet" href="./ui-readability-v2.css?v=2">
+  <link rel="stylesheet" href="./ui-polish-v3.css?v=1">
 </head>
 <body>
 <div class="app-shell">
@@ -52,13 +53,13 @@
       <button class="nav-btn" data-hub="pvp" data-view="pvp"><span>⚔</span><b>PvP</b></button>
       <button id="adminNav" class="nav-btn" data-hub="admin" data-view="admin" hidden><span>⚙</span><b>Admin</b><em>DEV</em></button>
     </nav>
-    <div class="season-card"><small>FOUNDING SEASON</small><b>Week 1</b><span>Build, gear and manage your first five.</span></div>
+    <div class="season-card"><small>FOUNDING SEASON</small><b>Week 1</b><span>Build your first five. Gear them. Push deeper.</span></div>
     <button id="signOut" class="sign-out">Sign out</button>
   </aside>
 
   <main class="main">
     <header class="topbar">
-      <div><small>THE GUILDMASTER'S DESK</small><h1 id="pageTitle">Command Overview</h1><span id="syncStatus" class="sync-status">Loading…</span></div>
+      <div><small>THE GUILDMASTER'S DESK</small><h1 id="pageTitle">Overview</h1><span id="syncStatus" class="sync-status">Loading…</span></div>
       <div class="resource-strip">
         <div><span>Guild Renown</span><b id="renown">120</b></div>
         <div><span>Gold</span><b id="gold">1,840</b></div>
@@ -75,18 +76,18 @@
 
     <section id="overview" class="view active">
       <div class="hero-card">
-        <div><small>CELLBOUND</small><h2>Your heroes fight.<br>You build the team that wins.</h2><p>Manage a five-character party, develop individual builds, improve Item Level and decide who is ready for the next encounter.</p></div>
-        <div id="questHomeObjective" class="hero-stat"><span>Current Objective</span><b>Prepare your active five-character party</b><button data-jump="party">MANAGE PARTY →</button></div>
+        <div><small>CELLBOUND</small><h2>Your heroes fight.<br>You build the team that wins.</h2><p>Build your five, tune their gear and decide what they are ready to face.</p></div>
+        <div id="questHomeObjective" class="hero-stat"><span>Current Objective</span><b>Prepare your active five</b><button data-jump="party">MANAGE PARTY →</button></div>
       </div>
       <div class="dashboard-grid">
-        <article class="panel"><div class="panel-head"><div><small>ACTIVE ROSTER</small><h3>Your Adventurers</h3></div><b class="good">5 PARTY SLOTS</b></div><div id="overviewRoster" class="mini-roster"></div></article>
-        <article class="panel" id="overviewNextDungeon"><div class="panel-head"><div><small>NEXT DUNGEON</small><h3>Dungeon Expedition</h3></div><b>CHECKING</b></div><div class="dungeon-preview"><div class="dungeon-art"><span>DUNGEONS</span></div><div><p>Reviewing your unlocked expeditions…</p><button data-jump="content">VIEW DUNGEONS →</button></div></div></article>
+        <article class="panel"><div class="panel-head"><div><small>ACTIVE ROSTER</small><h3>Active Roster</h3></div><b class="good">5 PARTY SLOTS</b></div><div id="overviewRoster" class="mini-roster"></div></article>
+        <article class="panel" id="overviewNextDungeon"><div class="panel-head"><div><small>NEXT DUNGEON</small><h3>Dungeon Expedition</h3></div><b>CHECKING</b></div><div class="dungeon-preview"><div class="dungeon-art"><span>DUNGEONS</span></div><div><p>Checking unlocked dungeons…</p><button data-jump="content">VIEW DUNGEONS →</button></div></div></article>
         <article class="panel activity-panel"><div class="panel-head"><div><small>GUILD LOG</small><h3>Recent Activity</h3></div></div><div id="activityLog" class="activity-log"></div></article>
       </div>
     </section>
 
     <section id="roster" class="view">
-      <div class="section-intro roster-intro"><div><small>YOUR ADVENTURING COMPANY</small><h2>Roster</h2><p>Review every adventurer, compare readiness and decide who earns a place in the active five.</p></div><div class="filters roster-role-filters"><button class="filter active" data-filter="all">All Roles</button><button class="filter" data-filter="tank">Tanks</button><button class="filter" data-filter="healer">Healers</button><button class="filter" data-filter="dps">Damage</button></div></div>
+      <div class="section-intro roster-intro"><div><small>YOUR ADVENTURING COMPANY</small><h2>Roster</h2><p>Review your roster and choose the active five.</p></div><div class="filters roster-role-filters"><button class="filter active" data-filter="all">All Roles</button><button class="filter" data-filter="tank">Tanks</button><button class="filter" data-filter="healer">Healers</button><button class="filter" data-filter="dps">Damage</button></div></div>
       <div class="roster-command-bar panel">
         <div class="roster-company-summary"><span>ACTIVE COMPANY</span><b id="rosterActiveSummary">5 / 5 deployed</b><small id="rosterRecoverySummary">All available</small></div>
         <label class="ui-search"><span>⌕</span><input id="rosterSearch" type="search" placeholder="Search adventurers"></label>
@@ -99,7 +100,7 @@
     </section>
 
     <section id="bank" class="view">
-      <div class="section-intro"><div><small>GUILD VAULT</small><h2>Bank</h2><p>Sort the guild's spoils, identify upgrades, equip what matters and sell or dismantle equipment you no longer need.</p></div><div class="bank-intro-actions"><div id="bankUpgradeLegend" class="bank-upgrade-legend">UPGRADES ARE CALCULATED AGAINST YOUR ROSTER</div><button id="bankSelectJunk" class="ghost-btn" type="button">SELECT JUNK</button><button id="bankBulkToggle" class="ghost-btn" type="button" aria-pressed="false">SELECT ITEMS</button></div></div>
+      <div class="section-intro"><div><small>GUILD VAULT</small><h2>Bank</h2><p>Equip upgrades, protect favourites, and clear out gear you no longer need.</p></div><div class="bank-intro-actions"><div id="bankUpgradeLegend" class="bank-upgrade-legend">UPGRADES ARE CALCULATED AGAINST YOUR ROSTER</div><button id="bankSelectJunk" class="ghost-btn" type="button">SELECT JUNK</button><button id="bankBulkToggle" class="ghost-btn" type="button" aria-pressed="false">SELECT ITEMS</button></div></div>
       <div id="bankSummary" class="bank-summary"></div>
       <div class="bank-command-bar panel">
         <label class="ui-search"><span>⌕</span><input id="bankSearch" type="search" placeholder="Search the vault"></label>
@@ -118,7 +119,7 @@
     </section>
 
     <section id="professions" class="view">
-      <div class="section-intro"><div><small>CRAFTING & PREPARATION</small><h2>Professions</h2><p>Use reagents from dungeons to craft tradeable potions, flasks, runes and temporary item enhancements.</p></div><b class="economy-badge">SKILL 1–100</b></div>
+      <div class="section-intro"><div><small>CRAFTING & PREPARATION</small><h2>Professions</h2><p>Turn dungeon reagents into potions, flasks, runes and temporary gear enhancements.</p></div><b class="economy-badge">SKILL 1–100</b></div>
       <div class="profession-layout">
         <aside class="panel profession-roster-panel"><div class="panel-head"><div><small>ADVENTURERS</small><h3>Profession Slots</h3></div></div><div id="professionCharacterList" class="profession-character-list"></div></aside>
         <div class="profession-main">
@@ -130,7 +131,7 @@
     </section>
 
     <section id="trading" class="view">
-      <div class="section-intro"><div><small>PLAYER ECONOMY</small><h2>Trading Post</h2><p>Browse rolled equipment, trade commodities through live buy and sell orders, follow price history and manage your market activity.</p></div></div>
+      <div class="section-intro"><div><small>PLAYER ECONOMY</small><h2>Trading Post</h2><p>Buy and sell equipment, reagents and crafted goods. Check prices before you trade.</p></div></div>
 
       <div class="tp-shell">
         <div class="tp-market-bar">
@@ -224,7 +225,7 @@
     </section>
 
     <section id="chat" class="view">
-      <div class="section-intro"><div><small>PLAYER NETWORK</small><h2>Chat</h2><p>Talk with other guildmasters, advertise trades and find groups for dungeons.</p></div><button id="refreshSocial" class="ghost-btn">REFRESH</button></div>
+      <div class="section-intro"><div><small>PLAYER NETWORK</small><h2>Chat</h2><p>Chat, trade and find groups.</p></div><button id="refreshSocial" class="ghost-btn">REFRESH</button></div>
       <div class="social-layout">
         <div class="panel chat-panel">
           <div class="chat-tabs"><button class="active" data-chat-channel="world">WORLD</button><button data-chat-channel="trade">TRADE</button><button data-chat-channel="party">PARTY FINDER</button></div>
@@ -242,7 +243,7 @@
     </section>
 
     <section id="pvp" class="view">
-      <div class="section-intro"><div><small>PLAYER VERSUS PLAYER</small><h2>The Crucible</h2><p>Enter objective battlegrounds, earn dedicated PvP equipment and prove your guild in rated Arena.</p></div></div>
+      <div class="section-intro"><div><small>PLAYER VERSUS PLAYER</small><h2>The Crucible</h2><p>Fight battlegrounds, earn PvP gear and climb the Arena ladder.</p></div></div>
       <div id="pvpMount"></div>
     </section>
 
@@ -251,12 +252,12 @@
     </section>
 
     <section id="world" class="view">
-      <div class="section-intro"><div><small>WORLD EVENT</small><h2>The Twelve Below</h2><p>The Sepulchre of Twelve is the current world-scale challenge. Bring your active five, survive the rising vices and chase class relics.</p></div></div>
+      <div class="section-intro"><div><small>WORLD EVENT</small><h2>The Twelve Below</h2><p>Enter the Sepulchre with your active five. Survive all twelve vices and chase ancient relics.</p></div></div>
       <div id="twelveBelowMount"></div>
     </section>
 
     <section id="quests" class="view">
-      <div class="section-intro quest-intro"><div><small>ADVENTURES & MYSTERIES</small><h2>Quest Journal</h2><p>Follow leads, question locals, carry strange items and uncover places your guild would otherwise miss.</p></div><div id="questCampaignStatus" class="quest-campaign-status">ADVENTURE AVAILABLE</div></div>
+      <div class="section-intro quest-intro"><div><small>ADVENTURES & MYSTERIES</small><h2>Quest Journal</h2><p>Follow leads, solve puzzles and uncover hidden places.</p></div><div id="questCampaignStatus" class="quest-campaign-status">ADVENTURE AVAILABLE</div></div>
       <div class="quest-journal-shell">
         <aside class="panel quest-journal-nav">
           <div class="quest-tabs"><button class="active" data-quest-tab="active">ACTIVE</button><button data-quest-tab="campaign">ADVENTURES</button><button data-quest-tab="completed">COMPLETED</button></div>
@@ -268,7 +269,7 @@
     </section>
 
     <section id="content" class="view">
-      <div class="section-intro dungeon-intro"><div><small>DUNGEON JOURNAL</small><h2>Dungeons</h2><p>Choose a dungeon. Open More Info for the route, bosses, entry requirements and rewards.</p></div><div class="content-status"><span>Available</span><b id="dungeonBrowserStatus">Checking unlocks…</b></div></div>
+      <div class="section-intro dungeon-intro"><div><small>DUNGEON JOURNAL</small><h2>Dungeons</h2><p>Choose a dungeon to see its route, bosses, requirements and rewards.</p></div><div class="content-status"><span>Available</span><b id="dungeonBrowserStatus">Checking unlocks…</b></div></div>
 
       <div id="dungeonBrowser" class="dungeon-browser-grid">
         <article id="ashenDungeonCard" class="dungeon-browser-card ashen" data-dungeon-card="ashen-vault">
@@ -305,13 +306,13 @@
     </section>
 
     <section id="party" class="view">
-      <div class="section-intro"><div><small>ACTIVE PARTY</small><h2>Party Builder</h2><p>Build any five-character party. Each adventurer’s active specialisation decides their combat role, so unusual compositions are allowed.</p></div><button id="autoFill" class="ghost-btn">AUTO-FILL</button></div>
+      <div class="section-intro"><div><small>ACTIVE PARTY</small><h2>Party Builder</h2><p>Choose any five adventurers. Their active specialisations set their combat roles.</p></div><button id="autoFill" class="ghost-btn">AUTO-FILL</button></div>
       <div class="party-layout">
         <div class="formation-panel panel">
           <div class="panel-head"><div><small>FORMATION</small><h3>Active Five</h3></div><b id="readinessLabel">NOT READY</b></div>
           <div id="partySlots" class="party-slots"></div>
-          <div class="readiness"><div class="readiness-line"><span>Party Readiness</span><b id="readinessText">0%</b></div><div class="readiness-bar"><i id="readinessFill"></i></div><p id="readinessHint">Fill all five party slots. Any role composition is allowed.</p></div>
-          <div class="party-dungeon-cta"><div><small>COMBAT ENTRY</small><b>Choose the expedition in the Dungeon Journal.</b><span>All dungeon combat now runs through the authoritative Combat Reborn encounter engine.</span></div><button id="partyOpenDungeons" type="button">OPEN DUNGEON JOURNAL →</button></div>
+          <div class="readiness"><div class="readiness-line"><span>Party Readiness</span><b id="readinessText">0%</b></div><div class="readiness-bar"><i id="readinessFill"></i></div><p id="readinessHint">Fill all five slots to enter combat.</p></div>
+          <div class="party-dungeon-cta"><div><small>COMBAT ENTRY</small><b>Choose a dungeon when your party is ready.</b><span>Combat opens in a dedicated full-screen expedition.</span></div><button id="partyOpenDungeons" type="button">OPEN DUNGEON JOURNAL →</button></div>
         </div>
         <div class="selection-panel panel"><div class="panel-head"><div><small>AVAILABLE</small><h3>Choose Adventurers</h3></div></div><div id="partyRoster" class="party-roster"></div></div>
       </div>
@@ -372,7 +373,7 @@
     </section>
 
     <section id="reports" class="view">
-      <div class="section-intro"><div><small>ENCOUNTER HISTORY</small><h2>Attempt Reports</h2><p>Wipes build encounter knowledge and add Cell Shock. Victories do not clear existing Cell Shock.</p></div></div>
+      <div class="section-intro"><div><small>ENCOUNTER HISTORY</small><h2>Run Reports</h2><p>Wipes add Cell Shock and build encounter knowledge. Victory does not remove existing Cell Shock.</p></div></div>
       <div id="reportsList" class="reports-list"></div>
     </section>
   </main>
