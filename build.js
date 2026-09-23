@@ -201,7 +201,8 @@ for(const file of files){
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
     if(!contents.includes('combat-reborn-v1.js'))throw new Error('Canonical Combat Reborn engine is not linked from guild.html');
-    if(!contents.includes('expedition-presentation-v1.css')||!contents.includes('expedition-presentation-v1.js'))throw new Error('Shared PvE expedition presentation assets are not linked from guild.html');\n    if(!contents.includes('boss-dossier-v1.css')||!contents.includes('boss-dossier-v1.js'))throw new Error('Final boss dossier assets are not linked from guild.html');
+    if(!contents.includes('expedition-presentation-v1.css')||!contents.includes('expedition-presentation-v1.js'))throw new Error('Shared PvE expedition presentation assets are not linked from guild.html');
+    if(!contents.includes('boss-dossier-v1.css')||!contents.includes('boss-dossier-v1.js'))throw new Error('Final boss dossier assets are not linked from guild.html');
     if(!contents.includes('dungeon-theme-v1.css'))throw new Error('Per-dungeon PvE theme layer is not linked from guild.html');
 
     const required=['rosterGrid','bankGrid','professionWorkshop','chatMessages','twelveBelowMount','dungeonRoute','dungeonIntel','enterDungeonBtn','partySlots'];
