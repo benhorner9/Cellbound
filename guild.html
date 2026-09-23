@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#0b1015">
 <title>Cellbound — Guild Command</title>
-<link rel="stylesheet" href="./guild.css?v=9">
+<link rel="stylesheet" href="./guild.css?v=10">
 <link rel="stylesheet" href="./bank.css?v=9">
 <link rel="stylesheet" href="./character-sheet.css?v=14">
 <link rel="stylesheet" href="./gear-system.css?v=10">
@@ -37,7 +37,7 @@
 <link rel="stylesheet" href="./fourfold-lock-v1.css?v=1">
 <link rel="stylesheet" href="./fractured-ages-v1.css?v=1">
 <link rel="stylesheet" href="./dungeon-theme-v1.css?v=1">
-<link rel="stylesheet" href="./mobile-v1.css?v=6">
+<link rel="stylesheet" href="./mobile-v1.css?v=7">
 <link rel="stylesheet" href="./combat-vitals-ui-v1.css?v=2">
   <link rel="stylesheet" href="./readability-v1.css?v=2">
   <link rel="stylesheet" href="./ui-readability-v2.css?v=4">
@@ -48,12 +48,30 @@
   <aside class="sidebar">
     <div class="brand"><div class="brand-mark">◇</div><div><strong>CELLBOUND</strong><span>GUILD COMMAND</span></div></div>
     <nav class="primary-nav" aria-label="Primary navigation">
-      <button class="nav-btn active" data-hub="overview" data-view="overview"><span>⌂</span><b>Overview</b></button>
-      <button class="nav-btn" data-hub="guild" data-view="roster"><span>♟</span><b>Guild</b></button>
-      <button class="nav-btn" data-hub="adventure" data-view="quests"><span>⌁</span><b>Adventure</b><em id="questNavBadge"></em></button>
-      <button class="nav-btn" data-hub="economy" data-view="bank"><span>▦</span><b>Supplies</b></button>
+      <button class="nav-btn active" data-hub="overview" data-view="overview" data-mobile-core><span>⌂</span><b>Home</b></button>
+
+      <div class="nav-section-label">GUILD</div>
+      <button class="nav-btn" data-hub="guild" data-view="roster"><span>♟</span><b>Roster</b></button>
+      <button class="nav-btn" data-hub="guild" data-view="party" data-mobile-core><span>◆</span><b>Active Party</b></button>
+      <button class="nav-btn" data-hub="guild" data-view="chat"><span>◌</span><b>Social</b><em id="chatNavBadge"></em></button>
+      <button class="nav-btn" data-hub="guild" data-view="reports"><span>▤</span><b>Run Reports</b></button>
+
+      <div class="nav-section-label">ADVENTURE</div>
+      <button class="nav-btn" data-hub="adventure" data-view="quests" data-mobile-core><span>⌁</span><b>Quests</b><em id="questNavBadge"></em></button>
+      <button class="nav-btn" data-hub="adventure" data-view="content" data-mobile-core><span>▱</span><b>Dungeons</b></button>
+      <button class="nav-btn" data-hub="adventure" data-view="endgame"><span>◇</span><b>Endgame</b></button>
+      <button class="nav-btn" data-hub="adventure" data-view="world"><span>✦</span><b>Twelve Below</b></button>
+
+      <div class="nav-section-label">SUPPLIES</div>
+      <button class="nav-btn" data-hub="economy" data-view="bank" data-mobile-core><span>▦</span><b>Bank</b></button>
+      <button class="nav-btn" data-hub="economy" data-view="professions"><span>⚒</span><b>Professions</b></button>
+      <button class="nav-btn" data-hub="economy" data-view="trading"><span>⇄</span><b>Trading Post</b></button>
+
+      <div class="nav-section-label">COMBAT</div>
       <button class="nav-btn" data-hub="pvp" data-view="pvp"><span>⚔</span><b>PvP</b></button>
+
       <button id="adminNav" class="nav-btn" data-hub="admin" data-view="admin" hidden><span>⚙</span><b>Admin</b><em>DEV</em></button>
+      <button id="mobileNavMore" class="nav-btn nav-more" type="button" data-mobile-more aria-expanded="false" aria-controls="mobileNavSheet"><span>•••</span><b>More</b></button>
     </nav>
     <div class="season-card"><small>FOUNDING SEASON</small><b>Week 1</b><span>Build your first five. Gear them. Push deeper.</span></div>
     <button id="signOut" class="sign-out">Sign out</button>
@@ -71,7 +89,6 @@
         <div><span>Bank</span><b id="bankCount">0</b></div>
       </div>
     </header>
-    <nav id="workspaceTabs" class="workspace-tabs" aria-label="Workspace navigation" hidden></nav>
     <span id="chatUnread" class="ui-state-proxy" aria-live="polite" hidden></span>
     <span id="worldActiveBadge" class="ui-state-proxy" hidden></span>
     <div id="worldAlertBar" class="world-alert-bar" role="status" aria-live="polite" hidden></div>
@@ -395,7 +412,7 @@
 <script src="./endgame-data-v1.js?v=5"></script>
 <script src="./presentation-fx-v1.js?v=1"></script>
 <script src="./combat-polish-v2.js?v=1"></script>
-<script src="./guild-v4.js?v=32"></script>
+<script src="./guild-v4.js?v=33"></script>
 <script src="./pvp-combat-v1.js?v=2"></script>
 <script src="./pvp-viewer-v1.js?v=2"></script>
 <script src="./pvp-match-v1.js?v=1"></script>
@@ -421,7 +438,7 @@
 <script src="./fourfold-lock-v1.js?v=1"></script>
 <script src="./fractured-ages-v1.js?v=3"></script>
 <script src="./admin-v1.js?v=7"></script>
-<script src="./mobile-v1.js?v=1"></script>
+<script src="./mobile-v1.js?v=2"></script>
 <script src="./release-v1.js?v=3"></script>
 </body>
 </html>

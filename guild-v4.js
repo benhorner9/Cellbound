@@ -306,30 +306,26 @@ Storage.prototype.setItem=function(key,value){
 };
 
 const WORKSPACES={
-  overview:{label:'Overview',views:[['overview','Overview']]},
-  guild:{label:'Guild',views:[['roster','Roster'],['party','Party'],['chat','Social'],['reports','Run Reports']]},
-  adventure:{label:'Adventure',views:[['quests','Quests'],['content','Dungeons'],['endgame','Endgame'],['world','World Event']]},
+  overview:{label:'Home',views:[['overview','Home']]},
+  guild:{label:'Guild',views:[['roster','Roster'],['party','Active Party'],['chat','Social'],['reports','Run Reports']]},
+  adventure:{label:'Adventure',views:[['quests','Quests'],['content','Dungeons'],['endgame','Endgame'],['world','Twelve Below']]},
   economy:{label:'Supplies',views:[['bank','Bank'],['professions','Professions'],['trading','Trading Post']]},
-  pvp:{label:'PvP',views:[['pvp','The Crucible']]},
+  pvp:{label:'Combat',views:[['pvp','PvP']]},
   admin:{label:'Admin',views:[['admin','Admin']]}
 };
 const VIEW_WORKSPACE={};
-Object.entries(WORKSPACES).forEach(([hub,data])=>data.views.forEach(([id])=>VIEW_WORKSPACE[id]=hub));
-function renderWorkspaceTabs(id){
-  const nav=$('#workspaceTabs'),hub=VIEW_WORKSPACE[id]||'overview',data=WORKSPACES[hub];
-  if(!nav)return;
-  if(!data||hub==='overview'||hub==='admin'||data.views.length<=1){nav.hidden=true;nav.innerHTML='';return}
-  nav.hidden=false;
-  nav.innerHTML=data.views.map(([view,label])=>'<button type="button" data-workspace-view="'+view+'" class="'+(view===id?'active':'')+'"><span>'+label+'</span></button>').join('');
-  nav.querySelectorAll('[data-workspace-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.workspaceView)));
+const VIEW_LABELS={};
+Object.entries(WORKSPACES).forEach(([hub,data])=>data.views.forEach(([id,label])=>{VIEW_WORKSPACE[id]=hub;VIEW_LABELS[id]=label}));
+function renderWorkspaceTabs(){
+  const nav=$('#workspaceTabs');
+  if(nav){nav.hidden=true;nav.innerHTML=''}
 }
 function switchView(id){
   $$('.view').forEach(v=>v.classList.toggle('active',v.id===id));
   const hub=VIEW_WORKSPACE[id]||id;
-  $$('.nav-btn[data-hub]').forEach(b=>b.classList.toggle('active',b.dataset.hub===hub));
-  const titles={overview:'Overview',guild:'Guild',adventure:'Adventure',economy:'Supplies',pvp:'PvP',admin:'Admin'};
-  if(ui.pageTitle)ui.pageTitle.textContent=titles[hub]||'Cellbound';
-  renderWorkspaceTabs(id);
+  $$('.nav-btn[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===id));
+  if(ui.pageTitle)ui.pageTitle.textContent=VIEW_LABELS[id]||'Cellbound';
+  renderWorkspaceTabs();
   if(id==='party')renderParty();
   if(id==='reports')renderReports();
   if(id==='bank')renderBank();

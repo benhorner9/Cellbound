@@ -691,3 +691,118 @@
   #chat .chat-panel{min-height:480px!important}
   #reports .reports-list{max-width:none}
 }
+
+
+/* Direct phone navigation: core loop stays visible, secondary destinations live one tap away. */
+@media(max-width:720px){
+  .sidebar nav{overflow:visible!important}
+  .sidebar nav .nav-section-label{display:none!important}
+  .sidebar nav .nav-btn:not([data-mobile-core]):not(.nav-more){display:none!important}
+  .sidebar nav .nav-btn[data-mobile-core],
+  .sidebar nav .nav-more{
+    display:flex!important;
+    flex:1 1 0!important;
+    width:auto!important;
+    min-width:0!important;
+    max-width:none!important;
+  }
+  .sidebar nav .nav-btn b{font-size:.5rem}
+  .nav-more span{font-size:.88rem!important;letter-spacing:.06em}
+  .mobile-nav-sheet[hidden]{display:none!important}
+  .mobile-nav-sheet{
+    position:fixed;
+    inset:0;
+    z-index:1400;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  .mobile-nav-sheet-backdrop{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    min-height:0;
+    border:0;
+    background:rgba(0,0,0,.62);
+    backdrop-filter:blur(3px);
+  }
+  .mobile-nav-sheet-panel{
+    position:relative;
+    z-index:1;
+    width:100%;
+    max-height:min(72dvh,620px);
+    overflow:auto;
+    padding:0 10px calc(var(--cb-mobile-dock) + 10px + env(safe-area-inset-bottom));
+    border-top:1px solid rgba(104,211,202,.18);
+    border-radius:16px 16px 0 0;
+    background:linear-gradient(180deg,#0b171b,#061014 75%);
+    box-shadow:0 -26px 70px rgba(0,0,0,.48);
+  }
+  .mobile-nav-sheet-panel>header{
+    position:sticky;
+    top:0;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:14px 4px 10px;
+    background:linear-gradient(180deg,#0b171b 78%,rgba(11,23,27,0));
+  }
+  .mobile-nav-sheet-panel>header small{
+    display:block;
+    color:#5b7772;
+    font-size:.36rem;
+    font-weight:900;
+    letter-spacing:.16em;
+  }
+  .mobile-nav-sheet-panel>header b{
+    display:block;
+    margin-top:3px;
+    font-family:Georgia,serif;
+    font-size:1rem;
+    font-weight:400;
+  }
+  .mobile-nav-sheet-panel>header>button{
+    width:44px;
+    min-width:44px;
+    height:44px;
+    padding:0;
+    border:1px solid rgba(255,255,255,.08);
+    background:#0b1519;
+    color:#91a39f;
+    font-size:1.2rem;
+  }
+  .mobile-nav-sheet-groups{display:grid;gap:9px;padding-bottom:6px}
+  .mobile-nav-sheet-group{
+    overflow:hidden;
+    border:1px solid rgba(126,178,173,.09);
+    background:rgba(7,17,21,.86);
+  }
+  .mobile-nav-sheet-group>small{
+    display:block;
+    padding:9px 11px 5px;
+    color:#4f6d68;
+    font-size:.34rem;
+    font-weight:900;
+    letter-spacing:.15em;
+  }
+  .mobile-nav-sheet-group>button{
+    width:100%;
+    min-height:50px;
+    padding:0 11px;
+    border:0;
+    border-top:1px solid rgba(255,255,255,.035);
+    background:transparent;
+    color:#cbd9d5;
+    display:grid;
+    grid-template-columns:28px 1fr auto;
+    align-items:center;
+    gap:8px;
+    text-align:left;
+  }
+  .mobile-nav-sheet-group>button span{color:#6dcfc7;text-align:center}
+  .mobile-nav-sheet-group>button b{font-size:.68rem}
+  .mobile-nav-sheet-group>button em{color:#526c68;font-style:normal}
+}

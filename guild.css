@@ -207,3 +207,45 @@ body.recruit-adventurer-open{overflow:hidden}
   position:relative;
   z-index:1;
 }
+
+
+/* ==========================================================================
+   DIRECT DESTINATION NAVIGATION
+   Primary destinations stay one click away on desktop and iPad.
+   ========================================================================== */
+.primary-nav{
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  padding-right:3px;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(88,215,207,.18) transparent;
+}
+.primary-nav::-webkit-scrollbar{width:4px}
+.primary-nav::-webkit-scrollbar-thumb{background:rgba(88,215,207,.16);border-radius:4px}
+.nav-section-label{
+  flex:0 0 auto;
+  margin:12px 10px 3px;
+  color:#445a57;
+  font-size:.4rem;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.17em;
+  user-select:none;
+}
+.primary-nav .nav-btn{
+  flex:0 0 40px;
+  height:40px;
+  min-height:40px;
+}
+.primary-nav .nav-btn b{font-weight:650}
+.primary-nav .nav-btn em{white-space:nowrap}
+.nav-more{display:none}
+@media(max-height:820px) and (min-width:721px){
+  .sidebar{padding-top:14px;padding-bottom:12px}
+  .brand{padding-bottom:14px}
+  .primary-nav .nav-btn{flex-basis:37px;height:37px;min-height:37px}
+  .nav-section-label{margin-top:8px}
+  .season-card{padding:10px 12px}
+  .season-card span{display:none}
+}
