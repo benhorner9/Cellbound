@@ -2,7 +2,8 @@
 .pvp2d-head{display:grid;grid-template-columns:1fr auto 1fr;gap:12px;align-items:center;padding:11px 13px;border-bottom:1px solid #1b292c;background:linear-gradient(180deg,#0e1a1e,#091316)}
 .pvp2d-head small{display:block;color:#6fc7c0;font-size:.38rem;font-weight:900;letter-spacing:.13em}
 .pvp2d-head h3{margin:3px 0 0;font:400 .9rem Georgia,serif}
-.pvp2d-head-center{text-align:center}.pvp2d-head-center b{display:block;color:#e7d59e;font:500 1.2rem Georgia,serif}.pvp2d-head-center span{display:block;margin-top:2px;color:#667974;font-size:.38rem}
+.pvp2d-head-center{text-align:center}.pvp2d-head-center b{display:block;color:#e7d59e;font:500 1.2rem Georgia,serif}.pvp2d-head-center b.score-tick{animation:pvpScoreTick .34s ease}.pvp2d-head-center span{display:block;margin-top:2px;color:#667974;font-size:.38rem}
+@keyframes pvpScoreTick{0%{transform:scale(1);text-shadow:none}45%{transform:scale(1.16);color:#f2df9e;text-shadow:0 0 14px rgba(226,198,111,.38)}100%{transform:scale(1);text-shadow:none}}
 .pvp2d-controls{display:flex;justify-content:flex-end;align-items:center;gap:7px}.pvp2d-controls>span{color:#8b9b97;font:500 .72rem Georgia,serif}.pvp2d-controls>b{padding:6px 8px;border:1px solid #2a4d49;background:#102725;color:#a9d8d2;font-size:.34rem;letter-spacing:.1em}
 .pvp2d-layout{display:grid;grid-template-columns:185px minmax(0,1fr) 185px;min-height:470px}
 .pvp2d-layout>aside{padding:8px;background:#081216;border-right:1px solid #182426}.pvp2d-layout>aside:last-child{border-right:0;border-left:1px solid #182426}
