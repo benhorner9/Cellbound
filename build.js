@@ -28,6 +28,9 @@ for(const file of files){
     for(const hook of ['const CHARACTER_TABS=','cb-command-character-header','cb-header-metrics','cb-command-overview','cb-profession-command','cb-history-command','cb-talent-command-v2','cb-talent-tier','cb-talent-inline-detail','data-char-jump','returnView='])if(!contents.includes(hook))throw new Error('Character Command redesign is missing '+hook);
     if(contents.includes("['knowledge','⌁','Mastery'")||contents.includes('function knowledgePanel'))throw new Error('Mastery must remain removed from the character screen');
   }
+  if(file==='bank-v2.css'){
+    if(!contents.includes('#bank .bank-card-v2[data-hidden="1"]{display:none!important}'))throw new Error('Bank category filtering must override card display so materials cannot leak into Equipment');
+  }
   if(file==='evolution-v1.js'){
     for(const hook of ['rosterClearFilters','rosterResultsLabel','Gear Watch','gearOrder='])if(!contents.includes(hook))throw new Error('Roster v2 filtering/enhancement is missing '+hook);
     for(const hook of ['bankMetricCrafting','data-bank-count','bank-filter-empty-v2',"bankCategory==='favorite'"])if(!contents.includes(hook))throw new Error('Bank v2 filtering/enhancement is missing '+hook);
@@ -249,6 +252,7 @@ for(const file of files){
     if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=22'))throw new Error('Character Command UI is not linked from guild.html');
     for(const hook of ['roster-v2.css','class="roster-overview-strip"','id="rosterClearFilters"','id="rosterResultsLabel"','class="roster-grid roster-grid-v2"'])if(!contents.includes(hook))throw new Error('Roster v2 UI is missing '+hook);
     for(const hook of ['bank-v2.css','class="bank-category-tabs"','id="bankClearFilters"','id="bankResultsLabel"','class="bank-grid bank-grid-v2"','data-bank-category="Gear"'])if(!contents.includes(hook))throw new Error('Bank v2 UI is missing '+hook);
+    if(!contents.includes('bank-v2.css?v=2'))throw new Error('Bank v2 stylesheet cache version must include category-isolation fix');
     if(!contents.includes('combat-polish-v2.css')||!contents.includes('combat-polish-v2.js'))throw new Error('Shared combat VFX polish assets are not linked from guild.html');
     if(!contents.includes('trading-post-v3.css')||!contents.includes('trading-post-v3.js')||!contents.includes('id="tpBrowseResults"'))throw new Error('Trading Post v3 assets or hooks are not linked from guild.html');
     if(!contents.includes('id="tpGearSellPicker"')||!contents.includes('id="tpGearSellSelected"')||!contents.includes('id="tpGearSellItem" type="hidden"'))throw new Error('Trading Post visual sell picker hooks are missing from guild.html');

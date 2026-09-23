@@ -97,6 +97,10 @@
   background:linear-gradient(180deg,#0e191d,#081115)!important;
   box-shadow:0 14px 34px rgba(0,0,0,.22);overflow:hidden
 }
+/* Evolution marks non-matching entries with data-hidden. This must outrank the
+   card's display:flex!important so category tabs never leak other item types. */
+#bank .bank-card-v2[data-hidden="1"]{display:none!important}
+
 #bank .bank-card-v2:hover{border-color:rgba(216,185,118,.24)!important;background:#0f1b1f!important}
 #bank .bank-card-v2.bank-item-selected{
   border-color:rgba(92,199,153,.34)!important;
