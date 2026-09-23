@@ -130,7 +130,7 @@ function achievementMarkup(){
 }
 function collectionMarkup(){
  const list=Game?.getState?.()?.collections||[];
- return '<section class="eg-collections panel"><div class="panel-head"><div><small>RARE DROPS</small><h3>Rare Finds</h3></div><b>'+list.length+' FOUND</b></div><div class="eg-collection-list">'+(list.length?list.slice(-8).reverse().map(x=>'<article><i>'+((x.kind==='mount'?'♞':x.kind==='pet'?'◆':x.kind==='cell'?'◈':'◇'))+'</i><span><b>'+esc(x.name)+'</b><small>'+esc(String(x.rarity||'Rare').toUpperCase())+' · '+esc(x.kind||'collection')+'</small><em>'+esc(x.source||'Endgame')+'</em></span></article>').join(''):'<p class="eg-empty">Rare mounts, pets and Cells can drop from endgame dungeons. These drops are collectible; they do not increase combat power.</p>')+'</div></section>'
+ return '<section class="eg-collections panel"><div class="panel-head"><div><small>RARE DROPS</small><h3>Rare Finds</h3></div><b>'+list.length+' FOUND</b></div><div class="eg-collection-list">'+(list.length?list.slice(-8).reverse().map(x=>'<article><i>'+(window.CellboundItemArt?.collectionHTML?.(x,48,'endgame-collection-art')||((x.kind==='mount'?'♞':x.kind==='pet'?'◆':x.kind==='cell'?'◈':'◇')))+'</i><span><b>'+esc(x.name)+'</b><small>'+esc(String(x.rarity||'Rare').toUpperCase())+' · '+esc(x.kind||'collection')+'</small><em>'+esc(x.source||'Endgame')+'</em></span></article>').join(''):'<p class="eg-empty">Rare mounts, pets and Cells can drop from endgame dungeons. These drops are collectible; they do not increase combat power.</p>')+'</div></section>'
 }
 
 
