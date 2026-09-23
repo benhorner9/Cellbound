@@ -237,7 +237,7 @@ function runBattleground(){
   matchRunning=true;render();
   const playerCore=chars.map(pvpCombatInput),avgPower=playerCore.reduce((n,x)=>n+x.pvpPower,0)/Math.max(1,playerCore.length),avgDef=playerCore.reduce((n,x)=>n+(x.pvpDefence||0),0)/Math.max(1,playerCore.length),avgControl=playerCore.reduce((n,x)=>n+(x.controlResistance||0),0)/Math.max(1,playerCore.length);
   const allies=makeAlliedUnits(battlegroundSize-5,avgPower,avgDef,avgControl),enemyScale=.94+Math.random()*.12,enemies=makeEnemyUnits(battlegroundSize,avgPower*enemyScale,avgDef,avgControl),blue=[...playerCore,...allies];
-  const result=engine.simulate({blue,red:enemies,kind:'battleground',mode:battlegroundMode,size:battlegroundSize,seed:[currentUser?.id||'guild',p.matchHistory.length,battlegroundMode,battlegroundSize,Date.now()].join(':')});
+  const result=engine.simulate({blue,red:enemies,kind:'battleground',mode:battlegroundMode,size:battlegroundSize,seed:[game()?.getUser?.()?.id||'guild',p.matchHistory.length,battlegroundMode,battlegroundSize,Date.now()].join(':')});
   const win=result.outcome==='victory',rewards=BG_SIZES[battlegroundSize],objectives=battlegroundMode==='capture-the-flag'?Number(result.score?.blue)||0:Math.max(1,Math.round((Number(result.score?.blue)||0)/25)),bonus=Math.min(Math.round(rewards.winMarks*.35),objectives*4),currency=(win?rewards.winMarks:rewards.lossMarks)+bonus,rankXp=(win?rewards.winXp:rewards.lossXp)+objectives*8,shockDelta=win?-2:2;
   const match={kind:'battleground',mode:battlegroundMode,size:battlegroundSize,win,scoreText:result.scoreText,currency,rankXp,objectives,shockDelta,summary:pvpSummary('battleground',battlegroundMode,win,result),playerUnits:blue,enemyUnits:enemies};
   beginVisual(match,result,()=>{
@@ -254,7 +254,7 @@ function runArena(){
   const chars=arenaSelection.map(id=>state()?.roster?.find(c=>c.id===id)).filter(c=>c&&!game()?.isUnavailable?.(c));if(chars.length!==arenaSize)return;
   matchRunning=true;render();
   const blue=chars.map(pvpCombatInput),own=teamPower(chars,'arena'),oppRating=Math.max(700,Math.round(p.arenaRating-110+Math.random()*220)),expected=1/(1+Math.pow(10,(oppRating-p.arenaRating)/400)),avgPower=blue.reduce((n,x)=>n+x.pvpPower,0)/Math.max(1,blue.length),avgDef=blue.reduce((n,x)=>n+(x.pvpDefence||0),0)/Math.max(1,blue.length),avgControl=blue.reduce((n,x)=>n+(x.controlResistance||0),0)/Math.max(1,blue.length),ratingScale=clamp(1+(oppRating-p.arenaRating)/1800,.88,1.14),red=makeEnemyUnits(arenaSize,avgPower*ratingScale,avgDef*ratingScale,avgControl);
-  const result=engine.simulate({blue,red,kind:'arena',mode:'arena',size:arenaSize,seed:[currentUser?.id||'guild',p.matchHistory.length,'arena',arenaSize,Date.now()].join(':')}),win=result.outcome==='victory';
+  const result=engine.simulate({blue,red,kind:'arena',mode:'arena',size:arenaSize,seed:[game()?.getUser?.()?.id||'guild',p.matchHistory.length,'arena',arenaSize,Date.now()].join(':')}),win=result.outcome==='victory';
   const k=32,ratingDelta=Math.round(k*((win?1:0)-expected)),ratingBefore=Math.round(p.arenaRating),ratingAfter=Math.max(0,ratingBefore+ratingDelta),reward=win?ARENA_FORMATS[arenaSize].win:ARENA_FORMATS[arenaSize].loss,shockDelta=win?-4:4;
   const match={kind:'arena',size:arenaSize,win,scoreText:result.scoreText+' standing',currency:reward,rankXp:0,objectives:0,shockDelta,ratingDelta,ratingBefore,ratingAfter,summary:pvpSummary('arena','arena',win,result),playerUnits:blue,enemyUnits:red};
   beginVisual(match,result,()=>{
