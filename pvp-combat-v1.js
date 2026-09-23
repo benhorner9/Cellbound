@@ -207,7 +207,7 @@ function mitigation(target){
   return clamp(m,.42,1)
 }
 function applyDamage(ctx,source,target,raw,ability,critical=false){
-  if(!source?.alive||!target?.alive)return 0;
+  if(!source?.alive||!target?.alive||!hasLineOfSight(ctx,source,target))return 0;
   const variance=.90+ctx.rng()*.20,powerScale=clamp(source.pvpPower/125,.68,1.8),guard=target.guardedUntil>ctx.time&&target.guardSource;
   let amount=Math.max(1,Math.round(raw*powerScale*variance*mitigation(target)*(critical?1.55:1)));
   target.health=Math.max(0,target.health-amount);source.damage+=amount;ctx.stats[source.team].damage+=amount;
@@ -216,7 +216,7 @@ function applyDamage(ctx,source,target,raw,ability,critical=false){
   if(target.health<=0)defeat(ctx,source,target);return amount
 }
 function applyHeal(ctx,source,target,raw,ability){
-  if(!source?.alive||!target?.alive)return 0;
+  if(!source?.alive||!target?.alive||!hasLineOfSight(ctx,source,target))return 0;
   const scale=clamp(source.pvpPower/120,.7,1.65),before=target.health,amount=Math.max(1,Math.round(raw*scale*(.9+ctx.rng()*.18)));
   target.health=Math.min(target.maxHealth,target.health+amount);const effective=target.health-before;source.healing+=effective;ctx.stats[source.team].healing+=effective;
   emit(ctx,'HEAL_RECEIVED',{source:source.id,target:target.id,ability,amount:effective,result:'pvp-heal',payload:{targetHp:target.health,targetMaxHealth:target.maxHealth,targetHpPct:target.health/target.maxHealth*100,overhealing:Math.max(0,amount-effective),pvp:true}});
@@ -256,29 +256,41 @@ function maybeDefensive(ctx,u){
   u.defensiveUntil=ctx.time+5000;u.nextDefensive=ctx.time+18000;emit(ctx,'DEFENSIVE_ACTIVATED',{source:u.id,target:u.id,ability:name,result:'defensive',payload:{duration:5000,pvp:true}});return true
 }
 function maybeControl(ctx,u,target){
-  const cc=kitFor(u).cc;if(!cc||ctx.time<u.nextControl||!target?.alive||ctx.rng()>.24)return false;
+  const cc=kitFor(u).cc;if(!cc||ctx.time<u.nextControl||!target?.alive||!hasLineOfSight(ctx,u,target)||ctx.rng()>.24)return false;
   const duration=Math.round(1800*clamp(1-target.controlResistance/100,.35,1));target.disabledUntil=Math.max(target.disabledUntil,ctx.time+duration);u.nextControl=ctx.time+12000+ctx.rng()*5000;u.cc++;
   emit(ctx,'CROWD_CONTROL',{source:u.id,target:target.id,ability:cc,result:'applied',payload:{duration,pvp:true}});return true
 }
 function tryInterrupt(ctx,u,target,ability){
-  const name=kitFor(u).interrupt;if(!name||!target?.alive||ctx.rng()>.38)return false;u.interrupts++;
+  const name=kitFor(u).interrupt;if(!name||!target?.alive||!hasLineOfSight(ctx,u,target)||ctx.rng()>.38)return false;u.interrupts++;
   emit(ctx,'INTERRUPT',{source:u.id,target:target.id,ability:name,result:'success',payload:{interruptedAbility:ability,pvp:true}});target.disabledUntil=Math.max(target.disabledUntil,ctx.time+700);return true
 }
 function healerAction(ctx,u){
   const target=selectHeal(ctx,u);if(!target)return false;
+  const range=30;
+  if(!hasLineOfSight(ctx,u,target)||distance(u,target)>range){
+    move(ctx,u,target.position,520,!hasLineOfSight(ctx,u,target)?'reposition for healing line of sight':'move into healing range');
+    emit(ctx,'LOS_BLOCKED',{source:u.id,target:target.id,result:'heal',payload:{kind:'heal'}});
+    return true
+  }
   const ability=abilityName(u,'heal'),strong=healthRatio(target)<.42,cost=strong?22:14;if(u.resource.value<cost)return false;
   emit(ctx,'ABILITY_START',{source:u.id,target:target.id,ability,result:'heal',payload:{kind:'heal',castTime:strong?850:0,pvp:true}});
   spendResource(ctx,u,cost);
   if(strong){
     emit(ctx,'CAST_START',{source:u.id,target:target.id,ability,result:'player',payload:{duration:850,interruptible:true,pvp:true}});
-    const interrupter=enemies(ctx,u).filter(x=>x.alive&&ctx.time>=x.disabledUntil&&distance(x,u)<=actionRange(x)+6).sort((a,b)=>distance(a,u)-distance(b,u))[0];
+    const interrupter=enemies(ctx,u).filter(x=>x.alive&&ctx.time>=x.disabledUntil&&distance(x,u)<=actionRange(x)+6&&hasLineOfSight(ctx,x,u)).sort((a,b)=>distance(a,u)-distance(b,u))[0];
     if(interrupter&&tryInterrupt(ctx,interrupter,u,ability)){emit(ctx,'CAST_CANCELLED',{source:u.id,target:target.id,ability,result:'interrupted',payload:{pvp:true}});return true}
   }
   applyHeal(ctx,u,target,strong?175:118,ability);emit(ctx,'ABILITY_FINISH',{source:u.id,target:target.id,ability,result:'resolved',payload:{kind:'heal',pvp:true}});return true
 }
 function damageAction(ctx,u,target){
   if(!target?.alive)return false;
-  const range=actionRange(u),d=distance(u,target);if(d>range){const stop=range>8?{x:u.team==='blue'?target.position.x-14:target.position.x+14,y:target.position.y}:{x:u.team==='blue'?target.position.x-3:target.position.x+3,y:target.position.y};move(ctx,u,stop,420,'engage');return true}
+  const range=actionRange(u),d=distance(u,target),los=hasLineOfSight(ctx,u,target);
+  if(d>range||!los){
+    const stop=range>8?{x:u.team==='blue'?target.position.x-14:target.position.x+14,y:target.position.y}:{x:u.team==='blue'?target.position.x-3:target.position.x+3,y:target.position.y};
+    move(ctx,u,stop,520,!los?'reposition for line of sight':'engage');
+    if(!los)emit(ctx,'LOS_BLOCKED',{source:u.id,target:target.id,result:'attack',payload:{kind:'damage'}});
+    return true
+  }
   maybeControl(ctx,u,target);
   const kind=u.role==='tank'?'tank':'damage',ability=abilityName(u,kind),cost=u.resource.max<=5?1:18;
   if(u.resource.value<cost){const basic=u.role==='tank'?'Guard Strike':'Basic Attack';emit(ctx,'ABILITY_START',{source:u.id,target:target.id,ability:basic,result:'damage',payload:{kind:'damage',pvp:true}});applyDamage(ctx,u,target,u.role==='tank'?48:54,basic,false);gainResource(ctx,u,u.resource.max<=5?1:18,'builder');return true}
