@@ -33,7 +33,8 @@ for(const file of files){
     for(const hook of ['bankMetricCrafting','data-bank-count','bank-filter-empty-v2',"bankCategory==='favorite'"])if(!contents.includes(hook))throw new Error('Bank v2 filtering/enhancement is missing '+hook);
   }
   if(file==='guild-v4.js'){
-    if(contents.includes("$('"+".bank-category-tabs [data-bank-category]"+").forEach"))throw new Error('Bank category buttons must use the multi-element selector helper $');
+    if(contents.includes("$('"+".bank-category-tabs [data-bank-category]"+").forEach"))throw new Error('Bank category buttons cannot call forEach on a single-element selector');
+    if(!contents.includes("document.querySelectorAll('.bank-category-tabs [data-bank-category]').forEach"))throw new Error('Bank category buttons must bind through querySelectorAll');
     if(!contents.includes('function isBankUtility')||!contents.includes('!canonical.nonStackable&&state.bank.find')||!contents.includes('!canon.nonStackable&&out.find'))throw new Error('Guild Bank must preserve non-stackable charge-bearing utility items');
     if(!contents.includes("ceiling=({1:26,2:32,3:40,4:44})")||!contents.includes('if(tier>=5)return current'))throw new Error('Cell Shard upgrades must stop at the Chapter 1 tier ceiling and never create Tier 5 power');
     if(contents.includes('<span>Mastery</span>')&&contents.includes('function rosterCard'))throw new Error('Roster cards must not reintroduce the removed Mastery stat');

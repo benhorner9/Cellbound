@@ -898,14 +898,14 @@ $('[data-bank-close]')?.addEventListener('click',()=>{ui.bankModal.hidden=true;d
 function setBankCategory(value){
   const select=$('#bankCategory');if(!select)return;
   select.value=value;
-  $('.bank-category-tabs [data-bank-category]').forEach(b=>b.classList.toggle('active',b.dataset.bankCategory===value));
+  document.querySelectorAll('.bank-category-tabs [data-bank-category]').forEach(b=>b.classList.toggle('active',b.dataset.bankCategory===value));
   select.dispatchEvent(new Event('change',{bubbles:true}));
 }
 $('#bankBulkToggle')?.addEventListener('click',()=>setBankBulkMode());
 $('#bankSelectJunk')?.addEventListener('click',selectJunkForBulk);
 $('#bankSearch')?.addEventListener('input',renderBank);
 ['bankCategory','bankClass','bankRarity','bankTrade','bankSort'].forEach(id=>$('#'+id)?.addEventListener('change',renderBank));
-$('.bank-category-tabs [data-bank-category]').forEach(b=>b.addEventListener('click',()=>setBankCategory(b.dataset.bankCategory)));
+document.querySelectorAll('.bank-category-tabs [data-bank-category]').forEach(b=>b.addEventListener('click',()=>setBankCategory(b.dataset.bankCategory)));
 $('#bankClearFilters')?.addEventListener('click',()=>{
   const search=$('#bankSearch');if(search)search.value='';
   for(const id of ['bankClass','bankRarity','bankTrade']){const el=$('#'+id);if(el){el.value='all';el.dispatchEvent(new Event('change',{bubbles:true}))}}
