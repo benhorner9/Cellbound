@@ -27,8 +27,9 @@ function mount(target){
   const arena=arenaFor(target);if(!arena||arena.dataset.cbvfxMounted==='1'||arena.id==='tbArena')return arena;
   arena.dataset.cbvfxMounted='1';arena.dataset.cbvfxTheme=themeFor(arena);
   const layer=document.createElement('div');layer.className='cbvfx-layer';layer.setAttribute('aria-hidden','true');
-  layer.innerHTML='<i class="cbvfx-haze h1"></i><i class="cbvfx-haze h2"></i><i class="cbvfx-motes"></i><i class="cbvfx-sweep"></i><div class="cbvfx-events"></div>';
-  arena.insertBefore(layer,arena.firstChild);
+  layer.innerHTML='<i class="cbvfx-haze h1"></i><i class="cbvfx-haze h2"></i><i class="cbvfx-motes"></i><i class="cbvfx-sweep"></i>';
+  const events=document.createElement('div');events.className='cbvfx-events';events.setAttribute('aria-hidden','true');
+  arena.insertBefore(layer,arena.firstChild);arena.appendChild(events);
   requestAnimationFrame(()=>arena.classList.add('cbvfx-ready'));
   return arena
 }
