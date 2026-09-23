@@ -43,7 +43,10 @@ for(const file of files){
     if(contents.includes('<span>Mastery</span>')&&contents.includes('function rosterCard'))throw new Error('Roster cards must not reintroduce the removed Mastery stat');
     for(const hook of ['roster-character-card','roster-card-metrics','roster-shock-line','roster-card-actions'])if(!contents.includes(hook))throw new Error('Roster v2 card renderer is missing '+hook);
   }
-  if(file==='item-art-v1.js'){\n    for(const hook of [\"window.CellboundItemArt\",\"function genericGear\",\"function material\",\"function consumable\",\"function collection\",\"frostbound-sigil\",\"relic-oathstone-dominion\",\"grid-override-module\",\"enhancePvp\",\"enhanceCrafting\"])if(!contents.includes(hook))throw new Error('Complete item artwork system is missing '+hook);\n  }\n  if(file==='gear-data.js'){
+  if(file==='item-art-v1.js'){
+    for(const hook of ["window.CellboundItemArt","function genericGear","function material","function consumable","function collection","frostbound-sigil","relic-oathstone-dominion","grid-override-module","enhancePvp","enhanceCrafting"])if(!contents.includes(hook))throw new Error('Complete item artwork system is missing '+hook);
+  }
+  if(file==='gear-data.js'){
     if(!contents.includes("5:{rarity:'Epic',label:'Tier 5'")||!contents.includes('raidExclusive:true'))throw new Error('Tier 5 must remain explicitly reserved for raid gear');
     if(!contents.includes('CHAPTER_GEAR={chapter:1,levelCap:15,dungeonTierCeiling:4,raidExclusiveTier:5}'))throw new Error('Chapter 1 gear contract is missing');
     if(!contents.includes("SLOT_ORDER=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring','Trinket','Relic']"))throw new Error('Full Chapter 1 equipment slot catalogue is missing');
@@ -213,6 +216,7 @@ for(const file of files){
     if(!contents.includes("id:'chaos-canyon',name:'Chaos Canyon'")||!contents.includes("id:'blackout-station',name:'Blackout Station'")||!contents.includes("id:'fractured-ages',name:'The Fractured Ages'"))throw new Error('Overview Next Dungeon ladder must cover current dungeon progression');
   }
   if(file==='guild.html'){
+    if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
     if(!contents.includes('combat-reborn-v1.js'))throw new Error('Canonical Combat Reborn engine is not linked from guild.html');
