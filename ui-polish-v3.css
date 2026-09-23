@@ -10,7 +10,7 @@
 .app-shell .content-layout,
 .app-shell .party-layout{min-width:0}
 
-.app-shell :is(h1,h2,h3,p,span,b,small,em,strong){overflow-wrap:anywhere}
+.app-shell :is(h1,h2,h3,p,span,b,small,em,strong){overflow-wrap:break-word}
 .app-shell :is(.section-intro p,.hero-card p,.panel p,.dungeon-preview p,.admin-card p){max-width:72ch;line-height:1.55}
 
 .primary-nav .nav-btn,
@@ -144,3 +144,20 @@ html,body{max-width:100%;overscroll-behavior-x:none}
 
 /* Modern heading wrapping: keeps hero and modal headings compact on narrow screens. */
 .app-shell :is(h1,h2,h3){text-wrap:balance}
+
+
+/* Brand wordmark must never split across lines. */
+.sidebar .brand{min-width:0}
+.sidebar .brand>div:last-child{min-width:0;flex:1 1 auto}
+.sidebar .brand strong{
+  display:block;
+  white-space:nowrap;
+  overflow-wrap:normal;
+  word-break:normal;
+  letter-spacing:.14em
+}
+.sidebar .brand span{
+  white-space:nowrap;
+  overflow-wrap:normal;
+  word-break:normal
+}
