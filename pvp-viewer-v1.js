@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.2.0';
+const VERSION='1.3.0';
 const $=(root,s)=>root?.querySelector(s);
 const $$=(root,s)=>[...(root?.querySelectorAll(s)||[])];
 const esc=v=>String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[m]));
@@ -75,9 +75,17 @@ function point(root,id){
   const arena=$(root,'#pvp2dArena'),u=$(root,'[data-pvp2d-unit="'+CSS.escape(String(id))+'"]');if(!arena||!u)return null;
   const a=arena.getBoundingClientRect(),r=u.getBoundingClientRect();return{x:r.left+r.width/2-a.left,y:r.top+r.height/2-a.top}
 }
-function move(root,id,x,y,ms=450){
+function move(root,id,x,y,ms=450,from=null){
   const u=$(root,'[data-pvp2d-unit="'+CSS.escape(String(id))+'"]');if(!u)return;const p=safePoint(x,y);
-  u.style.transitionDuration=Math.max(120,Number(ms)||450)+'ms';u.style.left=p.x+'%';u.style.top=p.y+'%'
+  if(from){
+    const start=safePoint(from.x,from.y);
+    u.style.transition='none';u.style.left=start.x+'%';u.style.top=start.y+'%';
+    void u.offsetWidth;
+  }
+  u.style.transitionProperty='left,top,transform,opacity,filter';
+  u.style.transitionTimingFunction='linear';
+  u.style.transitionDuration=Math.max(120,Number(ms)||450)+'ms';
+  requestAnimationFrame(()=>{if(u.isConnected){u.style.left=p.x+'%';u.style.top=p.y+'%'}})
 }
 function floatText(root,id,text,kind='damage'){
   const p=point(root,id),arena=$(root,'#pvp2dArena');if(!p||!arena)return;const e=document.createElement('b');
@@ -123,7 +131,7 @@ function handleEvent(pb,e){
   const root=pb.root,src=combatant(pb,e.source),target=combatant(pb,e.target);
   switch(e.type){
     case'COMBAT_START':setStatus(pb,'Combat live');feed(pb,'The gates open. PvP combat begins.');break;
-    case'MOVEMENT_START':if(e.payload?.to)move(root,e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
+    case'MOVEMENT_START':if(e.payload?.to)move(root,e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||420,e.payload?.from||null);break;
     case'ABILITY_START':
       if(src){pulse(root,e.source,e.payload?.kind==='heal'?'heal':'attack');if(e.target&&target)projectile(root,e.source,e.target,attackKind(src,e.ability),src.role==='dps'?280:330)}
       break;
@@ -156,7 +164,8 @@ function handleEvent(pb,e){
       break;
     case'OBJECTIVE_UPDATE':
       if(e.result==='hill-control'){updateScore(pb,e.payload?.blue,e.payload?.red,(e.payload?.owner==='blue'?'Blue':'Red')+' controls the Cell node');banner(pb,(e.payload?.owner==='blue'?'BLUE':'RED')+' TAKES THE NODE',e.payload?.owner)}
-      else updateScore(pb,e.payload?.blue,e.payload?.red,'Cell node control');
+      else if(e.result==='ctf-opening'){updateScore(pb,0,0,'Both teams advance from their bases');setStatus(pb,'Opening push · teams moving into lanes');feed(pb,'Both teams leave their bases and spread into the battleground.')}
+      else updateScore(pb,e.payload?.blue,e.payload?.red,pb.match?.mode==='capture-the-flag'?'Capture the enemy Cell Standard':'Cell node control');
       break;
     case'FLAG_STATE':{
       const owner=e.payload?.owner||e.payload?.team;
