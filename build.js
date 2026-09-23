@@ -15,7 +15,7 @@ for(const file of files){
   if(file.endsWith('.js')){try{new Function(contents)}catch(err){throw new Error(`Syntax check failed for ${file}: ${err.message}`)}}
   const playerCopyFiles=new Set(['guild.html','guild-v4.js','onboarding-v1.js','pvp-v1.js','endgame-v1.js','evolution-v1.js','quests-v2.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','fractured-ages-v1.js','twelve-below-v1.js','thirteenth-bell-v1.js','fourfold-lock-v1.js']);
   if(playerCopyFiles.has(file)){
-    for(const phrase of ['FARMABLE','authoritative Combat Reborn','authoritative Cellbound combat engine','proper 5v5 PvE','CHASE SYSTEM','UPDATE 2 · ENDGAME HUB','Title hook','Prestige cosmetic hook','normal endgame progression','repeat-run rule','randomized versions','Future Bellfoundry access hook'])if(contents.includes(phrase))throw new Error('Player-facing copy regression in '+file+': '+phrase);
+    for(const phrase of ['FARMABLE','authoritative Combat Reborn','authoritative Cellbound combat engine','proper 5v5 PvE','CHASE SYSTEM','UPDATE 2 · ENDGAME HUB','Title hook','Prestige cosmetic hook','normal endgame progression','repeat-run rule','randomized versions','Future Bellfoundry access hook','QUEST STRUCTURE','Combat Reborn final boss','simulation-driven','combat timeline rather than viewer buttons'])if(contents.includes(phrase))throw new Error('Player-facing copy regression in '+file+': '+phrase);
   }
 
   if(file==='guild-v4.js'){
@@ -85,7 +85,7 @@ for(const file of files){
     if(!contents.includes('function isUtilityItem')||!contents.includes('UTILITY EFFECT')||!contents.includes('function utilityArtHTML'))throw new Error('Trading Post must preserve visual utility-item trading support');
   }
   if(file==='ui-polish-v3.css'){
-    for(const hook of ['focus-visible','min-height:40px','.workspace-tabs','overflow-x:auto','prefers-reduced-motion','.resource-strip'])if(!contents.includes(hook))throw new Error('Global UI polish layer is missing '+hook);
+    for(const hook of ['focus-visible','min-height:44px','.workspace-tabs','overflow-x:auto','prefers-reduced-motion','.resource-strip'])if(!contents.includes(hook))throw new Error('Global UI polish layer is missing '+hook);
   }
   if(file==='dungeon-theme-v1.css'){
     for(const hook of ["#cb2dBackdrop{","#hs2dBackdrop{","#cc2dBackdrop{","#bs2dBackdrop{","#fracturedAgesBackdrop{",".theme-ashen",".theme-hollow",".theme-canyon",".theme-blackout",".theme-fractured","Mechanic telegraphs/class colours are intentionally not overridden"])if(!contents.includes(hook))throw new Error('Dungeon theme system is missing '+hook);
