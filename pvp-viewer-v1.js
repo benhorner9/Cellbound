@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.9.0';
+const VERSION='2.0.0';
 const $=(root,s)=>root?.querySelector(s);
 const $$=(root,s)=>[...(root?.querySelectorAll(s)||[])];
 const esc=v=>String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[m]));
@@ -70,7 +70,7 @@ function shellMarkup(match,units,map=null){
   const blue=units.filter(x=>x.team==='blue'),red=units.filter(x=>x.team==='red');
   const label=match.kind==='arena'?match.size+'v'+match.size+' RATED ARENA':match.size+'v'+match.size+' · '+(match.mode==='capture-the-flag'?'CAPTURE THE FLAG':'KING OF THE HILL');
   return '<div class="pvp2d-shell '+(map?'with-map':'')+'">'+
-    '<header class="pvp2d-head"><div><small>LIVE PVP COMBAT</small><h3>'+esc(label)+'</h3></div><div class="pvp2d-head-center"><b id="pvp2dScore">0–0</b><span id="pvp2dObjective">'+(match.kind==='arena'?'Eliminate the opposing squad':match.mode==='capture-the-flag'?'First to 3 captures':'First to 100 control')+'</span></div><div class="pvp2d-controls"><span id="pvp2dTimer">0:00</span><b>REAL TIME</b></div></header>'+
+    '<header class="pvp2d-head"><div><small>LIVE PVP COMBAT</small><h3>'+esc(label)+'</h3></div><div class="pvp2d-head-center"><b id="pvp2dScore">'+(match.kind==='arena'?(blue.length+'–'+red.length):'0–0')+'</b><span id="pvp2dObjective">'+(match.kind==='arena'?'Eliminate the opposing squad':match.mode==='capture-the-flag'?'First to 3 captures':'First to 100 control')+'</span></div><div class="pvp2d-controls"><span id="pvp2dTimer">0:00</span><b>REAL TIME</b></div></header>'+
     '<div class="pvp2d-layout"><aside>'+rosterMarkup(blue,'blue')+'</aside>'+
     '<main class="pvp2d-arena" id="pvp2dArena"><div class="pvp2d-floor"></div>'+mapMarkup(map)+'<div class="pvp2d-grid"></div>'+objectiveMarkup(match,map)+'<div id="pvp2dUnits" class="pvp2d-units">'+units.map(unitMarkup).join('')+'</div><div id="pvp2dFx" class="pvp2d-fx"></div><div id="pvp2dBanner" class="pvp2d-banner"></div></main>'+
     '<aside>'+rosterMarkup(red,'red')+'</aside></div>'+
@@ -159,14 +159,14 @@ function updateHill(root,payload={},state='neutral'){
   const label=hill.querySelector('b');if(label)label.textContent=name;
   $$(root,'[data-pvp2d-hill-site]').forEach(node=>node.classList.toggle('active',node.getAttribute('data-pvp2d-hill-site')===site))
 }
-function updateArenaStorm(root,payload={}){
+function updateArenaStorm(root,payload={},pulsePhase=true){
   const storm=$(root,'#pvp2dArenaStorm'),ring=$(root,'#pvp2dStormRing');if(!storm||!ring)return;
   const x=clamp(Number(payload.x)||50,8,92),y=clamp(Number(payload.y)||50,10,90),radius=clamp(Number(payload.radius)||44,8,48),damage=Math.max(0,Number(payload.damagePct)||0);
   const fog=storm.querySelector('.pvp2d-storm-fog');
   if(fog)fog.style.background='radial-gradient(circle at '+x+'% '+y+'%, transparent 0 '+radius+'%, rgba(39,52,57,.28) '+Math.min(49,radius+2)+'%, rgba(17,28,32,.78) 100%)';
   ring.style.left=x+'%';ring.style.top=y+'%';ring.style.width=(radius*2)+'%';ring.style.height=(radius*2)+'%';
   const label=ring.querySelector('b');if(label)label.textContent=damage?('CELLSTORM · '+damage+'%'):'CELLSTORM';
-  ring.classList.remove('phase-pulse');void ring.offsetWidth;ring.classList.add('phase-pulse')
+  if(pulsePhase){ring.classList.remove('phase-pulse');void ring.offsetWidth;ring.classList.add('phase-pulse')}
 }
 function combatant(pb,id){return pb.unitMap[id]}
 function attackKind(u,ability){
@@ -221,10 +221,15 @@ function handleEvent(pb,e){
       if(e.result==='guard'&&src&&target)feed(pb,src.name+' guards '+target.name+'.');break
     }
     case'PLAYER_DEFEATED':
-      if(target){const u=unitNode(root,target.id);u?.classList.add('dead');setHp(root,target.id,0);pb.stats[target.id].deaths++;if(src)pb.stats[src.id].kills++;feed(pb,target.name+' is defeated'+(src?' by '+src.name:'')+'.');banner(pb,(src?.team==='blue'?'BLUE':'RED')+' TAKEDOWN',src?.team||'')}
+      if(target){
+        target.alive=false;const u=unitNode(root,target.id);u?.classList.add('dead');setHp(root,target.id,0);pb.stats[target.id].deaths++;if(src)pb.stats[src.id].kills++;
+        feed(pb,target.name+' is defeated'+(src?' by '+src.name:e.ability==='Cellstorm'?' by the Cellstorm':'')+'.');
+        if(pb.match?.kind==='arena')updateScore(pb,pb.units.filter(x=>x.team==='blue'&&x.alive).length,pb.units.filter(x=>x.team==='red'&&x.alive).length,'Eliminate the opposing squad');
+        banner(pb,src?((src.team==='blue'?'BLUE':'RED')+' TAKEDOWN'):'CELLSTORM TAKEDOWN',src?.team||'')
+      }
       break;
     case'PLAYER_REVIVED':
-      if(target){const u=unitNode(root,target.id);u?.classList.remove('dead');setHp(root,target.id,Number(e.payload?.targetHpPct)||100);setResource(root,target.id,e.payload?.resource,e.payload?.resourceValue,e.payload?.resourceMax);floatText(root,target.id,e.result==='respawn'?'RESPAWN':'REVIVED','heal');feed(pb,target.name+' returns to the battleground.')}
+      if(target){target.alive=true;const u=unitNode(root,target.id);u?.classList.remove('dead');setHp(root,target.id,Number(e.payload?.targetHpPct)||100);setResource(root,target.id,e.payload?.resource,e.payload?.resourceValue,e.payload?.resourceMax);floatText(root,target.id,e.result==='respawn'?'RESPAWN':'REVIVED','heal');feed(pb,target.name+' returns to the battleground.')}
       break;
     case'OBJECTIVE_UPDATE':
       if(e.result==='hill-rotate'){
@@ -298,8 +303,10 @@ function handleEvent(pb,e){
       break;
     }
     case'ARENA_STATE':{
-      if(e.result==='storm-phase'){
-        updateArenaStorm(root,e.payload);
+      if(e.result==='storm-progress'){
+        updateArenaStorm(root,e.payload,false);
+      }else if(e.result==='storm-phase'){
+        updateArenaStorm(root,e.payload,true);
         const phase=Number(e.payload?.phase)||0;
         setStatus(pb,(e.payload?.label||'Cellstorm')+' · safe ring '+Math.round(Number(e.payload?.radius)||0));
         if(phase>0){banner(pb,e.payload?.label||'CELLSTORM CLOSING','');feed(pb,'The Cellstorm closes and shifts position. Move inside the new safe ring.')}
@@ -320,8 +327,8 @@ function handleEvent(pb,e){
   }
 }
 function buildUnits(match){
-  const blue=(match.playerUnits||[]).map((u,i)=>({id:engineId('blue',u,i),rawId:u.id,name:u.name,portrait:u.portrait,class:u.class||'Warrior',spec:u.spec||'',role:u.role||'dps',team:'blue',resource:resourceName(u),position:initialPoint('blue',i,(match.playerUnits||[]).length,match.kind,match.mode)}));
-  const red=(match.enemyUnits||[]).map((u,i)=>({id:engineId('red',u,i),rawId:u.id,name:u.name,portrait:u.portrait||'◆',class:u.class||'Warrior',spec:u.spec||'',role:u.role||'dps',team:'red',resource:resourceName(u),position:initialPoint('red',i,(match.enemyUnits||[]).length,match.kind,match.mode)}));
+  const blue=(match.playerUnits||[]).map((u,i)=>({id:engineId('blue',u,i),rawId:u.id,name:u.name,portrait:u.portrait,class:u.class||'Warrior',spec:u.spec||'',role:u.role||'dps',team:'blue',alive:true,resource:resourceName(u),position:initialPoint('blue',i,(match.playerUnits||[]).length,match.kind,match.mode)}));
+  const red=(match.enemyUnits||[]).map((u,i)=>({id:engineId('red',u,i),rawId:u.id,name:u.name,portrait:u.portrait||'◆',class:u.class||'Warrior',spec:u.spec||'',role:u.role||'dps',team:'red',alive:true,resource:resourceName(u),position:initialPoint('red',i,(match.enemyUnits||[]).length,match.kind,match.mode)}));
   return[...blue,...red]
 }
 function stop(){if(activePlayback){activePlayback.cancelled=true;cancelAnimationFrame(activePlayback.raf);activePlayback=null}}
