@@ -139,6 +139,7 @@ function defeat(ctx,killer,target){
     }
     target.carryingFlag=null
   }
+  if(target.flagIntent){Object.values(ctx.flag||{}).forEach(flag=>{if(flag?.state==='contested'&&flag.contester===target.id){flag.state='dropped';flag.contester=null;flag.lastActionAt=ctx.time}})}
   target.flagIntent=null;
   emit(ctx,'PLAYER_DEFEATED',{source:killer?.id||null,target:target.id,ability:'PvP defeat',result:'defeated',payload:{team:target.team,killer:killer?.id||null}});
   if(ctx.kind==='battleground')target.respawnAt=ctx.time+7000+Math.round(ctx.rng()*2500)
@@ -209,8 +210,8 @@ function setupObjective(ctx){
   }else{
     ctx.objective={type:'capture-the-flag',blue:0,red:0};
     ctx.flag={
-      blue:{owner:'blue',carrier:null,state:'base',position:{x:12,y:50},droppedAt:0,lastActionAt:0},
-      red:{owner:'red',carrier:null,state:'base',position:{x:88,y:50},droppedAt:0,lastActionAt:0}
+      blue:{owner:'blue',carrier:null,contester:null,state:'base',position:{x:12,y:50},droppedAt:0,lastActionAt:0},
+      red:{owner:'red',carrier:null,contester:null,state:'base',position:{x:88,y:50},droppedAt:0,lastActionAt:0}
     };
     emit(ctx,'FLAG_STATE',{result:'reset',payload:{team:'blue',owner:'blue',x:12,y:50}});
     emit(ctx,'FLAG_STATE',{result:'reset',payload:{team:'red',owner:'red',x:88,y:50}});
@@ -243,12 +244,12 @@ function travelFlagRunner(ctx,u,to,duration,reason,onArrive){
 function resetFlag(ctx,flag,reason='returned',source=null){
   if(!flag)return;
   if(flag.carrier&&ctx.byId[flag.carrier])ctx.byId[flag.carrier].carryingFlag=null;
-  flag.carrier=null;flag.state='base';flag.position=flagBase(flag.owner);flag.droppedAt=0;flag.lastActionAt=ctx.time;
+  flag.carrier=null;flag.contester=null;flag.state='base';flag.position=flagBase(flag.owner);flag.droppedAt=0;flag.lastActionAt=ctx.time;
   emit(ctx,'FLAG_STATE',{source:source?.id||null,result:reason,payload:{team:flag.owner,owner:flag.owner,x:flag.position.x,y:flag.position.y}})
 }
 function carryFlagHome(ctx,u,flag,from='base'){
   if(!u?.alive||!flag||u.team===flag.owner||u.carryingFlag)return false;
-  flag.carrier=u.id;flag.state='carried';flag.position=copy(u.position);flag.lastActionAt=ctx.time;u.carryingFlag=flag.owner;u.objectives++;
+  flag.carrier=u.id;flag.contester=null;flag.state='carried';flag.position=copy(u.position);flag.lastActionAt=ctx.time;u.carryingFlag=flag.owner;u.objectives++;
   emit(ctx,'FLAG_STATE',{source:u.id,result:'picked-up',payload:{team:flag.owner,owner:flag.owner,carrier:u.id,from,x:u.position.x,y:u.position.y}});
   const home=flagBase(u.team);
   travelFlagRunner(ctx,u,home,2800,'carry flag home',()=>{flag.position=copy(u.position)});
@@ -257,7 +258,7 @@ function carryFlagHome(ctx,u,flag,from='base'){
 function captureFlag(ctx,u,flag){
   if(!u?.alive||!flag||flag.carrier!==u.id||u.carryingFlag!==flag.owner)return false;
   const own=ctx.flag[u.team];if(!own||own.state!=='base')return false;
-  u.carryingFlag=null;flag.carrier=null;flag.state='base';flag.position=flagBase(flag.owner);flag.lastActionAt=ctx.time;
+  u.carryingFlag=null;flag.carrier=null;flag.contester=null;flag.state='base';flag.position=flagBase(flag.owner);flag.lastActionAt=ctx.time;
   ctx.objective[u.team]++;ctx.stats[u.team].objectives++;
   emit(ctx,'FLAG_STATE',{source:u.id,result:'captured',payload:{team:flag.owner,owner:flag.owner,scoringTeam:u.team,blue:ctx.objective.blue,red:ctx.objective.red,x:flag.position.x,y:flag.position.y}});
   return true
@@ -269,7 +270,7 @@ function resolveDroppedFlag(ctx,flag){
   const defenderDist=defender?pvpDistanceToPoint(defender,p):999,attackerDist=attacker?pvpDistanceToPoint(attacker,p):999;
   const returnWins=defender&&(!attacker||defenderDist<=attackerDist+4);
   const actor=returnWins?defender:attacker;if(!actor)return;
-  flag.state='contested';flag.lastActionAt=ctx.time;
+  flag.state='contested';flag.contester=actor.id;flag.lastActionAt=ctx.time;
   travelFlagRunner(ctx,actor,p,700,returnWins?'return dropped flag':'recover dropped flag',()=>{
     if(flag.state!=='contested'||!actor.alive)return;
     if(returnWins)resetFlag(ctx,flag,'returned',actor);
