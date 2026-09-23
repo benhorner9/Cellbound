@@ -62,6 +62,9 @@ for(const file of files){
     if(!contents.includes("tradeState:'tradeable'")||!contents.includes('nonStackable:true'))throw new Error('Grid Override Module must remain tradeable and non-stackable');
     if(!contents.includes("overrideDrop=Math.random()<GRID_OVERRIDE_DROP_CHANCE?createGridOverrideModule():null"))throw new Error('Grid Override drop must remain an independent 10% roll from equipment loot');
   }
+  if(file==='blackout-station-v1.js'){
+    for(const hook of ['bs-entry-status','bs2d-start','function bsXpCard','function bsCombatAnalysisHTML','data-bs-xp','PARTY EXPERIENCE'])if(!contents.includes(hook))throw new Error('Blackout shared briefing/results contract is missing '+hook);
+  }
   if(file==='trading-post-v3.js'){
     if(/location\.reload\s*\(/.test(contents))throw new Error('Trading Post must not hard-reload the page after market actions');
     if((contents.match(/function timeLeft\s*\(/g)||[]).length!==1)throw new Error('Trading Post timeLeft helper must be defined exactly once');
@@ -89,7 +92,7 @@ for(const file of files){
     if(!contents.includes('CellboundExpeditionPresentation'))throw new Error(file+' is not wired to the shared PvE expedition presentation');
   }
   if(file==='pvp-viewer-v1.css'){
-    for(const hook of [".pvp2d-lower{","height:132px","max-height:132px",".pvp2d-feed{","overflow-y:auto","height:264px","grid-template-columns:repeat(3,minmax(0,1fr))",".pvp2d-map{",".pvp2d-map-block",".pvp2d-map-area.tunnel"])if(!contents.includes(hook))throw new Error('PvP combat feed/map/healing-meter presentation is missing '+hook);
+    for(const hook of [".pvp2d-lower{","height:132px","max-height:132px",".pvp2d-feed{","overflow-y:auto","height:264px",".pvp2d-lower>section.pvp2d-meters","grid-template-columns:repeat(3,minmax(0,1fr))",".pvp2d-map{",".pvp2d-map-block",".pvp2d-map-area.tunnel"])if(!contents.includes(hook))throw new Error('PvP combat feed/map/healing-meter presentation is missing '+hook);
   }
   if(file==='pvp-combat-v1.js'){
     for(const hook of ["const VERSION='1.5.0'","cellwind-bastion","PVP_MAPS","findMapPath","hasLineOfSight","LOS_BLOCKED","assignCtfRoles","ctfCarrierAct","ctfAct","ctf-standoff","carryFlagHome","resolveDroppedFlag","window.CellboundPvPCombat"])if(!contents.includes(hook))throw new Error('PvP combat engine is missing '+hook);
@@ -203,6 +206,7 @@ for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readab
 {
   const blackoutCss=fs.readFileSync(path.join(out,'blackout-station-v1.css'),'utf8');
   if(!blackoutCss.includes('.bs2d-shell.results-mode .cb2d-loot-gear'))throw new Error('Blackout completion loot layout is missing');
+  for(const hook of ['.bs-entry-status','.bs2d-start','.bs-entry-ready','.bs2d-shell.results-mode .cb2d-xp-section'])if(!blackoutCss.includes(hook))throw new Error('Finished Blackout presentation styling is missing '+hook);
 }
 {
   const blackoutCss=fs.readFileSync(path.join(out,'blackout-station-v1.css'),'utf8');
