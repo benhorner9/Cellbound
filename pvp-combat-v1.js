@@ -262,8 +262,8 @@ function ctfCarrierAct(ctx,u){
   const hold=ctfHoldPoint(u);
   if(pvpDistanceToPoint(u,hold)>5){objectiveTravel(ctx,u,hold,'flag carrier hold');return true}
   maybeDefensive(ctx,u);
-  const threat=nearbyEnemies(ctx,u,9).sort((a,b)=>healthRatio(a)-healthRatio(b))[0];
-  if(threat&&ctx.time>=u.nextControl)maybeControl(ctx,u,threat);
+  const pursuer=nearbyEnemies(ctx,u,9).sort((a,b)=>healthRatio(a)-healthRatio(b))[0];
+  if(pursuer&&ctx.time>=u.nextControl)maybeControl(ctx,u,pursuer);
   if(ctx.time-u.lastObjectiveNotice>=3000){
     u.lastObjectiveNotice=ctx.time;
     emit(ctx,'OBJECTIVE_UPDATE',{source:u.id,result:'ctf-standoff',payload:{team:u.team,carrier:u.id,waitingFor:u.team,blue:ctx.objective.blue,red:ctx.objective.red}})
