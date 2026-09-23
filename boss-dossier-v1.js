@@ -1,9 +1,9 @@
 (()=>{
 'use strict';
-const VERSION='1.1.0';
+const VERSION='1.2.0';
 const BOSSES={
   'vaultheart':{
-    dungeon:'The Ashen Vault',name:'The Vaultheart',title:'The Living Core Beneath the Vault',theme:'ashen',artwork:'./assets/bosses/ashen-vault-vaultheart.avif',
+    dungeon:'The Ashen Vault',name:'The Vaultheart',title:'The Living Core Beneath the Vault',theme:'ashen',artwork:'./assets/bosses/ashen-vault-vaultheart.webp',
     description:'Buried beneath the Ashen Vault is something the old forge was built to contain. The Vaultheart floods the chamber with unstable Cell energy while fractures tear open around the party.',
     abilities:[
       {icon:'area',name:'Core Pulse',text:'A powerful area blast forces the party away from unstable ground.'},
@@ -14,7 +14,7 @@ const BOSSES={
     intel:[['MOVEMENT','Watch the arena'],['ADDS','Control Fracture Spawns'],['SURVIVAL','Heavy final-phase pressure']]
   },
   'bound-choir':{
-    dungeon:'The Hollow Sanctum',name:'The Bound Choir',title:'Voices Chained Beneath Zeltira',theme:'hollow',artwork:'./assets/bosses/hollow-sanctum-bound-choir.avif',
+    dungeon:'The Hollow Sanctum',name:'The Bound Choir',title:'Voices Chained Beneath Zeltira',theme:'hollow',artwork:'./assets/bosses/hollow-sanctum-bound-choir.webp',
     description:'The deepest shrine contains no single creature. Souls have been bound into blackglass and forced to sing as one. Their resonance turns the chamber itself into a weapon.',
     abilities:[
       {icon:'area',name:'Resonance Collapse',text:'A growing blast punishes anyone caught within the marked area.'},
@@ -25,7 +25,7 @@ const BOSSES={
     intel:[['INTERRUPT','Shattering Hymn'],['ADDS','Control Echo Choir'],['POSITIONING','Avoid resonance zones']]
   },
   'vorran':{
-    dungeon:'Chaos Canyon',name:'Archdruid Vorran',title:'Master of the Living Canyon',theme:'chaos',artwork:'./assets/bosses/chaos-canyon-vorran.avif',
+    dungeon:'Chaos Canyon',name:'Archdruid Vorran',title:'Master of the Living Canyon',theme:'chaos',artwork:'./assets/bosses/chaos-canyon-vorran.webp',
     description:'The architect of Chaos Canyon waits inside its living heart. Vorran commands the canyon itself, steadily crushing the battlefield inward while restoring his own strength whenever the party gives him the opportunity.',
     abilities:[
       {icon:'heal',name:'Rejuvenation',text:'Vorran heals himself. Interrupt it quickly or lose valuable progress.'},
@@ -36,7 +36,7 @@ const BOSSES={
     intel:[['INTERRUPT','Rejuvenation'],['POSITIONING','Arena continually shrinks'],['COOLDOWNS','Save power for True Chaos']]
   },
   'vex-calder':{
-    dungeon:'Blackout Station',name:'Dr. Vex Calder',title:'Architect of the Blackout',theme:'blackout',artwork:'./assets/bosses/blackout-station-calder.avif',
+    dungeon:'Blackout Station',name:'Dr. Vex Calder',title:'Architect of the Blackout',theme:'blackout',artwork:'./assets/bosses/blackout-station-calder.webp',
     description:'With the station powered again, Calder finally reveals himself inside the generator hall. He turns the restored grid against the party, forcing every role to survive the very system they repaired.',
     abilities:[
       {icon:'roles',name:'Role Circuits',text:'Tank, healer and damage roles must move into the correct coloured circuit.'},
@@ -47,7 +47,7 @@ const BOSSES={
     intel:[['POSITIONING','Respect Role Circuits'],['MOVEMENT','React to Shockwaves'],['SURVIVAL','Grid pressure increases']]
   },
   'old-man':{
-    dungeon:'The Fractured Ages',name:'The Old Man',title:'Keeper of Ages',theme:'fractured',artwork:'./assets/bosses/fractured-ages-old-man.avif',
+    dungeon:'The Fractured Ages',name:'The Old Man',title:'Keeper of Ages',theme:'fractured',artwork:'./assets/bosses/fractured-ages-old-man.webp',
     description:'Every fracture has led here. The Old Man waits inside a place that belongs to no age, surrounded by five figures who should never have existed together.',
     abilities:[
       {icon:'control',name:"Keeper's Gambit",text:'The Old Man manipulates the fight rather than following ordinary combat rules.'},
