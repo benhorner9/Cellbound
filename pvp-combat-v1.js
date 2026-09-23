@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.6.0';
+const VERSION='1.7.0';
 const TICK=250;
 const MAX_ARENA_MS=90000;
 const MAX_BG_MS=120000;
@@ -94,6 +94,28 @@ const PVP_MAPS={
       {x:34,y:83},{x:50,y:83},{x:66,y:83},
       {x:77,y:32},{x:83,y:50},{x:77,y:68}
     ]
+  },
+  'veilspire-arena':{
+    id:'veilspire-arena',name:'Veilspire Arena',mode:'arena',
+    bounds:{left:6,right:94,top:8,bottom:92},
+    areas:[
+      {id:'west-gate',name:'WEST GATE',x:6,y:27,w:18,h:46,kind:'arena-gate'},
+      {id:'east-gate',name:'EAST GATE',x:76,y:27,w:18,h:46,kind:'arena-gate'},
+      {id:'arena-floor',name:'THE VEILSPIRE',x:22,y:12,w:56,h:76,kind:'arena-floor'}
+    ],
+    blockers:[
+      {id:'north-west-pillar',x:38,y:36,w:7,h:11,kind:'pillar'},
+      {id:'north-east-pillar',x:62,y:36,w:7,h:11,kind:'pillar'},
+      {id:'south-west-pillar',x:38,y:64,w:7,h:11,kind:'pillar'},
+      {id:'south-east-pillar',x:62,y:64,w:7,h:11,kind:'pillar'}
+    ],
+    nav:[
+      {x:18,y:50},{x:27,y:30},{x:27,y:70},
+      {x:38,y:22},{x:50,y:22},{x:62,y:22},
+      {x:30,y:50},{x:44,y:50},{x:50,y:50},{x:56,y:50},{x:70,y:50},
+      {x:38,y:78},{x:50,y:78},{x:62,y:78},
+      {x:73,y:30},{x:73,y:70},{x:82,y:50}
+    ]
   }
 };
 
@@ -126,7 +148,7 @@ function normalize(raw,team,index,count,opts){
     id:unitId(team,raw,index),characterId:raw?.id||raw?.characterId||null,name:raw?.name||('Combatant '+(index+1)),portrait:raw?.portrait||'◆',class:raw?.class||'Warrior',spec:raw?.spec||'',role,team,
     level,pvpPower,pvpDefence,controlResistance:control,maxHealth,health:maxHealth,alive:true,position,resource:{name:r.name,max:r.max,value:r.start,regen:r.regen},
     nextAction:500+index*85,nextControl:5000+index*300,nextDefensive:9000+index*500,disabledUntil:0,guardedUntil:0,guardSource:null,defensiveUntil:0,
-    respawnAt:0,kills:0,deaths:0,damage:0,healing:0,interrupts:0,cc:0,objectives:0,carryingFlag:null,flagIntent:null,objectiveRole:null,ctfSlot:index,kothSlot:index,objectiveEpoch:0,lastObjectiveNotice:0
+    respawnAt:0,kills:0,deaths:0,damage:0,healing:0,interrupts:0,cc:0,objectives:0,carryingFlag:null,flagIntent:null,objectiveRole:null,ctfSlot:index,kothSlot:index,arenaSlot:index,objectiveEpoch:0,lastObjectiveNotice:0,lastStormMove:0
   }
 }
 function emit(ctx,type,data={}){ctx.events.push({timestamp:Math.max(0,Math.round(ctx.time)),type,...data})}
@@ -261,11 +283,15 @@ function applyDamage(ctx,source,target,raw,ability,critical=false){
   if(guard){const protector=ctx.byId[guard];if(protector?.alive){const redirect=Math.max(1,Math.round(amount*.16));protector.health=Math.max(0,protector.health-redirect);emit(ctx,'DAMAGE_DEALT',{source:source.id,target:protector.id,ability:'Guard Redirect',amount:redirect,result:'redirect',payload:{targetHp:protector.health,targetMaxHealth:protector.maxHealth,targetHpPct:protector.health/protector.maxHealth*100,pvp:true,redirected:true}});if(protector.health<=0)defeat(ctx,source,protector)}}
   if(target.health<=0)defeat(ctx,source,target);return amount
 }
+function arenaDampening(ctx){
+  if(ctx?.kind!=='arena'||ctx.time<45000)return 0;
+  return clamp((Math.floor((ctx.time-45000)/15000)+1)*.10,0,.30)
+}
 function applyHeal(ctx,source,target,raw,ability){
   if(!source?.alive||!target?.alive||!hasLineOfSight(ctx,source,target))return 0;
-  const scale=clamp(source.pvpPower/120,.7,1.65),before=target.health,amount=Math.max(1,Math.round(raw*scale*(.9+ctx.rng()*.18)));
+  const dampening=arenaDampening(ctx),scale=clamp(source.pvpPower/120,.7,1.65),before=target.health,amount=Math.max(1,Math.round(raw*scale*(.9+ctx.rng()*.18)*(1-dampening)));
   target.health=Math.min(target.maxHealth,target.health+amount);const effective=target.health-before;source.healing+=effective;ctx.stats[source.team].healing+=effective;
-  emit(ctx,'HEAL_RECEIVED',{source:source.id,target:target.id,ability,amount:effective,result:'pvp-heal',payload:{targetHp:target.health,targetMaxHealth:target.maxHealth,targetHpPct:target.health/target.maxHealth*100,overhealing:Math.max(0,amount-effective),pvp:true}});
+  emit(ctx,'HEAL_RECEIVED',{source:source.id,target:target.id,ability,amount:effective,result:'pvp-heal',payload:{targetHp:target.health,targetMaxHealth:target.maxHealth,targetHpPct:target.maxHealth?target.health/target.maxHealth*100:0,overhealing:Math.max(0,amount-effective),dampeningPct:Math.round(dampening*100),pvp:true}});
   return effective
 }
 function defeat(ctx,killer,target){
@@ -345,6 +371,7 @@ function damageAction(ctx,u,target){
 }
 function act(ctx,u){
   if(!u.alive||ctx.time<u.disabledUntil||ctx.time<u.nextAction)return;
+  if(ctx.kind==='arena'&&arenaAct(ctx,u))return;
   if(ctx.mode==='king-of-the-hill'&&kothAct(ctx,u))return;
   if(ctx.mode==='capture-the-flag'&&ctfAct(ctx,u))return;
   maybeDefensive(ctx,u);maybeGuard(ctx,u);
@@ -503,6 +530,85 @@ function ctfAct(ctx,u){
   const point=ctfRolePoint(u);if(pvpDistanceToPoint(u,point)>7)objectiveTravel(ctx,u,point,'hold battleground lane');else u.nextAction=ctx.time+900;
   return true
 }
+const ARENA_STORM_PHASES=[
+  {at:0,radius:44,x:50,y:50,damage:.00,label:'OPENING RING'},
+  {at:18000,radius:37,x:46,y:47,damage:.025,label:'VEIL CLOSING'},
+  {at:34000,radius:31,x:55,y:46,damage:.035,label:'VEIL ADVANCES'},
+  {at:50000,radius:25,x:48,y:55,damage:.05,label:'INNER RING'},
+  {at:66000,radius:19,x:53,y:50,damage:.07,label:'FINAL PRESSURE'},
+  {at:80000,radius:13,x:50,y:50,damage:.10,label:'LAST CIRCLE'}
+];
+function arenaPhaseForTime(time){
+  let index=0;for(let i=0;i<ARENA_STORM_PHASES.length;i++)if(time>=ARENA_STORM_PHASES[i].at)index=i;return index
+}
+function arenaState(ctx){return ctx?.objective?.storm||{...ARENA_STORM_PHASES[0],phase:0}}
+function arenaDistance(u,storm=arenaState({})){return Math.hypot(u.position.x-storm.x,u.position.y-storm.y)}
+function arenaSafePoint(ctx,u,storm=arenaState(ctx)){
+  const side=u.team==='blue'?-1:1,slot=Number(u.arenaSlot)||0,limit=Math.max(5,storm.radius-5);
+  let angle;
+  if(u.role==='healer')angle=u.team==='blue'?Math.PI:0;
+  else if(u.role==='tank')angle=u.team==='blue'?Math.PI*.88:Math.PI*.12;
+  else angle=(slot%2?-.58:.58)+(u.team==='blue'?Math.PI:0);
+  const radial=u.role==='healer'?Math.min(limit,Math.max(7,storm.radius*.52)):u.role==='tank'?Math.min(limit,Math.max(5,storm.radius*.30)):Math.min(limit,Math.max(6,storm.radius*.45));
+  return openMapPoint(ctx,{x:storm.x+Math.cos(angle)*radial+side*(slot%3-1)*1.4,y:storm.y+Math.sin(angle)*radial},1.1)
+}
+function arenaSetPhase(ctx,index,initial=false){
+  const phase=ARENA_STORM_PHASES[index];if(!phase)return;
+  ctx.objective.storm={...phase,phase:index};ctx.objective.stormPhase=index;
+  emit(ctx,'ARENA_STATE',{result:'storm-phase',payload:{phase,index,total:ARENA_STORM_PHASES.length,radius:phase.radius,x:phase.x,y:phase.y,damagePct:Math.round(phase.damage*100),label:phase.label,dampeningPct:Math.round(arenaDampening(ctx)*100),initial}});
+  if(!initial){
+    for(const u of living(ctx,'blue').concat(living(ctx,'red'))){
+      if(arenaDistance(u,ctx.objective.storm)>phase.radius*.78){
+        u.objectiveEpoch++;u.flagIntent=null;move(ctx,u,arenaSafePoint(ctx,u,ctx.objective.storm),500,'rotate away from cellstorm')
+      }
+    }
+  }
+}
+function arenaSpreadPoint(ctx,u,storm=arenaState(ctx)){
+  const alliesNear=allies(ctx,u).filter(a=>a.id!==u.id&&distance(u,a)<5.5);
+  if(!alliesNear.length)return null;
+  const slot=Number(u.arenaSlot)||0,angle=(slot*1.85)+(u.team==='blue'?.7:-.7),radial=Math.min(Math.max(6,storm.radius*.32),Math.max(6,storm.radius-5));
+  return openMapPoint(ctx,{x:storm.x+Math.cos(angle)*radial,y:storm.y+Math.sin(angle)*radial},1.1)
+}
+function arenaAct(ctx,u){
+  const storm=arenaState(ctx),distToSafe=arenaDistance(u,storm);
+  if(distToSafe>storm.radius-2){
+    move(ctx,u,arenaSafePoint(ctx,u,storm),460,'escape cellstorm');u.lastStormMove=ctx.time;u.nextAction=ctx.time+500;return true
+  }
+  if(ctx.time-u.lastStormMove>1800){
+    const spread=arenaSpreadPoint(ctx,u,storm);
+    if(spread&&Math.hypot(spread.x-u.position.x,spread.y-u.position.y)>4){
+      move(ctx,u,spread,430,'spread inside arena');u.lastStormMove=ctx.time;u.nextAction=ctx.time+520;return true
+    }
+  }
+  maybeDefensive(ctx,u);maybeGuard(ctx,u);
+  let acted=false;if(u.role==='healer')acted=healerAction(ctx,u);
+  if(!acted)acted=damageAction(ctx,u,selectTarget(ctx,u));
+  u.nextAction=ctx.time+(u.role==='healer'?1220:1080)+Math.round(ctx.rng()*360);
+  return true
+}
+function arenaTick(ctx){
+  if(ctx.kind!=='arena')return;
+  const wanted=arenaPhaseForTime(ctx.time);
+  if(wanted!==Number(ctx.objective.stormPhase||0))arenaSetPhase(ctx,wanted,false);
+  if(ctx.time%1000!==0)return;
+  const storm=arenaState(ctx);
+  for(const u of ctx.units){
+    if(!u.alive)continue;
+    const outside=arenaDistance(u,storm)>storm.radius;
+    if(!outside)continue;
+    const amount=Math.max(1,Math.round(u.maxHealth*storm.damage));
+    u.health=Math.max(0,u.health-amount);
+    emit(ctx,'DAMAGE_DEALT',{source:null,target:u.id,ability:'Cellstorm',amount,result:'storm',payload:{targetHp:u.health,targetMaxHealth:u.maxHealth,targetHpPct:u.maxHealth?u.health/u.maxHealth*100:0,pvp:true,environment:true,storm:true}});
+    emit(ctx,'ARENA_STATE',{target:u.id,result:'storm-damage',payload:{phase:storm.phase,radius:storm.radius,x:storm.x,y:storm.y,damagePct:Math.round(storm.damage*100)}});
+    if(u.health<=0)defeat(ctx,null,u)
+  }
+  const dampening=arenaDampening(ctx),last=Number(ctx.objective.lastDampening||0);
+  if(dampening!==last){
+    ctx.objective.lastDampening=dampening;
+    emit(ctx,'ARENA_STATE',{result:'dampening',payload:{dampeningPct:Math.round(dampening*100),phase:storm.phase,radius:storm.radius,x:storm.x,y:storm.y}})
+  }
+}
 function kothSite(ctx){return ctx?.map?.hills?.[Number(ctx?.objective?.activeIndex)||0]||{id:'central-nexus',name:'CENTRAL NEXUS',x:50,y:50,radius:12}}
 function kothDistance(u,p){return Math.hypot((u.position.x-p.x),(u.position.y-p.y))}
 function assignKothRoles(ctx,team){
@@ -549,7 +655,12 @@ function kothAct(ctx,u){
   u.nextAction=ctx.time+750;return true
 }
 function setupObjective(ctx){
-  if(ctx.kind==='arena'){ctx.objective={type:'arena',blue:0,red:0};return}
+  if(ctx.kind==='arena'){
+    ctx.objective={type:'arena',blue:0,red:0,stormPhase:0,lastDampening:0,storm:{...ARENA_STORM_PHASES[0],phase:0}};
+    ctx.units.forEach((u,i)=>{u.nextAction=Math.max(u.nextAction,950+i*55)});
+    arenaSetPhase(ctx,0,true);
+    return
+  }
   if(ctx.mode==='king-of-the-hill'){
     ctx.objective={type:'king-of-the-hill',blue:0,red:0,owner:null,activeIndex:0,rotations:0,nextRotation:18000};
     assignKothRoles(ctx,'blue');assignKothRoles(ctx,'red');
@@ -651,7 +762,7 @@ function flagTick(ctx){
     if(flag.state==='dropped'&&ctx.time-flag.lastActionAt>=700)resolveDroppedFlag(ctx,flag)
   }
 }
-function objectiveTick(ctx){if(ctx.mode==='king-of-the-hill')hillTick(ctx);else if(ctx.mode==='capture-the-flag')flagTick(ctx)}
+function objectiveTick(ctx){if(ctx.kind==='arena')arenaTick(ctx);else if(ctx.mode==='king-of-the-hill')hillTick(ctx);else if(ctx.mode==='capture-the-flag')flagTick(ctx)}
 function runScheduled(ctx){const due=ctx.scheduled.filter(x=>x.at<=ctx.time);ctx.scheduled=ctx.scheduled.filter(x=>x.at>ctx.time);due.forEach(x=>x.fn())}
 function ended(ctx){
   const blue=living(ctx,'blue').length,red=living(ctx,'red').length;
@@ -671,7 +782,7 @@ function winner(ctx){
 }
 function simulate({blue=[],red=[],kind='arena',mode='arena',size=null,seed='cellbound-pvp'}={}){
   if(!Array.isArray(blue)||!Array.isArray(red)||!blue.length||!red.length)throw new Error('PvP combat requires two non-empty teams.');
-  const ctx={kind,mode,size:Number(size)||Math.max(blue.length,red.length),time:0,rng:rngFrom(seed),events:[],scheduled:[],units:[],byId:{},map:mode==='capture-the-flag'?PVP_MAPS['cellwind-bastion']:mode==='king-of-the-hill'?PVP_MAPS['shifting-court']:null,stats:{blue:{kills:0,deaths:0,damage:0,healing:0,objectives:0},red:{kills:0,deaths:0,damage:0,healing:0,objectives:0}},objective:null,flag:{blue:{carrier:null},red:{carrier:null}}};
+  const ctx={kind,mode,size:Number(size)||Math.max(blue.length,red.length),time:0,rng:rngFrom(seed),events:[],scheduled:[],units:[],byId:{},map:kind==='arena'?PVP_MAPS['veilspire-arena']:mode==='capture-the-flag'?PVP_MAPS['cellwind-bastion']:mode==='king-of-the-hill'?PVP_MAPS['shifting-court']:null,stats:{blue:{kills:0,deaths:0,damage:0,healing:0,objectives:0},red:{kills:0,deaths:0,damage:0,healing:0,objectives:0}},objective:null,flag:{blue:{carrier:null},red:{carrier:null}}};
   ctx.units=[...blue.map((u,i)=>normalize(u,'blue',i,blue.length,{kind,mode})),...red.map((u,i)=>normalize(u,'red',i,red.length,{kind,mode}))];ctx.units.forEach(u=>ctx.byId[u.id]=u);
   emit(ctx,'COMBAT_START',{result:'pvp',payload:{kind,mode,size:ctx.size}});
   ctx.units.forEach(u=>emit(ctx,'RESOURCE_STATE',{source:u.id,target:u.id,result:'initial',payload:{resource:u.resource.name,value:u.resource.value,max:u.resource.max}}));
