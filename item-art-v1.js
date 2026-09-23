@@ -202,14 +202,16 @@ function collection(p,x,seed){
  if(kind==='pet')return '<path d="M64 25 L91 45 L86 86 L64 105 L42 86 L37 45 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><circle cx="53" cy="61" r="5" fill="#fff"/><circle cx="75" cy="61" r="5" fill="#fff"/><path d="M53 82 Q64 90 75 82" fill="none" stroke="'+p.rarity+'" stroke-width="3"/>';
  return '<path d="M64 16 L98 39 L91 89 L64 112 L37 89 L30 39 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M64 30 L81 50 L76 83 L64 96 L52 83 L47 50 Z" fill="'+p.dark+'" stroke="'+p.rarity+'" stroke-width="3"/><circle cx="64" cy="63" r="9" fill="'+p.rarity+'"/>';
 }
-function keyArt(p,x,seed){return '<circle cx="48" cy="52" r="23" fill="none" stroke="url(#m)" stroke-width="11"/><path d="M65 69 L105 109 M84 88 L96 76 M93 97 L105 85" stroke="'+p.ink+'" stroke-width="9"/><circle cx="48" cy="52" r="7" fill="'+p.rarity+'"/>'}\nfunction recipeArt(p,x,seed){return '<path d="M34 22 Q48 29 64 22 Q80 29 94 22 V105 Q80 98 64 105 Q48 98 34 105 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M45 43 H83 M45 55 H76 M45 72 H83 M45 84 H68" stroke="'+p.dark+'" stroke-width="4" opacity=".78"/><path d="M76 73 L88 86 L76 98 L64 86 Z" fill="'+p.rarity+'" stroke="'+p.ink+'" stroke-width="2"/>'}
+function keyArt(p,x,seed){return '<circle cx="48" cy="52" r="23" fill="none" stroke="url(#m)" stroke-width="11"/><path d="M65 69 L105 109 M84 88 L96 76 M93 97 L105 85" stroke="'+p.ink+'" stroke-width="9"/><circle cx="48" cy="52" r="7" fill="'+p.rarity+'"/>'}
+function recipeArt(p,x,seed){return '<path d="M34 22 Q48 29 64 22 Q80 29 94 22 V105 Q80 98 64 105 Q48 98 34 105 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M45 43 H83 M45 55 H76 M45 72 H83 M45 84 H68" stroke="'+p.dark+'" stroke-width="4" opacity=".78"/><path d="M76 73 L88 86 L76 98 L64 86 Z" fill="'+p.rarity+'" stroke="'+p.ink+'" stroke-width="2"/>'}
 function kindOf(x){
  const id=idOf(x);
  if(SPECIAL[id])return 'special';
  if(x?.kind&&['mount','pet','cell'].includes(String(x.kind)))return 'collection';
  if(x?.category==='material'||x?.material||MATERIAL_NAMES[id])return 'material';
  if(x?.category==='consumable'||x?.payload?.effect||CONSUMABLE_NAMES[id])return 'consumable';
- if(x?.category==='recipe'||/^Recipe:/i.test(String(x?.name||'')))return 'recipe';\n if(x?.category==='key'||/\bkey\b/i.test(String(x?.name||'')))return 'key';
+ if(x?.category==='recipe'||/^Recipe:/i.test(String(x?.name||'')))return 'recipe';
+ if(x?.category==='key'||/\bkey\b/i.test(String(x?.name||'')))return 'key';
  if(x?.category==='utility'||x?.utilityType||slotOf(x)==='Utility')return 'utility';
  if(slotOf(x))return 'gear';
  return 'utility'
@@ -220,7 +222,8 @@ function artBody(p,x,seed){
  if(kind==='material')return material(p,x,seed);
  if(kind==='consumable')return consumable(p,x,seed);
  if(kind==='collection')return collection(p,x,seed);
- if(kind==='recipe')return recipeArt(p,x,seed);\n if(kind==='key')return keyArt(p,x,seed);
+ if(kind==='recipe')return recipeArt(p,x,seed);
+ if(kind==='key')return keyArt(p,x,seed);
  if(kind==='utility')return special(p,x,seed,'grid-module');
  return genericGear(p,x,seed)
 }
@@ -306,7 +309,8 @@ function enhanceCrafting(root){
   if(card.dataset.itemArtDone==='1')return;
   const b=card.querySelector('b'),name=b?.textContent?.replace(/^[⚗▤]\s*/,'').trim();if(!name)return;
   const all=Object.values(P.PROFESSIONS||{}).flatMap(function(v){return v.recipes||[]}),recipe=all.find(function(r){return r?.output?.name===name});
-  if(recipe?.output?.category==='consumable'){b.insertAdjacentHTML('beforebegin',consumableHTML(recipe.output.key,48,'crafted-item-art'));card.dataset.itemArtDone='1';return}\n  if(/^Recipe:/i.test(name)){b.insertAdjacentHTML('beforebegin',artHTML({id:'recipe-'+slug(name),name:name,category:'recipe',rarity:'Rare'},48,'crafted-item-art'));card.dataset.itemArtDone='1'}
+  if(recipe?.output?.category==='consumable'){b.insertAdjacentHTML('beforebegin',consumableHTML(recipe.output.key,48,'crafted-item-art'));card.dataset.itemArtDone='1';return}
+  if(/^Recipe:/i.test(name)){b.insertAdjacentHTML('beforebegin',artHTML({id:'recipe-'+slug(name),name:name,category:'recipe',rarity:'Rare'},48,'crafted-item-art'));card.dataset.itemArtDone='1'}
  });
  scope.querySelectorAll?.('.recipe-card').forEach(function(card){
   if(card.dataset.itemArtDone==='1')return;const name=card.querySelector('h4')?.textContent||'';
