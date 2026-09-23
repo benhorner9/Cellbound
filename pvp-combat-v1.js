@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.4.0';
+const VERSION='1.5.0';
 const TICK=250;
 const MAX_ARENA_MS=90000;
 const MAX_BG_MS=120000;
@@ -34,6 +34,33 @@ const KIT={
   Warlock:{damage:['Shadow Bolt','Chaos Bolt','Drain Soul'],interrupt:'Spell Lock',cc:'Fear',defensive:'Unending Resolve'}
 };
 const ROLE_FALLBACK={tank:['Shield Slam','Guard Breaker'],healer:['Mend','Radiant Mend'],dps:['Strike','Heavy Strike','Finisher']};
+const PVP_MAPS={
+  'cellwind-bastion':{
+    id:'cellwind-bastion',name:'Cellwind Bastion',mode:'capture-the-flag',
+    bounds:{left:5,right:95,top:8,bottom:92},
+    areas:[
+      {id:'blue-keep',name:'BLUE KEEP',x:5,y:28,w:24,h:44,kind:'base',team:'blue'},
+      {id:'red-keep',name:'RED KEEP',x:71,y:28,w:24,h:44,kind:'base',team:'red'},
+      {id:'north-tunnel',name:'NORTH TUNNEL',x:32,y:10,w:36,h:17,kind:'tunnel'},
+      {id:'mid-ruins',name:'SHATTERED COURTYARD',x:31,y:31,w:38,h:38,kind:'mid'},
+      {id:'south-tunnel',name:'SOUTH TUNNEL',x:32,y:73,w:36,h:17,kind:'tunnel'}
+    ],
+    blockers:[
+      {id:'blue-rampart-n',x:22,y:34,w:20,h:5},{id:'blue-rampart-s',x:22,y:66,w:20,h:5},
+      {id:'red-rampart-n',x:78,y:34,w:20,h:5},{id:'red-rampart-s',x:78,y:66,w:20,h:5},
+      {id:'north-tunnel-wall',x:50,y:28,w:36,h:5},{id:'south-tunnel-wall',x:50,y:72,w:36,h:5},
+      {id:'centre-ruin-n',x:50,y:36,w:20,h:9},{id:'centre-ruin-s',x:50,y:64,w:20,h:9},
+      {id:'west-pillar',x:36,y:50,w:5,h:12},{id:'east-pillar',x:64,y:50,w:5,h:12}
+    ],
+    nav:[
+      {x:18,y:50},{x:27,y:42},{x:27,y:58},
+      {x:27,y:18},{x:35,y:18},{x:50,y:18},{x:65,y:18},{x:73,y:18},
+      {x:31,y:44},{x:43,y:48},{x:50,y:50},{x:57,y:52},{x:69,y:56},
+      {x:27,y:82},{x:35,y:82},{x:50,y:82},{x:65,y:82},{x:73,y:82},
+      {x:73,y:42},{x:73,y:58},{x:82,y:50}
+    ]
+  }
+};
 
 function hashSeed(input){
   let h=2166136261>>>0;for(const ch of String(input||'cellbound-pvp')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0
@@ -73,9 +100,76 @@ function allies(ctx,u){return living(ctx,u.team)}
 function enemies(ctx,u){return living(ctx,u.team==='blue'?'red':'blue')}
 function healthRatio(u){return u.maxHealth?u.health/u.maxHealth:0}
 function distance(a,b){return Math.hypot((a.position.x-b.position.x),(a.position.y-b.position.y))}
+function pointInRect(p,r,pad=0){return !!p&&p.x>=r.x-r.w/2-pad&&p.x<=r.x+r.w/2+pad&&p.y>=r.y-r.h/2-pad&&p.y<=r.y+r.h/2+pad}
+function segmentsCross(a,b,c,d){
+  const cross=(p,q,r)=>(q.x-p.x)*(r.y-p.y)-(q.y-p.y)*(r.x-p.x);
+  const on=(p,q,r)=>Math.min(p.x,r.x)-.0001<=q.x&&q.x<=Math.max(p.x,r.x)+.0001&&Math.min(p.y,r.y)-.0001<=q.y&&q.y<=Math.max(p.y,r.y)+.0001;
+  const o1=cross(a,b,c),o2=cross(a,b,d),o3=cross(c,d,a),o4=cross(c,d,b);
+  if(((o1>0&&o2<0)||(o1<0&&o2>0))&&((o3>0&&o4<0)||(o3<0&&o4>0)))return true;
+  if(Math.abs(o1)<.0001&&on(a,c,b))return true;if(Math.abs(o2)<.0001&&on(a,d,b))return true;
+  if(Math.abs(o3)<.0001&&on(c,a,d))return true;if(Math.abs(o4)<.0001&&on(c,b,d))return true;
+  return false
+}
+function lineHitsRect(a,b,r,pad=0){
+  const left=r.x-r.w/2-pad,right=r.x+r.w/2+pad,top=r.y-r.h/2-pad,bottom=r.y+r.h/2+pad;
+  const box={x:r.x,y:r.y,w:r.w+pad*2,h:r.h+pad*2};
+  if(pointInRect(a,box)||pointInRect(b,box))return true;
+  const tl={x:left,y:top},tr={x:right,y:top},br={x:right,y:bottom},bl={x:left,y:bottom};
+  return segmentsCross(a,b,tl,tr)||segmentsCross(a,b,tr,br)||segmentsCross(a,b,br,bl)||segmentsCross(a,b,bl,tl)
+}
+function mapBlockers(ctx){return Array.isArray(ctx?.map?.blockers)?ctx.map.blockers:[]}
+function segmentBlocked(ctx,a,b,pad=0,kind='movement'){
+  return mapBlockers(ctx).some(r=>(kind==='los'?r.blocksLos!==false:r.blocksMovement!==false)&&lineHitsRect(a,b,r,pad))
+}
+function hasLineOfSight(ctx,a,b){
+  const ap=a?.position||a,bp=b?.position||b;if(!ap||!bp)return false;
+  return !segmentBlocked(ctx,ap,bp,0,'los')
+}
+function openMapPoint(ctx,p,pad=1){
+  const b=ctx?.map?.bounds||{left:5,right:95,top:8,bottom:92};
+  let out={x:clamp(Number(p?.x)||50,b.left,b.right),y:clamp(Number(p?.y)||50,b.top,b.bottom)};
+  for(const r of mapBlockers(ctx)){
+    if(!pointInRect(out,r,pad))continue;
+    const opts=[
+      {x:r.x-r.w/2-pad-.3,y:out.y},{x:r.x+r.w/2+pad+.3,y:out.y},
+      {x:out.x,y:r.y-r.h/2-pad-.3},{x:out.x,y:r.y+r.h/2+pad+.3}
+    ].filter(q=>!mapBlockers(ctx).some(b=>pointInRect(q,b,pad*.6)));
+    if(opts.length)out=opts.sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0]
+  }
+  return{x:clamp(out.x,b.left,b.right),y:clamp(out.y,b.top,b.bottom)}
+}
+function mapLane(p){return p.y<31?'top':p.y>69?'bottom':'mid'}
+function routePressure(ctx,u,p){
+  if(!u)return 0;
+  const hostile=enemies(ctx,u).reduce((n,e)=>n+(Math.hypot(e.position.x-p.x,e.position.y-p.y)<18?1:0),0);
+  const lane=u.routePreference&&mapLane(p)!==u.routePreference?12:0;
+  return hostile*7+lane
+}
+function findMapPath(ctx,from,to,u=null){
+  const dest=openMapPoint(ctx,to,1.2),start=openMapPoint(ctx,from,1.2);
+  if(!ctx?.map||!segmentBlocked(ctx,start,dest,1.05,'movement'))return[start,dest];
+  const nodes=[start,...(ctx.map.nav||[]).map(p=>openMapPoint(ctx,p,.8)),dest];
+  const N=nodes.length,distances=Array(N).fill(Infinity),prev=Array(N).fill(-1),used=Array(N).fill(false);distances[0]=0;
+  for(let step=0;step<N;step++){
+    let at=-1,best=Infinity;for(let i=0;i<N;i++)if(!used[i]&&distances[i]<best){best=distances[i];at=i}
+    if(at<0)break;used[at]=true;if(at===N-1)break;
+    for(let j=0;j<N;j++){
+      if(j===at||used[j]||segmentBlocked(ctx,nodes[at],nodes[j],.9,'movement'))continue;
+      const d=Math.hypot(nodes[at].x-nodes[j].x,nodes[at].y-nodes[j].y),cost=d+routePressure(ctx,u,nodes[j]);
+      if(distances[at]+cost<distances[j]){distances[j]=distances[at]+cost;prev[j]=at}
+    }
+  }
+  if(!Number.isFinite(distances[N-1]))return[start,dest];
+  const path=[];let cur=N-1;while(cur>=0){path.unshift(nodes[cur]);if(cur===0)break;cur=prev[cur]}
+  return path.length>=2?path:[start,dest]
+}
+function nextMapWaypoint(ctx,u,to){
+  const path=findMapPath(ctx,u.position,to,u);return path[1]||openMapPoint(ctx,to,1)
+}
 function move(ctx,u,to,duration=500,reason='position'){
-  const from=copy(u.position),end={x:clamp(Number(to.x)||50,5,95),y:clamp(Number(to.y)||50,8,92)};
-  u.position=end;emit(ctx,'MOVEMENT_START',{source:u.id,result:reason,payload:{from,to:copy(end),duration}})
+  const from=copy(u.position),target=openMapPoint(ctx,to,1),end=ctx?.map?nextMapWaypoint(ctx,u,target):target;
+  const travel=Math.max(180,Math.round((Number(duration)||500)*Math.max(.55,Math.min(1.65,Math.hypot(end.x-from.x,end.y-from.y)/14))));
+  u.position=end;emit(ctx,'MOVEMENT_START',{source:u.id,result:reason,payload:{from,to:copy(end),final:copy(target),duration:travel,pathing:Boolean(ctx?.map&&Math.hypot(end.x-target.x,end.y-target.y)>1)}})
 }
 function actionRange(u){return ['Hunter','Mage','Priest','Druid','Evoker','Shaman','Warlock'].includes(u.class)?30:6}
 function rolePriority(target,attacker){
