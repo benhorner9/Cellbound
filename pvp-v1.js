@@ -201,6 +201,9 @@ function makeEnemyUnits(count){
   const names=['Vex','Rook','Nyra','Kade','Mara','Thorn','Iris','Vale','Ash','Renn'];
   return Array.from({length:count},(_,i)=>({id:`enemy-${i}`,name:names[i%names.length]+(i>=names.length?` ${Math.floor(i/names.length)+1}`:''),portrait:'◆'}))
 }
+function makeAlliedUnits(count){
+  return Array.from({length:Math.max(0,count)},(_,i)=>({id:`ally-${i}`,name:`Allied ${Math.floor(i/5)+2} · ${i%5+1}`,portrait:'◇'}))
+}
 function battlegroundObjective(mode,win){
   if(mode==='capture-the-flag'){
     const ours=win?3:Math.floor(Math.random()*3),theirs=win?Math.floor(Math.random()*Math.max(1,ours)):Math.max(3,ours+1);
@@ -232,10 +235,10 @@ function beginVisual(match,finish){
 function runBattleground(){
   if(matchRunning)return;const p=ensureState(),chars=activeParty(),ready=squadStatus(chars);if(!ready.ok)return;
   matchRunning=true;render();
-  const own=teamPower(chars,battlegroundMode),difficulty=own*(.92+Math.random()*.16),objectiveBias=battlegroundMode==='king-of-the-hill'?chars.filter(c=>['tank','healer'].includes(classRole(c))).length*.018:chars.filter(c=>classRole(c)==='dps').length*.012;
+  const commanderCount=BG_SIZES[battlegroundSize].commanders,own=teamPower(chars,battlegroundMode)*commanderCount,difficulty=own*(.92+Math.random()*.16),objectiveBias=battlegroundMode==='king-of-the-hill'?chars.filter(c=>['tank','healer'].includes(classRole(c))).length*.018:chars.filter(c=>classRole(c)==='dps').length*.012;
   const chance=clamp(.5+(own-difficulty)/Math.max(1,own)*.75+objectiveBias-.035,.28,.72),win=Math.random()<chance,obj=battlegroundObjective(battlegroundMode,win),rewards=BG_SIZES[battlegroundSize];
   const bonus=Math.min(Math.round(rewards.winMarks*.35),obj.objectives*4),currency=(win?rewards.winMarks:rewards.lossMarks)+bonus,rankXp=(win?rewards.winXp:rewards.lossXp)+obj.objectives*8,shockDelta=win?-2:2;
-  const match={kind:'battleground',mode:battlegroundMode,size:battlegroundSize,win,scoreText:obj.text,currency,rankXp,objectives:obj.objectives,shockDelta,summary:obj.summary,playerUnits:chars,enemyUnits:makeEnemyUnits(Math.min(10,battlegroundSize))};
+  const match={kind:'battleground',mode:battlegroundMode,size:battlegroundSize,win,scoreText:obj.text,currency,rankXp,objectives:obj.objectives,shockDelta,summary:obj.summary,playerUnits:[...chars,...makeAlliedUnits(battlegroundSize-5)],enemyUnits:makeEnemyUnits(battlegroundSize)};
   beginVisual(match,()=>{
     p.warMarks+=currency;p.bgXp+=rankXp;p.bgObjectives+=obj.objectives;if(win)p.bgWins++;else p.bgLosses++;applyShock(chars,shockDelta);
     p.matchHistory.unshift({at:nowIso(),kind:'battleground',mode:battlegroundMode,size:battlegroundSize,win,currency,rankXp,score:obj.text});p.matchHistory=p.matchHistory.slice(0,40);
