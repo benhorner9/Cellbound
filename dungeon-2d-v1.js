@@ -1346,8 +1346,11 @@ function renderRebornEvent(e,result,replayMode=false){
  if(window.CellboundCombatStatuses?.handle(e,{resolve:cbrStatusTargets,speed:()=>run?.speed||1}))return;
  const srcChar=rebornPlayerByUnit(e.source),targetChar=rebornPlayerByUnit(e.target),enemyIdx=rebornEnemyIndex(e.target),sourceEnemyIdx=rebornEnemyIndex(e.source);
  switch(e.type){
-  case'COMBAT_START':
+  case'COMBAT_START':{
+   const arena=$('#cb2dArena');window.CellboundCombatFX?.mount?.(arena);
+   if(!replayMode&&['boss','final'].includes(String(STAGES[run.stage]?.kind||'')))window.CellboundCombatFX?.boss?.(arena,STAGES[run.stage]?.title||'Boss');
    status(replayMode?'Replay started':'Combat live');log((replayMode?'Replay: ':'')+'Combat begins.');break;
+  }
   case'MOVEMENT_START':
    if(e.payload?.to)move(e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||360);
    if(srcChar&&e.result==='line of sight'){const rr=role(srcChar);act(rr==='tank'?'tank':rr==='healer'?'healer':'dps',srcChar.name+' · Repositioning for line of sight')}
@@ -1452,7 +1455,7 @@ function renderRebornEvent(e,result,replayMode=false){
   case'CAST_FINISH':
    rebornCastClear('CAST COMPLETE');if(String(e.source||'').startsWith('e-'))log((e.ability||'Enemy cast')+' completes.');break;
   case'COMBAT_END':
-   rebornCastClear();status(e.result==='victory'?'Encounter cleared':'Party defeated');run.stageOutcome=e.result==='victory';if(e.result!=='victory')window.CellboundFX?.wipe?.('The expedition has collapsed inside The Ashen Vault.');regroup();break;
+   rebornCastClear();status(e.result==='victory'?'Encounter cleared':'Party defeated');run.stageOutcome=e.result==='victory';if(e.result==='victory')window.CellboundCombatFX?.victory?.($('#cb2dArena'));else window.CellboundFX?.wipe?.('The expedition has collapsed inside The Ashen Vault.');regroup();break;
  }
 }
 function configureRebornViewer(){
