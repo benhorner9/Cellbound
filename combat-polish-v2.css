@@ -7,7 +7,7 @@
 }
 .cbvfx-layer{position:absolute;z-index:1;inset:0;overflow:hidden;pointer-events:none;opacity:0;transition:opacity .45s ease}
 .cbvfx-ready>.cbvfx-layer{opacity:1}
-.cbvfx-events{position:absolute;z-index:20;inset:0;pointer-events:none}
+.cbvfx-events{position:absolute;z-index:80;inset:0;pointer-events:none}
 .cbvfx-haze,.cbvfx-motes,.cbvfx-sweep{position:absolute;pointer-events:none}
 .cbvfx-haze{width:56%;height:46%;border-radius:50%;filter:blur(28px);opacity:.11;animation:cbvfxHaze 11s ease-in-out infinite alternate}
 .cbvfx-haze.h1{left:-14%;bottom:-16%;background:radial-gradient(ellipse,var(--cbvfx-a,rgba(89,205,197,.34)),transparent 68%)}
@@ -27,9 +27,7 @@
 [data-cbvfx-theme="world"]{--cbvfx-a:rgba(193,73,74,.31);--cbvfx-b:rgba(222,165,69,.18)}
 [data-cbvfx-theme="pvp"]{--cbvfx-a:rgba(69,169,163,.25);--cbvfx-b:rgba(99,124,154,.17)}
 
-/* Keep gameplay and units above ambience. */
-:where(.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena)>:not(.cbvfx-layer){z-index:2}
-
+/* Ambience stays behind gameplay; impact events render independently above units. */
 /* Local impact effects. */
 .cbvfx-burst{--cbvfx-scale:1;position:absolute;z-index:30;width:18px;height:18px;transform:translate(-50%,-50%) scale(var(--cbvfx-scale));border-radius:50%;pointer-events:none}
 .cbvfx-burst:before,.cbvfx-burst:after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
