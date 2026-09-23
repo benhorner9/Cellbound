@@ -104,7 +104,7 @@ for(const file of files){
     for(const hook of ["#cb2dBackdrop{","#hs2dBackdrop{","#cc2dBackdrop{","#bs2dBackdrop{","#fracturedAgesBackdrop{",".theme-ashen",".theme-hollow",".theme-canyon",".theme-blackout",".theme-fractured","Mechanic telegraphs/class colours are intentionally not overridden"])if(!contents.includes(hook))throw new Error('Dungeon theme system is missing '+hook);
   }
   if(file==='expedition-presentation-v1.js'){
-    for(const hook of ["const VERSION='1.0.0'","'ashen-vault'","'hollow-sanctum'","'chaos-canyon'","'blackout-station'","'fractured-ages'","async function enter(","async function room(","window.CellboundExpeditionPresentation"])if(!contents.includes(hook))throw new Error('PvE expedition presentation is missing '+hook);
+    for(const hook of ["const VERSION='1.1.0'","'ashen-vault'","'hollow-sanctum'","'chaos-canyon'","'blackout-station'","'fractured-ages'","async function enter(","async function room(","if(!isBoss&&!options.force)return;","BOSS AHEAD","window.CellboundExpeditionPresentation"])if(!contents.includes(hook))throw new Error('PvE expedition presentation is missing '+hook);
   }
   if(file==='expedition-presentation-v1.css'){
     for(const hook of [".cbx-transition{",".cbx-enter",".cbx-room",".cb2d-backdrop",".hs2d-backdrop",".cc2d-backdrop",".bs2d-backdrop",".fa-backdrop","100dvh"])if(!contents.includes(hook))throw new Error('PvE full-screen expedition styling is missing '+hook);
