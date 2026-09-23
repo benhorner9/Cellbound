@@ -109,14 +109,14 @@ function dungeonCard(id){
      '<section><small>REWARDS</small><h4>'+esc(D.rewardBand(cfg.difficulty,cfg.tier,id).label)+'</h4><p>'+lootNames(id).map(esc).join(' · ')+'</p><strong>Cell Shards · boss loot · rare collection hooks</strong></section>'+
    '</div>'+
    '<div class="eg-boss-strip">'+cfg.dungeon.bosses.map(b=>'<span><b>'+esc(b.name)+'</b><small>'+esc(b.signature)+'</small></span>').join('')+'</div>'+bossLootMarkup(id)+
-   '<footer><div><small>TARGET TIME</small><b>'+formatTime(cfg.targetTimeMs)+'</b><span>Score improves through tier, time, deaths and mechanical execution.</span></div><button data-eg-prepare="'+id+'" '+(difficultyUnlocked(id,cfg.difficulty,cfg.tier)?'':'disabled')+'>PREPARE '+esc(cfg.diff.label)+' →</button></footer>'+
+   '<footer><div><small>TARGET TIME</small><b>'+formatTime(cfg.targetTimeMs)+'</b><span>Higher tiers, faster clears and cleaner runs score more.</span></div><button data-eg-prepare="'+id+'" '+(difficultyUnlocked(id,cfg.difficulty,cfg.tier)?'':'disabled')+'>PREPARE '+esc(cfg.diff.label)+' →</button></footer>'+
    (runs.length?'<div class="eg-recent">'+runs.map(r=>'<span><b>'+esc(r.difficulty==='cellbound'?'+'+r.tier:r.difficulty.toUpperCase())+'</b><em>'+formatTime(r.completion_time_ms)+'</em><strong>'+Number(r.score).toLocaleString()+'</strong></span>').join('')+'</div>':'')+
  '</article>'
 }
 
 const ACHIEVEMENT_DEFS={
- 'first-heroic':{name:'Into Heroic',description:'Complete your first Heroic dungeon.',reward:'Title hook · Heroic Delver'},
- 'cellbound-10':{name:'Bound Beyond Ten',description:'Complete Cellbound+10 or higher.',reward:'Prestige cosmetic hook'},
+ 'first-heroic':{name:'Into Heroic',description:'Complete your first Heroic dungeon.',reward:'Title · Heroic Delver'},
+ 'cellbound-10':{name:'Bound Beyond Ten',description:'Complete Cellbound+10 or higher.',reward:'Prestige cosmetic'},
  'deathless':{name:'Untouched',description:'Complete a dungeon without a death.',reward:'Achievement'},
  'clean-mechanics':{name:'Perfect Execution',description:'Complete Heroic or Cellbound+ without failing a boss mechanic.',reward:'Achievement'},
  'perfect-interrupts':{name:'Not On My Watch',description:'Miss no critical interrupts in Heroic or Cellbound+.',reward:'Achievement'},
@@ -142,20 +142,20 @@ function milestoneMarkup(){
 
 function weeklyMarkup(){
  const w=server.weekly||{},points=Number(w.progress_points)||0,highest=Number(w.highest_tier)||0,pct=clamp(points/60*100,0,100),claimed=Boolean(w.reward_claimed);
- return'<article class="eg-weekly panel"><div><small>WEEKLY ENDGAME</small><h3>Weekly Vault</h3><p>Dungeon clears build one weekly reward. Missing a day does not matter.</p></div><div class="eg-weekly-progress"><span><b>'+points+' / 60 points</b><em>Highest Cellbound+ '+highest+'</em></span><div><i style="width:'+pct+'%"></i></div><button data-eg-weekly '+(points>=60&&!claimed?'':'disabled')+'>'+(claimed?'CLAIMED':points>=60?'CLAIM WEEKLY REWARD':'KEEP PLAYING')+'</button></div></article>'
+ return'<article class="eg-weekly panel"><div><small>WEEKLY ENDGAME</small><h3>Weekly Vault</h3><p>Dungeon clears build weekly progress. There is no daily login requirement.</p></div><div class="eg-weekly-progress"><span><b>'+points+' / 60 points</b><em>Highest Cellbound+ '+highest+'</em></span><div><i style="width:'+pct+'%"></i></div><button data-eg-weekly '+(points>=60&&!claimed?'':'disabled')+'>'+(claimed?'CLAIMED':points>=60?'CLAIM WEEKLY REWARD':'KEEP PLAYING')+'</button></div></article>'
 }
 function leaderboardMarkup(id){
  const rows=leaderboards[id]||[],view=leaderboardView[id]||{scope:'overall'},cfg=currentConfig(id),partyClasses=[...new Set((Game?.getPartyCharacters?.()||[]).map(c=>c.class))];
  if(!view.klass&&partyClasses.length)view.klass=partyClasses[0];
  const scopes=[['overall','OVERALL'],['tier','TIER +'+Math.max(1,cfg.tier||progressFor(id).highest_tier||1)],['class','CLASS'],['party','MY PARTY']];
  const filters='<div class="eg-leader-filters">'+scopes.map(x=>'<button data-eg-lb-scope="'+id+'|'+x[0]+'" class="'+(view.scope===x[0]?'active':'')+'">'+x[1]+'</button>').join('')+(view.scope==='class'?'<select data-eg-lb-class="'+id+'">'+partyClasses.map(k=>'<option '+(k===view.klass?'selected':'')+'>'+esc(k)+'</option>').join('')+'</select>':'')+'</div>';
- return'<section class="eg-leader panel"><div class="panel-head"><div><small>SEASON LEADERBOARD</small><h3>'+esc(D.DUNGEONS[id].name)+'</h3></div><b>'+esc(server.season?.name||D.SEASON.name)+'</b></div>'+filters+'<div class="eg-leader-list">'+(rows.length?rows.slice(0,10).map(r=>'<div><b>#'+r.rank+'</b><span>'+esc(r.guild_label)+'<small>'+esc(r.difficulty==='cellbound'?'Cellbound+'+r.tier:r.difficulty.toUpperCase())+' · '+r.deaths+' deaths · '+esc((r.party_classes||[]).join(' / '))+'</small></span><em>'+formatTime(r.completion_time_ms)+'</em><strong>'+Number(r.score).toLocaleString()+'</strong></div>').join(''):'<p class="eg-empty">No validated runs recorded for this scope yet.</p>')+'</div></section>'
+ return'<section class="eg-leader panel"><div class="panel-head"><div><small>SEASON LEADERBOARD</small><h3>'+esc(D.DUNGEONS[id].name)+'</h3></div><b>'+esc(server.season?.name||D.SEASON.name)+'</b></div>'+filters+'<div class="eg-leader-list">'+(rows.length?rows.slice(0,10).map(r=>'<div><b>#'+r.rank+'</b><span>'+esc(r.guild_label)+'<small>'+esc(r.difficulty==='cellbound'?'Cellbound+'+r.tier:r.difficulty.toUpperCase())+' · '+r.deaths+' deaths · '+esc((r.party_classes||[]).join(' / '))+'</small></span><em>'+formatTime(r.completion_time_ms)+'</em><strong>'+Number(r.score).toLocaleString()+'</strong></div>').join(''):'<p class="eg-empty">No runs recorded for this view yet.</p>')+'</div></section>'
 }
 function render(){
  const root=$('#endgameHub');if(!root||!Game?.ready)return;
  const rotation=server.rotation||{},minor=D.AFFIXES[rotation.minor_affix],major=D.AFFIXES[rotation.major_affix];
  root.innerHTML=
- '<section class="eg-hero"><div><small>UPDATE 2 · ENDGAME HUB</small><h2>Dungeon mastery now has somewhere to go.</h2><p>Normal teaches the dungeon. Heroic changes it. Cellbound+ turns it into a scalable endgame challenge with weekly modifiers, persistent scores and targeted rewards.</p></div><div class="eg-season"><span>SEASON</span><b>'+esc(server.season?.name||D.SEASON.name)+'</b><small>'+esc(minor?.name||'No minor affix')+' · '+esc(major?.name||'No major affix')+'</small></div></section>'+
+ '<section class="eg-hero"><div><small>ENDGAME</small><h2>Push beyond Normal.</h2><p>Learn the route on Normal, step up to Heroic, then climb Cellbound+ with rotating affixes, scores and weekly rewards.</p></div><div class="eg-season"><span>SEASON</span><b>'+esc(server.season?.name||D.SEASON.name)+'</b><small>'+esc(minor?.name||'No minor affix')+' · '+esc(major?.name||'No major affix')+'</small></div></section>'+
  weeklyMarkup()+milestoneMarkup()+achievementMarkup()+collectionMarkup()+
  '<div class="eg-content">'+dungeonCard('ashen-vault')+dungeonCard('hollow-sanctum')+dungeonCard('chaos-canyon')+'</div>'+
  '<div class="eg-leaderboards">'+leaderboardMarkup('ashen-vault')+leaderboardMarkup('hollow-sanctum')+leaderboardMarkup('chaos-canyon')+'</div>';
