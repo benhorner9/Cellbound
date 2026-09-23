@@ -198,7 +198,7 @@ for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readab
   const requiredSlots=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring','Trinket','Relic'];
   for(const klass of G.CLASS_ORDER)for(let tier=1;tier<=4;tier++)for(const slot of requiredSlots)if(!G.items.some(x=>x.class===klass&&x.tier===tier&&x.slot===slot))throw new Error('Missing gear catalogue item: '+klass+' T'+tier+' '+slot);
   if(G.items.some(x=>Number(x.tier)>=5))throw new Error('Generic gear catalogue contains raid-exclusive Tier 5 items');
-  if(G.items.filter(x=>Number(x.tier)===4).length!==21)throw new Error('Tier 4 catalogue must contain 3 slots for all 7 current classes');
+  if(G.items.filter(x=>Number(x.tier)===4).length!==G.CLASS_ORDER.length*requiredSlots.length)throw new Error('Tier 4 catalogue must contain the full Chapter 1 slot catalogue for every current class');
   if(!G.TIER_META?.[5]?.raidExclusive)throw new Error('Tier 5 is not marked raid-exclusive');
   const fractured=D.lootProfileFor('fractured-ages','normal',0),peak=D.lootProfileFor('chaos-canyon','cellbound',20);
   if(fractured.itemLevel?.Weapon!==40||Math.max(...Object.keys(fractured.tiers||{}).map(Number))>4)throw new Error('Fractured Ages loot profile exceeds Chapter 1 Normal ceiling');
