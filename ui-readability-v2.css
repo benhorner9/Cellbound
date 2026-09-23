@@ -501,6 +501,66 @@ em{line-height:1.4}
   border-right:1px solid rgba(216,185,118,.08)!important;
 }
 
+/* Dungeon Journal environment artwork pass.
+   Environment art sells each place; boss portraits stay exclusive to boss dossiers. */
+.dungeon-browser-art.has-image{
+  position:relative!important;
+  isolation:isolate!important;
+  overflow:hidden!important;
+  background:#091013!important;
+  border-right:1px solid rgba(216,185,118,.12)!important;
+}
+.dungeon-browser-art.has-image>img{
+  position:absolute!important;
+  inset:0!important;
+  z-index:0!important;
+  width:100%!important;
+  height:100%!important;
+  object-fit:cover!important;
+  object-position:center!important;
+  display:block!important;
+  filter:brightness(.72) saturate(.88) contrast(1.05)!important;
+  transform:scale(1.015)!important;
+  transition:transform .28s ease,filter .28s ease!important;
+}
+.dungeon-browser-art.has-image:before{
+  display:none!important;
+}
+.dungeon-browser-art.has-image:after{
+  content:""!important;
+  display:block!important;
+  position:absolute!important;
+  inset:0!important;
+  z-index:1!important;
+  pointer-events:none!important;
+  background:
+    linear-gradient(180deg,rgba(3,8,10,.12) 0%,rgba(3,8,10,.04) 42%,rgba(3,8,10,.62) 100%),
+    linear-gradient(90deg,rgba(3,8,10,.05) 0%,rgba(3,8,10,.08) 58%,rgba(3,8,10,.34) 100%)!important;
+}
+.dungeon-browser-art.has-image>span,
+.dungeon-browser-art.has-image>strong{
+  position:relative!important;
+  z-index:2!important;
+  text-shadow:0 2px 12px rgba(0,0,0,.92)!important;
+}
+.dungeon-browser-card:hover .dungeon-browser-art.has-image>img,
+.dungeon-browser-card.active .dungeon-browser-art.has-image>img{
+  transform:scale(1.055)!important;
+  filter:brightness(.84) saturate(.98) contrast(1.06)!important;
+}
+.dungeon-browser-card.locked .dungeon-browser-art.has-image>img{
+  filter:blur(8px) grayscale(.78) brightness(.28) saturate(.42)!important;
+  transform:scale(1.09)!important;
+}
+.dungeon-browser-card.locked .dungeon-browser-art.has-image:after{
+  background:linear-gradient(180deg,rgba(3,8,10,.42),rgba(3,8,10,.82))!important;
+}
+.dungeon-browser-card.ashen .dungeon-browser-art.has-image>img{object-position:51% 47%!important}
+.dungeon-browser-card.hollow .dungeon-browser-art.has-image>img{object-position:50% 48%!important}
+.dungeon-browser-card.chaos-canyon .dungeon-browser-art.has-image>img{object-position:49% 48%!important}
+.dungeon-browser-card.blackout-station .dungeon-browser-art.has-image>img{object-position:50% 50%!important}
+.dungeon-browser-card.fractured-ages .dungeon-browser-art.has-image>img{object-position:50% 48%!important}
+
 /* Status tone is shared; only state changes, not card geometry. */
 .dungeon-browser-card.unlocked .dungeon-browser-heading>b,
 .dungeon-browser-card:not(.locked) .dungeon-browser-heading>b{
