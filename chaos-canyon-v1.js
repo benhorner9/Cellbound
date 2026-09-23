@@ -262,7 +262,7 @@ function ccRenderRebornEvent(e){
  if(window.CellboundCombatStatuses?.handle(e,{resolve:ccStatusTargets,speed:()=>run?.speed||1}))return;
  const src=ccRenderId(e.source),target=ccRenderId(e.target),srcChar=ccCharacter(e.source),targetChar=ccCharacter(e.target);
  switch(e.type){
-  case'COMBAT_START':setStatus('Combat simulation live.');feed('Combat begins.');break;
+  case'COMBAT_START':{const arena=$('#cc2dArena');window.CellboundCombatFX?.mount?.(arena);if(['boss','final'].includes(String(STAGES[run.stage]?.kind||'')))window.CellboundCombatFX?.boss?.(arena,STAGES[run.stage]?.title||'Boss');setStatus('Combat simulation live.');feed('Combat begins.');break;}
   case'MOVEMENT_START':if(src&&e.payload?.to)move(src,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
   case'ABILITY_START':
    if(srcChar)ccAct(role(srcChar),srcChar.name+' · '+(e.ability||'Ability'));
@@ -313,10 +313,10 @@ function ccRenderRebornEvent(e){
   case'ADD_DEFEATED':case'ENEMY_DEFEATED':
    if(target){const el=$('[data-cc="'+target+'"]');if(el){el.classList.add('dead');window.CellboundCombatFX?.death?.(el);ccBar(target,0)}}break;
   case'PLAYER_DEFEATED':
-   if(target){const el=$('[data-cc="'+target+'"]');if(el)el.classList.add('dead');ccBar(target,0);if(targetChar){run.hp[targetChar.id]=0;feed(targetChar.name+' is defeated.');ccUpdateSidebar()}}
+   if(target){const el=$('[data-cc="'+target+'"]');if(el){el.classList.add('dead');window.CellboundCombatFX?.death?.(el)}ccBar(target,0);if(targetChar){run.hp[targetChar.id]=0;feed(targetChar.name+' is defeated.');ccUpdateSidebar()}}
    break;
   case'DEFENSIVE_ACTIVATED':if(srcChar)feed(srcChar.name+' activates a defensive.');break;
-  case'COMBAT_END':ccCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');if(e.result!=='victory')window.CellboundFX?.wipe?.('The party has fallen inside Chaos Canyon.');ccRegroup(260);break;
+  case'COMBAT_END':ccCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');if(e.result==='victory')window.CellboundCombatFX?.victory?.($('#cc2dArena'));else window.CellboundFX?.wipe?.('The party has fallen inside Chaos Canyon.');ccRegroup(260);break;
  }
 }
 async function ccPlayTimeline(result,tok){
