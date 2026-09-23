@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.1.0';
+const VERSION='1.2.0';
 const $=(root,s)=>root?.querySelector(s);
 const $$=(root,s)=>[...(root?.querySelectorAll(s)||[])];
 const esc=v=>String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[m]));
@@ -38,7 +38,7 @@ function rosterMarkup(list,team){
 function objectiveMarkup(match){
   if(match.kind==='arena')return '<div class="pvp2d-arena-mark"><i></i><b>ARENA</b></div>';
   if(match.mode==='king-of-the-hill')return '<div class="pvp2d-hill"><i></i><b>CELL NODE</b></div>';
-  return '<div class="pvp2d-flag blue">⚑</div><div class="pvp2d-flag red">⚑</div><div class="pvp2d-midline"></div>'
+  return '<div class="pvp2d-flag blue base" data-pvp2d-flag="blue"><i>⚑</i><small>BLUE</small></div><div class="pvp2d-flag red base" data-pvp2d-flag="red"><i>⚑</i><small>RED</small></div><div class="pvp2d-midline"></div>'
 }
 function shellMarkup(match,units){
   const blue=units.filter(x=>x.team==='blue'),red=units.filter(x=>x.team==='red');
@@ -51,6 +51,24 @@ function shellMarkup(match,units){
     '<div class="pvp2d-lower"><section><header><small>COMBAT FEED</small><b id="pvp2dStatus">The gates are opening…</b></header><div id="pvp2dFeed" class="pvp2d-feed"></div></section>'+
     '<section class="pvp2d-meters"><div><header><small>DAMAGE</small><b>Blue</b></header><div id="pvp2dDamageBlue"></div></div><div><header><small>DAMAGE</small><b>Red</b></header><div id="pvp2dDamageRed"></div></div><div><header><small>HEALING</small><b>Both teams</b></header><div id="pvp2dHealing"></div></div></section></div>'+
   '</div>'
+}
+function flagBasePoint(owner){return owner==='blue'?{x:12,y:50}:{x:88,y:50}}
+function flagElement(root,owner){return $(root,'[data-pvp2d-flag="'+CSS.escape(String(owner))+'"]')}
+function clearCarrierFlagClass(root,owner){
+  $(root,'.pvp2d-unit.carrying-flag').forEach(u=>{if(!owner||u.dataset.flagOwner===owner){u.classList.remove('carrying-flag');delete u.dataset.flagOwner}})
+}
+function setFlagAt(root,owner,x,y,state='dropped'){
+  const flag=flagElement(root,owner),arena=$(root,'#pvp2dArena');if(!flag||!arena)return;
+  clearCarrierFlagClass(root,owner);arena.appendChild(flag);flag.classList.remove('carried','base','dropped','returning');flag.classList.add(state);
+  flag.style.left=clamp(Number(x)||50,4,96)+'%';flag.style.top=clamp(Number(y)||50,8,92)+'%';flag.style.right='auto';
+}
+function resetFlagVisual(root,owner){
+  const p=flagBasePoint(owner);setFlagAt(root,owner,p.x,p.y,'base')
+}
+function carryFlagVisual(root,owner,carrierId){
+  const flag=flagElement(root,owner),carrier=$(root,'[data-pvp2d-unit="'+CSS.escape(String(carrierId))+'"]');if(!flag||!carrier)return;
+  clearCarrierFlagClass(root,owner);carrier.classList.add('carrying-flag');carrier.dataset.flagOwner=owner;carrier.appendChild(flag);
+  flag.classList.remove('base','dropped','returning');flag.classList.add('carried');flag.style.left='28px';flag.style.top='-22px';flag.style.right='auto';
 }
 function safePoint(x,y){return{x:clamp(Number(x)||50,5,95),y:clamp(Number(y)||50,8,92)}}
 function point(root,id){
@@ -140,11 +158,30 @@ function handleEvent(pb,e){
       if(e.result==='hill-control'){updateScore(pb,e.payload?.blue,e.payload?.red,(e.payload?.owner==='blue'?'Blue':'Red')+' controls the Cell node');banner(pb,(e.payload?.owner==='blue'?'BLUE':'RED')+' TAKES THE NODE',e.payload?.owner)}
       else updateScore(pb,e.payload?.blue,e.payload?.red,'Cell node control');
       break;
-    case'FLAG_STATE':
-      if(e.result==='picked-up'){setStatus(pb,(src?.name||'A carrier')+' has the '+(e.payload?.team==='blue'?'Blue':'Red')+' Standard');banner(pb,'FLAG TAKEN',src?.team||'');feed(pb,(src?.name||'A player')+' steals the enemy Cell Standard.')}
-      else if(e.result==='dropped'){banner(pb,'FLAG DROPPED','');feed(pb,'A Cell Standard is dropped in the field.')}
-      else if(e.result==='captured'){updateScore(pb,e.payload?.blue,e.payload?.red,'First to 3 captures');banner(pb,(e.payload?.scoringTeam==='blue'?'BLUE':'RED')+' CAPTURES',e.payload?.scoringTeam);feed(pb,(src?.name||'A carrier')+' completes the flag run.')}
+    case'FLAG_STATE':{
+      const owner=e.payload?.owner||e.payload?.team;
+      if(e.result==='reset'){
+        if(owner)resetFlagVisual(root,owner);
+      }else if(e.result==='picked-up'){
+        if(owner&&src)carryFlagVisual(root,owner,src.id);
+        setStatus(pb,(src?.name||'A carrier')+' has the '+(owner==='blue'?'Blue':'Red')+' Standard');
+        banner(pb,e.payload?.from==='ground'?'FLAG RECOVERED':'FLAG TAKEN',src?.team||'');
+        feed(pb,(src?.name||'A player')+(e.payload?.from==='ground'?' recovers ':' steals the ')+(owner==='blue'?'Blue':'Red')+' Cell Standard.');
+      }else if(e.result==='dropped'){
+        if(owner)setFlagAt(root,owner,e.payload?.x,e.payload?.y,'dropped');
+        banner(pb,'FLAG DROPPED','');feed(pb,(src?.name||'A carrier')+' drops the '+(owner==='blue'?'Blue':'Red')+' Cell Standard.');
+      }else if(e.result==='returned'){
+        if(owner)resetFlagVisual(root,owner);
+        banner(pb,(owner==='blue'?'BLUE':'RED')+' FLAG RETURNED',owner);
+        feed(pb,(src?.name||'A defender')+' returns the '+(owner==='blue'?'Blue':'Red')+' Cell Standard to base.');
+      }else if(e.result==='captured'){
+        if(owner)resetFlagVisual(root,owner);
+        updateScore(pb,e.payload?.blue,e.payload?.red,'First to 3 captures');
+        banner(pb,(e.payload?.scoringTeam==='blue'?'BLUE':'RED')+' CAPTURES',e.payload?.scoringTeam);
+        feed(pb,(src?.name||'A carrier')+' carries the '+(owner==='blue'?'Blue':'Red')+' Cell Standard home for a capture.');
+      }
       break;
+    }
     case'CAST_START':if(src)setStatus(pb,src.name+' · '+(e.ability||'Casting'));break;
     case'CAST_CANCELLED':if(src)feed(pb,src.name+'\'s '+(e.ability||'cast')+' is stopped.');break;
     case'COMBAT_END':
