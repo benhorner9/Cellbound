@@ -14,6 +14,11 @@ function arenaFor(target){
   return el.matches?.(ARENA_SELECTOR)?el:el.closest?.(ARENA_SELECTOR)||null
 }
 function themeFor(arena){
+  if(arena.closest?.('.fa-high-noon'))return'fractured-west';
+  if(arena.closest?.('.fa-iron-kingdom'))return'fractured-iron';
+  if(arena.closest?.('.fa-first-kingdom'))return'fractured-sun';
+  if(arena.closest?.('.fa-silent-frontier'))return'fractured-moon';
+  if(arena.closest?.('.fa-funhouse'))return'fractured-funhouse';
   for(const [sel,theme] of THEMES)if(arena.closest?.(sel))return theme;
   if(arena.classList?.contains('hs2d-arena'))return'hollow';
   if(arena.classList?.contains('cc2d-arena'))return'chaos';
