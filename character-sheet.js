@@ -24,7 +24,6 @@ const CHARACTER_TABS=[
   ['talents','✦','Talents','Build'],
   ['skills','⚔','Skills','Combat loadout'],
   ['professions','⚒','Professions','Trades'],
-  ['knowledge','⌁','Mastery','Encounters'],
   ['history','▤','History','Record']
 ];
 
@@ -316,49 +315,68 @@ function talentLockReason(c,spec,node,s){
   return'Ready to invest.';
 }
 function talentInspector(c,spec,node){
-  if(!node)return `<aside class="cb-talent-inspector empty"><span>SELECT A TALENT</span><h3>Inspect before you spend.</h3><p>Choose any talent in the tree — including locked talents — to see its effect and requirements.</p></aside>`;
+  if(!node)return `<aside class="cb-talent-inspector cb-talent-inspector-v2 empty"><span>SELECT A TALENT</span><h3>Build your specialisation.</h3><p>Choose a talent to inspect its combat effect, ranks and requirements before spending a point.</p></aside>`;
   const s=treeNodeState(c,spec,node),reason=talentLockReason(c,spec,node,s);
-  const canInvest=s.available&&!s.complete&&(c.talent>0);
-  const nextCopy=s.complete?'This talent is fully ranked.':node.max===1?'Spending one point unlocks this talent effect.':`Spending one point advances this talent to Rank ${s.rank+1} of ${node.max}.`;
-  const combatRule=window.CellboundCombatReborn?.talents?.rules?.[node.id]||node.desc;
-  return `<aside class="cb-talent-inspector ${canInvest?'investable':''}">
-    <div class="cb-talent-inspector-head"><span class="cb-inspector-icon">${node.icon}</span><div><small>TIER ${node.tier+1} · ${spec.toUpperCase()}</small><h3>${node.id}</h3><p>Rank ${s.rank} / ${node.max}</p></div></div>
+  const canInvest=s.available&&!s.complete&&(c.talent>0),combatRule=window.CellboundCombatReborn?.talents?.rules?.[node.id]||node.desc;
+  const rankPips=Array.from({length:node.max},(_,i)=>`<i class="${i<s.rank?'filled':''}"></i>`).join('');
+  const status=s.complete?'MAX RANK':canInvest?'READY TO LEARN':s.available?'NO POINTS':'LOCKED';
+  return `<aside class="cb-talent-inspector cb-talent-inspector-v2 ${canInvest?'investable':''}">
+    <div class="cb-talent-inspector-head"><span class="cb-inspector-icon">${node.icon}</span><div><small>TIER ${node.tier+1} · ${spec.toUpperCase()}</small><h3>${node.id}</h3><div class="cb-inspector-ranks">${rankPips}<span>Rank ${s.rank}/${node.max}</span></div></div></div>
+    <div class="cb-inspector-status ${canInvest?'ready':s.complete?'complete':'locked'}">${status}</div>
     <section><small>COMBAT EFFECT</small><p>${combatRule}</p></section>
-    <section><small>NEXT INVESTMENT</small><p>${nextCopy} Each point also grants <b>+1 Power</b>.</p></section>
+    <section><small>NEXT RANK</small><p>${s.complete?'This talent is fully ranked.':node.max===1?'One point unlocks this talent effect.':`Spend one point to reach Rank ${s.rank+1} of ${node.max}.`} Each point also grants <b>+1 Power</b>.</p></section>
     <div class="cb-talent-requirements">
-      <div><span>Tree requirement</span><b>${node.tier?node.tier*2+' points spent':'Available from Tier 1'}</b></div>
+      <div><span>Tier unlock</span><b>${node.tier?node.tier*2+' points spent':'Available immediately'}</b></div>
       <div><span>Prerequisite</span><b>${node.req||'None'}</b></div>
       <div><span>Status</span><b class="${canInvest?'ready':''}">${reason}</b></div>
     </div>
     <button class="cb-invest-talent" data-invest-talent="${node.id}" data-tree-spec="${spec}" ${canInvest?'':'disabled'}>${s.complete?'MAXIMUM RANK':canInvest?'SPEND 1 TALENT POINT':'UNAVAILABLE'}</button>
   </aside>`;
 }
+
 function talentTree(c,spec){
-  const nodes=trees[c.class]?.[spec]||[];
-  const spent=totalSpent(c,spec);
+  const nodes=(trees[c.class]?.[spec]||[]).slice().sort((a,b)=>a.tier-b.tier||a.col-b.col);
+  const spent=totalSpent(c,spec),role=roleLabel(specs[c.class]?.[spec]||'dps');
   let selected=nodes.find(n=>n.id===selectedTalentId&&selectedTalentSpec===spec);
-  if(!selected)selected=nodes[0]||null;
+  if(!selected)selected=nodes.find(n=>treeNodeState(c,spec,n).available&&!treeNodeState(c,spec,n).complete)||nodes[0]||null;
   if(selected){selectedTalentId=selected.id;selectedTalentSpec=spec}
-  return `<div class="cb-tree-shell">
-    <div class="cb-tree-head"><div><small>${c.class}</small><h3>${spec}</h3><p>${roleLabel(specs[c.class]?.[spec]||'dps')} specialisation · Select a talent to inspect it before investing.</p></div><div class="cb-tree-head-actions">${spec!==c.spec?`<button data-activate-spec="${spec}">SET ${spec.toUpperCase()} ACTIVE<small>Also changes this character's party role</small></button>`:''}<div class="cb-tree-points"><b>${c.talent||0}</b><span>points available</span><small>${spent} spent in tree</small></div></div></div>
-    <div class="cb-tree-layout">
-      <div class="cb-tree-grid">${[0,1,2,3,4].map(tier=>`<div class="cb-tier-line" style="--tier:${tier}"><span>Tier ${tier+1}</span></div>`).join('')}${nodes.map(node=>{const s=treeNodeState(c,spec,node),isSelected=selected?.id===node.id;return `<button class="cb-talent-node ${s.available?'available':'locked'} ${s.complete?'complete':''} ${isSelected?'selected':''}" style="--tier:${node.tier};--col:${node.col}" data-talent-node="${node.id}" data-tree-spec="${spec}" aria-pressed="${isSelected?'true':'false'}"><span class="cb-node-icon">${node.icon}</span><b>${node.id}</b><em>${s.rank}/${node.max}</em></button>`}).join('')}</div>
+  const tierNames=['Foundations','Specialisation','Core Techniques','Advanced','Capstone'];
+  const tiers=[0,1,2,3,4].map(tier=>{
+    const tierNodes=nodes.filter(n=>n.tier===tier),need=tier*2,open=spent>=need;
+    const cards=tierNodes.map(node=>{
+      const s=treeNodeState(c,spec,node),isSelected=selected?.id===node.id,canInvest=s.available&&!s.complete&&(c.talent>0);
+      const rankPips=Array.from({length:node.max},(_,i)=>`<i class="${i<s.rank?'filled':''}"></i>`).join('');
+      const combatRule=window.CellboundCombatReborn?.talents?.rules?.[node.id]||node.desc;
+      const stateLabel=s.complete?'MAX':canInvest?'READY':s.available?'NO POINTS':'LOCKED';
+      return `<article class="cb-talent-card ${s.available?'available':'locked'} ${s.complete?'complete':''} ${isSelected?'selected':''} ${tier===4?'capstone':''}">
+        <button type="button" class="cb-talent-card-main" data-talent-node="${node.id}" data-tree-spec="${spec}" aria-pressed="${isSelected?'true':'false'}">
+          <span class="cb-talent-card-icon">${node.icon}</span>
+          <span class="cb-talent-card-copy"><small>${node.req?'REQUIRES '+node.req.toUpperCase():'TIER '+(tier+1)}</small><b>${node.id}</b><em>${node.desc}</em></span>
+          <span class="cb-talent-card-state ${canInvest?'ready':s.complete?'complete':'locked'}">${stateLabel}</span>
+          <span class="cb-talent-card-ranks">${rankPips}<em>${s.rank}/${node.max}</em></span>
+        </button>
+        ${isSelected?`<div class="cb-talent-inline-detail"><small>COMBAT EFFECT</small><p>${combatRule}</p><div><span>${talentLockReason(c,spec,node,s)}</span><button type="button" data-invest-talent="${node.id}" data-tree-spec="${spec}" ${canInvest?'':'disabled'}>${s.complete?'MAX RANK':canInvest?'SPEND 1 POINT':'UNAVAILABLE'}</button></div></div>`:''}
+      </article>`
+    }).join('');
+    return `<section class="cb-talent-tier ${open?'open':'locked'} ${tier===4?'capstone':''}">
+      <header><span>0${tier+1}</span><div><small>TIER ${tier+1}</small><b>${tierNames[tier]}</b></div><em>${tier===0?'OPEN':open?'UNLOCKED':need+' POINTS REQUIRED'}</em></header>
+      <div class="cb-talent-tier-cards">${cards||'<div class="cb-no-items">No talents in this tier.</div>'}</div>
+    </section>`
+  }).join('');
+  return `<div class="cb-talent-command-v2">
+    <section class="cb-talent-command-hero">
+      <div><small>CLASS TALENTS · ${c.class.toUpperCase()}</small><h3>${spec}</h3><p>${role} specialisation · Build through five tiers. Locked talents can still be inspected before you commit.</p></div>
+      <div class="cb-talent-command-metrics">
+        <div><span>AVAILABLE</span><b>${c.talent||0}</b><small>Talent points</small></div>
+        <div><span>SPENT</span><b>${spent}</b><small>In ${spec}</small></div>
+        <div><span>ROLE</span><b>${role}</b><small>${spec===c.spec?'Active specialisation':'Inactive specialisation'}</small></div>
+      </div>
+    </section>
+    <div class="cb-talent-board">
+      <div class="cb-talent-tier-stack">${tiers}</div>
       ${talentInspector(c,spec,selected)}
     </div>
   </div>`;
-}
-function knowledgePanel(c){
-  const entries=Object.entries(c.knowledge||{}),values=entries.map(([,v])=>Math.max(0,Math.min(100,Number(v)||0)));
-  const average=values.length?Math.round(values.reduce((a,b)=>a+b,0)/values.length):0;
-  const complete=values.filter(v=>v>=100).length,experienced=values.filter(v=>v>0).length;
-  return `<div class="cb-mastery-command">
-    <section class="cb-character-tab-hero cb-mastery-hero">
-      <div><small>ENCOUNTER MASTERY</small><h3>Experience, not hidden power.</h3><p>Mastery records what this adventurer has experienced. It supports records, achievements and future cosmetic rewards without changing combat output.</p></div>
-      <div class="cb-character-tab-stat"><span>AVERAGE MASTERY</span><b>${average}%</b><small>${experienced} encountered · ${complete} mastered</small></div>
-    </section>
-    <div class="cb-mastery-summary"><div><span>ENCOUNTERS TRACKED</span><b>${entries.length}</b></div><div><span>EXPERIENCED</span><b>${experienced}</b></div><div><span>FULLY MASTERED</span><b>${complete}</b></div></div>
-    <div class="cb-knowledge-grid">${entries.length?entries.map(([id,val])=>{const pct=Math.max(0,Math.min(100,Number(val)||0));return `<article><div><span>${id.replace(/([a-z])([A-Z])/g,'$1 $2')}</span><b>${pct}%</b></div><div class="cb-knowledge-bar"><i style="width:${pct}%"></i></div><small>${pct>=100?'Mastered':pct>=60?'Experienced':pct>0?'Learning':'Unseen'}</small></article>`}).join(''):'<div class="cb-no-items">No encounter mastery recorded yet.</div>'}</div>
-  </div>`
 }
 
 function specTabs(c){const browsing=selectedTreeSpec&&specs[c.class]?.[selectedTreeSpec]?selectedTreeSpec:c.spec;return Object.keys(specs[c.class]||{}).map(spec=>`<button class="cb-spec-tab ${browsing===spec?'active':''}" data-spec-tab="${spec}">${spec}<small>${roleLabel(specs[c.class][spec])}${c.spec===spec?' · ACTIVE':''}</small></button>`).join('')}
@@ -373,8 +391,7 @@ function overviewPanel(c,state){
   const ilvl=window.CellboundGame?.characterItemLevel?.(c)||c.gear||0;
   const active=[state?.party?.tank,state?.party?.healer,...(state?.party?.dps||[])].includes(c.id);
   const recovering=window.CellboundGame?.isUnavailable?.(c)||false;
-  const knowledgeValues=Object.values(c.knowledge||{}).map(Number).filter(Number.isFinite);
-  const mastery=knowledgeValues.length?Math.round(knowledgeValues.reduce((a,b)=>a+b,0)/knowledgeValues.length):0;
+  const health=sheetMaxHealth(c);
   const allSlots=[...leftSlots,...rightSlots],equipped=allSlots.filter(slot=>c.equipment?.[slot]).length;
   const upgrades=allSlots.filter(slot=>bestBankUpgrade(state,c,slot)).length;
   const primary=stats[meta.primary]??0;
@@ -394,7 +411,7 @@ function overviewPanel(c,state){
         <article><span>ITEM LEVEL</span><b>${ilvl}</b><small>Average gear</small></article>
         <article><span>POWER</span><b>${c.power||0}</b><small>Combat power</small></article>
         <article class="${Number(c.cellShock||0)>=75?'danger':''}"><span>CELL SHOCK</span><b>${Math.round(c.cellShock||0)}%</b><small>${recovering?'Unavailable':'Current pressure'}</small></article>
-        <article><span>MASTERY</span><b>${mastery}%</b><small>Encounter record</small></article>
+        <article><span>HEALTH</span><b>${health.toLocaleString()}</b><small>Maximum health</small></article>
       </div>
     </section>
 
@@ -409,7 +426,7 @@ function overviewPanel(c,state){
           <div><span>PROFESSIONS</span><b>${professionCount}</b></div>
           <div><span>STATUS</span><b>${active?'ACTIVE FIVE':'RESERVE'}</b></div>
         </div>
-        <p>Level, equipment, talents and equipped combat skills determine performance. Mastery records experience but does not add hidden combat power.</p>
+        <p>Level, equipment, talents and equipped combat skills determine this adventurer's combat performance.</p>
       </section>
 
       <section class="cb-profile-panel cb-overview-loadout-panel">
@@ -484,7 +501,7 @@ function historyPanel(c,state){
     </section>
     <div class="cb-history-columns">
       <section class="cb-history-section"><header><small>GUILD ACTIVITY</small><h4>Recent Changes</h4></header><div class="cb-history-timeline">${entries.length?entries.map((x,i)=>`<article><i>${i===0?'NOW':'•'}</i><div><b>Guild Record</b><p>${x}</p></div></article>`).join(''):'<div class="cb-no-items">No notable guild activity recorded yet.</div>'}</div></section>
-      <section class="cb-history-section"><header><small>EXPEDITIONS</small><h4>Combat Record</h4></header><div class="cb-history-timeline">${reports.length?reports.map(r=>{const gain=(r.knowledgeGain||[]).find(k=>k.name===c.name)?.gain||0;return `<article class="${r.success?'victory':'wipe'}"><i>${r.success?'✓':'×'}</i><div><b>${r.success?'Victory':'Wipe'} · ${new Date(r.at).toLocaleDateString()}</b><p>Party iLvl ${Math.round(r.partyItemLevel||0)} · Mastery +${gain}%.</p></div></article>`}).join(''):'<div class="cb-no-items">No expedition reports recorded yet.</div>'}</div></section>
+      <section class="cb-history-section"><header><small>EXPEDITIONS</small><h4>Combat Record</h4></header><div class="cb-history-timeline">${reports.length?reports.map(r=>{return `<article class="${r.success?'victory':'wipe'}"><i>${r.success?'✓':'×'}</i><div><b>${r.success?'Victory':'Wipe'} · ${new Date(r.at).toLocaleDateString()}</b><p>Party iLvl ${Math.round(r.partyItemLevel||0)} · Expedition recorded.</p></div></article>`}).join(''):'<div class="cb-no-items">No expedition reports recorded yet.</div>'}</div></section>
     </div>
   </div>`;
 }
@@ -496,7 +513,7 @@ function sheetBody(state,c){
   if(currentTab==='skills')return skillsPanel(c);
   if(currentTab==='professions')return professionsPanel(c);
   if(currentTab==='history')return historyPanel(c,state);
-  return knowledgePanel(c);
+  currentTab='overview';return overviewPanel(c,state);
 }
 function renderSheet(){
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));

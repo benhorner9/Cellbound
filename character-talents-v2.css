@@ -1,0 +1,263 @@
+/* Cellbound Character Talents v2
+   Replaces the old compressed coordinate grid with a readable five-tier build path. */
+
+/* Six character tabs after Mastery removal */
+.cb-command-sheet .cb-character-tabs{
+  grid-template-columns:repeat(6,minmax(0,1fr))!important
+}
+
+/* Specialisation choice */
+.cb-command-sheet .cb-spec-tabs{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr))!important;
+  gap:8px!important;
+  margin-bottom:10px!important;
+  overflow:visible!important
+}
+.cb-command-sheet .cb-spec-tab{
+  position:relative;min-width:0!important;min-height:64px!important;padding:11px 14px!important;
+  border:1px solid rgba(216,185,118,.09)!important;
+  background:linear-gradient(180deg,#0d181c,#081115)!important;
+  color:#788983!important
+}
+.cb-command-sheet .cb-spec-tab:before{
+  content:"";position:absolute;left:0;top:8px;bottom:8px;width:2px;background:transparent
+}
+.cb-command-sheet .cb-spec-tab.active{
+  border-color:color-mix(in srgb,var(--cb-accent) 40%,rgba(216,185,118,.22))!important;
+  background:
+    radial-gradient(circle at 90% 10%,color-mix(in srgb,var(--cb-accent) 11%,transparent),transparent 42%),
+    linear-gradient(180deg,#151c1d,#0a1316)!important;
+  color:#ece4d2!important
+}
+.cb-command-sheet .cb-spec-tab.active:before{background:color-mix(in srgb,var(--cb-accent) 58%,#d8b976)}
+.cb-command-sheet .cb-spec-tab small{font-size:.48rem!important}
+
+/* Talent command hero */
+.cb-talent-command-v2{display:grid;gap:10px}
+.cb-talent-command-hero{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(430px,.86fr);gap:18px;align-items:center;
+  min-height:138px;padding:20px 22px;
+  border:1px solid rgba(216,185,118,.14);
+  background:
+    radial-gradient(circle at 14% 0%,color-mix(in srgb,var(--cb-accent) 13%,transparent),transparent 36%),
+    radial-gradient(circle at 87% 20%,rgba(216,185,118,.07),transparent 30%),
+    linear-gradient(180deg,#101a1e,#081115);
+  box-shadow:0 18px 48px rgba(0,0,0,.28)
+}
+.cb-talent-command-hero>div:first-child>small{
+  color:#a58d59;font-size:.52rem;font-weight:900;letter-spacing:.14em
+}
+.cb-talent-command-hero h3{margin:5px 0 6px;color:#eee6d6;font:400 1.65rem/1.05 Georgia,serif}
+.cb-talent-command-hero p{max-width:720px;margin:0;color:#82928c!important;font-size:.66rem!important;line-height:1.55}
+.cb-talent-command-metrics{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  border:1px solid rgba(216,185,118,.09);background:#081216
+}
+.cb-talent-command-metrics>div{min-width:0;padding:12px 10px;border-right:1px solid rgba(255,255,255,.04)}
+.cb-talent-command-metrics>div:last-child{border-right:0}
+.cb-talent-command-metrics span{display:block;color:#61716b;font-size:.42rem;font-weight:900;letter-spacing:.09em}
+.cb-talent-command-metrics b{
+  display:block;overflow:hidden;margin-top:4px;color:#e0cc93;
+  font:500 1rem Georgia,serif;text-overflow:ellipsis;white-space:nowrap
+}
+.cb-talent-command-metrics small{display:block;margin-top:4px;color:#596863!important;font-size:.42rem!important}
+
+/* Five tier path */
+.cb-talent-board{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 320px!important;
+  gap:10px;align-items:start;
+  min-height:0!important
+}
+.cb-talent-tier-stack{display:grid;gap:8px;min-width:0}
+.cb-talent-tier{
+  display:grid;grid-template-columns:126px minmax(0,1fr);
+  min-width:0;border:1px solid rgba(216,185,118,.075);
+  background:linear-gradient(180deg,#0b1519,#081115);
+  overflow:hidden
+}
+.cb-talent-tier>header{
+  position:relative;display:flex;flex-direction:column;justify-content:center;
+  min-height:126px;padding:14px 13px;
+  border-right:1px solid rgba(216,185,118,.065);
+  background:linear-gradient(155deg,rgba(47,39,24,.16),rgba(7,15,18,.4))
+}
+.cb-talent-tier>header>span{
+  position:absolute;right:8px;top:6px;
+  color:rgba(216,185,118,.08);font:500 2.35rem Georgia,serif;line-height:1
+}
+.cb-talent-tier>header small{position:relative;color:#817452;font-size:.4rem;font-weight:900;letter-spacing:.12em}
+.cb-talent-tier>header b{position:relative;margin-top:4px;color:#dcd5c6;font:500 .9rem/1.1 Georgia,serif}
+.cb-talent-tier>header em{
+  position:relative;display:block;margin-top:11px;
+  color:#5e6d68;font-size:.37rem;font-style:normal;font-weight:900;letter-spacing:.07em;line-height:1.35
+}
+.cb-talent-tier.open>header em{color:#85a98c}
+.cb-talent-tier.capstone{
+  border-color:rgba(216,185,118,.17);
+  background:
+    radial-gradient(circle at 78% 30%,rgba(216,185,118,.055),transparent 34%),
+    linear-gradient(180deg,#111813,#081115)
+}
+.cb-talent-tier.capstone>header b{color:#e5cc8d}
+.cb-talent-tier-cards{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));
+  gap:7px;padding:8px;min-width:0
+}
+
+/* Talent cards */
+.cb-talent-card{
+  min-width:0;border:1px solid rgba(255,255,255,.055);
+  background:linear-gradient(180deg,#0e181c,#081115);
+  transition:border-color .16s ease,background .16s ease,box-shadow .16s ease,opacity .16s ease
+}
+.cb-talent-card.locked{opacity:.5}
+.cb-talent-card.locked:hover{opacity:.78}
+.cb-talent-card.available{border-color:rgba(216,185,118,.095)}
+.cb-talent-card.complete{
+  border-color:rgba(216,185,118,.24);
+  background:linear-gradient(180deg,#181811,#091216)
+}
+.cb-talent-card.selected{
+  opacity:1!important;
+  border-color:color-mix(in srgb,var(--cb-accent) 42%,#d0ad64)!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--cb-accent) 10%,transparent),0 0 28px rgba(0,0,0,.24)
+}
+.cb-talent-card.capstone{background:linear-gradient(180deg,#191a12,#0a1215)}
+.cb-talent-card-main{
+  width:100%;min-height:116px!important;padding:11px!important;
+  display:grid!important;
+  grid-template-columns:46px minmax(0,1fr) auto!important;
+  grid-template-rows:1fr auto!important;
+  gap:8px 10px!important;
+  border:0!important;background:transparent!important;color:#d9e1dd!important;text-align:left!important
+}
+.cb-talent-card-main:hover{background:rgba(216,185,118,.025)!important}
+.cb-talent-card-icon{
+  grid-row:1/3;display:grid;place-items:center;width:44px;height:44px;
+  border:1px solid rgba(216,185,118,.13);background:#060d10;
+  color:#e1c985;font-size:1.1rem
+}
+.cb-talent-card.selected .cb-talent-card-icon{
+  border-color:color-mix(in srgb,var(--cb-accent) 34%,rgba(216,185,118,.22));
+  color:color-mix(in srgb,var(--cb-accent) 45%,#f0d99f)
+}
+.cb-talent-card-copy{min-width:0}
+.cb-talent-card-copy small{
+  display:block;overflow:hidden;color:#625f50!important;
+  font-size:.34rem!important;font-weight:900;letter-spacing:.08em;text-overflow:ellipsis;white-space:nowrap
+}
+.cb-talent-card-copy b{display:block;margin-top:3px;color:#e0ddd4;font-size:.66rem;line-height:1.15}
+.cb-talent-card-copy em{
+  display:-webkit-box;margin-top:5px;overflow:hidden;
+  color:#73847e;font-size:.48rem;font-style:normal;line-height:1.42;
+  -webkit-line-clamp:2;-webkit-box-orient:vertical
+}
+.cb-talent-card-state{
+  align-self:start;padding:4px 6px;border:1px solid rgba(255,255,255,.055);
+  background:#091317;color:#687873;font-size:.31rem;font-weight:900;letter-spacing:.07em;white-space:nowrap
+}
+.cb-talent-card-state.ready{border-color:rgba(86,190,133,.21);color:#78c99a}
+.cb-talent-card-state.complete{border-color:rgba(216,185,118,.19);color:#d3bb7c}
+.cb-talent-card-ranks{
+  grid-column:2/4;display:flex;align-items:center;gap:4px;min-width:0
+}
+.cb-talent-card-ranks>i{
+  display:block;width:20px;height:4px;background:#1b2527;border-radius:3px
+}
+.cb-talent-card-ranks>i.filled{background:linear-gradient(90deg,#89713e,#d3ae61)}
+.cb-talent-card-ranks>em{margin-left:3px;color:#677772;font-size:.38rem;font-style:normal}
+
+/* Desktop inspector */
+.cb-talent-inspector-v2{
+  position:sticky!important;top:72px!important;align-self:start;
+  min-height:0!important;padding:17px!important;
+  border:1px solid rgba(216,185,118,.11)!important;
+  background:
+    radial-gradient(circle at 50% 0%,color-mix(in srgb,var(--cb-accent) 9%,transparent),transparent 30%),
+    linear-gradient(180deg,#0d171a,#081115)!important;
+  box-shadow:0 16px 42px rgba(0,0,0,.25)
+}
+.cb-talent-inspector-v2 .cb-talent-inspector-head{grid-template-columns:50px 1fr!important;padding-bottom:12px!important}
+.cb-talent-inspector-v2 .cb-inspector-icon{width:48px!important;height:48px!important}
+.cb-talent-inspector-v2 .cb-talent-inspector-head h3{font-size:1.08rem!important}
+.cb-inspector-ranks{display:flex;align-items:center;gap:3px;margin-top:7px}
+.cb-inspector-ranks>i{display:block;width:18px;height:4px;background:#1a2426;border-radius:3px}
+.cb-inspector-ranks>i.filled{background:#c9a354}
+.cb-inspector-ranks>span{margin-left:4px;color:#697973;font-size:.38rem}
+.cb-inspector-status{
+  margin:10px 0 0;padding:7px 8px;border:1px solid rgba(255,255,255,.05);
+  background:#091317;color:#6b7a75;font-size:.4rem;font-weight:900;letter-spacing:.08em;text-align:center
+}
+.cb-inspector-status.ready{border-color:rgba(84,190,131,.2);color:#79c99b}
+.cb-inspector-status.complete{border-color:rgba(216,185,118,.2);color:#d5bd7e}
+.cb-talent-inspector-v2 section>p{font-size:.56rem!important}
+.cb-talent-inspector-v2 .cb-invest-talent{min-height:46px!important;font-size:.46rem!important}
+
+/* Inline inspector is hidden on wide layouts; it becomes the mobile interaction. */
+.cb-talent-inline-detail{display:none}
+
+/* Tablet portrait: keep the same tier structure but move details inline. */
+@media(max-width:900px){
+  .cb-talent-command-hero{grid-template-columns:1fr}
+  .cb-talent-board{grid-template-columns:1fr!important}
+  .cb-talent-board>.cb-talent-inspector-v2{display:none!important}
+  .cb-talent-card.selected .cb-talent-inline-detail{
+    display:block;padding:10px 11px 11px;border-top:1px solid rgba(216,185,118,.09);
+    background:rgba(7,15,18,.72)
+  }
+  .cb-talent-inline-detail>small{color:#9a8558;font-size:.38rem;font-weight:900;letter-spacing:.09em}
+  .cb-talent-inline-detail>p{margin:5px 0 9px;color:#91a09a!important;font-size:.58rem!important;line-height:1.5}
+  .cb-talent-inline-detail>div{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .cb-talent-inline-detail>div>span{color:#6e7d77;font-size:.48rem}
+  .cb-talent-inline-detail button{
+    flex:0 0 auto;min-height:38px;padding:0 10px;border:1px solid rgba(216,185,118,.24);
+    background:linear-gradient(180deg,#322919,#211c13);color:#e4d09b;
+    font-size:.4rem;font-weight:900;letter-spacing:.05em
+  }
+  .cb-talent-inline-detail button:disabled{opacity:.4}
+}
+
+/* Phone: no horizontal tree, no microscopic nodes. */
+@media(max-width:720px){
+  .cb-command-sheet .cb-character-tabs button{flex-basis:96px!important;min-width:96px!important}
+  .cb-command-sheet .cb-spec-tabs{
+    display:flex!important;overflow-x:auto!important;scrollbar-width:none!important
+  }
+  .cb-command-sheet .cb-spec-tabs::-webkit-scrollbar{display:none}
+  .cb-command-sheet .cb-spec-tab{flex:0 0 148px!important;min-height:52px!important;padding:8px 10px!important}
+  .cb-talent-command-hero{gap:10px;min-height:0;padding:14px}
+  .cb-talent-command-hero h3{font-size:1.28rem}
+  .cb-talent-command-hero p{font-size:.6rem!important}
+  .cb-talent-command-metrics{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .cb-talent-command-metrics>div{padding:9px 7px}
+  .cb-talent-command-metrics span{font-size:.32rem}
+  .cb-talent-command-metrics b{font-size:.82rem}
+  .cb-talent-command-metrics small{font-size:.34rem!important}
+  .cb-talent-tier{
+    grid-template-columns:1fr!important;
+    border-color:rgba(216,185,118,.08)
+  }
+  .cb-talent-tier>header{
+    min-height:58px;padding:9px 11px;
+    display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;
+    border-right:0;border-bottom:1px solid rgba(216,185,118,.055)
+  }
+  .cb-talent-tier>header>span{position:static;font-size:1.2rem}
+  .cb-talent-tier>header>div{min-width:0}
+  .cb-talent-tier>header small{font-size:.31rem}
+  .cb-talent-tier>header b{display:block;margin-top:2px;font-size:.76rem}
+  .cb-talent-tier>header em{margin:0;text-align:right;font-size:.3rem}
+  .cb-talent-tier-cards{grid-template-columns:1fr;padding:6px}
+  .cb-talent-card-main{min-height:108px!important;padding:10px!important;grid-template-columns:42px minmax(0,1fr) auto!important}
+  .cb-talent-card-icon{width:40px;height:40px;font-size:1rem}
+  .cb-talent-card-copy small{font-size:.31rem!important}
+  .cb-talent-card-copy b{font-size:.6rem}
+  .cb-talent-card-copy em{font-size:.52rem;-webkit-line-clamp:2}
+  .cb-talent-card-state{font-size:.28rem}
+  .cb-talent-card-ranks>i{width:17px}
+  .cb-talent-inline-detail>p{font-size:.62rem!important}
+  .cb-talent-inline-detail>div{align-items:flex-start;flex-direction:column}
+  .cb-talent-inline-detail button{width:100%;min-height:44px}
+}
