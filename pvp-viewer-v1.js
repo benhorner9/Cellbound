@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.7.0';
+const VERSION='1.8.0';
 const $=(root,s)=>root?.querySelector(s);
 const $$=(root,s)=>[...(root?.querySelectorAll(s)||[])];
 const esc=v=>String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[m]));
@@ -145,7 +145,11 @@ function objectiveBadge(root,id,label,tone=''){
 }
 function banner(pb,text,tone=''){const e=$(pb.root,'#pvp2dBanner');if(!e)return;e.textContent=text;e.className='pvp2d-banner show '+tone;setTimeout(()=>{if(e.isConnected)e.className='pvp2d-banner'},900)}
 function updateScore(pb,blue,red,copyText){
-  const score=$(pb.root,'#pvp2dScore'),obj=$(pb.root,'#pvp2dObjective');if(score)score.textContent=Math.round(Number(blue)||0)+'–'+Math.round(Number(red)||0);if(obj&&copyText)obj.textContent=copyText
+  const score=$(pb.root,'#pvp2dScore'),obj=$(pb.root,'#pvp2dObjective'),b=Math.round(Number(blue)||0),r=Math.round(Number(red)||0),next=b+'–'+r;
+  if(score&&score.textContent!==next){
+    score.textContent=next;score.classList.remove('score-tick');void score.offsetWidth;score.classList.add('score-tick')
+  }
+  pb.lastScore={blue:b,red:r};if(obj&&copyText)obj.textContent=copyText
 }
 function updateHill(root,payload={},state='neutral'){
   const hill=$(root,'#pvp2dHill');if(!hill)return;
@@ -232,8 +236,8 @@ function handleEvent(pb,e){
         updateScore(pb,e.payload?.blue,e.payload?.red,(e.payload?.name||'Active node')+' contested');
         setStatus(pb,(e.payload?.name||'Active node')+' · contested')
       }else if(e.result==='hill-score'){
-        updateHill(root,e.payload,e.payload?.owner||'contested');
         updateScore(pb,e.payload?.blue,e.payload?.red,(e.payload?.name||'Active node')+(e.payload?.owner?' · '+(e.payload.owner==='blue'?'Blue':'Red')+' control':' · contested'));
+        updateHill(root,e.payload,e.payload?.owner||'contested');
       }else if(e.result==='ctf-roles'){
         if(e.payload?.runner)objectiveBadge(root,e.payload.runner,'RUNNER','runner');
         (e.payload?.defenders||[]).forEach(id=>objectiveBadge(root,id,'DEFENCE','defender'));
