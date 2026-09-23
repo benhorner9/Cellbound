@@ -657,12 +657,12 @@ function qRenderRebornEvent(e){
       if(enemyIndex>=0){qSetEnemyHp(enemyIndex,Number(e.payload?.targetHp)||0)}
       else if(String(e.target||'').startsWith('add-'))qSetAddHp(e.target,Number(e.payload?.targetHpPct)||0);
       if(targetChar){qSetPartyHp(targetChar,Number(e.payload?.targetHpPct)||0)}
-      if(e.target){qFloat(e.target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':e.result==='critical'?'crit':'damage');qPulseUnit(e.target,'hit',300)}
+      if(e.target){qFloat(e.target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':e.result==='critical'?'crit':'damage');qPulseUnit(e.target,'hit',300);window.CellboundCombatFX?.impact?.(qUnit(e.target),{critical:e.result==='critical'})}
       if(srcChar){questFight.damage[srcChar.id]=(Number(questFight.damage[srcChar.id])||0)+Math.round(Number(e.amount)||0);qRenderMeters(enemyIndex>=0?enemyIndex:0)}
       if(e.payload?.avoidable)qLog((targetChar?.name||'A player')+' is hit by avoidable '+(e.ability||'damage')+'.');
       break;
     case'HEAL_RECEIVED':
-      if(targetChar){qSetPartyHp(targetChar,Number(e.payload?.targetHpPct)||0);qFloat(e.target,'+'+Math.round(Number(e.amount)||0),'heal');qPulseUnit(e.target,'healed',340)}
+      if(targetChar){qSetPartyHp(targetChar,Number(e.payload?.targetHpPct)||0);qFloat(e.target,'+'+Math.round(Number(e.amount)||0),'heal');qPulseUnit(e.target,'healed',340);window.CellboundCombatFX?.heal?.(qUnit(e.target))}
       if(srcChar){questFight.healing[srcChar.id]=(Number(questFight.healing?.[srcChar.id])||0)+Math.max(0,Math.round(Number(e.amount)||0));questFight.overhealing[srcChar.id]=(Number(questFight.overhealing?.[srcChar.id])||0)+Math.max(0,Math.round(Number(e.payload?.overhealing)||0));qRenderMeters(enemyIndex>=0?enemyIndex:0)}
       break;
     case'UNIQUE_EFFECT_TRIGGER':if(srcChar){qLog(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');qFloat(e.source,e.ability||'UNIQUE','heal')}break;
@@ -676,20 +676,20 @@ function qRenderRebornEvent(e){
       break;
     case'AGGRO_CHANGED':
       if(sourceEnemy>=0&&targetChar){questFight.aggro[sourceEnemy]=targetChar.id;qRenderMeters(sourceEnemy);if(qRole(targetChar)!=='tank')qLog(targetChar.name+' pulls aggro.')}break;
-    case'MECHANIC_TELEGRAPH':qMechanicFromEvent(e);qStatus((e.ability||'Mechanic')+' incoming');qLog((e.ability||'Mechanic')+' is telegraphed.');break;
+    case'MECHANIC_TELEGRAPH':window.CellboundCombatFX?.mechanic?.(document.querySelector('.quest-cb2d-arena'),'warning');qMechanicFromEvent(e);qStatus((e.ability||'Mechanic')+' incoming');qLog((e.ability||'Mechanic')+' is telegraphed.');break;
     case'MECHANIC_RESOLVE':qClearMechanic(e.payload?.token,true);break;
     case'CAST_START':if(String(e.source||'').startsWith('e-'))qCastStart(e);break;
     case'CAST_FINISH':if(String(e.source||'').startsWith('e-')){qCastClear('CAST COMPLETE');qLog((e.ability||'Enemy cast')+' completes.')}break;
     case'INTERRUPT':
-      if(e.result==='success'){qCastClear('INTERRUPTED');qClearMechanic(e.payload?.token,false);qLog((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');qAct('dps','Interrupt successful')}
+      if(e.result==='success'){qCastClear('INTERRUPTED');qClearMechanic(e.payload?.token,false);window.CellboundCombatFX?.interrupt?.(qUnit(e.target)||document.querySelector('.quest-cb2d-arena'));qLog((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');qAct('dps','Interrupt successful')}
       else if(e.result==='failed')qLog((srcChar?.name||'A player')+' misses an interrupt.');
       break;
-    case'ADD_SPAWNED':qSpawnAdd(e);qLog((e.payload?.name||'An add')+' joins the fight.');break;
+    case'ADD_SPAWNED':qSpawnAdd(e);window.CellboundCombatFX?.spawn?.(qUnit(e.target)||document.querySelector('.quest-cb2d-arena'));qLog((e.payload?.name||'An add')+' joins the fight.');break;
     case'ADD_DEFEATED':case'ENEMY_DEFEATED':{
-      const u=qUnit(e.target);if(u)u.classList.add('dead');if(enemyIndex>=0)qSetEnemyHp(enemyIndex,0);else qSetAddHp(e.target,0);break;
+      const u=qUnit(e.target);if(u){u.classList.add('dead');window.CellboundCombatFX?.death?.(u);}if(enemyIndex>=0)qSetEnemyHp(enemyIndex,0);else qSetAddHp(e.target,0);break;
     }
-    case'PLAYER_DEFEATED':if(targetChar){qPulseUnit(e.target,'dying',360);qSetPartyHp(targetChar,0);setTimeout(()=>qUnit(e.target)?.classList.add('dead'),Math.max(120,Math.round(300/Math.max(.25,Number(questFight?.speed)||1))));qLog(targetChar.name+' is defeated.')}break;
-    case'PHASE_CHANGE':window.CellboundFX?.phase?.(e.ability||'Boss phase',e.payload?.healthPct);qStatus(e.ability||'PHASE CHANGE');qLog((e.ability||'A new phase')+' begins.');break;
+    case'PLAYER_DEFEATED':if(targetChar){window.CellboundCombatFX?.death?.(qUnit(e.target));qPulseUnit(e.target,'dying',360);qSetPartyHp(targetChar,0);setTimeout(()=>qUnit(e.target)?.classList.add('dead'),Math.max(120,Math.round(300/Math.max(.25,Number(questFight?.speed)||1))));qLog(targetChar.name+' is defeated.')}break;
+    case'PHASE_CHANGE':window.CellboundCombatFX?.phase?.(document.querySelector('.quest-cb2d-arena'));window.CellboundFX?.phase?.(e.ability||'Boss phase',e.payload?.healthPct);qStatus(e.ability||'PHASE CHANGE');qLog((e.ability||'A new phase')+' begins.');break;
     case'ENRAGE':if(e.result==='hard')window.CellboundFX?.shake?.('hard');else window.CellboundFX?.flash?.('danger');qStatus(e.result==='hard'?'HARD ENRAGE':(e.ability||'ENRAGE'));qLog((e.ability||'The enemy enrages')+'.');break;
     case'DEFENSIVE_ACTIVATED':if(srcChar)qLog(srcChar.name+' activates '+(e.ability||'a defensive')+'.');break;
     case'COMBAT_END':qCastClear();qStatus(e.result==='victory'?'ENCOUNTER CLEAR':'PARTY DEFEATED');if(e.result!=='victory')window.CellboundFX?.wipe?.('The quest encounter has overwhelmed the party.');break;
