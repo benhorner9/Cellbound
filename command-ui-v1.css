@@ -1,0 +1,548 @@
+/* Cellbound Command UI v1
+   Selective continuation of the Home v2 visual language across the game.
+   Bespoke high-polish encounter surfaces keep their own identities. */
+
+:root{
+  --cmd-gold:#d8b976;
+  --cmd-gold-soft:#a99367;
+  --cmd-line:rgba(216,185,118,.14);
+  --cmd-line-strong:rgba(216,185,118,.28);
+  --cmd-surface:#091317;
+  --cmd-copy:#9aa8a3;
+  --cmd-shadow:0 22px 58px rgba(0,0,0,.34);
+}
+
+/* --------------------------------------------------------------------------
+   Page mastheads — one visual language, different page identities.
+   -------------------------------------------------------------------------- */
+#roster>.section-intro,
+#party>.section-intro,
+#bank>.section-intro,
+#professions>.section-intro,
+#trading>.section-intro,
+#chat>.section-intro,
+#quests>.section-intro,
+#content>.section-intro,
+#world>.section-intro,
+#pvp>.section-intro{
+  position:relative;
+  isolation:isolate;
+  min-height:132px;
+  margin-bottom:14px;
+  padding:22px 24px;
+  overflow:hidden;
+  align-items:center;
+  border:1px solid var(--cmd-line);
+  background:
+    radial-gradient(circle at 84% 22%,rgba(216,185,118,.09),transparent 28%),
+    linear-gradient(105deg,rgba(9,19,23,.98),rgba(9,20,24,.9));
+  box-shadow:var(--cmd-shadow)
+}
+#roster>.section-intro>*,
+#party>.section-intro>*,
+#bank>.section-intro>*,
+#professions>.section-intro>*,
+#trading>.section-intro>*,
+#chat>.section-intro>*,
+#quests>.section-intro>*,
+#content>.section-intro>*,
+#world>.section-intro>*,
+#pvp>.section-intro>*{position:relative;z-index:2}
+#roster>.section-intro:after,
+#party>.section-intro:after,
+#bank>.section-intro:after,
+#professions>.section-intro:after,
+#trading>.section-intro:after,
+#chat>.section-intro:after,
+#quests>.section-intro:after,
+#content>.section-intro:after,
+#world>.section-intro:after,
+#pvp>.section-intro:after{
+  position:absolute;
+  right:2.5%;
+  top:50%;
+  transform:translateY(-52%);
+  z-index:0;
+  color:rgba(216,185,118,.035);
+  font:400 8rem Georgia,serif;
+  line-height:1;
+  pointer-events:none
+}
+#roster>.section-intro:after{content:"♟"}
+#party>.section-intro:after{content:"◆"}
+#bank>.section-intro:after{content:"▦"}
+#professions>.section-intro:after{content:"⚒"}
+#trading>.section-intro:after{content:"⇄"}
+#chat>.section-intro:after{content:"◌"}
+#quests>.section-intro:after{content:"⌁"}
+#content>.section-intro:after{content:"▱"}
+#world>.section-intro:after{content:"✦"}
+#pvp>.section-intro:after{content:"⚔"}
+
+#content>.section-intro{
+  background:
+    linear-gradient(90deg,rgba(6,13,17,.98) 0%,rgba(7,15,19,.94) 54%,rgba(6,13,16,.54) 100%),
+    url('./assets/dungeons/ashen-vault.webp') right 38%/46% auto no-repeat,
+    #091317
+}
+#world>.section-intro{
+  background:
+    linear-gradient(90deg,rgba(6,13,17,.98) 0%,rgba(7,15,19,.93) 52%,rgba(6,13,16,.48) 100%),
+    url('./assets/world/twelve-below-key-art.webp') right 40%/48% auto no-repeat,
+    #091317
+}
+#pvp>.section-intro{
+  background:
+    radial-gradient(circle at 80% 15%,rgba(132,51,47,.17),transparent 30%),
+    radial-gradient(circle at 62% 55%,rgba(61,137,132,.1),transparent 35%),
+    linear-gradient(105deg,#091317,#0b171b)
+}
+#trading>.section-intro,#bank>.section-intro,#professions>.section-intro{
+  background:
+    radial-gradient(circle at 82% 20%,rgba(182,135,61,.14),transparent 30%),
+    linear-gradient(105deg,#0b1518,#091216)
+}
+#chat>.section-intro{
+  background:
+    radial-gradient(circle at 78% 24%,rgba(70,167,157,.12),transparent 31%),
+    linear-gradient(105deg,#091417,#0a171b)
+}
+
+#roster>.section-intro small,
+#party>.section-intro small,
+#bank>.section-intro small,
+#professions>.section-intro small,
+#trading>.section-intro small,
+#chat>.section-intro small,
+#quests>.section-intro small,
+#content>.section-intro small,
+#world>.section-intro small,
+#pvp>.section-intro small{
+  color:var(--cmd-gold)!important;
+  font-size:.64rem!important;
+  letter-spacing:.15em
+}
+#roster>.section-intro h2,
+#party>.section-intro h2,
+#bank>.section-intro h2,
+#professions>.section-intro h2,
+#trading>.section-intro h2,
+#chat>.section-intro h2,
+#quests>.section-intro h2,
+#content>.section-intro h2,
+#world>.section-intro h2,
+#pvp>.section-intro h2{
+  margin:5px 0 6px;
+  color:#f0ece3;
+  font-size:2.25rem;
+  line-height:1.05
+}
+#roster>.section-intro p,
+#party>.section-intro p,
+#bank>.section-intro p,
+#professions>.section-intro p,
+#trading>.section-intro p,
+#chat>.section-intro p,
+#quests>.section-intro p,
+#content>.section-intro p,
+#world>.section-intro p,
+#pvp>.section-intro p{
+  max-width:720px;
+  color:#99a7a2!important;
+  font-size:.78rem!important
+}
+#roster>.section-intro button,
+#party>.section-intro button,
+#bank>.section-intro button,
+#chat>.section-intro button{
+  border-color:var(--cmd-line-strong);
+  background:linear-gradient(180deg,rgba(61,51,32,.72),rgba(28,29,23,.74));
+  color:#ead9aa
+}
+#roster>.section-intro button:hover,
+#party>.section-intro button:hover,
+#bank>.section-intro button:hover,
+#chat>.section-intro button:hover{
+  border-color:rgba(224,194,121,.46);
+  background:#342e21
+}
+
+/* --------------------------------------------------------------------------
+   Roster — already structurally strong; align its command tools with Home.
+   -------------------------------------------------------------------------- */
+#roster .roster-command-bar{
+  border-color:var(--cmd-line);
+  background:linear-gradient(180deg,rgba(14,24,27,.96),rgba(8,16,20,.96));
+  box-shadow:0 16px 38px rgba(0,0,0,.25)
+}
+#roster .roster-company-summary span{color:var(--cmd-gold-soft)}
+#roster .roster-role-filters{align-items:center}
+#roster .roster-role-filters .filter.active{
+  border-color:rgba(216,185,118,.38);
+  background:linear-gradient(180deg,#2b2519,#151b1b);
+  color:#ecdba9
+}
+#roster .char-card{border-color:rgba(216,185,118,.1)}
+#roster .char-card:hover{border-color:rgba(216,185,118,.31)}
+
+/* --------------------------------------------------------------------------
+   Party Formation — largest structural UX upgrade in this pass.
+   Active five are now the primary horizontal command surface.
+   -------------------------------------------------------------------------- */
+#party .party-layout{grid-template-columns:1fr;gap:14px}
+#party .formation-panel,#party .selection-panel{
+  min-height:0;
+  border-color:var(--cmd-line);
+  box-shadow:var(--cmd-shadow)
+}
+#party .formation-panel>.panel-head,#party .selection-panel>.panel-head{
+  min-height:62px;
+  border-bottom-color:rgba(216,185,118,.08)
+}
+#party .party-slots{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:8px;
+  padding:14px;
+  background:linear-gradient(180deg,rgba(8,17,20,.68),rgba(7,14,18,.36))
+}
+#party .party-slot{
+  position:relative;
+  display:flex;
+  min-width:0;
+  min-height:168px;
+  padding:14px 12px 12px;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:flex-start;
+  gap:0;
+  border:1px dashed rgba(216,185,118,.12);
+  background:
+    radial-gradient(circle at 50% -12%,color-mix(in srgb,var(--slot-accent) 16%,transparent),transparent 52%),
+    linear-gradient(180deg,#0d181c,#081115)
+}
+#party .party-slot.filled{
+  border-style:solid;
+  border-color:color-mix(in srgb,var(--slot-accent) 34%,rgba(216,185,118,.12));
+  box-shadow:inset 0 2px 0 color-mix(in srgb,var(--slot-accent) 42%,transparent)
+}
+#party .party-slot.shock-locked{opacity:.64}
+#party .party-slot-index{
+  position:absolute;
+  right:10px;
+  top:9px;
+  color:#4e5d59;
+  font:500 .58rem Georgia,serif;
+  letter-spacing:.08em
+}
+#party .party-slot .slot-role{
+  width:46px;height:46px;
+  margin-bottom:12px;
+  border-color:color-mix(in srgb,var(--slot-accent) 28%,rgba(255,255,255,.05));
+  background:#111f24;
+  color:var(--slot-accent);
+  font-size:1.08rem
+}
+#party .party-slot-copy{min-width:0;width:100%}
+#party .party-slot-copy b{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#e8e4db;
+  font:500 .96rem Georgia,serif
+}
+#party .party-slot-copy small{
+  display:block;
+  margin-top:4px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#758681!important;
+  font-size:.58rem!important
+}
+#party .party-slot-copy span{
+  display:block;
+  margin-top:11px;
+  color:#9aa8a3;
+  font-size:.58rem;
+  line-height:1.45
+}
+#party .party-slot>button{
+  position:absolute;
+  top:7px;left:7px;
+  width:28px;height:28px;min-height:28px!important;
+  border:1px solid rgba(255,255,255,.06);
+  background:rgba(8,15,18,.72);
+  color:#667874
+}
+#party .party-slot>button:hover{border-color:rgba(203,111,92,.28);color:#e59a88;background:#271715}
+#party .readiness{
+  display:grid;
+  grid-template-columns:minmax(180px,.42fr) minmax(0,1fr);
+  column-gap:22px;
+  align-items:center;
+  padding:15px 17px;
+  border-top-color:rgba(216,185,118,.08);
+  background:#091317
+}
+#party .readiness-line{grid-column:1;grid-row:1;font-size:.66rem}
+#party .readiness-bar{grid-column:2;grid-row:1;height:8px;margin:0}
+#party .readiness p{grid-column:1/-1;margin:9px 0 0;color:#7e8f89;font-size:.64rem!important}
+#party .readiness-bar i{background:linear-gradient(90deg,#8b5838,#d0a355,#63c6a8)}
+#party .party-dungeon-cta{
+  margin:0 14px 14px;
+  border-color:rgba(216,185,118,.16);
+  background:
+    radial-gradient(circle at 80% 20%,rgba(216,185,118,.08),transparent 30%),
+    linear-gradient(90deg,#0f191a,#091317)
+}
+#party .party-dungeon-cta button{
+  border-color:rgba(216,185,118,.3);
+  background:linear-gradient(180deg,#45371f,#252318);
+  color:#eddbac
+}
+#party .party-roster{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:7px;
+  max-height:330px;
+  padding:10px
+}
+#party .party-choice{
+  min-height:68px;
+  padding:9px 10px;
+  border-color:rgba(216,185,118,.075);
+  background:#091317
+}
+#party .party-choice:hover:not(:disabled){border-color:rgba(216,185,118,.26);background:#0f1b1e}
+
+/* --------------------------------------------------------------------------
+   Guild economy — retain working layouts, strengthen command hierarchy.
+   -------------------------------------------------------------------------- */
+#bank .bank-command-bar,
+#bank .bank-bulk-bar,
+#professions .profession-layout>.panel,
+#professions .profession-main>.panel{
+  border-color:var(--cmd-line);
+  box-shadow:0 16px 38px rgba(0,0,0,.23)
+}
+#bank .bank-command-bar{background:linear-gradient(180deg,#0d181c,#091216)}
+#bank .bank-summary>div{border-color:rgba(216,185,118,.1)}
+#professions .workshop-panel{box-shadow:0 20px 50px rgba(0,0,0,.3)}
+#professions .profession-recipe-filters button.active{
+  border-color:rgba(216,185,118,.35);
+  color:#e8d7a7;
+  background:#292318
+}
+
+/* --------------------------------------------------------------------------
+   Trading Post — already feature-rich; align only the chrome, not its logic.
+   -------------------------------------------------------------------------- */
+#trading .tp-market-bar,
+#trading .tp-delivery,
+#trading .tp-panel{
+  border-color:var(--cmd-line)
+}
+#trading .tp-market-bar{
+  background:
+    radial-gradient(circle at 85% 20%,rgba(216,185,118,.08),transparent 30%),
+    linear-gradient(180deg,#0d181b,#081115)
+}
+#trading .tp-tabs{border-color:var(--cmd-line);background:#091317}
+#trading .tp-tabs button.active{
+  border-color:rgba(216,185,118,.3);
+  color:#eddbab;
+  background:linear-gradient(180deg,#2b251a,#141b1b)
+}
+
+/* --------------------------------------------------------------------------
+   Social — promote communication and group finding instead of plain chat.
+   -------------------------------------------------------------------------- */
+#chat .social-layout{grid-template-columns:minmax(0,1.55fr) minmax(320px,.62fr);gap:14px}
+#chat .social-side{gap:14px}
+#chat .party-finder-panel{order:0}
+#chat .identity-panel{order:1}
+#chat .chat-panel,#chat .social-side>.panel{
+  border-color:var(--cmd-line);
+  box-shadow:var(--cmd-shadow)
+}
+#chat .chat-panel{
+  min-height:660px;
+  background:
+    radial-gradient(circle at 18% 0%,rgba(65,145,138,.08),transparent 30%),
+    linear-gradient(180deg,#0d181c,#071014)
+}
+#chat .chat-tabs{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:0;
+  padding:0;
+  border-bottom-color:rgba(216,185,118,.08);
+  background:#081216
+}
+#chat .chat-tabs button{
+  min-height:46px;
+  height:46px;
+  border:0;
+  border-right:1px solid rgba(255,255,255,.04);
+  background:transparent;
+  color:#778782
+}
+#chat .chat-tabs button.active{
+  color:#eddba9;
+  border-bottom:2px solid var(--cmd-gold);
+  background:linear-gradient(180deg,rgba(46,40,27,.42),rgba(12,22,24,.24))
+}
+#chat .chat-messages{padding:14px 16px;max-height:565px}
+#chat .chat-message{padding:10px 0;grid-template-columns:116px 1fr}
+#chat .chat-message .chat-meta b{color:#d2bd83}
+#chat .chat-form{
+  padding:12px;
+  border-top-color:rgba(216,185,118,.08);
+  background:#081216
+}
+#chat .chat-form button,#chat .guild-name-form button,#chat .party-finder-form>button{
+  border-color:rgba(216,185,118,.28);
+  background:linear-gradient(180deg,#3d321e,#222119);
+  color:#ecd9a8
+}
+#chat .pf-card{border-color:rgba(216,185,118,.09);background:#091317}
+#chat .pf-card:hover{border-color:rgba(216,185,118,.22)}
+
+/* --------------------------------------------------------------------------
+   Quest Journal / Dungeons — both already polished. Only unify outer chrome.
+   -------------------------------------------------------------------------- */
+#quests .quest-journal-shell>.panel{
+  border-color:var(--cmd-line);
+  box-shadow:0 18px 42px rgba(0,0,0,.27)
+}
+#quests .quest-tabs button.active{
+  border-color:rgba(216,185,118,.28);
+  color:#ead9aa;
+  background:rgba(51,43,27,.45)
+}
+#content .dungeon-browser-card{box-shadow:0 18px 46px rgba(0,0,0,.31)}
+#content .content-status{
+  padding:9px 11px;
+  border:1px solid rgba(216,185,118,.14);
+  background:rgba(8,16,19,.72)
+}
+#content .content-status span{color:#85785e}
+#content .content-status b{color:#e8dfcd}
+
+/* --------------------------------------------------------------------------
+   Events — Twelve Below remains the visual star; frame it rather than reskin it.
+   -------------------------------------------------------------------------- */
+#world #twelveBelowMount{
+  position:relative;
+  border-top:1px solid rgba(216,185,118,.12)
+}
+
+/* --------------------------------------------------------------------------
+   Endgame — preserve its deep feature set, warm the hub toward Guild Command.
+   -------------------------------------------------------------------------- */
+#endgame .eg-hero{
+  border-color:rgba(216,185,118,.18);
+  background:
+    linear-gradient(100deg,rgba(7,16,20,.98),rgba(10,26,29,.84)),
+    radial-gradient(circle at 76% 16%,rgba(216,185,118,.13),transparent 34%);
+  box-shadow:var(--cmd-shadow)
+}
+#endgame .eg-hero:after{color:rgba(216,185,118,.035)}
+#endgame .eg-hero small,#endgame .eg-weekly small,#endgame .eg-dungeon-card small{color:#c8ae72}
+#endgame .eg-season{border-left-color:rgba(216,185,118,.16)}
+#endgame .eg-dungeon-card,#endgame .eg-leader{border-color:rgba(216,185,118,.11)}
+#endgame .endgame-run-history{border-top-color:rgba(216,185,118,.13)}
+
+/* PvP retains teal/red competitive identity beneath the shared command masthead. */
+#pvp #pvpMount{padding-top:0}
+#pvp .pvp-hero{box-shadow:0 20px 50px rgba(0,0,0,.3)}
+
+/* --------------------------------------------------------------------------
+   Responsive behaviour — preserve the existing iPad/phone strengths.
+   -------------------------------------------------------------------------- */
+@media(max-width:1180px){
+  #party .party-slots{grid-template-columns:repeat(5,minmax(140px,1fr));overflow-x:auto}
+  #party .party-slot{min-width:140px}
+  #chat .social-layout{grid-template-columns:1fr}
+  #chat .social-side{grid-template-columns:1fr 1fr}
+}
+@media(max-width:900px){
+  #roster>.section-intro,
+  #party>.section-intro,
+  #bank>.section-intro,
+  #professions>.section-intro,
+  #trading>.section-intro,
+  #chat>.section-intro,
+  #quests>.section-intro,
+  #content>.section-intro,
+  #world>.section-intro,
+  #pvp>.section-intro{
+    min-height:118px;
+    padding:18px 20px
+  }
+  #content>.section-intro,#world>.section-intro{background-size:62% auto}
+  #chat .social-side{grid-template-columns:1fr}
+}
+@media(max-width:720px){
+  #roster>.section-intro,
+  #party>.section-intro,
+  #bank>.section-intro,
+  #professions>.section-intro,
+  #trading>.section-intro,
+  #chat>.section-intro,
+  #quests>.section-intro,
+  #content>.section-intro,
+  #world>.section-intro,
+  #pvp>.section-intro{
+    min-height:0;
+    padding:16px 14px!important;
+    margin-bottom:10px;
+    align-items:flex-start!important
+  }
+  #roster>.section-intro:after,
+  #party>.section-intro:after,
+  #bank>.section-intro:after,
+  #professions>.section-intro:after,
+  #trading>.section-intro:after,
+  #chat>.section-intro:after,
+  #quests>.section-intro:after,
+  #content>.section-intro:after,
+  #world>.section-intro:after,
+  #pvp>.section-intro:after{font-size:5rem;opacity:.75}
+  #content>.section-intro,#world>.section-intro{
+    background:
+      linear-gradient(90deg,rgba(6,13,17,.97),rgba(7,15,19,.87)),
+      #091317
+  }
+  #roster>.section-intro h2,
+  #party>.section-intro h2,
+  #bank>.section-intro h2,
+  #professions>.section-intro h2,
+  #trading>.section-intro h2,
+  #chat>.section-intro h2,
+  #quests>.section-intro h2,
+  #content>.section-intro h2,
+  #world>.section-intro h2,
+  #pvp>.section-intro h2{font-size:1.5rem!important}
+  #roster>.section-intro p,
+  #party>.section-intro p,
+  #bank>.section-intro p,
+  #professions>.section-intro p,
+  #trading>.section-intro p,
+  #chat>.section-intro p,
+  #quests>.section-intro p,
+  #content>.section-intro p,
+  #world>.section-intro p,
+  #pvp>.section-intro p{font-size:.68rem!important}
+  #party .party-slots{display:flex;overflow-x:auto;scroll-snap-type:x proximity;padding:10px}
+  #party .party-slot{flex:0 0 205px;min-width:205px;min-height:155px;scroll-snap-align:start}
+  #party .readiness{display:block;padding:12px}
+  #party .readiness-bar{margin-top:8px}
+  #party .readiness p{margin-top:8px}
+  #party .party-roster{grid-template-columns:1fr;max-height:360px}
+  #chat .chat-panel{min-height:520px!important}
+  #chat .chat-message{grid-template-columns:88px 1fr}
+  #chat .chat-tabs button{min-width:0!important;padding:0 6px!important}
+}

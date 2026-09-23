@@ -840,8 +840,8 @@ function partyComposition(chars=partyCharacters()){
   return parts.join(' · ')||'No roles assigned'
 }
 function slotHtml(index,id){
-  const c=id?charById(id):null,r=c?roleOf(c):null,icon=r==='tank'?'🛡':r==='healer'?'✚':r==='dps'?'⚔':'•';
-  return `<div class="party-slot ${c?'filled':''} ${c&&isUnavailable(c)?'shock-locked':''}"><div class="slot-role">${icon}</div><div>${c?`<b>${c.name}</b><small>Slot ${index+1} · ${roleLabel(r)} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)} · Shock ${c.cellShock||0}%</small>`:`<b>Party Slot ${index+1}</b><small>Any available adventurer · role comes from active spec</small>`}</div>${c?`<button data-remove="${c.id}">×</button>`:''}</div>`;
+  const c=id?charById(id):null,r=c?roleOf(c):null,icon=r==='tank'?'🛡':r==='healer'?'✚':r==='dps'?'⚔':'•',accent=c?(classDef(c)?.glow||'#d8b976'):'#6d7d78';
+  return `<div class="party-slot ${c?'filled':''} ${c&&isUnavailable(c)?'shock-locked':''}" style="--slot-accent:${accent}"><span class="party-slot-index">0${index+1}</span><div class="slot-role">${icon}</div><div class="party-slot-copy">${c?`<b>${c.name}</b><small>${c.class} · ${c.spec}</small><span>${roleLabel(r)} · iLvl ${characterItemLevel(c)} · Shock ${c.cellShock||0}%</span>`:`<b>Open Slot</b><small>Choose any available adventurer</small><span>Role follows active specialisation</span>`}</div>${c?`<button data-remove="${c.id}" aria-label="Remove ${c.name} from party">×</button>`:''}</div>`;
 }
 function partyReadiness(){
   const ids=flatPartyIds();
