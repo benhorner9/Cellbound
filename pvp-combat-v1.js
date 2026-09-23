@@ -148,23 +148,34 @@ function routePressure(ctx,u,p){
 function findMapPath(ctx,from,to,u=null){
   const dest=openMapPoint(ctx,to,1.2),start=openMapPoint(ctx,from,1.2);
   if(!ctx?.map||!segmentBlocked(ctx,start,dest,1.05,'movement'))return[start,dest];
-  const nodes=[start,...(ctx.map.nav||[]).map(p=>openMapPoint(ctx,p,.8)),dest];
-  const N=nodes.length,distances=Array(N).fill(Infinity),prev=Array(N).fill(-1),used=Array(N).fill(false);distances[0]=0;
+  const cornerPad=2.2,corners=[];
+  for(const r of mapBlockers(ctx)){
+    for(const sx of [-1,1])for(const sy of [-1,1]){
+      const p=openMapPoint(ctx,{x:r.x+sx*(r.w/2+cornerPad),y:r.y+sy*(r.h/2+cornerPad)},.55);
+      if(!mapBlockers(ctx).some(b=>pointInRect(p,b,.5)))corners.push(p)
+    }
+  }
+  const raw=[start,...(ctx.map.nav||[]).map(p=>openMapPoint(ctx,p,.55)),...corners,dest],nodes=[];
+  for(const p of raw)if(!nodes.some(q=>Math.hypot(q.x-p.x,q.y-p.y)<.6))nodes.push(p);
+  const destinationIndex=nodes.length-1,N=nodes.length,distances=Array(N).fill(Infinity),prev=Array(N).fill(-1),used=Array(N).fill(false);distances[0]=0;
   for(let step=0;step<N;step++){
     let at=-1,best=Infinity;for(let i=0;i<N;i++)if(!used[i]&&distances[i]<best){best=distances[i];at=i}
-    if(at<0)break;used[at]=true;if(at===N-1)break;
+    if(at<0)break;used[at]=true;if(at===destinationIndex)break;
     for(let j=0;j<N;j++){
-      if(j===at||used[j]||segmentBlocked(ctx,nodes[at],nodes[j],.9,'movement'))continue;
+      if(j===at||used[j]||segmentBlocked(ctx,nodes[at],nodes[j],.82,'movement'))continue;
       const d=Math.hypot(nodes[at].x-nodes[j].x,nodes[at].y-nodes[j].y),cost=d+routePressure(ctx,u,nodes[j]);
       if(distances[at]+cost<distances[j]){distances[j]=distances[at]+cost;prev[j]=at}
     }
   }
-  if(!Number.isFinite(distances[N-1]))return[start,dest];
-  const path=[];let cur=N-1;while(cur>=0){path.unshift(nodes[cur]);if(cur===0)break;cur=prev[cur]}
-  return path.length>=2?path:[start,dest]
+  if(!Number.isFinite(distances[destinationIndex])){
+    const safe=(ctx.map.nav||[]).map(p=>openMapPoint(ctx,p,.55)).filter(p=>!segmentBlocked(ctx,start,p,.7,'movement')).sort((a,b)=>Math.hypot(a.x-dest.x,a.y-dest.y)-Math.hypot(b.x-dest.x,b.y-dest.y))[0];
+    return safe?[start,safe]:[start]
+  }
+  const path=[];let cur=destinationIndex;while(cur>=0){path.unshift(nodes[cur]);if(cur===0)break;cur=prev[cur]}
+  return path.length>=2?path:[start]
 }
 function nextMapWaypoint(ctx,u,to){
-  const path=findMapPath(ctx,u.position,to,u);return path[1]||openMapPoint(ctx,to,1)
+  const path=findMapPath(ctx,u.position,to,u);return path[1]||copy(u.position)
 }
 function move(ctx,u,to,duration=500,reason='position'){
   const from=copy(u.position),target=openMapPoint(ctx,to,1),end=ctx?.map?nextMapWaypoint(ctx,u,target):target;
