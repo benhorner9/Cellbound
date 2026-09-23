@@ -134,12 +134,16 @@
 .cbvfx-burst.death{border:1px solid rgba(177,199,197,.45);box-shadow:0 0 25px rgba(123,183,186,.22);animation:cbvfxDeath .96s ease-out forwards}
 .cbvfx-burst.death:before{width:8px;height:52px;border-radius:50%;background:linear-gradient(180deg,rgba(184,231,230,.4),transparent);filter:blur(2px)}
 .cbvfx-burst.death:after{width:42px;height:42px;border:1px solid rgba(155,205,203,.24);border-radius:50%}
+.cbvfx-burst.death.boss-death{width:28px;height:28px;border:2px solid rgba(244,188,94,.72);box-shadow:0 0 34px rgba(224,96,69,.34),0 0 60px rgba(241,185,84,.16);animation:cbvfxBossDeath 1.34s cubic-bezier(.16,.76,.25,1) forwards}
+.cbvfx-burst.death.boss-death:before{width:82px;height:82px;border:1px dashed rgba(246,194,103,.54);border-radius:50%;background:none;filter:none;animation:cbvfxSpin 1.15s linear infinite}
+.cbvfx-burst.death.boss-death:after{width:118px;height:118px;border:2px solid rgba(225,94,72,.30);border-radius:50%;box-shadow:inset 0 0 35px rgba(236,150,76,.12)}
 @keyframes cbvfxImpact{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(2.7) rotate(12deg)}}
 @keyframes cbvfxCrit{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}25%{opacity:1;filter:brightness(1.6)}100%{opacity:0;transform:translate(-50%,-50%) scale(3.7) rotate(-18deg)}}
 @keyframes cbvfxHeal{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}28%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(3.1) translateY(-4px)}}
 @keyframes cbvfxInterrupt{0%{opacity:0;transform:translate(-50%,-50%) scale(.5) rotate(-12deg)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(2.8) rotate(18deg)}}
 @keyframes cbvfxSpawn{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}35%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(4.1)}}
 @keyframes cbvfxDeath{0%{opacity:.9;transform:translate(-50%,-50%) scale(.65)}100%{opacity:0;transform:translate(-50%,-68%) scale(3.4);filter:blur(3px)}}
+@keyframes cbvfxBossDeath{0%{opacity:0;transform:translate(-50%,-50%) scale(.35)}16%{opacity:1;filter:brightness(1.45)}52%{opacity:.92;transform:translate(-50%,-50%) scale(2.1)}100%{opacity:0;transform:translate(-50%,-50%) scale(5.2);filter:blur(2px)}}
 @keyframes cbvfxSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
 
 .cbvfx-fallen{filter:grayscale(.7) brightness(.7)!important;transition:filter .35s ease!important}
