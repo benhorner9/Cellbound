@@ -135,7 +135,7 @@ function close(){
 function openBriefing(){
  const gate=partyReady(),left=attemptsLeft(),root=ensureBackdrop(),chars=party();
  root.hidden=false;document.body.classList.add('tb-open');
- root.innerHTML='<section class="cb2d-shell cb2d-brief tb-brief"><header class="cb2d-head"><div><small>THE SEPULCHRE OF TWELVE · PRIVATE WORLD EVENT</small><h2>The Twelve Below</h2></div><button data-tb-close>×</button></header>'+
+ root.innerHTML='<section class="cb2d-shell cb2d-brief tb-brief"><header class="cb2d-head"><div><small>THE SEPULCHRE OF TWELVE · PRIVATE WORLD EVENT</small><h2>The Twelve Below</h2></div><button data-tb-close aria-label="Close Twelve Below">×</button></header>'+
  '<div class="tb-brief-grid"><main><p class="cb2d-intro">Your guild enters alone. One tomb opens now; another opens every 20 seconds. Any boss still alive remains in the arena when the next one rises. The Sepulchre has a fixed endgame difficulty and never scales down to your party.</p>'+
  '<div class="tb-tomb-preview">'+BOSSES.map((b,i)=>'<span class="tb-boss-preview"><i>'+esc(b.rune)+'</i><b>'+(i+1)+'. '+esc(b.vice)+'</b><small class="tb-boss-name">'+esc(b.name)+'</small><strong class="tb-boss-action">'+esc(b.action)+'</strong><p>'+esc(b.journal)+'</p></span>').join('')+'</div>'+
  '<div class="tb-relic-intro"><small>ANCIENT RELICS · T4 · ILVL 42</small><h3>Relics sharpen each role.</h3><p>Relics use the Relic slot and specialise a character toward threat, survival, healing, burst or tempo.</p></div></main>'+
@@ -487,7 +487,7 @@ function resultPlayerRows(){
 }
 function showResults(){
  const root=ensureBackdrop(),r=run.result,w=run.rewards;
- root.innerHTML='<section class="cb2d-shell cb2d-loot-screen tb-results"><header class="cb2d-head"><div><small>THE TWELVE BELOW · ATTEMPT COMPLETE</small><h2>'+r.kills+' of 12 defeated</h2></div><button data-tb-close>×</button></header>'+
+ root.innerHTML='<section class="cb2d-shell cb2d-loot-screen tb-results"><header class="cb2d-head"><div><small>THE TWELVE BELOW · ATTEMPT COMPLETE</small><h2>'+r.kills+' of 12 defeated</h2></div><button data-tb-close aria-label="Close Twelve Below">×</button></header>'+
  '<div class="tb-result-hero '+w.band.tone+'"><div><small>'+w.band.label+'</small><h3>'+(r.kills===12?'No vice remains buried.':r.outcome==='defeat'?'The burial ground claimed the party.':'The guild withdrew from the Sepulchre.')+'</h3><p>Every additional vice defeated improved the reward cache.</p></div><strong>'+r.kills+' / 12</strong></div>'+
  '<div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+w.gold+'</b><small>Guild treasury</small></article><article><span>RENOWN</span><b>+'+w.renown+'</b><small>Guild reputation</small></article><article><span>CELL SHARDS</span><b>+'+w.shards+'</b><small>Relic material</small></article><article><span>BEST</span><b>'+eventState().bestKills+' / 12</b><small>Personal record</small></article></div>'+
  (w.relic?'<section class="tb-relic-drop"><div class="tb-relic-icon">'+esc(w.relic.icon||'◇')+'</div><div><small>ANCIENT RELIC · '+String(w.relic.relicRole).toUpperCase()+'</small><h3>'+esc(w.relic.name)+'</h3><p>'+esc(w.relic.uniqueEffect.description)+'</p><span>Sent to Guild Bank</span></div></section>':'<section class="tb-no-relic"><small>RELIC ROLL</small><h3>No relic recovered this attempt.</h3><p>Higher boss counts dramatically improve the relic chance. A 12/12 clear guarantees one.</p></section>')+
