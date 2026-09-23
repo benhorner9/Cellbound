@@ -1631,7 +1631,7 @@ function endgameRunMetrics(){
 async function seamlessFrom(startIndex,tok){
  try{
   for(let i=startIndex;i<STAGES.length;i++){
-   if(tok!==token||!run)return;run.stage=i;run.override=0;run.rebornResult=null;const s=STAGES[i];if(i>startIndex)await window.CellboundExpeditionPresentation?.room?.('ashen-vault',{title:s.title,index:i,total:STAGES.length,kind:s.kind});
+   if(tok!==token||!run)return;run.stage=i;run.override=0;run.rebornResult=null;const s=STAGES[i];if(s.kind==='final')await window.CellboundBossDossier?.show?.('vaultheart');else if(i>startIndex)await window.CellboundExpeditionPresentation?.room?.('ashen-vault',{title:s.title,index:i,total:STAGES.length,kind:s.kind});
    if(s.kind==='boss'||s.kind==='final')window.CellboundFX?.boss?.(s.title);
    $('#cb2dTitle').textContent=s.title;$('#cb2dRoute').innerHTML=route();$('#cb2dType').textContent=s.kind==='final'?'FINAL BOSS':s.kind==='boss'?'BOSS':s.kind==='event'?'EVENT':'HOSTILE PACK';
    spawn(s);status('Preparing encounter…');log('Entering '+s.title+'.');act('tank','Taking point');act('healer','Following formation');act('dps','Acquiring targets');await delay(650);
