@@ -1209,8 +1209,8 @@ function combatRebornReady(){
 function ensureCombatRebornEngine(){
  if(combatRebornReady())return Promise.resolve(window.CellboundCombatReborn);
  if(rebornLoaderPromise)return rebornLoaderPromise;
- status('Loading Combat Reborn engine…');
- log('Combat engine is not ready yet. Reloading the Combat Reborn runtime.');
+ status('Loading combat…');
+ log('Combat is not ready yet. Reloading the encounter.');
  rebornLoaderPromise=new Promise((resolve,reject)=>{
    let settled=false;
    const finish=(ok,error)=>{
@@ -1235,16 +1235,16 @@ function showRebornStartupFailure(error,s,tok){
  run.combatActive=false;
  const message=String(error?.message||error||'Unknown combat engine error');
  status('Combat engine failed to start');
- log('Combat Reborn could not start: '+message);
+ log('Combat could not start: '+message);
  act('tank','Waiting');act('healer','Waiting');act('dps','Waiting');
  const arena=$('#cb2dArena');if(!arena)return;
  let panel=$('#cbrStartupError');
  if(!panel){
    panel=document.createElement('div');panel.id='cbrStartupError';panel.className='cbr-startup-error';
-   panel.innerHTML='<small>COMBAT REBORN</small><b>Combat failed to initialise.</b><span data-cbr-error></span><button type="button" data-cbr-retry>RETRY COMBAT</button>';
+   panel.innerHTML='<small>COMBAT CORE</small><b>Combat failed to start.</b><span data-cbr-error></span><button type="button" data-cbr-retry>RETRY COMBAT</button>';
    arena.appendChild(panel)
  }
- const copy=panel.querySelector('[data-cbr-error]');if(copy)copy.textContent='The encounter has not started or changed state. '+message;
+ const copy=panel.querySelector('[data-cbr-error]');if(copy)copy.textContent='The encounter has not started. '+message;
  const button=panel.querySelector('[data-cbr-retry]');
  if(button)button.onclick=async()=>{
    button.disabled=true;button.textContent='RETRYING…';panel.remove();
