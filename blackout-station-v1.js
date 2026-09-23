@@ -44,7 +44,7 @@ function createGridOverrideModule(){
 function gridOverrideModules(){return(state()?.bank||[]).filter(x=>x?.itemId===GRID_OVERRIDE_ID&&Number(x.charges)>0)}
 function activeGridOverride(){return gridOverrideModules().sort((a,b)=>(Number(a.charges)||0)-(Number(b.charges)||0))[0]||null}
 function gridOverrideCharges(){return gridOverrideModules().reduce((n,x)=>n+Math.max(0,Number(x.charges)||0),0)}
-function gridOverrideArt(size=72){return'<span class="bs-override-art" style="width:'+size+'px;height:'+size+'px" aria-label="Grid Override Module"><i>⚡</i></span>'}
+function gridOverrideArt(size=72){return window.CellboundItemArt?.artHTML?.(createGridOverrideModule(),size,'bs-override-art')||'<span class="bs-override-art" style="width:'+size+'px;height:'+size+'px" aria-label="Grid Override Module"><i>⚡</i></span>'}
 function root(){
  let e=$('#bs2dBackdrop');
  if(e)return e;
