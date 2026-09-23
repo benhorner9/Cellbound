@@ -46,7 +46,7 @@ function rosterMarkup(list,team){
   return '<div class="pvp2d-roster '+team+'">'+list.map(u=>'<div data-pvp2d-row="'+esc(u.id)+'"><i style="--pvp-class:'+(CLASS_COLORS[u.class]||'#9aa7a4')+'"></i><span><b>'+esc(u.name)+'</b><small>'+esc(u.class)+' · '+esc(String(u.role||'dps').toUpperCase())+'</small><em><i style="width:100%"></i></em></span><strong>100%</strong></div>').join('')+'</div>'
 }
 function objectiveMarkup(match,map=null){
-  if(match.kind==='arena')return '<div class="pvp2d-arena-mark"><i></i><b>ARENA</b></div>';
+  if(match.kind==='arena')return '<div class="pvp2d-arena-mark"><i></i><b>VEILSPIRE</b></div><div class="pvp2d-arena-storm" id="pvp2dArenaStorm"><div class="pvp2d-storm-fog"></div><div class="pvp2d-storm-ring" id="pvp2dStormRing"><i></i><b>CELLSTORM</b></div></div>';
   if(match.mode==='king-of-the-hill'){
     const hills=(map?.hills||[{id:'central-nexus',name:'CENTRAL NEXUS',x:50,y:50,radius:12}]);
     const sites=hills.map((h,i)=>'<div class="pvp2d-hill-site '+(i===0?'active':'')+'" data-pvp2d-hill-site="'+esc(h.id)+'" style="left:'+Number(h.x||50)+'%;top:'+Number(h.y||50)+'%"><i></i><small>'+(i+1)+'</small></div>').join('');
@@ -63,7 +63,8 @@ function mapMarkup(map){
     const cls=/tunnel/i.test(b.id||'')?'tunnel-wall':/pillar/i.test(b.id||'')?'pillar':/rampart/i.test(b.id||'')?'rampart':'ruin';
     return '<div class="pvp2d-map-block '+cls+'" data-map-block="'+esc(b.id||'wall')+'" style="left:'+left+'%;top:'+top+'%;width:'+Number(b.w||0)+'%;height:'+Number(b.h||0)+'%"></div>'
   }).join('');
-  return '<div class="pvp2d-map" data-pvp-map="'+esc(map.id||'battleground')+'"><div class="pvp2d-map-title"><small>BATTLEGROUND</small><b>'+esc(map.name||'Cellwind Bastion')+'</b></div>'+areas+walls+'<div class="pvp2d-map-prop arch a1"></div><div class="pvp2d-map-prop arch a2"></div><div class="pvp2d-map-prop rubble r1"></div><div class="pvp2d-map-prop rubble r2"></div></div>'
+  const mapType=map.mode==='arena'?'ARENA':'BATTLEGROUND';
+  return '<div class="pvp2d-map" data-pvp-map="'+esc(map.id||'battleground')+'"><div class="pvp2d-map-title"><small>'+mapType+'</small><b>'+esc(map.name||'Cellwind Bastion')+'</b></div>'+areas+walls+'<div class="pvp2d-map-prop arch a1"></div><div class="pvp2d-map-prop arch a2"></div><div class="pvp2d-map-prop rubble r1"></div><div class="pvp2d-map-prop rubble r2"></div></div>'
 }
 function shellMarkup(match,units,map=null){
   const blue=units.filter(x=>x.team==='blue'),red=units.filter(x=>x.team==='red');
