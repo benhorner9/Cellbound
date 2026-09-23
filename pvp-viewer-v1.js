@@ -1,11 +1,21 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.0';
+const VERSION='1.4.0';
 const $=(root,s)=>root?.querySelector(s);
 const $$=(root,s)=>[...(root?.querySelectorAll(s)||[])];
 const esc=v=>String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[m]));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
+function dataNode(root,attribute,value){
+  if(!root)return null;
+  const wanted=String(value??'');
+  const nodes=root.querySelectorAll?.('['+attribute+']')||[];
+  for(const node of nodes)if(node.getAttribute(attribute)===wanted)return node;
+  return null
+}
+const unitNode=(root,id)=>dataNode(root,'data-pvp2d-unit',id);
+const rowNode=(root,id)=>dataNode(root,'data-pvp2d-row',id);
+const flagNode=(root,owner)=>dataNode(root,'data-pvp2d-flag',owner);
 const CLASS_COLORS=window.CellboundPvPCombat?.CLASS_COLORS||{};
 let activePlayback=null;
 
@@ -53,7 +63,7 @@ function shellMarkup(match,units){
   '</div>'
 }
 function flagBasePoint(owner){return owner==='blue'?{x:12,y:50}:{x:88,y:50}}
-function flagElement(root,owner){return $(root,'[data-pvp2d-flag="'+CSS.escape(String(owner))+'"]')}
+function flagElement(root,owner){return flagNode(root,owner)}
 function clearCarrierFlagClass(root,owner){
   $(root,'.pvp2d-unit.carrying-flag').forEach(u=>{if(!owner||u.dataset.flagOwner===owner){u.classList.remove('carrying-flag');delete u.dataset.flagOwner}})
 }
@@ -66,17 +76,17 @@ function resetFlagVisual(root,owner){
   const p=flagBasePoint(owner);setFlagAt(root,owner,p.x,p.y,'base')
 }
 function carryFlagVisual(root,owner,carrierId){
-  const flag=flagElement(root,owner),carrier=$(root,'[data-pvp2d-unit="'+CSS.escape(String(carrierId))+'"]');if(!flag||!carrier)return;
+  const flag=flagElement(root,owner),carrier=unitNode(root,carrierId);if(!flag||!carrier)return;
   clearCarrierFlagClass(root,owner);carrier.classList.add('carrying-flag');carrier.dataset.flagOwner=owner;carrier.appendChild(flag);
   flag.classList.remove('base','dropped','returning');flag.classList.add('carried');flag.style.left='28px';flag.style.top='-22px';flag.style.right='auto';
 }
 function safePoint(x,y){return{x:clamp(Number(x)||50,5,95),y:clamp(Number(y)||50,8,92)}}
 function point(root,id){
-  const arena=$(root,'#pvp2dArena'),u=$(root,'[data-pvp2d-unit="'+CSS.escape(String(id))+'"]');if(!arena||!u)return null;
+  const arena=$(root,'#pvp2dArena'),u=unitNode(root,id);if(!arena||!u)return null;
   const a=arena.getBoundingClientRect(),r=u.getBoundingClientRect();return{x:r.left+r.width/2-a.left,y:r.top+r.height/2-a.top}
 }
 function move(root,id,x,y,ms=450,from=null){
-  const u=$(root,'[data-pvp2d-unit="'+CSS.escape(String(id))+'"]');if(!u)return;const p=safePoint(x,y);
+  const u=unitNode(root,id);if(!u)return;const p=safePoint(x,y);
   if(from){
     const start=safePoint(from.x,from.y);
     u.style.transition='none';u.style.left=start.x+'%';u.style.top=start.y+'%';
@@ -96,18 +106,18 @@ function projectile(root,from,to,kind='damage',ms=320){
   const dx=b.x-a.x,dy=b.y-a.y,p=document.createElement('i');p.className='pvp2d-shot '+kind;p.style.left=a.x+'px';p.style.top=a.y+'px';p.style.setProperty('--dx',dx+'px');p.style.setProperty('--dy',dy+'px');p.style.setProperty('--shot-ms',Math.max(180,ms)+'ms');fx.appendChild(p);setTimeout(()=>p.remove(),ms+180)
 }
 function setHp(root,id,pct){
-  pct=clamp(Number(pct)||0,0,100);const u=$(root,'[data-pvp2d-unit="'+CSS.escape(String(id))+'"]'),bar=u?.querySelector('.pvp2d-hp i');if(bar)bar.style.width=pct+'%';
-  const row=$(root,'[data-pvp2d-row="'+CSS.escape(String(id))+'"]'),rb=row?.querySelector('em i'),strong=row?.querySelector('strong');if(rb)rb.style.width=pct+'%';if(strong)strong.textContent=Math.round(pct)+'%'
+  pct=clamp(Number(pct)||0,0,100);const u=unitNode(root,id),bar=u?.querySelector('.pvp2d-hp i');if(bar)bar.style.width=pct+'%';
+  const row=rowNode(root,id),rb=row?.querySelector('em i'),strong=row?.querySelector('strong');if(rb)rb.style.width=pct+'%';if(strong)strong.textContent=Math.round(pct)+'%'
 }
 function setResource(root,id,name,value,max){
-  const u=$(root,'[data-pvp2d-unit="'+CSS.escape(String(id))+'"]'),bar=u?.querySelector('.pvp2d-resource');if(!bar)return;const pct=clamp((Number(value)||0)/Math.max(1,Number(max)||100)*100,0,100);
+  const u=unitNode(root,id),bar=u?.querySelector('.pvp2d-resource');if(!bar)return;const pct=clamp((Number(value)||0)/Math.max(1,Number(max)||100)*100,0,100);
   [...bar.classList].filter(x=>x.startsWith('resource-')).forEach(x=>bar.classList.remove(x));bar.classList.add(resourceClass(name));bar.title=name||'Resource';const fill=bar.querySelector('i');if(fill)fill.style.width=pct+'%'
 }
 function pulse(root,id,kind='attack'){
-  const u=$(root,'[data-pvp2d-unit="'+CSS.escape(String(id))+'"]');if(!u)return;u.classList.remove('attacking','healing','hit');u.classList.add(kind==='heal'?'healing':kind==='hit'?'hit':'attacking');setTimeout(()=>u.classList.remove('attacking','healing','hit'),360)
+  const u=unitNode(root,id);if(!u)return;u.classList.remove('attacking','healing','hit');u.classList.add(kind==='heal'?'healing':kind==='hit'?'hit':'attacking');setTimeout(()=>u.classList.remove('attacking','healing','hit'),360)
 }
 function statusPill(root,id,label,kind='buff',duration=1800){
-  const u=$(root,'[data-pvp2d-unit="'+CSS.escape(String(id))+'"]'),box=u?.querySelector('.pvp2d-statuses');if(!box)return;
+  const u=unitNode(root,id),box=u?.querySelector('.pvp2d-statuses');if(!box)return;
   const e=document.createElement('i');e.className=kind;e.textContent=label;box.appendChild(e);setTimeout(()=>e.remove(),Math.max(250,duration))
 }
 function feed(pb,text){
@@ -157,10 +167,10 @@ function handleEvent(pb,e){
       if(e.result==='guard'&&src&&target)feed(pb,src.name+' guards '+target.name+'.');break
     }
     case'PLAYER_DEFEATED':
-      if(target){const u=$(root,'[data-pvp2d-unit="'+CSS.escape(target.id)+'"]');u?.classList.add('dead');setHp(root,target.id,0);pb.stats[target.id].deaths++;if(src)pb.stats[src.id].kills++;feed(pb,target.name+' is defeated'+(src?' by '+src.name:'')+'.');banner(pb,(src?.team==='blue'?'BLUE':'RED')+' TAKEDOWN',src?.team||'')}
+      if(target){const u=unitNode(root,target.id);u?.classList.add('dead');setHp(root,target.id,0);pb.stats[target.id].deaths++;if(src)pb.stats[src.id].kills++;feed(pb,target.name+' is defeated'+(src?' by '+src.name:'')+'.');banner(pb,(src?.team==='blue'?'BLUE':'RED')+' TAKEDOWN',src?.team||'')}
       break;
     case'PLAYER_REVIVED':
-      if(target){const u=$(root,'[data-pvp2d-unit="'+CSS.escape(target.id)+'"]');u?.classList.remove('dead');setHp(root,target.id,Number(e.payload?.targetHpPct)||100);setResource(root,target.id,e.payload?.resource,e.payload?.resourceValue,e.payload?.resourceMax);floatText(root,target.id,e.result==='respawn'?'RESPAWN':'REVIVED','heal');feed(pb,target.name+' returns to the battleground.')}
+      if(target){const u=unitNode(root,target.id);u?.classList.remove('dead');setHp(root,target.id,Number(e.payload?.targetHpPct)||100);setResource(root,target.id,e.payload?.resource,e.payload?.resourceValue,e.payload?.resourceMax);floatText(root,target.id,e.result==='respawn'?'RESPAWN':'REVIVED','heal');feed(pb,target.name+' returns to the battleground.')}
       break;
     case'OBJECTIVE_UPDATE':
       if(e.result==='hill-control'){updateScore(pb,e.payload?.blue,e.payload?.red,(e.payload?.owner==='blue'?'Blue':'Red')+' controls the Cell node');banner(pb,(e.payload?.owner==='blue'?'BLUE':'RED')+' TAKES THE NODE',e.payload?.owner)}
@@ -213,7 +223,19 @@ function play({stage,match,result,onComplete}={}){
     if(pb.cancelled||!stage.isConnected)return;
     const delta=Math.min(100,Math.max(0,now-last));last=now;simTime+=delta;
     const timer=$(stage,'#pvp2dTimer');if(timer){const sec=Math.floor(simTime/1000);timer.textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0')}
-    let handled=0;while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<220){handleEvent(pb,events[index]);index++;handled++}
+    let handled=0;while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<220){
+      const event=events[index];
+      try{handleEvent(pb,event)}
+      catch(error){
+        console.error('PvP viewer event failed',event,error);
+        if(!pb.runtimeErrorShown){
+          pb.runtimeErrorShown=true;
+          feed(pb,'Viewer recovered from a display error. Combat continues.');
+          setStatus(pb,'Combat live · viewer recovery active')
+        }
+      }
+      index++;handled++
+    }
     if(pb.meterDirty&&now-pb.lastMeterAt>120){pb.meterDirty=false;pb.lastMeterAt=now;updateMeters(pb)}
     if(index>=events.length){updateMeters(pb);setTimeout(()=>{if(!pb.cancelled&&stage.isConnected){activePlayback=null;onComplete?.()}},650);return}
     pb.raf=requestAnimationFrame(frame)
