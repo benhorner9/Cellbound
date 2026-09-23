@@ -115,7 +115,7 @@ function renderCard(){
  const root=$('#twelveBelowMount');if(!root||!Game?.ready)return;
  const e=eventState(),gate=partyReady(),left=attemptsLeft(),best=e.bestKills||0;
  root.innerHTML='<article class="tb-world-card">'+
-  '<div class="tb-world-art"><div class="tb-world-ring">'+BOSSES.map((b,i)=>'<i style="--i:'+i+'">'+esc(b.rune)+'</i>').join('')+'</div><span>ANCIENT BURIAL GROUND</span><b>THE TWELVE BELOW</b></div>'+
+  '<div class="tb-world-art has-key-art"><img class="tb-world-key-art" src="./assets/world/twelve-below-key-art.webp" alt="" aria-hidden="true" decoding="async" loading="eager"><span>ANCIENT BURIAL GROUND</span><b>THE TWELVE BELOW</b></div>'+
   '<div class="tb-world-copy"><div class="tb-world-kicker"><span>PRIVATE WORLD EVENT</span><em>5-CHARACTER GUILD PARTY</em></div><h3>The Twelve Below</h3><p>One tomb opens immediately. Every 20 seconds another vice rises. Kill quickly or the battlefield fills with bosses.</p>'+
   '<div class="tb-world-stats"><span><small>ATTEMPTS TODAY</small><b>'+left+' / '+DAILY_ATTEMPTS+'</b></span><span><small>PERSONAL BEST</small><b>'+best+' / 12</b></span><span><small>ENTRY / RECOMMENDED</small><b>'+TWELVE_BALANCE.minimumItemLevel+' / '+TWELVE_BALANCE.baseRecommendedItemLevel+'+</b></span><span><small>CHASE REWARD</small><b>T4 RELICS · ILVL 42</b></span></div>'+
   '<div class="tb-world-actions"><button data-tb-open '+(!gate.ok||left<=0?'disabled':'')+'>ENTER THE SEPULCHRE →</button><small>'+(left<=0?'Daily attempts exhausted.':esc(gate.reason))+'</small></div></div></article>';
