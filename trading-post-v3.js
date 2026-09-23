@@ -21,12 +21,13 @@ function commodityKey(c,k){return c+'|'+k}
 function materialByKey(k){return P?.MATERIALS?.[k]||null}
 function commodityArt(category,key,size){
   if(category==='material'&&P?.materialArtHTML)return P.materialArtHTML(key,size||62,'tp-material-art');
-  if(category==='recipe')return '<span class="trade-preview-symbol">▤</span>';
-  return '<span class="trade-preview-symbol">⚗</span>';
+  if(category==='consumable'&&P?.consumableArtHTML)return P.consumableArtHTML(key,size||62,'tp-consumable-art');
+  if(category==='recipe'&&window.CellboundItemArt?.artHTML)return window.CellboundItemArt.artHTML({id:'recipe-'+key,name:'Recipe: '+(P?.recipeById?.(key)?.name||key),category:'recipe',rarity:'Rare'},size||62,'tp-recipe-art');
+  return '<span class="trade-preview-symbol">◇</span>';
 }
 function gearFor(l){const base=G?.byId?.(l.item_key)||G?.byName?.(l.item_name)||{};return {...base,...(l.payload||{})}}
 function isUtilityItem(item){return Boolean(item?.category==='utility'||item?.utilityType)}
-function utilityArtHTML(item,size=62,extra=''){return '<span class="tp-utility-art '+extra+'" style="width:'+size+'px;height:'+size+'px" aria-label="'+esc(item?.name||'Utility item')+'"><i>'+esc(item?.icon||'⚡')+'</i></span>'}
+function utilityArtHTML(item,size=62,extra=''){return window.CellboundItemArt?.artHTML?.(item,size,extra+' tp-utility-art')||'<span class="tp-utility-art '+extra+'" style="width:'+size+'px;height:'+size+'px" aria-label="'+esc(item?.name||'Utility item')+'"><i>'+esc(item?.icon||'⚡')+'</i></span>'}
 function itemArtHTML(item,size=62,extra=''){return isUtilityItem(item)?utilityArtHTML(item,size,extra):(G?.artHTML?.(item,size,extra)||'◇')}
 function gearArt(l,size){const item=gearFor(l);return itemArtHTML(item,size||62,'tp-gear-art')}
 function currentGold(){return Number(state().gold)||0}
