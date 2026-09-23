@@ -271,7 +271,7 @@ function ccRenderRebornEvent(e){
    break;
   case'DAMAGE_DEALT':
    if(target){
-     const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));ccBar(target,pct);ccFloat(target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');
+     const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));ccBar(target,pct);ccFloat(target,'-'+Math.round(Number(e.amount)||0),targetChar?'incoming':'damage');window.CellboundCombatFX?.impact?.($('[data-cc="'+target+'"]'),{critical:e.result==='critical'});
      if(targetChar)run.hp[targetChar.id]=pct;
    }
    if(srcChar){run.damageDone[srcChar.id]=(Number(run.damageDone?.[srcChar.id])||0)+(Number(e.amount)||0);ccRenderMeters()}
@@ -280,10 +280,10 @@ function ccRenderRebornEvent(e){
    break;
   case'HEAL_RECEIVED':
    if(target&&!targetChar&&e.payload?.enemyHeal){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));ccBar(target,pct);ccFloat(target,'+'+Math.round(Number(e.amount)||0),'heal');feed((e.ability||'The enemy')+' restores health.');}
-   if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));run.hp[targetChar.id]=pct;ccBar(target,pct);ccFloat(target,'+'+Math.round(Number(e.amount)||0),'heal');ccUpdateSidebar()}
+   if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));run.hp[targetChar.id]=pct;ccBar(target,pct);ccFloat(target,'+'+Math.round(Number(e.amount)||0),'heal');window.CellboundCombatFX?.heal?.($('[data-cc="'+target+'"]'));ccUpdateSidebar()}
    if(srcChar){run.healingDone[srcChar.id]=(Number(run.healingDone?.[srcChar.id])||0)+(Number(e.amount)||0);run.overhealing[srcChar.id]=(Number(run.overhealing?.[srcChar.id])||0)+(Number(e.payload?.overhealing)||0);ccRenderMeters()}
    break;
-  case'PHASE_CHANGE':{window.CellboundFX?.phase?.(e.ability||'Boss phase',e.payload?.healthPct);feed((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');setStatus(e.ability||'Phase change');if(STAGES[run.stage]?.id==='vorran'){run.vorranShrink=Math.min(3,(Number(run.vorranShrink)||0)+1);const arena=$('#cc2dArena');if(arena)arena.classList.add('vorran-shrink-'+run.vorranShrink);ccReflowArena();feed(run.vorranShrink>=3?'There is nowhere left to run. Vorran forces the entire party into the centre.':'The canyon closes further around the party.');}break;}
+  case'PHASE_CHANGE':{window.CellboundCombatFX?.phase?.($('#cc2dArena'));window.CellboundFX?.phase?.(e.ability||'Boss phase',e.payload?.healthPct);feed((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');setStatus(e.ability||'Phase change');if(STAGES[run.stage]?.id==='vorran'){run.vorranShrink=Math.min(3,(Number(run.vorranShrink)||0)+1);const arena=$('#cc2dArena');if(arena)arena.classList.add('vorran-shrink-'+run.vorranShrink);ccReflowArena();feed(run.vorranShrink>=3?'There is nowhere left to run. Vorran forces the entire party into the centre.':'The canyon closes further around the party.');}break;}
   case'ENRAGE':feed((e.ability||'The boss enrages')+'.');setStatus(e.result==='hard'?'HARD ENRAGE — finish now':(e.ability||'Enrage'));break;
   case'UNIQUE_EFFECT_TRIGGER':if(srcChar){feed(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');ccFloat(src,e.ability||'UNIQUE','heal');setStatus((e.ability||'Unique effect')+' activated.')}break;
   case'CROWD_CONTROL':if(srcChar){feed(srcChar.name+' controls a priority enemy.');if(target)ccFloat(target,'CONTROLLED','heal')}break;
@@ -307,11 +307,11 @@ function ccRenderRebornEvent(e){
   case'CAST_START':if(String(e.result||'')==='enemy'){ccCastStart(e.ability||'Enemy Cast',e.payload?.duration)}if(e.payload?.interruptible)feed((e.ability||'Cast')+' can be interrupted.');break;
   case'CAST_FINISH':ccCastClear();break;
   case'INTERRUPT':
-   if(e.result==='success'){feed((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');setStatus('Interrupt successful.');ccCastClear();ccClearMechanic(e.payload?.token,false)}
+   if(e.result==='success'){window.CellboundCombatFX?.interrupt?.($('[data-cc="'+target+'"]')||$('#cc2dArena'));feed((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');setStatus('Interrupt successful.');ccCastClear();ccClearMechanic(e.payload?.token,false)}
    break;
-  case'ADD_SPAWNED':ccAddSpawn(e);feed((e.payload?.name||'An add')+' enters the encounter.');break;
+  case'ADD_SPAWNED':ccAddSpawn(e);window.CellboundCombatFX?.spawn?.($('[data-cc="'+target+'"]')||$('#cc2dArena'));feed((e.payload?.name||'An add')+' enters the encounter.');break;
   case'ADD_DEFEATED':case'ENEMY_DEFEATED':
-   if(target){const el=$('[data-cc="'+target+'"]');if(el){el.classList.add('dead');ccBar(target,0)}}break;
+   if(target){const el=$('[data-cc="'+target+'"]');if(el){el.classList.add('dead');window.CellboundCombatFX?.death?.(el);ccBar(target,0)}}break;
   case'PLAYER_DEFEATED':
    if(target){const el=$('[data-cc="'+target+'"]');if(el)el.classList.add('dead');ccBar(target,0);if(targetChar){run.hp[targetChar.id]=0;feed(targetChar.name+' is defeated.');ccUpdateSidebar()}}
    break;
