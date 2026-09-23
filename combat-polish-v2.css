@@ -28,7 +28,7 @@
 [data-cbvfx-theme="pvp"]{--cbvfx-a:rgba(69,169,163,.25);--cbvfx-b:rgba(99,124,154,.17)}
 
 /* Keep gameplay and units above ambience. */
-:where(.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena)>:not(.cbvfx-layer){position:relative;z-index:2}
+:where(.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena)>:not(.cbvfx-layer){z-index:2}
 
 /* Local impact effects. */
 .cbvfx-burst{--cbvfx-scale:1;position:absolute;z-index:30;width:18px;height:18px;transform:translate(-50%,-50%) scale(var(--cbvfx-scale));border-radius:50%;pointer-events:none}
