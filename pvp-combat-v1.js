@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.0.0';
+const VERSION='1.1.0';
 const TICK=250;
 const MAX_ARENA_MS=90000;
 const MAX_BG_MS=120000;
@@ -64,7 +64,7 @@ function normalize(raw,team,index,count,opts){
     id:unitId(team,raw,index),characterId:raw?.id||raw?.characterId||null,name:raw?.name||('Combatant '+(index+1)),portrait:raw?.portrait||'◆',class:raw?.class||'Warrior',spec:raw?.spec||'',role,team,
     level,pvpPower,pvpDefence,controlResistance:control,maxHealth,health:maxHealth,alive:true,position,resource:{name:r.name,max:r.max,value:r.start,regen:r.regen},
     nextAction:500+index*85,nextControl:5000+index*300,nextDefensive:9000+index*500,disabledUntil:0,guardedUntil:0,guardSource:null,defensiveUntil:0,
-    respawnAt:0,kills:0,deaths:0,damage:0,healing:0,interrupts:0,cc:0,objectives:0,carryingFlag:false
+    respawnAt:0,kills:0,deaths:0,damage:0,healing:0,interrupts:0,cc:0,objectives:0,carryingFlag:null,flagIntent:null
   }
 }
 function emit(ctx,type,data={}){ctx.events.push({timestamp:Math.max(0,Math.round(ctx.time)),type,...data})}
@@ -131,7 +131,15 @@ function applyHeal(ctx,source,target,raw,ability){
 function defeat(ctx,killer,target){
   if(!target.alive)return;
   target.alive=false;target.health=0;target.deaths++;ctx.stats[target.team].deaths++;if(killer){killer.kills++;ctx.stats[killer.team].kills++}
-  if(target.carryingFlag){target.carryingFlag=false;ctx.flag[target.team==='blue'?'red':'blue'].carrier=null;emit(ctx,'FLAG_STATE',{source:target.id,result:'dropped',payload:{team:target.team==='blue'?'red':'blue',x:target.position.x,y:target.position.y}})}
+  if(target.carryingFlag){
+    const owner=target.carryingFlag,flag=ctx.flag?.[owner];
+    if(flag){
+      flag.carrier=null;flag.state='dropped';flag.position=copy(target.position);flag.droppedAt=ctx.time;flag.lastActionAt=ctx.time;
+      emit(ctx,'FLAG_STATE',{source:target.id,result:'dropped',payload:{team:owner,owner,x:flag.position.x,y:flag.position.y}})
+    }
+    target.carryingFlag=null
+  }
+  target.flagIntent=null;
   emit(ctx,'PLAYER_DEFEATED',{source:killer?.id||null,target:target.id,ability:'PvP defeat',result:'defeated',payload:{team:target.team,killer:killer?.id||null}});
   if(ctx.kind==='battleground')target.respawnAt=ctx.time+7000+Math.round(ctx.rng()*2500)
 }
@@ -199,8 +207,14 @@ function setupObjective(ctx){
     ctx.objective={type:'king-of-the-hill',blue:0,red:0,owner:null};
     ctx.units.forEach((u,i)=>move(ctx,u,{x:50+(u.team==='blue'?-5:5),y:26+(i%(Math.max(1,ctx.size/2)))*Math.min(9,48/Math.max(1,ctx.size/2))},700,'contest hill'))
   }else{
-    ctx.objective={type:'capture-the-flag',blue:0,red:0};ctx.flag={blue:{carrier:null},red:{carrier:null}};
-    ctx.units.forEach((u,i)=>move(ctx,u,{x:u.team==='blue'?32:68,y:20+(i%10)*6.5},700,'advance'))
+    ctx.objective={type:'capture-the-flag',blue:0,red:0};
+    ctx.flag={
+      blue:{owner:'blue',carrier:null,state:'base',position:{x:12,y:50},droppedAt:0,lastActionAt:0},
+      red:{owner:'red',carrier:null,state:'base',position:{x:88,y:50},droppedAt:0,lastActionAt:0}
+    };
+    emit(ctx,'FLAG_STATE',{result:'reset',payload:{team:'blue',owner:'blue',x:12,y:50}});
+    emit(ctx,'FLAG_STATE',{result:'reset',payload:{team:'red',owner:'red',x:88,y:50}});
+    ctx.units.forEach((u,i)=>move(ctx,u,{x:u.team==='blue'?30:70,y:20+(i%10)*6.5},700,'advance'))
   }
 }
 function hillTick(ctx){
@@ -211,19 +225,85 @@ function hillTick(ctx){
   if(ctx.time%5000===0)emit(ctx,'OBJECTIVE_UPDATE',{result:'hill-score',payload:{mode:ctx.mode,owner:ctx.objective.owner,blue:ctx.objective.blue,red:ctx.objective.red}})
 }
 function chooseCarrier(ctx,team){
-  return living(ctx,team).filter(u=>u.role!=='healer').sort((a,b)=>(b.role==='tank'?1:0)-(a.role==='tank'?1:0)||healthRatio(b)-healthRatio(a))[0]||living(ctx,team)[0]
+  return living(ctx,team).filter(u=>!u.carryingFlag&&u.role!=='healer').sort((a,b)=>(b.role==='tank'?1:0)-(a.role==='tank'?1:0)||healthRatio(b)-healthRatio(a))[0]||living(ctx,team).find(u=>!u.carryingFlag)||null
+}
+function flagBase(team){return team==='blue'?{x:12,y:50}:{x:88,y:50}}
+function flagEnemy(team){return team==='blue'?'red':'blue'}
+function pvpDistanceToPoint(u,p){return Math.hypot((u.position.x-p.x),(u.position.y-p.y))}
+function travelFlagRunner(ctx,u,to,duration,reason,onArrive){
+  if(!u?.alive)return false;
+  const end={x:clamp(Number(to.x)||50,5,95),y:clamp(Number(to.y)||50,8,92)};
+  u.flagIntent=reason;u.nextAction=Math.max(u.nextAction,ctx.time+duration);
+  emit(ctx,'MOVEMENT_START',{source:u.id,result:reason,payload:{to:copy(end),duration,pvpFlag:true}});
+  ctx.scheduled.push({at:ctx.time+duration,fn:()=>{
+    if(!u.alive)return;u.position=end;u.flagIntent=null;onArrive?.()
+  }});
+  return true
+}
+function resetFlag(ctx,flag,reason='returned',source=null){
+  if(!flag)return;
+  if(flag.carrier&&ctx.byId[flag.carrier])ctx.byId[flag.carrier].carryingFlag=null;
+  flag.carrier=null;flag.state='base';flag.position=flagBase(flag.owner);flag.droppedAt=0;flag.lastActionAt=ctx.time;
+  emit(ctx,'FLAG_STATE',{source:source?.id||null,result:reason,payload:{team:flag.owner,owner:flag.owner,x:flag.position.x,y:flag.position.y}})
+}
+function carryFlagHome(ctx,u,flag,from='base'){
+  if(!u?.alive||!flag||u.team===flag.owner||u.carryingFlag)return false;
+  flag.carrier=u.id;flag.state='carried';flag.position=copy(u.position);flag.lastActionAt=ctx.time;u.carryingFlag=flag.owner;u.objectives++;
+  emit(ctx,'FLAG_STATE',{source:u.id,result:'picked-up',payload:{team:flag.owner,owner:flag.owner,carrier:u.id,from,x:u.position.x,y:u.position.y}});
+  const home=flagBase(u.team);
+  travelFlagRunner(ctx,u,home,2800,'carry flag home',()=>{flag.position=copy(u.position)});
+  return true
+}
+function captureFlag(ctx,u,flag){
+  if(!u?.alive||!flag||flag.carrier!==u.id||u.carryingFlag!==flag.owner)return false;
+  const own=ctx.flag[u.team];if(!own||own.state!=='base')return false;
+  u.carryingFlag=null;flag.carrier=null;flag.state='base';flag.position=flagBase(flag.owner);flag.lastActionAt=ctx.time;
+  ctx.objective[u.team]++;ctx.stats[u.team].objectives++;
+  emit(ctx,'FLAG_STATE',{source:u.id,result:'captured',payload:{team:flag.owner,owner:flag.owner,scoringTeam:u.team,blue:ctx.objective.blue,red:ctx.objective.red,x:flag.position.x,y:flag.position.y}});
+  return true
+}
+function resolveDroppedFlag(ctx,flag){
+  if(!flag||flag.state!=='dropped')return;
+  const p=flag.position,defender=living(ctx,flag.owner).sort((a,b)=>pvpDistanceToPoint(a,p)-pvpDistanceToPoint(b,p))[0],attackingTeam=flagEnemy(flag.owner),attacker=living(ctx,attackingTeam).filter(u=>!u.carryingFlag).sort((a,b)=>pvpDistanceToPoint(a,p)-pvpDistanceToPoint(b,p))[0];
+  if(!defender&&!attacker){flag.lastActionAt=ctx.time;return}
+  const defenderDist=defender?pvpDistanceToPoint(defender,p):999,attackerDist=attacker?pvpDistanceToPoint(attacker,p):999;
+  const returnWins=defender&&(!attacker||defenderDist<=attackerDist+4);
+  const actor=returnWins?defender:attacker;if(!actor)return;
+  flag.state='contested';flag.lastActionAt=ctx.time;
+  travelFlagRunner(ctx,actor,p,700,returnWins?'return dropped flag':'recover dropped flag',()=>{
+    if(flag.state!=='contested'||!actor.alive)return;
+    if(returnWins)resetFlag(ctx,flag,'returned',actor);
+    else{flag.state='dropped';carryFlagHome(ctx,actor,flag,'ground')}
+  })
 }
 function flagTick(ctx){
-  if(ctx.time<4000||ctx.time%5000!==0)return;
-  for(const team of ['blue','red']){
-    const other=team==='blue'?'red':'blue',flag=ctx.flag[other];if(flag.carrier)continue;
-    const alive=living(ctx,team),opp=living(ctx,other);if(!alive.length)continue;
-    const pressure=(alive.length-opp.length)*.055+alive.filter(x=>x.role==='tank').length*.025+alive.filter(x=>x.role==='healer').length*.012;
-    if(ctx.rng()<clamp(.15+pressure,.07,.42)){
-      const carrier=chooseCarrier(ctx,team);if(!carrier)continue;flag.carrier=carrier.id;carrier.carryingFlag=true;carrier.objectives++;
-      emit(ctx,'FLAG_STATE',{source:carrier.id,result:'picked-up',payload:{team:other,carrier:carrier.id}});move(ctx,carrier,{x:team==='blue'?88:12,y:50},700,'steal flag');
-      const captureAt=ctx.time+3500;ctx.scheduled.push({at:captureAt,fn:()=>{if(!carrier.alive||!carrier.carryingFlag||flag.carrier!==carrier.id)return;carrier.carryingFlag=false;flag.carrier=null;ctx.objective[team]++;ctx.stats[team].objectives++;emit(ctx,'FLAG_STATE',{source:carrier.id,result:'captured',payload:{team:other,scoringTeam:team,blue:ctx.objective.blue,red:ctx.objective.red}});move(ctx,carrier,{x:team==='blue'?22:78,y:50},600,'flag return')}})
+  if(ctx.time<2500||ctx.time%500!==0)return;
+  for(const owner of ['blue','red']){
+    const flag=ctx.flag[owner];if(!flag)continue;
+    if(flag.state==='carried'){
+      const carrier=ctx.byId[flag.carrier];
+      if(!carrier?.alive)continue;
+      flag.position=copy(carrier.position);
+      const home=flagBase(carrier.team);
+      if(pvpDistanceToPoint(carrier,home)<=4)captureFlag(ctx,carrier,flag);
+      continue
     }
+    if(flag.state==='dropped'){
+      if(ctx.time-flag.lastActionAt>=850)resolveDroppedFlag(ctx,flag);
+      continue
+    }
+    if(flag.state==='contested')continue;
+    if(flag.state!=='base'||ctx.time-flag.lastActionAt<3200)continue;
+    const attackingTeam=flagEnemy(owner),alive=living(ctx,attackingTeam),defenders=living(ctx,owner);if(!alive.length)continue;
+    const pressure=(alive.length-defenders.length)*.045+alive.filter(x=>x.role==='tank').length*.02;
+    if(ctx.rng()>clamp(.22+pressure,.12,.48))continue;
+    const runner=chooseCarrier(ctx,attackingTeam);if(!runner)continue;
+    flag.lastActionAt=ctx.time;
+    const base=flagBase(owner);
+    travelFlagRunner(ctx,runner,base,1900,'attack enemy flag',()=>{
+      if(!runner.alive||flag.state!=='base')return;
+      runner.position=copy(base);carryFlagHome(ctx,runner,flag,'base')
+    })
   }
 }
 function objectiveTick(ctx){if(ctx.mode==='king-of-the-hill')hillTick(ctx);else if(ctx.mode==='capture-the-flag')flagTick(ctx)}
