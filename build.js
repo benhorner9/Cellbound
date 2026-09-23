@@ -126,6 +126,10 @@ for(const file of files){
     if((contents.match(/itemLevel:42,power:10,statBudgetMultiplier:1/g)||[]).length!==6)throw new Error('Twelve Below relics must remain six iLvl 42 endgame chase pieces');
     if(contents.includes("toISOString().slice(0,10)"))throw new Error('Twelve Below daily reset must use local calendar time');
     if(!contents.includes('requestAnimationFrame(frame)'))throw new Error('Twelve Below playback must use the continuous frame clock');
+    for(const hook of ['function burialCryptMarkup','function tbAtmosphere','function tbArenaBurst','tb-depth-backdrop','tb-crypt-ring','tb-soul-braziers','tb-grave-fog','TB_VICE_COLORS'])if(!contents.includes(hook))throw new Error('Twelve Below visual-reborn runtime is missing '+hook);
+  }
+  if(file==='twelve-below-v1.css'){
+    for(const hook of ['TWELVE BELOW — SEPULCHRE VISUAL REBORN','.tb-depth-backdrop','.tb-floor-seal','.tb-crypt-marker','.tb-soul-braziers','.tb-grave-fog','.tb-spectral-pass','.tb-soul-burst','tbCryptWake','tbSoulFlame'])if(!contents.includes(hook))throw new Error('Twelve Below sepulchre visual layer is missing '+hook);
   }
   if(file==='social-v3.js'){
     for(const id of ['hollow-sanctum','chaos-canyon','blackout-station','fractured-ages'])if(!contents.includes("id:'"+id+"'"))throw new Error('Party Finder is missing dungeon target '+id);
@@ -198,7 +202,7 @@ for(const file of files){
   fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,contents)
 }
 for(const file of assets){const src=path.join(__dirname,file),dest=path.join(out,file);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest)}
-for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readability-v1.css','ui-readability-v2.css','blackout-station-v1.css','blackout-station-v1.js','trading-post-v3.css','trading-post-v3.js','combat-status-ui-v1.css','combat-status-ui-v1.js','pvp-v1.css','pvp-viewer-v1.css','pvp-match-v1.css','pvp-combat-v1.js','pvp-viewer-v1.js','pvp-match-v1.js','pvp-v1.js','expedition-presentation-v1.css','expedition-presentation-v1.js','dungeon-theme-v1.css']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing required production asset: ${file}`)}
+for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readability-v1.css','ui-readability-v2.css','blackout-station-v1.css','blackout-station-v1.js','trading-post-v3.css','trading-post-v3.js','combat-status-ui-v1.css','combat-status-ui-v1.js','pvp-v1.css','pvp-viewer-v1.css','pvp-match-v1.css','pvp-combat-v1.js','pvp-viewer-v1.js','pvp-match-v1.js','pvp-v1.js','expedition-presentation-v1.css','expedition-presentation-v1.js','dungeon-theme-v1.css','twelve-below-v1.css','twelve-below-v1.js']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing required production asset: ${file}`)}
 {
   const blackoutCss=fs.readFileSync(path.join(out,'blackout-station-v1.css'),'utf8');
   if(!blackoutCss.includes('.bs-role-zones.resolving .bs-role-zone'))throw new Error('Resolved Blackout role-circle fade is missing');
