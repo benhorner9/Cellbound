@@ -276,6 +276,23 @@ function startRun(){
 function tombMarkup(){
  return BOSSES.map((b,i)=>'<div class="tb-tomb" data-tb-tomb="'+b.id+'" style="--i:'+i+'"><i>'+esc(b.rune)+'</i><span>'+esc(b.vice)+'</span></div>').join('')
 }
+const TB_VICE_COLORS=['#72c8ef','#8d87df','#c07ac9','#e0876d','#74bca9','#b9a86a','#6ea0d5','#8cc978','#d47283','#7ab3c9','#a18bd2','#e1bf73'];
+function burialCryptMarkup(){
+ return BOSSES.map((b,i)=>'<i class="tb-crypt-marker" data-tb-crypt="'+esc(b.id)+'" style="--i:'+i+';--tb-vice:'+TB_VICE_COLORS[i%TB_VICE_COLORS.length]+'"><span>'+esc(b.rune)+'</span><small>'+String(i+1).padStart(2,'0')+'</small></i>').join('')
+}
+function tbAtmosphere(){
+ const arena=$('#tbArena');if(!arena||!run)return;
+ const active=run.activeBosses.size,kills=run.defeated.size,pressure=clamp(active/5,0,1);
+ arena.style.setProperty('--tb-active',String(active));
+ arena.style.setProperty('--tb-pressure',pressure.toFixed(2));
+ arena.classList.toggle('tb-high-pressure',active>=4);
+ arena.classList.toggle('tb-final-phase',kills>=9)
+}
+function tbArenaBurst(id,kind='open'){
+ const arena=$('#tbArena'),crypt=$('[data-tb-crypt="'+id+'"]');if(!arena||!crypt)return;
+ const r=crypt.getBoundingClientRect(),a=arena.getBoundingClientRect(),x=(r.left+r.width/2-a.left)/Math.max(1,a.width)*100,y=(r.top+r.height/2-a.top)/Math.max(1,a.height)*100;
+ const burst=document.createElement('i');burst.className='tb-soul-burst '+kind;burst.style.left=x+'%';burst.style.top=y+'%';arena.appendChild(burst);setTimeout(()=>burst.remove(),1200/playSpeed)
+}
 function tbPartyFormation(c,i){
  const r=roleOf(c);
  if(r==='tank')return{x:39,y:50};
@@ -326,7 +343,7 @@ function renderLive(){
  root.innerHTML='<section class="cb2d-shell tb-shell"><header class="cb2d-head"><div><small>THE SEPULCHRE OF TWELVE · PRIVATE WORLD EVENT</small><h2>The Twelve Below</h2></div><div class="cb2d-live"><i></i>LIVE <button data-tb-speed>1×</button></div></header>'+
  '<div class="tb-scorebar"><span><small>DEFEATED</small><b id="tbKilled">0 / 12</b></span><span><small>NEXT TOMB</small><b id="tbCountdown">00:20</b></span><span><small>ATTEMPTS LEFT</small><b>'+attemptsLeft()+' / '+DAILY_ATTEMPTS+'</b></span><span><small>PERSONAL BEST</small><b>'+eventState().bestKills+' / 12</b></span></div>'+
  '<div class="tb-tomb-track">'+tombMarkup()+'</div>'+
- '<div class="cb2d-layout tb-layout"><main><div class="cb2d-arena tb-arena" id="tbArena"><div class="cb2d-floor tb-ground"></div><div class="tb-burial-architecture"><i></i><i></i><i></i><i></i></div><div id="tbTelegraphs"></div><div id="tbBossUnits"></div><div id="tbPartyUnits">'+partyUnitMarkup()+'</div><div id="tbFx"></div><div class="cb2d-room-tag tb-room-tag"><b>Sepulchre Courtyard</b><small>Twelve sealed tombs surround the ancient fighting ground.</small></div><div class="cb2d-caption"><span>PRIVATE SURVIVAL EVENT</span><b id="tbStatus">The first seal breaks…</b></div></div>'+
+ '<div class="cb2d-layout tb-layout"><main><div class="cb2d-arena tb-arena" id="tbArena"><div class="tb-depth-backdrop"><i></i><i></i><i></i></div><div class="cb2d-floor tb-ground"></div><div class="tb-floor-seal"><i></i><b>十二</b></div><div class="tb-crypt-ring">'+burialCryptMarkup()+'</div><div class="tb-burial-architecture"><i></i><i></i><i></i><i></i></div><div class="tb-soul-braziers"><i></i><i></i><i></i><i></i></div><div class="tb-grave-fog fog-a"></div><div class="tb-grave-fog fog-b"></div><div class="tb-spectral-pass"><i></i><i></i><i></i></div><div id="tbTelegraphs"></div><div id="tbBossUnits"></div><div id="tbPartyUnits">'+partyUnitMarkup()+'</div><div id="tbFx"></div><div class="cb2d-room-tag tb-room-tag"><b>Sepulchre Courtyard</b><small>Twelve sealed crypts encircle the frozen burial ground.</small></div><div class="cb2d-caption"><span>PRIVATE SURVIVAL EVENT</span><b id="tbStatus">The first seal breaks…</b></div></div>'+
  '<div class="cb2d-controls tb-controls"><button><b>FOCUS TARGET</b><small>Party burns the active priority.</small></button><button><b>INTERRUPTS</b><small>Critical casts are covered.</small></button><button><b>DEFENSIVES</b><small>Tank stabilises incoming pressure.</small></button><button><b>BOSS CONTROL</b><small>Tank holds active vices together.</small></button><button><b>SURVIVE</b><small>Keep the five alive until the next tomb.</small></button></div>'+
  '<div class="cb2d-feed"><small>COMBAT FEED</small><div id="tbFeed"></div></div></main><aside>'+
  '<div class="cb2d-cast" id="tbCast"><small>ENEMY CAST</small><div><b id="tbCastName">—</b><strong id="tbCastTime">—</strong></div><div class="cb2d-castbar"><i id="tbCastFill"></i></div></div>'+
@@ -335,7 +352,7 @@ function renderLive(){
  '<div class="cb2d-party"><small>ACTIVE FIVE · PRIVATE INSTANCE</small><div id="tbPartyRows">'+party().map(c=>{const res=tbInitialResource(c),rk=tbResourceClass(res.name),rpct=clamp(res.value/res.max*100,0,100);return'<div class="cb2d-party-row"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+String(roleOf(c)).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-tb-side-hp="p-'+esc(c.id)+'" style="width:100%"></i></em><em class="tb-side-resource '+rk+'" data-tb-side-resource="p-'+esc(c.id)+'" title="'+esc(res.name)+' '+Math.round(res.value)+' / '+Math.round(res.max)+'"><i style="width:'+rpct+'%"></i></em></span><strong><span data-tb-side-text="p-'+esc(c.id)+'">100 HP</span><small data-tb-side-resource-label="p-'+esc(c.id)+'">'+esc(res.name)+' '+Math.round(res.value)+'</small></strong></div>'}).join('')+'</div></div>'+
  '<div class="tb-live-rule"><small>ESCALATION RULE</small><b>Another tomb opens every 20 seconds.</b><span>Surviving bosses remain active.</span></div></aside></div></section>';
  root.querySelector('[data-tb-speed]').onclick=e=>{playSpeed=playSpeed===1?2:playSpeed===2?4:1;e.currentTarget.textContent=playSpeed+'×';resetClockAnchor()}
- requestAnimationFrame(()=>{party().forEach((ch,i)=>{const p=tbPartyFormation(ch,i),el=$('[data-tb-unit="p-'+ch.id+'"]');tbSetPos(el,p.x,p.y,0);const res=run.resources['p-'+ch.id]||tbInitialResource(ch);tbSetResource('p-'+ch.id,res.name,res.value,res.max)});renderMeters()})
+ requestAnimationFrame(()=>{party().forEach((ch,i)=>{const p=tbPartyFormation(ch,i),el=$('[data-tb-unit="p-'+ch.id+'"]');tbSetPos(el,p.x,p.y,0);const res=run.resources['p-'+ch.id]||tbInitialResource(ch);tbSetResource('p-'+ch.id,res.name,res.value,res.max)});renderMeters();tbAtmosphere()})
 }
 function feed(text,kind=''){
  const root=$('#tbFeed');if(!root)return;const p=document.createElement('p');p.className=kind;p.textContent=text;root.prepend(p);while(root.children.length>14)root.lastElementChild.remove()
@@ -344,12 +361,13 @@ function bossDef(id){return BOSSES.find(b=>b.id===id)}
 function spawnBoss(id){
  const b=bossDef(id),root=$('#tbBossUnits');if(!b||!root||root.querySelector('[data-tb-boss="'+id+'"]'))return;
  const idx=BOSSES.findIndex(x=>x.id===id),entryY=24+(idx%5)*13;
- root.insertAdjacentHTML('beforeend','<div class="cb2d-unit tb-unit enemy boss" data-tb-boss="'+id+'" data-x="96" data-y="'+entryY+'" style="left:96%;top:'+entryY+'%"><i></i><span>'+esc(b.vice)+'<small class="cb2d-unit-meta">'+esc(b.name)+'</small></span><em class="cb2d-unit-hp"><i style="width:100%"></i></em></div>');
+ const accent=TB_VICE_COLORS[idx%TB_VICE_COLORS.length];
+ root.insertAdjacentHTML('beforeend','<div class="cb2d-unit tb-unit enemy boss" data-tb-boss="'+id+'" data-x="96" data-y="'+entryY+'" style="left:96%;top:'+entryY+'%;--tb-boss-accent:'+accent+'"><i></i><span>'+esc(b.vice)+'<small class="cb2d-unit-meta">'+esc(b.name)+'</small></span><em class="cb2d-unit-hp"><i style="width:100%"></i></em></div>');
  run.activeBosses.add(id);layoutBosses(760);
- const tomb=$('[data-tb-tomb="'+id+'"]');tomb?.classList.add('open');window.CellboundFX?.callout?.({eyebrow:'TOMB OPENED · '+b.vice,title:b.name,tone:'danger',duration:1200});feed(b.name+' rises from the tomb.','spawn');$('#tbStatus').textContent=b.name+' has entered the burial ground.'
+ const tomb=$('[data-tb-tomb="'+id+'"]'),crypt=$('[data-tb-crypt="'+id+'"]');tomb?.classList.add('open');crypt?.classList.add('opening');setTimeout(()=>{crypt?.classList.remove('opening');crypt?.classList.add('open')},650/playSpeed);tbArenaBurst(id,'open');tbAtmosphere();window.CellboundFX?.callout?.({eyebrow:'TOMB OPENED · '+b.vice,title:b.name,tone:'danger',duration:1200});feed(b.name+' rises from the tomb.','spawn');$('#tbStatus').textContent=b.name+' has entered the burial ground.'
 }
 function defeatBoss(id){
- run.activeBosses.delete(id);run.defeated.add(id);const dead=$('[data-tb-boss="'+id+'"]');if(dead){dead.classList.add('dead');setTimeout(()=>{dead.remove();layoutBosses(420)},420/playSpeed)}const tomb=$('[data-tb-tomb="'+id+'"]');tomb?.classList.remove('open');tomb?.classList.add('defeated');$('#tbKilled').textContent=run.defeated.size+' / 12';feed((bossDef(id)?.name||id)+' has fallen.','kill')
+ run.activeBosses.delete(id);run.defeated.add(id);const dead=$('[data-tb-boss="'+id+'"]');if(dead){dead.classList.add('dead');setTimeout(()=>{dead.remove();layoutBosses(420)},420/playSpeed)}const tomb=$('[data-tb-tomb="'+id+'"]'),crypt=$('[data-tb-crypt="'+id+'"]');tomb?.classList.remove('open');tomb?.classList.add('defeated');crypt?.classList.remove('open','opening');crypt?.classList.add('defeated');tbArenaBurst(id,'death');tbAtmosphere();$('#tbKilled').textContent=run.defeated.size+' / 12';feed((bossDef(id)?.name||id)+' has fallen.','kill')
 }
 function setPartyHp(id,pct){
  const value=clamp(Number(pct)||0,0,100),u=$('[data-tb-unit="'+id+'"]');if(u){u.querySelector('em i').style.width=value+'%';u.classList.toggle('dead',value<=0)}const bar=$('[data-tb-side-hp="'+id+'"]'),txt=$('[data-tb-side-text="'+id+'"]');if(bar)bar.style.width=value+'%';if(txt)txt.textContent=Math.round(value)+' HP'
