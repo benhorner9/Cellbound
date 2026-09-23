@@ -324,7 +324,7 @@ function handleEvent(pb,e){
     case'CAST_START':if(src)setStatus(pb,src.name+' · '+(e.ability||'Casting'));break;
     case'CAST_CANCELLED':if(src)feed(pb,src.name+'\'s '+(e.ability||'cast')+' is stopped.');break;
     case'COMBAT_END':
-      updateScore(pb,e.payload?.score?.blue,e.payload?.score?.red);setStatus(pb,e.result==='victory'?'Victory':'Defeat');banner(pb,e.result==='victory'?'VICTORY':'DEFEAT',e.result==='victory'?'blue':'red');break;
+      updateScore(pb,e.payload?.score?.blue,e.payload?.score?.red);setStatus(pb,e.result==='victory'?'Victory':'Defeat');if(e.result==='victory')window.CellboundCombatFX?.victory?.(root.querySelector('.pvp2d-arena'));banner(pb,e.result==='victory'?'VICTORY':'DEFEAT',e.result==='victory'?'blue':'red');break;
   }
 }
 function buildUnits(match){
