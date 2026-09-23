@@ -289,7 +289,7 @@ function wbRenderServerEvent(e){
   if(window.CellboundCombatStatuses?.handle(e,{resolve:wbStatusTargets,speed:1}))return;
   const source=wbEventUnit(e.source),target=wbEventUnit(e.target),sourceChar=String(e.source||'').startsWith('p-'),targetChar=String(e.target||'').startsWith('p-');
   switch(e.type){
-    case'COMBAT_START':break;
+    case'COMBAT_START':window.CellboundCombatFX?.boss?.(document.querySelector('.wb2d-arena'),active?.boss?.name||'World Boss');break;
     case'ABILITY_START':
       if(sourceChar&&source){
         if(e.target==='boss')projectileBetween(source,document.getElementById('wb2dBoss'),source.classList.contains('ranged')?'ranged':'melee');
@@ -297,12 +297,12 @@ function wbRenderServerEvent(e){
       }
       break;
     case'DAMAGE_DEALT':
-      if(e.target==='boss'){if(active?.boss&&e.payload?.targetHp!=null){active.boss.currentHp=Number(e.payload.targetHp);active.boss.maxHp=Number(e.payload.targetMax)||active.boss.maxHp;bossHealth(active.boss)}floatDamage(Number(e.amount)||0,true)}
-      else if(targetChar){setOwnHp(e.target,Number(e.payload?.targetHpPct)||0);if(source)projectileBetween(source,target,'enemy');message((e.ability||'Boss attack')+' hits','danger')}
+      if(e.target==='boss'){if(active?.boss&&e.payload?.targetHp!=null){active.boss.currentHp=Number(e.payload.targetHp);active.boss.maxHp=Number(e.payload.targetMax)||active.boss.maxHp;bossHealth(active.boss)}floatDamage(Number(e.amount)||0,true);window.CellboundCombatFX?.impact?.(document.getElementById('wb2dBoss'),{critical:e.result==='critical',scale:1.25})}
+      else if(targetChar){setOwnHp(e.target,Number(e.payload?.targetHpPct)||0);if(source)projectileBetween(source,target,'enemy');window.CellboundCombatFX?.impact?.(target,{critical:e.result==='critical'});message((e.ability||'Boss attack')+' hits','danger')}
       else if(String(e.target||'').startsWith('add-')){wbSetAddHp(e.target,Number(e.payload?.targetHpPct)||0);if(sourceChar&&source&&target)projectileBetween(source,target,'melee')}
       break;
     case'HEAL_RECEIVED':
-      if(targetChar){setOwnHp(e.target,Number(e.payload?.targetHpPct)||0);if(source&&target)projectileBetween(source,target,'heal');feed((e.ability||'Heal')+' restores '+Math.round(Number(e.amount)||0)+' health.','heal')}
+      if(targetChar){setOwnHp(e.target,Number(e.payload?.targetHpPct)||0);if(source&&target)projectileBetween(source,target,'heal');window.CellboundCombatFX?.heal?.(target);feed((e.ability||'Heal')+' restores '+Math.round(Number(e.amount)||0)+' health.','heal')}
       break;
     case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':
       if(sourceChar)wbSetResource(e.source,e.payload?.resource,e.payload?.value,e.payload?.max);
@@ -317,16 +317,16 @@ function wbRenderServerEvent(e){
       if(e.result==='avoided')message((e.ability||'Mechanic')+' avoided','victory');
       break;
     case'INTERRUPT':
-      if(e.result==='success'){if(source)projectileBetween(source,document.getElementById('wb2dBoss'),'ranged');wbCastClear('INTERRUPTED');wbClearServerTelegraph(e.payload?.token,'safe');message('INTERRUPTED','victory');feed((e.payload?.interruptedAbility||'Boss cast')+' was interrupted.','cast')}
+      if(e.result==='success'){if(source)projectileBetween(source,document.getElementById('wb2dBoss'),'ranged');window.CellboundCombatFX?.interrupt?.(document.getElementById('wb2dBoss'));wbCastClear('INTERRUPTED');wbClearServerTelegraph(e.payload?.token,'safe');message('INTERRUPTED','victory');feed((e.payload?.interruptedAbility||'Boss cast')+' was interrupted.','cast')}
       break;
-    case'ADD_SPAWNED':wbSpawnAdd(e);message('ADDS JOIN THE FIGHT','danger');feed((e.payload?.name||'An add')+' joins the encounter.','cast');break;
-    case'ADD_DEFEATED':{const u=wbEventUnit(e.target);if(u){u.classList.add('wiped');setTimeout(()=>u.remove(),500)}break}
+    case'ADD_SPAWNED':wbSpawnAdd(e);window.CellboundCombatFX?.spawn?.(wbEventUnit(e.target)||document.querySelector('.wb2d-arena'));message('ADDS JOIN THE FIGHT','danger');feed((e.payload?.name||'An add')+' joins the encounter.','cast');break;
+    case'ADD_DEFEATED':{const u=wbEventUnit(e.target);if(u){window.CellboundCombatFX?.death?.(u);u.classList.add('wiped');setTimeout(()=>u.remove(),500)}break}
     case'CROWD_CONTROL':if(target){target.classList.add('dodging');setTimeout(()=>target.classList.remove('dodging'),700);feed('Your party controls a dangerous add.','cast')}break;
-    case'PHASE_CHANGE':window.CellboundFX?.phase?.(e.ability||'World boss phase',e.payload?.healthPct);message(String(e.ability||'NEW PHASE').toUpperCase(),'danger');feed((e.ability||'A new boss phase')+' begins.','cast');break;
+    case'PHASE_CHANGE':window.CellboundCombatFX?.phase?.(document.querySelector('.wb2d-arena'));window.CellboundFX?.phase?.(e.ability||'World boss phase',e.payload?.healthPct);message(String(e.ability||'NEW PHASE').toUpperCase(),'danger');feed((e.ability||'A new boss phase')+' begins.','cast');break;
     case'ENRAGE':message(e.result==='hard'?'HARD ENRAGE':'ENRAGE','danger');feed((e.ability||'Enrage')+' activates.','wipe');break;
     case'UNIQUE_EFFECT_TRIGGER':feed((e.ability||'Unique item effect')+' activates.','heal');break;
-    case'PLAYER_DEFEATED':if(targetChar){setOwnHp(e.target,0);feed('One of your adventurers has fallen.','wipe')}break;
-    case'ENEMY_DEFEATED':if(e.target==='boss'){message('WORLD BOSS DEFEATED','victory');window.CellboundFX?.victory?.({eyebrow:'WORLD BOSS DEFEATED',title:active?.boss?.name||'World Boss',copy:'Your party helped bring down a shared world threat.'})}else{const u=wbEventUnit(e.target);if(u)setTimeout(()=>u.remove(),400)}break;
+    case'PLAYER_DEFEATED':if(targetChar){window.CellboundCombatFX?.death?.(target);setOwnHp(e.target,0);feed('One of your adventurers has fallen.','wipe')}break;
+    case'ENEMY_DEFEATED':if(e.target==='boss'){window.CellboundCombatFX?.death?.(document.getElementById('wb2dBoss'),{boss:true});window.CellboundCombatFX?.victory?.(document.querySelector('.wb2d-arena'));message('WORLD BOSS DEFEATED','victory');window.CellboundFX?.victory?.({eyebrow:'WORLD BOSS DEFEATED',title:active?.boss?.name||'World Boss',copy:'Your party helped bring down a shared world threat.'})}else{const u=wbEventUnit(e.target);if(u)setTimeout(()=>u.remove(),400)}break;
     case'COMBAT_END':break;
   }
 }
