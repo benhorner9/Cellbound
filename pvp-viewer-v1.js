@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.6.0';
+const VERSION='1.7.0';
 const $=(root,s)=>root?.querySelector(s);
 const $$=(root,s)=>[...(root?.querySelectorAll(s)||[])];
 const esc=v=>String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[m]));
@@ -45,9 +45,14 @@ function unitMarkup(u){
 function rosterMarkup(list,team){
   return '<div class="pvp2d-roster '+team+'">'+list.map(u=>'<div data-pvp2d-row="'+esc(u.id)+'"><i style="--pvp-class:'+(CLASS_COLORS[u.class]||'#9aa7a4')+'"></i><span><b>'+esc(u.name)+'</b><small>'+esc(u.class)+' · '+esc(String(u.role||'dps').toUpperCase())+'</small><em><i style="width:100%"></i></em></span><strong>100%</strong></div>').join('')+'</div>'
 }
-function objectiveMarkup(match){
+function objectiveMarkup(match,map=null){
   if(match.kind==='arena')return '<div class="pvp2d-arena-mark"><i></i><b>ARENA</b></div>';
-  if(match.mode==='king-of-the-hill')return '<div class="pvp2d-hill"><i></i><b>CELL NODE</b></div>';
+  if(match.mode==='king-of-the-hill'){
+    const hills=(map?.hills||[{id:'central-nexus',name:'CENTRAL NEXUS',x:50,y:50,radius:12}]);
+    const sites=hills.map((h,i)=>'<div class="pvp2d-hill-site '+(i===0?'active':'')+'" data-pvp2d-hill-site="'+esc(h.id)+'" style="left:'+Number(h.x||50)+'%;top:'+Number(h.y||50)+'%"><i></i><small>'+(i+1)+'</small></div>').join('');
+    const first=hills[0];
+    return '<div class="pvp2d-hill-sites">'+sites+'</div><div class="pvp2d-hill" id="pvp2dHill" data-site="'+esc(first.id||'central-nexus')+'" style="left:'+Number(first.x||50)+'%;top:'+Number(first.y||50)+'%"><i></i><b>'+esc(first.name||'CELL NODE')+'</b><small>ACTIVE NODE</small></div>'
+  }
   return '<div class="pvp2d-flag blue base" data-pvp2d-flag="blue"><i>⚑</i><small>BLUE</small></div><div class="pvp2d-flag red base" data-pvp2d-flag="red"><i>⚑</i><small>RED</small></div><div class="pvp2d-midline"></div>'
 }
 function mapMarkup(map){
@@ -66,7 +71,7 @@ function shellMarkup(match,units,map=null){
   return '<div class="pvp2d-shell '+(map?'with-map':'')+'">'+
     '<header class="pvp2d-head"><div><small>LIVE PVP COMBAT</small><h3>'+esc(label)+'</h3></div><div class="pvp2d-head-center"><b id="pvp2dScore">0–0</b><span id="pvp2dObjective">'+(match.kind==='arena'?'Eliminate the opposing squad':match.mode==='capture-the-flag'?'First to 3 captures':'First to 100 control')+'</span></div><div class="pvp2d-controls"><span id="pvp2dTimer">0:00</span><b>REAL TIME</b></div></header>'+
     '<div class="pvp2d-layout"><aside>'+rosterMarkup(blue,'blue')+'</aside>'+
-    '<main class="pvp2d-arena" id="pvp2dArena"><div class="pvp2d-floor"></div>'+mapMarkup(map)+'<div class="pvp2d-grid"></div>'+objectiveMarkup(match)+'<div id="pvp2dUnits" class="pvp2d-units">'+units.map(unitMarkup).join('')+'</div><div id="pvp2dFx" class="pvp2d-fx"></div><div id="pvp2dBanner" class="pvp2d-banner"></div></main>'+
+    '<main class="pvp2d-arena" id="pvp2dArena"><div class="pvp2d-floor"></div>'+mapMarkup(map)+'<div class="pvp2d-grid"></div>'+objectiveMarkup(match,map)+'<div id="pvp2dUnits" class="pvp2d-units">'+units.map(unitMarkup).join('')+'</div><div id="pvp2dFx" class="pvp2d-fx"></div><div id="pvp2dBanner" class="pvp2d-banner"></div></main>'+
     '<aside>'+rosterMarkup(red,'red')+'</aside></div>'+
     '<div class="pvp2d-lower"><section><header><small>COMBAT FEED</small><b id="pvp2dStatus">The gates are opening…</b></header><div id="pvp2dFeed" class="pvp2d-feed"></div></section>'+
     '<section class="pvp2d-meters"><div><header><small>DAMAGE</small><b>Blue</b></header><div id="pvp2dDamageBlue"></div></div><div><header><small>DAMAGE</small><b>Red</b></header><div id="pvp2dDamageRed"></div></div><div><header><small>HEALING</small><b>Both teams</b></header><div id="pvp2dHealing"></div></div></section></div>'+
@@ -142,6 +147,13 @@ function banner(pb,text,tone=''){const e=$(pb.root,'#pvp2dBanner');if(!e)return;
 function updateScore(pb,blue,red,copyText){
   const score=$(pb.root,'#pvp2dScore'),obj=$(pb.root,'#pvp2dObjective');if(score)score.textContent=Math.round(Number(blue)||0)+'–'+Math.round(Number(red)||0);if(obj&&copyText)obj.textContent=copyText
 }
+function updateHill(root,payload={},state='neutral'){
+  const hill=$(root,'#pvp2dHill');if(!hill)return;
+  const x=clamp(Number(payload.x)||50,5,95),y=clamp(Number(payload.y)||50,8,92),name=String(payload.name||'CELL NODE'),site=String(payload.site||'');
+  hill.style.left=x+'%';hill.style.top=y+'%';hill.dataset.site=site;hill.className='pvp2d-hill '+state;
+  const label=hill.querySelector('b');if(label)label.textContent=name;
+  $(root,'[data-pvp2d-hill-site]').forEach(node=>node.classList.toggle('active',node.getAttribute('data-pvp2d-hill-site')===site))
+}
 function combatant(pb,id){return pb.unitMap[id]}
 function attackKind(u,ability){
   if(/heal|rejuven|regrowth|renew|riptide|vivify|embrace|blossom|mend/i.test(String(ability||'')))return'heal';
@@ -200,9 +212,28 @@ function handleEvent(pb,e){
       if(target){const u=unitNode(root,target.id);u?.classList.remove('dead');setHp(root,target.id,Number(e.payload?.targetHpPct)||100);setResource(root,target.id,e.payload?.resource,e.payload?.resourceValue,e.payload?.resourceMax);floatText(root,target.id,e.result==='respawn'?'RESPAWN':'REVIVED','heal');feed(pb,target.name+' returns to the battleground.')}
       break;
     case'OBJECTIVE_UPDATE':
-      if(e.result==='hill-control'){
-        updateScore(pb,e.payload?.blue,e.payload?.red,(e.payload?.owner==='blue'?'Blue':'Red')+' controls the Cell node');
+      if(e.result==='hill-rotate'){
+        updateHill(root,e.payload,'rotating');
+        updateScore(pb,e.payload?.blue,e.payload?.red,(e.payload?.name||'New node')+' is now active');
+        setStatus(pb,'Rotate · '+(e.payload?.name||'new control zone'));
+        banner(pb,'NODE ROTATES','');
+        feed(pb,'The control zone shifts to '+(e.payload?.name||'a new area')+'. Both teams rotate through the battleground.')
+      }else if(e.result==='hill-roles'){
+        (e.payload?.anchors||[]).forEach(id=>objectiveBadge(root,id,'ANCHOR','defender'));
+        (e.payload?.supports||[]).forEach(id=>objectiveBadge(root,id,'SUPPORT','support'));
+        (e.payload?.flankers||[]).forEach(id=>objectiveBadge(root,id,'FLANK','runner'))
+      }else if(e.result==='hill-control'){
+        updateHill(root,e.payload,e.payload?.owner||'neutral');
+        updateScore(pb,e.payload?.blue,e.payload?.red,(e.payload?.owner==='blue'?'Blue':'Red')+' controls '+(e.payload?.name||'the active node'));
+        setStatus(pb,(e.payload?.owner==='blue'?'Blue':'Red')+' controls '+(e.payload?.name||'the active node'));
         banner(pb,(e.payload?.owner==='blue'?'BLUE':'RED')+' TAKES THE NODE',e.payload?.owner)
+      }else if(e.result==='hill-contested'){
+        updateHill(root,e.payload,'contested');
+        updateScore(pb,e.payload?.blue,e.payload?.red,(e.payload?.name||'Active node')+' contested');
+        setStatus(pb,(e.payload?.name||'Active node')+' · contested')
+      }else if(e.result==='hill-score'){
+        updateHill(root,e.payload,e.payload?.owner||'contested');
+        updateScore(pb,e.payload?.blue,e.payload?.red,(e.payload?.name||'Active node')+(e.payload?.owner?' · '+(e.payload.owner==='blue'?'Blue':'Red')+' control':' · contested'));
       }else if(e.result==='ctf-roles'){
         if(e.payload?.runner)objectiveBadge(root,e.payload.runner,'RUNNER','runner');
         (e.payload?.defenders||[]).forEach(id=>objectiveBadge(root,id,'DEFENCE','defender'));
