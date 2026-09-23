@@ -1,0 +1,254 @@
+/* Cellbound PvE dungeon visual themes v1
+   Shared structure stays identical; only environmental chrome changes.
+   Mechanic telegraphs/class colours are intentionally not overridden. */
+
+#cb2dBackdrop{
+  --d-accent:#d28345;--d-accent2:#8f3f2d;--d-highlight:#efbd73;
+  --d-bg:#0b0806;--d-shell:#120d09;--d-panel:#100c09;--d-panel2:#17100b;
+  --d-border:rgba(218,132,69,.22);--d-soft:rgba(218,132,69,.08);--d-glow:rgba(218,95,43,.22);
+  --d-arena-a:#1a100a;--d-arena-b:#090807;--d-text:#f0e2d2;--d-muted:#a58c79
+}
+#hs2dBackdrop{
+  --d-accent:#8896c9;--d-accent2:#65518e;--d-highlight:#c6ccef;
+  --d-bg:#06080e;--d-shell:#0a0d15;--d-panel:#090c14;--d-panel2:#0e1120;
+  --d-border:rgba(137,150,202,.22);--d-soft:rgba(125,110,177,.09);--d-glow:rgba(112,100,185,.2);
+  --d-arena-a:#101524;--d-arena-b:#06080e;--d-text:#e2e5f3;--d-muted:#8d93ae
+}
+#cc2dBackdrop{
+  --d-accent:#b28855;--d-accent2:#6e7740;--d-highlight:#d9b878;
+  --d-bg:#0d0a06;--d-shell:#151008;--d-panel:#110d08;--d-panel2:#17130a;
+  --d-border:rgba(178,136,85,.22);--d-soft:rgba(114,126,66,.09);--d-glow:rgba(171,116,58,.19);
+  --d-arena-a:#20170e;--d-arena-b:#0c0a06;--d-text:#eadfcf;--d-muted:#a4967d
+}
+#bs2dBackdrop{
+  --d-accent:#58b9b0;--d-accent2:#d6bd4f;--d-highlight:#8de2d8;
+  --d-bg:#050b0c;--d-shell:#071113;--d-panel:#081214;--d-panel2:#0b1718;
+  --d-border:rgba(88,185,176,.22);--d-soft:rgba(88,185,176,.08);--d-glow:rgba(56,167,164,.2);
+  --d-arena-a:#0b1b1c;--d-arena-b:#050a0b;--d-text:#dcebea;--d-muted:#82a7a3
+}
+#fracturedAgesBackdrop{
+  --d-accent:#9e76c8;--d-accent2:#c29a4b;--d-highlight:#d7b3f1;
+  --d-bg:#08060d;--d-shell:#0d0a13;--d-panel:#0c0912;--d-panel2:#120d19;
+  --d-border:rgba(158,118,200,.24);--d-soft:rgba(194,154,75,.07);--d-glow:rgba(133,83,188,.22);
+  --d-arena-a:#171020;--d-arena-b:#08060d;--d-text:#ece3f3;--d-muted:#a18bab
+}
+
+/* Full-screen backdrops */
+#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop,#fracturedAgesBackdrop{
+  background:
+    radial-gradient(circle at 50% 15%,var(--d-soft),transparent 34%),
+    linear-gradient(180deg,var(--d-bg),#030506 80%)!important
+}
+#cb2dBackdrop:before,#hs2dBackdrop:before,#cc2dBackdrop:before,#bs2dBackdrop:before,#fracturedAgesBackdrop:before{
+  content:"";position:fixed;z-index:0;inset:0;pointer-events:none;opacity:.52
+}
+#cb2dBackdrop:before{
+  background:
+    radial-gradient(circle at 15% 78%,rgba(228,92,37,.12),transparent 16%),
+    radial-gradient(circle at 82% 25%,rgba(209,124,53,.08),transparent 18%),
+    repeating-linear-gradient(112deg,transparent 0 78px,rgba(220,137,66,.018) 79px 80px)
+}
+#hs2dBackdrop:before{
+  background:
+    radial-gradient(circle at 50% 48%,rgba(119,111,190,.09),transparent 25%),
+    radial-gradient(circle at 16% 22%,rgba(160,180,224,.06),transparent 17%),
+    repeating-radial-gradient(circle at 50% 50%,transparent 0 68px,rgba(144,154,205,.015) 69px 70px)
+}
+#cc2dBackdrop:before{
+  background:
+    linear-gradient(112deg,transparent 0 18%,rgba(167,118,61,.055) 18.3% 18.8%,transparent 19% 74%,rgba(101,119,57,.045) 74.2% 74.8%,transparent 75%),
+    radial-gradient(circle at 50% 80%,rgba(163,116,52,.09),transparent 28%)
+}
+#bs2dBackdrop:before{
+  background:
+    repeating-linear-gradient(90deg,transparent 0 7%,rgba(87,189,182,.024) 7.1% 7.25%),
+    repeating-linear-gradient(0deg,transparent 0 54px,rgba(210,191,77,.012) 55px 56px)
+}
+#fracturedAgesBackdrop:before{
+  background:
+    linear-gradient(115deg,transparent 0 31%,rgba(176,128,219,.055) 31.2% 31.5%,transparent 31.8% 67%,rgba(215,173,80,.045) 67.2% 67.5%,transparent 67.8%),
+    radial-gradient(circle at 50% 50%,rgba(117,67,164,.1),transparent 30%)
+}
+
+/* Shared themed combat chrome */
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop)>.cb2d-shell,
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-shell{
+  position:relative;z-index:1;border-color:var(--d-border)!important;
+  background:linear-gradient(180deg,var(--d-shell),var(--d-bg))!important;color:var(--d-text)!important;
+  box-shadow:0 34px 110px #000,0 0 50px var(--d-glow)!important
+}
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-head{
+  border-bottom-color:var(--d-border)!important;
+  background:linear-gradient(100deg,var(--d-panel2),var(--d-panel) 66%,var(--d-bg))!important
+}
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-head small,
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-caption span,
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-room-tag small{
+  color:var(--d-accent)!important
+}
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-route{
+  border-bottom-color:var(--d-border)!important;background:var(--d-panel)!important
+}
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-route span.current{
+  border-color:var(--d-border)!important;
+  background:linear-gradient(135deg,var(--d-soft),var(--d-panel2))!important;
+  color:var(--d-highlight)!important;box-shadow:inset 3px 0 0 var(--d-accent)
+}
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-route span.current i{
+  color:var(--d-highlight)!important;background:var(--d-soft)!important
+}
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-layout>main{
+  background:linear-gradient(180deg,var(--d-shell),var(--d-bg))!important
+}
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-layout>aside{
+  border-left-color:var(--d-border)!important;background:linear-gradient(180deg,var(--d-panel),var(--d-bg))!important
+}
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-arena{
+  border-color:var(--d-border)!important;
+  background:
+    radial-gradient(circle at 52% 48%,var(--d-soft),transparent 28%),
+    linear-gradient(180deg,var(--d-arena-a),var(--d-arena-b))!important;
+  box-shadow:inset 0 0 90px rgba(0,0,0,.34),0 0 24px var(--d-glow)
+}
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-arena:after{
+  content:"";position:absolute;z-index:1;inset:0;pointer-events:none;opacity:.34
+}
+#cb2dBackdrop .cb2d-arena:after{
+  background:
+    radial-gradient(circle at 18% 84%,rgba(234,91,36,.2) 0 1px,transparent 2px),
+    radial-gradient(circle at 78% 18%,rgba(244,141,65,.16) 0 1px,transparent 2px),
+    repeating-linear-gradient(165deg,transparent 0 57px,rgba(227,132,55,.025) 58px 59px)
+}
+#hs2dBackdrop .cb2d-arena:after{
+  background:
+    radial-gradient(circle at 24% 24%,rgba(175,184,235,.13) 0 1px,transparent 2px),
+    radial-gradient(circle at 74% 68%,rgba(142,118,202,.11) 0 1px,transparent 2px),
+    repeating-radial-gradient(circle at 50% 50%,transparent 0 86px,rgba(145,154,210,.018) 87px 88px)
+}
+#cc2dBackdrop .cb2d-arena:after{
+  background:
+    linear-gradient(104deg,transparent 0 21%,rgba(175,120,62,.06) 21.3% 22%,transparent 22.3% 77%,rgba(92,116,54,.055) 77.2% 77.8%,transparent 78%),
+    radial-gradient(circle at 50% 94%,rgba(184,128,61,.1),transparent 31%)
+}
+#bs2dBackdrop .cb2d-arena:after{
+  background:
+    repeating-linear-gradient(90deg,transparent 0 64px,rgba(92,204,195,.025) 65px 66px),
+    repeating-linear-gradient(0deg,transparent 0 44px,rgba(219,198,73,.014) 45px 46px)
+}
+
+/* Panels, feed, meters and results inherit the dungeon identity. */
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) :is(.cb2d-feed,.cb2d-cast,.cb2d-meter-panel,.cb2d-actions,.cb2d-party,.cb2d-plan,.cb2d-controls){
+  border-color:var(--d-border)!important;background:linear-gradient(180deg,var(--d-panel2),var(--d-panel))!important
+}
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) :is(.cb2d-feed,.cb2d-meter-head,.cb2d-party,.cb2d-plan)>small,
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-cast>small{
+  color:var(--d-accent)!important
+}
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-meter-row em{
+  background:rgba(255,255,255,.035)!important
+}
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-end{
+  background:
+    radial-gradient(circle at 50% 8%,var(--d-soft),transparent 30%),
+    linear-gradient(180deg,var(--d-shell),var(--d-bg))!important
+}
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-loot-head{
+  border-color:var(--d-border)!important;background:linear-gradient(100deg,var(--d-panel2),var(--d-panel))!important
+}
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-loot-head small,
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-loot-title>span{
+  color:var(--d-highlight)!important
+}
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-loot-currency article,
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-loot-section{
+  border-color:var(--d-border)!important;background:var(--d-panel)!important
+}
+:is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-loot-currency article>b{
+  color:var(--d-highlight)!important
+}
+
+/* Dungeon-specific signature details */
+#cb2dBackdrop .cb2d-head{box-shadow:inset 0 -2px 0 rgba(205,91,39,.12)}
+#cb2dBackdrop .cb2d-arena{background:
+  radial-gradient(circle at 75% 82%,rgba(229,75,28,.16),transparent 20%),
+  radial-gradient(circle at 30% 34%,rgba(217,141,65,.09),transparent 23%),
+  linear-gradient(180deg,#1b1009,#090706)!important}
+#hs2dBackdrop .cb2d-head{box-shadow:inset 0 -2px 0 rgba(137,130,205,.12)}
+#hs2dBackdrop .cb2d-arena{background:
+  radial-gradient(circle at 50% 42%,rgba(120,105,191,.13),transparent 24%),
+  radial-gradient(ellipse at 20% 76%,rgba(164,185,224,.07),transparent 25%),
+  linear-gradient(180deg,#111624,#06080d)!important}
+#cc2dBackdrop .cb2d-head{box-shadow:inset 0 -2px 0 rgba(177,126,64,.13)}
+#cc2dBackdrop .cb2d-arena{background:
+  radial-gradient(ellipse at 50% 92%,rgba(183,123,56,.15),transparent 34%),
+  radial-gradient(circle at 84% 27%,rgba(91,116,54,.1),transparent 19%),
+  linear-gradient(180deg,#21170d,#0b0905)!important}
+#bs2dBackdrop .cb2d-head{box-shadow:inset 0 -2px 0 rgba(82,194,184,.13)}
+#bs2dBackdrop .cb2d-arena{background:
+  radial-gradient(circle at 50% 52%,rgba(74,183,178,.12),transparent 26%),
+  linear-gradient(180deg,#0b1b1d,#04090a)!important}
+#bs2dBackdrop .cb2d-route span.current{box-shadow:inset 3px 0 0 var(--d-accent),inset 0 -1px 0 rgba(215,193,73,.12)}
+
+/* Fractured Ages shell: persistent violet/gold time UI. */
+#fracturedAgesBackdrop>.fa-shell{
+  position:relative;z-index:1;border-color:var(--d-border)!important;
+  background:linear-gradient(180deg,var(--d-shell),var(--d-bg))!important;
+  box-shadow:0 34px 110px #000,0 0 52px var(--d-glow)!important;color:var(--d-text)
+}
+#fracturedAgesBackdrop .fa-shell>header{
+  border-bottom-color:var(--d-border)!important;
+  background:linear-gradient(100deg,#181020,#100c16 62%,#09070d)!important
+}
+#fracturedAgesBackdrop .fa-shell>header small{color:var(--d-highlight)!important}
+#fracturedAgesBackdrop :is(.fa-brief-grid main,.fa-brief-grid aside,.fa-transition-copy){
+  border-color:var(--d-border)!important;background:linear-gradient(150deg,var(--d-panel2),var(--d-panel))!important
+}
+#fracturedAgesBackdrop .fa-era-strip span{border-color:var(--d-border)!important;background:#100c17!important}
+#fracturedAgesBackdrop .fa-era-strip i{background:rgba(158,118,200,.14)!important;color:#d3b0ec!important}
+#fracturedAgesBackdrop .fa-warning{border-color:rgba(194,154,75,.34)!important;background:rgba(39,28,15,.62)!important}
+
+/* Fractured Ages combat viewer keeps shared layout but each era can tint the battlefield. */
+.quest-cb2d-shell:is(.fa-high-noon,.fa-iron-kingdom,.fa-first-kingdom,.fa-silent-frontier,.fa-funhouse){
+  --fa-ui:#a57bca;--fa-ui2:#c29a4b
+}
+.quest-cb2d-shell:is(.fa-high-noon,.fa-iron-kingdom,.fa-first-kingdom,.fa-silent-frontier,.fa-funhouse) .cb2d-head{
+  background:linear-gradient(100deg,#17101f,#0c1014)!important;border-bottom-color:rgba(165,123,202,.22)!important
+}
+.quest-cb2d-shell:is(.fa-high-noon,.fa-iron-kingdom,.fa-first-kingdom,.fa-silent-frontier,.fa-funhouse) .cb2d-head small{color:#c29a4b!important}
+.quest-cb2d-shell.fa-high-noon .quest-cb2d-arena{box-shadow:inset 0 0 80px rgba(108,66,31,.25)}
+.quest-cb2d-shell.fa-iron-kingdom .quest-cb2d-arena{box-shadow:inset 0 0 80px rgba(41,47,55,.38)}
+.quest-cb2d-shell.fa-first-kingdom .quest-cb2d-arena{box-shadow:inset 0 0 80px rgba(194,142,43,.18)}
+.quest-cb2d-shell.fa-silent-frontier .quest-cb2d-arena{box-shadow:inset 0 0 80px rgba(65,104,143,.22)}
+.quest-cb2d-shell.fa-funhouse .quest-cb2d-arena{box-shadow:inset 0 0 90px rgba(138,75,179,.24)}
+
+/* Entry / travel transitions inherit stronger dungeon identity. */
+.cbx-transition.theme-ashen{background:
+  radial-gradient(circle at 50% 74%,rgba(218,80,28,.17),transparent 22%),
+  linear-gradient(180deg,#130b07,#050505)}
+.cbx-transition.theme-ashen .cbx-gate{background:linear-gradient(90deg,#17100b,#3a2415 65%,#15100c)}
+.cbx-transition.theme-ashen .cbx-path{background:linear-gradient(180deg,transparent,rgba(231,106,42,.11))}
+.cbx-transition.theme-hollow{background:
+  radial-gradient(circle at 50% 46%,rgba(120,106,190,.15),transparent 27%),
+  linear-gradient(180deg,#0c0f19,#04050a)}
+.cbx-transition.theme-hollow .cbx-gate{background:linear-gradient(90deg,#0b0e17,#171b2c 65%,#090b13)}
+.cbx-transition.theme-hollow .cbx-path{background:linear-gradient(180deg,transparent,rgba(147,158,213,.08))}
+.cbx-transition.theme-canyon{background:
+  radial-gradient(circle at 50% 70%,rgba(177,117,52,.14),transparent 26%),
+  linear-gradient(180deg,#171008,#070603)}
+.cbx-transition.theme-canyon .cbx-gate{background:linear-gradient(90deg,#23160c,#4a2c16 65%,#20140b)}
+.cbx-transition.theme-canyon .cbx-path{background:linear-gradient(180deg,transparent,rgba(135,119,67,.1))}
+.cbx-transition.theme-blackout{background:
+  radial-gradient(circle at 50% 48%,rgba(63,169,164,.13),transparent 25%),
+  linear-gradient(180deg,#061112,#020506)}
+.cbx-transition.theme-blackout .cbx-gate{background:linear-gradient(90deg,#081113,#163134 65%,#071011)}
+.cbx-transition.theme-blackout .cbx-path{background:linear-gradient(180deg,transparent,rgba(210,190,69,.08))}
+.cbx-transition.theme-fractured{background:
+  radial-gradient(circle at 50% 48%,rgba(133,78,183,.17),transparent 25%),
+  radial-gradient(circle at 70% 25%,rgba(195,154,73,.08),transparent 16%),
+  linear-gradient(180deg,#100918,#040306)}
+.cbx-transition.theme-fractured .cbx-gate{background:linear-gradient(90deg,#130d19,#2c1940 65%,#100b16)}
+.cbx-transition.theme-fractured .cbx-path{background:linear-gradient(180deg,transparent,rgba(196,156,77,.08))}
+
+@media(max-width:820px){
+  :is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-layout>aside{border-left:0!important;border-top:1px solid var(--d-border)!important}
+}
