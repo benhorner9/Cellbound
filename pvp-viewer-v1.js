@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.5.0';
+const VERSION='1.6.0';
 const $=(root,s)=>root?.querySelector(s);
 const $$=(root,s)=>[...(root?.querySelectorAll(s)||[])];
 const esc=v=>String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[m]));
@@ -50,13 +50,23 @@ function objectiveMarkup(match){
   if(match.mode==='king-of-the-hill')return '<div class="pvp2d-hill"><i></i><b>CELL NODE</b></div>';
   return '<div class="pvp2d-flag blue base" data-pvp2d-flag="blue"><i>⚑</i><small>BLUE</small></div><div class="pvp2d-flag red base" data-pvp2d-flag="red"><i>⚑</i><small>RED</small></div><div class="pvp2d-midline"></div>'
 }
-function shellMarkup(match,units){
+function mapMarkup(map){
+  if(!map)return '';
+  const areas=(map.areas||[]).map(a=>'<div class="pvp2d-map-area '+esc(a.kind||'')+' '+esc(a.team||'')+'" style="left:'+Number(a.x||0)+'%;top:'+Number(a.y||0)+'%;width:'+Number(a.w||0)+'%;height:'+Number(a.h||0)+'%"><span>'+esc(a.name||'')+'</span></div>').join('');
+  const walls=(map.blockers||[]).map(b=>{
+    const left=Number(b.x||50)-Number(b.w||0)/2,top=Number(b.y||50)-Number(b.h||0)/2;
+    const cls=/tunnel/i.test(b.id||'')?'tunnel-wall':/pillar/i.test(b.id||'')?'pillar':/rampart/i.test(b.id||'')?'rampart':'ruin';
+    return '<div class="pvp2d-map-block '+cls+'" data-map-block="'+esc(b.id||'wall')+'" style="left:'+left+'%;top:'+top+'%;width:'+Number(b.w||0)+'%;height:'+Number(b.h||0)+'%"></div>'
+  }).join('');
+  return '<div class="pvp2d-map" data-pvp-map="'+esc(map.id||'battleground')+'"><div class="pvp2d-map-title"><small>BATTLEGROUND</small><b>'+esc(map.name||'Cellwind Bastion')+'</b></div>'+areas+walls+'<div class="pvp2d-map-prop arch a1"></div><div class="pvp2d-map-prop arch a2"></div><div class="pvp2d-map-prop rubble r1"></div><div class="pvp2d-map-prop rubble r2"></div></div>'
+}
+function shellMarkup(match,units,map=null){
   const blue=units.filter(x=>x.team==='blue'),red=units.filter(x=>x.team==='red');
   const label=match.kind==='arena'?match.size+'v'+match.size+' RATED ARENA':match.size+'v'+match.size+' · '+(match.mode==='capture-the-flag'?'CAPTURE THE FLAG':'KING OF THE HILL');
-  return '<div class="pvp2d-shell">'+
+  return '<div class="pvp2d-shell '+(map?'with-map':'')+'">'+
     '<header class="pvp2d-head"><div><small>LIVE PVP COMBAT</small><h3>'+esc(label)+'</h3></div><div class="pvp2d-head-center"><b id="pvp2dScore">0–0</b><span id="pvp2dObjective">'+(match.kind==='arena'?'Eliminate the opposing squad':match.mode==='capture-the-flag'?'First to 3 captures':'First to 100 control')+'</span></div><div class="pvp2d-controls"><span id="pvp2dTimer">0:00</span><b>REAL TIME</b></div></header>'+
     '<div class="pvp2d-layout"><aside>'+rosterMarkup(blue,'blue')+'</aside>'+
-    '<main class="pvp2d-arena" id="pvp2dArena"><div class="pvp2d-floor"></div><div class="pvp2d-grid"></div>'+objectiveMarkup(match)+'<div id="pvp2dUnits" class="pvp2d-units">'+units.map(unitMarkup).join('')+'</div><div id="pvp2dFx" class="pvp2d-fx"></div><div id="pvp2dBanner" class="pvp2d-banner"></div></main>'+
+    '<main class="pvp2d-arena" id="pvp2dArena"><div class="pvp2d-floor"></div>'+mapMarkup(map)+'<div class="pvp2d-grid"></div>'+objectiveMarkup(match)+'<div id="pvp2dUnits" class="pvp2d-units">'+units.map(unitMarkup).join('')+'</div><div id="pvp2dFx" class="pvp2d-fx"></div><div id="pvp2dBanner" class="pvp2d-banner"></div></main>'+
     '<aside>'+rosterMarkup(red,'red')+'</aside></div>'+
     '<div class="pvp2d-lower"><section><header><small>COMBAT FEED</small><b id="pvp2dStatus">The gates are opening…</b></header><div id="pvp2dFeed" class="pvp2d-feed"></div></section>'+
     '<section class="pvp2d-meters"><div><header><small>DAMAGE</small><b>Blue</b></header><div id="pvp2dDamageBlue"></div></div><div><header><small>DAMAGE</small><b>Red</b></header><div id="pvp2dDamageRed"></div></div><div><header><small>HEALING</small><b>Both teams</b></header><div id="pvp2dHealing"></div></div></section></div>'+
@@ -144,7 +154,10 @@ function updateMeters(pb){
 function handleEvent(pb,e){
   const root=pb.root,src=combatant(pb,e.source),target=combatant(pb,e.target);
   switch(e.type){
-    case'COMBAT_START':setStatus(pb,'Combat live');feed(pb,'The gates open. PvP combat begins.');break;
+    case'COMBAT_START':
+      setStatus(pb,pb.result?.map?.name?pb.result.map.name+' · combat live':'Combat live');
+      feed(pb,pb.result?.map?.name?'The gates of '+pb.result.map.name+' open. Three routes are live.':'The gates open. PvP combat begins.');
+      break;
     case'MOVEMENT_START':if(e.payload?.to)move(root,e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||420,e.payload?.from||null);break;
     case'ABILITY_START':
       if(src){pulse(root,e.source,e.payload?.kind==='heal'?'heal':'attack');if(e.target&&target)projectile(root,e.source,e.target,attackKind(src,e.ability),src.role==='dps'?280:330)}
@@ -160,6 +173,16 @@ function handleEvent(pb,e){
       if(src){pb.stats[src.id].healing+=(Number(e.amount)||0);pb.meterDirty=true}
       break;
     case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':if(src)setResource(root,src.id,e.payload?.resource,e.payload?.value,e.payload?.max);break;
+    case'LOS_BLOCKED':
+      if(src){
+        pb.lastLosAt=pb.lastLosAt||{};
+        if((pb.lastLosAt[src.id]||0)+2200<Number(e.timestamp||0)){
+          pb.lastLosAt[src.id]=Number(e.timestamp||0);
+          floatText(root,src.id,'LOS','control');
+          setStatus(pb,src.name+' repositioning around cover')
+        }
+      }
+      break;
     case'CROWD_CONTROL':
       if(target){statusPill(root,target.id,'CC','debuff',Number(e.payload?.duration)||1800);floatText(root,target.id,e.ability||'CONTROL','control');feed(pb,(src?.name||'A player')+' controls '+target.name+' with '+(e.ability||'crowd control')+'.')}
       break;
@@ -242,7 +265,7 @@ function buildUnits(match){
 function stop(){if(activePlayback){activePlayback.cancelled=true;cancelAnimationFrame(activePlayback.raf);activePlayback=null}}
 function play({stage,match,result,onComplete}={}){
   if(!stage||!match||!result){onComplete?.();return}stop();
-  const units=buildUnits(match);stage.innerHTML=shellMarkup(match,units);stage.scrollIntoView?.({behavior:'smooth',block:'nearest'});
+  const units=buildUnits(match),map=result?.map||match?.map||null;stage.innerHTML=shellMarkup(match,units,map);stage.scrollIntoView?.({behavior:'smooth',block:'nearest'});
   const pb={root:stage,match,result,units,unitMap:Object.fromEntries(units.map(u=>[u.id,u])),stats:Object.fromEntries(units.map(u=>[u.id,{damage:0,healing:0,kills:0,deaths:0}])),feed:[],cancelled:false,raf:0,meterDirty:false,lastMeterAt:0};
   activePlayback=pb;
   const events=(result.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));let index=0,simTime=0,last=performance.now();
