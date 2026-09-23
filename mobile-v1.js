@@ -5,7 +5,7 @@ let observer=null;
 
 const GROUPS=[
   ['Guild',[['roster','♟','Roster'],['professions','⚒','Professions']]],
-  ['Adventure',[['endgame','◇','Endgame'],['world','✦','Events']]],
+  ['Adventure',[['world','✦','Events'],['endgame','◇','Endgame']]],
   ['Market',[['trading','⇄','Trading Post']]],
   ['Combat',[['pvp','⚔','PvP']]],
   ['Social',[['chat','◌','Social']]]
