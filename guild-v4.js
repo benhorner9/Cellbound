@@ -140,7 +140,7 @@ function bankTotal(){return (state?.bank||[]).reduce((n,item)=>n+(item.quantity|
 function averageMastery(c){const vals=Object.values(c.knowledge||{});return vals.length?Math.round(vals.reduce((a,b)=>a+(Number(b)||0),0)/vals.length):0;}
 function canonicalItem(raw){if(!raw)return null;const base=G.byName(raw.name)||G.byId(raw.itemId);return base?{...base,...raw,itemLevel:raw.itemLevel||base.itemLevel,power:raw.power||base.power,tradeState:raw.tradeState||base.tradeState,visualKey:raw.visualKey||base.visualKey}:raw;}
 function isBankUtility(item){return Boolean(item?.category==='utility'||item?.utilityType)}
-function bankUtilityArt(item,size=66){const icon=esc(item?.icon||'⚡');return `<span class="bank-utility-art rarity-${String(item?.rarity||'rare').toLowerCase()}" style="width:${size}px;height:${size}px" aria-label="${esc(item?.name||'Utility item')}"><i>${icon}</i></span>`}
+function bankUtilityArt(item,size=66){const icon=esc(item?.icon||'⚡');return window.CellboundItemArt?.artHTML?.(item,size,'bank-utility-art')||`<span class="bank-utility-art rarity-${String(item?.rarity||'rare').toLowerCase()}" style="width:${size}px;height:${size}px" aria-label="${esc(item?.name||'Utility item')}"><i>${icon}</i></span>`}
 function bankItemArt(item,size=66){return isBankUtility(item)?bankUtilityArt(item,size):G.artHTML(item,size)}
 function characterItemLevel(c){
   const core=LEGACY_ILVL_SLOTS.map(slot=>canonicalItem(c?.equipment?.[slot])).filter(Boolean);
