@@ -235,6 +235,14 @@ for(const file of files){
   fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,contents)
 }
 for(const file of assets){const src=path.join(__dirname,file),dest=path.join(out,file);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest)}
+{
+  const twelveBelowParts=[1,2,3,4].map(i=>fs.readFileSync(path.join(__dirname,`assets/world/twelve-below-key-art.${i}.b64`),'utf8').trim());
+  const twelveBelowB64=twelveBelowParts[0].slice(0,9500)+twelveBelowParts.slice(1).join('');
+  const twelveBelowDest=path.join(out,'assets/world/twelve-below-key-art.webp');
+  fs.mkdirSync(path.dirname(twelveBelowDest),{recursive:true});
+  fs.writeFileSync(twelveBelowDest,Buffer.from(twelveBelowB64,'base64'));
+  if(!fs.existsSync(twelveBelowDest)||fs.statSync(twelveBelowDest).size<20000)throw new Error('Missing or invalid Twelve Below key art in production package');
+}
 for(const file of ['assets/dungeons/ashen-vault.webp','assets/dungeons/hollow-sanctum.webp','assets/dungeons/chaos-canyon.webp','assets/dungeons/blackout-station.webp','assets/dungeons/fractured-ages.webp']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing Dungeon Journal artwork in production package: ${file}`)}
 for(const file of ['assets/bosses/ashen-vault-vaultheart.webp','assets/bosses/hollow-sanctum-bound-choir.webp','assets/bosses/chaos-canyon-vorran.webp','assets/bosses/blackout-station-calder.webp','assets/bosses/fractured-ages-old-man.webp']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing final boss artwork in production package: ${file}`)}
 for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readability-v1.css','ui-readability-v2.css','ui-polish-v3.css','blackout-station-v1.css','blackout-station-v1.js','trading-post-v3.css','trading-post-v3.js','combat-status-ui-v1.css','combat-status-ui-v1.js','pvp-v1.css','pvp-viewer-v1.css','pvp-match-v1.css','pvp-combat-v1.js','pvp-viewer-v1.js','pvp-match-v1.js','pvp-v1.js','expedition-presentation-v1.css','expedition-presentation-v1.js','boss-dossier-v1.css','boss-dossier-v1.js','dungeon-theme-v1.css','twelve-below-v1.css','twelve-below-v1.js','combat-polish-v2.css','combat-polish-v2.js']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing required production asset: ${file}`)}
