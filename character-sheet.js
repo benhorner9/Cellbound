@@ -190,7 +190,8 @@ function sheetMaxHealth(c){
 }
 function bestBankUpgrade(state,c,slot){
   const current=Math.max(0,Number(c.equipment?.[slot]?.itemLevel)||0);
-  const candidates=(state?.bank||[]).filter(item=>canUse(c,item)&&possibleSlots(item).includes(slot));
+  const bank=Array.isArray(state?.bank)?state.bank:[];
+  const candidates=bank.filter(item=>canUse(c,item)&&possibleSlots(item).includes(slot));
   const best=candidates.sort((x,y)=>(Number(y.itemLevel)||0)-(Number(x.itemLevel)||0))[0];
   const gain=(Number(best?.itemLevel)||0)-current;
   return gain>0?{item:best,gain}:null;
@@ -313,7 +314,8 @@ function equippedUpgradeCost(item){
 }
 function equippedCanUpgrade(item){return Boolean(item)&&(Number(item?.itemLevel)||0)<equippedUpgradeMax(item)}
 function slotPicker(state,c,slot){
-  const candidates=(state.bank||[]).filter(item=>canUse(c,item)&&possibleSlots(item).includes(slot));
+  const bank=Array.isArray(state?.bank)?state.bank:[];
+  const candidates=bank.filter(item=>canUse(c,item)&&possibleSlots(item).includes(slot));
   const current=c.equipment?.[slot];
   const currentIlvl=Number(current?.itemLevel)||0;
   const shards=Number(state?.materials?.['cell-shards'])||0;
