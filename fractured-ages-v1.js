@@ -241,8 +241,8 @@ function rollTemporalGear(){
 }
 function gearCard(item){
  if(!item)return'<div class="cb2d-loot-empty">No temporal equipment recovered.</div>';
- const art=G?.artHTML?G.artHTML(item,78):'◇',stats=G?.statLines?.(item)||[];
- return'<article class="cb2d-loot-item rarity-rare"><div class="cb2d-loot-art">'+art+'</div><div><small>RARE · '+esc(item.slot||'GEAR')+'</small><h4>'+esc(item.name)+'</h4><p>Item Level '+Number(item.itemLevel||0)+'</p><div class="cb2d-loot-roll">'+stats.map(s=>'<span>'+esc(s.text)+'</span>').join('')+'</div><em>Sent to Guild Bank</em></div></article>'
+ const art=G?.artHTML?G.artHTML(item,78):'◇',stats=G?.statLines?.(item)||[],set=item?.setName?'<div class="cb2d-loot-set"><b>'+esc(item.setName)+'</b>'+(G?.setBonusLines?.(item)||[]).map(x=>'<span>'+x.threshold+'pc · '+esc(x.short)+'</span>').join('')+'</div>':'';
+ return'<article class="cb2d-loot-item rarity-rare"><div class="cb2d-loot-art">'+art+'</div><div><small>RARE · '+esc(item.slot||'GEAR')+'</small><h4>'+esc(item.name)+'</h4><p>Item Level '+Number(item.itemLevel||0)+'</p><div class="cb2d-loot-roll">'+stats.map(s=>'<span>'+esc(s.text)+'</span>').join('')+'</div>'+set+'<em>Sent to Guild Bank</em></div></article>'
 }
 async function completeRun(){
  if(!run||run.done)return;run.done=true;
