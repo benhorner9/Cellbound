@@ -95,7 +95,7 @@ const BOSS_REAGENTS={
   vaultheart:[{key:'ashen-soul-fragment',min:3,max:5},{key:'vaultheart-crystal',min:1,max:2}]
 };
 const recipeById=id=>Object.values(PROFESSIONS).flatMap(p=>p.recipes).find(r=>r.id===id)||null;
-const skillThreshold=level=>50+Math.max(1,level)*15;
+const skillThreshold=level=>50+Math.max(1,level)*5;
 const rollReagents=bossId=>(BOSS_REAGENTS[bossId]||[]).map(r=>({key:r.key,quantity:r.min+Math.floor(Math.random()*(r.max-r.min+1))}));
 window.CellboundProfessions={MATERIALS,PROFESSIONS,BOSS_REAGENTS,recipeById,skillThreshold,rollReagents,materialRarityClass,materialArtHTML,bonusText,itemSignature,activeBonuses,activeEffects,consumeBossCharges};
 })();
