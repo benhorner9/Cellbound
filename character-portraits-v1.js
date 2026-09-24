@@ -339,20 +339,20 @@ function paperSlotClass(slot,highlighted,item){
 function weaponType(item,c){
   if(item?.weaponType)return String(item.weaponType).toLowerCase();
   var n=(' '+itemIdentity(item,'Weapon')+' '+String(item?.name||'')+' ').toLowerCase();
-  if(/\b(spear|pike|lance|glaive|halberd|polearm)\b/.test(n))return'spear';
-  if(/\b(bow|longbow|shortbow)\b/.test(n))return'bow';
-  if(/\b(crossbow)\b/.test(n))return'crossbow';
-  if(/\b(axe|cleaver|hatchet)\b/.test(n))return'axe';
-  if(/\b(maul|hammer)\b/.test(n))return'hammer';
-  if(/\b(mace|morningstar)\b/.test(n))return'mace';
-  if(/\b(dagger|knife|shiv|shivs|knives|stiletto)\b/.test(n))return'dagger';
-  if(/\b(wand)\b/.test(n))return'wand';
-  if(/\b(focus|orb|crystal)\b/.test(n))return'focus';
-  if(/\b(scepter|sceptre)\b/.test(n))return'scepter';
-  if(/\b(staff|stave)\b/.test(n))return'staff';
-  if(/\b(rod)\b/.test(n))return'rod';
-  if(/\b(greatblade|greatsword|claymore)\b/.test(n))return'greatsword';
-  if(/\b(sword|blade|blades|sabre|saber)\b/.test(n))return'sword';
+  if(/(spear|pike|lance|glaive|halberd|polearm)/.test(n))return'spear';
+  if(/(bow|longbow|shortbow)/.test(n))return'bow';
+  if(/(crossbow)/.test(n))return'crossbow';
+  if(/(axe|cleaver|hatchet)/.test(n))return'axe';
+  if(/(maul|hammer)/.test(n))return'hammer';
+  if(/(mace|morningstar)/.test(n))return'mace';
+  if(/(dagger|knife|shiv|shivs|knives|stiletto)/.test(n))return'dagger';
+  if(/(wand)/.test(n))return'wand';
+  if(/(focus|orb|crystal)/.test(n))return'focus';
+  if(/(scepter|sceptre)/.test(n))return'scepter';
+  if(/(staff|stave|branch)/.test(n))return'staff';
+  if(/(rod)/.test(n))return'rod';
+  if(/(greatblade|greatsword|claymore)/.test(n))return'greatsword';
+  if(/(sword|blade|blades|sabre|saber)/.test(n))return'sword';
   return CLASS_WEAPON_DEFAULT[paperClass(c)]||'sword';
 }
 function offHandType(item,c){
