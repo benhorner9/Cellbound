@@ -528,9 +528,29 @@ function historyPanel(c,state){
   </div>`;
 }
 
+function equipmentFallback(c,state){
+  const slots=[...leftSlots,...rightSlots];
+  const rows=slots.map(slot=>{
+    const raw=c?.equipment?.[slot];
+    const item=raw&&typeof raw==='object'?raw:null;
+    const name=item?.name||(typeof raw==='string'?raw:'Empty');
+    const ilvl=Math.max(0,Number(item?.itemLevel)||0);
+    return `<button type="button" class="cb-equip-slot ${item?'':'cb-empty'}" data-slot="${slot}"><span class="cb-slot-icon">${slotIcons[slot]||'◇'}</span><span class="cb-slot-copy"><small>${slot.replace(/(\\d)/,' $1')}</small><b>${escHtml(name)}</b><span class="cb-slot-ilvl">${item?'Item Level '+ilvl:'Equipment slot'}</span></span></button>`;
+  }).join('');
+  return `<div class="cb-equipment-recovery"><section class="cb-character-tab-hero"><div><small>ARMOURY</small><h3>Equipment</h3><p>Your equipment is available below. A display error in one item was isolated so the character page stays usable.</p></div><div class="cb-character-tab-stat"><span>SLOTS</span><b>${slots.filter(slot=>c?.equipment?.[slot]).length} / 14</b><small>Character loadout</small></div></section><div class="cb-paperdoll cb-equipment-recovery-grid"><div class="cb-gear-column">${rows}</div></div></div>`;
+}
+function equipmentPanel(c,state){
+  try{return `${paperDoll(c,state)}${activeSlot?slotPicker(state,c,activeSlot):''}`}
+  catch(error){
+    console.error('Cellbound equipment tab render recovered from an item/UI error:',error);
+    activeSlot=null;
+    return equipmentFallback(c,state);
+  }
+}
+
 function sheetBody(state,c){
   if(currentTab==='overview')return overviewPanel(c,state);
-  if(currentTab==='equipment')return `${paperDoll(c,state)}${activeSlot?slotPicker(state,c,activeSlot):''}`;
+  if(currentTab==='equipment')return equipmentPanel(c,state);
   if(currentTab==='talents'){const treeSpec=selectedTreeSpec&&specs[c.class]?.[selectedTreeSpec]?selectedTreeSpec:c.spec;return `<div class="cb-spec-tabs">${specTabs(c)}</div>${talentTree(c,treeSpec)}`}
   if(currentTab==='skills')return skillsPanel(c);
   if(currentTab==='professions')return professionsPanel(c);
@@ -694,7 +714,7 @@ document.addEventListener('click',event=>{
   const charBtn=event.target.closest('[data-char]');
   if(charBtn){event.preventDefault();event.stopImmediatePropagation();openCharacter(charBtn.dataset.char);return}
   if(!modal.hidden){
-    const tab=event.target.closest('[data-sheet-tab]');if(tab){currentTab=tab.dataset.sheetTab;activeSlot=null;renderSheet();return}
+    const tab=event.target.closest('[data-sheet-tab]');if(tab){event.preventDefault();event.stopImmediatePropagation();currentTab=tab.dataset.sheetTab||'overview';activeSlot=null;renderSheet();return}
     const charJump=event.target.closest('[data-char-jump]');if(charJump){closeCharacter(charJump.dataset.charJump);return}
     const skillSlot=event.target.closest('[data-skill-slot]');if(skillSlot){activeSkillSlot=Math.max(0,Math.min(3,Number(skillSlot.dataset.skillSlot)||0));renderSheet();return}
     const equipSkillBtn=event.target.closest('[data-equip-skill]');if(equipSkillBtn){equipSkill(equipSkillBtn.dataset.equipSkill);return}
