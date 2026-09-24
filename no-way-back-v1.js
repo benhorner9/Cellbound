@@ -521,12 +521,13 @@ async function startHoundsCombat(){
     quest:TITLE,title:'The Three Hounds',location:'Manor Island · Outer Grounds',
     ambience:'Silas whistles once. Grim, Fang and Wail spread across the path while the party forms up in front of the Manor gates.',
     presentationKind:'quest',phases:['Pack Bond'],initialTarget:0,sliceMs:2400,reviveWindowMs:12000,revivePct:35,
+    autoContinueOnVictory:true,autoContinueDelayMs:850,
     enemies:[
-      {name:'Grim',maxHealth:1500,absoluteHealth:true,classification:'elite',attackName:'Bonebreaker Bite',damageScale:1.12},
-      {name:'Fang',maxHealth:1350,absoluteHealth:true,classification:'elite',attackName:'Pounce',targeting:'random',damageScale:1.04},
-      {name:'Wail',maxHealth:1425,absoluteHealth:true,classification:'elite',attackName:'Rending Howl',damageScale:1.02}
+      {name:'Grim',maxHealth:3600,absoluteHealth:true,classification:'elite',attackName:'Bonebreaker Bite',damageScale:1.12},
+      {name:'Fang',maxHealth:3300,absoluteHealth:true,classification:'elite',attackName:'Pounce',targeting:'random',damageScale:1.04},
+      {name:'Wail',maxHealth:3450,absoluteHealth:true,classification:'elite',attackName:'Rending Howl',damageScale:1.02}
     ],
-    combat:{kind:'boss',level:18,enemyTypes:['elite','elite','elite'],enemyHealth:1500,mechanics:[]},
+    combat:{kind:'boss',level:18,enemyTypes:['elite','elite','elite'],enemyHealth:3600,mechanics:[]},
     completeText:'The pack bond breaks. Grim, Fang and Wail stay down together.'
   });
   const r=ensureRoot();r.hidden=false;document.body.classList.add('nwb-open');

@@ -827,12 +827,18 @@ async function runInteractiveQuest2DFight(config){
       if(tok!==encounterToken||settled)return;
       questFight.finished=true;qCastClear();
       const end=$('#q2dEnd');if(!end){finish(won);return}
-      end.hidden=false;
       if(won){
         qStatus('ENCOUNTER CLEAR');window.CellboundCombatFX?.victory?.(document.querySelector('.quest-cb2d-arena'));qLog('The pack bond breaks. All three Hounds stay down.');
+        if(config.autoContinueOnVictory){
+          const delay=Math.max(250,Number(config.autoContinueDelayMs)||850);
+          await wait(delay);if(tok!==encounterToken||settled)return;
+          window.CellboundCombatStatuses?.clear?.(encounterRoot());encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(true);return
+        }
+        end.hidden=false;
         const totalDamage=Object.values(questFight.damage).reduce((n,x)=>n+Number(x||0),0),totalHealing=Object.values(questFight.healing).reduce((n,x)=>n+Number(x||0),0);
         end.innerHTML='<div><small>QUEST FIGHT COMPLETE</small><h3>'+esc(config.title)+'</h3><p>'+esc(config.completeText||'The way forward is clear.')+'</p><div class="cbr-analysis-grid quest-cbr-summary"><article><span>TIME</span><b>'+Math.round(elapsed/1000)+'s</b></article><article><span>DAMAGE</span><b>'+Math.round(totalDamage).toLocaleString()+'</b></article><article><span>HEALING</span><b>'+Math.round(totalHealing).toLocaleString()+'</b></article><article><span>REVIVE RULE</span><b>BEATEN</b></article></div></div><button data-q-continue>CONTINUE QUEST →</button>';
       }else{
+        end.hidden=false;
         qStatus('PARTY DEFEATED');window.CellboundFX?.wipe?.('The Three Hounds overwhelm the party.');Game.applyPartyCellShock?.(25);await Game.persistState?.();
         end.innerHTML='<div><small>QUEST FIGHT FAILED</small><h3>'+esc(config.title)+'</h3><p>Recover, then try again. Balance the pack before committing to the first kill.</p></div><button data-q-continue>RETURN TO QUEST →</button>';
       }

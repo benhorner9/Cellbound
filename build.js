@@ -250,6 +250,7 @@ for(const file of files){
     if(!contents.includes("rollClearLoot?.('fractured-ages'"))throw new Error('Fractured Ages must use Chapter 1 clear-loot pacing');
   }
   if(file==='quests-v2.js'){
+    if(!contents.includes('config.autoContinueOnVictory')||!contents.includes('autoContinueDelayMs'))throw new Error('Interactive quest combat must support automatic victory flow');
     if(!contents.includes("$$('[data-q-target]').forEach"))throw new Error('Live quest target controls must use querySelectorAll');
     if(!contents.includes('async function qPlayReborn')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('Quest combat must use continuous Combat Reborn playback');
     for(const hook of ['data-q-speed','q2dHealingMeter','function qStatusTargets','CellboundCombatStatuses?.handle','data-q-side-resource','function qResourceDef','function qPulseUnit'])if(!contents.includes(hook))throw new Error('Quest combat HUD is missing '+hook);
@@ -271,7 +272,7 @@ for(const file of files){
   if(file==='guild.html'){
     if(!contents.includes('boss-dossier-v1.css?v=3'))throw new Error('Boss dossier CSS cache version is stale in guild.html');
     if(!contents.includes('boss-dossier-v1.js?v=11'))throw new Error('Boss dossier cache version is stale in guild.html');
-    if(!contents.includes('no-way-back-v1.css?v=4')||!contents.includes('no-way-back-v1.js?v=6'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
+    if(!contents.includes('no-way-back-v1.css?v=4')||!contents.includes('no-way-back-v1.js?v=7'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
     if(!contents.includes('comic-scenes-v1.css?v=2')||!contents.includes('comic-scenes-v1.js?v=2')||!contents.includes('onboarding-v1.js?v=18'))throw new Error('Tutorial comic asset cache versions are stale in guild.html');
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=48')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
