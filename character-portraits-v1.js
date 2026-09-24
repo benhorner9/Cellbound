@@ -279,7 +279,10 @@ function itemIdentity(item,slot){
   return String(item.appearanceId||item.visualStyle||item.baseItemId||item.itemId||item.name||slot||'gear').toLowerCase();
 }
 function visualVariant(item,slot,count){
-  return hash(itemIdentity(item,slot)+'|'+slot)%Math.max(1,count||5);
+  var size=Math.max(1,count||6),id=itemIdentity(item,slot);
+  var canonical=id.match(/^([a-z0-9-]+)-t([1-5])-(head|shoulders|chest|hands|waist|legs|feet|weapon|offhand|ring|trinket|relic)$/);
+  if(canonical&&size>=5)return (hash(canonical[1]+'|'+slot)%size+(Number(canonical[2])-1))%size;
+  return hash(id+'|'+slot)%size;
 }
 function setGroupId(c,item){
   if(!item)return null;
@@ -352,6 +355,7 @@ function weaponType(item,c){
   if(/(staff|stave|branch)/.test(n))return'staff';
   if(/(rod)/.test(n))return'rod';
   if(/(greatblade|greatsword|claymore)/.test(n))return'greatsword';
+  if(paperClass(c)==='Rogue'&&/(blade|blades)/.test(n))return'dagger';
   if(/(sword|blade|blades|sabre|saber)/.test(n))return'sword';
   return CLASS_WEAPON_DEFAULT[paperClass(c)]||'sword';
 }
