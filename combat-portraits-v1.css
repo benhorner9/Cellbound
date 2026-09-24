@@ -25,6 +25,7 @@
   box-shadow:none
 }
 .cb2d-unit.cb-combat-has-portrait>.cb-combat-portrait svg{width:100%;height:100%}
+.cb-combat-portrait .cb-portrait svg>rect:last-child{display:none}
 .cb2d-unit.cb-combat-has-portrait>span:not(.cb-combat-portrait){top:34px}
 .cb2d-unit.cb-combat-has-portrait .cb2d-unit-hp{top:-15px;width:46px}
 .cb2d-unit.cb-combat-has-portrait.attacking>.cb-combat-portrait{animation:cbCombatPortraitAttack .42s ease-out}
