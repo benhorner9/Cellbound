@@ -240,12 +240,21 @@ function paperDoll(c,state){
   const upgradeCount=[...leftSlots,...rightSlots].filter(slot=>bestBankUpgrade(state,c,slot)).length;
   const ent=window.CellboundGame?.getEntitlements?.()||{professionSlots:1,member:false};
   const health=sheetMaxHealth(c),shock=Math.round(Number(c.cellShock)||0);
+  const visibleSlots=['Head','Shoulders','Chest','Hands','Legs','Feet','Weapon','OffHand'];
+  const visibleEquipped=visibleSlots.filter(slot=>c.equipment?.[slot]).length;
+  const visual=CP?.paperDollHTML?.(c,{size:'equipment',highlightedSlot:activeSlot,accent:meta.accent})||portraitHTML(c,'hero');
   const coreStats=['Strength','Agility','Intellect','Stamina'];
   const combatStats=['Armour','Crit','Haste','Block','Threat','Healing'];
   return `<div class="cb-paperdoll cb-armoury-screen cb-armoury-stats-screen" style="--cb-accent:${meta.accent}">
     <div class="cb-gear-column cb-gear-left">${leftSlots.map(s=>equipmentSlot(c,s,state)).join('')}</div>
     <section class="cb-armoury-stage cb-stat-command">
-      <div class="cb-armoury-heading"><div><small>CHARACTER STATS</small><h3>${c.name}</h3><p>${c.race||'Veyren'} · ${c.class} · ${c.spec}</p></div><span class="cb-role-pill cb-role-${role}">${roleLabel(role)}</span></div>
+      <div class="cb-armoury-heading"><div><small>CHARACTER ARMOURY</small><h3>${c.name}</h3><p>${c.race||'Veyren'} · ${c.class} · ${c.spec}</p></div><span class="cb-role-pill cb-role-${role}">${roleLabel(role)}</span></div>
+
+      <div class="cb-equipment-visual-stage" data-paper-doll-stage>
+        <div class="cb-equipment-visual-meta"><span>LIVE EQUIPMENT VIEW</span><b>${visibleEquipped}/8 visible slots equipped</b></div>
+        <div class="cb-equipment-visual-model">${visual}</div>
+        <div class="cb-equipment-visual-foot"><span>${activeSlot?`Inspecting ${activeSlot}`:'Select a gear slot to highlight it on the character.'}</span><em>Appearance updates instantly with equipped gear.</em></div>
+      </div>
 
       <div class="cb-stat-hero">
         <div class="cb-stat-crest cb-stat-portrait">${portraitHTML(c,'lg')}<span class="cb-stat-class">${meta.icon}</span><small>LEVEL ${c.level||1}</small></div>
