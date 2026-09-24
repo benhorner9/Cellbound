@@ -1,0 +1,333 @@
+
+/* Cellbound modular character portraits v1 */
+.cb-portrait{
+  --cbp-accent:#76d7d0;
+  position:relative;
+  display:inline-grid;
+  place-items:center;
+  flex:0 0 auto;
+  overflow:hidden;
+  border-radius:18px;
+  background:#0a1016;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb,var(--cbp-accent) 34%,transparent),
+    inset 0 0 24px rgba(0,0,0,.42),
+    0 8px 22px rgba(0,0,0,.2);
+  isolation:isolate;
+}
+.cb-portrait svg{display:block;width:100%;height:100%}
+.cb-portrait--xs{width:34px;height:34px;border-radius:9px}
+.cb-portrait--sm{width:44px;height:44px;border-radius:11px}
+.cb-portrait--md{width:58px;height:58px;border-radius:14px}
+.cb-portrait--lg{width:76px;height:76px;border-radius:17px}
+.cb-portrait--hero{width:112px;height:112px;border-radius:22px}
+.cb-portrait--fill{width:100%;height:100%;border-radius:inherit}
+
+/* Roster */
+.roster-card-portrait{
+  position:relative;
+  width:68px;
+  min-width:68px;
+  height:68px;
+  display:grid;
+  place-items:center;
+}
+.roster-card-portrait>.cb-portrait{width:64px;height:64px}
+.roster-card-portrait>i{
+  position:absolute;
+  right:-2px;
+  bottom:-2px;
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  font-size:12px;
+  font-style:normal;
+  color:var(--roster-accent,#d8b976);
+  background:#091017;
+  border:1px solid color-mix(in srgb,var(--roster-accent,#d8b976) 55%,#1d2c31);
+  box-shadow:0 4px 10px rgba(0,0,0,.35);
+}
+.home-party-portrait{
+  width:48px;
+  height:48px;
+  border-radius:12px;
+  overflow:visible;
+  background:none;
+  display:grid;
+  place-items:center;
+}
+.home-party-portrait .cb-portrait{width:48px;height:48px}
+.party-choice .avatar{
+  width:48px;
+  height:48px;
+  border-radius:12px;
+  display:grid;
+  place-items:center;
+  overflow:visible;
+  background:none;
+}
+.party-choice .avatar .cb-portrait{width:48px;height:48px}
+.party-slot .party-slot-portrait{
+  width:52px;
+  height:52px;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+}
+.party-slot .party-slot-portrait .cb-portrait{width:50px;height:50px}
+
+/* Character sheet */
+.cb-header-crest.cb-header-portrait{
+  width:76px;
+  height:76px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  background:none;
+  border:0;
+}
+.cb-header-crest.cb-header-portrait .cb-portrait{width:74px;height:74px}
+.cb-stat-crest.cb-stat-portrait{
+  width:auto;
+  min-width:132px;
+  gap:8px;
+}
+.cb-stat-crest.cb-stat-portrait>.cb-portrait{margin:0 auto}
+.cb-stat-crest.cb-stat-portrait>span.cb-stat-class{
+  font-size:18px;
+  color:var(--cb-accent,#58d7cf);
+}
+.cb-stat-crest.cb-stat-portrait>small{display:block}
+
+/* Compact portrait usages */
+.z-party-member>.cb-portrait{width:40px;height:40px;margin-right:10px}
+.party-draft-card>.cb-portrait{width:52px;height:52px}
+.formation-unit>.cb-portrait{width:44px;height:44px;margin-bottom:5px}
+.quest-dialogue-portrait{
+  width:76px;
+  min-width:76px;
+  height:76px;
+}
+.quest-dialogue-portrait>.cb-portrait{width:76px;height:76px}
+.quest-dialogue-portrait.is-monogram{
+  display:grid;
+  place-items:center;
+}
+.quest-gear-body [data-qgr-char]>span,
+.quest-bearer-picker [data-bearer]>span{
+  width:44px;
+  height:44px;
+  display:grid;
+  place-items:center;
+  overflow:visible;
+}
+.quest-gear-body [data-qgr-char]>span .cb-portrait,
+.quest-bearer-picker [data-bearer]>span .cb-portrait{
+  width:42px;
+  height:42px;
+}
+
+/* Character appearance editor */
+.cb-appearance-editor{
+  display:grid;
+  grid-template-columns:minmax(150px,190px) minmax(0,1fr);
+  gap:18px;
+  align-items:stretch;
+  padding:16px;
+  border:1px solid rgba(151,177,178,.16);
+  border-radius:18px;
+  background:
+    radial-gradient(circle at 15% 20%,rgba(77,171,166,.09),transparent 38%),
+    linear-gradient(155deg,rgba(16,25,32,.96),rgba(8,13,18,.94));
+  box-shadow:inset 0 1px rgba(255,255,255,.025);
+}
+.cb-appearance-preview{
+  min-height:170px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:14px;
+  border-radius:14px;
+  background:rgba(5,10,14,.55);
+  border:1px solid rgba(151,177,178,.12);
+}
+.cb-appearance-preview>.cb-portrait{
+  width:118px;
+  height:118px;
+}
+.cb-appearance-preview>button{
+  width:100%;
+  min-height:38px;
+  padding:8px 10px;
+  border:1px solid rgba(113,210,200,.28);
+  border-radius:9px;
+  color:#c9e8e4;
+  background:rgba(40,112,108,.11);
+  font:700 10px/1.2 inherit;
+  letter-spacing:.1em;
+  cursor:pointer;
+}
+.cb-appearance-preview>button:hover{
+  border-color:rgba(113,210,200,.55);
+  background:rgba(40,112,108,.2);
+}
+.cb-appearance-controls{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px 10px;
+  align-content:start;
+}
+.cb-appearance-control{
+  min-width:0;
+  padding:9px 10px;
+  border:1px solid rgba(151,177,178,.12);
+  border-radius:10px;
+  background:rgba(5,10,14,.36);
+}
+.cb-appearance-control>span{
+  display:block;
+  margin-bottom:6px;
+  color:#7f9898;
+  font-size:9px;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+.cb-appearance-control>div{
+  display:grid;
+  grid-template-columns:30px minmax(52px,1fr) 30px;
+  gap:5px;
+  align-items:center;
+}
+.cb-appearance-control button{
+  min-width:30px;
+  height:30px;
+  padding:0;
+  border-radius:7px;
+  border:1px solid rgba(151,177,178,.16);
+  background:#101820;
+  color:#cce0df;
+  font-size:19px;
+  line-height:1;
+  cursor:pointer;
+}
+.cb-appearance-control button:hover{
+  border-color:rgba(113,210,200,.48);
+  color:#fff;
+}
+.cb-appearance-control b{
+  overflow:hidden;
+  color:#d9e4e3;
+  font-size:10px;
+  text-align:center;
+  white-space:nowrap;
+}
+
+/* Onboarding appearance stage */
+.builder-section.appearance-builder-section .builder-section-head{margin-bottom:12px}
+.party-draft-card{
+  align-items:center;
+}
+.party-draft-card>.cb-portrait+div{min-width:0}
+.formation-unit{
+  min-width:0;
+}
+.formation-unit .cb-portrait{
+  box-shadow:0 0 0 1px rgba(255,255,255,.06),0 4px 12px rgba(0,0,0,.2);
+}
+.recruit-preview .cb-portrait{
+  width:72px;
+  height:72px;
+}
+.recruit-preview{
+  align-items:center;
+}
+.recruit-appearance-wrap{
+  margin-top:4px;
+}
+.recruit-appearance-wrap>small{
+  display:block;
+  margin:0 0 8px;
+  color:#76908d;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.12em;
+}
+.recruit-modal .cb-appearance-editor{
+  grid-template-columns:142px minmax(0,1fr);
+  margin:2px 0 4px;
+}
+.recruit-modal .cb-appearance-preview{min-height:150px}
+.recruit-modal .cb-appearance-preview>.cb-portrait{width:96px;height:96px}
+
+/* Keep portraits crisp and compact on touch layouts */
+@media (max-width:900px){
+  .cb-appearance-editor{grid-template-columns:1fr}
+  .cb-appearance-preview{min-height:auto;flex-direction:row;justify-content:flex-start}
+  .cb-appearance-preview>.cb-portrait{width:88px;height:88px;flex:0 0 auto}
+  .cb-appearance-preview>button{width:auto;flex:1}
+  .cb-appearance-controls{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .roster-card-portrait{width:60px;min-width:60px;height:60px}
+  .roster-card-portrait>.cb-portrait{width:56px;height:56px}
+}
+@media (max-width:560px){
+  .cb-appearance-editor{padding:12px;gap:12px}
+  .cb-appearance-controls{grid-template-columns:1fr 1fr}
+  .cb-appearance-control{padding:8px}
+  .cb-appearance-preview{align-items:center}
+  .cb-appearance-preview>.cb-portrait{width:78px;height:78px}
+  .cb-header-crest.cb-header-portrait{width:62px;height:62px}
+  .cb-header-crest.cb-header-portrait .cb-portrait{width:60px;height:60px}
+}
+
+.recruit-appearance-wrap{grid-column:1/-1}
+.party-slot .slot-role:has(.cb-portrait){
+  padding:0;
+  background:none;
+  border:0;
+  overflow:visible;
+}
+.party-slot .slot-role .cb-portrait{width:46px;height:46px}
+.quest-dialogue-portrait .cb-portrait{width:100%;height:100%}
+
+/* PvP identity */
+.pvp-avatar{overflow:hidden;padding:0}
+.pvp-avatar .cb-portrait{width:34px;height:34px;border-radius:7px}
+.pvp-team i:has(.cb-portrait){padding:0;overflow:hidden;background:none}
+.pvp-team i .cb-portrait{width:34px;height:34px;border-radius:50%}
+.pvp-match-roster-row{grid-template-columns:7px 42px minmax(0,1fr) auto}
+.pvp-match-portrait{width:42px;height:42px;display:grid;place-items:center}
+.pvp-match-portrait .cb-portrait{width:40px;height:40px;border-radius:10px}
+.pvp-match-portrait-fallback{width:40px;height:40px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.08);border-radius:10px}
+
+/* Character sheet compatibility with existing crest rules */
+.cb-header-crest.cb-header-portrait .cb-portrait{
+  width:100%;
+  height:100%;
+  border-radius:inherit;
+}
+.cb-stat-crest.cb-stat-portrait{min-width:0}
+.cb-stat-crest.cb-stat-portrait>.cb-portrait{
+  position:relative;
+  z-index:2;
+  width:92px;
+  height:92px;
+  margin:0 auto;
+  opacity:1;
+  font-size:initial;
+  color:inherit;
+}
+.cb-stat-crest.cb-stat-portrait>span.cb-stat-class{
+  position:absolute;
+  z-index:3;
+  right:8px;
+  top:7px;
+  font-size:15px;
+  line-height:1;
+  opacity:.72;
+  color:var(--cb-accent,#58d7cf);
+}

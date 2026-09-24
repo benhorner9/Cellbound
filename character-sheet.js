@@ -4,6 +4,8 @@
 const STORAGE='cellbound-management-reboot-v3';
 const G=window.CellboundGear;
 const I=window.CellboundIdentities;
+const CP=window.CellboundPortraits;
+const portraitHTML=(c,size='lg')=>CP?.portraitHTML?.(c,{size})||'<span class="cb-portrait cb-portrait--'+size+'"><b>'+String(c?.portrait||c?.name||'?').slice(0,2).toUpperCase()+'</b></span>';
 const modal=document.getElementById('characterModal');
 const detail=document.getElementById('characterDetail');
 if(!modal||!detail)return;
@@ -246,7 +248,7 @@ function paperDoll(c,state){
       <div class="cb-armoury-heading"><div><small>CHARACTER STATS</small><h3>${c.name}</h3><p>${c.race||'Veyren'} · ${c.class} · ${c.spec}</p></div><span class="cb-role-pill cb-role-${role}">${roleLabel(role)}</span></div>
 
       <div class="cb-stat-hero">
-        <div class="cb-stat-crest"><span>${meta.icon}</span><b>${c.portrait||String(c.name||'?').slice(0,2).toUpperCase()}</b><small>LEVEL ${c.level||1}</small></div>
+        <div class="cb-stat-crest cb-stat-portrait">${portraitHTML(c,'lg')}<span class="cb-stat-class">${meta.icon}</span><small>LEVEL ${c.level||1}</small></div>
         <div class="cb-stat-vitals">
           <article><span>HEALTH</span><b>${health.toLocaleString()}</b><small>Maximum health</small></article>
           <article><span>ITEM LEVEL</span><b>${itemLevel}</b><small>Average equipped gear</small></article>
@@ -545,7 +547,7 @@ function renderSheet(){
   const tabs=CHARACTER_TABS.map(([id,icon,label,sub])=>`<button type="button" data-sheet-tab="${id}" class="${currentTab===id?'active':''}" aria-current="${currentTab===id?'page':'false'}"><i>${icon}</i><span><b>${label}</b><small>${sub}</small></span></button>`).join('');
   detail.innerHTML=`<div class="cb-sheet cb-command-sheet ${editable?'':'member-slot-locked'}" style="--cb-accent:${meta.accent}">
     <header class="cb-sheet-header cb-command-character-header">
-      <div class="cb-header-crest">${meta.icon}</div>
+      <div class="cb-header-crest cb-header-portrait">${portraitHTML(c,'lg')}</div>
       <div class="cb-header-identity"><div class="cb-header-eyebrow"><span>LEVEL ${c.level} · ${c.race||'Veyren'}</span><em class="${recovering?'recovering':active?'active':'reserve'}">${recovering?'RECOVERING':active?'ACTIVE PARTY':'RESERVE'}</em></div><h2>${c.name}</h2><div class="cb-header-subtitle">${c.class} · ${c.spec} · ${role}</div></div>
       <div class="cb-header-metrics">
         <div><span>ITEM LEVEL</span><b>${ilvl}</b></div>

@@ -28,10 +28,11 @@ function close(){
 }
 function roleLabel(u){return String(u?.role||'dps').toUpperCase()}
 function classColour(u){return window.CellboundPvPCombat?.CLASS_COLORS?.[u?.class]||'#8da09b'}
+function portraitHTML(u){return window.CellboundPortraits?.portraitHTML?.(u,{size:'sm',accent:classColour(u)})||'<span class="pvp-match-portrait-fallback">'+esc(u?.portrait||u?.name?.slice(0,2)||'?')+'</span>'}
 function teamRows(units,side){
   return (units||[]).map((u,i)=>
     '<div class="pvp-match-roster-row '+side+'">'+
-      '<i style="--match-class:'+classColour(u)+'"></i>'+
+      '<i style="--match-class:'+classColour(u)+'"></i><div class="pvp-match-portrait">'+portraitHTML(u)+'</div>'+
       '<span><b>'+esc(u.name||('Combatant '+(i+1)))+'</b><small>'+esc(u.class||'Adventurer')+' · '+esc(u.spec||roleLabel(u))+'</small></span>'+
       '<strong>'+esc(roleLabel(u))+'</strong>'+
     '</div>'
