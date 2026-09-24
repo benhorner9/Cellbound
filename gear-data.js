@@ -98,20 +98,20 @@ const RELIC_NOUN={Warrior:'Crest',Paladin:'Libram',Priest:'Icon',Druid:'Totem',H
 const SLOT_GLYPHS={Head:'⛑',Shoulders:'⌃',Chest:'▣',Hands:'✋',Waist:'═',Legs:'║',Feet:'♟',Weapon:'⚔',OffHand:'🛡',Ring:'◉',Trinket:'◆',Relic:'◇'};
 function inferWeaponType(klass,name=''){
   const n=String(name).toLowerCase();
-  if(/\b(spear|pike|lance|glaive|halberd|polearm)\b/.test(n))return'spear';
-  if(/\b(crossbow)\b/.test(n))return'crossbow';
-  if(/\b(bow|longbow|shortbow)\b/.test(n))return'bow';
-  if(/\b(axe|cleaver|hatchet)\b/.test(n))return'axe';
-  if(/\b(maul|hammer)\b/.test(n))return'hammer';
-  if(/\b(mace|morningstar)\b/.test(n))return'mace';
-  if(/\b(dagger|knife|shiv|shivs|knives|stiletto)\b/.test(n))return'dagger';
-  if(/\b(wand)\b/.test(n))return'wand';
-  if(/\b(focus|orb|crystal)\b/.test(n))return'focus';
-  if(/\b(scepter|sceptre)\b/.test(n))return'scepter';
-  if(/\b(staff|stave|branch)\b/.test(n))return'staff';
-  if(/\b(rod)\b/.test(n))return'rod';
-  if(/\b(greatblade|greatsword|claymore)\b/.test(n))return'greatsword';
-  if(/\b(sword|blade|blades|sabre|saber)\b/.test(n))return'sword';
+  if(/(spear|pike|lance|glaive|halberd|polearm)/.test(n))return'spear';
+  if(/(crossbow)/.test(n))return'crossbow';
+  if(/(bow|longbow|shortbow)/.test(n))return'bow';
+  if(/(axe|cleaver|hatchet)/.test(n))return'axe';
+  if(/(maul|hammer)/.test(n))return'hammer';
+  if(/(mace|morningstar)/.test(n))return'mace';
+  if(/(dagger|knife|shiv|shivs|knives|stiletto)/.test(n))return'dagger';
+  if(/(wand)/.test(n))return'wand';
+  if(/(focus|orb|crystal)/.test(n))return'focus';
+  if(/(scepter|sceptre)/.test(n))return'scepter';
+  if(/(staff|stave|branch)/.test(n))return'staff';
+  if(/(rod)/.test(n))return'rod';
+  if(/(greatblade|greatsword|claymore)/.test(n))return'greatsword';
+  if(/(sword|blade|blades|sabre|saber)/.test(n))return'sword';
   return({Warrior:'sword',Paladin:'hammer',Priest:'staff',Druid:'staff',Hunter:'bow',Rogue:'dagger',Mage:'staff'})[klass]||'sword'
 }
 function inferOffHandType(klass,name=''){
@@ -120,7 +120,7 @@ function inferOffHandType(klass,name=''){
   if(/\b(quiver)\b/.test(n))return'quiver';
   if(/\b(scripture|tome|book|grimoire)\b/.test(n))return'tome';
   if(/\b(idol|totem)\b/.test(n))return'idol';
-  if(/\b(focus|orb|crystal)\b/.test(n))return'focus';
+  if(/(focus|orb|crystal)/.test(n))return'focus';
   if(/\b(blade|dagger|knife|shiv)\b/.test(n))return'dagger';
   return({Warrior:'shield',Paladin:'shield',Priest:'tome',Druid:'idol',Hunter:'quiver',Rogue:'dagger',Mage:'focus'})[klass]||'focus'
 }
@@ -227,6 +227,7 @@ function createQuestGear(c,slot,tier=1,profile='specialist',source='Quest Reward
     ...base,
     itemId:'quest-'+base.itemId+'-'+profile,
     baseItemId:base.itemId,
+    appearanceId:'quest-'+base.itemId+'-'+profile,
     name:profileName+' '+base.name,
     tierLabel:'Quest Gear · Tier '+tier,
     rarity:base.rarity,
