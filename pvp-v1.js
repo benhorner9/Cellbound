@@ -45,6 +45,7 @@ let matchRunning=false;
 let lastMatch=null;
 
 function game(){return window.CellboundGame}
+function portraitHTML(c,size='sm'){return game()?.portraitHTML?.(c,size)||window.CellboundPortraits?.portraitHTML?.(c,{size})||esc(c?.portrait||c?.name?.slice(0,2)||'?')}
 function state(){return game()?.getState?.()}
 function unlockedRoster(){
   const s=state(),g=game();
@@ -150,7 +151,7 @@ function squadStatus(chars){
   return{ok:true,text:'Active five ready'}
 }
 function teamMini(chars){
-  return `<div class="pvp-party-mini">${chars.map(c=>{const g=pvpGearScore(c);return `<div><span class="pvp-avatar">${esc(c.portrait||c.name?.slice(0,2)||'?')}</span><span><b>${esc(c.name)}</b><small>${esc(c.class)} · ${esc(c.spec)} · PvP ${Math.round(characterPvpPower(c))}</small></span><em>${g.pieces}/8 PvP pieces</em></div>`}).join('')||'<p>No active party selected.</p>'}</div>`
+  return `<div class="pvp-party-mini">${chars.map(c=>{const g=pvpGearScore(c);return `<div><span class="pvp-avatar">${portraitHTML(c,'xs')}</span><span><b>${esc(c.name)}</b><small>${esc(c.class)} · ${esc(c.spec)} · PvP ${Math.round(characterPvpPower(c))}</small></span><em>${g.pieces}/8 PvP pieces</em></div>`}).join('')||'<p>No active party selected.</p>'}</div>`
 }
 function battlegroundMarkup(p){
   const party=activeParty(),ready=squadStatus(party),m=MODE_DEFS[battlegroundMode],size=BG_SIZES[battlegroundSize];
@@ -159,7 +160,7 @@ function battlegroundMarkup(p){
 function arenaSelectionMarkup(){
   const roster=availableRoster();
   arenaSelection=arenaSelection.filter(id=>roster.some(c=>c.id===id)).slice(0,arenaSize);
-  return `<div class="arena-roster">${roster.map(c=>{const chosen=arenaSelection.includes(c.id),g=pvpGearScore(c);return `<button data-arena-char="${c.id}" class="${chosen?'selected':''}" ${!chosen&&arenaSelection.length>=arenaSize?'disabled':''}><span class="pvp-avatar">${esc(c.portrait||'?')}</span><span><b>${esc(c.name)}</b><small>${esc(c.class)} · ${esc(c.spec)} · ${g.pieces}/8 pieces</small></span><em>${chosen?'SELECTED':'ADD'}</em></button>`}).join('')||'<p>No available characters.</p>'}</div>`
+  return `<div class="arena-roster">${roster.map(c=>{const chosen=arenaSelection.includes(c.id),g=pvpGearScore(c);return `<button data-arena-char="${c.id}" class="${chosen?'selected':''}" ${!chosen&&arenaSelection.length>=arenaSize?'disabled':''}><span class="pvp-avatar">${portraitHTML(c,'xs')}</span><span><b>${esc(c.name)}</b><small>${esc(c.class)} · ${esc(c.spec)} · ${g.pieces}/8 pieces</small></span><em>${chosen?'SELECTED':'ADD'}</em></button>`}).join('')||'<p>No available characters.</p>'}</div>`
 }
 function arenaMarkup(p){
   const unlocked=arenaUnlocked(p),chars=arenaSelection.map(id=>state()?.roster?.find(c=>c.id===id)).filter(Boolean),ready=unlocked&&chars.length===arenaSize;
@@ -168,7 +169,7 @@ function arenaMarkup(p){
 function armouryMarkup(p){
   const roster=unlockedRoster(),c=roster.find(x=>x.id===armouryCharacterId)||roster[0],score=pvpGearScore(c||{});
   if(c)armouryCharacterId=c.id;
-  return `<section class="pvp-grid armoury-layout"><aside class="pvp-panel"><header><div><small>PVP LOADOUT</small><h3>Choose Adventurer</h3></div></header><div class="pvp-armoury-roster">${roster.map(x=>`<button data-armoury-char="${x.id}" class="${x.id===armouryCharacterId?'active':''}"><span class="pvp-avatar">${esc(x.portrait||'?')}</span><span><b>${esc(x.name)}</b><small>${esc(x.class)} · ${pvpGearScore(x).pieces}/8 equipped</small></span></button>`).join('')}</div></aside><div class="pvp-main-stack"><article class="pvp-panel"><header><div><small>DEDICATED PVP EQUIPMENT</small><h3>${esc(c?.name||'No Adventurer')}</h3></div><b>PVP POWER ${Math.round(characterPvpPower(c||{}))}</b></header><div class="pvp-stat-strip"><div><span>PvP Power</span><b>${score.power}</b></div><div><span>PvP Defence</span><b>${score.defence}</b></div><div><span>Control Resist</span><b>${score.control}</b></div><div><span>Pieces</span><b>${score.pieces}/8</b></div></div><div class="pvp-equipped-grid">${PVP_GEAR_SLOTS.map(slot=>{const item=c?.pvpEquipment?.[slot];return `<div class="${item?'filled':''}"><span>${item?pvpGearArt(item,item.tier,slot,42):SLOT_META[slot].icon}</span><small>${slot}</small><b>${item?esc(item.name):'Empty'}</b><em>${item?`T${item.tier} · +${item.pvpPower} power`:'PvP only'}</em></div>`}).join('')}</div></article>${[1,2,3].map(tier=>armouryTierMarkup(p,c,tier)).join('')}</div></section>`
+  return `<section class="pvp-grid armoury-layout"><aside class="pvp-panel"><header><div><small>PVP LOADOUT</small><h3>Choose Adventurer</h3></div></header><div class="pvp-armoury-roster">${roster.map(x=>`<button data-armoury-char="${x.id}" class="${x.id===armouryCharacterId?'active':''}"><span class="pvp-avatar">${portraitHTML(x,'xs')}</span><span><b>${esc(x.name)}</b><small>${esc(x.class)} · ${pvpGearScore(x).pieces}/8 equipped</small></span></button>`).join('')}</div></aside><div class="pvp-main-stack"><article class="pvp-panel"><header><div><small>DEDICATED PVP EQUIPMENT</small><h3>${esc(c?.name||'No Adventurer')}</h3></div><b>PVP POWER ${Math.round(characterPvpPower(c||{}))}</b></header><div class="pvp-stat-strip"><div><span>PvP Power</span><b>${score.power}</b></div><div><span>PvP Defence</span><b>${score.defence}</b></div><div><span>Control Resist</span><b>${score.control}</b></div><div><span>Pieces</span><b>${score.pieces}/8</b></div></div><div class="pvp-equipped-grid">${PVP_GEAR_SLOTS.map(slot=>{const item=c?.pvpEquipment?.[slot];return `<div class="${item?'filled':''}"><span>${item?pvpGearArt(item,item.tier,slot,42):SLOT_META[slot].icon}</span><small>${slot}</small><b>${item?esc(item.name):'Empty'}</b><em>${item?`T${item.tier} · +${item.pvpPower} power`:'PvP only'}</em></div>`}).join('')}</div></article>${[1,2,3].map(tier=>armouryTierMarkup(p,c,tier)).join('')}</div></section>`
 }
 function armouryTierMarkup(p,c,tier){
   const t=TIER_META[tier],locked=tier===2&&!arenaUnlocked(p),seasonLocked=tier===3&&p.seasonCrests<=0;
@@ -181,7 +182,7 @@ function leaderboardMarkup(p){
 }
 function matchStageMarkup(match){
   const blue=match.playerUnits||[],red=match.enemyUnits||[];
-  return `<div class="pvp-live"><div class="pvp-live-head"><span>${match.kind==='arena'?`${match.size}v${match.size} ARENA`:`${match.size}v${match.size} · ${MODE_DEFS[match.mode]?.name||'Battleground'}`}</span><b>COMBAT RESOLVING</b></div><div class="pvp-battlefield"><div class="pvp-objective-mark">${match.kind==='arena'?'⚔':MODE_DEFS[match.mode]?.icon||'◇'}</div><div class="pvp-team blue">${blue.map((u,i)=>`<span style="--i:${i}"><i>${esc(u.portrait||'◆')}</i><small>${esc(u.name)}</small></span>`).join('')}</div><div class="pvp-team red">${red.map((u,i)=>`<span style="--i:${i}"><i>◆</i><small>${esc(u.name)}</small></span>`).join('')}</div></div><div class="pvp-live-bars"><div><span>Your team</span><div><i id="pvpBlueBar" style="width:100%"></i></div></div><div><span>Opposition</span><div><i id="pvpRedBar" style="width:100%"></i></div></div></div><div id="pvpLiveLog" class="pvp-live-log">The gates open…</div></div>`
+  return `<div class="pvp-live"><div class="pvp-live-head"><span>${match.kind==='arena'?`${match.size}v${match.size} ARENA`:`${match.size}v${match.size} · ${MODE_DEFS[match.mode]?.name||'Battleground'}`}</span><b>COMBAT RESOLVING</b></div><div class="pvp-battlefield"><div class="pvp-objective-mark">${match.kind==='arena'?'⚔':MODE_DEFS[match.mode]?.icon||'◇'}</div><div class="pvp-team blue">${blue.map((u,i)=>`<span style="--i:${i}"><i>${portraitHTML(u,'xs')}</i><small>${esc(u.name)}</small></span>`).join('')}</div><div class="pvp-team red">${red.map((u,i)=>`<span style="--i:${i}"><i>◆</i><small>${esc(u.name)}</small></span>`).join('')}</div></div><div class="pvp-live-bars"><div><span>Your team</span><div><i id="pvpBlueBar" style="width:100%"></i></div></div><div><span>Opposition</span><div><i id="pvpRedBar" style="width:100%"></i></div></div></div><div id="pvpLiveLog" class="pvp-live-log">The gates open…</div></div>`
 }
 function matchResultMarkup(m){
   const win=m.win,colour=win?'victory':'defeat';
