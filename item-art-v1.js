@@ -313,7 +313,9 @@ function enhanceCrafting(root){
   if(/^Recipe:/i.test(name)){b.insertAdjacentHTML('beforebegin',artHTML({id:'recipe-'+slug(name),name:name,category:'recipe',rarity:'Rare'},48,'crafted-item-art'));card.dataset.itemArtDone='1'}
  });
  scope.querySelectorAll?.('.recipe-card').forEach(function(card){
-  if(card.dataset.itemArtDone==='1')return;const name=card.querySelector('h4')?.textContent||'';
+  if(card.dataset.itemArtDone==='1')return;
+  if(card.querySelector(':scope > .recipe-output-art')){card.dataset.itemArtDone='1';return}
+  const name=card.querySelector('h4')?.textContent||'';
   const all=Object.values(P.PROFESSIONS||{}).flatMap(function(v){return v.recipes||[]}),recipe=all.find(function(r){return r.name===name});
   if(recipe?.output?.category==='consumable'){card.insertAdjacentHTML('afterbegin',consumableHTML(recipe.output.key,48,'recipe-output-art'));card.dataset.itemArtDone='1'}
  });
