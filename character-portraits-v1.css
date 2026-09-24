@@ -69,6 +69,63 @@
   background:none;
 }
 .party-choice .avatar .cb-portrait{width:48px;height:48px}
+
+/* Active Party roster: reserve the real portrait width so copy never sits beneath it. */
+#party .party-choice{
+  grid-template-columns:56px minmax(0,1fr) auto;
+  column-gap:10px;
+  align-items:center;
+  min-width:0;
+}
+#party .party-choice>.avatar{
+  width:48px;
+  height:48px;
+  flex:0 0 48px;
+  align-self:center;
+}
+#party .party-choice>div:nth-child(2){
+  min-width:0;
+  padding-left:0;
+  overflow:hidden;
+}
+#party .party-choice>div:nth-child(2)>b{
+  display:block;
+  line-height:1.15;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+#party .party-choice>div:nth-child(2)>small{
+  display:block;
+  margin-top:3px;
+  line-height:1.35;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+#party .party-choice>em{
+  min-width:max-content;
+  padding-left:4px;
+  text-align:right;
+  line-height:1.25;
+}
+
+@media(max-width:1180px){
+  #party .party-roster{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #party .party-choice{grid-template-columns:56px minmax(0,1fr)}
+  #party .party-choice>em{
+    grid-column:2;
+    justify-self:start;
+    padding-left:0;
+    text-align:left;
+  }
+}
+@media(max-width:760px){
+  #party .party-roster{grid-template-columns:1fr}
+  #party .party-choice{
+    grid-template-columns:56px minmax(0,1fr);
+    min-height:72px;
+  }
+}
 .party-slot .party-slot-portrait{
   width:52px;
   height:52px;
