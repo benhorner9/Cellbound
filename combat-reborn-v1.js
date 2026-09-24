@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.5';
+const VERSION='1.3.6';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -503,10 +503,11 @@ function normalisePlayer(c,i){
  const carried=c?._combatResource,carriedValue=typeof carried==='number'?carried:Number(carried?.value);
  const resourceValue=Number.isFinite(carriedValue)?clamp(carriedValue,0,res.max):res.start;
  const setState=gearSetState(c),resourceRegen=(healer&&res.name==='Mana'?2.1:res.regen)*setState.resourceRegen;
- const itemLevel=Math.max(0,Number(c?._combatItemLevel??c?.itemLevel??c?.gear)||0),carriedCooldowns=copy(c?._combatCooldowns||{});
+ const itemLevel=Math.max(0,Number(c?._combatItemLevel??c?.itemLevel??c?.gear)||0),carriedCooldowns=copy(c?._combatCooldowns||{}),carriedPosition=c?._combatPosition;
+ const startPosition=carriedPosition&&Number.isFinite(Number(carriedPosition.x))&&Number.isFinite(Number(carriedPosition.y))?{x:Number(carriedPosition.x),y:Number(carriedPosition.y)}:{x:tank?42:role==='healer'?18:28,y:26+i*12};
  return{
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
-  maxHealth,health:startHealth,alive:startHealth>0,position:{x:tank?42:role==='healer'?18:28,y:26+i*12},facing:0,
+  maxHealth,health:startHealth,alive:startHealth>0,position:startPosition,facing:0,
   target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:carriedStatuses(c),resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
   abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:{},talentFlags:{},talentCounters:{},damageActions:0,knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),
   defensiveUntil:Math.max(0,Number(c?._combatDefensiveMs)||0),frenzyUntil:Math.max(0,Number(c?._combatFrenzyMs)||0),uniqueUsed:copy(c?._combatUniqueUsed||{}),nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
@@ -525,7 +526,7 @@ function normaliseEnemies(encounter){
   const currentHealth=data.currentHealth==null?maxHealth:clamp(Math.round(Number(data.currentHealth)||0),0,maxHealth);
   return{
    id:'e-'+i,name,role:'enemy',kind:classification==='boss'||classification==='world-boss'?'boss':'enemy',classification,classificationLabel:rule.label,level,
-   maxHealth,health:currentHealth,alive:currentHealth>0,position:{x:68,y:raw.length===1?50:30+i*(40/Math.max(1,raw.length-1))},facing:180,
+   maxHealth,health:currentHealth,alive:currentHealth>0,position:(data.currentPosition&&Number.isFinite(Number(data.currentPosition.x))&&Number.isFinite(Number(data.currentPosition.y)))?{x:Number(data.currentPosition.x),y:Number(data.currentPosition.y)}:{x:68,y:raw.length===1?50:30+i*(40/Math.max(1,raw.length-1))},facing:180,
    target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},movingUntil:0,moveToken:0,nextAttack:900+i*220,currentCast:null,
    isAdd:false,priority:Number.isFinite(Number(data.priority))?Number(data.priority):(i===0?2:1),focusSelected:Boolean(data.focusSelected),damageScale:rule.damage*damageMult,phaseDamageScale:1,hardEnraged:false,
    targeting:String(data.targeting||'threat').toLowerCase(),attackRange:Math.max(2,Number(data.attackRange)||5),attackName:data.attackName||null,damageType:data.damageType||'physical',allAttacksAoe:Boolean(data.allAttacksAoe)
