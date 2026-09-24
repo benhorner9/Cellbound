@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.6';
+const VERSION='1.3.7';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -509,7 +509,7 @@ function normalisePlayer(c,i){
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:startPosition,facing:0,
   target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:carriedStatuses(c),resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
-  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:{},talentFlags:{},talentCounters:{},damageActions:0,knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),
+  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:copy(c?._combatTalentTimers||{}),talentFlags:copy(c?._combatTalentFlags||{}),talentCounters:copy(c?._combatTalentCounters||{}),damageActions:Math.max(0,Number(c?._combatDamageActions)||0),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),
   defensiveUntil:Math.max(0,Number(c?._combatDefensiveMs)||0),frenzyUntil:Math.max(0,Number(c?._combatFrenzyMs)||0),uniqueUsed:copy(c?._combatUniqueUsed||{}),nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
 }
@@ -1044,12 +1044,16 @@ function useTalentUtility(ctx,u){
   talentTrigger(ctx,u,'Arcane Power',u,{duration:10000});return true
  }
  if(u.class==='Warrior'&&u.spec==='Arms'&&talentRank(u,'Bladestorm')&&talentReady(ctx,u,'bladestorm')&&livingEnemies(ctx).length>=2){
-  talentSetCooldown(ctx,u,'bladestorm',30000);u.gcdUntil=Math.max(u.gcdUntil,ctx.time+1500);
-  emit(ctx,'ABILITY_START',{source:u.id,target:livingEnemies(ctx)[0]?.id,ability:'Bladestorm',result:'talent',position:copy(u.position),payload:{kind:'damage'}});
+  const enemies=livingEnemies(ctx),target=enemies.find(e=>e.focusSelected)||[...enemies].sort((a,b)=>(Number(b.priority)||0)-(Number(a.priority)||0))[0];
+  if(!target)return false;
+  if(!moveIntoRange(ctx,u,target,5))return true;
+  talentSetCooldown(ctx,u,'bladestorm',30000);u.gcdUntil=Math.max(u.gcdUntil,ctx.time+1500);u.target=target.id;updateFacing(u,target);
+  emit(ctx,'ABILITY_START',{source:u.id,target:target.id,ability:'Bladestorm',result:'talent',position:copy(u.position),payload:{kind:'damage',range:8}});
   const amount=20*(1+Math.min(.35,u.power*.012))*(u.baseStats?.outputScale||1);
-  livingEnemies(ctx).forEach(e=>dealDamage(ctx,u,e,amount,'Bladestorm',{damageType:'physical'}));
-  talentTrigger(ctx,u,'Bladestorm',u,{targets:livingEnemies(ctx).length});
-  emit(ctx,'ABILITY_FINISH',{source:u.id,target:livingEnemies(ctx)[0]?.id,ability:'Bladestorm',result:'resolved',position:copy(u.position),payload:{kind:'damage'}});
+  const nearby=enemies.filter(e=>inRange(u,e,8)&&hasLineOfSight(ctx,u,e));
+  nearby.forEach(e=>dealDamage(ctx,u,e,amount,'Bladestorm',{damageType:'physical'}));
+  talentTrigger(ctx,u,'Bladestorm',u,{targets:nearby.length});
+  emit(ctx,'ABILITY_FINISH',{source:u.id,target:target.id,ability:'Bladestorm',result:'resolved',position:copy(u.position),payload:{kind:'damage',targets:nearby.length}});
   return true
  }
  return false
