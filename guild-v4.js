@@ -203,7 +203,9 @@ function normalizeCharacter(c,index=0){
   const starters=starterEquipment(c.class),keepBare=c.tutorialNew===true&&c.onboardingGearIssued!==true;
   ILVL_SLOTS.forEach(slot=>{
     const hasSlot=Object.prototype.hasOwnProperty.call(c.equipment,slot),existing=canonicalItem(c.equipment?.[slot]);
-    c.equipment[slot]=existing||(keepBare&&hasSlot?null:starters[slot]);
+    // Explicit null means the player intentionally unequipped this slot.
+    // Only seed starter gear when the slot has never existed on the save.
+    c.equipment[slot]=existing||(hasSlot?null:starters[slot]);
   });
   ['Shoulders','Hands','Waist','Legs','Feet','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic'].forEach(slot=>{if(!(slot in c.equipment))c.equipment[slot]=null;});
   c.gearItems=ILVL_SLOTS.map(slot=>c.equipment[slot]?.name||'Empty');c.cellShock=Math.max(0,Math.min(100,Number(c.cellShock)||0));c.cellShockLockedUntil=c.cellShockLockedUntil||null;c.professions=Array.isArray(c.professions)?c.professions.slice(0,2):[null,null];while(c.professions.length<2)c.professions.push(null);
