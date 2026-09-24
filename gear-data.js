@@ -163,6 +163,7 @@ function rollItemAffixes(raw){
   const pool=[...(CLASS_STAT_POOLS[item.class]||['stamina','crit','haste'])],stats=[];
   while(stats.length<count&&pool.length){const i=Math.floor(Math.random()*pool.length),key=pool.splice(i,1)[0];stats.push({key,value:rollValue(key,tier,item.slot)})}
   item.bonusStats=stats;item.rollId=rollId();item.affixVersion=1;
+  item.appearanceId=item.appearanceId||item.baseItemId||item.itemId||slug(item.name||item.slot||'gear');
   if(tier===4){item.setId=slug(item.class)+'-t4';item.setName=SET_META[item.class]?.name||item.class+' Tier 4 Set'}
   if(tier===5){item.setId=slug(item.class)+'-t5';item.setName=(SET_META[item.class]?.name||item.class)+' Raid Set';item.raidExclusive=true}
   return item;
