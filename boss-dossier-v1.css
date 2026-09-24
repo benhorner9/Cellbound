@@ -49,3 +49,5 @@ body.cbd-open{overflow:hidden}
 [data-cbd-boss="silas-vane"] .cbd-art-figure{height:64%;width:39%;bottom:8%}
 [data-cbd-boss="silas-vane"] .cbd-art-figure:after{content:"⚓";position:absolute;right:-44%;bottom:10%;font-size:clamp(72px,10vw,132px);color:#5b4a3d;transform:rotate(-19deg);filter:drop-shadow(0 8px 10px #000)}
 [data-cbd-boss="silas-vane"] .cbd-art-sigil{border-radius:2%;transform:translate(-50%,-50%) rotate(45deg)}
+
+.cbd-art-image[hidden],.cbd-art-fallback[hidden]{display:none!important}
