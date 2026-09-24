@@ -32,6 +32,7 @@ for(const file of files){
     for(const hook of ['escHtml(item.setName)','escHtml(rule.name)','escHtml(rule.short)','escHtml(rule.description)','escHtml(item.setName||id)'])if(!contents.includes(hook))throw new Error('Tier 4 set drawer escaping is missing '+hook);
     if(!contents.includes('function equipmentPanel')||!contents.includes('function equipmentFallback')||!contents.includes("stopImmediatePropagation();currentTab=tab.dataset.sheetTab"))throw new Error('Character Equipment tab recovery/navigation guard is missing');
     if(!contents.includes('function returnEquippedToBank')||!contents.includes('function refreshEquipmentSummary')||!contents.includes("const unequip=event.target.closest('[data-unequip-slot]');if(unequip){event.preventDefault();event.stopImmediatePropagation()"))throw new Error('Equipment replace/unequip must be atomic and take priority over slot clicks');
+    if(contents.includes("if(item.slot==='Weapon')return ['Weapon','OffHand']")||!contents.includes("if(item.slot==='Weapon')return ['Weapon']"))throw new Error('Character Equipment UI is allowing main-hand weapons into OffHand');
     if(!contents.includes("paperDollHTML?.(c")||!contents.includes('data-paper-doll-stage')||!contents.includes('LIVE EQUIPMENT VIEW'))throw new Error('Character Equipment visual paper doll is missing');
     if(!contents.includes('function fallbackEquipmentSlot')||!contents.includes('cb-recovery-armoury')||!contents.includes("if(!item||typeof item!=='object')return false")||contents.includes('activeSlot=null;\n    return equipmentFallback'))throw new Error('Equipment recovery mode must preserve the paper doll and slot controls');
   }
@@ -44,6 +45,7 @@ for(const file of files){
   }
   if(file==='character-portraits-v1.js'){
     for(const hook of ['window.CellboundPortraits','normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
+    if(!contents.includes("if(item.slot&&item.slot!=='OffHand')return''"))throw new Error('Paper doll must not invent an OffHand visual for main-hand weapons');
   }
   if(file==='character-portraits-v1.css'){
     for(const hook of ['.cb-portrait','.cb-appearance-editor','.roster-card-portrait','.quest-dialogue-portrait','.cb-paper-doll','.cb-paper-slot.is-highlighted','.cb-paper-slot.is-set-item','.cb-paper-set-glow','.cb-equipment-set-visual','.cb-equipment-visual-stage'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual styling is missing '+hook);
@@ -65,6 +67,7 @@ for(const file of files){
   }
   if(file==='gear-data.js'){
     if(!contents.includes('appearanceId:itemId')||!contents.includes('inferWeaponType')||!contents.includes('inferOffHandType'))throw new Error('Equipment Visuals V2 item identity metadata is missing');
+    if(!contents.includes('function equipmentPositions')||!contents.includes('function canEquipInSlot')||contents.includes("if(item.slot==='Weapon')return ['Weapon','OffHand']"))throw new Error('Weapon/OffHand slot rules are not strict');
     if(!contents.includes("5:{rarity:'Epic',label:'Tier 5'")||!contents.includes('raidExclusive:true'))throw new Error('Tier 5 must remain explicitly reserved for raid gear');
     if(!contents.includes('CHAPTER_GEAR={chapter:1,levelCap:15,dungeonTierCeiling:4,raidExclusiveTier:5}'))throw new Error('Chapter 1 gear contract is missing');
     if(!contents.includes("SLOT_ORDER=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring','Trinket','Relic']"))throw new Error('Full Chapter 1 equipment slot catalogue is missing');
@@ -235,11 +238,12 @@ for(const file of files){
     if(!contents.includes("id:'chaos-canyon',name:'Chaos Canyon'")||!contents.includes("id:'blackout-station',name:'Blackout Station'")||!contents.includes("id:'fractured-ages',name:'The Fractured Ages'"))throw new Error('Overview Next Dungeon ladder must cover current dungeon progression');
     if(!contents.includes("c.equipment[slot]=existing||(hasSlot?null:starters[slot])"))throw new Error('Explicitly unequipped core slots must stay empty after state normalization');
     if(contents.includes("existing||(keepBare&&hasSlot?null:starters[slot])"))throw new Error('Legacy starter restoration would re-equip removed Head/Chest/Weapon items');
+    if(!contents.includes('function repairInvalidOffHands')||!contents.includes("G?.canEquipInSlot?.(off,'OffHand')")||!contents.includes('repairInvalidOffHands(s);'))throw new Error('Legacy main-hand weapons are not being recovered from OffHand');
   }
   if(file==='guild.html'){
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
-    if(!contents.includes('character-portraits-v1.css?v=3')||!contents.includes('character-portraits-v1.js?v=4'))throw new Error('Character portrait identity assets are not linked from guild.html');
-    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=13')||!contents.includes('combat-reborn-v1.js?v=2')||!contents.includes('guild-v4.js?v=46')||!contents.includes('character-sheet.js?v=30')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=47')||!contents.includes('hollow-sanctum-v1.js?v=35')||!contents.includes('chaos-canyon-v1.js?v=10')||!contents.includes('blackout-station-v1.js?v=17')||!contents.includes('fractured-ages-v1.js?v=4'))throw new Error('Set bonus UI cache versions are stale in guild.html');
+    if(!contents.includes('character-portraits-v1.css?v=3')||!contents.includes('character-portraits-v1.js?v=5'))throw new Error('Character portrait identity assets are not linked from guild.html');
+    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=14')||!contents.includes('combat-reborn-v1.js?v=2')||!contents.includes('guild-v4.js?v=47')||!contents.includes('character-sheet.js?v=31')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=47')||!contents.includes('hollow-sanctum-v1.js?v=35')||!contents.includes('chaos-canyon-v1.js?v=10')||!contents.includes('blackout-station-v1.js?v=17')||!contents.includes('fractured-ages-v1.js?v=4'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
     if(!contents.includes('combat-reborn-v1.js'))throw new Error('Canonical Combat Reborn engine is not linked from guild.html');
@@ -276,7 +280,7 @@ for(const file of files){
     if(!contents.includes('ui-polish-v3.css'))throw new Error('Global UI polish stylesheet is not linked from guild.html');
     if(!contents.includes('home-v2.css')||!contents.includes('class="home-command"')||!contents.includes('class="home-destination-grid"')||!contents.includes('id="overviewGuildPulse"'))throw new Error('Guild Command Centre home is not linked or its required hooks are missing');
     if(!contents.includes('command-ui-v1.css'))throw new Error('Cross-game Guild Command UI layer is not linked from guild.html');
-    if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=30'))throw new Error('Character Command UI is not linked from guild.html');
+    if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=31'))throw new Error('Character Command UI is not linked from guild.html');
     for(const hook of ['roster-v2.css','class="roster-overview-strip"','id="rosterClearFilters"','id="rosterResultsLabel"','class="roster-grid roster-grid-v2"'])if(!contents.includes(hook))throw new Error('Roster v2 UI is missing '+hook);
     for(const hook of ['bank-v2.css','class="bank-category-tabs"','id="bankClearFilters"','id="bankResultsLabel"','class="bank-grid bank-grid-v2"','data-bank-category="Gear"'])if(!contents.includes(hook))throw new Error('Bank v2 UI is missing '+hook);
     if(!contents.includes('bank-v2.css?v=2'))throw new Error('Bank v2 stylesheet cache version must include category-isolation fix');
@@ -358,6 +362,8 @@ for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readab
   if(G.items.some(x=>!x.appearanceId))throw new Error('Base gear item missing stable character appearance identity');
   if(G.items.filter(x=>x.slot==='Weapon').some(x=>!x.weaponType))throw new Error('Weapon item missing character visual weapon type');
   if(G.items.filter(x=>x.slot==='OffHand').some(x=>!x.offHandType))throw new Error('Off-hand item missing character visual type');
+  const weaponProbe=G.items.find(x=>x.slot==='Weapon'),offhandProbe=G.items.find(x=>x.slot==='OffHand');
+  if(!weaponProbe||!offhandProbe||G.canEquipInSlot(weaponProbe,'OffHand')||!G.canEquipInSlot(weaponProbe,'Weapon')||!G.canEquipInSlot(offhandProbe,'OffHand')||G.canEquipInSlot(offhandProbe,'Weapon'))throw new Error('Weapon and OffHand compatibility contract failed');
   if(G.items.some(x=>Number(x.tier)>=5))throw new Error('Generic gear catalogue contains raid-exclusive Tier 5 items');
   if(G.items.filter(x=>Number(x.tier)===4).length!==G.CLASS_ORDER.length*requiredSlots.length)throw new Error('Tier 4 catalogue must contain the full Chapter 1 slot catalogue for every current class');
   if(!G.TIER_META?.[5]?.raidExclusive)throw new Error('Tier 5 is not marked raid-exclusive');
