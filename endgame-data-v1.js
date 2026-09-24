@@ -24,8 +24,8 @@ const LOOT_RULES={
   raidExclusiveTier:5
 };
 const SET_BONUS_FOUNDATION={
-  pieces2:{name:'Resonant Pair',description:'Two matching set pieces improve core role output by 5%.'},
-  pieces4:{name:'Cellbound Ensemble',description:'Four matching set pieces improve resource recovery by 12%.'}
+  pieces2:{name:'Resonant Pair',description:'Two matching set pieces make all damaging and healing abilities 5% stronger.'},
+  pieces4:{name:'Cellbound Ensemble',description:'Four matching set pieces increase passive class-resource recovery by 12%.'}
 };
 const LEVEL_MILESTONES=[
   {level:5,name:'Specialisation Established',description:'Your first meaningful build identity should be taking shape.'},
