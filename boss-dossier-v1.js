@@ -70,7 +70,7 @@ const BOSSES={
     intel:[['TARGETS','Balance all three health pools'],['KILL WINDOW','12 seconds after first death'],['REVIVE','Returns at 35% health']]
   },
   'silas-vane':{
-    dungeon:'No Way Back',name:'Silas Vane',title:'Master of the Manor',theme:'manor',artwork:null,
+    dungeon:'No Way Back',name:'Silas Vane',title:'Master of the Manor',theme:'manor',artwork:'./assets/bosses/no-way-back-silas-vane.webp',
     encounterLabel:'FINAL BOSS',artLabel:'FINAL ENCOUNTER',beginLabel:'FACE SILAS VANE →',
     description:'The old sailor is gone. Beneath the open coat is the crest of House Vane, and in his hands is an anchor heavy enough to turn the entire courtyard into a weapon.',
     abilities:[
