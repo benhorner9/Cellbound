@@ -139,7 +139,7 @@ function renderPartyBuilder(){
   const allValid=draft.every(x=>x.name.trim().length>=2)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5;
   const preview=draft.map((x,i)=>{
     const race=raceById(x.race);
-    return '<button class="party-draft-card '+(i===activeSlot?'active':'')+'" data-slot="'+i+'>'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<div><small>'+ROLE_LABEL[x.role]+' '+(SLOTS[i].number||'')+'</small><b>'+esc(x.name||'Unnamed')+'</b><span>'+race.icon+' '+esc(x.race)+' · '+esc(x.klass)+' · '+esc(x.spec)+'</span></div><em>'+(i===activeSlot?'EDIT':'CHANGE')+'</em></button>';
+    return '<button class="party-draft-card '+(i===activeSlot?'active':'')+'" data-slot="'+i+'">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<div><small>'+ROLE_LABEL[x.role]+' '+(SLOTS[i].number||'')+'</small><b>'+esc(x.name||'Unnamed')+'</b><span>'+race.icon+' '+esc(x.race)+' · '+esc(x.klass)+' · '+esc(x.spec)+'</span></div><em>'+(i===activeSlot?'EDIT':'CHANGE')+'</em></button>';
   }).join('');
   const raceCards=availableRaces.map(r=>{
     const identity=window.CellboundIdentities?.getRace?.(r.id);
