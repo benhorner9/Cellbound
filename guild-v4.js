@@ -200,10 +200,12 @@ function currentBossProgressionUnlocked(boss){const i=bosses.findIndex(b=>b.id==
 function normalizeCharacter(c,index=0){
   c.id=c.id||`legacy-${index}-${Date.now()}`;c.class=c.class||'Warrior';c.spec=c.spec||Object.keys(classDef(c).specs)[0];c.level=Math.max(1,Number(c.level)||1);c.xp=Math.max(0,Number(c.xp)||0);c.power=Math.max(1,Number(c.power)||1);
   c.race=c.race||'Veyren';c.raceTrait=c.raceTrait||window.CellboundIdentities?.getRace?.(c.race)?.trait||'';if(CP)c.appearance=CP.normalizeAppearance(c.appearance,c.id||c.name,c.race);c.talents=c.talents||talentState(c.class);c.knowledge=c.knowledge||{ashwarden:0,embermaw:0,vaultheart:0};c.equipment=c.equipment||{};
-  const starters=starterEquipment(c.class),keepBare=c.tutorialNew===true&&c.onboardingGearIssued!==true;
+  const starters=starterEquipment(c.class);
   ILVL_SLOTS.forEach(slot=>{
     const hasSlot=Object.prototype.hasOwnProperty.call(c.equipment,slot),existing=canonicalItem(c.equipment?.[slot]);
-    c.equipment[slot]=existing||(keepBare&&hasSlot?null:starters[slot]);
+    // Explicit null means the player intentionally unequipped this slot.
+    // Only seed starter gear when the slot has never existed on the save.
+    c.equipment[slot]=existing||(hasSlot?null:starters[slot]);
   });
   ['Shoulders','Hands','Waist','Legs','Feet','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic'].forEach(slot=>{if(!(slot in c.equipment))c.equipment[slot]=null;});
   c.gearItems=ILVL_SLOTS.map(slot=>c.equipment[slot]?.name||'Empty');c.cellShock=Math.max(0,Math.min(100,Number(c.cellShock)||0));c.cellShockLockedUntil=c.cellShockLockedUntil||null;c.professions=Array.isArray(c.professions)?c.professions.slice(0,2):[null,null];while(c.professions.length<2)c.professions.push(null);

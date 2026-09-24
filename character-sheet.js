@@ -614,40 +614,52 @@ function removeFromParty(state,id){
   if(state.party.healer===id)state.party.healer=null;
   if(Array.isArray(state.party.dps))state.party.dps=state.party.dps.map(x=>x===id?null:x);
 }
+function bankSlotForEquipped(slot,item){
+  if(slot==='Trinket1'||slot==='Trinket2')return'Trinket';
+  if(slot==='Ring1'||slot==='Ring2')return'Ring';
+  return item?.slot||slot;
+}
+function returnEquippedToBank(state,c,slot,source='Unequipped'){
+  const item=c?.equipment?.[slot];
+  if(!item)return null;
+  state.bank=Array.isArray(state.bank)?state.bank:[];
+  // Clear the live slot first so a replacement can never visually stack on top of it.
+  c.equipment[slot]=null;
+  c.power=Math.max(1,(Number(c.power)||1)-(Number(item.power)||0));
+  state.bank.push({...item,id:`bank-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,quantity:1,source:`${source} from ${c.name}`,slot:bankSlotForEquipped(slot,item)});
+  if(c.activeEnhancements&&typeof c.activeEnhancements==='object')delete c.activeEnhancements[slot];
+  return item;
+}
+function refreshEquipmentSummary(c){
+  c.gearItems=[...leftSlots,...rightSlots].map(s=>c.equipment?.[s]?.name||'Empty');
+  c.gear=window.CellboundGame?.characterItemLevel?.(c)||0;
+}
 function equipItem(bankId,slot){
   if(!characterEditable())return;
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId)),item=state?.bank?.find(x=>x.id===bankId);
-  if(!state||!c||!item||!canUse(c,item))return;
-  const old=c.equipment[slot];
-  if(old){
-    c.gear=Math.max(0,(c.gear||0)-(old.power||0));
-    c.power=Math.max(1,(c.power||1)-(old.power||0));
-    if(old.name&&old.name!=='Empty')state.bank.push({...old,id:`bank-${Date.now()}-${Math.random().toString(36).slice(2,6)}`,quantity:1,source:`Unequipped from ${c.name}`,classes:old.classes||[c.class],slot:old.slot==='Trinket1'||old.slot==='Trinket2'?'Trinket':old.slot});
-  }
+  if(!state||!c||!item||!canUse(c,item)||!possibleSlots(item).includes(slot))return;
+  state.bank=Array.isArray(state.bank)?state.bank:[];
   const canonical=window.CellboundGame?.canonicalItem?.(item)||item;
-  c.equipment[slot]={...canonical,slot:canonical.slot||slot,source:'Equipped'};
-  c.gear=(c.gear||0)+(canonical.power||0);
-  c.power=(c.power||0)+(item.power||0);
+  const old=returnEquippedToBank(state,c,slot,'Replaced');
+  c.equipment[slot]={...canonical,source:'Equipped'};
+  c.power=Math.max(1,(Number(c.power)||1)+(Number(canonical.power)||0));
   item.quantity=(item.quantity||1)-1;
   if(item.quantity<=0)state.bank=state.bank.filter(x=>x.id!==bankId);
+  refreshEquipmentSummary(c);
   state.activity=state.activity||[];
-  state.activity.push(`${c.name} equipped ${item.name} from the Guild Bank.`);
+  state.activity.push(old?`${c.name} replaced ${old.name} with ${item.name}.`:`${c.name} equipped ${item.name} from the Guild Bank.`);
   writeState(state);activeSlot=null;renderSheet();window.CellboundFX?.micro?.(item.name+' equipped','gold');window.CellboundFX?.pulse?.('.cb-current-item');
 }
 function unequipItem(slot){
   if(!characterEditable())return;
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId)),item=c?.equipment?.[slot];
   if(!state||!c||!item)return;
-  state.bank=Array.isArray(state.bank)?state.bank:[];
-  const returned={...item,id:`bank-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,quantity:1,source:`Unequipped from ${c.name}`,slot:item.slot==='Trinket1'||item.slot==='Trinket2'?'Trinket':item.slot==='Ring1'||item.slot==='Ring2'?'Ring':item.slot};
-  state.bank.push(returned);
-  c.equipment[slot]=null;
-  c.power=Math.max(1,(Number(c.power)||1)-(Number(item.power)||0));
-  c.gearItems=[...leftSlots,...rightSlots].map(s=>c.equipment?.[s]?.name||'Empty');
-  c.gear=window.CellboundGame?.characterItemLevel?.(c)||0;
+  const removed=returnEquippedToBank(state,c,slot,'Unequipped');
+  if(!removed)return;
+  refreshEquipmentSummary(c);
   state.activity=state.activity||[];
-  state.activity.push(`${c.name} unequipped ${item.name} to the Guild Bank.`);
-  writeState(state);activeSlot=null;renderSheet();window.CellboundFX?.micro?.(item.name+' returned to the Guild Bank','cell');
+  state.activity.push(`${c.name} unequipped ${removed.name} to the Guild Bank.`);
+  writeState(state);activeSlot=null;renderSheet();window.CellboundFX?.micro?.(removed.name+' returned to the Guild Bank','cell');
 }
 function upgradeEquippedItem(slot){
   if(!characterEditable())return;
@@ -745,11 +757,11 @@ document.addEventListener('click',event=>{
     const equipSkillBtn=event.target.closest('[data-equip-skill]');if(equipSkillBtn){equipSkill(equipSkillBtn.dataset.equipSkill);return}
     const clearSkill=event.target.closest('[data-clear-skill]');if(clearSkill){clearSkillSlot(clearSkill.dataset.clearSkill);return}
     const resetSkill=event.target.closest('[data-reset-skills]');if(resetSkill){resetSkills();return}
-    const slot=event.target.closest('[data-slot]');if(slot){activeSlot=slot.dataset.slot;renderSheet();return}
-    const closeSlot=event.target.closest('[data-close-slot]');if(closeSlot){activeSlot=null;renderSheet();return}
-    const unequip=event.target.closest('[data-unequip-slot]');if(unequip){unequipItem(unequip.dataset.unequipSlot);return}
-    const upgradeEquipped=event.target.closest('[data-upgrade-equipped]');if(upgradeEquipped){upgradeEquippedItem(upgradeEquipped.dataset.upgradeEquipped);return}
-    const equip=event.target.closest('[data-equip-bank]');if(equip){equipItem(equip.dataset.equipBank,equip.dataset.equipSlot);return}
+    const unequip=event.target.closest('[data-unequip-slot]');if(unequip){event.preventDefault();event.stopImmediatePropagation();unequipItem(unequip.dataset.unequipSlot);return}
+    const upgradeEquipped=event.target.closest('[data-upgrade-equipped]');if(upgradeEquipped){event.preventDefault();event.stopImmediatePropagation();upgradeEquippedItem(upgradeEquipped.dataset.upgradeEquipped);return}
+    const equip=event.target.closest('[data-equip-bank]');if(equip){event.preventDefault();event.stopImmediatePropagation();equipItem(equip.dataset.equipBank,equip.dataset.equipSlot);return}
+    const closeSlot=event.target.closest('[data-close-slot]');if(closeSlot){event.preventDefault();event.stopImmediatePropagation();activeSlot=null;renderSheet();return}
+    const slot=event.target.closest('[data-slot]');if(slot){event.preventDefault();event.stopImmediatePropagation();activeSlot=slot.dataset.slot;renderSheet();return}
     const node=event.target.closest('[data-talent-node]');if(node){selectedTalentId=node.dataset.talentNode;selectedTalentSpec=node.dataset.treeSpec;renderSheet();return}
     const invest=event.target.closest('[data-invest-talent]');if(invest){investTalent(invest.dataset.treeSpec,invest.dataset.investTalent);return}
     const spec=event.target.closest('[data-spec-tab]');if(spec){selectedTreeSpec=spec.dataset.specTab;selectedTalentId=null;selectedTalentSpec=selectedTreeSpec;renderSheet();return}
