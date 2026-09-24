@@ -29,6 +29,7 @@ for(const file of files){
     if(contents.includes("['knowledge','⌁','Mastery'")||contents.includes('function knowledgePanel'))throw new Error('Mastery must remain removed from the character screen');
     if(!contents.includes('function setSummaryMarkup')||!contents.includes('function setInlineMarkup')||!contents.includes('SET BONUSES'))throw new Error('Character equipment set bonus progress UI is missing');
     if(!contents.includes('function equipmentPanel')||!contents.includes('function equipmentFallback')||!contents.includes("stopImmediatePropagation();currentTab=tab.dataset.sheetTab"))throw new Error('Character Equipment tab recovery/navigation guard is missing');
+    if(!contents.includes("paperDollHTML?.(c")||!contents.includes('data-paper-doll-stage')||!contents.includes('LIVE EQUIPMENT VIEW'))throw new Error('Character Equipment visual paper doll is missing');
   }
   if(file==='bank-v2.css'){
     if(!contents.includes('#bank .bank-card-v2[data-hidden="1"]{display:none!important}'))throw new Error('Bank category filtering must override card display so materials cannot leak into Equipment');
@@ -38,10 +39,10 @@ for(const file of files){
     for(const hook of ['bankMetricCrafting','data-bank-count','bank-filter-empty-v2',"bankCategory==='favorite'"])if(!contents.includes(hook))throw new Error('Bank v2 filtering/enhancement is missing '+hook);
   }
   if(file==='character-portraits-v1.js'){
-    for(const hook of ['window.CellboundPortraits','normalizeAppearance','randomAppearance','portraitHTML','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait engine is missing '+hook);
+    for(const hook of ['window.CellboundPortraits','normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
   }
   if(file==='character-portraits-v1.css'){
-    for(const hook of ['.cb-portrait','.cb-appearance-editor','.roster-card-portrait','.quest-dialogue-portrait'])if(!contents.includes(hook))throw new Error('Character portrait styling is missing '+hook);
+    for(const hook of ['.cb-portrait','.cb-appearance-editor','.roster-card-portrait','.quest-dialogue-portrait','.cb-paper-doll','.cb-paper-slot.is-highlighted','.cb-equipment-visual-stage'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual styling is missing '+hook);
   }
   if(file==='guild-v4.js'){
     if(contents.includes("$('"+".bank-category-tabs [data-bank-category]"+").forEach"))throw new Error('Bank category buttons cannot call forEach on a single-element selector');
@@ -230,8 +231,8 @@ for(const file of files){
   }
   if(file==='guild.html'){
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
-    if(!contents.includes('character-portraits-v1.css?v=1')||!contents.includes('character-portraits-v1.js?v=1'))throw new Error('Character portrait identity assets are not linked from guild.html');
-    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=12')||!contents.includes('combat-reborn-v1.js?v=2')||!contents.includes('guild-v4.js?v=45')||!contents.includes('character-sheet.js?v=25')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=47')||!contents.includes('hollow-sanctum-v1.js?v=35')||!contents.includes('chaos-canyon-v1.js?v=10')||!contents.includes('blackout-station-v1.js?v=17')||!contents.includes('fractured-ages-v1.js?v=4'))throw new Error('Set bonus UI cache versions are stale in guild.html');
+    if(!contents.includes('character-portraits-v1.css?v=2')||!contents.includes('character-portraits-v1.js?v=2'))throw new Error('Character portrait identity assets are not linked from guild.html');
+    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=12')||!contents.includes('combat-reborn-v1.js?v=2')||!contents.includes('guild-v4.js?v=45')||!contents.includes('character-sheet.js?v=26')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=47')||!contents.includes('hollow-sanctum-v1.js?v=35')||!contents.includes('chaos-canyon-v1.js?v=10')||!contents.includes('blackout-station-v1.js?v=17')||!contents.includes('fractured-ages-v1.js?v=4'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
     if(!contents.includes('combat-reborn-v1.js'))throw new Error('Canonical Combat Reborn engine is not linked from guild.html');
@@ -268,7 +269,7 @@ for(const file of files){
     if(!contents.includes('ui-polish-v3.css'))throw new Error('Global UI polish stylesheet is not linked from guild.html');
     if(!contents.includes('home-v2.css')||!contents.includes('class="home-command"')||!contents.includes('class="home-destination-grid"')||!contents.includes('id="overviewGuildPulse"'))throw new Error('Guild Command Centre home is not linked or its required hooks are missing');
     if(!contents.includes('command-ui-v1.css'))throw new Error('Cross-game Guild Command UI layer is not linked from guild.html');
-    if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=25'))throw new Error('Character Command UI is not linked from guild.html');
+    if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=26'))throw new Error('Character Command UI is not linked from guild.html');
     for(const hook of ['roster-v2.css','class="roster-overview-strip"','id="rosterClearFilters"','id="rosterResultsLabel"','class="roster-grid roster-grid-v2"'])if(!contents.includes(hook))throw new Error('Roster v2 UI is missing '+hook);
     for(const hook of ['bank-v2.css','class="bank-category-tabs"','id="bankClearFilters"','id="bankResultsLabel"','class="bank-grid bank-grid-v2"','data-bank-category="Gear"'])if(!contents.includes(hook))throw new Error('Bank v2 UI is missing '+hook);
     if(!contents.includes('bank-v2.css?v=2'))throw new Error('Bank v2 stylesheet cache version must include category-isolation fix');
@@ -285,6 +286,19 @@ for(const file of files){
   }
   fs.mkdirSync(path.dirname(dest),{recursive:true});fs.writeFileSync(dest,contents)
 }
+{
+  const portraitSandbox={console,Math,Date};portraitSandbox.window=portraitSandbox;portraitSandbox.globalThis=portraitSandbox;
+  vm.createContext(portraitSandbox);
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),portraitSandbox,{filename:'character-portraits-v1.js'});
+  const P=portraitSandbox.CellboundPortraits;
+  if(!P?.paperDollHTML)throw new Error('Equipment paper doll runtime failed to load');
+  const base={id:'paper-test',name:'Test',race:'Veyren',class:'Warrior',appearance:{race:'Veyren',skinTone:1,face:2,hair:3,hairColor:4,facialHair:1,marking:2,eyes:0,feature:1},equipment:{}};
+  const bare=P.paperDollHTML(base,{highlightedSlot:'Chest'});
+  const geared=P.paperDollHTML({...base,equipment:{Chest:{name:'Test Plate',class:'Warrior',slot:'Chest',tier:4},Weapon:{name:'Test Blade',class:'Warrior',slot:'Weapon',tier:4}}},{highlightedSlot:'Chest'});
+  if(!bare.includes('cb-paper-doll')||!bare.includes('is-highlighted'))throw new Error('Equipment paper doll base/highlight render failed');
+  if(geared===bare||!geared.includes('cb-paper-glow'))throw new Error('Equipment paper doll does not react to equipped gear tiers');
+}
+
 for(const file of assets){const src=path.join(__dirname,file),dest=path.join(out,file);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest)}
 for(const file of ['assets/dungeons/ashen-vault.webp','assets/dungeons/hollow-sanctum.webp','assets/dungeons/chaos-canyon.webp','assets/dungeons/blackout-station.webp','assets/dungeons/fractured-ages.webp']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing Dungeon Journal artwork in production package: ${file}`)}
 for(const file of ['assets/bosses/ashen-vault-vaultheart.webp','assets/bosses/hollow-sanctum-bound-choir.webp','assets/bosses/chaos-canyon-vorran.webp','assets/bosses/blackout-station-calder.webp','assets/bosses/fractured-ages-old-man.webp']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing final boss artwork in production package: ${file}`)}
