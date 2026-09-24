@@ -253,6 +253,7 @@ for(const file of files){
     if(!contents.includes("rollClearLoot?.('fractured-ages'"))throw new Error('Fractured Ages must use Chapter 1 clear-loot pacing');
   }
   if(file==='quests-v2.js'){
+    if(!contents.includes("Number(lastResult?.durationMs)"))throw new Error('Interactive slice duration must use lastResult');
     if(!contents.includes("_combatTalentTimers:x.talentTimers||{}")||!contents.includes("talentTimers=Object.fromEntries"))throw new Error('Quest sliced talent state carry is missing');
     if(!contents.includes("_combatPosition:x.position||null")||!contents.includes("enemyPositions[i]=e.position"))throw new Error('Interactive quest position carry is missing');
     if(!contents.includes("focusSelected:i===focus")||!contents.includes("focusSelectedDamageOnly:Boolean(config.focusSelectedDamageOnly)"))throw new Error('Interactive quest focus marker is missing');
@@ -278,7 +279,7 @@ for(const file of files){
   if(file==='guild.html'){
     if(!contents.includes('boss-dossier-v1.css?v=3'))throw new Error('Boss dossier CSS cache version is stale in guild.html');
     if(!contents.includes('boss-dossier-v1.js?v=11'))throw new Error('Boss dossier cache version is stale in guild.html');
-    if(!contents.includes('no-way-back-v1.css?v=4')||!contents.includes('no-way-back-v1.js?v=8'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
+    if(!contents.includes('no-way-back-v1.css?v=4')||!contents.includes('no-way-back-v1.js?v=9'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
     if(!contents.includes('comic-scenes-v1.css?v=2')||!contents.includes('comic-scenes-v1.js?v=2')||!contents.includes('onboarding-v1.js?v=18'))throw new Error('Tutorial comic asset cache versions are stale in guild.html');
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=48')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');

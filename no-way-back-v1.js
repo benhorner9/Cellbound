@@ -531,10 +531,15 @@ async function startHoundsCombat(){
     completeText:'The pack bond breaks. Grim, Fang and Wail stay down together.'
   });
   const r=ensureRoot();r.hidden=false;document.body.classList.add('nwb-open');
-  if(!won){renderHoundsPrelude();return}
+  if(!won){renderHoundsRetry();return}
   n.houndsDefeated=true;n.stage='gate';await save('The Three Hounds were defeated in live combat before Licked Wounds could restore the pack.');
   notify('BOSS DEFEATED','The Three Hounds','Silas is already running for the Manor gates.');
   renderGateStory()
+}
+function renderHoundsRetry(){
+  root.innerHTML=chrome('BOSS FIGHT INTERRUPTED','The Three Hounds',
+    '<div class="nwb-retry"><span>🐺</span><div><small>PACK BOND</small><h3>The pack still guards the Manor.</h3><p>Recover and challenge Grim, Fang and Wail again when you are ready. The encounter will restart cleanly from full health.</p><button data-hounds-retry>CHALLENGE THE HOUNDS AGAIN →</button></div></div>');
+  bindClose();root.querySelector('[data-hounds-retry]').onclick=renderHoundsPrelude
 }
 function startHounds(){
   const n=ensure(),p=party();if(p.length!==5){alert('Build a complete active five-character party before facing The Three Hounds.');Game.switchView?.('party');close();return}

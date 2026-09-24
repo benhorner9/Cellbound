@@ -877,7 +877,7 @@ async function runInteractiveQuest2DFight(config){
           (lastResult.finalState?.players||[]).forEach(fp=>{
             const id=fp.characterId||String(fp.id||'').replace(/^p-/,'');const c=p.find(x=>String(x.id)===String(id));if(!c)return;
             const healthPct=fp.maxHealth>0?fp.health/fp.maxHealth*100:0;questFight.partyHp[c.id]=healthPct;questFight.resources[c.id]=fp.resource||questFight.resources[c.id];qSetPartyHp(c,healthPct);
-            const sliceDuration=Math.max(0,Number(result.durationMs)||0),talentTimers=Object.fromEntries(Object.entries(fp.talentTimers||{}).map(([k,v])=>[k,Math.max(0,(Number(v)||0)-sliceDuration)]));
+            const sliceDuration=Math.max(0,Number(lastResult?.durationMs)||0),talentTimers=Object.fromEntries(Object.entries(fp.talentTimers||{}).map(([k,v])=>[k,Math.max(0,(Number(v)||0)-sliceDuration)]));
             carry[c.id]={healthPct,resource:fp.resource,cooldowns:fp.cooldowns||{},statuses:statusCarry(fp),defensiveMs:fp.defensiveUntil||0,reviveSicknessMs:fp.revivePenaltyUntil||0,uniqueUsed:fp.uniqueUsed||{},position:fp.position?{x:Number(fp.position.x),y:Number(fp.position.y)}:carry[c.id]?.position,talentTimers,talentFlags:fp.talentFlags||{},talentCounters:fp.talentCounters||{},damageActions:Number(fp.damageActions)||0}
           });
           if(lastResult.outcome==='defeat'){await showEnd(false);return}
