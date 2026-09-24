@@ -324,7 +324,30 @@ function renderArrival(){
 function renderHoundsPrelude(){
   root.innerHTML=chrome('BOSS ENCOUNTER','The Three Hounds',
     '<div class="nwb-boss-intro"><div class="nwb-hound-silhouettes"><i>◆</i><i>◆</i><i>◆</i></div><div><small>PACK BOND</small><h3>Grim · Fang · Wail</h3><p>Silas whistles once. Three enormous hounds emerge from the grounds. When one falls, the surviving pack can use <strong>Licked Wounds</strong> to revive it.</p><div class="nwb-mechanic"><b>LICKED WOUNDS</b><span>Kill all three within the same 12-second window or a fallen hound returns at 35% health.</span></div><button data-hounds-start>ENGAGE THE THREE HOUNDS →</button></div></div>');
-  bindClose();root.querySelector('[data-hounds-start]').onclick=startHounds
+  bindClose();root.querySelector('[data-hounds-start]').onclick=startHoundsCombat
+}
+async function startHoundsCombat(){
+  const n=ensure(),p=party(),run=window.CellboundQuests?.runInteractiveQuest2DFight;
+  if(p.length!==5){alert('Build a complete active five-character party before facing The Three Hounds.');Game.switchView?.('party');close();return}
+  if(typeof run!=='function'){alert('Live quest combat is still loading. Try again.');return}
+  close();
+  const won=await run({
+    quest:TITLE,title:'The Three Hounds',location:'Manor Island · Outer Grounds',
+    ambience:'Silas whistles once. Grim, Fang and Wail spread across the path while the party forms up in front of the Manor gates.',
+    presentationKind:'quest',phases:['Pack Bond'],initialTarget:0,sliceMs:2400,reviveWindowMs:12000,revivePct:35,
+    enemies:[
+      {name:'Grim',maxHealth:1500,absoluteHealth:true,classification:'elite',attackName:'Bonebreaker Bite',damageScale:1.12},
+      {name:'Fang',maxHealth:1350,absoluteHealth:true,classification:'elite',attackName:'Pounce',targeting:'random',damageScale:1.04},
+      {name:'Wail',maxHealth:1425,absoluteHealth:true,classification:'elite',attackName:'Rending Howl',damageScale:1.02}
+    ],
+    combat:{kind:'boss',level:18,enemyTypes:['elite','elite','elite'],enemyHealth:1500,mechanics:[]},
+    completeText:'The pack bond breaks. Grim, Fang and Wail stay down together.'
+  });
+  const r=ensureRoot();r.hidden=false;document.body.classList.add('nwb-open');
+  if(!won){renderHoundsPrelude();return}
+  n.houndsDefeated=true;n.stage='gate';await save('The Three Hounds were defeated in live combat before Licked Wounds could restore the pack.');
+  notify('BOSS DEFEATED','The Three Hounds','Silas is already running for the Manor gates.');
+  renderGateStory()
 }
 function startHounds(){
   const n=ensure(),p=party();if(p.length!==5){alert('Build a complete active five-character party before facing The Three Hounds.');Game.switchView?.('party');close();return}
