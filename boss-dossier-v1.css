@@ -38,3 +38,14 @@ body.cbd-open{overflow:hidden}
 @media(max-width:820px){.cbd-backdrop{padding:0}.cbd-shell{display:block;min-height:100dvh;border:0}.cbd-visual{min-height:36dvh}.cbd-art-label{left:18px;right:18px;bottom:16px}.cbd-copy{padding:18px}.cbd-copy header p{font-size:.73rem}.cbd-skills{margin-top:17px}.cbd-skills>div{grid-template-columns:1fr 1fr}.cbd-ability{grid-template-columns:30px 1fr;padding:7px}.cbd-ability>i{width:28px;height:28px}.cbd-ability span{font-size:.58rem}.cbd-intel>div{gap:5px}.cbd-actions button{flex:1}.cbd-copy footer{padding-top:17px}}
 @media(max-width:540px){.cbd-visual{min-height:31dvh}.cbd-copy h1{font-size:1.65rem}.cbd-skills>div{grid-template-columns:1fr}.cbd-intel>div{grid-template-columns:1fr 1fr}.cbd-intel span:last-child{grid-column:1/-1}}
 @media(prefers-reduced-motion:reduce){.cbd-backdrop,.cbd-stinger,.cbd-art-fx i{transition:none!important;animation:none!important}}
+
+.theme-manor{--cbd-accent:#c7a66a;--cbd-glow:rgba(120,38,30,.32);--cbd-line:rgba(205,164,94,.36);--cbd-art-a:#241715;--cbd-figure:#71544b;--cbd-spark:#d6b270}
+[data-cbd-boss="three-hounds"] .cbd-art-sigil{width:min(68%,430px);border-radius:46%;transform:translate(-50%,-50%) rotate(-4deg)}
+[data-cbd-boss="three-hounds"] .cbd-art-figure{width:58%;height:45%;bottom:17%}
+[data-cbd-boss="three-hounds"] .cbd-art-figure>i{position:absolute!important;top:auto!important;bottom:0!important;width:31%!important;height:64%!important;border-radius:46% 52% 38% 42%!important;background:linear-gradient(165deg,#6b4a43,#151010 72%)!important;clip-path:polygon(18% 30%,0 13%,26% 17%,36% 0,48% 19%,68% 16%,100% 39%,86% 100%,14% 100%)!important;box-shadow:0 0 26px rgba(161,56,46,.22)!important}
+[data-cbd-boss="three-hounds"] .cbd-art-figure>i:nth-child(1){left:0!important;transform:scale(.86)}
+[data-cbd-boss="three-hounds"] .cbd-art-figure>i:nth-child(2){left:34%!important;height:82%!important;z-index:2}
+[data-cbd-boss="three-hounds"] .cbd-art-figure>i:nth-child(3){left:68%!important;transform:scale(.86)}
+[data-cbd-boss="silas-vane"] .cbd-art-figure{height:64%;width:39%;bottom:8%}
+[data-cbd-boss="silas-vane"] .cbd-art-figure:after{content:"⚓";position:absolute;right:-44%;bottom:10%;font-size:clamp(72px,10vw,132px);color:#5b4a3d;transform:rotate(-19deg);filter:drop-shadow(0 8px 10px #000)}
+[data-cbd-boss="silas-vane"] .cbd-art-sigil{border-radius:2%;transform:translate(-50%,-50%) rotate(45deg)}
