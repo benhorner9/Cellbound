@@ -110,7 +110,7 @@ for(const file of files){
   if(file==='combat-reborn-v1.js'){
     if(!contents.includes("_combatPosition")||!contents.includes("data.currentPosition"))throw new Error('Combat slice position persistence is missing');
     if(!contents.includes("focusSelectedDamageOnly")||!contents.includes("!target.focusSelected"))throw new Error('Focus-selected damage gating is missing');
-    if(!contents.includes("const VERSION='1.3.5'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
+    if(!contents.includes("const VERSION='1.3.6'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
     if(!contents.includes('CellboundGear?.SET_BONUS_RULES')||!contents.includes('rules.pieces4?.resourceRegen'))throw new Error('Combat must consume shared 2/4-piece set bonus rules');
   }
   if(file==='combat-status-ui-v1.js'){
