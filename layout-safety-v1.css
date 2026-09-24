@@ -1,0 +1,210 @@
+/*
+ * Cellbound layout safety v1
+ * Cross-module geometry and stacking safeguards.
+ * This file intentionally loads last. Feature files own their look; this layer
+ * only prevents app chrome, panels and newer feature CSS from colliding.
+ */
+
+:root{
+  --cb-z-dock:1000;
+  --cb-z-sheet:1400;
+  --cb-z-modal:3000;
+  --cb-z-gameplay:4500;
+  --cb-z-toast:15000;
+  --cb-z-release:20000;
+}
+
+html,body{
+  max-width:100%;
+  overflow-x:clip;
+}
+
+.app-shell,.main,.view,.panel,
+.topbar,.section-intro,.panel-head,
+.home-command,.home-command-grid,.home-bottom-grid,
+.roster-command-v2,.bank-command-v2,
+.profession-layout,.profession-main,
+.tp-shell,.tp-layout,.tp-main-stack,
+.social-layout,.social-side,
+.quest-journal-shell,
+.dungeon-journal-hero,.dungeon-journal-layout,
+.party-layout{
+  min-width:0;
+}
+
+img,svg,canvas,video{max-width:100%}
+input,select,textarea,button{max-width:100%}
+.section-intro>*,.panel-head>*,.topbar>*{min-width:0}
+.section-intro,.panel-head{flex-wrap:wrap}
+.world-alert-bar{overflow-wrap:anywhere}
+
+/*
+ * One shared layer order.
+ * Full-screen gameplay must always cover the mobile dock and ordinary sheets.
+ */
+.onboard-root,
+.cb2d-backdrop,
+.hs2d-backdrop,
+.hs2d-backdrop:has(.hs2d-unified-shell),
+.cc2d-backdrop,
+.cc2d-backdrop:has(.cc2d-unified-shell),
+.tb-backdrop,
+.quest-cb2d-backdrop,
+.bs2d-backdrop,
+.pvp-match-backdrop,
+.fa-backdrop,
+.bell-backdrop,
+.fourfold-story-backdrop,
+.fourfold-puzzle-backdrop,
+.fourfold-complete-backdrop,
+.nwb-backdrop{
+  z-index:var(--cb-z-gameplay)!important;
+}
+
+.quest-puzzle-backdrop,
+.quest-gear-backdrop{
+  z-index:calc(var(--cb-z-gameplay) + 200)!important;
+}
+
+.cbcomic-backdrop,
+.fourfold-toast,
+.nwb-toast{
+  z-index:var(--cb-z-toast)!important;
+}
+
+.release-gate{z-index:var(--cb-z-release)!important}
+.bs-power-flash:after{z-index:calc(var(--cb-z-gameplay) + 500)!important}
+.modal-backdrop{z-index:var(--cb-z-modal)}
+.mobile-nav-sheet{z-index:var(--cb-z-sheet)}
+
+/* Tablet: let status resources breathe rather than collide with the title. */
+@media(max-width:1180px){
+  .resource-strip{
+    min-width:0;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+  .resource-strip div{min-width:86px}
+}
+
+/* Narrow tablet: eliminate desktop-only sticky side panels and split talent hero. */
+@media(max-width:850px){
+  .cb-talent-command-hero{grid-template-columns:1fr!important}
+  .tp-inspector,
+  #professions .profession-roster-panel{
+    position:static!important;
+    max-height:none!important;
+  }
+}
+
+/* Phone / narrow portrait layouts. */
+@media(max-width:720px){
+  html,body{overflow-x:hidden}
+
+  .main{
+    width:100%!important;
+    max-width:100%!important;
+    padding-left:10px!important;
+    padding-right:10px!important;
+    padding-bottom:calc(var(--cb-mobile-dock,68px) + env(safe-area-inset-bottom) + 16px)!important;
+  }
+
+  .view{max-width:100%;overflow:visible}
+
+  .section-intro,.panel-head{gap:10px}
+  .section-intro>div:first-child,.panel-head>div:first-child{min-width:0}
+  .section-intro h2,.section-intro p,.panel-head h3{overflow-wrap:anywhere}
+
+  /* Horizontal control rails are preferable to squeezed/overlapping labels. */
+  .filters,
+  .profession-recipe-filters,
+  .chat-tabs,
+  .quest-tabs{
+    max-width:100%;
+    overflow-x:auto;
+    overscroll-behavior-x:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+  }
+  .filters{flex-wrap:nowrap}
+  .filters>*{flex:0 0 auto}
+
+  /* Bank categories used to squeeze seven full labels into the phone width. */
+  .bank-category-tabs{
+    display:flex!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
+  }
+  .bank-category-tabs button{
+    flex:0 0 132px;
+    width:132px;
+    min-width:132px;
+    scroll-snap-align:start;
+  }
+
+  .roster-filter-secondary,
+  .bank-filter-row{
+    grid-template-columns:1fr 1fr!important;
+  }
+  .roster-filter-secondary>*:last-child,
+  .bank-filter-row>*:last-child{
+    grid-column:1/-1;
+  }
+
+  .chat-form{grid-template-columns:minmax(0,1fr) auto}
+  .chat-form button{min-width:76px}
+  .chat-panel{min-height:min(620px,calc(100dvh - 190px))}
+
+  .tp-market-bar,
+  .tp-layout,
+  .social-layout,
+  .profession-layout,
+  .quest-journal-shell,
+  .dungeon-journal-hero,
+  .dungeon-journal-layout,
+  .party-layout{
+    grid-template-columns:1fr!important;
+  }
+
+  .cb-command-sheet{min-height:0!important}
+
+  /* Seven character tabs now scroll instead of rendering on top of each other. */
+  .cb-command-sheet .cb-character-tabs{
+    display:flex!important;
+    max-width:100%;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
+  }
+  .cb-command-sheet .cb-character-tabs button{
+    flex:0 0 112px!important;
+    width:112px!important;
+    min-width:112px!important;
+    scroll-snap-align:start;
+  }
+
+  #characterModal .modal-close{
+    top:calc(8px + env(safe-area-inset-top))!important;
+    right:8px!important;
+  }
+}
+
+@media(max-width:480px){
+  .roster-filter-secondary,
+  .bank-filter-row{
+    grid-template-columns:1fr!important;
+  }
+  .roster-filter-secondary>*:last-child,
+  .bank-filter-row>*:last-child{
+    grid-column:auto;
+  }
+  .home-destination-grid{grid-template-columns:1fr!important}
+  .cb-talent-command-metrics{grid-template-columns:1fr!important}
+}
+
+@supports not (overflow:clip){
+  html,body{overflow-x:hidden}
+}
