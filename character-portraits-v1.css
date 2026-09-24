@@ -293,3 +293,13 @@
 }
 .party-slot .slot-role .cb-portrait{width:46px;height:46px}
 .quest-dialogue-portrait .cb-portrait{width:100%;height:100%}
+
+/* PvP identity */
+.pvp-avatar{overflow:hidden;padding:0}
+.pvp-avatar .cb-portrait{width:34px;height:34px;border-radius:7px}
+.pvp-team i:has(.cb-portrait){padding:0;overflow:hidden;background:none}
+.pvp-team i .cb-portrait{width:34px;height:34px;border-radius:50%}
+.pvp-match-roster-row{grid-template-columns:7px 42px minmax(0,1fr) auto}
+.pvp-match-portrait{width:42px;height:42px;display:grid;place-items:center}
+.pvp-match-portrait .cb-portrait{width:40px;height:40px;border-radius:10px}
+.pvp-match-portrait-fallback{width:40px;height:40px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.08);border-radius:10px}
