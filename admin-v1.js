@@ -93,6 +93,18 @@ function resetTwelveBelow(){
     render();
   }
 }
+async function previewTutorialComics(){
+  if(!status.is_admin)return;
+  const btn=$('#adminPreviewTutorialComics');if(btn){btn.disabled=true;btn.firstChild.textContent='PLAYING COMIC PREVIEW…'}
+  try{
+    const ok=await window.CellboundOnboarding?.previewTutorialComics?.();
+    message(ok?'Tutorial comic preview complete. No save data was changed.':'Tutorial comic system is still loading. Refresh and try again.',ok?'ok':'error');
+  }catch(error){
+    console.warn('Tutorial comic preview failed',error);message(error?.message||'Could not preview tutorial comics.','error');
+  }finally{
+    if(btn){btn.disabled=false;btn.firstChild.textContent='PREVIEW TUTORIAL COMICS'}
+  }
+}
 async function freshStart(){
   const typed=prompt('This resets YOUR Cellbound testing account to a brand-new playable state.\n\nYour login and Admin access are preserved.\n\nType FRESH START to continue.');
   if(typed===null)return;
@@ -172,6 +184,7 @@ function bind(){
   if(bound)return;bound=true;
   $('#adminResetShock')?.addEventListener('click',resetShock);
   $('#adminResetTwelve')?.addEventListener('click',resetTwelveBelow);
+  $('#adminPreviewTutorialComics')?.addEventListener('click',previewTutorialComics);
   $('#adminFreshStart')?.addEventListener('click',freshStart);
   $('#adminAutoToggle')?.addEventListener('click',toggleAuto);
   $('#adminRefresh')?.addEventListener('click',async()=>{await refreshStatus();await Promise.all([refreshRelease(),refreshMarket()]);clearLocalShock();message('Admin status refreshed.','ok')});
