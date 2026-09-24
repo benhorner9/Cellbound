@@ -40,10 +40,10 @@ for(const file of files){
     for(const hook of ['bankMetricCrafting','data-bank-count','bank-filter-empty-v2',"bankCategory==='favorite'"])if(!contents.includes(hook))throw new Error('Bank v2 filtering/enhancement is missing '+hook);
   }
   if(file==='character-portraits-v1.js'){
-    for(const hook of ['window.CellboundPortraits','normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
+    for(const hook of ['window.CellboundPortraits','normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
   }
   if(file==='character-portraits-v1.css'){
-    for(const hook of ['.cb-portrait','.cb-appearance-editor','.roster-card-portrait','.quest-dialogue-portrait','.cb-paper-doll','.cb-paper-slot.is-highlighted','.cb-equipment-visual-stage'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual styling is missing '+hook);
+    for(const hook of ['.cb-portrait','.cb-appearance-editor','.roster-card-portrait','.quest-dialogue-portrait','.cb-paper-doll','.cb-paper-slot.is-highlighted','.cb-paper-slot.is-set-item','.cb-paper-set-glow','.cb-equipment-set-visual','.cb-equipment-visual-stage'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual styling is missing '+hook);
   }
   if(file==='guild-v4.js'){
     if(contents.includes("$('"+".bank-category-tabs [data-bank-category]"+").forEach"))throw new Error('Bank category buttons cannot call forEach on a single-element selector');
@@ -61,6 +61,7 @@ for(const file of files){
     for(const hook of ["window.CellboundItemArt","function genericGear","function material","function consumable","function collection","frostbound-sigil","relic-oathstone-dominion","grid-override-module","enhancePvp","enhanceCrafting"])if(!contents.includes(hook))throw new Error('Complete item artwork system is missing '+hook);
   }
   if(file==='gear-data.js'){
+    if(!contents.includes('appearanceId:itemId')||!contents.includes('inferWeaponType')||!contents.includes('inferOffHandType'))throw new Error('Equipment Visuals V2 item identity metadata is missing');
     if(!contents.includes("5:{rarity:'Epic',label:'Tier 5'")||!contents.includes('raidExclusive:true'))throw new Error('Tier 5 must remain explicitly reserved for raid gear');
     if(!contents.includes('CHAPTER_GEAR={chapter:1,levelCap:15,dungeonTierCeiling:4,raidExclusiveTier:5}'))throw new Error('Chapter 1 gear contract is missing');
     if(!contents.includes("SLOT_ORDER=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring','Trinket','Relic']"))throw new Error('Full Chapter 1 equipment slot catalogue is missing');
@@ -232,8 +233,8 @@ for(const file of files){
   }
   if(file==='guild.html'){
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
-    if(!contents.includes('character-portraits-v1.css?v=2')||!contents.includes('character-portraits-v1.js?v=2'))throw new Error('Character portrait identity assets are not linked from guild.html');
-    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=12')||!contents.includes('combat-reborn-v1.js?v=2')||!contents.includes('guild-v4.js?v=45')||!contents.includes('character-sheet.js?v=27')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=47')||!contents.includes('hollow-sanctum-v1.js?v=35')||!contents.includes('chaos-canyon-v1.js?v=10')||!contents.includes('blackout-station-v1.js?v=17')||!contents.includes('fractured-ages-v1.js?v=4'))throw new Error('Set bonus UI cache versions are stale in guild.html');
+    if(!contents.includes('character-portraits-v1.css?v=3')||!contents.includes('character-portraits-v1.js?v=3'))throw new Error('Character portrait identity assets are not linked from guild.html');
+    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=13')||!contents.includes('combat-reborn-v1.js?v=2')||!contents.includes('guild-v4.js?v=45')||!contents.includes('character-sheet.js?v=28')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=47')||!contents.includes('hollow-sanctum-v1.js?v=35')||!contents.includes('chaos-canyon-v1.js?v=10')||!contents.includes('blackout-station-v1.js?v=17')||!contents.includes('fractured-ages-v1.js?v=4'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
     if(!contents.includes('combat-reborn-v1.js'))throw new Error('Canonical Combat Reborn engine is not linked from guild.html');
@@ -270,7 +271,7 @@ for(const file of files){
     if(!contents.includes('ui-polish-v3.css'))throw new Error('Global UI polish stylesheet is not linked from guild.html');
     if(!contents.includes('home-v2.css')||!contents.includes('class="home-command"')||!contents.includes('class="home-destination-grid"')||!contents.includes('id="overviewGuildPulse"'))throw new Error('Guild Command Centre home is not linked or its required hooks are missing');
     if(!contents.includes('command-ui-v1.css'))throw new Error('Cross-game Guild Command UI layer is not linked from guild.html');
-    if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=27'))throw new Error('Character Command UI is not linked from guild.html');
+    if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=28'))throw new Error('Character Command UI is not linked from guild.html');
     for(const hook of ['roster-v2.css','class="roster-overview-strip"','id="rosterClearFilters"','id="rosterResultsLabel"','class="roster-grid roster-grid-v2"'])if(!contents.includes(hook))throw new Error('Roster v2 UI is missing '+hook);
     for(const hook of ['bank-v2.css','class="bank-category-tabs"','id="bankClearFilters"','id="bankResultsLabel"','class="bank-grid bank-grid-v2"','data-bank-category="Gear"'])if(!contents.includes(hook))throw new Error('Bank v2 UI is missing '+hook);
     if(!contents.includes('bank-v2.css?v=2'))throw new Error('Bank v2 stylesheet cache version must include category-isolation fix');
@@ -292,12 +293,20 @@ for(const file of files){
   vm.createContext(portraitSandbox);
   vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),portraitSandbox,{filename:'character-portraits-v1.js'});
   const P=portraitSandbox.CellboundPortraits;
-  if(!P?.paperDollHTML)throw new Error('Equipment paper doll runtime failed to load');
-  const base={id:'paper-test',name:'Test',race:'Veyren',class:'Warrior',appearance:{race:'Veyren',skinTone:1,face:2,hair:3,hairColor:4,facialHair:1,marking:2,eyes:0,feature:1},equipment:{}};
-  const bare=P.paperDollHTML(base,{highlightedSlot:'Chest'});
-  const geared=P.paperDollHTML({...base,equipment:{Chest:{name:'Test Plate',class:'Warrior',slot:'Chest',tier:4},Weapon:{name:'Test Blade',class:'Warrior',slot:'Weapon',tier:4}}},{highlightedSlot:'Chest'});
-  if(!bare.includes('cb-paper-doll')||!bare.includes('is-highlighted'))throw new Error('Equipment paper doll base/highlight render failed');
-  if(geared===bare||!geared.includes('cb-paper-glow'))throw new Error('Equipment paper doll does not react to equipped gear tiers');
+  if(!P?.paperDollHTML||!P?.visualProfile)throw new Error('Equipment Visuals V2 runtime failed to load');
+  const appearance={race:'Veyren',skinTone:1,face:2,hair:3,hairColor:4,facialHair:1,marking:2,eyes:0,feature:1};
+  const sword={name:'Test Sword',itemId:'test-sword',class:'Warrior',slot:'Weapon',tier:2};
+  const spear={name:'Test Spear',itemId:'test-spear',class:'Warrior',slot:'Weapon',tier:2};
+  if(P.weaponType(sword,{class:'Warrior'})!=='sword'||P.weaponType(spear,{class:'Warrior'})!=='spear')throw new Error('Weapon visual type swap failed');
+  const base={id:'paper-test',name:'Test',race:'Veyren',class:'Warrior',appearance,equipment:{Weapon:sword,Waist:{name:'Test Belt',itemId:'test-belt',class:'Warrior',slot:'Waist',tier:2},Ring1:{name:'Test Ring',itemId:'test-ring',class:'Warrior',slot:'Ring',tier:2}}};
+  const swordView=P.paperDollHTML(base,{highlightedSlot:'Weapon'});
+  const spearView=P.paperDollHTML({...base,equipment:{...base.equipment,Weapon:spear}},{highlightedSlot:'Weapon'});
+  if(swordView===spearView||!swordView.includes('data-weapon-type="sword"')||!spearView.includes('data-weapon-type="spear"'))throw new Error('Sword-to-spear paper doll visual swap failed');
+  if(!swordView.includes('cb-paper-slot-waist')||!swordView.includes('cb-paper-slot-ring1'))throw new Error('14-slot paper doll accessory coverage failed');
+  const setEquipment={};
+  ['Head','Shoulders','Chest','Hands'].forEach(slot=>setEquipment[slot]={name:'Warlord '+slot,itemId:'warrior-t4-'+slot.toLowerCase(),class:'Warrior',slot,tier:4,setId:'warrior-t4',setName:'Warlord Set'});
+  const setView=P.paperDollHTML({...base,equipment:setEquipment},{highlightedSlot:'Chest'});
+  if(!setView.includes('set-pieces-4')||!setView.includes('cb-paper-set-glow')||!setView.includes('is-set-item'))throw new Error('Set prestige visual treatment failed');
 }
 
 for(const file of assets){const src=path.join(__dirname,file),dest=path.join(out,file);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest)}
@@ -336,6 +345,9 @@ for(const file of ['endgame-v1.css','endgame-data-v1.js','endgame-v1.js','readab
   if(!G||!D)throw new Error('Chapter 1 gear validation runtime failed to load');
   const requiredSlots=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring','Trinket','Relic'];
   for(const klass of G.CLASS_ORDER)for(let tier=1;tier<=4;tier++)for(const slot of requiredSlots)if(!G.items.some(x=>x.class===klass&&x.tier===tier&&x.slot===slot))throw new Error('Missing gear catalogue item: '+klass+' T'+tier+' '+slot);
+  if(G.items.some(x=>!x.appearanceId))throw new Error('Base gear item missing stable character appearance identity');
+  if(G.items.filter(x=>x.slot==='Weapon').some(x=>!x.weaponType))throw new Error('Weapon item missing character visual weapon type');
+  if(G.items.filter(x=>x.slot==='OffHand').some(x=>!x.offHandType))throw new Error('Off-hand item missing character visual type');
   if(G.items.some(x=>Number(x.tier)>=5))throw new Error('Generic gear catalogue contains raid-exclusive Tier 5 items');
   if(G.items.filter(x=>Number(x.tier)===4).length!==G.CLASS_ORDER.length*requiredSlots.length)throw new Error('Tier 4 catalogue must contain the full Chapter 1 slot catalogue for every current class');
   if(!G.TIER_META?.[5]?.raidExclusive)throw new Error('Tier 5 is not marked raid-exclusive');

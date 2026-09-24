@@ -241,8 +241,14 @@ function paperDoll(c,state){
   const upgradeCount=[...leftSlots,...rightSlots].filter(slot=>bestBankUpgrade(state,c,slot)).length;
   const ent=window.CellboundGame?.getEntitlements?.()||{professionSlots:1,member:false};
   const health=sheetMaxHealth(c),shock=Math.round(Number(c.cellShock)||0);
-  const visibleSlots=['Head','Shoulders','Chest','Hands','Legs','Feet','Weapon','OffHand'];
+  const visibleSlots=[...leftSlots,...rightSlots];
   const visibleEquipped=visibleSlots.filter(slot=>c.equipment?.[slot]).length;
+  const setVisualItems=visibleSlots.map(slot=>({slot,item:c.equipment?.[slot]})).filter(x=>x.item&&CP?.visualProfile?.(c,x.item,x.slot)?.isSet);
+  const setCounts=setVisualItems.reduce((out,x)=>{const key=x.item.setId||x.item.setName||String(x.item.baseItemId||x.item.itemId||c.class+'-set').replace(/-(head|shoulders|chest|hands|waist|legs|feet|weapon|offhand|ring|trinket|relic)$/i,'');out[key]=(out[key]||0)+1;return out},{});
+  const dominantSetKey=Object.keys(setCounts).sort((a,b)=>setCounts[b]-setCounts[a])[0]||'';
+  const setCount=dominantSetKey?setCounts[dominantSetKey]:0;
+  const setExample=setVisualItems.find(x=>(x.item.setId||x.item.setName||String(x.item.baseItemId||x.item.itemId||'').replace(/-(head|shoulders|chest|hands|waist|legs|feet|weapon|offhand|ring|trinket|relic)$/i,''))===dominantSetKey)?.item;
+  const setLabel=setExample?.setName||G?.SET_META?.[c.class]?.name||(setCount?c.class+' Set':'');
   const visual=CP?.paperDollHTML?.(c,{size:'equipment',highlightedSlot:activeSlot,accent:meta.accent})||portraitHTML(c,'hero');
   const coreStats=['Strength','Agility','Intellect','Stamina'];
   const combatStats=['Armour','Crit','Haste','Block','Threat','Healing'];
@@ -252,7 +258,8 @@ function paperDoll(c,state){
       <div class="cb-armoury-heading"><div><small>CHARACTER ARMOURY</small><h3>${c.name}</h3><p>${c.race||'Veyren'} · ${c.class} · ${c.spec}</p></div><span class="cb-role-pill cb-role-${role}">${roleLabel(role)}</span></div>
 
       <div class="cb-equipment-visual-stage" data-paper-doll-stage>
-        <div class="cb-equipment-visual-meta"><span>LIVE EQUIPMENT VIEW</span><b>${visibleEquipped}/8 visible slots equipped</b></div>
+        <div class="cb-equipment-visual-meta"><span>LIVE EQUIPMENT VIEW</span><b>${visibleEquipped}/14 visual slots equipped</b></div>
+        ${setCount?`<div class="cb-equipment-set-visual"><strong>${escHtml(setLabel)}</strong><span>${setCount} set piece${setCount===1?'':'s'} shaping this look${setCount>=4?' · full prestige':''}</span></div>`:''}
         <div class="cb-equipment-visual-model">${visual}</div>
         <div class="cb-equipment-visual-foot"><span>${activeSlot?`Inspecting ${activeSlot}`:'Select a gear slot to highlight it on the character.'}</span><em>Appearance updates instantly with equipped gear.</em></div>
       </div>
@@ -550,13 +557,13 @@ function fallbackEquipmentSlot(c,slot){
 function equipmentFallback(c,state,error){
   const meta=classMeta[c?.class]||{icon:'◇',accent:'#58d7cf'},all=[...leftSlots,...rightSlots];
   const left=leftSlots.map(slot=>fallbackEquipmentSlot(c,slot)).join(''),right=rightSlots.map(slot=>fallbackEquipmentSlot(c,slot)).join('');
-  const visible=['Head','Shoulders','Chest','Hands','Legs','Feet','Weapon','OffHand'].filter(slot=>c?.equipment?.[slot]).length;
+  const visible=[...leftSlots,...rightSlots].filter(slot=>c?.equipment?.[slot]).length;
   const equipped=all.filter(slot=>c?.equipment?.[slot]).length;
   let visual=portraitHTML(c,'hero');
   try{visual=CP?.paperDollHTML?.(c,{size:'equipment',highlightedSlot:activeSlot,accent:meta.accent})||visual}catch(e){console.warn('Paper doll fallback isolated:',e)}
   let drawer='';
   if(activeSlot){try{drawer=slotPicker(state,c,activeSlot)}catch(e){console.warn('Equipment drawer fallback isolated:',e)}}
-  return `<div class='cb-paperdoll cb-armoury-screen cb-armoury-stats-screen cb-equipment-recovery' style='--cb-accent:${meta.accent}'><div class='cb-gear-column cb-gear-left'>${left}</div><section class='cb-armoury-stage cb-stat-command cb-recovery-armoury'><div class='cb-armoury-heading'><div><small>CHARACTER ARMOURY</small><h3>${escHtml(c?.name||'Adventurer')}</h3><p>${escHtml(c?.race||'Veyren')} · ${escHtml(c?.class||'Adventurer')} · ${escHtml(c?.spec||'')}</p></div><span class='cb-role-pill'>${equipped}/14 SLOTS</span></div><div class='cb-equipment-visual-stage' data-paper-doll-stage><div class='cb-equipment-visual-meta'><span>LIVE EQUIPMENT VIEW</span><b>${visible}/8 visible slots equipped</b></div><div class='cb-equipment-visual-model'>${visual}</div><div class='cb-equipment-visual-foot'><span>${activeSlot?'Inspecting '+escHtml(activeSlot):'Select a gear slot to highlight it on the character.'}</span><em>Appearance updates with equipped gear.</em></div></div><div class='cb-recovery-note'><strong>Armoury protected</strong><span>A legacy item value was isolated without hiding the character viewer.</span></div></section><div class='cb-gear-column cb-gear-right'>${right}</div>${drawer}</div>`;
+  return `<div class='cb-paperdoll cb-armoury-screen cb-armoury-stats-screen cb-equipment-recovery' style='--cb-accent:${meta.accent}'><div class='cb-gear-column cb-gear-left'>${left}</div><section class='cb-armoury-stage cb-stat-command cb-recovery-armoury'><div class='cb-armoury-heading'><div><small>CHARACTER ARMOURY</small><h3>${escHtml(c?.name||'Adventurer')}</h3><p>${escHtml(c?.race||'Veyren')} · ${escHtml(c?.class||'Adventurer')} · ${escHtml(c?.spec||'')}</p></div><span class='cb-role-pill'>${equipped}/14 SLOTS</span></div><div class='cb-equipment-visual-stage' data-paper-doll-stage><div class='cb-equipment-visual-meta'><span>LIVE EQUIPMENT VIEW</span><b>${visible}/14 visual slots equipped</b></div><div class='cb-equipment-visual-model'>${visual}</div><div class='cb-equipment-visual-foot'><span>${activeSlot?'Inspecting '+escHtml(activeSlot):'Select a gear slot to highlight it on the character.'}</span><em>Appearance updates with equipped gear.</em></div></div><div class='cb-recovery-note'><strong>Armoury protected</strong><span>A legacy item value was isolated without hiding the character viewer.</span></div></section><div class='cb-gear-column cb-gear-right'>${right}</div>${drawer}</div>`;
 }
 function equipmentPanel(c,state){
   try{return `${paperDoll(c,state)}${activeSlot?slotPicker(state,c,activeSlot):''}`}

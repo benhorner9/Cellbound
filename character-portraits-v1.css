@@ -334,7 +334,7 @@
 
 
 /* ==========================================================================
-   Full-character equipment visual / paper doll
+   Full-character equipment visual / paper doll V2
    Uses the portrait system's vector language and character appearance data.
    ========================================================================== */
 .cb-paper-doll{
@@ -362,6 +362,51 @@
 }
 .cb-paper-glow{
   filter:drop-shadow(0 0 5px currentColor)
+}
+.cb-paper-set-glow{
+  filter:
+    drop-shadow(0 0 5px var(--cbp-set-glow,var(--cbp-accent)))
+    drop-shadow(0 0 11px color-mix(in srgb,var(--cbp-set-glow,var(--cbp-accent)) 58%,transparent))
+}
+.cb-paper-slot.is-set-item{
+  filter:drop-shadow(0 0 2px color-mix(in srgb,var(--cbp-set-glow,var(--cbp-accent)) 48%,transparent))
+}
+.cb-paper-doll.has-set{
+  filter:
+    drop-shadow(0 18px 22px rgba(0,0,0,.34))
+    drop-shadow(0 0 9px color-mix(in srgb,var(--cbp-set-glow,var(--cbp-accent)) 16%,transparent))
+}
+.cb-paper-doll.set-pieces-4{
+  filter:
+    drop-shadow(0 18px 22px rgba(0,0,0,.36))
+    drop-shadow(0 0 14px color-mix(in srgb,var(--cbp-set-glow,var(--cbp-accent)) 26%,transparent))
+}
+.cb-equipment-set-visual{
+  position:absolute;
+  z-index:5;
+  right:12px;
+  top:32px;
+  max-width:145px;
+  padding:7px 9px;
+  border:1px solid color-mix(in srgb,var(--cbp-set-glow,var(--cb-accent)) 36%,rgba(216,185,118,.18));
+  background:rgba(7,13,16,.82);
+  box-shadow:0 7px 20px rgba(0,0,0,.28);
+  text-align:right;
+  pointer-events:none
+}
+.cb-equipment-set-visual strong{
+  display:block;
+  color:color-mix(in srgb,var(--cbp-set-glow,var(--cb-accent)) 75%,#f0dfad);
+  font-size:.34rem;
+  letter-spacing:.08em;
+  text-transform:uppercase
+}
+.cb-equipment-set-visual span{
+  display:block;
+  margin-top:3px;
+  color:#72837e;
+  font-size:.3rem;
+  line-height:1.25
 }
 
 /* Character Equipment page: the visual is the centre of the armoury. */
@@ -473,4 +518,9 @@
   .cb-equipment-visual-meta b{display:none}
   .cb-equipment-visual-foot{display:block}
   .cb-equipment-visual-foot em{display:block;margin-top:2px;text-align:left}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .cb-paper-slot{transition:none}
+  .cb-paper-set-glow,.cb-paper-glow{filter:none}
 }
