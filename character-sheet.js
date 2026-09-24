@@ -289,13 +289,16 @@ function paperDoll(c,state){
   </div>`;
 }
 function possibleSlots(item){
+  if(!item||typeof item!=='object')return[];
   if(item.slot==='Trinket')return ['Trinket1','Trinket2'];
   if(item.slot==='Ring')return ['Ring1','Ring2'];
   if(item.slot==='Weapon')return ['Weapon','OffHand'];
-  return [item.slot];
+  return item.slot?[item.slot]:[];
 }
 function canUse(c,item){
-  const classOk=item.classes==='all'||!item.classes||item.classes.includes(c.class);
+  if(!item||typeof item!=='object')return false;
+  const classes=item.classes;
+  const classOk=classes==='all'||!classes||(Array.isArray(classes)?classes.includes(c?.class):String(classes).includes(String(c?.class||'')));
   const roleOk=!item.relicRole||roleOf(c)===item.relicRole;
   return classOk&&roleOk
 }
@@ -537,23 +540,27 @@ function historyPanel(c,state){
   </div>`;
 }
 
-function equipmentFallback(c,state){
-  const slots=[...leftSlots,...rightSlots];
-  const rows=slots.map(slot=>{
-    const raw=c?.equipment?.[slot];
-    const item=raw&&typeof raw==='object'?raw:null;
-    const name=item?.name||(typeof raw==='string'?raw:'Empty');
-    const ilvl=Math.max(0,Number(item?.itemLevel)||0);
-    return `<button type="button" class="cb-equip-slot ${item?'':'cb-empty'}" data-slot="${slot}"><span class="cb-slot-icon">${slotIcons[slot]||'◇'}</span><span class="cb-slot-copy"><small>${slot.replace(/(\\d)/,' $1')}</small><b>${escHtml(name)}</b><span class="cb-slot-ilvl">${item?'Item Level '+ilvl:'Equipment slot'}</span></span></button>`;
-  }).join('');
-  return `<div class="cb-equipment-recovery"><section class="cb-character-tab-hero"><div><small>ARMOURY</small><h3>Equipment</h3><p>Your equipment is available below. A display error in one item was isolated so the character page stays usable.</p></div><div class="cb-character-tab-stat"><span>SLOTS</span><b>${slots.filter(slot=>c?.equipment?.[slot]).length} / 14</b><small>Character loadout</small></div></section><div class="cb-paperdoll cb-equipment-recovery-grid"><div class="cb-gear-column">${rows}</div></div></div>`;
+function fallbackEquipmentSlot(c,slot){
+  const raw=c?.equipment?.[slot],item=raw&&typeof raw==='object'?raw:null;
+  const name=item?.name||(typeof raw==='string'?raw:'Empty'),ilvl=Math.max(0,Number(item?.itemLevel)||0);
+  return `<button type='button' class='cb-equip-slot ${item?rarityClass(item):'cb-empty'}' data-slot='${slot}'><span class='cb-slot-icon'>${slotIcons[slot]||'◇'}</span><span class='cb-slot-copy'><small>${slot.replace(/(\d)/,' $1')}</small><b>${escHtml(name)}</b><span class='cb-slot-ilvl'>${item?'Item Level '+ilvl:'Equipment slot'}</span></span></button>`;
+}
+function equipmentFallback(c,state,error){
+  const meta=classMeta[c?.class]||{icon:'◇',accent:'#58d7cf'},all=[...leftSlots,...rightSlots];
+  const left=leftSlots.map(slot=>fallbackEquipmentSlot(c,slot)).join(''),right=rightSlots.map(slot=>fallbackEquipmentSlot(c,slot)).join('');
+  const visible=['Head','Shoulders','Chest','Hands','Legs','Feet','Weapon','OffHand'].filter(slot=>c?.equipment?.[slot]).length;
+  const equipped=all.filter(slot=>c?.equipment?.[slot]).length;
+  let visual=portraitHTML(c,'hero');
+  try{visual=CP?.paperDollHTML?.(c,{size:'equipment',highlightedSlot:activeSlot,accent:meta.accent})||visual}catch(e){console.warn('Paper doll fallback isolated:',e)}
+  let drawer='';
+  if(activeSlot){try{drawer=slotPicker(state,c,activeSlot)}catch(e){console.warn('Equipment drawer fallback isolated:',e)}}
+  return `<div class='cb-paperdoll cb-armoury-screen cb-armoury-stats-screen cb-equipment-recovery' style='--cb-accent:${meta.accent}'><div class='cb-gear-column cb-gear-left'>${left}</div><section class='cb-armoury-stage cb-stat-command cb-recovery-armoury'><div class='cb-armoury-heading'><div><small>CHARACTER ARMOURY</small><h3>${escHtml(c?.name||'Adventurer')}</h3><p>${escHtml(c?.race||'Veyren')} · ${escHtml(c?.class||'Adventurer')} · ${escHtml(c?.spec||'')}</p></div><span class='cb-role-pill'>${equipped}/14 SLOTS</span></div><div class='cb-equipment-visual-stage' data-paper-doll-stage><div class='cb-equipment-visual-meta'><span>LIVE EQUIPMENT VIEW</span><b>${visible}/8 visible slots equipped</b></div><div class='cb-equipment-visual-model'>${visual}</div><div class='cb-equipment-visual-foot'><span>${activeSlot?'Inspecting '+escHtml(activeSlot):'Select a gear slot to highlight it on the character.'}</span><em>Appearance updates with equipped gear.</em></div></div><div class='cb-recovery-note'><strong>Armoury protected</strong><span>A legacy item value was isolated without hiding the character viewer.</span></div></section><div class='cb-gear-column cb-gear-right'>${right}</div>${drawer}</div>`;
 }
 function equipmentPanel(c,state){
   try{return `${paperDoll(c,state)}${activeSlot?slotPicker(state,c,activeSlot):''}`}
   catch(error){
     console.error('Cellbound equipment tab render recovered from an item/UI error:',error);
-    activeSlot=null;
-    return equipmentFallback(c,state);
+    return equipmentFallback(c,state,error);
   }
 }
 
