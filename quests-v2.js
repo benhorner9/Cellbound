@@ -536,7 +536,7 @@ function qFloat(id,text,kind='damage'){const arena=$('#q2dArena'),p=qPoint(id);i
 function qSetEnemyHp(i,value){
   if(!questFight)return;const max=questFight.enemyMax[i]||1,prev=questFight.enemyHp[i]||0,next=Math.max(0,Math.min(max,Math.round(value)));questFight.enemyHp[i]=next;
   const u=qUnit('e-'+i),bar=u?.querySelector('.cb2d-unit-hp i');if(bar)bar.style.width=(next/max*100)+'%';
-  if(u&&prev>0&&next<=0)u.classList.add('dead')
+  if(u){if(next<=0)u.classList.add('dead');else u.classList.remove('dead')}qRefreshTargetControls()
 }
 function qSetPartyHp(c,value){if(!questFight)return;const next=Math.max(0,Math.min(100,Math.round(value)));questFight.partyHp[c.id]=next;const bar=$('[data-q-side-hp="'+c.id+'"]');if(bar)bar.style.width=next+'%';const txt=$('[data-q-hp-text="'+c.id+'"]');if(txt)txt.textContent=next+' HP';const overhead=qUnit('p-'+c.id)?.querySelector('.cb2d-unit-hp i');if(overhead)overhead.style.width=next+'%'}
 function qRenderMeters(target=0){
@@ -551,15 +551,38 @@ function qRenderMeters(target=0){
   const label=$('#q2dThreatTarget');if(label)label.textContent=questFight.enemies[target]||'No target';
   if(threatRoot)threatRoot.innerHTML=threatRows.map((x,i)=>{const pct=x.value/maxThreat*100,hasAggro=aggro===x.c.id,tank=p.find(y=>qRole(y)==='tank'),tankThreat=tank?Number(table[tank.id])||0:0,high=!hasAggro&&qRole(x.c)!=='tank'&&tankThreat>0&&x.value>=tankThreat*.85;return '<div class="cb2d-meter-row '+qClassKey(x.c)+(hasAggro?' aggro':'')+(high?' high':'')+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(x.c.name)+(hasAggro?' <strong>AGGRO</strong>':high?' <strong>HIGH</strong>':'')+'</b><span>'+Math.round(x.value).toLocaleString()+' · '+Math.round(pct)+'%</span></div><em><i style="width:'+pct+'%"></i></em></div>'}).join('')
 }
+function qRefreshTargetControls(){
+  if(!questFight)return;
+  $('[data-q-target]').forEach(b=>{
+    const i=Number(b.dataset.qTarget),max=Math.max(1,Number(questFight.enemyMax?.[i])||1),hp=Math.max(0,Number(questFight.enemyHp?.[i])||0),alive=hp>0;
+    b.classList.toggle('active',alive&&i===Number(questFight.focusTarget));
+    b.classList.toggle('defeated',!alive);b.disabled=!alive;
+    const fill=b.querySelector('em i');if(fill)fill.style.width=(hp/max*100)+'%';
+    const pct=b.querySelector('small');if(pct)pct.textContent=alive?Math.round(hp/max*100)+'%':'DOWN';
+  })
+}
+function qSelectTarget(index){
+  if(!questFight)return;
+  const i=Math.max(0,Math.min(questFight.enemies.length-1,Number(index)||0));
+  if((Number(questFight.enemyHp?.[i])||0)<=0)return;
+  questFight.focusTarget=i;qRefreshTargetControls();qRenderMeters(i);
+  qStatus('Focus target: '+questFight.enemies[i]);
+  qLog('Target switched to '+questFight.enemies[i]+'.')
+}
+function qTargetControlsMarkup(){
+  if(!questFight)return'';
+  return '<div class="cb2d-controls quest-live-targets"><div class="quest-live-target-copy"><small>LIVE TARGET PRIORITY</small><b>Call the party target during combat.</b><span>Bring all three Hounds low, then finish them inside the Licked Wounds window.</span></div><div class="quest-live-target-grid">'+questFight.enemies.map((name,i)=>'<button type="button" data-q-target="'+i+'" class="'+(i===Number(questFight.focusTarget)?'active':'')+'"><span>'+esc(name)+'</span><small>100%</small><em><i style="width:100%"></i></em></button>').join('')+'</div></div>'
+}
 function qDraw(config,finish){
   const root=encounterRoot();root.className='cb2d-backdrop quest-cb2d-backdrop';root.hidden=false;document.body.classList.add('quest-cb2d-open');
   const visualClass=String(config.visualClass||'').replace(/[^a-z0-9-_ ]/gi,'').trim(),environmentMarkup=String(config.environmentMarkup||'');
-  const liveKind=config.presentationKind==='dungeon'?'LIVE 2D DUNGEON':'LIVE 2D QUEST',partyLabel=config.partyLabel||'ACTIVE FIVE';
+  const liveKind=config.presentationKind==='dungeon'?'LIVE 2D DUNGEON':'LIVE 2D QUEST',partyLabel=config.partyLabel||'ACTIVE FIVE',controlMarkup=config.allowTargetSwitch?qTargetControlsMarkup():'<div class="cb2d-controls cbr-plan-lock"><div class="cbr-plan-lock-copy"><small>QUEST FIGHT</small><b>Your party is committed.</b><span>Watch the fight play out and see how the party handles the encounter.</span></div></div>';
   root.innerHTML='<section class="cb2d-shell quest-cb2d-shell '+esc(visualClass)+'"><header class="cb2d-head"><div><small>'+esc(config.quest.toUpperCase())+' · LV '+Math.max(1,Number(config.combat?.level)||1)+' · '+liveKind+'</small><h2>'+esc(config.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-q-speed>1×</button><button data-q-close>×</button></div></header>'+
     '<div class="cb2d-route" id="q2dRoute">'+qRoute()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena quest-cb2d-arena" id="q2dArena"><div class="cb2d-floor"></div><div class="quest-cb2d-environment">'+environmentMarkup+'</div><div class="cb2d-room-tag"><b>'+esc(config.location)+'</b><small>'+esc(config.ambience)+'</small></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="q2dTelegraphs"></div><div id="q2dUnits"></div><div class="cb2d-caption"><span>QUEST FIGHT</span><b id="q2dStatus">Entering encounter…</b></div></div>'+
-    '<div class="cb2d-controls cbr-plan-lock"><div class="cbr-plan-lock-copy"><small>QUEST FIGHT</small><b>Your party is committed.</b><span>Watch the fight play out and see how the party handles the encounter.</span></div></div>'+
+    controlMarkup+
     '<div class="cb2d-feed"><small>COMBAT FEED</small><p id="q2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="q2dCastName">—</b><strong id="q2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="q2dCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="q2dDamageTotal">0 total</span></div><div id="q2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="q2dHealingTotal">0 total</span></div><div id="q2dHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="q2dThreatTarget">No target</span></div><div id="q2dThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-q-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-q-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Holding range</em></div><div data-q-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>'+esc(partyLabel)+'</small>'+qRows()+'</div></aside></div><div class="cb2d-end" id="q2dEnd" hidden></div></section>';
   root.querySelector('[data-q-speed]').onclick=e=>{if(!questFight)return;questFight.speed=questFight.speed===2?1:2;e.currentTarget.textContent=questFight.speed+'×'};
+  root.querySelectorAll('[data-q-target]').forEach(b=>b.onclick=()=>qSelectTarget(Number(b.dataset.qTarget)));qRefreshTargetControls();
   root.querySelector('[data-q-close]').onclick=()=>{if(!questFight?.finished&&!confirm('Leave this quest fight? It will restart.'))return;encounterToken++;window.CellboundCombatStatuses?.clear?.(root);root.hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)};
 }
 function qEnemyMeta(index){
@@ -648,7 +671,7 @@ function qStatusTargets(id){
   return out
 }
 function qRenderRebornEvent(e){
-  if(!questFight||!e)return;questFight.elapsedMs=Math.max(Number(questFight.elapsedMs)||0,Number(e.timestamp)||0);
+  if(!questFight||!e)return;const eventTime=(Number(questFight.eventOffset)||0)+(Number(e.timestamp)||0);questFight.elapsedMs=Math.max(Number(questFight.elapsedMs)||0,eventTime);
   if(window.CellboundCombatStatuses?.handle(e,{resolve:qStatusTargets,speed:()=>questFight?.speed||1}))return;
   const srcChar=qEventCharacter(e.source),targetChar=qEventCharacter(e.target),enemyIndex=qEventEnemyIndex(e.target),sourceEnemy=qEventEnemyIndex(e.source);
   switch(e.type){
@@ -776,6 +799,94 @@ async function runQuest2DFight(config){
     })();
   });
 }
+async function runInteractiveQuest2DFight(config){
+  const p=party(),C=window.CellboundCombatStandard;if(p.length!==5||!C?.simulate)return false;
+  const tok=++encounterToken,sliceMs=Math.max(1400,Number(config.sliceMs)||2400),reviveMs=Math.max(3000,Number(config.reviveWindowMs)||12000),revivePct=Math.max(1,Math.min(100,Number(config.revivePct)||35));
+  return await new Promise(resolve=>{
+    let settled=false,step=0,elapsed=0,lastResult=null;
+    const finish=value=>{if(settled)return;settled=true;resolve(value)};
+    const encounter=qEncounterFromConfig(config),entries=config.enemies||[],names=entries.map(x=>typeof x==='object'&&x?x.name||'Unknown Enemy':x);
+    const initialMax=entries.map(x=>typeof x==='object'&&x&&Number(x.maxHealth||x.health)>0?Number(x.maxHealth||x.health):encounter.enemyHealth);
+    const carry={},downAt={},deathAt={};
+    questFight={token:tok,title:config.title,presentationKind:config.presentationKind||'quest',phases:Array.isArray(config.phases)&&config.phases.length?config.phases:['Combat'],phase:0,speed:1,elapsedMs:0,eventOffset:0,enemies:names,level:encounter.level,enemyLevels:encounter.enemyLevels,enemyTypes:encounter.enemyTypes,eliteIndex:Number.isInteger(config.eliteIndex)?config.eliteIndex:-1,enemyMax:[...initialMax],enemyHp:[...initialMax],partyHp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=qResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),damage:Object.fromEntries(p.map(c=>[c.id,0])),healing:Object.fromEntries(p.map(c=>[c.id,0])),overhealing:Object.fromEntries(p.map(c=>[c.id,0])),threat:initialMax.map(()=>Object.fromEntries(p.map(c=>[c.id,0]))),aggro:initialMax.map(()=>null),log:[],telegraphs:{},finished:false,focusTarget:Math.max(0,Number(config.initialTarget)||0)};
+    qDraw({...config,allowTargetSwitch:true},finish);qSpawn();qLog(config.ambience);qStatus('Choose a Hound and call the target.');
+    window.CellboundFX?.boss?.(config.title,config.location||'');
+
+    const statusCarry=fp=>Object.values(fp?.statuses||{}).map(st=>({...st,remainingMs:Math.max(0,(Number(st.expiresAt)||0)-Number(lastResult?.durationMs||0))})).filter(st=>st.remainingMs>0);
+    const reviveEnemy=i=>{
+      const hp=Math.max(1,Math.round((questFight.enemyMax[i]||1)*revivePct/100));questFight.enemyHp[i]=hp;delete downAt[i];delete deathAt[i];
+      const u=qUnit('e-'+i);u?.classList.remove('dead');qSetEnemyHp(i,hp);qFloat('e-'+i,'LICKED WOUNDS','heal');qPulseUnit('e-'+i,'healed',500);
+      qLog(questFight.enemies[i]+' uses Licked Wounds and returns at '+revivePct+'%.');qStatus('LICKED WOUNDS · '+questFight.enemies[i]+' REVIVED');
+      window.CellboundCombatFX?.heal?.(u||document.querySelector('.quest-cb2d-arena'));qRefreshTargetControls()
+    };
+    const ensureFocus=()=>{
+      const current=Number(questFight.focusTarget)||0;if((Number(questFight.enemyHp[current])||0)>0)return current;
+      const next=questFight.enemyHp.findIndex(x=>Number(x)>0);if(next>=0)qSelectTarget(next);return Math.max(0,next)
+    };
+    const showEnd=async won=>{
+      if(tok!==encounterToken||settled)return;
+      questFight.finished=true;qCastClear();
+      const end=$('#q2dEnd');if(!end){finish(won);return}
+      end.hidden=false;
+      if(won){
+        qStatus('ENCOUNTER CLEAR');window.CellboundCombatFX?.victory?.(document.querySelector('.quest-cb2d-arena'));qLog('The pack bond breaks. All three Hounds stay down.');
+        const totalDamage=Object.values(questFight.damage).reduce((n,x)=>n+Number(x||0),0),totalHealing=Object.values(questFight.healing).reduce((n,x)=>n+Number(x||0),0);
+        end.innerHTML='<div><small>QUEST FIGHT COMPLETE</small><h3>'+esc(config.title)+'</h3><p>'+esc(config.completeText||'The way forward is clear.')+'</p><div class="cbr-analysis-grid quest-cbr-summary"><article><span>TIME</span><b>'+Math.round(elapsed/1000)+'s</b></article><article><span>DAMAGE</span><b>'+Math.round(totalDamage).toLocaleString()+'</b></article><article><span>HEALING</span><b>'+Math.round(totalHealing).toLocaleString()+'</b></article><article><span>REVIVE RULE</span><b>BEATEN</b></article></div></div><button data-q-continue>CONTINUE QUEST →</button>';
+      }else{
+        qStatus('PARTY DEFEATED');window.CellboundFX?.wipe?.('The Three Hounds overwhelm the party.');Game.applyPartyCellShock?.(25);await Game.persistState?.();
+        end.innerHTML='<div><small>QUEST FIGHT FAILED</small><h3>'+esc(config.title)+'</h3><p>Recover, then try again. Balance the pack before committing to the first kill.</p></div><button data-q-continue>RETURN TO QUEST →</button>';
+      }
+      end.querySelector('[data-q-continue]').onclick=()=>{window.CellboundCombatStatuses?.clear?.(encounterRoot());encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(won)}
+    };
+
+    (async()=>{
+      try{
+        qRenderRebornEvent({timestamp:0,type:'COMBAT_START',result:'started'});await wait(450);
+        while(tok===encounterToken&&!settled){
+          const aliveNow=questFight.enemyHp.map((hp,i)=>Number(hp)>0?i:-1).filter(i=>i>=0);
+          if(!aliveNow.length){
+            const times=Object.values(deathAt).map(Number).filter(Number.isFinite);
+            if(times.length===names.length&&Math.max(...times)-Math.min(...times)<=reviveMs){await showEnd(true);return}
+            const oldest=Object.keys(deathAt).map(Number).sort((a,b)=>(deathAt[a]||0)-(deathAt[b]||0))[0];if(Number.isInteger(oldest)){reviveEnemy(oldest);continue}
+            await showEnd(true);return
+          }
+          Object.keys(downAt).map(Number).forEach(i=>{if((Number(questFight.enemyHp[i])||0)<=0&&elapsed-(downAt[i]||0)>=reviveMs&&questFight.enemyHp.some((hp,j)=>j!==i&&Number(hp)>0))reviveEnemy(i)});
+          const focus=ensureFocus(),enemyInput=entries.map((entry,i)=>({
+            ...(typeof entry==='object'&&entry?entry:{name:entry}),name:names[i],absoluteHealth:true,maxHealth:questFight.enemyMax[i],currentHealth:questFight.enemyHp[i],priority:i===focus?100:1
+          }));
+          const partyInput=p.map(c=>{const x=carry[c.id]||{};return Object.assign({},c,{
+            _combatHealthPct:x.healthPct==null?questFight.partyHp[c.id]:x.healthPct,_combatResource:x.resource||questFight.resources[c.id],_combatCooldowns:x.cooldowns||{},
+            _combatStatuses:Array.isArray(x.statuses)?x.statuses:[],_combatDefensiveMs:Number(x.defensiveMs)||0,_reviveSicknessMs:Number(x.reviveSicknessMs)||0,_combatUniqueUsed:x.uniqueUsed||{}
+          })});
+          const runEncounter={...encounter,enemies:enemyInput,mechanics:config.interactiveMechanics||[]};
+          lastResult=C.simulate({party:partyInput,encounter:runEncounter,tactics:{interruptPriority:'standard',addPriority:'immediate',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced',cooldownUse:'difficult'},seed:['quest-live',tok,config.title,step++].join(':'),maxDurationMs:sliceMs,elapsedOffsetMs:elapsed},{zone:'quest-encounters'});
+          const sliceStart=elapsed,mainEnemies=(lastResult.finalState?.enemies||[]).filter(e=>!e.isAdd);
+          lastResult.events.filter(e=>e.type==='ENEMY_DEFEATED').forEach(e=>{const i=qEventEnemyIndex(e.target);if(i>=0&&downAt[i]==null){downAt[i]=sliceStart+Number(e.timestamp||0);deathAt[i]=downAt[i]}});
+          questFight.eventOffset=sliceStart;
+          const visual={...lastResult,outcome:'ongoing',events:(lastResult.events||[]).filter(e=>e.type!=='COMBAT_START'&&e.type!=='COMBAT_END')};
+          await qPlayReborn(visual,tok);if(tok!==encounterToken||settled)return;
+          elapsed+=Number(lastResult.durationMs)||sliceMs;questFight.eventOffset=elapsed;
+          mainEnemies.forEach((e,i)=>{questFight.enemyMax[i]=Number(e.maxHealth)||questFight.enemyMax[i];questFight.enemyHp[i]=Math.max(0,Number(e.health)||0);qSetEnemyHp(i,questFight.enemyHp[i])});
+          (lastResult.finalState?.players||[]).forEach(fp=>{
+            const id=fp.characterId||String(fp.id||'').replace(/^p-/,'');const c=p.find(x=>String(x.id)===String(id));if(!c)return;
+            const healthPct=fp.maxHealth>0?fp.health/fp.maxHealth*100:0;questFight.partyHp[c.id]=healthPct;questFight.resources[c.id]=fp.resource||questFight.resources[c.id];qSetPartyHp(c,healthPct);
+            carry[c.id]={healthPct,resource:fp.resource,cooldowns:fp.cooldowns||{},statuses:statusCarry(fp),defensiveMs:fp.defensiveUntil||0,reviveSicknessMs:fp.revivePenaltyUntil||0,uniqueUsed:fp.uniqueUsed||{}}
+          });
+          if(lastResult.outcome==='defeat'){await showEnd(false);return}
+          const dead=questFight.enemyHp.map((hp,i)=>Number(hp)<=0?i:-1).filter(i=>i>=0),living=questFight.enemyHp.map((hp,i)=>Number(hp)>0?i:-1).filter(i=>i>=0);
+          if(dead.length===names.length){
+            const times=dead.map(i=>Number(deathAt[i]??elapsed));if(Math.max(...times)-Math.min(...times)<=reviveMs){await showEnd(true);return}
+            const oldest=dead.sort((a,b)=>(deathAt[a]||0)-(deathAt[b]||0))[0];reviveEnemy(oldest)
+          }else if(living.length){
+            dead.forEach(i=>{if(downAt[i]!=null&&elapsed-downAt[i]>=reviveMs)reviveEnemy(i)})
+          }
+          qRefreshTargetControls()
+        }
+      }catch(err){console.error('Interactive quest combat failed',err);encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}
+    })()
+  })
+}
+
 async function runResonanceBacklash(){
   const q=ensure(),bearer=party().find(c=>c.id===q.bearerId)||party()[0];
   return runQuest2DFight({quest:QUEST.title,title:'Resonance Backlash',location:'Jory’s Workshop',ambience:'The Blackened Fragment rejects the false route and tears an echo out of the room.',phases:['Backlash'],enemies:['Resonance Echo'],eliteIndex:0,combat:{kind:'boss',level:5,enemyTypes:['elite'],enemyHealth:720,mechanics:[['Memory Burst','circles',1500],['Resonance Shriek','interrupt',1800]]},completeText:'The echo collapses back into the fragment. The cipher is still waiting.'});
@@ -1059,7 +1170,7 @@ async function checkHistory(){if(currentStage()==='vault'&&latestAshenClear())aw
 function init(){
   Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,100);return}
   const q=ensure();if(q.started&&!complete())selectedAdventure='echoes';else if(q.ashfall?.complete&&echoesUnlocked())selectedAdventure='echoes';bind();render();checkHistory();setInterval(checkHistory,2500);
-  window.CellboundQuests={render,ensure,startAshfall,beginInvestigation,runQuest2DFight,selectAdventure:id=>{selectedAdventure=String(id||selectedAdventure);render()},isHollowUnlocked:()=>Boolean(ensure()?.flags?.hollowSanctumUnlocked)};
+  window.CellboundQuests={render,ensure,startAshfall,beginInvestigation,runQuest2DFight,runInteractiveQuest2DFight,selectAdventure:id=>{selectedAdventure=String(id||selectedAdventure);render()},isHollowUnlocked:()=>Boolean(ensure()?.flags?.hollowSanctumUnlocked)};
 }
 init();
 })();
