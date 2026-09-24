@@ -114,6 +114,18 @@ function inferWeaponType(klass,name=''){
   if(/(sword|blade|blades|sabre|saber)/.test(n))return'sword';
   return({Warrior:'sword',Paladin:'hammer',Priest:'staff',Druid:'staff',Hunter:'bow',Rogue:'dagger',Mage:'staff'})[klass]||'sword'
 }
+function equipmentPositions(item){
+  if(!item||typeof item!=='object')return[];
+  if(item.slot==='Trinket')return ['Trinket1','Trinket2'];
+  if(item.slot==='Ring')return ['Ring1','Ring2'];
+  // Main-hand weapons are intentionally NOT valid OffHand items.
+  if(item.slot==='Weapon')return ['Weapon'];
+  if(item.slot==='OffHand')return ['OffHand'];
+  return item.slot?[item.slot]:[];
+}
+function canEquipInSlot(item,slot){
+  return equipmentPositions(item).includes(slot);
+}
 function inferOffHandType(klass,name=''){
   const n=String(name).toLowerCase();
   if(/\b(shield|bulwark|buckler|aegis)\b/.test(n))return'shield';
@@ -275,5 +287,5 @@ function artHTML(item,size=64,extra=''){
   const slotClass='gear-slot-'+slug(canonical.slot||'item'),classClass='gear-class-'+slug(canonical.class||'all');
   return `<span class="gear-art tier-${canonical.tier||1} ${slotClass} ${classClass} ${extra}" data-gear-fit="${fit.toFixed(3)}" style="${artStyle(canonical,size)}" aria-label="${canonical.name}" title="${canonical.name}"><span class="gear-art-fallback" aria-hidden="true">${glyph}</span><span class="gear-art-cell" aria-hidden="true" style="position:absolute;overflow:hidden;width:${cell}px;height:${cell}px;left:${inset}px;top:${inset}px"><img class="gear-art-sprite" src="./assets/gear/cellbound-gear-atlas.webp?v=4" alt="" draggable="false" onerror="this.style.display='none'" style="position:absolute;max-width:none;width:${21*cell}px;height:${3*cell}px;left:-${pos.col*cell}px;top:-${pos.row*cell}px"></span></span>`;
 }
-window.CellboundGear={CLASS_ORDER,CORE_SLOT_ORDER,SLOT_ORDER,EQUIPMENT_POSITION_ORDER,SLOT_GLYPHS,TIER_META,ITEM_LEVELS,CHAPTER_GEAR,STAT_DEFS,SLOT_STAT_BUDGET,STAT_TYPE_BUDGET,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,SET_BONUS_RULES,setPieceCount,setBonusState,setBonusLines,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,effectiveStatBudget,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,questProfileStats,createQuestGear,inferWeaponType,inferOffHandType,artFit,artStyle,artHTML};
+window.CellboundGear={CLASS_ORDER,CORE_SLOT_ORDER,SLOT_ORDER,EQUIPMENT_POSITION_ORDER,SLOT_GLYPHS,TIER_META,ITEM_LEVELS,CHAPTER_GEAR,STAT_DEFS,SLOT_STAT_BUDGET,STAT_TYPE_BUDGET,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,SET_BONUS_RULES,setPieceCount,setBonusState,setBonusLines,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,effectiveStatBudget,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,questProfileStats,createQuestGear,inferWeaponType,inferOffHandType,equipmentPositions,canEquipInSlot,artFit,artStyle,artHTML};
 })();
