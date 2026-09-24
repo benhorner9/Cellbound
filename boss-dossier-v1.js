@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const VERSION='1.3.0';
+const VERSION='1.3.1';
 const BOSSES={
   'vaultheart':{
     dungeon:'The Ashen Vault',name:'The Vaultheart',title:'The Living Core Beneath the Vault',theme:'ashen',artwork:'./assets/bosses/ashen-vault-vaultheart.webp',
@@ -58,7 +58,7 @@ const BOSSES={
     intel:[['TARGETS','Five hostile combatants'],['CONTROL','Expect multiple threats'],['UNKNOWN','Final phase unrecorded']]
   },
   'three-hounds':{
-    dungeon:'No Way Back',name:'The Three Hounds',title:'Guardians of the Manor Grounds',theme:'manor',artwork:'./assets/bosses/no-way-back-three-hounds.webp',
+    dungeon:'No Way Back',name:'The Three Hounds',title:'Guardians of the Manor Grounds',theme:'manor',artwork:'./assets/bosses/no-way-back-three-hounds.webp?v=2',
     encounterLabel:'BOSS ENCOUNTER',artLabel:'FIRST BOSS',beginLabel:'ENGAGE THE THREE HOUNDS →',
     description:'Silas whistles once. Grim, Fang and Wail emerge from the Manor grounds as a single hunting pack. Killing one too early only gives the others time to bring it back.',
     abilities:[
@@ -70,7 +70,7 @@ const BOSSES={
     intel:[['TARGETS','Balance all three health pools'],['KILL WINDOW','12 seconds after first death'],['REVIVE','Returns at 35% health']]
   },
   'silas-vane':{
-    dungeon:'No Way Back',name:'Silas Vane',title:'Master of the Manor',theme:'manor',artwork:'./assets/bosses/no-way-back-silas-vane.webp',
+    dungeon:'No Way Back',name:'Silas Vane',title:'Master of the Manor',theme:'manor',artwork:'./assets/bosses/no-way-back-silas-vane.webp?v=2',
     encounterLabel:'FINAL BOSS',artLabel:'FINAL ENCOUNTER',beginLabel:'FACE SILAS VANE →',
     description:'The old sailor is gone. Beneath the open coat is the crest of House Vane, and in his hands is an anchor heavy enough to turn the entire courtyard into a weapon.',
     abilities:[
