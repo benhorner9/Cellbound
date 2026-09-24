@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const VERSION='1.3.4';
+const VERSION='1.3.5';
 const BOSSES={
   'vaultheart':{
     dungeon:'The Ashen Vault',name:'The Vaultheart',title:'The Living Core Beneath the Vault',theme:'ashen',artwork:'./assets/bosses/ashen-vault-vaultheart.webp',
@@ -104,8 +104,10 @@ function remove(){
   document.body.classList.remove('cbd-open')
 }
 function art(cfg){
+  const manor=cfg.theme==='manor'&&cfg.artwork;
+  const backdrop=manor?'<img class="cbd-art-backdrop" src="'+esc(cfg.artwork)+'" alt="" aria-hidden="true" decoding="async" draggable="false">':'';
   const img=cfg.artwork?'<img class="cbd-art-image" src="'+esc(cfg.artwork)+'" alt="'+esc(cfg.name)+'" decoding="async" draggable="false">':'';
-  return '<div class="cbd-art" data-cbd-boss="'+esc(Object.keys(BOSSES).find(k=>BOSSES[k]===cfg)||'boss')+'">'+img+
+  return '<div class="cbd-art" data-cbd-boss="'+esc(Object.keys(BOSSES).find(k=>BOSSES[k]===cfg)||'boss')+'">'+backdrop+img+
    '<div class="cbd-art-fallback" '+(cfg.artwork?'hidden':'')+' aria-hidden="true"><div class="cbd-art-depth"></div><div class="cbd-art-sigil"></div><div class="cbd-art-figure"><i></i><i></i><i></i></div><div class="cbd-art-fx"><i></i><i></i><i></i><i></i></div></div>'+
    '<div class="cbd-art-label"><small>'+esc(cfg.artLabel||'FINAL ENCOUNTER')+'</small><b>'+esc(cfg.name)+'</b></div></div>'
 }

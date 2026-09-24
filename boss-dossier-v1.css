@@ -51,3 +51,16 @@ body.cbd-open{overflow:hidden}
 [data-cbd-boss="silas-vane"] .cbd-art-sigil{border-radius:2%;transform:translate(-50%,-50%) rotate(45deg)}
 
 .cbd-art-image[hidden],.cbd-art-fallback[hidden]{display:none!important}
+
+
+/* Manor dossier artwork fit */
+.theme-manor .cbd-art{background:#090b0d}
+.theme-manor .cbd-art-backdrop{position:absolute;inset:-8%;width:116%;height:116%;object-fit:cover;filter:blur(24px) brightness(.32) saturate(.82);opacity:.96;transform:scale(1.04);z-index:0}
+.theme-manor .cbd-art:after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(3,5,7,.04) 0%,rgba(3,5,7,.02) 48%,rgba(3,5,7,.7) 100%);pointer-events:none}
+.theme-manor .cbd-art-image{position:relative;z-index:2;width:100%;height:100%;object-fit:contain;object-position:center 16%;filter:drop-shadow(0 16px 26px rgba(0,0,0,.48))}
+.theme-manor .cbd-art-label{z-index:4}
+.theme-manor .cbd-art-fallback{z-index:3}
+@media(max-width:820px){
+  .theme-manor .cbd-art-backdrop{filter:blur(18px) brightness(.3) saturate(.8)}
+  .theme-manor .cbd-art-image{object-position:center 12%}
+}
