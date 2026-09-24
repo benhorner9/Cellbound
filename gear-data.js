@@ -66,6 +66,10 @@ function setBonusState(c,setId){
   const pieces=setPieceCount(c,setId),r2=SET_BONUS_RULES.pieces2,r4=SET_BONUS_RULES.pieces4;
   return {setId,pieces,pieces2:pieces>=r2.threshold,pieces4:pieces>=r4.threshold,next:pieces<r2.threshold?r2.threshold:pieces<r4.threshold?r4.threshold:null}
 }
+function setBonusLines(item){
+  if(!item?.setId||!item?.setName)return[];
+  return [SET_BONUS_RULES.pieces2,SET_BONUS_RULES.pieces4].map(rule=>({threshold:rule.threshold,name:rule.name,short:rule.short,description:rule.description}))
+}
 const NAMES={
   Warrior:[['Militia Helm','Worn Breastplate','Training Sword'],['Ashguard Helm','Ashguard Plate','Embercleaver'],['Vaultforged Greathelm','Vaultforged Cuirass','Runic Greatblade'],['Warlord Greathelm','Warlord Warplate','Warlord Greatblade']],
   Paladin:[['Novice Crown','Oathbound Mail','Blessed Mace'],['Sunwarden Helm','Sunwarden Plate','Sunwarden Hammer'],['Radiant Aegis Crown','Radiant Aegis Plate','Dawnkeeper Hammer'],['Sunward Crown','Sunward Warplate','Sunward Maul']],
@@ -240,5 +244,5 @@ function artHTML(item,size=64,extra=''){
   const slotClass='gear-slot-'+slug(canonical.slot||'item'),classClass='gear-class-'+slug(canonical.class||'all');
   return `<span class="gear-art tier-${canonical.tier||1} ${slotClass} ${classClass} ${extra}" data-gear-fit="${fit.toFixed(3)}" style="${artStyle(canonical,size)}" aria-label="${canonical.name}" title="${canonical.name}"><span class="gear-art-fallback" aria-hidden="true">${glyph}</span><span class="gear-art-cell" aria-hidden="true" style="position:absolute;overflow:hidden;width:${cell}px;height:${cell}px;left:${inset}px;top:${inset}px"><img class="gear-art-sprite" src="./assets/gear/cellbound-gear-atlas.webp?v=4" alt="" draggable="false" onerror="this.style.display='none'" style="position:absolute;max-width:none;width:${21*cell}px;height:${3*cell}px;left:-${pos.col*cell}px;top:-${pos.row*cell}px"></span></span>`;
 }
-window.CellboundGear={CLASS_ORDER,CORE_SLOT_ORDER,SLOT_ORDER,EQUIPMENT_POSITION_ORDER,SLOT_GLYPHS,TIER_META,ITEM_LEVELS,CHAPTER_GEAR,STAT_DEFS,SLOT_STAT_BUDGET,STAT_TYPE_BUDGET,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,SET_BONUS_RULES,setPieceCount,setBonusState,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,effectiveStatBudget,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,questProfileStats,createQuestGear,artFit,artStyle,artHTML};
+window.CellboundGear={CLASS_ORDER,CORE_SLOT_ORDER,SLOT_ORDER,EQUIPMENT_POSITION_ORDER,SLOT_GLYPHS,TIER_META,ITEM_LEVELS,CHAPTER_GEAR,STAT_DEFS,SLOT_STAT_BUDGET,STAT_TYPE_BUDGET,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,SET_BONUS_RULES,setPieceCount,setBonusState,setBonusLines,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,effectiveStatBudget,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,questProfileStats,createQuestGear,artFit,artStyle,artHTML};
 })();
