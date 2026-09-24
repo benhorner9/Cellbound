@@ -37,12 +37,13 @@ const ROLE_DESC={
   dps:'Deals damage, handles priority targets and helps stop dangerous casts.'
 };
 
-let Game=null,G=null,P=null,db=null,user=null;
+let Game=null,G=null,P=null,CP=null,db=null,user=null;
 let draft=[],activeSlot=0,tutorialToken=0,tutorialCombatStats=null;
 
 const state=()=>Game?.getState?.();
 const onboarding=()=>state()?.onboarding||{};
 const raceById=id=>RACES.find(r=>r.id===id)||RACES[0];
+const portraitHTML=(c,size='md')=>CP?.portraitHTML?.(c,{size})||'<span class="cb-portrait cb-portrait--'+size+'"><b>'+esc(c?.portrait||initials(c?.name))+'</b></span>';
 
 function roleOptions(role){
   const out=[];
@@ -66,7 +67,8 @@ function defaultDraft(){
   SLOTS.forEach((slot,i)=>{
     const race=RACES.find(r=>r.roles.includes(slot.role))||RACES[0];
     const option=roleOptions(slot.role)[0];
-    rows.push({slot:slot.key,role:slot.role,race:race.id,klass:option?.klass||'Warrior',spec:option?.spec||'Arms',name:randomName(race.id,rows.map(x=>x.name))});
+        const name=randomName(race.id,rows.map(x=>x.name));
+    rows.push({slot:slot.key,role:slot.role,race:race.id,klass:option?.klass||'Warrior',spec:option?.spec||'Arms',name,appearance:CP?.randomAppearance?.(race.id)||{race:race.id}});
   });
   return rows;
 }
@@ -76,7 +78,7 @@ function restoreDraft(){
     draft=saved.map((d,i)=>{
       const slot=SLOTS[i],race=RACES.some(r=>r.id===d.race&&r.roles.includes(slot.role))?d.race:(RACES.find(r=>r.roles.includes(slot.role))?.id||'Veyren');
       const opts=roleOptions(slot.role),valid=opts.find(o=>o.klass===d.klass&&o.spec===d.spec)||opts[0];
-      return{slot:slot.key,role:slot.role,race,klass:valid?.klass||'Warrior',spec:valid?.spec||'Arms',name:String(d.name||randomName(race)).slice(0,24)};
+      const name=String(d.name||randomName(race)).slice(0,24);return{slot:slot.key,role:slot.role,race,klass:valid?.klass||'Warrior',spec:valid?.spec||'Arms',name,appearance:CP?.normalizeAppearance?.(d.appearance,name,race)||d.appearance||{race}};
     });
   }else draft=defaultDraft();
 }
@@ -137,24 +139,27 @@ function renderPartyBuilder(){
   const allValid=draft.every(x=>x.name.trim().length>=2)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5;
   const preview=draft.map((x,i)=>{
     const race=raceById(x.race);
-    return '<button class="party-draft-card '+(i===activeSlot?'active':'')+'" data-slot="'+i+'"><i class="on-role '+x.role+'"></i><div><small>'+ROLE_LABEL[x.role]+' '+(SLOTS[i].number||'')+'</small><b>'+esc(x.name||'Unnamed')+'</b><span>'+race.icon+' '+esc(x.race)+' · '+esc(x.klass)+' · '+esc(x.spec)+'</span></div><em>'+(i===activeSlot?'EDIT':'CHANGE')+'</em></button>';
+    return '<button class="party-draft-card '+(i===activeSlot?'active':'')+'" data-slot="'+i+'>'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<div><small>'+ROLE_LABEL[x.role]+' '+(SLOTS[i].number||'')+'</small><b>'+esc(x.name||'Unnamed')+'</b><span>'+race.icon+' '+esc(x.race)+' · '+esc(x.klass)+' · '+esc(x.spec)+'</span></div><em>'+(i===activeSlot?'EDIT':'CHANGE')+'</em></button>';
   }).join('');
   const raceCards=availableRaces.map(r=>{
     const identity=window.CellboundIdentities?.getRace?.(r.id);
     return '<button class="race-card '+(d.race===r.id?'active':'')+'" data-race="'+r.id+'"><strong>'+r.icon+'</strong><div><b>'+r.id+'</b><small>'+r.trait+'</small><p>'+esc(identity?.strength||r.lore)+'</p><span>Any role · '+esc(identity?.tradeoff||'Flexible')+'</span></div></button>';
   }).join('');
   const classCards=classes.map(o=>{const ci=window.CellboundIdentities?.getSpec?.(o.klass,o.spec);return '<button class="class-choice '+(d.klass===o.klass&&d.spec===o.spec?'active':'')+'" data-class="'+o.klass+'" data-spec="'+o.spec+'" style="--class-glow:'+o.glow+'"><strong>'+o.icon+'</strong><div><b>'+o.klass+'</b><small>'+o.spec+' · '+ROLE_LABEL[slot.role]+' · '+esc(ci?.title||'Specialist')+'</small><p>'+esc(ci?.strength||'Reliable in this role.')+'</p><em>Trade-off: '+esc(ci?.tradeoff||'Balanced')+'</em></div></button>'}).join('');
-  const formation=draft.map(x=>'<div class="formation-unit '+x.role+'"><i>'+raceById(x.race).icon+'</i><b>'+esc(x.name||'Unnamed')+'</b><small>'+ROLE_LABEL[x.role]+'</small></div>').join('');
+  d.appearance=CP?.normalizeAppearance?.(d.appearance,d.name||d.race,d.race)||d.appearance||{race:d.race};
+  const appearanceEditor=CP?.editorHTML?.(d.appearance,{characterClass:d.klass,name:d.name,race:d.race})||'';
+  const formation=draft.map(x=>'<div class="formation-unit '+x.role+'">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<b>'+esc(x.name||'Unnamed')+'</b><small>'+ROLE_LABEL[x.role]+'</small></div>').join('');
 
-  const body='<div class="party-build-layout"><aside class="party-draft-list"><div class="onboard-copy"><small>YOUR FIVE</small><h2>One party. Five lives.</h2><p>Build one Tank, one Healer and three Damage adventurers. Race changes passives; class sets the combat style.</p></div>'+preview+'</aside><main class="party-builder-main"><div class="builder-focus"><div><small>SELECTING</small><h2>'+ROLE_LABEL[slot.role]+' '+(slot.number||'')+'</h2><p>'+ROLE_DESC[slot.role]+'</p></div><span class="role-pill '+slot.role+'">'+ROLE_LABEL[slot.role]+'</span></div><section class="builder-section"><div class="builder-section-head"><div><small>01</small><h3>Choose a race</h3></div><p>Every race can fill every role. Pick the passive and trade-off you want.</p></div><div class="race-grid">'+raceCards+'</div></section><section class="builder-section"><div class="builder-section-head"><div><small>02</small><h3>Choose a class</h3></div><p>Only classes for this role are shown.</p></div><div class="class-grid">'+classCards+'</div></section><section class="builder-section"><div class="builder-section-head"><div><small>03</small><h3>Name your adventurer</h3></div><p>Type a name or roll one.</p></div><div class="name-builder"><input id="onboardName" maxlength="24" value="'+esc(d.name)+'" autocomplete="off"><button id="randomiseName">RANDOMISE</button></div></section></main><aside class="formation-preview"><small>FORMATION PREVIEW</small><div class="formation-board">'+formation+'</div><div class="formation-key"><span><i class="on-role tank"></i>Tank</span><span><i class="on-role healer"></i>Healer</span><span><i class="on-role dps"></i>Damage</span></div><button id="confirmParty" class="on-primary" '+(allValid?'':'disabled')+'>CONFIRM PARTY & ENTER ZELTIRA →</button><p class="builder-hint">'+(allValid?'Ready to enter Zeltira.':'All five characters need unique names of at least 2 characters.')+'</p></aside></div>';
+  const body='<div class="party-build-layout"><aside class="party-draft-list"><div class="onboard-copy"><small>YOUR FIVE</small><h2>One party. Five lives.</h2><p>Build one Tank, one Healer and three Damage adventurers. Race changes passives; class sets the combat style.</p></div>'+preview+'</aside><main class="party-builder-main"><div class="builder-focus"><div><small>SELECTING</small><h2>'+ROLE_LABEL[slot.role]+' '+(slot.number||'')+'</h2><p>'+ROLE_DESC[slot.role]+'</p></div><span class="role-pill '+slot.role+'">'+ROLE_LABEL[slot.role]+'</span></div><section class="builder-section"><div class="builder-section-head"><div><small>01</small><h3>Choose a race</h3></div><p>Every race can fill every role. Pick the passive and trade-off you want.</p></div><div class="race-grid">'+raceCards+'</div></section><section class="builder-section"><div class="builder-section-head"><div><small>02</small><h3>Choose a class</h3></div><p>Only classes for this role are shown.</p></div><div class="class-grid">'+classCards+'</div></section><section class="builder-section appearance-builder-section"><div class="builder-section-head"><div><small>03</small><h3>Choose their appearance</h3></div><p>Build a face that will follow this adventurer throughout Cellbound.</p></div>'+appearanceEditor+'</section><section class="builder-section"><div class="builder-section-head"><div><small>04</small><h3>Name your adventurer</h3></div><p>Type a name or roll one.</p></div><div class="name-builder"><input id="onboardName" maxlength="24" value="'+esc(d.name)+'" autocomplete="off"><button id="randomiseName">RANDOMISE</button></div></section></main><aside class="formation-preview"><small>FORMATION PREVIEW</small><div class="formation-board">'+formation+'</div><div class="formation-key"><span><i class="on-role tank"></i>Tank</span><span><i class="on-role healer"></i>Healer</span><span><i class="on-role dps"></i>Damage</span></div><button id="confirmParty" class="on-primary" '+(allValid?'':'disabled')+'>CONFIRM PARTY & ENTER ZELTIRA →</button><p class="builder-hint">'+(allValid?'Ready to enter Zeltira.':'All five characters need unique names of at least 2 characters.')+'</p></aside></div>';
 
   const root=ensureRoot();root.innerHTML=chrome(body,'party-builder');
   root.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{activeSlot=Number(b.dataset.slot);renderPartyBuilder()});
-  root.querySelectorAll('[data-race]').forEach(b=>b.onclick=()=>{d.race=b.dataset.race;d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name));saveDraft();renderPartyBuilder()});
+  root.querySelectorAll('[data-race]').forEach(b=>b.onclick=()=>{d.race=b.dataset.race;d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name));d.appearance=CP?.randomAppearance?.(d.race)||{race:d.race};saveDraft();renderPartyBuilder()});
   root.querySelectorAll('[data-class]').forEach(b=>b.onclick=()=>{d.klass=b.dataset.class;d.spec=b.dataset.spec;saveDraft();renderPartyBuilder()});
   const input=$('#onboardName');
   if(input)input.oninput=e=>{d.name=e.target.value;saveDraft();const btn=$('#confirmParty');if(btn)btn.disabled=!(draft.every(x=>x.name.trim().length>=2)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5)};
   $('#randomiseName')?.addEventListener('click',()=>{d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name));saveDraft();renderPartyBuilder()});
+  CP?.bindEditor?.(root,d.appearance,()=>{saveDraft();renderPartyBuilder()},{characterClass:d.klass,name:d.name});
   $('#confirmParty')?.addEventListener('click',createParty);
 }
 function emptyEquipment(){
@@ -175,7 +180,7 @@ async function syncPartyCharacters(roster){
   if(del.error){console.warn('Could not clear onboarding character records',del.error);return}
   const rows=roster.map((c,i)=>({
     user_id:user.id,name:c.name,combat_style:combatStyle(c.class),tutorial_complete:false,creation_complete:true,
-    appearance:{race:c.race,class:c.class,spec:c.spec,role:c.role,party_slot:i},
+    appearance:{...(c.appearance||{}),race:c.race,class:c.class,spec:c.spec,role:c.role,party_slot:i},
     level:1,xp:0,current_hp:100,max_hp:100,current_location:'zeltira',tutorial_stage:'arrived_zeltira',tutorial_reward_claimed:false,last_played_at:new Date().toISOString()
   }));
   const ins=await db.from('characters').insert(rows);
@@ -187,7 +192,7 @@ async function createParty(){
   const ids=draft.map(()=>uid());
   const roster=draft.map((d,i)=>({
     id:ids[i],name:d.name.trim(),race:d.race,raceTrait:raceById(d.race).trait,class:d.klass,spec:d.spec,role:d.role,
-    level:1,xp:0,power:d.role==='tank'?30:d.role==='healer'?27:29,talent:1,portrait:initials(d.name),
+    level:1,xp:0,power:d.role==='tank'?30:d.role==='healer'?27:29,talent:1,portrait:initials(d.name),appearance:CP?.normalizeAppearance?.(d.appearance,d.name,d.race)||d.appearance,
     knowledge:{ashwarden:0,embermaw:0,vaultheart:0},equipment:emptyEquipment(),gearItems:['Empty','Empty','Empty'],
     cellShock:0,cellShockLockedUntil:null,professions:[null,null],tutorialNew:true,onboardingGearIssued:false
   }));
@@ -201,7 +206,7 @@ async function createParty(){
 }
 
 function partySummary(){
-  return state().roster.map(c=>'<div class="z-party-member"><i class="on-role '+(Game.classes?.[c.class]?.specs?.[c.spec]?.role||'dps')+'"></i><span><b>'+esc(c.name)+'</b><small>'+raceById(c.race).icon+' '+esc(c.race)+' · '+esc(c.class)+' '+esc(c.spec)+'</small></span></div>').join('');
+  return state().roster.map(c=>'<div class="z-party-member">'+portraitHTML(c,'sm')+'<span><b>'+esc(c.name)+'</b><small>'+raceById(c.race).icon+' '+esc(c.race)+' · '+esc(c.class)+' '+esc(c.spec)+'</small></span></div>').join('');
 }
 function zeltiraMap(active){
   const spots=[
@@ -856,7 +861,7 @@ function render(){
 async function init(){
   Game=window.CellboundGame;
   if(!Game?.ready){setTimeout(init,100);return}
-  G=window.CellboundGear;P=window.CellboundProfessions;db=Game.getSupabase?.();user=Game.getUser?.();
+  G=window.CellboundGear;P=window.CellboundProfessions;CP=window.CellboundPortraits;db=Game.getSupabase?.();user=Game.getUser?.();
   if(!G||!P)return;
   window.CellboundCombatStandard?.register?.('zeltira-first-expedition',{kind:'onboarding-dungeon',execution:'local',ui:'shared-combat-contract'});
   render();
