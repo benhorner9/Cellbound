@@ -1,0 +1,86 @@
+/* Character portraits in every player-controlled combat renderer */
+.cb2d-unit.cb-combat-has-portrait>i{opacity:0}
+.cb2d-unit.cb-combat-has-portrait>.cb-combat-portrait{
+  position:absolute;
+  z-index:3;
+  left:50%;
+  top:50%;
+  width:34px;
+  height:34px;
+  transform:translate(-50%,-50%);
+  overflow:hidden;
+  border:2px solid var(--cb-combat-class,#76d7d0);
+  border-radius:50%;
+  background:#081115;
+  box-shadow:
+    0 0 0 2px rgba(2,6,8,.82),
+    0 0 13px color-mix(in srgb,var(--cb-combat-class,#76d7d0) 42%,transparent);
+  pointer-events:none
+}
+.cb2d-unit.cb-combat-has-portrait>.cb-combat-portrait .cb-portrait{
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  background:#091216;
+  box-shadow:none
+}
+.cb2d-unit.cb-combat-has-portrait>.cb-combat-portrait svg{width:100%;height:100%}
+.cb2d-unit.cb-combat-has-portrait>span:not(.cb-combat-portrait){top:34px}
+.cb2d-unit.cb-combat-has-portrait .cb2d-unit-hp{top:-15px;width:46px}
+.cb2d-unit.cb-combat-has-portrait.attacking>.cb-combat-portrait{animation:cbCombatPortraitAttack .42s ease-out}
+.cb2d-unit.cb-combat-has-portrait.hit>.cb-combat-portrait{animation:cbCombatPortraitHit .28s ease-out}
+.cb2d-unit.cb-combat-has-portrait.healed>.cb-combat-portrait{animation:cbCombatPortraitHeal .34s ease-out}
+.cb2d-unit.cb-combat-has-portrait.dying>.cb-combat-portrait{animation:cbCombatPortraitDown .3s ease-in forwards}
+
+.wb2d-unit.cb-combat-has-portrait .wb2d-unit-dot{opacity:0}
+.wb2d-unit.cb-combat-has-portrait>.cb-combat-portrait{
+  position:absolute;
+  z-index:3;
+  left:50%;
+  top:50%;
+  width:32px;
+  height:32px;
+  transform:translate(-50%,-50%);
+  overflow:hidden;
+  border:2px solid var(--cb-combat-class,#76d7d0);
+  border-radius:50%;
+  background:#081115;
+  box-shadow:0 0 0 2px rgba(2,6,8,.78),0 0 12px color-mix(in srgb,var(--cb-combat-class,#76d7d0) 38%,transparent);
+  pointer-events:none
+}
+.wb2d-unit.cb-combat-has-portrait>.cb-combat-portrait .cb-portrait{width:100%;height:100%;border-radius:50%;box-shadow:none}
+.wb2d-unit.cb-combat-has-portrait .wb2d-unit-hp{top:-9px}
+.wb2d-unit.cb-combat-has-portrait.attacking>.cb-combat-portrait{transform:translate(-50%,-50%) scale(1.1)}
+
+.pvp2d-unit.cb-combat-has-portrait .pvp2d-token>i,
+.pvp2d-unit.cb-combat-has-portrait .pvp2d-token>span:not(.cb-combat-portrait){opacity:0}
+.pvp2d-unit.cb-combat-has-portrait .pvp2d-token>.cb-combat-portrait{
+  position:absolute;
+  inset:2px;
+  z-index:2;
+  overflow:hidden;
+  border-radius:50%;
+  pointer-events:none
+}
+.pvp2d-unit.cb-combat-has-portrait .pvp2d-token>.cb-combat-portrait .cb-portrait{
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  background:#091216;
+  box-shadow:none
+}
+.pvp2d-unit.cb-combat-has-portrait .pvp2d-token{border-color:var(--cb-combat-class,var(--pvp-class))}
+.pvp2d-unit.cb-combat-has-portrait.attacking .pvp2d-token>.cb-combat-portrait{transform:scale(1.06)}
+.pvp2d-unit.cb-combat-has-portrait.hit .pvp2d-token>.cb-combat-portrait{filter:brightness(1.35)}
+.pvp2d-unit.cb-combat-has-portrait.healing .pvp2d-token>.cb-combat-portrait{filter:brightness(1.12)}
+
+@keyframes cbCombatPortraitAttack{0%{transform:translate(-50%,-50%) scale(1)}35%{transform:translate(-50%,-50%) scale(1.2);filter:brightness(1.35)}100%{transform:translate(-50%,-50%) scale(1)}}
+@keyframes cbCombatPortraitHit{0%{filter:brightness(1)}45%{filter:brightness(1.7)}100%{filter:brightness(1)}}
+@keyframes cbCombatPortraitHeal{0%{box-shadow:0 0 0 2px rgba(2,6,8,.82),0 0 8px rgba(105,217,155,.1)}50%{box-shadow:0 0 0 2px rgba(2,6,8,.82),0 0 24px rgba(105,217,155,.58)}100%{box-shadow:0 0 0 2px rgba(2,6,8,.82),0 0 13px color-mix(in srgb,var(--cb-combat-class,#76d7d0) 42%,transparent)}}
+@keyframes cbCombatPortraitDown{to{transform:translate(-50%,-50%) scale(.78) rotate(8deg);filter:grayscale(.8);opacity:.35}}
+
+@media(max-width:540px){
+  .cb2d-unit.cb-combat-has-portrait>.cb-combat-portrait{width:30px;height:30px}
+  .cb2d-unit.cb-combat-has-portrait>span:not(.cb-combat-portrait){top:31px}
+  .pvp2d-unit.cb-combat-has-portrait .pvp2d-token>.cb-combat-portrait{inset:2px}
+}
