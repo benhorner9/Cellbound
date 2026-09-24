@@ -112,25 +112,24 @@ const partyLevel=()=>{const p=party();return p.length?Math.round(p.reduce((n,c)=
 const ASHEN_VAULT_XP=420;
 function xpNeeded(level){return 800+Math.max(0,(Number(level)||1)-1)*250}
 function awardPartyXp(amount){
- const gains=[];
+ const gains=[],cap=Math.max(1,Number(Game?.getLevelCap?.())||15);
  party().forEach(c=>{
-   const beforeLevel=Math.max(1,Number(c.level)||1);
-   const beforeXp=Math.max(0,Number(c.xp)||0);
-   const beforeNeed=xpNeeded(beforeLevel);
-   let level=beforeLevel,xp=beforeXp+Math.max(0,Number(amount)||0),levels=0;
-   while(xp>=xpNeeded(level)){
+   const beforeLevel=Math.min(cap,Math.max(1,Number(c.level)||1));
+   const beforeXp=beforeLevel>=cap?0:Math.max(0,Number(c.xp)||0);
+   const beforeNeed=xpNeeded(beforeLevel),reward=Math.max(0,Number(amount)||0);
+   let level=beforeLevel,xp=beforeLevel>=cap?0:beforeXp+reward,levels=0;
+   while(level<cap&&xp>=xpNeeded(level)){
      xp-=xpNeeded(level);
      level++;
      levels++;
    }
+   if(level>=cap){level=cap;xp=0}
    c.level=level;c.xp=xp;
-   if(levels>0){
-     c.talent=(Number(c.talent)||0)+levels;
-   }
+   if(levels>0)c.talent=(Number(c.talent)||0)+levels;
    gains.push({
      id:c.id,name:c.name,portrait:c.portrait||String(c.name||'?').slice(0,2).toUpperCase(),
-     amount:Math.max(0,Number(amount)||0),beforeLevel,beforeXp,beforeNeed,
-     afterLevel:level,afterXp:xp,afterNeed:xpNeeded(level),levels
+     amount:beforeLevel>=cap?0:reward,beforeLevel,beforeXp,beforeNeed,
+     afterLevel:level,afterXp:xp,afterNeed:xpNeeded(level),levels,capped:level>=cap
    });
  });
  return gains
@@ -1688,7 +1687,7 @@ function lootMaterialCard(m){
 function xpGrowthCard(x){
  const startPct=Math.max(0,Math.min(100,(x.beforeXp/Math.max(1,x.beforeNeed))*100));
  const endPct=Math.max(0,Math.min(100,(x.afterXp/Math.max(1,x.afterNeed))*100));
- const levelCopy=x.levels>0?'<em class="cb2d-level-up">LEVEL UP'+(x.levels>1?' ×'+x.levels:'')+'</em>':'<em>+'+x.amount+' XP</em>';
+ const levelCopy=x.capped?'<em class="cb2d-level-up">MAX LEVEL</em>':x.levels>0?'<em class="cb2d-level-up">LEVEL UP'+(x.levels>1?' ×'+x.levels:'')+'</em>':'<em>+'+x.amount+' XP</em>';
  return '<article class="cb2d-xp-card" data-xp-row data-start="'+startPct.toFixed(2)+'" data-end="'+endPct.toFixed(2)+'" data-levels="'+x.levels+'">'+
    '<div class="cb2d-xp-avatar">'+esc(x.portrait)+'</div>'+
    '<div class="cb2d-xp-copy"><div><span><b>'+esc(x.name)+'</b><small>Level '+x.beforeLevel+(x.afterLevel!==x.beforeLevel?' → '+x.afterLevel:'')+'</small></span>'+levelCopy+'</div>'+
