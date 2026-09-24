@@ -195,11 +195,11 @@ function repairCard(kind,eyebrow,title,done,copy,action){
   return'<article class="nwb-repair-card '+(done?'done':'')+'"><span class="nwb-repair-icon">'+(kind==='hull'?'▰':kind==='sail'?'◩':'⌖')+'</span><small>'+eyebrow+'</small><h3>'+title+'</h3><p>'+copy+'</p><button data-repair="'+kind+'" '+(done?'disabled':'')+'>'+(done?'✓ '+action:action+' →')+'</button></article>'
 }
 function openSailPuzzle(){
-  const n=ensure(),r=ensureRoot(),pieces=[0,1,2,3,4,5,6,7,8].sort(()=>Math.random()-.5),placed={},selected={id:null},started=Date.now(),limit=90000;
+  const n=ensure(),r=ensureRoot(),pieces=[0,1,2,3,4,5,6,7,8,9,10,11].sort(()=>Math.random()-.5),placed={},selected={id:null},started=Date.now(),limit=105000;
   const draw=()=>{
     const remaining=Math.max(0,Math.ceil((limit-(Date.now()-started))/1000));
     r.innerHTML=chrome('TIMED MINI GAME · 90 SECONDS','Stitch The Sail',
-      '<div class="nwb-jigsaw"><aside><small>TORN CANVAS</small><h3>Rebuild the sail</h3><p>Tap a sail piece, then tap the position where you think it belongs. The faded guide shows the full sail shape, not the individual pieces.</p><div class="nwb-timer"><span>TIME</span><b data-sail-time>'+remaining+'s</b></div><div class="nwb-piece-tray">'+pieces.filter(id=>!Object.values(placed).includes(id)).map(id=>pieceButton(id)).join('')+'</div></aside><main><div class="nwb-sail-guide"><div class="nwb-sail-grid">'+[0,1,2,3,4,5,6,7,8].map(slot=>'<button data-sail-slot="'+slot+'">'+(placed[slot]!=null?pieceVisual(placed[slot]):'<span></span>')+'</button>').join('')+'</div></div><p data-sail-note>Rebuild the triangular seam and mast-side stripe before time expires.</p><button class="nwb-secondary" data-sail-reset>RESHUFFLE PIECES</button></main></div>');
+      '<div class="nwb-jigsaw"><aside><small>TORN CANVAS</small><h3>Rebuild the sail</h3><p>Tap a sail piece, then tap the position where you think it belongs. The faded guide shows the full sail shape, not the individual pieces.</p><div class="nwb-timer"><span>TIME</span><b data-sail-time>'+remaining+'s</b></div><div class="nwb-piece-tray">'+pieces.filter(id=>!Object.values(placed).includes(id)).map(id=>pieceButton(id)).join('')+'</div></aside><main><div class="nwb-sail-guide"><div class="nwb-sail-grid">'+[0,1,2,3,4,5,6,7,8,9,10,11].map(slot=>'<button data-sail-slot="'+slot+'">'+(placed[slot]!=null?pieceVisual(placed[slot]):'<span></span>')+'</button>').join('')+'</div></div><p data-sail-note>Rebuild the larger sail panel before the wind takes it.</p><button class="nwb-secondary" data-sail-reset>RESHUFFLE PIECES</button></main></div>');
     bindClose();bindPieces()
   };
   const pieceVisual=id=>'<i class="nwb-sail-piece p'+id+'" data-piece-visual="'+id+'"></i>';
@@ -212,7 +212,7 @@ function openSailPuzzle(){
       for(const key of Object.keys(placed))if(placed[key]===selected.id)delete placed[key];
       if(placed[slot]!=null){const displaced=placed[slot];delete placed[slot];if(!pieces.includes(displaced))pieces.push(displaced)}
       placed[slot]=selected.id;selected.id=null;
-      if(Object.keys(placed).length===9&&Object.keys(placed).every(k=>Number(k)===placed[k])){
+      if(Object.keys(placed).length===12&&Object.keys(placed).every(k=>Number(k)===placed[k])){
         cleanup();n.sailRepaired=true;n.stage='repairs';await save('The guild stitched the torn sail back into one seaworthy piece.');
         notify('MINI GAME COMPLETE','Sail repaired','The canvas holds against the harbour wind.');renderRepairs();return
       }
@@ -298,9 +298,9 @@ async function startVoyage(){
     const dt=Math.min(50,now-last);last=now;
     if(now-lastWind>3500){wind=(Math.random()*2-1)*.9;lastWind=now;const w=root.querySelector('[data-wind]');if(w)w.textContent=wind<-.15?'WIND ◀':wind>.15?'WIND ▶':'WIND ↔'}
     x=Math.max(5,Math.min(95,x+(rudder*0.055+wind*0.014)*dt));
-    progress=Math.min(100,progress+dt*.0021);
+    progress=Math.min(100,progress+dt*.00078);
     boat.style.left=x+'%';
-    if(now-lastSpawn>760)spawn(now);
+    if(now-lastSpawn>980)spawn(now);
     objects.forEach(obj=>{obj.y+=dt*.025;obj.el.style.top=obj.y+'%';if(!obj.hit&&obj.y>72&&obj.y<89&&Math.abs(x-obj.x)<8)hit(obj)});
     objects=objects.filter(obj=>{if(obj.y>105){obj.el.remove();return false}return true});
     root.querySelector('[data-hull]').textContent=Math.ceil(hull)+'%';root.querySelector('[data-sail]').textContent=Math.ceil(sail)+'%';root.querySelector('[data-route]').textContent=Math.floor(progress)+'%';
@@ -360,7 +360,7 @@ function startHounds(){
   const tick=setInterval(()=>{
     if(done)return;seconds+=.5;const living=hs.filter(h=>h.hp>0);
     if(!living.length){win();return}
-    const total=5.6;
+    const total=2.5;
     if(focus==='spread'){const each=total/living.length;living.forEach(h=>h.hp=Math.max(0,h.hp-each))}
     else{
       const target=hs.find(h=>h.id===focus&&h.hp>0);
@@ -370,7 +370,7 @@ function startHounds(){
     hs.forEach(h=>{if(h.hp<=0&&!h.deadAt){h.deadAt=Date.now();addLog(h.name+' falls. Pack Bond begins — 12 seconds.');window.CellboundFX?.death?.(root.querySelector('[data-hound="'+h.id+'"]'))}});
     if(hs.every(h=>h.hp<=0)){update();win();return}
     hs.forEach(h=>{if(h.hp<=0&&h.deadAt&&Date.now()-h.deadAt>=12000&&hs.some(x=>x.hp>0)){h.hp=35;h.deadAt=0;revives++;addLog('Licked Wounds! '+h.name+' returns at 35% health.');window.CellboundFX?.heal?.(root.querySelector('[data-hound="'+h.id+'"]'),35);notify('LICKED WOUNDS',h.name+' revived','The surviving pack restored a fallen hound.')}});
-    partyHp=Math.max(0,partyHp-living.length*.11);
+    partyHp=Math.max(0,partyHp-living.length*.07);
     special+=.5;if(special>=5){special=0;const attacker=living[Math.floor(Math.random()*living.length)];if(attacker){const hit=attacker.id==='grim'?4.5:attacker.id==='fang'?3.2:2.2;partyHp=Math.max(0,partyHp-hit);addLog(attacker.name+' uses '+attacker.skill+'.');if(attacker.id==='wail')hs.filter(h=>h.hp>0).forEach(h=>h.hp=Math.min(100,h.hp+1.5))}}
     if(revives>=4)partyHp=Math.max(0,partyHp-.8);
     update();if(partyHp<=0)lose()
@@ -416,8 +416,8 @@ async function startSilas(){
     quest:TITLE,title:'Silas Vane',location:'The Manor Courtyard',
     ambience:'The iron gate locks behind the party. Silas drags the anchor into a wide stance as the Manor windows begin to glow.',
     presentationKind:'quest',phases:['Master of the Manor','No One Leaves','Home At Last'],
-    enemies:[{name:'Silas Vane',maxHealth:2900}],eliteIndex:0,
-    combat:{kind:'final',level:18,enemyTypes:['boss'],enemyHealth:2900,mechanicIntervalMs:5200,mechanics:[
+    enemies:[{name:'Silas Vane',maxHealth:3900}],eliteIndex:0,
+    combat:{kind:'final',level:18,enemyTypes:['boss'],enemyHealth:3900,mechanicIntervalMs:4600,mechanics:[
       ['The Great Anchor','cone',2100],['Anchor Chain','line',1700],['Keelhaul','circles',1650],['The Great Anchor','cone',1850],['No One Leaves','circles',1550]
     ]},
     completeText:'Silas drops the anchor. The Manor doors answer with a sound from somewhere deep inside.'
