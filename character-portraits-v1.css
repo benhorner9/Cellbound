@@ -283,3 +283,13 @@
   .cb-header-crest.cb-header-portrait{width:62px;height:62px}
   .cb-header-crest.cb-header-portrait .cb-portrait{width:60px;height:60px}
 }
+
+.recruit-appearance-wrap{grid-column:1/-1}
+.party-slot .slot-role:has(.cb-portrait){
+  padding:0;
+  background:none;
+  border:0;
+  overflow:visible;
+}
+.party-slot .slot-role .cb-portrait{width:46px;height:46px}
+.quest-dialogue-portrait .cb-portrait{width:100%;height:100%}
