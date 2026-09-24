@@ -58,7 +58,7 @@ const BOSSES={
     intel:[['TARGETS','Five hostile combatants'],['CONTROL','Expect multiple threats'],['UNKNOWN','Final phase unrecorded']]
   },
   'three-hounds':{
-    dungeon:'No Way Back',name:'The Three Hounds',title:'Guardians of the Manor Grounds',theme:'manor',artwork:null,
+    dungeon:'No Way Back',name:'The Three Hounds',title:'Guardians of the Manor Grounds',theme:'manor',artwork:'./assets/bosses/no-way-back-three-hounds.webp',
     encounterLabel:'BOSS ENCOUNTER',artLabel:'FIRST BOSS',beginLabel:'ENGAGE THE THREE HOUNDS →',
     description:'Silas whistles once. Grim, Fang and Wail emerge from the Manor grounds as a single hunting pack. Killing one too early only gives the others time to bring it back.',
     abilities:[
