@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.4';
+const VERSION='1.3.5';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -527,7 +527,7 @@ function normaliseEnemies(encounter){
    id:'e-'+i,name,role:'enemy',kind:classification==='boss'||classification==='world-boss'?'boss':'enemy',classification,classificationLabel:rule.label,level,
    maxHealth,health:currentHealth,alive:currentHealth>0,position:{x:68,y:raw.length===1?50:30+i*(40/Math.max(1,raw.length-1))},facing:180,
    target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},movingUntil:0,moveToken:0,nextAttack:900+i*220,currentCast:null,
-   isAdd:false,priority:Number.isFinite(Number(data.priority))?Number(data.priority):(i===0?2:1),damageScale:rule.damage*damageMult,phaseDamageScale:1,hardEnraged:false,
+   isAdd:false,priority:Number.isFinite(Number(data.priority))?Number(data.priority):(i===0?2:1),focusSelected:Boolean(data.focusSelected),damageScale:rule.damage*damageMult,phaseDamageScale:1,hardEnraged:false,
    targeting:String(data.targeting||'threat').toLowerCase(),attackRange:Math.max(2,Number(data.attackRange)||5),attackName:data.attackName||null,damageType:data.damageType||'physical',allAttacksAoe:Boolean(data.allAttacksAoe)
   }
  })
@@ -1101,6 +1101,7 @@ function mitigation(ctx,target,damageType='physical',opts={}){
 
 function dealDamage(ctx,source,target,amount,ability,opts={}){
  if(!source?.alive||!target?.alive)return 0;
+ if(ctx?.encounter?.focusSelectedDamageOnly&&source.role!=='enemy'&&target.role==='enemy'&&!target.focusSelected)return 0;
  let final=Math.max(0,amount);
  if(target.role!=='enemy'){
   const mitigationOpts={...opts};final*=mitigation(ctx,target,opts.damageType||'physical',mitigationOpts);if(mitigationOpts.blocked)opts.blocked=true;

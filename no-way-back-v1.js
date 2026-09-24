@@ -520,7 +520,7 @@ async function startHoundsCombat(){
   const won=await run({
     quest:TITLE,title:'The Three Hounds',location:'Manor Island · Outer Grounds',
     ambience:'Silas whistles once. Grim, Fang and Wail spread across the path while the party forms up in front of the Manor gates.',
-    presentationKind:'quest',phases:['Pack Bond'],initialTarget:0,sliceMs:2400,reviveWindowMs:12000,revivePct:35,
+    presentationKind:'quest',phases:['Pack Bond'],initialTarget:0,sliceMs:1800,reviveWindowMs:12000,revivePct:35,focusSelectedDamageOnly:true,
     autoContinueOnVictory:true,autoContinueDelayMs:850,
     enemies:[
       {name:'Grim',maxHealth:3600,absoluteHealth:true,classification:'elite',attackName:'Bonebreaker Bite',damageScale:1.12},

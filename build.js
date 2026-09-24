@@ -108,7 +108,8 @@ for(const file of files){
     if(!contents.includes('function ratingCurve')||!contents.includes('function primaryCurve'))throw new Error('Full-loadout rating diminishing returns are missing');
   }
   if(file==='combat-reborn-v1.js'){
-    if(!contents.includes("const VERSION='1.3.4'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
+    if(!contents.includes("focusSelectedDamageOnly")||!contents.includes("!target.focusSelected"))throw new Error('Focus-selected damage gating is missing');
+    if(!contents.includes("const VERSION='1.3.5'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
     if(!contents.includes('CellboundGear?.SET_BONUS_RULES')||!contents.includes('rules.pieces4?.resourceRegen'))throw new Error('Combat must consume shared 2/4-piece set bonus rules');
   }
   if(file==='combat-status-ui-v1.js'){
@@ -250,6 +251,7 @@ for(const file of files){
     if(!contents.includes("rollClearLoot?.('fractured-ages'"))throw new Error('Fractured Ages must use Chapter 1 clear-loot pacing');
   }
   if(file==='quests-v2.js'){
+    if(!contents.includes("focusSelected:i===focus")||!contents.includes("focusSelectedDamageOnly:Boolean(config.focusSelectedDamageOnly)"))throw new Error('Interactive quest focus marker is missing');
     if(!contents.includes('config.autoContinueOnVictory')||!contents.includes('autoContinueDelayMs'))throw new Error('Interactive quest combat must support automatic victory flow');
     if(!contents.includes("$$('[data-q-target]').forEach"))throw new Error('Live quest target controls must use querySelectorAll');
     if(!contents.includes('async function qPlayReborn')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('Quest combat must use continuous Combat Reborn playback');
@@ -272,14 +274,14 @@ for(const file of files){
   if(file==='guild.html'){
     if(!contents.includes('boss-dossier-v1.css?v=3'))throw new Error('Boss dossier CSS cache version is stale in guild.html');
     if(!contents.includes('boss-dossier-v1.js?v=11'))throw new Error('Boss dossier cache version is stale in guild.html');
-    if(!contents.includes('no-way-back-v1.css?v=4')||!contents.includes('no-way-back-v1.js?v=7'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
+    if(!contents.includes('no-way-back-v1.css?v=4')||!contents.includes('no-way-back-v1.js?v=8'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
     if(!contents.includes('comic-scenes-v1.css?v=2')||!contents.includes('comic-scenes-v1.js?v=2')||!contents.includes('onboarding-v1.js?v=18'))throw new Error('Tutorial comic asset cache versions are stale in guild.html');
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=48')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
     if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=6'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
     if(!contents.includes('character-portraits-v1.css?v=4')||!contents.includes('character-portraits-v1.js?v=5'))throw new Error('Character portrait identity assets are not linked from guild.html');
      if(!contents.includes('combat-portraits-v1.css?v=3')||!contents.includes('combat-portraits-v1.js?v=3'))throw new Error('Combat portrait assets are not linked from guild.html');
-    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=14')||!contents.includes('combat-reborn-v1.js?v=3')||!contents.includes('guild-v4.js?v=48')||!contents.includes('character-sheet.js?v=31')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=48')||!contents.includes('hollow-sanctum-v1.js?v=36')||!contents.includes('chaos-canyon-v1.js?v=11')||!contents.includes('blackout-station-v1.js?v=18')||!contents.includes('fractured-ages-v1.js?v=5'))throw new Error('Set bonus UI cache versions are stale in guild.html');
+    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=14')||!contents.includes('combat-reborn-v1.js?v=4')||!contents.includes('guild-v4.js?v=48')||!contents.includes('character-sheet.js?v=31')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=48')||!contents.includes('hollow-sanctum-v1.js?v=36')||!contents.includes('chaos-canyon-v1.js?v=11')||!contents.includes('blackout-station-v1.js?v=18')||!contents.includes('fractured-ages-v1.js?v=5'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
     if(!contents.includes('combat-reborn-v1.js'))throw new Error('Canonical Combat Reborn engine is not linked from guild.html');
