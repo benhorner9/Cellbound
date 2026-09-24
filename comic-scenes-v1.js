@@ -31,7 +31,7 @@ function panelMarkup(panel,index){
   const speaker=p.speaker?'<div class="cbcomic-panel-speaker">'+esc(p.speaker)+'</div>':'';
   const caption=(p.eyebrow||p.title||p.text)?'<div class="cbcomic-panel-caption">'+(p.eyebrow?'<small>'+esc(p.eyebrow)+'</small>':'')+(p.title?'<b>'+esc(p.title)+'</b>':'')+(p.text?'<span>'+esc(p.text)+'</span>':'')+'</div>':'';
   const sigil=p.icon?'<i class="cbcomic-panel-icon">'+esc(p.icon)+'</i>':'';
-  return'<article class="cbcomic-panel kind-'+kind+' panel-'+(index+1)+' '+(p.wide?'wide':'')+'" data-panel="'+index+'">'+art+'<div class="cbcomic-panel-art" aria-hidden="true"><i></i><i></i><i></i><em></em></div>'+sigil+speaker+caption+'</article>';
+  return'<article class="cbcomic-panel kind-'+kind+' panel-'+(index+1)+' '+(p.wide?'wide':'')+(p.artwork?' has-art':'')+'" data-panel="'+index+'">'+art+'<div class="cbcomic-panel-art" aria-hidden="true"><i></i><i></i><i></i><em></em></div>'+sigil+speaker+caption+'</article>';
 }
 function choiceMarkup(choice,index){
   const c=choice||{};
@@ -76,5 +76,5 @@ function show(config={}){
 function close(){
   activeToken++;const root=ensureRoot();root.hidden=true;root.innerHTML='';document.body.classList.remove('cbcomic-open');
 }
-window.CellboundComicScenes={show,close,version:'1.0.0'};
+window.CellboundComicScenes={show,close,version:'1.1.0'};
 })();

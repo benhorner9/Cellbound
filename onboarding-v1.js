@@ -216,7 +216,7 @@ function tutorialComicConfig(id){
       speaker:'Warden Elara Vey',speakerRole:'ZELTIRA PATHFINDER',speakerMark:'EV',
       line:'Five names, fresh ink. I was going to give you a quiet first night.',
       panels:[
-        {kind:'location',eyebrow:'ZELTIRA · DUSK',title:'A city that should be settling down.',text:'Instead, wardens are clearing the western streets and the Cell Well has gone strangely quiet.',icon:'◇'},
+        {kind:'location',artwork:'./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp',eyebrow:'ZELTIRA · DUSK',title:'A city that should be settling down.',text:'Instead, wardens are clearing the western streets and the Cell Well has gone strangely quiet.',icon:'◇'},
         {kind:'npc',speaker:'ELARA VEY',eyebrow:'PATHFINDER',title:'A warning at the gate',text:'The Cell Well flashed twice before sunset. Something beneath the west wall answered it.'},
         {kind:'gate',eyebrow:'WEST WALL',title:'A dead wardstone is awake.',text:'It has not answered the Cell Well in living memory.',icon:'⌁'}
       ],
@@ -231,7 +231,7 @@ function tutorialComicConfig(id){
       speaker:'Warden Elara Vey',speakerRole:'FIELD COMMAND',speakerMark:'EV',
       line:'Do not tell me what you think is down there. Tell me what the stone is doing.',
       panels:[
-        {kind:'location',eyebrow:'AFTER SUNSET',title:'The street is empty.',text:'Three details do not belong here. None means much alone.',icon:'☾'},
+        {kind:'location',artwork:'./assets/comics/tutorial/moonlit_ruins_and_the_glowing_wardstone.webp',eyebrow:'AFTER SUNSET',title:'The street is empty.',text:'Three details do not belong here. None means much alone.',icon:'☾'},
         {kind:'clue',eyebrow:'EVIDENCE',title:'Fresh fracture',text:'Pale roots grow out of a new crack — away from something below.',icon:'⌁'},
         {kind:'clue',eyebrow:'EVIDENCE',title:'Dead lantern & warm wardstone',text:'One has been drained white. The other pulses toward the Hollows.',icon:'◇'}
       ],
@@ -246,7 +246,7 @@ function tutorialComicConfig(id){
       speaker:'Zeltira Quartermaster',speakerRole:'GUILD SUPPLY',speakerMark:'QM',
       line:'Same Item Level does not mean same value. Read the roll before you hand steel to '+leadName+'.',
       panels:[
-        {kind:'loot',eyebrow:'QUARTERMASTER',title:'Two weapons. One decision.',text:'Both are equally advanced. Their bonus stats are not equally useful.',icon:'⚔'},
+        {kind:'loot',artwork:'./assets/comics/tutorial/the_quartermaster_s_choice.webp',eyebrow:'QUARTERMASTER',title:'Two weapons. One decision.',text:'Both are equally advanced. Their bonus stats are not equally useful.',icon:'⚔'},
         {kind:'npc',eyebrow:'THE LESSON',title:'Item Level tells you power.',text:'The stat roll tells you who actually wants the item.'},
         {kind:'clue',eyebrow:'YOUR FRONT LINE',title:leadName,text:'Choose the roll that supports what your Tank is trying to do.',icon:'◆'}
       ],
@@ -261,7 +261,7 @@ function tutorialComicConfig(id){
       speaker:'Warden Elara Vey',speakerRole:'LAST WORD',speakerMark:'EV',
       line:'The Pathfinder ward can pull you out if all five fall. It cannot make good decisions for you.',
       panels:[
-        {kind:'gate',eyebrow:'SEALED DESCENT',title:'The resonance ends underground.',text:'Roots press through masonry older than modern Zeltira.',icon:'▽'},
+        {kind:'gate',artwork:'./assets/comics/tutorial/warden_s_descent_into_the_ruins.webp',eyebrow:'SEALED DESCENT',title:'The resonance ends underground.',text:'Roots press through masonry older than modern Zeltira.',icon:'▽'},
         {kind:'npc',eyebrow:'ELARA',title:'Watch the party, not just the boss.',text:'Threat, healing, interrupts and movement tell you why a fight succeeds.'},
         {kind:'location',eyebrow:'THREE ENCOUNTERS',title:'Nest · Gallery · Warden',text:'The tutorial uses the same combat language as the rest of Cellbound.',icon:'⚔'}
       ],
@@ -276,7 +276,7 @@ function tutorialComicConfig(id){
       speaker:'Warden Elara Vey',speakerRole:'POST-EXPEDITION',speakerMark:'EV',
       line:'A drop is not progress until you decide what to do with it.',
       panels:[
-        {kind:'loot',eyebrow:'BOSS DROP',title:'A new item reaches the Guild Bank.',text:'Nothing equips itself. The guild owns the decision.',icon:'✦'},
+        {kind:'loot',artwork:'./assets/comics/tutorial/the_warden_and_the_arcane_diadem.webp',eyebrow:'BOSS DROP',title:'A new item reaches the Guild Bank.',text:'Nothing equips itself. The guild owns the decision.',icon:'✦'},
         {kind:'clue',eyebrow:'RANDOM ROLLS',title:'The name can repeat. The stats can change.',text:'A future copy at the same Item Level may still be an upgrade.'},
         {kind:'location',eyebrow:'GUILD BANK',title:'Read · compare · assign',text:'Class restrictions and spec fit matter before the item leaves storage.',icon:'▦'}
       ],
@@ -291,7 +291,7 @@ function tutorialComicConfig(id){
       speaker:'Warden Elara Vey',speakerRole:'RECOVERY LESSON',speakerMark:'EV',
       line:'The ward spared your roster the penalty. It did not erase what failure normally costs.',
       panels:[
-        {kind:'shock',eyebrow:'ONE WIPE',title:'25% Cell Shock',text:'Failure creates pressure instead of deleting your progress.',icon:'◇'},
+        {kind:'shock',artwork:'./assets/comics/tutorial/arcane_overload_a_warden_s_lesson.webp',eyebrow:'ONE WIPE',title:'25% Cell Shock',text:'Failure creates pressure instead of deleting your progress.',icon:'◇'},
         {kind:'shock',eyebrow:'PRESSURE BUILDS',title:'25 · 50 · 75 · 100',text:'At the cap, that adventurer cannot immediately go back in.'},
         {kind:'npc',eyebrow:'THE POINT',title:'Your next decision changes.',text:'Use another character, recover, or prepare better for the next attempt.'}
       ],
@@ -306,7 +306,7 @@ function tutorialComicConfig(id){
       speaker:'Zeltira Craftmaster',speakerRole:'PROFESSION TRAINING',speakerMark:'CR',
       line:'Dungeon reagents are not vendor rubbish. They become preparation for the next fight.',
       panels:[
-        {kind:'craft',eyebrow:'REAGENTS',title:'The Hollows left materials behind.',text:'Faded Cell Fragments and Zeltiran Iron are useful because professions consume them.',icon:'⚒'},
+        {kind:'craft',artwork:'./assets/comics/tutorial/arcane_forge_beneath_the_twilight_citadel.webp',eyebrow:'REAGENTS',title:'The Hollows left materials behind.',text:'Faded Cell Fragments and Zeltiran Iron are useful because professions consume them.',icon:'⚒'},
         {kind:'npc',eyebrow:'PROFESSIONS',title:'Power with an expiry date',text:'Enhancements, flasks, runes and potions complement dungeon gear rather than replacing it.'},
         {kind:'loot',eyebrow:'FIRST CRAFT',title:'Choose who learns.',text:'Profession ownership belongs to a character and persists beyond the tutorial.',icon:'⚗'}
       ],
@@ -321,7 +321,7 @@ function tutorialComicConfig(id){
       speaker:'Warden Elara Vey',speakerRole:'ZELTIRA PATHFINDER',speakerMark:'EV',
       line:'No more training contract. Three supply carts are missing, and the ash in their wheel ruts came from a forge that has been cold for eighteen years.',
       panels:[
-        {kind:'location',eyebrow:'EAST ROAD',title:'Three carts never arrived.',text:'Patrols found wreckage beyond the city as the sun came up.',icon:'♜'},
+        {kind:'location',artwork:'./assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp',eyebrow:'EAST ROAD',title:'Three carts never arrived.',text:'Patrols found wreckage beyond the city as the sun came up.',icon:'♜'},
         {kind:'clue',eyebrow:'THE ODD DETAIL',title:'Furnace ash in the ruts',text:'The nearest matching forge should have been dead for eighteen years.',icon:'✦'},
         {kind:'gate',eyebrow:'YOUR FIRST REAL QUEST',title:'Ashes on the East Road',text:'Story, investigation, combat and the road toward The Ashen Vault.',icon:'→'}
       ],
@@ -336,7 +336,7 @@ function tutorialComicConfig(id){
       speaker:'Warden Elara Vey',speakerRole:'FAREWELL',speakerMark:'EV',
       line:'You have five people, a little gear and enough experience to know what can go wrong. That is more than most charters get.',
       panels:[
-        {kind:'location',eyebrow:'DAWN',title:'The eastern gate opens.',text:'For the first time, the route ahead belongs entirely to your guild.',icon:'☼'},
+        {kind:'location',artwork:'./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp',eyebrow:'DAWN',title:'The eastern gate opens.',text:'For the first time, the route ahead belongs entirely to your guild.',icon:'☼'},
         {kind:'npc',eyebrow:'ELARA',title:'No more training ward',text:'The systems you learned remain. The safety net does not.'},
         {kind:'location',eyebrow:'THE ROAD',title:'Quest · Dungeon · Endgame',text:'The tutorial ends where the actual game begins.',icon:'→'}
       ],
