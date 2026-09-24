@@ -12,6 +12,7 @@ const STORAGE='cellbound-management-reboot-v3';
 const PREVIOUS_STORAGE='cellbound-management-reboot-v2';
 const LOCAL_OWNER='cellbound-management-owner';
 const SAVE_VERSION=6;
+const PLAYER_LEVEL_CAP=15;
 const PVE_WIPE_CELL_SHOCK=25;
 const STANDARD_RECOVERY_MINUTES=60;
 const MEMBER_RECOVERY_MINUTES=30;
@@ -198,7 +199,7 @@ function tierText(item){return `Tier ${item?.tier||1} · ${item?.rarity||'Common
 function currentBossProgressionUnlocked(boss){const i=bosses.findIndex(b=>b.id===boss.id);return i<=0||Boolean(state.bossKills[bosses[i-1].id]);}
 
 function normalizeCharacter(c,index=0){
-  c.id=c.id||`legacy-${index}-${Date.now()}`;c.class=c.class||'Warrior';c.spec=c.spec||Object.keys(classDef(c).specs)[0];c.level=Math.max(1,Number(c.level)||1);c.xp=Math.max(0,Number(c.xp)||0);c.power=Math.max(1,Number(c.power)||1);
+  c.id=c.id||`legacy-${index}-${Date.now()}`;c.class=c.class||'Warrior';c.spec=c.spec||Object.keys(classDef(c).specs)[0];const rawLevel=Math.max(1,Number(c.level)||1),overCapLevels=Math.max(0,rawLevel-PLAYER_LEVEL_CAP);c.level=Math.min(PLAYER_LEVEL_CAP,rawLevel);c.xp=c.level>=PLAYER_LEVEL_CAP?0:Math.max(0,Number(c.xp)||0);if(overCapLevels>0)c.talent=Math.max(0,(Number(c.talent)||0)-overCapLevels);c.power=Math.max(1,Number(c.power)||1);
   c.race=c.race||'Veyren';c.raceTrait=c.raceTrait||window.CellboundIdentities?.getRace?.(c.race)?.trait||'';if(CP)c.appearance=CP.normalizeAppearance(c.appearance,c.id||c.name,c.race);c.talents=c.talents||talentState(c.class);c.knowledge=c.knowledge||{ashwarden:0,embermaw:0,vaultheart:0};c.equipment=c.equipment||{};
   const starters=starterEquipment(c.class);
   ILVL_SLOTS.forEach(slot=>{
@@ -1010,7 +1011,7 @@ function renderAll(){if(!state)return;state.roster.forEach(c=>{refreshRecovery(c
 function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(c=>{if(refreshRecovery(c)){state.activity.push(`${c.name} has fully recovered from Cell Shock.`);changed=true;}});if(changed)save();if(state.roster.some(c=>isUnavailable(c)))renderAll();}
 
 window.CellboundGame={
-  ready:false,getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,refreshStateFromServer,
+  ready:false,getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getLevelCap:()=>PLAYER_LEVEL_CAP,getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,refreshStateFromServer,
   characterItemLevel,partyItemLevel,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,portraitHTML,
   addBankItem,addMaterial,renderAll,switchView,starterEquipment,
   getPartyCharacters:()=>partyCharacters(),
