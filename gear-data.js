@@ -111,6 +111,7 @@ function inferWeaponType(klass,name=''){
   if(/(staff|stave|branch)/.test(n))return'staff';
   if(/(rod)/.test(n))return'rod';
   if(/(greatblade|greatsword|claymore)/.test(n))return'greatsword';
+  if(klass==='Rogue'&&/(blade|blades)/.test(n))return'dagger';
   if(/(sword|blade|blades|sabre|saber)/.test(n))return'sword';
   return({Warrior:'sword',Paladin:'hammer',Priest:'staff',Druid:'staff',Hunter:'bow',Rogue:'dagger',Mage:'staff'})[klass]||'sword'
 }
