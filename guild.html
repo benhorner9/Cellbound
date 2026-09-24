@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="./foundations.css?v=1">
 <link rel="stylesheet" href="./presentation-fx-v1.css?v=1">
 <link rel="stylesheet" href="./combat-polish-v2.css?v=1">
-<link rel="stylesheet" href="./economy-v2.css?v=7">
+<link rel="stylesheet" href="./economy-v2.css?v=8">
 <link rel="stylesheet" href="./trading-post-v3.css?v=3">
 <link rel="stylesheet" href="./social-v3.css?v=3">
 <link rel="stylesheet" href="./pvp-v1.css?v=1">
@@ -229,13 +229,13 @@
     </section>
 
     <section id="professions" class="view">
-      <div class="section-intro"><div><small>CRAFTING & PREPARATION</small><h2>Professions</h2><p>Turn dungeon reagents into potions, flasks, runes and temporary gear enhancements.</p></div><b class="economy-badge">SKILL 1–100</b></div>
+      <div class="section-intro"><div><small>WORKSHOP & MASTERY</small><h2>Professions</h2><p>Turn dungeon materials into useful preparation through hands-on work orders, quality finishes and recipe mastery.</p></div><b class="economy-badge">PROJECT CRAFTING</b></div>
       <div class="profession-layout">
-        <aside class="panel profession-roster-panel"><div class="panel-head"><div><small>ADVENTURERS</small><h3>Profession Slots</h3></div></div><div id="professionCharacterList" class="profession-character-list"></div></aside>
+        <aside class="panel profession-roster-panel"><div class="panel-head"><div><small>CRAFTING ROSTER</small><h3>Artisans</h3></div></div><div id="professionCharacterList" class="profession-character-list"></div></aside>
         <div class="profession-main">
-          <article class="panel"><div class="panel-head"><div><small>REAGENT VAULT</small><h3>Dungeon Materials</h3></div></div><div id="reagentGrid" class="reagent-grid"></div></article>
-          <article class="panel workshop-panel"><div class="panel-head"><div><small>WORKSHOP</small><h3 id="workshopTitle">Choose an Adventurer</h3></div><div id="professionRecipeFilters" class="profession-recipe-filters"><button class="active" data-prof-recipe-filter="all">All</button><button data-prof-recipe-filter="ready">Craftable</button><button data-prof-recipe-filter="locked">Locked</button><button data-prof-recipe-filter="rare">Rare</button></div></div><div id="professionWorkshop" class="profession-workshop"></div></article>
-          <article class="panel"><div class="panel-head"><div><small>CRAFTED STOCK</small><h3>Preparation Items</h3></div></div><div id="craftedInventory" class="crafted-inventory"></div></article>
+          <article class="panel workshop-panel"><div class="panel-head"><div><small>ACTIVE WORKSHOP</small><h3 id="workshopTitle">Choose an Adventurer</h3></div><div id="professionRecipeFilters" class="profession-recipe-filters"><button class="active" data-prof-recipe-filter="all">All</button><button data-prof-recipe-filter="ready">Ready</button><button data-prof-recipe-filter="locked">Locked</button><button data-prof-recipe-filter="rare">Rare</button></div></div><div id="professionWorkshop" class="profession-workshop"></div></article>
+          <article class="panel"><div class="panel-head"><div><small>MATERIAL VAULT</small><h3>Workshop Reagents</h3></div><span class="panel-head-note">Materials used by the selected profession are highlighted.</span></div><div id="reagentGrid" class="reagent-grid"></div></article>
+          <article class="panel"><div class="panel-head"><div><small>FINISHED GOODS</small><h3>Preparation Stock</h3></div></div><div id="craftedInventory" class="crafted-inventory"></div></article>
         </div>
       </div>
     </section>
@@ -495,7 +495,7 @@
 <script>window.CELLBOUND_BUILD='__CELLBOUND_BUILD__';window.CELLBOUND_BUILD_NUMBER='__CELLBOUND_BUILD_NUMBER__';</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
 <script src="./gear-data.js?v=14"></script>
-<script src="./profession-data.js?v=8"></script>
+<script src="./profession-data.js?v=9"></script>
 <script src="./item-art-v1.js?v=1"></script>
 <script src="./character-portraits-v1.js?v=5"></script>\n  <script src="./combat-portraits-v1.js?v=3"></script>
 <script src="./combat-identities-v1.js?v=27"></script>
@@ -505,7 +505,7 @@
 <script src="./endgame-data-v1.js?v=5"></script>
 <script src="./presentation-fx-v1.js?v=1"></script>
 <script src="./combat-polish-v2.js?v=1"></script>
-<script src="./guild-v4.js?v=47"></script>
+<script src="./guild-v4.js?v=48"></script>
 <script src="./pvp-combat-v1.js?v=2"></script>
 <script src="./pvp-viewer-v1.js?v=2"></script>
 <script src="./pvp-match-v1.js?v=2"></script>
@@ -513,7 +513,7 @@
 <script src="./character-sheet.js?v=31"></script>
 <script src="./gear-character-patch.js?v=6"></script>
 <script src="./character-foundations-patch.js?v=3"></script>
-<script src="./economy-v2.js?v=12"></script>
+<script src="./economy-v2.js?v=13"></script>
 <script src="./trading-post-v3.js?v=7"></script>
 <script src="./social-v3.js?v=5"></script>
 <script src="./twelve-below-v1.js?v=14"></script>
