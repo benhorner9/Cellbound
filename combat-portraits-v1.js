@@ -68,14 +68,14 @@ function mount(el,c){
 
   if(el.matches('.pvp2d-unit')){
     const token=el.querySelector('.pvp2d-token');
-    if(token)token.insertAdjacentHTML('beforeend','<span class="cb-combat-portrait">'+html+'</span>');
+    if(token)token.insertAdjacentHTML('beforeend','<div class="cb-combat-portrait">'+html+'</div>');
     return;
   }
   if(el.matches('.wb2d-unit')){
-    el.insertAdjacentHTML('beforeend','<span class="cb-combat-portrait">'+html+'</span>');
+    el.insertAdjacentHTML('beforeend','<div class="cb-combat-portrait">'+html+'</div>');
     return;
   }
-  el.insertAdjacentHTML('beforeend','<span class="cb-combat-portrait">'+html+'</span>');
+  el.insertAdjacentHTML('beforeend','<div class="cb-combat-portrait">'+html+'</div>');
 }
 function upgrade(root=document){
   if(root?.nodeType===1&&root.matches?.(PLAYER_SELECTORS)){
