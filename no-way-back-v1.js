@@ -299,26 +299,140 @@ function renderSailingReady(){
   bindClose();root.querySelector('[data-voyage-start]').onclick=startVoyage
 }
 async function startVoyage(){
-  const n=ensure();n.voyageAttempts=(Number(n.voyageAttempts)||0)+1;await save('The guild began crossing open water toward Manor Island.');
-  let x=50,rudder=0,wind=0,progress=0,hull=100,sail=100,lastSpawn=0,lastWind=0,ended=false,objects=[];
-  root.innerHTML=chrome('SAILING · MANOR ISLAND','Hold The Course',
-    '<div class="nwb-sailing"><div class="nwb-sailing-hud"><div><small>HULL</small><b data-hull>100%</b><span><i data-hullbar></i></span></div><div><small>ROUTE</small><b data-route>0%</b><span><i data-routebar></i></span></div><div><small>SAIL</small><b data-sail>100%</b><span><i data-sailbar></i></span></div></div><div class="nwb-ocean" data-ocean><div class="nwb-wind" data-wind>WIND ↔</div><div class="nwb-voyage-boat" data-boat><span>▲</span></div><div class="nwb-marker m1">SPLIT ROCK</div><div class="nwb-marker m2">CLIFF PASSAGE</div><div class="nwb-marker m3">BLACK BUOY</div><div class="nwb-marker m4">MANOR ISLAND</div></div><div class="nwb-rudder"><button data-steer="-1">◀ PORT</button><div><small>RUDDER</small><b data-rudder>STRAIGHT</b></div><button data-steer="1">STARBOARD ▶</button></div></div>');
-  bindClose();const ocean=root.querySelector('[data-ocean]'),boat=root.querySelector('[data-boat]');
-  function steer(v){rudder=v;const t=root.querySelector('[data-rudder]');if(t)t.textContent=v<0?'PORT':v>0?'STARBOARD':'STRAIGHT'}
-  root.querySelectorAll('[data-steer]').forEach(b=>{b.onpointerdown=()=>steer(Number(b.dataset.steer));b.onpointerup=b.onpointercancel=b.onpointerleave=()=>steer(0)});
-  const key=e=>{if(e.key==='ArrowLeft')steer(e.type==='keydown'?-1:0);if(e.key==='ArrowRight')steer(e.type==='keydown'?1:0)};
-  window.addEventListener('keydown',key);window.addEventListener('keyup',key);
-  function spawn(now){
-    const roll=Math.random(),type=roll<.52?'rock':roll<.8?'wreck':'squall',obj={type,x:8+Math.random()*84,y:-8,el:document.createElement('div')};
-    obj.el.className='nwb-sea-object '+type;obj.el.style.left=obj.x+'%';obj.el.style.top=obj.y+'%';obj.el.innerHTML=type==='rock'?'◆':type==='wreck'?'▰':'≋';ocean.appendChild(obj.el);objects.push(obj);lastSpawn=now
+  const n=ensure();
+  n.voyageAttempts=(Number(n.voyageAttempts)||0)+1;
+  await save('The guild began crossing open water toward Manor Island.');
+
+  const laneX=[22,50,78],duration=38000;
+  let lane=1,progress=0,hull=100,sail=100,lastSpawn=0,ended=false,hazards=[],lastHitAt=0,milestone=0;
+  const started=performance.now();
+
+  root.innerHTML=chrome('MANOR ISLAND · OPEN WATER','Crossing The Black Tide',
+    '<div class="nwb-sailing-v2">'+
+      '<div class="nwb-voyage-hud">'+
+        '<div class="nwb-vital-card hull"><small>HULL INTEGRITY</small><div><b data-hull>100%</b><span><i data-hullbar></i></span></div></div>'+
+        '<div class="nwb-route-card"><small>DISTANCE TO MANOR ISLAND</small><b data-distance>2.4 NM</b><span><i data-routebar></i></span></div>'+
+        '<div class="nwb-vital-card sail"><small>SAIL INTEGRITY</small><div><b data-sail>100%</b><span><i data-sailbar></i></span></div></div>'+
+      '</div>'+
+      '<div class="nwb-sea-stage" data-ocean>'+
+        '<div class="nwb-night-sky"><i class="nwb-voyage-moon"></i><i class="nwb-cloud c1"></i><i class="nwb-cloud c2"></i></div>'+
+        '<div class="nwb-manor-island" data-manor><div class="nwb-manor-cliff"></div><div class="nwb-manor-castle"><i></i><i></i><i></i><span></span></div><small>MANOR ISLAND</small></div>'+
+        '<div class="nwb-horizon-mist"></div>'+
+        '<div class="nwb-sea-surface"><i></i><i></i><i></i><i></i></div>'+
+        '<div class="nwb-lane-marker l0"></div><div class="nwb-lane-marker l1"></div><div class="nwb-lane-marker l2"></div>'+
+        '<button class="nwb-lane-touch l0" data-lane-touch="0" aria-label="Steer to port lane"></button>'+
+        '<button class="nwb-lane-touch l1" data-lane-touch="1" aria-label="Steer to middle lane"></button>'+
+        '<button class="nwb-lane-touch l2" data-lane-touch="2" aria-label="Steer to starboard lane"></button>'+
+        '<div class="nwb-voyage-callout" data-voyage-callout><small>BLACK TIDE</small><b>Keep the boat clear of the hazards ahead.</b></div>'+
+        '<div class="nwb-boat-v2 lane-1" data-boat><div class="wake"></div><div class="boat-hull"></div><div class="mast"></div><div class="boat-sail"></div><div class="lantern"></div></div>'+
+        '<div class="nwb-impact-flash" data-impact></div>'+
+      '</div>'+
+      '<div class="nwb-helm">'+
+        '<button data-lane="0"><span>◀</span><small>PORT</small><b>LEFT LANE</b></button>'+
+        '<button class="active" data-lane="1"><span>◆</span><small>HOLD COURSE</small><b>MIDDLE</b></button>'+
+        '<button data-lane="2"><span>▶</span><small>STARBOARD</small><b>RIGHT LANE</b></button>'+
+      '</div>'+
+      '<div class="nwb-voyage-legend"><span><i class="rock"></i>Rocks damage hull</span><span><i class="wreck"></i>Wreckage damages hull</span><span><i class="squall"></i>Squalls tear sail</span></div>'+
+    '</div>'
+  );
+  bindClose();
+
+  const ocean=root.querySelector('[data-ocean]'),boat=root.querySelector('[data-boat]'),manor=root.querySelector('[data-manor]');
+  const callout=root.querySelector('[data-voyage-callout]');
+
+  function say(kicker,message){
+    if(!callout)return;
+    callout.innerHTML='<small>'+esc(kicker)+'</small><b>'+esc(message)+'</b>';
+    callout.classList.remove('pulse');void callout.offsetWidth;callout.classList.add('pulse')
   }
-  function hit(obj){
-    if(obj.type==='squall'){sail=Math.max(0,sail-20);notify('SAIL HIT','Squall tears the canvas','Sail integrity -20%')}
-    else{hull=Math.max(0,hull-(obj.type==='rock'?24:12));notify('HULL HIT',obj.type==='rock'?'Rock strike':'Floating wreckage','Hull integrity reduced')}
-    obj.hit=true;obj.el.classList.add('hit');window.CellboundFX?.shake?.(obj.type==='rock'?'hard':'soft')
+
+  function setLane(next){
+    if(ended)return;
+    lane=Math.max(0,Math.min(2,Number(next)||0));
+    if(boat){
+      boat.classList.remove('lane-0','lane-1','lane-2');
+      boat.classList.add('lane-'+lane);
+      boat.style.left=laneX[lane]+'%'
+    }
+    root.querySelectorAll('[data-lane]').forEach(b=>b.classList.toggle('active',Number(b.dataset.lane)===lane))
   }
+  root.querySelectorAll('[data-lane],[data-lane-touch]').forEach(b=>b.addEventListener('click',()=>setLane(b.dataset.lane??b.dataset.laneTouch)));
+  const key=e=>{
+    if(e.type!=='keydown')return;
+    if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A')setLane(lane-1);
+    if(e.key==='ArrowRight'||e.key==='d'||e.key==='D')setLane(lane+1);
+    if(e.key==='ArrowDown'||e.key==='s'||e.key==='S')setLane(1)
+  };
+  window.addEventListener('keydown',key);
+
+  function hazardMarkup(type){
+    if(type==='rock')return'<div class="hazard-rock"><i></i><i></i><i></i></div><small>ROCKS</small>';
+    if(type==='wreck')return'<div class="hazard-wreck"><i></i><i></i><span></span></div><small>WRECKAGE</small>';
+    return'<div class="hazard-squall"><i></i><i></i><i></i></div><small>SQUALL</small>'
+  }
+
+  function addHazard(type,hLane,now,offset=0){
+    const el=document.createElement('div');
+    el.className='nwb-sea-hazard '+type+' lane-'+hLane;
+    el.style.left=laneX[hLane]+'%';
+    el.style.top=(-14-offset)+'%';
+    el.innerHTML='<span class="danger-ring"></span>'+hazardMarkup(type);
+    ocean.appendChild(el);
+    hazards.push({type,lane:hLane,y:-14-offset,el,hit:false});
+    lastSpawn=now
+  }
+
+  function spawnWave(now){
+    const difficulty=progress/100;
+    const safe=Math.floor(Math.random()*3);
+    const doubleWave=progress>24&&Math.random()<(0.24+difficulty*.18);
+    const occupied=[];
+    if(doubleWave){
+      [0,1,2].filter(x=>x!==safe).forEach((hLane,i)=>{
+        const roll=Math.random(),type=roll<.45?'rock':roll<.72?'wreck':'squall';
+        addHazard(type,hLane,now,i*7);occupied.push(hLane)
+      })
+    }else{
+      let hLane=Math.floor(Math.random()*3);
+      const roll=Math.random(),type=roll<.48?'rock':roll<.76?'wreck':'squall';
+      addHazard(type,hLane,now,0);occupied.push(hLane)
+    }
+    if(progress>62&&Math.random()<.18&&occupied.length===1){
+      const options=[0,1,2].filter(x=>!occupied.includes(x));
+      const second=options[Math.floor(Math.random()*options.length)];
+      addHazard(Math.random()<.55?'wreck':'squall',second,now,8)
+    }
+  }
+
+  function updateVitals(){
+    const h=root.querySelector('[data-hull]'),s=root.querySelector('[data-sail]');
+    const hb=root.querySelector('[data-hullbar]'),sb=root.querySelector('[data-sailbar]'),rb=root.querySelector('[data-routebar]');
+    if(h)h.textContent=Math.ceil(hull)+'%';if(s)s.textContent=Math.ceil(sail)+'%';
+    if(hb){hb.style.width=hull+'%';hb.parentElement?.classList.toggle('danger',hull<=35)}
+    if(sb){sb.style.width=sail+'%';sb.parentElement?.classList.toggle('danger',sail<=35)}
+    if(rb)rb.style.width=progress+'%';
+    const d=root.querySelector('[data-distance]');if(d)d.textContent=Math.max(0,(2.4*(1-progress/100))).toFixed(1)+' NM'
+  }
+
+  function hit(hazard,now){
+    if(hazard.hit||now-lastHitAt<500)return;
+    hazard.hit=true;lastHitAt=now;hazard.el.classList.add('hit');
+    const impact=root.querySelector('[data-impact]');
+    if(impact){impact.classList.remove('show');void impact.offsetWidth;impact.classList.add('show')}
+    boat?.classList.add('impact');setTimeout(()=>boat?.classList.remove('impact'),460);
+    if(hazard.type==='squall'){
+      sail=Math.max(0,sail-24);say('SAIL STRIKE','The squall catches the canvas — change lanes earlier.')
+    }else if(hazard.type==='rock'){
+      hull=Math.max(0,hull-30);say('HULL STRIKE','Rock along the keel. Hull integrity falling.')
+    }else{
+      hull=Math.max(0,hull-18);say('WRECKAGE','Timber clips the hull. Keep the bow clear.')
+    }
+    updateVitals();window.CellboundFX?.shake?.(hazard.type==='rock'?'hard':'soft')
+  }
+
   async function fail(){
-    if(ended)return;ended=true;cleanup();n.wrecks=(Number(n.wrecks)||0)+1;n.repairKit=false;n.sailRepaired=false;n.stage='repairs';
+    if(ended)return;ended=true;cleanup();
+    n.wrecks=(Number(n.wrecks)||0)+1;n.repairKit=false;n.sailRepaired=false;n.stage='repairs';
     await save('The crossing failed. The route chart survived, but the hull repair and sail were lost.');
     story('VOYAGE FAILED','Washed Back To Harbour','Silas Vane',[
       'Well. We found the rocks.',
@@ -327,30 +441,61 @@ async function startVoyage(){
       'Repair her again and we try again.'
     ],()=>renderRepairs(),'RETURN TO THE BOAT →')
   }
+
   async function succeed(){
-    if(ended)return;ended=true;cleanup();n.arrived=true;n.stage='arrival';
+    if(ended)return;ended=true;cleanup();
+    n.arrived=true;n.stage='arrival';
     await save('The boat survived the crossing and reached the jetty beneath Manor Island.');
     renderArrival()
   }
+
   let last=performance.now();
   function frame(now){
     if(ended)return;
     const dt=Math.min(50,now-last);last=now;
-    if(now-lastWind>3500){wind=(Math.random()*2-1)*.9;lastWind=now;const w=root.querySelector('[data-wind]');if(w)w.textContent=wind<-.15?'WIND ◀':wind>.15?'WIND ▶':'WIND ↔'}
-    x=Math.max(5,Math.min(95,x+(rudder*0.055+wind*0.014)*dt));
-    progress=Math.min(100,progress+dt*.00078);
-    boat.style.left=x+'%';
-    if(now-lastSpawn>980)spawn(now);
-    objects.forEach(obj=>{obj.y+=dt*.025;obj.el.style.top=obj.y+'%';if(!obj.hit&&obj.y>72&&obj.y<89&&Math.abs(x-obj.x)<8)hit(obj)});
-    objects=objects.filter(obj=>{if(obj.y>105){obj.el.remove();return false}return true});
-    root.querySelector('[data-hull]').textContent=Math.ceil(hull)+'%';root.querySelector('[data-sail]').textContent=Math.ceil(sail)+'%';root.querySelector('[data-route]').textContent=Math.floor(progress)+'%';
-    root.querySelector('[data-hullbar]').style.width=hull+'%';root.querySelector('[data-sailbar]').style.width=sail+'%';root.querySelector('[data-routebar]').style.width=progress+'%';
-    root.querySelector('.m1')?.classList.toggle('seen',progress>20);root.querySelector('.m2')?.classList.toggle('seen',progress>44);root.querySelector('.m3')?.classList.toggle('seen',progress>68);root.querySelector('.m4')?.classList.toggle('seen',progress>90);
-    if(hull<=0||sail<=0){fail();return}if(progress>=100){succeed();return}
+    progress=Math.min(100,((now-started)/duration)*100);
+
+    const interval=Math.max(1050,1650-progress*5.2);
+    if(now-lastSpawn>interval)spawnWave(now);
+
+    const speed=.024+progress*.000035;
+    hazards.forEach(h=>{
+      h.y+=dt*speed;
+      h.el.style.top=h.y+'%';
+      if(!h.hit&&h.y>69&&h.y<88&&h.lane===lane)hit(h,now)
+    });
+    hazards=hazards.filter(h=>{
+      if(h.y>112){h.el.remove();return false}
+      return true
+    });
+
+    if(manor){
+      const scale=.62+(progress/100)*.64;
+      manor.style.transform='translateX(-50%) scale('+scale.toFixed(3)+')';
+      manor.style.opacity=String(.46+(progress/100)*.54)
+    }
+
+    const nextMilestone=progress>=82?4:progress>=58?3:progress>=34?2:progress>=14?1:0;
+    if(nextMilestone>milestone){
+      milestone=nextMilestone;
+      if(milestone===1)say('SPLIT ROCK','Landmark confirmed. Keep the boat in open water.');
+      if(milestone===2)say('CLIFF PASSAGE','The island cliffs are visible through the mist.');
+      if(milestone===3)say('BLACK BUOY','Final marker. Manor Island is directly ahead.');
+      if(milestone===4)say('MANOR ISLAND','Jetty in sight. Hold the boat together.')
+    }
+
+    updateVitals();
+    if(hull<=0||sail<=0){fail();return}
+    if(progress>=100){succeed();return}
     requestAnimationFrame(frame)
   }
-  root._cleanup=()=>{ended=true;window.removeEventListener('keydown',key);window.removeEventListener('keyup',key);objects.forEach(o=>o.el.remove())};
-  requestAnimationFrame(frame)
+
+  root._cleanup=()=>{
+    ended=true;
+    window.removeEventListener('keydown',key);
+    hazards.forEach(h=>h.el.remove())
+  };
+  updateVitals();requestAnimationFrame(frame)
 }
 function renderArrival(){
   story('MANOR ISLAND','Homecoming','Silas Vane',[

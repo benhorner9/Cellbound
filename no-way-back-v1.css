@@ -64,3 +64,66 @@ background-size:400% 300%;background-repeat:no-repeat}
 
 .nwb-empty-sail-slot{display:block;width:100%;height:100%;background:linear-gradient(135deg,#172129,#0c151b);box-shadow:inset 0 0 0 1px #ffffff08}
 .nwb-sail-grid.is-placing button.available .nwb-empty-sail-slot{background:linear-gradient(135deg,#1b252c,#0e181e)}
+
+
+/* Cinematic lane-based sailing v2 */
+.nwb-sailing-v2{padding:18px 20px 22px;display:grid;gap:12px;background:radial-gradient(circle at 50% 0,#16304233,transparent 42%)}
+.nwb-voyage-hud{display:grid;grid-template-columns:1fr 1.15fr 1fr;gap:10px;position:relative;z-index:4}
+.nwb-voyage-hud>div{padding:11px 13px;background:linear-gradient(180deg,#0d171e,#091117);border:1px solid #ffffff14;border-radius:11px;box-shadow:0 10px 26px #0004}
+.nwb-voyage-hud small{display:block;color:#7f969f;letter-spacing:.13em;font-size:9px;font-weight:800}
+.nwb-voyage-hud b{font-size:17px;color:#e9f0f2}.nwb-route-card{text-align:center}
+.nwb-vital-card>div,.nwb-route-card{display:grid;gap:7px}
+.nwb-voyage-hud span{display:block;height:5px;border-radius:5px;background:#ffffff0d;overflow:hidden}
+.nwb-voyage-hud span i{display:block;height:100%;width:100%;transition:width .25s;background:linear-gradient(90deg,#5f9f82,#9dc8a9)}
+.nwb-voyage-hud .sail span i{background:linear-gradient(90deg,#688da7,#aac5d7)}
+.nwb-route-card span i{background:linear-gradient(90deg,#9a783e,#e1be72)}
+.nwb-voyage-hud span.danger i{background:linear-gradient(90deg,#a34842,#e27966)}
+.nwb-sea-stage{height:min(600px,62vh);min-height:470px;position:relative;overflow:hidden;border-radius:20px;border:1px solid #ffffff18;background:linear-gradient(180deg,#07121b 0 26%,#102832 27% 42%,#0a2938 43% 100%);box-shadow:inset 0 0 100px #0009,0 18px 45px #0006;isolation:isolate}
+.nwb-night-sky{position:absolute;inset:0 0 58% 0;background:radial-gradient(circle at 68% 19%,#34485755,transparent 16%),linear-gradient(180deg,#050b12,#10222d);z-index:0}
+.nwb-voyage-moon{position:absolute;width:48px;height:48px;border-radius:50%;right:27%;top:12%;background:radial-gradient(circle at 35% 32%,#fffde9,#d7e2df 62%,#80959a);box-shadow:0 0 32px #d7eee766}
+.nwb-cloud{position:absolute;height:30px;width:190px;border-radius:50%;background:#25343e99;filter:blur(7px)}.nwb-cloud.c1{left:8%;top:18%;transform:rotate(-4deg)}.nwb-cloud.c2{right:4%;top:42%;width:260px;opacity:.68}
+.nwb-manor-island{position:absolute;left:50%;top:12%;width:210px;height:150px;z-index:1;transform:translateX(-50%) scale(.62);transform-origin:50% 100%;opacity:.5;transition:opacity .2s;filter:drop-shadow(0 12px 20px #000)}
+.nwb-manor-island small{position:absolute;left:50%;bottom:-12px;transform:translateX(-50%);white-space:nowrap;font-size:8px;letter-spacing:.2em;color:#d7b56d88}
+.nwb-manor-cliff{position:absolute;left:8%;right:8%;bottom:0;height:54px;background:linear-gradient(160deg,#1e2528,#080d10);clip-path:polygon(0 100%,8% 42%,21% 55%,35% 21%,49% 47%,62% 14%,78% 44%,89% 30%,100% 100%)}
+.nwb-manor-castle{position:absolute;left:47px;bottom:39px;width:118px;height:82px;background:linear-gradient(90deg,#11171a,#242c2e 48%,#0b0f11);clip-path:polygon(6% 100%,6% 35%,17% 35%,17% 15%,26% 15%,26% 38%,39% 38%,39% 4%,47% 4%,47% 31%,60% 31%,60% 12%,70% 12%,70% 42%,83% 42%,83% 23%,92% 23%,92% 100%)}
+.nwb-manor-castle:after{content:"";position:absolute;inset:24px 18px 10px;background:repeating-linear-gradient(90deg,transparent 0 15px,#dca95b 16px 18px,transparent 19px 29px);opacity:.55}
+.nwb-manor-castle i{position:absolute;bottom:60px;width:15px;height:40px;background:#151c1f}.nwb-manor-castle i:nth-child(1){left:7px}.nwb-manor-castle i:nth-child(2){left:52px;height:57px}.nwb-manor-castle i:nth-child(3){right:9px}.nwb-manor-castle span{position:absolute;left:55px;bottom:43px;width:8px;height:10px;background:#e0a854;box-shadow:0 0 12px #e0a854}
+.nwb-horizon-mist{position:absolute;left:-10%;right:-10%;top:35%;height:100px;background:linear-gradient(180deg,transparent,#9cb1b21b 45%,transparent);filter:blur(10px);z-index:2}
+.nwb-sea-surface{position:absolute;inset:39% 0 0;z-index:1;background:repeating-linear-gradient(176deg,#113543 0 11px,#0b2b38 12px 24px,#153e4e 25px 27px);perspective:400px}
+.nwb-sea-surface:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent 0 36%,#b9d1d016 50%,transparent 64%),repeating-linear-gradient(105deg,transparent 0 50px,#8fb3ba12 51px 53px,transparent 54px 92px);animation:nwb-sea-drift 5s linear infinite}
+.nwb-sea-surface i{position:absolute;height:2px;width:18%;background:#b6d4da35;border-radius:50%;transform:rotate(-4deg)}.nwb-sea-surface i:nth-child(1){left:8%;top:18%}.nwb-sea-surface i:nth-child(2){right:8%;top:31%;width:26%}.nwb-sea-surface i:nth-child(3){left:25%;top:59%;width:34%}.nwb-sea-surface i:nth-child(4){right:15%;top:75%;width:20%}
+.nwb-lane-marker{position:absolute;top:42%;bottom:0;width:1px;z-index:2;background:linear-gradient(180deg,#d7b56d00,#d7b56d18 40%,#d7b56d2d);transform-origin:top}.nwb-lane-marker.l0{left:35%;transform:rotate(7deg)}.nwb-lane-marker.l1{left:65%;transform:rotate(-7deg)}.nwb-lane-marker.l2{display:none}
+.nwb-lane-touch{position:absolute;top:43%;bottom:0;width:33.33%;z-index:2;border:0;background:transparent}.nwb-lane-touch.l0{left:0}.nwb-lane-touch.l1{left:33.33%}.nwb-lane-touch.l2{right:0}
+.nwb-boat-v2{position:absolute;z-index:9;left:50%;bottom:7%;width:66px;height:95px;transform:translateX(-50%);transition:left .28s cubic-bezier(.2,.8,.2,1),transform .2s;filter:drop-shadow(0 9px 8px #0008);pointer-events:none}
+.nwb-boat-v2 .wake{position:absolute;left:50%;top:54px;width:75px;height:75px;transform:translateX(-50%);background:linear-gradient(145deg,transparent 45%,#d3ebef4d 46% 49%,transparent 50%),linear-gradient(215deg,transparent 45%,#d3ebef35 46% 49%,transparent 50%);opacity:.75}
+.nwb-boat-v2 .boat-hull{position:absolute;left:13px;bottom:10px;width:40px;height:62px;background:linear-gradient(90deg,#2b1b13,#6b452b 48%,#20130e);clip-path:polygon(50% 0,100% 28%,82% 100%,18% 100%,0 28%);border-bottom:4px solid #110b08}
+.nwb-boat-v2 .mast{position:absolute;left:32px;top:2px;width:3px;height:63px;background:#8a6542;box-shadow:0 0 0 1px #2f2117}
+.nwb-boat-v2 .boat-sail{position:absolute;left:35px;top:9px;width:28px;height:43px;background:linear-gradient(145deg,#d9d1b9,#817b6d);clip-path:polygon(0 0,100% 18%,0 100%);filter:drop-shadow(1px 2px 2px #0008)}
+.nwb-boat-v2 .lantern{position:absolute;left:22px;bottom:27px;width:7px;height:7px;border-radius:50%;background:#f0b75d;box-shadow:0 0 12px #f0a23e}
+.nwb-boat-v2.impact{animation:nwb-boat-impact .45s ease}
+.nwb-voyage-callout{position:absolute;z-index:10;left:18px;top:18px;max-width:310px;padding:9px 12px;background:#061017d9;border-left:3px solid #d7b56d;box-shadow:0 8px 22px #0008;backdrop-filter:blur(5px)}
+.nwb-voyage-callout small,.nwb-voyage-callout b{display:block}.nwb-voyage-callout small{font-size:8px;letter-spacing:.16em;color:#d7b56d}.nwb-voyage-callout b{font-size:12px;margin-top:2px;color:#e8eef0}.nwb-voyage-callout.pulse{animation:nwb-callout .35s ease}
+.nwb-sea-hazard{position:absolute;z-index:7;width:92px;height:88px;transform:translate(-50%,-50%);transition:opacity .2s;pointer-events:none;text-align:center}
+.nwb-sea-hazard .danger-ring{position:absolute;left:50%;top:50%;width:74px;height:34px;transform:translate(-50%,-50%);border:1px solid #d65b5555;border-radius:50%;background:#8b242415;box-shadow:0 0 20px #a6393922}
+.nwb-sea-hazard>small{position:absolute;top:-3px;left:50%;transform:translateX(-50%);padding:2px 5px;background:#071017d9;color:#d79a8e;font-size:7px;letter-spacing:.11em;border-radius:3px}
+.hazard-rock{position:absolute;left:15px;right:15px;bottom:10px;height:52px}.hazard-rock i{position:absolute;bottom:0;background:linear-gradient(135deg,#2b3132,#111719);clip-path:polygon(50% 0,100% 80%,82% 100%,7% 91%,0 51%)}.hazard-rock i:nth-child(1){left:7px;width:34px;height:43px}.hazard-rock i:nth-child(2){left:34px;width:42px;height:54px}.hazard-rock i:nth-child(3){right:2px;width:27px;height:34px}
+.hazard-wreck{position:absolute;left:12px;right:12px;bottom:12px;height:50px;transform:rotate(-8deg)}.hazard-wreck i{position:absolute;height:9px;background:linear-gradient(#7d5638,#3e281b);border:1px solid #1b120d}.hazard-wreck i:nth-child(1){left:6px;top:9px;width:65px}.hazard-wreck i:nth-child(2){left:15px;top:27px;width:55px;transform:rotate(15deg)}.hazard-wreck span{position:absolute;width:4px;height:48px;left:42px;top:0;background:#5c3c27}
+.hazard-squall{position:absolute;left:6px;right:6px;bottom:15px;height:54px}.hazard-squall:before{content:"";position:absolute;left:5px;right:5px;top:3px;height:30px;border-radius:50%;background:#8ea6b34a;box-shadow:0 6px 20px #b4d3dd21}.hazard-squall i{position:absolute;bottom:0;height:2px;background:#c5e3e866;transform:rotate(-8deg)}.hazard-squall i:nth-child(1){left:4px;width:60px}.hazard-squall i:nth-child(2){right:0;width:44px;bottom:10px}.hazard-squall i:nth-child(3){left:18px;width:55px;bottom:20px}
+.nwb-sea-hazard.hit{opacity:.18;transform:translate(-50%,-50%) scale(1.35)}
+.nwb-impact-flash{position:absolute;inset:0;z-index:12;pointer-events:none;border:0 solid transparent}.nwb-impact-flash.show{animation:nwb-impact-flash .42s ease}
+.nwb-helm{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.nwb-helm button{min-height:62px;padding:9px 12px;border:1px solid #ffffff18;background:linear-gradient(180deg,#111b22,#0a1116);color:#c8d3d7;border-radius:11px;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;text-align:left;column-gap:9px;align-items:center;box-shadow:0 7px 16px #0003}
+.nwb-helm button span{grid-row:1/3;font-size:18px;color:#7d9098}.nwb-helm button small{font-size:8px;letter-spacing:.13em;color:#71858d}.nwb-helm button b{font-size:12px}.nwb-helm button.active{border-color:#d7b56d99;background:linear-gradient(180deg,#2a2418,#15140f);box-shadow:inset 0 0 0 1px #d7b56d25,0 0 22px #d7b56d14}.nwb-helm button.active span{color:#e4c474}
+.nwb-voyage-legend{display:flex;justify-content:center;gap:22px;color:#7f9299;font-size:9px;letter-spacing:.08em}.nwb-voyage-legend span{display:flex;align-items:center;gap:6px}.nwb-voyage-legend i{width:8px;height:8px;border-radius:50%;display:inline-block}.nwb-voyage-legend i.rock{background:#555f60}.nwb-voyage-legend i.wreck{background:#7d5638}.nwb-voyage-legend i.squall{background:#8aa3b0}
+@keyframes nwb-sea-drift{to{transform:translateX(-90px)}}
+@keyframes nwb-boat-impact{25%{transform:translateX(-50%) rotate(-8deg) scale(1.08)}55%{transform:translateX(-50%) rotate(7deg)}100%{transform:translateX(-50%)}}
+@keyframes nwb-impact-flash{0%{box-shadow:inset 0 0 0 0 #c65b4c00}35%{box-shadow:inset 0 0 90px 18px #c65b4c66}100%{box-shadow:inset 0 0 0 0 #c65b4c00}}
+@keyframes nwb-callout{50%{transform:translateY(-3px)}}
+@media(max-width:800px){
+  .nwb-sailing-v2{padding:10px}
+  .nwb-voyage-hud{grid-template-columns:1fr 1fr 1fr;gap:5px}.nwb-voyage-hud>div{padding:8px}.nwb-voyage-hud small{font-size:7px}.nwb-voyage-hud b{font-size:13px}
+  .nwb-sea-stage{height:58vh;min-height:430px;border-radius:14px}
+  .nwb-helm{gap:5px}.nwb-helm button{min-height:58px;padding:8px;column-gap:5px}.nwb-helm button span{font-size:14px}.nwb-helm button b{font-size:10px}.nwb-helm button small{font-size:7px}
+  .nwb-voyage-callout{left:10px;top:10px;max-width:240px}.nwb-voyage-legend{display:none}
+  .nwb-boat-v2{bottom:8%}
+}
