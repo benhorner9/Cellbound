@@ -200,14 +200,14 @@ function endgamePrepMarkup(){
   const active=cfg.difficulty===mode,label=mode==='cellbound'?'CELLBOUND+':mode.toUpperCase();
   return'<button type="button" data-cb2d-mode="'+mode+'" class="'+(active?'active':'')+'" '+(unlocked?'':'disabled')+'>'+label+'</button>'
  }).join('');
- const tier=cfg.difficulty==='cellbound'?'<label>Tier <select data-cb2d-tier>'+Array.from({length:tierMax},(_,i)=>i+1).map(t=>'<option value="'+t+'" '+(t===cfg.tier?'selected':'')+'>+'+t+'</option>').join('')+'</select></label>':'';
+ const tier=cfg.difficulty==='cellbound'?(E?.tierPickerMarkup?.(cfg.tier,tierMax,{attribute:'data-cb2d-tier'})||''):'';
  const affixes=(cfg.affixes||[]).map(id=>window.CellboundEndgameData?.AFFIXES?.[id]?.name||id).join(' · ')||'No affixes';
  return'<div class="eg-prep-block"><small>DUNGEON DIFFICULTY</small><div class="eg-prep-tabs">'+buttons+'</div><div class="eg-prep-detail"><b>'+esc(cfg.diff?.name||'Normal')+'</b> · Recommended iLvl '+cfg.recommendedItemLevel+' · Target '+Math.floor(cfg.targetTimeMs/60000)+':'+String(Math.round(cfg.targetTimeMs/1000)%60).padStart(2,'0')+'<br>'+esc(affixes)+'<br>'+esc(cfg.diff?.description||'')+'</div>'+tier+'</div>'
 }
 function bindEndgamePrep(){
  const E=window.CellboundEndgame;
  document.querySelectorAll('[data-cb2d-mode]').forEach(b=>b.onclick=()=>{E?.choose?.('ashen-vault',b.dataset.cb2dMode);briefing()});
- $('[data-cb2d-tier]')?.addEventListener('change',e=>{E?.choose?.('ashen-vault','cellbound',Number(e.target.value));briefing()})
+ document.querySelectorAll('[data-cb2d-tier]').forEach(b=>b.onclick=()=>{E?.choose?.('ashen-vault','cellbound',Number(b.dataset.cb2dTier));briefing()})
 }
 
 function briefing(){
