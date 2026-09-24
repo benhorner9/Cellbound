@@ -281,13 +281,24 @@ function itemIdentity(item,slot){
 function visualVariant(item,slot,count){
   return hash(itemIdentity(item,slot)+'|'+slot)%Math.max(1,count||5);
 }
-function isSetItem(item){
-  return Boolean(item&&(item.setId||item.setName||item.visualSet||Number(item.tier)>=5));
+function setGroupId(c,item){
+  if(!item)return null;
+  if(item.setId)return String(item.setId);
+  if(item.setName)return String(item.setName).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+  if(item.visualSet)return String(item.visualSet);
+  var id=String(item.baseItemId||item.itemId||'').toLowerCase();
+  var match=id.match(/(?:^|-)t([45])(?:-|$)/);
+  if(match)return String((item.class||paperClass(c)||'gear')).toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-t'+match[1];
+  if(Number(item.tier)>=5)return String((item.class||paperClass(c)||'gear')).toLowerCase()+'-t5';
+  return null;
+}
+function isSetItem(item,c){
+  return Boolean(setGroupId(c,item));
 }
 function setVisual(c,item){
   var klass=(item&&item.class)||paperClass(c),base=SET_VISUALS[klass]||SET_VISUALS.Warrior;
-  if(!isSetItem(item))return null;
-  var id=String(item.setId||item.setName||klass+'-set');
+  var id=setGroupId(c,item);
+  if(!id)return null;
   var shift=(hash(id)%5)-2;
   return {
     primary:shift>0?mixHex(base.primary,'#ffffff',shift*.035):mixHex(base.primary,'#080d11',Math.abs(shift)*.035),
@@ -321,7 +332,8 @@ function bodyProfile(race){
   })[race]||{shoulder:45,waist:28,leg:14,arm:12,headScale:1};
 }
 function paperSlotClass(slot,highlighted,item){
-  var set=item&&isSetItem(item)?' is-set-item':'';
+  var id=String(item?.baseItemId||item?.itemId||'').toLowerCase();
+  var set=item&&(item.setId||item.setName||item.visualSet||/(?:^|-)t[45](?:-|$)/.test(id)||Number(item.tier)>=5)?' is-set-item':'';
   return 'cb-paper-slot cb-paper-slot-'+String(slot||'').toLowerCase()+(highlighted===slot?' is-highlighted':'')+set;
 }
 function weaponType(item,c){
@@ -494,7 +506,7 @@ function paperShoulders(c,highlighted){
     (pal.set?'<path d="M'+(120-s-18)+' 145 L'+(120-s-25)+' 132 M'+(120+s+18)+' 145 L'+(120+s+25)+' 132" stroke="'+pal.glow+'" stroke-width="3" opacity=".7" class="cb-paper-set-glow"/>':'')+
     '</g>';
 }
-function weaponMarkup(type,pal,v,tier){
+function weaponMarkup(type,pal,v,tier,item){
   var g='';
   if(type==='bow'){
     g='<path d="M190 116 Q225 206 188 316" fill="none" stroke="'+pal.base+'" stroke-width="'+(7+v%3)+'"/><path d="M190 116 L188 316" stroke="'+pal.trim+'" stroke-width="2"/><path d="M188 205 L220 195" stroke="'+pal.light+'" stroke-width="3"/><path d="M220 195 L213 192 L216 201Z" fill="'+pal.trim+'"/>';
@@ -512,6 +524,8 @@ function weaponMarkup(type,pal,v,tier){
     g='<path d="M182 236 L210 316" stroke="'+pal.light+'" stroke-width="5.5" stroke-linecap="round"/><path d="M207 313 L219 337 L204 327Z" fill="'+pal.trim+'"/><path d="M179 235 L197 241" stroke="'+pal.trim+'" stroke-width="5"/>';
   }else if(type==='wand'){
     g='<path d="M190 190 L207 329" stroke="'+pal.base+'" stroke-width="6" stroke-linecap="round"/><path d="M187 188 L194 165 L202 187Z" fill="'+pal.glow+'" stroke="'+pal.trim+'" stroke-width="2"/>';
+  }else if(type==='focus'){
+    g='<path d="M191 217 L202 331" stroke="'+pal.dark+'" stroke-width="6" stroke-linecap="round"/><circle cx="189" cy="194" r="18" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="189" cy="194" r="8" fill="'+pal.glow+'" opacity=".78" class="cb-paper-glow"/><path d="M170 194 H208 M189 175 V213" stroke="'+pal.light+'" stroke-width="1.8" opacity=".65"/>';
   }else if(type==='scepter'){
     g='<path d="M191 175 L206 336" stroke="'+pal.base+'" stroke-width="7" stroke-linecap="round"/><circle cx="189" cy="165" r="11" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="189" cy="165" r="4" fill="'+pal.glow+'"/>';
   }else if(type==='rod'){
@@ -524,31 +538,32 @@ function weaponMarkup(type,pal,v,tier){
     g='<path d="M191 149 L207 337" stroke="'+pal.dark+'" stroke-width="'+(great?10:8)+'" stroke-linecap="round"/><path d="M'+(196-bladeWidth/2)+' 147 L196 '+bladeTop+' L'+(196+bladeWidth/2)+' 147Z" fill="'+pal.light+'" stroke="'+pal.trim+'" stroke-width="2.4"/><path d="M178 158 L211 155" stroke="'+pal.trim+'" stroke-width="'+(great?6:5)+'"/>';
   }
   if(pal.set)g+=motifMarkup(pal.set.motif,196,176,.7,pal.glow);
-  else if(tier>=4)g+='<circle cx="196" cy="176" r="3.5" fill="'+pal.glow+'" opacity=".75" class="cb-paper-glow"/>';
+  else g+=itemRune(item,'Weapon',pal,196,176,.55);
+  if(tier>=4&&!pal.set)g+='<circle cx="196" cy="176" r="2.4" fill="'+pal.glow+'" opacity=".6" class="cb-paper-glow"/>';
   return g;
 }
 function paperWeapon(c,highlighted){
   var item=itemForSlot(c,'Weapon'),tier=clampTier(item&&item.tier);
   if(!item)return'';
   var pal=gearPalette(c,item,tier,'Weapon'),type=weaponType(item,c),v=pal.variant;
-  return '<g class="'+paperSlotClass('Weapon',highlighted,item)+'" data-weapon-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'Weapon'))+'">'+weaponMarkup(type,pal,v,tier)+'</g>';
+  return '<g class="'+paperSlotClass('Weapon',highlighted,item)+'" data-weapon-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'Weapon'))+'">'+weaponMarkup(type,pal,v,tier,item)+'</g>';
 }
-function offHandMarkup(type,pal,v,tier){
+function offHandMarkup(type,pal,v,tier,item){
   if(type==='shield'){
     var shape=v%3===0?'M26 174 Q48 155 70 174 L66 248 Q49 270 31 248Z':v%3===1?'M27 169 L70 177 L64 250 L49 266 L32 248Z':'M26 178 L48 159 L70 178 L62 252 L48 267 L34 252Z';
-    return '<path d="'+shape+'" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="3"/><path d="M48 170 L48 255 M31 205 L66 205" stroke="'+pal.light+'" stroke-width="2.3" opacity=".62"/>'+itemRune({name:'shield-'+v},'OffHand',pal,48,211,.8);
+    return '<path d="'+shape+'" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="3"/><path d="M48 170 L48 255 M31 205 L66 205" stroke="'+pal.light+'" stroke-width="2.3" opacity=".62"/>'+itemRune(item,'OffHand',pal,48,211,.8);
   }
   if(type==='quiver')return '<path d="M31 164 L65 174 L58 263 L35 257Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="2.5"/><path d="M38 164 L33 130 M46 167 L45 128 M55 168 L59 132" stroke="'+pal.light+'" stroke-width="3"/>';
-  if(type==='tome')return '<g transform="rotate(-8 48 216)"><rect x="28" y="187" width="42" height="57" rx="4" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><path d="M49 189 V242" stroke="'+pal.trim+'" stroke-width="2"/>'+itemRune({name:'tome-'+v},'OffHand',pal,49,215,.7)+'</g>';
+  if(type==='tome')return '<g transform="rotate(-8 48 216)"><rect x="28" y="187" width="42" height="57" rx="4" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><path d="M49 189 V242" stroke="'+pal.trim+'" stroke-width="2"/>'+itemRune(item,'OffHand',pal,49,215,.7)+'</g>';
   if(type==='idol')return '<path d="M32 238 Q48 182 64 238 L58 258 H38Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="48" cy="221" r="7" fill="'+pal.glow+'" opacity=".7"/>';
   if(type==='dagger')return '<path d="M52 236 L26 307" stroke="'+pal.light+'" stroke-width="5.5"/><path d="M29 304 L19 325 L33 316Z" fill="'+pal.trim+'"/><path d="M45 242 L60 248" stroke="'+pal.trim+'" stroke-width="4"/>';
-  return '<circle cx="49" cy="216" r="'+(v%2?18:21)+'" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/>'+itemRune({name:'focus-'+v},'OffHand',pal,49,216,1)+(tier>=4?'<circle cx="49" cy="216" r="6" fill="'+pal.glow+'" opacity=".65" class="cb-paper-glow"/>':'');
+  return '<circle cx="49" cy="216" r="'+(v%2?18:21)+'" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/>'+itemRune(item,'OffHand',pal,49,216,1)+(tier>=4?'<circle cx="49" cy="216" r="6" fill="'+pal.glow+'" opacity=".65" class="cb-paper-glow"/>':'');
 }
 function paperOffHand(c,highlighted){
   var item=itemForSlot(c,'OffHand'),tier=clampTier(item&&item.tier);
   if(!item)return'';
   var pal=gearPalette(c,item,tier,'OffHand'),type=offHandType(item,c),v=pal.variant;
-  return '<g class="'+paperSlotClass('OffHand',highlighted,item)+'" data-offhand-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'OffHand'))+'">'+offHandMarkup(type,pal,v,tier)+'</g>';
+  return '<g class="'+paperSlotClass('OffHand',highlighted,item)+'" data-offhand-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'OffHand'))+'">'+offHandMarkup(type,pal,v,tier,item)+'</g>';
 }
 function paperAccessories(c,highlighted){
   var out='',ring1=itemForSlot(c,'Ring1'),ring2=itemForSlot(c,'Ring2'),tr1=itemForSlot(c,'Trinket1'),tr2=itemForSlot(c,'Trinket2'),relic=itemForSlot(c,'Relic');
@@ -568,8 +583,9 @@ function paperAccessories(c,highlighted){
 function dominantSetState(c){
   var counts={},items={};
   Object.values(c?.equipment||{}).forEach(function(item){
-    if(!item||!isSetItem(item))return;
-    var id=item.setId||item.setName||itemIdentity(item,item.slot);
+    if(!item)return;
+    var id=setGroupId(c,item);
+    if(!id)return;
     counts[id]=(counts[id]||0)+1;items[id]=item;
   });
   var ids=Object.keys(counts);if(!ids.length)return null;
