@@ -347,6 +347,7 @@ function weaponType(item,c){
   if(/\b(mace|morningstar)\b/.test(n))return'mace';
   if(/\b(dagger|knife|shiv|shivs|knives|stiletto)\b/.test(n))return'dagger';
   if(/\b(wand)\b/.test(n))return'wand';
+  if(/\b(focus|orb|crystal)\b/.test(n))return'focus';
   if(/\b(scepter|sceptre)\b/.test(n))return'scepter';
   if(/\b(staff|stave)\b/.test(n))return'staff';
   if(/\b(rod)\b/.test(n))return'rod';
@@ -636,7 +637,7 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:1,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
+  version:2,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
   applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
   visualProfile:visualProfile,weaponType:weaponType,offHandType:offHandType,
