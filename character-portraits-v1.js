@@ -573,6 +573,8 @@ function offHandMarkup(type,pal,v,tier,item){
 function paperOffHand(c,highlighted){
   var item=itemForSlot(c,'OffHand'),tier=clampTier(item&&item.tier);
   if(!item)return'';
+  // Never invent a shield/focus visual for a main-hand weapon stored in OffHand.
+  if(item.slot&&item.slot!=='OffHand')return'';
   var pal=gearPalette(c,item,tier,'OffHand'),type=offHandType(item,c),v=pal.variant;
   return '<g class="'+paperSlotClass('OffHand',highlighted,item)+'" data-offhand-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'OffHand'))+'">'+offHandMarkup(type,pal,v,tier,item)+'</g>';
 }
