@@ -553,7 +553,7 @@ function qRenderMeters(target=0){
 }
 function qRefreshTargetControls(){
   if(!questFight)return;
-  $('[data-q-target]').forEach(b=>{
+  $$('[data-q-target]').forEach(b=>{
     const i=Number(b.dataset.qTarget),max=Math.max(1,Number(questFight.enemyMax?.[i])||1),hp=Math.max(0,Number(questFight.enemyHp?.[i])||0),alive=hp>0;
     b.classList.toggle('active',alive&&i===Number(questFight.focusTarget));
     b.classList.toggle('defeated',!alive);b.disabled=!alive;
