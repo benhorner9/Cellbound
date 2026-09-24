@@ -95,14 +95,14 @@ function faEndgameConfig(){
 function faEndgamePrepMarkup(){
  const E=window.CellboundEndgame,cfg=faEndgameConfig(),p=E?.progressFor?.('fractured-ages')||{},tierMax=Math.max(1,Number(p.highest_tier)||1);
  const buttons=['normal','heroic','cellbound'].map(mode=>{const unlocked=E?.difficultyUnlocked?E.difficultyUnlocked('fractured-ages',mode,cfg.tier||1):mode==='normal';return'<button type="button" data-fa-mode="'+mode+'" class="'+(cfg.difficulty===mode?'active':'')+'" '+(unlocked?'':'disabled')+'>'+(mode==='cellbound'?'CELLBOUND+':mode.toUpperCase())+'</button>'}).join('');
- const tier=cfg.difficulty==='cellbound'?'<label>Tier <select data-fa-tier>'+Array.from({length:tierMax},(_,i)=>i+1).map(t=>'<option value="'+t+'" '+(t===cfg.tier?'selected':'')+'>+'+t+'</option>').join('')+'</select></label>':'';
+ const tier=cfg.difficulty==='cellbound'?(E?.tierPickerMarkup?.(cfg.tier,tierMax,{attribute:'data-fa-tier'})||''):'';
  const affixes=(cfg.affixes||[]).map(id=>window.CellboundEndgameData?.AFFIXES?.[id]?.name||id).join(' · ')||'No affixes';
  return'<div class="eg-prep-block"><small>DUNGEON DIFFICULTY</small><div class="eg-prep-tabs">'+buttons+'</div><div class="eg-prep-detail"><b>'+esc(cfg.diff?.name||'Normal')+'</b> · Recommended iLvl '+cfg.recommendedItemLevel+' · Target '+Math.floor(cfg.targetTimeMs/60000)+':'+String(Math.round(cfg.targetTimeMs/1000)%60).padStart(2,'0')+'<br>'+esc(affixes)+'<br>'+esc(cfg.diff?.description||'')+'</div>'+tier+'</div>'
 }
 function faBindEndgamePrep(){
  const E=window.CellboundEndgame;
  document.querySelectorAll('[data-fa-mode]').forEach(b=>b.onclick=()=>{E?.choose?.('fractured-ages',b.dataset.faMode);briefing()});
- $('[data-fa-tier]')?.addEventListener('change',e=>{E?.choose?.('fractured-ages','cellbound',Number(e.target.value));briefing()})
+ document.querySelectorAll('[data-fa-tier]').forEach(b=>b.onclick=()=>{E?.choose?.('fractured-ages','cellbound',Number(b.dataset.faTier));briefing()})
 }
 async function faWaitForEndgame(){
  for(let i=0;i<20;i++){if(window.CellboundEndgame?.beginAttempt)return window.CellboundEndgame;await new Promise(r=>setTimeout(r,100))}
