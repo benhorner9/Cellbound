@@ -195,34 +195,74 @@ function repairCard(kind,eyebrow,title,done,copy,action){
   return'<article class="nwb-repair-card '+(done?'done':'')+'"><span class="nwb-repair-icon">'+(kind==='hull'?'▰':kind==='sail'?'◩':'⌖')+'</span><small>'+eyebrow+'</small><h3>'+title+'</h3><p>'+copy+'</p><button data-repair="'+kind+'" '+(done?'disabled':'')+'>'+(done?'✓ '+action:action+' →')+'</button></article>'
 }
 function openSailPuzzle(){
-  const n=ensure(),r=ensureRoot(),pieces=[0,1,2,3,4,5,6,7,8,9,10,11].sort(()=>Math.random()-.5),placed={},selected={id:null},started=Date.now(),limit=105000;
+  const n=ensure(),r=ensureRoot(),pieces=[0,1,2,3,4,5,6,7,8,9,10,11].sort(()=>Math.random()-.5),placed={},selected={id:null},started=Date.now(),limit=120000;
+  let note='Match the stains, seams and repair marks to the faded sail underneath.',misses=0;
+  const secured=()=>Object.keys(placed).length;
+  const pieceVisual=(id,ghost=false)=>'<i class="'+(ghost?'nwb-sail-ghost':'nwb-sail-piece')+' p'+id+'" data-piece-visual="'+id+'"></i>';
+  function pieceButton(id){
+    return'<button class="nwb-loose-piece '+(selected.id===id?'selected':'')+'" data-sail-piece="'+id+'" aria-label="Loose sail piece">'+pieceVisual(id)+'</button>'
+  }
   const draw=()=>{
     const remaining=Math.max(0,Math.ceil((limit-(Date.now()-started))/1000));
-    r.innerHTML=chrome('TIMED MINI GAME · 90 SECONDS','Stitch The Sail',
-      '<div class="nwb-jigsaw"><aside><small>TORN CANVAS</small><h3>Rebuild the sail</h3><p>Tap a sail piece, then tap the position where you think it belongs. The faded guide shows the full sail shape, not the individual pieces.</p><div class="nwb-timer"><span>TIME</span><b data-sail-time>'+remaining+'s</b></div><div class="nwb-piece-tray">'+pieces.filter(id=>!Object.values(placed).includes(id)).map(id=>pieceButton(id)).join('')+'</div></aside><main><div class="nwb-sail-guide"><div class="nwb-sail-grid">'+[0,1,2,3,4,5,6,7,8,9,10,11].map(slot=>'<button data-sail-slot="'+slot+'">'+(placed[slot]!=null?pieceVisual(placed[slot]):'<span></span>')+'</button>').join('')+'</div></div><p data-sail-note>Rebuild the larger sail panel before the wind takes it.</p><button class="nwb-secondary" data-sail-reset>RESHUFFLE PIECES</button></main></div>');
+    r.innerHTML=chrome('TIMED MINI GAME · 120 SECONDS','Stitch The Sail',
+      '<div class="nwb-jigsaw"><aside><small>TORN CANVAS</small><h3>Rebuild the sail</h3><p>Each piece now carries part of the sail’s original markings. Select a loose piece, then match its stains, seams and patches to the faded guide.</p>'+
+      '<div class="nwb-sail-progress"><span>STITCHED</span><b>'+secured()+' / 12</b></div>'+
+      '<div class="nwb-timer"><span>TIME</span><b data-sail-time>'+remaining+'s</b></div>'+
+      '<div class="nwb-piece-tray">'+pieces.filter(id=>placed[id]==null).map(id=>pieceButton(id)).join('')+'</div>'+
+      '<p class="nwb-sail-help">Correct pieces snap into place. A wrong panel will flash red without costing the piece.</p></aside>'+
+      '<main><div class="nwb-sail-guide"><div class="nwb-sail-grid '+(selected.id!=null?'is-placing':'')+'">'+
+      [0,1,2,3,4,5,6,7,8,9,10,11].map(slot=>'<button class="'+(placed[slot]!=null?'locked':'available')+'" data-sail-slot="'+slot+'" aria-label="Sail panel '+(slot+1)+'">'+(placed[slot]!=null?pieceVisual(placed[slot]):pieceVisual(slot,true))+'</button>').join('')+
+      '</div></div><p data-sail-note>'+esc(note)+'</p><button class="nwb-secondary" data-sail-reset>RESHUFFLE LOOSE PIECES</button></main></div>');
     bindClose();bindPieces()
   };
-  const pieceVisual=id=>'<i class="nwb-sail-piece p'+id+'" data-piece-visual="'+id+'"></i>';
-  function pieceButton(id){return'<button class="nwb-loose-piece '+(selected.id===id?'selected':'')+'" data-sail-piece="'+id+'">'+pieceVisual(id)+'</button>'}
   function bindPieces(){
-    r.querySelectorAll('[data-sail-piece]').forEach(b=>b.onclick=()=>{selected.id=Number(b.dataset.sailPiece);r.querySelectorAll('[data-sail-piece]').forEach(x=>x.classList.toggle('selected',Number(x.dataset.sailPiece)===selected.id))});
+    r.querySelectorAll('[data-sail-piece]').forEach(b=>b.onclick=()=>{
+      selected.id=Number(b.dataset.sailPiece);
+      note='Piece selected. Match its markings to the faded guide.';
+      r.querySelectorAll('[data-sail-piece]').forEach(x=>x.classList.toggle('selected',Number(x.dataset.sailPiece)===selected.id));
+      r.querySelector('.nwb-sail-grid')?.classList.add('is-placing');
+      const msg=r.querySelector('[data-sail-note]');if(msg)msg.textContent=note
+    });
     r.querySelectorAll('[data-sail-slot]').forEach(b=>b.onclick=async()=>{
-      if(selected.id==null)return;
+      if(selected.id==null){const msg=r.querySelector('[data-sail-note]');if(msg)msg.textContent='Select a loose sail piece first.';return}
       const slot=Number(b.dataset.sailSlot);
-      for(const key of Object.keys(placed))if(placed[key]===selected.id)delete placed[key];
-      if(placed[slot]!=null){const displaced=placed[slot];delete placed[slot];if(!pieces.includes(displaced))pieces.push(displaced)}
-      placed[slot]=selected.id;selected.id=null;
-      if(Object.keys(placed).length===12&&Object.keys(placed).every(k=>Number(k)===placed[k])){
+      if(placed[slot]!=null)return;
+      if(slot!==selected.id){
+        misses++;
+        b.classList.remove('wrong');void b.offsetWidth;b.classList.add('wrong');
+        note='Those seams do not line up. Try another panel.';
+        if(misses>=3){
+          const hint=r.querySelector('[data-sail-slot="'+selected.id+'"]');
+          if(hint){hint.classList.add('hint');setTimeout(()=>hint.classList.remove('hint'),1500)}
+          note='The torn edge seems to match the highlighted panel.';
+          misses=0
+        }
+        const msg=r.querySelector('[data-sail-note]');if(msg)msg.textContent=note;
+        setTimeout(()=>b.classList.remove('wrong'),420);
+        window.CellboundFX?.shake?.('soft');return
+      }
+      placed[slot]=selected.id;selected.id=null;misses=0;
+      const count=secured();
+      if(count===12){
         cleanup();n.sailRepaired=true;n.stage='repairs';await save('The guild stitched the torn sail back into one seaworthy piece.');
         notify('MINI GAME COMPLETE','Sail repaired','The canvas holds against the harbour wind.');renderRepairs();return
       }
+      note='Piece secured — '+count+' of 12 panels stitched.';
       draw()
     });
-    r.querySelector('[data-sail-reset]').onclick=()=>{for(const k of Object.keys(placed))delete placed[k];selected.id=null;pieces.sort(()=>Math.random()-.5);draw()}
+    r.querySelector('[data-sail-reset]').onclick=()=>{
+      pieces.sort(()=>Math.random()-.5);selected.id=null;misses=0;
+      note='Loose pieces reshuffled. Correctly stitched panels stay in place.';
+      draw()
+    }
   }
   const timer=setInterval(()=>{
     const t=r.querySelector('[data-sail-time]');if(t)t.textContent=Math.max(0,Math.ceil((limit-(Date.now()-started))/1000))+'s';
-    if(Date.now()-started>=limit){clearInterval(timer);notify('TIME EXPIRED','The sail comes apart','The stitches failed before the final panel was secured. Try again.');openSailPuzzle()}
+    if(Date.now()-started>=limit){
+      clearInterval(timer);root._cleanup=null;
+      notify('TIME EXPIRED','The sail comes apart','The loose canvas got away from you. Your next attempt starts fresh.');
+      openSailPuzzle()
+    }
   },250);
   r._cleanup=()=>clearInterval(timer);r.hidden=false;document.body.classList.add('nwb-open');draw()
 }

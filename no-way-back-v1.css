@@ -15,3 +15,49 @@
 .nwb-toast{position:fixed;right:18px;top:18px;z-index:13000;width:min(390px,calc(100vw - 36px));padding:15px 17px;border:1px solid #d7b56d66;background:#0a1319;border-radius:13px;box-shadow:0 16px 50px #000b;display:grid;gap:4px;transform:translateY(-130%);opacity:0;transition:.3s}.nwb-toast.show{transform:none;opacity:1}.nwb-toast small{color:#d7b56d;letter-spacing:.14em}.nwb-toast span{color:#aebcc1;font-size:13px}
 @keyframes nwb-hit{50%{transform:translate(-50%,-50%) scale(1.5);opacity:.3}}
 @media(max-width:800px){.nwb-backdrop{padding:0}.nwb-shell{width:100vw;height:100dvh;max-height:none;border-radius:0}.nwb-story{grid-template-columns:70px 1fr;padding:20px}.nwb-speaker{width:64px;height:64px;font-size:20px}.nwb-story p{font-size:17px}.nwb-rope-layout,.nwb-map-layout,.nwb-jigsaw,.nwb-lockpick,.nwb-hounds-fight,.nwb-boat-hero,.nwb-voyage-ready,.nwb-boss-intro,.nwb-retry{grid-template-columns:1fr;padding:15px}.nwb-rope-scene{min-height:360px}.nwb-repair-grid{grid-template-columns:1fr;padding:0 15px 15px}.nwb-ready-bar{margin:0 15px 15px;align-items:stretch;flex-direction:column}.nwb-chart{height:390px}.nwb-ocean{height:58vh;min-height:430px}.nwb-sailing-hud{font-size:11px}.nwb-rudder{grid-template-columns:1fr 110px 1fr}.nwb-hound-grid{grid-template-columns:1fr}.nwb-hound{display:grid;grid-template-columns:55px 1fr auto;gap:8px;align-items:center;text-align:left}.nwb-hound-portrait{font-size:44px}.nwb-hound-hp{grid-column:1/4;width:100%}.nwb-hound em{grid-column:1/4}.nwb-hound button{grid-column:1/4}.nwb-journal-progress{grid-template-columns:1fr 1fr}.nwb-trade-listing{grid-template-columns:60px 1fr}.nwb-trade-art{width:58px;height:58px}.nwb-trade-price{grid-column:1/3;text-align:left}.nwb-piece-tray{grid-template-columns:repeat(3,62px)}.nwb-loose-piece,.nwb-sail-grid button{width:62px;height:62px}.nwb-sail-grid{grid-template-columns:repeat(3,62px);width:186px}.nwb-sail-piece{background-size:186px 186px}.nwb-sail-piece.p1{background-position:-62px 0}.nwb-sail-piece.p2{background-position:-124px 0}.nwb-sail-piece.p3{background-position:0 -62px}.nwb-sail-piece.p4{background-position:-62px -62px}.nwb-sail-piece.p5{background-position:-124px -62px}.nwb-sail-piece.p6{background-position:0 -124px}.nwb-sail-piece.p7{background-position:-62px -124px}.nwb-sail-piece.p8{background-position:-124px -124px}}
+
+
+/* Sail puzzle readability pass */
+.nwb-jigsaw{grid-template-columns:minmax(320px,.82fr) minmax(520px,1.18fr)}
+.nwb-piece-tray{display:grid;grid-template-columns:repeat(4,76px);gap:10px;margin:18px 0}
+.nwb-loose-piece,.nwb-sail-grid button{width:76px;height:76px;border:1px solid #ffffff28;background:#0b151b;padding:0;overflow:hidden;position:relative;border-radius:4px}
+.nwb-loose-piece{box-shadow:0 7px 18px #0005;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+.nwb-loose-piece:hover{border-color:#d7b56d88}
+.nwb-loose-piece.selected{outline:3px solid #f0ca75;outline-offset:3px;border-color:#f5d992;transform:translateY(-3px) scale(1.06);box-shadow:0 0 0 5px #d7b56d1e,0 10px 24px #0009}
+.nwb-sail-piece,.nwb-sail-ghost{display:block;width:100%;height:100%;position:relative;background-image:
+radial-gradient(circle at 73% 27%,transparent 0 8%,rgba(125,78,38,.58) 8.5% 10%,transparent 10.5%),
+radial-gradient(ellipse at 18% 72%,rgba(91,72,48,.38) 0 7%,transparent 8%),
+linear-gradient(90deg,transparent 0 23%,rgba(53,72,80,.62) 24% 30%,rgba(202,180,126,.25) 31% 32%,transparent 33% 100%),
+linear-gradient(165deg,transparent 0 39%,rgba(121,77,43,.58) 40% 45%,rgba(232,217,174,.25) 46% 47%,transparent 48%),
+linear-gradient(35deg,transparent 0 62%,rgba(76,66,52,.33) 63% 65%,transparent 66%),
+repeating-linear-gradient(0deg,transparent 0 17%,rgba(79,67,49,.12) 17.5% 18%,transparent 18.5% 34%),
+linear-gradient(135deg,#e4d9bb,#b5aa8b 52%,#877f6d);
+background-size:400% 300%;background-repeat:no-repeat}
+.nwb-sail-piece:after,.nwb-sail-ghost:after{content:"";position:absolute;inset:7px;border:1px dashed rgba(83,70,50,.38);opacity:.62;pointer-events:none}
+.nwb-sail-piece.p0,.nwb-sail-ghost.p0{background-position:0 0}.nwb-sail-piece.p1,.nwb-sail-ghost.p1{background-position:33.333% 0}.nwb-sail-piece.p2,.nwb-sail-ghost.p2{background-position:66.667% 0}.nwb-sail-piece.p3,.nwb-sail-ghost.p3{background-position:100% 0}
+.nwb-sail-piece.p4,.nwb-sail-ghost.p4{background-position:0 50%}.nwb-sail-piece.p5,.nwb-sail-ghost.p5{background-position:33.333% 50%}.nwb-sail-piece.p6,.nwb-sail-ghost.p6{background-position:66.667% 50%}.nwb-sail-piece.p7,.nwb-sail-ghost.p7{background-position:100% 50%}
+.nwb-sail-piece.p8,.nwb-sail-ghost.p8{background-position:0 100%}.nwb-sail-piece.p9,.nwb-sail-ghost.p9{background-position:33.333% 100%}.nwb-sail-piece.p10,.nwb-sail-ghost.p10{background-position:66.667% 100%}.nwb-sail-piece.p11,.nwb-sail-ghost.p11{background-position:100% 100%}
+.nwb-sail-guide{display:grid;place-items:center;min-height:390px;background:radial-gradient(circle at 50% 50%,#17242b,#071117 66%);border:1px solid #ffffff0d;border-radius:18px}
+.nwb-sail-grid{display:grid;grid-template-columns:repeat(4,76px);width:304px;transform:skewY(-4deg);box-shadow:0 0 0 6px #ffffff08,0 18px 45px #0008}
+.nwb-sail-grid button{border-color:#263840;background:#0c161d}
+.nwb-sail-grid button.available{cursor:pointer}
+.nwb-sail-grid.is-placing button.available{border-color:#d7b56d55;box-shadow:inset 0 0 0 1px #d7b56d22}
+.nwb-sail-grid button.locked{border-color:#7fb49388;box-shadow:inset 0 0 14px #4a8a622a;cursor:default}
+.nwb-sail-ghost{opacity:.28;filter:saturate(.55) brightness(.88)}
+.nwb-sail-grid.is-placing .nwb-sail-ghost{opacity:.38}
+.nwb-sail-grid button.wrong{animation:nwb-sail-wrong .4s ease;border-color:#d56868!important;box-shadow:inset 0 0 20px #a52f2f66,0 0 16px #a52f2f55!important}
+.nwb-sail-grid button.hint{animation:nwb-sail-hint .75s ease infinite alternate;border-color:#f0cb78!important;box-shadow:0 0 0 3px #d7b56d55,0 0 26px #d7b56d66!important}
+.nwb-sail-progress{margin-top:18px;display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border:1px solid #6da18444;background:#14241d;border-radius:10px}
+.nwb-sail-progress span{font-size:10px;letter-spacing:.13em;color:#90a99e}.nwb-sail-progress b{color:#9fd4b1}
+.nwb-sail-help{font-size:12px!important;color:#8fa1a8!important;line-height:1.45!important;margin-top:10px!important}
+.nwb-jigsaw main>[data-sail-note]{min-height:22px;color:#d9c18e;font-weight:700}
+@keyframes nwb-sail-wrong{25%{transform:translateX(-5px)}55%{transform:translateX(5px)}80%{transform:translateX(-3px)}}
+@keyframes nwb-sail-hint{from{transform:scale(1)}to{transform:scale(1.035)}}
+@media(max-width:800px){
+  .nwb-jigsaw{grid-template-columns:1fr}
+  .nwb-piece-tray{grid-template-columns:repeat(4,58px);gap:8px;justify-content:center}
+  .nwb-loose-piece,.nwb-sail-grid button{width:58px;height:58px}
+  .nwb-sail-grid{grid-template-columns:repeat(4,58px);width:232px}
+  .nwb-sail-piece,.nwb-sail-ghost{background-size:400% 300%}
+  .nwb-sail-guide{min-height:260px}
+}
