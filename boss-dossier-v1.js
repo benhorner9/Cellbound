@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const VERSION='1.2.0';
+const VERSION='1.3.0';
 const BOSSES={
   'vaultheart':{
     dungeon:'The Ashen Vault',name:'The Vaultheart',title:'The Living Core Beneath the Vault',theme:'ashen',artwork:'./assets/bosses/ashen-vault-vaultheart.webp',
@@ -56,9 +56,33 @@ const BOSSES={
       {icon:'unknown',name:'???',text:'No information available.'}
     ],
     intel:[['TARGETS','Five hostile combatants'],['CONTROL','Expect multiple threats'],['UNKNOWN','Final phase unrecorded']]
+  },
+  'three-hounds':{
+    dungeon:'No Way Back',name:'The Three Hounds',title:'Guardians of the Manor Grounds',theme:'manor',artwork:null,
+    encounterLabel:'BOSS ENCOUNTER',artLabel:'FIRST BOSS',beginLabel:'ENGAGE THE THREE HOUNDS →',
+    description:'Silas whistles once. Grim, Fang and Wail emerge from the Manor grounds as a single hunting pack. Killing one too early only gives the others time to bring it back.',
+    abilities:[
+      {icon:'heal',name:'Licked Wounds',text:'A fallen Hound is revived at 35% health if another remains alive for 12 seconds.'},
+      {icon:'control',name:'Pack Bond',text:'Treat the three health pools as one problem. Balance damage before committing to the first kill.'},
+      {icon:'danger',name:'Bonebreaker · Pounce · Howl',text:'Each Hound pressures the party differently while you manage the shared kill window.'},
+      {icon:'targets',name:'Live Target Switching',text:'Call Grim, Fang or Wail as the party focus during the fight to control their health precisely.'}
+    ],
+    intel:[['TARGETS','Balance all three health pools'],['KILL WINDOW','12 seconds after first death'],['REVIVE','Returns at 35% health']]
+  },
+  'silas-vane':{
+    dungeon:'No Way Back',name:'Silas Vane',title:'Master of the Manor',theme:'manor',artwork:null,
+    encounterLabel:'FINAL BOSS',artLabel:'FINAL ENCOUNTER',beginLabel:'FACE SILAS VANE →',
+    description:'The old sailor is gone. Beneath the open coat is the crest of House Vane, and in his hands is an anchor heavy enough to turn the entire courtyard into a weapon.',
+    abilities:[
+      {icon:'area',name:'The Great Anchor',text:'A huge sweeping attack covers a wide section of the courtyard. Move before the swing lands.'},
+      {icon:'line',name:'Anchor Chain',text:'Silas hurls his anchor chain toward a distant target and drags the fight out of position.'},
+      {icon:'danger',name:'Keelhaul',text:'A brutal tank-focused strike creates sustained pressure that the healer must stabilise.'},
+      {icon:'phase',name:'No One Leaves',text:'Silas becomes increasingly aggressive as the fight closes in on its final phase.'}
+    ],
+    intel:[['MOVEMENT','Respect The Great Anchor'],['POSITIONING','Recover after Anchor Chain'],['SURVIVAL','Pressure rises near defeat']]
   }
 };
-const ICONS={area:'◎',adds:'◇',line:'↗',phase:'◈',interrupt:'!',heal:'+',danger:'▲',roles:'◆',control:'⌁',unknown:'?'};
+const ICONS={area:'◎',adds:'◇',line:'↗',phase:'◈',interrupt:'!',heal:'+',danger:'▲',roles:'◆',control:'⌁',targets:'◎',unknown:'?'};
 let active=null;
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#039;'}[m]));
 const reduce=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
@@ -83,7 +107,7 @@ function art(cfg){
   const img=cfg.artwork?'<img class="cbd-art-image" src="'+esc(cfg.artwork)+'" alt="'+esc(cfg.name)+'" onerror="this.hidden=true;this.nextElementSibling.hidden=false">':'';
   return '<div class="cbd-art" data-cbd-boss="'+esc(Object.keys(BOSSES).find(k=>BOSSES[k]===cfg)||'boss')+'">'+img+
    '<div class="cbd-art-fallback" '+(cfg.artwork?'hidden':'')+' aria-hidden="true"><div class="cbd-art-depth"></div><div class="cbd-art-sigil"></div><div class="cbd-art-figure"><i></i><i></i><i></i></div><div class="cbd-art-fx"><i></i><i></i><i></i><i></i></div></div>'+
-   '<div class="cbd-art-label"><small>FINAL ENCOUNTER</small><b>'+esc(cfg.name)+'</b></div></div>'
+   '<div class="cbd-art-label"><small>'+esc(cfg.artLabel||'FINAL ENCOUNTER')+'</small><b>'+esc(cfg.name)+'</b></div></div>'
 }
 function full(id,cfg,options={}){
   return new Promise(resolve=>{
@@ -93,10 +117,10 @@ function full(id,cfg,options={}){
     const intel=cfg.intel.map(x=>'<span><small>'+esc(x[0])+'</small><b>'+esc(x[1])+'</b></span>').join('');
     root.innerHTML='<section class="cbd-shell">'+
       '<div class="cbd-visual">'+art(cfg)+'</div>'+
-      '<div class="cbd-copy"><header><small>'+esc(cfg.dungeon.toUpperCase())+' · FINAL BOSS</small><h1>'+esc(cfg.name)+'</h1><em>'+esc(cfg.title)+'</em><p>'+esc(cfg.description)+'</p></header>'+
+      '<div class="cbd-copy"><header><small>'+esc(cfg.dungeon.toUpperCase())+' · '+esc(cfg.encounterLabel||'FINAL BOSS')+'</small><h1>'+esc(cfg.name)+'</h1><em>'+esc(cfg.title)+'</em><p>'+esc(cfg.description)+'</p></header>'+
       '<section class="cbd-skills"><small>SIGNATURE ABILITIES</small><div>'+abilities+'</div></section>'+
       '<section class="cbd-intel"><small>PARTY INTEL</small><div>'+intel+'</div></section>'+
-      '<footer><label class="cbd-skip-pref"><input type="checkbox" data-cbd-future checked><span>Skip the full briefing on future runs</span></label><div class="cbd-actions"><button type="button" data-cbd-skip>SKIP</button><button type="button" class="primary" data-cbd-begin>BEGIN ENCOUNTER →</button></div></footer></div>'+
+      '<footer><label class="cbd-skip-pref"><input type="checkbox" data-cbd-future checked><span>Skip the full briefing on future runs</span></label><div class="cbd-actions"><button type="button" data-cbd-skip>SKIP</button><button type="button" class="primary" data-cbd-begin>'+esc(cfg.beginLabel||'BEGIN ENCOUNTER →')+'</button></div></footer></div>'+
       '</section>';
     document.body.appendChild(root);active=root;document.body.classList.add('cbd-open');
     const complete=async()=>{
@@ -111,7 +135,7 @@ function full(id,cfg,options={}){
 async function stinger(id,cfg){
   remove();
   const root=document.createElement('div');root.className='cbd-stinger theme-'+cfg.theme;root.dataset.boss=id;
-  root.innerHTML='<div><small>FINAL BOSS</small><h2>'+esc(cfg.name)+'</h2><span>ENTERING ENCOUNTER</span></div>';
+  root.innerHTML='<div><small>'+esc(cfg.encounterLabel||'FINAL BOSS')+'</small><h2>'+esc(cfg.name)+'</h2><span>ENTERING ENCOUNTER</span></div>';
   document.body.appendChild(root);active=root;document.body.classList.add('cbd-open');
   requestAnimationFrame(()=>requestAnimationFrame(()=>root.classList.add('ready')));
   await wait(reduce()?180:1050);root.classList.add('leaving');await wait(reduce()?20:180);remove();return true
