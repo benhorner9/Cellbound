@@ -210,7 +210,7 @@ function setSummaryMarkup(c){
   if(!sets.size)return'';
   const rules=setRuleData();
   const bonus=(rule,count)=>`<div class="cb-set-bonus ${count>=rule.threshold?'active':''}"><span>${rule.threshold} PIECES</span><div><b>${esc(rule.name)}</b><strong>${esc(rule.short)}</strong><p>${esc(rule.description)}</p></div><em>${count>=rule.threshold?'ACTIVE':count+'/'+rule.threshold}</em></div>`;
-  return `<section class="cb-set-summary"><div class="cb-stat-section-head"><span>SET BONUSES</span><small>Matching Tier 4 equipment effects</small></div>${[...sets.entries()].map(([id,item])=>{const count=G?.setPieceCount?.(c,id)||0;return `<article class="cb-set-card"><header><div><small>EQUIPMENT SET</small><h4>${esc(item.setName||id)}</h4></div><b>${count}/4</b></header>${bonus(rules.pieces2,count)}${bonus(rules.pieces4,count)}</article>`}).join('')}</section>`
+  return `<section class="cb-set-summary"><div class="cb-stat-section-head"><span>SET BONUSES</span><small>Matching equipment set effects</small></div>${[...sets.entries()].map(([id,item])=>{const count=G?.setPieceCount?.(c,id)||0;return `<article class="cb-set-card"><header><div><small>EQUIPMENT SET</small><h4>${esc(item.setName||id)}</h4></div><b>${count}/4</b></header>${bonus(rules.pieces2,count)}${bonus(rules.pieces4,count)}</article>`}).join('')}</section>`
 }
 function equipmentSlot(c,slot,state){
   const item=c.equipment?.[slot],upgrade=bestBankUpgrade(state,c,slot),prep=(window.CellboundProfessions?.activeEffects?.(c)||[]).find(x=>x.kind==='enhancement'&&x.slot===slot);
