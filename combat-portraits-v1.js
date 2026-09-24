@@ -14,6 +14,14 @@ const PLAYER_SELECTORS=[
   '.wb2d-unit.own[data-unit-key]',
   '.pvp2d-unit[data-pvp2d-unit]'
 ].join(',');
+const BOSS_SELECTOR='.cb2d-unit.enemy.boss';
+const BOSS_ART=[
+  {match:['the vaultheart','vaultheart'],name:'The Vaultheart',art:'./assets/bosses/ashen-vault-vaultheart.webp'},
+  {match:['the bound choir','bound choir'],name:'The Bound Choir',art:'./assets/bosses/hollow-sanctum-bound-choir.webp'},
+  {match:['archdruid vorran','vorran'],name:'Archdruid Vorran',art:'./assets/bosses/chaos-canyon-vorran.webp'},
+  {match:['dr. vex calder','dr vex calder','vex calder'],name:'Dr. Vex Calder',art:'./assets/bosses/blackout-station-calder.webp'},
+  {match:['the old man','keeper of ages'],name:'The Old Man',art:'./assets/bosses/fractured-ages-old-man.webp'}
+];
 
 function roster(){
   const list=window.CellboundGame?.getState?.()?.roster;
@@ -57,6 +65,21 @@ function findCharacter(el){
   }
   return null;
 }
+function bossProfile(el){
+  if(!el?.matches?.(BOSS_SELECTOR))return null;
+  const name=unitName(el).toLowerCase().replace(/[–—]/g,'-').replace(/\s+/g,' ').trim();
+  return BOSS_ART.find(b=>b.match.some(alias=>name.includes(alias)))||null;
+}
+function mountBoss(el,boss){
+  if(!el||!boss||el.classList.contains('cb-combat-has-boss-portrait'))return;
+  el.classList.add('cb-combat-has-boss-portrait');
+  const wrap=document.createElement('div');
+  wrap.className='cb-combat-boss-portrait';
+  wrap.setAttribute('aria-label',boss.name+' boss portrait');
+  wrap.innerHTML='<img src="'+boss.art+'" alt="" draggable="false">';
+  el.appendChild(wrap);
+}
+
 function mount(el,c){
   if(!el||!c||el.classList.contains('cb-combat-has-portrait'))return;
   const color=CP.CLASS_COLORS?.[c.class]||'#76d7d0';
@@ -81,7 +104,11 @@ function upgrade(root=document){
   if(root?.nodeType===1&&root.matches?.(PLAYER_SELECTORS)){
     const c=findCharacter(root);if(c)mount(root,c);
   }
+  if(root?.nodeType===1&&root.matches?.(BOSS_SELECTOR)){
+    const boss=bossProfile(root);if(boss)mountBoss(root,boss);
+  }
   root?.querySelectorAll?.(PLAYER_SELECTORS).forEach(el=>{const c=findCharacter(el);if(c)mount(el,c)});
+  root?.querySelectorAll?.(BOSS_SELECTOR).forEach(el=>{const boss=bossProfile(el);if(boss)mountBoss(el,boss)});
 }
 function refresh(){upgrade(document)}
 
@@ -96,5 +123,5 @@ function start(){
 }
 if(document.body)start();else document.addEventListener('DOMContentLoaded',start,{once:true});
 
-window.CellboundCombatPortraits={refresh,upgrade};
+window.CellboundCombatPortraits={refresh,upgrade,bosses:BOSS_ART,version:'1.1.0'};
 })();
