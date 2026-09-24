@@ -70,14 +70,14 @@ function ccEndgameConfig(){
 function ccEndgamePrepMarkup(){
  const E=window.CellboundEndgame,cfg=ccEndgameConfig(),p=E?.progressFor?.('chaos-canyon')||{},tierMax=Math.max(1,Number(p.highest_tier)||1);
  const buttons=['normal','heroic','cellbound'].map(mode=>{const unlocked=E?.difficultyUnlocked?E.difficultyUnlocked('chaos-canyon',mode,cfg.tier||1):mode==='normal';return'<button type="button" data-cc-mode="'+mode+'" class="'+(cfg.difficulty===mode?'active':'')+'" '+(unlocked?'':'disabled')+'>'+(mode==='cellbound'?'CELLBOUND+':mode.toUpperCase())+'</button>'}).join('');
- const tier=cfg.difficulty==='cellbound'?'<label>Tier <select data-cc-tier>'+Array.from({length:tierMax},(_,i)=>i+1).map(t=>'<option value="'+t+'" '+(t===cfg.tier?'selected':'')+'>+'+t+'</option>').join('')+'</select></label>':'';
+ const tier=cfg.difficulty==='cellbound'?(E?.tierPickerMarkup?.(cfg.tier,tierMax,{attribute:'data-cc-tier'})||''):'';
  const affixes=(cfg.affixes||[]).map(id=>window.CellboundEndgameData?.AFFIXES?.[id]?.name||id).join(' · ')||'No affixes';
  return'<div class="eg-prep-block"><small>DUNGEON DIFFICULTY</small><div class="eg-prep-tabs">'+buttons+'</div><div class="eg-prep-detail"><b>'+esc(cfg.diff?.name||'Normal')+'</b> · Recommended iLvl '+cfg.recommendedItemLevel+' · Target '+Math.floor(cfg.targetTimeMs/60000)+':'+String(Math.round(cfg.targetTimeMs/1000)%60).padStart(2,'0')+'<br>'+esc(affixes)+'<br>'+esc(cfg.diff?.description||'')+'</div>'+tier+'</div>'
 }
 function ccBindEndgamePrep(){
  const E=window.CellboundEndgame;
  document.querySelectorAll('[data-cc-mode]').forEach(b=>b.onclick=()=>{E?.choose?.('chaos-canyon',b.dataset.ccMode);briefing()});
- $('[data-cc-tier]')?.addEventListener('change',e=>{E?.choose?.('chaos-canyon','cellbound',Number(e.target.value));briefing()})
+ document.querySelectorAll('[data-cc-tier]').forEach(b=>b.onclick=()=>{E?.choose?.('chaos-canyon','cellbound',Number(b.dataset.ccTier));briefing()})
 }
 
 
