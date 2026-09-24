@@ -332,3 +332,13 @@ radial-gradient(ellipse at 76% 74%,rgba(104,85,53,.08),transparent 22%)}
   .seal-rings{grid-template-columns:1fr}.seal-ring-visual{width:78px;height:78px}
   .quest-evidence-grid p,.quest-deduction button,.quest-post-ledger p{font-size:.5rem}
 }
+
+/* Live quest target switching */
+.quest-live-targets{display:grid;grid-template-columns:minmax(210px,.8fr) minmax(0,1.7fr);gap:14px;align-items:center;padding:12px 14px!important;border:1px solid rgba(215,181,109,.32)!important;background:linear-gradient(90deg,rgba(35,28,20,.82),rgba(10,18,24,.94))!important}
+.quest-live-target-copy{display:grid;gap:3px}.quest-live-target-copy small{font-size:10px;letter-spacing:.14em;color:#d7b56d}.quest-live-target-copy b{font-size:13px;color:#f2ead8}.quest-live-target-copy span{font-size:11px;line-height:1.35;color:#9fb0b6}
+.quest-live-target-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.quest-live-target-grid button{position:relative;overflow:hidden;display:grid;gap:5px;text-align:left;padding:10px 11px;border-radius:10px;border:1px solid rgba(255,255,255,.13);background:#0a1218;color:#dfe8ea;min-height:60px}
+.quest-live-target-grid button span{font-size:12px;font-weight:900;letter-spacing:.06em}.quest-live-target-grid button small{font-size:10px;color:#9db0b6}.quest-live-target-grid button em{height:4px;background:#ffffff12;border-radius:6px;overflow:hidden}.quest-live-target-grid button em i{display:block;height:100%;background:#a94f4f;transition:width .25s ease}
+.quest-live-target-grid button.active{border-color:#d7b56d;box-shadow:0 0 0 1px rgba(215,181,109,.22),0 0 20px rgba(215,181,109,.08);background:#251e16}.quest-live-target-grid button.active:after{content:"FOCUS";position:absolute;right:8px;top:7px;font-size:8px;letter-spacing:.12em;color:#e8cb91}
+.quest-live-target-grid button.defeated{opacity:.42;filter:grayscale(.7)}.quest-live-target-grid button.defeated em i{width:0!important}
+@media(max-width:780px){.quest-live-targets{grid-template-columns:1fr}.quest-live-target-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.quest-live-target-copy span{display:none}.quest-live-target-grid button{padding:9px;min-height:54px}}
