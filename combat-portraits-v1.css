@@ -3,6 +3,8 @@
 .cb2d-unit.cb-combat-has-portrait>.cb-combat-portrait{
   position:absolute;
   z-index:3;
+  display:block!important;
+  min-width:0!important;
   left:50%;
   top:50%;
   width:34px;
@@ -37,6 +39,8 @@
 .wb2d-unit.cb-combat-has-portrait>.cb-combat-portrait{
   position:absolute;
   z-index:3;
+  display:block!important;
+  min-width:0!important;
   left:50%;
   top:50%;
   width:32px;
@@ -59,6 +63,8 @@
   position:absolute;
   inset:2px;
   z-index:2;
+  display:block!important;
+  min-width:0!important;
   overflow:hidden;
   border-radius:50%;
   pointer-events:none
