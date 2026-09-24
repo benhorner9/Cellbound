@@ -971,7 +971,8 @@ function renderList(){
     {id:'ashfall',title:ASHFALL.title,meta:ASHFALL.length+' adventure · Zeltira',difficulty:ASHFALL.difficulty,status:a.complete?'COMPLETE':a.started?'IN PROGRESS':'AVAILABLE',complete:a.complete,locked:false},
     {id:'echoes',title:QUEST.title,meta:QUEST.length+' adventure · Zeltira',difficulty:QUEST.difficulty,status:complete()?'COMPLETE':q.started?'IN PROGRESS':echoesUnlocked()?'AVAILABLE':'LOCKED',complete:complete(),locked:!echoesUnlocked()&&!q.started},
     window.CellboundThirteenthBell?.card?.(),
-    window.CellboundFourfoldLock?.card?.()
+    window.CellboundFourfoldLock?.card?.(),
+    window.CellboundNoWayBack?.card?.()
   ].filter(Boolean).filter(x=>selectedTab==='campaign'||(selectedTab==='active'&&!x.complete)||(selectedTab==='completed'&&x.complete));
   if(!cards.length){root.innerHTML='<div class="quest-list-empty">'+(selectedTab==='completed'?'No completed adventures yet.':'No active adventures.')+'</div>';return}
   if(!cards.some(x=>x.id===selectedAdventure))selectedAdventure=cards[0].id;
@@ -983,6 +984,7 @@ function renderDetail(){
   if(selectedAdventure==='ashfall'){renderAshfallDetail(root,side);bindActions();return}
   if(selectedAdventure==='thirteenth-bell'){window.CellboundThirteenthBell?.renderDetail?.(root,side);return}
   if(selectedAdventure==='fourfold-lock'){window.CellboundFourfoldLock?.renderDetail?.(root,side);return}
+  if(selectedAdventure==='no-way-back'){window.CellboundNoWayBack?.renderDetail?.(root,side);return}
   const q=ensure(),stage=currentStage(),d=stage==='complete'?STAGES[STAGES.length-1]:stageDef(stage),facts=knownFacts(q),rewards=visibleRewards();
   root.innerHTML='<div class="quest-v3-hero"><div><small>'+QUEST.difficulty.toUpperCase()+' · '+QUEST.length.toUpperCase()+' ADVENTURE</small><h2>'+QUEST.title+'</h2><p>'+esc(QUEST.start)+'</p></div><span class="quest-v3-status '+(complete()?'complete':'')+'">'+(complete()?'COMPLETE':q.started?'IN PROGRESS':echoesUnlocked()?'AVAILABLE':'LOCKED')+'</span></div>'+
     '<div class="quest-v3-story"><p>'+QUEST.summary+'</p></div>'+
@@ -1015,8 +1017,9 @@ function bindActions(){
 function renderHome(){
   const root=$('#questHomeObjective'),badge=$('#questNavBadge');if(!root)return;
   const q=ensure(),a=q.ashfall,stage=currentStage();let title='',button='OPEN ADVENTURE →',jump='quests',small='CURRENT ADVENTURE',homeAdventure=selectedAdventure;
-  const bellHome=window.CellboundThirteenthBell?.homeState?.(),fourfoldHome=window.CellboundFourfoldLock?.homeState?.();
-  if(bellHome?.active){title=bellHome.title;button='OPEN GREYWAKE →';small=bellHome.small||'CURRENT ADVENTURE';homeAdventure='thirteenth-bell'}
+  const bellHome=window.CellboundThirteenthBell?.homeState?.(),fourfoldHome=window.CellboundFourfoldLock?.homeState?.(),noWayBackHome=window.CellboundNoWayBack?.homeState?.();
+  if(noWayBackHome?.active){title=noWayBackHome.title;button='OPEN NO WAY BACK →';small=noWayBackHome.small||'RAID ATTUNEMENT';homeAdventure='no-way-back'}
+  else if(bellHome?.active){title=bellHome.title;button='OPEN GREYWAKE →';small=bellHome.small||'CURRENT ADVENTURE';homeAdventure='thirteenth-bell'}
   else if(fourfoldHome?.active){title=fourfoldHome.title;button='OPEN THE FOURFOLD LOCK →';small=fourfoldHome.small||'CURRENT ADVENTURE';homeAdventure='fourfold-lock'}
   else if(!a.complete){title=a.started?ashfallDef(ashfallStage()).objective:'Warden Elara needs your guild on the east road.';homeAdventure=homeAdventure||'ashfall'}
   else if(!complete()){
@@ -1035,12 +1038,12 @@ function renderHome(){
       setTimeout(()=>window.CellboundDungeonBrowser?.open?.(dungeon),40)
     }
   };
-  if(badge){const bell=window.CellboundThirteenthBell?.card?.(),fourfold=window.CellboundFourfoldLock?.card?.(),open=(!a.complete?1:0)+(!complete()&&echoesUnlocked()?1:0)+(bell&&!bell.complete&&!bell.locked?1:0)+(fourfold&&!fourfold.complete&&!fourfold.locked?1:0);badge.textContent=open?String(open):'';badge.hidden=!open}
+  if(badge){const bell=window.CellboundThirteenthBell?.card?.(),fourfold=window.CellboundFourfoldLock?.card?.(),nwb=window.CellboundNoWayBack?.card?.(),open=(!a.complete?1:0)+(!complete()&&echoesUnlocked()?1:0)+(bell&&!bell.complete&&!bell.locked?1:0)+(fourfold&&!fourfold.complete&&!fourfold.locked?1:0)+(nwb&&!nwb.complete&&!nwb.locked?1:0);badge.textContent=open?String(open):'';badge.hidden=!open}
 }
 function render(){
   if(!Game?.ready)return;const q=ensure();if(!q)return;
   $$('.quest-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.questTab===selectedTab));
-  const bellCard=window.CellboundThirteenthBell?.card?.(),fourfoldCard=window.CellboundFourfoldLock?.card?.(),activeCount=(q.ashfall.complete?0:1)+(complete()?0:1)+(bellCard&&!bellCard.complete&&!bellCard.locked?1:0)+(fourfoldCard&&!fourfoldCard.complete&&!fourfoldCard.locked?1:0);
+  const bellCard=window.CellboundThirteenthBell?.card?.(),fourfoldCard=window.CellboundFourfoldLock?.card?.(),nwbCard=window.CellboundNoWayBack?.card?.(),activeCount=(q.ashfall.complete?0:1)+(complete()?0:1)+(bellCard&&!bellCard.complete&&!bellCard.locked?1:0)+(fourfoldCard&&!fourfoldCard.complete&&!fourfoldCard.locked?1:0)+(nwbCard&&!nwbCard.complete&&!nwbCard.locked?1:0);
   const status=$('#questCampaignStatus');if(status)status.textContent=activeCount?activeCount+' ADVENTURE'+(activeCount===1?'':'S')+' IN PROGRESS':'CURRENT STORY COMPLETE';
   renderList();renderDetail();renderHome();window.CellboundHollowSanctum?.renderCard?.();
 }
@@ -1050,6 +1053,7 @@ function bind(){
   window.addEventListener('cellbound:dungeon-complete',e=>checkAshenProgress(e.detail||{}));
   window.addEventListener('cellbound:hollow-complete',render);
   window.addEventListener('cellbound:fourfold-update',render);
+  window.addEventListener('cellbound:no-way-back-update',render);
 }
 async function checkHistory(){if(currentStage()==='vault'&&latestAshenClear())await checkAshenProgress(null)}
 function init(){
