@@ -6,6 +6,7 @@ const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const G=window.CellboundGear;
+const CP=window.CellboundPortraits;
 
 let Game=null,selectedTab='active',selectedAdventure='ashfall',encounterToken=0,questFight=null;
 
@@ -68,6 +69,14 @@ const ITEMS={
 
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
+const portraitHTML=(c,size='sm')=>CP?.portraitHTML?.(c,{size})||'<span class="cb-portrait cb-portrait--'+size+'"><b>'+esc(c?.portrait||String(c?.name||'?').slice(0,2).toUpperCase())+'</b></span>';
+function speakerPortrait(speaker){
+  const key=String(speaker||'').trim().toLowerCase();
+  const character=(state()?.roster||[]).find(c=>String(c?.name||'').trim().toLowerCase()===key);
+  if(character)return '<div class="quest-dialogue-portrait">'+portraitHTML(character,'lg')+'</div>';
+  const initials=String(speaker||'?').split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'?';
+  return '<div class="quest-dialogue-portrait is-monogram">'+esc(initials)+'</div>';
+}
 const stageDef=id=>STAGES.find(x=>x.id===id)||STAGES[0];
 const complete=()=>Boolean(ensure()?.flags?.hollowSanctumUnlocked);
 const currentStage=()=>complete()?'complete':ensure()?.currentStage||'letter';
@@ -181,8 +190,7 @@ function dialogueRoot(){
 function showDialogue(title,speaker,beats,onDone){
   const root=dialogueRoot();let index=0;
   const draw=()=>{
-    const initials=speaker.split(/\s+/).slice(0,2).map(x=>x[0]).join('');
-    root.innerHTML='<section class="quest-dialogue"><div class="quest-dialogue-portrait">'+esc(initials)+'</div><div><small>'+esc(speaker)+'</small><h3>'+esc(title)+'</h3><p>'+esc(beats[index])+'</p><div class="quest-dialogue-progress">'+beats.map((_,i)=>'<i class="'+(i<=index?'active':'')+'"></i>').join('')+'</div><button data-next>'+(index===beats.length-1?'CONTINUE →':'NEXT →')+'</button></div></section>';
+    root.innerHTML='<section class="quest-dialogue">'+speakerPortrait(speaker)+'<div><small>'+esc(speaker)+'</small><h3>'+esc(title)+'</h3><p>'+esc(beats[index])+'</p><div class="quest-dialogue-progress">'+beats.map((_,i)=>'<i class="'+(i<=index?'active':'')+'"></i>').join('')+'</div><button data-next>'+(index===beats.length-1?'CONTINUE →':'NEXT →')+'</button></div></section>';
     root.querySelector('[data-next]').onclick=async()=>{
       if(index<beats.length-1){index++;draw();return}
       root.hidden=true;
@@ -215,7 +223,7 @@ async function openGearReward({key,title,slot,tier,source,onClaim}){
   const draw=()=>{
     const ch=chars.find(x=>x.id===selected)||chars[0];
     root.innerHTML='<section class="quest-gear-card"><header><div><small>QUEST EQUIPMENT REWARD</small><h2>'+esc(title)+'</h2><p>Quest gear is reliable and useful, but its stat values are deliberately below dungeon-roll potential.</p></div><button data-qgr-close>×</button></header>'+
-      '<div class="quest-gear-body"><aside><small>CHOOSE ADVENTURER</small>'+chars.map(c=>'<button data-qgr-char="'+c.id+'" class="'+(c.id===ch.id?'active':'')+'"><span>'+esc(c.portrait||c.name.slice(0,2))+'</span><div><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></div></button>').join('')+'</aside>'+
+      '<div class="quest-gear-body"><aside><small>CHOOSE ADVENTURER</small>'+chars.map(c=>'<button data-qgr-char="'+c.id+'" class="'+(c.id===ch.id?'active':'')+'"><span>'+portraitHTML(c,'sm')+'</span><div><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></div></button>').join('')+'</aside>'+
       '<main><small>'+esc(ch.name.toUpperCase())+' · '+esc(slot.toUpperCase())+'</small><h3>Choose the roll you want to take</h3><div class="quest-gear-options">'+profiles.map(p=>'<button data-qgr-profile="'+p[0]+'" class="'+(profile===p[0]?'active':'')+'"><b>'+p[1]+'</b><span>'+esc(rewardProfileText(ch,p[0],tier,slot))+'</span><em>'+p[2]+'</em></button>').join('')+'</div><div class="quest-gear-note"><b>Why dungeon gear is still better</b><span>Dungeon drops use the same tier but roll higher stat values. This reward gets you ready; farming gives you the ceiling.</span></div><button class="quest-gear-claim" data-qgr-claim>CLAIM '+esc(slot.toUpperCase())+' →</button></main></div></section>';
     root.querySelector('[data-qgr-close]').onclick=()=>{root.hidden=true;document.body.classList.remove('quest-gear-open')};
     root.querySelectorAll('[data-qgr-char]').forEach(b=>b.onclick=()=>{selected=b.dataset.qgrChar;draw()});
@@ -919,7 +927,7 @@ function actionHtml(){
   if(stage==='letter')return '<button class="quest-primary" data-start>READ BRAM’S LETTER →</button>';
   if(stage==='bearer'){
     const activeIds=new Set(party().map(c=>c.id)),chars=(state().roster||[]).filter(c=>activeIds.has(c.id));
-    return '<div class="quest-bearer-picker"><small>CHOOSE THE BEARER</small>'+chars.map(c=>'<button data-bearer="'+c.id+'"><span>'+esc(c.portrait||c.name.slice(0,2))+'</span><div><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></div></button>').join('')+(chars.length!==5?'<p>Your active five is incomplete. Build the party first.</p>':'')+'</div>';
+    return '<div class="quest-bearer-picker"><small>CHOOSE THE BEARER</small>'+chars.map(c=>'<button data-bearer="'+c.id+'"><span>'+portraitHTML(c,'sm')+'</span><div><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></div></button>').join('')+(chars.length!==5?'<p>Your active five is incomplete. Build the party first.</p>':'')+'</div>';
   }
   if(stage==='vault'){const bypass=averagePartyLevel()>=3;return '<div class="quest-action-block"><div><span>BEARER</span><b>'+esc(q.bearerName||'Not assigned')+'</b></div><button class="quest-primary" data-ashen>OPEN THE ASHEN VAULT →</button>'+(bypass?'<button class="quest-primary secondary" data-force-resonance>USE PARTY RESONANCE INSTEAD →</button>':'')+'<small>'+(bypass?'Your active five is strong enough to continue without another Ashen Vault clear.':'Clear The Ashen Vault with '+esc(q.bearerName||'the Bearer')+' in the five, or reach average party Level 3.')+'</small></div>'}
   if(stage==='decipher')return hasItem('surveyor-rubbing')?'<button class="quest-primary" data-puzzle>EXAMINE JORY’S RUBBING →</button>':'<button class="quest-primary" data-jory>ASK AROUND ZELTIRA →</button>';
