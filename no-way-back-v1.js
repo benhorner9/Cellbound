@@ -321,10 +321,11 @@ function renderArrival(){
     'Unfortunately, I cannot have you leaving.'
   ],async()=>{const n=ensure();n.stage='hounds';await save('Silas revealed himself as the owner of the Manor and trapped the guild on the island.');renderHoundsPrelude()},'TURN TOWARD THE GROWLING →')
 }
-function renderHoundsPrelude(){
-  root.innerHTML=chrome('BOSS ENCOUNTER','The Three Hounds',
-    '<div class="nwb-boss-intro"><div class="nwb-hound-silhouettes"><i>◆</i><i>◆</i><i>◆</i></div><div><small>PACK BOND</small><h3>Grim · Fang · Wail</h3><p>Silas whistles once. Three enormous hounds emerge from the grounds. When one falls, the surviving pack can use <strong>Licked Wounds</strong> to revive it.</p><div class="nwb-mechanic"><b>LICKED WOUNDS</b><span>Kill all three within the same 12-second window or a fallen hound returns at 35% health.</span></div><button data-hounds-start>ENGAGE THE THREE HOUNDS →</button></div></div>');
-  bindClose();root.querySelector('[data-hounds-start]').onclick=startHoundsCombat
+async function renderHoundsPrelude(){
+  close();
+  const dossier=window.CellboundBossDossier;
+  if(dossier?.show)await dossier.show('three-hounds');
+  await startHoundsCombat()
 }
 async function startHoundsCombat(){
   const n=ensure(),p=party(),run=window.CellboundQuests?.runInteractiveQuest2DFight;
@@ -430,7 +431,13 @@ function renderSilasPrelude(){
     '“You made it further than the last crew.”',
     'He lifts the anchor.',
     '“No one leaves my home twice.”'
-  ],async()=>{const n=ensure();n.stage='silas';await save();startSilas()},'FACE SILAS VANE →')
+  ],async()=>{const n=ensure();n.stage='silas';await save();await showSilasDossier()},'FACE SILAS VANE →')
+}
+async function showSilasDossier(){
+  close();
+  const dossier=window.CellboundBossDossier;
+  if(dossier?.show)await dossier.show('silas-vane');
+  await startSilas()
 }
 async function startSilas(){
   const p=party();if(p.length!==5){alert('Build a complete active five-character party before facing Silas Vane.');Game.switchView?.('party');close();return}
