@@ -30,6 +30,7 @@ for(const file of files){
     if(!contents.includes('function setSummaryMarkup')||!contents.includes('function setInlineMarkup')||!contents.includes('SET BONUSES'))throw new Error('Character equipment set bonus progress UI is missing');
     if(!contents.includes('function equipmentPanel')||!contents.includes('function equipmentFallback')||!contents.includes("stopImmediatePropagation();currentTab=tab.dataset.sheetTab"))throw new Error('Character Equipment tab recovery/navigation guard is missing');
     if(!contents.includes("paperDollHTML?.(c")||!contents.includes('data-paper-doll-stage')||!contents.includes('LIVE EQUIPMENT VIEW'))throw new Error('Character Equipment visual paper doll is missing');
+    if(!contents.includes('function fallbackEquipmentSlot')||!contents.includes('cb-recovery-armoury')||!contents.includes("if(!item||typeof item!=='object')return false")||contents.includes('activeSlot=null;\n    return equipmentFallback'))throw new Error('Equipment recovery mode must preserve the paper doll and slot controls');
   }
   if(file==='bank-v2.css'){
     if(!contents.includes('#bank .bank-card-v2[data-hidden="1"]{display:none!important}'))throw new Error('Bank category filtering must override card display so materials cannot leak into Equipment');
@@ -232,7 +233,7 @@ for(const file of files){
   if(file==='guild.html'){
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!contents.includes('character-portraits-v1.css?v=2')||!contents.includes('character-portraits-v1.js?v=2'))throw new Error('Character portrait identity assets are not linked from guild.html');
-    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=12')||!contents.includes('combat-reborn-v1.js?v=2')||!contents.includes('guild-v4.js?v=45')||!contents.includes('character-sheet.js?v=26')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=47')||!contents.includes('hollow-sanctum-v1.js?v=35')||!contents.includes('chaos-canyon-v1.js?v=10')||!contents.includes('blackout-station-v1.js?v=17')||!contents.includes('fractured-ages-v1.js?v=4'))throw new Error('Set bonus UI cache versions are stale in guild.html');
+    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=12')||!contents.includes('combat-reborn-v1.js?v=2')||!contents.includes('guild-v4.js?v=45')||!contents.includes('character-sheet.js?v=27')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=47')||!contents.includes('hollow-sanctum-v1.js?v=35')||!contents.includes('chaos-canyon-v1.js?v=10')||!contents.includes('blackout-station-v1.js?v=17')||!contents.includes('fractured-ages-v1.js?v=4'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
     if(!contents.includes('combat-reborn-v1.js'))throw new Error('Canonical Combat Reborn engine is not linked from guild.html');
@@ -269,7 +270,7 @@ for(const file of files){
     if(!contents.includes('ui-polish-v3.css'))throw new Error('Global UI polish stylesheet is not linked from guild.html');
     if(!contents.includes('home-v2.css')||!contents.includes('class="home-command"')||!contents.includes('class="home-destination-grid"')||!contents.includes('id="overviewGuildPulse"'))throw new Error('Guild Command Centre home is not linked or its required hooks are missing');
     if(!contents.includes('command-ui-v1.css'))throw new Error('Cross-game Guild Command UI layer is not linked from guild.html');
-    if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=26'))throw new Error('Character Command UI is not linked from guild.html');
+    if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=27'))throw new Error('Character Command UI is not linked from guild.html');
     for(const hook of ['roster-v2.css','class="roster-overview-strip"','id="rosterClearFilters"','id="rosterResultsLabel"','class="roster-grid roster-grid-v2"'])if(!contents.includes(hook))throw new Error('Roster v2 UI is missing '+hook);
     for(const hook of ['bank-v2.css','class="bank-category-tabs"','id="bankClearFilters"','id="bankResultsLabel"','class="bank-grid bank-grid-v2"','data-bank-category="Gear"'])if(!contents.includes(hook))throw new Error('Bank v2 UI is missing '+hook);
     if(!contents.includes('bank-v2.css?v=2'))throw new Error('Bank v2 stylesheet cache version must include category-isolation fix');
