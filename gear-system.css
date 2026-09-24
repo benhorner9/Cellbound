@@ -230,3 +230,51 @@
   .gear-set-bonus>em,.cb-set-bonus>em{grid-column:2}
   .cb-slot-set{align-items:flex-start;flex-direction:column;gap:1px}
 }
+
+
+.cb2d-loot-set{
+  display:flex;
+  flex-wrap:wrap;
+  gap:5px 8px;
+  margin:7px 0 3px;
+  padding:7px 9px;
+  border:1px solid rgba(176,108,255,.24);
+  border-radius:7px;
+  background:rgba(79,42,105,.10)
+}
+.cb2d-loot-set b{
+  width:100%;
+  color:#d9b7f4;
+  font-size:.58rem
+}
+.cb2d-loot-set span{
+  color:#b986e0;
+  font-size:.51rem
+}
+.tp-set-section{
+  border-color:rgba(176,108,255,.28)!important;
+  background:linear-gradient(145deg,rgba(46,27,61,.42),rgba(8,14,18,.25))
+}
+.tp-set-bonus{
+  padding:8px 0;
+  border-top:1px solid rgba(255,255,255,.07)
+}
+.tp-set-bonus:first-of-type{margin-top:6px}
+.tp-set-bonus b{
+  display:block;
+  color:#dfc4f5;
+  font-size:.63rem
+}
+.tp-set-bonus span{
+  display:block;
+  margin-top:2px;
+  color:#c58aff;
+  font-size:.58rem;
+  font-weight:700
+}
+.tp-set-bonus p{
+  margin:3px 0 0;
+  color:#879591;
+  font-size:.55rem;
+  line-height:1.35
+}
