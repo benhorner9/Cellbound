@@ -42,6 +42,7 @@ for(const file of files){
     if(!contents.includes("ceiling=({1:26,2:32,3:40,4:44})")||!contents.includes('if(tier>=5)return current'))throw new Error('Cell Shard upgrades must stop at the Chapter 1 tier ceiling and never create Tier 5 power');
     if(contents.includes('<span>Mastery</span>')&&contents.includes('function rosterCard'))throw new Error('Roster cards must not reintroduce the removed Mastery stat');
     for(const hook of ['roster-character-card','roster-card-metrics','roster-shock-line','roster-card-actions'])if(!contents.includes(hook))throw new Error('Roster v2 card renderer is missing '+hook);
+    if(!contents.includes('function setBonusPanel')||!contents.includes('gear-set-panel'))throw new Error('Guild Bank set bonus explanation is missing');
   }
   if(file==='item-art-v1.js'){
     for(const hook of ["window.CellboundItemArt","function genericGear","function material","function consumable","function collection","frostbound-sigil","relic-oathstone-dominion","grid-override-module","enhancePvp","enhanceCrafting"])if(!contents.includes(hook))throw new Error('Complete item artwork system is missing '+hook);
@@ -52,6 +53,7 @@ for(const file of files){
     if(!contents.includes("SLOT_ORDER=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring','Trinket','Relic']"))throw new Error('Full Chapter 1 equipment slot catalogue is missing');
     if(!contents.includes('const SLOT_STAT_BUDGET=')||!contents.includes('function effectiveStatBudget'))throw new Error('14-slot combat stat budgeting is missing');
     if(!contents.includes('[1,2,3,4].forEach(tier=>'))throw new Error('Generic gear catalogue must stop at Tier 4');
+    if(!contents.includes('const SET_BONUS_RULES=')||!contents.includes('function setPieceCount')||!contents.includes('function setBonusState'))throw new Error('Shared equipment set bonus rules are missing');
   }
   if(file==='endgame-data-v1.js'){
     if(!contents.includes('raidExclusiveTier:5')||!contents.includes('powerCeiling:44'))throw new Error('Dungeon loot must stop below raid-exclusive Tier 5');
@@ -67,7 +69,7 @@ for(const file of files){
   }
   if(file==='combat-reborn-v1.js'){
     if(!contents.includes("const VERSION='1.3.4'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
-    if(!contents.includes('resourceRegen:sets.some(s=>s.pieces>=4)?1.12:1'))throw new Error('T4 full-set combat bonus must remain a four-piece bonus');
+    if(!contents.includes('CellboundGear?.SET_BONUS_RULES')||!contents.includes('rules.pieces4?.resourceRegen'))throw new Error('Combat must consume shared 2/4-piece set bonus rules');
   }
   if(file==='combat-status-ui-v1.js'){
     if(!contents.includes("version:'2.1.0'"))throw new Error('Combat status UI smart-overhead version is missing');
@@ -217,6 +219,7 @@ for(const file of files){
   }
   if(file==='guild.html'){
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
+    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=12')||!contents.includes('combat-reborn-v1.js?v=2')||!contents.includes('guild-v4.js?v=44')||!contents.includes('character-sheet.js?v=23'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
     if(!contents.includes('combat-reborn-v1.js'))throw new Error('Canonical Combat Reborn engine is not linked from guild.html');
@@ -253,7 +256,7 @@ for(const file of files){
     if(!contents.includes('ui-polish-v3.css'))throw new Error('Global UI polish stylesheet is not linked from guild.html');
     if(!contents.includes('home-v2.css')||!contents.includes('class="home-command"')||!contents.includes('class="home-destination-grid"')||!contents.includes('id="overviewGuildPulse"'))throw new Error('Guild Command Centre home is not linked or its required hooks are missing');
     if(!contents.includes('command-ui-v1.css'))throw new Error('Cross-game Guild Command UI layer is not linked from guild.html');
-    if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=22'))throw new Error('Character Command UI is not linked from guild.html');
+    if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=23'))throw new Error('Character Command UI is not linked from guild.html');
     for(const hook of ['roster-v2.css','class="roster-overview-strip"','id="rosterClearFilters"','id="rosterResultsLabel"','class="roster-grid roster-grid-v2"'])if(!contents.includes(hook))throw new Error('Roster v2 UI is missing '+hook);
     for(const hook of ['bank-v2.css','class="bank-category-tabs"','id="bankClearFilters"','id="bankResultsLabel"','class="bank-grid bank-grid-v2"','data-bank-category="Gear"'])if(!contents.includes(hook))throw new Error('Bank v2 UI is missing '+hook);
     if(!contents.includes('bank-v2.css?v=2'))throw new Error('Bank v2 stylesheet cache version must include category-isolation fix');
