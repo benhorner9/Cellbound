@@ -38,7 +38,7 @@ const ROLE_DESC={
 };
 
 let Game=null,G=null,P=null,CP=null,db=null,user=null;
-let draft=[],activeSlot=0,tutorialToken=0,tutorialCombatStats=null;
+let draft=[],activeSlot=0,tutorialToken=0,tutorialCombatStats=null,tutorialComicBusy=false;
 
 const state=()=>Game?.getState?.();
 const onboarding=()=>state()?.onboarding||{};
@@ -208,6 +208,170 @@ async function createParty(){
 function partySummary(){
   return state().roster.map(c=>'<div class="z-party-member">'+portraitHTML(c,'sm')+'<span><b>'+esc(c.name)+'</b><small>'+raceById(c.race).icon+' '+esc(c.race)+' · '+esc(c.class)+' '+esc(c.spec)+'</small></span></div>').join('');
 }
+function tutorialComicConfig(id){
+  const roster=state()?.roster||[],lead=roster[0],leadName=lead?.name||'your charter';
+  const scenes={
+    arrival:{
+      theme:'zeltira',eyebrow:'CELLBOUND · FIRST EXPEDITION',title:'The Gate at Dusk',subtitle:'Zeltira · Outer Gate',page:'I · ARRIVAL',
+      speaker:'Warden Elara Vey',speakerRole:'ZELTIRA PATHFINDER',speakerMark:'EV',
+      line:'Five names, fresh ink. I was going to give you a quiet first night.',
+      panels:[
+        {kind:'location',eyebrow:'ZELTIRA · DUSK',title:'A city that should be settling down.',text:'Instead, wardens are clearing the western streets and the Cell Well has gone strangely quiet.',icon:'◇'},
+        {kind:'npc',speaker:'ELARA VEY',eyebrow:'PATHFINDER',title:'A warning at the gate',text:'The Cell Well flashed twice before sunset. Something beneath the west wall answered it.'},
+        {kind:'gate',eyebrow:'WEST WALL',title:'A dead wardstone is awake.',text:'It has not answered the Cell Well in living memory.',icon:'⌁'}
+      ],
+      choices:[
+        {id:'what-happened',icon:'?',label:'What happened at the west wall?',reply:'A wardstone woke. Patrol lanterns died. I need eyes on the scene before I send soldiers underground.'},
+        {id:'why-us',icon:'◇',label:'Why send a new charter?',reply:'Because five unknowns attract less attention than twenty wardens. And because I want to know how you think before I trust you below my city.'},
+        {id:'lead-on',icon:'→',label:'Show us the way.',reply:'Good. Keep your weapons sheathed until the evidence tells you otherwise.'}
+      ]
+    },
+    'west-wall':{
+      theme:'zeltira',eyebrow:'THE FIRST RESONANCE',title:'Read the Scene',subtitle:'Zeltira · West Wall',page:'II · EVIDENCE',
+      speaker:'Warden Elara Vey',speakerRole:'FIELD COMMAND',speakerMark:'EV',
+      line:'Do not tell me what you think is down there. Tell me what the stone is doing.',
+      panels:[
+        {kind:'location',eyebrow:'AFTER SUNSET',title:'The street is empty.',text:'Three details do not belong here. None means much alone.',icon:'☾'},
+        {kind:'clue',eyebrow:'EVIDENCE',title:'Fresh fracture',text:'Pale roots grow out of a new crack — away from something below.',icon:'⌁'},
+        {kind:'clue',eyebrow:'EVIDENCE',title:'Dead lantern & warm wardstone',text:'One has been drained white. The other pulses toward the Hollows.',icon:'◇'}
+      ],
+      choices:[
+        {id:'fracture',icon:'⌁',label:'Start with the fresh fracture.',reply:'Then ask why the roots are growing away from the crack. The direction matters.'},
+        {id:'lantern',icon:'◌',label:'Check the dead patrol lantern.',reply:'Good. Oil remains, but the Cell filament is empty. Something drew the energy out.'},
+        {id:'ward',icon:'◇',label:'Inspect the old wardstone first.',reply:'Watch the carved line when it brightens. It is pointing somewhere.'}
+      ]
+    },
+    gear:{
+      theme:'zeltira',eyebrow:'EMERGENCY ISSUE',title:'Arm the Five',subtitle:'Zeltira · Quartermaster',page:'III · GEAR',
+      speaker:'Zeltira Quartermaster',speakerRole:'GUILD SUPPLY',speakerMark:'QM',
+      line:'Same Item Level does not mean same value. Read the roll before you hand steel to '+leadName+'.',
+      panels:[
+        {kind:'loot',eyebrow:'QUARTERMASTER',title:'Two weapons. One decision.',text:'Both are equally advanced. Their bonus stats are not equally useful.',icon:'⚔'},
+        {kind:'npc',eyebrow:'THE LESSON',title:'Item Level tells you power.',text:'The stat roll tells you who actually wants the item.'},
+        {kind:'clue',eyebrow:'YOUR FRONT LINE',title:leadName,text:'Choose the roll that supports what your Tank is trying to do.',icon:'◆'}
+      ],
+      choices:[
+        {id:'explain-rolls',icon:'?',label:'Explain the difference in rolls.',reply:'Threat, Block, Stamina and Armour help a Tank do the job. A different spec may chase entirely different stats.'},
+        {id:'show-tank',icon:'◆',label:'Show me what our Tank needs.',reply:'Read the role first, then the stat line. That habit will matter when the same dungeon item drops with a different roll.'},
+        {id:'we-choose',icon:'⚔',label:'Put them on the counter. We will choose.',reply:'That is the point. I issue equipment. Your guild decides what is worth wearing.'}
+      ]
+    },
+    hollows:{
+      theme:'zeltira',eyebrow:'FIRST EXPEDITION',title:'Below Zeltira',subtitle:'The Zeltiran Hollows',page:'IV · DESCENT',
+      speaker:'Warden Elara Vey',speakerRole:'LAST WORD',speakerMark:'EV',
+      line:'The Pathfinder ward can pull you out if all five fall. It cannot make good decisions for you.',
+      panels:[
+        {kind:'gate',eyebrow:'SEALED DESCENT',title:'The resonance ends underground.',text:'Roots press through masonry older than modern Zeltira.',icon:'▽'},
+        {kind:'npc',eyebrow:'ELARA',title:'Watch the party, not just the boss.',text:'Threat, healing, interrupts and movement tell you why a fight succeeds.'},
+        {kind:'location',eyebrow:'THREE ENCOUNTERS',title:'Nest · Gallery · Warden',text:'The tutorial uses the same combat language as the rest of Cellbound.',icon:'⚔'}
+      ],
+      choices:[
+        {id:'wipe',icon:'◇',label:'What happens if all five fall?',reply:'The ward extracts you this once. Outside training, failure leaves Cell Shock on everyone who went in.'},
+        {id:'watch',icon:'◎',label:'What should I watch first?',reply:'Threat. If the wrong person owns the enemy, healing problems usually follow.'},
+        {id:'open',icon:'▽',label:'Open the descent.',reply:'Then learn by watching. The party will show you more than another lecture will.'}
+      ]
+    },
+    loot:{
+      theme:'zeltira',eyebrow:'AFTER THE HOLLOW WARDEN',title:'What the Warden Kept',subtitle:'Zeltira · Guild Bank',page:'V · SPOILS',
+      speaker:'Warden Elara Vey',speakerRole:'POST-EXPEDITION',speakerMark:'EV',
+      line:'A drop is not progress until you decide what to do with it.',
+      panels:[
+        {kind:'loot',eyebrow:'BOSS DROP',title:'A new item reaches the Guild Bank.',text:'Nothing equips itself. The guild owns the decision.',icon:'✦'},
+        {kind:'clue',eyebrow:'RANDOM ROLLS',title:'The name can repeat. The stats can change.',text:'A future copy at the same Item Level may still be an upgrade.'},
+        {kind:'location',eyebrow:'GUILD BANK',title:'Read · compare · assign',text:'Class restrictions and spec fit matter before the item leaves storage.',icon:'▦'}
+      ],
+      choices:[
+        {id:'why-bank',icon:'▦',label:'Why does loot go to the Bank first?',reply:'Because your guild manages the roster. Drops should create decisions, not silently replace equipment.'},
+        {id:'same-item',icon:'?',label:'Can the same item roll better later?',reply:'Exactly. Item Level sets the tier of power; the bonus roll gives you something worth chasing.'},
+        {id:'assign',icon:'→',label:'Let us assign the drop.',reply:'Read who can equip it, then decide who benefits most.'}
+      ]
+    },
+    shock:{
+      theme:'shock',eyebrow:'THE COST OF FAILURE',title:'Cell Shock',subtitle:'Pathfinder Ward · Training Record',page:'VI · CONSEQUENCE',
+      speaker:'Warden Elara Vey',speakerRole:'RECOVERY LESSON',speakerMark:'EV',
+      line:'The ward spared your roster the penalty. It did not erase what failure normally costs.',
+      panels:[
+        {kind:'shock',eyebrow:'ONE WIPE',title:'25% Cell Shock',text:'Failure creates pressure instead of deleting your progress.',icon:'◇'},
+        {kind:'shock',eyebrow:'PRESSURE BUILDS',title:'25 · 50 · 75 · 100',text:'At the cap, that adventurer cannot immediately go back in.'},
+        {kind:'npc',eyebrow:'THE POINT',title:'Your next decision changes.',text:'Use another character, recover, or prepare better for the next attempt.'}
+      ],
+      choices:[
+        {id:'delete',icon:'?',label:'Does a wipe delete our progress?',reply:'No. Your items and progression remain. Cell Shock changes availability, not ownership.'},
+        {id:'recover',icon:'◇',label:'Can Cell Shock be recovered?',reply:'Yes. Time clears it, membership shortens recovery, and rare crafted preparation can remove it.'},
+        {id:'show',icon:'→',label:'Show us what reaching 100% looks like.',reply:'Watch the ward record. Your real roster will not be changed by this demonstration.'}
+      ]
+    },
+    craft:{
+      theme:'craft',eyebrow:'CRAFT ROW',title:'Use What You Found',subtitle:'Zeltira · Profession District',page:'VII · PREPARATION',
+      speaker:'Zeltira Craftmaster',speakerRole:'PROFESSION TRAINING',speakerMark:'CR',
+      line:'Dungeon reagents are not vendor rubbish. They become preparation for the next fight.',
+      panels:[
+        {kind:'craft',eyebrow:'REAGENTS',title:'The Hollows left materials behind.',text:'Faded Cell Fragments and Zeltiran Iron are useful because professions consume them.',icon:'⚒'},
+        {kind:'npc',eyebrow:'PROFESSIONS',title:'Power with an expiry date',text:'Enhancements, flasks, runes and potions complement dungeon gear rather than replacing it.'},
+        {kind:'loot',eyebrow:'FIRST CRAFT',title:'Choose who learns.',text:'Profession ownership belongs to a character and persists beyond the tutorial.',icon:'⚗'}
+      ],
+      choices:[
+        {id:'replace',icon:'?',label:'Does crafting replace dungeon gear?',reply:'No. The strongest foundation still comes from quests and dungeons. Professions prepare that gear and the people wearing it.'},
+        {id:'trade',icon:'⇄',label:'Can crafted items be traded?',reply:'Many can. A useful profession can become part of the player economy as well as your own preparation.'},
+        {id:'choose',icon:'⚒',label:'Let us choose a profession.',reply:'Pick the adventurer first. Then decide what job you want that character to bring to the guild.'}
+      ]
+    },
+    contract:{
+      theme:'road',eyebrow:'THE WORLD OPENS',title:'Ashes on the East Road',subtitle:'Zeltira · East Gate · Dawn',page:'VIII · CONTRACT',
+      speaker:'Warden Elara Vey',speakerRole:'ZELTIRA PATHFINDER',speakerMark:'EV',
+      line:'No more training contract. Three supply carts are missing, and the ash in their wheel ruts came from a forge that has been cold for eighteen years.',
+      panels:[
+        {kind:'location',eyebrow:'EAST ROAD',title:'Three carts never arrived.',text:'Patrols found wreckage beyond the city as the sun came up.',icon:'♜'},
+        {kind:'clue',eyebrow:'THE ODD DETAIL',title:'Furnace ash in the ruts',text:'The nearest matching forge should have been dead for eighteen years.',icon:'✦'},
+        {kind:'gate',eyebrow:'YOUR FIRST REAL QUEST',title:'Ashes on the East Road',text:'Story, investigation, combat and the road toward The Ashen Vault.',icon:'→'}
+      ],
+      choices:[
+        {id:'what-happened',icon:'?',label:'What happened to the carts?',reply:'That is what I am paying you to discover. Start with the first wreck and do not assume the obvious answer is the right one.'},
+        {id:'why-ash',icon:'✦',label:'Why does the ash matter?',reply:'Because cold furnaces do not leave fresh ash. Someone is using a place the city believes abandoned.'},
+        {id:'accept',icon:'⚔',label:'We will take the contract.',reply:'Then the ward comes off here. From now on, good calls and bad calls both belong to your guild.'}
+      ]
+    },
+    departure:{
+      theme:'road',eyebrow:'FIRST EXPEDITION COMPLETE',title:'Beyond Zeltira',subtitle:'Eastern Road',page:'IX · DEPARTURE',
+      speaker:'Warden Elara Vey',speakerRole:'FAREWELL',speakerMark:'EV',
+      line:'You have five people, a little gear and enough experience to know what can go wrong. That is more than most charters get.',
+      panels:[
+        {kind:'location',eyebrow:'DAWN',title:'The eastern gate opens.',text:'For the first time, the route ahead belongs entirely to your guild.',icon:'☼'},
+        {kind:'npc',eyebrow:'ELARA',title:'No more training ward',text:'The systems you learned remain. The safety net does not.'},
+        {kind:'location',eyebrow:'THE ROAD',title:'Quest · Dungeon · Endgame',text:'The tutorial ends where the actual game begins.',icon:'→'}
+      ],
+      choices:[
+        {id:'advice',icon:'?',label:'Any final advice?',reply:'Read the fight. Read the item. Read the room. Most bad outcomes tell you what you missed.'},
+        {id:'failure',icon:'◇',label:'And if we fail out there?',reply:'Recover, change the plan and go again. A guild is built from what it does after the wipe.'},
+        {id:'ready',icon:'→',label:'We are ready.',reply:'Then stop standing in my gate.'}
+      ]
+    }
+  };
+  return scenes[id]||null
+}
+function comicSeen(id){
+  const s=state();return Boolean(s?.onboarding?.comicSeen?.[id])
+}
+function maybeTutorialComic(id){
+  const config=tutorialComicConfig(id),C=window.CellboundComicScenes;
+  if(!config||!C?.show||comicSeen(id)||tutorialComicBusy)return false;
+  tutorialComicBusy=true;
+  C.show(config).then(async result=>{
+    const cur=state();if(!cur?.onboarding){tutorialComicBusy=false;return}
+    cur.onboarding.comicSeen=cur.onboarding.comicSeen&&typeof cur.onboarding.comicSeen==='object'?cur.onboarding.comicSeen:{};
+    cur.onboarding.dialogueChoices=cur.onboarding.dialogueChoices&&typeof cur.onboarding.dialogueChoices==='object'?cur.onboarding.dialogueChoices:{};
+    cur.onboarding.comicSeen[id]=true;
+    if(result?.choiceId)cur.onboarding.dialogueChoices[id]=result.choiceId;
+    Game.save();await Game.persistState?.();tutorialComicBusy=false;render()
+  }).catch(error=>{console.warn('Tutorial comic scene failed',id,error);tutorialComicBusy=false;const cur=state();if(cur?.onboarding){cur.onboarding.comicSeen=cur.onboarding.comicSeen||{};cur.onboarding.comicSeen[id]=true;Game.save()}render()});
+  return true
+}
+async function previewTutorialComics(){
+  const C=window.CellboundComicScenes;if(!C?.show)return false;
+  const ids=['arrival','west-wall','gear','hollows','loot','shock','craft','contract','departure'];
+  for(const id of ids){const cfg=tutorialComicConfig(id);if(cfg)await C.show({...cfg,eyebrow:'DEV PREVIEW · '+cfg.eyebrow})}
+  return true
+}
 function zeltiraMap(active){
   const spots=[
     ['gate','Arrival Gate','Your charter enters Zeltira.'],
@@ -236,11 +400,13 @@ async function setStage(next,extra){
   if(m)window.CellboundFX?.story?.(m[1],m[2],{eyebrow:m[0],tone:m[3],duration:1350});
 }
 function renderArrival(){
+  if(maybeTutorialComic('arrival'))return;
   const body='<div class="zeltira-layout"><main>'+zeltiraMap('gate')+'</main><aside class="z-guide"><small>ZELTIRA · OUTER GATE</small><h2>Your charter arrives at the wrong moment.</h2><p class="guide-quote">“Five names, fresh ink. I was going to give you a quiet first night.”</p><div class="guide-name"><b>Warden Elara Vey</b><span>Zeltira Pathfinder</span></div><p>The Cell Well flashed twice before sunset. A wardstone beneath the west wall answered it. That stone has been dead longer than anyone here has been alive.</p><div class="first-expedition-hook"><span>NEW CONTRACT</span><b>The First Resonance</b><small>Inspect the west wall before whatever is below it reaches the city proper.</small></div><div class="z-party-list">'+partySummary()+'</div><button id="answerResonance" class="on-primary">GO TO THE WEST WALL →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'zeltira-arrival');
   $('#answerResonance')?.addEventListener('click',()=>setStage('first-expedition'));
 }
 function renderFirstExpedition(){
+  if(maybeTutorialComic('west-wall'))return;
   const s=state();s.onboarding=s.onboarding||{};
   const seen=new Set(Array.isArray(s.onboarding.firstExpeditionClues)?s.onboarding.firstExpeditionClues:[]);
   const clues=[
@@ -266,6 +432,7 @@ function renderFirstExpedition(){
   });
 }
 function renderGear(){
+  if(maybeTutorialComic('gear'))return;
   const tank=state().roster.find(c=>Game.classes?.[c.class]?.specs?.[c.spec]?.role==='tank')||state().roster[0];
   const good=G.createQuestGear?.(tank,'Weapon',1,'specialist','Zeltira Training')||G.starterSet(tank.class).find(x=>x.slot==='Weapon');
   const off=G.createQuestGear?.(tank,'Weapon',1,'swift','Zeltira Training')||good;
@@ -295,6 +462,7 @@ async function issueStarterGear(trainingWeapon){
   render();
 }
 function renderDungeonBriefing(){
+  if(maybeTutorialComic('hollows'))return;
   const body='<div class="dungeon-brief-layout"><main><div class="tutorial-dungeon-art"><span>FIRST EXPEDITION · THE ZELTIRAN HOLLOWS</span><h2>The resonance ends below the oldest part of the city.</h2><p>Elara has put a Pathfinder ward on your charter. It can pull the party out if all five fall, but it cannot fight for them. This is the same combat used everywhere else in Cellbound. Watch threat, healing, interrupts and movement.</p><div class="tutorial-route"><div><i>1</i><b>Rootling Nest</b><small>Threat & formation</small></div><div><i>2</i><b>Collapsed Gallery</b><small>Healing & interrupts</small></div><div><i>3</i><b>Hollow Warden</b><small>Telegraphs & boss pressure</small></div></div></div></main><aside class="z-guide"><small>WARDEN ELARA · LAST WORD</small><h2>Watch what the party actually does.</h2><div class="role-lessons"><div><i class="on-role tank"></i><b>Tank</b><span>Establishes threat and controls where dangerous enemies face.</span></div><div><i class="on-role healer"></i><b>Healer</b><span>Repairs damage while keeping a safe position.</span></div><div><i class="on-role dps"></i><b>Damage</b><span>Burns priority targets and covers dangerous interrupts.</span></div></div><p>The right side of the combat screen will show the same HP, resources, damage, healing, threat and status information used in later dungeons.</p><button id="enterTutorialDungeon" class="on-primary">DESCEND INTO THE HOLLOWS →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'dungeon-briefing');
   $('#enterTutorialDungeon')?.addEventListener('click',async()=>{await setStage('dungeon-running');});
@@ -699,6 +867,7 @@ function tutorialLootItem(){
   return (s?.bank||[]).find(x=>x.id===id)||null;
 }
 function renderLootReview(){
+  if(maybeTutorialComic('loot'))return;
   const s=state(),item=tutorialLootItem();
   if(!item){s.onboarding.stage='recovery-lesson';Game.save();render();return}
   const eligible=s.roster.filter(ch=>item.class===ch.class||item.classes==='all'||item.classes?.includes?.(ch.class));
@@ -720,6 +889,7 @@ async function equipTutorialLoot(charId){
   Game.save();await Game.persistState();render();
 }
 function renderRecoveryLesson(){
+  if(maybeTutorialComic('shock'))return;
   const mins=Game.getEntitlements?.().recoveryMinutes||60,lead=state().roster.find(c=>tdRole(c)==='tank')||state().roster[0];
   const body='<div class="growth-school shock-story"><main><small>ZELTIRA · PATHFINDER WARD</small><h2>The ward saved the party from the penalty. Elara wants you to see what it absorbed.</h2><p>A failed run adds Cell Shock to every participating character. This training record does not change your roster.</p><div class="shock-simulation" id="shockSimulation"><div class="shock-sim-character"><span>'+esc(lead?.portrait||'??')+'</span><div><b>'+esc(lead?.name||'Your Tank')+'</b><small>TRAINING PROJECTION · NOT REAL SHOCK</small></div></div><div class="shock-sim-meter"><div><i id="shockSimFill" style="width:0%"></i></div><strong id="shockSimValue">0%</strong></div><p id="shockSimCopy">Run the ward record to see how repeated wipes create recovery pressure.</p><button id="runShockSimulation" class="on-primary">PLAY FAILURE RECORD →</button><button id="clearShockSimulation" class="on-primary" hidden>DISCHARGE THE WARD & CONTINUE →</button></div></main><aside class="z-guide"><small>CELL SHOCK</small><h2>Failure changes roster decisions.</h2><div class="growth-cards compact"><article><strong>25% PER WIPE</strong><b>Pressure accumulates</b><p>A failed run adds shock instead of deleting progress.</p></article><article><strong>100%</strong><b>Character unavailable</b><p>At the cap, that adventurer must recover before entering again.</p></article><article><strong>'+mins+' MIN</strong><b>Your current recovery</b><p>Recovery time depends on your account.</p></article></div><p>Failure changes your next decision without erasing progress.</p></aside></div>';
   ensureRoot().innerHTML=chrome(body,'recovery-lesson');
@@ -739,6 +909,7 @@ function renderRecoveryLesson(){
 }
 
 function renderProfessionChoice(){
+  if(maybeTutorialComic('craft'))return;
   const s=state(),selectedChar=s.onboarding.professionCharacterId||s.roster[0]?.id,selectedProf=s.onboarding.professionName||null;
   const chars=s.roster.map(c=>'<button class="prof-char-choice '+(c.id===selectedChar?'active':'')+'" data-prof-char="'+c.id+'"><span>'+c.portrait+'</span><div><b>'+esc(c.name)+'</b><small>'+esc(c.race)+' · '+esc(c.class)+'</small></div></button>').join('');
   const profs=Object.entries(P.PROFESSIONS).map(([name,p])=>'<button class="prof-choice '+(name===selectedProf?'active':'')+'" data-prof="'+name+'"><strong>'+p.icon+'</strong><div><b>'+name+'</b><p>'+p.summary+'</p><small>FIRST RECIPE · '+esc(p.recipes[0].name)+'</small></div></button>').join('');
@@ -821,11 +992,13 @@ function renderProfessionUse(){
 }
 
 function renderQuestLesson(){
+  if(maybeTutorialComic('contract'))return;
   const body='<div class="quest-school first-contract"><main><small>ZELTIRA · EAST GATE · DAWN</small><h2>Before the city fully wakes, Elara sends for your charter again.</h2><p>The disturbance below the west wall is over. Three supply carts on the east road are now missing. Patrols found furnace ash in the wheel ruts from a forge that has been cold for eighteen years.</p><article class="first-quest-preview"><div class="quest-preview-rune">♜</div><div><small>NOVICE · STORY ADVENTURE</small><h3>Ashes on the East Road</h3><p>Inspect the first wreck, reconstruct the ambush and discover why someone is moving through the abandoned forge above Zeltira.</p><b>Rewards · Tier 1 quest gear · 120 Gold · 75 Renown · The Ashen Vault access</b></div></article><div class="progression-teach"><div><b>QUEST</b><span>Story, puzzles and reliable gear.</span></div><i>→</i><div><b>DUNGEON</b><span>Randomised drops, better rolls and harder combat.</span></div><i>→</i><div><b>ENDGAME</b><span>Heroic, Cellbound+ and long-term progression.</span></div></div></main><aside class="z-guide"><small>WARDEN ELARA VEY</small><h2>No more training contract.</h2><p class="guide-quote">“The ward comes off here. If you make a bad call on the road, it belongs to you. If you make a good one, so does that.”</p><p>Accept the contract to open Guild Command and begin the investigation.</p><button id="acceptFirstContract" class="on-primary">ACCEPT ASHES ON THE EAST ROAD →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'quest-lesson');
   $('#acceptFirstContract')?.addEventListener('click',()=>setStage('departure',{firstContractReady:true}));
 }
 function renderDeparture(){
+  if(maybeTutorialComic('departure'))return;
   const s=state(),c=s.roster.find(x=>x.id===s.onboarding.professionCharacterId),prof=s.onboarding.professionName;
   const body='<div class="zeltira-layout departure"><main>'+zeltiraMap('road')+'</main><aside class="z-guide"><small>ZELTIRA · EASTERN ROAD</small><h2>Your first expedition is over. Your first real contract is not.</h2><p class="guide-quote">“You have five people, a little gear and enough experience to know what can go wrong. That is more than most charters get.”</p><div class="tutorial-complete-list"><div><i>✓</i><span><b>Active five formed</b><small>Tank · Healer · Damage and flexible class identities</small></span></div><div><i>✓</i><span><b>Combat read live</b><small>HP · resources · threat · healing · interrupts · telegraphs · statuses</small></span></div><div><i>✓</i><span><b>Loot handled</b><small>Item Level · random rolls · Guild Bank assignment</small></span></div><div><i>✓</i><span><b>Cell Shock witnessed</b><small>Failure creates roster pressure without deleting progress</small></span></div><div><i>✓</i><span><b>Profession started</b><small>'+esc(c?.name||'Adventurer')+' · '+esc(prof||'Profession')+' · '+esc(s.onboarding.craftedItem||'first craft')+'</small></span></div></div><button id="beginAdventure" class="on-primary">LEAVE ZELTIRA · BEGIN THE EAST ROAD →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'departure');
@@ -865,7 +1038,7 @@ async function init(){
   if(!G||!P)return;
   window.CellboundCombatStandard?.register?.('zeltira-first-expedition',{kind:'onboarding-dungeon',execution:'local',ui:'shared-combat-contract'});
   render();
-  window.CellboundOnboarding={render,RACES};
+  window.CellboundOnboarding={render,RACES,previewTutorialComics,tutorialComicConfig};
 }
 init();
 })();
