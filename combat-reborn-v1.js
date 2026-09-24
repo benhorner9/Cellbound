@@ -244,10 +244,11 @@ function gearSetState(c){
  const counts={};
  Object.values(c?.equipment||{}).forEach(item=>{if(item?.setId)counts[item.setId]=(counts[item.setId]||0)+1});
  const sets=Object.entries(counts).map(([id,pieces])=>({id,pieces,name:Object.values(c?.equipment||{}).find(x=>x?.setId===id)?.setName||id}));
+ const rules=window.CellboundGear?.SET_BONUS_RULES||{pieces2:{threshold:2,outputScale:1.05},pieces4:{threshold:4,resourceRegen:1.12}};
  return{
    sets,
-   outputScale:sets.some(s=>s.pieces>=2)?1.05:1,
-   resourceRegen:sets.some(s=>s.pieces>=4)?1.12:1
+   outputScale:sets.some(s=>s.pieces>=Number(rules.pieces2?.threshold||2))?Number(rules.pieces2?.outputScale||1.05):1,
+   resourceRegen:sets.some(s=>s.pieces>=Number(rules.pieces4?.threshold||4))?Number(rules.pieces4?.resourceRegen||1.12):1
  }
 }
 
