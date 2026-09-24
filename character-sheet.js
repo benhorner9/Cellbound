@@ -193,12 +193,31 @@ function bestBankUpgrade(state,c,slot){
   const gain=(Number(best?.itemLevel)||0)-current;
   return gain>0?{item:best,gain}:null;
 }
+function setRuleData(){
+  return G?.SET_BONUS_RULES||{
+    pieces2:{threshold:2,name:'Resonant Pair',short:'+5% damage & healing output',description:'All damaging and healing abilities are 5% stronger.'},
+    pieces4:{threshold:4,name:'Cellbound Ensemble',short:'+12% resource recovery',description:'Passive class-resource recovery is increased by 12%.'}
+  }
+}
+function setInlineMarkup(c,item){
+  if(!item?.setId||!item?.setName)return'';
+  const count=G?.setPieceCount?.(c,item.setId)||0,rules=setRuleData(),two=count>=rules.pieces2.threshold,four=count>=rules.pieces4.threshold;
+  return `<span class="cb-slot-set"><b>${esc(item.setName)}</b><em>${count}/4 equipped${four?' · 2 & 4-piece active':two?' · 2-piece active':''}</em></span>`
+}
+function setSummaryMarkup(c){
+  const sets=new Map();
+  Object.values(c?.equipment||{}).forEach(item=>{if(item?.setId&&!sets.has(item.setId))sets.set(item.setId,item)});
+  if(!sets.size)return'';
+  const rules=setRuleData();
+  const bonus=(rule,count)=>`<div class="cb-set-bonus ${count>=rule.threshold?'active':''}"><span>${rule.threshold} PIECES</span><div><b>${esc(rule.name)}</b><strong>${esc(rule.short)}</strong><p>${esc(rule.description)}</p></div><em>${count>=rule.threshold?'ACTIVE':count+'/'+rule.threshold}</em></div>`;
+  return `<section class="cb-set-summary"><div class="cb-stat-section-head"><span>SET BONUSES</span><small>Matching Tier 4 equipment effects</small></div>${[...sets.entries()].map(([id,item])=>{const count=G?.setPieceCount?.(c,id)||0;return `<article class="cb-set-card"><header><div><small>EQUIPMENT SET</small><h4>${esc(item.setName||id)}</h4></div><b>${count}/4</b></header>${bonus(rules.pieces2,count)}${bonus(rules.pieces4,count)}</article>`}).join('')}</section>`
+}
 function equipmentSlot(c,slot,state){
   const item=c.equipment?.[slot],upgrade=bestBankUpgrade(state,c,slot),prep=(window.CellboundProfessions?.activeEffects?.(c)||[]).find(x=>x.kind==='enhancement'&&x.slot===slot);
   const art=item?(G?.artHTML?.(item,48,'cb-slot-art')||item.icon||slotIcons[slot]||'◇'):(slotIcons[slot]||'◇');
   return `<button class="cb-equip-slot ${item?rarityClass(item):'cb-empty'} ${upgrade?'has-upgrade':''}" data-slot="${slot}">
     <span class="cb-slot-icon">${art}</span>
-    <span class="cb-slot-copy"><small>${slot.replace(/(\d)/,' $1')}</small><b>${item?.name||'Empty'}</b>${item?.power?`<em>+${item.power} power</em>`:''}${item?`<span class="cb-slot-ilvl">Item Level ${item.itemLevel||0}</span><span class="cb-slot-roll">${(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll'}</span>${prep?`<span class="cb-slot-roll cb-slot-prep">✥ ${prep.name} · ${window.CellboundProfessions?.bonusText?.(prep.bonuses)||''} · ${prep.remainingBosses} bosses</span>`:''}`:'<span class="cb-slot-ilvl">Empty equipment slot</span>'}</span>
+    <span class="cb-slot-copy"><small>${slot.replace(/(\d)/,' $1')}</small><b>${item?.name||'Empty'}</b>${item?.power?`<em>+${item.power} power</em>`:''}${item?`<span class="cb-slot-ilvl">Item Level ${item.itemLevel||0}</span><span class="cb-slot-roll">${(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll'}</span>${setInlineMarkup(c,item)}${prep?`<span class="cb-slot-roll cb-slot-prep">✥ ${prep.name} · ${window.CellboundProfessions?.bonusText?.(prep.bonuses)||''} · ${prep.remainingBosses} bosses</span>`:''}`:'<span class="cb-slot-ilvl">Empty equipment slot</span>'}</span>
     ${upgrade?`<span class="cb-slot-upgrade">+${upgrade.gain} ILVL</span>`:''}
   </button>`;
 }
@@ -253,6 +272,7 @@ function paperDoll(c,state){
         <div><span>ACCOUNT RULE</span><b>${ent.member?'MEMBER':'STANDARD'}</b></div>
       </div>
       <div class="cb-armoury-hint">${upgradeCount?`<strong>${upgradeCount} upgrade${upgradeCount===1?'':'s'} available</strong><span>Gold-marked equipment slots have a stronger compatible item waiting in the Guild Bank.</span>`:'<strong>Loadout current</strong><span>No higher Item Level upgrades are currently waiting in the Guild Bank.</span>'}</div>
+      ${setSummaryMarkup(c)}
     </section>
     <div class="cb-gear-column cb-gear-right">${rightSlots.map(s=>equipmentSlot(c,s,state)).join('')}</div>
   </div>`;
@@ -293,10 +313,10 @@ function slotPicker(state,c,slot){
   </div>`:'';
   return `<button class="cb-slot-drawer-backdrop" data-close-slot aria-label="Close equipment drawer"></button><div class="cb-slot-drawer">
     <div class="cb-slot-drawer-head"><div><small>${slot}</small><h3>${current?.name||'Empty slot'}</h3></div><button data-close-slot>×</button></div>
-    ${current?`<div class="cb-current-item ${rarityClass(current)}"><span>${G?.artHTML?.(current,56)||current.icon||slotIcons[slot]}</span><div><b>${current.name}</b><small>${current.rarity||'Starter'} · iLvl ${currentIlvl}${current.power?` · +${current.power} power`:''}${Number(current.upgradeLevel)>0?` · Upgrade ${Number(current.upgradeLevel)}`:''}</small><em class="cb-current-roll">${(G?.statLines?.(current)||[]).map(s=>s.text).join(' · ')||'Legacy roll'}</em></div></div>`:''}
+    ${current?`<div class="cb-current-item ${rarityClass(current)}"><span>${G?.artHTML?.(current,56)||current.icon||slotIcons[slot]}</span><div><b>${current.name}</b><small>${current.rarity||'Starter'} · iLvl ${currentIlvl}${current.power?` · +${current.power} power`:''}${Number(current.upgradeLevel)>0?` · Upgrade ${Number(current.upgradeLevel)}`:''}</small><em class="cb-current-roll">${(G?.statLines?.(current)||[]).map(s=>s.text).join(' · ')||'Legacy roll'}</em>${setInlineMarkup(c,current)}</div></div>`:''}
     ${currentActions}
     <p>Compatible Guild Bank items</p>
-    <div class="cb-slot-options">${candidates.length?candidates.sort((a,b)=>(b.itemLevel||0)-(a.itemLevel||0)).map(item=>{const delta=(Number(item.itemLevel)||0)-currentIlvl,fit=G?.rollFit?.(c,item),stats=(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll';return `<button data-equip-bank="${item.id}" data-equip-slot="${slot}" class="${rarityClass(item)}"><span>${G?.artHTML?.(item,48)||item.icon||'◇'}</span><div><b>${item.name}</b><small>${item.rarity} · iLvl ${item.itemLevel||0} · ×${item.quantity||1}</small><strong class="cb-option-roll">${stats}</strong><em class="${delta>0?'upgrade':delta<0?'downgrade':''}">${fit?.label||''}${delta===0?' · Same Item Level':delta>0?` · +${delta} Item Level`:` · ${delta} Item Level`}</em></div></button>`}).join(''):'<div class="cb-no-items">No compatible items are currently stored in the Bank.</div>'}</div>
+    <div class="cb-slot-options">${candidates.length?candidates.sort((a,b)=>(b.itemLevel||0)-(a.itemLevel||0)).map(item=>{const delta=(Number(item.itemLevel)||0)-currentIlvl,fit=G?.rollFit?.(c,item),stats=(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll';return `<button data-equip-bank="${item.id}" data-equip-slot="${slot}" class="${rarityClass(item)}"><span>${G?.artHTML?.(item,48)||item.icon||'◇'}</span><div><b>${item.name}</b><small>${item.rarity} · iLvl ${item.itemLevel||0} · ×${item.quantity||1}</small><strong class="cb-option-roll">${stats}</strong>${setInlineMarkup(c,item)}<em class="${delta>0?'upgrade':delta<0?'downgrade':''}">${fit?.label||''}${delta===0?' · Same Item Level':delta>0?` · +${delta} Item Level`:` · ${delta} Item Level`}</em></div></button>`}).join(''):'<div class="cb-no-items">No compatible items are currently stored in the Bank.</div>'}</div>
   </div>`;
 }
 function totalSpent(c,spec){return Object.values(c.talents?.[spec]||{}).reduce((a,b)=>a+(Number(b)||0),0)}
