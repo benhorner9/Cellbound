@@ -108,7 +108,7 @@ for(const file of files){
     if(!contents.includes('function ratingCurve')||!contents.includes('function primaryCurve'))throw new Error('Full-loadout rating diminishing returns are missing');
   }
   if(file==='combat-reborn-v1.js'){
-    if(!contents.includes("const VERSION='1.3.5'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
+    if(!contents.includes("const VERSION='1.3.4'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
     if(!contents.includes('CellboundGear?.SET_BONUS_RULES')||!contents.includes('rules.pieces4?.resourceRegen'))throw new Error('Combat must consume shared 2/4-piece set bonus rules');
   }
   if(file==='combat-status-ui-v1.js'){
@@ -170,7 +170,7 @@ for(const file of files){
     for(const hook of [".cbx-transition{",".cbx-enter",".cbx-room",".cb2d-backdrop",".hs2d-backdrop",".cc2d-backdrop",".bs2d-backdrop",".fa-backdrop","100dvh"])if(!contents.includes(hook))throw new Error('PvE full-screen expedition styling is missing '+hook);
   }
   if(file==='boss-dossier-v1.js'){
-    for(const hook of ["const VERSION='1.3.4'","'vaultheart'","'bound-choir'","'vorran'","'vex-calder'","'old-man'","'three-hounds'","'silas-vane'","./assets/bosses/ashen-vault-vaultheart.webp","./assets/bosses/hollow-sanctum-bound-choir.webp","./assets/bosses/chaos-canyon-vorran.webp","./assets/bosses/blackout-station-calder.webp","./assets/bosses/fractured-ages-old-man.webp","./assets/bosses/no-way-back-three-hounds-v3.jpg","./assets/bosses/no-way-back-silas-vane-v3.jpg","async function show(","Skip the full briefing on future runs","window.CellboundBossDossier"])if(!contents.includes(hook))throw new Error('Final boss dossier runtime is missing '+hook);
+    for(const hook of ["const VERSION='1.3.5'","'vaultheart'","'bound-choir'","'vorran'","'vex-calder'","'old-man'","'three-hounds'","'silas-vane'","./assets/bosses/ashen-vault-vaultheart.webp","./assets/bosses/hollow-sanctum-bound-choir.webp","./assets/bosses/chaos-canyon-vorran.webp","./assets/bosses/blackout-station-calder.webp","./assets/bosses/fractured-ages-old-man.webp","./assets/bosses/no-way-back-three-hounds-v3.jpg","./assets/bosses/no-way-back-silas-vane-v3.jpg","async function show(","Skip the full briefing on future runs","window.CellboundBossDossier"])if(!contents.includes(hook))throw new Error('Final boss dossier runtime is missing '+hook);
   }
   if(file==='boss-dossier-v1.css'){
     for(const hook of [".cbd-backdrop",".cbd-shell",".cbd-art",".cbd-art-backdrop",".cbd-ability",".cbd-intel",".cbd-stinger","theme-fractured","prefers-reduced-motion"])if(!contents.includes(hook))throw new Error('Final boss dossier styling is missing '+hook);
