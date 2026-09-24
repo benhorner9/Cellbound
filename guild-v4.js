@@ -2,6 +2,7 @@
 'use strict';
 const G=window.CellboundGear;
 const P=window.CellboundProfessions;
+const CP=window.CellboundPortraits;
 if(!G){console.error('Cellbound gear catalogue failed to load.');return;}
 
 const SUPABASE_URL='https://jvydqeikdpelmtloulnd.supabase.co';
@@ -10,7 +11,7 @@ const REMEMBER_KEY='cellbound-remember-device';
 const STORAGE='cellbound-management-reboot-v3';
 const PREVIOUS_STORAGE='cellbound-management-reboot-v2';
 const LOCAL_OWNER='cellbound-management-owner';
-const SAVE_VERSION=5;
+const SAVE_VERSION=6;
 const PVE_WIPE_CELL_SHOCK=25;
 const STANDARD_RECOVERY_MINUTES=60;
 const MEMBER_RECOVERY_MINUTES=30;
@@ -134,6 +135,7 @@ function levelHpBonus(c){return Math.round(Math.max(0,(Number(c?.level)||1)-1)*3
 function levelOutputBonus(c){return Math.round(Math.max(0,(Number(c?.level)||1)-1)*2)}
 function partyAverageLevel(){const p=partyCharacters();return p.length?Math.round(p.reduce((n,c)=>n+Math.max(1,Number(c.level)||1),0)/p.length):1}
 function combatClassKey(c){return 'class-'+String(c?.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}
+function portraitHTML(c,size='md',className=''){return CP?.portraitHTML?.(c,{size,className})||`<span class="cb-portrait cb-portrait--${esc(size)} ${esc(className)}"><b>${esc(c?.portrait||String(c?.name||'?').slice(0,2).toUpperCase())}</b></span>`}
 function charById(id){return state?.roster?.find(c=>c.id===id)||null;}
 function bossById(id){return bosses.find(b=>b.id===id)||bosses[0];}
 function bankTotal(){return (state?.bank||[]).reduce((n,item)=>n+(item.quantity||1),0);}
@@ -197,7 +199,7 @@ function currentBossProgressionUnlocked(boss){const i=bosses.findIndex(b=>b.id==
 
 function normalizeCharacter(c,index=0){
   c.id=c.id||`legacy-${index}-${Date.now()}`;c.class=c.class||'Warrior';c.spec=c.spec||Object.keys(classDef(c).specs)[0];c.level=Math.max(1,Number(c.level)||1);c.xp=Math.max(0,Number(c.xp)||0);c.power=Math.max(1,Number(c.power)||1);
-  c.race=c.race||'Veyren';c.raceTrait=c.raceTrait||window.CellboundIdentities?.getRace?.(c.race)?.trait||'';c.talents=c.talents||talentState(c.class);c.knowledge=c.knowledge||{ashwarden:0,embermaw:0,vaultheart:0};c.equipment=c.equipment||{};
+  c.race=c.race||'Veyren';c.raceTrait=c.raceTrait||window.CellboundIdentities?.getRace?.(c.race)?.trait||'';if(CP)c.appearance=CP.normalizeAppearance(c.appearance,c.id||c.name,c.race);c.talents=c.talents||talentState(c.class);c.knowledge=c.knowledge||{ashwarden:0,embermaw:0,vaultheart:0};c.equipment=c.equipment||{};
   const starters=starterEquipment(c.class),keepBare=c.tutorialNew===true&&c.onboardingGearIssued!==true;
   ILVL_SLOTS.forEach(slot=>{
     const hasSlot=Object.prototype.hasOwnProperty.call(c.equipment,slot),existing=canonicalItem(c.equipment?.[slot]);
@@ -366,7 +368,7 @@ function rosterCard(c,index){
   return `<article class="char-card roster-character-card ${classKey} ${!unlocked?'roster-locked':''} ${recovering?'shock-locked':''} ${active?'is-active':''}" data-role="${role}" data-class-name="${c.class}" style="--roster-accent:${meta?.glow||'#7F8B88'};--glow:${meta?.glow||'#7F8B88'}">
     ${!unlocked?'<div class="member-slot-ribbon">MEMBERSHIP SLOT '+(index+1)+'</div>':''}
     <div class="roster-card-head">
-      <div class="roster-card-portrait"><span>${c.portrait}</span><i>${meta?.icon||'◇'}</i></div>
+      <div class="roster-card-portrait">${portraitHTML(c,'md')}<i>${meta?.icon||'◇'}</i></div>
       <div class="roster-card-identity">
         <div class="roster-card-flags"><span class="role-tag role-${role}">${roleLabel(role)}</span><em class="roster-state ${statusClass}">${status}${recovering&&unlocked?` · ${formatRemaining(c)}`:''}</em></div>
         <h3>${c.name}</h3>
@@ -438,7 +440,7 @@ function ensureRecruitModal(){
 function openRecruit(slotIndex){
   if(!entitlements().member||!state.onboarding?.complete||state.roster.length>=10||slotIndex!==state.roster.length)return;
   const klass=Object.keys(classes)[0],spec=Object.keys(classes[klass]?.specs||{})[0];
-  recruitDraft={race:'Veyren',klass,spec,name:recruitRandomName('Veyren')};renderRecruitModal()
+  recruitDraft={race:'Veyren',klass,spec,name:recruitRandomName('Veyren'),appearance:CP?.randomAppearance?.('Veyren')||{race:'Veyren'}};renderRecruitModal()
 }
 function closeRecruit(){
   const root=$('#recruitAdventurerModal');if(root)root.hidden=true;document.body.classList.remove('recruit-adventurer-open');recruitDraft=null
@@ -446,6 +448,8 @@ function closeRecruit(){
 function renderRecruitModal(){
   const root=ensureRecruitModal();if(!recruitDraft)return;
   const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],specs=Object.entries(classes[recruitDraft.klass]?.specs||{}),role=classes[recruitDraft.klass]?.specs?.[recruitDraft.spec]?.role||'dps';
+  recruitDraft.appearance=CP?.normalizeAppearance?.(recruitDraft.appearance,recruitDraft.name||recruitDraft.race,recruitDraft.race)||recruitDraft.appearance||{race:recruitDraft.race};
+  const appearanceEditor=CP?.editorHTML?.(recruitDraft.appearance,{characterClass:recruitDraft.klass,name:recruitDraft.name,race:recruitDraft.race})||'';
   root.hidden=false;document.body.classList.add('recruit-adventurer-open');
   root.innerHTML='<section class="recruit-modal"><button class="modal-close" data-close-recruit>×</button>'+
     '<header><small>MEMBERSHIP ROSTER · SLOT '+(state.roster.length+1)+' OF 10</small><h2>Recruit Adventurer</h2><p>Membership adds five roster slots. Recruit them whenever you need them.</p></header>'+
@@ -453,16 +457,18 @@ function renderRecruitModal(){
       '<label><span>Race</span><select id="recruitRace">'+RECRUIT_RACES.map(r=>'<option value="'+r.id+'" '+(r.id===recruitDraft.race?'selected':'')+'>'+r.icon+' '+r.id+' · '+r.trait+'</option>').join('')+'</select></label>'+
       '<label><span>Class</span><select id="recruitClass">'+Object.entries(classes).map(([name,d])=>'<option value="'+name+'" '+(name===recruitDraft.klass?'selected':'')+'>'+d.icon+' '+name+'</option>').join('')+'</select></label>'+
       '<label><span>Specialisation</span><select id="recruitSpec">'+specs.map(([name,d])=>'<option value="'+name+'" '+(name===recruitDraft.spec?'selected':'')+'>'+name+' · '+roleLabel(d.role)+'</option>').join('')+'</select></label>'+
+      '<div class="recruit-appearance-wrap"><small>APPEARANCE</small>'+appearanceEditor+'</div>'+ 
       '<label class="recruit-name-label"><span>Name</span><div class="recruit-name"><input id="recruitName" maxlength="24" autocomplete="off" value="'+esc(recruitDraft.name)+'"><button type="button" data-random-recruit>RANDOMISE</button></div></label>'+
     '</div>'+
-    '<div class="recruit-preview"><i>'+race.icon+'</i><div><small>NEW LEVEL 1 ADVENTURER</small><b>'+esc(recruitDraft.name||'Unnamed')+'</b><span>'+race.id+' · '+recruitDraft.klass+' · '+recruitDraft.spec+' · '+roleLabel(role)+'</span></div></div>'+
+    '<div class="recruit-preview">'+portraitHTML({race:recruitDraft.race,appearance:recruitDraft.appearance,class:recruitDraft.klass,name:recruitDraft.name},'lg')+'<div><small>NEW LEVEL 1 ADVENTURER</small><b>'+esc(recruitDraft.name||'Unnamed')+'</b><span>'+race.id+' · '+recruitDraft.klass+' · '+recruitDraft.spec+' · '+roleLabel(role)+'</span></div></div>'+
     '<footer><small>Starts with basic equipment · 0% Cell Shock · independent talents and professions</small><button class="on-primary" data-confirm-recruit>CONFIRM RECRUIT →</button></footer></section>';
   root.querySelector('[data-close-recruit]').onclick=closeRecruit;
-  root.querySelector('#recruitRace').onchange=e=>{recruitDraft.race=e.target.value;recruitDraft.name=recruitRandomName(recruitDraft.race);renderRecruitModal()};
+  root.querySelector('#recruitRace').onchange=e=>{recruitDraft.race=e.target.value;recruitDraft.name=recruitRandomName(recruitDraft.race);recruitDraft.appearance=CP?.randomAppearance?.(recruitDraft.race)||{race:recruitDraft.race};renderRecruitModal()};
   root.querySelector('#recruitClass').onchange=e=>{recruitDraft.klass=e.target.value;recruitDraft.spec=Object.keys(classes[recruitDraft.klass]?.specs||{})[0];renderRecruitModal()};
   root.querySelector('#recruitSpec').onchange=e=>{recruitDraft.spec=e.target.value;renderRecruitModal()};
   root.querySelector('#recruitName').oninput=e=>{recruitDraft.name=e.target.value};
   root.querySelector('[data-random-recruit]').onclick=()=>{recruitDraft.name=recruitRandomName(recruitDraft.race);renderRecruitModal()};
+  CP?.bindEditor?.(root,recruitDraft.appearance,()=>renderRecruitModal(),{characterClass:recruitDraft.klass,name:recruitDraft.name});
   root.querySelector('[data-confirm-recruit]').onclick=createRecruit;
 }
 async function createRecruit(){
@@ -476,14 +482,14 @@ async function createRecruit(){
   const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],klass=recruitDraft.klass,spec=recruitDraft.spec,role=classes[klass]?.specs?.[spec]?.role||'dps',equipment=starterEquipment(klass);
   const ch=normalizeCharacter({
     id:recruitUid(),name,race:race.id,raceTrait:window.CellboundIdentities?.getRace?.(race.id)?.trait||race.trait,class:klass,spec,role,
-    level:1,xp:0,power:role==='tank'?30:role==='healer'?27:29,talent:1,portrait:recruitInitials(name),
+    level:1,xp:0,power:role==='tank'?30:role==='healer'?27:29,talent:1,portrait:recruitInitials(name),appearance:CP?.normalizeAppearance?.(recruitDraft.appearance,name,race.id)||recruitDraft.appearance,
     knowledge:{ashwarden:0,embermaw:0,vaultheart:0},equipment,gearItems:ILVL_SLOTS.map(slot=>equipment[slot]?.name||'Empty'),
     talents:talentState(klass),cellShock:0,cellShockLockedUntil:null,professions:[null,null],recruitedAt:new Date().toISOString()
   },state.roster.length);
   state.roster.push(ch);state.activity.push(name+' joined the guild in membership roster slot '+state.roster.length+'.');
   closeRecruit();writeLocal();await persistState();
   const combatStyle=['Mage','Priest','Druid','Hunter'].includes(ch.class)?'ranged':'melee';
-  const mirror=await supabaseClient.from('characters').insert({user_id:currentUser.id,name:ch.name,combat_style:combatStyle,tutorial_complete:true,creation_complete:true,appearance:{race:ch.race,class:ch.class,spec:ch.spec,role,roster_slot:state.roster.length-1,recruited:true},level:1,xp:0,current_hp:100,max_hp:100,current_location:'zeltira',tutorial_stage:'complete',tutorial_reward_claimed:true,last_played_at:new Date().toISOString()});
+  const mirror=await supabaseClient.from('characters').insert({user_id:currentUser.id,name:ch.name,combat_style:combatStyle,tutorial_complete:true,creation_complete:true,appearance:{...(ch.appearance||{}),race:ch.race,class:ch.class,spec:ch.spec,role,roster_slot:state.roster.length-1,recruited:true},level:1,xp:0,current_hp:100,max_hp:100,current_location:'zeltira',tutorial_stage:'complete',tutorial_reward_claimed:true,last_played_at:new Date().toISOString()});
   if(mirror.error)console.warn('Recruit character mirror record skipped',mirror.error);
   renderAll()
 }
@@ -495,7 +501,7 @@ function renderOverview(){
   const pi=partyItemLevel();
 
   ui.overviewRoster.innerHTML=party.length
-    ?party.map(c=>`<div class="home-party-member ${isUnavailable(c)?'recovering':''}" style="--party-class:${classDef(c)?.glow||'#77d7cf'}"><div class="home-party-portrait">${c.portrait}</div><div class="home-party-copy"><b>${c.name}</b><small>${c.class} · ${c.spec}</small><span>${roleLabel(roleOf(c))} · iLvl ${characterItemLevel(c)}</span></div><em>${isUnavailable(c)?formatRemaining(c):'READY'}</em></div>`).join('')
+    ?party.map(c=>`<div class="home-party-member ${isUnavailable(c)?'recovering':''}" style="--party-class:${classDef(c)?.glow||'#77d7cf'}"><div class="home-party-portrait">${portraitHTML(c,'sm')}</div><div class="home-party-copy"><b>${c.name}</b><small>${c.class} · ${c.spec}</small><span>${roleLabel(roleOf(c))} · iLvl ${characterItemLevel(c)}</span></div><em>${isUnavailable(c)?formatRemaining(c):'READY'}</em></div>`).join('')
     :'<div class="home-party-empty"><b>No active party yet.</b><span>Build your first five to begin.</span></div>';
 
   if(ui.activityLog){
@@ -882,7 +888,7 @@ function openBankItem(id){
         </div>
       </div>`;
 
-  const stats=G.statLines?.(item)||[];ui.bankDetail.innerHTML=`<div class="detail-hero gear-detail-hero"><div class="gear-detail-art">${G.artHTML(item,112)}</div><div><small>${tierText(item).toUpperCase()} · ${String(item.class||'All').toUpperCase()} · ${String(item.slot||'Gear').toUpperCase()}</small><h2>${item.name}</h2><div class="bank-detail-rolls">${stats.length?stats.map(s=>`<span>${s.text}</span>`).join(''):'<span class="legacy">Legacy item · no rolled stats</span>'}</div>${setBonusPanel(item)}${item.uniqueEffect?`<div class="bank-unique-detail"><small>UNIQUE EFFECT</small><b>${esc(item.uniqueEffect.name)}</b><p>${esc(item.uniqueEffect.description)}</p></div>`:''}<p>Dropped by ${item.source||'Unknown source'}</p><p>Quantity in bank: ${qty}</p></div></div>${flags}${upgrade}<div class="bank-manage"><h3>Equip to an adventurer</h3><p>Same Item Level can still be an upgrade if the roll better suits that character's spec.</p><div class="bank-character-list">${eligible.map(ch=>{const fit=G.rollFit?.(ch,item);return`<button data-equip-char="${ch.id}"><span class="avatar">${ch.portrait}</span><span><b>${ch.name}</b><small>${ch.race||'Veyren'} · ${ch.class} · ${ch.spec} · iLvl ${characterItemLevel(ch)}</small></span><em class="roll-fit ${fit?.tone||''}">${fit?.label||''}</em>${bankCompareMarkup(ch,item)}</button>`}).join('')||'<p>No available characters can use this item.</p>'}</div></div>${cleanup}`;
+  const stats=G.statLines?.(item)||[];ui.bankDetail.innerHTML=`<div class="detail-hero gear-detail-hero"><div class="gear-detail-art">${G.artHTML(item,112)}</div><div><small>${tierText(item).toUpperCase()} · ${String(item.class||'All').toUpperCase()} · ${String(item.slot||'Gear').toUpperCase()}</small><h2>${item.name}</h2><div class="bank-detail-rolls">${stats.length?stats.map(s=>`<span>${s.text}</span>`).join(''):'<span class="legacy">Legacy item · no rolled stats</span>'}</div>${setBonusPanel(item)}${item.uniqueEffect?`<div class="bank-unique-detail"><small>UNIQUE EFFECT</small><b>${esc(item.uniqueEffect.name)}</b><p>${esc(item.uniqueEffect.description)}</p></div>`:''}<p>Dropped by ${item.source||'Unknown source'}</p><p>Quantity in bank: ${qty}</p></div></div>${flags}${upgrade}<div class="bank-manage"><h3>Equip to an adventurer</h3><p>Same Item Level can still be an upgrade if the roll better suits that character's spec.</p><div class="bank-character-list">${eligible.map(ch=>{const fit=G.rollFit?.(ch,item);return`<button data-equip-char="${ch.id}"><span class="avatar">${portraitHTML(ch,'sm')}</span><span><b>${ch.name}</b><small>${ch.race||'Veyren'} · ${ch.class} · ${ch.spec} · iLvl ${characterItemLevel(ch)}</small></span><em class="roll-fit ${fit?.tone||''}">${fit?.label||''}</em>${bankCompareMarkup(ch,item)}</button>`}).join('')||'<p>No available characters can use this item.</p>'}</div></div>${cleanup}`;
   document.body.classList.add('bank-manage-open');ui.bankModal.hidden=false;
   ui.bankDetail.querySelectorAll('[data-equip-char]').forEach(b=>b.addEventListener('click',()=>equipBankItem(id,b.dataset.equipChar)));
   $('[data-bank-favorite]')?.addEventListener('click',()=>toggleBankFlag(id,'favorite'));
@@ -944,7 +950,7 @@ function partyComposition(chars=partyCharacters()){
 }
 function slotHtml(index,id){
   const c=id?charById(id):null,r=c?roleOf(c):null,icon=r==='tank'?'🛡':r==='healer'?'✚':r==='dps'?'⚔':'•',accent=c?(classDef(c)?.glow||'#d8b976'):'#6d7d78';
-  return `<div class="party-slot ${c?'filled':''} ${c&&isUnavailable(c)?'shock-locked':''}" style="--slot-accent:${accent}"><span class="party-slot-index">0${index+1}</span><div class="slot-role">${icon}</div><div class="party-slot-copy">${c?`<b>${c.name}</b><small>${c.class} · ${c.spec}</small><span>${roleLabel(r)} · iLvl ${characterItemLevel(c)} · Shock ${c.cellShock||0}%</span>`:`<b>Open Slot</b><small>Choose any available adventurer</small><span>Role follows active specialisation</span>`}</div>${c?`<button data-remove="${c.id}" aria-label="Remove ${c.name} from party">×</button>`:''}</div>`;
+  return `<div class="party-slot ${c?'filled':''} ${c&&isUnavailable(c)?'shock-locked':''}" style="--slot-accent:${accent}"><span class="party-slot-index">0${index+1}</span><div class="slot-role">${c?portraitHTML(c,'sm'):icon}</div><div class="party-slot-copy">${c?`<b>${c.name}</b><small>${c.class} · ${c.spec}</small><span>${roleLabel(r)} · iLvl ${characterItemLevel(c)} · Shock ${c.cellShock||0}%</span>`:`<b>Open Slot</b><small>Choose any available adventurer</small><span>Role follows active specialisation</span>`}</div>${c?`<button data-remove="${c.id}" aria-label="Remove ${c.name} from party">×</button>`:''}</div>`;
 }
 function partyReadiness(){
   const ids=flatPartyIds();
@@ -957,7 +963,7 @@ function partyReadiness(){
 }
 function renderParty(){
   const slots=partySlotIds();ui.partySlots.innerHTML=slots.map((id,i)=>slotHtml(i,id)).join('');ui.partySlots.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',()=>{removeChar(b.dataset.remove);save();renderAll();}));
-  const selected=new Set(flatPartyIds());ui.partyRoster.innerHTML=state.roster.map((c,i)=>{const slotLocked=!isRosterSlotUnlocked(i),shock=isUnavailable(c),disabled=selected.has(c.id)||slotLocked||shock||selected.size>=5;return `<button class="party-choice ${slotLocked?'roster-locked':''} ${shock?'shock-locked':''}" data-pick="${c.id}" ${disabled?'disabled':''}><div class="avatar">${c.portrait}</div><div><b>${c.name}</b><small>Lv. ${c.level} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}</small></div><em>${slotLocked?'Member slot':shock?`Recovering ${formatRemaining(c)}`:`${roleLabel(roleOf(c))} · Shock ${c.cellShock||0}%`}</em></button>`;}).join('');
+  const selected=new Set(flatPartyIds());ui.partyRoster.innerHTML=state.roster.map((c,i)=>{const slotLocked=!isRosterSlotUnlocked(i),shock=isUnavailable(c),disabled=selected.has(c.id)||slotLocked||shock||selected.size>=5;return `<button class="party-choice ${slotLocked?'roster-locked':''} ${shock?'shock-locked':''}" data-pick="${c.id}" ${disabled?'disabled':''}><div class="avatar">${portraitHTML(c,'sm')}</div><div><b>${c.name}</b><small>Lv. ${c.level} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}</small></div><em>${slotLocked?'Member slot':shock?`Recovering ${formatRemaining(c)}`:`${roleLabel(roleOf(c))} · Shock ${c.cellShock||0}%`}</em></button>`;}).join('');
   ui.partyRoster.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>assignChar(b.dataset.pick)));const r=partyReadiness();ui.readinessFill.style.width=`${r.score}%`;ui.readinessText.textContent=`${r.score}%`;ui.readinessLabel.textContent=r.ready?'READY':'NOT READY';ui.readinessLabel.className=r.ready?'good':'';ui.readinessHint.textContent=r.hint;
 }
 $('#autoFill')?.addEventListener('click',()=>{const available=state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&!isUnavailable(c)).sort((a,b)=>characterItemLevel(b)-characterItemLevel(a)||b.power-a.power).slice(0,5);writePartySlots(available.map(c=>c.id));save();renderAll();});
@@ -976,7 +982,7 @@ function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(
 
 window.CellboundGame={
   ready:false,getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,refreshStateFromServer,
-  characterItemLevel,partyItemLevel,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,
+  characterItemLevel,partyItemLevel,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,portraitHTML,
   addBankItem,addMaterial,renderAll,switchView,starterEquipment,
   getPartyCharacters:()=>partyCharacters(),
   applyPartyCellShock:(amount=PVE_WIPE_CELL_SHOCK)=>{const chars=partyCharacters();chars.forEach(ch=>applyCellShock(ch,amount));save();renderAll();return chars.map(ch=>({id:ch.id,name:ch.name,cellShock:ch.cellShock}));}
