@@ -893,3 +893,71 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:1px solid 
   .dungeon-browser-heading>b{display:inline-block;margin-top:7px}
   .dungeon-detail-toolbar{align-items:flex-start}
 }
+
+
+/* Profession Workshop V2 layout ownership
+   The current workshop owns recipe geometry; legacy Evolution rules must not
+   split work orders into two narrow columns or reflow their child artwork. */
+#professions .profession-layout{
+  grid-template-columns:250px minmax(0,1fr);
+  align-items:start;
+  gap:14px
+}
+#professions .profession-main{min-width:0}
+#professions .profession-roster-panel{
+  top:10px;
+  max-height:calc(100vh - 20px);
+  overflow:auto
+}
+#professions .recipe-list{
+  grid-template-columns:1fr!important;
+  gap:8px!important;
+  margin-top:8px!important
+}
+#professions .profession-recipe-card{
+  display:grid!important;
+  grid-template-columns:64px minmax(0,1fr) 132px!important;
+  grid-template-rows:auto!important;
+  grid-auto-flow:row!important;
+  align-items:center!important;
+  min-height:94px!important;
+  height:auto!important;
+  padding:10px!important
+}
+#professions .profession-recipe-card>.recipe-output-art{
+  grid-column:1!important;
+  grid-row:1!important;
+  margin:0!important;
+  align-self:center!important
+}
+#professions .profession-recipe-card>.recipe-main{
+  grid-column:2!important;
+  grid-row:1!important;
+  min-width:0!important
+}
+#professions .profession-recipe-card>button{
+  grid-column:3!important;
+  grid-row:1!important;
+  align-self:center!important;
+  width:100%!important;
+  height:auto!important;
+  min-height:42px!important
+}
+@media(max-width:1120px){
+  #professions .profession-layout{grid-template-columns:1fr}
+  #professions .profession-roster-panel{position:static;max-height:none}
+  #professions .profession-character-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  #professions .profession-character-list{grid-template-columns:1fr}
+  #professions .profession-recipe-card{
+    grid-template-columns:52px minmax(0,1fr)!important;
+  }
+  #professions .profession-recipe-card>.recipe-output-art{grid-column:1!important}
+  #professions .profession-recipe-card>.recipe-main{grid-column:2!important}
+  #professions .profession-recipe-card>button{
+    grid-column:1/-1!important;
+    grid-row:2!important;
+    width:100%!important
+  }
+}
