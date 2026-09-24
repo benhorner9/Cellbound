@@ -104,9 +104,9 @@
 }
 .roster-card-portrait{
   position:relative;width:62px;height:62px;display:grid;place-items:center;
-  border:1px solid color-mix(in srgb,var(--roster-accent) 28%,rgba(255,255,255,.06));
-  background:linear-gradient(180deg,#122126,#0a1418);
-  box-shadow:inset 0 0 22px rgba(0,0,0,.42)
+  border:0;
+  background:none;
+  box-shadow:none
 }
 .roster-card-portrait>span{font:500 1.25rem Georgia,serif;color:#e8efec}
 .roster-card-portrait>i{
