@@ -170,7 +170,7 @@ for(const file of files){
     for(const hook of [".cbx-transition{",".cbx-enter",".cbx-room",".cb2d-backdrop",".hs2d-backdrop",".cc2d-backdrop",".bs2d-backdrop",".fa-backdrop","100dvh"])if(!contents.includes(hook))throw new Error('PvE full-screen expedition styling is missing '+hook);
   }
   if(file==='boss-dossier-v1.js'){
-    for(const hook of ["const VERSION='1.3.3'","'vaultheart'","'bound-choir'","'vorran'","'vex-calder'","'old-man'","'three-hounds'","'silas-vane'","./assets/bosses/ashen-vault-vaultheart.webp","./assets/bosses/hollow-sanctum-bound-choir.webp","./assets/bosses/chaos-canyon-vorran.webp","./assets/bosses/blackout-station-calder.webp","./assets/bosses/fractured-ages-old-man.webp","data:image/webp;base64,","async function show(","Skip the full briefing on future runs","window.CellboundBossDossier"])if(!contents.includes(hook))throw new Error('Final boss dossier runtime is missing '+hook);
+    for(const hook of ["const VERSION='1.3.4'","'vaultheart'","'bound-choir'","'vorran'","'vex-calder'","'old-man'","'three-hounds'","'silas-vane'","./assets/bosses/ashen-vault-vaultheart.webp","./assets/bosses/hollow-sanctum-bound-choir.webp","./assets/bosses/chaos-canyon-vorran.webp","./assets/bosses/blackout-station-calder.webp","./assets/bosses/fractured-ages-old-man.webp","./assets/bosses/no-way-back-three-hounds-v3.jpg","./assets/bosses/no-way-back-silas-vane-v3.jpg","async function show(","Skip the full briefing on future runs","window.CellboundBossDossier"])if(!contents.includes(hook))throw new Error('Final boss dossier runtime is missing '+hook);
   }
   if(file==='boss-dossier-v1.css'){
     for(const hook of [".cbd-backdrop",".cbd-shell",".cbd-art",".cbd-ability",".cbd-intel",".cbd-stinger","theme-fractured","prefers-reduced-motion"])if(!contents.includes(hook))throw new Error('Final boss dossier styling is missing '+hook);
@@ -269,7 +269,7 @@ for(const file of files){
   }
   if(file==='guild.html'){
     if(!contents.includes('boss-dossier-v1.css?v=2'))throw new Error('Boss dossier CSS cache version is stale in guild.html');
-    if(!contents.includes('boss-dossier-v1.js?v=9'))throw new Error('Boss dossier cache version is stale in guild.html');
+    if(!contents.includes('boss-dossier-v1.js?v=10'))throw new Error('Boss dossier cache version is stale in guild.html');
     if(!contents.includes('no-way-back-v1.css?v=4')||!contents.includes('no-way-back-v1.js?v=6'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
     if(!contents.includes('comic-scenes-v1.css?v=2')||!contents.includes('comic-scenes-v1.js?v=2')||!contents.includes('onboarding-v1.js?v=18'))throw new Error('Tutorial comic asset cache versions are stale in guild.html');
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
