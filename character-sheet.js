@@ -297,10 +297,12 @@ function paperDoll(c,state){
   </div>`;
 }
 function possibleSlots(item){
+  if(G?.equipmentPositions)return G.equipmentPositions(item);
   if(!item||typeof item!=='object')return[];
   if(item.slot==='Trinket')return ['Trinket1','Trinket2'];
   if(item.slot==='Ring')return ['Ring1','Ring2'];
-  if(item.slot==='Weapon')return ['Weapon','OffHand'];
+  if(item.slot==='Weapon')return ['Weapon'];
+  if(item.slot==='OffHand')return ['OffHand'];
   return item.slot?[item.slot]:[];
 }
 function canUse(c,item){
