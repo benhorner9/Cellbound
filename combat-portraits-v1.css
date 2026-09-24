@@ -91,3 +91,61 @@
   .cb2d-unit.cb-combat-has-portrait>span:not(.cb-combat-portrait){top:31px}
   .pvp2d-unit.cb-combat-has-portrait .pvp2d-token>.cb-combat-portrait{inset:2px}
 }
+
+/* Named final bosses use their real dossier artwork in combat. */
+.cb2d-unit.cb-combat-has-boss-portrait>i{opacity:0!important}
+.cb2d-unit.cb-combat-has-boss-portrait>.cb-combat-boss-portrait{
+  position:absolute;
+  z-index:3;
+  display:block!important;
+  min-width:0!important;
+  left:50%;
+  top:50%;
+  width:50px;
+  height:50px;
+  transform:translate(-50%,-50%);
+  overflow:hidden;
+  border:2px solid #d7b45b;
+  border-radius:50%;
+  background:#180b0a;
+  box-shadow:
+    0 0 0 2px rgba(118,28,25,.92),
+    0 0 0 4px rgba(3,6,8,.88),
+    0 0 24px rgba(215,180,91,.42),
+    0 0 34px rgba(179,48,38,.22);
+  pointer-events:none
+}
+.cb2d-unit.cb-combat-has-boss-portrait>.cb-combat-boss-portrait:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+  box-shadow:inset 0 0 14px rgba(0,0,0,.48),inset 0 -8px 16px rgba(70,10,8,.28);
+  pointer-events:none
+}
+.cb2d-unit.cb-combat-has-boss-portrait>.cb-combat-boss-portrait img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center 28%;
+  transform:scale(1.08);
+  filter:saturate(1.06) contrast(1.04)
+}
+.cb2d-unit.cb-combat-has-boss-portrait>span{top:53px!important;color:#efcf72!important;text-shadow:0 1px 3px #000,0 0 9px rgba(215,180,91,.28)!important}
+.cb2d-unit.cb-combat-has-boss-portrait .cb2d-unit-hp,
+.cb2d-unit.cb-combat-has-boss-portrait>em{top:-24px!important;width:78px!important}
+.cb2d-unit.cb-combat-has-boss-portrait>.cbs-strip{top:-52px!important}
+.cb2d-unit.cb-combat-has-boss-portrait.attacking>.cb-combat-boss-portrait{animation:cbCombatBossAttack .42s ease-out}
+.cb2d-unit.cb-combat-has-boss-portrait.hit>.cb-combat-boss-portrait{animation:cbCombatBossHit .28s ease-out}
+.cb2d-unit.cb-combat-has-boss-portrait.dying>.cb-combat-boss-portrait,
+.cb2d-unit.cb-combat-has-boss-portrait.dead>.cb-combat-boss-portrait{animation:cbCombatBossDown .34s ease-in forwards}
+@keyframes cbCombatBossAttack{0%{transform:translate(-50%,-50%) scale(1)}38%{transform:translate(-50%,-50%) scale(1.12);filter:brightness(1.22)}100%{transform:translate(-50%,-50%) scale(1)}}
+@keyframes cbCombatBossHit{0%{filter:brightness(1)}45%{filter:brightness(1.62) saturate(1.2)}100%{filter:brightness(1)}}
+@keyframes cbCombatBossDown{to{transform:translate(-50%,-50%) scale(.82);filter:grayscale(.75) brightness(.55);opacity:.35}}
+
+@media(max-width:540px){
+  .cb2d-unit.cb-combat-has-boss-portrait>.cb-combat-boss-portrait{width:42px;height:42px}
+  .cb2d-unit.cb-combat-has-boss-portrait .cb2d-unit-hp,
+  .cb2d-unit.cb-combat-has-boss-portrait>em{top:-21px!important;width:70px!important}
+}
