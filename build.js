@@ -47,6 +47,9 @@ for(const file of files){
     for(const hook of ['window.CellboundPortraits','normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
     if(!contents.includes("if(item.slot&&item.slot!=='OffHand')return''"))throw new Error('Paper doll must not invent an OffHand visual for main-hand weapons');
   }
+  if(file==='roster-v2.css'){
+    if(!contents.includes('.roster-card-portrait{')||!contents.includes('border:0;')||!contents.includes('background:none;')||!contents.includes('box-shadow:none'))throw new Error('Roster portrait wrapper must stay frameless');
+  }
   if(file==='character-portraits-v1.css'){
     for(const hook of ['.cb-portrait','.cb-appearance-editor','.roster-card-portrait','.quest-dialogue-portrait','.cb-paper-doll','.cb-paper-slot.is-highlighted','.cb-paper-slot.is-set-item','.cb-paper-set-glow','.cb-equipment-set-visual','.cb-equipment-visual-stage'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual styling is missing '+hook);
     for(const hook of ['#party .party-choice{','grid-template-columns:56px minmax(0,1fr) auto','#party .party-choice>div:nth-child(2){','text-overflow:ellipsis'])if(!contents.includes(hook))throw new Error('Active Party portrait/text spacing is missing '+hook);
@@ -289,7 +292,7 @@ for(const file of files){
     if(!contents.includes('home-v2.css')||!contents.includes('class="home-command"')||!contents.includes('class="home-destination-grid"')||!contents.includes('id="overviewGuildPulse"'))throw new Error('Guild Command Centre home is not linked or its required hooks are missing');
     if(!contents.includes('command-ui-v1.css'))throw new Error('Cross-game Guild Command UI layer is not linked from guild.html');
     if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=31'))throw new Error('Character Command UI is not linked from guild.html');
-    for(const hook of ['roster-v2.css','class="roster-overview-strip"','id="rosterClearFilters"','id="rosterResultsLabel"','class="roster-grid roster-grid-v2"'])if(!contents.includes(hook))throw new Error('Roster v2 UI is missing '+hook);
+    for(const hook of ['roster-v2.css?v=2','class="roster-overview-strip"','id="rosterClearFilters"','id="rosterResultsLabel"','class="roster-grid roster-grid-v2"'])if(!contents.includes(hook))throw new Error('Roster v2 UI is missing '+hook);
     for(const hook of ['bank-v2.css','class="bank-category-tabs"','id="bankClearFilters"','id="bankResultsLabel"','class="bank-grid bank-grid-v2"','data-bank-category="Gear"'])if(!contents.includes(hook))throw new Error('Bank v2 UI is missing '+hook);
     if(!contents.includes('bank-v2.css?v=2'))throw new Error('Bank v2 stylesheet cache version must include category-isolation fix');
     if(!contents.includes('combat-polish-v2.css')||!contents.includes('combat-polish-v2.js'))throw new Error('Shared combat VFX polish assets are not linked from guild.html');
