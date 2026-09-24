@@ -199,7 +199,7 @@ function gearInspector(l){
   return '<div class="tp-inspector-content">'+
     '<div class="tp-inspector-hero"><div class="tp-inspector-art">'+gearArt(l,76)+'</div><div><small class="tp-rarity-'+slug(rarity)+'">'+heroMeta+'</small><h3>'+esc(l.item_name)+'</h3><p>'+heroDetail+'</p></div></div>'+
     '<div><div class="tp-quote-grid"><div><span>Price</span><b>'+gold(l.unit_price)+'</b></div><div><span>Time left</span><b>'+(l.expires_at?timeLeft(l.expires_at):'48h')+'</b></div></div>'+
-    itemSection+
+    itemSection+setSection+
     '<div class="tp-inspector-section"><small>'+ (utility?'USAGE':'YOUR COMPARISON') +'</small>'+compatibleCompare(g)+'</div></div>'+
     '<div><div class="tp-inspector-section"><small>MARKET ACTIONS</small><div class="tp-action-row">'+
     (l.is_own?'<button type="button" class="danger" data-cancel-gear="'+esc(l.id)+'">CANCEL LISTING</button>':'<button type="button" data-buy-gear="'+esc(l.id)+'">BUY FOR '+gold(l.unit_price)+'</button>')+
