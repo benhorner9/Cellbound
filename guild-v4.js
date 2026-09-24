@@ -214,6 +214,31 @@ function normalizeCharacter(c,index=0){
 function canonicalBank(raw){
   const out=[];(Array.isArray(raw)?raw:[]).forEach(item=>{const canon=canonicalItem(item);if(!canon?.name)return;const sig=G.rollSignature?.(canon)||'';const found=!canon.nonStackable&&out.find(x=>x.itemId===canon.itemId&&(G.rollSignature?.(x)||'')===sig&&x.source===item.source);if(found)found.quantity+=(item.quantity||1);else out.push({...canon,id:item.id||`bank-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,quantity:item.quantity||1,source:item.source||'Previous loot'});});return out;
 }
+function repairInvalidOffHands(s){
+  if(!s||!Array.isArray(s.roster))return 0;
+  s.bank=Array.isArray(s.bank)?s.bank:[];
+  let repaired=0;
+  s.roster.forEach(c=>{
+    const raw=c?.equipment?.OffHand,off=canonicalItem(raw);
+    if(!off)return;
+    // Old Equipment UI allowed a main-hand Weapon item to be stored in OffHand.
+    // Return it safely to the Bank rather than inventing an off-hand visual for it.
+    if(!G?.canEquipInSlot?.(off,'OffHand')){
+      c.equipment.OffHand=null;
+      c.power=Math.max(1,(Number(c.power)||1)-(Number(off.power)||0));
+      s.bank.push({...off,id:`bank-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,quantity:1,source:`Recovered from invalid OffHand on ${c.name}`});
+      c.gearItems=ILVL_SLOTS.map(slot=>c.equipment?.[slot]?.name||'Empty');
+      c.gear=characterItemLevel(c);
+      repaired++;
+    }
+  });
+  if(repaired){
+    s.bank=canonicalBank(s.bank);
+    s.activity=Array.isArray(s.activity)?s.activity:[];
+    s.activity.push(`Recovered ${repaired} main-hand weapon${repaired===1?'':'s'} that had been incorrectly equipped in OffHand.`);
+  }
+  return repaired;
+}
 function removeInvalidPartyMembers(s){
   const allowed=new Set((s.roster||[]).filter((c,i)=>isRosterSlotUnlocked(i)&&!isUnavailable(c)).map(c=>c.id));
   if(!allowed.has(s.party?.tank))s.party.tank=null;if(!allowed.has(s.party?.healer))s.party.healer=null;
@@ -231,7 +256,7 @@ function migrateState(raw){
   s.progression=s.progression&&typeof s.progression==='object'?s.progression:{};if(typeof s.progression.ashenVaultUnlocked!=='boolean')s.progression.ashenVaultUnlocked=Boolean(Number(s.dungeonCompletions)>0||Object.values(s.bossKills||{}).some(Boolean)||s.questSystem?.ashfall?.complete);s.bank=canonicalBank(s.bank);s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};s.consumables=Array.isArray(s.consumables)?s.consumables:[];s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];s.collectionHistory=Array.isArray(s.collectionHistory)?s.collectionHistory:[];s.reports=Array.isArray(s.reports)?s.reports:[];s.activity=Array.isArray(s.activity)?s.activity:[];s.bossKills=s.bossKills||{ashwarden:false,embermaw:false,vaultheart:false};s.party=s.party||{tank:null,healer:null,dps:[null,null,null]};
   if(s.__fresh_start===true||!s.onboarding&&!hadRoster)s.onboarding={version:1,complete:false,stage:'party-builder',zone:'zeltira',startedAt:new Date().toISOString()};
   else if(!s.onboarding&&hadRoster)s.onboarding={version:1,complete:true,stage:'complete',zone:'zeltira',legacy:true};
-  s.roster.forEach(c=>refreshRecovery(c));delete s.__fresh_start;return s;
+  repairInvalidOffHands(s);s.roster.forEach(c=>refreshRecovery(c));delete s.__fresh_start;return s;
 }
 function localCandidate(userId){
   const owner=localStorage.getItem(LOCAL_OWNER);
@@ -910,7 +935,9 @@ function addMaterial(key,quantity=1){if(!key||quantity<=0)return;state.materials
 function awardReagents(boss){if(!P)return[];const drops=P.rollReagents(boss.id);drops.forEach(d=>addMaterial(d.key,d.quantity));if(boss.id==='vaultheart'&&!state.discoveredRecipes.includes('enc-vault-glyph')&&!state.recipeScrolls.some(x=>x.recipeId==='enc-vault-glyph')&&Math.random()<.12){state.recipeScrolls.push({recipeId:'enc-vault-glyph',name:'Recipe: Vaultheart Glyph',quantity:1});drops.push({key:'recipe:enc-vault-glyph',quantity:1,recipe:true});state.activity.push('Rare recipe scroll dropped: Vaultheart Glyph.');}return drops;}
 function equipBankItem(itemId,charId){
   const item=state.bank.find(x=>x.id===itemId),c=charById(charId);if(!item||!c||!canUseItem(c,item)||isUnavailable(c))return;
-  const slot=item.slot,old=canonicalItem(c.equipment?.[slot]),incoming=canonicalItem(item);
+  const slot=item.slot,incoming=canonicalItem(item);
+  if(!G?.canEquipInSlot?.(incoming,slot))return;
+  const old=canonicalItem(c.equipment?.[slot]);
   if(old?.name){c.power=Math.max(1,(Number(c.power)||1)-(Number(old.power)||0));addBankItem({...old,source:`Unequipped from ${c.name}`},false)}
   c.equipment[slot]={...incoming,source:'Equipped'};c.power=Math.max(1,(Number(c.power)||1)+(Number(incoming?.power)||0));
   c.gearItems=ILVL_SLOTS.map(s=>c.equipment?.[s]?.name||'Empty');c.gear=characterItemLevel(c);item.quantity=(item.quantity||1)-1;if(item.quantity<=0)state.bank=state.bank.filter(x=>x.id!==item.id);state.activity.push(`${c.name} equipped ${item.name} (iLvl ${item.itemLevel}).`);save();ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open');renderAll();switchView('bank');
