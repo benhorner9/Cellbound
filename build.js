@@ -268,7 +268,7 @@ for(const file of files){
     if(!contents.includes('craftHistory:p.craftHistory')||!contents.includes('projectsCompleted:Math.max'))throw new Error('Profession project progression is not preserved by guild state normalization');
   }
   if(file==='guild.html'){
-    if(!contents.includes('no-way-back-v1.css?v=2')||!contents.includes('no-way-back-v1.js?v=4'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
+    if(!contents.includes('no-way-back-v1.css?v=3')||!contents.includes('no-way-back-v1.js?v=5'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
     if(!contents.includes('comic-scenes-v1.css?v=2')||!contents.includes('comic-scenes-v1.js?v=2')||!contents.includes('onboarding-v1.js?v=18'))throw new Error('Tutorial comic asset cache versions are stale in guild.html');
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=48')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');

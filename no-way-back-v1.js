@@ -196,7 +196,7 @@ function repairCard(kind,eyebrow,title,done,copy,action){
 }
 function openSailPuzzle(){
   const n=ensure(),r=ensureRoot(),pieces=[0,1,2,3,4,5,6,7,8,9,10,11].sort(()=>Math.random()-.5),placed={},selected={id:null},started=Date.now(),limit=120000;
-  let note='Match the stains, seams and repair marks to the faded sail underneath.',misses=0;
+  let note='Match the stains, seams and repair marks across the loose pieces.',misses=0;
   const secured=()=>Object.keys(placed).length;
   const pieceVisual=(id,ghost=false)=>'<i class="'+(ghost?'nwb-sail-ghost':'nwb-sail-piece')+' p'+id+'" data-piece-visual="'+id+'"></i>';
   function pieceButton(id){
@@ -205,13 +205,13 @@ function openSailPuzzle(){
   const draw=()=>{
     const remaining=Math.max(0,Math.ceil((limit-(Date.now()-started))/1000));
     r.innerHTML=chrome('TIMED MINI GAME · 120 SECONDS','Stitch The Sail',
-      '<div class="nwb-jigsaw"><aside><small>TORN CANVAS</small><h3>Rebuild the sail</h3><p>Each piece now carries part of the sail’s original markings. Select a loose piece, then match its stains, seams and patches to the faded guide.</p>'+
+      '<div class="nwb-jigsaw"><aside><small>TORN CANVAS</small><h3>Rebuild the sail</h3><p>Each piece carries part of the sail’s original markings. Select a loose piece, then work out where its stains, seams and patches continue across the finished sail.</p>'+
       '<div class="nwb-sail-progress"><span>STITCHED</span><b>'+secured()+' / 12</b></div>'+
       '<div class="nwb-timer"><span>TIME</span><b data-sail-time>'+remaining+'s</b></div>'+
       '<div class="nwb-piece-tray">'+pieces.filter(id=>placed[id]==null).map(id=>pieceButton(id)).join('')+'</div>'+
       '<p class="nwb-sail-help">Correct pieces snap into place. A wrong panel will flash red without costing the piece.</p></aside>'+
       '<main><div class="nwb-sail-guide"><div class="nwb-sail-grid '+(selected.id!=null?'is-placing':'')+'">'+
-      [0,1,2,3,4,5,6,7,8,9,10,11].map(slot=>'<button class="'+(placed[slot]!=null?'locked':'available')+'" data-sail-slot="'+slot+'" aria-label="Sail panel '+(slot+1)+'">'+(placed[slot]!=null?pieceVisual(placed[slot]):pieceVisual(slot,true))+'</button>').join('')+
+      [0,1,2,3,4,5,6,7,8,9,10,11].map(slot=>'<button class="'+(placed[slot]!=null?'locked':'available')+'" data-sail-slot="'+slot+'" aria-label="Sail panel '+(slot+1)+'">'+(placed[slot]!=null?pieceVisual(placed[slot]):'<span class="nwb-empty-sail-slot"></span>')+'</button>').join('')+
       '</div></div><p data-sail-note>'+esc(note)+'</p><button class="nwb-secondary" data-sail-reset>RESHUFFLE LOOSE PIECES</button></main></div>');
     bindClose();bindPieces()
   };

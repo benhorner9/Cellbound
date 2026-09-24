@@ -44,7 +44,7 @@ background-size:400% 300%;background-repeat:no-repeat}
 .nwb-sail-grid.is-placing button.available{border-color:#d7b56d55;box-shadow:inset 0 0 0 1px #d7b56d22}
 .nwb-sail-grid button.locked{border-color:#7fb49388;box-shadow:inset 0 0 14px #4a8a622a;cursor:default}
 .nwb-sail-ghost{opacity:.28;filter:saturate(.55) brightness(.88)}
-.nwb-sail-grid.is-placing .nwb-sail-ghost{opacity:.38}
+
 .nwb-sail-grid button.wrong{animation:nwb-sail-wrong .4s ease;border-color:#d56868!important;box-shadow:inset 0 0 20px #a52f2f66,0 0 16px #a52f2f55!important}
 .nwb-sail-grid button.hint{animation:nwb-sail-hint .75s ease infinite alternate;border-color:#f0cb78!important;box-shadow:0 0 0 3px #d7b56d55,0 0 26px #d7b56d66!important}
 .nwb-sail-progress{margin-top:18px;display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border:1px solid #6da18444;background:#14241d;border-radius:10px}
@@ -61,3 +61,6 @@ background-size:400% 300%;background-repeat:no-repeat}
   .nwb-sail-piece,.nwb-sail-ghost{background-size:400% 300%}
   .nwb-sail-guide{min-height:260px}
 }
+
+.nwb-empty-sail-slot{display:block;width:100%;height:100%;background:linear-gradient(135deg,#172129,#0c151b);box-shadow:inset 0 0 0 1px #ffffff08}
+.nwb-sail-grid.is-placing button.available .nwb-empty-sail-slot{background:linear-gradient(135deg,#1b252c,#0e181e)}
