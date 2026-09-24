@@ -104,10 +104,19 @@ function remove(){
   document.body.classList.remove('cbd-open')
 }
 function art(cfg){
-  const img=cfg.artwork?'<img class="cbd-art-image" src="'+esc(cfg.artwork)+'" alt="'+esc(cfg.name)+'" onerror="this.hidden=true;this.nextElementSibling.hidden=false">':'';
+  const img=cfg.artwork?'<img class="cbd-art-image" src="'+esc(cfg.artwork)+'" alt="'+esc(cfg.name)+'" decoding="async" draggable="false">':'';
   return '<div class="cbd-art" data-cbd-boss="'+esc(Object.keys(BOSSES).find(k=>BOSSES[k]===cfg)||'boss')+'">'+img+
    '<div class="cbd-art-fallback" '+(cfg.artwork?'hidden':'')+' aria-hidden="true"><div class="cbd-art-depth"></div><div class="cbd-art-sigil"></div><div class="cbd-art-figure"><i></i><i></i><i></i></div><div class="cbd-art-fx"><i></i><i></i><i></i><i></i></div></div>'+
    '<div class="cbd-art-label"><small>'+esc(cfg.artLabel||'FINAL ENCOUNTER')+'</small><b>'+esc(cfg.name)+'</b></div></div>'
+}
+function bindArtwork(root){
+  const img=root?.querySelector?.('.cbd-art-image'),fallback=root?.querySelector?.('.cbd-art-fallback');
+  if(!img||!fallback)return;
+  const loaded=()=>{img.hidden=false;fallback.hidden=true;root.classList.remove('art-failed')};
+  const failed=()=>{img.hidden=true;fallback.hidden=false;root.classList.add('art-failed')};
+  img.addEventListener('load',loaded,{once:true});
+  img.addEventListener('error',failed,{once:true});
+  if(img.complete){if(img.naturalWidth>0)loaded();else failed()}
 }
 function full(id,cfg,options={}){
   return new Promise(resolve=>{
@@ -123,6 +132,7 @@ function full(id,cfg,options={}){
       '<footer><label class="cbd-skip-pref"><input type="checkbox" data-cbd-future checked><span>Skip the full briefing on future runs</span></label><div class="cbd-actions"><button type="button" data-cbd-skip>SKIP</button><button type="button" class="primary" data-cbd-begin>'+esc(cfg.beginLabel||'BEGIN ENCOUNTER →')+'</button></div></footer></div>'+
       '</section>';
     document.body.appendChild(root);active=root;document.body.classList.add('cbd-open');
+    bindArtwork(root);
     const complete=async()=>{
       const skipFuture=Boolean(root.querySelector('[data-cbd-future]')?.checked);mark(id,skipFuture);
       root.classList.add('leaving');await wait(reduce()?20:220);remove();resolve(true)
