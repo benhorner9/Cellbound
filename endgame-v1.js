@@ -90,15 +90,22 @@ function bossLootMarkup(id){
  return '<section class="eg-loot-table"><div class="panel-head"><div><small>TARGET LOOT</small><h4>Boss-specific drops</h4></div><span>Secret collection drops remain hidden.</span></div>'+rows+'</section>'
 }
 
+function tierPickerMarkup(current,max,{attribute='data-eg-tier',prefix=''}={}){
+ const cur=clamp(Number(current)||1,1,Math.max(1,Number(max)||1)),top=Math.max(1,Number(max)||1);
+ const buttons=Array.from({length:top},(_,i)=>i+1).map(t=>{
+   const value=prefix?prefix+'|'+t:String(t);
+   return '<button type="button" '+attribute+'="'+value+'" class="'+(t===cur?'active':'')+'" aria-pressed="'+(t===cur?'true':'false')+'">+'+t+'</button>'
+ }).join('');
+ return '<div class="eg-tier-picker"><div class="eg-tier-picker-head"><span>CELLBOUND+ TIER</span><em>Highest unlocked +'+top+'</em></div><div class="eg-tier-strip" role="group" aria-label="Cellbound Plus tier">'+buttons+'</div></div>'
+}
+
 function dungeonCard(id){
  const cfg=currentConfig(id),p=progressFor(id),s=selection[id],tiers=Math.max(1,Number(p.highest_tier)||1),runs=recentFor(id);
  const modeButtons=['normal','heroic','cellbound'].map(mode=>{
    const unlocked=difficultyUnlocked(id,mode,s.tier),label=mode==='cellbound'?'CELLBOUND+':' '+mode.toUpperCase();
    return'<button data-eg-mode="'+id+'|'+mode+'" class="'+(s.difficulty===mode?'active':'')+'" '+(unlocked?'':'disabled')+'>'+label+'</button>'
  }).join('');
- const tier=s.difficulty==='cellbound'
-   ?'<div class="eg-tier-select"><label>Tier <select data-eg-tier="'+id+'">'+Array.from({length:tiers},(_,i)=>i+1).map(t=>'<option value="'+t+'" '+(t===s.tier?'selected':'')+'>Cellbound+'+t+'</option>').join('')+'</select></label><span>Highest unlocked +'+tiers+'</span></div>'
-   :'';
+ const tier=s.difficulty==='cellbound'?tierPickerMarkup(s.tier,tiers,{attribute:'data-eg-tier',prefix:id}):'';
  const best=p.best_score?'<b>'+Number(p.best_score).toLocaleString()+' score</b><small>Best time '+formatTime(p.best_time_ms)+'</small>':'<b>No ranked clear yet</b><small>Your first completion will establish a baseline.</small>';
  return '<article class="eg-dungeon-card" data-eg-dungeon="'+id+'">'+
    '<header><div><small>'+esc(cfg.dungeon.theme.toUpperCase())+' · VERSION '+cfg.dungeon.version+'</small><h3>'+esc(cfg.dungeon.name)+'</h3><p>'+esc(cfg.dungeon.identity)+'</p></div><div class="eg-best">'+best+'</div></header>'+
@@ -163,7 +170,7 @@ function render(){
 }
 function bind(){
  document.querySelectorAll('[data-eg-mode]').forEach(b=>b.onclick=()=>{const[id,mode]=b.dataset.egMode.split('|');choose(id,mode)});
- document.querySelectorAll('[data-eg-tier]').forEach(s=>s.onchange=()=>choose(s.dataset.egTier,'cellbound',Number(s.value)));
+ document.querySelectorAll('[data-eg-tier]').forEach(b=>b.onclick=()=>{const[id,tier]=b.dataset.egTier.split('|');choose(id,'cellbound',Number(tier))});
  document.querySelectorAll('[data-eg-prepare]').forEach(b=>b.onclick=()=>prepare(b.dataset.egPrepare));
  $('[data-eg-weekly]')?.addEventListener('click',claimWeekly);
  document.querySelectorAll('[data-eg-lb-scope]').forEach(b=>b.onclick=async()=>{const[id,scope]=b.dataset.egLbScope.split('|');leaderboardView[id].scope=scope;await loadLeaderboard(id);render()});
@@ -387,7 +394,7 @@ async function init(){
  await refresh();
  window.CellboundEndgame={
    refresh,render,currentConfig,stageConfig,beginAttempt,recordRun,rollPersonalLoot,rollChapterLoot,rollClearLoot,clearLootGuaranteed,recordClearLootOutcome,shardReward,rollChase,
-   progressFor,difficultyUnlocked,choose,prepare,runSummaryLabel,achievementName,debugSnapshot,getSelection:id=>({...selection[id]})
+   progressFor,difficultyUnlocked,choose,prepare,runSummaryLabel,achievementName,debugSnapshot,tierPickerMarkup,getSelection:id=>({...selection[id]})
  }
 }
 init();

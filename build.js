@@ -157,6 +157,8 @@ for(const file of files){
   }
   if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','fractured-ages-v1.js'].includes(file)){
     if(!contents.includes('CellboundExpeditionPresentation'))throw new Error(file+' is not wired to the shared PvE expedition presentation');
+    if(contents.includes('<select data-')&&contents.includes('-tier'))throw new Error(file+' still uses the broken native Cellbound+ tier selector');
+    if(!contents.includes('tierPickerMarkup')||!contents.includes("querySelectorAll('[data-"))throw new Error(file+' is not using the shared tap-friendly Cellbound+ tier picker');
   }
   if(file==='pvp-viewer-v1.css'){
     for(const hook of [".pvp2d-lower{","height:132px","max-height:132px",".pvp2d-feed{","overflow-y:auto","height:264px",".pvp2d-lower>section.pvp2d-meters","grid-template-columns:repeat(3,minmax(0,1fr))",".pvp2d-map{",".pvp2d-map-block",".pvp2d-map-area.tunnel",".pvp2d-hill-site",".pvp2d-hill.rotating","score-tick","pvpScoreTick","shifting-court","veilspire-arena",".pvp2d-arena-storm",".pvp2d-storm-fog","pvpStormDrift"])if(!contents.includes(hook))throw new Error('PvP combat feed/map/healing-meter presentation is missing '+hook);
@@ -190,6 +192,10 @@ for(const file of files){
     if(!contents.includes('function rollClearLoot')||!contents.includes('function clearLootGuaranteed'))throw new Error('Dungeon clear loot must retain bad-luck protection');
     if(!contents.includes("Number(x.tier)<Number(D.LOOT_RULES?.raidExclusiveTier||5)"))throw new Error('Dungeon loot pools must exclude raid-exclusive Tier 5');
     if(contents.includes("quality==='epic'?5"))throw new Error('Weekly rewards must never create Tier 5 gear');
+    if(!contents.includes('function tierPickerMarkup')||contents.includes('<select data-eg-tier'))throw new Error('Endgame Hub must use the tap-friendly Cellbound+ tier picker');
+  }
+  if(file==='endgame-v1.css'){
+    for(const hook of ['.eg-tier-picker{','.eg-tier-picker-head{','.eg-tier-strip{','.eg-tier-strip button.active{','-webkit-overflow-scrolling:touch'])if(!contents.includes(hook))throw new Error('Cellbound+ tier picker styling is missing '+hook);
   }
   if(file==='twelve-below-v1.js'){
     if(!contents.includes('minimumItemLevel:38')||!contents.includes('baseRecommendedItemLevel:40')||!contents.includes('bossHealthScale:1.55')||!contents.includes('pressureScale:1.24'))throw new Error('Twelve Below full-gear balance contract is missing');
@@ -242,8 +248,9 @@ for(const file of files){
   }
   if(file==='guild.html'){
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
+    if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=6'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
     if(!contents.includes('character-portraits-v1.css?v=3')||!contents.includes('character-portraits-v1.js?v=5'))throw new Error('Character portrait identity assets are not linked from guild.html');
-    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=14')||!contents.includes('combat-reborn-v1.js?v=2')||!contents.includes('guild-v4.js?v=47')||!contents.includes('character-sheet.js?v=31')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=47')||!contents.includes('hollow-sanctum-v1.js?v=35')||!contents.includes('chaos-canyon-v1.js?v=10')||!contents.includes('blackout-station-v1.js?v=17')||!contents.includes('fractured-ages-v1.js?v=4'))throw new Error('Set bonus UI cache versions are stale in guild.html');
+    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=14')||!contents.includes('combat-reborn-v1.js?v=2')||!contents.includes('guild-v4.js?v=47')||!contents.includes('character-sheet.js?v=31')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=48')||!contents.includes('hollow-sanctum-v1.js?v=36')||!contents.includes('chaos-canyon-v1.js?v=11')||!contents.includes('blackout-station-v1.js?v=18')||!contents.includes('fractured-ages-v1.js?v=5'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
     if(!contents.includes('combat-reborn-v1.js'))throw new Error('Canonical Combat Reborn engine is not linked from guild.html');
