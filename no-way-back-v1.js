@@ -109,6 +109,7 @@ function story(label,title,speaker,lines,onDone,button='CONTINUE →'){
 async function start(){
   const n=ensure();if(!available()&&!n.started)return;
   if(n.started){open();return}
+  if(party().length!==5){alert('Silas needs a full five-character crew before the crossing can begin. Build your active party first.');Game.switchView?.('party');return}
   story('ZELTIRA HARBOUR','A Sailor With A Story','Silas Vane',[
     'You ever hear of the house on the little island beyond the Black Buoy?',
     'Big place. Old place. Been empty longer than most folk around here have been alive.',
@@ -449,7 +450,7 @@ async function completeQuest(){
   renderComplete()
 }
 function renderComplete(){
-  root.innerHTML='<section class="nwb-complete"><div class="nwb-key">⚿</div><small>QUEST COMPLETE</small><h2>No Way Back</h2><p>The windows of the Manor ignite all at once. Its front doors open into darkness. Whatever Silas needed to wake is now awake.</p><div class="nwb-complete-rewards"><article><span>QUEST ITEM</span><b>THE MANOR KEY</b></article><article><span>ATTUNEMENT</span><b>PERMANENT</b></article></div><section><small>RAID UNLOCKED</small><h3>The Manor</h3><p>The key has been bound to your guild. The raid itself will become enterable when The Manor is added.</p></section><button data-nwb-complete-close>RETURN TO QUEST JOURNAL →</button></section>';
+  root.innerHTML='<section class="nwb-complete"><div class="nwb-key">⚿</div><small>QUEST COMPLETE</small><h2>No Way Back</h2><p>The windows of the Manor ignite all at once. Its front doors open into darkness. Whatever Silas needed to wake is now awake.</p><div class="nwb-complete-rewards"><article><span>QUEST ITEM</span><b>THE MANOR KEY</b></article><article><span>ATTUNEMENT</span><b>PERMANENT</b></article></div><section><small>RAID UNLOCKED</small><h3>The Manor</h3><p>The black iron key is bound to your guild. Beyond the opened doors, the Manor is waiting.</p></section><button data-nwb-complete-close>RETURN TO QUEST JOURNAL →</button></section>';
   root.hidden=false;document.body.classList.add('nwb-open');root.querySelector('[data-nwb-complete-close]').onclick=()=>{close();Game.switchView?.('quests')}
 }
 function renderDetail(main,side){
