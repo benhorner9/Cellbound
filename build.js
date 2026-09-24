@@ -250,6 +250,7 @@ for(const file of files){
     if(!contents.includes("rollClearLoot?.('fractured-ages'"))throw new Error('Fractured Ages must use Chapter 1 clear-loot pacing');
   }
   if(file==='quests-v2.js'){
+    if(!contents.includes("$$('[data-q-target]').forEach"))throw new Error('Live quest target controls must use querySelectorAll');
     if(!contents.includes('async function qPlayReborn')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('Quest combat must use continuous Combat Reborn playback');
     for(const hook of ['data-q-speed','q2dHealingMeter','function qStatusTargets','CellboundCombatStatuses?.handle','data-q-side-resource','function qResourceDef','function qPulseUnit'])if(!contents.includes(hook))throw new Error('Quest combat HUD is missing '+hook);
     if(!contents.includes("simTime+=Math.min(rawDelta,100)*Math.max(.25,Number(questFight?.speed)||1)"))throw new Error('Quest combat playback speed must control the authoritative timeline');
