@@ -77,8 +77,17 @@
 .home-destination:hover{transform:translateY(-2px);border-color:rgba(216,185,118,.32);background:linear-gradient(155deg,#172429,#0a1418)}
 .home-destination.events{background:linear-gradient(90deg,rgba(9,16,19,.96),rgba(10,18,20,.84)),url('./assets/world/twelve-below-key-art.webp') center/cover}
 .home-destination.events:after{background:linear-gradient(90deg,rgba(9,16,19,.12),rgba(211,174,96,.08));inset:0;width:auto;height:auto;border-radius:0;right:0;top:0}
-.home-destination.raids{background:radial-gradient(circle at 82% 18%,rgba(232,127,31,.15),transparent 34%),linear-gradient(155deg,#19130e,#0a1114)}
-.home-destination.raids>span{border-color:rgba(232,127,31,.3);color:#e49a4f;background:#1b130d}
+.home-destination.raids{background:
+  linear-gradient(90deg,rgba(5,10,13,.96) 0%,rgba(5,10,13,.82) 36%,rgba(5,10,13,.46) 68%,rgba(5,10,13,.22) 100%),
+  linear-gradient(0deg,rgba(3,7,9,.52),rgba(3,7,9,.04) 68%),
+  url('./assets/manor/manor-raid-hero.webp') 63% 46%/cover no-repeat;
+  border-color:rgba(232,127,31,.28)
+}
+.home-destination.raids:after{inset:0;width:auto;height:auto;right:0;top:0;border-radius:0;background:linear-gradient(90deg,rgba(226,134,48,.05),transparent 42%,rgba(226,134,48,.08))}
+.home-destination.raids>span{border-color:rgba(232,127,31,.38);color:#f0a45a;background:rgba(27,19,13,.86);box-shadow:0 0 18px rgba(232,127,31,.08)}
+.home-destination.raids small{color:#c89b67;text-shadow:0 1px 6px #000}
+.home-destination.raids b{color:#f2eadf;text-shadow:0 2px 8px #000}
+.home-destination.raids em{color:#b5c0bc;text-shadow:0 1px 6px #000}
 
 .home-bottom-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.25fr);gap:14px}
 .home-pulse-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:rgba(255,255,255,.035)}

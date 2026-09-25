@@ -18,6 +18,9 @@ for(const file of files){
     for(const phrase of ['FARMABLE','authoritative Combat Reborn','authoritative Cellbound combat engine','proper 5v5 PvE','CHASE SYSTEM','UPDATE 2 · ENDGAME HUB','Title hook','Prestige cosmetic hook','normal endgame progression','repeat-run rule','randomized versions','Future Bellfoundry access hook','QUEST STRUCTURE','Combat Reborn final boss','simulation-driven','combat timeline rather than viewer buttons','COMBAT REBORN · RUN ANALYSIS','Pre-dungeon tactics are authoritative','stored combat timeline',' simulated time','Combat Reborn rules','actual Combat Reborn positions','NEW SYSTEM'])if(contents.includes(phrase))throw new Error('Player-facing copy regression in '+file+': '+phrase);
   }
 
+  if(file==='home-v2.css'){
+    for(const hook of [".home-destination.raids","url('./assets/manor/manor-raid-hero.webp')",".home-destination.raids:after"])if(!contents.includes(hook))throw new Error('Home Manor raid artwork styling is missing '+hook);
+  }
   if(file==='combat-polish-v2.js'){
     for(const hook of ["const VERSION='2.0.0'","CellboundCombatFX","MutationObserver","cbvfx-layer","cbvfx-events","function impact","function heal","function interrupt","function death","function spawn","function boss","function victory"])if(!contents.includes(hook))throw new Error('Shared combat VFX runtime is missing '+hook);
   }
@@ -377,7 +380,7 @@ for(const file of files){
     if(!contents.includes('mobile-v1.css')||!contents.includes('mobile-v1.js'))throw new Error('Mobile UX assets are not linked from guild.html');
     if(!contents.includes('ui-readability-v2.css'))throw new Error('UI readability stylesheet is not linked from guild.html');
     if(!contents.includes('ui-polish-v3.css'))throw new Error('Global UI polish stylesheet is not linked from guild.html');
-    if(!contents.includes('home-v2.css')||!contents.includes('class="home-command"')||!contents.includes('class="home-destination-grid"')||!contents.includes('id="overviewGuildPulse"'))throw new Error('Guild Command Centre home is not linked or its required hooks are missing');
+    if(!contents.includes('home-v2.css?v=4')||!contents.includes('class="home-command"')||!contents.includes('class="home-destination-grid"')||!contents.includes('class="home-destination raids"')||!contents.includes('id="overviewGuildPulse"'))throw new Error('Guild Command Centre home is not linked or its required hooks are missing');
     if(!contents.includes('command-ui-v1.css'))throw new Error('Cross-game Guild Command UI layer is not linked from guild.html');
     if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=32'))throw new Error('Character Command UI is not linked from guild.html');
     for(const hook of ['roster-v2.css?v=2','class="roster-overview-strip"','id="rosterClearFilters"','id="rosterResultsLabel"','class="roster-grid roster-grid-v2"'])if(!contents.includes(hook))throw new Error('Roster v2 UI is missing '+hook);
