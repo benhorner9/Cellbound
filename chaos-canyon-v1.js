@@ -325,7 +325,7 @@ async function ccPlayTimeline(result,tok){
  if(!run)return false;run.telegraphs={};
  if(!events.length)return result?.outcome==='victory';
  return await new Promise(resolve=>{
-   let index=0,simTime=0,wallAnchor=Date.now(),simAnchor=0,lastSpeed=null,finished=false,raf=0;
+   let index=0,simTime=0,wallAnchor=Number(run?.runtimeStageStartedAt)||Date.now(),simAnchor=0,lastSpeed=null,finished=false,raf=0;
    const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);resolve(value)};
    const frame=()=>{
      if(finished)return;
@@ -575,13 +575,67 @@ function ccRunMetrics(){
  return{timeMs,deaths:totals.deaths,mechanicsFailed:totals.failed,mistakes:totals.mistakes,missedInterrupts:totals.missedInterrupts,threatLosses:totals.threatLosses,avoidableDamage:totals.avoidableDamage,battleResurrections:totals.battleResurrections,scorePreview:window.CellboundEndgameData?.scorePreview?.({difficulty:run.endgame?.difficulty||'normal',tier:run.endgame?.tier||0,timeMs,targetTimeMs:run.endgame?.targetTimeMs||0,deaths:totals.deaths,mechanicsFailed:totals.failed,mistakes:totals.mistakes})||0}
 }
 function ccFormatTime(ms){const t=Math.max(0,Math.round((Number(ms)||0)/1000)),m=Math.floor(t/60),s=t%60;return m+':'+String(s).padStart(2,'0')}
+function ccRuntimeRun(){
+ if(!run)return null;
+ return{
+  stage:Number(run.stage)||0,done:Boolean(run.done),speed:Number(run.speed)||1,log:(run.log||[]).slice(-30),
+  damageDone:{...(run.damageDone||{})},healingDone:{...(run.healingDone||{})},overhealing:{...(run.overhealing||{})},
+  threat:{...(run.threat||{})},aggro:run.aggro||null,endgame:{...(run.endgame||{})},hp:{...(run.hp||{})},
+  resources:JSON.parse(JSON.stringify(run.resources||{})),cooldowns:JSON.parse(JSON.stringify(run.cooldowns||{})),
+  statuses:JSON.parse(JSON.stringify(run.statuses||{})),reviveSickness:{...(run.reviveSickness||{})},
+  expeditionTimeMs:Number(run.expeditionTimeMs)||0,reviveReadyAt:Number(run.reviveReadyAt)||0,
+  outOfCombatRevives:Number(run.outOfCombatRevives)||0,chaosScar:Number(run.chaosScar)||0,vorranShrink:Number(run.vorranShrink)||0,
+  history:(run.history||[]).map(h=>({stageId:h.stageId,stageTitle:h.stageTitle,startHp:h.startHp,durationMs:h.durationMs,summary:h.summary,outcome:h.outcome}))
+ }
+}
+async function ccSaveRuntime(phase='stage'){
+ if(!run?.endgame?.attemptId)return;
+ await window.CellboundEndgame?.saveRuntime?.('chaos-canyon',{
+  version:1,kind:'chaos-canyon',phase,stage:Number(run.stage)||0,
+  stageStartedAt:Number(run.runtimeStageStartedAt)||0,tactics:{...ccTactics},run:ccRuntimeRun()
+ })
+}
+function ccRestoreRuntime(attempt){
+ const snap=attempt?.runtimeState||{},saved=snap.run||{};
+ Object.assign(ccTactics,snap.tactics||{});
+ run={...saved,telegraphs:{},runtimeStageStartedAt:Number(snap.stageStartedAt)||Date.now(),_restored:true};
+ run.endgame={...(saved.endgame||{}),attemptId:attempt.attemptId,seed:attempt.seed,difficulty:attempt.difficulty,tier:Number(attempt.tier)||0,targetTimeMs:Number(attempt.targetTimeMs)||Number(saved.endgame?.targetTimeMs)||0,dungeonVersion:Number(attempt.dungeonVersion)||Number(saved.endgame?.dungeonVersion)||2};
+ return run
+}
+async function ccRunFrom(startIndex,tok){
+ for(let i=Math.max(0,Number(startIndex)||0);i<STAGES.length;i++){
+  if(tok!==token||!run)return;
+  const resuming=Boolean(run._restored)&&i===Math.max(0,Number(startIndex)||0);
+  run.stage=i;
+  if(!resuming||!run.runtimeStageStartedAt)run.runtimeStageStartedAt=Date.now();
+  run._restored=false;
+  await ccSaveRuntime('stage');
+  const s=STAGES[i];
+  if(s.combatKind==='final')await window.CellboundBossDossier?.show?.('vorran');else if(i>0)await window.CellboundExpeditionPresentation?.room?.('chaos-canyon',{title:s.title,index:i,total:STAGES.length,kind:s.kind});
+  if(/boss/i.test(String(s.kind||s.combatKind||'')))window.CellboundFX?.boss?.(s.title);
+  $('#cc2dTitle').textContent=s.title;$('.cc2d-route').innerHTML=ccRouteMarkup(s.id,false);
+  if(!await fightStage(s,tok,i)){await ccSaveRuntime('failed');return}
+  if(i===2){if(!await runChaosCrossing(tok)){await ccSaveRuntime('failed');return}}
+  run.stage=i+1;run.runtimeStageStartedAt=0;await ccSaveRuntime('between')
+ }
+ if(tok!==token||!run)return;
+ await complete()
+}
 
 async function start(){
  const startButton=root().querySelector('[data-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
  await Game.persistState?.();
- const service=await ccWaitForEndgame(),eg=ccEndgameConfig(),attempt=await service?.beginAttempt?.('chaos-canyon');if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN EXPEDITION →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Descent again.');return}token++;const tok=token,p=party();run={stage:0,done:false,speed:1,log:[],damageDone:Object.fromEntries(p.map(ch=>[ch.id,0])),healingDone:Object.fromEntries(p.map(ch=>[ch.id,0])),overhealing:Object.fromEntries(p.map(ch=>[ch.id,0])),threat:Object.fromEntries(p.map(ch=>[ch.id,0])),aggro:null,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=ccResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),statuses:Object.fromEntries(p.map(c=>[c.id,[]])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{},chaosScar:0,vorranShrink:0};await window.CellboundExpeditionPresentation?.enter?.('chaos-canyon',{difficulty:eg.diff?.name||'Normal'});draw();
- for(let i=0;i<STAGES.length;i++){if(tok!==token)return;run.stage=i;const s=STAGES[i];if(s.combatKind==='final')await window.CellboundBossDossier?.show?.('vorran');else if(i>0)await window.CellboundExpeditionPresentation?.room?.('chaos-canyon',{title:s.title,index:i,total:STAGES.length,kind:s.kind});if(/boss/i.test(String(s.kind||s.combatKind||'')))window.CellboundFX?.boss?.(s.title);$('#cc2dTitle').textContent=s.title;$('.cc2d-route').innerHTML=ccRouteMarkup(s.id,false);if(!await fightStage(s,tok,i))return;if(i===2){if(!await runChaosCrossing(tok))return}}
- if(tok!==token)return;await complete();
+ const service=await ccWaitForEndgame(),eg=ccEndgameConfig(),attempt=await service?.beginOrResumeAttempt?.('chaos-canyon')||await service?.beginAttempt?.('chaos-canyon');
+ if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN EXPEDITION →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Descent again.');return}
+ token++;const tok=token,p=party();
+ if(attempt.resumed&&attempt.runtimeState?.kind==='chaos-canyon'){
+  ccRestoreRuntime(attempt)
+ }else{
+  run={stage:0,done:false,speed:1,log:[],damageDone:Object.fromEntries(p.map(ch=>[ch.id,0])),healingDone:Object.fromEntries(p.map(ch=>[ch.id,0])),overhealing:Object.fromEntries(p.map(ch=>[ch.id,0])),threat:Object.fromEntries(p.map(ch=>[ch.id,0])),aggro:null,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=ccResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),statuses:Object.fromEntries(p.map(c=>[c.id,[]])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{},chaosScar:0,vorranShrink:0,runtimeStageStartedAt:Date.now()}
+ }
+ await window.CellboundExpeditionPresentation?.enter?.('chaos-canyon',{difficulty:attempt.difficulty||eg.diff?.name||'Normal'});
+ draw();
+ await ccRunFrom(Math.min(STAGES.length-1,Number(run.stage)||0),tok)
 }
 async function complete(){
  const s=state(),metrics=ccRunMetrics();run.endgameMetrics=metrics;const record=await window.CellboundEndgame?.recordRun?.('chaos-canyon',metrics);run.endgameRecord=record&&!record.error?record:null;const gains=awardXp(),mode=run.endgame?.difficulty||'normal',tier=Number(run.endgame?.tier)||0,gear=window.CellboundEndgame?.rollClearLoot?.('chaos-canyon','vorran',mode==='normal'?.75:mode==='heroic'?.82:.88)||null;
