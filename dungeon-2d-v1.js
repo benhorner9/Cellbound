@@ -1906,7 +1906,8 @@ async function playSharedEncounter(options={}){
    damageDone:Object.fromEntries(extParty.map(c=>[c.id,0])),healingDone:Object.fromEntries(extParty.map(c=>[c.id,0])),overhealing:Object.fromEntries(extParty.map(c=>[c.id,0])),
    hitCount:Object.fromEntries(extParty.map(c=>[c.id,0])),identityTimers:{},combatStartedAt:0,lastMeterAt:0,log:[(options.title||encounter.title||'Encounter')+' begins.'],
    override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},resolved:false,combatActive:false,mechanicActive:false,allowKill:true,stageOutcome:true,shotSeq:0,
-   rebornHistory:[],rebornReplay:null,rebornResult:result,rebornTelegraphs:{},groundHazards:{},rebornCastTimer:null};
+   rebornHistory:[],rebornReplay:null,rebornResult:result,rebornTelegraphs:{},groundHazards:{},rebornCastTimer:null,
+   runtimeStageStartedAt:Number(options.startAt)||0};
  sharedViewerShell(options);spawnSharedEncounter(run.externalStage,result,options);
  const outcome=await playRebornTimeline(result,tok);
  if(tok!==token||!run)return'cancelled';
