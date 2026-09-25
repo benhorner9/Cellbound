@@ -418,23 +418,25 @@ async function hsPlayTimeline(result,tok){
  if(!run)return false;run.telegraphs={};
  if(!events.length)return result?.outcome==='victory';
  return await new Promise(resolve=>{
-  let index=0,simTime=0,lastFrame=performance.now(),finished=false;
-  const finish=value=>{if(finished)return;finished=true;resolve(value)};
-  const frame=now=>{
+  let index=0,simTime=0,wallAnchor=Date.now(),simAnchor=0,lastSpeed=null,finished=false,raf=0;
+  const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);resolve(value)};
+  const frame=()=>{
    if(finished)return;
    if(tok!==token||!run){finish(false);return}
-   const delta=Math.min(Math.max(0,now-lastFrame),100);lastFrame=now;
-   simTime+=delta*Math.max(.25,Number(run.speed)||1);
+   const speed=Math.max(.25,Number(run.speed)||1);
+   if(lastSpeed===null)lastSpeed=speed;
+   else if(lastSpeed!==speed){simAnchor=simTime;wallAnchor=Date.now();lastSpeed=speed}
+   simTime=Math.max(simTime,simAnchor+Math.max(0,Date.now()-wallAnchor)*speed);
    const frameStarted=performance.now();let handled=0;
-   while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<12&&performance.now()-frameStarted<7){
+   while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<32&&performance.now()-frameStarted<9){
     const event=events[index++];handled++;
     try{hsRenderRebornEvent(event)}
     catch(error){console.error('Hollow Sanctum combat visual recovered',event?.type,event?.ability,error)}
    }
    if(index>=events.length){finish(result?.outcome==='victory');return}
-   requestAnimationFrame(frame)
+   raf=requestAnimationFrame(frame)
   };
-  requestAnimationFrame(frame)
+  raf=requestAnimationFrame(frame)
  })
 }
 function hsStageSummary(result){
