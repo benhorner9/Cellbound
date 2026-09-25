@@ -252,6 +252,45 @@ async function beginAttempt(dungeonId){
  if(error){console.warn('Dungeon attempt could not start',error);return{error}}
  attempts[dungeonId]=data;return data
 }
+async function resumeAttempt(dungeonId){
+ if(!db)return{active:false,error:new Error('Endgame service unavailable')};
+ const {data,error}=await db.rpc('resume_dungeon_attempt',{p_dungeon_id:dungeonId});
+ if(error){console.warn('Dungeon attempt could not be resumed',error);return{active:false,error}}
+ if(!data?.active)return data||{active:false};
+ const attempt={
+   ...data,
+   attemptId:data.attemptId,
+   seed:data.seed,
+   targetTimeMs:Number(data.targetTimeMs)||0,
+   difficulty:data.difficulty,
+   tier:Number(data.tier)||0,
+   dungeonVersion:Number(data.dungeonVersion)||1,
+   seasonId:data.seasonId,
+   runtimeState:data.runtimeState&&typeof data.runtimeState==='object'?data.runtimeState:{}
+ };
+ attempts[dungeonId]=attempt;
+ return attempt
+}
+async function beginOrResumeAttempt(dungeonId){
+ const resumed=await resumeAttempt(dungeonId);
+ const runtime=resumed?.runtimeState;
+ if(resumed?.active&&runtime&&typeof runtime==='object'&&Number(runtime.version)>=1){
+   return{...resumed,resumed:true}
+ }
+ return beginAttempt(dungeonId)
+}
+async function saveRuntime(dungeonId,runtimeState){
+ let attempt=attempts[dungeonId];
+ if(!attempt?.attemptId){
+   const resumed=await resumeAttempt(dungeonId);
+   if(!resumed?.active||!resumed?.attemptId)return{ok:false,reason:'missing-attempt'};
+   attempt=resumed
+ }
+ const payload=runtimeState&&typeof runtimeState==='object'?runtimeState:{};
+ const {data,error}=await db.rpc('save_dungeon_attempt_runtime',{p_attempt_id:attempt.attemptId,p_runtime_state:payload});
+ if(error){console.warn('Dungeon runtime could not be saved',error);return{ok:false,error}}
+ return data||{ok:true}
+}
 
 async function recordRun(dungeonId,metrics){
  const before={...progressFor(dungeonId)},attempt=attempts[dungeonId];
@@ -393,7 +432,7 @@ async function init(){
  window.addEventListener('cellbound:dungeon-complete',()=>refresh());
  await refresh();
  window.CellboundEndgame={
-   refresh,render,currentConfig,stageConfig,beginAttempt,recordRun,rollPersonalLoot,rollChapterLoot,rollClearLoot,clearLootGuaranteed,recordClearLootOutcome,shardReward,rollChase,
+   refresh,render,currentConfig,stageConfig,beginAttempt,beginOrResumeAttempt,resumeAttempt,saveRuntime,recordRun,rollPersonalLoot,rollChapterLoot,rollClearLoot,clearLootGuaranteed,recordClearLootOutcome,shardReward,rollChase,
    progressFor,difficultyUnlocked,choose,prepare,runSummaryLabel,achievementName,debugSnapshot,tierPickerMarkup,getSelection:id=>({...selection[id]})
  }
 }
