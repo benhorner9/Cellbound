@@ -770,23 +770,22 @@ async function tdPlayCombat(result,my){
   const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0)),telegraphs={};
   if(!events.length)return result?.outcome==='victory';
   return await new Promise(resolve=>{
-    let index=0,simTime=0,lastFrame=performance.now(),finished=false;
-    const finish=value=>{if(finished)return;finished=true;resolve(value)};
-    const frame=now=>{
+    let index=0,simTime=0,wallAnchor=Date.now(),finished=false,raf=0;
+    const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);resolve(value)};
+    const frame=()=>{
       if(finished)return;
       if(my!==tutorialToken){finish(false);return}
-      const rawDelta=Math.max(0,now-lastFrame);lastFrame=now;
-      simTime+=Math.min(rawDelta,100);
+      simTime=Math.max(simTime,Math.max(0,Date.now()-wallAnchor));
       const frameStarted=performance.now();let handled=0;
-      while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<18&&performance.now()-frameStarted<8){
+      while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<36&&performance.now()-frameStarted<9){
         const event=events[index++];handled++;
         try{tdRenderCombatEvent(event,telegraphs)}
         catch(error){console.warn('First Expedition combat visual recovered',event?.type,event?.ability,error)}
       }
       if(index>=events.length){finish(result?.outcome==='victory');return}
-      requestAnimationFrame(frame)
+      raf=requestAnimationFrame(frame)
     };
-    requestAnimationFrame(frame)
+    raf=requestAnimationFrame(frame)
   })
 }
 async function fightTdPack(encounter,my){
