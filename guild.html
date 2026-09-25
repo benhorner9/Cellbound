@@ -46,7 +46,7 @@
   <link rel="stylesheet" href="./readability-v1.css?v=2">
   <link rel="stylesheet" href="./ui-readability-v2.css?v=4">
   <link rel="stylesheet" href="./ui-polish-v3.css?v=2">
-  <link rel="stylesheet" href="./home-v2.css?v=1">
+  <link rel="stylesheet" href="./home-v2.css?v=2">
   <link rel="stylesheet" href="./command-ui-v1.css?v=1">
   <link rel="stylesheet" href="./roster-v2.css?v=2">
   <link rel="stylesheet" href="./character-portraits-v1.css?v=4">
@@ -73,6 +73,7 @@
       <button class="nav-btn" data-hub="adventure" data-view="quests" data-mobile-core><span>⌁</span><b>Quests</b><em id="questNavBadge"></em></button>
       <button class="nav-btn" data-hub="adventure" data-view="content" data-mobile-core><span>▱</span><b>Dungeons</b></button>
       <button class="nav-btn" data-hub="adventure" data-view="world"><span>✦</span><b>Events</b></button>
+      <button class="nav-btn" data-hub="adventure" data-view="raids"><span>♜</span><b>Raids</b></button>
       <button class="nav-btn" data-hub="adventure" data-view="endgame"><span>◇</span><b>Endgame</b></button>
 
       <div class="nav-section-label">MARKET</div>
@@ -133,6 +134,7 @@
           <button type="button" class="home-destination quests" data-jump="quests"><span>⌁</span><small>ADVENTURE</small><b>Quests</b><em>Continue the story</em></button>
           <button type="button" class="home-destination dungeons" data-jump="content"><span>▱</span><small>EXPEDITIONS</small><b>Dungeons</b><em id="homeDungeonStatus">Choose a dungeon</em></button>
           <button type="button" class="home-destination events" data-jump="world"><span>✦</span><small>LIVE CONTENT</small><b>Events</b><em id="homeEventStatus">The Twelve Below</em></button>
+          <button type="button" class="home-destination raids" data-jump="raids"><span>♜</span><small>GROUP CONTENT</small><b>Raids</b><em id="homeRaidStatus">The Manor</em></button>
           <button type="button" class="home-destination endgame" data-jump="endgame"><span>◇</span><small>PROGRESSION</small><b>Endgame</b><em id="homeEndgameStatus">Push further</em></button>
         </nav>
 
@@ -362,9 +364,12 @@
       <div id="pvpMount"></div>
     </section>
 
-    <section id="endgame" class="view">
+    <section id="raids" class="view">
       <div id="manorRaidMount"></div>
-          <div id="endgameHub"></div>
+    </section>
+
+    <section id="endgame" class="view">
+      <div id="endgameHub"></div>
       <section class="endgame-run-history">
         <div class="section-intro"><div><small>EXPEDITION HISTORY</small><h2>Run Reports</h2><p>Review clears, wipes, Cell Shock gains, encounter mastery and recent dungeon expeditions in the same place as your endgame progression.</p></div></div>
         <div id="reportsList" class="reports-list"></div>
@@ -513,7 +518,7 @@
 <script src="./endgame-data-v1.js?v=5"></script>
 <script src="./presentation-fx-v1.js?v=1"></script>
 <script src="./combat-polish-v2.js?v=1"></script>
-<script src="./guild-v4.js?v=50"></script>
+<script src="./guild-v4.js?v=51"></script>
 <script src="./pvp-combat-v1.js?v=2"></script>
 <script src="./pvp-viewer-v1.js?v=2"></script>
 <script src="./pvp-match-v1.js?v=2"></script>
@@ -534,7 +539,7 @@
 <script src="./hollow-sanctum-v1.js?v=38"></script>
 <script src="./chaos-canyon-v1.js?v=13"></script>
 <script src="./blackout-station-v1.js?v=20"></script>
-<script src="./manor-raid-v1.js?v=1"></script>
+<script src="./manor-raid-v1.js?v=2"></script>
   <script src="./endgame-v1.js?v=6"></script>
 <script src="./quests-v2.js?v=35"></script>
 <script src="./thirteenth-bell-v1.js?v=3"></script>
@@ -542,7 +547,7 @@
 <script src="./no-way-back-v1.js?v=10"></script>
 <script src="./fractured-ages-v1.js?v=7"></script>
 <script src="./admin-v1.js?v=8"></script>
-<script src="./mobile-v1.js?v=6"></script>
+<script src="./mobile-v1.js?v=7"></script>
 <script src="./release-v1.js?v=3"></script>
 </body>
 </html>
