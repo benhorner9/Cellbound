@@ -443,10 +443,10 @@ function handleEvent(e){
  if(e.type==='PLAYER_MISTAKE'){feed((party().find(c=>'p-'+c.id===e.source)?.name||'A party member')+' made a '+(e.result||'combat')+' mistake.','danger');return}
  if(e.type==='AGGRO_CHANGED'){layoutBosses(360);const ch=party().find(c=>'p-'+c.id===e.target);if(ch&&roleOf(ch)!=='tank')feed(ch.name+' has boss aggro.','danger')}
 }
-function resetClockAnchor(){playBaseMs=run?.elapsed||0;playStartedAt=performance.now()}
+function resetClockAnchor(){playBaseMs=run?.elapsed||0;playStartedAt=Date.now()}
 function startClock(){
  stopClock();resetClockAnchor();clockTimer=setInterval(()=>{
-  if(!run)return;const sim=playBaseMs+(performance.now()-playStartedAt)*playSpeed;run.elapsed=Math.max(run.elapsed,sim);
+  if(!run)return;const sim=playBaseMs+(Date.now()-playStartedAt)*playSpeed;run.elapsed=Math.max(run.elapsed,sim);
   const nextIndex=Math.floor(sim/SPAWN_MS)+1,nextAt=nextIndex*SPAWN_MS,left=Math.max(0,nextAt-sim),el=$('#tbCountdown');if(el)el.textContent=nextIndex>=12?'ALL TOMBS OPEN':formatTime(left);
  },250)
 }
@@ -456,30 +456,29 @@ async function playTimeline(events){
  startClock();
  if(!timeline.length){stopClock();if(run&&!run.rewardsApplied){run.rewards=applyRewards(run.result);run.rewardsApplied=true}showResults();return}
  return await new Promise(resolve=>{
-  let index=0,simTime=0,lastFrame=performance.now(),finished=false;
+  let index=0,simTime=0,wallAnchor=Date.now(),finished=false,raf=0;
   const finish=()=>{
-   if(finished)return;finished=true;stopClock();
+   if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);stopClock();
    if(token===playToken&&run){
     if(!run.rewardsApplied){run.rewards=applyRewards(run.result);run.rewardsApplied=true}
     showResults()
    }
    resolve()
   };
-  const frame=now=>{
+  const frame=()=>{
    if(finished)return;
    if(token!==playToken||!run){finish();return}
-   const rawDelta=Math.max(0,now-lastFrame);lastFrame=now;
-   simTime+=Math.min(rawDelta,100)*Math.max(1,Number(playSpeed)||1);
+   simTime=Math.max(simTime,Math.max(0,Date.now()-wallAnchor)*Math.max(1,Number(playSpeed)||1));
    run.elapsed=Math.max(Number(run.elapsed)||0,simTime);
    const frameStarted=performance.now();let handled=0;
-   while(index<timeline.length&&(Number(timeline[index].timestamp)||0)<=simTime+4&&handled<18&&performance.now()-frameStarted<8){
+   while(index<timeline.length&&(Number(timeline[index].timestamp)||0)<=simTime+4&&handled<36&&performance.now()-frameStarted<9){
     const event=timeline[index++];handled++;
     try{handleEvent(event)}catch(error){console.warn('Twelve Below combat visual recovered',event?.type,event?.ability,error)}
    }
    if(index>=timeline.length){finish();return}
-   requestAnimationFrame(frame)
+   raf=requestAnimationFrame(frame)
   };
-  requestAnimationFrame(frame)
+  raf=requestAnimationFrame(frame)
  })
 }
 function resultPlayerRows(){
