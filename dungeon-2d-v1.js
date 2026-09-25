@@ -233,11 +233,53 @@ function briefing(){
  r.querySelector('[data-start]').onclick=start;
  try{bindEndgamePrep()}catch(error){console.warn('Dungeon difficulty controls failed to bind',error)}
 }
+function ashenRuntimeRun(){
+ if(!run)return null;
+ return{
+  stage:Number(run.stage)||0,speed:Number(run.speed)||1,
+  resources:JSON.parse(JSON.stringify(run.resources||{})),cooldowns:JSON.parse(JSON.stringify(run.cooldowns||{})),
+  statuses:JSON.parse(JSON.stringify(run.statuses||{})),reviveSickness:{...(run.reviveSickness||{})},
+  expeditionTimeMs:Number(run.expeditionTimeMs)||0,reviveReadyAt:Number(run.reviveReadyAt)||0,outOfCombatRevives:Number(run.outOfCombatRevives)||0,
+  endgame:{...(run.endgame||{})},condition:{...(run.condition||{})},hp:{...(run.hp||{})},
+  damageDone:{...(run.damageDone||{})},healingDone:{...(run.healingDone||{})},overhealing:{...(run.overhealing||{})},
+  hitCount:{...(run.hitCount||{})},identityTimers:{...(run.identityTimers||{})},log:(run.log||[]).slice(-30),
+  rewards:JSON.parse(JSON.stringify(run.rewards||[])),loot:JSON.parse(JSON.stringify(run.loot||{gear:[],materials:{},gold:0,renown:0,xp:0})),
+  rebornHistory:(run.rebornHistory||[]).map(h=>({stageId:h.stageId,stageTitle:h.stageTitle,startHp:h.startHp,summary:h.summary,outcome:h.outcome})),
+  resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true
+ }
+}
+async function ashenSaveRuntime(phase='stage'){
+ if(!run?.endgame?.attemptId)return;
+ await window.CellboundEndgame?.saveRuntime?.('ashen-vault',{
+  version:1,kind:'ashen-vault',phase,stage:Number(run.stage)||0,
+  stageStartedAt:Number(run.runtimeStageStartedAt)||0,tactics:{...tactics},run:ashenRuntimeRun()
+ })
+}
+function ashenRestoreRuntime(attempt){
+ const snap=attempt?.runtimeState||{},saved=snap.run||{};
+ Object.assign(tactics,snap.tactics||{});
+ token++;
+ run={...saved,token,enemyHp:[],enemyMax:[],threat:[],aggro:[],xpGrowth:[],override:0,forceInterrupt:false,shotSeq:0,rebornReplay:null,rebornResult:null,rebornTelegraphs:{},rebornCastTimer:null,runtimeStageStartedAt:Number(snap.stageStartedAt)||Date.now(),_restored:true};
+ run.endgame={...(saved.endgame||{}),attemptId:attempt.attemptId,seed:attempt.seed,difficulty:attempt.difficulty,tier:Number(attempt.tier)||0,targetTimeMs:Number(attempt.targetTimeMs)||Number(saved.endgame?.targetTimeMs)||0,dungeonVersion:Number(attempt.dungeonVersion)||Number(saved.endgame?.dungeonVersion)||2};
+ return run
+}
+
 async function start(){
  const startButton=root().querySelector('[data-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
  await Game.persistState?.();
- const service=await waitForEndgame(),eg=endgameConfig(),attempt=await service?.beginAttempt?.('ashen-vault');if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN EXPEDITION →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Expedition again.');return}const p=party(),resources=Object.fromEntries(p.map(c=>{const def=resourceDefFor(c);return[c.id,{name:def.name,max:def.max,value:def.start}]})),cooldowns=Object.fromEntries(p.map(c=>[c.id,{}])),statuses=Object.fromEntries(p.map(c=>[c.id,[]])),reviveSickness=Object.fromEntries(p.map(c=>[c.id,0]));token++;run={token:token,stage:0,speed:1,resources,cooldowns,statuses,reviveSickness,expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],damageDone:Object.fromEntries(p.map(c=>[c.id,0])),healingDone:Object.fromEntries(p.map(c=>[c.id,0])),overhealing:Object.fromEntries(p.map(c=>[c.id,0])),hitCount:Object.fromEntries(p.map(c=>[c.id,0])),identityTimers:{},combatStartedAt:0,lastMeterAt:0,log:['The party enters The Ashen Vault · '+(eg.diff?.name||'Normal')+'.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},xpGrowth:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0,rebornHistory:[],rebornReplay:null,rebornResult:null,rebornTelegraphs:{},rebornCastTimer:null};
- await window.CellboundExpeditionPresentation?.enter?.('ashen-vault',{difficulty:eg.diff?.name||'Normal'});drawViewer();seamless(token);
+ const service=await waitForEndgame(),eg=endgameConfig(),attempt=await service?.beginOrResumeAttempt?.('ashen-vault')||await service?.beginAttempt?.('ashen-vault');
+ if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN EXPEDITION →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Expedition again.');return}
+ const p=party();
+ if(attempt.resumed&&attempt.runtimeState?.kind==='ashen-vault'){
+   ashenRestoreRuntime(attempt)
+ }else{
+   const resources=Object.fromEntries(p.map(c=>{const def=resourceDefFor(c);return[c.id,{name:def.name,max:def.max,value:def.start}]})),cooldowns=Object.fromEntries(p.map(c=>[c.id,{}])),statuses=Object.fromEntries(p.map(c=>[c.id,[]])),reviveSickness=Object.fromEntries(p.map(c=>[c.id,0]));
+   token++;
+   run={token:token,stage:0,speed:1,resources,cooldowns,statuses,reviveSickness,expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},condition:Object.fromEntries(p.map(c=>[c.id,100])),hp:Object.fromEntries(p.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],damageDone:Object.fromEntries(p.map(c=>[c.id,0])),healingDone:Object.fromEntries(p.map(c=>[c.id,0])),overhealing:Object.fromEntries(p.map(c=>[c.id,0])),hitCount:Object.fromEntries(p.map(c=>[c.id,0])),identityTimers:{},combatStartedAt:0,lastMeterAt:0,log:['The party enters The Ashen Vault · '+(eg.diff?.name||'Normal')+'.'],override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},xpGrowth:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,stageOutcome:true,shotSeq:0,rebornHistory:[],rebornReplay:null,rebornResult:null,rebornTelegraphs:{},rebornCastTimer:null,runtimeStageStartedAt:Date.now()}
+ }
+ await window.CellboundExpeditionPresentation?.enter?.('ashen-vault',{difficulty:attempt.difficulty||eg.diff?.name||'Normal'});
+ drawViewer();
+ seamlessFrom(Math.min(STAGES.length-1,Number(run.stage)||0),token)
 }
 function route(){
  return STAGES.map((s,i)=>'<span class="'+(i<run.stage?'done':i===run.stage?'current':'')+'"><i>'+(i+1)+'</i>'+esc(s.title)+'</span>').join('');
@@ -1544,7 +1586,7 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
  if(!events.length){run.combatActive=false;return replayMode?'done':(result?.outcome==='victory'?'victory':'defeat')}
 
  return await new Promise(resolve=>{
-   let index=0,simTime=0,wallAnchor=Date.now(),simAnchor=0,lastSpeed=null,finished=false,raf=0;
+   let index=0,simTime=0,wallAnchor=replayMode?Date.now():(Number(run?.runtimeStageStartedAt)||Date.now()),simAnchor=0,lastSpeed=null,finished=false,raf=0;
    const speedNow=()=>replayMode?Math.max(.25,Number(run?.replaySpeed)||1):Math.max(.25,Number(run?.speed)||1);
    const readClock=()=>{
      if(replayMode&&run?.replayPaused){wallAnchor=Date.now();simAnchor=simTime;return simTime}
@@ -1683,7 +1725,13 @@ function endgameRunMetrics(){
 async function seamlessFrom(startIndex,tok){
  try{
   for(let i=startIndex;i<STAGES.length;i++){
-   if(tok!==token||!run)return;run.stage=i;run.override=0;run.rebornResult=null;const s=STAGES[i];if(s.kind==='final')await window.CellboundBossDossier?.show?.('vaultheart');else if(i>startIndex)await window.CellboundExpeditionPresentation?.room?.('ashen-vault',{title:s.title,index:i,total:STAGES.length,kind:s.kind});
+   if(tok!==token||!run)return;
+   const resuming=Boolean(run._restored)&&i===startIndex;
+   run.stage=i;run.override=0;run.rebornResult=null;
+   if(!resuming||!run.runtimeStageStartedAt)run.runtimeStageStartedAt=Date.now();
+   run._restored=false;
+   await ashenSaveRuntime('stage');
+   const s=STAGES[i];if(s.kind==='final')await window.CellboundBossDossier?.show?.('vaultheart');else if(i>startIndex)await window.CellboundExpeditionPresentation?.room?.('ashen-vault',{title:s.title,index:i,total:STAGES.length,kind:s.kind});
    if(s.kind==='boss'||s.kind==='final')window.CellboundFX?.boss?.(s.title);
    $('#cb2dTitle').textContent=s.title;$('#cb2dRoute').innerHTML=route();$('#cb2dType').textContent=s.kind==='final'?'FINAL BOSS':s.kind==='boss'?'BOSS':s.kind==='event'?'EVENT':'HOSTILE PACK';
    spawn(s);status('Preparing encounter…');log('Entering '+s.title+'.');act('tank','Taking point');act('healer','Following formation');act('dps','Acquiring targets');await delay(650);
@@ -1693,16 +1741,18 @@ async function seamlessFrom(startIndex,tok){
    const result=runRebornStage(s);
    captureRebornResult(result);run.stageOutcome=result.outcome==='victory';run.allowKill=true;
    await playRebornTimeline(result,tok);
-   if(!await resolveStage(s)||tok!==token)return;
+   if(!await resolveStage(s)||tok!==token){await ashenSaveRuntime('failed');return}
    const recovered=await recoverFallenBetweenStages(tok);
    if(!recovered||tok!==token){
      if(tok===token&&run){
        Game.applyPartyCellShock(25);const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonHistory.unshift({at:new Date().toISOString(),result:'no-healer',stage:s.id,partyIlvl:ilvl()});st.dungeonHistory=st.dungeonHistory.slice(0,20);st.activity.push('The expedition ended after '+s.title+' because no healer was available to revive fallen adventurers. All five gained 25% Cell Shock.');await Game.persistState();
        const e=$('#cb2dEnd');e.className='cb2d-end cb2d-results-screen';e.innerHTML='<div class="cb2d-failure-wrap"><section class="cb2d-failure-main"><div><small>EXPEDITION FAILED</small><h3>No healer available after '+esc(s.title)+'.</h3><p>A fallen adventurer cannot be recovered without a healer. The expedition ends here and all five gain 25% Cell Shock.</p></div>'+rebornFailureDiagnosisHTML()+'<button data-failure-return>RETURN TO GUILD →</button></section><aside class="cb2d-failure-analysis"></aside></div>';appendRebornAnalysis(e);enterResultsMode();e.querySelector('[data-failure-return]').onclick=()=>{close();Game.switchView('content')}
      }
+     await ashenSaveRuntime('failed');
      return
    }
    if(i<STAGES.length-1){party().forEach(c=>{if(hp(c.id)>0)setHp(c.id,Math.min(100,hp(c.id)+6))});recoverDungeonResources();advanceDungeonCooldowns(5000);updateRows();await stageClearTransition(s,STAGES[i+1],tok);await travelDeeper(STAGES[i+1],tok)}
+   run.stage=i+1;run.runtimeStageStartedAt=0;await ashenSaveRuntime('between')
   }
   const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;
   const mode=run.endgame?.difficulty||'normal',tier=Number(run.endgame?.tier)||0,gold=mode==='normal'?120:mode==='heroic'?190:220+tier*10,renown=mode==='normal'?60:mode==='heroic'?90:100+tier*4,xp=mode==='normal'?ASHEN_VAULT_XP:mode==='heroic'?480:500;
