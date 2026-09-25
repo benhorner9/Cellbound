@@ -19,6 +19,7 @@ const SCREECH_COLOURS=[
 let Game=null,db=null,user=null,mount=null,groups=[],members=[],lockout=null,myGroup=null,session=null,pendingRewardSession=null;
 let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false,raidRealtime=null,readyLaunchTimer=null,serverClockOffset=0;
 const handledScreechTokens=new Set();
+const resolvingScreechTokens=new Set();
 const combatCache=new Map();
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
@@ -92,8 +93,8 @@ function combatPlayerHp(ch,elapsed){
  if(!pack)return null;
  const id='p-'+(stage==='maids'?'maid-':'raid-')+side+'-'+String(ch?.id||ch?.name||'character');
  let hp=hpPctAt(pack.result,elapsed,id,100);
- if(stage==='maids'){const penalty=Number(session.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0;hp=Math.max(0,hp-penalty*2.5)}
- if(stage==='housebound'&&masterBuffRemaining())hp=Math.max(0,hp-4);
+ if(stage==='maids'){const penalty=Number(session.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0;hp=Math.max(0,100-(100-hp)*(1+penalty*.10))}
+ if(stage==='housebound'){const penalty=masterPenaltyStacks();hp=Math.max(0,100-(100-hp)*(1+penalty*.10))}
  return hp
 }
 function maidBossHp(side,elapsed,penalty){
@@ -345,7 +346,7 @@ async function subscribeRaidRealtime(id){
     if(!encounterIsLive())renderReadyGate();
     else if(beforeState!==JSON.stringify(session.state||{})){
       // Screech penalties and other shared raid state are now available immediately.
-      if(session.stage==='maids')window.dispatchEvent(new CustomEvent('cellbound:manor-sync',{detail:{state:session.state}}))
+      if(['maids','housebound'].includes(session.stage))window.dispatchEvent(new CustomEvent('cellbound:manor-sync',{detail:{state:session.state}}))
     }
   })
   .subscribe(status=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.warn('Manor realtime status',status)})
@@ -454,7 +455,7 @@ async function openRaid(id){
 }
 function closeRaid(fromShared=false){
  if(closingRaid)return;closingRaid=true;
- clearInterval(raidTimer);clearInterval(paintTimer);raidTimer=paintTimer=null;screechOpen=false;sharedStageKey='';clearReadyLaunch();
+ clearInterval(raidTimer);clearInterval(paintTimer);raidTimer=paintTimer=null;screechOpen=false;sharedStageKey='';clearReadyLaunch();resolvingScreechTokens.clear();
  unsubscribeRaidRealtime();
  const host=$('#mrScreechHost');if(host){host.innerHTML='';host.style.display='none';host.style.pointerEvents='none'}handledScreechTokens.clear();
  if(!fromShared)window.CellboundDungeon2D?.closeShared?.(true);
@@ -481,6 +482,7 @@ function tickRaid(){
  if(session.status==='failed'||session.status==='completed'||session.stage==='victory')return;
  if(!encounterIsLive()){renderReadyGate();return}
  const e=stageElapsed();
+ resolveExpiredScreeches();
  if(isLeader()){
    if(session.stage==='maids')driveMaids(e);
    else driveStage(e)
@@ -508,7 +510,14 @@ function handleRaidCombatEvent(event){
    setTimeout(()=>openScreech({fallback:true}),50)
  }
 }
+function masterBossHp(elapsed){
+ const pack=combatFor('housebound');if(!pack)return null;
+ const base=hpPctAt(pack.result,elapsed,'e-0',100),duration=Math.max(1,Number(pack.result.durationMs)||Number(STAGES.housebound?.duration)||100000),penalty=masterPenaltyStacks();
+ if(elapsed<=duration)return Math.min(100,base+penalty*15);
+ return Math.max(0,penalty*15-((elapsed-duration)/duration)*100)
+}
 function bossHp(stage,e){
+ if(stage==='housebound'){const masterHp=masterBossHp(e);if(masterHp!==null)return masterHp}
  const engineHp=combatBossHp(stage,e);if(engineHp!==null)return engineHp;
  const d=STAGES[stage]?.duration||1;return Math.max(0,100-(e/d)*100)
 }
@@ -560,10 +569,7 @@ function stageCallout(stage,e,engineEvent=null){
  if(stage==='housebound'){const hp=bossHp(stage,e);if(hp<=10)return'<div class="mr-cast burn">BURN THE HOUSE <span>20s · UNINTERRUPTIBLE</span></div>';if(hp<=30)return'<div class="mr-cast">HOUSE COLLAPSES <span>SHRINKING ARENA · SCREECH · TURRETS</span></div>';if(hp<=60)return Math.floor(e/6500)%2?'<div class="mr-cast">CHOSEN SERVANT <span>SPREAD</span></div>':'<div class="mr-cast">MARK OF THE MANOR <span>TANK SWAP</span></div>';return Math.floor(e/7000)%2?'<div class="mr-cast">SERVANT\'S SCREECH <span>READ THE WORD</span></div>':'<div class="mr-cast">SHATTERED FLOOR <span>MOVE</span></div>'}
  return''
 }
-function masterBuffRemaining(){
- const until=stamp(session?.state?.masterDamageBuffUntil),left=Math.max(0,until-now());
- return left>0?Math.ceil(left/1000):0
-}
+function masterPenaltyStacks(){return Math.max(0,Number(session?.state?.masterScreechFailures)||0)}
 function mechanicsMarkup(stage,e,phase){
  const data={
   butler:['PLATE BARRAGE','The Butler smashes plate zones across the hall. Standing in a shattered zone deals damage over time; older zones disappear as new ones are created.','The Butler moves slowly and never performs normal attacks — the room itself is the threat.'],
@@ -571,7 +577,8 @@ function mechanicsMarkup(stage,e,phase){
   bedroom:['BEDROOM SWARM','Twenty enemies rush the raid at once. No puzzle — group them, control them and burn them down.','When all twenty fall, the attic hatch drops open.'],
   housebound:['THE MASTER OF THE MANOR',phase===1?'Shattered Floor returns. Servant’s Screech punishes bad reads, and one Nail Gun Turret forces target priority.':phase===2?'At 60%, the Master rises. Mark of the Manor stacks +15% damage taken on the active tank; swap threat while Chosen Servant forces a spread.':'At 30%, the house collapses around the raid: shrinking space, beams, fire, turrets, Marks and Screech. At ~10%, BURN THE HOUSE begins a 20-second uninterruptible raid-kill cast.','Silas did not return to rule this house. He returned to wake its true master.']
  }[stage]||['THE MANOR','',''];
- const buff=stage==='housebound'&&masterBuffRemaining()?'<strong class="mr-master-buff">SCREECH FAILURE · MASTER +10% DAMAGE · '+masterBuffRemaining()+'s</strong>':'';
+ const stacks=stage==='housebound'?masterPenaltyStacks():0;
+ const buff=stacks?'<strong class="mr-master-buff">SCREECH FAILURE ×'+stacks+' · MASTER HEALED '+(stacks*15)+'% · +'+(stacks*10)+'% DAMAGE TO RAID</strong>':'';
  return '<section class="mr-mechanic-card"><small>ACTIVE MECHANIC</small><h3>'+data[0]+'</h3><p>'+data[1]+'</p><span>'+data[2]+'</span>'+buff+'</section>'
 }
 function paintMaids(arena,mech,roster,e){
@@ -579,7 +586,7 @@ function paintMaids(arena,mech,roster,e){
  const ea=maidBossHp(0,e,pa),eb=maidBossHp(1,e,pb),hpA=ea===null?Math.max(0,100-e/1000*2.5+pa*15):ea,hpB=eb===null?Math.max(0,100-e/1000*2.5+pb*15):eb;
  const side=(row,i,hp,penalty)=>{const chars=Array.isArray(row?.party_snapshot)?row.party_snapshot:[];return'<section class="mr-maid-side '+(i?'kitchen':'dining')+'"><header><small>'+(i?'KITCHEN':'DINING ROOM')+'</small><b>'+esc(row?.guild_label||'Party')+'</b></header><div class="mr-maid-boss"><span>♟</span><div><b>The Maid</b><div class="mr-boss-hp"><i style="width:'+Math.min(100,hp)+'%"></i></div><small>'+Math.ceil(hp)+'% HP · +'+(penalty*10)+'% DAMAGE</small></div></div><div class="mr-maid-units">'+chars.map((ch,x)=>unit({...ch,partyIndex:i},x+i*5,e)).join('')+'</div></section>'};
  arena.innerHTML='<div class="mr-arena mr-maids">'+side(rows[0],0,hpA,pa)+side(rows[1],1,hpB,pb)+'</div>';
- mech.innerHTML='<section class="mr-mechanic-card"><small>COMBAT REBORN · LINKED ENCOUNTER</small><h3>SCREECH</h3><p>Each Maid runs her own five-character combat simulation: threat, tanking, healer swipes, damage and healing are real. A failed Screech heals the <b>other player’s Maid for 15%</b> and gives her <b>+10% damage</b>.</p><span>Failures stack until that Maid dies. Both players must resolve at least one Screech.</span></section><div class="mr-linked-stats"><span>PARTY A FAILURES <b>'+pa+'</b></span><span>PARTY B FAILURES <b>'+pb+'</b></span></div>';
+ mech.innerHTML='<section class="mr-mechanic-card"><small>COMBAT REBORN · LINKED ENCOUNTER</small><h3>SCREECH</h3><p>A wrong answer heals the <b>other player’s Maid for 15%</b> and gives her <b>+10% damage</b>. If the timer expires with no answer, <b>both Maids</b> heal 15% and gain +10% damage.</p><span>Timeouts are shared through the raid session, so leaving or disconnecting cannot avoid the mechanic. Penalties stack until the Maids die.</span></section><div class="mr-linked-stats"><span>MAID A PENALTY <b>+'+(pa*10)+'% DMG</b></span><span>MAID B PENALTY <b>+'+(pb*10)+'% DMG</b></span></div>';
  roster.innerHTML='<small>SPLIT RAID</small><p class="mr-split-note">Both five-character parties are fighting at the same time. Your Screech answer can make your partner’s room harder.</p>';
  const aPack=combatFor('maids',0),bPack=combatFor('maids',1),defeat=(aPack?.result?.outcome!=='victory'&&e>=Number(aPack?.result?.durationMs||Infinity))||(bPack?.result?.outcome!=='victory'&&e>=Number(bPack?.result?.durationMs||Infinity));
  if(defeat&&isLeader()){failRaid('The Maids overwhelmed one of the split parties.');return}
@@ -597,6 +604,13 @@ async function driveMaids(e){
 async function driveStage(e){
  if(advancing||session.stage==='maids')return;
  const stage=session.stage,pack=combatFor(stage),result=pack?.result;
+ if(stage==='housebound'&&result){
+   if(result.outcome!=='victory'&&e>=Number(result.durationMs||0)){await failRaid(stageName(stage)+' defeated the raid.');return}
+   const effectiveHp=bossHp(stage,e),enrage=Number(pack.encounter?.hardEnrageMs)||150000;
+   if(result.outcome==='victory'&&effectiveHp>0&&e>=enrage){await failRaid('BURN THE HOUSE consumed the raid.');return}
+   if(result.outcome==='victory'&&e>=STAGE_MIN_MS.housebound&&effectiveHp<=0){await advance(STAGES[stage]?.next);return}
+   return
+ }
  if(result){
    if(result.outcome!=='victory'&&e>=Number(result.durationMs||0)){await failRaid(stageName(stage)+' defeated the raid.');return}
    if(result.outcome==='victory'&&e>=stageCombatDuration(stage)){await advance(STAGES[stage]?.next);return}
@@ -606,11 +620,24 @@ async function driveStage(e){
 async function advance(next){
  if(advancing||!session)return;advancing=true;
  try{
-   const patch=next==='maids'?{maidPenaltyA:0,maidPenaltyB:0,screechCountA:0,screechCountB:0,screechSuccessA:0,screechSuccessB:0}:{};
+   const patch=next==='maids'?{maidPenaltyA:0,maidPenaltyB:0,screechCountA:0,screechCountB:0,screechSuccessA:0,screechSuccessB:0,screechPrompts:{}}:next==='housebound'?{masterScreechFailures:0,masterScreechTimeouts:0,screechPrompts:{}}:{screechPrompts:{}};
    const {data,error}=await db.rpc('advance_manor_raid',{p_session_id:session.id,p_expected_stage:session.stage,p_next_stage:next,p_patch:patch});
    if(error)throw error;if(data?.state)session.state=data.state;if(data?.stage)session.stage=data.stage;if(data?.status)session.status=data.status;
    lastStage='';sharedStageKey='';await loadSession(session.id);await syncSharedRaidView(true)
  }catch(e){console.warn('Manor advance',e)}finally{advancing=false}
+}
+function resolveExpiredScreeches(){
+ const prompts=session?.state?.screechPrompts;
+ if(!session?.id||!prompts||typeof prompts!=='object')return;
+ Object.entries(prompts).forEach(([token,prompt])=>{
+   if(!prompt||prompt.resolved||String(prompt.stage||'')!==String(session.stage||''))return;
+   const deadline=stamp(prompt.deadline);if(!deadline||serverNow()<deadline||resolvingScreechTokens.has(token))return;
+   resolvingScreechTokens.add(token);
+   db.rpc('manor_screech_result_v2',{p_session_id:session.id,p_token:token,p_result:'timeout'})
+    .then(({data,error})=>{if(error)throw error;if(data?.state)session.state=data.state})
+    .catch(error=>console.warn('Could not resolve expired Manor Screech',error))
+    .finally(()=>resolvingScreechTokens.delete(token))
+ })
 }
 function openScreech(trigger={}){
  if(screechOpen||!['maids','housebound'].includes(session?.stage))return;
@@ -623,19 +650,30 @@ function openScreech(trigger={}){
  const display=SCREECH_COLOURS.filter(x=>x.name!==target.name)[Math.floor(Math.random()*4)];
  const shuffled=[...SCREECH_COLOURS].sort(()=>Math.random()-.5);
  const promptMs=Math.max(2500,Number(event?.payload?.durationMs)||4500);
+ const token=String(trigger?.tokenKey||[session.id,session.stage,myRaidSide(),'fallback',now()].join(':'));
  let answered=false,deadline=now()+promptMs;
  const master=session.stage==='housebound';
+ const registration=db.rpc('manor_screech_open_v2',{p_session_id:session.id,p_token:token,p_duration_ms:promptMs})
+  .then(({data,error})=>{if(error)throw error;if(data?.state)session.state=data.state;const serverDeadline=stamp(data?.prompt?.deadline);if(serverDeadline)deadline=serverDeadline-serverClockOffset;return data})
+  .catch(error=>{console.warn('Could not register Manor Screech',error);throw error});
  host.innerHTML='<div class="mr-screech"><small>'+(master?'THE MASTER CALLS A SERVANT':'THE MAID CASTS')+'</small><h3>'+(master?"SERVANT'S SCREECH":'SCREECH')+'</h3><p>PRESS THE COLOUR THE <b>WORD SAYS</b></p><strong style="color:'+display.hex+'">'+target.name+'</strong><div>'+shuffled.map(x=>'<button data-colour="'+x.name+'" style="--c:'+x.hex+'">'+x.name+'</button>').join('')+'</div><span data-screech-time>'+(promptMs/1000).toFixed(1)+'</span></div>';
- const finish=async success=>{
+ const finish=async result=>{
    if(answered)return;answered=true;clearInterval(clock);
-   const master=session.stage==='housebound';
-   host.innerHTML='<div class="mr-screech-result '+(success?'ok':'fail')+'"><b>'+(success?'SCREECH RESISTED':'SCREECH FAILED')+'</b><span>'+(success?(master?'The Master gains nothing.':'Your room stays stable.'):(master?'The Master gains +10% damage for 20 seconds.':'The other Maid heals 15% and gains +10% damage.'))+'</span></div>';
-   const {error}=await db.rpc('manor_screech_result',{p_session_id:session.id,p_success:success});if(error)console.warn(error);
-   await loadSession(session.id).catch(()=>{});
+   const success=result==='success',timedOut=result==='timeout',master=session.stage==='housebound';
+   const failCopy=master
+     ?'The Master heals 15% and gains +10% damage against the entire raid.'
+     :timedOut?'No answer — both Maids heal 15% and gain +10% damage.':'The other Maid heals 15% and gains +10% damage.';
+   host.innerHTML='<div class="mr-screech-result '+(success?'ok':'fail')+'"><b>'+(success?'SCREECH RESISTED':timedOut?'SCREECH MISSED':'SCREECH FAILED')+'</b><span>'+(success?(master?'The Master gains nothing.':'Your room stays stable.'):failCopy)+'</span></div>';
+   try{
+     await registration;
+     const {data,error}=await db.rpc('manor_screech_result_v2',{p_session_id:session.id,p_token:token,p_result:result});
+     if(error)throw error;if(data?.state)session.state=data.state;
+     await loadSession(session.id).catch(()=>{});
+   }catch(error){console.warn('Could not resolve Manor Screech',error)}
    setTimeout(()=>{host.innerHTML='';host.style.display='none';host.style.pointerEvents='none';screechOpen=false},1200)
  };
- host.querySelectorAll('[data-colour]').forEach(b=>b.onclick=()=>finish(b.dataset.colour===target.name));
- const clock=setInterval(()=>{const left=Math.max(0,deadline-now()),el=host.querySelector('[data-screech-time]');if(el)el.textContent=(left/1000).toFixed(1);if(left<=0)finish(false)},100)
+ host.querySelectorAll('[data-colour]').forEach(b=>b.onclick=()=>finish(b.dataset.colour===target.name?'success':'wrong'));
+ const clock=setInterval(()=>{const left=Math.max(0,deadline-now()),el=host.querySelector('[data-screech-time]');if(el)el.textContent=(left/1000).toFixed(1);if(left<=0)finish('timeout')},100)
 }
 function renderWipeShell(){
  const root=ensureOverlay();applyLocalRaidFailureShock();
