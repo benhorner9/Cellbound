@@ -13,6 +13,58 @@ const STAGES={
  bedroom:{name:'The Bedroom',room:'West Bedroom',duration:20000,next:'housebound'},
  housebound:{name:'The Master of the Manor',room:'The Attic',duration:100000,next:'victory'}
 };
+const BOSS_BRIEFS={
+ butler:{
+  eyebrow:'ENTRANCE HALL · BOSS 1',title:'The Butler',art:'./assets/manor/manor-butler.webp',
+  tagline:'The Manor’s silent host still serves a ruined table.',
+  mechanics:[
+   ['THROWN PLATE BARRAGE','The Butler hurls plates toward healers and damage dealers. Every impact leaves a persistent shattered zone.'],
+   ['SHATTERED SERVICE','Standing in broken porcelain deals constant damage. Several zones can remain active at once and squeeze the safe floor.'],
+   ['SLOW PATROL','The Butler does not use normal attacks. He stalks the room while the raid continually repositions.']
+  ],
+  tip:'Keep the backline rotating. Do not let ranged players or healers settle into one safe corner.'
+ },
+ maids:{
+  eyebrow:'DINING ROOM / KITCHEN · LINKED BOSSES',title:'The Maids',art:'./assets/manor/manor-maids.webp',
+  tagline:'Two rooms. Two parties. One mistake can punish the other team.',
+  mechanics:[
+   ['SCREECH','Read the WORD, not the ink colour, and choose the matching answer before the timer expires.'],
+   ['LINKED PUNISHMENT','A wrong answer heals the other party’s Maid by 15% and gives her +10% damage. A timeout applies the penalty to both Maids.'],
+   ['HEALER SWIPE','Each Maid can break from the threat target, leap onto the healer for a heavy swipe, then return to the tank.']
+  ],
+  tip:'Solve Screech cleanly and remember your answer can directly change the difficulty in the other room.'
+ },
+ engineer:{
+  eyebrow:'UPPER WORKSHOP · BOSS 3',title:'The Engineer',art:'./assets/manor/manor-engineer.webp',
+  tagline:'The workshop was never meant to stop building.',
+  mechanics:[
+   ['REBUILD NAIL GUNS','Two Nail Gun Turrets pressure random targets. Destroy them quickly; Rebuild replaces destroyed guns.'],
+   ['OVERCLOCK','Leaving both turrets active lets the Engineer increase their pressure. Target priority matters.'],
+   ['NAIL STORM','At 70%, 40% and 15% health, a lane-shaped attack forces the raid to find safe ground.']
+  ],
+  tip:'Control the turrets first, then be ready to move at every Nail Storm health breakpoint.'
+ },
+ bedroom:{
+  eyebrow:'WEST BEDROOM · RAID ASSAULT',title:'The Bedroom',art:null,
+  tagline:'There is no puzzle here. The room simply floods with bodies.',
+  mechanics:[
+   ['TWENTY ENEMIES','A full swarm rushes the raid at once.'],
+   ['CONTROL THE ROOM','Tanks gather, healers stabilise and damage dealers burn the pack together.'],
+   ['OPEN THE ATTIC','Every enemy must fall before the hatch to the final encounter opens.']
+  ],
+  tip:'Stay grouped and control the pull. This is the raid’s pressure test before the Master.'
+ },
+ housebound:{
+  eyebrow:'THE ATTIC · FINAL BOSS',title:'The Master of the Manor',art:'./assets/manor/manor-master.webp',
+  tagline:'Everything the Manor taught you returns in one fight.',
+  mechanics:[
+   ['SHATTERED FLOOR / SCREECH','Movement pressure returns alongside Servant’s Screech. Failed Screeches heal the Master and increase damage across the raid.'],
+   ['MARK / CHOSEN SERVANT','From 60%, tanks must swap through Mark of the Manor while Chosen Servant forces players to spread.'],
+   ['HOUSE COLLAPSES','From 30%, safe space shrinks and mechanics overlap. Near 10%, Burn the House begins a 20-second uninterruptible raid-kill cast.']
+  ],
+  tip:'Save control and damage for the final collapse. The last phase combines the raid’s lessons rather than introducing a new puzzle.'
+ }
+};
 const SCREECH_COLOURS=[
  {name:'RED',hex:'#ff5050'},{name:'BLUE',hex:'#55a7ff'},{name:'GREEN',hex:'#58d87a'},{name:'YELLOW',hex:'#ffd34f'},{name:'PURPLE',hex:'#bf75ff'}
 ];
@@ -64,7 +116,7 @@ function engineParty(side=null){
  })
 }
 function manorEncounter(stage){
- if(stage==='butler')return{id:'manor-butler',title:'The Butler',kind:'boss',level:15,enemies:[{name:'The Butler',classification:'boss',passive:true}],enemyHealth:5000,mechanicIntervalMs:3200,mechanics:[{name:'Plate Barrage',type:'persistent-circle',duration:1300,persistMs:9000,tickMs:1100,tickDamage:5,radius:10},{name:'Slow Patrol',type:'patrol',duration:1300}],hardEnrageMs:70000};
+ if(stage==='butler')return{id:'manor-butler',title:'The Butler',kind:'boss',level:15,enemies:[{name:'The Butler',classification:'boss',passive:true}],enemyHealth:5000,mechanicIntervalMs:2600,mechanics:[{name:'Thrown Plate Barrage',type:'persistent-circle',duration:1100,persistMs:12000,tickMs:950,tickDamage:5,radius:12,targetRoles:['healer','dps']},{name:'Slow Patrol',type:'patrol',duration:1300}],hardEnrageMs:70000};
  if(stage==='engineer')return{id:'manor-engineer',title:'The Engineer',kind:'boss',level:15,enemies:[{name:'The Engineer',classification:'boss'}],enemyHealth:4000,scaling:{enemyDamage:.72},mechanicIntervalMs:4200,mechanics:[{name:'Rebuild Nail Guns',type:'adds',duration:900,addCount:2,addName:'Nail Gun Turret',addGroup:'nail-guns',maxActive:2,healthScale:.13,damageScale:.32,targeting:'random',attackRange:35,attackName:'Nail Burst',overclockOnCap:1.08,overclockAbility:'Overclock'},{name:'Nail Storm',type:'line',duration:1900}],phases:[{id:'nail70',name:'Nail Storm · 70%',atPct:70,triggerMechanic:{name:'Nail Storm',type:'line',duration:1800}},{id:'nail40',name:'Nail Storm · 40%',atPct:40,triggerMechanic:{name:'Nail Storm',type:'line',duration:1600}},{id:'nail15',name:'Nail Storm · 15%',atPct:15,triggerMechanic:{name:'Nail Storm',type:'line',duration:1400}}],hardEnrageMs:105000};
  if(stage==='bedroom')return{id:'manor-bedroom',title:'The Bedroom',kind:'event',level:15,enemies:Array.from({length:20},(_,i)=>({name:'Manor Thrall '+(i+1),classification:'trash',priority:i<4?2:1})),enemyHealth:140,scaling:{enemyDamage:.40},mechanics:[],hardEnrageMs:95000};
  if(stage==='housebound'){const penalty=masterPenaltyStacks();return{id:'manor-master',title:'The Master of the Manor',kind:'final',level:15,enemies:[{name:'The Master of the Manor',classification:'boss'}],enemyHealth:5000*(1+penalty*.15),scaling:{enemyDamage:.68*(1+penalty*.10)},mechanicIntervalMs:5200,mechanics:[{name:'Shattered Floor',type:'persistent-circle',duration:1500,persistMs:7000,tickMs:1200,tickDamage:4,radius:9},{name:"Servant's Screech",type:'interaction',duration:900,interaction:'manor-screech',interactionDurationMs:4500},{name:'Nail Gun',type:'adds',duration:900,addCount:1,addName:'Nail Gun Turret',addGroup:'master-turret',maxActive:1,healthScale:.10,damageScale:.25,targeting:'random',attackRange:35,attackName:'Nail Burst'}],phases:[{id:'standing',name:'The Master Rises',atPct:60,damageScale:1.04,addMechanics:[{name:'Mark of the Manor',type:'tank-mark',duration:1000,damageTakenPerStack:.15,swapAt:3,markDuration:22000},{name:'Chosen Servant',type:'target-circle',duration:1850,radius:11}]},{id:'collapse',name:'House Collapses',atPct:30,damageScale:1.08,arenaBounds:{left:20,right:80,top:18,bottom:82},addMechanics:[{name:'Falling Beam',type:'line',duration:1500},{name:'Fire Floor',type:'persistent-circle',duration:1500,persistMs:8000,tickMs:1100,tickDamage:5,radius:10}],wipeAfterMs:20000,wipeAbility:'BURN THE HOUSE'}],hardEnrageMs:150000};}
@@ -331,6 +383,16 @@ async function setRaidReady(next){
    renderReadyGate();scheduleReadyLaunch()
  }catch(error){alert(error.message||'Could not update raid ready state')}
 }
+function bossBriefingMarkup(stage){
+ const brief=BOSS_BRIEFS[stage]||BOSS_BRIEFS.bedroom;
+ const art=brief.art
+  ?'<div class="mr-brief-art" style="background-image:linear-gradient(90deg,rgba(3,7,9,.08),rgba(3,7,9,.55)),url(\''+brief.art+'\')"><span>'+esc(brief.eyebrow)+'</span></div>'
+  :'<div class="mr-brief-art mr-brief-no-art"><span>'+esc(brief.eyebrow)+'</span><b>20</b><em>ENEMIES</em></div>';
+ return '<section class="mr-boss-brief '+(brief.art?'has-art':'no-art')+'">'+art+
+  '<div class="mr-brief-copy"><small>'+esc(brief.eyebrow)+'</small><h1>'+esc(brief.title)+'</h1><p>'+esc(brief.tagline)+'</p>'+
+  '<div class="mr-brief-mechanics">'+brief.mechanics.map((m,i)=>'<article><i>0'+(i+1)+'</i><div><b>'+esc(m[0])+'</b><span>'+esc(m[1])+'</span></div></article>').join('')+'</div>'+
+  '<div class="mr-brief-tip"><b>RAID NOTE</b><span>'+esc(brief.tip)+'</span></div></div></section>'
+}
 function renderReadyGate(){
  if(!session||session.status!=='active'||encounterIsLive())return;
  window.CellboundDungeon2D?.closeShared?.(true);
@@ -346,6 +408,7 @@ function renderReadyGate(){
  if(!root.hidden&&root.dataset.readyKey===renderKey)return;
  root.dataset.readyKey=renderKey;
  root.innerHTML='<section class="mr-ready-shell"><header><div><small>THE MANOR · SYNCHRONISED RAID</small><h2>'+esc(stageRoom(session.stage))+'</h2></div><button data-ready-close>×</button></header>'+
+  bossBriefingMarkup(session.stage)+
   countdown+
   '<div class="mr-ready-teams"><article class="'+(ready.a?'is-ready':'')+'"><i>PARTY A</i><b>'+esc(commanderLabel(0))+'</b><span>'+(ready.a?'READY ✓':'NOT READY')+'</span>'+(entryA<100?'<em>RECOVERED · '+entryA+'% HP</em>':'')+'</article>'+
   '<article class="'+(ready.b?'is-ready':'')+'"><i>PARTY B</i><b>'+esc(commanderLabel(1))+'</b><span>'+(ready.b?'READY ✓':'NOT READY')+'</span>'+(entryB<100?'<em>RECOVERED · '+entryB+'% HP</em>':'')+'</article></div>'+
@@ -650,9 +713,9 @@ function raidRosterMarkup(chars,e){
 }
 function arenaDecor(stage,e){
  if(stage==='butler'){
-   const pts=[[15,22],[72,18],[42,64],[80,70],[25,76],[58,35],[10,58],[68,82]];
-   const n=Math.min(pts.length,1+Math.floor(e/4500));
-   return '<div class="mr-plates">'+pts.slice(0,n).map((p,i)=>'<i style="left:'+p[0]+'%;top:'+p[1]+'%;opacity:'+(i<Math.max(0,n-5)?.18:.76)+'"></i>').join('')+'</div>'
+   const pts=[[18,68],[78,72],[31,78],[67,58],[12,48],[88,50],[41,65],[60,80],[25,39],[76,35],[47,50],[52,86]];
+   const n=Math.min(pts.length,1+Math.floor(e/2600)),activeStart=Math.max(0,n-5),target=pts[Math.min(pts.length-1,Math.floor(e/2600)%pts.length)];
+   return '<div class="mr-plates">'+pts.slice(0,n).map((p,i)=>'<i style="left:'+p[0]+'%;top:'+p[1]+'%;opacity:'+(i<activeStart?.09:.86)+'"></i>').join('')+'<b class="mr-thrown-plate" style="left:'+target[0]+'%;top:'+target[1]+'%"></b></div>'
  }
  if(stage==='engineer')return '<div class="mr-turret t1">⌁<span>NAIL GUN</span></div><div class="mr-turret t2">⌁<span>NAIL GUN</span></div>';
  if(stage==='bedroom')return '<div class="mr-trash">'+Array.from({length:20},(_,i)=>'<i class="m'+i+'">◆</i>').join('')+'</div>';
@@ -665,7 +728,7 @@ function arenaDecor(stage,e){
 function stageCallout(stage,e,engineEvent=null){
  if(engineEvent?.type==='PHASE_CHANGE')return'<div class="mr-cast phase-call">'+esc(engineEvent.ability||'PHASE CHANGE')+' <span>'+Math.round(Number(engineEvent.payload?.healthPct)||0)+'%</span></div>';
  if(engineEvent?.type==='ADD_OVERCLOCKED')return'<div class="mr-cast">OVERCLOCK <span>DESTROY TURRETS</span></div>';
- if(stage==='butler')return'<div class="mr-cast">PLATE BARRAGE <span>MOVE · OLD HAZARDS FADE</span></div>';
+ if(stage==='butler')return'<div class="mr-cast">THROWN PLATE BARRAGE <span>BACKLINE TARGETED · KEEP MOVING</span></div>';
  if(stage==='engineer'){const hp=bossHp(stage,e);if([70,40,15].some(x=>Math.abs(hp-x)<5))return'<div class="mr-cast">NAIL STORM <span>FIND THE SAFE LANE</span></div>';return'<div class="mr-cast">REBUILD <span>KEEP TWO TURRETS UNDER CONTROL</span></div>'}
  if(stage==='housebound'){const hp=bossHp(stage,e);if(hp<=10)return'<div class="mr-cast burn">BURN THE HOUSE <span>20s · UNINTERRUPTIBLE</span></div>';if(hp<=30)return'<div class="mr-cast">HOUSE COLLAPSES <span>SHRINKING ARENA · SCREECH · TURRETS</span></div>';if(hp<=60)return Math.floor(e/6500)%2?'<div class="mr-cast">CHOSEN SERVANT <span>SPREAD</span></div>':'<div class="mr-cast">MARK OF THE MANOR <span>TANK SWAP</span></div>';return Math.floor(e/7000)%2?'<div class="mr-cast">SERVANT\'S SCREECH <span>READ THE WORD</span></div>':'<div class="mr-cast">SHATTERED FLOOR <span>MOVE</span></div>'}
  return''
@@ -673,7 +736,7 @@ function stageCallout(stage,e,engineEvent=null){
 function masterPenaltyStacks(){return Math.max(0,Number(session?.state?.masterScreechFailures)||0)}
 function mechanicsMarkup(stage,e,phase){
  const data={
-  butler:['PLATE BARRAGE','The Butler smashes plate zones across the hall. Standing in a shattered zone deals damage over time; older zones disappear as new ones are created.','The Butler moves slowly and never performs normal attacks — the room itself is the threat.'],
+  butler:['THROWN PLATE BARRAGE','The Butler hurls plates toward ranged damage dealers and healers. Each impact leaves a larger shattered zone that deals damage over time, so the backline must keep rotating.','Several hazards remain active together before older zones fade. The Butler moves slowly and never performs normal attacks — controlling the floor is the fight.'],
   engineer:['NAIL GUN TURRETS','Two fragile turrets stay active, lock random characters and deal constant damage. Destroy them quickly; Rebuild replaces destroyed guns and Overclock punishes leaving both alive.','Nail Storm fires at 70%, 40% and 15% with lane-shaped safe gaps.'],
   bedroom:['BEDROOM SWARM','Twenty enemies rush the raid at once. No puzzle — group them, control them and burn them down.','When all twenty fall, the attic hatch drops open.'],
   housebound:['THE MASTER OF THE MANOR',phase===1?'Shattered Floor returns. Servant’s Screech punishes bad reads, and one Nail Gun Turret forces target priority.':phase===2?'At 60%, the Master rises. Mark of the Manor stacks +15% damage taken on the active tank; swap threat while Chosen Servant forces a spread.':'At 30%, the house collapses around the raid: shrinking space, beams, fire, turrets, Marks and Screech. At ~10%, BURN THE HOUSE begins a 20-second uninterruptible raid-kill cast.','Silas did not return to rule this house. He returned to wake its true master.']

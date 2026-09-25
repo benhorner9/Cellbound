@@ -19,3 +19,22 @@
 .mr-ready-status{margin:10px 0 0;color:#80918c;font-size:.58rem}.mr-ready-shell>footer{align-self:end;width:min(760px,100%);display:flex;justify-content:space-between;gap:12px;padding-top:16px;border-top:1px solid #ffffff0c;color:#5e706b;font-size:.48rem}.mr-ready-shell>footer b{color:#c48346;letter-spacing:.09em}
 @keyframes mrReadyPulse{from{transform:scale(.96);filter:brightness(.9)}to{transform:scale(1.03);filter:brightness(1.15)}}
 @media(max-width:620px){.mr-ready-shell{padding:12px}.mr-ready-teams{grid-template-columns:1fr;gap:7px;margin:18px 0 12px}.mr-ready-teams article{padding:12px}.mr-ready-count{margin-top:20px}.mr-ready-shell>footer{flex-direction:column;text-align:center;align-items:center}}
+
+
+/* Manor boss briefing ready screens */
+.mr-ready-shell{grid-template-rows:auto auto auto auto auto auto;align-content:start;overflow-y:auto}
+.mr-boss-brief{width:min(1040px,100%);display:grid;grid-template-columns:minmax(300px,.95fr) minmax(360px,1.05fr);overflow:hidden;margin:18px 0 4px;border:1px solid rgba(224,133,39,.28);background:linear-gradient(135deg,#100e0c,#071013 62%);box-shadow:0 20px 55px #0008}
+.mr-brief-art{position:relative;min-height:320px;background-size:cover;background-position:center;isolation:isolate}
+.mr-brief-art:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 48%,rgba(3,7,9,.88));pointer-events:none}
+.mr-brief-art>span{position:absolute;z-index:2;left:16px;bottom:14px;padding:6px 8px;border:1px solid rgba(236,145,57,.38);background:#090b0dcf;color:#efb06e;font-size:.46rem;font-weight:900;letter-spacing:.13em}
+.mr-brief-no-art{display:grid;place-items:center;align-content:center;background:radial-gradient(circle at 50% 42%,#3a1f12,#090d0f 66%)}
+.mr-brief-no-art>b{font:700 5rem/.85 Georgia,serif;color:#df914c;text-shadow:0 0 40px #dc7b3040}.mr-brief-no-art>em{margin-top:8px;color:#8b9b96;font-size:.55rem;font-style:normal;font-weight:900;letter-spacing:.18em}
+.mr-brief-copy{padding:24px 26px;display:flex;flex-direction:column;justify-content:center}.mr-brief-copy>small{color:#c87d39;font-size:.46rem;font-weight:900;letter-spacing:.14em}.mr-brief-copy>h1{margin:5px 0 4px;font:500 clamp(1.8rem,4vw,2.8rem) Georgia,serif;color:#f1e4d6}.mr-brief-copy>p{margin:0 0 17px;color:#84958f;font-size:.61rem;line-height:1.55}
+.mr-brief-mechanics{display:grid;gap:8px}.mr-brief-mechanics article{display:grid;grid-template-columns:29px 1fr;gap:9px;padding:9px 10px;border:1px solid #ffffff0d;background:#071013b8}.mr-brief-mechanics article>i{display:grid;place-items:center;width:27px;height:27px;border:1px solid #b76c31;color:#d99150;font-size:.43rem;font-style:normal;font-weight:900}.mr-brief-mechanics b,.mr-brief-mechanics span{display:block}.mr-brief-mechanics b{color:#d8e1de;font-size:.5rem;letter-spacing:.06em}.mr-brief-mechanics span{margin-top:3px;color:#778984;font-size:.52rem;line-height:1.45}
+.mr-brief-tip{display:grid;grid-template-columns:auto 1fr;gap:10px;margin-top:11px;padding:9px 10px;border-left:2px solid #d78039;background:#1c130d}.mr-brief-tip b{color:#e39a55;font-size:.45rem;letter-spacing:.1em}.mr-brief-tip span{color:#a7b2ae;font-size:.51rem;line-height:1.45}
+.mr-ready-wait,.mr-ready-count{align-self:auto;margin-top:18px}.mr-ready-teams{margin:18px 0 14px}.mr-ready-shell>footer{margin-top:16px;padding-bottom:max(10px,env(safe-area-inset-bottom))}
+.stage-butler .mr-plates i{width:145px;height:104px;border:2px solid rgba(226,95,51,.38);background:radial-gradient(circle,rgba(235,116,56,.22),rgba(121,43,27,.16) 48%,transparent 70%);box-shadow:inset 0 0 24px rgba(223,78,38,.14),0 0 22px rgba(217,76,34,.14)}
+.mr-thrown-plate{position:absolute;z-index:12;width:34px;height:10px;border:2px solid #e9e3d4;border-radius:50%;background:linear-gradient(180deg,#f4efe2,#a7a095);box-shadow:0 0 12px #fff8;animation:mrPlateThrow 2.6s linear infinite;pointer-events:none}
+.mr-thrown-plate:after{content:"";position:absolute;inset:2px 7px;border:1px solid #b28d65;border-radius:50%}
+@keyframes mrPlateThrow{0%{opacity:0;transform:translate(-240px,-210px) rotate(0deg) scale(.55)}12%{opacity:1}72%{opacity:1;transform:translate(-55px,-55px) rotate(600deg) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) rotate(820deg) scale(.75)}}
+@media(max-width:760px){.mr-boss-brief{grid-template-columns:1fr}.mr-brief-art{min-height:210px}.mr-brief-copy{padding:18px}.mr-ready-shell{padding:10px}.mr-ready-shell>header{position:sticky;top:0;z-index:40}.mr-ready-wait h1{font-size:1.8rem}.stage-butler .mr-plates i{width:116px;height:86px}}
