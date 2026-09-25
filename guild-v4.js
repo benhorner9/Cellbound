@@ -351,7 +351,7 @@ Storage.prototype.setItem=function(key,value){
 const WORKSPACES={
   overview:{label:'Home',views:[['overview','Home']]},
   guild:{label:'Guild',views:[['roster','Roster'],['party','Active Party'],['bank','Bank'],['professions','Professions']]},
-  adventure:{label:'Adventure',views:[['quests','Quests'],['content','Dungeons'],['world','Events'],['raids','Raids'],['endgame','Endgame']]},
+  adventure:{label:'Adventure',views:[['quests','Quests'],['content','Dungeons'],['world','Activities'],['raids','Raids']]},
   market:{label:'Market',views:[['trading','Trading Post']]},
   pvp:{label:'Combat',views:[['pvp','PvP']]},
   social:{label:'Social',views:[['chat','Social']]},
@@ -595,8 +595,6 @@ function renderOverview(){
   const attemptsLeft=Math.max(0,3-attemptsUsed),bestKills=Math.max(0,Number(tb.bestKills)||0);
   const eventStatus=$('#homeEventStatus');if(eventStatus)eventStatus.textContent=attemptsLeft+' entr'+(attemptsLeft===1?'y':'ies')+' today · Best '+bestKills+'/12';
   const dungeonStatus=$('#homeDungeonStatus');if(dungeonStatus)dungeonStatus.textContent=dungeon.name;
-  const endgameStatus=$('#homeEndgameStatus');
-  if(endgameStatus)endgameStatus.textContent=fracturedDone?'Cellbound+ · rewards · reports':blackoutDone?'Heroic & Cellbound+ progression':'Progression & run reports';
 
   const pulse=$('#overviewGuildPulse');
   if(pulse){
