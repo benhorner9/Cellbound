@@ -358,7 +358,7 @@ for(const file of files){
     if(!sharedViewerRuntime.includes('externalOnEvent')||!sharedViewerRuntime.includes("case'INTERACTION_REQUIRED'"))throw new Error('Shared CB2D raid interaction event bridge is missing');
     const callbackAt=sharedViewerRuntime.indexOf('run.externalOnEvent(event,result)'),renderAt=sharedViewerRuntime.indexOf('renderRebornEvent(event,result,replayMode)',callbackAt);
     if(callbackAt<0||renderAt<0||callbackAt>renderAt)throw new Error('Raid interaction callbacks must fire before visual event rendering');
-    for(const hook of ["zIndex:'2147483000'","host.style.display='grid'","handledScreechTokens","Manor Screech menu failed to open"])if(!manorRuntime.includes(hook))throw new Error('Manor Screech modal hardening is missing '+hook);
+    for(const hook of ["host.style.setProperty('z-index','2147483647','important')","host.style.setProperty('display','grid','important')","handledScreechTokens","Manor Screech menu failed to open"])if(!manorRuntime.includes(hook))throw new Error('Manor Screech modal hardening is missing '+hook);
     const combatRuntime=fs.readFileSync(path.join(__dirname,'combat-reborn-v1.js'),'utf8');
     if(!combatRuntime.includes("emit(ctx,'INTERACTION_REQUIRED'")||!manorRuntime.includes("type:'interaction'")||!manorRuntime.includes('onEvent:handleRaidCombatEvent'))throw new Error('Manor Screech must be driven by Combat Reborn interaction events');
     const endgameStart=contents.indexOf('<section id="endgame" class="view">'),endgameEnd=contents.indexOf('<section id="world" class="view">',endgameStart);
