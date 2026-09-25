@@ -268,7 +268,7 @@ for(const file of files){
     for(const legacy of ['Math.min(rawDelta,100)','Math.min(100,Math.max(0,now-last','Math.min(Math.max(0,now-lastFrame),100)']){
       if(contents.includes(legacy))throw new Error(file+' still discards background combat time');
     }
-    if(!contents.includes('Date.now()-wallAnchor'))throw new Error(file+' must use a wall-clock combat timeline');
+    if(!contents.includes('Date.now()-wallAnchor')&&!contents.includes('Date.now()-playStartedAt'))throw new Error(file+' must use a wall-clock combat timeline');
   }
   if(file==='quests-v2.js'){
     if(!contents.includes("Number(lastResult?.durationMs)"))throw new Error('Interactive slice duration must use lastResult');
