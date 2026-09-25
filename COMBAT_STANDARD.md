@@ -77,6 +77,25 @@ Combat Reborn is authoritative for:
 
 The visual layer only renders engine events.
 
+### Shared visual event layer
+Every combat playback surface must also forward its authoritative Combat Reborn events to:
+
+`CellboundCombatFX.combatEvent(event, options)`
+
+The shared visual layer owns the common animation language for:
+- ability starts and class-accented action feedback;
+- hit, critical, block, dodge and heal reactions;
+- enemy cast wind-ups;
+- threat / aggro changes;
+- mechanic warning, impact and safe-state feedback;
+- defensives, crowd control and interrupts;
+- death and revival presentation;
+- health-change feedback.
+
+Encounter code may add unique boss/environment effects, but it must not recreate these common reactions locally when the shared visual layer can express them.
+
+The visual event layer remains presentation-only. It cannot calculate or alter damage, healing, targeting, timing, threat, movement decisions or encounter outcomes.
+
 ---
 
 ## 3. STANDARD COMBAT SCREEN
@@ -435,6 +454,8 @@ Before any new combat content ships:
 - [ ] Equipped Skills drive player abilities
 - [ ] Playback speed cannot change outcome
 - [ ] Visual errors cannot freeze combat
+- [ ] Authoritative combat events are forwarded to the shared visual event layer
+- [ ] Common hit/heal/cast/threat/death visuals are not reimplemented per encounter
 - [ ] Wipes include a useful diagnosis
 - [ ] Victory/loot/progression state saves correctly
 - [ ] iPad layout tested
@@ -451,8 +472,10 @@ The required combat model for all current systems is Combat Reborn:
 - Chaos Canyon
 - Blackout Station
 - The Twelve Below
+- The Manor raid (through the shared CB2D viewer)
 - Quest combat encounters
 - World Boss encounters (server-authoritative Combat Reborn)
+- PvP combat presentation (shared visual event language over its authoritative PvP event stream)
 
 Any future:
 - dungeon;
