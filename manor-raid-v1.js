@@ -201,7 +201,10 @@ function tickRaid(){
  if(session.status==='completed'||session.stage==='victory'){if(lastStage!=='victory')renderRaidShell();return}
  if(lastStage!==session.stage){lastScreechAt=0;screechOpen=false;renderRaidShell()}
  const e=stageElapsed();paintStage(e);if(isLeader())driveStage(e);
- if(session.stage==='maids'&&e>7000&&!screechOpen&&e-lastScreechAt>10500)openScreech()
+ const maidScreech=session.stage==='maids'&&e>7000&&e-lastScreechAt>10500;
+ const masterHp=session.stage==='housebound'?bossHp('housebound',e):100;
+ const masterScreech=session.stage==='housebound'&&e>7000&&masterHp>10&&e-lastScreechAt>18000;
+ if(!screechOpen&&(maidScreech||masterScreech))openScreech()
 }
 function bossHp(stage,e){
  const d=STAGES[stage]?.duration||1;
@@ -225,7 +228,8 @@ function bossIcon(stage){return stage==='butler'?'♜':stage==='engineer'?'⚙':
 function unit(c,i,e){
  const color=CLASS_COLORS[c.class]||'#81aaa3',p=window.CellboundPortraits?.portraitHTML?.(c,{size:'sm'})||'<b>'+esc((c.name||'?').slice(0,2).toUpperCase())+'</b>';
  const danger=session.stage==='housebound'?Math.max(48,88-((i*7+Math.floor(e/1100)*5)%38)):session.stage==='engineer'&&i%4===Math.floor(e/5000)%4?62:90;
- return '<div class="mr-unit u'+i+'" style="--class:'+color+'"><div class="mr-unit-pic">'+p+'</div><span>'+esc(c.name)+'</span><div class="mr-unit-hp"><i style="width:'+danger+'%"></i></div></div>'
+ const hp=session.stage==='housebound'?bossHp('housebound',e):100,chosen=session.stage==='housebound'&&hp<=60&&hp>30&&i===Math.floor(e/6500)%10;
+ return '<div class="mr-unit u'+i+' '+(chosen?'chosen':'')+'" style="--class:'+color+'"><div class="mr-unit-pic">'+p+'</div><span>'+esc(c.name)+'</span><div class="mr-unit-hp"><i style="width:'+danger+'%"></i></div></div>'
 }
 function arenaDecor(stage,e){
  if(stage==='butler'){
@@ -259,6 +263,10 @@ function stageCallout(stage,e){
  }
  return''
 }
+function masterBuffRemaining(){
+ const until=stamp(session?.state?.masterDamageBuffUntil),left=Math.max(0,until-now());
+ return left>0?Math.ceil(left/1000):0
+}
 function mechanicsMarkup(stage,e,phase){
  const data={
   butler:['PLATE BARRAGE','The Butler smashes plate zones across the hall. Standing in a shattered zone deals damage over time; older zones disappear as new ones are created.','The Butler moves slowly and never performs normal attacks — the room itself is the threat.'],
@@ -266,7 +274,8 @@ function mechanicsMarkup(stage,e,phase){
   bedroom:['BEDROOM SWARM','Twenty enemies rush the raid at once. No puzzle — group them, control them and burn them down.','When all twenty fall, the attic hatch drops open.'],
   housebound:['THE MASTER OF THE MANOR',phase===1?'Shattered Floor returns. Servant’s Screech punishes bad reads, and one Nail Gun Turret forces target priority.':phase===2?'At 60%, the Master rises. Mark of the Manor stacks +15% damage taken on the active tank; swap threat while Chosen Servant forces a spread.':'At 30%, the house collapses around the raid: shrinking space, beams, fire, turrets, Marks and Screech. At ~10%, BURN THE HOUSE begins a 20-second uninterruptible raid-kill cast.','Silas did not return to rule this house. He returned to wake its true master.']
  }[stage]||['THE MANOR','',''];
- return '<section class="mr-mechanic-card"><small>ACTIVE MECHANIC</small><h3>'+data[0]+'</h3><p>'+data[1]+'</p><span>'+data[2]+'</span></section>'
+ const buff=stage==='housebound'&&masterBuffRemaining()?'<strong class="mr-master-buff">SCREECH FAILURE · MASTER +10% DAMAGE · '+masterBuffRemaining()+'s</strong>':'';
+ return '<section class="mr-mechanic-card"><small>ACTIVE MECHANIC</small><h3>'+data[0]+'</h3><p>'+data[1]+'</p><span>'+data[2]+'</span>'+buff+'</section>'
 }
 function paintMaids(arena,mech,roster,e){
  const rows=memberRows(),pa=Number(session.state?.maidPenaltyA)||0,pb=Number(session.state?.maidPenaltyB)||0;
@@ -294,15 +303,18 @@ async function advance(next){
  }catch(e){console.warn('Manor advance',e)}finally{advancing=false}
 }
 function openScreech(){
- if(screechOpen||session?.stage!=='maids')return;screechOpen=true;lastScreechAt=stageElapsed();
+ if(screechOpen||!['maids','housebound'].includes(session?.stage))return;screechOpen=true;lastScreechAt=stageElapsed();
  const host=$('#mrScreechHost');if(!host){screechOpen=false;return}
  const target=SCREECH_COLOURS[Math.floor(Math.random()*SCREECH_COLOURS.length)];
  const display=SCREECH_COLOURS.filter(x=>x.name!==target.name)[Math.floor(Math.random()*4)];
  const shuffled=[...SCREECH_COLOURS].sort(()=>Math.random()-.5);
  let answered=false,deadline=now()+4500;
- host.innerHTML='<div class="mr-screech"><small>THE MAID CASTS</small><h3>SCREECH</h3><p>PRESS THE COLOUR THE <b>WORD SAYS</b></p><strong style="color:'+display.hex+'">'+target.name+'</strong><div>'+shuffled.map(x=>'<button data-colour="'+x.name+'" style="--c:'+x.hex+'">'+x.name+'</button>').join('')+'</div><span data-screech-time>4.5</span></div>';
+ const master=session.stage==='housebound';
+ host.innerHTML='<div class="mr-screech"><small>'+(master?'THE MASTER CALLS A SERVANT':'THE MAID CASTS')+'</small><h3>'+(master?"SERVANT'S SCREECH":'SCREECH')+'</h3><p>PRESS THE COLOUR THE <b>WORD SAYS</b></p><strong style="color:'+display.hex+'">'+target.name+'</strong><div>'+shuffled.map(x=>'<button data-colour="'+x.name+'" style="--c:'+x.hex+'">'+x.name+'</button>').join('')+'</div><span data-screech-time>4.5</span></div>';
  const finish=async success=>{
-   if(answered)return;answered=true;clearInterval(clock);host.innerHTML='<div class="mr-screech-result '+(success?'ok':'fail')+'"><b>'+(success?'SCREECH RESISTED':'SCREECH FAILED')+'</b><span>'+(success?'Your room stays stable.':'The other Maid heals 15% and gains +10% damage.')+'</span></div>';
+   if(answered)return;answered=true;clearInterval(clock);
+   const master=session.stage==='housebound';
+   host.innerHTML='<div class="mr-screech-result '+(success?'ok':'fail')+'"><b>'+(success?'SCREECH RESISTED':'SCREECH FAILED')+'</b><span>'+(success?(master?'The Master gains nothing.':'Your room stays stable.'):(master?'The Master gains +10% damage for 20 seconds.':'The other Maid heals 15% and gains +10% damage.'))+'</span></div>';
    const {error}=await db.rpc('manor_screech_result',{p_session_id:session.id,p_success:success});if(error)console.warn(error);
    await loadSession(session.id).catch(()=>{});setTimeout(()=>{host.innerHTML='';screechOpen=false},1200)
  };
