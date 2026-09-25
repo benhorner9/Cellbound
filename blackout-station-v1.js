@@ -422,22 +422,24 @@ async function playTimeline(result,tok){
  const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
  if(!run)return false;if(!events.length)return result?.outcome==='victory';
  return await new Promise(resolve=>{
-  let index=0,simTime=0,lastFrame=performance.now(),finished=false,visualErrors=0;
-  const finish=value=>{if(finished)return;finished=true;resolve(value)};
-  const frame=now=>{
+  let index=0,simTime=0,wallAnchor=Date.now(),simAnchor=0,lastSpeed=null,finished=false,visualErrors=0,raf=0;
+  const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);resolve(value)};
+  const frame=()=>{
    if(finished)return;
    if(tok!==token||!run){finish(false);return}
-   const delta=Math.min(Math.max(0,now-lastFrame),100);lastFrame=now;
-   simTime+=delta*Math.max(.25,Number(run.speed)||1);run.combatElapsed=simTime;
+   const speed=Math.max(.25,Number(run.speed)||1);
+   if(lastSpeed===null)lastSpeed=speed;
+   else if(lastSpeed!==speed){simAnchor=simTime;wallAnchor=Date.now();lastSpeed=speed}
+   simTime=Math.max(simTime,simAnchor+Math.max(0,Date.now()-wallAnchor)*speed);run.combatElapsed=simTime;
    const frameStarted=performance.now();let handled=0;
-   while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<12&&performance.now()-frameStarted<7){
+   while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<32&&performance.now()-frameStarted<9){
     const e=events[index++];handled++;
     try{eventRender(e)}catch(error){visualErrors++;console.warn('Blackout Station combat visual recovered',e?.type,e?.ability,error);if(visualErrors===1)feed('A display event was recovered without interrupting combat.')}
    }
    if(index>=events.length){finish(result?.outcome==='victory');return}
-   requestAnimationFrame(frame)
+   raf=requestAnimationFrame(frame)
   };
-  requestAnimationFrame(frame)
+  raf=requestAnimationFrame(frame)
  })
 }
 function drawCombat(){
