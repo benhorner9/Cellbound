@@ -1544,46 +1544,42 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
  if(!events.length){run.combatActive=false;return replayMode?'done':(result?.outcome==='victory'?'victory':'defeat')}
 
  return await new Promise(resolve=>{
-   let index=0,simTime=0,lastFrame=performance.now(),finished=false;
+   let index=0,simTime=0,wallAnchor=Date.now(),simAnchor=0,lastSpeed=null,finished=false,raf=0;
+   const speedNow=()=>replayMode?Math.max(.25,Number(run?.replaySpeed)||1):Math.max(.25,Number(run?.speed)||1);
+   const readClock=()=>{
+     if(replayMode&&run?.replayPaused){wallAnchor=Date.now();simAnchor=simTime;return simTime}
+     const speed=speedNow();
+     if(lastSpeed===null)lastSpeed=speed;
+     else if(speed!==lastSpeed){simAnchor=simTime;wallAnchor=Date.now();lastSpeed=speed}
+     simTime=Math.max(simTime,simAnchor+Math.max(0,Date.now()-wallAnchor)*speed);
+     return simTime
+   };
    const finishPlayback=value=>{
-     if(finished)return;finished=true;
+     if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
      if(run)run.combatActive=false;
      resolve(value)
    };
-   const frame=now=>{
+   const frame=()=>{
      if(finished)return;
      if(tok!==token||!run){finishPlayback('cancelled');return}
      if(replayMode&&run.replayRestartRequested){finishPlayback('restart');return}
-
-     // One continuous playback clock. Simulation events remain authoritative, but
-     // presentation no longer blocks on each individual event gap.
-     const rawDelta=Math.max(0,now-lastFrame);
-     lastFrame=now;
-     if(!(replayMode&&run.replayPaused)){
-       // Clamp only giant background-tab jumps. Normal frames retain their real timing.
-       const frameDelta=Math.min(rawDelta,100);
-       const speed=replayMode?Math.max(.25,Number(run.replaySpeed)||1):Math.max(.25,Number(run.speed)||1);
-       simTime+=frameDelta*speed
-     }
-
-     // Render every event that became due this frame. Actions with close timestamps
-     // now overlap naturally (movement/projectiles/casts/heals) instead of becoming slides.
-     while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4){
+     const current=readClock(),frameStarted=performance.now();let handled=0;
+     // Wall time remains authoritative even when the browser suspends animation frames.
+     while(index<events.length&&(Number(events[index].timestamp)||0)<=current+4&&handled<48&&performance.now()-frameStarted<10){
        const event=events[index];
        renderRebornEvent(event,result,replayMode);
        if(!replayMode&&run?.externalMode&&typeof run.externalOnEvent==='function'){
          try{run.externalOnEvent(event,result)}catch(error){console.warn('Shared combat event callback failed',error)}
        }
-       index++
+       index++;handled++
      }
-
      if(index>=events.length){
        finishPlayback(replayMode?'done':(result?.outcome==='victory'?'victory':'defeat'));
        return
      }
-     requestAnimationFrame(frame)
+     raf=requestAnimationFrame(frame)
    };
-   requestAnimationFrame(frame)
+   raf=requestAnimationFrame(frame)
  })
 }
 function runRebornStage(s){
