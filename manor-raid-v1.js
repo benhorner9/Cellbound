@@ -21,6 +21,7 @@ let Game=null,db=null,user=null,mount=null,groups=[],members=[],lockout=null,myG
 let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false,raidRealtime=null,readyLaunchTimer=null,serverClockOffset=0;
 const handledScreechTokens=new Set();
 const resolvingScreechTokens=new Set();
+const screechPromptTimers=new Map();
 const combatCache=new Map();
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
@@ -61,12 +62,12 @@ function manorEncounter(stage){
  if(stage==='butler')return{id:'manor-butler',title:'The Butler',kind:'boss',level:15,enemies:[{name:'The Butler',classification:'boss',passive:true}],enemyHealth:5000,mechanicIntervalMs:3200,mechanics:[{name:'Plate Barrage',type:'persistent-circle',duration:1300,persistMs:9000,tickMs:1100,tickDamage:5,radius:10},{name:'Slow Patrol',type:'patrol',duration:1300}],hardEnrageMs:70000};
  if(stage==='engineer')return{id:'manor-engineer',title:'The Engineer',kind:'boss',level:15,enemies:[{name:'The Engineer',classification:'boss'}],enemyHealth:4000,scaling:{enemyDamage:.72},mechanicIntervalMs:4200,mechanics:[{name:'Rebuild Nail Guns',type:'adds',duration:900,addCount:2,addName:'Nail Gun Turret',addGroup:'nail-guns',maxActive:2,healthScale:.13,damageScale:.32,targeting:'random',attackRange:35,attackName:'Nail Burst',overclockOnCap:1.08,overclockAbility:'Overclock'},{name:'Nail Storm',type:'line',duration:1900}],phases:[{id:'nail70',name:'Nail Storm · 70%',atPct:70,triggerMechanic:{name:'Nail Storm',type:'line',duration:1800}},{id:'nail40',name:'Nail Storm · 40%',atPct:40,triggerMechanic:{name:'Nail Storm',type:'line',duration:1600}},{id:'nail15',name:'Nail Storm · 15%',atPct:15,triggerMechanic:{name:'Nail Storm',type:'line',duration:1400}}],hardEnrageMs:105000};
  if(stage==='bedroom')return{id:'manor-bedroom',title:'The Bedroom',kind:'event',level:15,enemies:Array.from({length:20},(_,i)=>({name:'Manor Thrall '+(i+1),classification:'trash',priority:i<4?2:1})),enemyHealth:140,scaling:{enemyDamage:.40},mechanics:[],hardEnrageMs:95000};
- if(stage==='housebound'){const penalty=masterPenaltyStacks();return{id:'manor-master',title:'The Master of the Manor',kind:'final',level:15,enemies:[{name:'The Master of the Manor',classification:'boss'}],enemyHealth:5000*(1+penalty*.15),scaling:{enemyDamage:.68*(1+penalty*.10)},mechanicIntervalMs:5200,mechanics:[{name:'Shattered Floor',type:'persistent-circle',duration:1500,persistMs:7000,tickMs:1200,tickDamage:4,radius:9},{name:"Servant's Screech",type:'interaction',duration:900,interaction:'manor-screech',interactionDurationMs:4500},{name:'Nail Gun',type:'adds',duration:900,addCount:1,addName:'Nail Gun Turret',addGroup:'master-turret',maxActive:1,healthScale:.10,damageScale:.25,targeting:'random',attackRange:35,attackName:'Nail Burst'}],phases:[{id:'standing',name:'The Master Rises',atPct:60,damageScale:1.04,addMechanics:[{name:'Mark of the Manor',type:'tank-mark',duration:1000,damageTakenPerStack:.15,swapAt:3,markDuration:22000},{name:'Chosen Servant',type:'target-circle',duration:1850,radius:11}]},{id:'collapse',name:'House Collapses',atPct:30,damageScale:1.08,arenaBounds:{left:20,right:80,top:18,bottom:82},addMechanics:[{name:'Falling Beam',type:'line',duration:1500},{name:'Fire Floor',type:'persistent-circle',duration:1500,persistMs:8000,tickMs:1100,tickDamage:5,radius:10}],wipeAfterMs:20000,wipeAbility:'BURN THE HOUSE'}],hardEnrageMs:150000};}
+ if(stage==='housebound'){const penalty=masterPenaltyStacks();return{id:'manor-master',title:'The Master of the Manor',kind:'final',level:15,enemies:[{name:'The Master of the Manor',classification:'boss'}],enemyHealth:5000,scaling:{enemyDamage:.68*(1+penalty*.10)},mechanicIntervalMs:5200,mechanics:[{name:'Shattered Floor',type:'persistent-circle',duration:1500,persistMs:7000,tickMs:1200,tickDamage:4,radius:9},{name:"Servant's Screech",type:'interaction',duration:900,interaction:'manor-screech',interactionDurationMs:4500},{name:'Nail Gun',type:'adds',duration:900,addCount:1,addName:'Nail Gun Turret',addGroup:'master-turret',maxActive:1,healthScale:.10,damageScale:.25,targeting:'random',attackRange:35,attackName:'Nail Burst'}],phases:[{id:'standing',name:'The Master Rises',atPct:60,damageScale:1.04,addMechanics:[{name:'Mark of the Manor',type:'tank-mark',duration:1000,damageTakenPerStack:.15,swapAt:3,markDuration:22000},{name:'Chosen Servant',type:'target-circle',duration:1850,radius:11}]},{id:'collapse',name:'House Collapses',atPct:30,damageScale:1.08,arenaBounds:{left:20,right:80,top:18,bottom:82},addMechanics:[{name:'Falling Beam',type:'line',duration:1500},{name:'Fire Floor',type:'persistent-circle',duration:1500,persistMs:8000,tickMs:1100,tickDamage:5,radius:10}],wipeAfterMs:20000,wipeAbility:'BURN THE HOUSE'}],hardEnrageMs:150000};}
  return null
 }
 function maidEncounter(side){
  const penalty=Number(session?.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0;
- return{id:'manor-maid-'+side,title:'The Maid',kind:'boss',level:15,enemies:[{name:'The Maid',classification:'boss'}],enemyHealth:2500*(1+penalty*.15),scaling:{enemyDamage:.72*(1+penalty*.10)},mechanicIntervalMs:4400,mechanics:[{name:'Screech',type:'interaction',duration:900,interaction:'manor-screech',interactionDurationMs:4500},{name:'Silver Tray',type:'cone',duration:1500},{name:'Healer Swipe',type:'healer-swipe',duration:1400,status:{id:'maid-gash',name:'Maid Gash',duration:5000,effect:{incomingDamageTaken:.08}}}],hardEnrageMs:85000}
+ return{id:'manor-maid-'+side,title:'The Maid',kind:'boss',level:15,enemies:[{name:'The Maid',classification:'boss'}],enemyHealth:2500,scaling:{enemyDamage:.72*(1+penalty*.10)},mechanicIntervalMs:4400,mechanics:[{name:'Screech',type:'interaction',duration:900,interaction:'manor-screech',interactionDurationMs:4500},{name:'Silver Tray',type:'cone',duration:1500},{name:'Healer Swipe',type:'healer-swipe',duration:1400,status:{id:'maid-gash',name:'Maid Gash',duration:5000,effect:{incomingDamageTaken:.08}}}],hardEnrageMs:85000}
 }
 function combatFor(stage,side=null){
  const E=combatEngine();if(!E?.simulate||!session)return null;
@@ -97,9 +98,12 @@ function combatPlayerHp(ch,elapsed){
  const id='p-'+(stage==='maids'?'maid-':'raid-')+side+'-'+String(ch?.id||ch?.name||'character');
  return hpPctAt(pack.result,elapsed,id,100)
 }
-function maidBossHp(side,elapsed){
+function maidBossHp(side,elapsed,penalty=Number(session?.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0){
  const pack=combatFor('maids',side);if(!pack)return null;
- return hpPctAt(pack.result,elapsed,'e-0',100)
+ const base=hpPctAt(pack.result,elapsed,'e-0',100),duration=Math.max(1,Number(pack.result?.durationMs)||STAGE_MIN_MS.maids);
+ if(!penalty)return base;
+ if(elapsed<=duration)return Math.min(100,base+penalty*15);
+ return Math.max(0,penalty*15-((elapsed-duration)/duration)*100)
 }
 function stageCombatDuration(stage){
  if(stage==='maids'){const a=combatFor('maids',0)?.result?.durationMs||0,b=combatFor('maids',1)?.result?.durationMs||0;return Math.max(STAGE_MIN_MS.maids,a,b)}
@@ -336,16 +340,17 @@ async function subscribeRaidRealtime(id){
  raidRealtime=db.channel('manor-session-'+id)
   .on('postgres_changes',{event:'UPDATE',schema:'public',table:'raid_sessions',filter:'id=eq.'+id},payload=>{
     const incoming=payload?.new;if(!incoming||incoming.id!==id)return;
-    const side=myRaidSide(),beforeStage=session?.stage,beforeStatus=session?.status,beforeStart=readyStartAt(),beforeState=JSON.stringify(session?.state||{});
-    const beforePenalty=beforeStage==='maids'?Number(session?.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0:beforeStage==='housebound'?masterPenaltyStacks():0;
+    const beforeStage=session?.stage,beforeStatus=session?.status,beforeStart=readyStartAt(),beforeState=JSON.stringify(session?.state||{});
+    const beforePenaltyA=Number(session?.state?.maidPenaltyA)||0,beforePenaltyB=Number(session?.state?.maidPenaltyB)||0,beforeMaster=masterPenaltyStacks();
     session=incoming;
     const changedStage=beforeStage!==session.stage||beforeStatus!==session.status;
     const changedStart=beforeStart!==readyStartAt();
     if(changedStage||changedStart){sharedStageKey='';syncSharedRaidView(true);return}
     if(!encounterIsLive())renderReadyGate();
     else if(beforeState!==JSON.stringify(session.state||{})){
-      const afterPenalty=session.stage==='maids'?Number(session?.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0:session.stage==='housebound'?masterPenaltyStacks():0;
-      if(afterPenalty!==beforePenalty){
+      const afterPenaltyA=Number(session?.state?.maidPenaltyA)||0,afterPenaltyB=Number(session?.state?.maidPenaltyB)||0,afterMaster=masterPenaltyStacks();
+      const penaltyChanged=session.stage==='maids'?(afterPenaltyA!==beforePenaltyA||afterPenaltyB!==beforePenaltyB):session.stage==='housebound'?afterMaster!==beforeMaster:false;
+      if(penaltyChanged){
         sharedStageKey='';
         if(screechOpen)setTimeout(()=>syncSharedRaidView(true),1250);else syncSharedRaidView(true);
         return
@@ -371,13 +376,22 @@ function ensureScreechHost(){
    host.setAttribute('aria-modal','true');
    document.body.appendChild(host)
  }
- // Make the portal itself authoritative so stale/cached CSS cannot bury the choices.
- Object.assign(host.style,{
-   position:'fixed',inset:'0',zIndex:'2147483000',display:'none',
-   placeItems:'center',padding:'16px',background:'rgba(0,0,0,.72)',
-   pointerEvents:'auto'
- });
- host.hidden=false;return host
+ host.hidden=false;
+ host.style.setProperty('position','fixed','important');
+ host.style.setProperty('inset','0','important');
+ host.style.setProperty('width','100vw','important');
+ host.style.setProperty('height','100dvh','important');
+ host.style.setProperty('min-height','-webkit-fill-available','important');
+ host.style.setProperty('z-index','2147483647','important');
+ host.style.setProperty('display','none','important');
+ host.style.setProperty('place-items','center','important');
+ host.style.setProperty('padding','max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left))','important');
+ host.style.setProperty('background','rgba(0,0,0,.82)','important');
+ host.style.setProperty('pointer-events','auto','important');
+ host.style.setProperty('overflow','auto','important');
+ host.style.setProperty('overscroll-behavior','contain','important');
+ host.style.setProperty('touch-action','manipulation','important');
+ return host
 }
 function myRaidSide(){
  const rows=memberRows(),index=rows.findIndex(m=>m.user_id===user?.id);
@@ -413,7 +427,7 @@ async function syncSharedRaidView(force=false){
  const pack=sharedStagePack();if(!pack)return;
  const side=session.stage==='maids'?myRaidSide():null,penalty=session.stage==='maids'?Number(session?.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0:session.stage==='housebound'?masterPenaltyStacks():0,key=session.id+':'+session.stage+':'+(side===null?'raid':side)+':penalty-'+penalty;
  if(!force&&sharedStageKey===key)return;
- sharedStageKey=key;lastStage=session.stage;lastScreechAt=0;screechOpen=false;handledScreechTokens.clear();
+ sharedStageKey=key;lastStage=session.stage;lastScreechAt=0;screechOpen=false;handledScreechTokens.clear();clearScreechPromptTimers();
  const overlay=$('#manorRaidOverlay');if(overlay)overlay.hidden=true;document.body.classList.remove('mr-open');
  ensureScreechHost().innerHTML='';
  const viewer=window.CellboundDungeon2D;
@@ -431,7 +445,8 @@ async function syncSharedRaidView(force=false){
    planCopy:'Combat Reborn controls movement, threat, resources, healing, interrupts, deaths and boss mechanics. Raid-only interactions are layered over the same event stream.',
    onEvent:handleRaidCombatEvent,
    onClose:()=>closeRaid(true)
- }).catch(error=>console.error('Manor shared viewer failed',error))
+ }).catch(error=>console.error('Manor shared viewer failed',error));
+ scheduleOwnScreechPrompts()
 }
 async function pollRaidSession(id){
  try{
@@ -449,7 +464,7 @@ async function loadSession(id){
 }
 async function openRaid(id){
  try{await loadSession(id)}catch(e){alert(e.message);return}
- sharedStageKey='';lastStage='';lastScreechAt=0;screechOpen=false;closingRaid=false;resolvingScreechTokens.clear();
+ sharedStageKey='';lastStage='';lastScreechAt=0;screechOpen=false;closingRaid=false;resolvingScreechTokens.clear();clearScreechPromptTimers();
  clearInterval(raidTimer);clearInterval(paintTimer);clearReadyLaunch();
  await subscribeRaidRealtime(id);
  await syncSharedRaidView(true);
@@ -459,9 +474,9 @@ async function openRaid(id){
 }
 function closeRaid(fromShared=false){
  if(closingRaid)return;closingRaid=true;
- clearInterval(raidTimer);clearInterval(paintTimer);raidTimer=paintTimer=null;screechOpen=false;sharedStageKey='';clearReadyLaunch();resolvingScreechTokens.clear();
+ clearInterval(raidTimer);clearInterval(paintTimer);raidTimer=paintTimer=null;screechOpen=false;sharedStageKey='';clearReadyLaunch();resolvingScreechTokens.clear();clearScreechPromptTimers();
  unsubscribeRaidRealtime();
- const host=$('#mrScreechHost');if(host){host.innerHTML='';host.style.display='none';host.style.pointerEvents='none'}handledScreechTokens.clear();
+ const host=$('#mrScreechHost');if(host){host.innerHTML='';host.style.setProperty('display','none','important');host.style.setProperty('pointer-events','none','important')}document.documentElement.classList.remove('mr-screech-active');document.body.classList.remove('mr-screech-active');handledScreechTokens.clear();
  if(!fromShared)window.CellboundDungeon2D?.closeShared?.(true);
  const root=$('#manorRaidOverlay');if(root){root.hidden=true;delete root.dataset.readyKey;}
  document.body.classList.remove('mr-open');fetchHub();
@@ -480,6 +495,9 @@ function renderRaidShell(){
  '<div class="mr-stage-tabs">'+['butler','maids','engineer','bedroom','housebound'].map((x,i)=>'<span class="'+(x===session.stage?'active':'')+'"><i>'+(i+1)+'</i>'+stageName(x)+'</span>').join('')+'</div>'+
  '<div id="mrArenaHost"></div><aside class="mr-raid-side"><div id="mrMechanics"></div><div id="mrRaidRoster"></div></aside><div id="mrScreechHost"></div></section>';
  root.querySelector('[data-mr-close]')?.addEventListener('click',closeRaid);lastStage=session.stage
+}
+function clearScreechPromptTimers(){
+ screechPromptTimers.forEach(timer=>clearTimeout(timer));screechPromptTimers.clear()
 }
 function screechEventMs(event){return Math.max(0,Math.round(Number(event?.timestamp)||0))}
 function screechToken(stage,side,eventMs){return String(stage)+':'+String(side)+':'+String(eventMs)}
@@ -517,6 +535,23 @@ function fallbackScreechEvent(side){
  const stage=session?.stage,elapsed=stageElapsed(),events=screechEvents(stage,side);
  return events.find(ev=>!screechResolved(stage,side,screechEventMs(ev))&&screechEventMs(ev)<=elapsed)||null
 }
+function scheduleOwnScreechPrompts(){
+ clearScreechPromptTimers();
+ if(!session?.id||!encounterIsLive()||!['maids','housebound'].includes(session.stage))return;
+ const stage=session.stage,side=myRaidSide(),elapsed=stageElapsed();
+ screechEvents(stage,side).forEach(event=>{
+   const eventMs=screechEventMs(event),token=screechToken(stage,side,eventMs);
+   if(screechResolved(stage,side,eventMs))return;
+   const fire=()=>{
+     screechPromptTimers.delete(token);
+     if(!session||session.stage!==stage||screechResolved(stage,side,eventMs)||screechOpen)return;
+     openScreech({event,tokenKey:token,scheduled:true})
+   };
+   const delay=eventMs-elapsed;
+   if(delay<=0&&elapsed<eventMs+Math.max(SCREECH_TIMEOUT_MS,Number(event?.payload?.durationMs)||0))fire();
+   else if(delay>0)screechPromptTimers.set(token,setTimeout(fire,delay))
+ })
+}
 function tickRaid(){
  if(!session)return;
  if(session.status==='failed'||session.status==='completed'||session.stage==='victory')return;
@@ -549,7 +584,10 @@ function handleRaidCombatEvent(event){
 }
 function masterBossHp(elapsed){
  const pack=combatFor('housebound');if(!pack)return null;
- return hpPctAt(pack.result,elapsed,'e-0',100)
+ const penalty=masterPenaltyStacks(),base=hpPctAt(pack.result,elapsed,'e-0',100),duration=Math.max(1,Number(pack.result?.durationMs)||STAGE_MIN_MS.housebound);
+ if(!penalty)return base;
+ if(elapsed<=duration)return Math.min(100,base+penalty*15);
+ return Math.max(0,penalty*15-((elapsed-duration)/duration)*100)
 }
 function bossHp(stage,e){
  if(stage==='housebound'){const masterHp=masterBossHp(e);if(masterHp!==null)return masterHp}
@@ -618,7 +656,7 @@ function mechanicsMarkup(stage,e,phase){
 }
 function paintMaids(arena,mech,roster,e){
  const rows=memberRows(),pa=Number(session.state?.maidPenaltyA)||0,pb=Number(session.state?.maidPenaltyB)||0;
- const ea=maidBossHp(0,e),eb=maidBossHp(1,e),hpA=ea===null?Math.max(0,100-e/1000*2.5):ea,hpB=eb===null?Math.max(0,100-e/1000*2.5):eb;
+ const ea=maidBossHp(0,e,pa),eb=maidBossHp(1,e,pb),hpA=ea===null?Math.max(0,100-e/1000*2.5+pa*15):ea,hpB=eb===null?Math.max(0,100-e/1000*2.5+pb*15):eb;
  const side=(row,i,hp,penalty)=>{const chars=Array.isArray(row?.party_snapshot)?row.party_snapshot:[];return'<section class="mr-maid-side '+(i?'kitchen':'dining')+'"><header><small>'+(i?'KITCHEN':'DINING ROOM')+'</small><b>'+esc(row?.guild_label||'Party')+'</b></header><div class="mr-maid-boss"><span>♟</span><div><b>The Maid</b><div class="mr-boss-hp"><i style="width:'+Math.min(100,hp)+'%"></i></div><small>'+Math.ceil(hp)+'% HP · +'+(penalty*10)+'% DAMAGE</small></div></div><div class="mr-maid-units">'+chars.map((ch,x)=>unit({...ch,partyIndex:i},x+i*5,e)).join('')+'</div></section>'};
  arena.innerHTML='<div class="mr-arena mr-maids">'+side(rows[0],0,hpA,pa)+side(rows[1],1,hpB,pb)+'</div>';
  mech.innerHTML='<section class="mr-mechanic-card"><small>COMBAT REBORN · LINKED ENCOUNTER</small><h3>SCREECH</h3><p>A wrong answer heals the <b>other player’s Maid for 15%</b> and gives her <b>+10% damage</b>. If the timer expires with no answer, <b>both Maids</b> heal 15% and gain +10% damage.</p><span>Timeouts are shared through the raid session, so leaving or disconnecting cannot avoid the mechanic. Penalties stack until the Maids die.</span></section><div class="mr-linked-stats"><span>MAID A PENALTY <b>+'+(pa*10)+'% DMG</b></span><span>MAID B PENALTY <b>+'+(pb*10)+'% DMG</b></span></div>';
@@ -632,7 +670,7 @@ async function driveMaids(e){
  const aPack=combatFor('maids',0),bPack=combatFor('maids',1);
  const defeated=(aPack?.result?.outcome!=='victory'&&e>=Number(aPack?.result?.durationMs||Infinity))||(bPack?.result?.outcome!=='victory'&&e>=Number(bPack?.result?.durationMs||Infinity));
  if(defeated){await failRaid('The Maids overwhelmed one of the split parties.');return}
- const hpA=maidBossHp(0,e),hpB=maidBossHp(1,e);
+ const hpA=maidBossHp(0,e,pa),hpB=maidBossHp(1,e,pb);
  const countA=Number(session?.state?.screechCountA)||0,countB=Number(session?.state?.screechCountB)||0;
  if(hpA!==null&&hpB!==null&&hpA<=0&&hpB<=0&&countA>0&&countB>0)await advance('engineer')
 }
@@ -668,8 +706,10 @@ function openScreech(trigger={}){
  if(screechResolved(session.stage,side,eventMs))return;
  const host=ensureScreechHost();
  if(!host)throw new Error('Screech portal unavailable');
- host.style.display='grid';
- host.style.pointerEvents='auto';
+ host.style.setProperty('display','grid','important');
+ host.style.setProperty('pointer-events','auto','important');
+ document.documentElement.classList.add('mr-screech-active');
+ document.body.classList.add('mr-screech-active');
  screechOpen=true;lastScreechAt=now();
  const target=SCREECH_COLOURS[Math.floor(Math.random()*SCREECH_COLOURS.length)];
  const display=SCREECH_COLOURS.filter(x=>x.name!==target.name)[Math.floor(Math.random()*4)];
@@ -689,7 +729,7 @@ function openScreech(trigger={}){
      await submitScreechOutcome(side,eventMs,outcome);
      await loadSession(session.id).catch(()=>{})
    }catch(error){console.warn('Could not resolve Manor Screech',error)}
-   setTimeout(()=>{host.innerHTML='';host.style.display='none';host.style.pointerEvents='none';screechOpen=false},1200)
+   setTimeout(()=>{host.innerHTML='';host.style.setProperty('display','none','important');host.style.setProperty('pointer-events','none','important');document.documentElement.classList.remove('mr-screech-active');document.body.classList.remove('mr-screech-active');screechOpen=false;scheduleOwnScreechPrompts()},1200)
  };
  host.querySelectorAll('[data-colour]').forEach(b=>b.onclick=()=>finish(b.dataset.colour===target.name?'success':'wrong'));
  const clock=setInterval(()=>{const left=Math.max(0,deadline-now()),el=host.querySelector('[data-screech-time]');if(el)el.textContent=(left/1000).toFixed(1);if(left<=0)finish('timeout')},100)
