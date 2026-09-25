@@ -342,7 +342,7 @@ function renderReadyGate(){
  const countdown=ready.startAt
    ?'<div class="mr-ready-count"><small>BOTH COMMANDERS READY</small><strong>'+(remaining<=80?'GO':count)+'</strong><span>Entering '+esc(stageName(session.stage))+' together</span></div>'
    :'<div class="mr-ready-wait"><small>READY CHECK</small><h1>'+esc(stageName(session.stage))+'</h1><p>Both commanders must be ready before combat begins.</p></div>';
- const renderKey=[session.stage,ready.a,ready.b,ready.startAt?count:'wait',mineReady,otherReady].join('|');
+ const renderKey=[session.stage,ready.a,ready.b,ready.startAt?count:'wait',mineReady,otherReady,entryA,entryB].join('|');
  if(!root.hidden&&root.dataset.readyKey===renderKey)return;
  root.dataset.readyKey=renderKey;
  root.innerHTML='<section class="mr-ready-shell"><header><div><small>THE MANOR · SYNCHRONISED RAID</small><h2>'+esc(stageRoom(session.stage))+'</h2></div><button data-ready-close>×</button></header>'+
@@ -449,7 +449,7 @@ async function syncSharedRaidView(force=false){
    const root=ensureOverlay();root.hidden=false;document.body.classList.add('mr-open');renderVictoryShell();return
  }
  const pack=sharedStagePack();if(!pack)return;
- const side=session.stage==='maids'?myRaidSide():null,penalty=session.stage==='maids'?Number(session?.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0:session.stage==='housebound'?masterPenaltyStacks():0,key=session.id+':'+session.stage+':'+(side===null?'raid':side)+':penalty-'+penalty;
+ const side=session.stage==='maids'?myRaidSide():null,penalty=session.stage==='maids'?Number(session?.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0:session.stage==='housebound'?masterPenaltyStacks():0,healthKey=side===null?(entryHealthForSide(0)+'-'+entryHealthForSide(1)):String(entryHealthForSide(side)),key=session.id+':'+session.stage+':'+(side===null?'raid':side)+':penalty-'+penalty+':entry-'+healthKey;
  if(!force&&sharedStageKey===key)return;
  sharedStageKey=key;lastStage=session.stage;lastScreechAt=0;screechOpen=false;handledScreechTokens.clear();clearScreechPromptTimers();
  const overlay=$('#manorRaidOverlay');if(overlay)overlay.hidden=true;document.body.classList.remove('mr-open');
