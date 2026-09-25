@@ -8,10 +8,10 @@ const RAID_NAME='The Manor';
 const CLASS_COLORS={Warrior:'#C69B6D',Paladin:'#F48CBA',Priest:'#FFFFFF',Druid:'#FF7C0A',Hunter:'#AAD372',Rogue:'#FFF468',Mage:'#3FC7EB',Monk:'#00FF98',Shaman:'#0070DD',Warlock:'#8788EE','Death Knight':'#C41E3A','Demon Hunter':'#A330C9',Evoker:'#33937F'};
 const SET_NAMES={Warrior:'Housebreaker Plate',Paladin:'Gilded Vigil',Priest:'Veil of the Attic',Druid:'Nightbloom Regalia',Hunter:'Blackwood Hunt',Rogue:'Silent Service',Mage:'Housebound Arcanum',Monk:'Stillhouse Vestments',Shaman:'Stormcell Regalia',Warlock:'Ashen Covenant','Death Knight':'Grave Manor Plate','Demon Hunter':'Nightglass Harness',Evoker:'Emberwing Regalia'};
 const STAGES={
- butler:{name:'The Butler',room:'Entrance Hall',next:'maids'},
- engineer:{name:'The Engineer',room:'Upper Workshop',next:'bedroom'},
- bedroom:{name:'The Bedroom',room:'West Bedroom',next:'housebound'},
- housebound:{name:'The Housebound',room:'The Attic',next:'victory'}
+ butler:{name:'The Butler',room:'Entrance Hall',duration:36000,next:'maids'},
+ engineer:{name:'The Engineer',room:'Upper Workshop',duration:52000,next:'bedroom'},
+ bedroom:{name:'The Bedroom',room:'West Bedroom',duration:20000,next:'housebound'},
+ housebound:{name:'The Master of the Manor',room:'The Attic',duration:100000,next:'victory'}
 };
 const SCREECH_COLOURS=[
  {name:'RED',hex:'#ff5050'},{name:'BLUE',hex:'#55a7ff'},{name:'GREEN',hex:'#58d87a'},{name:'YELLOW',hex:'#ffd34f'},{name:'PURPLE',hex:'#bf75ff'}
@@ -84,7 +84,7 @@ function raidHeader(){
  return '<section class="mr-hero"><div class="mr-hero-copy"><small>10-CHARACTER RAID · 2 PLAYERS</small><h2>The Manor</h2><p>Silas is dead. The black iron key turns anyway. Ten Cellbound cross the threshold to face what he woke inside.</p><div class="mr-tags"><span>2 PLAYERS</span><span>10 CHARACTERS</span><span>TIER 5</span><span>2 ITEMS EACH</span></div></div><div class="mr-lockout"><small>RAID WINDOW</small><strong>'+remain+' / 3</strong><span>runs remaining</span><em>'+(lockout?.resetAt?'Reset in '+formatReset(lockout.resetAt):'48-hour reset')+'</em><i>'+used+' used this window</i></div></section>';
 }
 function encounterStrip(){
- return '<div class="mr-route"><span><b>01</b>Butler</span><i>›</i><span><b>02</b>Maids</span><i>›</i><span><b>03</b>Engineer</span><i>›</i><span><b>04</b>Bedroom</span><i>›</i><span class="final"><b>05</b>Housebound</span></div>'
+ return '<div class="mr-route"><span><b>01</b>Butler</span><i>›</i><span><b>02</b>Maids</span><i>›</i><span><b>03</b>Engineer</span><i>›</i><span><b>04</b>Bedroom</span><i>›</i><span class="final"><b>05</b>Master</span></div>'
 }
 function renderHub(){
  if(!mount)return;
@@ -98,7 +98,7 @@ function renderHub(){
    body='<section class="mr-card mr-current"><div><small>RAID IN PROGRESS</small><h3>'+esc(stageName(session.stage))+'</h3><p>Your 10-character raid is already inside the Manor.</p></div><button data-mr-enter>ENTER RAID →</button></section>';
  }else if(session?.status==='completed'){
    const claimed=Boolean(state()?.raidRewardClaims?.[session.id]),leader=myGroup?.leader_id===user.id,count=mineRows.length,canRerun=claimed&&leader&&count===2&&Number(lockout?.runsRemaining??0)>0;
-   body='<section class="mr-card mr-current victory"><div><small>THE MANOR · CLEARED</small><h3>The Housebound has fallen</h3><p>'+(claimed?'Your Tier 5 rewards are secured in the Guild Bank.':'Two personal Tier 5 items are waiting for you.')+'</p></div><div class="mr-current-actions"><button data-mr-loot>'+(claimed?'VIEW CLEAR →':'COLLECT 2 RAID ITEMS →')+'</button>'+(canRerun?'<button data-mr-rerun>RUN THE MANOR AGAIN →</button>':(!leader&&count===2&&Number(lockout?.runsRemaining??0)>0?'<span>Waiting for the group leader to begin another run.</span>':'')+'</div></section>';
+   body='<section class="mr-card mr-current victory"><div><small>THE MANOR · CLEARED</small><h3>The Master of the Manor has fallen</h3><p>'+(claimed?'Your Tier 5 rewards are secured in the Guild Bank.':'Two personal Tier 5 items are waiting for you.')+'</p></div><div class="mr-current-actions"><button data-mr-loot>'+(claimed?'VIEW CLEAR →':'COLLECT 2 RAID ITEMS →')+'</button>'+(canRerun?'<button data-mr-rerun>RUN THE MANOR AGAIN →</button>':(!leader&&count===2&&Number(lockout?.runsRemaining??0)>0?'<span>Waiting for the group leader to begin another run.</span>':'')+'</div></section>';
  }else if(myGroup){
    const leader=myGroup.leader_id===user.id,count=mineRows.length;
    body='<section class="mr-card mr-group"><header><div><small>YOUR RAID GROUP</small><h3>'+esc(myGroup.guild_label)+' · '+count+'/2 players</h3></div><span class="'+(count===2?'ready':'waiting')+'">'+(count===2?'READY':'WAITING')+'</span></header>'+
@@ -181,7 +181,7 @@ function closeRaid(){
  clearInterval(raidTimer);clearInterval(paintTimer);raidTimer=paintTimer=null;screechOpen=false;
  const root=$('#manorRaidOverlay');if(root)root.hidden=true;document.body.classList.remove('mr-open');fetchHub()
 }
-function stageName(id){return id==='maids'?'The Maids':id==='housebound'?'The Housebound':id==='bedroom'?'The Bedroom':id==='victory'?'Raid Complete':STAGES[id]?.name||'The Manor'}
+function stageName(id){return id==='maids'?'The Maids':id==='housebound'?'The Master of the Manor':id==='bedroom'?'The Bedroom':id==='victory'?'Raid Complete':STAGES[id]?.name||'The Manor'}
 function stageRoom(id){return id==='maids'?'Dining Room / Kitchen':id==='victory'?'The Attic':STAGES[id]?.room||'The Manor'}
 function stageElapsed(){return Math.max(0,now()-stamp(session?.state?.stageStartedAt))}
 function memberRows(){return groupMembers(session?.listing_id).sort((a,b)=>stamp(a.joined_at)-stamp(b.joined_at))}
@@ -205,13 +205,18 @@ function tickRaid(){
 }
 function bossHp(stage,e){
  const d=STAGES[stage]?.duration||1;
- if(stage==='housebound')return Math.max(0,100-(e/d)*100);
+ if(stage==='housebound'){
+   if(e<30000)return Math.max(60,100-(e/30000)*40);
+   if(e<58000)return Math.max(30,60-((e-30000)/28000)*30);
+   if(e<80000)return Math.max(10,30-((e-58000)/22000)*20);
+   return Math.max(0,10-((e-80000)/20000)*10)
+ }
  return Math.max(0,100-(e/d)*100)
 }
 function paintStage(e){
  const arena=$('#mrArenaHost'),mech=$('#mrMechanics'),roster=$('#mrRaidRoster');if(!arena||!mech||!roster)return;
  if(session.stage==='maids'){paintMaids(arena,mech,roster,e);return}
- const hp=bossHp(session.stage,e),chars=allRaidChars(),phase=session.stage==='housebound'?(e<26000?1:e<52000?2:3):1;
+ const hp=bossHp(session.stage,e),chars=allRaidChars(),phase=session.stage==='housebound'?(hp>60?1:hp>30?2:3):1;
  arena.innerHTML='<div class="mr-arena stage-'+session.stage+' phase-'+phase+'">'+arenaDecor(session.stage,e)+'<div class="mr-boss"><span class="mr-boss-icon">'+bossIcon(session.stage)+'</span><b>'+esc(stageName(session.stage))+'</b><div class="mr-boss-hp"><i style="width:'+hp.toFixed(1)+'%"></i></div><small>'+Math.ceil(hp)+'%</small></div><div class="mr-units">'+chars.map((c,i)=>unit(c,i,e)).join('')+'</div>'+stageCallout(session.stage,e)+'</div>';
  mech.innerHTML=mechanicsMarkup(session.stage,e,phase);
  roster.innerHTML='<small>RAID ROSTER</small><div class="mr-roster-grid">'+memberRows().map((m,i)=>'<section><b>PARTY '+(i?'B':'A')+' · '+esc(m.guild_label)+'</b>'+((m.party_snapshot||[]).map(ch=>'<span style="--class:'+(CLASS_COLORS[ch.class]||'#8aa')+'"><i></i>'+esc(ch.name)+'<em>'+esc(ch.role||'dps')+'</em></span>').join(''))+'</section>').join('')+'</div>'
@@ -230,26 +235,36 @@ function arenaDecor(stage,e){
  }
  if(stage==='engineer')return '<div class="mr-turret t1">⌁<span>NAIL GUN</span></div><div class="mr-turret t2">⌁<span>NAIL GUN</span></div>';
  if(stage==='bedroom')return '<div class="mr-trash">'+Array.from({length:20},(_,i)=>'<i class="m'+i+'">◆</i>').join('')+'</div>';
- if(stage==='housebound')return '<div class="mr-collapse"><i></i><i></i><i></i><i></i></div>';
+ if(stage==='housebound'){
+   const hp=bossHp(stage,e),turret=hp>60||hp<=30?'<div class="mr-turret master-turret">⌁<span>NAIL GUN</span></div>':'';
+   return '<div class="mr-collapse"><i></i><i></i><i></i><i></i></div>'+turret
+ }
  return''
 }
 function stageCallout(stage,e){
  if(stage==='butler'&&Math.floor(e/5500)%2===1)return'<div class="mr-cast">SMASHED PLATES <span>MOVE</span></div>';
- if(stage==='engineer'&&Math.floor(e/7000)%2===1)return'<div class="mr-cast">OVERCLOCK <span>DESTROY TURRETS</span></div>';
+ if(stage==='engineer'){
+   const hp=bossHp(stage,e),storm=[70,40,15].some(x=>Math.abs(hp-x)<6);
+   if(storm)return'<div class="mr-cast">NAIL STORM <span>FIND THE SAFE LANE</span></div>';
+   if(Math.floor(e/7000)%2===1)return'<div class="mr-cast">OVERCLOCK <span>DESTROY TURRETS</span></div>';
+   return'<div class="mr-cast">REBUILD <span>TURRETS RETURN</span></div>'
+ }
  if(stage==='bedroom')return'<div class="mr-cast trash">CLEAR THE ROOM <span>20 ENEMIES</span></div>';
  if(stage==='housebound'){
-   if(e>=52000)return'<div class="mr-cast burn">BURN THE HOUSE <span>'+Math.max(0,Math.ceil((72000-e)/1000))+'s</span></div>';
-   if(e>=26000)return'<div class="mr-cast">MARK OF THE MANOR <span>TANK SWAP</span></div>';
-   return'<div class="mr-cast">THE HOUSE OBEYS <span>REMEMBER THE ROOMS</span></div>'
+   const hp=bossHp(stage,e);
+   if(hp<=10)return'<div class="mr-cast burn">BURN THE HOUSE <span>'+Math.max(0,Math.ceil((100000-e)/1000))+'s · UNINTERRUPTIBLE</span></div>';
+   if(hp<=30)return'<div class="mr-cast">HOUSE COLLAPSES <span>SHRINKING ARENA · SCREECH · TURRETS</span></div>';
+   if(hp<=60)return Math.floor(e/6500)%2?'<div class="mr-cast">CHOSEN SERVANT <span>SPREAD</span></div>':'<div class="mr-cast">MARK OF THE MANOR <span>TANK SWAP</span></div>';
+   return Math.floor(e/7000)%2?'<div class="mr-cast">SERVANT\'S SCREECH <span>READ THE WORD</span></div>':'<div class="mr-cast">SHATTERED FLOOR <span>MOVE</span></div>'
  }
  return''
 }
 function mechanicsMarkup(stage,e,phase){
  const data={
-  butler:['SMASHED PLATES','Plate zones deal damage over time. New hazards appear while the oldest shattered areas fade away.','The Butler moves slowly and never performs normal attacks.'],
-  engineer:['NAIL GUN TURRETS','Two turrets stay active, lock random characters and deal constant damage until destroyed.','If both survive too long, Overclock increases their firing speed.'],
-  bedroom:['BEDROOM SWARM','Twenty enemies rush the raid at once. No puzzle — group them, control them and burn them down.','When the room is clear, the attic hatch falls open.'],
-  housebound:['THE HOUSEBOUND',phase===1?'The house repeats the lessons below: plates, Screech and a single turret.':phase===2?'Mark of the Manor stacks tank damage. Swap threat before the active tank is crushed.':'The attic collapses, space disappears and Burn the House becomes the final damage check.','Silas did not return to rule this house. He returned to wake what was already inside it.']
+  butler:['PLATE BARRAGE','The Butler smashes plate zones across the hall. Standing in a shattered zone deals damage over time; older zones disappear as new ones are created.','The Butler moves slowly and never performs normal attacks — the room itself is the threat.'],
+  engineer:['NAIL GUN TURRETS','Two fragile turrets stay active, lock random characters and deal constant damage. Destroy them quickly; Rebuild replaces destroyed guns and Overclock punishes leaving both alive.','Nail Storm fires at 70%, 40% and 15% with lane-shaped safe gaps.'],
+  bedroom:['BEDROOM SWARM','Twenty enemies rush the raid at once. No puzzle — group them, control them and burn them down.','When all twenty fall, the attic hatch drops open.'],
+  housebound:['THE MASTER OF THE MANOR',phase===1?'Shattered Floor returns. Servant’s Screech punishes bad reads, and one Nail Gun Turret forces target priority.':phase===2?'At 60%, the Master rises. Mark of the Manor stacks +15% damage taken on the active tank; swap threat while Chosen Servant forces a spread.':'At 30%, the house collapses around the raid: shrinking space, beams, fire, turrets, Marks and Screech. At ~10%, BURN THE HOUSE begins a 20-second uninterruptible raid-kill cast.','Silas did not return to rule this house. He returned to wake its true master.']
  }[stage]||['THE MANOR','',''];
  return '<section class="mr-mechanic-card"><small>ACTIVE MECHANIC</small><h3>'+data[0]+'</h3><p>'+data[1]+'</p><span>'+data[2]+'</span></section>'
 }
@@ -261,7 +276,7 @@ function paintMaids(arena,mech,roster,e){
   return '<section class="mr-maid-side '+(i?'kitchen':'dining')+'"><header><small>'+(i?'KITCHEN':'DINING ROOM')+'</small><b>'+esc(row?.guild_label||'Party')+'</b></header><div class="mr-maid-boss"><span>♟</span><div><b>The Maid</b><div class="mr-boss-hp"><i style="width:'+Math.min(100,hp)+'%"></i></div><small>'+Math.ceil(hp)+'% HP · +'+(penalty*10)+'% DAMAGE</small></div></div><div class="mr-maid-units">'+chars.map((c,x)=>unit(c,x+i*5,e)).join('')+'</div></section>'
  };
  arena.innerHTML='<div class="mr-arena mr-maids">'+side(rows[0],0,hpA,pa)+side(rows[1],1,hpB,pb)+'</div>';
- mech.innerHTML='<section class="mr-mechanic-card"><small>LINKED ENCOUNTER</small><h3>SCREECH</h3><p>Read the word — not the colour it is painted. A wrong answer or timeout heals the <b>other player’s Maid for 15%</b> and gives her <b>+10% damage</b>.</p><span>Failures stack until that Maid dies.</span></section><div class="mr-linked-stats"><span>PARTY A FAILURES <b>'+pa+'</b></span><span>PARTY B FAILURES <b>'+pb+'</b></span></div>';
+ mech.innerHTML='<section class="mr-mechanic-card"><small>LINKED ENCOUNTER</small><h3>SCREECH</h3><p>Each Maid hard-focuses the highest-threat target and periodically swipes a random healer. Read the Screech word — not the colour it is painted. A wrong answer or timeout heals the <b>other player’s Maid for 15%</b> and gives her <b>+10% damage</b>.</p><span>Failures stack until that Maid dies.</span></section><div class="mr-linked-stats"><span>PARTY A FAILURES <b>'+pa+'</b></span><span>PARTY B FAILURES <b>'+pb+'</b></span></div>';
  roster.innerHTML='<small>SPLIT RAID</small><p class="mr-split-note">Both five-character parties are fighting at the same time. Your Screech answer can make your partner’s room harder.</p>';
  if(isLeader()&&hpA<=0&&hpB<=0)advance('engineer')
 }
@@ -296,7 +311,7 @@ function openScreech(){
 }
 function renderVictoryShell(){
  const root=ensureOverlay(),claimed=Boolean(state()?.raidRewardClaims?.[session.id]);
- root.innerHTML='<section class="mr-raid-shell mr-victory-shell"><header class="mr-raid-head"><div><small>THE MANOR · THE ATTIC</small><h2>Raid Complete</h2></div><button data-mr-close>×</button></header><div class="mr-victory-art"><span>◈</span><small>THE HOUSE FALLS SILENT</small><h1>The Housebound</h1><p>The creature collapses into the attic floorboards. Every door below unlocks at once.</p></div><div class="mr-victory-loot"><small>PERSONAL RAID LOOT</small><h2>2 × Tier 5 Items</h2><p>Orange-framed Chapter 1 raid equipment. Four rolled stats with Tier 5 raid-set progression.</p><button data-mr-claim '+(claimed?'disabled':'')+'>'+(claimed?'REWARDS SECURED':'REVEAL RAID LOOT →')+'</button><div id="mrLootDrops"></div></div></section>';
+ root.innerHTML='<section class="mr-raid-shell mr-victory-shell"><header class="mr-raid-head"><div><small>THE MANOR · THE ATTIC</small><h2>Raid Complete</h2></div><button data-mr-close>×</button></header><div class="mr-victory-art"><span>◈</span><small>THE HOUSE FALLS SILENT</small><h1>The Master of the Manor</h1><p>The creature collapses into the attic floorboards. Every door below unlocks at once.</p></div><div class="mr-victory-loot"><small>PERSONAL RAID LOOT</small><h2>2 × Tier 5 Items</h2><p>Orange-framed Chapter 1 raid equipment. Four rolled stats with Tier 5 raid-set progression.</p><button data-mr-claim '+(claimed?'disabled':'')+'>'+(claimed?'REWARDS SECURED':'REVEAL RAID LOOT →')+'</button><div id="mrLootDrops"></div></div></section>';
  root.querySelector('[data-mr-close]')?.addEventListener('click',closeRaid);
  root.querySelector('[data-mr-claim]')?.addEventListener('click',()=>claimLoot(session.id))
 }
@@ -319,7 +334,7 @@ function makeTier5Item(def,i){
  const G=window.CellboundGear,klass=def.class||'Warrior',slot=def.slot||'Chest';
  const base=G?.items?.find(x=>x.class===klass&&x.slot===slot&&Number(x.tier)===4)||G?.items?.find(x=>x.slot===slot&&Number(x.tier)===4)||{};
  const setName=SET_NAMES[klass]||'Housebound Regalia',ilvl=Number(G?.ITEM_LEVELS?.[slot]?.[4])||46;
- const raw={...base,itemId:'manor-t5-'+slug(klass)+'-'+slug(slot)+'-'+Date.now().toString(36)+'-'+i,name:setName+' '+slot,class:klass,slot,tier:5,tierLabel:'Tier 5',rarity:'Epic',itemLevel:ilvl,power:Math.max(Number(base.power)||0,Math.round(ilvl*.55)),source:'The Manor · The Housebound',raidExclusive:true,nonStackable:true,tradeState:'bound',appearanceId:base.appearanceId||base.itemId};
+ const raw={...base,itemId:'manor-t5-'+slug(klass)+'-'+slug(slot)+'-'+Date.now().toString(36)+'-'+i,name:setName+' '+slot,class:klass,slot,tier:5,tierLabel:'Tier 5',rarity:'Epic',itemLevel:ilvl,power:Math.max(Number(base.power)||0,Math.round(ilvl*.55)),source:'The Manor · Master of the Manor',raidExclusive:true,nonStackable:true,tradeState:'bound',appearanceId:base.appearanceId||base.itemId};
  return G?.rollItemAffixes?G.rollItemAffixes(raw):raw
 }
 function renderLootDrops(items){
