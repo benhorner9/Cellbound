@@ -101,7 +101,7 @@ function action(source,target,e,arena){
   pulseClass(source,'cbvfx3-acting',melee?300:420);
   pulseClass(source,heal?'cbvfx3-heal-cast':ranged?'cbvfx3-ranged-cast':'cbvfx3-melee-cast',heal?520:ranged?460:320);
   const p=point(arena,source);
-  addEventNode(arena,'cbvfx3-action-flare '+(heal?'heal':ranged?'ranged':'melee'),p.x,p.y,heal?620:520);
+  const flare=addEventNode(arena,'cbvfx3-action-flare '+(heal?'heal':ranged?'ranged':'melee'),p.x,p.y,heal?620:520);if(flare)flare.style.setProperty('--cbvfx3-accent',accentFor(source,heal?'heal':''));
   if(target){
     target.style.setProperty('--cbvfx3-accent',accentFor(source,heal?'heal':''));
     pulseClass(target,'cbvfx3-targeted',360)
@@ -116,7 +116,7 @@ function castStart(source,e,arena){
     pulseClass(source,'cbvfx3-danger-windup',Math.max(500,Math.min(1800,Number(e?.payload?.duration)||1000)))
   }
   const p=point(arena,source);
-  addEventNode(arena,'cbvfx3-cast-ring',p.x,p.y,Math.max(650,Math.min(2100,Number(e?.payload?.duration)||1200)));
+  const ring=addEventNode(arena,'cbvfx3-cast-ring',p.x,p.y,Math.max(650,Math.min(2100,Number(e?.payload?.duration)||1200)));if(ring)ring.style.setProperty('--cbvfx3-accent',accentFor(source));
   const old=castTimers.get(source);if(old)clearTimeout(old);
   castTimers.set(source,setTimeout(()=>castEnd(source,arena),Math.max(800,Number(e?.payload?.duration)||1600)+200))
 }
@@ -155,7 +155,7 @@ function mechanicState(arena,state='warning',e=null){
   if(!arena)return;
   arena.classList.remove('cbvfx3-mechanic-warning','cbvfx3-mechanic-impact','cbvfx3-mechanic-safe','cbvfx3-hazard-active');
   const cls=state==='safe'?'cbvfx3-mechanic-safe':state==='impact'?'cbvfx3-mechanic-impact':state==='active'?'cbvfx3-hazard-active':'cbvfx3-mechanic-warning';
-  pulseClass(arena,cls,state==='warning'?900:620);
+  if(state==='warning')arena.classList.add(cls);else pulseClass(arena,cls,620);
   if(state==='warning'&&e?.ability){
     const n=addEventNode(arena,'cbvfx3-mechanic-name',50,10,1000);if(n)n.textContent=String(e.ability).toUpperCase()
   }
@@ -212,7 +212,7 @@ function combatEvent(e,opts={}){
       case'ADD_SPAWNED':if(target){const p=point(arena,target);addEventNode(arena,'cbvfx3-spawn-ring',p.x,p.y,900)}break;
       case'PLAYER_DEFEATED':case'ADD_DEFEATED':case'ENEMY_DEFEATED':fallen(target,e.type==='ENEMY_DEFEATED'&&target?.classList?.contains('boss'));break;
       case'PLAYER_REVIVED':case'ENEMY_REVIVED':revive(target,arena);break;
-      case'COMBAT_END':arena.classList.remove('cbvfx3-combat-live','cbvfx3-enraged','cbvfx3-boss-windup');break;
+      case'COMBAT_END':arena.classList.remove('cbvfx3-combat-live','cbvfx3-enraged','cbvfx3-boss-windup','cbvfx3-mechanic-warning','cbvfx3-hazard-active');break;
     }
   }catch(err){console.warn('Cellbound visual event skipped',e?.type,err)}
 }
