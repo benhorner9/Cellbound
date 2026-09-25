@@ -71,12 +71,12 @@ function maidEncounter(side){
 function combatFor(stage,side=null){
  const E=combatEngine();if(!E?.simulate||!session)return null;
  const penalty=stage==='maids'?(Number(session?.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0):stage==='housebound'?masterPenaltyStacks():0;
- const key=session.id+':'+stage+':'+(side===null?'raid':side)+':penalty-'+penalty;
+ const seedKey=session.id+':'+stage+':'+(side===null?'raid':side),key=seedKey+':penalty-'+penalty;
  if(combatCache.has(key))return combatCache.get(key);
  const p=stage==='maids'?engineParty(side):engineParty(null),enc=stage==='maids'?maidEncounter(side):manorEncounter(stage);
  if(!p.length||!enc)return null;
  try{
-   const result=E.simulate({party:p,encounter:enc,seed:key,maxDurationMs:180000},{zone:'manor-raid'});
+   const result=E.simulate({party:p,encounter:enc,seed:seedKey,maxDurationMs:180000},{zone:'manor-raid'});
    const pack={result,party:p,encounter:enc};combatCache.set(key,pack);return pack
  }catch(error){console.warn('Manor shared combat simulation failed',stage,error);return null}
 }
