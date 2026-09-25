@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-window.CellboundCombatStandard?.register?.('manor',{kind:'raid',execution:'local-coop',ui:'shared-cb2d'});
+window.CellboundCombatStandard?.register?.('manor-raid',{kind:'raid',execution:'local-coop',ui:'shared-cb2d'});
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const RAID_ID='manor';
@@ -17,7 +17,7 @@ const SCREECH_COLOURS=[
  {name:'RED',hex:'#ff5050'},{name:'BLUE',hex:'#55a7ff'},{name:'GREEN',hex:'#58d87a'},{name:'YELLOW',hex:'#ffd34f'},{name:'PURPLE',hex:'#bf75ff'}
 ];
 let Game=null,db=null,user=null,mount=null,groups=[],members=[],lockout=null,myGroup=null,session=null;
-let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,lastStage='',lastScreechAt=0,screechOpen=false;
+let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false;
 const combatCache=new Map();
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
@@ -37,7 +37,7 @@ function snapshot(){
 }
 
 const STAGE_MIN_MS={butler:30000,maids:30000,engineer:40000,bedroom:12000,housebound:40000};
-function combatEngine(){return window.CellboundCombatReborn}
+function combatEngine(){return window.CellboundCombatStandard}
 function engineParty(side=null){
  const rows=memberRows(),selected=side===null?rows:(rows[side]?[rows[side]]:[]);
  return selected.flatMap((row,rowIndex)=>{
@@ -66,8 +66,10 @@ function combatFor(stage,side=null){
  if(combatCache.has(key))return combatCache.get(key);
  const p=stage==='maids'?engineParty(side):engineParty(null),enc=stage==='maids'?maidEncounter(side):manorEncounter(stage);
  if(!p.length||!enc)return null;
- try{const result=E.simulate({party:p,encounter:enc,seed:key,maxDurationMs:180000}),pack={result,party:p,encounter:enc};combatCache.set(key,pack);return pack}
- catch(error){console.warn('Manor combat simulation failed',stage,error);return null}
+ try{
+   const result=E.simulate({party:p,encounter:enc,seed:key,maxDurationMs:180000},{zone:'manor-raid'});
+   const pack={result,party:p,encounter:enc};combatCache.set(key,pack);return pack
+ }catch(error){console.warn('Manor shared combat simulation failed',stage,error);return null}
 }
 function hpPctAt(result,elapsed,targetId,fallback=100){
  let hp=fallback;
@@ -111,8 +113,12 @@ function combatCallout(stage,elapsed){
 }
 async function failRaid(reason='The raid was defeated'){
  if(!session||session.status!=='active')return;
- if(isLeader()){const {error}=await db.rpc('fail_manor_raid',{p_session_id:session.id,p_reason:reason});if(error){console.warn('Could not resolve Manor wipe',error);return}}
- await loadSession(session.id).catch(()=>{});renderRaidShell()
+ if(isLeader()){
+   const {error}=await db.rpc('fail_manor_raid',{p_session_id:session.id,p_reason:reason});
+   if(error){console.warn('Could not resolve Manor wipe',error);return}
+ }
+ await loadSession(session.id).catch(()=>{});
+ await syncSharedRaidView(true)
 }
 function applyLocalRaidFailureShock(){
  const s=state();if(!s||!session?.id)return;
@@ -253,6 +259,68 @@ function ensureOverlay(){
  let root=$('#manorRaidOverlay');if(root)return root;
  root=document.createElement('div');root.id='manorRaidOverlay';root.className='mr-overlay';root.hidden=true;document.body.appendChild(root);return root
 }
+
+function ensureScreechHost(){
+ let host=$('#mrScreechHost');
+ if(!host){host=document.createElement('div');host.id='mrScreechHost';document.body.appendChild(host)}
+ return host
+}
+function myRaidSide(){
+ const rows=memberRows(),index=rows.findIndex(m=>m.user_id===user?.id);
+ return index<0?0:index
+}
+function sharedRaidRoute(){
+ return[
+   {id:'butler',title:'The Butler'},
+   {id:'maids',title:'The Maids'},
+   {id:'engineer',title:'The Engineer'},
+   {id:'bedroom',title:'Bedroom'},
+   {id:'housebound',title:'The Master'}
+ ]
+}
+function sharedStagePack(){
+ if(!session||!['butler','maids','engineer','bedroom','housebound'].includes(session.stage))return null;
+ const side=session.stage==='maids'?myRaidSide():null;
+ return session.stage==='maids'?combatFor('maids',side):combatFor(session.stage)
+}
+async function syncSharedRaidView(force=false){
+ if(!session)return;
+ if(session.status==='failed'){
+   window.CellboundDungeon2D?.closeShared?.(true);
+   const root=ensureOverlay();root.hidden=false;document.body.classList.add('mr-open');renderWipeShell();return
+ }
+ if(session.status==='completed'||session.stage==='victory'){
+   window.CellboundDungeon2D?.closeShared?.(true);
+   const root=ensureOverlay();root.hidden=false;document.body.classList.add('mr-open');renderVictoryShell();return
+ }
+ const pack=sharedStagePack();if(!pack)return;
+ const side=session.stage==='maids'?myRaidSide():null,key=session.id+':'+session.stage+':'+(side===null?'raid':side);
+ if(!force&&sharedStageKey===key)return;
+ sharedStageKey=key;lastStage=session.stage;lastScreechAt=0;screechOpen=false;
+ const overlay=$('#manorRaidOverlay');if(overlay)overlay.hidden=true;document.body.classList.remove('mr-open');
+ ensureScreechHost().innerHTML='';
+ const viewer=window.CellboundDungeon2D;
+ if(!viewer?.playSharedEncounter){console.error('The shared CB2D combat viewer is unavailable');return}
+ const room=session.stage==='maids'?(side===0?'Dining Room':'Kitchen'):stageRoom(session.stage);
+ viewer.playSharedEncounter({
+   party:pack.party,encounter:pack.encounter,result:pack.result,
+   header:'THE MANOR · '+String(room).toUpperCase()+' · LIVE 2D RAID',
+   title:session.stage==='maids'?'The Maid':stageName(session.stage),
+   route:sharedRaidRoute(),currentId:session.stage,theme:'manor',room:'manor-'+session.stage,
+   roomLabel:room,ambience:session.stage==='maids'?'Your five-character party is separated from the other commander. Screech links both rooms.':'The raid fights together as one ten-character group.',
+   shellClass:'cb2d-manor-raid',arenaClass:'cb2d-manor-arena',
+   planTitle:'The Manor uses the same combat system as every dungeon.',
+   planCopy:'Combat Reborn controls movement, threat, resources, healing, interrupts, deaths and boss mechanics. Raid-only interactions are layered over the same event stream.',
+   onClose:()=>closeRaid(true)
+ }).catch(error=>console.error('Manor shared viewer failed',error))
+}
+async function pollRaidSession(id){
+ try{
+   const beforeStage=session?.stage,beforeStatus=session?.status;
+   await loadSession(id);
+   if(session?.stage!==beforeStage||session?.status!==beforeStatus)await syncSharedRaidView(true)
+ }catch(error){console.warn('Manor session refresh failed',error)}
+}
 async function loadSession(id){
  const {data:s,error}=await db.from('raid_sessions').select('*').eq('id',id).maybeSingle();if(error)throw error;session=s;
  if(!session)return;
@@ -261,14 +329,21 @@ async function loadSession(id){
 }
 async function openRaid(id){
  try{await loadSession(id)}catch(e){alert(e.message);return}
- const root=ensureOverlay();root.hidden=false;document.body.classList.add('mr-open');lastStage='';lastScreechAt=0;screechOpen=false;
- renderRaidShell();clearInterval(raidTimer);clearInterval(paintTimer);
- raidTimer=setInterval(()=>loadSession(id).then(()=>{if(session?.status==='completed'){renderRaidShell();clearInterval(raidTimer)}}).catch(()=>{}),1300);
- paintTimer=setInterval(tickRaid,180);tickRaid()
+ sharedStageKey='';lastStage='';lastScreechAt=0;screechOpen=false;closingRaid=false;
+ clearInterval(raidTimer);clearInterval(paintTimer);
+ await syncSharedRaidView(true);
+ raidTimer=setInterval(()=>pollRaidSession(id),900);
+ paintTimer=setInterval(tickRaid,180);
+ tickRaid()
 }
-function closeRaid(){
- clearInterval(raidTimer);clearInterval(paintTimer);raidTimer=paintTimer=null;screechOpen=false;
- const root=$('#manorRaidOverlay');if(root)root.hidden=true;document.body.classList.remove('mr-open');fetchHub()
+function closeRaid(fromShared=false){
+ if(closingRaid)return;closingRaid=true;
+ clearInterval(raidTimer);clearInterval(paintTimer);raidTimer=paintTimer=null;screechOpen=false;sharedStageKey='';
+ const host=$('#mrScreechHost');if(host)host.innerHTML='';
+ if(!fromShared)window.CellboundDungeon2D?.closeShared?.(true);
+ const root=$('#manorRaidOverlay');if(root)root.hidden=true;
+ document.body.classList.remove('mr-open');fetchHub();
+ setTimeout(()=>{closingRaid=false},0)
 }
 function stageName(id){return id==='maids'?'The Maids':id==='housebound'?'The Master of the Manor':id==='bedroom'?'The Bedroom':id==='victory'?'Raid Complete':STAGES[id]?.name||'The Manor'}
 function stageRoom(id){return id==='maids'?'Dining Room / Kitchen':id==='victory'?'The Attic':STAGES[id]?.room||'The Manor'}
@@ -286,14 +361,16 @@ function renderRaidShell(){
 }
 function tickRaid(){
  if(!session)return;
- if(session.status==='failed'){if(lastStage!=='failed')renderRaidShell();clearInterval(paintTimer);return}
- if(session.status==='completed'||session.stage==='victory'){if(lastStage!=='victory')renderRaidShell();return}
- if(lastStage!==session.stage){lastScreechAt=0;screechOpen=false;renderRaidShell()}
- const e=stageElapsed();paintStage(e);if(isLeader())driveStage(e);
- const maidScreech=session.stage==='maids'&&e>7000&&e-lastScreechAt>10500;
+ if(session.status==='failed'||session.status==='completed'||session.stage==='victory')return;
+ const e=stageElapsed();
+ if(isLeader()){
+   if(session.stage==='maids')driveMaids(e);
+   else driveStage(e)
+ }
+ const maidScreech=session.stage==='maids'&&e>7000&&!screechOpen&&e-lastScreechAt>10500;
  const masterHp=session.stage==='housebound'?bossHp('housebound',e):100,masterWindow=masterHp>60||(masterHp<=30&&masterHp>10);
- const masterScreech=session.stage==='housebound'&&e>7000&&masterWindow&&e-lastScreechAt>18000;
- if(!screechOpen&&(maidScreech||masterScreech))openScreech()
+ const masterScreech=session.stage==='housebound'&&e>7000&&!screechOpen&&masterWindow&&e-lastScreechAt>18000;
+ if(maidScreech||masterScreech)openScreech()
 }
 function bossHp(stage,e){
  const engineHp=combatBossHp(stage,e);if(engineHp!==null)return engineHp;
@@ -372,6 +449,15 @@ function paintMaids(arena,mech,roster,e){
  if(defeat&&isLeader()){failRaid('The Maids overwhelmed one of the split parties.');return}
  if(isLeader()&&hpA<=0&&hpB<=0)advance('engineer')
 }
+async function driveMaids(e){
+ const pa=Number(session?.state?.maidPenaltyA)||0,pb=Number(session?.state?.maidPenaltyB)||0;
+ const aPack=combatFor('maids',0),bPack=combatFor('maids',1);
+ const defeated=(aPack?.result?.outcome!=='victory'&&e>=Number(aPack?.result?.durationMs||Infinity))||(bPack?.result?.outcome!=='victory'&&e>=Number(bPack?.result?.durationMs||Infinity));
+ if(defeated){await failRaid('The Maids overwhelmed one of the split parties.');return}
+ const hpA=maidBossHp(0,e,pa),hpB=maidBossHp(1,e,pb);
+ const countA=Number(session?.state?.screechCountA)||0,countB=Number(session?.state?.screechCountB)||0;
+ if(hpA!==null&&hpB!==null&&hpA<=0&&hpB<=0&&countA>0&&countB>0)await advance('engineer')
+}
 async function driveStage(e){
  if(advancing||session.stage==='maids')return;
  const stage=session.stage,pack=combatFor(stage),result=pack?.result;
@@ -387,12 +473,12 @@ async function advance(next){
    const patch=next==='maids'?{maidPenaltyA:0,maidPenaltyB:0,screechCountA:0,screechCountB:0,screechSuccessA:0,screechSuccessB:0}:{};
    const {data,error}=await db.rpc('advance_manor_raid',{p_session_id:session.id,p_expected_stage:session.stage,p_next_stage:next,p_patch:patch});
    if(error)throw error;if(data?.state)session.state=data.state;if(data?.stage)session.stage=data.stage;if(data?.status)session.status=data.status;
-   lastStage='';if(next==='victory'){await loadSession(session.id);renderRaidShell()}
+   lastStage='';sharedStageKey='';await loadSession(session.id);await syncSharedRaidView(true)
  }catch(e){console.warn('Manor advance',e)}finally{advancing=false}
 }
 function openScreech(){
  if(screechOpen||!['maids','housebound'].includes(session?.stage))return;screechOpen=true;lastScreechAt=stageElapsed();
- const host=$('#mrScreechHost');if(!host){screechOpen=false;return}
+ const host=ensureScreechHost();
  const target=SCREECH_COLOURS[Math.floor(Math.random()*SCREECH_COLOURS.length)];
  const display=SCREECH_COLOURS.filter(x=>x.name!==target.name)[Math.floor(Math.random()*4)];
  const shuffled=[...SCREECH_COLOURS].sort(()=>Math.random()-.5);

@@ -306,8 +306,8 @@ for(const file of files){
     if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=51')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
     if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=6'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
     if(!contents.includes('character-portraits-v1.css?v=4')||!contents.includes('character-portraits-v1.js?v=5'))throw new Error('Character portrait identity assets are not linked from guild.html');
-     if(!contents.includes('combat-portraits-v1.css?v=3')||!contents.includes('combat-portraits-v1.js?v=3'))throw new Error('Combat portrait assets are not linked from guild.html');
-    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=14')||!contents.includes('combat-reborn-v1.js?v=6')||!contents.includes('guild-v4.js?v=51')||!contents.includes('character-sheet.js?v=32')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=50')||!contents.includes('hollow-sanctum-v1.js?v=38')||!contents.includes('chaos-canyon-v1.js?v=13')||!contents.includes('blackout-station-v1.js?v=20')||!contents.includes('fractured-ages-v1.js?v=7'))throw new Error('Set bonus UI cache versions are stale in guild.html');
+     if(!contents.includes('combat-portraits-v1.css?v=3')||!contents.includes('combat-portraits-v1.js?v=4'))throw new Error('Combat portrait assets are not linked from guild.html');
+    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=14')||!contents.includes('combat-reborn-v1.js?v=6')||!contents.includes('guild-v4.js?v=51')||!contents.includes('character-sheet.js?v=32')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=51')||!contents.includes('hollow-sanctum-v1.js?v=38')||!contents.includes('chaos-canyon-v1.js?v=13')||!contents.includes('blackout-station-v1.js?v=20')||!contents.includes('fractured-ages-v1.js?v=7'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     const layoutSafetyLink='<link rel="stylesheet" href="./layout-safety-v1.css?v=1">';
     if(!contents.includes(layoutSafetyLink)||contents.lastIndexOf('<link rel="stylesheet"')!==contents.indexOf(layoutSafetyLink))throw new Error('Layout safety stylesheet must remain the final CSS layer in guild.html');
@@ -333,6 +333,9 @@ for(const file of files){
     const qNav=contents.indexOf('data-view="quests" data-mobile-core'),dNav=contents.indexOf('data-view="content" data-mobile-core'),eNav=contents.indexOf('data-view="world"><span>✦</span><b>Events</b>'),rNav=contents.indexOf('data-view="raids"><span>♜</span><b>Raids</b>'),egNav=contents.indexOf('data-view="endgame"><span>◇</span><b>Endgame</b>');
     if(qNav<0||dNav<0||eNav<0||rNav<0||egNav<0||!(qNav<dNav&&dNav<eNav&&eNav<rNav&&rNav<egNav))throw new Error('Adventure navigation must remain Quests → Dungeons → Events → Raids → Endgame');
     if(!contents.includes('<section id="raids" class="view">')||!contents.includes('id="manorRaidMount"'))throw new Error('Raids view or Manor raid mount is missing');
+    const manorRuntime=fs.readFileSync(path.join(__dirname,'manor-raid-v1.js'),'utf8'),sharedViewerRuntime=fs.readFileSync(path.join(__dirname,'dungeon-2d-v1.js'),'utf8');
+    if(!manorRuntime.includes("function combatEngine(){return window.CellboundCombatStandard}")||!manorRuntime.includes("zone:'manor-raid'")||!manorRuntime.includes('playSharedEncounter'))throw new Error('The Manor must use the standard Combat Reborn gateway and shared CB2D viewer');
+    if(!sharedViewerRuntime.includes('function playSharedEncounter(')||!sharedViewerRuntime.includes('playRebornTimeline(result,tok)'))throw new Error('Shared CB2D external encounter playback is missing');
     const endgameStart=contents.indexOf('<section id="endgame" class="view">'),endgameEnd=contents.indexOf('<section id="world" class="view">',endgameStart);
     if(endgameStart<0||endgameEnd<0||contents.slice(endgameStart,endgameEnd).includes('manorRaidMount'))throw new Error('The Manor must not be mounted inside Endgame');
     if(!contents.includes('dungeon-2d-v1.css')||!contents.includes('dungeon-2d-v1.js'))throw new Error('Ashen Vault 2D viewer assets are not linked from guild.html');
@@ -461,8 +464,10 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
 }
 {
   const combatCode=fs.readFileSync(path.join(__dirname,'combat-reborn-v1.js'),'utf8');
-  const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;
+  const combatStandardCode=fs.readFileSync(path.join(__dirname,'combat-standard-v1.js'),'utf8');
+  const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;sandbox.globalThis=sandbox;
   vm.createContext(sandbox);vm.runInContext(combatCode,sandbox,{filename:'combat-reborn-v1.js'});
+  vm.runInContext(combatStandardCode,sandbox,{filename:'combat-standard-v1.js'});
   const result=sandbox.CellboundCombatReborn?.tests?.run?.();
   if(!result||result.passed!==result.total){
     const failed=(result?.tests||[]).filter(x=>!x.pass).map(x=>x.name+(x.error?' · '+x.error:'')).join(', ');
@@ -481,12 +486,14 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     {id:'rd5',name:'Damage B2',class:'Mage',spec:'Arcane',power:44,level:15,itemLevel:44},
     {id:'rd6',name:'Damage B3',class:'Hunter',spec:'Marksman',power:44,level:15,itemLevel:44}
   ];
-  const raid=sandbox.CellboundCombatReborn.simulate({party:raidParty,seed:'build-manor-raid',encounter:{
+  sandbox.CellboundCombatStandard.register('manor-raid',{kind:'raid',ui:'shared-cb2d'});
+  const raid=sandbox.CellboundCombatStandard.simulate({party:raidParty,seed:'build-manor-raid',encounter:{
     id:'build-manor-raid',title:'Manor Raid Smoke Test',kind:'boss',level:15,
     enemies:[{name:'Raid Test Boss',classification:'boss'}],enemyHealth:1400,mechanicIntervalMs:2200,
     mechanics:[{name:'Shattered Floor',type:'persistent-circle',duration:900,persistMs:2600,tickMs:700,tickDamage:2,radius:8}],
     phases:[{id:'tank-phase',name:'Tank Phase',atPct:80,addMechanics:[{name:'Mark of the Manor',type:'tank-mark',duration:600,damageTakenPerStack:.15,swapAt:2}]}]
-  }});
+  }},{zone:'manor-raid'});
+  if(raid.combatModel!=='Combat Reborn'||raid.combatZone!=='manor-raid')throw new Error('Manor raid did not use the standard Combat Reborn gateway');
   if(raid.summary.players.length!==10)throw new Error('Combat Reborn raid smoke test did not preserve all 10 characters');
   if(!raid.events.some(e=>e.type==='GROUND_HAZARD_SPAWNED'))throw new Error('Combat Reborn raid smoke test did not produce persistent floor hazards');
   if(!raid.events.some(e=>e.type==='TANK_MARK'))throw new Error('Combat Reborn raid smoke test did not produce tank-mark mechanics');
