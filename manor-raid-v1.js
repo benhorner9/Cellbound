@@ -16,6 +16,7 @@ const STAGES={
 const SCREECH_COLOURS=[
  {name:'RED',hex:'#ff5050'},{name:'BLUE',hex:'#55a7ff'},{name:'GREEN',hex:'#58d87a'},{name:'YELLOW',hex:'#ffd34f'},{name:'PURPLE',hex:'#bf75ff'}
 ];
+const SCREECH_TIMEOUT_MS=4500;
 let Game=null,db=null,user=null,mount=null,groups=[],members=[],lockout=null,myGroup=null,session=null,pendingRewardSession=null;
 let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false,raidRealtime=null,readyLaunchTimer=null,serverClockOffset=0;
 const handledScreechTokens=new Set();
@@ -60,15 +61,17 @@ function manorEncounter(stage){
  if(stage==='butler')return{id:'manor-butler',title:'The Butler',kind:'boss',level:15,enemies:[{name:'The Butler',classification:'boss',passive:true}],enemyHealth:5000,mechanicIntervalMs:3200,mechanics:[{name:'Plate Barrage',type:'persistent-circle',duration:1300,persistMs:9000,tickMs:1100,tickDamage:5,radius:10},{name:'Slow Patrol',type:'patrol',duration:1300}],hardEnrageMs:70000};
  if(stage==='engineer')return{id:'manor-engineer',title:'The Engineer',kind:'boss',level:15,enemies:[{name:'The Engineer',classification:'boss'}],enemyHealth:4000,scaling:{enemyDamage:.72},mechanicIntervalMs:4200,mechanics:[{name:'Rebuild Nail Guns',type:'adds',duration:900,addCount:2,addName:'Nail Gun Turret',addGroup:'nail-guns',maxActive:2,healthScale:.13,damageScale:.32,targeting:'random',attackRange:35,attackName:'Nail Burst',overclockOnCap:1.08,overclockAbility:'Overclock'},{name:'Nail Storm',type:'line',duration:1900}],phases:[{id:'nail70',name:'Nail Storm · 70%',atPct:70,triggerMechanic:{name:'Nail Storm',type:'line',duration:1800}},{id:'nail40',name:'Nail Storm · 40%',atPct:40,triggerMechanic:{name:'Nail Storm',type:'line',duration:1600}},{id:'nail15',name:'Nail Storm · 15%',atPct:15,triggerMechanic:{name:'Nail Storm',type:'line',duration:1400}}],hardEnrageMs:105000};
  if(stage==='bedroom')return{id:'manor-bedroom',title:'The Bedroom',kind:'event',level:15,enemies:Array.from({length:20},(_,i)=>({name:'Manor Thrall '+(i+1),classification:'trash',priority:i<4?2:1})),enemyHealth:140,scaling:{enemyDamage:.40},mechanics:[],hardEnrageMs:95000};
- if(stage==='housebound')return{id:'manor-master',title:'The Master of the Manor',kind:'final',level:15,enemies:[{name:'The Master of the Manor',classification:'boss'}],enemyHealth:5000,scaling:{enemyDamage:.68},mechanicIntervalMs:5200,mechanics:[{name:'Shattered Floor',type:'persistent-circle',duration:1500,persistMs:7000,tickMs:1200,tickDamage:4,radius:9},{name:"Servant's Screech",type:'interaction',duration:900,interaction:'manor-screech',interactionDurationMs:4500},{name:'Nail Gun',type:'adds',duration:900,addCount:1,addName:'Nail Gun Turret',addGroup:'master-turret',maxActive:1,healthScale:.10,damageScale:.25,targeting:'random',attackRange:35,attackName:'Nail Burst'}],phases:[{id:'standing',name:'The Master Rises',atPct:60,damageScale:1.04,addMechanics:[{name:'Mark of the Manor',type:'tank-mark',duration:1000,damageTakenPerStack:.15,swapAt:3,markDuration:22000},{name:'Chosen Servant',type:'target-circle',duration:1850,radius:11}]},{id:'collapse',name:'House Collapses',atPct:30,damageScale:1.08,arenaBounds:{left:20,right:80,top:18,bottom:82},addMechanics:[{name:'Falling Beam',type:'line',duration:1500},{name:'Fire Floor',type:'persistent-circle',duration:1500,persistMs:8000,tickMs:1100,tickDamage:5,radius:10}],wipeAfterMs:20000,wipeAbility:'BURN THE HOUSE'}],hardEnrageMs:150000};
+ if(stage==='housebound'){const penalty=masterPenaltyStacks();return{id:'manor-master',title:'The Master of the Manor',kind:'final',level:15,enemies:[{name:'The Master of the Manor',classification:'boss'}],enemyHealth:5000*(1+penalty*.15),scaling:{enemyDamage:.68*(1+penalty*.10)},mechanicIntervalMs:5200,mechanics:[{name:'Shattered Floor',type:'persistent-circle',duration:1500,persistMs:7000,tickMs:1200,tickDamage:4,radius:9},{name:"Servant's Screech",type:'interaction',duration:900,interaction:'manor-screech',interactionDurationMs:4500},{name:'Nail Gun',type:'adds',duration:900,addCount:1,addName:'Nail Gun Turret',addGroup:'master-turret',maxActive:1,healthScale:.10,damageScale:.25,targeting:'random',attackRange:35,attackName:'Nail Burst'}],phases:[{id:'standing',name:'The Master Rises',atPct:60,damageScale:1.04,addMechanics:[{name:'Mark of the Manor',type:'tank-mark',duration:1000,damageTakenPerStack:.15,swapAt:3,markDuration:22000},{name:'Chosen Servant',type:'target-circle',duration:1850,radius:11}]},{id:'collapse',name:'House Collapses',atPct:30,damageScale:1.08,arenaBounds:{left:20,right:80,top:18,bottom:82},addMechanics:[{name:'Falling Beam',type:'line',duration:1500},{name:'Fire Floor',type:'persistent-circle',duration:1500,persistMs:8000,tickMs:1100,tickDamage:5,radius:10}],wipeAfterMs:20000,wipeAbility:'BURN THE HOUSE'}],hardEnrageMs:150000};}
  return null
 }
 function maidEncounter(side){
- return{id:'manor-maid-'+side,title:'The Maid',kind:'boss',level:15,enemies:[{name:'The Maid',classification:'boss'}],enemyHealth:2500,scaling:{enemyDamage:.72},mechanicIntervalMs:4400,mechanics:[{name:'Screech',type:'interaction',duration:900,interaction:'manor-screech',interactionDurationMs:4500},{name:'Silver Tray',type:'cone',duration:1500},{name:'Healer Swipe',type:'healer-swipe',duration:1400,status:{id:'maid-gash',name:'Maid Gash',duration:5000,effect:{incomingDamageTaken:.08}}}],hardEnrageMs:85000}
+ const penalty=Number(session?.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0;
+ return{id:'manor-maid-'+side,title:'The Maid',kind:'boss',level:15,enemies:[{name:'The Maid',classification:'boss'}],enemyHealth:2500*(1+penalty*.15),scaling:{enemyDamage:.72*(1+penalty*.10)},mechanicIntervalMs:4400,mechanics:[{name:'Screech',type:'interaction',duration:900,interaction:'manor-screech',interactionDurationMs:4500},{name:'Silver Tray',type:'cone',duration:1500},{name:'Healer Swipe',type:'healer-swipe',duration:1400,status:{id:'maid-gash',name:'Maid Gash',duration:5000,effect:{incomingDamageTaken:.08}}}],hardEnrageMs:85000}
 }
 function combatFor(stage,side=null){
  const E=combatEngine();if(!E?.simulate||!session)return null;
- const key=session.id+':'+stage+':'+(side===null?'raid':side);
+ const penalty=stage==='maids'?(Number(session?.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0):stage==='housebound'?masterPenaltyStacks():0;
+ const key=session.id+':'+stage+':'+(side===null?'raid':side)+':penalty-'+penalty;
  if(combatCache.has(key))return combatCache.get(key);
  const p=stage==='maids'?engineParty(side):engineParty(null),enc=stage==='maids'?maidEncounter(side):manorEncounter(stage);
  if(!p.length||!enc)return null;
@@ -92,16 +95,11 @@ function combatPlayerHp(ch,elapsed){
  const side=Number(ch?.partyIndex)||0,stage=session.stage,pack=stage==='maids'?combatFor('maids',side):combatFor(stage);
  if(!pack)return null;
  const id='p-'+(stage==='maids'?'maid-':'raid-')+side+'-'+String(ch?.id||ch?.name||'character');
- let hp=hpPctAt(pack.result,elapsed,id,100);
- if(stage==='maids'){const penalty=Number(session.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0;hp=Math.max(0,100-(100-hp)*(1+penalty*.10))}
- if(stage==='housebound'){const penalty=masterPenaltyStacks();hp=Math.max(0,100-(100-hp)*(1+penalty*.10))}
- return hp
+ return hpPctAt(pack.result,elapsed,id,100)
 }
-function maidBossHp(side,elapsed,penalty){
+function maidBossHp(side,elapsed){
  const pack=combatFor('maids',side);if(!pack)return null;
- const base=hpPctAt(pack.result,elapsed,'e-0',100),duration=Math.max(1,Number(pack.result.durationMs)||30000);
- if(elapsed<=duration)return Math.min(100,base+penalty*15);
- return Math.max(0,penalty*15-((elapsed-duration)/duration)*100)
+ return hpPctAt(pack.result,elapsed,'e-0',100)
 }
 function stageCombatDuration(stage){
  if(stage==='maids'){const a=combatFor('maids',0)?.result?.durationMs||0,b=combatFor('maids',1)?.result?.durationMs||0;return Math.max(STAGE_MIN_MS.maids,a,b)}
@@ -512,9 +510,7 @@ function handleRaidCombatEvent(event){
 }
 function masterBossHp(elapsed){
  const pack=combatFor('housebound');if(!pack)return null;
- const base=hpPctAt(pack.result,elapsed,'e-0',100),duration=Math.max(1,Number(pack.result.durationMs)||Number(STAGES.housebound?.duration)||100000),penalty=masterPenaltyStacks();
- if(elapsed<=duration)return Math.min(100,base+penalty*15);
- return Math.max(0,penalty*15-((elapsed-duration)/duration)*100)
+ return hpPctAt(pack.result,elapsed,'e-0',100)
 }
 function bossHp(stage,e){
  if(stage==='housebound'){const masterHp=masterBossHp(e);if(masterHp!==null)return masterHp}
@@ -583,7 +579,7 @@ function mechanicsMarkup(stage,e,phase){
 }
 function paintMaids(arena,mech,roster,e){
  const rows=memberRows(),pa=Number(session.state?.maidPenaltyA)||0,pb=Number(session.state?.maidPenaltyB)||0;
- const ea=maidBossHp(0,e,pa),eb=maidBossHp(1,e,pb),hpA=ea===null?Math.max(0,100-e/1000*2.5+pa*15):ea,hpB=eb===null?Math.max(0,100-e/1000*2.5+pb*15):eb;
+ const ea=maidBossHp(0,e),eb=maidBossHp(1,e),hpA=ea===null?Math.max(0,100-e/1000*2.5):ea,hpB=eb===null?Math.max(0,100-e/1000*2.5):eb;
  const side=(row,i,hp,penalty)=>{const chars=Array.isArray(row?.party_snapshot)?row.party_snapshot:[];return'<section class="mr-maid-side '+(i?'kitchen':'dining')+'"><header><small>'+(i?'KITCHEN':'DINING ROOM')+'</small><b>'+esc(row?.guild_label||'Party')+'</b></header><div class="mr-maid-boss"><span>♟</span><div><b>The Maid</b><div class="mr-boss-hp"><i style="width:'+Math.min(100,hp)+'%"></i></div><small>'+Math.ceil(hp)+'% HP · +'+(penalty*10)+'% DAMAGE</small></div></div><div class="mr-maid-units">'+chars.map((ch,x)=>unit({...ch,partyIndex:i},x+i*5,e)).join('')+'</div></section>'};
  arena.innerHTML='<div class="mr-arena mr-maids">'+side(rows[0],0,hpA,pa)+side(rows[1],1,hpB,pb)+'</div>';
  mech.innerHTML='<section class="mr-mechanic-card"><small>COMBAT REBORN · LINKED ENCOUNTER</small><h3>SCREECH</h3><p>A wrong answer heals the <b>other player’s Maid for 15%</b> and gives her <b>+10% damage</b>. If the timer expires with no answer, <b>both Maids</b> heal 15% and gain +10% damage.</p><span>Timeouts are shared through the raid session, so leaving or disconnecting cannot avoid the mechanic. Penalties stack until the Maids die.</span></section><div class="mr-linked-stats"><span>MAID A PENALTY <b>+'+(pa*10)+'% DMG</b></span><span>MAID B PENALTY <b>+'+(pb*10)+'% DMG</b></span></div>';
@@ -597,7 +593,7 @@ async function driveMaids(e){
  const aPack=combatFor('maids',0),bPack=combatFor('maids',1);
  const defeated=(aPack?.result?.outcome!=='victory'&&e>=Number(aPack?.result?.durationMs||Infinity))||(bPack?.result?.outcome!=='victory'&&e>=Number(bPack?.result?.durationMs||Infinity));
  if(defeated){await failRaid('The Maids overwhelmed one of the split parties.');return}
- const hpA=maidBossHp(0,e,pa),hpB=maidBossHp(1,e,pb);
+ const hpA=maidBossHp(0,e),hpB=maidBossHp(1,e);
  const countA=Number(session?.state?.screechCountA)||0,countB=Number(session?.state?.screechCountB)||0;
  if(hpA!==null&&hpB!==null&&hpA<=0&&hpB<=0&&countA>0&&countB>0)await advance('engineer')
 }
@@ -620,7 +616,7 @@ async function driveStage(e){
 async function advance(next){
  if(advancing||!session)return;advancing=true;
  try{
-   const patch=next==='maids'?{maidPenaltyA:0,maidPenaltyB:0,screechCountA:0,screechCountB:0,screechSuccessA:0,screechSuccessB:0,screechPrompts:{}}:next==='housebound'?{masterScreechFailures:0,masterScreechTimeouts:0,screechPrompts:{}}:{screechPrompts:{}};
+   const patch=next==='maids'?{maidPenaltyA:0,maidPenaltyB:0,screechCountA:0,screechCountB:0,screechSuccessA:0,screechSuccessB:0,screechResolved:{}}:next==='housebound'?{masterPenalty:0,masterScreechFailures:0,masterScreechTimeouts:0,screechCountA:0,screechCountB:0,screechSuccessA:0,screechSuccessB:0,screechResolved:{}}:{screechResolved:{}};
    const {data,error}=await db.rpc('advance_manor_raid',{p_session_id:session.id,p_expected_stage:session.stage,p_next_stage:next,p_patch:patch});
    if(error)throw error;if(data?.state)session.state=data.state;if(data?.stage)session.stage=data.stage;if(data?.status)session.status=data.status;
    lastStage='';sharedStageKey='';await loadSession(session.id);await syncSharedRaidView(true)
