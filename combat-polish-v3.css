@@ -1,0 +1,106 @@
+/* Cellbound Combat Visual Language v3
+   Shared presentation layer. No combat math or outcome logic lives here. */
+
+:where(.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena,#tbArena){--cbvfx3-accent:#78d7cf}
+.cbvfx3-events{position:absolute;z-index:82;inset:0;overflow:hidden;pointer-events:none;contain:layout paint}
+.cbvfx3-vignette,.cbvfx3-depth{position:absolute;inset:0;pointer-events:none}
+.cbvfx3-vignette{z-index:0;background:radial-gradient(ellipse at center,transparent 46%,rgba(2,8,12,.16) 78%,rgba(1,5,8,.32));opacity:.56}
+.cbvfx3-depth{z-index:0;background:linear-gradient(180deg,rgba(255,255,255,.025),transparent 22%,transparent 76%,rgba(0,0,0,.15));mix-blend-mode:screen;opacity:.58}
+.cbvfx3-word,.cbvfx3-mechanic-name{position:absolute;z-index:20;transform:translate(-50%,-50%);font:800 9px/1 system-ui,sans-serif;letter-spacing:.12em;text-shadow:0 2px 8px #000;white-space:nowrap;animation:cbvfx3Word .72s ease-out forwards}
+.cbvfx3-word.crit{font-size:10px;color:#ffd77c}
+.cbvfx3-word.guard{color:#b9dcff}.cbvfx3-word.avoid{color:#d9edf5}.cbvfx3-word.aggro{color:#ffd16e}.cbvfx3-word.control{color:#c9a7ff}.cbvfx3-word.interrupt{color:#89e7f4}
+.cbvfx3-mechanic-name{top:11%!important;color:#ffb2a8;background:rgba(24,7,8,.72);border:1px solid rgba(255,101,87,.32);border-radius:999px;padding:6px 10px;animation-duration:.95s}
+@keyframes cbvfx3Word{0%{opacity:0;transform:translate(-50%,-30%) scale(.82)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-115%) scale(1.04)}}
+
+.cbvfx3-action-flare,.cbvfx3-cast-ring,.cbvfx3-heal-rise,.cbvfx3-shield,.cbvfx3-revive-pillar,.cbvfx3-spawn-ring{position:absolute;z-index:12;transform:translate(-50%,-50%);pointer-events:none}
+.cbvfx3-action-flare{width:30px;height:30px;border-radius:50%;border:1px solid var(--cbvfx3-accent,#78d7cf);box-shadow:0 0 16px color-mix(in srgb,var(--cbvfx3-accent,#78d7cf) 48%,transparent);animation:cbvfx3Flare .5s ease-out forwards}
+.cbvfx3-action-flare.melee:before,.cbvfx3-action-flare.melee:after{content:"";position:absolute;left:50%;top:50%;width:3px;height:34px;border-radius:5px;background:linear-gradient(transparent,var(--cbvfx3-accent,#fff),transparent)}
+.cbvfx3-action-flare.melee:before{transform:translate(-50%,-50%) rotate(54deg)}.cbvfx3-action-flare.melee:after{transform:translate(-50%,-50%) rotate(-34deg)}
+.cbvfx3-action-flare.ranged{border-style:dashed;animation-name:cbvfx3CastFlare}.cbvfx3-action-flare.heal{border-color:#6ef0a6;box-shadow:0 0 24px rgba(98,235,163,.34);animation-name:cbvfx3HealFlare}
+.cbvfx3-cast-ring{width:48px;height:48px;border:2px solid var(--cbvfx3-accent,#ef6a62);border-left-color:transparent;border-right-color:transparent;border-radius:50%;box-shadow:0 0 20px color-mix(in srgb,var(--cbvfx3-accent,#ef6a62) 35%,transparent);animation:cbvfx3CastRing 1s linear infinite}
+.cbvfx3-heal-rise{width:26px;height:52px;border-radius:50%;background:linear-gradient(180deg,rgba(121,255,185,0),rgba(121,255,185,.25),rgba(121,255,185,0));filter:blur(1px);animation:cbvfx3Rise .72s ease-out forwards}
+.cbvfx3-shield{width:42px;height:48px;border:2px solid rgba(167,216,255,.75);border-radius:48% 48% 58% 58%;clip-path:polygon(50% 0,94% 18%,84% 76%,50% 100%,16% 76%,6% 18%);box-shadow:0 0 22px rgba(135,202,255,.3);animation:cbvfx3Shield .86s ease-out forwards}
+.cbvfx3-revive-pillar{width:18px;height:96px;background:linear-gradient(180deg,transparent,rgba(190,255,219,.56),transparent);filter:blur(2px);animation:cbvfx3RevivePillar 1.15s ease-out forwards}
+.cbvfx3-spawn-ring{width:56px;height:56px;border:2px dashed rgba(202,147,255,.72);border-radius:50%;box-shadow:0 0 24px rgba(170,105,231,.3);animation:cbvfx3SpawnRing .86s ease-out forwards}
+@keyframes cbvfx3Flare{from{opacity:0;transform:translate(-50%,-50%) scale(.25) rotate(-16deg)}28%{opacity:1}to{opacity:0;transform:translate(-50%,-50%) scale(2.5) rotate(20deg)}}
+@keyframes cbvfx3CastFlare{from{opacity:0;transform:translate(-50%,-50%) scale(.45) rotate(0)}30%{opacity:1}to{opacity:0;transform:translate(-50%,-50%) scale(2.1) rotate(90deg)}}
+@keyframes cbvfx3HealFlare{from{opacity:0;transform:translate(-50%,-50%) scale(.25)}35%{opacity:1}to{opacity:0;transform:translate(-50%,-65%) scale(2.7)}}
+@keyframes cbvfx3CastRing{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes cbvfx3Rise{from{opacity:.8;transform:translate(-50%,-32%) scale(.6)}to{opacity:0;transform:translate(-50%,-115%) scale(1.5)}}
+@keyframes cbvfx3Shield{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.7)}}
+@keyframes cbvfx3RevivePillar{0%{opacity:0;transform:translate(-50%,-30%) scaleY(.4)}25%{opacity:1}100%{opacity:0;transform:translate(-50%,-78%) scaleY(1.4)}}
+@keyframes cbvfx3SpawnRing{from{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(0)}35%{opacity:1}to{opacity:0;transform:translate(-50%,-50%) scale(2.3) rotate(100deg)}}
+
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit)>i:first-child{will-change:transform,filter;transform-origin:50% 65%}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-acting{filter:brightness(1.08)}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-melee-cast>i:first-child{animation:cbvfx3Melee .3s cubic-bezier(.2,.85,.25,1)}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-ranged-cast>i:first-child{animation:cbvfx3Ranged .44s ease-out}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-heal-cast>i:first-child{animation:cbvfx3HealCast .5s ease-out}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-hit>i:first-child{animation:cbvfx3Hit .34s ease-out}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-heavy-hit>i:first-child{animation:cbvfx3HeavyHit .48s cubic-bezier(.2,.8,.2,1)}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-healed>i:first-child{animation:cbvfx3Healed .54s ease-out}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-dodge>i:first-child{animation:cbvfx3Dodge .42s ease-out}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-block>i:first-child{animation:cbvfx3Block .48s ease-out}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-controlled{filter:saturate(.65) brightness(.82);animation:cbvfx3Control .65s ease-in-out}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-interrupted>i:first-child{animation:cbvfx3Interrupt .56s ease-out}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-aggro-target{filter:drop-shadow(0 0 8px rgba(255,205,93,.75));animation:cbvfx3Aggro .85s ease-out}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-defensive{filter:drop-shadow(0 0 8px rgba(151,213,255,.72))}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-revive>i:first-child{animation:cbvfx3Revive .95s cubic-bezier(.2,.75,.2,1)}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-fallen{filter:grayscale(.82) brightness(.55)!important;opacity:.72;transition:filter .32s ease,opacity .32s ease}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-fallen>i:first-child{transform:translateY(4px) rotate(-7deg) scale(.92)!important;transition:transform .32s ease}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-boss-fallen>i:first-child{transform:translateY(6px) rotate(-3deg) scale(.96)!important}
+
+@keyframes cbvfx3Melee{0%{transform:translateX(0) scale(1)}46%{transform:translateX(7px) scale(1.06)}100%{transform:translateX(0) scale(1)}}
+@keyframes cbvfx3Ranged{0%{transform:scale(1)}44%{transform:scale(.96)}70%{transform:scale(1.05)}100%{transform:scale(1)}}
+@keyframes cbvfx3HealCast{0%{filter:brightness(1)}45%{filter:brightness(1.32) drop-shadow(0 0 9px rgba(104,239,165,.58))}100%{filter:brightness(1)}}
+@keyframes cbvfx3Hit{0%,100%{transform:translate(0,0)}35%{transform:translateX(-3px)}58%{transform:translateX(2px)}}
+@keyframes cbvfx3HeavyHit{0%,100%{transform:translate(0,0) scale(1)}28%{transform:translateX(-6px) scale(.94)}52%{transform:translateX(3px) scale(1.03)}}
+@keyframes cbvfx3Healed{0%,100%{filter:brightness(1)}45%{filter:brightness(1.28) drop-shadow(0 0 8px rgba(98,239,165,.58))}}
+@keyframes cbvfx3Dodge{0%,100%{transform:translateX(0)}42%{transform:translateX(-8px)}}
+@keyframes cbvfx3Block{0%,100%{transform:scale(1)}40%{transform:scale(.95);filter:brightness(1.35)}}
+@keyframes cbvfx3Control{50%{filter:saturate(.35) brightness(.72) drop-shadow(0 0 7px rgba(193,133,255,.6))}}
+@keyframes cbvfx3Interrupt{0%,100%{transform:rotate(0)}28%{transform:rotate(-4deg)}52%{transform:rotate(3deg)}}
+@keyframes cbvfx3Aggro{0%{filter:drop-shadow(0 0 0 rgba(255,205,93,0))}35%{filter:drop-shadow(0 0 12px rgba(255,205,93,.92))}100%{filter:drop-shadow(0 0 0 rgba(255,205,93,0))}}
+@keyframes cbvfx3Revive{0%{opacity:.25;transform:translateY(6px) scale(.82);filter:brightness(1.8)}55%{opacity:1;transform:translateY(-2px) scale(1.08)}100%{transform:translateY(0) scale(1);filter:brightness(1)}}
+
+.cbvfx3-casting:after{content:"";position:absolute;left:50%;top:50%;width:122%;height:122%;border:1px dashed var(--cbvfx3-accent,#ef6a62);border-radius:50%;transform:translate(-50%,-50%);opacity:.65;animation:cbvfx3UnitCast 1.1s linear infinite;pointer-events:none}
+.cbvfx3-danger-windup{filter:brightness(1.18) drop-shadow(0 0 10px rgba(239,89,75,.65))}
+@keyframes cbvfx3UnitCast{to{transform:translate(-50%,-50%) rotate(360deg)}}
+
+.cbvfx3-mechanic-warning{box-shadow:inset 0 0 38px rgba(239,76,67,.18)}
+.cbvfx3-mechanic-impact{animation:cbvfx3ArenaImpact .55s ease-out}
+.cbvfx3-mechanic-safe{animation:cbvfx3ArenaSafe .55s ease-out}
+.cbvfx3-hazard-active{box-shadow:inset 0 0 28px rgba(213,81,58,.13)}
+.cbvfx3-boss-windup>.cbvfx3-events .cbvfx3-vignette{background:radial-gradient(ellipse at center,transparent 40%,rgba(58,4,5,.22) 78%,rgba(30,1,3,.42));animation:cbvfx3Vignette .75s ease-in-out infinite alternate}
+.cbvfx3-enraged>.cbvfx3-events .cbvfx3-vignette{background:radial-gradient(ellipse at center,transparent 38%,rgba(90,7,8,.24) 78%,rgba(36,0,1,.48))}
+.cbvfx3-phase{animation:cbvfx3Phase .82s ease-out}
+.cbvfx3-enrage-pulse{animation:cbvfx3Enrage .82s ease-out}
+@keyframes cbvfx3ArenaImpact{0%,100%{filter:none}24%{filter:brightness(1.13) saturate(1.14)}}
+@keyframes cbvfx3ArenaSafe{0%,100%{box-shadow:inset 0 0 0 rgba(84,230,159,0)}35%{box-shadow:inset 0 0 34px rgba(84,230,159,.2)}}
+@keyframes cbvfx3Vignette{to{opacity:.82}}
+@keyframes cbvfx3Phase{0%,100%{filter:none}42%{filter:brightness(1.13) saturate(1.2)}}
+@keyframes cbvfx3Enrage{0%,100%{filter:none}42%{filter:contrast(1.06) saturate(1.28) brightness(1.07)}}
+
+:where(.cb2d-unit-hp,.pvp2d-hp,.wb2d-unit-hp,.quest-cb2d-unit-hp){position:relative}
+:where(.cb2d-unit-hp,.pvp2d-hp,.wb2d-unit-hp,.quest-cb2d-unit-hp).cbvfx3-health-drop{animation:cbvfx3HpDrop .4s ease-out}
+:where(.cb2d-unit-hp,.pvp2d-hp,.wb2d-unit-hp,.quest-cb2d-unit-hp).cbvfx3-health-gain{animation:cbvfx3HpGain .4s ease-out}
+@keyframes cbvfx3HpDrop{45%{filter:brightness(1.75) drop-shadow(0 0 4px rgba(255,94,82,.75))}}
+@keyframes cbvfx3HpGain{45%{filter:brightness(1.55) drop-shadow(0 0 4px rgba(87,234,154,.72))}}
+
+/* Sharper shared telegraph language: warning first, impact second, hazard persists. */
+:where(.cb2d-tg,.quest-cb2d-tg,.tb-telegraph,.wb2d-telegraph){transition:opacity .16s ease,filter .16s ease,box-shadow .16s ease}
+.cbvfx3-mechanic-warning :where(.cb2d-tg,.quest-cb2d-tg,.tb-telegraph,.wb2d-telegraph){filter:brightness(1.14) saturate(1.12)}
+.cbvfx3-hazard-active :where(.cb2d-ground-hazard,.quest-ground-hazard,.wb2d-ground-hazard){filter:brightness(1.05) saturate(1.1)}
+
+/* Existing projectiles gain a stronger readable tail without changing timing. */
+:where(.cb2d-projectile,.quest-cb2d-projectile,.wb2d-projectile,.pvp2d-projectile){filter:drop-shadow(0 0 4px currentColor)}
+:where(.cb2d-projectile,.quest-cb2d-projectile,.wb2d-projectile,.pvp2d-projectile):after{content:"";position:absolute;right:65%;top:50%;width:20px;height:2px;transform:translateY(-50%);background:linear-gradient(90deg,transparent,currentColor);opacity:.55;pointer-events:none}
+
+@media (max-width:720px){
+  .cbvfx3-mechanic-name{font-size:8px;padding:5px 8px}
+  .cbvfx3-word{font-size:8px}
+}
+@media (prefers-reduced-motion:reduce){
+  .cbvfx3-events{display:none!important}
+  :where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit)[class*="cbvfx3-"]{animation:none!important;transition:none!important}
+}

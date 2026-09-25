@@ -179,6 +179,7 @@ function updateMeters(pb){
 }
 function handleEvent(pb,e){
   const root=pb.root,src=combatant(pb,e.source),target=combatant(pb,e.target);
+  window.CellboundCombatFX?.combatEvent?.(e,{arena:root.querySelector('.pvp2d-arena'),root,resolve:id=>unitNode(root,id)});
   switch(e.type){
     case'COMBAT_START':
       window.CellboundCombatFX?.mount?.(root.querySelector('.pvp2d-arena'));

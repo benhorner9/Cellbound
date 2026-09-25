@@ -416,6 +416,7 @@ function tbStatusTargets(id){
 function handleEvent(e){
  run.elapsed=Math.max(run.elapsed,Number(e.timestamp)||0);
  if(window.CellboundCombatStatuses?.handle(e,{resolve:tbStatusTargets,speed:()=>playSpeed}))return;
+ window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#tbArena'),resolve:id=>tbStatusTargets(id)?.[0]?.el||tbStatusTargets(id)?.[0]||null});
  if(e.type==='TOMB_OPEN'){spawnBoss(e.payload?.bossId);return}
  if(e.type==='MOVEMENT_START'&&e.payload?.to){const el=String(e.source||'').startsWith('tb-')?$('[data-tb-boss="'+String(e.source).slice(3)+'"]'):$('[data-tb-unit="'+e.source+'"]');tbSetPos(el,e.payload.to.x,e.payload.to.y,e.payload.duration||420);return}
  if(e.type==='ABILITY_START'){tbLunge(e.source,e.target);return}
