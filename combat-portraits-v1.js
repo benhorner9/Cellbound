@@ -24,8 +24,9 @@ const BOSS_ART=[
 ];
 
 function roster(){
-  const list=window.CellboundGame?.getState?.()?.roster;
-  return Array.isArray(list)?list:[];
+  const list=window.CellboundGame?.getState?.()?.roster,external=window.CellboundDungeon2D?.externalCharacters?.();
+  const own=Array.isArray(list)?list:[],remote=Array.isArray(external)?external:[];
+  return own.concat(remote.filter(c=>!own.some(x=>String(x?.id||'')===String(c?.id||''))));
 }
 function key(v){return String(v||'').trim().replace(/[^a-zA-Z0-9_-]+/g,'-')}
 function unitName(el){
