@@ -197,10 +197,13 @@ function revive(target,arena){
  if(!target)return;target.classList.remove('cbvfx4-dead','cbvfx4-boss-dead');pulse(target,'cbvfx4-revive',1100);
  if(reduce())return;const p=point(arena,target),n=document.createElement('i');n.className='cbvfx4-revive-ring';n.style.left=p.px+'px';n.style.top=p.py+'px';eventLayer(arena)?.appendChild(n);setTimeout(()=>n.remove(),1100)
 }
+function visualHook(type,e,arena,source,target){
+ try{window.dispatchEvent(new CustomEvent('cellbound:combat-visual',{detail:{type,event:e,arena,source,target}}))}catch(_){}
+}
 function physicalEvent(e,opts={}){
  if(!e)return;
  const arena=mount(arenaFor(opts.arena||opts.root)||arenaFor(resolveUnit(e.source,opts))||arenaFor(resolveUnit(e.target,opts)));if(!arena)return;
- const source=resolveUnit(e.source,opts,arena),target=resolveUnit(e.target,opts,arena);if(source)markProfile(source);if(target)markProfile(target);
+ const source=resolveUnit(e.source,opts,arena),target=resolveUnit(e.target,opts,arena);if(source)markProfile(source);if(target)markProfile(target);visualHook(e.type,e,arena,source,target);
  switch(e.type){
   case'COMBAT_START':scanUnits(arena);arena.classList.add('cbvfx4-live');break;
   case'ABILITY_START':
