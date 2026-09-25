@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-window.CellboundCombatStandard?.register?.('manor',{kind:'raid',execution:'local-coop',ui:'shared-cb2d'});
+window.CellboundCombatStandard?.register?.('manor-raid',{kind:'raid',execution:'local-coop',ui:'shared-cb2d'});
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const RAID_ID='manor';
