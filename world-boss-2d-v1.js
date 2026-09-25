@@ -335,23 +335,22 @@ async function playServerEvents(events){
   if(!timeline.length||!active)return;
   const bossId=active.boss?.id;
   return await new Promise(resolve=>{
-    let index=0,simTime=0,lastFrame=performance.now(),finished=false;
-    const finish=()=>{if(finished)return;finished=true;resolve()};
-    const frame=now=>{
+    let index=0,simTime=0,wallAnchor=Date.now(),finished=false,raf=0;
+    const finish=()=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);resolve()};
+    const frame=()=>{
       if(finished)return;
       if(!active||active.boss?.id!==bossId){finish();return}
-      const rawDelta=Math.max(0,now-lastFrame);lastFrame=now;
-      simTime+=Math.min(rawDelta,100);
+      simTime=Math.max(simTime,Math.max(0,Date.now()-wallAnchor));
       const frameStarted=performance.now();let handled=0;
-      while(index<timeline.length&&(Number(timeline[index].timestamp)||0)<=simTime+4&&handled<18&&performance.now()-frameStarted<8){
+      while(index<timeline.length&&(Number(timeline[index].timestamp)||0)<=simTime+4&&handled<36&&performance.now()-frameStarted<9){
         const event=timeline[index++];handled++;
         try{wbRenderServerEvent(event)}
         catch(error){console.warn('World boss combat visual recovered',event?.type,event?.ability,error)}
       }
       if(index>=timeline.length){finish();return}
-      requestAnimationFrame(frame)
+      raf=requestAnimationFrame(frame)
     };
-    requestAnimationFrame(frame)
+    raf=requestAnimationFrame(frame)
   })
 }
 function wipeOwnParty(){

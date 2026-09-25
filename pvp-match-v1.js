@@ -78,17 +78,18 @@ function resultMarkup(match){
 }
 function showIntro(r,match,result,onResolved,myToken){
   if(myToken!==token)return;
-  let seconds=10;r.innerHTML=introMarkup(match,seconds);
-  const tick=()=>{
+  const deadline=Date.now()+10000;
+  const draw=()=>{
     if(myToken!==token)return;
-    seconds--;
-    const el=r.querySelector('#pvpMatchCountdown');if(el)el.textContent=String(Math.max(0,seconds));
-    if(seconds<=0){
-      clearInterval(countdownTimer);countdownTimer=null;
-      showBattle(r,match,result,onResolved,myToken);
+    const left=Math.max(0,deadline-Date.now()),seconds=Math.ceil(left/1000);
+    const el=r.querySelector('#pvpMatchCountdown');if(el)el.textContent=String(seconds);
+    if(left<=0){
+      if(countdownTimer){clearInterval(countdownTimer);countdownTimer=null}
+      showBattle(r,match,result,onResolved,myToken)
     }
   };
-  countdownTimer=setInterval(tick,1000);
+  r.innerHTML=introMarkup(match,10);draw();
+  countdownTimer=setInterval(draw,250);
 }
 function showBattle(r,match,result,onResolved,myToken){
   if(myToken!==token)return;

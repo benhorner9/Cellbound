@@ -731,23 +731,26 @@ async function qPlayReborn(result,tok){
   if(!questFight)return false;questFight.telegraphs={};
   if(!events.length)return result?.outcome==='victory';
   return await new Promise(resolve=>{
-    let index=0,simTime=0,lastFrame=performance.now(),finished=false;
-    const finish=value=>{if(finished)return;finished=true;resolve(value)};
-    const frame=now=>{
+    let index=0,simTime=0,wallAnchor=Date.now(),simAnchor=0,lastSpeed=null,finished=false,raf=0;
+    const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);resolve(value)};
+    const frame=()=>{
       if(finished)return;
       if(tok!==encounterToken||!questFight){finish(false);return}
-      const rawDelta=Math.max(0,now-lastFrame);lastFrame=now;
-      simTime+=Math.min(rawDelta,100)*Math.max(.25,Number(questFight?.speed)||1);
+      const speed=Math.max(.25,Number(questFight?.speed)||1);
+      if(lastSpeed===null)lastSpeed=speed;
+      else if(lastSpeed!==speed){simAnchor=simTime;wallAnchor=Date.now();lastSpeed=speed}
+      simTime=Math.max(simTime,simAnchor+Math.max(0,Date.now()-wallAnchor)*speed);
+      questFight.elapsedMs=Math.max(Number(questFight.elapsedMs)||0,simTime);
       const frameStarted=performance.now();let handled=0;
-      while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<18&&performance.now()-frameStarted<8){
+      while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<36&&performance.now()-frameStarted<9){
         const event=events[index++];handled++;
         try{qRenderRebornEvent(event)}
         catch(error){console.warn('Quest combat visual recovered',event?.type,event?.ability,error)}
       }
       if(index>=events.length){finish(result?.outcome==='victory');return}
-      requestAnimationFrame(frame)
+      raf=requestAnimationFrame(frame)
     };
-    requestAnimationFrame(frame)
+    raf=requestAnimationFrame(frame)
   })
 }
 function qEncounterFromConfig(config){

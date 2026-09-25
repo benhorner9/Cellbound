@@ -338,12 +338,13 @@ function play({stage,match,result,onComplete}={}){
   const units=buildUnits(match),map=result?.map||match?.map||null;stage.innerHTML=shellMarkup(match,units,map);stage.scrollIntoView?.({behavior:'smooth',block:'nearest'});
   const pb={root:stage,match,result,units,unitMap:Object.fromEntries(units.map(u=>[u.id,u])),stats:Object.fromEntries(units.map(u=>[u.id,{damage:0,healing:0,kills:0,deaths:0}])),feed:[],cancelled:false,raf:0,meterDirty:false,lastMeterAt:0};
   activePlayback=pb;
-  const events=(result.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));let index=0,simTime=0,last=performance.now();
-  const frame=now=>{
+  const events=(result.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));let index=0,simTime=0,wallAnchor=Date.now();
+  const frame=()=>{
     if(pb.cancelled||!stage.isConnected)return;
-    const delta=Math.min(100,Math.max(0,now-last));last=now;simTime+=delta;
+    simTime=Math.max(simTime,Math.max(0,Date.now()-wallAnchor));
     const timer=$(stage,'#pvp2dTimer');if(timer){const sec=Math.floor(simTime/1000);timer.textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0')}
-    let handled=0;while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<220){
+    const frameStarted=performance.now();let handled=0;
+    while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<260&&performance.now()-frameStarted<10){
       const event=events[index];
       try{handleEvent(pb,event)}
       catch(error){
@@ -356,6 +357,7 @@ function play({stage,match,result,onComplete}={}){
       }
       index++;handled++
     }
+    const now=performance.now();
     if(pb.meterDirty&&now-pb.lastMeterAt>120){pb.meterDirty=false;pb.lastMeterAt=now;updateMeters(pb)}
     if(index>=events.length){updateMeters(pb);setTimeout(()=>{if(!pb.cancelled&&stage.isConnected){activePlayback=null;onComplete?.()}},650);return}
     pb.raf=requestAnimationFrame(frame)
