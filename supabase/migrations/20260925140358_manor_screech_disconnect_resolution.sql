@@ -201,5 +201,7 @@ $$;
 
 revoke all on function public.manor_screech_open_v2(uuid,text,integer) from public;
 revoke all on function public.manor_screech_result_v2(uuid,text,text) from public;
+revoke execute on function public.manor_screech_open_v2(uuid,text,integer) from anon;
+revoke execute on function public.manor_screech_result_v2(uuid,text,text) from anon;
 grant execute on function public.manor_screech_open_v2(uuid,text,integer) to authenticated;
 grant execute on function public.manor_screech_result_v2(uuid,text,text) to authenticated;
