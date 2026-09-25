@@ -585,7 +585,8 @@ function setEnemyHp(index,value){
  if(!run)return;
  const previous=Number(run.enemyHp[index])||0;
  run.enemyHp[index]=clamp(Math.round(value),0,run.enemyMax[index]||1);
- const pct=(run.enemyHp[index]/Math.max(1,run.enemyMax[index]))*100;
+ const displayMax=Math.max(1,Number(run.enemyDisplayMax?.[index])||run.enemyMax[index]||1);
+ const pct=clamp((run.enemyHp[index]/displayMax)*100,0,100);
  const bar=$('[data-unit="e-'+index+'"] .cb2d-unit-hp i');if(bar)bar.style.width=pct+'%';
  const unit=$('[data-unit="e-'+index+'"]');
  if(unit){
@@ -1885,6 +1886,8 @@ function spawnSharedEncounter(s,result,options={}){
  if(tag)tag.innerHTML='<b>'+esc(options.roomLabel||s?.title||'Combat')+'</b><small>'+esc(options.ambience||'Combat Reborn is controlling every unit in the arena.')+'</small>';
  const baseEnemies=(result?.finalState?.enemies||[]).filter(e=>!e.isAdd&&/^e-\d+$/.test(String(e.id||'')));
  run.enemyMax=baseEnemies.map(e=>Math.max(1,Number(e.maxHealth)||1));run.enemyHp=[...run.enemyMax];
+ const requestedDisplayMax=Array.isArray(options.enemyDisplayMax)?options.enemyDisplayMax:[];
+ run.enemyDisplayMax=run.enemyMax.map((max,i)=>Math.max(1,Number(requestedDisplayMax[i])||max));
  run.threat=run.enemyMax.map(()=>Object.fromEntries(party().map(c=>[c.id,0])));run.aggro=run.enemyMax.map(()=>null);
  run.combatStartedAt=0;run.lastMeterAt=0;renderCombatMeters();renderRebornHealingMeter();
  party().forEach((c,i)=>{
