@@ -31,23 +31,24 @@
 @keyframes cbvfx3RevivePillar{0%{opacity:0;transform:translate(-50%,-30%) scaleY(.4)}25%{opacity:1}100%{opacity:0;transform:translate(-50%,-78%) scaleY(1.4)}}
 @keyframes cbvfx3SpawnRing{from{opacity:0;transform:translate(-50%,-50%) scale(.2) rotate(0)}35%{opacity:1}to{opacity:0;transform:translate(-50%,-50%) scale(2.3) rotate(100deg)}}
 
-:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit){will-change:transform,filter;transform-origin:50% 65%}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit)>i:first-child{will-change:transform,filter;transform-origin:50% 65%}
 :where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-acting{filter:brightness(1.08)}
-:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-melee-cast{animation:cbvfx3Melee .3s cubic-bezier(.2,.85,.25,1)}
-:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-ranged-cast{animation:cbvfx3Ranged .44s ease-out}
-:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-heal-cast{animation:cbvfx3HealCast .5s ease-out}
-:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-hit{animation:cbvfx3Hit .34s ease-out}
-:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-heavy-hit{animation:cbvfx3HeavyHit .48s cubic-bezier(.2,.8,.2,1)}
-:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-healed{animation:cbvfx3Healed .54s ease-out}
-:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-dodge{animation:cbvfx3Dodge .42s ease-out}
-:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-block{animation:cbvfx3Block .48s ease-out}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-melee-cast>i:first-child{animation:cbvfx3Melee .3s cubic-bezier(.2,.85,.25,1)}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-ranged-cast>i:first-child{animation:cbvfx3Ranged .44s ease-out}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-heal-cast>i:first-child{animation:cbvfx3HealCast .5s ease-out}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-hit>i:first-child{animation:cbvfx3Hit .34s ease-out}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-heavy-hit>i:first-child{animation:cbvfx3HeavyHit .48s cubic-bezier(.2,.8,.2,1)}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-healed>i:first-child{animation:cbvfx3Healed .54s ease-out}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-dodge>i:first-child{animation:cbvfx3Dodge .42s ease-out}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-block>i:first-child{animation:cbvfx3Block .48s ease-out}
 :where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-controlled{filter:saturate(.65) brightness(.82);animation:cbvfx3Control .65s ease-in-out}
-:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-interrupted{animation:cbvfx3Interrupt .56s ease-out}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-interrupted>i:first-child{animation:cbvfx3Interrupt .56s ease-out}
 :where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-aggro-target{filter:drop-shadow(0 0 8px rgba(255,205,93,.75));animation:cbvfx3Aggro .85s ease-out}
 :where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-defensive{filter:drop-shadow(0 0 8px rgba(151,213,255,.72))}
-:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-revive{animation:cbvfx3Revive .95s cubic-bezier(.2,.75,.2,1)}
-:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-fallen{filter:grayscale(.82) brightness(.55)!important;transform:translateY(4px) rotate(-7deg) scale(.92)!important;opacity:.72;transition:filter .32s ease,transform .32s ease,opacity .32s ease}
-:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-boss-fallen{transform:translateY(6px) rotate(-3deg) scale(.96)!important}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-revive>i:first-child{animation:cbvfx3Revive .95s cubic-bezier(.2,.75,.2,1)}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-fallen{filter:grayscale(.82) brightness(.55)!important;opacity:.72;transition:filter .32s ease,opacity .32s ease}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-fallen>i:first-child{transform:translateY(4px) rotate(-7deg) scale(.92)!important;transition:transform .32s ease}
+:where(.cb2d-unit,.pvp2d-unit,.wb2d-unit,.quest-cb2d-unit).cbvfx3-boss-fallen>i:first-child{transform:translateY(6px) rotate(-3deg) scale(.96)!important}
 
 @keyframes cbvfx3Melee{0%{transform:translateX(0) scale(1)}46%{transform:translateX(7px) scale(1.06)}100%{transform:translateX(0) scale(1)}}
 @keyframes cbvfx3Ranged{0%{transform:scale(1)}44%{transform:scale(.96)}70%{transform:scale(1.05)}100%{transform:scale(1)}}
