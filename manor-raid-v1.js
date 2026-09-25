@@ -265,6 +265,9 @@ function raidHeader(){
 function encounterStrip(){
  return '<div class="mr-route"><span><b>01</b>Butler</span><i>›</i><span><b>02</b>Maids</span><i>›</i><span><b>03</b>Engineer</span><i>›</i><span><b>04</b>Bedroom</span><i>›</i><span class="final"><b>05</b>Master</span></div>'
 }
+function raidRequirementsCard(){
+ return '<section class="mr-requirements"><div><small>RAID REQUIREMENTS</small><strong>LEVEL 15</strong><span>Intended character level</span></div><div><small>RECOMMENDED GEAR</small><strong>iLVL '+RAID_RECOMMENDED_ILVL+'</strong><span>Lower gear can enter, but difficulty rises sharply</span></div><div><small>EXPECTED CLEAR</small><strong>≈ 15 MIN</strong><span>Typical successful run</span></div><div><small>REWARD TIER</small><strong>TIER 5</strong><span>2 personal raid items per player</span></div></section>'
+}
 function renderHub(){
  if(!mount)return;
  if(!unlocked()){
@@ -296,7 +299,7 @@ function renderHub(){
  const pendingLoot=pendingRewardSession
    ?'<section class="mr-card mr-current victory mr-pending-loot"><div><small>UNCLAIMED MANOR REWARD</small><h3>Your previous raid group has been released</h3><p>Your two Tier 5 items are still waiting. You can claim them without rejoining the old team.</p></div><div class="mr-current-actions"><button data-mr-pending-loot="'+pendingRewardSession.id+'">COLLECT 2 RAID ITEMS →</button></div></section>'
    :'';
- mount.innerHTML=raidHeader()+encounterStrip()+pendingLoot+body+'<section class="mr-card mr-loot-preview"><div><small>RAID REWARD</small><h3>Tier 5 equipment</h3><p>The Manor is the only source of Chapter 1 Tier 5 gear. Every clear awards <b>2 personal items per player</b>.</p></div><span class="mr-t5-frame">T5</span><div><b>ORANGE RAID FRAME</b><span>4 rolled stats · raid set pieces · iLvl up to 50</span></div></section>';
+ mount.innerHTML=raidHeader()+encounterStrip()+raidRequirementsCard()+pendingLoot+body+'<section class="mr-card mr-loot-preview"><div><small>RAID REWARD</small><h3>Tier 5 equipment</h3><p>The Manor is the only source of Chapter 1 Tier 5 gear. Every clear awards <b>2 personal items per player</b>.</p></div><span class="mr-t5-frame">T5</span><div><b>ORANGE RAID FRAME</b><span>4 rolled stats · raid set pieces · iLvl up to 50</span></div></section>';
  bindHub();
 }
 function partyPanel(m,i){
