@@ -247,6 +247,7 @@ async function fightStage(s){
   enemies:s.enemies,eliteIndex:s.id==='funhouse'?1:0,visualClass:s.visual,environmentMarkup:s.environment,combat,
   combatState:run?.combatState||null,onResult:result=>{combatResult=result},
   wallClockStartAt:Number(run.runtimeStageStartedAt)||Date.now(),
+  seed:[run.endgame?.seed||'fractured-ages',s.id,run.stage].join(':'),
   autoContinueOnVictory:true,autoContinueDelayMs:650,
   completeText:s.id==='funhouse'?'The echoes fall. At exactly twenty percent health, the Old Man lifts one finger. Everything stops.':'The fracture shudders. A new door opens where no door existed before.'
  });
