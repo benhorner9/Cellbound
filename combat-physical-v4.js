@@ -200,10 +200,37 @@ function revive(target,arena){
 function visualHook(type,e,arena,source,target){
  try{window.dispatchEvent(new CustomEvent('cellbound:combat-visual',{detail:{type,event:e,arena,source,target}}))}catch(_){}
 }
+function encounterBurst(arena,x,y,kind,life=900){
+ if(!arena||reduce())return;
+ const n=document.createElement('i');n.className='cbvfx4-encounter '+kind;n.style.left=x+'%';n.style.top=y+'%';eventLayer(arena)?.appendChild(n);setTimeout(()=>n.remove(),life)
+}
+function throwEncounterObject(arena,source,target,kind='plate',duration=430){
+ if(!arena||!source||!target||reduce())return;
+ const a=point(arena,source),b=point(arena,target),dx=b.px-a.px,dy=b.py-a.py,angle=Math.atan2(dy,dx)*180/Math.PI;
+ const n=document.createElement('i');n.className='cbvfx4-thrown '+kind;n.style.left=a.px+'px';n.style.top=a.py+'px';n.style.setProperty('--cbvfx4-angle',angle+'deg');eventLayer(arena)?.appendChild(n);
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!n.isConnected)return;n.style.transitionDuration=duration+'ms';n.style.transform='translate3d('+dx+'px,'+dy+'px,0) rotate('+(angle+540)+'deg)'}));
+ setTimeout(()=>n.remove(),duration+100)
+}
+function encounterSpecific(e,arena,source,target){
+ const ability=String(e?.ability||'').toLowerCase();
+ if(e.type==='MECHANIC_TELEGRAPH'&&ability.includes('thrown plate'))throwEncounterObject(arena,source,target,'plate',Math.max(320,Math.min(650,Number(e?.payload?.duration)||430)));
+ if(e.type==='GROUND_HAZARD_SPAWNED'&&ability.includes('plate')){
+  const x=clamp(Number(e?.position?.x)||50,0,100),y=clamp(Number(e?.position?.y)||50,0,100);encounterBurst(arena,x,y,'porcelain',1050)
+ }
+ if(e.type==='INTERACTION_REQUIRED'&&ability.includes('screech')){
+  const p=point(arena,source||target||arena);encounterBurst(arena,p.x,p.y,'screech',1150)
+ }
+ if(e.type==='DAMAGE_DEALT'&&ability.includes('healer swipe')&&target){
+  const p=point(arena,target);encounterBurst(arena,p.x,p.y,'swipe',700)
+ }
+ if(e.type==='MECHANIC_TELEGRAPH'&&ability.includes('nail storm')&&source){
+  const p=point(arena,source);encounterBurst(arena,p.x,p.y,'nailstorm',Math.max(900,Number(e?.payload?.duration)||1200))
+ }
+}
 function physicalEvent(e,opts={}){
  if(!e)return;
  const arena=mount(arenaFor(opts.arena||opts.root)||arenaFor(resolveUnit(e.source,opts))||arenaFor(resolveUnit(e.target,opts)));if(!arena)return;
- const source=resolveUnit(e.source,opts,arena),target=resolveUnit(e.target,opts,arena);if(source)markProfile(source);if(target)markProfile(target);visualHook(e.type,e,arena,source,target);
+ const source=resolveUnit(e.source,opts,arena),target=resolveUnit(e.target,opts,arena);if(source)markProfile(source);if(target)markProfile(target);visualHook(e.type,e,arena,source,target);encounterSpecific(e,arena,source,target);
  switch(e.type){
   case'COMBAT_START':scanUnits(arena);arena.classList.add('cbvfx4-live');break;
   case'ABILITY_START':
