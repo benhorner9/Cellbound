@@ -1894,7 +1894,8 @@ function spawnSharedEncounter(s,result,options={}){
    addUnit('p-'+c.id,c.name,'party '+role(c)+' profile-'+combatProfile(c)+' '+classKey(c),4,50,'');
    mountRebornResourceBar(c);
    const unit=$('[data-unit="p-'+c.id+'"]');if(unit){unit.dataset.uiSlot=String(i);unit.style.setProperty('--label-shift-x',((i%2?1:-1)*(6+(i%3)*6))+'px');unit.style.setProperty('--status-shift-x',((i%2?1:-1)*(5+(i%3)*5))+'px')}
-   const pos=sharedFormationPosition(c,i,party().length);setTimeout(()=>{move('p-'+c.id,pos.x,pos.y,700);const bar=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(bar)bar.style.width='100%'},30+i*10)
+   const startHp=Math.max(0,Math.min(100,Number(c?._combatHealthPct??100)));
+   const pos=sharedFormationPosition(c,i,party().length);setTimeout(()=>{move('p-'+c.id,pos.x,pos.y,700);const bar=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(bar)bar.style.width=startHp+'%'},30+i*10)
  });
  const sourceEnemies=Array.isArray(s?.enemies)?s.enemies:[];
  sourceEnemies.forEach((raw,i)=>{
@@ -1911,7 +1912,7 @@ async function playSharedEncounter(options={}){
  const resources=Object.fromEntries(extParty.map(c=>{const d=resourceDefFor(c);return[c.id,{name:d.name,max:d.max,value:d.start}]}));
  run={token:tok,stage:0,speed:1,externalMode:true,externalParty:extParty,externalStage:{...encounter,enemies:(encounter.enemies||[]).map(x=>typeof x==='object'?{...x}:x)},externalOnClose:options.onClose||null,externalOnEvent:typeof options.onEvent==='function'?options.onEvent:null,
    resources,cooldowns:Object.fromEntries(extParty.map(c=>[c.id,{}])),statuses:Object.fromEntries(extParty.map(c=>[c.id,[]])),reviveSickness:Object.fromEntries(extParty.map(c=>[c.id,0])),
-   expeditionTimeMs:0,condition:Object.fromEntries(extParty.map(c=>[c.id,100])),hp:Object.fromEntries(extParty.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],
+   expeditionTimeMs:0,condition:Object.fromEntries(extParty.map(c=>[c.id,100])),hp:Object.fromEntries(extParty.map(c=>[c.id,Math.max(0,Math.min(100,Number(c?._combatHealthPct??100))) ])),enemyHp:[],enemyMax:[],threat:[],aggro:[],
    damageDone:Object.fromEntries(extParty.map(c=>[c.id,0])),healingDone:Object.fromEntries(extParty.map(c=>[c.id,0])),overhealing:Object.fromEntries(extParty.map(c=>[c.id,0])),
    hitCount:Object.fromEntries(extParty.map(c=>[c.id,0])),identityTimers:{},combatStartedAt:0,lastMeterAt:0,log:[(options.title||encounter.title||'Encounter')+' begins.'],
    override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},resolved:false,combatActive:false,mechanicActive:false,allowKill:true,stageOutcome:true,shotSeq:0,
