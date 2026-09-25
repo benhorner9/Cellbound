@@ -26,8 +26,8 @@ const partyReady=()=>party().length===5&&!party().some(c=>Game?.isUnavailable?.(
 const unlocked=()=>Boolean(state()?.progression?.manorRaidUnlocked);
 const now=()=>Date.now();
 const serverNow=()=>Date.now()+serverClockOffset;
-function syncServerClock(serverStamp){
- const ms=stamp(serverStamp);if(ms)serverClockOffset=ms-Date.now()
+function syncServerClock(serverStamp,localReference=Date.now()){
+ const ms=stamp(serverStamp);if(ms)serverClockOffset=ms-localReference
 }
 const stamp=v=>new Date(v||0).getTime()||0;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -287,9 +287,11 @@ function commanderLabel(side){
 async function setRaidReady(next){
  if(!session?.id)return;
  try{
+   const sentAt=Date.now();
    const {data,error}=await db.rpc('manor_set_ready',{p_session_id:session.id,p_ready:Boolean(next)});
+   const receivedAt=Date.now();
    if(error)throw error;
-   if(data?.serverNow)syncServerClock(data.serverNow);
+   if(data?.serverNow)syncServerClock(data.serverNow,Math.round((sentAt+receivedAt)/2));
    if(data?.state)session={...session,state:data.state,updated_at:new Date(serverNow()).toISOString()};
    renderReadyGate();scheduleReadyLaunch()
  }catch(error){alert(error.message||'Could not update raid ready state')}
@@ -326,7 +328,6 @@ async function subscribeRaidRealtime(id){
  raidRealtime=db.channel('manor-session-'+id)
   .on('postgres_changes',{event:'UPDATE',schema:'public',table:'raid_sessions',filter:'id=eq.'+id},payload=>{
     const incoming=payload?.new;if(!incoming||incoming.id!==id)return;
-    syncServerClock(incoming.updated_at);
     const beforeStage=session?.stage,beforeStatus=session?.status,beforeStart=readyStartAt(),beforeState=JSON.stringify(session?.state||{});
     session=incoming;
     const changedStage=beforeStage!==session.stage||beforeStatus!==session.status;
@@ -410,7 +411,6 @@ async function pollRaidSession(id){
  try{
    const beforeStage=session?.stage,beforeStatus=session?.status,beforeUpdated=session?.updated_at,beforeStart=readyStartAt();
    await loadSession(id);
-   if(session?.updated_at)syncServerClock(session.updated_at);
    if(session?.stage!==beforeStage||session?.status!==beforeStatus||readyStartAt()!==beforeStart)await syncSharedRaidView(true);
    else if(session?.updated_at!==beforeUpdated&&!encounterIsLive())renderReadyGate()
  }catch(error){console.warn('Manor session refresh failed',error)}
