@@ -1,5 +1,6 @@
 (()=>{
 'use strict';
+window.CellboundCombatStandard?.register?.('manor',{kind:'raid',execution:'local-coop',ui:'shared-cb2d'});
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const RAID_ID='manor';
@@ -7,16 +8,17 @@ const RAID_NAME='The Manor';
 const CLASS_COLORS={Warrior:'#C69B6D',Paladin:'#F48CBA',Priest:'#FFFFFF',Druid:'#FF7C0A',Hunter:'#AAD372',Rogue:'#FFF468',Mage:'#3FC7EB',Monk:'#00FF98',Shaman:'#0070DD',Warlock:'#8788EE','Death Knight':'#C41E3A','Demon Hunter':'#A330C9',Evoker:'#33937F'};
 const SET_NAMES={Warrior:'Housebreaker Plate',Paladin:'Gilded Vigil',Priest:'Veil of the Attic',Druid:'Nightbloom Regalia',Hunter:'Blackwood Hunt',Rogue:'Silent Service',Mage:'Housebound Arcanum',Monk:'Stillhouse Vestments',Shaman:'Stormcell Regalia',Warlock:'Ashen Covenant','Death Knight':'Grave Manor Plate','Demon Hunter':'Nightglass Harness',Evoker:'Emberwing Regalia'};
 const STAGES={
- butler:{name:'The Butler',room:'Entrance Hall',duration:35000,next:'maids'},
- engineer:{name:'The Engineer',room:'Upper Workshop',duration:45000,next:'bedroom'},
- bedroom:{name:'The Bedroom',room:'West Bedroom',duration:16000,next:'housebound'},
- housebound:{name:'The Housebound',room:'The Attic',duration:72000,next:'victory'}
+ butler:{name:'The Butler',room:'Entrance Hall',next:'maids'},
+ engineer:{name:'The Engineer',room:'Upper Workshop',next:'bedroom'},
+ bedroom:{name:'The Bedroom',room:'West Bedroom',next:'housebound'},
+ housebound:{name:'The Housebound',room:'The Attic',next:'victory'}
 };
 const SCREECH_COLOURS=[
  {name:'RED',hex:'#ff5050'},{name:'BLUE',hex:'#55a7ff'},{name:'GREEN',hex:'#58d87a'},{name:'YELLOW',hex:'#ffd34f'},{name:'PURPLE',hex:'#bf75ff'}
 ];
 let Game=null,db=null,user=null,mount=null,groups=[],members=[],lockout=null,myGroup=null,session=null;
 let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,lastStage='',lastScreechAt=0,screechOpen=false;
+const combatCache=new Map();
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
 const roleOf=c=>Game?.classes?.[c?.class]?.specs?.[c?.spec]?.role||c?.role||'dps';
@@ -26,10 +28,12 @@ const now=()=>Date.now();
 const stamp=v=>new Date(v||0).getTime()||0;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function snapshot(){
- return party().map(c=>({
-   id:c.id,name:c.name,class:c.class,spec:c.spec,role:roleOf(c),level:Number(c.level)||1,
-   itemLevel:Number(Game?.characterItemLevel?.(c))||0,portrait:c.portrait||'',appearance:c.appearance||null
- }));
+ return party().map(c=>JSON.parse(JSON.stringify({
+   id:c.id,name:c.name,class:c.class,spec:c.spec,role:roleOf(c),level:Number(c.level)||1,power:Number(c.power)||1,
+   race:c.race||null,raceTrait:c.raceTrait||null,itemLevel:Number(Game?.characterItemLevel?.(c))||0,
+   portrait:c.portrait||'',appearance:c.appearance||null,equipment:c.equipment||{},talents:c.talents||{},
+   skillLoadouts:c.skillLoadouts||{},buffSkill:c.buffSkill||null,knowledge:c.knowledge||{}
+ })));
 }
 function groupMembers(id){return members.filter(m=>m.listing_id===id)}
 function myMembership(){return members.find(m=>m.user_id===user?.id)}
