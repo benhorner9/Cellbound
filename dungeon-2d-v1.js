@@ -297,7 +297,7 @@ function renderCombatMeters(){
    const pct=value/maxDamage*100,dps=Math.round(value/elapsed);
    return '<div class="cb2d-meter-row '+meterRole(c)+'"><div class="cb2d-meter-label"><b>'+(i+1)+'. '+esc(c.name)+'</b><span>'+value.toLocaleString()+' · '+dps+' DPS</span></div><em><i style="width:'+pct+'%"></i></em></div>';
  }).join('');
- const targetIndex=enemyIndex(),table=targetIndex>=0?run.threat?.[targetIndex]:null,targetName=targetIndex>=0?currentStageDef()?.enemies?.[targetIndex]:'';
+ const targetIndex=enemyIndex(),table=targetIndex>=0?run.threat?.[targetIndex]:null,targetRaw=targetIndex>=0?currentStageDef()?.enemies?.[targetIndex]:null,targetName=typeof targetRaw==='object'?targetRaw?.name:(targetRaw||'');
  const threatLabel=$('#cb2dThreatTarget');if(threatLabel)threatLabel.textContent=targetName||'No target';
  if(!threatRoot)return;
  if(!table){threatRoot.innerHTML='<div class="cb2d-meter-empty">Threat appears when combat begins.</div>';return}
@@ -1326,6 +1326,10 @@ function rebornTelegraph(e){
  else if(type==='line')v=lineTelegraph(source,target||'p-'+party().find(c=>role(c)!=='tank')?.id,'LINE ATTACK · SIDESTEP');
  else if(type==='circle')v=circleTelegraph(target||source,170,'GROUND AOE · MOVE OUT');
  else if(type==='circles'){const ids=(e.payload?.targetIds||[]).filter(Boolean);v=multiCircleTelegraph(ids.length?ids:party().filter(c=>role(c)!=='tank').map(c=>'p-'+c.id),108,'TARGETED AOE · SPREAD')}
+ else if(type==='persistent-circle')v=circleTelegraph(target||source,145,'PERSISTENT GROUND · MOVE');
+ else if(type==='target-circle')v=circleTelegraph(target||source,135,'TARGETED AOE · SPREAD');
+ else if(type==='healer-swipe')v=coneTelegraph(source,target||'p-'+party().find(c=>role(c)==='healer')?.id,'HEALER SWIPE · CLEAR THE PATH');
+ else if(type==='tank-mark')v=castTelegraph(source,'TANK MARK · PREPARE SWAP');
  else if(type==='adds')v=addTelegraph([{x:72,y:35},{x:72,y:65}],'ADDS INCOMING · PREPARE');
  else if(type==='interrupt')v=castTelegraph(source,'INTERRUPT '+String(e.ability||'CAST').toUpperCase());
  if(v){run.rebornTelegraphs=run.rebornTelegraphs||{};run.rebornTelegraphs[tokenId]=v}
@@ -1333,6 +1337,20 @@ function rebornTelegraph(e){
 }
 function clearRebornTelegraph(tokenId,result='safe'){
  const v=run?.rebornTelegraphs?.[tokenId];if(v){clearTelegraph(v,result);delete run.rebornTelegraphs[tokenId]}
+}
+function spawnGroundHazardVisual(e){
+ const root=$('#cb2dTelegraphs');if(!root||!e?.position)return null;
+ const id=String(e.payload?.hazardId||('hazard-'+e.timestamp)),radius=Math.max(4,Number(e.payload?.radius)||10),el=document.createElement('div');
+ el.className='cb2d-tg circle dynamic persistent show';el.dataset.groundHazard=id;
+ el.style.left=clamp(Number(e.position.x)||50,0,100)+'%';el.style.top=clamp(Number(e.position.y)||50,0,100)+'%';
+ el.style.width=Math.min(46,radius*2)+'%';el.style.height=Math.min(46,radius*2)+'%';el.style.transform='translate(-50%,-50%)';
+ const label=document.createElement('span');label.className='cb2d-tg-label';label.textContent=String(e.ability||'DANGER').toUpperCase();el.appendChild(label);
+ root.appendChild(el);run.groundHazards=run.groundHazards||{};run.groundHazards[id]=el;return el
+}
+function clearGroundHazardVisual(id){
+ const key=String(id||''),el=run?.groundHazards?.[key]||document.querySelector('[data-ground-hazard="'+key+'"]');
+ if(el){el.classList.add('safe');setTimeout(()=>el.remove(),260)}
+ if(run?.groundHazards)delete run.groundHazards[key]
 }
 function rebornDebugEvent(e,result){
  if(!(/[?&]combatDebug=1\b/.test(location.search)||localStorage.getItem('cellboundCombatDebug')==='1'))return;
@@ -1444,6 +1462,20 @@ function renderRebornEvent(e,result,replayMode=false){
    rebornTelegraph(e);status((e.ability||'Mechanic')+' incoming');break;
   case'MECHANIC_RESOLVE':
    clearRebornTelegraph(e.payload?.token,'impact');requestAnimationFrame(()=>{if(run){const i=enemyIndex();if(i>=0)settleFormation(i);else regroup()}});break;
+  case'GROUND_HAZARD_SPAWNED':
+   spawnGroundHazardVisual(e);status((e.ability||'Ground hazard')+' active');log((e.ability||'A ground hazard')+' remains active.');break;
+  case'GROUND_HAZARD_TICK':{
+   const hz=run?.groundHazards?.[String(e.payload?.hazardId||'')];if(hz){hz.classList.remove('tick');requestAnimationFrame(()=>hz.classList.add('tick'));setTimeout(()=>hz?.classList?.remove('tick'),180)}
+   break;
+  }
+  case'GROUND_HAZARD_EXPIRED':
+   clearGroundHazardVisual(e.payload?.hazardId);break;
+  case'TANK_MARK':
+   if(targetChar){floating(e.target,'MARK ×'+Math.max(1,Number(e.payload?.stacks)||1),'incoming');status('Tank mark · '+targetChar.name+' ×'+Math.max(1,Number(e.payload?.stacks)||1));act('tank',targetChar.name+' · Mark '+Math.max(1,Number(e.payload?.stacks)||1))}break;
+  case'TANK_SWAP':
+   flash('TANK SWAP',false);if(srcChar)act('tank',srcChar.name+' takes threat');log('Tank swap completed.');break;
+  case'ADD_OVERCLOCKED':
+   flash('OVERCLOCK',true);status(e.ability||'Turrets overclocked');log((e.ability||'Adds')+' empowers active adds.');break;
   case'INTERRUPT':
    if(e.result==='success'){rebornCastClear('INTERRUPTED');clearRebornTelegraph(e.payload?.token,'safe');flash('INTERRUPTED',false);window.CellboundCombatFX?.interrupt?.($('[data-unit="'+e.target+'"]')||$('#cb2dArena'));log((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');act('dps','Interrupt successful')}
    else if(e.result==='failed')log((srcChar?.name||'A player')+' misses an interrupt.');
@@ -1812,7 +1844,7 @@ async function playSharedEncounter(options={}){
    damageDone:Object.fromEntries(extParty.map(c=>[c.id,0])),healingDone:Object.fromEntries(extParty.map(c=>[c.id,0])),overhealing:Object.fromEntries(extParty.map(c=>[c.id,0])),
    hitCount:Object.fromEntries(extParty.map(c=>[c.id,0])),identityTimers:{},combatStartedAt:0,lastMeterAt:0,log:[(options.title||encounter.title||'Encounter')+' begins.'],
    override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},resolved:false,combatActive:false,mechanicActive:false,allowKill:true,stageOutcome:true,shotSeq:0,
-   rebornHistory:[],rebornReplay:null,rebornResult:result,rebornTelegraphs:{},rebornCastTimer:null};
+   rebornHistory:[],rebornReplay:null,rebornResult:result,rebornTelegraphs:{},groundHazards:{},rebornCastTimer:null};
  sharedViewerShell(options);spawnSharedEncounter(run.externalStage,result,options);
  const outcome=await playRebornTimeline(result,tok);
  if(tok!==token||!run)return'cancelled';
