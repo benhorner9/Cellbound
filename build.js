@@ -466,6 +466,28 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     throw new Error('Combat Reborn self-tests failed: '+(failed||'test runtime unavailable'));
   }
   console.log('Combat Reborn self-tests passed: '+result.passed+'/'+result.total+'.');
+  const raidParty=[
+    {id:'rt1',name:'Tank A',class:'Warrior',spec:'Protection',power:44,level:15,itemLevel:44},
+    {id:'rh1',name:'Healer A',class:'Priest',spec:'Holy',power:44,level:15,itemLevel:44},
+    {id:'rd1',name:'Damage A1',class:'Mage',spec:'Arcane',power:44,level:15,itemLevel:44},
+    {id:'rd2',name:'Damage A2',class:'Hunter',spec:'Marksman',power:44,level:15,itemLevel:44},
+    {id:'rd3',name:'Damage A3',class:'Rogue',spec:'Assassination',power:44,level:15,itemLevel:44},
+    {id:'rt2',name:'Tank B',class:'Paladin',spec:'Protection',power:44,level:15,itemLevel:44},
+    {id:'rh2',name:'Healer B',class:'Druid',spec:'Restoration',power:44,level:15,itemLevel:44},
+    {id:'rd4',name:'Damage B1',class:'Warrior',spec:'Arms',power:44,level:15,itemLevel:44},
+    {id:'rd5',name:'Damage B2',class:'Mage',spec:'Arcane',power:44,level:15,itemLevel:44},
+    {id:'rd6',name:'Damage B3',class:'Hunter',spec:'Marksman',power:44,level:15,itemLevel:44}
+  ];
+  const raid=sandbox.CellboundCombatReborn.simulate({party:raidParty,seed:'build-manor-raid',encounter:{
+    id:'build-manor-raid',title:'Manor Raid Smoke Test',kind:'boss',level:15,
+    enemies:[{name:'Raid Test Boss',classification:'boss'}],enemyHealth:1400,mechanicIntervalMs:2200,
+    mechanics:[{name:'Shattered Floor',type:'persistent-circle',duration:900,persistMs:2600,tickMs:700,tickDamage:2,radius:8}],
+    phases:[{id:'tank-phase',name:'Tank Phase',atPct:80,addMechanics:[{name:'Mark of the Manor',type:'tank-mark',duration:600,damageTakenPerStack:.15,swapAt:2}]}]
+  }});
+  if(raid.summary.players.length!==10)throw new Error('Combat Reborn raid smoke test did not preserve all 10 characters');
+  if(!raid.events.some(e=>e.type==='GROUND_HAZARD_SPAWNED'))throw new Error('Combat Reborn raid smoke test did not produce persistent floor hazards');
+  if(!raid.events.some(e=>e.type==='TANK_MARK'))throw new Error('Combat Reborn raid smoke test did not produce tank-mark mechanics');
+  console.log('Combat Reborn 10-character Manor smoke test passed.');
 }
 {
   const pvpCode=fs.readFileSync(path.join(__dirname,'pvp-combat-v1.js'),'utf8');
