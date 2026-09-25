@@ -161,11 +161,11 @@ function combatProfile(c){
  return'ranged';
 }
 function root(){let r=$('#cb2dBackdrop');if(!r){r=document.createElement('div');r.id='cb2dBackdrop';r.className='cb2d-backdrop';r.hidden=true;document.body.appendChild(r)}return r}
-function close(){
+function close(silentExternal=false){
  token++;removeRebornReplayControls();
  const callback=run?.externalOnClose,wasExternal=Boolean(run?.externalMode);
  run=null;document.body.classList.remove('cb2d-open');const r=root();r.hidden=true;r.innerHTML='';
- if(wasExternal&&typeof callback==='function'){try{callback()}catch(error){console.warn('Shared combat close callback failed',error)}}
+ if(wasExternal&&!silentExternal&&typeof callback==='function'){try{callback()}catch(error){console.warn('Shared combat close callback failed',error)}}
 }
 function knowledge(key){const p=party();return p.length?Math.round(p.reduce((n,c)=>n+(Number(c.knowledge&&c.knowledge[key])||0),0)/p.length):0}
 function readiness(){
@@ -1846,7 +1846,7 @@ function init(){
  document.documentElement.dataset.cb2d='ready';
  syncEntryButton();
  setInterval(syncEntryButton,400);
- window.CellboundDungeon2D={open:openDungeon,briefing,currentRun:()=>run,playSharedEncounter,externalCharacters,closeShared:()=>{if(run?.externalMode)close()}};
+ window.CellboundDungeon2D={open:openDungeon,briefing,currentRun:()=>run,playSharedEncounter,externalCharacters,closeShared:(silent=false)=>{if(run?.externalMode)close(Boolean(silent))}};
 }
 init();
 })();
