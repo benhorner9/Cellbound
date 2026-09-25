@@ -1833,7 +1833,7 @@ function startMechanic(ctx,m){
   castState.targetId=target?.id||null;castState.targetIds=target?[target.id]:[];
   if(target){const plan=mechanicResponse(ctx,target,'line',duration,enemy);castState.responses[target.id]=plan.success;castState.reactionMs[target.id]=plan.reactionMs}
  }else if(m.type==='persistent-circle'){
-  const preferredRoles=Array.isArray(m.targetRoles)?m.targetRoles.map(String):[],preferred=preferredRoles.length?live.filter(p=>preferredRoles.includes(p.role)):live,pool=preferred.length?preferred:live;
+  const preferredRoles=Array.isArray(m.targetRoles)?m.targetRoles.map(String):[],rolePool=preferredRoles.length?live.filter(p=>preferredRoles.includes(p.role)):live,rangedPool=m.preferRanged?rolePool.filter(p=>p.role==='healer'||!isMeleeCombatant(p)):rolePool,pool=rangedPool.length?rangedPool:(rolePool.length?rolePool:live);
   const target=pool[Math.floor(ctx.rng()*Math.max(1,pool.length))]||live[0];castState.targetId=target?.id||null;castState.targetIds=target?[target.id]:[];castState.hazardPosition=copy(target?.position||enemy.position);
   if(target){const plan=mechanicResponse(ctx,target,'circle',duration,enemy);castState.responses[target.id]=plan.success;castState.reactionMs[target.id]=plan.reactionMs}
  }else if(m.type==='healer-swipe'){
