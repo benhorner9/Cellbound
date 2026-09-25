@@ -785,12 +785,18 @@ async function runQuest2DFight(config){
         if(typeof config.onResult==='function')await config.onResult(result);
         questFight.finished=true;
         const end=$('#q2dEnd');if(!end)return;
-        end.hidden=false;
         if(won){
           qLog('The party secures the area.');
+          if(config.autoContinueOnVictory){
+            const delay=Math.max(250,Number(config.autoContinueDelayMs)||650);
+            await wait(delay);if(tok!==encounterToken||settled)return;
+            window.CellboundCombatStatuses?.clear?.(encounterRoot());encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(true);return
+          }
+          end.hidden=false;
           end.innerHTML='<div><small>QUEST FIGHT COMPLETE</small><h3>'+esc(config.title)+'</h3><p>'+esc(config.completeText||'The way forward is clear.')+'</p>'+qAnalysis(result)+'</div><button data-q-continue>CONTINUE QUEST →</button>';
           end.querySelector('[data-q-continue]').onclick=()=>{window.CellboundCombatStatuses?.clear?.(encounterRoot());encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(true)}
         }else{
+          end.hidden=false;
           Game.applyPartyCellShock?.(25);await Game.persistState?.();
           end.innerHTML='<div><small>QUEST FIGHT FAILED</small><h3>'+esc(config.title)+'</h3><p>The party was defeated by the combat simulation. Review what happened, recover, and return when ready.</p>'+qAnalysis(result)+'</div><button data-q-continue>RETURN TO QUEST →</button>';
           end.querySelector('[data-q-continue]').onclick=()=>{window.CellboundCombatStatuses?.clear?.(encounterRoot());encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}

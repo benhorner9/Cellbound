@@ -1726,10 +1726,10 @@ function finish(ok,s){
    endgameProgressHTML()+'<section class="cb2d-loot-section cb2d-xp-section"><div class="cb2d-loot-title"><span>PARTY EXPERIENCE</span><small>Active party XP</small></div><div class="cb2d-xp-grid">'+(xpGrowth.length?xpGrowth.map(xpGrowthCard).join(''):'<div class="cb2d-loot-empty">No character XP was awarded.</div>')+'</div></section>'+
    '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>GEAR ACQUIRED</span><small>Sent to Guild Bank</small></div><div class="cb2d-loot-gear">'+(gear.length?gear.map(lootGearCard).join(''):'<div class="cb2d-loot-empty">No bonus gear dropped before the guaranteed Vaultheart reward.</div>')+'</div></section>'+
    '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>PROFESSION REAGENTS</span><small>Available immediately for crafting</small></div><div class="cb2d-loot-materials">'+(materials.length?materials.map(lootMaterialCard).join(''):'<div class="cb2d-loot-empty">No profession reagents recovered.</div>')+'</div></section>'+
-   '<footer class="cb2d-loot-actions"><button data-loot-bank>VIEW GUILD BANK</button><button class="primary" data-loot-return>RETURN TO GUILD →</button></footer>'+
+   '<footer class="cb2d-loot-actions"><button data-loot-bank>VIEW GUILD BANK</button><button class="primary" data-loot-return>RETURN HOME →</button></footer>'+
    '</div>';
  animateXpGrowth(e);appendRebornAnalysis(e);e.querySelector('[data-loot-bank]').onclick=()=>{close();Game.switchView('bank')};
- e.querySelector('[data-loot-return]').onclick=()=>{close();Game.switchView('content')}
+ e.querySelector('[data-loot-return]').onclick=()=>{close();Game.switchView('overview')}
 }
 async function override(t,b){
  if(!run||run.resolved)return;b.classList.add('active');setTimeout(()=>b.classList.remove('active'),450);

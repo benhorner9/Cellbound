@@ -162,6 +162,9 @@ for(const file of files){
   if(file==='chaos-canyon-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Chaos Canyon');
   if(file==='blackout-station-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Blackout Station');
   if(file==='fractured-ages-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Fractured Ages');
+  if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','fractured-ages-v1.js'].includes(file)){
+    if(!contents.includes('RETURN HOME →')||(!contents.includes("switchView?.('overview')")&&!contents.includes("switchView('overview')")))throw new Error('Dungeon completion flow must end on loot/results with a Return Home action: '+file);
+  }
   if(file==='twelve-below-v1.js'&&!contents.includes('aria-label="Close Twelve Below"'))throw new Error('Accessible close control is missing from Twelve Below');
   if(file==='fourfold-lock-v1.js'&&!contents.includes('aria-label="Close map"'))throw new Error('Accessible close control is missing from Fourfold Lock');
   if(file==='dungeon-theme-v1.css'){
@@ -252,6 +255,8 @@ for(const file of files){
     if(!contents.includes('async function failRecovery'))throw new Error('Fractured Ages must handle healerless between-fight recovery');
     if(contents.includes('itemLevel:42'))throw new Error('Fractured Ages Normal must not hand out old Item Level 42 gear');
     if(!contents.includes("rollClearLoot?.('fractured-ages'"))throw new Error('Fractured Ages must use Chapter 1 clear-loot pacing');
+    if(!contents.includes('autoContinueOnVictory:true')||!contents.includes("CellboundExpeditionPresentation?.room?.('fractured-ages'"))throw new Error('Fractured Ages boss victories must transition automatically');
+    if(contents.includes('data-fa-fight')||contents.includes('data-fa-resolve'))throw new Error('Fractured Ages must not require manual continue buttons between boss victories and rewards');
   }
   if(file==='quests-v2.js'){
     if(!contents.includes("Number(lastResult?.durationMs)"))throw new Error('Interactive slice duration must use lastResult');
@@ -259,6 +264,7 @@ for(const file of files){
     if(!contents.includes("_combatPosition:x.position||null")||!contents.includes("enemyPositions[i]=e.position"))throw new Error('Interactive quest position carry is missing');
     if(!contents.includes("focusSelected:i===focus")||!contents.includes("focusSelectedDamageOnly:Boolean(config.focusSelectedDamageOnly)"))throw new Error('Interactive quest focus marker is missing');
     if(!contents.includes('config.autoContinueOnVictory')||!contents.includes('autoContinueDelayMs'))throw new Error('Interactive quest combat must support automatic victory flow');
+    if((contents.match(/if\(config\.autoContinueOnVictory\)/g)||[]).length<2)throw new Error('Both standard and interactive quest combat must support automatic victory flow');
     if(!contents.includes("$$('[data-q-target]').forEach"))throw new Error('Live quest target controls must use querySelectorAll');
     if(!contents.includes('async function qPlayReborn')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('Quest combat must use continuous Combat Reborn playback');
     for(const hook of ['data-q-speed','q2dHealingMeter','function qStatusTargets','CellboundCombatStatuses?.handle','data-q-side-resource','function qResourceDef','function qPulseUnit'])if(!contents.includes(hook))throw new Error('Quest combat HUD is missing '+hook);
@@ -287,7 +293,7 @@ for(const file of files){
     if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=6'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
     if(!contents.includes('character-portraits-v1.css?v=4')||!contents.includes('character-portraits-v1.js?v=5'))throw new Error('Character portrait identity assets are not linked from guild.html');
      if(!contents.includes('combat-portraits-v1.css?v=3')||!contents.includes('combat-portraits-v1.js?v=3'))throw new Error('Combat portrait assets are not linked from guild.html');
-    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=14')||!contents.includes('combat-reborn-v1.js?v=6')||!contents.includes('guild-v4.js?v=49')||!contents.includes('character-sheet.js?v=31')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=49')||!contents.includes('hollow-sanctum-v1.js?v=37')||!contents.includes('chaos-canyon-v1.js?v=12')||!contents.includes('blackout-station-v1.js?v=19')||!contents.includes('fractured-ages-v1.js?v=6'))throw new Error('Set bonus UI cache versions are stale in guild.html');
+    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=14')||!contents.includes('combat-reborn-v1.js?v=6')||!contents.includes('guild-v4.js?v=49')||!contents.includes('character-sheet.js?v=31')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=50')||!contents.includes('hollow-sanctum-v1.js?v=38')||!contents.includes('chaos-canyon-v1.js?v=13')||!contents.includes('blackout-station-v1.js?v=20')||!contents.includes('fractured-ages-v1.js?v=7'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     const layoutSafetyLink='<link rel="stylesheet" href="./layout-safety-v1.css?v=1">';
     if(!contents.includes(layoutSafetyLink)||contents.lastIndexOf('<link rel="stylesheet"')!==contents.indexOf(layoutSafetyLink))throw new Error('Layout safety stylesheet must remain the final CSS layer in guild.html');
