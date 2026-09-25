@@ -93,8 +93,8 @@ function renderHub(){
  if(session?.status==='active'){
    body='<section class="mr-card mr-current"><div><small>RAID IN PROGRESS</small><h3>'+esc(stageName(session.stage))+'</h3><p>Your 10-character raid is already inside the Manor.</p></div><button data-mr-enter>ENTER RAID →</button></section>';
  }else if(session?.status==='completed'){
-   const claimed=Boolean(state()?.raidRewardClaims?.[session.id]);
-   body='<section class="mr-card mr-current victory"><div><small>THE MANOR · CLEARED</small><h3>The Housebound has fallen</h3><p>'+(claimed?'Your Tier 5 rewards are secured in the Guild Bank.':'Two personal Tier 5 items are waiting for you.')+'</p></div><button data-mr-loot>'+(claimed?'VIEW CLEAR →':'COLLECT 2 RAID ITEMS →')+'</button></section>';
+   const claimed=Boolean(state()?.raidRewardClaims?.[session.id]),leader=myGroup?.leader_id===user.id,count=mineRows.length,canRerun=leader&&count===2&&Number(lockout?.runsRemaining??0)>0;
+   body='<section class="mr-card mr-current victory"><div><small>THE MANOR · CLEARED</small><h3>The Housebound has fallen</h3><p>'+(claimed?'Your Tier 5 rewards are secured in the Guild Bank.':'Two personal Tier 5 items are waiting for you.')+'</p></div><div class="mr-current-actions"><button data-mr-loot>'+(claimed?'VIEW CLEAR →':'COLLECT 2 RAID ITEMS →')+'</button>'+(canRerun?'<button data-mr-rerun>RUN THE MANOR AGAIN →</button>':(!leader&&count===2&&Number(lockout?.runsRemaining??0)>0?'<span>Waiting for the group leader to begin another run.</span>':'')+'</div></section>';
  }else if(myGroup){
    const leader=myGroup.leader_id===user.id,count=mineRows.length;
    body='<section class="mr-card mr-group"><header><div><small>YOUR RAID GROUP</small><h3>'+esc(myGroup.guild_label)+' · '+count+'/2 players</h3></div><span class="'+(count===2?'ready':'waiting')+'">'+(count===2?'READY':'WAITING')+'</span></header>'+
@@ -128,7 +128,8 @@ function bindHub(){
  mount.querySelector('[data-mr-leave]')?.addEventListener('click',leaveGroup);
  mount.querySelector('[data-mr-start]')?.addEventListener('click',startRaid);
  mount.querySelector('[data-mr-enter]')?.addEventListener('click',()=>openRaid(session.id));
- mount.querySelector('[data-mr-loot]')?.addEventListener('click',()=>session?.status==='completed'?showVictory(session.id):null)
+ mount.querySelector('[data-mr-loot]')?.addEventListener('click',()=>session?.status==='completed'?showVictory(session.id):null);
+ mount.querySelector('[data-mr-rerun]')?.addEventListener('click',startRaid)
 }
 async function createGroup(){
  try{
