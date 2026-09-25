@@ -18,6 +18,7 @@ const SCREECH_COLOURS=[
 ];
 let Game=null,db=null,user=null,mount=null,groups=[],members=[],lockout=null,myGroup=null,session=null,pendingRewardSession=null;
 let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false,raidRealtime=null,readyLaunchTimer=null,serverClockOffset=0;
+const handledScreechTokens=new Set();
 const combatCache=new Map();
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
@@ -356,10 +357,21 @@ async function unsubscribeRaidRealtime(){
 }
 function ensureScreechHost(){
  let host=$('#mrScreechHost');
- // The old raid renderer could leave this host inside the hidden Manor overlay.
- // Raid interactions must always sit above the active shared CB2D combat viewer.
  if(host&&host.parentElement!==document.body){host.remove();host=null}
- if(!host){host=document.createElement('div');host.id='mrScreechHost';host.className='mr-screech-host';document.body.appendChild(host)}
+ if(!host){
+   host=document.createElement('div');
+   host.id='mrScreechHost';
+   host.className='mr-screech-host';
+   host.setAttribute('role','dialog');
+   host.setAttribute('aria-modal','true');
+   document.body.appendChild(host)
+ }
+ // Make the portal itself authoritative so stale/cached CSS cannot bury the choices.
+ Object.assign(host.style,{
+   position:'fixed',inset:'0',zIndex:'2147483000',display:'none',
+   placeItems:'center',padding:'16px',background:'rgba(0,0,0,.72)',
+   pointerEvents:'auto'
+ });
  host.hidden=false;return host
 }
 function myRaidSide(){
@@ -396,7 +408,7 @@ async function syncSharedRaidView(force=false){
  const pack=sharedStagePack();if(!pack)return;
  const side=session.stage==='maids'?myRaidSide():null,key=session.id+':'+session.stage+':'+(side===null?'raid':side);
  if(!force&&sharedStageKey===key)return;
- sharedStageKey=key;lastStage=session.stage;lastScreechAt=0;screechOpen=false;
+ sharedStageKey=key;lastStage=session.stage;lastScreechAt=0;screechOpen=false;handledScreechTokens.clear();
  const overlay=$('#manorRaidOverlay');if(overlay)overlay.hidden=true;document.body.classList.remove('mr-open');
  ensureScreechHost().innerHTML='';
  const viewer=window.CellboundDungeon2D;
@@ -444,7 +456,7 @@ function closeRaid(fromShared=false){
  if(closingRaid)return;closingRaid=true;
  clearInterval(raidTimer);clearInterval(paintTimer);raidTimer=paintTimer=null;screechOpen=false;sharedStageKey='';clearReadyLaunch();
  unsubscribeRaidRealtime();
- const host=$('#mrScreechHost');if(host)host.innerHTML='';
+ const host=$('#mrScreechHost');if(host){host.innerHTML='';host.style.display='none';host.style.pointerEvents='none'}handledScreechTokens.clear();
  if(!fromShared)window.CellboundDungeon2D?.closeShared?.(true);
  const root=$('#manorRaidOverlay');if(root){root.hidden=true;delete root.dataset.readyKey;}
  document.body.classList.remove('mr-open');fetchHub();
@@ -485,7 +497,16 @@ function handleRaidCombatEvent(event){
  if(!event||event.type!=='INTERACTION_REQUIRED')return;
  if(String(event.payload?.interaction||'')!=='manor-screech')return;
  if(!['maids','housebound'].includes(session?.stage))return;
- openScreech({event})
+ const tokenKey=[session?.id,session?.stage,myRaidSide(),event.payload?.token||event.timestamp||event.ability].join(':');
+ if(handledScreechTokens.has(tokenKey))return;
+ handledScreechTokens.add(tokenKey);
+ try{openScreech({event,tokenKey})}
+ catch(error){
+   handledScreechTokens.delete(tokenKey);
+   screechOpen=false;
+   console.error('Manor Screech menu failed to open',error);
+   setTimeout(()=>openScreech({fallback:true}),50)
+ }
 }
 function bossHp(stage,e){
  const engineHp=combatBossHp(stage,e);if(engineHp!==null)return engineHp;
@@ -593,8 +614,11 @@ async function advance(next){
 }
 function openScreech(trigger={}){
  if(screechOpen||!['maids','housebound'].includes(session?.stage))return;
- screechOpen=true;lastScreechAt=now();
  const host=ensureScreechHost(),event=trigger?.event;
+ if(!host)throw new Error('Screech portal unavailable');
+ host.style.display='grid';
+ host.style.pointerEvents='auto';
+ screechOpen=true;lastScreechAt=now();
  const target=SCREECH_COLOURS[Math.floor(Math.random()*SCREECH_COLOURS.length)];
  const display=SCREECH_COLOURS.filter(x=>x.name!==target.name)[Math.floor(Math.random()*4)];
  const shuffled=[...SCREECH_COLOURS].sort(()=>Math.random()-.5);
@@ -607,7 +631,8 @@ function openScreech(trigger={}){
    const master=session.stage==='housebound';
    host.innerHTML='<div class="mr-screech-result '+(success?'ok':'fail')+'"><b>'+(success?'SCREECH RESISTED':'SCREECH FAILED')+'</b><span>'+(success?(master?'The Master gains nothing.':'Your room stays stable.'):(master?'The Master gains +10% damage for 20 seconds.':'The other Maid heals 15% and gains +10% damage.'))+'</span></div>';
    const {error}=await db.rpc('manor_screech_result',{p_session_id:session.id,p_success:success});if(error)console.warn(error);
-   await loadSession(session.id).catch(()=>{});setTimeout(()=>{host.innerHTML='';screechOpen=false},1200)
+   await loadSession(session.id).catch(()=>{});
+   setTimeout(()=>{host.innerHTML='';host.style.display='none';host.style.pointerEvents='none';screechOpen=false},1200)
  };
  host.querySelectorAll('[data-colour]').forEach(b=>b.onclick=()=>finish(b.dataset.colour===target.name));
  const clock=setInterval(()=>{const left=Math.max(0,deadline-now()),el=host.querySelector('[data-screech-time]');if(el)el.textContent=(left/1000).toFixed(1);if(left<=0)finish(false)},100)
