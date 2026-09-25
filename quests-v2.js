@@ -780,7 +780,7 @@ async function runQuest2DFight(config){
           })}),
           encounter,
           tactics:{interruptPriority:'standard',addPriority:'immediate',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced'},
-          seed:['quest',tok,config.title,Date.now()].join(':')
+          seed:config.seed||['quest',tok,config.title,Date.now()].join(':')
         },{zone:'quest-encounters'});
         questFight.result=result;
         if(Array.isArray(result?.finalState?.enemies)){const main=result.finalState.enemies.filter(e=>!e.isAdd);questFight.enemyMax=main.map(e=>e.maxHealth);questFight.enemyHp=[...questFight.enemyMax]}
