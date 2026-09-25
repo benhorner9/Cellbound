@@ -447,13 +447,13 @@ function renderLootDrops(items){
  host.innerHTML='<div class="mr-loot-grid">'+(items||[]).map(item=>'<article class="mr-t5-drop"><div>'+((G?.artHTML?.(item,78))||'<span>◇</span>')+'</div><small>TIER 5 · iLvl '+esc(item.itemLevel)+'</small><h3>'+esc(item.name)+'</h3><p>'+esc(item.class)+' · '+esc(item.slot)+'</p><div>'+((G?.statLines?.(item)||[]).map(s=>'<span>'+esc(s.text)+'</span>').join(''))+'</div></article>').join('')+'</div>'
 }
 function bindView(){
- window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='endgame')fetchHub()});
+ window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='raids')fetchHub()});
  window.addEventListener('cellbound:no-way-back-update',fetchHub);
 }
 async function init(){
  Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,100);return}
  db=Game.getSupabase?.();user=Game.getUser?.();mount=$('#manorRaidMount');if(!db||!user||!mount)return;
- bindView();await fetchHub();clearInterval(hubTimer);hubTimer=setInterval(()=>{if(document.querySelector('#endgame.view.active'))fetchHub()},5000);
+ bindView();await fetchHub();clearInterval(hubTimer);hubTimer=setInterval(()=>{if(document.querySelector('#raids.view.active'))fetchHub()},5000);
  window.CellboundManorRaid={refresh:fetchHub,open:openRaid,syncPartyToListing:syncParty,snapshot}
 }
 init()

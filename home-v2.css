@@ -64,7 +64,7 @@
 .home-content-head small{color:#a89367;font-size:.58rem;font-weight:900;letter-spacing:.16em}
 .home-content-head h3{margin:3px 0 0;font:500 1.35rem Georgia,serif;color:#ece7dc}
 .home-content-head>span{color:#687975;font-size:.66rem}
-.home-destination-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.home-destination-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
 .home-destination{
   position:relative;min-height:132px!important;padding:16px;border:1px solid var(--home-line);
   background:linear-gradient(155deg,#111d21,#081115);color:#dce5e1;text-align:left;overflow:hidden
@@ -77,6 +77,8 @@
 .home-destination:hover{transform:translateY(-2px);border-color:rgba(216,185,118,.32);background:linear-gradient(155deg,#172429,#0a1418)}
 .home-destination.events{background:linear-gradient(90deg,rgba(9,16,19,.96),rgba(10,18,20,.84)),url('./assets/world/twelve-below-key-art.webp') center/cover}
 .home-destination.events:after{background:linear-gradient(90deg,rgba(9,16,19,.12),rgba(211,174,96,.08));inset:0;width:auto;height:auto;border-radius:0;right:0;top:0}
+.home-destination.raids{background:radial-gradient(circle at 82% 18%,rgba(232,127,31,.15),transparent 34%),linear-gradient(155deg,#19130e,#0a1114)}
+.home-destination.raids>span{border-color:rgba(232,127,31,.3);color:#e49a4f;background:#1b130d}
 .home-destination.endgame{background:linear-gradient(155deg,#15191a,#0a1114)}
 
 .home-bottom-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.25fr);gap:14px}
