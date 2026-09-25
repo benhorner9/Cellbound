@@ -46,14 +46,19 @@ function snapshot(){
 
 const STAGE_MIN_MS={butler:30000,maids:30000,engineer:40000,bedroom:12000,housebound:40000};
 function combatEngine(){return window.CellboundCombatStandard}
+function entryHealthForSide(side){
+ const raw=Number(session?.state?.[side===0?'entryHealthA':'entryHealthB']);
+ return Number.isFinite(raw)?Math.max(1,Math.min(100,raw)):100
+}
 function engineParty(side=null){
  const rows=memberRows(),selected=side===null?rows:(rows[side]?[rows[side]]:[]);
  return selected.flatMap((row,rowIndex)=>{
-   const actualSide=side===null?rowIndex:side;
+   const actualSide=side===null?rowIndex:side,entryHealth=entryHealthForSide(actualSide);
    return (Array.isArray(row?.party_snapshot)?row.party_snapshot:[]).map(ch=>({
      ...JSON.parse(JSON.stringify(ch)),
      id:(side===null?'raid-':'maid-')+actualSide+'-'+String(ch.id||ch.name||'character'),
      _combatItemLevel:Number(ch.itemLevel)||0,itemLevel:Number(ch.itemLevel)||0,gear:Number(ch.itemLevel)||0,
+     _combatHealthPct:entryHealth,
      power:Math.max(1,Number(ch.power)||Math.round((Number(ch.itemLevel)||20)*1.1))
    }))
  })
@@ -72,7 +77,8 @@ function maidEncounter(side){
 function combatFor(stage,side=null){
  const E=combatEngine();if(!E?.simulate||!session)return null;
  const penalty=stage==='maids'?(Number(session?.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0):stage==='housebound'?masterPenaltyStacks():0;
- const seedKey=session.id+':'+stage+':'+(side===null?'raid':side),key=seedKey+':penalty-'+penalty;
+ const healthKey=side===null?(entryHealthForSide(0)+'-'+entryHealthForSide(1)):String(entryHealthForSide(side));
+ const seedKey=session.id+':'+stage+':'+(side===null?'raid':side),key=seedKey+':penalty-'+penalty+':entry-'+healthKey;
  if(combatCache.has(key))return combatCache.get(key);
  const p=stage==='maids'?engineParty(side):engineParty(null),enc=stage==='maids'?maidEncounter(side):manorEncounter(stage);
  if(!p.length||!enc)return null;
@@ -127,6 +133,23 @@ async function failRaid(reason='The raid was defeated'){
  }
  await loadSession(session.id).catch(()=>{});
  await syncSharedRaidView(true)
+}
+function sharedPartyWiped(result,side){
+ const prefix='p-raid-'+side+'-',players=(result?.finalState?.players||[]).filter(p=>String(p?.id||'').startsWith(prefix));
+ return players.length>=5&&players.every(p=>p?.alive===false||Number(p?.health)<=0)
+}
+function sharedRecoveryPatch(stage,next){
+ if(next==='victory'||stage==='maids')return{entryHealthA:100,entryHealthB:100,lastRecoveredParty:null,lastRecoveryFrom:null};
+ const result=combatFor(stage)?.result;
+ if(!result||result.outcome!=='victory')return{entryHealthA:100,entryHealthB:100,lastRecoveredParty:null,lastRecoveryFrom:null};
+ const wipedA=sharedPartyWiped(result,0),wipedB=sharedPartyWiped(result,1);
+ const recovered=wipedA&&!wipedB?'A':wipedB&&!wipedA?'B':null;
+ return{
+   entryHealthA:recovered==='A'?50:100,
+   entryHealthB:recovered==='B'?50:100,
+   lastRecoveredParty:recovered,
+   lastRecoveryFrom:recovered?stage:null
+ }
 }
 function applyLocalRaidFailureShock(){
  const s=state();if(!s||!session?.id)return;
