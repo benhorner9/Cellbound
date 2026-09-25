@@ -1,0 +1,131 @@
+/* Cellbound Physical Combat & Class Identity v4
+   Presentation only. No combat outcomes are calculated here. */
+
+:where(.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena,#tbArena){--cbvfx4-accent:#78d7cf}
+.cbvfx4-events{position:absolute;z-index:83;inset:0;overflow:hidden;pointer-events:none;contain:layout paint}
+.cbvfx4-ground{position:absolute!important;z-index:-1!important;left:50%!important;top:68%!important;width:34px!important;height:12px!important;border-radius:50%!important;background:radial-gradient(ellipse,rgba(0,0,0,.48),rgba(0,0,0,.08) 58%,transparent 72%)!important;box-shadow:none!important;transform:translate(-50%,-50%)!important;filter:blur(1px)!important;opacity:.72!important;pointer-events:none!important}
+:where(.cb2d-unit.enemy.big,.cb2d-unit.enemy.boss,.tb-unit.enemy.boss)>.cbvfx4-ground{width:54px!important;height:17px!important;opacity:.8!important}
+:where(.cb2d-unit,.wb2d-unit,.pvp2d-unit,.tb-unit){transition-timing-function:cubic-bezier(.18,.72,.22,1)!important}
+:where(.cb2d-unit,.wb2d-unit,.pvp2d-unit,.tb-unit)>.cbvfx4-ground{transition:transform .36s ease,opacity .3s ease!important}
+
+:where(.cb2d-unit,.tb-unit)>i:first-child,
+.wb2d-unit>.wb2d-unit-dot,
+.pvp2d-unit>.pvp2d-token{position:relative;z-index:2;will-change:transform,filter}
+
+.cbvfx4-heavy>i:first-child,.cbvfx4-heavy>.wb2d-unit-dot,.cbvfx4-heavy>.pvp2d-token{animation:cbvfx4Heavy .42s cubic-bezier(.18,.82,.24,1)}
+.cbvfx4-brutal>i:first-child,.cbvfx4-brutal>.wb2d-unit-dot,.cbvfx4-brutal>.pvp2d-token{animation:cbvfx4Brutal .44s cubic-bezier(.16,.82,.22,1)}
+.cbvfx4-dart>i:first-child,.cbvfx4-dart>.wb2d-unit-dot,.cbvfx4-dart>.pvp2d-token{animation:cbvfx4Dart .34s cubic-bezier(.15,.9,.22,1)}
+.cbvfx4-rush>i:first-child,.cbvfx4-rush>.wb2d-unit-dot,.cbvfx4-rush>.pvp2d-token{animation:cbvfx4Rush .35s cubic-bezier(.12,.9,.2,1)}
+.cbvfx4-flow>i:first-child,.cbvfx4-flow>.wb2d-unit-dot,.cbvfx4-flow>.pvp2d-token{animation:cbvfx4Flow .4s ease-out}
+.cbvfx4-radiant>i:first-child,.cbvfx4-radiant>.wb2d-unit-dot,.cbvfx4-radiant>.pvp2d-token{animation:cbvfx4Radiant .46s ease-out}
+.cbvfx4-fluid>i:first-child,.cbvfx4-fluid>.wb2d-unit-dot,.cbvfx4-fluid>.pvp2d-token{animation:cbvfx4Fluid .48s ease-out}
+.cbvfx4-marksman>i:first-child,.cbvfx4-marksman>.wb2d-unit-dot,.cbvfx4-marksman>.pvp2d-token{animation:cbvfx4Marksman .42s ease-out}
+.cbvfx4-caster>i:first-child,.cbvfx4-caster>.wb2d-unit-dot,.cbvfx4-caster>.pvp2d-token,
+.cbvfx4-support>i:first-child,.cbvfx4-support>.wb2d-unit-dot,.cbvfx4-support>.pvp2d-token,
+.cbvfx4-storm>i:first-child,.cbvfx4-storm>.wb2d-unit-dot,.cbvfx4-storm>.pvp2d-token,
+.cbvfx4-occult>i:first-child,.cbvfx4-occult>.wb2d-unit-dot,.cbvfx4-occult>.pvp2d-token,
+.cbvfx4-breath>i:first-child,.cbvfx4-breath>.wb2d-unit-dot,.cbvfx4-breath>.pvp2d-token{animation:cbvfx4Caster .5s ease-out}
+
+@keyframes cbvfx4Heavy{0%,100%{transform:translate(0,0) scale(1)}24%{transform:translate(calc(var(--cbvfx4-lunge-x,8px)*-.16),calc(var(--cbvfx4-lunge-y,0px)*-.16)) scale(.96)}58%{transform:translate(var(--cbvfx4-lunge-x,8px),var(--cbvfx4-lunge-y,0px)) scale(1.08)}}
+@keyframes cbvfx4Brutal{0%,100%{transform:translate(0,0) scale(1)}22%{transform:translate(-2px,1px) scale(.96)}60%{transform:translate(var(--cbvfx4-lunge-x,9px),var(--cbvfx4-lunge-y,0px)) scale(1.1);filter:brightness(1.2)}}
+@keyframes cbvfx4Dart{0%,100%{transform:translate(0,0) rotate(0)}25%{transform:translate(-2px,2px) rotate(-4deg)}56%{transform:translate(var(--cbvfx4-lunge-x,12px),var(--cbvfx4-lunge-y,0px)) rotate(5deg) scale(1.05)}}
+@keyframes cbvfx4Rush{0%,100%{transform:translate(0,0) scale(1)}18%{transform:translate(-3px,0) scale(.94)}48%{transform:translate(var(--cbvfx4-lunge-x,15px),var(--cbvfx4-lunge-y,0px)) scale(1.06)}68%{transform:translate(calc(var(--cbvfx4-lunge-x,15px)*.72),calc(var(--cbvfx4-lunge-y,0px)*.72)) scale(1.02)}}
+@keyframes cbvfx4Flow{0%,100%{transform:translate(0,0) rotate(0)}34%{transform:translate(calc(var(--cbvfx4-lunge-x,8px)*.55),calc(var(--cbvfx4-lunge-y,0px)*.55)) rotate(-8deg)}62%{transform:translate(var(--cbvfx4-lunge-x,8px),var(--cbvfx4-lunge-y,0px)) rotate(6deg)}}
+@keyframes cbvfx4Radiant{0%,100%{transform:translate(0,0) scale(1);filter:none}50%{transform:translate(var(--cbvfx4-lunge-x,7px),var(--cbvfx4-lunge-y,0px)) scale(1.06);filter:brightness(1.32) drop-shadow(0 0 7px var(--cbvfx4-accent))}}
+@keyframes cbvfx4Fluid{0%,100%{transform:translate(0,0) scale(1)}40%{transform:translate(calc(var(--cbvfx4-lunge-x,5px)*.45),calc(var(--cbvfx4-lunge-y,0px)*.45)) scale(.97)}68%{transform:translate(var(--cbvfx4-lunge-x,5px),var(--cbvfx4-lunge-y,0px)) scale(1.04)}}
+@keyframes cbvfx4Marksman{0%,100%{transform:translate(0,0) scale(1)}36%{transform:translate(-2px,0) scale(.96)}58%{transform:translate(1px,0) scale(1.04)}}
+@keyframes cbvfx4Caster{0%,100%{transform:scale(1);filter:none}42%{transform:scale(.96);filter:brightness(1.3) drop-shadow(0 0 7px var(--cbvfx4-accent))}72%{transform:scale(1.05);filter:brightness(1.18)}}
+
+.cbvfx4-charge{position:absolute;z-index:22;width:28px;height:28px;transform:translate(-50%,-50%);border:2px solid var(--cbvfx4-accent);border-radius:50%;box-shadow:0 0 20px color-mix(in srgb,var(--cbvfx4-accent) 55%,transparent);animation:cbvfx4Charge .86s ease-in-out infinite alternate}
+.cbvfx4-charge:before,.cbvfx4-charge:after{content:"";position:absolute;inset:-8px;border:1px dashed color-mix(in srgb,var(--cbvfx4-accent) 70%,transparent);border-radius:50%;animation:cbvfx4Spin 1.15s linear infinite}
+.cbvfx4-charge:after{inset:5px;border-style:solid;animation-direction:reverse;animation-duration:.7s}
+.cbvfx4-charge.holy{box-shadow:0 0 24px rgba(255,247,205,.45)}
+.cbvfx4-charge.nature{border-radius:44% 56% 48% 52%;box-shadow:0 0 22px rgba(255,124,10,.32)}
+.cbvfx4-charge.arcane{box-shadow:0 0 25px rgba(63,199,235,.5)}
+.cbvfx4-charge.shadow,.cbvfx4-charge.death{box-shadow:0 0 26px rgba(135,136,238,.42)}
+.cbvfx4-charge.fel{box-shadow:0 0 27px rgba(163,48,201,.5)}
+.cbvfx4-charge.storm{box-shadow:0 0 28px rgba(0,112,221,.48)}
+@keyframes cbvfx4Charge{from{opacity:.62;transform:translate(-50%,-50%) scale(.78)}to{opacity:1;transform:translate(-50%,-50%) scale(1.16)}}
+@keyframes cbvfx4Spin{to{transform:rotate(360deg)}}
+
+.cbvfx4-projectile{position:absolute;z-index:25;width:13px;height:4px;border-radius:6px;background:var(--cbvfx4-accent);box-shadow:0 0 12px 2px color-mix(in srgb,var(--cbvfx4-accent) 52%,transparent);transform:translate3d(0,0,0) rotate(var(--cbvfx4-angle));transition-property:transform;transition-timing-function:linear;pointer-events:none}
+.cbvfx4-projectile:before{content:"";position:absolute;right:70%;top:50%;width:26px;height:2px;transform:translateY(-50%);background:linear-gradient(90deg,transparent,var(--cbvfx4-accent));opacity:.72}
+.cbvfx4-projectile.arrow{width:17px;height:2px;border-radius:1px;background:#e7dda6;box-shadow:0 0 7px rgba(225,214,156,.46)}
+.cbvfx4-projectile.arrow:after{content:"";position:absolute;right:-2px;top:50%;border-left:5px solid #efe6bd;border-top:3px solid transparent;border-bottom:3px solid transparent;transform:translateY(-50%)}
+.cbvfx4-projectile.arcane{width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#eafcff,#3FC7EB 45%,#236da0 80%);box-shadow:0 0 18px 4px rgba(63,199,235,.52)}
+.cbvfx4-projectile.holy{width:10px;height:10px;border-radius:50%;background:#fff7cf;box-shadow:0 0 18px 4px rgba(255,237,170,.48)}
+.cbvfx4-projectile.nature{width:12px;height:8px;border-radius:60% 35% 60% 35%;background:#b8ef75;box-shadow:0 0 15px 3px rgba(125,213,93,.4)}
+.cbvfx4-projectile.death{width:12px;height:9px;border-radius:50%;background:#8b172a;box-shadow:0 0 18px 4px rgba(196,30,58,.48)}
+.cbvfx4-projectile.fel{width:12px;height:8px;background:#a330c9;box-shadow:0 0 18px 4px rgba(163,48,201,.5)}
+.cbvfx4-projectile.emerald{width:13px;height:9px;border-radius:50%;background:#67d5b3;box-shadow:0 0 18px 4px rgba(51,147,127,.48)}
+.cbvfx4-projectile.chi{width:10px;height:10px;border-radius:50%;background:#b8ffdc;box-shadow:0 0 18px 4px rgba(0,255,152,.42)}
+.cbvfx4-projectile.lightning{width:18px;height:3px;background:#89c9ff;box-shadow:0 0 17px 4px rgba(0,112,221,.52);clip-path:polygon(0 35%,36% 0,32% 40%,68% 8%,57% 60%,100% 42%,62% 100%,68% 56%,24% 94%,32% 50%)}
+.cbvfx4-projectile.shadow{width:12px;height:12px;border-radius:50%;background:#7779de;box-shadow:0 0 20px 5px rgba(135,136,238,.48)}
+.cbvfx4-projectile.blade,.cbvfx4-projectile.steel{width:18px;height:3px;background:#f5eecf;box-shadow:0 0 10px rgba(255,255,255,.5)}
+.cbvfx4-projectile.hostile{--cbvfx4-accent:#ef5c50;background:#ef5c50;box-shadow:0 0 18px 4px rgba(239,92,80,.48)}
+.cbvfx4-projectile.heal{--cbvfx4-accent:#6ff0aa!important;border-radius:50%;width:10px;height:10px;background:#aaffce;box-shadow:0 0 18px 4px rgba(111,240,170,.42)}
+.cbvfx4-profile-projectile :where(.cb2d-projectile,.quest-cb2d-projectile,.wb2d-projectile,.pvp2d-projectile){opacity:.28!important}
+
+.cbvfx4-impact,.cbvfx4-heal-impact,.cbvfx4-revive-ring{position:absolute;z-index:24;transform:translate(-50%,-50%);pointer-events:none}
+.cbvfx4-impact{width:24px;height:24px;border:1px solid rgba(255,109,89,.74);border-radius:50%;animation:cbvfx4Impact .55s ease-out forwards}
+.cbvfx4-impact:before,.cbvfx4-impact:after{content:"";position:absolute;left:50%;top:50%;width:3px;height:40px;background:linear-gradient(transparent,rgba(255,187,139,.9),transparent)}
+.cbvfx4-impact:before{transform:translate(-50%,-50%) rotate(45deg)}.cbvfx4-impact:after{transform:translate(-50%,-50%) rotate(-45deg)}
+.cbvfx4-impact.heavy{width:31px;height:31px;border-width:2px;box-shadow:0 0 24px rgba(255,92,74,.35)}
+.cbvfx4-impact.critical{border-color:#ffd36d;box-shadow:0 0 28px rgba(255,198,82,.48)}
+.cbvfx4-heal-impact{width:30px;height:30px;border:2px solid rgba(112,245,172,.68);border-radius:50%;box-shadow:0 0 22px rgba(85,229,151,.3);animation:cbvfx4HealImpact .72s ease-out forwards}
+.cbvfx4-heal-impact:before{content:"";position:absolute;left:50%;top:-18px;width:4px;height:56px;background:linear-gradient(transparent,rgba(167,255,207,.62),transparent);transform:translateX(-50%)}
+.cbvfx4-revive-ring{width:52px;height:52px;border:2px solid rgba(169,255,211,.78);border-radius:50%;box-shadow:0 0 26px rgba(120,244,181,.36);animation:cbvfx4ReviveRing 1.05s ease-out forwards}
+@keyframes cbvfx4Impact{0%{opacity:0;transform:translate(-50%,-50%) scale(.35) rotate(-12deg)}25%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(2.9) rotate(24deg)}}
+@keyframes cbvfx4HealImpact{0%{opacity:0;transform:translate(-50%,-50%) scale(.4)}30%{opacity:1}100%{opacity:0;transform:translate(-50%,-68%) scale(2.5)}}
+@keyframes cbvfx4ReviveRing{0%{opacity:0;transform:translate(-50%,-50%) scale(.35)}35%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(3)}}
+
+.cbvfx4-impact-light>i:first-child,.cbvfx4-impact-light>.wb2d-unit-dot,.cbvfx4-impact-light>.pvp2d-token{animation:cbvfx4HitLight .3s ease-out}
+.cbvfx4-impact-heavy>i:first-child,.cbvfx4-impact-heavy>.wb2d-unit-dot,.cbvfx4-impact-heavy>.pvp2d-token{animation:cbvfx4HitHeavy .48s cubic-bezier(.16,.82,.22,1)}
+.cbvfx4-heal-receive>i:first-child,.cbvfx4-heal-receive>.wb2d-unit-dot,.cbvfx4-heal-receive>.pvp2d-token{animation:cbvfx4HealReceive .6s ease-out}
+.cbvfx4-interrupt-break>i:first-child,.cbvfx4-interrupt-break>.wb2d-unit-dot,.cbvfx4-interrupt-break>.pvp2d-token{animation:cbvfx4Interrupt .62s ease-out}
+.cbvfx4-cc>i:first-child,.cbvfx4-cc>.wb2d-unit-dot,.cbvfx4-cc>.pvp2d-token{filter:saturate(.5) brightness(.76);animation:cbvfx4CC .75s ease-in-out}
+.cbvfx4-defensive{filter:drop-shadow(0 0 9px rgba(151,214,255,.52))}
+.cbvfx4-aggro{filter:drop-shadow(0 0 10px rgba(255,204,88,.72))}
+@keyframes cbvfx4HitLight{0%,100%{transform:translate(0,0)}35%{transform:translate(-2px,1px) scale(.97)}}
+@keyframes cbvfx4HitHeavy{0%,100%{transform:translate(0,0) scale(1)}28%{transform:translate(-5px,2px) scale(.91)}58%{transform:translate(2px,-1px) scale(1.04)}}
+@keyframes cbvfx4HealReceive{0%,100%{filter:none;transform:scale(1)}45%{filter:brightness(1.38) drop-shadow(0 0 9px rgba(99,240,166,.65));transform:scale(1.05)}}
+@keyframes cbvfx4Interrupt{0%,100%{transform:rotate(0) scale(1)}24%{transform:rotate(-6deg) scale(.95)}48%{transform:rotate(5deg) scale(1.03)}}
+@keyframes cbvfx4CC{50%{filter:saturate(.22) brightness(.68) drop-shadow(0 0 8px rgba(192,132,255,.5))}}
+
+.cbvfx4-enemy-strike>i:first-child,.cbvfx4-enemy-strike>.wb2d-unit-dot,.cbvfx4-enemy-strike>.pvp2d-token{animation:cbvfx4EnemyStrike .4s ease-out}
+.cbvfx4-enemy-heavy>i:first-child,.cbvfx4-enemy-heavy>.wb2d-unit-dot,.cbvfx4-enemy-heavy>.pvp2d-token{animation:cbvfx4EnemyHeavy .6s cubic-bezier(.18,.8,.22,1)}
+.cbvfx4-boss-intent{filter:brightness(1.14) drop-shadow(0 0 11px rgba(239,92,80,.58))}
+@keyframes cbvfx4EnemyStrike{0%,100%{transform:scale(1)}45%{transform:scale(1.08)}}
+@keyframes cbvfx4EnemyHeavy{0%,100%{transform:scale(1)}24%{transform:scale(.92)}62%{transform:scale(1.14);filter:brightness(1.25)}}
+
+.cbvfx4-telegraph-incoming{box-shadow:inset 0 0 34px rgba(239,76,67,.12)}
+.cbvfx4-telegraph-incoming :where(.cb2d-tg,.tb-telegraph,.wb2d-telegraph){filter:brightness(1.24) saturate(1.18);animation-duration:.56s!important}
+.cbvfx4-resolve-impact{animation:cbvfx4ArenaImpact .58s ease-out}
+.cbvfx4-resolve-safe{animation:cbvfx4ArenaSafe .58s ease-out}
+.cbvfx4-hazard-live :where(.cb2d-ground-hazard,.quest-ground-hazard,.wb2d-ground-hazard){filter:saturate(1.18) brightness(.94);outline:1px solid rgba(239,92,80,.22)}
+.cbvfx4-boss-cast>.cbvfx4-events:before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 38%,rgba(89,7,9,.18));animation:cbvfx4BossCast .72s ease-in-out infinite alternate}
+.cbvfx4-phase{animation:cbvfx4Phase .95s ease-out}.cbvfx4-enrage-pulse{animation:cbvfx4Enrage .9s ease-out}
+.cbvfx4-enrage>.cbvfx4-events{box-shadow:inset 0 0 46px rgba(164,23,31,.2)}
+@keyframes cbvfx4ArenaImpact{0%,100%{filter:none}22%{filter:brightness(1.18) saturate(1.25)}}
+@keyframes cbvfx4ArenaSafe{0%,100%{box-shadow:inset 0 0 0 rgba(88,233,157,0)}35%{box-shadow:inset 0 0 34px rgba(88,233,157,.19)}}
+@keyframes cbvfx4BossCast{to{opacity:.85}}
+@keyframes cbvfx4Phase{0%,100%{filter:none}45%{filter:brightness(1.17) saturate(1.2)}}
+@keyframes cbvfx4Enrage{0%,100%{filter:none}45%{filter:contrast(1.08) saturate(1.35) brightness(1.08)}}
+
+.cbvfx4-dead{filter:grayscale(.82) brightness(.56)!important;opacity:.72!important}
+.cbvfx4-dead>i:first-child,.cbvfx4-dead>.wb2d-unit-dot,.cbvfx4-dead>.pvp2d-token{transform:translateY(5px) rotate(-9deg) scale(.9)!important;transition:transform .32s ease!important}
+.cbvfx4-boss-dead>i:first-child{transform:translateY(7px) rotate(-4deg) scale(.94)!important}
+.cbvfx4-dead>.cbvfx4-ground{opacity:.34!important;transform:translate(-50%,-50%) scaleX(1.2)!important}
+.cbvfx4-revive>i:first-child,.cbvfx4-revive>.wb2d-unit-dot,.cbvfx4-revive>.pvp2d-token{animation:cbvfx4Revive .95s cubic-bezier(.18,.8,.22,1)}
+@keyframes cbvfx4Revive{0%{opacity:.25;transform:translateY(6px) scale(.8);filter:brightness(1.8)}55%{opacity:1;transform:translateY(-2px) scale(1.08)}100%{transform:translateY(0) scale(1);filter:none}}
+
+@media(max-width:720px){
+ .cbvfx4-ground{width:28px!important;height:9px!important}
+ .cbvfx4-charge{width:22px;height:22px}
+ .cbvfx4-projectile:before{width:18px}
+}
+@media(prefers-reduced-motion:reduce){
+ .cbvfx4-events{display:none!important}
+ .cbvfx4-ground{display:none!important}
+ :where(.cb2d-unit,.quest-cb2d-unit,.wb2d-unit,.pvp2d-unit,.tb-unit)[class*="cbvfx4-"]{animation:none!important;transition:none!important}
+}
