@@ -119,6 +119,25 @@
 .cbvfx4-revive>i:first-child,.cbvfx4-revive>.wb2d-unit-dot,.cbvfx4-revive>.pvp2d-token{animation:cbvfx4Revive .95s cubic-bezier(.18,.8,.22,1)}
 @keyframes cbvfx4Revive{0%{opacity:.25;transform:translateY(6px) scale(.8);filter:brightness(1.8)}55%{opacity:1;transform:translateY(-2px) scale(1.08)}100%{transform:translateY(0) scale(1);filter:none}}
 
+/* Encounter-specific extensions use the same event layer rather than bespoke combat viewers. */
+.cbvfx4-thrown,.cbvfx4-encounter{position:absolute;z-index:27;transform:translate(-50%,-50%);pointer-events:none}
+.cbvfx4-thrown.plate{width:19px;height:19px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff7e6,#d9d0bd 58%,#8e877a 100%);border:1px solid rgba(255,255,255,.72);box-shadow:0 0 10px rgba(255,245,218,.38);transition-property:transform;transition-timing-function:cubic-bezier(.18,.68,.2,1)}
+.cbvfx4-encounter.porcelain{width:22px;height:22px;border:2px solid rgba(248,239,215,.72);border-radius:50%;animation:cbvfx4Porcelain 1s ease-out forwards}
+.cbvfx4-encounter.porcelain:before,.cbvfx4-encounter.porcelain:after{content:"";position:absolute;left:50%;top:50%;width:52px;height:2px;background:linear-gradient(90deg,transparent,rgba(247,236,211,.92),transparent)}
+.cbvfx4-encounter.porcelain:before{transform:translate(-50%,-50%) rotate(24deg)}.cbvfx4-encounter.porcelain:after{transform:translate(-50%,-50%) rotate(-48deg)}
+.cbvfx4-encounter.screech{width:40px;height:40px;border:2px solid rgba(221,184,255,.64);border-radius:50%;box-shadow:0 0 20px rgba(181,116,230,.28);animation:cbvfx4Screech 1.05s ease-out forwards}
+.cbvfx4-encounter.screech:before,.cbvfx4-encounter.screech:after{content:"";position:absolute;inset:-12px;border:1px solid rgba(221,184,255,.44);border-radius:50%;animation:cbvfx4ScreechRing 1.05s ease-out forwards}
+.cbvfx4-encounter.screech:after{inset:-26px;animation-delay:.08s}
+.cbvfx4-encounter.swipe{width:58px;height:26px;border-top:4px solid rgba(255,222,185,.86);border-radius:50%;filter:drop-shadow(0 0 7px rgba(255,185,116,.5));animation:cbvfx4Swipe .62s ease-out forwards}
+.cbvfx4-encounter.nailstorm{width:68px;height:68px;border-radius:50%;border:1px dashed rgba(230,207,147,.56);box-shadow:0 0 22px rgba(220,183,94,.22);animation:cbvfx4NailStorm 1.05s ease-out forwards}
+.cbvfx4-encounter.nailstorm:before,.cbvfx4-encounter.nailstorm:after{content:"";position:absolute;left:50%;top:50%;width:76px;height:2px;background:repeating-linear-gradient(90deg,rgba(237,217,166,.9) 0 5px,transparent 5px 11px)}
+.cbvfx4-encounter.nailstorm:before{transform:translate(-50%,-50%) rotate(18deg)}.cbvfx4-encounter.nailstorm:after{transform:translate(-50%,-50%) rotate(-18deg)}
+@keyframes cbvfx4Porcelain{0%{opacity:0;transform:translate(-50%,-50%) scale(.35) rotate(0)}22%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(3.1) rotate(70deg)}}
+@keyframes cbvfx4Screech{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}24%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(5.4)}}
+@keyframes cbvfx4ScreechRing{0%{opacity:.8;transform:scale(.55)}100%{opacity:0;transform:scale(2.2)}}
+@keyframes cbvfx4Swipe{0%{opacity:0;transform:translate(-50%,-50%) rotate(-30deg) scale(.55)}28%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) rotate(35deg) scale(1.45)}}
+@keyframes cbvfx4NailStorm{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}25%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(2.4) rotate(28deg)}}
+
 @media(max-width:720px){
  .cbvfx4-ground{width:28px!important;height:9px!important}
  .cbvfx4-charge{width:22px;height:22px}
