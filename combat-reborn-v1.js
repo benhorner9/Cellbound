@@ -1642,7 +1642,13 @@ function spawnAdds(ctx,e,mechanic={}){
     if(controller&&i===0){applyStatus(ctx,controller,add,{id:'tactical-control-add-'+id,name:'Tactical Crowd Control',kind:'debuff',duration:1800,cc:'stun'});emit(ctx,'CROWD_CONTROL',{source:controller.id,target:add.id,ability:'Tactical Crowd Control',result:'applied',payload:{duration:1800,policy:'priority-elites'}})}
   }
  }
- if(!count&&Number.isFinite(maxActive))emit(ctx,'ADD_SPAWN_SKIPPED',{source:e.id,ability:mechanic.spawnAbility||'Summon',result:'max-active',payload:{addGroup:group,maxActive,active}});
+ if(!count&&Number.isFinite(maxActive)){
+   const activeAdds=livingEnemies(ctx).filter(x=>x.isAdd&&String(x.addGroup||x.name||'adds')===group),overclock=Math.max(1,Number(mechanic.overclockOnCap)||1);
+   if(overclock>1&&activeAdds.length){
+     activeAdds.forEach(add=>{add.damageScale=Math.min(6,(Number(add.damageScale)||1)*overclock);add.nextAttack=Math.min(Number(add.nextAttack)||ctx.time+800,ctx.time+350)});
+     emit(ctx,'ADD_OVERCLOCKED',{source:e.id,ability:mechanic.overclockAbility||'Overclock',result:'empower',payload:{addGroup:group,targets:activeAdds.map(x=>x.id),damageScale:overclock}})
+   }else emit(ctx,'ADD_SPAWN_SKIPPED',{source:e.id,ability:mechanic.spawnAbility||'Summon',result:'max-active',payload:{addGroup:group,maxActive,active}});
+ }
 }
 function mechanicStatusDefinition(m){
  const raw=m?.status;
@@ -1713,6 +1719,9 @@ function resolveMechanic(ctx,e,m,token){
    livingPlayers(ctx).filter(p=>p.id!==target.id&&dist(p.position,target.position)<=Math.max(6,Number(m.radius)||10)).forEach(p=>{failed=true;dealDamage(ctx,e,p,34*enemyPressure(ctx,e,p),m.name,{damageType:m.damageType||'magic',avoidable:true})})
   }
   mechanicStat(ctx,'target-circle',failed);scheduleNextMechanic(ctx);return
+ }
+ if(m.type==='patrol'){
+  mechanicStat(ctx,'patrol',false);scheduleNextMechanic(ctx);return
  }
  if(m.type==='tank-mark'){
   const target=getUnit(ctx,cast.targetId),base=Math.max(.05,Number(m.damageTakenPerStack)||.15),duration=Math.max(5000,Number(m.markDuration)||22000);
@@ -1810,6 +1819,10 @@ function startMechanic(ctx,m){
   if(target){const plan=mechanicResponse(ctx,target,'circle',duration,enemy);castState.responses[target.id]=plan.success;castState.reactionMs[target.id]=plan.reactionMs}
  }else if(m.type==='tank-mark'){
   const target=topThreatTarget(ctx,enemy)||live.find(p=>p.role==='tank')||live[0];castState.targetId=target?.id||null;castState.targetIds=target?[target.id]:[];
+ }else if(m.type==='patrol'){
+  const points=Array.isArray(m.points)&&m.points.length?m.points:[{x:62,y:30},{x:72,y:50},{x:62,y:70},{x:78,y:38}];
+  const point=points[Math.floor(ctx.rng()*points.length)]||points[0];
+  castState.patrolTo={x:Number(point.x)||70,y:Number(point.y)||50};enemy.movingUntil=0;moveTo(ctx,enemy,castState.patrolTo,Math.max(800,duration),m.name||'Patrol')
  }else if(m.type==='role-circles'){
   const defaults={tank:{x:34,y:29,radius:10,color:'red',label:'TANK'},dps:{x:62,y:50,radius:13,color:'yellow',label:'DAMAGE'},healer:{x:34,y:71,radius:10,color:'blue',label:'HEALER'}};
   castState.zones={...defaults,...copy(m.zones||{})};castState.targetIds=live.map(p=>p.id);
