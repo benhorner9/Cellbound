@@ -35,6 +35,91 @@ function snapshot(){
    skillLoadouts:c.skillLoadouts||{},buffSkill:c.buffSkill||null,knowledge:c.knowledge||{}
  })));
 }
+
+const STAGE_MIN_MS={butler:30000,maids:30000,engineer:40000,bedroom:12000,housebound:40000};
+function combatEngine(){return window.CellboundCombatReborn}
+function engineParty(side=null){
+ const rows=memberRows(),selected=side===null?rows:(rows[side]?[rows[side]]:[]);
+ return selected.flatMap((row,rowIndex)=>{
+   const actualSide=side===null?rowIndex:side;
+   return (Array.isArray(row?.party_snapshot)?row.party_snapshot:[]).map(ch=>({
+     ...JSON.parse(JSON.stringify(ch)),
+     id:(side===null?'raid-':'maid-')+actualSide+'-'+String(ch.id||ch.name||'character'),
+     _combatItemLevel:Number(ch.itemLevel)||0,itemLevel:Number(ch.itemLevel)||0,gear:Number(ch.itemLevel)||0,
+     power:Math.max(1,Number(ch.power)||Math.round((Number(ch.itemLevel)||20)*1.1))
+   }))
+ })
+}
+function manorEncounter(stage){
+ if(stage==='butler')return{id:'manor-butler',title:'The Butler',kind:'boss',level:15,enemies:[{name:'The Butler',classification:'boss',passive:true}],enemyHealth:5000,mechanicIntervalMs:3200,mechanics:[{name:'Plate Barrage',type:'persistent-circle',duration:1300,persistMs:9000,tickMs:1100,tickDamage:5,radius:10},{name:'Slow Patrol',type:'patrol',duration:1300}],hardEnrageMs:70000};
+ if(stage==='engineer')return{id:'manor-engineer',title:'The Engineer',kind:'boss',level:15,enemies:[{name:'The Engineer',classification:'boss'}],enemyHealth:4000,scaling:{enemyDamage:.72},mechanicIntervalMs:4200,mechanics:[{name:'Rebuild Nail Guns',type:'adds',duration:900,addCount:2,addName:'Nail Gun Turret',addGroup:'nail-guns',maxActive:2,healthScale:.13,damageScale:.32,targeting:'random',attackRange:35,attackName:'Nail Burst',overclockOnCap:1.08,overclockAbility:'Overclock'},{name:'Nail Storm',type:'line',duration:1900}],phases:[{id:'nail70',name:'Nail Storm · 70%',atPct:70,triggerMechanic:{name:'Nail Storm',type:'line',duration:1800}},{id:'nail40',name:'Nail Storm · 40%',atPct:40,triggerMechanic:{name:'Nail Storm',type:'line',duration:1600}},{id:'nail15',name:'Nail Storm · 15%',atPct:15,triggerMechanic:{name:'Nail Storm',type:'line',duration:1400}}],hardEnrageMs:105000};
+ if(stage==='bedroom')return{id:'manor-bedroom',title:'The Bedroom',kind:'event',level:15,enemies:Array.from({length:20},(_,i)=>({name:'Manor Thrall '+(i+1),classification:'trash',priority:i<4?2:1})),enemyHealth:140,scaling:{enemyDamage:.40},mechanics:[],hardEnrageMs:95000};
+ if(stage==='housebound')return{id:'manor-master',title:'The Master of the Manor',kind:'final',level:15,enemies:[{name:'The Master of the Manor',classification:'boss'}],enemyHealth:5000,scaling:{enemyDamage:.68},mechanicIntervalMs:5200,mechanics:[{name:'Shattered Floor',type:'persistent-circle',duration:1500,persistMs:7000,tickMs:1200,tickDamage:4,radius:9},{name:"Servant's Screech",type:'target-circle',duration:1800,radius:9},{name:'Nail Gun',type:'adds',duration:900,addCount:1,addName:'Nail Gun Turret',addGroup:'master-turret',maxActive:1,healthScale:.10,damageScale:.25,targeting:'random',attackRange:35,attackName:'Nail Burst'}],phases:[{id:'standing',name:'The Master Rises',atPct:60,damageScale:1.04,addMechanics:[{name:'Mark of the Manor',type:'tank-mark',duration:1000,damageTakenPerStack:.15,swapAt:3,markDuration:22000},{name:'Chosen Servant',type:'target-circle',duration:1850,radius:11}]},{id:'collapse',name:'House Collapses',atPct:30,damageScale:1.08,arenaBounds:{left:20,right:80,top:18,bottom:82},addMechanics:[{name:'Falling Beam',type:'line',duration:1500},{name:'Fire Floor',type:'persistent-circle',duration:1500,persistMs:8000,tickMs:1100,tickDamage:5,radius:10}],wipeAfterMs:20000,wipeAbility:'BURN THE HOUSE'}],hardEnrageMs:150000};
+ return null
+}
+function maidEncounter(side){
+ return{id:'manor-maid-'+side,title:'The Maid',kind:'boss',level:15,enemies:[{name:'The Maid',classification:'boss'}],enemyHealth:2500,scaling:{enemyDamage:.72},mechanicIntervalMs:4400,mechanics:[{name:'Silver Tray',type:'cone',duration:1500},{name:'Healer Swipe',type:'healer-swipe',duration:1400,status:{id:'maid-gash',name:'Maid Gash',duration:5000,effect:{incomingDamageTaken:.08}}}],hardEnrageMs:85000}
+}
+function combatFor(stage,side=null){
+ const E=combatEngine();if(!E?.simulate||!session)return null;
+ const key=session.id+':'+stage+':'+(side===null?'raid':side);
+ if(combatCache.has(key))return combatCache.get(key);
+ const p=stage==='maids'?engineParty(side):engineParty(null),enc=stage==='maids'?maidEncounter(side):manorEncounter(stage);
+ if(!p.length||!enc)return null;
+ try{const result=E.simulate({party:p,encounter:enc,seed:key,maxDurationMs:180000}),pack={result,party:p,encounter:enc};combatCache.set(key,pack);return pack}
+ catch(error){console.warn('Manor combat simulation failed',stage,error);return null}
+}
+function hpPctAt(result,elapsed,targetId,fallback=100){
+ let hp=fallback;
+ for(const ev of result?.events||[]){
+   if(Number(ev.timestamp)>elapsed)break;
+   if(ev.target===targetId&&Number.isFinite(Number(ev.payload?.targetHpPct)))hp=Number(ev.payload.targetHpPct);
+   if((ev.type==='PLAYER_DEFEATED'||ev.type==='ENEMY_DEFEATED')&&ev.target===targetId)hp=0
+ }
+ return Math.max(0,Math.min(100,hp))
+}
+function combatBossHp(stage,elapsed){const pack=combatFor(stage);return pack?hpPctAt(pack.result,elapsed,'e-0',100):null}
+function combatPlayerHp(ch,elapsed){
+ if(!session)return null;
+ const side=Number(ch?.partyIndex)||0,stage=session.stage,pack=stage==='maids'?combatFor('maids',side):combatFor(stage);
+ if(!pack)return null;
+ const id='p-'+(stage==='maids'?'maid-':'raid-')+side+'-'+String(ch?.id||ch?.name||'character');
+ let hp=hpPctAt(pack.result,elapsed,id,100);
+ if(stage==='maids'){const penalty=Number(session.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0;hp=Math.max(0,hp-penalty*2.5)}
+ if(stage==='housebound'&&masterBuffRemaining())hp=Math.max(0,hp-4);
+ return hp
+}
+function maidBossHp(side,elapsed,penalty){
+ const pack=combatFor('maids',side);if(!pack)return null;
+ const base=hpPctAt(pack.result,elapsed,'e-0',100),duration=Math.max(1,Number(pack.result.durationMs)||30000);
+ if(elapsed<=duration)return Math.min(100,base+penalty*15);
+ return Math.max(0,penalty*15-((elapsed-duration)/duration)*100)
+}
+function stageCombatDuration(stage){
+ if(stage==='maids'){const a=combatFor('maids',0)?.result?.durationMs||0,b=combatFor('maids',1)?.result?.durationMs||0;return Math.max(STAGE_MIN_MS.maids,a,b)}
+ return Math.max(STAGE_MIN_MS[stage]||0,Number(combatFor(stage)?.result?.durationMs)||Number(STAGES[stage]?.duration)||0)
+}
+function bedroomRemaining(elapsed){
+ const result=combatFor('bedroom')?.result;if(!result)return 20;
+ const dead=(result.events||[]).filter(ev=>ev.type==='ENEMY_DEFEATED'&&Number(ev.timestamp)<=elapsed).length;
+ return Math.max(0,20-dead)
+}
+function combatCallout(stage,elapsed){
+ const pack=combatFor(stage);if(!pack)return null;let last=null;
+ for(const ev of pack.result.events||[]){if(Number(ev.timestamp)>elapsed)break;if(['MECHANIC_TELEGRAPH','PHASE_CHANGE','ADD_OVERCLOCKED','CAST_START'].includes(ev.type))last=ev}
+ return last
+}
+async function failRaid(reason='The raid was defeated'){
+ if(!session||session.status!=='active')return;
+ if(isLeader()){const {error}=await db.rpc('fail_manor_raid',{p_session_id:session.id,p_reason:reason});if(error){console.warn('Could not resolve Manor wipe',error);return}}
+ await loadSession(session.id).catch(()=>{});renderRaidShell()
+}
+function applyLocalRaidFailureShock(){
+ const s=state();if(!s||!session?.id)return;
+ s.raidFailureShock=s.raidFailureShock&&typeof s.raidFailureShock==='object'?s.raidFailureShock:{};
+ if(s.raidFailureShock[session.id])return;
+ s.raidFailureShock[session.id]=true;Game.applyPartyCellShock?.();Game.save?.();Game.persistState?.()
+}
 function groupMembers(id){return members.filter(m=>m.listing_id===id)}
 function myMembership(){return members.find(m=>m.user_id===user?.id)}
 function isLeader(){return Boolean(session&&session.leader_id===user?.id)}
@@ -68,7 +153,7 @@ async function fetchHub(){
    }
    const mine=myMembership();myGroup=mine?groups.find(g=>g.id===mine.listing_id)||null:null;session=null;
    if(myGroup){
-     const {data:s}=await db.from('raid_sessions').select('*').eq('listing_id',myGroup.id).in('status',['active','completed']).order('started_at',{ascending:false}).limit(1);
+     const {data:s}=await db.from('raid_sessions').select('*').eq('listing_id',myGroup.id).order('started_at',{ascending:false}).limit(1);
      session=s?.[0]||null;
      if(myGroup&&(!Array.isArray(mine?.party_snapshot)||mine.party_snapshot.length!==5)&&partyReady())syncParty(myGroup.id).catch(()=>{});
    }
@@ -95,7 +180,10 @@ function renderHub(){
  const mine=myMembership(),mineRows=myGroup?groupMembers(myGroup.id):[],comp=roleSummary(mineRows),recommended=compositionClass(mineRows)==='recommended';
  let body='';
  if(session?.status==='active'){
-   body='<section class="mr-card mr-current"><div><small>RAID IN PROGRESS</small><h3>'+esc(stageName(session.stage))+'</h3><p>Your 10-character raid is already inside the Manor.</p></div><button data-mr-enter>ENTER RAID →</button></section>';
+   body='<section class="mr-card mr-current"><div><small>RAID IN PROGRESS</small><h3>'+esc(stageName(session.stage))+'</h3><p>Combat Reborn is resolving the ten-character fight inside the Manor.</p></div><button data-mr-enter>ENTER RAID →</button></section>';
+ }else if(session?.status==='failed'){
+   const leader=myGroup?.leader_id===user.id,count=mineRows.length,canRetry=leader&&count===2&&Number(lockout?.runsRemaining??0)>0;
+   body='<section class="mr-card mr-current mr-failed"><div><small>RAID WIPE</small><h3>'+esc(session.state?.failureReason||'The Manor claimed the raid')+'</h3><p>This run has been consumed. Recover from Cell Shock, adjust the party and try again if you have a run remaining.</p></div><div class="mr-current-actions">'+(canRetry?'<button data-mr-rerun>TRY THE MANOR AGAIN →</button>':'<span>'+(leader?'No runs remain this reset.':'Waiting for the group leader.')+'</span>')+'</div></section>';
  }else if(session?.status==='completed'){
    const claimed=Boolean(state()?.raidRewardClaims?.[session.id]),leader=myGroup?.leader_id===user.id,count=mineRows.length,canRerun=claimed&&leader&&count===2&&Number(lockout?.runsRemaining??0)>0;
    const followup=canRerun?'<button data-mr-rerun>RUN THE MANOR AGAIN →</button>':(!leader&&count===2&&Number(lockout?.runsRemaining??0)>0?'<span>Waiting for the group leader to begin another run.</span>':'');
@@ -189,48 +277,53 @@ function memberRows(){return groupMembers(session?.listing_id).sort((a,b)=>stamp
 function allRaidChars(){return memberRows().flatMap((m,pi)=>(Array.isArray(m.party_snapshot)?m.party_snapshot:[]).map((c,ci)=>({...c,partyIndex:pi,charIndex:ci})))}
 function renderRaidShell(){
  const root=ensureOverlay();if(!session)return;
+ if(session.status==='failed'){renderWipeShell();return}
  if(session.status==='completed'||session.stage==='victory'){renderVictoryShell();return}
- root.innerHTML='<section class="mr-raid-shell"><header class="mr-raid-head"><div><small>THE MANOR · '+esc(stageRoom(session.stage).toUpperCase())+'</small><h2>'+esc(stageName(session.stage))+'</h2></div><div class="mr-raid-head-center"><span>10-CHARACTER RAID</span><b>'+memberRows().length+'/2 COMMANDERS</b></div><button data-mr-close>×</button></header>'+
+ root.innerHTML='<section class="mr-raid-shell"><header class="mr-raid-head"><div><small>THE MANOR · '+esc(stageRoom(session.stage).toUpperCase())+'</small><h2>'+esc(stageName(session.stage))+'</h2></div><div class="mr-raid-head-center"><span>COMBAT REBORN</span><b>10 CHARACTERS · '+memberRows().length+'/2 COMMANDERS</b></div><button data-mr-close>×</button></header>'+
  '<div class="mr-stage-tabs">'+['butler','maids','engineer','bedroom','housebound'].map((x,i)=>'<span class="'+(x===session.stage?'active':'')+'"><i>'+(i+1)+'</i>'+stageName(x)+'</span>').join('')+'</div>'+
- '<div id="mrArenaHost"></div><aside class="mr-raid-side"><div id="mrMechanics"></div><div id="mrRaidRoster"></div></aside>'+
- '<div id="mrScreechHost"></div></section>';
- root.querySelector('[data-mr-close]')?.addEventListener('click',closeRaid);
- lastStage=session.stage
+ '<div id="mrArenaHost"></div><aside class="mr-raid-side"><div id="mrMechanics"></div><div id="mrRaidRoster"></div></aside><div id="mrScreechHost"></div></section>';
+ root.querySelector('[data-mr-close]')?.addEventListener('click',closeRaid);lastStage=session.stage
 }
 function tickRaid(){
  if(!session)return;
+ if(session.status==='failed'){if(lastStage!=='failed')renderRaidShell();clearInterval(paintTimer);return}
  if(session.status==='completed'||session.stage==='victory'){if(lastStage!=='victory')renderRaidShell();return}
  if(lastStage!==session.stage){lastScreechAt=0;screechOpen=false;renderRaidShell()}
  const e=stageElapsed();paintStage(e);if(isLeader())driveStage(e);
  const maidScreech=session.stage==='maids'&&e>7000&&e-lastScreechAt>10500;
- const masterHp=session.stage==='housebound'?bossHp('housebound',e):100;
- const masterScreech=session.stage==='housebound'&&e>7000&&masterHp>10&&e-lastScreechAt>18000;
+ const masterHp=session.stage==='housebound'?bossHp('housebound',e):100,masterWindow=masterHp>60||(masterHp<=30&&masterHp>10);
+ const masterScreech=session.stage==='housebound'&&e>7000&&masterWindow&&e-lastScreechAt>18000;
  if(!screechOpen&&(maidScreech||masterScreech))openScreech()
 }
 function bossHp(stage,e){
- const d=STAGES[stage]?.duration||1;
- if(stage==='housebound'){
-   if(e<30000)return Math.max(60,100-(e/30000)*40);
-   if(e<58000)return Math.max(30,60-((e-30000)/28000)*30);
-   if(e<80000)return Math.max(10,30-((e-58000)/22000)*20);
-   return Math.max(0,10-((e-80000)/20000)*10)
- }
- return Math.max(0,100-(e/d)*100)
+ const engineHp=combatBossHp(stage,e);if(engineHp!==null)return engineHp;
+ const d=STAGES[stage]?.duration||1;return Math.max(0,100-(e/d)*100)
 }
 function paintStage(e){
  const arena=$('#mrArenaHost'),mech=$('#mrMechanics'),roster=$('#mrRaidRoster');if(!arena||!mech||!roster)return;
  if(session.stage==='maids'){paintMaids(arena,mech,roster,e);return}
- const hp=bossHp(session.stage,e),chars=allRaidChars(),phase=session.stage==='housebound'?(hp>60?1:hp>30?2:3):1;
- arena.innerHTML='<div class="mr-arena stage-'+session.stage+' phase-'+phase+'">'+arenaDecor(session.stage,e)+'<div class="mr-boss"><span class="mr-boss-icon">'+bossIcon(session.stage)+'</span><b>'+esc(stageName(session.stage))+'</b><div class="mr-boss-hp"><i style="width:'+hp.toFixed(1)+'%"></i></div><small>'+Math.ceil(hp)+'%</small></div><div class="mr-units">'+chars.map((c,i)=>unit(c,i,e)).join('')+'</div>'+stageCallout(session.stage,e)+'</div>';
- mech.innerHTML=mechanicsMarkup(session.stage,e,phase);
- roster.innerHTML='<small>RAID ROSTER</small><div class="mr-roster-grid">'+memberRows().map((m,i)=>'<section><b>PARTY '+(i?'B':'A')+' · '+esc(m.guild_label)+'</b>'+((m.party_snapshot||[]).map(ch=>'<span style="--class:'+(CLASS_COLORS[ch.class]||'#8aa')+'"><i></i>'+esc(ch.name)+'<em>'+esc(ch.role||'dps')+'</em></span>').join(''))+'</section>').join('')+'</div>'
+ if(session.stage==='bedroom'){paintBedroom(arena,mech,roster,e);return}
+ const hp=bossHp(session.stage,e),chars=allRaidChars(),phase=session.stage==='housebound'?(hp>60?1:hp>30?2:3):1,call=combatCallout(session.stage,e);
+ arena.innerHTML='<div class="mr-arena stage-'+session.stage+' phase-'+phase+'">'+arenaDecor(session.stage,e)+'<div class="mr-boss"><span class="mr-boss-icon">'+bossIcon(session.stage)+'</span><b>'+esc(stageName(session.stage))+'</b><div class="mr-boss-hp"><i style="width:'+hp.toFixed(1)+'%"></i></div><small>'+Math.ceil(hp)+'%</small></div><div class="mr-units">'+chars.map((ch,i)=>unit(ch,i,e)).join('')+'</div>'+stageCallout(session.stage,e,call)+'</div>';
+ mech.innerHTML=mechanicsMarkup(session.stage,e,phase)+(call?'<div class="mr-engine-event"><small>ENGINE EVENT</small><b>'+esc(call.ability||call.payload?.name||call.type)+'</b><span>'+Math.round((Number(call.timestamp)||0)/100)/10+'s</span></div>':'');
+ roster.innerHTML=raidRosterMarkup(chars,e)
 }
 function bossIcon(stage){return stage==='butler'?'♜':stage==='engineer'?'⚙':stage==='bedroom'?'☗':'◈'}
 function unit(c,i,e){
  const color=CLASS_COLORS[c.class]||'#81aaa3',p=window.CellboundPortraits?.portraitHTML?.(c,{size:'sm'})||'<b>'+esc((c.name||'?').slice(0,2).toUpperCase())+'</b>';
- const danger=session.stage==='housebound'?Math.max(48,88-((i*7+Math.floor(e/1100)*5)%38)):session.stage==='engineer'&&i%4===Math.floor(e/5000)%4?62:90;
+ const engineHp=combatPlayerHp(c,e),danger=engineHp===null?90:engineHp;
  const hp=session.stage==='housebound'?bossHp('housebound',e):100,chosen=session.stage==='housebound'&&hp<=60&&hp>30&&i===Math.floor(e/6500)%10;
- return '<div class="mr-unit u'+i+' '+(chosen?'chosen':'')+'" style="--class:'+color+'"><div class="mr-unit-pic">'+p+'</div><span>'+esc(c.name)+'</span><div class="mr-unit-hp"><i style="width:'+danger+'%"></i></div></div>'
+ return '<div class="mr-unit u'+i+' '+(chosen?'chosen':'')+'" style="--class:'+color+'"><div class="mr-unit-pic">'+p+'</div><span>'+esc(c.name)+'</span><div class="mr-unit-hp"><i style="width:'+Math.max(0,danger)+'%"></i></div></div>'
+}
+function paintBedroom(arena,mech,roster,e){
+ const remaining=bedroomRemaining(e),chars=allRaidChars(),result=combatFor('bedroom')?.result;
+ arena.innerHTML='<div class="mr-arena stage-bedroom"><div class="mr-trash">'+Array.from({length:remaining},(_,i)=>'<i class="m'+i+'">◆</i>').join('')+'</div><div class="mr-bedroom-counter"><small>BEDROOM SWARM</small><strong>'+remaining+'</strong><span>ENEMIES REMAIN</span></div><div class="mr-units">'+chars.map((ch,i)=>unit(ch,i,e)).join('')+'</div><div class="mr-cast trash">CLEAR THE ROOM <span>'+remaining+' / 20 REMAIN</span></div></div>';
+ mech.innerHTML='<section class="mr-mechanic-card"><small>COMBAT REBORN · TRASH PULL</small><h3>BEDROOM SWARM</h3><p>Twenty real enemies are active in the combat engine at once. Tanks gather them, healers stabilise the raid and damage burns the room down.</p><span>'+(result?'Engine outcome: '+String(result.outcome).toUpperCase()+' · '+Math.round(result.durationMs/1000)+'s simulation':'Preparing combat simulation…')+'</span></section>';
+ roster.innerHTML=raidRosterMarkup(chars,e)
+}
+function raidRosterMarkup(chars,e){
+ const rows=memberRows();
+ return '<small>RAID ROSTER</small><div class="mr-roster-grid">'+rows.map((m,i)=>'<section><b>PARTY '+(i?'B':'A')+' · '+esc(m.guild_label)+'</b>'+((m.party_snapshot||[]).map(ch=>{const view={...ch,partyIndex:i},hp=combatPlayerHp(view,e);return'<span style="--class:'+(CLASS_COLORS[ch.class]||'#8aa')+'"><i></i>'+esc(ch.name)+'<em>'+esc(ch.role||'dps')+(hp!==null?' · '+Math.round(hp)+'%':'')+'</em></span>'}).join(''))+'</section>').join('')+'</div>'
 }
 function arenaDecor(stage,e){
  if(stage==='butler'){
@@ -246,22 +339,12 @@ function arenaDecor(stage,e){
  }
  return''
 }
-function stageCallout(stage,e){
- if(stage==='butler'&&Math.floor(e/5500)%2===1)return'<div class="mr-cast">SMASHED PLATES <span>MOVE</span></div>';
- if(stage==='engineer'){
-   const hp=bossHp(stage,e),storm=[70,40,15].some(x=>Math.abs(hp-x)<6);
-   if(storm)return'<div class="mr-cast">NAIL STORM <span>FIND THE SAFE LANE</span></div>';
-   if(Math.floor(e/7000)%2===1)return'<div class="mr-cast">OVERCLOCK <span>DESTROY TURRETS</span></div>';
-   return'<div class="mr-cast">REBUILD <span>TURRETS RETURN</span></div>'
- }
- if(stage==='bedroom')return'<div class="mr-cast trash">CLEAR THE ROOM <span>20 ENEMIES</span></div>';
- if(stage==='housebound'){
-   const hp=bossHp(stage,e);
-   if(hp<=10)return'<div class="mr-cast burn">BURN THE HOUSE <span>'+Math.max(0,Math.ceil((100000-e)/1000))+'s · UNINTERRUPTIBLE</span></div>';
-   if(hp<=30)return'<div class="mr-cast">HOUSE COLLAPSES <span>SHRINKING ARENA · SCREECH · TURRETS</span></div>';
-   if(hp<=60)return Math.floor(e/6500)%2?'<div class="mr-cast">CHOSEN SERVANT <span>SPREAD</span></div>':'<div class="mr-cast">MARK OF THE MANOR <span>TANK SWAP</span></div>';
-   return Math.floor(e/7000)%2?'<div class="mr-cast">SERVANT\'S SCREECH <span>READ THE WORD</span></div>':'<div class="mr-cast">SHATTERED FLOOR <span>MOVE</span></div>'
- }
+function stageCallout(stage,e,engineEvent=null){
+ if(engineEvent?.type==='PHASE_CHANGE')return'<div class="mr-cast phase-call">'+esc(engineEvent.ability||'PHASE CHANGE')+' <span>'+Math.round(Number(engineEvent.payload?.healthPct)||0)+'%</span></div>';
+ if(engineEvent?.type==='ADD_OVERCLOCKED')return'<div class="mr-cast">OVERCLOCK <span>DESTROY TURRETS</span></div>';
+ if(stage==='butler')return'<div class="mr-cast">PLATE BARRAGE <span>MOVE · OLD HAZARDS FADE</span></div>';
+ if(stage==='engineer'){const hp=bossHp(stage,e);if([70,40,15].some(x=>Math.abs(hp-x)<5))return'<div class="mr-cast">NAIL STORM <span>FIND THE SAFE LANE</span></div>';return'<div class="mr-cast">REBUILD <span>KEEP TWO TURRETS UNDER CONTROL</span></div>'}
+ if(stage==='housebound'){const hp=bossHp(stage,e);if(hp<=10)return'<div class="mr-cast burn">BURN THE HOUSE <span>20s · UNINTERRUPTIBLE</span></div>';if(hp<=30)return'<div class="mr-cast">HOUSE COLLAPSES <span>SHRINKING ARENA · SCREECH · TURRETS</span></div>';if(hp<=60)return Math.floor(e/6500)%2?'<div class="mr-cast">CHOSEN SERVANT <span>SPREAD</span></div>':'<div class="mr-cast">MARK OF THE MANOR <span>TANK SWAP</span></div>';return Math.floor(e/7000)%2?'<div class="mr-cast">SERVANT\'S SCREECH <span>READ THE WORD</span></div>':'<div class="mr-cast">SHATTERED FLOOR <span>MOVE</span></div>'}
  return''
 }
 function masterBuffRemaining(){
@@ -280,19 +363,23 @@ function mechanicsMarkup(stage,e,phase){
 }
 function paintMaids(arena,mech,roster,e){
  const rows=memberRows(),pa=Number(session.state?.maidPenaltyA)||0,pb=Number(session.state?.maidPenaltyB)||0;
- const hpA=Math.max(0,100-e/1000*2.5+pa*15),hpB=Math.max(0,100-e/1000*2.5+pb*15);
- const side=(row,i,hp,penalty)=>{
-  const chars=Array.isArray(row?.party_snapshot)?row.party_snapshot:[];
-  return '<section class="mr-maid-side '+(i?'kitchen':'dining')+'"><header><small>'+(i?'KITCHEN':'DINING ROOM')+'</small><b>'+esc(row?.guild_label||'Party')+'</b></header><div class="mr-maid-boss"><span>♟</span><div><b>The Maid</b><div class="mr-boss-hp"><i style="width:'+Math.min(100,hp)+'%"></i></div><small>'+Math.ceil(hp)+'% HP · +'+(penalty*10)+'% DAMAGE</small></div></div><div class="mr-maid-units">'+chars.map((c,x)=>unit(c,x+i*5,e)).join('')+'</div></section>'
- };
+ const ea=maidBossHp(0,e,pa),eb=maidBossHp(1,e,pb),hpA=ea===null?Math.max(0,100-e/1000*2.5+pa*15):ea,hpB=eb===null?Math.max(0,100-e/1000*2.5+pb*15):eb;
+ const side=(row,i,hp,penalty)=>{const chars=Array.isArray(row?.party_snapshot)?row.party_snapshot:[];return'<section class="mr-maid-side '+(i?'kitchen':'dining')+'"><header><small>'+(i?'KITCHEN':'DINING ROOM')+'</small><b>'+esc(row?.guild_label||'Party')+'</b></header><div class="mr-maid-boss"><span>♟</span><div><b>The Maid</b><div class="mr-boss-hp"><i style="width:'+Math.min(100,hp)+'%"></i></div><small>'+Math.ceil(hp)+'% HP · +'+(penalty*10)+'% DAMAGE</small></div></div><div class="mr-maid-units">'+chars.map((ch,x)=>unit({...ch,partyIndex:i},x+i*5,e)).join('')+'</div></section>'};
  arena.innerHTML='<div class="mr-arena mr-maids">'+side(rows[0],0,hpA,pa)+side(rows[1],1,hpB,pb)+'</div>';
- mech.innerHTML='<section class="mr-mechanic-card"><small>LINKED ENCOUNTER</small><h3>SCREECH</h3><p>Each Maid hard-focuses the highest-threat target and periodically swipes a random healer. Read the Screech word — not the colour it is painted. A wrong answer or timeout heals the <b>other player’s Maid for 15%</b> and gives her <b>+10% damage</b>.</p><span>Failures stack until that Maid dies.</span></section><div class="mr-linked-stats"><span>PARTY A FAILURES <b>'+pa+'</b></span><span>PARTY B FAILURES <b>'+pb+'</b></span></div>';
+ mech.innerHTML='<section class="mr-mechanic-card"><small>COMBAT REBORN · LINKED ENCOUNTER</small><h3>SCREECH</h3><p>Each Maid runs her own five-character combat simulation: threat, tanking, healer swipes, damage and healing are real. A failed Screech heals the <b>other player’s Maid for 15%</b> and gives her <b>+10% damage</b>.</p><span>Failures stack until that Maid dies. Both players must resolve at least one Screech.</span></section><div class="mr-linked-stats"><span>PARTY A FAILURES <b>'+pa+'</b></span><span>PARTY B FAILURES <b>'+pb+'</b></span></div>';
  roster.innerHTML='<small>SPLIT RAID</small><p class="mr-split-note">Both five-character parties are fighting at the same time. Your Screech answer can make your partner’s room harder.</p>';
+ const aPack=combatFor('maids',0),bPack=combatFor('maids',1),defeat=(aPack?.result?.outcome!=='victory'&&e>=Number(aPack?.result?.durationMs||Infinity))||(bPack?.result?.outcome!=='victory'&&e>=Number(bPack?.result?.durationMs||Infinity));
+ if(defeat&&isLeader()){failRaid('The Maids overwhelmed one of the split parties.');return}
  if(isLeader()&&hpA<=0&&hpB<=0)advance('engineer')
 }
 async function driveStage(e){
  if(advancing||session.stage==='maids')return;
- const d=STAGES[session.stage];if(d&&e>=d.duration)await advance(d.next)
+ const stage=session.stage,pack=combatFor(stage),result=pack?.result;
+ if(result){
+   if(result.outcome!=='victory'&&e>=Number(result.durationMs||0)){await failRaid(stageName(stage)+' defeated the raid.');return}
+   if(result.outcome==='victory'&&e>=stageCombatDuration(stage)){await advance(STAGES[stage]?.next);return}
+ }
+ const d=STAGES[stage];if(!pack&&d&&e>=d.duration)await advance(d.next)
 }
 async function advance(next){
  if(advancing||!session)return;advancing=true;
@@ -321,6 +408,11 @@ function openScreech(){
  };
  host.querySelectorAll('[data-colour]').forEach(b=>b.onclick=()=>finish(b.dataset.colour===target.name));
  const clock=setInterval(()=>{const left=Math.max(0,deadline-now()),el=host.querySelector('[data-screech-time]');if(el)el.textContent=(left/1000).toFixed(1);if(left<=0)finish(false)},100)
+}
+function renderWipeShell(){
+ const root=ensureOverlay();applyLocalRaidFailureShock();
+ root.innerHTML='<section class="mr-raid-shell mr-wipe-shell"><header class="mr-raid-head"><div><small>THE MANOR · RAID WIPE</small><h2>'+esc(stageName(session.stage))+'</h2></div><button data-mr-close>×</button></header><div class="mr-wipe"><span>☠</span><small>COMBAT REBORN RESULT</small><h1>The Manor Claims Another Raid</h1><p>'+esc(session.state?.failureReason||'The ten-character raid was defeated.')+'</p><button data-mr-wipe-close>RETURN TO RAID HUB →</button></div></section>';
+ root.querySelector('[data-mr-close]')?.addEventListener('click',closeRaid);root.querySelector('[data-mr-wipe-close]')?.addEventListener('click',closeRaid);lastStage='failed'
 }
 function renderVictoryShell(){
  const root=ensureOverlay(),claimed=Boolean(state()?.raidRewardClaims?.[session.id]);
