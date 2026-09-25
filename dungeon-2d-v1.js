@@ -1609,9 +1609,15 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
      // Wall time remains authoritative even when the browser suspends animation frames.
      while(index<events.length&&(Number(events[index].timestamp)||0)<=current+4&&handled<48&&performance.now()-frameStarted<10){
        const event=events[index];
-       renderRebornEvent(event,result,replayMode);
+       // External encounter interactions (for example Manor Screech) must not depend
+       // on the visual renderer succeeding. Forward the authoritative event first.
        if(!replayMode&&run?.externalMode&&typeof run.externalOnEvent==='function'){
          try{run.externalOnEvent(event,result)}catch(error){console.warn('Shared combat event callback failed',error)}
+       }
+       try{renderRebornEvent(event,result,replayMode)}
+       catch(error){
+         console.warn('Shared combat visual recovered',event?.type,event?.ability,error);
+         if(event?.type==='INTERACTION_REQUIRED')status((event.ability||'Interaction')+' · response required')
        }
        index++;handled++
      }
