@@ -1201,6 +1201,10 @@ function killUnit(ctx,target,source,ability){
 
 function reviveUnit(ctx,healer,target,ability,{healthPct=35,resourcePct=20,combat=true}={}){
  if(!healer?.alive||!target||target.alive)return false;
+ if(combat&&!canBattleRezTarget(ctx,target)){
+  emit(ctx,'ABILITY_FINISH',{source:healer.id,target:target.id,ability,result:'party-wiped',position:copy(healer.position),payload:{kind:'battle-rez',reason:'raid-party-wiped'}});
+  return false
+ }
  target.alive=true;target.health=Math.max(1,Math.round(target.maxHealth*healthPct/100));
  target.resource.value=clamp(target.resource.max*resourcePct/100,0,target.resource.max);
  target.currentCast=null;target.movingUntil=0;target.nextDecision=ctx.time+700;target.revivePenaltyUntil=ctx.time+(combat?30000:15000);
@@ -1291,6 +1295,21 @@ function healerTarget(ctx){
    return aw-bw
  })[0]||null
 }
+function raidPartySide(unit){
+ const id=String(unit?.characterId||unit?.original?.id||'');
+ const match=id.match(/^raid-(\d+)-/);
+ return match?Number(match[1]):null
+}
+function raidPartyIsWiped(ctx,side){
+ if(side===null||side===undefined)return false;
+ const group=(ctx?.players||[]).filter(p=>raidPartySide(p)===side);
+ return group.length>=5&&group.every(p=>!p.alive)
+}
+function canBattleRezTarget(ctx,target){
+ if(!ctx?.encounter?.lockWipedRaidParties)return true;
+ const side=raidPartySide(target);
+ return side===null||!raidPartyIsWiped(ctx,side)
+}
 function chooseAbility(ctx,u,target){
  let pool=u.abilities.filter(a=>a.kind!=='interrupt'&&a.kind!=='taunt'&&cooldownReady(u,a)&&(a.cost||0)<=u.resource.value);
  const cdPolicy=ctx.tactics?.cooldownUse||'difficult';
@@ -1304,9 +1323,9 @@ function chooseAbility(ctx,u,target){
  }
  if(u.role==='healer'){
   const alive=livingPlayers(ctx),tank=alive.find(p=>p.role==='tank'),low=healerTarget(ctx),dead=deadPlayers(ctx);
-  const battleRez=pool.find(a=>a.kind==='battle-rez');
-  if(battleRez&&dead.length){
-   const reviveTarget=[...dead].sort((a,b)=>(a.role==='tank'?-3:a.role==='healer'?-2:0)-(b.role==='tank'?-3:b.role==='healer'?-2:0)||b.power-a.power)[0];
+  const battleRez=pool.find(a=>a.kind==='battle-rez'),revivableDead=dead.filter(p=>canBattleRezTarget(ctx,p));
+  if(battleRez&&revivableDead.length){
+   const reviveTarget=[...revivableDead].sort((a,b)=>(a.role==='tank'?-3:a.role==='healer'?-2:0)-(b.role==='tank'?-3:b.role==='healer'?-2:0)||b.power-a.power)[0];
    const tankSafe=!tank||healthRatio(tank)>.58,pressure=combatPressure(ctx);
    const badDecision=pressure>.78&&shouldMistake(ctx,u,'triage',7000);
    if((tankSafe&&pressure<.86)||badDecision){
