@@ -157,12 +157,9 @@ function combatPlayerHp(ch,elapsed){
  const id='p-'+(stage==='maids'?'maid-':'raid-')+side+'-'+String(ch?.id||ch?.name||'character');
  return hpPctAt(pack.result,elapsed,id,100)
 }
-function maidBossHp(side,elapsed,penalty=Number(session?.state?.[side===0?'maidPenaltyA':'maidPenaltyB'])||0){
+function maidBossHp(side,elapsed){
  const pack=combatFor('maids',side);if(!pack)return null;
- const base=hpPctAt(pack.result,elapsed,'e-0',100),duration=Math.max(1,Number(pack.result?.durationMs)||STAGE_MIN_MS.maids);
- if(!penalty)return base;
- if(elapsed<=duration)return Math.min(100,base+penalty*15);
- return Math.max(0,penalty*15-((elapsed-duration)/duration)*100)
+ return hpPctAt(pack.result,elapsed,'e-0',100)
 }
 function stageCombatDuration(stage){
  if(stage==='maids'){const a=combatFor('maids',0)?.result?.durationMs||0,b=combatFor('maids',1)?.result?.durationMs||0;return Math.max(STAGE_MIN_MS.maids,a,b)}
@@ -531,7 +528,7 @@ async function syncSharedRaidView(force=false){
    :((entryHealthForSide(0)<100||entryHealthForSide(1)<100)?' One five-character party was recovered after the previous room and enters at 50% health.':'');
  viewer.playSharedEncounter({
    party:pack.party,encounter:pack.encounter,result:pack.result,
-   enemyDisplayMax:session.stage==='maids'?[2500]:session.stage==='housebound'?[5000]:null,
+   enemyDisplayMax:null,
    startAt:readyStartAt()||stamp(session?.state?.stageStartedAt),
    header:'THE MANOR · '+String(room).toUpperCase()+' · LIVE 2D RAID',
    title:session.stage==='maids'?'The Maid':stageName(session.stage),
