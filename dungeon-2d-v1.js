@@ -575,6 +575,13 @@ function pctPosition(id){
 function enemyPosition(index){return pctPosition('e-'+index)}
 function formationPoint(c,index){
  const ep=enemyPosition(index),profile=combatProfile(c),p=party();
+ if(run?.externalMode){
+   const same=p.filter(x=>combatProfile(x)===profile&&hp(x.id)>0),i=Math.max(0,same.indexOf(c)),count=Math.max(1,same.length),spread=(lo,hi)=>count===1?(lo+hi)/2:lo+(hi-lo)*(i/(count-1));
+   if(profile==='tank')return{x:clamp(ep.x-10,34,68),y:clamp(spread(36,64),14,86)};
+   if(profile==='melee')return{x:clamp(ep.x-14-(i%2)*2,30,66),y:clamp(spread(20,80),14,86)};
+   if(profile==='ranged')return{x:clamp(ep.x-31-(i%2)*3,18,46),y:clamp(spread(18,82),14,86)};
+   return{x:clamp(ep.x-40,12,34),y:clamp(spread(28,72),14,86)}
+ }
  if(profile==='tank')return{x:clamp(ep.x-10,34,68),y:clamp(ep.y,15,85)};
  if(profile==='melee'){
    const melees=p.filter(x=>combatProfile(x)==='melee'),i=Math.max(0,melees.indexOf(c));
@@ -587,7 +594,7 @@ function formationPoint(c,index){
    return{x:clamp(ep.x-30-(i%2)*4,20,46),y:ys[i]||50};
  }
  const living=p.filter(x=>hp(x.id)>0),avgY=living.reduce((n,x)=>n+pctPosition('p-'+x.id).y,0)/Math.max(1,living.length);
- return{x:clamp(ep.x-40,12,34),y:clamp(avgY+12,24,78)};
+ return{x:clamp(ep.x-40,12,34),y:clamp(avgY+12,24,78)}
 }
 function maintainPosition(c,index,fast=false){
  if(run?.mechanicActive||index<0)return;
@@ -1082,7 +1089,9 @@ function interruptOK(s){if(run.forceInterrupt){run.forceInterrupt=false;return t
 function regroup(){
  const index=enemyIndex();
  if(index>=0){settleFormation(index);return}
- const p=party(),melee=p.filter(c=>combatProfile(c)==='melee'),ranged=p.filter(c=>combatProfile(c)==='ranged');
+ const p=party();
+ if(run?.externalMode){p.forEach((c,i)=>{const pos=sharedFormationPosition(c,i,p.length);move('p-'+c.id,pos.x,pos.y,500)});return}
+ const melee=p.filter(c=>combatProfile(c)==='melee'),ranged=p.filter(c=>combatProfile(c)==='ranged');
  p.forEach(c=>{
    let x=22,y=50;
    if(combatProfile(c)==='tank'){x=32;y=50}
