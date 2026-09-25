@@ -6,7 +6,7 @@ create or replace function public.manor_screech_result_v2(
 ) returns jsonb
 language plpgsql
 security definer
-set search_path='public'
+set search_path=''
 as $$
 declare
   v_user uuid:=auth.uid();
