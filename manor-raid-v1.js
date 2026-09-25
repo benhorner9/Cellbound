@@ -80,7 +80,7 @@ function combatFor(stage,side=null){
  const healthKey=side===null?(entryHealthForSide(0)+'-'+entryHealthForSide(1)):String(entryHealthForSide(side));
  const seedKey=session.id+':'+stage+':'+(side===null?'raid':side),key=seedKey+':penalty-'+penalty+':entry-'+healthKey;
  if(combatCache.has(key))return combatCache.get(key);
- const p=stage==='maids'?engineParty(side):engineParty(null),enc=stage==='maids'?maidEncounter(side):manorEncounter(stage);
+ const p=stage==='maids'?engineParty(side):engineParty(null),enc=stage==='maids'?maidEncounter(side):{...manorEncounter(stage),lockWipedRaidParties:true};
  if(!p.length||!enc)return null;
  try{
    const result=E.simulate({party:p,encounter:enc,seed:seedKey,maxDurationMs:180000},{zone:'manor-raid'});
