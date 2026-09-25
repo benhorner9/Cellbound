@@ -274,7 +274,7 @@ async function resumeAttempt(dungeonId){
 async function beginOrResumeAttempt(dungeonId){
  const resumed=await resumeAttempt(dungeonId);
  const runtime=resumed?.runtimeState;
- if(resumed?.active&&runtime&&typeof runtime==='object'&&Number(runtime.version)>=1){
+ if(resumed?.active&&runtime&&typeof runtime==='object'&&Number(runtime.version)>=1&&!['failed','completed','abandoned'].includes(String(runtime.phase||''))){
    return{...resumed,resumed:true}
  }
  return beginAttempt(dungeonId)
