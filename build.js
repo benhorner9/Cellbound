@@ -330,8 +330,11 @@ for(const file of files){
     if(contents.includes('data-hub="guild" data-view="chat"'))throw new Error('Social must remain separate from the Guild section');
     const socialNav=contents.indexOf('<div class="nav-section-label">SOCIAL</div>'),combatNav=contents.indexOf('<div class="nav-section-label">COMBAT</div>'),adminNav=contents.indexOf('id="adminNav"');
     if(socialNav<0||combatNav<0||adminNav<0||!(combatNav<socialNav&&socialNav<adminNav)||!contents.includes('data-hub="social" data-view="chat"'))throw new Error('Social must be the final player-facing sidebar section');
-    const qNav=contents.indexOf('data-view="quests" data-mobile-core'),dNav=contents.indexOf('data-view="content" data-mobile-core'),eNav=contents.indexOf('data-view="world"><span>✦</span><b>Events</b>'),egNav=contents.indexOf('data-view="endgame"><span>◇</span><b>Endgame</b>');
-    if(qNav<0||dNav<0||eNav<0||egNav<0||!(qNav<dNav&&dNav<eNav&&eNav<egNav))throw new Error('Adventure navigation must remain Quests → Dungeons → Events → Endgame');
+    const qNav=contents.indexOf('data-view="quests" data-mobile-core'),dNav=contents.indexOf('data-view="content" data-mobile-core'),eNav=contents.indexOf('data-view="world"><span>✦</span><b>Events</b>'),rNav=contents.indexOf('data-view="raids"><span>♜</span><b>Raids</b>'),egNav=contents.indexOf('data-view="endgame"><span>◇</span><b>Endgame</b>');
+    if(qNav<0||dNav<0||eNav<0||rNav<0||egNav<0||!(qNav<dNav&&dNav<eNav&&eNav<rNav&&rNav<egNav))throw new Error('Adventure navigation must remain Quests → Dungeons → Events → Raids → Endgame');
+    if(!contents.includes('<section id="raids" class="view">')||!contents.includes('id="manorRaidMount"'))throw new Error('Raids view or Manor raid mount is missing');
+    const endgameStart=contents.indexOf('<section id="endgame" class="view">'),endgameEnd=contents.indexOf('<section id="world" class="view">',endgameStart);
+    if(endgameStart<0||endgameEnd<0||contents.slice(endgameStart,endgameEnd).includes('manorRaidMount'))throw new Error('The Manor must not be mounted inside Endgame');
     if(!contents.includes('dungeon-2d-v1.css')||!contents.includes('dungeon-2d-v1.js'))throw new Error('Ashen Vault 2D viewer assets are not linked from guild.html');
     if(!contents.includes('chaos-canyon-v1.css')||!contents.includes('chaos-canyon-v1.js')||!contents.includes('id="chaosCanyonMount"'))throw new Error('Chaos Canyon assets or mount are not linked from guild.html');
     if(!contents.includes('blackout-station-v1.css')||!contents.includes('blackout-station-v1.js')||!contents.includes('id="blackoutStationMount"'))throw new Error('Blackout Station assets or mount are not linked from guild.html');
