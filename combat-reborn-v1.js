@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.7';
+const VERSION='1.3.8';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -1696,6 +1696,13 @@ function resolveMechanic(ctx,e,m,token){
  if(!cast||cast.token!==token){scheduleNextMechanic(ctx);return}
  ctx.activeEnemyCast=null;
  emit(ctx,'MECHANIC_RESOLVE',{source:e.id,ability:m.name,result:'resolve',payload:{mechanicType:m.type,token}});
+ if(m.type==='interaction'){
+  emit(ctx,'INTERACTION_REQUIRED',{
+   source:e.id,target:cast.targetId||null,ability:m.name,result:'required',
+   payload:{mechanicType:'interaction',token,interaction:m.interaction||m.interactionKey||m.name,durationMs:Math.max(1000,Number(m.interactionDurationMs)||4500)}
+  });
+  mechanicStat(ctx,'interaction',false);scheduleNextMechanic(ctx);return
+ }
  if(m.type==='adds'){spawnAdds(ctx,e,m);mechanicStat(ctx,'adds',false);scheduleNextMechanic(ctx);return}
  if(m.type==='persistent-circle'){
   const target=getUnit(ctx,cast.targetId),success=target?cast.responses?.[target.id]!==false:true;
@@ -2054,6 +2061,8 @@ function runSelfTests(){
  test('Frontal Cone',()=>r.events.some(e=>e.type==='MECHANIC_TELEGRAPH'&&e.payload.mechanicType==='cone'));
  r=simulate({party,encounter:{...base,mechanics:[['Adds','adds',900]]},seed:'adds'});
  test('Adds',()=>r.events.some(e=>e.type==='ADD_SPAWNED')&&r.events.some(e=>e.type==='ADD_DEFEATED'));
+ r=simulate({party,encounter:{...base,enemyHealth:5000,mechanicIntervalMs:900,mechanics:[{name:'Screech',type:'interaction',duration:600,interaction:'manor-screech',interactionDurationMs:4500}]},seed:'interaction-event',maxDurationMs:2600});
+ test('Raid Interaction Event',()=>r.events.some(e=>e.type==='INTERACTION_REQUIRED'&&e.ability==='Screech'&&e.payload?.interaction==='manor-screech'&&Number(e.payload?.durationMs)===4500));
  r=simulate({party,encounter:{...base,mechanics:[['Ground AoE','circle',1500]]},tactics:{movementDiscipline:'safety'},seed:'ground'});
  test('Ground AoE',()=>r.events.some(e=>e.type==='MOVEMENT_START'&&e.result==='mechanic response'));
  const weak=mockParty().map(x=>({...x,power:1,level:1}));
