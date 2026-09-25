@@ -166,7 +166,9 @@ function maidBossHp(side,elapsed,penalty=Number(session?.state?.[side===0?'maidP
 }
 function stageCombatDuration(stage){
  if(stage==='maids'){const a=combatFor('maids',0)?.result?.durationMs||0,b=combatFor('maids',1)?.result?.durationMs||0;return Math.max(STAGE_MIN_MS.maids,a,b)}
- return Math.max(STAGE_MIN_MS[stage]||0,Number(combatFor(stage)?.result?.durationMs)||Number(STAGES[stage]?.duration)||0)
+ const resultMs=Number(combatFor(stage)?.result?.durationMs)||0;
+ if(resultMs>0)return Math.max(STAGE_MIN_MS[stage]||0,resultMs);
+ return Number(STAGES[stage]?.duration)||STAGE_MIN_MS[stage]||0
 }
 function bedroomRemaining(elapsed){
  const result=combatFor('bedroom')?.result;if(!result)return 20;
