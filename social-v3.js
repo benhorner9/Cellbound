@@ -61,14 +61,15 @@ function renderTargetOptions(){
   options.push({type:'dungeon',id:'chaos-canyon',label:'Chaos Canyon'});
   options.push({type:'dungeon',id:'blackout-station',label:'Blackout Station'});
   if(s?.progression?.fracturedAgesUnlocked)options.push({type:'dungeon',id:'fractured-ages',label:'The Fractured Ages'});
+  if(s?.progression?.manorRaidUnlocked)options.push({type:'raid',id:'manor',label:'The Manor'});
   const before=sel.value;
-  sel.innerHTML=options.map(o=>`<option value="${o.type}|${o.id}|${esc(o.label)}">Dungeon · ${esc(o.label)}</option>`).join('');
+  sel.innerHTML=options.map(o=>`<option value="${o.type}|${o.id}|${esc(o.label)}">${o.type==='raid'?'Raid':'Dungeon'} · ${esc(o.label)}</option>`).join('');
   if([...sel.options].some(o=>o.value===before))sel.value=before;
 }
 async function loadGroups(){
   if(!db||!user)return;
   const now=new Date().toISOString();
-  const {data,error}=await db.from('party_finder_listings').select('*').eq('content_type','dungeon').in('status',['open','full']).gt('expires_at',now).order('created_at',{ascending:false}).limit(40);
+  const {data,error}=await db.from('party_finder_listings').select('*').in('content_type',['dungeon','raid']).in('status',['open','full']).gt('expires_at',now).order('created_at',{ascending:false}).limit(40);
   if(error){console.warn(error);groups=[];groupMembers=[];renderGroups();return;}
   groups=data||[];
   if(groups.length){
@@ -84,22 +85,26 @@ function renderGroups(){
   if(!groups.length){root.innerHTML='<div class="social-empty">No groups looking for players.</div>';return;}
   root.innerHTML=groups.map(g=>{
     const members=groupMembers.filter(m=>m.listing_id===g.id),joined=members.some(m=>m.user_id===user.id),leader=g.leader_id===user.id,full=members.length>=g.player_cap;
-    return `<article class="pf-card"><div class="pf-card-head"><div><h4>${esc(g.target_label)}</h4><small>DUNGEON · Leader ${esc(g.guild_label)} · Party iLvl ${Number(g.party_ilvl).toFixed(1)}</small></div><b class="pf-count">${members.length}/${g.player_cap}</b></div><p>${esc(g.note||'Looking for other commanders.')}</p><div class="pf-members">${members.map(m=>`<span>${esc(m.guild_label)} · iLvl ${Number(m.party_ilvl).toFixed(1)}</span>`).join('')}</div><div class="pf-actions">${leader?`<button class="secondary" data-pf-leave="${g.id}">CLOSE GROUP</button>`:joined?`<button class="secondary" data-pf-leave="${g.id}">LEAVE</button>`:`<button data-pf-join="${g.id}" ${full?'disabled':''}>${full?'FULL':'JOIN GROUP'}</button>`}</div></article>`;
+    return `<article class="pf-card"><div class="pf-card-head"><div><h4>${esc(g.target_label)}</h4><small>${g.content_type==='raid'?'RAID':'DUNGEON'} · Leader ${esc(g.guild_label)} · Party iLvl ${Number(g.party_ilvl).toFixed(1)}</small></div><b class="pf-count">${members.length}/${g.player_cap}</b></div><p>${esc(g.note||'Looking for other commanders.')}</p><div class="pf-members">${members.map(m=>`<span>${esc(m.guild_label)} · iLvl ${Number(m.party_ilvl).toFixed(1)}</span>`).join('')}</div><div class="pf-actions">${leader?`<button class="secondary" data-pf-leave="${g.id}">CLOSE GROUP</button>`:joined?`<button class="secondary" data-pf-leave="${g.id}">LEAVE</button>`:`<button data-pf-join="${g.id}" ${full?'disabled':''}>${full?'FULL':'JOIN GROUP'}</button>`}</div></article>`;
   }).join('');
   root.querySelectorAll('[data-pf-join]').forEach(b=>b.onclick=()=>joinGroup(b.dataset.pfJoin));
   root.querySelectorAll('[data-pf-leave]').forEach(b=>b.onclick=()=>leaveGroup(b.dataset.pfLeave));
 }
 async function createGroup(e){
   e.preventDefault();if(!partyReady()){alert('Build a complete available five-character party first.');return;}
-  const [type,id,label]=($('#partyFinderTarget')?.value||'dungeon|ashen-vault|The Ashen Vault').split('|'),cap=Math.max(2,Math.min(8,Number($('#partyFinderCap')?.value)||4)),note=($('#partyFinderNote')?.value||'').trim();
-  const {error}=await db.rpc('create_party_finder_listing',{p_content_type:type,p_target_id:id,p_target_label:label,p_note:note,p_party_ilvl:partyIlvl(),p_player_cap:cap});
+  const [type,id,label]=($('#partyFinderTarget')?.value||'dungeon|ashen-vault|The Ashen Vault').split('|'),cap=type==='raid'?2:Math.max(2,Math.min(8,Number($('#partyFinderCap')?.value)||4)),note=($('#partyFinderNote')?.value||'').trim();
+  const {data,error}=await db.rpc('create_party_finder_listing',{p_content_type:type,p_target_id:id,p_target_label:label,p_note:note,p_party_ilvl:partyIlvl(),p_player_cap:cap});
   if(error){alert(error.message||'Could not create group');return;}
+  if(type==='raid'&&data)await window.CellboundManorRaid?.syncPartyToListing?.(data);
   $('#partyFinderNote').value='';channel='party';setChannel('party');await loadGroups();
 }
 async function joinGroup(id){
   if(!partyReady()){alert('Build a complete available five-character party first.');return;}
+  const target=groups.find(x=>x.id===id);
   const {error}=await db.rpc('join_party_finder_listing',{p_listing_id:id,p_party_ilvl:partyIlvl()});
-  if(error){alert(error.message||'Could not join group');return;}await loadGroups();
+  if(error){alert(error.message||'Could not join group');return;}
+  if(target?.content_type==='raid')await window.CellboundManorRaid?.syncPartyToListing?.(id);
+  await loadGroups();
 }
 async function leaveGroup(id){const {error}=await db.rpc('leave_party_finder_listing',{p_listing_id:id});if(error){alert(error.message);return;}await loadGroups();}
 
