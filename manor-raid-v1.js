@@ -17,7 +17,7 @@ const SCREECH_COLOURS=[
  {name:'RED',hex:'#ff5050'},{name:'BLUE',hex:'#55a7ff'},{name:'GREEN',hex:'#58d87a'},{name:'YELLOW',hex:'#ffd34f'},{name:'PURPLE',hex:'#bf75ff'}
 ];
 let Game=null,db=null,user=null,mount=null,groups=[],members=[],lockout=null,myGroup=null,session=null;
-let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false;
+let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false,raidRealtime=null,readyLaunchTimer=null,serverClockOffset=0;
 const combatCache=new Map();
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
@@ -25,6 +25,10 @@ const roleOf=c=>Game?.classes?.[c?.class]?.specs?.[c?.spec]?.role||c?.role||'dps
 const partyReady=()=>party().length===5&&!party().some(c=>Game?.isUnavailable?.(c));
 const unlocked=()=>Boolean(state()?.progression?.manorRaidUnlocked);
 const now=()=>Date.now();
+const serverNow=()=>Date.now()+serverClockOffset;
+function syncServerClock(serverStamp){
+ const ms=stamp(serverStamp);if(ms)serverClockOffset=ms-Date.now()
+}
 const stamp=v=>new Date(v||0).getTime()||0;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function snapshot(){
@@ -260,6 +264,84 @@ function ensureOverlay(){
  root=document.createElement('div');root.id='manorRaidOverlay';root.className='mr-overlay';root.hidden=true;document.body.appendChild(root);return root
 }
 
+function readyStartAt(){return stamp(session?.state?.encounterStartAt)}
+function encounterIsLive(){const start=readyStartAt();return Boolean(start&&serverNow()>=start)}
+function readyState(){
+ return{
+  a:Boolean(session?.state?.readyA),
+  b:Boolean(session?.state?.readyB),
+  stage:String(session?.state?.readyStage||session?.stage||''),
+  startAt:readyStartAt()
+ }
+}
+function clearReadyLaunch(){if(readyLaunchTimer){clearTimeout(readyLaunchTimer);readyLaunchTimer=null}}
+function scheduleReadyLaunch(){
+ clearReadyLaunch();
+ const start=readyStartAt();if(!start)return;
+ const delay=Math.max(0,start-serverNow());
+ readyLaunchTimer=setTimeout(()=>{readyLaunchTimer=null;syncSharedRaidView(true)},delay+20)
+}
+function commanderLabel(side){
+ const rows=memberRows();return rows[side]?.guild_label||('Party '+(side===0?'A':'B'))
+}
+async function setRaidReady(next){
+ if(!session?.id)return;
+ try{
+   const {data,error}=await db.rpc('manor_set_ready',{p_session_id:session.id,p_ready:Boolean(next)});
+   if(error)throw error;
+   if(data?.serverNow)syncServerClock(data.serverNow);
+   if(data?.state)session={...session,state:data.state,updated_at:new Date(serverNow()).toISOString()};
+   renderReadyGate();scheduleReadyLaunch()
+ }catch(error){alert(error.message||'Could not update raid ready state')}
+}
+function renderReadyGate(){
+ if(!session||session.status!=='active'||encounterIsLive())return;
+ window.CellboundDungeon2D?.closeShared?.(true);
+ const root=ensureOverlay();root.hidden=false;document.body.classList.add('mr-open');
+ const ready=readyState(),mine=myRaidSide(),mineReady=mine===0?ready.a:ready.b,otherReady=mine===0?ready.b:ready.a;
+ const remaining=ready.startAt?Math.max(0,ready.startAt-serverNow()):0;
+ const count=ready.startAt?Math.max(1,Math.ceil(remaining/1000)):null;
+ const countdown=ready.startAt
+   ?'<div class="mr-ready-count"><small>BOTH COMMANDERS READY</small><strong>'+(remaining<=80?'GO':count)+'</strong><span>Entering '+esc(stageName(session.stage))+' together</span></div>'
+   :'<div class="mr-ready-wait"><small>READY CHECK</small><h1>'+esc(stageName(session.stage))+'</h1><p>Both commanders must be ready before combat begins.</p></div>';
+ root.innerHTML='<section class="mr-ready-shell"><header><div><small>THE MANOR · SYNCHRONISED RAID</small><h2>'+esc(stageRoom(session.stage))+'</h2></div><button data-ready-close>×</button></header>'+
+  countdown+
+  '<div class="mr-ready-teams"><article class="'+(ready.a?'is-ready':'')+'"><i>PARTY A</i><b>'+esc(commanderLabel(0))+'</b><span>'+(ready.a?'READY ✓':'NOT READY')+'</span></article>'+
+  '<article class="'+(ready.b?'is-ready':'')+'"><i>PARTY B</i><b>'+esc(commanderLabel(1))+'</b><span>'+(ready.b?'READY ✓':'NOT READY')+'</span></article></div>'+
+  (ready.startAt?'':'<button class="mr-ready-button '+(mineReady?'is-ready':'')+'" data-raid-ready="'+(!mineReady)+'">'+(mineReady?'READY ✓ · CANCEL':'READY UP')+'</button>')+
+  (!ready.startAt&&mineReady&&!otherReady?'<p class="mr-ready-status">Waiting for the other commander…</p>':'')+
+  '<footer><span>Both clients use the same server start timestamp.</span><b>3 SECOND COUNTDOWN</b></footer></section>';
+ root.querySelector('[data-ready-close]')?.addEventListener('click',()=>closeRaid());
+ root.querySelector('[data-raid-ready]')?.addEventListener('click',e=>setRaidReady(e.currentTarget.dataset.raidReady==='true'));
+ if(ready.startAt){
+   if(remaining<=80){scheduleReadyLaunch()}
+ }
+}
+async function subscribeRaidRealtime(id){
+ if(!db?.channel)return;
+ if(raidRealtime){try{await db.removeChannel(raidRealtime)}catch(_){}raidRealtime=null}
+ raidRealtime=db.channel('manor-session-'+id)
+  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'raid_sessions',filter:'id=eq.'+id},payload=>{
+    const incoming=payload?.new;if(!incoming||incoming.id!==id)return;
+    syncServerClock(incoming.updated_at);
+    const beforeStage=session?.stage,beforeStatus=session?.status,beforeStart=readyStartAt(),beforeState=JSON.stringify(session?.state||{});
+    session=incoming;
+    const changedStage=beforeStage!==session.stage||beforeStatus!==session.status;
+    const changedStart=beforeStart!==readyStartAt();
+    if(changedStage||changedStart){sharedStageKey='';syncSharedRaidView(true);return}
+    if(!encounterIsLive())renderReadyGate();
+    else if(beforeState!==JSON.stringify(session.state||{})){
+      // Screech penalties and other shared raid state are now available immediately.
+      if(session.stage==='maids')window.dispatchEvent(new CustomEvent('cellbound:manor-sync',{detail:{state:session.state}}))
+    }
+  })
+  .subscribe(status=>{if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')console.warn('Manor realtime status',status)})
+}
+async function unsubscribeRaidRealtime(){
+ if(!raidRealtime||!db)return;
+ const channel=raidRealtime;raidRealtime=null;
+ try{await db.removeChannel(channel)}catch(error){console.warn('Could not remove Manor realtime channel',error)}
+}
 function ensureScreechHost(){
  let host=$('#mrScreechHost');
  // The old raid renderer could leave this host inside the hidden Manor overlay.
@@ -288,6 +370,9 @@ function sharedStagePack(){
 }
 async function syncSharedRaidView(force=false){
  if(!session)return;
+ if(session.status==='active'&&!encounterIsLive()){
+   sharedStageKey='';renderReadyGate();scheduleReadyLaunch();return
+ }
  if(session.status==='failed'){
    window.CellboundDungeon2D?.closeShared?.(true);
    const root=ensureOverlay();root.hidden=false;document.body.classList.add('mr-open');renderWipeShell();return
@@ -320,9 +405,11 @@ async function syncSharedRaidView(force=false){
 }
 async function pollRaidSession(id){
  try{
-   const beforeStage=session?.stage,beforeStatus=session?.status;
+   const beforeStage=session?.stage,beforeStatus=session?.status,beforeUpdated=session?.updated_at,beforeStart=readyStartAt();
    await loadSession(id);
-   if(session?.stage!==beforeStage||session?.status!==beforeStatus)await syncSharedRaidView(true)
+   if(session?.updated_at)syncServerClock(session.updated_at);
+   if(session?.stage!==beforeStage||session?.status!==beforeStatus||readyStartAt()!==beforeStart)await syncSharedRaidView(true);
+   else if(session?.updated_at!==beforeUpdated&&!encounterIsLive())renderReadyGate()
  }catch(error){console.warn('Manor session refresh failed',error)}
 }
 async function loadSession(id){
@@ -334,15 +421,17 @@ async function loadSession(id){
 async function openRaid(id){
  try{await loadSession(id)}catch(e){alert(e.message);return}
  sharedStageKey='';lastStage='';lastScreechAt=0;screechOpen=false;closingRaid=false;
- clearInterval(raidTimer);clearInterval(paintTimer);
+ clearInterval(raidTimer);clearInterval(paintTimer);clearReadyLaunch();
+ await subscribeRaidRealtime(id);
  await syncSharedRaidView(true);
- raidTimer=setInterval(()=>pollRaidSession(id),900);
- paintTimer=setInterval(tickRaid,180);
+ raidTimer=setInterval(()=>pollRaidSession(id),2500);
+ paintTimer=setInterval(tickRaid,100);
  tickRaid()
 }
 function closeRaid(fromShared=false){
  if(closingRaid)return;closingRaid=true;
- clearInterval(raidTimer);clearInterval(paintTimer);raidTimer=paintTimer=null;screechOpen=false;sharedStageKey='';
+ clearInterval(raidTimer);clearInterval(paintTimer);raidTimer=paintTimer=null;screechOpen=false;sharedStageKey='';clearReadyLaunch();
+ unsubscribeRaidRealtime();
  const host=$('#mrScreechHost');if(host)host.innerHTML='';
  if(!fromShared)window.CellboundDungeon2D?.closeShared?.(true);
  const root=$('#manorRaidOverlay');if(root)root.hidden=true;
@@ -351,7 +440,7 @@ function closeRaid(fromShared=false){
 }
 function stageName(id){return id==='maids'?'The Maids':id==='housebound'?'The Master of the Manor':id==='bedroom'?'The Bedroom':id==='victory'?'Raid Complete':STAGES[id]?.name||'The Manor'}
 function stageRoom(id){return id==='maids'?'Dining Room / Kitchen':id==='victory'?'The Attic':STAGES[id]?.room||'The Manor'}
-function stageElapsed(){return Math.max(0,now()-stamp(session?.state?.stageStartedAt))}
+function stageElapsed(){return Math.max(0,serverNow()-stamp(session?.state?.stageStartedAt))}
 function memberRows(){return groupMembers(session?.listing_id).sort((a,b)=>stamp(a.joined_at)-stamp(b.joined_at))}
 function allRaidChars(){return memberRows().flatMap((m,pi)=>(Array.isArray(m.party_snapshot)?m.party_snapshot:[]).map((c,ci)=>({...c,partyIndex:pi,charIndex:ci})))}
 function renderRaidShell(){
@@ -366,6 +455,7 @@ function renderRaidShell(){
 function tickRaid(){
  if(!session)return;
  if(session.status==='failed'||session.status==='completed'||session.stage==='victory')return;
+ if(!encounterIsLive()){renderReadyGate();return}
  const e=stageElapsed();
  if(isLeader()){
    if(session.stage==='maids')driveMaids(e);
