@@ -529,7 +529,7 @@ function normaliseEnemies(encounter){
    maxHealth,health:currentHealth,alive:currentHealth>0,position:(data.currentPosition&&Number.isFinite(Number(data.currentPosition.x))&&Number.isFinite(Number(data.currentPosition.y)))?{x:Number(data.currentPosition.x),y:Number(data.currentPosition.y)}:{x:68,y:raw.length===1?50:30+i*(40/Math.max(1,raw.length-1))},facing:180,
    target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},movingUntil:0,moveToken:0,nextAttack:900+i*220,currentCast:null,
    isAdd:false,priority:Number.isFinite(Number(data.priority))?Number(data.priority):(i===0?2:1),focusSelected:Boolean(data.focusSelected),damageScale:rule.damage*damageMult,phaseDamageScale:1,hardEnraged:false,
-   targeting:String(data.targeting||'threat').toLowerCase(),attackRange:Math.max(2,Number(data.attackRange)||5),attackName:data.attackName||null,damageType:data.damageType||'physical',allAttacksAoe:Boolean(data.allAttacksAoe)
+   targeting:String(data.targeting||'threat').toLowerCase(),attackRange:Math.max(2,Number(data.attackRange)||5),attackName:data.attackName||null,damageType:data.damageType||'physical',allAttacksAoe:Boolean(data.allAttacksAoe),passive:Boolean(data.passive),addGroup:data.addGroup||null
   }
  })
 }
@@ -1101,6 +1101,7 @@ function mitigation(ctx,target,damageType='physical',opts={}){
  if(target.class==='Priest'&&healthRatio(target)<.55)value*=Math.max(.82,1-talentRank(target,'Focused Will')*.05);
  if(target.defensiveUntil>0)value*=target.role==='tank'?.66:.74;
  value*=1-clamp(statusBonus(target,'incomingDamageReduction'),0,.70);
+ value*=1+clamp(statusBonus(target,'incomingDamageTaken'),0,2.5);
  return Math.max(.28,value);
 }
 
@@ -1508,6 +1509,7 @@ function playerAI(ctx,u){
 }
 function enemyBasicAttack(ctx,e){
  if(!e.alive||ctx.time<e.movingUntil||isCrowdControlled(e))return;
+ if(e.passive){e.nextAttack=ctx.time+1000;return}
  const live=livingPlayers(ctx);if(!live.length)return;
  const randomTarget=e.targeting==='random',target=randomTarget?live[Math.floor(ctx.rng()*live.length)]:(topThreatTarget(ctx,e)||live[0]);if(!target)return;
  setAggro(ctx,e,target,randomTarget?'random targeting':'threat');
