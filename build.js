@@ -336,6 +336,7 @@ for(const file of files){
     const manorRuntime=fs.readFileSync(path.join(__dirname,'manor-raid-v1.js'),'utf8'),sharedViewerRuntime=fs.readFileSync(path.join(__dirname,'dungeon-2d-v1.js'),'utf8');
     if(!manorRuntime.includes("function combatEngine(){return window.CellboundCombatStandard}")||!manorRuntime.includes("zone:'manor-raid'")||!manorRuntime.includes('playSharedEncounter'))throw new Error('The Manor must use the standard Combat Reborn gateway and shared CB2D viewer');
     for(const hook of ["manor_set_ready","3 SECOND COUNTDOWN","subscribeRaidRealtime","encounterStartAt","readyA","readyB"])if(!manorRuntime.includes(hook))throw new Error('Manor synchronized ready check is missing '+hook);
+    for(const hook of ["pendingRewardSession","UNCLAIMED MANOR REWARD","data-mr-pending-loot"])if(!manorRuntime.includes(hook))throw new Error('Manor released-group reward recovery is missing '+hook);
     if(!sharedViewerRuntime.includes('function playSharedEncounter(')||!sharedViewerRuntime.includes('playRebornTimeline(result,tok)'))throw new Error('Shared CB2D external encounter playback is missing');
     if(!sharedViewerRuntime.includes('externalOnEvent')||!sharedViewerRuntime.includes("case'INTERACTION_REQUIRED'"))throw new Error('Shared CB2D raid interaction event bridge is missing');
     const combatRuntime=fs.readFileSync(path.join(__dirname,'combat-reborn-v1.js'),'utf8');
