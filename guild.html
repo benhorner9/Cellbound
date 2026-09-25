@@ -48,7 +48,7 @@
   <link rel="stylesheet" href="./readability-v1.css?v=2">
   <link rel="stylesheet" href="./ui-readability-v2.css?v=4">
   <link rel="stylesheet" href="./ui-polish-v3.css?v=2">
-  <link rel="stylesheet" href="./home-v2.css?v=2">
+  <link rel="stylesheet" href="./home-v2.css?v=3">
   <link rel="stylesheet" href="./command-ui-v1.css?v=1">
   <link rel="stylesheet" href="./roster-v2.css?v=2">
   <link rel="stylesheet" href="./character-portraits-v1.css?v=4">
@@ -74,9 +74,8 @@
       <div class="nav-section-label">ADVENTURE</div>
       <button class="nav-btn" data-hub="adventure" data-view="quests" data-mobile-core><span>⌁</span><b>Quests</b><em id="questNavBadge"></em></button>
       <button class="nav-btn" data-hub="adventure" data-view="content" data-mobile-core><span>▱</span><b>Dungeons</b></button>
-      <button class="nav-btn" data-hub="adventure" data-view="world"><span>✦</span><b>Events</b></button>
+      <button class="nav-btn" data-hub="adventure" data-view="world"><span>✦</span><b>Activities</b></button>
       <button class="nav-btn" data-hub="adventure" data-view="raids"><span>♜</span><b>Raids</b></button>
-      <button class="nav-btn" data-hub="adventure" data-view="endgame"><span>◇</span><b>Endgame</b></button>
 
       <div class="nav-section-label">MARKET</div>
       <button class="nav-btn" data-hub="market" data-view="trading"><span>⇄</span><b>Trading Post</b></button>
@@ -135,9 +134,8 @@
         <nav class="home-destination-grid" aria-label="Home quick access">
           <button type="button" class="home-destination quests" data-jump="quests"><span>⌁</span><small>ADVENTURE</small><b>Quests</b><em>Continue the story</em></button>
           <button type="button" class="home-destination dungeons" data-jump="content"><span>▱</span><small>EXPEDITIONS</small><b>Dungeons</b><em id="homeDungeonStatus">Choose a dungeon</em></button>
-          <button type="button" class="home-destination events" data-jump="world"><span>✦</span><small>LIVE CONTENT</small><b>Events</b><em id="homeEventStatus">The Twelve Below</em></button>
+          <button type="button" class="home-destination events" data-jump="world"><span>✦</span><small>SIDE ACTIVITIES</small><b>Activities</b><em id="homeEventStatus">The Twelve Below</em></button>
           <button type="button" class="home-destination raids" data-jump="raids"><span>♜</span><small>GROUP CONTENT</small><b>Raids</b><em id="homeRaidStatus">The Manor</em></button>
-          <button type="button" class="home-destination endgame" data-jump="endgame"><span>◇</span><small>PROGRESSION</small><b>Endgame</b><em id="homeEndgameStatus">Push further</em></button>
         </nav>
 
         <div class="home-bottom-grid">
@@ -379,7 +377,7 @@
     </section>
 
     <section id="world" class="view">
-      <div class="section-intro"><div><small>WORLD EVENTS</small><h2>Events</h2><p>Special encounters and limited challenges appear here. The Twelve Below is currently active in the Sepulchre.</p></div></div>
+      <div class="section-intro"><div><small>SIDE ACTIVITIES</small><h2>Activities</h2><p>Minigames, special encounters and repeatable challenges live here. The Twelve Below is currently active in the Sepulchre.</p></div></div>
       <div id="twelveBelowMount"></div>
     </section>
 
@@ -522,7 +520,7 @@
 <script src="./combat-polish-v2.js?v=1"></script>
 <script src="./combat-polish-v3.js?v=1"></script>
 <script src="./combat-physical-v4.js?v=1"></script>
-<script src="./guild-v4.js?v=51"></script>
+<script src="./guild-v4.js?v=52"></script>
 <script src="./pvp-combat-v1.js?v=2"></script>
 <script src="./pvp-viewer-v1.js?v=3"></script>
 <script src="./pvp-match-v1.js?v=3"></script>
