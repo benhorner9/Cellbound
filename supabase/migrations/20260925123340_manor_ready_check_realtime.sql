@@ -208,6 +208,7 @@ declare
   v_ready_b boolean;
   v_start_at timestamptz;
   v_state jsonb;
+  v_ready_path text[];
 begin
   if v_user is null then raise exception 'Authentication required'; end if;
 
@@ -244,12 +245,8 @@ begin
     return jsonb_build_object('ok',true,'state',v_state,'serverNow',now(),'locked',true);
   end if;
 
-  v_state:=jsonb_set(
-    v_state,
-    case when v_is_leader then '{readyA}' else '{readyB}' end,
-    to_jsonb(coalesce(p_ready,false)),
-    true
-  );
+  v_ready_path:=case when v_is_leader then array['readyA']::text[] else array['readyB']::text[] end;
+  v_state:=jsonb_set(v_state,v_ready_path,to_jsonb(coalesce(p_ready,false)),true);
 
   v_ready_a:=coalesce((v_state->>'readyA')::boolean,false);
   v_ready_b:=coalesce((v_state->>'readyB')::boolean,false);
