@@ -38,3 +38,11 @@
 .mr-thrown-plate:after{content:"";position:absolute;inset:2px 7px;border:1px solid #b28d65;border-radius:50%}
 @keyframes mrPlateThrow{0%{opacity:0;transform:translate(-240px,-210px) rotate(0deg) scale(.55)}12%{opacity:1}72%{opacity:1;transform:translate(-55px,-55px) rotate(600deg) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) rotate(820deg) scale(.75)}}
 @media(max-width:760px){.mr-boss-brief{grid-template-columns:1fr}.mr-brief-art{min-height:210px}.mr-brief-copy{padding:18px}.mr-ready-shell{padding:10px}.mr-ready-shell>header{position:sticky;top:0;z-index:40}.mr-ready-wait h1{font-size:1.8rem}.stage-butler .mr-plates i{width:116px;height:86px}}
+
+/* Manor raid requirements */
+.mr-requirements{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:10px;border:1px solid rgba(224,133,39,.22);background:linear-gradient(180deg,#0d1314,#080d0f)}
+.mr-requirements>div{display:grid;gap:4px;min-height:76px;padding:12px 13px;border:1px solid #ffffff0d;background:#0b1113}
+.mr-requirements small{color:#a8794b;font-size:.45rem;font-weight:900;letter-spacing:.12em}
+.mr-requirements strong{font:600 1.05rem Georgia,serif;color:#f0c18c}
+.mr-requirements span{color:#71817d;font-size:.52rem;line-height:1.35}
+@media(max-width:760px){.mr-requirements{grid-template-columns:1fr 1fr}.mr-requirements>div{min-height:70px}}
