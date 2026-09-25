@@ -304,6 +304,9 @@ function renderReadyGate(){
  const countdown=ready.startAt
    ?'<div class="mr-ready-count"><small>BOTH COMMANDERS READY</small><strong>'+(remaining<=80?'GO':count)+'</strong><span>Entering '+esc(stageName(session.stage))+' together</span></div>'
    :'<div class="mr-ready-wait"><small>READY CHECK</small><h1>'+esc(stageName(session.stage))+'</h1><p>Both commanders must be ready before combat begins.</p></div>';
+ const renderKey=[session.stage,ready.a,ready.b,ready.startAt?count:'wait',mineReady,otherReady].join('|');
+ if(!root.hidden&&root.dataset.readyKey===renderKey)return;
+ root.dataset.readyKey=renderKey;
  root.innerHTML='<section class="mr-ready-shell"><header><div><small>THE MANOR · SYNCHRONISED RAID</small><h2>'+esc(stageRoom(session.stage))+'</h2></div><button data-ready-close>×</button></header>'+
   countdown+
   '<div class="mr-ready-teams"><article class="'+(ready.a?'is-ready':'')+'"><i>PARTY A</i><b>'+esc(commanderLabel(0))+'</b><span>'+(ready.a?'READY ✓':'NOT READY')+'</span></article>'+
@@ -434,7 +437,7 @@ function closeRaid(fromShared=false){
  unsubscribeRaidRealtime();
  const host=$('#mrScreechHost');if(host)host.innerHTML='';
  if(!fromShared)window.CellboundDungeon2D?.closeShared?.(true);
- const root=$('#manorRaidOverlay');if(root)root.hidden=true;
+ const root=$('#manorRaidOverlay');if(root){root.hidden=true;delete root.dataset.readyKey;}
  document.body.classList.remove('mr-open');fetchHub();
  setTimeout(()=>{closingRaid=false},0)
 }
