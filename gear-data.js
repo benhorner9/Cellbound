@@ -9,7 +9,7 @@ const TIER_META={
   2:{rarity:'Uncommon',label:'Tier 2',dropEnabled:true,color:'#55d56a',statCount:2,chapter:1},
   3:{rarity:'Rare',label:'Tier 3',dropEnabled:false,color:'#4b9fff',statCount:3,chapter:1},
   4:{rarity:'Epic',label:'Tier 4',dropEnabled:false,color:'#b06cff',statCount:3,setBonus:true,chapter:1,endgame:true},
-  5:{rarity:'Epic',label:'Tier 5',dropEnabled:false,color:'#d18cff',statCount:4,setBonus:true,chapter:1,raidExclusive:true}
+  5:{rarity:'Epic',label:'Tier 5',dropEnabled:false,color:'#f08a24',statCount:4,setBonus:true,chapter:1,raidExclusive:true}
 };
 const ITEM_LEVELS={
   Head:[18,24,32,40,46],
