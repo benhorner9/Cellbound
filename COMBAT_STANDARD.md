@@ -96,6 +96,49 @@ Encounter code may add unique boss/environment effects, but it must not recreate
 
 The visual event layer remains presentation-only. It cannot calculate or alter damage, healing, targeting, timing, threat, movement decisions or encounter outcomes.
 
+### Physical combat and class identity
+The shared physical-combat layer extends the event language with class-specific presentation while leaving simulation coordinates and outcomes untouched.
+
+Every supported class must resolve through one shared visual profile containing:
+- movement personality;
+- melee lunge feel;
+- cast language;
+- projectile family;
+- class accent;
+- impact/recoil weight.
+
+Current profile coverage:
+- Warrior;
+- Paladin;
+- Priest;
+- Druid;
+- Hunter;
+- Rogue;
+- Mage;
+- Death Knight;
+- Demon Hunter;
+- Evoker;
+- Monk;
+- Shaman;
+- Warlock.
+
+Visual lunges, dodges and recoil are presentation offsets only. They must never change the authoritative combat position used by Combat Reborn.
+
+Boss/enemy presentation follows the same shared language:
+- normal strike;
+- heavy strike;
+- interruptible cast;
+- major mechanic wind-up;
+- phase change;
+- enrage;
+- death.
+
+Projectile and impact visuals should align with the authoritative event sequence. Existing encounter-specific projectile code may remain as a low-emphasis fallback, but the shared class projectile should be visually dominant when present.
+
+Units should be visually grounded with lightweight contact shadows and portrait-level motion rather than moving the whole positioned unit for cosmetic attacks.
+
+The shared layer also emits `cellbound:combat-visual` presentation events so sound design can attach to combat moments later without becoming a gameplay dependency.
+
 ---
 
 ## 3. STANDARD COMBAT SCREEN
@@ -456,6 +499,10 @@ Before any new combat content ships:
 - [ ] Visual errors cannot freeze combat
 - [ ] Authoritative combat events are forwarded to the shared visual event layer
 - [ ] Common hit/heal/cast/threat/death visuals are not reimplemented per encounter
+- [ ] Class-specific motion/projectile profile is inherited from the shared visual layer
+- [ ] Cosmetic lunges/recoil never change simulation coordinates
+- [ ] Units remain visually grounded and readable on tablet/mobile
+- [ ] Boss wind-ups clearly distinguish normal, heavy, cast and major-mechanic moments
 - [ ] Wipes include a useful diagnosis
 - [ ] Victory/loot/progression state saves correctly
 - [ ] iPad layout tested
