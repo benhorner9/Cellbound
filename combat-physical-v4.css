@@ -3,7 +3,7 @@
 
 :where(.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena,#tbArena){--cbvfx4-accent:#78d7cf}
 .cbvfx4-events{position:absolute;z-index:83;inset:0;overflow:hidden;pointer-events:none;contain:layout paint}
-.cbvfx4-ground{position:absolute!important;z-index:-1!important;left:50%!important;top:68%!important;width:34px!important;height:12px!important;border-radius:50%!important;background:radial-gradient(ellipse,rgba(0,0,0,.48),rgba(0,0,0,.08) 58%,transparent 72%)!important;box-shadow:none!important;transform:translate(-50%,-50%)!important;filter:blur(1px)!important;opacity:.72!important;pointer-events:none!important}
+.cbvfx4-ground{position:absolute!important;z-index:0!important;left:50%!important;top:68%!important;width:34px!important;height:12px!important;border-radius:50%!important;background:radial-gradient(ellipse,rgba(0,0,0,.48),rgba(0,0,0,.08) 58%,transparent 72%)!important;box-shadow:none!important;transform:translate(-50%,-50%)!important;filter:blur(1px)!important;opacity:.72!important;pointer-events:none!important}
 :where(.cb2d-unit.enemy.big,.cb2d-unit.enemy.boss,.tb-unit.enemy.boss)>.cbvfx4-ground{width:54px!important;height:17px!important;opacity:.8!important}
 :where(.cb2d-unit,.wb2d-unit,.pvp2d-unit,.tb-unit){transition-timing-function:cubic-bezier(.18,.72,.22,1)!important}
 :where(.cb2d-unit,.wb2d-unit,.pvp2d-unit,.tb-unit)>.cbvfx4-ground{transition:transform .36s ease,opacity .3s ease!important}
