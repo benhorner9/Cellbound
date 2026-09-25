@@ -456,7 +456,7 @@ async function playTimeline(events){
  startClock();
  if(!timeline.length){stopClock();if(run&&!run.rewardsApplied){run.rewards=applyRewards(run.result);run.rewardsApplied=true}showResults();return}
  return await new Promise(resolve=>{
-  let index=0,simTime=0,wallAnchor=Date.now(),finished=false,raf=0;
+  let index=0,simTime=0,finished=false,raf=0;
   const finish=()=>{
    if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);stopClock();
    if(token===playToken&&run){
@@ -468,7 +468,7 @@ async function playTimeline(events){
   const frame=()=>{
    if(finished)return;
    if(token!==playToken||!run){finish();return}
-   simTime=Math.max(simTime,Math.max(0,Date.now()-wallAnchor)*Math.max(1,Number(playSpeed)||1));
+   simTime=Math.max(simTime,playBaseMs+Math.max(0,Date.now()-playStartedAt)*Math.max(1,Number(playSpeed)||1));
    run.elapsed=Math.max(Number(run.elapsed)||0,simTime);
    const frameStarted=performance.now();let handled=0;
    while(index<timeline.length&&(Number(timeline[index].timestamp)||0)<=simTime+4&&handled<36&&performance.now()-frameStarted<9){
