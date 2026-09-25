@@ -287,6 +287,7 @@ function wbStatusTargets(id){
 }
 function wbRenderServerEvent(e){
   if(window.CellboundCombatStatuses?.handle(e,{resolve:wbStatusTargets,speed:1}))return;
+  window.CellboundCombatFX?.combatEvent?.(e,{arena:document.querySelector('.wb2d-arena'),resolve:wbEventUnit});
   const source=wbEventUnit(e.source),target=wbEventUnit(e.target),sourceChar=String(e.source||'').startsWith('p-'),targetChar=String(e.target||'').startsWith('p-');
   switch(e.type){
     case'COMBAT_START':window.CellboundCombatFX?.boss?.(document.querySelector('.wb2d-arena'),active?.boss?.name||'World Boss');break;
