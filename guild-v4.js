@@ -856,6 +856,7 @@ function upgradeBankItem(id){
   const cost=bankUpgradeCost(item),available=Number(state.materials?.['cell-shards'])||0,next=Math.min(bankUpgradeMax(item),(Number(item.itemLevel)||0)+2);
   if(available<cost){alert('You need '+cost+' Cell Shards. You currently have '+available+'.');return;}
   if(!confirm('Upgrade '+item.name+' from Item Level '+item.itemLevel+' to '+next+' for '+cost+' Cell Shards?'))return;
+  const detailScroll=Math.max(0,Number(ui.bankDetail?.scrollTop)||0);
   let target=item;
   if((Number(item.quantity)||1)>1){
     item.quantity--;
@@ -867,7 +868,11 @@ function upgradeBankItem(id){
   if(target.upgradeLevel%2===0)target.power=(Number(target.power)||0)+1;
   state.materials['cell-shards']=available-cost;
   state.activity.push('Upgraded '+target.name+' to Item Level '+target.itemLevel+' for '+cost+' Cell Shards.');
-  save();ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open');renderAll();switchView('bank');
+  save();
+  renderAll();
+  openBankItem(target.id);
+  requestAnimationFrame(()=>{if(ui.bankDetail)ui.bankDetail.scrollTop=detailScroll});
+  window.CellboundFX?.micro?.(target.name+' upgraded to iLvl '+target.itemLevel,'gold');
 }
 function toggleBankFlag(id,key){
   const item=state.bank.find(x=>x.id===id);if(!item||!['favorite','junk'].includes(key))return;

@@ -682,7 +682,7 @@ function upgradeEquippedItem(slot){
   state.materials['cell-shards']=available-cost;
   state.activity=state.activity||[];
   state.activity.push(`Upgraded ${c.name}'s equipped ${item.name} to Item Level ${item.itemLevel} for ${cost} Cell Shards.`);
-  writeState(state);renderSheet();window.CellboundFX?.callout?.({eyebrow:'ITEM UPGRADED',title:item.name+' · Item Level '+item.itemLevel,tone:'gold'});window.CellboundFX?.flash?.('gold');
+  writeState(state);activeSlot=slot;renderSheet();window.CellboundFX?.callout?.({eyebrow:'ITEM UPGRADED',title:item.name+' · Item Level '+item.itemLevel,tone:'gold'});window.CellboundFX?.flash?.('gold');
 }
 function investTalent(spec,nodeId){
   if(!characterEditable())return;
