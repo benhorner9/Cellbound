@@ -224,7 +224,7 @@ function renderHub(){
    body='<section class="mr-card mr-current"><div><small>RAID IN PROGRESS</small><h3>'+esc(stageName(session.stage))+'</h3><p>Combat Reborn is resolving the ten-character fight inside the Manor.</p></div><button data-mr-enter>ENTER RAID →</button></section>';
  }else if(session?.status==='failed'){
    const leader=myGroup?.leader_id===user.id,count=mineRows.length,canRetry=leader&&count===2&&Number(lockout?.runsRemaining??0)>0;
-   body='<section class="mr-card mr-current mr-failed"><div><small>RAID WIPE</small><h3>'+esc(session.state?.failureReason||'The Manor claimed the raid')+'</h3><p>This run has ended. The temporary raid group will close so both commanders can form a fresh team for the next attempt.</p></div><div class="mr-current-actions">'+(canRetry?'<button data-mr-rerun>TRY THE MANOR AGAIN →</button>':'<span>'+(leader?'No runs remain this reset.':'Raid group closing…')+'</span>')+'</div></section>';
+   body='<section class="mr-card mr-current mr-failed"><div><small>RAID WIPE · ATTEMPT SPENT</small><h3>'+esc(session.state?.failureReason||'The Manor claimed the raid')+'</h3><p>This raid attempt is over. There is no checkpoint recovery after a wipe; starting again begins from The Butler and consumes another raid charge.</p></div><div class="mr-current-actions">'+(canRetry?'<button data-mr-rerun>START A NEW RAID ATTEMPT →</button>':'<span>'+(leader?'No runs remain this reset.':'Raid group closing…')+'</span>')+'</div></section>';
  }else if(session?.status==='completed'){
    const claimed=Boolean(state()?.raidRewardClaims?.[session.id]),leader=myGroup?.leader_id===user.id,count=mineRows.length,canRerun=claimed&&leader&&count===2&&Number(lockout?.runsRemaining??0)>0;
    const followup=canRerun?'<button data-mr-rerun>RUN THE MANOR AGAIN →</button>':(!leader&&count===2&&Number(lockout?.runsRemaining??0)>0?'<span>Waiting for the group leader to begin another run.</span>':'');
@@ -336,6 +336,7 @@ function renderReadyGate(){
  window.CellboundDungeon2D?.closeShared?.(true);
  const root=ensureOverlay();root.hidden=false;document.body.classList.add('mr-open');
  const ready=readyState(),mine=myRaidSide(),mineReady=mine===0?ready.a:ready.b,otherReady=mine===0?ready.b:ready.a;
+ const entryA=entryHealthForSide(0),entryB=entryHealthForSide(1);
  const remaining=ready.startAt?Math.max(0,ready.startAt-serverNow()):0;
  const count=ready.startAt?Math.max(1,Math.ceil(remaining/1000)):null;
  const countdown=ready.startAt
@@ -346,8 +347,8 @@ function renderReadyGate(){
  root.dataset.readyKey=renderKey;
  root.innerHTML='<section class="mr-ready-shell"><header><div><small>THE MANOR · SYNCHRONISED RAID</small><h2>'+esc(stageRoom(session.stage))+'</h2></div><button data-ready-close>×</button></header>'+
   countdown+
-  '<div class="mr-ready-teams"><article class="'+(ready.a?'is-ready':'')+'"><i>PARTY A</i><b>'+esc(commanderLabel(0))+'</b><span>'+(ready.a?'READY ✓':'NOT READY')+'</span></article>'+
-  '<article class="'+(ready.b?'is-ready':'')+'"><i>PARTY B</i><b>'+esc(commanderLabel(1))+'</b><span>'+(ready.b?'READY ✓':'NOT READY')+'</span></article></div>'+
+  '<div class="mr-ready-teams"><article class="'+(ready.a?'is-ready':'')+'"><i>PARTY A</i><b>'+esc(commanderLabel(0))+'</b><span>'+(ready.a?'READY ✓':'NOT READY')+'</span>'+(entryA<100?'<em>RECOVERED · '+entryA+'% HP</em>':'')+'</article>'+
+  '<article class="'+(ready.b?'is-ready':'')+'"><i>PARTY B</i><b>'+esc(commanderLabel(1))+'</b><span>'+(ready.b?'READY ✓':'NOT READY')+'</span>'+(entryB<100?'<em>RECOVERED · '+entryB+'% HP</em>':'')+'</article></div>'+
   (ready.startAt?'':'<button class="mr-ready-button '+(mineReady?'is-ready':'')+'" data-raid-ready="'+(!mineReady)+'">'+(mineReady?'READY ✓ · CANCEL':'READY UP')+'</button>')+
   (!ready.startAt&&mineReady&&!otherReady?'<p class="mr-ready-status">Waiting for the other commander…</p>':'')+
   '<footer><span>Both clients use the same server start timestamp.</span><b>3 SECOND COUNTDOWN</b></footer></section>';
@@ -456,6 +457,9 @@ async function syncSharedRaidView(force=false){
  const viewer=window.CellboundDungeon2D;
  if(!viewer?.playSharedEncounter){console.error('The shared CB2D combat viewer is unavailable');return}
  const room=session.stage==='maids'?(side===0?'Dining Room':'Kitchen'):stageRoom(session.stage);
+ const recoveryNote=session.stage==='maids'
+   ?(entryHealthForSide(side)<100?' Your party was recovered after the previous room and enters at 50% health.':'')
+   :((entryHealthForSide(0)<100||entryHealthForSide(1)<100)?' One five-character party was recovered after the previous room and enters at 50% health.':'');
  viewer.playSharedEncounter({
    party:pack.party,encounter:pack.encounter,result:pack.result,
    enemyDisplayMax:session.stage==='maids'?[2500]:session.stage==='housebound'?[5000]:null,
@@ -463,7 +467,7 @@ async function syncSharedRaidView(force=false){
    header:'THE MANOR · '+String(room).toUpperCase()+' · LIVE 2D RAID',
    title:session.stage==='maids'?'The Maid':stageName(session.stage),
    route:sharedRaidRoute(),currentId:session.stage,theme:'manor',room:'manor-'+session.stage,
-   roomLabel:room,ambience:session.stage==='maids'?'Your five-character party is separated from the other commander. Screech links both rooms.':'The raid fights together as one ten-character group.',
+   roomLabel:room,ambience:(session.stage==='maids'?'Your five-character party is separated from the other commander. Screech links both rooms.':'The raid fights together as one ten-character group.')+recoveryNote,
    shellClass:'cb2d-manor-raid',arenaClass:'cb2d-manor-arena',
    planTitle:'The Manor uses the same combat system as every dungeon.',
    planCopy:'Combat Reborn controls movement, threat, resources, healing, interrupts, deaths and boss mechanics. Raid-only interactions are layered over the same event stream.',
@@ -717,7 +721,9 @@ async function driveStage(e){
 async function advance(next){
  if(advancing||!session)return;advancing=true;
  try{
-   const patch=next==='maids'?{maidPenaltyA:0,maidPenaltyB:0,screechCountA:0,screechCountB:0,screechSuccessA:0,screechSuccessB:0,screechResolved:{}}:next==='housebound'?{masterPenalty:0,masterScreechFailures:0,masterScreechTimeouts:0,screechCountA:0,screechCountB:0,screechSuccessA:0,screechSuccessB:0,screechResolved:{}}:{screechResolved:{}};
+   const recovery=sharedRecoveryPatch(session.stage,next);
+   const mechanicPatch=next==='maids'?{maidPenaltyA:0,maidPenaltyB:0,screechCountA:0,screechCountB:0,screechSuccessA:0,screechSuccessB:0,screechResolved:{}}:next==='housebound'?{masterPenalty:0,masterScreechFailures:0,masterScreechTimeouts:0,screechCountA:0,screechCountB:0,screechSuccessA:0,screechSuccessB:0,screechResolved:{}}:{screechResolved:{}};
+   const patch={...mechanicPatch,...recovery};
    const {data,error}=await db.rpc('advance_manor_raid',{p_session_id:session.id,p_expected_stage:session.stage,p_next_stage:next,p_patch:patch});
    if(error)throw error;if(data?.state)session.state=data.state;if(data?.stage)session.stage=data.stage;if(data?.status)session.status=data.status;
    lastStage='';sharedStageKey='';await loadSession(session.id);await syncSharedRaidView(true)
@@ -760,7 +766,7 @@ function openScreech(trigger={}){
 }
 function renderWipeShell(){
  const root=ensureOverlay();applyLocalRaidFailureShock();
- root.innerHTML='<section class="mr-raid-shell mr-wipe-shell"><header class="mr-raid-head"><div><small>THE MANOR · RAID WIPE</small><h2>'+esc(stageName(session.stage))+'</h2></div><button data-mr-close>×</button></header><div class="mr-wipe"><span>☠</span><small>COMBAT REBORN RESULT</small><h1>The Manor Claims Another Raid</h1><p>'+esc(session.state?.failureReason||'The ten-character raid was defeated.')+'</p><button data-mr-wipe-close>RETURN TO RAID HUB →</button></div></section>';
+ root.innerHTML='<section class="mr-raid-shell mr-wipe-shell"><header class="mr-raid-head"><div><small>THE MANOR · RAID WIPE</small><h2>'+esc(stageName(session.stage))+'</h2></div><button data-mr-close>×</button></header><div class="mr-wipe"><span>☠</span><small>ATTEMPT FAILED · RAID CHARGE SPENT</small><h1>The Manor Claims Another Raid</h1><p>'+esc(session.state?.failureReason||'The ten-character raid was defeated.')+'</p><p>The next attempt starts again from The Butler and uses another raid charge.</p><button data-mr-wipe-close>RETURN TO RAID HUB →</button></div></section>';
  root.querySelector('[data-mr-close]')?.addEventListener('click',closeRaid);root.querySelector('[data-mr-wipe-close]')?.addEventListener('click',closeRaid);lastStage='failed'
 }
 function renderVictoryShell(){
