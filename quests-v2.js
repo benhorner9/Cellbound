@@ -305,7 +305,7 @@ async function beginAshfallAmbush(){
     quest:ASHFALL.title,title:'The Cinder Cart',location:'Old Forge Approach',
     ambience:alertLevel>=2?'A whistle answers from above the road. You were heard. Another sentry is already moving.':'The tracks end at a second cart, burnt down to its ironwork. Nobody is visible. That is the problem.',
     phases:['Ambush','Signal Flare','Cinder Breath'],enemies,eliteIndex:1,
-    combat:{kind:'boss',level:2,enemyTypes:alertLevel>=2?['trash','elite','trash','trash']:['trash','elite','trash'],enemyHealth:520,mechanics:alertLevel>=2?[['Signal Flare','interrupt',1800],['Ash Whistle','interrupt',1500],['Cinder Breath','cone',1700]]:[['Signal Flare','interrupt',1800],['Cinder Breath','cone',1700]]},
+    combat:{kind:'boss',level:2,recommendedItemLevel:18,enemyTypes:alertLevel>=2?['trash','elite','trash','trash']:['trash','elite','trash'],enemyHealth:alertLevel>=2?600:520,scaling:alertLevel>=2?{enemyDamage:1.08}:{enemyDamage:1},mechanics:alertLevel>=2?[['Signal Flare','interrupt',1800],['Ash Whistle','interrupt',1500],['Cinder Breath','cone',1700]]:[['Signal Flare','interrupt',1800],['Cinder Breath','cone',1700]]},
     completeText:'The ambush is broken. The Ashbound Runner drops a heavy iron key stamped with the old forge seal.'
   });
   if(!won)return;
@@ -903,7 +903,7 @@ async function runInteractiveQuest2DFight(config){
 
 async function runResonanceBacklash(){
   const q=ensure(),bearer=party().find(c=>c.id===q.bearerId)||party()[0];
-  return runQuest2DFight({quest:QUEST.title,title:'Resonance Backlash',location:'Jory’s Workshop',ambience:'The Blackened Fragment rejects the false route and tears an echo out of the room.',phases:['Backlash'],enemies:['Resonance Echo'],eliteIndex:0,combat:{kind:'boss',level:5,enemyTypes:['elite'],enemyHealth:720,mechanics:[['Memory Burst','circles',1500],['Resonance Shriek','interrupt',1800]]},completeText:'The echo collapses back into the fragment. The cipher is still waiting.'});
+  return runQuest2DFight({quest:QUEST.title,title:'Resonance Backlash',location:'Jory’s Workshop',ambience:'The Blackened Fragment rejects the false route and tears an echo out of the room.',phases:['Backlash'],enemies:['Resonance Echo'],eliteIndex:0,combat:{kind:'boss',level:4,recommendedItemLevel:20,enemyTypes:['elite'],enemyHealth:850,mechanics:[['Memory Burst','circles',1500],['Resonance Shriek','interrupt',1800]]},completeText:'The echo collapses back into the fragment. The cipher is still waiting.'});
 }
 async function beginInvestigation(){
   const q=ensure(),p=party();if(currentStage()!=='route')return;
@@ -912,7 +912,7 @@ async function beginInvestigation(){
   const won=await runQuest2DFight({
     quest:QUEST.title,title:'The Road Under the Road',location:'Collapsed Survey Tunnels',
     ambience:'Jory’s decoded posts lead beneath the east road. The Blackened Fragment grows warmer with every step.',
-    phases:['Buried Junction','Resonance Husk','Hollow Seal'],enemies:['Hollow Scavenger','Hollow Scavenger','Resonance Husk'],eliteIndex:2,combat:{kind:'boss',level:5,enemyTypes:['trash','trash','elite'],enemyHealth:460,mechanics:[['Resonance Lash','line',1600],['Binding Hum','interrupt',1850],['Cell Pulse','circles',1500]]},
+    phases:['Buried Junction','Resonance Husk','Hollow Seal'],enemies:['Hollow Scavenger','Hollow Scavenger','Resonance Husk'],eliteIndex:2,combat:{kind:'boss',level:5,recommendedItemLevel:22,enemyTypes:['trash','trash','elite'],enemyHealth:560,mechanics:[['Resonance Lash','line',1600],['Binding Hum','interrupt',1850],['Cell Pulse','circles',1500]]},
     completeText:'A final survey mark is cut into the wall behind the broken Husk. Beyond it waits the Hollow Seal.'
   });
   if(!won)return;
@@ -936,7 +936,7 @@ async function runSealGuardian(){
   return runQuest2DFight({
     quest:QUEST.title,title:'Guardian of the Seal',location:'The Hollow Seal',
     ambience:'The misaligned rings grind together. A shape peels itself out of the stone and blocks the chamber.',
-    phases:['Awakening','Sealbreaker'],enemies:['Hollow Sentinel'],eliteIndex:0,combat:{kind:'boss',level:6,enemyTypes:['boss'],enemyHealth:1350,mechanics:[['Stone Choir','interrupt',1800],['Sealbreaker Line','line',1600],['Hollow Sweep','cone',1700]]},
+    phases:['Awakening','Sealbreaker'],enemies:['Hollow Sentinel'],eliteIndex:0,combat:{kind:'boss',level:6,recommendedItemLevel:24,enemyTypes:['boss'],enemyHealth:1450,mechanics:[['Stone Choir','interrupt',1800],['Sealbreaker Line','line',1600],['Hollow Sweep','cone',1700]]},
     completeText:'The Sentinel collapses into inert glass. The seal rings remain, waiting to be aligned correctly.'
   });
 }

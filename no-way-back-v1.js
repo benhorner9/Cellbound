@@ -520,14 +520,14 @@ async function startHoundsCombat(){
   const won=await run({
     quest:TITLE,title:'The Three Hounds',location:'Manor Island · Outer Grounds',
     ambience:'Silas whistles once. Grim, Fang and Wail spread across the path while the party forms up in front of the Manor gates.',
-    presentationKind:'quest',phases:['Pack Bond'],initialTarget:0,sliceMs:1800,reviveWindowMs:12000,revivePct:35,focusSelectedDamageOnly:true,
+    presentationKind:'quest',phases:['Pack Bond'],initialTarget:0,sliceMs:1800,reviveWindowMs:15000,revivePct:25,focusSelectedDamageOnly:true,
     autoContinueOnVictory:true,autoContinueDelayMs:850,
     enemies:[
-      {name:'Grim',maxHealth:3600,absoluteHealth:true,classification:'elite',attackName:'Bonebreaker Bite',damageScale:1.12},
-      {name:'Fang',maxHealth:3300,absoluteHealth:true,classification:'elite',attackName:'Pounce',targeting:'random',damageScale:1.04},
-      {name:'Wail',maxHealth:3450,absoluteHealth:true,classification:'elite',attackName:'Rending Howl',damageScale:1.02}
+      {name:'Grim',maxHealth:2400,absoluteHealth:true,classification:'elite',attackName:'Bonebreaker Bite',damageScale:.96},
+      {name:'Fang',maxHealth:2200,absoluteHealth:true,classification:'elite',attackName:'Pounce',targeting:'random',damageScale:.92},
+      {name:'Wail',maxHealth:2300,absoluteHealth:true,classification:'elite',attackName:'Rending Howl',damageScale:.92}
     ],
-    combat:{kind:'boss',level:18,enemyTypes:['elite','elite','elite'],enemyHealth:3600,mechanics:[]},
+    combat:{kind:'boss',level:13,recommendedItemLevel:32,enemyTypes:['elite','elite','elite'],enemyHealth:2400,mechanics:[]},
     completeText:'The pack bond breaks. Grim, Fang and Wail stay down together.'
   });
   const r=ensureRoot();r.hidden=false;document.body.classList.add('nwb-open');
@@ -546,7 +546,7 @@ function startHounds(){
   const hs=[{id:'grim',name:'Grim',hp:100,deadAt:0,skill:'Bonebreaker'},{id:'fang',name:'Fang',hp:100,deadAt:0,skill:'Pounce'},{id:'wail',name:'Wail',hp:100,deadAt:0,skill:'Pack Howl'}];
   let focus='grim',partyHp=100,seconds=0,revives=0,done=false,log=['The pack circles the party.'],special=0;
   root.innerHTML=chrome('BOSS FIGHT · MANOR GROUNDS','The Three Hounds',
-    '<div class="nwb-hounds-fight"><aside><small>ACTIVE FIVE</small><div class="nwb-hound-party">'+p.map(c=>'<article>'+portraitHTML(c,'sm')+'<span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span></article>').join('')+'</div><div class="nwb-party-vital"><span>PARTY CONDITION</span><div><i data-party-hp></i></div><b data-party-hp-text>100%</b></div><div class="nwb-combat-log" data-hound-log></div></aside><main><div class="nwb-pack-banner"><small>PACK BOND</small><b>Fallen hounds revive after 12 seconds.</b><span>Switch targets before the first body is licked back to life.</span></div><div class="nwb-hound-grid">'+hs.map(h=>'<article class="nwb-hound" data-hound="'+h.id+'"><div class="nwb-hound-portrait">◆</div><small>'+h.skill.toUpperCase()+'</small><h3>'+h.name+'</h3><div class="nwb-hound-hp"><i data-hound-bar="'+h.id+'"></i></div><b data-hound-hp="'+h.id+'">100%</b><em data-hound-revive="'+h.id+'"></em><button data-focus="'+h.id+'">FOCUS '+h.name.toUpperCase()+'</button></article>').join('')+'</div><div class="nwb-tactics"><button data-focus="spread">SPREAD DAMAGE</button><span data-focus-label>Current order: FOCUS GRIM</span></div></main></div>');
+    '<div class="nwb-hounds-fight"><aside><small>ACTIVE FIVE</small><div class="nwb-hound-party">'+p.map(c=>'<article>'+portraitHTML(c,'sm')+'<span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span></article>').join('')+'</div><div class="nwb-party-vital"><span>PARTY CONDITION</span><div><i data-party-hp></i></div><b data-party-hp-text>100%</b></div><div class="nwb-combat-log" data-hound-log></div></aside><main><div class="nwb-pack-banner"><small>PACK BOND</small><b>Fallen hounds revive after 15 seconds.</b><span>Switch targets before the first body is licked back to life.</span></div><div class="nwb-hound-grid">'+hs.map(h=>'<article class="nwb-hound" data-hound="'+h.id+'"><div class="nwb-hound-portrait">◆</div><small>'+h.skill.toUpperCase()+'</small><h3>'+h.name+'</h3><div class="nwb-hound-hp"><i data-hound-bar="'+h.id+'"></i></div><b data-hound-hp="'+h.id+'">100%</b><em data-hound-revive="'+h.id+'"></em><button data-focus="'+h.id+'">FOCUS '+h.name.toUpperCase()+'</button></article>').join('')+'</div><div class="nwb-tactics"><button data-focus="spread">SPREAD DAMAGE</button><span data-focus-label>Current order: FOCUS GRIM</span></div></main></div>');
   bindClose();
   function addLog(t){log.push(t);log=log.slice(-6);const e=root.querySelector('[data-hound-log]');if(e)e.innerHTML=log.slice().reverse().map(x=>'<p>'+esc(x)+'</p>').join('')}
   root.querySelectorAll('[data-focus]').forEach(b=>b.onclick=()=>{focus=b.dataset.focus;root.querySelectorAll('[data-focus]').forEach(x=>x.classList.toggle('active',x.dataset.focus===focus));const l=root.querySelector('[data-focus-label]');if(l)l.textContent='Current order: '+(focus==='spread'?'SPREAD DAMAGE':'FOCUS '+focus.toUpperCase());addLog(focus==='spread'?'The party spreads damage across the pack.':'The party focuses '+hs.find(x=>x.id===focus)?.name+'.')});
@@ -637,8 +637,8 @@ async function startSilas(){
     quest:TITLE,title:'Silas Vane',location:'The Manor Courtyard',
     ambience:'The iron gate locks behind the party. Silas drags the anchor into a wide stance as the Manor windows begin to glow.',
     presentationKind:'quest',phases:['Master of the Manor','No One Leaves','Home At Last'],
-    enemies:[{name:'Silas Vane',maxHealth:3900}],eliteIndex:0,
-    combat:{kind:'final',level:18,enemyTypes:['boss'],enemyHealth:3900,mechanicIntervalMs:4600,mechanics:[
+    enemies:[{name:'Silas Vane',maxHealth:5000}],eliteIndex:0,
+    combat:{kind:'final',level:15,recommendedItemLevel:34,enemyTypes:['boss'],enemyHealth:5000,mechanicIntervalMs:4300,scaling:{enemyDamage:1.06},mechanics:[
       ['The Great Anchor','cone',2100],['Anchor Chain','line',1700],['Keelhaul','circles',1650],['The Great Anchor','cone',1850],['No One Leaves','circles',1550]
     ]},
     completeText:'Silas drops the anchor. The Manor doors answer with a sound from somewhere deep inside.'

@@ -328,13 +328,13 @@ function renderBossPrelude(){
 async function fightEdrin(){
   const b=ensure(),runner=window.CellboundQuests?.runQuest2DFight;if(typeof runner!=='function'){alert('Quest combat runtime is unavailable.');return}
   root.hidden=true;document.body.classList.remove('bell-open');
-  const avg=Math.max(6,Math.round(party().reduce((n,c)=>n+(Number(c.level)||1),0)/Math.max(1,party().length)));
+  // Fixed encounter target: stronger parties outgrow Edrin instead of scaling him upward with them.
   const won=await runner({
     quest:TITLE,title:'Edrin, Keeper of the Thirteenth Hour',location:'Greywake Clocktower',
     ambience:'The clock moves for the first time. Edrin reaches for the rope beneath the black-glass bell.',
     phases:['First Toll','Broken Minute','Thirteenth Hour'],enemies:['Edrin Vale'],eliteIndex:0,
     combat:{
-      kind:'final',level:avg+1,enemyTypes:['boss'],enemyHealth:2850,
+      kind:'final',level:8,recommendedItemLevel:24,enemyTypes:['boss'],enemyHealth:2850,
       mechanics:[
         {name:'Clock Hand Sweep',type:'line',duration:1850},
         {name:'Bell Toll',type:'circles',duration:1700},

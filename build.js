@@ -275,6 +275,13 @@ for(const file of files){
     if(!contents.includes('async function qPlayReborn')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('Quest combat must use continuous Combat Reborn playback');
     for(const hook of ['data-q-speed','q2dHealingMeter','function qStatusTargets','CellboundCombatStatuses?.handle','data-q-side-resource','function qResourceDef','function qPulseUnit'])if(!contents.includes(hook))throw new Error('Quest combat HUD is missing '+hook);
     if(!contents.includes("simTime+=Math.min(rawDelta,100)*Math.max(.25,Number(questFight?.speed)||1)"))throw new Error('Quest combat playback speed must control the authoritative timeline');
+    if(!contents.includes("level:2,recommendedItemLevel:18")||!contents.includes("level:4,recommendedItemLevel:20")||!contents.includes("level:5,recommendedItemLevel:22")||!contents.includes("level:6,recommendedItemLevel:24"))throw new Error('Quest combat progression targets are missing');
+  }
+  if(file==='thirteenth-bell-v1.js'){
+    if(!contents.includes("kind:'final',level:8,recommendedItemLevel:24")||contents.includes("level:avg+1"))throw new Error('Edrin must use a fixed progressive quest-combat target');
+  }
+  if(file==='no-way-back-v1.js'){
+    if(!contents.includes("reviveWindowMs:15000")||!contents.includes("revivePct:25")||!contents.includes("level:13,recommendedItemLevel:32")||!contents.includes("level:15,recommendedItemLevel:34"))throw new Error('No Way Back progressive combat targets are missing');
   }
   if(file==='quests-v2.css'){
     if(!contents.includes('transition-property:left,top,transform,opacity,filter'))throw new Error('Quest combat units must animate left/top movement instead of snapping');
@@ -292,7 +299,8 @@ for(const file of files){
   if(file==='guild.html'){
     if(!contents.includes('boss-dossier-v1.css?v=3'))throw new Error('Boss dossier CSS cache version is stale in guild.html');
     if(!contents.includes('boss-dossier-v1.js?v=11'))throw new Error('Boss dossier cache version is stale in guild.html');
-    if(!contents.includes('no-way-back-v1.css?v=4')||!contents.includes('no-way-back-v1.js?v=9'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
+    if(!contents.includes('quests-v2.js?v=35')||!contents.includes('thirteenth-bell-v1.js?v=3')||!contents.includes('no-way-back-v1.js?v=10'))throw new Error('Progressive quest combat cache versions are stale in guild.html');
+    if(!contents.includes('no-way-back-v1.css?v=4')||!contents.includes('no-way-back-v1.js?v=10'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
     if(!contents.includes('comic-scenes-v1.css?v=2')||!contents.includes('comic-scenes-v1.js?v=2')||!contents.includes('onboarding-v1.js?v=18'))throw new Error('Tutorial comic asset cache versions are stale in guild.html');
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=50')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
