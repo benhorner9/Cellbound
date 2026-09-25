@@ -404,6 +404,7 @@ async function syncSharedRaidView(force=false){
  const room=session.stage==='maids'?(side===0?'Dining Room':'Kitchen'):stageRoom(session.stage);
  viewer.playSharedEncounter({
    party:pack.party,encounter:pack.encounter,result:pack.result,
+   startAt:readyStartAt()||stamp(session?.state?.stageStartedAt),
    header:'THE MANOR · '+String(room).toUpperCase()+' · LIVE 2D RAID',
    title:session.stage==='maids'?'The Maid':stageName(session.stage),
    route:sharedRaidRoute(),currentId:session.stage,theme:'manor',room:'manor-'+session.stage,

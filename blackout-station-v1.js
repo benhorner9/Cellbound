@@ -215,10 +215,11 @@ async function useGridOverride(){
 async function slideTile(pos,blank){
  if(!run||!neighbours(blank).includes(pos))return;
  run.board[blank]=run.board[pos];run.board[pos]=null;run.moves++;const solved=puzzleSolved();renderPuzzle();
+ await bsSaveRuntime('puzzle');
  if(solved)await powerOn()
 }
 async function powerOn(overridden=false){
- if(!run||run.powered)return;run.powered=true;run.log.push(overridden?'Grid Override completed. Main breaker closing automatically.':run.quickReconnect?'Valid bridge established. Main breaker closing.':'Full circuit complete. Main breaker closing.');
+ if(!run||run.powered)return;run.powered=true;run.log.push(overridden?'Grid Override completed. Main breaker closing automatically.':run.quickReconnect?'Valid bridge established. Main breaker closing.':'Full circuit complete. Main breaker closing.');await bsSaveRuntime('boss-pending');
  const board=$('.bs-grid-frame');board?.classList.add('solved');const schematic=$('.bs-station-schematic');if(schematic)schematic.classList.add('online');
  const label=$('.bs-station-schematic strong');if(label)label.textContent='100%';
  await wait(500);
@@ -422,7 +423,7 @@ async function playTimeline(result,tok){
  const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
  if(!run)return false;if(!events.length)return result?.outcome==='victory';
  return await new Promise(resolve=>{
-  let index=0,simTime=0,wallAnchor=Date.now(),simAnchor=0,lastSpeed=null,finished=false,visualErrors=0,raf=0;
+  let index=0,simTime=0,wallAnchor=Number(run?.runtimeStageStartedAt)||Date.now(),simAnchor=0,lastSpeed=null,finished=false,visualErrors=0,raf=0;
   const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);resolve(value)};
   const frame=()=>{
    if(finished)return;
@@ -465,16 +466,18 @@ function drawCombat(){
  addUnit('e0','Dr. Vex Calder','enemy boss',68,50,true);renderMeters();
  feed('Power restored. Dr. Vex Calder enters the generator hall.')
 }
-async function startBoss(){
- if(!run)return;await window.CellboundBossDossier?.show?.('vex-calder');drawCombat();window.CellboundFX?.boss?.('Dr. Vex Calder','Restore the grid. Survive the role circuits.');const tok=token,C=window.CellboundCombatStandard;if(!C?.simulate){setStatus('Combat failed to start');feed('The encounter could not start. Reload and try again.');return}
+async function startBoss(resumed=false){
+ if(!run)return;if(!resumed)await window.CellboundBossDossier?.show?.('vex-calder');drawCombat();window.CellboundFX?.boss?.('Dr. Vex Calder','Restore the grid. Survive the role circuits.');const tok=token,C=window.CellboundCombatStandard;if(!C?.simulate){setStatus('Combat failed to start');feed('The encounter could not start. Reload and try again.');return}
  try{
   const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:100,_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0}));
   let result=C.simulate({party:combatParty,encounter:bossEncounter(),tactics:{pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced'},seed:'blackout-station:'+run.seed},{zone:'blackout-station'});
   const hasCombat=(result.events||[]).some(e=>e.type==='DAMAGE_DEALT'||e.type==='HEAL_RECEIVED'||e.type==='ABILITY_START');
   if(!hasCombat)throw new Error('Combat Reborn produced no actionable events.');
   run.result=result;
+  if(!run.runtimeStageStartedAt)run.runtimeStageStartedAt=Date.now();
+  await bsSaveRuntime('combat');
   const won=await playTimeline(result,tok);if(tok!==token||!run)return;
-  if(won)await complete();else fail()
+  if(won)await complete();else await fail()
  }catch(error){
   console.error('Blackout Station boss runtime',error);setStatus('Encounter runtime interrupted');feed('Boss runtime error: '+String(error?.message||error))
  }
@@ -541,17 +544,46 @@ function failureDiagnosis(){
  if(deaths.length)return 'The party was overwhelmed by Calder\'s sustained damage before the boss could be finished.';
  return 'The party failed the encounter damage / healing check.'
 }
-function fail(){
- Game.applyPartyCellShock?.(25);const e=$('#bsEnd');if(!e)return;e.hidden=false;e.className='cb2d-end bs-wipe-report cb2d-results-screen';$('.bs2d-shell')?.classList.add('results-mode');e.innerHTML='<div><small>BLACKOUT STATION · EXPEDITION FAILED</small><h3>Party Wiped</h3><p>'+esc(failureDiagnosis())+'</p><strong>Every adventurer gained 25% Cell Shock.</strong></div><button data-bs-return>RETURN TO DUNGEONS →</button>';e.querySelector('[data-bs-return]').onclick=()=>{close();Game.switchView?.('content')}
+function bsRuntimeRun(){
+ if(!run)return null;
+ const copy={...run};
+ delete copy.result;delete copy.movementEpoch;
+ copy.movementEpoch={};
+ return JSON.parse(JSON.stringify(copy))
+}
+async function bsSaveRuntime(phase='puzzle'){
+ if(!run?.endgame?.attemptId)return;
+ await window.CellboundEndgame?.saveRuntime?.('blackout-station',{
+  version:1,kind:'blackout-station',phase,stage:phase==='combat'?1:0,
+  stageStartedAt:Number(run.runtimeStageStartedAt)||0,run:bsRuntimeRun()
+ })
+}
+function bsRestoreRuntime(attempt){
+ const snap=attempt?.runtimeState||{},saved=snap.run||{};
+ run={...saved,movementEpoch:{},result:null,runtimeStageStartedAt:Number(snap.stageStartedAt)||0,_restored:true};
+ run.endgame={...(saved.endgame||{}),attemptId:attempt.attemptId,difficulty:attempt.difficulty,tier:Number(attempt.tier)||0,targetTimeMs:Number(attempt.targetTimeMs)||Number(saved.endgame?.targetTimeMs)||0,dungeonVersion:Number(attempt.dungeonVersion)||Number(saved.endgame?.dungeonVersion)||2};
+ run.seed=attempt.seed||saved.seed;
+ return snap.phase||'puzzle'
+}
+async function fail(){
+ Game.applyPartyCellShock?.(25);await Game.persistState?.();await bsSaveRuntime('failed');const e=$('#bsEnd');if(!e)return;e.hidden=false;e.className='cb2d-end bs-wipe-report cb2d-results-screen';$('.bs2d-shell')?.classList.add('results-mode');e.innerHTML='<div><small>BLACKOUT STATION · EXPEDITION FAILED</small><h3>Party Wiped</h3><p>'+esc(failureDiagnosis())+'</p><strong>Every adventurer gained 25% Cell Shock.</strong></div><button data-bs-return>RETURN TO DUNGEONS →</button>';e.querySelector('[data-bs-return]').onclick=()=>{close();Game.switchView?.('content')}
 }
 async function startRun(){
  const gate=readiness();if(!gate.ok)return;
  const startButton=root().querySelector('[data-bs-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
  await Game.persistState?.();
- const service=await bsWaitForEndgame(),eg=bsEndgameConfig(),attempt=await service?.beginAttempt?.('blackout-station');
+ const service=await bsWaitForEndgame(),eg=bsEndgameConfig(),attempt=await service?.beginOrResumeAttempt?.('blackout-station')||await service?.beginAttempt?.('blackout-station');
  if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN RESTORATION →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Restoration again.');return}
- const quickReconnect=(Number(state()?.blackoutStationCompletions)||0)>0;token++;
- run={speed:1,seed:attempt.seed||Date.now().toString(36),startedAt:Date.now(),endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId},board:shuffledBoard(),moves:0,powered:false,quickReconnect,overrideInProgress:false,overrideUsed:false,cluesUsed:0,cluesRemaining:5,log:[quickReconnect?'Previous clear recognised. One continuous path to the breaker is enough.':'First-clear protocol active. Restore all 15 cable tiles before the breaker will close.'],damage:Object.fromEntries(party().map(c=>[c.id,0])),healing:Object.fromEntries(party().map(c=>[c.id,0])),threat:Object.fromEntries(party().map(c=>[c.id,0])),hp:Object.fromEntries(party().map(c=>[c.id,100])),resources:Object.fromEntries(party().map(c=>{const d=resourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),aggro:null,combatElapsed:0,movementEpoch:{},result:null};await window.CellboundExpeditionPresentation?.enter?.('blackout-station',{difficulty:eg.diff?.name||'Normal'});renderPuzzle()
+ token++;
+ if(attempt.resumed&&attempt.runtimeState?.kind==='blackout-station'){
+   const phase=bsRestoreRuntime(attempt);
+   await window.CellboundExpeditionPresentation?.enter?.('blackout-station',{difficulty:attempt.difficulty||eg.diff?.name||'Normal'});
+   if(phase==='combat'||phase==='boss-pending'||run.powered){if(!run.runtimeStageStartedAt)run.runtimeStageStartedAt=Number(attempt.runtimeUpdatedAt?Date.parse(attempt.runtimeUpdatedAt):0)||Date.now();return startBoss(true)}
+   renderPuzzle();return
+ }
+ const quickReconnect=(Number(state()?.blackoutStationCompletions)||0)>0;
+ run={speed:1,seed:attempt.seed||Date.now().toString(36),startedAt:Date.now(),endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId},board:shuffledBoard(),moves:0,powered:false,quickReconnect,overrideInProgress:false,overrideUsed:false,cluesUsed:0,cluesRemaining:5,log:[quickReconnect?'Previous clear recognised. One continuous path to the breaker is enough.':'First-clear protocol active. Restore all 15 cable tiles before the breaker will close.'],damage:Object.fromEntries(party().map(c=>[c.id,0])),healing:Object.fromEntries(party().map(c=>[c.id,0])),threat:Object.fromEntries(party().map(c=>[c.id,0])),hp:Object.fromEntries(party().map(c=>[c.id,100])),resources:Object.fromEntries(party().map(c=>{const d=resourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),aggro:null,combatElapsed:0,movementEpoch:{},result:null,runtimeStageStartedAt:0};
+ await window.CellboundExpeditionPresentation?.enter?.('blackout-station',{difficulty:eg.diff?.name||'Normal'});renderPuzzle();await bsSaveRuntime('puzzle')
 }
 function init(){
  Game=window.CellboundGame;G=window.CellboundGear;if(!Game?.ready){setTimeout(init,100);return}db=Game.getSupabase?.();renderCard();

@@ -221,6 +221,7 @@ for(const file of files){
     for(const hook of ['function renderDungeonHistory','function bindReportEnhancement','function bindDungeonBrowser','bindReportEnhancement();bindGlobal();bindDungeonBrowser()'])if(!contents.includes(hook))throw new Error('Dungeon browser startup dependency missing: '+hook);
   }
   if(file==='endgame-v1.js'){
+    for(const hook of ['resume_dungeon_attempt','save_dungeon_attempt_runtime','function beginOrResumeAttempt','function saveRuntime'])if(!contents.includes(hook))throw new Error('Resumable dungeon service is missing '+hook);
     if(!contents.includes("dungeonCard('chaos-canyon')")||!contents.includes("leaderboardMarkup('chaos-canyon')"))throw new Error('Chaos Canyon must remain visible in the Endgame Hub');
     if(!contents.includes('function rollClearLoot')||!contents.includes('function clearLootGuaranteed'))throw new Error('Dungeon clear loot must retain bad-luck protection');
     if(!contents.includes("Number(x.tier)<Number(D.LOOT_RULES?.raidExclusiveTier||5)"))throw new Error('Dungeon loot pools must exclude raid-exclusive Tier 5');
@@ -264,6 +265,16 @@ for(const file of files){
     if(!contents.includes('autoContinueOnVictory:true')||!contents.includes("CellboundExpeditionPresentation?.room?.('fractured-ages'"))throw new Error('Fractured Ages boss victories must transition automatically');
     if(contents.includes('data-fa-fight')||contents.includes('data-fa-resolve'))throw new Error('Fractured Ages must not require manual continue buttons between boss victories and rewards');
   }
+  const resumableDungeonHooks={
+    'dungeon-2d-v1.js':['ashenSaveRuntime','ashenRestoreRuntime',"beginOrResumeAttempt?.('ashen-vault')",'runtimeStageStartedAt'],
+    'hollow-sanctum-v1.js':['hsSaveRuntime','hsRestoreRuntime',"beginOrResumeAttempt?.('hollow-sanctum')",'runtimeStageStartedAt'],
+    'chaos-canyon-v1.js':['ccSaveRuntime','ccRestoreRuntime',"beginOrResumeAttempt?.('chaos-canyon')",'runtimeStageStartedAt'],
+    'blackout-station-v1.js':['bsSaveRuntime','bsRestoreRuntime',"beginOrResumeAttempt?.('blackout-station')",'runtimeStageStartedAt'],
+    'fractured-ages-v1.js':['faSaveRuntime','faRestoreRuntime',"beginOrResumeAttempt?.('fractured-ages')",'wallClockStartAt']
+  };
+  if(resumableDungeonHooks[file])for(const hook of resumableDungeonHooks[file])if(!contents.includes(hook))throw new Error(file+' resumable dungeon runtime is missing '+hook);
+  if(file==='manor-raid-v1.js'&&!contents.includes('startAt:readyStartAt()'))throw new Error('The Manor shared viewer must resume from the server encounter clock');
+  if(file==='quests-v2.js'&&(!contents.includes('config.seed||')||!contents.includes('wallClockStartAt:Number(config.wallClockStartAt)')))throw new Error('Quest combat must support deterministic resumed dungeon playback');
   if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','twelve-below-v1.js','world-boss-2d-v1.js','pvp-viewer-v1.js','onboarding-v1.js','quests-v2.js'].includes(file)){
     for(const legacy of ['Math.min(rawDelta,100)','Math.min(100,Math.max(0,now-last','Math.min(Math.max(0,now-lastFrame),100)']){
       if(contents.includes(legacy))throw new Error(file+' still discards background combat time');
@@ -305,15 +316,15 @@ for(const file of files){
   if(file==='guild.html'){
     if(!contents.includes('boss-dossier-v1.css?v=3'))throw new Error('Boss dossier CSS cache version is stale in guild.html');
     if(!contents.includes('boss-dossier-v1.js?v=11'))throw new Error('Boss dossier cache version is stale in guild.html');
-    if(!contents.includes('quests-v2.js?v=36')||!contents.includes('thirteenth-bell-v1.js?v=3')||!contents.includes('no-way-back-v1.js?v=10'))throw new Error('Progressive quest combat cache versions are stale in guild.html');
+    if(!contents.includes('quests-v2.js?v=37')||!contents.includes('thirteenth-bell-v1.js?v=3')||!contents.includes('no-way-back-v1.js?v=10'))throw new Error('Progressive quest combat cache versions are stale in guild.html');
     if(!contents.includes('no-way-back-v1.css?v=4')||!contents.includes('no-way-back-v1.js?v=10'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
     if(!contents.includes('comic-scenes-v1.css?v=2')||!contents.includes('comic-scenes-v1.js?v=2')||!contents.includes('onboarding-v1.js?v=19'))throw new Error('Tutorial comic asset cache versions are stale in guild.html');
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=51')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
-    if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=6'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
+    if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=7'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
     if(!contents.includes('character-portraits-v1.css?v=4')||!contents.includes('character-portraits-v1.js?v=5'))throw new Error('Character portrait identity assets are not linked from guild.html');
      if(!contents.includes('combat-portraits-v1.css?v=3')||!contents.includes('combat-portraits-v1.js?v=4'))throw new Error('Combat portrait assets are not linked from guild.html');
-    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=14')||!contents.includes('combat-reborn-v1.js?v=7')||!contents.includes('guild-v4.js?v=51')||!contents.includes('character-sheet.js?v=32')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=53')||!contents.includes('hollow-sanctum-v1.js?v=39')||!contents.includes('chaos-canyon-v1.js?v=14')||!contents.includes('blackout-station-v1.js?v=21')||!contents.includes('fractured-ages-v1.js?v=7'))throw new Error('Set bonus UI cache versions are stale in guild.html');
+    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=14')||!contents.includes('combat-reborn-v1.js?v=7')||!contents.includes('guild-v4.js?v=51')||!contents.includes('character-sheet.js?v=32')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=54')||!contents.includes('hollow-sanctum-v1.js?v=40')||!contents.includes('chaos-canyon-v1.js?v=15')||!contents.includes('blackout-station-v1.js?v=22')||!contents.includes('fractured-ages-v1.js?v=8'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     const layoutSafetyLink='<link rel="stylesheet" href="./layout-safety-v1.css?v=1">';
     if(!contents.includes(layoutSafetyLink)||contents.lastIndexOf('<link rel="stylesheet"')!==contents.indexOf(layoutSafetyLink))throw new Error('Layout safety stylesheet must remain the final CSS layer in guild.html');

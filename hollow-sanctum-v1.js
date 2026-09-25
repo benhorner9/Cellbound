@@ -418,7 +418,7 @@ async function hsPlayTimeline(result,tok){
  if(!run)return false;run.telegraphs={};
  if(!events.length)return result?.outcome==='victory';
  return await new Promise(resolve=>{
-  let index=0,simTime=0,wallAnchor=Date.now(),simAnchor=0,lastSpeed=null,finished=false,raf=0;
+  let index=0,simTime=0,wallAnchor=Number(run?.runtimeStageStartedAt)||Date.now(),simAnchor=0,lastSpeed=null,finished=false,raf=0;
   const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);resolve(value)};
   const frame=()=>{
    if(finished)return;
@@ -645,13 +645,67 @@ function hsRunMetrics(){
  return{timeMs,deaths:totals.deaths,mechanicsFailed:totals.failed,mistakes:totals.mistakes,missedInterrupts:totals.missedInterrupts,threatLosses:totals.threatLosses,avoidableDamage:totals.avoidableDamage,battleResurrections:totals.battleResurrections,scorePreview:window.CellboundEndgameData?.scorePreview?.({difficulty:run.endgame?.difficulty||'normal',tier:run.endgame?.tier||0,timeMs,targetTimeMs:run.endgame?.targetTimeMs||0,deaths:totals.deaths,mechanicsFailed:totals.failed,mistakes:totals.mistakes})||0}
 }
 function hsFormatTime(ms){const t=Math.max(0,Math.round((Number(ms)||0)/1000)),m=Math.floor(t/60),s=t%60;return m+':'+String(s).padStart(2,'0')}
+function hsRuntimeRun(){
+ if(!run)return null;
+ return{
+  stage:Number(run.stage)||0,done:Boolean(run.done),speed:Number(run.speed)||1,log:(run.log||[]).slice(-30),
+  damageDone:{...(run.damageDone||{})},healingDone:{...(run.healingDone||{})},overhealing:{...(run.overhealing||{})},
+  threat:{...(run.threat||{})},aggro:run.aggro||null,endgame:{...(run.endgame||{})},hp:{...(run.hp||{})},
+  resources:JSON.parse(JSON.stringify(run.resources||{})),cooldowns:JSON.parse(JSON.stringify(run.cooldowns||{})),
+  statuses:JSON.parse(JSON.stringify(run.statuses||{})),reviveSickness:{...(run.reviveSickness||{})},
+  expeditionTimeMs:Number(run.expeditionTimeMs)||0,reviveReadyAt:Number(run.reviveReadyAt)||0,
+  outOfCombatRevives:Number(run.outOfCombatRevives)||0,
+  history:(run.history||[]).map(h=>({stageId:h.stageId,stageTitle:h.stageTitle,startHp:h.startHp,durationMs:h.durationMs,summary:h.summary,outcome:h.outcome}))
+ }
+}
+async function hsSaveRuntime(phase='stage'){
+ if(!run?.endgame?.attemptId)return;
+ await window.CellboundEndgame?.saveRuntime?.('hollow-sanctum',{
+  version:1,kind:'hollow-sanctum',phase,stage:Number(run.stage)||0,
+  stageStartedAt:Number(run.runtimeStageStartedAt)||0,tactics:{...hsTactics},run:hsRuntimeRun()
+ })
+}
+function hsRestoreRuntime(attempt){
+ const snap=attempt?.runtimeState||{},saved=snap.run||{};
+ Object.assign(hsTactics,snap.tactics||{});
+ run={...saved,telegraphs:{},runtimeStageStartedAt:Number(snap.stageStartedAt)||Date.now(),_restored:true};
+ run.endgame={...(saved.endgame||{}),attemptId:attempt.attemptId,seed:attempt.seed,difficulty:attempt.difficulty,tier:Number(attempt.tier)||0,targetTimeMs:Number(attempt.targetTimeMs)||Number(saved.endgame?.targetTimeMs)||0,dungeonVersion:Number(attempt.dungeonVersion)||Number(saved.endgame?.dungeonVersion)||2};
+ return run
+}
+async function hsRunFrom(startIndex,tok){
+ for(let i=Math.max(0,Number(startIndex)||0);i<STAGES.length;i++){
+  if(tok!==token||!run)return;
+  const resuming=Boolean(run._restored)&&i===Math.max(0,Number(startIndex)||0);
+  run.stage=i;
+  if(!resuming||!run.runtimeStageStartedAt)run.runtimeStageStartedAt=Date.now();
+  run._restored=false;
+  await hsSaveRuntime('stage');
+  const s=STAGES[i];
+  if(s.combatKind==='final')await window.CellboundBossDossier?.show?.('bound-choir');else if(i>0)await window.CellboundExpeditionPresentation?.room?.('hollow-sanctum',{title:s.title,index:i,total:STAGES.length,kind:s.kind});
+  if(/boss/i.test(String(s.kind||s.combatKind||'')))window.CellboundFX?.boss?.(s.title);
+  $('#hs2dTitle').textContent=s.title;const type=$('#hs2dType');if(type)type.textContent=s.kind;
+  $('.hs2d-route').innerHTML=STAGES.map((x,j)=>'<span class="'+(j<i?'done':j===i?'current':'')+'"><i>'+(j+1)+'</i>'+esc(x.title)+'</span>').join('');
+  if(!await fightStage(s,tok,i)){await hsSaveRuntime('failed');return}
+  run.stage=i+1;run.runtimeStageStartedAt=0;await hsSaveRuntime('between')
+ }
+ if(tok!==token||!run)return;
+ await complete()
+}
 
 async function start(){
  const startButton=root().querySelector('[data-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
  await Game.persistState?.();
- const service=await hsWaitForEndgame(),eg=hsEndgameConfig(),attempt=await service?.beginAttempt?.('hollow-sanctum');if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN EXPEDITION →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Descent again.');return}token++;const tok=token,p=party();run={stage:0,done:false,speed:1,log:[],damageDone:Object.fromEntries(p.map(ch=>[ch.id,0])),healingDone:Object.fromEntries(p.map(ch=>[ch.id,0])),overhealing:Object.fromEntries(p.map(ch=>[ch.id,0])),threat:Object.fromEntries(p.map(ch=>[ch.id,0])),aggro:null,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=hsResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),statuses:Object.fromEntries(p.map(c=>[c.id,[]])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{}};await window.CellboundExpeditionPresentation?.enter?.('hollow-sanctum',{difficulty:eg.diff?.name||'Normal'});draw();
- for(let i=0;i<STAGES.length;i++){if(tok!==token)return;run.stage=i;const s=STAGES[i];if(s.combatKind==='final')await window.CellboundBossDossier?.show?.('bound-choir');else if(i>0)await window.CellboundExpeditionPresentation?.room?.('hollow-sanctum',{title:s.title,index:i,total:STAGES.length,kind:s.kind});if(/boss/i.test(String(s.kind||s.combatKind||'')))window.CellboundFX?.boss?.(s.title);$('#hs2dTitle').textContent=s.title;const type=$('#hs2dType');if(type)type.textContent=s.kind;$('.hs2d-route').innerHTML=STAGES.map((x,j)=>'<span class="'+(j<i?'done':j===i?'current':'')+'"><i>'+(j+1)+'</i>'+esc(x.title)+'</span>').join('');if(!await fightStage(s,tok,i))return}
- if(tok!==token)return;await complete();
+ const service=await hsWaitForEndgame(),eg=hsEndgameConfig(),attempt=await service?.beginOrResumeAttempt?.('hollow-sanctum')||await service?.beginAttempt?.('hollow-sanctum');
+ if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN EXPEDITION →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Descent again.');return}
+ token++;const tok=token,p=party();
+ if(attempt.resumed&&attempt.runtimeState?.kind==='hollow-sanctum'){
+  hsRestoreRuntime(attempt)
+ }else{
+  run={stage:0,done:false,speed:1,log:[],damageDone:Object.fromEntries(p.map(ch=>[ch.id,0])),healingDone:Object.fromEntries(p.map(ch=>[ch.id,0])),overhealing:Object.fromEntries(p.map(ch=>[ch.id,0])),threat:Object.fromEntries(p.map(ch=>[ch.id,0])),aggro:null,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=hsResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),statuses:Object.fromEntries(p.map(c=>[c.id,[]])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{},runtimeStageStartedAt:Date.now()}
+ }
+ await window.CellboundExpeditionPresentation?.enter?.('hollow-sanctum',{difficulty:attempt.difficulty||eg.diff?.name||'Normal'});
+ draw();
+ await hsRunFrom(Math.min(STAGES.length-1,Number(run.stage)||0),tok)
 }
 async function complete(){
  const s=state(),q=qstate(),first=!q.flags.hollowFirstClear,metrics=hsRunMetrics();run.endgameMetrics=metrics;const record=await window.CellboundEndgame?.recordRun?.('hollow-sanctum',metrics);run.endgameRecord=record&&!record.error?record:null;const gains=awardXp(),mode=run.endgame?.difficulty||'normal',tier=Number(run.endgame?.tier)||0,gear=window.CellboundEndgame?.rollClearLoot?.('hollow-sanctum','choir',mode==='normal'?.70:mode==='heroic'?.78:.85)||null,gold=mode==='normal'?220:mode==='heroic'?300:340+tier*12,renown=mode==='normal'?100:mode==='heroic'?135:150+tier*5;s.gold=(Number(s.gold)||0)+gold;s.renown=(Number(s.renown)||0)+renown;const shards=window.CellboundEndgame?.shardReward?.('hollow-sanctum')||0;if(shards)Game.addMaterial?.('cell-shards',shards);const chase=window.CellboundEndgame?.rollChase?.('hollow-sanctum');if(chase)s.activity.push('Very rare collection reward: '+chase.name+'.');Game.addMaterial?.('void-crystal',first?2:1);q.flags.hollowFirstClear=true;q.hollowCompletions=(Number(q.hollowCompletions)||0)+1;

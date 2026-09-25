@@ -145,14 +145,42 @@ function briefing(){
  r.querySelector('[data-fa-close]').onclick=close;r.querySelector('[data-fa-start]').onclick=startRun;
  try{faBindEndgamePrep()}catch(error){console.warn('Fractured Ages difficulty controls failed to bind',error)}
 }
+function faRuntimeRun(){
+ if(!run)return null;
+ return{
+  stage:Number(run.stage)||0,startedAt:Number(run.startedAt)||Date.now(),done:Boolean(run.done),
+  combatState:JSON.parse(JSON.stringify(run.combatState||{})),recoveries:Number(run.recoveries)||0,
+  endgame:{...(run.endgame||{})},
+  results:(run.results||[]).map(x=>({id:x.id,boss:x.boss,combatResult:x.combatResult?{durationMs:x.combatResult.durationMs,summary:x.combatResult.summary,outcome:x.combatResult.outcome}:null}))
+ }
+}
+async function faSaveRuntime(phase='stage'){
+ if(!run?.endgame?.attemptId)return;
+ await window.CellboundEndgame?.saveRuntime?.('fractured-ages',{
+  version:1,kind:'fractured-ages',phase,stage:Number(run.stage)||0,
+  stageStartedAt:Number(run.runtimeStageStartedAt)||0,run:faRuntimeRun()
+ })
+}
+function faRestoreRuntime(attempt){
+ const snap=attempt?.runtimeState||{},saved=snap.run||{};
+ run={...saved,runtimeStageStartedAt:Number(snap.stageStartedAt)||Date.now(),_restored:true,finalDossierPending:false};
+ run.endgame={...(saved.endgame||{}),attemptId:attempt.attemptId,seed:attempt.seed,difficulty:attempt.difficulty,tier:Number(attempt.tier)||0,targetTimeMs:Number(attempt.targetTimeMs)||Number(saved.endgame?.targetTimeMs)||0,dungeonVersion:Number(attempt.dungeonVersion)||Number(saved.endgame?.dungeonVersion)||2};
+ return run
+}
+
 async function startRun(){
  const startButton=root().querySelector('[data-fa-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
  await Game.persistState?.();
- const service=await faWaitForEndgame(),eg=faEndgameConfig(),attempt=await service?.beginAttempt?.('fractured-ages');
+ const service=await faWaitForEndgame(),eg=faEndgameConfig(),attempt=await service?.beginOrResumeAttempt?.('fractured-ages')||await service?.beginAttempt?.('fractured-ages');
  if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='STEP THROUGH THE FIRST FRACTURE →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try again.');return}
- const combatState=Object.fromEntries(party().map(c=>[c.id,{healthPct:100,resource:null,cooldowns:{},statuses:[],reviveSicknessMs:0,uniqueUsed:{}}]));
- run={stage:0,startedAt:Date.now(),results:[],done:false,combatState,recoveries:0,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed}};
- await window.CellboundExpeditionPresentation?.enter?.('fractured-ages',{difficulty:eg.diff?.name||'Normal'});await transition()
+ if(attempt.resumed&&attempt.runtimeState?.kind==='fractured-ages'){
+  faRestoreRuntime(attempt)
+ }else{
+  const combatState=Object.fromEntries(party().map(c=>[c.id,{healthPct:100,resource:null,cooldowns:{},statuses:[],reviveSicknessMs:0,uniqueUsed:{}}]));
+  run={stage:0,startedAt:Date.now(),results:[],done:false,combatState,recoveries:0,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},runtimeStageStartedAt:Date.now()}
+ }
+ await window.CellboundExpeditionPresentation?.enter?.('fractured-ages',{difficulty:attempt.difficulty||eg.diff?.name||'Normal'});
+ await transition()
 }
 function carryCombatState(result){
  if(!run||!result?.finalState?.players)return{ok:false,reason:'Combat state could not be recovered.'};
@@ -193,6 +221,8 @@ function carryCombatState(result){
 async function transition(){
  if(!run)return;
  const stageIndex=run.stage,s=STAGES[stageIndex],r=root();
+ const resuming=Boolean(run._restored);if(!resuming||!run.runtimeStageStartedAt)run.runtimeStageStartedAt=Date.now();run._restored=false;
+ await faSaveRuntime('stage');
  r.hidden=true;document.body.classList.add('fa-open');
  if(s.id==='funhouse'){
   if(run.finalDossierPending)return;
@@ -216,23 +246,25 @@ async function fightStage(s){
   presentationKind:'dungeon',phases:STAGES.map(x=>x.era),phaseIndex:run.stage,partyLabel:'PARTY CONDITION · ILVL '+ilvl(),
   enemies:s.enemies,eliteIndex:s.id==='funhouse'?1:0,visualClass:s.visual,environmentMarkup:s.environment,combat,
   combatState:run?.combatState||null,onResult:result=>{combatResult=result},
+  wallClockStartAt:Number(run.runtimeStageStartedAt)||Date.now(),
+  seed:[run.endgame?.seed||'fractured-ages',s.id,run.stage].join(':'),
   autoContinueOnVictory:true,autoContinueDelayMs:650,
   completeText:s.id==='funhouse'?'The echoes fall. At exactly twenty percent health, the Old Man lifts one finger. Everything stops.':'The fracture shudders. A new door opens where no door existed before.'
  });
  if(!run)return;
- if(!won){showFailure(s);return}
+ if(!won){await showFailure(s);return}
  const carry=carryCombatState(combatResult);
  if(!carry.ok){await failRecovery(s,carry.reason);return}
  run.results.push({id:s.id,boss:s.boss,combatResult});
  if(s.id==='funhouse'){await showMaskFall();return}
- run.stage++;return transition()
+ run.stage++;run.runtimeStageStartedAt=0;await faSaveRuntime('between');return transition()
 }
-function showFailure(s){
- const r=root();r.hidden=false;r.innerHTML='<section class="fa-shell fa-failed"><small>THE FRACTURED AGES · RUN ENDED</small><h2>The timeline rejects the party.</h2><p>Your guild was defeated by '+esc(s.boss)+'. The party gains Cell Shock. The Fourfold Lock remains open for another attempt after recovery.</p><button data-fa-return>RETURN TO DUNGEONS →</button></section>';r.querySelector('[data-fa-return]').onclick=close
+async function showFailure(s){
+ await faSaveRuntime('failed');const r=root();r.hidden=false;r.innerHTML='<section class="fa-shell fa-failed"><small>THE FRACTURED AGES · RUN ENDED</small><h2>The timeline rejects the party.</h2><p>Your guild was defeated by '+esc(s.boss)+'. The party gains Cell Shock. The Fourfold Lock remains open for another attempt after recovery.</p><button data-fa-return>RETURN TO DUNGEONS →</button></section>';r.querySelector('[data-fa-return]').onclick=close
 }
 async function failRecovery(s,reason){
  if(!run||run.done)return;run.done=true;
- Game.applyPartyCellShock?.(25);await Game.persistState?.();
+ Game.applyPartyCellShock?.(25);await Game.persistState?.();await faSaveRuntime('failed');
  const r=root();r.hidden=false;r.innerHTML='<section class="fa-shell fa-failed"><small>THE FRACTURED AGES · EXPEDITION FAILED</small><h2>The party cannot continue beyond '+esc(s.boss)+'.</h2><p>'+esc(reason||'Fallen adventurers could not be recovered between fractures.')+' All five adventurers gained 25% Cell Shock.</p><button data-fa-return>RETURN TO DUNGEONS →</button></section>';r.querySelector('[data-fa-return]').onclick=close
 }
 async function showMaskFall(){
