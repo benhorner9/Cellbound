@@ -264,6 +264,12 @@ for(const file of files){
     if(!contents.includes('autoContinueOnVictory:true')||!contents.includes("CellboundExpeditionPresentation?.room?.('fractured-ages'"))throw new Error('Fractured Ages boss victories must transition automatically');
     if(contents.includes('data-fa-fight')||contents.includes('data-fa-resolve'))throw new Error('Fractured Ages must not require manual continue buttons between boss victories and rewards');
   }
+  if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','twelve-below-v1.js','world-boss-2d-v1.js','pvp-viewer-v1.js','onboarding-v1.js','quests-v2.js'].includes(file)){
+    for(const legacy of ['Math.min(rawDelta,100)','Math.min(100,Math.max(0,now-last','Math.min(Math.max(0,now-lastFrame),100)']){
+      if(contents.includes(legacy))throw new Error(file+' still discards background combat time');
+    }
+    if(!contents.includes('Date.now()-wallAnchor'))throw new Error(file+' must use a wall-clock combat timeline');
+  }
   if(file==='quests-v2.js'){
     if(!contents.includes("Number(lastResult?.durationMs)"))throw new Error('Interactive slice duration must use lastResult');
     if(!contents.includes("_combatTalentTimers:x.talentTimers||{}")||!contents.includes("talentTimers=Object.fromEntries"))throw new Error('Quest sliced talent state carry is missing');
@@ -274,7 +280,7 @@ for(const file of files){
     if(!contents.includes("$$('[data-q-target]').forEach"))throw new Error('Live quest target controls must use querySelectorAll');
     if(!contents.includes('async function qPlayReborn')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('Quest combat must use continuous Combat Reborn playback');
     for(const hook of ['data-q-speed','q2dHealingMeter','function qStatusTargets','CellboundCombatStatuses?.handle','data-q-side-resource','function qResourceDef','function qPulseUnit'])if(!contents.includes(hook))throw new Error('Quest combat HUD is missing '+hook);
-    if(!contents.includes("simTime+=Math.min(rawDelta,100)*Math.max(.25,Number(questFight?.speed)||1)"))throw new Error('Quest combat playback speed must control the authoritative timeline');
+    if(!contents.includes("Date.now()-wallAnchor")||!contents.includes("Math.max(.25,Number(questFight?.speed)||1)"))throw new Error('Quest combat playback must use a speed-aware wall clock');
     if(!contents.includes("level:2,recommendedItemLevel:18")||!contents.includes("level:4,recommendedItemLevel:20")||!contents.includes("level:5,recommendedItemLevel:22")||!contents.includes("level:6,recommendedItemLevel:24"))throw new Error('Quest combat progression targets are missing');
   }
   if(file==='thirteenth-bell-v1.js'){
@@ -299,15 +305,15 @@ for(const file of files){
   if(file==='guild.html'){
     if(!contents.includes('boss-dossier-v1.css?v=3'))throw new Error('Boss dossier CSS cache version is stale in guild.html');
     if(!contents.includes('boss-dossier-v1.js?v=11'))throw new Error('Boss dossier cache version is stale in guild.html');
-    if(!contents.includes('quests-v2.js?v=35')||!contents.includes('thirteenth-bell-v1.js?v=3')||!contents.includes('no-way-back-v1.js?v=10'))throw new Error('Progressive quest combat cache versions are stale in guild.html');
+    if(!contents.includes('quests-v2.js?v=36')||!contents.includes('thirteenth-bell-v1.js?v=3')||!contents.includes('no-way-back-v1.js?v=10'))throw new Error('Progressive quest combat cache versions are stale in guild.html');
     if(!contents.includes('no-way-back-v1.css?v=4')||!contents.includes('no-way-back-v1.js?v=10'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
-    if(!contents.includes('comic-scenes-v1.css?v=2')||!contents.includes('comic-scenes-v1.js?v=2')||!contents.includes('onboarding-v1.js?v=18'))throw new Error('Tutorial comic asset cache versions are stale in guild.html');
+    if(!contents.includes('comic-scenes-v1.css?v=2')||!contents.includes('comic-scenes-v1.js?v=2')||!contents.includes('onboarding-v1.js?v=19'))throw new Error('Tutorial comic asset cache versions are stale in guild.html');
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=51')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
     if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=6'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
     if(!contents.includes('character-portraits-v1.css?v=4')||!contents.includes('character-portraits-v1.js?v=5'))throw new Error('Character portrait identity assets are not linked from guild.html');
      if(!contents.includes('combat-portraits-v1.css?v=3')||!contents.includes('combat-portraits-v1.js?v=4'))throw new Error('Combat portrait assets are not linked from guild.html');
-    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=14')||!contents.includes('combat-reborn-v1.js?v=7')||!contents.includes('guild-v4.js?v=51')||!contents.includes('character-sheet.js?v=32')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=52')||!contents.includes('hollow-sanctum-v1.js?v=38')||!contents.includes('chaos-canyon-v1.js?v=13')||!contents.includes('blackout-station-v1.js?v=20')||!contents.includes('fractured-ages-v1.js?v=7'))throw new Error('Set bonus UI cache versions are stale in guild.html');
+    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=14')||!contents.includes('combat-reborn-v1.js?v=7')||!contents.includes('guild-v4.js?v=51')||!contents.includes('character-sheet.js?v=32')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=53')||!contents.includes('hollow-sanctum-v1.js?v=39')||!contents.includes('chaos-canyon-v1.js?v=14')||!contents.includes('blackout-station-v1.js?v=21')||!contents.includes('fractured-ages-v1.js?v=7'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     const layoutSafetyLink='<link rel="stylesheet" href="./layout-safety-v1.css?v=1">';
     if(!contents.includes(layoutSafetyLink)||contents.lastIndexOf('<link rel="stylesheet"')!==contents.indexOf(layoutSafetyLink))throw new Error('Layout safety stylesheet must remain the final CSS layer in guild.html');
