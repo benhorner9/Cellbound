@@ -1339,6 +1339,7 @@ function rebornTelegraph(e){
  else if(type==='target-circle')v=circleTelegraph(target||source,135,'TARGETED AOE · SPREAD');
  else if(type==='healer-swipe')v=coneTelegraph(source,target||'p-'+party().find(c=>role(c)==='healer')?.id,'HEALER SWIPE · CLEAR THE PATH');
  else if(type==='tank-mark')v=castTelegraph(source,'TANK MARK · PREPARE SWAP');
+ else if(type==='interaction')v=castTelegraph(source,String(e.ability||'INTERACTION').toUpperCase()+' · RESPOND');
  else if(type==='adds')v=addTelegraph([{x:72,y:35},{x:72,y:65}],'ADDS INCOMING · PREPARE');
  else if(type==='interrupt')v=castTelegraph(source,'INTERRUPT '+String(e.ability||'CAST').toUpperCase());
  if(v){run.rebornTelegraphs=run.rebornTelegraphs||{};run.rebornTelegraphs[tokenId]=v}
@@ -1485,6 +1486,8 @@ function renderRebornEvent(e,result,replayMode=false){
    flash('TANK SWAP',false);if(srcChar)act('tank',srcChar.name+' takes threat');log('Tank swap completed.');break;
   case'ADD_OVERCLOCKED':
    flash('OVERCLOCK',true);status(e.ability||'Turrets overclocked');log((e.ability||'Adds')+' empowers active adds.');break;
+  case'INTERACTION_REQUIRED':
+   flash(String(e.ability||'INTERACTION').toUpperCase(),true);status((e.ability||'Interaction')+' · response required');log((e.ability||'An encounter interaction')+' requires a response.');break;
   case'INTERRUPT':
    if(e.result==='success'){rebornCastClear('INTERRUPTED');clearRebornTelegraph(e.payload?.token,'safe');flash('INTERRUPTED',false);window.CellboundCombatFX?.interrupt?.($('[data-unit="'+e.target+'"]')||$('#cb2dArena'));log((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');act('dps','Interrupt successful')}
    else if(e.result==='failed')log((srcChar?.name||'A player')+' misses an interrupt.');
@@ -1566,7 +1569,11 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
      // Render every event that became due this frame. Actions with close timestamps
      // now overlap naturally (movement/projectiles/casts/heals) instead of becoming slides.
      while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4){
-       renderRebornEvent(events[index],result,replayMode);
+       const event=events[index];
+       renderRebornEvent(event,result,replayMode);
+       if(!replayMode&&run?.externalMode&&typeof run.externalOnEvent==='function'){
+         try{run.externalOnEvent(event,result)}catch(error){console.warn('Shared combat event callback failed',error)}
+       }
        index++
      }
 
@@ -1847,7 +1854,7 @@ async function playSharedEncounter(options={}){
  if(!extParty.length||!encounter||!result)throw new Error('Shared combat viewer requires party, encounter and result.');
  token++;const tok=token;
  const resources=Object.fromEntries(extParty.map(c=>{const d=resourceDefFor(c);return[c.id,{name:d.name,max:d.max,value:d.start}]}));
- run={token:tok,stage:0,speed:1,externalMode:true,externalParty:extParty,externalStage:{...encounter,enemies:(encounter.enemies||[]).map(x=>typeof x==='object'?{...x}:x)},externalOnClose:options.onClose||null,
+ run={token:tok,stage:0,speed:1,externalMode:true,externalParty:extParty,externalStage:{...encounter,enemies:(encounter.enemies||[]).map(x=>typeof x==='object'?{...x}:x)},externalOnClose:options.onClose||null,externalOnEvent:typeof options.onEvent==='function'?options.onEvent:null,
    resources,cooldowns:Object.fromEntries(extParty.map(c=>[c.id,{}])),statuses:Object.fromEntries(extParty.map(c=>[c.id,[]])),reviveSickness:Object.fromEntries(extParty.map(c=>[c.id,0])),
    expeditionTimeMs:0,condition:Object.fromEntries(extParty.map(c=>[c.id,100])),hp:Object.fromEntries(extParty.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],
    damageDone:Object.fromEntries(extParty.map(c=>[c.id,0])),healingDone:Object.fromEntries(extParty.map(c=>[c.id,0])),overhealing:Object.fromEntries(extParty.map(c=>[c.id,0])),

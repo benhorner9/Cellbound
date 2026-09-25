@@ -54,11 +54,11 @@ function manorEncounter(stage){
  if(stage==='butler')return{id:'manor-butler',title:'The Butler',kind:'boss',level:15,enemies:[{name:'The Butler',classification:'boss',passive:true}],enemyHealth:5000,mechanicIntervalMs:3200,mechanics:[{name:'Plate Barrage',type:'persistent-circle',duration:1300,persistMs:9000,tickMs:1100,tickDamage:5,radius:10},{name:'Slow Patrol',type:'patrol',duration:1300}],hardEnrageMs:70000};
  if(stage==='engineer')return{id:'manor-engineer',title:'The Engineer',kind:'boss',level:15,enemies:[{name:'The Engineer',classification:'boss'}],enemyHealth:4000,scaling:{enemyDamage:.72},mechanicIntervalMs:4200,mechanics:[{name:'Rebuild Nail Guns',type:'adds',duration:900,addCount:2,addName:'Nail Gun Turret',addGroup:'nail-guns',maxActive:2,healthScale:.13,damageScale:.32,targeting:'random',attackRange:35,attackName:'Nail Burst',overclockOnCap:1.08,overclockAbility:'Overclock'},{name:'Nail Storm',type:'line',duration:1900}],phases:[{id:'nail70',name:'Nail Storm · 70%',atPct:70,triggerMechanic:{name:'Nail Storm',type:'line',duration:1800}},{id:'nail40',name:'Nail Storm · 40%',atPct:40,triggerMechanic:{name:'Nail Storm',type:'line',duration:1600}},{id:'nail15',name:'Nail Storm · 15%',atPct:15,triggerMechanic:{name:'Nail Storm',type:'line',duration:1400}}],hardEnrageMs:105000};
  if(stage==='bedroom')return{id:'manor-bedroom',title:'The Bedroom',kind:'event',level:15,enemies:Array.from({length:20},(_,i)=>({name:'Manor Thrall '+(i+1),classification:'trash',priority:i<4?2:1})),enemyHealth:140,scaling:{enemyDamage:.40},mechanics:[],hardEnrageMs:95000};
- if(stage==='housebound')return{id:'manor-master',title:'The Master of the Manor',kind:'final',level:15,enemies:[{name:'The Master of the Manor',classification:'boss'}],enemyHealth:5000,scaling:{enemyDamage:.68},mechanicIntervalMs:5200,mechanics:[{name:'Shattered Floor',type:'persistent-circle',duration:1500,persistMs:7000,tickMs:1200,tickDamage:4,radius:9},{name:"Servant's Screech",type:'target-circle',duration:1800,radius:9},{name:'Nail Gun',type:'adds',duration:900,addCount:1,addName:'Nail Gun Turret',addGroup:'master-turret',maxActive:1,healthScale:.10,damageScale:.25,targeting:'random',attackRange:35,attackName:'Nail Burst'}],phases:[{id:'standing',name:'The Master Rises',atPct:60,damageScale:1.04,addMechanics:[{name:'Mark of the Manor',type:'tank-mark',duration:1000,damageTakenPerStack:.15,swapAt:3,markDuration:22000},{name:'Chosen Servant',type:'target-circle',duration:1850,radius:11}]},{id:'collapse',name:'House Collapses',atPct:30,damageScale:1.08,arenaBounds:{left:20,right:80,top:18,bottom:82},addMechanics:[{name:'Falling Beam',type:'line',duration:1500},{name:'Fire Floor',type:'persistent-circle',duration:1500,persistMs:8000,tickMs:1100,tickDamage:5,radius:10}],wipeAfterMs:20000,wipeAbility:'BURN THE HOUSE'}],hardEnrageMs:150000};
+ if(stage==='housebound')return{id:'manor-master',title:'The Master of the Manor',kind:'final',level:15,enemies:[{name:'The Master of the Manor',classification:'boss'}],enemyHealth:5000,scaling:{enemyDamage:.68},mechanicIntervalMs:5200,mechanics:[{name:'Shattered Floor',type:'persistent-circle',duration:1500,persistMs:7000,tickMs:1200,tickDamage:4,radius:9},{name:"Servant's Screech",type:'interaction',duration:900,interaction:'manor-screech',interactionDurationMs:4500},{name:'Nail Gun',type:'adds',duration:900,addCount:1,addName:'Nail Gun Turret',addGroup:'master-turret',maxActive:1,healthScale:.10,damageScale:.25,targeting:'random',attackRange:35,attackName:'Nail Burst'}],phases:[{id:'standing',name:'The Master Rises',atPct:60,damageScale:1.04,addMechanics:[{name:'Mark of the Manor',type:'tank-mark',duration:1000,damageTakenPerStack:.15,swapAt:3,markDuration:22000},{name:'Chosen Servant',type:'target-circle',duration:1850,radius:11}]},{id:'collapse',name:'House Collapses',atPct:30,damageScale:1.08,arenaBounds:{left:20,right:80,top:18,bottom:82},addMechanics:[{name:'Falling Beam',type:'line',duration:1500},{name:'Fire Floor',type:'persistent-circle',duration:1500,persistMs:8000,tickMs:1100,tickDamage:5,radius:10}],wipeAfterMs:20000,wipeAbility:'BURN THE HOUSE'}],hardEnrageMs:150000};
  return null
 }
 function maidEncounter(side){
- return{id:'manor-maid-'+side,title:'The Maid',kind:'boss',level:15,enemies:[{name:'The Maid',classification:'boss'}],enemyHealth:2500,scaling:{enemyDamage:.72},mechanicIntervalMs:4400,mechanics:[{name:'Silver Tray',type:'cone',duration:1500},{name:'Healer Swipe',type:'healer-swipe',duration:1400,status:{id:'maid-gash',name:'Maid Gash',duration:5000,effect:{incomingDamageTaken:.08}}}],hardEnrageMs:85000}
+ return{id:'manor-maid-'+side,title:'The Maid',kind:'boss',level:15,enemies:[{name:'The Maid',classification:'boss'}],enemyHealth:2500,scaling:{enemyDamage:.72},mechanicIntervalMs:4400,mechanics:[{name:'Screech',type:'interaction',duration:900,interaction:'manor-screech',interactionDurationMs:4500},{name:'Silver Tray',type:'cone',duration:1500},{name:'Healer Swipe',type:'healer-swipe',duration:1400,status:{id:'maid-gash',name:'Maid Gash',duration:5000,effect:{incomingDamageTaken:.08}}}],hardEnrageMs:85000}
 }
 function combatFor(stage,side=null){
  const E=combatEngine();if(!E?.simulate||!session)return null;
@@ -262,8 +262,11 @@ function ensureOverlay(){
 
 function ensureScreechHost(){
  let host=$('#mrScreechHost');
- if(!host){host=document.createElement('div');host.id='mrScreechHost';document.body.appendChild(host)}
- return host
+ // The old raid renderer could leave this host inside the hidden Manor overlay.
+ // Raid interactions must always sit above the active shared CB2D combat viewer.
+ if(host&&host.parentElement!==document.body){host.remove();host=null}
+ if(!host){host=document.createElement('div');host.id='mrScreechHost';host.className='mr-screech-host';document.body.appendChild(host)}
+ host.hidden=false;return host
 }
 function myRaidSide(){
  const rows=memberRows(),index=rows.findIndex(m=>m.user_id===user?.id);
@@ -311,6 +314,7 @@ async function syncSharedRaidView(force=false){
    shellClass:'cb2d-manor-raid',arenaClass:'cb2d-manor-arena',
    planTitle:'The Manor uses the same combat system as every dungeon.',
    planCopy:'Combat Reborn controls movement, threat, resources, healing, interrupts, deaths and boss mechanics. Raid-only interactions are layered over the same event stream.',
+   onEvent:handleRaidCombatEvent,
    onClose:()=>closeRaid(true)
  }).catch(error=>console.error('Manor shared viewer failed',error))
 }
@@ -367,10 +371,19 @@ function tickRaid(){
    if(session.stage==='maids')driveMaids(e);
    else driveStage(e)
  }
- const maidScreech=session.stage==='maids'&&e>7000&&!screechOpen&&e-lastScreechAt>10500;
- const masterHp=session.stage==='housebound'?bossHp('housebound',e):100,masterWindow=masterHp>60||(masterHp<=30&&masterHp>10);
- const masterScreech=session.stage==='housebound'&&e>7000&&!screechOpen&&masterWindow&&e-lastScreechAt>18000;
- if(maidScreech||masterScreech)openScreech()
+ // Safety fallback only. Normal Screech timing now comes directly from the
+ // Combat Reborn INTERACTION_REQUIRED event in the shared viewer.
+ if(!screechOpen&&lastScreechAt===0){
+   const ownCount=Number(session?.state?.[isLeader()?'screechCountA':'screechCountB'])||0;
+   if(session.stage==='maids'&&ownCount<1&&e>=16000)openScreech({fallback:true});
+   else if(session.stage==='housebound'&&e>=22000)openScreech({fallback:true})
+ }
+}
+function handleRaidCombatEvent(event){
+ if(!event||event.type!=='INTERACTION_REQUIRED')return;
+ if(String(event.payload?.interaction||'')!=='manor-screech')return;
+ if(!['maids','housebound'].includes(session?.stage))return;
+ openScreech({event})
 }
 function bossHp(stage,e){
  const engineHp=combatBossHp(stage,e);if(engineHp!==null)return engineHp;
@@ -476,15 +489,17 @@ async function advance(next){
    lastStage='';sharedStageKey='';await loadSession(session.id);await syncSharedRaidView(true)
  }catch(e){console.warn('Manor advance',e)}finally{advancing=false}
 }
-function openScreech(){
- if(screechOpen||!['maids','housebound'].includes(session?.stage))return;screechOpen=true;lastScreechAt=stageElapsed();
- const host=ensureScreechHost();
+function openScreech(trigger={}){
+ if(screechOpen||!['maids','housebound'].includes(session?.stage))return;
+ screechOpen=true;lastScreechAt=now();
+ const host=ensureScreechHost(),event=trigger?.event;
  const target=SCREECH_COLOURS[Math.floor(Math.random()*SCREECH_COLOURS.length)];
  const display=SCREECH_COLOURS.filter(x=>x.name!==target.name)[Math.floor(Math.random()*4)];
  const shuffled=[...SCREECH_COLOURS].sort(()=>Math.random()-.5);
- let answered=false,deadline=now()+4500;
+ const promptMs=Math.max(2500,Number(event?.payload?.durationMs)||4500);
+ let answered=false,deadline=now()+promptMs;
  const master=session.stage==='housebound';
- host.innerHTML='<div class="mr-screech"><small>'+(master?'THE MASTER CALLS A SERVANT':'THE MAID CASTS')+'</small><h3>'+(master?"SERVANT'S SCREECH":'SCREECH')+'</h3><p>PRESS THE COLOUR THE <b>WORD SAYS</b></p><strong style="color:'+display.hex+'">'+target.name+'</strong><div>'+shuffled.map(x=>'<button data-colour="'+x.name+'" style="--c:'+x.hex+'">'+x.name+'</button>').join('')+'</div><span data-screech-time>4.5</span></div>';
+ host.innerHTML='<div class="mr-screech"><small>'+(master?'THE MASTER CALLS A SERVANT':'THE MAID CASTS')+'</small><h3>'+(master?"SERVANT'S SCREECH":'SCREECH')+'</h3><p>PRESS THE COLOUR THE <b>WORD SAYS</b></p><strong style="color:'+display.hex+'">'+target.name+'</strong><div>'+shuffled.map(x=>'<button data-colour="'+x.name+'" style="--c:'+x.hex+'">'+x.name+'</button>').join('')+'</div><span data-screech-time>'+(promptMs/1000).toFixed(1)+'</span></div>';
  const finish=async success=>{
    if(answered)return;answered=true;clearInterval(clock);
    const master=session.stage==='housebound';
