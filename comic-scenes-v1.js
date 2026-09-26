@@ -66,11 +66,11 @@ function show(config={}){
     const skipButton=config.allowSkip===false?'':'<button type="button" data-comic-skip>'+esc(config.skipLabel||'SKIP')+'</button>';
     root.dataset.theme=config.theme||'zeltira';
     const dialogue=storyOnly
-      ? '<footer class="cbcomic-dialogue cbcomic-story-only"><div class="cbcomic-controls"><div id="cbcomicChoices" class="cbcomic-choices" '+(progressive||!choices.length?'hidden':'')+'>'+choices.map(choiceMarkup).join('')+'</div><div class="cbcomic-actions"><button type="button" data-comic-skip>'+esc(config.skipLabel||'SKIP')+'</button><button type="button" class="primary" data-comic-continue '+((choices.length&&!progressive)?'disabled':'')+'>'+esc(progressive?(config.nextLabel||'NEXT →'):(config.continueLabel||'CONTINUE →'))+'</button></div></div></footer>'
+      ? '<footer class="cbcomic-dialogue cbcomic-story-only"><div class="cbcomic-controls"><div id="cbcomicChoices" class="cbcomic-choices" '+(progressive||!choices.length?'hidden':'')+'>'+choices.map(choiceMarkup).join('')+'</div><div class="cbcomic-actions">'+skipButton+'<button type="button" class="primary" data-comic-continue '+((choices.length&&!progressive)?'disabled':'')+'>'+esc(progressive?(config.nextLabel||'NEXT →'):(config.continueLabel||'CONTINUE →'))+'</button></div></div></footer>'
       : '<footer class="cbcomic-dialogue">'+
         '<div class="cbcomic-speaker">'+(config.speakerPortrait?'<img src="'+esc(config.speakerPortrait)+'" alt="">':'<span>'+esc(config.speakerMark||String(config.speaker||'NPC').split(/\s+/).map(x=>x[0]).slice(0,2).join(''))+'</span>')+'<div><small>'+esc(config.speakerRole||'')+'</small><b>'+esc(config.speaker||'Narrator')+'</b></div></div>'+
         '<div class="cbcomic-line"><p id="cbcomicLine">'+esc(config.line||'')+'</p><div id="cbcomicReply" class="cbcomic-reply" hidden></div></div>'+
-        '<div class="cbcomic-controls"><div id="cbcomicChoices" class="cbcomic-choices" '+(progressive?'hidden':'')+'>'+choices.map(choiceMarkup).join('')+'</div><div class="cbcomic-actions"><button type="button" data-comic-skip>'+esc(config.skipLabel||'SKIP')+'</button><button type="button" class="primary" data-comic-continue '+((choices.length&&!progressive)?'disabled':'')+'>'+esc(progressive?(config.nextLabel||'NEXT →'):(config.continueLabel||'CONTINUE →'))+'</button></div></div>'+
+        '<div class="cbcomic-controls"><div id="cbcomicChoices" class="cbcomic-choices" '+(progressive?'hidden':'')+'>'+choices.map(choiceMarkup).join('')+'</div><div class="cbcomic-actions">'+skipButton+'<button type="button" class="primary" data-comic-continue '+((choices.length&&!progressive)?'disabled':'')+'>'+esc(progressive?(config.nextLabel||'NEXT →'):(config.continueLabel||'CONTINUE →'))+'</button></div></div>'+
       '</footer>';
     root.innerHTML='<section class="cbcomic-shell" role="dialog" aria-modal="true" aria-label="'+esc(config.title||'Story scene')+'">'+
       '<header class="cbcomic-head"><div><small>'+esc(config.eyebrow||'CELLBOUND · STORY')+'</small><h2>'+esc(config.title||'Story Scene')+'</h2><span>'+esc(config.subtitle||'')+'</span></div><div class="cbcomic-page-mark">'+esc(config.page||'STORY')+'</div></header>'+
@@ -131,5 +131,5 @@ function show(config={}){
 function close(){
   activeToken++;const root=ensureRoot();root.hidden=true;root.innerHTML='';document.body.classList.remove('cbcomic-open');
 }
-window.CellboundComicScenes={show,close,version:'1.2.0'};
+window.CellboundComicScenes={show,close,version:'1.2.1'};
 })();
