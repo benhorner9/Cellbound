@@ -15,13 +15,14 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
   document.querySelector('#rosterActiveSummary').textContent='10 / 10';document.querySelector('#rosterMetricActive').textContent='5 / 5';document.querySelector('#rosterRecoverySummary').textContent='Company assembled';
   selectView('roster');
  });
- for(const f of ['character-portraits-v1.js','character-sheet.js'])await page.addScriptTag({content:read(f)});
+ for(const f of ['gear-data.js','character-portraits-v1.js','character-sheet.js'])await page.addScriptTag({content:read(f)});
+ await page.evaluate(()=>{fixture.roster.forEach(c=>{c.equipment=Object.fromEntries(CellboundGear.starterSet(c.class).filter(Boolean).map(item=>[item.slot,item]))});localStorage.setItem('cellbound-management-reboot-v3',JSON.stringify(fixture))});
  const guild=read('guild-v4.js');const source={card:guild.slice(guild.indexOf('function rosterCard('),guild.indexOf('function recruitSlotCard(')),slot:guild.slice(guild.indexOf('function slotHtml('),guild.indexOf('function partyReadiness(')),party:guild.slice(guild.indexOf('function renderParty('),guild.indexOf("$('#autoFill')?."))};
  await page.evaluate(source=>{
   const state=fixture,$=s=>document.querySelector(s),ui={partySlots:$('#partySlots'),partyRoster:$('#partyRoster'),readinessFill:$('#readinessFill'),readinessText:$('#readinessText'),readinessLabel:$('#readinessLabel'),readinessHint:$('#readinessHint')};
   const roleOf=c=>c.role,isRosterSlotUnlocked=()=>true,isUnavailable=c=>c.cellShock>=100,characterItemLevel=()=>24,combatClassKey=c=>c.class.toLowerCase(),flatPartyIds=()=>partyIds,partySlotIds=()=>Array.from({length:5},(_,i)=>partyIds[i]||null),charById=id=>state.roster.find(c=>c.id===id),classDef=()=>({glow:'#c5a878',icon:'◇'}),roleLabel=r=>r,portraitHTML=(c,size)=>CellboundPortraits.portraitHTML(c,{size}),formatRemaining=()=> '30m',partyReadiness=()=>({score:partyIds.length*20,ready:partyIds.length===5,hint:'Fixture party'}),save=()=>{},removeChar=id=>{window.partyIds=partyIds.filter(x=>x!==id)},assignChar=id=>{window.partyIds.push(id);renderAll()},renderAll=()=>CellboundGame.renderAll();
   const rosterCard=eval('('+source.card+')'),slotHtml=eval('('+source.slot+')');window.fixtureRenderParty=eval('('+source.party+')');fixtureRenderParty();$('#rosterGrid').innerHTML=state.roster.map(rosterCard).join('');
-  $('#rosterSearch').addEventListener('input',e=>{[...$('#rosterGrid').children].forEach((n,i)=>n.hidden=!state.roster[i].name.toLowerCase().includes(e.target.value.toLowerCase()))});
+  $('#rosterSearch').addEventListener('input',e=>{[...$('#rosterGrid').children].forEach((n,i)=>n.style.display=state.roster[i].name.toLowerCase().includes(e.target.value.toLowerCase())?'':'none')});
  },source);
  for(const f of ['living-world-v1.js','lantern-inn-v1.js'])await page.addScriptTag({content:read(f)});
  const shot=async name=>{await page.waitForTimeout(200);await page.screenshot({path:'/tmp/cellbound-inn-'+name+'.png'})};
@@ -35,7 +36,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
  await page.locator('.inn-ledger').click();assert.equal(await page.locator('#rosterSearch').inputValue(),'Mercy');await page.keyboard.press('Escape');
  const parent=await page.locator('#party').evaluate(n=>n.parentElement.className);
  await page.locator('.inn-table').click();assert.equal(await page.locator('#innParty #partySlots').count(),1);await shot('04-party');
- await page.locator('#innParty [data-remove="hero-4"]').click();assert.equal(await page.locator('.inn-traveller').count(),4);await page.locator('#innParty [data-pick="hero-5"]').click();assert.equal(await page.locator('[data-inn-character="hero-5"]').evaluate(n=>n.classList.contains('inn-traveller')),true);
+ await page.locator('#innParty [data-remove="hero-4"]').click();assert.equal(await page.locator('.inn-traveller').count(),4);assert.equal(await page.locator('.inn-adventurer').evaluateAll(nodes=>new Set(nodes.map(n=>n.dataset.locationSlot)).size),10);await page.locator('#innParty [data-pick="hero-5"]').click();assert.equal(await page.locator('[data-inn-character="hero-5"]').evaluate(n=>n.classList.contains('inn-traveller')),true);
  await page.keyboard.press('Escape');assert.equal(await page.locator('#party').evaluate(n=>n.parentElement.className),parent);
  await page.setViewportSize({width:1024,height:768});await shot('05-ipad-landscape');
  await page.setViewportSize({width:390,height:844});await page.locator('.inn-art img').evaluate(img=>img.decode());assert((await page.locator('.inn-art img').evaluate(n=>n.currentSrc)).includes('portrait'));

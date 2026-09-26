@@ -56,3 +56,5 @@ body.inn-character-open #characterModal .cb-character-tabs button{min-width:110p
  body.inn-character-open #characterModal .character-modal{width:100%!important;max-height:82dvh!important;min-height:0!important;border-radius:14px 14px 0 0!important}
 }
 @media(prefers-reduced-motion:reduce){.inn-world *{animation:none!important;transition:none!important}}
+
+body.inn-character-open{overflow:hidden}

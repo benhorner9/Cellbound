@@ -53,8 +53,13 @@ function mount(){
 }
 function assign(roster,party){
  const ids=new Set(party.map(c=>String(c.id))),active=party.filter(c=>roster.some(r=>String(r.id)===String(c.id)));
- // Preserve authoritative party order (tank, healer, DPS); reserves retain roster order.
- return active.map((c,i)=>({c:roster.find(r=>String(r.id)===String(c.id)),slot:activeSlots[i],active:true})).concat(roster.filter(c=>!ids.has(String(c.id))).map((c,i)=>({c,slot:reserveSlots[i]||Object.keys(slots)[i%10],active:false})));
+ // Membership is authoritative; class preferences only select a free room position.
+ const preferred={Warrior:'fireplace-right',Paladin:'fireplace-right',Priest:'main-table-right',Druid:'main-table-right',Rogue:'bar-left',Mage:'main-table-left',Hunter:'doorway'};
+ const used=new Set();
+ const placed=active.map(c=>{const slot=[preferred[c.class],...activeSlots].find(s=>s&&!used.has(s));used.add(slot);return {c:roster.find(r=>String(r.id)===String(c.id)),slot,active:true}});
+ const free=[...reserveSlots,...activeSlots].filter(s=>!used.has(s));
+ return placed.concat(roster.filter(c=>!ids.has(String(c.id))).map((c,i)=>({c,slot:free[i],active:false}))).filter(p=>p.slot);
+
 }
 function refresh(){
  mount();if(!world)return;
@@ -73,14 +78,15 @@ function refresh(){
 }
 // Run before the existing character-sheet capture handler. It owns all gear and talent actions.
 window.addEventListener('click',e=>{
+ if(e.target.closest?.('[data-recruit-slot]')&&ledger?.open)ledger.close();
  const b=e.target.closest?.('[data-char]');if(!b||!root?.classList.contains('active')||!root.contains(b))return;
  characterFocus=b;document.body.classList.add('inn-character-open');
  // A non-native character modal must sit above the Ledger's native top layer.
  if(ledger.open)ledger.close();
- requestAnimationFrame(()=>{const m=document.getElementById('characterModal');if(m&&!m.hidden){m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.setAttribute('aria-label','Adventurer details');m.querySelector('[data-close]')?.focus()}});
+ requestAnimationFrame(()=>{const m=document.getElementById('characterModal');if(m&&!m.hidden){const shell=document.querySelector('.app-shell');if(shell)shell.inert=true;m.setAttribute('role','dialog');m.setAttribute('aria-modal','true');m.setAttribute('aria-label','Adventurer details');m.querySelector('[data-close]')?.focus()}});
 },true);
 const modal=document.getElementById('characterModal');
-if(modal)new MutationObserver(()=>{if(modal.hidden&&document.body.classList.contains('inn-character-open')){document.body.classList.remove('inn-character-open');refresh();const id=characterFocus?.dataset?.char;([...world.querySelectorAll('[data-inn-character]')].find(n=>n.dataset.char===id)||world.querySelector('.inn-ledger'))?.focus({preventScroll:true})}}).observe(modal,{attributes:true,attributeFilter:['hidden']});
+if(modal)new MutationObserver(()=>{if(modal.hidden&&document.body.classList.contains('inn-character-open')){document.body.classList.remove('inn-character-open');const shell=document.querySelector('.app-shell');if(shell)shell.inert=false;refresh();const id=characterFocus?.dataset?.char;([...world.querySelectorAll('[data-inn-character]')].find(n=>n.dataset.char===id)||world.querySelector('.inn-ledger'))?.focus({preventScroll:true})}}).observe(modal,{attributes:true,attributeFilter:['hidden']});
 window.addEventListener('keydown',e=>{
  if(!document.body.classList.contains('inn-character-open')||!modal||modal.hidden)return;
  if(e.key==='Escape'){e.preventDefault();modal.querySelector('[data-close]')?.click()}
