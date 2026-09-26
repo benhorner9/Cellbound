@@ -81,7 +81,7 @@ body.inn-character-open{overflow:hidden}
 #innLedger .roster-card-metrics b{font-size:17px}
 @media(max-width:600px){.inn-table{left:38%;top:56%}}
 /* The door is a direct, keyboard-accessible exit, not another travel screen. */
-.inn-door{position:absolute;left:5%;top:28%;width:12%;height:23%;min-width:44px;min-height:44px;z-index:104;display:flex;align-items:flex-end;justify-content:center;text-decoration:none;border-radius:45% 45% 4px 4px;color:#ffefd3}
+.inn-door{position:absolute;left:.5%;top:16%;width:7%;height:25%;min-width:44px;min-height:44px;z-index:104;display:flex;align-items:flex-end;justify-content:center;text-decoration:none;border-radius:45% 45% 4px 4px;color:#ffefd3}
 .inn-door span{padding:6px 10px;background:#17130ddd;border:1px solid #a58755;border-radius:3px;font:13px Georgia,serif;white-space:nowrap}
 .inn-door:hover,.inn-door:focus-visible{outline:2px solid #dbbc83;outline-offset:3px;background:#e8b06312}
-@media(max-width:600px){.inn-door{left:3%;top:28%;width:13%;height:21%}}
+@media(max-width:600px){.inn-door{left:.5%;top:17%;width:7%;height:17%}}
