@@ -70,7 +70,7 @@ function refresh(){
   const host=document.getElementById(id);if(!host||!host.classList.contains('active'))continue;
   host.classList.add('lw-location');host.dataset.worldLocation=config.theme;integrate(host,config);
   if(id==='raids'&&host.querySelector('.lw-scene[data-raid-assembly]'))continue;
-  if(id==='professions'&&crafter){const station=scene(host,{...config,name:craftName?craftName+' Workshop':config.name},[crafter]);station.dataset.station=String(craftName||'').toLowerCase();host.dataset.station=station.dataset.station;continue}
+  if(id==='professions'&&crafter){host.querySelector(':scope > .lw-scene')?.remove();const station=scene(host.querySelector('.workshop-panel')||host,{...config,name:craftName?craftName+' Workshop':config.name},[crafter]);station.dataset.station=String(craftName||'').toLowerCase();host.dataset.station=station.dataset.station;continue}
   const chars=id==='roster'?(game()?.getState?.()?.roster||[]):party();scene(host,config,chars,id==='roster'||id==='party');
  }
  staging();
@@ -91,7 +91,7 @@ function harbour(host,rows=[],departing=false,elapsed=0){
 window.CellboundLivingWorld={refresh,scene,harbour,locations,stages,partyMarkup:()=>heroes(party(),new Set(party().map(c=>String(c.id)))),workstation:(c,prof)=>{crafter=c;craftName=prof?.name;schedule()},version:'2.0.0'};
 window.addEventListener('cellbound:view-changed',e=>{const view=document.getElementById(e.detail?.view);if(view&&!reduce())view.animate([{opacity:.65},{opacity:1}],{duration:160});schedule()});
 window.addEventListener('cellbound:state-rendered',schedule);
-window.addEventListener('cellbound:crafted',e=>{const el=document.querySelector('#professions > .lw-scene');if(!el)return;const text=document.createElement('p');text.className='lw-craft-result';text.setAttribute('role','status');text.textContent=e.detail?.name+' completed';el.querySelector('.lw-craft-result')?.remove();el.appendChild(text);if(!reduce())el.querySelector('.lw-light').animate([{opacity:.3},{opacity:1},{opacity:.3}],{duration:700});setTimeout(()=>text.remove(),2500)});
+window.addEventListener('cellbound:crafted',e=>{const el=document.querySelector('#professions .lw-scene');if(!el)return;const text=document.createElement('p');text.className='lw-craft-result';text.setAttribute('role','status');text.textContent=e.detail?.name+' completed';el.querySelector('.lw-craft-result')?.remove();el.appendChild(text);if(!reduce())el.querySelector('.lw-light').animate([{opacity:.3},{opacity:1},{opacity:.3}],{duration:700});setTimeout(()=>text.remove(),2500)});
 // Observe only structural insertions; ignore our own scene mutations and combat frame updates.
 const observer=new MutationObserver(records=>{if(records.some(r=>!r.target.closest?.('.lw-scene')&&[...r.addedNodes].some(n=>n.nodeType===1&&!n.matches?.('.lw-scene')&&(n.matches?.('.cb2d-brief,.tb-brief,.fa-brief,.cb-sheet')||n.querySelector?.('.cb2d-brief,.tb-brief,.fa-brief,.cb-sheet')))))schedule()});
 observer.observe(document.body,{childList:true,subtree:true});refresh();
