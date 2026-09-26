@@ -2,15 +2,15 @@
 (()=>{
 'use strict';
 const specimens=[
- {id:'study-warrior',name:'Mara',class:'Warrior',spec:'Protection',role:'Tank',look:'Braided black hair, warm brown skin, grey-green eyes.',gear:'Layered steel plate, oxblood tabard, sword and round shield.',note:'Broad armour, small hard highlights and a grounded stance.',position:[24,64,21,64]},
+ {id:'study-warrior',name:'Mara',class:'Warrior',spec:'Protection',role:'Tank',look:'Braided black hair, warm brown skin, grey-green eyes.',gear:'Layered steel plate, oxblood tabard, sword and round shield.',note:'Broad armour, small hard highlights and a grounded stance.',position:[16,65,16,65]},
  {id:'study-priest',name:'Oren',class:'Priest',spec:'Holy',role:'Healer',look:'Close silver hair and beard, dark skin, amber eyes.',gear:'Bone-grey vestments, ochre lining, staff and prayer book.',note:'Long cloth masses and restrained warm metal distinguish the healer.',position:[57,76,58,77]},
  {id:'study-mage',name:'Ilyra',class:'Mage',spec:'Arcane',role:'DPS',look:'Short auburn hair, olive skin, hazel eyes.',gear:'Teal coat, violet lining, quartz staff and folio.',note:'Angular tailoring and a small magical focus give a clear casting silhouette.',position:[40,43,49,39]},
  {id:'study-rogue',name:'Soren',class:'Rogue',spec:'Assassination',role:'DPS',look:'Ash-blond tied hair, pale skin, blue eyes.',gear:'Charcoal leather, plum scarf and paired daggers.',note:'Asymmetry and close layers keep the agile silhouette distinct.',position:[75,56,81,55]},
- {id:'study-hunter',name:'Tamsin',class:'Hunter',spec:'Marksmanship',role:'DPS',look:'Curly dark hair, brown skin, green eyes.',gear:'Moss-grey cloak, tawny leather, recurve bow and quiver.',note:'The long bow and travelling cloak read before fine detail.',position:[11,89,19,91]}
+ {id:'study-hunter',name:'Tamsin',class:'Hunter',spec:'Marksmanship',role:'DPS',look:'Curly dark hair, brown skin, green eyes.',gear:'Moss-grey cloak, tawny leather, recurve bow and quiver.',note:'The long bow and travelling cloak read before fine detail.',position:[44,94,46,94]}
 ];
 const ids=new Set(specimens.map(c=>c.id));
 const image=c=>'./assets/world/avatars/'+c.class.toLowerCase()+'-study-v1.webp';
-window.CellboundInnTheme={landscape:'./assets/world/lantern-inn-landscape-v2.webp',portrait:'./assets/world/lantern-inn-portrait-v2.webp'};
+window.CellboundInnTheme={landscape:'./assets/world/lantern-inn-landscape-v2.webp',portrait:'./assets/world/lantern-inn-portrait-v2.webp',hint:'Select an adventurer to review their illustrated appearance and equipment.'};
 // Only this review page defines this adapter. It cannot replace live character artwork.
 window.CellboundPortraits={worldAvatarHTML:c=>'<span class="cb-painted-study"><img src="'+image(c)+'" alt="" width="1024" height="1536" decoding="async"></span>'};
 function renderTools(){
