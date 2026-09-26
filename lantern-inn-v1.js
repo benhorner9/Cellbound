@@ -68,7 +68,7 @@ function refresh(){
  if(key!==lastKey){
   lastKey=key;const focused=document.activeElement?.dataset?.innCharacter;
   world.querySelector('.inn-inhabitants').innerHTML=assign(roster,party).map(({c,slot,active})=>{
-   const s=slots[slot],body=window.CellboundPortraits?.paperDollHTML?.(c,{size:'inn',label:c.name})||window.CellboundPortraits?.portraitHTML?.(c,{size:'hero'})||esc(c.name);
+   const s=slots[slot],body=window.CellboundPortraits?.worldAvatarHTML?.(c,{size:'inn',label:c.name})||window.CellboundPortraits?.paperDollHTML?.(c,{size:'inn',label:c.name})||window.CellboundPortraits?.portraitHTML?.(c,{size:'hero'})||esc(c.name);
    return '<button type="button" class="inn-adventurer '+(active?'inn-traveller':'inn-resting')+'" data-char="'+esc(c.id)+'" data-inn-character="'+esc(c.id)+'" data-location-slot="'+slot+'" style="--slot-x:'+s.wide[0]+'%;--slot-y:'+s.wide[1]+'%;--phone-x:'+s.phone[0]+'%;--phone-y:'+s.phone[1]+'%;--depth:'+Math.round(s.wide[1])+'" aria-label="'+esc(c.name+', '+c.class+', '+c.spec+', '+(active?'active party':'reserve')+(Number(c.cellShock)>=100?', recovering':''))+'"><span class="inn-figure">'+body+'</span><span class="inn-name">'+esc(c.name)+'</span></button>';
   }).join('');
   if(focused)[...world.querySelectorAll('[data-inn-character]')].find(n=>n.dataset.innCharacter===focused)?.focus({preventScroll:true});

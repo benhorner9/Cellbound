@@ -636,6 +636,121 @@ function paperDollSVG(c,opts){
     '<g transform="translate('+headX+' '+headY+') scale('+headScale+')">'+paperHeadMarkup(c,a,skin,eye,hair,highlighted)+'</g>'+
     '</svg>';
 }
+
+/* World Avatar V1.
+   A higher-detail, inked full-body representation for Living World scenes.
+   It consumes the same saved appearance and equipment data as the paper doll,
+   but deliberately uses stronger silhouettes, textured shadow and tier families.
+   Prototype archetypes: Warrior, Priest and Rogue. */
+const WORLD_AVATAR_CLASSES=new Set(['Warrior','Priest','Rogue']);
+function worldAvatarTier(c){
+  return PAPER_VISIBLE_SLOTS.reduce(function(max,slot){
+    var item=itemForSlot(c,slot);return Math.max(max,clampTier(item&&item.tier));
+  },1);
+}
+function worldAvatarWeapon(c){
+  var item=itemForSlot(c,'Weapon');
+  return item?weaponType(item,c):CLASS_WEAPON_DEFAULT[paperClass(c)]||'sword';
+}
+function worldAvatarHead(c,a,skin,eye,hair,pal,tier,klass){
+  var face=facePath(a.face),out=
+    '<g class="cb-world-head">'+raceFeatureMarkup(a,a.race)+earsMarkup(a.race,skin,a.feature)+
+    '<path d="'+face+'" fill="'+skin+'" stroke="#0b0d0e" stroke-width="3.2"/>'+
+    '<path d="'+face+'" fill="url(#cbw-face-light)" opacity=".22"/>'+
+    hairMarkup(a,hair)+
+    '<path d="M37 47 Q42 43 46 47 M54 47 Q59 43 63 47" fill="none" stroke="#161315" stroke-width="2.6" stroke-linecap="round"/>'+
+    '<ellipse cx="42" cy="52" rx="2.6" ry="3.2" fill="'+eye+'"/><ellipse cx="58" cy="52" rx="2.6" ry="3.2" fill="'+eye+'"/>'+
+    '<path d="M50 54 L47 64 Q50 66 53 64" fill="none" stroke="#3a2927" stroke-width="1.8" stroke-linecap="round"/>'+
+    '<path d="M42 70 Q50 74 58 69" fill="none" stroke="#3a2025" stroke-width="2.2" stroke-linecap="round"/>'+
+    markingMarkup(a,a.race)+beardMarkup(a,hair);
+  if(klass==='Warrior'&&tier>=2){
+    out+='<path d="M27 42 Q28 17 50 14 Q72 17 73 42 L67 36 L50 29 L33 36Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/>'+
+      (tier>=4?'<path d="M31 28 L24 13 L40 23 M69 28 L76 13 L60 23" fill="'+pal.trim+'" opacity=".8"/>':'');
+  }else if(klass==='Priest'){
+    out+=(tier>=2?'<path d="M29 42 Q31 20 50 18 Q69 20 71 42 Q61 32 50 32 Q39 32 29 42Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="2.5"/>':'')+
+      (tier>=4?'<ellipse cx="50" cy="13" rx="16" ry="5" fill="none" stroke="'+pal.glow+'" stroke-width="2.4" opacity=".85"/>':'');
+  }else if(klass==='Rogue'&&tier>=2){
+    out+='<path d="M28 43 Q30 18 50 17 Q70 18 72 43 L65 57 L59 45 L50 37 L41 45 L35 57Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="2.8"/>'+
+      (tier>=4?'<path d="M37 43 L43 52 M63 43 L57 52" stroke="'+pal.glow+'" stroke-width="2" opacity=".7"/>':'');
+  }
+  return out+'</g>';
+}
+function worldAvatarBody(klass,pal,tier,set){
+  var glow=set&&set.visual?set.visual.glow:pal.glow;
+  if(klass==='Warrior'){
+    return '<g class="cb-world-body cb-world-warrior">'+
+      '<path d="M73 139 Q120 111 167 139 L156 250 Q120 269 84 250Z" fill="'+pal.base+'" stroke="#090c0e" stroke-width="5"/>'+
+      '<path d="M83 151 L120 171 L157 151 L150 225 L120 241 L90 225Z" fill="'+pal.dark+'" opacity=".82"/>'+
+      '<path d="M69 141 L42 150 L50 185 L82 174Z M171 141 L198 150 L190 185 L158 174Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="4"/>'+
+      '<path d="M120 142 L120 237 M83 190 L157 190" stroke="'+pal.trim+'" stroke-width="'+(tier>=4?4:3)+'" opacity=".78"/>'+
+      (tier>=3?'<path d="M94 207 L120 222 L146 207" fill="none" stroke="'+pal.light+'" stroke-width="3"/>':'')+
+      (tier>=4?'<circle cx="120" cy="181" r="7" fill="'+glow+'" opacity=".62"/>':'')+
+      '<path d="M87 247 L113 248 L108 365 L72 365 Q73 324 80 286Z M127 248 L153 247 L168 365 L132 365 L127 286Z" fill="'+pal.dark+'" stroke="#090c0e" stroke-width="5"/>'+
+      '<path d="M70 359 L109 359 L111 399 L57 399 Q57 383 69 374Z M131 359 L170 359 L183 399 L129 399 L129 374Z" fill="#17191b" stroke="'+pal.trim+'" stroke-width="3"/>'+
+      '</g>';
+  }
+  if(klass==='Priest'){
+    return '<g class="cb-world-body cb-world-priest">'+
+      '<path d="M82 137 Q120 116 158 137 L168 267 L188 380 Q120 412 52 380 L72 267Z" fill="'+pal.base+'" stroke="#090c0e" stroke-width="4.5"/>'+
+      '<path d="M92 145 Q120 169 148 145 M81 216 Q120 238 159 216" fill="none" stroke="'+pal.trim+'" stroke-width="3.5" opacity=".9"/>'+
+      '<path d="M104 139 L120 176 L136 139" fill="'+pal.light+'" opacity=".46"/>'+
+      '<path d="M65 151 L42 177 L62 207 L85 181Z M175 151 L198 177 L178 207 L155 181Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/>'+
+      (tier>=3?'<path d="M120 178 L120 347 M84 327 Q120 350 156 327" stroke="'+pal.light+'" stroke-width="2.6" opacity=".55"/>':'')+
+      (tier>=4?'<circle cx="120" cy="198" r="8" fill="'+glow+'" opacity=".5"/><circle cx="120" cy="198" r="15" fill="none" stroke="'+glow+'" stroke-width="2" opacity=".45"/>':'')+
+      '<path d="M71 374 L110 374 L108 402 L58 402Z M130 374 L169 374 L182 402 L132 402Z" fill="#15191c" stroke="'+pal.trim+'" stroke-width="2.5"/>'+
+      '</g>';
+  }
+  return '<g class="cb-world-body cb-world-rogue">'+
+    '<path d="M84 140 Q120 119 156 140 L149 249 Q120 262 91 249Z" fill="'+pal.base+'" stroke="#080b0d" stroke-width="4.5"/>'+
+    '<path d="M93 145 L120 169 L147 145 L141 226 L120 242 L99 226Z" fill="'+pal.dark+'" opacity=".88"/>'+
+    '<path d="M77 149 L54 169 L68 195 L92 177Z M163 149 L186 169 L172 195 L148 177Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/>'+
+    '<path d="M93 188 L147 188 M101 215 L139 215" stroke="'+pal.trim+'" stroke-width="2.6" opacity=".72"/>'+
+    (tier>=3?'<path d="M83 226 L120 245 L157 226" fill="none" stroke="'+pal.light+'" stroke-width="2.5"/>':'')+
+    (tier>=4?'<path d="M107 171 L120 183 L133 171" fill="none" stroke="'+glow+'" stroke-width="2.5" opacity=".7"/>':'')+
+    '<path d="M92 246 L115 247 L107 363 L78 363 Q78 322 85 285Z M125 247 L148 246 L162 363 L133 363 L126 285Z" fill="'+pal.dark+'" stroke="#080b0d" stroke-width="4"/>'+
+    '<path d="M76 357 L108 357 L108 399 L62 399 Q61 383 75 374Z M132 357 L164 357 L178 399 L132 399 L132 374Z" fill="#111518" stroke="'+pal.trim+'" stroke-width="2.5"/>'+
+    '</g>';
+}
+function worldAvatarSVG(c,opts){
+  opts=opts||{};
+  var klass=paperClass(c);
+  if(!WORLD_AVATAR_CLASSES.has(klass))return'';
+  var race=c.race||(c.appearance&&c.appearance.race)||'Veyren';
+  var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race),r=raceDef(a.race);
+  var skin=r.skin[a.skinTone],eye=r.eyes[a.eyes],hair=HAIR[a.hairColor];
+  var chest=itemForSlot(c,'Chest')||itemForSlot(c,'Shoulders')||itemForSlot(c,'Weapon');
+  var tier=worldAvatarTier(c),pal=gearPalette(c,chest,tier,'Chest'),set=dominantSetState(c);
+  var accent=set&&set.visual?set.visual.glow:paperAccent(c);
+  var uid='wa'+hash((c.id||c.name||race)+'|'+JSON.stringify(a)+'|'+tier+'|'+worldAvatarWeapon(c)).toString(36);
+  return '<svg viewBox="0 0 240 420" role="img" aria-hidden="true" focusable="false" data-world-svg="'+esc(klass)+'">'+
+    '<defs>'+
+      '<linearGradient id="cbw-face-light" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/></linearGradient>'+
+      '<radialGradient id="'+uid+'g" cx="45%" cy="43%" r="55%"><stop offset="0" stop-color="'+accent+'" stop-opacity=".18"/><stop offset=".7" stop-color="'+accent+'" stop-opacity=".025"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>'+
+      '<filter id="'+uid+'ink" x="-30%" y="-20%" width="160%" height="150%"><feTurbulence type="fractalNoise" baseFrequency=".018" numOctaves="2" seed="'+(hash(uid)%99)+'" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale=".7" xChannelSelector="R" yChannelSelector="G"/></filter>'+
+    '</defs>'+
+    '<ellipse cx="120" cy="397" rx="72" ry="12" fill="#050505" opacity=".62"/>'+
+    '<ellipse cx="120" cy="217" rx="112" ry="184" fill="url(#'+uid+'g)"/>'+
+    '<g filter="url(#'+uid+'ink)">'+
+      paperWeapon(c,'')+paperOffHand(c,'')+
+      worldAvatarBody(klass,pal,tier,set)+
+      '<path d="M108 108 L108 145 Q120 152 132 145 L132 108Z" fill="'+skin+'" stroke="#0a0c0e" stroke-width="3"/>'+
+      '<g transform="translate(70 23)">'+worldAvatarHead(c,a,skin,eye,hair,pal,tier,klass)+'</g>'+
+    '</g>'+
+    (set&&set.count>=2?'<ellipse cx="120" cy="398" rx="'+(set.count>=4?86:77)+'" ry="'+(set.count>=4?18:14)+'" fill="none" stroke="'+set.visual.glow+'" stroke-width="'+(set.count>=4?3:2)+'" opacity="'+(set.count>=4?.55:.3)+'"/>':'')+
+    '</svg>';
+}
+function worldAvatarHTML(subject,opts){
+  opts=opts||{};
+  var c=subject||{},klass=paperClass(c);
+  if(!WORLD_AVATAR_CLASSES.has(klass))return'';
+  var tier=worldAvatarTier(c),weapon=worldAvatarWeapon(c);
+  var race=c.race||(c.appearance&&c.appearance.race)||'Veyren';
+  var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
+  var appearanceKey=hash(JSON.stringify([a.race,a.skinTone,a.face,a.hair,a.hairColor,a.facialHair,a.marking,a.eyes,a.feature])).toString(36);
+  var label=opts.label||((c.name||'Character')+' world appearance');
+  return '<span class="cb-world-avatar cb-world-avatar--'+esc(klass.toLowerCase())+'" role="img" aria-label="'+esc(label)+'" data-world-avatar="'+esc(klass)+'" data-avatar-class="'+esc(klass)+'" data-avatar-tier="'+tier+'" data-avatar-weapon="'+esc(weapon)+'" data-avatar-race="'+esc(a.race)+'" data-appearance-key="'+appearanceKey+'">'+worldAvatarSVG(c,opts)+'</span>';
+}
+
 function paperDollHTML(subject,opts){
   opts=opts||{};
   var c=subject||{},size=opts.size||'equipment',accent=opts.accent||paperAccent(c),set=dominantSetState(c);
@@ -649,9 +764,9 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:2,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
+  version:3,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
-  applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
+  applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,worldAvatarHTML:worldAvatarHTML,worldAvatarSVG:worldAvatarSVG,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
   visualProfile:visualProfile,weaponType:weaponType,offHandType:offHandType,
   editorHTML:editorHTML,bindEditor:bindEditor
 };

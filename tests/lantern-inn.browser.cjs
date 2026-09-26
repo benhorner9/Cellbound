@@ -28,6 +28,17 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
  const shot=async name=>{await page.waitForTimeout(200);await page.screenshot({path:'/tmp/cellbound-inn-'+name+'.png'})};
  await page.locator('.inn-art img').evaluate(img=>img.decode());
  assert.equal(await page.locator('.inn-adventurer').count(),10);assert.equal(await page.locator('.inn-traveller').count(),5);assert.equal(await page.locator('#rosterGrid').isVisible(),false);assert.equal(await page.locator('.inn-world').isVisible(),true);
+ assert.equal(await page.locator('.cb-world-avatar').count(),3,'Warrior, Priest and Rogue use world-avatar prototypes');
+ for(const klass of ['Warrior','Priest','Rogue'])assert.equal(await page.locator('.cb-world-avatar[data-avatar-class="'+klass+'"]').count(),1,klass+' prototype present');
+ const warriorAvatar=page.locator('[data-inn-character="hero-0"] .cb-world-avatar');
+ assert.equal(await warriorAvatar.getAttribute('data-avatar-tier'),'1');assert.equal(await warriorAvatar.getAttribute('data-avatar-weapon'),'sword');
+ const appearanceBefore=await warriorAvatar.getAttribute('data-appearance-key');
+ await page.evaluate(()=>{fixture.roster[0].appearance={race:'Veyren',skinTone:5,face:3,hair:5,hairColor:6,facialHair:3,marking:4,eyes:2,feature:1};dispatchEvent(new CustomEvent('cellbound:state-rendered'))});
+ assert.notEqual(await warriorAvatar.getAttribute('data-appearance-key'),appearanceBefore,'appearance data changes world avatar');
+ await page.evaluate(()=>{const c=fixture.roster[0];for(const slot of ['Head','Chest','Weapon']){const item=CellboundGear.items.find(x=>x.class==='Warrior'&&x.tier===4&&x.slot===slot);if(item)c.equipment[slot]=item}dispatchEvent(new CustomEvent('cellbound:state-rendered'))});
+ assert.equal(await warriorAvatar.getAttribute('data-avatar-tier'),'4','equipped tier changes world avatar family');
+ assert.equal(await warriorAvatar.getAttribute('data-avatar-weapon'),'greatsword','equipped weapon type remains visible');
+
  assert.equal(await page.locator('.inn-adventurer').evaluateAll(nodes=>new Set(nodes.map(n=>n.dataset.locationSlot)).size),10);
  await shot('01-default-ipad');
  await page.locator('[data-inn-character="hero-0"]').click();await page.waitForSelector('#characterModal:not([hidden])');assert(await page.locator('body').evaluate(n=>n.classList.contains('inn-character-open')));await shot('02-character');
