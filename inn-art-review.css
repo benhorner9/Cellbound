@@ -4,3 +4,30 @@
 @media(prefers-reduced-motion:reduce){.art-review *{animation:none!important;transition:none!important}}
 .art-review [data-inn-character="study-mage"]{width:clamp(82px,11vw,152px)}
 @media(max-width:600px){.art-review [data-inn-character="study-mage"]{width:72px}}
+/* Reuse painted room pixels as foreground furniture. Characters stand behind
+   the table/counter, while the same props remain in front of their lower bodies. */
+.art-review .inn-world{--room-art:url('./assets/world/lantern-inn-landscape-v2.webp')}
+.review-room-props{position:absolute;inset:0;z-index:90;pointer-events:none;background-image:var(--room-art);background-size:100% 100%;clip-path:polygon(23% 47%,33% 42%,44% 45%,51% 49%,55% 52%,59% 56%,60% 65%,55% 70%,53% 75%,46% 74%,35% 69%,29% 65%,20% 61%,20% 53%)}
+.review-room-props:after{content:''}
+.art-review .inn-world:after{content:'';position:absolute;inset:0;z-index:60;pointer-events:none;background-image:var(--room-art);background-size:100% 100%;clip-path:polygon(61% 32%,69% 34%,80% 38%,89% 39%,90% 53%,84% 59%,65% 48%)}
+.art-review .inn-adventurer{min-height:0;--room-brightness:.85;--room-saturation:.82}
+.art-review .inn-figure{filter:brightness(var(--room-brightness)) saturate(var(--room-saturation)) drop-shadow(3px 3px 2px #100b0866)!important}
+.art-review .inn-adventurer:before{bottom:4%;left:27%;width:46%;height:5%;background:#100b08d9;filter:blur(2px);transform:skewX(-25deg)}
+.art-review .inn-name{position:absolute;top:100%;left:50%;transform:translateX(-50%);background:#161510aa;border:0;font-weight:400;opacity:0;pointer-events:none}
+.art-review .inn-adventurer:is(:hover,:focus-visible) .inn-name{opacity:1}
+.art-review [data-inn-character="study-warrior"]{--room-brightness:.97;--room-saturation:.92}
+.art-review [data-inn-character="study-warrior"] .inn-figure{filter:sepia(.13) brightness(.97) saturate(.92) drop-shadow(5px 3px 2px #100b0877)!important}
+.art-review [data-inn-character="study-mage"]{--room-brightness:.7;--room-saturation:.7}
+.art-review [data-inn-character="study-rogue"]{--room-brightness:.73}
+.art-review .inn-door{left:60%;top:19%;width:7%;height:12%}
+.art-review.hide-labels .inn-door span{visibility:hidden}
+.art-review .character-modal .cb-character-tabs{scrollbar-width:thin}
+.art-review .character-modal button{font-size:12px}
+.art-review .character-modal .cb-header-portrait{overflow:hidden}
+.art-review .character-modal .cb-profile-panel{min-width:0}
+@media(max-width:600px){
+ .art-review .inn-world{--room-art:url('./assets/world/lantern-inn-portrait-v2.webp')}
+ .review-room-props{clip-path:polygon(17% 43%,33% 38%,48% 41%,57% 45%,65% 47%,71% 49%,72% 56%,65% 62%,61% 64%,49% 63%,29% 59%,16% 54%,10% 49%)}
+ .art-review .inn-world:after{clip-path:polygon(60% 30%,70% 32%,86% 35%,92% 35%,94% 44%,87% 49%,64% 39%)}
+ .art-review .inn-door{left:59%;top:21%;width:10%;height:12%}
+}

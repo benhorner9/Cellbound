@@ -34,3 +34,7 @@ The Warrior is slightly above the 300KB character target. Only the isolated revi
 ## Review states
 
 The browser review captures default room, selected character, Ledger, Party Table, 1024px iPad landscape, 390px mobile, mobile character sheet and a label-free scene. Production Inn regression independently covers real roster/party handlers, appearance and gear changes, keyboard focus, ten-character slots and reduced motion. Physical iPad performance still requires device testing.
+
+## Grounding and interaction revision
+
+Room furniture now overlaps the sample figures at the table and counter. Per-position brightness, restrained saturation, foot shadows and quiet hover labels integrate them into the room. The door returns to Home. The prototype description panel has been removed: the review loads the production character-sheet.js and its six tabs with an explicit in-memory sample-state adapter. Production save handling is unchanged, and the review never reads or writes player saves. Painted studies still do not represent dynamically equipped items; the equipment sheet uses the existing data-driven gear representation.

@@ -10,7 +10,7 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  assert.equal(await page.locator('.inn-traveller').count(),5);assert.equal(await page.locator('.cb-painted-study img').count(),5);
  assert.equal(await page.evaluate(()=>localStorage.length),0,'review never reads or writes player saves');
  await shot('01-default');
- await page.locator('[data-char="study-warrior"]').first().click();await page.waitForSelector('#characterModal:not([hidden])');await shot('02-character');await page.keyboard.press('Escape');
+ await page.locator('[data-char="study-warrior"]').first().click();await page.waitForSelector('#characterModal:not([hidden])');await shot('02-character');for(const tab of ['equipment','talents','skills','professions','history','overview']){await page.locator('[data-sheet-tab="'+tab+'"]').first().click();assert.equal(await page.locator('[data-character-section]').getAttribute('data-character-section'),tab)}await page.keyboard.press('Escape');
  assert.equal(await page.evaluate(()=>document.activeElement.dataset.innCharacter),'study-warrior');
  await page.locator('.inn-ledger').click();await page.locator('#reviewSearch').fill('Mage');assert.equal(await page.locator('#reviewRoster .review-row:visible').count(),1);await shot('03-ledger');await page.keyboard.press('Escape');
  await page.locator('.inn-table').click();await page.locator('[data-study-party="study-hunter"]').click();assert.equal(await page.locator('.inn-traveller').count(),4);await page.locator('[data-study-party="study-hunter"]').click();assert.equal(await page.locator('.inn-traveller').count(),5);await shot('04-party');await page.keyboard.press('Escape');
@@ -22,5 +22,5 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  await page.locator('[data-inn-character="study-priest"]').click();await shot('07-phone-character');await page.keyboard.press('Escape');
  await page.locator('#reviewLabels').click();await shot('08-no-labels');
  await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await page.locator('.inn-hearth-light').evaluate(n=>getComputedStyle(n).animationName),'none');
- assert.deepEqual(errors,[]);await browser.close();console.log('Inn art review: image decoding, five prototypes, contextual tools, sample-party state, focus, responsive composition and no-save isolation passed.');
+ assert.equal(await page.evaluate(()=>localStorage.length),0,'shared sheet keeps sample state isolated');assert.equal(await page.locator('.inn-door').getAttribute('href'),'./guild.html');assert.deepEqual(errors,[]);await browser.close();console.log('Inn art review: image decoding, five prototypes, contextual tools, sample-party state, focus, responsive composition and no-save isolation passed.');
 })().catch(e=>{console.error(e);process.exit(1)});
