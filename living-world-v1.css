@@ -40,3 +40,7 @@
 .lw-location[data-world-location="vault"] .bank-overview-strip{border-top:4px solid #8f7c5755!important}
 .mr-ready-shell:has(.lw-scene){display:flex;flex-direction:column;gap:12px;min-height:100dvh;padding-bottom:calc(24px + env(safe-area-inset-bottom))}
 .mr-ready-shell>.lw-scene{width:min(980px,100%);flex-shrink:0;margin-bottom:0}.mr-ready-shell:has(.lw-scene) .mr-ready-wait,.mr-ready-shell:has(.lw-scene) .mr-ready-count{margin-top:0;align-self:center}.mr-ready-shell:has(.lw-scene) .mr-ready-count strong{font-size:3rem}.mr-ready-shell:has(.lw-scene) .mr-ready-button{position:sticky;bottom:12px;z-index:6;flex-shrink:0}
+.lw-location>.section-intro{min-height:0!important;margin:0 0 12px!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
+.lw-location>.section-intro>div:first-child:not(:only-child){display:none}
+#trading.lw-location>.section-intro{display:none}
+.lw-location>.section-intro:before,.lw-location>.section-intro:after{display:none}

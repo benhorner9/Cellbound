@@ -34,7 +34,7 @@ function architecture(theme){
  hall:'<path d="M340 195V40H660V195Z" fill="#685238" stroke="#9b7d4f" stroke-width="7"/><g fill="#bca77c"><path d="M362 63L447 58L450 133L368 138Z"/><path d="M469 74L548 64L557 170L479 180Z"/><path d="M577 62H636V142H577Z"/></g><path d="M92 214L272 182L350 209L166 246Z" fill="#9d8b64"/><path d="M750 160V80M810 160V80M870 160V80" stroke="#bba368" stroke-width="6"/>',
  harbour:'<path d="M0 130Q220 113 400 138T1000 130V340H0Z" fill="#25414a"/><path d="M0 230L550 203L655 255L0 310Z" fill="#70573f"/><path d="M45 211V311M198 205V289M348 196V274" stroke="#ac8c63" stroke-width="10"/><g class="lw-boat"><path d="M510 210H775L730 256H560Z" fill="#806344"/><path d="M633 212V82" stroke="#c0aa80" stroke-width="5"/><path d="M640 88L717 198H640Z" fill="#b4b1a0"/></g><path d="M755 135L805 102L850 104L870 86L900 101L935 132Z" fill="#18262c"/><path d="M820 111V61H879V111M811 61L850 34L888 61M832 61V43M866 61V43" fill="#1c252c" stroke="#526068" stroke-width="2"/>'
  };
- return '<svg class="lw-architecture" viewBox="0 0 1000 340" preserveAspectRatio="xMidYMid slice" aria-hidden="true">'+(harbour?'':common)+(objects[theme]||objects.hall)+'</svg>';
+ return '<svg class="lw-architecture" viewBox="0 0 1000 340" preserveAspectRatio="'+(harbour?'none':'xMidYMid slice')+'" aria-hidden="true">'+(harbour?'':common)+(objects[theme]||objects.hall)+'</svg>';
 }
 function heroes(chars,activeIds,interactive=false){
  return chars.slice(0,10).map((c,i)=>{
@@ -60,7 +60,7 @@ function refresh(){
  for(const [id,config]of Object.entries(locations)){
   const host=document.getElementById(id);if(!host||!host.classList.contains('active'))continue;
   host.classList.add('lw-location');host.dataset.worldLocation=config.theme;
-  if(id==='raids'&&host.querySelector('.lw-scene'))continue;
+  if(id==='raids'&&host.querySelector('.lw-scene[data-raid-assembly]'))continue;
   if(id==='professions'&&crafter){const station=scene(host,{...config,name:craftName?craftName+' Workshop':config.name},[crafter]);station.dataset.station=String(craftName||'').toLowerCase();continue}
   const chars=id==='roster'?(game()?.getState?.()?.roster||[]):party();scene(host,config,chars,id==='roster'||id==='party');
  }
@@ -76,7 +76,7 @@ function harbour(host,rows=[],departing=false,elapsed=0){
  const old=document.querySelector('#raids > .lw-scene');if(old&&host!==document.getElementById('raids'))old.remove();
  const chars=rows.length?rows.flatMap((r,i)=>(r.party_snapshot||[]).map(c=>({...c,_worldParty:i,_worldCommander:r.guild_label||'Party '+(i+1)}))):party();
  const el=scene(host,{...locations.raids,copy:rows.length>1?'Both parties are gathered. Confirm readiness below.':'Your party waits at the dock for the second commander.'},chars);
- el?.classList.toggle('lw-departing',departing&&!reduce());if(el)el.style.setProperty('--departure-elapsed',-Math.min(2.8,Math.max(0,elapsed))+'s');
+ if(el)el.dataset.raidAssembly='1';el?.classList.toggle('lw-departing',departing&&!reduce());if(el)el.style.setProperty('--departure-elapsed',-Math.min(2.8,Math.max(0,elapsed))+'s');
  if(el&&departing)el.querySelector('header p').textContent='Setting sail for the Manor. Combat begins at the shared start time.';
 }
 window.CellboundLivingWorld={refresh,scene,harbour,locations,stages,partyMarkup:()=>heroes(party(),new Set(party().map(c=>String(c.id)))),workstation:(c,prof)=>{crafter=c;craftName=prof?.name;schedule()},version:'1.0.0'};
