@@ -40,7 +40,9 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
  assert.equal(await warriorAvatar.getAttribute('data-avatar-weapon'),'greatsword','equipped weapon type remains visible');
 
  assert.equal(await page.locator('.inn-adventurer').evaluateAll(nodes=>new Set(nodes.map(n=>n.dataset.locationSlot)).size),10);
+ assert.equal(await page.locator('[data-inn-town]').count(),1,'Inn exposes a physical Town exit');
  await shot('01-default-ipad');
+ await page.locator('[data-inn-town]').click();assert.equal(await page.locator('#overview').evaluate(n=>n.classList.contains('active')),true,'Inn door returns to Town');await page.evaluate(()=>selectView('roster'));
  await page.locator('[data-inn-character="hero-0"]').click();await page.waitForSelector('#characterModal:not([hidden])');assert(await page.locator('body').evaluate(n=>n.classList.contains('inn-character-open')));await shot('02-character');
  await page.keyboard.press('Escape');await page.waitForSelector('#characterModal[hidden]',{state:'attached'});assert.equal(await page.evaluate(()=>document.activeElement.dataset.innCharacter),'hero-0');
  await page.locator('.inn-ledger').click();await page.locator('#rosterSearch').fill('Mercy');assert.equal(await page.locator('#rosterGrid .roster-character-card:visible').count(),1);assert((await page.locator('#rosterStatusFilter').boundingBox()).height>=44);await shot('03-ledger');await page.locator('#innLedger [data-inn-close]').click();
