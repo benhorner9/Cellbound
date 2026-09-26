@@ -123,22 +123,51 @@ function formatClock(minute){
   const total=23*60+47+Math.max(0,Number(minute)||0),h=Math.floor(total/60)%24,m=total%60;
   return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')
 }
-function renderLetter(){
-  root.innerHTML=chrome('QUEST · SEALED LETTER',TITLE,
-    '<div class="bell-letter-scene"><div class="bell-letter"><small>TO THE GUILDMASTER</small><p>When the thirteenth bell rings,</p><strong>forget us.</strong><em>— Greywake</em></div><div class="bell-letter-copy"><span>NO CURRENT MAP RECORD</span><h3>Greywake</h3><p>An old survey map shows a road ending at a village removed from every modern chart. The seal on the letter is still warm.</p><button data-bell-start>FOLLOW THE OLD ROAD →</button></div></div>'
-  );bindClose();
-  root.querySelector('[data-bell-start]').onclick=async()=>{
-    const b=ensure();b.started=true;b.stage='loops';b.startedAt=new Date().toISOString();b.loop=1;b.minute=0;
-    addFact('letter','The letter asks the guild to forget Greywake when a thirteenth bell rings.');
-    history('The guild followed an obsolete road and found Greywake exactly where the old map said it should be.');
-    await save(false);renderArrival()
+const BELL_COMIC_ROOT='./assets/comics/thirteenth-bell/';
+function bellArt(name){return BELL_COMIC_ROOT+name+'.webp'}
+function bellPanel(art,eyebrow,title,text,extra={}){
+  return{kind:extra.kind||'location',artwork:bellArt(art),eyebrow,title,text,icon:extra.icon||'',speaker:extra.speaker||'',wide:!!extra.wide}
+}
+async function bellComic(config={}){
+  const C=window.CellboundComicScenes;
+  if(typeof C?.show!=='function')return{skipped:true,unavailable:true};
+  const r=ensureRoot();r.hidden=true;document.body.classList.remove('bell-open');
+  try{
+    return await C.show({
+      eyebrow:'THE THIRTEENTH BELL',subtitle:'Greywake · The missing hour',theme:'bell',page:'STORY',
+      progressive:true,panelOnly:true,nextLabel:'NEXT →',skipLabel:'SKIP SCENE',
+      ...config
+    })
+  }finally{
+    if(root?.isConnected){root.hidden=false;document.body.classList.add('bell-open')}
   }
 }
-function renderArrival(){
-  root.innerHTML=chrome('GREYWAKE · LOOP 1','11:47 PM',
-    '<div class="bell-arrival"><div class="bell-town-silhouette"><i></i><i></i><i></i><i></i><div class="bell-tower"><span>11:47</span></div></div><div class="bell-arrival-copy"><small>NO PEOPLE · FIRES STILL BURNING</small><h3>The village is empty.</h3><p>A meal sits warm on an inn table. A forge still glows. Every door is open except one. Above all of it, the clocktower is ticking.</p><button data-bell-enter>STEP INTO GREYWAKE →</button></div></div>'
-  );bindClose();
-  root.querySelector('[data-bell-enter]').onclick=()=>renderTown()
+
+async function renderLetter(){
+  const result=await bellComic({
+    page:'I · THE LETTER',title:TITLE,subtitle:'A village erased from every living map',continueLabel:'FOLLOW THE OLD ROAD →',
+    panels:[
+      bellPanel('sealed_letter','GUILD HALL · AFTER DARK','A sealed letter reaches the guild.','There is no courier, no return address and no record of the village named on the seal.',{kind:'clue',icon:'XIII'}),
+      bellPanel('sealed_letter','THE MESSAGE','“When the thirteenth bell rings, forget us.”','Seven words. The wax on the seal is still warm.',{kind:'clue',icon:'✦'}),
+      bellPanel('greywake_arrival','AN OBSOLETE ROAD','Greywake is missing from every current map.','An older survey marks one road leading into the hills. The road still exists.',{kind:'location',icon:'→'})
+    ]
+  });
+  const b=ensure();if(!b||b.started)return renderArrival();
+  b.started=true;b.stage='loops';b.startedAt=new Date().toISOString();b.loop=1;b.minute=0;
+  addFact('letter','The letter asks the guild to forget Greywake when a thirteenth bell rings.');
+  history('The guild followed an obsolete road and found Greywake exactly where the old map said it should be.');
+  await save(false);renderArrival()
+}
+async function renderArrival(){
+  await bellComic({
+    page:'II · GREYWAKE',title:'The road ends at Greywake',subtitle:'Loop 1 · 11:47 PM',continueLabel:'STEP INTO GREYWAKE →',
+    panels:[
+      bellPanel('greywake_arrival','THE OLD ROAD','The village is exactly where the map said it would be.','Greywake rises out of the fog beneath a clocktower frozen at 11:47.',{kind:'location',icon:'◴'}),
+      bellPanel('greywake_arrival','NO PEOPLE','The streets are empty. The village is not.','A meal sits warm on an inn table. A forge still glows. Lamps burn behind open doors.',{kind:'location',icon:'⌂'}),
+      bellPanel('locked_house','ABOVE THE SQUARE','The clocktower is ticking.','Every door is open except one. Somewhere above them all, a mechanism counts toward midnight.',{kind:'gate',icon:'XIII'})
+    ]
+  });
+  renderTown()
 }
 function renderTown(note=''){
   const b=ensure(),count=solvedCount(),houseOpen=['watchmaker','chapel','well','inn','blacksmith'].every(id=>b.solved[id]);
@@ -272,12 +301,17 @@ function blacksmith(){
     root.querySelector('[data-reset-shards]').onclick=()=>{pool=[...pieces].sort(()=>Math.random()-.5);built=[];draw()}
   };draw()
 }
-function lockedHouse(){
+async function lockedHouse(){
   const b=ensure();if(b.solved.house){renderTown('The child’s drawings remain burned into the guild’s memory.');return}
-  root.innerHTML=chrome('GREYWAKE · 12:01 AM','The house that was not there',
-    '<div class="bell-house-scene"><div class="bell-drawings"><article><i>⌂</i><span>HOME</span></article><article><i>♟</i><span>FATHER</span></article><article><i>◇</i><span>CELL GLASS</span></article><article class="final"><i>XIII</i><span>THE BELL</span></article></div><div><small>CHILD’S BEDROOM</small><h3>Edrin was not trying to destroy Greywake.</h3><p>The drawings show his daughter beside the black Cell corruption beneath the village. The final picture shows Edrin carrying her toward the clocktower.</p><p>He built the thirteenth bell to keep rewinding the last thirteen minutes until he could find a way to save her.</p><button data-house-understand>I UNDERSTAND WHAT THE LOOP IS →</button></div></div>'
-  );bindClose();
-  root.querySelector('[data-house-understand]').onclick=()=>solve('house','Edrin Vale built the Thirteenth Bell to rewind the final thirteen minutes and save his Cell-touched daughter. Every reset damaged Greywake further.','At 12:01 AM, a house appeared that did not exist inside the loop. The child’s drawings revealed why Edrin built the bell.')
+  await bellComic({
+    page:'VI · THE LOCKED HOUSE',title:'The house that was not there',subtitle:'Greywake · 12:01 AM',continueLabel:'RETURN TO THE LOOP →',
+    panels:[
+      bellPanel('locked_house','AFTER MIDNIGHT','At 12:01 AM, a house appears.','It does not exist during the loop. Inside, a child’s room has been waiting beyond the missing hour.',{kind:'clue',icon:'⌂'}),
+      bellPanel('locked_house','CHILD’S BEDROOM','The drawings show Edrin carrying his daughter to the clocktower.','Black Cell corruption surrounds her. In every picture after it, the same bell hangs above Greywake.',{kind:'clue',icon:'◇'}),
+      bellPanel('locked_house','THE TRUTH','Edrin was not trying to destroy Greywake.','He built the Thirteenth Bell to rewind the final thirteen minutes until he could save her. Every reset damaged the village further.',{kind:'npc',icon:'XIII'})
+    ]
+  });
+  await solve('house','Edrin Vale built the Thirteenth Bell to rewind the final thirteen minutes and save his Cell-touched daughter. Every reset damaged Greywake further.','At 12:01 AM, a house appeared that did not exist inside the loop. The child’s drawings revealed why Edrin built the bell.')
 }
 async function triggerReset(reason){
   const b=ensure();b.loop++;b.minute=0;history('Loop '+(b.loop-1)+' ended at midnight. The guild remembered.');await save(false);
@@ -312,18 +346,31 @@ function renderFinalRun(msg=''){
     renderFinalRun('Correct. Keep moving.')
   })
 }
-function revealAliveVillage(){
-  const b=ensure();b.stage='boss';save(false);
+async function revealAliveVillage(){
+  const b=ensure();b.stage='boss';await save(false);
   window.CellboundFX?.flash?.('gold',true);
-  root.innerHTML=chrome('GREYWAKE · 11:59 PM','The final thirteen minutes',
-    '<div class="bell-alive-reveal"><div class="bell-alive-town"><span>THE INN</span><span>THE FORGE</span><span>THE CHAPEL</span><span>THE WELL</span><strong>THE CLOCKTOWER</strong></div><div><small>GREYWAKE · ALIVE</small><h3>Everything you explored as a ruin is suddenly full of people.</h3><p>The inn is roaring. The blacksmith is shouting over his forge. Children cross the square you have walked through empty again and again.</p><p>Above them, Edrin Vale is climbing the clocktower with his daughter in his arms.</p><button data-climb-tower>CLIMB THE CLOCKTOWER →</button></div></div>'
-  );bindClose();window.CellboundFX?.callout?.({eyebrow:'GREYWAKE · ALIVE',title:'The village was never empty.',tone:'gold',duration:1700});root.querySelector('[data-climb-tower]').onclick=renderBossPrelude
+  await bellComic({
+    page:'VII · THE FINAL LOOP',title:'The final thirteen minutes',subtitle:'Greywake · 11:59 PM',continueLabel:'CLIMB THE CLOCKTOWER →',
+    panels:[
+      bellPanel('final_run','THE SEQUENCE HOLDS','Every action lands exactly where it must.','The replacement key. The formula. The fragment. The lens. The well. For the first time, the loop does not fight back.',{kind:'clue',icon:'✓'}),
+      bellPanel('greywake_freed','GREYWAKE · ALIVE','The village was never empty.','The inn is roaring. The forge is alive. Children cross the square you have walked through ruins again and again.',{kind:'location',icon:'☼'}),
+      bellPanel('bellkeeper','11:59 PM','Edrin Vale is climbing the clocktower.','His daughter is in his arms. Above them waits the black-glass bell and one final toll.',{kind:'npc',icon:'XIII'})
+    ]
+  });
+  window.CellboundFX?.callout?.({eyebrow:'GREYWAKE · ALIVE',title:'The village was never empty.',tone:'gold',duration:1700});
+  renderBossPrelude()
 }
-function renderBossPrelude(){
-  const b=ensure();b.stage='boss';save(false);
-  root.innerHTML=chrome('CLOCKTOWER · 11:59 PM','Edrin Vale',
-    '<div class="bell-boss-prelude"><div class="bell-bell-visual"><i>XIII</i></div><div><small>KEEPER OF THE THIRTEENTH HOUR</small><h3>“I only need one more try.”</h3><p>Edrin stands beneath a bell made from black Cell glass and old bronze. His daughter lies beside the mechanism.</p><p>Your discoveries have weakened the loop: the chapel’s light, the buried melody and the restored inscription are all working against him.</p><button data-fight-edrin>STOP THE THIRTEENTH TOLL →</button></div></div>'
-  );bindClose();root.querySelector('[data-fight-edrin]').onclick=fightEdrin
+async function renderBossPrelude(){
+  const b=ensure();b.stage='boss';await save(false);
+  await bellComic({
+    page:'VIII · THE BELLKEEPER',title:'Edrin Vale',subtitle:'Clocktower · 11:59 PM',continueLabel:'STOP THE THIRTEENTH TOLL →',
+    panels:[
+      bellPanel('bellkeeper','CLOCKTOWER SUMMIT','The party reaches the Bell.','Old bronze surrounds a core of black Cell glass. The mechanism is already moving.',{kind:'gate',icon:'XIII'}),
+      bellPanel('bellkeeper','EDRIN VALE','“I only need one more try.”','His daughter lies beside the mechanism. One hand grips the bell rope. He has lived these minutes more times than anyone can count.',{kind:'npc',icon:'◴',speaker:'EDRIN VALE'}),
+      bellPanel('bell_breaks','THE MISSING HOUR','Your discoveries have weakened the loop.','The chapel’s light, the buried melody and the restored inscription are all working against him. This time, midnight can continue.',{kind:'clue',icon:'⚔'})
+    ]
+  });
+  fightEdrin()
 }
 async function fightEdrin(){
   const b=ensure(),runner=window.CellboundQuests?.runQuest2DFight;if(typeof runner!=='function'){alert('Quest combat runtime is unavailable.');return}
@@ -353,10 +400,24 @@ async function fightEdrin(){
   if(!won){renderBossPrelude();return}
   b.bossWon=true;b.stage='choice';history('Edrin Vale was defeated beneath the Thirteenth Bell. Midnight continued.');await save(false);renderChoice();window.CellboundFX?.callout?.({eyebrow:'12:01 AM',title:'Midnight continued.',tone:'gold',duration:1600})
 }
-function renderChoice(){
+async function renderChoice(){
   const b=ensure();
+  const result=await bellComic({
+    page:'IX · 12:01 AM',title:'The bell is yours',subtitle:'The loop has stopped',continueLabel:'CONFIRM CHOICE →',allowSkip:false,
+    panels:[
+      bellPanel('bell_breaks','THE THIRTEENTH TOLL','Edrin falls away from the rope.','The Bell cracks. The hand of the clock moves past midnight.',{kind:'loot',icon:'XIII'}),
+      bellPanel('greywake_freed','12:01 AM','Midnight continues.','For the first time in countless loops, Greywake reaches the next minute.',{kind:'location',icon:'◴'}),
+      bellPanel('greywake_freed','A FUTURE','Greywake waits for your decision.','The mechanism is silent. What happens to the Bell now will decide what the village carries into the present.',{kind:'clue',icon:'◇'})
+    ],
+    choices:[
+      {id:'break',icon:'⚒',label:'BREAK THE BELL',replySpeaker:'CONSEQUENCE',reply:'Destroy the time mechanism. Greywake returns cleanly to the present, but the Bell can never be used again.'},
+      {id:'complete',icon:'XIII',label:'COMPLETE THE BELL',replySpeaker:'CONSEQUENCE',reply:'Stabilise the mechanism. Greywake returns permanently touched by small temporal anomalies.'},
+      {id:'silence',icon:'◇',label:'SILENCE THE THIRTEENTH HOUR',replySpeaker:'MASTERWORK SOLUTION',reply:'Remove the missing hour from the mechanism itself. Some villagers will remember every loop.'}
+    ]
+  });
+  if(result?.choiceId){finish(result.choiceId);return}
   root.innerHTML=chrome('CLOCKTOWER · 12:01 AM','The bell is yours',
-    '<div class="bell-choice-intro"><small>THE LOOP HAS STOPPED</small><h3>Greywake waits for a future.</h3><p>The mechanism is silent. The village below has no idea how many times it has lived these thirteen minutes.</p></div><div class="bell-choice-grid">'+
+    '<div class="bell-choice-intro"><small>THE LOOP HAS STOPPED</small><h3>Greywake waits for a future.</h3><p>Choose what becomes of the Bell.</p></div><div class="bell-choice-grid">'+
     endingCard('break','BREAK THE BELL','Destroy the time mechanism. Greywake returns cleanly to the present, but the Bell can never be used again.')+
     endingCard('complete','COMPLETE THE BELL','Stabilise the mechanism. Greywake returns permanently touched by small temporal anomalies.')+
     endingCard('silence','SILENCE THE THIRTEENTH HOUR','Use every discovery to remove the missing hour from the mechanism itself. Some villagers will remember every loop.')+
@@ -374,17 +435,31 @@ async function finish(ending){
   history('The guild chose to '+({break:'break the Bell and return Greywake cleanly',complete:'complete the Bell and stabilise Greywake',silence:'silence the Thirteenth Hour itself'}[ending])+'.');
   await save(false);renderCompletion();window.CellboundFX?.victory?.({eyebrow:'QUEST COMPLETE',title:TITLE,copy:'Greywake has returned to the world.'})
 }
-function renderCompletion(){
+async function renderCompletion(){
   const b=ensure(),ending={break:'The Bell was broken.',complete:'The Bell was completed.',silence:'The Thirteenth Hour was silenced.'}[b.ending]||'The loop ended.';
+  await bellComic({
+    page:'X · GREYWAKE',title:'The Thirteenth Bell',subtitle:'Quest complete',continueLabel:'VIEW REWARDS →',allowSkip:false,
+    panels:[
+      bellPanel('bell_breaks','THE BELL',ending,'The choice is made. The mechanism will never hold Greywake in the same thirteen minutes again.',{kind:'loot',icon:'XIII'}),
+      bellPanel('greywake_freed','GREYWAKE','The fog lifts. Time moves again.','Doors open. Voices carry through the square. The village returns to a world that had forgotten it existed.',{kind:'location',icon:'☼'}),
+      bellPanel('departure','DAWN','The party leaves Greywake at sunrise.','Behind them, the clocktower marks an ordinary hour. The thirteenth bell is silent — for now.',{kind:'location',icon:'→'})
+    ]
+  });
   root.innerHTML=chrome('QUEST COMPLETE',TITLE,
-    '<div class="bell-complete"><div class="bell-complete-mark">XIII</div><small>GREYWAKE HAS RETURNED</small><h3>'+ending+'</h3><p>The village now exists on the world map again. Your guild keeps every memory of the loops that led here.</p><div><article><span>GOLD</span><b>+500</b></article><article><span>RENOWN</span><b>+300</b></article><article><span>RELIC</span><b>THE THIRTEENTH CHIME</b></article><article><span>LOCATION</span><b>GREYWAKE</b></article></div><button data-bell-finish>RETURN TO QUEST JOURNAL →</button></div>'
+    '<div class="bell-complete"><div class="bell-complete-mark">XIII</div><small>REWARDS SECURED</small><h3>Greywake has returned.</h3><div><article><span>GOLD</span><b>+500</b></article><article><span>RENOWN</span><b>+300</b></article><article><span>RELIC</span><b>THE THIRTEENTH CHIME</b></article><article><span>LOCATION</span><b>GREYWAKE</b></article></div><button data-bell-finish>RETURN TO QUEST JOURNAL →</button></div>'
   );bindClose();root.querySelector('[data-bell-finish]').onclick=()=>{close();window.CellboundQuests?.render?.()}
 }
-function renderAftermath(){
+async function renderAftermath(){
   const b=ensure();
-  root.innerHTML=chrome('GREYWAKE · AFTERMATH',TITLE,
-    '<div class="bell-aftermath"><small>PERMANENT WORLD LOCATION</small><h3>Greywake</h3><p>'+esc({break:'The clocktower is silent and the Bell is gone. Life has begun again without the loop.',complete:'The clocktower runs normally, though villagers occasionally remember things that have not happened yet.',silence:'Some villagers remember every single loop. Nobody in Greywake will ever hear a thirteenth toll again.'}[b.ending]||'The village exists again.')+'</p><div class="bell-memory-wall">'+b.facts.slice(-8).map(f=>'<span>'+esc(f.text)+'</span>').join('')+'</div><button data-bell-close2>CLOSE</button></div>'
-  );bindClose();root.querySelector('[data-bell-close2]').onclick=close
+  const consequence={break:'The clocktower is silent and the Bell is gone. Life has begun again without the loop.',complete:'The clocktower runs normally, though villagers occasionally remember things that have not happened yet.',silence:'Some villagers remember every single loop. Nobody in Greywake will ever hear a thirteenth toll again.'}[b.ending]||'The village exists again.';
+  await bellComic({
+    page:'AFTERMATH',title:'Greywake',subtitle:'Permanent world location',continueLabel:'CLOSE →',
+    panels:[
+      bellPanel('greywake_freed','GREYWAKE · PRESENT DAY','The village exists again.',consequence,{kind:'location',icon:'XIII'}),
+      bellPanel('departure','THE OLD ROAD','The road no longer ends in fog.','Your guild remembers every loop that led here, even when the rest of the world does not.',{kind:'location',icon:'→'})
+    ]
+  });
+  close()
 }
 function init(){
   Game=window.CellboundGame;
