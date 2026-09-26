@@ -28,3 +28,8 @@ transactions. They cover selection delegation, retained form controls, idempoten
 mounting, two-party snapshots, crafting feedback, reduced motion and 390/768/1024px
 viewports. Live purchase, craft persistence and multiplayer service behavior
 remain unchanged; physical iPad performance requires device testing.
+
+## Phase 2: continuous working environments
+The existing scene API now integrates one inert room-depth layer into each host. Real controls keep their DOM parents and handlers. Inn roster cards become the gathering itself once populated; the duplicate introductory portrait row is suppressed. Market search, category signage and listings share a counter; staging artwork extends behind the preparation desk. Armoury equipment racks surround the existing live paper doll. Workshop work orders, quest panels and vault shelves use location-specific functional surfaces. No economy, readiness, equipment or combat decisions changed.
+
+At phone widths roster seating uses two columns (one below 360px), market counters collapse using the existing layout, and harbour parties use two rows of five. Decoration never receives pointer input; reduced motion disables room lamps and boats. Scene depth uses existing inline vectors and dungeon WebP assets without additional network payloads. Browser regression uses the production roster template with fixture data; live transactions and physical iPad FPS remain outside automated coverage.
