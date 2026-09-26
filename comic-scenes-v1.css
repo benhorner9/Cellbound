@@ -84,3 +84,64 @@ body.cbcomic-open{overflow:hidden}
   .cbcomic-story-only .cbcomic-actions{grid-column:1}
   .cbcomic-reveal-caption.place-top-right,.cbcomic-reveal-caption.place-top-left{left:10px;right:10px;top:9px}
 }
+/* Thirteenth Bell / single-panel cinematic presentation */
+.cbcomic-page.count-1{
+  grid-template-columns:1fr;
+  grid-template-rows:minmax(540px,68vh);
+  min-height:540px;
+  padding:8px;
+}
+.cbcomic-page.count-1 .cbcomic-panel{
+  grid-column:1!important;
+  grid-row:1!important;
+  min-height:540px;
+  border-width:2px;
+}
+.cbcomic-page.count-1 .cbcomic-panel img{
+  object-fit:cover;
+  object-position:center center;
+  image-rendering:auto;
+}
+.cbcomic-page.count-1 .cbcomic-panel:after{
+  background:linear-gradient(180deg,rgba(1,4,6,.08) 0%,rgba(1,4,6,.02) 46%,rgba(1,4,6,.28) 100%);
+}
+.cbcomic-page.count-1 .cbcomic-reveal-caption{
+  width:min(520px,calc(100% - 32px));
+  right:auto;
+  max-width:520px;
+  background:linear-gradient(90deg,rgba(4,7,10,.95),rgba(4,7,10,.82));
+  border:1px solid rgba(212,173,101,.28);
+  border-left:3px solid rgba(212,173,101,.9);
+}
+.cbcomic-page.count-1 .cbcomic-reveal-caption.place-top-right{
+  left:auto;
+  right:18px;
+}
+.cbcomic-page.count-1 .cbcomic-reveal-caption.place-bottom-left{
+  left:18px;
+  right:auto;
+  bottom:16px;
+}
+.cbcomic-page.count-1 .cbcomic-reveal-caption.place-bottom-right{
+  left:auto;
+  right:18px;
+  bottom:16px;
+}
+@media(max-width:900px){
+  .cbcomic-page.count-1{grid-template-rows:minmax(500px,62vh);min-height:500px}
+  .cbcomic-page.count-1 .cbcomic-panel{min-height:500px}
+}
+@media(max-width:700px){
+  .cbcomic-page.count-1{grid-template-rows:minmax(390px,54vh);min-height:390px}
+  .cbcomic-page.count-1 .cbcomic-panel{min-height:390px}
+  .cbcomic-page.count-1 .cbcomic-reveal-caption{
+    width:calc(100% - 20px);
+    max-width:none;
+  }
+  .cbcomic-page.count-1 .cbcomic-reveal-caption.place-top-right,
+  .cbcomic-page.count-1 .cbcomic-reveal-caption.place-top-left,
+  .cbcomic-page.count-1 .cbcomic-reveal-caption.place-bottom-left,
+  .cbcomic-page.count-1 .cbcomic-reveal-caption.place-bottom-right{
+    left:10px;right:10px;
+  }
+}
