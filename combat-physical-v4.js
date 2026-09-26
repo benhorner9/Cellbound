@@ -256,7 +256,8 @@ function livingEvent(e,opts={}){
 }
 let raf=0,last=0;
 function wake(){if(!raf)raf=requestAnimationFrame(frame)}
-function frame(now){
+function frame(){
+ const now=performance.now(); // Same clock as cast starts, effect expiry and state transitions.
  raf=0;if(now-last<32){wake();return}last=now;
  let active=false;
  for(const [arena,scene] of scenes){

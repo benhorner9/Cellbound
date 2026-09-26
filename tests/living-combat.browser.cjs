@@ -5,7 +5,8 @@ const root=path.resolve(__dirname,'..');
 (async()=>{
  const browser=await (process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium).launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
  const page=await browser.newPage({viewport:{width:1024,height:768}}),errors=[];
- page.on('pageerror',e=>errors.push(String(e)));
+ page.on('pageerror',e=>{errors.push(String(e));console.error(e.stack||String(e))});
+ await page.emulateMedia({reducedMotion:'no-preference'});
  page.on('console',msg=>{if(/visual skipped|visual recovered/.test(msg.text()))errors.push(msg.text())});
  await page.setContent('<body style="background:#10171d"><div class="cb2d-arena" id="cb2dArena" style="width:900px;height:560px;position:relative"></div></body>');
  for(const f of ['dungeon-2d-v1.css','combat-portraits-v1.css','combat-polish-v2.css','combat-polish-v3.css','combat-physical-v4.css'])await page.addStyleTag({content:fs.readFileSync(path.join(root,'dist',f),'utf8')});
@@ -117,7 +118,7 @@ const root=path.resolve(__dirname,'..');
   const target=arena.querySelector('[data-unit^="p-"]').dataset.unit;
   for(let i=0;i<200;i++)CellboundCombatFX.combatEvent({type:'DAMAGE_DEALT',source:'e-0',target,amount:1,result:'hit',payload:{}},{arena});
  });
- assert(await page.locator('.cbl-effects>.cbl-fx').count()<=38,'transient FX remain bounded under an event burst');
+ assert(await page.locator('.cbl-effects>.cbl-fx:not(.cast-orb):not(.channel)').count()<=36,'transient FX remain bounded under an event burst');
  await page.waitForFunction(()=>document.querySelectorAll('.cbl-effects>.cbl-fx').length===0,{},{timeout:5000});
  await page.emulateMedia({reducedMotion:'no-preference'});
 
