@@ -60,10 +60,11 @@
 <link rel="stylesheet" href="./lantern-inn-v1.css?v=2">
 <link rel="stylesheet" href="./inn-art-direction-v1.css?v=1">
   <link rel="stylesheet" href="./layout-safety-v1.css?v=1">
+  <link rel="stylesheet" href="./town-world-v1.css?v=1">
 </head>
 <body>
 <div class="app-shell">
-  <aside class="sidebar">
+  <aside class="sidebar" data-legacy-world-nav aria-hidden="true">
     <div class="brand"><div class="brand-mark">◇</div><div><strong>CELLBOUND</strong><span>GUILD COMMAND</span></div></div>
     <nav class="primary-nav" aria-label="Primary navigation">
       <button class="nav-btn active" data-hub="overview" data-view="overview" data-mobile-core><span>⌂</span><b>Home</b></button>
@@ -97,8 +98,8 @@
   </aside>
 
   <main class="main">
-    <header class="topbar">
-      <div><small>THE GUILDMASTER'S DESK</small><h1 id="pageTitle">Home</h1><span id="syncStatus" class="sync-status" role="status" aria-live="polite">Loading…</span></div>
+    <header class="topbar world-topbar">
+      <div class="world-topbar-title"><small>CELLBOUND WORLD</small><h1 id="pageTitle">Town</h1><span id="syncStatus" class="sync-status" role="status" aria-live="polite">Loading…</span></div>
       <div class="resource-strip">
         <div><span>Guild Renown</span><b id="renown">—</b></div>
         <div><span>Gold</span><b id="gold">—</b></div>
@@ -107,13 +108,35 @@
         <div><span>Account</span><b id="membershipStatus">LOADING</b></div>
         <div><span>Bank</span><b id="bankCount">—</b></div>
       </div>
+      <nav class="world-utility-actions" aria-label="Global utilities">
+        <button type="button" data-world-utility="town" aria-label="Return to town"><span>◇</span><b>Town</b></button>
+        <button type="button" data-world-utility="social"><span>◌</span><b>Social</b><em id="worldChatBadge"></em></button>
+        <button type="button" id="worldAdminUtility" hidden><span>⚙</span><b>Admin</b></button>
+        <button type="button" id="worldSignOut"><span>↥</span><b>Sign out</b></button>
+      </nav>
     </header>
     <span id="chatUnread" class="ui-state-proxy" aria-live="polite" hidden></span>
     <span id="worldActiveBadge" class="ui-state-proxy" hidden></span>
     <div id="worldAlertBar" class="world-alert-bar" role="status" aria-live="polite" hidden></div>
 
-    <section id="overview" class="view active">
-      <div class="home-command">
+    <section id="overview" class="view active town-view">
+      <div class="town-world" aria-label="Cellbound town">
+        <picture class="town-world-art" aria-hidden="true"><img src="./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp" alt="" fetchpriority="high" decoding="async"></picture>
+        <div class="town-world-shade" aria-hidden="true"></div>
+        <header class="town-world-heading"><small>YOUR GUILD'S HOME</small><h2>Town</h2><p>Choose where to go by interacting with the world.</p></header>
+        <button type="button" class="town-hotspot town-inn" data-town-target="roster" aria-label="Enter the Lantern Inn"><span><b>Lantern Inn</b><small>Your adventurers</small></span></button>
+        <button type="button" class="town-hotspot town-quests" data-town-target="quests" aria-label="Open the quest notice board"><span><b>Notice Board</b><small>Quests & mysteries</small><em data-town-status="quests"></em></span></button>
+        <button type="button" class="town-hotspot town-expeditions" data-town-target="content" aria-label="Open dungeon expeditions"><span><b>Expedition Cart</b><small>Dungeons</small><em data-town-status="content">Choose a dungeon</em></span></button>
+        <button type="button" class="town-hotspot town-market" data-town-target="trading" aria-label="Visit the marketplace"><span><b>Marketplace</b><small>Trading Post</small></span></button>
+        <button type="button" class="town-hotspot town-forge" data-town-target="professions" aria-label="Visit the Crafting Quarter"><span><b>Crafting Quarter</b><small>Professions</small></span></button>
+        <button type="button" class="town-hotspot town-vault" data-town-target="bank" aria-label="Enter the Guild Vault"><span><b>Guild Vault</b><small>Bank & storage</small></span></button>
+        <button type="button" class="town-hotspot town-arena" data-town-target="pvp" aria-label="Enter the Crucible"><span><b>The Crucible</b><small>PvP</small></span></button>
+        <button type="button" class="town-hotspot town-harbour" data-town-target="raids" aria-label="Go to the harbour"><span><b>Harbour</b><small>Raids</small><em data-town-status="raids">The Manor</em></span></button>
+        <button type="button" class="town-hotspot town-gate" data-town-target="world" aria-label="Leave through the town gate"><span><b>Town Gate</b><small>Activities & events</small><em data-town-status="world">Explore</em></span></button>
+        <footer class="town-world-foot"><span>Tap a location to travel.</span><b>World navigation · no menu required</b></footer>
+      </div>
+      <div class="town-legacy-home" hidden aria-hidden="true">
+<div class="home-command">
         <section id="overviewNextDungeon" class="home-continue-card" aria-label="Continue expedition">
           <div class="home-continue-loading"><small>GUILD COMMAND</small><h2>Preparing your next move…</h2></div>
         </section>
@@ -152,6 +175,7 @@
             <div id="activityLog" class="activity-log"></div>
           </article>
         </div>
+      </div>
       </div>
     </section>
 
@@ -555,6 +579,7 @@
 <script src="./mobile-v1.js?v=7"></script>
 <script src="./release-v1.js?v=3"></script>
 <script src="./living-world-v1.js?v=3"></script>
-<script src="./lantern-inn-v1.js?v=3"></script>
+<script src="./lantern-inn-v1.js?v=4"></script>
+<script src="./town-world-v1.js?v=1"></script>
 </body>
 </html>
