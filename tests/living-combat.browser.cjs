@@ -4,7 +4,7 @@ const fs=require('fs'),path=require('path'),assert=require('node:assert/strict')
 const root=path.resolve(__dirname,'..');
 (async()=>{
  const browser=await (process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium).launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
- const page=await browser.newPage({viewport:{width:1024,height:768}}),errors=[];
+ const page=await browser.newPage({viewport:{width:1024,height:768}}),errors=[];await page.bringToFront();
  page.on('pageerror',e=>{errors.push(String(e));console.error(e.stack||String(e))});
  await page.emulateMedia({reducedMotion:'no-preference'});
  page.on('console',msg=>{if(/visual skipped|visual recovered/.test(msg.text()))errors.push(msg.text())});
@@ -17,13 +17,14 @@ const root=path.resolve(__dirname,'..');
   window.send=(type,source='p-t',target='e-0',payload={},extra={})=>window.CellboundCombatFX.combatEvent({type,source,target,timestamp:1000,payload,...extra},{arena});
  });
  for(const f of ['combat-polish-v2.js','combat-polish-v3.js','combat-physical-v4.js'])await page.addScriptTag({content:fs.readFileSync(path.join(root,'dist',f),'utf8')});
+ await page.screenshot({path:'/tmp/cellbound-initial-paint.png'});
  await page.evaluate(()=>send('COMBAT_START'));
  assert.equal(await page.locator('.cbl-facing').count(),6);
  await page.evaluate(()=>{send('ABILITY_START','p-t','e-0',{kind:'damage',range:5});send('DAMAGE_DEALT','p-t','e-0',{targetMax:1000},{amount:35,result:'hit'})});
  const portraitAnimated=await page.evaluate(()=>document.querySelector('[data-unit="p-t"] .cb-combat-portrait').getAnimations().length>0);
  assert(portraitAnimated,'animate the visible portrait');
  assert.equal(await page.locator('.cbl-fx.contact').count(),1,'one impact owner');
- await page.waitForFunction(()=>document.querySelectorAll('.cbl-fx.contact').length===0,{},{timeout:5000});
+ await page.waitForFunction(()=>document.querySelectorAll('.cbl-fx.contact').length===0,{},{timeout:5000,polling:100});
  await page.evaluate(()=>send('DAMAGE_DEALT','p-t','e-0',{}, {amount:0,result:'miss'}));
  assert.equal(await page.locator('.cbl-fx.contact').count(),0,'miss cannot hit');
  await page.evaluate(()=>send('DEBUFF_APPLIED','e-0','p-t',{}, {statusEffects:[{id:'stun',cc:'stun'}]}));
@@ -32,7 +33,7 @@ const root=path.resolve(__dirname,'..');
  await page.evaluate(()=>send('DEBUFF_REMOVED','e-0','p-t',{}, {statusEffects:[{id:'stun'}]}));
  await page.evaluate(()=>{send('CAST_START','p-m','e-0',{duration:700},{ability:'Fireball'});send('CAST_START','p-h','p-t',{duration:900},{ability:'Flash Heal'})});
  assert.equal(await page.locator('.cbl-casting').count(),2,'independent casts overlap');
- await page.waitForFunction(()=>document.querySelector('.cast-orb'),{},{timeout:5000});
+ await page.waitForFunction(()=>document.querySelector('.cast-orb'),{},{timeout:5000,polling:100}).catch(async e=>{console.error('Cast diagnostics',await page.evaluate(()=>({hidden:document.hidden,rects:document.querySelector('#cb2dArena').getClientRects().length,classes:document.querySelector('#cb2dArena').className,units:[...document.querySelectorAll('.cbl-unit')].map(n=>({id:n.dataset.unit,state:n.dataset.combatState,cast:n.classList.contains('cbl-casting'),charge:n.style.getPropertyValue('--cbl-charge')}))})));throw e});
  assert(await page.locator('.cast-orb').count()>0,'cast travel before resolution');
  await page.evaluate(()=>send('INTERRUPT','e-0','p-m',{}, {result:'success'}));
  assert.equal(await page.locator('[data-unit="p-m"].cbl-casting').count(),0);
@@ -85,7 +86,7 @@ const root=path.resolve(__dirname,'..');
   send('GROUND_HAZARD_SPAWNED',{hazardId:'review-shards',radius:11,duration:300},{position:{x:30,y:65}});
  });
  assert.equal(await page.locator('.cbl-hazard.porcelain').count(),1);
- await page.waitForFunction(()=>document.querySelector('.cbl-hazard')?.dataset.phase==='expiring',{},{timeout:5000});
+ await page.waitForFunction(()=>document.querySelector('.cbl-hazard')?.dataset.phase==='expiring',{},{timeout:5000,polling:100});
  assert.equal(await page.locator('.cbl-hazard').count(),1,'expiry anticipation cannot remove an authoritative hazard');
  await page.evaluate(()=>sceneSend('GROUND_HAZARD_EXPIRED',{hazardId:'review-shards'}));
  assert.equal(await page.locator('.cbl-hazard').count(),0);
@@ -103,7 +104,7 @@ const root=path.resolve(__dirname,'..');
  await page.evaluate(()=>document.querySelectorAll('[data-unit^="art-"]').forEach(n=>n.remove()));
  // Exercise resized iPad/phone viewports without changing engine coordinates.
  await page.setViewportSize({width:768,height:1024});
- await page.waitForFunction(()=>{const a=document.querySelector('#cb2dArena'),u=a.querySelector('[data-unit^="p-"]');return Math.abs(parseFloat(u.style.getPropertyValue('--unit-x'))-Number(u.dataset.x)/100*a.clientWidth)<1},{},{timeout:5000});
+ await page.waitForFunction(()=>{const a=document.querySelector('#cb2dArena'),u=a.querySelector('[data-unit^="p-"]');return Math.abs(parseFloat(u.style.getPropertyValue('--unit-x'))-Number(u.dataset.x)/100*a.clientWidth)<1},{},{timeout:5000,polling:100});
  const resizePosition=await page.evaluate(()=>{
   const arena=document.querySelector('#cb2dArena'),unit=arena.querySelector('[data-unit^="p-"]');
   return {x:Number(unit.dataset.x),px:parseFloat(unit.style.getPropertyValue('--unit-x')),width:arena.clientWidth};
@@ -119,7 +120,7 @@ const root=path.resolve(__dirname,'..');
   for(let i=0;i<200;i++)CellboundCombatFX.combatEvent({type:'DAMAGE_DEALT',source:'e-0',target,amount:1,result:'hit',payload:{}},{arena});
  });
  assert(await page.locator('.cbl-effects>.cbl-fx:not(.cast-orb):not(.channel)').count()<=36,'transient FX remain bounded under an event burst');
- await page.waitForFunction(()=>document.querySelectorAll('.cbl-effects>.cbl-fx').length===0,{},{timeout:5000});
+ await page.waitForFunction(()=>document.querySelectorAll('.cbl-effects>.cbl-fx').length===0,{},{timeout:5000,polling:100});
  await page.emulateMedia({reducedMotion:'no-preference'});
 
 

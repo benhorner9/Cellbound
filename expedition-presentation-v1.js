@@ -17,7 +17,7 @@ function remove(){
   active=null;document.body.classList.remove('cbx-transition-open')
 }
 function sceneMarkup(p){
-  return '<div class="cbx-scene '+esc(p.motion)+'"><div class="cbx-depth far"></div><div class="cbx-depth mid"></div><div class="cbx-depth near"></div><div class="cbx-gate left"></div><div class="cbx-gate right"></div><div class="cbx-path"></div><div class="cbx-party"><i></i><i></i><i></i><i></i><i></i></div><div class="cbx-vignette"></div></div>'
+  return '<div class="cbx-scene '+esc(p.motion)+'"><div class="cbx-depth far"></div><div class="cbx-depth mid"></div><div class="cbx-depth near"></div><div class="cbx-gate left"></div><div class="cbx-gate right"></div><div class="cbx-path"></div><div class="cbx-party">'+(window.CellboundLivingWorld?.partyMarkup?.()||'<i></i><i></i><i></i><i></i><i></i>')+'</div><div class="cbx-vignette"></div></div>'
 }
 async function enter(id,options={}){
   const my=++token;remove();const p=profile(id),difficulty=String(options.difficulty||'Normal');
@@ -25,8 +25,8 @@ async function enter(id,options={}){
   root.innerHTML=sceneMarkup(p)+'<div class="cbx-copy"><small>'+esc(p.eyebrow)+'</small><h1>'+esc(p.name)+'</h1><b>'+esc(p.tag)+'</b><p>'+esc(p.entry)+'</p><span>'+esc(difficulty.toUpperCase())+' · EXPEDITION STARTING</span></div><div class="cbx-progress"><i></i></div>';
   document.body.appendChild(root);active=root;document.body.classList.add('cbx-transition-open');
   requestAnimationFrame(()=>requestAnimationFrame(()=>root.classList.add('moving')));
-  await wait(2150);if(my!==token)return;
-  root.classList.add('arriving');await wait(550);if(my!==token)return;
+  await wait(matchMedia('(prefers-reduced-motion: reduce)').matches?0:350);if(my!==token)return;
+  root.classList.add('arriving');await wait(matchMedia('(prefers-reduced-motion: reduce)').matches?0:120);if(my!==token)return;
   remove()
 }
 async function room(id,options={}){

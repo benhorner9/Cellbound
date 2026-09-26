@@ -289,7 +289,7 @@ function renderHub(){
    body='<section class="mr-card mr-group"><header><div><small>YOUR RAID GROUP</small><h3>'+esc(myGroup.guild_label)+' · '+count+'/2 players</h3></div><span class="'+(count===2?'ready':'waiting')+'">'+(count===2?'READY':'WAITING')+'</span></header>'+
    '<div class="mr-group-parties">'+mineRows.map((m,i)=>partyPanel(m,i)).join('')+(count<2?'<div class="mr-empty-party"><b>PARTY B</b><span>Waiting for another player…</span></div>':'')+'</div>'+
    '<div class="mr-comp '+(recommended?'recommended':'custom')+'"><b>Raid composition</b><span>'+comp.tank+' Tanks · '+comp.healer+' Healers · '+comp.dps+' Damage</span><em>'+(recommended?'RECOMMENDED 2 / 2 / 6':'CUSTOM COMPOSITION ALLOWED')+'</em></div>'+
-   '<footer><button class="secondary" data-mr-sync>LOCK IN CURRENT PARTY</button><button class="secondary" data-mr-leave>'+(leader?'CLOSE GROUP':'LEAVE GROUP')+'</button>'+(leader&&count===2?'<button data-mr-start>ENTER THE MANOR →</button>':'')+(count===2&&!leader?'<span>Waiting for the group leader to open the Manor.</span>':'')+'</footer></section>';
+   '<footer><button class="secondary" data-mr-sync>LOCK IN CURRENT PARTY</button><button class="secondary" data-mr-leave>'+(leader?'CLOSE GROUP':'LEAVE GROUP')+'</button>'+(leader&&count===2?'<button data-mr-start>ASSEMBLE AT THE HARBOUR →</button>':'')+(count===2&&!leader?'<span>Waiting for the group leader to open the Manor.</span>':'')+'</footer></section>';
  }else{
    const open=groups.filter(g=>groupMembers(g.id).length<2);
    body='<section class="mr-card mr-finder"><header><div><small>RAID FINDER</small><h3>Form a two-player raid</h3><p>Each player brings their active five-character party. 2 Tanks / 2 Healers / 6 Damage is recommended, not required.</p></div><button data-mr-create '+(partyReady()&&Number(lockout?.runsRemaining??3)>0?'':'disabled')+'>CREATE RAID GROUP</button></header>'+
@@ -299,6 +299,7 @@ function renderHub(){
    ?'<section class="mr-card mr-current victory mr-pending-loot"><div><small>UNCLAIMED MANOR REWARD</small><h3>Your previous raid group has been released</h3><p>Your two Tier 5 items are still waiting. You can claim them without rejoining the old team.</p></div><div class="mr-current-actions"><button data-mr-pending-loot="'+pendingRewardSession.id+'">COLLECT 2 RAID ITEMS →</button></div></section>'
    :'';
  mount.innerHTML=raidHeader()+encounterStrip()+raidRequirementsCard()+pendingLoot+body+'<section class="mr-card mr-loot-preview"><div><small>RAID REWARD</small><h3>Tier 5 equipment</h3><p>The Manor is the only source of Chapter 1 Tier 5 gear. Every clear awards <b>2 personal items per player</b>.</p></div><span class="mr-t5-frame">T5</span><div><b>ORANGE RAID FRAME</b><span>4 rolled stats · raid set pieces · iLvl up to 50</span></div></section>';
+ window.CellboundLivingWorld?.harbour?.(mount,mineRows);
  bindHub();
 }
 function partyPanel(m,i){
@@ -415,9 +416,10 @@ function renderReadyGate(){
   countdown+
   '<div class="mr-ready-teams"><article class="'+(ready.a?'is-ready':'')+'"><i>PARTY A</i><b>'+esc(commanderLabel(0))+'</b><span>'+(ready.a?'READY ✓':'NOT READY')+'</span>'+(entryA<100?'<em>RECOVERED · '+entryA+'% HP</em>':'')+'</article>'+
   '<article class="'+(ready.b?'is-ready':'')+'"><i>PARTY B</i><b>'+esc(commanderLabel(1))+'</b><span>'+(ready.b?'READY ✓':'NOT READY')+'</span>'+(entryB<100?'<em>RECOVERED · '+entryB+'% HP</em>':'')+'</article></div>'+
-  (ready.startAt?'':'<button class="mr-ready-button '+(mineReady?'is-ready':'')+'" data-raid-ready="'+(!mineReady)+'">'+(mineReady?'READY ✓ · CANCEL':'READY UP')+'</button>')+
+  (ready.startAt?'':'<button class="mr-ready-button '+(mineReady?'is-ready':'')+'" data-raid-ready="'+(!mineReady)+'">'+(mineReady?'READY ✓ · CANCEL':session.stage==='butler'?'READY TO SET SAIL':'READY UP')+'</button>')+
   (!ready.startAt&&mineReady&&!otherReady?'<p class="mr-ready-status">Waiting for the other commander…</p>':'')+
   '<footer><span>Both clients use the same server start timestamp.</span><b>3 SECOND COUNTDOWN</b></footer></section>';
+ if(session.stage==='butler')window.CellboundLivingWorld?.harbour?.(root.querySelector('.mr-ready-shell'),memberRows(),Boolean(ready.startAt),Math.max(0,3000-remaining)/1000);
  root.querySelector('[data-ready-close]')?.addEventListener('click',()=>closeRaid());
  root.querySelector('[data-raid-ready]')?.addEventListener('click',e=>setRaidReady(e.currentTarget.dataset.raidReady==='true'));
  if(ready.startAt){
