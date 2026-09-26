@@ -175,7 +175,7 @@ function observeHealth(arena){
     }
   };
   arena.querySelectorAll?.('.cb2d-unit-hp>i,.pvp2d-hp>i,.wb2d-unit-hp>i,.quest-cb2d-unit-hp>i').forEach(scan);
-  const o=new MutationObserver(records=>{for(const r of records){if(r.type==='attributes')scan(r.target);for(const n of r.addedNodes||[])if(n.nodeType===1)scan(n)}});
+  const o=new MutationObserver(records=>{for(const r of records){if(r.type==='attributes'&&r.target.matches?.('.cb2d-unit-hp>i,.pvp2d-hp>i,.wb2d-unit-hp>i,.quest-cb2d-unit-hp>i'))scan(r.target);for(const n of r.addedNodes||[])if(n.nodeType===1)scan(n)}});
   o.observe(arena,{subtree:true,childList:true,attributes:true,attributeFilter:['style']});
   arena._cbvfx3HealthObserver=o
 }

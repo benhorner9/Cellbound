@@ -327,6 +327,8 @@ function layoutBosses(ms=520){
  ids.forEach((id,i)=>{const el=$('[data-tb-boss="'+id+'"]'),p=slots[i]||[70,50];tbSetPos(el,p[0],p[1],ms)})
 }
 function tbLunge(source,target){
+ if(window.CellboundCombatFX?.living)return;
+
  const src=String(source||''),el=src.startsWith('tb-')?$('[data-tb-boss="'+src.slice(3)+'"]'):$('[data-tb-unit="'+src+'"]'),tp=src.startsWith('tb-')?tbUnitPos(target):tbUnitPos(String(target||'').startsWith('tb-')?String(target).slice(3):target);
  if(!el||!tp)return;
  const ox=Number(el.dataset.x)||50,oy=Number(el.dataset.y)||50,dx=tp.x-ox,dy=tp.y-oy,len=Math.max(1,Math.hypot(dx,dy)),step=src.startsWith('tb-')?5:3.5;
@@ -415,10 +417,10 @@ function tbStatusTargets(id){
 }
 function handleEvent(e){
  run.elapsed=Math.max(run.elapsed,Number(e.timestamp)||0);
+ window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#tbArena'),resolve:id=>tbStatusTargets(id)?.[0]?.el||tbStatusTargets(id)?.[0]||null,speed:()=>playSpeed});
  if(window.CellboundCombatStatuses?.handle(e,{resolve:tbStatusTargets,speed:()=>playSpeed}))return;
- window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#tbArena'),resolve:id=>tbStatusTargets(id)?.[0]?.el||tbStatusTargets(id)?.[0]||null});
  if(e.type==='TOMB_OPEN'){spawnBoss(e.payload?.bossId);return}
- if(e.type==='MOVEMENT_START'&&e.payload?.to){const el=String(e.source||'').startsWith('tb-')?$('[data-tb-boss="'+String(e.source).slice(3)+'"]'):$('[data-tb-unit="'+e.source+'"]');tbSetPos(el,e.payload.to.x,e.payload.to.y,e.payload.duration||420);return}
+ if(e.type==='MOVEMENT_START'&&e.payload?.to){if(window.CellboundCombatFX?.ownsMovement)return;const el=String(e.source||'').startsWith('tb-')?$('[data-tb-boss="'+String(e.source).slice(3)+'"]'):$('[data-tb-unit="'+e.source+'"]');tbSetPos(el,e.payload.to.x,e.payload.to.y,e.payload.duration||420);return}
  if(e.type==='ABILITY_START'){tbLunge(e.source,e.target);return}
  if(e.type==='VICE_DEFEATED'){defeatBoss(e.payload?.bossId);return}
  if(e.type==='ENEMY_DEFEATED'&&String(e.target||'').startsWith('tb-')){defeatBoss(String(e.target).slice(3));return}

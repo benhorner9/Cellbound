@@ -16,6 +16,10 @@ const PLAYER_SELECTORS=[
 ].join(',');
 const BOSS_SELECTOR='.cb2d-unit.enemy.boss';
 const BOSS_ART=[
+  {match:['the butler'],name:'The Butler',art:'./assets/manor/manor-butler.webp'},
+  {match:['the maid','servant maid'],name:'The Maid',art:'./assets/manor/manor-maids.webp'},
+  {match:['the engineer'],name:'The Engineer',art:'./assets/manor/manor-engineer.webp'},
+  {match:['master of the manor'],name:'The Master of the Manor',art:'./assets/manor/manor-master.webp'},
   {match:['the vaultheart','vaultheart'],name:'The Vaultheart',art:'./assets/bosses/ashen-vault-vaultheart.webp'},
   {match:['the bound choir','bound choir'],name:'The Bound Choir',art:'./assets/bosses/hollow-sanctum-bound-choir.webp'},
   {match:['archdruid vorran','vorran'],name:'Archdruid Vorran',art:'./assets/bosses/chaos-canyon-vorran.webp'},

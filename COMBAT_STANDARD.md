@@ -568,3 +568,47 @@ All current and future combat viewers must follow these rules.
 - Loot, currency, XP, analysis and action buttons must never rely on the previous combat layout height.
 - Action buttons remain accessible at the bottom of long results screens.
 - The same results behaviour applies to Ashen Vault, Hollow Sanctum, Chaos Canyon, Blackout Station and future dungeon-style combat content.
+
+## Living combat presentation (4.1)
+
+`combat-physical-v4.js` is the common owner of unit presentation state, facing,
+portrait motion, basic VFX and authoritative movement interpolation. Extend it
+instead of adding another event wrapper. The v2 environment and v3 mechanic
+language remain shared dependencies; all three must ship in the production build.
+
+Every playback adapter forwards events **before** a status UI can consume them:
+
+```js
+CellboundCombatFX.combatEvent(event, {
+  arena,
+  resolve: id => unitElementForAuthoritativeId(id),
+  speed: () => playbackSpeed
+});
+```
+
+An arena with a coordinate projection can supply `position(element, point,
+durationMs)`. This maps an engine point into the existing room geometry; it must
+not choose a different destination. Chaos Canyon uses this for its shrinking
+room. Native UI adapters retain HP, resources, meters, encounter geometry and
+outcomes. `ownsMovement` and `living` suppress duplicate legacy movement/projectiles.
+
+Combat Reborn includes initial unit positions in `COMBAT_START.payload.units` and
+frozen persistent-hazard destinations in `payload.hazardPosition`. Older streams
+without these optional fields retain their initial scene positions. Instant
+attacks connect at the same authoritative damage/heal event. Casts can show travel
+within their existing interval; the renderer never postpones HP, invents a hit,
+or extends an attack's gameplay timing to fit a visual.
+
+Current delivery covers Ashen Vault/Manor, Hollow Sanctum, Chaos Canyon, Blackout
+Station, quest-based fights (including tutorial and Fractured Ages), Twelve Below,
+and PvP presentation. The legacy world-boss adapter uses the same entry point but
+is intentionally not in the current production bundle.
+
+Limits of this milestone: bespoke room art, a full enemy portrait catalogue,
+automatic camera framing, complete enemy archetype authoring and device-measured
+iPad frame-rate certification remain later work. This foundation keeps the event
+and extension contract ready for them.
+
+Verification: `npm run build` runs the engine and formation regressions. Run
+`node tests/living-combat.browser.cjs` with Playwright installed for presentation
+state/portrait/impact/accessibility checks. The PR validation workflow runs both.

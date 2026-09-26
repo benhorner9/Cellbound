@@ -43,3 +43,21 @@ jobs:
           test -f dist/assets/gear/cellbound-gear-atlas.webp
           test -f dist/assets/combat/status-icons-v1.webp
           ! grep -R --line-number -E 'href="/|src="/' dist/*.html
+
+      - name: Install browser test tools
+        run: |
+          npm install --no-save --package-lock=false playwright@1.51.1
+          npx playwright install --with-deps chromium webkit
+
+      - name: Living combat browser regression
+        run: |
+          node tests/living-combat.browser.cjs
+          CELLBOUND_TEST_ENGINE=webkit node tests/living-combat.browser.cjs
+
+      - name: Save combat review capture
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: living-combat-review
+          path: /tmp/cellbound-living-combat.png
+          if-no-files-found: ignore

@@ -230,6 +230,7 @@ function hsSafePoint(id,x,y){return{x:Math.max(7,Math.min(93,Number(x)||50)),y:M
 function move(id,x,y,ms=550){const e=$('[data-hs="'+id+'"]');if(!e)return;const p=hsSafePoint(id,x,y);e.style.transitionDuration=ms+'ms';e.style.left=p.x+'%';e.style.top=p.y+'%'}
 function hsPoint(id){const arena=$('#hs2dArena'),e=$('[data-hs="'+id+'"]');if(!arena||!e)return null;const ar=arena.getBoundingClientRect(),r=e.getBoundingClientRect();return{x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,w:ar.width,h:ar.height}}
 function projectile(fromId,toId,kind='magic',ms=420){
+ if(window.CellboundCombatFX?.living)return;
  const a=hsPoint(fromId),b=hsPoint(toId),fx=$('#hs2dFx');if(!a||!b||!fx)return;
  const dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI,p=document.createElement('i');
  p.className='hs2d-shot '+kind;p.style.left=a.x+'px';p.style.top=a.y+'px';p.style.setProperty('--dx',dx+'px');p.style.setProperty('--dy',dy+'px');p.style.setProperty('--angle',angle+'deg');fx.appendChild(p);setTimeout(()=>p.remove(),ms+120)
@@ -352,13 +353,14 @@ function hsStatusTargets(id){
  return out
 }
 function hsRenderRebornEvent(e){
+ window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#hs2dArena'),resolve:id=>hsStatusTargets(id)?.[0],speed:()=>run?.speed||1});
  try{
   if(window.CellboundCombatStatuses?.handle(e,{resolve:hsStatusTargets,speed:()=>run?.speed||1}))return;
  }catch(error){console.warn('Hollow Sanctum status visual skipped',e?.type,error)}
  const src=hsRenderId(e.source),target=hsRenderId(e.target),srcChar=hsCharacter(e.source),targetChar=hsCharacter(e.target);
  switch(e.type){
   case'COMBAT_START':{const arena=$('#hs2dArena');window.CellboundCombatFX?.mount?.(arena);if(['boss','final'].includes(String(STAGES[run.stage]?.kind||'')))window.CellboundCombatFX?.boss?.(arena,STAGES[run.stage]?.title||'Boss');setStatus('Combat simulation live.');feed('Combat begins.');break;}
-  case'MOVEMENT_START':if(src&&e.payload?.to)move(src,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
+  case'MOVEMENT_START':if(window.CellboundCombatFX?.ownsMovement)break;if(src&&e.payload?.to)move(src,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
   case'ABILITY_START':
    if(srcChar)hsAct(role(srcChar),srcChar.name+' · '+(e.ability||'Ability'));
    if(srcChar&&target){projectile(src,target,hsAttackKind(srcChar),260)}
@@ -397,7 +399,7 @@ function hsRenderRebornEvent(e){
    break;
   case'MECHANIC_TELEGRAPH':
    setStatus((e.ability||'Mechanic')+' incoming…');feed((e.ability||'A mechanic')+' is telegraphed.');hsMechanicFromEvent(e);break;
-  case'MECHANIC_RESOLVE':hsClearMechanic(e.payload?.token,true);requestAnimationFrame(()=>hsRegroup());break;
+  case'MECHANIC_RESOLVE':hsClearMechanic(e.payload?.token,true);/* Engine events own return-to-formation movement. */break;
   case'CAST_START':if(String(e.result||'')==='enemy'){hsCastStart(e.ability||'Enemy Cast',e.payload?.duration)}if(e.payload?.interruptible)feed((e.ability||'Cast')+' can be interrupted.');break;
   case'CAST_FINISH':hsCastClear();break;
   case'INTERRUPT':

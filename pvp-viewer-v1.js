@@ -118,6 +118,8 @@ function floatText(root,id,text,kind='damage'){
   e.className='pvp2d-float '+kind;e.textContent=text;e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),900)
 }
 function projectile(root,from,to,kind='damage',ms=320){
+ if(window.CellboundCombatFX?.living)return;
+
   const a=point(root,from),b=point(root,to),fx=$(root,'#pvp2dFx');if(!a||!b||!fx)return;
   const dx=b.x-a.x,dy=b.y-a.y,p=document.createElement('i');p.className='pvp2d-shot '+kind;p.style.left=a.x+'px';p.style.top=a.y+'px';p.style.setProperty('--dx',dx+'px');p.style.setProperty('--dy',dy+'px');p.style.setProperty('--shot-ms',Math.max(180,ms)+'ms');fx.appendChild(p);setTimeout(()=>p.remove(),ms+180)
 }
@@ -187,7 +189,7 @@ function handleEvent(pb,e){
       if(pb.match?.kind==='arena')feed(pb,'The Veilspire gates close. The Cellstorm will keep shrinking until one team falls.');
       else feed(pb,pb.result?.map?.name?'The gates of '+pb.result.map.name+' open. Multiple routes are live.':'The gates open. PvP combat begins.');
       break;
-    case'MOVEMENT_START':if(e.payload?.to)move(root,e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||420,e.payload?.from||null);break;
+    case'MOVEMENT_START':if(window.CellboundCombatFX?.ownsMovement)break;if(e.payload?.to)move(root,e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||420,e.payload?.from||null);break;
     case'ABILITY_START':
       if(src){pulse(root,e.source,e.payload?.kind==='heal'?'heal':'attack');if(e.target&&target)projectile(root,e.source,e.target,attackKind(src,e.ability),src.role==='dps'?280:330)}
       break;

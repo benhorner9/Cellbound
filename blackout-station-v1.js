@@ -305,6 +305,7 @@ function floatText(id,text,kind='damage'){
  const p=point(id),arena=$('#bsArena');if(!p||!arena)return;const e=document.createElement('b');e.className='bs-float '+kind;e.textContent=text;e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),850)
 }
 function projectile(from,to,enemy=false){
+ if(window.CellboundCombatFX?.living)return;
  const a=point(from),b=point(to),fx=$('#bsFx');if(!a||!b||!fx)return;const e=document.createElement('i');e.className='bs-shot '+(enemy?'enemy':'player');e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.setProperty('--dx',(b.x-a.x)+'px');e.style.setProperty('--dy',(b.y-a.y)+'px');fx.appendChild(e);setTimeout(()=>e.remove(),430)
 }
 function setStatus(t){const e=$('#bsStatus');if(e)e.textContent=t}
@@ -365,12 +366,13 @@ function hideRoleZones(immediate=false){
  setTimeout(()=>{if(!layer.isConnected||layer.dataset.zoneEpoch!==epoch)return;layer.innerHTML='';layer.classList.remove('resolving')},delay)
 }
 function eventRender(e){
+ window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#bsArena'),resolve:id=>statusTargets(id)?.[0],speed:()=>run?.speed||1});
  try{if(window.CellboundCombatStatuses?.handle(e,{resolve:statusTargets,speed:()=>run?.speed||1}))return}catch(error){console.warn('Blackout Station status UI skipped',e?.type,error)}
 
  const src=renderId(e.source),target=renderId(e.target),srcChar=charFor(e.source),targetChar=charFor(e.target);
  switch(e.type){
   case'COMBAT_START':{hideRoleZones(true);$('#bsArena')?.classList.remove('shockwave');window.CellboundCombatFX?.boss?.($('#bsArena'),'Dr. Vex Calder');const oc=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT;setStatus('Generator hall combat live'+(oc?' · CALDER OVERCHARGE +'+oc+'%':'')+'.');feed('Dr. Vex Calder steps into the restored light.'+(oc?' Diagnostics have increased his maximum health by '+oc+'%.':''));break}
-  case'MOVEMENT_START':
+  case'MOVEMENT_START':if(window.CellboundCombatFX?.ownsMovement)break;
    if(src&&e.payload?.to){run.movementEpoch=run.movementEpoch||{};run.movementEpoch[src]=(Number(run.movementEpoch[src])||0)+1;move(src,e.payload.to.x,e.payload.to.y,e.payload.duration||420)}
    break;
   case'ABILITY_START':

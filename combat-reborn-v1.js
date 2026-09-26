@@ -710,8 +710,10 @@ function moveTo(ctx,u,pos,duration=420,reason='positioning'){
  },'movement-end');
  return false
 }
-function nearestMeleePoint(enemy,u){
- const angle=Math.atan2(u.position.y-enemy.position.y,u.position.x-enemy.position.x);
+function nearestMeleePoint(enemy,u,ctx){
+ const pack=ctx?ctx.enemies.filter(e=>e.alive&&e.target===enemy.id&&e.attackRange<=7):[];
+ const slot=pack.findIndex(e=>e.id===u.id);
+ const angle=pack.length>1&&slot>=0?-Math.PI/2+slot*Math.PI*2/pack.length:Math.atan2(u.position.y-enemy.position.y,u.position.x-enemy.position.x);
  return{x:enemy.position.x+Math.cos(angle)*4,y:enemy.position.y+Math.sin(angle)*4}
 }
 function stableUnitIndex(ctx,u,list){
@@ -725,7 +727,8 @@ function meleeFormationPoint(ctx,u,target){
  if(u.role==='tank'){
    // Tank owns the front of the enemy. With enemies entering from the right side of the arena,
    // this places the tank on the party-facing side and keeps the boss facing away from melee DPS.
-   return{x:target.position.x-radius,y:target.position.y}
+   const tanks=ctx.players.filter(p=>p.alive&&p.role==='tank'),slot=stableUnitIndex(ctx,u,tanks),angle=Math.PI+(slot-(tanks.length-1)/2)*.75;
+   return{x:target.position.x+Math.cos(angle)*radius,y:target.position.y+Math.sin(angle)*radius}
  }
  const melee=ctx.players.filter(p=>p.alive&&p.role!=='tank'&&isMeleeCombatant(p));
  const slot=stableUnitIndex(ctx,u,melee);
@@ -738,8 +741,7 @@ function meleeFormationPoint(ctx,u,target){
 function rangedFormationPoint(ctx,u,target,range){
  const ranged=ctx.players.filter(p=>p.alive&&!isMeleeCombatant(p)&&p.role!=='tank');
  const slot=stableUnitIndex(ctx,u,ranged);
- const angles=[Math.PI,-2.55,2.55,-2.2,2.2];
- const angle=angles[slot%angles.length],desired=Math.max(10,Math.min((Number(range)||25)*.72,22));
+ const angle=ranged.length<=1?Math.PI:2.12+slot*2.04/(ranged.length-1),desired=Math.max(10,Math.min((Number(range)||25)*.72,22));
  return{x:target.position.x+Math.cos(angle)*desired,y:target.position.y+Math.sin(angle)*desired}
 }
 function moveIntoRange(ctx,u,target,range){
@@ -1533,8 +1535,10 @@ function enemyBasicAttack(ctx,e){
  const randomTarget=e.targeting==='random',target=randomTarget?live[Math.floor(ctx.rng()*live.length)]:(topThreatTarget(ctx,e)||live[0]);if(!target)return;
  setAggro(ctx,e,target,randomTarget?'random targeting':'threat');
  const range=Math.max(2,Number(e.attackRange)||5);
- if(!inRange(e,target,range)||!hasLineOfSight(ctx,e,target)){
-  const destination=range>7?visibleCastPoint(ctx,e,target,range,e.position):nearestMeleePoint(target,e);
+ const crowded=e.kind!=='boss'&&range<=7&&ctx.enemies.some(other=>other!==e&&other.alive&&other.target===target.id&&dist(other.position,e.position)<2.4);
+ const separated=range<=7?nearestMeleePoint(target,e,ctx):null;
+ if(!inRange(e,target,range)||!hasLineOfSight(ctx,e,target)||(crowded&&dist(e.position,separated)>1)){
+  const destination=range>7?visibleCastPoint(ctx,e,target,range,e.position):separated;
   moveTo(ctx,e,destination,320,!hasLineOfSight(ctx,e,target)?'line of sight':range>7?'ranged position':'chase target');
   e.nextAttack=ctx.time+450;return;
  }
@@ -1546,7 +1550,7 @@ function enemyBasicAttack(ctx,e){
   livingPlayers(ctx).forEach(p=>dealDamage(ctx,e,p,base*.62*enemyPressure(ctx,e,p)*roll,'Wild Wrath',{damageType:'magic',avoidable:false,aoe:true,aggroHit:true}));
  }else{
   const levelPressure=enemyPressure(ctx,e,target);
-  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability,result:randomTarget?'enemy-random':'enemy',payload:{randomTargeting:randomTarget,attackRange:range}});
+  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability,result:randomTarget?'enemy-random':'enemy',payload:{randomTargeting:randomTarget,attackRange:range,classification:e.classification,damageType:e.damageType}});
   dealDamage(ctx,e,target,base*levelPressure*roll,ability,{damageType:e.damageType||'physical',aggroHit:!randomTarget});
  }
  const cadence=e.classification==='world-boss'?1325:e.kind==='boss'?1450:e.classification==='elite'?1850:e.isAdd?1800:2050;
@@ -1873,8 +1877,8 @@ function startMechanic(ctx,m){
   })
  }
 
- emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:castState.targetId,ability:m.name,result:'telegraph',position:copy(enemy.position),payload:{mechanicType:m.type,duration,token,interruptible:m.type==='interrupt'||m.type==='self-heal',targetId:castState.targetId,targetIds:copy(castState.targetIds),responses:copy(castState.responses),reactionMs:copy(castState.reactionMs),zones:copy(castState.zones||null)}});
- emit(ctx,'CAST_START',{source:enemy.id,target:castState.targetId,ability:m.name,result:'enemy',payload:{duration,interruptible:m.type==='interrupt'||m.type==='self-heal',mechanicType:m.type,token,targetId:castState.targetId,targetIds:copy(castState.targetIds)}});
+ emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:castState.targetId,ability:m.name,result:'telegraph',position:copy(enemy.position),payload:{mechanicType:m.type,duration,hazardPosition:copy(castState.hazardPosition||null),token,interruptible:m.type==='interrupt'||m.type==='self-heal',targetId:castState.targetId,targetIds:copy(castState.targetIds),responses:copy(castState.responses),reactionMs:copy(castState.reactionMs),zones:copy(castState.zones||null)}});
+ emit(ctx,'CAST_START',{source:enemy.id,target:castState.targetId,ability:m.name,result:'enemy',payload:{duration,interruptible:m.type==='interrupt'||m.type==='self-heal',mechanicType:m.type,hazardPosition:copy(castState.hazardPosition||null),token,targetId:castState.targetId,targetIds:copy(castState.targetIds)}});
  if(m.type==='interrupt'||m.type==='self-heal')tryInterrupt(ctx,enemy,m,token);
  else if(m.type==='cone'){
   const tank=getUnit(ctx,castState.targetId);
@@ -1970,7 +1974,9 @@ function simulate(options={}){
  };
  const environment=copy(encounter.environment||{blockers:[]});
  const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
- emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
+ players.forEach((u,i)=>{if(players.length>5&&!options.party[i]?._combatPosition)u.position.y=20+i*60/Math.max(1,players.length-1);u.position=openPosition(ctx,u.position,1.35)});
+ enemies.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
+ emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),units:[...players,...enemies].map(u=>({id:u.id,position:copy(u.position),facing:u.facing,alive:u.alive,role:u.role,classification:u.classification,attackRange:u.attackRange,damageType:u.damageType})),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
  players.forEach(u=>{
   Object.values(u.statuses||{}).forEach(st=>{
    if(Number(st.expiresAt)>0){
