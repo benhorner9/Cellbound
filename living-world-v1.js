@@ -55,13 +55,22 @@ function scene(host,config,chars=party(),interactive=false){
  if(config.art)el.querySelector('.lw-distance').style.backgroundImage='url("./'+config.art+'")';
  return el;
 }
+// The room belongs to the entire working surface, not just its introduction.
+// Existing controls remain in place so delegated events, focus and filtering survive.
+function integrate(host,config){
+ host.classList.add('lw-room');host.dataset.room=config.theme;
+ let room=host.querySelector(':scope > .lw-room-depth');
+ if(!room){room=document.createElement('div');room.className='lw-room-depth';room.setAttribute('aria-hidden','true');host.prepend(room)}
+ if(room.dataset.theme!==config.theme){room.dataset.theme=config.theme;room.innerHTML=architecture(config.theme)+'<i class="lw-room-lamp"></i><i class="lw-room-lamp"></i>';}
+ if(config.art)host.style.setProperty('--lw-room-art','url("./'+config.art+'")');
+}
 function refresh(){
  queued=false;
  for(const [id,config]of Object.entries(locations)){
   const host=document.getElementById(id);if(!host||!host.classList.contains('active'))continue;
-  host.classList.add('lw-location');host.dataset.worldLocation=config.theme;
+  host.classList.add('lw-location');host.dataset.worldLocation=config.theme;integrate(host,config);
   if(id==='raids'&&host.querySelector('.lw-scene[data-raid-assembly]'))continue;
-  if(id==='professions'&&crafter){const station=scene(host,{...config,name:craftName?craftName+' Workshop':config.name},[crafter]);station.dataset.station=String(craftName||'').toLowerCase();continue}
+  if(id==='professions'&&crafter){const station=scene(host,{...config,name:craftName?craftName+' Workshop':config.name},[crafter]);station.dataset.station=String(craftName||'').toLowerCase();host.dataset.station=station.dataset.station;continue}
   const chars=id==='roster'?(game()?.getState?.()?.roster||[]):party();scene(host,config,chars,id==='roster'||id==='party');
  }
  staging();
@@ -69,20 +78,20 @@ function refresh(){
 function schedule(){if(!queued){queued=true;requestAnimationFrame(refresh)}}
 function staging(){
  const mappings=[['#cb2dBackdrop .cb2d-brief','ashen-vault'],['#hs2dBackdrop .cb2d-brief','hollow-sanctum'],['#cc2dBackdrop .cb2d-brief','chaos-canyon'],['#bs2dBackdrop .cb2d-brief','blackout-station'],['.tb-brief','twelve-below'],['.fa-brief','fractured-ages']];
- for(const [selector,id]of mappings){const host=document.querySelector(selector);if(!host)continue;host.classList.add('lw-staging');scene(host,{...stages[id],tag:'EXPEDITION · PARTY ASSEMBLED'});const start=host.querySelector('button[data-start],button[data-fa-start],button[data-tb-start]');if(start&&!start.disabled&&!start.dataset.worldLabel){start.textContent=stages[id].cta;start.dataset.worldLabel='1'}}
- const sheet=document.querySelector('#characterDetail .cb-sheet');if(sheet){sheet.classList.add('lw-armoury');sheet.setAttribute('aria-label','Armoury · character equipment and progression')}
+ for(const [selector,id]of mappings){const host=document.querySelector(selector);if(!host)continue;host.classList.add('lw-staging');integrate(host,stages[id]);scene(host,{...stages[id],tag:'EXPEDITION · PARTY ASSEMBLED'});const start=host.querySelector('button[data-start],button[data-fa-start],button[data-tb-start]');if(start&&!start.disabled&&!start.dataset.worldLabel){start.textContent=stages[id].cta;start.dataset.worldLabel='1'}}
+ const sheet=document.querySelector('#characterDetail .cb-sheet');if(sheet){sheet.classList.add('lw-armoury');integrate(sheet,{theme:'vault'});sheet.setAttribute('aria-label','Armoury · character equipment and progression')}
 }
 function harbour(host,rows=[],departing=false,elapsed=0){
  const old=document.querySelector('#raids > .lw-scene');if(old&&host!==document.getElementById('raids'))old.remove();
  const chars=rows.length?rows.flatMap((r,i)=>(r.party_snapshot||[]).map(c=>({...c,_worldParty:i,_worldCommander:r.guild_label||'Party '+(i+1)}))):party();
- const el=scene(host,{...locations.raids,copy:rows.length>1?'Both parties are gathered. Confirm readiness below.':'Your party waits at the dock for the second commander.'},chars);
- if(el)el.dataset.raidAssembly='1';el?.classList.toggle('lw-departing',departing&&!reduce());if(el)el.style.setProperty('--departure-elapsed',-Math.min(2.8,Math.max(0,elapsed))+'s');
+ integrate(host,locations.raids);const el=scene(host,{...locations.raids,copy:rows.length>1?'Both parties are gathered. Confirm readiness below.':'Your party waits at the dock for the second commander.'},chars);
+ host.style.setProperty('--departure-elapsed',-Math.min(2.8,Math.max(0,elapsed))+'s');if(el)el.dataset.raidAssembly='1';el?.classList.toggle('lw-departing',departing&&!reduce());if(el)el.style.setProperty('--departure-elapsed',-Math.min(2.8,Math.max(0,elapsed))+'s');
  if(el&&departing)el.querySelector('header p').textContent='Setting sail for the Manor. Combat begins at the shared start time.';
 }
-window.CellboundLivingWorld={refresh,scene,harbour,locations,stages,partyMarkup:()=>heroes(party(),new Set(party().map(c=>String(c.id)))),workstation:(c,prof)=>{crafter=c;craftName=prof?.name;schedule()},version:'1.0.0'};
+window.CellboundLivingWorld={refresh,scene,harbour,locations,stages,partyMarkup:()=>heroes(party(),new Set(party().map(c=>String(c.id)))),workstation:(c,prof)=>{crafter=c;craftName=prof?.name;schedule()},version:'2.0.0'};
 window.addEventListener('cellbound:view-changed',e=>{const view=document.getElementById(e.detail?.view);if(view&&!reduce())view.animate([{opacity:.65},{opacity:1}],{duration:160});schedule()});
 window.addEventListener('cellbound:state-rendered',schedule);
-window.addEventListener('cellbound:crafted',e=>{const el=document.querySelector('#professions > .lw-scene');if(!el)return;const text=document.createElement('p');text.className='lw-craft-result';text.setAttribute('role','status');text.textContent=e.detail?.name+' completed';el.querySelector('.lw-craft-result')?.remove();el.appendChild(text);if(!reduce())el.animate([{boxShadow:'inset 0 0 65px #d5b77970'},{boxShadow:'inset 0 0 0 transparent'}],{duration:700});setTimeout(()=>text.remove(),2500)});
+window.addEventListener('cellbound:crafted',e=>{const el=document.querySelector('#professions > .lw-scene');if(!el)return;const text=document.createElement('p');text.className='lw-craft-result';text.setAttribute('role','status');text.textContent=e.detail?.name+' completed';el.querySelector('.lw-craft-result')?.remove();el.appendChild(text);if(!reduce())el.querySelector('.lw-light').animate([{opacity:.3},{opacity:1},{opacity:.3}],{duration:700});setTimeout(()=>text.remove(),2500)});
 // Observe only structural insertions; ignore our own scene mutations and combat frame updates.
 const observer=new MutationObserver(records=>{if(records.some(r=>!r.target.closest?.('.lw-scene')&&[...r.addedNodes].some(n=>n.nodeType===1&&!n.matches?.('.lw-scene')&&(n.matches?.('.cb2d-brief,.tb-brief,.fa-brief,.cb-sheet')||n.querySelector?.('.cb2d-brief,.tb-brief,.fa-brief,.cb-sheet')))))schedule()});
 observer.observe(document.body,{childList:true,subtree:true});refresh();

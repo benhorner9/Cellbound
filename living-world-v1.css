@@ -44,3 +44,95 @@
 .lw-location>.section-intro>div:first-child:not(:only-child){display:none}
 #trading.lw-location>.section-intro{display:none}
 .lw-location>.section-intro:before,.lw-location>.section-intro:after{display:none}
+
+/* Living World II: a continuous room around real controls. No cloned controls. */
+.lw-room{position:relative;isolation:isolate;--room-glow:#bb773126;--room-wood:#715234;--room-ink:#141c20; background:radial-gradient(ellipse at 85% 16%,var(--room-glow),transparent 50%),repeating-linear-gradient(0deg,#76573509 0 78px,#b19a6420 79px 80px),#141c20!important;border-radius:16px;padding:clamp(14px,2.5vw,30px);overflow:clip}
+.lw-room-depth{position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:hidden;border-radius:inherit;border-inline:12px solid #6c523425;background:linear-gradient(90deg,#0005,transparent 14% 86%,#0005)}
+.lw-room-depth>.lw-architecture{height:520px;opacity:.65;z-index:0;top:30px;mask-image:linear-gradient(#000 55%,transparent)}
+.lw-room-lamp{position:absolute;top:34px;left:3%;width:15px;height:32px;border:3px solid #8b724f;border-radius:5px;background:#e9b868;box-shadow:0 0 34px 15px #d68b382b;animation:lwLamp 5s ease-in-out infinite alternate}
+.lw-room-lamp:last-child{left:auto;right:3%;animation-delay:-2s}
+.lw-room>.lw-scene{background:none;border:0;border-radius:0;box-shadow:none;min-height:0;margin:0 0 20px;overflow:visible}
+.lw-room>.lw-scene>.lw-distance,.lw-room>.lw-scene>.lw-architecture,.lw-room>.lw-scene>.lw-foreground{display:none}
+.lw-room>.lw-scene>.lw-light{background:radial-gradient(ellipse at center,#d6993226,transparent 70%)}
+.lw-room>.lw-scene header{padding:10px 28px 0;max-width:650px}.lw-room>.lw-scene header p{max-width:540px}
+.lw-room>.lw-scene .lw-company{min-height:120px;padding-bottom:10px}
+.lw-room :is(input,select){color:#f2e8d8;background-color:#101c23}.lw-room button:focus-visible{outline:2px solid #f8d799;outline-offset:3px}
+/* The Inn's real roster is the gathering; no second row of the same people. */
+#roster.lw-room:has(.roster-character-card)>.lw-scene .lw-company{display:none}
+#roster.lw-room>.lw-scene{padding-bottom:38px}
+#roster.lw-room .roster-overview-strip,#bank.lw-room .bank-overview-strip{background:transparent!important;box-shadow:none!important;border:0!important;border-bottom:1px solid #c3a26c40!important;border-radius:0}
+#roster.lw-room .roster-overview-strip article,#bank.lw-room .bank-overview-strip article{background:none;border:0;border-right:1px solid #af966530}
+#roster.lw-room .roster-command-bar,#bank.lw-room .bank-command-bar{background:#152027eb!important;border:0!important;border-block:1px solid #a88a5244!important;border-radius:4px;box-shadow:none}
+#roster.lw-room #rosterGrid{background:none;padding:28px 0 8px;gap:28px 20px;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr))}
+#roster.lw-room .roster-character-card{position:relative;background:linear-gradient(0deg,#2e251e 0 44%,#192023c9 60%,transparent)!important;border:0!important;border-bottom:7px solid #725437!important;border-radius:40% 40% 7px 7px;box-shadow:0 12px 0 -7px #070c0f,0 22px 22px -18px #0009;padding:20px 18px 14px}
+#roster.lw-room .roster-character-card.is-active{background:radial-gradient(ellipse at 50% 25%,#b78e3830,transparent 60%),linear-gradient(0deg,#30251c 0 44%,#192023bf 65%,transparent)!important}
+#roster.lw-room .roster-card-head{flex-direction:column;text-align:center;align-items:center;gap:12px}
+#roster.lw-room .roster-card-portrait{width:88px;height:96px;filter:drop-shadow(0 12px 7px #0007)}
+#roster.lw-room .roster-card-portrait .cb-portrait{width:100%!important;height:100%!important}
+#roster.lw-room .roster-card-flags{justify-content:center;flex-wrap:wrap}
+#roster.lw-room .roster-card-metrics{background:none;border:0;border-block:1px solid #a68e5738;border-radius:0}
+#roster.lw-room .roster-card-metrics>div{background:none;border:0}
+#roster.lw-room .roster-card-actions button{min-height:44px;background:#13222b;border-color:#aa895959}
+#roster.lw-room .roster-recruit-card{background:#19212480;border:1px dashed #9f88515c;box-shadow:none}
+/* A covered market: category signage and a shared display counter. */
+#trading.lw-room{--room-glow:#91ac6940;--room-wood:#687452}
+#trading.lw-room>.lw-scene .lw-company,#bank.lw-room>.lw-scene .lw-company,#quests.lw-room>.lw-scene .lw-company{display:none}
+#trading.lw-room>.lw-scene{padding-bottom:58px}
+#trading.lw-room .tp-shell{background:none;border:0;border-radius:0;box-shadow:none}
+#trading.lw-room .tp-market-bar{position:relative;border-top:12px solid #6d7c51;border-bottom:5px solid #8e7750;border-radius:12px 12px 0 0;background:repeating-linear-gradient(90deg,#415638e8 0 60px,#746343ee 60px 120px);padding:20px}
+#trading.lw-room .tp-layout{gap:24px;background:linear-gradient(100deg,#35291bd9,#121f26ee);padding:20px;border-bottom:10px solid #6c5035;border-radius:0 0 6px 6px}
+#trading.lw-room .tp-panel{background:none!important;border:0!important;box-shadow:none!important;border-radius:0}
+#trading.lw-room .tp-category-panel{border-right:1px solid #ae965649!important}
+#trading.lw-room .tp-result-card{background:#121c20a8;border:0;border-bottom:1px solid #b2925b50;border-radius:0;box-shadow:none}
+#trading.lw-room .tp-delivery{background:#18252bd9;border-radius:0;border:0;border-bottom:1px solid #ae965638}
+#trading.lw-room .tp-tabs{background:#151f24c9;border-radius:0}
+/* Dungeon scenery covers preparation, with a legible field desk below the party. */
+.lw-staging.lw-room{background-image:linear-gradient(0deg,#101a22 8%,#101a22e8 42%,#101a2230 100%),var(--lw-room-art)!important;background-size:cover!important;background-position:center top!important}
+.lw-staging>.lw-room-depth{display:none}.lw-staging.lw-room>.lw-scene{min-height:270px;margin:0;padding-top:22px}
+.lw-staging.lw-room>.lw-scene .lw-company{padding-top:60px;gap:clamp(8px,3vw,38px)}
+.lw-staging .lw-person{width:60px;height:66px}
+.lw-staging.lw-room :is(.cb2d-brief-grid,.fa-brief-grid,.tb-brief-grid){background:#101c23de;border-top:3px solid #a58a58;border-radius:4px;padding:20px;gap:24px}
+.lw-staging.lw-room .cb2d-brief-grid>aside{background:none;border:0;border-left:1px solid #b0935940;border-radius:0}
+/* Hero dais, equipment racks and readable statistics within the Armoury. */
+.lw-armoury.lw-room{padding:0;--room-glow:var(--cb-accent);background:radial-gradient(ellipse at 50% 20%,#5f64552b,transparent 60%),#111c24!important}
+.lw-armoury .cb-sheet-header,.lw-armoury .cb-sheet-body{position:relative}
+.lw-armoury .cb-paperdoll,.lw-armoury .cb-armoury-stage{background:none!important;box-shadow:none!important;border:0!important}
+.lw-armoury .cb-equipment-visual-stage{position:relative;background:radial-gradient(ellipse at 50% 82%,#a0a88b30 0 20%,transparent 21%),linear-gradient(90deg,#060f1666,transparent 25% 75%,#060f1666)!important;border:0;border-bottom:9px solid #69604a;border-radius:45% 45% 8px 8px;min-height:340px;overflow:hidden}
+.lw-armoury .cb-equipment-visual-model{position:relative;z-index:1;min-height:260px;filter:drop-shadow(0 16px 10px #0008)}
+.lw-armoury .cb-equipment-visual-stage:before,.lw-armoury .cb-equipment-visual-stage:after{content:'';position:absolute;top:8%;bottom:10%;width:12%;border:2px solid #a58d5050;background:linear-gradient(#7a643638,transparent);transform:skewY(-5deg);pointer-events:none}
+.lw-armoury .cb-equipment-visual-stage:before{left:4%}.lw-armoury .cb-equipment-visual-stage:after{right:4%;transform:skewY(5deg)}
+.lw-armoury .cb-gear-column{background:repeating-linear-gradient(0deg,transparent 0 83px,#88765355 84px 89px);padding:10px;border-inline:3px solid #80674230}
+.lw-armoury :is(.cb-stat-section,.cb-stat-hero){background:#14212abf;border:0;border-bottom:1px solid #98855d38;border-radius:0;box-shadow:none}
+/* Work orders on a bench, notices on a board, inventory on shelves. */
+#professions.lw-room .profession-layout{gap:24px}
+#professions.lw-room .panel{background:#162126d9!important;border:0!important;border-top:5px solid #775b3d!important;border-radius:4px;box-shadow:none}
+#professions.lw-room .workshop-panel{background:linear-gradient(115deg,#392a1edd,#17242aee)!important;border-bottom:10px solid #6a5034!important}
+#professions.lw-room .profession-command-hero{background:none!important;border:0!important;box-shadow:none}
+#professions.lw-room .recipe-card{background:#122129a6!important;border:0!important;border-bottom:1px solid #bd986047!important;border-radius:0;box-shadow:none}
+#professions.lw-room[data-station="alchemy"]{--room-glow:#71b8a83b}#professions.lw-room[data-station="enchanting"]{--room-glow:#a48bd43b}
+#professions.lw-room .reagent-card{border:0;border-bottom:5px solid #786343;background:#17252cbf;border-radius:0}
+#quests.lw-room .panel{background:linear-gradient(110deg,#302a20ef,#202925ed)!important;border:0!important;border-left:7px solid #6a5034!important;border-radius:2px;box-shadow:none}
+#quests.lw-room>.lw-scene,#bank.lw-room>.lw-scene{padding-bottom:40px}
+#bank.lw-room #bankGrid{padding:22px 0;background:repeating-linear-gradient(0deg,#26302922 0 110px,#937b4d26 111px 118px);border:0}
+#bank.lw-room .bank-category-tabs{border-bottom:6px solid #7c6748;padding-bottom:10px}
+.lw-room[data-room="harbour"]{--room-glow:#74a7b52e;background:linear-gradient(#233846a6,#10242fe6 360px,#1e2629),repeating-linear-gradient(0deg,#55737b 0 4px,#344d58 6px 35px)!important}
+.lw-room[data-room="harbour"]>.lw-room-depth>.lw-architecture{height:390px;opacity:1;mask-image:linear-gradient(#000 80%,transparent)}
+.lw-room[data-room="harbour"]>.lw-scene .lw-company{padding-top:70px}
+.lw-room-depth .lw-boat{animation:lwBoat 4s ease-in-out infinite alternate}.lw-room:has(.lw-departing)>.lw-room-depth .lw-boat{animation:lwSail 2.8s ease-in forwards;animation-delay:var(--departure-elapsed,0s)}
+@keyframes lwLamp{to{opacity:.72}}
+@media(max-width:700px){
+ .lw-room{padding:14px 10px;border-radius:8px}.lw-room-depth{border-inline-width:4px}.lw-room-depth>.lw-architecture{height:380px;width:150%;left:-25%}
+ .lw-room>.lw-scene header{padding:12px 18px 0}.lw-room>.lw-scene header p{font-size:13px}.lw-room>.lw-scene .lw-company{gap:6px}
+ #roster.lw-room #rosterGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 10px}
+ #roster.lw-room .roster-character-card{padding:16px 8px 10px;border-radius:45px 45px 5px 5px}
+ #roster.lw-room .roster-card-portrait{width:64px;height:72px}#roster.lw-room .roster-card-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #roster.lw-room .roster-card-identity{min-width:0;width:100%}#roster.lw-room .roster-card-identity h3{font-size:16px;overflow-wrap:anywhere}
+ #roster.lw-room .roster-card-actions button{font-size:10px;padding:8px 4px;white-space:normal}
+ #trading.lw-room .tp-layout{padding:12px 8px;gap:12px}#trading.lw-room .tp-category-panel{border-right:0!important;border-bottom:2px solid #9b84523b!important}
+ .lw-staging.lw-room>.lw-scene{min-height:235px}.lw-staging .lw-person{width:44px;height:50px}.lw-staging.lw-room>.lw-scene .lw-company{padding-top:35px;gap:1px}
+ .lw-staging.lw-room :is(.cb2d-brief-grid,.fa-brief-grid,.tb-brief-grid){padding:12px}.lw-staging.lw-room .cb2d-brief-grid>aside{border-left:0;border-top:1px solid #b0935940}
+ .lw-armoury .cb-equipment-visual-stage{min-height:280px}.lw-armoury .cb-equipment-visual-model{min-height:220px}.lw-armoury .cb-gear-column{padding:4px;border:0}
+ .lw-room[data-room="harbour"]>.lw-room-depth>.lw-architecture{width:100%;left:0;height:330px}.lw-room[data-room="harbour"]>.lw-scene .lw-company{padding-top:70px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}.lw-room[data-room="harbour"] .lw-hero{width:100%;min-width:0}
+}
+@media(max-width:360px){#roster.lw-room #rosterGrid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.lw-room-depth *{animation:none!important}.lw-room *{scroll-behavior:auto!important}}
