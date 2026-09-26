@@ -57,3 +57,30 @@ body.cbcomic-open{overflow:hidden}
 .cbcomic-backdrop[data-theme="bell"] .cbcomic-page{background:#17120e}
 @media(max-width:980px){.cbcomic-shell.panel-only .cbcomic-controls{grid-template-columns:1fr}.cbcomic-shell.panel-only .cbcomic-choices{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:700px){.cbcomic-shell.panel-only .cbcomic-controls{grid-template-columns:1fr}.cbcomic-shell.panel-only .cbcomic-choices{grid-template-columns:1fr}.cbcomic-shell.panel-only .cbcomic-actions{display:grid;grid-template-columns:1fr 1fr}.cbcomic-shell.panel-only .cbcomic-actions button:only-child{grid-column:1/-1}}
+
+
+/* Progressive comic cutscene reveals */
+.cbcomic-page.count-1{grid-template-columns:1fr;grid-template-rows:minmax(430px,1fr)}
+.cbcomic-page.count-1 .cbcomic-panel:first-child{grid-column:1;grid-row:1}
+.cbcomic-page.count-2{grid-template-columns:1fr 1fr;grid-template-rows:minmax(430px,1fr)}
+.cbcomic-page.count-2 .cbcomic-panel:first-child{grid-column:auto;grid-row:auto}
+.cbcomic-panel.reveal-active{outline:2px solid rgba(226,190,108,.78);outline-offset:-4px;box-shadow:inset 0 0 65px rgba(212,173,101,.08)}
+.cbcomic-reveal-caption{animation:cbcomicReveal .22s ease-out both;z-index:5}
+.cbcomic-reveal-caption.place-top-left{top:14px;bottom:auto;left:16px;right:auto}
+.cbcomic-reveal-caption.place-top-right{top:14px;bottom:auto;left:auto;right:16px}
+.cbcomic-reveal-caption.place-bottom-right{left:auto;right:16px}
+.cbcomic-reveal-caption.place-center{left:50%;right:auto;bottom:50%;transform:translate(-50%,50%);width:min(620px,calc(100% - 32px))}
+.cbcomic-reveal-speaker{color:#f0d793!important}
+.cbcomic-story-only{grid-template-columns:1fr;padding:10px 14px}
+.cbcomic-story-only .cbcomic-controls{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}
+.cbcomic-story-only .cbcomic-choices{grid-column:1}
+.cbcomic-story-only .cbcomic-actions{grid-column:2;align-self:end}
+.cbcomic-backdrop[data-theme="bell"]{--comic-gold:#d3b260}
+@keyframes cbcomicReveal{from{opacity:0;transform:translateY(9px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(max-width:700px){
+  .cbcomic-page.count-1,.cbcomic-page.count-2{grid-template-columns:1fr;grid-template-rows:minmax(360px,1fr)}
+  .cbcomic-page.count-2 .cbcomic-panel{min-height:300px}
+  .cbcomic-story-only .cbcomic-controls{grid-template-columns:1fr}
+  .cbcomic-story-only .cbcomic-actions{grid-column:1}
+  .cbcomic-reveal-caption.place-top-right,.cbcomic-reveal-caption.place-top-left{left:10px;right:10px;top:9px}
+}
