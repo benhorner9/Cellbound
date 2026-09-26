@@ -145,3 +145,24 @@
 #professions.lw-room .workshop-panel>.lw-scene .lw-person{width:64px;height:72px}
 #professions.lw-room .workshop-panel>.lw-scene .lw-foreground{height:20px;background:linear-gradient(#84613c,#38291c)}
 @media(max-width:650px){#professions.lw-room .workshop-panel>.lw-scene{grid-template-columns:minmax(0,1fr) 85px;min-height:205px}#professions.lw-room .workshop-panel>.lw-scene header{padding:20px 12px}#professions.lw-room .workshop-panel>.lw-scene h2{font-size:24px}#professions.lw-room .workshop-panel>.lw-scene .lw-company{padding:20px 0}}
+/* Override legacy roster density rules explicitly; touch targets must not regress. */
+#roster.lw-room #rosterGrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr))!important;gap:24px 18px!important}
+#roster.lw-room .roster-character-card{padding:20px 10px 12px!important;min-height:0!important;border-radius:16px 16px 5px 5px;box-shadow:0 12px 0 -7px #070c0f!important}
+#roster.lw-room .roster-character-card:before{display:none}
+#roster.lw-room .roster-card-head{display:flex!important;flex-direction:column;align-items:center;padding:6px 8px 14px}
+#roster.lw-room .roster-card-actions{margin-top:14px;padding:8px}
+#roster.lw-room .roster-card-actions>button{height:auto!important;min-height:46px!important;font-size:11px!important}
+#roster.lw-room .roster-card-identity p{font-size:12px!important;color:#b9c2b9!important;white-space:normal}
+#roster.lw-room .roster-card-identity>small{font-size:11px!important;color:#b2bbaa}
+#roster.lw-room .roster-card-flags .role-tag,#roster.lw-room .roster-state{font-size:10px!important;letter-spacing:.02em}
+#roster.lw-room .roster-card-metrics{margin:0 6px;grid-template-columns:repeat(2,minmax(0,1fr))}
+#roster.lw-room .roster-card-metrics span,#roster.lw-room .roster-shock-line :is(span,b){font-size:10px;color:#b7b9a4;letter-spacing:.02em}
+#roster.lw-room .roster-card-metrics b{font-size:17px}
+#roster.lw-room .roster-overview-strip small,#bank.lw-room .bank-overview-strip small{font-size:11px!important;color:#b5bcae}
+#roster.lw-room .roster-overview-strip span,#bank.lw-room .bank-overview-strip span{font-size:10px;color:#c6b789}
+.lw-room-depth>.lw-architecture{opacity:.3}
+.lw-room :is(button,input,select){min-height:44px}
+#trading.lw-room .tp-layout :is(input,select){font-size:13px;min-width:0}
+#trading.lw-room .tp-category-list button{font-size:13px}
+@media(max-width:700px){#roster.lw-room #rosterGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:18px 10px!important}#roster.lw-room .roster-character-card{padding:14px 2px 8px!important}#roster.lw-room .roster-card-flags{gap:3px}#roster.lw-room .roster-card-flags .role-tag,#roster.lw-room .roster-state{font-size:9px!important}#roster.lw-room .roster-card-metrics span{font-size:9px}#roster.lw-room .roster-card-actions>button{font-size:10px!important}}
+@media(max-width:360px){#roster.lw-room #rosterGrid{grid-template-columns:1fr!important}}
