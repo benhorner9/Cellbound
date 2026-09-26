@@ -8,6 +8,10 @@ Dark illustrated fantasy online RPG. Places are the interface; adventurers inhab
 
 The resting scene owns 70–80% of attention. Characters, a table and a ledger are the interaction points. Management can temporarily occupy most of the screen; closing it returns to the same room and preserves state.
 
+![Lantern Inn environment study](assets/world/lantern-inn-landscape-v2.webp)
+
+[Open the interactive five-class proof](inn-art-review.html) to compare the room, characters and contextual tools together.
+
 ## Environment
 
 - Establish architecture, walkable floor and clear character foot positions before adding props. Never place a standing character on a tabletop or in a wall.
@@ -47,6 +51,7 @@ Until those layers exist and pass identity tests, retain the existing data-drive
 - Ink-black leather/wood surfaces; warm bone text; aged brass boundaries. Class colour is a small accent.
 - Shared tokens: ink `#111619`, surface `#20201d`, raised `#2b2922`, brass `#a58755`, bright brass `#dbbc83`, text `#eee3cf`, secondary `#bcb29f`, cool shadow `#1b3039`.
 - Georgia/serif for location and tool titles; existing system sans for controls, statistics and long text. No novelty font for body copy. Primary text 14–16px; secondary text at least 12px in new controls.
+- Icons use simple inked silhouettes, consistent optical weight and matte material accents. Keep functional symbols recognisable at 20–24px. Pair unfamiliar actions with text; never mix emoji, glossy clip art and painted item thumbnails as equivalent controls. Keep rarity, class and danger colours semantically distinct.
 - Strong outer framing belongs to contextual tools, not every row. Inside the Ledger use dividers and whitespace. Avoid nested card stacks.
 - Buttons: solid readable idle surface; warmer hover; inset pressed state; clear 2px keyboard focus; disabled remains legible and visibly unavailable. Do not encode state only in colour.
 - Keep 44px touch targets, visible close controls, Escape, focus return, readable native selects and safe-area spacing. Never remove working controls for composition.
