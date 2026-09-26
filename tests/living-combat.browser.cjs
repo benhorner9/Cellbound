@@ -31,7 +31,7 @@ const root=path.resolve(__dirname,'..');
  await page.evaluate(()=>send('DEBUFF_REMOVED','e-0','p-t',{}, {statusEffects:[{id:'stun'}]}));
  await page.evaluate(()=>{send('CAST_START','p-m','e-0',{duration:700},{ability:'Fireball'});send('CAST_START','p-h','p-t',{duration:900},{ability:'Flash Heal'})});
  assert.equal(await page.locator('.cbl-casting').count(),2,'independent casts overlap');
- await page.waitForTimeout(530);
+ await page.waitForFunction(()=>document.querySelector('.cast-orb'),{},{timeout:5000});
  assert(await page.locator('.cast-orb').count()>0,'cast travel before resolution');
  await page.evaluate(()=>send('INTERRUPT','e-0','p-m',{}, {result:'success'}));
  assert.equal(await page.locator('[data-unit="p-m"].cbl-casting').count(),0);
