@@ -68,6 +68,7 @@ function refresh(){
  queued=false;
  for(const [id,config]of Object.entries(locations)){
   const host=document.getElementById(id);if(!host||!host.classList.contains('active'))continue;
+  if(id==='roster'&&window.CellboundInn){window.CellboundInn.refresh();continue}
   host.classList.add('lw-location');host.dataset.worldLocation=config.theme;integrate(host,config);
   if(id==='raids'&&host.querySelector('.lw-scene[data-raid-assembly]'))continue;
   if(id==='professions'&&crafter){host.querySelector(':scope > .lw-scene')?.remove();const station=scene(host.querySelector('.workshop-panel')||host,{...config,name:craftName?craftName+' Workshop':config.name},[crafter]);station.dataset.station=String(craftName||'').toLowerCase();host.dataset.station=station.dataset.station;continue}

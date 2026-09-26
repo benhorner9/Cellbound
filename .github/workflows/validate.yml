@@ -54,6 +54,11 @@ jobs:
           node tests/living-world.browser.cjs
           CELLBOUND_TEST_ENGINE=webkit node tests/living-world.browser.cjs
 
+      - name: Lantern Inn prototype review
+        run: |
+          node tests/lantern-inn.browser.cjs
+          CELLBOUND_TEST_ENGINE=webkit node tests/lantern-inn.browser.cjs
+
       - name: Living combat browser regression
         run: |
           node tests/living-combat.browser.cjs
@@ -65,6 +70,14 @@ jobs:
         with:
           name: living-world-review
           path: /tmp/cellbound-world-*.png
+          if-no-files-found: ignore
+
+      - name: Save Inn review states
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lantern-inn-review
+          path: /tmp/cellbound-inn-*.png
           if-no-files-found: ignore
 
       - name: Save combat review capture
