@@ -124,7 +124,7 @@ function formatClock(minute){
   return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')
 }
 const BELL_COMIC_ROOT='./assets/comics/thirteenth-bell/';
-function bellArt(name){return BELL_COMIC_ROOT+name+'.webp?v=5'}
+function bellArt(name){return BELL_COMIC_ROOT+name+'.jpg?v=7'}
 function bellPanel(art,eyebrow,title,text,extra={}){
   return{kind:extra.kind||'location',artwork:bellArt(art),eyebrow,title,text,icon:extra.icon||'',speaker:extra.speaker||'',wide:!!extra.wide}
 }
@@ -162,7 +162,7 @@ async function renderLetter(){
 async function renderArrival(){
   await bellComic({
     page:'II · GREYWAKE',title:'The road ends at Greywake',subtitle:'Loop 1 · 11:47 PM',continueLabel:'STEP INTO GREYWAKE →',
-    panels:[bellPanel('final_run','','','',{kind:'location'})],
+    panels:[bellPanel('greywake_arrival','','','',{kind:'location'})],
     reveals:[
       {panel:0,placement:'top-left',eyebrow:'THE OLD ROAD',title:'The village is exactly where the map said it would be.',text:'Greywake rises out of the fog beneath a clocktower frozen at 11:47.'},
       {panel:0,placement:'top-right',eyebrow:'NO PEOPLE',title:'The streets are empty. The village is not.',text:'A meal sits warm on an inn table. A forge still glows. Lamps burn behind open doors.'},
