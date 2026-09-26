@@ -6,6 +6,7 @@ const root=path.resolve(__dirname,'..');
  const browser=await chromium.launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
  const page=await browser.newPage({viewport:{width:1024,height:768}}),errors=[];
  page.on('pageerror',e=>errors.push(String(e)));
+ page.on('console',msg=>{if(msg.text().includes('visual skipped'))errors.push(msg.text())});
  await page.setContent('<body style="background:#10171d"><div class="cb2d-arena" id="cb2dArena" style="width:900px;height:560px;position:relative"></div></body>');
  for(const f of ['dungeon-2d-v1.css','combat-portraits-v1.css','combat-polish-v2.css','combat-polish-v3.css','combat-physical-v4.css'])await page.addStyleTag({content:fs.readFileSync(path.join(root,'dist',f),'utf8')});
  await page.evaluate(()=>{
@@ -18,7 +19,8 @@ const root=path.resolve(__dirname,'..');
  await page.evaluate(()=>send('COMBAT_START'));
  assert.equal(await page.locator('.cbl-facing').count(),6);
  await page.evaluate(()=>{send('ABILITY_START','p-t','e-0',{kind:'damage',range:5});send('DAMAGE_DEALT','p-t','e-0',{targetMax:1000},{amount:35,result:'hit'})});
- assert(await page.evaluate(()=>document.querySelector('[data-unit="p-t"] .cb-combat-portrait').getAnimations().length>0),'animate the visible portrait');
+ const portraitAnimated=await page.evaluate(()=>document.querySelector('[data-unit="p-t"] .cb-combat-portrait').getAnimations().length>0);
+ assert(portraitAnimated,'animate the visible portrait');
  assert.equal(await page.locator('.cbl-fx.contact').count(),1,'one impact owner');
  await page.waitForTimeout(600);
  await page.evaluate(()=>send('DAMAGE_DEALT','p-t','e-0',{}, {amount:0,result:'miss'}));

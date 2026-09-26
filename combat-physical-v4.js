@@ -27,7 +27,7 @@ const PROFILES={
 const ENEMY={name:'Enemy',accent:'#EF5C50',motion:'enemy',projectile:'hostile',cast:'hostile',lunge:10,recoil:1.08,travel:275};
 
 
-function actor(el){return el?.querySelector('.cb-combat-portrait,.cb-combat-boss-portrait,.pvp2d-token,.wb2d-unit-dot,:scope > i:first-child')||el}
+function actor(el){return el?.querySelector('.cb-combat-portrait,.cb-combat-boss-portrait,.pvp2d-token,.wb2d-unit-dot')||el?.querySelector(':scope > i:first-child')||el}
 function profile(el){return Object.entries(PROFILES).find(([key])=>el.classList.contains(key))?.[1]||ENEMY}
 function resolve(id,opts,arena){
  if(!id)return null;
@@ -144,11 +144,12 @@ function livingEvent(e,opts={}){
   if(canAct(u)){u.action=e;if(t)face(u,t.el);state(u,kind(e,u)==='heal'?'healing':'attacking',performance.now()+450/scene.speed);
    if(!(e.payload?.castTime>0))motion(u,[{scale:'.97'},{scale:'1'}],210,scene)}break;
  case'CAST_START':
-  if(canAct(u)){u.cast={event:e,start:performance.now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');state(u,/channel|beam|drain/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el)}break;
+  if(canAct(u)){clearCast(u);u.target=t?.el||null;u.cast={event:e,destination:e.payload?.hazardPosition||null,start:performance.now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');state(u,/channel|beam|drain/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el)}break;
  case'CAST_CANCELLED':case'CAST_FINISH':case'ABILITY_FINISH':clearCast(u);if(u&&!u.dead&&!controlled(u))state(u,'idle');break;
  case'DAMAGE_DEALT':if(t){if(canAct(u))strike(scene,u,t,e);else if(!['miss','dodged','immune'].includes(e.result))effect(scene,'contact',null,t.el,220)}break;
  case'HEAL_RECEIVED':if(t){if(canAct(u))strike(scene,u,t,e,true);else effect(scene,'heal-ring',null,t.el,400)}break;
  case'AGGRO_CHANGED':if(u&&t){face(u,t.el);effect(scene,'aggro',null,t.el,650)}break;
+ case'CROWD_CONTROL':if(t){statuses(t,{type:'DEBUFF_APPLIED',statusEffects:[{id:'visual-control',cc:e.payload?.cc||'stun'}]});t.controlUntil=performance.now()+(Number(e.payload?.duration)||900)/scene.speed}break;
  case'BUFF_APPLIED':case'DEBUFF_APPLIED':case'BUFF_REMOVED':case'DEBUFF_REMOVED':statuses(t,e);break;
  case'INTERRUPT':if(e.result==='success'&&t){if(canAct(u))effect(scene,'connection lightning',u.el,t.el,150);clearCast(t);t.animation?.cancel();state(t,'interrupted',performance.now()+500/scene.speed);effect(scene,'interrupt',null,t.el,550)}break;
  case'DEFENSIVE_ACTIVATED':if(t||u)state(t||u,'defending',performance.now()+650/scene.speed);effect(scene,'shield',null,(t||u)?.el,650);break;
@@ -177,6 +178,7 @@ function frame(now){
   for(const [el,u] of scene.units){if(el.isConnected)pos(el);if(u.target?.isConnected)pos(u.target)}
   for(const [el,u] of scene.units){
    if(!el.isConnected){scene.units.delete(el);continue}
+   if(u.controlUntil&&now>=u.controlUntil){u.controlUntil=0;statuses(u,{type:'DEBUFF_REMOVED',statusEffects:[{id:'visual-control'}]})}
    if(u.until&&now>=u.until&&!u.dead){u.until=0;state(u,controlled(u)?'controlled':'idle')}
    if(u.target?.isConnected&&!u.dead&&u.state!=='moving'){
     const d=direction(pos(el),pos(u.target));el.style.setProperty('--cbl-facing',d.angle+'deg');
@@ -186,10 +188,10 @@ function frame(now){
     if(u.state==='channeling'&&u.target?.isConnected){
      if(!u.cast.beam){const n=document.createElement('i');n.className='cbl-fx connection channel '+family(u.cast.event,u);n.style.setProperty('--cbl-accent',u.p.accent);scene.layer.appendChild(n);u.cast.beam=n}
      const a=pos(el),b=pos(u.target),d=direction(a,b),n=u.cast.beam;n.style.left=a.x-bounds.left+'px';n.style.top=a.y-bounds.top+'px';n.style.width=d.len+'px';n.style.setProperty('--cbl-angle',d.angle+'deg');
-    }else if(u.target?.isConnected&&u.target!==el&&progress>.7&&!reduce()){
+    }else if((u.cast.destination||u.target?.isConnected&&u.target!==el)&&progress>.7&&!reduce()){
      if(!u.cast.orb){const n=document.createElement('i');n.className='cbl-fx cast-orb '+family(u.cast.event,u);n.style.setProperty('--cbl-accent',kind(u.action||u.cast.event,u)==='heal'?'#86f3b7':u.p.accent);scene.layer.appendChild(n);u.cast.orb=n}
-     const a=pos(el),b=pos(u.target),t=(progress-.7)/.3,n=u.cast.orb;
-     n.style.left=(a.x+(b.x-a.x)*t-bounds.left)+'px';n.style.top=(a.y+(b.y-a.y)*t-bounds.top)+'px';
+     const a=pos(el),b=u.cast.destination?{x:bounds.left+u.cast.destination.x/100*bounds.width,y:bounds.top+u.cast.destination.y/100*bounds.height}:pos(u.target),t=(progress-.7)/.3,n=u.cast.orb;
+     n.style.left=(a.x+(b.x-a.x)*t-bounds.left)+'px';n.style.top=(a.y+(b.y-a.y)*t-bounds.top-(family(u.cast.event,u)==='plate'?Math.sin(t*Math.PI)*24:0))+'px';
     }
    }
   }

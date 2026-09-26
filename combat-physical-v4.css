@@ -77,3 +77,5 @@
 .cbl-scene[data-cbvfx-theme="ashen"] .cbvfx-layer{box-shadow:inset 0 -45px 70px #ce562018}
 .cbl-scene[data-cbvfx-theme="hollow"] .cbvfx-layer{background:linear-gradient(15deg,#93bed50c,transparent 45%,#739eb30b)}
 @media(prefers-reduced-motion:reduce){.cbl-live .cbl-unit *{animation:none!important}.cbl-fx.screech,.cbl-fx.phase{animation:none;opacity:.5}}
+
+.cbl-fx.cast-orb.plate{width:18px;height:18px;background:#d7d8ce;border:3px double #fff;border-radius:50%;box-shadow:0 2px 4px #0006}
