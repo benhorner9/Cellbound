@@ -1,10 +1,12 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="color-scheme" content="dark"><title>Cellbound — Lantern Inn art review</title>
-<link rel="stylesheet" href="./lantern-inn-v1.css"><link rel="stylesheet" href="./inn-art-direction-v1.css"><link rel="stylesheet" href="./inn-art-review.css">
+<link rel="stylesheet" href="./character-sheet.css"><link rel="stylesheet" href="./gear-system.css"><link rel="stylesheet" href="./character-command-v1.css"><link rel="stylesheet" href="./character-talents-v2.css"><link rel="stylesheet" href="./character-portraits-v1.css">
+<link rel="stylesheet" href="./lantern-inn-v1.css"><link rel="stylesheet" href="./inn-art-direction-v1.css"><link rel="stylesheet" href="./inn-art-review.css?v=2">
 </head><body class="art-review">
 <div class="app-shell"><header class="review-bar"><a href="./guild.html">Cellbound</a><span>Lantern Inn · Phase 1 art study</span><button id="reviewLabels" type="button" aria-pressed="false">Hide labels</button></header>
 <main><section id="roster" class="view active"><div class="review-ledger"><p>Five sample adventurers for this art study. Your company and saved game are not loaded here.</p><label for="reviewSearch">Find an adventurer</label><input id="reviewSearch" type="search" placeholder="Name or class"><div id="reviewRoster"></div></div></section><section id="party" class="review-party"><p>Arrange the sample company. This review does not change your saved party.</p><div id="reviewParty"></div></section></main>
 <footer class="review-note">Illustrated character prototypes · existing Inn scene and interaction framework. Painted modular customisation remains the next production step.</footer></div>
-<div id="characterModal" hidden><section class="character-modal"><header class="review-character-head"><div><small>THE LANTERN INN</small><h2 id="reviewCharacterName"></h2></div><button type="button" data-close>Back to Inn ×</button></header><div id="reviewCharacterBody"></div></section></div>
-<script src="./inn-art-review.js"></script><script src="./lantern-inn-v1.js"></script>
+<div id="characterModal" class="modal-backdrop" hidden><section class="character-modal"><button class="modal-close" data-close aria-label="Close character">×</button><div id="characterDetail"></div></section></div>
+<script src="./gear-data.js"></script><script src="./character-portraits-v1.js"></script><script src="./combat-identities-v1.js"></script><script src="./combat-reborn-v1.js"></script>
+<script src="./inn-art-review.js?v=2"></script><script src="./character-sheet.js?v=33"></script><script src="./lantern-inn-v1.js?v=4"></script>
 </body></html>

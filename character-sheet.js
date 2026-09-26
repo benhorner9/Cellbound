@@ -119,8 +119,10 @@ const leftSlots=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet'];
 const rightSlots=['Weapon','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic'];
 const slotIcons={Head:'⛑',Shoulders:'⌃',Chest:'▣',Hands:'✋',Waist:'═',Legs:'║',Feet:'♟',Weapon:'⚔',OffHand:'🛡',Ring1:'◉',Ring2:'◉',Trinket1:'◆',Trinket2:'◆',Relic:'◇'};
 
-function readState(){try{return JSON.parse(localStorage.getItem(STORAGE))}catch{return null}}
-function writeState(state){localStorage.setItem(STORAGE,JSON.stringify(state));dirty=true}
+// Optional isolated host for the art review; normal gameplay keeps its existing save path.
+const sheetState=window.CellboundCharacterSheetState;
+function readState(){if(sheetState)return sheetState.read();try{return JSON.parse(localStorage.getItem(STORAGE))}catch{return null}}
+function writeState(state){if(sheetState)sheetState.write(state);else localStorage.setItem(STORAGE,JSON.stringify(state));dirty=true}
 function getCharacter(state,id){return state?.roster?.find(c=>c.id===id)}
 function characterEditable(){const game=window.CellboundGame;return !game?.isCharacterRosterUnlocked||game.isCharacterRosterUnlocked(currentId)}
 function roleOf(c){return specs[c.class]?.[c.spec]||'dps'}
