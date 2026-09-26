@@ -182,6 +182,7 @@ async function finishCraftProject(c,prof,recipe,project){
   lastCraftMessage=tier.label+' · '+out.name+' completed · +'+xp+' profession XP'+(reclaimed?' · recovered 1 '+reclaimed:'');
   craftProject=null;
   await commit();
+  window.dispatchEvent(new CustomEvent('cellbound:crafted',{detail:{name:out.name,charId:c.id,profession:prof.name}}));
 }
 function craftProjectMarkup(c,prof,recipe){
   if(!craftProject||craftProject.charId!==c.id||craftProject.slot!==selectedSlot||craftProject.recipeId!==recipe.id)return'';
@@ -224,6 +225,7 @@ function renderProfessions(){
     const activeRecipe=craftProject&&craftProject.charId===c.id&&craftProject.slot===selectedSlot?def.recipes.find(r=>r.id===craftProject.recipeId):null;
     body=profile+(lastCraftMessage?`<p class="craft-message profession-result-message">${lastCraftMessage}</p>`:'')+(activeRecipe?craftProjectMarkup(c,prof,activeRecipe):'')+`<div class="profession-recipe-heading"><div><small>WORK ORDERS</small><h3>Choose what to make.</h3></div><p>Harder and first-time projects award the most skill XP. Out-levelled recipes remain useful, but become poor training.</p></div><div class="recipe-list">${recipes||'<div class="profession-empty">No recipes match this filter.</div>'}</div>`;
   }
+  window.CellboundLivingWorld?.workstation?.(c,prof);
   work.innerHTML=`<div class="profession-slot-grid">${slotHtml}</div>${body}`;
   work.querySelectorAll('[data-prof-slot]').forEach(b=>b.onclick=()=>{selectedSlot=Number(b.dataset.profSlot);craftProject=null;lastCraftMessage='';renderProfessions();});
   work.querySelectorAll('[data-learn-prof]').forEach(b=>b.onclick=()=>learnProfession(c.id,selectedSlot,b.dataset.learnProf));
