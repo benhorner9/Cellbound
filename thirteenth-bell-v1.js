@@ -162,7 +162,7 @@ async function renderLetter(){
 async function renderArrival(){
   await bellComic({
     page:'II · GREYWAKE',title:'The road ends at Greywake',subtitle:'Loop 1 · 11:47 PM',continueLabel:'STEP INTO GREYWAKE →',
-    panels:[bellPanel('greywake_arrival','','','',{kind:'location'})],
+    panels:[bellPanel('final_run','','','',{kind:'location'})],
     reveals:[
       {panel:0,placement:'top-left',eyebrow:'THE OLD ROAD',title:'The village is exactly where the map said it would be.',text:'Greywake rises out of the fog beneath a clocktower frozen at 11:47.'},
       {panel:0,placement:'top-right',eyebrow:'NO PEOPLE',title:'The streets are empty. The village is not.',text:'A meal sits warm on an inn table. A forge still glows. Lamps burn behind open doors.'},
