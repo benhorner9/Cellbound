@@ -102,7 +102,7 @@ const root=path.resolve(__dirname,'..');
  await page.evaluate(()=>document.querySelectorAll('[data-unit^="art-"]').forEach(n=>n.remove()));
  // Exercise resized iPad/phone viewports without changing engine coordinates.
  await page.setViewportSize({width:768,height:1024});
- await page.waitForTimeout(150);
+ await page.waitForFunction(()=>{const a=document.querySelector('#cb2dArena'),u=a.querySelector('[data-unit^="p-"]');return Math.abs(parseFloat(u.style.getPropertyValue('--unit-x'))-Number(u.dataset.x)/100*a.clientWidth)<1},{},{timeout:5000});
  const resizePosition=await page.evaluate(()=>{
   const arena=document.querySelector('#cb2dArena'),unit=arena.querySelector('[data-unit^="p-"]');
   return {x:Number(unit.dataset.x),px:parseFloat(unit.style.getPropertyValue('--unit-x')),width:arena.clientWidth};
