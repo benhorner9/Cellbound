@@ -80,3 +80,7 @@ body.inn-character-open{overflow:hidden}
 #innLedger .roster-card-metrics span,#innLedger .roster-shock-line :is(span,b){font-size:10px;color:#b7c2b6}
 #innLedger .roster-card-metrics b{font-size:17px}
 @media(max-width:600px){.inn-table{left:38%;top:56%}}
+
+/* World-navigation exit: the Inn is now a place entered from Town. */
+.inn-door{left:91%;top:24%;z-index:120!important}
+@media(max-width:600px){.inn-door{left:88%;top:20%;padding:7px 9px!important}.inn-door small{display:none}}
