@@ -169,3 +169,11 @@
 /* Clip only inert scenery; dropdowns and scrollable preparation retain their reach. */
 .lw-room{overflow:visible}
 .lw-staging.lw-room{overflow:auto}
+.lw-room select{color-scheme:dark;background-color:#132129!important;color:#f2e8d8!important}
+@media(max-width:700px){
+ #roster.lw-room .roster-overview-strip,#bank.lw-room .bank-overview-strip{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:0}
+ #roster.lw-room .roster-overview-strip article,#bank.lw-room .bank-overview-strip article{padding:9px 6px;min-width:0}
+ #roster.lw-room .roster-overview-strip small,#bank.lw-room .bank-overview-strip small{font-size:10px!important}
+ #roster.lw-room .roster-filter-secondary{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #roster.lw-room .roster-filter-secondary select{width:100%;min-width:0;font-size:12px!important}
+}
