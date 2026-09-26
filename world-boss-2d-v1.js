@@ -203,6 +203,8 @@ function wbPoint(el){
   return{x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,w:ar.width,h:ar.height};
 }
 function projectileBetween(fromEl,toEl,kind){
+ if(window.CellboundCombatFX?.living)return;
+
   const fx=document.getElementById('wb2dEffects'),a=wbPoint(fromEl),b=wbPoint(toEl);if(!fx||!a||!b)return;
   const dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI,p=document.createElement('i');
   p.className='wb2d-projectile '+kind;p.style.left=a.x+'px';p.style.top=a.y+'px';p.style.setProperty('--dx',dx+'px');p.style.setProperty('--dy',dy+'px');p.style.setProperty('--angle',angle+'deg');fx.appendChild(p);setTimeout(()=>p.remove(),620);
@@ -286,8 +288,8 @@ function wbStatusTargets(id){
   return unit?[unit]:[]
 }
 function wbRenderServerEvent(e){
-  if(window.CellboundCombatStatuses?.handle(e,{resolve:wbStatusTargets,speed:1}))return;
   window.CellboundCombatFX?.combatEvent?.(e,{arena:document.querySelector('.wb2d-arena'),resolve:wbEventUnit});
+  if(window.CellboundCombatStatuses?.handle(e,{resolve:wbStatusTargets,speed:1}))return;
   const source=wbEventUnit(e.source),target=wbEventUnit(e.target),sourceChar=String(e.source||'').startsWith('p-'),targetChar=String(e.target||'').startsWith('p-');
   switch(e.type){
     case'COMBAT_START':window.CellboundCombatFX?.boss?.(document.querySelector('.wb2d-arena'),active?.boss?.name||'World Boss');break;
@@ -308,7 +310,7 @@ function wbRenderServerEvent(e){
     case'RESOURCE_STATE':case'RESOURCE_SPENT':case'RESOURCE_GAINED':
       if(sourceChar)wbSetResource(e.source,e.payload?.resource,e.payload?.value,e.payload?.max);
       break;
-    case'MOVEMENT_START':if(sourceChar)wbServerDodge(e.source);break;
+    case'MOVEMENT_START':if(window.CellboundCombatFX?.ownsMovement)break;if(sourceChar)wbServerDodge(e.source);break;
     case'MECHANIC_TELEGRAPH':
       wbServerTelegraph(e);feed(active.boss.name+' begins '+(e.ability||'a mechanic')+'.','cast');break;
     case'CAST_START':wbCastStart(e);break;

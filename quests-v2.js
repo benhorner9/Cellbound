@@ -527,7 +527,9 @@ function qUnit(id){return $('[data-q-unit="'+id+'"]')}
 function qMove(id,x,y,ms=520){const e=qUnit(id);if(!e)return;const ox=parseFloat(e.style.left);const oy=parseFloat(e.style.top);const fromX=Number.isFinite(ox)?ox:x,fromY=Number.isFinite(oy)?oy:y,speed=Math.max(.25,Number(questFight?.speed)||1),dur=Math.max(90,Math.round((Number(ms)||520)/speed));e.style.setProperty('--face-angle',(Math.atan2(y-fromY,x-fromX)*180/Math.PI)+'deg');e.style.transitionDuration=dur+'ms';requestAnimationFrame(()=>{if(!e.isConnected)return;e.style.left=x+'%';e.style.top=y+'%'})}
 function qPoint(id){const a=$('#q2dArena'),u=qUnit(id);if(!a||!u)return null;const ar=a.getBoundingClientRect(),r=u.getBoundingClientRect();return{x:r.left-ar.left+r.width/2,y:r.top-ar.top+r.height/2,w:ar.width,h:ar.height}}
 function qFace(id,targetId){const e=qUnit(id),a=qPoint(id),b=qPoint(targetId);if(!e||!a||!b)return;e.style.setProperty('--face-angle',(Math.atan2(b.y-a.y,b.x-a.x)*180/Math.PI)+'deg')}
-function qProjectile(from,to,kind='physical',ms=320){const arena=$('#q2dArena'),a=qPoint(from),b=qPoint(to);if(!arena||!a||!b)return;const speed=Math.max(.25,Number(questFight?.speed)||1),dur=Math.max(1,Math.round(ms/speed)),dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI,e=document.createElement('i');e.className='cb2d-projectile '+kind;e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.transform='rotate('+angle+'deg)';arena.appendChild(e);requestAnimationFrame(()=>{e.style.transitionDuration=dur+'ms';e.style.transform='translate('+dx+'px,'+dy+'px) rotate('+angle+'deg)'});setTimeout(()=>e.remove(),dur+130)}
+function qProjectile(from,to,kind='physical',ms=320){
+ if(window.CellboundCombatFX?.living)return;
+const arena=$('#q2dArena'),a=qPoint(from),b=qPoint(to);if(!arena||!a||!b)return;const speed=Math.max(.25,Number(questFight?.speed)||1),dur=Math.max(1,Math.round(ms/speed)),dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI,e=document.createElement('i');e.className='cb2d-projectile '+kind;e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.transform='rotate('+angle+'deg)';arena.appendChild(e);requestAnimationFrame(()=>{e.style.transitionDuration=dur+'ms';e.style.transform='translate('+dx+'px,'+dy+'px) rotate('+angle+'deg)'});setTimeout(()=>e.remove(),dur+130)}
 function qPulseUnit(id,cls,ms=360){
   const e=qUnit(id);if(!e)return;const speed=Math.max(.25,Number(questFight?.speed)||1),dur=Math.max(90,Math.round(ms/speed));
   e.classList.remove(cls);void e.offsetWidth;e.classList.add(cls);setTimeout(()=>e?.classList?.remove(cls),dur)
@@ -672,12 +674,12 @@ function qStatusTargets(id){
 }
 function qRenderRebornEvent(e){
   if(!questFight||!e)return;const eventTime=(Number(questFight.eventOffset)||0)+(Number(e.timestamp)||0);questFight.elapsedMs=Math.max(Number(questFight.elapsedMs)||0,eventTime);
+  window.CellboundCombatFX?.combatEvent?.(e,{arena:document.querySelector('.quest-cb2d-arena'),resolve:qUnit,speed:()=>questFight?.speed||1});
   if(window.CellboundCombatStatuses?.handle(e,{resolve:qStatusTargets,speed:()=>questFight?.speed||1}))return;
-  window.CellboundCombatFX?.combatEvent?.(e,{arena:document.querySelector('.quest-cb2d-arena'),resolve:qUnit});
   const srcChar=qEventCharacter(e.source),targetChar=qEventCharacter(e.target),enemyIndex=qEventEnemyIndex(e.target),sourceEnemy=qEventEnemyIndex(e.source);
   switch(e.type){
     case'COMBAT_START':{const arena=document.querySelector('.quest-cb2d-arena');window.CellboundCombatFX?.mount?.(arena);if(String(questFight?.presentationKind||'')==='dungeon')window.CellboundCombatFX?.boss?.(arena,questFight?.title||'Boss');qStatus('Combat simulation live');qLog('Combat begins.');break;}
-    case'MOVEMENT_START':if(e.payload?.to)qMove(e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
+    case'MOVEMENT_START':if(window.CellboundCombatFX?.ownsMovement)break;if(e.payload?.to)qMove(e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
     case'ABILITY_START':
       if(e.source&&e.target){
         qPulseUnit(e.source,'attacking',420);qPulseUnit(e.target,'targeted',360);

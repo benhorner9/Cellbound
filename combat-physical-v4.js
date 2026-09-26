@@ -1,20 +1,14 @@
 (()=>{
 'use strict';
-/*
- * Cellbound Physical Combat & Class Identity v4
- * Presentation-only extension to Combat Visual Language v3.
- * Combat Reborn / authoritative PvP and server event streams remain the sole gameplay authority.
- */
-const VERSION='4.0.0';
+/* Shared living presentation. All state comes from the authoritative event stream.
+ * No combat outcomes, paths, HP, resources or target choices are calculated here. */
 const FX=window.CellboundCombatFX=window.CellboundCombatFX||{};
-const BASE_EVENT=typeof FX.combatEvent==='function'?FX.combatEvent.bind(FX):null;
-const BASE_MOUNT=typeof FX.mount==='function'?FX.mount.bind(FX):null;
-const ARENA_SELECTOR='.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena,#tbArena';
-const UNIT_SELECTOR='.cb2d-unit,.quest-cb2d-unit,.wb2d-unit,.pvp2d-unit,.tb-unit';
+const baseMount=FX.mount?.bind(FX), baseEvent=FX.combatEvent?.bind(FX);
+const ARENA='.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena,#tbArena';
+const UNIT='.cb2d-unit,.quest-cb2d-unit,.wb2d-unit,.pvp2d-unit,.tb-unit';
+const scenes=new Map();
 const reduce=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-const projectileCounts=new WeakMap();
-
 const PROFILES={
  'class-warrior':{name:'Warrior',accent:'#C69B6D',motion:'heavy',projectile:'steel',cast:'brace',lunge:12,recoil:1.18,travel:245},
  'class-paladin':{name:'Paladin',accent:'#F48CBA',motion:'radiant',projectile:'holy',cast:'radiant',lunge:9,recoil:1.08,travel:280},
@@ -32,244 +26,187 @@ const PROFILES={
 };
 const ENEMY={name:'Enemy',accent:'#EF5C50',motion:'enemy',projectile:'hostile',cast:'hostile',lunge:10,recoil:1.08,travel:275};
 
-function arenaFor(target){
- const el=typeof target==='string'?document.querySelector(target):target;
- if(el?.matches?.(ARENA_SELECTOR))return el;
- return el?.closest?.(ARENA_SELECTOR)||null
-}
-function resolveUnit(id,opts={},arena=null){
+
+function actor(el){return el?.querySelector('.cb-combat-portrait,.cb-combat-boss-portrait,.pvp2d-token,.wb2d-unit-dot,:scope > i:first-child')||el}
+function profile(el){return Object.entries(PROFILES).find(([key])=>el.classList.contains(key))?.[1]||ENEMY}
+function resolve(id,opts,arena){
  if(!id)return null;
- if(typeof opts.resolve==='function'){
-  try{
-   const r=opts.resolve(id);
-   if(Array.isArray(r)){const x=r.find(Boolean);return x?.el||x||null}
-   return r?.el||r||null
-  }catch(_){}
- }
- const root=opts.root||arena||document,s=String(id);
- const safe=window.CSS?.escape?CSS.escape(s):s.replace(/["\\]/g,'\\$&');
- const qs=[
-  '[data-unit="'+safe+'"]','[data-q-unit="'+safe+'"]','[data-tb-unit="'+safe+'"]',
-  '[data-pvp2d-unit="'+safe+'"]','[data-combat-id="'+safe+'"]'
- ];
- if(s.startsWith('tb-'))qs.unshift('[data-tb-boss="'+(window.CSS?.escape?CSS.escape(s.slice(3)):s.slice(3))+'"]');
- if(s==='boss')qs.unshift('#wb2dBoss');
- for(const q of qs){try{const n=root.querySelector?.(q)||document.querySelector(q);if(n)return n}catch(_){}}
- return null
-}
-function profileFor(el){
- if(!el?.classList)return ENEMY;
- for(const [key,p] of Object.entries(PROFILES))if(el.classList.contains(key))return p;
- return (el.classList.contains('enemy')||el.classList.contains('boss'))?ENEMY:ENEMY
-}
-function actorNode(unit){
- if(!unit)return null;
- return unit.querySelector?.('.pvp2d-token,.wb2d-unit-dot,:scope > i:first-child')||unit
-}
-function point(arena,el){
- if(!arena?.getBoundingClientRect||!el?.getBoundingClientRect)return{x:50,y:50,px:0,py:0};
- const a=arena.getBoundingClientRect(),r=el.getBoundingClientRect(),px=r.left+r.width/2-a.left,py=r.top+r.height/2-a.top;
- return{x:clamp(px/Math.max(1,a.width)*100,0,100),y:clamp(py/Math.max(1,a.height)*100,0,100),px,py}
-}
-function eventLayer(arena){
- let host=arena?.querySelector?.('.cbvfx4-events');
- if(host)return host;
- if(!arena)return null;
- host=document.createElement('div');host.className='cbvfx4-events';host.setAttribute('aria-hidden','true');arena.appendChild(host);
- return host
-}
-function pulse(el,cls,ms=500){
- if(!el||reduce())return;
- el.classList.remove(cls);void el.offsetWidth;el.classList.add(cls);setTimeout(()=>el?.classList?.remove(cls),ms)
-}
-function markProfile(unit){
- if(!unit||unit.dataset.cbvfx4Profile)return;
- const p=profileFor(unit);unit.dataset.cbvfx4Profile=p.name.toLowerCase().replace(/[^a-z0-9]+/g,'-');
- unit.style.setProperty('--cbvfx4-accent',p.accent);
- unit.style.setProperty('--cbvfx4-recoil',String(p.recoil));
- ensureGround(unit)
-}
-function ensureGround(unit){
- if(!unit||unit.querySelector(':scope > .cbvfx4-ground'))return;
- const g=document.createElement('i');g.className='cbvfx4-ground';unit.appendChild(g)
-}
-function scanUnits(root=document){
- root.querySelectorAll?.(UNIT_SELECTOR).forEach(markProfile)
+ const custom=opts.resolve?.(id);if(custom)return (Array.isArray(custom)?custom[0]:custom)?.el||(Array.isArray(custom)?custom[0]:custom);
+ const safe=CSS.escape(String(id));
+ return arena.querySelector('[data-unit="'+safe+'"],[data-q-unit="'+safe+'"],[data-tb-unit="'+safe+'"],[data-pvp2d-unit="'+safe+'"],[data-combat-id="'+safe+'"],[data-unit-key="'+safe+'"]')||
+ (String(id).startsWith('tb-')?arena.querySelector('[data-tb-boss="'+CSS.escape(String(id).slice(3))+'"]'):null)||
+ (id==='boss'?arena.querySelector('#wb2dBoss'):null)
 }
 function mount(target){
- let arena=null;try{arena=BASE_MOUNT?BASE_MOUNT(target):arenaFor(target)}catch(_){arena=arenaFor(target)}
- arena=arena||arenaFor(target);if(!arena)return null;
- if(arena.dataset.cbvfx4Mounted!=='1'){
-  arena.dataset.cbvfx4Mounted='1';eventLayer(arena);scanUnits(arena);requestAnimationFrame(()=>arena.classList.add('cbvfx4-ready'))
+ const arena=typeof target==='string'?document.querySelector(target):target;
+ if(!arena?.matches?.(ARENA))return null;
+ baseMount?.(arena);
+ if(scenes.has(arena)&&!scenes.get(arena).layer.isConnected){for(const u of scenes.get(arena).units.values()){clearCast(u);u.animation?.cancel()}scenes.delete(arena)}
+ arena.classList.add('cbl-scene');
+ if(!scenes.has(arena)){
+  const layer=document.createElement('div');layer.className='cbl-effects';layer.setAttribute('aria-hidden','true');arena.appendChild(layer);
+  scenes.set(arena,{arena,layer,units:new Map(),effects:new Set(),time:0,speed:1,live:true});
+  arena.classList.add('cbl-scene');
  }
  return arena
 }
-function setProjectileState(arena,on){
- const n=Math.max(0,(projectileCounts.get(arena)||0)+(on?1:-1));projectileCounts.set(arena,n);
- arena?.classList?.toggle('cbvfx4-profile-projectile',n>0)
+function unit(scene,el){
+ if(!el)return null;
+ let u=scene.units.get(el);if(u)return u;
+ const p=profile(el);u={el,p,target:null,dead:false,statuses:new Map(),state:'idle',until:0,animation:null,cast:null};scene.units.set(el,u);
+ el.classList.add('cbl-unit');el.dataset.motion=p.motion;el.style.setProperty('--cbl-accent',p.accent);
+ const nose=document.createElement('i');nose.className='cbl-facing';nose.setAttribute('aria-hidden','true');el.appendChild(nose);
+ const ground=document.createElement('i');ground.className='cbl-ground';ground.setAttribute('aria-hidden','true');el.appendChild(ground);
+ return u
 }
-function makeProjectile(arena,source,target,profile,type='damage',ability=''){
- if(!arena||!source||!target||reduce())return;
- const a=point(arena,source),b=point(arena,target),dx=b.px-a.px,dy=b.py-a.py,angle=Math.atan2(dy,dx)*180/Math.PI;
- const heal=type==='heal',hostile=profile===ENEMY;
- const p=document.createElement('i');
- p.className='cbvfx4-projectile '+(heal?'heal ':'')+(hostile?'hostile ':'')+profile.projectile;
- p.dataset.ability=String(ability||'');
- p.style.left=a.px+'px';p.style.top=a.py+'px';p.style.setProperty('--cbvfx4-accent',heal?'#6ff0aa':profile.accent);
- p.style.setProperty('--cbvfx4-angle',angle+'deg');
- const host=eventLayer(arena);if(!host)return;host.appendChild(p);setProjectileState(arena,true);
- const duration=Math.max(170,Number(profile.travel)||270);
- requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!p.isConnected)return;p.style.transitionDuration=duration+'ms';p.style.transform='translate3d('+dx+'px,'+dy+'px,0) rotate('+angle+'deg)'}));
- setTimeout(()=>{p.remove();setProjectileState(arena,false)},duration+90)
+function state(u,value,until=0){if(!u)return;u.state=value;u.until=until;u.el.dataset.combatState=value}
+function controlled(u){return [...u.statuses.values()].some(s=>['stun','fear','incapacitate'].includes(s.cc))}
+function canAct(u){return u&&!u.dead&&!controlled(u)}
+function center(el){const r=actor(el).getBoundingClientRect();return{x:r.left+r.width/2,y:r.top+r.height/2}}
+function direction(a,b){const x=b.x-a.x,y=b.y-a.y,len=Math.hypot(x,y)||1;return{x:x/len,y:y/len,angle:Math.atan2(y,x)*180/Math.PI,len}}
+function face(u,target){if(!u||!target||u.dead)return;u.target=target;const d=direction(center(u.el),center(target));u.el.style.setProperty('--cbl-facing',d.angle+'deg');u.el.style.setProperty('--face-angle',d.angle+'deg')}
+function motion(u,frames,duration,scene){
+ if(!u||reduce())return;u.animation?.cancel();
+ u.animation=actor(u.el)?.animate?.(frames,{duration:Math.max(35,duration/scene.speed),easing:'ease-out'});
 }
-function actionKind(e,source,profile){
- const kind=String(e?.payload?.kind||'').toLowerCase(),ability=String(e?.ability||'').toLowerCase();
- const heal=/heal|group-heal/.test(kind)||/heal|rejuven|regrowth|growth|light|shock|embrace|blossom|breath|renew|prayer|tranquil/.test(ability);
- if(heal)return'heal';
- const ranged=/ranged|spell/.test(kind)||/shot|bolt|ball|wrath|judg|barrage|flame|nova|arrow|lightning|chain|breath|blast/.test(ability)||
-  ['Hunter','Mage','Priest','Druid','Evoker','Shaman','Warlock'].includes(profile.name);
- return ranged?'ranged':'melee'
+function setPosition(scene,u,p,duration=0){
+ if(!u||!p||!Number.isFinite(Number(p.x))||!Number.isFinite(Number(p.y)))return;
+ if(scene.position){scene.position(u.el,p,reduce()?0:duration/scene.speed);return}
+ const el=u.el,x=clamp(Number(p.x),0,100),y=clamp(Number(p.y),0,100);
+ el.dataset.x=String(x);el.dataset.y=String(y);el.style.transitionDuration=(reduce()?0:duration/scene.speed)+'ms';
+ if(scene.arena.id==='cb2dArena'&&el.dataset.unit){el.style.setProperty('--unit-x',x/100*scene.arena.clientWidth+'px');el.style.setProperty('--unit-y',y/100*scene.arena.clientHeight+'px')}
+ else{el.style.left=x+'%';el.style.top=y+'%'}
 }
-function physicalAction(source,target,e,arena){
- if(!source||!arena||reduce())return;
- markProfile(source);if(target)markProfile(target);
- const p=profileFor(source),kind=actionKind(e,source,p),actor=actorNode(source);
- source.dataset.cbvfx4Action=kind;source.style.setProperty('--cbvfx4-accent',kind==='heal'?'#6ff0aa':p.accent);
- if(actor&&target&&kind==='melee'){
-  const a=point(arena,source),b=point(arena,target),len=Math.hypot(b.px-a.px,b.py-a.py)||1,dist=Math.min(p.lunge,Math.max(4,len*.10));
-  actor.style.setProperty('--cbvfx4-lunge-x',((b.px-a.px)/len*dist).toFixed(1)+'px');
-  actor.style.setProperty('--cbvfx4-lunge-y',((b.py-a.py)/len*dist).toFixed(1)+'px')
+function kind(e,u){
+ const k=e.payload?.kind;
+ if(k)return /heal|battle-rez/.test(k)?'heal':k==='damage'?((Number(e.payload.range)||Number(e.payload.attackRange)||5)>7?'ranged':'melee'):'support';
+ if(e.payload?.attackRange)return e.payload.attackRange>7?'ranged':'melee';
+ return /shot|bolt|ball|arrow|lightning|beam|breath|plate|nail|blast/i.test(e.ability||'')?'ranged':'melee'
+}
+function family(e,u){
+ const a=String(e.ability||'').toLowerCase();
+ for(const [re,value] of [[/frost|ice/,'frost'],[/fire|flame/,'fire'],[/lightning|chain/,'lightning'],[/shadow|drain/,'shadow'],[/plate/,'plate'],[/nail/,'steel']])if(re.test(a))return value;
+ return u?.p.projectile||'hostile'
+}
+function effect(scene,cls,source,target,life=320){
+ if(scene.effects.size>=36)return null;
+ const n=document.createElement('i');n.className='cbl-fx '+cls;scene.layer.appendChild(n);
+ const fx={n,source,target,ends:performance.now()+life/scene.speed};scene.effects.add(fx);return fx
+}
+function clearCast(u){if(!u)return;u.cast?.orb?.remove();u.cast?.beam?.remove();u.cast=null;u.el.classList.remove('cbl-casting');u.el.style.removeProperty('--cbl-charge')}
+function strike(scene,u,t,e,heal=false){
+ if(!u||!t)return;
+ const d=direction(center(u.el),center(t.el));face(u,t.el);
+ if(['miss','missed','dodge','dodged','immune'].includes(e.result)){
+  if(/dodg/.test(e.result))motion(t,[{translate:(-d.y*5)+'px '+(d.x*5)+'px'},{translate:'0px 0px'}],240,scene);
+  const f=effect(scene,'avoid',null,t.el,400);if(f)f.n.textContent=String(e.result).toUpperCase();return
  }
- pulse(source,'cbvfx4-'+p.motion,kind==='melee'?430:560);
- pulse(source,'cbvfx4-'+kind,kind==='melee'?430:560);
- if(target)pulse(target,'cbvfx4-target',340);
- const castTime=Number(e?.payload?.castTime)||0;
- if(kind!=='melee'&&castTime<=0)makeProjectile(arena,source,target,p,kind,e?.ability)
-}
-function castCharge(source,e,arena){
- if(!source||!arena||reduce())return;
- markProfile(source);const p=profileFor(source),actor=actorNode(source),pos=point(arena,source),host=eventLayer(arena);if(!host)return;
- source.classList.add('cbvfx4-charging','cbvfx4-cast-'+p.cast);
- const orb=document.createElement('i');orb.className='cbvfx4-charge '+p.cast;orb.style.left=pos.px+'px';orb.style.top=pos.py+'px';orb.style.setProperty('--cbvfx4-accent',p.accent);host.appendChild(orb);
- const dur=Math.max(520,Math.min(2200,Number(e?.payload?.duration)||Number(e?.payload?.castTime)||1100));setTimeout(()=>orb.remove(),dur+100);
- if(actor)pulse(actor,'cbvfx4-cast-body',dur)
-}
-function endCharge(source){
- if(!source)return;[...source.classList].filter(x=>x==='cbvfx4-charging'||x.startsWith('cbvfx4-cast-')).forEach(x=>source.classList.remove(x))
-}
-function impact(target,e,arena){
- if(!target||reduce())return;markProfile(target);const actor=actorNode(target),amount=Math.max(0,Number(e?.amount)||0),crit=e?.result==='critical';
- const heavy=crit||amount>=120||/slam|smash|crush|obliterate|mortal|execute|barrage|storm|swipe|strike/i.test(String(e?.ability||''));
- pulse(target,heavy?'cbvfx4-impact-heavy':'cbvfx4-impact-light',heavy?520:330);
- if(actor){actor.style.setProperty('--cbvfx4-impact-x',(heavy?'-5px':'-2px'));actor.style.setProperty('--cbvfx4-impact-scale',heavy?'0.92':'0.97')}
- const p=point(arena,target),n=document.createElement('i');n.className='cbvfx4-impact '+(heavy?'heavy':'light')+(crit?' critical':'');n.style.left=p.px+'px';n.style.top=p.py+'px';eventLayer(arena)?.appendChild(n);setTimeout(()=>n.remove(),650)
-}
-function healingImpact(target,arena){
- if(!target||reduce())return;markProfile(target);pulse(target,'cbvfx4-heal-receive',640);
- const p=point(arena,target),n=document.createElement('i');n.className='cbvfx4-heal-impact';n.style.left=p.px+'px';n.style.top=p.py+'px';eventLayer(arena)?.appendChild(n);setTimeout(()=>n.remove(),800)
-}
-function enemyAttack(source,target,e,arena){
- if(!source||!target||reduce())return;markProfile(source);
- const ability=String(e?.ability||''),ranged=/shot|bolt|burst|barrage|flame|nail|plate|arrow|beam|breath|volley|missile/i.test(ability);
- const heavy=/slam|smash|crush|swipe|storm|cleave|heavy|massive|devour|maul/i.test(ability);
- pulse(source,heavy?'cbvfx4-enemy-heavy':'cbvfx4-enemy-strike',heavy?650:430);
- if(ranged)makeProjectile(arena,source,target,ENEMY,'damage',ability)
-}
-function bossTelegraph(e,arena,source){
- if(!arena||reduce())return;
- const boss=source||arena.querySelector('.boss,.enemy.big,#wb2dBoss,[data-tb-boss]');
- if(boss){markProfile(boss);pulse(boss,'cbvfx4-boss-intent',Math.max(700,Math.min(1600,Number(e?.payload?.duration)||1100)))}
- arena.classList.add('cbvfx4-telegraph-incoming');
- setTimeout(()=>arena?.classList?.remove('cbvfx4-telegraph-incoming'),Math.max(650,Math.min(1800,Number(e?.payload?.duration)||1000)))
-}
-function mechanicResolve(e,arena){
- if(!arena)return;arena.classList.remove('cbvfx4-telegraph-incoming');
- pulse(arena,e?.result==='avoided'||e?.result==='interrupted'?'cbvfx4-resolve-safe':'cbvfx4-resolve-impact',620)
-}
-function aggro(target,source){
- if(target){markProfile(target);pulse(target,'cbvfx4-aggro',1000)}
- if(source)pulse(source,'cbvfx4-turn',520)
-}
-function death(target,boss=false){
- if(!target)return;markProfile(target);target.classList.add('cbvfx4-dead');if(boss)target.classList.add('cbvfx4-boss-dead')
-}
-function revive(target,arena){
- if(!target)return;target.classList.remove('cbvfx4-dead','cbvfx4-boss-dead');pulse(target,'cbvfx4-revive',1100);
- if(reduce())return;const p=point(arena,target),n=document.createElement('i');n.className='cbvfx4-revive-ring';n.style.left=p.px+'px';n.style.top=p.py+'px';eventLayer(arena)?.appendChild(n);setTimeout(()=>n.remove(),1100)
-}
-function visualHook(type,e,arena,source,target){
- try{window.dispatchEvent(new CustomEvent('cellbound:combat-visual',{detail:{type,event:e,arena,source,target}}))}catch(_){}
-}
-function encounterBurst(arena,x,y,kind,life=900){
- if(!arena||reduce())return;
- const n=document.createElement('i');n.className='cbvfx4-encounter '+kind;n.style.left=x+'%';n.style.top=y+'%';eventLayer(arena)?.appendChild(n);setTimeout(()=>n.remove(),life)
-}
-function throwEncounterObject(arena,source,target,kind='plate',duration=430){
- if(!arena||!source||!target||reduce())return;
- const a=point(arena,source),b=point(arena,target),dx=b.px-a.px,dy=b.py-a.py,angle=Math.atan2(dy,dx)*180/Math.PI;
- const n=document.createElement('i');n.className='cbvfx4-thrown '+kind;n.style.left=a.px+'px';n.style.top=a.py+'px';n.style.setProperty('--cbvfx4-angle',angle+'deg');eventLayer(arena)?.appendChild(n);
- requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!n.isConnected)return;n.style.transitionDuration=duration+'ms';n.style.transform='translate3d('+dx+'px,'+dy+'px,0) rotate('+(angle+540)+'deg)'}));
- setTimeout(()=>n.remove(),duration+100)
-}
-function encounterSpecific(e,arena,source,target){
- const ability=String(e?.ability||'').toLowerCase();
- if(e.type==='MECHANIC_TELEGRAPH'&&ability.includes('thrown plate'))throwEncounterObject(arena,source,target,'plate',Math.max(320,Math.min(650,Number(e?.payload?.duration)||430)));
- if(e.type==='GROUND_HAZARD_SPAWNED'&&ability.includes('plate')){
-  const x=clamp(Number(e?.position?.x)||50,0,100),y=clamp(Number(e?.position?.y)||50,0,100);encounterBurst(arena,x,y,'porcelain',1050)
+ const k=heal?'heal':kind(u.action||e,u),heavy=e.result==='critical'||Number(e.amount)>Number(e.payload?.targetMax||Infinity)*.15;
+ const intensity=heavy?3:Number(e.amount)<10?1:2;u.el.dataset.intensity=String(intensity);
+ // Instant engine attacks have no flight interval: connect at contact, never invent a delayed hit.
+ if(k!=='melee'){
+  const f=effect(scene,'connection '+(heal?'heal':family(e,u)),u.el,t.el,heal?400:210);
+  if(f)f.n.style.setProperty('--cbl-accent',heal?'#76efac':u.p.accent);
+ }else if(d.len<110){
+  const reach=Math.min(u.p.lunge,d.len*.16,12),x=d.x*reach,y=d.y*reach;
+  motion(u,[{translate:x+'px '+y+'px',rotate:u.p.motion==='flow'?'8deg':'0deg',scale:heavy?'1.09':'1.04'},{translate:'0px 0px',rotate:'0deg',scale:'1'}],u.p.motion==='dart'?180:310,scene);
+  const f=effect(scene,'slash '+u.p.motion,u.el,t.el,260);if(f)f.n.style.setProperty('--cbl-accent',u.p.accent);
  }
- if(e.type==='INTERACTION_REQUIRED'&&ability.includes('screech')){
-  const p=point(arena,source||target||arena);encounterBurst(arena,p.x,p.y,'screech',1150)
- }
- if(e.type==='DAMAGE_DEALT'&&ability.includes('healer swipe')&&target){
-  const p=point(arena,target);encounterBurst(arena,p.x,p.y,'swipe',700)
- }
- if(e.type==='MECHANIC_TELEGRAPH'&&ability.includes('nail storm')&&source){
-  const p=point(arena,source);encounterBurst(arena,p.x,p.y,'nailstorm',Math.max(900,Number(e?.payload?.duration)||1200))
- }
+ if(heal){const f=effect(scene,'heal-ring'+(Number(e.payload?.targetHpPct)<40?' emergency':'')+(/HoT/.test(e.ability||'')?' periodic':''),null,t.el,500);return}
+ if(['miss','missed','dodge','dodged','immune'].includes(e.result))return;
+ effect(scene,(e.result==='blocked'?'shield':'contact')+(heavy?' heavy':''),null,t.el,240);
+ motion(t,[{translate:(d.x*2*intensity)+'px '+(d.y*2*intensity)+'px',scale:heavy?'.94':'.98'},{translate:'0px 0px',scale:'1'}],230,scene)
 }
-function physicalEvent(e,opts={}){
+function statuses(u,e){
+ if(!u)return;
+ for(const s of e.statusEffects||[]) /REMOVED$/.test(e.type)?u.statuses.delete(s.id):u.statuses.set(s.id,s);
+ const values=[...u.statuses.values()],cc=values.find(s=>s.cc)?.cc||'';
+ u.el.dataset.control=cc;
+ u.el.dataset.aura=values.some(s=>s.effect?.damageReduction)?'guard':values.some(s=>s.effect?.damageTaken)?'vulnerable':values.some(s=>/poison|burn|bleed/i.test(s.name))?'harm':'';
+ if(controlled(u)){u.animation?.cancel();clearCast(u);state(u,'controlled')}else if(u.state==='controlled')state(u,'idle')
+}
+function livingEvent(e,opts={}){
  if(!e)return;
- const arena=mount(arenaFor(opts.arena||opts.root)||arenaFor(resolveUnit(e.source,opts))||arenaFor(resolveUnit(e.target,opts)));if(!arena)return;
- const source=resolveUnit(e.source,opts,arena),target=resolveUnit(e.target,opts,arena);if(source)markProfile(source);if(target)markProfile(target);visualHook(e.type,e,arena,source,target);encounterSpecific(e,arena,source,target);
+ const arena=mount(opts.arena||opts.root?.querySelector?.(ARENA));if(!arena)return;
+ const scene=scenes.get(arena);scene.position=opts.position;scene.speed=Math.max(.25,Number(typeof opts.speed==='function'?opts.speed():opts.speed)||1);scene.time=Number(e.timestamp)||0;
+ const u=unit(scene,resolve(e.source,opts,arena)),t=unit(scene,resolve(e.target,opts,arena));
+ // Mechanics retain the existing v3 language; actions/reactions have one owner.
+ if(/^(MECHANIC_|GROUND_HAZARD_|PHASE_CHANGE|ENRAGE|INTERACTION_REQUIRED)/.test(e.type))baseEvent?.(e,opts);
+ try{window.dispatchEvent(new CustomEvent('cellbound:combat-visual',{detail:{type:e.type,event:e,arena,source:u?.el,target:t?.el,audioCue:e.payload?.audioCue||e.type.toLowerCase()}}))}catch(_){}
  switch(e.type){
-  case'COMBAT_START':scanUnits(arena);arena.classList.add('cbvfx4-live');break;
-  case'ABILITY_START':
-   if(source&&(source.classList.contains('enemy')||source.classList.contains('boss')||String(e.source||'').startsWith('tb-')||e.source==='boss'))enemyAttack(source,target,e,arena);
-   else physicalAction(source,target,e,arena);
-   break;
-  case'CAST_START':castCharge(source,e,arena);if(source&&(source.classList.contains('enemy')||source.classList.contains('boss')))pulse(arena,'cbvfx4-boss-cast',Math.max(650,Math.min(1500,Number(e?.payload?.duration)||1000)));break;
-  case'CAST_FINISH':case'CAST_CANCELLED':endCharge(source);break;
-  case'ABILITY_FINISH':
-   if(source&&target&&Number(e?.payload?.castTime)>0){const p=profileFor(source),kind=actionKind(e,source,p);if(kind!=='melee')makeProjectile(arena,source,target,p,kind,e?.ability)}break;
-  case'DAMAGE_DEALT':impact(target,e,arena);break;
-  case'HEAL_RECEIVED':healingImpact(target,arena);break;
-  case'DEFENSIVE_ACTIVATED':if(target||source)pulse(target||source,'cbvfx4-defensive',850);break;
-  case'CROWD_CONTROL':if(target)pulse(target,'cbvfx4-cc',Math.min(1200,Number(e?.payload?.duration)||900));break;
-  case'INTERRUPT':if(e.result==='success'){endCharge(target);if(target)pulse(target,'cbvfx4-interrupt-break',650)}break;
-  case'AGGRO_CHANGED':aggro(target,source);break;
-  case'MECHANIC_TELEGRAPH':bossTelegraph(e,arena,source);break;
-  case'MECHANIC_RESOLVE':mechanicResolve(e,arena);break;
-  case'GROUND_HAZARD_SPAWNED':arena.classList.add('cbvfx4-hazard-live');break;
-  case'GROUND_HAZARD_EXPIRED':if(!arena.querySelector('.cb2d-ground-hazard,.quest-ground-hazard,.wb2d-ground-hazard'))arena.classList.remove('cbvfx4-hazard-live');break;
-  case'PHASE_CHANGE':pulse(arena,'cbvfx4-phase',1050);if(source)pulse(source,'cbvfx4-phase-boss',1050);break;
-  case'ENRAGE':arena.classList.add('cbvfx4-enrage');pulse(arena,'cbvfx4-enrage-pulse',950);break;
-  case'PLAYER_DEFEATED':case'ADD_DEFEATED':case'ENEMY_DEFEATED':death(target,e.type==='ENEMY_DEFEATED'&&target?.classList?.contains('boss'));break;
-  case'PLAYER_REVIVED':case'ENEMY_REVIVED':revive(target,arena);break;
-  case'COMBAT_END':arena.classList.remove('cbvfx4-live','cbvfx4-enrage','cbvfx4-telegraph-incoming','cbvfx4-hazard-live');break
+ case'COMBAT_START':
+  scene.live=true;arena.classList.add('cbl-live');arena.querySelectorAll(UNIT).forEach(el=>unit(scene,el));
+  for(const v of e.payload?.units||[]){const a=unit(scene,resolve(v.id,opts,arena));if(a){a.dead=v.alive===false;if(!a.dead)a.el.classList.remove('dead','dying');a.target=null;a.statuses.clear();a.el.dataset.control='';state(a,a.dead?'dead':'idle');setPosition(scene,a,v.position);a.el.style.setProperty('--cbl-facing',(v.facing||0)+'deg')}}break;
+ case'MOVEMENT_START':
+  if(canAct(u)){u.el.dataset.intent=String(e.result||'moving');setPosition(scene,u,e.payload?.to,Number(e.payload?.duration)||420);clearCast(u);state(u,'moving',performance.now()+(Number(e.payload?.duration)||420)/scene.speed);if(e.position&&e.payload?.to){const d=direction(e.position,e.payload.to);u.el.style.setProperty('--cbl-facing',d.angle+'deg');u.target=null}}break;
+ case'MOVEMENT_END':if(u&&!u.dead){setPosition(scene,u,e.position);state(u,controlled(u)?'controlled':'idle');if(t)face(u,t.el)}break;
+ case'ABILITY_START':
+  if(canAct(u)){u.action=e;if(t)face(u,t.el);state(u,kind(e,u)==='heal'?'healing':'attacking',performance.now()+450/scene.speed);
+   if(!(e.payload?.castTime>0))motion(u,[{scale:'.97'},{scale:'1'}],210,scene)}break;
+ case'CAST_START':
+  if(canAct(u)){u.cast={event:e,start:performance.now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');state(u,/channel|beam|drain/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el)}break;
+ case'CAST_CANCELLED':case'CAST_FINISH':case'ABILITY_FINISH':clearCast(u);if(u&&!u.dead&&!controlled(u))state(u,'idle');break;
+ case'DAMAGE_DEALT':if(t){if(canAct(u))strike(scene,u,t,e);else if(!['miss','dodged','immune'].includes(e.result))effect(scene,'contact',null,t.el,220)}break;
+ case'HEAL_RECEIVED':if(t){if(canAct(u))strike(scene,u,t,e,true);else effect(scene,'heal-ring',null,t.el,400)}break;
+ case'AGGRO_CHANGED':if(u&&t){face(u,t.el);effect(scene,'aggro',null,t.el,650)}break;
+ case'BUFF_APPLIED':case'DEBUFF_APPLIED':case'BUFF_REMOVED':case'DEBUFF_REMOVED':statuses(t,e);break;
+ case'INTERRUPT':if(e.result==='success'&&t){if(canAct(u))effect(scene,'connection lightning',u.el,t.el,150);clearCast(t);t.animation?.cancel();state(t,'interrupted',performance.now()+500/scene.speed);effect(scene,'interrupt',null,t.el,550)}break;
+ case'DEFENSIVE_ACTIVATED':if(t||u)state(t||u,'defending',performance.now()+650/scene.speed);effect(scene,'shield',null,(t||u)?.el,650);break;
+ case'PLAYER_DEFEATED':case'ENEMY_DEFEATED':case'ADD_DEFEATED':
+  if(t){t.dead=true;clearCast(t);t.animation?.cancel();state(t,'dead');effect(scene,'death',null,t.el,t.el.classList.contains('boss')?1100:650)}break;
+ case'PLAYER_REVIVED':case'ENEMY_REVIVED':
+  if(t){t.dead=false;t.statuses.clear();t.el.dataset.control='';t.el.classList.remove('dead','dying');state(t,'reviving',performance.now()+800/scene.speed);effect(scene,'revive',u?.el,t.el,850)}break;
+ case'ADD_SPAWNED':requestAnimationFrame(()=>{const el=resolve(e.target,opts,arena);if(el){unit(scene,el);effect(scene,'spawn',null,el,650)}});break;
+ case'INTERACTION_REQUIRED':if(/screech/i.test(e.ability||''))effect(scene,'screech',null,u?.el||t?.el,800);break;
+ case'PHASE_CHANGE':if(u){effect(scene,'phase',null,u.el,1000);u.el.dataset.intensity='5'}break;
+ case'GROUND_HAZARD_SPAWNED':
+  if(/plate|collapse|beam|debris|floor/i.test(e.ability||'')&&e.position){const f=effect(scene,'debris',null,null,650);if(f){f.n.style.left=e.position.x+'%';f.n.style.top=e.position.y+'%'}}break;
+ case'COMBAT_END':scene.live=false;arena.classList.remove('cbl-live');for(const v of scene.units.values()){clearCast(v);v.animation?.cancel();if(!v.dead)state(v,'idle')}break;
  }
+ wake();
 }
-function combatEvent(e,opts={}){
- try{BASE_EVENT?.(e,opts)}catch(err){console.warn('Cellbound v3 visual event skipped',e?.type,err)}
- try{physicalEvent(e,opts)}catch(err){console.warn('Cellbound v4 physical visual event skipped',e?.type,err)}
+let raf=0,last=0;
+function wake(){if(!raf)raf=requestAnimationFrame(frame)}
+function frame(now){
+ raf=0;if(now-last<32){wake();return}last=now;
+ let active=false;
+ for(const [arena,scene] of scenes){
+  if(!arena.isConnected){for(const u of scene.units.values()){u.animation?.cancel();clearCast(u)}scenes.delete(arena);continue}
+  const bounds=arena.getBoundingClientRect(),positions=new Map();
+  const pos=el=>{if(!positions.has(el))positions.set(el,center(el));return positions.get(el)};
+  for(const [el,u] of scene.units){if(el.isConnected)pos(el);if(u.target?.isConnected)pos(u.target)}
+  for(const [el,u] of scene.units){
+   if(!el.isConnected){scene.units.delete(el);continue}
+   if(u.until&&now>=u.until&&!u.dead){u.until=0;state(u,controlled(u)?'controlled':'idle')}
+   if(u.target?.isConnected&&!u.dead&&u.state!=='moving'){
+    const d=direction(pos(el),pos(u.target));el.style.setProperty('--cbl-facing',d.angle+'deg');
+   }
+   if(u.cast){
+    const progress=clamp((now-u.cast.start)/u.cast.duration,0,1);el.style.setProperty('--cbl-charge',String(progress));
+    if(u.state==='channeling'&&u.target?.isConnected){
+     if(!u.cast.beam){const n=document.createElement('i');n.className='cbl-fx connection channel '+family(u.cast.event,u);n.style.setProperty('--cbl-accent',u.p.accent);scene.layer.appendChild(n);u.cast.beam=n}
+     const a=pos(el),b=pos(u.target),d=direction(a,b),n=u.cast.beam;n.style.left=a.x-bounds.left+'px';n.style.top=a.y-bounds.top+'px';n.style.width=d.len+'px';n.style.setProperty('--cbl-angle',d.angle+'deg');
+    }else if(u.target?.isConnected&&u.target!==el&&progress>.7&&!reduce()){
+     if(!u.cast.orb){const n=document.createElement('i');n.className='cbl-fx cast-orb '+family(u.cast.event,u);n.style.setProperty('--cbl-accent',kind(u.action||u.cast.event,u)==='heal'?'#86f3b7':u.p.accent);scene.layer.appendChild(n);u.cast.orb=n}
+     const a=pos(el),b=pos(u.target),t=(progress-.7)/.3,n=u.cast.orb;
+     n.style.left=(a.x+(b.x-a.x)*t-bounds.left)+'px';n.style.top=(a.y+(b.y-a.y)*t-bounds.top)+'px';
+    }
+   }
+  }
+  for(const f of scene.effects){
+   if(now>=f.ends||f.target&&!f.target.isConnected){f.n.remove();scene.effects.delete(f);continue}
+   if(f.target){const b=pos(f.target),a=f.source?.isConnected?pos(f.source):b,d=direction(a,b);
+    const connection=f.n.classList.contains('connection');f.n.style.left=(connection?a.x:b.x)-bounds.left+'px';f.n.style.top=(connection?a.y:b.y)-bounds.top+'px';
+    if(connection){f.n.style.width=d.len+'px';f.n.style.setProperty('--cbl-angle',d.angle+'deg')}
+   }
+  }
+  active=active||scene.live||scene.effects.size>0;
+ }
+ if(active)wake()
 }
-function init(){
- document.querySelectorAll(ARENA_SELECTOR).forEach(mount);scanUnits();
- const observer=new MutationObserver(records=>{for(const rec of records)for(const node of rec.addedNodes){if(node.nodeType!==1)continue;if(node.matches?.(ARENA_SELECTOR))mount(node);if(node.matches?.(UNIT_SELECTOR))markProfile(node);node.querySelectorAll?.(ARENA_SELECTOR).forEach(mount);node.querySelectorAll?.(UNIT_SELECTOR).forEach(markProfile)}});
- observer.observe(document.documentElement,{childList:true,subtree:true})
-}
-FX.combatEvent=combatEvent;
-FX.physicalEvent=physicalEvent;
-FX.visualProfiles=PROFILES;
-FX.VERSION_PHYSICAL=VERSION;
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
+function combatEvent(e,opts={}){try{livingEvent(e,opts)}catch(error){console.warn('Living combat visual skipped',e?.type,error)}}
+FX.mount=mount;FX.combatEvent=combatEvent;FX.physicalEvent=combatEvent;
+FX.visualProfiles=PROFILES;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.1.0';FX.living=true;
+// Legacy public entry points remain callable but no longer duplicate shared reactions.
+for(const name of ['impact','heal','death','spawn','interrupt']){const old=FX[name];FX[name]=function(el,...args){if(el?.closest?.('.cbl-scene'))return;return old?.(el,...args)}}
 })();

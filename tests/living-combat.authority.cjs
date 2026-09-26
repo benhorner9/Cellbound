@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
+const sandbox={window:{},console};vm.createContext(sandbox);vm.runInContext(fs.readFileSync(path.join(__dirname,'..','combat-reborn-v1.js'),'utf8'),sandbox);
+const party=Array.from({length:10},(_,i)=>({id:'raid-'+i,name:'Raider '+i,class:i%5===0?'Warrior':i%5===1?'Priest':'Mage',spec:i%5===0?'Protection':i%5===1?'Holy':'Arcane',power:10,level:15}));
+const options={party,encounter:{id:'living-raid',kind:'boss',enemies:['Boss'],enemyHealth:9000,mechanics:[]},seed:'living-raid-formation',maxDurationMs:10000};
+const run=()=>sandbox.window.CellboundCombatReborn.simulate(options),a=run(),b=run();
+assert.equal(JSON.stringify(a.events),JSON.stringify(b.events),'formation remains deterministic');
+const initial=a.events.find(e=>e.type==='COMBAT_START').payload.units;
+assert.equal(initial.length,11);
+assert(initial.every(u=>u.position.x>=0&&u.position.x<=100&&u.position.y>=0&&u.position.y<=100),'raid begins inside arena');
+assert.equal(new Set(initial.filter(u=>u.id.startsWith('p-')).map(u=>u.position.x+':'+u.position.y)).size,10,'raid initial positions are distinct');
+const tankMoves=a.events.filter(e=>e.type==='MOVEMENT_END'&&e.result==='tank positioning');
+assert(tankMoves.some(e=>e.source==='p-raid-0')&&tankMoves.some(e=>e.source==='p-raid-5'),'both tanks receive authoritative formation paths');
+const roles=['p-raid-0','p-raid-5'].map(id=>tankMoves.find(e=>e.source===id).position);
+assert(Math.hypot(roles[0].x-roles[1].x,roles[0].y-roles[1].y)>2,'tanks do not share a formation slot');
+console.log('Living combat authority checks passed: deterministic events, legal 10-player starting positions, separate tank slots.');

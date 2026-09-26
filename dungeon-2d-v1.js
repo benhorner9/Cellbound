@@ -605,6 +605,8 @@ function targetPulse(id){
  const u=$('[data-unit="'+id+'"]');if(!u)return;u.classList.add('targeted');setTimeout(()=>u.classList.remove('targeted'),420)
 }
 function projectile(from,to,kind='physical',ms=320){
+ if(window.CellboundCombatFX?.living)return;
+
  const arena=$('#cb2dArena'),a=point(from),b=point(to);if(!arena||!a||!b)return;
  const dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI;
  const e=document.createElement('i');e.className='cb2d-projectile '+kind;e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.transform='rotate('+angle+'deg)';arena.appendChild(e);
@@ -1422,8 +1424,8 @@ function cbrStatusTargets(id){
 function renderRebornEvent(e,result,replayMode=false){
  if(!run||!e)return;
  rebornDebugEvent(e,result);
+ window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#cb2dArena'),speed:()=>replayMode?(run?.replaySpeed||1):(run?.speed||1)});
  if(window.CellboundCombatStatuses?.handle(e,{resolve:cbrStatusTargets,speed:()=>run?.speed||1}))return;
- window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#cb2dArena')});
  const srcChar=rebornPlayerByUnit(e.source),targetChar=rebornPlayerByUnit(e.target),enemyIdx=rebornEnemyIndex(e.target),sourceEnemyIdx=rebornEnemyIndex(e.source);
  switch(e.type){
   case'COMBAT_START':{
@@ -1431,7 +1433,9 @@ function renderRebornEvent(e,result,replayMode=false){
    if(!replayMode&&['boss','final'].includes(String(currentStageDef()?.kind||'')))window.CellboundCombatFX?.boss?.(arena,currentStageDef()?.title||'Boss');
    status(replayMode?'Replay started':'Combat live');log((replayMode?'Replay: ':'')+'Combat begins.');break;
   }
+  case'MOVEMENT_END':{if(window.CellboundCombatFX?.ownsMovement)break;const u=$('[data-unit="'+e.source+'"]');if(u&&e.position)applyUnitPosition(u,e.position.x,e.position.y,true);break;}
   case'MOVEMENT_START':
+   if(window.CellboundCombatFX?.ownsMovement)break;
    if(e.payload?.to)move(e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||360);
    if(srcChar&&e.result==='line of sight'){const rr=role(srcChar);act(rr==='tank'?'tank':rr==='healer'?'healer':'dps',srcChar.name+' · Repositioning for line of sight')}
    break;
@@ -1515,7 +1519,7 @@ function renderRebornEvent(e,result,replayMode=false){
   case'MECHANIC_TELEGRAPH':
    rebornTelegraph(e);status((e.ability||'Mechanic')+' incoming');break;
   case'MECHANIC_RESOLVE':
-   clearRebornTelegraph(e.payload?.token,'impact');requestAnimationFrame(()=>{if(run){const i=enemyIndex();if(i>=0)settleFormation(i);else regroup()}});break;
+   clearRebornTelegraph(e.payload?.token,'impact');break; // Engine movement events own regrouping.
   case'GROUND_HAZARD_SPAWNED':
    spawnGroundHazardVisual(e);status((e.ability||'Ground hazard')+' active');log((e.ability||'A ground hazard')+' remains active.');break;
   case'GROUND_HAZARD_TICK':{
