@@ -49,15 +49,15 @@ jobs:
           npm install --no-save --package-lock=false playwright@1.51.1
           npx playwright install --with-deps chromium webkit
 
-      - name: Living combat browser regression
-        run: |
-          node tests/living-combat.browser.cjs
-          CELLBOUND_TEST_ENGINE=webkit node tests/living-combat.browser.cjs
-
       - name: Living world browser regression
         run: |
           node tests/living-world.browser.cjs
           CELLBOUND_TEST_ENGINE=webkit node tests/living-world.browser.cjs
+
+      - name: Living combat browser regression
+        run: |
+          node tests/living-combat.browser.cjs
+          CELLBOUND_TEST_ENGINE=webkit node tests/living-combat.browser.cjs
 
       - name: Save world review captures
         if: always()
