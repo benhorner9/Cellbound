@@ -131,3 +131,7 @@
 .cbl-casting[data-cast-style="brace"] .cb-combat-portrait{scale:.97}
 .cbl-casting[data-cast-style="hostile"] .cb-combat-boss-portrait{scale:1.035}
 @media(prefers-reduced-motion:reduce){.cbl-casting :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait){rotate:0deg!important;scale:1!important;translate:0 0!important}}
+.cbl-fx.cast-orb.rubble{width:46px;height:7px;border:1px solid #b89970;border-radius:1px;background:#6e5540;rotate:24deg;box-shadow:0 8px 10px #0006}
+.cbl-room[data-wear="1"] .cbl-prop.table,.cbl-room[data-wear="2"] .cbl-prop.table,.cbl-room[data-wear="3"] .cbl-prop.table{rotate:8deg}
+.cbl-room[data-wear="2"] .cbl-prop.window,.cbl-room[data-wear="3"] .cbl-prop.window{opacity:.1}
+.cbl-room[data-wear="3"] .cbl-prop{stroke-dasharray:8 3}

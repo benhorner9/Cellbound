@@ -375,7 +375,7 @@ function move(id,x,y,ms){
  requestAnimationFrame(()=>applyUnitPosition(e,x,y,false))
 }
 function syncUnitPixelPositions(){
- $('[data-unit]').forEach(e=>applyUnitPosition(e,Number(e.dataset.x)||50,Number(e.dataset.y)||50,true))
+ $$('[data-unit]').forEach(e=>applyUnitPosition(e,Number(e.dataset.x)||50,Number(e.dataset.y)||50,true))
 }
 window.addEventListener('resize',()=>{if(run)requestAnimationFrame(syncUnitPixelPositions)},{passive:true});
 function faceUnit(id,targetId){

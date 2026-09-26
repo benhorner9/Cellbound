@@ -86,7 +86,7 @@ function hazard(scene,e){
  const radius=Math.max(0,Number(e.payload.radius)||0);
  n.style.left=e.position.x+'%';n.style.top=e.position.y+'%';n.style.width=radius*2+'%';n.style.height=radius*2+'%';
  if(/plate|porcelain/i.test(e.ability||''))n.classList.add('porcelain');
- if(/collapse|beam|debris/i.test(e.ability||''))n.classList.add('rubble');
+ if(/collapse|beam|debris|floor/i.test(e.ability||''))n.classList.add('rubble');
  scene.arena.appendChild(n);scene.hazards.set(id,{node:n,end:performance.now()+(Number(e.payload.duration)||10000)/scene.speed});
 }
 function mechanic(scene,e){
@@ -102,11 +102,11 @@ function mechanic(scene,e){
   scene.warnings.delete(token);
  }
 }
-function framing(scene){
+function framing(scene,reposition=false){
  const count=[...scene.units.values()].filter(u=>!u.dead).length;
  scene.arena.dataset.density=count>20?'crowded':count>10?'raid':'party';
  // Preserve normalized authoritative positions through rotation and split-screen resizing.
- for(const u of scene.units.values())if(u.position)setPosition(scene,u,u.position);
+ if(reposition)for(const u of scene.units.values())if(u.position)setPosition(scene,u,u.position);
 }
 function actor(el){return el?.querySelector('.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot')||el?.querySelector(':scope > i:first-child')||el}
 function profile(el){return Object.entries(PROFILES).find(([key])=>el.classList.contains(key))?.[1]||ENEMY}
@@ -128,7 +128,7 @@ function mount(target){
   const layer=document.createElement('div');layer.className='cbl-effects';layer.setAttribute('aria-hidden','true');arena.appendChild(layer);
   scenes.set(arena,{arena,layer,units:new Map(),effects:new Set(),hazards:new Map(),warnings:new Map(),time:0,speed:1,live:true});
   arena.classList.add('cbl-scene');
-  const scene=scenes.get(arena);scene.resize=new ResizeObserver(()=>framing(scene));scene.resize.observe(arena);
+  const scene=scenes.get(arena);scene.resize=new ResizeObserver(()=>framing(scene,true));scene.resize.observe(arena);
  }
  return arena
 }
@@ -169,7 +169,7 @@ function kind(e,u){
 }
 function family(e,u){
  const a=String(e.ability||'').toLowerCase();
- for(const [re,value] of [[/frost|ice/,'frost'],[/fire|flame/,'fire'],[/lightning|chain/,'lightning'],[/shadow|drain/,'shadow'],[/plate/,'plate'],[/nail/,'steel']])if(re.test(a))return value;
+ for(const [re,value] of [[/frost|ice/,'frost'],[/fire|flame/,'fire'],[/lightning|chain/,'lightning'],[/shadow|drain/,'shadow'],[/plate/,'plate'],[/nail/,'steel'],[/collapse|shattered floor|falling beam/,'rubble']])if(re.test(a))return value;
  return u?.p.projectile||'hostile'
 }
 function effect(scene,cls,source,target,life=320){
@@ -247,7 +247,7 @@ function livingEvent(e,opts={}){
  case'ADD_SPAWNED':requestAnimationFrame(()=>{const el=resolve(e.target,opts,arena);if(el){const spawned=unit(scene,el);enemyProfile(spawned,e.payload||{});setPosition(scene,spawned,e.position);framing(scene);effect(scene,'spawn',null,el,650)}});break;
  case'INTERACTION_REQUIRED':if(/screech/i.test(e.ability||''))effect(scene,'screech',null,u?.el||t?.el,800);break;
  case'ENRAGE':if(u)u.el.dataset.aura='enrage';break;
- case'PHASE_CHANGE':emphasis(scene,'phase');if(u){effect(scene,'phase',null,u.el,1000);u.el.dataset.intensity='5'}break;
+ case'PHASE_CHANGE':emphasis(scene,'phase');if(scene.room)scene.room.dataset.wear=String(Math.min(3,Number(scene.room.dataset.wear||0)+1));if(u){effect(scene,'phase',null,u.el,1000);u.el.dataset.intensity='5'}break;
  case'GROUND_HAZARD_SPAWNED':
   if(/plate|collapse|beam|debris|floor/i.test(e.ability||'')&&e.position){const f=effect(scene,'debris',null,null,650);if(f){f.n.style.left=e.position.x+'%';f.n.style.top=e.position.y+'%'}}break;
  case'COMBAT_END':for(const h of scene.hazards.values())h.node.remove();scene.hazards.clear();scene.warnings.clear();scene.live=false;arena.classList.remove('cbl-live');for(const v of scene.units.values()){clearCast(v);v.animation?.cancel();if(!v.dead)state(v,'idle')}break;
@@ -284,7 +284,7 @@ function frame(now){
      if(!u.cast.orb){const n=document.createElement('i');n.className='cbl-fx cast-orb '+family(u.cast.event,u);n.style.setProperty('--cbl-accent',kind(u.action||u.cast.event,u)==='heal'?'#86f3b7':u.p.accent);scene.layer.appendChild(n);u.cast.orb=n}
      const a=pos(el),b=u.cast.destination?{x:bounds.left+u.cast.destination.x/100*bounds.width,y:bounds.top+u.cast.destination.y/100*bounds.height}:pos(u.target),travelFraction=Math.min(1,u.p.travel/scene.speed/u.cast.duration),t=clamp((progress-1+travelFraction)/travelFraction,0,1),n=u.cast.orb;
      n.style.setProperty('--cbl-angle',direction(a,b).angle+'deg');
-     n.style.left=(a.x+(b.x-a.x)*t-bounds.left)+'px';n.style.top=(a.y+(b.y-a.y)*t-bounds.top-(family(u.cast.event,u)==='plate'?Math.sin(t*Math.PI)*24:0))+'px';
+     n.style.left=(family(u.cast.event,u)==='rubble'?b.x-bounds.left:a.x+(b.x-a.x)*t-bounds.left)+'px';n.style.top=(family(u.cast.event,u)==='rubble'?b.y-bounds.top-60*(1-t):a.y+(b.y-a.y)*t-bounds.top-(family(u.cast.event,u)==='plate'?Math.sin(t*Math.PI)*24:0))+'px';
     }
    }
   }
