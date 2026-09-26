@@ -22,7 +22,7 @@ const root=path.resolve(__dirname,'..');
  const portraitAnimated=await page.evaluate(()=>document.querySelector('[data-unit="p-t"] .cb-combat-portrait').getAnimations().length>0);
  assert(portraitAnimated,'animate the visible portrait');
  assert.equal(await page.locator('.cbl-fx.contact').count(),1,'one impact owner');
- await page.waitForTimeout(600);
+ await page.waitForFunction(()=>document.querySelectorAll('.cbl-fx.contact').length===0,{},{timeout:5000});
  await page.evaluate(()=>send('DAMAGE_DEALT','p-t','e-0',{}, {amount:0,result:'miss'}));
  assert.equal(await page.locator('.cbl-fx.contact').count(),0,'miss cannot hit');
  await page.evaluate(()=>send('DEBUFF_APPLIED','e-0','p-t',{}, {statusEffects:[{id:'stun',cc:'stun'}]}));
