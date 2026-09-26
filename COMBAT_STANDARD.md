@@ -604,10 +604,26 @@ Station, quest-based fights (including tutorial and Fractured Ages), Twelve Belo
 and PvP presentation. The legacy world-boss adapter uses the same entry point but
 is intentionally not in the current production bundle.
 
-Limits of this milestone: bespoke room art, a full enemy portrait catalogue,
-automatic camera framing, complete enemy archetype authoring and device-measured
-iPad frame-rate certification remain later work. This foundation keeps the event
-and extension contract ready for them.
+The immersion layer adds shared vector room dressing for Manor, Ashen Vault,
+Hollow Sanctum, Chaos Canyon, Blackout Station, Fractured Ages and outdoor fights.
+Decorations never add collision. Eight lightweight monster portrait families fill
+missing artwork; dedicated boss portraits take priority. Encounter authors may
+provide `visualArchetype` (boss, elite, ranged, caster, add, fast, bruiser, healer)
+in enemy/add definitions to select motion without changing targeting or AI.
+
+Ground hazards are shared, sized from the exact authoritative radius, and removed
+only by GROUND_HAZARD_EXPIRED or COMBAT_END. Expiring styling remains dangerous.
+Existing mechanic adapters retain their cone, line and puzzle geometry; shared
+incoming/imminent/impact styling annotates that geometry. No inferred safe areas.
+Camera emphasis is limited to entry/phase/death, sub-percent scale, 2.5-second
+cooldown and disabled in reduced motion. Density adapts portrait size; resize
+observation reapplies engine coordinates instead of leaving old pixel positions.
+
+Browser regression covers Chromium and WebKit at tablet dimensions, including
+portrait fallback, hazard lifecycle and orientation resizing. Real iPad/iPhone
+frame-rate and touch testing still require physical devices. Bespoke painted
+assets can replace vector portraits/props through the same shared system; actual
+audio playback remains a subscriber to the existing sound hooks.
 
 Verification: `npm run build` runs the engine and formation regressions. Run
 `node tests/living-combat.browser.cjs` with Playwright installed for presentation

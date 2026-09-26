@@ -1523,7 +1523,7 @@ function renderRebornEvent(e,result,replayMode=false){
   case'MECHANIC_RESOLVE':
    clearRebornTelegraph(e.payload?.token,'impact');break; // Engine movement events own regrouping.
   case'GROUND_HAZARD_SPAWNED':
-   spawnGroundHazardVisual(e);status((e.ability||'Ground hazard')+' active');log((e.ability||'A ground hazard')+' remains active.');break;
+   if(!window.CellboundCombatFX?.ownsHazards)spawnGroundHazardVisual(e);status((e.ability||'Ground hazard')+' active');log((e.ability||'A ground hazard')+' remains active.');break;
   case'GROUND_HAZARD_TICK':{
    const hz=run?.groundHazards?.[String(e.payload?.hazardId||'')];if(hz){hz.classList.remove('tick');requestAnimationFrame(()=>hz.classList.add('tick'));setTimeout(()=>hz?.classList?.remove('tick'),180)}
    break;
