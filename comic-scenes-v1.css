@@ -34,3 +34,26 @@ body.cbcomic-open{overflow:hidden}
 @media(max-width:700px){.cbcomic-backdrop{padding:0}.cbcomic-shell{border-radius:0;min-height:100dvh}.cbcomic-head{padding:12px 14px}.cbcomic-head h2{font-size:24px}.cbcomic-page{grid-template-columns:1fr 1fr;grid-template-rows:220px 165px;padding:6px;gap:5px}.cbcomic-panel:first-child{grid-column:1/3}.cbcomic-panel-caption{left:10px;right:10px;bottom:9px}.cbcomic-panel-caption span{font-size:10px}.cbcomic-panel-caption b{font-size:16px}.cbcomic-panel-icon{font-size:28px}.cbcomic-party-strip{padding:6px}.cbcomic-party-member span{display:none}.cbcomic-dialogue{grid-template-columns:1fr;padding:10px}.cbcomic-speaker{border-right:0;border-bottom:1px solid rgba(212,173,101,.15);padding:0 0 8px}.cbcomic-speaker>span{width:40px;height:40px}.cbcomic-line>p{font-size:14px}.cbcomic-controls{grid-column:auto}.cbcomic-choices{grid-template-columns:1fr}.cbcomic-choices button{min-height:44px}.cbcomic-actions button{flex:1}.cbcomic-page-mark{display:none}}
 
 .cbcomic-panel.has-art img{filter:saturate(.96) contrast(1.03)}.cbcomic-panel.has-art .cbcomic-panel-caption span{color:#eef2f3}.cbcomic-panel.has-art .cbcomic-panel-caption b{color:#fff5df}@media(max-width:700px){.cbcomic-panel-caption{padding:7px 8px;max-width:calc(100% - 20px)}}
+
+
+/* Progressive comic cutscenes — captions reveal one panel at a time */
+.cbcomic-panel-caption,.cbcomic-panel-speaker,.cbcomic-panel-icon{transition:opacity .22s ease,transform .22s ease,filter .22s ease}
+.cbcomic-panel.reveal-pending .cbcomic-panel-caption,
+.cbcomic-panel.reveal-pending .cbcomic-panel-speaker,
+.cbcomic-panel.reveal-pending .cbcomic-panel-icon{opacity:0;transform:translateY(10px);pointer-events:none}
+.cbcomic-panel.reveal-visible .cbcomic-panel-caption,
+.cbcomic-panel.reveal-visible .cbcomic-panel-speaker,
+.cbcomic-panel.reveal-visible .cbcomic-panel-icon{opacity:1;transform:translateY(0)}
+.cbcomic-panel.reveal-current{box-shadow:inset 0 0 0 2px rgba(220,184,101,.52),0 0 24px rgba(212,173,101,.1)}
+.cbcomic-panel.reveal-current img{filter:saturate(1.04) contrast(1.06) brightness(1.03)}
+.cbcomic-choices[hidden]{display:none!important}
+.cbcomic-shell.panel-only .cbcomic-dialogue{grid-template-columns:1fr}
+.cbcomic-shell.panel-only .cbcomic-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:end}
+.cbcomic-shell.panel-only .cbcomic-choice-reply{grid-column:1/-1}
+.cbcomic-shell.panel-only .cbcomic-choices{align-self:end}
+.cbcomic-shell.panel-only .cbcomic-actions{align-self:end}
+.cbcomic-backdrop[data-theme="bell"]{--comic-gold:#d8b367;--comic-line:#7f6741}
+.cbcomic-backdrop[data-theme="bell"] .cbcomic-head{background:linear-gradient(90deg,#17130d,#0a1117 56%,#11101b)}
+.cbcomic-backdrop[data-theme="bell"] .cbcomic-page{background:#17120e}
+@media(max-width:980px){.cbcomic-shell.panel-only .cbcomic-controls{grid-template-columns:1fr}.cbcomic-shell.panel-only .cbcomic-choices{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.cbcomic-shell.panel-only .cbcomic-controls{grid-template-columns:1fr}.cbcomic-shell.panel-only .cbcomic-choices{grid-template-columns:1fr}.cbcomic-shell.panel-only .cbcomic-actions{display:grid;grid-template-columns:1fr 1fr}.cbcomic-shell.panel-only .cbcomic-actions button:only-child{grid-column:1/-1}}
