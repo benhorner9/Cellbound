@@ -419,7 +419,7 @@ function renderReadyGate(){
   (ready.startAt?'':'<button class="mr-ready-button '+(mineReady?'is-ready':'')+'" data-raid-ready="'+(!mineReady)+'">'+(mineReady?'READY ✓ · CANCEL':session.stage==='butler'?'READY TO SET SAIL':'READY UP')+'</button>')+
   (!ready.startAt&&mineReady&&!otherReady?'<p class="mr-ready-status">Waiting for the other commander…</p>':'')+
   '<footer><span>Both clients use the same server start timestamp.</span><b>3 SECOND COUNTDOWN</b></footer></section>';
- if(session.stage==='butler')window.CellboundLivingWorld?.harbour?.(root.querySelector('.mr-ready-shell'),memberRows(),Boolean(ready.startAt));
+ if(session.stage==='butler')window.CellboundLivingWorld?.harbour?.(root.querySelector('.mr-ready-shell'),memberRows(),Boolean(ready.startAt),Math.max(0,3000-remaining)/1000);
  root.querySelector('[data-ready-close]')?.addEventListener('click',()=>closeRaid());
  root.querySelector('[data-raid-ready]')?.addEventListener('click',e=>setRaidReady(e.currentTarget.dataset.raidReady==='true'));
  if(ready.startAt){

@@ -2,7 +2,7 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
 const root=path.resolve(__dirname,'..');
 (async()=>{
  const browser=await(process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium).launch({headless:true});
- const page=await browser.newPage({viewport:{width:1024,height:768}}),errors=[];page.on('pageerror',e=>errors.push(String(e)));
+ const page=await browser.newPage({viewport:{width:1024,height:768}}),errors=[];await page.bringToFront();page.on('pageerror',e=>errors.push(String(e)));
  await page.route('https://cellbound.test/**',async route=>{const file=path.resolve(root,'dist',new URL(route.request().url()).pathname.slice(1));if(!file.startsWith(path.resolve(root,'dist')+path.sep)||!fs.existsSync(file))return route.fulfill({status:404,body:''});await route.fulfill({path:file})});
  let html=fs.readFileSync(path.join(root,'dist/guild.html'),'utf8').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,'');
  await page.setContent(html.replace('<head>','<head><base href="https://cellbound.test/">'));

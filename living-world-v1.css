@@ -30,3 +30,13 @@
 .lw-scene[data-station="alchemy"] .lw-light{background:radial-gradient(ellipse at 80% 70%,#65af933b,transparent 50%),linear-gradient(90deg,#080f17c5,transparent 70%)}
 .lw-scene[data-station="enchanting"] .lw-light{background:radial-gradient(ellipse at 50% 80%,#a886db45,transparent 55%),linear-gradient(90deg,#080f17c5,transparent 70%)}
 .lw-scene[data-station="blacksmithing"] .lw-light{background:radial-gradient(ellipse at 18% 70%,#dc74344a,transparent 45%),linear-gradient(90deg,#080f1785,transparent 70%)}
+
+.lw-departing .lw-boat{animation-delay:var(--departure-elapsed,0s)}
+/* Functional surfaces become counters, shelves and noticeboards, without moving controls. */
+.lw-location[data-world-location="market"] .tp-shell{border:1px solid #96825d44;border-top:9px solid #756749;border-radius:7px;background:linear-gradient(110deg,#272d25,#142026);box-shadow:0 12px 26px #0004}
+.lw-location[data-world-location="market"] .tp-market-bar{background:repeating-linear-gradient(90deg,#546b4b44 0 55px,#a2916240 55px 110px);border-bottom:3px solid #94805e66}
+.lw-location[data-world-location="market"] .tp-result-card{background:linear-gradient(110deg,#252c26,#182126);border-bottom-color:#9b855b55}
+.lw-location[data-world-location="hall"] .panel{border:1px solid #99825955!important;box-shadow:inset 0 0 0 4px #614b2720,0 8px 15px #0003}
+.lw-location[data-world-location="vault"] .bank-overview-strip{border-top:4px solid #8f7c5755!important}
+.mr-ready-shell:has(.lw-scene){display:flex;flex-direction:column;gap:12px;min-height:100dvh;padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+.mr-ready-shell>.lw-scene{width:min(980px,100%);flex-shrink:0;margin-bottom:0}.mr-ready-shell:has(.lw-scene) .mr-ready-wait,.mr-ready-shell:has(.lw-scene) .mr-ready-count{margin-top:0;align-self:center}.mr-ready-shell:has(.lw-scene) .mr-ready-count strong{font-size:3rem}.mr-ready-shell:has(.lw-scene) .mr-ready-button{position:sticky;bottom:12px;z-index:6;flex-shrink:0}

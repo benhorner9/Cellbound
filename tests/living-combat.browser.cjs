@@ -4,7 +4,7 @@ const fs=require('fs'),path=require('path'),assert=require('node:assert/strict')
 const root=path.resolve(__dirname,'..');
 (async()=>{
  const browser=await (process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium).launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
- const page=await browser.newPage({viewport:{width:1024,height:768}}),errors=[];
+ const page=await browser.newPage({viewport:{width:1024,height:768}}),errors=[];await page.bringToFront();
  page.on('pageerror',e=>{errors.push(String(e));console.error(e.stack||String(e))});
  await page.emulateMedia({reducedMotion:'no-preference'});
  page.on('console',msg=>{if(/visual skipped|visual recovered/.test(msg.text()))errors.push(msg.text())});

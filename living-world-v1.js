@@ -72,11 +72,11 @@ function staging(){
  for(const [selector,id]of mappings){const host=document.querySelector(selector);if(!host)continue;host.classList.add('lw-staging');scene(host,{...stages[id],tag:'EXPEDITION · PARTY ASSEMBLED'});const start=host.querySelector('button[data-start],button[data-fa-start],button[data-tb-start]');if(start&&!start.disabled&&!start.dataset.worldLabel){start.textContent=stages[id].cta;start.dataset.worldLabel='1'}}
  const sheet=document.querySelector('#characterDetail .cb-sheet');if(sheet){sheet.classList.add('lw-armoury');sheet.setAttribute('aria-label','Armoury · character equipment and progression')}
 }
-function harbour(host,rows=[],departing=false){
+function harbour(host,rows=[],departing=false,elapsed=0){
  const old=document.querySelector('#raids > .lw-scene');if(old&&host!==document.getElementById('raids'))old.remove();
  const chars=rows.length?rows.flatMap((r,i)=>(r.party_snapshot||[]).map(c=>({...c,_worldParty:i,_worldCommander:r.guild_label||'Party '+(i+1)}))):party();
  const el=scene(host,{...locations.raids,copy:rows.length>1?'Both parties are gathered. Confirm readiness below.':'Your party waits at the dock for the second commander.'},chars);
- el?.classList.toggle('lw-departing',departing&&!reduce());
+ el?.classList.toggle('lw-departing',departing&&!reduce());if(el)el.style.setProperty('--departure-elapsed',-Math.min(2.8,Math.max(0,elapsed))+'s');
  if(el&&departing)el.querySelector('header p').textContent='Setting sail for the Manor. Combat begins at the shared start time.';
 }
 window.CellboundLivingWorld={refresh,scene,harbour,locations,stages,partyMarkup:()=>heroes(party(),new Set(party().map(c=>String(c.id)))),workstation:(c,prof)=>{crafter=c;craftName=prof?.name;schedule()},version:'1.0.0'};
