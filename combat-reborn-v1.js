@@ -1536,8 +1536,9 @@ function enemyBasicAttack(ctx,e){
  setAggro(ctx,e,target,randomTarget?'random targeting':'threat');
  const range=Math.max(2,Number(e.attackRange)||5);
  const crowded=e.kind!=='boss'&&range<=7&&ctx.enemies.some(other=>other!==e&&other.alive&&other.target===target.id&&dist(other.position,e.position)<2.4);
- if(!inRange(e,target,range)||!hasLineOfSight(ctx,e,target)||crowded){
-  const destination=range>7?visibleCastPoint(ctx,e,target,range,e.position):nearestMeleePoint(target,e,ctx);
+ const separated=range<=7?nearestMeleePoint(target,e,ctx):null;
+ if(!inRange(e,target,range)||!hasLineOfSight(ctx,e,target)||(crowded&&dist(e.position,separated)>1)){
+  const destination=range>7?visibleCastPoint(ctx,e,target,range,e.position):separated;
   moveTo(ctx,e,destination,320,!hasLineOfSight(ctx,e,target)?'line of sight':range>7?'ranged position':'chase target');
   e.nextAttack=ctx.time+450;return;
  }

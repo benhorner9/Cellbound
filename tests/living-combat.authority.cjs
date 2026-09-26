@@ -13,3 +13,7 @@ assert(tankMoves.some(e=>e.source==='p-raid-0')&&tankMoves.some(e=>e.source==='p
 const roles=['p-raid-0','p-raid-5'].map(id=>tankMoves.find(e=>e.source===id).position);
 assert(Math.hypot(roles[0].x-roles[1].x,roles[0].y-roles[1].y)>2,'tanks do not share a formation slot');
 console.log('Living combat authority checks passed: deterministic events, legal 10-player starting positions, separate tank slots.');
+
+const pack=sandbox.window.CellboundCombatReborn.simulate({...options,encounter:{id:'crowded-pack',kind:'event',enemies:Array.from({length:20},(_,i)=>({name:'Thrall '+i,classification:'trash'})),enemyHealth:10000,scaling:{enemyDamage:.05},mechanics:[]},maxDurationMs:10000});
+assert(pack.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source?.startsWith('e-')&&e.timestamp>5000),'crowded enemies must still attack after settling');
+console.log('Crowded enemy pack continues attacking after separation.');
