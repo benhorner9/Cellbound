@@ -1408,7 +1408,9 @@ function clearGroundHazardVisual(id){
  if(run?.groundHazards)delete run.groundHazards[key]
 }
 function rebornDebugEvent(e,result){
- if(!(/[?&]combatDebug=1\b/.test(location.search)||localStorage.getItem('cellboundCombatDebug')==='1'))return;
+ let debug=/[?&]combatDebug=1\b/.test(location.search);
+ try{debug=debug||localStorage.getItem('cellboundCombatDebug')==='1'}catch(_){}
+ if(!debug)return;
  let panel=$('#cbrDebugPanel');if(!panel){panel=document.createElement('pre');panel.id='cbrDebugPanel';panel.className='cbr-debug';$('#cb2dArena')?.appendChild(panel)}
  const snap=window.CellboundCombatReborn?.debugSnapshot?.(result)||{};
  panel.textContent=['COMBAT REBORN '+(snap.version||''),'t '+(e?.timestamp||0)+'ms · '+(e?.type||'event'),(e?.source||'—')+' → '+(e?.target||'—'),e?.ability||e?.result||'', 'Events '+(snap.events||0)].join('\n');

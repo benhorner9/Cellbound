@@ -71,6 +71,8 @@ const root=path.resolve(__dirname,'..');
   window.testPlayback=CellboundDungeon2D.playSharedEncounter({party:window.testParty,encounter,result,theme:'manor'});
  });
  await page.waitForTimeout(2400);
+ await page.screenshot({path:'/tmp/cellbound-living-combat.png'});
+ assert.deepEqual(errors,[]);
  assert.equal(await page.locator('#cb2dArena .cbl-unit').count(),11,'production raid uses shared controller');
  assert.equal(await page.locator('#cb2dArena .cb-combat-portrait').count(),10,'all raid portraits are visible');
  assert.equal(await page.locator('#cb2dArena .cb-combat-boss-portrait img').getAttribute('src'),'./assets/manor/manor-butler.webp');
