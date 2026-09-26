@@ -166,3 +166,6 @@
 #trading.lw-room .tp-category-list button{font-size:13px}
 @media(max-width:700px){#roster.lw-room #rosterGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:18px 10px!important}#roster.lw-room .roster-character-card{padding:14px 2px 8px!important}#roster.lw-room .roster-card-flags{gap:3px}#roster.lw-room .roster-card-flags .role-tag,#roster.lw-room .roster-state{font-size:9px!important}#roster.lw-room .roster-card-metrics span{font-size:9px}#roster.lw-room .roster-card-actions>button{font-size:10px!important}}
 @media(max-width:360px){#roster.lw-room #rosterGrid{grid-template-columns:1fr!important}}
+/* Clip only inert scenery; dropdowns and scrollable preparation retain their reach. */
+.lw-room{overflow:visible}
+.lw-staging.lw-room{overflow:auto}
