@@ -1,9 +1,9 @@
 /* Run after npm run build. Requires Playwright and its Chromium browser. */
-const {chromium}=require('playwright');
+const {chromium,webkit}=require('playwright');
 const fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');
 (async()=>{
- const browser=await chromium.launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
+ const browser=await (process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium).launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
  const page=await browser.newPage({viewport:{width:1024,height:768}}),errors=[];
  page.on('pageerror',e=>errors.push(String(e)));
  page.on('console',msg=>{if(msg.text().includes('visual skipped'))errors.push(msg.text())});

@@ -79,3 +79,7 @@
 @media(prefers-reduced-motion:reduce){.cbl-live .cbl-unit *{animation:none!important}.cbl-fx.screech,.cbl-fx.phase{animation:none;opacity:.5}}
 
 .cbl-fx.cast-orb.plate{width:18px;height:18px;background:#d7d8ce;border:3px double #fff;border-radius:50%;box-shadow:0 2px 4px #0006}
+
+.cbl-unit[data-raid-party="0"]>.cbl-ground{box-shadow:0 2px 0 #81c5ef!important}
+.cbl-unit[data-raid-party="1"]>.cbl-ground{box-shadow:0 2px 0 #d0b0e9!important}
+.cbl-unit[data-motion="brutal"][data-combat-state="moving"] :is(.cb-combat-portrait,.cb-combat-boss-portrait){animation-duration:.45s!important}

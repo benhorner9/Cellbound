@@ -27,6 +27,18 @@ const PROFILES={
 const ENEMY={name:'Enemy',accent:'#EF5C50',motion:'enemy',projectile:'hostile',cast:'hostile',lunge:10,recoil:1.08,travel:275};
 
 
+const ENEMY_PROFILES={
+ boss:{...ENEMY,motion:'brutal',lunge:9,recoil:1.3},
+ elite:{...ENEMY,motion:'heavy',lunge:10,recoil:1.15},
+ ranged:{...ENEMY,motion:'marksman',lunge:2,projectile:'steel'},
+ caster:{...ENEMY,motion:'occult',lunge:2,projectile:'shadow'},
+ add:{...ENEMY,motion:'dart',lunge:7,recoil:.8}
+};
+function enemyProfile(u,data){
+ if(!u||u.p.name!=='Enemy'||(!data.classification&&data.attackRange==null))return;
+ const key=Number(data.attackRange)>7?(data.damageType==='magic'?'caster':'ranged'):data.classification==='world-boss'?'boss':data.classification;
+ u.p=ENEMY_PROFILES[key]||ENEMY;u.el.dataset.motion=u.p.motion;
+}
 function actor(el){return el?.querySelector('.cb-combat-portrait,.cb-combat-boss-portrait,.pvp2d-token,.wb2d-unit-dot')||el?.querySelector(':scope > i:first-child')||el}
 function profile(el){return Object.entries(PROFILES).find(([key])=>el.classList.contains(key))?.[1]||ENEMY}
 function resolve(id,opts,arena){
@@ -54,7 +66,8 @@ function unit(scene,el){
  if(!el)return null;
  let u=scene.units.get(el);if(u)return u;
  const p=profile(el);u={el,p,target:null,dead:false,statuses:new Map(),state:'idle',until:0,animation:null,cast:null};scene.units.set(el,u);
- el.classList.add('cbl-unit');el.dataset.motion=p.motion;el.style.setProperty('--cbl-accent',p.accent);
+ if(p===ENEMY)enemyProfile(u,{classification:el.classList.contains('boss')?'boss':el.classList.contains('elite')?'elite':''});
+ el.classList.add('cbl-unit');el.dataset.motion=u.p.motion;el.style.setProperty('--cbl-accent',p.accent);
  const nose=document.createElement('i');nose.className='cbl-facing';nose.setAttribute('aria-hidden','true');el.appendChild(nose);
  const ground=document.createElement('i');ground.className='cbl-ground';ground.setAttribute('aria-hidden','true');el.appendChild(ground);
  return u
@@ -136,12 +149,12 @@ function livingEvent(e,opts={}){
  switch(e.type){
  case'COMBAT_START':
   scene.live=true;arena.classList.add('cbl-live');arena.querySelectorAll(UNIT).forEach(el=>unit(scene,el));
-  for(const v of e.payload?.units||[]){const a=unit(scene,resolve(v.id,opts,arena));if(a){a.dead=v.alive===false;if(!a.dead)a.el.classList.remove('dead','dying');a.target=null;a.statuses.clear();a.el.dataset.control='';state(a,a.dead?'dead':'idle');setPosition(scene,a,v.position);a.el.style.setProperty('--cbl-facing',(v.facing||0)+'deg')}}break;
+  for(const v of e.payload?.units||[]){const a=unit(scene,resolve(v.id,opts,arena));if(a){enemyProfile(a,v);const group=String(v.id).match(/^p-(?:raid|maid)-(\d+)-/);if(group)a.el.dataset.raidParty=group[1];a.dead=v.alive===false;if(!a.dead)a.el.classList.remove('dead','dying');a.target=null;a.statuses.clear();a.el.dataset.control='';state(a,a.dead?'dead':'idle');setPosition(scene,a,v.position);a.el.style.setProperty('--cbl-facing',(v.facing||0)+'deg')}}break;
  case'MOVEMENT_START':
   if(canAct(u)){u.el.dataset.intent=String(e.result||'moving');setPosition(scene,u,e.payload?.to,Number(e.payload?.duration)||420);clearCast(u);state(u,'moving',performance.now()+(Number(e.payload?.duration)||420)/scene.speed);if(e.position&&e.payload?.to){const d=direction(e.position,e.payload.to);u.el.style.setProperty('--cbl-facing',d.angle+'deg');u.target=null}}break;
  case'MOVEMENT_END':if(u&&!u.dead){setPosition(scene,u,e.position);state(u,controlled(u)?'controlled':'idle');if(t)face(u,t.el)}break;
  case'ABILITY_START':
-  if(canAct(u)){u.action=e;if(t)face(u,t.el);state(u,kind(e,u)==='heal'?'healing':'attacking',performance.now()+450/scene.speed);
+  if(canAct(u)){enemyProfile(u,e.payload||{});u.action=e;if(t)face(u,t.el);state(u,kind(e,u)==='heal'?'healing':'attacking',performance.now()+450/scene.speed);
    if(!(e.payload?.castTime>0))motion(u,[{scale:'.97'},{scale:'1'}],210,scene)}break;
  case'CAST_START':
   if(canAct(u)){clearCast(u);u.target=t?.el||null;u.cast={event:e,destination:e.payload?.hazardPosition||null,start:performance.now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');state(u,/channel|beam|drain/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el)}break;
@@ -173,6 +186,7 @@ function frame(now){
  let active=false;
  for(const [arena,scene] of scenes){
   if(!arena.isConnected){for(const u of scene.units.values()){u.animation?.cancel();clearCast(u)}scenes.delete(arena);continue}
+  if(!arena.getClientRects().length){scene.live=false;for(const u of scene.units.values()){u.animation?.cancel();clearCast(u)}continue}
   const bounds=arena.getBoundingClientRect(),positions=new Map();
   const pos=el=>{if(!positions.has(el))positions.set(el,center(el));return positions.get(el)};
   for(const [el,u] of scene.units){if(el.isConnected)pos(el);if(u.target?.isConnected)pos(u.target)}
