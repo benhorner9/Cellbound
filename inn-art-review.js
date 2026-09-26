@@ -3,7 +3,7 @@
 'use strict';
 const specimens=[
  {id:'study-warrior',name:'Mara',class:'Warrior',spec:'Protection',role:'Tank',look:'Braided black hair, warm brown skin, grey-green eyes.',gear:'Layered steel plate, oxblood tabard, sword and round shield.',note:'Broad armour, small hard highlights and a grounded stance.',position:[16,65,16,65]},
- {id:'study-priest',name:'Oren',class:'Priest',spec:'Holy',role:'Healer',look:'Close silver hair and beard, dark skin, amber eyes.',gear:'Bone-grey vestments, ochre lining, staff and prayer book.',note:'Long cloth masses and restrained warm metal distinguish the healer.',position:[55,66,59,63]},
+ {id:'study-priest',name:'Oren',class:'Priest',spec:'Holy',role:'Healer',look:'Close silver hair and beard, dark skin, amber eyes.',gear:'Bone-grey vestments, ochre lining, staff and prayer book.',note:'Long cloth masses and restrained warm metal distinguish the healer.',position:[55,66,62,60]},
  {id:'study-mage',name:'Ilyra',class:'Mage',spec:'Arcane',role:'DPS',look:'Short auburn hair, olive skin, hazel eyes.',gear:'Teal coat, violet lining, quartz staff and folio.',note:'Angular tailoring and a small magical focus give a clear casting silhouette.',position:[40,43,49,39]},
  {id:'study-rogue',name:'Soren',class:'Rogue',spec:'Assassination',role:'DPS',look:'Ash-blond tied hair, pale skin, blue eyes.',gear:'Charcoal leather, plum scarf and paired daggers.',note:'Asymmetry and close layers keep the agile silhouette distinct.',position:[76,48,80,48]},
  {id:'study-hunter',name:'Tamsin',class:'Hunter',spec:'Marksman',role:'DPS',look:'Curly dark hair, brown skin, green eyes.',gear:'Moss-grey cloak, tawny leather, recurve bow and quiver.',note:'The long bow and travelling cloak read before fine detail.',position:[44,94,46,94]}
@@ -19,7 +19,7 @@ function renderTools(){
  document.querySelector('#reviewParty').innerHTML=specimens.map(c=>'<div class="review-row"><div><h3>'+c.name+'</h3><small>'+c.class+' · '+(ids.has(c.id)?'Preparing to leave':'Resting at the Inn')+'</small></div><button data-study-party="'+c.id+'" aria-pressed="'+ids.has(c.id)+'">'+(ids.has(c.id)?'Rest at Inn':'Join party')+'</button></div>').join('');
 }
 function place(){for(const c of specimens){const n=document.querySelector('[data-inn-character="'+c.id+'"]');if(!n)continue;const p=c.position;n.style.setProperty('--review-x',p[0]+'%');n.style.setProperty('--review-y',p[1]+'%');n.style.setProperty('--review-phone-x',p[2]+'%');n.style.setProperty('--review-phone-y',p[3]+'%');n.style.setProperty('--depth',Math.round(p[1]))}}
-let sampleState={roster:specimens.map(c=>({...c,level:15,race:'Veyren',equipment:{},talents:{},talent:5,professions:[],cellShock:0})),party:{tank:specimens[0].id,healer:specimens[1].id,dps:specimens.slice(2).map(c=>c.id)},bank:[],activity:[],gold:0};
+let sampleState={roster:specimens.map(c=>({...c,level:15,gear:0,race:'Veyren',equipment:{},talents:{},talent:5,professions:[],cellShock:0})),party:{tank:specimens[0].id,healer:specimens[1].id,dps:specimens.slice(2).map(c=>c.id)},bank:[],activity:[],gold:0};
 window.CellboundCharacterSheetState={read:()=>structuredClone(sampleState),write:s=>{sampleState=structuredClone(s)}};
 window.CellboundGame={getState:()=>sampleState,getPartyCharacters:()=>sampleState.roster.filter(c=>ids.has(c.id)),replaceState:s=>{sampleState=s;CellboundGame.renderAll()},renderAll:()=>{renderTools();dispatchEvent(new CustomEvent('cellbound:state-rendered'));place()}};
 document.addEventListener('click',e=>{
