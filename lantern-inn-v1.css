@@ -70,3 +70,6 @@ body.inn-character-open{overflow:hidden}
  body.inn-view-active .topbar{padding-block:8px!important;min-height:0!important;align-items:center!important}
  body.inn-character-open #characterModal .character-modal{max-height:72dvh!important}
 }
+#innLedger .roster-card-metrics span,#innLedger .roster-shock-line :is(span,b){font-size:10px;color:#b7c2b6}
+#innLedger .roster-card-metrics b{font-size:17px}
+@media(max-width:600px){.inn-table{left:38%;top:56%}}
