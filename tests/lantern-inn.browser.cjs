@@ -32,7 +32,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
  await shot('01-default-ipad');
  await page.locator('[data-inn-character="hero-0"]').click();await page.waitForSelector('#characterModal:not([hidden])');assert(await page.locator('body').evaluate(n=>n.classList.contains('inn-character-open')));await shot('02-character');
  await page.keyboard.press('Escape');await page.waitForSelector('#characterModal[hidden]',{state:'attached'});assert.equal(await page.evaluate(()=>document.activeElement.dataset.innCharacter),'hero-0');
- await page.locator('.inn-ledger').click();await page.locator('#rosterSearch').fill('Mercy');assert.equal(await page.locator('#rosterGrid .roster-character-card:visible').count(),1);await shot('03-ledger');await page.locator('#innLedger [data-inn-close]').click();
+ await page.locator('.inn-ledger').click();await page.locator('#rosterSearch').fill('Mercy');assert.equal(await page.locator('#rosterGrid .roster-character-card:visible').count(),1);assert((await page.locator('#rosterStatusFilter').boundingBox()).height>=44);await shot('03-ledger');await page.locator('#innLedger [data-inn-close]').click();
  await page.locator('.inn-ledger').click();assert.equal(await page.locator('#rosterSearch').inputValue(),'Mercy');await page.keyboard.press('Escape');
  const parent=await page.locator('#party').evaluate(n=>n.parentElement.className);
  await page.locator('.inn-table').click();assert.equal(await page.locator('#innParty #partySlots').count(),1);await shot('04-party');
@@ -42,7 +42,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
  await page.setViewportSize({width:390,height:844});await page.locator('.inn-art img').evaluate(img=>img.decode());assert((await page.locator('.inn-art img').evaluate(n=>n.currentSrc)).includes('portrait'));
  await shot('06-mobile');
  for(const n of await page.locator('.inn-adventurer,.inn-hotspot').all()){const b=await n.boundingBox();assert(b.width>=44&&b.height>=44,'touch target');assert(b.x>=0&&b.x+b.width<=390,'within viewport')}
- await page.locator('[data-inn-character="hero-1"]').click();await page.waitForSelector('#characterModal:not([hidden])');await shot('07-mobile-character');assert((await page.locator('#characterModal .character-modal').boundingBox()).y>70,'room remains visible above bottom sheet');await page.keyboard.press('Escape');
+ await page.locator('[data-inn-character="hero-1"]').click();await page.waitForSelector('#characterModal:not([hidden])');await shot('07-mobile-character');assert((await page.locator('#characterModal .character-modal').boundingBox()).y>180,'room remains visible above bottom sheet');await page.keyboard.press('Escape');
  await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await page.locator('.inn-figure').first().evaluate(n=>getComputedStyle(n).animationName),'none');
  await page.evaluate(()=>{for(let i=0;i<5;i++)CellboundInn.refresh()});assert.equal(await page.locator('.inn-world').count(),1);assert.equal(await page.locator('#innLedger #rosterSearch').count(),1);
  assert.deepEqual(errors,[]);await browser.close();console.log('Lantern Inn: 10 spatial characters, actual character sheet, ledger search persistence, existing party handlers, focus return, iPad/mobile composition and reduced motion passed.');

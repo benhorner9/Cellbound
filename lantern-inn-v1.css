@@ -58,3 +58,15 @@ body.inn-character-open #characterModal .cb-character-tabs button{min-width:110p
 @media(prefers-reduced-motion:reduce){.inn-world *{animation:none!important;transition:none!important}}
 
 body.inn-character-open{overflow:hidden}
+
+.inn-hotspot{width:150px}.inn-ledger{width:155px}
+.inn-dialog select{color-scheme:dark;background-color:#132129!important;color:#f3e6cf!important}
+.inn-dialog :is(button,input,select){min-height:44px!important}
+#innLedger .roster-card-actions>button{height:auto!important;min-height:44px!important;font-size:11px!important}
+#innLedger .roster-card-identity p{font-size:12px!important;color:#b3c1b9}
+@media(max-width:600px){
+ .inn-hotspot{width:122px}.inn-ledger{width:110px}.inn-hotspot small{display:block}
+ body.inn-view-active .topbar>div:first-child>small,body.inn-view-active #pageTitle{display:none!important}
+ body.inn-view-active .topbar{padding-block:8px!important;min-height:0!important;align-items:center!important}
+ body.inn-character-open #characterModal .character-modal{max-height:72dvh!important}
+}

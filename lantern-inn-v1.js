@@ -24,7 +24,7 @@ function dialog(title,id){
  d.innerHTML='<header class="inn-dialog-head"><div><small>THE LANTERN INN</small><h2 id="'+id+'-title">'+title+'</h2></div><button type="button" data-inn-close aria-label="Close '+title+'">Back to Inn ×</button></header><div class="inn-dialog-body"></div>';
  d.querySelector('[data-inn-close]').onclick=()=>d.close();
  d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close()}});
- d.addEventListener('close',()=>{if(d===partyDialog)restoreParty();document.body.classList.remove('inn-tool-open');returnFocus?.focus({preventScroll:true});refresh()});root.append(d);return d;
+ d.addEventListener('close',()=>{if(d===partyDialog)restoreParty();const another=Boolean(ledger?.open||partyDialog?.open);document.body.classList.toggle('inn-tool-open',another);if(!another)returnFocus?.focus({preventScroll:true});refresh()});root.append(d);return d;
 }
 function restoreParty(){if(partyNode){partyNode.classList.remove('inn-party-content');partyMarker.replaceWith(partyNode);partyNode=null;partyMarker=null}}
 function openTool(kind,trigger){
@@ -62,7 +62,7 @@ function assign(roster,party){
 
 }
 function refresh(){
- mount();if(!world)return;
+ mount();if(!world)return;document.body.classList.toggle('inn-view-active',root.classList.contains('active'));
  const roster=game()?.getState?.()?.roster||[],party=game()?.getPartyCharacters?.()||[];
  const key=JSON.stringify([roster.map(c=>[c.id,c.name,c.class,c.spec,c.appearance,c.equipment,c.cellShock]),party.map(c=>c.id)]);
  if(key!==lastKey){
@@ -93,6 +93,6 @@ window.addEventListener('keydown',e=>{
  if(e.key==='Tab'){const list=[...modal.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex="0"]')].filter(n=>n.getClientRects().length);const first=list[0],last=list.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}
 });
 window.addEventListener('cellbound:state-rendered',refresh);
-window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view!=='roster'){ledger?.close();partyDialog?.close()}else refresh()});
+window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view!=='roster'){document.body.classList.remove('inn-view-active');ledger?.close();partyDialog?.close()}else refresh()});
 window.CellboundInn={refresh,openTool,slots,assign};refresh();
 })();
