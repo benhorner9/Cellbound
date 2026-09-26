@@ -1,0 +1,22 @@
+/* Shared Phase 1 surface language. Scoped to Inn tools; no combat styling. */
+.inn-location,body.inn-character-open{--inn-ink:#111619;--inn-surface:#20201d;--inn-raised:#2b2922;--inn-brass:#a58755;--inn-highlight:#dbbc83;--inn-text:#eee3cf;--inn-muted:#bcb29f}
+.inn-dialog{background:var(--inn-surface);color:var(--inn-text);border-color:var(--inn-brass);border-radius:5px;box-shadow:0 24px 70px #000a,inset 0 0 0 3px #111619,inset 0 0 0 4px #a5875533}
+.inn-dialog-head{background:var(--inn-ink);border-color:#a5875566;padding:16px 22px}
+.inn-dialog-head small{color:var(--inn-highlight)}
+.inn-dialog-head h2{color:var(--inn-text);font-weight:400;letter-spacing:.015em}
+.inn-dialog-head button,.inn-dialog :is(button,input,select){font-size:14px;line-height:1.4}
+.inn-dialog-head button{background:var(--inn-raised);border-color:var(--inn-brass);color:var(--inn-text)}
+.inn-dialog :is(button,input,select):focus-visible{outline:2px solid var(--inn-highlight);outline-offset:3px}
+.inn-dialog button:active{box-shadow:inset 0 2px 5px #0008}
+.inn-dialog button:disabled{opacity:.6;cursor:not-allowed}
+.inn-dialog select,.inn-dialog input{color-scheme:dark;background:#111619!important;color:#eee3cf!important;border-color:#a5875570!important}
+#innLedger .roster-character-card{background:#171b1a!important;border-color:#a587552f!important;box-shadow:none!important;border-radius:3px!important}
+#innLedger .roster-card-metrics{background:none!important;border:0!important}
+#innLedger .roster-card-identity p,#innLedger .roster-card-metrics span,#innLedger .roster-shock-line :is(span,b){color:#c4baaa;font-size:12px}
+#innParty .party-slot{background:#171b1a!important;border-color:#a587554a!important;box-shadow:none!important}
+body.inn-character-open #characterModal .character-modal{background:#171c1d!important;color:#eee3cf;border:1px solid #a58755!important;box-shadow:0 24px 80px #000a,inset 0 0 0 3px #111619!important;border-radius:5px!important}
+.inn-hotspot{background:#181b18e8!important;border-color:#a58755!important;border-radius:3px;box-shadow:0 4px 16px #0009,inset 0 0 0 2px #111619}
+.inn-hotspot small{color:#d3c3a6;font-size:12px}
+.inn-hotspot:hover,.inn-hotspot:focus-visible{background:#463927f5!important}
+.inn-name{background:#111619d9!important;border:0!important;color:#eee3cf}
+@media(max-width:600px){.inn-dialog{border-radius:8px 8px 0 0;padding-bottom:env(safe-area-inset-bottom)}.inn-dialog-head{padding:12px 14px}.inn-dialog-head h2{font-size:23px}.inn-hotspot small{font-size:11px}}

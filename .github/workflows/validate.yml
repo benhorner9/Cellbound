@@ -64,6 +64,19 @@ jobs:
           node tests/living-combat.browser.cjs
           CELLBOUND_TEST_ENGINE=webkit node tests/living-combat.browser.cjs
 
+      - name: Inn art direction review
+        run: |
+          node tests/inn-art-review.browser.cjs
+          CELLBOUND_TEST_ENGINE=webkit node tests/inn-art-review.browser.cjs
+
+      - name: Save art direction review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inn-art-direction-review
+          path: /tmp/cellbound-art-*.png
+          if-no-files-found: ignore
+
       - name: Save world review captures
         if: always()
         uses: actions/upload-artifact@v4
