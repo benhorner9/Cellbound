@@ -6,7 +6,7 @@ const root=path.resolve(__dirname,'..');
  const browser=await (process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium).launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
  const page=await browser.newPage({viewport:{width:1024,height:768}}),errors=[];
  page.on('pageerror',e=>errors.push(String(e)));
- page.on('console',msg=>{if(msg.text().includes('visual skipped'))errors.push(msg.text())});
+ page.on('console',msg=>{if(/visual skipped|visual recovered/.test(msg.text()))errors.push(msg.text())});
  await page.setContent('<body style="background:#10171d"><div class="cb2d-arena" id="cb2dArena" style="width:900px;height:560px;position:relative"></div></body>');
  for(const f of ['dungeon-2d-v1.css','combat-portraits-v1.css','combat-polish-v2.css','combat-polish-v3.css','combat-physical-v4.css'])await page.addStyleTag({content:fs.readFileSync(path.join(root,'dist',f),'utf8')});
  await page.evaluate(()=>{
@@ -50,6 +50,32 @@ const root=path.resolve(__dirname,'..');
  await page.screenshot({path:'/tmp/cellbound-living-combat.png'});
  await page.evaluate(()=>{send('COMBAT_END');document.querySelector('#cb2dArena').remove()});
  await page.waitForTimeout(100);
+ assert.deepEqual(errors,[]);
+ // Exercise the production shared viewer with real Combat Reborn events and portraits.
+ await page.emulateMedia({reducedMotion:'no-preference'});
+ await page.setContent('<base href="https://cellbound.test/"><body style="background:#081115;color:white"></body>');
+ await page.route('https://cellbound.test/**',async route=>{
+  const relative=new URL(route.request().url()).pathname.slice(1),file=path.resolve(root,'dist',relative);
+  if(!file.startsWith(path.resolve(root,'dist')+path.sep)||!fs.existsSync(file)){await route.fulfill({status:404,body:''});return}
+  await route.fulfill({path:file})
+ });
+ for(const f of ['dungeon-2d-v1.css','character-portraits-v1.css','combat-portraits-v1.css','combat-vitals-ui-v1.css','combat-polish-v2.css','combat-polish-v3.css','combat-physical-v4.css'])await page.addStyleTag({content:fs.readFileSync(path.join(root,'dist',f),'utf8')});
+ await page.evaluate(()=>{
+  window.testParty=Array.from({length:10},(_,i)=>({id:'raid-'+Math.floor(i/5)+'-'+i,name:['Aegis','Mercy','Ember','Fletch','Shade'][i%5]+(i<5?' A':' B'),class:['Warrior','Priest','Mage','Hunter','Rogue'][i%5],spec:['Protection','Holy','Arcane','Marksman','Assassination'][i%5],role:i%5===0?'tank':i%5===1?'healer':'dps',level:15,power:12,itemLevel:30}));
+  window.CellboundGame={ready:true,getState:()=>({roster:window.testParty}),getPartyCharacters:()=>window.testParty,characterItemLevel:()=>30,isUnavailable:()=>false};
+ });
+ for(const f of ['character-portraits-v1.js','combat-portraits-v1.js','combat-reborn-v1.js','dungeon-2d-v1.js'])await page.addScriptTag({content:fs.readFileSync(path.join(root,'dist',f),'utf8')});
+ await page.evaluate(()=>{
+  const encounter={id:'manor-butler',title:'The Butler',kind:'boss',level:15,enemies:[{name:'The Butler',classification:'boss'}],enemyHealth:10000,mechanics:[]};
+  const result=CellboundCombatReborn.simulate({party:window.testParty,encounter,seed:'browser-raid',maxDurationMs:12000});
+  window.testPlayback=CellboundDungeon2D.playSharedEncounter({party:window.testParty,encounter,result,theme:'manor'});
+ });
+ await page.waitForTimeout(2400);
+ assert.equal(await page.locator('#cb2dArena .cbl-unit').count(),11,'production raid uses shared controller');
+ assert.equal(await page.locator('#cb2dArena .cb-combat-portrait').count(),10,'all raid portraits are visible');
+ assert.equal(await page.locator('#cb2dArena .cb-combat-boss-portrait img').getAttribute('src'),'./assets/manor/manor-butler.webp');
+ await page.screenshot({path:'/tmp/cellbound-living-combat.png'});
+ await page.evaluate(()=>CellboundDungeon2D.closeShared(true));
  assert.deepEqual(errors,[]);
  await browser.close();console.log('Living combat browser checks passed: visible portraits, one impact, misses, CC, concurrent casts, travel, interrupts, deaths, revival, movement, reduced motion, cleanup.');
 })().catch(e=>{console.error(e);process.exit(1)});

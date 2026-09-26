@@ -1885,6 +1885,7 @@ function sharedFormationPosition(c,index,total){
 }
 function spawnSharedEncounter(s,result,options={}){
  clearArenaEphemera();$('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
+ const initialUnits=new Map((result.events?.find(e=>e.type==='COMBAT_START')?.payload?.units||[]).map(u=>[u.id,u]));
  const arena=$('#cb2dArena'),env=$('#cb2dEnvironment'),tag=$('#cb2dRoomTag');
  if(arena)arena.className='cb2d-arena theme-'+esc(options.theme||'manor')+' room-'+esc(options.room||s?.id||'shared')+(['boss','final'].includes(String(s?.kind||''))?' boss-room':'');
  if(env)env.innerHTML='<div class="cb2d-ambience">'+Array.from({length:10},(_,i)=>'<i class="cb2d-ambient ash" style="--x:'+(8+(i*9)%84)+'%;--delay:-'+(i*.41)+'s;--dur:'+(4+(i%4)*.5)+'s;--drift:'+(-12+(i%5)*6)+'px"></i>').join('')+'</div>';
@@ -1896,17 +1897,18 @@ function spawnSharedEncounter(s,result,options={}){
  run.threat=run.enemyMax.map(()=>Object.fromEntries(party().map(c=>[c.id,0])));run.aggro=run.enemyMax.map(()=>null);
  run.combatStartedAt=0;run.lastMeterAt=0;renderCombatMeters();renderRebornHealingMeter();
  party().forEach((c,i)=>{
-   addUnit('p-'+c.id,c.name,'party '+role(c)+' profile-'+combatProfile(c)+' '+classKey(c),4,50,'');
+   const pos=initialUnits.get('p-'+c.id)?.position||sharedFormationPosition(c,i,party().length);
+   addUnit('p-'+c.id,c.name,'party '+role(c)+' profile-'+combatProfile(c)+' '+classKey(c),pos.x,pos.y,'');
    mountRebornResourceBar(c);
    const unit=$('[data-unit="p-'+c.id+'"]');if(unit){unit.dataset.uiSlot=String(i);unit.style.setProperty('--label-shift-x',((i%2?1:-1)*(6+(i%3)*6))+'px');unit.style.setProperty('--status-shift-x',((i%2?1:-1)*(5+(i%3)*5))+'px')}
    const startHp=Math.max(0,Math.min(100,Number(c?._combatHealthPct??100)));
-   const pos=sharedFormationPosition(c,i,party().length);setTimeout(()=>{move('p-'+c.id,pos.x,pos.y,700);const bar=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(bar)bar.style.width=startHp+'%'},30+i*10)
+   const bar=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(bar)bar.style.width=startHp+'%';
  });
  const sourceEnemies=Array.isArray(s?.enemies)?s.enemies:[];
  sourceEnemies.forEach((raw,i)=>{
    const data=typeof raw==='object'&&raw?raw:{name:raw},name=data.name||('Enemy '+(i+1)),meta=baseEnemies[i],boss=['boss','final'].includes(String(s?.kind||''))||String(data.classification||'').includes('boss'),y=sourceEnemies.length===1?50:18+i*(64/Math.max(1,sourceEnemies.length-1));
-   addUnit('e-'+i,name,boss?'enemy boss':'enemy',92,y,boss?'big':'',meta?('Lv. '+(meta.level||s?.level||1)+' · '+String(meta.classificationLabel||data.classification||'ENEMY').toUpperCase()):'');
-   setTimeout(()=>move('e-'+i,68,y,700),50+i*15)
+   const pos=initialUnits.get('e-'+i)?.position||{x:68,y};
+   addUnit('e-'+i,name,boss?'enemy boss':'enemy',pos.x,pos.y,boss?'big':'',meta?('Lv. '+(meta.level||s?.level||1)+' · '+String(meta.classificationLabel||data.classification||'ENEMY').toUpperCase()):'');
  });
  window.CellboundCombatPortraits?.refresh?.()
 }
