@@ -7,13 +7,13 @@
 .cbl-unit>.cbl-facing{display:block!important;position:absolute!important;left:50%!important;top:50%!important;width:48px!important;height:48px!important;border:0!important;border-radius:50%!important;transform:translate(-50%,-50%) rotate(var(--cbl-facing))!important;background:conic-gradient(from 76deg,transparent 0deg,var(--cbl-accent) 3deg,var(--cbl-accent) 24deg,transparent 28deg)!important;mask:radial-gradient(transparent 61%,#000 64%,#000 72%,transparent 75%);opacity:.8!important;pointer-events:none;z-index:4}
 .cbl-unit.boss>.cbl-facing{width:72px!important;height:72px!important;--cbl-accent:#f3b55e}
 .cbl-unit[data-combat-state="dead"]>.cbl-facing{opacity:0!important}
-.cbl-unit[data-combat-state="dead"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.pvp2d-token,.wb2d-unit-dot){filter:grayscale(1);opacity:.36;rotate:24deg;scale:.82}
-.cbl-unit[data-combat-state="moving"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.pvp2d-token,.wb2d-unit-dot){animation:cblStep .26s ease-in-out infinite alternate!important}
+.cbl-unit[data-combat-state="dead"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot){filter:grayscale(1);opacity:.36;rotate:24deg;scale:.82}
+.cbl-unit[data-combat-state="moving"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot){animation:cblStep .26s ease-in-out infinite alternate!important}
 .cbl-unit[data-motion="heavy"][data-combat-state="moving"] :is(.cb-combat-portrait,.pvp2d-token){animation-duration:.38s!important}
 .cbl-unit[data-motion="dart"][data-combat-state="moving"] :is(.cb-combat-portrait,.pvp2d-token){animation-duration:.18s!important}
 .cbl-unit[data-combat-state="reviving"] :is(.cb-combat-portrait,.pvp2d-token){animation:cblRise .8s ease-out!important}
 .cbl-unit.cbl-casting>.cbl-facing{opacity:1!important;box-shadow:0 0 calc(5px + var(--cbl-charge,0)*13px) var(--cbl-accent)}
-.cbl-unit.cbl-casting :is(.cb-combat-portrait,.cb-combat-boss-portrait,.pvp2d-token,.wb2d-unit-dot){box-shadow:0 0 calc(4px + var(--cbl-charge,0)*16px) var(--cbl-accent)!important}
+.cbl-unit.cbl-casting :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot){box-shadow:0 0 calc(4px + var(--cbl-charge,0)*16px) var(--cbl-accent)!important}
 .cbl-unit[data-control="stun"]>.cbl-facing{background:#eeb95d!important;opacity:1!important}
 .cbl-unit[data-control="root"]>.cbl-ground{background:#9bd473!important;opacity:.7!important}
 .cbl-unit[data-control="silence"]>.cbl-facing{--cbl-accent:#bbb0e9}
@@ -68,7 +68,7 @@
 .cbl-fx.heal-ring.periodic{width:27px;height:27px;opacity:.6}
 .cbl-fx.screech,.cbl-fx.phase{width:75px;height:75px;border:3px double #d8c1f0;border-radius:50%;animation:cblContact .8s ease-out both}
 .cbl-fx.phase{width:110px;height:110px;border-color:#f4c784;animation-duration:1s}
-.cbl-live .cbl-unit[data-combat-state="idle"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.pvp2d-token,.wb2d-unit-dot){animation:cblBreathe 3.2s ease-in-out infinite alternate}
+.cbl-live .cbl-unit[data-combat-state="idle"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot){animation:cblBreathe 3.2s ease-in-out infinite alternate}
 .cbl-live .cbl-unit[data-motion="heavy"] :is(.cb-combat-portrait,.cb-combat-boss-portrait){animation-duration:4.1s}
 @keyframes cblBreathe{from{scale:1}to{scale:1.018}}
 /* Atmosphere is scenery, never new blocking geometry. */
@@ -83,3 +83,55 @@
 .cbl-unit[data-raid-party="0"]>.cbl-ground{box-shadow:0 2px 0 #81c5ef!important}
 .cbl-unit[data-raid-party="1"]>.cbl-ground{box-shadow:0 2px 0 #d0b0e9!important}
 .cbl-unit[data-motion="brutal"][data-combat-state="moving"] :is(.cb-combat-portrait,.cb-combat-boss-portrait){animation-duration:.45s!important}
+
+/* Room dressing stays around the playable floor; it never suggests new collision. */
+.cbl-room{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;background:radial-gradient(ellipse at 50% 48%,transparent 30%,#0206096b)}
+.cbl-prop{position:absolute;width:56px;height:70px;transform:translate(-50%,-50%);color:var(--room-accent);opacity:.28}
+.cbl-prop svg{width:100%;height:100%}
+.cbl-room[data-room="manor"]{background:repeating-linear-gradient(0deg,transparent 0 59px,#baa17b09 60px 61px),linear-gradient(118deg,transparent 30%,#bacce611 35%,transparent 53%),radial-gradient(ellipse at 50% 48%,transparent 30%,#0206096b)}
+.cbl-room[data-room="ashen"]{background:repeating-linear-gradient(90deg,transparent 0 99px,#e3a2730a 100px 101px),radial-gradient(ellipse at 0 80%,#ed713420,transparent 50%)}
+.cbl-room[data-room="hollow"]{background:repeating-linear-gradient(0deg,transparent 0 69px,#a3baca0c 70px 71px),radial-gradient(ellipse at 50% 100%,#94c6dc18,transparent 60%)}
+.cbl-room[data-room="blackout"]{background:repeating-linear-gradient(90deg,transparent 0 79px,#80c3d30b 80px 81px),repeating-linear-gradient(0deg,transparent 0 79px,#80c3d30b 80px 81px)}
+.cbl-prop.candle,.cbl-prop.furnace{opacity:.5;animation:cblFirelight 3.4s ease-in-out infinite alternate}
+.cbl-prop.window{height:100px;opacity:.2;background:linear-gradient(160deg,#c5dcef14,transparent 70%)}
+.cbl-prop.crack,.cbl-prop.cable{width:95px;opacity:.24}
+@keyframes cblFirelight{to{opacity:.3}}
+.cbl-hazard{position:absolute;z-index:2;pointer-events:none;border:2px solid #ee715b;border-radius:50%;transform:translate(-50%,-50%);background:repeating-linear-gradient(135deg,#c949322e 0 6px,#d6534512 6px 12px);box-shadow:inset 0 0 16px #e0574326}
+.cbl-hazard.porcelain{background:radial-gradient(ellipse at 30% 38%,#d2c9b6 0 2%,transparent 3%),radial-gradient(ellipse at 65% 62%,#d2c9b6 0 3%,transparent 4%),repeating-linear-gradient(135deg,#c949322e 0 6px,#d6534512 6px 12px)}
+.cbl-hazard.rubble{border-radius:24%;background:repeating-linear-gradient(25deg,#443e39aa 0 9px,#9b7f6240 10px 13px,#bc3c3520 14px 24px)}
+.cbl-hazard[data-phase="expiring"]{border-style:dashed;box-shadow:none} /* Still dangerous until the engine expires it. */
+.cbl-scene [data-phase="incoming"]{border-style:dashed!important;animation:cblWarning .8s ease-in-out infinite alternate!important}
+.cbl-scene [data-phase="imminent"]{border-style:solid!important;animation:cblWarning .25s ease-in-out infinite alternate!important}
+.cbl-scene [data-phase="impact"]{border-color:#ffe0b6!important}
+.cbl-scene [data-phase="safe"]{border-color:#83cba7!important}
+@keyframes cblWarning{to{opacity:.55}}
+.cbl-scene[data-density="raid"] .cb-combat-portrait{width:30px;height:30px}
+.cbl-scene[data-density="crowded"] .cb-combat-portrait{width:26px;height:26px}
+.cbl-scene[data-density="crowded"] .cbl-unit>span{font-size:8px}
+.cbl-unit[data-control="fear"]>.cbl-facing{background:#c692de!important;border-radius:20%!important}
+.cbl-unit[data-control="incapacitate"]>.cbl-facing{background:#8daac7!important;opacity:.5!important}
+.cbl-unit[data-control="slow"]>.cbl-ground{background:#78b8dd!important}
+.cbl-unit[data-aura="enrage"]>.cbl-facing{background:#ed6450!important;opacity:1!important}
+@media(max-width:600px){.cbl-prop{width:36px;opacity:.2}.cbl-scene .cbl-unit>span{max-width:66px;overflow:hidden;text-overflow:ellipsis}}
+@media(prefers-reduced-motion:reduce){.cbl-prop,.cbl-scene [data-phase]{animation:none!important}.cbl-scene [data-phase="imminent"]{border-width:3px!important}}
+.cbl-fx.slash.thrust{height:4px;width:44px;border-radius:0;rotate:var(--cbl-angle,0deg)}
+.cbl-fx.slash.overhead{width:20px;height:48px;rotate:0deg;border-left:4px solid var(--cbl-accent);border-top:0}
+.cbl-fx.slash.sweep{width:65px;height:55px;border:3px solid var(--cbl-accent);border-bottom-color:transparent}
+.cbl-fx.slash.shield-strike{width:34px;height:38px;border:4px double #b7d6e3;border-radius:30% 30% 50% 50%;rotate:0deg}
+.cbl-fx.cast-orb.arrow,.cbl-fx.cast-orb.steel,.cbl-fx.cast-orb.blade{rotate:var(--cbl-angle);width:20px;height:3px;border-radius:0}
+.cbl-fx.cast-orb.frost{border-radius:0;rotate:45deg;background:#a3e0f7}
+.cbl-fx.cast-orb.fire{width:16px;height:12px;background:#f7a455;box-shadow:0 0 8px #df5e29}
+.cbl-fx.cast-orb.lightning{width:27px;height:7px;clip-path:polygon(0 40%,40% 0,60% 40%,100% 20%,65% 100%,40% 60%);rotate:var(--cbl-angle);background:#b7edff}
+.cbl-fx.cast-orb.shadow,.cbl-fx.cast-orb.death{background:#4b345f;border:2px solid #c6a1df}
+.cbl-fx.cast-orb.nature,.cbl-fx.cast-orb.emerald{border-radius:0 80%;width:15px;background:#8dcc95}
+.cbl-casting[data-cast-style="aim"] .cb-combat-portrait{rotate:-3deg}
+.cbl-casting[data-cast-style="shadow"] :is(.cb-combat-portrait,.cb-combat-monster-portrait){scale:.96;rotate:-4deg}
+.cbl-casting[data-cast-style="essence"] .cb-combat-portrait{scale:1.05;translate:0 -2px}
+.cbl-casting[data-cast-style="nature"] .cb-combat-portrait{rotate:3deg}
+.cbl-casting[data-cast-style="brace"] .cb-combat-portrait{scale:.97}
+.cbl-casting[data-cast-style="hostile"] .cb-combat-boss-portrait{scale:1.035}
+@media(prefers-reduced-motion:reduce){.cbl-casting :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait){rotate:0deg!important;scale:1!important;translate:0 0!important}}
+.cbl-fx.cast-orb.rubble{width:46px;height:7px;border:1px solid #b89970;border-radius:1px;background:#6e5540;rotate:24deg;box-shadow:0 8px 10px #0006}
+.cbl-room[data-wear="1"] .cbl-prop.table,.cbl-room[data-wear="2"] .cbl-prop.table,.cbl-room[data-wear="3"] .cbl-prop.table{rotate:8deg}
+.cbl-room[data-wear="2"] .cbl-prop.window,.cbl-room[data-wear="3"] .cbl-prop.window{opacity:.1}
+.cbl-room[data-wear="3"] .cbl-prop{stroke-dasharray:8 3}

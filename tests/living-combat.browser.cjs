@@ -5,7 +5,8 @@ const root=path.resolve(__dirname,'..');
 (async()=>{
  const browser=await (process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium).launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
  const page=await browser.newPage({viewport:{width:1024,height:768}}),errors=[];
- page.on('pageerror',e=>errors.push(String(e)));
+ page.on('pageerror',e=>{errors.push(String(e));console.error(e.stack||String(e))});
+ await page.emulateMedia({reducedMotion:'no-preference'});
  page.on('console',msg=>{if(/visual skipped|visual recovered/.test(msg.text()))errors.push(msg.text())});
  await page.setContent('<body style="background:#10171d"><div class="cb2d-arena" id="cb2dArena" style="width:900px;height:560px;position:relative"></div></body>');
  for(const f of ['dungeon-2d-v1.css','combat-portraits-v1.css','combat-polish-v2.css','combat-polish-v3.css','combat-physical-v4.css'])await page.addStyleTag({content:fs.readFileSync(path.join(root,'dist',f),'utf8')});
@@ -76,6 +77,52 @@ const root=path.resolve(__dirname,'..');
  assert.equal(await page.locator('#cb2dArena .cbl-unit').count(),11,'production raid uses shared controller');
  assert.equal(await page.locator('#cb2dArena .cb-combat-portrait').count(),10,'all raid portraits are visible');
  assert.equal(await page.locator('#cb2dArena .cb-combat-boss-portrait img').getAttribute('src'),'./assets/manor/manor-butler.webp');
+ assert.equal(await page.locator('.cbl-room[data-room="manor"] .cbl-prop').count(),6,'one bounded room decoration layer');
+ await page.evaluate(()=>{
+  const arena=document.querySelector('#cb2dArena');
+  const send=(type,payload={},extra={})=>CellboundCombatFX.combatEvent({type,source:'e-0',ability:'Porcelain Shards',timestamp:3000,payload,...extra},{arena});
+  window.sceneSend=send;
+  send('GROUND_HAZARD_SPAWNED',{hazardId:'review-shards',radius:11,duration:300},{position:{x:30,y:65}});
+ });
+ assert.equal(await page.locator('.cbl-hazard.porcelain').count(),1);
+ await page.waitForFunction(()=>document.querySelector('.cbl-hazard')?.dataset.phase==='expiring',{},{timeout:5000});
+ assert.equal(await page.locator('.cbl-hazard').count(),1,'expiry anticipation cannot remove an authoritative hazard');
+ await page.evaluate(()=>sceneSend('GROUND_HAZARD_EXPIRED',{hazardId:'review-shards'}));
+ assert.equal(await page.locator('.cbl-hazard').count(),0);
+ await page.evaluate(()=>{
+  const arena=document.querySelector('#cb2dArena');
+  for(const [i,name] of ['Crypt Spider','Undead Knight','Fel Demon','Canyon Wolf','Nail Turret','Cult Healer','Vault Guard','Brute'].entries()){
+   const el=document.createElement('div');el.className='cb2d-unit enemy';el.dataset.unit='art-'+i;el.innerHTML='<i></i><span>'+name+'</span>';arena.appendChild(el);
+  }
+  CellboundCombatPortraits.refresh();
+ });
+ assert.equal(await page.locator('.cb-combat-monster-portrait').count(),8,'all fallback monster families mount');
+ assert.equal(await page.locator('[data-monster="spider"]').count(),1);
+ await page.evaluate(()=>CellboundCombatPortraits.refresh());
+ assert.equal(await page.locator('.cb-combat-monster-portrait').count(),8,'portrait refresh is idempotent');
+ await page.evaluate(()=>document.querySelectorAll('[data-unit^="art-"]').forEach(n=>n.remove()));
+ // Exercise resized iPad/phone viewports without changing engine coordinates.
+ await page.setViewportSize({width:768,height:1024});
+ await page.waitForFunction(()=>{const a=document.querySelector('#cb2dArena'),u=a.querySelector('[data-unit^="p-"]');return Math.abs(parseFloat(u.style.getPropertyValue('--unit-x'))-Number(u.dataset.x)/100*a.clientWidth)<1},{},{timeout:5000});
+ const resizePosition=await page.evaluate(()=>{
+  const arena=document.querySelector('#cb2dArena'),unit=arena.querySelector('[data-unit^="p-"]');
+  return {x:Number(unit.dataset.x),px:parseFloat(unit.style.getPropertyValue('--unit-x')),width:arena.clientWidth};
+ });
+ assert(Math.abs(resizePosition.px-resizePosition.x/100*resizePosition.width)<1,'resize preserves normalized positions');
+ await page.setViewportSize({width:1024,height:768});
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await page.evaluate(()=>sceneSend('PHASE_CHANGE',{}, {ability:'Room Collapse'}));
+ assert.equal(await page.locator('#cb2dArena').evaluate(el=>el.getAnimations().filter(a=>a.playState==='running').length),0,'reduced motion suppresses camera emphasis');
+ await page.evaluate(()=>{
+  const arena=document.querySelector('#cb2dArena');
+  const target=arena.querySelector('[data-unit^="p-"]').dataset.unit;
+  for(let i=0;i<200;i++)CellboundCombatFX.combatEvent({type:'DAMAGE_DEALT',source:'e-0',target,amount:1,result:'hit',payload:{}},{arena});
+ });
+ assert(await page.locator('.cbl-effects>.cbl-fx:not(.cast-orb):not(.channel)').count()<=36,'transient FX remain bounded under an event burst');
+ await page.waitForFunction(()=>document.querySelectorAll('.cbl-effects>.cbl-fx').length===0,{},{timeout:5000});
+ await page.emulateMedia({reducedMotion:'no-preference'});
+
+
  await page.screenshot({path:'/tmp/cellbound-living-combat.png'});
  await page.evaluate(()=>CellboundDungeon2D.closeShared(true));
  assert.deepEqual(errors,[]);
