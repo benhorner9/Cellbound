@@ -59,7 +59,7 @@
   <link rel="stylesheet" href="./living-world-v1.css?v=3">
 <link rel="stylesheet" href="./lantern-inn-v1.css?v=3">
 <link rel="stylesheet" href="./inn-art-direction-v1.css?v=1">
-  <link rel="stylesheet" href="./town-scene-v1.css?v=9">
+  <link rel="stylesheet" href="./town-scene-v1.css?v=10">
   <link rel="stylesheet" href="./world-venues-v1.css?v=3">
   <link rel="stylesheet" href="./layout-safety-v1.css?v=1">
 </head>
@@ -176,6 +176,12 @@
                     <image class="town-painted-lift" href="./assets/world/town/central-square-v1.webp?v=2" x="0" y="0" width="1448" height="1086" preserveAspectRatio="xMidYMid slice" clip-path="url(#townClip-board)"/>
                     <path class="town-painted-hit town-object-shape" d="M562 580 L875 558 L907 798 L846 806 L844 913 L797 916 L785 811 L661 818 L655 915 L607 915 L615 824 L579 827 Z"/>
                     <path class="town-painted-outline town-object-outline" d="M562 580 L875 558 L907 798 L846 806 L844 913 L797 916 L785 811 L661 818 L655 915 L607 915 L615 824 L579 827 Z"/>
+                  </g>
+
+                  <!-- Quest availability marker: driven by the live quest badge -->
+                  <g class="town-quest-marker" data-town-quest-marker aria-hidden="true">
+                    <circle class="town-quest-marker-disc" cx="846" cy="618" r="29"/>
+                    <text class="town-quest-marker-text" x="846" y="637" text-anchor="middle">?</text>
                   </g>
 
                   <!-- Harbour route sign / flag -->
@@ -801,7 +807,7 @@
 <script src="./release-v1.js?v=3"></script>
 <script src="./living-world-v1.js?v=4"></script>
 <script src="./lantern-inn-v1.js?v=5"></script>
-<script src="./town-scene-v1.js?v=4"></script>
+<script src="./town-scene-v1.js?v=5"></script>
 <script src="./world-venues-v1.js?v=2"></script>
 </body>
 </html>
