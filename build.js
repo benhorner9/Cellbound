@@ -55,7 +55,7 @@ for(const file of files){
     if(!contents.includes('function equipmentPanel')||!contents.includes('function equipmentFallback')||!contents.includes("stopImmediatePropagation();currentTab=tab.dataset.sheetTab"))throw new Error('Character Equipment tab recovery/navigation guard is missing');
     if(!contents.includes('function returnEquippedToBank')||!contents.includes('function refreshEquipmentSummary')||!contents.includes("const unequip=event.target.closest('[data-unequip-slot]');if(unequip){event.preventDefault();event.stopImmediatePropagation()"))throw new Error('Equipment replace/unequip must be atomic and take priority over slot clicks');
     if(contents.includes("if(item.slot==='Weapon')return ['Weapon','OffHand']")||!contents.includes("if(item.slot==='Weapon')return ['Weapon']"))throw new Error('Character Equipment UI is allowing main-hand weapons into OffHand');
-    if(!contents.includes("paperDollHTML?.(c")||!contents.includes('data-paper-doll-stage')||!contents.includes('LIVE EQUIPMENT VIEW'))throw new Error('Character Equipment visual paper doll is missing');
+    if(!contents.includes("characterModelHTML?.(c")||!contents.includes('data-paper-doll-stage')||!contents.includes('LIVE CHARACTER MODEL'))throw new Error('Character Equipment canonical creator model is missing');
     if(!contents.includes('function fallbackEquipmentSlot')||!contents.includes('cb-recovery-armoury')||!contents.includes("if(!item||typeof item!=='object')return false")||contents.includes('activeSlot=null;\n    return equipmentFallback'))throw new Error('Equipment recovery mode must preserve the paper doll and slot controls');
   }
   if(file==='bank-v2.css'){
