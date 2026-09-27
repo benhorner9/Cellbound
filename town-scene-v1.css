@@ -1038,7 +1038,7 @@
   padding:0!important;
 }
 .town-expedition-mount>.view>.cb-venue-stage{display:none!important}
-.town-expedition-mount .cb-venue-system-content{display:block!important}
+.town-expedition-mount>.cb-venue-location>.cb-venue-system-content{display:block!important}
 .town-expedition-mount .section-intro{margin-top:0!important}
 .town-expedition-mount .view>.section-intro:first-child{padding-top:0!important}
 
