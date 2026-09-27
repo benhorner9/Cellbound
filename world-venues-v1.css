@@ -1,0 +1,146 @@
+/* Cellbound World Venues v1
+   Arrival scene -> NPC/station -> live system -> back to venue -> Town. */
+
+.cb-venue-location{position:relative;isolation:isolate;padding-bottom:calc(28px + env(safe-area-inset-bottom))}
+.cb-venue-location>.lw-scene{display:none!important}
+.cb-venue-location>.cb-venue-system-content{display:none!important}
+.cb-venue-location[data-venue-state="system"]>.cb-venue-system-content{display:block!important}
+.cb-venue-location[data-venue-state="system"]>.section-intro.cb-venue-system-content{display:none!important}
+
+.cb-venue-stage{
+  position:relative;isolation:isolate;overflow:hidden;min-height:510px;margin:0 0 18px;
+  border:1px solid #a98c5b50;border-radius:16px 16px 4px 4px;background:#11191d;color:#efe4cf;
+  box-shadow:0 18px 44px #0005
+}
+.cb-venue-depth{position:absolute;inset:0;z-index:-4;background:linear-gradient(#15242a,#25241f 62%,#151817)}
+.cb-venue-stage[data-theme="arena"] .cb-venue-depth{background:radial-gradient(ellipse at 50% 78%,#a35e3a2b,transparent 45%),linear-gradient(#1a2429,#37322d 61%,#1a1c1b)}
+.cb-venue-stage[data-theme="market"] .cb-venue-depth{background:radial-gradient(ellipse at 28% 75%,#be8b4b2a,transparent 38%),linear-gradient(#1a292c,#403a2d 62%,#201d19)}
+.cb-venue-stage[data-theme="workshop"] .cb-venue-depth{background:radial-gradient(ellipse at 25% 76%,#d2773f43,transparent 36%),linear-gradient(#17252a,#3b312b 64%,#1b1917)}
+.cb-venue-stage[data-theme="vault"] .cb-venue-depth{background:radial-gradient(ellipse at 50% 75%,#9c815433,transparent 42%),linear-gradient(#152126,#302f2a 61%,#171a19)}
+.cb-venue-stage[data-theme="expedition"] .cb-venue-depth{background:radial-gradient(ellipse at 48% 75%,#a27c4c2d,transparent 43%),linear-gradient(#17262c,#3d3930 62%,#1d1c19)}
+.cb-venue-stage[data-theme="harbour"] .cb-venue-depth{background:linear-gradient(#203847 0 40%,#314b57 40% 51%,#1c3741 51% 100%)}
+.cb-venue-stage[data-theme="grounds"] .cb-venue-depth{background:radial-gradient(ellipse at 50% 75%,#b28b4d2d,transparent 45%),linear-gradient(#1d2d31,#403a2f 62%,#20211d)}
+
+.cb-venue-scenery{position:absolute;inset:auto 0 0;width:100%;height:74%;z-index:-3;opacity:.96;pointer-events:none;filter:drop-shadow(0 -4px 8px #0003)}
+.cb-venue-stage:after{
+  content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(180deg,#05090b8a,transparent 27%,transparent 67%,#050708c2),
+             radial-gradient(circle at 50% 55%,transparent 36%,#0203044c)
+}
+
+.cb-venue-header{position:absolute;left:20px;top:18px;z-index:6;max-width:540px;padding:11px 14px 13px;border-left:2px solid #c3a267aa;background:linear-gradient(90deg,#080d10e8,#080d1050,transparent)}
+.cb-venue-header small{display:block;color:#bea066;font-size:.55rem;font-weight:900;letter-spacing:.17em}
+.cb-venue-header h2{margin:4px 0 4px;font:400 clamp(1.9rem,3vw,3rem)/1 Georgia,serif;color:#f1e4cc}
+.cb-venue-header p{margin:0;color:#b9ae99;font-size:.67rem;line-height:1.45;max-width:480px}
+
+.cb-venue-town{
+  position:absolute;right:16px;top:16px;z-index:9;min-height:42px;padding:0 12px;border:1px solid #b18f585c;border-radius:3px;
+  background:#151a18e8;color:#dfd2ba;font-size:.6rem;font-weight:900;letter-spacing:.04em
+}
+.cb-venue-town:hover,.cb-venue-town:focus-visible{background:#3a3022;border-color:#d6b36f}
+
+.cb-venue-actors{position:absolute;inset:108px 18px 54px;z-index:5}
+.cb-venue-actor{
+  position:absolute;left:var(--venue-x);top:var(--venue-y);transform:translate(-50%,-50%);
+  width:145px;min-height:150px;padding:0!important;border:0!important;background:transparent!important;color:#eee0c7!important;
+  box-shadow:none!important;cursor:pointer;outline:none;text-align:center
+}
+.cb-venue-actor-visual{
+  display:grid;place-items:end center;width:112px;height:105px;margin:0 auto;filter:drop-shadow(0 10px 8px #0009);
+  transform-origin:50% 100%;transition:transform .16s ease,filter .16s ease
+}
+.cb-venue-actor-visual svg{display:block;width:100%;height:100%;overflow:visible}
+.cb-venue-actor-plaque{
+  display:inline-block;min-width:112px;max-width:150px;margin-top:2px;padding:5px 7px 6px;
+  border:1px solid #9c805253;border-radius:2px;background:#111513df;box-shadow:0 5px 14px #0007
+}
+.cb-venue-actor-plaque b{display:block;font:500 .76rem/1.1 Georgia,serif;color:#f0e1c5}
+.cb-venue-actor-plaque small{display:block;margin-top:2px;color:#aa9d88;font-size:.46rem}
+.cb-venue-actor:hover .cb-venue-actor-visual,.cb-venue-actor:focus-visible .cb-venue-actor-visual{transform:scale(1.07);filter:brightness(1.13) drop-shadow(0 10px 8px #000a)}
+.cb-venue-actor:hover .cb-venue-actor-plaque,.cb-venue-actor:focus-visible .cb-venue-actor-plaque{border-color:#d0ae6d;background:#30271cf0}
+.cb-venue-actor.is-selected .cb-venue-actor-visual{transform:scale(1.1);filter:brightness(1.18) drop-shadow(0 0 8px #d6aa5d66) drop-shadow(0 10px 8px #000a)}
+.cb-venue-actor.is-selected .cb-venue-actor-plaque{border-color:#e2bb72;background:#3a2d1df5}
+.cb-venue-actor:focus-visible{outline:2px solid #e5c27f;outline-offset:3px;border-radius:5px}
+
+.cb-venue-dialogue[hidden],.cb-venue-system-bar[hidden]{display:none!important}
+.cb-venue-dialogue{
+  position:absolute;left:50%;bottom:16px;z-index:12;transform:translateX(-50%);width:min(760px,calc(100% - 32px));
+  display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px;padding:12px 13px 12px 16px;
+  border:1px solid #c4a16073;background:linear-gradient(180deg,#24221dea,#121616f7);box-shadow:0 12px 30px #0008
+}
+.cb-venue-dialogue small{display:block;color:#bd9d62;font-size:.48rem;font-weight:900;letter-spacing:.14em}
+.cb-venue-dialogue h3{margin:3px 0 3px;font:500 1.05rem Georgia,serif;color:#f0e3ce}
+.cb-venue-dialogue p{margin:0;color:#bdb09c;font-size:.63rem;line-height:1.42}
+.cb-venue-dialogue button{
+  min-height:44px;padding:0 14px;border:1px solid #d0aa685c;background:#4a3922;color:#f1d9a4;
+  font-size:.59rem;font-weight:900;letter-spacing:.05em;white-space:nowrap
+}
+.cb-venue-dialogue button:hover,.cb-venue-dialogue button:focus-visible{border-color:#edc77c;background:#5b4528}
+
+.cb-venue-location[data-venue-state="system"]>.cb-venue-stage{min-height:178px;overflow:visible}
+.cb-venue-location[data-venue-state="system"] .cb-venue-stage>.cb-venue-actors,
+.cb-venue-location[data-venue-state="system"] .cb-venue-stage>.cb-venue-town,
+.cb-venue-location[data-venue-state="system"] .cb-venue-stage>.cb-venue-dialogue{display:none!important}
+.cb-venue-location[data-venue-state="system"] .cb-venue-scenery{height:100%;opacity:.55}
+.cb-venue-location[data-venue-state="system"] .cb-venue-header{max-width:470px;top:15px}
+.cb-venue-location[data-venue-state="system"] .cb-venue-header h2{font-size:1.6rem}
+.cb-venue-location[data-venue-state="system"] .cb-venue-header p{display:none}
+.cb-venue-system-bar{
+  position:absolute;left:0;right:0;bottom:0;z-index:15;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;
+  padding:8px 10px;border-top:1px solid #a98b5840;background:#0e1314ef;backdrop-filter:blur(6px)
+}
+.cb-venue-system-bar>button{min-height:40px;padding:0 11px;border:1px solid #a98b5844;background:#171b19;color:#ddcfb5;font-size:.57rem;font-weight:900}
+.cb-venue-system-bar>button:hover,.cb-venue-system-bar>button:focus-visible{background:#3a3022;border-color:#d0ab69}
+.cb-venue-system-bar>div{text-align:center;min-width:0}.cb-venue-system-bar small{display:block;color:#8f805f;font-size:.42rem;letter-spacing:.14em}.cb-venue-system-bar b{display:block;margin-top:1px;color:#e9dcc4;font:500 .78rem Georgia,serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Make the authoritative systems feel like work surfaces inside the venue. */
+.cb-venue-location[data-venue-state="system"]>.cb-venue-system-content{
+  position:relative;z-index:2;margin-top:10px
+}
+.cb-venue-location[data-venue-state="system"] :is(.panel,.pvp-panel,.tp-panel,.bank-overview-strip,.profession-roster-panel,.workshop-panel,.dungeon-browser-card,.dungeon-detail-panel){
+  border-color:#b39a6339!important;box-shadow:0 8px 22px #00020!important
+}
+#pvp.cb-venue-location[data-venue-state="system"] .pvp-hero{margin-top:0}
+#raids.cb-venue-location[data-venue-state="system"] #manorRaidMount,
+#world.cb-venue-location[data-venue-state="system"] #twelveBelowMount{padding-top:4px}
+
+/* Crucible gets the strongest venue identity: arena floor, guard silhouettes and vendor post. */
+#pvp .cb-venue-actor[data-venue-actor="marshal"] .cb-venue-actor-visual,
+#pvp .cb-venue-actor[data-venue-actor="warden"] .cb-venue-actor-visual{width:124px;height:116px}
+#pvp .cb-venue-actor[data-venue-actor="quartermaster"]{width:155px}
+#pvp .cb-venue-actor[data-venue-actor="ladder"] .cb-venue-actor-visual{width:126px;height:112px}
+
+/* Give every venue a grounded floor strip so figures do not float. */
+.cb-venue-stage:before{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:94px;z-index:-2;pointer-events:none;
+  background:linear-gradient(180deg,transparent,#161918cc 32%,#111312)
+}
+.cb-venue-stage[data-theme="harbour"]:before{background:linear-gradient(180deg,transparent,#203a42d9 35%,#172b31)}
+.cb-venue-stage[data-theme="arena"]:before{background:linear-gradient(180deg,transparent,#3a322acc 33%,#1a1b1a)}
+
+@media(max-width:900px){
+  .cb-venue-stage{min-height:540px}
+  .cb-venue-header{max-width:62%}
+  .cb-venue-actors{inset:120px 8px 58px}
+  .cb-venue-actor{width:125px}.cb-venue-actor-visual{width:98px;height:94px}.cb-venue-actor-plaque{min-width:100px;max-width:130px}
+}
+@media(max-width:650px){
+  .cb-venue-stage{min-height:620px;margin-inline:-10px;border-left:0;border-right:0;border-radius:0}
+  .cb-venue-header{left:12px;top:10px;max-width:72%;padding:8px 9px}.cb-venue-header h2{font-size:1.65rem}.cb-venue-header p{font-size:.58rem}
+  .cb-venue-town{right:8px;top:8px;min-height:40px;padding:0 8px;font-size:.5rem}
+  .cb-venue-actors{inset:110px 5px 92px}
+  .cb-venue-actor{width:112px;min-height:128px}.cb-venue-actor-visual{width:82px;height:82px}.cb-venue-actor-plaque{min-width:88px;max-width:112px;padding:4px 5px}
+  .cb-venue-actor-plaque b{font-size:.64rem}.cb-venue-actor-plaque small{font-size:.39rem}
+  .cb-venue-dialogue{bottom:10px;width:calc(100% - 16px);grid-template-columns:1fr;gap:8px;padding:9px 10px}.cb-venue-dialogue button{width:100%}
+  .cb-venue-location[data-venue-state="system"]>.cb-venue-stage{min-height:166px}
+  .cb-venue-location[data-venue-state="system"] .cb-venue-header{max-width:60%}.cb-venue-location[data-venue-state="system"] .cb-venue-header h2{font-size:1.25rem}
+  .cb-venue-system-bar{grid-template-columns:1fr 1fr;gap:5px}.cb-venue-system-bar>div{grid-column:1/-1;grid-row:1}.cb-venue-system-bar>button{grid-row:2}
+}
+@media(max-width:390px){
+  .cb-venue-stage{min-height:590px}
+  .cb-venue-header p{display:none}
+  .cb-venue-actors{inset-top:90px}
+}
+@media(prefers-reduced-motion:reduce){
+  .cb-venue-actor,.cb-venue-actor-visual{transition:none!important}
+}
