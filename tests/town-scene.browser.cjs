@@ -44,6 +44,14 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  assert.equal(await page.locator('.town-painted-image').count(),1,'Central Square uses the painted town artwork');
  assert((await page.locator('.town-painted-image').getAttribute('src')||'').includes('assets/world/town/central-square-v1.webp'),'painted Central Square asset is wired into the scene');
  assert.equal(await page.locator('[data-town-sector="square"] [data-town-object]').count(),5,'painted Central Square exposes exactly five environmental destinations');
+ assert.equal(await page.locator('[data-town-quest-marker]').count(),1,'painted notice board includes one quest marker');
+ assert.equal(await page.locator('[data-town-scene]').evaluate(n=>n.classList.contains('has-available-quests')),true,'open quest count lights the Town notice board marker');
+ await page.evaluate(()=>{document.querySelector('#questNavBadge').textContent=''});
+ await page.waitForTimeout(20);
+ assert.equal(await page.locator('[data-town-scene]').evaluate(n=>n.classList.contains('has-available-quests')),false,'quest marker hides when no quest is available');
+ await page.evaluate(()=>{document.querySelector('#questNavBadge').textContent='1'});
+ await page.waitForTimeout(20);
+ assert.equal(await page.locator('[data-town-scene]').evaluate(n=>n.classList.contains('has-available-quests')),true,'quest marker returns when a quest becomes available');
  assert.equal(await page.locator('[data-town-selection]').isVisible(),false,'No location labels/panel shown by default');
 
  const press=async id=>page.locator('[data-town-object="'+id+'"]').evaluate(n=>n.dispatchEvent(new MouseEvent('click',{bubbles:true})));
