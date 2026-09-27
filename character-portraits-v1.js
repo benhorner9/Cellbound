@@ -221,19 +221,16 @@ function portraitHTML(subject,opts){
   var a=normalizeAppearance(c.appearance||c,c.id||c.name||opts.seed||race,race);
   var accent=opts.accent||CLASS_COLORS[c.class]||'#76d7d0';
   var size=opts.size||'md';
-  var cls=opts.className||'';
+  var cls='cb-portrait cb-portrait-illustrated cb-portrait--'+esc(size)+(opts.className?' '+esc(opts.className):'');
   var label=opts.label||c.name||a.race+' adventurer';
-  if(paintedRaceOf(c,a))return paintedFaceHTML(c,a,accent,size,label,cls);
-  cls='cb-portrait cb-portrait--'+esc(size)+(cls?' '+esc(cls):'');
-  return '<span class="'+cls+'" style="--cbp-accent:'+accent+'" role="img" aria-label="'+esc(label)+'">'+svgFor(a,accent)+'</span>';
+  return '<span class="'+cls+'" style="--cbp-accent:'+accent+'" role="img" aria-label="'+esc(label)+'" data-illustrated-race="'+esc(a.race)+'" data-appearance-key="'+hash(JSON.stringify(a)).toString(36)+'">'+svgFor(a,accent)+'</span>';
 }
 function optionText(field,value,race){
   if(field==='hair'&&value===0)return 'None';
   if(field==='facialHair'&&value===0)return 'None';
   if(field==='marking'&&value===0)return 'None';
-  var count=(PAINTED_RACES.has(race)&&field==='face')?4:COUNTS[field];
-  var shown=(PAINTED_RACES.has(race)&&field==='face')?paintedFaceIndex({face:value}):value;
-  return String(shown+1).padStart(2,'0')+' / '+String(count).padStart(2,'0');
+  var count=COUNTS[field]||1;
+  return String((Number(value)||0)+1).padStart(2,'0')+' / '+String(count).padStart(2,'0');
 }
 function editorHTML(appearance,opts){
   opts=opts||{};
@@ -243,33 +240,23 @@ function editorHTML(appearance,opts){
     var label=field==='feature'?(raceDef(a.race).featureLabel||'Race detail'):(LABELS[field]||field);
     return '<div class="cb-appearance-control"><span>'+esc(label)+'</span><div><button type="button" data-appearance-field="'+field+'" data-direction="-1" aria-label="Previous '+esc(label)+'">‹</button><b>'+esc(optionText(field,a[field],a.race))+'</b><button type="button" data-appearance-field="'+field+'" data-direction="1" aria-label="Next '+esc(label)+'">›</button></div></div>';
   }).join('');
-  var visual=portraitHTML({race:a.race,appearance:a,class:opts.characterClass,name:opts.name||'Character'},{size:'hero',label:(opts.name||'Character')+' appearance preview'});
-  var faces='',painted=PAINTED_RACES.has(a.race);
-  if(painted){
-    faces='<div class="cb-painted-face-picker"><small>ILLUSTRATED '+esc(a.race.toUpperCase())+' FACE</small><div>'+[0,1,2,3].map(function(i){return '<button type="button" class="'+(paintedFaceIndex(a)===i?'is-selected':'')+'" data-painted-race="'+esc(a.race)+'" data-appearance-direct="face" data-value="'+i+'" aria-label="'+esc(a.race)+' face '+(i+1)+'"><img src="'+paintedAsset(a.race,'face-'+i+'.webp')+'" alt=""></button>'}).join('')+'</div></div>';
-  }
-  return '<div class="cb-appearance-editor '+(painted?'cb-appearance-editor-painted':'')+'" data-appearance-editor><div class="cb-appearance-preview">'+visual+faces+'<button type="button" data-appearance-randomize>RANDOMISE APPEARANCE</button></div><div class="cb-appearance-controls">'+rows+'</div></div>';
+  var previewCharacter={id:opts.seed||'appearance-preview',name:opts.name||'Character',race:a.race,appearance:a,class:opts.characterClass||'Warrior',equipment:opts.equipment||{}};
+  var portrait=portraitHTML(previewCharacter,{size:'hero',label:(opts.name||'Character')+' portrait preview'});
+  var body=paperDollHTML(previewCharacter,{size:'creator',label:(opts.name||'Character')+' full body preview'});
+  return '<div class="cb-appearance-editor cb-appearance-editor-illustrated" data-appearance-editor><div class="cb-appearance-preview"><div class="cb-appearance-preview-pair">'+portrait+body+'</div><small class="cb-appearance-live-note">LIVE CHARACTER MODEL</small><button type="button" data-appearance-randomize>RANDOMISE APPEARANCE</button></div><div class="cb-appearance-controls">'+rows+'</div></div>';
 }
 function bindEditor(container,appearance,onChange,opts){
   if(!container||!appearance)return;
   container.querySelectorAll('[data-appearance-field]').forEach(function(btn){
     btn.addEventListener('click',function(){
-      var field=btn.dataset.appearanceField,count=(PAINTED_RACES.has(appearance.race)&&field==='face')?4:(COUNTS[field]||1),dir=Number(btn.dataset.direction)||1;
+      var field=btn.dataset.appearanceField,count=COUNTS[field]||1,dir=Number(btn.dataset.direction)||1;
       appearance[field]=(Number(appearance[field]||0)+dir+count)%count;
-      if(typeof onChange==='function')onChange(appearance,field);
-    });
-  });
-  container.querySelectorAll('[data-appearance-direct]').forEach(function(btn){
-    btn.addEventListener('click',function(){
-      var field=btn.dataset.appearanceDirect,count=(PAINTED_RACES.has(appearance.race)&&field==='face')?4:(COUNTS[field]||1),value=Number(btn.dataset.value)||0;
-      appearance[field]=Math.max(0,Math.min(count-1,value));
       if(typeof onChange==='function')onChange(appearance,field);
     });
   });
   var random=container.querySelector('[data-appearance-randomize]');
   if(random)random.addEventListener('click',function(){
     Object.assign(appearance,randomAppearance(appearance.race));
-    if(PAINTED_RACES.has(appearance.race))appearance.face=paintedFaceIndex(appearance);
     if(typeof onChange==='function')onChange(appearance,'random');
   });
 }
