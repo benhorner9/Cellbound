@@ -1076,3 +1076,340 @@ body.town-expedition-focus-open{overflow:hidden}
   }
   .town-scene.is-entering-expedition:after{opacity:0!important}
 }
+
+
+/* Town Square v6 · concept-led plaza composition
+   The clean 16:9 plaza remains the world layer. Inn, arches, quest board and
+   harbour sign are independent artwork layers, with the active party living
+   in the open centre of the square. */
+.town-scene[data-town-sector="square"]:not(.town-board-open){
+  aspect-ratio:16/9;
+  background:#080d11
+}
+.town-painted-square{background:#080d11}
+.town-cartoon-stage{
+  overflow:hidden;
+  background:#080d11
+}
+.town-cartoon-stage .town-layered-base{
+  object-fit:fill;
+  object-position:center
+}
+
+/* Final plaza composition: Inn north, district arches west/east, utility
+   landmarks in the lower corners, leaving the centre open for the party. */
+.town-cartoon-stage .town-landmark-inn{
+  z-index:5;
+  left:33.5%;
+  top:-1.5%;
+  width:33%;
+  aspect-ratio:1448/1086
+}
+.town-cartoon-stage .town-landmark-expedition{
+  z-index:4;
+  left:1.5%;
+  top:5.5%;
+  width:21%;
+  aspect-ratio:1086/1448
+}
+.town-cartoon-stage .town-landmark-merchant{
+  z-index:4;
+  left:77.5%;
+  top:5.5%;
+  width:21%;
+  aspect-ratio:1086/1448
+}
+.town-cartoon-stage .town-landmark-board{
+  z-index:8;
+  left:4.2%;
+  top:49%;
+  width:17.5%;
+  aspect-ratio:1086/1448
+}
+.town-cartoon-stage .town-landmark-direction-board{
+  z-index:8;
+  left:auto;
+  right:4.8%;
+  top:51%;
+  width:16.5%;
+  aspect-ratio:1086/1448
+}
+.town-cartoon-stage .town-landmark>img{
+  object-fit:contain;
+  object-position:center bottom
+}
+.town-cartoon-stage .town-landmark-glow{
+  transform:scale(1.045);
+  filter:
+    brightness(0)
+    saturate(100%)
+    invert(78%)
+    sepia(73%)
+    saturate(1120%)
+    hue-rotate(346deg)
+    brightness(108%)
+    contrast(98%)
+    blur(14px)
+}
+.town-cartoon-stage .town-landmark.is-selected{z-index:11}
+.town-cartoon-stage .town-landmark.is-selected .town-landmark-glow{
+  opacity:.86!important;
+  transform:scale(1.065)
+}
+.town-cartoon-stage .town-landmark.is-selected .town-landmark-art{
+  transform:translateY(-2px) scale(1.012);
+  filter:brightness(1.09) saturate(1.07) drop-shadow(0 16px 15px rgba(0,0,0,.33))
+}
+.town-cartoon-stage .town-landmark-board .town-quest-marker{
+  left:52%;
+  top:38%
+}
+
+/* The hit areas are independent from the artwork. This keeps touch targets
+   generous while preserving the clean, modular art layers. */
+.town-square-hotspots{
+  position:absolute;
+  inset:0;
+  z-index:24;
+  pointer-events:none;
+  transition:opacity .16s ease
+}
+.town-square-hotspot{
+  position:absolute;
+  display:block;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:16px;
+  background:transparent;
+  appearance:none;
+  -webkit-appearance:none;
+  cursor:pointer;
+  touch-action:manipulation;
+  pointer-events:auto;
+  filter:none!important;
+  outline:none
+}
+.town-square-hotspot-expedition{left:1%;top:4%;width:23%;height:53%}
+.town-square-hotspot-inn{left:32%;top:0;width:36%;height:47%}
+.town-square-hotspot-merchant{right:1%;top:4%;width:23%;height:53%}
+.town-square-hotspot-board{left:3.2%;top:48%;width:20%;height:47%}
+.town-square-hotspot-harbour{right:3.2%;top:49%;width:20%;height:46%}
+
+.town-square-label{
+  position:absolute;
+  left:50%;
+  bottom:1%;
+  transform:translate(-50%,0);
+  min-width:max-content;
+  padding:7px 14px 8px;
+  border:1px solid rgba(222,177,92,.42);
+  border-radius:8px;
+  background:linear-gradient(180deg,rgba(34,29,27,.94),rgba(13,16,17,.96));
+  box-shadow:0 8px 20px rgba(0,0,0,.34);
+  color:#ead7ad;
+  font:600 clamp(10px,1.15vw,15px)/1.1 Georgia,serif;
+  letter-spacing:.015em;
+  opacity:.78;
+  pointer-events:none;
+  white-space:nowrap;
+  transition:
+    opacity .16s ease,
+    border-color .16s ease,
+    color .16s ease,
+    box-shadow .16s ease,
+    transform .16s ease
+}
+.town-square-label b{font:inherit}
+.town-square-hotspot-board .town-square-label,
+.town-square-hotspot-harbour .town-square-label{bottom:10%}
+.town-square-hotspot:hover .town-square-label,
+.town-square-hotspot:focus-visible .town-square-label{
+  opacity:.95;
+  border-color:rgba(239,196,112,.72);
+  color:#f4e2b9
+}
+.town-square-hotspot.is-selected .town-square-label{
+  opacity:1;
+  border-color:#f1c36f;
+  color:#ffe2a0;
+  transform:translate(-50%,-2px);
+  box-shadow:
+    0 0 0 1px rgba(255,222,151,.22),
+    0 0 19px rgba(236,178,78,.42),
+    0 10px 24px rgba(0,0,0,.42)
+}
+.town-square-hotspot:focus-visible .town-square-label{
+  box-shadow:
+    0 0 0 2px rgba(255,225,163,.58),
+    0 0 18px rgba(236,178,78,.34),
+    0 10px 22px rgba(0,0,0,.4)
+}
+
+/* A light preview on hover/focus; the strong gold halo is reserved for the
+   actual first-press selection. */
+.town-cartoon-stage:has(.town-square-hotspot-inn:hover) [data-town-layer="inn"] .town-landmark-glow,
+.town-cartoon-stage:has(.town-square-hotspot-inn:focus-visible) [data-town-layer="inn"] .town-landmark-glow,
+.town-cartoon-stage:has(.town-square-hotspot-expedition:hover) [data-town-layer="expeditionRoad"] .town-landmark-glow,
+.town-cartoon-stage:has(.town-square-hotspot-expedition:focus-visible) [data-town-layer="expeditionRoad"] .town-landmark-glow,
+.town-cartoon-stage:has(.town-square-hotspot-merchant:hover) [data-town-layer="merchantRoad"] .town-landmark-glow,
+.town-cartoon-stage:has(.town-square-hotspot-merchant:focus-visible) [data-town-layer="merchantRoad"] .town-landmark-glow,
+.town-cartoon-stage:has(.town-square-hotspot-board:hover) [data-town-layer="board"] .town-landmark-glow,
+.town-cartoon-stage:has(.town-square-hotspot-board:focus-visible) [data-town-layer="board"] .town-landmark-glow,
+.town-cartoon-stage:has(.town-square-hotspot-harbour:hover) [data-town-layer="harbourRoad"] .town-landmark-glow,
+.town-cartoon-stage:has(.town-square-hotspot-harbour:focus-visible) [data-town-layer="harbourRoad"] .town-landmark-glow{
+  opacity:.25
+}
+
+/* Active five: decorative, non-interactive inhabitants of the square. Their
+   live equipment/appearance comes from the same character renderer as the Inn. */
+.town-square-party{
+  position:absolute;
+  inset:0;
+  z-index:14;
+  pointer-events:none;
+  opacity:1;
+  transition:opacity .18s ease
+}
+.town-square-party[hidden]{display:none!important}
+.town-square-hero{
+  position:absolute;
+  width:6.8%;
+  aspect-ratio:240/420;
+  transform:translate(-50%,-100%) scale(var(--town-square-scale,1));
+  transform-origin:50% 100%;
+  filter:drop-shadow(0 9px 7px rgba(0,0,0,.48))
+}
+.town-square-hero:nth-child(1){left:42.5%;top:62%;--town-square-scale:.82}
+.town-square-hero:nth-child(2){left:50%;top:59.5%;--town-square-scale:.84}
+.town-square-hero:nth-child(3){left:57.5%;top:62%;--town-square-scale:.82}
+.town-square-hero:nth-child(4){left:46%;top:75%;--town-square-scale:.96}
+.town-square-hero:nth-child(5){left:54%;top:75%;--town-square-scale:.96}
+.town-square-hero>.cb-world-avatar,
+.town-square-hero>.cb-paper-doll{
+  display:block;
+  width:100%!important;
+  height:100%!important;
+  background:transparent!important;
+  animation:townSquareHeroIdle 3.2s ease-in-out infinite;
+  animation-delay:calc(var(--town-party-order)*-.43s)
+}
+.town-square-hero>.cb-portrait{
+  display:block;
+  width:100%!important;
+  height:auto!important;
+  margin-top:auto;
+  border-radius:16%;
+  animation:townSquareHeroIdle 3.2s ease-in-out infinite;
+  animation-delay:calc(var(--town-party-order)*-.43s)
+}
+.town-square-party-fallback{
+  display:grid;
+  place-items:center;
+  width:100%;
+  aspect-ratio:1;
+  border:1px solid rgba(226,185,105,.4);
+  border-radius:50%;
+  background:#14191b;
+  color:#d7b36e
+}
+@keyframes townSquareHeroIdle{
+  0%,100%{translate:0 0}
+  50%{translate:0 -2px}
+}
+.town-scene.has-selection .town-square-party{opacity:.84}
+
+/* Small warm motes keep the plaza from feeling like a static menu without
+   competing with interactable landmarks. */
+.town-square-ambience{
+  position:absolute;
+  inset:0;
+  z-index:13;
+  pointer-events:none
+}
+.town-square-ambience span{
+  position:absolute;
+  width:3px;
+  height:3px;
+  border-radius:50%;
+  background:#ffd58a;
+  box-shadow:0 0 9px rgba(255,190,91,.58);
+  opacity:.14;
+  animation:townSquareMote 4.8s ease-in-out infinite alternate
+}
+.town-square-ambience span:nth-child(1){left:23%;top:46%;animation-delay:-.6s}
+.town-square-ambience span:nth-child(2){left:38%;top:42%;animation-delay:-1.7s}
+.town-square-ambience span:nth-child(3){left:62%;top:41%;animation-delay:-2.9s}
+.town-square-ambience span:nth-child(4){left:77%;top:47%;animation-delay:-1.1s}
+.town-square-ambience span:nth-child(5){left:51%;top:67%;animation-delay:-3.6s}
+@keyframes townSquareMote{
+  to{transform:translate(7px,-12px);opacity:.48}
+}
+
+/* Camera language follows the new physical layout. Confirming a destination
+   pushes toward the object first, then hands off to its existing system. */
+.town-scene.is-entering-inn .town-cartoon-stage{
+  transform-origin:50% 28%;
+  transform:translate(0,18%) scale(2.25)
+}
+.town-scene.is-entering-district[data-town-entry="expeditionRoad"] .town-cartoon-stage{
+  transform-origin:13% 31%;
+  transform:translate(37%,16%) scale(2.08)
+}
+.town-scene.is-entering-district[data-town-entry="merchantRoad"] .town-cartoon-stage{
+  transform-origin:87% 31%;
+  transform:translate(-37%,16%) scale(2.08)
+}
+.town-scene.is-entering-district[data-town-entry="harbourRoad"] .town-cartoon-stage{
+  transform-origin:88% 72%;
+  transform:translate(-38%,-22%) scale(1.92)
+}
+.town-scene.is-opening-board .town-cartoon-stage,
+.town-scene.town-board-open .town-cartoon-stage,
+.town-scene.is-returning-board .town-cartoon-stage{
+  transform-origin:13% 72%;
+  transform:translate(37%,-22%) scale(1.72)
+}
+.town-scene.is-returning-board.is-returning-board-home .town-cartoon-stage{
+  transform-origin:13% 72%;
+  transform:translate(0,0) scale(1)
+}
+.town-scene.is-entering-inn .town-square-hotspots,
+.town-scene.is-entering-district .town-square-hotspots,
+.town-scene.is-opening-board .town-square-hotspots,
+.town-scene.town-board-open .town-square-hotspots,
+.town-scene.is-returning-board .town-square-hotspots{
+  opacity:0;
+  pointer-events:none
+}
+.town-scene.is-entering-inn .town-square-party,
+.town-scene.is-entering-district .town-square-party,
+.town-scene.is-opening-board .town-square-party,
+.town-scene.town-board-open .town-square-party,
+.town-scene.is-returning-board .town-square-party{
+  opacity:0
+}
+
+@media(max-width:720px){
+  .town-scene[data-town-sector="square"]:not(.town-board-open){aspect-ratio:16/9}
+  .town-square-label{
+    padding:5px 8px 6px;
+    border-radius:6px;
+    font-size:8px
+  }
+  .town-square-hotspot-board .town-square-label,
+  .town-square-hotspot-harbour .town-square-label{bottom:8%}
+  .town-square-hero{width:7.4%}
+  .town-square-ambience{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .town-square-label,.town-square-party,.town-square-hotspots{transition:none!important}
+  .town-square-hero>.cb-world-avatar,
+  .town-square-hero>.cb-paper-doll,
+  .town-square-hero>.cb-portrait,
+  .town-square-ambience span{animation:none!important}
+  .town-scene.is-entering-district[data-town-entry="harbourRoad"] .town-cartoon-stage{
+    transform:none!important;
+    filter:none!important
+  }
+}
