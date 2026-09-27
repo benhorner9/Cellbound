@@ -25,6 +25,7 @@ const headingKicker=root.querySelector('[data-town-sector-kicker]');
 const headingTitle=root.querySelector('[data-town-sector-title]');
 const headingCopy=root.querySelector('[data-town-sector-copy]');
 const travelParty=root.querySelector('[data-town-travel-party]');
+const questNavBadge=$('#questNavBadge');
 
 let selected='';
 let sector='square';
@@ -188,6 +189,12 @@ const sectorRoutes={
 
 function locationNode(id){return root.querySelector('[data-town-object="'+id+'"]')}
 
+function syncQuestMarker(){
+  const count=Number.parseInt(String(questNavBadge?.textContent||'').trim(),10)||0;
+  root.classList.toggle('has-available-quests',count>0);
+  if(count>0)root.dataset.townQuestCount=String(count);else delete root.dataset.townQuestCount;
+}
+
 function renderTravelParty(){
   if(!travelParty)return;
   const chars=(game()?.getPartyCharacters?.()||[]).slice(0,5);
@@ -283,6 +290,7 @@ function openBoard(){
   requestAnimationFrame(()=>board.classList.add('is-visible'));
   boardClose?.focus({preventScroll:true});
   window.CellboundQuests?.render?.();
+  syncQuestMarker();
 }
 
 function travel(view){
@@ -336,6 +344,7 @@ function syncHome(){
     if(track)track.style.transform='translateX(0%)';
     updateHeading();
     renderTravelParty();
+    syncQuestMarker();
   }else{
     closeBoard({focus:false});
     setSelected('');
@@ -372,14 +381,20 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('cellbound:view-changed',syncHome);
 window.addEventListener('cellbound:state-rendered',()=>{
   renderTravelParty();
+  syncQuestMarker();
   if(selected&&objectCopy[selected])panelStatus.textContent=objectCopy[selected].status();
 });
 window.addEventListener('beforeunload',()=>restoreQuests(),{once:true});
+
+if(questNavBadge){
+  new MutationObserver(syncQuestMarker).observe(questNavBadge,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['hidden']});
+}
 
 root.dataset.townSector='square';
 if(track)track.style.transform='translateX(0%)';
 updateHeading();
 renderTravelParty();
+syncQuestMarker();
 syncHome();
 
 window.CellboundTownScene={
