@@ -304,8 +304,28 @@ function travel(view){
   },220);
 }
 
+function enterInn(){
+  if(entering)return;
+  entering=true;
+  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  if(reduced){
+    game()?.switchView?.('roster');
+    entering=false;
+    return;
+  }
+  root.classList.add('is-entering-inn');
+  root.dataset.townEntry='inn';
+  setTimeout(()=>{
+    game()?.switchView?.('roster');
+    root.classList.remove('is-entering-inn');
+    delete root.dataset.townEntry;
+    entering=false;
+  },720);
+}
+
 function enter(id){
   if(id==='board'){openBoard();return}
+  if(id==='inn'){enterInn();return}
   if(sectorRoutes[id]){setSector(sectorRoutes[id]);return}
   const view=viewRoutes[id];
   if(view)travel(view);
