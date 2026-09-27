@@ -2,7 +2,7 @@
 #roster.inn-location{padding:0!important;background:none!important;border:0;border-radius:0;isolation:isolate}
 .inn-world{position:relative;width:100%;aspect-ratio:3/2;isolation:isolate;overflow:hidden;border-radius:12px;background:#291e17;min-height:440px}
 .inn-art,.inn-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:-3}
-.inn-heading{position:absolute;top:0;left:0;right:0;padding:22px 26px 38px;background:linear-gradient(#080f16b8,transparent);pointer-events:none;z-index:100;color:#fff0d5}
+.inn-heading{position:absolute;top:0;left:0;right:0;padding:22px 26px 38px;background:linear-gradient(180deg,#090b0dc9 0%,#11100870 52%,transparent 100%);pointer-events:none;z-index:100;color:#fff0d5}
 .inn-heading small{font:700 10px system-ui;letter-spacing:.18em;color:#e6c58c}.inn-heading h2{font:400 clamp(25px,3vw,38px)/1.1 Georgia,serif;margin:7px 0}.inn-heading p{font:12px system-ui;color:#eee0c7;margin:0}
 .inn-adventurer{
   position:absolute!important;
@@ -89,11 +89,11 @@
 .inn-hotspot{position:absolute;transform:translate(-50%,-50%);padding:9px 14px!important;min-height:48px!important;border:1px solid #d8b67699!important;border-radius:6px;background:#201b14d9!important;color:#ffefd3!important;box-shadow:0 4px 14px #0006;z-index:105;text-align:center}
 .inn-hotspot span{display:block;font:600 14px Georgia,serif}.inn-hotspot small{font:10px system-ui;color:#decead}
 .inn-hotspot:hover,.inn-hotspot:focus-visible{background:#624623ed!important;outline:2px solid #ffe0a0;outline-offset:3px}
-.inn-table{left:32%;top:57%}.inn-ledger{left:81%;top:80%}
+.inn-table{left:37%;top:72%}.inn-ledger{left:86%;top:81%}
 .inn-hint{position:absolute;bottom:0;left:0;right:0;padding:22px 15px 12px;text-align:center;background:linear-gradient(transparent,#0c1014c9);font:12px system-ui;color:#e1d2b8;pointer-events:none;z-index:100}
 .inn-hearth-light,.inn-window-light{position:absolute;pointer-events:none;z-index:-1;inset:0}
-.inn-hearth-light{background:radial-gradient(ellipse at 25% 37%,#ff9c3020,transparent 35%);animation:innHearth 4s ease-in-out infinite alternate}
-.inn-window-light{background:linear-gradient(120deg,transparent 35%,#c1daea08 45%,transparent 58%)}
+.inn-hearth-light{background:radial-gradient(ellipse at 29% 40%,#ff9c3018,transparent 31%);animation:innHearth 4s ease-in-out infinite alternate}
+.inn-window-light{background:linear-gradient(125deg,transparent 38%,#9bd8ff09 48%,transparent 60%)}
 .inn-empty{position:absolute;left:20%;right:20%;top:50%;padding:15px;background:#121b23dd;color:#f2e3c5;text-align:center}
 .inn-dialog{padding:0;width:min(1100px,94vw);max-width:94vw;max-height:86dvh;border:1px solid #ae9160;border-radius:12px;background:#101d24;color:#eee7d7;box-shadow:0 20px 80px #0008;overflow:auto}
 .inn-dialog::backdrop{background:#060b104f;backdrop-filter:none}
@@ -125,7 +125,7 @@ body.inn-character-open #characterModal .cb-character-tabs button{min-width:110p
  .inn-illustrated-model .inn-figure{width:72px;height:128px}
  .inn-illustrated-model .cb-world-avatar-illustrated{width:72px!important;height:128px!important}
  .inn-name{font-size:10px;padding:2px 5px;max-width:70px}
- .inn-table{left:34%;top:62%}.inn-ledger{left:78%;top:85%}.inn-hotspot{padding:7px 9px!important;min-height:46px!important}.inn-hotspot span{font-size:13px}.inn-hotspot small{font-size:9px}
+ .inn-table{left:40%;top:72%}.inn-ledger{left:80%;top:86%}.inn-hotspot{padding:7px 9px!important;min-height:46px!important}.inn-hotspot span{font-size:13px}.inn-hotspot small{font-size:9px}
  .inn-hint{font-size:11px;padding-bottom:12px}.inn-hearth-light{background:radial-gradient(ellipse at 23% 30%,#ff9c3020,transparent 40%)}
  .inn-dialog{position:fixed;inset:auto 0 0;margin:0;width:100%;max-width:100%;max-height:84dvh;border-radius:14px 14px 0 0;padding-bottom:env(safe-area-inset-bottom)}
  .inn-dialog-body{padding:12px}.inn-dialog-head{padding:12px}.inn-dialog-head h2{font-size:21px}.inn-dialog-head button{font-size:12px}
@@ -150,7 +150,7 @@ body.inn-character-open{overflow:hidden}
 }
 #innLedger .roster-card-metrics span,#innLedger .roster-shock-line :is(span,b){font-size:10px;color:#b7c2b6}
 #innLedger .roster-card-metrics b{font-size:17px}
-@media(max-width:600px){.inn-table{left:38%;top:56%}}
+@media(max-width:600px){.inn-table{left:40%;top:72%}}
 /* The door is a direct, keyboard-accessible exit, not another travel screen. */
 .inn-door{position:absolute;left:.5%;top:16%;width:7%;height:25%;min-width:44px;min-height:44px;z-index:104;display:flex;align-items:flex-end;justify-content:center;text-decoration:none;border-radius:45% 45% 4px 4px;color:#ffefd3}
 .inn-door span{padding:6px 10px;background:#17130ddd;border:1px solid #a58755;border-radius:3px;font:13px Georgia,serif;white-space:nowrap}
