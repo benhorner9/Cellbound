@@ -1,0 +1,106 @@
+{
+  "canvas": [
+    512,
+    896
+  ],
+  "target_body_height": 748,
+  "foot_y": 842,
+  "races": {
+    "veyren": {
+      "body-a.webp": {
+        "source_bbox": [
+          0,
+          0,
+          275,
+          750
+        ],
+        "output_bbox": [
+          119,
+          94,
+          393,
+          842
+        ],
+        "visible_height": 748
+      },
+      "body-b.webp": {
+        "source_bbox": [
+          0,
+          15,
+          252,
+          750
+        ],
+        "output_bbox": [
+          128,
+          97,
+          384,
+          842
+        ],
+        "visible_height": 745
+      }
+    },
+    "stoneborn": {
+      "body-a.webp": {
+        "source_bbox": [
+          0,
+          0,
+          275,
+          750
+        ],
+        "output_bbox": [
+          122,
+          94,
+          393,
+          842
+        ],
+        "visible_height": 748
+      },
+      "body-b.webp": {
+        "source_bbox": [
+          0,
+          15,
+          252,
+          750
+        ],
+        "output_bbox": [
+          128,
+          97,
+          384,
+          842
+        ],
+        "visible_height": 745
+      }
+    },
+    "aelari": {
+      "body-a.webp": {
+        "source_bbox": [
+          106,
+          0,
+          368,
+          750
+        ],
+        "output_bbox": [
+          128,
+          97,
+          383,
+          839
+        ],
+        "visible_height": 742
+      },
+      "body-b.webp": {
+        "source_bbox": [
+          91,
+          0,
+          405,
+          750
+        ],
+        "output_bbox": [
+          102,
+          94,
+          409,
+          841
+        ],
+        "visible_height": 747
+      }
+    }
+  }
+}
