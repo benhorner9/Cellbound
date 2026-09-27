@@ -1,0 +1,193 @@
+/* Cellbound Town Scene v1
+   A scene, not a menu: the visible Inn, Notice Board and Expedition Cart are the controls. */
+
+#overview.town-scene-view{padding-top:8px!important}
+.town-scene-shell{position:relative;max-width:1460px;margin:0 auto}
+.town-scene{
+  position:relative;isolation:isolate;overflow:hidden;
+  min-height:clamp(610px,69vw,860px);
+  border:1px solid rgba(169,139,88,.34);
+  background:#0b1012;
+  box-shadow:0 24px 70px rgba(0,0,0,.48);
+  color:#eee3cf
+}
+.town-scene:before{
+  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  background:
+    linear-gradient(180deg,rgba(4,7,9,.72),transparent 22%,transparent 63%,rgba(4,6,8,.8)),
+    radial-gradient(circle at 49% 54%,transparent 30%,rgba(1,3,4,.38) 100%);
+}
+.town-scene-art{
+  position:absolute;inset:0;z-index:1;width:100%;height:100%;
+  transition:transform .42s cubic-bezier(.2,.75,.25,1),filter .32s ease;
+  transform-origin:48% 62%
+}
+.town-scene.is-travelling .town-scene-art{transform:scale(1.04);filter:brightness(.7)}
+.town-scene-town-title{
+  position:absolute;z-index:5;left:24px;top:20px;max-width:390px;
+  padding:10px 13px 12px;border-left:2px solid rgba(207,169,99,.65);
+  background:linear-gradient(90deg,rgba(7,11,13,.82),rgba(7,11,13,.08));
+  pointer-events:none
+}
+.town-scene-town-title small{display:block;color:#bc9a61;font-size:.54rem;font-weight:900;letter-spacing:.17em}
+.town-scene-town-title h2{margin:3px 0 2px;font:400 clamp(1.9rem,3vw,3.2rem)/1 Georgia,serif;color:#f0e5d0}
+.town-scene-town-title p{margin:0;color:#a99f90;font-size:.68rem;line-height:1.45}
+.town-scene-hint{
+  position:absolute;z-index:5;left:50%;bottom:13px;transform:translateX(-50%);
+  margin:0;padding:6px 10px;border:1px solid rgba(169,139,88,.22);
+  background:rgba(10,14,14,.83);color:#b5a991;font-size:.58rem;letter-spacing:.04em;
+  pointer-events:none;white-space:nowrap
+}
+
+/* Actual illustrated objects are the hit areas. No rectangular nav buttons. */
+.town-location{cursor:pointer;outline:none;transform-box:fill-box;transform-origin:center;transition:filter .16s ease,transform .16s ease}
+.town-location .town-object-shape{transition:filter .16s ease,opacity .16s ease}
+.town-location .town-object-outline{
+  fill:none;stroke:#e7bd73;stroke-width:5;vector-effect:non-scaling-stroke;
+  opacity:0;filter:drop-shadow(0 0 5px rgba(225,180,93,.7));transition:opacity .16s ease
+}
+.town-location:hover,.town-location:focus-visible{filter:brightness(1.12) saturate(1.06)}
+.town-location:hover .town-object-outline,.town-location:focus-visible .town-object-outline{opacity:.5}
+.town-location.is-selected{filter:brightness(1.18) saturate(1.08) drop-shadow(0 8px 9px rgba(0,0,0,.5))}
+.town-location.is-selected .town-object-outline{opacity:.92}
+.town-location.is-selected .town-object-shape{filter:drop-shadow(0 0 7px rgba(218,171,83,.22))}
+.town-location:focus-visible .town-object-outline{stroke:#f6d694;opacity:1}
+
+/* Bottom contextual card appears only after selection. */
+.town-selection-panel[hidden]{display:none!important}
+.town-selection-panel{
+  position:absolute;z-index:9;left:50%;bottom:46px;transform:translateX(-50%);
+  width:min(680px,calc(100% - 32px));display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;
+  padding:13px 14px 13px 17px;border:1px solid rgba(207,172,103,.54);
+  background:linear-gradient(180deg,rgba(28,27,23,.97),rgba(14,17,17,.98));
+  box-shadow:0 15px 40px rgba(0,0,0,.48)
+}
+.town-selection-copy{min-width:0}
+.town-selection-copy small{display:block;color:#a98b58;font-size:.5rem;font-weight:900;letter-spacing:.14em}
+.town-selection-copy h3{margin:3px 0 3px;font:500 1.15rem Georgia,serif;color:#f1e6d3}
+.town-selection-copy p{margin:0;color:#bcb29f;font-size:.66rem;line-height:1.45}
+.town-selection-copy em{display:block;margin-top:5px;color:#ceb273;font-size:.53rem;font-style:normal}
+.town-selection-panel button{
+  min-height:44px;padding:0 15px;border:1px solid rgba(213,178,105,.5);
+  background:linear-gradient(180deg,#4a3a22,#2a2418);color:#f0d79f;
+  font-size:.62rem;font-weight:900;letter-spacing:.06em;white-space:nowrap
+}
+.town-selection-panel button:hover,.town-selection-panel button:focus-visible{border-color:#edc77b;background:#574326}
+
+/* Notice Board focus scene. */
+.town-board-focus[hidden]{display:none!important}
+.town-board-focus{
+  position:absolute;inset:0;z-index:30;display:grid;place-items:center;padding:18px;
+  opacity:0;transition:opacity .28s ease
+}
+.town-board-focus.is-visible{opacity:1}
+.town-board-backdrop{position:absolute;inset:0;background:rgba(3,5,6,.74);backdrop-filter:blur(2px)}
+.town-board-open .town-scene-art{transform:scale(1.3) translate(1%,-4%);filter:brightness(.45) blur(.4px)}
+.town-board-frame{
+  position:relative;z-index:2;width:min(1220px,100%);height:min(760px,calc(100% - 10px));
+  overflow:auto;padding:22px 24px 26px;
+  border:12px solid #2c2118;border-radius:4px;
+  background:
+    linear-gradient(90deg,rgba(97,62,35,.22),transparent 22%,rgba(73,45,26,.18)),
+    repeating-linear-gradient(93deg,#6e5138 0 3px,#75573c 3px 7px,#62472f 7px 12px);
+  box-shadow:0 20px 70px rgba(0,0,0,.72),inset 0 0 0 2px #a17c4e
+}
+.town-board-frame:before{
+  content:"";position:absolute;inset:13px;pointer-events:none;border:1px solid rgba(38,25,16,.7);
+  box-shadow:inset 0 0 45px rgba(18,11,7,.42)
+}
+.town-board-toolbar{
+  position:sticky;top:-22px;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin:-22px -24px 18px;padding:12px 14px;
+  border-bottom:1px solid rgba(219,186,125,.36);
+  background:rgba(24,18,14,.96);backdrop-filter:blur(5px)
+}
+.town-board-toolbar div small{display:block;color:#aa8b55;font-size:.48rem;font-weight:900;letter-spacing:.15em}
+.town-board-toolbar div b{display:block;margin-top:2px;font:500 1.1rem Georgia,serif;color:#eee3cf}
+.town-board-toolbar button{min-height:42px;padding:0 12px;border:1px solid rgba(197,161,98,.42);background:#231c15;color:#e5d3ae;font-size:.6rem;font-weight:800}
+.town-board-toolbar button:hover,.town-board-toolbar button:focus-visible{border-color:#dbb671;background:#382b1d}
+.town-board-quest-mount{position:relative;z-index:3}
+
+/* Re-skin the live quest UI when it is physically mounted on the board. */
+.town-board-quest-mount>.section-intro.quest-intro{
+  margin:0 0 15px;padding:12px 14px;border:1px solid rgba(71,48,31,.6);
+  background:rgba(219,202,164,.88);color:#281c14;box-shadow:3px 5px 0 rgba(37,23,14,.26);
+  transform:rotate(-.25deg)
+}
+.town-board-quest-mount>.section-intro.quest-intro small,
+.town-board-quest-mount>.section-intro.quest-intro h2,
+.town-board-quest-mount>.section-intro.quest-intro p{color:#2e2118!important}
+.town-board-quest-mount .quest-campaign-status{border-color:#6b482d!important;background:#dcc69d!important;color:#4b311f!important}
+.town-board-quest-mount .quest-journal-shell{
+  display:grid;grid-template-columns:minmax(230px,.72fr) minmax(0,1.55fr) minmax(210px,.65fr);
+  gap:16px;align-items:start
+}
+.town-board-quest-mount .panel{
+  border:1px solid rgba(65,43,29,.7)!important;background:rgba(226,210,174,.94)!important;
+  color:#302117!important;box-shadow:4px 6px 0 rgba(33,21,13,.24)!important
+}
+.town-board-quest-mount .quest-journal-nav{padding:14px!important;transform:rotate(-.35deg)}
+.town-board-quest-mount .quest-journal-detail{padding:18px!important;transform:rotate(.15deg)}
+.town-board-quest-mount .quest-journal-side{padding:14px!important;transform:rotate(.38deg)}
+.town-board-quest-mount .quest-tabs{display:flex;gap:5px;margin-bottom:10px}
+.town-board-quest-mount .quest-tabs button{
+  min-height:36px!important;padding:0 9px!important;border:1px solid #6d4f37!important;background:#cdb68b!important;color:#3d2a1b!important
+}
+.town-board-quest-mount .quest-tabs button.active{background:#5c3d26!important;color:#f3e3c3!important}
+.town-board-quest-mount .quest-v2-list-card{
+  position:relative;margin:8px 0!important;padding:12px!important;border:1px solid #846244!important;
+  background:#e5d2aa!important;color:#2e2016!important;box-shadow:2px 3px 0 rgba(40,24,14,.22)!important;
+  transform:rotate(-.6deg)
+}
+.town-board-quest-mount .quest-v2-list-card:nth-child(even){transform:rotate(.45deg)}
+.town-board-quest-mount .quest-v2-list-card:before{
+  content:"";position:absolute;left:50%;top:-5px;width:9px;height:9px;border-radius:50%;background:#6e4a2e;
+  box-shadow:0 1px 2px #0008
+}
+.town-board-quest-mount .quest-v2-list-card.selected{outline:2px solid #7c4c27;outline-offset:1px;background:#efdcb4!important}
+.town-board-quest-mount .quest-v2-list-card small,
+.town-board-quest-mount .quest-v2-list-card b,
+.town-board-quest-mount .quest-v2-list-card em{color:#352319!important}
+.town-board-quest-mount .quest-v2-icon{color:#674326!important}
+.town-board-quest-mount :is(.quest-v3-hero,.quest-v3-story,.quest-v3-clue,.quest-v3-known,.quest-detail-action,.quest-journal-side section){
+  color:#302117!important
+}
+.town-board-quest-mount :is(.quest-v3-hero h2,.quest-v3-clue h3,.quest-journal-side b,.quest-journal-side p,.quest-v3-known p,.quest-v3-story p){color:#302117!important}
+.town-board-quest-mount :is(.quest-v3-hero small,.quest-v3-clue small,.quest-v3-section-head span,.quest-journal-side small){color:#6c492e!important}
+.town-board-quest-mount button:not(.quest-tabs button):not(.quest-v2-list-card){
+  border-color:#795636!important;background:#5b3d26!important;color:#f2dfbc!important
+}
+
+/* Preserve old Home widgets invisibly so existing state renderers remain authoritative. */
+.town-legacy-home[hidden]{display:none!important}
+
+@media(max-width:1000px){
+  .town-scene{min-height:650px}
+  .town-board-quest-mount .quest-journal-shell{grid-template-columns:210px minmax(0,1fr)}
+  .town-board-quest-mount .quest-journal-side{grid-column:1/-1;transform:none}
+}
+@media(max-width:720px){
+  #overview.town-scene-view{padding-top:6px!important}
+  .town-scene{min-height:690px;border-left:0;border-right:0;margin:0 -10px}
+  .town-scene-town-title{left:13px;top:12px;max-width:74%;padding:8px 9px 9px}.town-scene-town-title h2{font-size:1.8rem}.town-scene-town-title p{font-size:.58rem}
+  .town-scene-hint{bottom:8px;font-size:.5rem;max-width:84%;overflow:hidden;text-overflow:ellipsis}
+  .town-selection-panel{bottom:35px;width:calc(100% - 18px);grid-template-columns:1fr;padding:10px 11px;gap:9px}
+  .town-selection-copy h3{font-size:1rem}.town-selection-copy p{font-size:.6rem}.town-selection-panel button{width:100%}
+  .town-board-focus{padding:0}
+  .town-board-frame{width:100%;height:100%;border-width:7px;border-radius:0;padding:14px}
+  .town-board-toolbar{top:-14px;margin:-14px -14px 12px;padding:9px 10px}
+  .town-board-toolbar div b{font-size:.95rem}
+  .town-board-quest-mount>.section-intro.quest-intro{padding:10px;margin-bottom:10px}
+  .town-board-quest-mount .quest-journal-shell{grid-template-columns:1fr;gap:10px}
+  .town-board-quest-mount .quest-journal-nav,.town-board-quest-mount .quest-journal-detail,.town-board-quest-mount .quest-journal-side{transform:none}
+  .town-board-quest-mount .quest-journal-list{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+  .town-board-quest-mount .quest-v2-list-card{margin:0!important;min-height:90px!important}
+  .town-board-open .town-scene-art{transform:scale(1.45) translate(2%,-4%)}
+}
+@media(max-width:420px){
+  .town-scene{min-height:640px}
+  .town-board-quest-mount .quest-journal-list{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){
+  .town-scene-art,.town-location,.town-object-outline,.town-object-shape,.town-board-focus{transition:none!important}
+}
