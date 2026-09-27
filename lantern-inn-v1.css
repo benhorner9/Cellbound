@@ -4,9 +4,9 @@
 .inn-art,.inn-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:-3}
 .inn-heading{position:absolute;top:0;left:0;right:0;padding:22px 26px 38px;background:linear-gradient(#080f16b8,transparent);pointer-events:none;z-index:100;color:#fff0d5}
 .inn-heading small{font:700 10px system-ui;letter-spacing:.18em;color:#e6c58c}.inn-heading h2{font:400 clamp(25px,3vw,38px)/1.1 Georgia,serif;margin:7px 0}.inn-heading p{font:12px system-ui;color:#eee0c7;margin:0}
-.inn-adventurer{position:absolute!important;left:var(--slot-x);top:var(--slot-y);transform:translate(-50%,-100%);width:clamp(54px,8vw,108px);height:auto;min-height:90px;background:none!important;border:0!important;padding:0!important;box-shadow:none!important;color:#fff1d5;z-index:var(--depth);cursor:pointer;touch-action:manipulation}
+.inn-adventurer{position:absolute!important;left:var(--slot-x);top:var(--slot-y);transform:translate(-50%,-100%);width:clamp(54px,8vw,108px);height:72px;min-height:72px;background:none!important;border:0!important;padding:0!important;box-shadow:none!important;color:#fff1d5;z-index:var(--depth);cursor:pointer;touch-action:manipulation}
 .inn-adventurer:before{content:'';position:absolute;bottom:14px;left:15%;width:70%;height:12px;border-radius:50%;background:#100b08a6;filter:blur(3px)}
-.inn-figure{display:block;transform-origin:50% 95%;animation:innBreathe 5s ease-in-out infinite alternate}
+.inn-figure{position:absolute;left:50%;bottom:18px;width:100%;display:block;translate:-50% 0;transform-origin:50% 95%;animation:innBreathe 5s ease-in-out infinite alternate}
 .inn-figure,.inn-figure *,.inn-name{pointer-events:none}
 .inn-adventurer:nth-child(3n) .inn-figure{animation-delay:-2s}.inn-adventurer:nth-child(3n+1) .inn-figure{animation-delay:-3.5s}
 .inn-figure .cb-paper-doll{display:block!important;width:100%!important;height:auto!important;min-height:0!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important}
@@ -20,7 +20,7 @@
 .inn-figure svg{display:block;width:100%;height:auto;overflow:visible}
 .inn-resting{width:clamp(46px,6vw,82px);filter:brightness(.82) saturate(.8)}
 .inn-traveller .inn-figure{filter:drop-shadow(0 0 7px #f2c36f48)}
-.inn-name{position:relative;display:inline-block;padding:3px 7px;border-radius:4px;background:#141311be;font:600 11px/1.3 system-ui;text-shadow:0 1px 2px #000;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.inn-name{position:absolute;z-index:2;left:50%;bottom:0;transform:translateX(-50%);display:inline-block;padding:3px 7px;border-radius:4px;background:#141311be;font:600 11px/1.3 system-ui;text-shadow:0 1px 2px #000;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .inn-adventurer:hover .inn-name,.inn-adventurer:focus-visible .inn-name{background:#422e19;color:#fff}
 .inn-adventurer:focus-visible{outline:2px solid #f8d28e;outline-offset:3px;border-radius:8px}
 .inn-hotspot{position:absolute;transform:translate(-50%,-50%);padding:9px 14px!important;min-height:48px!important;border:1px solid #d8b67699!important;border-radius:6px;background:#201b14d9!important;color:#ffefd3!important;box-shadow:0 4px 14px #0006;z-index:105;text-align:center}
@@ -55,7 +55,7 @@ body.inn-character-open #characterModal .cb-character-tabs button{min-width:110p
 @media(max-width:600px){
  .inn-world{aspect-ratio:2/3;min-height:570px;border-radius:7px}
  .inn-heading{padding:16px 16px 30px}.inn-heading h2{font-size:26px}.inn-heading small{font-size:9px}.inn-heading p{font-size:11px}
- .inn-adventurer{left:var(--phone-x);top:var(--phone-y);width:56px;min-height:80px}.inn-resting{width:46px;min-height:70px}.inn-name{font-size:10px;padding:2px 5px;max-width:70px}
+ .inn-adventurer{left:var(--phone-x);top:var(--phone-y);width:56px;height:64px;min-height:64px}.inn-resting{width:46px;height:58px;min-height:58px}.inn-name{font-size:10px;padding:2px 5px;max-width:70px}
  .inn-table{left:34%;top:62%}.inn-ledger{left:78%;top:85%}.inn-hotspot{padding:7px 9px!important;min-height:46px!important}.inn-hotspot span{font-size:13px}.inn-hotspot small{font-size:9px}
  .inn-hint{font-size:11px;padding-bottom:12px}.inn-hearth-light{background:radial-gradient(ellipse at 23% 30%,#ff9c3020,transparent 40%)}
  .inn-dialog{position:fixed;inset:auto 0 0;margin:0;width:100%;max-width:100%;max-height:84dvh;border-radius:14px 14px 0 0;padding-bottom:env(safe-area-inset-bottom)}
