@@ -4,16 +4,111 @@
 .inn-art,.inn-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:-3}
 .inn-heading{position:absolute;top:0;left:0;right:0;padding:22px 26px 38px;background:linear-gradient(#080f16b8,transparent);pointer-events:none;z-index:100;color:#fff0d5}
 .inn-heading small{font:700 10px system-ui;letter-spacing:.18em;color:#e6c58c}.inn-heading h2{font:400 clamp(25px,3vw,38px)/1.1 Georgia,serif;margin:7px 0}.inn-heading p{font:12px system-ui;color:#eee0c7;margin:0}
-.inn-adventurer{position:absolute!important;left:var(--slot-x);top:var(--slot-y);transform:translate(-50%,-100%);width:clamp(54px,8vw,108px);height:72px;min-height:72px;background:none!important;border:0!important;padding:0!important;box-shadow:none!important;color:#fff1d5;z-index:var(--depth);cursor:pointer;touch-action:manipulation}
-.inn-adventurer:before{content:'';position:absolute;bottom:14px;left:15%;width:70%;height:12px;border-radius:50%;background:#100b08a6;filter:blur(3px);transform:scaleX(var(--inn-scale,1));transform-origin:50% 50%}
-.inn-figure{position:absolute;left:50%;bottom:18px;width:100%;display:block;translate:-50% 0;scale:var(--inn-scale,1);transform-origin:50% 100%;animation:innBreathe 5s ease-in-out infinite alternate}
+.inn-adventurer{
+  position:absolute!important;
+  left:var(--slot-x);
+  top:var(--slot-y);
+  transform:translate(-50%,-100%);
+  width:88px;
+  height:72px;
+  min-height:72px;
+  overflow:visible!important;
+  background:none!important;
+  border:0!important;
+  padding:0!important;
+  box-shadow:none!important;
+  color:#fff1d5;
+  z-index:var(--depth);
+  cursor:pointer;
+  touch-action:manipulation
+}
+.inn-adventurer:before{
+  content:'';
+  position:absolute;
+  bottom:14px;
+  left:15%;
+  width:70%;
+  height:12px;
+  border-radius:50%;
+  background:#100b08a6;
+  filter:blur(3px);
+  transform:scaleX(var(--inn-scale-wide,.82));
+  transform-origin:50% 50%
+}
+.inn-figure{
+  position:absolute;
+  left:50%;
+  bottom:18px;
+  width:96px;
+  height:170px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  overflow:visible!important;
+  translate:-50% 0;
+  scale:var(--inn-scale-wide,.82);
+  transform-origin:50% 100%;
+  animation:innBreathe 5s ease-in-out infinite alternate
+}
 .inn-figure,.inn-figure *,.inn-name{pointer-events:none}
+.inn-adventurer:nth-child(3n) .inn-figure{animation-delay:-2s}
+.inn-adventurer:nth-child(3n+1) .inn-figure{animation-delay:-3.5s}
+
+/* Painted models use the normalized 512x896 body canvas. */
+.inn-painted-model{width:88px}
+.inn-painted-model .inn-figure{width:96px;height:170px}
+.inn-painted-model .cb-world-avatar-painted{
+  display:flex!important;
+  align-items:flex-end!important;
+  justify-content:center!important;
+  width:96px!important;
+  height:170px!important;
+  overflow:visible!important;
+  background:none!important;
+  border:0!important
+}
+.inn-painted-model .cb-world-avatar-painted>img{
+  display:block!important;
+  width:96px!important;
+  height:170px!important;
+  max-width:none!important;
+  object-fit:contain!important;
+  object-position:50% 100%!important;
+  transform:none!important
+}
+
+/* Vector bodies are isolated from painted sizing so one renderer can never
+   override the other. Both still use the same floor-anchor perspective. */
+.inn-vector-model{width:78px}
+.inn-vector-model .inn-figure{width:82px;height:154px}
+.inn-vector-model .cb-world-avatar{
+  display:flex!important;
+  align-items:flex-end!important;
+  justify-content:center!important;
+  width:82px!important;
+  height:154px!important;
+  overflow:visible!important;
+  background:none!important;
+  border:0!important;
+  filter:drop-shadow(0 10px 7px #0008) drop-shadow(0 0 1px #000)
+}
+.inn-vector-model .cb-world-avatar svg{
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible
+}
+.inn-adventurer .inn-name{background:#100f0dde;border:1px solid #c39d5a45}
+.inn-traveller .cb-world-avatar{filter:drop-shadow(0 12px 8px #0009) drop-shadow(0 0 9px #d59b443d)}
+.inn-resting{filter:brightness(.86) saturate(.88)}
+.inn-traveller .inn-figure{filter:drop-shadow(0 0 7px #f2c36f48)}
+.inn-name{pointer-events:none}
 .inn-adventurer:nth-child(3n) .inn-figure{animation-delay:-2s}.inn-adventurer:nth-child(3n+1) .inn-figure{animation-delay:-3.5s}
 .inn-figure .cb-paper-doll{display:block!important;width:100%!important;height:auto!important;min-height:0!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important}
 .inn-figure .cb-world-avatar{display:block;width:100%;height:auto;background:none;border:0;filter:drop-shadow(0 10px 7px #0008) drop-shadow(0 0 1px #000)}
 .inn-figure .cb-world-avatar svg{display:block;width:100%;height:auto;overflow:visible}
-.inn-adventurer:has(.cb-world-avatar-painted){width:clamp(44px,5.2vw,76px)}
-.inn-adventurer:has(.cb-world-avatar-painted).inn-resting{width:clamp(40px,4.6vw,66px)}
+
+
 .inn-figure .cb-world-avatar-painted{
   width:auto!important;
   height:auto!important;
@@ -29,9 +124,9 @@
 .inn-resting .cb-world-avatar-painted>img{
   height:clamp(102px,9.8vw,132px)!important;
 }
-.inn-adventurer:has(.cb-world-avatar){width:clamp(64px,9vw,126px)}
-.inn-adventurer:has(.cb-world-avatar).inn-resting{width:clamp(54px,7vw,94px)}
-.inn-adventurer:has(.cb-world-avatar) .inn-name{background:#100f0dde;border:1px solid #c39d5a45}
+
+
+
 .inn-traveller .cb-world-avatar{filter:drop-shadow(0 12px 8px #0009) drop-shadow(0 0 9px #d59b443d)}
 
 .inn-figure svg{display:block;width:100%;height:auto;overflow:visible}
@@ -68,21 +163,28 @@ body.inn-character-open #characterModal .cb-armoury-stage{grid-column:1/-1;grid-
 body.inn-character-open #characterModal .cb-character-tabs{overflow-x:auto;display:flex!important}
 body.inn-character-open #characterModal .cb-character-tabs button{min-width:110px;min-height:44px}
 @keyframes innBreathe{to{transform:translateY(-1px) rotate(.25deg)}}@keyframes innHearth{to{opacity:.45}}
-@media(max-width:1100px) and (min-width:601px){.inn-adventurer{width:8.5%}.inn-resting{width:6.5%}.inn-world{min-height:440px}}
+@media(max-width:1100px) and (min-width:601px){.inn-world{min-height:440px}}
 @media(max-width:600px){
  .inn-world{aspect-ratio:2/3;min-height:570px;border-radius:7px}
  .inn-heading{padding:16px 16px 30px}.inn-heading h2{font-size:26px}.inn-heading small{font-size:9px}.inn-heading p{font-size:11px}
- .inn-adventurer{left:var(--phone-x);top:var(--phone-y);width:56px;height:64px;min-height:64px}.inn-resting{width:46px;height:58px;min-height:58px}.inn-name{font-size:10px;padding:2px 5px;max-width:70px}
+ .inn-adventurer{left:var(--phone-x);top:var(--phone-y);width:62px;height:64px;min-height:64px}
+ .inn-figure{width:76px;height:140px;scale:var(--inn-scale-phone,.82)}
+ .inn-adventurer:before{transform:scaleX(var(--inn-scale-phone,.82))}
+ .inn-painted-model{width:62px}
+ .inn-painted-model .inn-figure{width:76px;height:140px}
+ .inn-painted-model .cb-world-avatar-painted,
+ .inn-painted-model .cb-world-avatar-painted>img{width:76px!important;height:140px!important}
+ .inn-vector-model{width:58px}
+ .inn-vector-model .inn-figure{width:68px;height:132px}
+ .inn-vector-model .cb-world-avatar{width:68px!important;height:132px!important}
+ .inn-name{font-size:10px;padding:2px 5px;max-width:70px}
  .inn-table{left:34%;top:62%}.inn-ledger{left:78%;top:85%}.inn-hotspot{padding:7px 9px!important;min-height:46px!important}.inn-hotspot span{font-size:13px}.inn-hotspot small{font-size:9px}
  .inn-hint{font-size:11px;padding-bottom:12px}.inn-hearth-light{background:radial-gradient(ellipse at 23% 30%,#ff9c3020,transparent 40%)}
  .inn-dialog{position:fixed;inset:auto 0 0;margin:0;width:100%;max-width:100%;max-height:84dvh;border-radius:14px 14px 0 0;padding-bottom:env(safe-area-inset-bottom)}
  .inn-dialog-body{padding:12px}.inn-dialog-head{padding:12px}.inn-dialog-head h2{font-size:21px}.inn-dialog-head button{font-size:12px}
  body.inn-character-open #characterModal{align-items:flex-end!important;padding:0!important}
  body.inn-character-open #characterModal .character-modal{width:100%!important;max-height:82dvh!important;min-height:0!important;border-radius:14px 14px 0 0!important}
- .inn-adventurer:has(.cb-world-avatar-painted){width:46px}
- .inn-adventurer:has(.cb-world-avatar-painted).inn-resting{width:40px}
- .inn-figure .cb-world-avatar-painted>img{height:102px!important}
- .inn-resting .cb-world-avatar-painted>img{height:90px!important}
+
 }
 @media(prefers-reduced-motion:reduce){.inn-world *{animation:none!important;transition:none!important}}
 
