@@ -581,3 +581,138 @@
   .cb-paper-slot{transition:none}
   .cb-paper-set-glow,.cb-paper-glow{filter:none}
 }
+
+
+/* ==========================================================================
+   Illustrated Character Art V2 — Veyren production conversion
+   ========================================================================== */
+.cb-painted-portrait{
+  background:
+    radial-gradient(circle at 50% 35%,color-mix(in srgb,var(--cbp-accent) 12%,transparent),transparent 62%),
+    #0a0d0f;
+}
+.cb-painted-portrait>img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:50% 24%;
+  transform:scale(1.035);
+  filter:saturate(.94) contrast(1.035);
+}
+.cb-painted-portrait:after{
+  content:'';
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  border-radius:inherit;
+  box-shadow:
+    inset 0 0 18px rgba(0,0,0,.34),
+    inset 0 -14px 20px rgba(0,0,0,.22);
+}
+.cb-appearance-editor-painted{
+  border-color:rgba(194,155,91,.22);
+  background:
+    radial-gradient(circle at 15% 18%,rgba(181,126,59,.12),transparent 38%),
+    linear-gradient(155deg,rgba(22,21,18,.97),rgba(9,12,14,.96));
+}
+.cb-appearance-editor-painted .cb-appearance-preview{
+  background:
+    linear-gradient(180deg,rgba(23,19,15,.72),rgba(7,10,12,.74)),
+    radial-gradient(circle at 50% 24%,rgba(208,150,71,.13),transparent 54%);
+  border-color:rgba(194,155,91,.2);
+}
+.cb-painted-face-picker{
+  width:100%;
+}
+.cb-painted-face-picker>small{
+  display:block;
+  margin:2px 0 7px;
+  color:#bba887;
+  font:700 8px/1.2 system-ui;
+  letter-spacing:.13em;
+}
+.cb-painted-face-picker>div{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:5px;
+}
+.cb-painted-face-picker button{
+  position:relative;
+  min-width:0;
+  aspect-ratio:1/1.22;
+  padding:0;
+  overflow:hidden;
+  border:1px solid rgba(182,153,101,.22);
+  border-radius:7px;
+  background:#0a0d0f;
+  cursor:pointer;
+}
+.cb-painted-face-picker button.is-selected{
+  border-color:#d8b875;
+  box-shadow:0 0 0 1px rgba(216,184,117,.28),0 0 12px rgba(216,165,77,.16);
+}
+.cb-painted-face-picker img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:50% 24%;
+}
+.cb-paper-doll-painted{
+  display:grid;
+  place-items:center;
+  overflow:visible;
+}
+.cb-paper-doll-painted .cb-painted-paper-body{
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  border-radius:26px;
+  background:#090c0e;
+  -webkit-mask-image:radial-gradient(ellipse 70% 58% at 50% 48%,#000 64%,transparent 100%);
+  mask-image:radial-gradient(ellipse 70% 58% at 50% 48%,#000 64%,transparent 100%);
+}
+.cb-paper-doll-painted .cb-painted-paper-body>img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:50% 50%;
+  filter:
+    saturate(.96)
+    contrast(1.035)
+    drop-shadow(0 16px 18px rgba(0,0,0,.42));
+}
+.cb-world-avatar-painted{
+  display:block;
+  position:relative;
+  overflow:visible;
+  background:none!important;
+}
+.cb-world-avatar-painted>img{
+  display:block;
+  width:100%;
+  height:auto;
+  object-fit:contain;
+  object-position:50% 100%;
+  -webkit-mask-image:radial-gradient(ellipse 64% 57% at 50% 50%,#000 66%,transparent 100%);
+  mask-image:radial-gradient(ellipse 64% 57% at 50% 50%,#000 66%,transparent 100%);
+}
+.inn-figure .cb-world-avatar-painted>img{
+  width:100%;
+  height:auto;
+  filter:saturate(.9) contrast(1.04);
+}
+.cb-painted-legacy-hooks[hidden]{
+  display:none!important;
+}
+@media(max-width:720px){
+  .cb-appearance-editor-painted{
+    grid-template-columns:1fr;
+  }
+  .cb-painted-face-picker>div{
+    grid-template-columns:repeat(4,minmax(48px,1fr));
+  }
+}
