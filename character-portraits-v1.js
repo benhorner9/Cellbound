@@ -201,8 +201,9 @@ function paintedFaceHTML(c,a,accent,size,label,className){
 }
 function paintedBodyHTML(c,a,kind,label){
   var race=paintedRaceOf(c,a),slug=String(race).toLowerCase();
-  var body=(paintedFaceIndex(a)%2===1)?'body-b.webp':'body-a.webp';
-  return '<span class="'+kind+' cb-painted-character cb-painted-'+slug+'-body" role="img" aria-label="'+esc(label)+'" data-painted-race="'+esc(race)+'"><img src="'+paintedAsset(race,body)+'" alt="" draggable="false"></span>';
+  var bodyKey=(paintedFaceIndex(a)%2===1)?'b':'a';
+  var body='body-'+bodyKey+'.webp';
+  return '<span class="'+kind+' cb-painted-character cb-painted-'+slug+'-body cb-painted-body-'+bodyKey+'" role="img" aria-label="'+esc(label)+'" data-painted-race="'+esc(race)+'" data-painted-body="'+bodyKey+'"><img src="'+paintedAsset(race,body)+'" alt="" draggable="false"></span>';
 }
 function portraitHTML(subject,opts){
   opts=opts||{};
@@ -236,7 +237,7 @@ function editorHTML(appearance,opts){
   var visual=portraitHTML({race:a.race,appearance:a,class:opts.characterClass,name:opts.name||'Character'},{size:'hero',label:(opts.name||'Character')+' appearance preview'});
   var faces='',painted=PAINTED_RACES.has(a.race);
   if(painted){
-    faces='<div class="cb-painted-face-picker"><small>ILLUSTRATED '+esc(a.race.toUpperCase())+' FACE</small><div>'+[0,1,2,3].map(function(i){return '<button type="button" class="'+(paintedFaceIndex(a)===i?'is-selected':'')+'" data-appearance-direct="face" data-value="'+i+'" aria-label="'+esc(a.race)+' face '+(i+1)+'"><img src="'+paintedAsset(a.race,'face-'+i+'.webp')+'" alt=""></button>'}).join('')+'</div></div>';
+    faces='<div class="cb-painted-face-picker"><small>ILLUSTRATED '+esc(a.race.toUpperCase())+' FACE</small><div>'+[0,1,2,3].map(function(i){return '<button type="button" class="'+(paintedFaceIndex(a)===i?'is-selected':'')+'" data-painted-race="'+esc(a.race)+'" data-appearance-direct="face" data-value="'+i+'" aria-label="'+esc(a.race)+' face '+(i+1)+'"><img src="'+paintedAsset(a.race,'face-'+i+'.webp')+'" alt=""></button>'}).join('')+'</div></div>';
   }
   return '<div class="cb-appearance-editor '+(painted?'cb-appearance-editor-painted':'')+'" data-appearance-editor><div class="cb-appearance-preview">'+visual+faces+'<button type="button" data-appearance-randomize>RANDOMISE APPEARANCE</button></div><div class="cb-appearance-controls">'+rows+'</div></div>';
 }
@@ -816,7 +817,7 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:6,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
+  version:7,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
   applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,worldAvatarHTML:worldAvatarHTML,worldAvatarSVG:worldAvatarSVG,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
   visualProfile:visualProfile,weaponType:weaponType,offHandType:offHandType,
