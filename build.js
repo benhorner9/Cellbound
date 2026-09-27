@@ -337,7 +337,7 @@ for(const file of files){
     if(portraitContract.includes('paintedFaceHTML')||portraitContract.includes('<img'))throw new Error('Runtime portraits must be generated from live appearance data, not static painted images');
     const worldContract=portraitJs.slice(portraitJs.indexOf('function worldAvatarHTML'),portraitJs.indexOf('function paperDollHTML'));
     const dollContract=portraitJs.slice(portraitJs.indexOf('function paperDollHTML'),portraitJs.indexOf('function visualProfile'));
-    if(!worldContract.includes('paperDollSVG')||worldContract.includes('paintedBodyHTML')||worldContract.includes('WORLD_AVATAR_CLASSES.has'))throw new Error('World characters must use the class-agnostic live illustrated model');
+    if(!worldContract.includes('creatorFigureSVG')||worldContract.includes('paintedBodyHTML')||worldContract.includes('WORLD_AVATAR_CLASSES.has'))throw new Error('World characters must use the same canonical illustrated model as Character Creation');
     if(!dollContract.includes('paperDollSVG')||dollContract.includes('paintedBodyHTML'))throw new Error('Equipment characters must use the live gear-aware illustrated model');
     for(const fn of ['paperHeadMarkup','paperShoulders','paperChest','paperArms','paperWaist','paperLegs','paperFeet','paperWeapon','paperOffHand','paperAccessories'])if(!portraitJs.includes('function '+fn))throw new Error('Gear-aware model layer missing: '+fn);
     if(!portraitCss.includes('Unified Illustrated Character Runtime')||!portraitCss.includes('.cb-paper-doll-illustrated')||!portraitCss.includes('.cb-world-avatar-illustrated'))throw new Error('Illustrated character presentation CSS is missing');
