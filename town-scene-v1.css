@@ -736,3 +736,343 @@
   }
   .town-scene.is-entering-district:after{opacity:0!important}
 }
+
+
+/* Expedition Ward v2 · modular cartoon district
+   Clean painted world plus independent interactive assets. */
+.town-expedition-quarter{
+  background:#102435;
+  overflow:hidden;
+}
+.town-expedition-stage{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  isolation:isolate;
+  overflow:hidden;
+  background:#102435;
+  transform:translate(0,0) scale(1);
+  transform-origin:center center;
+  will-change:transform,filter;
+  transition:
+    transform .7s cubic-bezier(.18,.78,.2,1),
+    filter .42s ease;
+}
+.town-expedition-world{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+  object-position:center 53%;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+.ew-building{
+  position:absolute;
+  z-index:4;
+  pointer-events:none;
+  isolation:isolate;
+  transform-origin:center bottom;
+}
+.ew-building>img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:contain;
+  object-position:center bottom;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+.ew-building-glow{
+  z-index:1;
+  opacity:0;
+  transform:scale(1.035);
+  filter:
+    brightness(0)
+    saturate(100%)
+    invert(77%)
+    sepia(69%)
+    saturate(1020%)
+    hue-rotate(344deg)
+    brightness(108%)
+    contrast(98%)
+    blur(14px);
+  transition:opacity .2s ease,transform .22s ease;
+}
+.ew-building-art{
+  z-index:2;
+  filter:brightness(1) saturate(1) drop-shadow(0 15px 13px rgba(3,9,14,.32));
+  transition:filter .2s ease,transform .22s ease;
+}
+.ew-building-return{left:2.1%;bottom:7.8%;width:16.3%;aspect-ratio:2/3;z-index:3}
+.ew-building-cart{left:17.5%;bottom:7.8%;width:30%;aspect-ratio:4/3;z-index:5}
+.ew-building-arena{left:40%;bottom:7.8%;width:30%;aspect-ratio:4/5;z-index:6}
+.ew-building-grounds{left:67.5%;bottom:7.8%;width:30.8%;aspect-ratio:4/3;z-index:4}
+
+.ew-building.is-selected{z-index:10}
+.ew-building.is-selected .ew-building-glow{opacity:.82;transform:scale(1.065)}
+.ew-building.is-selected .ew-building-art{
+  transform:translateY(-2px) scale(1.012);
+  filter:brightness(1.08) saturate(1.07) drop-shadow(0 18px 15px rgba(3,9,14,.4));
+}
+
+.ew-hotspot{
+  position:absolute;
+  z-index:20;
+  display:block;
+  margin:0;
+  padding:0;
+  border:0;
+  border-radius:14px;
+  background:transparent;
+  color:transparent;
+  appearance:none;
+  -webkit-appearance:none;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+.ew-hotspot-return{left:0;bottom:5%;width:19%;height:48%}
+.ew-hotspot-cart{left:16%;bottom:4%;width:31%;height:45%}
+.ew-hotspot-arena{left:41%;bottom:4%;width:28%;height:67%}
+.ew-hotspot-grounds{left:68%;bottom:4%;width:32%;height:46%}
+.ew-hotspot:focus-visible{
+  outline:2px solid rgba(244,199,111,.8);
+  outline-offset:-4px;
+  background:rgba(239,189,92,.035);
+}
+
+.town-expedition-stage:has(.ew-hotspot-return:hover) .ew-building-return .ew-building-glow,
+.town-expedition-stage:has(.ew-hotspot-return:focus-visible) .ew-building-return .ew-building-glow,
+.town-expedition-stage:has(.ew-hotspot-cart:hover) .ew-building-cart .ew-building-glow,
+.town-expedition-stage:has(.ew-hotspot-cart:focus-visible) .ew-building-cart .ew-building-glow,
+.town-expedition-stage:has(.ew-hotspot-arena:hover) .ew-building-arena .ew-building-glow,
+.town-expedition-stage:has(.ew-hotspot-arena:focus-visible) .ew-building-arena .ew-building-glow,
+.town-expedition-stage:has(.ew-hotspot-grounds:hover) .ew-building-grounds .ew-building-glow,
+.town-expedition-stage:has(.ew-hotspot-grounds:focus-visible) .ew-building-grounds .ew-building-glow{
+  opacity:.28;
+}
+.town-expedition-stage:has(.ew-hotspot-return:hover) .ew-building-return .ew-building-art,
+.town-expedition-stage:has(.ew-hotspot-cart:hover) .ew-building-cart .ew-building-art,
+.town-expedition-stage:has(.ew-hotspot-arena:hover) .ew-building-arena .ew-building-art,
+.town-expedition-stage:has(.ew-hotspot-grounds:hover) .ew-building-grounds .ew-building-art{
+  filter:brightness(1.045) saturate(1.035) drop-shadow(0 17px 14px rgba(3,9,14,.36));
+}
+
+.town-scene[data-town-sector="expedition"] .town-scene-town-title{
+  border-left-color:rgba(238,184,91,.82);
+  background:linear-gradient(90deg,rgba(7,20,31,.86),rgba(7,20,31,.12));
+}
+.town-scene[data-town-sector="expedition"] .town-scene-town-title small{color:#e8b867}
+.town-scene[data-town-sector="expedition"] .town-scene-hint{
+  background:rgba(5,14,22,.74);
+  border-color:rgba(232,181,91,.34);
+  backdrop-filter:blur(4px);
+}
+
+/* The second press becomes a camera move before the destination opens. */
+.town-scene.is-opening-expedition[data-town-entry="cart"] .town-expedition-stage,
+.town-scene.town-expedition-open[data-town-entry="cart"] .town-expedition-stage,
+.town-scene.is-returning-expedition[data-town-entry="cart"] .town-expedition-stage{
+  transform-origin:32.5% 72%;
+  transform:translate(17.5%,-22%) scale(1.78);
+}
+.town-scene.is-opening-expedition[data-town-entry="grounds"] .town-expedition-stage,
+.town-scene.town-expedition-open[data-town-entry="grounds"] .town-expedition-stage,
+.town-scene.is-returning-expedition[data-town-entry="grounds"] .town-expedition-stage{
+  transform-origin:82.5% 71%;
+  transform:translate(-32.5%,-21%) scale(1.78);
+}
+.town-scene.is-entering-expedition[data-town-entry="arena"] .town-expedition-stage{
+  transform-origin:55% 66%;
+  transform:translate(-5%,-16%) scale(1.72);
+  filter:brightness(.76) saturate(.92);
+}
+.town-scene.is-opening-expedition .town-expedition-stage{
+  filter:brightness(.86) saturate(.96);
+}
+.town-scene.town-expedition-open .town-expedition-stage,
+.town-scene.is-returning-expedition .town-expedition-stage{
+  filter:brightness(.46) saturate(.78) blur(.35px);
+}
+.town-scene.is-returning-expedition.is-returning-expedition-home .town-expedition-stage{
+  transform:translate(0,0) scale(1)!important;
+  transform-origin:center center!important;
+  filter:none;
+  transition:
+    transform .66s cubic-bezier(.22,.72,.24,1),
+    filter .56s ease;
+}
+.town-scene.is-opening-expedition .ew-hotspot,
+.town-scene.town-expedition-open .ew-hotspot,
+.town-scene.is-returning-expedition .ew-hotspot,
+.town-scene.is-entering-expedition .ew-hotspot{
+  pointer-events:none;
+}
+.town-scene.is-opening-expedition .town-selection-panel,
+.town-scene.is-opening-expedition .town-scene-hint,
+.town-scene.town-expedition-open .town-selection-panel,
+.town-scene.town-expedition-open .town-scene-hint,
+.town-scene.is-returning-expedition .town-selection-panel,
+.town-scene.is-returning-expedition .town-scene-hint,
+.town-scene.is-entering-expedition .town-selection-panel,
+.town-scene.is-entering-expedition .town-scene-hint{
+  opacity:0!important;
+  pointer-events:none;
+}
+.town-scene.is-entering-expedition:after{
+  opacity:.95;
+  transition:opacity .2s ease .5s;
+}
+
+/* Dungeon and Activities menus remain inside Town as centred pop-ups. */
+.town-expedition-focus{
+  position:absolute;
+  inset:0;
+  z-index:48;
+  display:grid;
+  place-items:center;
+  padding:clamp(10px,2vw,26px);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .2s ease;
+}
+.town-expedition-focus[hidden]{display:none!important}
+.town-expedition-focus.is-visible{opacity:1;pointer-events:auto}
+.town-expedition-backdrop{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  border:0;
+  background:rgba(2,7,11,.73);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+  cursor:pointer;
+}
+.town-expedition-frame{
+  position:relative;
+  z-index:2;
+  width:min(96%,1100px);
+  height:min(90%,690px);
+  min-height:min(560px,88%);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  border:1px solid rgba(203,164,95,.55);
+  border-radius:4px;
+  background:
+    linear-gradient(180deg,rgba(12,23,28,.99),rgba(7,14,18,.99));
+  box-shadow:
+    0 28px 80px rgba(0,0,0,.62),
+    inset 0 0 0 1px rgba(255,226,163,.045);
+  transform:translateY(12px) scale(.975);
+  opacity:.9;
+  transition:transform .24s ease,opacity .22s ease;
+}
+.town-expedition-focus.is-visible .town-expedition-frame{
+  transform:translateY(0) scale(1);
+  opacity:1;
+}
+.town-expedition-toolbar{
+  flex:0 0 auto;
+  min-height:58px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:10px 14px 10px 18px;
+  border-bottom:1px solid rgba(192,153,88,.32);
+  background:linear-gradient(90deg,rgba(34,35,30,.74),rgba(11,23,28,.94));
+}
+.town-expedition-toolbar>div{display:grid;gap:2px;min-width:0}
+.town-expedition-toolbar small{
+  color:#c6a261;
+  font:700 10px/1.2 var(--font-ui,system-ui,sans-serif);
+  letter-spacing:.15em;
+}
+.town-expedition-toolbar b{
+  color:#f2ead9;
+  font:600 clamp(17px,2vw,24px)/1.1 var(--font-display,Georgia,serif);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.town-expedition-toolbar button{
+  flex:0 0 auto;
+  min-height:40px;
+  padding:0 13px;
+  border:1px solid rgba(201,164,99,.4);
+  background:rgba(13,21,22,.84);
+  color:#d9cfbd;
+  font:700 11px/1 var(--font-ui,system-ui,sans-serif);
+  letter-spacing:.04em;
+  cursor:pointer;
+}
+.town-expedition-toolbar button:hover,
+.town-expedition-toolbar button:focus-visible{
+  border-color:rgba(231,190,112,.72);
+  color:#fff3d9;
+  outline:none;
+}
+.town-expedition-mount{
+  position:relative;
+  flex:1 1 auto;
+  min-height:0;
+  overflow:auto;
+  overscroll-behavior:contain;
+  padding:14px;
+  background:rgba(4,10,13,.78);
+}
+.town-expedition-mount>.view{
+  display:block!important;
+  width:100%!important;
+  min-height:100%;
+  margin:0!important;
+  padding:0!important;
+}
+.town-expedition-mount>.view>.cb-venue-stage{display:none!important}
+.town-expedition-mount .cb-venue-system-content{display:block!important}
+.town-expedition-mount .section-intro{margin-top:0!important}
+.town-expedition-mount .view>.section-intro:first-child{padding-top:0!important}
+
+body.town-expedition-focus-open{overflow:hidden}
+
+@media(max-width:720px){
+  .ew-building-return{left:1%;bottom:7%;width:18%}
+  .ew-building-cart{left:15.5%;bottom:7%;width:32%}
+  .ew-building-arena{left:39%;bottom:7%;width:32%}
+  .ew-building-grounds{left:67%;bottom:7%;width:33%}
+  .ew-hotspot-return{width:20%}
+  .ew-hotspot-cart{left:14%;width:34%}
+  .ew-hotspot-arena{left:39%;width:32%}
+  .ew-hotspot-grounds{left:67%;width:33%}
+  .ew-building-glow{
+    filter:
+      brightness(0) saturate(100%) invert(77%) sepia(69%) saturate(1020%)
+      hue-rotate(344deg) brightness(108%) contrast(98%) blur(9px);
+  }
+  .town-expedition-focus{padding:8px}
+  .town-expedition-frame{width:100%;height:94%;min-height:0}
+  .town-expedition-toolbar{padding:8px 9px 8px 12px}
+  .town-expedition-toolbar button{padding:0 9px;font-size:10px}
+  .town-expedition-mount{padding:8px}
+}
+@media(prefers-reduced-motion:reduce){
+  .town-expedition-stage,.ew-building-glow,.ew-building-art,
+  .town-expedition-focus,.town-expedition-frame{transition:none!important}
+  .town-scene.is-opening-expedition .town-expedition-stage,
+  .town-scene.town-expedition-open .town-expedition-stage,
+  .town-scene.is-returning-expedition .town-expedition-stage,
+  .town-scene.is-entering-expedition .town-expedition-stage{
+    transform:none!important;
+    filter:none!important;
+  }
+  .town-scene.is-entering-expedition:after{opacity:0!important}
+}
