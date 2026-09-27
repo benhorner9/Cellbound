@@ -184,12 +184,13 @@ function svgFor(a,accent){
 const PAINTED_RACES=new Set(['Veyren','Stoneborn','Aelari']);
 // All converted painted race packs now contain real alpha.
 const PAINTED_BODY_RACES=new Set(['Veyren','Stoneborn','Aelari']);
+const PAINTED_BODY_STANDARD=Object.freeze({width:512,height:896,footY:842,version:1});
 function paintedRaceOf(c,a){
   var race=c?.race||a?.race||c?.appearance?.race||'Veyren';
   return PAINTED_RACES.has(race)?race:'';
 }
 function paintedAsset(race,file){
-  return './assets/characters/v2/'+String(race).toLowerCase()+'/'+file+'?v=3';
+  return './assets/characters/v2/'+String(race).toLowerCase()+'/'+file+'?v=4';
 }
 function paintedFaceIndex(a){
   var value=Number(a?.face)||0;
@@ -205,7 +206,13 @@ function paintedBodyHTML(c,a,kind,label,extraAttrs){
   var race=paintedRaceOf(c,a),slug=String(race).toLowerCase();
   var bodyKey=(paintedFaceIndex(a)%2===1)?'b':'a';
   var body='body-'+bodyKey+'.webp';
-  return '<span class="'+kind+' cb-painted-character cb-painted-'+slug+'-body cb-painted-body-'+bodyKey+'" role="img" aria-label="'+esc(label)+'" data-painted-race="'+esc(race)+'" data-painted-body="'+bodyKey+'"'+(extraAttrs||'')+'><img src="'+paintedAsset(race,body)+'" alt="" draggable="false"></span>';
+  return '<span class="'+kind+' cb-painted-character cb-painted-'+slug+'-body cb-painted-body-'+bodyKey+'" role="img" aria-label="'+esc(label)+'" data-painted-race="'+esc(race)+'" data-painted-body="'+bodyKey+'" data-body-standard="'+PAINTED_BODY_STANDARD.width+'x'+PAINTED_BODY_STANDARD.height+'"'+(extraAttrs||'')+'><img src="'+paintedAsset(race,body)+'" alt="" draggable="false"></span>';
+}
+function usesPaintedBody(subject){
+  var c=subject||{},race=c.race||(c.appearance&&c.appearance.race)||'Veyren';
+  var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
+  var painted=paintedRaceOf(c,a);
+  return Boolean(painted&&PAINTED_BODY_RACES.has(painted));
 }
 function portraitHTML(subject,opts){
   opts=opts||{};
@@ -820,8 +827,9 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:11,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
+  version:12,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
+  PAINTED_BODY_STANDARD:PAINTED_BODY_STANDARD,usesPaintedBody:usesPaintedBody,
   applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,worldAvatarHTML:worldAvatarHTML,worldAvatarSVG:worldAvatarSVG,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
   visualProfile:visualProfile,weaponType:weaponType,offHandType:offHandType,
   editorHTML:editorHTML,bindEditor:bindEditor
