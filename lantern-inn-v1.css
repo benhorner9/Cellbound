@@ -156,3 +156,243 @@ body.inn-character-open{overflow:hidden}
 .inn-door span{padding:6px 10px;background:#17130ddd;border:1px solid #a58755;border-radius:3px;font:13px Georgia,serif;white-space:nowrap}
 .inn-door:hover,.inn-door:focus-visible{outline:2px solid #dbbc83;outline-offset:3px;background:#e8b06312}
 @media(max-width:600px){.inn-door{left:.5%;top:17%;width:7%;height:17%}}
+
+
+/* ==========================================================================
+   Lantern Inn Layered Scene V2
+   The room is now composed from a clean background plus independent Door,
+   Bar and Party Table sprites. These objects own their glow and interaction.
+   ========================================================================== */
+.inn-world{
+  aspect-ratio:4/3;
+  min-height:0;
+  overflow:hidden;
+  background:#0c0b09;
+  border-radius:12px
+}
+.inn-scene-stage{
+  position:absolute;
+  z-index:1;
+  top:0;
+  left:50%;
+  height:100%;
+  width:auto;
+  aspect-ratio:4/3;
+  translate:-50% 0;
+  transform:translate(0,0) scale(1);
+  transform-origin:50% 50%;
+  transition:transform .72s cubic-bezier(.2,.72,.18,1),filter .42s ease;
+  will-change:transform,filter
+}
+.inn-scene-bg{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:cover;
+  user-select:none;
+  pointer-events:none
+}
+.inn-inhabitants{
+  position:absolute;
+  inset:0;
+  z-index:auto;
+  pointer-events:none
+}
+.inn-inhabitants>.inn-adventurer{pointer-events:auto}
+.inn-hearth-light,.inn-window-light{z-index:3}
+.inn-hearth-light{background:radial-gradient(ellipse at 27% 43%,#ff9c3018,transparent 27%)}
+.inn-window-light{background:linear-gradient(125deg,transparent 39%,#9bd8ff09 49%,transparent 61%)}
+
+/* Modular scene objects. Their z-index deliberately interleaves with actor
+   depth values so characters can stand in front of or behind real furniture. */
+.inn-scene-object{
+  position:absolute;
+  display:block;
+  margin:0;
+  padding:0!important;
+  border:0!important;
+  min-width:44px;
+  min-height:44px;
+  overflow:visible;
+  background:none!important;
+  color:#fff0d5;
+  cursor:pointer;
+  outline:none;
+  isolation:isolate;
+  touch-action:manipulation
+}
+.inn-object-door{left:0;top:22%;width:25%;aspect-ratio:1086/1448;z-index:28}
+.inn-object-bar{left:52%;top:19%;width:49%;aspect-ratio:4/3;z-index:46}
+.inn-object-table{left:15%;top:50%;width:64%;aspect-ratio:4/3;z-index:74}
+
+.inn-object-visual{
+  position:absolute;
+  inset:0;
+  display:block;
+  pointer-events:none
+}
+.inn-object-visual>img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  object-fit:contain;
+  object-position:50% 50%;
+  user-select:none;
+  pointer-events:none
+}
+.inn-object-art{
+  z-index:2;
+  filter:brightness(1) saturate(1);
+  transition:filter .2s ease,transform .2s ease
+}
+.inn-object-glow{
+  z-index:1;
+  opacity:0;
+  transform:scale(1.03);
+  filter:
+    brightness(0)
+    saturate(100%)
+    invert(72%)
+    sepia(67%)
+    saturate(930%)
+    hue-rotate(348deg)
+    brightness(104%)
+    contrast(96%)
+    blur(13px);
+  transition:opacity .2s ease
+}
+.inn-scene-object:hover .inn-object-glow,
+.inn-scene-object:focus-visible .inn-object-glow{opacity:.46}
+.inn-scene-object.is-selected .inn-object-glow{opacity:.72}
+.inn-scene-object:hover .inn-object-art,
+.inn-scene-object:focus-visible .inn-object-art,
+.inn-scene-object.is-selected .inn-object-art{filter:brightness(1.075) saturate(1.045)}
+.inn-object-table.is-selected .inn-object-glow{opacity:.78}
+.inn-scene-object:focus-visible .inn-object-art{filter:brightness(1.1) saturate(1.06)}
+
+.inn-object-caption{
+  position:absolute;
+  z-index:5;
+  left:50%;
+  display:block;
+  min-width:118px;
+  padding:6px 9px;
+  transform:translate(-50%,5px);
+  border:1px solid rgba(215,181,114,.58);
+  border-radius:4px;
+  background:rgba(18,16,12,.9);
+  box-shadow:0 6px 18px rgba(0,0,0,.38);
+  opacity:0;
+  color:#f3e1bf;
+  text-align:center;
+  pointer-events:none;
+  transition:opacity .16s ease,transform .16s ease
+}
+.inn-object-caption b{display:block;font:600 13px Georgia,serif}
+.inn-object-caption small{display:block;margin-top:2px;color:#cbb996;font:9px system-ui}
+.inn-object-door .inn-object-caption{left:48%;bottom:3%}
+.inn-object-bar .inn-object-caption{left:72%;bottom:8%}
+.inn-object-table .inn-object-caption{left:54%;top:38%;bottom:auto}
+.inn-scene-object:hover .inn-object-caption,
+.inn-scene-object:focus-visible .inn-object-caption,
+.inn-scene-object.is-selected .inn-object-caption{
+  opacity:1;
+  transform:translate(-50%,0)
+}
+
+/* Old overlay controls no longer exist in the layered scene. */
+.inn-art,.inn-hotspot,.inn-door{display:none!important}
+
+/* Heading and hint remain UI overlays, not part of the camera stage. */
+.inn-heading{z-index:104}
+.inn-hint{z-index:104}
+.inn-empty{z-index:104}
+
+/* Camera travel back to the Town Square. The room moves toward the physical
+   Door first, then the entire scene fades before switching views. */
+.inn-world:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:150;
+  pointer-events:none;
+  background:#050708;
+  opacity:0;
+  transition:opacity .22s ease
+}
+.inn-world.is-leaving-to-town .inn-scene-stage{
+  transform-origin:13% 48%;
+  transform:translate(31%,-2%) scale(2.35);
+  filter:brightness(.78) saturate(.94)
+}
+.inn-world.is-leaving-to-town :is(.inn-heading,.inn-hint,.inn-empty){
+  opacity:0;
+  transition:opacity .16s ease
+}
+.inn-world.is-fading-to-town:after{opacity:1}
+
+/* Management opens in a true centre-screen modal on every device. */
+.inn-dialog{
+  position:fixed;
+  inset:auto!important;
+  left:50%!important;
+  top:50%!important;
+  width:min(1100px,calc(100vw - 40px))!important;
+  max-width:1100px!important;
+  max-height:min(86dvh,860px)!important;
+  margin:0!important;
+  padding:0!important;
+  transform:translate(-50%,-50%)!important;
+  border-radius:12px!important;
+  overflow:auto
+}
+.inn-dialog::backdrop{
+  background:rgba(4,7,8,.62);
+  backdrop-filter:blur(2px)
+}
+#innParty{width:min(1120px,calc(100vw - 40px))!important}
+#innLedger{width:min(1180px,calc(100vw - 40px))!important}
+
+/* The table is the strongest world affordance. On coarse pointers the glow
+   remains visible briefly via JS selection before the modal opens. */
+@media (hover:hover) and (pointer:fine){
+  .inn-object-table:hover .inn-object-glow{opacity:.62}
+}
+
+@media(max-width:600px){
+  .inn-world{aspect-ratio:4/3;min-height:0;border-radius:7px}
+  .inn-heading{padding:10px 12px 24px}
+  .inn-heading h2{font-size:22px}
+  .inn-heading small{font-size:8px}
+  .inn-heading p{font-size:10px}
+  .inn-figure{width:58px;height:104px}
+  .inn-illustrated-model .inn-figure{width:58px;height:104px}
+  .inn-illustrated-model .cb-world-avatar-illustrated{width:58px!important;height:104px!important}
+  .inn-name{font-size:8px;padding:2px 4px;max-width:64px}
+  .inn-dialog{
+    left:50%!important;
+    top:50%!important;
+    width:calc(100vw - 18px)!important;
+    max-width:calc(100vw - 18px)!important;
+    max-height:82dvh!important;
+    margin:0!important;
+    transform:translate(-50%,-50%)!important;
+    border-radius:10px!important;
+    padding-bottom:0!important
+  }
+  .inn-dialog-head{padding:10px 11px}
+  .inn-dialog-head h2{font-size:19px}
+  .inn-dialog-body{padding:10px}
+  .inn-object-caption{min-width:96px;padding:5px 7px}
+  .inn-object-caption b{font-size:11px}
+  .inn-object-caption small{font-size:8px}
+  .inn-hint{padding:18px 9px 8px;font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+  .inn-scene-stage,.inn-world:after,.inn-object-glow,.inn-object-art,.inn-object-caption{transition:none!important}
+}
