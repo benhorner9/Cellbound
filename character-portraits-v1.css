@@ -684,24 +684,29 @@
   background:transparent;
 }
 
-/* Full body assets are always clear at runtime. The containing game surface is
-   responsible for scenery, lighting and the equipment stage. */
+/* Full-body Standard V1
+   Every converted body asset is normalized to the same transparent 512x896
+   canvas with fixed headroom and a common foot baseline. Rendering contexts
+   now size the standard canvas; they never resize individual races. */
 .cb-paper-doll-painted{
   display:grid;
   place-items:center;
   overflow:visible;
+  padding:0;
 }
 .cb-paper-doll-painted .cb-painted-paper-body,
 .cb-world-avatar-painted{
   position:relative;
-  display:block;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
   width:100%;
   height:100%;
-  overflow:visible;
+  overflow:visible!important;
   border-radius:0;
   background:transparent!important;
-  -webkit-mask-image:none;
-  mask-image:none;
+  -webkit-mask-image:none!important;
+  mask-image:none!important;
 }
 .cb-paper-doll-painted .cb-painted-paper-body>img,
 .cb-world-avatar-painted>img{
@@ -711,32 +716,41 @@
   object-fit:contain;
   object-position:50% 100%;
   background:transparent;
+  clip-path:none!important;
+  transform:none!important;
+  transform-origin:50% 100%;
   filter:
     saturate(.96)
     contrast(1.035)
     drop-shadow(0 14px 16px rgba(0,0,0,.38));
-  transform-origin:50% 100%;
 }
 
-/* Every painted full-body pack is true-alpha. Contexts own the scenery;
-   race art is only the character silhouette. */
-.cb-painted-veyren-body>img,
-.cb-painted-stoneborn-body>img,
-.cb-painted-aelari-body>img{clip-path:none}
-
-/* Race-specific fit while keeping the same foot baseline. */
-.cb-paper-doll-painted .cb-painted-veyren-body>img{transform:scale(.93)}
-.cb-paper-doll-painted .cb-painted-stoneborn-body>img{transform:scale(.96)}
-.cb-paper-doll-painted .cb-painted-aelari-body>img{transform:scale(.95)}
-.cb-world-avatar-painted.cb-world-avatar--veyren>img{transform:scale(.96)}
-.cb-world-avatar-painted.cb-world-avatar--stoneborn>img{transform:scale(.98)}
-.cb-world-avatar-painted.cb-world-avatar--aelari>img{transform:scale(.97)}
+/* Equipment always shows the complete normalized canvas. The asset carries
+   its own transparent headroom, so hair, horns and helmets cannot hit the
+   top edge of the visible character. */
+.cb-paper-doll-painted.cb-paper-doll--equipment{
+  width:min(100%,230px);
+  height:350px;
+  overflow:visible;
+}
+.cb-paper-doll-painted.cb-paper-doll--equipment .cb-painted-paper-body{
+  width:100%;
+  height:100%;
+}
+.cb-paper-doll-painted.cb-paper-doll--equipment .cb-painted-paper-body>img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:50% 100%;
+}
 
 .inn-figure .cb-world-avatar-painted{
   width:100%;
   height:100%;
-  display:grid;
-  place-items:end center;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  overflow:visible!important;
 }
 .inn-figure .cb-world-avatar-painted>img{
   width:100%;
@@ -750,7 +764,5 @@
 @media(max-width:720px){
   .cb-appearance-editor-painted{grid-template-columns:1fr}
   .cb-painted-face-picker>div{grid-template-columns:repeat(4,minmax(48px,1fr))}
-  .cb-paper-doll-painted .cb-painted-veyren-body>img{transform:scale(.90)}
-  .cb-paper-doll-painted .cb-painted-stoneborn-body>img{transform:scale(.93)}
-  .cb-paper-doll-painted .cb-painted-aelari-body>img{transform:scale(.92)}
+  .cb-paper-doll-painted.cb-paper-doll--equipment{width:min(100%,204px);height:315px}
 }
