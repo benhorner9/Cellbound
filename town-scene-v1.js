@@ -25,6 +25,7 @@ const headingKicker=root.querySelector('[data-town-sector-kicker]');
 const headingTitle=root.querySelector('[data-town-sector-title]');
 const headingCopy=root.querySelector('[data-town-sector-copy]');
 const travelParty=root.querySelector('[data-town-travel-party]');
+const squareParty=root.querySelector('[data-town-square-party]');
 const questNavBadge=$('#questNavBadge');
 const expeditionFocus=root.querySelector('[data-town-expedition-focus]');
 const expeditionMount=root.querySelector('[data-town-expedition-mount]');
@@ -214,6 +215,21 @@ function renderTravelParty(){
   travelParty.innerHTML=chars.map((c,i)=>{
     const portrait=window.CellboundPortraits?.portraitHTML?.(c,{size:'fill',label:c.name});
     return '<span class="town-travel-hero" style="--travel-order:'+i+'">'+(portrait||'<b>'+String(c.name||'?').charAt(0)+'</b>')+'</span>';
+  }).join('');
+}
+
+function renderSquareParty(){
+  if(!squareParty)return;
+  const chars=(game()?.getPartyCharacters?.()||[]).slice(0,5);
+  const portraits=window.CellboundPortraits;
+  squareParty.hidden=!chars.length;
+  squareParty.innerHTML=chars.map((c,i)=>{
+    const avatar=
+      portraits?.worldAvatarHTML?.(c,{size:'town',label:c.name})||
+      portraits?.paperDollHTML?.(c,{size:'town',label:c.name})||
+      portraits?.portraitHTML?.(c,{size:'hero',label:c.name})||
+      '<span class="town-square-party-fallback">◆</span>';
+    return '<span class="town-square-hero" data-town-party-index="'+i+'" style="--town-party-order:'+i+'">'+avatar+'</span>';
   }).join('');
 }
 
@@ -525,7 +541,7 @@ function enterDistrictArch(id){
 function enter(id){
   if(id==='board'){openBoard();return}
   if(id==='inn'){enterInn();return}
-  if(id==='merchantRoad'||id==='expeditionRoad'){enterDistrictArch(id);return}
+  if(id==='merchantRoad'||id==='expeditionRoad'||id==='harbourRoad'){enterDistrictArch(id);return}
   if(sectorRoutes[id]){setSector(sectorRoutes[id]);return}
   const view=viewRoutes[id];
   if(view)travel(view);
@@ -564,6 +580,7 @@ function syncHome(){
     if(track)track.style.transform='translateX(0%)';
     updateHeading();
     renderTravelParty();
+    renderSquareParty();
     syncQuestMarker();
   }else{
     closeBoard({focus:false,instant:true});
@@ -607,6 +624,7 @@ window.addEventListener('keydown',e=>{
 window.addEventListener('cellbound:view-changed',syncHome);
 window.addEventListener('cellbound:state-rendered',()=>{
   renderTravelParty();
+  renderSquareParty();
   syncQuestMarker();
   if(selected&&objectCopy[selected])panelStatus.textContent=objectCopy[selected].status();
 });
@@ -623,6 +641,7 @@ root.dataset.townSector='square';
 if(track)track.style.transform='translateX(0%)';
 updateHeading();
 renderTravelParty();
+renderSquareParty();
 syncQuestMarker();
 syncHome();
 
