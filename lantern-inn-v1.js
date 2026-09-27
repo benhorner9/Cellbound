@@ -4,23 +4,45 @@
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 const game=()=>window.CellboundGame;
 // Foot positions in each independently composed environment. Reusable across locations.
+/* Character staging map for the modular Inn.
+   Each slot owns its floor anchor, visual scale and z-depth so actors can
+   naturally disappear behind furniture instead of cutting through it.
+   Prop depth: Door 24 · Bar 46 · Party Table 74. */
 const slots={
- 'fireplace-right':{wide:[27,49],phone:[34,56]},
- 'main-table-left':{wide:[20,77],phone:[16,75]},
- 'main-table-right':{wide:[52,76],phone:[60,74]},
- 'bar-left':{wide:[68,52],phone:[73,58]},
- doorway:{wide:[13,48],phone:[13,49]},
- window:{wide:[44,38],phone:[47,35]},
- 'back-table':{wide:[55,40],phone:[55,46]},
- stairs:{wide:[91,66],phone:[92,50]},
- 'bar-right':{wide:[83,53],phone:[82,42]},
- 'fireplace-left':{wide:[16,42],phone:[25,42]}
+ 'door-side':{
+  wide:[18.5,55],phone:[18,57],scale:.94,phoneScale:.90,depth:54,zone:'floor'
+ },
+ 'hearth-right':{
+  wide:[39,56],phone:[39,59],scale:.96,phoneScale:.92,depth:56,zone:'floor'
+ },
+ 'bar-guest':{
+  wide:[82,61],phone:[79,61],scale:.98,phoneScale:.94,depth:62,zone:'floor'
+ },
+ 'table-left':{
+  wide:[39,74],phone:[38,74],scale:1.02,phoneScale:.97,depth:72,zone:'behind-table'
+ },
+ 'table-right':{
+  wide:[63,74],phone:[62,74],scale:1.02,phoneScale:.97,depth:72,zone:'behind-table'
+ },
+ 'window-left':{
+  wide:[51,46],phone:[49,47],scale:.82,phoneScale:.82,depth:42,zone:'background'
+ },
+ 'window-right':{
+  wide:[61,47],phone:[61,48],scale:.84,phoneScale:.83,depth:43,zone:'background'
+ },
+ 'bar-behind':{
+  wide:[73,51],phone:[72,52],scale:.87,phoneScale:.85,depth:44,zone:'behind-bar'
+ },
+ stairs:{
+  wide:[67,54],phone:[67,55],scale:.90,phoneScale:.88,depth:50,zone:'midground'
+ },
+ 'hearth-left':{
+  wide:[27,54],phone:[28,56],scale:.93,phoneScale:.90,depth:53,zone:'floor'
+ }
 };
-// Perspective is derived from the floor anchor, not tuned per character.
-// This gives every race the same depth rules and prevents size drift.
-const perspectiveFor=y=>Math.max(.82,Math.min(.96,.68+(Number(y)||50)*.0036));
-const activeSlots=['fireplace-right','main-table-right','main-table-left','bar-left','doorway'];
-const reserveSlots=['window','back-table','stairs','bar-right','fireplace-left'];
+const perspectiveFor=y=>Math.max(.82,Math.min(1.02,.70+(Number(y)||50)*.0042));
+const activeSlots=['door-side','hearth-right','bar-guest','table-left','table-right'];
+const reserveSlots=['window-left','window-right','bar-behind','stairs','hearth-left'];
 let root,world,ledger,partyDialog,partyMarker,partyNode,selectionPanel,selectionTitle,selectionCopy,selectionStatus,selectionAction,returnFocus=null,characterFocus=null,lastKey='',selectedObject='',exitTimer=0;
 const objectCopy={
  party:{
@@ -177,7 +199,7 @@ function mount(){
 function assign(roster,party){
  const ids=new Set(party.map(c=>String(c.id))),active=party.filter(c=>roster.some(r=>String(r.id)===String(c.id)));
  // Membership is authoritative; class preferences only select a free room position.
- const preferred={Warrior:'fireplace-right',Paladin:'fireplace-right',Priest:'main-table-right',Druid:'main-table-right',Rogue:'bar-left',Mage:'main-table-left',Hunter:'doorway'};
+ const preferred={Warrior:'hearth-right',Paladin:'hearth-right',Priest:'table-right',Druid:'table-right',Rogue:'bar-guest',Mage:'table-left',Hunter:'door-side'};
  const used=new Set();
  const placed=active.map(c=>{const slot=[preferred[c.class],...activeSlots].find(s=>s&&!used.has(s));used.add(slot);return {c:roster.find(r=>String(r.id)===String(c.id)),slot,active:true}});
  const free=[...reserveSlots,...activeSlots].filter(s=>!used.has(s));
@@ -194,8 +216,8 @@ function refresh(){
    const s=slots[slot],P=window.CellboundPortraits;
    const illustrated=Boolean(P?.usesIllustratedBody?.(c));
    const body=P?.worldAvatarHTML?.(c,{size:'inn',label:c.name})||P?.paperDollHTML?.(c,{size:'inn',label:c.name})||P?.portraitHTML?.(c,{size:'hero'})||esc(c.name);
-   const wideScale=perspectiveFor(s.wide[1]),phoneScale=perspectiveFor(s.phone[1]);
-   return '<button type="button" class="inn-adventurer '+(illustrated?'inn-illustrated-model ':'inn-fallback-model ')+(active?'inn-traveller':'inn-resting')+'" data-char="'+esc(c.id)+'" data-inn-character="'+esc(c.id)+'" data-location-slot="'+slot+'" style="--slot-x:'+s.wide[0]+'%;--slot-y:'+s.wide[1]+'%;--phone-x:'+s.phone[0]+'%;--phone-y:'+s.phone[1]+'%;--inn-scale-wide:'+wideScale.toFixed(3)+';--inn-scale-phone:'+phoneScale.toFixed(3)+';--depth:'+Math.round(s.wide[1])+'" aria-label="'+esc(c.name+', '+c.class+', '+c.spec+', '+(active?'active party':'reserve')+(Number(c.cellShock)>=100?', recovering':''))+'"><span class="inn-figure">'+body+'</span><span class="inn-name">'+esc(c.name)+'</span></button>';
+   const wideScale=Number(s.scale||perspectiveFor(s.wide[1])),phoneScale=Number(s.phoneScale||s.scale||perspectiveFor(s.phone[1])),depth=Number(s.depth||Math.round(s.wide[1]));
+   return '<button type="button" class="inn-adventurer '+(illustrated?'inn-illustrated-model ':'inn-fallback-model ')+'inn-zone-'+esc(s.zone||'floor')+' '+(active?'inn-traveller':'inn-resting')+'" data-char="'+esc(c.id)+'" data-inn-character="'+esc(c.id)+'" data-location-slot="'+slot+'" data-inn-zone="'+esc(s.zone||'floor')+'" style="--slot-x:'+s.wide[0]+'%;--slot-y:'+s.wide[1]+'%;--phone-x:'+s.phone[0]+'%;--phone-y:'+s.phone[1]+'%;--inn-scale-wide:'+wideScale.toFixed(3)+';--inn-scale-phone:'+phoneScale.toFixed(3)+';--depth:'+depth+'" aria-label="'+esc(c.name+', '+c.class+', '+c.spec+', '+(active?'active party':'reserve')+(Number(c.cellShock)>=100?', recovering':''))+'"><span class="inn-figure">'+body+'</span><span class="inn-name">'+esc(c.name)+'</span></button>';
   }).join('');
   if(focused)[...world.querySelectorAll('[data-inn-character]')].find(n=>n.dataset.innCharacter===focused)?.focus({preventScroll:true});
  }
