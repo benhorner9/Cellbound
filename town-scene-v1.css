@@ -352,6 +352,66 @@
   opacity:.08
 }
 
+/* Textless destination cues are treated like physical signs/emblems in the scene,
+   not persistent floating navigation labels. */
+.town-destination-sign{
+  pointer-events:none;
+  opacity:.34;
+  transform-box:fill-box;
+  transform-origin:center;
+  filter:
+    drop-shadow(0 2px 2px rgba(0,0,0,.68))
+    drop-shadow(0 0 3px rgba(213,169,91,.18));
+  animation:townDestinationDiscover 1.45s cubic-bezier(.2,.76,.24,1) .35s 1 both;
+  transition:opacity .2s ease,filter .2s ease,transform .2s ease
+}
+.town-sign-hanger{
+  fill:none;
+  stroke:#4b3928;
+  stroke-width:5;
+  stroke-linecap:round;
+  vector-effect:non-scaling-stroke
+}
+.town-sign-board{
+  fill:rgba(38,27,19,.9);
+  stroke:#9f7745;
+  stroke-width:2;
+  vector-effect:non-scaling-stroke
+}
+.town-sign-medallion{
+  fill:rgba(30,27,23,.78);
+  stroke:rgba(172,136,79,.74);
+  stroke-width:2;
+  vector-effect:non-scaling-stroke
+}
+.town-sign-glyph{
+  fill:none;
+  stroke:#d2a862;
+  stroke-width:4;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  vector-effect:non-scaling-stroke
+}
+.town-sign-inn .town-sign-glyph{
+  fill:rgba(201,151,76,.16);
+  stroke-width:3.2
+}
+.town-painted-location[data-town-object="inn"].is-selected ~ .town-sign-inn,
+.town-painted-location[data-town-object="expeditionRoad"].is-selected ~ .town-sign-expedition,
+.town-painted-location[data-town-object="merchantRoad"].is-selected ~ .town-sign-merchant,
+.town-painted-location[data-town-object="harbourRoad"].is-selected ~ .town-sign-harbour{
+  opacity:.72;
+  transform:scale(1.035);
+  filter:
+    drop-shadow(0 2px 2px rgba(0,0,0,.72))
+    drop-shadow(0 0 7px rgba(225,177,91,.48))
+}
+@keyframes townDestinationDiscover{
+  0%{opacity:.18;filter:drop-shadow(0 2px 2px rgba(0,0,0,.66)) drop-shadow(0 0 0 rgba(226,175,87,0));transform:scale(.98)}
+  42%{opacity:.78;filter:drop-shadow(0 2px 2px rgba(0,0,0,.7)) drop-shadow(0 0 11px rgba(226,175,87,.62));transform:scale(1.05)}
+  100%{opacity:.34;filter:drop-shadow(0 2px 2px rgba(0,0,0,.68)) drop-shadow(0 0 3px rgba(213,169,91,.18));transform:scale(1)}
+}
+
 /* Quest availability lives on the physical notice board, not in a floating UI card. */
 .town-quest-marker{
   opacity:0;
@@ -495,7 +555,8 @@
   }
 }
 @media(prefers-reduced-motion:reduce){
-  .town-painted-image,.town-painted-hotspots,.town-painted-bloom,.town-painted-lift,.town-painted-hit,.town-painted-outline,.town-scene-town-title,.town-quest-marker{transition:none!important}
+  .town-painted-image,.town-painted-hotspots,.town-painted-bloom,.town-painted-lift,.town-painted-hit,.town-painted-outline,.town-scene-town-title,.town-quest-marker,.town-destination-sign{transition:none!important}
+  .town-destination-sign{animation:none!important}
   .town-scene.has-selection .town-selection-panel,.town-scene.has-available-quests .town-quest-marker{animation:none!important}
   .town-scene.is-entering-inn .town-painted-image,.town-scene.is-entering-inn .town-painted-hotspots,
   .town-scene.is-opening-board .town-painted-image,.town-scene.is-opening-board .town-painted-hotspots,
