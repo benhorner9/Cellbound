@@ -181,6 +181,21 @@ function svgFor(a,accent){
     (a.race==='Nymari'?'<circle cx="35" cy="58" r="1.3" fill="#8ffcff" opacity=".7"/><circle cx="65" cy="58" r="1.3" fill="#8ffcff" opacity=".7"/>':'')+
     '</g><rect x="2.5" y="2.5" width="95" height="95" rx="17.5" fill="none" stroke="'+accent+'" stroke-opacity=".55" stroke-width="2"/></svg>';
 }
+function paintedVeyrenAsset(file){
+  return './assets/characters/v2/veyren/'+file+'?v=2';
+}
+function isPaintedVeyren(c,a){
+  return (c?.race||a?.race||c?.appearance?.race||'Veyren')==='Veyren';
+}
+function paintedVeyrenFaceHTML(c,a,accent,size,label,className){
+  var face=Math.max(0,Math.min(3,Number(a?.face)||0));
+  var cls='cb-portrait cb-painted-portrait cb-painted-veyren cb-portrait--'+esc(size)+(className?' '+esc(className):'');
+  return '<span class="'+cls+'" style="--cbp-accent:'+accent+'" role="img" aria-label="'+esc(label)+'" data-painted-race="Veyren" data-painted-face="'+face+'"><img src="'+paintedVeyrenAsset('face-'+face+'.webp')+'" alt="" draggable="false"></span>';
+}
+function paintedVeyrenBodyHTML(c,a,kind,label){
+  var body=((Number(a?.face)||0)%2===1)?'body-b.webp':'body-a.webp';
+  return '<span class="'+kind+' cb-painted-character cb-painted-veyren-body" role="img" aria-label="'+esc(label)+'" data-painted-race="Veyren"><img src="'+paintedVeyrenAsset(body)+'" alt="" draggable="false"></span>';
+}
 function portraitHTML(subject,opts){
   opts=opts||{};
   var c=subject||{};
@@ -188,8 +203,10 @@ function portraitHTML(subject,opts){
   var a=normalizeAppearance(c.appearance||c,c.id||c.name||opts.seed||race,race);
   var accent=opts.accent||CLASS_COLORS[c.class]||'#76d7d0';
   var size=opts.size||'md';
-  var cls='cb-portrait cb-portrait--'+esc(size)+(opts.className?' '+esc(opts.className):'');
+  var cls=opts.className||'';
   var label=opts.label||c.name||a.race+' adventurer';
+  if(isPaintedVeyren(c,a))return paintedVeyrenFaceHTML(c,a,accent,size,label,cls);
+  cls='cb-portrait cb-portrait--'+esc(size)+(cls?' '+esc(cls):'');
   return '<span class="'+cls+'" style="--cbp-accent:'+accent+'" role="img" aria-label="'+esc(label)+'">'+svgFor(a,accent)+'</span>';
 }
 function optionText(field,value,race){
@@ -206,7 +223,12 @@ function editorHTML(appearance,opts){
     var label=field==='feature'?(raceDef(a.race).featureLabel||'Race detail'):(LABELS[field]||field);
     return '<div class="cb-appearance-control"><span>'+esc(label)+'</span><div><button type="button" data-appearance-field="'+field+'" data-direction="-1" aria-label="Previous '+esc(label)+'">‹</button><b>'+esc(optionText(field,a[field],a.race))+'</b><button type="button" data-appearance-field="'+field+'" data-direction="1" aria-label="Next '+esc(label)+'">›</button></div></div>';
   }).join('');
-  return '<div class="cb-appearance-editor" data-appearance-editor><div class="cb-appearance-preview">'+portraitHTML({race:a.race,appearance:a,class:opts.characterClass,name:opts.name||'Character'},{size:'hero',label:(opts.name||'Character')+' appearance preview'})+'<button type="button" data-appearance-randomize>RANDOMISE APPEARANCE</button></div><div class="cb-appearance-controls">'+rows+'</div></div>';
+  var visual=portraitHTML({race:a.race,appearance:a,class:opts.characterClass,name:opts.name||'Character'},{size:'hero',label:(opts.name||'Character')+' appearance preview'});
+  var faces='';
+  if(a.race==='Veyren'){
+    faces='<div class="cb-painted-face-picker"><small>ILLUSTRATED VEYREN FACE</small><div>'+[0,1,2,3].map(function(i){return '<button type="button" class="'+(a.face===i?'is-selected':'')+'" data-appearance-direct="face" data-value="'+i+'" aria-label="Veyren face '+(i+1)+'"><img src="'+paintedVeyrenAsset('face-'+i+'.webp')+'" alt=""></button>'}).join('')+'</div></div>';
+  }
+  return '<div class="cb-appearance-editor '+(a.race==='Veyren'?'cb-appearance-editor-painted':'')+'" data-appearance-editor><div class="cb-appearance-preview">'+visual+faces+'<button type="button" data-appearance-randomize>RANDOMISE APPEARANCE</button></div><div class="cb-appearance-controls">'+rows+'</div></div>';
 }
 function bindEditor(container,appearance,onChange,opts){
   if(!container||!appearance)return;
@@ -214,6 +236,13 @@ function bindEditor(container,appearance,onChange,opts){
     btn.addEventListener('click',function(){
       var field=btn.dataset.appearanceField,count=COUNTS[field]||1,dir=Number(btn.dataset.direction)||1;
       appearance[field]=(Number(appearance[field]||0)+dir+count)%count;
+      if(typeof onChange==='function')onChange(appearance,field);
+    });
+  });
+  container.querySelectorAll('[data-appearance-direct]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var field=btn.dataset.appearanceDirect,count=COUNTS[field]||1,value=Number(btn.dataset.value)||0;
+      appearance[field]=Math.max(0,Math.min(count-1,value));
       if(typeof onChange==='function')onChange(appearance,field);
     });
   });
@@ -742,12 +771,15 @@ function worldAvatarSVG(c,opts){
 function worldAvatarHTML(subject,opts){
   opts=opts||{};
   var c=subject||{},klass=paperClass(c);
-  if(!WORLD_AVATAR_CLASSES.has(klass))return'';
-  var tier=worldAvatarTier(c),weapon=worldAvatarWeapon(c);
   var race=c.race||(c.appearance&&c.appearance.race)||'Veyren';
   var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
-  var appearanceKey=hash(JSON.stringify([a.race,a.skinTone,a.face,a.hair,a.hairColor,a.facialHair,a.marking,a.eyes,a.feature])).toString(36);
   var label=opts.label||((c.name||'Character')+' world appearance');
+  if(isPaintedVeyren(c,a)){
+    return paintedVeyrenBodyHTML(c,a,'cb-world-avatar cb-world-avatar-painted cb-world-avatar--veyren',label);
+  }
+  if(!WORLD_AVATAR_CLASSES.has(klass))return'';
+  var tier=worldAvatarTier(c),weapon=worldAvatarWeapon(c);
+  var appearanceKey=hash(JSON.stringify([a.race,a.skinTone,a.face,a.hair,a.hairColor,a.facialHair,a.marking,a.eyes,a.feature])).toString(36);
   return '<span class="cb-world-avatar cb-world-avatar--'+esc(klass.toLowerCase())+'" role="img" aria-label="'+esc(label)+'" data-world-avatar="'+esc(klass)+'" data-avatar-class="'+esc(klass)+'" data-avatar-tier="'+tier+'" data-avatar-weapon="'+esc(weapon)+'" data-avatar-race="'+esc(a.race)+'" data-appearance-key="'+appearanceKey+'">'+worldAvatarSVG(c,opts)+'</span>';
 }
 
@@ -755,7 +787,15 @@ function paperDollHTML(subject,opts){
   opts=opts||{};
   var c=subject||{},size=opts.size||'equipment',accent=opts.accent||paperAccent(c),set=dominantSetState(c);
   var label=opts.label||((c.name||'Character')+' equipment appearance');
+  var race=c.race||(c.appearance&&c.appearance.race)||'Veyren';
+  var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
   var cls='cb-paper-doll cb-paper-doll--'+esc(size)+(set?' has-set set-pieces-'+Math.min(4,set.count):'');
+  if(isPaintedVeyren(c,a)){
+    return '<span class="'+cls+' cb-paper-doll-painted cb-paper-doll-veyren" style="--cbp-accent:'+accent+'" role="img" aria-label="'+esc(label)+'" data-painted-race="Veyren">'+
+      paintedVeyrenBodyHTML(c,a,'cb-painted-paper-body',label)+
+      '<span class="cb-painted-legacy-hooks" hidden>'+paperDollSVG(c,opts)+'</span>'+
+    '</span>';
+  }
   return '<span class="'+cls+'" style="--cbp-accent:'+accent+(set?' ;--cbp-set-glow:'+set.visual.glow:'')+'" role="img" aria-label="'+esc(label)+'">'+paperDollSVG(c,opts)+'</span>';
 }
 function visualProfile(subject,item,slot){
@@ -764,7 +804,7 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:3,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
+  version:4,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
   applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,worldAvatarHTML:worldAvatarHTML,worldAvatarSVG:worldAvatarSVG,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
   visualProfile:visualProfile,weaponType:weaponType,offHandType:offHandType,
