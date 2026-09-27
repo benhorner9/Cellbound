@@ -594,3 +594,10 @@ body.inn-character-open{overflow:hidden}
   .inn-zone-behind-table .inn-name{bottom:132px}
   .inn-zone-behind-bar .inn-name{bottom:114px}
 }
+
+
+/* Inn character labels hidden: the illustrated actor is now the identity cue.
+   Accessible names remain on the character buttons for screen readers. */
+.inn-adventurer .inn-name{
+  display:none!important
+}
