@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 470">
+<defs>
+  <linearGradient id="stone" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c4b58d"/><stop offset=".55" stop-color="#918264"/><stop offset="1" stop-color="#655c4c"/></linearGradient>
+  <linearGradient id="roof" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#40656b"/><stop offset="1" stop-color="#243e43"/></linearGradient>
+  <radialGradient id="lamp"><stop stop-color="#ffd87c"/><stop offset=".45" stop-color="#e58f39" stop-opacity=".68"/><stop offset="1" stop-color="#e58f39" stop-opacity="0"/></radialGradient>
+</defs>
+<ellipse cx="166" cy="444" rx="139" ry="18" fill="#101a18" opacity=".48"/>
+<path d="M39 423 L48 154 Q62 75 164 55 Q267 72 284 154 L292 425Z" fill="url(#stone)" stroke="#172321" stroke-width="11" stroke-linejoin="round"/>
+<path d="M72 423 L78 190 Q82 129 165 111 Q247 131 255 190 L260 424Z" fill="#243b3b" stroke="#172321" stroke-width="9"/>
+<path d="M97 423 L101 215 Q105 166 165 151 Q224 165 232 215 L235 424Z" fill="#102424" stroke="#172321" stroke-width="8"/>
+<path d="M25 155 Q60 49 166 28 Q271 50 306 157 L277 173 Q244 92 165 78 Q84 92 53 174Z" fill="url(#roof)" stroke="#152321" stroke-width="10" stroke-linejoin="round"/>
+<path d="M54 176 Q82 153 111 169 M219 169 Q250 153 279 176" fill="none" stroke="#ded0a5" stroke-width="5" opacity=".45"/>
+<path d="M165 76 v43" stroke="#1b2926" stroke-width="8"/>
+<path d="M125 116 Q165 94 205 116 L198 151 Q165 168 132 151Z" fill="#6c4730" stroke="#1a211e" stroke-width="7"/>
+<path d="M148 133 l17-12 17 12-17 13Z" fill="#e0b363" stroke="#3b2e21" stroke-width="4"/>
+<circle cx="55" cy="245" r="42" fill="url(#lamp)" opacity=".35"/><circle cx="276" cy="245" r="42" fill="url(#lamp)" opacity=".35"/>
+<path d="M48 217 h15 l-2 28 H50Z M269 217 h15 l-2 28 h-11Z" fill="#e5a548" stroke="#3b2d22" stroke-width="4"/>
+<g fill="none" stroke="#716751" stroke-width="4" opacity=".52">
+  <path d="M49 190 l42-7 M244 183 l39 7 M50 309 l31 9 M250 320 l34-10 M52 365 l31-6 M249 360 l39 5"/>
+</g>
+<path d="M85 424 Q165 402 244 424" fill="none" stroke="#d6bd8d" stroke-width="10" opacity=".52"/>
+</svg>
