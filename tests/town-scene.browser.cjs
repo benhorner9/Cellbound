@@ -68,6 +68,8 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  assert.equal(await page.locator('[data-town-object="inn"]').getAttribute('aria-pressed'),'true');
  assert.equal(await page.locator('[data-town-layer="inn"]').evaluate(n=>n.classList.contains('is-selected')),true,'selecting the Inn activates its real layered artwork glow');
  assert.equal(await page.locator('[data-town-layer="board"]').evaluate(n=>n.classList.contains('is-selected')),false,'only the selected landmark receives the layered glow');
+ assert.equal(await page.locator('[data-town-scene]').getAttribute('data-selected-town-object'),'inn','Town records the exact selected landmark');
+ assert.equal(await page.locator('[data-town-layer].is-selected').count(),1,'exactly one modular landmark can be selected at a time');
  await page.screenshot({path:'/tmp/cellbound-town-scene-01-selected.png'});
 
  await press('inn');
