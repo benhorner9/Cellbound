@@ -59,6 +59,7 @@
   <link rel="stylesheet" href="./living-world-v1.css?v=2">
 <link rel="stylesheet" href="./lantern-inn-v1.css?v=3">
 <link rel="stylesheet" href="./inn-art-direction-v1.css?v=1">
+  <link rel="stylesheet" href="./town-scene-v1.css?v=1">
   <link rel="stylesheet" href="./layout-safety-v1.css?v=1">
 </head>
 <body>
@@ -66,7 +67,7 @@
   <aside class="sidebar">
     <div class="brand"><div class="brand-mark">◇</div><div><strong>CELLBOUND</strong><span>GUILD COMMAND</span></div></div>
     <nav class="primary-nav" aria-label="Primary navigation">
-      <button class="nav-btn active" data-hub="overview" data-view="overview" data-mobile-core><span>⌂</span><b>Home</b></button>
+      <button class="nav-btn active" data-hub="overview" data-view="overview" data-mobile-core><span>⌂</span><b>Town</b></button>
 
       <div class="nav-section-label">GUILD</div>
       <button class="nav-btn" data-hub="guild" data-view="roster"><span>♟</span><b>Roster</b></button>
@@ -98,7 +99,7 @@
 
   <main class="main">
     <header class="topbar">
-      <div><small>THE GUILDMASTER'S DESK</small><h1 id="pageTitle">Home</h1><span id="syncStatus" class="sync-status" role="status" aria-live="polite">Loading…</span></div>
+      <div><small>THE GUILDMASTER'S DESK</small><h1 id="pageTitle">Town</h1><span id="syncStatus" class="sync-status" role="status" aria-live="polite">Loading…</span></div>
       <div class="resource-strip">
         <div><span>Guild Renown</span><b id="renown">—</b></div>
         <div><span>Gold</span><b id="gold">—</b></div>
@@ -112,8 +113,141 @@
     <span id="worldActiveBadge" class="ui-state-proxy" hidden></span>
     <div id="worldAlertBar" class="world-alert-bar" role="status" aria-live="polite" hidden></div>
 
-    <section id="overview" class="view active">
-      <div class="home-command">
+    <section id="overview" class="view active town-scene-view">
+      <div class="town-scene-shell">
+        <section class="town-scene" data-town-scene aria-label="Cellbound Town">
+          <svg class="town-scene-art" viewBox="0 0 1200 760" role="img" aria-labelledby="townSceneTitle townSceneDesc" preserveAspectRatio="xMidYMid slice">
+            <title id="townSceneTitle">The Cellbound guild town</title>
+            <desc id="townSceneDesc">A dark illustrated fantasy town. The Lantern Inn stands left, a wooden notice board occupies the square, and an expedition cart waits on the right. These visible objects are interactive.</desc>
+            <defs>
+              <linearGradient id="townSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14242a"/><stop offset=".56" stop-color="#263239"/><stop offset="1" stop-color="#171a19"/></linearGradient>
+              <linearGradient id="townRoad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4b443a"/><stop offset=".45" stop-color="#38342e"/><stop offset="1" stop-color="#201f1d"/></linearGradient>
+              <linearGradient id="innWall" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a4b3b"/><stop offset=".55" stop-color="#3b342c"/><stop offset="1" stop-color="#292825"/></linearGradient>
+              <linearGradient id="roof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#272727"/><stop offset=".45" stop-color="#171b1c"/><stop offset="1" stop-color="#101415"/></linearGradient>
+              <linearGradient id="wood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#745036"/><stop offset=".55" stop-color="#4d3425"/><stop offset="1" stop-color="#2b211a"/></linearGradient>
+              <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2cda5"/><stop offset="1" stop-color="#bda477"/></linearGradient>
+              <radialGradient id="lanternGlow"><stop offset="0" stop-color="#f4ba62" stop-opacity=".92"/><stop offset=".35" stop-color="#dd8b38" stop-opacity=".42"/><stop offset="1" stop-color="#cf6b23" stop-opacity="0"/></radialGradient>
+              <filter id="townInk" x="-20%" y="-20%" width="140%" height="140%">
+                <feTurbulence type="fractalNoise" baseFrequency=".012" numOctaves="2" seed="17" result="noise"/>
+                <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.1" xChannelSelector="R" yChannelSelector="G"/>
+              </filter>
+              <filter id="townPaper" x="-15%" y="-15%" width="130%" height="130%">
+                <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="8" result="noise"/>
+                <feBlend in="SourceGraphic" in2="noise" mode="soft-light"/>
+              </filter>
+            </defs>
+
+            <rect width="1200" height="760" fill="url(#townSky)"/>
+            <circle cx="920" cy="108" r="54" fill="#c8c5ab" opacity=".18"/>
+            <path d="M0 280 L96 225 L153 247 L232 188 L303 226 L380 170 L454 220 L540 173 L615 235 L690 184 L777 235 L848 174 L950 225 L1040 186 L1124 235 L1200 196 L1200 410 L0 410Z" fill="#11191c" opacity=".82"/>
+            <path d="M0 338 L104 288 L169 313 L255 258 L331 307 L426 246 L505 300 L610 255 L702 304 L802 246 L902 300 L1010 259 L1094 302 L1200 246 L1200 448 L0 448Z" fill="#1b2222" opacity=".92"/>
+            <path d="M0 495 C220 445 354 452 520 477 C688 501 850 468 1200 448 L1200 760 L0 760Z" fill="url(#townRoad)"/>
+            <path d="M480 760 C530 628 547 542 591 478 C631 420 675 400 730 377" fill="none" stroke="#8f816d" stroke-width="80" opacity=".18"/>
+            <path d="M478 760 C531 627 551 540 595 476 C635 418 679 398 735 375" fill="none" stroke="#211f1b" stroke-width="6" opacity=".65"/>
+
+            <g filter="url(#townInk)" opacity=".94">
+              <path d="M458 392 L458 278 L516 248 L567 280 L567 418Z" fill="#35342f" stroke="#0b0e0e" stroke-width="5"/>
+              <path d="M443 288 L515 221 L582 288Z" fill="#191e1f" stroke="#0b0e0e" stroke-width="6"/>
+              <rect x="492" y="327" width="24" height="42" fill="#bd7b39" opacity=".4"/>
+              <path d="M680 414 L680 284 L742 250 L800 286 L800 425Z" fill="#393630" stroke="#0b0e0e" stroke-width="5"/>
+              <path d="M665 294 L742 222 L816 294Z" fill="#171b1c" stroke="#0b0e0e" stroke-width="6"/>
+              <rect x="711" y="334" width="25" height="41" fill="#d18438" opacity=".37"/>
+              <path d="M1015 410 L1015 294 L1084 264 L1158 302 L1158 438Z" fill="#35332e" stroke="#0b0e0e" stroke-width="5"/>
+              <path d="M995 305 L1085 230 L1175 311Z" fill="#181c1d" stroke="#0b0e0e" stroke-width="6"/>
+              <path d="M864 376 L887 302 L930 294 L948 372Z" fill="#2f302d" stroke="#0b0e0e" stroke-width="5"/>
+              <path d="M908 300 L910 214" stroke="#161a1b" stroke-width="17"/>
+              <path d="M910 214 L945 228 L911 244Z" fill="#6b3d35"/>
+            </g>
+
+            <g class="town-location town-location-inn" data-town-object="inn" role="button" tabindex="0" aria-pressed="false" aria-label="The Lantern Inn" filter="url(#townInk)">
+              <path class="town-object-shape" d="M62 590 L73 363 L141 332 L157 247 L342 238 L407 327 L451 359 L447 596Z" fill="url(#innWall)" stroke="#0b0d0e" stroke-width="7"/>
+              <path class="town-object-shape" d="M112 338 L163 229 L343 220 L435 342 L355 322 L295 268 L163 276Z" fill="url(#roof)" stroke="#080a0b" stroke-width="8"/>
+              <path class="town-object-shape" d="M102 370 L394 350 M118 431 L413 416 M108 493 L423 480" stroke="#1f2020" stroke-width="8" opacity=".64"/>
+              <path class="town-object-shape" d="M170 276 L170 565 M338 270 L338 585" stroke="#171817" stroke-width="12" opacity=".9"/>
+              <rect class="town-object-shape" x="116" y="393" width="70" height="72" rx="2" fill="#242d2c" stroke="#0b0e0e" stroke-width="5"/>
+              <rect x="128" y="405" width="20" height="48" fill="#e1a24b" opacity=".55"/><rect x="154" y="405" width="20" height="48" fill="#d98c3d" opacity=".46"/>
+              <rect class="town-object-shape" x="286" y="394" width="67" height="70" rx="2" fill="#252e2e" stroke="#0b0e0e" stroke-width="5"/>
+              <rect x="297" y="405" width="19" height="47" fill="#e6a84e" opacity=".56"/><rect x="322" y="405" width="19" height="47" fill="#d88c3d" opacity=".44"/>
+              <path class="town-object-shape" d="M218 588 L218 447 Q252 415 286 447 L286 588Z" fill="#201a16" stroke="#0b0d0e" stroke-width="6"/>
+              <path d="M226 455 Q252 432 278 455" fill="none" stroke="#8b633e" stroke-width="4"/>
+              <ellipse cx="251" cy="440" rx="82" ry="65" fill="url(#lanternGlow)" opacity=".22"/>
+              <path class="town-object-shape" d="M183 346 L187 315 L300 315 L304 346Z" fill="#2b211a" stroke="#0a0c0c" stroke-width="5"/>
+              <path d="M195 329 Q242 312 291 329" fill="none" stroke="#bd8c54" stroke-width="3" opacity=".7"/>
+              <circle cx="390" cy="366" r="14" fill="#d89542"/><circle cx="390" cy="366" r="54" fill="url(#lanternGlow)" opacity=".44"/>
+              <path class="town-object-outline" d="M62 590 L73 363 L141 332 L157 247 L342 238 L407 327 L451 359 L447 596Z"/>
+            </g>
+
+            <g class="town-location town-location-board" data-town-object="board" role="button" tabindex="0" aria-pressed="false" aria-label="Town Notice Board" filter="url(#townInk)">
+              <path class="town-object-shape" d="M510 655 L527 447 L549 447 L556 655Z" fill="#342318" stroke="#0a0c0d" stroke-width="6"/>
+              <path class="town-object-shape" d="M672 655 L676 445 L699 446 L716 655Z" fill="#342318" stroke="#0a0c0d" stroke-width="6"/>
+              <path class="town-object-shape" d="M487 438 L711 426 L718 567 L480 578Z" fill="url(#wood)" stroke="#0a0c0d" stroke-width="8"/>
+              <path class="town-object-shape" d="M502 453 L697 444 L702 549 L494 558Z" fill="#6d563f" stroke="#2a1b12" stroke-width="5"/>
+              <g filter="url(#townPaper)">
+                <path class="town-object-shape" d="M519 470 L571 465 L575 519 L523 524Z" fill="url(#paper)" stroke="#5d452f" stroke-width="2"/>
+                <path class="town-object-shape" d="M584 458 L650 461 L646 514 L579 511Z" fill="#d8c399" stroke="#5a422e" stroke-width="2"/>
+                <path class="town-object-shape" d="M656 473 L690 469 L692 527 L654 531Z" fill="#c9b181" stroke="#59412d" stroke-width="2"/>
+                <path class="town-object-shape" d="M540 526 L604 519 L608 550 L543 555Z" fill="#d5be91" stroke="#59412d" stroke-width="2"/>
+              </g>
+              <circle cx="546" cy="472" r="5" fill="#5b3121"/><circle cx="614" cy="461" r="5" fill="#5b3121"/><circle cx="672" cy="474" r="5" fill="#5b3121"/>
+              <path d="M536 483 L559 480 M536 492 L561 489 M597 475 L633 477 M596 485 L626 487 M665 487 L683 484 M553 538 L596 534" stroke="#66523f" stroke-width="3" opacity=".7"/>
+              <path class="town-object-outline" d="M487 438 L711 426 L718 567 L699 572 L716 655 L672 655 L676 572 L556 578 L556 655 L510 655 L527 579 L480 578Z"/>
+            </g>
+
+            <g class="town-location town-location-cart" data-town-object="cart" role="button" tabindex="0" aria-pressed="false" aria-label="Expedition Cart" filter="url(#townInk)">
+              <path class="town-object-shape" d="M790 508 L1002 495 L1044 583 L813 597Z" fill="#543923" stroke="#0a0c0d" stroke-width="7"/>
+              <path class="town-object-shape" d="M819 500 L842 421 L972 413 L1001 497Z" fill="#36342e" stroke="#0a0c0d" stroke-width="7"/>
+              <path class="town-object-shape" d="M848 422 Q906 371 965 413" fill="none" stroke="#231e18" stroke-width="14"/>
+              <path class="town-object-shape" d="M845 421 Q906 382 970 413" fill="none" stroke="#7b5d43" stroke-width="6"/>
+              <rect class="town-object-shape" x="847" y="444" width="48" height="50" fill="#6a5037" stroke="#191611" stroke-width="4"/>
+              <rect class="town-object-shape" x="902" y="437" width="57" height="57" fill="#72543a" stroke="#191611" stroke-width="4"/>
+              <path d="M861 447 L884 489 M916 441 L946 489" stroke="#aa8359" stroke-width="3" opacity=".5"/>
+              <circle class="town-object-shape" cx="847" cy="600" r="54" fill="#221a15" stroke="#0a0c0d" stroke-width="8"/>
+              <circle cx="847" cy="600" r="28" fill="#4c3728" stroke="#0a0c0d" stroke-width="6"/>
+              <path d="M847 548 L847 652 M795 600 L899 600 M810 563 L884 637 M810 637 L884 563" stroke="#76553a" stroke-width="6"/>
+              <circle class="town-object-shape" cx="1006" cy="592" r="49" fill="#221a15" stroke="#0a0c0d" stroke-width="8"/>
+              <circle cx="1006" cy="592" r="25" fill="#4c3728" stroke="#0a0c0d" stroke-width="6"/>
+              <path d="M1006 545 L1006 639 M959 592 L1053 592 M973 559 L1039 625 M973 625 L1039 559" stroke="#76553a" stroke-width="6"/>
+              <path class="town-object-shape" d="M1042 547 L1134 526 L1148 539 L1050 572Z" fill="#3e2c20" stroke="#0a0c0d" stroke-width="6"/>
+              <path class="town-object-outline" d="M790 508 L819 500 L842 421 Q906 371 972 413 L1001 497 L1044 583 L1056 580 L1134 526 L1148 539 L1050 572 L1055 596 L1050 620 L1026 641 L985 640 L964 619 L965 601 L899 605 L899 626 L875 650 L824 649 L794 620Z"/>
+            </g>
+
+            <path d="M0 654 Q80 610 157 640 T318 675 L289 760 L0 760Z" fill="#0d1110" opacity=".95"/>
+            <path d="M1200 630 Q1108 604 1038 650 T895 684 L927 760 L1200 760Z" fill="#0b1010" opacity=".96"/>
+            <path d="M16 710 Q70 660 122 712 M1083 700 Q1133 650 1192 704" fill="none" stroke="#253126" stroke-width="12" opacity=".65"/>
+          </svg>
+
+          <header class="town-scene-town-title">
+            <small>THE GUILD QUARTER</small>
+            <h2>Town</h2>
+            <p>The places around you are the interface. Select a location, then enter it.</p>
+          </header>
+
+          <aside class="town-selection-panel" data-town-selection hidden aria-live="polite">
+            <div class="town-selection-copy">
+              <small>SELECTED LOCATION</small>
+              <h3 data-town-selection-title></h3>
+              <p data-town-selection-copy></p>
+              <em data-town-selection-status></em>
+            </div>
+            <button type="button" data-town-selection-action data-enter-town-object=""></button>
+          </aside>
+
+          <p class="town-scene-hint">Tap a place once to inspect it · tap again to enter</p>
+
+          <section class="town-board-focus" data-town-board-focus hidden aria-label="Town Notice Board">
+            <button class="town-board-backdrop" type="button" data-town-board-backdrop aria-label="Back to Town"></button>
+            <div class="town-board-frame">
+              <header class="town-board-toolbar">
+                <div><small>TOWN NOTICE BOARD</small><b>Adventures & Mysteries</b></div>
+                <button type="button" data-town-board-close>← Back to Town</button>
+              </header>
+              <div class="town-board-quest-mount" data-town-board-mount></div>
+            </div>
+          </section>
+        </section>
+
+        <div class="town-legacy-home" hidden aria-hidden="true">
+<div class="home-command">
         <section id="overviewNextDungeon" class="home-continue-card" aria-label="Continue expedition">
           <div class="home-continue-loading"><small>GUILD COMMAND</small><h2>Preparing your next move…</h2></div>
         </section>
@@ -151,6 +285,8 @@
             <div class="panel-head"><div><small>GUILD LOG</small><h3>Recent Activity</h3></div></div>
             <div id="activityLog" class="activity-log"></div>
           </article>
+        </div>
+      </div>
         </div>
       </div>
     </section>
@@ -555,6 +691,7 @@
 <script src="./mobile-v1.js?v=7"></script>
 <script src="./release-v1.js?v=3"></script>
 <script src="./living-world-v1.js?v=3"></script>
-<script src="./lantern-inn-v1.js?v=4"></script>
+<script src="./lantern-inn-v1.js?v=5"></script>
+<script src="./town-scene-v1.js?v=1"></script>
 </body>
 </html>
