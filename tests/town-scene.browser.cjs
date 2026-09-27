@@ -41,6 +41,9 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
 
  assert.equal(await page.locator('[data-town-object]').count(),15,'Town exposes physical destinations and district roads across four sectors');
  assert.equal(await page.locator('[data-town-scene]').getAttribute('data-town-sector'),'square','Town opens in Central Square');
+ assert.equal(await page.locator('.town-painted-image').count(),1,'Central Square uses the painted town artwork');
+ assert((await page.locator('.town-painted-image').getAttribute('src')||'').includes('assets/world/town/central-square-v1.webp'),'painted Central Square asset is wired into the scene');
+ assert.equal(await page.locator('[data-town-sector="square"] [data-town-object]').count(),5,'painted Central Square exposes exactly five environmental destinations');
  assert.equal(await page.locator('[data-town-selection]').isVisible(),false,'No location labels/panel shown by default');
 
  const press=async id=>page.locator('[data-town-object="'+id+'"]').evaluate(n=>n.dispatchEvent(new MouseEvent('click',{bubbles:true})));
@@ -49,6 +52,7 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  assert.equal(await page.locator('#overview').evaluate(n=>n.classList.contains('active')),true,'first click selects without navigating');
  assert.equal(await page.locator('[data-town-selection]').isVisible(),true);
  assert.equal(await page.locator('[data-town-selection-title]').textContent(),'The Lantern Inn');
+ assert.equal(await page.locator('[data-town-selection-action]').textContent(),'Enter the Inn →');
  assert.equal(await page.locator('[data-town-object="inn"]').getAttribute('aria-pressed'),'true');
  await page.screenshot({path:'/tmp/cellbound-town-scene-01-selected.png'});
 
