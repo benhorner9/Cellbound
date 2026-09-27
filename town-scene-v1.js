@@ -214,6 +214,7 @@ function updateHeading(){
 
 function setSelected(id,focusPanel=true){
   selected=id||'';
+  if(selected)root.dataset.selectedTownObject=selected;else delete root.dataset.selectedTownObject;
   root.querySelectorAll('[data-town-object]').forEach(n=>{
     const on=n.dataset.townObject===selected;
     n.classList.toggle('is-selected',on);
