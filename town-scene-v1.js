@@ -42,7 +42,8 @@ let boardTimer=0;
 let expeditionPopupOpen=false;
 let expeditionPopupId='';
 let expeditionPopupView=null;
-let expeditionPopupChildren=[];
+let expeditionPopupOriginParent=null;
+let expeditionPopupOriginNext=null;
 let expeditionTimer=0;
 
 const sectorOrder={square:0,merchant:1,expedition:2,harbour:3};
@@ -357,11 +358,14 @@ const expeditionPopupConfig={
 };
 
 function restoreExpeditionPopup(){
-  if(expeditionPopupView&&expeditionPopupChildren.length){
-    expeditionPopupChildren.forEach(node=>expeditionPopupView.appendChild(node));
+  if(expeditionPopupView&&expeditionPopupOriginParent){
+    const anchor=expeditionPopupOriginNext&&expeditionPopupOriginNext.parentNode===expeditionPopupOriginParent
+      ?expeditionPopupOriginNext:null;
+    expeditionPopupOriginParent.insertBefore(expeditionPopupView,anchor);
   }
-  expeditionPopupChildren=[];
   expeditionPopupView=null;
+  expeditionPopupOriginParent=null;
+  expeditionPopupOriginNext=null;
   expeditionMount?.replaceChildren();
 }
 
@@ -378,8 +382,9 @@ function showExpeditionPopup(id){
   restoreExpeditionPopup();
   expeditionPopupId=id;
   expeditionPopupView=view;
-  expeditionPopupChildren=[...view.children];
-  expeditionPopupChildren.forEach(node=>expeditionMount.appendChild(node));
+  expeditionPopupOriginParent=view.parentNode;
+  expeditionPopupOriginNext=view.nextSibling;
+  expeditionMount.appendChild(view);
 
   if(expeditionKicker)expeditionKicker.textContent=config.kicker;
   if(expeditionTitle)expeditionTitle.textContent=config.title;
