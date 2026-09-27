@@ -246,61 +246,55 @@
   overflow:visible
 }
 .town-painted-location{filter:none!important}
-.town-painted-location .town-painted-aura{
-  fill:none;
-  stroke:#e0a34f;
-  stroke-width:20;
-  vector-effect:non-scaling-stroke;
+.town-painted-location .town-painted-bloom{
+  fill:#fff;
   opacity:0;
   pointer-events:none;
-  mix-blend-mode:screen;
-  filter:blur(9px);
-  transition:opacity .18s ease,stroke-width .18s ease,filter .18s ease
+  transition:opacity .18s ease
+}
+.town-painted-location .town-painted-lift{
+  opacity:0;
+  pointer-events:none;
+  filter:brightness(1.08) contrast(1.025) saturate(1.04);
+  transition:opacity .18s ease,filter .18s ease
 }
 .town-painted-location .town-painted-hit{
   fill:transparent;
   stroke:transparent;
   stroke-width:1;
   vector-effect:non-scaling-stroke;
-  pointer-events:all;
-  transition:fill .16s ease,filter .16s ease
+  pointer-events:all
 }
 .town-painted-location .town-painted-outline{
   fill:none;
   stroke:#f4cf87;
-  stroke-width:1.25;
+  stroke-width:1;
   vector-effect:non-scaling-stroke;
   opacity:0;
-  pointer-events:none;
-  transition:opacity .16s ease
+  pointer-events:none
 }
-.town-painted-location:hover .town-painted-aura,
-.town-painted-location:focus-visible .town-painted-aura{
-  opacity:.28;
-  stroke-width:17;
-  filter:blur(8px)
+.town-painted-location:hover .town-painted-bloom,
+.town-painted-location:focus-visible .town-painted-bloom{
+  opacity:.24
 }
-.town-painted-location:hover .town-painted-hit,
-.town-painted-location:focus-visible .town-painted-hit{
-  fill:rgba(255,220,158,.015);
-  filter:brightness(1.015)
+.town-painted-location:hover .town-painted-lift,
+.town-painted-location:focus-visible .town-painted-lift{
+  opacity:.42;
+  filter:brightness(1.055) contrast(1.018) saturate(1.025)
 }
-.town-painted-location.is-selected .town-painted-aura{
-  opacity:.72;
-  stroke:#e4a64d;
-  stroke-width:26;
-  filter:blur(12px)
+.town-painted-location.is-selected .town-painted-bloom{
+  opacity:.5
 }
-.town-painted-location.is-selected .town-painted-hit{
-  fill:rgba(255,219,150,.022);
-  filter:brightness(1.025)
+.town-painted-location.is-selected .town-painted-lift{
+  opacity:1;
+  filter:brightness(1.105) contrast(1.035) saturate(1.055)
 }
 .town-painted-location.is-selected .town-painted-outline{
-  opacity:.08
+  opacity:0
 }
 .town-painted-location:focus-visible{outline:none}
 .town-painted-location:focus-visible .town-painted-outline{
-  opacity:.16
+  opacity:.08
 }
 
 /* Central Square relies on environmental landmarks rather than a permanent
@@ -341,10 +335,8 @@
   .town-scene[data-town-sector="square"] .town-selection-panel{
     bottom:31px
   }
-  .town-painted-location .town-painted-aura{stroke-width:16}
-  .town-painted-location.is-selected .town-painted-aura{stroke-width:22}
 }
 @media(prefers-reduced-motion:reduce){
-  .town-painted-image,.town-painted-aura,.town-painted-hit,.town-painted-outline,.town-scene-town-title{transition:none!important}
+  .town-painted-image,.town-painted-bloom,.town-painted-lift,.town-painted-hit,.town-painted-outline,.town-scene-town-title{transition:none!important}
   .town-scene.has-selection .town-selection-panel{animation:none!important}
 }
