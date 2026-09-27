@@ -322,7 +322,7 @@ for(const file of files){
     if(!contents.includes('boss-dossier-v1.js?v=11'))throw new Error('Boss dossier cache version is stale in guild.html');
     if(!contents.includes('quests-v2.js?v=37')||!contents.includes('thirteenth-bell-v1.js?v=7')||!contents.includes('no-way-back-v1.js?v=10'))throw new Error('Progressive quest combat cache versions are stale in guild.html');
     if(!contents.includes('no-way-back-v1.css?v=4')||!contents.includes('no-way-back-v1.js?v=10'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
-    if(!contents.includes('comic-scenes-v1.css?v=5')||!contents.includes('comic-scenes-v1.js?v=5')||!contents.includes('onboarding-v1.js?v=19'))throw new Error('Tutorial comic asset cache versions are stale in guild.html');
+    if(!contents.includes('comic-scenes-v1.css?v=5')||!contents.includes('comic-scenes-v1.js?v=5')||!contents.includes('onboarding-v1.js?v=20'))throw new Error('Tutorial comic asset cache versions are stale in guild.html');
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=52')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
     if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=7'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
@@ -391,6 +391,9 @@ for(const file of files){
     if(!contents.includes('admin-v1.css')||!contents.includes('admin-v1.js')||!contents.includes('id=\"adminNav\"'))throw new Error('Admin panel assets or navigation hook are not linked from guild.html');
     if(!contents.includes('release-v1.css')||!contents.includes('release-v1.js')||!contents.includes('CELLBOUND_BUILD'))throw new Error('Release gate assets or build hook are not linked from guild.html');
     if(!contents.includes('onboarding-v1.css')||!contents.includes('onboarding-v1.js'))throw new Error('Zeltira onboarding assets are not linked from guild.html');
+    const onboardingCss=fs.readFileSync(path.join(__dirname,'onboarding-v1.css'),'utf8');
+    const onboardingJs=fs.readFileSync(path.join(__dirname,'onboarding-v1.js'),'utf8');
+    if(!contents.includes('onboarding-v1.css?v=11')||!contents.includes('onboarding-v1.js?v=20')||!onboardingCss.includes('Party Builder Flow V2')||!onboardingCss.includes('grid-template-columns:48px minmax(0,1fr) auto')||!onboardingJs.includes("builderStep='race'")||!onboardingJs.includes('builder-step-nav')||!onboardingJs.includes('data-builder-next'))throw new Error('Party builder flow/clipping fix is missing');
     if(!contents.includes('quests-v1.css')||!contents.includes('quests-v2.css')||!contents.includes('quests-v2.js')||!contents.includes('id="quests"'))throw new Error('Quest Adventure assets or hooks are not linked from guild.html');
     if(!contents.includes('no-way-back-v1.css')||!contents.includes('no-way-back-v1.js'))throw new Error('No Way Back raid-attunement assets are not linked from guild.html');
     if(!contents.includes('hollow-sanctum-v1.css')||!contents.includes('hollow-sanctum-v1.js')||!contents.includes('id="hollowSanctumMount"'))throw new Error('Hollow Sanctum assets or hooks are not linked from guild.html');
