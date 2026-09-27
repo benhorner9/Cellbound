@@ -39,7 +39,7 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  });
  await page.addScriptTag({content:fs.readFileSync(path.join(root,'town-scene-v1.js'),'utf8')});
 
- assert.equal(await page.locator('[data-town-object]').count(),3,'Town exposes three real scene objects in the proof');
+ assert.equal(await page.locator('[data-town-object]').count(),9,'Town exposes nine physical world destinations');
  assert.equal(await page.locator('[data-town-selection]').isVisible(),false,'No location labels/panel shown by default');
 
  const press=async id=>page.locator('[data-town-object="'+id+'"]').evaluate(n=>n.dispatchEvent(new MouseEvent('click',{bubbles:true})));
@@ -72,11 +72,28 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  await press('cart');await page.waitForTimeout(260);
  assert.equal(await page.locator('#content').evaluate(n=>n.classList.contains('active')),true,'cart enters existing dungeon system');
 
+ const destinations=[
+   ['market','The Marketplace','trading'],
+   ['forge','Crafting Quarter','professions'],
+   ['vault','The Guild Vault','bank'],
+   ['arena','The Crucible','pvp'],
+   ['harbour','Greywake Harbour','raids'],
+   ['grounds','Festival Grounds','world']
+ ];
+ for(const [id,title,view] of destinations){
+   await page.evaluate(()=>window.CellboundGame.switchView('overview'));
+   await press(id);
+   assert.equal(await page.locator('[data-town-selection-title]').textContent(),title,id+' selects its physical location before travel');
+   assert.equal(await page.locator('#overview').evaluate(n=>n.classList.contains('active')),true,id+' first interaction stays in Town');
+   await press(id);await page.waitForTimeout(260);
+   assert.equal(await page.locator('#'+view).evaluate(n=>n.classList.contains('active')),true,id+' second interaction enters '+view);
+ }
+
  await page.evaluate(()=>window.CellboundGame.switchView('overview'));
  await page.setViewportSize({width:390,height:844});
  await page.screenshot({path:'/tmp/cellbound-town-scene-03-phone.png'});
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no phone horizontal overflow');
- for(const id of ['inn','board','cart']){
+ for(const id of ['inn','board','cart','market','forge','vault','arena','harbour','grounds']){
    const box=await page.locator('[data-town-object="'+id+'"]').boundingBox();
    assert(box&&box.width>=44&&box.height>=44,id+' remains a usable touch target');
  }
@@ -89,5 +106,5 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
 
  assert.deepEqual(errors,[]);
  await browser.close();
- console.log('Town scene: object-shaped selection, second-action entry, notice-board close-up, quest DOM restoration and responsive controls passed.');
+ console.log('Town scene: nine world-object destinations, select-then-enter travel, Notice Board close-up, quest DOM restoration and responsive controls passed.');
 })().catch(e=>{console.error(e);process.exit(1)});
