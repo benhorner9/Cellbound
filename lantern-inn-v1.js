@@ -76,10 +76,10 @@ function refresh(){
   lastKey=key;const focused=document.activeElement?.dataset?.innCharacter;
   world.querySelector('.inn-inhabitants').innerHTML=assign(roster,party).map(({c,slot,active})=>{
    const s=slots[slot],P=window.CellboundPortraits;
-   const painted=Boolean(P?.usesPaintedBody?.(c));
+   const illustrated=Boolean(P?.usesIllustratedBody?.(c));
    const body=P?.worldAvatarHTML?.(c,{size:'inn',label:c.name})||P?.paperDollHTML?.(c,{size:'inn',label:c.name})||P?.portraitHTML?.(c,{size:'hero'})||esc(c.name);
    const wideScale=perspectiveFor(s.wide[1]),phoneScale=perspectiveFor(s.phone[1]);
-   return '<button type="button" class="inn-adventurer '+(painted?'inn-painted-model ':'inn-vector-model ')+(active?'inn-traveller':'inn-resting')+'" data-char="'+esc(c.id)+'" data-inn-character="'+esc(c.id)+'" data-location-slot="'+slot+'" style="--slot-x:'+s.wide[0]+'%;--slot-y:'+s.wide[1]+'%;--phone-x:'+s.phone[0]+'%;--phone-y:'+s.phone[1]+'%;--inn-scale-wide:'+wideScale.toFixed(3)+';--inn-scale-phone:'+phoneScale.toFixed(3)+';--depth:'+Math.round(s.wide[1])+'" aria-label="'+esc(c.name+', '+c.class+', '+c.spec+', '+(active?'active party':'reserve')+(Number(c.cellShock)>=100?', recovering':''))+'"><span class="inn-figure">'+body+'</span><span class="inn-name">'+esc(c.name)+'</span></button>';
+   return '<button type="button" class="inn-adventurer '+(illustrated?'inn-illustrated-model ':'inn-fallback-model ')+(active?'inn-traveller':'inn-resting')+'" data-char="'+esc(c.id)+'" data-inn-character="'+esc(c.id)+'" data-location-slot="'+slot+'" style="--slot-x:'+s.wide[0]+'%;--slot-y:'+s.wide[1]+'%;--phone-x:'+s.phone[0]+'%;--phone-y:'+s.phone[1]+'%;--inn-scale-wide:'+wideScale.toFixed(3)+';--inn-scale-phone:'+phoneScale.toFixed(3)+';--depth:'+Math.round(s.wide[1])+'" aria-label="'+esc(c.name+', '+c.class+', '+c.spec+', '+(active?'active party':'reserve')+(Number(c.cellShock)>=100?', recovering':''))+'"><span class="inn-figure">'+body+'</span><span class="inn-name">'+esc(c.name)+'</span></button>';
   }).join('');
   if(focused)[...world.querySelectorAll('[data-inn-character]')].find(n=>n.dataset.innCharacter===focused)?.focus({preventScroll:true});
  }
