@@ -984,3 +984,163 @@ linear-gradient(180deg,#142019,#09110e)}
 .creator-hero-model .cb-creator-figure svg{display:block;width:100%;height:100%}
 @media(max-width:1120px){.creator-hero-model .cb-creator-figure{width:252px;height:375px}}
 @media(max-width:620px){.creator-hero-model .cb-creator-figure{width:225px;height:350px}}
+
+
+/* Character Creator iPad Readability Fix */
+.creator-race-card{
+  min-height:176px;
+  grid-template-rows:102px minmax(64px,auto);
+  padding:7px;
+}
+.creator-race-model{height:102px}
+.creator-race-model .cb-creator-figure{width:82px;height:112px}
+.creator-race-copy{
+  grid-template-columns:16px minmax(0,1fr);
+  column-gap:6px;
+  row-gap:2px;
+  padding:5px 4px 4px;
+  min-width:0;
+}
+.creator-race-copy>i{
+  grid-row:1/5;
+  align-self:start;
+  margin-top:2px;
+  font-size:.68rem;
+}
+.creator-race-copy b{
+  font-size:.68rem;
+  line-height:1.1;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.creator-race-copy small{
+  font-size:.48rem;
+  line-height:1.2;
+  white-space:normal;
+}
+.creator-race-copy em{
+  display:block;
+  margin-top:1px;
+  color:#999088;
+  font-size:.46rem;
+  line-height:1.28;
+  font-style:normal;
+  white-space:normal;
+  overflow:visible;
+  text-overflow:clip;
+  overflow-wrap:anywhere;
+}
+
+.creator-class-grid{
+  gap:6px;
+  align-items:stretch;
+}
+.creator-class-card{
+  height:auto;
+  min-height:154px;
+  padding:5px 4px 8px;
+  overflow:hidden;
+}
+.creator-class-model{height:84px}
+.creator-class-model .cb-creator-figure{
+  width:66px;
+  height:94px;
+  transform:translateY(2px);
+}
+.creator-class-copy{
+  display:flex;
+  min-height:52px;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  gap:2px;
+  padding:2px 2px 0;
+  text-align:center;
+}
+.creator-class-copy b{
+  width:100%;
+  overflow:visible;
+  color:#e7d9c6;
+  font:500 .60rem/1.12 Georgia,serif;
+  text-overflow:clip;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.creator-class-copy small{
+  display:block;
+  width:100%;
+  margin-top:0;
+  overflow:visible;
+  color:#9a8d80;
+  font-size:.43rem;
+  line-height:1.22;
+  text-overflow:clip;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.creator-class-card.locked{opacity:.48}
+
+.creator-appearance .cb-appearance-controls{
+  grid-template-columns:minmax(0,1fr)!important;
+  gap:7px!important;
+}
+.creator-appearance .cb-appearance-control{
+  grid-template-columns:minmax(92px,108px) minmax(0,1fr)!important;
+  gap:10px!important;
+  min-height:46px;
+  padding:6px 8px!important;
+}
+.creator-appearance .cb-appearance-control>span{
+  margin:0!important;
+  color:#c9b9a2!important;
+  font:600 .52rem/1.15 Georgia,serif!important;
+  letter-spacing:.04em!important;
+  text-transform:none!important;
+  white-space:normal;
+}
+.creator-appearance .cb-appearance-control>div{
+  grid-template-columns:34px minmax(44px,1fr) 34px!important;
+  gap:6px!important;
+}
+.creator-appearance .cb-appearance-control button{
+  width:34px!important;
+  height:34px!important;
+  min-width:34px!important;
+  font-size:1rem!important;
+}
+.creator-appearance .cb-appearance-control b{
+  min-height:34px!important;
+  padding:0 4px;
+  font-size:.48rem!important;
+  line-height:1.15!important;
+  white-space:normal!important;
+  overflow-wrap:anywhere;
+}
+.creator-panel-copy{
+  font-size:.46rem;
+  line-height:1.55;
+}
+.creator-v3-header p,.creator-stage-head p{
+  font-size:.46rem;
+  line-height:1.45;
+}
+.creator-name .creator-build-summary{font-size:.40rem}
+
+@media(min-width:841px) and (max-width:1180px){
+  .creator-v3-grid{
+    grid-template-columns:minmax(248px,270px) minmax(430px,1fr) minmax(310px,332px);
+  }
+  .creator-race-card{min-height:180px}
+  .creator-class-grid{grid-template-columns:repeat(7,minmax(72px,1fr))}
+  .creator-class-card{min-height:158px}
+  .creator-class-copy b{font-size:.58rem}
+  .creator-class-copy small{font-size:.41rem}
+}
+@media(max-width:840px){
+  .creator-race-copy em{font-size:.54rem}
+  .creator-race-copy small{font-size:.54rem}
+  .creator-class-copy b{font-size:.66rem}
+  .creator-class-copy small{font-size:.50rem}
+  .creator-appearance .cb-appearance-control>span{font-size:.60rem!important}
+  .creator-appearance .cb-appearance-control b{font-size:.54rem!important}
+}
