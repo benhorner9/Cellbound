@@ -266,18 +266,31 @@
 }
 .town-painted-location:hover .town-painted-hit,
 .town-painted-location:focus-visible .town-painted-hit{
-  fill:rgba(225,181,102,.075);
-  stroke:rgba(236,199,128,.42)
+  fill:transparent;
+  stroke:transparent
 }
 .town-painted-location:hover .town-painted-outline,
-.town-painted-location:focus-visible .town-painted-outline{opacity:.52}
+.town-painted-location:focus-visible .town-painted-outline{
+  opacity:.48;
+  stroke:#e8bd72;
+  stroke-width:2.1;
+  filter:
+    drop-shadow(0 0 2px rgba(243,205,132,.72))
+    drop-shadow(0 0 7px rgba(205,151,67,.42))
+}
 .town-painted-location.is-selected .town-painted-hit{
-  fill:rgba(224,177,90,.16);
-  stroke:rgba(244,205,130,.88);
-  filter:drop-shadow(0 0 9px rgba(225,177,88,.48))
+  fill:transparent;
+  stroke:transparent;
+  filter:none
 }
 .town-painted-location.is-selected .town-painted-outline{
-  opacity:1;stroke-width:3.5
+  opacity:1;
+  stroke:#f1c978;
+  stroke-width:2.7;
+  filter:
+    drop-shadow(0 0 2px rgba(255,226,156,.95))
+    drop-shadow(0 0 6px rgba(229,177,85,.82))
+    drop-shadow(0 0 13px rgba(188,126,42,.52))
 }
 .town-painted-location:focus-visible{outline:none}
 .town-painted-location:focus-visible .town-painted-outline{
