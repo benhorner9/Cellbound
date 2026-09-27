@@ -18,7 +18,7 @@ const slots={
 };
 // Perspective is derived from the floor anchor, not tuned per character.
 // This gives every race the same depth rules and prevents size drift.
-const perspectiveFor=y=>Math.max(.72,Math.min(.98,.50+(Number(y)||50)*.00625));
+const perspectiveFor=y=>Math.max(.82,Math.min(.96,.68+(Number(y)||50)*.0036));
 const activeSlots=['fireplace-right','main-table-right','main-table-left','bar-left','doorway'];
 const reserveSlots=['window','back-table','stairs','bar-right','fireplace-left'];
 let root,world,ledger,partyDialog,partyMarker,partyNode,returnFocus=null,characterFocus=null,lastKey='';
