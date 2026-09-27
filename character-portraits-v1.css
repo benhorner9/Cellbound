@@ -734,37 +734,14 @@
   transform-origin:50% 100%;
 }
 
-/* Opaque Veyren/Stoneborn source plates get a deterministic silhouette matte.
-   This removes the visible rectangular/environment plate everywhere the body
-   renderer is used while preserving the same source model identity. */
-.cb-painted-veyren-body>img{
-  clip-path:polygon(
-    38% 0%,62% 0%,68% 7%,79% 10%,88% 17%,91% 31%,
-    84% 42%,78% 42%,75% 55%,80% 68%,82% 97%,
-    58% 97%,54% 70%,50% 61%,46% 70%,42% 97%,
-    18% 97%,20% 68%,25% 55%,22% 42%,16% 42%,
-    9% 31%,12% 17%,21% 10%,32% 7%
-  );
-}
-.cb-painted-stoneborn-body>img{
-  clip-path:polygon(
-    36% 0%,64% 0%,70% 6%,84% 10%,94% 18%,96% 33%,
-    89% 44%,82% 45%,78% 58%,84% 72%,86% 97%,
-    59% 97%,55% 72%,50% 62%,45% 72%,41% 97%,
-    14% 97%,16% 72%,22% 58%,18% 45%,11% 44%,
-    4% 33%,6% 18%,16% 10%,30% 6%
-  );
-}
-/* Alpha-authored Aelari should never be clipped into the earlier silhouette. */
+/* Veyren and Stoneborn V2 bodies are opaque source paintings, so they are
+   never displayed as full-body image assets. Their Inn and Equipment views
+   use the transparent vector character renderer instead. Aelari is the first
+   painted body pack with real alpha and can render directly. */
 .cb-painted-aelari-body>img{clip-path:none}
 
-/* Context-specific fit. Keep feet on the same baseline in paper doll and Inn,
-   but let race proportions remain distinct rather than stretching them. */
-.cb-paper-doll-painted .cb-painted-veyren-body>img{transform:scale(.93)}
-.cb-paper-doll-painted .cb-painted-stoneborn-body>img{transform:scale(.96)}
+/* True-alpha painted body fit. Feet remain anchored to the game-owned stage. */
 .cb-paper-doll-painted .cb-painted-aelari-body>img{transform:scale(.95)}
-.cb-world-avatar-painted.cb-world-avatar--veyren>img{transform:scale(.96)}
-.cb-world-avatar-painted.cb-world-avatar--stoneborn>img{transform:scale(.98)}
 .cb-world-avatar-painted.cb-world-avatar--aelari>img{transform:scale(.97)}
 
 .inn-figure .cb-world-avatar-painted{
@@ -785,7 +762,5 @@
 @media(max-width:720px){
   .cb-appearance-editor-painted{grid-template-columns:1fr}
   .cb-painted-face-picker>div{grid-template-columns:repeat(4,minmax(48px,1fr))}
-  .cb-paper-doll-painted .cb-painted-veyren-body>img{transform:scale(.9)}
-  .cb-paper-doll-painted .cb-painted-stoneborn-body>img{transform:scale(.93)}
   .cb-paper-doll-painted .cb-painted-aelari-body>img{transform:scale(.92)}
 }
