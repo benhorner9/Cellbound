@@ -416,13 +416,20 @@
 .town-scene.is-opening-board .town-painted-image,
 .town-scene.is-opening-board .town-painted-hotspots,
 .town-scene.town-board-open .town-painted-image,
+.town-scene.town-board-open .town-painted-hotspots,
+.town-scene.is-returning-board .town-painted-image,
+.town-scene.is-returning-board .town-painted-hotspots{
+  transform-origin:50.8% 67.8%;
+  transform:translate(-.8%,-17.8%) scale(1.55)
+}
+.town-scene.is-opening-board .town-painted-image,
+.town-scene.is-opening-board .town-painted-hotspots,
+.town-scene.town-board-open .town-painted-image,
 .town-scene.town-board-open .town-painted-hotspots{
-  transform-origin:50.8% 63.5%;
-  transform:translateY(-8.5%) scale(1.37);
   transition:
-    transform .68s cubic-bezier(.16,.82,.2,1),
-    filter .5s ease,
-    opacity .28s ease
+    transform .76s cubic-bezier(.16,.82,.2,1),
+    filter .56s ease,
+    opacity .3s ease
 }
 .town-scene.is-opening-board .town-painted-image{
   filter:brightness(.88) saturate(.98)
@@ -440,10 +447,12 @@
   pointer-events:none;
   transition:opacity .18s ease!important
 }
-.town-scene.town-board-open .town-painted-image{
+.town-scene.town-board-open .town-painted-image,
+.town-scene.is-returning-board .town-painted-image{
   filter:brightness(.5) saturate(.82) blur(.3px)
 }
-.town-scene.town-board-open .town-painted-hotspots{
+.town-scene.town-board-open .town-painted-hotspots,
+.town-scene.is-returning-board .town-painted-hotspots{
   opacity:0;pointer-events:none
 }
 .town-scene.is-closing-board .town-board-backdrop,
@@ -454,12 +463,26 @@
   transform:translateY(10px) scale(.98)!important;
   filter:blur(.5px)
 }
+/* Hold the exact finished zoom while the popup is removed. A second class
+   added on the next animation frame starts the pull-back from this state. */
 .town-scene.is-returning-board .town-painted-image,
 .town-scene.is-returning-board .town-painted-hotspots{
+  transition:none
+}
+.town-scene.is-returning-board.is-returning-board-home .town-painted-image,
+.town-scene.is-returning-board.is-returning-board-home .town-painted-hotspots{
+  transform-origin:50.8% 67.8%;
+  transform:translate(0,0) scale(1);
   transition:
-    transform .54s cubic-bezier(.22,.72,.24,1),
-    filter .45s ease,
-    opacity .24s ease
+    transform .68s cubic-bezier(.22,.72,.24,1),
+    filter .58s ease,
+    opacity .3s ease
+}
+.town-scene.is-returning-board.is-returning-board-home .town-painted-image{
+  filter:none
+}
+.town-scene.is-returning-board.is-returning-board-home .town-painted-hotspots{
+  opacity:1
 }
 
 
@@ -476,6 +499,7 @@
   .town-scene.has-selection .town-selection-panel,.town-scene.has-available-quests .town-quest-marker{animation:none!important}
   .town-scene.is-entering-inn .town-painted-image,.town-scene.is-entering-inn .town-painted-hotspots,
   .town-scene.is-opening-board .town-painted-image,.town-scene.is-opening-board .town-painted-hotspots,
-  .town-scene.town-board-open .town-painted-image,.town-scene.town-board-open .town-painted-hotspots{transform:none!important}
+  .town-scene.town-board-open .town-painted-image,.town-scene.town-board-open .town-painted-hotspots,
+  .town-scene.is-returning-board .town-painted-image,.town-scene.is-returning-board .town-painted-hotspots{transform:none!important}
   .town-scene.is-entering-inn:after{opacity:0!important}
 }
