@@ -326,17 +326,23 @@ for(const file of files){
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=52')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
     if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=7'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
-    if(!contents.includes('character-art-v2.js?v=1')||!contents.includes('character-portraits-v1.css?v=8')||!contents.includes('character-portraits-v1.js?v=13'))throw new Error('Character portrait identity assets are not linked from guild.html');
+    if(!contents.includes('character-art-v2.js?v=1')||!contents.includes('character-portraits-v1.css?v=9')||!contents.includes('character-portraits-v1.js?v=14'))throw new Error('Character portrait identity assets are not linked from guild.html');
     const portraitCss=fs.readFileSync(path.join(__dirname,'character-portraits-v1.css'),'utf8');
     const portraitJs=fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8');
-    if(!portraitCss.includes('transparent cutout presentation')||!portraitCss.includes('.cb-painted-veyren-body>img')||!portraitCss.includes('.cb-painted-stoneborn-body>img')||!portraitCss.includes('.cb-painted-aelari-body>img'))throw new Error('Painted race transparent presentation rules are missing');
+    if(!portraitCss.includes('Full-body Standard V1')||!portraitCss.includes('transform:none!important')||!portraitCss.includes('overflow:visible!important'))throw new Error('Normalized painted full-body presentation rules are missing');
     if(portraitCss.includes('clip-path:polygon('))throw new Error('Opaque painted body polygon cutout workaround returned');
-    if(!portraitJs.includes("PAINTED_BODY_RACES=new Set(['Veyren','Stoneborn','Aelari'])")||!portraitJs.includes('painted&&PAINTED_BODY_RACES.has(painted)'))throw new Error('Painted full-body alpha support is incomplete');
-    if(portraitCss.includes('.cb-painted-paper-body{\n  display:block;\n  width:100%;\n  height:100%;\n  overflow:hidden;\n  border-radius:26px;\n  background:#090c0e'))throw new Error('Legacy painted body backdrop returned');
-    if(!portraitJs.includes('data-painted-body')||!portraitJs.includes('cb-painted-body-'))throw new Error('Painted body variant metadata is missing');
-    if(!portraitJs.includes("+'/'+file+'?v=3'"))throw new Error('Painted character binary asset cache version is stale');
+    if(!portraitJs.includes("PAINTED_BODY_RACES=new Set(['Veyren','Stoneborn','Aelari'])")||!portraitJs.includes('PAINTED_BODY_STANDARD=Object.freeze({width:512,height:896,footY:842,version:1})')||!portraitJs.includes('usesPaintedBody:usesPaintedBody'))throw new Error('Painted full-body standard contract is incomplete');
+    if(!portraitJs.includes('data-painted-body')||!portraitJs.includes('data-body-standard')||!portraitJs.includes('cb-painted-body-'))throw new Error('Painted body normalization metadata is missing');
+    if(!portraitJs.includes("+'/'+file+'?v=4'"))throw new Error('Painted character binary asset cache version is stale');
+    const bodyReport=JSON.parse(fs.readFileSync(path.join(__dirname,'assets-src/characters/v2/full-body-normalization.json'),'utf8'));
+    if(bodyReport.canvas?.[0]!==512||bodyReport.canvas?.[1]!==896||bodyReport.foot_y!==842)throw new Error('Painted full-body canvas standard is invalid');
+    for(const race of ['veyren','stoneborn','aelari'])for(const body of ['body-a.webp','body-b.webp']){
+      const row=bodyReport.races?.[race]?.[body];
+      if(!row||row.output_bbox?.[1]<38||row.output_bbox?.[3]>848||row.visible_height<730)throw new Error('Painted full-body safe-area validation failed: '+race+'/'+body);
+    }
     const innCss=fs.readFileSync(path.join(__dirname,'lantern-inn-v1.css'),'utf8');
-    if(!contents.includes('lantern-inn-v1.css?v=6')||!contents.includes('lantern-inn-v1.js?v=9')||!innCss.includes('.inn-adventurer:has(.cb-world-avatar-painted)')||!innCss.includes('height:clamp(116px,11.5vw,156px)!important')||!innCss.includes('scale:var(--inn-scale,1)'))throw new Error('Painted Inn perspective/scale rules are missing');
+    const innJs=fs.readFileSync(path.join(__dirname,'lantern-inn-v1.js'),'utf8');
+    if(!contents.includes('lantern-inn-v1.css?v=7')||!contents.includes('lantern-inn-v1.js?v=10')||!innCss.includes('.inn-painted-model .cb-world-avatar-painted')||!innCss.includes('scale:var(--inn-scale-wide,.82)')||!innCss.includes('scale:var(--inn-scale-phone,.82)')||innCss.includes(':has(.cb-world-avatar-painted)')||!innJs.includes('perspectiveFor=y=>')||!innJs.includes('inn-painted-model'))throw new Error('Canonical Inn actor staging rules are missing');
      if(!contents.includes('combat-portraits-v1.css?v=4')||!contents.includes('combat-portraits-v1.js?v=5'))throw new Error('Combat portrait assets are not linked from guild.html');
     if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=14')||!contents.includes('combat-reborn-v1.js?v=9')||!contents.includes('guild-v4.js?v=52')||!contents.includes('character-sheet.js?v=33')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=56')||!contents.includes('hollow-sanctum-v1.js?v=40')||!contents.includes('chaos-canyon-v1.js?v=15')||!contents.includes('blackout-station-v1.js?v=22')||!contents.includes('fractured-ages-v1.js?v=8'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
