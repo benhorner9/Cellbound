@@ -60,7 +60,7 @@ const sectorCopy={
 const objectCopy={
   inn:{
     title:'The Lantern Inn',
-    copy:'Your adventuring company rests here. Inspect characters, equipment and prepare the active party.',
+    copy:'Manage your adventurers, equipment and active party.',
     action:'Enter the Inn',
     status(){
       const roster=game()?.getState?.()?.roster||[];
@@ -70,8 +70,8 @@ const objectCopy={
   },
   board:{
     title:'Town Notice Board',
-    copy:'Letters, contracts and rumours from across Cellbound. Review the adventures currently available to your guild.',
-    action:'Look closer',
+    copy:'Read available quests, contracts and story leads.',
+    action:'Open Quests',
     status(){
       const count=String($('#questNavBadge')?.textContent||'').trim();
       return count?count+' lead'+(count==='1'?'':'s')+' waiting':'Review current and completed adventures';
@@ -79,20 +79,20 @@ const objectCopy={
   },
   merchantRoad:{
     title:'Merchant Quarter',
-    copy:'A busy lane of merchants, workshops and guarded storehouses.',
-    action:'Walk to the Merchant Quarter',
+    copy:'Trading, crafting and guild storage.',
+    action:'Enter Merchant Quarter',
     status(){return 'Marketplace · Crafting Quarter · Guild Vault'}
   },
   expeditionRoad:{
     title:'Expedition Ward',
-    copy:'The outer ward where parties prepare for dangerous journeys and organised combat.',
-    action:'Walk to the Expedition Ward',
+    copy:'Dungeons, the Crucible and expedition activities.',
+    action:'Enter Expedition Ward',
     status(){return 'Dungeons · The Crucible · Activities'}
   },
   harbourRoad:{
-    title:'Road to Greywake Harbour',
-    copy:'Follow the sloping road to the docks where raid parties gather beside the sea.',
-    action:'Walk to the Harbour',
+    title:'Greywake Harbour',
+    copy:'Raid staging and departures for The Manor.',
+    action:'Enter Greywake Harbour',
     status(){return String($('#homeRaidStatus')?.textContent||'').trim()||'The Manor · raid staging'}
   },
   market:{
