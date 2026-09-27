@@ -370,9 +370,34 @@ function enterInn(){
   },720);
 }
 
+function enterDistrictArch(id){
+  const next=sectorRoutes[id];
+  if(!next||entering)return;
+  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  if(reduced){setSector(next);return}
+
+  entering=true;
+  clearTimeout(sectorTimer);
+  root.dataset.townEntry=id;
+  root.classList.add('is-entering-district');
+
+  // Hold on the selected arch long enough for the camera move to read, then
+  // transition the district track only after the zoom has completed.
+  sectorTimer=setTimeout(()=>{
+    setSector(next,{focus:false});
+    sectorTimer=setTimeout(()=>{
+      root.classList.remove('is-entering-district');
+      delete root.dataset.townEntry;
+      entering=false;
+      root.querySelector('[data-town-sector="'+sector+'"] [data-town-object]')?.focus({preventScroll:true});
+    },560);
+  },680);
+}
+
 function enter(id){
   if(id==='board'){openBoard();return}
   if(id==='inn'){enterInn();return}
+  if(id==='merchantRoad'||id==='expeditionRoad'){enterDistrictArch(id);return}
   if(sectorRoutes[id]){setSector(sectorRoutes[id]);return}
   const view=viewRoutes[id];
   if(view)travel(view);

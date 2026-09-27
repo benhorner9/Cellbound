@@ -686,3 +686,53 @@
 .town-cartoon-stage .town-landmark.is-selected .town-landmark-art{
   filter:brightness(1.07) saturate(1.045) drop-shadow(0 15px 12px rgba(0,0,0,.28))
 }
+
+
+/* Town Square arch camera transitions v1
+   Confirming either main arch now moves the camera into that physical gateway
+   before the district track advances. */
+.town-scene.is-entering-district .town-cartoon-stage{
+  filter:brightness(.83) saturate(.98);
+  transition:
+    transform .68s cubic-bezier(.16,.82,.2,1),
+    filter .5s ease
+}
+.town-scene.is-entering-district[data-town-entry="expeditionRoad"] .town-cartoon-stage{
+  transform-origin:51% 36%;
+  transform:translate(-1%,14%) scale(2.18)
+}
+.town-scene.is-entering-district[data-town-entry="merchantRoad"] .town-cartoon-stage{
+  transform-origin:86% 46%;
+  transform:translate(-36%,4%) scale(2.18)
+}
+.town-scene.is-entering-district .town-painted-hotspots{
+  pointer-events:none
+}
+.town-scene.is-entering-district .town-selection-panel,
+.town-scene.is-entering-district .town-scene-hint,
+.town-scene.is-entering-district .town-quest-marker{
+  opacity:0!important;
+  pointer-events:none;
+  transition:opacity .16s ease!important
+}
+.town-scene.is-entering-district:after{
+  opacity:.28;
+  transition:opacity .18s ease .5s
+}
+@media(max-width:720px){
+  .town-scene.is-entering-district[data-town-entry="expeditionRoad"] .town-cartoon-stage{
+    transform-origin:51% 37%;
+    transform:translate(-1%,13%) scale(2.08)
+  }
+  .town-scene.is-entering-district[data-town-entry="merchantRoad"] .town-cartoon-stage{
+    transform-origin:85% 47%;
+    transform:translate(-35%,3%) scale(2.08)
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .town-scene.is-entering-district .town-cartoon-stage{
+    transform:none!important;
+    filter:none!important
+  }
+  .town-scene.is-entering-district:after{opacity:0!important}
+}
