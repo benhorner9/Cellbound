@@ -13,16 +13,16 @@ const slots={
   wide:[22.5,55],phone:[22,57],scale:.94,phoneScale:.90,depth:54,zone:'floor'
  },
  'hearth-right':{
-  wide:[39,56],phone:[39,59],scale:.96,phoneScale:.92,depth:56,zone:'floor'
+  wide:[34.5,56],phone:[35,59],scale:.96,phoneScale:.92,depth:56,zone:'floor'
  },
  'bar-guest':{
-  wide:[82,61],phone:[79,61],scale:.98,phoneScale:.94,depth:62,zone:'floor'
+  wide:[88,63],phone:[86,62],scale:.99,phoneScale:.94,depth:63,zone:'floor'
  },
  'table-left':{
-  wide:[39,74],phone:[38,74],scale:1.02,phoneScale:.97,depth:72,zone:'behind-table'
+  wide:[47.5,74],phone:[46,74],scale:1.02,phoneScale:.97,depth:72,zone:'behind-table'
  },
  'table-right':{
-  wide:[63,74],phone:[62,74],scale:1.02,phoneScale:.97,depth:72,zone:'behind-table'
+  wide:[65.5,74],phone:[65,74],scale:1.02,phoneScale:.97,depth:72,zone:'behind-table'
  },
  'window-left':{
   wide:[51,46],phone:[48,39],scale:.82,phoneScale:.78,depth:42,zone:'background'
@@ -36,13 +36,13 @@ const slots={
  stairs:{
   wide:[67,54],phone:[68,54],scale:.93,phoneScale:.83,depth:50,zone:'midground'
  },
- 'hearth-left':{
-  wide:[27,54],phone:[30,43],scale:.93,phoneScale:.79,depth:53,zone:'floor'
+ balcony:{
+  wide:[86,34],phone:[85,35],scale:.72,phoneScale:.70,depth:45,zone:'behind-bar'
  }
 };
 const perspectiveFor=y=>Math.max(.82,Math.min(1.02,.70+(Number(y)||50)*.0042));
 const activeSlots=['door-side','hearth-right','bar-guest','table-left','table-right'];
-const reserveSlots=['window-left','window-right','bar-behind','stairs','hearth-left'];
+const reserveSlots=['window-left','window-right','bar-behind','stairs','balcony'];
 let root,world,ledger,partyDialog,partyMarker,partyNode,selectionPanel,selectionTitle,selectionCopy,selectionStatus,selectionAction,returnFocus=null,characterFocus=null,lastKey='',selectedObject='',exitTimer=0;
 const objectCopy={
  party:{
