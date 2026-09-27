@@ -59,7 +59,7 @@
   <link rel="stylesheet" href="./living-world-v1.css?v=3">
 <link rel="stylesheet" href="./lantern-inn-v1.css?v=19">
 <link rel="stylesheet" href="./inn-art-direction-v1.css?v=1">
-  <link rel="stylesheet" href="./town-scene-v1.css?v=22">
+  <link rel="stylesheet" href="./town-scene-v1.css?v=23">
   <link rel="stylesheet" href="./world-venues-v1.css?v=3">
   <link rel="stylesheet" href="./layout-safety-v1.css?v=1">
 </head>
@@ -120,7 +120,7 @@
           <div class="town-sector-viewport">
             <div class="town-sector-track" data-town-sector-track>
 
-              <!-- CENTRAL SQUARE · SEPARATE CARTOON ASSETS -->
+              <!-- CENTRAL SQUARE · CARTOON PLAZA COMPOSITION -->
               <section class="town-sector town-painted-square" data-town-sector="square" aria-label="Central Square">
                 <div class="town-layered-stage town-cartoon-stage" data-town-layered-stage>
                   <img class="town-painted-image town-layered-base" src="./assets/world/town/town-square-background-v1.webp?v=1" alt="" aria-hidden="true" draggable="false">
@@ -146,33 +146,34 @@
                     <span class="town-quest-marker" data-town-quest-marker>!</span>
                   </div>
 
-                  <div class="town-landmark town-landmark-direction-flag" data-town-layer="harbourRoad" aria-hidden="true">
-                    <img class="town-landmark-glow" src="./assets/world/town/town-square-direction-flag-v1.webp?v=1" alt="" draggable="false">
-                    <img class="town-landmark-art" src="./assets/world/town/town-square-direction-flag-v1.webp?v=1" alt="" draggable="false">
-                  </div>
-
                   <div class="town-landmark town-landmark-direction-board" data-town-layer="harbourRoad" aria-hidden="true">
                     <img class="town-landmark-glow" src="./assets/world/town/town-square-direction-board-v1.webp?v=1" alt="" draggable="false">
                     <img class="town-landmark-art" src="./assets/world/town/town-square-direction-board-v1.webp?v=1" alt="" draggable="false">
                   </div>
 
-                  <svg class="town-painted-hotspots" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid slice" aria-label="Interactive locations in Central Square">
-                    <g class="town-location town-painted-location" data-town-object="inn" role="button" tabindex="0" aria-pressed="false" aria-label="The Lantern Inn">
-                      <path class="town-painted-hit town-object-shape" d="M0 780 L0 120 L390 70 L460 640 L430 780 Z"/>
-                    </g>
-                    <g class="town-location town-painted-location" data-town-object="expeditionRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Gateway to the Expedition Ward">
-                      <path class="town-painted-hit town-object-shape" d="M425 660 L425 95 L795 95 L810 660 Z"/>
-                    </g>
-                    <g class="town-location town-painted-location" data-town-object="merchantRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Gateway to the Merchant Quarter">
-                      <path class="town-painted-hit town-object-shape" d="M855 740 L855 205 L1200 205 L1200 740 Z"/>
-                    </g>
-                    <g class="town-location town-painted-location" data-town-object="board" role="button" tabindex="0" aria-pressed="false" aria-label="Town Notice Board">
-                      <path class="town-painted-hit town-object-shape" d="M450 445 L765 445 L765 845 L450 845 Z"/>
-                    </g>
-                    <g class="town-location town-painted-location" data-town-object="harbourRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Harbour route to Greywake">
-                      <path class="town-painted-hit town-object-shape" d="M770 550 L1010 550 L1010 900 L760 900 Z"/>
-                    </g>
-                  </svg>
+                  <div class="town-square-party" data-town-square-party aria-hidden="true"></div>
+
+                  <div class="town-square-ambience" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span><span></span>
+                  </div>
+
+                  <div class="town-square-hotspots" aria-label="Interactive locations in Central Square">
+                    <button type="button" class="town-location town-square-hotspot town-square-hotspot-expedition" data-town-object="expeditionRoad" data-town-walkway="expedition" aria-pressed="false" aria-label="Expedition Ward">
+                      <span class="town-square-label"><b>Expedition Ward</b></span>
+                    </button>
+                    <button type="button" class="town-location town-square-hotspot town-square-hotspot-inn" data-town-object="inn" aria-pressed="false" aria-label="The Lantern Inn">
+                      <span class="town-square-label"><b>Inn</b></span>
+                    </button>
+                    <button type="button" class="town-location town-square-hotspot town-square-hotspot-merchant" data-town-object="merchantRoad" data-town-walkway="merchant" aria-pressed="false" aria-label="Merchant Quarter">
+                      <span class="town-square-label"><b>Merchant Quarter</b></span>
+                    </button>
+                    <button type="button" class="town-location town-square-hotspot town-square-hotspot-board" data-town-object="board" aria-pressed="false" aria-label="Town Notice Board and Quests">
+                      <span class="town-square-label"><b>Quests</b></span>
+                    </button>
+                    <button type="button" class="town-location town-square-hotspot town-square-hotspot-harbour" data-town-object="harbourRoad" aria-pressed="false" aria-label="Road to Greywake Harbour">
+                      <span class="town-square-label"><b>Harbour</b></span>
+                    </button>
+                  </div>
                 </div>
               </section>
 
@@ -785,7 +786,7 @@
 <script src="./release-v1.js?v=3"></script>
 <script src="./living-world-v1.js?v=4"></script>
 <script src="./lantern-inn-v1.js?v=19"></script>
-<script src="./town-scene-v1.js?v=12"></script>
+<script src="./town-scene-v1.js?v=13"></script>
 <script src="./world-venues-v1.js?v=2"></script>
 </body>
 </html>
