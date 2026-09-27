@@ -59,7 +59,7 @@
   <link rel="stylesheet" href="./living-world-v1.css?v=3">
 <link rel="stylesheet" href="./lantern-inn-v1.css?v=3">
 <link rel="stylesheet" href="./inn-art-direction-v1.css?v=1">
-  <link rel="stylesheet" href="./town-scene-v1.css?v=2">
+  <link rel="stylesheet" href="./town-scene-v1.css?v=3">
   <link rel="stylesheet" href="./layout-safety-v1.css?v=1">
 </head>
 <body>
@@ -115,184 +115,218 @@
 
     <section id="overview" class="view active town-scene-view">
       <div class="town-scene-shell">
-        <section class="town-scene" data-town-scene aria-label="Cellbound Town">
-          <svg class="town-scene-art" viewBox="0 0 1200 760" role="img" aria-labelledby="townSceneTitle townSceneDesc" preserveAspectRatio="xMidYMid slice">
-            <title id="townSceneTitle">The Cellbound guild town</title>
-            <desc id="townSceneDesc">A dark illustrated fantasy guild town. The Inn, notice board, expedition cart, Marketplace, Crafting Quarter, Crucible, Guild Vault, raid boat and Festival Grounds are visible parts of the scene and are interactive.</desc>
-            <defs>
-              <linearGradient id="townSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#14242a"/><stop offset=".56" stop-color="#263239"/><stop offset="1" stop-color="#171a19"/></linearGradient>
-              <linearGradient id="townRoad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4b443a"/><stop offset=".45" stop-color="#38342e"/><stop offset="1" stop-color="#201f1d"/></linearGradient>
-              <linearGradient id="innWall" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5a4b3b"/><stop offset=".55" stop-color="#3b342c"/><stop offset="1" stop-color="#292825"/></linearGradient>
-              <linearGradient id="roof" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#272727"/><stop offset=".45" stop-color="#171b1c"/><stop offset="1" stop-color="#101415"/></linearGradient>
-              <linearGradient id="wood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#745036"/><stop offset=".55" stop-color="#4d3425"/><stop offset="1" stop-color="#2b211a"/></linearGradient>
-              <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e2cda5"/><stop offset="1" stop-color="#bda477"/></linearGradient>
-              <radialGradient id="lanternGlow"><stop offset="0" stop-color="#f4ba62" stop-opacity=".92"/><stop offset=".35" stop-color="#dd8b38" stop-opacity=".42"/><stop offset="1" stop-color="#cf6b23" stop-opacity="0"/></radialGradient>
-              <filter id="townInk" x="-20%" y="-20%" width="140%" height="140%">
-                <feTurbulence type="fractalNoise" baseFrequency=".012" numOctaves="2" seed="17" result="noise"/>
-                <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.1" xChannelSelector="R" yChannelSelector="G"/>
-              </filter>
-              <filter id="townPaper" x="-15%" y="-15%" width="130%" height="130%">
-                <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="8" result="noise"/>
-                <feBlend in="SourceGraphic" in2="noise" mode="soft-light"/>
-              </filter>
-            </defs>
+        <section class="town-scene" data-town-scene data-town-sector="square" aria-label="Cellbound Town">
+          <div class="town-sector-viewport">
+            <div class="town-sector-track" data-town-sector-track>
 
-            <rect width="1200" height="760" fill="url(#townSky)"/>
-            <circle cx="920" cy="108" r="54" fill="#c8c5ab" opacity=".18"/>
-            <path d="M0 280 L96 225 L153 247 L232 188 L303 226 L380 170 L454 220 L540 173 L615 235 L690 184 L777 235 L848 174 L950 225 L1040 186 L1124 235 L1200 196 L1200 410 L0 410Z" fill="#11191c" opacity=".82"/>
-            <path d="M0 338 L104 288 L169 313 L255 258 L331 307 L426 246 L505 300 L610 255 L702 304 L802 246 L902 300 L1010 259 L1094 302 L1200 246 L1200 448 L0 448Z" fill="#1b2222" opacity=".92"/>
-            <path d="M0 495 C220 445 354 452 520 477 C688 501 850 468 1200 448 L1200 760 L0 760Z" fill="url(#townRoad)"/>
-            <path d="M480 760 C530 628 547 542 591 478 C631 420 675 400 730 377" fill="none" stroke="#8f816d" stroke-width="80" opacity=".18"/>
-            <path d="M478 760 C531 627 551 540 595 476 C635 418 679 398 735 375" fill="none" stroke="#211f1b" stroke-width="6" opacity=".65"/>
+              <!-- CENTRAL SQUARE -->
+              <section class="town-sector" data-town-sector="square" aria-label="Central Square">
+                <svg class="town-sector-art" viewBox="0 0 1200 760" role="img" aria-label="Central Square with the Lantern Inn, Notice Board and roads to the other districts" preserveAspectRatio="xMidYMid slice">
+                  <defs>
+                    <linearGradient id="sqSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16242a"/><stop offset=".62" stop-color="#31353a"/><stop offset="1" stop-color="#1a1c1b"/></linearGradient>
+                    <linearGradient id="sqRoad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#554b3e"/><stop offset="1" stop-color="#272522"/></linearGradient>
+                    <radialGradient id="sqGlow"><stop offset="0" stop-color="#f0aa51" stop-opacity=".86"/><stop offset=".5" stop-color="#d67a31" stop-opacity=".28"/><stop offset="1" stop-color="#bd6422" stop-opacity="0"/></radialGradient>
+                  </defs>
+                  <rect width="1200" height="760" fill="url(#sqSky)"/>
+                  <circle cx="955" cy="112" r="60" fill="#ddd7b9" opacity=".14"/>
+                  <path d="M0 356 L85 302 L158 328 L242 264 L330 316 L430 238 L523 306 L620 224 L721 303 L818 245 L915 312 L1028 257 L1120 311 L1200 274 L1200 475 L0 475Z" fill="#131a1c" opacity=".94"/>
+                  <path d="M0 504 C248 454 422 462 591 495 C777 532 984 474 1200 452 L1200 760 L0 760Z" fill="url(#sqRoad)"/>
+                  <path d="M568 760 C585 648 608 548 633 476 C659 401 690 351 724 309" fill="none" stroke="#978773" stroke-width="106" opacity=".15"/>
+                  <path d="M876 760 C876 663 893 583 929 516 C963 453 1008 412 1071 374" fill="none" stroke="#7b7468" stroke-width="77" opacity=".13"/>
 
-            <g filter="url(#townInk)" opacity=".94">
-              <path d="M458 392 L458 278 L516 248 L567 280 L567 418Z" fill="#35342f" stroke="#0b0e0e" stroke-width="5"/>
-              <path d="M443 288 L515 221 L582 288Z" fill="#191e1f" stroke="#0b0e0e" stroke-width="6"/>
-              <rect x="492" y="327" width="24" height="42" fill="#bd7b39" opacity=".4"/>
-              <path d="M680 414 L680 284 L742 250 L800 286 L800 425Z" fill="#393630" stroke="#0b0e0e" stroke-width="5"/>
-              <path d="M665 294 L742 222 L816 294Z" fill="#171b1c" stroke="#0b0e0e" stroke-width="6"/>
-              <rect x="711" y="334" width="25" height="41" fill="#d18438" opacity=".37"/>
-              <path d="M1015 410 L1015 294 L1084 264 L1158 302 L1158 438Z" fill="#35332e" stroke="#0b0e0e" stroke-width="5"/>
-              <path d="M995 305 L1085 230 L1175 311Z" fill="#181c1d" stroke="#0b0e0e" stroke-width="6"/>
-              <path d="M864 376 L887 302 L930 294 L948 372Z" fill="#2f302d" stroke="#0b0e0e" stroke-width="5"/>
-              <path d="M908 300 L910 214" stroke="#161a1b" stroke-width="17"/>
-              <path d="M910 214 L945 228 L911 244Z" fill="#6b3d35"/>
-            </g>
+                  <g class="town-location" data-town-object="inn" role="button" tabindex="0" aria-pressed="false" aria-label="The Lantern Inn">
+                    <path class="town-object-shape" d="M54 644 L69 348 L150 313 L172 213 L347 207 L430 324 L454 361 L448 650Z" fill="#493d31" stroke="#090c0d" stroke-width="8"/>
+                    <path class="town-object-shape" d="M105 335 L171 196 L350 190 L443 339 L360 313 L301 244 L174 253Z" fill="#171c1d" stroke="#080a0b" stroke-width="9"/>
+                    <path d="M150 314 L150 614 M352 309 L352 627 M87 405 L424 389 M84 492 L432 476" stroke="#211e1a" stroke-width="11" opacity=".82"/>
+                    <rect class="town-object-shape" x="113" y="416" width="76" height="85" fill="#202a29" stroke="#090c0d" stroke-width="5"/>
+                    <rect x="128" y="430" width="20" height="56" fill="#e09a43" opacity=".57"/><rect x="155" y="430" width="20" height="56" fill="#d78239" opacity=".48"/>
+                    <rect class="town-object-shape" x="293" y="414" width="76" height="85" fill="#202929" stroke="#090c0d" stroke-width="5"/>
+                    <rect x="308" y="429" width="20" height="56" fill="#e3a049" opacity=".57"/><rect x="335" y="429" width="20" height="56" fill="#d9843a" opacity=".48"/>
+                    <path class="town-object-shape" d="M213 643 L214 491 Q253 451 292 491 L294 644Z" fill="#211914" stroke="#080a0b" stroke-width="7"/>
+                    <ellipse cx="389" cy="387" rx="82" ry="72" fill="url(#sqGlow)" opacity=".44"/>
+                    <circle cx="389" cy="380" r="14" fill="#e2a24e" stroke="#2b1c10" stroke-width="4"/>
+                    <path class="town-object-outline" d="M54 644 L69 348 L150 313 L172 213 L347 207 L430 324 L454 361 L448 650Z"/>
+                  </g>
 
-            <!-- MARKETPLACE: merchant awnings and counters are the destination itself. -->
-            <g class="town-location town-location-market" data-town-object="market" role="button" tabindex="0" aria-pressed="false" aria-label="The Marketplace" filter="url(#townInk)">
-              <path class="town-object-shape" d="M433 411 L440 303 L578 297 L584 416Z" fill="#4d4134" stroke="#0a0d0e" stroke-width="6"/>
-              <path class="town-object-shape" d="M420 315 L455 267 L565 264 L596 311Z" fill="#273331" stroke="#0a0d0e" stroke-width="6"/>
-              <path class="town-object-shape" d="M424 315 L592 311 L578 342 L436 345Z" fill="#8c6542" stroke="#1a1512" stroke-width="4"/>
-              <path d="M447 315 L455 342 M478 312 L484 340 M510 310 L514 338 M542 309 L546 337 M572 307 L576 334" stroke="#c69b64" stroke-width="8" opacity=".65"/>
-              <path class="town-object-shape" d="M447 380 L569 377 L580 405 L438 409Z" fill="#6b4d31" stroke="#17120f" stroke-width="5"/>
-              <rect class="town-object-shape" x="458" y="346" width="30" height="28" fill="#9b774e" stroke="#241a12" stroke-width="3"/>
-              <rect class="town-object-shape" x="500" y="343" width="36" height="31" fill="#765437" stroke="#241a12" stroke-width="3"/>
-              <circle cx="553" cy="360" r="12" fill="#8e6b43" stroke="#241a12" stroke-width="3"/>
-              <path class="town-object-outline" d="M420 315 L455 267 L565 264 L596 311 L584 416 L433 411Z"/>
-            </g>
+                  <g class="town-location" data-town-object="board" role="button" tabindex="0" aria-pressed="false" aria-label="Town Notice Board">
+                    <path class="town-object-shape" d="M508 694 L523 472 L548 471 L557 694Z" fill="#352318" stroke="#090c0d" stroke-width="6"/>
+                    <path class="town-object-shape" d="M666 694 L675 470 L700 471 L714 694Z" fill="#352318" stroke="#090c0d" stroke-width="6"/>
+                    <path class="town-object-shape" d="M482 455 L716 446 L722 589 L475 601Z" fill="#65462f" stroke="#090c0d" stroke-width="8"/>
+                    <path class="town-object-shape" d="M499 470 L701 462 L705 573 L490 584Z" fill="#7d6044" stroke="#291b12" stroke-width="5"/>
+                    <path d="M520 488 L578 482 L582 536 L524 542Z M593 476 L656 478 L652 533 L590 531Z M664 486 L693 483 L695 546 L663 549Z M539 544 L608 539 L612 568 L541 574Z" fill="#d5bf91" stroke="#5a402b" stroke-width="2"/>
+                    <circle cx="550" cy="488" r="5" fill="#5a3122"/><circle cx="624" cy="479" r="5" fill="#5a3122"/><circle cx="679" cy="487" r="5" fill="#5a3122"/>
+                    <path class="town-object-outline" d="M482 455 L716 446 L722 589 L700 594 L714 694 L666 694 L675 594 L557 600 L557 694 L508 694 L523 602 L475 601Z"/>
+                  </g>
 
-            <!-- FESTIVAL GROUNDS: banner pavilion for side activities and events. -->
-            <g class="town-location town-location-grounds" data-town-object="grounds" role="button" tabindex="0" aria-pressed="false" aria-label="Festival Grounds" filter="url(#townInk)">
-              <path class="town-object-shape" d="M574 408 L578 303 L660 302 L670 411Z" fill="#41382e" stroke="#0a0d0e" stroke-width="6"/>
-              <path class="town-object-shape" d="M545 310 L619 247 L697 309Z" fill="#493838" stroke="#0a0d0e" stroke-width="6"/>
-              <path d="M619 247 L619 205" stroke="#171b1b" stroke-width="8"/>
-              <path class="town-object-shape" d="M621 207 L669 222 L621 240Z" fill="#7b493e" stroke="#171313" stroke-width="3"/>
-              <path d="M588 327 L650 326 M586 354 L654 353" stroke="#a58a5e" stroke-width="4" opacity=".55"/>
-              <circle cx="619" cy="377" r="20" fill="#6d5238" stroke="#1b1511" stroke-width="4"/>
-              <path d="M608 377 L630 377 M619 366 L619 388" stroke="#d0aa68" stroke-width="3"/>
-              <path class="town-object-outline" d="M545 310 L619 247 L697 309 L670 411 L574 408Z"/>
-            </g>
+                  <g class="town-location" data-town-object="expeditionRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Road to the Expedition Ward">
+                    <path class="town-object-shape" d="M540 385 L548 231 Q636 141 728 232 L737 386Z" fill="#3f403c" stroke="#090c0d" stroke-width="8"/>
+                    <path class="town-object-shape" d="M579 384 L583 281 Q638 220 696 281 L700 384Z" fill="#151a1b" stroke="#090c0d" stroke-width="6"/>
+                    <path d="M560 254 L719 254 M555 282 L724 282" stroke="#85775e" stroke-width="7" opacity=".6"/>
+                    <path d="M568 239 L546 194 L584 211 M710 239 L732 194 L696 211" fill="#744139" stroke="#211414" stroke-width="3"/>
+                    <path class="town-object-outline" d="M540 385 L548 231 Q636 141 728 232 L737 386Z"/>
+                  </g>
 
-            <!-- CRAFTING QUARTER: chimney, forge mouth and workshop frontage. -->
-            <g class="town-location town-location-forge" data-town-object="forge" role="button" tabindex="0" aria-pressed="false" aria-label="Crafting Quarter" filter="url(#townInk)">
-              <path class="town-object-shape" d="M676 421 L681 292 L791 288 L798 425Z" fill="#41413c" stroke="#090d0e" stroke-width="6"/>
-              <path class="town-object-shape" d="M664 301 L702 255 L774 253 L807 297Z" fill="#222829" stroke="#090d0e" stroke-width="6"/>
-              <path class="town-object-shape" d="M733 258 L741 202 L770 201 L773 258Z" fill="#292d2c" stroke="#090d0e" stroke-width="5"/>
-              <path d="M746 199 Q754 175 765 193 Q774 171 783 193" fill="none" stroke="#69716e" stroke-width="7" opacity=".6"/>
-              <path class="town-object-shape" d="M695 419 L696 349 Q724 321 750 349 L751 420Z" fill="#1a1714" stroke="#090b0c" stroke-width="5"/>
-              <ellipse cx="723" cy="376" rx="40" ry="48" fill="url(#lanternGlow)" opacity=".42"/>
-              <path d="M705 381 Q723 353 742 381 Q723 397 705 381Z" fill="#e48b3f"/>
-              <path class="town-object-shape" d="M755 352 L786 342 L796 365 L763 374Z" fill="#65503c" stroke="#171310" stroke-width="3"/>
-              <path class="town-object-outline" d="M664 301 L702 255 L733 255 L741 202 L770 201 L773 254 L774 253 L807 297 L798 425 L676 421Z"/>
-            </g>
+                  <g class="town-location" data-town-object="merchantRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Road to the Merchant Quarter">
+                    <path class="town-object-shape" d="M920 598 L930 316 L1147 309 L1160 604Z" fill="#444038" stroke="#090c0d" stroke-width="8"/>
+                    <path class="town-object-shape" d="M904 325 L967 267 L1115 263 L1171 319Z" fill="#1c2222" stroke="#090c0d" stroke-width="8"/>
+                    <path class="town-object-shape" d="M963 594 L965 391 Q1039 333 1110 392 L1113 598Z" fill="#191c1b" stroke="#080b0c" stroke-width="7"/>
+                    <path d="M937 351 L1148 347 M938 374 L1149 370" stroke="#7d6e58" stroke-width="6" opacity=".55"/>
+                    <path d="M980 421 L1099 421 M980 456 L1099 456" stroke="#6f5e4b" stroke-width="5"/>
+                    <path class="town-object-outline" d="M904 325 L967 267 L1115 263 L1171 319 L1160 604 L920 598Z"/>
+                  </g>
 
-            <!-- THE CRUCIBLE: a stone colosseum gate represents all PvP. -->
-            <g class="town-location town-location-arena" data-town-object="arena" role="button" tabindex="0" aria-pressed="false" aria-label="The Crucible Colosseum" filter="url(#townInk)">
-              <path class="town-object-shape" d="M815 401 L819 247 Q886 190 958 248 L963 402Z" fill="#4b4a43" stroke="#090d0e" stroke-width="7"/>
-              <path class="town-object-shape" d="M834 245 Q889 167 945 246" fill="none" stroke="#5e5c53" stroke-width="31"/>
-              <path class="town-object-shape" d="M851 399 L852 306 Q888 265 924 306 L927 399Z" fill="#171a1a" stroke="#0a0c0d" stroke-width="6"/>
-              <path d="M835 270 L948 270 M830 293 L953 293" stroke="#8a8068" stroke-width="6" opacity=".52"/>
-              <path d="M840 255 L829 209 L856 221 M938 255 L951 209 L924 222" fill="#7f433a" stroke="#211413" stroke-width="3"/>
-              <path d="M869 329 L907 329 M888 310 L888 352" stroke="#9c7950" stroke-width="5" opacity=".8"/>
-              <path class="town-object-outline" d="M815 401 L819 247 Q886 190 958 248 L963 402Z"/>
-            </g>
+                  <g class="town-location" data-town-object="harbourRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Road to Greywake Harbour">
+                    <path class="town-object-shape" d="M747 722 L760 606 L884 588 L911 720Z" fill="#293234" stroke="#090c0d" stroke-width="7"/>
+                    <path d="M772 614 L870 599 M768 639 L878 624 M763 665 L885 648 M758 692 L894 675" stroke="#81715c" stroke-width="9"/>
+                    <path class="town-object-shape" d="M824 606 L833 542" stroke="#493729" stroke-width="9"/>
+                    <path class="town-object-shape" d="M834 547 L892 561 L836 580Z" fill="#6b4140" stroke="#1e1515" stroke-width="3"/>
+                    <path class="town-object-outline" d="M747 722 L760 606 L824 596 L833 542 L892 561 L836 580 L884 588 L911 720Z"/>
+                  </g>
 
-            <!-- GUILD VAULT: fortified stone storehouse and barred door. -->
-            <g class="town-location town-location-vault" data-town-object="vault" role="button" tabindex="0" aria-pressed="false" aria-label="The Guild Vault" filter="url(#townInk)">
-              <path class="town-object-shape" d="M989 434 L996 300 L1168 294 L1177 439Z" fill="#45443e" stroke="#090d0e" stroke-width="7"/>
-              <path class="town-object-shape" d="M979 309 L1034 257 L1131 254 L1184 305Z" fill="#24292a" stroke="#090d0e" stroke-width="7"/>
-              <path class="town-object-shape" d="M1035 435 L1037 337 Q1084 296 1130 337 L1132 437Z" fill="#1a1d1d" stroke="#090c0d" stroke-width="6"/>
-              <path d="M1054 343 L1056 426 M1077 326 L1078 429 M1100 326 L1101 430 M1123 344 L1124 428 M1043 371 L1129 371 M1041 402 L1130 402" stroke="#8b7652" stroke-width="5"/>
-              <circle cx="1085" cy="382" r="11" fill="#b18c55" stroke="#271e14" stroke-width="4"/>
-              <path class="town-object-outline" d="M979 309 L1034 257 L1131 254 L1184 305 L1177 439 L989 434Z"/>
-            </g>
+                  <path d="M0 681 Q92 628 171 670 T326 702 L302 760 L0 760Z" fill="#0d1110" pointer-events="none"/>
+                </svg>
+              </section>
 
-            <g class="town-location town-location-inn" data-town-object="inn" role="button" tabindex="0" aria-pressed="false" aria-label="The Lantern Inn" filter="url(#townInk)">
-              <path class="town-object-shape" d="M62 590 L73 363 L141 332 L157 247 L342 238 L407 327 L451 359 L447 596Z" fill="url(#innWall)" stroke="#0b0d0e" stroke-width="7"/>
-              <path class="town-object-shape" d="M112 338 L163 229 L343 220 L435 342 L355 322 L295 268 L163 276Z" fill="url(#roof)" stroke="#080a0b" stroke-width="8"/>
-              <path class="town-object-shape" d="M102 370 L394 350 M118 431 L413 416 M108 493 L423 480" stroke="#1f2020" stroke-width="8" opacity=".64"/>
-              <path class="town-object-shape" d="M170 276 L170 565 M338 270 L338 585" stroke="#171817" stroke-width="12" opacity=".9"/>
-              <rect class="town-object-shape" x="116" y="393" width="70" height="72" rx="2" fill="#242d2c" stroke="#0b0e0e" stroke-width="5"/>
-              <rect x="128" y="405" width="20" height="48" fill="#e1a24b" opacity=".55"/><rect x="154" y="405" width="20" height="48" fill="#d98c3d" opacity=".46"/>
-              <rect class="town-object-shape" x="286" y="394" width="67" height="70" rx="2" fill="#252e2e" stroke="#0b0e0e" stroke-width="5"/>
-              <rect x="297" y="405" width="19" height="47" fill="#e6a84e" opacity=".56"/><rect x="322" y="405" width="19" height="47" fill="#d88c3d" opacity=".44"/>
-              <path class="town-object-shape" d="M218 588 L218 447 Q252 415 286 447 L286 588Z" fill="#201a16" stroke="#0b0d0e" stroke-width="6"/>
-              <path d="M226 455 Q252 432 278 455" fill="none" stroke="#8b633e" stroke-width="4"/>
-              <ellipse cx="251" cy="440" rx="82" ry="65" fill="url(#lanternGlow)" opacity=".22"/>
-              <path class="town-object-shape" d="M183 346 L187 315 L300 315 L304 346Z" fill="#2b211a" stroke="#0a0c0c" stroke-width="5"/>
-              <path d="M195 329 Q242 312 291 329" fill="none" stroke="#bd8c54" stroke-width="3" opacity=".7"/>
-              <circle cx="390" cy="366" r="14" fill="#d89542"/><circle cx="390" cy="366" r="54" fill="url(#lanternGlow)" opacity=".44"/>
-              <path class="town-object-outline" d="M62 590 L73 363 L141 332 L157 247 L342 238 L407 327 L451 359 L447 596Z"/>
-            </g>
+              <!-- MERCHANT QUARTER -->
+              <section class="town-sector" data-town-sector="merchant" aria-label="Merchant Quarter">
+                <svg class="town-sector-art" viewBox="0 0 1200 760" role="img" aria-label="Merchant Quarter with marketplace, workshops and guild vault" preserveAspectRatio="xMidYMid slice">
+                  <defs><linearGradient id="mqSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c292c"/><stop offset=".62" stop-color="#3b3830"/><stop offset="1" stop-color="#211e1b"/></linearGradient><radialGradient id="mqFire"><stop offset="0" stop-color="#f1a24b" stop-opacity=".9"/><stop offset=".5" stop-color="#d87531" stop-opacity=".3"/><stop offset="1" stop-color="#bd5e22" stop-opacity="0"/></radialGradient></defs>
+                  <rect width="1200" height="760" fill="url(#mqSky)"/>
+                  <path d="M0 437 L110 359 L213 393 L319 308 L434 389 L544 320 L660 395 L774 308 L887 388 L1007 315 L1124 384 L1200 350 L1200 522 L0 522Z" fill="#151b1b"/>
+                  <path d="M0 530 C288 483 537 501 753 521 C935 538 1066 503 1200 482 L1200 760 L0 760Z" fill="#4b4035"/>
+                  <path d="M0 760 C114 644 186 579 256 531" stroke="#817461" stroke-width="95" opacity=".15"/>
 
-            <!-- GREYWAKE HARBOUR: the raid destination is a real boat at the town quay. -->
-            <g class="town-location town-location-harbour" data-town-object="harbour" role="button" tabindex="0" aria-pressed="false" aria-label="Greywake Harbour raid boat" filter="url(#townInk)">
-              <path d="M315 665 Q387 642 468 655 L470 720 L305 720Z" fill="#1d343a" opacity=".82"/>
-              <path class="town-object-shape" d="M323 640 L465 628 L439 679 L347 682Z" fill="#6b4b32" stroke="#090c0d" stroke-width="6"/>
-              <path d="M344 645 L449 637 M357 657 L441 650" stroke="#a27a50" stroke-width="3" opacity=".52"/>
-              <path class="town-object-shape" d="M391 634 L394 535" stroke="#c0a978" stroke-width="7"/>
-              <path class="town-object-shape" d="M399 544 L453 614 L399 617Z" fill="#b7b19b" stroke="#28251f" stroke-width="3"/>
-              <path class="town-object-shape" d="M386 551 L341 610 L386 615Z" fill="#817d6f" stroke="#28251f" stroke-width="3"/>
-              <path d="M394 539 L394 512" stroke="#1c1e1c" stroke-width="5"/>
-              <path d="M396 514 L426 523 L396 537Z" fill="#743d38"/>
-              <path class="town-object-shape" d="M304 686 L479 680" stroke="#8d6d49" stroke-width="12"/>
-              <path class="town-object-outline" d="M323 640 L341 610 L386 551 L391 535 L394 512 L399 544 L453 614 L465 628 L439 679 L479 680 L479 694 L304 700 L304 686 L347 682Z"/>
-            </g>
+                  <g class="town-location" data-town-object="squareFromMerchant" role="button" tabindex="0" aria-pressed="false" aria-label="Road back to Central Square">
+                    <path class="town-object-shape" d="M11 630 L17 322 L143 307 L155 638Z" fill="#3f3b35" stroke="#080b0c" stroke-width="8"/>
+                    <path class="town-object-shape" d="M0 335 L56 278 L118 276 L169 326Z" fill="#1b2020" stroke="#080b0c" stroke-width="7"/>
+                    <path class="town-object-shape" d="M48 632 L50 398 Q84 357 119 398 L121 636Z" fill="#171b1a" stroke="#080b0c" stroke-width="6"/>
+                    <path class="town-object-outline" d="M0 335 L56 278 L118 276 L169 326 L155 638 L11 630Z"/>
+                  </g>
 
-            <g class="town-location town-location-board" data-town-object="board" role="button" tabindex="0" aria-pressed="false" aria-label="Town Notice Board" filter="url(#townInk)">
-              <path class="town-object-shape" d="M510 655 L527 447 L549 447 L556 655Z" fill="#342318" stroke="#0a0c0d" stroke-width="6"/>
-              <path class="town-object-shape" d="M672 655 L676 445 L699 446 L716 655Z" fill="#342318" stroke="#0a0c0d" stroke-width="6"/>
-              <path class="town-object-shape" d="M487 438 L711 426 L718 567 L480 578Z" fill="url(#wood)" stroke="#0a0c0d" stroke-width="8"/>
-              <path class="town-object-shape" d="M502 453 L697 444 L702 549 L494 558Z" fill="#6d563f" stroke="#2a1b12" stroke-width="5"/>
-              <g filter="url(#townPaper)">
-                <path class="town-object-shape" d="M519 470 L571 465 L575 519 L523 524Z" fill="url(#paper)" stroke="#5d452f" stroke-width="2"/>
-                <path class="town-object-shape" d="M584 458 L650 461 L646 514 L579 511Z" fill="#d8c399" stroke="#5a422e" stroke-width="2"/>
-                <path class="town-object-shape" d="M656 473 L690 469 L692 527 L654 531Z" fill="#c9b181" stroke="#59412d" stroke-width="2"/>
-                <path class="town-object-shape" d="M540 526 L604 519 L608 550 L543 555Z" fill="#d5be91" stroke="#59412d" stroke-width="2"/>
-              </g>
-              <circle cx="546" cy="472" r="5" fill="#5b3121"/><circle cx="614" cy="461" r="5" fill="#5b3121"/><circle cx="672" cy="474" r="5" fill="#5b3121"/>
-              <path d="M536 483 L559 480 M536 492 L561 489 M597 475 L633 477 M596 485 L626 487 M665 487 L683 484 M553 538 L596 534" stroke="#66523f" stroke-width="3" opacity=".7"/>
-              <path class="town-object-outline" d="M487 438 L711 426 L718 567 L699 572 L716 655 L672 655 L676 572 L556 578 L556 655 L510 655 L527 579 L480 578Z"/>
-            </g>
+                  <g class="town-location" data-town-object="market" role="button" tabindex="0" aria-pressed="false" aria-label="The Marketplace">
+                    <path class="town-object-shape" d="M165 625 L177 343 L461 337 L471 631Z" fill="#4f4337" stroke="#090c0d" stroke-width="8"/>
+                    <path class="town-object-shape" d="M149 355 L210 282 L433 280 L489 349Z" fill="#283331" stroke="#090c0d" stroke-width="8"/>
+                    <path class="town-object-shape" d="M155 357 L484 350 L460 403 L175 410Z" fill="#8d6443" stroke="#1b1511" stroke-width="5"/>
+                    <path d="M197 355 L203 405 M246 353 L252 402 M295 352 L301 400 M345 351 L351 399 M396 350 L402 397 M447 349 L452 394" stroke="#d0a36a" stroke-width="11" opacity=".67"/>
+                    <path class="town-object-shape" d="M190 525 L446 519 L465 595 L172 603Z" fill="#6c4d31" stroke="#18120f" stroke-width="6"/>
+                    <rect x="218" y="455" width="58" height="62" fill="#8e6d49" stroke="#20170f" stroke-width="4"/><rect x="300" y="447" width="65" height="68" fill="#755438" stroke="#20170f" stroke-width="4"/><circle cx="407" cy="483" r="27" fill="#8f6b43" stroke="#20170f" stroke-width="4"/>
+                    <path class="town-object-outline" d="M149 355 L210 282 L433 280 L489 349 L471 631 L165 625Z"/>
+                  </g>
 
-            <g class="town-location town-location-cart" data-town-object="cart" role="button" tabindex="0" aria-pressed="false" aria-label="Expedition Cart" filter="url(#townInk)">
-              <path class="town-object-shape" d="M790 508 L1002 495 L1044 583 L813 597Z" fill="#543923" stroke="#0a0c0d" stroke-width="7"/>
-              <path class="town-object-shape" d="M819 500 L842 421 L972 413 L1001 497Z" fill="#36342e" stroke="#0a0c0d" stroke-width="7"/>
-              <path class="town-object-shape" d="M848 422 Q906 371 965 413" fill="none" stroke="#231e18" stroke-width="14"/>
-              <path class="town-object-shape" d="M845 421 Q906 382 970 413" fill="none" stroke="#7b5d43" stroke-width="6"/>
-              <rect class="town-object-shape" x="847" y="444" width="48" height="50" fill="#6a5037" stroke="#191611" stroke-width="4"/>
-              <rect class="town-object-shape" x="902" y="437" width="57" height="57" fill="#72543a" stroke="#191611" stroke-width="4"/>
-              <path d="M861 447 L884 489 M916 441 L946 489" stroke="#aa8359" stroke-width="3" opacity=".5"/>
-              <circle class="town-object-shape" cx="847" cy="600" r="54" fill="#221a15" stroke="#0a0c0d" stroke-width="8"/>
-              <circle cx="847" cy="600" r="28" fill="#4c3728" stroke="#0a0c0d" stroke-width="6"/>
-              <path d="M847 548 L847 652 M795 600 L899 600 M810 563 L884 637 M810 637 L884 563" stroke="#76553a" stroke-width="6"/>
-              <circle class="town-object-shape" cx="1006" cy="592" r="49" fill="#221a15" stroke="#0a0c0d" stroke-width="8"/>
-              <circle cx="1006" cy="592" r="25" fill="#4c3728" stroke="#0a0c0d" stroke-width="6"/>
-              <path d="M1006 545 L1006 639 M959 592 L1053 592 M973 559 L1039 625 M973 625 L1039 559" stroke="#76553a" stroke-width="6"/>
-              <path class="town-object-shape" d="M1042 547 L1134 526 L1148 539 L1050 572Z" fill="#3e2c20" stroke="#0a0c0d" stroke-width="6"/>
-              <path class="town-object-outline" d="M790 508 L819 500 L842 421 Q906 371 972 413 L1001 497 L1044 583 L1056 580 L1134 526 L1148 539 L1050 572 L1055 596 L1050 620 L1026 641 L985 640 L964 619 L965 601 L899 605 L899 626 L875 650 L824 649 L794 620Z"/>
-            </g>
+                  <g class="town-location" data-town-object="forge" role="button" tabindex="0" aria-pressed="false" aria-label="Crafting Quarter">
+                    <path class="town-object-shape" d="M485 631 L495 329 L754 324 L765 637Z" fill="#41413d" stroke="#090c0d" stroke-width="8"/>
+                    <path class="town-object-shape" d="M470 342 L536 276 L724 273 L781 335Z" fill="#212728" stroke="#090c0d" stroke-width="8"/>
+                    <path class="town-object-shape" d="M653 277 L664 187 L711 186 L715 276Z" fill="#292c2c" stroke="#090c0d" stroke-width="6"/>
+                    <path d="M675 184 Q688 148 703 180 Q718 146 732 181" fill="none" stroke="#6d7471" stroke-width="10" opacity=".6"/>
+                    <path class="town-object-shape" d="M541 629 L544 448 Q615 390 685 448 L688 632Z" fill="#171512" stroke="#080a0b" stroke-width="7"/>
+                    <ellipse cx="616" cy="503" rx="100" ry="105" fill="url(#mqFire)" opacity=".42"/>
+                    <path d="M571 526 Q616 450 662 526 Q616 563 571 526Z" fill="#e58538"/>
+                    <path class="town-object-shape" d="M678 419 L739 400 L756 447 L690 465Z" fill="#6a5540" stroke="#171310" stroke-width="4"/>
+                    <path class="town-object-outline" d="M470 342 L536 276 L653 275 L664 187 L711 186 L715 273 L724 273 L781 335 L765 637 L485 631Z"/>
+                  </g>
 
-            <path d="M0 654 Q80 610 157 640 T318 675 L289 760 L0 760Z" fill="#0d1110" opacity=".95" pointer-events="none"/>
-            <path d="M1200 630 Q1108 604 1038 650 T895 684 L927 760 L1200 760Z" fill="#0b1010" opacity=".96" pointer-events="none"/>
-            <path d="M16 710 Q70 660 122 712 M1083 700 Q1133 650 1192 704" fill="none" stroke="#253126" stroke-width="12" opacity=".65" pointer-events="none"/>
-          </svg>
+                  <g class="town-location" data-town-object="vault" role="button" tabindex="0" aria-pressed="false" aria-label="The Guild Vault">
+                    <path class="town-object-shape" d="M793 642 L803 328 L1160 320 L1172 649Z" fill="#46443e" stroke="#090c0d" stroke-width="8"/>
+                    <path class="town-object-shape" d="M775 343 L860 260 L1106 255 L1188 334Z" fill="#232828" stroke="#090c0d" stroke-width="8"/>
+                    <path class="town-object-shape" d="M889 640 L892 418 Q982 339 1074 419 L1078 645Z" fill="#171b1b" stroke="#080b0c" stroke-width="7"/>
+                    <path d="M920 424 L923 625 M959 392 L961 632 M1000 389 L1002 634 M1040 423 L1043 627 M901 484 L1067 484 M898 547 L1072 547" stroke="#8f7853" stroke-width="8"/>
+                    <circle cx="983" cy="520" r="17" fill="#b2905a" stroke="#281e14" stroke-width="5"/>
+                    <path class="town-object-outline" d="M775 343 L860 260 L1106 255 L1188 334 L1172 649 L793 642Z"/>
+                  </g>
+                </svg>
+              </section>
+
+              <!-- EXPEDITION WARD -->
+              <section class="town-sector" data-town-sector="expedition" aria-label="Expedition Ward">
+                <svg class="town-sector-art" viewBox="0 0 1200 760" role="img" aria-label="Expedition Ward with dungeon cart, Crucible colosseum and Festival Grounds" preserveAspectRatio="xMidYMid slice">
+                  <defs><linearGradient id="ewSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#17242b"/><stop offset=".6" stop-color="#34383b"/><stop offset="1" stop-color="#1c1d1c"/></linearGradient></defs>
+                  <rect width="1200" height="760" fill="url(#ewSky)"/>
+                  <path d="M0 430 L103 362 L222 400 L334 322 L442 394 L560 304 L682 395 L799 314 L918 391 L1032 321 L1148 392 L1200 358 L1200 515 L0 515Z" fill="#13191b"/>
+                  <path d="M0 526 C230 488 433 506 615 526 C829 550 1009 505 1200 486 L1200 760 L0 760Z" fill="#454038"/>
+
+                  <g class="town-location" data-town-object="squareFromExpedition" role="button" tabindex="0" aria-pressed="false" aria-label="Road back to Central Square">
+                    <path class="town-object-shape" d="M10 636 L18 319 L149 309 L158 643Z" fill="#3e3d38" stroke="#080b0c" stroke-width="8"/>
+                    <path class="town-object-shape" d="M0 332 L59 274 L122 274 L172 327Z" fill="#1b2020" stroke="#080b0c" stroke-width="7"/>
+                    <path class="town-object-shape" d="M49 636 L51 398 Q86 356 122 399 L124 640Z" fill="#171a1a" stroke="#080b0c" stroke-width="6"/>
+                    <path class="town-object-outline" d="M0 332 L59 274 L122 274 L172 327 L158 643 L10 636Z"/>
+                  </g>
+
+                  <g class="town-location" data-town-object="cart" role="button" tabindex="0" aria-pressed="false" aria-label="Expedition Cart">
+                    <path class="town-object-shape" d="M174 529 L426 514 L473 615 L198 633Z" fill="#573a25" stroke="#090c0d" stroke-width="8"/>
+                    <path class="town-object-shape" d="M205 519 L237 402 L390 393 L426 515Z" fill="#36342f" stroke="#090c0d" stroke-width="8"/>
+                    <path d="M244 403 Q314 343 387 393" fill="none" stroke="#7d5e43" stroke-width="9"/>
+                    <rect x="252" y="433" width="57" height="67" fill="#6b5138" stroke="#181410" stroke-width="4"/><rect x="322" y="424" width="58" height="74" fill="#75563b" stroke="#181410" stroke-width="4"/>
+                    <circle class="town-object-shape" cx="237" cy="635" r="62" fill="#211914" stroke="#080b0c" stroke-width="9"/><circle cx="237" cy="635" r="31" fill="#4b3527" stroke="#090b0c" stroke-width="6"/>
+                    <circle class="town-object-shape" cx="416" cy="626" r="57" fill="#211914" stroke="#080b0c" stroke-width="9"/><circle cx="416" cy="626" r="28" fill="#4b3527" stroke="#090b0c" stroke-width="6"/>
+                    <path class="town-object-shape" d="M469 573 L559 550 L574 565 L479 599Z" fill="#3e2b1f" stroke="#090b0c" stroke-width="6"/>
+                    <path class="town-object-outline" d="M174 529 L205 519 L237 402 Q314 343 390 393 L426 515 L473 615 L479 599 L559 550 L574 565 L480 609 L470 639 L448 667 L386 679 L357 652 L298 659 L267 686 L210 681 L181 652Z"/>
+                  </g>
+
+                  <g class="town-location" data-town-object="arena" role="button" tabindex="0" aria-pressed="false" aria-label="The Crucible Colosseum">
+                    <path class="town-object-shape" d="M454 634 L461 270 Q597 128 744 271 L753 639Z" fill="#494943" stroke="#080b0c" stroke-width="9"/>
+                    <path d="M486 268 Q603 100 723 269" fill="none" stroke="#5c5b54" stroke-width="42"/>
+                    <path class="town-object-shape" d="M529 630 L532 409 Q604 326 675 409 L680 635Z" fill="#151919" stroke="#080b0c" stroke-width="8"/>
+                    <path d="M484 315 L731 315 M479 353 L736 353" stroke="#8b8169" stroke-width="9" opacity=".54"/>
+                    <path d="M493 287 L461 223 L512 242 M718 288 L750 223 L701 242" fill="#7d423b" stroke="#201313" stroke-width="4"/>
+                    <path d="M565 452 L643 452 M604 412 L604 495" stroke="#9b7951" stroke-width="8" opacity=".82"/>
+                    <path class="town-object-outline" d="M454 634 L461 270 Q597 128 744 271 L753 639Z"/>
+                  </g>
+
+                  <g class="town-location" data-town-object="grounds" role="button" tabindex="0" aria-pressed="false" aria-label="Festival Grounds">
+                    <path class="town-object-shape" d="M802 645 L827 383 L1119 382 L1140 649Z" fill="#37342d" stroke="#080b0c" stroke-width="8"/>
+                    <path class="town-object-shape" d="M784 395 L847 306 L1099 305 L1154 391Z" fill="#493c3d" stroke="#080b0c" stroke-width="8"/>
+                    <path d="M842 308 L842 239 M1094 306 L1094 239" stroke="#b39d70" stroke-width="8"/>
+                    <path d="M846 242 L910 265 L846 289 M1090 242 L1026 265 L1090 289" fill="#79413c" stroke="#221414" stroke-width="3"/>
+                    <path d="M861 455 L1079 451 M852 507 L1087 503" stroke="#a88a5e" stroke-width="7" opacity=".55"/>
+                    <circle cx="969" cy="574" r="43" fill="#604832" stroke="#c09c65" stroke-width="6"/>
+                    <path d="M945 574 L993 574 M969 550 L969 598" stroke="#d4b476" stroke-width="5"/>
+                    <path class="town-object-outline" d="M784 395 L847 306 L1099 305 L1154 391 L1140 649 L802 645Z"/>
+                  </g>
+                </svg>
+              </section>
+
+              <!-- GREYWAKE HARBOUR -->
+              <section class="town-sector" data-town-sector="harbour" aria-label="Greywake Harbour">
+                <svg class="town-sector-art" viewBox="0 0 1200 760" role="img" aria-label="Greywake Harbour with raid boat and road back to Central Square" preserveAspectRatio="xMidYMid slice">
+                  <defs><linearGradient id="hbSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#162733"/><stop offset=".52" stop-color="#405160"/><stop offset=".53" stop-color="#233c47"/><stop offset="1" stop-color="#152a31"/></linearGradient></defs>
+                  <rect width="1200" height="760" fill="url(#hbSky)"/>
+                  <circle cx="948" cy="118" r="65" fill="#d6d1b6" opacity=".17"/>
+                  <path d="M766 334 L830 290 L879 296 L904 268 L949 288 L1002 330Z" fill="#17252b"/>
+                  <path d="M874 299 L876 211 L942 211 L945 301 M859 214 L909 173 L960 214 M890 211 L890 190 M928 211 L928 190" fill="#1b2429" stroke="#4f5b60" stroke-width="4"/>
+                  <path d="M0 499 L651 461 L763 527 L0 614Z" fill="#6b543e"/>
+                  <path d="M44 482 L47 650 M226 470 L228 617 M411 461 L413 588 M590 455 L592 557" stroke="#9e815f" stroke-width="13"/>
+                  <path d="M0 545 Q235 520 422 537 T793 538 Q1012 516 1200 542 L1200 760 L0 760Z" fill="#1e3b45"/>
+                  <path d="M0 608 Q245 576 464 606 T882 605 T1200 598" fill="none" stroke="#577782" stroke-width="5" opacity=".35"/>
+
+                  <g class="town-location" data-town-object="squareFromHarbour" role="button" tabindex="0" aria-pressed="false" aria-label="Steps back to Central Square">
+                    <path class="town-object-shape" d="M35 492 L57 252 L259 247 L275 488Z" fill="#393a37" stroke="#080b0c" stroke-width="8"/>
+                    <path class="town-object-shape" d="M18 267 L93 201 L222 199 L290 259Z" fill="#1d2324" stroke="#080b0c" stroke-width="8"/>
+                    <path class="town-object-shape" d="M92 486 L94 337 Q156 281 217 337 L220 489Z" fill="#151919" stroke="#080b0c" stroke-width="7"/>
+                    <path d="M115 365 L198 365 M111 402 L204 402 M106 441 L210 441" stroke="#776a57" stroke-width="7"/>
+                    <path class="town-object-outline" d="M18 267 L93 201 L222 199 L290 259 L275 488 L35 492Z"/>
+                  </g>
+
+                  <g class="town-location" data-town-object="harbour" role="button" tabindex="0" aria-pressed="false" aria-label="Raid boat at Greywake Harbour">
+                    <path class="town-object-shape" d="M422 535 L990 498 L929 647 L538 672Z" fill="#6f5136" stroke="#080b0c" stroke-width="9"/>
+                    <path d="M469 538 L953 507 M491 566 L941 536 M512 595 L928 566" stroke="#a17b51" stroke-width="5" opacity=".5"/>
+                    <path class="town-object-shape" d="M702 510 L708 213" stroke="#c2aa7d" stroke-width="11"/>
+                    <path class="town-object-shape" d="M720 233 L887 469 L723 481Z" fill="#b8b4a2" stroke="#282620" stroke-width="5"/>
+                    <path class="town-object-shape" d="M689 256 L548 469 L687 480Z" fill="#817d70" stroke="#282620" stroke-width="5"/>
+                    <path d="M708 214 L708 172" stroke="#1d1e1c" stroke-width="7"/>
+                    <path d="M712 176 L789 198 L712 233Z" fill="#733e3a" stroke="#241616" stroke-width="4"/>
+                    <path class="town-object-shape" d="M475 665 L1012 635" stroke="#8d6e4a" stroke-width="15"/>
+                    <path class="town-object-outline" d="M422 535 L548 469 L689 256 L702 213 L708 172 L720 233 L887 469 L990 498 L929 647 L1012 635 L1014 655 L475 686 L475 665 L538 672Z"/>
+                  </g>
+                </svg>
+              </section>
+
+            </div>
+          </div>
 
           <header class="town-scene-town-title">
-            <small>THE GUILD QUARTER</small>
-            <h2>Town</h2>
-            <p>The places around you are the interface. Select a location, then enter it.</p>
+            <small data-town-sector-kicker>THE GUILD QUARTER</small>
+            <h2 data-town-sector-title>Central Square</h2>
+            <p data-town-sector-copy>The heart of your guild town. Choose a place, or follow a road into another district.</p>
           </header>
 
           <aside class="town-selection-panel" data-town-selection hidden aria-live="polite">
@@ -305,14 +339,15 @@
             <button type="button" data-town-selection-action data-enter-town-object=""></button>
           </aside>
 
-          <p class="town-scene-hint">Tap a place once to inspect it · tap again to enter</p>
+          <div class="town-travel-party" data-town-travel-party aria-hidden="true"></div>
+          <p class="town-scene-hint">Tap once to inspect · tap again to enter or walk there</p>
 
           <section class="town-board-focus" data-town-board-focus hidden aria-label="Town Notice Board">
-            <button class="town-board-backdrop" type="button" data-town-board-backdrop aria-label="Back to Town"></button>
+            <button class="town-board-backdrop" type="button" data-town-board-backdrop aria-label="Back to Central Square"></button>
             <div class="town-board-frame">
               <header class="town-board-toolbar">
                 <div><small>TOWN NOTICE BOARD</small><b>Adventures & Mysteries</b></div>
-                <button type="button" data-town-board-close>← Back to Town</button>
+                <button type="button" data-town-board-close>← Back to Central Square</button>
               </header>
               <div class="town-board-quest-mount" data-town-board-mount></div>
             </div>
@@ -765,6 +800,6 @@
 <script src="./release-v1.js?v=3"></script>
 <script src="./living-world-v1.js?v=4"></script>
 <script src="./lantern-inn-v1.js?v=5"></script>
-<script src="./town-scene-v1.js?v=2"></script>
+<script src="./town-scene-v1.js?v=3"></script>
 </body>
 </html>
