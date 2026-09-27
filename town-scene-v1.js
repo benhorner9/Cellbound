@@ -26,6 +26,11 @@ const headingTitle=root.querySelector('[data-town-sector-title]');
 const headingCopy=root.querySelector('[data-town-sector-copy]');
 const travelParty=root.querySelector('[data-town-travel-party]');
 const questNavBadge=$('#questNavBadge');
+const expeditionFocus=root.querySelector('[data-town-expedition-focus]');
+const expeditionMount=root.querySelector('[data-town-expedition-mount]');
+const expeditionClose=root.querySelector('[data-town-expedition-close]');
+const expeditionTitle=root.querySelector('[data-town-expedition-title]');
+const expeditionKicker=root.querySelector('[data-town-expedition-kicker]');
 
 let selected='';
 let sector='square';
@@ -34,6 +39,11 @@ let boardOpen=false;
 let entering=false;
 let sectorTimer=0;
 let boardTimer=0;
+let expeditionPopupOpen=false;
+let expeditionPopupId='';
+let expeditionPopupView=null;
+let expeditionPopupChildren=[];
+let expeditionTimer=0;
 
 const sectorOrder={square:0,merchant:1,expedition:2,harbour:3};
 const sectorCopy={
@@ -340,6 +350,111 @@ function openBoard(){
   boardTimer=setTimeout(showBoardPopup,600);
 }
 
+
+const expeditionPopupConfig={
+  cart:{view:'content',kicker:'DUNGEON EXPEDITIONS',title:'Choose a Dungeon'},
+  grounds:{view:'world',kicker:'ACTIVITIES',title:'Activity Grounds'}
+};
+
+function restoreExpeditionPopup(){
+  if(expeditionPopupView&&expeditionPopupChildren.length){
+    expeditionPopupChildren.forEach(node=>expeditionPopupView.appendChild(node));
+  }
+  expeditionPopupChildren=[];
+  expeditionPopupView=null;
+  expeditionMount?.replaceChildren();
+}
+
+function showExpeditionPopup(id){
+  const config=expeditionPopupConfig[id];
+  const view=config?document.getElementById(config.view):null;
+  if(!config||!view||!expeditionFocus||!expeditionMount){
+    entering=false;
+    root.classList.remove('is-opening-expedition');
+    delete root.dataset.townEntry;
+    return;
+  }
+
+  restoreExpeditionPopup();
+  expeditionPopupId=id;
+  expeditionPopupView=view;
+  expeditionPopupChildren=[...view.children];
+  expeditionPopupChildren.forEach(node=>expeditionMount.appendChild(node));
+
+  if(expeditionKicker)expeditionKicker.textContent=config.kicker;
+  if(expeditionTitle)expeditionTitle.textContent=config.title;
+
+  expeditionPopupOpen=true;
+  expeditionFocus.hidden=false;
+  root.classList.remove('is-opening-expedition','is-returning-expedition','is-returning-expedition-home','is-closing-expedition');
+  root.classList.add('town-expedition-open');
+  document.body.classList.add('town-expedition-focus-open');
+  requestAnimationFrame(()=>requestAnimationFrame(()=>expeditionFocus.classList.add('is-visible')));
+  expeditionClose?.focus({preventScroll:true});
+  entering=false;
+}
+
+function openExpeditionPopup(id){
+  if(expeditionPopupOpen||entering||!expeditionPopupConfig[id])return;
+  clearTimeout(expeditionTimer);
+  entering=true;
+  root.dataset.townEntry=id;
+  root.classList.remove('is-returning-expedition','is-returning-expedition-home','is-closing-expedition');
+  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  if(reduced){showExpeditionPopup(id);return}
+  root.classList.add('is-opening-expedition');
+  expeditionTimer=setTimeout(()=>showExpeditionPopup(id),620);
+}
+
+function closeExpeditionPopup({focus=true,instant=false}={}){
+  if(!expeditionPopupOpen&&!root.classList.contains('is-opening-expedition'))return;
+  clearTimeout(expeditionTimer);
+  const returnId=expeditionPopupId||root.dataset.townEntry||selected;
+  expeditionPopupOpen=false;
+  entering=true;
+  root.classList.remove('is-opening-expedition');
+  expeditionFocus?.classList.remove('is-visible');
+  document.body.classList.remove('town-expedition-focus-open');
+
+  const finish=()=>{
+    if(expeditionFocus)expeditionFocus.hidden=true;
+    restoreExpeditionPopup();
+    root.classList.remove('town-expedition-open','is-closing-expedition','is-returning-expedition','is-returning-expedition-home');
+    expeditionPopupId='';
+    delete root.dataset.townEntry;
+    entering=false;
+    if(focus&&returnId)locationNode(returnId)?.focus({preventScroll:true});
+  };
+
+  if(instant){finish();return}
+
+  root.classList.add('is-closing-expedition');
+  expeditionTimer=setTimeout(()=>{
+    if(expeditionFocus)expeditionFocus.hidden=true;
+    restoreExpeditionPopup();
+    root.classList.remove('town-expedition-open','is-closing-expedition');
+    root.classList.add('is-returning-expedition');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>root.classList.add('is-returning-expedition-home')));
+    expeditionTimer=setTimeout(finish,680);
+  },220);
+}
+
+function enterCrucible(){
+  if(entering)return;
+  entering=true;
+  root.dataset.townEntry='arena';
+  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  const finish=()=>{
+    game()?.switchView?.('pvp');
+    root.classList.remove('is-entering-expedition');
+    delete root.dataset.townEntry;
+    entering=false;
+  };
+  if(reduced){finish();return}
+  root.classList.add('is-entering-expedition');
+  setTimeout(finish,720);
+}
+
 function travel(view){
   if(entering)return;
   entering=true;
@@ -404,13 +519,13 @@ function enter(id){
 }
 
 function interact(id){
-  if(boardOpen)return;
+  if(boardOpen||expeditionPopupOpen)return;
   if(selected===id){enter(id);return}
   setSelected(id,false);
 }
 
 function backgroundClick(e){
-  if(boardOpen)return;
+  if(boardOpen||expeditionPopupOpen)return;
   if(e.target.closest('[data-town-object]')||e.target.closest('[data-town-selection]'))return;
   setSelected('');
 }
@@ -439,6 +554,7 @@ function syncHome(){
     syncQuestMarker();
   }else{
     closeBoard({focus:false,instant:true});
+    closeExpeditionPopup({focus:false,instant:true});
     setSelected('');
   }
 }
@@ -452,11 +568,16 @@ root.addEventListener('click',e=>{
 });
 root.addEventListener('keydown',keyboardObject);
 boardClose?.addEventListener('click',()=>closeBoard());
+expeditionClose?.addEventListener('click',()=>closeExpeditionPopup());
+expeditionFocus?.addEventListener('click',e=>{
+  if(e.target===expeditionFocus||e.target.closest('[data-town-expedition-backdrop]'))closeExpeditionPopup();
+});
 board?.addEventListener('click',e=>{
   if(e.target===board||e.target.closest('[data-town-board-backdrop]'))closeBoard();
 });
 window.addEventListener('keydown',e=>{
   if(e.key!=='Escape')return;
+  if(expeditionPopupOpen||root.classList.contains('is-opening-expedition')){e.preventDefault();closeExpeditionPopup();return}
   if(boardOpen){e.preventDefault();closeBoard();return}
   if(selected){
     e.preventDefault();
@@ -476,7 +597,10 @@ window.addEventListener('cellbound:state-rendered',()=>{
   syncQuestMarker();
   if(selected&&objectCopy[selected])panelStatus.textContent=objectCopy[selected].status();
 });
-window.addEventListener('beforeunload',()=>restoreQuests(),{once:true});
+window.addEventListener('beforeunload',()=>{
+  restoreQuests();
+  restoreExpeditionPopup();
+},{once:true});
 
 if(questNavBadge){
   new MutationObserver(syncQuestMarker).observe(questNavBadge,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['hidden']});
@@ -495,8 +619,11 @@ window.CellboundTownScene={
   setSector,
   openBoard,
   closeBoard,
+  openExpeditionPopup,
+  closeExpeditionPopup,
   get selected(){return selected},
   get sector(){return sector},
-  get boardOpen(){return boardOpen}
+  get boardOpen(){return boardOpen},
+  get expeditionPopupOpen(){return expeditionPopupOpen}
 };
 })();
