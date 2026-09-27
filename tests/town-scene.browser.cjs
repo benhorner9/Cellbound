@@ -39,7 +39,8 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  });
  await page.addScriptTag({content:fs.readFileSync(path.join(root,'town-scene-v1.js'),'utf8')});
 
- assert.equal(await page.locator('[data-town-object]').count(),9,'Town exposes nine physical world destinations');
+ assert.equal(await page.locator('[data-town-object]').count(),15,'Town exposes physical destinations and district roads across four sectors');
+ assert.equal(await page.locator('[data-town-scene]').getAttribute('data-town-sector'),'square','Town opens in Central Square');
  assert.equal(await page.locator('[data-town-selection]').isVisible(),false,'No location labels/panel shown by default');
 
  const press=async id=>page.locator('[data-town-object="'+id+'"]').evaluate(n=>n.dispatchEvent(new MouseEvent('click',{bubbles:true})));
@@ -67,33 +68,64 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  assert.equal(await page.locator('[data-town-board-focus]').isVisible(),false);
  assert(await page.locator('#quests #questJournalList').count(),'closing board restores the original quest view');
 
+ await press('expeditionRoad');
+ assert.equal(await page.locator('[data-town-selection-title]').textContent(),'Expedition Ward');
+ assert.equal(await page.locator('[data-town-scene]').getAttribute('data-town-sector'),'square','first road tap only selects the district');
+ await press('expeditionRoad');await page.waitForTimeout(560);
+ assert.equal(await page.locator('[data-town-scene]').getAttribute('data-town-sector'),'expedition','second road tap pans into Expedition Ward');
+ assert.equal(await page.locator('#overview').evaluate(n=>n.classList.contains('active')),true,'district travel stays inside Town');
+ await page.screenshot({path:'/tmp/cellbound-town-scene-03-expedition.png'});
+
  await press('cart');
  assert.equal(await page.locator('[data-town-selection-title]').textContent(),'Expedition Cart');
  await press('cart');await page.waitForTimeout(260);
  assert.equal(await page.locator('#content').evaluate(n=>n.classList.contains('active')),true,'cart enters existing dungeon system');
 
- const destinations=[
+ await page.evaluate(()=>window.CellboundGame.switchView('overview'));
+ await press('merchantRoad');await press('merchantRoad');await page.waitForTimeout(560);
+ assert.equal(await page.locator('[data-town-scene]').getAttribute('data-town-sector'),'merchant');
+ await page.screenshot({path:'/tmp/cellbound-town-scene-04-merchant.png'});
+ for(const [id,title,view] of [
    ['market','The Marketplace','trading'],
    ['forge','Crafting Quarter','professions'],
-   ['vault','The Guild Vault','bank'],
-   ['arena','The Crucible','pvp'],
-   ['harbour','Greywake Harbour','raids'],
-   ['grounds','Festival Grounds','world']
- ];
- for(const [id,title,view] of destinations){
-   await page.evaluate(()=>window.CellboundGame.switchView('overview'));
+   ['vault','The Guild Vault','bank']
+ ]){
+   await page.evaluate(()=>window.CellboundTownScene.setSector('merchant',{instant:true,focus:false}));
    await press(id);
-   assert.equal(await page.locator('[data-town-selection-title]').textContent(),title,id+' selects its physical location before travel');
-   assert.equal(await page.locator('#overview').evaluate(n=>n.classList.contains('active')),true,id+' first interaction stays in Town');
+   assert.equal(await page.locator('[data-town-selection-title]').textContent(),title,id+' selects its building before entry');
+   assert.equal(await page.locator('#overview').evaluate(n=>n.classList.contains('active')),true,id+' first tap stays in district');
    await press(id);await page.waitForTimeout(260);
-   assert.equal(await page.locator('#'+view).evaluate(n=>n.classList.contains('active')),true,id+' second interaction enters '+view);
+   assert.equal(await page.locator('#'+view).evaluate(n=>n.classList.contains('active')),true,id+' second tap enters '+view);
+   await page.evaluate(()=>window.CellboundGame.switchView('overview'));
+ }
+
+ await page.evaluate(()=>window.CellboundTownScene.setSector('expedition',{instant:true,focus:false}));
+ for(const [id,title,view] of [
+   ['arena','The Crucible','pvp'],
+   ['grounds','Festival Grounds','world']
+ ]){
+   await press(id);
+   assert.equal(await page.locator('[data-town-selection-title]').textContent(),title);
+   await press(id);await page.waitForTimeout(260);
+   assert.equal(await page.locator('#'+view).evaluate(n=>n.classList.contains('active')),true,id+' enters '+view);
+   await page.evaluate(()=>window.CellboundGame.switchView('overview'));
+   await page.evaluate(()=>window.CellboundTownScene.setSector('expedition',{instant:true,focus:false}));
  }
 
  await page.evaluate(()=>window.CellboundGame.switchView('overview'));
+ await press('harbourRoad');await press('harbourRoad');await page.waitForTimeout(560);
+ assert.equal(await page.locator('[data-town-scene]').getAttribute('data-town-sector'),'harbour');
+ await page.screenshot({path:'/tmp/cellbound-town-scene-05-harbour.png'});
+ await press('harbour');
+ assert.equal(await page.locator('[data-town-selection-title]').textContent(),'Greywake Raid Pier');
+ await press('harbour');await page.waitForTimeout(260);
+ assert.equal(await page.locator('#raids').evaluate(n=>n.classList.contains('active')),true,'raid boat enters Greywake raid staging');
+
+ await page.evaluate(()=>window.CellboundGame.switchView('overview'));
  await page.setViewportSize({width:390,height:844});
- await page.screenshot({path:'/tmp/cellbound-town-scene-03-phone.png'});
+ await page.screenshot({path:'/tmp/cellbound-town-scene-06-phone.png'});
  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no phone horizontal overflow');
- for(const id of ['inn','board','cart','market','forge','vault','arena','harbour','grounds']){
+ for(const id of ['inn','board','merchantRoad','expeditionRoad','harbourRoad','market','forge','vault','cart','arena','grounds','harbour']){
    const box=await page.locator('[data-town-object="'+id+'"]').boundingBox();
    assert(box&&box.width>=44&&box.height>=44,id+' remains a usable touch target');
  }
@@ -106,5 +138,5 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
 
  assert.deepEqual(errors,[]);
  await browser.close();
- console.log('Town scene: nine world-object destinations, select-then-enter travel, Notice Board close-up, quest DOM restoration and responsive controls passed.');
+ console.log('Town scene: four readable sectors, physical district roads, select-then-enter destinations, Notice Board close-up and responsive controls passed.');
 })().catch(e=>{console.error(e);process.exit(1)});
