@@ -408,3 +408,96 @@ body.inn-character-open{overflow:hidden}
 @media(prefers-reduced-motion:reduce){
   .inn-scene-stage,.inn-world:after,.inn-object-glow,.inn-object-art,.inn-object-caption{transition:none!important}
 }
+
+
+/* ==========================================================================
+   Inn selection confirmation
+   First press selects the physical object; the action only fires from Confirm.
+   Mirrors the Town Square interaction model.
+   ========================================================================== */
+.inn-selection-panel[hidden]{display:none!important}
+.inn-selection-panel{
+  position:absolute;
+  z-index:122;
+  left:50%;
+  bottom:42px;
+  width:min(660px,calc(100% - 32px));
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  gap:14px;
+  align-items:center;
+  padding:13px 14px 13px 17px;
+  transform:translateX(-50%);
+  border:1px solid rgba(207,172,103,.58);
+  border-radius:6px;
+  background:linear-gradient(180deg,rgba(30,26,20,.97),rgba(13,15,14,.98));
+  box-shadow:0 15px 42px rgba(0,0,0,.52),0 0 28px rgba(215,175,96,.06);
+  color:#f0e4cf
+}
+.inn-selection-copy{min-width:0}
+.inn-selection-copy>small{
+  display:block;
+  color:#a98b58;
+  font:900 9px/1 system-ui;
+  letter-spacing:.14em
+}
+.inn-selection-copy h3{
+  margin:4px 0 3px;
+  color:#f1e6d3;
+  font:500 20px/1.1 Georgia,serif
+}
+.inn-selection-copy p{
+  margin:0;
+  color:#bcb29f;
+  font:11px/1.45 system-ui
+}
+.inn-selection-copy em{
+  display:block;
+  margin-top:5px;
+  color:#ceb273;
+  font:normal 10px/1.35 system-ui
+}
+.inn-selection-panel>button{
+  min-width:154px;
+  min-height:46px!important;
+  padding:0 16px!important;
+  border:1px solid rgba(213,178,105,.58)!important;
+  border-radius:4px;
+  background:linear-gradient(180deg,#4d3b21,#2a2418)!important;
+  color:#f0d79f!important;
+  font:900 10px/1 system-ui;
+  letter-spacing:.055em;
+  white-space:nowrap;
+  cursor:pointer
+}
+.inn-selection-panel>button:hover,
+.inn-selection-panel>button:focus-visible{
+  border-color:#edc77b!important;
+  outline:2px solid rgba(237,199,123,.44);
+  outline-offset:2px;
+  background:linear-gradient(180deg,#614a28,#342b1b)!important
+}
+.inn-world.has-selection .inn-hint{opacity:.25}
+.inn-scene-object.is-selected .inn-object-caption{opacity:1}
+.inn-scene-object.is-selected .inn-object-glow{
+  opacity:.82;
+  animation:innSelectedGlow 1.4s ease-in-out infinite alternate
+}
+@keyframes innSelectedGlow{to{opacity:.58;filter:brightness(0) saturate(100%) invert(72%) sepia(67%) saturate(930%) hue-rotate(348deg) brightness(114%) contrast(96%) blur(17px)}}
+
+@media(max-width:600px){
+  .inn-selection-panel{
+    bottom:31px;
+    width:calc(100% - 16px);
+    grid-template-columns:1fr;
+    gap:9px;
+    padding:10px 11px
+  }
+  .inn-selection-copy h3{font-size:17px}
+  .inn-selection-copy p{font-size:10px}
+  .inn-selection-copy em{font-size:9px}
+  .inn-selection-panel>button{width:100%;min-height:44px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .inn-scene-object.is-selected .inn-object-glow{animation:none!important}
+}
