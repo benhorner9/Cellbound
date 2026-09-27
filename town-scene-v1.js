@@ -279,7 +279,7 @@ function closeBoard({focus=true,instant=false}={}){
 
   const finishInstant=()=>{
     board.hidden=true;
-    root.classList.remove('town-board-open','is-closing-board','is-returning-board');
+    root.classList.remove('town-board-open','is-closing-board','is-returning-board','is-returning-board-home');
     restoreQuests();
     syncQuestMarker();
     entering=false;
@@ -296,11 +296,15 @@ function closeBoard({focus=true,instant=false}={}){
     restoreQuests();
     syncQuestMarker();
 
+    requestAnimationFrame(()=>{
+      requestAnimationFrame(()=>root.classList.add('is-returning-board-home'));
+    });
+
     boardTimer=setTimeout(()=>{
-      root.classList.remove('is-returning-board');
+      root.classList.remove('is-returning-board','is-returning-board-home');
       entering=false;
       if(focus)locationNode('board')?.focus({preventScroll:true});
-    },540);
+    },720);
   },260);
 }
 
@@ -327,9 +331,9 @@ function openBoard(){
   if(reduced){showBoardPopup();return}
 
   entering=true;
-  root.classList.remove('is-returning-board','is-closing-board');
+  root.classList.remove('is-returning-board','is-returning-board-home','is-closing-board');
   root.classList.add('is-opening-board');
-  boardTimer=setTimeout(showBoardPopup,520);
+  boardTimer=setTimeout(showBoardPopup,600);
 }
 
 function travel(view){
