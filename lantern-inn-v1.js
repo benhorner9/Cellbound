@@ -21,8 +21,34 @@ const slots={
 const perspectiveFor=y=>Math.max(.82,Math.min(.96,.68+(Number(y)||50)*.0036));
 const activeSlots=['fireplace-right','main-table-right','main-table-left','bar-left','doorway'];
 const reserveSlots=['window','back-table','stairs','bar-right','fireplace-left'];
-let root,world,ledger,partyDialog,partyMarker,partyNode,returnFocus=null,characterFocus=null,lastKey='',selectedObject='',exitTimer=0;
-function setObjectSelected(kind){
+let root,world,ledger,partyDialog,partyMarker,partyNode,selectionPanel,selectionTitle,selectionCopy,selectionStatus,selectionAction,returnFocus=null,characterFocus=null,lastKey='',selectedObject='',exitTimer=0;
+const objectCopy={
+ party:{
+  title:'Party Table',
+  copy:'Choose and prepare the five adventurers who will travel together.',
+  action:'Open Active Party',
+  status(){
+   const party=game()?.getPartyCharacters?.()||[];
+   return party.length+' / 5 adventurers currently prepared';
+  }
+ },
+ roster:{
+  title:'The Bar',
+  copy:'Open your company roster to inspect, recruit and manage adventurers.',
+  action:'Open Roster',
+  status(){
+   const roster=game()?.getState?.()?.roster||[];
+   return roster.length+' adventurer'+(roster.length===1?'':'s')+' in your company';
+  }
+ },
+ door:{
+  title:'Town Square',
+  copy:'Leave the Lantern Inn and return to the guild quarter.',
+  action:'Return to Town Square',
+  status(){return 'The camera will move to the door before leaving the Inn'}
+ }
+};
+function setObjectSelected(kind,{focusConfirm=false}={}){
  selectedObject=kind||'';
  if(!world)return;
  if(selectedObject)world.dataset.selectedInnObject=selectedObject;else delete world.dataset.selectedInnObject;
@@ -31,6 +57,22 @@ function setObjectSelected(kind){
   node.classList.toggle('is-selected',on);
   node.setAttribute('aria-pressed',String(on));
  });
+ if(!selectionPanel)return;
+ if(!selectedObject||!objectCopy[selectedObject]){
+  selectionPanel.hidden=true;
+  world.classList.remove('has-selection');
+  if(selectionAction)delete selectionAction.dataset.confirmInnObject;
+  return;
+ }
+ const def=objectCopy[selectedObject];
+ selectionTitle.textContent=def.title;
+ selectionCopy.textContent=def.copy;
+ selectionStatus.textContent=def.status();
+ selectionAction.textContent=def.action+' →';
+ selectionAction.dataset.confirmInnObject=selectedObject;
+ selectionPanel.hidden=false;
+ world.classList.add('has-selection');
+ if(focusConfirm)selectionAction.focus({preventScroll:true});
 }
 function leaveToTown(trigger){
  if(!world||world.classList.contains('is-leaving-to-town'))return;
@@ -111,19 +153,42 @@ function mount(){
    '</button>'+
   '</div>'+
   '<header class="inn-heading"><small>YOUR ADVENTURING COMPANY</small><h2>The Lantern Inn</h2><p class="inn-company-status"></p></header>'+
+  '<aside class="inn-selection-panel" data-inn-selection hidden aria-live="polite"><div class="inn-selection-copy"><small>SELECTED</small><h3 data-inn-selection-title></h3><p data-inn-selection-copy></p><em data-inn-selection-status></em></div><button type="button" data-inn-selection-action data-confirm-inn-object=""></button></aside>'+
   '<p class="inn-empty" hidden>Your company will gather here when you recruit your first adventurer.</p>'+
-  '<footer class="inn-hint">Select an adventurer, the Party Table, the Bar or the door.</footer>';
+  '<footer class="inn-hint">Tap once to select · then confirm</footer>';
  const theme=window.CellboundInnTheme;if(theme?.hint)world.querySelector('.inn-hint').textContent=theme.hint;
  root.prepend(world);
+ selectionPanel=world.querySelector('[data-inn-selection]');
+ selectionTitle=world.querySelector('[data-inn-selection-title]');
+ selectionCopy=world.querySelector('[data-inn-selection-copy]');
+ selectionStatus=world.querySelector('[data-inn-selection-status]');
+ selectionAction=world.querySelector('[data-inn-selection-action]');
  ledger=dialog('Roster','innLedger');original.forEach(n=>ledger.querySelector('.inn-dialog-body').append(n));
  partyDialog=dialog('Active Party','innParty');
  world.addEventListener('click',e=>{
+  const confirm=e.target.closest('[data-confirm-inn-object]');
+  if(confirm){
+   e.preventDefault();e.stopPropagation();
+   const kind=confirm.dataset.confirmInnObject||selectedObject;
+   const trigger=world.querySelector('[data-inn-object="'+kind+'"]');
+   activateObject(kind,trigger||confirm);
+   return;
+  }
   const object=e.target.closest('[data-inn-object]');
-  if(!object)return;
-  e.preventDefault();
-  activateObject(object.dataset.innObject,object);
+  if(object){
+   e.preventDefault();
+   setObjectSelected(object.dataset.innObject,{focusConfirm:false});
+   return;
+  }
+  if(e.target.closest('[data-inn-selection]'))return;
+  if(!ledger?.open&&!partyDialog?.open)setObjectSelected('');
  });
- world.addEventListener('focusin',e=>{const object=e.target.closest?.('[data-inn-object]');if(object)setObjectSelected(object.dataset.innObject)});
+ world.addEventListener('keydown',e=>{
+  const object=e.target.closest?.('[data-inn-object]');
+  if(!object||(e.key!=='Enter'&&e.key!==' '))return;
+  e.preventDefault();
+  setObjectSelected(object.dataset.innObject,{focusConfirm:true});
+ });
  // Existing jump buttons inside the roster modal still open the Party Table.
  ledger.addEventListener('click',e=>{if(e.target.closest('[data-jump="party"]')){e.preventDefault();e.stopPropagation();ledger.close();setTimeout(()=>{setObjectSelected('party');openTool('party',world.querySelector('[data-inn-object="party"]'))},80)}},true);
 }
@@ -167,11 +232,18 @@ window.addEventListener('click',e=>{
 const modal=document.getElementById('characterModal');
 if(modal)new MutationObserver(()=>{if(modal.hidden&&document.body.classList.contains('inn-character-open')){document.body.classList.remove('inn-character-open');const shell=document.querySelector('.app-shell');if(shell)shell.inert=false;refresh();const id=characterFocus?.dataset?.char;([...world.querySelectorAll('[data-inn-character]')].find(n=>n.dataset.char===id)||world.querySelector('[data-inn-object="roster"]'))?.focus({preventScroll:true})}}).observe(modal,{attributes:true,attributeFilter:['hidden']});
 window.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&selectedObject&&!ledger?.open&&!partyDialog?.open&&!document.body.classList.contains('inn-character-open')){
+  e.preventDefault();
+  const selected=world?.querySelector('[data-inn-object="'+selectedObject+'"]');
+  setObjectSelected('');
+  selected?.focus({preventScroll:true});
+  return;
+ }
  if(!document.body.classList.contains('inn-character-open')||!modal||modal.hidden)return;
  if(e.key==='Escape'){e.preventDefault();modal.querySelector('[data-close]')?.click()}
  if(e.key==='Tab'){const list=[...modal.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex="0"]')].filter(n=>n.getClientRects().length);const first=list[0],last=list.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}}
 });
 window.addEventListener('cellbound:state-rendered',refresh);
 window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view!=='roster'){document.body.classList.remove('inn-view-active');ledger?.close();partyDialog?.close();clearTimeout(exitTimer);world?.classList.remove('is-leaving-to-town','is-fading-to-town');setObjectSelected('')}else refresh()});
-window.CellboundInn={refresh,openTool,activateObject,leaveToTown,setObjectSelected,slots,assign,perspectiveFor};refresh();
+window.CellboundInn={refresh,openTool,activateObject,leaveToTown,setObjectSelected,objectCopy,slots,assign,perspectiveFor};refresh();
 })();
