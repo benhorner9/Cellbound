@@ -65,8 +65,12 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  assert.equal(await page.locator('[data-town-object="inn"]').getAttribute('aria-pressed'),'true');
  await page.screenshot({path:'/tmp/cellbound-town-scene-01-selected.png'});
 
- await press('inn');await page.waitForTimeout(260);
- assert.equal(await page.locator('#roster').evaluate(n=>n.classList.contains('active')),true,'second Inn click enters');
+ await press('inn');
+ await page.waitForTimeout(80);
+ assert.equal(await page.locator('[data-town-scene]').evaluate(n=>n.classList.contains('is-entering-inn')),true,'second Inn click begins doorway camera push before navigation');
+ await page.screenshot({path:'/tmp/cellbound-town-scene-01b-inn-entry.png'});
+ await page.waitForTimeout(700);
+ assert.equal(await page.locator('#roster').evaluate(n=>n.classList.contains('active')),true,'Inn opens after doorway transition');
  windowTown=await page.evaluate(()=>Boolean(window.CellboundTownScene));assert.equal(windowTown,true);
 
  await page.evaluate(()=>window.CellboundGame.switchView('overview'));
