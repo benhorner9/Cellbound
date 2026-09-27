@@ -117,19 +117,22 @@
 /* Notice Board focus remains a close-up of the real board in Central Square. */
 .town-board-focus[hidden]{display:none!important}
 .town-board-focus{
-  position:absolute;inset:0;z-index:30;display:grid;place-items:center;padding:18px;
-  opacity:0;transition:opacity .28s ease
+  position:absolute;inset:0;z-index:31;display:grid;place-items:center;padding:22px;
+  opacity:0;transition:opacity .22s ease
 }
 .town-board-focus.is-visible{opacity:1}
-.town-board-backdrop{position:absolute;inset:0;background:rgba(3,5,6,.76);backdrop-filter:blur(2px)}
-.town-board-open .town-sector[data-town-sector="square"] .town-sector-art{transform:scale(1.24) translate(1%,-3%);filter:brightness(.45) blur(.4px)}
+.town-board-backdrop{
+  position:absolute;inset:0;
+  background:rgba(3,5,6,.48);
+  backdrop-filter:blur(1.2px)
+}
 .town-board-frame{
-  position:relative;z-index:2;width:min(1220px,100%);height:min(760px,calc(100% - 10px));
+  position:relative;z-index:2;width:min(1040px,88%);height:min(650px,76%);
   overflow:auto;padding:22px 24px 26px;border:12px solid #2c2118;border-radius:4px;
   background:
     linear-gradient(90deg,rgba(97,62,35,.22),transparent 22%,rgba(73,45,26,.18)),
     repeating-linear-gradient(93deg,#6e5138 0 3px,#75573c 3px 7px,#62472f 7px 12px);
-  box-shadow:0 20px 70px rgba(0,0,0,.72),inset 0 0 0 2px #a17c4e
+  box-shadow:0 24px 80px rgba(0,0,0,.76),0 0 0 1px rgba(197,161,98,.26),inset 0 0 0 2px #a17c4e
 }
 .town-board-frame:before{
   content:"";position:absolute;inset:13px;pointer-events:none;border:1px solid rgba(38,25,16,.7);
@@ -208,7 +211,7 @@
   .town-selection-copy h3{font-size:1rem}.town-selection-copy p{font-size:.6rem}.town-selection-panel button{width:100%}
   .town-travel-party{bottom:42px}.town-travel-hero{width:23px;height:27px}
   .town-board-focus{padding:0}
-  .town-board-frame{width:100%;height:100%;border-width:7px;border-radius:0;padding:14px}
+  .town-board-frame{width:calc(100% - 14px);height:calc(100% - 28px);border-width:7px;border-radius:3px;padding:14px}
   .town-board-toolbar{top:-14px;margin:-14px -14px 12px;padding:9px 10px}
   .town-board-toolbar div b{font-size:.95rem}
   .town-board-quest-mount>.section-intro.quest-intro{padding:10px;margin-bottom:10px}
@@ -394,14 +397,37 @@
   to{opacity:1;transform:translate(-50%,0)}
 }
 
-/* The physical notice board remains visible under the quest close-up. */
-.town-board-open .town-painted-image{
-  transform:scale(1.16) translate(0,-2%);
-  filter:brightness(.36) saturate(.78) blur(.45px)
+/* Notice Board interaction: camera pushes toward the real board, then the
+   quest interface opens as a pop-up without leaving Central Square. */
+.town-scene.is-opening-board .town-painted-image,
+.town-scene.is-opening-board .town-painted-hotspots,
+.town-scene.town-board-open .town-painted-image,
+.town-scene.town-board-open .town-painted-hotspots{
+  transform-origin:50.8% 63.5%;
+  transform:translateY(-8%) scale(1.34);
+  transition:transform .4s cubic-bezier(.2,.72,.18,1),filter .28s ease,opacity .18s ease
 }
-.town-board-open .town-painted-hotspots{
+.town-scene.is-opening-board .town-painted-image{
+  filter:brightness(.82) saturate(.96)
+}
+.town-scene.is-opening-board .town-painted-hotspots{
+  pointer-events:none
+}
+.town-scene.is-opening-board .town-selection-panel,
+.town-scene.is-opening-board .town-scene-hint,
+.town-scene.is-opening-board .town-quest-marker{
+  opacity:0!important;
+  pointer-events:none;
+  transition:opacity .12s ease!important
+}
+.town-scene.town-board-open .town-painted-image{
+  filter:brightness(.48) saturate(.8) blur(.35px)
+}
+.town-scene.town-board-open .town-painted-hotspots{
   opacity:0;pointer-events:none
 }
+.town-scene.is-closing-board .town-board-focus{opacity:0!important}
+
 
 @media(max-width:720px){
   .town-scene[data-town-sector="square"]:not(.town-board-open){
@@ -414,6 +440,8 @@
 @media(prefers-reduced-motion:reduce){
   .town-painted-image,.town-painted-hotspots,.town-painted-bloom,.town-painted-lift,.town-painted-hit,.town-painted-outline,.town-scene-town-title,.town-quest-marker{transition:none!important}
   .town-scene.has-selection .town-selection-panel,.town-scene.has-available-quests .town-quest-marker{animation:none!important}
-  .town-scene.is-entering-inn .town-painted-image,.town-scene.is-entering-inn .town-painted-hotspots{transform:none!important}
+  .town-scene.is-entering-inn .town-painted-image,.town-scene.is-entering-inn .town-painted-hotspots,
+  .town-scene.is-opening-board .town-painted-image,.town-scene.is-opening-board .town-painted-hotspots,
+  .town-scene.town-board-open .town-painted-image,.town-scene.town-board-open .town-painted-hotspots{transform:none!important}
   .town-scene.is-entering-inn:after{opacity:0!important}
 }
