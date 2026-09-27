@@ -326,12 +326,13 @@ for(const file of files){
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=52')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
     if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=7'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
-    if(!contents.includes('character-art-v2.js?v=1')||!contents.includes('character-portraits-v1.css?v=9')||!contents.includes('character-portraits-v1.js?v=14'))throw new Error('Character portrait identity assets are not linked from guild.html');
+    if(!contents.includes('character-art-v2.js?v=1')||!contents.includes('character-portraits-v1.css?v=9')||!contents.includes('character-portraits-v1.js?v=15'))throw new Error('Character portrait identity assets are not linked from guild.html');
     const portraitCss=fs.readFileSync(path.join(__dirname,'character-portraits-v1.css'),'utf8');
     const portraitJs=fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8');
     if(!portraitCss.includes('Full-body Standard V1')||!portraitCss.includes('transform:none!important')||!portraitCss.includes('overflow:visible!important'))throw new Error('Normalized painted full-body presentation rules are missing');
     if(portraitCss.includes('clip-path:polygon('))throw new Error('Opaque painted body polygon cutout workaround returned');
     if(!portraitJs.includes("PAINTED_BODY_RACES=new Set(['Veyren','Stoneborn','Aelari'])")||!portraitJs.includes('PAINTED_BODY_STANDARD=Object.freeze({width:512,height:896,footY:842,version:1})')||!portraitJs.includes('usesPaintedBody:usesPaintedBody'))throw new Error('Painted full-body standard contract is incomplete');
+    if(portraitJs.indexOf("if(painted&&PAINTED_BODY_RACES.has(painted)){")>portraitJs.indexOf("if(!WORLD_AVATAR_CLASSES.has(klass))return'';"))throw new Error('Painted full-body rendering is incorrectly gated by the legacy vector class whitelist');
     if(!portraitJs.includes('data-painted-body')||!portraitJs.includes('data-body-standard')||!portraitJs.includes('cb-painted-body-'))throw new Error('Painted body normalization metadata is missing');
     if(!portraitJs.includes("+'/'+file+'?v=4'"))throw new Error('Painted character binary asset cache version is stale');
     const bodyReport=JSON.parse(fs.readFileSync(path.join(__dirname,'assets-src/characters/v2/full-body-normalization.json'),'utf8'));
