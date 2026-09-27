@@ -501,3 +501,94 @@ body.inn-character-open{overflow:hidden}
 @media(prefers-reduced-motion:reduce){
   .inn-scene-object.is-selected .inn-object-glow{animation:none!important}
 }
+
+
+/* ==========================================================================
+   Inn Actor Staging V3
+   Characters use the room's actual prop depth. The Bar sits at z46 and the
+   Party Table at z74, so dedicated slots can be naturally occluded by them.
+   ========================================================================== */
+.inn-adventurer{
+  width:104px;
+  height:80px;
+  min-height:80px
+}
+.inn-adventurer:before{
+  bottom:15px;
+  width:72px;
+  height:11px;
+  opacity:.82
+}
+.inn-figure{
+  bottom:18px;
+  width:118px;
+  height:208px;
+  scale:var(--inn-scale-wide,.94);
+  transform-origin:50% 100%
+}
+.inn-illustrated-model,
+.inn-fallback-model{width:104px}
+.inn-illustrated-model .inn-figure{width:118px;height:208px}
+.inn-illustrated-model .cb-world-avatar-illustrated{
+  width:118px!important;
+  height:208px!important;
+  filter:drop-shadow(0 12px 9px rgba(0,0,0,.56)) drop-shadow(0 1px 1px rgba(0,0,0,.72))
+}
+.inn-fallback-model .cb-world-avatar,
+.inn-fallback-model .cb-paper-doll{
+  width:112px!important;
+  height:202px!important
+}
+.inn-name{
+  bottom:0;
+  max-width:126px;
+  padding:3px 8px;
+  font-size:11px
+}
+
+/* Characters in these slots are intentionally behind the furniture sprite.
+   Their heads/torso remain visible while the furniture hides legs cleanly. */
+.inn-zone-behind-table .inn-name{
+  bottom:184px;
+  background:rgba(16,15,13,.90)
+}
+.inn-zone-behind-bar .inn-name{
+  bottom:158px;
+  background:rgba(16,15,13,.90)
+}
+.inn-zone-background .inn-name{font-size:10px}
+.inn-zone-behind-table .inn-figure,
+.inn-zone-behind-bar .inn-figure,
+.inn-zone-background .inn-figure{filter:saturate(.97) brightness(.98)}
+.inn-zone-floor .inn-figure{filter:drop-shadow(0 0 7px rgba(242,195,111,.10))}
+.inn-traveller .inn-figure{filter:drop-shadow(0 0 8px rgba(242,195,111,.24))}
+
+/* Explicit furniture depth contract. These are deliberately adjacent to the
+   actor rules so future art changes cannot accidentally flatten the room. */
+.inn-object-door{z-index:24}
+.inn-object-bar{z-index:46}
+.inn-object-table{z-index:74}
+
+@media(max-width:600px){
+  .inn-adventurer{width:74px;height:68px;min-height:68px}
+  .inn-adventurer:before{
+    bottom:12px;
+    width:52px;
+    transform:translateX(-50%) scaleX(var(--inn-scale-phone,.90))
+  }
+  .inn-figure{
+    bottom:15px;
+    width:88px;
+    height:156px;
+    scale:var(--inn-scale-phone,.90)
+  }
+  .inn-illustrated-model,
+  .inn-fallback-model{width:74px}
+  .inn-illustrated-model .inn-figure{width:88px;height:156px}
+  .inn-illustrated-model .cb-world-avatar-illustrated{width:88px!important;height:156px!important}
+  .inn-fallback-model .cb-world-avatar,
+  .inn-fallback-model .cb-paper-doll{width:84px!important;height:150px!important}
+  .inn-name{font-size:9px;max-width:82px}
+  .inn-zone-behind-table .inn-name{bottom:139px}
+  .inn-zone-behind-bar .inn-name{bottom:121px}
+}
