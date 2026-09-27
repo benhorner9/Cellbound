@@ -1,5 +1,5 @@
-/* Cellbound Town Scene v1
-   A scene, not a menu: the visible Inn, Notice Board and Expedition Cart are the controls. */
+/* Cellbound Town Scene v2
+   Sector-based world navigation. Only a few physical destinations are visible at once. */
 
 #overview.town-scene-view{padding-top:8px!important}
 .town-scene-shell{position:relative;max-width:1460px;margin:0 auto}
@@ -7,39 +7,53 @@
   position:relative;isolation:isolate;overflow:hidden;
   aspect-ratio:1200/760;min-height:0;
   border:1px solid rgba(169,139,88,.34);
-  background:#0b1012;
-  box-shadow:0 24px 70px rgba(0,0,0,.48);
-  color:#eee3cf
+  background:#0b1012;color:#eee3cf;
+  box-shadow:0 24px 70px rgba(0,0,0,.48)
 }
 .town-scene:before{
-  content:"";position:absolute;inset:0;z-index:2;pointer-events:none;
+  content:"";position:absolute;inset:0;z-index:4;pointer-events:none;
   background:
-    linear-gradient(180deg,rgba(4,7,9,.72),transparent 22%,transparent 63%,rgba(4,6,8,.8)),
-    radial-gradient(circle at 49% 54%,transparent 30%,rgba(1,3,4,.38) 100%);
+    linear-gradient(180deg,rgba(4,7,9,.62),transparent 21%,transparent 66%,rgba(4,6,8,.72)),
+    radial-gradient(circle at 50% 52%,transparent 31%,rgba(1,3,4,.3) 100%)
 }
-.town-scene-art{
-  position:absolute;inset:0;z-index:1;width:100%;height:100%;
-  transition:transform .42s cubic-bezier(.2,.75,.25,1),filter .32s ease;
-  transform-origin:48% 62%
+
+/* Four full-width districts sit on one horizontal camera track. */
+.town-sector-viewport{position:absolute;inset:0;z-index:1;overflow:hidden}
+.town-sector-track{
+  display:flex;width:400%;height:100%;
+  transform:translateX(0%);
+  transition:transform .5s cubic-bezier(.22,.72,.24,1);
+  will-change:transform
 }
-.town-scene.is-travelling .town-scene-art{transform:scale(1.04);filter:brightness(.7)}
+.town-sector{
+  position:relative;flex:0 0 25%;width:25%;height:100%;overflow:hidden;
+  background:#101719
+}
+.town-sector-art{position:absolute;inset:0;width:100%;height:100%;display:block}
+.town-sector:after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,#05090c2e,transparent 22%,transparent 67%,#0507084f)
+}
+.town-scene.is-travelling .town-sector-track{filter:brightness(.78)}
+.town-scene.is-sector-travelling .town-sector-track{filter:brightness(.9)}
+
 .town-scene-town-title{
-  position:absolute;z-index:5;left:24px;top:20px;max-width:390px;
+  position:absolute;z-index:8;left:24px;top:20px;max-width:430px;
   padding:10px 13px 12px;border-left:2px solid rgba(207,169,99,.65);
-  background:linear-gradient(90deg,rgba(7,11,13,.82),rgba(7,11,13,.08));
+  background:linear-gradient(90deg,rgba(7,11,13,.88),rgba(7,11,13,.12));
   pointer-events:none
 }
 .town-scene-town-title small{display:block;color:#bc9a61;font-size:.54rem;font-weight:900;letter-spacing:.17em}
 .town-scene-town-title h2{margin:3px 0 2px;font:400 clamp(1.9rem,3vw,3.2rem)/1 Georgia,serif;color:#f0e5d0}
-.town-scene-town-title p{margin:0;color:#a99f90;font-size:.68rem;line-height:1.45}
+.town-scene-town-title p{margin:0;color:#b7ad9a;font-size:.68rem;line-height:1.45}
 .town-scene-hint{
-  position:absolute;z-index:5;left:50%;bottom:13px;transform:translateX(-50%);
+  position:absolute;z-index:8;left:50%;bottom:13px;transform:translateX(-50%);
   margin:0;padding:6px 10px;border:1px solid rgba(169,139,88,.22);
-  background:rgba(10,14,14,.83);color:#b5a991;font-size:.58rem;letter-spacing:.04em;
+  background:rgba(10,14,14,.86);color:#b5a991;font-size:.58rem;letter-spacing:.04em;
   pointer-events:none;white-space:nowrap
 }
 
-/* Actual illustrated objects are the hit areas. No rectangular nav buttons. */
+/* Actual illustrated objects are the controls. */
 .town-location{cursor:pointer;outline:none;transform-box:fill-box;transform-origin:center;transition:filter .16s ease,transform .16s ease}
 .town-location .town-object-shape{transition:filter .16s ease,opacity .16s ease}
 .town-location .town-object-outline{
@@ -48,15 +62,21 @@
 }
 .town-location:hover,.town-location:focus-visible{filter:brightness(1.12) saturate(1.06)}
 .town-location:hover .town-object-outline,.town-location:focus-visible .town-object-outline{opacity:.5}
-.town-location.is-selected{filter:brightness(1.18) saturate(1.08) drop-shadow(0 8px 9px rgba(0,0,0,.5))}
-.town-location.is-selected .town-object-outline{opacity:.92}
+.town-location.is-selected{filter:brightness(1.2) saturate(1.09) drop-shadow(0 8px 9px rgba(0,0,0,.5))}
+.town-location.is-selected .town-object-outline{opacity:.96}
 .town-location.is-selected .town-object-shape{filter:drop-shadow(0 0 7px rgba(218,171,83,.22))}
 .town-location:focus-visible .town-object-outline{stroke:#f6d694;opacity:1}
 
-/* Bottom contextual card appears only after selection. */
+/* Roads between districts use a slightly cooler selection edge so they read as travel. */
+.town-location[data-town-object$="Road"] .town-object-outline,
+.town-location[data-town-object^="squareFrom"] .town-object-outline{stroke:#bad0c3}
+.town-location[data-town-object$="Road"].is-selected,
+.town-location[data-town-object^="squareFrom"].is-selected{filter:brightness(1.16) saturate(1.03) drop-shadow(0 8px 8px rgba(0,0,0,.45))}
+
+/* Contextual panel appears only after the player selects something. */
 .town-selection-panel[hidden]{display:none!important}
 .town-selection-panel{
-  position:absolute;z-index:9;left:50%;bottom:46px;transform:translateX(-50%);
+  position:absolute;z-index:12;left:50%;bottom:46px;transform:translateX(-50%);
   width:min(680px,calc(100% - 32px));display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;
   padding:13px 14px 13px 17px;border:1px solid rgba(207,172,103,.54);
   background:linear-gradient(180deg,rgba(28,27,23,.97),rgba(14,17,17,.98));
@@ -74,19 +94,38 @@
 }
 .town-selection-panel button:hover,.town-selection-panel button:focus-visible{border-color:#edc77b;background:#574326}
 
-/* Notice Board focus scene. */
+/* The party briefly walks across the bottom of the screen during district travel. */
+.town-travel-party{
+  position:absolute;z-index:10;left:45%;bottom:54px;display:flex;align-items:end;gap:4px;
+  opacity:0;pointer-events:none;transform:translateX(-50%)
+}
+.town-travel-hero{
+  display:grid;place-items:center;width:28px;height:32px;border:1px solid #c7ad7b7d;
+  border-radius:45% 45% 38% 38%;overflow:hidden;background:#172126;
+  box-shadow:0 5px 7px #0009;animation-delay:calc(var(--travel-order)*-.04s)
+}
+.town-travel-hero .cb-portrait,.town-travel-hero svg{width:100%!important;height:100%!important}
+.town-travel-hero b{font:800 10px system-ui;color:#e7d8ba}
+.town-scene.is-sector-travelling .town-travel-party{opacity:1}
+.town-scene[data-travel-direction="forward"].is-sector-travelling .town-travel-party{animation:townPartyForward .5s ease both}
+.town-scene[data-travel-direction="back"].is-sector-travelling .town-travel-party{animation:townPartyBack .5s ease both}
+.town-scene.is-sector-travelling .town-travel-hero{animation:townPartyBob .18s ease-in-out infinite alternate}
+@keyframes townPartyForward{from{transform:translateX(-75%);opacity:0}35%{opacity:1}to{transform:translateX(15%);opacity:0}}
+@keyframes townPartyBack{from{transform:translateX(15%);opacity:0}35%{opacity:1}to{transform:translateX(-75%);opacity:0}}
+@keyframes townPartyBob{to{translate:0 -3px}}
+
+/* Notice Board focus remains a close-up of the real board in Central Square. */
 .town-board-focus[hidden]{display:none!important}
 .town-board-focus{
   position:absolute;inset:0;z-index:30;display:grid;place-items:center;padding:18px;
   opacity:0;transition:opacity .28s ease
 }
 .town-board-focus.is-visible{opacity:1}
-.town-board-backdrop{position:absolute;inset:0;background:rgba(3,5,6,.74);backdrop-filter:blur(2px)}
-.town-board-open .town-scene-art{transform:scale(1.3) translate(1%,-4%);filter:brightness(.45) blur(.4px)}
+.town-board-backdrop{position:absolute;inset:0;background:rgba(3,5,6,.76);backdrop-filter:blur(2px)}
+.town-board-open .town-sector[data-town-sector="square"] .town-sector-art{transform:scale(1.24) translate(1%,-3%);filter:brightness(.45) blur(.4px)}
 .town-board-frame{
   position:relative;z-index:2;width:min(1220px,100%);height:min(760px,calc(100% - 10px));
-  overflow:auto;padding:22px 24px 26px;
-  border:12px solid #2c2118;border-radius:4px;
+  overflow:auto;padding:22px 24px 26px;border:12px solid #2c2118;border-radius:4px;
   background:
     linear-gradient(90deg,rgba(97,62,35,.22),transparent 22%,rgba(73,45,26,.18)),
     repeating-linear-gradient(93deg,#6e5138 0 3px,#75573c 3px 7px,#62472f 7px 12px);
@@ -98,8 +137,7 @@
 }
 .town-board-toolbar{
   position:sticky;top:-22px;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;
-  margin:-22px -24px 18px;padding:12px 14px;
-  border-bottom:1px solid rgba(219,186,125,.36);
+  margin:-22px -24px 18px;padding:12px 14px;border-bottom:1px solid rgba(219,186,125,.36);
   background:rgba(24,18,14,.96);backdrop-filter:blur(5px)
 }
 .town-board-toolbar div small{display:block;color:#aa8b55;font-size:.48rem;font-weight:900;letter-spacing:.15em}
@@ -108,10 +146,10 @@
 .town-board-toolbar button:hover,.town-board-toolbar button:focus-visible{border-color:#dbb671;background:#382b1d}
 .town-board-quest-mount{position:relative;z-index:3}
 
-/* Re-skin the live quest UI when it is physically mounted on the board. */
+/* Re-skin the live quest UI as pinned notices. */
 .town-board-quest-mount>.section-intro.quest-intro{
   margin:0 0 15px;padding:12px 14px;border:1px solid rgba(71,48,31,.6);
-  background:rgba(219,202,164,.88);color:#281c14;box-shadow:3px 5px 0 rgba(37,23,14,.26);
+  background:rgba(219,202,164,.9);color:#281c14;box-shadow:3px 5px 0 rgba(37,23,14,.26);
   transform:rotate(-.25deg)
 }
 .town-board-quest-mount>.section-intro.quest-intro small,
@@ -123,7 +161,7 @@
   gap:16px;align-items:start
 }
 .town-board-quest-mount .panel{
-  border:1px solid rgba(65,43,29,.7)!important;background:rgba(226,210,174,.94)!important;
+  border:1px solid rgba(65,43,29,.7)!important;background:rgba(226,210,174,.95)!important;
   color:#302117!important;box-shadow:4px 6px 0 rgba(33,21,13,.24)!important
 }
 .town-board-quest-mount .quest-journal-nav{padding:14px!important;transform:rotate(-.35deg)}
@@ -141,39 +179,34 @@
 }
 .town-board-quest-mount .quest-v2-list-card:nth-child(even){transform:rotate(.45deg)}
 .town-board-quest-mount .quest-v2-list-card:before{
-  content:"";position:absolute;left:50%;top:-5px;width:9px;height:9px;border-radius:50%;background:#6e4a2e;
-  box-shadow:0 1px 2px #0008
+  content:"";position:absolute;left:50%;top:-5px;width:9px;height:9px;border-radius:50%;background:#6e4a2e;box-shadow:0 1px 2px #0008
 }
 .town-board-quest-mount .quest-v2-list-card.selected{outline:2px solid #7c4c27;outline-offset:1px;background:#efdcb4!important}
 .town-board-quest-mount .quest-v2-list-card small,
 .town-board-quest-mount .quest-v2-list-card b,
 .town-board-quest-mount .quest-v2-list-card em{color:#352319!important}
 .town-board-quest-mount .quest-v2-icon{color:#674326!important}
-.town-board-quest-mount :is(.quest-v3-hero,.quest-v3-story,.quest-v3-clue,.quest-v3-known,.quest-detail-action,.quest-journal-side section){
-  color:#302117!important
-}
+.town-board-quest-mount :is(.quest-v3-hero,.quest-v3-story,.quest-v3-clue,.quest-v3-known,.quest-detail-action,.quest-journal-side section){color:#302117!important}
 .town-board-quest-mount :is(.quest-v3-hero h2,.quest-v3-clue h3,.quest-journal-side b,.quest-journal-side p,.quest-v3-known p,.quest-v3-story p){color:#302117!important}
 .town-board-quest-mount :is(.quest-v3-hero small,.quest-v3-clue small,.quest-v3-section-head span,.quest-journal-side small){color:#6c492e!important}
-.town-board-quest-mount button:not(.quest-tabs button):not(.quest-v2-list-card){
-  border-color:#795636!important;background:#5b3d26!important;color:#f2dfbc!important
-}
+.town-board-quest-mount button:not(.quest-tabs button):not(.quest-v2-list-card){border-color:#795636!important;background:#5b3d26!important;color:#f2dfbc!important}
 
-/* Preserve old Home widgets invisibly so existing state renderers remain authoritative. */
 .town-legacy-home[hidden]{display:none!important}
 
 @media(max-width:1000px){
-  .town-scene{min-height:0}
   .town-board-quest-mount .quest-journal-shell{grid-template-columns:210px minmax(0,1fr)}
   .town-board-quest-mount .quest-journal-side{grid-column:1/-1;transform:none}
 }
 @media(max-width:720px){
   #overview.town-scene-view{padding-top:6px!important}
-  .town-scene{min-height:0;aspect-ratio:1200/760;border-left:0;border-right:0;margin:0 -10px}
+  .town-scene{aspect-ratio:1200/760;border-left:0;border-right:0;margin:0 -10px}
   .town-scene.town-board-open{min-height:690px;aspect-ratio:auto}
-  .town-scene-town-title{left:13px;top:12px;max-width:74%;padding:8px 9px 9px}.town-scene-town-title h2{font-size:1.8rem}.town-scene-town-title p{font-size:.58rem}
-  .town-scene-hint{bottom:8px;font-size:.5rem;max-width:84%;overflow:hidden;text-overflow:ellipsis}
-  .town-selection-panel{bottom:35px;width:calc(100% - 18px);grid-template-columns:1fr;padding:10px 11px;gap:9px}
+  .town-scene-town-title{left:13px;top:12px;max-width:76%;padding:8px 9px 9px}
+  .town-scene-town-title h2{font-size:1.72rem}.town-scene-town-title p{font-size:.57rem}
+  .town-scene-hint{bottom:8px;font-size:.48rem;max-width:86%;overflow:hidden;text-overflow:ellipsis}
+  .town-selection-panel{bottom:34px;width:calc(100% - 18px);grid-template-columns:1fr;padding:10px 11px;gap:9px}
   .town-selection-copy h3{font-size:1rem}.town-selection-copy p{font-size:.6rem}.town-selection-panel button{width:100%}
+  .town-travel-party{bottom:42px}.town-travel-hero{width:23px;height:27px}
   .town-board-focus{padding:0}
   .town-board-frame{width:100%;height:100%;border-width:7px;border-radius:0;padding:14px}
   .town-board-toolbar{top:-14px;margin:-14px -14px 12px;padding:9px 10px}
@@ -183,12 +216,12 @@
   .town-board-quest-mount .quest-journal-nav,.town-board-quest-mount .quest-journal-detail,.town-board-quest-mount .quest-journal-side{transform:none}
   .town-board-quest-mount .quest-journal-list{display:grid;grid-template-columns:1fr 1fr;gap:7px}
   .town-board-quest-mount .quest-v2-list-card{margin:0!important;min-height:90px!important}
-  .town-board-open .town-scene-art{transform:scale(1.45) translate(2%,-4%)}
 }
 @media(max-width:420px){
   .town-scene.town-board-open{min-height:640px}
   .town-board-quest-mount .quest-journal-list{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){
-  .town-scene-art,.town-location,.town-object-outline,.town-object-shape,.town-board-focus{transition:none!important}
+  .town-sector-track,.town-location,.town-object-outline,.town-object-shape,.town-board-focus{transition:none!important}
+  .town-travel-party,.town-travel-hero{animation:none!important}
 }
