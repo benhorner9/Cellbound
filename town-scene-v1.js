@@ -89,6 +89,7 @@ function restoreQuests(){
 function closeBoard({focus=true}={}){
   if(!boardOpen)return;
   boardOpen=false;
+  board.classList.remove('is-visible');
   board.hidden=true;
   root.classList.remove('town-board-open');
   document.body.classList.remove('town-board-focus-open');
@@ -158,9 +159,6 @@ root.addEventListener('click',e=>{
   backgroundClick(e);
 });
 root.addEventListener('keydown',keyboardObject);
-panel?.addEventListener('click',e=>{
-  const b=e.target.closest('[data-enter-town-object]');if(b)enter(b.dataset.enterTownObject);
-});
 boardClose?.addEventListener('click',()=>closeBoard());
 board?.addEventListener('click',e=>{if(e.target===board||e.target.closest('[data-town-board-backdrop]'))closeBoard()});
 window.addEventListener('keydown',e=>{
