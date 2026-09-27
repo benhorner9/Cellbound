@@ -553,3 +553,116 @@
   .town-cartoon-stage .town-landmark-direction-flag{left:65.8%;top:61.1%;width:15.2%}
   .town-cartoon-stage .town-landmark-direction-board{left:65.8%;top:76.8%;width:13.8%}
 }
+
+
+/* Merchant Quarter v2 · modular cartoon district */
+.town-merchant-quarter{background:#17353c}
+.town-merchant-stage{
+  position:absolute;inset:0;z-index:1;isolation:isolate;overflow:hidden;
+  background:#17353c
+}
+.town-merchant-world{
+  position:absolute;inset:0;z-index:1;width:100%;height:100%;display:block;
+  object-fit:cover;object-position:center;
+  pointer-events:none;user-select:none;-webkit-user-drag:none
+}
+.mq-building{
+  position:absolute;z-index:4;pointer-events:none;isolation:isolate;
+  transform-origin:center bottom
+}
+.mq-building>img{
+  position:absolute;inset:0;width:100%;height:100%;display:block;
+  object-fit:contain;object-position:center bottom;pointer-events:none
+}
+.mq-building-glow{
+  z-index:1;opacity:0;transform:scale(1.035);
+  filter:
+    brightness(0) saturate(100%) invert(78%) sepia(59%) saturate(1105%)
+    hue-rotate(342deg) brightness(105%) contrast(96%) blur(13px);
+  transition:opacity .2s ease,transform .22s ease
+}
+.mq-building-art{
+  z-index:2;filter:brightness(1) saturate(1) drop-shadow(0 16px 12px rgba(7,15,13,.28));
+  transition:filter .2s ease,transform .22s ease
+}
+.mq-building.is-selected{z-index:8}
+.mq-building.is-selected .mq-building-glow{opacity:.82;transform:scale(1.065)}
+.mq-building.is-selected .mq-building-art{
+  transform:translateY(-2px) scale(1.012);
+  filter:brightness(1.075) saturate(1.07) drop-shadow(0 18px 15px rgba(7,15,13,.35))
+}
+.mq-building-square{left:-2.2%;top:17.2%;width:21.6%;aspect-ratio:330/470;z-index:3}
+.mq-building-market{left:10.5%;top:22.8%;width:39.2%;aspect-ratio:560/550;z-index:5}
+.mq-building-forge{left:39.9%;top:15.4%;width:35.7%;aspect-ratio:480/560;z-index:6}
+.mq-building-vault{left:69.2%;top:18.4%;width:32.8%;aspect-ratio:450/535;z-index:4}
+.town-merchant-hotspots{
+  position:absolute;inset:0;z-index:20;width:100%;height:100%;display:block;overflow:visible
+}
+.town-merchant-hotspots .town-painted-hit{
+  fill:rgba(255,255,255,.001);stroke:transparent;pointer-events:all
+}
+.town-merchant-stage:has([data-town-object="squareFromMerchant"]:hover) .mq-building-square .mq-building-art,
+.town-merchant-stage:has([data-town-object="squareFromMerchant"]:focus-visible) .mq-building-square .mq-building-art,
+.town-merchant-stage:has([data-town-object="market"]:hover) .mq-building-market .mq-building-art,
+.town-merchant-stage:has([data-town-object="market"]:focus-visible) .mq-building-market .mq-building-art,
+.town-merchant-stage:has([data-town-object="forge"]:hover) .mq-building-forge .mq-building-art,
+.town-merchant-stage:has([data-town-object="forge"]:focus-visible) .mq-building-forge .mq-building-art,
+.town-merchant-stage:has([data-town-object="vault"]:hover) .mq-building-vault .mq-building-art,
+.town-merchant-stage:has([data-town-object="vault"]:focus-visible) .mq-building-vault .mq-building-art{
+  filter:brightness(1.055) saturate(1.045) drop-shadow(0 18px 14px rgba(7,15,13,.32))
+}
+.town-merchant-stage:has([data-town-object="squareFromMerchant"]:hover) .mq-building-square .mq-building-glow,
+.town-merchant-stage:has([data-town-object="squareFromMerchant"]:focus-visible) .mq-building-square .mq-building-glow,
+.town-merchant-stage:has([data-town-object="market"]:hover) .mq-building-market .mq-building-glow,
+.town-merchant-stage:has([data-town-object="market"]:focus-visible) .mq-building-market .mq-building-glow,
+.town-merchant-stage:has([data-town-object="forge"]:hover) .mq-building-forge .mq-building-glow,
+.town-merchant-stage:has([data-town-object="forge"]:focus-visible) .mq-building-forge .mq-building-glow,
+.town-merchant-stage:has([data-town-object="vault"]:hover) .mq-building-vault .mq-building-glow,
+.town-merchant-stage:has([data-town-object="vault"]:focus-visible) .mq-building-vault .mq-building-glow{opacity:.34}
+.mq-building-forge .mq-smoke{
+  position:absolute;z-index:3;left:69%;top:2%;
+  width:11%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,rgba(221,231,224,.45),rgba(118,136,131,.24) 48%,transparent 72%);
+  filter:blur(1px);opacity:0;
+  animation:mqSmoke 4.8s ease-in-out infinite
+}
+.mq-building-forge .mq-smoke-b{left:73%;top:-2%;width:13%;animation-delay:-1.7s}
+.mq-building-forge .mq-smoke-c{left:67%;top:-6%;width:15%;animation-delay:-3.1s}
+@keyframes mqSmoke{
+  0%{opacity:0;transform:translate(0,14px) scale(.68)}
+  24%{opacity:.52}
+  100%{opacity:0;transform:translate(18px,-58px) scale(1.48)}
+}
+.mq-life{position:absolute;inset:0;z-index:9;pointer-events:none}
+.mq-mote{
+  position:absolute;width:3px;height:3px;border-radius:50%;background:#ffd37b;
+  box-shadow:0 0 8px rgba(255,180,78,.68);opacity:.16;
+  animation:mqMote 4.4s ease-in-out infinite alternate
+}
+.mq-mote-1{left:31%;top:58%;animation-delay:-.6s}
+.mq-mote-2{left:47%;top:63%;animation-delay:-1.8s}
+.mq-mote-3{left:58%;top:54%;animation-delay:-2.7s}
+.mq-mote-4{left:76%;top:60%;animation-delay:-1.1s}
+.mq-mote-5{left:87%;top:50%;animation-delay:-3.4s}
+@keyframes mqMote{to{transform:translate(8px,-14px);opacity:.7}}
+.town-scene[data-town-sector="merchant"] .town-scene-town-title{
+  border-left-color:rgba(232,176,89,.78);
+  background:linear-gradient(90deg,rgba(10,23,22,.86),rgba(10,23,22,.1))
+}
+.town-scene[data-town-sector="merchant"] .town-scene-town-title small{color:#e4b66c}
+.town-scene[data-town-sector="merchant"] .town-scene-hint{
+  background:rgba(11,27,25,.76);border-color:rgba(222,174,93,.34);backdrop-filter:blur(4px)
+}
+@media(max-width:720px){
+  .mq-building-square{left:-3.4%;top:18%;width:23%}
+  .mq-building-market{left:8.6%;top:24%;width:41.4%}
+  .mq-building-forge{left:39%;top:16.4%;width:37.2%}
+  .mq-building-vault{left:68.2%;top:20%;width:34.2%}
+  .mq-building-glow{filter:
+    brightness(0) saturate(100%) invert(78%) sepia(59%) saturate(1105%)
+    hue-rotate(342deg) brightness(105%) contrast(96%) blur(9px)}
+}
+@media(prefers-reduced-motion:reduce){
+  .mq-building-glow,.mq-building-art{transition:none!important}
+  .mq-smoke,.mq-mote{animation:none!important;opacity:0!important}
+}
