@@ -130,7 +130,10 @@ function stageMarkup(config){
     '<button type="button" class="cb-venue-town" data-venue-town>← Return to Town</button>'+
     '<div class="cb-venue-actors">'+config.actors.map(actorMarkup).join('')+'</div>'+
     '<aside class="cb-venue-dialogue" data-venue-dialogue hidden aria-live="polite"><div><small data-venue-role></small><h3 data-venue-name></h3><p data-venue-copy></p></div><button type="button" data-venue-action></button></aside>'+
-    '<div class="cb-venue-system-bar" data-venue-system-bar hidden><button type="button" data-venue-back>← Back to '+esc(config.name)+'</button><div><small>YOU ARE IN</small><b data-venue-system-name>'+esc(config.name)+'</b></div><button type="button" data-venue-town>Return to Town →</button></div>'+
+    '<section class="cb-venue-system-surface" data-venue-system-surface hidden aria-label="'+esc(config.name)+' interface">'+
+      '<div class="cb-venue-system-bar" data-venue-system-bar><button type="button" data-venue-back>← Back to '+esc(config.name)+'</button><div><small>INTERACTING WITH</small><b data-venue-system-name>'+esc(config.name)+'</b></div><button type="button" data-venue-town>Return to Town →</button></div>'+
+      '<div class="cb-venue-system-slot" data-venue-system-slot></div>'+
+    '</section>'+
   '</section>';
 }
 
@@ -164,12 +167,19 @@ function selectActor(entry,id){
   host.dataset.venueState='arrival';
 }
 
+function restoreSystem(entry){
+  if(!entry.portalNodes?.length)return;
+  entry.portalNodes.forEach(node=>entry.host.appendChild(node));
+  entry.portalNodes=[];
+  const surface=entry.stage.querySelector('[data-venue-system-surface]');
+  if(surface)surface.hidden=true;
+}
 function resetArrival(entry){
+  restoreSystem(entry);
   entry.selected='';
   entry.host.dataset.venueState='arrival';
   delete entry.host.dataset.venueActor;
   entry.stage.querySelector('[data-venue-dialogue]').hidden=true;
-  entry.stage.querySelector('[data-venue-system-bar]').hidden=true;
   entry.stage.querySelectorAll('[data-venue-actor]').forEach(n=>{n.classList.remove('is-selected');n.setAttribute('aria-pressed','false')});
 }
 
@@ -187,19 +197,26 @@ function openSystem(entry,id){
   const {host,config,stage,view}=entry;
   const actor=config.actors.find(a=>a.id===id);
   if(!actor)return;
+  restoreSystem(entry);
+  markSystemChildren(host);
   entry.selected=id;
   host.dataset.venueState='system';
   host.dataset.venueActor=id;
   stage.querySelector('[data-venue-dialogue]').hidden=true;
+  const surface=stage.querySelector('[data-venue-system-surface]');
+  const slot=stage.querySelector('[data-venue-system-slot]');
   const bar=stage.querySelector('[data-venue-system-bar]');
-  bar.hidden=false;
+  const nodes=[...host.children].filter(node=>node!==stage && node.classList?.contains('cb-venue-system-content'));
+  entry.portalNodes=nodes;
+  nodes.forEach(node=>slot.appendChild(node));
+  surface.hidden=false;
   bar.querySelector('[data-venue-system-name]').textContent=actor.name+' · '+actor.role;
   clickTab(view,actor);
   if(actor.focus){
     requestAnimationFrame(()=>setTimeout(()=>{
-      const target=host.querySelector(actor.focus);
-      target?.scrollIntoView?.({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
-    },40));
+      const target=slot.querySelector(actor.focus)||host.querySelector(actor.focus);
+      target?.scrollIntoView?.({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});
+    },60));
   }
 }
 
@@ -219,7 +236,7 @@ function install(view,config){
   stage.innerHTML=stageMarkup(config);
   const stageEl=stage.firstElementChild;
   host.insertBefore(stageEl,host.firstChild);
-  const entry={view,host,config,stage:stageEl,selected:''};
+  const entry={view,host,config,stage:stageEl,selected:'',portalNodes:[]};
   installed.set(view,entry);
 
   stageEl.addEventListener('click',e=>{
@@ -267,7 +284,7 @@ window.addEventListener('cellbound:state-rendered',()=>{
 });
 
 window.CellboundWorldVenues={
-  version:'1.0.0',
+  version:'1.1.0',
   venues:VENUES,
   open(view,actorId){const entry=installed.get(view);if(entry)openSystem(entry,actorId)},
   back(view){const entry=installed.get(view);if(entry)resetArrival(entry)},
