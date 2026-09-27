@@ -140,7 +140,7 @@ function creatorPreviewEquipment(klass){
 function creatorModelHTML(subject,size='creator'){
   const c={...(subject||{})};
   c.equipment=c.equipment||creatorPreviewEquipment(c.class);
-  return CP?.creatorFigureHTML?.(c,{size,label:(c.name||c.race||'Character')+' illustrated creator preview'})||CP?.paperDollHTML?.(c,{size,label:(c.name||c.race||'Character')+' full body preview'})||portraitHTML(c,'lg');
+  return CP?.characterModelHTML?.(c,{size,label:(c.name||c.race||'Character')+' illustrated creator preview'})||CP?.creatorFigureHTML?.(c,{size,label:(c.name||c.race||'Character')+' illustrated creator preview'})||portraitHTML(c,'lg');
 }
 function creatorClassOptions(role){
   const order=(G?.CLASS_ORDER||Object.keys(Game?.classes||{})).filter(klass=>Game?.classes?.[klass]);

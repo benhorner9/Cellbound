@@ -332,7 +332,8 @@
   background:transparent!important;
 }
 .cb-paper-doll-illustrated .cb-illustrated-character-svg,
-.cb-world-avatar-illustrated .cb-illustrated-character-svg{
+.cb-world-avatar-illustrated .cb-illustrated-character-svg,
+.cb-world-avatar-illustrated .cb-creator-figure-svg{
   display:block;
   width:100%;
   height:100%;

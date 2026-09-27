@@ -866,31 +866,12 @@ function worldAvatarBody(klass,pal,tier,set){
 }
 function worldAvatarSVG(c,opts){
   opts=opts||{};
-  var klass=paperClass(c);
-  if(!WORLD_AVATAR_CLASSES.has(klass))return'';
-  var race=c.race||(c.appearance&&c.appearance.race)||'Veyren';
-  var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race),r=raceDef(a.race);
-  var skin=r.skin[a.skinTone],eye=r.eyes[a.eyes],hair=HAIR[a.hairColor];
-  var chest=itemForSlot(c,'Chest')||itemForSlot(c,'Shoulders')||itemForSlot(c,'Weapon');
-  var tier=worldAvatarTier(c),pal=gearPalette(c,chest,tier,'Chest'),set=dominantSetState(c);
-  var accent=set&&set.visual?set.visual.glow:paperAccent(c);
-  var uid='wa'+hash((c.id||c.name||race)+'|'+JSON.stringify(a)+'|'+tier+'|'+worldAvatarWeapon(c)).toString(36);
-  return '<svg viewBox="0 0 240 420" role="img" aria-hidden="true" focusable="false" data-world-svg="'+esc(klass)+'">'+
-    '<defs>'+
-      '<linearGradient id="cbw-face-light" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".5"/><stop offset=".55" stop-color="#fff" stop-opacity="0"/></linearGradient>'+
-      '<radialGradient id="'+uid+'g" cx="45%" cy="43%" r="55%"><stop offset="0" stop-color="'+accent+'" stop-opacity=".18"/><stop offset=".7" stop-color="'+accent+'" stop-opacity=".025"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>'+
-      '<filter id="'+uid+'ink" x="-30%" y="-20%" width="160%" height="150%"><feTurbulence type="fractalNoise" baseFrequency=".018" numOctaves="2" seed="'+(hash(uid)%99)+'" result="noise"/><feDisplacementMap in="SourceGraphic" in2="noise" scale=".7" xChannelSelector="R" yChannelSelector="G"/></filter>'+
-    '</defs>'+
-    '<ellipse cx="120" cy="397" rx="72" ry="12" fill="#050505" opacity=".62"/>'+
-    '<ellipse cx="120" cy="217" rx="112" ry="184" fill="url(#'+uid+'g)"/>'+
-    '<g filter="url(#'+uid+'ink)">'+
-      paperWeapon(c,'')+paperOffHand(c,'')+
-      worldAvatarBody(klass,pal,tier,set)+
-      '<path d="M108 108 L108 145 Q120 152 132 145 L132 108Z" fill="'+skin+'" stroke="#0a0c0e" stroke-width="3"/>'+
-      '<g transform="translate(70 23)">'+worldAvatarHead(c,a,skin,eye,hair,pal,tier,klass)+'</g>'+
-    '</g>'+
-    (set&&set.count>=2?'<ellipse cx="120" cy="398" rx="'+(set.count>=4?86:77)+'" ry="'+(set.count>=4?18:14)+'" fill="none" stroke="'+set.visual.glow+'" stroke-width="'+(set.count>=4?3:2)+'" opacity="'+(set.count>=4?.55:.3)+'"/>':'')+
-    '</svg>';
+  // World actors now use the exact same illustrated model renderer as Character Creation.
+  return creatorFigureSVG(c||{});
+}
+function characterModelHTML(subject,opts){
+  // Canonical playable-character model. Creation, Town and Inn all resolve here.
+  return creatorFigureHTML(subject||{},opts||{});
 }
 function worldAvatarHTML(subject,opts){
   opts=opts||{};
@@ -900,7 +881,7 @@ function worldAvatarHTML(subject,opts){
   var label=opts.label||((c.name||'Character')+' world appearance');
   var tier=worldAvatarTier(c),weapon=worldAvatarWeapon(c),signature=illustratedSignature(c);
   var appearanceKey=hash(JSON.stringify(a)).toString(36);
-  return '<span class="cb-world-avatar cb-world-avatar-illustrated cb-world-avatar--'+esc(klass.toLowerCase().replace(/[^a-z0-9]+/g,'-'))+'" role="img" aria-label="'+esc(label)+'" data-world-avatar="'+esc(klass)+'" data-avatar-class="'+esc(klass)+'" data-avatar-tier="'+tier+'" data-avatar-weapon="'+esc(weapon)+'" data-avatar-race="'+esc(a.race)+'" data-appearance-key="'+appearanceKey+'" data-model-signature="'+signature+'">'+paperDollSVG(c,Object.assign({},opts,{context:'world'}))+'</span>';
+  return '<span class="cb-world-avatar cb-world-avatar-illustrated cb-world-avatar--'+esc(klass.toLowerCase().replace(/[^a-z0-9]+/g,'-'))+'" role="img" aria-label="'+esc(label)+'" data-world-avatar="'+esc(klass)+'" data-avatar-class="'+esc(klass)+'" data-avatar-tier="'+tier+'" data-avatar-weapon="'+esc(weapon)+'" data-avatar-race="'+esc(a.race)+'" data-appearance-key="'+appearanceKey+'" data-model-signature="'+signature+'">'+creatorFigureSVG({...c,appearance:a})+'</span>';
 }
 
 function paperDollHTML(subject,opts){
@@ -921,7 +902,7 @@ window.CellboundPortraits={
   version:20,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
   PAINTED_BODY_STANDARD:PAINTED_BODY_STANDARD,usesIllustratedBody:usesIllustratedBody,usesPaintedBody:usesPaintedBody,illustratedSignature:illustratedSignature,
-  applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,worldAvatarHTML:worldAvatarHTML,worldAvatarSVG:worldAvatarSVG,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
+  applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,characterModelHTML:characterModelHTML,worldAvatarHTML:worldAvatarHTML,worldAvatarSVG:worldAvatarSVG,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
   visualProfile:visualProfile,weaponType:weaponType,offHandType:offHandType,
   creatorFigureHTML:creatorFigureHTML,creatorFigureSVG:creatorFigureSVG,
   editorHTML:editorHTML,bindEditor:bindEditor
