@@ -228,6 +228,18 @@ body.inn-character-open{overflow:hidden}
 .inn-object-bar{left:52%;top:19%;width:49%;aspect-ratio:4/3;z-index:46}
 .inn-object-table{left:15%;top:50%;width:64%;aspect-ratio:4/3;z-index:74}
 
+.inn-scene-object{pointer-events:none}
+.inn-object-hit{
+  position:absolute;
+  z-index:6;
+  display:block;
+  pointer-events:auto;
+  background:rgba(255,255,255,.001)
+}
+.inn-object-door .inn-object-hit{left:10%;top:9%;right:8%;bottom:8%;clip-path:polygon(11% 0,87% 0,100% 16%,100% 100%,0 100%,0 13%)}
+.inn-object-bar .inn-object-hit{left:3%;top:27%;right:1%;bottom:4%;clip-path:polygon(0 28%,14% 4%,98% 0,100% 100%,0 100%)}
+.inn-object-table .inn-object-hit{left:7%;top:20%;right:7%;bottom:17%;clip-path:ellipse(50% 43% at 50% 43%)}
+
 .inn-object-visual{
   position:absolute;
   inset:0;
