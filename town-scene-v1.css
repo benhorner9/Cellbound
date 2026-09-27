@@ -5,7 +5,7 @@
 .town-scene-shell{position:relative;max-width:1460px;margin:0 auto}
 .town-scene{
   position:relative;isolation:isolate;overflow:hidden;
-  min-height:clamp(610px,69vw,860px);
+  aspect-ratio:1200/760;min-height:0;
   border:1px solid rgba(169,139,88,.34);
   background:#0b1012;
   box-shadow:0 24px 70px rgba(0,0,0,.48);
@@ -162,13 +162,14 @@
 .town-legacy-home[hidden]{display:none!important}
 
 @media(max-width:1000px){
-  .town-scene{min-height:650px}
+  .town-scene{min-height:0}
   .town-board-quest-mount .quest-journal-shell{grid-template-columns:210px minmax(0,1fr)}
   .town-board-quest-mount .quest-journal-side{grid-column:1/-1;transform:none}
 }
 @media(max-width:720px){
   #overview.town-scene-view{padding-top:6px!important}
-  .town-scene{min-height:690px;border-left:0;border-right:0;margin:0 -10px}
+  .town-scene{min-height:0;aspect-ratio:1200/760;border-left:0;border-right:0;margin:0 -10px}
+  .town-scene.town-board-open{min-height:690px;aspect-ratio:auto}
   .town-scene-town-title{left:13px;top:12px;max-width:74%;padding:8px 9px 9px}.town-scene-town-title h2{font-size:1.8rem}.town-scene-town-title p{font-size:.58rem}
   .town-scene-hint{bottom:8px;font-size:.5rem;max-width:84%;overflow:hidden;text-overflow:ellipsis}
   .town-selection-panel{bottom:35px;width:calc(100% - 18px);grid-template-columns:1fr;padding:10px 11px;gap:9px}
@@ -185,7 +186,7 @@
   .town-board-open .town-scene-art{transform:scale(1.45) translate(2%,-4%)}
 }
 @media(max-width:420px){
-  .town-scene{min-height:640px}
+  .town-scene.town-board-open{min-height:640px}
   .town-board-quest-mount .quest-journal-list{grid-template-columns:1fr}
 }
 @media(prefers-reduced-motion:reduce){
