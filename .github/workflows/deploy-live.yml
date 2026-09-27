@@ -40,6 +40,8 @@ jobs:
           test -f dist/auth.js
           test -f dist/guild-v4.js
           test -f dist/assets/gear/cellbound-gear-atlas.webp
+          test -f dist/assets/world/lantern-inn-cartoon-v1.webp
+          test -f dist/assets/world/lantern-inn-cartoon-portrait-v1.webp
           ! grep -R --line-number -E 'href="/|src="/' dist/*.html
 
       - name: Deploy Cellbound to shared hosting
