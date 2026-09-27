@@ -224,7 +224,7 @@ body.inn-character-open{overflow:hidden}
   isolation:isolate;
   touch-action:manipulation
 }
-.inn-object-door{left:0;top:22%;width:25%;aspect-ratio:1086/1448;z-index:28}
+.inn-object-door{left:-3.6%;top:19.4%;width:23.2%;aspect-ratio:1086/1448;z-index:24}
 .inn-object-bar{left:52%;top:19%;width:49%;aspect-ratio:4/3;z-index:46}
 .inn-object-table{left:15%;top:50%;width:64%;aspect-ratio:4/3;z-index:74}
 
@@ -236,7 +236,7 @@ body.inn-character-open{overflow:hidden}
   pointer-events:auto;
   background:rgba(255,255,255,.001)
 }
-.inn-object-door .inn-object-hit{left:10%;top:9%;right:8%;bottom:8%;clip-path:polygon(11% 0,87% 0,100% 16%,100% 100%,0 100%,0 13%)}
+.inn-object-door .inn-object-hit{left:14%;top:8%;right:5%;bottom:7%;clip-path:polygon(12% 0,86% 0,100% 16%,100% 100%,0 100%,0 13%)}
 .inn-object-bar .inn-object-hit{left:3%;top:27%;right:1%;bottom:4%;clip-path:polygon(0 28%,14% 4%,98% 0,100% 100%,0 100%)}
 .inn-object-table .inn-object-hit{left:7%;top:20%;right:7%;bottom:17%;clip-path:ellipse(50% 43% at 50% 43%)}
 
@@ -307,7 +307,7 @@ body.inn-character-open{overflow:hidden}
 }
 .inn-object-caption b{display:block;font:600 13px Georgia,serif}
 .inn-object-caption small{display:block;margin-top:2px;color:#cbb996;font:9px system-ui}
-.inn-object-door .inn-object-caption{left:48%;bottom:3%}
+.inn-object-door .inn-object-caption{left:55%;bottom:2%}
 .inn-object-bar .inn-object-caption{left:72%;bottom:8%}
 .inn-object-table .inn-object-caption{left:54%;top:38%;bottom:auto}
 .inn-scene-object:hover .inn-object-caption,
@@ -338,7 +338,7 @@ body.inn-character-open{overflow:hidden}
   transition:opacity .22s ease
 }
 .inn-world.is-leaving-to-town .inn-scene-stage{
-  transform-origin:13% 48%;
+  transform-origin:9.5% 44%;
   transform:translate(31%,-2%) scale(2.35);
   filter:brightness(.78) saturate(.94)
 }
