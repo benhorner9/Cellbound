@@ -1,0 +1,40 @@
+name: Verify character staging rework
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/verify-character-staging.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Build and verify Inn actor staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build
+        run: npm run build
+      - name: Install Playwright
+        run: |
+          npm install --no-save --package-lock=false playwright@1.51.1
+          npx playwright install --with-deps chromium webkit
+      - name: Chromium Inn staging regression
+        run: node tests/lantern-inn.browser.cjs
+      - name: WebKit Inn staging regression
+        run: CELLBOUND_TEST_ENGINE=webkit node tests/lantern-inn.browser.cjs
+      - name: Upload captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: character-staging-review
+          path: /tmp/cellbound-inn-*.png
+          if-no-files-found: ignore
