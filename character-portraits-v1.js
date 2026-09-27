@@ -189,7 +189,7 @@ function paintedRaceOf(c,a){
   return PAINTED_RACES.has(race)?race:'';
 }
 function paintedAsset(race,file){
-  return './assets/characters/v2/'+String(race).toLowerCase()+'/'+file+'?v=2';
+  return './assets/characters/v2/'+String(race).toLowerCase()+'/'+file+'?v=3';
 }
 function paintedFaceIndex(a){
   var value=Number(a?.face)||0;
@@ -820,7 +820,7 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:10,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
+  version:11,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
   applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,worldAvatarHTML:worldAvatarHTML,worldAvatarSVG:worldAvatarSVG,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
   visualProfile:visualProfile,weaponType:weaponType,offHandType:offHandType,
