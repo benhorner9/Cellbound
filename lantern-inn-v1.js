@@ -5,16 +5,17 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const game=()=>window.CellboundGame;
 // Foot positions in each independently composed environment. Reusable across locations.
 const slots={
- 'fireplace-right':{wide:[27,49],phone:[34,56]},
- 'main-table-left':{wide:[20,77],phone:[16,75]},
- 'main-table-right':{wide:[52,76],phone:[60,74]},
- 'bar-left':{wide:[68,52],phone:[73,58]},
- doorway:{wide:[13,48],phone:[13,49]},
- window:{wide:[44,38],phone:[47,35]},
- 'back-table':{wide:[55,40],phone:[55,46]},
- stairs:{wide:[91,66],phone:[92,50]},
- 'bar-right':{wide:[83,53],phone:[82,42]},
- 'fireplace-left':{wide:[16,42],phone:[25,42]}
+ // Scale is perspective: deeper room positions render smaller than foreground.
+ 'fireplace-right':{wide:[27,49],phone:[34,56],scale:.82},
+ 'main-table-left':{wide:[20,77],phone:[16,75],scale:.96},
+ 'main-table-right':{wide:[52,76],phone:[60,74],scale:.90},
+ 'bar-left':{wide:[68,52],phone:[73,58],scale:.84},
+ doorway:{wide:[13,48],phone:[13,49],scale:.78},
+ window:{wide:[44,38],phone:[47,35],scale:.64},
+ 'back-table':{wide:[55,40],phone:[55,46],scale:.68},
+ stairs:{wide:[91,66],phone:[92,50],scale:.82},
+ 'bar-right':{wide:[83,53],phone:[82,42],scale:.78},
+ 'fireplace-left':{wide:[16,42],phone:[25,42],scale:.72}
 };
 const activeSlots=['fireplace-right','main-table-right','main-table-left','bar-left','doorway'];
 const reserveSlots=['window','back-table','stairs','bar-right','fireplace-left'];
@@ -73,7 +74,7 @@ function refresh(){
   lastKey=key;const focused=document.activeElement?.dataset?.innCharacter;
   world.querySelector('.inn-inhabitants').innerHTML=assign(roster,party).map(({c,slot,active})=>{
    const s=slots[slot],body=window.CellboundPortraits?.worldAvatarHTML?.(c,{size:'inn',label:c.name})||window.CellboundPortraits?.paperDollHTML?.(c,{size:'inn',label:c.name})||window.CellboundPortraits?.portraitHTML?.(c,{size:'hero'})||esc(c.name);
-   return '<button type="button" class="inn-adventurer '+(active?'inn-traveller':'inn-resting')+'" data-char="'+esc(c.id)+'" data-inn-character="'+esc(c.id)+'" data-location-slot="'+slot+'" style="--slot-x:'+s.wide[0]+'%;--slot-y:'+s.wide[1]+'%;--phone-x:'+s.phone[0]+'%;--phone-y:'+s.phone[1]+'%;--depth:'+Math.round(s.wide[1])+'" aria-label="'+esc(c.name+', '+c.class+', '+c.spec+', '+(active?'active party':'reserve')+(Number(c.cellShock)>=100?', recovering':''))+'"><span class="inn-figure">'+body+'</span><span class="inn-name">'+esc(c.name)+'</span></button>';
+   return '<button type="button" class="inn-adventurer '+(active?'inn-traveller':'inn-resting')+'" data-char="'+esc(c.id)+'" data-inn-character="'+esc(c.id)+'" data-location-slot="'+slot+'" style="--slot-x:'+s.wide[0]+'%;--slot-y:'+s.wide[1]+'%;--phone-x:'+s.phone[0]+'%;--phone-y:'+s.phone[1]+'%;--inn-scale:'+(s.scale||1)+';--depth:'+Math.round(s.wide[1])+'" aria-label="'+esc(c.name+', '+c.class+', '+c.spec+', '+(active?'active party':'reserve')+(Number(c.cellShock)>=100?', recovering':''))+'"><span class="inn-figure">'+body+'</span><span class="inn-name">'+esc(c.name)+'</span></button>';
   }).join('');
   if(focused)[...world.querySelectorAll('[data-inn-character]')].find(n=>n.dataset.innCharacter===focused)?.focus({preventScroll:true});
  }
