@@ -622,22 +622,6 @@
   background:transparent;
   filter:saturate(.96) contrast(1.035);
 }
-/* Early V2 packs (Veyren / Stoneborn) were authored on painted plates.
-   Constrain those images to a bust silhouette so the plate can never appear
-   as a rectangle. Aelari already carries real alpha and needs no matte. */
-.cb-painted-veyren>img,
-.cb-painted-stoneborn>img,
-.cb-painted-face-picker button[data-painted-race="Veyren"] img,
-.cb-painted-face-picker button[data-painted-race="Stoneborn"] img{
-  -webkit-mask-image:
-    radial-gradient(ellipse 34% 39% at 50% 37%,#000 0 94%,transparent 100%),
-    radial-gradient(ellipse 55% 31% at 50% 87%,#000 0 92%,transparent 100%);
-  mask-image:
-    radial-gradient(ellipse 34% 39% at 50% 37%,#000 0 94%,transparent 100%),
-    radial-gradient(ellipse 55% 31% at 50% 87%,#000 0 92%,transparent 100%);
-  -webkit-mask-repeat:no-repeat;
-  mask-repeat:no-repeat;
-}
 .cb-painted-portrait:after{
   content:'';
   position:absolute;
@@ -734,14 +718,18 @@
   transform-origin:50% 100%;
 }
 
-/* Veyren and Stoneborn V2 bodies are opaque source paintings, so they are
-   never displayed as full-body image assets. Their Inn and Equipment views
-   use the transparent vector character renderer instead. Aelari is the first
-   painted body pack with real alpha and can render directly. */
+/* Every painted full-body pack is true-alpha. Contexts own the scenery;
+   race art is only the character silhouette. */
+.cb-painted-veyren-body>img,
+.cb-painted-stoneborn-body>img,
 .cb-painted-aelari-body>img{clip-path:none}
 
-/* True-alpha painted body fit. Feet remain anchored to the game-owned stage. */
+/* Race-specific fit while keeping the same foot baseline. */
+.cb-paper-doll-painted .cb-painted-veyren-body>img{transform:scale(.93)}
+.cb-paper-doll-painted .cb-painted-stoneborn-body>img{transform:scale(.96)}
 .cb-paper-doll-painted .cb-painted-aelari-body>img{transform:scale(.95)}
+.cb-world-avatar-painted.cb-world-avatar--veyren>img{transform:scale(.96)}
+.cb-world-avatar-painted.cb-world-avatar--stoneborn>img{transform:scale(.98)}
 .cb-world-avatar-painted.cb-world-avatar--aelari>img{transform:scale(.97)}
 
 .inn-figure .cb-world-avatar-painted{
@@ -762,5 +750,7 @@
 @media(max-width:720px){
   .cb-appearance-editor-painted{grid-template-columns:1fr}
   .cb-painted-face-picker>div{grid-template-columns:repeat(4,minmax(48px,1fr))}
+  .cb-paper-doll-painted .cb-painted-veyren-body>img{transform:scale(.90)}
+  .cb-paper-doll-painted .cb-painted-stoneborn-body>img{transform:scale(.93)}
   .cb-paper-doll-painted .cb-painted-aelari-body>img{transform:scale(.92)}
 }

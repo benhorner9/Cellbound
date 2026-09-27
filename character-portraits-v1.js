@@ -182,10 +182,8 @@ function svgFor(a,accent){
     '</g><rect x="2.5" y="2.5" width="95" height="95" rx="17.5" fill="none" stroke="'+accent+'" stroke-opacity=".55" stroke-width="2"/></svg>';
 }
 const PAINTED_RACES=new Set(['Veyren','Stoneborn','Aelari']);
-// Only use painted full-body art when the source really contains alpha.
-// Veyren and Stoneborn V2 were authored on opaque environment plates, so
-// their full-body contexts deliberately fall back to the clean vector model.
-const PAINTED_BODY_RACES=new Set(['Aelari']);
+// All converted painted race packs now contain real alpha.
+const PAINTED_BODY_RACES=new Set(['Veyren','Stoneborn','Aelari']);
 function paintedRaceOf(c,a){
   var race=c?.race||a?.race||c?.appearance?.race||'Veyren';
   return PAINTED_RACES.has(race)?race:'';
@@ -822,7 +820,7 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:9,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
+  version:10,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
   applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,worldAvatarHTML:worldAvatarHTML,worldAvatarSVG:worldAvatarSVG,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
   visualProfile:visualProfile,weaponType:weaponType,offHandType:offHandType,
