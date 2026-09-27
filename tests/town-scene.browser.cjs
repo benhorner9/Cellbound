@@ -41,13 +41,14 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
 
  assert.equal(await page.locator('[data-town-object]').count(),15,'Town exposes physical destinations and district roads across four sectors');
  assert.equal(await page.locator('[data-town-scene]').getAttribute('data-town-sector'),'square','Town opens in Central Square');
- assert.equal(await page.locator('.town-painted-image').count(),1,'Central Square keeps one clean painted background layer');
- assert((await page.locator('.town-painted-image image').getAttribute('href')||'').includes('assets/world/town/central-square-atlas-v2.webp'),'modular Central Square atlas is wired into the scene');
- assert.equal(await page.locator('.town-sector[data-town-sector="square"] [data-town-object]').count(),5,'painted Central Square exposes exactly five environmental destinations');
- assert.equal(await page.locator('[data-town-layer]').count(),5,'all five Central Square destinations render as independent artwork layers');
- assert.equal(await page.locator('.town-landmark-glow').count(),5,'each modular landmark owns a behind-art glow layer');
+ assert.equal(await page.locator('.town-sector[data-town-sector="square"] .town-painted-image').count(),1,'Central Square keeps one clean painted background layer');
+ assert((await page.locator('.town-sector[data-town-sector="square"] .town-painted-image').getAttribute('src')||'').includes('assets/world/town/town-square-background-v1.webp'),'clean 16:9 Town Square background is wired into the scene');
+ assert.equal(await page.locator('.town-sector[data-town-sector="square"] [data-town-object]').count(),5,'Central Square exposes exactly five environmental destinations');
+ assert.equal(await page.locator('.town-sector[data-town-sector="square"] [data-town-layer]').count(),5,'all five Central Square destinations render as independent artwork layers');
+ assert.equal(await page.locator('.town-sector[data-town-sector="square"] .town-landmark-glow').count(),5,'each modular landmark owns a behind-art glow layer');
  assert.equal(await page.locator('[data-town-sign]').count(),0,'legacy floating destination emblems are removed');
- assert.equal(await page.locator('[data-town-walkway]').count(),2,'both painted gateway walkways are part of the press targets');
+ assert.equal(await page.locator('.town-sector[data-town-sector="square"] [data-town-walkway]').count(),2,'both district arches are part of the press targets');
+ assert.equal(await page.locator('[data-town-square-party] .town-square-hero').count(),5,'the active five inhabit the centre of the Town Square');
  assert.equal(await page.locator('[data-town-quest-marker]').count(),1,'painted notice board includes one quest marker');
  assert.equal(await page.locator('[data-town-scene]').evaluate(n=>n.classList.contains('has-available-quests')),true,'open quest count lights the Town notice board marker');
  await page.evaluate(()=>{document.querySelector('#questNavBadge').textContent=''});
@@ -101,7 +102,7 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  await press('expeditionRoad');
  assert.equal(await page.locator('[data-town-selection-title]').textContent(),'Expedition Ward');
  assert.equal(await page.locator('[data-town-scene]').getAttribute('data-town-sector'),'square','first road tap only selects the district');
- await press('expeditionRoad');await page.waitForTimeout(560);
+ await press('expeditionRoad');await page.waitForTimeout(1320);
  assert.equal(await page.locator('[data-town-scene]').getAttribute('data-town-sector'),'expedition','second road tap pans into Expedition Ward');
  assert.equal(await page.locator('#overview').evaluate(n=>n.classList.contains('active')),true,'district travel stays inside Town');
  await page.screenshot({path:'/tmp/cellbound-town-scene-03-expedition.png'});
@@ -112,7 +113,7 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  assert.equal(await page.locator('#content').evaluate(n=>n.classList.contains('active')),true,'cart enters existing dungeon system');
 
  await page.evaluate(()=>window.CellboundGame.switchView('overview'));
- await press('merchantRoad');await press('merchantRoad');await page.waitForTimeout(560);
+ await press('merchantRoad');await press('merchantRoad');await page.waitForTimeout(1320);
  assert.equal(await page.locator('[data-town-scene]').getAttribute('data-town-sector'),'merchant');
  await page.screenshot({path:'/tmp/cellbound-town-scene-04-merchant.png'});
  for(const [id,title,view] of [
@@ -143,7 +144,7 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  }
 
  await page.evaluate(()=>window.CellboundGame.switchView('overview'));
- await press('harbourRoad');await press('harbourRoad');await page.waitForTimeout(560);
+ await press('harbourRoad');await press('harbourRoad');await page.waitForTimeout(1320);
  assert.equal(await page.locator('[data-town-scene]').getAttribute('data-town-sector'),'harbour');
  await page.screenshot({path:'/tmp/cellbound-town-scene-05-harbour.png'});
  await press('harbour');
