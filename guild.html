@@ -120,96 +120,63 @@
           <div class="town-sector-viewport">
             <div class="town-sector-track" data-town-sector-track>
 
-              <!-- CENTRAL SQUARE · PAINTED WORLD NAVIGATION -->
+              <!-- CENTRAL SQUARE · MODULAR PAINTED WORLD NAVIGATION -->
               <section class="town-sector town-painted-square" data-town-sector="square" aria-label="Central Square">
-                <img
-                  class="town-painted-image"
-                  src="./assets/world/town/central-square-v1.webp?v=2"
-                  alt=""
-                  aria-hidden="true"
-                  draggable="false"
-                  decoding="async"
-                >
-                <svg class="town-painted-hotspots" viewBox="0 0 1448 1086" preserveAspectRatio="xMidYMid slice" aria-label="Interactive locations in Central Square">
-                  <defs>
-                    <filter id="townOuterGlow" x="-22%" y="-22%" width="144%" height="144%" color-interpolation-filters="sRGB">
-                      <feMorphology in="SourceAlpha" operator="dilate" radius="2.5" result="spread"/>
-                      <feGaussianBlur in="spread" stdDeviation="7.2" result="soft"/>
-                      <feComposite in="soft" in2="SourceAlpha" operator="out" result="outer"/>
-                      <feFlood flood-color="#e8ad58" flood-opacity=".9" result="amber"/>
-                      <feComposite in="amber" in2="outer" operator="in"/>
-                    </filter>
-                    <clipPath id="townClip-inn" clipPathUnits="userSpaceOnUse"><path d="M42 834 L48 422 L100 400 L134 358 L156 340 L183 278 L222 270 L253 234 L316 226 L366 195 L402 194 L431 232 L454 311 L491 360 L512 425 L530 468 L528 795 L494 800 L484 820 L420 827 L90 835 Z"/></clipPath>
-                    <clipPath id="townClip-expeditionRoad" clipPathUnits="userSpaceOnUse"><path d="M598 546 L606 273 L663 217 L710 184 L778 181 L830 200 L890 181 L960 201 L1007 250 L1020 531 L955 552 L949 468 Q822 345 700 468 L692 552 Z"/></clipPath>
-                    <clipPath id="townClip-merchantRoad" clipPathUnits="userSpaceOnUse"><path d="M1045 813 L1060 374 L1120 342 L1208 323 L1330 326 L1428 372 L1448 392 L1448 826 L1369 825 L1365 533 Q1263 438 1164 535 L1158 817 Z"/></clipPath>
-                    <clipPath id="townClip-board" clipPathUnits="userSpaceOnUse"><path d="M562 580 L875 558 L907 798 L846 806 L844 913 L797 916 L785 811 L661 818 L655 915 L607 915 L615 824 L579 827 Z"/></clipPath>
-                    <clipPath id="townClip-harbourRoad" clipPathUnits="userSpaceOnUse"><path d="M922 1014 L948 807 L1032 782 L1054 699 L1080 704 L1073 750 L1163 770 L1070 803 L1154 1007 Z"/></clipPath>
-                  </defs>
+                <div class="town-layered-stage" data-town-layered-stage>
+                  <svg class="town-painted-image town-layered-base" viewBox="0 0 1448 1086" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                    <image href="./assets/world/town/central-square-atlas-v2.webp?v=1" x="0" y="0" width="2048" height="2048"/>
+                  </svg>
 
-                  <!-- Lantern Inn · the building itself is the control -->
-                  <g class="town-location town-painted-location" data-town-object="inn" role="button" tabindex="0" aria-pressed="false" aria-label="The Lantern Inn">
-                    <path class="town-painted-bloom" d="M42 834 L48 422 L100 400 L134 358 L156 340 L183 278 L222 270 L253 234 L316 226 L366 195 L402 194 L431 232 L454 311 L491 360 L512 425 L530 468 L528 795 L494 800 L484 820 L420 827 L90 835 Z" filter="url(#townOuterGlow)"/>
-                    <image class="town-painted-lift" href="./assets/world/town/central-square-v1.webp?v=2" x="0" y="0" width="1448" height="1086" preserveAspectRatio="xMidYMid slice" clip-path="url(#townClip-inn)"/>
-                    <path class="town-painted-hit town-object-shape" d="M42 834 L48 422 L100 400 L134 358 L156 340 L183 278 L222 270 L253 234 L316 226 L366 195 L402 194 L431 232 L454 311 L491 360 L512 425 L530 468 L528 795 L494 800 L484 820 L420 827 L90 835 Z"/>
-                    <path class="town-painted-outline town-object-outline" d="M42 834 L48 422 L100 400 L134 358 L156 340 L183 278 L222 270 L253 234 L316 226 L366 195 L402 194 L431 232 L454 311 L491 360 L512 425 L530 468 L528 795 L494 800 L484 820 L420 827 L90 835 Z"/>
-                  </g>
-                  <g class="town-destination-sign town-sign-inn" data-town-sign="inn" aria-hidden="true">
-                    <path class="town-sign-hanger" d="M312 565 L312 591"/>
-                    <path class="town-sign-board" d="M280 590 Q312 578 344 590 L340 633 Q312 642 284 633 Z"/>
-                    <path class="town-sign-glyph" d="M312 598 L303 608 L306 625 L318 625 L321 608 Z M307 603 L317 603"/>
-                  </g>
+                  <div class="town-landmark town-landmark-inn" data-town-layer="inn" aria-hidden="true">
+                    <svg class="town-landmark-glow" viewBox="1448 0 600 803"><image href="./assets/world/town/central-square-atlas-v2.webp?v=1" x="0" y="0" width="2048" height="2048"/></svg>
+                    <svg class="town-landmark-art" viewBox="1448 0 600 803"><image href="./assets/world/town/central-square-atlas-v2.webp?v=1" x="0" y="0" width="2048" height="2048"/></svg>
+                  </div>
 
-                  <!-- Upper gateway · Expedition Ward -->
-                  <g class="town-location town-painted-location" data-town-object="expeditionRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Gateway to the Expedition Ward">
-                    <path class="town-painted-bloom" d="M598 546 L606 273 L663 217 L710 184 L778 181 L830 200 L890 181 L960 201 L1007 250 L1020 531 L955 552 L949 468 Q822 345 700 468 L692 552 Z" filter="url(#townOuterGlow)"/>
-                    <image class="town-painted-lift" href="./assets/world/town/central-square-v1.webp?v=2" x="0" y="0" width="1448" height="1086" preserveAspectRatio="xMidYMid slice" clip-path="url(#townClip-expeditionRoad)"/>
-                    <path class="town-painted-hit town-object-shape" d="M598 546 L606 273 L663 217 L710 184 L778 181 L830 200 L890 181 L960 201 L1007 250 L1020 531 L955 552 L949 468 Q822 345 700 468 L692 552 Z"/>
-                    <path class="town-painted-hit town-painted-walkway-hit" data-town-walkway="expeditionRoad" d="M700 468 Q822 345 949 468 L962 647 L674 647 L692 552 Z"/>
-                    <path class="town-painted-outline town-object-outline" d="M598 546 L606 273 L663 217 L710 184 L778 181 L830 200 L890 181 L960 201 L1007 250 L1020 531 L955 552 L949 468 Q822 345 700 468 L692 552 Z"/>
-                  </g>
-                  <g class="town-destination-sign town-sign-expedition" data-town-sign="expeditionRoad" aria-hidden="true">
-                    <circle class="town-sign-medallion" cx="823" cy="259" r="31"/>
-                    <path class="town-sign-glyph" d="M807 244 L839 276 M839 244 L807 276 M803 240 L811 242 L813 250 M843 240 L835 242 L833 250"/>
-                  </g>
+                  <div class="town-landmark town-landmark-expedition" data-town-layer="expeditionRoad" aria-hidden="true">
+                    <svg class="town-landmark-glow" viewBox="1448 805 575 752"><image href="./assets/world/town/central-square-atlas-v2.webp?v=1" x="0" y="0" width="2048" height="2048"/></svg>
+                    <svg class="town-landmark-art" viewBox="1448 805 575 752"><image href="./assets/world/town/central-square-atlas-v2.webp?v=1" x="0" y="0" width="2048" height="2048"/></svg>
+                  </div>
 
-                  <!-- Merchant gate on the right -->
-                  <g class="town-location town-painted-location" data-town-object="merchantRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Gateway to the Merchant Quarter">
-                    <path class="town-painted-bloom" d="M1045 813 L1060 374 L1120 342 L1208 323 L1330 326 L1428 372 L1448 392 L1448 826 L1369 825 L1365 533 Q1263 438 1164 535 L1158 817 Z" filter="url(#townOuterGlow)"/>
-                    <image class="town-painted-lift" href="./assets/world/town/central-square-v1.webp?v=2" x="0" y="0" width="1448" height="1086" preserveAspectRatio="xMidYMid slice" clip-path="url(#townClip-merchantRoad)"/>
-                    <path class="town-painted-hit town-object-shape" d="M1045 813 L1060 374 L1120 342 L1208 323 L1330 326 L1428 372 L1448 392 L1448 826 L1369 825 L1365 533 Q1263 438 1164 535 L1158 817 Z"/>
-                    <path class="town-painted-hit town-painted-walkway-hit" data-town-walkway="merchantRoad" d="M1164 535 Q1263 438 1365 533 L1370 825 L1154 817 Z"/>
-                    <path class="town-painted-outline town-object-outline" d="M1045 813 L1060 374 L1120 342 L1208 323 L1330 326 L1428 372 L1448 392 L1448 826 L1369 825 L1365 533 Q1263 438 1164 535 L1158 817 Z"/>
-                  </g>
-                  <g class="town-destination-sign town-sign-merchant" data-town-sign="merchantRoad" aria-hidden="true">
-                    <circle class="town-sign-medallion" cx="1260" cy="397" r="31"/>
-                    <path class="town-sign-glyph" d="M1260 377 L1260 416 M1243 386 L1277 386 M1248 386 L1238 402 L1258 402 Z M1272 386 L1262 402 L1282 402 Z"/>
-                  </g>
+                  <div class="town-landmark town-landmark-merchant" data-town-layer="merchantRoad" aria-hidden="true">
+                    <svg class="town-landmark-glow" viewBox="0 1086 520 651"><image href="./assets/world/town/central-square-atlas-v2.webp?v=1" x="0" y="0" width="2048" height="2048"/></svg>
+                    <svg class="town-landmark-art" viewBox="0 1086 520 651"><image href="./assets/world/town/central-square-atlas-v2.webp?v=1" x="0" y="0" width="2048" height="2048"/></svg>
+                  </div>
 
-                  <!-- Quest notice board -->
-                  <g class="town-location town-painted-location" data-town-object="board" role="button" tabindex="0" aria-pressed="false" aria-label="Town Notice Board">
-                    <path class="town-painted-bloom" d="M562 580 L875 558 L907 798 L846 806 L844 913 L797 916 L785 811 L661 818 L655 915 L607 915 L615 824 L579 827 Z" filter="url(#townOuterGlow)"/>
-                    <image class="town-painted-lift" href="./assets/world/town/central-square-v1.webp?v=2" x="0" y="0" width="1448" height="1086" preserveAspectRatio="xMidYMid slice" clip-path="url(#townClip-board)"/>
-                    <path class="town-painted-hit town-object-shape" d="M562 580 L875 558 L907 798 L846 806 L844 913 L797 916 L785 811 L661 818 L655 915 L607 915 L615 824 L579 827 Z"/>
-                    <path class="town-painted-outline town-object-outline" d="M562 580 L875 558 L907 798 L846 806 L844 913 L797 916 L785 811 L661 818 L655 915 L607 915 L615 824 L579 827 Z"/>
-                  </g>
+                  <div class="town-landmark town-landmark-board" data-town-layer="board" aria-hidden="true">
+                    <svg class="town-landmark-glow" viewBox="520 1086 420 556"><image href="./assets/world/town/central-square-atlas-v2.webp?v=1" x="0" y="0" width="2048" height="2048"/></svg>
+                    <svg class="town-landmark-art" viewBox="520 1086 420 556"><image href="./assets/world/town/central-square-atlas-v2.webp?v=1" x="0" y="0" width="2048" height="2048"/></svg>
+                    <span class="town-quest-marker" data-town-quest-marker>!</span>
+                  </div>
 
-                  <!-- Quest availability marker: driven by the live quest badge -->
-                  <g class="town-quest-marker" data-town-quest-marker aria-hidden="true">
-                    <text class="town-quest-marker-text" x="736" y="719" text-anchor="middle">!</text>
-                  </g>
+                  <div class="town-landmark town-landmark-harbour" data-town-layer="harbourRoad" aria-hidden="true">
+                    <svg class="town-landmark-glow" viewBox="940 1086 360 418"><image href="./assets/world/town/central-square-atlas-v2.webp?v=1" x="0" y="0" width="2048" height="2048"/></svg>
+                    <svg class="town-landmark-art" viewBox="940 1086 360 418"><image href="./assets/world/town/central-square-atlas-v2.webp?v=1" x="0" y="0" width="2048" height="2048"/></svg>
+                  </div>
 
-                  <!-- Harbour route sign / flag -->
-                  <g class="town-location town-painted-location" data-town-object="harbourRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Harbour route to Greywake">
-                    <path class="town-painted-bloom" d="M922 1014 L948 807 L1032 782 L1054 699 L1080 704 L1073 750 L1163 770 L1070 803 L1154 1007 Z" filter="url(#townOuterGlow)"/>
-                    <image class="town-painted-lift" href="./assets/world/town/central-square-v1.webp?v=2" x="0" y="0" width="1448" height="1086" preserveAspectRatio="xMidYMid slice" clip-path="url(#townClip-harbourRoad)"/>
-                    <path class="town-painted-hit town-object-shape" d="M922 1014 L948 807 L1032 782 L1054 699 L1080 704 L1073 750 L1163 770 L1070 803 L1154 1007 Z"/>
-                    <path class="town-painted-outline town-object-outline" d="M922 1014 L948 807 L1032 782 L1054 699 L1080 704 L1073 750 L1163 770 L1070 803 L1154 1007 Z"/>
-                  </g>
-                  <g class="town-destination-sign town-sign-harbour" data-town-sign="harbourRoad" aria-hidden="true">
-                    <circle class="town-sign-medallion" cx="1069" cy="804" r="28"/>
-                    <path class="town-sign-glyph" d="M1069 784 L1069 823 M1056 795 L1082 795 M1054 813 Q1069 828 1084 813 M1060 808 L1054 813 L1049 806 M1078 808 L1084 813 L1089 806"/>
-                  </g>
-                </svg>
+                  <svg class="town-painted-hotspots" viewBox="0 0 1448 1086" preserveAspectRatio="xMidYMid slice" aria-label="Interactive locations in Central Square">
+                    <g class="town-location town-painted-location" data-town-object="inn" role="button" tabindex="0" aria-pressed="false" aria-label="The Lantern Inn">
+                      <path class="town-painted-hit town-object-shape" d="M0 897 L0 315 L78 248 L365 200 L510 407 L510 897 Z"/>
+                    </g>
+
+                    <g class="town-location town-painted-location" data-town-object="expeditionRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Gateway to the Expedition Ward">
+                      <path class="town-painted-hit town-object-shape" d="M500 824 L500 255 L555 175 L945 175 L1000 245 L1000 824 Z"/>
+                      <path class="town-painted-hit town-painted-walkway-hit" data-town-walkway="expeditionRoad" d="M625 430 Q750 340 875 430 L930 824 L570 824 Z"/>
+                    </g>
+
+                    <g class="town-location town-painted-location" data-town-object="merchantRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Gateway to the Merchant Quarter">
+                      <path class="town-painted-hit town-object-shape" d="M1015 878 L1015 375 L1075 320 L1448 320 L1448 878 Z"/>
+                      <path class="town-painted-hit town-painted-walkway-hit" data-town-walkway="merchantRoad" d="M1115 520 Q1250 425 1385 520 L1410 878 L1080 878 Z"/>
+                    </g>
+
+                    <g class="town-location town-painted-location" data-town-object="board" role="button" tabindex="0" aria-pressed="false" aria-label="Town Notice Board">
+                      <path class="town-painted-hit town-object-shape" d="M565 540 L900 540 L900 984 L565 984 Z"/>
+                    </g>
+
+                    <g class="town-location town-painted-location" data-town-object="harbourRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Harbour route to Greywake">
+                      <path class="town-painted-hit town-object-shape" d="M900 735 L1185 735 L1185 1086 L900 1086 Z"/>
+                    </g>
+                  </svg>
+                </div>
               </section>
 
               <!-- MERCHANT QUARTER -->
