@@ -97,16 +97,16 @@ function mount(){
    '<img class="inn-scene-bg" src="./assets/world/inn/lantern-inn-bg-v1.webp?v=1" alt="" fetchpriority="high">'+
    '<div class="inn-hearth-light" aria-hidden="true"></div><div class="inn-window-light" aria-hidden="true"></div>'+
    '<button type="button" class="inn-scene-object inn-object-door" data-inn-object="door" aria-label="Return to the Town Square">'+
-    '<span class="inn-object-visual"><img class="inn-object-glow" src="./assets/world/inn/lantern-inn-door-v1.webp?v=1" alt=""><img class="inn-object-art" src="./assets/world/inn/lantern-inn-door-v1.webp?v=1" alt=""></span>'+
+    '<span class="inn-object-visual"><img class="inn-object-glow" src="./assets/world/inn/lantern-inn-door-v1.webp?v=1" alt=""><img class="inn-object-art" src="./assets/world/inn/lantern-inn-door-v1.webp?v=1" alt=""></span><span class="inn-object-hit" aria-hidden="true"></span>'+
     '<span class="inn-object-caption"><b>Town Square</b><small>Leave the Inn</small></span>'+
    '</button>'+
    '<button type="button" class="inn-scene-object inn-object-bar" data-inn-object="roster" aria-label="Open the roster at the bar">'+
-    '<span class="inn-object-visual"><img class="inn-object-glow" src="./assets/world/inn/lantern-inn-bar-v1.webp?v=1" alt=""><img class="inn-object-art" src="./assets/world/inn/lantern-inn-bar-v1.webp?v=1" alt=""></span>'+
+    '<span class="inn-object-visual"><img class="inn-object-glow" src="./assets/world/inn/lantern-inn-bar-v1.webp?v=1" alt=""><img class="inn-object-art" src="./assets/world/inn/lantern-inn-bar-v1.webp?v=1" alt=""></span><span class="inn-object-hit" aria-hidden="true"></span>'+
     '<span class="inn-object-caption"><b>Roster</b><small>Manage your company</small></span>'+
    '</button>'+
    '<div class="inn-inhabitants"></div>'+
    '<button type="button" class="inn-scene-object inn-object-table" data-inn-object="party" aria-label="Open Active Party at the planning table">'+
-    '<span class="inn-object-visual"><img class="inn-object-glow" src="./assets/world/inn/lantern-inn-table-v1.webp?v=1" alt=""><img class="inn-object-art" src="./assets/world/inn/lantern-inn-table-v1.webp?v=1" alt=""></span>'+
+    '<span class="inn-object-visual"><img class="inn-object-glow" src="./assets/world/inn/lantern-inn-table-v1.webp?v=1" alt=""><img class="inn-object-art" src="./assets/world/inn/lantern-inn-table-v1.webp?v=1" alt=""></span><span class="inn-object-hit" aria-hidden="true"></span>'+
     '<span class="inn-object-caption"><b>Party Table</b><small>Prepare your five</small></span>'+
    '</button>'+
   '</div>'+
@@ -123,8 +123,6 @@ function mount(){
   e.preventDefault();
   activateObject(object.dataset.innObject,object);
  });
- world.addEventListener('pointerenter',e=>{const object=e.target.closest?.('[data-inn-object]');if(object&&!ledger?.open&&!partyDialog?.open)setObjectSelected(object.dataset.innObject)},true);
- world.addEventListener('pointerleave',e=>{const object=e.target.closest?.('[data-inn-object]');if(object&&!ledger?.open&&!partyDialog?.open&&!world.classList.contains('is-leaving-to-town'))setObjectSelected('')},true);
  world.addEventListener('focusin',e=>{const object=e.target.closest?.('[data-inn-object]');if(object)setObjectSelected(object.dataset.innObject)});
  // Existing jump buttons inside the roster modal still open the Party Table.
  ledger.addEventListener('click',e=>{if(e.target.closest('[data-jump="party"]')){e.preventDefault();e.stopPropagation();ledger.close();setTimeout(()=>{setObjectSelected('party');openTool('party',world.querySelector('[data-inn-object="party"]'))},80)}},true);
