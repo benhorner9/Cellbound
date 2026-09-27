@@ -145,3 +145,77 @@
 @media(prefers-reduced-motion:reduce){
   .cb-venue-actor,.cb-venue-actor-visual{transition:none!important}
 }
+
+/* V1.1 — keep the venue visible while the working system is open. */
+.cb-venue-system-surface[hidden]{display:none!important}
+.cb-venue-location[data-venue-state="system"]>.cb-venue-stage{
+  min-height:clamp(650px,72vh,840px)!important;
+  overflow:hidden!important
+}
+.cb-venue-location[data-venue-state="system"] .cb-venue-stage>.cb-venue-actors,
+.cb-venue-location[data-venue-state="system"] .cb-venue-stage>.cb-venue-town,
+.cb-venue-location[data-venue-state="system"] .cb-venue-stage>.cb-venue-dialogue{display:none!important}
+.cb-venue-location[data-venue-state="system"] .cb-venue-stage>.cb-venue-header{
+  display:block!important;max-width:420px;top:12px;opacity:.78
+}
+.cb-venue-location[data-venue-state="system"] .cb-venue-stage>.cb-venue-header h2{font-size:1.42rem}
+.cb-venue-location[data-venue-state="system"] .cb-venue-stage>.cb-venue-header p{display:none}
+.cb-venue-location[data-venue-state="system"] .cb-venue-scenery{
+  height:100%!important;opacity:.72!important;filter:brightness(.72) saturate(.88) drop-shadow(0 -4px 8px #0004)
+}
+.cb-venue-location[data-venue-state="system"] .cb-venue-depth{filter:brightness(.7)}
+.cb-venue-system-surface{
+  position:absolute;z-index:22;left:18px;right:18px;top:86px;bottom:18px;
+  display:grid;grid-template-rows:auto minmax(0,1fr);
+  border:1px solid #b8995f70;border-radius:5px;
+  background:linear-gradient(180deg,#151919f2,#0d1112f7);
+  box-shadow:0 24px 60px #000b,0 0 0 1px #0b0d0d inset;
+  backdrop-filter:blur(5px)
+}
+.cb-venue-system-surface:before{
+  content:"";position:absolute;inset:6px;pointer-events:none;border:1px solid #b5965a24;border-radius:2px
+}
+.cb-venue-system-surface .cb-venue-system-bar{
+  position:relative!important;left:auto!important;right:auto!important;bottom:auto!important;
+  display:grid!important;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;
+  padding:9px 10px;border-bottom:1px solid #aa8c5745;background:#111718f5
+}
+.cb-venue-system-slot{
+  position:relative;min-height:0;overflow:auto;padding:14px 14px 18px;
+  scrollbar-color:#8f7448 #151918;overscroll-behavior:contain
+}
+.cb-venue-system-slot>.cb-venue-system-content{display:block!important;margin:0 0 12px!important}
+.cb-venue-system-slot>.section-intro.cb-venue-system-content{display:none!important}
+.cb-venue-system-slot :is(.panel,.pvp-panel,.tp-panel,.bank-overview-strip,.profession-roster-panel,.workshop-panel,.dungeon-browser-card,.dungeon-detail-panel){
+  background-color:#14191aeb!important;border-color:#ae925f48!important;box-shadow:0 9px 22px #0005!important
+}
+.cb-venue-system-slot :is(.pvp-hero,.tp-hero,.bank-hero,.profession-hero){margin-top:0!important}
+.cb-venue-system-slot #pvpMount,
+.cb-venue-system-slot #manorRaidMount,
+.cb-venue-system-slot #twelveBelowMount{min-height:0}
+.cb-venue-system-slot button,.cb-venue-system-slot [role="button"]{scroll-margin-top:60px}
+.cb-venue-location[data-venue-state="system"]:after{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 55%,transparent 35%,#05070845 100%)
+}
+
+/* Theme-specific in-world work surfaces. */
+#pvp .cb-venue-system-surface{border-color:#b67b6075;background:linear-gradient(180deg,#171716f2,#111315f7)}
+#pvp .cb-venue-system-surface .cb-venue-system-bar{background:linear-gradient(90deg,#2b201be8,#111718f5 45%,#201915e8)}
+#trading .cb-venue-system-surface{border-color:#b59b657a;background:linear-gradient(180deg,#1b1914f3,#111513f8)}
+#professions .cb-venue-system-surface{border-color:#b77a5275;background:linear-gradient(180deg,#211813f1,#121515f8)}
+#bank .cb-venue-system-surface{border-color:#9c8d6970;background:linear-gradient(180deg,#171a19f3,#101313f8)}
+#content .cb-venue-system-surface{border-color:#9d8a6170;background:linear-gradient(180deg,#161b1cf3,#101314f8)}
+#raids .cb-venue-system-surface{border-color:#8099a375;background:linear-gradient(180deg,#11191df2,#0d1316f8)}
+#world .cb-venue-system-surface{border-color:#a68b5f72;background:linear-gradient(180deg,#1a1814f1,#111414f8)}
+
+@media(max-width:650px){
+  .cb-venue-location[data-venue-state="system"]>.cb-venue-stage{min-height:720px!important}
+  .cb-venue-location[data-venue-state="system"] .cb-venue-stage>.cb-venue-header{max-width:56%;left:8px;top:7px}
+  .cb-venue-location[data-venue-state="system"] .cb-venue-stage>.cb-venue-header h2{font-size:1.08rem}
+  .cb-venue-system-surface{left:5px;right:5px;top:72px;bottom:5px;border-radius:2px}
+  .cb-venue-system-surface .cb-venue-system-bar{grid-template-columns:1fr 1fr;gap:5px;padding:7px}
+  .cb-venue-system-surface .cb-venue-system-bar>div{grid-column:1/-1;grid-row:1}
+  .cb-venue-system-surface .cb-venue-system-bar>button{grid-row:2;min-height:42px}
+  .cb-venue-system-slot{padding:8px 7px 12px}
+}
