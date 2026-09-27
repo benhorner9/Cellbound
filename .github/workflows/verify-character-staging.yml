@@ -1,5 +1,5 @@
 name: Verify character staging rework
-# pass: 16
+# pass: 17
 
 on:
   push:
