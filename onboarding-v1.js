@@ -555,10 +555,10 @@ function tdSideRows(){
 }
 function renderDungeonRunning(){
   const roster=state().roster;
-  tutorialCombatStats={damage:Object.fromEntries(roster.map(c=>[c.id,0])),healing:Object.fromEntries(roster.map(c=>[c.id,0])),threat:Object.fromEntries(roster.map(c=>[c.id,0])),aggro:null,elapsed:0,currentEnemy:'—'};
-  const body='<div class="td-wrap"><div class="td-top"><div><small>FIRST EXPEDITION · ZELTIRAN HOLLOWS · LEVEL 1</small><h2 id="tdEncounter">Descending below Zeltira…</h2></div><b class="td-safe">PATHFINDER WARD ACTIVE</b></div><div class="td-route"><span class="active" data-td-route="0">1 · Rootling Nest</span><span data-td-route="1">2 · Collapsed Gallery</span><span data-td-route="2">3 · Hollow Warden</span></div><div class="td-live-layout"><main><div class="td-arena theme-hollows room-rootling-nest" id="tdArena"><div class="td-floor"></div><div class="td-environment" id="tdEnvironment"></div><div class="td-room-tag" id="tdRoomTag"></div><div id="tdEnemies"></div><div id="tdParty">'+roster.map(unitMarkup).join('')+'</div><div class="td-callout" id="tdCallout">Your party advances together.</div><div id="tdLesson" class="td-lesson" hidden></div></div><div class="td-bottom"><div class="td-actions"><div><i class="on-role tank"></i><b>Tank</b><span id="tdTankAction">Taking point</span></div><div><i class="on-role healer"></i><b>Healer</b><span id="tdHealAction">Following formation</span></div><div><i class="on-role dps"></i><b>Damage</b><span id="tdDpsAction">Acquiring targets</span></div></div><div class="td-feed" id="tdFeed">The Pathfinder ward closes behind the five.</div></div></main><aside class="td-live-hud"><div class="cb2d-cast td-cast-panel" id="tdCastPanel"><small>ENEMY CAST</small><div><b id="tdCastName">—</b><strong id="tdCastTime">—</strong></div><div class="cb2d-castbar"><i id="tdCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="tdDamageTotal">0 total</span></div><div id="tdDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="tdHealingTotal">0 total</span></div><div id="tdHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="tdThreatTarget">—</span></div><div id="tdThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-party td-party-panel"><small>PARTY CONDITION · ACTIVE FIVE</small><div id="tdPartyRows">'+tdSideRows()+'</div></div><div class="td-hud-note"><b>WATCH THE FIGHT</b><span>HP sits above class resource. Buffs and debuffs appear on the unit. Threat resets each encounter; damage and healing continue through the expedition.</span></div></aside></div></div>';
+  tutorialCombatStats=null;
+  const partyCards=roster.map(c=>'<div class="tutorial-combat-party-card">'+portraitHTML(c,'md')+'<span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+' · '+tdRole(c).toUpperCase()+'</small></span></div>').join('');
+  const body='<div class="td-wrap tutorial-combat-handoff"><div class="td-top"><div><small>FIRST EXPEDITION · ZELTIRAN HOLLOWS · LEVEL 1</small><h2 id="tdEncounter">Descending below Zeltira…</h2></div><b class="td-safe">PATHFINDER WARD ACTIVE</b></div><div class="td-route"><span class="active" data-td-route="0">1 · Rootling Nest</span><span data-td-route="1">2 · Collapsed Gallery</span><span data-td-route="2">3 · Hollow Warden</span></div><section class="tutorial-combat-stage"><div class="tutorial-combat-stage-copy"><small>SHARED COMBAT SYSTEM</small><h3>Your tutorial now uses Combat Reborn.</h3><p id="tdCallout">The lesson appears here first. When the pull starts, the full shared combat viewer opens with the same portraits, movement, resources, spell effects, telegraphs, statuses and meters used by live PvE.</p><div class="tutorial-combat-feature-grid"><span><b>PORTRAITS</b>Live character faces in arena units.</span><span><b>VFX</b>Class attacks, heals and impact effects.</span><span><b>MECHANICS</b>Cones, casts, threat and movement.</span><span><b>STATUS</b>Buffs, debuffs, HP and resources.</span></div></div><div class="tutorial-combat-party"><small>YOUR FIVE</small>'+partyCards+'</div><div id="tdLesson" class="td-lesson" hidden></div></section><div class="tutorial-combat-feed"><small>EXPEDITION LOG</small><p id="tdFeed">The Pathfinder ward closes behind the five.</p></div></div>';
   ensureRoot().innerHTML=chrome(body,'dungeon-running');
-  tdRenderMeters();
   const my=++tutorialToken;setTimeout(()=>runTutorialDungeon(my),350);
 }
 function tdLesson(title,text,options,correct,success){
@@ -821,59 +821,104 @@ async function tdPlayCombat(result,my){
     raf=requestAnimationFrame(frame)
   })
 }
+function tutorialSharedRoute(activeIndex){
+  const rows=[
+    {id:'rootling-nest',title:'Rootling Nest'},
+    {id:'collapsed-gallery',title:'Collapsed Gallery'},
+    {id:'hollow-warden',title:'Hollow Warden'}
+  ];
+  return rows.map((row,i)=>({...row,done:i<activeIndex}))
+}
 async function fightTdPack(encounter,my){
-  spawnTdEnemies(encounter);await sleep(350);
-  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
+  const C=window.CellboundCombatStandard,D=window.CellboundDungeon2D;
+  if(!C?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
+  if(!D?.playSharedEncounter)throw new Error('Shared Combat Reborn viewer unavailable');
   const roster=state().roster;
-  roster.forEach(c=>tdSetPartyHpByEvent(c,100));
   const combatParty=roster.map(c=>Object.assign({},c,{power:Math.max(Number(c.power)||1,30),_combatHealthPct:100}));
-  if(tutorialCombatStats){tutorialCombatStats.threat=Object.fromEntries(roster.map(c=>[c.id,0]));tutorialCombatStats.aggro=null;tutorialCombatStats.currentEnemy=encounter.name;tdRenderMeters()}
+  const simEncounter={
+    id:encounter.id,title:encounter.name,kind:encounter.combatKind||(encounter.boss?'boss':'trash'),
+    level:encounter.level||1,enemyTypes:encounter.enemyTypes||null,enemies:[...encounter.mobs],
+    enemyHealth:encounter.enemyHealth,mechanics:encounter.mechanics||[]
+  };
   const result=C.simulate({
     party:combatParty,
-    encounter:{
-      id:encounter.id,title:encounter.name,kind:encounter.combatKind||(encounter.boss?'boss':'trash'),
-      level:encounter.level||1,enemyTypes:encounter.enemyTypes||null,enemies:[...encounter.mobs],enemyHealth:encounter.enemyHealth,
-      mechanics:encounter.mechanics||[]
-    },
+    encounter:simEncounter,
     tactics:{interruptPriority:'high',addPriority:'immediate',defensiveUsage:'aggressive',pullStyle:'safe',movementDiscipline:'safety'},
     seed:['zeltira-first-expedition',my,encounter.id].join(':')
   },{zone:'zeltira-first-expedition'});
-  const won=await tdPlayCombat(result,my);
-  if(!won){
+  const room=ZELTIRA_ROOMS[encounter.routeIndex]||ZELTIRA_ROOMS[0];
+  const viewerEncounter={
+    ...simEncounter,
+    enemies:encounter.mobs.map((name,i)=>({name,classification:String(encounter.enemyTypes?.[i]||((encounter.boss||encounter.combatKind==='boss')?'boss':'trash'))}))
+  };
+  tdFeed('Combat Reborn takes over for '+encounter.name+'.');
+  let outcome='defeat';
+  try{
+    outcome=await D.playSharedEncounter({
+      party:combatParty,
+      encounter:viewerEncounter,
+      result,
+      header:'FIRST EXPEDITION · SHARED COMBAT REBORN',
+      title:encounter.name,
+      subtitle:'PATHFINDER WARD · TUTORIAL TACTICS LOCKED',
+      planTitle:'This is the same combat presentation used across Cellbound.',
+      planCopy:'Watch the portraits, class resources, spell and weapon effects, threat links, healing, casts, buffs, debuffs and telegraphed mechanics.',
+      theme:'hollows',
+      room:room?.room||encounter.id,
+      roomLabel:room?.label||encounter.name,
+      ambience:room?.ambience||'The Zeltiran Hollows answer the Cell beneath the city.',
+      route:tutorialSharedRoute(encounter.routeIndex),
+      currentId:encounter.id,
+      shellClass:'tutorial-shared-combat',
+      closable:false
+    });
+  }finally{
+    D.closeShared?.(true);
+  }
+  if(my!==tutorialToken)return false;
+  if(outcome!=='victory'){
     tdFeed('The Pathfinder ward pulls the five back from the brink. Elara resets the approach.');
     return false
   }
-  tdRegroup();tdAction('tank','Leading the party onward');tdAction('healer','Following at safe range');tdAction('dps','Returning to travel formation');
-  await sleep(650);return true
+  tdFeed(encounter.name+' cleared using the shared combat engine.');
+  await sleep(450);
+  return true
 }
 
 async function runTutorialDungeon(my){
   if(my!==tutorialToken||onboarding().stage!=='dungeon-running')return;
   const encounters=[
-    {id:'rootling-nest',name:'Rootling Nest',level:1,enemyTypes:['trash','trash'],mobs:['Rootling','Rootling'],boss:false,enemyHealth:105,mechanics:[]},
-    {id:'collapsed-gallery',name:'Collapsed Gallery',level:1,enemyTypes:['elite'],mobs:['Cell-Sick Marauder'],boss:false,combatKind:'boss',enemyHealth:420,mechanics:[['Hollow Scream','interrupt',1800]]},
-    {id:'hollow-warden',name:'Hollow Warden',level:1,enemyTypes:['boss'],mobs:['The Hollow Warden'],boss:true,enemyHealth:520,mechanics:[['Rootbound Cleave','cone',1700]]}
+    {id:'rootling-nest',name:'Rootling Nest',routeIndex:0,level:1,enemyTypes:['trash','trash'],mobs:['Rootling','Rootling'],boss:false,enemyHealth:105,mechanics:[]},
+    {id:'collapsed-gallery',name:'Collapsed Gallery',routeIndex:1,level:1,enemyTypes:['elite'],mobs:['Cell-Sick Marauder'],boss:false,combatKind:'boss',enemyHealth:420,mechanics:[['Hollow Scream','interrupt',1800]]},
+    {id:'hollow-warden',name:'Hollow Warden',routeIndex:2,level:1,enemyTypes:['boss'],mobs:['The Hollow Warden'],boss:true,enemyHealth:520,mechanics:[['Rootbound Cleave','cone',1700]]}
   ];
   for(let i=0;i<encounters.length;i++){
     if(my!==tutorialToken)return;
-    $$('[data-td-route]').forEach((x,j)=>x.classList.toggle('active',j===i));
-    const e=encounters[i];renderTdEnvironment(i);$('#tdEncounter').textContent=e.name;
+    $$('[data-td-route]').forEach((x,j)=>{x.classList.toggle('active',j===i);x.classList.toggle('done',j<i)});
+    const e=encounters[i],title=$('#tdEncounter'),callout=$('#tdCallout');
+    if(title)title.textContent=e.name;
     if(i===0){
-      $('#tdCallout').textContent='Decide who starts the pull.';
+      if(callout)callout.textContent='Before the shared viewer opens, decide who should establish the pull.';
       await tdLesson('Who should enter first?','Two enemies are waiting ahead and neither has chosen a target yet.',['Send the Tank in first','Send the Healer in first','Let Damage race for the first hit'],0,'Exactly. The Tank establishes threat before everyone else commits.');
     }else if(i===1){
-      $('#tdCallout').textContent='The Tank is taking damage.';
+      if(callout)callout.textContent='The next fight teaches healing and interrupts. Then Combat Reborn shows both live.';
       await tdLesson('Who stabilises the Tank?','The Tank is doing their job and absorbing repeated hits.',['The Healer restores them from a safe position','The Tank abandons the enemies','Damage stops attacking and waits'],0,'Correct. Healing keeps the pull stable while the Tank continues holding threat.');
       await tdLesson('A dangerous cast begins','The Cell-Sick Marauder starts a long cast called Hollow Scream.',['Ignore it and heal through everything','Damage switches attention and interrupts it','The Healer runs into melee range'],1,'Correct. Interrupting dangerous casts prevents damage instead of forcing the Healer to repair it afterwards.');
     }else{
-      $('#tdCallout').textContent='Read the boss telegraph.';
+      if(callout)callout.textContent='The final lesson is positioning. The shared viewer will show the boss frontal telegraph and party movement.';
       await tdLesson('The boss raises a frontal cleave','A wide attack is aimed through the Tank toward the group.',['Tank turns the boss away while the party stays behind it','Everyone stacks directly in front','Healer takes the attack instead'],0,'Correct. Positioning is part of tanking: control where the boss faces so avoidable damage never reaches the group.');
     }
-    tdFeed('Entering '+e.name+'.');const won=await fightTdPack(e,my);if(!won){i--;await sleep(700);continue}
+    if(my!==tutorialToken)return;
+    const won=await fightTdPack(e,my);
+    if(!won){i--;await sleep(650);continue}
+    $$('[data-td-route]').forEach((x,j)=>{x.classList.toggle('done',j<=i);x.classList.remove('active')});
   }
   if(my!==tutorialToken)return;
-  $('#tdEncounter').textContent='First Expedition Complete';$('#tdCallout').textContent='The resonance beneath Zeltira has gone silent.';
-  tdFeed('The Hollow Warden falls. Something in the chamber stops answering the Cell Well. Gear and reagents remain among the roots.');await sleep(900);
+  const title=$('#tdEncounter'),callout=$('#tdCallout');
+  if(title)title.textContent='First Expedition Complete';
+  if(callout)callout.textContent='The resonance beneath Zeltira has gone silent. Every fight you just watched used the same Combat Reborn presentation layer as the rest of PvE.';
+  tdFeed('The Hollow Warden falls. Gear and reagents remain among the roots.');
+  await sleep(900);
   const s=state();
   if(s.onboarding.stage==='dungeon-running'&&!s.onboarding.tutorialDungeonComplete){
     s.materials['faded-cell-fragment']=(Number(s.materials['faded-cell-fragment'])||0)+4;
