@@ -54,7 +54,63 @@ const objectCopy={
       const next=String($('#homeDungeonStatus')?.textContent||'').trim();
       return next||'Choose a dungeon route';
     }
+  },
+  market:{
+    title:'The Marketplace',
+    copy:'Merchant stalls and the guild Trading Post. Buy, sell and search the goods moving through Cellbound.',
+    action:'Enter the Marketplace',
+    status(){return 'Trading Post · equipment, materials and reagents'}
+  },
+  forge:{
+    title:'Crafting Quarter',
+    copy:'The forge and workshops used by your adventurers. Refine materials and advance your professions here.',
+    action:'Enter the workshops',
+    status(){return 'Profession projects · crafting progression'}
+  },
+  vault:{
+    title:'The Guild Vault',
+    copy:'A fortified storehouse for equipment, reagents and valuables gathered by your company.',
+    action:'Enter the Vault',
+    status(){
+      const count=String($('#bankCount')?.textContent||'').trim();
+      return count&&count!=='—'?count+' stored items':'Bank & guild storage';
+    }
+  },
+  arena:{
+    title:'The Crucible',
+    copy:'A stone colosseum where guilds test their parties against other players in organised combat.',
+    action:'Enter the Colosseum',
+    status(){return 'Battlegrounds · ranked arenas · seasonal PvP'}
+  },
+  harbour:{
+    title:'Greywake Harbour',
+    copy:'Raid parties gather at the docks before sailing for threats beyond the town walls.',
+    action:'Go to the docks',
+    status(){
+      const raid=String($('#homeRaidStatus')?.textContent||'').trim();
+      return raid||'The Manor · group raid staging';
+    }
+  },
+  grounds:{
+    title:'Festival Grounds',
+    copy:'Travellers, challenges and unusual events gather here between major expeditions.',
+    action:'Visit the Grounds',
+    status(){
+      const event=String($('#homeEventStatus')?.textContent||'').trim();
+      return event||'Activities · events · special challenges';
+    }
   }
+};
+
+const routes={
+  inn:'roster',
+  cart:'content',
+  market:'trading',
+  forge:'professions',
+  vault:'bank',
+  arena:'pvp',
+  harbour:'raids',
+  grounds:'world'
 };
 
 function locationNode(id){return root.querySelector('[data-town-object="'+id+'"]')}
@@ -120,9 +176,9 @@ function travel(view){
   },220);
 }
 function enter(id){
-  if(id==='inn'){travel('roster');return}
   if(id==='board'){openBoard();return}
-  if(id==='cart'){travel('content');return}
+  const view=routes[id];
+  if(view)travel(view);
 }
 function interact(id){
   if(boardOpen)return;
