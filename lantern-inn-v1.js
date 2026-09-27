@@ -19,10 +19,10 @@ const slots={
   wide:[88,63],phone:[86,62],scale:.99,phoneScale:.94,depth:63,zone:'floor'
  },
  'table-left':{
-  wide:[47.5,74],phone:[46,74],scale:1.02,phoneScale:.97,depth:72,zone:'behind-table'
+  wide:[47.5,70],phone:[46,70],scale:1.00,phoneScale:.95,depth:72,zone:'behind-table'
  },
  'table-right':{
-  wide:[65.5,74],phone:[65,74],scale:1.02,phoneScale:.97,depth:72,zone:'behind-table'
+  wide:[65.5,70],phone:[65,70],scale:1.00,phoneScale:.95,depth:72,zone:'behind-table'
  },
  'window-left':{
   wide:[51,46],phone:[48,39],scale:.82,phoneScale:.78,depth:42,zone:'background'
