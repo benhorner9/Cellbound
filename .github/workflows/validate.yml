@@ -59,6 +59,11 @@ jobs:
           node tests/lantern-inn.browser.cjs
           CELLBOUND_TEST_ENGINE=webkit node tests/lantern-inn.browser.cjs
 
+      - name: Town scene interaction regression
+        run: |
+          node tests/town-scene.browser.cjs
+          CELLBOUND_TEST_ENGINE=webkit node tests/town-scene.browser.cjs
+
       - name: Living combat browser regression
         run: |
           node tests/living-combat.browser.cjs
@@ -91,6 +96,14 @@ jobs:
         with:
           name: lantern-inn-review
           path: /tmp/cellbound-inn-*.png
+          if-no-files-found: ignore
+
+      - name: Save Town scene review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: town-scene-review
+          path: /tmp/cellbound-town-scene-*.png
           if-no-files-found: ignore
 
       - name: Save combat review capture
