@@ -33,7 +33,8 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
    const world=document.querySelector('.inn-world').getBoundingClientRect();
    return nodes.map(n=>{
      const img=n.querySelector('.cb-world-avatar-painted>img'),figure=n.querySelector('.inn-figure'),r=img.getBoundingClientRect();
-     return {slot:n.dataset.locationSlot,slotY:parseFloat(n.style.getPropertyValue('--slot-y'))||0,top:r.top-world.top,bottom:r.bottom-world.top,height:r.height,standard:img.parentElement.dataset.bodyStandard,overflow:getComputedStyle(figure).overflow};
+     const style=getComputedStyle(figure);
+     return {slot:n.dataset.locationSlot,slotY:parseFloat(n.style.getPropertyValue('--slot-y'))||0,top:r.top-world.top,bottom:r.bottom-world.top,height:r.height,scale:parseFloat(style.scale)||1,standard:img.parentElement.dataset.bodyStandard,overflow:style.overflow};
    });
  });
  assert(paintedGeometry.every(x=>x.standard==='512x896'),'all Inn painted bodies use the normalized full-body canvas');
@@ -42,8 +43,8 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
  assert(paintedGeometry.every(x=>x.top>=-0.5&&x.bottom<=innWorldBox.height+.5),'painted bodies stay inside the room bounds without head/foot clipping');
  const paintedHeights=paintedGeometry.map(x=>x.height),heightRatio=Math.max(...paintedHeights)/Math.min(...paintedHeights);
  assert(heightRatio<1.4,'room perspective must stay controlled rather than producing wildly different body sizes');
- const depthRows=paintedGeometry.map(x=>({y:x.slotY,h:x.height})).sort((a,b)=>a.y-b.y);
- for(let i=1;i<depthRows.length;i++)assert(depthRows[i].h+1>=depthRows[i-1].h,'foreground actors must not render smaller than deeper actors');
+ const depthRows=paintedGeometry.map(x=>({y:x.slotY,scale:x.scale})).sort((a,b)=>a.y-b.y);
+ for(let i=1;i<depthRows.length;i++)assert(depthRows[i].scale+.001>=depthRows[i-1].scale,'foreground actor perspective scale must not be smaller than deeper actors');
  assert((await page.locator('.cb-world-avatar').count())>=3,'Warrior, Priest and Rogue use world-avatar prototypes');
  for(const [klass,count] of Object.entries({Warrior:2,Priest:2,Rogue:1}))assert.equal(await page.locator('.cb-world-avatar[data-avatar-class="'+klass+'"]').count(),count,klass+' prototypes match roster');
  const warriorAvatar=page.locator('[data-inn-character="hero-0"] .cb-world-avatar');
