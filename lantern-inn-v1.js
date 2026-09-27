@@ -25,19 +25,19 @@ const slots={
   wide:[63,74],phone:[62,74],scale:1.02,phoneScale:.97,depth:72,zone:'behind-table'
  },
  'window-left':{
-  wide:[51,46],phone:[49,47],scale:.82,phoneScale:.82,depth:42,zone:'background'
+  wide:[51,46],phone:[48,39],scale:.82,phoneScale:.78,depth:42,zone:'background'
  },
  'window-right':{
-  wide:[61,47],phone:[61,48],scale:.84,phoneScale:.83,depth:43,zone:'background'
+  wide:[61,47],phone:[61,42],scale:.84,phoneScale:.79,depth:43,zone:'background'
  },
  'bar-behind':{
-  wide:[73,51],phone:[72,52],scale:.87,phoneScale:.85,depth:44,zone:'behind-bar'
+  wide:[73,51],phone:[88,43],scale:.87,phoneScale:.79,depth:44,zone:'behind-bar'
  },
  stairs:{
-  wide:[67,54],phone:[67,55],scale:.93,phoneScale:.90,depth:50,zone:'midground'
+  wide:[67,54],phone:[68,54],scale:.93,phoneScale:.83,depth:50,zone:'midground'
  },
  'hearth-left':{
-  wide:[27,54],phone:[28,56],scale:.93,phoneScale:.90,depth:53,zone:'floor'
+  wide:[27,54],phone:[30,43],scale:.93,phoneScale:.79,depth:53,zone:'floor'
  }
 };
 const perspectiveFor=y=>Math.max(.82,Math.min(1.02,.70+(Number(y)||50)*.0042));
