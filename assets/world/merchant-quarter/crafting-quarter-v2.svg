@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 560">
+<defs>
+  <linearGradient id="stone" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8d8b7e"/><stop offset=".55" stop-color="#676b64"/><stop offset="1" stop-color="#464d49"/></linearGradient>
+  <linearGradient id="roof" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#7b4a3a"/><stop offset="1" stop-color="#492e2a"/></linearGradient>
+  <radialGradient id="fire"><stop stop-color="#fff0a1"/><stop offset=".28" stop-color="#ffb346"/><stop offset=".65" stop-color="#e85f2f" stop-opacity=".76"/><stop offset="1" stop-color="#e85f2f" stop-opacity="0"/></radialGradient>
+</defs>
+<ellipse cx="236" cy="532" rx="203" ry="22" fill="#101817" opacity=".52"/>
+<path d="M59 489 L70 213 L403 210 L421 493Z" fill="url(#stone)" stroke="#17211f" stroke-width="11" stroke-linejoin="round"/>
+<path d="M41 224 L101 137 L375 137 L437 219 L410 245 L67 247Z" fill="url(#roof)" stroke="#18211f" stroke-width="11"/>
+<path d="M286 150 L298 38 L359 38 L368 153Z" fill="#565d59" stroke="#18211f" stroke-width="10"/>
+<path d="M289 53 L366 53" stroke="#8f958d" stroke-width="6" opacity=".45"/>
+<path d="M108 490 L112 321 Q121 270 185 257 Q249 271 257 322 L260 493Z" fill="#241c18" stroke="#141a18" stroke-width="9"/>
+<ellipse cx="185" cy="363" rx="103" ry="121" fill="url(#fire)" opacity=".44"/>
+<path d="M139 399 Q184 309 226 399 Q184 437 139 399Z" fill="#f07833" stroke="#4b251d" stroke-width="6"/>
+<path d="M145 391 Q185 334 214 392 Q182 414 145 391Z" fill="#ffcf61"/>
+<path d="M284 281 L388 274 L393 458 L281 463Z" fill="#4a3d32" stroke="#18201c" stroke-width="8"/>
+<path d="M305 312 h61 M305 354 h61 M305 397 h61" stroke="#aa8a5f" stroke-width="7" opacity=".64"/>
+<path d="M316 314 l-9 35 M344 315 l-2 35 M368 355 l-14 40 M327 397 l8 35" stroke="#d7b172" stroke-width="6" stroke-linecap="round"/>
+<path d="M367 186 h67" stroke="#312822" stroke-width="7"/><circle cx="430" cy="186" r="32" fill="#6d4934" stroke="#171d1a" stroke-width="7"/>
+<path d="M415 191 h29 M429 176 v30 M417 176 l25 25" fill="none" stroke="#e6b55f" stroke-width="5" stroke-linecap="round"/>
+<path d="M270 478 q44-47 90-3 l-14 31-73 0Z" fill="#2f3330" stroke="#141a18" stroke-width="7"/>
+<path d="M291 472 h49 M302 456 h27" stroke="#b4b1a2" stroke-width="7" stroke-linecap="round"/>
+<g fill="#ba4d2d" opacity=".92"><circle cx="252" cy="421" r="5"/><circle cx="271" cy="404" r="4"/><circle cx="242" cy="388" r="3"/></g>
+</svg>
