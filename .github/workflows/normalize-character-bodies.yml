@@ -1,0 +1,136 @@
+name: Normalize painted full-body assets
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/normalize-character-bodies.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: normalize-painted-character-bodies
+  cancel-in-progress: false
+
+jobs:
+  normalize:
+    name: Normalize alpha canvas, headroom and foot baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Check out Cellbound
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Pillow
+        run: python -m pip install pillow
+
+      - name: Normalize painted full-body assets
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from io import BytesIO
+          import base64, json, math
+          from PIL import Image, ImageChops
+
+          ROOT = Path('.')
+          CANVAS = (512, 896)
+          TARGET_BODY_HEIGHT = 748
+          FOOT_Y = 842
+          ALPHA_THRESHOLD = 10
+          RACES = {
+              'veyren': 6,
+              'stoneborn': 10,
+              'aelari': 14,
+          }
+
+          def alpha_bbox(img):
+              alpha = img.getchannel('A')
+              mask = alpha.point(lambda p: 255 if p > ALPHA_THRESHOLD else 0)
+              return mask.getbbox()
+
+          def normalize_body(img, label):
+              img = img.convert('RGBA')
+              bbox = alpha_bbox(img)
+              if not bbox:
+                  raise RuntimeError(f'{label}: no visible alpha body pixels')
+
+              l,t,r,b = bbox
+              # Small safety expansion before scaling so antialiased edge pixels survive.
+              pad = 3
+              l=max(0,l-pad); t=max(0,t-pad); r=min(img.width,r+pad); b=min(img.height,b+pad)
+              body = img.crop((l,t,r,b))
+              bw,bh = body.size
+
+              scale = TARGET_BODY_HEIGHT / float(bh)
+              nw = max(1, round(bw * scale))
+              nh = max(1, round(bh * scale))
+              max_w = 430
+              if nw > max_w:
+                  scale = max_w / float(bw)
+                  nw = max_w
+                  nh = max(1, round(bh * scale))
+
+              body = body.resize((nw,nh), Image.Resampling.LANCZOS)
+              canvas = Image.new('RGBA', CANVAS, (0,0,0,0))
+              x = (CANVAS[0] - nw)//2
+              y = FOOT_Y - nh
+              if y < 42:
+                  raise RuntimeError(f'{label}: normalized body would violate headroom ({y}px)')
+              canvas.alpha_composite(body,(x,y))
+
+              out_bbox = alpha_bbox(canvas)
+              if not out_bbox:
+                  raise RuntimeError(f'{label}: normalized alpha disappeared')
+              ol,ot,orr,ob = out_bbox
+              if ot < 38:
+                  raise RuntimeError(f'{label}: insufficient top safe area ({ot}px)')
+              if ob > FOOT_Y + 6:
+                  raise RuntimeError(f'{label}: foot baseline escaped ({ob}px)')
+              return canvas, {'source_bbox':[l,t,r,b],'output_bbox':[ol,ot,orr,ob],'visible_height':ob-ot}
+
+          report = {'canvas':list(CANVAS),'target_body_height':TARGET_BODY_HEIGHT,'foot_y':FOOT_Y,'races':{}}
+
+          for race,count in RACES.items():
+              pack = ROOT/'assets-src'/'characters'/'v2'/race/'pack'
+              parts=[pack/f'part-{i:02d}.txt' for i in range(count)]
+              manifest=json.loads(''.join(p.read_text() for p in parts))
+              race_report={}
+              for name in ('body-a.webp','body-b.webp'):
+                  raw=base64.b64decode(manifest[name])
+                  img=Image.open(BytesIO(raw))
+                  normalized,stats=normalize_body(img,f'{race}/{name}')
+                  out=BytesIO()
+                  normalized.save(out,'WEBP',lossless=True,quality=96,method=6)
+                  manifest[name]=base64.b64encode(out.getvalue()).decode('ascii')
+                  race_report[name]=stats
+
+              packed=json.dumps(manifest,separators=(',',':'))
+              chunk=math.ceil(len(packed)/count)
+              for i,p in enumerate(parts):
+                  p.write_text(packed[i*chunk:(i+1)*chunk])
+              report['races'][race]=race_report
+
+          Path('assets-src/characters/v2/full-body-normalization.json').write_text(json.dumps(report,indent=2)+'\n')
+          print(json.dumps(report,indent=2))
+          PY
+
+      - name: Commit normalized bodies
+        shell: bash
+        run: |
+          git config user.name "Cellbound Asset Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add assets-src/characters/v2
+          git diff --cached --stat
+          git commit -m "Normalize painted full-body character canvases [body-standard]"
+          git push origin HEAD:main
