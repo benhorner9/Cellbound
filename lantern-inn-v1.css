@@ -509,40 +509,26 @@ body.inn-character-open{overflow:hidden}
    Party Table at z74, so dedicated slots can be naturally occluded by them.
    ========================================================================== */
 .inn-adventurer{
-  width:104px;
-  height:80px;
-  min-height:80px
+  width:112px;
+  height:190px;
+  min-height:190px
 }
 .inn-adventurer:before{
-  bottom:15px;
+  bottom:3px;
   width:72px;
   height:11px;
   opacity:.82
 }
-/* The visual body overflows above the small foot-anchor button. This invisible
-   hit column follows the visible torso/head, so actors remain selectable even
-   when furniture correctly occludes their lower body. */
-.inn-adventurer:after{
-  content:"";
-  position:absolute;
-  z-index:4;
-  left:50%;
-  bottom:24px;
-  width:82px;
-  height:166px;
-  transform:translateX(-50%);
-  pointer-events:auto;
-  background:transparent
-}
+.inn-adventurer:after{display:none!important}
 .inn-figure{
-  bottom:18px;
+  bottom:0;
   width:118px;
   height:208px;
   scale:var(--inn-scale-wide,.94);
   transform-origin:50% 100%
 }
 .inn-illustrated-model,
-.inn-fallback-model{width:104px}
+.inn-fallback-model{width:112px}
 .inn-illustrated-model .inn-figure{width:118px;height:208px}
 .inn-illustrated-model .cb-world-avatar-illustrated{
   width:118px!important;
@@ -564,11 +550,11 @@ body.inn-character-open{overflow:hidden}
 /* Characters in these slots are intentionally behind the furniture sprite.
    Their heads/torso remain visible while the furniture hides legs cleanly. */
 .inn-zone-behind-table .inn-name{
-  bottom:184px;
+  bottom:176px;
   background:rgba(16,15,13,.90)
 }
 .inn-zone-behind-bar .inn-name{
-  bottom:158px;
+  bottom:154px;
   background:rgba(16,15,13,.90)
 }
 .inn-zone-background .inn-name{font-size:10px}
@@ -578,37 +564,31 @@ body.inn-character-open{overflow:hidden}
 .inn-zone-floor .inn-figure{filter:drop-shadow(0 0 7px rgba(242,195,111,.10))}
 .inn-traveller .inn-figure{filter:drop-shadow(0 0 8px rgba(242,195,111,.24))}
 
-/* Explicit furniture depth contract. These are deliberately adjacent to the
-   actor rules so future art changes cannot accidentally flatten the room. */
+/* Explicit furniture depth contract. */
 .inn-object-door{z-index:24}
 .inn-object-bar{z-index:46}
 .inn-object-table{z-index:74}
 
 @media(max-width:600px){
-  .inn-adventurer{width:74px;height:68px;min-height:68px}
+  .inn-adventurer{width:84px;height:142px;min-height:142px}
   .inn-adventurer:before{
-    bottom:12px;
+    bottom:2px;
     width:52px;
     transform:translateX(-50%) scaleX(var(--inn-scale-phone,.90))
   }
-  .inn-adventurer:after{
-    bottom:20px;
-    width:60px;
-    height:118px
-  }
   .inn-figure{
-    bottom:15px;
+    bottom:0;
     width:88px;
     height:156px;
     scale:var(--inn-scale-phone,.90)
   }
   .inn-illustrated-model,
-  .inn-fallback-model{width:74px}
+  .inn-fallback-model{width:84px}
   .inn-illustrated-model .inn-figure{width:88px;height:156px}
   .inn-illustrated-model .cb-world-avatar-illustrated{width:88px!important;height:156px!important}
   .inn-fallback-model .cb-world-avatar,
   .inn-fallback-model .cb-paper-doll{width:84px!important;height:150px!important}
   .inn-name{font-size:9px;max-width:82px}
-  .inn-zone-behind-table .inn-name{bottom:139px}
-  .inn-zone-behind-bar .inn-name{bottom:121px}
+  .inn-zone-behind-table .inn-name{bottom:132px}
+  .inn-zone-behind-bar .inn-name{bottom:114px}
 }
