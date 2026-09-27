@@ -305,39 +305,33 @@
   transform-origin:center;
   transition:opacity .2s ease,transform .2s ease;
   filter:
-    drop-shadow(0 0 4px rgba(255,214,133,.82))
-    drop-shadow(0 0 11px rgba(226,164,76,.62))
-    drop-shadow(0 0 22px rgba(184,112,35,.38))
-}
-.town-quest-marker-disc{
-  fill:rgba(27,19,13,.86);
-  stroke:#d9a756;
-  stroke-width:2.2;
-  vector-effect:non-scaling-stroke
+    drop-shadow(0 0 5px rgba(255,220,145,.56))
+    drop-shadow(0 0 14px rgba(226,164,76,.42))
+    drop-shadow(0 0 28px rgba(184,112,35,.24))
 }
 .town-quest-marker-text{
-  fill:#ffd78f;
-  stroke:#5a3518;
-  stroke-width:1.2;
+  fill:rgba(255,215,143,.58);
+  stroke:rgba(255,231,177,.18);
+  stroke-width:.8;
   paint-order:stroke fill;
   font-family:Georgia,serif;
-  font-size:58px;
+  font-size:82px;
   font-weight:700;
   dominant-baseline:auto
 }
 .town-scene.has-available-quests .town-quest-marker{
-  opacity:1;
-  animation:townQuestMarkerPulse 1.85s ease-in-out infinite
+  opacity:.72;
+  animation:townQuestMarkerPulse 1.9s ease-in-out infinite
 }
 .town-location[data-town-object="board"].is-selected ~ .town-quest-marker{
   filter:
-    drop-shadow(0 0 5px rgba(255,224,155,.95))
-    drop-shadow(0 0 15px rgba(232,172,80,.75))
-    drop-shadow(0 0 28px rgba(188,116,38,.48))
+    drop-shadow(0 0 6px rgba(255,226,156,.66))
+    drop-shadow(0 0 18px rgba(232,172,80,.5))
+    drop-shadow(0 0 32px rgba(188,116,38,.28))
 }
 @keyframes townQuestMarkerPulse{
-  0%,100%{transform:scale(.96);opacity:.82}
-  50%{transform:scale(1.08);opacity:1}
+  0%,100%{transform:scale(.97);opacity:.58}
+  50%{transform:scale(1.035);opacity:.8}
 }
 
 /* Central Square relies on environmental landmarks rather than a permanent
