@@ -128,9 +128,10 @@
   .cb-venue-stage{min-height:620px;margin-inline:-10px;border-left:0;border-right:0;border-radius:0}
   .cb-venue-header{left:12px;top:10px;max-width:72%;padding:8px 9px}.cb-venue-header h2{font-size:1.65rem}.cb-venue-header p{font-size:.58rem}
   .cb-venue-town{right:8px;top:8px;min-height:40px;padding:0 8px;font-size:.5rem}
-  .cb-venue-actors{inset:110px 5px 92px}
-  .cb-venue-actor{width:112px;min-height:128px}.cb-venue-actor-visual{width:82px;height:82px}.cb-venue-actor-plaque{min-width:88px;max-width:112px;padding:4px 5px}
-  .cb-venue-actor-plaque b{font-size:.64rem}.cb-venue-actor-plaque small{font-size:.39rem}
+  .cb-venue-actors{inset:108px 8px 96px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:end;gap:4px 8px}
+  .cb-venue-actor{position:relative;left:auto!important;top:auto!important;transform:none;width:100%;min-height:116px;align-self:end}
+  .cb-venue-actor-visual{width:72px;height:70px}.cb-venue-actor-plaque{min-width:82px;max-width:130px;padding:4px 5px}
+  .cb-venue-actor-plaque b{font-size:.62rem}.cb-venue-actor-plaque small{font-size:.38rem}
   .cb-venue-dialogue{bottom:10px;width:calc(100% - 16px);grid-template-columns:1fr;gap:8px;padding:9px 10px}.cb-venue-dialogue button{width:100%}
   .cb-venue-location[data-venue-state="system"]>.cb-venue-stage{min-height:166px}
   .cb-venue-location[data-venue-state="system"] .cb-venue-header{max-width:60%}.cb-venue-location[data-venue-state="system"] .cb-venue-header h2{font-size:1.25rem}
@@ -139,7 +140,7 @@
 @media(max-width:390px){
   .cb-venue-stage{min-height:590px}
   .cb-venue-header p{display:none}
-  .cb-venue-actors{inset-top:90px}
+  .cb-venue-actors{top:88px}
 }
 @media(prefers-reduced-motion:reduce){
   .cb-venue-actor,.cb-venue-actor-visual{transition:none!important}
