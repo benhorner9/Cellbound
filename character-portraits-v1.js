@@ -182,6 +182,10 @@ function svgFor(a,accent){
     '</g><rect x="2.5" y="2.5" width="95" height="95" rx="17.5" fill="none" stroke="'+accent+'" stroke-opacity=".55" stroke-width="2"/></svg>';
 }
 const PAINTED_RACES=new Set(['Veyren','Stoneborn','Aelari']);
+// Only use painted full-body art when the source really contains alpha.
+// Veyren and Stoneborn V2 were authored on opaque environment plates, so
+// their full-body contexts deliberately fall back to the clean vector model.
+const PAINTED_BODY_RACES=new Set(['Aelari']);
 function paintedRaceOf(c,a){
   var race=c?.race||a?.race||c?.appearance?.race||'Veyren';
   return PAINTED_RACES.has(race)?race:'';
@@ -789,7 +793,7 @@ function worldAvatarHTML(subject,opts){
   if(!WORLD_AVATAR_CLASSES.has(klass))return'';
   var tier=worldAvatarTier(c),weapon=worldAvatarWeapon(c);
   var appearanceKey=hash(JSON.stringify([a.race,a.skinTone,a.face,a.hair,a.hairColor,a.facialHair,a.marking,a.eyes,a.feature])).toString(36);
-  if(painted){
+  if(painted&&PAINTED_BODY_RACES.has(painted)){
     var attrs=' data-world-avatar="'+esc(klass)+'" data-avatar-class="'+esc(klass)+'" data-avatar-tier="'+tier+'" data-avatar-weapon="'+esc(weapon)+'" data-avatar-race="'+esc(a.race)+'" data-appearance-key="'+appearanceKey+'"';
     return paintedBodyHTML(c,a,'cb-world-avatar cb-world-avatar-painted cb-world-avatar--'+esc(painted.toLowerCase()),label,attrs);
   }
@@ -804,7 +808,7 @@ function paperDollHTML(subject,opts){
   var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
   var cls='cb-paper-doll cb-paper-doll--'+esc(size)+(set?' has-set set-pieces-'+Math.min(4,set.count):'');
   var painted=paintedRaceOf(c,a);
-  if(painted){
+  if(painted&&PAINTED_BODY_RACES.has(painted)){
     return '<span class="'+cls+' cb-paper-doll-painted cb-paper-doll-'+esc(painted.toLowerCase())+'" style="--cbp-accent:'+accent+'" role="img" aria-label="'+esc(label)+'" data-painted-race="'+esc(painted)+'">'+
       paintedBodyHTML(c,a,'cb-painted-paper-body',label)+
       '<span class="cb-painted-legacy-hooks" hidden>'+paperDollSVG(c,opts)+'</span>'+
@@ -818,7 +822,7 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:8,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
+  version:9,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
   applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,worldAvatarHTML:worldAvatarHTML,worldAvatarSVG:worldAvatarSVG,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
   visualProfile:visualProfile,weaponType:weaponType,offHandType:offHandType,
