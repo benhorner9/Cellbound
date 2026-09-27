@@ -267,30 +267,54 @@ function restoreQuests(){
   boardMount.replaceChildren();
 }
 
-function closeBoard({focus=true}={}){
-  if(!boardOpen)return;
+function closeBoard({focus=true,instant=false}={}){
+  if(!boardOpen&&!root.classList.contains('is-opening-board'))return;
   boardOpen=false;
+  entering=false;
+  root.classList.remove('is-opening-board');
   board.classList.remove('is-visible');
-  board.hidden=true;
-  root.classList.remove('town-board-open');
   document.body.classList.remove('town-board-focus-open');
-  restoreQuests();
-  if(focus)locationNode('board')?.focus({preventScroll:true});
+
+  const finish=()=>{
+    board.hidden=true;
+    root.classList.remove('town-board-open');
+    restoreQuests();
+    syncQuestMarker();
+    if(focus)locationNode('board')?.focus({preventScroll:true});
+  };
+
+  if(instant){finish();return}
+  root.classList.add('is-closing-board');
+  setTimeout(()=>{
+    root.classList.remove('is-closing-board');
+    finish();
+  },220);
 }
 
-function openBoard(){
-  if(!questView||boardOpen)return;
+function showBoardPopup(){
   window.CellboundQuests?.render?.();
   questChildren=[...questView.children];
   questChildren.forEach(node=>boardMount.appendChild(node));
   boardOpen=true;
   board.hidden=false;
+  root.classList.remove('is-opening-board');
   root.classList.add('town-board-open');
   document.body.classList.add('town-board-focus-open');
   requestAnimationFrame(()=>board.classList.add('is-visible'));
   boardClose?.focus({preventScroll:true});
   window.CellboundQuests?.render?.();
   syncQuestMarker();
+  entering=false;
+}
+
+function openBoard(){
+  if(!questView||boardOpen||entering)return;
+  const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+  if(reduced){showBoardPopup();return}
+
+  entering=true;
+  root.classList.add('is-opening-board');
+  setTimeout(showBoardPopup,420);
 }
 
 function travel(view){
@@ -366,7 +390,7 @@ function syncHome(){
     renderTravelParty();
     syncQuestMarker();
   }else{
-    closeBoard({focus:false});
+    closeBoard({focus:false,instant:true});
     setSelected('');
   }
 }
