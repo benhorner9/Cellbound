@@ -326,25 +326,23 @@ for(const file of files){
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=52')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
     if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=7'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
-    if(!contents.includes('character-art-v2.js?v=1')||!contents.includes('character-portraits-v1.css?v=9')||!contents.includes('character-portraits-v1.js?v=15'))throw new Error('Character portrait identity assets are not linked from guild.html');
+    if(!contents.includes('character-art-v2.js?v=1')||!contents.includes('character-portraits-v1.css?v=10')||!contents.includes('character-portraits-v1.js?v=16'))throw new Error('Unified illustrated character assets are not linked from guild.html');
     const portraitCss=fs.readFileSync(path.join(__dirname,'character-portraits-v1.css'),'utf8');
     const portraitJs=fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8');
-    if(!portraitCss.includes('Full-body Standard V1')||!portraitCss.includes('transform:none!important')||!portraitCss.includes('overflow:visible!important'))throw new Error('Normalized painted full-body presentation rules are missing');
-    if(portraitCss.includes('clip-path:polygon('))throw new Error('Opaque painted body polygon cutout workaround returned');
-    if(!portraitJs.includes("PAINTED_BODY_RACES=new Set(['Veyren','Stoneborn','Aelari'])")||!portraitJs.includes('PAINTED_BODY_STANDARD=Object.freeze({width:512,height:896,footY:842,version:1})')||!portraitJs.includes('usesPaintedBody:usesPaintedBody'))throw new Error('Painted full-body standard contract is incomplete');
-    const worldAvatarContract=portraitJs.slice(portraitJs.indexOf('function worldAvatarHTML'),portraitJs.indexOf('function paperDollHTML'));
-    if(worldAvatarContract.indexOf("if(painted&&PAINTED_BODY_RACES.has(painted)){")<0||worldAvatarContract.indexOf("if(!WORLD_AVATAR_CLASSES.has(klass))return'';")<0||worldAvatarContract.indexOf("if(painted&&PAINTED_BODY_RACES.has(painted)){")>worldAvatarContract.indexOf("if(!WORLD_AVATAR_CLASSES.has(klass))return'';"))throw new Error('Painted full-body rendering is incorrectly gated by the legacy vector class whitelist');
-    if(!portraitJs.includes('data-painted-body')||!portraitJs.includes('data-body-standard')||!portraitJs.includes('cb-painted-body-'))throw new Error('Painted body normalization metadata is missing');
-    if(!portraitJs.includes("+'/'+file+'?v=4'"))throw new Error('Painted character binary asset cache version is stale');
-    const bodyReport=JSON.parse(fs.readFileSync(path.join(__dirname,'assets-src/characters/v2/full-body-normalization.json'),'utf8'));
-    if(bodyReport.canvas?.[0]!==512||bodyReport.canvas?.[1]!==896||bodyReport.foot_y!==842)throw new Error('Painted full-body canvas standard is invalid');
-    for(const race of ['veyren','stoneborn','aelari'])for(const body of ['body-a.webp','body-b.webp']){
-      const row=bodyReport.races?.[race]?.[body];
-      if(!row||row.output_bbox?.[1]<38||row.output_bbox?.[3]>848||row.visible_height<730)throw new Error('Painted full-body safe-area validation failed: '+race+'/'+body);
-    }
+    for(const race of ['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'])if(!portraitJs.includes(race+':{'))throw new Error('Illustrated character race support missing: '+race);
+    for(const token of ['cb-portrait-illustrated','cb-paper-doll-illustrated','cb-world-avatar-illustrated','usesIllustratedBody:usesIllustratedBody','illustratedSignature:illustratedSignature'])if(!portraitJs.includes(token))throw new Error('Unified illustrated character runtime is incomplete: '+token);
+    const portraitContract=portraitJs.slice(portraitJs.indexOf('function portraitHTML'),portraitJs.indexOf('function optionText'));
+    if(portraitContract.includes('paintedFaceHTML')||portraitContract.includes('<img'))throw new Error('Runtime portraits must be generated from live appearance data, not static painted images');
+    const worldContract=portraitJs.slice(portraitJs.indexOf('function worldAvatarHTML'),portraitJs.indexOf('function paperDollHTML'));
+    const dollContract=portraitJs.slice(portraitJs.indexOf('function paperDollHTML'),portraitJs.indexOf('function visualProfile'));
+    if(!worldContract.includes('paperDollSVG')||worldContract.includes('paintedBodyHTML')||worldContract.includes('WORLD_AVATAR_CLASSES.has'))throw new Error('World characters must use the class-agnostic live illustrated model');
+    if(!dollContract.includes('paperDollSVG')||dollContract.includes('paintedBodyHTML'))throw new Error('Equipment characters must use the live gear-aware illustrated model');
+    for(const fn of ['paperHeadMarkup','paperShoulders','paperChest','paperArms','paperWaist','paperLegs','paperFeet','paperWeapon','paperOffHand','paperAccessories'])if(!portraitJs.includes('function '+fn))throw new Error('Gear-aware model layer missing: '+fn);
+    if(!portraitCss.includes('Unified Illustrated Character Runtime')||!portraitCss.includes('.cb-paper-doll-illustrated')||!portraitCss.includes('.cb-world-avatar-illustrated'))throw new Error('Illustrated character presentation CSS is missing');
     const innCss=fs.readFileSync(path.join(__dirname,'lantern-inn-v1.css'),'utf8');
     const innJs=fs.readFileSync(path.join(__dirname,'lantern-inn-v1.js'),'utf8');
-    if(!contents.includes('lantern-inn-v1.css?v=7')||!contents.includes('lantern-inn-v1.js?v=11')||!innCss.includes('.inn-painted-model .cb-world-avatar-painted')||!innCss.includes('scale:var(--inn-scale-wide,.82)')||!innCss.includes('scale:var(--inn-scale-phone,.82)')||innCss.includes(':has(.cb-world-avatar-painted)')||!innJs.includes("perspectiveFor=y=>Math.max(.82,Math.min(.96,.68+(Number(y)||50)*.0036))")||!innJs.includes('inn-painted-model'))throw new Error('Canonical Inn actor staging rules are missing');
+    if(!contents.includes('lantern-inn-v1.css?v=8')||!contents.includes('lantern-inn-v1.js?v=12')||!innCss.includes('.inn-illustrated-model .cb-world-avatar-illustrated')||!innJs.includes('usesIllustratedBody')||!innJs.includes('inn-illustrated-model'))throw new Error('Inn is not using the unified illustrated actor stage');
+    if(innJs.includes('usesPaintedBody')||innJs.includes('inn-painted-model'))throw new Error('Legacy static painted Inn model path returned');
      if(!contents.includes('combat-portraits-v1.css?v=4')||!contents.includes('combat-portraits-v1.js?v=5'))throw new Error('Combat portrait assets are not linked from guild.html');
     if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=14')||!contents.includes('combat-reborn-v1.js?v=9')||!contents.includes('guild-v4.js?v=52')||!contents.includes('character-sheet.js?v=33')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=56')||!contents.includes('hollow-sanctum-v1.js?v=40')||!contents.includes('chaos-canyon-v1.js?v=15')||!contents.includes('blackout-station-v1.js?v=22')||!contents.includes('fractured-ages-v1.js?v=8'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
