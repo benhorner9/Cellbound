@@ -43,7 +43,7 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  assert.equal(await page.locator('[data-town-scene]').getAttribute('data-town-sector'),'square','Town opens in Central Square');
  assert.equal(await page.locator('.town-painted-image').count(),1,'Central Square keeps one clean painted background layer');
  assert((await page.locator('.town-painted-image image').getAttribute('href')||'').includes('assets/world/town/central-square-atlas-v2.webp'),'modular Central Square atlas is wired into the scene');
- assert.equal(await page.locator('[data-town-sector="square"] [data-town-object]').count(),5,'painted Central Square exposes exactly five environmental destinations');
+ assert.equal(await page.locator('.town-sector[data-town-sector="square"] [data-town-object]').count(),5,'painted Central Square exposes exactly five environmental destinations');
  assert.equal(await page.locator('[data-town-layer]').count(),5,'all five Central Square destinations render as independent artwork layers');
  assert.equal(await page.locator('.town-landmark-glow').count(),5,'each modular landmark owns a behind-art glow layer');
  assert.equal(await page.locator('[data-town-sign]').count(),0,'legacy floating destination emblems are removed');
