@@ -59,7 +59,7 @@
   <link rel="stylesheet" href="./living-world-v1.css?v=3">
 <link rel="stylesheet" href="./lantern-inn-v1.css?v=3">
 <link rel="stylesheet" href="./inn-art-direction-v1.css?v=1">
-  <link rel="stylesheet" href="./town-scene-v1.css?v=3">
+  <link rel="stylesheet" href="./town-scene-v1.css?v=4">
   <link rel="stylesheet" href="./world-venues-v1.css?v=3">
   <link rel="stylesheet" href="./layout-safety-v1.css?v=1">
 </head>
@@ -120,71 +120,47 @@
           <div class="town-sector-viewport">
             <div class="town-sector-track" data-town-sector-track>
 
-              <!-- CENTRAL SQUARE -->
-              <section class="town-sector" data-town-sector="square" aria-label="Central Square">
-                <svg class="town-sector-art" viewBox="0 0 1200 760" role="img" aria-label="Central Square with the Lantern Inn, Notice Board and roads to the other districts" preserveAspectRatio="xMidYMid slice">
-                  <defs>
-                    <linearGradient id="sqSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16242a"/><stop offset=".62" stop-color="#31353a"/><stop offset="1" stop-color="#1a1c1b"/></linearGradient>
-                    <linearGradient id="sqRoad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#554b3e"/><stop offset="1" stop-color="#272522"/></linearGradient>
-                    <radialGradient id="sqGlow"><stop offset="0" stop-color="#f0aa51" stop-opacity=".86"/><stop offset=".5" stop-color="#d67a31" stop-opacity=".28"/><stop offset="1" stop-color="#bd6422" stop-opacity="0"/></radialGradient>
-                  </defs>
-                  <rect width="1200" height="760" fill="url(#sqSky)"/>
-                  <circle cx="955" cy="112" r="60" fill="#ddd7b9" opacity=".14"/>
-                  <path d="M0 356 L85 302 L158 328 L242 264 L330 316 L430 238 L523 306 L620 224 L721 303 L818 245 L915 312 L1028 257 L1120 311 L1200 274 L1200 475 L0 475Z" fill="#131a1c" opacity=".94"/>
-                  <path d="M0 504 C248 454 422 462 591 495 C777 532 984 474 1200 452 L1200 760 L0 760Z" fill="url(#sqRoad)"/>
-                  <path d="M568 760 C585 648 608 548 633 476 C659 401 690 351 724 309" fill="none" stroke="#978773" stroke-width="106" opacity=".15"/>
-                  <path d="M876 760 C876 663 893 583 929 516 C963 453 1008 412 1071 374" fill="none" stroke="#7b7468" stroke-width="77" opacity=".13"/>
+              <!-- CENTRAL SQUARE · PAINTED WORLD NAVIGATION -->
+              <section class="town-sector town-painted-square" data-town-sector="square" aria-label="Central Square">
+                <img
+                  class="town-painted-image"
+                  src="./assets/world/town/central-square-v1.webp"
+                  alt=""
+                  aria-hidden="true"
+                  draggable="false"
+                  decoding="async"
+                >
+                <svg class="town-painted-hotspots" viewBox="0 0 1448 1086" preserveAspectRatio="xMidYMid slice" aria-label="Interactive locations in Central Square">
 
-                  <g class="town-location" data-town-object="inn" role="button" tabindex="0" aria-pressed="false" aria-label="The Lantern Inn">
-                    <path class="town-object-shape" d="M54 644 L69 348 L150 313 L172 213 L347 207 L430 324 L454 361 L448 650Z" fill="#493d31" stroke="#090c0d" stroke-width="8"/>
-                    <path class="town-object-shape" d="M105 335 L171 196 L350 190 L443 339 L360 313 L301 244 L174 253Z" fill="#171c1d" stroke="#080a0b" stroke-width="9"/>
-                    <path d="M150 314 L150 614 M352 309 L352 627 M87 405 L424 389 M84 492 L432 476" stroke="#211e1a" stroke-width="11" opacity=".82"/>
-                    <rect class="town-object-shape" x="113" y="416" width="76" height="85" fill="#202a29" stroke="#090c0d" stroke-width="5"/>
-                    <rect x="128" y="430" width="20" height="56" fill="#e09a43" opacity=".57"/><rect x="155" y="430" width="20" height="56" fill="#d78239" opacity=".48"/>
-                    <rect class="town-object-shape" x="293" y="414" width="76" height="85" fill="#202929" stroke="#090c0d" stroke-width="5"/>
-                    <rect x="308" y="429" width="20" height="56" fill="#e3a049" opacity=".57"/><rect x="335" y="429" width="20" height="56" fill="#d9843a" opacity=".48"/>
-                    <path class="town-object-shape" d="M213 643 L214 491 Q253 451 292 491 L294 644Z" fill="#211914" stroke="#080a0b" stroke-width="7"/>
-                    <ellipse cx="389" cy="387" rx="82" ry="72" fill="url(#sqGlow)" opacity=".44"/>
-                    <circle cx="389" cy="380" r="14" fill="#e2a24e" stroke="#2b1c10" stroke-width="4"/>
-                    <path class="town-object-outline" d="M54 644 L69 348 L150 313 L172 213 L347 207 L430 324 L454 361 L448 650Z"/>
+                  <!-- Lantern Inn · the building itself is the control -->
+                  <g class="town-location town-painted-location" data-town-object="inn" role="button" tabindex="0" aria-pressed="false" aria-label="The Lantern Inn">
+                    <path class="town-painted-hit town-object-shape" d="M0 824 L18 424 L111 382 L184 211 L463 198 L589 395 L592 828 L492 851 L0 850 Z"/>
+                    <path class="town-painted-outline town-object-outline" d="M0 824 L18 424 L111 382 L184 211 L463 198 L589 395 L592 828 L492 851 L0 850 Z"/>
                   </g>
 
-                  <g class="town-location" data-town-object="board" role="button" tabindex="0" aria-pressed="false" aria-label="Town Notice Board">
-                    <path class="town-object-shape" d="M508 694 L523 472 L548 471 L557 694Z" fill="#352318" stroke="#090c0d" stroke-width="6"/>
-                    <path class="town-object-shape" d="M666 694 L675 470 L700 471 L714 694Z" fill="#352318" stroke="#090c0d" stroke-width="6"/>
-                    <path class="town-object-shape" d="M482 455 L716 446 L722 589 L475 601Z" fill="#65462f" stroke="#090c0d" stroke-width="8"/>
-                    <path class="town-object-shape" d="M499 470 L701 462 L705 573 L490 584Z" fill="#7d6044" stroke="#291b12" stroke-width="5"/>
-                    <path d="M520 488 L578 482 L582 536 L524 542Z M593 476 L656 478 L652 533 L590 531Z M664 486 L693 483 L695 546 L663 549Z M539 544 L608 539 L612 568 L541 574Z" fill="#d5bf91" stroke="#5a402b" stroke-width="2"/>
-                    <circle cx="550" cy="488" r="5" fill="#5a3122"/><circle cx="624" cy="479" r="5" fill="#5a3122"/><circle cx="679" cy="487" r="5" fill="#5a3122"/>
-                    <path class="town-object-outline" d="M482 455 L716 446 L722 589 L700 594 L714 694 L666 694 L675 594 L557 600 L557 694 L508 694 L523 602 L475 601Z"/>
+                  <!-- Upper gateway · Expedition Ward -->
+                  <g class="town-location town-painted-location" data-town-object="expeditionRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Gateway to the Expedition Ward">
+                    <path class="town-painted-hit town-object-shape" d="M598 546 L606 273 L663 217 L710 184 L778 181 L830 200 L890 181 L960 201 L1007 250 L1020 531 L955 552 L949 468 Q822 345 700 468 L692 552 Z"/>
+                    <path class="town-painted-outline town-object-outline" d="M598 546 L606 273 L663 217 L710 184 L778 181 L830 200 L890 181 L960 201 L1007 250 L1020 531 L955 552 L949 468 Q822 345 700 468 L692 552 Z"/>
                   </g>
 
-                  <g class="town-location" data-town-object="expeditionRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Road to the Expedition Ward">
-                    <path class="town-object-shape" d="M540 385 L548 231 Q636 141 728 232 L737 386Z" fill="#3f403c" stroke="#090c0d" stroke-width="8"/>
-                    <path class="town-object-shape" d="M579 384 L583 281 Q638 220 696 281 L700 384Z" fill="#151a1b" stroke="#090c0d" stroke-width="6"/>
-                    <path d="M560 254 L719 254 M555 282 L724 282" stroke="#85775e" stroke-width="7" opacity=".6"/>
-                    <path d="M568 239 L546 194 L584 211 M710 239 L732 194 L696 211" fill="#744139" stroke="#211414" stroke-width="3"/>
-                    <path class="town-object-outline" d="M540 385 L548 231 Q636 141 728 232 L737 386Z"/>
+                  <!-- Merchant gate on the right -->
+                  <g class="town-location town-painted-location" data-town-object="merchantRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Gateway to the Merchant Quarter">
+                    <path class="town-painted-hit town-object-shape" d="M1045 813 L1060 374 L1120 342 L1208 323 L1330 326 L1428 372 L1448 392 L1448 826 L1369 825 L1365 533 Q1263 438 1164 535 L1158 817 Z"/>
+                    <path class="town-painted-outline town-object-outline" d="M1045 813 L1060 374 L1120 342 L1208 323 L1330 326 L1428 372 L1448 392 L1448 826 L1369 825 L1365 533 Q1263 438 1164 535 L1158 817 Z"/>
                   </g>
 
-                  <g class="town-location" data-town-object="merchantRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Road to the Merchant Quarter">
-                    <path class="town-object-shape" d="M920 598 L930 316 L1147 309 L1160 604Z" fill="#444038" stroke="#090c0d" stroke-width="8"/>
-                    <path class="town-object-shape" d="M904 325 L967 267 L1115 263 L1171 319Z" fill="#1c2222" stroke="#090c0d" stroke-width="8"/>
-                    <path class="town-object-shape" d="M963 594 L965 391 Q1039 333 1110 392 L1113 598Z" fill="#191c1b" stroke="#080b0c" stroke-width="7"/>
-                    <path d="M937 351 L1148 347 M938 374 L1149 370" stroke="#7d6e58" stroke-width="6" opacity=".55"/>
-                    <path d="M980 421 L1099 421 M980 456 L1099 456" stroke="#6f5e4b" stroke-width="5"/>
-                    <path class="town-object-outline" d="M904 325 L967 267 L1115 263 L1171 319 L1160 604 L920 598Z"/>
+                  <!-- Quest notice board -->
+                  <g class="town-location town-painted-location" data-town-object="board" role="button" tabindex="0" aria-pressed="false" aria-label="Town Notice Board">
+                    <path class="town-painted-hit town-object-shape" d="M562 580 L875 558 L907 798 L846 806 L844 913 L797 916 L785 811 L661 818 L655 915 L607 915 L615 824 L579 827 Z"/>
+                    <path class="town-painted-outline town-object-outline" d="M562 580 L875 558 L907 798 L846 806 L844 913 L797 916 L785 811 L661 818 L655 915 L607 915 L615 824 L579 827 Z"/>
                   </g>
 
-                  <g class="town-location" data-town-object="harbourRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Road to Greywake Harbour">
-                    <path class="town-object-shape" d="M747 722 L760 606 L884 588 L911 720Z" fill="#293234" stroke="#090c0d" stroke-width="7"/>
-                    <path d="M772 614 L870 599 M768 639 L878 624 M763 665 L885 648 M758 692 L894 675" stroke="#81715c" stroke-width="9"/>
-                    <path class="town-object-shape" d="M824 606 L833 542" stroke="#493729" stroke-width="9"/>
-                    <path class="town-object-shape" d="M834 547 L892 561 L836 580Z" fill="#6b4140" stroke="#1e1515" stroke-width="3"/>
-                    <path class="town-object-outline" d="M747 722 L760 606 L824 596 L833 542 L892 561 L836 580 L884 588 L911 720Z"/>
+                  <!-- Harbour route sign / flag -->
+                  <g class="town-location town-painted-location" data-town-object="harbourRoad" role="button" tabindex="0" aria-pressed="false" aria-label="Harbour route to Greywake">
+                    <path class="town-painted-hit town-object-shape" d="M922 1014 L948 807 L1032 782 L1054 699 L1080 704 L1073 750 L1163 770 L1070 803 L1154 1007 Z"/>
+                    <path class="town-painted-outline town-object-outline" d="M922 1014 L948 807 L1032 782 L1054 699 L1080 704 L1073 750 L1163 770 L1070 803 L1154 1007 Z"/>
                   </g>
-
-                  <path d="M0 681 Q92 628 171 670 T326 702 L302 760 L0 760Z" fill="#0d1110" pointer-events="none"/>
                 </svg>
               </section>
 
@@ -801,7 +777,7 @@
 <script src="./release-v1.js?v=3"></script>
 <script src="./living-world-v1.js?v=4"></script>
 <script src="./lantern-inn-v1.js?v=5"></script>
-<script src="./town-scene-v1.js?v=3"></script>
+<script src="./town-scene-v1.js?v=4"></script>
 <script src="./world-venues-v1.js?v=2"></script>
 </body>
 </html>
