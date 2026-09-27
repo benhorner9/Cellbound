@@ -570,6 +570,8 @@ body.inn-character-open{overflow:hidden}
 .inn-object-table{z-index:74}
 
 @media(max-width:600px){
+  /* The compact Inn shows the travelling five; reserves remain in the Bar/Roster. */
+  .inn-resting{display:none!important}
   .inn-adventurer{width:84px;height:142px;min-height:142px}
   .inn-adventurer:before{
     bottom:2px;
