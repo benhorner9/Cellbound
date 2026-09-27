@@ -5,18 +5,20 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const game=()=>window.CellboundGame;
 // Foot positions in each independently composed environment. Reusable across locations.
 const slots={
- // Scale is perspective: deeper room positions render smaller than foreground.
- 'fireplace-right':{wide:[27,49],phone:[34,56],scale:.82},
- 'main-table-left':{wide:[20,77],phone:[16,75],scale:.96},
- 'main-table-right':{wide:[52,76],phone:[60,74],scale:.90},
- 'bar-left':{wide:[68,52],phone:[73,58],scale:.84},
- doorway:{wide:[13,48],phone:[13,49],scale:.78},
- window:{wide:[44,38],phone:[47,35],scale:.64},
- 'back-table':{wide:[55,40],phone:[55,46],scale:.68},
- stairs:{wide:[91,66],phone:[92,50],scale:.82},
- 'bar-right':{wide:[83,53],phone:[82,42],scale:.78},
- 'fireplace-left':{wide:[16,42],phone:[25,42],scale:.72}
+ 'fireplace-right':{wide:[27,49],phone:[34,56]},
+ 'main-table-left':{wide:[20,77],phone:[16,75]},
+ 'main-table-right':{wide:[52,76],phone:[60,74]},
+ 'bar-left':{wide:[68,52],phone:[73,58]},
+ doorway:{wide:[13,48],phone:[13,49]},
+ window:{wide:[44,38],phone:[47,35]},
+ 'back-table':{wide:[55,40],phone:[55,46]},
+ stairs:{wide:[91,66],phone:[92,50]},
+ 'bar-right':{wide:[83,53],phone:[82,42]},
+ 'fireplace-left':{wide:[16,42],phone:[25,42]}
 };
+// Perspective is derived from the floor anchor, not tuned per character.
+// This gives every race the same depth rules and prevents size drift.
+const perspectiveFor=y=>Math.max(.72,Math.min(.98,.50+(Number(y)||50)*.00625));
 const activeSlots=['fireplace-right','main-table-right','main-table-left','bar-left','doorway'];
 const reserveSlots=['window','back-table','stairs','bar-right','fireplace-left'];
 let root,world,ledger,partyDialog,partyMarker,partyNode,returnFocus=null,characterFocus=null,lastKey='';
@@ -73,8 +75,11 @@ function refresh(){
  if(key!==lastKey){
   lastKey=key;const focused=document.activeElement?.dataset?.innCharacter;
   world.querySelector('.inn-inhabitants').innerHTML=assign(roster,party).map(({c,slot,active})=>{
-   const s=slots[slot],body=window.CellboundPortraits?.worldAvatarHTML?.(c,{size:'inn',label:c.name})||window.CellboundPortraits?.paperDollHTML?.(c,{size:'inn',label:c.name})||window.CellboundPortraits?.portraitHTML?.(c,{size:'hero'})||esc(c.name);
-   return '<button type="button" class="inn-adventurer '+(active?'inn-traveller':'inn-resting')+'" data-char="'+esc(c.id)+'" data-inn-character="'+esc(c.id)+'" data-location-slot="'+slot+'" style="--slot-x:'+s.wide[0]+'%;--slot-y:'+s.wide[1]+'%;--phone-x:'+s.phone[0]+'%;--phone-y:'+s.phone[1]+'%;--inn-scale:'+(s.scale||1)+';--depth:'+Math.round(s.wide[1])+'" aria-label="'+esc(c.name+', '+c.class+', '+c.spec+', '+(active?'active party':'reserve')+(Number(c.cellShock)>=100?', recovering':''))+'"><span class="inn-figure">'+body+'</span><span class="inn-name">'+esc(c.name)+'</span></button>';
+   const s=slots[slot],P=window.CellboundPortraits;
+   const painted=Boolean(P?.usesPaintedBody?.(c));
+   const body=P?.worldAvatarHTML?.(c,{size:'inn',label:c.name})||P?.paperDollHTML?.(c,{size:'inn',label:c.name})||P?.portraitHTML?.(c,{size:'hero'})||esc(c.name);
+   const wideScale=perspectiveFor(s.wide[1]),phoneScale=perspectiveFor(s.phone[1]);
+   return '<button type="button" class="inn-adventurer '+(painted?'inn-painted-model ':'inn-vector-model ')+(active?'inn-traveller':'inn-resting')+'" data-char="'+esc(c.id)+'" data-inn-character="'+esc(c.id)+'" data-location-slot="'+slot+'" style="--slot-x:'+s.wide[0]+'%;--slot-y:'+s.wide[1]+'%;--phone-x:'+s.phone[0]+'%;--phone-y:'+s.phone[1]+'%;--inn-scale-wide:'+wideScale.toFixed(3)+';--inn-scale-phone:'+phoneScale.toFixed(3)+';--depth:'+Math.round(s.wide[1])+'" aria-label="'+esc(c.name+', '+c.class+', '+c.spec+', '+(active?'active party':'reserve')+(Number(c.cellShock)>=100?', recovering':''))+'"><span class="inn-figure">'+body+'</span><span class="inn-name">'+esc(c.name)+'</span></button>';
   }).join('');
   if(focused)[...world.querySelectorAll('[data-inn-character]')].find(n=>n.dataset.innCharacter===focused)?.focus({preventScroll:true});
  }
@@ -99,5 +104,5 @@ window.addEventListener('keydown',e=>{
 });
 window.addEventListener('cellbound:state-rendered',refresh);
 window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view!=='roster'){document.body.classList.remove('inn-view-active');ledger?.close();partyDialog?.close()}else refresh()});
-window.CellboundInn={refresh,openTool,slots,assign};refresh();
+window.CellboundInn={refresh,openTool,slots,assign,perspectiveFor};refresh();
 })();
