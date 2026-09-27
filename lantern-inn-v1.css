@@ -12,6 +12,23 @@
 .inn-figure .cb-paper-doll{display:block!important;width:100%!important;height:auto!important;min-height:0!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important}
 .inn-figure .cb-world-avatar{display:block;width:100%;height:auto;background:none;border:0;filter:drop-shadow(0 10px 7px #0008) drop-shadow(0 0 1px #000)}
 .inn-figure .cb-world-avatar svg{display:block;width:100%;height:auto;overflow:visible}
+.inn-adventurer:has(.cb-world-avatar-painted){width:clamp(44px,5.2vw,76px)}
+.inn-adventurer:has(.cb-world-avatar-painted).inn-resting{width:clamp(40px,4.6vw,66px)}
+.inn-figure .cb-world-avatar-painted{
+  width:auto!important;
+  height:auto!important;
+  display:block!important;
+}
+.inn-figure .cb-world-avatar-painted>img{
+  width:auto!important;
+  height:clamp(128px,13vw,172px)!important;
+  max-width:none!important;
+  object-fit:contain!important;
+  object-position:50% 100%!important;
+}
+.inn-resting .cb-world-avatar-painted>img{
+  height:clamp(112px,11vw,148px)!important;
+}
 .inn-adventurer:has(.cb-world-avatar){width:clamp(64px,9vw,126px)}
 .inn-adventurer:has(.cb-world-avatar).inn-resting{width:clamp(54px,7vw,94px)}
 .inn-adventurer:has(.cb-world-avatar) .inn-name{background:#100f0dde;border:1px solid #c39d5a45}
@@ -62,6 +79,10 @@ body.inn-character-open #characterModal .cb-character-tabs button{min-width:110p
  .inn-dialog-body{padding:12px}.inn-dialog-head{padding:12px}.inn-dialog-head h2{font-size:21px}.inn-dialog-head button{font-size:12px}
  body.inn-character-open #characterModal{align-items:flex-end!important;padding:0!important}
  body.inn-character-open #characterModal .character-modal{width:100%!important;max-height:82dvh!important;min-height:0!important;border-radius:14px 14px 0 0!important}
+ .inn-adventurer:has(.cb-world-avatar-painted){width:46px}
+ .inn-adventurer:has(.cb-world-avatar-painted).inn-resting{width:40px}
+ .inn-figure .cb-world-avatar-painted>img{height:112px!important}
+ .inn-resting .cb-world-avatar-painted>img{height:98px!important}
 }
 @media(prefers-reduced-motion:reduce){.inn-world *{animation:none!important;transition:none!important}}
 
