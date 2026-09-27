@@ -245,6 +245,44 @@
   position:absolute;inset:0;z-index:5;width:100%;height:100%;display:block;
   overflow:visible
 }
+
+/* Entering the Inn: push the painted camera toward the real doorway before
+   handing control to the existing Inn scene. Door centre is ~22% x / 65% y. */
+.town-painted-image,
+.town-painted-hotspots{
+  transform-origin:0 0;
+  will-change:transform,filter
+}
+.town-scene:after{
+  content:"";
+  position:absolute;inset:0;z-index:30;
+  pointer-events:none;
+  background:#050708;
+  opacity:0;
+  transition:opacity .18s ease
+}
+.town-scene.is-entering-inn .town-painted-image,
+.town-scene.is-entering-inn .town-painted-hotspots{
+  transform:translate(-3.5%,-106%) scale(2.4);
+  transition:transform .66s cubic-bezier(.2,.72,.18,1),filter .38s ease;
+}
+.town-scene.is-entering-inn .town-painted-image{
+  filter:brightness(.78) saturate(.94)
+}
+.town-scene.is-entering-inn .town-painted-hotspots{
+  pointer-events:none
+}
+.town-scene.is-entering-inn .town-selection-panel,
+.town-scene.is-entering-inn .town-scene-hint,
+.town-scene.is-entering-inn .town-quest-marker{
+  opacity:0!important;
+  pointer-events:none;
+  transition:opacity .12s ease!important
+}
+.town-scene.is-entering-inn:after{
+  opacity:.94;
+  transition:opacity .18s ease .5s
+}
 .town-painted-location{filter:none!important}
 .town-painted-location .town-painted-bloom{
   fill:#fff;
@@ -374,6 +412,8 @@
   }
 }
 @media(prefers-reduced-motion:reduce){
-  .town-painted-image,.town-painted-bloom,.town-painted-lift,.town-painted-hit,.town-painted-outline,.town-scene-town-title,.town-quest-marker{transition:none!important}
+  .town-painted-image,.town-painted-hotspots,.town-painted-bloom,.town-painted-lift,.town-painted-hit,.town-painted-outline,.town-scene-town-title,.town-quest-marker{transition:none!important}
   .town-scene.has-selection .town-selection-panel,.town-scene.has-available-quests .town-quest-marker{animation:none!important}
+  .town-scene.is-entering-inn .town-painted-image,.town-scene.is-entering-inn .town-painted-hotspots{transform:none!important}
+  .town-scene.is-entering-inn:after{opacity:0!important}
 }
