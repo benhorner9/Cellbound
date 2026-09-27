@@ -655,3 +655,170 @@ linear-gradient(180deg,#142019,#09110e)}
   .builder-stage-actions>button{width:100%}
   .party-draft-list{grid-template-columns:1fr}
 }
+
+
+/* ==========================================================================
+   Tutorial Combat -> Shared Combat Reborn
+   ========================================================================== */
+.tutorial-combat-handoff{max-width:1180px;margin:0 auto}
+.tutorial-combat-handoff .td-route span.done{
+  border-color:rgba(104,194,136,.14);
+  background:#0d1814;
+  color:#77bd90
+}
+.tutorial-combat-stage{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1.25fr) minmax(240px,.75fr);
+  gap:14px;
+  min-height:430px;
+  margin-top:12px;
+  padding:22px;
+  overflow:hidden;
+  border:1px solid rgba(216,185,118,.11);
+  background:
+    radial-gradient(circle at 25% 42%,rgba(79,133,94,.12),transparent 28%),
+    radial-gradient(circle at 82% 18%,rgba(153,122,66,.08),transparent 24%),
+    linear-gradient(145deg,#111a16,#07100e 72%);
+  box-shadow:inset 0 0 70px rgba(0,0,0,.25)
+}
+.tutorial-combat-stage:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:.32;
+  background:
+    linear-gradient(112deg,transparent 0 38%,rgba(255,255,255,.02) 38.5% 39%,transparent 39.5%),
+    radial-gradient(ellipse at 50% 92%,rgba(79,118,85,.10),transparent 38%)
+}
+.tutorial-combat-stage-copy,.tutorial-combat-party{position:relative;z-index:2}
+.tutorial-combat-stage-copy>small,.tutorial-combat-party>small,.tutorial-combat-feed>small{
+  color:#a58d60;
+  font-size:.4rem;
+  font-weight:900;
+  letter-spacing:.13em
+}
+.tutorial-combat-stage-copy h3{
+  max-width:620px;
+  margin:8px 0 10px;
+  color:#e6dfcf;
+  font:400 1.55rem/1.08 Georgia,serif
+}
+.tutorial-combat-stage-copy>p{
+  max-width:680px;
+  margin:0;
+  color:#81908a;
+  font-size:.54rem;
+  line-height:1.65
+}
+.tutorial-combat-feature-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:22px
+}
+.tutorial-combat-feature-grid span{
+  min-height:72px;
+  padding:11px;
+  border:1px solid rgba(255,255,255,.05);
+  background:rgba(7,15,16,.7);
+  color:#697872;
+  font-size:.42rem;
+  line-height:1.45
+}
+.tutorial-combat-feature-grid b{
+  display:block;
+  margin-bottom:4px;
+  color:#c9b27b;
+  font-size:.39rem;
+  letter-spacing:.08em
+}
+.tutorial-combat-party{
+  align-self:start;
+  padding:13px;
+  border:1px solid rgba(216,185,118,.08);
+  background:rgba(5,12,14,.72)
+}
+.tutorial-combat-party-card{
+  display:grid;
+  grid-template-columns:46px minmax(0,1fr);
+  gap:9px;
+  align-items:center;
+  min-width:0;
+  padding:8px 0;
+  border-bottom:1px solid rgba(255,255,255,.04)
+}
+.tutorial-combat-party-card:last-child{border-bottom:0}
+.tutorial-combat-party-card>.cb-portrait{width:44px!important;height:44px!important}
+.tutorial-combat-party-card span{min-width:0}
+.tutorial-combat-party-card b{
+  display:block;
+  overflow:hidden;
+  color:#d4dad6;
+  font-size:.48rem;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.tutorial-combat-party-card small{
+  display:block;
+  margin-top:3px;
+  overflow:hidden;
+  color:#64736d;
+  font-size:.36rem;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.tutorial-combat-feed{
+  margin-top:9px;
+  padding:11px 13px;
+  border:1px solid rgba(255,255,255,.045);
+  background:#081115
+}
+.tutorial-combat-feed p{
+  margin:5px 0 0;
+  color:#75847e;
+  font-size:.44rem;
+  line-height:1.5
+}
+.tutorial-combat-stage .td-lesson{
+  z-index:20;
+  border-radius:0
+}
+
+/* The tutorial shared viewer uses the exact CB2D renderer, with only the room
+   atmosphere changed to the Zeltiran Hollows. Portraits/VFX/status UI remain
+   owned by the shared combat presentation layer. */
+.cb2d-shared-shell.tutorial-shared-combat .cb2d-head{
+  background:linear-gradient(90deg,#17180f,#0a1714 55%,#081115)
+}
+.cb2d-shared-shell.tutorial-shared-combat .cb2d-arena.theme-hollows{
+  background:
+    radial-gradient(circle at 68% 48%,rgba(80,143,96,.12),transparent 20%),
+    radial-gradient(circle at 22% 22%,rgba(129,105,62,.07),transparent 18%),
+    linear-gradient(180deg,#142018,#09110e)
+}
+.cb2d-shared-shell.tutorial-shared-combat .cb2d-arena.theme-hollows .cb2d-floor{
+  background:
+    radial-gradient(ellipse at 52% 58%,rgba(83,138,94,.075),transparent 31%),
+    linear-gradient(155deg,rgba(255,255,255,.012),transparent 30%,rgba(63,91,68,.035) 58%,transparent 78%)
+}
+.cb2d-shared-shell.tutorial-shared-combat .cb2d-room-tag{
+  border-color:rgba(126,169,132,.10);
+  background:rgba(5,13,11,.68)
+}
+.cb2d-shared-shell.tutorial-shared-combat .cb2d-plan{
+  border-color:rgba(104,194,136,.12)
+}
+.cb2d-shared-shell.tutorial-shared-combat .cb2d-plan b{color:#91c6a2}
+.cb2d-shared-shell.tutorial-shared-combat .cb2d-ground-legend{top:42px}
+
+@media(max-width:820px){
+  .tutorial-combat-stage{grid-template-columns:1fr;min-height:0;padding:16px}
+  .tutorial-combat-party{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+  .tutorial-combat-party>small{grid-column:1/-1;margin-bottom:4px}
+}
+@media(max-width:540px){
+  .tutorial-combat-feature-grid,.tutorial-combat-party{grid-template-columns:1fr}
+  .tutorial-combat-stage-copy h3{font-size:1.25rem}
+}
