@@ -181,7 +181,7 @@ function svgFor(a,accent){
     (a.race==='Nymari'?'<circle cx="35" cy="58" r="1.3" fill="#8ffcff" opacity=".7"/><circle cx="65" cy="58" r="1.3" fill="#8ffcff" opacity=".7"/>':'')+
     '</g><rect x="2.5" y="2.5" width="95" height="95" rx="17.5" fill="none" stroke="'+accent+'" stroke-opacity=".55" stroke-width="2"/></svg>';
 }
-const PAINTED_RACES=new Set(['Veyren','Stoneborn']);
+const PAINTED_RACES=new Set(['Veyren','Stoneborn','Aelari']);
 function paintedRaceOf(c,a){
   var race=c?.race||a?.race||c?.appearance?.race||'Veyren';
   return PAINTED_RACES.has(race)?race:'';
@@ -816,7 +816,7 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:5,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
+  version:6,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
   applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,worldAvatarHTML:worldAvatarHTML,worldAvatarSVG:worldAvatarSVG,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
   visualProfile:visualProfile,weaponType:weaponType,offHandType:offHandType,
