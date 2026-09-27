@@ -219,6 +219,9 @@ function setSelected(id,focusPanel=true){
     n.classList.toggle('is-selected',on);
     n.setAttribute('aria-pressed',String(on));
   });
+  root.querySelectorAll('[data-town-layer]').forEach(n=>{
+    n.classList.toggle('is-selected',n.dataset.townLayer===selected);
+  });
   if(!selected){
     panel.hidden=true;
     root.classList.remove('has-selection');
