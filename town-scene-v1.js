@@ -33,6 +33,7 @@ let questChildren=[];
 let boardOpen=false;
 let entering=false;
 let sectorTimer=0;
+let boardTimer=0;
 
 const sectorOrder={square:0,merchant:1,expedition:2,harbour:3};
 const sectorCopy={
@@ -269,26 +270,38 @@ function restoreQuests(){
 
 function closeBoard({focus=true,instant=false}={}){
   if(!boardOpen&&!root.classList.contains('is-opening-board'))return;
+  clearTimeout(boardTimer);
   boardOpen=false;
-  entering=false;
+  entering=true;
   root.classList.remove('is-opening-board');
   board.classList.remove('is-visible');
   document.body.classList.remove('town-board-focus-open');
 
-  const finish=()=>{
+  const finishInstant=()=>{
     board.hidden=true;
-    root.classList.remove('town-board-open');
+    root.classList.remove('town-board-open','is-closing-board','is-returning-board');
     restoreQuests();
     syncQuestMarker();
+    entering=false;
     if(focus)locationNode('board')?.focus({preventScroll:true});
   };
 
-  if(instant){finish();return}
+  if(instant){finishInstant();return}
+
   root.classList.add('is-closing-board');
-  setTimeout(()=>{
-    root.classList.remove('is-closing-board');
-    finish();
-  },220);
+  boardTimer=setTimeout(()=>{
+    board.hidden=true;
+    root.classList.remove('town-board-open','is-closing-board');
+    root.classList.add('is-returning-board');
+    restoreQuests();
+    syncQuestMarker();
+
+    boardTimer=setTimeout(()=>{
+      root.classList.remove('is-returning-board');
+      entering=false;
+      if(focus)locationNode('board')?.focus({preventScroll:true});
+    },540);
+  },260);
 }
 
 function showBoardPopup(){
@@ -300,7 +313,7 @@ function showBoardPopup(){
   root.classList.remove('is-opening-board');
   root.classList.add('town-board-open');
   document.body.classList.add('town-board-focus-open');
-  requestAnimationFrame(()=>board.classList.add('is-visible'));
+  requestAnimationFrame(()=>requestAnimationFrame(()=>board.classList.add('is-visible')));
   boardClose?.focus({preventScroll:true});
   window.CellboundQuests?.render?.();
   syncQuestMarker();
@@ -309,12 +322,14 @@ function showBoardPopup(){
 
 function openBoard(){
   if(!questView||boardOpen||entering)return;
+  clearTimeout(boardTimer);
   const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
   if(reduced){showBoardPopup();return}
 
   entering=true;
+  root.classList.remove('is-returning-board','is-closing-board');
   root.classList.add('is-opening-board');
-  setTimeout(showBoardPopup,420);
+  boardTimer=setTimeout(showBoardPopup,520);
 }
 
 function travel(view){
