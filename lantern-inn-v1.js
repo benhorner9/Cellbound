@@ -9,7 +9,7 @@ const slots={
  'main-table-left':{wide:[20,77],phone:[16,75]},
  'main-table-right':{wide:[52,76],phone:[60,74]},
  'bar-left':{wide:[68,52],phone:[73,58]},
- doorway:{wide:[9,48],phone:[10,49]},
+ doorway:{wide:[13,48],phone:[13,49]},
  window:{wide:[44,38],phone:[47,35]},
  'back-table':{wide:[55,40],phone:[55,46]},
  stairs:{wide:[91,66],phone:[92,50]},
