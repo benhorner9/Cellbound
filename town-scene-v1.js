@@ -44,6 +44,7 @@ let expeditionPopupId='';
 let expeditionPopupView=null;
 let expeditionPopupOriginParent=null;
 let expeditionPopupOriginNext=null;
+let expeditionPopupPreviousVenueState='';
 let expeditionTimer=0;
 
 const sectorOrder={square:0,merchant:1,expedition:2,harbour:3};
@@ -358,6 +359,10 @@ const expeditionPopupConfig={
 };
 
 function restoreExpeditionPopup(){
+  if(expeditionPopupView){
+    if(expeditionPopupPreviousVenueState)expeditionPopupView.dataset.venueState=expeditionPopupPreviousVenueState;
+    else if(expeditionPopupView.hasAttribute('data-venue-state'))delete expeditionPopupView.dataset.venueState;
+  }
   if(expeditionPopupView&&expeditionPopupOriginParent){
     const anchor=expeditionPopupOriginNext&&expeditionPopupOriginNext.parentNode===expeditionPopupOriginParent
       ?expeditionPopupOriginNext:null;
@@ -366,6 +371,7 @@ function restoreExpeditionPopup(){
   expeditionPopupView=null;
   expeditionPopupOriginParent=null;
   expeditionPopupOriginNext=null;
+  expeditionPopupPreviousVenueState='';
   expeditionMount?.replaceChildren();
 }
 
@@ -384,6 +390,8 @@ function showExpeditionPopup(id){
   expeditionPopupView=view;
   expeditionPopupOriginParent=view.parentNode;
   expeditionPopupOriginNext=view.nextSibling;
+  expeditionPopupPreviousVenueState=view.dataset.venueState||'';
+  if(view.classList.contains('cb-venue-location'))view.dataset.venueState='system';
   expeditionMount.appendChild(view);
 
   if(expeditionKicker)expeditionKicker.textContent=config.kicker;
