@@ -7,7 +7,8 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
  await page.route('https://cellbound.test/**',async route=>{const p=new URL(route.request().url()).pathname;if(p==='/guild.html')return route.fulfill({body:html,contentType:'text/html'});const f=path.resolve(root,'dist',p.slice(1));if(!f.startsWith(path.join(root,'dist')+path.sep)||!fs.existsSync(f))return route.fulfill({status:404,body:''});return route.fulfill({path:f})});
  await page.goto('https://cellbound.test/guild.html');
  await page.evaluate(()=>{
-  const roster=Array.from({length:10},(_,i)=>({id:'hero-'+i,name:['Aegis','Mercy','Shade','Ember','Fletch','Rowan','Kestrel','Garrick','Wren','Lyra'][i],class:['Warrior','Priest','Rogue','Mage','Hunter','Druid','Paladin','Warrior','Hunter','Priest'][i],spec:['Protection','Holy','Assassination','Fire','Marksmanship','Restoration','Protection','Arms','Marksmanship','Holy'][i],level:15,power:180,talent:4,equipment:{},professions:[],cellShock:i===9?100:0,role:i===0?'tank':i===1?'healer':'dps'}));
+  const races=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'];
+  const roster=Array.from({length:10},(_,i)=>({id:'hero-'+i,name:['Aegis','Mercy','Shade','Ember','Fletch','Rowan','Kestrel','Garrick','Wren','Lyra'][i],race:races[i%races.length],appearance:{race:races[i%races.length],skinTone:i%6,face:i%4,hair:i%6,hairColor:i%8,facialHair:i%4,marking:i%5,eyes:i%6,feature:i%4},class:['Warrior','Priest','Rogue','Mage','Hunter','Druid','Paladin','Warrior','Hunter','Priest'][i],spec:['Protection','Holy','Assassination','Fire','Marksmanship','Restoration','Protection','Arms','Marksmanship','Holy'][i],level:15,power:180,talent:4,equipment:{},professions:[],cellShock:i===9?100:0,role:i===0?'tank':i===1?'healer':'dps'}));
   window.fixture={roster,party:{tank:'hero-0',healer:'hero-1',dps:['hero-2','hero-3','hero-4']},bank:[],activity:[]};window.partyIds=roster.slice(0,5).map(c=>c.id);
   localStorage.setItem('cellbound-management-reboot-v3',JSON.stringify(fixture));
   window.selectView=id=>{document.querySelectorAll('.view').forEach(n=>n.classList.toggle('active',n.id===id));document.querySelector('#pageTitle').textContent=id==='roster'?'The Lantern Inn':id;dispatchEvent(new CustomEvent('cellbound:view-changed',{detail:{view:id}}))};
@@ -28,33 +29,36 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
  const shot=async name=>{await page.waitForTimeout(200);await page.screenshot({path:'/tmp/cellbound-inn-'+name+'.png'})};
  await page.locator('.inn-art img').evaluate(img=>img.decode());
  assert.equal(await page.locator('.inn-adventurer').count(),10);assert.equal(await page.locator('.inn-traveller').count(),5);assert.equal(await page.locator('#rosterGrid').isVisible(),false);assert.equal(await page.locator('.inn-world').isVisible(),true);
- assert.equal(await page.locator('.inn-painted-model').count(),10,'converted races use the canonical painted actor stage');
- const paintedGeometry=await page.locator('.inn-painted-model').evaluateAll(nodes=>{
+ assert.equal(await page.locator('.inn-illustrated-model').count(),10,'all playable races use the unified illustrated actor stage');
+ assert.equal(await page.locator('.cb-world-avatar-illustrated').count(),10,'every class gets a full illustrated world model');
+ const illustratedGeometry=await page.locator('.inn-illustrated-model').evaluateAll(nodes=>{
    const world=document.querySelector('.inn-world').getBoundingClientRect();
    return nodes.map(n=>{
-     const img=n.querySelector('.cb-world-avatar-painted>img'),figure=n.querySelector('.inn-figure'),r=img.getBoundingClientRect();
+     const model=n.querySelector('.cb-world-avatar-illustrated'),svg=n.querySelector('.cb-illustrated-character-svg'),figure=n.querySelector('.inn-figure'),r=model.getBoundingClientRect();
      const style=getComputedStyle(figure);
-     return {slot:n.dataset.locationSlot,slotY:parseFloat(n.style.getPropertyValue('--slot-y'))||0,top:r.top-world.top,bottom:r.bottom-world.top,height:r.height,scale:parseFloat(style.scale)||1,standard:img.parentElement.dataset.bodyStandard,overflow:style.overflow};
+     return {slot:n.dataset.locationSlot,slotY:parseFloat(n.style.getPropertyValue('--slot-y'))||0,top:r.top-world.top,bottom:r.bottom-world.top,height:r.height,scale:parseFloat(style.scale)||1,race:svg?.dataset.race,klass:svg?.dataset.class,overflow:style.overflow,hasImage:Boolean(n.querySelector('img'))};
    });
  });
- assert(paintedGeometry.every(x=>x.standard==='512x896'),'all Inn painted bodies use the normalized full-body canvas');
- assert(paintedGeometry.every(x=>x.overflow==='visible'),'actor stage must never clip a painted body');
+ assert(illustratedGeometry.every(x=>x.overflow==='visible'),'actor stage must never clip the live illustrated model');
+ assert(illustratedGeometry.every(x=>!x.hasImage),'playable full bodies must not fall back to static painted images');
+ assert.equal(new Set(illustratedGeometry.map(x=>x.race)).size,6,'all six races render through the same live model');
  const innWorldBox=await page.locator('.inn-world').boundingBox();
- assert(paintedGeometry.every(x=>x.top>=-0.5&&x.bottom<=innWorldBox.height+.5),'painted bodies stay inside the room bounds without head/foot clipping');
- const paintedHeights=paintedGeometry.map(x=>x.height),heightRatio=Math.max(...paintedHeights)/Math.min(...paintedHeights);
- assert(heightRatio<1.4,'room perspective must stay controlled rather than producing wildly different body sizes');
- const depthRows=paintedGeometry.map(x=>({y:x.slotY,scale:x.scale})).sort((a,b)=>a.y-b.y);
+ assert(illustratedGeometry.every(x=>x.top>=-0.5&&x.bottom<=innWorldBox.height+.5),'illustrated bodies stay inside the room bounds');
+ const depthRows=illustratedGeometry.map(x=>({y:x.slotY,scale:x.scale})).sort((a,b)=>a.y-b.y);
  for(let i=1;i<depthRows.length;i++)assert(depthRows[i].scale+.001>=depthRows[i-1].scale,'foreground actor perspective scale must not be smaller than deeper actors');
- assert((await page.locator('.cb-world-avatar').count())>=3,'Warrior, Priest and Rogue use world-avatar prototypes');
- for(const [klass,count] of Object.entries({Warrior:2,Priest:2,Rogue:1}))assert.equal(await page.locator('.cb-world-avatar[data-avatar-class="'+klass+'"]').count(),count,klass+' prototypes match roster');
+ assert.equal(await page.locator('.cb-world-avatar[data-avatar-class]').count(),10,'all launch classes use the same world renderer');
  const warriorAvatar=page.locator('[data-inn-character="hero-0"] .cb-world-avatar');
  assert.equal(await warriorAvatar.getAttribute('data-avatar-tier'),'1');assert.equal(await warriorAvatar.getAttribute('data-avatar-weapon'),'sword');
  const appearanceBefore=await warriorAvatar.getAttribute('data-appearance-key');
  await page.evaluate(()=>{fixture.roster[0].appearance={race:'Veyren',skinTone:5,face:3,hair:5,hairColor:6,facialHair:3,marking:4,eyes:2,feature:1};dispatchEvent(new CustomEvent('cellbound:state-rendered'))});
- assert.notEqual(await warriorAvatar.getAttribute('data-appearance-key'),appearanceBefore,'appearance data changes world avatar');
+ const warriorAfterAppearance=page.locator('[data-inn-character="hero-0"] .cb-world-avatar');
+ assert.notEqual(await warriorAfterAppearance.getAttribute('data-appearance-key'),appearanceBefore,'appearance data changes the live world model');
+ const modelBeforeGear=await warriorAfterAppearance.getAttribute('data-model-signature');
  await page.evaluate(()=>{const c=fixture.roster[0];for(const slot of ['Head','Chest','Weapon']){const item=CellboundGear.items.find(x=>x.class==='Warrior'&&x.tier===4&&x.slot===slot);if(item)c.equipment[slot]=item}dispatchEvent(new CustomEvent('cellbound:state-rendered'))});
- assert.equal(await warriorAvatar.getAttribute('data-avatar-tier'),'4','equipped tier changes world avatar family');
- assert.equal(await warriorAvatar.getAttribute('data-avatar-weapon'),'greatsword','equipped weapon type remains visible');
+ const warriorAfterGear=page.locator('[data-inn-character="hero-0"] .cb-world-avatar');
+ assert.equal(await warriorAfterGear.getAttribute('data-avatar-tier'),'4','equipped tier changes the live model');
+ assert.equal(await warriorAfterGear.getAttribute('data-avatar-weapon'),'greatsword','equipped weapon type remains visible');
+ assert.notEqual(await warriorAfterGear.getAttribute('data-model-signature'),modelBeforeGear,'equipping gear changes the rendered character identity');
 
  assert.equal(await page.locator('.inn-adventurer').evaluateAll(nodes=>new Set(nodes.map(n=>n.dataset.locationSlot)).size),10);
  await shot('01-default-ipad');
