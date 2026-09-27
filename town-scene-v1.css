@@ -275,7 +275,7 @@
 }
 .town-painted-location:hover .town-painted-bloom,
 .town-painted-location:focus-visible .town-painted-bloom{
-  opacity:.24
+  opacity:.14
 }
 .town-painted-location:hover .town-painted-lift,
 .town-painted-location:focus-visible .town-painted-lift{
@@ -283,11 +283,11 @@
   filter:brightness(1.055) contrast(1.018) saturate(1.025)
 }
 .town-painted-location.is-selected .town-painted-bloom{
-  opacity:.5
+  opacity:.36
 }
 .town-painted-location.is-selected .town-painted-lift{
   opacity:1;
-  filter:brightness(1.105) contrast(1.035) saturate(1.055)
+  filter:brightness(1.085) contrast(1.025) saturate(1.04)
 }
 .town-painted-location.is-selected .town-painted-outline{
   opacity:0
