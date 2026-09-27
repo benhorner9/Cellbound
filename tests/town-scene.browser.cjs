@@ -80,13 +80,13 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  await page.waitForTimeout(80);
  assert.equal(await page.locator('[data-town-scene]').evaluate(n=>n.classList.contains('is-opening-board')),true,'second Board click starts a camera push toward the physical board');
  assert.equal(await page.locator('#overview').evaluate(n=>n.classList.contains('active')),true,'Notice Board interaction stays in Town');
- await page.waitForTimeout(520);
+ await page.waitForTimeout(640);
  assert.equal(await page.locator('[data-town-board-focus]').isVisible(),true,'quest interface opens as a pop-up after the board camera push');
  assert(await page.locator('[data-town-board-mount] #questJournalList').count(),'live quest journal is mounted on the physical board pop-up');
  assert.equal(await page.locator('#quests').evaluate(n=>n.children.length),0,'quest children move into the pop-up rather than opening a separate page');
  await page.screenshot({path:'/tmp/cellbound-town-scene-02-board.png'});
  await page.locator('[data-town-board-close]').click();
- await page.waitForTimeout(840);
+ await page.waitForTimeout(1020);
  assert.equal(await page.locator('[data-town-board-focus]').isVisible(),false,'closing the board dismisses the pop-up after the camera returns');
  assert.equal(await page.locator('#overview').evaluate(n=>n.classList.contains('active')),true,'closing the board remains in Town');
  assert(await page.locator('#quests #questJournalList').count(),'closing board restores the original quest view');
@@ -154,9 +154,9 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  }
  await page.locator('[data-town-object="board"]').focus();await page.keyboard.press('Enter');
  assert.equal(await page.locator('[data-town-object="board"]').getAttribute('aria-pressed'),'true','keyboard first press selects');
- await page.keyboard.press('Enter');await page.waitForTimeout(560);
+ await page.keyboard.press('Enter');await page.waitForTimeout(640);
  assert.equal(await page.locator('[data-town-board-focus]').isVisible(),true,'keyboard second press opens board pop-up');
- await page.keyboard.press('Escape');await page.waitForTimeout(840);
+ await page.keyboard.press('Escape');await page.waitForTimeout(1020);
  assert.equal(await page.locator('[data-town-board-focus]').isVisible(),false,'Escape dismisses the board and returns to Town');
 
  assert.deepEqual(errors,[]);
