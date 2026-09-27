@@ -59,7 +59,7 @@
   <link rel="stylesheet" href="./living-world-v1.css?v=3">
 <link rel="stylesheet" href="./lantern-inn-v1.css?v=19">
 <link rel="stylesheet" href="./inn-art-direction-v1.css?v=1">
-  <link rel="stylesheet" href="./town-scene-v1.css?v=20">
+  <link rel="stylesheet" href="./town-scene-v1.css?v=21">
   <link rel="stylesheet" href="./world-venues-v1.css?v=3">
   <link rel="stylesheet" href="./layout-safety-v1.css?v=1">
 </head>
@@ -178,53 +178,54 @@
                 </div>
               </section>
 
-              <!-- MERCHANT QUARTER -->
-              <section class="town-sector" data-town-sector="merchant" aria-label="Merchant Quarter">
-                <svg class="town-sector-art" viewBox="0 0 1200 760" role="img" aria-label="Merchant Quarter with marketplace, workshops and guild vault" preserveAspectRatio="xMidYMid slice">
-                  <defs><linearGradient id="mqSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c292c"/><stop offset=".62" stop-color="#3b3830"/><stop offset="1" stop-color="#211e1b"/></linearGradient><radialGradient id="mqFire"><stop offset="0" stop-color="#f1a24b" stop-opacity=".9"/><stop offset=".5" stop-color="#d87531" stop-opacity=".3"/><stop offset="1" stop-color="#bd5e22" stop-opacity="0"/></radialGradient></defs>
-                  <rect width="1200" height="760" fill="url(#mqSky)"/>
-                  <path d="M0 437 L110 359 L213 393 L319 308 L434 389 L544 320 L660 395 L774 308 L887 388 L1007 315 L1124 384 L1200 350 L1200 522 L0 522Z" fill="#151b1b"/>
-                  <path d="M0 530 C288 483 537 501 753 521 C935 538 1066 503 1200 482 L1200 760 L0 760Z" fill="#4b4035"/>
-                  <path d="M0 760 C114 644 186 579 256 531" stroke="#817461" stroke-width="95" opacity=".15"/>
+              <!-- MERCHANT QUARTER · CARTOON WORLD LAYERS -->
+              <section class="town-sector town-merchant-quarter" data-town-sector="merchant" aria-label="Merchant Quarter">
+                <div class="town-merchant-stage" data-town-merchant-stage>
+                  <img class="town-merchant-world" src="./assets/world/merchant-quarter/merchant-quarter-world-v2.svg?v=1" alt="" aria-hidden="true" draggable="false">
 
-                  <g class="town-location" data-town-object="squareFromMerchant" role="button" tabindex="0" aria-pressed="false" aria-label="Road back to Central Square">
-                    <path class="town-object-shape" d="M11 630 L17 322 L143 307 L155 638Z" fill="#3f3b35" stroke="#080b0c" stroke-width="8"/>
-                    <path class="town-object-shape" d="M0 335 L56 278 L118 276 L169 326Z" fill="#1b2020" stroke="#080b0c" stroke-width="7"/>
-                    <path class="town-object-shape" d="M48 632 L50 398 Q84 357 119 398 L121 636Z" fill="#171b1a" stroke="#080b0c" stroke-width="6"/>
-                    <path class="town-object-outline" d="M0 335 L56 278 L118 276 L169 326 L155 638 L11 630Z"/>
-                  </g>
+                  <div class="mq-building mq-building-square" data-town-layer="squareFromMerchant" aria-hidden="true">
+                    <img class="mq-building-glow" src="./assets/world/merchant-quarter/central-square-arch-v2.svg?v=1" alt="">
+                    <img class="mq-building-art" src="./assets/world/merchant-quarter/central-square-arch-v2.svg?v=1" alt="">
+                  </div>
 
-                  <g class="town-location" data-town-object="market" role="button" tabindex="0" aria-pressed="false" aria-label="The Marketplace">
-                    <path class="town-object-shape" d="M165 625 L177 343 L461 337 L471 631Z" fill="#4f4337" stroke="#090c0d" stroke-width="8"/>
-                    <path class="town-object-shape" d="M149 355 L210 282 L433 280 L489 349Z" fill="#283331" stroke="#090c0d" stroke-width="8"/>
-                    <path class="town-object-shape" d="M155 357 L484 350 L460 403 L175 410Z" fill="#8d6443" stroke="#1b1511" stroke-width="5"/>
-                    <path d="M197 355 L203 405 M246 353 L252 402 M295 352 L301 400 M345 351 L351 399 M396 350 L402 397 M447 349 L452 394" stroke="#d0a36a" stroke-width="11" opacity=".67"/>
-                    <path class="town-object-shape" d="M190 525 L446 519 L465 595 L172 603Z" fill="#6c4d31" stroke="#18120f" stroke-width="6"/>
-                    <rect x="218" y="455" width="58" height="62" fill="#8e6d49" stroke="#20170f" stroke-width="4"/><rect x="300" y="447" width="65" height="68" fill="#755438" stroke="#20170f" stroke-width="4"/><circle cx="407" cy="483" r="27" fill="#8f6b43" stroke="#20170f" stroke-width="4"/>
-                    <path class="town-object-outline" d="M149 355 L210 282 L433 280 L489 349 L471 631 L165 625Z"/>
-                  </g>
+                  <div class="mq-building mq-building-market" data-town-layer="market" aria-hidden="true">
+                    <img class="mq-building-glow" src="./assets/world/merchant-quarter/marketplace-v2.svg?v=1" alt="">
+                    <img class="mq-building-art" src="./assets/world/merchant-quarter/marketplace-v2.svg?v=1" alt="">
+                  </div>
 
-                  <g class="town-location" data-town-object="forge" role="button" tabindex="0" aria-pressed="false" aria-label="Crafting Quarter">
-                    <path class="town-object-shape" d="M485 631 L495 329 L754 324 L765 637Z" fill="#41413d" stroke="#090c0d" stroke-width="8"/>
-                    <path class="town-object-shape" d="M470 342 L536 276 L724 273 L781 335Z" fill="#212728" stroke="#090c0d" stroke-width="8"/>
-                    <path class="town-object-shape" d="M653 277 L664 187 L711 186 L715 276Z" fill="#292c2c" stroke="#090c0d" stroke-width="6"/>
-                    <path d="M675 184 Q688 148 703 180 Q718 146 732 181" fill="none" stroke="#6d7471" stroke-width="10" opacity=".6"/>
-                    <path class="town-object-shape" d="M541 629 L544 448 Q615 390 685 448 L688 632Z" fill="#171512" stroke="#080a0b" stroke-width="7"/>
-                    <ellipse cx="616" cy="503" rx="100" ry="105" fill="url(#mqFire)" opacity=".42"/>
-                    <path d="M571 526 Q616 450 662 526 Q616 563 571 526Z" fill="#e58538"/>
-                    <path class="town-object-shape" d="M678 419 L739 400 L756 447 L690 465Z" fill="#6a5540" stroke="#171310" stroke-width="4"/>
-                    <path class="town-object-outline" d="M470 342 L536 276 L653 275 L664 187 L711 186 L715 273 L724 273 L781 335 L765 637 L485 631Z"/>
-                  </g>
+                  <div class="mq-building mq-building-forge" data-town-layer="forge" aria-hidden="true">
+                    <img class="mq-building-glow" src="./assets/world/merchant-quarter/crafting-quarter-v2.svg?v=1" alt="">
+                    <img class="mq-building-art" src="./assets/world/merchant-quarter/crafting-quarter-v2.svg?v=1" alt="">
+                    <span class="mq-smoke mq-smoke-a"></span>
+                    <span class="mq-smoke mq-smoke-b"></span>
+                    <span class="mq-smoke mq-smoke-c"></span>
+                  </div>
 
-                  <g class="town-location" data-town-object="vault" role="button" tabindex="0" aria-pressed="false" aria-label="The Guild Vault">
-                    <path class="town-object-shape" d="M793 642 L803 328 L1160 320 L1172 649Z" fill="#46443e" stroke="#090c0d" stroke-width="8"/>
-                    <path class="town-object-shape" d="M775 343 L860 260 L1106 255 L1188 334Z" fill="#232828" stroke="#090c0d" stroke-width="8"/>
-                    <path class="town-object-shape" d="M889 640 L892 418 Q982 339 1074 419 L1078 645Z" fill="#171b1b" stroke="#080b0c" stroke-width="7"/>
-                    <path d="M920 424 L923 625 M959 392 L961 632 M1000 389 L1002 634 M1040 423 L1043 627 M901 484 L1067 484 M898 547 L1072 547" stroke="#8f7853" stroke-width="8"/>
-                    <circle cx="983" cy="520" r="17" fill="#b2905a" stroke="#281e14" stroke-width="5"/>
-                    <path class="town-object-outline" d="M775 343 L860 260 L1106 255 L1188 334 L1172 649 L793 642Z"/>
-                  </g>
-                </svg>
+                  <div class="mq-building mq-building-vault" data-town-layer="vault" aria-hidden="true">
+                    <img class="mq-building-glow" src="./assets/world/merchant-quarter/guild-vault-v2.svg?v=1" alt="">
+                    <img class="mq-building-art" src="./assets/world/merchant-quarter/guild-vault-v2.svg?v=1" alt="">
+                  </div>
+
+                  <div class="mq-life" aria-hidden="true">
+                    <span class="mq-mote mq-mote-1"></span><span class="mq-mote mq-mote-2"></span><span class="mq-mote mq-mote-3"></span>
+                    <span class="mq-mote mq-mote-4"></span><span class="mq-mote mq-mote-5"></span>
+                  </div>
+
+                  <svg class="town-merchant-hotspots" viewBox="0 0 1200 760" preserveAspectRatio="xMidYMid slice" aria-label="Interactive locations in Merchant Quarter">
+                    <g class="town-location town-painted-location" data-town-object="squareFromMerchant" role="button" tabindex="0" aria-pressed="false" aria-label="Road back to Central Square">
+                      <path class="town-painted-hit town-object-shape" d="M0 535 L0 155 L222 130 L247 542 Z"/>
+                    </g>
+                    <g class="town-location town-painted-location" data-town-object="market" role="button" tabindex="0" aria-pressed="false" aria-label="The Marketplace">
+                      <path class="town-painted-hit town-object-shape" d="M125 620 L145 215 L515 190 L560 625 Z"/>
+                    </g>
+                    <g class="town-location town-painted-location" data-town-object="forge" role="button" tabindex="0" aria-pressed="false" aria-label="Crafting Quarter">
+                      <path class="town-painted-hit town-object-shape" d="M430 620 L456 155 L806 145 L842 625 Z"/>
+                    </g>
+                    <g class="town-location town-painted-location" data-town-object="vault" role="button" tabindex="0" aria-pressed="false" aria-label="The Guild Vault">
+                      <path class="town-painted-hit town-object-shape" d="M778 620 L800 176 L1200 170 L1200 632 Z"/>
+                    </g>
+                  </svg>
+                </div>
               </section>
 
               <!-- EXPEDITION WARD -->
