@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 550">
+<defs>
+  <linearGradient id="timber" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a76c43"/><stop offset=".55" stop-color="#7c4a32"/><stop offset="1" stop-color="#5b3428"/></linearGradient>
+  <linearGradient id="plaster" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f0d9a5"/><stop offset="1" stop-color="#bfa47b"/></linearGradient>
+  <linearGradient id="roof" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#3e6a70"/><stop offset="1" stop-color="#244447"/></linearGradient>
+  <radialGradient id="warm"><stop stop-color="#ffd579"/><stop offset=".5" stop-color="#e2873c" stop-opacity=".54"/><stop offset="1" stop-color="#e2873c" stop-opacity="0"/></radialGradient>
+</defs>
+<ellipse cx="278" cy="523" rx="230" ry="23" fill="#101916" opacity=".48"/>
+<path d="M66 476 L74 214 L452 203 L483 482Z" fill="url(#plaster)" stroke="#17211e" stroke-width="11" stroke-linejoin="round"/>
+<path d="M48 226 L118 111 L387 96 L478 203 L449 232 L82 245Z" fill="url(#roof)" stroke="#14201e" stroke-width="12" stroke-linejoin="round"/>
+<path d="M93 127 Q174 79 287 86 Q395 80 442 144" fill="none" stroke="#7ca0a0" stroke-width="8" opacity=".46"/>
+<path d="M105 223 L114 407 M226 218 L230 408 M355 212 L364 409 M455 210 L466 458" stroke="#5d3b2d" stroke-width="18"/>
+<path d="M86 293 L466 280" stroke="#714731" stroke-width="13"/>
+<path d="M126 245 L194 241 L196 286 L124 290Z M284 236 L357 232 L360 281 L282 284Z" fill="#365c61" stroke="#1d2d2e" stroke-width="7"/>
+<path d="M135 252 l49 28 M294 242 l54 31" stroke="#f3c36b" stroke-width="5" opacity=".84"/>
+<circle cx="165" cy="268" r="55" fill="url(#warm)" opacity=".23"/><circle cx="322" cy="259" r="55" fill="url(#warm)" opacity=".2"/>
+<path d="M92 319 Q270 286 466 303 L454 365 Q270 344 101 380Z" fill="#d87548" stroke="#4a3026" stroke-width="8"/>
+<path d="M102 318 Q270 293 466 303 L455 336 Q272 318 98 351Z" fill="#f0be66" opacity=".9"/>
+<path d="M139 313 l-5 52 M194 305 l-4 54 M250 300 l-2 57 M307 298 l2 57 M366 298 l5 58 M423 300 l7 58" stroke="#8b4f36" stroke-width="12" opacity=".82"/>
+<path d="M114 391 L449 382 L477 474 L86 486Z" fill="url(#timber)" stroke="#17211e" stroke-width="9"/>
+<path d="M136 413 L430 406" stroke="#d2a169" stroke-width="7" opacity=".45"/>
+<g stroke="#1b241f" stroke-width="5">
+  <path d="M145 470 l2-60 56-2-2 63Z" fill="#76985e"/><path d="M225 471 l3-70 62-1-1 70Z" fill="#c16d44"/><path d="M317 467 l2-58 56-1 3 59Z" fill="#7c6d9a"/>
+</g>
+<g fill="#e7bd5d" stroke="#3d3121" stroke-width="4"><circle cx="159" cy="425" r="8"/><circle cx="179" cy="424" r="9"/><circle cx="250" cy="419" r="8"/><circle cx="270" cy="418" r="9"/></g>
+<path d="M468 259 h54" stroke="#342a23" stroke-width="7"/><path d="M510 259 v54" stroke="#342a23" stroke-width="6"/>
+<circle cx="510" cy="326" r="37" fill="#7b5134" stroke="#1b211d" stroke-width="7"/>
+<path d="M489 326 h42 M510 305 v42 M492 311 q18 15 36 0 M492 341 q18-15 36 0" fill="none" stroke="#e6bd6b" stroke-width="5" stroke-linecap="round"/>
+<circle cx="107" cy="339" r="45" fill="url(#warm)" opacity=".27"/><path d="M98 323 h19 l-3 33 h-14Z" fill="#e9a84c" stroke="#463224" stroke-width="4"/>
+</svg>
