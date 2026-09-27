@@ -299,7 +299,7 @@
 .town-landmark-glow{
   z-index:1;
   opacity:0;
-  transform:scale(1.015);
+  transform:scale(1.03);
   filter:
     brightness(0)
     saturate(100%)
@@ -310,17 +310,33 @@
     brightness(104%)
     contrast(96%)
     blur(13px);
-  transition:opacity .22s ease,transform .22s ease
+  transition:opacity .2s ease;
+  animation:none!important
 }
-.town-landmark.is-selected .town-landmark-glow{
-  opacity:.7;
-  transform:scale(1.035)
+.town-landmark-art{
+  animation:none!important
 }
-.town-landmark.is-selected .town-landmark-art{
+/* Only the exact selected landmark can light up. All other modular layers stay inert. */
+.town-scene:not([data-selected-town-object]) .town-landmark-glow,
+.town-scene[data-selected-town-object] .town-landmark:not(.is-selected) .town-landmark-glow{
+  opacity:0!important
+}
+.town-scene[data-selected-town-object="inn"] [data-town-layer="inn"] .town-landmark-glow,
+.town-scene[data-selected-town-object="expeditionRoad"] [data-town-layer="expeditionRoad"] .town-landmark-glow,
+.town-scene[data-selected-town-object="merchantRoad"] [data-town-layer="merchantRoad"] .town-landmark-glow,
+.town-scene[data-selected-town-object="board"] [data-town-layer="board"] .town-landmark-glow,
+.town-scene[data-selected-town-object="harbourRoad"] [data-town-layer="harbourRoad"] .town-landmark-glow{
+  opacity:.7
+}
+.town-scene[data-selected-town-object="board"] [data-town-layer="board"] .town-landmark-glow{opacity:.76}
+.town-scene[data-selected-town-object="harbourRoad"] [data-town-layer="harbourRoad"] .town-landmark-glow{opacity:.64}
+.town-scene[data-selected-town-object="inn"] [data-town-layer="inn"] .town-landmark-art,
+.town-scene[data-selected-town-object="expeditionRoad"] [data-town-layer="expeditionRoad"] .town-landmark-art,
+.town-scene[data-selected-town-object="merchantRoad"] [data-town-layer="merchantRoad"] .town-landmark-art,
+.town-scene[data-selected-town-object="board"] [data-town-layer="board"] .town-landmark-art,
+.town-scene[data-selected-town-object="harbourRoad"] [data-town-layer="harbourRoad"] .town-landmark-art{
   filter:brightness(1.07) saturate(1.045)
 }
-.town-landmark-board.is-selected .town-landmark-glow{opacity:.76}
-.town-landmark-harbour.is-selected .town-landmark-glow{opacity:.64}
 
 .town-painted-hotspots{
   position:absolute;inset:0;z-index:12;width:100%;height:100%;display:block;
