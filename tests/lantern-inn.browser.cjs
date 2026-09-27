@@ -38,7 +38,8 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
  });
  assert(paintedGeometry.every(x=>x.standard==='512x896'),'all Inn painted bodies use the normalized full-body canvas');
  assert(paintedGeometry.every(x=>x.overflow==='visible'),'actor stage must never clip a painted body');
- assert(paintedGeometry.every(x=>x.top>=-0.5&&x.bottom<=document.querySelector('.inn-world').getBoundingClientRect().height+.5),'painted bodies stay inside the room bounds without head/foot clipping');
+ const innWorldBox=await page.locator('.inn-world').boundingBox();
+ assert(paintedGeometry.every(x=>x.top>=-0.5&&x.bottom<=innWorldBox.height+.5),'painted bodies stay inside the room bounds without head/foot clipping');
  const paintedHeights=paintedGeometry.map(x=>x.height),heightRatio=Math.max(...paintedHeights)/Math.min(...paintedHeights);
  assert(heightRatio<1.4,'room perspective must stay controlled rather than producing wildly different body sizes');
  const depthRows=paintedGeometry.map(x=>({y:CellboundInn.slots[x.slot].wide[1],h:x.height})).sort((a,b)=>a.y-b.y);
