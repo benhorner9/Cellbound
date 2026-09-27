@@ -10,7 +10,7 @@ const game=()=>window.CellboundGame;
    Prop depth: Door 24 · Bar 46 · Party Table 74. */
 const slots={
  'door-side':{
-  wide:[18.5,55],phone:[18,57],scale:.94,phoneScale:.90,depth:54,zone:'floor'
+  wide:[22.5,55],phone:[22,57],scale:.94,phoneScale:.90,depth:54,zone:'floor'
  },
  'hearth-right':{
   wide:[39,56],phone:[39,59],scale:.96,phoneScale:.92,depth:56,zone:'floor'
@@ -34,7 +34,7 @@ const slots={
   wide:[73,51],phone:[72,52],scale:.87,phoneScale:.85,depth:44,zone:'behind-bar'
  },
  stairs:{
-  wide:[67,54],phone:[67,55],scale:.90,phoneScale:.88,depth:50,zone:'midground'
+  wide:[67,54],phone:[67,55],scale:.93,phoneScale:.90,depth:50,zone:'midground'
  },
  'hearth-left':{
   wide:[27,54],phone:[28,56],scale:.93,phoneScale:.90,depth:53,zone:'floor'
