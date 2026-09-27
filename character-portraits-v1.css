@@ -284,6 +284,69 @@
   white-space:nowrap;
 }
 
+/* Unified Illustrated Character Runtime
+   ------------------------------------------------------------
+   The playable character is generated from saved appearance + equipped gear.
+   Static painted race images are reference art only and are never the live
+   character model. */
+.cb-portrait-illustrated{
+  background:
+    radial-gradient(circle at 50% 38%,color-mix(in srgb,var(--cbp-accent) 12%,transparent),transparent 58%),
+    linear-gradient(155deg,#10171d,#070b0f 68%);
+}
+.cb-portrait-illustrated svg{
+  transform:scale(1.08) translateY(3%);
+  transform-origin:50% 42%;
+  shape-rendering:geometricPrecision;
+}
+.cb-appearance-editor-illustrated .cb-appearance-preview{
+  min-width:0;
+}
+.cb-appearance-preview-pair{
+  width:100%;
+  min-height:184px;
+  display:grid;
+  grid-template-columns:92px minmax(84px,1fr);
+  align-items:center;
+  justify-items:center;
+  gap:8px;
+}
+.cb-appearance-preview-pair>.cb-portrait{
+  width:88px!important;
+  height:88px!important;
+}
+.cb-paper-doll--creator{
+  width:106px;
+  height:184px;
+  margin:0 auto;
+}
+.cb-appearance-live-note{
+  color:#8f7b58;
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.14em;
+}
+.cb-paper-doll-illustrated,
+.cb-world-avatar-illustrated{
+  overflow:visible!important;
+  background:transparent!important;
+}
+.cb-paper-doll-illustrated .cb-illustrated-character-svg,
+.cb-world-avatar-illustrated .cb-illustrated-character-svg{
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+  shape-rendering:geometricPrecision;
+}
+.cb-paper-doll-illustrated.cb-paper-doll--equipment{
+  width:min(100%,228px);
+  height:362px;
+}
+.cb-paper-doll-illustrated.cb-paper-doll--equipment .cb-illustrated-character-svg{
+  filter:drop-shadow(0 16px 18px rgba(0,0,0,.34));
+}
+
 /* Onboarding appearance stage */
 .builder-section.appearance-builder-section .builder-section-head{margin-bottom:12px}
 .party-draft-card{
@@ -332,6 +395,10 @@
   .roster-card-portrait>.cb-portrait{width:56px;height:56px}
 }
 @media (max-width:560px){
+  .cb-appearance-preview-pair{grid-template-columns:78px minmax(72px,1fr);min-height:150px}
+  .cb-appearance-preview-pair>.cb-portrait{width:74px!important;height:74px!important}
+  .cb-paper-doll--creator{width:88px;height:150px}
+
   .cb-appearance-editor{padding:12px;gap:12px}
   .cb-appearance-controls{grid-template-columns:1fr 1fr}
   .cb-appearance-control{padding:8px}
