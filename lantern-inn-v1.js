@@ -175,23 +175,41 @@ function mount(){
    '</button>'+
   '</div>'+
   '<header class="inn-heading"><small>YOUR ADVENTURING COMPANY</small><h2>The Lantern Inn</h2><p class="inn-company-status"></p></header>'+
+  '<aside class="inn-selection-panel" data-inn-selection hidden aria-live="polite"><div class="inn-selection-copy"><small>SELECTED</small><h3 data-inn-selection-title></h3><p data-inn-selection-copy></p><em data-inn-selection-status></em></div><button type="button" data-inn-selection-action data-confirm-inn-object=""></button></aside>'+
   '<p class="inn-empty" hidden>Your company will gather here when you recruit your first adventurer.</p>'+
-  '<footer class="inn-hint">Party Table · Active Party &nbsp;&nbsp; Bar · Roster &nbsp;&nbsp; Door · Town Square</footer>';
+  '<footer class="inn-hint">Tap once to select · then confirm</footer>';
  const theme=window.CellboundInnTheme;if(theme?.hint)world.querySelector('.inn-hint').textContent=theme.hint;
  root.prepend(world);
+ selectionPanel=world.querySelector('[data-inn-selection]');
+ selectionTitle=world.querySelector('[data-inn-selection-title]');
+ selectionCopy=world.querySelector('[data-inn-selection-copy]');
+ selectionStatus=world.querySelector('[data-inn-selection-status]');
+ selectionAction=world.querySelector('[data-inn-selection-action]');
  ledger=dialog('Roster','innLedger');original.forEach(n=>ledger.querySelector('.inn-dialog-body').append(n));
  partyDialog=dialog('Active Party','innParty');
  world.addEventListener('click',e=>{
+  const confirm=e.target.closest('[data-confirm-inn-object]');
+  if(confirm){
+   e.preventDefault();e.stopPropagation();
+   const kind=confirm.dataset.confirmInnObject||selectedObject;
+   const trigger=world.querySelector('[data-inn-object="'+kind+'"]');
+   activateObject(kind,trigger||confirm);
+   return;
+  }
   const object=e.target.closest('[data-inn-object]');
-  if(!object)return;
-  e.preventDefault();
-  activateObject(object.dataset.innObject,object);
+  if(object){
+   e.preventDefault();
+   setObjectSelected(object.dataset.innObject,{focusConfirm:false});
+   return;
+  }
+  if(e.target.closest('[data-inn-selection]'))return;
+  if(!ledger?.open&&!partyDialog?.open)setObjectSelected('');
  });
  world.addEventListener('keydown',e=>{
   const object=e.target.closest?.('[data-inn-object]');
   if(!object||(e.key!=='Enter'&&e.key!==' '))return;
   e.preventDefault();
-  activateObject(object.dataset.innObject,object);
+  setObjectSelected(object.dataset.innObject,{focusConfirm:true});
  });
  // Existing jump buttons inside the roster modal still open the Party Table.
  ledger.addEventListener('click',e=>{if(e.target.closest('[data-jump="party"]')){e.preventDefault();e.stopPropagation();ledger.close();setTimeout(()=>{setObjectSelected('party');openTool('party',world.querySelector('[data-inn-object="party"]'))},80)}},true);
