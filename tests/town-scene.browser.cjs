@@ -42,7 +42,7 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  assert.equal(await page.locator('[data-town-object]').count(),15,'Town exposes physical destinations and district roads across four sectors');
  assert.equal(await page.locator('[data-town-scene]').getAttribute('data-town-sector'),'square','Town opens in Central Square');
  assert.equal(await page.locator('.town-sector[data-town-sector="square"] .town-painted-image').count(),1,'Central Square keeps one clean painted background layer');
- assert((await page.locator('.town-sector[data-town-sector="square"] .town-painted-image').getAttribute('src')||'').includes('assets/world/town/town-square-background-v1.webp'),'clean 16:9 Town Square background is wired into the scene');
+ assert((await page.locator('.town-sector[data-town-sector="square"] .town-painted-image').getAttribute('src')||'').includes('assets/world/town/town-square-background-v2.png'),'clean 16:9 Town Square background is wired into the scene');
  assert.equal(await page.locator('.town-sector[data-town-sector="square"] [data-town-object]').count(),5,'Central Square exposes exactly five environmental destinations');
  assert.equal(await page.locator('.town-sector[data-town-sector="square"] [data-town-layer]').count(),5,'all five Central Square destinations render as independent artwork layers');
  assert.equal(await page.locator('.town-sector[data-town-sector="square"] .town-landmark-glow').count(),5,'each modular landmark owns a behind-art glow layer');
