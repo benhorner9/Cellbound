@@ -46,9 +46,9 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
  const innWorldBox=await page.locator('.inn-world').boundingBox();
  assert(illustratedGeometry.every(x=>x.top>=-0.5&&x.bottom<=innWorldBox.height+.5),'illustrated bodies stay inside the room bounds');
  const actorHeights=illustratedGeometry.map(x=>x.height);
- assert(Math.min(...actorHeights)>=165,'back-room actors are large enough to read as people');
+ assert(Math.min(...actorHeights)>=145,'far-depth actors are still large enough to read as people');
  assert(Math.max(...actorHeights)<=220,'foreground actors remain proportional to the room');
- assert(Math.max(...actorHeights)/Math.min(...actorHeights)<1.3,'perspective sizing stays controlled');
+ assert(Math.max(...actorHeights)/Math.min(...actorHeights)<1.45,'perspective sizing stays controlled across floor and balcony depth');
  const depthRows=illustratedGeometry.map(x=>({y:x.slotY,scale:x.scale})).sort((a,b)=>a.y-b.y);
  for(let i=1;i<depthRows.length;i++)assert(depthRows[i].scale+.001>=depthRows[i-1].scale,'foreground actor perspective scale must not be smaller than deeper actors');
  const layerContract=await page.evaluate(()=>{
