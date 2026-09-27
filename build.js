@@ -326,10 +326,12 @@ for(const file of files){
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=52')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
     if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=7'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
-    if(!contents.includes('character-art-v2.js?v=1')||!contents.includes('character-portraits-v1.css?v=6')||!contents.includes('character-portraits-v1.js?v=10'))throw new Error('Character portrait identity assets are not linked from guild.html');
+    if(!contents.includes('character-art-v2.js?v=1')||!contents.includes('character-portraits-v1.css?v=7')||!contents.includes('character-portraits-v1.js?v=11'))throw new Error('Character portrait identity assets are not linked from guild.html');
     const portraitCss=fs.readFileSync(path.join(__dirname,'character-portraits-v1.css'),'utf8');
     const portraitJs=fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8');
-    if(!portraitCss.includes('transparent cutout presentation')||!portraitCss.includes('.cb-painted-veyren-body>img')||!portraitCss.includes('.cb-painted-stoneborn-body>img')||!portraitCss.includes('.cb-painted-aelari-body>img'))throw new Error('Painted race transparent-cutout presentation rules are missing');
+    if(!portraitCss.includes('transparent cutout presentation')||!portraitCss.includes('.cb-painted-aelari-body>img'))throw new Error('Painted race transparent presentation rules are missing');
+    if(portraitCss.includes('clip-path:polygon(')||portraitCss.includes('.cb-painted-veyren-body>img')||portraitCss.includes('.cb-painted-stoneborn-body>img'))throw new Error('Opaque painted body cutout workaround returned');
+    if(!portraitJs.includes("PAINTED_BODY_RACES=new Set(['Aelari'])")||!portraitJs.includes('painted&&PAINTED_BODY_RACES.has(painted)'))throw new Error('Opaque painted bodies are not gated behind real alpha support');
     if(portraitCss.includes('.cb-painted-paper-body{\n  display:block;\n  width:100%;\n  height:100%;\n  overflow:hidden;\n  border-radius:26px;\n  background:#090c0e'))throw new Error('Legacy painted body backdrop returned');
     if(!portraitJs.includes('data-painted-body')||!portraitJs.includes('cb-painted-body-'))throw new Error('Painted body variant metadata is missing');
      if(!contents.includes('combat-portraits-v1.css?v=4')||!contents.includes('combat-portraits-v1.js?v=5'))throw new Error('Combat portrait assets are not linked from guild.html');
