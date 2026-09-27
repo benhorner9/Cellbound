@@ -427,6 +427,21 @@ for(const file of files){
 }
 
 for(const file of assets){const src=path.join(__dirname,file),dest=path.join(out,file);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest)}
+// Central Square v2 is authored as one packed source atlas so the painted
+// background and transparent interactive landmarks can render as independent layers.
+{
+  const partsDir=path.join(__dirname,'assets-src/world/town/central-square-atlas-v2');
+  const parts=fs.readdirSync(partsDir).filter(x=>/^part-\d+\.b64$/.test(x)).sort();
+  if(parts.length!==18)throw new Error('Central Square v2 atlas source is incomplete: '+parts.length+'/18 chunks');
+  const encoded=parts.map(x=>fs.readFileSync(path.join(partsDir,x),'utf8').trim()).join('');
+  const atlas=Buffer.from(encoded,'base64');
+  if(atlas.length<600000||atlas.subarray(0,4).toString('ascii')!=='RIFF'||atlas.subarray(8,12).toString('ascii')!=='WEBP'){
+    throw new Error('Central Square v2 atlas failed integrity validation');
+  }
+  const dest=path.join(out,'assets/world/town/central-square-atlas-v2.webp');
+  fs.mkdirSync(path.dirname(dest),{recursive:true});
+  fs.writeFileSync(dest,atlas);
+}
 for(const file of ['assets/comics/thirteenth-bell/sealed_letter.jpg','assets/comics/thirteenth-bell/greywake_arrival.jpg','assets/comics/thirteenth-bell/locked_house.jpg','assets/comics/thirteenth-bell/final_run.jpg','assets/comics/thirteenth-bell/bellkeeper.jpg','assets/comics/thirteenth-bell/bell_breaks.jpg','assets/comics/thirteenth-bell/greywake_freed.jpg','assets/comics/thirteenth-bell/departure.jpg']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing Thirteenth Bell comic artwork in production package: ${file}`)}
 for(const file of ['assets/dungeons/ashen-vault.webp','assets/dungeons/hollow-sanctum.webp','assets/dungeons/chaos-canyon.webp','assets/dungeons/blackout-station.webp','assets/dungeons/fractured-ages.webp']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing Dungeon Journal artwork in production package: ${file}`)}
 for(const file of ['assets/bosses/ashen-vault-vaultheart.webp','assets/bosses/hollow-sanctum-bound-choir.webp','assets/bosses/chaos-canyon-vorran.webp','assets/bosses/blackout-station-calder.webp','assets/bosses/fractured-ages-old-man.webp','assets/bosses/no-way-back-three-hounds.webp','assets/bosses/no-way-back-silas-vane.webp','assets/bosses/no-way-back-three-hounds-v2.webp','assets/bosses/no-way-back-silas-vane-v2.webp']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing final boss artwork in production package: ${file}`)}
