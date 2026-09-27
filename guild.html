@@ -226,53 +226,36 @@
                 </div>
               </section>
 
-              <!-- EXPEDITION WARD -->
-              <section class="town-sector" data-town-sector="expedition" aria-label="Expedition Ward">
-                <svg class="town-sector-art" viewBox="0 0 1200 760" role="img" aria-label="Expedition Ward with dungeon cart, Crucible colosseum and Festival Grounds" preserveAspectRatio="xMidYMid slice">
-                  <defs><linearGradient id="ewSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#17242b"/><stop offset=".6" stop-color="#34383b"/><stop offset="1" stop-color="#1c1d1c"/></linearGradient></defs>
-                  <rect width="1200" height="760" fill="url(#ewSky)"/>
-                  <path d="M0 430 L103 362 L222 400 L334 322 L442 394 L560 304 L682 395 L799 314 L918 391 L1032 321 L1148 392 L1200 358 L1200 515 L0 515Z" fill="#13191b"/>
-                  <path d="M0 526 C230 488 433 506 615 526 C829 550 1009 505 1200 486 L1200 760 L0 760Z" fill="#454038"/>
+              <!-- EXPEDITION WARD · MODULAR CARTOON WORLD -->
+              <section class="town-sector town-expedition-quarter" data-town-sector="expedition" aria-label="Expedition Ward">
+                <div class="town-expedition-stage" data-town-expedition-stage>
+                  <img class="town-expedition-world" src="./assets/world/expedition-ward/expedition-ward-world-v1.webp?v=1" alt="" aria-hidden="true" draggable="false">
 
-                  <g class="town-location" data-town-object="squareFromExpedition" role="button" tabindex="0" aria-pressed="false" aria-label="Road back to Central Square">
-                    <path class="town-object-shape" d="M10 636 L18 319 L149 309 L158 643Z" fill="#3e3d38" stroke="#080b0c" stroke-width="8"/>
-                    <path class="town-object-shape" d="M0 332 L59 274 L122 274 L172 327Z" fill="#1b2020" stroke="#080b0c" stroke-width="7"/>
-                    <path class="town-object-shape" d="M49 636 L51 398 Q86 356 122 399 L124 640Z" fill="#171a1a" stroke="#080b0c" stroke-width="6"/>
-                    <path class="town-object-outline" d="M0 332 L59 274 L122 274 L172 327 L158 643 L10 636Z"/>
-                  </g>
+                  <div class="ew-building ew-building-return" data-town-layer="squareFromExpedition" aria-hidden="true">
+                    <img class="ew-building-glow" src="./assets/world/expedition-ward/expedition-return-tower-v1.webp?v=1" alt="">
+                    <img class="ew-building-art" src="./assets/world/expedition-ward/expedition-return-tower-v1.webp?v=1" alt="">
+                  </div>
 
-                  <g class="town-location" data-town-object="cart" role="button" tabindex="0" aria-pressed="false" aria-label="Expedition Cart">
-                    <path class="town-object-shape" d="M174 529 L426 514 L473 615 L198 633Z" fill="#573a25" stroke="#090c0d" stroke-width="8"/>
-                    <path class="town-object-shape" d="M205 519 L237 402 L390 393 L426 515Z" fill="#36342f" stroke="#090c0d" stroke-width="8"/>
-                    <path d="M244 403 Q314 343 387 393" fill="none" stroke="#7d5e43" stroke-width="9"/>
-                    <rect x="252" y="433" width="57" height="67" fill="#6b5138" stroke="#181410" stroke-width="4"/><rect x="322" y="424" width="58" height="74" fill="#75563b" stroke="#181410" stroke-width="4"/>
-                    <circle class="town-object-shape" cx="237" cy="635" r="62" fill="#211914" stroke="#080b0c" stroke-width="9"/><circle cx="237" cy="635" r="31" fill="#4b3527" stroke="#090b0c" stroke-width="6"/>
-                    <circle class="town-object-shape" cx="416" cy="626" r="57" fill="#211914" stroke="#080b0c" stroke-width="9"/><circle cx="416" cy="626" r="28" fill="#4b3527" stroke="#090b0c" stroke-width="6"/>
-                    <path class="town-object-shape" d="M469 573 L559 550 L574 565 L479 599Z" fill="#3e2b1f" stroke="#090b0c" stroke-width="6"/>
-                    <path class="town-object-outline" d="M174 529 L205 519 L237 402 Q314 343 390 393 L426 515 L473 615 L479 599 L559 550 L574 565 L480 609 L470 639 L448 667 L386 679 L357 652 L298 659 L267 686 L210 681 L181 652Z"/>
-                  </g>
+                  <div class="ew-building ew-building-cart" data-town-layer="cart" aria-hidden="true">
+                    <img class="ew-building-glow" src="./assets/world/expedition-ward/expedition-dungeon-cart-v1.webp?v=1" alt="">
+                    <img class="ew-building-art" src="./assets/world/expedition-ward/expedition-dungeon-cart-v1.webp?v=1" alt="">
+                  </div>
 
-                  <g class="town-location" data-town-object="arena" role="button" tabindex="0" aria-pressed="false" aria-label="The Crucible Colosseum">
-                    <path class="town-object-shape" d="M454 634 L461 270 Q597 128 744 271 L753 639Z" fill="#494943" stroke="#080b0c" stroke-width="9"/>
-                    <path d="M486 268 Q603 100 723 269" fill="none" stroke="#5c5b54" stroke-width="42"/>
-                    <path class="town-object-shape" d="M529 630 L532 409 Q604 326 675 409 L680 635Z" fill="#151919" stroke="#080b0c" stroke-width="8"/>
-                    <path d="M484 315 L731 315 M479 353 L736 353" stroke="#8b8169" stroke-width="9" opacity=".54"/>
-                    <path d="M493 287 L461 223 L512 242 M718 288 L750 223 L701 242" fill="#7d423b" stroke="#201313" stroke-width="4"/>
-                    <path d="M565 452 L643 452 M604 412 L604 495" stroke="#9b7951" stroke-width="8" opacity=".82"/>
-                    <path class="town-object-outline" d="M454 634 L461 270 Q597 128 744 271 L753 639Z"/>
-                  </g>
+                  <div class="ew-building ew-building-arena" data-town-layer="arena" aria-hidden="true">
+                    <img class="ew-building-glow" src="./assets/world/expedition-ward/expedition-crucible-v1.webp?v=1" alt="">
+                    <img class="ew-building-art" src="./assets/world/expedition-ward/expedition-crucible-v1.webp?v=1" alt="">
+                  </div>
 
-                  <g class="town-location" data-town-object="grounds" role="button" tabindex="0" aria-pressed="false" aria-label="Festival Grounds">
-                    <path class="town-object-shape" d="M802 645 L827 383 L1119 382 L1140 649Z" fill="#37342d" stroke="#080b0c" stroke-width="8"/>
-                    <path class="town-object-shape" d="M784 395 L847 306 L1099 305 L1154 391Z" fill="#493c3d" stroke="#080b0c" stroke-width="8"/>
-                    <path d="M842 308 L842 239 M1094 306 L1094 239" stroke="#b39d70" stroke-width="8"/>
-                    <path d="M846 242 L910 265 L846 289 M1090 242 L1026 265 L1090 289" fill="#79413c" stroke="#221414" stroke-width="3"/>
-                    <path d="M861 455 L1079 451 M852 507 L1087 503" stroke="#a88a5e" stroke-width="7" opacity=".55"/>
-                    <circle cx="969" cy="574" r="43" fill="#604832" stroke="#c09c65" stroke-width="6"/>
-                    <path d="M945 574 L993 574 M969 550 L969 598" stroke="#d4b476" stroke-width="5"/>
-                    <path class="town-object-outline" d="M784 395 L847 306 L1099 305 L1154 391 L1140 649 L802 645Z"/>
-                  </g>
-                </svg>
+                  <div class="ew-building ew-building-grounds" data-town-layer="grounds" aria-hidden="true">
+                    <img class="ew-building-glow" src="./assets/world/expedition-ward/expedition-activities-stall-v1.webp?v=1" alt="">
+                    <img class="ew-building-art" src="./assets/world/expedition-ward/expedition-activities-stall-v1.webp?v=1" alt="">
+                  </div>
+
+                  <button type="button" class="town-location ew-hotspot ew-hotspot-return" data-town-object="squareFromExpedition" aria-pressed="false" aria-label="Road back to Central Square"></button>
+                  <button type="button" class="town-location ew-hotspot ew-hotspot-cart" data-town-object="cart" aria-pressed="false" aria-label="Expedition Cart · Dungeons"></button>
+                  <button type="button" class="town-location ew-hotspot ew-hotspot-arena" data-town-object="arena" aria-pressed="false" aria-label="The Crucible · PvP"></button>
+                  <button type="button" class="town-location ew-hotspot ew-hotspot-grounds" data-town-object="grounds" aria-pressed="false" aria-label="Activity Grounds"></button>
+                </div>
               </section>
 
               <!-- GREYWAKE HARBOUR -->
@@ -340,6 +323,17 @@
                 <button type="button" data-town-board-close>← Back to Central Square</button>
               </header>
               <div class="town-board-quest-mount" data-town-board-mount></div>
+            </div>
+          </section>
+
+          <section class="town-expedition-focus" data-town-expedition-focus hidden aria-label="Expedition Ward interface">
+            <button class="town-expedition-backdrop" type="button" data-town-expedition-backdrop aria-label="Back to Expedition Ward"></button>
+            <div class="town-expedition-frame">
+              <header class="town-expedition-toolbar">
+                <div><small data-town-expedition-kicker>EXPEDITION WARD</small><b data-town-expedition-title>Choose a destination</b></div>
+                <button type="button" data-town-expedition-close>← Back to Expedition Ward</button>
+              </header>
+              <div class="town-expedition-mount" data-town-expedition-mount></div>
             </div>
           </section>
         </section>
