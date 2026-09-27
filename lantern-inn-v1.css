@@ -519,6 +519,21 @@ body.inn-character-open{overflow:hidden}
   height:11px;
   opacity:.82
 }
+/* The visual body overflows above the small foot-anchor button. This invisible
+   hit column follows the visible torso/head, so actors remain selectable even
+   when furniture correctly occludes their lower body. */
+.inn-adventurer:after{
+  content:"";
+  position:absolute;
+  z-index:4;
+  left:50%;
+  bottom:24px;
+  width:82px;
+  height:166px;
+  transform:translateX(-50%);
+  pointer-events:auto;
+  background:transparent
+}
 .inn-figure{
   bottom:18px;
   width:118px;
@@ -575,6 +590,11 @@ body.inn-character-open{overflow:hidden}
     bottom:12px;
     width:52px;
     transform:translateX(-50%) scaleX(var(--inn-scale-phone,.90))
+  }
+  .inn-adventurer:after{
+    bottom:20px;
+    width:60px;
+    height:118px
   }
   .inn-figure{
     bottom:15px;
