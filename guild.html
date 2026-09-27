@@ -59,7 +59,7 @@
   <link rel="stylesheet" href="./living-world-v1.css?v=3">
 <link rel="stylesheet" href="./lantern-inn-v1.css?v=3">
 <link rel="stylesheet" href="./inn-art-direction-v1.css?v=1">
-  <link rel="stylesheet" href="./town-scene-v1.css?v=7">
+  <link rel="stylesheet" href="./town-scene-v1.css?v=8">
   <link rel="stylesheet" href="./world-venues-v1.css?v=3">
   <link rel="stylesheet" href="./layout-safety-v1.css?v=1">
 </head>
@@ -132,14 +132,14 @@
                 >
                 <svg class="town-painted-hotspots" viewBox="0 0 1448 1086" preserveAspectRatio="xMidYMid slice" aria-label="Interactive locations in Central Square">
                   <defs>
-                    <filter id="townOuterGlow" x="-35%" y="-35%" width="170%" height="170%" color-interpolation-filters="sRGB">
-                      <feMorphology in="SourceAlpha" operator="dilate" radius="7" result="spread"/>
-                      <feGaussianBlur in="spread" stdDeviation="12" result="soft"/>
+                    <filter id="townOuterGlow" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+                      <feMorphology in="SourceAlpha" operator="dilate" radius="3" result="spread"/>
+                      <feGaussianBlur in="spread" stdDeviation="6" result="soft"/>
                       <feComposite in="soft" in2="SourceAlpha" operator="out" result="outer"/>
-                      <feFlood flood-color="#e2a654" flood-opacity=".95" result="amber"/>
+                      <feFlood flood-color="#e2a654" flood-opacity=".82" result="amber"/>
                       <feComposite in="amber" in2="outer" operator="in"/>
                     </filter>
-                    <clipPath id="townClip-inn" clipPathUnits="userSpaceOnUse"><path d="M0 824 L18 424 L111 382 L184 211 L463 198 L589 395 L592 828 L492 851 L0 850 Z"/></clipPath>
+                    <clipPath id="townClip-inn" clipPathUnits="userSpaceOnUse"><path d="M34 834 L40 416 L94 394 L128 350 L150 332 L177 270 L218 262 L249 226 L314 218 L366 187 L407 185 L438 226 L461 306 L499 354 L520 421 L540 466 L538 798 L499 804 L489 826 L424 833 L82 842 Z"/></clipPath>
                     <clipPath id="townClip-expeditionRoad" clipPathUnits="userSpaceOnUse"><path d="M598 546 L606 273 L663 217 L710 184 L778 181 L830 200 L890 181 L960 201 L1007 250 L1020 531 L955 552 L949 468 Q822 345 700 468 L692 552 Z"/></clipPath>
                     <clipPath id="townClip-merchantRoad" clipPathUnits="userSpaceOnUse"><path d="M1045 813 L1060 374 L1120 342 L1208 323 L1330 326 L1428 372 L1448 392 L1448 826 L1369 825 L1365 533 Q1263 438 1164 535 L1158 817 Z"/></clipPath>
                     <clipPath id="townClip-board" clipPathUnits="userSpaceOnUse"><path d="M562 580 L875 558 L907 798 L846 806 L844 913 L797 916 L785 811 L661 818 L655 915 L607 915 L615 824 L579 827 Z"/></clipPath>
@@ -148,10 +148,10 @@
 
                   <!-- Lantern Inn · the building itself is the control -->
                   <g class="town-location town-painted-location" data-town-object="inn" role="button" tabindex="0" aria-pressed="false" aria-label="The Lantern Inn">
-                    <path class="town-painted-bloom" d="M0 824 L18 424 L111 382 L184 211 L463 198 L589 395 L592 828 L492 851 L0 850 Z" filter="url(#townOuterGlow)"/>
+                    <path class="town-painted-bloom" d="M34 834 L40 416 L94 394 L128 350 L150 332 L177 270 L218 262 L249 226 L314 218 L366 187 L407 185 L438 226 L461 306 L499 354 L520 421 L540 466 L538 798 L499 804 L489 826 L424 833 L82 842 Z" filter="url(#townOuterGlow)"/>
                     <image class="town-painted-lift" href="./assets/world/town/central-square-v1.webp?v=2" x="0" y="0" width="1448" height="1086" preserveAspectRatio="xMidYMid slice" clip-path="url(#townClip-inn)"/>
-                    <path class="town-painted-hit town-object-shape" d="M0 824 L18 424 L111 382 L184 211 L463 198 L589 395 L592 828 L492 851 L0 850 Z"/>
-                    <path class="town-painted-outline town-object-outline" d="M0 824 L18 424 L111 382 L184 211 L463 198 L589 395 L592 828 L492 851 L0 850 Z"/>
+                    <path class="town-painted-hit town-object-shape" d="M34 834 L40 416 L94 394 L128 350 L150 332 L177 270 L218 262 L249 226 L314 218 L366 187 L407 185 L438 226 L461 306 L499 354 L520 421 L540 466 L538 798 L499 804 L489 826 L424 833 L82 842 Z"/>
+                    <path class="town-painted-outline town-object-outline" d="M34 834 L40 416 L94 394 L128 350 L150 332 L177 270 L218 262 L249 226 L314 218 L366 187 L407 185 L438 226 L461 306 L499 354 L520 421 L540 466 L538 798 L499 804 L489 826 L424 833 L82 842 Z"/>
                   </g>
 
                   <!-- Upper gateway · Expedition Ward -->
