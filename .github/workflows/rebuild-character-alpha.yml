@@ -1,0 +1,205 @@
+name: Rebuild painted character alpha
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/rebuild-character-alpha.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rebuild-character-alpha
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    name: Remove baked backgrounds and restore painted bodies
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Check out Cellbound
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install background removal tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "rembg[cpu]" pillow
+
+      - name: Rebuild Veyren and Stoneborn with true alpha
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from io import BytesIO
+          import base64, json, math
+          from PIL import Image
+          from rembg import remove, new_session
+
+          root = Path('.')
+          session = new_session('u2net_human_seg')
+
+          def process_race(race, part_count):
+              pack = root / 'assets-src' / 'characters' / 'v2' / race / 'pack'
+              parts = [pack / f'part-{i:02d}.txt' for i in range(part_count)]
+              manifest = json.loads(''.join(p.read_text() for p in parts))
+
+              stats = []
+              for name, encoded in list(manifest.items()):
+                  if not name.endswith('.webp'):
+                      continue
+                  src = Image.open(BytesIO(base64.b64decode(encoded))).convert('RGBA')
+                  cut = remove(
+                      src,
+                      session=session,
+                      alpha_matting=True,
+                      alpha_matting_foreground_threshold=235,
+                      alpha_matting_background_threshold=20,
+                      alpha_matting_erode_size=8,
+                  )
+                  if not isinstance(cut, Image.Image):
+                      cut = Image.open(BytesIO(cut)).convert('RGBA')
+                  else:
+                      cut = cut.convert('RGBA')
+
+                  alpha = cut.getchannel('A')
+                  lo, hi = alpha.getextrema()
+                  transparent = sum(1 for px in alpha.getdata() if px < 16)
+                  transparent_ratio = transparent / float(cut.width * cut.height)
+                  if hi < 240 or transparent_ratio < 0.08:
+                      raise RuntimeError(
+                          f'{race}/{name} alpha validation failed: '
+                          f'alpha={lo}-{hi}, transparent={transparent_ratio:.3f}'
+                      )
+
+                  out = BytesIO()
+                  cut.save(out, 'WEBP', lossless=True, quality=96, method=6)
+                  manifest[name] = base64.b64encode(out.getvalue()).decode('ascii')
+                  stats.append((name, cut.width, cut.height, transparent_ratio))
+
+              packed = json.dumps(manifest, separators=(',', ':'))
+              chunk = math.ceil(len(packed) / part_count)
+              for i, path in enumerate(parts):
+                  path.write_text(packed[i*chunk:(i+1)*chunk])
+
+              print(race, 'rebuilt:')
+              for row in stats:
+                  print(' ', row[0], row[1], 'x', row[2], 'transparent', f'{row[3]:.1%}')
+
+          process_race('veyren', 6)
+          process_race('stoneborn', 10)
+          PY
+
+      - name: Restore painted full-body rendering
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          js = Path('character-portraits-v1.js')
+          s = js.read_text()
+          s = s.replace(
+              "// Only use painted full-body art when the source really contains alpha.\n"
+              "// Veyren and Stoneborn V2 were authored on opaque environment plates, so\n"
+              "// their full-body contexts deliberately fall back to the clean vector model.\n"
+              "const PAINTED_BODY_RACES=new Set(['Aelari']);",
+              "// All converted painted race packs now contain real alpha.\n"
+              "const PAINTED_BODY_RACES=new Set(['Veyren','Stoneborn','Aelari']);"
+          )
+          s = s.replace('window.CellboundPortraits={\n  version:9,', 'window.CellboundPortraits={\n  version:10,')
+          js.write_text(s)
+
+          css = Path('character-portraits-v1.css')
+          s = css.read_text()
+
+          marker_a = "/* Early V2 packs (Veyren / Stoneborn) were authored on painted plates."
+          marker_b = ".cb-painted-portrait:after{"
+          if marker_a in s:
+              start = s.index(marker_a)
+              end = s.index(marker_b, start)
+              s = s[:start] + s[end:]
+
+          old = """/* Veyren and Stoneborn V2 bodies are opaque source paintings, so they are
+             never displayed as full-body image assets. Their Inn and Equipment views
+             use the transparent vector character renderer instead. Aelari is the first
+             painted body pack with real alpha and can render directly. */
+          .cb-painted-aelari-body>img{clip-path:none}
+
+          /* True-alpha painted body fit. Feet remain anchored to the game-owned stage. */
+          .cb-paper-doll-painted .cb-painted-aelari-body>img{transform:scale(.95)}
+          .cb-world-avatar-painted.cb-world-avatar--aelari>img{transform:scale(.97)}
+          """
+          new = """/* Every painted full-body pack is true-alpha. Contexts own the scenery;
+             race art is only the character silhouette. */
+          .cb-painted-veyren-body>img,
+          .cb-painted-stoneborn-body>img,
+          .cb-painted-aelari-body>img{clip-path:none}
+
+          /* Race-specific fit while keeping the same foot baseline. */
+          .cb-paper-doll-painted .cb-painted-veyren-body>img{transform:scale(.93)}
+          .cb-paper-doll-painted .cb-painted-stoneborn-body>img{transform:scale(.96)}
+          .cb-paper-doll-painted .cb-painted-aelari-body>img{transform:scale(.95)}
+          .cb-world-avatar-painted.cb-world-avatar--veyren>img{transform:scale(.96)}
+          .cb-world-avatar-painted.cb-world-avatar--stoneborn>img{transform:scale(.98)}
+          .cb-world-avatar-painted.cb-world-avatar--aelari>img{transform:scale(.97)}
+          """
+          if old not in s:
+              raise RuntimeError('Expected painted body CSS block not found')
+          s = s.replace(old, new)
+          s = s.replace(
+              '  .cb-paper-doll-painted .cb-painted-aelari-body>img{transform:scale(.92)}',
+              '  .cb-paper-doll-painted .cb-painted-veyren-body>img{transform:scale(.90)}\n'
+              '  .cb-paper-doll-painted .cb-painted-stoneborn-body>img{transform:scale(.93)}\n'
+              '  .cb-paper-doll-painted .cb-painted-aelari-body>img{transform:scale(.92)}'
+          )
+          css.write_text(s)
+
+          html = Path('guild.html')
+          s = html.read_text()
+          s = s.replace('character-portraits-v1.css?v=7', 'character-portraits-v1.css?v=8')
+          s = s.replace('character-portraits-v1.js?v=11', 'character-portraits-v1.js?v=12')
+          html.write_text(s)
+
+          build = Path('build.js')
+          s = build.read_text()
+          s = s.replace(
+              "character-portraits-v1.css?v=7')||!contents.includes('character-portraits-v1.js?v=11",
+              "character-portraits-v1.css?v=8')||!contents.includes('character-portraits-v1.js?v=12"
+          )
+          s = s.replace(
+              "if(!portraitCss.includes('transparent cutout presentation')||!portraitCss.includes('.cb-painted-aelari-body>img'))throw new Error('Painted race transparent presentation rules are missing');",
+              "if(!portraitCss.includes('transparent cutout presentation')||!portraitCss.includes('.cb-painted-veyren-body>img')||!portraitCss.includes('.cb-painted-stoneborn-body>img')||!portraitCss.includes('.cb-painted-aelari-body>img'))throw new Error('Painted race transparent presentation rules are missing');"
+          )
+          s = s.replace(
+              "if(portraitCss.includes('clip-path:polygon(')||portraitCss.includes('.cb-painted-veyren-body>img')||portraitCss.includes('.cb-painted-stoneborn-body>img'))throw new Error('Opaque painted body cutout workaround returned');",
+              "if(portraitCss.includes('clip-path:polygon('))throw new Error('Opaque painted body polygon cutout workaround returned');"
+          )
+          s = s.replace(
+              "if(!portraitJs.includes(\"PAINTED_BODY_RACES=new Set(['Aelari'])\")||!portraitJs.includes('painted&&PAINTED_BODY_RACES.has(painted)'))throw new Error('Opaque painted bodies are not gated behind real alpha support');",
+              "if(!portraitJs.includes(\"PAINTED_BODY_RACES=new Set(['Veyren','Stoneborn','Aelari'])\")||!portraitJs.includes('painted&&PAINTED_BODY_RACES.has(painted)'))throw new Error('Painted full-body alpha support is incomplete');"
+          )
+          build.write_text(s)
+          PY
+
+      - name: Build and validate
+        run: npm run build
+
+      - name: Commit transparent character assets
+        shell: bash
+        run: |
+          git config user.name "Cellbound Asset Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add             assets-src/characters/v2/veyren/pack             assets-src/characters/v2/stoneborn/pack             character-portraits-v1.js             character-portraits-v1.css             guild.html             build.js
+          git diff --cached --stat
+          git commit -m "Rebuild painted characters with true alpha [alpha-assets]"
+          git push origin HEAD:main
