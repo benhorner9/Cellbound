@@ -64,6 +64,11 @@ jobs:
           node tests/town-scene.browser.cjs
           CELLBOUND_TEST_ENGINE=webkit node tests/town-scene.browser.cjs
 
+      - name: World venue navigation regression
+        run: |
+          node tests/world-venues.browser.cjs
+          CELLBOUND_TEST_ENGINE=webkit node tests/world-venues.browser.cjs
+
       - name: Living combat browser regression
         run: |
           node tests/living-combat.browser.cjs
@@ -104,6 +109,14 @@ jobs:
         with:
           name: town-scene-review
           path: /tmp/cellbound-town-scene-*.png
+          if-no-files-found: ignore
+
+      - name: Save World venue review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: world-venue-review
+          path: /tmp/cellbound-venue-*.png
           if-no-files-found: ignore
 
       - name: Save combat review capture
