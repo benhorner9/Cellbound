@@ -273,23 +273,23 @@
   isolation:isolate
 }
 .town-landmark-inn{
-  z-index:4;left:0;top:19.8%;width:35.22%;aspect-ratio:600/803
+  z-index:4;left:0;top:14.27%;width:37.29%;aspect-ratio:600/803
 }
 .town-landmark-expedition{
-  z-index:2;left:34.53%;top:15.65%;width:34.53%;aspect-ratio:575/752
+  z-index:2;left:38.67%;top:12.43%;width:31.77%;aspect-ratio:575/752
 }
 .town-landmark-merchant{
-  z-index:3;left:70.10%;top:29.47%;width:30.73%;aspect-ratio:520/651
+  z-index:3;left:70.44%;top:30.39%;width:29.70%;aspect-ratio:520/651
 }
 .town-landmark-board{
-  z-index:6;left:39.02%;top:49.72%;width:23.14%;aspect-ratio:420/556
+  z-index:6;left:38.67%;top:50.18%;width:24.17%;aspect-ratio:420/556
 }
 .town-landmark-harbour{
-  z-index:5;left:62.15%;top:67.68%;width:19.68%;aspect-ratio:360/418
+  z-index:5;left:62.15%;top:65.38%;width:17.96%;aspect-ratio:360/418
 }
 .town-landmark svg{
   position:absolute;inset:0;width:100%;height:100%;display:block;
-  overflow:visible;pointer-events:none
+  overflow:hidden;pointer-events:none
 }
 .town-landmark-art{
   z-index:2;
@@ -423,8 +423,8 @@
 .town-scene.is-opening-board .town-layered-stage,
 .town-scene.town-board-open .town-layered-stage,
 .town-scene.is-returning-board .town-layered-stage{
-  transform-origin:50.6% 67.2%;
-  transform:translate(-.6%,-17.2%) scale(1.58)
+  transform-origin:50.76% 71.45%;
+  transform:translate(-.76%,-21.45%) scale(1.58)
 }
 .town-scene.is-opening-board .town-layered-stage,
 .town-scene.town-board-open .town-layered-stage{
@@ -464,7 +464,7 @@
 }
 .town-scene.is-returning-board .town-layered-stage{transition:none}
 .town-scene.is-returning-board.is-returning-board-home .town-layered-stage{
-  transform-origin:50.6% 67.2%;
+  transform-origin:50.76% 71.45%;
   transform:translate(0,0) scale(1);
   filter:none;
   transition:
