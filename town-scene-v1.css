@@ -297,6 +297,49 @@
   opacity:.08
 }
 
+/* Quest availability lives on the physical notice board, not in a floating UI card. */
+.town-quest-marker{
+  opacity:0;
+  pointer-events:none;
+  transform-box:fill-box;
+  transform-origin:center;
+  transition:opacity .2s ease,transform .2s ease;
+  filter:
+    drop-shadow(0 0 4px rgba(255,214,133,.82))
+    drop-shadow(0 0 11px rgba(226,164,76,.62))
+    drop-shadow(0 0 22px rgba(184,112,35,.38))
+}
+.town-quest-marker-disc{
+  fill:rgba(27,19,13,.86);
+  stroke:#d9a756;
+  stroke-width:2.2;
+  vector-effect:non-scaling-stroke
+}
+.town-quest-marker-text{
+  fill:#ffd78f;
+  stroke:#5a3518;
+  stroke-width:1.2;
+  paint-order:stroke fill;
+  font-family:Georgia,serif;
+  font-size:58px;
+  font-weight:700;
+  dominant-baseline:auto
+}
+.town-scene.has-available-quests .town-quest-marker{
+  opacity:1;
+  animation:townQuestMarkerPulse 1.85s ease-in-out infinite
+}
+.town-location[data-town-object="board"].is-selected ~ .town-quest-marker{
+  filter:
+    drop-shadow(0 0 5px rgba(255,224,155,.95))
+    drop-shadow(0 0 15px rgba(232,172,80,.75))
+    drop-shadow(0 0 28px rgba(188,116,38,.48))
+}
+@keyframes townQuestMarkerPulse{
+  0%,100%{transform:scale(.96);opacity:.82}
+  50%{transform:scale(1.08);opacity:1}
+}
+
 /* Central Square relies on environmental landmarks rather than a permanent
    title card. Destination copy appears only after an object is selected. */
 .town-scene[data-town-sector="square"] .town-scene-town-title{
@@ -337,6 +380,6 @@
   }
 }
 @media(prefers-reduced-motion:reduce){
-  .town-painted-image,.town-painted-bloom,.town-painted-lift,.town-painted-hit,.town-painted-outline,.town-scene-town-title{transition:none!important}
-  .town-scene.has-selection .town-selection-panel{animation:none!important}
+  .town-painted-image,.town-painted-bloom,.town-painted-lift,.town-painted-hit,.town-painted-outline,.town-scene-town-title,.town-quest-marker{transition:none!important}
+  .town-scene.has-selection .town-selection-panel,.town-scene.has-available-quests .town-quest-marker{animation:none!important}
 }
