@@ -326,7 +326,7 @@ for(const file of files){
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=52')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
     if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=7'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
-    if(!contents.includes('character-art-v2.js?v=1')||!contents.includes('character-portraits-v1.css?v=5')||!contents.includes('character-portraits-v1.js?v=8'))throw new Error('Character portrait identity assets are not linked from guild.html');
+    if(!contents.includes('character-art-v2.js?v=1')||!contents.includes('character-portraits-v1.css?v=5')||!contents.includes('character-portraits-v1.js?v=9'))throw new Error('Character portrait identity assets are not linked from guild.html');
      if(!contents.includes('combat-portraits-v1.css?v=4')||!contents.includes('combat-portraits-v1.js?v=5'))throw new Error('Combat portrait assets are not linked from guild.html');
     if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=14')||!contents.includes('combat-reborn-v1.js?v=9')||!contents.includes('guild-v4.js?v=52')||!contents.includes('character-sheet.js?v=33')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=56')||!contents.includes('hollow-sanctum-v1.js?v=40')||!contents.includes('chaos-canyon-v1.js?v=15')||!contents.includes('blackout-station-v1.js?v=22')||!contents.includes('fractured-ages-v1.js?v=8'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
@@ -460,6 +460,23 @@ for(const file of assets){const src=path.join(__dirname,file),dest=path.join(out
   }
   for(const name of ['body-a.webp','body-b.webp','face-0.webp','face-1.webp','face-2.webp','face-3.webp']){
     if(!fs.existsSync(path.join(destDir,name)))throw new Error('Missing Stoneborn v2 production asset: '+name);
+  }
+}
+// Aelari V2 is stored as text chunks and rebuilt into binary WebP files at deploy time.
+{
+  const partsDir=path.join(__dirname,'assets-src/characters/v2/aelari/pack');
+  const parts=fs.readdirSync(partsDir).filter(x=>/^part-\d+\.txt$/.test(x)).sort();
+  if(parts.length!==14)throw new Error('Aelari v2 art source is incomplete: '+parts.length+'/14 chunks');
+  const manifest=JSON.parse(parts.map(x=>fs.readFileSync(path.join(partsDir,x),'utf8')).join(''));
+  const destDir=path.join(out,'assets/characters/v2/aelari');
+  fs.mkdirSync(destDir,{recursive:true});
+  for(const [name,encoded] of Object.entries(manifest)){
+    const bytes=Buffer.from(encoded,'base64');
+    if(bytes.length<3000)throw new Error('Aelari v2 asset failed integrity validation: '+name);
+    fs.writeFileSync(path.join(destDir,name),bytes);
+  }
+  for(const name of ['body-a.webp','body-b.webp','face-0.webp','face-1.webp','face-2.webp','face-3.webp']){
+    if(!fs.existsSync(path.join(destDir,name)))throw new Error('Missing Aelari v2 production asset: '+name);
   }
 }
 // Central Square v2 is authored as one packed source atlas so the painted
