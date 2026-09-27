@@ -38,7 +38,7 @@ const ROLE_DESC={
 };
 
 let Game=null,G=null,P=null,CP=null,db=null,user=null;
-let draft=[],activeSlot=0,tutorialToken=0,tutorialCombatStats=null,tutorialComicBusy=false;
+let draft=[],activeSlot=0,builderStep='race',tutorialToken=0,tutorialCombatStats=null,tutorialComicBusy=false;
 
 const state=()=>Game?.getState?.();
 const onboarding=()=>state()?.onboarding||{};
@@ -137,28 +137,61 @@ function renderPartyBuilder(){
   const d=draft[activeSlot],slot=SLOTS[activeSlot],availableRaces=RACES;
   const classes=roleOptions(slot.role);
   const allValid=draft.every(x=>x.name.trim().length>=2)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5;
+  const stepOrder=['race','class','appearance','name'];
+  if(!stepOrder.includes(builderStep))builderStep='race';
+  const stepIndex=stepOrder.indexOf(builderStep);
+  const nextSlot=(activeSlot+1)%draft.length;
   const preview=draft.map((x,i)=>{
     const race=raceById(x.race);
-    return '<button class="party-draft-card '+(i===activeSlot?'active':'')+'" data-slot="'+i+'">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<div><small>'+ROLE_LABEL[x.role]+' '+(SLOTS[i].number||'')+'</small><b>'+esc(x.name||'Unnamed')+'</b><span>'+race.icon+' '+esc(x.race)+' · '+esc(x.klass)+' · '+esc(x.spec)+'</span></div><em>'+(i===activeSlot?'EDIT':'CHANGE')+'</em></button>';
+    return '<button class="party-draft-card '+(i===activeSlot?'active':'')+'" data-slot="'+i+'" aria-label="Edit '+esc(x.name||ROLE_LABEL[x.role])+'"><span class="party-draft-portrait">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'</span><div class="party-draft-copy"><small>'+ROLE_LABEL[x.role]+' '+(SLOTS[i].number||'')+'</small><b>'+esc(x.name||'Unnamed')+'</b><span>'+race.icon+' '+esc(x.race)+' · '+esc(x.klass)+' · '+esc(x.spec)+'</span></div><em>'+(i===activeSlot?'EDITING':'EDIT')+'</em></button>';
   }).join('');
   const raceCards=availableRaces.map(r=>{
     const identity=window.CellboundIdentities?.getRace?.(r.id);
     return '<button class="race-card '+(d.race===r.id?'active':'')+'" data-race="'+r.id+'"><strong>'+r.icon+'</strong><div><b>'+r.id+'</b><small>'+r.trait+'</small><p>'+esc(identity?.strength||r.lore)+'</p><span>Any role · '+esc(identity?.tradeoff||'Flexible')+'</span></div></button>';
   }).join('');
-  const classCards=classes.map(o=>{const ci=window.CellboundIdentities?.getSpec?.(o.klass,o.spec);return '<button class="class-choice '+(d.klass===o.klass&&d.spec===o.spec?'active':'')+'" data-class="'+o.klass+'" data-spec="'+o.spec+'" style="--class-glow:'+o.glow+'"><strong>'+o.icon+'</strong><div><b>'+o.klass+'</b><small>'+o.spec+' · '+ROLE_LABEL[slot.role]+' · '+esc(ci?.title||'Specialist')+'</small><p>'+esc(ci?.strength||'Reliable in this role.')+'</p><em>Trade-off: '+esc(ci?.tradeoff||'Balanced')+'</em></div></button>'}).join('');
+  const classCards=classes.map(o=>{
+    const ci=window.CellboundIdentities?.getSpec?.(o.klass,o.spec);
+    return '<button class="class-choice '+(d.klass===o.klass&&d.spec===o.spec?'active':'')+'" data-class="'+o.klass+'" data-spec="'+o.spec+'" style="--class-glow:'+o.glow+'"><strong>'+o.icon+'</strong><div><b>'+o.klass+'</b><small>'+o.spec+' · '+ROLE_LABEL[slot.role]+'</small><p>'+esc(ci?.strength||'Reliable in this role.')+'</p><em>'+esc(ci?.title||'Specialist')+' · '+esc(ci?.tradeoff||'Balanced')+'</em></div></button>';
+  }).join('');
   d.appearance=CP?.normalizeAppearance?.(d.appearance,d.name||d.race,d.race)||d.appearance||{race:d.race};
   const appearanceEditor=CP?.editorHTML?.(d.appearance,{characterClass:d.klass,name:d.name,race:d.race})||'';
   const formation=draft.map(x=>'<div class="formation-unit '+x.role+'">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<b>'+esc(x.name||'Unnamed')+'</b><small>'+ROLE_LABEL[x.role]+'</small></div>').join('');
+  const steps=[
+    ['race','01','Race',d.race],
+    ['class','02','Class',d.klass],
+    ['appearance','03','Appearance','Customise'],
+    ['name','04','Name',d.name||'Unnamed']
+  ];
+  const stepNav='<nav class="builder-step-nav" aria-label="Character creation steps">'+steps.map((x,i)=>'<button type="button" data-builder-step="'+x[0]+'" class="'+(x[0]===builderStep?'active':i<stepIndex?'done':'')+'"><i>'+(i<stepIndex?'✓':x[1])+'</i><span><b>'+x[2]+'</b><small>'+esc(x[3])+'</small></span></button>').join('')+'</nav>';
 
-  const body='<div class="party-build-layout"><aside class="party-draft-list"><div class="onboard-copy"><small>YOUR FIVE</small><h2>One party. Five lives.</h2><p>Build one Tank, one Healer and three Damage adventurers. Race changes passives; class sets the combat style.</p></div>'+preview+'</aside><main class="party-builder-main"><div class="builder-focus"><div><small>SELECTING</small><h2>'+ROLE_LABEL[slot.role]+' '+(slot.number||'')+'</h2><p>'+ROLE_DESC[slot.role]+'</p></div><span class="role-pill '+slot.role+'">'+ROLE_LABEL[slot.role]+'</span></div><section class="builder-section"><div class="builder-section-head"><div><small>01</small><h3>Choose a race</h3></div><p>Every race can fill every role. Pick the passive and trade-off you want.</p></div><div class="race-grid">'+raceCards+'</div></section><section class="builder-section"><div class="builder-section-head"><div><small>02</small><h3>Choose a class</h3></div><p>Only classes for this role are shown.</p></div><div class="class-grid">'+classCards+'</div></section><section class="builder-section appearance-builder-section"><div class="builder-section-head"><div><small>03</small><h3>Choose their appearance</h3></div><p>Build a face that will follow this adventurer throughout Cellbound.</p></div>'+appearanceEditor+'</section><section class="builder-section"><div class="builder-section-head"><div><small>04</small><h3>Name your adventurer</h3></div><p>Type a name or roll one.</p></div><div class="name-builder"><input id="onboardName" maxlength="24" value="'+esc(d.name)+'" autocomplete="off"><button id="randomiseName">RANDOMISE</button></div></section></main><aside class="formation-preview"><small>FORMATION PREVIEW</small><div class="formation-board">'+formation+'</div><div class="formation-key"><span><i class="on-role tank"></i>Tank</span><span><i class="on-role healer"></i>Healer</span><span><i class="on-role dps"></i>Damage</span></div><button id="confirmParty" class="on-primary" '+(allValid?'':'disabled')+'>CONFIRM PARTY & ENTER ZELTIRA →</button><p class="builder-hint">'+(allValid?'Ready to enter Zeltira.':'All five characters need unique names of at least 2 characters.')+'</p></aside></div>';
+  let stepBody='';
+  if(builderStep==='race'){
+    stepBody='<section class="builder-stage-panel" data-stage="race"><div class="builder-stage-head"><div><small>STEP 1 OF 4</small><h3>Choose a race</h3></div><p>Race changes your passive strengths and trade-offs. Every race can fill every role.</p></div><div class="race-grid">'+raceCards+'</div><p class="builder-stage-tip">Choose a race to continue to class.</p></section>';
+  }else if(builderStep==='class'){
+    stepBody='<section class="builder-stage-panel" data-stage="class"><div class="builder-stage-head"><div><small>STEP 2 OF 4</small><h3>Choose a class</h3></div><p>Only classes that can fill '+esc(ROLE_LABEL[slot.role])+' are shown. Your class defines combat style and gear identity.</p></div><div class="class-grid">'+classCards+'</div><p class="builder-stage-tip">Choose a class to continue to appearance.</p></section>';
+  }else if(builderStep==='appearance'){
+    stepBody='<section class="builder-stage-panel" data-stage="appearance"><div class="builder-stage-head"><div><small>STEP 3 OF 4</small><h3>Customise appearance</h3></div><p>This is the same character identity used in portraits, equipment and the world.</p></div>'+appearanceEditor+'<div class="builder-stage-actions"><button type="button" class="on-secondary" data-builder-step="class">← BACK TO CLASS</button><button type="button" class="on-primary" data-builder-next="name">CONTINUE TO NAME →</button></div></section>';
+  }else{
+    stepBody='<section class="builder-stage-panel" data-stage="name"><div class="builder-stage-head"><div><small>STEP 4 OF 4</small><h3>Name your adventurer</h3></div><p>Give this '+esc(ROLE_LABEL[slot.role])+' a unique name, then move to the next member of your five.</p></div><div class="name-builder"><input id="onboardName" maxlength="24" value="'+esc(d.name)+'" autocomplete="off" aria-label="Adventurer name"><button id="randomiseName" type="button">RANDOMISE</button></div><div class="builder-character-summary">'+portraitHTML({name:d.name,race:d.race,class:d.klass,appearance:d.appearance},'lg')+'<div><small>CURRENT BUILD</small><b>'+esc(d.name||'Unnamed')+'</b><span>'+esc(d.race)+' · '+esc(d.klass)+' · '+esc(d.spec)+'</span></div></div><div class="builder-stage-actions"><button type="button" class="on-secondary" data-builder-step="appearance">← BACK TO APPEARANCE</button><button type="button" class="on-primary" id="nextAdventurer">'+(activeSlot===draft.length-1?'REVIEW YOUR FIVE →':'SAVE & EDIT '+esc(ROLE_LABEL[draft[nextSlot].role]+' '+(SLOTS[nextSlot].number||''))+' →')+'</button></div></section>';
+  }
+
+  const body='<div class="party-build-layout"><aside class="party-draft-list"><div class="onboard-copy"><small>YOUR FIVE</small><h2>One party. Five lives.</h2><p>Select a party member to edit. Build one Tank, one Healer and three Damage adventurers.</p></div>'+preview+'</aside><main class="party-builder-main"><div class="builder-focus"><div><small>NOW BUILDING</small><h2>'+ROLE_LABEL[slot.role]+' '+(slot.number||'')+'</h2><p>'+ROLE_DESC[slot.role]+'</p></div><span class="role-pill '+slot.role+'">'+ROLE_LABEL[slot.role]+'</span></div>'+stepNav+stepBody+'</main><aside class="formation-preview"><small>YOUR PARTY</small><div class="formation-board">'+formation+'</div><div class="formation-key"><span><i class="on-role tank"></i>Tank</span><span><i class="on-role healer"></i>Healer</span><span><i class="on-role dps"></i>Damage</span></div><button id="confirmParty" class="on-primary" '+(allValid?'':'disabled')+'>CONFIRM PARTY & ENTER ZELTIRA →</button><p class="builder-hint">'+(allValid?'All five are ready. You can still edit anyone before entering Zeltira.':'All five characters need unique names of at least 2 characters.')+'</p></aside></div>';
 
   const root=ensureRoot();root.innerHTML=chrome(body,'party-builder');
-  root.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{activeSlot=Number(b.dataset.slot);renderPartyBuilder()});
-  root.querySelectorAll('[data-race]').forEach(b=>b.onclick=()=>{d.race=b.dataset.race;d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name));d.appearance=CP?.randomAppearance?.(d.race)||{race:d.race};saveDraft();renderPartyBuilder()});
-  root.querySelectorAll('[data-class]').forEach(b=>b.onclick=()=>{d.klass=b.dataset.class;d.spec=b.dataset.spec;saveDraft();renderPartyBuilder()});
+  root.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>{activeSlot=Number(b.dataset.slot);builderStep='race';renderPartyBuilder()});
+  root.querySelectorAll('[data-builder-step]').forEach(b=>b.onclick=()=>{builderStep=b.dataset.builderStep;renderPartyBuilder()});
+  root.querySelectorAll('[data-builder-next]').forEach(b=>b.onclick=()=>{builderStep=b.dataset.builderNext;renderPartyBuilder()});
+  root.querySelectorAll('[data-race]').forEach(b=>b.onclick=()=>{d.race=b.dataset.race;d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name));d.appearance=CP?.randomAppearance?.(d.race)||{race:d.race};builderStep='class';saveDraft();renderPartyBuilder()});
+  root.querySelectorAll('[data-class]').forEach(b=>b.onclick=()=>{d.klass=b.dataset.class;d.spec=b.dataset.spec;builderStep='appearance';saveDraft();renderPartyBuilder()});
   const input=$('#onboardName');
   if(input)input.oninput=e=>{d.name=e.target.value;saveDraft();const btn=$('#confirmParty');if(btn)btn.disabled=!(draft.every(x=>x.name.trim().length>=2)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5)};
   $('#randomiseName')?.addEventListener('click',()=>{d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name));saveDraft();renderPartyBuilder()});
+  $('#nextAdventurer')?.addEventListener('click',()=>{
+    if(String(d.name||'').trim().length<2){input?.focus();return}
+    saveDraft();
+    if(activeSlot<draft.length-1){activeSlot+=1;builderStep='race';renderPartyBuilder();return}
+    builderStep='name';renderPartyBuilder();root.querySelector('#confirmParty')?.focus();
+  });
   CP?.bindEditor?.(root,d.appearance,()=>{saveDraft();renderPartyBuilder()},{characterClass:d.klass,name:d.name});
   $('#confirmParty')?.addEventListener('click',createParty);
 }
