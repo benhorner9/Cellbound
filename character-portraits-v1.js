@@ -208,11 +208,17 @@ function paintedBodyHTML(c,a,kind,label,extraAttrs){
   var body='body-'+bodyKey+'.webp';
   return '<span class="'+kind+' cb-painted-character cb-painted-'+slug+'-body cb-painted-body-'+bodyKey+'" role="img" aria-label="'+esc(label)+'" data-painted-race="'+esc(race)+'" data-painted-body="'+bodyKey+'" data-body-standard="'+PAINTED_BODY_STANDARD.width+'x'+PAINTED_BODY_STANDARD.height+'"'+(extraAttrs||'')+'><img src="'+paintedAsset(race,body)+'" alt="" draggable="false"></span>';
 }
-function usesPaintedBody(subject){
+function usesIllustratedBody(subject){
   var c=subject||{},race=c.race||(c.appearance&&c.appearance.race)||'Veyren';
-  var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
-  var painted=paintedRaceOf(c,a);
-  return Boolean(painted&&PAINTED_BODY_RACES.has(painted));
+  return Boolean(RACES[race]||RACES[c?.appearance?.race]);
+}
+// Compatibility alias for older callers while the runtime moves off static paintings.
+function usesPaintedBody(subject){return usesIllustratedBody(subject)}
+function illustratedSignature(c){
+  var race=c?.race||c?.appearance?.race||'Veyren';
+  var a=normalizeAppearance(c?.appearance||c,c?.id||c?.name||race,race);
+  var gear=PAPER_VISIBLE_SLOTS.map(function(slot){return itemIdentity(itemForSlot(c,slot),slot)});
+  return hash(JSON.stringify([a,c?.class||'Warrior',...gear])).toString(36);
 }
 function portraitHTML(subject,opts){
   opts=opts||{};
@@ -656,20 +662,29 @@ function paperDollSVG(c,opts){
   var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
   var r=raceDef(a.race),skin=r.skin[a.skinTone],eye=r.eyes[a.eyes],hair=HAIR[a.hairColor];
   var accent=opts.accent||paperAccent(c),highlighted=opts.highlightedSlot||'',profile=bodyProfile(race);
-  var uid='pd'+hash((c.id||c.name||race)+'|'+JSON.stringify(a)).toString(36);
-  var neck='<path d="M108 110 L108 143 Q120 151 132 143 L132 110Z" fill="'+skin+'" stroke="#182027" stroke-width="2.5"/>';
-  var under='<path d="M91 237 Q120 250 149 237 L151 269 Q120 281 89 269Z" fill="#162126" stroke="#111820" stroke-width="3"/>';
+  var uid='ill'+hash((c.id||c.name||race)+'|'+JSON.stringify(a)+'|'+illustratedSignature(c)).toString(36);
+  var neck='<path d="M108 110 L108 143 Q120 151 132 143 L132 110Z" fill="'+skin+'" stroke="#11171b" stroke-width="2.7"/>';
+  var under='<path d="M91 237 Q120 250 149 237 L151 269 Q120 281 89 269Z" fill="#172126" stroke="#0b1013" stroke-width="3"/>';
   var headScale=profile.headScale||1,headX=70+(50*(1-headScale)),headY=20+(50*(1-headScale));
-  return '<svg viewBox="0 0 240 410" role="img" aria-hidden="true" focusable="false">'+
-    '<defs><radialGradient id="'+uid+'a" cx="50%" cy="46%" r="54%"><stop offset="0%" stop-color="'+accent+'" stop-opacity=".13"/><stop offset="70%" stop-color="'+accent+'" stop-opacity=".025"/><stop offset="100%" stop-color="'+accent+'" stop-opacity="0"/></radialGradient></defs>'+
-    '<ellipse cx="120" cy="214" rx="110" ry="180" fill="url(#'+uid+'a)"/>'+
-    '<ellipse cx="120" cy="392" rx="72" ry="10" fill="#000" opacity=".38"/>'+
+  var body=
     paperTierAura(c)+
     paperLegs(c,skin,highlighted)+paperFeet(c,skin,highlighted)+
     paperWeapon(c,highlighted)+paperOffHand(c,highlighted)+
     paperArms(c,skin,highlighted)+under+paperChest(c,highlighted)+paperWaist(c,highlighted)+paperShoulders(c,highlighted)+paperAccessories(c,highlighted)+
     neck+
-    '<g transform="translate('+headX+' '+headY+') scale('+headScale+')">'+paperHeadMarkup(c,a,skin,eye,hair,highlighted)+'</g>'+
+    '<g transform="translate('+headX+' '+headY+') scale('+headScale+')">'+paperHeadMarkup(c,a,skin,eye,hair,highlighted)+'</g>';
+  return '<svg viewBox="0 0 240 420" role="img" aria-hidden="true" focusable="false" class="cb-illustrated-character-svg" data-race="'+esc(a.race)+'" data-class="'+esc(paperClass(c))+'">'+
+    '<defs>'+
+      '<filter id="'+uid+'ink" x="-18%" y="-12%" width="136%" height="132%">'+
+        '<feTurbulence type="fractalNoise" baseFrequency=".013 .021" numOctaves="2" seed="'+(hash(uid)%97)+'" result="paper"/>'+
+        '<feDisplacementMap in="SourceGraphic" in2="paper" scale=".42" xChannelSelector="R" yChannelSelector="G" result="inked"/>'+
+        '<feDropShadow dx="0" dy="2.4" stdDeviation="1.9" flood-color="#050709" flood-opacity=".52"/>'+
+      '</filter>'+
+      '<linearGradient id="'+uid+'light" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset=".42" stop-color="#fff" stop-opacity=".025"/><stop offset="1" stop-color="#000" stop-opacity=".13"/></linearGradient>'+
+    '</defs>'+
+    '<ellipse cx="120" cy="400" rx="67" ry="8" fill="#000" opacity=".28"/>'+
+    '<g filter="url(#'+uid+'ink)">'+body+'</g>'+
+    '<path d="M68 93 Q120 47 172 93 L165 305 Q120 346 75 305Z" fill="url(#'+uid+'light)" opacity=".16" pointer-events="none"/>'+
     '</svg>';
 }
 
@@ -781,17 +796,9 @@ function worldAvatarHTML(subject,opts){
   var race=c.race||(c.appearance&&c.appearance.race)||'Veyren';
   var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
   var label=opts.label||((c.name||'Character')+' world appearance');
-  var painted=paintedRaceOf(c,a);
-  var tier=worldAvatarTier(c),weapon=worldAvatarWeapon(c);
-  var appearanceKey=hash(JSON.stringify([a.race,a.skinTone,a.face,a.hair,a.hairColor,a.facialHair,a.marking,a.eyes,a.feature])).toString(36);
-  // Converted painted races are class-agnostic full-body assets. The old
-  // vector class whitelist only applies to races that still need that fallback.
-  if(painted&&PAINTED_BODY_RACES.has(painted)){
-    var attrs=' data-world-avatar="'+esc(klass)+'" data-avatar-class="'+esc(klass)+'" data-avatar-tier="'+tier+'" data-avatar-weapon="'+esc(weapon)+'" data-avatar-race="'+esc(a.race)+'" data-appearance-key="'+appearanceKey+'"';
-    return paintedBodyHTML(c,a,'cb-world-avatar cb-world-avatar-painted cb-world-avatar--'+esc(painted.toLowerCase()),label,attrs);
-  }
-  if(!WORLD_AVATAR_CLASSES.has(klass))return'';
-  return '<span class="cb-world-avatar cb-world-avatar--'+esc(klass.toLowerCase())+'" role="img" aria-label="'+esc(label)+'" data-world-avatar="'+esc(klass)+'" data-avatar-class="'+esc(klass)+'" data-avatar-tier="'+tier+'" data-avatar-weapon="'+esc(weapon)+'" data-avatar-race="'+esc(a.race)+'" data-appearance-key="'+appearanceKey+'">'+worldAvatarSVG(c,opts)+'</span>';
+  var tier=worldAvatarTier(c),weapon=worldAvatarWeapon(c),signature=illustratedSignature(c);
+  var appearanceKey=hash(JSON.stringify(a)).toString(36);
+  return '<span class="cb-world-avatar cb-world-avatar-illustrated cb-world-avatar--'+esc(klass.toLowerCase().replace(/[^a-z0-9]+/g,'-'))+'" role="img" aria-label="'+esc(label)+'" data-world-avatar="'+esc(klass)+'" data-avatar-class="'+esc(klass)+'" data-avatar-tier="'+tier+'" data-avatar-weapon="'+esc(weapon)+'" data-avatar-race="'+esc(a.race)+'" data-appearance-key="'+appearanceKey+'" data-model-signature="'+signature+'">'+paperDollSVG(c,Object.assign({},opts,{context:'world'}))+'</span>';
 }
 
 function paperDollHTML(subject,opts){
@@ -800,15 +807,8 @@ function paperDollHTML(subject,opts){
   var label=opts.label||((c.name||'Character')+' equipment appearance');
   var race=c.race||(c.appearance&&c.appearance.race)||'Veyren';
   var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
-  var cls='cb-paper-doll cb-paper-doll--'+esc(size)+(set?' has-set set-pieces-'+Math.min(4,set.count):'');
-  var painted=paintedRaceOf(c,a);
-  if(painted&&PAINTED_BODY_RACES.has(painted)){
-    return '<span class="'+cls+' cb-paper-doll-painted cb-paper-doll-'+esc(painted.toLowerCase())+'" style="--cbp-accent:'+accent+'" role="img" aria-label="'+esc(label)+'" data-painted-race="'+esc(painted)+'">'+
-      paintedBodyHTML(c,a,'cb-painted-paper-body',label)+
-      '<span class="cb-painted-legacy-hooks" hidden>'+paperDollSVG(c,opts)+'</span>'+
-    '</span>';
-  }
-  return '<span class="'+cls+'" style="--cbp-accent:'+accent+(set?' ;--cbp-set-glow:'+set.visual.glow:'')+'" role="img" aria-label="'+esc(label)+'">'+paperDollSVG(c,opts)+'</span>';
+  var cls='cb-paper-doll cb-paper-doll-illustrated cb-paper-doll--'+esc(size)+(set?' has-set set-pieces-'+Math.min(4,set.count):'');
+  return '<span class="'+cls+'" style="--cbp-accent:'+accent+(set?' ;--cbp-set-glow:'+set.visual.glow:'')+'" role="img" aria-label="'+esc(label)+'" data-illustrated-race="'+esc(a.race)+'" data-model-signature="'+illustratedSignature(c)+'">'+paperDollSVG(c,opts)+'</span>';
 }
 function visualProfile(subject,item,slot){
   var c=subject||{},s=slot||item?.slot||'Gear',tier=clampTier(item?.tier),pal=gearPalette(c,item,tier||1,s);
@@ -816,9 +816,9 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:13,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
+  version:20,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
-  PAINTED_BODY_STANDARD:PAINTED_BODY_STANDARD,usesPaintedBody:usesPaintedBody,
+  PAINTED_BODY_STANDARD:PAINTED_BODY_STANDARD,usesIllustratedBody:usesIllustratedBody,usesPaintedBody:usesPaintedBody,illustratedSignature:illustratedSignature,
   applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,worldAvatarHTML:worldAvatarHTML,worldAvatarSVG:worldAvatarSVG,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
   visualProfile:visualProfile,weaponType:weaponType,offHandType:offHandType,
   editorHTML:editorHTML,bindEditor:bindEditor
