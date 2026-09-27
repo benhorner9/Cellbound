@@ -24,7 +24,8 @@ function dialog(title,id){
  d.innerHTML='<header class="inn-dialog-head"><div><small>THE LANTERN INN</small><h2 id="'+id+'-title">'+title+'</h2></div><button type="button" data-inn-close aria-label="Close '+title+'">Back to Inn ×</button></header><div class="inn-dialog-body"></div>';
  d.querySelector('[data-inn-close]').onclick=()=>d.close();
  // Search inputs consume Escape in some browsers; closing the tool must remain consistent.
- d.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();d.close()}},true);
+ d.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();if(d===partyDialog)restoreParty();d.close()}},true);
+ d.addEventListener('cancel',()=>{if(d===partyDialog)restoreParty()});
  d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close()}});
  d.addEventListener('close',()=>{if(d===partyDialog)restoreParty();const another=Boolean(ledger?.open||partyDialog?.open);document.body.classList.toggle('inn-tool-open',another);if(!another)returnFocus?.focus({preventScroll:true});refresh()});root.append(d);return d;
 }
@@ -50,7 +51,7 @@ function mount(){
  world.innerHTML='<picture class="inn-art"><source media="(max-width:600px)" srcset="./assets/world/lantern-inn-portrait-v1.webp"><img src="./assets/world/lantern-inn-landscape-v1.webp" alt="Lantern-lit timber inn with a stone hearth, bar, stairs, planning table and open guild ledger" fetchpriority="high"></picture><div class="inn-hearth-light" aria-hidden="true"></div><div class="inn-window-light" aria-hidden="true"></div><header class="inn-heading"><small>YOUR ADVENTURING COMPANY</small><h2>The Lantern Inn</h2><p class="inn-company-status"></p></header><div class="inn-inhabitants"></div><a class="inn-door" href="./guild.html" aria-label="Leave the Inn — Town"><span>Town ↗</span></a><button type="button" class="inn-hotspot inn-table" data-inn-tool="party"><span>Party Table</span><small>Prepare your five</small></button><button type="button" class="inn-hotspot inn-ledger" data-inn-tool="ledger"><span>Guild Ledger</span><small>Search & manage roster</small></button><p class="inn-empty" hidden>Your company will gather here when you recruit your first adventurer.</p><footer class="inn-hint">Select an adventurer to inspect their equipment and talents.</footer>';
  const theme=window.CellboundInnTheme;if(theme){if(theme.landscape)world.querySelector('.inn-art img').src=theme.landscape;if(theme.portrait)world.querySelector('.inn-art source').srcset=theme.portrait;if(theme.hint)world.querySelector('.inn-hint').textContent=theme.hint;}
  root.prepend(world);ledger=dialog('Guild Ledger','innLedger');original.forEach(n=>ledger.querySelector('.inn-dialog-body').append(n));partyDialog=dialog('Party Table','innParty');
- world.addEventListener('click',e=>{if(e.target.closest('.inn-door')&&game()?.switchView){e.preventDefault();game().switchView('overview');return}const b=e.target.closest('[data-inn-tool]');if(b)openTool(b.dataset.innTool,b)});
+ world.addEventListener('click',e=>{if(e.target.closest('.inn-door')&&game()?.switchView){e.preventDefault();game().switchView('home');return}const b=e.target.closest('[data-inn-tool]');if(b)openTool(b.dataset.innTool,b)});
  // Existing jump buttons inside the Ledger still open the same party tools in this room.
  ledger.addEventListener('click',e=>{if(e.target.closest('[data-jump="party"]')){e.preventDefault();e.stopPropagation();ledger.close();openTool('party',world.querySelector('.inn-table'))}},true);
 }

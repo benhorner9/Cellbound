@@ -584,31 +584,70 @@
 
 
 /* ==========================================================================
-   Illustrated Character Art V2 — Veyren production conversion
+   Illustrated Character Art V2 — transparent cutout presentation
+   Source character art never supplies the UI/environment background.
+   Portraits get a game-owned vector plate; full bodies stay clear so the
+   Equipment stage / Inn scene can provide their real context.
    ========================================================================== */
 .cb-painted-portrait{
   background:
-    radial-gradient(circle at 50% 35%,color-mix(in srgb,var(--cbp-accent) 12%,transparent),transparent 62%),
-    #0a0d0f;
+    radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--cbp-accent) 16%,transparent) 0 27%,transparent 61%),
+    linear-gradient(135deg,rgba(255,255,255,.025),transparent 42%),
+    #080c10;
+}
+.cb-painted-portrait:before{
+  content:"";
+  position:absolute;
+  z-index:0;
+  inset:9%;
+  border-radius:50%;
+  border:1px solid color-mix(in srgb,var(--cbp-accent) 25%,rgba(216,185,118,.16));
+  box-shadow:
+    0 0 0 5px rgba(255,255,255,.012),
+    inset 0 0 22px color-mix(in srgb,var(--cbp-accent) 8%,transparent);
+  background:
+    linear-gradient(90deg,transparent 49.4%,color-mix(in srgb,var(--cbp-accent) 11%,transparent) 49.5% 50.5%,transparent 50.6%),
+    linear-gradient(0deg,transparent 49.4%,color-mix(in srgb,var(--cbp-accent) 9%,transparent) 49.5% 50.5%,transparent 50.6%);
+  pointer-events:none;
 }
 .cb-painted-portrait>img{
+  position:relative;
+  z-index:2;
   display:block;
   width:100%;
   height:100%;
   object-fit:cover;
-  object-position:50% 24%;
-  transform:scale(1.035);
-  filter:saturate(.94) contrast(1.035);
+  object-position:50% 22%;
+  transform:scale(1.04);
+  background:transparent;
+  filter:saturate(.96) contrast(1.035);
+}
+/* Early V2 packs (Veyren / Stoneborn) were authored on painted plates.
+   Constrain those images to a bust silhouette so the plate can never appear
+   as a rectangle. Aelari already carries real alpha and needs no matte. */
+.cb-painted-veyren>img,
+.cb-painted-stoneborn>img,
+.cb-painted-face-picker button[data-painted-race="Veyren"] img,
+.cb-painted-face-picker button[data-painted-race="Stoneborn"] img{
+  -webkit-mask-image:
+    radial-gradient(ellipse 34% 39% at 50% 37%,#000 0 94%,transparent 100%),
+    radial-gradient(ellipse 55% 31% at 50% 87%,#000 0 92%,transparent 100%);
+  mask-image:
+    radial-gradient(ellipse 34% 39% at 50% 37%,#000 0 94%,transparent 100%),
+    radial-gradient(ellipse 55% 31% at 50% 87%,#000 0 92%,transparent 100%);
+  -webkit-mask-repeat:no-repeat;
+  mask-repeat:no-repeat;
 }
 .cb-painted-portrait:after{
   content:'';
   position:absolute;
+  z-index:3;
   inset:0;
   pointer-events:none;
   border-radius:inherit;
   box-shadow:
-    inset 0 0 18px rgba(0,0,0,.34),
-    inset 0 -14px 20px rgba(0,0,0,.22);
+    inset 0 0 15px rgba(0,0,0,.19),
+    inset 0 -10px 16px rgba(0,0,0,.1);
 }
 .cb-appearance-editor-painted{
   border-color:rgba(194,155,91,.22);
@@ -622,9 +661,7 @@
     radial-gradient(circle at 50% 24%,rgba(208,150,71,.13),transparent 54%);
   border-color:rgba(194,155,91,.2);
 }
-.cb-painted-face-picker{
-  width:100%;
-}
+.cb-painted-face-picker{width:100%}
 .cb-painted-face-picker>small{
   display:block;
   margin:2px 0 7px;
@@ -645,7 +682,9 @@
   overflow:hidden;
   border:1px solid rgba(182,153,101,.22);
   border-radius:7px;
-  background:#0a0d0f;
+  background:
+    radial-gradient(circle at 50% 42%,rgba(216,184,117,.08),transparent 63%),
+    #080c10;
   cursor:pointer;
 }
 .cb-painted-face-picker button.is-selected{
@@ -657,62 +696,96 @@
   width:100%;
   height:100%;
   object-fit:cover;
-  object-position:50% 24%;
+  object-position:50% 22%;
+  background:transparent;
 }
+
+/* Full body assets are always clear at runtime. The containing game surface is
+   responsible for scenery, lighting and the equipment stage. */
 .cb-paper-doll-painted{
   display:grid;
   place-items:center;
   overflow:visible;
 }
-.cb-paper-doll-painted .cb-painted-paper-body{
-  display:block;
-  width:100%;
-  height:100%;
-  overflow:hidden;
-  border-radius:26px;
-  background:#090c0e;
-  -webkit-mask-image:radial-gradient(ellipse 70% 58% at 50% 48%,#000 64%,transparent 100%);
-  mask-image:radial-gradient(ellipse 70% 58% at 50% 48%,#000 64%,transparent 100%);
-}
-.cb-paper-doll-painted .cb-painted-paper-body>img{
-  display:block;
-  width:100%;
-  height:100%;
-  object-fit:contain;
-  object-position:50% 50%;
-  filter:
-    saturate(.96)
-    contrast(1.035)
-    drop-shadow(0 16px 18px rgba(0,0,0,.42));
-}
+.cb-paper-doll-painted .cb-painted-paper-body,
 .cb-world-avatar-painted{
-  display:block;
   position:relative;
+  display:block;
+  width:100%;
+  height:100%;
   overflow:visible;
-  background:none!important;
+  border-radius:0;
+  background:transparent!important;
+  -webkit-mask-image:none;
+  mask-image:none;
 }
+.cb-paper-doll-painted .cb-painted-paper-body>img,
 .cb-world-avatar-painted>img{
   display:block;
   width:100%;
-  height:auto;
+  height:100%;
   object-fit:contain;
   object-position:50% 100%;
-  -webkit-mask-image:radial-gradient(ellipse 64% 57% at 50% 50%,#000 66%,transparent 100%);
-  mask-image:radial-gradient(ellipse 64% 57% at 50% 50%,#000 66%,transparent 100%);
+  background:transparent;
+  filter:
+    saturate(.96)
+    contrast(1.035)
+    drop-shadow(0 14px 16px rgba(0,0,0,.38));
+  transform-origin:50% 100%;
+}
+
+/* Opaque Veyren/Stoneborn source plates get a deterministic silhouette matte.
+   This removes the visible rectangular/environment plate everywhere the body
+   renderer is used while preserving the same source model identity. */
+.cb-painted-veyren-body>img{
+  clip-path:polygon(
+    38% 0%,62% 0%,68% 7%,79% 10%,88% 17%,91% 31%,
+    84% 42%,78% 42%,75% 55%,80% 68%,82% 97%,
+    58% 97%,54% 70%,50% 61%,46% 70%,42% 97%,
+    18% 97%,20% 68%,25% 55%,22% 42%,16% 42%,
+    9% 31%,12% 17%,21% 10%,32% 7%
+  );
+}
+.cb-painted-stoneborn-body>img{
+  clip-path:polygon(
+    36% 0%,64% 0%,70% 6%,84% 10%,94% 18%,96% 33%,
+    89% 44%,82% 45%,78% 58%,84% 72%,86% 97%,
+    59% 97%,55% 72%,50% 62%,45% 72%,41% 97%,
+    14% 97%,16% 72%,22% 58%,18% 45%,11% 44%,
+    4% 33%,6% 18%,16% 10%,30% 6%
+  );
+}
+/* Alpha-authored Aelari should never be clipped into the earlier silhouette. */
+.cb-painted-aelari-body>img{clip-path:none}
+
+/* Context-specific fit. Keep feet on the same baseline in paper doll and Inn,
+   but let race proportions remain distinct rather than stretching them. */
+.cb-paper-doll-painted .cb-painted-veyren-body>img{transform:scale(.93)}
+.cb-paper-doll-painted .cb-painted-stoneborn-body>img{transform:scale(.96)}
+.cb-paper-doll-painted .cb-painted-aelari-body>img{transform:scale(.95)}
+.cb-world-avatar-painted.cb-world-avatar--veyren>img{transform:scale(.96)}
+.cb-world-avatar-painted.cb-world-avatar--stoneborn>img{transform:scale(.98)}
+.cb-world-avatar-painted.cb-world-avatar--aelari>img{transform:scale(.97)}
+
+.inn-figure .cb-world-avatar-painted{
+  width:100%;
+  height:100%;
+  display:grid;
+  place-items:end center;
 }
 .inn-figure .cb-world-avatar-painted>img{
   width:100%;
-  height:auto;
-  filter:saturate(.9) contrast(1.04);
+  height:100%;
+  object-fit:contain;
+  object-position:50% 100%;
+  filter:saturate(.92) contrast(1.035) drop-shadow(0 10px 12px rgba(0,0,0,.34));
 }
-.cb-painted-legacy-hooks[hidden]{
-  display:none!important;
-}
+.cb-painted-legacy-hooks[hidden]{display:none!important}
+
 @media(max-width:720px){
-  .cb-appearance-editor-painted{
-    grid-template-columns:1fr;
-  }
-  .cb-painted-face-picker>div{
-    grid-template-columns:repeat(4,minmax(48px,1fr));
-  }
+  .cb-appearance-editor-painted{grid-template-columns:1fr}
+  .cb-painted-face-picker>div{grid-template-columns:repeat(4,minmax(48px,1fr))}
+  .cb-paper-doll-painted .cb-painted-veyren-body>img{transform:scale(.9)}
+  .cb-paper-doll-painted .cb-painted-stoneborn-body>img{transform:scale(.93)}
+  .cb-paper-doll-painted .cb-painted-aelari-body>img{transform:scale(.92)}
 }
