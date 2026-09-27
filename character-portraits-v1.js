@@ -199,11 +199,11 @@ function paintedFaceHTML(c,a,accent,size,label,className){
   var cls='cb-portrait cb-painted-portrait cb-painted-'+slug+' cb-portrait--'+esc(size)+(className?' '+esc(className):'');
   return '<span class="'+cls+'" style="--cbp-accent:'+accent+'" role="img" aria-label="'+esc(label)+'" data-painted-race="'+esc(race)+'" data-painted-face="'+face+'"><img src="'+paintedAsset(race,'face-'+face+'.webp')+'" alt="" draggable="false"></span>';
 }
-function paintedBodyHTML(c,a,kind,label){
+function paintedBodyHTML(c,a,kind,label,extraAttrs){
   var race=paintedRaceOf(c,a),slug=String(race).toLowerCase();
   var bodyKey=(paintedFaceIndex(a)%2===1)?'b':'a';
   var body='body-'+bodyKey+'.webp';
-  return '<span class="'+kind+' cb-painted-character cb-painted-'+slug+'-body cb-painted-body-'+bodyKey+'" role="img" aria-label="'+esc(label)+'" data-painted-race="'+esc(race)+'" data-painted-body="'+bodyKey+'"><img src="'+paintedAsset(race,body)+'" alt="" draggable="false"></span>';
+  return '<span class="'+kind+' cb-painted-character cb-painted-'+slug+'-body cb-painted-body-'+bodyKey+'" role="img" aria-label="'+esc(label)+'" data-painted-race="'+esc(race)+'" data-painted-body="'+bodyKey+'"'+(extraAttrs||'')+'><img src="'+paintedAsset(race,body)+'" alt="" draggable="false"></span>';
 }
 function portraitHTML(subject,opts){
   opts=opts||{};
@@ -786,12 +786,13 @@ function worldAvatarHTML(subject,opts){
   var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
   var label=opts.label||((c.name||'Character')+' world appearance');
   var painted=paintedRaceOf(c,a);
-  if(painted){
-    return paintedBodyHTML(c,a,'cb-world-avatar cb-world-avatar-painted cb-world-avatar--'+esc(painted.toLowerCase()),label);
-  }
   if(!WORLD_AVATAR_CLASSES.has(klass))return'';
   var tier=worldAvatarTier(c),weapon=worldAvatarWeapon(c);
   var appearanceKey=hash(JSON.stringify([a.race,a.skinTone,a.face,a.hair,a.hairColor,a.facialHair,a.marking,a.eyes,a.feature])).toString(36);
+  if(painted){
+    var attrs=' data-world-avatar="'+esc(klass)+'" data-avatar-class="'+esc(klass)+'" data-avatar-tier="'+tier+'" data-avatar-weapon="'+esc(weapon)+'" data-avatar-race="'+esc(a.race)+'" data-appearance-key="'+appearanceKey+'"';
+    return paintedBodyHTML(c,a,'cb-world-avatar cb-world-avatar-painted cb-world-avatar--'+esc(painted.toLowerCase()),label,attrs);
+  }
   return '<span class="cb-world-avatar cb-world-avatar--'+esc(klass.toLowerCase())+'" role="img" aria-label="'+esc(label)+'" data-world-avatar="'+esc(klass)+'" data-avatar-class="'+esc(klass)+'" data-avatar-tier="'+tier+'" data-avatar-weapon="'+esc(weapon)+'" data-avatar-race="'+esc(a.race)+'" data-appearance-key="'+appearanceKey+'">'+worldAvatarSVG(c,opts)+'</span>';
 }
 
@@ -817,7 +818,7 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:7,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
+  version:8,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
   applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,worldAvatarHTML:worldAvatarHTML,worldAvatarSVG:worldAvatarSVG,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
   visualProfile:visualProfile,weaponType:weaponType,offHandType:offHandType,
