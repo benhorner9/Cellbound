@@ -41,11 +41,12 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
 
  assert.equal(await page.locator('[data-town-object]').count(),15,'Town exposes physical destinations and district roads across four sectors');
  assert.equal(await page.locator('[data-town-scene]').getAttribute('data-town-sector'),'square','Town opens in Central Square');
- assert.equal(await page.locator('.town-painted-image').count(),1,'Central Square uses the painted town artwork');
- assert((await page.locator('.town-painted-image').getAttribute('src')||'').includes('assets/world/town/central-square-v1.webp'),'painted Central Square asset is wired into the scene');
+ assert.equal(await page.locator('.town-painted-image').count(),1,'Central Square keeps one clean painted background layer');
+ assert((await page.locator('.town-painted-image image').getAttribute('href')||'').includes('assets/world/town/central-square-atlas-v2.webp'),'modular Central Square atlas is wired into the scene');
  assert.equal(await page.locator('[data-town-sector="square"] [data-town-object]').count(),5,'painted Central Square exposes exactly five environmental destinations');
- assert.equal(await page.locator('[data-town-sign]').count(),4,'Town uses four textless destination emblems while the Notice Board remains quest-state driven');
- assert.equal(await page.locator('[data-town-sign="board"]').count(),0,'Notice Board does not get a permanent destination sign');
+ assert.equal(await page.locator('[data-town-layer]').count(),5,'all five Central Square destinations render as independent artwork layers');
+ assert.equal(await page.locator('.town-landmark-glow').count(),5,'each modular landmark owns a behind-art glow layer');
+ assert.equal(await page.locator('[data-town-sign]').count(),0,'legacy floating destination emblems are removed');
  assert.equal(await page.locator('[data-town-walkway]').count(),2,'both painted gateway walkways are part of the press targets');
  assert.equal(await page.locator('[data-town-quest-marker]').count(),1,'painted notice board includes one quest marker');
  assert.equal(await page.locator('[data-town-scene]').evaluate(n=>n.classList.contains('has-available-quests')),true,'open quest count lights the Town notice board marker');
@@ -65,6 +66,8 @@ const {chromium,webkit}=require('playwright'),fs=require('fs'),path=require('pat
  assert.equal(await page.locator('[data-town-selection-title]').textContent(),'The Lantern Inn');
  assert.equal(await page.locator('[data-town-selection-action]').textContent(),'Enter the Inn →');
  assert.equal(await page.locator('[data-town-object="inn"]').getAttribute('aria-pressed'),'true');
+ assert.equal(await page.locator('[data-town-layer="inn"]').evaluate(n=>n.classList.contains('is-selected')),true,'selecting the Inn activates its real layered artwork glow');
+ assert.equal(await page.locator('[data-town-layer="board"]').evaluate(n=>n.classList.contains('is-selected')),false,'only the selected landmark receives the layered glow');
  await page.screenshot({path:'/tmp/cellbound-town-scene-01-selected.png'});
 
  await press('inn');
