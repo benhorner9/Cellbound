@@ -8,7 +8,8 @@ const ROLE_MAP={
   Druid:{Restoration:'healer'},
   Hunter:{Marksman:'dps'},
   Rogue:{Assassination:'dps'},
-  Mage:{Arcane:'dps'}
+  Mage:{Arcane:'dps'},
+  Shaman:{Restoration:'healer'}
 };
 
 const RACES={
@@ -118,6 +119,14 @@ const SPECS={
       tradeoff:'Fragile and capable of pulling threat during burst windows.',
       damage:1.14,threat:1.18,cooldown:1.06,cleave:.28,physicalTaken:1.10,magicTaken:.92,burstEvery:4,burst:1.30
     }
+  },
+  Shaman:{
+    Restoration:{
+      title:'Totemic Mender',
+      strength:'Chain healing and persistent totems excel when damage is spread across the party.',
+      tradeoff:'Less focused emergency tank healing than a Holy Paladin and strongest while its totems remain active.',
+      damage:.79,threat:.94,healing:1.00,healThreat:.96,magicTaken:.96
+    }
   }
 };
 
@@ -212,6 +221,7 @@ function healingMultiplier(healer,target,ctx={}){
     if(Number(ctx.targetHp)<40)m*=1.14;
   }
   if(healer?.class==='Druid')m*=1+rank(healer,'Rejuvenation')*.03;
+  if(healer?.class==='Shaman'&&healer?.spec==='Restoration')m*=1+rank(healer,'Tidal Focus')*.03;
   return m;
 }
 function healThreatMultiplier(c){const gear=gearStats(c);return (Number(specFor(c).healThreat)||1)*(1+ratingCurve(gear.threat,24,.45,60)/100)}
