@@ -2196,6 +2196,16 @@ function runSelfTests(){
  test('Player Death',()=>{const death=r.events.find(e=>e.type==='PLAYER_DEFEATED');if(!death)return false;return !r.events.some(e=>e.type==='ABILITY_START'&&e.source===death.target&&e.timestamp>death.timestamp)});
  r=simulate({party,encounter:{...base,kind:'final',enemyHealth:1600},seed:'healer'});
  test('Healer Logic',()=>r.events.some(e=>e.type==='HEAL_RECEIVED'&&e.source==='p-heal'));
+ const shamanParty=[
+  {id:'st',name:'Tank',class:'Warrior',spec:'Protection',power:10,level:10,_combatHealthPct:50},
+  {id:'sh',name:'Shaman',class:'Shaman',spec:'Restoration',power:10,level:10,_combatHealthPct:50},
+  {id:'s1',name:'Mage',class:'Mage',spec:'Arcane',power:10,level:10,_combatHealthPct:50},
+  {id:'s2',name:'Hunter',class:'Hunter',spec:'Marksman',power:10,level:10,_combatHealthPct:50},
+  {id:'s3',name:'Rogue',class:'Rogue',spec:'Assassination',power:10,level:10,_combatHealthPct:50}
+ ];
+ r=simulate({party:shamanParty,encounter:{...base,enemyHealth:5000},seed:'shaman-kit',maxDurationMs:6500});
+ test('Shaman Totems',()=>['Windfury Totem','Stoneskin Totem','Healing Stream Totem'].every(name=>r.events.some(e=>e.type==='TOTEM_PLACED'&&e.ability===name)));
+ test('Shaman Chain Heal',()=>r.events.some(e=>e.type==='HEAL_RECEIVED'&&e.ability==='Chain Heal'&&Number(e.payload?.chainBounce)>0&&e.payload?.visualSource));
  const mageOnly=[{id:'m',name:'Mage',class:'Mage',spec:'Arcane',power:2,level:2}];
  r=simulate({party:mageOnly,encounter:{...base,enemyHealth:900},seed:'resource'});
  test('Resource Starvation',()=>r.events.some(e=>e.type==='RESOURCE_SPENT'));
