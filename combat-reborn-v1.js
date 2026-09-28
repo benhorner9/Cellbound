@@ -500,6 +500,17 @@ function talentDamageScale(ctx,u,a,target){
   m*=1+talentRank(u,'Fel Knowledge')*.035;
   if(a.id==='demonbolt'&&u.statuses?.['demonic-core'])m*=1.12;
  }
+ if(u.class==='Monk'&&u.spec==='Brewmaster'){
+  if(a.id==='keg-smash')m*=1+talentRank(u,'Keg Mastery')*.08;
+  if(a.id==='breath-of-fire')m*=1.08;
+ }
+ if(u.class==='Monk'&&u.spec==='Windwalker'){
+  m*=1+talentRank(u,'Ferocity')*.03;
+  if(a.id==='windwalker-rising-sun-kick')m*=1+talentRank(u,'Rising Sun Kick')*.07;
+  const combo=u.lastMonkAbility!==a.id;
+  m*=combo?(1.10+talentRank(u,'Combo Strikes')*.025):.88;
+  if((a.id==='spinning-crane-kick'||a.id==='fists-of-fury')&&talentRank(u,'Jade Ignition'))m*=1+talentRank(u,'Jade Ignition')*.05;
+ }
  const aura=livingPlayers(ctx).find(p=>p.class==='Hunter'&&talentRank(p,'Trueshot Aura')>0);
  if(aura&&['Hunter','Mage'].includes(u.class))m*=1.05;
  return m
@@ -530,6 +541,11 @@ function talentHealingScale(ctx,u,a,target){
   if(a.id==='riptide')m*=1+talentRank(u,'Riptide')*.08;
   if(a.id==='chain-heal')m*=1+talentRank(u,'Chain Mastery')*.025;
  }
+ if(u.class==='Monk'&&u.spec==='Mistweaver'){
+  m*=1+talentRank(u,'Mist Wrap')*.035;
+  if(a.id==='renewing-mist')m*=1+talentRank(u,'Renewing Mist')*.07;
+  if(a.id==='revival')m*=1.20;
+ }
  return m
 }
 function talentCooldownScale(u,a){
@@ -538,16 +554,23 @@ function talentCooldownScale(u,a){
  if(u.class==='Mage')m*=Math.max(.78,1-talentRank(u,'Arcane Flows')*.06);
  if(u.class==='Paladin'&&a.kind==='interrupt')m*=Math.max(.75,1-talentRank(u,'Hammer of Justice')*.10);
  if(u.class==='Warlock'&&a.kind==='summon')m*=Math.max(.78,1-talentRank(u,'Master Summoner')*.07);
+ if(u.class==='Monk'&&u.spec==='Windwalker'&&a.kind==='damage')m*=Math.max(.78,1-talentRank(u,'Serenity')*.055);
  return m
 }
 function talentResourceRegenScale(u){
  if(u.class==='Rogue')return 1+talentRank(u,'Quick Recovery')*.08;
+ if(u.class==='Monk'&&u.spec==='Mistweaver')return 1+talentRank(u,'Mana Tea')*.08;
  return 1
 }
 function talentCost(ctx,u,a,cost){
  let value=cost;
  if(u.class==='Paladin'&&u.spec==='Holy'&&(a.kind==='heal'||a.kind==='group-heal'))value*=Math.max(.70,1-talentRank(u,'Grace')*.06);
  if(u.class==='Shaman'&&u.spec==='Restoration'&&(a.kind==='heal'||a.kind==='group-heal'))value*=Math.max(.76,1-talentRank(u,'Tidal Focus')*.03);
+ if(u.class==='Monk'&&u.spec==='Mistweaver'&&(a.kind==='heal'||a.kind==='group-heal')){
+  value*=Math.max(.72,1-talentRank(u,'Mana Tea')*.03-talentRank(u,'Lifecycles')*.025);
+  if(u.lastMistHealId&&u.lastMistHealId!==a.id)value*=Math.max(.80,1-talentRank(u,'Lifecycles')*.035);
+ }
+ if(u.class==='Monk'&&u.spec==='Windwalker'&&a.kind==='damage')value*=Math.max(.72,1-talentRank(u,'Serenity')*.05);
  if(u.class==='Mage'&&value>0){
   const r=talentRank(u,'Clearcasting');
   if(r&&ctx.rng()<r*.08){talentTrigger(ctx,u,'Clearcasting',u,{saved:Math.round(value)});value=0}
