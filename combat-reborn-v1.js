@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.15';
+const VERSION='1.3.16';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -146,13 +146,23 @@ const ABILITIES={
   {id:'tranquility',name:'Tranquility',kind:'group-heal',role:'healer',unlockLevel:14,desc:'A powerful emergency party heal with a long cooldown.',range:30,heal:30,cost:32,gcd:1500,cast:2500,cd:30000}
  ],
  Evoker:[
-  {id:'verdant-embrace',name:'Verdant Embrace',kind:'heal',role:'healer',unlockLevel:1,desc:'A strong focused heal.',range:25,heal:34,cost:1,gcd:1500,cast:900,cd:6000},
-  {id:'emerald-blossom',name:'Emerald Blossom',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Restore health across the party.',range:25,heal:17,cost:2,gcd:1500,cast:1200,cd:8000},
-  {id:'living-flame',name:'Living Flame',kind:'damage',unlockLevel:1,desc:'A ranged magical attack.',range:25,damage:22,cost:1,gcd:1500,cast:1300,cd:0},
-  {id:'azure-strike',name:'Azure Strike',kind:'damage',unlockLevel:1,desc:'A fast ranged strike with no resource cost.',range:25,damage:12,cost:0,gcd:1500,cd:0},
-  {id:'quell',name:'Quell',kind:'interrupt',unlockLevel:4,desc:'Interrupt an enemy cast.',range:25,cost:0,gcd:0,cd:40000},
-  {id:'obsidian-scales',name:'Obsidian Scales',kind:'defensive',unlockLevel:8,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000},
-  {id:'dream-breath',name:'Dream Breath',kind:'group-heal',role:'healer',unlockLevel:14,desc:'A powerful party-wide healing breath.',range:25,heal:27,cost:3,gcd:1500,cast:1800,cd:22000}
+  {id:'reversion',name:'Reversion',kind:'heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Rewind an ally to a healthier moment and continue healing them briefly.',range:25,heal:24,cost:1,gcd:1500,cast:0,cd:7000,hot:8},
+  {id:'verdant-embrace',name:'Verdant Embrace',kind:'heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Rush restorative dragon magic into an injured ally.',range:25,heal:35,cost:1,gcd:1500,cast:700,cd:6000},
+  {id:'emerald-blossom',name:'Emerald Blossom',kind:'group-heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Bloom emerald magic through the party.',range:25,heal:18,cost:2,gcd:1500,cast:1000,cd:8000},
+  {id:'dream-breath',name:'Dream Breath',kind:'group-heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Breathe restorative energy across the party.',range:25,heal:29,cost:3,gcd:1500,cast:1600,cd:22000},
+  {id:'temporal-anomaly',name:'Temporal Anomaly',kind:'group-heal',role:'healer',spec:'Preservation',unlockLevel:8,desc:'Send a temporal pulse through allies for broad recovery.',range:25,heal:16,cost:2,gcd:1500,cast:900,cd:12000},
+  {id:'emerald-communion',name:'Emerald Communion',kind:'group-heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Commune with emerald magic for a powerful emergency party heal.',range:25,heal:38,cost:4,gcd:1500,cast:1800,cd:60000},
+  {id:'preservation-living-flame',name:'Living Flame',kind:'damage',role:'healer',spec:'Preservation',unlockLevel:4,desc:'A safe ranged damage spell for quiet healing windows.',range:25,damage:14,cost:0,gcd:1500,cast:1200,cd:0,damageType:'magic'},
+  {id:'quell',name:'Quell',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with draconic force.',range:25,cost:0,gcd:0,cd:24000},
+  {id:'obsidian-scales',name:'Obsidian Scales',kind:'defensive',unlockLevel:8,desc:'Harden your scales to reduce incoming damage.',duration:8000,damageReduction:.25,gcd:0,cd:75000},
+
+  {id:'living-flame',name:'Living Flame',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Launch a focused bolt of red dragonfire.',range:30,damage:22,cost:0,gcd:1500,cast:1300,cd:0,damageType:'magic'},
+  {id:'azure-strike',name:'Azure Strike',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Strike instantly with blue dragon magic.',range:30,damage:14,cost:0,gcd:1500,cd:0,damageType:'magic'},
+  {id:'disintegrate',name:'Disintegrate',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Spend Essence to tear into the target with blue magic.',range:30,damage:34,cost:2,gcd:1500,cast:1400,cd:0,damageType:'magic'},
+  {id:'fire-breath',name:'Fire Breath',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:4,desc:'Breathe red dragonfire through the enemy pack.',range:22,damage:27,cost:1,gcd:1500,cast:1200,cd:14000,cleave:3,damageType:'magic'},
+  {id:'pyre',name:'Pyre',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:6,desc:'Spend Essence to explode dragonfire across nearby enemies.',range:30,damage:25,cost:2,gcd:1500,cd:6000,cleave:3,damageType:'magic'},
+  {id:'eternity-surge',name:'Eternity Surge',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Release a devastating blast of blue dragon magic.',range:30,damage:40,cost:3,gcd:1500,cast:1700,cd:18000,cleave:2,damageType:'magic'},
+  {id:'dragonrage',name:'Dragonrage',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Unleash the full fury of the dragonflights and enter a major burst window.',range:30,damage:38,cost:2,gcd:1500,cd:60000,cleave:3,damageType:'magic'}
  ],
  Hunter:[
   {id:'aimed-shot',name:'Aimed Shot',kind:'damage',unlockLevel:1,desc:'A slow, heavy ranged shot.',range:35,damage:31,cost:35,gcd:1500,cast:1500,cd:7000},
@@ -369,7 +379,8 @@ const TALENT_SKILL_REQUIREMENTS={
   'spirit-link-totem':'Spirit Link Totem','soul-strike':'Soul Strike','felstorm':'Felstorm','summon-demonic-tyrant':'Demonic Tyrant',
   'breath-of-fire':'Breath of Fire','fortifying-brew':'Fortifying Brew','revival':'Revival','fists-of-fury':'Fists of Fury','touch-of-death':'Touch of Death',
   'rune-tap':'Rune Tap','dancing-rune-weapon':'Dancing Rune Weapon','vampiric-blood':'Vampiric Blood','remorseless-winter':'Remorseless Winter','breath-of-sindragosa':'Breath of Sindragosa','dark-transformation':'Dark Transformation','army-of-the-dead':'Army of the Dead','apocalypse':'Apocalypse',
-  'fel-barrage':'Fel Barrage','havoc-metamorphosis':'Metamorphosis','sigil-of-flame':'Sigil of Flame','spirit-bomb':'Spirit Bomb','vengeance-metamorphosis':'Metamorphosis'
+  'fel-barrage':'Fel Barrage','havoc-metamorphosis':'Metamorphosis','sigil-of-flame':'Sigil of Flame','spirit-bomb':'Spirit Bomb','vengeance-metamorphosis':'Metamorphosis',
+  'dream-breath':'Dream Breath','emerald-communion':'Emerald Communion','eternity-surge':'Eternity Surge','dragonrage':'Dragonrage'
 };
 const TALENT_RULES={
  'Shield Mastery':'More block chance and physical mitigation per rank.',
@@ -540,7 +551,25 @@ const TALENT_RULES={
  'Spirit Bomb':'Unlocks Spirit Bomb, consuming Soul Fragments for area damage and healing.',
  'Soul Barrier':'Consuming Soul Fragments grants short additional mitigation.',
  'Fiery Demise':'Increases Vengeance fel and fire damage.',
- 'Metamorphosis':'Unlocks the active Metamorphosis skill for the current Demon Hunter specialisation.'
+ 'Metamorphosis':'Unlocks the active Metamorphosis skill for the current Demon Hunter specialisation.',
+ 'Temporal Mending':'Increases direct Preservation healing.',
+ 'Essence Attunement':'Improves Preservation Essence regeneration.',
+ 'Reversion':'Improves Reversion and its healing-over-time ticks.',
+ 'Lifebind':'Verdant Embrace echoes healing onto another injured ally.',
+ 'Echoing Bloom':'Emerald Blossom leaves an additional delayed healing pulse.',
+ 'Dream Breath':'Unlocks Dream Breath as an equipable Preservation group heal.',
+ 'Time Lord':'Reduces Preservation healing cooldowns.',
+ 'Cycle of Life':'Group heals can trigger a delayed restorative pulse across the party.',
+ 'Emerald Communion':'Unlocks Emerald Communion as a major emergency party heal.',
+ 'Dragonfire':'Increases Devastation red-dragon spell damage.',
+ 'Azure Mastery':'Increases Devastation blue-dragon spell damage and cleave.',
+ 'Essence Burst':'Living Flame and Azure Strike can make the next Essence spender free.',
+ 'Burnout':'Fire Breath empowers the next Living Flame.',
+ 'Eternity Surge':'Unlocks Eternity Surge as a heavy blue-dragon burst spell.',
+ 'Pyre':'Increases Pyre damage and area pressure.',
+ 'Scintillation':'Disintegrate can trigger an extra burst of blue magic.',
+ 'Power Swell':'Spending Essence grants a short haste surge.',
+ 'Dragonrage':'Unlocks Dragonrage, a major Devastation burst window.'
 };
 function characterTalentRank(c,name){return Math.max(0,Number(c?.talents?.[c?.spec]?.[name])||0)}
 function talentRank(u,name){return Math.max(0,Number(u?.talentTree?.[name]??u?.original?.talents?.[u?.spec]?.[name])||0)}
@@ -621,6 +650,12 @@ function talentDamageScale(ctx,u,a,target){
    if(a.damageType==='magic'||['infernal-strike','sigil-of-flame','spirit-bomb','soul-cleave'].includes(a.id))m*=1+talentRank(u,'Fiery Demise')*.04;
   }
  }
+ if(u.class==='Evoker'&&u.spec==='Devastation'){
+  if(['living-flame','fire-breath','pyre','dragonrage'].includes(a.id))m*=1+talentRank(u,'Dragonfire')*.035;
+  if(['azure-strike','disintegrate','eternity-surge'].includes(a.id))m*=1+talentRank(u,'Azure Mastery')*.035;
+  if(a.id==='pyre')m*=1+talentRank(u,'Pyre')*.065;
+  if(a.id==='living-flame'&&u.statuses?.['burnout'])m*=1.18;
+ }
  const aura=livingPlayers(ctx).find(p=>p.class==='Hunter'&&talentRank(p,'Trueshot Aura')>0);
  if(aura&&['Hunter','Mage'].includes(u.class))m*=1.05;
  return m
@@ -656,6 +691,12 @@ function talentHealingScale(ctx,u,a,target){
   if(a.id==='renewing-mist')m*=1+talentRank(u,'Renewing Mist')*.07;
   if(a.id==='revival')m*=1.20;
  }
+ if(u.class==='Evoker'&&u.spec==='Preservation'){
+  m*=1+talentRank(u,'Temporal Mending')*.035;
+  if(a.id==='reversion')m*=1+talentRank(u,'Reversion')*.07;
+  if(a.id==='emerald-blossom')m*=1+talentRank(u,'Echoing Bloom')*.045;
+  if(a.id==='emerald-communion')m*=1.18;
+ }
  return m
 }
 function talentCooldownScale(u,a){
@@ -667,11 +708,13 @@ function talentCooldownScale(u,a){
  if(u.class==='Monk'&&u.spec==='Windwalker'&&a.kind==='damage')m*=Math.max(.78,1-talentRank(u,'Serenity')*.055);
  if(u.class==='Death Knight'&&u.spec==='Blood'&&a.kind==='defensive')m*=Math.max(.76,1-talentRank(u,'Red Thirst')*.06);
  if(u.class==='Demon Hunter'&&u.spec==='Vengeance'&&a.kind==='defensive')m*=Math.max(.76,1-talentRank(u,'Feed the Demon')*.07);
+ if(u.class==='Evoker'&&u.spec==='Preservation'&&(a.kind==='heal'||a.kind==='group-heal'))m*=Math.max(.78,1-talentRank(u,'Time Lord')*.055);
  return m
 }
 function talentResourceRegenScale(u){
  if(u.class==='Rogue')return 1+talentRank(u,'Quick Recovery')*.08;
  if(u.class==='Monk'&&u.spec==='Mistweaver')return 1+talentRank(u,'Mana Tea')*.08;
+ if(u.class==='Evoker'&&u.spec==='Preservation')return 1+talentRank(u,'Essence Attunement')*.08;
  return 1
 }
 function talentCost(ctx,u,a,cost){
@@ -683,6 +726,9 @@ function talentCost(ctx,u,a,cost){
   if(u.lastMistHealId&&u.lastMistHealId!==a.id)value*=Math.max(.80,1-talentRank(u,'Lifecycles')*.035);
  }
  if(u.class==='Monk'&&u.spec==='Windwalker'&&a.kind==='damage')value*=Math.max(.72,1-talentRank(u,'Serenity')*.05);
+ if(u.class==='Evoker'&&u.spec==='Devastation'&&value>0&&u.statuses?.['essence-burst']){
+  removeStatus(ctx,u,'essence-burst','consumed');talentTrigger(ctx,u,'Essence Burst',u,{saved:value,ability:a.name});value=0
+ }
  if(u.class==='Mage'&&value>0){
   const r=talentRank(u,'Clearcasting');
   if(r&&ctx.rng()<r*.08){talentTrigger(ctx,u,'Clearcasting',u,{saved:Math.round(value)});value=0}
@@ -1363,6 +1409,28 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
    }
   }
  }
+ if(u.class==='Evoker'&&u.spec==='Devastation'){
+  if(['living-flame','azure-strike'].includes(a.id)&&(r=talentRank(u,'Essence Burst'))&&ctx.rng()<.12*r){
+   applyStatus(ctx,u,u,{id:'essence-burst',name:'Essence Burst',kind:'buff',duration:8000,effect:{}});
+   talentTrigger(ctx,u,'Essence Burst',u,{duration:8000})
+  }
+  if(a.id==='fire-breath'&&(r=talentRank(u,'Burnout'))){
+   applyStatus(ctx,u,u,{id:'burnout',name:'Burnout',kind:'buff',duration:8000,effect:{}});
+   talentTrigger(ctx,u,'Burnout',u,{duration:8000})
+  }
+  if(a.id==='living-flame'&&u.statuses?.['burnout'])removeStatus(ctx,u,'burnout','consumed');
+  if(a.id==='disintegrate'&&(r=talentRank(u,'Scintillation'))&&ctx.rng()<.14*r&&target.alive){
+   const burst=Math.max(1,Math.round(dealt*(.16+.05*r)));dealDamage(ctx,u,target,burst,'Scintillation',{damageType:'magic'});talentTrigger(ctx,u,'Scintillation',target,{damage:burst})
+  }
+  if(Number(a.cost)>0&&(r=talentRank(u,'Power Swell'))){
+   applyStatus(ctx,u,u,{id:'power-swell',name:'Power Swell',kind:'buff',duration:5000,effect:{haste:.035*r}});
+   talentTrigger(ctx,u,'Power Swell',u,{duration:5000})
+  }
+  if(a.id==='dragonrage'){
+   applyStatus(ctx,u,u,{id:'dragonrage',name:'Dragonrage',kind:'buff',duration:10000,effect:{outgoingDamage:.18,haste:.10}});
+   talentTrigger(ctx,u,'Dragonrage',u,{duration:10000})
+  }
+ }
 }
 function talentAfterHeal(ctx,u,a,target,effective){
  if(!u?.alive||!target?.alive||effective<=0||a.kind!=='heal')return;
@@ -1436,6 +1504,15 @@ function talentAfterHeal(ctx,u,a,target,effective){
    }
   }
  }
+ if(u.class==='Evoker'&&u.spec==='Preservation'){
+  if(a.id==='reversion'&&(r=talentRank(u,'Reversion'))){
+   const tick=Math.max(1,Math.round(effective*.045*r));[1300,2600].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)doHeal(ctx,u,target,tick,'Reversion')},'evoker-reversion'))
+  }
+  if(a.id==='verdant-embrace'&&(r=talentRank(u,'Lifebind'))){
+   const other=livingPlayers(ctx).filter(p=>p.id!==target.id&&hasLineOfSight(ctx,u,p)).sort((x,y)=>healthRatio(x)-healthRatio(y))[0];
+   if(other){const echo=Math.max(1,Math.round(effective*(.12+.08*r)));doHeal(ctx,u,other,echo,'Lifebind');talentTrigger(ctx,u,'Lifebind',other,{healing:echo})}
+  }
+ }
 }
 function talentAfterGroupHeal(ctx,u,a,totalEffective){
  if(!u?.alive||totalEffective<=0)return;
@@ -1447,6 +1524,15 @@ function talentAfterGroupHeal(ctx,u,a,totalEffective){
  if(u.class==='Shaman'&&u.spec==='Restoration'&&a.id==='chain-heal'){
   const r=talentRank(u,'Tidal Waves');
   if(r){applyStatus(ctx,u,u,{id:'tidal-waves',name:'Tidal Waves',kind:'buff',duration:6000,effect:{haste:.04*r}});talentTrigger(ctx,u,'Tidal Waves',u,{duration:6000})}
+ }
+ if(u.class==='Evoker'&&u.spec==='Preservation'){
+  const echo=talentRank(u,'Echoing Bloom'),cycle=talentRank(u,'Cycle of Life');
+  if(a.id==='emerald-blossom'&&echo){
+   const pulse=Math.max(1,Math.round(totalEffective*(.025+.02*echo)));schedule(ctx,ctx.time+1300,()=>livingPlayers(ctx).filter(p=>hasLineOfSight(ctx,u,p)).forEach(p=>doHeal(ctx,u,p,pulse,'Echoing Bloom')),'evoker-echoing-bloom');talentTrigger(ctx,u,'Echoing Bloom',u,{healingPerTarget:pulse})
+  }
+  if(cycle&&ctx.rng()<.18*cycle){
+   const pulse=Math.max(1,Math.round(totalEffective*.035*cycle));schedule(ctx,ctx.time+1700,()=>livingPlayers(ctx).filter(p=>hasLineOfSight(ctx,u,p)).forEach(p=>doHeal(ctx,u,p,pulse,'Cycle of Life')),'evoker-cycle-of-life');talentTrigger(ctx,u,'Cycle of Life',u,{healingPerTarget:pulse})
+  }
  }
 }
 function useTalentUtility(ctx,u){
