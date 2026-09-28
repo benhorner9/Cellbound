@@ -775,11 +775,7 @@ function talentDamageScale(ctx,u,a,target){
  if(u.class==='Shaman'&&u.spec==='Elemental'){
   if(['lightning-bolt','chain-lightning','lava-burst'].includes(a.id))m*=1+talentRank(u,'Elemental Fury')*.035;
  }
- if(u.class==='Hunter'&&u.spec==='Beast Mastery'){
-  const priority=a=>a.petCommand==='bestial-wrath'?5:a.summonType==='stampede-beast'?4:a.summonType==='dire-beast'?3:a.petCommand==='kill-command'?2:0;
-  const specials=u.abilities.filter(a=>(a.kind==='summon'||a.kind==='pet-command')&&hunterSpecialReady(ctx,u,a,target)).sort((a,b)=>priority(b)-priority(a));
-  if(specials.length&&startAbility(ctx,u,specials[0],target))return
- }
+
  if(u.class==='Warlock'&&u.spec==='Demonology'){
   m*=1+talentRank(u,'Fel Knowledge')*.035;
   if(a.id==='demonbolt'&&u.statuses?.['demonic-core'])m*=1.12;
@@ -2931,6 +2927,11 @@ function playerAI(ctx,u){
  }
  const target=pickDamageTarget(ctx,u);
  if(!target)return;
+ if(u.class==='Hunter'&&u.spec==='Beast Mastery'){
+  const priority=a=>a.petCommand==='bestial-wrath'?5:a.summonType==='stampede-beast'?4:a.summonType==='dire-beast'?3:a.petCommand==='kill-command'?2:0;
+  const specials=u.abilities.filter(a=>(a.kind==='summon'||a.kind==='pet-command')&&hunterSpecialReady(ctx,u,a,target)).sort((a,b)=>priority(b)-priority(a));
+  if(specials.length&&startAbility(ctx,u,specials[0],target))return
+ }
  if(u.class==='Warlock'&&u.spec==='Demonology'){
   const priority=a=>a.summonType==='tyrant'?5:a.petCommand==='implosion'?4:a.summonType==='dreadstalker'?3:a.petCommand==='felstorm'?2:a.petCommand==='soul-strike'?1:0;
   const specials=u.abilities.filter(a=>(a.kind==='summon'||a.kind==='pet-command')&&warlockSpecialReady(ctx,u,a,target)).sort((a,b)=>priority(b)-priority(a));
