@@ -691,113 +691,12 @@ function talentDamageScale(ctx,u,a,target){
   m*=1+talentRank(u,'Arcane Focus')*.03;
   if(a.id==='arcane-barrage'&&talentRank(u,'Barrage'))m*=1.28;
  }
- if(u.class==='Druid'&&u.spec==='Balance'){
-  u.talentCounters=u.talentCounters||{};
-  const eclipseActive=Boolean(u.statuses?.['solar-eclipse']||u.statuses?.['lunar-eclipse']||u.statuses?.['celestial-alignment']);
-  if(!eclipseActive&&a.id==='wrath'){
-   u.talentCounters.wrathCycle=(Number(u.talentCounters.wrathCycle)||0)+1;
-   u.talentCounters.starfireCycle=0;
-   if(u.talentCounters.wrathCycle>=2){
-    u.talentCounters.wrathCycle=0;u.nextEclipse='solar';
-    applyStatus(ctx,u,u,{id:'lunar-eclipse',name:'Lunar Eclipse',kind:'buff',duration:8000,effect:{haste:.05}});
-    talentTrigger(ctx,u,'Lunar Eclipse',u,{duration:8000})
-   }
-  }
-  if(!eclipseActive&&a.id==='starfire'){
-   u.talentCounters.starfireCycle=(Number(u.talentCounters.starfireCycle)||0)+1;
-   u.talentCounters.wrathCycle=0;
-   if(u.talentCounters.starfireCycle>=2){
-    u.talentCounters.starfireCycle=0;u.nextEclipse='lunar';
-    applyStatus(ctx,u,u,{id:'solar-eclipse',name:'Solar Eclipse',kind:'buff',duration:8000,effect:{haste:.05}});
-    talentTrigger(ctx,u,'Solar Eclipse',u,{duration:8000})
-   }
-  }
-  if(['moonfire','sunfire'].includes(a.id)&&target.alive){
-   const twin=talentRank(u,'Twin Moons'),shoot=talentRank(u,'Shooting Stars'),setScale=Math.max(.5,Number(u?.setBonuses?.periodicDamageScale)||1);
-   const ratio=a.id==='moonfire'?.50:.46,tick=Math.max(1,Math.round(dealt*ratio*(1+twin*.08)*setScale)),label=a.name,id=a.id+'-'+u.id;
-   applyStatus(ctx,u,target,{id,name:label,kind:'debuff',duration:5100,effect:{damageOverTime:tick}});
-   [1600,3200,4800].forEach(t=>schedule(ctx,ctx.time+t,()=>{
-    if(!u.alive||!target.alive)return;
-    dealDamage(ctx,u,target,tick,label+' (DoT)',{damageType:'magic'});
-    if(shoot){
-     u.talentCounters.shootingStars=(Number(u.talentCounters.shootingStars)||0)+1;
-     const threshold=Math.max(2,4-shoot);
-     if(u.talentCounters.shootingStars>=threshold){
-      u.talentCounters.shootingStars=0;const ap=4+shoot*2;
-      gainResource(ctx,u,{name:'Shooting Stars',gain:ap});talentTrigger(ctx,u,'Shooting Stars',u,{astralPower:ap})
-     }
-    }
-   },'balance-dot'))
-  }
-  if(['starsurge','starfall'].includes(a.id)&&(r=talentRank(u,'Astral Communion'))){
-   u.talentCounters.astralCommunion=(Number(u.talentCounters.astralCommunion)||0)+1;
-   if(u.talentCounters.astralCommunion>=Math.max(2,4-r)){
-    u.talentCounters.astralCommunion=0;const ap=8+r*4;
-    gainResource(ctx,u,{name:'Astral Communion',gain:ap});talentTrigger(ctx,u,'Astral Communion',u,{astralPower:ap})
-   }
-  }
-  if(a.id==='celestial-alignment'){
-   removeStatus(ctx,u,'solar-eclipse','alignment');removeStatus(ctx,u,'lunar-eclipse','alignment');
-   applyStatus(ctx,u,u,{id:'celestial-alignment',name:'Celestial Alignment',kind:'buff',duration:10000,effect:{outgoingDamage:.15,haste:.10}});
-   talentTrigger(ctx,u,'Celestial Alignment',u,{duration:10000})
-  }
- }
+
  if(u.class==='Priest'&&u.spec==='Shadow'){
   if(['mind-flay','mind-blast'].includes(a.id))m*=1+talentRank(u,'Dark Thoughts')*.035;
   if(hp<.35)m*=1+talentRank(u,'Twist of Fate')*.06;
  }
- if(u.class==='Druid'&&u.spec==='Balance'){
-  u.talentCounters=u.talentCounters||{};
-  if(a.id==='wrath'){
-   u.talentCounters.wrathCycle=(Number(u.talentCounters.wrathCycle)||0)+1;
-   u.talentCounters.starfireCycle=0;
-   if(u.talentCounters.wrathCycle>=2){
-    u.talentCounters.wrathCycle=0;
-    removeStatus(ctx,u,'solar-eclipse','cycle');
-    applyStatus(ctx,u,u,{id:'lunar-eclipse',name:'Lunar Eclipse',kind:'buff',duration:8000,effect:{haste:.05}});
-    talentTrigger(ctx,u,'Lunar Eclipse',u,{duration:8000})
-   }
-  }
-  if(a.id==='starfire'){
-   u.talentCounters.starfireCycle=(Number(u.talentCounters.starfireCycle)||0)+1;
-   u.talentCounters.wrathCycle=0;
-   if(u.talentCounters.starfireCycle>=2){
-    u.talentCounters.starfireCycle=0;
-    removeStatus(ctx,u,'lunar-eclipse','cycle');
-    applyStatus(ctx,u,u,{id:'solar-eclipse',name:'Solar Eclipse',kind:'buff',duration:8000,effect:{haste:.05}});
-    talentTrigger(ctx,u,'Solar Eclipse',u,{duration:8000})
-   }
-  }
-  if(['moonfire','sunfire'].includes(a.id)&&target.alive){
-   const twin=talentRank(u,'Twin Moons'),shoot=talentRank(u,'Shooting Stars'),setScale=Math.max(.5,Number(u?.setBonuses?.periodicDamageScale)||1);
-   const ratio=a.id==='moonfire'?.50:.46,tick=Math.max(1,Math.round(dealt*ratio*(1+twin*.08)*setScale)),label=a.name,id=a.id+'-'+u.id;
-   applyStatus(ctx,u,target,{id,name:label,kind:'debuff',duration:5100,effect:{damageOverTime:tick}});
-   [1600,3200,4800].forEach(t=>schedule(ctx,ctx.time+t,()=>{
-    if(!u.alive||!target.alive)return;
-    dealDamage(ctx,u,target,tick,label+' (DoT)',{damageType:'magic'});
-    if(shoot){
-     u.talentCounters.shootingStars=(Number(u.talentCounters.shootingStars)||0)+1;
-     const threshold=Math.max(2,4-shoot);
-     if(u.talentCounters.shootingStars>=threshold){
-      u.talentCounters.shootingStars=0;const gain=4+shoot*2;
-      gainResource(ctx,u,{name:'Shooting Stars',gain});talentTrigger(ctx,u,'Shooting Stars',u,{astralPower:gain})
-     }
-    }
-   },'balance-dot'))
-  }
-  if(['starsurge','starfall'].includes(a.id)&&(r=talentRank(u,'Astral Communion'))){
-   u.talentCounters.astralCommunion=(Number(u.talentCounters.astralCommunion)||0)+1;
-   if(u.talentCounters.astralCommunion>=Math.max(2,4-r)){
-    u.talentCounters.astralCommunion=0;const refund=8+r*4;
-    gainResource(ctx,u,{name:'Astral Communion',gain:refund});talentTrigger(ctx,u,'Astral Communion',u,{astralPower:refund})
-   }
-  }
-  if(a.id==='celestial-alignment'){
-   removeStatus(ctx,u,'solar-eclipse','alignment');removeStatus(ctx,u,'lunar-eclipse','alignment');
-   applyStatus(ctx,u,u,{id:'celestial-alignment',name:'Celestial Alignment',kind:'buff',duration:10000,effect:{outgoingDamage:.15,haste:.10}});
-   talentTrigger(ctx,u,'Celestial Alignment',u,{duration:10000})
-  }
- }
+
  if(u.class==='Shaman'&&u.spec==='Elemental'){
   if(['lightning-bolt','chain-lightning','lava-burst'].includes(a.id))m*=1+talentRank(u,'Elemental Fury')*.035;
  }
@@ -1417,6 +1316,57 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
  if(!u?.alive||!target||dealt<=0)return;
  u.damageActions=(Number(u.damageActions)||0)+1;
  let r=0;
+ if(u.class==='Druid'&&u.spec==='Balance'){
+  u.talentCounters=u.talentCounters||{};
+  const eclipseActive=Boolean(u.statuses?.['solar-eclipse']||u.statuses?.['lunar-eclipse']||u.statuses?.['celestial-alignment']);
+  if(!eclipseActive&&a.id==='wrath'){
+   u.talentCounters.wrathCycle=(Number(u.talentCounters.wrathCycle)||0)+1;
+   u.talentCounters.starfireCycle=0;
+   if(u.talentCounters.wrathCycle>=2){
+    u.talentCounters.wrathCycle=0;u.nextEclipse='solar';
+    applyStatus(ctx,u,u,{id:'lunar-eclipse',name:'Lunar Eclipse',kind:'buff',duration:8000,effect:{haste:.05}});
+    talentTrigger(ctx,u,'Lunar Eclipse',u,{duration:8000})
+   }
+  }
+  if(!eclipseActive&&a.id==='starfire'){
+   u.talentCounters.starfireCycle=(Number(u.talentCounters.starfireCycle)||0)+1;
+   u.talentCounters.wrathCycle=0;
+   if(u.talentCounters.starfireCycle>=2){
+    u.talentCounters.starfireCycle=0;u.nextEclipse='lunar';
+    applyStatus(ctx,u,u,{id:'solar-eclipse',name:'Solar Eclipse',kind:'buff',duration:8000,effect:{haste:.05}});
+    talentTrigger(ctx,u,'Solar Eclipse',u,{duration:8000})
+   }
+  }
+  if(['moonfire','sunfire'].includes(a.id)&&target.alive){
+   const twin=talentRank(u,'Twin Moons'),shoot=talentRank(u,'Shooting Stars'),setScale=Math.max(.5,Number(u?.setBonuses?.periodicDamageScale)||1);
+   const ratio=a.id==='moonfire'?.50:.46,tick=Math.max(1,Math.round(dealt*ratio*(1+twin*.08)*setScale)),label=a.name,id=a.id+'-'+u.id;
+   applyStatus(ctx,u,target,{id,name:label,kind:'debuff',duration:5100,effect:{damageOverTime:tick}});
+   [1600,3200,4800].forEach(t=>schedule(ctx,ctx.time+t,()=>{
+    if(!u.alive||!target.alive)return;
+    dealDamage(ctx,u,target,tick,label+' (DoT)',{damageType:'magic'});
+    if(shoot){
+     u.talentCounters.shootingStars=(Number(u.talentCounters.shootingStars)||0)+1;
+     const threshold=Math.max(2,4-shoot);
+     if(u.talentCounters.shootingStars>=threshold){
+      u.talentCounters.shootingStars=0;const ap=4+shoot*2;
+      gainResource(ctx,u,{name:'Shooting Stars',gain:ap});talentTrigger(ctx,u,'Shooting Stars',u,{astralPower:ap})
+     }
+    }
+   },'balance-dot'))
+  }
+  if(['starsurge','starfall'].includes(a.id)&&(r=talentRank(u,'Astral Communion'))){
+   u.talentCounters.astralCommunion=(Number(u.talentCounters.astralCommunion)||0)+1;
+   if(u.talentCounters.astralCommunion>=Math.max(2,4-r)){
+    u.talentCounters.astralCommunion=0;const ap=8+r*4;
+    gainResource(ctx,u,{name:'Astral Communion',gain:ap});talentTrigger(ctx,u,'Astral Communion',u,{astralPower:ap})
+   }
+  }
+  if(a.id==='celestial-alignment'){
+   removeStatus(ctx,u,'solar-eclipse','alignment');removeStatus(ctx,u,'lunar-eclipse','alignment');
+   applyStatus(ctx,u,u,{id:'celestial-alignment',name:'Celestial Alignment',kind:'buff',duration:10000,effect:{outgoingDamage:.15,haste:.10}});
+   talentTrigger(ctx,u,'Celestial Alignment',u,{duration:10000})
+  }
+ }
  if(u.class==='Priest'&&u.spec==='Shadow'){
   if(a.id==='mind-blast'&&(r=talentRank(u,'Mind Devourer'))&&ctx.rng()<.16*r){
    applyStatus(ctx,u,u,{id:'mind-devourer',name:'Mind Devourer',kind:'buff',duration:9000,effect:{}});
