@@ -17,7 +17,7 @@ const ICONS={
  PLAYER_WEAKEN:58,PLAYER_ARMOR_BREAK:59,PLAYER_BLEED:60,PLAYER_STUN:61,PLAYER_ROOT:62,PLAYER_MARK:63,PLAYER_SILENCE:64,PLAYER_BURN:65,PLAYER_FREEZE:66,PLAYER_SHOCK:67
 };
 const STATUS_ICON={
- 'class-buff-runic-ascendance':ICONS.OFF_ARCANE,'class-buff-demonic-momentum':ICONS.OFF_SPEED,'class-buff-predators-focus':ICONS.OFF_CRIT,
+ 'class-buff-runic-ascendance':ICONS.OFF_ARCANE,'class-buff-horn-of-winter':ICONS.SUP_RESOURCE,'class-buff-demonic-momentum':ICONS.OFF_SPEED,'class-buff-predators-focus':ICONS.OFF_CRIT,
  'class-buff-killing-tempo':ICONS.OFF_CLEAVE,'class-buff-battle-fury':ICONS.OFF_RAGE,'class-buff-arcane-empowerment':ICONS.OFF_ARCANE,
  'class-buff-divine-inspiration':ICONS.SUP_RADIANCE,'class-buff-wild-communion':ICONS.SUP_NATURE,'class-buff-blessing-resolve':ICONS.DEF_SHIELD,
  'class-buff-draconic-resonance':ICONS.SUP_HASTE,'class-buff-bloodlust':ICONS.SUP_HASTE,'class-buff-demonic-pact':ICONS.OFF_ARCANE,'class-buff-mystic-touch':ICONS.SUP_NATURE,'monk-momentum':ICONS.SUP_HASTE,'demonic-core':ICONS.OFF_ARCANE,'tyrant-command':ICONS.OFF_ASCEND,'shaman-totem-windfury':ICONS.SUP_HASTE,'shaman-totem-stoneskin':ICONS.DEF_ARMOR,'shaman-totem-healing-stream':ICONS.DEF_HEALWARD,'spirit-link-totem':ICONS.SUP_PARTY_GUARD,'tidal-waves':ICONS.SUP_HASTE,'ascendant-tide':ICONS.SUP_EMPOWER_HEAL,'ascendant-totems':ICONS.SUP_NATURE,'battle-rhythm':ICONS.OFF_SPEED,'blood-frenzy-talent':ICONS.OFF_RAGE,
@@ -25,7 +25,7 @@ const STATUS_ICON={
  'ironbark-talent':ICONS.DEF_THORNS,'tree-of-life':ICONS.SUP_NATURE,'arcane-power':ICONS.OFF_ARCANE,'last-stand-talent':ICONS.DEF_GUARDIAN,
  'unbroken':ICONS.DEF_GUARDIAN,'guardian-last-stand':ICONS.DEF_GUARDIAN,'vengeance-talent':ICONS.OFF_FURY,'hold-the-line':ICONS.DEF_PARRY,
  'righteous-guard':ICONS.DEF_SHIELD,'bulwark-party':ICONS.SUP_PARTY_GUARD,'divine-guardian-party':ICONS.SUP_PARTY_GUARD,
- 'frostbound-sigil-shield':ICONS.DEF_ARCANE,'soft-enrage':ICONS.OFF_RAGE,'hard-enrage':ICONS.OFF_RAGE,'blood-frenzy':ICONS.OFF_RAGE,
+ 'frostbound-sigil-shield':ICONS.DEF_ARCANE,'bone-shield':ICONS.DEF_ARMOR,'blood-shield':ICONS.DEF_SHIELD,'hemostasis':ICONS.OFF_BLOOD,'vampiric-blood':ICONS.DEF_RECOVERY,'vampiric-blood-healing':ICONS.DEF_HEALWARD,'dancing-rune-weapon':ICONS.DEF_PARRY,'dancing-rune-weapon-threat':ICONS.OFF_ASCEND,'icy-talons':ICONS.SUP_HASTE,'sudden-doom':ICONS.ENEMY_DOOM,'dark-transformation':ICONS.OFF_ASCEND,'anti-magic-shell':ICONS.DEF_ARCANE,'soft-enrage':ICONS.OFF_RAGE,'hard-enrage':ICONS.OFF_RAGE,'blood-frenzy':ICONS.OFF_RAGE,
  'shield-wall':ICONS.DEF_SHIELD,'ardent-defender':ICONS.DEF_ARMOR,'divine-protection':ICONS.DEF_SHIELD,'barkskin':ICONS.DEF_THORNS,
  'blur':ICONS.DEF_DODGE,'obsidian-scales':ICONS.DEF_ARMOR,'arcane-ward':ICONS.DEF_ARCANE,'feint':ICONS.DEF_DODGE,'icebound-fortitude':ICONS.DEF_ARCANE,
  'guardian-spirit':ICONS.DEF_GUARDIAN,'hammer-of-justice':ICONS.PLAYER_STUN,'concussive-shot':ICONS.PLAYER_STUN,'tactical-control':ICONS.PLAYER_ROOT,'chaos-scar':ICONS.ENEMY_VULNERABLE,'deep-wounds':ICONS.PLAYER_BLEED,'piercing-shots':ICONS.PLAYER_BLEED,'garrote-bleed':ICONS.PLAYER_BLEED,'venom':ICONS.ENEMY_POISON
