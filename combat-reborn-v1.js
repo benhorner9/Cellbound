@@ -560,6 +560,23 @@ function talentDamageScale(ctx,u,a,target){
   m*=combo?(1.10+talentRank(u,'Combo Strikes')*.025):.88;
   if((a.id==='spinning-crane-kick'||a.id==='fists-of-fury')&&talentRank(u,'Jade Ignition'))m*=1+talentRank(u,'Jade Ignition')*.05;
  }
+ if(u.class==='Death Knight'){
+  if(u.spec==='Blood'){
+   if(a.id==='heart-strike')m*=1+talentRank(u,'Heartbreaker')*.045;
+   if(a.id==='death-strike'&&u.statuses?.['hemostasis'])m*=1+talentRank(u,'Hemostasis')*.06;
+  }
+  if(u.spec==='Frost'){
+   if(a.id==='obliterate')m*=1+talentRank(u,'Obliteration')*.055;
+   if(a.id==='howling-blast')m*=1+talentRank(u,'Rime')*.06;
+   if((Number(a.cost)||0)===0&&u.resource.value<35)m*=1+talentRank(u,'Frozen Pulse')*.04;
+  }
+  if(u.spec==='Unholy'){
+   const temporary=activePets(ctx,u.id).some(p=>p.type!=='ghoul');
+   if(temporary)m*=1+talentRank(u,'Unholy Pact')*.04;
+   if(a.id==='death-and-decay-unholy')m*=1+talentRank(u,'Defile')*.06;
+   if(a.id==='death-coil'&&u.statuses?.['sudden-doom'])m*=1.18;
+  }
+ }
  const aura=livingPlayers(ctx).find(p=>p.class==='Hunter'&&talentRank(p,'Trueshot Aura')>0);
  if(aura&&['Hunter','Mage'].includes(u.class))m*=1.05;
  return m
@@ -604,6 +621,7 @@ function talentCooldownScale(u,a){
  if(u.class==='Paladin'&&a.kind==='interrupt')m*=Math.max(.75,1-talentRank(u,'Hammer of Justice')*.10);
  if(u.class==='Warlock'&&a.kind==='summon')m*=Math.max(.78,1-talentRank(u,'Master Summoner')*.07);
  if(u.class==='Monk'&&u.spec==='Windwalker'&&a.kind==='damage')m*=Math.max(.78,1-talentRank(u,'Serenity')*.055);
+ if(u.class==='Death Knight'&&u.spec==='Blood'&&a.kind==='defensive')m*=Math.max(.76,1-talentRank(u,'Red Thirst')*.06);
  return m
 }
 function talentResourceRegenScale(u){
@@ -704,7 +722,7 @@ function normalisePlayer(c,i){
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:startPosition,facing:0,
   target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:carriedStatuses(c),resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
-  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:copy(c?._combatTalentTimers||{}),talentFlags:copy(c?._combatTalentFlags||{}),talentCounters:copy(c?._combatTalentCounters||{}),damageActions:Math.max(0,Number(c?._combatDamageActions)||0),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),staggerPool:0,nextStaggerTick:0,staggerSourceId:null,lastMonkAbility:null,lastMistHealId:null,
+  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:copy(c?._combatTalentTimers||{}),talentFlags:copy(c?._combatTalentFlags||{}),talentCounters:copy(c?._combatTalentCounters||{}),damageActions:Math.max(0,Number(c?._combatDamageActions)||0),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),staggerPool:0,nextStaggerTick:0,staggerSourceId:null,lastMonkAbility:null,lastMistHealId:null,recentDamageTaken:[],dkWounds:{},
   defensiveUntil:Math.max(0,Number(c?._combatDefensiveMs)||0),frenzyUntil:Math.max(0,Number(c?._combatFrenzyMs)||0),uniqueUsed:copy(c?._combatUniqueUsed||{}),nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
 }
@@ -967,7 +985,9 @@ function spendResource(ctx,u,a){
  return true;
 }
 function gainResource(ctx,u,a){
- const gain=Math.max(0,Number(a.gain)||0);
+ let gain=Math.max(0,Number(a.gain)||0);
+ if(u.class==='Death Knight'&&u.spec==='Blood'&&a.id==='heart-strike')gain+=talentRank(u,'Heartbreaker')*2;
+ if(u.class==='Death Knight'&&u.spec==='Frost'&&a.id==='howling-blast')gain+=talentRank(u,'Rime')*2;
  if(!gain)return;
  const before=u.resource.value;u.resource.value=clamp(before+gain,0,u.resource.max);
  const actual=u.resource.value-before;
@@ -1318,7 +1338,8 @@ function rollDamage(ctx,u,a,target){
  let executeBelow=Number(a.executeBelow)||0,executeMultiplier=Math.max(1,Number(a.executeMultiplier)||1.5);
  if(u.class==='Hunter'&&a.id==='kill-shot'&&talentRank(u,'Kill Shot')){executeBelow=Math.max(executeBelow,.35);executeMultiplier=Math.max(executeMultiplier,2.05)}
  if(executeBelow>0&&healthRatio(target)<=executeBelow)amount*=executeMultiplier;
- const critChance=clamp(.12+statusBonus(u,'critBonus')+talentCritBonus(u),0,.80);
+ let dkCrit=0;if(u.class==='Death Knight'&&u.spec==='Frost'&&['obliterate','frostwyrms-fury','breath-of-sindragosa'].includes(a.id))dkCrit=talentRank(u,'Killing Machine')*.05;
+ const critChance=clamp(.12+statusBonus(u,'critBonus')+talentCritBonus(u)+dkCrit,0,.80);
  if(ctx.rng()<critChance){amount*=1.5*talentCritMultiplier(u);return{amount,crit:true}}
  return{amount,crit:false};
 }
@@ -1437,6 +1458,11 @@ function dealDamage(ctx,source,target,amount,ability,opts={}){
   addThreat(ctx,target,source,dealt*threatMultiplier(source,opts.ability||{}),'damage');
  }else{
   const st=ctx.stats.players[target.id];if(st){st.damageTaken+=dealt;if(opts.avoidable)st.avoidableDamage+=dealt}
+  if(dealt>0){
+   target.recentDamageTaken=Array.isArray(target.recentDamageTaken)?target.recentDamageTaken:[];
+   target.recentDamageTaken.push({at:ctx.time,amount:dealt});
+   target.recentDamageTaken=target.recentDamageTaken.filter(x=>Number(x.at)>=ctx.time-5000)
+  }
   if(target.alive&&dealt>0&&target.class==='Warrior'&&target.spec==='Protection'&&talentRank(target,'Vengeance')){
    const r=talentRank(target,'Vengeance');applyStatus(ctx,target,target,{id:'vengeance-talent',name:'Vengeance',kind:'buff',duration:4500,effect:{outgoingDamage:.04*r}})
   }
