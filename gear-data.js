@@ -99,7 +99,7 @@ const ARMOUR_NOUNS={
   mail:{Shoulders:'Spaulders',Hands:'Grips',Waist:'Belt',Legs:'Legguards',Feet:'Boots'}
 };
 const OFFHAND_NOUN={Warrior:'Shield',Paladin:'Bulwark',Priest:'Scripture',Druid:'Idol',Hunter:'Quiver',Rogue:'Parrying Blade',Mage:'Grimoire',Shaman:'Totem'};
-const RELIC_NOUN={Warrior:'Crest',Paladin:'Libram',Priest:'Icon',Druid:'Totem',Hunter:'Trophy',Rogue:'Token',Mage:'Focus',Shaman:'Charm'};
+const RELIC_NOUN={Warrior:'Crest',Paladin:'Libram',Priest:'Icon',Druid:'Totem',Hunter:'Trophy',Rogue:'Token',Mage:'Focus',Shaman:'Spirit Charm'};
 const SLOT_GLYPHS={Head:'⛑',Shoulders:'⌃',Chest:'▣',Hands:'✋',Waist:'═',Legs:'║',Feet:'♟',Weapon:'⚔',OffHand:'🛡',Ring:'◉',Trinket:'◆',Relic:'◇'};
 function inferWeaponType(klass,name=''){
   const n=String(name).toLowerCase();
