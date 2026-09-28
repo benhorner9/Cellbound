@@ -1464,14 +1464,7 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
   }
  }
 
- if(u.class==='Hunter'&&u.spec==='Beast Mastery'){
-  const by=id=>pool.find(a=>a.id===id),barbed=by('barbed-shot'),multi=by('beast-multi-shot'),cobra=by('cobra-shot');
-  const frenzy=u.statuses?.['beast-frenzy'],remaining=frenzy?Math.max(0,Number(frenzy.expiresAt)-ctx.time):0;
-  if(barbed&&(!frenzy||remaining<2200))return{ability:barbed,target};
-  if(multi&&livingEnemies(ctx).length>=3&&talentRank(u,'Beast Cleave')>0)return{ability:multi,target};
-  if(cobra)return{ability:cobra,target};
-  if(barbed)return{ability:barbed,target}
- }
+
  if(u.class==='Mage'&&u.spec==='Frost'){
   u.talentCounters=u.talentCounters||{};
   const fingers=talentRank(u,'Fingers of Frost'),brain=talentRank(u,'Brain Freeze'),procRate=Math.max(0,Number(u?.setBonuses?.frostProcRate)||0);
@@ -2378,6 +2371,14 @@ function chooseAbility(ctx,u,target){
   }
   // Other healers preserve mana and watch incoming damage during safe windows.
   return null
+ }
+ if(u.class==='Hunter'&&u.spec==='Beast Mastery'){
+  const by=id=>pool.find(a=>a.id===id),barbed=by('barbed-shot'),multi=by('beast-multi-shot'),cobra=by('cobra-shot');
+  const frenzy=u.statuses?.['beast-frenzy'],remaining=frenzy?Math.max(0,Number(frenzy.expiresAt)-ctx.time):0;
+  if(barbed&&(!frenzy||remaining<2200))return{ability:barbed,target};
+  if(multi&&livingEnemies(ctx).length>=3&&talentRank(u,'Beast Cleave')>0)return{ability:multi,target};
+  if(cobra)return{ability:cobra,target};
+  if(barbed)return{ability:barbed,target}
  }
  if(u.class==='Warlock'&&u.spec==='Destruction'){
   const by=id=>pool.find(a=>a.id===id),immolate=by('immolate'),conflagrate=by('conflagrate'),chaos=by('chaos-bolt'),rain=by('rain-of-fire'),demonfire=by('channel-demonfire'),incinerate=by('incinerate');
