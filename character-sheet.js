@@ -50,7 +50,7 @@ const specs={
   Warrior:{Protection:'tank',Arms:'dps'},
   Paladin:{Protection:'tank',Holy:'healer'},
   Priest:{Holy:'healer',Shadow:'dps'},
-  Druid:{Restoration:'healer'},
+  Druid:{Restoration:'healer',Balance:'dps'},
   Hunter:{Marksman:'dps'},
   Rogue:{Assassination:'dps'},
   Mage:{Arcane:'dps'},
@@ -127,9 +127,22 @@ const trees={
       {id:'Void Eruption',icon:'✦',tier:4,col:2,max:1,req:'Psychic Link',desc:'Capstone: unlock Void Eruption and enter a short Voidform burst window.'}
     ]
   },
-  Druid:{Restoration:[
-    {id:'Rejuvenation',icon:'❈',tier:0,col:1,max:3,desc:'Improve your core heal-over-time spell.'},{id:'Lifebloom',icon:'🌿',tier:0,col:3,max:3,desc:'Stack healing on a focused ally.'},{id:'Wild Growth',icon:'☘',tier:1,col:0,max:2,req:'Rejuvenation',desc:'Spread healing across the party.'},{id:'Natural Swiftness',icon:'➤',tier:1,col:2,max:1,desc:'Make an important heal instant.'},{id:'Living Seed',icon:'◉',tier:2,col:1,max:2,req:'Wild Growth',desc:'Critical heals plant a delayed heal.'},{id:'Ironbark',icon:'♣',tier:2,col:3,max:1,req:'Lifebloom',desc:'Reduce damage on an ally.'},{id:'Tree of Life',icon:'♠',tier:3,col:1,max:1,req:'Living Seed',desc:'Temporarily empower restoration magic.'},{id:'Flourish',icon:'✿',tier:3,col:3,max:1,req:'Ironbark',desc:'Extend active healing effects.'},{id:'Tranquility',icon:'✦',tier:4,col:2,max:1,req:'Tree of Life',desc:'Capstone: channel massive party-wide healing.'}
-  ]},
+  Druid:{
+    Restoration:[
+      {id:'Rejuvenation',icon:'❈',tier:0,col:1,max:3,desc:'Improve your core heal-over-time spell.'},{id:'Lifebloom',icon:'🌿',tier:0,col:3,max:3,desc:'Stack healing on a focused ally.'},{id:'Wild Growth',icon:'☘',tier:1,col:0,max:2,req:'Rejuvenation',desc:'Spread healing across the party.'},{id:'Natural Swiftness',icon:'➤',tier:1,col:2,max:1,desc:'Make an important heal instant.'},{id:'Living Seed',icon:'◉',tier:2,col:1,max:2,req:'Wild Growth',desc:'Critical heals plant a delayed heal.'},{id:'Ironbark',icon:'♣',tier:2,col:3,max:1,req:'Lifebloom',desc:'Reduce damage on an ally.'},{id:'Tree of Life',icon:'♠',tier:3,col:1,max:1,req:'Living Seed',desc:'Temporarily empower restoration magic.'},{id:'Flourish',icon:'✿',tier:3,col:3,max:1,req:'Ironbark',desc:'Extend active healing effects.'},{id:'Tranquility',icon:'✦',tier:4,col:2,max:1,req:'Tree of Life',desc:'Capstone: channel massive party-wide healing.'}
+    ],
+    Balance:[
+      {id:'Starlight',icon:'☀',tier:0,col:1,max:3,desc:'Increase Wrath and Starfire damage and Astral Power generation.'},
+      {id:'Twin Moons',icon:'☾',tier:0,col:3,max:3,desc:'Increase Moonfire and Sunfire periodic damage.'},
+      {id:"Nature's Balance",icon:'◈',tier:1,col:0,max:2,req:'Starlight',desc:'Improve Astral Power generation and make Eclipse cycles easier to maintain.'},
+      {id:'Shooting Stars',icon:'✧',tier:1,col:2,max:2,req:'Twin Moons',desc:'Periodic astral damage can generate additional Astral Power.'},
+      {id:'Starfall',icon:'✹',tier:2,col:1,max:1,req:'Shooting Stars',desc:'Unlock Starfall as a powerful area Astral Power spender.'},
+      {id:'Soul of the Forest',icon:'❈',tier:2,col:3,max:2,req:"Nature's Balance",desc:'Solar and Lunar Eclipse empower their matching spells more strongly.'},
+      {id:'Fury of Elune',icon:'☄',tier:3,col:1,max:1,req:'Starfall',desc:'Unlock Fury of Elune as an astral beam that damages packs and generates Astral Power.'},
+      {id:'Astral Communion',icon:'◎',tier:3,col:3,max:2,req:'Soul of the Forest',desc:'Starsurge and Starfall gain stronger finishers and can return Astral Power.'},
+      {id:'Celestial Alignment',icon:'✦',tier:4,col:2,max:1,req:'Fury of Elune',desc:'Capstone: unlock Celestial Alignment, empowering both Solar and Lunar magic at once.'}
+    ]
+  },
   Hunter:{Marksman:[
     {id:'True Aim',icon:'◎',tier:0,col:1,max:3,desc:'Increase accuracy and ranged damage.'},{id:'Rapid Fire',icon:'➶',tier:0,col:3,max:2,desc:'Fire several shots in quick succession.'},{id:'Steady Focus',icon:'◈',tier:1,col:0,max:2,req:'True Aim',desc:'Maintain damage while stationary.'},{id:'Concussive Shot',icon:'◉',tier:1,col:2,max:1,desc:'Add useful control.'},{id:'Piercing Shots',icon:'⇢',tier:2,col:1,max:3,req:'Steady Focus',desc:'Critical shots cause bleeding.'},{id:'Trueshot Aura',icon:'✦',tier:2,col:3,max:1,req:'Rapid Fire',desc:'Improve party ranged output.'},{id:'Careful Aim',icon:'⊙',tier:3,col:1,max:2,req:'Piercing Shots',desc:'Deal extra damage to healthy targets.'},{id:'Killer Instinct',icon:'☠',tier:3,col:3,max:2,req:'Trueshot Aura',desc:'Improve finishing damage.'},{id:'Kill Shot',icon:'✹',tier:4,col:2,max:1,req:'Careful Aim',desc:'Capstone execute ability.'}
   ]},
@@ -325,6 +338,25 @@ const UI_SKILL_FALLBACKS={
     {id:'void-eruption',name:'Void Eruption',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Spend Insanity to erupt with Void energy and enter Voidform.',range:35,damage:44,cost:40,gcd:1500,cast:1100,cd:60000,cleave:3,damageType:'magic',talentReq:'Void Eruption'},
     {id:'dispersion',name:'Dispersion',kind:'defensive',role:'dps',spec:'Shadow',unlockLevel:8,desc:'Disperse into shadow, greatly reducing incoming damage for 6 seconds.',duration:6000,damageReduction:.40,gcd:0,cd:75000},
     {id:'silence',name:'Silence',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast from range.',range:30,cost:0,gcd:0,cd:30000}
+  ],
+  Druid:[
+    {id:'rejuvenation',name:'Rejuvenation',kind:'heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'An efficient heal with a short healing-over-time effect.',range:30,heal:22,cost:10,gcd:1500,cast:0,cd:0,hot:8},
+    {id:'regrowth',name:'Regrowth',kind:'heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'A stronger direct heal for injured allies.',range:30,heal:34,cost:18,gcd:1500,cast:1100,cd:0},
+    {id:'wild-growth',name:'Wild Growth',kind:'group-heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Restore health to the whole party.',range:30,heal:15,cost:22,gcd:1500,cast:0,cd:8000},
+    {id:'restoration-wrath',name:'Wrath',kind:'damage',role:'healer',spec:'Restoration',unlockLevel:4,desc:'A ranged nature attack for safe damage windows.',range:30,damage:14,cost:4,gcd:1500,cast:1200,cd:0,damageType:'magic'},
+    {id:'tranquility',name:'Tranquility',kind:'group-heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'A powerful emergency party heal with a long cooldown.',range:30,heal:30,cost:32,gcd:1500,cast:2500,cd:30000,talentReq:'Tranquility'},
+
+    {id:'wrath',name:'Wrath',kind:'damage',role:'dps',spec:'Balance',unlockLevel:1,desc:'Cast nature magic to generate Astral Power and move toward Lunar Eclipse.',range:35,damage:19,cost:0,gain:10,gcd:1500,cast:1200,cd:0,damageType:'magic',school:'nature'},
+    {id:'starfire',name:'Starfire',kind:'damage',role:'dps',spec:'Balance',unlockLevel:1,desc:'Cast arcane stellar magic to generate Astral Power and move toward Solar Eclipse.',range:35,damage:22,cost:0,gain:12,gcd:1500,cast:1450,cd:0,cleave:1,damageType:'magic',school:'arcane'},
+    {id:'starsurge',name:'Starsurge',kind:'damage',role:'dps',spec:'Balance',unlockLevel:1,desc:'Spend Astral Power on a heavy single-target astral strike.',range:35,damage:40,cost:40,gcd:1500,cast:0,cd:0,damageType:'magic',school:'astral'},
+    {id:'moonfire',name:'Moonfire',kind:'damage',role:'dps',spec:'Balance',unlockLevel:4,desc:'Burn the target with lunar magic that continues dealing damage.',range:35,damage:11,cost:0,gain:6,gcd:1500,cast:0,cd:7000,damageType:'magic',school:'arcane'},
+    {id:'sunfire',name:'Sunfire',kind:'damage',role:'dps',spec:'Balance',unlockLevel:6,desc:'Scorch the target with solar nature magic and spread pressure into nearby enemies.',range:35,damage:12,cost:0,gain:6,gcd:1500,cast:0,cd:7000,cleave:2,damageType:'magic',school:'nature'},
+    {id:'starfall',name:'Starfall',kind:'damage',role:'dps',spec:'Balance',unlockLevel:1,desc:'Spend Astral Power to call falling stars across the enemy pack.',range:35,damage:32,cost:50,gcd:1500,cast:700,cd:8000,cleave:4,damageType:'magic',school:'astral',talentReq:'Starfall'},
+    {id:'fury-of-elune',name:'Fury of Elune',kind:'damage',role:'dps',spec:'Balance',unlockLevel:1,desc:'Channel an astral beam through the enemy pack while generating Astral Power.',range:35,damage:38,cost:0,gain:24,gcd:1500,cast:1600,cd:30000,cleave:3,damageType:'magic',school:'astral',talentReq:'Fury of Elune'},
+    {id:'celestial-alignment',name:'Celestial Alignment',kind:'damage',role:'dps',spec:'Balance',unlockLevel:1,desc:'Align the heavens and empower Solar and Lunar magic simultaneously.',range:35,damage:36,cost:20,gcd:1500,cast:900,cd:60000,cleave:2,damageType:'magic',school:'astral',talentReq:'Celestial Alignment'},
+    {id:'solar-beam',name:'Solar Beam',kind:'interrupt',role:'dps',spec:'Balance',unlockLevel:1,desc:'Silence an enemy cast with focused solar energy.',range:30,cost:0,gcd:0,cd:30000},
+    {id:'barkskin',name:'Barkskin',kind:'defensive',unlockLevel:8,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.20,gcd:0,cd:60000},
+    {id:'skull-bash',name:'Skull Bash',kind:'interrupt',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Interrupt an enemy cast.',range:13,cost:0,gcd:0,cd:15000}
   ],
   Shaman:[
     {id:'healing-wave',name:'Healing Wave',kind:'heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'A dependable restorative cast for an injured ally.',range:30,heal:36,cost:14,gcd:1500,cast:1450,cd:0},
