@@ -678,33 +678,6 @@ function talentDamageScale(ctx,u,a,target){
    if(a.id==='death-coil'&&u.statuses?.['sudden-doom'])m*=1.18;
   }
  }
- if(u.class==='Priest'&&u.spec==='Shadow'){
-  if(a.id==='mind-blast'&&(r=talentRank(u,'Mind Devourer'))&&ctx.rng()<.16*r){
-   applyStatus(ctx,u,u,{id:'mind-devourer',name:'Mind Devourer',kind:'buff',duration:9000,effect:{}});
-   talentTrigger(ctx,u,'Mind Devourer',u,{duration:9000})
-  }
-  if(['mind-blast','devouring-plague'].includes(a.id)&&(r=talentRank(u,'Psychic Link'))&&target.alive){
-   const extra=livingEnemies(ctx).filter(e=>e.id!==target.id).sort((x,y)=>dist(target.position,x.position)-dist(target.position,y.position))[0];
-   if(extra&&dist(target.position,extra.position)<=20){
-    const splash=Math.max(1,Math.round(dealt*(.08+.07*r)));dealDamage(ctx,u,extra,splash,'Psychic Link',{damageType:'magic'});talentTrigger(ctx,u,'Psychic Link',extra,{damage:splash})
-   }
-  }
-  if(['shadow-word-pain','vampiric-touch','devouring-plague'].includes(a.id)&&target.alive){
-   const weaving=talentRank(u,'Shadow Weaving'),embrace=talentRank(u,'Vampiric Embrace'),setScale=Math.max(.5,Number(u?.setBonuses?.periodicDamageScale)||1);
-   const ratio=a.id==='shadow-word-pain'?.46:a.id==='vampiric-touch'?.52:.30,tick=Math.max(1,Math.round(dealt*ratio*(1+weaving*.04)*setScale));
-   const label=a.name,id=a.id+'-'+u.id;
-   applyStatus(ctx,u,target,{id,name:label,kind:'debuff',duration:5000,effect:{damageOverTime:tick}});
-   [1500,3000,4500].forEach(t=>schedule(ctx,ctx.time+t,()=>{
-    if(!u.alive||!target.alive)return;
-    const td=dealDamage(ctx,u,target,tick,label+' (DoT)',{damageType:'magic'});
-    if(embrace&&td>0)doHeal(ctx,u,u,Math.max(1,Math.round(td*(.025+.02*embrace))),'Vampiric Embrace')
-   },'shadow-dot'));
-  }
-  if(a.id==='void-eruption'){
-   applyStatus(ctx,u,u,{id:'voidform',name:'Voidform',kind:'buff',duration:10000,effect:{outgoingDamage:.20,haste:.12}});
-   talentTrigger(ctx,u,'Void Eruption',u,{duration:10000})
-  }
- }
  if(u.class==='Demon Hunter'){
   if(u.spec==='Havoc'){
    if(['demons-bite','chaos-strike'].includes(a.id))m*=1+talentRank(u,'Demon Blades')*.03;
@@ -1284,6 +1257,33 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
  if(!u?.alive||!target||dealt<=0)return;
  u.damageActions=(Number(u.damageActions)||0)+1;
  let r=0;
+ if(u.class==='Priest'&&u.spec==='Shadow'){
+  if(a.id==='mind-blast'&&(r=talentRank(u,'Mind Devourer'))&&ctx.rng()<.16*r){
+   applyStatus(ctx,u,u,{id:'mind-devourer',name:'Mind Devourer',kind:'buff',duration:9000,effect:{}});
+   talentTrigger(ctx,u,'Mind Devourer',u,{duration:9000})
+  }
+  if(['mind-blast','devouring-plague'].includes(a.id)&&(r=talentRank(u,'Psychic Link'))&&target.alive){
+   const extra=livingEnemies(ctx).filter(e=>e.id!==target.id).sort((x,y)=>dist(target.position,x.position)-dist(target.position,y.position))[0];
+   if(extra&&dist(target.position,extra.position)<=20){
+    const splash=Math.max(1,Math.round(dealt*(.08+.07*r)));dealDamage(ctx,u,extra,splash,'Psychic Link',{damageType:'magic'});talentTrigger(ctx,u,'Psychic Link',extra,{damage:splash})
+   }
+  }
+  if(['shadow-word-pain','vampiric-touch','devouring-plague'].includes(a.id)&&target.alive){
+   const weaving=talentRank(u,'Shadow Weaving'),embrace=talentRank(u,'Vampiric Embrace'),setScale=Math.max(.5,Number(u?.setBonuses?.periodicDamageScale)||1);
+   const ratio=a.id==='shadow-word-pain'?.46:a.id==='vampiric-touch'?.52:.30,tick=Math.max(1,Math.round(dealt*ratio*(1+weaving*.04)*setScale));
+   const label=a.name,id=a.id+'-'+u.id;
+   applyStatus(ctx,u,target,{id,name:label,kind:'debuff',duration:5000,effect:{damageOverTime:tick}});
+   [1500,3000,4500].forEach(t=>schedule(ctx,ctx.time+t,()=>{
+    if(!u.alive||!target.alive)return;
+    const td=dealDamage(ctx,u,target,tick,label+' (DoT)',{damageType:'magic'});
+    if(embrace&&td>0)doHeal(ctx,u,u,Math.max(1,Math.round(td*(.025+.02*embrace))),'Vampiric Embrace')
+   },'shadow-dot'));
+  }
+  if(a.id==='void-eruption'){
+   applyStatus(ctx,u,u,{id:'voidform',name:'Voidform',kind:'buff',duration:10000,effect:{outgoingDamage:.20,haste:.12}});
+   talentTrigger(ctx,u,'Void Eruption',u,{duration:10000})
+  }
+ }
  if(u.class==='Warrior'&&u.spec==='Arms'){
   if((r=talentRank(u,'Battle Rhythm'))){
    applyStatus(ctx,u,u,{id:'battle-rhythm',name:'Battle Rhythm',kind:'buff',duration:4200,effect:{outgoingDamage:.018*r,haste:.018*r}});
