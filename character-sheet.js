@@ -171,8 +171,9 @@ function defaultSkillIds(c,spec=c?.spec){
   return ids.slice(0,4)
 }
 function equippedSkillIds(c,spec=c?.spec){
-  const pool=skillPoolFor(c,spec),byId=new Map(pool.map(s=>[s.id,s]));
-  const explicit=Array.isArray(c?.skillLoadouts?.[spec])?c.skillLoadouts[spec]:defaultSkillIds(c,spec),out=explicit.slice(0,4).map(id=>{const skill=byId.get(id);return skill&&skillAvailable(c,skill,spec)?id:null});
+  const pool=skillPoolFor(c,spec),byId=new Map(pool.map(s=>[s.id,s])),saved=Array.isArray(c?.skillLoadouts?.[spec])?c.skillLoadouts[spec]:null;
+  const hasValidSaved=Array.isArray(saved)&&saved.some(id=>{const skill=byId.get(id);return skill&&skillAvailable(c,skill,spec)});
+  const explicit=hasValidSaved?saved:defaultSkillIds(c,spec),out=explicit.slice(0,4).map(id=>{const skill=byId.get(id);return skill&&skillAvailable(c,skill,spec)?id:null});
   while(out.length<4)out.push(null);
   return out
 }
