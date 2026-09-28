@@ -695,50 +695,7 @@ function talentTrigger(ctx,u,name,target=u,payload={}){
 }
 function talentDamageScale(ctx,u,a,target){
  let m=1,rank=0,hp=healthRatio(target);
- if(u.class==='Warlock'&&u.spec==='Destruction'){
-  u.talentCounters=u.talentCounters||{};
-  if(a.id==='immolate'&&target.alive){
-   const blaze=talentRank(u,'Roaring Blaze'),tick=Math.max(1,Math.round(dealt*.52*(1+blaze*.08))),id='immolate-'+u.id;
-   applyStatus(ctx,u,target,{id,name:'Immolate',kind:'debuff',duration:6600,effect:{damageOverTime:tick}});
-   [1600,3200,4800,6400].forEach(t=>schedule(ctx,ctx.time+t,()=>{
-    if(!u.alive||!target.alive)return;
-    dealDamage(ctx,u,target,tick,'Immolate (DoT)',{damageType:'magic'});
-    gainResource(ctx,u,{name:'Immolate',gain:.25})
-   },'destruction-immolate'))
-  }
-  if(a.id==='conflagrate'&&(r=talentRank(u,'Backdraft'))){
-   applyStatus(ctx,u,u,{id:'backdraft',name:'Backdraft',kind:'buff',duration:8000,effect:{haste:.02*r}});
-   talentTrigger(ctx,u,'Backdraft',u,{duration:8000})
-  }
-  if(a.id==='chaos-bolt'&&(r=talentRank(u,'Eradication'))&&target.alive){
-   applyStatus(ctx,u,target,{id:'eradication-'+u.id,name:'Eradication',kind:'debuff',duration:5500,effect:{incomingDamageTaken:.025*r}});
-   talentTrigger(ctx,u,'Eradication',target,{duration:5500,damageTaken:.025*r})
-  }
-  if(['chaos-bolt','rain-of-fire'].includes(a.id)){
-   if((r=talentRank(u,'Reverse Entropy'))){
-    u.talentCounters.reverseEntropy=(Number(u.talentCounters.reverseEntropy)||0)+1;
-    if(u.talentCounters.reverseEntropy>=Math.max(2,4-r)){
-     u.talentCounters.reverseEntropy=0;
-     applyStatus(ctx,u,u,{id:'reverse-entropy',name:'Reverse Entropy',kind:'buff',duration:6000,effect:{haste:.05*r}});
-     talentTrigger(ctx,u,'Reverse Entropy',u,{duration:6000})
-    }
-   }
-   if((r=talentRank(u,'Soul Conduit'))){
-    u.talentCounters.soulConduit=(Number(u.talentCounters.soulConduit)||0)+1;
-    if(u.talentCounters.soulConduit>=Math.max(2,4-r)){
-     u.talentCounters.soulConduit=0;const refund=.5+.25*r;
-     gainResource(ctx,u,{name:'Soul Conduit',gain:refund});talentTrigger(ctx,u,'Soul Conduit',u,{soulShards:refund})
-    }
-   }
-  }
-  if((r=talentRank(u,'Havoc'))&&['incinerate','chaos-bolt'].includes(a.id)&&target.alive){
-   const extra=livingEnemies(ctx).filter(e=>e.id!==target.id).sort((x,y)=>dist(target.position,x.position)-dist(target.position,y.position))[0];
-   if(extra&&dist(target.position,extra.position)<=20){
-    const echo=Math.max(1,Math.round(dealt*(.18+.12*r)));dealDamage(ctx,u,extra,echo,'Havoc',{damageType:'magic'});
-    talentTrigger(ctx,u,'Havoc',extra,{damage:echo,sourceAbility:a.name})
-   }
-  }
- }
+
  if(u.class==='Warrior'&&u.spec==='Arms'){
   m*=1+talentRank(u,'Weapon Mastery')*.03;
   if((target?.currentCast||Number(target?.interruptedUntil)>ctx.time)&&(rank=talentRank(u,'Overpower')))m*=1+rank*.06;
@@ -1427,14 +1384,50 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
  u.damageActions=(Number(u.damageActions)||0)+1;
  let r=0;
  if(u.class==='Warlock'&&u.spec==='Destruction'){
-  const by=id=>pool.find(a=>a.id===id),immolate=by('immolate'),conflagrate=by('conflagrate'),chaos=by('chaos-bolt'),rain=by('rain-of-fire'),demonfire=by('channel-demonfire'),incinerate=by('incinerate');
-  if(immolate&&!target.statuses?.['immolate-'+u.id])return{ability:immolate,target};
-  if(conflagrate&&cooldownReady(u,conflagrate))return{ability:conflagrate,target};
-  if(demonfire&&target.statuses?.['immolate-'+u.id]&&cooldownReady(u,demonfire))return{ability:demonfire,target};
-  if(livingEnemies(ctx).length>=3&&rain&&u.resource.value>=Number(rain.cost||0))return{ability:rain,target};
-  if(chaos&&u.resource.value>=Number(chaos.cost||0))return{ability:chaos,target};
-  if(incinerate)return{ability:incinerate,target}
+  u.talentCounters=u.talentCounters||{};
+  if(a.id==='immolate'&&target.alive){
+   const blaze=talentRank(u,'Roaring Blaze'),tick=Math.max(1,Math.round(dealt*.52*(1+blaze*.08))),id='immolate-'+u.id;
+   applyStatus(ctx,u,target,{id,name:'Immolate',kind:'debuff',duration:6600,effect:{damageOverTime:tick}});
+   [1600,3200,4800,6400].forEach(t=>schedule(ctx,ctx.time+t,()=>{
+    if(!u.alive||!target.alive)return;
+    dealDamage(ctx,u,target,tick,'Immolate (DoT)',{damageType:'magic'});
+    gainResource(ctx,u,{name:'Immolate',gain:.25})
+   },'destruction-immolate'))
+  }
+  if(a.id==='conflagrate'&&(r=talentRank(u,'Backdraft'))){
+   applyStatus(ctx,u,u,{id:'backdraft',name:'Backdraft',kind:'buff',duration:8000,effect:{haste:.02*r}});
+   talentTrigger(ctx,u,'Backdraft',u,{duration:8000})
+  }
+  if(a.id==='chaos-bolt'&&(r=talentRank(u,'Eradication'))&&target.alive){
+   applyStatus(ctx,u,target,{id:'eradication-'+u.id,name:'Eradication',kind:'debuff',duration:5500,effect:{incomingDamageTaken:.025*r}});
+   talentTrigger(ctx,u,'Eradication',target,{duration:5500,damageTaken:.025*r})
+  }
+  if(['chaos-bolt','rain-of-fire'].includes(a.id)){
+   if((r=talentRank(u,'Reverse Entropy'))){
+    u.talentCounters.reverseEntropy=(Number(u.talentCounters.reverseEntropy)||0)+1;
+    if(u.talentCounters.reverseEntropy>=Math.max(2,4-r)){
+     u.talentCounters.reverseEntropy=0;
+     applyStatus(ctx,u,u,{id:'reverse-entropy',name:'Reverse Entropy',kind:'buff',duration:6000,effect:{haste:.05*r}});
+     talentTrigger(ctx,u,'Reverse Entropy',u,{duration:6000})
+    }
+   }
+   if((r=talentRank(u,'Soul Conduit'))){
+    u.talentCounters.soulConduit=(Number(u.talentCounters.soulConduit)||0)+1;
+    if(u.talentCounters.soulConduit>=Math.max(2,4-r)){
+     u.talentCounters.soulConduit=0;const refund=.5+.25*r;
+     gainResource(ctx,u,{name:'Soul Conduit',gain:refund});talentTrigger(ctx,u,'Soul Conduit',u,{soulShards:refund})
+    }
+   }
+  }
+  if((r=talentRank(u,'Havoc'))&&['incinerate','chaos-bolt'].includes(a.id)&&target.alive){
+   const extra=livingEnemies(ctx).filter(e=>e.id!==target.id).sort((x,y)=>dist(target.position,x.position)-dist(target.position,y.position))[0];
+   if(extra&&dist(target.position,extra.position)<=20){
+    const echo=Math.max(1,Math.round(dealt*(.18+.12*r)));dealDamage(ctx,u,extra,echo,'Havoc',{damageType:'magic'});
+    talentTrigger(ctx,u,'Havoc',extra,{damage:echo,sourceAbility:a.name})
+   }
+  }
  }
+
  if(u.class==='Mage'&&u.spec==='Frost'){
   u.talentCounters=u.talentCounters||{};
   const fingers=talentRank(u,'Fingers of Frost'),brain=talentRank(u,'Brain Freeze'),procRate=Math.max(0,Number(u?.setBonuses?.frostProcRate)||0);
@@ -2329,6 +2322,15 @@ function chooseAbility(ctx,u,target){
   }
   // Other healers preserve mana and watch incoming damage during safe windows.
   return null
+ }
+ if(u.class==='Warlock'&&u.spec==='Destruction'){
+  const by=id=>pool.find(a=>a.id===id),immolate=by('immolate'),conflagrate=by('conflagrate'),chaos=by('chaos-bolt'),rain=by('rain-of-fire'),demonfire=by('channel-demonfire'),incinerate=by('incinerate');
+  if(immolate&&!target.statuses?.['immolate-'+u.id])return{ability:immolate,target};
+  if(conflagrate&&cooldownReady(u,conflagrate))return{ability:conflagrate,target};
+  if(demonfire&&target.statuses?.['immolate-'+u.id]&&cooldownReady(u,demonfire))return{ability:demonfire,target};
+  if(livingEnemies(ctx).length>=3&&rain&&u.resource.value>=Number(rain.cost||0))return{ability:rain,target};
+  if(chaos&&u.resource.value>=Number(chaos.cost||0))return{ability:chaos,target};
+  if(incinerate)return{ability:incinerate,target}
  }
  if(u.class==='Mage'&&u.spec==='Frost'){
   const by=id=>pool.find(a=>a.id===id),fingers=Boolean(u.statuses?.['fingers-of-frost']),brain=Boolean(u.statuses?.['brain-freeze']),chilled=Boolean(target?.statuses?.['winters-chill-'+u.id]);
