@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.20';
+const VERSION='1.3.21';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -188,13 +188,21 @@ const ABILITIES={
   {id:'survival-instincts',name:'Survival Instincts',kind:'defensive',unlockLevel:13,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.20,gcd:0,cd:75000}
  ],
  Mage:[
-  {id:'pyroblast',name:'Pyroblast',kind:'damage',unlockLevel:1,desc:'A slow, devastating ranged spell.',range:35,damage:36,cost:14,gcd:1500,cast:2200,cd:8000},
-  {id:'fireball',name:'Fireball',kind:'damage',unlockLevel:1,desc:'Reliable ranged spell damage.',range:35,damage:24,cost:8,gcd:1500,cast:1700,cd:0},
-  {id:'fire-blast',name:'Fire Blast',kind:'damage',unlockLevel:1,desc:'An instant burst of damage.',range:35,damage:16,cost:4,gcd:0,cast:0,cd:9000},
+  {id:'pyroblast',name:'Pyroblast',kind:'damage',role:'dps',spec:'Arcane',unlockLevel:1,desc:'A slow, devastating ranged spell.',range:35,damage:36,cost:14,gcd:1500,cast:2200,cd:8000,damageType:'magic'},
+  {id:'fireball',name:'Fireball',kind:'damage',role:'dps',spec:'Arcane',unlockLevel:1,desc:'Reliable ranged spell damage.',range:35,damage:24,cost:8,gcd:1500,cast:1700,cd:0,damageType:'magic'},
+  {id:'fire-blast',name:'Fire Blast',kind:'damage',role:'dps',spec:'Arcane',unlockLevel:1,desc:'An instant burst of damage.',range:35,damage:16,cost:4,gcd:0,cast:0,cd:9000,damageType:'magic'},
+  {id:'arcane-barrage',name:'Arcane Barrage',kind:'damage',role:'dps',spec:'Arcane',unlockLevel:5,desc:'An instant ranged attack with a short cooldown.',range:35,damage:25,cost:12,gcd:1500,cd:5000,damageType:'magic'},
+  {id:'arcane-ward',name:'Arcane Ward',kind:'defensive',role:'dps',spec:'Arcane',unlockLevel:9,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000},
+  {id:'arcane-nova',name:'Arcane Nova',kind:'damage',role:'dps',spec:'Arcane',unlockLevel:13,desc:'Burst the target and nearby enemies with arcane energy.',range:25,damage:22,cost:18,gcd:1500,cd:10000,cleave:3,damageType:'magic'},
+
+  {id:'frostbolt',name:'Frostbolt',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Launch a bolt of frost and build toward Frost procs.',range:35,damage:20,cost:6,gcd:1500,cast:1450,cd:0,damageType:'magic'},
+  {id:'ice-lance',name:'Ice Lance',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'An instant frost shard that becomes deadly against frozen targets.',range:35,damage:14,cost:5,gcd:1500,cast:0,cd:0,damageType:'magic'},
+  {id:'flurry',name:'Flurry',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'A rapid sequence of frost bolts that can prepare a Shatter window.',range:35,damage:27,cost:10,gcd:1500,cast:950,cd:8000,damageType:'magic'},
+  {id:'blizzard',name:'Blizzard',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Blanket the enemy pack in freezing magic.',range:35,damage:20,cost:16,gcd:1500,cast:1400,cd:8000,cleave:4,damageType:'magic'},
+  {id:'frozen-orb',name:'Frozen Orb',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Launch an orb that repeatedly lashes nearby enemies with frost.',range:35,damage:30,cost:18,gcd:1500,cast:700,cd:24000,cleave:3,damageType:'magic'},
+  {id:'glacial-spike',name:'Glacial Spike',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Hurl a massive spike of compressed ice for devastating burst.',range:35,damage:48,cost:24,gcd:1500,cast:1800,cd:18000,damageType:'magic'},
   {id:'counterspell',name:'Counterspell',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast from range.',range:35,cost:0,gcd:0,cd:24000},
-  {id:'arcane-barrage',name:'Arcane Barrage',kind:'damage',unlockLevel:5,desc:'An instant ranged attack with a short cooldown.',range:35,damage:25,cost:12,gcd:1500,cd:5000},
-  {id:'arcane-ward',name:'Arcane Ward',kind:'defensive',unlockLevel:9,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000},
-  {id:'arcane-nova',name:'Arcane Nova',kind:'damage',unlockLevel:13,desc:'Burst the target and nearby enemies with arcane energy.',range:25,damage:22,cost:18,gcd:1500,cd:10000,cleave:3}
+  {id:'ice-barrier',name:'Ice Barrier',kind:'defensive',role:'dps',spec:'Frost',unlockLevel:8,desc:'Wrap yourself in ice, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:60000}
  ],
  Warrior:[
   {id:'shield-slam',name:'Shield Slam',kind:'damage',role:'tank',unlockLevel:1,desc:'High-threat melee strike.',range:5,damage:21,cost:20,gain:8,gcd:1500,cd:6000,threat:3},
@@ -398,7 +406,9 @@ function gearSetState(c){
    talentSkillCooldownScale:Number(e2.talentSkillCooldownScale||1)*Number(e4.talentSkillCooldownScale||1),
    resourceGainScale:Number(e2.resourceGainScale||1)*Number(e4.resourceGainScale||1),
    periodicDamageScale:Number(e2.periodicDamageScale||1)*Number(e4.periodicDamageScale||1),
-   eclipseDamageScale:Number(e2.eclipseDamageScale||1)*Number(e4.eclipseDamageScale||1)
+   eclipseDamageScale:Number(e2.eclipseDamageScale||1)*Number(e4.eclipseDamageScale||1),
+   frostProcDamageScale:Number(e2.frostProcDamageScale||1)*Number(e4.frostProcDamageScale||1),
+   frostProcRate:Number(e2.frostProcRate||0)+Number(e4.frostProcRate||0)
  }
 }
 
@@ -422,7 +432,7 @@ const TALENT_SKILL_REQUIREMENTS={
   'consecration':'Consecration','ardent-defender':'Ardent Defender','holy-shock':'Holy Shock','radiant-wave':'Radiance',
   'guardian-spirit':'Guardian Spirit','divine-hymn':'Divine Hymn',
   'wild-growth':'Wild Growth','tranquility':'Tranquility','starfall':'Starfall','fury-of-elune':'Fury of Elune','celestial-alignment':'Celestial Alignment',
-  'kill-shot':'Kill Shot','garrote':'Garrote','envenom':'Envenom','arcane-barrage':'Barrage',
+  'kill-shot':'Kill Shot','garrote':'Garrote','envenom':'Envenom','arcane-barrage':'Barrage','blizzard':'Blizzard','frozen-orb':'Frozen Orb','glacial-spike':'Glacial Spike',
   'spirit-link-totem':'Spirit Link Totem','earthquake':'Earthquake','stormkeeper':'Stormkeeper','ascendance':'Ascendance','soul-strike':'Soul Strike','felstorm':'Felstorm','summon-demonic-tyrant':'Demonic Tyrant',
   'breath-of-fire':'Breath of Fire','fortifying-brew':'Fortifying Brew','revival':'Revival','fists-of-fury':'Fists of Fury','touch-of-death':'Touch of Death',
   'rune-tap':'Rune Tap','dancing-rune-weapon':'Dancing Rune Weapon','vampiric-blood':'Vampiric Blood','remorseless-winter':'Remorseless Winter','breath-of-sindragosa':'Breath of Sindragosa','dark-transformation':'Dark Transformation','army-of-the-dead':'Army of the Dead','apocalypse':'Apocalypse',
@@ -520,6 +530,15 @@ const TALENT_RULES={
  'Arcane Power':'Automatically triggers a major damage cooldown in difficult combat.',
  'Nether Precision':'Increases spell critical chance.',
  'Barrage':'Unlocks Arcane Barrage and makes it hit harder with splash damage.',
+ 'Piercing Cold':'Increases Frostbolt, Flurry and Ice Lance damage.',
+ 'Ice Shards':'Increases Frost spell critical chance.',
+ 'Fingers of Frost':'Frostbolt and Blizzard build toward an empowered Ice Lance.',
+ 'Brain Freeze':'Frostbolt can make Flurry instant and prepare Winter’s Chill.',
+ 'Blizzard':'Unlocks Blizzard as an equipable area frost spell.',
+ 'Shatter':'Greatly increases Ice Lance and Glacial Spike damage during frozen-state windows.',
+ 'Frozen Orb':'Unlocks Frozen Orb, which deals repeated frost damage through enemy packs.',
+ 'Thermal Void':'Consuming Frost procs grants a short haste and damage surge.',
+ 'Glacial Spike':'Unlocks Glacial Spike, a devastating Frost capstone finisher.',
  'Tidal Focus':'Increases Restoration healing and reduces the Mana cost of healing spells.',
  'Totemic Mastery':'Makes equipped Shaman totems stronger and keeps them active longer.',
  'Riptide':'Strengthens Riptide and its lingering healing.',
@@ -688,8 +707,17 @@ function talentDamageScale(ctx,u,a,target){
   if(a.id==='eviscerate'&&talentRank(u,'Eviscerate'))m*=hp<.35?1.35:1.20;
  }
  if(u.class==='Mage'){
-  m*=1+talentRank(u,'Arcane Focus')*.03;
-  if(a.id==='arcane-barrage'&&talentRank(u,'Barrage'))m*=1.28;
+  if(u.spec==='Arcane'){
+   m*=1+talentRank(u,'Arcane Focus')*.03;
+   if(a.id==='arcane-barrage'&&talentRank(u,'Barrage'))m*=1.28;
+  }
+  if(u.spec==='Frost'){
+   if(['frostbolt','flurry','ice-lance'].includes(a.id))m*=1+talentRank(u,'Piercing Cold')*.035;
+   const proc=Boolean(u.statuses?.['fingers-of-frost'])||Boolean(target?.statuses?.['winters-chill-'+u.id]);
+   if(proc&&['ice-lance','glacial-spike'].includes(a.id)){
+    m*=(1.45+talentRank(u,'Shatter')*.14)*Math.max(1,Number(u?.setBonuses?.frostProcDamageScale)||1);
+   }
+  }
  }
 
  if(u.class==='Priest'&&u.spec==='Shadow'){
@@ -754,8 +782,11 @@ function talentDamageScale(ctx,u,a,target){
  if(aura&&['Hunter','Mage'].includes(u.class))m*=1.05;
  return m
 }
-function talentCritBonus(u){return u.class==='Mage'?talentRank(u,'Nether Precision')*.03:0}
-function talentCritMultiplier(u){return u.class==='Mage'?1+talentRank(u,'Spell Impact')*.12:1}
+function talentCritBonus(u){
+ if(u.class!=='Mage')return 0;
+ return u.spec==='Frost'?talentRank(u,'Ice Shards')*.025:talentRank(u,'Nether Precision')*.03
+}
+function talentCritMultiplier(u){return u.class==='Mage'&&u.spec==='Arcane'?1+talentRank(u,'Spell Impact')*.12:1}
 function talentHealingScale(ctx,u,a,target){
  let m=1,rank=0,hp=healthRatio(target);
  if(u.class==='Paladin'&&u.spec==='Holy'){
@@ -796,7 +827,7 @@ function talentHealingScale(ctx,u,a,target){
 function talentCooldownScale(u,a){
  let m=1;
  if(u.class==='Hunter')m*=Math.max(.78,1-talentRank(u,'Rapid Fire')*.06);
- if(u.class==='Mage')m*=Math.max(.78,1-talentRank(u,'Arcane Flows')*.06);
+ if(u.class==='Mage'&&u.spec==='Arcane')m*=Math.max(.78,1-talentRank(u,'Arcane Flows')*.06);
  if(u.class==='Paladin'&&a.kind==='interrupt')m*=Math.max(.75,1-talentRank(u,'Hammer of Justice')*.10);
  if(u.class==='Warlock'&&a.kind==='summon')m*=Math.max(.78,1-talentRank(u,'Master Summoner')*.07);
  if(u.class==='Monk'&&u.spec==='Windwalker'&&a.kind==='damage')m*=Math.max(.78,1-talentRank(u,'Serenity')*.055);
@@ -835,6 +866,9 @@ function talentCost(ctx,u,a,cost){
 }
 function talentCastTime(ctx,u,a,cast){
  if(cast<=0)return cast;
+ if(u.class==='Mage'&&u.spec==='Frost'&&a.id==='flurry'&&u.statuses?.['brain-freeze']){
+  removeStatus(ctx,u,'brain-freeze','consumed');talentTrigger(ctx,u,'Brain Freeze',u,{originalCast:cast});return 0
+ }
  if(u.class==='Shaman'&&u.spec==='Elemental'&&a.id==='lava-burst'&&u.statuses?.['lava-surge']){
   removeStatus(ctx,u,'lava-surge','consumed');talentTrigger(ctx,u,'Lava Surge',u,{originalCast:cast});return 0
  }
