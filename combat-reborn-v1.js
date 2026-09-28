@@ -2863,6 +2863,63 @@ function runSelfTests(){
   const ids=(monkLocked.finalState.players.find(p=>p.id==='p-ml')?.abilities||[]).map(a=>a.id);
   return ids.includes('tiger-palm')&&!ids.includes('fists-of-fury')&&!ids.includes('touch-of-death')
  });
+ const bloodTalents={'Heartbreaker':3,'Ossuary':3,'Hemostasis':2,'Rune Tap':1,'Blood Shield':2,'Voracious':2,'Dancing Rune Weapon':1,'Red Thirst':2,'Vampiric Blood':1};
+ const bloodParty=[
+  {id:'dkt',name:'Blood DK',class:'Death Knight',spec:'Blood',power:14,level:15,skillLoadouts:{Blood:['heart-strike','death-strike','dark-command','marrowrend']},talents:{Blood:bloodTalents}},
+  {id:'dkh',name:'Healer',class:'Priest',spec:'Holy',power:14,level:15},
+  {id:'dkb1',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15},
+  {id:'dkb2',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15},
+  {id:'dkb3',name:'Rogue',class:'Rogue',spec:'Assassination',power:14,level:15}
+ ];
+ const bloodRun=simulate({party:bloodParty,encounter:{...base,kind:'boss',level:15,enemyHealth:7000},tactics:{cooldownUse:'free'},seed:'death-knight-blood',maxDurationMs:13000});
+ test('Blood Death Strike Recovery',()=>{
+  const dk=bloodRun.finalState.players.find(p=>p.id==='p-dkt'),stats=bloodRun.summary.players.find(p=>p.id==='p-dkt');
+  return dk?.role==='tank'&&Number(stats?.damageTaken)>0&&Number(stats?.healing)>0&&bloodRun.events.some(e=>e.type==='HEAL_RECEIVED'&&e.source==='p-dkt'&&e.ability==='Death Strike'&&Number(e.amount)>0)
+ });
+ test('Blood Bone Shield',()=>bloodRun.events.some(e=>e.type==='BUFF_APPLIED'&&e.target==='p-dkt'&&e.ability==='Bone Shield'));
+
+ const frostTalents={'Killing Machine':3,'Icy Talons':3,'Rime':2,'Obliteration':2,'Runic Empowerment':2,'Remorseless Winter':1,'Avalanche':2,'Frozen Pulse':2,'Breath of Sindragosa':1};
+ const frostParty=[
+  {id:'dkft',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15},
+  {id:'dkfh',name:'Healer',class:'Priest',spec:'Holy',power:14,level:15},
+  {id:'dkf',name:'Frost DK',class:'Death Knight',spec:'Frost',power:14,level:15,skillLoadouts:{Frost:['obliterate','frost-strike','howling-blast','breath-of-sindragosa']},talents:{Frost:frostTalents}},
+  {id:'dkf1',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15},
+  {id:'dkf2',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15}
+ ];
+ const frostRun=simulate({party:frostParty,encounter:{...base,kind:'boss',level:15,enemyHealth:6500},tactics:{cooldownUse:'free'},seed:'death-knight-frost',maxDurationMs:12000});
+ test('Frost Runic Generator Spender',()=>{
+  const gains=frostRun.events.some(e=>e.type==='RESOURCE_GAINED'&&e.source==='p-dkf'&&['Obliterate','Howling Blast'].includes(e.ability));
+  const spends=frostRun.events.some(e=>e.type==='RESOURCE_SPENT'&&e.source==='p-dkf'&&['Frost Strike','Breath of Sindragosa'].includes(e.ability));
+  return gains&&spends&&frostRun.events.some(e=>e.type==='BUFF_APPLIED'&&e.target==='p-dkf'&&e.ability==='Icy Talons')
+ });
+
+ const unholyTalents={'Festering Wounds':3,'Dark Transformation':3,'Infected Claws':2,'Epidemic':2,'Sudden Doom':2,'Army of the Dead':1,'Unholy Pact':2,'Defile':2,'Apocalypse':1};
+ const unholyParty=[
+  {id:'dkut',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15},
+  {id:'dkuh',name:'Healer',class:'Priest',spec:'Holy',power:14,level:15},
+  {id:'dku',name:'Unholy DK',class:'Death Knight',spec:'Unholy',power:14,level:15,skillLoadouts:{Unholy:['festering-strike','scourge-strike','apocalypse','dark-transformation']},talents:{Unholy:unholyTalents}},
+  {id:'dku1',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15},
+  {id:'dku2',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15}
+ ];
+ const unholyRun=simulate({party:unholyParty,encounter:{...base,kind:'boss',level:15,enemyHealth:7500},tactics:{cooldownUse:'free'},seed:'death-knight-unholy',maxDurationMs:15000});
+ test('Unholy Permanent Ghoul',()=>{
+  const dk=unholyRun.finalState.players.find(p=>p.id==='p-dku'),summon=unholyRun.events.find(e=>e.type==='PET_SUMMONED'&&e.source==='p-dku'&&e.payload?.petType==='ghoul'&&e.result==='permanent');
+  const hit=unholyRun.events.find(e=>e.type==='DAMAGE_DEALT'&&e.payload?.ownerId==='p-dku'&&e.payload?.pet===true);
+  return dk?.role==='dps'&&Boolean(summon&&hit)
+ });
+ test('Unholy Wounds and Apocalypse',()=>unholyRun.events.some(e=>e.type==='FESTERING_WOUND_CHANGED'&&e.source==='p-dku'&&e.result==='applied')&&unholyRun.events.some(e=>e.type==='PET_SUMMONED'&&e.payload?.ownerId==='p-dku'&&e.payload?.petType==='apocalypse-ghoul'));
+
+ const dkLocked=simulate({party:[
+  {id:'dkl-t',name:'Tank',class:'Warrior',spec:'Protection',power:12,level:15},
+  {id:'dkl-h',name:'Healer',class:'Priest',spec:'Holy',power:12,level:15},
+  {id:'dkl',name:'Locked DK',class:'Death Knight',spec:'Frost',power:12,level:15,skillLoadouts:{Frost:['breath-of-sindragosa','remorseless-winter','obliterate','mind-freeze']},talents:{Frost:{}}},
+  {id:'dkl1',name:'Mage',class:'Mage',spec:'Arcane',power:12,level:15},
+  {id:'dkl2',name:'Hunter',class:'Hunter',spec:'Marksman',power:12,level:15}
+ ],encounter:{...base,level:15,enemyHealth:3200},seed:'death-knight-gates',maxDurationMs:2500});
+ test('Death Knight Talent Skill Gates',()=>{
+  const ids=(dkLocked.finalState.players.find(p=>p.id==='p-dkl')?.abilities||[]).map(a=>a.id);
+  return ids.includes('obliterate')&&!ids.includes('breath-of-sindragosa')&&!ids.includes('remorseless-winter')
+ });
  const mageOnly=[{id:'m',name:'Mage',class:'Mage',spec:'Arcane',power:2,level:2}];
  r=simulate({party:mageOnly,encounter:{...base,enemyHealth:900},seed:'resource'});
  test('Resource Starvation',()=>r.events.some(e=>e.type==='RESOURCE_SPENT'));
