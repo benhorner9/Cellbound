@@ -61,7 +61,10 @@ const classes={
   }},
   Hunter:{icon:'➶',glow:'#AAD372',specs:{Marksman:{role:'dps',talents:['True Aim','Rapid Fire','Kill Shot']}}},
   Rogue:{icon:'◆',glow:'#FFF468',specs:{Assassination:{role:'dps',talents:['Ambush','Venom','Eviscerate']}}},
-  Mage:{icon:'✦',glow:'#3FC7EB',specs:{Arcane:{role:'dps',talents:['Arcane Focus','Surge','Barrage']}}},
+  Mage:{icon:'✦',glow:'#3FC7EB',specs:{
+    Arcane:{role:'dps',talents:['Arcane Focus','Surge','Barrage']},
+    Frost:{role:'dps',talents:['Piercing Cold','Fingers of Frost','Glacial Spike']}
+  }},
   Shaman:{icon:'⚡',glow:'#0070DD',specs:{
     Restoration:{role:'healer',talents:['Tidal Focus','Totemic Mastery','Ascendant Tide']},
     Elemental:{role:'dps',talents:['Elemental Fury','Lava Surge','Ascendance']}
