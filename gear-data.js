@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const CLASS_ORDER=['Warrior','Paladin','Priest','Druid','Hunter','Rogue','Mage'];
+const CLASS_ORDER=['Warrior','Paladin','Priest','Druid','Hunter','Rogue','Mage','Shaman'];
 const CORE_SLOT_ORDER=['Head','Chest','Weapon'];
 const SLOT_ORDER=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring','Trinket','Relic'];
 const EQUIPMENT_POSITION_ORDER=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic'];
@@ -42,17 +42,19 @@ const CLASS_STAT_POOLS={
   Druid:['intellect','stamina','healing','crit','haste'],
   Hunter:['agility','stamina','crit','haste'],
   Rogue:['agility','stamina','crit','haste'],
-  Mage:['intellect','stamina','crit','haste']
+  Mage:['intellect','stamina','crit','haste'],
+  Shaman:['intellect','stamina','healing','crit','haste']
 };
 const SPEC_IDEALS={
   'Warrior|Protection':['block','threat','stamina','armour'],'Warrior|Arms':['strength','crit','haste'],
   'Paladin|Protection':['block','threat','stamina','armour'],'Paladin|Holy':['healing','intellect','haste','crit'],
   'Priest|Holy':['healing','intellect','haste','crit'],'Druid|Restoration':['healing','haste','intellect','crit'],
-  'Hunter|Marksman':['agility','crit','haste'],'Rogue|Assassination':['agility','crit','haste'],'Mage|Arcane':['intellect','crit','haste']
+  'Hunter|Marksman':['agility','crit','haste'],'Rogue|Assassination':['agility','crit','haste'],'Mage|Arcane':['intellect','crit','haste'],
+  'Shaman|Restoration':['healing','intellect','haste','crit']
 };
 const SET_META={
   Warrior:{name:'Warlord Set'},Paladin:{name:'Sunward Set'},Priest:{name:'Saintglass Set'},Druid:{name:'Moonbark Set'},
-  Hunter:{name:'Hawkeye Set'},Rogue:{name:'Shadecoil Set'},Mage:{name:'Starweave Set'}
+  Hunter:{name:'Hawkeye Set'},Rogue:{name:'Shadecoil Set'},Mage:{name:'Starweave Set'},Shaman:{name:'Tempestcaller Set'}
 };
 const SET_BONUS_RULES={
   pieces2:{threshold:2,name:'Resonant Pair',outputScale:1.05,short:'+5% damage & healing output',description:'All damaging and healing abilities are 5% stronger.'},
@@ -77,7 +79,8 @@ const NAMES={
   Druid:[['Rootwoven Hood','Barkhide Garb','Living Branch'],['Wildbloom Hood','Wildbloom Raiment','Thornstaff'],['Moonbark Crown','Moonbark Regalia','Starroot Scepter'],['Moonbark Antlers','Moonbark Vestments','Moonbark Scepter']],
   Hunter:[['Tracker Hood','Leather Jerkin','Ashwood Bow'],['Longshot Hood','Longshot Harness','Emberstring Bow'],['Hawkeye Visor','Hawkeye Brigandine','Stormflight Longbow'],['Hawkeye Warhood','Hawkeye Harness','Hawkeye Greatbow']],
   Rogue:[['Shadowcap','Duskleather Tunic','Twin Knives'],['Nightfang Hood','Nightfang Jerkin','Venomshivs'],['Shadecoil Mask','Shadecoil Vest','Ghostfang Daggers'],['Shadecoil Cowl','Shadecoil Leathers','Shadecoil Blades']],
-  Mage:[['Novice Circlet','Blueweave Robe','Crystal Wand'],['Spellforge Circlet','Spellforge Mantle','Arcglass Rod'],['Starweave Crown','Starweave Vestment','Celestine Staff'],['Starweave Diadem','Starweave Robe','Starweave Focus']]
+  Mage:[['Novice Circlet','Blueweave Robe','Crystal Wand'],['Spellforge Circlet','Spellforge Mantle','Arcglass Rod'],['Starweave Crown','Starweave Vestment','Celestine Staff'],['Starweave Diadem','Starweave Robe','Starweave Focus']],
+  Shaman:[['Tidecaller Hood','Tidecaller Mail','Riverstone Mace'],['Stormspeaker Helm','Stormspeaker Hauberk','Tempest Mace'],['Deepcurrent Crown','Deepcurrent Mail','Tidemender Scepter'],['Tempestcaller Headdress','Tempestcaller Hauberk','Tempestcaller Hammer']]
 };
 const TIER_PREFIX={
   Warrior:['Militia','Ashguard','Vaultforged','Warlord'],
@@ -86,15 +89,17 @@ const TIER_PREFIX={
   Druid:['Rootwoven','Wildbloom','Moonbark','Elder Moonbark'],
   Hunter:['Tracker','Longshot','Hawkeye','Storm Hawkeye'],
   Rogue:['Shadow','Nightfang','Shadecoil','Master Shadecoil'],
-  Mage:['Novice','Spellforge','Starweave','Ascendant Starweave']
+  Mage:['Novice','Spellforge','Starweave','Ascendant Starweave'],
+  Shaman:['Tidecaller','Stormspeaker','Deepcurrent','Tempestcaller']
 };
 const ARMOUR_NOUNS={
   plate:{Shoulders:'Shoulderguards',Hands:'Gauntlets',Waist:'Warbelt',Legs:'Legplates',Feet:'Greaves'},
   leather:{Shoulders:'Spaulders',Hands:'Grips',Waist:'Belt',Legs:'Legguards',Feet:'Boots'},
-  cloth:{Shoulders:'Mantle',Hands:'Gloves',Waist:'Sash',Legs:'Leggings',Feet:'Slippers'}
+  cloth:{Shoulders:'Mantle',Hands:'Gloves',Waist:'Sash',Legs:'Leggings',Feet:'Slippers'},
+  mail:{Shoulders:'Spaulders',Hands:'Grips',Waist:'Belt',Legs:'Legguards',Feet:'Boots'}
 };
-const OFFHAND_NOUN={Warrior:'Shield',Paladin:'Bulwark',Priest:'Scripture',Druid:'Idol',Hunter:'Quiver',Rogue:'Parrying Blade',Mage:'Grimoire'};
-const RELIC_NOUN={Warrior:'Crest',Paladin:'Libram',Priest:'Icon',Druid:'Totem',Hunter:'Trophy',Rogue:'Token',Mage:'Focus'};
+const OFFHAND_NOUN={Warrior:'Shield',Paladin:'Bulwark',Priest:'Scripture',Druid:'Idol',Hunter:'Quiver',Rogue:'Parrying Blade',Mage:'Grimoire',Shaman:'Totem'};
+const RELIC_NOUN={Warrior:'Crest',Paladin:'Libram',Priest:'Icon',Druid:'Totem',Hunter:'Trophy',Rogue:'Token',Mage:'Focus',Shaman:'Charm'};
 const SLOT_GLYPHS={Head:'⛑',Shoulders:'⌃',Chest:'▣',Hands:'✋',Waist:'═',Legs:'║',Feet:'♟',Weapon:'⚔',OffHand:'🛡',Ring:'◉',Trinket:'◆',Relic:'◇'};
 function inferWeaponType(klass,name=''){
   const n=String(name).toLowerCase();
@@ -112,7 +117,7 @@ function inferWeaponType(klass,name=''){
   if(/(rod)/.test(n))return'rod';
   if(/(greatblade|greatsword|claymore)/.test(n))return'greatsword';
   if(/(sword|blade|blades|sabre|saber)/.test(n))return'sword';
-  return({Warrior:'sword',Paladin:'hammer',Priest:'staff',Druid:'staff',Hunter:'bow',Rogue:'dagger',Mage:'staff'})[klass]||'sword'
+  return({Warrior:'sword',Paladin:'hammer',Priest:'staff',Druid:'staff',Hunter:'bow',Rogue:'dagger',Mage:'staff',Shaman:'mace'})[klass]||'sword'
 }
 function equipmentPositions(item){
   if(!item||typeof item!=='object')return[];
@@ -134,9 +139,9 @@ function inferOffHandType(klass,name=''){
   if(/\b(idol|totem)\b/.test(n))return'idol';
   if(/(focus|orb|crystal)/.test(n))return'focus';
   if(/\b(blade|dagger|knife|shiv)\b/.test(n))return'dagger';
-  return({Warrior:'shield',Paladin:'shield',Priest:'tome',Druid:'idol',Hunter:'quiver',Rogue:'dagger',Mage:'focus'})[klass]||'focus'
+  return({Warrior:'shield',Paladin:'shield',Priest:'tome',Druid:'idol',Hunter:'quiver',Rogue:'dagger',Mage:'focus',Shaman:'idol'})[klass]||'focus'
 }
-function armourFamily(klass){return ['Warrior','Paladin'].includes(klass)?'plate':['Priest','Mage'].includes(klass)?'cloth':'leather'}
+function armourFamily(klass){return ['Warrior','Paladin'].includes(klass)?'plate':['Priest','Mage'].includes(klass)?'cloth':klass==='Shaman'?'mail':'leather'}
 function nameFor(klass,tier,slot){
   const core=CORE_SLOT_ORDER.indexOf(slot);if(core>=0)return NAMES[klass][tier-1][core];
   const prefix=TIER_PREFIX[klass]?.[tier-1]||klass;
