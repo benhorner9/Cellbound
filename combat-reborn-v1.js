@@ -2385,6 +2385,33 @@ function runSelfTests(){
  r=simulate({party:shamanParty,encounter:{...base,enemyHealth:5000},seed:'shaman-kit',maxDurationMs:6500});
  test('Shaman Totem Skills',()=>['Windfury Totem','Stoneskin Totem','Healing Stream Totem'].every(name=>r.events.some(e=>e.type==='TOTEM_PLACED'&&e.ability===name))&&!r.events.some(e=>e.type==='TOTEM_PLACED'&&e.ability==='Spirit Link Totem'));
  test('Shaman Chain Heal',()=>r.events.some(e=>e.type==='HEAL_RECEIVED'&&e.ability==='Chain Heal'&&Number(e.payload?.chainBounce)>0&&e.payload?.visualSource));
+ const warlockBase=[
+  {id:'wt',name:'Tank',class:'Warrior',spec:'Protection',power:10,level:15},
+  {id:'wh',name:'Healer',class:'Priest',spec:'Holy',power:10,level:15},
+  {id:'wl',name:'Warlock',class:'Warlock',spec:'Demonology',power:10,level:15,skillLoadouts:{Demonology:['shadow-bolt','demonbolt','hand-of-guldan','axe-toss']},talents:{Demonology:{}}},
+  {id:'wm',name:'Mage',class:'Mage',spec:'Arcane',power:10,level:15},
+  {id:'wr',name:'Rogue',class:'Rogue',spec:'Assassination',power:10,level:15}
+ ];
+ const warlockRun=simulate({party:warlockBase,encounter:{...base,level:15,enemyHealth:5500},seed:'warlock-felguard',maxDurationMs:9000});
+ test('Demonology Permanent Felguard',()=>{
+  const summon=warlockRun.events.find(e=>e.type==='PET_SUMMONED'&&e.source==='p-wl'&&e.payload?.petType==='felguard'&&e.result==='permanent');
+  const hit=warlockRun.events.find(e=>e.type==='DAMAGE_DEALT'&&e.payload?.ownerId==='p-wl'&&e.payload?.pet===true);
+  const meter=warlockRun.summary.players.find(p=>p.id==='p-wl');
+  return Boolean(summon&&hit&&Number(meter?.damage)>0)
+ });
+ const demonTalents={'Demonic Bond':3,'Fel Knowledge':3,'Soul Strike':1,'Dread Calling':2,'Pack Tactics':2,'Felstorm':1,'Demonic Core':2,'Master Summoner':2,'Demonic Tyrant':1};
+ const petWarlock=warlockBase.map(x=>x.id==='wl'?{...x,skillLoadouts:{Demonology:['call-dreadstalkers','soul-strike','felstorm','summon-demonic-tyrant']},talents:{Demonology:demonTalents}}:x);
+ const petRun=simulate({party:petWarlock,encounter:{...base,kind:'boss',level:15,enemyHealth:9000},tactics:{cooldownUse:'free'},seed:'warlock-pet-build',maxDurationMs:14000});
+ test('Demonology Pure Pet Loadout',()=>{
+  const lock=petRun.finalState.players.find(p=>p.id==='p-wl'),ids=(lock?.abilities||[]).map(a=>a.id);
+  return ids.length===4&&!ids.includes('basic-attack')&&petRun.events.some(e=>e.type==='PET_SUMMONED'&&e.payload?.petType==='dreadstalker')&&petRun.events.some(e=>e.type==='PET_COMMAND'&&e.source==='p-wl')
+ });
+ const lockedWarlock=warlockBase.map(x=>x.id==='wl'?{...x,skillLoadouts:{Demonology:['soul-strike','felstorm','summon-demonic-tyrant','call-dreadstalkers']},talents:{Demonology:{}}}:x);
+ const lockedRun=simulate({party:lockedWarlock,encounter:{...base,level:15,enemyHealth:5000},tactics:{cooldownUse:'free'},seed:'warlock-locks',maxDurationMs:5000});
+ test('Demonology Talent Skill Gates',()=>{
+  const ids=(lockedRun.finalState.players.find(p=>p.id==='p-wl')?.abilities||[]).map(a=>a.id);
+  return ids.includes('call-dreadstalkers')&&!ids.includes('soul-strike')&&!ids.includes('felstorm')&&!ids.includes('summon-demonic-tyrant')
+ });
  const mageOnly=[{id:'m',name:'Mage',class:'Mage',spec:'Arcane',power:2,level:2}];
  r=simulate({party:mageOnly,encounter:{...base,enemyHealth:900},seed:'resource'});
  test('Resource Starvation',()=>r.events.some(e=>e.type==='RESOURCE_SPENT'));
