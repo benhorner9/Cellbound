@@ -38,7 +38,8 @@ const classMeta={
   Rogue:{icon:'◆',accent:'#FFF468',primary:'Agility'},
   Mage:{icon:'✦',accent:'#3FC7EB',primary:'Intellect'},
   Shaman:{icon:'⚡',accent:'#0070DD',primary:'Intellect'},
-  Warlock:{icon:'✺',accent:'#8788EE',primary:'Intellect'}
+  Warlock:{icon:'✺',accent:'#8788EE',primary:'Intellect'},
+  Monk:{icon:'☯',accent:'#00FF98',primary:'Agility'}
 };
 
 const specs={
@@ -50,7 +51,8 @@ const specs={
   Rogue:{Assassination:'dps'},
   Mage:{Arcane:'dps'},
   Shaman:{Restoration:'healer'},
-  Warlock:{Demonology:'dps'}
+  Warlock:{Demonology:'dps'},
+  Monk:{Brewmaster:'tank',Mistweaver:'healer',Windwalker:'dps'}
 };
 
 const trees={
@@ -138,7 +140,42 @@ const trees={
     {id:'Demonic Core',icon:'◈',tier:3,col:1,max:2,req:'Pack Tactics',desc:'Demon attacks can empower your next burst of spell damage.'},
     {id:'Master Summoner',icon:'◎',tier:3,col:3,max:2,req:'Felstorm',desc:'Improve the duration and recovery of temporary demon summons.'},
     {id:'Demonic Tyrant',icon:'♛',tier:4,col:2,max:1,req:'Master Summoner',desc:'Capstone: unlock Summon Demonic Tyrant, a powerful temporary ranged demon.'}
-  ]}
+  ]},
+  Monk:{
+    Brewmaster:[
+      {id:'High Tolerance',icon:'◫',tier:0,col:1,max:3,desc:'Stagger a larger share of incoming damage and smooth dangerous spikes.'},
+      {id:'Elusive Brawler',icon:'◌',tier:0,col:3,max:3,desc:'Improve physical and magical resilience while tanking.'},
+      {id:'Purifying Brew',icon:'♨',tier:1,col:0,max:2,req:'High Tolerance',desc:'Purifying Brew clears a larger portion of accumulated Stagger.'},
+      {id:'Keg Mastery',icon:'◎',tier:1,col:2,max:2,desc:'Increase Keg Smash damage and threat.'},
+      {id:'Gift of the Ox',icon:'✚',tier:2,col:1,max:2,req:'Elusive Brawler',desc:'Taking sustained damage can create a self-healing burst.'},
+      {id:'Breath of Fire',icon:'🔥',tier:2,col:3,max:1,req:'Keg Mastery',desc:'Unlock Breath of Fire for fiery pack pressure.'},
+      {id:'Celestial Brew',icon:'◇',tier:3,col:1,max:2,req:'Purifying Brew',desc:'Strengthen Celestial Brew and gain extra protection while Stagger is high.'},
+      {id:'Shuffle',icon:'↺',tier:3,col:3,max:2,req:'Gift of the Ox',desc:'Reduce the damage released by each Stagger tick.'},
+      {id:'Fortifying Brew',icon:'✦',tier:4,col:2,max:1,req:'Celestial Brew',desc:'Capstone: unlock a major defensive brew with health recovery.'}
+    ],
+    Mistweaver:[
+      {id:'Mist Wrap',icon:'≈',tier:0,col:1,max:3,desc:'Increase direct Mistweaver healing.'},
+      {id:'Lifecycles',icon:'☯',tier:0,col:3,max:3,desc:'Reduce Mana costs by flowing between different healing techniques.'},
+      {id:'Renewing Mist',icon:'≋',tier:1,col:0,max:2,req:'Mist Wrap',desc:'Strengthen Renewing Mist and its healing-over-time effect.'},
+      {id:'Ancient Teachings',icon:'✥',tier:1,col:2,max:2,desc:'Martial attacks smart-heal an injured ally for part of their damage.'},
+      {id:'Enveloping Breath',icon:'☁',tier:2,col:1,max:2,req:'Renewing Mist',desc:'Enveloping Mist splashes healing to additional injured allies.'},
+      {id:'Jade Serpent',icon:'🐉',tier:2,col:3,max:1,req:'Lifecycles',desc:'Healing casts can call a small additional jade-serpent heal.'},
+      {id:'Rising Mist',icon:'☀',tier:3,col:1,max:2,req:'Ancient Teachings',desc:'Increase fistweaving healing and reward Rising Sun Kick.'},
+      {id:'Mana Tea',icon:'♨',tier:3,col:3,max:2,req:'Jade Serpent',desc:'Improve Mana efficiency and passive recovery.'},
+      {id:'Revival',icon:'✦',tier:4,col:2,max:1,req:'Enveloping Breath',desc:'Capstone: unlock Revival, an instant emergency party heal.'}
+    ],
+    Windwalker:[
+      {id:'Combo Strikes',icon:'☯',tier:0,col:1,max:3,desc:'Rotating different attacks increases damage; repeating the same technique loses efficiency.'},
+      {id:'Ferocity',icon:'✹',tier:0,col:3,max:3,desc:'Increase core martial damage.'},
+      {id:'Rising Sun Kick',icon:'☀',tier:1,col:0,max:2,req:'Combo Strikes',desc:'Increase Rising Sun Kick damage.'},
+      {id:'Dance of the Wind',icon:'◌',tier:1,col:2,max:2,desc:'Improve defensive movement and personal mitigation.'},
+      {id:'Fists of Fury',icon:'✊',tier:2,col:1,max:1,req:'Rising Sun Kick',desc:'Unlock Fists of Fury, a powerful cleaving technique.'},
+      {id:'Jade Ignition',icon:'◆',tier:2,col:3,max:2,req:'Ferocity',desc:'Area attacks deal additional cleave damage.'},
+      {id:'Momentum',icon:'➤',tier:3,col:1,max:2,req:'Fists of Fury',desc:'Successful Combo Strikes grant a short haste surge.'},
+      {id:'Serenity',icon:'◇',tier:3,col:3,max:2,req:'Dance of the Wind',desc:'Reduce martial ability costs and cooldowns.'},
+      {id:'Touch of Death',icon:'☠',tier:4,col:2,max:1,req:'Momentum',desc:'Capstone: unlock a deadly execute against weakened enemies.'}
+    ]
+  }
 };
 
 const leftSlots=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet'];
@@ -177,11 +214,36 @@ const UI_SKILL_FALLBACKS={
     {id:'felstorm',name:'Felstorm',kind:'pet-command',unlockLevel:1,desc:'Command your Felguard to spin through several nearby enemies.',range:30,cost:12,gcd:1000,cd:18000,petCommand:'felstorm',cleave:3,talentReq:'Felstorm'},
     {id:'implosion',name:'Implosion',kind:'pet-command',unlockLevel:10,desc:'Detonate your temporary demons into the target for explosive area damage.',range:35,cost:10,gcd:1500,cd:16000,petCommand:'implosion',cleave:3},
     {id:'summon-demonic-tyrant',name:'Summon Demonic Tyrant',kind:'summon',unlockLevel:1,desc:'Summon a Demonic Tyrant that bombards enemies and empowers your active demons.',range:35,cost:20,gcd:1500,cast:1600,cd:60000,duration:15000,summonType:'tyrant',summonCount:1,talentReq:'Demonic Tyrant'}
+  ],
+  Monk:[
+    {id:'keg-smash',name:'Keg Smash',kind:'damage',role:'tank',unlockLevel:1,desc:'Smash the target and nearby enemies with heavy threat.',range:8,damage:20,cost:25,gcd:1000,cd:8000,threat:3,cleave:3},
+    {id:'brewmaster-blackout-kick',name:'Blackout Kick',kind:'damage',role:'tank',unlockLevel:1,desc:'Reliable Brewmaster melee pressure.',range:5,damage:16,cost:18,gcd:1000,cd:3000,threat:2.2},
+    {id:'provoke',name:'Provoke',kind:'taunt',role:'tank',unlockLevel:1,desc:'Challenge an enemy and force its attention onto the Brewmaster.',range:30,cost:0,gcd:0,cd:8000,threat:5},
+    {id:'purifying-brew',name:'Purifying Brew',kind:'defensive',role:'tank',unlockLevel:1,desc:'Clear a large portion of accumulated Stagger damage.',duration:1000,damageReduction:0,gcd:0,cd:12000,purifyStagger:.50},
+    {id:'celestial-brew',name:'Celestial Brew',kind:'defensive',role:'tank',unlockLevel:6,desc:'Reduce incoming damage while your brews stabilise you.',duration:7000,damageReduction:.28,gcd:0,cd:45000},
+    {id:'breath-of-fire',name:'Breath of Fire',kind:'damage',role:'tank',unlockLevel:1,desc:'Breathe fire across the target and nearby enemies.',range:8,damage:18,cost:20,gcd:1000,cd:12000,cleave:3,threat:2.4,talentReq:'Breath of Fire'},
+    {id:'fortifying-brew',name:'Fortifying Brew',kind:'defensive',role:'tank',unlockLevel:1,desc:'Major defensive brew that also restores health.',duration:10000,damageReduction:.35,selfHealPct:.15,gcd:0,cd:90000,talentReq:'Fortifying Brew'},
+    {id:'soothing-mist',name:'Soothing Mist',kind:'heal',role:'healer',unlockLevel:1,desc:'Efficient focused healing through soothing mist.',range:30,heal:29,cost:10,gcd:1500,cast:950,cd:0},
+    {id:'vivify',name:'Vivify',kind:'heal',role:'healer',unlockLevel:1,desc:'A strong direct heal for an injured ally.',range:30,heal:35,cost:15,gcd:1500,cast:1250,cd:0},
+    {id:'renewing-mist',name:'Renewing Mist',kind:'heal',role:'healer',unlockLevel:1,desc:'Instant healing that continues restoring the target over time.',range:30,heal:20,cost:11,gcd:1500,cast:0,cd:6000,hot:7},
+    {id:'essence-font',name:'Essence Font',kind:'group-heal',role:'healer',unlockLevel:6,desc:'Release a wave of healing across the party.',range:30,heal:16,cost:23,gcd:1500,cast:1500,cd:9000},
+    {id:'mist-rising-sun-kick',name:'Rising Sun Kick',kind:'damage',role:'healer',unlockLevel:4,desc:'A martial strike that can fuel fistweaving healing.',range:5,damage:19,cost:5,gcd:1000,cd:8000},
+    {id:'mist-tiger-palm',name:'Tiger Palm',kind:'damage',role:'healer',unlockLevel:4,desc:'A quick martial strike for safe healing windows.',range:5,damage:11,cost:2,gcd:1000,cd:0},
+    {id:'revival',name:'Revival',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Instantly restore the whole party in an emergency.',range:30,heal:32,cost:30,gcd:1500,cast:0,cd:45000,talentReq:'Revival'},
+    {id:'tiger-palm',name:'Tiger Palm',kind:'damage',role:'dps',unlockLevel:1,desc:'A quick strike that maintains martial pressure.',range:5,damage:14,cost:18,gain:10,gcd:1000,cd:0},
+    {id:'windwalker-blackout-kick',name:'Blackout Kick',kind:'damage',role:'dps',unlockLevel:1,desc:'A fast finishing kick in the Windwalker rotation.',range:5,damage:20,cost:26,gcd:1000,cd:3000},
+    {id:'windwalker-rising-sun-kick',name:'Rising Sun Kick',kind:'damage',role:'dps',unlockLevel:1,desc:'A heavy martial strike with a short cooldown.',range:5,damage:31,cost:32,gcd:1000,cd:8000},
+    {id:'spinning-crane-kick',name:'Spinning Crane Kick',kind:'damage',role:'dps',unlockLevel:5,desc:'Spin through the target and nearby enemies.',range:7,damage:17,cost:28,gcd:1000,cd:7000,cleave:3},
+    {id:'fists-of-fury',name:'Fists of Fury',kind:'damage',role:'dps',unlockLevel:1,desc:'Unleash a powerful flurry that cleaves nearby enemies.',range:6,damage:34,cost:38,gcd:1000,cast:1300,cd:18000,cleave:2,talentReq:'Fists of Fury'},
+    {id:'touch-of-death',name:'Touch of Death',kind:'damage',role:'dps',unlockLevel:1,desc:'A devastating finishing technique against weakened enemies.',range:5,damage:30,cost:20,gcd:1000,cd:30000,executeBelow:.20,executeMultiplier:2.4,talentReq:'Touch of Death'},
+    {id:'touch-of-karma',name:'Touch of Karma',kind:'defensive',role:'dps',unlockLevel:9,desc:'Reduce incoming damage for a short period.',duration:7000,damageReduction:.25,gcd:0,cd:75000},
+    {id:'spear-hand-strike',name:'Spear Hand Strike',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with a precise hand strike.',range:5,cost:0,gcd:0,cd:15000}
   ]
 };
 const UI_BUFF_FALLBACKS={
   Shaman:{id:'class-buff-bloodlust',name:'Bloodlust',scope:'party',duration:60000,cooldown:180000,effect:{haste:.10,resourceRegen:.05}},
-  Warlock:{id:'class-buff-demonic-pact',name:'Demonic Pact',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04}}
+  Warlock:{id:'class-buff-demonic-pact',name:'Demonic Pact',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04}},
+  Monk:{id:'class-buff-mystic-touch',name:'Mystic Touch',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,outgoingHealing:.03}}
 };
 function classBuffFor(c){
   // Character-sheet fallbacks are the UI contract for newly added classes.
@@ -246,11 +308,11 @@ function combinedBonusStats(c){
   Object.entries(prep).forEach(([k,v])=>out[k]=(Number(out[k])||0)+(Number(v)||0));return out
 }
 function statBlock(c){
-  const meta=classMeta[c.class]||{primary:'Strength'},bonus=combinedBonusStats(c);
+  const meta=classMeta[c.class]||{primary:'Strength'},bonus=combinedBonusStats(c),primary=c.class==='Monk'&&c.spec==='Mistweaver'?'Intellect':meta.primary;
   const level=c.level||1,gear=c.gear||0,role=roleOf(c);
-  const strength=Math.round(level*7+gear*(meta.primary==='Strength'?.62:.2)+(bonus.strength||0));
-  const agility=Math.round(level*6+gear*(meta.primary==='Agility'?.62:.18)+(bonus.agility||0));
-  const intellect=Math.round(level*7+gear*(meta.primary==='Intellect'?.64:.16)+(bonus.intellect||0));
+  const strength=Math.round(level*7+gear*(primary==='Strength'?.62:.2)+(bonus.strength||0));
+  const agility=Math.round(level*6+gear*(primary==='Agility'?.62:.18)+(bonus.agility||0));
+  const intellect=Math.round(level*7+gear*(primary==='Intellect'?.64:.16)+(bonus.intellect||0));
   const stamina=Math.round(level*9+gear*.52+(role==='tank'?18:0)+(bonus.stamina||0));
   const armour=Math.round(gear*14+level*20+(role==='tank'?180:role==='healer'?35:60)+(bonus.armour||0));
   const crit=Math.max(3,Math.round(5+gear*.11+(bonus.crit||0)));
