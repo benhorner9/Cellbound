@@ -1,6 +1,7 @@
 (()=>{
 'use strict';
 const G=window.CellboundGear;
+const B=window.CellboundBuildRules;
 const P=window.CellboundProfessions;
 const CP=window.CellboundPortraits;
 if(!G){console.error('Cellbound gear catalogue failed to load.');return;}
@@ -113,7 +114,7 @@ let recruitDraft=null;
 const nativeLocalSet=Storage.prototype.setItem;
 
 function talentState(className){
-  const out={};Object.entries(classes[className]?.specs||{}).forEach(([spec,data])=>{out[spec]={};data.talents.forEach((name,i)=>out[spec][name]=i<2?1:0)});return out;
+  const out={};Object.keys(classes[className]?.specs||{}).forEach(spec=>{out[spec]={}});return out;
 }
 function cloneGear(item,source='Starting Equipment'){return item?{...item,source,quantity:undefined}:null;}
 function starterEquipment(klass){
@@ -168,16 +169,14 @@ function bankUtilityArt(item,size=66){const icon=esc(item?.icon||'⚡');return w
 function bankItemArt(item,size=66){return isBankUtility(item)?bankUtilityArt(item,size):G.artHTML(item,size)}
 function setBonusPanel(item,c=null){
   if(!item?.setId||!item?.setName)return'';
-  const rules=G.SET_BONUS_RULES||{
-    pieces2:{threshold:2,name:'Resonant Pair',short:'+5% damage & healing output',description:'All damaging and healing abilities are 5% stronger.'},
-    pieces4:{threshold:4,name:'Cellbound Ensemble',short:'+12% resource recovery',description:'Passive class-resource recovery is increased by 12%.'}
-  };
+  const rules=c?(G.setBonusRulesFor?.(c,c.spec,item)||G.SET_BONUS_RULES):null;
+  const lines=c&&rules?[rules.pieces2,rules.pieces4]:(G.setBonusLines?.(item)||[]);
   const count=c?(G.setPieceCount?.(c,item.setId)||0):null;
   const row=rule=>{
     const active=count!==null&&count>=rule.threshold;
     return `<div class="gear-set-bonus ${active?'active':''}"><span>${rule.threshold} PIECES</span><div><b>${esc(rule.name)}</b><strong>${esc(rule.short)}</strong><p>${esc(rule.description)}</p></div>${count!==null?`<em>${active?'ACTIVE':count+'/'+rule.threshold}</em>`:''}</div>`
   };
-  return `<section class="gear-set-panel"><header><div><small>EQUIPMENT SET</small><h3>${esc(item.setName)}</h3></div>${count!==null?`<b>${count}/4 EQUIPPED</b>`:''}</header>${row(rules.pieces2)}${row(rules.pieces4)}</section>`
+  return `<section class="gear-set-panel"><header><div><small>${c?'ACTIVE SPEC SET':'ADAPTIVE CLASS SET'}</small><h3>${esc(item.setName)}</h3>${c?`<span>${esc(c.spec)} bonuses</span>`:'<span>Effects change with the wearer’s active specialisation.</span>'}</div>${count!==null?`<b>${count}/4 EQUIPPED</b>`:''}</header>${lines.map(row).join('')}</section>`
 }
 function characterItemLevel(c){
   const core=LEGACY_ILVL_SLOTS.map(slot=>canonicalItem(c?.equipment?.[slot])).filter(Boolean);
@@ -221,7 +220,7 @@ function currentBossProgressionUnlocked(boss){const i=bosses.findIndex(b=>b.id==
 
 function normalizeCharacter(c,index=0){
   c.id=c.id||`legacy-${index}-${Date.now()}`;c.class=c.class||'Warrior';c.spec=c.spec||Object.keys(classDef(c).specs)[0];const rawLevel=Math.max(1,Number(c.level)||1),overCapLevels=Math.max(0,rawLevel-PLAYER_LEVEL_CAP);c.level=Math.min(PLAYER_LEVEL_CAP,rawLevel);c.xp=c.level>=PLAYER_LEVEL_CAP?0:Math.max(0,Number(c.xp)||0);if(overCapLevels>0)c.talent=Math.max(0,(Number(c.talent)||0)-overCapLevels);c.power=Math.max(1,Number(c.power)||1);
-  c.race=c.race||'Veyren';c.raceTrait=c.raceTrait||window.CellboundIdentities?.getRace?.(c.race)?.trait||'';if(CP)c.appearance=CP.normalizeAppearance(c.appearance,c.id||c.name,c.race);c.talents=c.talents||talentState(c.class);c.knowledge=c.knowledge||{ashwarden:0,embermaw:0,vaultheart:0};c.equipment=c.equipment||{};
+  c.race=c.race||'Veyren';c.raceTrait=c.raceTrait||window.CellboundIdentities?.getRace?.(c.race)?.trait||'';if(CP)c.appearance=CP.normalizeAppearance(c.appearance,c.id||c.name,c.race);c.talents=c.talents||talentState(c.class);Object.keys(classDef(c)?.specs||{}).forEach(spec=>{c.talents[spec]=c.talents[spec]||{}});B?.syncLegacyTalentCounter?.(c);c.knowledge=c.knowledge||{ashwarden:0,embermaw:0,vaultheart:0};c.equipment=c.equipment||{};
   c.skillLoadouts=c.skillLoadouts&&typeof c.skillLoadouts==='object'?c.skillLoadouts:{};
   const combat=window.CellboundCombatReborn,combatRole=classes[c.class]?.specs?.[c.spec]?.role||'dps',savedLoadout=Array.isArray(c.skillLoadouts[c.spec])?c.skillLoadouts[c.spec]:[];
   if(combat?.skills?.classSkillPool&&combat?.skills?.defaultSkillLoadout){
@@ -438,7 +437,7 @@ function rosterCard(c,index){
       <div><span>ITEM LEVEL</span><b>${ilvl}</b></div>
       <div><span>POWER</span><b>${c.power||0}</b></div>
       <div><span>CELL SHOCK</span><b class="${shock>=75?'danger':''}">${shock}%</b></div>
-      <div><span>TALENT POINTS</span><b>${c.talent||0}</b></div>
+      <div><span>BUILD POINTS</span><b>${B?.talentRemaining?.(c,c.spec)??c.talent??0}</b></div>
     </div>
     <div class="roster-shock-line"><div><span>CELL SHOCK</span><b>${recovering?'RECOVERING':shock?shock+'%':'CLEAR'}</b></div><i><em style="width:${shock}%"></em></i></div>
     <div class="roster-card-actions"><button type="button" data-char="${c.id}">${unlocked?'OPEN CHARACTER':'VIEW LOCKED CHARACTER'} →</button></div>
@@ -521,7 +520,7 @@ function renderRecruitModal(){
       '<label class="recruit-name-label"><span>Name</span><div class="recruit-name"><input id="recruitName" maxlength="24" autocomplete="off" value="'+esc(recruitDraft.name)+'"><button type="button" data-random-recruit>RANDOMISE</button></div></label>'+
     '</div>'+
     '<div class="recruit-preview">'+portraitHTML({race:recruitDraft.race,appearance:recruitDraft.appearance,class:recruitDraft.klass,name:recruitDraft.name},'lg')+'<div><small>NEW LEVEL 1 ADVENTURER</small><b>'+esc(recruitDraft.name||'Unnamed')+'</b><span>'+race.id+' · '+recruitDraft.klass+' · '+recruitDraft.spec+' · '+roleLabel(role)+'</span></div></div>'+
-    '<footer><small>Starts with basic equipment · 0% Cell Shock · independent talents and professions</small><button class="on-primary" data-confirm-recruit>CONFIRM RECRUIT →</button></footer></section>';
+    '<footer><small>Starts with basic equipment · 0% Cell Shock · independent spec builds and professions</small><button class="on-primary" data-confirm-recruit>CONFIRM RECRUIT →</button></footer></section>';
   root.querySelector('[data-close-recruit]').onclick=closeRecruit;
   root.querySelector('#recruitRace').onchange=e=>{recruitDraft.race=e.target.value;recruitDraft.name=recruitRandomName(recruitDraft.race);recruitDraft.appearance=CP?.randomAppearance?.(recruitDraft.race)||{race:recruitDraft.race};renderRecruitModal()};
   root.querySelector('#recruitClass').onchange=e=>{recruitDraft.klass=e.target.value;recruitDraft.spec=Object.keys(classes[recruitDraft.klass]?.specs||{})[0];renderRecruitModal()};
