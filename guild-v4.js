@@ -66,6 +66,10 @@ const classes={
     Blood:{role:'tank',talents:['Heartbreaker','Ossuary','Vampiric Blood']},
     Frost:{role:'dps',talents:['Killing Machine','Icy Talons','Breath of Sindragosa']},
     Unholy:{role:'dps',talents:['Festering Wounds','Dark Transformation','Apocalypse']}
+  }},
+  'Demon Hunter':{icon:'⛧',glow:'#A330C9',specs:{
+    Havoc:{role:'dps',talents:['Demon Blades','Furious Gaze','Metamorphosis']},
+    Vengeance:{role:'tank',talents:['Thick Skin','Soul Cleave','Metamorphosis']}
   }}
 };
 
