@@ -1731,17 +1731,91 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
    talentTrigger(ctx,u,'Concussive Shot',target,{duration:900})
   }
  }
- if(u.class==='Rogue'){
-  const venom=talentRank(u,'Venom'),master=talentRank(u,'Master Poisoner');
+ if(u.class==='Rogue'&&u.spec==='Outlaw'){
+  u.talentCounters=u.talentCounters||{};
+  const spent=Math.max(0,Number(u.lastOutlawComboSpent)||0);
+  if(a.id==='sinister-strike'){
+   gainComboPoints(ctx,u,Number(a.comboGain)||1,a.name);
+   const opp=talentRank(u,'Opportunity');
+   if(opp&&!u.statuses?.['opportunity']){
+    u.talentCounters.opportunity=(Number(u.talentCounters.opportunity)||0)+1;
+    const threshold=Math.max(2,5-opp);
+    if(u.talentCounters.opportunity>=threshold){
+     u.talentCounters.opportunity=0;
+     applyStatus(ctx,u,u,{id:'opportunity',name:'Opportunity',kind:'buff',duration:8000,effect:{haste:.02*opp}});
+     talentTrigger(ctx,u,'Opportunity',u,{duration:8000})
+    }
+   }
+  }
+  if(a.id==='pistol-shot'){
+   const hadOpportunity=Boolean(u.statuses?.['opportunity']),quick=talentRank(u,'Quick Draw');
+   gainComboPoints(ctx,u,(Number(a.comboGain)||1)+(hadOpportunity&&quick?1:0),a.name);
+   if(hadOpportunity){
+    removeStatus(ctx,u,'opportunity','consumed');
+    if(quick)talentTrigger(ctx,u,'Quick Draw',u,{bonusComboPoints:1,rank:quick})
+   }
+  }
+  if(a.id==='blade-flurry'){
+   const duration=7500;
+   applyStatus(ctx,u,u,{id:'blade-flurry',name:'Blade Flurry',kind:'buff',duration,effect:{haste:.03}});
+   talentTrigger(ctx,u,'Blade Flurry',u,{duration})
+  }else if(u.statuses?.['blade-flurry']&&['sinister-strike','dispatch','killing-spree'].includes(a.id)&&target.alive){
+   const extras=livingEnemies(ctx).filter(e=>e.id!==target.id).sort((x,y)=>dist(target.position,x.position)-dist(target.position,y.position)).slice(0,2);
+   const echo=Math.max(1,Math.round(dealt*.28));
+   extras.forEach(e=>dealDamage(ctx,u,e,echo,'Blade Flurry',{damageType:'physical'}));
+   if(extras.length)talentTrigger(ctx,u,'Blade Flurry',extras[0],{targets:extras.length,damage:echo})
+  }
+  if(a.id==='roll-the-bones'&&spent>0){
+   const loaded=talentRank(u,'Loaded Dice'),rollIndex=Number(u.talentCounters.rollIndex)||0;
+   const rolls=[
+    {name:'Broadside',effect:{outgoingDamage:.04+loaded*.015}},
+    {name:'Grand Melee',effect:{haste:.06+loaded*.015}},
+    {name:'Buried Treasure',effect:{resourceRegen:.08+loaded*.025}},
+    {name:'Ruthless Precision',effect:{critBonus:.07+loaded*.02}}
+   ],result=rolls[rollIndex%rolls.length];
+   u.talentCounters.rollIndex=rollIndex+1;
+   const duration=9000+spent*1200+loaded*900;
+   applyStatus(ctx,u,u,{id:'roll-the-bones',name:'Roll the Bones: '+result.name,kind:'buff',duration,effect:result.effect});
+   talentTrigger(ctx,u,'Roll the Bones',u,{result:result.name,duration,comboPoints:spent,loadedDice:loaded})
+  }
+  if(a.id==='between-the-eyes'&&spent>0){
+   const duration=5000+spent*450;
+   applyStatus(ctx,u,u,{id:'between-the-eyes',name:'Between the Eyes',kind:'buff',duration,effect:{critBonus:.08+spent*.018}});
+   talentTrigger(ctx,u,'Between the Eyes',u,{duration,comboPoints:spent})
+  }
+  if(a.id==='adrenaline-rush'){
+   const rank=Math.max(1,talentRank(u,'Adrenaline Rush')),duration=9000+rank*1200;
+   applyStatus(ctx,u,u,{id:'adrenaline-rush',name:'Adrenaline Rush',kind:'buff',duration,effect:{haste:.12+rank*.035,resourceRegen:.28+rank*.11}});
+   talentTrigger(ctx,u,'Adrenaline Rush',u,{duration,rank})
+  }
+  if(a.id==='killing-spree'){
+   const pulses=[250,500,750],pulse=Math.max(1,Math.round(dealt*.30));
+   pulses.forEach(delay=>schedule(ctx,ctx.time+delay,()=>{
+    if(!u.alive)return;
+    const primary=target.alive?target:livingEnemies(ctx)[0];if(!primary)return;
+    dealDamage(ctx,u,primary,pulse,'Killing Spree',{damageType:'physical'});
+    const extra=livingEnemies(ctx).filter(e=>e.id!==primary.id).sort((x,y)=>dist(primary.position,x.position)-dist(primary.position,y.position))[0];
+    if(extra&&dist(primary.position,extra.position)<=12)dealDamage(ctx,u,extra,Math.max(1,Math.round(pulse*.45)),'Killing Spree cleave',{damageType:'physical'})
+   },'outlaw-killing-spree'));
+   talentTrigger(ctx,u,'Killing Spree',target,{hits:pulses.length+1})
+  }
+  if(spent>0&&(r=talentRank(u,'Ruthlessness'))){
+   const reduction=spent*r*320;
+   ['pistol-shot','blade-flurry','between-the-eyes','adrenaline-rush','killing-spree'].forEach(id=>{if(Number(u.cooldowns[id])>0)u.cooldowns[id]=Math.max(0,u.cooldowns[id]-reduction)});
+   talentTrigger(ctx,u,'Ruthlessness',u,{comboPoints:spent,reductionMs:reduction})
+  }
+ }
+ if(u.class==='Rogue'&&u.spec==='Assassination'){
+  const venom=talentRank(u,'Venom'),master=talentRank(u,'Master Poisoner'),setScale=Math.max(.5,Number(u?.setBonuses?.periodicDamageScale)||1);
   if((venom||master)&&target.alive){
-   const tick=Math.max(1,Math.round(dealt*(venom*.018+master*.025)));
+   const tick=Math.max(1,Math.round(dealt*(venom*.018+master*.025)*setScale));
    if(tick>0){
     applyStatus(ctx,u,target,{id:'venom',name:'Venom',kind:'debuff',duration:1300,effect:{damageOverTime:tick}});
     schedule(ctx,ctx.time+1100,()=>{if(u.alive&&target.alive)dealDamage(ctx,u,target,tick,'Venom',{damageType:'magic'})},'talent-venom')
    }
   }
   if(a.id==='garrote'&&(r=talentRank(u,'Garrote'))&&target.alive){
-   const tick=Math.max(1,Math.round(dealt*.06*r));
+   const tick=Math.max(1,Math.round(dealt*.06*r*setScale));
    applyStatus(ctx,u,target,{id:'garrote-bleed',name:'Garrote Bleed',kind:'debuff',duration:2600,effect:{damageOverTime:tick}});
    talentTrigger(ctx,u,'Garrote',target,{ticks:2,damagePerTick:tick});
    [1200,2400].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)dealDamage(ctx,u,target,tick,'Garrote Bleed',{damageType:'physical'})},'talent-garrote'))
@@ -2420,6 +2494,20 @@ function chooseAbility(ctx,u,target){
   }
   // Other healers preserve mana and watch incoming damage during safe windows.
   return null
+ }
+ if(u.class==='Rogue'&&u.spec==='Outlaw'){
+  const by=id=>pool.find(a=>a.id===id),cp=Math.max(0,Number(u.comboPoints)||0),enemyCount=livingEnemies(ctx).length;
+  const sinister=by('sinister-strike'),pistol=by('pistol-shot'),dispatch=by('dispatch'),roll=by('roll-the-bones'),blade=by('blade-flurry'),eyes=by('between-the-eyes'),rush=by('adrenaline-rush'),spree=by('killing-spree');
+  const bossLike=['boss','final','world-boss','event'].includes(ctx.encounter.kind);
+  if(roll&&cp>=3&&!u.statuses?.['roll-the-bones'])return{ability:roll,target};
+  if(rush&&bossLike&&!u.statuses?.['adrenaline-rush']&&u.resource.value<80)return{ability:rush,target};
+  if(blade&&enemyCount>=2&&!u.statuses?.['blade-flurry'])return{ability:blade,target};
+  if(spree&&bossLike&&(u.statuses?.['adrenaline-rush']||u.statuses?.['roll-the-bones']))return{ability:spree,target};
+  if(eyes&&cp>=4)return{ability:eyes,target};
+  if(dispatch&&cp>=4)return{ability:dispatch,target};
+  if(pistol&&u.statuses?.['opportunity'])return{ability:pistol,target};
+  if(sinister)return{ability:sinister,target};
+  if(pistol)return{ability:pistol,target}
  }
  if(u.class==='Hunter'&&u.spec==='Beast Mastery'){
   const by=id=>pool.find(a=>a.id===id),barbed=by('barbed-shot'),multi=by('beast-multi-shot'),cobra=by('cobra-shot');
