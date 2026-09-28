@@ -199,7 +199,10 @@ function family(e,u){
  for(const [re,value] of [[/frost|ice/,'frost'],[/fire|flame/,'fire'],[/lightning|chain/,'lightning'],[/fel|demon|shadow|drain/,'shadow'],[/plate/,'plate'],[/nail/,'steel'],[/collapse|shattered floor|falling beam/,'rubble']])if(re.test(a))return value;
  return u?.p.projectile||'hostile'
 }
-function effect(scene,cls,source,target,life=320){
+function effect(scene,cls,source,target,life=320,allowUnanchored=false){
+ // Never create an FX node at the layer origin unless the caller is about to
+ // position it explicitly. Missing actor resolution used to leave effects at 0,0.
+ if(!allowUnanchored&&!source&&!target)return null;
  if(scene.effects.size>=36)return null;
  const n=document.createElement('i');n.className='cbl-fx '+cls;scene.layer.appendChild(n);
  const fx={n,source,target,ends:performance.now()+life/scene.speed};scene.effects.add(fx);return fx
@@ -251,6 +254,7 @@ function livingEvent(e,opts={}){
  if(/^TOTEM_/.test(e.type))totem(scene,e);
  switch(e.type){
  case'COMBAT_START':
+  for(const f of scene.effects){f.n.remove()}scene.effects.clear();
   for(const n of scene.totems.values())n.remove();scene.totems.clear();for(const n of scene.pets.values())n.remove();scene.pets.clear();
   scene.live=true;room(scene,e);emphasis(scene,'entry');arena.classList.add('cbl-live');arena.querySelectorAll(UNIT).forEach(el=>unit(scene,el));
   for(const v of e.payload?.units||[]){const a=unit(scene,resolve(v.id,opts,arena));if(a){enemyProfile(a,v);const group=String(v.id).match(/^p-(?:raid|maid)-(\d+)-/);if(group)a.el.dataset.raidParty=group[1];a.dead=v.alive===false;if(!a.dead)a.el.classList.remove('dead','dying');a.target=null;a.statuses.clear();a.el.dataset.control='';state(a,a.dead?'dead':'idle');setPosition(scene,a,v.position);a.el.style.setProperty('--cbl-facing',(v.facing||0)+'deg')}}framing(scene);break;
@@ -287,7 +291,7 @@ function livingEvent(e,opts={}){
  case'ENRAGE':if(u)u.el.dataset.aura='enrage';break;
  case'PHASE_CHANGE':emphasis(scene,'phase');if(scene.room)scene.room.dataset.wear=String(Math.min(3,Number(scene.room.dataset.wear||0)+1));if(u){effect(scene,'phase',null,u.el,1000);u.el.dataset.intensity='5'}break;
  case'GROUND_HAZARD_SPAWNED':
-  if(/plate|collapse|beam|debris|floor/i.test(e.ability||'')&&e.position){const f=effect(scene,'debris',null,null,650);if(f){f.n.style.left=e.position.x+'%';f.n.style.top=e.position.y+'%'}}break;
+  if(/plate|collapse|beam|debris|floor/i.test(e.ability||'')&&e.position){const f=effect(scene,'debris',null,null,650,true);if(f){f.n.style.left=e.position.x+'%';f.n.style.top=e.position.y+'%'}}break;
  case'COMBAT_END':for(const h of scene.hazards.values())h.node.remove();scene.hazards.clear();for(const n of scene.totems.values())n.remove();scene.totems.clear();for(const n of scene.pets.values())n.remove();scene.pets.clear();scene.warnings.clear();scene.live=false;arena.classList.remove('cbl-live');for(const v of scene.units.values()){clearCast(v);v.animation?.cancel();if(!v.dead)state(v,'idle')}break;
  }
  wake();
