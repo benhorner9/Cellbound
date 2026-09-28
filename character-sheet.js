@@ -139,16 +139,35 @@ function characterEditable(){const game=window.CellboundGame;return !game?.isCha
 function roleOf(c){return specs[c.class]?.[c.spec]||'dps'}
 function roleLabel(role){return role==='dps'?'Damage':role[0].toUpperCase()+role.slice(1)}
 function combatEngine(){return window.CellboundCombatReborn||null}
+const UI_SKILL_FALLBACKS={
+  Shaman:[
+    {id:'healing-wave',name:'Healing Wave',kind:'heal',role:'healer',unlockLevel:1,desc:'A dependable restorative cast for an injured ally.',range:30,heal:36,cost:14,gcd:1500,cast:1450,cd:0},
+    {id:'riptide',name:'Riptide',kind:'heal',role:'healer',unlockLevel:1,desc:'An instant tidal heal that continues restoring health briefly.',range:30,heal:23,cost:10,gcd:1500,cast:0,cd:6000,hot:7},
+    {id:'chain-heal',name:'Chain Heal',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Heal one ally, then bounce restorative energy through other injured party members.',range:30,heal:30,cost:20,gcd:1500,cast:1700,cd:0,chainBounces:3,chainFalloff:.72,chainRange:16},
+    {id:'wind-shear',name:'Wind Shear',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with a sharp burst of wind.',range:30,cost:0,gcd:0,cd:18000},
+    {id:'lightning-bolt',name:'Lightning Bolt',kind:'damage',unlockLevel:4,desc:'A ranged lightning attack for safe damage windows.',range:30,damage:13,cost:4,gcd:1500,cast:1200,cd:0},
+    {id:'healing-rain',name:'Healing Rain',kind:'group-heal',role:'healer',unlockLevel:8,desc:'Call restorative rain over the party for broad recovery.',range:30,heal:16,cost:24,gcd:1500,cast:1200,cd:10000},
+    {id:'astral-shift',name:'Astral Shift',kind:'defensive',unlockLevel:11,desc:'Shift partially into the spirit world, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000}
+  ]
+};
+const UI_BUFF_FALLBACKS={
+  Shaman:{id:'class-buff-totemic-circle',name:'Totemic Circle',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,incomingDamageReduction:.03,incomingHealing:.03},totems:true}
+};
+function classBuffFor(c){return combatEngine()?.CLASS_BUFFS?.[c?.class]||UI_BUFF_FALLBACKS[c?.class]||null}
 function skillPoolFor(c,spec=c?.spec){
   const engine=combatEngine(),role=specs[c?.class]?.[spec]||'dps',copyChar={...c,spec};
-  if(engine?.skills?.classSkillPool)return engine.skills.classSkillPool(copyChar,role);
-  return (engine?.ABILITIES?.[c?.class]||[]).filter(a=>!a.role||a.role===role)
+  let pool=[];
+  if(engine?.skills?.classSkillPool)pool=engine.skills.classSkillPool(copyChar,role)||[];
+  if(!pool.length)pool=(engine?.ABILITIES?.[c?.class]||[]).filter(a=>!a.role||a.role===role);
+  if(!pool.length)pool=(UI_SKILL_FALLBACKS[c?.class]||[]).filter(a=>!a.role||a.role===role);
+  return pool
 }
 function skillTalentMet(c,skill,spec=c?.spec){return !skill?.talentReq||Math.max(0,Number(c?.talents?.[spec]?.[skill.talentReq])||0)>0}
 function skillAvailable(c,skill,spec=c?.spec){return (Number(skill?.unlockLevel)||1)<=Math.max(1,Number(c?.level)||1)&&skillTalentMet(c,skill,spec)}
 function defaultSkillIds(c,spec=c?.spec){
   const engine=combatEngine(),role=specs[c?.class]?.[spec]||'dps',copyChar={...c,spec};
-  const ids=engine?.skills?.defaultSkillLoadout?.(copyChar,role)||skillPoolFor(copyChar,spec).filter(a=>(Number(a.unlockLevel)||1)<=Math.max(1,Number(c?.level)||1)).slice(0,4).map(a=>a.id);
+  let ids=engine?.skills?.defaultSkillLoadout?.(copyChar,role);
+  if(!Array.isArray(ids)||!ids.length)ids=skillPoolFor(copyChar,spec).filter(a=>(Number(a.unlockLevel)||1)<=Math.max(1,Number(c?.level)||1)).slice(0,4).map(a=>a.id);
   return ids.slice(0,4)
 }
 function equippedSkillIds(c,spec=c?.spec){
@@ -175,7 +194,7 @@ function ensureCharacter(c){
   c.talents=c.talents||{};
   Object.keys(specs[c.class]||{}).forEach(spec=>{c.talents[spec]=c.talents[spec]||{}});
   c.skillLoadouts=c.skillLoadouts&&typeof c.skillLoadouts==='object'?c.skillLoadouts:{};
-  const buff=combatEngine()?.CLASS_BUFFS?.[c.class];if(buff&&!c.buffSkill)c.buffSkill=buff.id;
+  const buff=classBuffFor(c);if(buff&&!c.buffSkill)c.buffSkill=buff.id;
   return c;
 }
 function rarityClass(item){return `cb-rarity-${String(item?.rarity||'starter').toLowerCase()}`}
@@ -499,7 +518,7 @@ function overviewPanel(c,state){
 
 function skillsPanel(c){
   const engine=combatEngine(),spec=c.spec,role=roleOf(c),pool=skillPoolFor(c,spec),level=Math.max(1,Number(c.level)||1),equipped=equippedSkillIds(c,spec),selected=Math.max(0,Math.min(3,Number(activeSkillSlot)||0));
-  const byId=new Map(pool.map(s=>[s.id,s])),buff=engine?.CLASS_BUFFS?.[c.class]||null;
+  const byId=new Map(pool.map(s=>[s.id,s])),buff=classBuffFor(c);
   const unlockedCount=pool.filter(s=>skillAvailable(c,s,spec)).length,nextUnlock=pool.filter(s=>(Number(s.unlockLevel)||1)>level).sort((a,b)=>(a.unlockLevel||1)-(b.unlockLevel||1))[0];
   const slotCards=equipped.map((id,i)=>{
     const skill=byId.get(id);
