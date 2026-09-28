@@ -1072,27 +1072,33 @@ body.inn-character-open{overflow:hidden}
   filter:none!important;
 }
 
-/* Keep actors compact in this environment. */
+/* Character scale pass V9: actors now read at believable human scale against
+   the room, table and bar while preserving the existing depth/occlusion system. */
 .inn-adventurer{
-  width:70px!important;
-  height:122px!important;
-  min-height:122px!important;
+  width:88px!important;
+  height:160px!important;
+  min-height:160px!important;
 }
 .inn-figure{
-  width:76px!important;
-  height:132px!important;
+  width:96px!important;
+  height:170px!important;
 }
 .inn-illustrated-model,
-.inn-fallback-model{width:70px!important}
+.inn-fallback-model{width:88px!important}
 .inn-illustrated-model .inn-figure{
-  width:76px!important;
-  height:132px!important;
+  width:96px!important;
+  height:170px!important;
 }
 .inn-illustrated-model .cb-world-avatar-illustrated{
-  width:76px!important;
-  height:132px!important;
+  width:96px!important;
+  height:170px!important;
 }
-.inn-adventurer:before{width:40px!important;height:6px!important}
+.inn-fallback-model .cb-world-avatar,
+.inn-fallback-model .cb-paper-doll{
+  width:88px!important;
+  height:164px!important;
+}
+.inn-adventurer:before{width:54px!important;height:8px!important}
 
 @media(max-width:600px){
   .inn-object-bar{
@@ -1104,23 +1110,28 @@ body.inn-character-open{overflow:hidden}
      of the Inn's ambience rather than something hidden behind the roster. */
   .inn-resting{display:block!important}
   .inn-adventurer{
-    width:58px!important;
-    height:102px!important;
-    min-height:102px!important;
+    width:76px!important;
+    height:136px!important;
+    min-height:136px!important;
   }
   .inn-figure{
-    width:62px!important;
-    height:108px!important;
+    width:82px!important;
+    height:146px!important;
   }
   .inn-illustrated-model,
-  .inn-fallback-model{width:58px!important}
+  .inn-fallback-model{width:76px!important}
   .inn-illustrated-model .inn-figure{
-    width:62px!important;
-    height:108px!important;
+    width:82px!important;
+    height:146px!important;
   }
   .inn-illustrated-model .cb-world-avatar-illustrated{
-    width:62px!important;
-    height:108px!important;
+    width:82px!important;
+    height:146px!important;
   }
-  .inn-adventurer:before{width:34px!important}
+  .inn-fallback-model .cb-world-avatar,
+  .inn-fallback-model .cb-paper-doll{
+    width:76px!important;
+    height:140px!important;
+  }
+  .inn-adventurer:before{width:46px!important;height:7px!important}
 }
