@@ -164,6 +164,26 @@ const SPEC_SET_BONUSES={
       pieces2:{threshold:2,name:'Housebound Shatter',short:'+15% proc-combo damage',description:'Raid robes increase Frost proc-combo damage by 15%.',effects:{frostProcDamageScale:1.15}},
       pieces4:{threshold:4,name:'Absolute Winter',short:'Much faster Frost procs · +4% crit',description:'Fingers of Frost and Brain Freeze build substantially faster, and talent-unlocked Frost skills recover 15% faster.',effects:{frostProcRate:2,talentSkillCooldownScale:.85,critBonus:.04}}
     }
+  },
+  'Warlock|Demonology':{
+    4:{
+      pieces2:{threshold:2,name:'Dreadweave Command',short:'+8% demon damage',description:'Felguard and temporary demon damage is increased while Demonology is active.',effects:{petDamageScale:1.08}},
+      pieces4:{threshold:4,name:'Legion Resonance',short:'+8% Mana recovery · 10% faster talent summons',description:'Mana recovery improves and talent-unlocked Demonology skills recover 10% faster.',effects:{resourceRegen:1.08,talentSkillCooldownScale:.90,critBonus:.03}}
+    },
+    5:{
+      pieces2:{threshold:2,name:'Netherlord Command',short:'+12% demon damage',description:'Raid regalia increases Demonology pet damage by 12%.',effects:{petDamageScale:1.12}},
+      pieces4:{threshold:4,name:'Tyrant Resonance',short:'+12% Mana recovery · 15% faster talent summons',description:'Mana recovery improves and talent-unlocked Demonology skills recover 15% faster.',effects:{resourceRegen:1.12,talentSkillCooldownScale:.85,critBonus:.04}}
+    }
+  },
+  'Warlock|Destruction':{
+    4:{
+      pieces2:{threshold:2,name:'Dreadweave Ruin',short:'+10% Chaos Bolt damage',description:'Chaos Bolt and Rain of Fire deal 10% more damage while Destruction is active.',effects:{destructionSpenderScale:1.10}},
+      pieces4:{threshold:4,name:'Ember Resonance',short:'Faster Soul Shards · +3% crit',description:'Soul Shard generation improves and talent-unlocked Destruction skills recover 10% faster.',effects:{resourceGainScale:1.12,talentSkillCooldownScale:.90,critBonus:.03}}
+    },
+    5:{
+      pieces2:{threshold:2,name:'Netherlord Ruin',short:'+15% Chaos Bolt damage',description:'Raid regalia increases Chaos Bolt and Rain of Fire damage by 15%.',effects:{destructionSpenderScale:1.15}},
+      pieces4:{threshold:4,name:'Cataclysmic Resonance',short:'Much faster Soul Shards · +4% crit',description:'Soul Shard generation improves substantially and talent-unlocked Destruction skills recover 15% faster.',effects:{resourceGainScale:1.16,talentSkillCooldownScale:.85,critBonus:.04}}
+    }
   }
 };
 function setTier(item){
