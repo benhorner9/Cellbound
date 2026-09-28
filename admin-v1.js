@@ -141,12 +141,14 @@ async function toggleAuto(){
   render();
 }
 async function refreshStatus(){
+  const wasAdmin=Boolean(window.CellboundAdmin.isAdmin);
   const {data,error}=await db.rpc('cellbound_admin_status');
   if(error){console.warn('Cellbound admin status unavailable',error);return}
   status=data||status;
   window.CellboundAdmin.isAdmin=Boolean(status.is_admin);
   window.CellboundAdmin.role=status.role||null;
   window.CellboundAdmin.autoClear=Boolean(status.auto_clear_cell_shock);
+  if(wasAdmin!==window.CellboundAdmin.isAdmin)Game?.renderAll?.();
   render();
 }
 async function refreshRelease(){
