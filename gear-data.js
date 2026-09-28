@@ -124,6 +124,26 @@ const SPEC_SET_BONUSES={
       pieces2:{threshold:2,name:'Stormcell Conduction',short:'+8% Elemental damage',description:'Raid mail increases Elemental spell damage by 8%.',effects:{damageScale:1.08}},
       pieces4:{threshold:4,name:'Primal Ascendance',short:'+16% Maelstrom generation · +4% crit',description:'Maelstrom generation improves and talent-unlocked Elemental skills recover 15% faster.',effects:{resourceGainScale:1.16,talentSkillCooldownScale:.85,critBonus:.04}}
     }
+  },
+  'Druid|Restoration':{
+    4:{
+      pieces2:{threshold:2,name:'Moonbark Renewal',short:'+5% Restoration healing',description:'Restoration healing is increased while Restoration is active.',effects:{healingScale:1.05}},
+      pieces4:{threshold:4,name:'Verdant Continuance',short:'+8% Mana recovery · +3% haste',description:'Mana recovery and casting speed improve, and talent-unlocked Restoration skills recover 10% faster.',effects:{resourceRegen:1.08,haste:.03,talentSkillCooldownScale:.90}}
+    },
+    5:{
+      pieces2:{threshold:2,name:'Nightbloom Renewal',short:'+7% Restoration healing',description:'Raid regalia deepens Restoration healing while Restoration is active.',effects:{healingScale:1.07}},
+      pieces4:{threshold:4,name:'Ancient Continuance',short:'+12% Mana recovery · +4% haste',description:'Mana recovery and casting speed improve, and talent-unlocked Restoration skills recover 15% faster.',effects:{resourceRegen:1.12,haste:.04,talentSkillCooldownScale:.85}}
+    }
+  },
+  'Druid|Balance':{
+    4:{
+      pieces2:{threshold:2,name:'Moonbark Eclipse',short:'+8% Eclipse spell damage',description:'Spells matching the active Solar or Lunar Eclipse deal 8% more damage.',effects:{eclipseDamageScale:1.08}},
+      pieces4:{threshold:4,name:'Astral Convergence',short:'+12% Astral Power generation · +3% crit',description:'Astral Power generation improves and talent-unlocked Balance skills recover 10% faster.',effects:{resourceGainScale:1.12,talentSkillCooldownScale:.90,critBonus:.03}}
+    },
+    5:{
+      pieces2:{threshold:2,name:'Nightbloom Eclipse',short:'+12% Eclipse spell damage',description:'Raid regalia increases damage from spells matching the active Eclipse by 12%.',effects:{eclipseDamageScale:1.12}},
+      pieces4:{threshold:4,name:'Celestial Convergence',short:'+16% Astral Power generation · +4% crit',description:'Astral Power generation improves and talent-unlocked Balance skills recover 15% faster.',effects:{resourceGainScale:1.16,talentSkillCooldownScale:.85,critBonus:.04}}
+    }
   }
 };
 function setTier(item){
