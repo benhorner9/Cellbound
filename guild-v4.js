@@ -56,7 +56,12 @@ const classes={
   Rogue:{icon:'◆',glow:'#FFF468',specs:{Assassination:{role:'dps',talents:['Ambush','Venom','Eviscerate']}}},
   Mage:{icon:'✦',glow:'#3FC7EB',specs:{Arcane:{role:'dps',talents:['Arcane Focus','Surge','Barrage']}}},
   Shaman:{icon:'⚡',glow:'#0070DD',specs:{Restoration:{role:'healer',talents:['Tidal Focus','Totemic Mastery','Ascendant Tide']}}},
-  Warlock:{icon:'✺',glow:'#8788EE',specs:{Demonology:{role:'dps',talents:['Demonic Bond','Fel Knowledge','Demonic Tyrant']}}}
+  Warlock:{icon:'✺',glow:'#8788EE',specs:{Demonology:{role:'dps',talents:['Demonic Bond','Fel Knowledge','Demonic Tyrant']}}},
+  Monk:{icon:'☯',glow:'#00FF98',specs:{
+    Brewmaster:{role:'tank',talents:['High Tolerance','Elusive Brawler','Fortifying Brew']},
+    Mistweaver:{role:'healer',talents:['Mist Wrap','Lifecycles','Revival']},
+    Windwalker:{role:'dps',talents:['Combo Strikes','Ferocity','Touch of Death']}
+  }}
 };
 
 const RECRUIT_RACES=[
