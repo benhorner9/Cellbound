@@ -525,7 +525,7 @@ async function createRecruit(){
 
 function renderOverview(){
   if(!ui.overviewRoster)return;
-  const party=partyCharacters(),activeIds=new Set(party.map(c=>c.id)),cap=entitlements().rosterCap;
+  const party=partyCharacters(),cap=entitlements().rosterCap;
   const recovering=party.filter(c=>isUnavailable(c)).length;
   const pi=partyItemLevel();
 
@@ -548,6 +548,8 @@ function renderOverview(){
   const blackoutDone=(Number(state?.blackoutStationCompletions)||0)>0;
   const fracturedOpen=Boolean(state?.progression?.fracturedAgesUnlocked);
   const fracturedDone=(Number(state?.fracturedAgesCompletions)||0)>0;
+  const manorUnlocked=Boolean(state?.progression?.manorRaidUnlocked);
+
   const dungeonImages={
     'ashen-vault':'./assets/dungeons/ashen-vault.webp',
     'hollow-sanctum':'./assets/dungeons/hollow-sanctum.webp',
@@ -555,6 +557,7 @@ function renderOverview(){
     'blackout-station':'./assets/dungeons/blackout-station.webp',
     'fractured-ages':'./assets/dungeons/fractured-ages.webp'
   };
+
   let dungeon;
   if(!ashenOpen||!ashenDone)dungeon={id:'ashen-vault',name:'The Ashen Vault',tag:ashenOpen?'AVAILABLE':'QUEST LOCKED',copy:'Break through the furnace halls and reach the living Vaultheart.',pips:3,active:Math.min(3,Object.values(state?.bossKills||{}).filter(Boolean).length||1),req:18};
   else if(hollowOpen&&!hollowDone)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:'NEWLY UNLOCKED',copy:'Descend beneath Zeltira and face the Bound Choir.',pips:3,active:1,req:24};
@@ -565,28 +568,107 @@ function renderOverview(){
   else if(hollowOpen)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:hollowDone?'CLEARED':'AVAILABLE',copy:hollowDone?'Return to the Sanctum for another run.':'The Hollow Sanctum is open when your party is ready.',pips:3,active:hollowDone?3:1,req:24};
   else dungeon={id:'ashen-vault',name:'The Ashen Vault',tag:'CLEARED',copy:'The Ashen Vault remains open while you follow the next lead.',pips:3,active:3,req:18};
 
+  const roles=party.reduce((out,c)=>{const role=roleOf(c);out[role]=(out[role]||0)+1;return out;},{tank:0,healer:0,dps:0});
+  const fullParty=party.length===5;
+  const compositionReady=roles.tank>=1&&roles.healer>=1&&roles.dps>=3;
+  const gearReady=pi>=dungeon.req;
+  const recoveryReady=recovering===0;
+  const questReady=ashenOpen||dungeon.id!=='ashen-vault';
+  const missionReady=fullParty&&compositionReady&&gearReady&&recoveryReady&&questReady;
+  const checks=[fullParty,compositionReady,gearReady,recoveryReady,questReady];
+  const readinessScore=Math.round(checks.filter(Boolean).length/checks.length*100);
+  const avgLevel=party.length?Math.round(party.reduce((sum,c)=>sum+(Number(c.level)||1),0)/party.length):0;
+
+  const missionAction=()=>{
+    if(!questReady){switchView('quests');return}
+    if(!fullParty||!compositionReady||!recoveryReady){switchView('party');return}
+    if(!gearReady){switchView('roster');return}
+    switchView('content');
+    setTimeout(()=>window.CellboundDungeonBrowser?.open?.(dungeon.id),40);
+  };
+  const missionLabel=!questReady?'CONTINUE QUEST':!fullParty||!compositionReady?'BUILD ACTIVE PARTY':!recoveryReady?'MANAGE RECOVERY':!gearReady?'IMPROVE GEAR':'OPEN DUNGEON';
+  const directive=!questReady
+    ?'Complete the current adventure to unlock this expedition.'
+    :!fullParty
+      ?'Fill all five party slots before committing to the expedition.'
+      :!compositionReady
+        ?'Your active five need at least 1 Tank, 1 Healer and 3 Damage.'
+        :!recoveryReady
+          ?recovering+' adventurer'+(recovering===1?' is':'s are')+' recovering from Cell Shock.'
+          :!gearReady
+            ?'Raise average party Item Level by '+Math.max(1,dungeon.req-pi)+' to meet the entry requirement.'
+            :'Your party meets the current entry checks.';
+
   const next=$('#overviewNextDungeon');
   if(next){
-    const partyState=party.length<5?party.length+'/5 PARTY':recovering?recovering+' RECOVERING':pi<dungeon.req?'iLvl '+pi+' · ENTRY '+dungeon.req+'+':'PARTY READY';
-    const primaryLabel=!ashenOpen&&dungeon.id==='ashen-vault'?'CONTINUE QUEST':party.length<5?'BUILD ACTIVE PARTY':'OPEN DUNGEON';
+    const partyState=!fullParty?party.length+'/5 PARTY':recovering?recovering+' RECOVERING':!gearReady?'iLvl '+pi+' · ENTRY '+dungeon.req+'+':'PARTY READY';
     next.dataset.dungeon=dungeon.id;
     next.innerHTML=`
       <div class="home-continue-art"><img src="${dungeonImages[dungeon.id]}" alt="" aria-hidden="true" decoding="async"><i></i></div>
       <div class="home-continue-copy">
-        <div class="home-continue-eyebrow"><span>CONTINUE EXPEDITION</span><em>${dungeon.tag}</em></div>
+        <div class="home-continue-eyebrow"><span>NEXT MISSION</span><em>${dungeon.tag}</em></div>
         <h2>${dungeon.name}</h2>
         <p>${dungeon.copy}</p>
-        <div class="home-continue-meta"><span>Party iLvl <b>${pi||'—'}</b></span><span>Entry <b>${dungeon.req}+</b></span><span class="${party.length===5&&!recovering&&pi>=dungeon.req?'ready':''}">${partyState}</span></div>
+        <div class="home-mission-directive"><i></i><span>${directive}</span></div>
+        <div class="home-continue-meta"><span>Party iLvl <b>${pi||'—'}</b></span><span>Entry <b>${dungeon.req}+</b></span><span>Avg Level <b>${avgLevel||'—'}</b></span><span class="${missionReady?'ready':''}">${partyState}</span></div>
         <div class="boss-pips">${Array.from({length:dungeon.pips},(_,i)=>`<span class="${i<dungeon.active?'active':''}"></span>`).join('')}</div>
-        <div class="home-continue-actions"><button type="button" data-home-primary>${primaryLabel} →</button><button type="button" data-home-party>MANAGE PARTY</button></div>
+        <div class="home-continue-actions"><button type="button" data-home-primary>${missionLabel} →</button><button type="button" data-home-party>MANAGE PARTY</button></div>
       </div>`;
-    next.querySelector('[data-home-primary]')?.addEventListener('click',()=>{
-      if(!ashenOpen&&dungeon.id==='ashen-vault'){switchView('quests');return}
-      if(party.length<5){switchView('party');return}
-      switchView('content');
-      setTimeout(()=>window.CellboundDungeonBrowser?.open?.(dungeon.id),40)
-    });
+    next.querySelector('[data-home-primary]')?.addEventListener('click',missionAction);
     next.querySelector('[data-home-party]')?.addEventListener('click',()=>switchView('party'));
+  }
+
+  const readiness=$('#overviewReadiness'),readinessBadge=$('#homeReadinessBadge');
+  if(readinessBadge){
+    readinessBadge.textContent=missionReady?'READY TO ENTER':!questReady?'CONTENT LOCKED':'NEEDS ATTENTION';
+    readinessBadge.className=missionReady?'ready':!questReady?'blocked':'warn';
+  }
+  if(readiness){
+    const statusCopy=missionReady?'Your active five are prepared for '+dungeon.name+'.':directive;
+    readiness.innerHTML=`
+      <div class="home-readiness-score">
+        <div class="home-readiness-ring" style="--ready:${readinessScore}"><b>${readinessScore}%</b></div>
+        <div><small>EXPEDITION CHECK</small><strong>${missionReady?'Ready to deploy':'Preparation needed'}</strong><span>${statusCopy}</span></div>
+      </div>
+      <div class="home-role-checks">
+        <div class="home-role-check ${roles.tank>=1?'ok':''}"><i>TANK</i><b>${roles.tank}/1 ${roles.tank>=1?'✓':''}</b></div>
+        <div class="home-role-check ${roles.healer>=1?'ok':''}"><i>HEALER</i><b>${roles.healer}/1 ${roles.healer>=1?'✓':''}</b></div>
+        <div class="home-role-check ${roles.dps>=3?'ok':''}"><i>DAMAGE</i><b>${roles.dps}/3 ${roles.dps>=3?'✓':''}</b></div>
+      </div>
+      <div class="home-ready-list">
+        <div class="home-ready-row ${fullParty?'ok':'bad'}"><span>Active party</span><b>${party.length}/5</b></div>
+        <div class="home-ready-row ${gearReady?'ok':'warn'}"><span>Average Item Level</span><b>${pi||0} / ${dungeon.req}</b></div>
+        <div class="home-ready-row ${recoveryReady?'ok':'bad'}"><span>Cell Shock recovery</span><b>${recoveryReady?'CLEAR':recovering+' RECOVERING'}</b></div>
+        <div class="home-ready-row ${questReady?'ok':'warn'}"><span>Access</span><b>${questReady?'UNLOCKED':'QUEST LOCKED'}</b></div>
+      </div>
+      <button class="home-readiness-action" type="button" data-home-readiness-action>${missionLabel} →</button>`;
+    readiness.querySelector('[data-home-readiness-action]')?.addEventListener('click',missionAction);
+  }
+
+  const progress=$('#overviewProgress');
+  if(progress){
+    const chaosOpen=hollowDone||chaosDone||blackoutDone||fracturedOpen;
+    const blackoutOpen=chaosDone||blackoutDone||fracturedOpen;
+    const stages=[
+      {id:'ashen-vault',label:'Ashen Vault',kind:'DUNGEON',done:ashenDone,open:ashenOpen},
+      {id:'hollow-sanctum',label:'Hollow Sanctum',kind:'DUNGEON',done:hollowDone,open:hollowOpen},
+      {id:'chaos-canyon',label:'Chaos Canyon',kind:'DUNGEON',done:chaosDone,open:chaosOpen},
+      {id:'blackout-station',label:'Blackout Station',kind:'DUNGEON',done:blackoutDone,open:blackoutOpen},
+      {id:'fractured-ages',label:'Fractured Ages',kind:'DUNGEON',done:fracturedDone,open:fracturedOpen},
+      {id:'manor',label:'The Manor',kind:'RAID',done:false,open:manorUnlocked}
+    ];
+    progress.innerHTML=stages.map((stage,index)=>{
+      const current=stage.id===dungeon.id&&!stage.done;
+      const cls=stage.done?'done':current?'current':stage.open?'open':'locked';
+      const status=stage.done?'CLEARED':current?'NEXT':stage.open?'OPEN':'LOCKED';
+      return `<button type="button" class="home-progress-stage ${cls}" data-home-stage="${stage.id}" ${stage.open||stage.done?'':'disabled'}><i class="node">${stage.done?'✓':index+1}</i><small>${stage.kind}</small><b>${stage.label}</b><em>${status}</em></button>`;
+    }).join('');
+    progress.querySelectorAll('[data-home-stage]').forEach(button=>button.addEventListener('click',()=>{
+      const id=button.dataset.homeStage;
+      if(id==='manor'){switchView('raids');return}
+      switchView('content');
+      setTimeout(()=>window.CellboundDungeonBrowser?.open?.(id),40);
+    }));
   }
 
   const today=(()=>{const d=new Date();return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')})();
@@ -595,6 +677,7 @@ function renderOverview(){
   const attemptsLeft=Math.max(0,3-attemptsUsed),bestKills=Math.max(0,Number(tb.bestKills)||0);
   const eventStatus=$('#homeEventStatus');if(eventStatus)eventStatus.textContent=attemptsLeft+' entr'+(attemptsLeft===1?'y':'ies')+' today · Best '+bestKills+'/12';
   const dungeonStatus=$('#homeDungeonStatus');if(dungeonStatus)dungeonStatus.textContent=dungeon.name;
+  const raidStatus=$('#homeRaidStatus');if(raidStatus)raidStatus.textContent=manorUnlocked?'The Manor unlocked':'Attunement required';
 
   const pulse=$('#overviewGuildPulse');
   if(pulse){
@@ -611,6 +694,7 @@ function renderOverview(){
     pulse.querySelector('[data-pulse="roster"]')?.addEventListener('click',()=>switchView('roster'));
   }
 }
+
 function bankBulkSelection(){
   [...bankBulkSelected].forEach(id=>{
     const item=state.bank.find(x=>x.id===id);
