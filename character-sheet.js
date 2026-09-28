@@ -3,6 +3,7 @@
 
 const STORAGE='cellbound-management-reboot-v3';
 const G=window.CellboundGear;
+const B=window.CellboundBuildRules;
 const I=window.CellboundIdentities;
 const CP=window.CellboundPortraits;
 const portraitHTML=(c,size='lg')=>CP?.portraitHTML?.(c,{size})||'<span class="cb-portrait cb-portrait--'+size+'"><b>'+String(c?.portrait||c?.name||'?').slice(0,2).toUpperCase()+'</b></span>';
@@ -461,6 +462,7 @@ function ensureCharacter(c){
   [...leftSlots,...rightSlots].forEach(slot=>{if(!(slot in c.equipment))c.equipment[slot]=null});
   c.talents=c.talents||{};
   Object.keys(specs[c.class]||{}).forEach(spec=>{c.talents[spec]=c.talents[spec]||{}});
+  B?.syncLegacyTalentCounter?.(c);
   c.skillLoadouts=c.skillLoadouts&&typeof c.skillLoadouts==='object'?c.skillLoadouts:{};
   const buff=classBuffFor(c);if(buff)c.buffSkill=buff.id;
   return c;
@@ -496,24 +498,23 @@ function bestBankUpgrade(state,c,slot){
   const gain=(Number(best?.itemLevel)||0)-current;
   return gain>0?{item:best,gain}:null;
 }
-function setRuleData(){
-  return G?.SET_BONUS_RULES||{
-    pieces2:{threshold:2,name:'Resonant Pair',short:'+5% damage & healing output',description:'All damaging and healing abilities are 5% stronger.'},
-    pieces4:{threshold:4,name:'Cellbound Ensemble',short:'+12% resource recovery',description:'Passive class-resource recovery is increased by 12%.'}
+function setRuleData(c=null,item=null){
+  return G?.setBonusRulesFor?.(c||item?.class,c?.spec||null,item)||G?.SET_BONUS_RULES||{
+    pieces2:{threshold:2,name:'Specialisation Pair',short:'Adaptive 2-piece bonus',description:'Changes with the active specialisation.'},
+    pieces4:{threshold:4,name:'Talent Ensemble',short:'Adaptive 4-piece bonus',description:'Changes with the active specialisation.'}
   }
 }
 function setInlineMarkup(c,item){
   if(!item?.setId||!item?.setName)return'';
-  const count=G?.setPieceCount?.(c,item.setId)||0,rules=setRuleData(),two=count>=rules.pieces2.threshold,four=count>=rules.pieces4.threshold;
-  return `<span class="cb-slot-set"><b>${escHtml(item.setName)}</b><em>${count}/4 equipped${four?' · 2 & 4-piece active':two?' · 2-piece active':''}</em></span>`
+  const count=G?.setPieceCount?.(c,item.setId)||0,rules=setRuleData(c,item),two=count>=rules.pieces2.threshold,four=count>=rules.pieces4.threshold;
+  return `<span class="cb-slot-set"><b>${escHtml(item.setName)}</b><em>${count}/4 equipped · ${escHtml(c.spec)}${four?' · 2 & 4-piece active':two?' · 2-piece active':''}</em></span>`
 }
 function setSummaryMarkup(c){
   const sets=new Map();
   Object.values(c?.equipment||{}).forEach(item=>{if(item?.setId&&!sets.has(item.setId))sets.set(item.setId,item)});
   if(!sets.size)return'';
-  const rules=setRuleData();
   const bonus=(rule,count)=>`<div class="cb-set-bonus ${count>=rule.threshold?'active':''}"><span>${rule.threshold} PIECES</span><div><b>${escHtml(rule.name)}</b><strong>${escHtml(rule.short)}</strong><p>${escHtml(rule.description)}</p></div><em>${count>=rule.threshold?'ACTIVE':count+'/'+rule.threshold}</em></div>`;
-  return `<section class="cb-set-summary"><div class="cb-stat-section-head"><span>SET BONUSES</span><small>Matching equipment set effects</small></div>${[...sets.entries()].map(([id,item])=>{const count=G?.setPieceCount?.(c,id)||0;return `<article class="cb-set-card"><header><div><small>EQUIPMENT SET</small><h4>${escHtml(item.setName||id)}</h4></div><b>${count}/4</b></header>${bonus(rules.pieces2,count)}${bonus(rules.pieces4,count)}</article>`}).join('')}</section>`
+  return `<section class="cb-set-summary"><div class="cb-stat-section-head"><span>SET BONUSES · ${escHtml(c.spec.toUpperCase())}</span><small>Bonuses adapt to the active specialisation</small></div>${[...sets.entries()].map(([id,item])=>{const count=G?.setPieceCount?.(c,id)||0,rules=setRuleData(c,item);return `<article class="cb-set-card"><header><div><small>ADAPTIVE EQUIPMENT SET</small><h4>${escHtml(item.setName||id)}</h4></div><b>${count}/4</b></header>${bonus(rules.pieces2,count)}${bonus(rules.pieces4,count)}</article>`}).join('')}</section>`
 }
 function equipmentSlot(c,slot,state){
   const item=c.equipment?.[slot],upgrade=bestBankUpgrade(state,c,slot),prep=(window.CellboundProfessions?.activeEffects?.(c)||[]).find(x=>x.kind==='enhancement'&&x.slot===slot);
@@ -644,34 +645,37 @@ function slotPicker(state,c,slot){
     <div class="cb-slot-options">${candidates.length?candidates.sort((a,b)=>(b.itemLevel||0)-(a.itemLevel||0)).map(item=>{const delta=(Number(item.itemLevel)||0)-currentIlvl,fit=G?.rollFit?.(c,item),stats=(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll';return `<button data-equip-bank="${item.id}" data-equip-slot="${slot}" class="${rarityClass(item)}"><span>${G?.artHTML?.(item,48)||item.icon||'◇'}</span><div><b>${item.name}</b><small>${item.rarity} · iLvl ${item.itemLevel||0} · ×${item.quantity||1}</small><strong class="cb-option-roll">${stats}</strong>${setInlineMarkup(c,item)}<em class="${delta>0?'upgrade':delta<0?'downgrade':''}">${fit?.label||''}${delta===0?' · Same Item Level':delta>0?` · +${delta} Item Level`:` · ${delta} Item Level`}</em></div></button>`}).join(''):'<div class="cb-no-items">No compatible items are currently stored in the Bank.</div>'}</div>
   </div>`;
 }
-function totalSpent(c,spec){return Object.values(c.talents?.[spec]||{}).reduce((a,b)=>a+(Number(b)||0),0)}
+function totalSpent(c,spec){return B?.talentSpent?.(c,spec)??Object.values(c.talents?.[spec]||{}).reduce((a,b)=>a+(Number(b)||0),0)}
+function talentBudget(c){return B?.talentBudgetForLevel?.(c?.level)??Math.max(1,Number(c?.level)||1)}
+function talentRemaining(c,spec){return B?.talentRemaining?.(c,spec)??Math.max(0,talentBudget(c)-totalSpent(c,spec))}
+function tierNeed(node){return B?.tierRequirement?.(node?.tier)??Math.max(0,Number(node?.tier)||0)*2}
 function treeNodeState(c,spec,node){
   const ranks=c.talents?.[spec]||{},rank=ranks[node.id]||0,spent=totalSpent(c,spec);
   const prereq=!node.req||(ranks[node.req]||0)>0;
-  const tierOk=spent>=node.tier*2;
+  const tierOk=spent>=tierNeed(node);
   return {rank,available:prereq&&tierOk,complete:rank>=node.max};
 }
 function talentLockReason(c,spec,node,s){
   if(s.complete)return'Maximum rank reached.';
   if(node.req&&!(c.talents?.[spec]?.[node.req]>0))return'Requires '+node.req+'.';
-  const spent=totalSpent(c,spec),need=node.tier*2;
+  const spent=totalSpent(c,spec),need=tierNeed(node);
   if(spent<need)return'Requires '+need+' points spent in this tree.';
-  if(!(c.talent>0))return'No talent points available.';
+  if(!(talentRemaining(c,spec)>0))return'No build points available for this specialisation.';
   return'Ready to invest.';
 }
 function talentInspector(c,spec,node){
   if(!node)return `<aside class="cb-talent-inspector cb-talent-inspector-v2 empty"><span>SELECT A TALENT</span><h3>Build your specialisation.</h3><p>Choose a talent to inspect its combat effect, ranks and requirements before spending a point.</p></aside>`;
   const s=treeNodeState(c,spec,node),reason=talentLockReason(c,spec,node,s);
-  const canInvest=s.available&&!s.complete&&(c.talent>0),combatRule=window.CellboundCombatReborn?.talents?.rules?.[node.id]||node.desc;
+  const canInvest=s.available&&!s.complete&&(talentRemaining(c,spec)>0),combatRule=window.CellboundCombatReborn?.talents?.rules?.[node.id]||node.desc;
   const rankPips=Array.from({length:node.max},(_,i)=>`<i class="${i<s.rank?'filled':''}"></i>`).join('');
   const status=s.complete?'MAX RANK':canInvest?'READY TO LEARN':s.available?'NO POINTS':'LOCKED';
   return `<aside class="cb-talent-inspector cb-talent-inspector-v2 ${canInvest?'investable':''}">
     <div class="cb-talent-inspector-head"><span class="cb-inspector-icon">${node.icon}</span><div><small>TIER ${node.tier+1} · ${spec.toUpperCase()}</small><h3>${node.id}</h3><div class="cb-inspector-ranks">${rankPips}<span>Rank ${s.rank}/${node.max}</span></div></div></div>
     <div class="cb-inspector-status ${canInvest?'ready':s.complete?'complete':'locked'}">${status}</div>
     <section><small>COMBAT EFFECT</small><p>${combatRule}</p></section>
-    <section><small>NEXT RANK</small><p>${s.complete?'This talent is fully ranked.':node.max===1?'One point unlocks this talent effect.':`Spend one point to reach Rank ${s.rank+1} of ${node.max}.`} Each point also grants <b>+1 Power</b>.</p></section>
+    <section><small>NEXT RANK</small><p>${s.complete?'This talent is fully ranked.':node.max===1?'One point unlocks this talent effect.':`Spend one point to reach Rank ${s.rank+1} of ${node.max}.`}</p></section>
     <div class="cb-talent-requirements">
-      <div><span>Tier unlock</span><b>${node.tier?node.tier*2+' points spent':'Available immediately'}</b></div>
+      <div><span>Tier unlock</span><b>${node.tier?tierNeed(node)+' points spent':'Available immediately'}</b></div>
       <div><span>Prerequisite</span><b>${node.req||'None'}</b></div>
       <div><span>Status</span><b class="${canInvest?'ready':''}">${reason}</b></div>
     </div>
@@ -687,7 +691,7 @@ function talentTree(c,spec){
   if(selected){selectedTalentId=selected.id;selectedTalentSpec=spec}
   const tierNames=['Foundations','Specialisation','Core Techniques','Advanced','Capstone'];
   const tiers=[0,1,2,3,4].map(tier=>{
-    const tierNodes=nodes.filter(n=>n.tier===tier),need=tier*2,open=spent>=need;
+    const tierNodes=nodes.filter(n=>n.tier===tier),need=B?.tierRequirement?.(tier)??tier*2,open=spent>=need;
     const cards=tierNodes.map(node=>{
       const s=treeNodeState(c,spec,node),isSelected=selected?.id===node.id,canInvest=s.available&&!s.complete&&(c.talent>0);
       const rankPips=Array.from({length:node.max},(_,i)=>`<i class="${i<s.rank?'filled':''}"></i>`).join('');
@@ -712,8 +716,8 @@ function talentTree(c,spec){
     <section class="cb-talent-command-hero">
       <div><small>CLASS TALENTS · ${c.class.toUpperCase()}</small><h3>${spec}</h3><p>${role} specialisation · Build through five tiers. Locked talents can still be inspected before you commit.</p><div class="cb-spec-activate-row">${spec===c.spec?'<span class="cb-spec-active-pill">ACTIVE SPECIALISATION</span>':`<button type="button" class="cb-activate-spec" data-activate-spec="${spec}">ACTIVATE ${spec.toUpperCase()}</button>`}</div></div>
       <div class="cb-talent-command-metrics">
-        <div><span>AVAILABLE</span><b>${c.talent||0}</b><small>Talent points</small></div>
-        <div><span>SPENT</span><b>${spent}</b><small>In ${spec}</small></div>
+        <div><span>AVAILABLE</span><b>${talentRemaining(c,spec)}</b><small>${spec} build points</small></div>
+        <div><span>SPENT</span><b>${spent}/${talentBudget(c)}</b><small>In ${spec}</small></div>
         <div><span>ROLE</span><b>${role}</b><small>${spec===c.spec?'Active specialisation':'Inactive specialisation'}</small></div>
       </div>
     </section>
@@ -900,7 +904,7 @@ function renderSheet(){
         <div><span>ITEM LEVEL</span><b>${ilvl}</b></div>
         <div><span>POWER</span><b>${c.power||0}</b></div>
         <div class="${shock>=75?'danger':''}"><span>CELL SHOCK</span><b>${shock}%</b></div>
-        <div><span>TALENTS</span><b>${c.talent||0}</b></div>
+        <div><span>BUILD POINTS</span><b>${talentRemaining(c,c.spec)}/${talentBudget(c)}</b></div>
       </div>
     </header>
     ${editable?'':'<div class="cb-membership-lock-banner"><b>MEMBERSHIP SLOT LOCKED</b><span>You can inspect this adventurer, but changes are locked until membership returns.</span></div>'}
@@ -987,19 +991,19 @@ function upgradeEquippedItem(slot){
 function investTalent(spec,nodeId){
   if(!characterEditable())return;
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));
-  if(!state||!c||!(c.talent>0))return;
+  if(!state||!c||!(talentRemaining(c,spec)>0))return;
   const node=(trees[c.class]?.[spec]||[]).find(n=>n.id===nodeId);if(!node)return;
   const s=treeNodeState(c,spec,node);if(!s.available||s.complete)return;
   c.talents[spec][node.id]=(c.talents[spec][node.id]||0)+1;
-  c.talent--;c.power=(c.power||0)+1;
-  state.activity=state.activity||[];state.activity.push(`${c.name} invested a point in ${spec}: ${node.id}.`);
+  B?.syncLegacyTalentCounter?.(c);
+  state.activity=state.activity||[];state.activity.push(`${c.name} invested a ${spec} build point in ${node.id}.`);
   writeState(state);renderSheet();window.CellboundFX?.callout?.({eyebrow:'TALENT LEARNED',title:node.id,tone:'arcane'});window.CellboundFX?.flash?.('arcane');
 }
 function changeSpec(spec){
   if(!characterEditable())return;
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId));
   if(!state||!c||!specs[c.class]?.[spec]||c.spec===spec)return;
-  c.spec=spec;selectedTreeSpec=spec;selectedTalentId=null;selectedTalentSpec=spec;activeSkillSlot=0;
+  c.spec=spec;B?.syncLegacyTalentCounter?.(c);selectedTreeSpec=spec;selectedTalentId=null;selectedTalentSpec=spec;activeSkillSlot=0;
   state.activity=state.activity||[];state.activity.push(`${c.name} changed specialisation to ${spec} (${roleLabel(roleOf(c))}). Active-party role updated automatically.`);
   writeState(state);renderSheet();window.CellboundFX?.quest?.({eyebrow:'SPECIALISATION CHANGED',title:spec,copy:roleLabel(roleOf(c))+' role is now active for this character.',tone:'story',duration:1250});
 }
