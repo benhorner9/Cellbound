@@ -9,40 +9,40 @@ const game=()=>window.CellboundGame;
    naturally disappear behind furniture instead of cutting through it.
    Prop depth: Door 24 · Bar 46 · Party Table 74. */
 const slots={
- 'fireplace-floor':{
-  wide:[27,50],phone:[27,50],scale:.72,phoneScale:.70,depth:58,zone:'floor'
+ 'party-back-left':{
+  wide:[39,58],phone:[39,58],scale:.61,phoneScale:.59,depth:72,zone:'behind-table'
  },
- 'window-back':{
-  wide:[49,42],phone:[49,42],scale:.60,phoneScale:.58,depth:43,zone:'background'
+ 'party-back-centre':{
+  wide:[50,55],phone:[50,55],scale:.59,phoneScale:.57,depth:72,zone:'behind-table'
  },
- 'table-left':{
-  wide:[43,67],phone:[43,67],scale:.73,phoneScale:.71,depth:72,zone:'behind-table'
+ 'party-back-right':{
+  wide:[61,58],phone:[61,58],scale:.61,phoneScale:.59,depth:72,zone:'behind-table'
  },
- 'table-right':{
-  wide:[58,67],phone:[58,67],scale:.73,phoneScale:.71,depth:72,zone:'behind-table'
+ 'party-front-left':{
+  wide:[43,80],phone:[43,80],scale:.65,phoneScale:.63,depth:82,zone:'floor'
  },
- 'bar-floor':{
-  wide:[78,55],phone:[78,55],scale:.69,phoneScale:.67,depth:61,zone:'floor'
+ 'party-front-right':{
+  wide:[57,80],phone:[57,80],scale:.65,phoneScale:.63,depth:82,zone:'floor'
  },
- 'window-left':{
-  wide:[38,43],phone:[38,43],scale:.53,phoneScale:.51,depth:41,zone:'background'
+ 'reserve-fireplace':{
+  wide:[27,43],phone:[27,43],scale:.50,phoneScale:.48,depth:42,zone:'background'
  },
- 'window-right':{
-  wide:[66,43],phone:[66,43],scale:.54,phoneScale:.52,depth:42,zone:'background'
+ 'reserve-window-left':{
+  wide:[39,39],phone:[39,39],scale:.48,phoneScale:.46,depth:40,zone:'background'
  },
- 'bar-behind':{
-  wide:[79,43],phone:[79,43],scale:.55,phoneScale:.53,depth:44,zone:'behind-bar'
+ 'reserve-window-right':{
+  wide:[61,39],phone:[61,39],scale:.48,phoneScale:.46,depth:40,zone:'background'
  },
- stairs:{
-  wide:[84,47],phone:[84,47],scale:.56,phoneScale:.54,depth:48,zone:'midground'
+ 'reserve-bar':{
+  wide:[79,42],phone:[79,42],scale:.50,phoneScale:.48,depth:44,zone:'behind-bar'
  },
- balcony:{
-  wide:[88,29],phone:[88,29],scale:.45,phoneScale:.43,depth:39,zone:'behind-bar'
+ 'reserve-door':{
+  wide:[18,42],phone:[18,42],scale:.49,phoneScale:.47,depth:41,zone:'background'
  }
 }
 const perspectiveFor=y=>Math.max(.82,Math.min(1.02,.70+(Number(y)||50)*.0042));
-const activeSlots=['fireplace-floor','window-back','table-left','table-right','bar-floor'];
-const reserveSlots=['window-left','window-right','bar-behind','stairs','balcony'];
+const activeSlots=['party-back-left','party-back-centre','party-back-right','party-front-left','party-front-right'];
+const reserveSlots=['reserve-fireplace','reserve-window-left','reserve-window-right','reserve-bar','reserve-door'];
 let root,world,ledger,partyDialog,partyMarker,partyNode,selectionPanel,selectionTitle,selectionCopy,selectionStatus,selectionAction,returnFocus=null,characterFocus=null,lastKey='',selectedObject='',exitTimer=0;
 const objectCopy={
  party:{
