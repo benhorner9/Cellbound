@@ -137,7 +137,8 @@ function entitlementFromAccount(a){
   const until=a?.membership_active_until?new Date(a.membership_active_until).getTime():0;
   const staffMember=Boolean(a?.staff_member);
   const member=staffMember||Boolean(a?.membership_override)||(until>Date.now());
-  return {member,staffMember,chatBadge:a?.chat_badge||'player',playerModDiscountEligible:Boolean(a?.player_mod_discount_eligible),rosterCap:member?10:5,professionSlots:member?2:1,recoveryMinutes:member?MEMBER_RECOVERY_MINUTES:STANDARD_RECOVERY_MINUTES,membershipActiveUntil:a?.membership_active_until||null};
+  const isAdmin=Boolean(globalThis.CellboundAdmin?.isAdmin);
+  return {member,staffMember,isAdmin,chatBadge:a?.chat_badge||'player',playerModDiscountEligible:Boolean(a?.player_mod_discount_eligible),rosterCap:isAdmin?20:member?10:5,professionSlots:member?2:1,recoveryMinutes:member?MEMBER_RECOVERY_MINUTES:STANDARD_RECOVERY_MINUTES,membershipActiveUntil:a?.membership_active_until||null};
 }
 function entitlements(){return entitlementFromAccount(account);}
 function classDef(c){return classes[c.class]||classes.Warrior;}
@@ -411,10 +412,11 @@ function renderTop(){
 function shockMarkup(c){const pct=Math.round(c.cellShock||0),locked=isUnavailable(c);return `<div class="cell-shock-row"><div><span>Cell Shock</span><b>${pct}%${locked?` · ${formatRemaining(c)}`:''}</b></div><div class="cell-shock-bar"><i style="width:${pct}%"></i></div></div>`;}
 function rosterCard(c,index){
   const role=roleOf(c),unlocked=isRosterSlotUnlocked(index),recovering=isUnavailable(c),ilvl=characterItemLevel(c),classKey=combatClassKey(c),active=flatPartyIds().includes(c.id);
-  const shock=Math.round(Number(c.cellShock)||0),meta=classDef(c),status=!unlocked?'MEMBERSHIP LOCKED':recovering?'RECOVERING':active?'ACTIVE PARTY':'AVAILABLE';
+  const lockedLabel=index>=10?'ADMIN LOCKED':'MEMBERSHIP LOCKED';
+  const shock=Math.round(Number(c.cellShock)||0),meta=classDef(c),status=!unlocked?lockedLabel:recovering?'RECOVERING':active?'ACTIVE PARTY':'AVAILABLE';
   const statusClass=!unlocked?'locked':recovering?'recovering':active?'active':'ready';
   return `<article class="char-card roster-character-card ${classKey} ${!unlocked?'roster-locked':''} ${recovering?'shock-locked':''} ${active?'is-active':''}" data-role="${role}" data-class-name="${c.class}" style="--roster-accent:${meta?.glow||'#7F8B88'};--glow:${meta?.glow||'#7F8B88'}">
-    ${!unlocked?'<div class="member-slot-ribbon">MEMBERSHIP SLOT '+(index+1)+'</div>':''}
+    ${!unlocked?'<div class="member-slot-ribbon">'+(index>=10?'ADMIN SLOT ':'MEMBERSHIP SLOT ')+(index+1)+'</div>':''}
     <div class="roster-card-head">
       <div class="roster-card-portrait">${portraitHTML(c,'md')}<i>${meta?.icon||'◇'}</i></div>
       <div class="roster-card-identity">
@@ -437,7 +439,7 @@ function rosterCard(c,index){
 
 function recruitSlotCard(index){
   return `<article class="char-card recruit-slot-card roster-recruit-card">
-    <div class="recruit-slot-number">MEMBERSHIP SLOT ${index+1}</div>
+    <div class="recruit-slot-number">${index>=10?'ADMIN SLOT':'MEMBERSHIP SLOT'} ${index+1}</div>
     <div class="recruit-plus">+</div>
     <h3>Recruit Adventurer</h3>
     <div class="class">Open roster position</div>
@@ -462,8 +464,8 @@ function renderRoster(filter='all'){
   // Always keep the complete roster in the DOM. Evolution handles combined role,
   // status, class, profession, search and sort filters without destroying cards.
   let html=state.roster.map((c,index)=>rosterCard(c,index)).join('');
-  if(e.member&&state.onboarding?.complete&&state.roster.length<10){
-    for(let i=state.roster.length;i<10;i++)html+=recruitSlotCard(i);
+  if(e.rosterCap>5&&state.onboarding?.complete&&state.roster.length<e.rosterCap){
+    for(let i=state.roster.length;i<e.rosterCap;i++)html+=recruitSlotCard(i);
   }
   ui.rosterGrid.innerHTML=html;
   ui.rosterGrid.querySelectorAll('[data-recruit-slot]').forEach(b=>b.onclick=()=>openRecruit(Number(b.dataset.recruitSlot)));
@@ -486,7 +488,8 @@ function ensureRecruitModal(){
   root=document.createElement('div');root.id='recruitAdventurerModal';root.className='modal-backdrop recruit-modal-backdrop';root.hidden=true;document.body.appendChild(root);return root
 }
 function openRecruit(slotIndex){
-  if(!entitlements().member||!state.onboarding?.complete||state.roster.length>=10||slotIndex!==state.roster.length)return;
+  const e=entitlements();
+  if(e.rosterCap<=5||!state.onboarding?.complete||state.roster.length>=e.rosterCap||slotIndex!==state.roster.length)return;
   const klass=Object.keys(classes)[0],spec=Object.keys(classes[klass]?.specs||{})[0];
   recruitDraft={race:'Veyren',klass,spec,name:recruitRandomName('Veyren'),appearance:CP?.randomAppearance?.('Veyren')||{race:'Veyren'}};renderRecruitModal()
 }
@@ -499,8 +502,9 @@ function renderRecruitModal(){
   recruitDraft.appearance=CP?.normalizeAppearance?.(recruitDraft.appearance,recruitDraft.name||recruitDraft.race,recruitDraft.race)||recruitDraft.appearance||{race:recruitDraft.race};
   const appearanceEditor=CP?.editorHTML?.(recruitDraft.appearance,{characterClass:recruitDraft.klass,name:recruitDraft.name,race:recruitDraft.race})||'';
   root.hidden=false;document.body.classList.add('recruit-adventurer-open');
+  const e=entitlements(),adminSlot=e.isAdmin&&state.roster.length>=10;
   root.innerHTML='<section class="recruit-modal"><button class="modal-close" data-close-recruit>×</button>'+
-    '<header><small>MEMBERSHIP ROSTER · SLOT '+(state.roster.length+1)+' OF 10</small><h2>Recruit Adventurer</h2><p>Membership adds five roster slots. Recruit them whenever you need them.</p></header>'+
+    '<header><small>'+(adminSlot?'ADMIN ROSTER':'MEMBERSHIP ROSTER')+' · SLOT '+(state.roster.length+1)+' OF '+e.rosterCap+'</small><h2>Recruit Adventurer</h2><p>'+(e.isAdmin?'Admin accounts can maintain up to 20 adventurers.':'Membership adds five roster slots. Recruit them whenever you need them.')+'</p></header>'+
     '<div class="recruit-body">'+
       '<label><span>Race</span><select id="recruitRace">'+RECRUIT_RACES.map(r=>'<option value="'+r.id+'" '+(r.id===recruitDraft.race?'selected':'')+'>'+r.icon+' '+r.id+' · '+r.trait+'</option>').join('')+'</select></label>'+
       '<label><span>Class</span><select id="recruitClass">'+Object.entries(classes).map(([name,d])=>'<option value="'+name+'" '+(name===recruitDraft.klass?'selected':'')+'>'+d.icon+' '+name+'</option>').join('')+'</select></label>'+
@@ -522,7 +526,8 @@ function renderRecruitModal(){
 async function createRecruit(){
   if(!recruitDraft)return;
   await refreshMembershipStatus({render:false,silent:true});
-  if(!entitlements().member||state.roster.length>=10){closeRecruit();renderAll();return}
+  const e=entitlements();
+  if(e.rosterCap<=5||state.roster.length>=e.rosterCap){closeRecruit();renderAll();return}
   const name=String(recruitDraft.name||'').trim().replace(/\s+/g,' ');
   if(name.length<2||name.length>24||state.roster.some(c=>String(c.name||'').toLowerCase()===name.toLowerCase())){
     const input=$('#recruitName');if(input){input.setCustomValidity('Use a unique name between 2 and 24 characters.');input.reportValidity();setTimeout(()=>input.setCustomValidity(''),1800)}return
@@ -534,7 +539,7 @@ async function createRecruit(){
     knowledge:{ashwarden:0,embermaw:0,vaultheart:0},equipment,gearItems:ILVL_SLOTS.map(slot=>equipment[slot]?.name||'Empty'),
     talents:talentState(klass),cellShock:0,cellShockLockedUntil:null,professions:[null,null],recruitedAt:new Date().toISOString()
   },state.roster.length);
-  state.roster.push(ch);state.activity.push(name+' joined the guild in membership roster slot '+state.roster.length+'.');
+  state.roster.push(ch);state.activity.push(name+' joined the guild in '+(e.isAdmin&&state.roster.length>10?'admin':'membership')+' roster slot '+state.roster.length+'.');
   closeRecruit();writeLocal();await persistState();
   const combatStyle=['Mage','Priest','Druid','Hunter'].includes(ch.class)?'ranged':'melee';
   const mirror=await supabaseClient.from('characters').insert({user_id:currentUser.id,name:ch.name,combat_style:combatStyle,tutorial_complete:true,creation_complete:true,appearance:{...(ch.appearance||{}),race:ch.race,class:ch.class,spec:ch.spec,role,roster_slot:state.roster.length-1,recruited:true},level:1,xp:0,current_hp:100,max_hp:100,current_location:'zeltira',tutorial_stage:'complete',tutorial_reward_claimed:true,last_played_at:new Date().toISOString()});
