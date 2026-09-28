@@ -24,6 +24,7 @@ const RESOURCE_DEFS={
  Warrior:{name:'Rage',max:100,start:20,regen:7},
  Paladin:{name:'Mana',max:100,start:100,regen:6},
  'Priest|Shadow':{name:'Insanity',max:100,start:0,regen:0},
+ 'Druid|Balance':{name:'Astral Power',max:100,start:0,regen:0},
  Priest:{name:'Mana',max:100,start:100,regen:7},
  'Shaman|Elemental':{name:'Maelstrom',max:100,start:0,regen:0},
  Shaman:{name:'Mana',max:100,start:100,regen:7},
@@ -140,13 +141,23 @@ const ABILITIES={
   {id:'vengeance-metamorphosis',name:'Metamorphosis',kind:'defensive',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Transform into a towering demon, restoring health and greatly reducing damage taken.',duration:10000,damageReduction:.35,selfHealPct:.18,gcd:0,cd:90000}
  ],
  Druid:[
-  {id:'rejuvenation',name:'Rejuvenation',kind:'heal',role:'healer',unlockLevel:1,desc:'An efficient heal with a short healing-over-time effect.',range:30,heal:22,cost:10,gcd:1500,cast:0,cd:0,hot:8},
-  {id:'regrowth',name:'Regrowth',kind:'heal',role:'healer',unlockLevel:1,desc:'A stronger direct heal for injured allies.',range:30,heal:34,cost:18,gcd:1500,cast:1100,cd:0},
-  {id:'wild-growth',name:'Wild Growth',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Restore health to the whole party.',range:30,heal:15,cost:22,gcd:1500,cast:0,cd:8000},
-  {id:'skull-bash',name:'Skull Bash',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast.',range:13,cost:0,gcd:0,cd:15000},
-  {id:'wrath',name:'Wrath',kind:'damage',unlockLevel:4,desc:'A ranged nature attack for safe damage windows.',range:30,damage:14,cost:4,gcd:1500,cast:1200,cd:0},
+  {id:'rejuvenation',name:'Rejuvenation',kind:'heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'An efficient heal with a short healing-over-time effect.',range:30,heal:22,cost:10,gcd:1500,cast:0,cd:0,hot:8},
+  {id:'regrowth',name:'Regrowth',kind:'heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'A stronger direct heal for injured allies.',range:30,heal:34,cost:18,gcd:1500,cast:1100,cd:0},
+  {id:'wild-growth',name:'Wild Growth',kind:'group-heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Restore health to the whole party.',range:30,heal:15,cost:22,gcd:1500,cast:0,cd:8000},
+  {id:'skull-bash',name:'Skull Bash',kind:'interrupt',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Interrupt an enemy cast.',range:13,cost:0,gcd:0,cd:15000},
+  {id:'restoration-wrath',name:'Wrath',kind:'damage',role:'healer',spec:'Restoration',unlockLevel:4,desc:'A ranged nature attack for safe damage windows.',range:30,damage:14,cost:4,gcd:1500,cast:1200,cd:0,damageType:'magic'},
   {id:'barkskin',name:'Barkskin',kind:'defensive',unlockLevel:8,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.20,gcd:0,cd:60000},
-  {id:'tranquility',name:'Tranquility',kind:'group-heal',role:'healer',unlockLevel:14,desc:'A powerful emergency party heal with a long cooldown.',range:30,heal:30,cost:32,gcd:1500,cast:2500,cd:30000}
+  {id:'tranquility',name:'Tranquility',kind:'group-heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'A powerful emergency party heal with a long cooldown.',range:30,heal:30,cost:32,gcd:1500,cast:2500,cd:30000},
+
+  {id:'wrath',name:'Wrath',kind:'damage',role:'dps',spec:'Balance',unlockLevel:1,desc:'Cast nature magic to generate Astral Power and move toward Lunar Eclipse.',range:35,damage:19,cost:0,gain:10,gcd:1500,cast:1200,cd:0,damageType:'magic',school:'nature'},
+  {id:'starfire',name:'Starfire',kind:'damage',role:'dps',spec:'Balance',unlockLevel:1,desc:'Cast arcane stellar magic to generate Astral Power and move toward Solar Eclipse.',range:35,damage:22,cost:0,gain:12,gcd:1500,cast:1450,cd:0,cleave:1,damageType:'magic',school:'arcane'},
+  {id:'starsurge',name:'Starsurge',kind:'damage',role:'dps',spec:'Balance',unlockLevel:1,desc:'Spend Astral Power on a heavy single-target astral strike.',range:35,damage:40,cost:40,gcd:1500,cast:0,cd:0,damageType:'magic',school:'astral'},
+  {id:'moonfire',name:'Moonfire',kind:'damage',role:'dps',spec:'Balance',unlockLevel:4,desc:'Burn the target with lunar magic that continues dealing damage.',range:35,damage:11,cost:0,gain:6,gcd:1500,cast:0,cd:7000,damageType:'magic',school:'arcane'},
+  {id:'sunfire',name:'Sunfire',kind:'damage',role:'dps',spec:'Balance',unlockLevel:6,desc:'Scorch the target with solar nature magic and spread pressure into nearby enemies.',range:35,damage:12,cost:0,gain:6,gcd:1500,cast:0,cd:7000,cleave:2,damageType:'magic',school:'nature'},
+  {id:'starfall',name:'Starfall',kind:'damage',role:'dps',spec:'Balance',unlockLevel:1,desc:'Spend Astral Power to call falling stars across the enemy pack.',range:35,damage:32,cost:50,gcd:1500,cast:700,cd:8000,cleave:4,damageType:'magic',school:'astral'},
+  {id:'fury-of-elune',name:'Fury of Elune',kind:'damage',role:'dps',spec:'Balance',unlockLevel:1,desc:'Channel an astral beam through the enemy pack while generating Astral Power.',range:35,damage:38,cost:0,gain:24,gcd:1500,cast:1600,cd:30000,cleave:3,damageType:'magic',school:'astral'},
+  {id:'celestial-alignment',name:'Celestial Alignment',kind:'damage',role:'dps',spec:'Balance',unlockLevel:1,desc:'Align the heavens and empower Solar and Lunar magic simultaneously.',range:35,damage:36,cost:20,gcd:1500,cast:900,cd:60000,cleave:2,damageType:'magic',school:'astral'},
+  {id:'solar-beam',name:'Solar Beam',kind:'interrupt',role:'dps',spec:'Balance',unlockLevel:1,desc:'Silence an enemy cast with focused solar energy.',range:30,cost:0,gcd:0,cd:30000}
  ],
  Evoker:[
   {id:'reversion',name:'Reversion',kind:'heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Rewind an ally to a healthier moment and continue healing them briefly.',range:25,heal:24,cost:1,gcd:1500,cast:0,cd:7000,hot:8},
