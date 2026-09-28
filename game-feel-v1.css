@@ -1,0 +1,279 @@
+/* Cellbound Game Feel v1 — Step 2
+   Ambient world mood, fast screen transitions, tactile interaction feedback.
+   Presentation only: gameplay timing and progression logic remain untouched. */
+
+:root{
+  --cb-view-accent:213,179,107;
+  --cb-view-accent-strong:#d5b36b;
+}
+
+/* Contextual atmosphere follows the current command destination. */
+body[data-cb-view="overview"],
+body[data-cb-view="roster"],
+body[data-cb-view="party"],
+body[data-cb-view="bank"],
+body[data-cb-view="professions"]{
+  --cb-view-accent:213,179,107;
+  --cb-view-accent-strong:#d5b36b;
+}
+body[data-cb-view="quests"]{
+  --cb-view-accent:189,143,79;
+  --cb-view-accent-strong:#c9a05d;
+}
+body[data-cb-view="content"]{
+  --cb-view-accent:205,103,63;
+  --cb-view-accent-strong:#d27a4d;
+}
+body[data-cb-view="world"]{
+  --cb-view-accent:117,91,151;
+  --cb-view-accent-strong:#9c7fc1;
+}
+body[data-cb-view="raids"]{
+  --cb-view-accent:201,111,55;
+  --cb-view-accent-strong:#dc884f;
+}
+body[data-cb-view="trading"]{
+  --cb-view-accent:202,164,80;
+  --cb-view-accent-strong:#d6b25b;
+}
+body[data-cb-view="pvp"]{
+  --cb-view-accent:170,66,63;
+  --cb-view-accent-strong:#c86560;
+}
+body[data-cb-view="chat"]{
+  --cb-view-accent:77,151,145;
+  --cb-view-accent-strong:#68aaa4;
+}
+
+.main{
+  position:relative;
+  isolation:isolate;
+  transition:background .36s ease;
+  background:
+    radial-gradient(circle at 72% 4%,rgba(var(--cb-view-accent),.075),transparent 27%),
+    radial-gradient(circle at 8% 94%,rgba(var(--cb-view-accent),.028),transparent 30%),
+    linear-gradient(180deg,rgba(5,10,13,.24),rgba(4,8,11,.42)),
+    repeating-linear-gradient(135deg,rgba(255,255,255,.005) 0 1px,transparent 1px 8px);
+}
+
+/* Fine atmospheric grain without using another image asset. */
+.main:before{
+  content:"";
+  position:fixed;
+  left:250px;right:0;top:0;bottom:0;
+  z-index:-1;
+  pointer-events:none;
+  opacity:.56;
+  background:
+    radial-gradient(circle at 18% 18%,rgba(var(--cb-view-accent),.08) 0 1px,transparent 1.6px),
+    radial-gradient(circle at 68% 38%,rgba(255,222,157,.045) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 42% 78%,rgba(var(--cb-view-accent),.05) 0 1px,transparent 1.4px);
+  background-size:180px 190px,240px 225px,210px 250px;
+  animation:cbAmbientDrift 22s linear infinite;
+}
+@keyframes cbAmbientDrift{
+  from{background-position:0 0,0 0,0 0}
+  to{background-position:28px -42px,-22px -34px,19px -48px}
+}
+
+/* The top bar now behaves like a game location header. */
+.topbar{
+  position:relative;
+  overflow:hidden;
+  border-bottom-color:rgba(var(--cb-view-accent),.14)!important;
+  transition:border-color .28s ease,background .28s ease;
+}
+.topbar:before{
+  content:"";
+  position:absolute;
+  left:0;bottom:-1px;
+  width:170px;height:2px;
+  background:linear-gradient(90deg,var(--cb-view-accent-strong),rgba(var(--cb-view-accent),.14),transparent);
+  box-shadow:0 0 18px rgba(var(--cb-view-accent),.22);
+  transition:background .3s ease;
+}
+.topbar:after{
+  position:absolute;
+  right:2.5%;top:50%;
+  transform:translateY(-50%);
+  z-index:-1;
+  color:rgba(var(--cb-view-accent),.035);
+  font:400 5.8rem Georgia,serif;
+  line-height:1;
+  pointer-events:none;
+}
+body[data-cb-view="overview"] .topbar:after{content:"◇"}
+body[data-cb-view="roster"] .topbar:after{content:"♟"}
+body[data-cb-view="party"] .topbar:after{content:"◆"}
+body[data-cb-view="bank"] .topbar:after{content:"▦"}
+body[data-cb-view="professions"] .topbar:after{content:"⚒"}
+body[data-cb-view="quests"] .topbar:after{content:"⌁"}
+body[data-cb-view="content"] .topbar:after{content:"▱"}
+body[data-cb-view="world"] .topbar:after{content:"✦"}
+body[data-cb-view="raids"] .topbar:after{content:"♜"}
+body[data-cb-view="trading"] .topbar:after{content:"⇄"}
+body[data-cb-view="pvp"] .topbar:after{content:"⚔"}
+body[data-cb-view="chat"] .topbar:after{content:"◌"}
+
+/* Fast, cinematic entrance. Nothing waits for this animation. */
+.view.active.cb-view-entering{
+  animation:cbViewEnter .24s cubic-bezier(.2,.75,.25,1) both;
+}
+@keyframes cbViewEnter{
+  0%{opacity:.2;transform:translateY(7px);filter:blur(1.5px)}
+  100%{opacity:1;transform:none;filter:none}
+}
+
+/* A small location stinger makes changing screens feel intentional. */
+.cb-location-stinger{
+  position:fixed;
+  left:calc(250px + 28px);
+  top:77px;
+  z-index:1200;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 11px;
+  border:1px solid rgba(var(--cb-view-accent),.22);
+  background:linear-gradient(90deg,rgba(7,12,14,.96),rgba(13,17,17,.9));
+  color:#d9d0c0;
+  box-shadow:0 10px 35px rgba(0,0,0,.35);
+  pointer-events:none;
+  opacity:0;
+  transform:translateY(-6px);
+}
+.cb-location-stinger.show{
+  animation:cbStinger .88s ease both;
+}
+.cb-location-stinger i{
+  width:5px;height:5px;
+  transform:rotate(45deg);
+  background:var(--cb-view-accent-strong);
+  box-shadow:0 0 12px rgba(var(--cb-view-accent),.34)
+}
+.cb-location-stinger small{
+  color:#807868;
+  font-size:.45rem;
+  font-weight:900;
+  letter-spacing:.14em
+}
+.cb-location-stinger b{
+  font:500 .72rem Georgia,serif;
+  letter-spacing:.03em
+}
+@keyframes cbStinger{
+  0%{opacity:0;transform:translateY(-7px)}
+  16%,72%{opacity:1;transform:none}
+  100%{opacity:0;transform:translateY(-3px)}
+}
+
+/* Buttons receive a brief physical press instead of feeling like web controls. */
+.app-shell button.cb-pressed{
+  transform:translateY(1px) scale(.992)!important;
+  filter:brightness(1.12);
+}
+.app-shell button.cb-confirmed{
+  box-shadow:inset 0 0 0 1px rgba(var(--cb-view-accent),.2),0 0 18px rgba(var(--cb-view-accent),.08)!important;
+}
+
+/* Active navigation feels like a selected game destination. */
+.nav-btn.active{
+  box-shadow:
+    inset 3px 0 0 var(--cb-view-accent-strong),
+    inset 0 1px 0 rgba(255,255,255,.015),
+    0 0 24px rgba(var(--cb-view-accent),.035)!important;
+}
+.nav-btn.active:before{display:none!important}
+.nav-btn.active span{
+  color:var(--cb-view-accent-strong)!important;
+  text-shadow:0 0 14px rgba(var(--cb-view-accent),.24)
+}
+
+/* Home party is now an interactive command surface. */
+#overview .home-party-member{
+  cursor:pointer;
+  outline:none;
+  transition:transform .14s ease,border-color .14s ease,background .14s ease,filter .14s ease
+}
+#overview .home-party-member:hover,
+#overview .home-party-member:focus-visible{
+  z-index:2;
+  transform:translateY(-2px);
+  filter:brightness(1.08);
+  border-top-color:color-mix(in srgb,var(--party-class) 82%,#d5b36b);
+  box-shadow:0 10px 28px rgba(0,0,0,.24)
+}
+#overview .home-party-member:focus-visible{
+  box-shadow:0 0 0 1px rgba(231,203,137,.45),0 10px 28px rgba(0,0,0,.24)
+}
+#overview .home-party-member:before{
+  content:"MANAGE";
+  position:absolute;
+  right:8px;top:8px;
+  z-index:3;
+  opacity:0;
+  color:#9e8d67;
+  font-size:.42rem;
+  font-weight:900;
+  letter-spacing:.12em;
+  transition:opacity .14s ease
+}
+#overview .home-party-member:hover:before,
+#overview .home-party-member:focus-visible:before{opacity:1}
+
+/* Resource changes get a restrained in-game pulse. */
+.resource-strip b.cb-resource-pulse{
+  animation:cbResourcePulse .48s ease;
+}
+@keyframes cbResourcePulse{
+  0%{color:#fff;transform:translateY(-1px);text-shadow:0 0 16px rgba(var(--cb-view-accent),.7)}
+  100%{color:#ddd5c8;transform:none;text-shadow:none}
+}
+
+/* Destination cards get a focused selection flare on touch/click. */
+.home-destination.cb-selected,
+.dungeon-browser-card.cb-selected{
+  border-color:rgba(var(--cb-view-accent),.52)!important;
+  box-shadow:0 0 0 1px rgba(var(--cb-view-accent),.12),0 16px 46px rgba(0,0,0,.32),0 0 26px rgba(var(--cb-view-accent),.07)!important;
+}
+
+/* Section mastheads subtly inherit their location colour. */
+.section-intro{
+  transition:border-color .25s ease,box-shadow .25s ease;
+}
+.view.active>.section-intro{
+  border-color:rgba(var(--cb-view-accent),.17)!important;
+  box-shadow:0 20px 52px rgba(0,0,0,.26),inset 0 1px 0 rgba(var(--cb-view-accent),.025)!important;
+}
+.view.active>.section-intro small{color:var(--cb-view-accent-strong)!important}
+
+/* Preserve clean gameplay layers. These effects belong to command UI only. */
+body:has(.cb2d-backdrop) .cb-location-stinger,
+body:has(.hs2d-backdrop) .cb-location-stinger,
+body:has(.cc2d-backdrop) .cb-location-stinger,
+body:has(.bs2d-backdrop) .cb-location-stinger,
+body:has(.fa-backdrop) .cb-location-stinger,
+body:has(.pvp-match-backdrop) .cb-location-stinger{display:none}
+
+@media(max-width:1050px){
+  .main:before{left:82px}
+  .cb-location-stinger{left:100px}
+}
+@media(max-width:760px){
+  .main:before{left:64px}
+  .cb-location-stinger{
+    left:76px;
+    top:60px;
+    max-width:calc(100vw - 88px);
+    padding:6px 9px
+  }
+  .cb-location-stinger small{display:none}
+  .topbar:after{font-size:4rem}
+}
+@media(prefers-reduced-motion:reduce){
+  .main:before{animation:none}
+  .view.active.cb-view-entering,
+  .cb-location-stinger.show,
+  .resource-strip b.cb-resource-pulse{animation:none!important}
+  .cb-location-stinger.show{opacity:1;transform:none}
+}
