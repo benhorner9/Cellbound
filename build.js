@@ -116,7 +116,7 @@ for(const file of files){
   }
   if(file==='combat-reborn-v1.js'){
     if(!contents.includes("if(!moveIntoRange(ctx,u,target,5))return true")||!contents.includes("_combatTalentTimers"))throw new Error('Bladestorm melee movement rule is missing');
-    for(const hook of ["spec:'Havoc'","spec:'Vengeance'","id:'havoc-metamorphosis'","id:'spirit-bomb'","SOUL_FRAGMENT_CHANGED","'Fel Barrage':'Fel Barrage'"])if(!contents.includes(hook))throw new Error('Demon Hunter combat kit is incomplete: '+hook);
+    for(const hook of ["spec:'Havoc'","spec:'Vengeance'","id:'havoc-metamorphosis'","id:'spirit-bomb'","SOUL_FRAGMENT_CHANGED","'fel-barrage':'Fel Barrage'"])if(!contents.includes(hook))throw new Error('Demon Hunter combat kit is incomplete: '+hook);
     if(!contents.includes("_combatPosition")||!contents.includes("data.currentPosition"))throw new Error('Combat slice position persistence is missing');
     if(!contents.includes("focusSelectedDamageOnly")||!contents.includes("!target.focusSelected"))throw new Error('Focus-selected damage gating is missing');
     if(!contents.includes("const VERSION='1.3.15'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
