@@ -100,6 +100,7 @@ for(const file of files){
     if(!contents.includes('[1,2,3,4,5].forEach(tier=>'))throw new Error('Central gear catalogue must include raid-exclusive Tier 5 templates');
     if(!contents.includes('const SET_BONUS_RULES=')||!contents.includes('function setPieceCount')||!contents.includes('function setBonusState')||!contents.includes('function setBonusLines'))throw new Error('Shared equipment set bonus rules are missing');
     if(!contents.includes("'Death Knight|Blood'")||!contents.includes("'Death Knight|Frost'")||!contents.includes("'Death Knight|Unholy'")||!contents.includes("raidName:'Grave Sovereign Plate'"))throw new Error('Death Knight T1-T5 gear/spec catalogue is incomplete');
+    if(!contents.includes("'Demon Hunter|Havoc'")||!contents.includes("'Demon Hunter|Vengeance'")||!contents.includes("raidName:'Abyssal Hunt Regalia'"))throw new Error('Demon Hunter T1-T5 gear/spec catalogue is incomplete');
   }
   if(file==='endgame-data-v1.js'){
     if(!contents.includes('raidExclusiveTier:5')||!contents.includes('powerCeiling:44'))throw new Error('Dungeon loot must stop below raid-exclusive Tier 5');
@@ -115,9 +116,10 @@ for(const file of files){
   }
   if(file==='combat-reborn-v1.js'){
     if(!contents.includes("if(!moveIntoRange(ctx,u,target,5))return true")||!contents.includes("_combatTalentTimers"))throw new Error('Bladestorm melee movement rule is missing');
+    for(const hook of ["spec:'Havoc'","spec:'Vengeance'","id:'havoc-metamorphosis'","id:'spirit-bomb'","SOUL_FRAGMENT_CHANGED","'Fel Barrage':'Fel Barrage'"])if(!contents.includes(hook))throw new Error('Demon Hunter combat kit is incomplete: '+hook);
     if(!contents.includes("_combatPosition")||!contents.includes("data.currentPosition"))throw new Error('Combat slice position persistence is missing');
     if(!contents.includes("focusSelectedDamageOnly")||!contents.includes("!target.focusSelected"))throw new Error('Focus-selected damage gating is missing');
-    if(!contents.includes("const VERSION='1.3.14'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
+    if(!contents.includes("const VERSION='1.3.15'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
     if(!contents.includes('CellboundGear?.SET_BONUS_RULES')||!contents.includes('rules.pieces4?.resourceRegen'))throw new Error('Combat must consume shared 2/4-piece set bonus rules');
   }
   if(file==='combat-status-ui-v1.js'){
@@ -313,6 +315,7 @@ for(const file of files){
   }
   if(file==='guild-v4.js'){
     if(!contents.includes("'Death Knight':{icon:'☠'")||!contents.includes("Blood:{role:'tank'")||!contents.includes("Frost:{role:'dps'")||!contents.includes("Unholy:{role:'dps'"))throw new Error('Death Knight must expose Blood, Frost and Unholy as playable specialisations');
+    if(!contents.includes("'Demon Hunter':{icon:'⛧'")||!contents.includes("Havoc:{role:'dps'")||!contents.includes("Vengeance:{role:'tank'"))throw new Error('Demon Hunter must expose Havoc and Vengeance as playable specialisations');
     if(!contents.includes("id:'chaos-canyon',name:'Chaos Canyon'")||!contents.includes("id:'blackout-station',name:'Blackout Station'")||!contents.includes("id:'fractured-ages',name:'The Fractured Ages'"))throw new Error('Overview Next Dungeon ladder must cover current dungeon progression');
     if(!contents.includes("c.equipment[slot]=existing||(hasSlot?null:starters[slot])"))throw new Error('Explicitly unequipped core slots must stay empty after state normalization');
     if(contents.includes("existing||(keepBare&&hasSlot?null:starters[slot])"))throw new Error('Legacy starter restoration would re-equip removed Head/Chest/Weapon items');
@@ -326,11 +329,11 @@ for(const file of files){
     if(!contents.includes('no-way-back-v1.css?v=4')||!contents.includes('no-way-back-v1.js?v=10'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
     if(!contents.includes('comic-scenes-v1.css?v=5')||!contents.includes('comic-scenes-v1.js?v=5')||!contents.includes('onboarding-v1.js?v=19'))throw new Error('Tutorial comic asset cache versions are stale in guild.html');
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
-    if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=59')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
+    if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=60')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
     if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=7'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
     if(!contents.includes('character-portraits-v1.css?v=4')||!contents.includes('character-portraits-v1.js?v=9'))throw new Error('Character portrait identity assets are not linked from guild.html');
      if(!contents.includes('combat-portraits-v1.css?v=4')||!contents.includes('combat-portraits-v1.js?v=5'))throw new Error('Combat portrait assets are not linked from guild.html');
-    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=20')||!contents.includes('combat-reborn-v1.js?v=17')||!contents.includes('guild-v4.js?v=59')||!contents.includes('character-sheet.js?v=40')||!contents.includes('combat-identities-v1.js?v=31')||!contents.includes('combat-status-ui-v1.js?v=10')||!contents.includes('combat-physical-v4.js?v=10')||!contents.includes('combat-physical-v4.css?v=8')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=57')||!contents.includes('hollow-sanctum-v1.js?v=40')||!contents.includes('chaos-canyon-v1.js?v=15')||!contents.includes('blackout-station-v1.js?v=22')||!contents.includes('fractured-ages-v1.js?v=8'))throw new Error('Set bonus UI cache versions are stale in guild.html');
+    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=21')||!contents.includes('combat-reborn-v1.js?v=18')||!contents.includes('guild-v4.js?v=59')||!contents.includes('character-sheet.js?v=41')||!contents.includes('combat-identities-v1.js?v=32')||!contents.includes('combat-status-ui-v1.js?v=10')||!contents.includes('combat-physical-v4.js?v=10')||!contents.includes('combat-physical-v4.css?v=8')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=57')||!contents.includes('hollow-sanctum-v1.js?v=40')||!contents.includes('chaos-canyon-v1.js?v=15')||!contents.includes('blackout-station-v1.js?v=22')||!contents.includes('fractured-ages-v1.js?v=8'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     const layoutSafetyLink='<link rel="stylesheet" href="./layout-safety-v1.css?v=1">';
     if(!contents.includes(layoutSafetyLink)||contents.lastIndexOf('<link rel="stylesheet"')!==contents.indexOf(layoutSafetyLink))throw new Error('Layout safety stylesheet must remain the final CSS layer in guild.html');
@@ -385,7 +388,7 @@ for(const file of files){
     if(!contents.includes('ui-polish-v3.css'))throw new Error('Global UI polish stylesheet is not linked from guild.html');
     if(!contents.includes('home-v2.css?v=4')||!contents.includes('class="home-command"')||!contents.includes('class="home-destination-grid"')||!contents.includes('class="home-destination raids"')||!contents.includes('id="overviewGuildPulse"'))throw new Error('Guild Command Centre home is not linked or its required hooks are missing');
     if(!contents.includes('command-ui-v1.css'))throw new Error('Cross-game Guild Command UI layer is not linked from guild.html');
-    if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=40'))throw new Error('Character Command UI is not linked from guild.html');
+    if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=41'))throw new Error('Character Command UI is not linked from guild.html');
     for(const hook of ['roster-v2.css?v=2','class="roster-overview-strip"','id="rosterClearFilters"','id="rosterResultsLabel"','class="roster-grid roster-grid-v2"'])if(!contents.includes(hook))throw new Error('Roster v2 UI is missing '+hook);
     for(const hook of ['bank-v2.css','class="bank-category-tabs"','id="bankClearFilters"','id="bankResultsLabel"','class="bank-grid bank-grid-v2"','data-bank-category="Gear"'])if(!contents.includes(hook))throw new Error('Bank v2 UI is missing '+hook);
     if(!contents.includes('bank-v2.css?v=2'))throw new Error('Bank v2 stylesheet cache version must include category-isolation fix');
