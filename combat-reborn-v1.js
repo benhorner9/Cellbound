@@ -1930,20 +1930,23 @@ function summonPet(ctx,owner,{type='felguard',name='Felguard',duration=0,countIn
  const defs={
   felguard:{name:'Felguard',range:5,baseDamage:9,interval:2200,attack:'Legion Strike',visual:'felguard'},
   dreadstalker:{name:'Dreadstalker',range:5,baseDamage:6.5,interval:1800,attack:'Dreadbite',visual:'dreadstalker'},
-  tyrant:{name:'Demonic Tyrant',range:28,baseDamage:11,interval:2100,attack:'Demonfire',visual:'tyrant'}
+  tyrant:{name:'Demonic Tyrant',range:28,baseDamage:11,interval:2100,attack:'Demonfire',visual:'tyrant'},
+  ghoul:{name:'Ghoul',range:5,baseDamage:8.5,interval:2100,attack:'Claw',visual:'ghoul'},
+  'army-ghoul':{name:'Army Ghoul',range:5,baseDamage:5.5,interval:1850,attack:'Rend',visual:'army-ghoul'},
+  'apocalypse-ghoul':{name:'Apocalypse Ghoul',range:5,baseDamage:7.5,interval:1700,attack:'Grave Slash',visual:'apocalypse-ghoul'}
  },def=defs[type]||defs.felguard,seq=++ctx.petSeq;
  const pos=openPosition(ctx,{x:owner.position.x+4+(countIndex%2)*2,y:owner.position.y+3+(countIndex%2?3:-3)},1.2);
  const dread=talentRank(owner,'Dread Calling'),master=talentRank(owner,'Master Summoner');
- const bonusDuration=duration>0?((type==='dreadstalker'?dread*1500:0)+master*750):0;
+ const bonusDuration=owner.class==='Warlock'&&duration>0?((type==='dreadstalker'?dread*1500:0)+master*750):0;
  const pet={
   id:'pet-'+String(owner.characterId||owner.id).replace(/^p-/,'')+'-'+type+'-'+seq,
-  ownerId:owner.id,owner,role:'pet',class:'Warlock Pet',spec:type,name:name||def.name,type,visualArchetype:def.visual,
+  ownerId:owner.id,owner,role:'pet',class:owner.class+' Pet',spec:type,name:name||def.name,type,visualArchetype:def.visual,empoweredUntil:0,
   active:true,alive:true,position:pos,facing:0,target:null,currentCast:null,movingUntil:0,moveToken:0,
   range:def.range,baseDamage:def.baseDamage,attackName:def.attack,baseInterval:def.interval,
   nextAttack:ctx.time+450+countIndex*180,expiresAt:duration>0?ctx.time+duration+bonusDuration:0
  };
  ctx.pets.push(pet);ctx.units[pet.id]=pet;
- emit(ctx,'PET_SUMMONED',{source:owner.id,target:pet.id,ability:pet.name,result:type==='felguard'?'permanent':'summoned',position:copy(pet.position),payload:{petId:pet.id,ownerId:owner.id,petType:type,name:pet.name,permanent:duration<=0,duration:pet.expiresAt?pet.expiresAt-ctx.time:0,visualArchetype:pet.visualArchetype,attackRange:pet.range}});
+ emit(ctx,'PET_SUMMONED',{source:owner.id,target:pet.id,ability:pet.name,result:duration<=0?'permanent':'summoned',position:copy(pet.position),payload:{petId:pet.id,ownerId:owner.id,ownerClass:owner.class,petType:type,name:pet.name,permanent:duration<=0,duration:pet.expiresAt?pet.expiresAt-ctx.time:0,visualArchetype:pet.visualArchetype,attackRange:pet.range}});
  return pet
 }
 function dismissPet(ctx,pet,reason='expired'){
@@ -1954,12 +1957,23 @@ function dismissPet(ctx,pet,reason='expired'){
 function permanentFelguard(ctx,owner){
  return activePets(ctx,owner.id).find(p=>p.type==='felguard')||null
 }
+function permanentGhoul(ctx,owner){
+ return activePets(ctx,owner.id).find(p=>p.type==='ghoul')||null
+}
 function petDamage(ctx,pet,target,base,ability,{cleave=0,multiplier=1}={}){
  const owner=pet?.owner;if(!pet?.active||!owner?.alive||!target?.alive)return 0;
  const bond=talentRank(owner,'Demonic Bond'),dread=talentRank(owner,'Dread Calling'),master=talentRank(owner,'Master Summoner');
  let scale=(owner.baseStats?.outputScale||levelOutputScale(owner.level))*(1+bond*.05)*Math.max(.1,1+statusBonus(owner,'outgoingDamage'))*multiplier;
  if(pet.type==='dreadstalker')scale*=1+dread*.08;
  if(pet.type==='tyrant')scale*=1.18+master*.05;
+ if(owner.class==='Death Knight'&&owner.spec==='Unholy'){
+  const dark=talentRank(owner,'Dark Transformation'),pact=talentRank(owner,'Unholy Pact');
+  scale*=1+dark*.04;
+  if(activePets(ctx,owner.id).some(p=>p.type!=='ghoul'))scale*=1+pact*.04;
+  if(Number(pet.empoweredUntil)>ctx.time)scale*=1.28+dark*.04;
+  if(pet.type==='army-ghoul')scale*=.82;
+  if(pet.type==='apocalypse-ghoul')scale*=1.05
+ }
  const crit=ctx.rng()<(.08+talentCritBonus(owner)),amount=Math.max(1,Math.round(base*scale*(.91+ctx.rng()*.18)*(crit?1.5:1)));
  const before=target.health;target.health=clamp(target.health-amount,0,target.maxHealth);const dealt=before-target.health;
  emit(ctx,'DAMAGE_DEALT',{source:pet.id,target:target.id,ability,amount:dealt,result:crit?'critical':'hit',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),damageType:'magic',kind:'damage',attackRange:pet.range,pet:true,petType:pet.type,ownerId:owner.id}});
@@ -1969,6 +1983,17 @@ function petDamage(ctx,pet,target,base,ability,{cleave=0,multiplier=1}={}){
  if(core&&ctx.rng()<core*.09){
   applyStatus(ctx,owner,owner,{id:'demonic-core',name:'Demonic Core',kind:'buff',duration:5000,effect:{outgoingDamage:.04*core,haste:.025*core}});
   talentTrigger(ctx,owner,'Demonic Core',owner,{sourcePet:pet.name,duration:5000})
+ }
+ if(owner.class==='Death Knight'&&owner.spec==='Unholy'){
+  const infected=talentRank(owner,'Infected Claws'),doom=talentRank(owner,'Sudden Doom');
+  if(infected&&ctx.rng()<.10*infected&&target.alive){
+   const infection=Math.max(1,Math.round(dealt*.07*infected));dealDamage(ctx,owner,target,infection,'Infected Claws',{damageType:'magic'});
+   talentTrigger(ctx,owner,'Infected Claws',target,{damage:infection,sourcePet:pet.name})
+  }
+  if(doom&&ctx.rng()<.07*doom){
+   applyStatus(ctx,owner,owner,{id:'sudden-doom',name:'Sudden Doom',kind:'buff',duration:7000,effect:{outgoingDamage:.03*doom}});
+   talentTrigger(ctx,owner,'Sudden Doom',owner,{sourcePet:pet.name,duration:7000})
+  }
  }
  if(target.health<=0)killUnit(ctx,target,owner,ability);
  if(cleave&&dealt>0)livingEnemies(ctx).filter(e=>e.alive&&e.id!==target.id).slice(0,cleave).forEach(e=>petDamage(ctx,pet,e,Math.max(1,base*.42),ability+' cleave',{multiplier}));
@@ -1991,8 +2016,8 @@ function petAI(ctx,pet){
  emit(ctx,'ABILITY_START',{source:pet.id,target:target.id,ability:pet.attackName,result:'pet',position:copy(pet.position),payload:{kind:'damage',attackRange:pet.range,pet:true,petType:pet.type,ownerId:owner.id}});
  petDamage(ctx,pet,target,pet.baseDamage,pet.attackName);
  emit(ctx,'ABILITY_FINISH',{source:pet.id,target:target.id,ability:pet.attackName,result:'pet',position:copy(pet.position),payload:{kind:'damage',pet:true,petType:pet.type,ownerId:owner.id}});
- const pack=talentRank(owner,'Pack Tactics'),haste=Math.max(0,statusBonus(owner,'haste'));
- pet.nextAttack=ctx.time+Math.max(750,Math.round(pet.baseInterval*Math.max(.72,1-pack*.08)/(1+haste)))
+ const pack=talentRank(owner,'Pack Tactics'),dkFrenzy=owner.class==='Death Knight'&&Number(pet.empoweredUntil)>ctx.time?.18:0,haste=Math.max(0,statusBonus(owner,'haste'));
+ pet.nextAttack=ctx.time+Math.max(750,Math.round(pet.baseInterval*Math.max(.68,1-pack*.08-dkFrenzy)/(1+haste)))
 }
 function tickPets(ctx){activePets(ctx).slice().forEach(p=>petAI(ctx,p))}
 function resolveWarlockSummon(ctx,u,a,target){
