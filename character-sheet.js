@@ -49,7 +49,7 @@ const classMeta={
 const specs={
   Warrior:{Protection:'tank',Arms:'dps'},
   Paladin:{Protection:'tank',Holy:'healer'},
-  Priest:{Holy:'healer'},
+  Priest:{Holy:'healer',Shadow:'dps'},
   Druid:{Restoration:'healer'},
   Hunter:{Marksman:'dps'},
   Rogue:{Assassination:'dps'},
@@ -111,9 +111,22 @@ const trees={
       {id:'Divine Hymn',icon:'♫',tier:4,col:2,max:1,req:'Aura Mastery',desc:'Capstone: unleash a raid-saving wave of holy healing.'}
     ]
   },
-  Priest:{Holy:[
-    {id:'Renew',icon:'✚',tier:0,col:1,max:3,desc:'Improve healing over time.'},{id:'Serenity',icon:'◌',tier:0,col:3,max:2,desc:'Increase efficient direct healing.'},{id:'Prayer of Mending',icon:'✧',tier:1,col:0,max:2,req:'Renew',desc:'Healing jumps between allies.'},{id:'Focused Will',icon:'◇',tier:1,col:2,max:2,desc:'Increase healing under pressure.'},{id:'Circle of Healing',icon:'◎',tier:2,col:1,max:1,req:'Prayer of Mending',desc:'Heal several party members at once.'},{id:'Spirit of Redemption',icon:'♰',tier:2,col:3,max:1,req:'Serenity',desc:'Continue healing briefly after defeat.'},{id:'Guardian Spirit',icon:'翼',tier:3,col:1,max:1,req:'Circle of Healing',desc:'Protect an ally from lethal damage.'},{id:'Divine Insight',icon:'✦',tier:3,col:3,max:2,req:'Spirit of Redemption',desc:'Gain powerful healing procs.'},{id:'Divine Hymn',icon:'♫',tier:4,col:2,max:1,req:'Guardian Spirit',desc:'Capstone group healing channel.'}
-  ]},
+  Priest:{
+    Holy:[
+      {id:'Renew',icon:'✚',tier:0,col:1,max:3,desc:'Improve healing over time.'},{id:'Serenity',icon:'◌',tier:0,col:3,max:2,desc:'Increase efficient direct healing.'},{id:'Prayer of Mending',icon:'✧',tier:1,col:0,max:2,req:'Renew',desc:'Healing jumps between allies.'},{id:'Focused Will',icon:'◇',tier:1,col:2,max:2,desc:'Increase healing under pressure.'},{id:'Circle of Healing',icon:'◎',tier:2,col:1,max:1,req:'Prayer of Mending',desc:'Heal several party members at once.'},{id:'Spirit of Redemption',icon:'♰',tier:2,col:3,max:1,req:'Serenity',desc:'Continue healing briefly after defeat.'},{id:'Guardian Spirit',icon:'翼',tier:3,col:1,max:1,req:'Circle of Healing',desc:'Protect an ally from lethal damage.'},{id:'Divine Insight',icon:'✦',tier:3,col:3,max:2,req:'Spirit of Redemption',desc:'Gain powerful healing procs.'},{id:'Divine Hymn',icon:'♫',tier:4,col:2,max:1,req:'Guardian Spirit',desc:'Capstone group healing channel.'}
+    ],
+    Shadow:[
+      {id:'Dark Thoughts',icon:'◉',tier:0,col:1,max:3,desc:'Strengthen Mind Flay and Mind Blast and improve Insanity generation.'},
+      {id:'Shadow Weaving',icon:'☾',tier:0,col:3,max:3,desc:'Increase the damage dealt by your lingering shadow effects.'},
+      {id:'Mind Devourer',icon:'◆',tier:1,col:0,max:2,req:'Dark Thoughts',desc:'Mind Blast can make the next Devouring Plague cost no Insanity.'},
+      {id:'Vampiric Embrace',icon:'♥',tier:1,col:2,max:2,desc:'Lingering shadow damage returns a portion of its damage as healing.'},
+      {id:'Shadow Crash',icon:'✹',tier:2,col:1,max:1,req:'Shadow Weaving',desc:'Unlock Shadow Crash as a ranged area-damage and Insanity-generating skill.'},
+      {id:'Twist of Fate',icon:'☠',tier:2,col:3,max:2,req:'Mind Devourer',desc:'Deal increased damage to weakened enemies.'},
+      {id:'Psychic Link',icon:'⛓',tier:3,col:1,max:2,req:'Shadow Crash',desc:'Mind Blast and Devouring Plague splash shadow damage into another nearby enemy.'},
+      {id:'Void Torrent',icon:'◎',tier:3,col:3,max:1,req:'Twist of Fate',desc:'Unlock Void Torrent, a powerful channel that rapidly generates Insanity.'},
+      {id:'Void Eruption',icon:'✦',tier:4,col:2,max:1,req:'Psychic Link',desc:'Capstone: unlock Void Eruption and enter a short Voidform burst window.'}
+    ]
+  },
   Druid:{Restoration:[
     {id:'Rejuvenation',icon:'❈',tier:0,col:1,max:3,desc:'Improve your core heal-over-time spell.'},{id:'Lifebloom',icon:'🌿',tier:0,col:3,max:3,desc:'Stack healing on a focused ally.'},{id:'Wild Growth',icon:'☘',tier:1,col:0,max:2,req:'Rejuvenation',desc:'Spread healing across the party.'},{id:'Natural Swiftness',icon:'➤',tier:1,col:2,max:1,desc:'Make an important heal instant.'},{id:'Living Seed',icon:'◉',tier:2,col:1,max:2,req:'Wild Growth',desc:'Critical heals plant a delayed heal.'},{id:'Ironbark',icon:'♣',tier:2,col:3,max:1,req:'Lifebloom',desc:'Reduce damage on an ally.'},{id:'Tree of Life',icon:'♠',tier:3,col:1,max:1,req:'Living Seed',desc:'Temporarily empower restoration magic.'},{id:'Flourish',icon:'✿',tier:3,col:3,max:1,req:'Ironbark',desc:'Extend active healing effects.'},{id:'Tranquility',icon:'✦',tier:4,col:2,max:1,req:'Tree of Life',desc:'Capstone: channel massive party-wide healing.'}
   ]},
@@ -280,6 +293,26 @@ function roleOf(c){return specs[c.class]?.[c.spec]||'dps'}
 function roleLabel(role){return role==='dps'?'Damage':role[0].toUpperCase()+role.slice(1)}
 function combatEngine(){return window.CellboundCombatReborn||null}
 const UI_SKILL_FALLBACKS={
+  Priest:[
+    {id:'heal',name:'Heal',kind:'heal',role:'healer',spec:'Holy',unlockLevel:1,desc:'Efficient direct healing.',range:30,heal:35,cost:13,gcd:1500,cast:1400,cd:0},
+    {id:'flash-heal',name:'Flash Heal',kind:'heal',role:'healer',spec:'Holy',unlockLevel:1,desc:'Fast emergency healing.',range:30,heal:29,cost:18,gcd:1500,cast:800,cd:0},
+    {id:'prayer-healing',name:'Prayer of Healing',kind:'group-heal',role:'healer',spec:'Holy',unlockLevel:1,desc:'Restore health to the whole party.',range:30,heal:18,cost:22,gcd:1500,cast:1700,cd:6500},
+    {id:'smite',name:'Smite',kind:'damage',role:'healer',spec:'Holy',unlockLevel:4,desc:'A ranged holy attack for safe damage windows.',range:30,damage:13,cost:4,gcd:1500,cast:1200,cd:0,damageType:'magic'},
+    {id:'soul-recall',name:'Soul Recall',kind:'battle-rez',role:'healer',spec:'Holy',unlockLevel:8,desc:'Return a fallen ally to combat. Very long cooldown.',range:30,cost:32,gcd:1500,cast:5000,cd:600000},
+    {id:'guardian-spirit',name:'Guardian Spirit',kind:'defensive',role:'healer',spec:'Holy',unlockLevel:12,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:90000,talentReq:'Guardian Spirit'},
+    {id:'divine-hymn',name:'Divine Hymn',kind:'group-heal',role:'healer',spec:'Holy',unlockLevel:1,desc:'A major emergency heal for the entire party.',range:30,heal:32,cost:34,gcd:1500,cast:2600,cd:35000,talentReq:'Divine Hymn'},
+
+    {id:'mind-flay',name:'Mind Flay',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Channel shadow energy into the target and generate Insanity.',range:35,damage:18,cost:0,gain:12,gcd:1500,cast:1250,cd:0,damageType:'magic'},
+    {id:'mind-blast',name:'Mind Blast',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Assault the target’s mind for heavy shadow damage and Insanity.',range:35,damage:30,cost:0,gain:18,gcd:1500,cast:1200,cd:6500,damageType:'magic'},
+    {id:'devouring-plague',name:'Devouring Plague',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Spend Insanity to infect the target with a powerful devouring shadow plague.',range:35,damage:34,cost:50,gcd:1500,cast:0,cd:0,damageType:'magic'},
+    {id:'shadow-word-pain',name:'Shadow Word: Pain',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:4,desc:'Afflict the target with lingering shadow pain while generating Insanity.',range:35,damage:10,cost:0,gain:7,gcd:1500,cast:0,cd:7000,damageType:'magic'},
+    {id:'vampiric-touch',name:'Vampiric Touch',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:6,desc:'Apply a draining shadow curse that damages the target over time.',range:35,damage:15,cost:0,gain:10,gcd:1500,cast:1300,cd:11000,damageType:'magic'},
+    {id:'shadow-crash',name:'Shadow Crash',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Crash shadow energy into the target and nearby enemies.',range:35,damage:28,cost:0,gain:12,gcd:1500,cast:800,cd:14000,cleave:3,damageType:'magic',talentReq:'Shadow Crash'},
+    {id:'void-torrent',name:'Void Torrent',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Channel concentrated Void energy for heavy damage and rapid Insanity generation.',range:35,damage:42,cost:0,gain:28,gcd:1500,cast:1900,cd:30000,damageType:'magic',talentReq:'Void Torrent'},
+    {id:'void-eruption',name:'Void Eruption',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Spend Insanity to erupt with Void energy and enter Voidform.',range:35,damage:44,cost:40,gcd:1500,cast:1100,cd:60000,cleave:3,damageType:'magic',talentReq:'Void Eruption'},
+    {id:'dispersion',name:'Dispersion',kind:'defensive',role:'dps',spec:'Shadow',unlockLevel:8,desc:'Disperse into shadow, greatly reducing incoming damage for 6 seconds.',duration:6000,damageReduction:.40,gcd:0,cd:75000},
+    {id:'silence',name:'Silence',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast from range.',range:30,cost:0,gcd:0,cd:30000}
+  ],
   Shaman:[
     {id:'healing-wave',name:'Healing Wave',kind:'heal',role:'healer',unlockLevel:1,desc:'A dependable restorative cast for an injured ally.',range:30,heal:36,cost:14,gcd:1500,cast:1450,cd:0},
     {id:'riptide',name:'Riptide',kind:'heal',role:'healer',unlockLevel:1,desc:'An instant tidal heal that continues restoring health briefly.',range:30,heal:23,cost:10,gcd:1500,cast:0,cd:6000,hot:7},
@@ -402,6 +435,7 @@ const UI_SKILL_FALLBACKS={
   ]
 };
 const UI_BUFF_FALLBACKS={
+  Priest:{id:'class-buff-divine-inspiration',name:'Divine Inspiration',scope:'party',duration:60000,cooldown:180000,effect:{outgoingHealing:.05,incomingHealing:.05}},
   Shaman:{id:'class-buff-bloodlust',name:'Bloodlust',scope:'party',duration:60000,cooldown:180000,effect:{haste:.10,resourceRegen:.05}},
   Warlock:{id:'class-buff-demonic-pact',name:'Demonic Pact',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04}},
   Monk:{id:'class-buff-mystic-touch',name:'Mystic Touch',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,outgoingHealing:.03}},
