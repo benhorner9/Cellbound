@@ -15,7 +15,7 @@ const CLASS_COLORS={
 };
 
 const RESOURCE_DEFS={
- 'Death Knight':{name:'Runic Power',max:100,start:20,regen:6},
+ 'Death Knight':{name:'Runic Power',max:100,start:20,regen:2},
  'Demon Hunter':{name:'Fury',max:100,start:30,regen:9},
  Druid:{name:'Mana',max:100,start:100,regen:7},
  Evoker:{name:'Essence',max:5,start:5,regen:.45},
@@ -112,7 +112,8 @@ const ABILITIES={
   {id:'death-and-decay-unholy',name:'Death and Decay',kind:'damage',role:'dps',spec:'Unholy',unlockLevel:6,desc:'Corrupt the ground beneath enemies with shadow damage.',range:15,damage:17,cost:10,gcd:1200,cd:12000,cleave:3,damageType:'magic'},
   {id:'dark-transformation',name:'Dark Transformation',kind:'pet-command',role:'dps',spec:'Unholy',unlockLevel:1,desc:'Empower your permanent Ghoul into a savage frenzy.',range:30,cost:15,gcd:1000,cd:30000,petCommand:'dark-transformation'},
   {id:'army-of-the-dead',name:'Army of the Dead',kind:'summon',role:'dps',spec:'Unholy',unlockLevel:1,desc:'Summon a pack of temporary ghouls to tear into your enemies.',range:30,cost:35,gcd:1500,cast:1800,cd:75000,duration:14000,summonType:'army-ghoul',summonCount:4},
-  {id:'apocalypse',name:'Apocalypse',kind:'summon',role:'dps',spec:'Unholy',unlockLevel:1,desc:'Burst Festering Wounds and summon additional undead attackers.',range:5,cost:30,gcd:1500,cd:45000,duration:12000,summonType:'apocalypse-ghoul',summonCount:2}
+  {id:'apocalypse',name:'Apocalypse',kind:'summon',role:'dps',spec:'Unholy',unlockLevel:1,desc:'Burst Festering Wounds and summon additional undead attackers.',range:5,cost:30,gcd:1500,cd:45000,duration:12000,summonType:'apocalypse-ghoul',summonCount:2},
+  {id:'anti-magic-shell',name:'Anti-Magic Shell',kind:'defensive',role:'dps',spec:'Unholy',unlockLevel:8,desc:'Wrap yourself in anti-magic energy to reduce incoming damage.',duration:8000,damageReduction:.25,gcd:0,cd:75000}
  ],
  'Demon Hunter':[
   {id:'demons-bite',name:"Demon's Bite",kind:'damage',unlockLevel:1,desc:'Generate Fury with a quick melee strike.',range:5,damage:13,cost:0,gain:22,gcd:1000,cd:0},
@@ -2016,7 +2017,7 @@ function petAI(ctx,pet){
  emit(ctx,'ABILITY_START',{source:pet.id,target:target.id,ability:pet.attackName,result:'pet',position:copy(pet.position),payload:{kind:'damage',attackRange:pet.range,pet:true,petType:pet.type,ownerId:owner.id}});
  petDamage(ctx,pet,target,pet.baseDamage,pet.attackName);
  emit(ctx,'ABILITY_FINISH',{source:pet.id,target:target.id,ability:pet.attackName,result:'pet',position:copy(pet.position),payload:{kind:'damage',pet:true,petType:pet.type,ownerId:owner.id}});
- const pack=talentRank(owner,'Pack Tactics'),dkFrenzy=owner.class==='Death Knight'&&Number(pet.empoweredUntil)>ctx.time?.18:0,haste=Math.max(0,statusBonus(owner,'haste'));
+ const pack=talentRank(owner,'Pack Tactics'),dkFrenzy=(owner.class==='Death Knight'&&Number(pet.empoweredUntil)>ctx.time)?.18:0,haste=Math.max(0,statusBonus(owner,'haste'));
  pet.nextAttack=ctx.time+Math.max(750,Math.round(pet.baseInterval*Math.max(.68,1-pack*.08-dkFrenzy)/(1+haste)))
 }
 function tickPets(ctx){activePets(ctx).slice().forEach(p=>petAI(ctx,p))}
@@ -2662,6 +2663,7 @@ function simulate(options={}){
   emitResourceState(ctx,u,'initial')
  });
  players.filter(u=>u.class==='Warlock'&&u.spec==='Demonology'&&u.alive).forEach(u=>summonPet(ctx,u,{type:'felguard',name:'Felguard'}));
+ players.filter(u=>u.class==='Death Knight'&&u.spec==='Unholy'&&u.alive).forEach(u=>summonPet(ctx,u,{type:'ghoul',name:'Ghoul'}));
  {
   const boss=enemies.find(e=>e.kind==='boss');
   if(boss){
