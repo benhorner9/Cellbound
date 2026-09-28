@@ -58,6 +58,7 @@
   <link rel="stylesheet" href="./character-talents-v2.css?v=1">
   <link rel="stylesheet" href="./game-shell-v1.css?v=1">
   <link rel="stylesheet" href="./game-feel-v1.css?v=1">
+  <link rel="stylesheet" href="./home-loop-v1.css?v=1">
   <link rel="stylesheet" href="./layout-safety-v1.css?v=1">
 </head>
 <body>
@@ -113,7 +114,7 @@
 
     <section id="overview" class="view active">
       <div class="home-command">
-        <section id="overviewNextDungeon" class="home-continue-card" aria-label="Continue expedition">
+        <section id="overviewNextDungeon" class="home-continue-card" aria-label="Next mission">
           <div class="home-continue-loading"><small>GUILD COMMAND</small><h2>Preparing your next move…</h2></div>
         </section>
 
@@ -123,22 +124,35 @@
             <div id="overviewRoster" class="home-party-roster"></div>
           </article>
 
+          <article class="panel home-readiness-panel">
+            <div class="panel-head"><div><small>MISSION READINESS</small><h3>Can We Go?</h3></div><b id="homeReadinessBadge">CHECKING</b></div>
+            <div id="overviewReadiness" class="home-readiness"><div class="home-readiness-loading">Checking your active five…</div></div>
+          </article>
+        </div>
+
+        <article class="panel home-progression-panel">
+          <div class="panel-head"><div><small>CHAPTER PROGRESSION</small><h3>The Road Ahead</h3></div><span class="panel-head-note">Clear content to push the guild deeper.</span></div>
+          <div id="overviewProgress" class="home-progress-track" aria-label="Chapter progression"></div>
+        </article>
+
+        <div class="home-secondary-grid">
           <article class="panel home-objective-panel">
             <div class="panel-head"><div><small>ADVENTURE</small><h3>Current Objective</h3></div><button class="home-panel-action" type="button" data-jump="quests">QUEST JOURNAL</button></div>
             <div id="questHomeObjective" class="home-objective"><span>CURRENT ADVENTURE</span><b>Checking your journal…</b><button type="button" data-jump="quests">OPEN ADVENTURE →</button></div>
           </article>
-        </div>
 
-        <div class="home-content-head">
-          <div><small>AVAILABLE CONTENT</small><h3>Where next?</h3></div>
-          <span>Jump straight to the part of the game you need.</span>
+          <article class="panel home-routes-panel">
+            <div class="panel-head"><div><small>OTHER ROUTES</small><h3>Guild Destinations</h3></div><span class="panel-head-note">Fast access without leaving Guild Command.</span></div>
+            <nav class="home-destination-grid" aria-label="Home quick access">
+              <button type="button" class="home-destination quests" data-jump="quests"><span>⌁</span><small>STORY</small><b>Quests</b><em>Continue the campaign</em></button>
+              <button type="button" class="home-destination dungeons" data-jump="content"><span>▱</span><small>PVE</small><b>Dungeons</b><em id="homeDungeonStatus">Choose a dungeon</em></button>
+              <button type="button" class="home-destination events" data-jump="world"><span>✦</span><small>ACTIVITIES</small><b>Side Content</b><em id="homeEventStatus">The Twelve Below</em></button>
+              <button type="button" class="home-destination raids" data-jump="raids"><span>♜</span><small>ENDGAME</small><b>Raids</b><em id="homeRaidStatus">The Manor</em></button>
+              <button type="button" class="home-destination trading" data-jump="trading"><span>⇄</span><small>ECONOMY</small><b>Trading Post</b><em>Buy, sell and prepare</em></button>
+              <button type="button" class="home-destination pvp" data-jump="pvp"><span>⚔</span><small>COMBAT</small><b>PvP</b><em>Battlegrounds and Arena</em></button>
+            </nav>
+          </article>
         </div>
-        <nav class="home-destination-grid" aria-label="Home quick access">
-          <button type="button" class="home-destination quests" data-jump="quests"><span>⌁</span><small>ADVENTURE</small><b>Quests</b><em>Continue the story</em></button>
-          <button type="button" class="home-destination dungeons" data-jump="content"><span>▱</span><small>EXPEDITIONS</small><b>Dungeons</b><em id="homeDungeonStatus">Choose a dungeon</em></button>
-          <button type="button" class="home-destination events" data-jump="world"><span>✦</span><small>SIDE ACTIVITIES</small><b>Activities</b><em id="homeEventStatus">The Twelve Below</em></button>
-          <button type="button" class="home-destination raids" data-jump="raids"><span>♜</span><small>GROUP CONTENT</small><b>Raids</b><em id="homeRaidStatus">The Manor</em></button>
-        </nav>
 
         <div class="home-bottom-grid">
           <article class="panel home-pulse-panel">
@@ -522,7 +536,7 @@
 <script src="./combat-polish-v2.js?v=1"></script>
 <script src="./combat-polish-v3.js?v=1"></script>
 <script src="./combat-physical-v4.js?v=3"></script>
-<script src="./guild-v4.js?v=52"></script>
+<script src="./guild-v4.js?v=53"></script>
 <script src="./pvp-combat-v1.js?v=2"></script>
 <script src="./pvp-viewer-v1.js?v=3"></script>
 <script src="./pvp-match-v1.js?v=3"></script>
