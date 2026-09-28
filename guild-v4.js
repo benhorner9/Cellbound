@@ -55,7 +55,10 @@ const classes={
     Holy:{role:'healer',talents:['Renew','Serenity','Divine Hymn']},
     Shadow:{role:'dps',talents:['Dark Thoughts','Shadow Weaving','Void Eruption']}
   }},
-  Druid:{icon:'❈',glow:'#FF7C0A',specs:{Restoration:{role:'healer',talents:['Rejuvenation','Lifebloom','Tranquility']}}},
+  Druid:{icon:'❈',glow:'#FF7C0A',specs:{
+    Restoration:{role:'healer',talents:['Rejuvenation','Lifebloom','Tranquility']},
+    Balance:{role:'dps',talents:['Starlight','Twin Moons','Celestial Alignment']}
+  }},
   Hunter:{icon:'➶',glow:'#AAD372',specs:{Marksman:{role:'dps',talents:['True Aim','Rapid Fire','Kill Shot']}}},
   Rogue:{icon:'◆',glow:'#FFF468',specs:{Assassination:{role:'dps',talents:['Ambush','Venom','Eviscerate']}}},
   Mage:{icon:'✦',glow:'#3FC7EB',specs:{Arcane:{role:'dps',talents:['Arcane Focus','Surge','Barrage']}}},
