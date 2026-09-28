@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.21';
+const VERSION='1.3.22';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -28,6 +28,7 @@ const RESOURCE_DEFS={
  Priest:{name:'Mana',max:100,start:100,regen:7},
  'Shaman|Elemental':{name:'Maelstrom',max:100,start:0,regen:0},
  Shaman:{name:'Mana',max:100,start:100,regen:7},
+ 'Warlock|Destruction':{name:'Soul Shards',max:5,start:0,regen:0},
  Warlock:{name:'Mana',max:100,start:100,regen:5.5},
  'Monk|Brewmaster':{name:'Energy',max:100,start:100,regen:11},
  'Monk|Mistweaver':{name:'Mana',max:100,start:100,regen:7},
@@ -284,16 +285,25 @@ const ABILITIES={
   {id:'astral-shift',name:'Astral Shift',kind:'defensive',unlockLevel:8,desc:'Shift partially into the spirit world, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000}
  ],
  Warlock:[
-  {id:'shadow-bolt',name:'Shadow Bolt',kind:'damage',unlockLevel:1,desc:'A reliable ranged shadow spell.',range:35,damage:19,cost:6,gcd:1500,cast:1450,cd:0},
-  {id:'demonbolt',name:'Demonbolt',kind:'damage',unlockLevel:1,desc:'Hurl concentrated demonic energy at the target.',range:35,damage:29,cost:11,gcd:1500,cast:1800,cd:6000},
-  {id:'hand-of-guldan',name:"Hand of Gul'dan",kind:'damage',unlockLevel:1,desc:'Call down fel energy on the target and nearby enemies.',range:35,damage:23,cost:15,gcd:1500,cast:1500,cd:7000,cleave:2},
-  {id:'axe-toss',name:'Axe Toss',kind:'interrupt',unlockLevel:1,desc:'Command your Felguard to hurl its weapon and interrupt an enemy cast.',range:30,cost:0,gcd:0,cd:20000},
-  {id:'call-dreadstalkers',name:'Call Dreadstalkers',kind:'summon',unlockLevel:1,desc:'Summon two Dreadstalkers to maul your enemies for a short time.',range:35,cost:16,gcd:1500,cast:1200,cd:20000,duration:12000,summonType:'dreadstalker',summonCount:2},
-  {id:'soul-strike',name:'Soul Strike',kind:'pet-command',unlockLevel:1,desc:'Command your Felguard to deliver a crushing soul-infused strike.',range:30,cost:8,gcd:1000,cd:10000,petCommand:'soul-strike'},
-  {id:'dark-pact',name:'Dark Pact',kind:'defensive',unlockLevel:5,desc:'Wrap yourself in demonic power, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000},
-  {id:'felstorm',name:'Felstorm',kind:'pet-command',unlockLevel:1,desc:'Command your Felguard to spin through several nearby enemies.',range:30,cost:12,gcd:1000,cd:18000,petCommand:'felstorm',cleave:3},
-  {id:'implosion',name:'Implosion',kind:'pet-command',unlockLevel:10,desc:'Detonate your temporary demons into the target for explosive area damage.',range:35,cost:10,gcd:1500,cd:16000,petCommand:'implosion',cleave:3},
-  {id:'summon-demonic-tyrant',name:'Summon Demonic Tyrant',kind:'summon',unlockLevel:1,desc:'Summon a Demonic Tyrant that bombards enemies and empowers your active demons.',range:35,cost:20,gcd:1500,cast:1600,cd:60000,duration:15000,summonType:'tyrant',summonCount:1}
+  {id:'shadow-bolt',name:'Shadow Bolt',kind:'damage',role:'dps',spec:'Demonology',unlockLevel:1,desc:'A reliable ranged shadow spell.',range:35,damage:19,cost:6,gcd:1500,cast:1450,cd:0,damageType:'magic'},
+  {id:'demonbolt',name:'Demonbolt',kind:'damage',role:'dps',spec:'Demonology',unlockLevel:1,desc:'Hurl concentrated demonic energy at the target.',range:35,damage:29,cost:11,gcd:1500,cast:1800,cd:6000,damageType:'magic'},
+  {id:'hand-of-guldan',name:"Hand of Gul'dan",kind:'damage',role:'dps',spec:'Demonology',unlockLevel:1,desc:'Call down fel energy on the target and nearby enemies.',range:35,damage:23,cost:15,gcd:1500,cast:1500,cd:7000,cleave:2,damageType:'magic'},
+  {id:'axe-toss',name:'Axe Toss',kind:'interrupt',role:'dps',spec:'Demonology',unlockLevel:1,desc:'Command your Felguard to hurl its weapon and interrupt an enemy cast.',range:30,cost:0,gcd:0,cd:20000},
+  {id:'call-dreadstalkers',name:'Call Dreadstalkers',kind:'summon',role:'dps',spec:'Demonology',unlockLevel:1,desc:'Summon two Dreadstalkers to maul your enemies for a short time.',range:35,cost:16,gcd:1500,cast:1200,cd:20000,duration:12000,summonType:'dreadstalker',summonCount:2},
+  {id:'soul-strike',name:'Soul Strike',kind:'pet-command',role:'dps',spec:'Demonology',unlockLevel:1,desc:'Command your Felguard to deliver a crushing soul-infused strike.',range:30,cost:8,gcd:1000,cd:10000,petCommand:'soul-strike',talentReq:'Soul Strike'},
+  {id:'felstorm',name:'Felstorm',kind:'pet-command',role:'dps',spec:'Demonology',unlockLevel:1,desc:'Command your Felguard to spin through several nearby enemies.',range:30,cost:12,gcd:1000,cd:18000,petCommand:'felstorm',cleave:3,talentReq:'Felstorm'},
+  {id:'implosion',name:'Implosion',kind:'pet-command',role:'dps',spec:'Demonology',unlockLevel:10,desc:'Detonate your temporary demons into the target for explosive area damage.',range:35,cost:10,gcd:1500,cd:16000,petCommand:'implosion',cleave:3},
+  {id:'summon-demonic-tyrant',name:'Summon Demonic Tyrant',kind:'summon',role:'dps',spec:'Demonology',unlockLevel:1,desc:'Summon a Demonic Tyrant that bombards enemies and empowers your active demons.',range:35,cost:20,gcd:1500,cast:1600,cd:60000,duration:15000,summonType:'tyrant',summonCount:1,talentReq:'Demonic Tyrant'},
+
+  {id:'incinerate',name:'Incinerate',kind:'damage',role:'dps',spec:'Destruction',unlockLevel:1,desc:'Scorch the target and generate Soul Shards.',range:35,damage:19,cost:0,gain:.5,gcd:1500,cast:1450,cd:0,damageType:'magic',school:'fire'},
+  {id:'conflagrate',name:'Conflagrate',kind:'damage',role:'dps',spec:'Destruction',unlockLevel:1,desc:'Instantly blast the target with fire and generate a Soul Shard.',range:35,damage:22,cost:0,gain:1,gcd:1500,cast:0,cd:10000,damageType:'magic',school:'fire'},
+  {id:'chaos-bolt',name:'Chaos Bolt',kind:'damage',role:'dps',spec:'Destruction',unlockLevel:1,desc:'Spend Soul Shards on a devastating bolt of chaotic fire.',range:35,damage:48,cost:2,gcd:1500,cast:2100,cd:0,damageType:'magic',school:'chaos'},
+  {id:'immolate',name:'Immolate',kind:'damage',role:'dps',spec:'Destruction',unlockLevel:4,desc:'Burn the target over time and generate Soul Shard fragments from the flames.',range:35,damage:11,cost:0,gain:.5,gcd:1500,cast:1200,cd:9000,damageType:'magic',school:'fire'},
+  {id:'rain-of-fire',name:'Rain of Fire',kind:'damage',role:'dps',spec:'Destruction',unlockLevel:1,desc:'Spend Soul Shards to rain fire across the enemy pack.',range:35,damage:34,cost:3,gcd:1500,cast:900,cd:7000,cleave:4,damageType:'magic',school:'fire'},
+  {id:'channel-demonfire',name:'Channel Demonfire',kind:'damage',role:'dps',spec:'Destruction',unlockLevel:1,desc:'Channel waves of demonfire into burning targets.',range:35,damage:40,cost:0,gain:.5,gcd:1500,cast:1800,cd:24000,cleave:2,damageType:'magic',school:'fire'},
+  {id:'summon-infernal',name:'Summon Infernal',kind:'summon',role:'dps',spec:'Destruction',unlockLevel:1,desc:'Crash an Infernal into the enemy pack to burn them for a short time.',range:35,cost:2,gcd:1500,cast:1200,cd:60000,duration:14000,summonType:'infernal',summonCount:1},
+  {id:'shadowfury',name:'Shadowfury',kind:'interrupt',role:'dps',spec:'Destruction',unlockLevel:1,desc:'Disrupt an enemy cast with a burst of shadow force.',range:30,cost:0,gcd:0,cd:24000},
+  {id:'dark-pact',name:'Dark Pact',kind:'defensive',unlockLevel:8,desc:'Wrap yourself in demonic power, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000}
  ],
  Monk:[
   {id:'keg-smash',name:'Keg Smash',kind:'damage',role:'tank',unlockLevel:1,desc:'Smash the target and nearby enemies with heavy threat.',range:8,damage:20,cost:25,gcd:1000,cd:8000,threat:3,cleave:3},
@@ -408,7 +418,9 @@ function gearSetState(c){
    periodicDamageScale:Number(e2.periodicDamageScale||1)*Number(e4.periodicDamageScale||1),
    eclipseDamageScale:Number(e2.eclipseDamageScale||1)*Number(e4.eclipseDamageScale||1),
    frostProcDamageScale:Number(e2.frostProcDamageScale||1)*Number(e4.frostProcDamageScale||1),
-   frostProcRate:Number(e2.frostProcRate||0)+Number(e4.frostProcRate||0)
+   frostProcRate:Number(e2.frostProcRate||0)+Number(e4.frostProcRate||0),
+   petDamageScale:Number(e2.petDamageScale||1)*Number(e4.petDamageScale||1),
+   destructionSpenderScale:Number(e2.destructionSpenderScale||1)*Number(e4.destructionSpenderScale||1)
  }
 }
 
@@ -433,7 +445,7 @@ const TALENT_SKILL_REQUIREMENTS={
   'guardian-spirit':'Guardian Spirit','divine-hymn':'Divine Hymn',
   'wild-growth':'Wild Growth','tranquility':'Tranquility','starfall':'Starfall','fury-of-elune':'Fury of Elune','celestial-alignment':'Celestial Alignment',
   'kill-shot':'Kill Shot','garrote':'Garrote','envenom':'Envenom','arcane-barrage':'Barrage','blizzard':'Blizzard','frozen-orb':'Frozen Orb','glacial-spike':'Glacial Spike',
-  'spirit-link-totem':'Spirit Link Totem','earthquake':'Earthquake','stormkeeper':'Stormkeeper','ascendance':'Ascendance','soul-strike':'Soul Strike','felstorm':'Felstorm','summon-demonic-tyrant':'Demonic Tyrant',
+  'spirit-link-totem':'Spirit Link Totem','earthquake':'Earthquake','stormkeeper':'Stormkeeper','ascendance':'Ascendance','soul-strike':'Soul Strike','felstorm':'Felstorm','summon-demonic-tyrant':'Demonic Tyrant','rain-of-fire':'Rain of Fire','channel-demonfire':'Channel Demonfire','summon-infernal':'Summon Infernal',
   'breath-of-fire':'Breath of Fire','fortifying-brew':'Fortifying Brew','revival':'Revival','fists-of-fury':'Fists of Fury','touch-of-death':'Touch of Death',
   'rune-tap':'Rune Tap','dancing-rune-weapon':'Dancing Rune Weapon','vampiric-blood':'Vampiric Blood','remorseless-winter':'Remorseless Winter','breath-of-sindragosa':'Breath of Sindragosa','dark-transformation':'Dark Transformation','army-of-the-dead':'Army of the Dead','apocalypse':'Apocalypse',
   'fel-barrage':'Fel Barrage','havoc-metamorphosis':'Metamorphosis','sigil-of-flame':'Sigil of Flame','spirit-bomb':'Spirit Bomb','vengeance-metamorphosis':'Metamorphosis',
@@ -566,6 +578,15 @@ const TALENT_RULES={
  'Demonic Core':'Demon attacks can trigger a short damage and haste surge for the Warlock.',
  'Master Summoner':'Extends temporary demon duration and reduces summon cooldowns.',
  'Demonic Tyrant':'Unlocks Summon Demonic Tyrant, a powerful temporary ranged demon.',
+ 'Eradication':'Chaos Bolt leaves the target vulnerable to follow-up Destruction damage.',
+ 'Roaring Blaze':'Increases Immolate and Conflagrate damage.',
+ 'Backdraft':'Conflagrate reduces the cast time of the next casted Destruction spell.',
+ 'Reverse Entropy':'Soul Shard spenders periodically grant a short haste surge.',
+ 'Rain of Fire':'Unlocks Rain of Fire as an equipable area Soul Shard spender.',
+ 'Havoc':'Chaos Bolt and Incinerate can echo damage into a second nearby enemy.',
+ 'Channel Demonfire':'Unlocks Channel Demonfire, rewarding targets already burning from Immolate.',
+ 'Soul Conduit':'Soul Shard spenders periodically refund Soul Shards.',
+ 'Summon Infernal':'Unlocks Summon Infernal, a major temporary demon for Destruction.',
  'High Tolerance':'Increases the share of incoming physical damage delayed by Stagger.',
  'Elusive Brawler':'Reduces damage taken while Brewmaster is under pressure.',
  'Purifying Brew':'Purifying Brew removes more accumulated Stagger per rank.',
@@ -734,6 +755,11 @@ function talentDamageScale(ctx,u,a,target){
   m*=1+talentRank(u,'Fel Knowledge')*.035;
   if(a.id==='demonbolt'&&u.statuses?.['demonic-core'])m*=1.12;
  }
+ if(u.class==='Warlock'&&u.spec==='Destruction'){
+  if(['immolate','conflagrate'].includes(a.id))m*=1+talentRank(u,'Roaring Blaze')*.045;
+  if(['chaos-bolt','rain-of-fire'].includes(a.id))m*=Math.max(1,Number(u?.setBonuses?.destructionSpenderScale)||1);
+  if(a.id==='channel-demonfire'&&target?.statuses?.['immolate-'+u.id])m*=1.20+talentRank(u,'Channel Demonfire')*.04;
+ }
  if(u.class==='Monk'&&u.spec==='Brewmaster'){
   if(a.id==='keg-smash')m*=1+talentRank(u,'Keg Mastery')*.08;
   if(a.id==='breath-of-fire')m*=1.08;
@@ -868,6 +894,10 @@ function talentCost(ctx,u,a,cost){
 }
 function talentCastTime(ctx,u,a,cast){
  if(cast<=0)return cast;
+ if(u.class==='Warlock'&&u.spec==='Destruction'&&u.statuses?.['backdraft']&&a.cast>0&&['incinerate','chaos-bolt','immolate','channel-demonfire'].includes(a.id)){
+  const rank=Math.max(1,talentRank(u,'Backdraft')),scaled=Math.max(0,Math.round(cast*(1-.14*rank)));
+  removeStatus(ctx,u,'backdraft','consumed');talentTrigger(ctx,u,'Backdraft',u,{ability:a.name,originalCast:cast,newCast:scaled});return scaled
+ }
  if(u.class==='Mage'&&u.spec==='Frost'&&a.id==='flurry'&&u.statuses?.['brain-freeze']){
   removeStatus(ctx,u,'brain-freeze','consumed');u.brainFreezeFlurryUntil=ctx.time+3000;talentTrigger(ctx,u,'Brain Freeze',u,{originalCast:cast});return 0
  }
