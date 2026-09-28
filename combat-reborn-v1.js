@@ -3649,6 +3649,59 @@ function runSelfTests(){
   return ids.includes('frostbolt')&&!ids.includes('blizzard')&&!ids.includes('frozen-orb')&&!ids.includes('glacial-spike')
  });
 
+ const destructionTalents={'Eradication':3,'Roaring Blaze':2,'Backdraft':2,'Reverse Entropy':1,'Rain of Fire':1,'Havoc':1,'Channel Demonfire':1,'Soul Conduit':1,'Summon Infernal':1};
+ const destructionParty=[
+  {id:'dwt',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15},
+  {id:'dwh',name:'Healer',class:'Priest',spec:'Holy',power:14,level:15},
+  {id:'dw',name:'Destruction Warlock',class:'Warlock',spec:'Destruction',power:14,level:15,skillLoadouts:{Destruction:['incinerate','conflagrate','chaos-bolt','shadowfury']},talents:{Destruction:destructionTalents}},
+  {id:'dw1',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15},
+  {id:'dw2',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15}
+ ];
+ const destructionRun=simulate({party:destructionParty,encounter:{...base,kind:'boss',level:15,enemyHealth:12000},tactics:{cooldownUse:'free'},seed:'destruction-warlock',maxDurationMs:24000});
+ test('Destruction Warlock Soul Shards',()=>{
+  const warlock=destructionRun.finalState.players.find(p=>p.id==='p-dw');
+  return warlock?.role==='dps'&&warlock?.resource?.name==='Soul Shards'&&destructionRun.events.some(e=>e.type==='RESOURCE_GAINED'&&e.source==='p-dw')&&destructionRun.events.some(e=>e.type==='RESOURCE_SPENT'&&e.source==='p-dw'&&e.ability==='Chaos Bolt')
+ });
+ test('Destruction Backdraft and Eradication',()=>destructionRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-dw'&&e.ability==='Backdraft')&&destructionRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-dw'&&e.ability==='Eradication'));
+
+ const destructionDotParty=[
+  {id:'ddt',name:'Tank',class:'Warrior',spec:'Protection',power:13,level:15},
+  {id:'ddh',name:'Healer',class:'Priest',spec:'Holy',power:13,level:15},
+  {id:'dd',name:'Burning Warlock',class:'Warlock',spec:'Destruction',power:13,level:15,skillLoadouts:{Destruction:['immolate','incinerate','chaos-bolt','channel-demonfire']},talents:{Destruction:destructionTalents}},
+  {id:'dd1',name:'Hunter',class:'Hunter',spec:'Marksman',power:13,level:15},
+  {id:'dd2',name:'Mage',class:'Mage',spec:'Arcane',power:13,level:15}
+ ];
+ const destructionDotRun=simulate({party:destructionDotParty,encounter:{...base,kind:'boss',level:15,enemyHealth:12000},tactics:{cooldownUse:'free'},seed:'destruction-dots',maxDurationMs:20000});
+ test('Destruction Immolate',()=>destructionDotRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-dd'&&e.ability==='Immolate (DoT)')&&destructionDotRun.events.some(e=>e.type==='RESOURCE_GAINED'&&e.source==='p-dd'&&e.ability==='Immolate'));
+ test('Destruction Demonfire',()=>destructionDotRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-dd'&&e.ability==='Channel Demonfire'));
+
+ const destructionPackParty=[
+  {id:'dpt',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15},
+  {id:'dph',name:'Healer',class:'Priest',spec:'Holy',power:14,level:15},
+  {id:'dp',name:'Ruin Warlock',class:'Warlock',spec:'Destruction',power:14,level:15,skillLoadouts:{Destruction:['incinerate','conflagrate','rain-of-fire','summon-infernal']},talents:{Destruction:destructionTalents}},
+  {id:'dp1',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15},
+  {id:'dp2',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15}
+ ];
+ const destructionPackRun=simulate({party:destructionPackParty,encounter:{...base,kind:'boss',level:15,enemies:['Ruin Boss','Ember Add','Ash Add'],enemyHealth:12000},tactics:{cooldownUse:'free'},seed:'destruction-pack',maxDurationMs:26000});
+ test('Destruction Infernal',()=>destructionPackRun.events.some(e=>e.type==='PET_SUMMONED'&&e.source==='p-dp'&&e.payload?.petType==='infernal')&&destructionPackRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.payload?.ownerId==='p-dp'&&e.payload?.petType==='infernal'));
+ test('Destruction Rain of Fire',()=>destructionPackRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-dp'&&e.ability==='Rain of Fire'));
+
+ const destructionHavocParty=destructionParty.map(x=>x.id==='dw'?{...x,id:'dhv',name:'Havoc Warlock',skillLoadouts:{Destruction:['incinerate','conflagrate','chaos-bolt','shadowfury']}}:x);
+ const destructionHavocRun=simulate({party:destructionHavocParty,encounter:{...base,kind:'boss',level:15,enemies:['Primary','Secondary'],enemyHealth:10000},tactics:{cooldownUse:'free'},seed:'destruction-havoc',maxDurationMs:18000});
+ test('Destruction Havoc',()=>destructionHavocRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-dhv'&&e.ability==='Havoc'));
+
+ const destructionLocked=simulate({party:[
+  {id:'dwlt',name:'Tank',class:'Warrior',spec:'Protection',power:12,level:15},
+  {id:'dwlh',name:'Healer',class:'Priest',spec:'Holy',power:12,level:15},
+  {id:'dwl',name:'Locked Destruction',class:'Warlock',spec:'Destruction',power:12,level:15,skillLoadouts:{Destruction:['rain-of-fire','channel-demonfire','summon-infernal','incinerate']},talents:{Destruction:{}}},
+  {id:'dwl1',name:'Hunter',class:'Hunter',spec:'Marksman',power:12,level:15},
+  {id:'dwl2',name:'Mage',class:'Mage',spec:'Arcane',power:12,level:15}
+ ],encounter:{...base,level:15,enemyHealth:4000},seed:'destruction-gates',maxDurationMs:2500});
+ test('Destruction Warlock Talent Skill Gates',()=>{
+  const ids=(destructionLocked.finalState.players.find(p=>p.id==='p-dwl')?.abilities||[]).map(a=>a.id);
+  return ids.includes('incinerate')&&!ids.includes('rain-of-fire')&&!ids.includes('channel-demonfire')&&!ids.includes('summon-infernal')
+ });
+
  const bloodTalents={'Heartbreaker':3,'Ossuary':3,'Hemostasis':2,'Rune Tap':1,'Blood Shield':2,'Voracious':2,'Dancing Rune Weapon':1,'Red Thirst':2,'Vampiric Blood':1};
  const bloodParty=[
   {id:'dkt',name:'Blood DK',class:'Death Knight',spec:'Blood',power:14,level:15,skillLoadouts:{Blood:['heart-strike','death-strike','dark-command','marrowrend']},talents:{Blood:bloodTalents}},
