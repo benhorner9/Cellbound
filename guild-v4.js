@@ -51,7 +51,10 @@ const ui={
 const classes={
   Warrior:{icon:'⚔',glow:'#C69B6D',specs:{Protection:{role:'tank',talents:['Shield Mastery','Last Stand','Bulwark']},Arms:{role:'dps',talents:['Weapon Mastery','Deep Wounds','Execute']}}},
   Paladin:{icon:'✥',glow:'#F48CBA',specs:{Protection:{role:'tank',talents:['Sacred Shield','Guardian Oath','Consecration']},Holy:{role:'healer',talents:['Divine Light','Grace','Beacon']}}},
-  Priest:{icon:'✚',glow:'#FFFFFF',specs:{Holy:{role:'healer',talents:['Renew','Serenity','Divine Hymn']}}},
+  Priest:{icon:'✚',glow:'#FFFFFF',specs:{
+    Holy:{role:'healer',talents:['Renew','Serenity','Divine Hymn']},
+    Shadow:{role:'dps',talents:['Dark Thoughts','Shadow Weaving','Void Eruption']}
+  }},
   Druid:{icon:'❈',glow:'#FF7C0A',specs:{Restoration:{role:'healer',talents:['Rejuvenation','Lifebloom','Tranquility']}}},
   Hunter:{icon:'➶',glow:'#AAD372',specs:{Marksman:{role:'dps',talents:['True Aim','Rapid Fire','Kill Shot']}}},
   Rogue:{icon:'◆',glow:'#FFF468',specs:{Assassination:{role:'dps',talents:['Ambush','Venom','Eviscerate']}}},
