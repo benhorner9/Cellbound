@@ -860,3 +860,62 @@
 @media(max-width:620px){
   .cb-equipment-visual-model .cb-creator-figure{width:220px;height:295px}
 }
+
+
+/* Character Model V2 — class silhouette phase */
+.cb-character-model-v2 .cb-appearance-preview-pair{
+  grid-template-columns:82px minmax(118px,1fr);
+  min-height:198px;
+  gap:10px;
+}
+.cb-character-model-v2 .cb-appearance-preview-pair>.cb-portrait{
+  width:80px!important;
+  height:80px!important;
+}
+.cb-character-model-v2 .cb-appearance-preview-pair>.cb-creator-figure{
+  display:block;
+  width:128px;
+  height:190px;
+  align-self:end;
+  overflow:visible;
+  filter:drop-shadow(0 12px 12px rgba(0,0,0,.34));
+}
+.cb-paper-doll-class-v2{
+  overflow:visible!important;
+  background:transparent!important;
+  filter:drop-shadow(0 16px 16px rgba(0,0,0,.34));
+}
+.cb-paper-doll-class-v2 .cb-creator-figure-svg{
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+  shape-rendering:geometricPrecision;
+}
+.cb-paper-doll-class-v2.cb-paper-doll--equipment{
+  width:min(100%,265px);
+  height:340px;
+  margin:0 auto;
+}
+.inn-figure .cb-world-avatar-illustrated .cb-creator-figure-svg,
+.town-square-hero .cb-world-avatar-illustrated .cb-creator-figure-svg{
+  shape-rendering:geometricPrecision;
+}
+@media(max-width:720px){
+  .cb-character-model-v2 .cb-appearance-preview-pair{
+    grid-template-columns:70px minmax(96px,1fr);
+    min-height:166px;
+  }
+  .cb-character-model-v2 .cb-appearance-preview-pair>.cb-portrait{
+    width:68px!important;
+    height:68px!important;
+  }
+  .cb-character-model-v2 .cb-appearance-preview-pair>.cb-creator-figure{
+    width:104px;
+    height:160px;
+  }
+  .cb-paper-doll-class-v2.cb-paper-doll--equipment{
+    width:min(100%,220px);
+    height:300px;
+  }
+}
