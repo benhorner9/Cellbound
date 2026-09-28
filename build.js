@@ -90,6 +90,9 @@ for(const file of files){
   if(file==='item-art-v1.js'){
     for(const hook of ["window.CellboundItemArt","function genericGear","function material","function consumable","function collection","frostbound-sigil","relic-oathstone-dominion","grid-override-module","enhancePvp","enhanceCrafting"])if(!contents.includes(hook))throw new Error('Complete item artwork system is missing '+hook);
   }
+  if(file==='class-build-v1.js'){
+    for(const hook of ["CURRENT_SPEC_POINT_CAP=12","TALENT_TIER_REQUIREMENTS=[0,2,4,6,8]","'Priest|Shadow':'dps'","'Hunter|Beast Mastery':'dps'","function talentBudgetForLevel","function talentRemaining"])if(!contents.includes(hook))throw new Error('Class build foundation is incomplete: '+hook);
+  }
   if(file==='gear-data.js'){
     if(!contents.includes('appearanceId:itemId')||!contents.includes('inferWeaponType')||!contents.includes('inferOffHandType'))throw new Error('Equipment Visuals V2 item identity metadata is missing');
     if(!contents.includes('function equipmentPositions')||!contents.includes('function canEquipInSlot')||contents.includes("if(item.slot==='Weapon')return ['Weapon','OffHand']"))throw new Error('Weapon/OffHand slot rules are not strict');
@@ -102,6 +105,8 @@ for(const file of files){
     if(!contents.includes("'Death Knight|Blood'")||!contents.includes("'Death Knight|Frost'")||!contents.includes("'Death Knight|Unholy'")||!contents.includes("raidName:'Grave Sovereign Plate'"))throw new Error('Death Knight T1-T5 gear/spec catalogue is incomplete');
     if(!contents.includes("'Demon Hunter|Havoc'")||!contents.includes("'Demon Hunter|Vengeance'")||!contents.includes("raidName:'Abyssal Hunt Regalia'"))throw new Error('Demon Hunter T1-T5 gear/spec catalogue is incomplete');
     if(!contents.includes("'Evoker|Preservation'")||!contents.includes("'Evoker|Devastation'")||!contents.includes("raidName:'Aspectbound Regalia'"))throw new Error('Evoker T1-T5 gear/spec catalogue is incomplete');
+    for(const hook of ["'Priest|Shadow'","'Druid|Balance'","'Hunter|Beast Mastery'","'Rogue|Outlaw'","'Mage|Frost'","'Shaman|Elemental'","'Warlock|Destruction'"])if(!contents.includes(hook))throw new Error('Planned second-spec gear weighting is missing '+hook);
+    if(!contents.includes('function setBonusRulesFor')||!contents.includes('talentSkillCooldownScale')||!contents.includes('specBias'))throw new Error('Adaptive spec-aware equipment foundation is incomplete');
   }
   if(file==='endgame-data-v1.js'){
     if(!contents.includes('raidExclusiveTier:5')||!contents.includes('powerCeiling:44'))throw new Error('Dungeon loot must stop below raid-exclusive Tier 5');
@@ -121,8 +126,8 @@ for(const file of files){
     for(const hook of ["spec:'Preservation'","spec:'Devastation'","id:'reversion'","id:'disintegrate'","id:'emerald-communion'","id:'dragonrage'","'Essence Burst':'","Evoker Preservation Healing","Evoker Devastation Essence"])if(!contents.includes(hook))throw new Error('Evoker combat kit is incomplete: '+hook);
     if(!contents.includes("_combatPosition")||!contents.includes("data.currentPosition"))throw new Error('Combat slice position persistence is missing');
     if(!contents.includes("focusSelectedDamageOnly")||!contents.includes("!target.focusSelected"))throw new Error('Focus-selected damage gating is missing');
-    if(!contents.includes("const VERSION='1.3.16'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
-    if(!contents.includes('CellboundGear?.SET_BONUS_RULES')||!contents.includes('rules.pieces4?.resourceRegen'))throw new Error('Combat must consume shared 2/4-piece set bonus rules');
+    if(!contents.includes("const VERSION='1.3.17'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
+    for(const hook of ['setBonusRulesFor','talentSkillCooldownScale','incomingDamageReduction','setBonuses?.damageScale','setBonuses?.healingScale'])if(!contents.includes(hook))throw new Error('Combat adaptive set foundation is missing '+hook);
   }
   if(file==='combat-status-ui-v1.js'){
     if(!contents.includes("version:'2.1.0'"))throw new Error('Combat status UI smart-overhead version is missing');
@@ -319,11 +324,16 @@ for(const file of files){
     if(!contents.includes("'Death Knight':{icon:'☠'")||!contents.includes("Blood:{role:'tank'")||!contents.includes("Frost:{role:'dps'")||!contents.includes("Unholy:{role:'dps'"))throw new Error('Death Knight must expose Blood, Frost and Unholy as playable specialisations');
     if(!contents.includes("'Demon Hunter':{icon:'⛧'")||!contents.includes("Havoc:{role:'dps'")||!contents.includes("Vengeance:{role:'tank'"))throw new Error('Demon Hunter must expose Havoc and Vengeance as playable specialisations');
     if(!contents.includes("Evoker:{icon:'✧'")||!contents.includes("Preservation:{role:'healer'")||!contents.includes("Devastation:{role:'dps'"))throw new Error('Evoker must expose Preservation and Devastation as playable specialisations');
+    if(!contents.includes('B?.syncLegacyTalentCounter?.(c)')||!contents.includes("Object.keys(classes[className]?.specs||{}).forEach(spec=>{out[spec]={}})"))throw new Error('Guild must use independent per-spec build points without auto-selected fresh talents');
     if(!contents.includes("id:'chaos-canyon',name:'Chaos Canyon'")||!contents.includes("id:'blackout-station',name:'Blackout Station'")||!contents.includes("id:'fractured-ages',name:'The Fractured Ages'"))throw new Error('Overview Next Dungeon ladder must cover current dungeon progression');
     if(!contents.includes("c.equipment[slot]=existing||(hasSlot?null:starters[slot])"))throw new Error('Explicitly unequipped core slots must stay empty after state normalization');
     if(contents.includes("existing||(keepBare&&hasSlot?null:starters[slot])"))throw new Error('Legacy starter restoration would re-equip removed Head/Chest/Weapon items');
     if(!contents.includes('function repairInvalidOffHands')||!contents.includes("G?.canEquipInSlot?.(off,'OffHand')")||!contents.includes('repairInvalidOffHands(s);'))throw new Error('Legacy main-hand weapons are not being recovered from OffHand');
     if(!contents.includes('craftHistory:p.craftHistory')||!contents.includes('projectsCompleted:Math.max'))throw new Error('Profession project progression is not preserved by guild state normalization');
+  }
+  if(file==='character-sheet.js'){
+    for(const hook of ['function talentBudget(c)','function talentRemaining(c,spec)','BUILD POINTS','B?.syncLegacyTalentCounter?.(c)','setBonusRulesFor?.(c,c.spec,item)'])if(!contents.includes(hook))throw new Error('Character build UI foundation is missing '+hook);
+    if(contents.includes('Each point also grants <b>+1 Power</b>'))throw new Error('Talent points must not inflate global Power across inactive specialisations');
   }
   if(file==='guild.html'){
     if(!contents.includes('boss-dossier-v1.css?v=3'))throw new Error('Boss dossier CSS cache version is stale in guild.html');
@@ -332,11 +342,11 @@ for(const file of files){
     if(!contents.includes('no-way-back-v1.css?v=4')||!contents.includes('no-way-back-v1.js?v=10'))throw new Error('No Way Back sail puzzle cache versions are stale in guild.html');
     if(!contents.includes('comic-scenes-v1.css?v=5')||!contents.includes('comic-scenes-v1.js?v=5')||!contents.includes('onboarding-v1.js?v=19'))throw new Error('Tutorial comic asset cache versions are stale in guild.html');
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
-    if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=61')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
+    if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=62')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
     if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=7'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
     if(!contents.includes('character-portraits-v1.css?v=4')||!contents.includes('character-portraits-v1.js?v=11'))throw new Error('Character portrait identity assets are not linked from guild.html');
      if(!contents.includes('combat-portraits-v1.css?v=4')||!contents.includes('combat-portraits-v1.js?v=5'))throw new Error('Combat portrait assets are not linked from guild.html');
-    if(!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=22')||!contents.includes('combat-reborn-v1.js?v=19')||!contents.includes('guild-v4.js?v=61')||!contents.includes('character-sheet.js?v=42')||!contents.includes('combat-identities-v1.js?v=33')||!contents.includes('combat-status-ui-v1.js?v=10')||!contents.includes('combat-physical-v4.js?v=10')||!contents.includes('combat-physical-v4.css?v=8')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=57')||!contents.includes('hollow-sanctum-v1.js?v=40')||!contents.includes('chaos-canyon-v1.js?v=15')||!contents.includes('blackout-station-v1.js?v=22')||!contents.includes('fractured-ages-v1.js?v=8'))throw new Error('Set bonus UI cache versions are stale in guild.html');
+    if(!contents.includes('class-build-v1.js?v=1')||!contents.includes('gear-system.css?v=11')||!contents.includes('gear-data.js?v=23')||!contents.includes('combat-reborn-v1.js?v=20')||!contents.includes('guild-v4.js?v=62')||!contents.includes('character-sheet.js?v=43')||!contents.includes('combat-identities-v1.js?v=33')||!contents.includes('combat-status-ui-v1.js?v=10')||!contents.includes('combat-physical-v4.js?v=10')||!contents.includes('combat-physical-v4.css?v=8')||!contents.includes('trading-post-v3.js?v=7')||!contents.includes('dungeon-2d-v1.js?v=57')||!contents.includes('hollow-sanctum-v1.js?v=40')||!contents.includes('chaos-canyon-v1.js?v=15')||!contents.includes('blackout-station-v1.js?v=22')||!contents.includes('fractured-ages-v1.js?v=8'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     const layoutSafetyLink='<link rel="stylesheet" href="./layout-safety-v1.css?v=1">';
     if(!contents.includes(layoutSafetyLink)||contents.lastIndexOf('<link rel="stylesheet"')!==contents.indexOf(layoutSafetyLink))throw new Error('Layout safety stylesheet must remain the final CSS layer in guild.html');
@@ -391,7 +401,7 @@ for(const file of files){
     if(!contents.includes('ui-polish-v3.css'))throw new Error('Global UI polish stylesheet is not linked from guild.html');
     if(!contents.includes('home-v2.css?v=4')||!contents.includes('class="home-command"')||!contents.includes('class="home-destination-grid"')||!contents.includes('class="home-destination raids"')||!contents.includes('id="overviewGuildPulse"'))throw new Error('Guild Command Centre home is not linked or its required hooks are missing');
     if(!contents.includes('command-ui-v1.css'))throw new Error('Cross-game Guild Command UI layer is not linked from guild.html');
-    if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=42'))throw new Error('Character Command UI is not linked from guild.html');
+    if(!contents.includes('character-command-v1.css')||!contents.includes('character-talents-v2.css')||!contents.includes('character-sheet.js?v=43'))throw new Error('Character Command UI is not linked from guild.html');
     for(const hook of ['roster-v2.css?v=2','class="roster-overview-strip"','id="rosterClearFilters"','id="rosterResultsLabel"','class="roster-grid roster-grid-v2"'])if(!contents.includes(hook))throw new Error('Roster v2 UI is missing '+hook);
     for(const hook of ['bank-v2.css','class="bank-category-tabs"','id="bankClearFilters"','id="bankResultsLabel"','class="bank-grid bank-grid-v2"','data-bank-category="Gear"'])if(!contents.includes(hook))throw new Error('Bank v2 UI is missing '+hook);
     if(!contents.includes('bank-v2.css?v=2'))throw new Error('Bank v2 stylesheet cache version must include category-isolation fix');
@@ -467,10 +477,15 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
 {
   const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;sandbox.globalThis=sandbox;
   vm.createContext(sandbox);
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'class-build-v1.js'),'utf8'),sandbox,{filename:'class-build-v1.js'});
   vm.runInContext(fs.readFileSync(path.join(__dirname,'gear-data.js'),'utf8'),sandbox,{filename:'gear-data.js'});
   vm.runInContext(fs.readFileSync(path.join(__dirname,'endgame-data-v1.js'),'utf8'),sandbox,{filename:'endgame-data-v1.js'});
   const G=sandbox.CellboundGear,D=sandbox.CellboundEndgameData;
   if(!G||!D)throw new Error('Chapter 1 gear validation runtime failed to load');
+  const B=sandbox.CellboundBuildRules;
+  if(!B||B.talentBudgetForLevel(1)!==1||B.talentBudgetForLevel(15)!==12)throw new Error('Per-spec talent budget foundation failed runtime validation');
+  const adaptiveProbe={class:'Priest',spec:'Holy',equipment:{}},adaptiveRules=G.setBonusRulesFor(adaptiveProbe,'Holy',{tier:4,class:'Priest'});
+  if(!(adaptiveRules?.pieces2?.effects?.healingScale>1)||!(adaptiveRules?.pieces4?.effects?.talentSkillCooldownScale<1))throw new Error('Adaptive healer set rules failed runtime validation');
   const requiredSlots=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring','Trinket','Relic'];
   for(const klass of G.CLASS_ORDER)for(let tier=1;tier<=4;tier++)for(const slot of requiredSlots)if(!G.items.some(x=>x.class===klass&&x.tier===tier&&x.slot===slot))throw new Error('Missing gear catalogue item: '+klass+' T'+tier+' '+slot);
   if(G.items.some(x=>!x.appearanceId))throw new Error('Base gear item missing stable character appearance identity');
@@ -506,7 +521,10 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   const combatCode=fs.readFileSync(path.join(__dirname,'combat-reborn-v1.js'),'utf8');
   const combatStandardCode=fs.readFileSync(path.join(__dirname,'combat-standard-v1.js'),'utf8');
   const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;sandbox.globalThis=sandbox;
-  vm.createContext(sandbox);vm.runInContext(combatCode,sandbox,{filename:'combat-reborn-v1.js'});
+  vm.createContext(sandbox);
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'class-build-v1.js'),'utf8'),sandbox,{filename:'class-build-v1.js'});
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'gear-data.js'),'utf8'),sandbox,{filename:'gear-data.js'});
+  vm.runInContext(combatCode,sandbox,{filename:'combat-reborn-v1.js'});
   vm.runInContext(combatStandardCode,sandbox,{filename:'combat-standard-v1.js'});
   const result=sandbox.CellboundCombatReborn?.tests?.run?.();
   if(!result||result.passed!==result.total){
