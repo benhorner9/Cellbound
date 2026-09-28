@@ -435,6 +435,7 @@ const UI_SKILL_FALLBACKS={
   ]
 };
 const UI_BUFF_FALLBACKS={
+  'Priest|Shadow':{id:'class-buff-shadow-inspiration',name:'Shadow Inspiration',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04,resourceRegen:.04}},
   Priest:{id:'class-buff-divine-inspiration',name:'Divine Inspiration',scope:'party',duration:60000,cooldown:180000,effect:{outgoingHealing:.05,incomingHealing:.05}},
   Shaman:{id:'class-buff-bloodlust',name:'Bloodlust',scope:'party',duration:60000,cooldown:180000,effect:{haste:.10,resourceRegen:.05}},
   Warlock:{id:'class-buff-demonic-pact',name:'Demonic Pact',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04}},
@@ -446,7 +447,7 @@ const UI_BUFF_FALLBACKS={
 function classBuffFor(c){
   // Character-sheet fallbacks are the UI contract for newly added classes.
   // Prefer them when present so an older cached combat module cannot expose stale buff data.
-  return UI_BUFF_FALLBACKS[c?.class]||combatEngine()?.CLASS_BUFFS?.[c?.class]||null
+  return UI_BUFF_FALLBACKS[c?.class+'|'+c?.spec]||UI_BUFF_FALLBACKS[c?.class]||combatEngine()?.CLASS_BUFFS?.[c?.class+'|'+c?.spec]||combatEngine()?.CLASS_BUFFS?.[c?.class]||null
 }
 function skillPoolFor(c,spec=c?.spec){
   const engine=combatEngine(),role=specs[c?.class]?.[spec]||'dps',copyChar={...c,spec};
