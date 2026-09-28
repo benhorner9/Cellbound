@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.19';
+const VERSION='1.3.20';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -397,7 +397,8 @@ function gearSetState(c){
    incomingDamageReduction:Math.max(0,Number(e2.incomingDamageReduction||0)+Number(e4.incomingDamageReduction||0)),
    talentSkillCooldownScale:Number(e2.talentSkillCooldownScale||1)*Number(e4.talentSkillCooldownScale||1),
    resourceGainScale:Number(e2.resourceGainScale||1)*Number(e4.resourceGainScale||1),
-   periodicDamageScale:Number(e2.periodicDamageScale||1)*Number(e4.periodicDamageScale||1)
+   periodicDamageScale:Number(e2.periodicDamageScale||1)*Number(e4.periodicDamageScale||1),
+   eclipseDamageScale:Number(e2.eclipseDamageScale||1)*Number(e4.eclipseDamageScale||1)
  }
 }
 
@@ -420,7 +421,7 @@ const TALENT_SKILL_REQUIREMENTS={
   'mortal-strike':'Mortal Strike','overpower':'Overpower','sweeping-strike':'Sweeping Blows',
   'consecration':'Consecration','ardent-defender':'Ardent Defender','holy-shock':'Holy Shock','radiant-wave':'Radiance',
   'guardian-spirit':'Guardian Spirit','divine-hymn':'Divine Hymn',
-  'wild-growth':'Wild Growth','tranquility':'Tranquility',
+  'wild-growth':'Wild Growth','tranquility':'Tranquility','starfall':'Starfall','fury-of-elune':'Fury of Elune','celestial-alignment':'Celestial Alignment',
   'kill-shot':'Kill Shot','garrote':'Garrote','envenom':'Envenom','arcane-barrage':'Barrage',
   'spirit-link-totem':'Spirit Link Totem','earthquake':'Earthquake','stormkeeper':'Stormkeeper','ascendance':'Ascendance','soul-strike':'Soul Strike','felstorm':'Felstorm','summon-demonic-tyrant':'Demonic Tyrant',
   'breath-of-fire':'Breath of Fire','fortifying-brew':'Fortifying Brew','revival':'Revival','fists-of-fury':'Fists of Fury','touch-of-death':'Touch of Death',
@@ -483,6 +484,15 @@ const TALENT_RULES={
  'Tree of Life':'Under heavy pressure, temporarily boosts healing and haste.',
  'Flourish':'Party heals extend restoration with an additional healing pulse.',
  'Tranquility':'Unlocks and strengthens Tranquility.',
+ 'Starlight':'Increases Wrath and Starfire damage and Astral Power generation.',
+ 'Twin Moons':'Increases Moonfire and Sunfire periodic damage.',
+ "Nature's Balance":'Further improves Astral Power generation and helps maintain Eclipse cycles.',
+ 'Shooting Stars':'Periodic Balance damage can generate extra Astral Power.',
+ 'Starfall':'Unlocks Starfall as an equipable area Astral Power spender.',
+ 'Soul of the Forest':'Strengthens the matching spell-school bonus granted by Solar and Lunar Eclipse.',
+ 'Fury of Elune':'Unlocks Fury of Elune, an astral beam that damages packs and generates Astral Power.',
+ 'Astral Communion':'Empowers Astral Power spenders and periodically refunds Astral Power.',
+ 'Celestial Alignment':'Unlocks Celestial Alignment, empowering Solar and Lunar magic simultaneously.',
  'True Aim':'Increases ranged damage.',
  'Rapid Fire':'Reduces Hunter ability cooldowns.',
  'Steady Focus':'Increases damage while the Hunter is stationary.',
@@ -654,6 +664,16 @@ function talentDamageScale(ctx,u,a,target){
  if(u.class==='Paladin'){
   if(a.id==='consecration'&&(rank=talentRank(u,'Consecration')))m*=1+rank*.22;
  }
+ if(u.class==='Druid'&&u.spec==='Balance'){
+  if(['wrath','starfire'].includes(a.id))m*=1+talentRank(u,'Starlight')*.035;
+  if(['starsurge','starfall'].includes(a.id))m*=1+talentRank(u,'Astral Communion')*.04;
+  const celestial=Boolean(u.statuses?.['celestial-alignment']),solar=Boolean(u.statuses?.['solar-eclipse']),lunar=Boolean(u.statuses?.['lunar-eclipse']);
+  const matching=celestial||(solar&&a.school==='nature')||(lunar&&a.school==='arcane');
+  if(matching){
+   const forest=talentRank(u,'Soul of the Forest'),setScale=Math.max(1,Number(u?.setBonuses?.eclipseDamageScale)||1);
+   m*=(1.12+forest*.035)*setScale
+  }
+ }
  if(u.class==='Hunter'){
   m*=1+talentRank(u,'True Aim')*.03;
   if(ctx.time>=Number(u.movingUntil||0))m*=1+talentRank(u,'Steady Focus')*.025;
@@ -674,6 +694,58 @@ function talentDamageScale(ctx,u,a,target){
  if(u.class==='Priest'&&u.spec==='Shadow'){
   if(['mind-flay','mind-blast'].includes(a.id))m*=1+talentRank(u,'Dark Thoughts')*.035;
   if(hp<.35)m*=1+talentRank(u,'Twist of Fate')*.06;
+ }
+ if(u.class==='Druid'&&u.spec==='Balance'){
+  u.talentCounters=u.talentCounters||{};
+  if(a.id==='wrath'){
+   u.talentCounters.wrathCycle=(Number(u.talentCounters.wrathCycle)||0)+1;
+   u.talentCounters.starfireCycle=0;
+   if(u.talentCounters.wrathCycle>=2){
+    u.talentCounters.wrathCycle=0;
+    removeStatus(ctx,u,'solar-eclipse','cycle');
+    applyStatus(ctx,u,u,{id:'lunar-eclipse',name:'Lunar Eclipse',kind:'buff',duration:8000,effect:{haste:.05}});
+    talentTrigger(ctx,u,'Lunar Eclipse',u,{duration:8000})
+   }
+  }
+  if(a.id==='starfire'){
+   u.talentCounters.starfireCycle=(Number(u.talentCounters.starfireCycle)||0)+1;
+   u.talentCounters.wrathCycle=0;
+   if(u.talentCounters.starfireCycle>=2){
+    u.talentCounters.starfireCycle=0;
+    removeStatus(ctx,u,'lunar-eclipse','cycle');
+    applyStatus(ctx,u,u,{id:'solar-eclipse',name:'Solar Eclipse',kind:'buff',duration:8000,effect:{haste:.05}});
+    talentTrigger(ctx,u,'Solar Eclipse',u,{duration:8000})
+   }
+  }
+  if(['moonfire','sunfire'].includes(a.id)&&target.alive){
+   const twin=talentRank(u,'Twin Moons'),shoot=talentRank(u,'Shooting Stars'),setScale=Math.max(.5,Number(u?.setBonuses?.periodicDamageScale)||1);
+   const ratio=a.id==='moonfire'?.50:.46,tick=Math.max(1,Math.round(dealt*ratio*(1+twin*.08)*setScale)),label=a.name,id=a.id+'-'+u.id;
+   applyStatus(ctx,u,target,{id,name:label,kind:'debuff',duration:5100,effect:{damageOverTime:tick}});
+   [1600,3200,4800].forEach(t=>schedule(ctx,ctx.time+t,()=>{
+    if(!u.alive||!target.alive)return;
+    dealDamage(ctx,u,target,tick,label+' (DoT)',{damageType:'magic'});
+    if(shoot){
+     u.talentCounters.shootingStars=(Number(u.talentCounters.shootingStars)||0)+1;
+     const threshold=Math.max(2,4-shoot);
+     if(u.talentCounters.shootingStars>=threshold){
+      u.talentCounters.shootingStars=0;const gain=4+shoot*2;
+      gainResource(ctx,u,{name:'Shooting Stars',gain});talentTrigger(ctx,u,'Shooting Stars',u,{astralPower:gain})
+     }
+    }
+   },'balance-dot'))
+  }
+  if(['starsurge','starfall'].includes(a.id)&&(r=talentRank(u,'Astral Communion'))){
+   u.talentCounters.astralCommunion=(Number(u.talentCounters.astralCommunion)||0)+1;
+   if(u.talentCounters.astralCommunion>=Math.max(2,4-r)){
+    u.talentCounters.astralCommunion=0;const refund=8+r*4;
+    gainResource(ctx,u,{name:'Astral Communion',gain:refund});talentTrigger(ctx,u,'Astral Communion',u,{astralPower:refund})
+   }
+  }
+  if(a.id==='celestial-alignment'){
+   removeStatus(ctx,u,'solar-eclipse','alignment');removeStatus(ctx,u,'lunar-eclipse','alignment');
+   applyStatus(ctx,u,u,{id:'celestial-alignment',name:'Celestial Alignment',kind:'buff',duration:10000,effect:{outgoingDamage:.15,haste:.10}});
+   talentTrigger(ctx,u,'Celestial Alignment',u,{duration:10000})
+  }
  }
  if(u.class==='Shaman'&&u.spec==='Elemental'){
   if(['lightning-bolt','chain-lightning','lava-burst'].includes(a.id))m*=1+talentRank(u,'Elemental Fury')*.035;
@@ -1160,6 +1232,7 @@ function gainResource(ctx,u,a){
  if(u.class==='Death Knight'&&u.spec==='Frost'&&a.id==='howling-blast')gain+=talentRank(u,'Rime')*2;
  if(u.class==='Priest'&&u.spec==='Shadow'&&a.id==='mind-flay')gain+=talentRank(u,'Dark Thoughts')*2;
  if(u.class==='Shaman'&&u.spec==='Elemental'&&['lightning-bolt','chain-lightning'].includes(a.id))gain+=talentRank(u,'Elemental Fury');
+ if(u.class==='Druid'&&u.spec==='Balance'&&['wrath','starfire'].includes(a.id))gain+=talentRank(u,'Starlight')+talentRank(u,"Nature's Balance")*2;
  gain*=Math.max(.5,Number(u?.setBonuses?.resourceGainScale)||1);
  if(!gain)return;
  const before=u.resource.value;u.resource.value=clamp(before+gain,0,u.resource.max);
