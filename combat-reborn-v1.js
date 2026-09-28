@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.12';
+const VERSION='1.3.13';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -11,7 +11,7 @@ const pct=(v,max)=>max>0?clamp(v/max*100,0,100):0;
 const CLASS_COLORS={
  'Death Knight':'#C41E3A','Demon Hunter':'#A330C9','Druid':'#FF7C0A','Evoker':'#33937F',
  'Hunter':'#AAD372','Mage':'#3FC7EB','Warrior':'#C69B6D','Paladin':'#F48CBA',
- 'Priest':'#FFFFFF','Rogue':'#FFF468','Shaman':'#0070DD','Warlock':'#8788EE'
+ 'Priest':'#FFFFFF','Rogue':'#FFF468','Shaman':'#0070DD','Warlock':'#8788EE','Monk':'#00FF98'
 };
 
 const RESOURCE_DEFS={
@@ -26,6 +26,9 @@ const RESOURCE_DEFS={
  Priest:{name:'Mana',max:100,start:100,regen:7},
  Shaman:{name:'Mana',max:100,start:100,regen:7},
  Warlock:{name:'Mana',max:100,start:100,regen:5.5},
+ 'Monk|Brewmaster':{name:'Energy',max:100,start:100,regen:11},
+ 'Monk|Mistweaver':{name:'Mana',max:100,start:100,regen:7},
+ 'Monk|Windwalker':{name:'Energy',max:100,start:100,regen:12},
  Rogue:{name:'Energy',max:100,start:100,regen:13}
 };
 
@@ -41,6 +44,7 @@ const CLASS_BUFFS={
  Paladin:{id:'class-buff-blessing-resolve',name:'Blessing of Resolve',scope:'party',duration:60000,cooldown:180000,effect:{incomingDamageReduction:.06}},
  Shaman:{id:'class-buff-bloodlust',name:'Bloodlust',scope:'party',duration:60000,cooldown:180000,effect:{haste:.10,resourceRegen:.05}},
  Warlock:{id:'class-buff-demonic-pact',name:'Demonic Pact',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04}},
+ Monk:{id:'class-buff-mystic-touch',name:'Mystic Touch',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,outgoingHealing:.03}},
  Evoker:{id:'class-buff-draconic-resonance',name:'Draconic Resonance',scope:'party',duration:60000,cooldown:180000,effect:{haste:.06}}
 };
 
@@ -205,6 +209,30 @@ const ABILITIES={
   {id:'felstorm',name:'Felstorm',kind:'pet-command',unlockLevel:1,desc:'Command your Felguard to spin through several nearby enemies.',range:30,cost:12,gcd:1000,cd:18000,petCommand:'felstorm',cleave:3},
   {id:'implosion',name:'Implosion',kind:'pet-command',unlockLevel:10,desc:'Detonate your temporary demons into the target for explosive area damage.',range:35,cost:10,gcd:1500,cd:16000,petCommand:'implosion',cleave:3},
   {id:'summon-demonic-tyrant',name:'Summon Demonic Tyrant',kind:'summon',unlockLevel:1,desc:'Summon a Demonic Tyrant that bombards enemies and empowers your active demons.',range:35,cost:20,gcd:1500,cast:1600,cd:60000,duration:15000,summonType:'tyrant',summonCount:1}
+ ],
+ Monk:[
+  {id:'keg-smash',name:'Keg Smash',kind:'damage',role:'tank',unlockLevel:1,desc:'Smash the target and nearby enemies with heavy threat.',range:8,damage:20,cost:25,gcd:1000,cd:8000,threat:3,cleave:3},
+  {id:'brewmaster-blackout-kick',name:'Blackout Kick',kind:'damage',role:'tank',unlockLevel:1,desc:'Reliable Brewmaster melee pressure.',range:5,damage:16,cost:18,gcd:1000,cd:3000,threat:2.2},
+  {id:'provoke',name:'Provoke',kind:'taunt',role:'tank',unlockLevel:1,desc:'Challenge an enemy and force its attention onto the Brewmaster.',range:30,cost:0,gcd:0,cd:8000,threat:5},
+  {id:'purifying-brew',name:'Purifying Brew',kind:'defensive',role:'tank',unlockLevel:1,desc:'Clear a large portion of accumulated Stagger damage.',duration:1000,damageReduction:0,gcd:0,cd:12000,purifyStagger:.50},
+  {id:'celestial-brew',name:'Celestial Brew',kind:'defensive',role:'tank',unlockLevel:6,desc:'Reduce incoming damage while your brews stabilise you.',duration:7000,damageReduction:.28,gcd:0,cd:45000},
+  {id:'breath-of-fire',name:'Breath of Fire',kind:'damage',role:'tank',unlockLevel:1,desc:'Breathe fire across the target and nearby enemies.',range:8,damage:18,cost:20,gcd:1000,cd:12000,cleave:3,threat:2.4},
+  {id:'fortifying-brew',name:'Fortifying Brew',kind:'defensive',role:'tank',unlockLevel:1,desc:'Major defensive brew that also restores health.',duration:10000,damageReduction:.35,selfHealPct:.15,gcd:0,cd:90000},
+  {id:'soothing-mist',name:'Soothing Mist',kind:'heal',role:'healer',unlockLevel:1,desc:'Efficient focused healing through soothing mist.',range:30,heal:29,cost:10,gcd:1500,cast:950,cd:0},
+  {id:'vivify',name:'Vivify',kind:'heal',role:'healer',unlockLevel:1,desc:'A strong direct heal for an injured ally.',range:30,heal:35,cost:15,gcd:1500,cast:1250,cd:0},
+  {id:'renewing-mist',name:'Renewing Mist',kind:'heal',role:'healer',unlockLevel:1,desc:'Instant healing that continues restoring the target over time.',range:30,heal:20,cost:11,gcd:1500,cast:0,cd:6000,hot:7},
+  {id:'essence-font',name:'Essence Font',kind:'group-heal',role:'healer',unlockLevel:6,desc:'Release a wave of healing across the party.',range:30,heal:16,cost:23,gcd:1500,cast:1500,cd:9000},
+  {id:'mist-rising-sun-kick',name:'Rising Sun Kick',kind:'damage',role:'healer',unlockLevel:4,desc:'A martial strike that can fuel fistweaving healing.',range:5,damage:19,cost:5,gcd:1000,cd:8000},
+  {id:'mist-tiger-palm',name:'Tiger Palm',kind:'damage',role:'healer',unlockLevel:4,desc:'A quick martial strike for safe healing windows.',range:5,damage:11,cost:2,gcd:1000,cd:0},
+  {id:'revival',name:'Revival',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Instantly restore the whole party in an emergency.',range:30,heal:32,cost:30,gcd:1500,cast:0,cd:45000},
+  {id:'tiger-palm',name:'Tiger Palm',kind:'damage',role:'dps',unlockLevel:1,desc:'A quick strike that maintains martial pressure.',range:5,damage:14,cost:18,gain:10,gcd:1000,cd:0},
+  {id:'windwalker-blackout-kick',name:'Blackout Kick',kind:'damage',role:'dps',unlockLevel:1,desc:'A fast finishing kick in the Windwalker rotation.',range:5,damage:20,cost:26,gcd:1000,cd:3000},
+  {id:'windwalker-rising-sun-kick',name:'Rising Sun Kick',kind:'damage',role:'dps',unlockLevel:1,desc:'A heavy martial strike with a short cooldown.',range:5,damage:31,cost:32,gcd:1000,cd:8000},
+  {id:'spinning-crane-kick',name:'Spinning Crane Kick',kind:'damage',role:'dps',unlockLevel:5,desc:'Spin through the target and nearby enemies.',range:7,damage:17,cost:28,gcd:1000,cd:7000,cleave:3},
+  {id:'fists-of-fury',name:'Fists of Fury',kind:'damage',role:'dps',unlockLevel:1,desc:'Unleash a powerful flurry that cleaves nearby enemies.',range:6,damage:34,cost:38,gcd:1000,cast:1300,cd:18000,cleave:2},
+  {id:'touch-of-death',name:'Touch of Death',kind:'damage',role:'dps',unlockLevel:1,desc:'A devastating finishing technique against weakened enemies.',range:5,damage:30,cost:20,gcd:1000,cd:30000,executeBelow:.20,executeMultiplier:2.4},
+  {id:'touch-of-karma',name:'Touch of Karma',kind:'defensive',role:'dps',unlockLevel:9,desc:'Reduce incoming damage for a short period.',duration:7000,damageReduction:.25,gcd:0,cd:75000},
+  {id:'spear-hand-strike',name:'Spear Hand Strike',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with a precise hand strike.',range:5,cost:0,gcd:0,cd:15000}
  ]
 };
 
@@ -243,7 +271,7 @@ function inferredRole(c){
  return'dps';
 }
 function resourceDef(c){
- return RESOURCE_DEFS[c?.class]||{name:'Power',max:100,start:100,regen:8};
+ return RESOURCE_DEFS[c?.class+'|'+c?.spec]||RESOURCE_DEFS[c?.class]||{name:'Power',max:100,start:100,regen:8};
 }
 function carriedStatuses(c){
  const input=Array.isArray(c?._combatStatuses)?c._combatStatuses:[],out={};
@@ -303,7 +331,8 @@ const TALENT_SKILL_REQUIREMENTS={
   'guardian-spirit':'Guardian Spirit','divine-hymn':'Divine Hymn',
   'wild-growth':'Wild Growth','tranquility':'Tranquility',
   'kill-shot':'Kill Shot','garrote':'Garrote','envenom':'Envenom','arcane-barrage':'Barrage',
-  'spirit-link-totem':'Spirit Link Totem','soul-strike':'Soul Strike','felstorm':'Felstorm','summon-demonic-tyrant':'Demonic Tyrant'
+  'spirit-link-totem':'Spirit Link Totem','soul-strike':'Soul Strike','felstorm':'Felstorm','summon-demonic-tyrant':'Demonic Tyrant',
+  'breath-of-fire':'Breath of Fire','fortifying-brew':'Fortifying Brew','revival':'Revival','fists-of-fury':'Fists of Fury','touch-of-death':'Touch of Death'
 };
 const TALENT_RULES={
  'Shield Mastery':'More block chance and physical mitigation per rank.',
@@ -403,7 +432,34 @@ const TALENT_RULES={
  'Felstorm':'Unlocks Felstorm, an equipable Felguard area command.',
  'Demonic Core':'Demon attacks can trigger a short damage and haste surge for the Warlock.',
  'Master Summoner':'Extends temporary demon duration and reduces summon cooldowns.',
- 'Demonic Tyrant':'Unlocks Summon Demonic Tyrant, a powerful temporary ranged demon.'
+ 'Demonic Tyrant':'Unlocks Summon Demonic Tyrant, a powerful temporary ranged demon.',
+ 'High Tolerance':'Increases the share of incoming physical damage delayed by Stagger.',
+ 'Elusive Brawler':'Reduces damage taken while Brewmaster is under pressure.',
+ 'Purifying Brew':'Purifying Brew removes more accumulated Stagger per rank.',
+ 'Keg Mastery':'Increases Keg Smash damage and threat.',
+ 'Gift of the Ox':'Taking sustained damage can trigger a small self-heal.',
+ 'Breath of Fire':'Unlocks Breath of Fire and improves pack pressure.',
+ 'Celestial Brew':'Strengthens Celestial Brew, especially while Stagger is high.',
+ 'Shuffle':'Reduces each periodic Stagger damage release.',
+ 'Fortifying Brew':'Unlocks a major defensive brew with health recovery.',
+ 'Mist Wrap':'Increases Mistweaver direct healing.',
+ 'Lifecycles':'Reduces Mana costs when alternating healing techniques.',
+ 'Renewing Mist':'Improves Renewing Mist and its healing-over-time ticks.',
+ 'Ancient Teachings':'Martial damage smart-heals the most injured ally.',
+ 'Enveloping Breath':'Direct Mistweaver healing splashes onto nearby injured allies.',
+ 'Jade Serpent':'Healing casts can trigger a small additional jade-serpent heal.',
+ 'Rising Mist':'Improves healing generated by Mistweaver martial attacks.',
+ 'Mana Tea':'Improves Mana efficiency and regeneration.',
+ 'Revival':'Unlocks Revival, an instant emergency party heal.',
+ 'Combo Strikes':'Windwalker deals more damage when rotating different attacks and less when repeating one.',
+ 'Ferocity':'Increases Windwalker martial damage.',
+ 'Rising Sun Kick':'Increases Rising Sun Kick damage.',
+ 'Dance of the Wind':'Improves personal mitigation.',
+ 'Fists of Fury':'Unlocks Fists of Fury.',
+ 'Jade Ignition':'Area martial attacks deal additional cleave damage.',
+ 'Momentum':'Successful Combo Strikes grant a short haste surge.',
+ 'Serenity':'Reduces Windwalker ability costs and cooldowns.',
+ 'Touch of Death':'Unlocks a powerful execute against weakened enemies.'
 };
 function characterTalentRank(c,name){return Math.max(0,Number(c?.talents?.[c?.spec]?.[name])||0)}
 function talentRank(u,name){return Math.max(0,Number(u?.talentTree?.[name]??u?.original?.talents?.[u?.spec]?.[name])||0)}
