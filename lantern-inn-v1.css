@@ -821,3 +821,102 @@ body.inn-character-open{overflow:hidden}
   .inn-heading h2{font-size:21px}
   .inn-heading p{font-size:9px}
 }
+
+
+/* Lantern Inn Supplied Asset Rebuild V6
+   Source of truth: the newly supplied Inn_BG, Inn_Door, Inn_Bar and Inn_Table. */
+.inn-world{
+  aspect-ratio:16/9!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  background:#181218!important;
+}
+.inn-scene-stage{
+  width:100%!important;
+  height:100%!important;
+  aspect-ratio:16/9!important;
+  left:0!important;
+  top:0!important;
+  translate:0 0!important;
+}
+.inn-scene-bg{width:100%!important;height:100%!important;object-fit:fill!important}
+
+/* Door is mounted against the back-left wall. */
+.inn-object-door{left:5.2%!important;top:1.8%!important;width:13.2%!important;aspect-ratio:1086/1448!important;z-index:24!important}
+/* Bar is set against the right-hand wall. */
+.inn-object-bar{left:61.5%!important;top:21.5%!important;width:36.5%!important;aspect-ratio:4/3!important;z-index:46!important}
+/* Table owns the foreground centre. */
+.inn-object-table{left:27.5%!important;top:46.5%!important;width:45%!important;aspect-ratio:4/3!important;z-index:74!important}
+
+/* Small warm correction so the supplied prop assets inherit the room lighting. */
+.inn-object-door .inn-object-art{
+  opacity:1!important;
+  filter:brightness(.91) saturate(.90) sepia(.08) hue-rotate(-5deg) contrast(1.04) drop-shadow(0 8px 10px rgba(0,0,0,.36))!important
+}
+.inn-object-bar .inn-object-art{
+  opacity:1!important;
+  filter:brightness(.92) saturate(.91) sepia(.09) hue-rotate(-6deg) contrast(1.04) drop-shadow(0 11px 12px rgba(0,0,0,.38))!important
+}
+.inn-object-table .inn-object-art{
+  opacity:1!important;
+  filter:brightness(.93) saturate(.91) sepia(.09) hue-rotate(-6deg) contrast(1.04) drop-shadow(0 12px 12px rgba(0,0,0,.40))!important
+}
+.inn-object-door:is(:hover,:focus-visible,.is-selected) .inn-object-art,
+.inn-object-bar:is(:hover,:focus-visible,.is-selected) .inn-object-art,
+.inn-object-table:is(:hover,:focus-visible,.is-selected) .inn-object-art{
+  filter:brightness(1.01) saturate(.97) sepia(.07) hue-rotate(-5deg) contrast(1.05) drop-shadow(0 12px 13px rgba(0,0,0,.40))!important
+}
+
+/* Exact transparent-asset selection glow. */
+.inn-scene-object .inn-object-glow{
+  opacity:0!important;
+  transform:scale(1.022)!important;
+  mix-blend-mode:screen;
+  filter:brightness(0) saturate(100%) invert(75%) sepia(73%) saturate(1150%) hue-rotate(347deg) brightness(122%) contrast(101%) blur(10px)!important
+}
+.inn-scene-object.is-selected .inn-object-glow{
+  opacity:.92!important;
+  animation:innSuppliedAssetGlow 1.15s ease-in-out infinite alternate!important
+}
+@keyframes innSuppliedAssetGlow{to{opacity:.58;transform:scale(1.038)}}
+.inn-object-door .inn-object-hit{left:4%!important;top:2%!important;right:5%!important;bottom:0!important}
+.inn-object-bar .inn-object-hit{left:2%!important;top:4%!important;right:2%!important;bottom:2%!important;clip-path:none!important}
+.inn-object-table .inn-object-hit{left:3%!important;top:25%!important;right:3%!important;bottom:5%!important;clip-path:ellipse(49% 42% at 50% 48%)!important}
+
+/* Five active characters occupy real room positions at different depths. */
+.inn-adventurer{width:82px!important;height:142px!important;min-height:142px!important}
+.inn-figure{width:88px!important;height:152px!important;bottom:0!important;scale:var(--inn-scale-wide,.7)!important}
+.inn-illustrated-model,.inn-fallback-model{width:82px!important}
+.inn-illustrated-model .inn-figure{width:88px!important;height:152px!important}
+.inn-illustrated-model .cb-world-avatar-illustrated{width:88px!important;height:152px!important;filter:drop-shadow(0 7px 6px rgba(0,0,0,.5))!important}
+.inn-adventurer:before{width:48px!important;height:7px!important;bottom:0!important;opacity:.58!important}
+.inn-adventurer[data-location-slot="window-back"] .inn-figure{filter:brightness(.80) saturate(.84) drop-shadow(0 5px 5px rgba(0,0,0,.38))!important}
+.inn-adventurer[data-location-slot="table-left"] .inn-figure,
+.inn-adventurer[data-location-slot="table-right"] .inn-figure{filter:brightness(.88) saturate(.90) drop-shadow(0 6px 6px rgba(0,0,0,.43))!important}
+.inn-adventurer[data-location-slot="bar-floor"] .inn-figure{filter:brightness(.90) saturate(.91) drop-shadow(0 7px 6px rgba(0,0,0,.46))!important}
+
+/* Keep UI from covering the new room art. */
+.inn-heading{
+  left:50%!important;right:auto!important;top:8px!important;width:auto!important;max-width:72%!important;
+  padding:7px 12px 8px!important;transform:translateX(-50%)!important;
+  border:1px solid rgba(204,166,111,.20);border-radius:5px;background:rgba(12,11,13,.74)!important;text-align:center;backdrop-filter:blur(2px)
+}
+.inn-heading small{display:none!important}
+.inn-heading h2{margin:0!important;font-size:18px!important}
+.inn-heading p{margin-top:2px!important;font-size:9px!important}
+.inn-hint{font-size:9px!important;padding-bottom:7px!important}
+
+@media(max-width:600px){
+  .inn-world{aspect-ratio:16/9!important}
+  .inn-object-door{left:5%!important;top:2%!important;width:13.5%!important}
+  .inn-object-bar{left:61%!important;top:21%!important;width:37%!important}
+  .inn-object-table{left:27%!important;top:46%!important;width:46%!important}
+  .inn-adventurer{width:70px!important;height:120px!important;min-height:120px!important}
+  .inn-figure{width:74px!important;height:128px!important;scale:var(--inn-scale-phone,.68)!important}
+  .inn-illustrated-model,.inn-fallback-model{width:70px!important}
+  .inn-illustrated-model .inn-figure{width:74px!important;height:128px!important}
+  .inn-illustrated-model .cb-world-avatar-illustrated{width:74px!important;height:128px!important}
+  .inn-heading{top:5px!important;padding:5px 9px 6px!important;max-width:76%!important}
+  .inn-heading h2{font-size:15px!important}
+  .inn-heading p{font-size:8px!important}
+}
