@@ -695,6 +695,50 @@ function talentTrigger(ctx,u,name,target=u,payload={}){
 }
 function talentDamageScale(ctx,u,a,target){
  let m=1,rank=0,hp=healthRatio(target);
+ if(u.class==='Warlock'&&u.spec==='Destruction'){
+  u.talentCounters=u.talentCounters||{};
+  if(a.id==='immolate'&&target.alive){
+   const blaze=talentRank(u,'Roaring Blaze'),tick=Math.max(1,Math.round(dealt*.52*(1+blaze*.08))),id='immolate-'+u.id;
+   applyStatus(ctx,u,target,{id,name:'Immolate',kind:'debuff',duration:6600,effect:{damageOverTime:tick}});
+   [1600,3200,4800,6400].forEach(t=>schedule(ctx,ctx.time+t,()=>{
+    if(!u.alive||!target.alive)return;
+    dealDamage(ctx,u,target,tick,'Immolate (DoT)',{damageType:'magic'});
+    gainResource(ctx,u,{name:'Immolate',gain:.25})
+   },'destruction-immolate'))
+  }
+  if(a.id==='conflagrate'&&(r=talentRank(u,'Backdraft'))){
+   applyStatus(ctx,u,u,{id:'backdraft',name:'Backdraft',kind:'buff',duration:8000,effect:{haste:.02*r}});
+   talentTrigger(ctx,u,'Backdraft',u,{duration:8000})
+  }
+  if(a.id==='chaos-bolt'&&(r=talentRank(u,'Eradication'))&&target.alive){
+   applyStatus(ctx,u,target,{id:'eradication-'+u.id,name:'Eradication',kind:'debuff',duration:5500,effect:{incomingDamageTaken:.025*r}});
+   talentTrigger(ctx,u,'Eradication',target,{duration:5500,damageTaken:.025*r})
+  }
+  if(['chaos-bolt','rain-of-fire'].includes(a.id)){
+   if((r=talentRank(u,'Reverse Entropy'))){
+    u.talentCounters.reverseEntropy=(Number(u.talentCounters.reverseEntropy)||0)+1;
+    if(u.talentCounters.reverseEntropy>=Math.max(2,4-r)){
+     u.talentCounters.reverseEntropy=0;
+     applyStatus(ctx,u,u,{id:'reverse-entropy',name:'Reverse Entropy',kind:'buff',duration:6000,effect:{haste:.05*r}});
+     talentTrigger(ctx,u,'Reverse Entropy',u,{duration:6000})
+    }
+   }
+   if((r=talentRank(u,'Soul Conduit'))){
+    u.talentCounters.soulConduit=(Number(u.talentCounters.soulConduit)||0)+1;
+    if(u.talentCounters.soulConduit>=Math.max(2,4-r)){
+     u.talentCounters.soulConduit=0;const refund=.5+.25*r;
+     gainResource(ctx,u,{name:'Soul Conduit',gain:refund});talentTrigger(ctx,u,'Soul Conduit',u,{soulShards:refund})
+    }
+   }
+  }
+  if((r=talentRank(u,'Havoc'))&&['incinerate','chaos-bolt'].includes(a.id)&&target.alive){
+   const extra=livingEnemies(ctx).filter(e=>e.id!==target.id).sort((x,y)=>dist(target.position,x.position)-dist(target.position,y.position))[0];
+   if(extra&&dist(target.position,extra.position)<=20){
+    const echo=Math.max(1,Math.round(dealt*(.18+.12*r)));dealDamage(ctx,u,extra,echo,'Havoc',{damageType:'magic'});
+    talentTrigger(ctx,u,'Havoc',extra,{damage:echo,sourceAbility:a.name})
+   }
+  }
+ }
  if(u.class==='Warrior'&&u.spec==='Arms'){
   m*=1+talentRank(u,'Weapon Mastery')*.03;
   if((target?.currentCast||Number(target?.interruptedUntil)>ctx.time)&&(rank=talentRank(u,'Overpower')))m*=1+rank*.06;
@@ -1382,6 +1426,15 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
  if(!u?.alive||!target||dealt<=0)return;
  u.damageActions=(Number(u.damageActions)||0)+1;
  let r=0;
+ if(u.class==='Warlock'&&u.spec==='Destruction'){
+  const by=id=>pool.find(a=>a.id===id),immolate=by('immolate'),conflagrate=by('conflagrate'),chaos=by('chaos-bolt'),rain=by('rain-of-fire'),demonfire=by('channel-demonfire'),incinerate=by('incinerate');
+  if(immolate&&!target.statuses?.['immolate-'+u.id])return{ability:immolate,target};
+  if(conflagrate&&cooldownReady(u,conflagrate))return{ability:conflagrate,target};
+  if(demonfire&&target.statuses?.['immolate-'+u.id]&&cooldownReady(u,demonfire))return{ability:demonfire,target};
+  if(livingEnemies(ctx).length>=3&&rain&&u.resource.value>=Number(rain.cost||0))return{ability:rain,target};
+  if(chaos&&u.resource.value>=Number(chaos.cost||0))return{ability:chaos,target};
+  if(incinerate)return{ability:incinerate,target}
+ }
  if(u.class==='Mage'&&u.spec==='Frost'){
   u.talentCounters=u.talentCounters||{};
   const fingers=talentRank(u,'Fingers of Frost'),brain=talentRank(u,'Brain Freeze'),procRate=Math.max(0,Number(u?.setBonuses?.frostProcRate)||0);
@@ -2484,6 +2537,7 @@ function summonPet(ctx,owner,{type='felguard',name='Felguard',duration=0,countIn
   felguard:{name:'Felguard',range:5,baseDamage:9,interval:2200,attack:'Legion Strike',visual:'felguard'},
   dreadstalker:{name:'Dreadstalker',range:5,baseDamage:6.5,interval:1800,attack:'Dreadbite',visual:'dreadstalker'},
   tyrant:{name:'Demonic Tyrant',range:28,baseDamage:11,interval:2100,attack:'Demonfire',visual:'tyrant'},
+  infernal:{name:'Infernal',range:6,baseDamage:10.5,interval:1850,attack:'Burning Fist',visual:'infernal'},
   ghoul:{name:'Ghoul',range:5,baseDamage:8.5,interval:2100,attack:'Claw',visual:'ghoul'},
   'army-ghoul':{name:'Army Ghoul',range:5,baseDamage:5.5,interval:1850,attack:'Rend',visual:'army-ghoul'},
   'apocalypse-ghoul':{name:'Apocalypse Ghoul',range:5,baseDamage:7.5,interval:1700,attack:'Grave Slash',visual:'apocalypse-ghoul'}
@@ -2516,7 +2570,7 @@ function permanentGhoul(ctx,owner){
 function petDamage(ctx,pet,target,base,ability,{cleave=0,multiplier=1}={}){
  const owner=pet?.owner;if(!pet?.active||!owner?.alive||!target?.alive)return 0;
  const bond=talentRank(owner,'Demonic Bond'),dread=talentRank(owner,'Dread Calling'),master=talentRank(owner,'Master Summoner');
- let scale=(owner.baseStats?.outputScale||levelOutputScale(owner.level))*(1+bond*.05)*Math.max(.1,1+statusBonus(owner,'outgoingDamage'))*multiplier;
+ let scale=(owner.baseStats?.outputScale||levelOutputScale(owner.level))*(1+bond*.05)*Math.max(.1,1+statusBonus(owner,'outgoingDamage'))*multiplier*Math.max(.5,Number(owner?.setBonuses?.petDamageScale)||1);
  if(pet.type==='dreadstalker')scale*=1+dread*.08;
  if(pet.type==='tyrant')scale*=1.18+master*.05;
  if(owner.class==='Death Knight'&&owner.spec==='Unholy'){
@@ -2574,15 +2628,28 @@ function petAI(ctx,pet){
 }
 function tickPets(ctx){activePets(ctx).slice().forEach(p=>petAI(ctx,p))}
 function resolveWarlockSummon(ctx,u,a,target){
- if(u.class!=='Warlock'||u.spec!=='Demonology')return false;
+ if(u.class!=='Warlock')return false;
  const count=Math.max(1,Number(a.summonCount)||1),type=a.summonType||'dreadstalker';
- if(type==='tyrant'){
-  activePets(ctx,u.id).forEach(p=>{if(p.type!=='tyrant')p.expiresAt=p.expiresAt?Math.max(p.expiresAt,ctx.time+8000):0});
-  applyStatus(ctx,u,u,{id:'tyrant-command',name:'Demonic Tyrant',kind:'buff',duration:Number(a.duration)||15000,effect:{outgoingDamage:.06}});
-  talentTrigger(ctx,u,'Demonic Tyrant',u,{duration:Number(a.duration)||15000})
+ if(u.spec==='Demonology'){
+  if(type==='tyrant'){
+   activePets(ctx,u.id).forEach(p=>{if(p.type!=='tyrant')p.expiresAt=p.expiresAt?Math.max(p.expiresAt,ctx.time+8000):0});
+   applyStatus(ctx,u,u,{id:'tyrant-command',name:'Demonic Tyrant',kind:'buff',duration:Number(a.duration)||15000,effect:{outgoingDamage:.06}});
+   talentTrigger(ctx,u,'Demonic Tyrant',u,{duration:Number(a.duration)||15000})
+  }
+  for(let i=0;i<count;i++)summonPet(ctx,u,{type,duration:Number(a.duration)||12000,countIndex:i});
+  return true
  }
- for(let i=0;i<count;i++)summonPet(ctx,u,{type,duration:Number(a.duration)||12000,countIndex:i});
- return true
+ if(u.spec==='Destruction'&&type==='infernal'){
+  const impact=Math.max(1,Math.round(28*(u.baseStats?.outputScale||1)));
+  if(target?.alive){
+   dealDamage(ctx,u,target,impact,'Infernal Impact',{damageType:'magic'});
+   livingEnemies(ctx).filter(e=>e.id!==target.id).slice(0,3).forEach(e=>dealDamage(ctx,u,e,Math.max(1,Math.round(impact*.45)),'Infernal Impact',{damageType:'magic'}))
+  }
+  for(let i=0;i<count;i++)summonPet(ctx,u,{type:'infernal',duration:Number(a.duration)||14000,countIndex:i});
+  talentTrigger(ctx,u,'Summon Infernal',u,{duration:Number(a.duration)||14000});
+  return true
+ }
+ return false
 }
 function resolveWarlockPetCommand(ctx,u,a,target){
  if(u.class!=='Warlock'||u.spec!=='Demonology')return false;
@@ -2605,6 +2672,15 @@ function resolveWarlockPetCommand(ctx,u,a,target){
 }
 function warlockSpecialReady(ctx,u,a,target){
  if(!a||!cooldownReady(u,a)||(a.cost||0)>u.resource.value)return false;
+ if(u.spec==='Destruction'){
+  if(a.kind==='summon'&&a.summonType==='infernal'){
+   const bossLike=['boss','final','world-boss','event'].includes(ctx.encounter.kind);
+   if(!bossLike&&ctx.tactics.cooldownUse!=='free')return false;
+   return !activePets(ctx,u.id).some(p=>p.type==='infernal')
+  }
+  return false
+ }
+ if(u.spec!=='Demonology')return false;
  if(a.kind==='summon'){
   if(a.summonType==='tyrant'){
    const bossLike=['boss','final','world-boss','event'].includes(ctx.encounter.kind);
@@ -2722,6 +2798,10 @@ function playerAI(ctx,u){
   const priority=a=>a.summonType==='tyrant'?5:a.petCommand==='implosion'?4:a.summonType==='dreadstalker'?3:a.petCommand==='felstorm'?2:a.petCommand==='soul-strike'?1:0;
   const specials=u.abilities.filter(a=>(a.kind==='summon'||a.kind==='pet-command')&&warlockSpecialReady(ctx,u,a,target)).sort((a,b)=>priority(b)-priority(a));
   if(specials.length&&startAbility(ctx,u,specials[0],target))return
+ }
+ if(u.class==='Warlock'&&u.spec==='Destruction'){
+  const infernal=u.abilities.find(a=>a.kind==='summon'&&a.summonType==='infernal'&&warlockSpecialReady(ctx,u,a,target));
+  if(infernal&&startAbility(ctx,u,infernal,target))return
  }
  if(u.class==='Death Knight'&&u.spec==='Unholy'){
   const priority=a=>a.summonType==='apocalypse-ghoul'?4:a.summonType==='army-ghoul'?3:a.petCommand==='dark-transformation'?2:0;
