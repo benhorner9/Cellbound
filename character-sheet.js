@@ -36,7 +36,8 @@ const classMeta={
   Druid:{icon:'❈',accent:'#FF7C0A',primary:'Intellect'},
   Hunter:{icon:'➶',accent:'#AAD372',primary:'Agility'},
   Rogue:{icon:'◆',accent:'#FFF468',primary:'Agility'},
-  Mage:{icon:'✦',accent:'#3FC7EB',primary:'Intellect'}
+  Mage:{icon:'✦',accent:'#3FC7EB',primary:'Intellect'},
+  Shaman:{icon:'⚡',accent:'#0070DD',primary:'Intellect'}
 };
 
 const specs={
@@ -46,7 +47,8 @@ const specs={
   Druid:{Restoration:'healer'},
   Hunter:{Marksman:'dps'},
   Rogue:{Assassination:'dps'},
-  Mage:{Arcane:'dps'}
+  Mage:{Arcane:'dps'},
+  Shaman:{Restoration:'healer'}
 };
 
 const trees={
@@ -112,6 +114,17 @@ const trees={
   ]},
   Mage:{Arcane:[
     {id:'Arcane Focus',icon:'✦',tier:0,col:1,max:3,desc:'Increase spell accuracy and power.'},{id:'Surge',icon:'⚡',tier:0,col:3,max:2,desc:'Burst arcane power for a short time.'},{id:'Clearcasting',icon:'◇',tier:1,col:0,max:2,req:'Arcane Focus',desc:'Chance to make spells cost no mana.'},{id:'Spell Impact',icon:'✷',tier:1,col:2,max:2,desc:'Increase critical spell damage.'},{id:'Presence of Mind',icon:'◉',tier:2,col:1,max:1,req:'Clearcasting',desc:'Make a cast instant.'},{id:'Arcane Flows',icon:'≈',tier:2,col:3,max:2,req:'Surge',desc:'Reduce cooldowns.'},{id:'Arcane Power',icon:'☄',tier:3,col:1,max:1,req:'Presence of Mind',desc:'Major spell-damage cooldown.'},{id:'Nether Precision',icon:'✧',tier:3,col:3,max:2,req:'Arcane Flows',desc:'Improve critical spell efficiency.'},{id:'Barrage',icon:'✹',tier:4,col:2,max:1,req:'Arcane Power',desc:'Capstone instant arcane barrage.'}
+  ]},
+  Shaman:{Restoration:[
+    {id:'Tidal Focus',icon:'≈',tier:0,col:1,max:3,desc:'Increase healing efficiency and the strength of restorative spells.'},
+    {id:'Totemic Mastery',icon:'⚑',tier:0,col:3,max:3,desc:'Strengthen your totems and keep their effects active for longer.'},
+    {id:'Riptide',icon:'≋',tier:1,col:0,max:2,req:'Tidal Focus',desc:'Improve Riptide and its lingering restorative effect.'},
+    {id:'Ancestral Reach',icon:'⌁',tier:1,col:2,max:2,desc:'Increase Chain Heal bounce range and improve later jumps.'},
+    {id:'Chain Mastery',icon:'⛓',tier:2,col:1,max:2,req:'Riptide',desc:'Chain Heal loses less strength as it jumps between allies.'},
+    {id:'Earthen Ward',icon:'⬢',tier:2,col:3,max:2,req:'Totemic Mastery',desc:'Strengthen defensive totems and their protection.'},
+    {id:'Tidal Waves',icon:'🌊',tier:3,col:1,max:2,req:'Chain Mastery',desc:'Riptide and Chain Heal accelerate your next restorative cast.'},
+    {id:'Spirit Link Totem',icon:'◎',tier:3,col:3,max:1,req:'Earthen Ward',desc:'Place an emergency totem that links and protects the party.'},
+    {id:'Ascendant Tide',icon:'✦',tier:4,col:2,max:1,req:'Spirit Link Totem',desc:'Capstone: enter an ascendant state that empowers healing and totems under heavy pressure.'}
   ]}
 };
 
