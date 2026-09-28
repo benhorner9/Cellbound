@@ -9,7 +9,7 @@ const ROLE_MAP={
   Hunter:{Marksman:'dps'},
   Rogue:{Assassination:'dps'},
   Mage:{Arcane:'dps'},
-  Shaman:{Restoration:'healer'},
+  Shaman:{Restoration:'healer',Elemental:'dps'},
   Warlock:{Demonology:'dps'},
   Monk:{Brewmaster:'tank',Mistweaver:'healer',Windwalker:'dps'},
   'Death Knight':{Blood:'tank',Frost:'dps',Unholy:'dps'},
@@ -137,6 +137,12 @@ const SPECS={
       strength:'Chain healing and persistent totems excel when damage is spread across the party.',
       tradeoff:'Less focused emergency tank healing than a Holy Paladin and strongest while its totems remain active.',
       damage:.79,threat:.94,healing:1.00,healThreat:.96,magicTaken:.96
+    },
+    Elemental:{
+      title:'Stormcaller',
+      strength:'Builds Maelstrom through lightning and lava, then converts it into heavy ranged burst and pack damage.',
+      tradeoff:'Its strongest finishers depend on Maelstrom generation and proc timing, so disrupted casts create noticeable damage gaps.',
+      damage:1.07,threat:1.00,cooldown:.97,physicalTaken:1.02,magicTaken:.91,cleave:.28
     }
   },
   Warlock:{
