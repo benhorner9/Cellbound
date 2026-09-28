@@ -165,6 +165,26 @@ const SPEC_SET_BONUSES={
       pieces4:{threshold:4,name:'Alpha Hunt',short:'+14% Focus recovery · +4% haste',description:'Focus recovery and attack speed improve, and talent-unlocked Beast Mastery skills recover 15% faster.',effects:{resourceRegen:1.14,haste:.04,talentSkillCooldownScale:.85}}
     }
   },
+  'Rogue|Assassination':{
+    4:{
+      pieces2:{threshold:2,name:'Master Shadecoil Venom',short:'+8% bleed and poison damage',description:'Assassination periodic bleed and poison effects deal 8% more damage.',effects:{periodicDamageScale:1.08}},
+      pieces4:{threshold:4,name:'Silent Precision',short:'+10% Energy recovery · +3% crit',description:'Energy recovery and critical chance improve, and talent-unlocked Assassination skills recover 10% faster.',effects:{resourceRegen:1.10,critBonus:.03,talentSkillCooldownScale:.90}}
+    },
+    5:{
+      pieces2:{threshold:2,name:'Silent Service Venom',short:'+12% bleed and poison damage',description:'Raid leathers increase Assassination periodic damage by 12%.',effects:{periodicDamageScale:1.12}},
+      pieces4:{threshold:4,name:'Perfect Execution',short:'+14% Energy recovery · +4% crit',description:'Energy recovery and critical chance improve, and talent-unlocked Assassination skills recover 15% faster.',effects:{resourceRegen:1.14,critBonus:.04,talentSkillCooldownScale:.85}}
+    }
+  },
+  'Rogue|Outlaw':{
+    4:{
+      pieces2:{threshold:2,name:'Master Shadecoil Broadside',short:'+10% Outlaw finisher damage',description:'Dispatch and Between the Eyes deal 10% more damage when spent as Outlaw finishers.',effects:{outlawFinisherScale:1.10}},
+      pieces4:{threshold:4,name:'Loaded Arsenal',short:'+10% Energy recovery · +3% haste',description:'Energy recovery and attack speed improve, and talent-unlocked Outlaw skills recover 10% faster.',effects:{resourceRegen:1.10,haste:.03,talentSkillCooldownScale:.90}}
+    },
+    5:{
+      pieces2:{threshold:2,name:'Silent Service Broadside',short:'+15% Outlaw finisher damage',description:'Raid leathers increase Dispatch and Between the Eyes damage by 15%.',effects:{outlawFinisherScale:1.15}},
+      pieces4:{threshold:4,name:'Black Flag Arsenal',short:'+14% Energy recovery · +4% haste',description:'Energy recovery and attack speed improve, and talent-unlocked Outlaw skills recover 15% faster.',effects:{resourceRegen:1.14,haste:.04,talentSkillCooldownScale:.85}}
+    }
+  },
   'Mage|Arcane':{
     4:{
       pieces2:{threshold:2,name:'Starweave Overcharge',short:'+6% Arcane damage',description:'Arcane Mage damage is increased while Arcane is active.',effects:{damageScale:1.06}},
