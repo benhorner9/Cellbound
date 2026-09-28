@@ -11,7 +11,8 @@ const ROLE_MAP={
   Mage:{Arcane:'dps'},
   Shaman:{Restoration:'healer'},
   Warlock:{Demonology:'dps'},
-  Monk:{Brewmaster:'tank',Mistweaver:'healer',Windwalker:'dps'}
+  Monk:{Brewmaster:'tank',Mistweaver:'healer',Windwalker:'dps'},
+  'Death Knight':{Blood:'tank',Frost:'dps',Unholy:'dps'}
 };
 
 const RACES={
@@ -157,12 +158,32 @@ const SPECS={
       tradeoff:'Repeating the same attack loses efficiency and movement away from melee quickly cuts output.',
       damage:1.06,threat:.98,cooldown:.95,physicalTaken:.97,magicTaken:.99,cleave:.24
     }
+  },
+  'Death Knight':{
+    Blood:{
+      title:'Blood Warden',
+      strength:'Turns recent incoming damage into powerful Death Strike healing while maintaining relentless single-target threat.',
+      tradeoff:'Survival is reactive; wasting Runic Power before a heavy hit leaves fewer resources for recovery.',
+      singleThreat:2.70,packThreat:2.20,groupThreat:.20,physicalTaken:.91,magicTaken:.94,damage:.90,tauntLead:1.22
+    },
+    Frost:{
+      title:'Rime Reaper',
+      strength:'Heavy melee burst, frost cleave and a strong generator-spender rhythm.',
+      tradeoff:'Peak damage depends on maintaining Runic Power flow and staying in melee range.',
+      damage:1.08,threat:1.02,cooldown:.96,physicalTaken:.94,magicTaken:.94,cleave:.28
+    },
+    Unholy:{
+      title:'Plague Commander',
+      strength:'Sustained disease pressure backed by a permanent Ghoul and explosive wound/summon windows.',
+      tradeoff:'Damage ramps through wounds, diseases and undead rather than arriving instantly.',
+      damage:1.04,threat:.96,cooldown:1.00,physicalTaken:.95,magicTaken:.93,petDamage:1.00
+    }
   }
 };
 
 const role=c=>ROLE_MAP[c?.class]?.[c?.spec]||'dps';
 const gearStats=c=>{const base={...(window.CellboundGear?.aggregateStats?.(c)||{})},extra=window.CellboundProfessions?.activeBonuses?.(c)||{};Object.entries(extra).forEach(([k,v])=>base[k]=(Number(base[k])||0)+(Number(v)||0));return base};
-const primaryKey=c=>c?.class==='Warrior'?'strength':c?.class==='Monk'?(c?.spec==='Mistweaver'?'intellect':'agility'):['Hunter','Rogue'].includes(c?.class)?'agility':'intellect';
+const primaryKey=c=>['Warrior','Death Knight'].includes(c?.class)?'strength':c?.class==='Monk'?(c?.spec==='Mistweaver'?'intellect':'agility'):['Hunter','Rogue'].includes(c?.class)?'agility':'intellect';
 const getRace=id=>RACES[id]||RACES.Veyren;
 const getSpec=(klass,spec)=>SPECS[klass]?.[spec]||{title:'Adventurer',strength:'Flexible combatant.',tradeoff:'No defined specialisation.',damage:1,threat:1};
 const specFor=c=>getSpec(c?.class,c?.spec);
