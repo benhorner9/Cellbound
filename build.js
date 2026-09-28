@@ -433,25 +433,23 @@ for(const file of files){
   vm.createContext(portraitSandbox);
   vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),portraitSandbox,{filename:'character-portraits-v1.js'});
   const P=portraitSandbox.CellboundPortraits;
-  if(!P?.paperDollHTML||!P?.visualProfile)throw new Error('Equipment Visuals V2 runtime failed to load');
+  if(!P?.paperDollHTML||!P?.characterModelHTML||!P?.visualProfile)throw new Error('Character Model V2 runtime failed to load');
   const appearance={race:'Veyren',skinTone:1,face:2,hair:3,hairColor:4,facialHair:1,marking:2,eyes:0,feature:1};
   const sword={name:'Test Sword',itemId:'test-sword',class:'Warrior',slot:'Weapon',tier:2};
   const spear={name:'Test Spear',itemId:'test-spear',class:'Warrior',slot:'Weapon',tier:2};
-  if(P.weaponType(sword,{class:'Warrior'})!=='sword'||P.weaponType(spear,{class:'Warrior'})!=='spear')throw new Error('Weapon visual type swap failed');
-  const base={id:'paper-test',name:'Test',race:'Veyren',class:'Warrior',appearance,equipment:{Weapon:sword,Waist:{name:'Test Belt',itemId:'test-belt',class:'Warrior',slot:'Waist',tier:2},Ring1:{name:'Test Ring',itemId:'test-ring',class:'Warrior',slot:'Ring',tier:2}}};
-  const swordView=P.paperDollHTML(base,{highlightedSlot:'Weapon'});
-  const spearView=P.paperDollHTML({...base,equipment:{...base.equipment,Weapon:spear}},{highlightedSlot:'Weapon'});
-  if(swordView===spearView||!swordView.includes('data-weapon-type="sword"')||!spearView.includes('data-weapon-type="spear"'))throw new Error('Sword-to-spear paper doll visual swap failed');
-  if(!swordView.includes('cb-paper-slot-waist')||!swordView.includes('cb-paper-slot-ring1'))throw new Error('14-slot paper doll accessory coverage failed');
-  const emptyArmour=P.paperDollHTML({...base,equipment:{}},{});
-  if(!emptyArmour.includes('cb-paper-empty-chest')||!emptyArmour.includes('cb-paper-empty-legs')||!emptyArmour.includes('cb-paper-empty-feet'))throw new Error('Unequipped paper doll must show clean underlayers instead of leftover armour');
-  const chestItem={name:'Test Chest',itemId:'warrior-t2-chest',class:'Warrior',slot:'Chest',tier:2};
-  const chestView=P.paperDollHTML({...base,equipment:{Chest:chestItem}},{});
-  if(chestView.includes('cb-paper-empty-chest')||!chestView.includes('data-item-key="warrior-t2-chest"'))throw new Error('Equipping a replacement chest must fully replace the empty/previous visual layer');
-  const setEquipment={};
-  ['Head','Shoulders','Chest','Hands'].forEach(slot=>setEquipment[slot]={name:'Warlord '+slot,itemId:'warrior-t4-'+slot.toLowerCase(),class:'Warrior',slot,tier:4,setId:'warrior-t4',setName:'Warlord Set'});
-  const setView=P.paperDollHTML({...base,equipment:setEquipment},{highlightedSlot:'Chest'});
-  if(!setView.includes('set-pieces-4')||!setView.includes('cb-paper-set-glow')||!setView.includes('is-set-item'))throw new Error('Set prestige visual treatment failed');
+  if(P.weaponType(sword,{class:'Warrior'})!=='sword'||P.weaponType(spear,{class:'Warrior'})!=='spear')throw new Error('Stored weapon visual metadata regression');
+  const base={id:'model-test',name:'Test',race:'Veyren',class:'Warrior',appearance,equipment:{Weapon:sword,Waist:{name:'Test Belt',itemId:'test-belt',class:'Warrior',slot:'Waist',tier:2}}};
+  const swordView=P.paperDollHTML(base,{});
+  const spearView=P.paperDollHTML({...base,equipment:{...base.equipment,Weapon:spear}},{});
+  if(swordView!==spearView)throw new Error('Phase 1 class model must not change when equipment changes');
+  if(!swordView.includes('data-model-phase="class-outfit"')||!swordView.includes('cb-creator-figure-svg'))throw new Error('Phase 1 equipment screen is not using the canonical race + class model');
+  if(swordView.includes('data-weapon-type=')||swordView.includes('cb-paper-slot-'))throw new Error('Legacy gear layers leaked into the Phase 1 class model');
+  const mageView=P.paperDollHTML({...base,class:'Mage'},{});
+  if(mageView===swordView||!mageView.includes('data-class="Mage"'))throw new Error('Class silhouette must visibly change the canonical character model');
+  const stonebornView=P.paperDollHTML({...base,race:'Stoneborn',appearance:{...appearance,race:'Stoneborn'}},{});
+  if(stonebornView===swordView||!stonebornView.includes('data-race="Stoneborn"'))throw new Error('Race anatomy must visibly change the canonical character model');
+  const hairView=P.paperDollHTML({...base,appearance:{...appearance,hair:5}},{});
+  if(hairView===swordView)throw new Error('Saved character customisation must change the canonical character model');
 }
 
 for(const file of assets){const src=path.join(__dirname,file),dest=path.join(out,file);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest)}
