@@ -144,6 +144,26 @@ const SPEC_SET_BONUSES={
       pieces2:{threshold:2,name:'Nightbloom Eclipse',short:'+12% Eclipse spell damage',description:'Raid regalia increases damage from spells matching the active Eclipse by 12%.',effects:{eclipseDamageScale:1.12}},
       pieces4:{threshold:4,name:'Celestial Convergence',short:'+16% Astral Power generation · +4% crit',description:'Astral Power generation improves and talent-unlocked Balance skills recover 15% faster.',effects:{resourceGainScale:1.16,talentSkillCooldownScale:.85,critBonus:.04}}
     }
+  },
+  'Mage|Arcane':{
+    4:{
+      pieces2:{threshold:2,name:'Starweave Overcharge',short:'+6% Arcane damage',description:'Arcane Mage damage is increased while Arcane is active.',effects:{damageScale:1.06}},
+      pieces4:{threshold:4,name:'Arcane Resonance',short:'+8% Mana recovery · +3% crit',description:'Mana recovery and critical chance improve, and talent-unlocked Arcane skills recover 10% faster.',effects:{resourceRegen:1.08,critBonus:.03,talentSkillCooldownScale:.90}}
+    },
+    5:{
+      pieces2:{threshold:2,name:'Housebound Overcharge',short:'+8% Arcane damage',description:'Raid robes increase Arcane damage by 8%.',effects:{damageScale:1.08}},
+      pieces4:{threshold:4,name:'Nether Resonance',short:'+12% Mana recovery · +4% crit',description:'Mana recovery and critical chance improve, and talent-unlocked Arcane skills recover 15% faster.',effects:{resourceRegen:1.12,critBonus:.04,talentSkillCooldownScale:.85}}
+    }
+  },
+  'Mage|Frost':{
+    4:{
+      pieces2:{threshold:2,name:'Starweave Shatter',short:'+10% proc-combo damage',description:'Ice Lance, Flurry and Glacial Spike deal 10% more damage while exploiting Frost procs.',effects:{frostProcDamageScale:1.10}},
+      pieces4:{threshold:4,name:'Winter Resonance',short:'Faster Frost procs · +3% crit',description:'Fingers of Frost and Brain Freeze build faster, and talent-unlocked Frost skills recover 10% faster.',effects:{frostProcRate:1,talentSkillCooldownScale:.90,critBonus:.03}}
+    },
+    5:{
+      pieces2:{threshold:2,name:'Housebound Shatter',short:'+15% proc-combo damage',description:'Raid robes increase Frost proc-combo damage by 15%.',effects:{frostProcDamageScale:1.15}},
+      pieces4:{threshold:4,name:'Absolute Winter',short:'Much faster Frost procs · +4% crit',description:'Fingers of Frost and Brain Freeze build substantially faster, and talent-unlocked Frost skills recover 15% faster.',effects:{frostProcRate:2,talentSkillCooldownScale:.85,critBonus:.04}}
+    }
   }
 };
 function setTier(item){
