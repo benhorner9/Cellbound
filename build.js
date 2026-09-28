@@ -328,7 +328,7 @@ for(const file of files){
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=52')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
     if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=7'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
-    if(!contents.includes('character-art-v2.js?v=1')||!contents.includes('character-portraits-v1.css?v=13')||!contents.includes('character-portraits-v1.js?v=19'))throw new Error('Unified illustrated character assets are not linked from guild.html');
+    if(!contents.includes('character-art-v2.js?v=1')||!contents.includes('character-portraits-v1.css?v=14')||!contents.includes('character-portraits-v1.js?v=20'))throw new Error('Unified illustrated character assets are not linked from guild.html');
     const portraitCss=fs.readFileSync(path.join(__dirname,'character-portraits-v1.css'),'utf8');
     const portraitJs=fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8');
     for(const race of ['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'])if(!portraitJs.includes(race+':{'))throw new Error('Illustrated character race support missing: '+race);
