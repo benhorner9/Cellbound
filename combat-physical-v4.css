@@ -173,3 +173,31 @@
 /* Combat Physical v4 owns event reactions inside the shared scene. Keep older
    v2/v3 event layers from drawing a second set of hit/heal/spawn FX. */
 .cbl-scene>.cbvfx-events,.cbl-scene>.cbvfx3-events{display:none!important}
+
+
+/* Death Knight undead companions share the pet actor contract but not Warlock demon styling. */
+.cbl-pet.class-death-knight{--cbl-accent:#C41E3A}
+.cbl-pet.class-death-knight .cbl-pet-body{
+  border-color:#9aaab7;background:linear-gradient(160deg,#354248,#171d21 72%);
+  box-shadow:inset 0 0 10px #9bc5c933,0 0 11px #9b334655
+}
+.cbl-pet.class-death-knight .cbl-pet-body:before,.cbl-pet.class-death-knight .cbl-pet-body:after{
+  border-color:#8e9ca5;background:#242c31
+}
+.cbl-pet.class-death-knight .cbl-pet-body>b{
+  background:linear-gradient(90deg,#7de9e5 0 34%,transparent 35% 65%,#7de9e5 66%);
+  box-shadow:0 0 7px #67d8d5
+}
+.cbl-pet.class-death-knight .cbl-pet-name{color:#c4d3d6}
+.cbl-pet.class-death-knight.ghoul{width:32px;height:38px}
+.cbl-pet.class-death-knight.ghoul .cbl-pet-body{width:27px;height:27px;border-radius:38% 45% 34% 40%;rotate:-4deg}
+.cbl-pet.class-death-knight.army-ghoul{width:27px;height:31px;scale:.86}
+.cbl-pet.class-death-knight.army-ghoul .cbl-pet-body{width:23px;height:21px;border-style:dashed;opacity:.9}
+.cbl-pet.class-death-knight.apocalypse-ghoul{width:31px;height:37px}
+.cbl-pet.class-death-knight.apocalypse-ghoul .cbl-pet-body{
+  border-color:#c64b60;background:linear-gradient(160deg,#4d2d36,#171c21);
+  box-shadow:inset 0 0 10px #d54a5a33,0 0 13px #c41e3a66
+}
+.cbl-pet.class-death-knight[data-combat-state="attacking"] .cbl-pet-body{
+  filter:brightness(1.22);box-shadow:inset 0 0 12px #8ed9d955,0 0 16px #c41e3a88
+}
