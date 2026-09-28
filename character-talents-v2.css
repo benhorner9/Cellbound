@@ -50,6 +50,17 @@
 }
 .cb-talent-command-hero h3{margin:5px 0 6px;color:#eee6d6;font:400 1.65rem/1.05 Georgia,serif}
 .cb-talent-command-hero p{max-width:720px;margin:0;color:#82928c!important;font-size:.66rem!important;line-height:1.55}
+.cb-spec-activate-row{display:flex;align-items:center;gap:8px;margin-top:12px}
+.cb-activate-spec{
+  min-height:38px;padding:9px 14px;border:1px solid color-mix(in srgb,var(--cb-accent) 44%,rgba(216,185,118,.2));
+  background:linear-gradient(180deg,color-mix(in srgb,var(--cb-accent) 14%,#162126),#0a1316);
+  color:#eee6d6;font-size:.48rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;cursor:pointer
+}
+.cb-activate-spec:hover{border-color:color-mix(in srgb,var(--cb-accent) 68%,#d8b976);filter:brightness(1.08)}
+.cb-spec-active-pill{
+  display:inline-flex;align-items:center;min-height:34px;padding:7px 11px;border:1px solid rgba(84,190,131,.22);
+  background:rgba(84,190,131,.07);color:#79c99b;font-size:.44rem;font-weight:900;letter-spacing:.08em
+}
 .cb-talent-command-metrics{
   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
   border:1px solid rgba(216,185,118,.09);background:#081216
