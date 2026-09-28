@@ -149,6 +149,8 @@ async function syncPartyXpRecords(gains){
  }catch(error){console.warn('Character XP mirror sync failed',error)}
 }
 const delay=ms=>new Promise(r=>setTimeout(r,Math.round(ms/((run&&run.speed)||1))));
+const NORMAL_COMBAT_PLAYBACK=.85;
+const combatPlaybackSpeed=value=>{const v=Math.max(.25,Number(value)||1);return Math.abs(v-1)<.001?NORMAL_COMBAT_PLAYBACK:v};
 const cond=id=>run&&run.condition[id]!=null?run.condition[id]:100;
 const setCond=(id,v)=>{if(run)run.condition[id]=clamp(Math.round(v),0,100)};
 const hp=id=>run&&run.hp&&run.hp[id]!=null?run.hp[id]:100;
