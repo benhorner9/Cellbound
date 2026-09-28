@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.10';
+const VERSION='1.3.11';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -38,7 +38,7 @@ const CLASS_BUFFS={
  Priest:{id:'class-buff-divine-inspiration',name:'Divine Inspiration',scope:'party',duration:60000,cooldown:180000,effect:{outgoingHealing:.05,incomingHealing:.05}},
  Druid:{id:'class-buff-wild-communion',name:'Wild Communion',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04,outgoingHealing:.04,resourceRegen:.04}},
  Paladin:{id:'class-buff-blessing-resolve',name:'Blessing of Resolve',scope:'party',duration:60000,cooldown:180000,effect:{incomingDamageReduction:.06}},
- Shaman:{id:'class-buff-totemic-circle',name:'Totemic Circle',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,incomingDamageReduction:.03,incomingHealing:.03},totems:true},
+ Shaman:{id:'class-buff-bloodlust',name:'Bloodlust',scope:'party',duration:60000,cooldown:180000,effect:{haste:.10,resourceRegen:.05}},
  Evoker:{id:'class-buff-draconic-resonance',name:'Draconic Resonance',scope:'party',duration:60000,cooldown:180000,effect:{haste:.06}}
 };
 
@@ -183,9 +183,14 @@ const ABILITIES={
   {id:'riptide',name:'Riptide',kind:'heal',role:'healer',unlockLevel:1,desc:'An instant tidal heal that continues restoring health briefly.',range:30,heal:23,cost:10,gcd:1500,cast:0,cd:6000,hot:7},
   {id:'chain-heal',name:'Chain Heal',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Heal one ally, then bounce restorative energy through other injured party members.',range:30,heal:30,cost:20,gcd:1500,cast:1700,cd:0,chainBounces:3,chainFalloff:.72,chainRange:16},
   {id:'wind-shear',name:'Wind Shear',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with a sharp burst of wind.',range:30,cost:0,gcd:0,cd:18000},
+  {id:'windfury-totem',name:'Windfury Totem',kind:'totem',role:'healer',unlockLevel:1,desc:'Place a Windfury Totem that increases party damage and haste while it remains active.',cost:8,gcd:1000,cd:45000,duration:20000,totemType:'windfury'},
+  {id:'stoneskin-totem',name:'Stoneskin Totem',kind:'totem',role:'healer',unlockLevel:1,desc:'Place a Stoneskin Totem that reduces damage taken by the party while it remains active.',cost:10,gcd:1000,cd:45000,duration:20000,totemType:'stoneskin'},
+  {id:'healing-stream-totem',name:'Healing Stream Totem',kind:'totem',role:'healer',unlockLevel:1,desc:'Place a Healing Stream Totem that pulses healing through the party while it remains active.',cost:12,gcd:1000,cd:30000,duration:20000,totemType:'healing-stream'},
+  {id:'spirit-link-totem',name:'Spirit Link Totem',kind:'totem',role:'healer',unlockLevel:1,desc:'Place an emergency Spirit Link Totem that protects and stabilises injured allies.',cost:18,gcd:1000,cd:75000,duration:8000,totemType:'spirit-link'},
   {id:'lightning-bolt',name:'Lightning Bolt',kind:'damage',unlockLevel:4,desc:'A ranged lightning attack for safe damage windows.',range:30,damage:13,cost:4,gcd:1500,cast:1200,cd:0},
   {id:'healing-rain',name:'Healing Rain',kind:'group-heal',role:'healer',unlockLevel:8,desc:'Call restorative rain over the party for broad recovery.',range:30,heal:16,cost:24,gcd:1500,cast:1200,cd:10000},
   {id:'astral-shift',name:'Astral Shift',kind:'defensive',unlockLevel:11,desc:'Shift partially into the spirit world, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000}
+
  ]
 };
 
@@ -283,7 +288,8 @@ const TALENT_SKILL_REQUIREMENTS={
   'consecration':'Consecration','ardent-defender':'Ardent Defender','holy-shock':'Holy Shock','radiant-wave':'Radiance',
   'guardian-spirit':'Guardian Spirit','divine-hymn':'Divine Hymn',
   'wild-growth':'Wild Growth','tranquility':'Tranquility',
-  'kill-shot':'Kill Shot','garrote':'Garrote','envenom':'Envenom','arcane-barrage':'Barrage'
+  'kill-shot':'Kill Shot','garrote':'Garrote','envenom':'Envenom','arcane-barrage':'Barrage',
+  'spirit-link-totem':'Spirit Link Totem'
 };
 const TALENT_RULES={
  'Shield Mastery':'More block chance and physical mitigation per rank.',
@@ -367,13 +373,13 @@ const TALENT_RULES={
  'Nether Precision':'Increases spell critical chance.',
  'Barrage':'Unlocks Arcane Barrage and makes it hit harder with splash damage.',
  'Tidal Focus':'Increases Restoration healing and reduces the Mana cost of healing spells.',
- 'Totemic Mastery':'Makes the Shaman’s Totemic Circle stronger and keeps its totems active longer.',
+ 'Totemic Mastery':'Makes equipped Shaman totems stronger and keeps them active longer.',
  'Riptide':'Strengthens Riptide and its lingering healing.',
  'Ancestral Reach':'Extends Chain Heal bounce range and improves later jumps.',
  'Chain Mastery':'Reduces the healing lost as Chain Heal jumps between allies.',
  'Earthen Ward':'Strengthens Stoneskin Totem and Spirit Link protection.',
  'Tidal Waves':'Riptide and Chain Heal grant a short haste buff for follow-up healing.',
- 'Spirit Link Totem':'Under dangerous party pressure, places a visible defensive totem that links and stabilises allies.',
+ 'Spirit Link Totem':'Unlocks Spirit Link Totem as an equipable combat skill for dangerous party pressure.',
  'Ascendant Tide':'Under heavy pressure, empowers Restoration healing and briefly surges the active totem network.'
 };
 function characterTalentRank(c,name){return Math.max(0,Number(c?.talents?.[c?.spec]?.[name])||0)}
@@ -519,7 +525,7 @@ function abilityPool(c,role){
  // A stale or empty saved loadout must never make a character inert in combat.
  // Fall back to the current spec defaults whenever the configured skills no longer
  // contain a valid role action (important for classes/specs added to existing saves).
- if(role==='healer'&&!pool.some(a=>a.kind==='heal'||a.kind==='group-heal'))pool=defaults();
+ if(role==='healer'&&!pool.length)pool=defaults();
  if(role==='tank'&&!pool.some(a=>a.kind==='taunt'))pool=defaults();
  if(role==='dps'&&!pool.some(a=>a.kind==='damage'))pool=defaults();
  if(role==='healer'&&!pool.some(a=>a.kind==='heal'||a.kind==='group-heal'))pool=(ROLE_FALLBACKS.healer||[]);
@@ -1086,18 +1092,6 @@ function useTalentUtility(ctx,u){
  }
  if(u.class==='Shaman'&&u.spec==='Restoration'){
   const alive=livingPlayers(ctx),deep=alive.filter(p=>healthRatio(p)<.65),pressure=combatPressure(ctx);
-  if(talentRank(u,'Spirit Link Totem')&&deep.length>=2&&talentReady(ctx,u,'spirit-link-totem')){
-   const ward=talentRank(u,'Earthen Ward'),duration=8000,id='spirit-link-'+u.id+'-'+Math.round(ctx.time);
-   talentSetCooldown(ctx,u,'spirit-link-totem',75000);
-   const pos=constrainToArena(ctx,{x:u.position.x+5,y:u.position.y-3},1.5),reduction=.12+ward*.025;
-   emit(ctx,'TOTEM_PLACED',{source:u.id,target:u.id,ability:'Spirit Link Totem',result:'placed',position:copy(pos),payload:{totemId:id,totemType:'spirit-link',duration,effect:{incomingDamageReduction:reduction}}});
-   alive.forEach(p=>applyStatus(ctx,u,p,{id:'spirit-link-totem',name:'Spirit Link Totem',kind:'buff',duration,effect:{incomingDamageReduction:reduction}}));
-   const avg=alive.reduce((n,p)=>n+healthRatio(p),0)/Math.max(1,alive.length);
-   alive.filter(p=>healthRatio(p)<avg).forEach(p=>doHeal(ctx,u,p,Math.max(1,(avg-healthRatio(p))*p.maxHealth*.42),'Spirit Link Totem'));
-   talentTrigger(ctx,u,'Spirit Link Totem',u,{duration,targets:alive.length});
-   schedule(ctx,ctx.time+duration,()=>emit(ctx,'TOTEM_EXPIRED',{source:u.id,target:u.id,ability:'Spirit Link Totem',result:'expired',position:copy(pos),payload:{totemId:id,totemType:'spirit-link'}}),'spirit-link-expire');
-   u.gcdUntil=Math.max(u.gcdUntil,ctx.time+500);return true
-  }
   if(talentRank(u,'Ascendant Tide')&&(pressure>.35||deep.length>=3)&&talentReady(ctx,u,'ascendant-tide')){
    talentSetCooldown(ctx,u,'ascendant-tide',65000);
    applyStatus(ctx,u,u,{id:'ascendant-tide',name:'Ascendant Tide',kind:'buff',duration:10000,effect:{outgoingHealing:.20,haste:.08}});
@@ -1529,7 +1523,6 @@ function tankNeedsTaunt(ctx,tank){
 function classBuffUseAllowed(ctx,u,buff){
  if(!buff||!u?.alive||(Number(u.cooldowns?.[buff.id])||0)>0)return false;
  if(ctx.time<500+(ctx.players.indexOf(u)*120))return false;
- if(u.class==='Shaman'&&buff.totems)return true;
  if(buff.scope==='party'&&ctx.players.some(p=>p.statuses?.[buff.id]))return false;
  const policy=ctx.tactics?.cooldownUse||'difficult',bossLike=['boss','final','world-boss','event'].includes(ctx.encounter.kind);
  if(policy==='free')return true;
@@ -1537,36 +1530,8 @@ function classBuffUseAllowed(ctx,u,buff){
  if(policy==='difficult')return bossLike||combatPressure(ctx)>=.68;
  return bossLike
 }
-function activateShamanTotems(ctx,u,buff){
- const mastery=talentRank(u,'Totemic Mastery'),ward=talentRank(u,'Earthen Ward');
- const duration=Math.round((Number(buff.duration)||60000)*(1+mastery*.08)),potency=1+mastery*.10;
- const defs=[
-  {id:'windfury',name:'Windfury Totem',dx:-5,dy:3,effect:{outgoingDamage:.03*potency,haste:.02*potency}},
-  {id:'stoneskin',name:'Stoneskin Totem',dx:5,dy:3,effect:{incomingDamageReduction:(.03+ward*.0125)*potency}},
-  {id:'healing-stream',name:'Healing Stream Totem',dx:0,dy:-5,effect:{incomingHealing:.03*potency}}
- ];
- u.cooldowns[buff.id]=Number(buff.cooldown)||180000;u.gcdUntil=Math.max(u.gcdUntil,ctx.time+500);
- emit(ctx,'ABILITY_START',{source:u.id,target:u.id,ability:buff.name,result:'class-buff',position:copy(u.position),payload:{kind:'buff',scope:'party',duration,cooldown:buff.cooldown,totems:true}});
- defs.forEach(def=>{
-  const pos=constrainToArena(ctx,{x:u.position.x+def.dx,y:u.position.y+def.dy},1.5),totemId='shaman-'+def.id+'-'+u.id+'-'+Math.round(ctx.time);
-  emit(ctx,'TOTEM_PLACED',{source:u.id,target:u.id,ability:def.name,result:'placed',position:copy(pos),payload:{totemId,totemType:def.id,duration,effect:copy(def.effect)}});
-  livingPlayers(ctx).forEach(target=>applyStatus(ctx,u,target,{id:'shaman-totem-'+def.id,name:def.name,kind:'buff',duration,effect:def.effect}));
-  schedule(ctx,ctx.time+duration,()=>emit(ctx,'TOTEM_EXPIRED',{source:u.id,target:u.id,ability:def.name,result:'expired',position:copy(pos),payload:{totemId,totemType:def.id}}),'totem-expire');
-  if(def.id==='healing-stream'){
-   const tick=Math.max(2,4*(u.baseStats?.outputScale||levelOutputScale(u.level))*potency);
-   for(let at=4000;at<duration;at+=4000)schedule(ctx,ctx.time+at,()=>{
-    if(ctx.finished||!u.alive)return;
-    livingPlayers(ctx).filter(p=>hasLineOfSight(ctx,u,p)).forEach(p=>doHeal(ctx,u,p,tick,'Healing Stream Totem'))
-   },'healing-stream-tick')
-  }
- });
- if(mastery)talentTrigger(ctx,u,'Totemic Mastery',u,{rank:mastery,duration,totems:defs.map(x=>x.name)});
- emit(ctx,'ABILITY_FINISH',{source:u.id,target:u.id,ability:buff.name,result:'class-buff',position:copy(u.position),payload:{kind:'buff',scope:'party',duration,totems:true}});
- return true
-}
 function activateClassBuff(ctx,u,buff){
  if(!classBuffUseAllowed(ctx,u,buff))return false;
- if(u.class==='Shaman'&&buff.totems)return activateShamanTotems(ctx,u,buff);
  let duration=buff.duration,effect=copy(buff.effect||{});
  if(u.class==='Paladin'&&u.spec==='Holy'&&talentRank(u,'Aura Mastery')){
   duration=Math.round(duration*1.5);Object.keys(effect).forEach(k=>effect[k]=Number(effect[k])*1.35);talentTrigger(ctx,u,'Aura Mastery',u,{duration})
@@ -1576,6 +1541,50 @@ function activateClassBuff(ctx,u,buff){
  const targets=buff.scope==='party'?livingPlayers(ctx):[u];
  targets.forEach(target=>applyStatus(ctx,u,target,{id:buff.id,name:buff.name,kind:'buff',duration,effect,persistAcrossEncounters:true}));
  emit(ctx,'ABILITY_FINISH',{source:u.id,target:u.id,ability:buff.name,result:'class-buff',position:copy(u.position),payload:{kind:'buff',scope:buff.scope,duration}});
+ return true
+}
+
+function shamanTotemUseAllowed(ctx,u,a){
+ if(!u?.alive||u.class!=='Shaman'||a?.kind!=='totem'||!cooldownReady(u,a)||(a.cost||0)>u.resource.value)return false;
+ const alive=livingPlayers(ctx),deep=alive.filter(p=>healthRatio(p)<.65),injured=alive.filter(p=>healthRatio(p)<.94);
+ if(a.totemType==='healing-stream')return injured.length>=2;
+ if(a.totemType==='spirit-link')return deep.length>=2;
+ return true
+}
+function useShamanTotem(ctx,u,a){
+ if(!shamanTotemUseAllowed(ctx,u,a))return false;
+ const mastery=talentRank(u,'Totemic Mastery'),ward=talentRank(u,'Earthen Ward'),potency=1+mastery*.10;
+ const duration=Math.round((Number(a.duration)||20000)*(1+mastery*.08)),type=a.totemType||a.id.replace(/-totem$/,''),offsets={
+  windfury:{x:-5,y:3},stoneskin:{x:5,y:3},'healing-stream':{x:0,y:-5},'spirit-link':{x:5,y:-3}
+ },offset=offsets[type]||{x:0,y:-4};
+ let effect={};
+ if(type==='windfury')effect={outgoingDamage:.04*potency,haste:.03*potency};
+ if(type==='stoneskin')effect={incomingDamageReduction:(.05+ward*.0125)*potency};
+ if(type==='healing-stream')effect={incomingHealing:.03*potency};
+ if(type==='spirit-link')effect={incomingDamageReduction:(.12+ward*.025)*potency};
+ if(!spendResource(ctx,u,a))return false;
+ u.cooldowns[a.id]=Math.max(1000,Math.round((Number(a.cd)||30000)*talentCooldownScale(u,a)));
+ u.gcdUntil=Math.max(u.gcdUntil,ctx.time+Math.max(500,Number(a.gcd)||1000));
+ const pos=constrainToArena(ctx,{x:u.position.x+offset.x,y:u.position.y+offset.y},1.5),totemId='shaman-'+type+'-'+u.id+'-'+Math.round(ctx.time),statusId=type==='spirit-link'?'spirit-link-totem':'shaman-totem-'+type;
+ emit(ctx,'ABILITY_START',{source:u.id,target:u.id,ability:a.name,result:'totem',position:copy(u.position),payload:{kind:'totem',duration,cooldown:a.cd,totemType:type}});
+ emit(ctx,'TOTEM_PLACED',{source:u.id,target:u.id,ability:a.name,result:'placed',position:copy(pos),payload:{totemId,totemType:type,duration,effect:copy(effect)}});
+ const alive=livingPlayers(ctx);
+ alive.forEach(target=>applyStatus(ctx,u,target,{id:statusId,name:a.name,kind:'buff',duration,effect}));
+ if(type==='healing-stream'){
+  const tick=Math.max(2,4*(u.baseStats?.outputScale||levelOutputScale(u.level))*potency);
+  for(let at=4000;at<duration;at+=4000)schedule(ctx,ctx.time+at,()=>{
+   if(ctx.finished||!u.alive)return;
+   livingPlayers(ctx).filter(p=>hasLineOfSight(ctx,u,p)).forEach(p=>doHeal(ctx,u,p,tick,a.name))
+  },'healing-stream-tick')
+ }
+ if(type==='spirit-link'){
+  const avg=alive.reduce((n,p)=>n+healthRatio(p),0)/Math.max(1,alive.length);
+  alive.filter(p=>healthRatio(p)<avg).forEach(p=>doHeal(ctx,u,p,Math.max(1,(avg-healthRatio(p))*p.maxHealth*.42),a.name));
+  talentTrigger(ctx,u,'Spirit Link Totem',u,{duration,targets:alive.length})
+ }
+ if(mastery)talentTrigger(ctx,u,'Totemic Mastery',u,{rank:mastery,duration,totems:[a.name]});
+ schedule(ctx,ctx.time+duration,()=>emit(ctx,'TOTEM_EXPIRED',{source:u.id,target:u.id,ability:a.name,result:'expired',position:copy(pos),payload:{totemId,totemType:type}}),'totem-expire');
+ emit(ctx,'ABILITY_FINISH',{source:u.id,target:u.id,ability:a.name,result:'totem',position:copy(u.position),payload:{kind:'totem',duration,totemType:type}});
  return true
 }
 
@@ -1606,6 +1615,8 @@ function playerAI(ctx,u){
  u.nextDecision=ctx.time+160;
  const buff=classBuffFor(u);if(buff&&activateClassBuff(ctx,u,buff))return;
  if(useTalentUtility(ctx,u))return;
+ const equippedTotems=u.abilities.filter(a=>a.kind==='totem'&&cooldownReady(u,a));
+ for(const totem of equippedTotems)if(useShamanTotem(ctx,u,totem))return;
  const defensiveThreshold=ctx.tactics.defensiveUsage==='aggressive'?.62:ctx.tactics.defensiveUsage==='conservative'?.38:.50;
  const defensive=u.abilities.find(a=>a.kind==='defensive'&&cooldownReady(u,a));
  if(defensive&&healthRatio(u)<defensiveThreshold){
@@ -2205,13 +2216,13 @@ function runSelfTests(){
  test('Healer Logic',()=>r.events.some(e=>e.type==='HEAL_RECEIVED'&&e.source==='p-heal'));
  const shamanParty=[
   {id:'st',name:'Tank',class:'Warrior',spec:'Protection',power:10,level:10,_combatHealthPct:50},
-  {id:'sh',name:'Shaman',class:'Shaman',spec:'Restoration',power:10,level:10,_combatHealthPct:50},
+  {id:'sh',name:'Shaman',class:'Shaman',spec:'Restoration',power:10,level:10,_combatHealthPct:50,skillLoadouts:{Restoration:['chain-heal','windfury-totem','stoneskin-totem','healing-stream-totem']}},
   {id:'s1',name:'Mage',class:'Mage',spec:'Arcane',power:10,level:10,_combatHealthPct:50},
   {id:'s2',name:'Hunter',class:'Hunter',spec:'Marksman',power:10,level:10,_combatHealthPct:50},
   {id:'s3',name:'Rogue',class:'Rogue',spec:'Assassination',power:10,level:10,_combatHealthPct:50}
  ];
  r=simulate({party:shamanParty,encounter:{...base,enemyHealth:5000},seed:'shaman-kit',maxDurationMs:6500});
- test('Shaman Totems',()=>['Windfury Totem','Stoneskin Totem','Healing Stream Totem'].every(name=>r.events.some(e=>e.type==='TOTEM_PLACED'&&e.ability===name)));
+ test('Shaman Totem Skills',()=>['Windfury Totem','Stoneskin Totem','Healing Stream Totem'].every(name=>r.events.some(e=>e.type==='TOTEM_PLACED'&&e.ability===name))&&!r.events.some(e=>e.type==='TOTEM_PLACED'&&e.ability==='Spirit Link Totem'));
  test('Shaman Chain Heal',()=>r.events.some(e=>e.type==='HEAL_RECEIVED'&&e.ability==='Chain Heal'&&Number(e.payload?.chainBounce)>0&&e.payload?.visualSource));
  const mageOnly=[{id:'m',name:'Mage',class:'Mage',spec:'Arcane',power:2,level:2}];
  r=simulate({party:mageOnly,encounter:{...base,enemyHealth:900},seed:'resource'});
@@ -2473,7 +2484,7 @@ function runSelfTests(){
    {id:'idle-3',name:'DPS Three',class:'Rogue',spec:'Assassination',power:10,level:8}
   ];
   const shamanRun=simulate({party:idleShaman,encounter:{id:'idle-shaman',kind:'boss',level:8,enemies:[{name:'Pressure Dummy',classification:'boss',allAttacksAoe:true}],enemyHealth:2200,mechanics:[]},seed:'idle-shaman',maxDurationMs:8000});
-  test('Empty Healer Loadout Recovers',()=>shamanRun.events.some(e=>e.type==='TOTEM_PLACED'&&e.source==='p-idle-s')&&shamanRun.events.some(e=>e.type==='ABILITY_START'&&e.source==='p-idle-s'&&(e.ability==='Chain Heal'||e.ability==='Healing Wave'||e.ability==='Riptide')));
+  test('Empty Healer Loadout Recovers',()=>shamanRun.events.some(e=>e.type==='ABILITY_START'&&e.source==='p-idle-s'&&(e.ability==='Chain Heal'||e.ability==='Healing Wave'||e.ability==='Riptide'))&&!shamanRun.events.some(e=>e.type==='TOTEM_PLACED'&&e.source==='p-idle-s'));
  }
   {
   const noInterrupt=Array.from({length:5},(_,i)=>({id:'status-'+i,name:'Status Tester '+i,class:'Mage',spec:'Arcane',power:8,level:8,_combatItemLevel:28,skillLoadouts:{Arcane:['fireball']}}));
