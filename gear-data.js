@@ -53,8 +53,8 @@ const SPEC_IDEALS={
   'Shaman|Restoration':['healing','intellect','haste','crit']
 };
 const SET_META={
-  Warrior:{name:'Warlord Set'},Paladin:{name:'Sunward Set'},Priest:{name:'Saintglass Set'},Druid:{name:'Moonbark Set'},
-  Hunter:{name:'Hawkeye Set'},Rogue:{name:'Shadecoil Set'},Mage:{name:'Starweave Set'},Shaman:{name:'Tempestcaller Set'}
+  Warrior:{name:'Warlord Set',raidName:'Housebreaker Plate'},Paladin:{name:'Sunward Set',raidName:'Gilded Vigil'},Priest:{name:'Saintglass Set',raidName:'Veil of the Attic'},Druid:{name:'Moonbark Set',raidName:'Nightbloom Regalia'},
+  Hunter:{name:'Hawkeye Set',raidName:'Blackwood Hunt'},Rogue:{name:'Shadecoil Set',raidName:'Silent Service'},Mage:{name:'Starweave Set',raidName:'Housebound Arcanum'},Shaman:{name:'Tempestcaller Set',raidName:'Stormcell Regalia'}
 };
 const SET_BONUS_RULES={
   pieces2:{threshold:2,name:'Resonant Pair',outputScale:1.05,short:'+5% damage & healing output',description:'All damaging and healing abilities are 5% stronger.'},
@@ -73,24 +73,24 @@ function setBonusLines(item){
   return [SET_BONUS_RULES.pieces2,SET_BONUS_RULES.pieces4].map(rule=>({threshold:rule.threshold,name:rule.name,short:rule.short,description:rule.description}))
 }
 const NAMES={
-  Warrior:[['Militia Helm','Worn Breastplate','Training Sword'],['Ashguard Helm','Ashguard Plate','Embercleaver'],['Vaultforged Greathelm','Vaultforged Cuirass','Runic Greatblade'],['Warlord Greathelm','Warlord Warplate','Warlord Greatblade']],
-  Paladin:[['Novice Crown','Oathbound Mail','Blessed Mace'],['Sunwarden Helm','Sunwarden Plate','Sunwarden Hammer'],['Radiant Aegis Crown','Radiant Aegis Plate','Dawnkeeper Hammer'],['Sunward Crown','Sunward Warplate','Sunward Maul']],
-  Priest:[['Acolyte Hood','Prayer Vestments','Cedar Staff'],['Chapelweave Cowl','Chapelweave Robe','Lightwell Rod'],['Saintglass Halo','Saintglass Vestments','Seraphic Staff'],['Ascendant Halo','Ascendant Vestments','Ascendant Staff']],
-  Druid:[['Rootwoven Hood','Barkhide Garb','Living Branch'],['Wildbloom Hood','Wildbloom Raiment','Thornstaff'],['Moonbark Crown','Moonbark Regalia','Starroot Scepter'],['Moonbark Antlers','Moonbark Vestments','Moonbark Scepter']],
-  Hunter:[['Tracker Hood','Leather Jerkin','Ashwood Bow'],['Longshot Hood','Longshot Harness','Emberstring Bow'],['Hawkeye Visor','Hawkeye Brigandine','Stormflight Longbow'],['Hawkeye Warhood','Hawkeye Harness','Hawkeye Greatbow']],
-  Rogue:[['Shadowcap','Duskleather Tunic','Twin Knives'],['Nightfang Hood','Nightfang Jerkin','Venomshivs'],['Shadecoil Mask','Shadecoil Vest','Ghostfang Daggers'],['Shadecoil Cowl','Shadecoil Leathers','Shadecoil Blades']],
-  Mage:[['Novice Circlet','Blueweave Robe','Crystal Wand'],['Spellforge Circlet','Spellforge Mantle','Arcglass Rod'],['Starweave Crown','Starweave Vestment','Celestine Staff'],['Starweave Diadem','Starweave Robe','Starweave Focus']],
-  Shaman:[['Tidecaller Hood','Tidecaller Mail','Riverstone Mace'],['Stormspeaker Helm','Stormspeaker Hauberk','Tempest Mace'],['Deepcurrent Crown','Deepcurrent Mail','Tidemender Scepter'],['Tempestcaller Headdress','Tempestcaller Hauberk','Tempestcaller Hammer']]
+  Warrior:[['Militia Helm','Worn Breastplate','Training Sword'],['Ashguard Helm','Ashguard Plate','Embercleaver'],['Vaultforged Greathelm','Vaultforged Cuirass','Runic Greatblade'],['Warlord Greathelm','Warlord Warplate','Warlord Greatblade'],['Housebreaker Greathelm','Housebreaker Warplate','Housebreaker Greatblade']],
+  Paladin:[['Novice Crown','Oathbound Mail','Blessed Mace'],['Sunwarden Helm','Sunwarden Plate','Sunwarden Hammer'],['Radiant Aegis Crown','Radiant Aegis Plate','Dawnkeeper Hammer'],['Sunward Crown','Sunward Warplate','Sunward Maul'],['Gilded Vigil Crown','Gilded Vigil Warplate','Gilded Vigil Maul']],
+  Priest:[['Acolyte Hood','Prayer Vestments','Cedar Staff'],['Chapelweave Cowl','Chapelweave Robe','Lightwell Rod'],['Saintglass Halo','Saintglass Vestments','Seraphic Staff'],['Ascendant Halo','Ascendant Vestments','Ascendant Staff'],['Attic Veil Halo','Attic Veil Vestments','Attic Veil Staff']],
+  Druid:[['Rootwoven Hood','Barkhide Garb','Living Branch'],['Wildbloom Hood','Wildbloom Raiment','Thornstaff'],['Moonbark Crown','Moonbark Regalia','Starroot Scepter'],['Moonbark Antlers','Moonbark Vestments','Moonbark Scepter'],['Nightbloom Antlers','Nightbloom Regalia','Nightbloom Scepter']],
+  Hunter:[['Tracker Hood','Leather Jerkin','Ashwood Bow'],['Longshot Hood','Longshot Harness','Emberstring Bow'],['Hawkeye Visor','Hawkeye Brigandine','Stormflight Longbow'],['Hawkeye Warhood','Hawkeye Harness','Hawkeye Greatbow'],['Blackwood Warhood','Blackwood Harness','Blackwood Greatbow']],
+  Rogue:[['Shadowcap','Duskleather Tunic','Twin Knives'],['Nightfang Hood','Nightfang Jerkin','Venomshivs'],['Shadecoil Mask','Shadecoil Vest','Ghostfang Daggers'],['Shadecoil Cowl','Shadecoil Leathers','Shadecoil Blades'],['Silent Service Cowl','Silent Service Leathers','Silent Service Blades']],
+  Mage:[['Novice Circlet','Blueweave Robe','Crystal Wand'],['Spellforge Circlet','Spellforge Mantle','Arcglass Rod'],['Starweave Crown','Starweave Vestment','Celestine Staff'],['Starweave Diadem','Starweave Robe','Starweave Focus'],['Housebound Diadem','Housebound Robe','Housebound Focus']],
+  Shaman:[['Tidecaller Hood','Tidecaller Mail','Riverstone Mace'],['Stormspeaker Helm','Stormspeaker Hauberk','Tempest Mace'],['Deepcurrent Crown','Deepcurrent Mail','Tidemender Scepter'],['Tempestcaller Headdress','Tempestcaller Hauberk','Tempestcaller Hammer'],['Stormcell Headdress','Stormcell Hauberk','Stormcell Hammer']]
 };
 const TIER_PREFIX={
-  Warrior:['Militia','Ashguard','Vaultforged','Warlord'],
-  Paladin:['Oathbound','Sunwarden','Radiant Aegis','Sunward'],
-  Priest:['Acolyte','Chapelweave','Saintglass','Ascendant'],
-  Druid:['Rootwoven','Wildbloom','Moonbark','Elder Moonbark'],
-  Hunter:['Tracker','Longshot','Hawkeye','Storm Hawkeye'],
-  Rogue:['Shadow','Nightfang','Shadecoil','Master Shadecoil'],
-  Mage:['Novice','Spellforge','Starweave','Ascendant Starweave'],
-  Shaman:['Tidecaller','Stormspeaker','Deepcurrent','Tempestcaller']
+  Warrior:['Militia','Ashguard','Vaultforged','Warlord','Housebreaker'],
+  Paladin:['Oathbound','Sunwarden','Radiant Aegis','Sunward','Gilded Vigil'],
+  Priest:['Acolyte','Chapelweave','Saintglass','Ascendant','Attic Veil'],
+  Druid:['Rootwoven','Wildbloom','Moonbark','Elder Moonbark','Nightbloom'],
+  Hunter:['Tracker','Longshot','Hawkeye','Storm Hawkeye','Blackwood'],
+  Rogue:['Shadow','Nightfang','Shadecoil','Master Shadecoil','Silent Service'],
+  Mage:['Novice','Spellforge','Starweave','Ascendant Starweave','Housebound'],
+  Shaman:['Tidecaller','Stormspeaker','Deepcurrent','Tempestcaller','Stormcell']
 };
 const ARMOUR_NOUNS={
   plate:{Shoulders:'Shoulderguards',Hands:'Gauntlets',Waist:'Warbelt',Legs:'Legplates',Feet:'Greaves'},
@@ -153,7 +153,7 @@ function nameFor(klass,tier,slot){
 }
 const slug=s=>String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const items=[];
-CLASS_ORDER.forEach((klass,classIndex)=>{[1,2,3,4].forEach(tier=>{SLOT_ORDER.forEach((slot,slotIndex)=>{
+CLASS_ORDER.forEach((klass,classIndex)=>{[1,2,3,4,5].forEach(tier=>{SLOT_ORDER.forEach((slot,slotIndex)=>{
   const meta=TIER_META[tier],itemLevel=ITEM_LEVELS[slot]?.[tier-1]||18+(tier-1)*8;
   const itemId=slug(klass)+'-t'+tier+'-'+slug(slot),name=nameFor(klass,tier,slot);
   items.push({itemId,name,appearanceId:itemId,class:klass,classes:[klass],slot,tier,rarity:meta.rarity,tierLabel:meta.label,enabled:true,dropEnabled:meta.dropEnabled,itemLevel,power:0,classIndex,slotIndex,rowIndex:tier-1,...(slot==='Weapon'?{weaponType:inferWeaponType(klass,name)}:{}),...(slot==='OffHand'?{offHandType:inferOffHandType(klass,name)}:{})});
@@ -182,7 +182,7 @@ function rollItemAffixes(raw){
   item.bonusStats=stats;item.rollId=rollId();item.affixVersion=1;
   item.appearanceId=item.appearanceId||item.baseItemId||item.itemId||slug(item.name||item.slot||'gear');
   if(tier===4){item.setId=slug(item.class)+'-t4';item.setName=SET_META[item.class]?.name||item.class+' Tier 4 Set'}
-  if(tier===5){item.setId=slug(item.class)+'-t5';item.setName=(SET_META[item.class]?.name||item.class)+' Raid Set';item.raidExclusive=true}
+  if(tier===5){item.setId=slug(item.class)+'-t5';item.setName=SET_META[item.class]?.raidName||((SET_META[item.class]?.name||item.class)+' Raid Set');item.raidExclusive=true}
   return item;
 }
 function rollDungeonLoot(source='Dungeon',tier2Chance=.25){
