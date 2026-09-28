@@ -13,7 +13,8 @@ const ROLE_MAP={
   Warlock:{Demonology:'dps'},
   Monk:{Brewmaster:'tank',Mistweaver:'healer',Windwalker:'dps'},
   'Death Knight':{Blood:'tank',Frost:'dps',Unholy:'dps'},
-  'Demon Hunter':{Havoc:'dps',Vengeance:'tank'}
+  'Demon Hunter':{Havoc:'dps',Vengeance:'tank'},
+  Evoker:{Preservation:'healer',Devastation:'dps'}
 };
 
 const RACES={
@@ -192,6 +193,20 @@ const SPECS={
       strength:'Mobile tank that converts enemy souls into self-healing while controlling packs with fel damage.',
       tradeoff:'Survival depends on generating and spending Soul Fragments well rather than relying on passive block.',
       singleThreat:2.48,packThreat:2.58,groupThreat:.30,physicalTaken:.91,magicTaken:.88,damage:.93,tauntLead:1.22
+    }
+  },
+  Evoker:{
+    Preservation:{
+      title:'Temporal Lifebinder',
+      strength:'Proactive ranged healing that layers time magic, echoes and powerful group recovery around Essence windows.',
+      tradeoff:'Shorter range than other healers and poor Essence timing can leave the party exposed during consecutive damage spikes.',
+      damage:.82,threat:.90,healing:1.04,healThreat:.92,physicalTaken:1.01,magicTaken:.91,cooldown:.96
+    },
+    Devastation:{
+      title:'Dragonfire Artillery',
+      strength:'High ranged magical burst with strong cleave and a flexible red/blue spell rotation.',
+      tradeoff:'Its strongest attacks consume scarce Essence, so wasteful spending creates noticeable low-output windows.',
+      damage:1.09,threat:1.03,cooldown:.96,physicalTaken:1.04,magicTaken:.90,cleave:.30
     }
   }
 };
