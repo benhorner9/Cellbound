@@ -7,7 +7,7 @@ const ROLE_MAP={
   Priest:{Holy:'healer',Shadow:'dps'},
   Druid:{Restoration:'healer',Balance:'dps'},
   Hunter:{Marksman:'dps','Beast Mastery':'dps'},
-  Rogue:{Assassination:'dps'},
+  Rogue:{Assassination:'dps',Outlaw:'dps'},
   Mage:{Arcane:'dps',Frost:'dps'},
   Shaman:{Restoration:'healer',Elemental:'dps'},
   Warlock:{Demonology:'dps',Destruction:'dps'},
@@ -133,6 +133,12 @@ const SPECS={
       strength:'Exceptional single-target damage with strong personal threat control.',
       tradeoff:'Very little pack damage and vulnerable when mechanics force movement.',
       damage:1.12,threat:.72,cooldown:.84,execute:.18,opening:.26,physicalTaken:1.03
+    },
+    Outlaw:{
+      title:'Freeblade Duelist',
+      strength:'Builds Combo Points rapidly, converts them into finishers, and can pivot between priority damage and strong close-range cleave.',
+      tradeoff:'Its strongest pressure depends on maintaining Energy, reacting to Opportunity procs and spending Combo Points efficiently rather than sitting on them.',
+      damage:1.03,threat:.82,cooldown:.92,cleave:.30,physicalTaken:1.01,magicTaken:1.00
     }
   },
   Mage:{
