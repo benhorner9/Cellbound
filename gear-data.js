@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const CLASS_ORDER=['Warrior','Paladin','Priest','Druid','Hunter','Rogue','Mage','Shaman'];
+const CLASS_ORDER=['Warrior','Paladin','Priest','Druid','Hunter','Rogue','Mage','Shaman','Warlock'];
 const CORE_SLOT_ORDER=['Head','Chest','Weapon'];
 const SLOT_ORDER=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring','Trinket','Relic'];
 const EQUIPMENT_POSITION_ORDER=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic'];
@@ -43,18 +43,20 @@ const CLASS_STAT_POOLS={
   Hunter:['agility','stamina','crit','haste'],
   Rogue:['agility','stamina','crit','haste'],
   Mage:['intellect','stamina','crit','haste'],
-  Shaman:['intellect','stamina','healing','crit','haste']
+  Shaman:['intellect','stamina','healing','crit','haste'],
+  Warlock:['intellect','stamina','crit','haste']
 };
 const SPEC_IDEALS={
   'Warrior|Protection':['block','threat','stamina','armour'],'Warrior|Arms':['strength','crit','haste'],
   'Paladin|Protection':['block','threat','stamina','armour'],'Paladin|Holy':['healing','intellect','haste','crit'],
   'Priest|Holy':['healing','intellect','haste','crit'],'Druid|Restoration':['healing','haste','intellect','crit'],
   'Hunter|Marksman':['agility','crit','haste'],'Rogue|Assassination':['agility','crit','haste'],'Mage|Arcane':['intellect','crit','haste'],
-  'Shaman|Restoration':['healing','intellect','haste','crit']
+  'Shaman|Restoration':['healing','intellect','haste','crit'],
+  'Warlock|Demonology':['intellect','haste','crit','stamina']
 };
 const SET_META={
   Warrior:{name:'Warlord Set',raidName:'Housebreaker Plate'},Paladin:{name:'Sunward Set',raidName:'Gilded Vigil'},Priest:{name:'Saintglass Set',raidName:'Veil of the Attic'},Druid:{name:'Moonbark Set',raidName:'Nightbloom Regalia'},
-  Hunter:{name:'Hawkeye Set',raidName:'Blackwood Hunt'},Rogue:{name:'Shadecoil Set',raidName:'Silent Service'},Mage:{name:'Starweave Set',raidName:'Housebound Arcanum'},Shaman:{name:'Tempestcaller Set',raidName:'Stormcell Regalia'}
+  Hunter:{name:'Hawkeye Set',raidName:'Blackwood Hunt'},Rogue:{name:'Shadecoil Set',raidName:'Silent Service'},Mage:{name:'Starweave Set',raidName:'Housebound Arcanum'},Shaman:{name:'Tempestcaller Set',raidName:'Stormcell Regalia'},Warlock:{name:'Dreadweave Set',raidName:'Netherlord Regalia'}
 };
 const SET_BONUS_RULES={
   pieces2:{threshold:2,name:'Resonant Pair',outputScale:1.05,short:'+5% damage & healing output',description:'All damaging and healing abilities are 5% stronger.'},
@@ -80,7 +82,8 @@ const NAMES={
   Hunter:[['Tracker Hood','Leather Jerkin','Ashwood Bow'],['Longshot Hood','Longshot Harness','Emberstring Bow'],['Hawkeye Visor','Hawkeye Brigandine','Stormflight Longbow'],['Hawkeye Warhood','Hawkeye Harness','Hawkeye Greatbow'],['Blackwood Warhood','Blackwood Harness','Blackwood Greatbow']],
   Rogue:[['Shadowcap','Duskleather Tunic','Twin Knives'],['Nightfang Hood','Nightfang Jerkin','Venomshivs'],['Shadecoil Mask','Shadecoil Vest','Ghostfang Daggers'],['Shadecoil Cowl','Shadecoil Leathers','Shadecoil Blades'],['Silent Service Cowl','Silent Service Leathers','Silent Service Blades']],
   Mage:[['Novice Circlet','Blueweave Robe','Crystal Wand'],['Spellforge Circlet','Spellforge Mantle','Arcglass Rod'],['Starweave Crown','Starweave Vestment','Celestine Staff'],['Starweave Diadem','Starweave Robe','Starweave Focus'],['Housebound Diadem','Housebound Robe','Housebound Focus']],
-  Shaman:[['Tidecaller Hood','Tidecaller Mail','Riverstone Mace'],['Stormspeaker Helm','Stormspeaker Hauberk','Tempest Mace'],['Deepcurrent Crown','Deepcurrent Mail','Tidemender Scepter'],['Tempestcaller Headdress','Tempestcaller Hauberk','Tempestcaller Hammer'],['Stormcell Headdress','Stormcell Hauberk','Stormcell Hammer']]
+  Shaman:[['Tidecaller Hood','Tidecaller Mail','Riverstone Mace'],['Stormspeaker Helm','Stormspeaker Hauberk','Tempest Mace'],['Deepcurrent Crown','Deepcurrent Mail','Tidemender Scepter'],['Tempestcaller Headdress','Tempestcaller Hauberk','Tempestcaller Hammer'],['Stormcell Headdress','Stormcell Hauberk','Stormcell Hammer']],
+  Warlock:[['Initiate Hood','Felwoven Robe','Ashen Staff'],['Dreadcaller Cowl','Dreadcaller Vestments','Demonspine Staff'],['Soulbinder Crown','Soulbinder Robe','Nether Rod'],['Dreadweave Horns','Dreadweave Vestments','Felheart Staff'],['Netherlord Crown','Netherlord Regalia','Tyrant Staff']]
 };
 const TIER_PREFIX={
   Warrior:['Militia','Ashguard','Vaultforged','Warlord','Housebreaker'],
@@ -90,7 +93,8 @@ const TIER_PREFIX={
   Hunter:['Tracker','Longshot','Hawkeye','Storm Hawkeye','Blackwood'],
   Rogue:['Shadow','Nightfang','Shadecoil','Master Shadecoil','Silent Service'],
   Mage:['Novice','Spellforge','Starweave','Ascendant Starweave','Housebound'],
-  Shaman:['Tidecaller','Stormspeaker','Deepcurrent','Tempestcaller','Stormcell']
+  Shaman:['Tidecaller','Stormspeaker','Deepcurrent','Tempestcaller','Stormcell'],
+  Warlock:['Initiate','Dreadcaller','Soulbinder','Dreadweave','Netherlord']
 };
 const ARMOUR_NOUNS={
   plate:{Shoulders:'Shoulderguards',Hands:'Gauntlets',Waist:'Warbelt',Legs:'Legplates',Feet:'Greaves'},
@@ -98,8 +102,8 @@ const ARMOUR_NOUNS={
   cloth:{Shoulders:'Mantle',Hands:'Gloves',Waist:'Sash',Legs:'Leggings',Feet:'Slippers'},
   mail:{Shoulders:'Spaulders',Hands:'Grips',Waist:'Belt',Legs:'Legguards',Feet:'Boots'}
 };
-const OFFHAND_NOUN={Warrior:'Shield',Paladin:'Bulwark',Priest:'Scripture',Druid:'Idol',Hunter:'Quiver',Rogue:'Parrying Blade',Mage:'Grimoire',Shaman:'Totem'};
-const RELIC_NOUN={Warrior:'Crest',Paladin:'Libram',Priest:'Icon',Druid:'Totem',Hunter:'Trophy',Rogue:'Token',Mage:'Focus',Shaman:'Spirit Charm'};
+const OFFHAND_NOUN={Warrior:'Shield',Paladin:'Bulwark',Priest:'Scripture',Druid:'Idol',Hunter:'Quiver',Rogue:'Parrying Blade',Mage:'Grimoire',Shaman:'Totem',Warlock:'Grimoire'};
+const RELIC_NOUN={Warrior:'Crest',Paladin:'Libram',Priest:'Icon',Druid:'Totem',Hunter:'Trophy',Rogue:'Token',Mage:'Focus',Shaman:'Spirit Charm',Warlock:'Soulstone'};
 const SLOT_GLYPHS={Head:'⛑',Shoulders:'⌃',Chest:'▣',Hands:'✋',Waist:'═',Legs:'║',Feet:'♟',Weapon:'⚔',OffHand:'🛡',Ring:'◉',Trinket:'◆',Relic:'◇'};
 function inferWeaponType(klass,name=''){
   const n=String(name).toLowerCase();
@@ -117,7 +121,7 @@ function inferWeaponType(klass,name=''){
   if(/(rod)/.test(n))return'rod';
   if(/(greatblade|greatsword|claymore)/.test(n))return'greatsword';
   if(/(sword|blade|blades|sabre|saber)/.test(n))return'sword';
-  return({Warrior:'sword',Paladin:'hammer',Priest:'staff',Druid:'staff',Hunter:'bow',Rogue:'dagger',Mage:'staff',Shaman:'mace'})[klass]||'sword'
+  return({Warrior:'sword',Paladin:'hammer',Priest:'staff',Druid:'staff',Hunter:'bow',Rogue:'dagger',Mage:'staff',Shaman:'mace',Warlock:'staff'})[klass]||'sword'
 }
 function equipmentPositions(item){
   if(!item||typeof item!=='object')return[];
@@ -139,9 +143,9 @@ function inferOffHandType(klass,name=''){
   if(/\b(idol|totem)\b/.test(n))return'idol';
   if(/(focus|orb|crystal)/.test(n))return'focus';
   if(/\b(blade|dagger|knife|shiv)\b/.test(n))return'dagger';
-  return({Warrior:'shield',Paladin:'shield',Priest:'tome',Druid:'idol',Hunter:'quiver',Rogue:'dagger',Mage:'focus',Shaman:'idol'})[klass]||'focus'
+  return({Warrior:'shield',Paladin:'shield',Priest:'tome',Druid:'idol',Hunter:'quiver',Rogue:'dagger',Mage:'focus',Shaman:'idol',Warlock:'tome'})[klass]||'focus'
 }
-function armourFamily(klass){return ['Warrior','Paladin'].includes(klass)?'plate':['Priest','Mage'].includes(klass)?'cloth':klass==='Shaman'?'mail':'leather'}
+function armourFamily(klass){return ['Warrior','Paladin'].includes(klass)?'plate':['Priest','Mage','Warlock'].includes(klass)?'cloth':klass==='Shaman'?'mail':'leather'}
 function nameFor(klass,tier,slot){
   const core=CORE_SLOT_ORDER.indexOf(slot);if(core>=0)return NAMES[klass][tier-1][core];
   const prefix=TIER_PREFIX[klass]?.[tier-1]||klass;
@@ -277,6 +281,9 @@ function artCoordinates(item,size=64){
   const slotIndex=CORE_SLOT_ORDER.indexOf(canonical.slot);
   const rawRow=Number.isInteger(canonical.rowIndex)?canonical.rowIndex:Math.max(0,(canonical.tier||1)-1),rowIndex=Math.min(2,rawRow);
   if(classIndex<0||slotIndex<0||rawRow<0)return null;
+  // The current atlas contains seven class columns (21 cells). Newer classes use
+  // the deterministic fallback artwork until their dedicated atlas cells exist.
+  if(classIndex*3+slotIndex>=21)return null;
   return {canonical,col:classIndex*3+slotIndex,row:rowIndex,size};
 }
 function artStyle(item,size=64){
