@@ -55,7 +55,7 @@ const specs={
   Rogue:{Assassination:'dps'},
   Mage:{Arcane:'dps',Frost:'dps'},
   Shaman:{Restoration:'healer',Elemental:'dps'},
-  Warlock:{Demonology:'dps'},
+  Warlock:{Demonology:'dps',Destruction:'dps'},
   Monk:{Brewmaster:'tank',Mistweaver:'healer',Windwalker:'dps'},
   'Death Knight':{Blood:'tank',Frost:'dps',Unholy:'dps'},
   'Demon Hunter':{Havoc:'dps',Vengeance:'tank'},
@@ -189,17 +189,30 @@ const trees={
       {id:'Ascendance',icon:'✦',tier:4,col:2,max:1,req:'Master of the Elements',desc:'Capstone: unlock Ascendance and become a living storm for a major burst window.'}
     ]
   },
-  Warlock:{Demonology:[
-    {id:'Demonic Bond',icon:'⛧',tier:0,col:1,max:3,desc:'Increase the damage dealt by your Felguard and temporary demons.'},
-    {id:'Fel Knowledge',icon:'✺',tier:0,col:3,max:3,desc:'Increase the power of your shadow and fel spells.'},
-    {id:'Soul Strike',icon:'◆',tier:1,col:0,max:1,req:'Demonic Bond',desc:'Unlock Soul Strike, commanding your Felguard to crush your target.'},
-    {id:'Dread Calling',icon:'☠',tier:1,col:2,max:2,desc:'Empower Dreadstalkers and keep them fighting for longer.'},
-    {id:'Pack Tactics',icon:'⛓',tier:2,col:1,max:2,req:'Soul Strike',desc:'Your demons attack faster and stay closer to your chosen target.'},
-    {id:'Felstorm',icon:'✹',tier:2,col:3,max:1,req:'Dread Calling',desc:'Unlock Felstorm, commanding your Felguard to cleave nearby enemies.'},
-    {id:'Demonic Core',icon:'◈',tier:3,col:1,max:2,req:'Pack Tactics',desc:'Demon attacks can empower your next burst of spell damage.'},
-    {id:'Master Summoner',icon:'◎',tier:3,col:3,max:2,req:'Felstorm',desc:'Improve the duration and recovery of temporary demon summons.'},
-    {id:'Demonic Tyrant',icon:'♛',tier:4,col:2,max:1,req:'Master Summoner',desc:'Capstone: unlock Summon Demonic Tyrant, a powerful temporary ranged demon.'}
-  ]},
+  Warlock:{
+    Demonology:[
+      {id:'Demonic Bond',icon:'⛧',tier:0,col:1,max:3,desc:'Increase the damage dealt by your Felguard and temporary demons.'},
+      {id:'Fel Knowledge',icon:'✺',tier:0,col:3,max:3,desc:'Increase the power of your shadow and fel spells.'},
+      {id:'Soul Strike',icon:'◆',tier:1,col:0,max:1,req:'Demonic Bond',desc:'Unlock Soul Strike, commanding your Felguard to crush your target.'},
+      {id:'Dread Calling',icon:'☠',tier:1,col:2,max:2,desc:'Empower Dreadstalkers and keep them fighting for longer.'},
+      {id:'Pack Tactics',icon:'⛓',tier:2,col:1,max:2,req:'Soul Strike',desc:'Your demons attack faster and stay closer to your chosen target.'},
+      {id:'Felstorm',icon:'✹',tier:2,col:3,max:1,req:'Dread Calling',desc:'Unlock Felstorm, commanding your Felguard to cleave nearby enemies.'},
+      {id:'Demonic Core',icon:'◈',tier:3,col:1,max:2,req:'Pack Tactics',desc:'Demon attacks can empower your next burst of spell damage.'},
+      {id:'Master Summoner',icon:'◎',tier:3,col:3,max:2,req:'Felstorm',desc:'Improve the duration and recovery of temporary demon summons.'},
+      {id:'Demonic Tyrant',icon:'♛',tier:4,col:2,max:1,req:'Master Summoner',desc:'Capstone: unlock Summon Demonic Tyrant, a powerful temporary ranged demon.'}
+    ],
+    Destruction:[
+      {id:'Eradication',icon:'☄',tier:0,col:1,max:3,desc:'Chaos Bolt leaves the target vulnerable to your next destructive spells.'},
+      {id:'Roaring Blaze',icon:'🔥',tier:0,col:3,max:3,desc:'Increase Immolate and Conflagrate fire damage.'},
+      {id:'Backdraft',icon:'➤',tier:1,col:0,max:2,req:'Roaring Blaze',desc:'Conflagrate accelerates your next casted Destruction spell.'},
+      {id:'Reverse Entropy',icon:'↺',tier:1,col:2,max:2,desc:'Spending Soul Shards can grant a short haste surge.'},
+      {id:'Rain of Fire',icon:'✹',tier:2,col:1,max:1,req:'Backdraft',desc:'Unlock Rain of Fire as a heavy area Soul Shard spender.'},
+      {id:'Havoc',icon:'⛓',tier:2,col:3,max:1,req:'Eradication',desc:'Chaos Bolt and Incinerate can echo damage into a second nearby enemy.'},
+      {id:'Channel Demonfire',icon:'✺',tier:3,col:1,max:2,req:'Rain of Fire',desc:'Unlock Channel Demonfire, a rapid fire channel that rewards burning targets.'},
+      {id:'Soul Conduit',icon:'◇',tier:3,col:3,max:2,req:'Havoc',desc:'Soul Shard spenders periodically refund part of their cost.'},
+      {id:'Summon Infernal',icon:'♛',tier:4,col:2,max:1,req:'Channel Demonfire',desc:'Capstone: summon an Infernal that crashes into the battlefield and burns enemies for a short time.'}
+    ]
+  },
   Monk:{
     Brewmaster:[
       {id:'High Tolerance',icon:'◫',tier:0,col:1,max:3,desc:'Stagger a larger share of incoming damage and smooth dangerous spikes.'},
@@ -410,16 +423,25 @@ const UI_SKILL_FALLBACKS={
     {id:'astral-shift',name:'Astral Shift',kind:'defensive',unlockLevel:8,desc:'Shift partially into the spirit world, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000}
   ],
   Warlock:[
-    {id:'shadow-bolt',name:'Shadow Bolt',kind:'damage',unlockLevel:1,desc:'A reliable ranged shadow spell.',range:35,damage:19,cost:6,gcd:1500,cast:1450,cd:0},
-    {id:'demonbolt',name:'Demonbolt',kind:'damage',unlockLevel:1,desc:'Hurl concentrated demonic energy at the target.',range:35,damage:29,cost:11,gcd:1500,cast:1800,cd:6000},
-    {id:'hand-of-guldan',name:"Hand of Gul'dan",kind:'damage',unlockLevel:1,desc:'Call down fel energy on the target and nearby enemies.',range:35,damage:23,cost:15,gcd:1500,cast:1500,cd:7000,cleave:2},
-    {id:'axe-toss',name:'Axe Toss',kind:'interrupt',unlockLevel:1,desc:'Command your Felguard to hurl its weapon and interrupt an enemy cast.',range:30,cost:0,gcd:0,cd:20000},
-    {id:'call-dreadstalkers',name:'Call Dreadstalkers',kind:'summon',unlockLevel:1,desc:'Summon two Dreadstalkers to maul your enemies for a short time.',range:35,cost:16,gcd:1500,cast:1200,cd:20000,duration:12000,summonType:'dreadstalker',summonCount:2},
-    {id:'soul-strike',name:'Soul Strike',kind:'pet-command',unlockLevel:1,desc:'Command your Felguard to deliver a crushing soul-infused strike.',range:30,cost:8,gcd:1000,cd:10000,petCommand:'soul-strike',talentReq:'Soul Strike'},
-    {id:'dark-pact',name:'Dark Pact',kind:'defensive',unlockLevel:5,desc:'Wrap yourself in demonic power, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000},
-    {id:'felstorm',name:'Felstorm',kind:'pet-command',unlockLevel:1,desc:'Command your Felguard to spin through several nearby enemies.',range:30,cost:12,gcd:1000,cd:18000,petCommand:'felstorm',cleave:3,talentReq:'Felstorm'},
-    {id:'implosion',name:'Implosion',kind:'pet-command',unlockLevel:10,desc:'Detonate your temporary demons into the target for explosive area damage.',range:35,cost:10,gcd:1500,cd:16000,petCommand:'implosion',cleave:3},
-    {id:'summon-demonic-tyrant',name:'Summon Demonic Tyrant',kind:'summon',unlockLevel:1,desc:'Summon a Demonic Tyrant that bombards enemies and empowers your active demons.',range:35,cost:20,gcd:1500,cast:1600,cd:60000,duration:15000,summonType:'tyrant',summonCount:1,talentReq:'Demonic Tyrant'}
+    {id:'shadow-bolt',name:'Shadow Bolt',kind:'damage',role:'dps',spec:'Demonology',unlockLevel:1,desc:'A reliable ranged shadow spell.',range:35,damage:19,cost:6,gcd:1500,cast:1450,cd:0,damageType:'magic'},
+    {id:'demonbolt',name:'Demonbolt',kind:'damage',role:'dps',spec:'Demonology',unlockLevel:1,desc:'Hurl concentrated demonic energy at the target.',range:35,damage:29,cost:11,gcd:1500,cast:1800,cd:6000,damageType:'magic'},
+    {id:'hand-of-guldan',name:"Hand of Gul'dan",kind:'damage',role:'dps',spec:'Demonology',unlockLevel:1,desc:'Call down fel energy on the target and nearby enemies.',range:35,damage:23,cost:15,gcd:1500,cast:1500,cd:7000,cleave:2,damageType:'magic'},
+    {id:'call-dreadstalkers',name:'Call Dreadstalkers',kind:'summon',role:'dps',spec:'Demonology',unlockLevel:1,desc:'Summon two Dreadstalkers to maul your enemies for a short time.',range:35,cost:16,gcd:1500,cast:1200,cd:20000,duration:12000,summonType:'dreadstalker',summonCount:2},
+    {id:'soul-strike',name:'Soul Strike',kind:'pet-command',role:'dps',spec:'Demonology',unlockLevel:1,desc:'Command your Felguard to deliver a crushing soul-infused strike.',range:30,cost:8,gcd:1000,cd:10000,petCommand:'soul-strike',talentReq:'Soul Strike'},
+    {id:'felstorm',name:'Felstorm',kind:'pet-command',role:'dps',spec:'Demonology',unlockLevel:1,desc:'Command your Felguard to spin through several nearby enemies.',range:30,cost:12,gcd:1000,cd:18000,petCommand:'felstorm',cleave:3,talentReq:'Felstorm'},
+    {id:'implosion',name:'Implosion',kind:'pet-command',role:'dps',spec:'Demonology',unlockLevel:10,desc:'Detonate your temporary demons into the target for explosive area damage.',range:35,cost:10,gcd:1500,cd:16000,petCommand:'implosion',cleave:3},
+    {id:'summon-demonic-tyrant',name:'Summon Demonic Tyrant',kind:'summon',role:'dps',spec:'Demonology',unlockLevel:1,desc:'Summon a Demonic Tyrant that bombards enemies and empowers your active demons.',range:35,cost:20,gcd:1500,cast:1600,cd:60000,duration:15000,summonType:'tyrant',summonCount:1,talentReq:'Demonic Tyrant'},
+
+    {id:'incinerate',name:'Incinerate',kind:'damage',role:'dps',spec:'Destruction',unlockLevel:1,desc:'Scorch the target and generate Soul Shards.',range:35,damage:19,cost:0,gain:.5,gcd:1500,cast:1450,cd:0,damageType:'magic',school:'fire'},
+    {id:'conflagrate',name:'Conflagrate',kind:'damage',role:'dps',spec:'Destruction',unlockLevel:1,desc:'Instantly blast the target with fire and generate a Soul Shard.',range:35,damage:22,cost:0,gain:1,gcd:1500,cast:0,cd:10000,damageType:'magic',school:'fire'},
+    {id:'chaos-bolt',name:'Chaos Bolt',kind:'damage',role:'dps',spec:'Destruction',unlockLevel:1,desc:'Spend Soul Shards on a devastating bolt of chaotic fire.',range:35,damage:48,cost:2,gcd:1500,cast:2100,cd:0,damageType:'magic',school:'chaos'},
+    {id:'immolate',name:'Immolate',kind:'damage',role:'dps',spec:'Destruction',unlockLevel:4,desc:'Burn the target over time and generate Soul Shard fragments from the flames.',range:35,damage:11,cost:0,gain:.5,gcd:1500,cast:1200,cd:9000,damageType:'magic',school:'fire'},
+    {id:'rain-of-fire',name:'Rain of Fire',kind:'damage',role:'dps',spec:'Destruction',unlockLevel:1,desc:'Spend Soul Shards to rain fire across the enemy pack.',range:35,damage:34,cost:3,gcd:1500,cast:900,cd:7000,cleave:4,damageType:'magic',school:'fire',talentReq:'Rain of Fire'},
+    {id:'channel-demonfire',name:'Channel Demonfire',kind:'damage',role:'dps',spec:'Destruction',unlockLevel:1,desc:'Channel waves of demonfire into burning targets.',range:35,damage:40,cost:0,gain:.5,gcd:1500,cast:1800,cd:24000,cleave:2,damageType:'magic',school:'fire',talentReq:'Channel Demonfire'},
+    {id:'summon-infernal',name:'Summon Infernal',kind:'summon',role:'dps',spec:'Destruction',unlockLevel:1,desc:'Crash an Infernal into the enemy pack to burn them for a short time.',range:35,cost:2,gcd:1500,cast:1200,cd:60000,duration:14000,summonType:'infernal',summonCount:1,talentReq:'Summon Infernal'},
+    {id:'shadowfury',name:'Shadowfury',kind:'interrupt',role:'dps',spec:'Destruction',unlockLevel:1,desc:'Disrupt an enemy cast with a burst of shadow force.',range:30,cost:0,gcd:0,cd:24000},
+    {id:'dark-pact',name:'Dark Pact',kind:'defensive',unlockLevel:8,desc:'Wrap yourself in demonic power, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000},
+    {id:'axe-toss',name:'Axe Toss',kind:'interrupt',role:'dps',spec:'Demonology',unlockLevel:1,desc:'Command your Felguard to hurl its weapon and interrupt an enemy cast.',range:30,cost:0,gcd:0,cd:20000}
   ],
   Monk:[
     {id:'keg-smash',name:'Keg Smash',kind:'damage',role:'tank',unlockLevel:1,desc:'Smash the target and nearby enemies with heavy threat.',range:8,damage:20,cost:25,gcd:1000,cd:8000,threat:3,cleave:3},
