@@ -1,0 +1,256 @@
+/* Cellbound Home Loop v1 — Step 3
+   Home answers: what next, is my party ready, and what am I working toward? */
+
+#overview .home-command{gap:12px}
+#overview .home-command-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.45fr) minmax(300px,.72fr);
+  gap:12px;
+}
+#overview .home-secondary-grid{
+  display:grid;
+  grid-template-columns:minmax(320px,.72fr) minmax(0,1.28fr);
+  gap:12px;
+}
+
+/* NEXT MISSION */
+#overview .home-continue-card{
+  min-height:410px;
+  border-color:rgba(213,179,107,.26);
+}
+#overview .home-continue-copy{width:min(760px,65%)}
+#overview .home-continue-eyebrow span:first-child{letter-spacing:.19em}
+#overview .home-mission-directive{
+  display:flex;align-items:center;gap:8px;
+  margin:14px 0 0;
+  color:#c0b9aa;font-size:.66rem;line-height:1.45
+}
+#overview .home-mission-directive i{
+  width:7px;height:7px;flex:0 0 auto;transform:rotate(45deg);
+  background:#caa75d;box-shadow:0 0 14px rgba(202,167,93,.28)
+}
+#overview .home-continue-actions{margin-top:3px}
+
+/* PARTY READINESS */
+#overview .home-readiness-panel{
+  min-height:0;
+  border-color:rgba(213,179,107,.13);
+  background:
+    radial-gradient(circle at 85% 10%,rgba(213,179,107,.07),transparent 34%),
+    linear-gradient(180deg,#0d1719,#081114);
+}
+#homeReadinessBadge{
+  color:#a9a092;
+  font-size:.52rem;
+  letter-spacing:.12em
+}
+#homeReadinessBadge.ready{color:#75d69a}
+#homeReadinessBadge.warn{color:#e2b76e}
+#homeReadinessBadge.blocked{color:#d38274}
+#overview .home-readiness{padding:14px}
+#overview .home-readiness-loading{padding:24px;color:#78847e;font-size:.68rem}
+#overview .home-readiness-score{
+  display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;
+  padding:2px 0 14px
+}
+#overview .home-readiness-ring{
+  --ready:0;
+  width:64px;height:64px;border-radius:50%;
+  display:grid;place-items:center;
+  background:
+    radial-gradient(circle at center,#0a1416 57%,transparent 58%),
+    conic-gradient(#c9a65d calc(var(--ready)*1%),#202a2a 0);
+  box-shadow:inset 0 0 0 1px rgba(213,179,107,.12),0 8px 20px rgba(0,0,0,.2)
+}
+#overview .home-readiness-ring b{
+  color:#eee7da;font:500 .88rem Georgia,serif
+}
+#overview .home-readiness-score small{
+  display:block;color:#8d8065;font-size:.48rem;font-weight:900;letter-spacing:.13em
+}
+#overview .home-readiness-score strong{
+  display:block;margin-top:4px;color:#e8e2d7;font:500 1.05rem Georgia,serif
+}
+#overview .home-readiness-score span{
+  display:block;margin-top:3px;color:#7f8b85;font-size:.58rem;line-height:1.45
+}
+#overview .home-role-checks{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px
+}
+#overview .home-role-check{
+  padding:9px 7px;
+  border:1px solid rgba(255,255,255,.055);
+  background:#091316;text-align:center
+}
+#overview .home-role-check i{
+  display:block;color:#5e6b67;font-style:normal;font-size:.55rem
+}
+#overview .home-role-check b{
+  display:block;margin-top:2px;color:#d8d4ca;font-size:.7rem
+}
+#overview .home-role-check.ok{
+  border-color:rgba(102,198,141,.16);background:rgba(15,35,27,.44)
+}
+#overview .home-role-check.ok i{color:#70c992}
+#overview .home-ready-list{display:grid;gap:1px;background:rgba(255,255,255,.035)}
+#overview .home-ready-row{
+  display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
+  min-height:38px;padding:8px 10px;background:#091215
+}
+#overview .home-ready-row span{color:#7d8983;font-size:.58rem}
+#overview .home-ready-row b{font-size:.62rem;color:#d4d0c6}
+#overview .home-ready-row.ok b{color:#75cf96}
+#overview .home-ready-row.warn b{color:#e0b368}
+#overview .home-ready-row.bad b{color:#da8376}
+#overview .home-readiness-action{
+  width:100%;min-height:40px;margin-top:10px;
+  border:1px solid rgba(213,179,107,.28);
+  background:linear-gradient(180deg,#40331f,#242219);
+  color:#e8d29c;font-size:.57rem;font-weight:900;letter-spacing:.1em
+}
+
+/* ROAD AHEAD */
+#overview .home-progression-panel{
+  overflow:hidden;
+  border-color:rgba(213,179,107,.12);
+  background:
+    linear-gradient(180deg,rgba(12,20,22,.96),rgba(7,13,15,.98));
+}
+#overview .home-progress-track{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:0;
+  padding:0 12px 16px;
+}
+#overview .home-progress-stage{
+  position:relative;min-width:0;
+  border:0;background:none;color:#737e79;
+  text-align:left;padding:16px 12px 12px;
+}
+#overview .home-progress-stage:before{
+  content:"";position:absolute;left:0;right:0;top:28px;height:2px;background:#1d2829
+}
+#overview .home-progress-stage:first-child:before{left:50%}
+#overview .home-progress-stage:last-child:before{right:50%}
+#overview .home-progress-stage .node{
+  position:relative;z-index:1;
+  width:25px;height:25px;border-radius:50%;
+  display:grid;place-items:center;
+  margin:0 0 12px;
+  border:1px solid #34403e;background:#0b1517;
+  color:#65706b;font-size:.58rem;font-style:normal
+}
+#overview .home-progress-stage small{
+  display:block;color:#635f54;font-size:.43rem;font-weight:900;letter-spacing:.12em
+}
+#overview .home-progress-stage b{
+  display:block;margin-top:4px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:#929b96;font:500 .77rem Georgia,serif
+}
+#overview .home-progress-stage em{
+  display:block;margin-top:3px;color:#586561;font-size:.47rem;font-style:normal
+}
+#overview .home-progress-stage.done:before,
+#overview .home-progress-stage.current:before{background:linear-gradient(90deg,#846b39,#c5a55f)}
+#overview .home-progress-stage.done .node{
+  border-color:rgba(104,203,144,.38);background:#10241b;color:#77d39a
+}
+#overview .home-progress-stage.done b{color:#bbb9b0}
+#overview .home-progress-stage.current .node{
+  border-color:rgba(229,196,115,.62);
+  background:#332919;color:#efd48f;
+  box-shadow:0 0 18px rgba(213,179,107,.17)
+}
+#overview .home-progress-stage.current small{color:#c29d56}
+#overview .home-progress-stage.current b{color:#f0e7d7}
+#overview .home-progress-stage.open .node{border-color:rgba(213,179,107,.25);color:#c9aa66}
+#overview .home-progress-stage.open b{color:#b8b2a6}
+#overview .home-progress-stage:not(:disabled){cursor:pointer}
+#overview .home-progress-stage:not(:disabled):hover b{color:#f0e7d8}
+#overview .home-progress-stage:not(:disabled):hover .node{border-color:rgba(232,198,117,.48)}
+#overview .home-progress-stage:disabled{cursor:default;opacity:.62}
+
+/* CURRENT OBJECTIVE remains relevant, but no longer competes with the next mission. */
+#overview .home-objective-panel{min-height:100%}
+#overview .home-objective{min-height:188px}
+#overview .home-objective>b{font-size:1.08rem;line-height:1.4}
+
+/* SECONDARY ROUTES — compact utility access instead of six competing hero cards. */
+#overview .home-routes-panel{min-width:0}
+#overview .home-destination-grid{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:1px!important;
+  padding:0;
+  background:rgba(213,179,107,.045)
+}
+#overview .home-destination{
+  min-height:100px!important;
+  padding:12px!important;
+  border:0!important;
+  background:#091316!important;
+  box-shadow:none!important;
+}
+#overview .home-destination:before{
+  background:
+    linear-gradient(90deg,rgba(6,11,13,.93),rgba(6,11,13,.72)),
+    var(--route-art,none) center/cover no-repeat!important;
+}
+#overview .home-destination.quests{--route-art:url('./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp')}
+#overview .home-destination.dungeons{--route-art:url('./assets/dungeons/ashen-vault.webp')}
+#overview .home-destination.events{--route-art:url('./assets/world/twelve-below-key-art.webp')}
+#overview .home-destination.raids{--route-art:url('./assets/manor/manor-raid-hero.webp')}
+#overview .home-destination.trading{--route-art:linear-gradient(135deg,#302414,#12191a)}
+#overview .home-destination.pvp{--route-art:linear-gradient(135deg,#311716,#101719)}
+#overview .home-destination>span{
+  width:27px;height:27px;font-size:.75rem;
+  border-color:rgba(213,179,107,.2)
+}
+#overview .home-destination small{
+  margin-top:8px!important;font-size:.42rem!important
+}
+#overview .home-destination b{
+  margin-top:2px!important;font-size:.88rem!important
+}
+#overview .home-destination em{
+  margin-top:2px!important;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:.5rem!important
+}
+#overview .home-destination:hover{
+  transform:none!important;
+  filter:brightness(1.12);
+  background:#0d181a!important
+}
+
+/* At-a-glance is now tertiary. */
+#overview .home-bottom-grid{margin-top:0}
+#overview .home-pulse-grid button{min-height:76px!important}
+#overview .home-activity-panel .activity-log{max-height:184px}
+
+/* iPad / narrow desktop */
+@media(max-width:1180px){
+  #overview .home-command-grid,
+  #overview .home-secondary-grid{grid-template-columns:1fr}
+  #overview .home-progress-track{
+    display:flex;overflow-x:auto;scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch
+  }
+  #overview .home-progress-stage{
+    flex:0 0 155px;scroll-snap-align:start
+  }
+}
+@media(max-width:760px){
+  #overview .home-continue-card{min-height:380px}
+  #overview .home-continue-copy{width:100%}
+  #overview .home-readiness-score{grid-template-columns:56px 1fr}
+  #overview .home-readiness-ring{width:56px;height:56px}
+  #overview .home-destination-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  #overview .home-destination{min-height:92px!important}
+}
+@media(max-width:420px){
+  #overview .home-role-checks{grid-template-columns:1fr}
+  #overview .home-role-check{display:flex;align-items:center;justify-content:space-between;text-align:left}
+  #overview .home-destination-grid{grid-template-columns:1fr!important}
+}
