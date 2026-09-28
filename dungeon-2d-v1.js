@@ -1370,8 +1370,8 @@ function rebornResourceVisual(e){
 function rebornCastStart(e){
  const n=$('#cb2dCastName'),tm=$('#cb2dCastTime'),f=$('#cb2dCastFill'),duration=Math.max(0,Number(e.payload?.duration)||0);
  if(n)n.textContent=e.ability||'Enemy Cast';if(tm)tm.textContent=(duration/1000).toFixed(1)+'s';
- if(f){f.style.transition='none';f.style.width='0%';requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!f.isConnected)return;f.style.transition='width '+Math.max(1,Math.round(duration/(run?.speed||1)))+'ms linear';f.style.width='100%'}))}
- clearTimeout(run.rebornCastTimer);run.rebornCastTimer=setTimeout(()=>{if(tm)tm.textContent='—'},Math.max(1,Math.round(duration/(run?.speed||1))));
+ if(f){f.style.transition='none';f.style.width='0%';requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!f.isConnected)return;f.style.transition='width '+Math.max(1,Math.round(duration/combatPlaybackSpeed(run?.speed)))+'ms linear';f.style.width='100%'}))}
+ clearTimeout(run.rebornCastTimer);run.rebornCastTimer=setTimeout(()=>{if(tm)tm.textContent='—'},Math.max(1,Math.round(duration/combatPlaybackSpeed(run?.speed))));
 }
 function rebornCastClear(label='—'){
  const n=$('#cb2dCastName'),tm=$('#cb2dCastTime'),f=$('#cb2dCastFill');clearTimeout(run?.rebornCastTimer);
@@ -1429,8 +1429,9 @@ function cbrStatusTargets(id){
 function renderRebornEvent(e,result,replayMode=false){
  if(!run||!e)return;
  rebornDebugEvent(e,result);
- window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#cb2dArena'),speed:()=>replayMode?(run?.replaySpeed||1):(run?.speed||1)});
- if(window.CellboundCombatStatuses?.handle(e,{resolve:cbrStatusTargets,speed:()=>run?.speed||1}))return;
+ const visualSpeed=()=>combatPlaybackSpeed(replayMode?(run?.replaySpeed||1):(run?.speed||1));
+ window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#cb2dArena'),speed:visualSpeed});
+ if(window.CellboundCombatStatuses?.handle(e,{resolve:cbrStatusTargets,speed:visualSpeed}))return;
  const srcChar=rebornPlayerByUnit(e.source),targetChar=rebornPlayerByUnit(e.target),enemyIdx=rebornEnemyIndex(e.target),sourceEnemyIdx=rebornEnemyIndex(e.source);
  switch(e.type){
   case'COMBAT_START':{
@@ -1585,7 +1586,7 @@ async function rebornReplayWait(ms,tok){
   if(tok!==token||!run)return'cancelled';
   if(run.replayRestartRequested)return'restart';
   if(run.replayPaused){await new Promise(r=>setTimeout(r,70));continue}
-  const step=Math.min(70,remaining),speed=Math.max(.25,Number(run.replaySpeed)||1);
+  const step=Math.min(70,remaining),speed=combatPlaybackSpeed(run.replaySpeed);
   await new Promise(r=>setTimeout(r,Math.max(8,Math.round(step/speed))));remaining-=step
  }
  return run.replayRestartRequested?'restart':'ok'
@@ -1598,7 +1599,7 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
 
  return await new Promise(resolve=>{
    let index=0,simTime=0,wallAnchor=replayMode?Date.now():(Number(run?.runtimeStageStartedAt)||Date.now()),simAnchor=0,lastSpeed=null,finished=false,raf=0;
-   const speedNow=()=>replayMode?Math.max(.25,Number(run?.replaySpeed)||1):Math.max(.25,Number(run?.speed)||1);
+   const speedNow=()=>combatPlaybackSpeed(replayMode?(run?.replaySpeed||1):(run?.speed||1));
    const readClock=()=>{
      if(replayMode&&run?.replayPaused){wallAnchor=Date.now();simAnchor=simTime;return simTime}
      const speed=speedNow();
