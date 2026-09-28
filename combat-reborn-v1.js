@@ -3118,6 +3118,35 @@ function runSelfTests(){
   const ids=(monkLocked.finalState.players.find(p=>p.id==='p-ml')?.abilities||[]).map(a=>a.id);
   return ids.includes('tiger-palm')&&!ids.includes('fists-of-fury')&&!ids.includes('touch-of-death')
  });
+
+ const shadowTalents={'Dark Thoughts':2,'Shadow Weaving':2,'Mind Devourer':1,'Vampiric Embrace':1,'Shadow Crash':1,'Twist of Fate':1,'Psychic Link':2,'Void Torrent':1,'Void Eruption':1};
+ const shadowParty=[
+  {id:'spt',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15},
+  {id:'sph',name:'Healer',class:'Paladin',spec:'Holy',power:14,level:15},
+  {id:'sp',name:'Shadow Priest',class:'Priest',spec:'Shadow',power:14,level:15,skillLoadouts:{Shadow:['mind-flay','mind-blast','devouring-plague','void-eruption']},talents:{Shadow:shadowTalents}},
+  {id:'sp1',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15},
+  {id:'sp2',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15}
+ ];
+ const shadowRun=simulate({party:shadowParty,encounter:{...base,kind:'boss',level:15,enemyHealth:9000},tactics:{cooldownUse:'free'},seed:'shadow-priest',maxDurationMs:18000});
+ test('Shadow Priest Insanity',()=>{
+  const priest=shadowRun.finalState.players.find(p=>p.id==='p-sp');
+  return priest?.role==='dps'&&priest?.resource?.name==='Insanity'&&shadowRun.events.some(e=>e.type==='RESOURCE_GAINED'&&e.source==='p-sp')&&shadowRun.events.some(e=>e.type==='RESOURCE_SPENT'&&e.source==='p-sp')
+ });
+ test('Shadow Priest DoT Pressure',()=>shadowRun.events.some(e=>e.type==='DEBUFF_APPLIED'&&e.source==='p-sp'&&e.ability==='Devouring Plague')&&shadowRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-sp'&&e.ability==='Devouring Plague (DoT)'));
+ test('Shadow Priest Voidform',()=>shadowRun.events.some(e=>e.type==='BUFF_APPLIED'&&e.target==='p-sp'&&e.ability==='Voidform'));
+
+ const shadowLocked=simulate({party:[
+  {id:'splt',name:'Tank',class:'Warrior',spec:'Protection',power:12,level:15},
+  {id:'splh',name:'Healer',class:'Paladin',spec:'Holy',power:12,level:15},
+  {id:'spl',name:'Locked Shadow Priest',class:'Priest',spec:'Shadow',power:12,level:15,skillLoadouts:{Shadow:['shadow-crash','void-torrent','void-eruption','mind-flay']},talents:{Shadow:{}}},
+  {id:'spl1',name:'Mage',class:'Mage',spec:'Arcane',power:12,level:15},
+  {id:'spl2',name:'Hunter',class:'Hunter',spec:'Marksman',power:12,level:15}
+ ],encounter:{...base,level:15,enemyHealth:3500},seed:'shadow-priest-gates',maxDurationMs:2500});
+ test('Shadow Priest Talent Skill Gates',()=>{
+  const ids=(shadowLocked.finalState.players.find(p=>p.id==='p-spl')?.abilities||[]).map(a=>a.id);
+  return ids.includes('mind-flay')&&!ids.includes('shadow-crash')&&!ids.includes('void-torrent')&&!ids.includes('void-eruption')
+ });
+
  const bloodTalents={'Heartbreaker':3,'Ossuary':3,'Hemostasis':2,'Rune Tap':1,'Blood Shield':2,'Voracious':2,'Dancing Rune Weapon':1,'Red Thirst':2,'Vampiric Blood':1};
  const bloodParty=[
   {id:'dkt',name:'Blood DK',class:'Death Knight',spec:'Blood',power:14,level:15,skillLoadouts:{Blood:['heart-strike','death-strike','dark-command','marrowrend']},talents:{Blood:bloodTalents}},
