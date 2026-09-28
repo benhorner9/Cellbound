@@ -491,6 +491,7 @@ const UI_SKILL_FALLBACKS={
 const UI_BUFF_FALLBACKS={
   'Priest|Shadow':{id:'class-buff-shadow-inspiration',name:'Shadow Inspiration',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04,resourceRegen:.04}},
   Priest:{id:'class-buff-divine-inspiration',name:'Divine Inspiration',scope:'party',duration:60000,cooldown:180000,effect:{outgoingHealing:.05,incomingHealing:.05}},
+  Druid:{id:'class-buff-wild-communion',name:'Wild Communion',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04,outgoingHealing:.04,resourceRegen:.04}},
   Shaman:{id:'class-buff-bloodlust',name:'Bloodlust',scope:'party',duration:60000,cooldown:180000,effect:{haste:.10,resourceRegen:.05}},
   Warlock:{id:'class-buff-demonic-pact',name:'Demonic Pact',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04}},
   Monk:{id:'class-buff-mystic-touch',name:'Mystic Touch',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,outgoingHealing:.03}},
