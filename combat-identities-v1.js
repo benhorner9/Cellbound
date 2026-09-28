@@ -8,7 +8,7 @@ const ROLE_MAP={
   Druid:{Restoration:'healer',Balance:'dps'},
   Hunter:{Marksman:'dps'},
   Rogue:{Assassination:'dps'},
-  Mage:{Arcane:'dps'},
+  Mage:{Arcane:'dps',Frost:'dps'},
   Shaman:{Restoration:'healer',Elemental:'dps'},
   Warlock:{Demonology:'dps'},
   Monk:{Brewmaster:'tank',Mistweaver:'healer',Windwalker:'dps'},
@@ -135,6 +135,12 @@ const SPECS={
       strength:'Highest burst spell pressure with strong splash damage.',
       tradeoff:'Fragile and capable of pulling threat during burst windows.',
       damage:1.14,threat:1.18,cooldown:1.06,cleave:.28,physicalTaken:1.10,magicTaken:.92,burstEvery:4,burst:1.30
+    },
+    Frost:{
+      title:'Winter Savant',
+      strength:'Turns Frostbolt procs into rapid Shatter chains, with strong control-flavoured burst and reliable ranged cleave.',
+      tradeoff:'Peak damage depends on converting Fingers of Frost and Brain Freeze correctly; poor proc usage leaves the rotation noticeably flatter.',
+      damage:1.04,threat:.95,cooldown:.96,cleave:.24,physicalTaken:1.02,magicTaken:.91
     }
   },
   Shaman:{
