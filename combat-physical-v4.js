@@ -100,6 +100,22 @@ function totem(scene,e){
  const core=document.createElement('i'),rune=document.createElement('b'),label=document.createElement('span');
  label.textContent=String(e.ability||'Totem').replace(/ Totem$/,'');n.append(core,rune,label);scene.arena.appendChild(n);scene.totems.set(id,n)
 }
+function petObject(scene,e){
+ const id=String(e.payload?.petId||e.target||'');if(!id)return;
+ if(e.type==='PET_DISMISSED'){
+  const old=scene.pets.get(id);if(old){const u=scene.units.get(old);u?.animation?.cancel();clearCast(u);scene.units.delete(old);old.remove();scene.pets.delete(id)}
+  return
+ }
+ if(e.type!=='PET_SUMMONED'||!e.position)return;
+ const existing=scene.pets.get(id);if(existing){scene.units.delete(existing);existing.remove()}
+ const type=String(e.payload?.petType||'demon').replace(/[^a-z0-9-]/gi,'-').toLowerCase(),n=document.createElement('div');
+ n.className='cbl-pet class-warlock '+type;n.dataset.unit=id;n.dataset.petType=type;n.dataset.owner=String(e.payload?.ownerId||e.source||'');
+ n.setAttribute('aria-label',String(e.payload?.name||e.ability||'Warlock demon'));
+ const body=document.createElement('i');body.className='cbl-pet-body';body.appendChild(document.createElement('b'));
+ const label=document.createElement('span');label.className='cbl-pet-name';label.textContent=String(e.payload?.name||e.ability||'Demon');
+ n.append(body,label);scene.arena.appendChild(n);scene.pets.set(id,n);
+ const u=unit(scene,n);setPosition(scene,u,e.position);state(u,'idle');framing(scene)
+}
 function mechanic(scene,e){
  const token=e.payload?.token;if(token==null)return;
  if(e.type==='MECHANIC_TELEGRAPH'){
@@ -137,7 +153,7 @@ function mount(target){
  arena.classList.add('cbl-scene');
  if(!scenes.has(arena)){
   const layer=document.createElement('div');layer.className='cbl-effects';layer.setAttribute('aria-hidden','true');arena.appendChild(layer);
-  scenes.set(arena,{arena,layer,units:new Map(),effects:new Set(),hazards:new Map(),warnings:new Map(),totems:new Map(),time:0,speed:1,live:true});
+  scenes.set(arena,{arena,layer,units:new Map(),effects:new Set(),hazards:new Map(),warnings:new Map(),totems:new Map(),pets:new Map(),time:0,speed:1,live:true});
   arena.classList.add('cbl-scene');
   const scene=scenes.get(arena);scene.resize=new ResizeObserver(()=>framing(scene,true));scene.resize.observe(arena);
  }
@@ -180,7 +196,7 @@ function kind(e,u){
 }
 function family(e,u){
  const a=String(e.ability||'').toLowerCase();
- for(const [re,value] of [[/frost|ice/,'frost'],[/fire|flame/,'fire'],[/lightning|chain/,'lightning'],[/shadow|drain/,'shadow'],[/plate/,'plate'],[/nail/,'steel'],[/collapse|shattered floor|falling beam/,'rubble']])if(re.test(a))return value;
+ for(const [re,value] of [[/frost|ice/,'frost'],[/fire|flame/,'fire'],[/lightning|chain/,'lightning'],[/fel|demon|shadow|drain/,'shadow'],[/plate/,'plate'],[/nail/,'steel'],[/collapse|shattered floor|falling beam/,'rubble']])if(re.test(a))return value;
  return u?.p.projectile||'hostile'
 }
 function effect(scene,cls,source,target,life=320){
@@ -225,6 +241,7 @@ function livingEvent(e,opts={}){
  if(!e)return;
  const arena=mount(opts.arena||opts.root?.querySelector?.(ARENA));if(!arena)return;
  const scene=scenes.get(arena);scene.position=opts.position;scene.speed=Math.max(.25,Number(typeof opts.speed==='function'?opts.speed():opts.speed)||1);scene.time=Number(e.timestamp)||0;
+ if(/^PET_/.test(e.type))petObject(scene,e);
  const u=unit(scene,resolve(e.source,opts,arena)),t=unit(scene,resolve(e.target,opts,arena));
  // Mechanics retain the existing v3 language; actions/reactions have one owner.
  if(/^(MECHANIC_|GROUND_HAZARD_|PHASE_CHANGE|ENRAGE|INTERACTION_REQUIRED)/.test(e.type))baseEvent?.(e,opts);
@@ -234,7 +251,7 @@ function livingEvent(e,opts={}){
  if(/^TOTEM_/.test(e.type))totem(scene,e);
  switch(e.type){
  case'COMBAT_START':
-  for(const n of scene.totems.values())n.remove();scene.totems.clear();
+  for(const n of scene.totems.values())n.remove();scene.totems.clear();for(const n of scene.pets.values())n.remove();scene.pets.clear();
   scene.live=true;room(scene,e);emphasis(scene,'entry');arena.classList.add('cbl-live');arena.querySelectorAll(UNIT).forEach(el=>unit(scene,el));
   for(const v of e.payload?.units||[]){const a=unit(scene,resolve(v.id,opts,arena));if(a){enemyProfile(a,v);const group=String(v.id).match(/^p-(?:raid|maid)-(\d+)-/);if(group)a.el.dataset.raidParty=group[1];a.dead=v.alive===false;if(!a.dead)a.el.classList.remove('dead','dying');a.target=null;a.statuses.clear();a.el.dataset.control='';state(a,a.dead?'dead':'idle');setPosition(scene,a,v.position);a.el.style.setProperty('--cbl-facing',(v.facing||0)+'deg')}}framing(scene);break;
  case'MOVEMENT_START':
@@ -264,12 +281,14 @@ function livingEvent(e,opts={}){
  case'PLAYER_REVIVED':case'ENEMY_REVIVED':
   if(t){t.dead=false;t.statuses.clear();t.el.dataset.control='';t.el.classList.remove('dead','dying');state(t,'reviving',performance.now()+800/scene.speed);effect(scene,'revive',u?.el,t.el,850)}break;
  case'ADD_SPAWNED':requestAnimationFrame(()=>{const el=resolve(e.target,opts,arena);if(el){const spawned=unit(scene,el);enemyProfile(spawned,e.payload||{});setPosition(scene,spawned,e.position);framing(scene);effect(scene,'spawn',null,el,650)}});break;
+ case'PET_SUMMONED':if(t){effect(scene,'spawn pet-spawn',null,t.el,650);state(t,'idle')}break;
+ case'PET_COMMAND':if(t||u)effect(scene,'command',null,(t||u).el,420);break;
  case'INTERACTION_REQUIRED':if(/screech/i.test(e.ability||''))effect(scene,'screech',null,u?.el||t?.el,800);break;
  case'ENRAGE':if(u)u.el.dataset.aura='enrage';break;
  case'PHASE_CHANGE':emphasis(scene,'phase');if(scene.room)scene.room.dataset.wear=String(Math.min(3,Number(scene.room.dataset.wear||0)+1));if(u){effect(scene,'phase',null,u.el,1000);u.el.dataset.intensity='5'}break;
  case'GROUND_HAZARD_SPAWNED':
   if(/plate|collapse|beam|debris|floor/i.test(e.ability||'')&&e.position){const f=effect(scene,'debris',null,null,650);if(f){f.n.style.left=e.position.x+'%';f.n.style.top=e.position.y+'%'}}break;
- case'COMBAT_END':for(const h of scene.hazards.values())h.node.remove();scene.hazards.clear();for(const n of scene.totems.values())n.remove();scene.totems.clear();scene.warnings.clear();scene.live=false;arena.classList.remove('cbl-live');for(const v of scene.units.values()){clearCast(v);v.animation?.cancel();if(!v.dead)state(v,'idle')}break;
+ case'COMBAT_END':for(const h of scene.hazards.values())h.node.remove();scene.hazards.clear();for(const n of scene.totems.values())n.remove();scene.totems.clear();for(const n of scene.pets.values())n.remove();scene.pets.clear();scene.warnings.clear();scene.live=false;arena.classList.remove('cbl-live');for(const v of scene.units.values()){clearCast(v);v.animation?.cancel();if(!v.dead)state(v,'idle')}break;
  }
  wake();
 }
