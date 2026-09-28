@@ -2587,6 +2587,57 @@ function runSelfTests(){
   const ids=(lockedRun.finalState.players.find(p=>p.id==='p-wl')?.abilities||[]).map(a=>a.id);
   return ids.includes('call-dreadstalkers')&&!ids.includes('soul-strike')&&!ids.includes('felstorm')&&!ids.includes('summon-demonic-tyrant')
  });
+ const brewTalents={'High Tolerance':3,'Elusive Brawler':3,'Purifying Brew':2,'Keg Mastery':2,'Gift of the Ox':2,'Breath of Fire':1,'Celestial Brew':2,'Shuffle':2,'Fortifying Brew':1};
+ const brewParty=[
+  {id:'mb',name:'Brewmaster',class:'Monk',spec:'Brewmaster',power:14,level:15,skillLoadouts:{Brewmaster:['keg-smash','brewmaster-blackout-kick','provoke','purifying-brew']},talents:{Brewmaster:brewTalents}},
+  {id:'mbh',name:'Healer',class:'Priest',spec:'Holy',power:14,level:15},
+  {id:'mb1',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15},
+  {id:'mb2',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15},
+  {id:'mb3',name:'Rogue',class:'Rogue',spec:'Assassination',power:14,level:15}
+ ];
+ const brewRun=simulate({party:brewParty,encounter:{...base,kind:'boss',level:15,enemyHealth:7000},tactics:{cooldownUse:'free'},seed:'monk-brewmaster',maxDurationMs:16000});
+ test('Brewmaster Stagger',()=>{
+  const monk=brewRun.finalState.players.find(p=>p.id==='p-mb');
+  return monk?.role==='tank'&&brewRun.events.some(e=>e.type==='STAGGER_CHANGED'&&e.target==='p-mb'&&e.result==='added')&&brewRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.target==='p-mb'&&e.ability==='Stagger')
+ });
+ test('Brewmaster Purifying Brew',()=>brewRun.events.some(e=>e.type==='STAGGER_PURIFIED'&&e.source==='p-mb'&&Number(e.amount)>0));
+ const mistTalents={'Mist Wrap':3,'Lifecycles':3,'Renewing Mist':2,'Ancient Teachings':2,'Enveloping Breath':2,'Jade Serpent':1,'Rising Mist':2,'Mana Tea':2,'Revival':1};
+ const mistParty=[
+  {id:'mwt',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15,_combatHealthPct:93},
+  {id:'mw',name:'Mistweaver',class:'Monk',spec:'Mistweaver',power:14,level:15,skillLoadouts:{Mistweaver:['vivify','mist-rising-sun-kick','mist-tiger-palm','spear-hand-strike']},talents:{Mistweaver:mistTalents}},
+  {id:'mw1',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15},
+  {id:'mw2',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15},
+  {id:'mw3',name:'Rogue',class:'Rogue',spec:'Assassination',power:14,level:15}
+ ];
+ const mistRun=simulate({party:mistParty,encounter:{...base,kind:'boss',level:15,enemies:[{name:'Passive Master',classification:'boss',passive:true}],enemyHealth:5000},tactics:{cooldownUse:'free'},seed:'monk-mistweaver',maxDurationMs:7000});
+ test('Mistweaver Fistweaving',()=>{
+  const monk=mistRun.finalState.players.find(p=>p.id==='p-mw');
+  return monk?.role==='healer'&&mistRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-mw')&&mistRun.events.some(e=>e.type==='HEAL_RECEIVED'&&e.source==='p-mw'&&e.ability==='Ancient Teachings')
+ });
+ const windTalents={'Combo Strikes':3,'Ferocity':3,'Rising Sun Kick':2,'Dance of the Wind':2,'Fists of Fury':1,'Jade Ignition':2,'Momentum':2,'Serenity':2,'Touch of Death':1};
+ const windParty=[
+  {id:'mwtank',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15},
+  {id:'mwh',name:'Healer',class:'Priest',spec:'Holy',power:14,level:15},
+  {id:'ww',name:'Windwalker',class:'Monk',spec:'Windwalker',power:14,level:15,skillLoadouts:{Windwalker:['tiger-palm','windwalker-blackout-kick','windwalker-rising-sun-kick','spear-hand-strike']},talents:{Windwalker:windTalents}},
+  {id:'ww1',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15},
+  {id:'ww2',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15}
+ ];
+ const windRun=simulate({party:windParty,encounter:{...base,kind:'boss',level:15,enemyHealth:6500},tactics:{cooldownUse:'free'},seed:'monk-windwalker',maxDurationMs:12000});
+ test('Windwalker Combo Strikes',()=>{
+  const abilities=new Set(windRun.events.filter(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-ww').map(e=>e.ability));
+  return abilities.size>=3&&windRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-ww'&&e.ability==='Momentum')
+ });
+ const monkLocked=simulate({party:[
+  {id:'mlt',name:'Tank',class:'Warrior',spec:'Protection',power:12,level:15},
+  {id:'mlh',name:'Healer',class:'Priest',spec:'Holy',power:12,level:15},
+  {id:'ml',name:'Monk',class:'Monk',spec:'Windwalker',power:12,level:15,skillLoadouts:{Windwalker:['fists-of-fury','touch-of-death','tiger-palm','spear-hand-strike']},talents:{Windwalker:{}}},
+  {id:'ml1',name:'Mage',class:'Mage',spec:'Arcane',power:12,level:15},
+  {id:'ml2',name:'Hunter',class:'Hunter',spec:'Marksman',power:12,level:15}
+ ],encounter:{...base,level:15,enemyHealth:3500},seed:'monk-gates',maxDurationMs:2500});
+ test('Monk Talent Skill Gates',()=>{
+  const ids=(monkLocked.finalState.players.find(p=>p.id==='p-ml')?.abilities||[]).map(a=>a.id);
+  return ids.includes('tiger-palm')&&!ids.includes('fists-of-fury')&&!ids.includes('touch-of-death')
+ });
  const mageOnly=[{id:'m',name:'Mage',class:'Mage',spec:'Arcane',power:2,level:2}];
  r=simulate({party:mageOnly,encounter:{...base,enemyHealth:900},seed:'resource'});
  test('Resource Starvation',()=>r.events.some(e=>e.type==='RESOURCE_SPENT'));
