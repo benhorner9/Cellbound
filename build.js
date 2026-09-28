@@ -332,7 +332,7 @@ for(const file of files){
     if(!contents.includes('craftHistory:p.craftHistory')||!contents.includes('projectsCompleted:Math.max'))throw new Error('Profession project progression is not preserved by guild state normalization');
   }
   if(file==='character-sheet.js'){
-    for(const hook of ['function talentBudget(c)','function talentRemaining(c,spec)','BUILD POINTS','B?.syncLegacyTalentCounter?.(c)','setBonusRulesFor?.(c,c.spec,item)'])if(!contents.includes(hook))throw new Error('Character build UI foundation is missing '+hook);
+    for(const hook of ['function talentBudget(c)','function talentRemaining(c,spec)','BUILD POINTS','B?.syncLegacyTalentCounter?.(c)','setBonusRulesFor?.(c,c?.spec||null,item)'])if(!contents.includes(hook))throw new Error('Character build UI foundation is missing '+hook);
     if(contents.includes('Each point also grants <b>+1 Power</b>'))throw new Error('Talent points must not inflate global Power across inactive specialisations');
   }
   if(file==='guild.html'){
