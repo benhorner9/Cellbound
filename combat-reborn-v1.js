@@ -216,7 +216,7 @@ const ABILITIES={
   {id:'provoke',name:'Provoke',kind:'taunt',role:'tank',unlockLevel:1,desc:'Challenge an enemy and force its attention onto the Brewmaster.',range:30,cost:0,gcd:0,cd:8000,threat:5},
   {id:'purifying-brew',name:'Purifying Brew',kind:'defensive',role:'tank',unlockLevel:1,desc:'Clear a large portion of accumulated Stagger damage.',duration:1000,damageReduction:0,gcd:0,cd:12000,purifyStagger:.50},
   {id:'celestial-brew',name:'Celestial Brew',kind:'defensive',role:'tank',unlockLevel:6,desc:'Reduce incoming damage while your brews stabilise you.',duration:7000,damageReduction:.28,gcd:0,cd:45000},
-  {id:'breath-of-fire',name:'Breath of Fire',kind:'damage',role:'tank',unlockLevel:1,desc:'Breathe fire across the target and nearby enemies.',range:8,damage:18,cost:20,gcd:1000,cd:12000,cleave:3,threat:2.4},
+  {id:'breath-of-fire',name:'Breath of Fire',kind:'damage',role:'tank',unlockLevel:1,desc:'Breathe fire across the target and nearby enemies.',range:8,damage:18,cost:20,gcd:1000,cd:12000,cleave:3,threat:2.4,damageType:'magic'},
   {id:'fortifying-brew',name:'Fortifying Brew',kind:'defensive',role:'tank',unlockLevel:1,desc:'Major defensive brew that also restores health.',duration:10000,damageReduction:.35,selfHealPct:.15,gcd:0,cd:90000},
   {id:'soothing-mist',name:'Soothing Mist',kind:'heal',role:'healer',unlockLevel:1,desc:'Efficient focused healing through soothing mist.',range:30,heal:29,cost:10,gcd:1500,cast:950,cd:0},
   {id:'vivify',name:'Vivify',kind:'heal',role:'healer',unlockLevel:1,desc:'A strong direct heal for an injured ally.',range:30,heal:35,cost:15,gcd:1500,cast:1250,cd:0},
@@ -266,8 +266,8 @@ function inferredRole(c){
  const r=window.CellboundIdentities?.role?.(c);
  if(r)return r;
  const s=String(c?.spec||'').toLowerCase();
- if(/protect|guardian|blood|vengeance/.test(s))return'tank';
- if(/holy|restoration|discipline|preservation/.test(s))return'healer';
+ if(/protect|guardian|blood|vengeance|brewmaster/.test(s))return'tank';
+ if(/holy|restoration|discipline|preservation|mistweaver/.test(s))return'healer';
  return'dps';
 }
 function resourceDef(c){
@@ -1303,6 +1303,7 @@ function mitigation(ctx,target,damageType='physical',opts={}){
   if(damageType==='magic')value*=Math.max(.76,1-talentRank(target,'Divine Ward')*.04)
  }
  if(target.class==='Priest'&&healthRatio(target)<.55)value*=Math.max(.82,1-talentRank(target,'Focused Will')*.05);
+ if(target.class==='Monk'&&target.spec==='Windwalker')value*=Math.max(.88,1-talentRank(target,'Dance of the Wind')*.025);
  if(target.defensiveUntil>0)value*=target.role==='tank'?.66:.74;
  value*=1-clamp(statusBonus(target,'incomingDamageReduction'),0,.70);
  value*=1+clamp(statusBonus(target,'incomingDamageTaken'),0,2.5);
@@ -1600,8 +1601,13 @@ function chooseAbility(ctx,u,target){
    return{ability:chosen,target:healTarget}
   }
 
-  // Healer preserves mana and watches incoming damage during safe windows.
-  // Damage contribution is intentionally not part of the default healer loop.
+  // Mistweaver can deliberately trade healing slots for martial techniques.
+  // During safe windows those attacks become smart healing through fistweaving.
+  if(u.class==='Monk'&&u.spec==='Mistweaver'){
+   const martial=pool.filter(a=>a.kind==='damage').sort((a,b)=>(b.damage||0)-(a.damage||0));
+   if(martial.length&&avg>.95&&tankRatio>.96)return{ability:martial[0],target}
+  }
+  // Other healers preserve mana and watch incoming damage during safe windows.
   return null
  }
  const dmg=pool.filter(a=>a.kind==='damage').sort((a,b)=>(b.damage||0)-(a.damage||0));
@@ -1666,13 +1672,13 @@ function finishAbility(ctx,u,a,target){
    const effective=doHeal(ctx,u,target,base*talentHealingScale(ctx,u,a,target),a.name);talentAfterHeal(ctx,u,a,target,effective)
   }
   if(a.hot){
-   const hotScale=u.class==='Druid'?1+talentRank(u,'Rejuvenation')*.18:u.class==='Shaman'&&a.id==='riptide'?1+talentRank(u,'Riptide')*.25:1,hot=Math.max(1,a.hot*hotScale);
+   const hotScale=u.class==='Druid'?1+talentRank(u,'Rejuvenation')*.18:u.class==='Shaman'&&a.id==='riptide'?1+talentRank(u,'Riptide')*.25:u.class==='Monk'&&u.spec==='Mistweaver'&&a.id==='renewing-mist'?1+talentRank(u,'Renewing Mist')*.22:1,hot=Math.max(1,a.hot*hotScale);
    applyStatus(ctx,u,target,{id:a.id+'-hot',name:a.name,kind:'buff',duration:3400,effect:{healingOverTime:hot}});
    [1600,3200].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)doHeal(ctx,u,target,hot,a.name+' (HoT)')},'hot'));
   }
  }else if(a.kind==='damage'){
   const rolled=rollDamage(ctx,u,a,target);
-  const dealt=dealDamage(ctx,u,target,rolled.amount,a.name,{crit:rolled.crit,ability:a,damageType:['Mage','Evoker','Shaman','Warlock'].includes(u.class)?'magic':'physical'});
+  const dealt=dealDamage(ctx,u,target,rolled.amount,a.name,{crit:rolled.crit,ability:a,damageType:a.damageType||(['Mage','Evoker','Shaman','Warlock'].includes(u.class)?'magic':'physical')});
   if(dealt>0)talentAfterDamage(ctx,u,a,target,dealt,rolled.crit);
   if(dealt>0&&rolled.crit&&hasUnique(u,'heart-troll-king')&&ctx.rng()<.28){
    u.frenzyUntil=Math.max(Number(u.frenzyUntil)||0,ctx.time+6000);
@@ -1689,7 +1695,7 @@ function finishAbility(ctx,u,a,target){
   if(dealt>0&&target.alive&&u.role==='dps'&&shouldMistake(ctx,u,'threat',12000)){recordMistake(ctx,u,'threat','overcommitted before threat was secure',{target:target.id,ability:a.name});addThreat(ctx,target,u,dealt*(1.8+ctx.rng()*.8),'overcommit')}
   gainResource(ctx,u,a);
   if(a.selfHeal&&u.alive)doHeal(ctx,u,u,a.selfHeal,a.name);
-  if(a.cleave&&dealt>0)livingEnemies(ctx).filter(e=>e.id!==target.id).slice(0,a.cleave).forEach(e=>dealDamage(ctx,u,e,dealt*.42,a.name+' cleave',{ability:a,damageType:['Mage','Warlock'].includes(u.class)?'magic':'physical'}));
+  if(a.cleave&&dealt>0)livingEnemies(ctx).filter(e=>e.id!==target.id).slice(0,a.cleave).forEach(e=>dealDamage(ctx,u,e,dealt*.42,a.name+' cleave',{ability:a,damageType:a.damageType||(['Mage','Warlock'].includes(u.class)?'magic':'physical')}));
  }
 }
 
