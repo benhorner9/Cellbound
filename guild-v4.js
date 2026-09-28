@@ -54,7 +54,8 @@ const classes={
   Druid:{icon:'❈',glow:'#FF7C0A',specs:{Restoration:{role:'healer',talents:['Rejuvenation','Lifebloom','Tranquility']}}},
   Hunter:{icon:'➶',glow:'#AAD372',specs:{Marksman:{role:'dps',talents:['True Aim','Rapid Fire','Kill Shot']}}},
   Rogue:{icon:'◆',glow:'#FFF468',specs:{Assassination:{role:'dps',talents:['Ambush','Venom','Eviscerate']}}},
-  Mage:{icon:'✦',glow:'#3FC7EB',specs:{Arcane:{role:'dps',talents:['Arcane Focus','Surge','Barrage']}}}
+  Mage:{icon:'✦',glow:'#3FC7EB',specs:{Arcane:{role:'dps',talents:['Arcane Focus','Surge','Barrage']}}},
+  Shaman:{icon:'⚡',glow:'#0070DD',specs:{Restoration:{role:'healer',talents:['Tidal Focus','Totemic Mastery','Ascendant Tide']}}}
 };
 
 const RECRUIT_RACES=[
