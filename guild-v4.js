@@ -59,7 +59,10 @@ const classes={
     Restoration:{role:'healer',talents:['Rejuvenation','Lifebloom','Tranquility']},
     Balance:{role:'dps',talents:['Starlight','Twin Moons','Celestial Alignment']}
   }},
-  Hunter:{icon:'➶',glow:'#AAD372',specs:{Marksman:{role:'dps',talents:['True Aim','Rapid Fire','Kill Shot']}}},
+  Hunter:{icon:'➶',glow:'#AAD372',specs:{
+    Marksman:{role:'dps',talents:['True Aim','Rapid Fire','Kill Shot']},
+    'Beast Mastery':{role:'dps',talents:['Pack Leader','Dire Beast','Bestial Wrath']}
+  }},
   Rogue:{icon:'◆',glow:'#FFF468',specs:{Assassination:{role:'dps',talents:['Ambush','Venom','Eviscerate']}}},
   Mage:{icon:'✦',glow:'#3FC7EB',specs:{
     Arcane:{role:'dps',talents:['Arcane Focus','Surge','Barrage']},
