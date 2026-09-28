@@ -289,7 +289,7 @@ function inferredRole(c){
  if(r)return r;
  const s=String(c?.spec||'').toLowerCase();
  if(/protect|guardian|blood|vengeance|brewmaster/.test(s))return'tank';
- if(/holy|restoration|discipline|preservation|mistweaver/.test(s))return'healer';
+ if(/^(holy|restoration|discipline|preservation|mistweaver)$/.test(s))return'healer';
  return'dps';
 }
 function resourceDef(c){
