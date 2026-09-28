@@ -643,7 +643,6 @@ function talentDamageScale(ctx,u,a,target){
  }
  if(u.class==='Priest'&&u.spec==='Shadow'){
   if(['mind-flay','mind-blast'].includes(a.id))m*=1+talentRank(u,'Dark Thoughts')*.035;
-  if(['shadow-word-pain','vampiric-touch','devouring-plague'].includes(a.id))m*=1+talentRank(u,'Shadow Weaving')*.04;
   if(hp<.35)m*=1+talentRank(u,'Twist of Fate')*.06;
  }
  if(u.class==='Warlock'&&u.spec==='Demonology'){
