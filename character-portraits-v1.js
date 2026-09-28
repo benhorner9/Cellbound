@@ -215,10 +215,11 @@ function usesIllustratedBody(subject){
 // Compatibility alias for older callers while the runtime moves off static paintings.
 function usesPaintedBody(subject){return usesIllustratedBody(subject)}
 function illustratedSignature(c){
+  // Phase 1 visual identity is race + saved appearance + class only.
+  // Equipment remains gameplay/stat data until the modular armour pass lands.
   var race=c?.race||c?.appearance?.race||'Veyren';
   var a=normalizeAppearance(c?.appearance||c,c?.id||c?.name||race,race);
-  var gear=PAPER_VISIBLE_SLOTS.map(function(slot){return itemIdentity(itemForSlot(c,slot),slot)});
-  return hash(JSON.stringify([a,c?.class||'Warrior',...gear])).toString(36);
+  return hash(JSON.stringify(['character-model-v2',a,c?.class||'Warrior'])).toString(36);
 }
 function portraitHTML(subject,opts){
   opts=opts||{};
@@ -248,8 +249,8 @@ function editorHTML(appearance,opts){
   }).join('');
   var previewCharacter={id:opts.seed||'appearance-preview',name:opts.name||'Character',race:a.race,appearance:a,class:opts.characterClass||'Warrior',equipment:opts.equipment||{}};
   var portrait=portraitHTML(previewCharacter,{size:'hero',label:(opts.name||'Character')+' portrait preview'});
-  var body=paperDollHTML(previewCharacter,{size:'creator',label:(opts.name||'Character')+' full body preview'});
-  return '<div class="cb-appearance-editor cb-appearance-editor-illustrated" data-appearance-editor><div class="cb-appearance-preview"><div class="cb-appearance-preview-pair">'+portrait+body+'</div><small class="cb-appearance-live-note">LIVE CHARACTER MODEL</small><button type="button" data-appearance-randomize>RANDOMISE APPEARANCE</button></div><div class="cb-appearance-controls">'+rows+'</div></div>';
+  var body=creatorFigureHTML(previewCharacter,{size:'creator',label:(opts.name||'Character')+' full body preview'});
+  return '<div class="cb-appearance-editor cb-appearance-editor-illustrated cb-character-model-v2" data-appearance-editor><div class="cb-appearance-preview"><div class="cb-appearance-preview-pair cb-model-preview-pair">'+portrait+body+'</div><small class="cb-appearance-live-note">RACE + CLASS LIVE MODEL</small><button type="button" data-appearance-randomize>RANDOMISE APPEARANCE</button></div><div class="cb-appearance-controls">'+rows+'</div></div>';
 }
 function bindEditor(container,appearance,onChange,opts){
   if(!container||!appearance)return;
@@ -390,14 +391,16 @@ function creatorClassPalette(klass){
   })[klass]||{base:'#4b4d55',dark:'#24262d',light:'#74777c',trim:'#a88b61',cloth:'#4a3b39',glow:CLASS_COLORS[klass]||'#d6a45f'};
 }
 function creatorRaceBody(race){
+  // Compact 3-ish-head heroic proportions: large readable face, short limbs,
+  // then race-specific anatomy on top rather than recoloured Veyren bodies.
   return ({
-    Stoneborn:{torso:1.13,head:1.07,leg:.94,arm:1.08},
-    Aelari:{torso:.88,head:.98,leg:1.08,arm:.92},
-    Thornkin:{torso:1.02,head:1.01,leg:1,arm:1.02},
-    Emberkin:{torso:1.03,head:1.01,leg:1,arm:1.03},
-    Nymari:{torso:.94,head:.99,leg:1.05,arm:.95},
-    Veyren:{torso:1,head:1,leg:1,arm:1}
-  })[race]||{torso:1,head:1,leg:1,arm:1};
+    Stoneborn:{torso:1.17,head:1.13,leg:.90,arm:1.10},
+    Aelari:{torso:.86,head:1.04,leg:1.05,arm:.90},
+    Thornkin:{torso:1.04,head:1.08,leg:.98,arm:1.03},
+    Emberkin:{torso:1.06,head:1.08,leg:.98,arm:1.04},
+    Nymari:{torso:.93,head:1.06,leg:1.03,arm:.94},
+    Veyren:{torso:1,head:1.08,leg:.98,arm:1}
+  })[race]||{torso:1,head:1.08,leg:.98,arm:1};
 }
 function creatorFaceMarkup(c,a,skin,eye,hair){
   var race=a.race,profile=creatorRaceBody(race),s=profile.head;
@@ -886,12 +889,14 @@ function worldAvatarHTML(subject,opts){
 
 function paperDollHTML(subject,opts){
   opts=opts||{};
-  var c=subject||{},size=opts.size||'equipment',accent=opts.accent||paperAccent(c),set=dominantSetState(c);
-  var label=opts.label||((c.name||'Character')+' equipment appearance');
+  var c=subject||{},size=opts.size||'equipment';
+  var label=opts.label||((c.name||'Character')+' class appearance');
   var race=c.race||(c.appearance&&c.appearance.race)||'Veyren';
   var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
-  var cls='cb-paper-doll cb-paper-doll-illustrated cb-paper-doll--'+esc(size)+(set?' has-set set-pieces-'+Math.min(4,set.count):'');
-  return '<span class="'+cls+'" style="--cbp-accent:'+accent+(set?' ;--cbp-set-glow:'+set.visual.glow:'')+'" role="img" aria-label="'+esc(label)+'" data-illustrated-race="'+esc(a.race)+'" data-model-signature="'+illustratedSignature(c)+'">'+paperDollSVG(c,opts)+'</span>';
+  var cls='cb-paper-doll cb-paper-doll-illustrated cb-paper-doll-class-v2 cb-paper-doll--'+esc(size);
+  // Deliberately ignore equipped item visuals for this phase. The same class
+  // silhouette is used in Creation, Town, Inn and the Character screen.
+  return '<span class="'+cls+'" role="img" aria-label="'+esc(label)+'" data-illustrated-race="'+esc(a.race)+'" data-model-phase="class-outfit" data-model-signature="'+illustratedSignature(c)+'">'+creatorFigureSVG({...c,appearance:a})+'</span>';
 }
 function visualProfile(subject,item,slot){
   var c=subject||{},s=slot||item?.slot||'Gear',tier=clampTier(item?.tier),pal=gearPalette(c,item,tier||1,s);
@@ -899,7 +904,7 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:20,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
+  version:21,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
   PAINTED_BODY_STANDARD:PAINTED_BODY_STANDARD,usesIllustratedBody:usesIllustratedBody,usesPaintedBody:usesPaintedBody,illustratedSignature:illustratedSignature,
   applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,characterModelHTML:characterModelHTML,worldAvatarHTML:worldAvatarHTML,worldAvatarSVG:worldAvatarSVG,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
