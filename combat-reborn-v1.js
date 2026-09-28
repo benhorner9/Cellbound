@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.14';
+const VERSION='1.3.15';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -116,12 +116,25 @@ const ABILITIES={
   {id:'anti-magic-shell',name:'Anti-Magic Shell',kind:'defensive',role:'dps',spec:'Unholy',unlockLevel:8,desc:'Wrap yourself in anti-magic energy to reduce incoming damage.',duration:8000,damageReduction:.25,gcd:0,cd:75000}
  ],
  'Demon Hunter':[
-  {id:'demons-bite',name:"Demon's Bite",kind:'damage',unlockLevel:1,desc:'Generate Fury with a quick melee strike.',range:5,damage:13,cost:0,gain:22,gcd:1000,cd:0},
-  {id:'chaos-strike',name:'Chaos Strike',kind:'damage',unlockLevel:1,desc:'Spend Fury for a powerful melee attack.',range:5,damage:27,cost:30,gcd:1000,cd:0},
-  {id:'blade-dance',name:'Blade Dance',kind:'damage',unlockLevel:1,desc:'Spin through the target and nearby enemies.',range:5,damage:18,cost:25,gcd:1000,cd:8000,cleave:2},
-  {id:'disrupt',name:'Disrupt',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast.',range:10,cost:0,gcd:0,cd:15000},
-  {id:'fel-barrage',name:'Fel Barrage',kind:'damage',unlockLevel:6,desc:'Burst through several enemies at once.',range:18,damage:32,cost:35,gcd:1000,cd:15000,cleave:3},
-  {id:'blur',name:'Blur',kind:'defensive',unlockLevel:10,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.30,gcd:0,cd:75000}
+  {id:'demons-bite',name:"Demon's Bite",kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Generate Fury with a fast warglaive strike.',range:5,damage:16,cost:0,gain:24,gcd:1000,cd:0},
+  {id:'chaos-strike',name:'Chaos Strike',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Spend Fury on a heavy chaos-infused melee strike.',range:5,damage:28,cost:30,gcd:1000,cd:0,damageType:'magic'},
+  {id:'blade-dance',name:'Blade Dance',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Dance through the target and nearby enemies with both warglaives.',range:6,damage:20,cost:25,gcd:1000,cd:8000,cleave:3},
+  {id:'throw-glaive',name:'Throw Glaive',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:4,desc:'Throw a warglaive at a distant target while repositioning.',range:20,damage:15,cost:0,gain:8,gcd:1000,cd:6000},
+  {id:'eye-beam',name:'Eye Beam',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:6,desc:'Channel fel energy through enemies in front of you.',range:18,damage:32,cost:30,gcd:1000,cast:1200,cd:18000,cleave:3,damageType:'magic'},
+  {id:'fel-barrage',name:'Fel Barrage',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Unleash a violent fel barrage across the enemy pack.',range:18,damage:38,cost:35,gcd:1000,cd:22000,cleave:4,damageType:'magic'},
+  {id:'havoc-metamorphosis',name:'Metamorphosis',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Transform and crash into the target, opening a major demonic burst window.',range:12,damage:40,cost:20,gcd:1000,cd:60000,cleave:2,damageType:'magic'},
+  {id:'blur',name:'Blur',kind:'defensive',role:'dps',spec:'Havoc',unlockLevel:10,desc:'Blur your form, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.30,gcd:0,cd:75000},
+  {id:'disrupt',name:'Disrupt',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with fel force.',range:10,cost:0,gcd:0,cd:15000},
+
+  {id:'shear',name:'Shear',kind:'damage',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Rip into the target, generating Fury and a Soul Fragment.',range:5,damage:16,cost:0,gain:18,gcd:1000,cd:0,threat:2.6},
+  {id:'soul-cleave',name:'Soul Cleave',kind:'damage',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Spend Fury and consume Soul Fragments to damage the target and heal yourself.',range:5,damage:21,cost:30,gcd:1000,cd:0,threat:2.4,damageType:'magic'},
+  {id:'infernal-strike',name:'Infernal Strike',kind:'damage',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Leap into the pack in a burst of fel fire and heavy threat.',range:15,damage:17,cost:10,gain:8,gcd:1000,cd:10000,cleave:3,threat:2.8,damageType:'magic'},
+  {id:'torment',name:'Torment',kind:'taunt',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Torment the enemy and force its attention onto the Demon Hunter.',range:30,cost:0,gcd:0,cd:8000,threat:5},
+  {id:'sigil-of-flame',name:'Sigil of Flame',kind:'damage',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Burn enemies in a fel sigil for area damage and pack threat.',range:18,damage:20,cost:12,gain:8,gcd:1000,cd:12000,cleave:3,threat:2.7,damageType:'magic'},
+  {id:'demon-spikes',name:'Demon Spikes',kind:'defensive',role:'tank',spec:'Vengeance',unlockLevel:5,desc:'Harden your body with demonic spikes to reduce incoming damage.',duration:7000,damageReduction:.25,gcd:0,cd:18000},
+  {id:'fiery-brand',name:'Fiery Brand',kind:'defensive',role:'tank',spec:'Vengeance',unlockLevel:9,desc:'Brand the enemy with fel fire while fortifying yourself against its assault.',duration:8000,damageReduction:.30,gcd:0,cd:60000},
+  {id:'spirit-bomb',name:'Spirit Bomb',kind:'damage',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Consume Soul Fragments in an explosive fel blast that also restores health.',range:10,damage:28,cost:30,gcd:1000,cd:15000,cleave:3,threat:2.9,damageType:'magic'},
+  {id:'vengeance-metamorphosis',name:'Metamorphosis',kind:'defensive',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Transform into a towering demon, restoring health and greatly reducing damage taken.',duration:10000,damageReduction:.35,selfHealPct:.18,gcd:0,cd:90000}
  ],
  Druid:[
   {id:'rejuvenation',name:'Rejuvenation',kind:'heal',role:'healer',unlockLevel:1,desc:'An efficient heal with a short healing-over-time effect.',range:30,heal:22,cost:10,gcd:1500,cast:0,cd:0,hot:8},
@@ -355,7 +368,8 @@ const TALENT_SKILL_REQUIREMENTS={
   'kill-shot':'Kill Shot','garrote':'Garrote','envenom':'Envenom','arcane-barrage':'Barrage',
   'spirit-link-totem':'Spirit Link Totem','soul-strike':'Soul Strike','felstorm':'Felstorm','summon-demonic-tyrant':'Demonic Tyrant',
   'breath-of-fire':'Breath of Fire','fortifying-brew':'Fortifying Brew','revival':'Revival','fists-of-fury':'Fists of Fury','touch-of-death':'Touch of Death',
-  'rune-tap':'Rune Tap','dancing-rune-weapon':'Dancing Rune Weapon','vampiric-blood':'Vampiric Blood','remorseless-winter':'Remorseless Winter','breath-of-sindragosa':'Breath of Sindragosa','dark-transformation':'Dark Transformation','army-of-the-dead':'Army of the Dead','apocalypse':'Apocalypse'
+  'rune-tap':'Rune Tap','dancing-rune-weapon':'Dancing Rune Weapon','vampiric-blood':'Vampiric Blood','remorseless-winter':'Remorseless Winter','breath-of-sindragosa':'Breath of Sindragosa','dark-transformation':'Dark Transformation','army-of-the-dead':'Army of the Dead','apocalypse':'Apocalypse',
+  'fel-barrage':'Fel Barrage','havoc-metamorphosis':'Metamorphosis','sigil-of-flame':'Sigil of Flame','spirit-bomb':'Spirit Bomb','vengeance-metamorphosis':'Metamorphosis'
 };
 const TALENT_RULES={
  'Shield Mastery':'More block chance and physical mitigation per rank.',
@@ -509,7 +523,24 @@ const TALENT_RULES={
  'Army of the Dead':'Unlocks Army of the Dead as an equipable undead summon.',
  'Unholy Pact':'You and your undead deal more damage while temporary undead are active.',
  'Defile':'Strengthens Death and Decay and plague pressure.',
- 'Apocalypse':'Unlocks Apocalypse, consuming wounds and summoning additional undead.'
+ 'Apocalypse':'Unlocks Apocalypse, consuming wounds and summoning additional undead.',
+ 'Demon Blades':"Increases Havoc core strike damage and improves Demon's Bite Fury generation.",
+ 'Furious Gaze':'Eye Beam grants a short haste surge.',
+ 'Initiative':'Increases Havoc opening damage.',
+ 'Soul Rending':'Heavy Havoc fel attacks restore a portion of damage dealt as health.',
+ 'First Blood':'Increases Blade Dance damage and cleave pressure.',
+ 'Fel Barrage':'Unlocks Fel Barrage as an equipable Havoc area skill.',
+ 'Demonic':'Eye Beam briefly grants a demonic damage surge.',
+ 'Chaos Theory':'Strengthens Chaos Strike and gives it a chance to refund Fury.',
+ 'Thick Skin':'Reduces physical and magical damage taken by Vengeance.',
+ 'Soul Cleave':'Increases healing from Soul Cleave and consumed Soul Fragments.',
+ 'Fracture':'Shear generates extra Fury and can create an additional Soul Fragment.',
+ 'Sigil of Flame':'Unlocks Sigil of Flame as an equipable Vengeance area-threat skill.',
+ 'Feed the Demon':'Reduces Vengeance defensive cooldowns.',
+ 'Spirit Bomb':'Unlocks Spirit Bomb, consuming Soul Fragments for area damage and healing.',
+ 'Soul Barrier':'Consuming Soul Fragments grants short additional mitigation.',
+ 'Fiery Demise':'Increases Vengeance fel and fire damage.',
+ 'Metamorphosis':'Unlocks the active Metamorphosis skill for the current Demon Hunter specialisation.'
 };
 function characterTalentRank(c,name){return Math.max(0,Number(c?.talents?.[c?.spec]?.[name])||0)}
 function talentRank(u,name){return Math.max(0,Number(u?.talentTree?.[name]??u?.original?.talents?.[u?.spec]?.[name])||0)}
@@ -578,6 +609,18 @@ function talentDamageScale(ctx,u,a,target){
    if(a.id==='death-coil'&&u.statuses?.['sudden-doom'])m*=1.18;
   }
  }
+ if(u.class==='Demon Hunter'){
+  if(u.spec==='Havoc'){
+   if(['demons-bite','chaos-strike'].includes(a.id))m*=1+talentRank(u,'Demon Blades')*.03;
+   if(Number(u.damageActions||0)===0)m*=1+talentRank(u,'Initiative')*.06;
+   if(a.id==='blade-dance')m*=1+talentRank(u,'First Blood')*.075;
+   if(a.id==='chaos-strike')m*=1+talentRank(u,'Chaos Theory')*.055;
+  }
+  if(u.spec==='Vengeance'){
+   if(a.id==='shear')m*=1+talentRank(u,'Fracture')*.05;
+   if(a.damageType==='magic'||['infernal-strike','sigil-of-flame','spirit-bomb','soul-cleave'].includes(a.id))m*=1+talentRank(u,'Fiery Demise')*.04;
+  }
+ }
  const aura=livingPlayers(ctx).find(p=>p.class==='Hunter'&&talentRank(p,'Trueshot Aura')>0);
  if(aura&&['Hunter','Mage'].includes(u.class))m*=1.05;
  return m
@@ -623,6 +666,7 @@ function talentCooldownScale(u,a){
  if(u.class==='Warlock'&&a.kind==='summon')m*=Math.max(.78,1-talentRank(u,'Master Summoner')*.07);
  if(u.class==='Monk'&&u.spec==='Windwalker'&&a.kind==='damage')m*=Math.max(.78,1-talentRank(u,'Serenity')*.055);
  if(u.class==='Death Knight'&&u.spec==='Blood'&&a.kind==='defensive')m*=Math.max(.76,1-talentRank(u,'Red Thirst')*.06);
+ if(u.class==='Demon Hunter'&&u.spec==='Vengeance'&&a.kind==='defensive')m*=Math.max(.76,1-talentRank(u,'Feed the Demon')*.07);
  return m
 }
 function talentResourceRegenScale(u){
@@ -723,7 +767,7 @@ function normalisePlayer(c,i){
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:startPosition,facing:0,
   target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:carriedStatuses(c),resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
-  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:copy(c?._combatTalentTimers||{}),talentFlags:copy(c?._combatTalentFlags||{}),talentCounters:copy(c?._combatTalentCounters||{}),damageActions:Math.max(0,Number(c?._combatDamageActions)||0),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),staggerPool:0,nextStaggerTick:0,staggerSourceId:null,lastMonkAbility:null,lastMistHealId:null,recentDamageTaken:[],dkWounds:{},
+  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:copy(c?._combatTalentTimers||{}),talentFlags:copy(c?._combatTalentFlags||{}),talentCounters:copy(c?._combatTalentCounters||{}),damageActions:Math.max(0,Number(c?._combatDamageActions)||0),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),staggerPool:0,nextStaggerTick:0,staggerSourceId:null,lastMonkAbility:null,lastMistHealId:null,recentDamageTaken:[],dkWounds:{},soulFragments:0,
   defensiveUntil:Math.max(0,Number(c?._combatDefensiveMs)||0),frenzyUntil:Math.max(0,Number(c?._combatFrenzyMs)||0),uniqueUsed:copy(c?._combatUniqueUsed||{}),nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
 }
@@ -1271,6 +1315,54 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
    if(a.id==='death-coil'&&u.statuses?.['sudden-doom'])removeStatus(ctx,u,'sudden-doom','consumed')
   }
  }
+ if(u.class==='Demon Hunter'){
+  if(u.spec==='Havoc'){
+   if(a.id==='demons-bite'&&(r=talentRank(u,'Demon Blades')))gainResource(ctx,u,{name:'Demon Blades',gain:2+r*2});
+   if(a.id==='eye-beam'){
+    if((r=talentRank(u,'Furious Gaze'))){
+     applyStatus(ctx,u,u,{id:'furious-gaze',name:'Furious Gaze',kind:'buff',duration:5000,effect:{haste:.035*r}});
+     talentTrigger(ctx,u,'Furious Gaze',u,{duration:5000})
+    }
+    if((r=talentRank(u,'Demonic'))){
+     applyStatus(ctx,u,u,{id:'demonic',name:'Demonic',kind:'buff',duration:5500,effect:{outgoingDamage:.055*r,haste:.02*r}});
+     talentTrigger(ctx,u,'Demonic',u,{duration:5500})
+    }
+   }
+   if(['chaos-strike','eye-beam','fel-barrage','havoc-metamorphosis'].includes(a.id)&&(r=talentRank(u,'Soul Rending'))){
+    const healing=Math.max(1,Math.round(dealt*(.025+.025*r)));doHeal(ctx,u,u,healing,'Soul Rending')
+   }
+   if(a.id==='chaos-strike'&&(r=talentRank(u,'Chaos Theory'))&&ctx.rng()<.12*r){
+    gainResource(ctx,u,{name:'Chaos Theory',gain:12});talentTrigger(ctx,u,'Chaos Theory',u,{fury:12})
+   }
+   if(a.id==='havoc-metamorphosis'){
+    applyStatus(ctx,u,u,{id:'metamorphosis-havoc',name:'Metamorphosis',kind:'buff',duration:10000,effect:{outgoingDamage:.18,haste:.12}});
+    talentTrigger(ctx,u,'Metamorphosis',u,{duration:10000,spec:'Havoc'})
+   }
+  }
+  if(u.spec==='Vengeance'){
+   if(a.id==='shear'){
+    const fracture=talentRank(u,'Fracture'),fragments=1+(fracture>=2?1:0);u.soulFragments=Math.min(5,Number(u.soulFragments||0)+fragments);
+    if(fracture)gainResource(ctx,u,{name:'Fracture',gain:fracture*2});
+    emit(ctx,'SOUL_FRAGMENT_CHANGED',{source:u.id,target:u.id,ability:'Shear',amount:fragments,result:'generated',position:copy(u.position),payload:{fragments:u.soulFragments}})
+   }
+   if(['infernal-strike','sigil-of-flame'].includes(a.id)&&ctx.rng()<.35){
+    u.soulFragments=Math.min(5,Number(u.soulFragments||0)+1);
+    emit(ctx,'SOUL_FRAGMENT_CHANGED',{source:u.id,target:u.id,ability:a.name,amount:1,result:'generated',position:copy(u.position),payload:{fragments:u.soulFragments}})
+   }
+   if(a.id==='soul-cleave'||a.id==='spirit-bomb'){
+    const available=Math.max(0,Number(u.soulFragments)||0),consume=a.id==='spirit-bomb'?available:Math.min(3,available),soulRank=talentRank(u,'Soul Cleave');
+    u.soulFragments=Math.max(0,available-consume);
+    const pctHeal=a.id==='spirit-bomb'?.035:.045;
+    const healing=u.maxHealth*(pctHeal+consume*(.018+soulRank*.004));
+    doHeal(ctx,u,u,healing,a.name);
+    emit(ctx,'SOUL_FRAGMENT_CHANGED',{source:u.id,target:u.id,ability:a.name,amount:consume,result:'consumed',position:copy(u.position),payload:{fragments:u.soulFragments}});
+    if((r=talentRank(u,'Soul Barrier'))&&consume>0){
+     const reduction=.03+r*.025;applyStatus(ctx,u,u,{id:'soul-barrier',name:'Soul Barrier',kind:'buff',duration:5000,effect:{incomingDamageReduction:reduction}});
+     talentTrigger(ctx,u,'Soul Barrier',u,{fragments:consume,reduction,duration:5000})
+    }
+   }
+  }
+ }
 }
 function talentAfterHeal(ctx,u,a,target,effective){
  if(!u?.alive||!target?.alive||effective<=0||a.kind!=='heal')return;
@@ -1445,6 +1537,7 @@ function mitigation(ctx,target,damageType='physical',opts={}){
  value*=1-clamp(statusBonus(target,'incomingDamageReduction'),0,.70);
  value*=1+clamp(statusBonus(target,'incomingDamageTaken'),0,2.5);
  if(target.class==='Monk'&&target.spec==='Brewmaster')value*=Math.max(.84,1-talentRank(target,'Elusive Brawler')*.018);
+ if(target.class==='Demon Hunter'&&target.spec==='Vengeance')value*=Math.max(.78,1-talentRank(target,'Thick Skin')*.022);
  return Math.max(.28,value);
 }
 
