@@ -601,3 +601,104 @@ body.inn-character-open{overflow:hidden}
 .inn-adventurer .inn-name{
   display:none!important
 }
+
+
+/* Lantern Inn Asset Lighting + Party Staging V4
+   The supplied background, door, bar and table remain independent layers.
+   Only their presentation is graded here so they sit in the same warm room light. */
+.inn-object-art{
+  transform:translateZ(0);
+  transform-origin:50% 50%;
+  will-change:filter,transform;
+}
+.inn-object-door .inn-object-art{
+  filter:
+    brightness(.78)
+    saturate(.82)
+    sepia(.16)
+    hue-rotate(-7deg)
+    contrast(1.06)
+    drop-shadow(0 10px 11px rgba(0,0,0,.32));
+}
+.inn-object-bar .inn-object-art{
+  filter:
+    brightness(.81)
+    saturate(.86)
+    sepia(.14)
+    hue-rotate(-8deg)
+    contrast(1.05)
+    drop-shadow(0 13px 13px rgba(0,0,0,.34));
+}
+.inn-object-table .inn-object-art{
+  filter:
+    brightness(.76)
+    saturate(.84)
+    sepia(.18)
+    hue-rotate(-9deg)
+    contrast(1.07)
+    drop-shadow(0 14px 12px rgba(0,0,0,.36));
+}
+/* Selected objects brighten from their graded state rather than snapping back
+   to the raw asset, preserving the room lighting while keeping the gold cue. */
+.inn-object-door:is(:hover,:focus-visible,.is-selected) .inn-object-art{
+  filter:
+    brightness(.89)
+    saturate(.92)
+    sepia(.13)
+    hue-rotate(-7deg)
+    contrast(1.07)
+    drop-shadow(0 10px 11px rgba(0,0,0,.32));
+}
+.inn-object-bar:is(:hover,:focus-visible,.is-selected) .inn-object-art{
+  filter:
+    brightness(.92)
+    saturate(.95)
+    sepia(.12)
+    hue-rotate(-8deg)
+    contrast(1.06)
+    drop-shadow(0 13px 13px rgba(0,0,0,.34));
+}
+.inn-object-table:is(:hover,:focus-visible,.is-selected) .inn-object-art{
+  filter:
+    brightness(.88)
+    saturate(.93)
+    sepia(.15)
+    hue-rotate(-9deg)
+    contrast(1.08)
+    drop-shadow(0 14px 12px rgba(0,0,0,.36));
+}
+/* Keep the duplicate transparent sprite solely as the precise selection mask. */
+.inn-object-glow{
+  mix-blend-mode:screen;
+  transform:scale(1.025);
+}
+.inn-scene-object.is-selected .inn-object-glow{
+  opacity:.88;
+  filter:
+    brightness(0)
+    saturate(100%)
+    invert(72%)
+    sepia(67%)
+    saturate(930%)
+    hue-rotate(348deg)
+    brightness(116%)
+    contrast(98%)
+    blur(15px);
+}
+/* Five active adventurers get deliberate readable places in the room.
+   The two table-side slots remain behind the supplied table layer so its real
+   silhouette handles occlusion; the other three stand fully on open floor. */
+.inn-adventurer[data-location-slot="left-floor"] .inn-figure,
+.inn-adventurer[data-location-slot="hearth-floor"] .inn-figure,
+.inn-adventurer[data-location-slot="right-floor"] .inn-figure{
+  filter:drop-shadow(0 10px 8px rgba(0,0,0,.48)) brightness(.94) saturate(.94);
+}
+.inn-adventurer[data-location-slot="table-left"] .inn-figure,
+.inn-adventurer[data-location-slot="table-right"] .inn-figure{
+  filter:drop-shadow(0 8px 7px rgba(0,0,0,.42)) brightness(.91) saturate(.92);
+}
+.inn-adventurer[data-location-slot="left-floor"]{--inn-scale-wide:.97}
+.inn-adventurer[data-location-slot="hearth-floor"]{--inn-scale-wide:.94}
+.inn-adventurer[data-location-slot="table-left"],
+.inn-adventurer[data-location-slot="table-right"]{--inn-scale-wide:1}
+.inn-adventurer[data-location-slot="right-floor"]{--inn-scale-wide:.98}
