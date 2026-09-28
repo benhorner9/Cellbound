@@ -84,6 +84,28 @@ const SET_BONUS_RULES={
   pieces4:{threshold:4,name:'Talent Ensemble'}
 };
 const BUILD=window.CellboundBuildRules;
+const SPEC_SET_BONUSES={
+  'Priest|Holy':{
+    4:{
+      pieces2:{threshold:2,name:'Saintglass Benediction',short:'+5% Holy healing',description:'Holy healing is increased while Holy is active.',effects:{healingScale:1.05}},
+      pieces4:{threshold:4,name:'Seraphic Insight',short:'+8% Mana recovery · +3% haste',description:'Mana recovery and casting speed improve, and talent-unlocked Holy skills recover 10% faster.',effects:{resourceRegen:1.08,haste:.03,talentSkillCooldownScale:.90}}
+    },
+    5:{
+      pieces2:{threshold:2,name:'Attic Veil Benediction',short:'+7% Holy healing',description:'Raid vestments deepen Holy healing while Holy is active.',effects:{healingScale:1.07}},
+      pieces4:{threshold:4,name:'Veilborne Insight',short:'+12% Mana recovery · +4% haste',description:'Mana recovery and casting speed improve, and talent-unlocked Holy skills recover 15% faster.',effects:{resourceRegen:1.12,haste:.04,talentSkillCooldownScale:.85}}
+    }
+  },
+  'Priest|Shadow':{
+    4:{
+      pieces2:{threshold:2,name:'Saintglass Whispers',short:'+8% lingering Shadow damage',description:'Damage-over-time effects from Shadow Priest skills deal 8% more damage.',effects:{periodicDamageScale:1.08}},
+      pieces4:{threshold:4,name:'Voidbound Insight',short:'+12% Insanity generation · 10% faster talent skills',description:'Insanity generation improves and talent-unlocked Shadow skills recover 10% faster.',effects:{resourceGainScale:1.12,talentSkillCooldownScale:.90,critBonus:.03}}
+    },
+    5:{
+      pieces2:{threshold:2,name:'Attic Veil Whispers',short:'+12% lingering Shadow damage',description:'Raid vestments increase Shadow damage-over-time effects by 12%.',effects:{periodicDamageScale:1.12}},
+      pieces4:{threshold:4,name:'Voidborne Ascendance',short:'+16% Insanity generation · 15% faster talent skills',description:'Insanity generation improves and talent-unlocked Shadow skills recover 15% faster during endgame combat.',effects:{resourceGainScale:1.16,talentSkillCooldownScale:.85,critBonus:.04}}
+    }
+  }
+};
 function setTier(item){
   const tier=Math.max(1,Number(item?.tier)||0);
   if(tier>=5)return 5;
@@ -105,7 +127,8 @@ function setBonusRulesFor(characterOrClass,specArg=null,item=null){
   const roleExtra=role==='healer'?{haste}:{critBonus:crit};
   const roleShort=role==='healer'?'+'+Math.round((fourRegen-1)*100)+'% recovery · +'+Math.round(haste*100)+'% haste':'+'+Math.round((fourRegen-1)*100)+'% recovery · '+Math.round((1-talentCd)*100)+'% faster talent skills';
   const pieces4={threshold:4,name:prefix+' Mastery',short:roleShort,description:'Resource recovery improves and talent-unlocked skills recover faster, rewarding a committed specialisation build.',effects:{resourceRegen:fourRegen,talentSkillCooldownScale:talentCd,...roleExtra}};
-  return{pieces2,pieces4,role,tier,spec,klass}
+  const bespoke=SPEC_SET_BONUSES[klass+'|'+spec]?.[tier];
+  return{...(bespoke||{pieces2,pieces4}),role,tier,spec,klass}
 }
 function setPieceCount(c,setId){
   if(!c||!setId)return 0;
@@ -362,5 +385,5 @@ function artHTML(item,size=64,extra=''){
   const slotClass='gear-slot-'+slug(canonical.slot||'item'),classClass='gear-class-'+slug(canonical.class||'all');
   return `<span class="gear-art tier-${canonical.tier||1} ${slotClass} ${classClass} ${extra}" data-gear-fit="${fit.toFixed(3)}" style="${artStyle(canonical,size)}" aria-label="${canonical.name}" title="${canonical.name}"><span class="gear-art-fallback" aria-hidden="true">${glyph}</span><span class="gear-art-cell" aria-hidden="true" style="position:absolute;overflow:hidden;width:${cell}px;height:${cell}px;left:${inset}px;top:${inset}px"><img class="gear-art-sprite" src="./assets/gear/cellbound-gear-atlas.webp?v=4" alt="" draggable="false" onerror="this.style.display='none'" style="position:absolute;max-width:none;width:${21*cell}px;height:${3*cell}px;left:-${pos.col*cell}px;top:-${pos.row*cell}px"></span></span>`;
 }
-window.CellboundGear={CLASS_ORDER,CORE_SLOT_ORDER,SLOT_ORDER,EQUIPMENT_POSITION_ORDER,SLOT_GLYPHS,TIER_META,ITEM_LEVELS,CHAPTER_GEAR,STAT_DEFS,SLOT_STAT_BUDGET,STAT_TYPE_BUDGET,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,SET_BONUS_RULES,setBonusRulesFor,setPieceCount,setBonusState,setBonusLines,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,effectiveStatBudget,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,questProfileStats,createQuestGear,inferWeaponType,inferOffHandType,equipmentPositions,canEquipInSlot,artFit,artStyle,artHTML};
+window.CellboundGear={CLASS_ORDER,CORE_SLOT_ORDER,SLOT_ORDER,EQUIPMENT_POSITION_ORDER,SLOT_GLYPHS,TIER_META,ITEM_LEVELS,CHAPTER_GEAR,STAT_DEFS,SLOT_STAT_BUDGET,STAT_TYPE_BUDGET,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,SET_BONUS_RULES,SPEC_SET_BONUSES,setBonusRulesFor,setPieceCount,setBonusState,setBonusLines,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,effectiveStatBudget,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,questProfileStats,createQuestGear,inferWeaponType,inferOffHandType,equipmentPositions,canEquipInSlot,artFit,artStyle,artHTML};
 })();
