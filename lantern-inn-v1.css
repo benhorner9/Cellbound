@@ -1376,3 +1376,26 @@ body.inn-character-open{overflow:hidden}
     width:42.4%!important;
   }
 }
+
+
+/* ==========================================================================
+   Lantern Inn Door Exit Camera V12
+   Exit travel now locks onto the physical door before the scene fades.
+   ========================================================================== */
+.inn-world.is-leaving-to-town .inn-scene-stage{
+  /* Current supplied door centre is approximately 15.6% / 11.1% of the stage. */
+  transform-origin:15.6% 11.1%!important;
+  transform:translate(34.4%,35%) scale(2.8)!important;
+  filter:brightness(.78) saturate(.94)!important;
+}
+.inn-world.is-leaving-to-town .inn-selection-panel{
+  opacity:0!important;
+  pointer-events:none!important;
+  transition:opacity .14s ease!important;
+}
+@media(max-width:600px){
+  .inn-world.is-leaving-to-town .inn-scene-stage{
+    transform-origin:15.6% 11.1%!important;
+    transform:translate(34.4%,35%) scale(2.8)!important;
+  }
+}
