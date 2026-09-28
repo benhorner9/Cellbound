@@ -655,7 +655,7 @@ function normalisePlayer(c,i){
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:startPosition,facing:0,
   target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:carriedStatuses(c),resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
-  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:copy(c?._combatTalentTimers||{}),talentFlags:copy(c?._combatTalentFlags||{}),talentCounters:copy(c?._combatTalentCounters||{}),damageActions:Math.max(0,Number(c?._combatDamageActions)||0),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),
+  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:copy(c?._combatTalentTimers||{}),talentFlags:copy(c?._combatTalentFlags||{}),talentCounters:copy(c?._combatTalentCounters||{}),damageActions:Math.max(0,Number(c?._combatDamageActions)||0),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),staggerPool:0,nextStaggerTick:0,staggerSourceId:null,lastMonkAbility:null,lastMistHealId:null,
   defensiveUntil:Math.max(0,Number(c?._combatDefensiveMs)||0),frenzyUntil:Math.max(0,Number(c?._combatFrenzyMs)||0),uniqueUsed:copy(c?._combatUniqueUsed||{}),nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
 }
@@ -1269,7 +1269,35 @@ function mitigation(ctx,target,damageType='physical',opts={}){
  if(target.defensiveUntil>0)value*=target.role==='tank'?.66:.74;
  value*=1-clamp(statusBonus(target,'incomingDamageReduction'),0,.70);
  value*=1+clamp(statusBonus(target,'incomingDamageTaken'),0,2.5);
+ if(target.class==='Monk'&&target.spec==='Brewmaster')value*=Math.max(.84,1-talentRank(target,'Elusive Brawler')*.018);
  return Math.max(.28,value);
+}
+
+function monkStaggerShare(target,damageType='physical'){
+ if(target?.class!=='Monk'||target?.spec!=='Brewmaster')return 0;
+ const high=talentRank(target,'High Tolerance');
+ return damageType==='magic'?Math.min(.24,.10+high*.03):Math.min(.48,.30+high*.05)
+}
+function addMonkStagger(ctx,source,target,damage,damageType='physical'){
+ const share=monkStaggerShare(target,damageType);
+ if(share<=0||damage<=1)return damage;
+ const delayed=Math.max(1,Math.round(damage*share)),immediate=Math.max(1,Math.round(damage-delayed));
+ target.staggerPool=Math.max(0,Number(target.staggerPool)||0)+delayed;
+ target.staggerSourceId=source?.id||target.staggerSourceId;
+ if(!target.nextStaggerTick||target.nextStaggerTick<=ctx.time)target.nextStaggerTick=ctx.time+1000;
+ emit(ctx,'STAGGER_CHANGED',{source:source?.id||null,target:target.id,ability:'Stagger',amount:delayed,result:'added',position:copy(target.position),payload:{pool:Math.round(target.staggerPool),poolPct:pct(target.staggerPool,target.maxHealth),immediate,damageType}});
+ return immediate
+}
+function tickMonkStagger(ctx){
+ ctx.players.filter(u=>u.alive&&u.class==='Monk'&&u.spec==='Brewmaster'&&Number(u.staggerPool)>0).forEach(u=>{
+  if(ctx.time<Number(u.nextStaggerTick||0))return;
+  const shuffle=talentRank(u,'Shuffle'),ratio=.22*Math.max(.72,1-shuffle*.08);
+  const release=Math.max(1,Math.min(Math.round(u.staggerPool),Math.round(u.staggerPool*ratio)));
+  u.staggerPool=Math.max(0,u.staggerPool-release);u.nextStaggerTick=ctx.time+1000;
+  const source=getUnit(ctx,u.staggerSourceId)||livingEnemies(ctx)[0]||{id:'stagger',name:'Stagger',role:'enemy',alive:true};
+  dealDamage(ctx,source,u,release,'Stagger',{damageType:'physical',avoidable:false,ignoreMitigation:true,ignoreStagger:true,staggerTick:true});
+  emit(ctx,'STAGGER_CHANGED',{source:source.id,target:u.id,ability:'Stagger',amount:release,result:'released',position:copy(u.position),payload:{pool:Math.round(u.staggerPool),poolPct:pct(u.staggerPool,u.maxHealth)}})
+ })
 }
 
 function dealDamage(ctx,source,target,amount,ability,opts={}){
@@ -1277,8 +1305,11 @@ function dealDamage(ctx,source,target,amount,ability,opts={}){
  if(ctx?.encounter?.focusSelectedDamageOnly&&source.role!=='enemy'&&target.role==='enemy'&&!target.focusSelected)return 0;
  let final=Math.max(0,amount);
  if(target.role!=='enemy'){
-  const mitigationOpts={...opts};final*=mitigation(ctx,target,opts.damageType||'physical',mitigationOpts);if(mitigationOpts.blocked)opts.blocked=true;
+  if(!opts.ignoreMitigation){
+   const mitigationOpts={...opts};final*=mitigation(ctx,target,opts.damageType||'physical',mitigationOpts);if(mitigationOpts.blocked)opts.blocked=true;
+  }
   final=Math.max(1,Math.round(final));
+  if(!opts.ignoreStagger&&target.class==='Monk'&&target.spec==='Brewmaster')final=addMonkStagger(ctx,source,target,final,opts.damageType||'physical');
   const projectedHp=target.health-final;
   const crossesLow=healthRatio(target)>.30&&(projectedHp/Math.max(1,target.maxHealth))<.30;
   if(target.class==='Warrior'&&target.spec==='Protection'&&talentRank(target,'Last Stand')&&!target.talentFlags.lastStand&&crossesLow){
@@ -1321,6 +1352,13 @@ function dealDamage(ctx,source,target,amount,ability,opts={}){
   const st=ctx.stats.players[target.id];if(st){st.damageTaken+=dealt;if(opts.avoidable)st.avoidableDamage+=dealt}
   if(target.alive&&dealt>0&&target.class==='Warrior'&&target.spec==='Protection'&&talentRank(target,'Vengeance')){
    const r=talentRank(target,'Vengeance');applyStatus(ctx,target,target,{id:'vengeance-talent',name:'Vengeance',kind:'buff',duration:4500,effect:{outgoingDamage:.04*r}})
+  }
+  if(target.alive&&dealt>0&&target.class==='Monk'&&target.spec==='Brewmaster'&&talentRank(target,'Gift of the Ox')){
+   const r=talentRank(target,'Gift of the Ox');target.talentCounters.giftOx=(Number(target.talentCounters.giftOx)||0)+dealt;
+   if(target.talentCounters.giftOx>=target.maxHealth*.24){
+    target.talentCounters.giftOx=0;const heal=Math.max(1,Math.round(target.maxHealth*(.035+r*.018)));
+    doHeal(ctx,target,target,heal,'Gift of the Ox');talentTrigger(ctx,target,'Gift of the Ox',target,{healing:heal})
+   }
   }
  }
  if(opts.blocked&&target.alive){
@@ -2379,7 +2417,7 @@ function simulate(options={}){
   }
   if(!livingEnemies(ctx).length&&ctx.pendingResurrections<=0&&ctx.pendingHazards<=0){outcome='victory';break}
   if(!livingPlayers(ctx).length){outcome='defeat';break}
-  checkBossPhases(ctx);tickCooldowns(ctx);passiveResources(ctx);tickPets(ctx);
+  checkBossPhases(ctx);tickCooldowns(ctx);passiveResources(ctx);tickMonkStagger(ctx);tickPets(ctx);
   players.forEach(u=>playerAI(ctx,u));
   enemies.forEach(e=>{if(e.alive&&ctx.time>=e.nextAttack)enemyBasicAttack(ctx,e)});
   ctx.time+=TICK;
