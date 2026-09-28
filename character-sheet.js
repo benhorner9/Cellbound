@@ -547,7 +547,7 @@ function talentTree(c,spec){
   }).join('');
   return `<div class="cb-talent-command-v2">
     <section class="cb-talent-command-hero">
-      <div><small>CLASS TALENTS · ${c.class.toUpperCase()}</small><h3>${spec}</h3><p>${role} specialisation · Build through five tiers. Locked talents can still be inspected before you commit.</p></div>
+      <div><small>CLASS TALENTS · ${c.class.toUpperCase()}</small><h3>${spec}</h3><p>${role} specialisation · Build through five tiers. Locked talents can still be inspected before you commit.</p><div class="cb-spec-activate-row">${spec===c.spec?'<span class="cb-spec-active-pill">ACTIVE SPECIALISATION</span>':`<button type="button" class="cb-activate-spec" data-activate-spec="${spec}">ACTIVATE ${spec.toUpperCase()}</button>`}</div></div>
       <div class="cb-talent-command-metrics">
         <div><span>AVAILABLE</span><b>${c.talent||0}</b><small>Talent points</small></div>
         <div><span>SPENT</span><b>${spent}</b><small>In ${spec}</small></div>
