@@ -208,7 +208,7 @@ function normalizeCharacter(c,index=0){
     const validIds=new Set(combat.skills.classSkillPool(c,combatRole).map(skill=>skill.id));
     if(!savedLoadout.some(id=>validIds.has(id)))c.skillLoadouts[c.spec]=combat.skills.defaultSkillLoadout(c,combatRole);
   }
-  const classBuff=combat?.CLASS_BUFFS?.[c.class];if(classBuff&&!c.buffSkill)c.buffSkill=classBuff.id;
+  const classBuff=combat?.CLASS_BUFFS?.[c.class];if(classBuff)c.buffSkill=classBuff.id;
   const starters=starterEquipment(c.class);
   ILVL_SLOTS.forEach(slot=>{
     const hasSlot=Object.prototype.hasOwnProperty.call(c.equipment,slot),existing=canonicalItem(c.equipment?.[slot]);
