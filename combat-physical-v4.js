@@ -199,13 +199,33 @@ function family(e,u){
  for(const [re,value] of [[/frost|ice/,'frost'],[/fire|flame/,'fire'],[/lightning|chain/,'lightning'],[/fel|demon|shadow|drain/,'shadow'],[/plate/,'plate'],[/nail/,'steel'],[/collapse|shattered floor|falling beam/,'rubble']])if(re.test(a))return value;
  return u?.p.projectile||'hostile'
 }
+function anchorPoint(scene,el,bounds=scene.arena.getBoundingClientRect()){
+ if(!el?.isConnected)return null;
+ const tracked=scene.units.get(el),p=tracked?.position;
+ if(Number.isFinite(Number(p?.x))&&Number.isFinite(Number(p?.y))){
+  return{x:bounds.left+clamp(Number(p.x),0,100)/100*bounds.width,y:bounds.top+clamp(Number(p.y),0,100)/100*bounds.height}
+ }
+ const a=actor(el),r=a?.getBoundingClientRect?.();
+ if(!r||(!r.width&&!r.height))return null;
+ const x=r.left+r.width/2,y=r.top+r.height/2;
+ if(!Number.isFinite(x)||!Number.isFinite(y))return null;
+ return{x,y}
+}
 function effect(scene,cls,source,target,life=320,allowUnanchored=false){
- // Never create an FX node at the layer origin unless the caller is about to
- // position it explicitly. Missing actor resolution used to leave effects at 0,0.
+ // Anchored FX must receive geometry before they enter the DOM. Previously the
+ // browser could paint one frame at 0,0 before the animation loop positioned it.
  if(!allowUnanchored&&!source&&!target)return null;
  if(scene.effects.size>=36)return null;
- const n=document.createElement('i');n.className='cbl-fx '+cls;scene.layer.appendChild(n);
- const fx={n,source,target,ends:performance.now()+life/scene.speed};scene.effects.add(fx);return fx
+ const bounds=scene.arena.getBoundingClientRect(),tp=target?anchorPoint(scene,target,bounds):null,sp=source?anchorPoint(scene,source,bounds):null;
+ if(!allowUnanchored&&!tp&&!sp)return null;
+ const n=document.createElement('i');n.className='cbl-fx '+cls;
+ const connection=n.classList.contains('connection'),a=sp||tp,b=tp||sp;
+ if(a&&b){
+  const d=direction(a,b);
+  n.style.left=(connection?a.x:b.x)-bounds.left+'px';n.style.top=(connection?a.y:b.y)-bounds.top+'px';
+  if(connection){n.style.width=d.len+'px';n.style.setProperty('--cbl-angle',d.angle+'deg')}
+ }
+ const fx={n,source,target,ends:performance.now()+life/scene.speed};scene.layer.appendChild(n);scene.effects.add(fx);return fx
 }
 function clearCast(u){if(!u)return;u.cast?.orb?.remove();u.cast?.beam?.remove();u.cast=null;u.el.classList.remove('cbl-casting');u.el.style.removeProperty('--cbl-charge')}
 function strike(scene,u,t,e,heal=false){
@@ -308,7 +328,7 @@ function frame(){
   for(const entry of scene.warnings.values())if(now-entry.start>=entry.duration*.7)for(const n of entry.nodes)n.dataset.phase='imminent';
   for(const h of scene.hazards.values())if(now>=h.end-900/scene.speed)h.node.dataset.phase='expiring';
   const bounds=arena.getBoundingClientRect(),positions=new Map();
-  const pos=el=>{if(!positions.has(el))positions.set(el,center(el));return positions.get(el)};
+  const pos=el=>{if(!positions.has(el))positions.set(el,anchorPoint(scene,el,bounds)||center(el));return positions.get(el)};
   for(const [el,u] of scene.units){if(el.isConnected)pos(el);if(u.target?.isConnected)pos(u.target)}
   for(const [el,u] of scene.units){
    if(!el.isConnected){scene.units.delete(el);continue}
