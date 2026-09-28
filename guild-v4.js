@@ -69,7 +69,10 @@ const classes={
     Restoration:{role:'healer',talents:['Tidal Focus','Totemic Mastery','Ascendant Tide']},
     Elemental:{role:'dps',talents:['Elemental Fury','Lava Surge','Ascendance']}
   }},
-  Warlock:{icon:'✺',glow:'#8788EE',specs:{Demonology:{role:'dps',talents:['Demonic Bond','Fel Knowledge','Demonic Tyrant']}}},
+  Warlock:{icon:'✺',glow:'#8788EE',specs:{
+    Demonology:{role:'dps',talents:['Demonic Bond','Fel Knowledge','Demonic Tyrant']},
+    Destruction:{role:'dps',talents:['Eradication','Backdraft','Summon Infernal']}
+  }},
   Monk:{icon:'☯',glow:'#00FF98',specs:{
     Brewmaster:{role:'tank',talents:['High Tolerance','Elusive Brawler','Fortifying Brew']},
     Mistweaver:{role:'healer',talents:['Mist Wrap','Lifecycles','Revival']},
