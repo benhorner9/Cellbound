@@ -328,7 +328,7 @@ for(const file of files){
     if(!contents.includes('item-art-v1.css?v=1')||!contents.includes('item-art-v1.js?v=1'))throw new Error('Complete item artwork assets are not linked from guild.html');
     if(!contents.includes('economy-v2.css?v=8')||!contents.includes('profession-data.js?v=9')||!contents.includes('guild-v4.js?v=52')||!contents.includes('economy-v2.js?v=13'))throw new Error('Profession Workshop V2 cache versions are stale in guild.html');
     if(!contents.includes('endgame-v1.css?v=5')||!contents.includes('endgame-v1.js?v=7'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
-    if(!contents.includes('character-art-v2.js?v=1')||!contents.includes('character-portraits-v1.css?v=11')||!contents.includes('character-portraits-v1.js?v=17'))throw new Error('Unified illustrated character assets are not linked from guild.html');
+    if(!contents.includes('character-art-v2.js?v=1')||!contents.includes('character-portraits-v1.css?v=12')||!contents.includes('character-portraits-v1.js?v=18'))throw new Error('Unified illustrated character assets are not linked from guild.html');
     const portraitCss=fs.readFileSync(path.join(__dirname,'character-portraits-v1.css'),'utf8');
     const portraitJs=fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8');
     for(const race of ['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'])if(!portraitJs.includes(race+':{'))throw new Error('Illustrated character race support missing: '+race);
@@ -338,7 +338,7 @@ for(const file of files){
     const worldContract=portraitJs.slice(portraitJs.indexOf('function worldAvatarHTML'),portraitJs.indexOf('function paperDollHTML'));
     const dollContract=portraitJs.slice(portraitJs.indexOf('function paperDollHTML'),portraitJs.indexOf('function visualProfile'));
     if(!worldContract.includes('creatorFigureSVG')||worldContract.includes('paintedBodyHTML')||worldContract.includes('WORLD_AVATAR_CLASSES.has'))throw new Error('World characters must use the same canonical illustrated model as Character Creation');
-    if(!dollContract.includes('paperDollSVG')||dollContract.includes('paintedBodyHTML'))throw new Error('Equipment characters must use the live gear-aware illustrated model');
+    if(!dollContract.includes('creatorFigureSVG')||!dollContract.includes('data-model-phase="class-outfit"')||dollContract.includes('paintedBodyHTML'))throw new Error('Equipment characters must use the canonical race + class model during the class-outfit phase');
     for(const fn of ['paperHeadMarkup','paperShoulders','paperChest','paperArms','paperWaist','paperLegs','paperFeet','paperWeapon','paperOffHand','paperAccessories'])if(!portraitJs.includes('function '+fn))throw new Error('Gear-aware model layer missing: '+fn);
     if(!portraitCss.includes('Unified Illustrated Character Runtime')||!portraitCss.includes('.cb-paper-doll-illustrated')||!portraitCss.includes('.cb-world-avatar-illustrated'))throw new Error('Illustrated character presentation CSS is missing');
     const innCss=fs.readFileSync(path.join(__dirname,'lantern-inn-v1.css'),'utf8');
