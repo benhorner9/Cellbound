@@ -97,7 +97,7 @@ for(const file of files){
     if(!contents.includes('CHAPTER_GEAR={chapter:1,levelCap:15,dungeonTierCeiling:4,raidExclusiveTier:5}'))throw new Error('Chapter 1 gear contract is missing');
     if(!contents.includes("SLOT_ORDER=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring','Trinket','Relic']"))throw new Error('Full Chapter 1 equipment slot catalogue is missing');
     if(!contents.includes('const SLOT_STAT_BUDGET=')||!contents.includes('function effectiveStatBudget'))throw new Error('14-slot combat stat budgeting is missing');
-    if(!contents.includes('[1,2,3,4].forEach(tier=>'))throw new Error('Generic gear catalogue must stop at Tier 4');
+    if(!contents.includes('[1,2,3,4,5].forEach(tier=>'))throw new Error('Central gear catalogue must include raid-exclusive Tier 5 templates');
     if(!contents.includes('const SET_BONUS_RULES=')||!contents.includes('function setPieceCount')||!contents.includes('function setBonusState')||!contents.includes('function setBonusLines'))throw new Error('Shared equipment set bonus rules are missing');
   }
   if(file==='endgame-data-v1.js'){
@@ -470,7 +470,8 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   if(G.items.filter(x=>x.slot==='OffHand').some(x=>!x.offHandType))throw new Error('Off-hand item missing character visual type');
   const weaponProbe=G.items.find(x=>x.slot==='Weapon'),offhandProbe=G.items.find(x=>x.slot==='OffHand');
   if(!weaponProbe||!offhandProbe||G.canEquipInSlot(weaponProbe,'OffHand')||!G.canEquipInSlot(weaponProbe,'Weapon')||!G.canEquipInSlot(offhandProbe,'OffHand')||G.canEquipInSlot(offhandProbe,'Weapon'))throw new Error('Weapon and OffHand compatibility contract failed');
-  if(G.items.some(x=>Number(x.tier)>=5))throw new Error('Generic gear catalogue contains raid-exclusive Tier 5 items');
+  if(G.items.filter(x=>Number(x.tier)===5).length!==G.CLASS_ORDER.length*requiredSlots.length)throw new Error('Tier 5 catalogue must contain the full raid slot catalogue for every current class');
+  if(G.items.filter(x=>Number(x.tier)===5).some(x=>!x.raidExclusive))throw new Error('Every Tier 5 catalogue item must remain raid-exclusive');
   if(G.items.filter(x=>Number(x.tier)===4).length!==G.CLASS_ORDER.length*requiredSlots.length)throw new Error('Tier 4 catalogue must contain the full Chapter 1 slot catalogue for every current class');
   if(!G.TIER_META?.[5]?.raidExclusive)throw new Error('Tier 5 is not marked raid-exclusive');
   const fractured=D.lootProfileFor('fractured-ages','normal',0),peak=D.lootProfileFor('chaos-canyon','cellbound',20);
