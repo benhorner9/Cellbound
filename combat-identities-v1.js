@@ -4,7 +4,7 @@
 const ROLE_MAP={
   Warrior:{Protection:'tank',Arms:'dps'},
   Paladin:{Protection:'tank',Holy:'healer'},
-  Priest:{Holy:'healer'},
+  Priest:{Holy:'healer',Shadow:'dps'},
   Druid:{Restoration:'healer'},
   Hunter:{Marksman:'dps'},
   Rogue:{Assassination:'dps'},
@@ -91,6 +91,12 @@ const SPECS={
       strength:'Best burst recovery when several allies are in danger.',
       tradeoff:'Large recovery windows generate noticeably more healing threat.',
       damage:.78,threat:1,healing:1.04,healThreat:1.12,groupHeal:.20,physicalTaken:1.04
+    },
+    Shadow:{
+      title:'Void Prophet',
+      strength:'Builds Insanity through ranged shadow pressure, then converts it into heavy damage-over-time and Void burst windows.',
+      tradeoff:'Damage ramps through resource generation and lingering effects, so frequent target deaths or poor spender timing reduce output.',
+      damage:1.07,threat:.94,cooldown:.98,physicalTaken:1.05,magicTaken:.90,cleave:.18,execute:.12
     }
   },
   Druid:{
