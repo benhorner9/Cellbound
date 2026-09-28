@@ -1022,3 +1022,105 @@ body.inn-character-open{overflow:hidden}
   }
   .inn-adventurer:before{width:38px!important}
 }
+
+
+/* Lantern Inn Party Around Table + Rear Bar V8
+   Active party gathers around the Party Table. Reserve characters occupy
+   separate places around the Inn. */
+
+/* Move the bar almost fully back to the rear-right wall. */
+.inn-object-bar{
+  left:65.2%!important;
+  top:10.8%!important;
+  width:31.6%!important;
+  z-index:46!important;
+}
+.inn-object-bar .inn-object-art{
+  filter:brightness(.89) saturate(.89) sepia(.09) hue-rotate(-6deg) contrast(1.04)
+    drop-shadow(0 7px 8px rgba(0,0,0,.34))!important;
+}
+
+/* Party grouping: three characters sit/stand behind the table and two occupy
+   the near corners in front, so all five clearly read as the active party. */
+.inn-adventurer[data-location-slot="party-back-left"] .inn-figure,
+.inn-adventurer[data-location-slot="party-back-centre"] .inn-figure,
+.inn-adventurer[data-location-slot="party-back-right"] .inn-figure{
+  filter:brightness(.88) saturate(.90) drop-shadow(0 5px 5px rgba(0,0,0,.42))!important;
+}
+.inn-adventurer[data-location-slot="party-front-left"] .inn-figure,
+.inn-adventurer[data-location-slot="party-front-right"] .inn-figure{
+  filter:brightness(.92) saturate(.92) drop-shadow(0 7px 6px rgba(0,0,0,.47))!important;
+}
+
+/* Reserve characters are deliberately scattered around the room and read a
+   little quieter than the travelling five. */
+.inn-resting{
+  display:block!important;
+  filter:brightness(.82) saturate(.84)!important;
+}
+.inn-adventurer[data-location-slot^="reserve-"] .inn-figure{
+  filter:brightness(.80) saturate(.84) drop-shadow(0 5px 5px rgba(0,0,0,.38))!important;
+}
+
+/* The rear bar reserve is partially occluded by the bar asset. */
+.inn-adventurer[data-location-slot="reserve-bar"]{
+  z-index:44!important;
+}
+
+/* Party members keep the clearer travelling treatment. */
+.inn-traveller{
+  filter:none!important;
+}
+
+/* Keep actors compact in this environment. */
+.inn-adventurer{
+  width:70px!important;
+  height:122px!important;
+  min-height:122px!important;
+}
+.inn-figure{
+  width:76px!important;
+  height:132px!important;
+}
+.inn-illustrated-model,
+.inn-fallback-model{width:70px!important}
+.inn-illustrated-model .inn-figure{
+  width:76px!important;
+  height:132px!important;
+}
+.inn-illustrated-model .cb-world-avatar-illustrated{
+  width:76px!important;
+  height:132px!important;
+}
+.inn-adventurer:before{width:40px!important;height:6px!important}
+
+@media(max-width:600px){
+  .inn-object-bar{
+    left:64.8%!important;
+    top:10.5%!important;
+    width:32.2%!important;
+  }
+  /* Reserves remain visible on mobile; the new staging is intentionally part
+     of the Inn's ambience rather than something hidden behind the roster. */
+  .inn-resting{display:block!important}
+  .inn-adventurer{
+    width:58px!important;
+    height:102px!important;
+    min-height:102px!important;
+  }
+  .inn-figure{
+    width:62px!important;
+    height:108px!important;
+  }
+  .inn-illustrated-model,
+  .inn-fallback-model{width:58px!important}
+  .inn-illustrated-model .inn-figure{
+    width:62px!important;
+    height:108px!important;
+  }
+  .inn-illustrated-model .cb-world-avatar-illustrated{
+    width:62px!important;
+    height:108px!important;
+  }
+  .inn-adventurer:before{width:34px!important}
+}
