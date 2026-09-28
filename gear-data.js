@@ -104,6 +104,26 @@ const SPEC_SET_BONUSES={
       pieces2:{threshold:2,name:'Attic Veil Whispers',short:'+12% lingering Shadow damage',description:'Raid vestments increase Shadow damage-over-time effects by 12%.',effects:{periodicDamageScale:1.12}},
       pieces4:{threshold:4,name:'Voidborne Ascendance',short:'+16% Insanity generation · 15% faster talent skills',description:'Insanity generation improves and talent-unlocked Shadow skills recover 15% faster during endgame combat.',effects:{resourceGainScale:1.16,talentSkillCooldownScale:.85,critBonus:.04}}
     }
+  },
+  'Shaman|Restoration':{
+    4:{
+      pieces2:{threshold:2,name:'Tempestcaller Tides',short:'+5% Restoration healing',description:'Restoration healing is increased while Restoration is active.',effects:{healingScale:1.05}},
+      pieces4:{threshold:4,name:'Totemic Harmony',short:'+8% Mana recovery · +3% haste',description:'Mana recovery and casting speed improve, and talent-unlocked Restoration skills recover 10% faster.',effects:{resourceRegen:1.08,haste:.03,talentSkillCooldownScale:.90}}
+    },
+    5:{
+      pieces2:{threshold:2,name:'Stormcell Tides',short:'+7% Restoration healing',description:'Raid mail deepens Restoration healing while Restoration is active.',effects:{healingScale:1.07}},
+      pieces4:{threshold:4,name:'Ancestral Harmony',short:'+12% Mana recovery · +4% haste',description:'Mana recovery and casting speed improve, and talent-unlocked Restoration skills recover 15% faster.',effects:{resourceRegen:1.12,haste:.04,talentSkillCooldownScale:.85}}
+    }
+  },
+  'Shaman|Elemental':{
+    4:{
+      pieces2:{threshold:2,name:'Tempestcaller Conduction',short:'+6% Elemental damage',description:'Lightning, lava and earth spells deal 6% more damage while Elemental is active.',effects:{damageScale:1.06}},
+      pieces4:{threshold:4,name:'Stormcharged Insight',short:'+12% Maelstrom generation · +3% crit',description:'Maelstrom generation improves and talent-unlocked Elemental skills recover 10% faster.',effects:{resourceGainScale:1.12,talentSkillCooldownScale:.90,critBonus:.03}}
+    },
+    5:{
+      pieces2:{threshold:2,name:'Stormcell Conduction',short:'+8% Elemental damage',description:'Raid mail increases Elemental spell damage by 8%.',effects:{damageScale:1.08}},
+      pieces4:{threshold:4,name:'Primal Ascendance',short:'+16% Maelstrom generation · +4% crit',description:'Maelstrom generation improves and talent-unlocked Elemental skills recover 15% faster.',effects:{resourceGainScale:1.16,talentSkillCooldownScale:.85,critBonus:.04}}
+    }
   }
 };
 function setTier(item){
