@@ -2465,6 +2465,17 @@ function runSelfTests(){
 
 
  {
+  const idleShaman=[
+   {id:'idle-t',name:'Tank',class:'Warrior',spec:'Protection',power:10,level:8},
+   {id:'idle-s',name:'Shaman',class:'Shaman',spec:'Restoration',power:10,level:8,skillLoadouts:{Restoration:[]},talents:{Restoration:{}}},
+   {id:'idle-1',name:'DPS One',class:'Mage',spec:'Arcane',power:10,level:8},
+   {id:'idle-2',name:'DPS Two',class:'Hunter',spec:'Marksman',power:10,level:8},
+   {id:'idle-3',name:'DPS Three',class:'Rogue',spec:'Assassination',power:10,level:8}
+  ];
+  const shamanRun=simulate({party:idleShaman,encounter:{id:'idle-shaman',kind:'boss',level:8,enemies:[{name:'Pressure Dummy',classification:'boss',allAttacksAoe:true}],enemyHealth:2200,mechanics:[]},seed:'idle-shaman',maxDurationMs:8000});
+  test('Empty Healer Loadout Recovers',()=>shamanRun.events.some(e=>e.type==='TOTEM_PLACED'&&e.source==='p-idle-s')&&shamanRun.events.some(e=>e.type==='ABILITY_START'&&e.source==='p-idle-s'&&(e.ability==='Chain Heal'||e.ability==='Healing Wave'||e.ability==='Riptide')));
+ }
+  {
   const noInterrupt=Array.from({length:5},(_,i)=>({id:'status-'+i,name:'Status Tester '+i,class:'Mage',spec:'Arcane',power:8,level:8,_combatItemLevel:28,skillLoadouts:{Arcane:['fireball']}}));
   const statusRun=simulate({party:noInterrupt,encounter:{id:'enemy-status-test',kind:'boss',level:8,enemies:['Rot Caster'],enemyHealth:6000,mechanicIntervalMs:500,mechanics:[{name:'Arcane Rot',type:'interrupt',duration:600,priority:'critical',status:{id:'arcane-rot',name:'Arcane Rot',duration:3500,effect:{outgoingDamageReduction:.10}}}]},seed:'enemy-status-effect',maxDurationMs:2600});
   test('Enemy Mechanics Emit Status Effects',()=>statusRun.events.some(e=>e.type==='DEBUFF_APPLIED'&&e.ability==='Arcane Rot'&&String(e.source||'').startsWith('e-')&&String(e.target||'').startsWith('p-')));
