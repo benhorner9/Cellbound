@@ -10,7 +10,8 @@ const ROLE_MAP={
   Rogue:{Assassination:'dps'},
   Mage:{Arcane:'dps'},
   Shaman:{Restoration:'healer'},
-  Warlock:{Demonology:'dps'}
+  Warlock:{Demonology:'dps'},
+  Monk:{Brewmaster:'tank',Mistweaver:'healer',Windwalker:'dps'}
 };
 
 const RACES={
@@ -136,12 +137,32 @@ const SPECS={
       tradeoff:'A meaningful share of its output comes from demons, so pet-command and summon choices compete with direct spell slots.',
       damage:1.02,threat:.92,cooldown:1.00,magicTaken:.95,physicalTaken:1.06,petDamage:1.00
     }
+  },
+  Monk:{
+    Brewmaster:{
+      title:'Staggering Brewmaster',
+      strength:'Smooths dangerous physical spikes through Stagger while controlling packs with mobile melee pressure.',
+      tradeoff:'Some damage is delayed rather than erased, so poor Purifying Brew timing can let the Stagger pool become dangerous.',
+      singleThreat:2.34,packThreat:2.52,groupThreat:.34,physicalTaken:.96,magicTaken:.98,damage:.91,tauntLead:1.18
+    },
+    Mistweaver:{
+      title:'Martial Mender',
+      strength:'Mobile direct healing with the option to turn melee pressure into smart healing through fistweaving.',
+      tradeoff:'Less raw crisis healing than Holy Priest and requires skill-slot investment to mix damage and healing.',
+      damage:.86,threat:.90,healing:1.00,healThreat:.94,physicalTaken:.98,magicTaken:.96
+    },
+    Windwalker:{
+      title:'Combo Fighter',
+      strength:'Fast melee pressure that rewards rotating different techniques and brings strong cleave.',
+      tradeoff:'Repeating the same attack loses efficiency and movement away from melee quickly cuts output.',
+      damage:1.06,threat:.98,cooldown:.95,physicalTaken:.97,magicTaken:.99,cleave:.24
+    }
   }
 };
 
 const role=c=>ROLE_MAP[c?.class]?.[c?.spec]||'dps';
 const gearStats=c=>{const base={...(window.CellboundGear?.aggregateStats?.(c)||{})},extra=window.CellboundProfessions?.activeBonuses?.(c)||{};Object.entries(extra).forEach(([k,v])=>base[k]=(Number(base[k])||0)+(Number(v)||0));return base};
-const primaryKey=c=>c?.class==='Warrior'?'strength':['Hunter','Rogue'].includes(c?.class)?'agility':'intellect';
+const primaryKey=c=>c?.class==='Warrior'?'strength':c?.class==='Monk'?(c?.spec==='Mistweaver'?'intellect':'agility'):['Hunter','Rogue'].includes(c?.class)?'agility':'intellect';
 const getRace=id=>RACES[id]||RACES.Veyren;
 const getSpec=(klass,spec)=>SPECS[klass]?.[spec]||{title:'Adventurer',strength:'Flexible combatant.',tradeoff:'No defined specialisation.',damage:1,threat:1};
 const specFor=c=>getSpec(c?.class,c?.spec);
@@ -204,6 +225,10 @@ function defenceProfile(c){
     physical*=Math.max(.84,1-rank(c,'Sacred Shield')*.02);
     magic*=Math.max(.80,1-rank(c,'Divine Ward')*.03);
   }
+  if(c?.class==='Monk'&&c?.spec==='Brewmaster'){
+    physical*=Math.max(.86,1-rank(c,'High Tolerance')*.018);
+    magic*=Math.max(.90,1-rank(c,'Elusive Brawler')*.012);
+  }
   return{
     physicalTaken:Math.max(.56,physical),
     magicTaken:Math.max(.56,magic),
@@ -231,6 +256,7 @@ function healingMultiplier(healer,target,ctx={}){
   }
   if(healer?.class==='Druid')m*=1+rank(healer,'Rejuvenation')*.03;
   if(healer?.class==='Shaman'&&healer?.spec==='Restoration')m*=1+rank(healer,'Tidal Focus')*.03;
+  if(healer?.class==='Monk'&&healer?.spec==='Mistweaver')m*=1+rank(healer,'Mist Wrap')*.03;
   return m;
 }
 function healThreatMultiplier(c){const gear=gearStats(c);return (Number(specFor(c).healThreat)||1)*(1+ratingCurve(gear.threat,24,.45,60)/100)}
