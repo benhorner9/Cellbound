@@ -66,27 +66,60 @@ const SPEC_IDEALS={
   'Demon Hunter|Havoc':['agility','haste','crit','stamina'],
   'Demon Hunter|Vengeance':['stamina','armour','agility','threat','haste'],
   'Evoker|Preservation':['healing','intellect','haste','crit','stamina'],
-  'Evoker|Devastation':['intellect','crit','haste','stamina']
+  'Evoker|Devastation':['intellect','crit','haste','stamina'],
+  'Priest|Shadow':['intellect','haste','crit','stamina'],
+  'Druid|Balance':['intellect','crit','haste','stamina'],
+  'Hunter|Beast Mastery':['agility','haste','crit','stamina'],
+  'Rogue|Outlaw':['agility','haste','crit','stamina'],
+  'Mage|Frost':['intellect','crit','haste','stamina'],
+  'Shaman|Elemental':['intellect','crit','haste','stamina'],
+  'Warlock|Destruction':['intellect','crit','haste','stamina']
 };
 const SET_META={
   Warrior:{name:'Warlord Set',raidName:'Housebreaker Plate'},Paladin:{name:'Sunward Set',raidName:'Gilded Vigil'},Priest:{name:'Saintglass Set',raidName:'Veil of the Attic'},Druid:{name:'Moonbark Set',raidName:'Nightbloom Regalia'},
   Hunter:{name:'Hawkeye Set',raidName:'Blackwood Hunt'},Rogue:{name:'Shadecoil Set',raidName:'Silent Service'},Mage:{name:'Starweave Set',raidName:'Housebound Arcanum'},Shaman:{name:'Tempestcaller Set',raidName:'Stormcell Regalia'},Warlock:{name:'Dreadweave Set',raidName:'Netherlord Regalia'},Monk:{name:'Celestial Way Set',raidName:'Grandmaster Regalia'},'Death Knight':{name:'Ebon Oath Set',raidName:'Grave Sovereign Plate'},'Demon Hunter':{name:'Felstalker Set',raidName:'Abyssal Hunt Regalia'},Evoker:{name:'Chronoscale Set',raidName:'Aspectbound Regalia'}
 };
 const SET_BONUS_RULES={
-  pieces2:{threshold:2,name:'Resonant Pair',outputScale:1.05,short:'+5% damage & healing output',description:'All damaging and healing abilities are 5% stronger.'},
-  pieces4:{threshold:4,name:'Cellbound Ensemble',resourceRegen:1.12,short:'+12% resource recovery',description:'Passive class-resource recovery is increased by 12%.'}
+  pieces2:{threshold:2,name:'Specialisation Pair'},
+  pieces4:{threshold:4,name:'Talent Ensemble'}
 };
+const BUILD=window.CellboundBuildRules;
+function setTier(item){
+  const tier=Math.max(1,Number(item?.tier)||0);
+  if(tier>=5)return 5;
+  return tier>=4?4:0
+}
+function setBonusRulesFor(characterOrClass,specArg=null,item=null){
+  const character=typeof characterOrClass==='object'&&characterOrClass?characterOrClass:null;
+  const klass=character?.class||String(characterOrClass||item?.class||'');
+  const spec=character?.spec||specArg||'';
+  const role=BUILD?.roleFor?.(klass,spec)||'dps';
+  const tier=setTier(item)||4;
+  const raid=tier>=5;
+  const twoAmount=raid?.06:.04,fourRegen=raid?1.10:1.06,talentCd=raid?.85:.90,haste=raid?.04:.03,crit=raid?.04:.03,mitigation=raid?.05:.035;
+  const prefix=spec||klass||'Specialisation';
+  let pieces2;
+  if(role==='healer')pieces2={threshold:2,name:prefix+' Resonance',short:'+'+Math.round(twoAmount*100)+'% healing',description:'Healing is increased while this specialisation is active.',effects:{healingScale:1+twoAmount}};
+  else if(role==='tank')pieces2={threshold:2,name:prefix+' Guard',short:'-'+Math.round(mitigation*100)+'% damage taken',description:'Incoming damage is reduced while this tank specialisation is active.',effects:{incomingDamageReduction:mitigation}};
+  else pieces2={threshold:2,name:prefix+' Resonance',short:'+'+Math.round(twoAmount*100)+'% damage',description:'Damage is increased while this specialisation is active.',effects:{damageScale:1+twoAmount}};
+  const roleExtra=role==='healer'?{haste}:{critBonus:crit};
+  const roleShort=role==='healer'?'+'+Math.round((fourRegen-1)*100)+'% recovery · +'+Math.round(haste*100)+'% haste':'+'+Math.round((fourRegen-1)*100)+'% recovery · '+Math.round((1-talentCd)*100)+'% faster talent skills';
+  const pieces4={threshold:4,name:prefix+' Mastery',short:roleShort,description:'Resource recovery improves and talent-unlocked skills recover faster, rewarding a committed specialisation build.',effects:{resourceRegen:fourRegen,talentSkillCooldownScale:talentCd,...roleExtra}};
+  return{pieces2,pieces4,role,tier,spec,klass}
+}
 function setPieceCount(c,setId){
   if(!c||!setId)return 0;
   return Object.values(c.equipment||{}).filter(item=>item?.setId===setId).length
 }
 function setBonusState(c,setId){
-  const pieces=setPieceCount(c,setId),r2=SET_BONUS_RULES.pieces2,r4=SET_BONUS_RULES.pieces4;
-  return {setId,pieces,pieces2:pieces>=r2.threshold,pieces4:pieces>=r4.threshold,next:pieces<r2.threshold?r2.threshold:pieces<r4.threshold?r4.threshold:null}
+  const sample=Object.values(c?.equipment||{}).find(item=>item?.setId===setId)||null;
+  const rules=setBonusRulesFor(c,c?.spec,sample),pieces=setPieceCount(c,setId),r2=rules.pieces2,r4=rules.pieces4;
+  return {setId,pieces,pieces2:pieces>=r2.threshold,pieces4:pieces>=r4.threshold,next:pieces<r2.threshold?r2.threshold:pieces<r4.threshold?r4.threshold:null,rules}
 }
-function setBonusLines(item){
+function setBonusLines(item,character=null){
   if(!item?.setId||!item?.setName)return[];
-  return [SET_BONUS_RULES.pieces2,SET_BONUS_RULES.pieces4].map(rule=>({threshold:rule.threshold,name:rule.name,short:rule.short,description:rule.description}))
+  const rules=setBonusRulesFor(character||item.class,character?.spec||null,item);
+  return [rules.pieces2,rules.pieces4].map(rule=>({threshold:rule.threshold,name:rule.name,short:rule.short,description:rule.description}))
 }
 const NAMES={
   Warrior:[['Militia Helm','Worn Breastplate','Training Sword'],['Ashguard Helm','Ashguard Plate','Embercleaver'],['Vaultforged Greathelm','Vaultforged Cuirass','Runic Greatblade'],['Warlord Greathelm','Warlord Warplate','Warlord Greatblade'],['Housebreaker Greathelm','Housebreaker Warplate','Housebreaker Greatblade']],
@@ -201,11 +234,13 @@ function rollValue(key,tier,slot){
   return Math.max(1,Math.round(rand(min,max)*mult));
 }
 function rollId(){return globalThis.crypto?.randomUUID?crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10)}
-function rollItemAffixes(raw){
+function rollItemAffixes(raw,context=null){
   if(!raw)return raw;
   const item={...raw},tier=Math.max(1,Math.min(5,Number(item.tier)||1)),count=TIER_META[tier]?.statCount||1;
-  const pool=[...(CLASS_STAT_POOLS[item.class]||['stamina','crit','haste'])],stats=[];
-  while(stats.length<count&&pool.length){const i=Math.floor(Math.random()*pool.length),key=pool.splice(i,1)[0];stats.push({key,value:rollValue(key,tier,item.slot)})}
+  const spec=typeof context==='string'?context:(context?.spec||item.specBias||null),ideal=SPEC_IDEALS[item.class+'|'+String(spec||'')]||[];
+  const base=[...(CLASS_STAT_POOLS[item.class]||['stamina','crit','haste'])],weighted=[...ideal.filter(x=>base.includes(x)),...ideal.filter(x=>base.includes(x)),...base],pool=[...new Set(weighted)],stats=[];
+  while(stats.length<count&&pool.length){const weights=pool.map(key=>ideal.includes(key)?3:1),total=weights.reduce((a,b)=>a+b,0);let pick=Math.random()*total,i=0;for(;i<pool.length-1;i++){pick-=weights[i];if(pick<0)break}const key=pool.splice(i,1)[0];stats.push({key,value:rollValue(key,tier,item.slot)})}
+  if(spec)item.specBias=spec;
   item.bonusStats=stats;item.rollId=rollId();item.affixVersion=1;
   item.appearanceId=item.appearanceId||item.baseItemId||item.itemId||slug(item.name||item.slot||'gear');
   if(tier===4){item.setId=slug(item.class)+'-t4';item.setName=SET_META[item.class]?.name||item.class+' Tier 4 Set'}
@@ -281,6 +316,7 @@ function createQuestGear(c,slot,tier=1,profile='specialist',source='Quest Reward
     rollId:'quest-'+slug(c.id||c.name||c.class)+'-'+slug(slot)+'-'+profile+'-'+Date.now().toString(36),
     affixVersion:1,
     questGear:true,
+    specBias:c.spec||null,
     tradeState:'soulbound',
     source
   };
@@ -322,5 +358,5 @@ function artHTML(item,size=64,extra=''){
   const slotClass='gear-slot-'+slug(canonical.slot||'item'),classClass='gear-class-'+slug(canonical.class||'all');
   return `<span class="gear-art tier-${canonical.tier||1} ${slotClass} ${classClass} ${extra}" data-gear-fit="${fit.toFixed(3)}" style="${artStyle(canonical,size)}" aria-label="${canonical.name}" title="${canonical.name}"><span class="gear-art-fallback" aria-hidden="true">${glyph}</span><span class="gear-art-cell" aria-hidden="true" style="position:absolute;overflow:hidden;width:${cell}px;height:${cell}px;left:${inset}px;top:${inset}px"><img class="gear-art-sprite" src="./assets/gear/cellbound-gear-atlas.webp?v=4" alt="" draggable="false" onerror="this.style.display='none'" style="position:absolute;max-width:none;width:${21*cell}px;height:${3*cell}px;left:-${pos.col*cell}px;top:-${pos.row*cell}px"></span></span>`;
 }
-window.CellboundGear={CLASS_ORDER,CORE_SLOT_ORDER,SLOT_ORDER,EQUIPMENT_POSITION_ORDER,SLOT_GLYPHS,TIER_META,ITEM_LEVELS,CHAPTER_GEAR,STAT_DEFS,SLOT_STAT_BUDGET,STAT_TYPE_BUDGET,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,SET_BONUS_RULES,setPieceCount,setBonusState,setBonusLines,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,effectiveStatBudget,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,questProfileStats,createQuestGear,inferWeaponType,inferOffHandType,equipmentPositions,canEquipInSlot,artFit,artStyle,artHTML};
+window.CellboundGear={CLASS_ORDER,CORE_SLOT_ORDER,SLOT_ORDER,EQUIPMENT_POSITION_ORDER,SLOT_GLYPHS,TIER_META,ITEM_LEVELS,CHAPTER_GEAR,STAT_DEFS,SLOT_STAT_BUDGET,STAT_TYPE_BUDGET,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,SET_BONUS_RULES,setBonusRulesFor,setPieceCount,setBonusState,setBonusLines,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,effectiveStatBudget,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,questProfileStats,createQuestGear,inferWeaponType,inferOffHandType,equipmentPositions,canEquipInSlot,artFit,artStyle,artHTML};
 })();
