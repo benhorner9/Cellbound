@@ -41,7 +41,8 @@ const classMeta={
   Warlock:{icon:'✺',accent:'#8788EE',primary:'Intellect'},
   Monk:{icon:'☯',accent:'#00FF98',primary:'Agility'},
   'Death Knight':{icon:'☠',accent:'#C41E3A',primary:'Strength'},
-  'Demon Hunter':{icon:'⛧',accent:'#A330C9',primary:'Agility'}
+  'Demon Hunter':{icon:'⛧',accent:'#A330C9',primary:'Agility'},
+  Evoker:{icon:'✧',accent:'#33937F',primary:'Intellect'}
 };
 
 const specs={
@@ -56,7 +57,8 @@ const specs={
   Warlock:{Demonology:'dps'},
   Monk:{Brewmaster:'tank',Mistweaver:'healer',Windwalker:'dps'},
   'Death Knight':{Blood:'tank',Frost:'dps',Unholy:'dps'},
-  'Demon Hunter':{Havoc:'dps',Vengeance:'tank'}
+  'Demon Hunter':{Havoc:'dps',Vengeance:'tank'},
+  Evoker:{Preservation:'healer',Devastation:'dps'}
 };
 
 const trees={
@@ -238,6 +240,30 @@ const trees={
       {id:'Fiery Demise',icon:'✹',tier:3,col:3,max:2,req:'Spirit Bomb',desc:'Increase fel and fire damage dealt by Vengeance skills.'},
       {id:'Metamorphosis',icon:'✦',tier:4,col:2,max:1,req:'Soul Barrier',desc:'Capstone: unlock a powerful Vengeance Metamorphosis defensive transformation.'}
     ]
+  },
+  Evoker:{
+    Preservation:[
+      {id:'Temporal Mending',icon:'⌛',tier:0,col:1,max:3,desc:'Increase direct Preservation healing and reward careful timing.'},
+      {id:'Essence Attunement',icon:'◇',tier:0,col:3,max:3,desc:'Improve Essence recovery for healing spells.'},
+      {id:'Reversion',icon:'↺',tier:1,col:0,max:2,req:'Temporal Mending',desc:'Strengthen Reversion and its healing-over-time effect.'},
+      {id:'Lifebind',icon:'⛓',tier:1,col:2,max:2,desc:'Verdant Embrace echoes healing onto another injured ally.'},
+      {id:'Echoing Bloom',icon:'✿',tier:2,col:1,max:2,req:'Reversion',desc:'Emerald Blossom restores more health and leaves a short echo.'},
+      {id:'Dream Breath',icon:'☁',tier:2,col:3,max:1,req:'Essence Attunement',desc:'Unlock Dream Breath as a powerful party-wide healing breath.'},
+      {id:'Time Lord',icon:'◈',tier:3,col:1,max:2,req:'Echoing Bloom',desc:'Reduce Preservation cooldowns and improve haste during emergency healing.'},
+      {id:'Cycle of Life',icon:'◎',tier:3,col:3,max:2,req:'Dream Breath',desc:'Group heals can trigger an additional delayed restorative pulse.'},
+      {id:'Emerald Communion',icon:'✦',tier:4,col:2,max:1,req:'Time Lord',desc:'Capstone: unlock Emerald Communion, a major emergency party heal.'}
+    ],
+    Devastation:[
+      {id:'Dragonfire',icon:'🔥',tier:0,col:1,max:3,desc:'Increase red dragon spell damage.'},
+      {id:'Azure Mastery',icon:'❄',tier:0,col:3,max:3,desc:'Increase blue dragon spell damage and cleave.'},
+      {id:'Essence Burst',icon:'◆',tier:1,col:0,max:2,req:'Dragonfire',desc:'Core attacks can trigger a free Essence spender.'},
+      {id:'Burnout',icon:'☄',tier:1,col:2,max:2,desc:'Fire Breath empowers the next Living Flame.'},
+      {id:'Eternity Surge',icon:'✧',tier:2,col:1,max:1,req:'Azure Mastery',desc:'Unlock Eternity Surge as a heavy blue-magic burst spell.'},
+      {id:'Pyre',icon:'✹',tier:2,col:3,max:2,req:'Essence Burst',desc:'Increase Pyre damage and its area pressure.'},
+      {id:'Scintillation',icon:'⚡',tier:3,col:1,max:2,req:'Eternity Surge',desc:'Disintegrate can trigger extra arcane-dragon damage.'},
+      {id:'Power Swell',icon:'◉',tier:3,col:3,max:2,req:'Pyre',desc:'Essence spending grants a short haste surge.'},
+      {id:'Dragonrage',icon:'✦',tier:4,col:2,max:1,req:'Scintillation',desc:'Capstone: unlock Dragonrage, a major ranged burst window.'}
+    ]
   }
 };
 
@@ -353,6 +379,25 @@ const UI_SKILL_FALLBACKS={
     {id:'fiery-brand',name:'Fiery Brand',kind:'defensive',role:'tank',spec:'Vengeance',unlockLevel:9,desc:'Brand the enemy with fel fire while fortifying yourself against its assault.',duration:8000,damageReduction:.30,gcd:0,cd:60000},
     {id:'spirit-bomb',name:'Spirit Bomb',kind:'damage',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Consume Soul Fragments in an explosive fel blast that also restores health.',range:10,damage:28,cost:30,gcd:1000,cd:15000,cleave:3,threat:2.9,damageType:'magic',talentReq:'Spirit Bomb'},
     {id:'vengeance-metamorphosis',name:'Metamorphosis',kind:'defensive',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Transform into a towering demon, restoring health and greatly reducing damage taken.',duration:10000,damageReduction:.35,selfHealPct:.18,gcd:0,cd:90000,talentReq:'Metamorphosis'}
+  ],
+  Evoker:[
+    {id:'reversion',name:'Reversion',kind:'heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Rewind an ally to a healthier moment and continue healing them briefly.',range:25,heal:24,cost:1,gcd:1500,cast:0,cd:7000,hot:8},
+    {id:'verdant-embrace',name:'Verdant Embrace',kind:'heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Rush restorative dragon magic into an injured ally.',range:25,heal:35,cost:1,gcd:1500,cast:700,cd:6000},
+    {id:'emerald-blossom',name:'Emerald Blossom',kind:'group-heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Bloom emerald magic through the party.',range:25,heal:18,cost:2,gcd:1500,cast:1000,cd:8000},
+    {id:'dream-breath',name:'Dream Breath',kind:'group-heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Breathe restorative energy across the party.',range:25,heal:29,cost:3,gcd:1500,cast:1600,cd:22000,talentReq:'Dream Breath'},
+    {id:'temporal-anomaly',name:'Temporal Anomaly',kind:'group-heal',role:'healer',spec:'Preservation',unlockLevel:8,desc:'Send a temporal pulse through allies for broad recovery.',range:25,heal:16,cost:2,gcd:1500,cast:900,cd:12000},
+    {id:'emerald-communion',name:'Emerald Communion',kind:'group-heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Commune with emerald magic for a powerful emergency party heal.',range:25,heal:38,cost:4,gcd:1500,cast:1800,cd:60000,talentReq:'Emerald Communion'},
+    {id:'preservation-living-flame',name:'Living Flame',kind:'damage',role:'healer',spec:'Preservation',unlockLevel:4,desc:'A safe ranged damage spell for quiet healing windows.',range:25,damage:14,cost:0,gcd:1500,cast:1200,cd:0,damageType:'magic'},
+    {id:'quell',name:'Quell',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with draconic force.',range:25,cost:0,gcd:0,cd:24000},
+    {id:'obsidian-scales',name:'Obsidian Scales',kind:'defensive',unlockLevel:8,desc:'Harden your scales to reduce incoming damage.',duration:8000,damageReduction:.25,gcd:0,cd:75000},
+
+    {id:'living-flame',name:'Living Flame',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Launch a focused bolt of red dragonfire.',range:30,damage:22,cost:0,gcd:1500,cast:1300,cd:0,damageType:'magic'},
+    {id:'azure-strike',name:'Azure Strike',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Strike instantly with blue dragon magic.',range:30,damage:14,cost:0,gcd:1500,cd:0,damageType:'magic'},
+    {id:'disintegrate',name:'Disintegrate',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Spend Essence to tear into the target with blue magic.',range:30,damage:34,cost:2,gcd:1500,cast:1400,cd:0,damageType:'magic'},
+    {id:'fire-breath',name:'Fire Breath',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:4,desc:'Breathe red dragonfire through the enemy pack.',range:22,damage:27,cost:1,gcd:1500,cast:1200,cd:14000,cleave:3,damageType:'magic'},
+    {id:'pyre',name:'Pyre',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:6,desc:'Spend Essence to explode dragonfire across nearby enemies.',range:30,damage:25,cost:2,gcd:1500,cd:6000,cleave:3,damageType:'magic'},
+    {id:'eternity-surge',name:'Eternity Surge',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Release a devastating blast of blue dragon magic.',range:30,damage:40,cost:3,gcd:1500,cast:1700,cd:18000,cleave:2,damageType:'magic',talentReq:'Eternity Surge'},
+    {id:'dragonrage',name:'Dragonrage',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Unleash the full fury of the dragonflights and enter a major burst window.',range:30,damage:38,cost:2,gcd:1500,cd:60000,cleave:3,damageType:'magic',talentReq:'Dragonrage'}
   ]
 };
 const UI_BUFF_FALLBACKS={
@@ -360,7 +405,8 @@ const UI_BUFF_FALLBACKS={
   Warlock:{id:'class-buff-demonic-pact',name:'Demonic Pact',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04}},
   Monk:{id:'class-buff-mystic-touch',name:'Mystic Touch',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,outgoingHealing:.03}},
   'Death Knight':{id:'class-buff-horn-of-winter',name:'Horn of Winter',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,resourceRegen:.04}},
-  'Demon Hunter':{id:'class-buff-demonic-momentum',name:'Demonic Momentum',scope:'self',duration:60000,cooldown:180000,effect:{outgoingDamage:.15,haste:.10,resourceRegen:.15}}
+  'Demon Hunter':{id:'class-buff-demonic-momentum',name:'Demonic Momentum',scope:'self',duration:60000,cooldown:180000,effect:{outgoingDamage:.15,haste:.10,resourceRegen:.15}},
+  Evoker:{id:'class-buff-draconic-resonance',name:'Draconic Resonance',scope:'party',duration:60000,cooldown:180000,effect:{haste:.06}}
 };
 function classBuffFor(c){
   // Character-sheet fallbacks are the UI contract for newly added classes.
