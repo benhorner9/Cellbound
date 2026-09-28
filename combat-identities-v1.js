@@ -12,7 +12,8 @@ const ROLE_MAP={
   Shaman:{Restoration:'healer'},
   Warlock:{Demonology:'dps'},
   Monk:{Brewmaster:'tank',Mistweaver:'healer',Windwalker:'dps'},
-  'Death Knight':{Blood:'tank',Frost:'dps',Unholy:'dps'}
+  'Death Knight':{Blood:'tank',Frost:'dps',Unholy:'dps'},
+  'Demon Hunter':{Havoc:'dps',Vengeance:'tank'}
 };
 
 const RACES={
@@ -178,12 +179,26 @@ const SPECS={
       tradeoff:'Damage ramps through wounds, diseases and undead rather than arriving instantly.',
       damage:1.04,threat:.96,cooldown:1.00,physicalTaken:.95,magicTaken:.93,petDamage:1.00
     }
+  },
+  'Demon Hunter':{
+    Havoc:{
+      title:'Fel Vanguard',
+      strength:'Extremely mobile melee damage with fast Fury cycling, magical burst and strong cleave.',
+      tradeoff:'Must stay aggressive and in melee range to keep Fury flowing; defensive tools compete with damage skills.',
+      damage:1.08,threat:.98,cooldown:.93,physicalTaken:.96,magicTaken:.92,cleave:.30
+    },
+    Vengeance:{
+      title:'Soul Warden',
+      strength:'Mobile tank that converts enemy souls into self-healing while controlling packs with fel damage.',
+      tradeoff:'Survival depends on generating and spending Soul Fragments well rather than relying on passive block.',
+      singleThreat:2.48,packThreat:2.58,groupThreat:.30,physicalTaken:.91,magicTaken:.88,damage:.93,tauntLead:1.22
+    }
   }
 };
 
 const role=c=>ROLE_MAP[c?.class]?.[c?.spec]||'dps';
 const gearStats=c=>{const base={...(window.CellboundGear?.aggregateStats?.(c)||{})},extra=window.CellboundProfessions?.activeBonuses?.(c)||{};Object.entries(extra).forEach(([k,v])=>base[k]=(Number(base[k])||0)+(Number(v)||0));return base};
-const primaryKey=c=>['Warrior','Death Knight'].includes(c?.class)?'strength':c?.class==='Monk'?(c?.spec==='Mistweaver'?'intellect':'agility'):['Hunter','Rogue'].includes(c?.class)?'agility':'intellect';
+const primaryKey=c=>['Warrior','Death Knight'].includes(c?.class)?'strength':c?.class==='Monk'?(c?.spec==='Mistweaver'?'intellect':'agility'):['Hunter','Rogue','Demon Hunter'].includes(c?.class)?'agility':'intellect';
 const getRace=id=>RACES[id]||RACES.Veyren;
 const getSpec=(klass,spec)=>SPECS[klass]?.[spec]||{title:'Adventurer',strength:'Flexible combatant.',tradeoff:'No defined specialisation.',damage:1,threat:1};
 const specFor=c=>getSpec(c?.class,c?.spec);
@@ -224,6 +239,10 @@ function damageMultiplier(c,ctx={}){
     m*=1+rank(c,'Arcane Focus')*.03+rank(c,'Surge')*.025;
     if(p.burstEvery&&Number(ctx.hit)>0&&Number(ctx.hit)%p.burstEvery===0)m*=Number(p.burst)||1;
   }
+  if(c?.class==='Demon Hunter'&&c?.spec==='Havoc'){
+    m*=1+rank(c,'Demon Blades')*.025;
+    if(ctx.opening)m*=1+rank(c,'Initiative')*.05;
+  }
   return m;
 }
 function cooldownMultiplier(c){
@@ -249,6 +268,10 @@ function defenceProfile(c){
   if(c?.class==='Monk'&&c?.spec==='Brewmaster'){
     physical*=Math.max(.86,1-rank(c,'High Tolerance')*.018);
     magic*=Math.max(.90,1-rank(c,'Elusive Brawler')*.012);
+  }
+  if(c?.class==='Demon Hunter'&&c?.spec==='Vengeance'){
+    physical*=Math.max(.82,1-rank(c,'Thick Skin')*.025);
+    magic*=Math.max(.84,1-rank(c,'Thick Skin')*.018);
   }
   return{
     physicalTaken:Math.max(.56,physical),
