@@ -145,6 +145,26 @@ const SPEC_SET_BONUSES={
       pieces4:{threshold:4,name:'Celestial Convergence',short:'+16% Astral Power generation · +4% crit',description:'Astral Power generation improves and talent-unlocked Balance skills recover 15% faster.',effects:{resourceGainScale:1.16,talentSkillCooldownScale:.85,critBonus:.04}}
     }
   },
+  'Hunter|Marksman':{
+    4:{
+      pieces2:{threshold:2,name:'Storm Hawkeye Precision',short:'+6% Marksman damage',description:'Marksman ranged damage is increased while Marksman is active.',effects:{damageScale:1.06}},
+      pieces4:{threshold:4,name:'Deadeye Rhythm',short:'+8% Focus recovery · +3% crit',description:'Focus recovery and critical chance improve, and talent-unlocked Marksman skills recover 10% faster.',effects:{resourceRegen:1.08,critBonus:.03,talentSkillCooldownScale:.90}}
+    },
+    5:{
+      pieces2:{threshold:2,name:'Blackwood Precision',short:'+8% Marksman damage',description:'Raid hunt gear increases Marksman damage by 8%.',effects:{damageScale:1.08}},
+      pieces4:{threshold:4,name:'Perfect Volley',short:'+12% Focus recovery · +4% crit',description:'Focus recovery and critical chance improve, and talent-unlocked Marksman skills recover 15% faster.',effects:{resourceRegen:1.12,critBonus:.04,talentSkillCooldownScale:.85}}
+    }
+  },
+  'Hunter|Beast Mastery':{
+    4:{
+      pieces2:{threshold:2,name:'Storm Hawkeye Packbond',short:'+10% beast damage',description:'Your permanent beast and temporary beasts deal 10% more damage.',effects:{petDamageScale:1.10}},
+      pieces4:{threshold:4,name:'Pack Hunt Rhythm',short:'+10% Focus recovery · +3% haste',description:'Focus recovery and attack speed improve, and talent-unlocked Beast Mastery skills recover 10% faster.',effects:{resourceRegen:1.10,haste:.03,talentSkillCooldownScale:.90}}
+    },
+    5:{
+      pieces2:{threshold:2,name:'Blackwood Packbond',short:'+15% beast damage',description:'Raid hunt gear increases damage dealt by your permanent beast and temporary beasts by 15%.',effects:{petDamageScale:1.15}},
+      pieces4:{threshold:4,name:'Alpha Hunt',short:'+14% Focus recovery · +4% haste',description:'Focus recovery and attack speed improve, and talent-unlocked Beast Mastery skills recover 15% faster.',effects:{resourceRegen:1.14,haste:.04,talentSkillCooldownScale:.85}}
+    }
+  },
   'Mage|Arcane':{
     4:{
       pieces2:{threshold:2,name:'Starweave Overcharge',short:'+6% Arcane damage',description:'Arcane Mage damage is increased while Arcane is active.',effects:{damageScale:1.06}},
