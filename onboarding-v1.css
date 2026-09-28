@@ -494,3 +494,30 @@ linear-gradient(180deg,#142019,#09110e)}
  .character-creator .creator-choice-grid .class-choice,
  .character-creator .creator-choice-grid .race-card{min-height:90px!important}
 }
+
+/* Creator v5: back navigation matches the primary continue control */
+.character-creator .creator-panel>footer .creator-back{
+  min-width:0!important;
+  min-height:42px!important;
+  padding:9px 15px!important;
+  border-radius:0!important;
+  font:inherit!important;
+  font-weight:900!important;
+  letter-spacing:inherit!important;
+  text-transform:none!important;
+}
+.character-creator .creator-panel>footer .creator-back,
+.character-creator .creator-panel>footer .creator-back:hover,
+.character-creator .creator-panel>footer .creator-back:focus{
+  border-color:var(--gold,#b79a5e)!important;
+  background:linear-gradient(180deg,#2b2417,#17140e)!important;
+  color:#e6cf98!important;
+}
+.character-creator .creator-panel>footer .creator-back .creator-back-arrow{
+  font-size:inherit!important;
+  line-height:inherit!important;
+  color:inherit!important;
+}
+@media(max-width:560px){
+  .character-creator .creator-panel>footer .creator-back{min-width:0!important;padding:8px 10px!important;font-size:.36rem!important}
+}
