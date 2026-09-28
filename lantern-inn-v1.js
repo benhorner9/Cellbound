@@ -10,19 +10,19 @@ const game=()=>window.CellboundGame;
    Prop depth: Door 24 · Bar 46 · Party Table 74. */
 const slots={
  'party-back-left':{
-  wide:[39,58],phone:[39,58],scale:.61,phoneScale:.59,depth:72,zone:'behind-table'
+  wide:[38,64],phone:[38,64],scale:.60,phoneScale:.58,depth:72,zone:'behind-table'
  },
  'party-back-centre':{
-  wide:[50,55],phone:[50,55],scale:.59,phoneScale:.57,depth:72,zone:'behind-table'
+  wide:[50,62],phone:[50,62],scale:.59,phoneScale:.57,depth:72,zone:'behind-table'
  },
  'party-back-right':{
-  wide:[61,58],phone:[61,58],scale:.61,phoneScale:.59,depth:72,zone:'behind-table'
+  wide:[62,64],phone:[62,64],scale:.60,phoneScale:.58,depth:72,zone:'behind-table'
  },
  'party-front-left':{
-  wide:[43,80],phone:[43,80],scale:.65,phoneScale:.63,depth:82,zone:'floor'
+  wide:[25.5,76],phone:[25.5,76],scale:.63,phoneScale:.61,depth:82,zone:'floor'
  },
  'party-front-right':{
-  wide:[57,80],phone:[57,80],scale:.65,phoneScale:.63,depth:82,zone:'floor'
+  wide:[74.5,76],phone:[74.5,76],scale:.63,phoneScale:.61,depth:82,zone:'floor'
  },
  'reserve-fireplace':{
   wide:[27,43],phone:[27,43],scale:.50,phoneScale:.48,depth:42,zone:'background'
@@ -41,6 +41,7 @@ const slots={
  }
 }
 const perspectiveFor=y=>Math.max(.82,Math.min(1.02,.70+(Number(y)||50)*.0042));
+/* Party Table Ring V9: three behind the table, two outside its front corners. */
 const activeSlots=['party-back-left','party-back-centre','party-back-right','party-front-left','party-front-right'];
 const reserveSlots=['reserve-fireplace','reserve-window-left','reserve-window-right','reserve-bar','reserve-door'];
 let root,world,ledger,partyDialog,partyMarker,partyNode,selectionPanel,selectionTitle,selectionCopy,selectionStatus,selectionAction,returnFocus=null,characterFocus=null,lastKey='',selectedObject='',exitTimer=0;
