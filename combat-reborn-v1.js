@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.16';
+const VERSION='1.3.17';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -346,12 +346,24 @@ function classMobility(c){
 function gearSetState(c){
  const counts={};
  Object.values(c?.equipment||{}).forEach(item=>{if(item?.setId)counts[item.setId]=(counts[item.setId]||0)+1});
- const sets=Object.entries(counts).map(([id,pieces])=>({id,pieces,name:Object.values(c?.equipment||{}).find(x=>x?.setId===id)?.setName||id}));
- const rules=window.CellboundGear?.SET_BONUS_RULES||{pieces2:{threshold:2,outputScale:1.05},pieces4:{threshold:4,resourceRegen:1.12}};
+ const gear=window.CellboundGear;
+ const sets=Object.entries(counts).map(([id,pieces])=>{
+  const sample=Object.values(c?.equipment||{}).find(x=>x?.setId===id)||{},rules=gear?.setBonusRulesFor?.(c,c?.spec,sample)||gear?.SET_BONUS_RULES||{pieces2:{threshold:2,effects:{}},pieces4:{threshold:4,effects:{}}};
+  const rank=pieces>=Number(rules.pieces4?.threshold||4)?2:pieces>=Number(rules.pieces2?.threshold||2)?1:0;
+  return{id,pieces,name:sample?.setName||id,tier:Number(sample?.tier)||0,rules,rank}
+ });
+ const active=[...sets].filter(s=>s.rank>0).sort((a,b)=>b.rank-a.rank||b.tier-a.tier)[0]||null;
+ const e2=active&&active.pieces>=Number(active.rules?.pieces2?.threshold||2)?active.rules.pieces2.effects||{}:{};
+ const e4=active&&active.pieces>=Number(active.rules?.pieces4?.threshold||4)?active.rules.pieces4.effects||{}:{};
  return{
-   sets,
-   outputScale:sets.some(s=>s.pieces>=Number(rules.pieces2?.threshold||2))?Number(rules.pieces2?.outputScale||1.05):1,
-   resourceRegen:sets.some(s=>s.pieces>=Number(rules.pieces4?.threshold||4))?Number(rules.pieces4?.resourceRegen||1.12):1
+   sets,activeSetId:active?.id||null,activeSetName:active?.name||null,
+   damageScale:Number(e2.damageScale||1)*Number(e4.damageScale||1),
+   healingScale:Number(e2.healingScale||1)*Number(e4.healingScale||1),
+   resourceRegen:Number(e2.resourceRegen||1)*Number(e4.resourceRegen||1),
+   haste:Number(e2.haste||0)+Number(e4.haste||0),
+   critBonus:Number(e2.critBonus||0)+Number(e4.critBonus||0),
+   incomingDamageReduction:Math.max(0,Number(e2.incomingDamageReduction||0)+Number(e4.incomingDamageReduction||0)),
+   talentSkillCooldownScale:Number(e2.talentSkillCooldownScale||1)*Number(e4.talentSkillCooldownScale||1)
  }
 }
 
@@ -709,6 +721,7 @@ function talentCooldownScale(u,a){
  if(u.class==='Death Knight'&&u.spec==='Blood'&&a.kind==='defensive')m*=Math.max(.76,1-talentRank(u,'Red Thirst')*.06);
  if(u.class==='Demon Hunter'&&u.spec==='Vengeance'&&a.kind==='defensive')m*=Math.max(.76,1-talentRank(u,'Feed the Demon')*.07);
  if(u.class==='Evoker'&&u.spec==='Preservation'&&(a.kind==='heal'||a.kind==='group-heal'))m*=Math.max(.78,1-talentRank(u,'Time Lord')*.055);
+ if(a?.talentReq)m*=Math.max(.65,Number(u?.setBonuses?.talentSkillCooldownScale)||1);
  return m
 }
 function talentResourceRegenScale(u){
@@ -813,7 +826,7 @@ function normalisePlayer(c,i){
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:startPosition,facing:0,
   target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:carriedStatuses(c),resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
-  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale:outputScale*setState.outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:copy(c?._combatTalentTimers||{}),talentFlags:copy(c?._combatTalentFlags||{}),talentCounters:copy(c?._combatTalentCounters||{}),damageActions:Math.max(0,Number(c?._combatDamageActions)||0),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),staggerPool:0,nextStaggerTick:0,staggerSourceId:null,lastMonkAbility:null,lastMistHealId:null,recentDamageTaken:[],dkWounds:{},soulFragments:0,
+  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:copy(c?._combatTalentTimers||{}),talentFlags:copy(c?._combatTalentFlags||{}),talentCounters:copy(c?._combatTalentCounters||{}),damageActions:Math.max(0,Number(c?._combatDamageActions)||0),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),staggerPool:0,nextStaggerTick:0,staggerSourceId:null,lastMonkAbility:null,lastMistHealId:null,recentDamageTaken:[],dkWounds:{},soulFragments:0,
   defensiveUntil:Math.max(0,Number(c?._combatDefensiveMs)||0),frenzyUntil:Math.max(0,Number(c?._combatFrenzyMs)||0),uniqueUsed:copy(c?._combatUniqueUsed||{}),nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
 }
@@ -1579,12 +1592,12 @@ function useTalentUtility(ctx,u){
 function rollDamage(ctx,u,a,target){
  const power=1+Math.min(.35,u.power*.012),levelScale=u.baseStats?.outputScale||levelOutputScale(u.level),match=levelMatchMultiplier(u.level,target?.level||1);
  const variance=.9+ctx.rng()*.2,revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1,frenzy=u.frenzyUntil>ctx.time?1.15:1;
- let amount=(Number(a.damage)||12)*power*levelScale*match*variance*revivePenalty*frenzy*Math.max(.1,1+statusBonus(u,'outgoingDamage'))*talentDamageScale(ctx,u,a,target);
+ let amount=(Number(a.damage)||12)*power*levelScale*match*variance*revivePenalty*frenzy*Math.max(.1,1+statusBonus(u,'outgoingDamage'))*talentDamageScale(ctx,u,a,target)*Math.max(.5,Number(u?.setBonuses?.damageScale)||1);
  let executeBelow=Number(a.executeBelow)||0,executeMultiplier=Math.max(1,Number(a.executeMultiplier)||1.5);
  if(u.class==='Hunter'&&a.id==='kill-shot'&&talentRank(u,'Kill Shot')){executeBelow=Math.max(executeBelow,.35);executeMultiplier=Math.max(executeMultiplier,2.05)}
  if(executeBelow>0&&healthRatio(target)<=executeBelow)amount*=executeMultiplier;
  let dkCrit=0;if(u.class==='Death Knight'&&u.spec==='Frost'&&['obliterate','frostwyrms-fury','breath-of-sindragosa'].includes(a.id))dkCrit=talentRank(u,'Killing Machine')*.05;
- const critChance=clamp(.12+statusBonus(u,'critBonus')+talentCritBonus(u)+dkCrit,0,.80);
+ const critChance=clamp(.12+statusBonus(u,'critBonus')+talentCritBonus(u)+dkCrit+Math.max(0,Number(u?.setBonuses?.critBonus)||0),0,.80);
  if(ctx.rng()<critChance){amount*=1.5*talentCritMultiplier(u);return{amount,crit:true}}
  return{amount,crit:false};
 }
@@ -1601,6 +1614,7 @@ function mitigation(ctx,target,damageType='physical',opts={}){
  const profile=target?.defence||{},gearTaken=damageType==='magic'?(Number(profile.magicTaken)||1):(Number(profile.physicalTaken)||1);
  let value=target.role==='tank'?(damageType==='magic'?.82:.72):1;
  value*=gearTaken;value*=itemLevelIncomingMultiplier(ctx,target);
+ value*=1-clamp(Number(target?.setBonuses?.incomingDamageReduction)||0,0,.35);
  if(opts.aggroHit&&target.role!=='tank')value*=target.role==='healer'?1.28:1.22;
  let blockChance=Number(profile.blockChance)||0;
  if(target.class==='Warrior'&&target.spec==='Protection')blockChance+=talentRank(target,'Shield Mastery')*4;
@@ -1942,7 +1956,7 @@ function startAbility(ctx,u,a,target){
  if(!u.alive||(!target?.alive&&!deadTarget)||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.gcdUntil||!cooldownReady(u,a))return false;
  if(!moveIntoRange(ctx,u,target,Number(a.range)||5))return false;
  if(!spendResource(ctx,u,a))return false;
- const haste=clamp(statusBonus(u,'haste'),0,.60),speed=1+haste;
+ const haste=clamp(statusBonus(u,'haste')+Math.max(0,Number(u?.setBonuses?.haste)||0),0,.60),speed=1+haste;
  let cast=Math.max(0,Math.round((Number(a.cast)||0)/speed));cast=talentCastTime(ctx,u,a,cast);
  const gcd=Math.max(0,Math.round((Number(a.gcd)||0)/speed)),cd=Math.max(0,Math.round((Number(a.cd)||0)*talentCooldownScale(u,a)));
  u.gcdUntil=ctx.time+gcd;u.cooldowns[a.id]=Math.max(cd,gcd);
@@ -1973,7 +1987,7 @@ function finishAbility(ctx,u,a,target){
   if(u.class==='Death Knight')resolveDeathKnightPetCommand(ctx,u,a,target);else resolveWarlockPetCommand(ctx,u,a,target);
  }else if(a.kind==='heal'||a.kind==='group-heal'){
   const revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1;
-  const base=(a.heal||24)*(1+Math.min(.28,u.power*.01))*(u.baseStats?.outputScale||levelOutputScale(u.level))*(.92+ctx.rng()*.16)*revivePenalty;
+  const base=(a.heal||24)*(1+Math.min(.28,u.power*.01))*(u.baseStats?.outputScale||levelOutputScale(u.level))*(.92+ctx.rng()*.16)*revivePenalty*Math.max(.5,Number(u?.setBonuses?.healingScale)||1);
   if(a.kind==='group-heal'&&a.id==='chain-heal'){
    let total=0,current=target,amount=base*talentHealingScale(ctx,u,a,target);
    total+=doHeal(ctx,u,target,amount,a.name);
@@ -3327,11 +3341,11 @@ function runSelfTests(){
   test('Persistent Boss Phase',()=>pb?.phaseDamageScale>=1.2&&!persisted.events.some(e=>e.type==='PHASE_CHANGE'&&e.payload?.phaseId==='p70'));
 
   const setParty=party.map((p,i)=>i===0?{...p,equipment:{
-    Head:{setId:'test-set',setName:'Test Set'},Shoulders:{setId:'test-set',setName:'Test Set'},Chest:{setId:'test-set',setName:'Test Set'},Weapon:{setId:'test-set',setName:'Test Set'}
+    Head:{setId:'test-set',setName:'Test Set',tier:4},Shoulders:{setId:'test-set',setName:'Test Set',tier:4},Chest:{setId:'test-set',setName:'Test Set',tier:4},Weapon:{setId:'test-set',setName:'Test Set',tier:4}
   }}:p);
   const setRun=simulate({party:setParty,encounter:{...base,enemyHealth:420},seed:'set-foundation'});
   const setTank=setRun.finalState.players.find(p=>p.characterId===setParty[0].id);
-  test('Gear Set Foundation',()=>setTank?.setBonuses?.sets?.[0]?.pieces===4&&setTank?.setBonuses?.outputScale>1&&setTank?.setBonuses?.resourceRegen>1);
+  test('Gear Set Foundation',()=>setTank?.setBonuses?.sets?.[0]?.pieces===4&&setTank?.setBonuses?.incomingDamageReduction>0&&setTank?.setBonuses?.resourceRegen>1&&setTank?.setBonuses?.talentSkillCooldownScale<1);
 
   const cc=simulate({
     party,
