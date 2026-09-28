@@ -2427,9 +2427,13 @@ function finishAbility(ctx,u,a,target){
  if(a.kind==='battle-rez'){
   reviveUnit(ctx,u,target,a.name,{healthPct:35,resourcePct:20,combat:true});
  }else if(a.kind==='summon'){
-  if(u.class==='Death Knight')resolveDeathKnightSummon(ctx,u,a,target);else resolveWarlockSummon(ctx,u,a,target);
+  if(u.class==='Death Knight')resolveDeathKnightSummon(ctx,u,a,target);
+  else if(u.class==='Hunter')resolveHunterSummon(ctx,u,a,target);
+  else resolveWarlockSummon(ctx,u,a,target);
  }else if(a.kind==='pet-command'){
-  if(u.class==='Death Knight')resolveDeathKnightPetCommand(ctx,u,a,target);else resolveWarlockPetCommand(ctx,u,a,target);
+  if(u.class==='Death Knight')resolveDeathKnightPetCommand(ctx,u,a,target);
+  else if(u.class==='Hunter')resolveHunterPetCommand(ctx,u,a,target);
+  else resolveWarlockPetCommand(ctx,u,a,target);
  }else if(a.kind==='heal'||a.kind==='group-heal'){
   const revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1;
   const base=(a.heal||24)*(1+Math.min(.28,u.power*.01))*(u.baseStats?.outputScale||levelOutputScale(u.level))*(.92+ctx.rng()*.16)*revivePenalty*Math.max(.5,Number(u?.setBonuses?.healingScale)||1);
@@ -2571,6 +2575,9 @@ function summonPet(ctx,owner,{type='felguard',name='Felguard',duration=0,countIn
   dreadstalker:{name:'Dreadstalker',range:5,baseDamage:6.5,interval:1800,attack:'Dreadbite',visual:'dreadstalker'},
   tyrant:{name:'Demonic Tyrant',range:28,baseDamage:11,interval:2100,attack:'Demonfire',visual:'tyrant'},
   infernal:{name:'Infernal',range:6,baseDamage:10.5,interval:1850,attack:'Burning Fist',visual:'infernal'},
+  'hunter-beast':{name:'Hunting Beast',range:5,baseDamage:9.5,interval:1900,attack:'Savage Bite',visual:'hunter-beast'},
+  'dire-beast':{name:'Dire Beast',range:5,baseDamage:7.5,interval:1650,attack:'Dire Maul',visual:'dire-beast'},
+  'stampede-beast':{name:'Stampede Beast',range:5,baseDamage:6.2,interval:1450,attack:'Stampede Strike',visual:'stampede-beast'},
   ghoul:{name:'Ghoul',range:5,baseDamage:8.5,interval:2100,attack:'Claw',visual:'ghoul'},
   'army-ghoul':{name:'Army Ghoul',range:5,baseDamage:5.5,interval:1850,attack:'Rend',visual:'army-ghoul'},
   'apocalypse-ghoul':{name:'Apocalypse Ghoul',range:5,baseDamage:7.5,interval:1700,attack:'Grave Slash',visual:'apocalypse-ghoul'}
@@ -2600,12 +2607,21 @@ function permanentFelguard(ctx,owner){
 function permanentGhoul(ctx,owner){
  return activePets(ctx,owner.id).find(p=>p.type==='ghoul')||null
 }
+function permanentHunterBeast(ctx,owner){
+ return activePets(ctx,owner.id).find(p=>p.type==='hunter-beast')||null
+}
 function petDamage(ctx,pet,target,base,ability,{cleave=0,multiplier=1}={}){
  const owner=pet?.owner;if(!pet?.active||!owner?.alive||!target?.alive)return 0;
  const bond=talentRank(owner,'Demonic Bond'),dread=talentRank(owner,'Dread Calling'),master=talentRank(owner,'Master Summoner');
  let scale=(owner.baseStats?.outputScale||levelOutputScale(owner.level))*(1+bond*.05)*Math.max(.1,1+statusBonus(owner,'outgoingDamage'))*multiplier*Math.max(.5,Number(owner?.setBonuses?.petDamageScale)||1);
  if(pet.type==='dreadstalker')scale*=1+dread*.08;
  if(pet.type==='tyrant')scale*=1.18+master*.05;
+ if(owner.class==='Hunter'&&owner.spec==='Beast Mastery'){
+  const leader=talentRank(owner,'Pack Leader'),barbed=talentRank(owner,'Barbed Wrath');
+  scale*=1+leader*.045;
+  if(owner.statuses?.['beast-frenzy'])scale*=1+barbed*.06;
+  if(Number(pet.empoweredUntil)>ctx.time)scale*=1.30
+ }
  if(owner.class==='Death Knight'&&owner.spec==='Unholy'){
   const dark=talentRank(owner,'Dark Transformation'),pact=talentRank(owner,'Unholy Pact');
   scale*=1+dark*.04;
@@ -2616,7 +2632,8 @@ function petDamage(ctx,pet,target,base,ability,{cleave=0,multiplier=1}={}){
  }
  const crit=ctx.rng()<(.08+talentCritBonus(owner)),amount=Math.max(1,Math.round(base*scale*(.91+ctx.rng()*.18)*(crit?1.5:1)));
  const before=target.health;target.health=clamp(target.health-amount,0,target.maxHealth);const dealt=before-target.health;
- emit(ctx,'DAMAGE_DEALT',{source:pet.id,target:target.id,ability,amount:dealt,result:crit?'critical':'hit',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),damageType:'magic',kind:'damage',attackRange:pet.range,pet:true,petType:pet.type,ownerId:owner.id}});
+ const petDamageType=owner.class==='Hunter'?'physical':'magic';
+ emit(ctx,'DAMAGE_DEALT',{source:pet.id,target:target.id,ability,amount:dealt,result:crit?'critical':'hit',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),damageType:petDamageType,kind:'damage',attackRange:pet.range,pet:true,petType:pet.type,ownerId:owner.id}});
  const st=ctx.stats.players[owner.id];if(st){st.damage+=dealt;st.abilityDamage[ability]=(st.abilityDamage[ability]||0)+dealt}
  addThreat(ctx,target,owner,dealt*.72,'pet');
  const core=talentRank(owner,'Demonic Core');
@@ -2654,10 +2671,11 @@ function petAI(ctx,pet){
  pet.target=target.id;updateFacing(pet,target);
  if(!inRange(pet,target,pet.range)||!hasLineOfSight(ctx,pet,target)){petMoveToward(ctx,pet,target);pet.nextAttack=ctx.time+420;return}
  emit(ctx,'ABILITY_START',{source:pet.id,target:target.id,ability:pet.attackName,result:'pet',position:copy(pet.position),payload:{kind:'damage',attackRange:pet.range,pet:true,petType:pet.type,ownerId:owner.id}});
- petDamage(ctx,pet,target,pet.baseDamage,pet.attackName);
+ const beastCleave=owner.class==='Hunter'&&owner.spec==='Beast Mastery'&&pet.type==='hunter-beast'&&owner.statuses?.['beast-cleave']?Math.min(3,talentRank(owner,'Beast Cleave')):0;
+ petDamage(ctx,pet,target,pet.baseDamage,pet.attackName,{cleave:beastCleave});
  emit(ctx,'ABILITY_FINISH',{source:pet.id,target:target.id,ability:pet.attackName,result:'pet',position:copy(pet.position),payload:{kind:'damage',pet:true,petType:pet.type,ownerId:owner.id}});
- const pack=talentRank(owner,'Pack Tactics'),dkFrenzy=(owner.class==='Death Knight'&&Number(pet.empoweredUntil)>ctx.time)?.18:0,haste=Math.max(0,statusBonus(owner,'haste'));
- pet.nextAttack=ctx.time+Math.max(750,Math.round(pet.baseInterval*Math.max(.68,1-pack*.08-dkFrenzy)/(1+haste)))
+ const pack=talentRank(owner,'Pack Tactics'),dkFrenzy=(owner.class==='Death Knight'&&Number(pet.empoweredUntil)>ctx.time)?.18:0,bmFrenzy=(owner.class==='Hunter'&&owner.spec==='Beast Mastery'&&owner.statuses?.['beast-frenzy'])?.08*Math.max(1,talentRank(owner,'Barbed Wrath')):0,haste=Math.max(0,statusBonus(owner,'haste'));
+ pet.nextAttack=ctx.time+Math.max(650,Math.round(pet.baseInterval*Math.max(.58,1-pack*.08-dkFrenzy-bmFrenzy)/(1+haste)))
 }
 function tickPets(ctx){activePets(ctx).slice().forEach(p=>petAI(ctx,p))}
 function resolveWarlockSummon(ctx,u,a,target){
@@ -2725,6 +2743,66 @@ function warlockSpecialReady(ctx,u,a,target){
  if(a.kind==='pet-command'){
   if(a.petCommand==='implosion')return activePets(ctx,u.id).some(p=>p.type==='dreadstalker')&&(livingEnemies(ctx).length>=2||activePets(ctx,u.id).some(p=>p.type==='dreadstalker'&&p.expiresAt-ctx.time<3500));
   return Boolean(permanentFelguard(ctx,u))
+ }
+ return false
+}
+function resolveHunterSummon(ctx,u,a,target){
+ if(u.class!=='Hunter'||u.spec!=='Beast Mastery'||a.kind!=='summon')return false;
+ const type=a.summonType||'dire-beast',count=Math.max(1,Number(a.summonCount)||1);
+ if(type==='dire-beast'){
+  for(let i=0;i<count;i++)summonPet(ctx,u,{type:'dire-beast',duration:Number(a.duration)||12000,countIndex:i});
+  if(Number(a.gain)>0)gainResource(ctx,u,a);
+  talentTrigger(ctx,u,'Dire Beast',u,{duration:Number(a.duration)||12000,count})
+  return true
+ }
+ if(type==='stampede-beast'){
+  for(let i=0;i<count;i++)summonPet(ctx,u,{type:'stampede-beast',duration:Number(a.duration)||9000,countIndex:i});
+  talentTrigger(ctx,u,'Stampede',u,{duration:Number(a.duration)||9000,count})
+  return true
+ }
+ return false
+}
+function resolveHunterPetCommand(ctx,u,a,target){
+ if(u.class!=='Hunter'||u.spec!=='Beast Mastery'||a.kind!=='pet-command')return false;
+ const pet=permanentHunterBeast(ctx,u);if(!pet?.active)return false;
+ const command=a.petCommand||a.id;
+ emit(ctx,'PET_COMMAND',{source:u.id,target:target.id,ability:a.name,result:'commanded',position:copy(pet.position),payload:{petId:pet.id,petCommand:command}});
+ if(command==='kill-command'){
+  const hit=petDamage(ctx,pet,target,29,a.name,{multiplier:1.12});
+  const wild=talentRank(u,'Wild Call');
+  if(wild&&hit>0){
+   u.cooldowns['barbed-shot']=Math.max(0,(Number(u.cooldowns['barbed-shot'])||0)-(1100+wild*700));
+   talentTrigger(ctx,u,'Wild Call',u,{reduced:'Barbed Shot',ms:1100+wild*700})
+  }
+  const thrill=talentRank(u,'Thrill of the Hunt');
+  if(thrill){
+   applyStatus(ctx,u,u,{id:'thrill-hunt',name:'Thrill of the Hunt',kind:'buff',duration:5000,effect:{haste:.025*thrill,critBonus:.025*thrill}});
+   talentTrigger(ctx,u,'Thrill of the Hunt',u,{duration:5000})
+  }
+ }else if(command==='bestial-wrath'){
+  const duration=10000;pet.empoweredUntil=ctx.time+duration;
+  applyStatus(ctx,u,u,{id:'bestial-wrath',name:'Bestial Wrath',kind:'buff',duration,effect:{outgoingDamage:.14,haste:.08}});
+  talentTrigger(ctx,u,'Bestial Wrath',u,{duration,petId:pet.id})
+ }
+ pet.nextAttack=Math.min(pet.nextAttack,ctx.time+350);
+ return true
+}
+function hunterSpecialReady(ctx,u,a,target){
+ if(u.class!=='Hunter'||u.spec!=='Beast Mastery'||!a||!cooldownReady(u,a)||(a.cost||0)>u.resource.value)return false;
+ if(a.kind==='pet-command'){
+  if(!permanentHunterBeast(ctx,u))return false;
+  if(a.petCommand==='bestial-wrath'){
+   const bossLike=['boss','final','world-boss','event'].includes(ctx.encounter.kind);
+   return bossLike||ctx.tactics.cooldownUse==='free'
+  }
+  return true
+ }
+ if(a.kind==='summon'){
+  if(a.summonType==='dire-beast')return !activePets(ctx,u.id).some(p=>p.type==='dire-beast');
+  if(a.summonType==='stampede-beast'){
+   const bossLike=['boss','final','world-boss','event'].includes(ctx.encounter.kind);
+   return (bossLike||ctx.tactics.cooldownUse==='free')&&!activePets(ctx,u.id).some(p=>p.type==='stampede-beast')
+  }
  }
  return false
 }
@@ -3330,6 +3408,7 @@ function simulate(options={}){
   emitResourceState(ctx,u,'initial')
  });
  players.filter(u=>u.class==='Warlock'&&u.spec==='Demonology'&&u.alive).forEach(u=>summonPet(ctx,u,{type:'felguard',name:'Felguard'}));
+ players.filter(u=>u.class==='Hunter'&&u.spec==='Beast Mastery'&&u.alive).forEach(u=>summonPet(ctx,u,{type:'hunter-beast',name:'Hunting Beast'}));
  players.filter(u=>u.class==='Death Knight'&&u.spec==='Unholy'&&u.alive).forEach(u=>summonPet(ctx,u,{type:'ghoul',name:'Ghoul'}));
  {
   const boss=enemies.find(e=>e.kind==='boss');
