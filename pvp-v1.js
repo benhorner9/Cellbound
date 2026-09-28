@@ -1,6 +1,9 @@
 (()=>{
 'use strict';
 
+const PVP_ENABLED=false;
+const PVP_LOCK_MESSAGE='PvP is currently locked while the launch game is being finished. Battlegrounds, Arena, PvP gear and progression will return in a future update.';
+
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>\"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[m]));
@@ -188,8 +191,12 @@ function matchResultMarkup(m){
   const win=m.win,colour=win?'victory':'defeat';
   return `<article class="pvp-panel pvp-result ${colour}"><header><div><small>${m.kind==='arena'?'RATED ARENA':'BATTLEGROUND COMPLETE'}</small><h3>${win?'VICTORY':'DEFEAT'}</h3></div><b>${m.kind==='arena'?`${m.ratingBefore} → ${m.ratingAfter}`:`+${m.rankXp} RANK XP`}</b></header><div class="pvp-result-grid"><div><span>Score</span><b>${esc(m.scoreText)}</b></div><div><span>${m.kind==='arena'?'Arena Seals':'War Marks'}</span><b>+${m.currency}</b></div><div><span>Cell Shock</span><b>${m.shockDelta>0?'+':''}${m.shockDelta}%</b></div><div><span>${m.kind==='arena'?'Rating':'Objectives'}</span><b>${m.kind==='arena'?(m.ratingDelta>0?'+':'')+m.ratingDelta:m.objectives}</b></div></div><p>${esc(m.summary)}</p></article>`
 }
+function lockedMarkup(){
+  return `<div class="pvp-hero"><div><small>PLAYER VERSUS PLAYER</small><h2>The Crucible</h2><p>${esc(PVP_LOCK_MESSAGE)}</p></div><div class="pvp-rank-card"><span>STATUS</span><b>LOCKED</b><small>Coming in a future update</small></div></div><div class="pvp-body"><article class="pvp-panel"><header><div><small>FEATURE PAUSED</small><h3>PvP is not available yet</h3></div><b>LOCKED</b></header><p>The Crucible is staying in the game, but matchmaking and PvP progression are disabled for now. Your existing PvP systems have not been removed.</p></article></div>`;
+}
 function render(){
   const mount=$('#pvpMount');if(!mount||!game()?.ready)return;
+  if(!PVP_ENABLED){mount.innerHTML=lockedMarkup();return}
   const p=ensureState();if(!p)return;maybeSettleSeason(p);
   mount.innerHTML=`${pvpHeader(p)}<div class="pvp-body">${activeTab==='battlegrounds'?battlegroundMarkup(p):activeTab==='arena'?arenaMarkup(p):activeTab==='armoury'?armouryMarkup(p):leaderboardMarkup(p)}</div>`;
   bind();
@@ -286,7 +293,7 @@ function buyGear(tier,slot){
   game()?.save?.();render()
 }
 
-window.CellboundPvP={version:'1.2.0',render,arenaUnlocked,getRank:()=>bgRank(ensureState()),getState:()=>ensureState()};
+window.CellboundPvP={version:'1.3.0',enabled:PVP_ENABLED,render,arenaUnlocked,getRank:()=>PVP_ENABLED?bgRank(ensureState()):null,getState:()=>PVP_ENABLED?ensureState():null};
 window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='pvp')render()});
-let bootTries=0;const boot=setInterval(()=>{bootTries++;if(game()?.ready){clearInterval(boot);ensureState();if($('#pvp')?.classList.contains('active'))render()}else if(bootTries>80)clearInterval(boot)},125);
+let bootTries=0;const boot=setInterval(()=>{bootTries++;if(game()?.ready){clearInterval(boot);if(PVP_ENABLED)ensureState();if($('#pvp')?.classList.contains('active'))render()}else if(bootTries>80)clearInterval(boot)},125);
 })();
