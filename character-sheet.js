@@ -123,7 +123,7 @@ const trees={
     {id:'Chain Mastery',icon:'⛓',tier:2,col:1,max:2,req:'Riptide',desc:'Chain Heal loses less strength as it jumps between allies.'},
     {id:'Earthen Ward',icon:'⬢',tier:2,col:3,max:2,req:'Totemic Mastery',desc:'Strengthen defensive totems and their protection.'},
     {id:'Tidal Waves',icon:'🌊',tier:3,col:1,max:2,req:'Chain Mastery',desc:'Riptide and Chain Heal accelerate your next restorative cast.'},
-    {id:'Spirit Link Totem',icon:'◎',tier:3,col:3,max:1,req:'Earthen Ward',desc:'Place an emergency totem that links and protects the party.'},
+    {id:'Spirit Link Totem',icon:'◎',tier:3,col:3,max:1,req:'Earthen Ward',desc:'Unlock Spirit Link Totem as an equipable emergency combat skill.'},
     {id:'Ascendant Tide',icon:'✦',tier:4,col:2,max:1,req:'Spirit Link Totem',desc:'Capstone: enter an ascendant state that empowers healing and totems under heavy pressure.'}
   ]}
 };
@@ -145,13 +145,17 @@ const UI_SKILL_FALLBACKS={
     {id:'riptide',name:'Riptide',kind:'heal',role:'healer',unlockLevel:1,desc:'An instant tidal heal that continues restoring health briefly.',range:30,heal:23,cost:10,gcd:1500,cast:0,cd:6000,hot:7},
     {id:'chain-heal',name:'Chain Heal',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Heal one ally, then bounce restorative energy through other injured party members.',range:30,heal:30,cost:20,gcd:1500,cast:1700,cd:0,chainBounces:3,chainFalloff:.72,chainRange:16},
     {id:'wind-shear',name:'Wind Shear',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with a sharp burst of wind.',range:30,cost:0,gcd:0,cd:18000},
+    {id:'windfury-totem',name:'Windfury Totem',kind:'totem',role:'healer',unlockLevel:1,desc:'Place a Windfury Totem that increases party damage and haste while it remains active.',cost:8,gcd:1000,cd:45000,duration:20000,totemType:'windfury'},
+    {id:'stoneskin-totem',name:'Stoneskin Totem',kind:'totem',role:'healer',unlockLevel:1,desc:'Place a Stoneskin Totem that reduces damage taken by the party while it remains active.',cost:10,gcd:1000,cd:45000,duration:20000,totemType:'stoneskin'},
+    {id:'healing-stream-totem',name:'Healing Stream Totem',kind:'totem',role:'healer',unlockLevel:1,desc:'Place a Healing Stream Totem that pulses healing through the party while it remains active.',cost:12,gcd:1000,cd:30000,duration:20000,totemType:'healing-stream'},
+    {id:'spirit-link-totem',name:'Spirit Link Totem',kind:'totem',role:'healer',unlockLevel:1,desc:'Place an emergency Spirit Link Totem that protects and stabilises injured allies.',cost:18,gcd:1000,cd:75000,duration:8000,totemType:'spirit-link',talentReq:'Spirit Link Totem'},
     {id:'lightning-bolt',name:'Lightning Bolt',kind:'damage',unlockLevel:4,desc:'A ranged lightning attack for safe damage windows.',range:30,damage:13,cost:4,gcd:1500,cast:1200,cd:0},
     {id:'healing-rain',name:'Healing Rain',kind:'group-heal',role:'healer',unlockLevel:8,desc:'Call restorative rain over the party for broad recovery.',range:30,heal:16,cost:24,gcd:1500,cast:1200,cd:10000},
     {id:'astral-shift',name:'Astral Shift',kind:'defensive',unlockLevel:11,desc:'Shift partially into the spirit world, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000}
   ]
 };
 const UI_BUFF_FALLBACKS={
-  Shaman:{id:'class-buff-totemic-circle',name:'Totemic Circle',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,incomingDamageReduction:.03,incomingHealing:.03},totems:true}
+  Shaman:{id:'class-buff-bloodlust',name:'Bloodlust',scope:'party',duration:60000,cooldown:180000,effect:{haste:.10,resourceRegen:.05}}
 };
 function classBuffFor(c){return combatEngine()?.CLASS_BUFFS?.[c?.class]||UI_BUFF_FALLBACKS[c?.class]||null}
 function skillPoolFor(c,spec=c?.spec){
@@ -178,10 +182,10 @@ function equippedSkillIds(c,spec=c?.spec){
   return out
 }
 function skillKindLabel(kind){
-  return ({damage:'Damage',heal:'Healing','group-heal':'Group Heal',interrupt:'Interrupt',taunt:'Taunt',defensive:'Defensive','battle-rez':'Battle Rez'})[kind]||'Utility'
+  return ({damage:'Damage',heal:'Healing','group-heal':'Group Heal',interrupt:'Interrupt',taunt:'Taunt',defensive:'Defensive','battle-rez':'Battle Rez',totem:'Totem'})[kind]||'Utility'
 }
 function skillIcon(kind){
-  return ({damage:'⚔',heal:'✚','group-heal':'✥',interrupt:'!',taunt:'◎',defensive:'◆','battle-rez':'♰'})[kind]||'◇'
+  return ({damage:'⚔',heal:'✚','group-heal':'✥',interrupt:'!',taunt:'◎',defensive:'◆','battle-rez':'♰',totem:'▲'})[kind]||'◇'
 }
 function skillCooldownText(skill){
   const ms=Math.max(0,Number(skill?.cd)||0);if(!ms)return'No cooldown';
