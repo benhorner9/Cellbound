@@ -9,39 +9,39 @@ const game=()=>window.CellboundGame;
    naturally disappear behind furniture instead of cutting through it.
    Prop depth: Door 24 · Bar 46 · Party Table 74. */
 const slots={
- 'left-floor':{
-  wide:[20.5,71],phone:[18,72],scale:.97,phoneScale:.91,depth:78,zone:'floor'
+ 'fireplace-floor':{
+  wide:[24,66],phone:[24,66],scale:.72,phoneScale:.70,depth:66,zone:'floor'
  },
- 'hearth-floor':{
-  wide:[32.5,65],phone:[31,66],scale:.94,phoneScale:.89,depth:68,zone:'floor'
+ 'window-back':{
+  wide:[51,52],phone:[51,51],scale:.58,phoneScale:.57,depth:44,zone:'background'
  },
  'table-left':{
-  wide:[45.5,71],phone:[45,72],scale:1.00,phoneScale:.94,depth:72,zone:'behind-table'
+  wide:[43,74],phone:[43,74],scale:.72,phoneScale:.70,depth:72,zone:'behind-table'
  },
  'table-right':{
-  wide:[63.5,71],phone:[64,72],scale:1.00,phoneScale:.94,depth:72,zone:'behind-table'
+  wide:[62,74],phone:[62,74],scale:.72,phoneScale:.70,depth:72,zone:'behind-table'
  },
- 'right-floor':{
-  wide:[84.5,70],phone:[83,71],scale:.98,phoneScale:.92,depth:79,zone:'floor'
+ 'bar-floor':{
+  wide:[83,65],phone:[82,66],scale:.69,phoneScale:.67,depth:64,zone:'floor'
  },
  'window-left':{
-  wide:[48,46],phone:[47,43],scale:.80,phoneScale:.76,depth:42,zone:'background'
+  wide:[42,48],phone:[42,48],scale:.52,phoneScale:.50,depth:41,zone:'background'
  },
  'window-right':{
-  wide:[61,47],phone:[61,44],scale:.82,phoneScale:.77,depth:43,zone:'background'
+  wide:[61,48],phone:[61,48],scale:.53,phoneScale:.51,depth:42,zone:'background'
  },
  'bar-behind':{
-  wide:[75,51],phone:[82,48],scale:.85,phoneScale:.77,depth:44,zone:'behind-bar'
+  wide:[75,53],phone:[75,54],scale:.58,phoneScale:.55,depth:44,zone:'behind-bar'
  },
  stairs:{
-  wide:[69,54],phone:[70,55],scale:.90,phoneScale:.81,depth:50,zone:'midground'
+  wide:[70,53],phone:[70,54],scale:.60,phoneScale:.57,depth:48,zone:'midground'
  },
  balcony:{
-  wide:[87,34],phone:[85,35],scale:.70,phoneScale:.68,depth:45,zone:'behind-bar'
+  wide:[86,35],phone:[85,36],scale:.46,phoneScale:.44,depth:40,zone:'behind-bar'
  }
 }
 const perspectiveFor=y=>Math.max(.82,Math.min(1.02,.70+(Number(y)||50)*.0042));
-const activeSlots=['left-floor','hearth-floor','table-left','table-right','right-floor'];
+const activeSlots=['fireplace-floor','window-back','table-left','table-right','bar-floor'];
 const reserveSlots=['window-left','window-right','bar-behind','stairs','balcony'];
 let root,world,ledger,partyDialog,partyMarker,partyNode,selectionPanel,selectionTitle,selectionCopy,selectionStatus,selectionAction,returnFocus=null,characterFocus=null,lastKey='',selectedObject='',exitTimer=0;
 const objectCopy={
@@ -216,14 +216,16 @@ function mount(){
 }
 function assign(roster,party){
  const ids=new Set(party.map(c=>String(c.id))),active=party.filter(c=>roster.some(r=>String(r.id)===String(c.id)));
- // Membership is authoritative; class preferences only select a free room position.
- const preferred={Warrior:'hearth-floor',Paladin:'hearth-floor',Priest:'table-right',Druid:'table-right',Rogue:'right-floor',Mage:'table-left',Hunter:'left-floor'};
- const used=new Set();
- const placed=active.map(c=>{const slot=[preferred[c.class],...activeSlots].find(s=>s&&!used.has(s));used.add(slot);return {c:roster.find(r=>String(r.id)===String(c.id)),slot,active:true}});
+ const placed=active.slice(0,activeSlots.length).map((c,i)=>({
+  c:roster.find(r=>String(r.id)===String(c.id)),
+  slot:activeSlots[i],
+  active:true
+ }));
+ const used=new Set(placed.map(x=>x.slot));
  const free=[...reserveSlots,...activeSlots].filter(s=>!used.has(s));
  return placed.concat(roster.filter(c=>!ids.has(String(c.id))).map((c,i)=>({c,slot:free[i],active:false}))).filter(p=>p.slot);
-
 }
+
 function refresh(){
  mount();if(!world)return;document.body.classList.toggle('inn-view-active',root.classList.contains('active'));
  const roster=game()?.getState?.()?.roster||[],party=game()?.getPartyCharacters?.()||[];
