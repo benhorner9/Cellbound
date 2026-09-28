@@ -555,7 +555,7 @@ function abilityPool(c,role){
  // contain a valid role action (important for classes/specs added to existing saves).
  if(role==='healer'&&!pool.length)pool=defaults();
  if(role==='tank'&&!pool.some(a=>a.kind==='taunt'))pool=defaults();
- if(role==='dps'&&!pool.some(a=>a.kind==='damage'))pool=defaults();
+ if(role==='dps'&&!pool.some(a=>a.kind==='damage'||a.kind==='summon'||a.kind==='pet-command'))pool=defaults();
  if(role==='healer'&&!pool.some(a=>a.kind==='heal'||a.kind==='group-heal'))pool=(ROLE_FALLBACKS.healer||[]);
  if(role!=='healer'&&!pool.some(a=>a.kind==='damage'))pool.push({id:'basic-attack',name:'Basic Attack',kind:'damage',range:5,damage:10,cost:0,gcd:1500,cd:0,hiddenFallback:true});
  return pool.length?pool:(ROLE_FALLBACKS[role]||ROLE_FALLBACKS.dps)
@@ -888,7 +888,7 @@ function executionQuality(ctx,u){
  const gearReadiness=recIlvl>0?clamp((Number(u.itemLevel)||0)/recIlvl,.45,1.08):1;
  const equipped=Array.isArray(u.abilities)?u.abilities.filter(a=>!a.hiddenFallback):[];
  const filled=Math.min(1,equipped.length/4);
- const hasRoleTool=u.role==='tank'?equipped.some(a=>a.kind==='taunt'):u.role==='healer'?equipped.some(a=>a.kind==='heal'||a.kind==='group-heal'):equipped.some(a=>a.kind==='damage');
+ const hasRoleTool=u.role==='tank'?equipped.some(a=>a.kind==='taunt'):u.role==='healer'?equipped.some(a=>a.kind==='heal'||a.kind==='group-heal'):equipped.some(a=>a.kind==='damage'||a.kind==='summon'||a.kind==='pet-command');
  const hasInterrupt=equipped.some(a=>a.kind==='interrupt');
  const skillReadiness=clamp(.55+filled*.25+(hasRoleTool?.12:0)+(hasInterrupt?.08:0),.45,1);
  const pressure=combatPressure(ctx);
@@ -1899,7 +1899,9 @@ function tryInterrupt(ctx,e,mechanic,castToken){
    ctx.stats.interrupts.missedCritical++;emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'failed',payload:{interruptedAbility:mechanic.name,token:castToken}});return
   }
   u.cooldowns[a.id]=Math.round((a.cd||15000)*talentCooldownScale(u,a));cast.interrupted=true;ctx.activeEnemyCast=null;e.interruptedUntil=ctx.time+2600;st.interrupts++;ctx.stats.interrupts.success++;
-  emit(ctx,'INTERRUPT',{source:u.id,target:e.id,ability:a.name,result:'success',payload:{interruptedAbility:mechanic.name,token:castToken}});
+  const petSource=u.class==='Warlock'&&a.id==='axe-toss'?permanentFelguard(ctx,u):null;
+  if(petSource)emit(ctx,'PET_COMMAND',{source:u.id,target:e.id,ability:a.name,result:'commanded',position:copy(petSource.position),payload:{petId:petSource.id,petCommand:'axe-toss'}});
+  emit(ctx,'INTERRUPT',{source:petSource?.id||u.id,target:e.id,ability:a.name,result:'success',payload:{interruptedAbility:mechanic.name,token:castToken,ownerId:u.id,pet:!!petSource}});
   if(u.class==='Paladin'&&talentRank(u,'Hammer of Justice')&&!['boss','world-boss'].includes(e.classification)){applyStatus(ctx,u,e,{id:'hammer-of-justice',name:'Hammer of Justice',kind:'debuff',duration:900,cc:'stun'});talentTrigger(ctx,u,'Hammer of Justice',e,{duration:900})}
   if(hasUnique(u,'frostbound-sigil')){
    u.defensiveUntil=Math.max(Number(u.defensiveUntil)||0,3500);
