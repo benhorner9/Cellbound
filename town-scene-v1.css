@@ -1666,3 +1666,142 @@ body.town-expedition-focus-open{overflow:hidden}
     transform:translate(-9%,4%) scale(1.5)!important
   }
 }
+
+
+/* ==========================================================================
+   Town Square Arch Integration v9
+   Stronger architectural pass: visibly recess the gates into the left/right
+   edges, reduce their standalone scale, and neutralise the purple source art.
+   ========================================================================== */
+.town-cartoon-stage .town-landmark-expedition{
+  left:-4.8%!important;
+  top:12.2%!important;
+  width:17.6%!important;
+  opacity:.96!important;
+  transform:perspective(900px) rotateY(7deg)!important;
+  transform-origin:100% 100%!important;
+}
+.town-cartoon-stage .town-landmark-merchant{
+  left:auto!important;
+  right:-4.8%!important;
+  top:12.2%!important;
+  width:17.6%!important;
+  opacity:.96!important;
+  transform:perspective(900px) rotateY(-7deg)!important;
+  transform-origin:0 100%!important;
+}
+
+/* Pull the source palette toward the plaza stone instead of the pink/purple
+   standalone-asset palette. */
+.town-cartoon-stage .town-landmark-expedition .town-landmark-art,
+.town-cartoon-stage .town-landmark-merchant .town-landmark-art{
+  transform:scaleY(.90)!important;
+  transform-origin:50% 100%!important;
+  filter:
+    brightness(.72)
+    saturate(.48)
+    sepia(.17)
+    hue-rotate(-12deg)
+    contrast(1.06)
+    drop-shadow(0 9px 7px rgba(5,6,7,.42))!important;
+}
+
+/* Keep the glow aligned to the visually compressed gate. */
+.town-cartoon-stage .town-landmark-expedition .town-landmark-glow,
+.town-cartoon-stage .town-landmark-merchant .town-landmark-glow{
+  transform:scale(1.04) scaleY(.90)!important;
+  transform-origin:50% 100%!important;
+}
+
+/* Dark edge masks visually connect each arch to an implied street/wall beyond
+   the screen, so the visible half reads as an entrance rather than a prop. */
+.town-cartoon-stage .town-landmark-expedition::after{
+  content:"";
+  position:absolute;
+  z-index:3;
+  left:-1%;
+  top:7%;
+  bottom:5%;
+  width:24%;
+  background:linear-gradient(90deg,rgba(13,14,18,.58),rgba(13,14,18,.14),transparent);
+  filter:blur(1px);
+  pointer-events:none
+}
+.town-cartoon-stage .town-landmark-merchant::after{
+  content:"";
+  position:absolute;
+  z-index:3;
+  right:-1%;
+  top:7%;
+  bottom:5%;
+  width:24%;
+  background:linear-gradient(270deg,rgba(13,14,18,.58),rgba(13,14,18,.14),transparent);
+  filter:blur(1px);
+  pointer-events:none
+}
+
+/* Stronger foot contact with the plaza. */
+.town-cartoon-stage .town-landmark-expedition::before,
+.town-cartoon-stage .town-landmark-merchant::before{
+  left:8%!important;
+  right:8%!important;
+  bottom:2%!important;
+  height:14%!important;
+  background:radial-gradient(ellipse at center,rgba(6,6,8,.58) 0%,rgba(6,6,8,.30) 48%,rgba(6,6,8,0) 78%)!important;
+  filter:blur(8px)!important
+}
+
+/* Selected state brightens the integrated version rather than reverting to the
+   raw source colouring. */
+.town-cartoon-stage .town-landmark-expedition.is-selected .town-landmark-art,
+.town-cartoon-stage .town-landmark-merchant.is-selected .town-landmark-art{
+  transform:translateY(-1px) scaleY(.91)!important;
+  filter:
+    brightness(.86)
+    saturate(.62)
+    sepia(.14)
+    hue-rotate(-10deg)
+    contrast(1.065)
+    drop-shadow(0 11px 8px rgba(5,6,7,.44))!important;
+}
+
+/* Touch targets and camera anchors follow the visibly recessed gates. */
+.town-square-hotspot-expedition{
+  left:0!important;
+  top:11%!important;
+  width:15%!important;
+  height:43%!important
+}
+.town-square-hotspot-merchant{
+  right:0!important;
+  top:11%!important;
+  width:15%!important;
+  height:43%!important
+}
+.town-scene.is-entering-district[data-town-entry="expeditionRoad"] .town-cartoon-stage{
+  transform-origin:6.5% 33%!important;
+  transform:translate(12%,6%) scale(1.66)!important
+}
+.town-scene.is-entering-district[data-town-entry="merchantRoad"] .town-cartoon-stage{
+  transform-origin:93.5% 33%!important;
+  transform:translate(-12%,6%) scale(1.66)!important
+}
+
+@media(max-width:720px){
+  .town-cartoon-stage .town-landmark-expedition{
+    left:-5.2%!important;
+    top:11.8%!important;
+    width:18.2%!important
+  }
+  .town-cartoon-stage .town-landmark-merchant{
+    right:-5.2%!important;
+    top:11.8%!important;
+    width:18.2%!important
+  }
+  .town-square-hotspot-expedition,
+  .town-square-hotspot-merchant{
+    top:10.5%!important;
+    width:16%!important;
+    height:44%!important
+  }
+}
