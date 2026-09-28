@@ -10,34 +10,34 @@ const game=()=>window.CellboundGame;
    Prop depth: Door 24 · Bar 46 · Party Table 74. */
 const slots={
  'fireplace-floor':{
-  wide:[24,66],phone:[24,66],scale:.72,phoneScale:.70,depth:66,zone:'floor'
+  wide:[27,50],phone:[27,50],scale:.72,phoneScale:.70,depth:58,zone:'floor'
  },
  'window-back':{
-  wide:[51,52],phone:[51,51],scale:.58,phoneScale:.57,depth:44,zone:'background'
+  wide:[49,42],phone:[49,42],scale:.60,phoneScale:.58,depth:43,zone:'background'
  },
  'table-left':{
-  wide:[43,74],phone:[43,74],scale:.72,phoneScale:.70,depth:72,zone:'behind-table'
+  wide:[43,67],phone:[43,67],scale:.73,phoneScale:.71,depth:72,zone:'behind-table'
  },
  'table-right':{
-  wide:[62,74],phone:[62,74],scale:.72,phoneScale:.70,depth:72,zone:'behind-table'
+  wide:[58,67],phone:[58,67],scale:.73,phoneScale:.71,depth:72,zone:'behind-table'
  },
  'bar-floor':{
-  wide:[83,65],phone:[82,66],scale:.69,phoneScale:.67,depth:64,zone:'floor'
+  wide:[78,55],phone:[78,55],scale:.69,phoneScale:.67,depth:61,zone:'floor'
  },
  'window-left':{
-  wide:[42,48],phone:[42,48],scale:.52,phoneScale:.50,depth:41,zone:'background'
+  wide:[38,43],phone:[38,43],scale:.53,phoneScale:.51,depth:41,zone:'background'
  },
  'window-right':{
-  wide:[61,48],phone:[61,48],scale:.53,phoneScale:.51,depth:42,zone:'background'
+  wide:[66,43],phone:[66,43],scale:.54,phoneScale:.52,depth:42,zone:'background'
  },
  'bar-behind':{
-  wide:[75,53],phone:[75,54],scale:.58,phoneScale:.55,depth:44,zone:'behind-bar'
+  wide:[79,43],phone:[79,43],scale:.55,phoneScale:.53,depth:44,zone:'behind-bar'
  },
  stairs:{
-  wide:[70,53],phone:[70,54],scale:.60,phoneScale:.57,depth:48,zone:'midground'
+  wide:[84,47],phone:[84,47],scale:.56,phoneScale:.54,depth:48,zone:'midground'
  },
  balcony:{
-  wide:[86,35],phone:[85,36],scale:.46,phoneScale:.44,depth:40,zone:'behind-bar'
+  wide:[88,29],phone:[88,29],scale:.45,phoneScale:.43,depth:39,zone:'behind-bar'
  }
 }
 const perspectiveFor=y=>Math.max(.82,Math.min(1.02,.70+(Number(y)||50)*.0042));
@@ -158,19 +158,19 @@ function mount(){
  world=document.createElement('section');world.className='inn-world';world.setAttribute('aria-label','The Lantern Inn');
  world.innerHTML=
   '<div class="inn-scene-stage" data-inn-scene-stage>'+
-   '<img class="inn-scene-bg" src="./assets/world/inn/lantern-inn-bg-v1.webp?v=1" alt="" fetchpriority="high">'+
+   '<img class="inn-scene-bg" src="./assets/world/inn/lantern-inn-bg-v2.webp?v=1" alt="" fetchpriority="high">'+
    '<div class="inn-hearth-light" aria-hidden="true"></div><div class="inn-window-light" aria-hidden="true"></div>'+
    '<button type="button" class="inn-scene-object inn-object-door" data-inn-object="door" aria-label="Return to the Town Square">'+
-    '<span class="inn-object-visual"><img class="inn-object-glow" src="./assets/world/inn/lantern-inn-door-v1.webp?v=1" alt=""><img class="inn-object-art" src="./assets/world/inn/lantern-inn-door-v1.webp?v=1" alt=""></span><span class="inn-object-hit" aria-hidden="true"></span>'+
+    '<span class="inn-object-visual"><img class="inn-object-glow" src="./assets/world/inn/lantern-inn-door-v2.webp?v=1" alt=""><img class="inn-object-art" src="./assets/world/inn/lantern-inn-door-v2.webp?v=1" alt=""></span><span class="inn-object-hit" aria-hidden="true"></span>'+
     '<span class="inn-object-caption"><b>Town Square</b><small>Leave the Inn</small></span>'+
    '</button>'+
    '<button type="button" class="inn-scene-object inn-object-bar" data-inn-object="roster" aria-label="Open the roster at the bar">'+
-    '<span class="inn-object-visual"><img class="inn-object-glow" src="./assets/world/inn/lantern-inn-bar-v1.webp?v=1" alt=""><img class="inn-object-art" src="./assets/world/inn/lantern-inn-bar-v1.webp?v=1" alt=""></span><span class="inn-object-hit" aria-hidden="true"></span>'+
+    '<span class="inn-object-visual"><img class="inn-object-glow" src="./assets/world/inn/lantern-inn-bar-v2.webp?v=1" alt=""><img class="inn-object-art" src="./assets/world/inn/lantern-inn-bar-v2.webp?v=1" alt=""></span><span class="inn-object-hit" aria-hidden="true"></span>'+
     '<span class="inn-object-caption"><b>Roster</b><small>Manage your company</small></span>'+
    '</button>'+
    '<div class="inn-inhabitants"></div>'+
    '<button type="button" class="inn-scene-object inn-object-table" data-inn-object="party" aria-label="Open Active Party at the planning table">'+
-    '<span class="inn-object-visual"><img class="inn-object-glow" src="./assets/world/inn/lantern-inn-table-v1.webp?v=1" alt=""><img class="inn-object-art" src="./assets/world/inn/lantern-inn-table-v1.webp?v=1" alt=""></span><span class="inn-object-hit" aria-hidden="true"></span>'+
+    '<span class="inn-object-visual"><img class="inn-object-glow" src="./assets/world/inn/lantern-inn-table-v2.webp?v=1" alt=""><img class="inn-object-art" src="./assets/world/inn/lantern-inn-table-v2.webp?v=1" alt=""></span><span class="inn-object-hit" aria-hidden="true"></span>'+
     '<span class="inn-object-caption"><b>Party Table</b><small>Prepare your five</small></span>'+
    '</button>'+
   '</div>'+
