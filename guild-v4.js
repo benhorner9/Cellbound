@@ -59,7 +59,10 @@ const classes={
   Hunter:{icon:'➶',glow:'#AAD372',specs:{Marksman:{role:'dps',talents:['True Aim','Rapid Fire','Kill Shot']}}},
   Rogue:{icon:'◆',glow:'#FFF468',specs:{Assassination:{role:'dps',talents:['Ambush','Venom','Eviscerate']}}},
   Mage:{icon:'✦',glow:'#3FC7EB',specs:{Arcane:{role:'dps',talents:['Arcane Focus','Surge','Barrage']}}},
-  Shaman:{icon:'⚡',glow:'#0070DD',specs:{Restoration:{role:'healer',talents:['Tidal Focus','Totemic Mastery','Ascendant Tide']}}},
+  Shaman:{icon:'⚡',glow:'#0070DD',specs:{
+    Restoration:{role:'healer',talents:['Tidal Focus','Totemic Mastery','Ascendant Tide']},
+    Elemental:{role:'dps',talents:['Elemental Fury','Lava Surge','Ascendance']}
+  }},
   Warlock:{icon:'✺',glow:'#8788EE',specs:{Demonology:{role:'dps',talents:['Demonic Bond','Fel Knowledge','Demonic Tyrant']}}},
   Monk:{icon:'☯',glow:'#00FF98',specs:{
     Brewmaster:{role:'tank',talents:['High Tolerance','Elusive Brawler','Fortifying Brew']},
