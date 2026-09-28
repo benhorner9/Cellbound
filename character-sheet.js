@@ -39,7 +39,8 @@ const classMeta={
   Mage:{icon:'✦',accent:'#3FC7EB',primary:'Intellect'},
   Shaman:{icon:'⚡',accent:'#0070DD',primary:'Intellect'},
   Warlock:{icon:'✺',accent:'#8788EE',primary:'Intellect'},
-  Monk:{icon:'☯',accent:'#00FF98',primary:'Agility'}
+  Monk:{icon:'☯',accent:'#00FF98',primary:'Agility'},
+  'Death Knight':{icon:'☠',accent:'#C41E3A',primary:'Strength'}
 };
 
 const specs={
@@ -52,7 +53,8 @@ const specs={
   Mage:{Arcane:'dps'},
   Shaman:{Restoration:'healer'},
   Warlock:{Demonology:'dps'},
-  Monk:{Brewmaster:'tank',Mistweaver:'healer',Windwalker:'dps'}
+  Monk:{Brewmaster:'tank',Mistweaver:'healer',Windwalker:'dps'},
+  'Death Knight':{Blood:'tank',Frost:'dps',Unholy:'dps'}
 };
 
 const trees={
@@ -175,6 +177,41 @@ const trees={
       {id:'Serenity',icon:'◇',tier:3,col:3,max:2,req:'Dance of the Wind',desc:'Reduce martial ability costs and cooldowns.'},
       {id:'Touch of Death',icon:'☠',tier:4,col:2,max:1,req:'Momentum',desc:'Capstone: unlock a deadly execute against weakened enemies.'}
     ]
+  },
+  'Death Knight':{
+    Blood:[
+      {id:'Heartbreaker',icon:'♥',tier:0,col:1,max:3,desc:'Heart Strike deals more damage, generates more Runic Power and produces additional threat.'},
+      {id:'Ossuary',icon:'☠',tier:0,col:3,max:3,desc:'Marrowrend strengthens Bone Shield, reducing incoming damage.'},
+      {id:'Hemostasis',icon:'🩸',tier:1,col:0,max:2,req:'Heartbreaker',desc:'Blood Boil empowers your next Death Strike.'},
+      {id:'Rune Tap',icon:'◇',tier:1,col:2,max:1,desc:'Unlock Rune Tap as a short defensive cooldown.'},
+      {id:'Blood Shield',icon:'⬢',tier:2,col:1,max:2,req:'Ossuary',desc:'Death Strike grants a short protective blood shield.'},
+      {id:'Voracious',icon:'✚',tier:2,col:3,max:2,req:'Hemostasis',desc:'Increase the healing returned by Death Strike.'},
+      {id:'Dancing Rune Weapon',icon:'⚔',tier:3,col:1,max:1,req:'Blood Shield',desc:'Unlock Dancing Rune Weapon, increasing defence and threat during dangerous windows.'},
+      {id:'Red Thirst',icon:'♨',tier:3,col:3,max:2,req:'Rune Tap',desc:'Reduce the cooldown of Blood defensive abilities.'},
+      {id:'Vampiric Blood',icon:'✦',tier:4,col:2,max:1,req:'Dancing Rune Weapon',desc:'Capstone: unlock Vampiric Blood for emergency healing and damage reduction.'}
+    ],
+    Frost:[
+      {id:'Killing Machine',icon:'❄',tier:0,col:1,max:3,desc:'Increase critical strike chance for Obliterate and heavy Frost attacks.'},
+      {id:'Icy Talons',icon:'✣',tier:0,col:3,max:3,desc:'Frost Strike grants a short haste surge.'},
+      {id:'Rime',icon:'✧',tier:1,col:0,max:2,req:'Killing Machine',desc:'Increase Howling Blast damage and Runic Power generation.'},
+      {id:'Obliteration',icon:'✕',tier:1,col:2,max:2,desc:'Increase Obliterate damage and reward alternating generators and spenders.'},
+      {id:'Runic Empowerment',icon:'◆',tier:2,col:1,max:2,req:'Rime',desc:'Runic Power spenders have a chance to restore additional Runic Power.'},
+      {id:'Remorseless Winter',icon:'❆',tier:2,col:3,max:1,req:'Icy Talons',desc:'Unlock Remorseless Winter for sustained cleave.'},
+      {id:'Avalanche',icon:'△',tier:3,col:1,max:2,req:'Runic Empowerment',desc:'Critical frost attacks splash extra damage to nearby enemies.'},
+      {id:'Frozen Pulse',icon:'◈',tier:3,col:3,max:2,req:'Remorseless Winter',desc:'Low Runic Power increases your generator damage.'},
+      {id:'Breath of Sindragosa',icon:'✦',tier:4,col:2,max:1,req:'Avalanche',desc:'Capstone: unlock a devastating frost breath that cleaves enemies.'}
+    ],
+    Unholy:[
+      {id:'Festering Wounds',icon:'☣',tier:0,col:1,max:3,desc:'Festering Strike applies additional wounds and wound bursts deal more damage.'},
+      {id:'Dark Transformation',icon:'☠',tier:0,col:3,max:3,desc:'Increase Ghoul damage and unlock stronger pet-command windows.'},
+      {id:'Infected Claws',icon:'✥',tier:1,col:0,max:2,req:'Festering Wounds',desc:'Your Ghoul can infect its target and increase disease pressure.'},
+      {id:'Epidemic',icon:'◎',tier:1,col:2,max:2,desc:'Diseases spread additional damage into nearby enemies.'},
+      {id:'Sudden Doom',icon:'◆',tier:2,col:1,max:2,req:'Infected Claws',desc:'Ghoul attacks can empower your next Death Coil.'},
+      {id:'Army of the Dead',icon:'♜',tier:2,col:3,max:1,req:'Dark Transformation',desc:'Unlock Army of the Dead, summoning temporary ghouls.'},
+      {id:'Unholy Pact',icon:'⛓',tier:3,col:1,max:2,req:'Sudden Doom',desc:'While undead are active, your damage and their damage increase.'},
+      {id:'Defile',icon:'◉',tier:3,col:3,max:2,req:'Army of the Dead',desc:'Death and Decay becomes stronger and spreads plague damage.'},
+      {id:'Apocalypse',icon:'✦',tier:4,col:2,max:1,req:'Unholy Pact',desc:'Capstone: unlock Apocalypse, bursting wounds and summoning additional undead.'}
+    ]
   }
 };
 
@@ -238,12 +275,43 @@ const UI_SKILL_FALLBACKS={
     {id:'touch-of-death',name:'Touch of Death',kind:'damage',role:'dps',unlockLevel:1,desc:'A devastating finishing technique against weakened enemies.',range:5,damage:30,cost:20,gcd:1000,cd:30000,executeBelow:.20,executeMultiplier:2.4,talentReq:'Touch of Death'},
     {id:'touch-of-karma',name:'Touch of Karma',kind:'defensive',role:'dps',unlockLevel:9,desc:'Reduce incoming damage for a short period.',duration:7000,damageReduction:.25,gcd:0,cd:75000},
     {id:'spear-hand-strike',name:'Spear Hand Strike',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with a precise hand strike.',range:5,cost:0,gcd:0,cd:15000}
+  ],
+  'Death Knight':[
+    {id:'heart-strike',name:'Heart Strike',kind:'damage',role:'tank',unlockLevel:1,desc:'A high-threat strike that generates Runic Power.',range:5,damage:18,cost:0,gain:16,gcd:1200,cd:0,threat:2.6},
+    {id:'death-strike',name:'Death Strike',kind:'damage',role:'tank',unlockLevel:1,desc:'Spend Runic Power to strike and heal from damage taken recently.',range:5,damage:22,cost:35,gcd:1200,cd:0,threat:2.2},
+    {id:'dark-command',name:'Dark Command',kind:'taunt',role:'tank',unlockLevel:1,desc:'Command an enemy to attack the Death Knight.',range:30,cost:0,gcd:0,cd:8000,threat:5},
+    {id:'mind-freeze',name:'Mind Freeze',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with frozen runic force.',range:15,cost:0,gcd:0,cd:15000},
+    {id:'marrowrend',name:'Marrowrend',kind:'damage',role:'tank',unlockLevel:1,desc:'Generate Runic Power and reinforce Bone Shield.',range:5,damage:17,cost:0,gain:14,gcd:1200,cd:4500,threat:2.4},
+    {id:'blood-boil',name:'Blood Boil',kind:'damage',role:'tank',unlockLevel:4,desc:'Boil the blood of nearby enemies for heavy pack threat.',range:8,damage:16,cost:0,gain:10,gcd:1200,cd:7000,cleave:3,threat:2.8,damageType:'magic'},
+    {id:'death-and-decay-blood',name:'Death and Decay',kind:'damage',role:'tank',unlockLevel:7,desc:'Corrupt the ground beneath enemies with shadow damage.',range:15,damage:17,cost:10,gcd:1200,cd:12000,cleave:3,threat:2.5,damageType:'magic'},
+    {id:'rune-tap',name:'Rune Tap',kind:'defensive',role:'tank',unlockLevel:1,desc:'Briefly reduce incoming damage.',duration:5000,damageReduction:.20,gcd:0,cd:30000,talentReq:'Rune Tap'},
+    {id:'dancing-rune-weapon',name:'Dancing Rune Weapon',kind:'defensive',role:'tank',unlockLevel:1,desc:'Summon a spectral weapon that reinforces defence and threat.',duration:9000,damageReduction:.22,gcd:0,cd:75000,talentReq:'Dancing Rune Weapon'},
+    {id:'vampiric-blood',name:'Vampiric Blood',kind:'defensive',role:'tank',unlockLevel:1,desc:'Empower your blood, restoring health and greatly improving survival.',duration:10000,damageReduction:.25,selfHealPct:.18,gcd:0,cd:90000,talentReq:'Vampiric Blood'},
+
+    {id:'obliterate',name:'Obliterate',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'A brutal melee strike that generates Runic Power.',range:5,damage:28,cost:0,gain:18,gcd:1200,cd:4500},
+    {id:'frost-strike',name:'Frost Strike',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Spend Runic Power on a weapon strike infused with frost.',range:5,damage:26,cost:28,gcd:1200,cd:0,damageType:'magic'},
+    {id:'howling-blast',name:'Howling Blast',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Blast the target and nearby enemies with freezing wind.',range:25,damage:18,cost:0,gain:12,gcd:1200,cd:6000,cleave:2,damageType:'magic'},
+    {id:'remorseless-winter',name:'Remorseless Winter',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Surround yourself with a freezing storm that cleaves nearby enemies.',range:8,damage:24,cost:18,gcd:1200,cd:14000,cleave:3,damageType:'magic',talentReq:'Remorseless Winter'},
+    {id:'frostscythe',name:'Frostscythe',kind:'damage',role:'dps',spec:'Frost',unlockLevel:7,desc:'Sweep a frozen blade through several enemies.',range:7,damage:21,cost:0,gain:10,gcd:1200,cd:9000,cleave:3,damageType:'magic'},
+    {id:'frostwyrms-fury',name:"Frostwyrm's Fury",kind:'damage',role:'dps',spec:'Frost',unlockLevel:11,desc:'Call a frostwyrm across the battlefield for heavy cleave damage.',range:30,damage:38,cost:35,gcd:1500,cast:1000,cd:45000,cleave:4,damageType:'magic'},
+    {id:'breath-of-sindragosa',name:'Breath of Sindragosa',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Unleash a devastating cone of frost into the enemy pack.',range:20,damage:45,cost:50,gcd:1500,cast:1200,cd:60000,cleave:4,damageType:'magic',talentReq:'Breath of Sindragosa'},
+    {id:'icebound-fortitude',name:'Icebound Fortitude',kind:'defensive',role:'dps',unlockLevel:8,desc:'Harden yourself against incoming damage.',duration:8000,damageReduction:.25,gcd:0,cd:75000},
+
+    {id:'festering-strike',name:'Festering Strike',kind:'damage',role:'dps',spec:'Unholy',unlockLevel:1,desc:'Strike the target, generate Runic Power and apply Festering Wounds.',range:5,damage:20,cost:0,gain:15,gcd:1200,cd:3500},
+    {id:'scourge-strike',name:'Scourge Strike',kind:'damage',role:'dps',spec:'Unholy',unlockLevel:1,desc:'Burst Festering Wounds for additional shadow damage.',range:5,damage:19,cost:0,gain:8,gcd:1200,cd:0,damageType:'magic'},
+    {id:'death-coil',name:'Death Coil',kind:'damage',role:'dps',spec:'Unholy',unlockLevel:1,desc:'Spend Runic Power to hurl death magic at the target.',range:30,damage:27,cost:30,gcd:1200,cd:0,damageType:'magic'},
+    {id:'outbreak',name:'Outbreak',kind:'damage',role:'dps',spec:'Unholy',unlockLevel:1,desc:'Infect the target with a damaging plague.',range:30,damage:10,cost:0,gain:8,gcd:1200,cd:7000,damageType:'magic'},
+    {id:'death-and-decay-unholy',name:'Death and Decay',kind:'damage',role:'dps',spec:'Unholy',unlockLevel:6,desc:'Corrupt the ground beneath enemies with shadow damage.',range:15,damage:17,cost:10,gcd:1200,cd:12000,cleave:3,damageType:'magic'},
+    {id:'dark-transformation',name:'Dark Transformation',kind:'pet-command',role:'dps',spec:'Unholy',unlockLevel:1,desc:'Empower your permanent Ghoul into a savage frenzy.',range:30,cost:15,gcd:1000,cd:30000,petCommand:'dark-transformation',talentReq:'Dark Transformation'},
+    {id:'army-of-the-dead',name:'Army of the Dead',kind:'summon',role:'dps',spec:'Unholy',unlockLevel:1,desc:'Summon a pack of temporary ghouls to tear into your enemies.',range:30,cost:35,gcd:1500,cast:1800,cd:75000,duration:14000,summonType:'army-ghoul',summonCount:4,talentReq:'Army of the Dead'},
+    {id:'apocalypse',name:'Apocalypse',kind:'summon',role:'dps',spec:'Unholy',unlockLevel:1,desc:'Burst Festering Wounds and summon additional undead attackers.',range:5,cost:30,gcd:1500,cd:45000,duration:12000,summonType:'apocalypse-ghoul',summonCount:2,talentReq:'Apocalypse'}
   ]
 };
 const UI_BUFF_FALLBACKS={
   Shaman:{id:'class-buff-bloodlust',name:'Bloodlust',scope:'party',duration:60000,cooldown:180000,effect:{haste:.10,resourceRegen:.05}},
   Warlock:{id:'class-buff-demonic-pact',name:'Demonic Pact',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04}},
-  Monk:{id:'class-buff-mystic-touch',name:'Mystic Touch',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,outgoingHealing:.03}}
+  Monk:{id:'class-buff-mystic-touch',name:'Mystic Touch',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,outgoingHealing:.03}},
+  'Death Knight':{id:'class-buff-horn-of-winter',name:'Horn of Winter',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,resourceRegen:.04}}
 };
 function classBuffFor(c){
   // Character-sheet fallbacks are the UI contract for newly added classes.
@@ -258,7 +326,7 @@ function skillPoolFor(c,spec=c?.spec){
 
   // Merge in the latest UI catalogue instead of using it only when the engine returns
   // nothing. This prevents an older cached combat module from hiding newly-added skills.
-  const fallback=(UI_SKILL_FALLBACKS[c?.class]||[]).filter(a=>!a.role||a.role===role);
+  const fallback=(UI_SKILL_FALLBACKS[c?.class]||[]).filter(a=>(!a.role||a.role===role)&&(!a.spec||a.spec===spec));
   if(fallback.length){
     const merged=new Map(pool.map(skill=>[skill.id,skill]));
     fallback.forEach(skill=>merged.set(skill.id,{...(merged.get(skill.id)||{}),...skill}));
