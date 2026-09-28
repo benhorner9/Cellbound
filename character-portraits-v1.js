@@ -237,16 +237,17 @@ const SET_VISUALS={
   Druid:{primary:'#a86832',secondary:'#36573c',trim:'#d8c37a',glow:'#9be09a',motif:'leaf'},
   Hunter:{primary:'#688a48',secondary:'#33482c',trim:'#d4bd72',glow:'#b7e17f',motif:'arrow'},
   Rogue:{primary:'#6f672d',secondary:'#282834',trim:'#f0df70',glow:'#f9ef9a',motif:'fang'},
-  Mage:{primary:'#337fa0',secondary:'#3d396f',trim:'#bd9ceb',glow:'#82e7ff',motif:'star'}
+  Mage:{primary:'#337fa0',secondary:'#3d396f',trim:'#bd9ceb',glow:'#82e7ff',motif:'star'},
+  Shaman:{primary:'#286a9f',secondary:'#254a56',trim:'#79c9d6',glow:'#93efff',motif:'chevron'}
 };
 
 const CLASS_WEAPON_DEFAULT={
   Warrior:'sword',Paladin:'hammer',Priest:'staff',Druid:'staff',
-  Hunter:'bow',Rogue:'dagger',Mage:'staff'
+  Hunter:'bow',Rogue:'dagger',Mage:'staff',Shaman:'mace'
 };
 const CLASS_OFFHAND_DEFAULT={
   Warrior:'shield',Paladin:'shield',Priest:'tome',Druid:'idol',
-  Hunter:'quiver',Rogue:'dagger',Mage:'focus'
+  Hunter:'quiver',Rogue:'dagger',Mage:'focus',Shaman:'idol'
 };
 
 function clampTier(v){
