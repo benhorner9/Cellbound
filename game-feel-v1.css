@@ -70,7 +70,8 @@ body[data-cb-view="chat"]{
     radial-gradient(circle at 68% 38%,rgba(255,222,157,.045) 0 1px,transparent 1.5px),
     radial-gradient(circle at 42% 78%,rgba(var(--cb-view-accent),.05) 0 1px,transparent 1.4px);
   background-size:180px 190px,240px 225px,210px 250px;
-  animation:cbAmbientDrift 22s linear infinite;
+  /* Static on purpose: continuous fixed-layer compositing caused flashes during view swaps on WebKit. */
+  animation:none;
 }
 @keyframes cbAmbientDrift{
   from{background-position:0 0,0 0,0 0}
@@ -282,4 +283,14 @@ body:has(.pvp-match-backdrop) .cb-location-stinger{display:none}
   .cb-location-stinger.show,
   .resource-strip b.cb-resource-pulse{animation:none!important}
   .cb-location-stinger.show{opacity:1;transform:none}
+}
+
+
+/* Navigation stability: tab changes must remain an instant content swap. */
+.view.active.cb-view-entering{
+  animation:none!important;
+  transform:none!important;
+  opacity:1!important;
+  filter:none!important;
+  will-change:auto!important;
 }
