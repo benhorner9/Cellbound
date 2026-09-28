@@ -19,7 +19,8 @@
 .cbl-unit[data-control="silence"]>.cbl-facing{--cbl-accent:#bbb0e9}
 .cbl-unit[data-aura="guard"]>.cbl-facing{background:#8fcbf0!important;opacity:.45!important}
 .cbl-unit[data-aura="harm"]>.cbl-ground,.cbl-unit[data-aura="vulnerable"]>.cbl-ground{background:#af423b!important;opacity:.6!important}
-.cbl-fx{position:absolute;display:block;pointer-events:none;transform:translate(-50%,-50%);--cbl-accent:#f0c993}
+.cbl-fx{position:absolute;display:block;visibility:hidden;pointer-events:none;transform:translate(-50%,-50%);--cbl-accent:#f0c993}
+.cbl-fx[data-cbl-positioned="1"]{visibility:visible}
 .cbl-fx.connection{height:3px;transform-origin:0 50%;transform:rotate(var(--cbl-angle));background:linear-gradient(90deg,transparent,var(--cbl-accent) 35%,#fff 95%);border-radius:60%;animation:cblFade .22s ease-out both}
 .cbl-fx.connection.arrow,.cbl-fx.connection.steel,.cbl-fx.connection.blade{height:2px;clip-path:polygon(0 40%,92% 40%,92% 0,100% 50%,92% 100%,92% 60%,0 60%);height:9px}
 .cbl-fx.connection.lightning{height:12px;clip-path:polygon(0 40%,20% 10%,40% 60%,60% 20%,80% 55%,100% 30%,80% 85%,60% 50%,40% 90%,20% 40%,0 60%);background:#9ce2ff}
@@ -168,3 +169,7 @@
 @keyframes cblPetStep{from{translate:0 0;rotate:-3deg}to{translate:0 -2px;rotate:3deg}}
 @media(max-width:600px){.cbl-pet{scale:.86}.cbl-pet-name{display:none}}
 @media(prefers-reduced-motion:reduce){.cbl-pet .cbl-pet-body{animation:none!important}}
+
+/* Combat Physical v4 owns event reactions inside the shared scene. Keep older
+   v2/v3 event layers from drawing a second set of hit/heal/spawn FX. */
+.cbl-scene>.cbvfx-events,.cbl-scene>.cbvfx3-events{display:none!important}
