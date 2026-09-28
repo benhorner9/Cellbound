@@ -381,111 +381,146 @@ function bodyProfile(race){
    older tall equipment paper doll. Saved race/appearance data stays unchanged. */
 function creatorClassPalette(klass){
   return ({
-    Warrior:{base:'#4a4b53',dark:'#24252b',mid:'#666873',light:'#979aa3',trim:'#d19a48',cloth:'#8e342d',accent:'#c44b3f',glow:'#f0b35f'},
-    Paladin:{base:'#757986',dark:'#343741',mid:'#9599a4',light:'#c9c4b4',trim:'#d6ae5e',cloth:'#365787',accent:'#e8d59b',glow:'#f2c4d7'},
-    Priest:{base:'#d8d0bf',dark:'#6a625c',mid:'#b5ab9a',light:'#f0e5d1',trim:'#c89a50',cloth:'#eee6d7',accent:'#f5f0e7',glow:'#fff7dc'},
-    Druid:{base:'#4c593e',dark:'#283025',mid:'#697b57',light:'#84936f',trim:'#9c7748',cloth:'#35503a',accent:'#7a9a5b',glow:'#c8a46e'},
-    Hunter:{base:'#46513e',dark:'#272f28',mid:'#65705b',light:'#7f8c73',trim:'#9b7444',cloth:'#31503b',accent:'#829c67',glow:'#b9d887'},
-    Rogue:{base:'#393640',dark:'#1d1c22',mid:'#514d58',light:'#6d6674',trim:'#876551',cloth:'#6d3035',accent:'#7e3c44',glow:'#d8ba6e'},
-    Mage:{base:'#424870',dark:'#252943',mid:'#626a9a',light:'#8793c0',trim:'#b08ac7',cloth:'#343b68',accent:'#5667a7',glow:'#62c8ea'}
-  })[klass]||{base:'#4a4b53',dark:'#24252b',mid:'#666873',light:'#92949a',trim:'#aa885c',cloth:'#493b39',accent:'#6a5751',glow:CLASS_COLORS[klass]||'#d6a45f'};
+    Warrior:{base:'#50545e',dark:'#292b31',mid:'#747883',light:'#a8abb2',trim:'#d39b4e',cloth:'#96372f',accent:'#c25043',glow:'#e7a75a'},
+    Paladin:{base:'#858a94',dark:'#3a3d45',mid:'#a2a6ad',light:'#d2cec2',trim:'#dbb25e',cloth:'#3d5d8e',accent:'#f1d79c',glow:'#f4c5dc'},
+    Priest:{base:'#d9d0be',dark:'#70675e',mid:'#bbb09f',light:'#f3ead8',trim:'#c99a51',cloth:'#ece3d2',accent:'#fff8e9',glow:'#fff7dc'},
+    Druid:{base:'#4d5a40',dark:'#2b3328',mid:'#6c7b59',light:'#899672',trim:'#9d7749',cloth:'#3a5140',accent:'#79945f',glow:'#b8d58c'},
+    Hunter:{base:'#475340',dark:'#29312a',mid:'#68735c',light:'#87927a',trim:'#9f7949',cloth:'#32513d',accent:'#7f9a68',glow:'#b9d888'},
+    Rogue:{base:'#3c3943',dark:'#211f25',mid:'#55505c',light:'#756d79',trim:'#8d6953',cloth:'#71323a',accent:'#8a434b',glow:'#d9bd74'},
+    Mage:{base:'#454c78',dark:'#292d4a',mid:'#646d9f',light:'#8d98c2',trim:'#b48bcc',cloth:'#363e6d',accent:'#566aaf',glow:'#64caec'}
+  })[klass]||{base:'#50545e',dark:'#292b31',mid:'#747883',light:'#a8abb2',trim:'#aa895f',cloth:'#4a3b39',accent:'#66524f',glow:CLASS_COLORS[klass]||'#d6a45f'};
 }
 function creatorRaceBody(race){
   return ({
-    Stoneborn:{width:1.16,head:1.08,leg:.90,arm:1.09,boot:1.08},
-    Aelari:{width:.88,head:.98,leg:1.06,arm:.92,boot:.94},
-    Thornkin:{width:1.02,head:1.02,leg:.98,arm:1.02,boot:1},
-    Emberkin:{width:1.05,head:1.02,leg:.98,arm:1.04,boot:1.02},
-    Nymari:{width:.94,head:1.00,leg:1.04,arm:.95,boot:.96},
+    Stoneborn:{width:1.13,head:1.04,leg:.90,arm:1.08,boot:1.06},
+    Aelari:{width:.89,head:.98,leg:1.04,arm:.92,boot:.94},
+    Thornkin:{width:1.02,head:1.01,leg:.97,arm:1.02,boot:1},
+    Emberkin:{width:1.04,head:1.01,leg:.98,arm:1.03,boot:1.02},
+    Nymari:{width:.95,head:1.00,leg:1.03,arm:.95,boot:.97},
     Veyren:{width:1,head:1,leg:1,arm:1,boot:1}
   })[race]||{width:1,head:1,leg:1,arm:1,boot:1};
 }
 function creatorFaceShape(i){
   return [
-    'M31 36 Q50 23 69 36 L68 63 Q64 79 50 87 Q36 79 32 63Z',
-    'M29 37 Q50 24 71 37 L69 66 Q63 82 50 88 Q37 82 31 66Z',
-    'M33 33 Q50 22 67 33 L69 60 Q65 80 50 90 Q35 80 31 60Z',
-    'M30 39 Q35 24 50 23 Q65 24 70 39 L67 65 Q62 82 50 87 Q38 82 33 65Z'
-  ][i]||'M31 36 Q50 23 69 36 L68 63 Q64 79 50 87 Q36 79 32 63Z';
+    'M31 35 Q50 22 69 35 L68 61 Q65 78 50 86 Q35 78 32 61Z',
+    'M29 37 Q50 23 71 37 L69 64 Q63 81 50 87 Q37 81 31 64Z',
+    'M33 32 Q50 21 67 32 L69 59 Q65 79 50 89 Q35 79 31 59Z',
+    'M30 38 Q35 23 50 22 Q65 23 70 38 L67 63 Q62 80 50 86 Q38 80 33 63Z'
+  ][i]||'M31 35 Q50 22 69 35 L68 61 Q65 78 50 86 Q35 78 32 61Z';
 }
-function creatorFaceMarkup(c,a,skin,eye,hair){
+function creatorRaceFeatureMarkup(a,race){
+  var f=Number(a.feature)||0;
+  if(race==='Stoneborn'){
+    return '<path d="M34 35 L39 29 L45 34 L51 27 L57 34 L64 29 L68 35" fill="none" stroke="#cab9aa" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" opacity=".72"/><path d="M34 58 L29 63 M66 58 L71 63" stroke="#decfc1" stroke-width="1.8" opacity=".4"/>';
+  }
+  if(race==='Aelari'){
+    return f?'<path d="M43 31 Q50 '+(22-f*2)+' 57 31" fill="none" stroke="#d7bbef" stroke-width="1.7" opacity=".65"/>':'';
+  }
+  if(race==='Thornkin'){
+    var antler=f%2===0
+      ?'<path d="M35 35 Q29 23 24 18 M65 35 Q71 23 76 18 M27 24 L20 21 M73 24 L80 21" fill="none" stroke="#6d8352" stroke-width="3.5" stroke-linecap="round"/>'
+      :'<path d="M35 35 Q27 25 29 15 M65 35 Q73 25 71 15 M29 21 L22 18 M71 21 L78 18" fill="none" stroke="#6d8352" stroke-width="3.5" stroke-linecap="round"/>';
+    return antler+'<path d="M31 34 Q24 31 22 25 Q30 25 34 30 M69 34 Q76 31 78 25 Q70 25 66 30" fill="#7d9860" stroke="#35442f" stroke-width="1.5"/>';
+  }
+  if(race==='Emberkin'){
+    return '<path d="M35 35 Q27 24 30 13 Q38 22 41 32 M65 35 Q73 24 70 13 Q62 22 59 32" fill="#3f2528" stroke="#c76548" stroke-width="1.8"/><path d="M31 18 L34 15 M69 18 L66 15" stroke="#f19855" stroke-width="2.2" opacity=".75"/>';
+  }
+  if(race==='Nymari'){
+    return '<path d="M34 35 L24 24 L40 30 M66 35 L76 24 L60 30" fill="#62a9b3" stroke="#2f5f67" stroke-width="1.8"/><path d="M39 29 L43 14 L50 29 L57 14 L61 29" fill="#78bbc2" stroke="#2f5f67" stroke-width="1.5" opacity=".9"/>';
+  }
+  return '';
+}
+function creatorHairMarkup(a,hair){
+  var h=Number(a.hair)||0;
+  if(h===0)return'';
+  if(h===1)return '<path d="M30 40 Q31 20 50 18 Q69 20 70 40 Q61 31 51 32 Q40 29 30 40Z" fill="'+hair+'" stroke="#171216" stroke-width="3"/>';
+  if(h===2)return '<path d="M28 42 Q28 18 52 17 Q72 20 71 41 Q61 30 48 33 Q37 33 28 42Z" fill="'+hair+'" stroke="#171216" stroke-width="3"/><path d="M52 18 Q43 27 36 44" fill="none" stroke="#fff" stroke-width="2" opacity=".12"/>';
+  if(h===3)return '<path d="M28 40 Q29 19 50 18 Q71 19 72 40 L73 69 Q66 62 64 49 L63 34 Q50 27 36 35 L35 50 Q33 63 27 69Z" fill="'+hair+'" stroke="#171216" stroke-width="3"/>';
+  if(h===4)return '<path d="M42 31 L45 10 L51 25 L57 9 L59 31 Q51 26 42 31Z" fill="'+hair+'" stroke="#171216" stroke-width="3"/><path d="M29 40 Q32 27 43 28 Q50 34 59 28 Q68 29 71 40 Q58 31 50 33 Q41 30 29 40Z" fill="'+hair+'" stroke="#171216" stroke-width="3"/>';
+  return '<path d="M29 40 Q30 20 50 18 Q70 20 71 40 Q61 30 50 33 Q39 30 29 40Z" fill="'+hair+'" stroke="#171216" stroke-width="3"/><path d="M31 38 Q22 52 29 70 M69 38 Q78 52 71 70" fill="none" stroke="'+hair+'" stroke-width="7" stroke-linecap="round"/>';
+}
+function creatorBeardMarkup(a,hair){
+  var b=Number(a.facialHair)||0;
+  if(!b)return'';
+  if(b===1)return '<path d="M38 67 Q50 76 62 67" fill="none" stroke="'+hair+'" stroke-width="2.5" stroke-dasharray="2 2" opacity=".7"/>';
+  if(b===2)return '<path d="M43 64 Q50 69 57 64 L55 79 Q50 84 45 79Z" fill="'+hair+'" stroke="#171216" stroke-width="1.6"/>';
+  return '<path d="M35 62 Q39 82 50 87 Q61 82 65 62 Q58 72 50 70 Q42 72 35 62Z" fill="'+hair+'" stroke="#171216" stroke-width="2"/>';
+}
+function creatorFaceMarkup(c,a,skin,eye,hair,uid){
   var race=a.race,profile=creatorRaceBody(race),s=profile.head;
-  var x=120-50*s,y=9+(1-s)*8,face=creatorFaceShape(a.face);
-  var p=creatorClassPalette(c.class),headGear='';
-  if(c.class==='Mage')headGear='<path d="M26 39 Q31 17 50 16 Q69 17 74 39 L65 48 Q58 37 50 35 Q41 37 35 48Z" fill="'+p.dark+'" stroke="#171218" stroke-width="3.4"/><path d="M38 22 L48 -4 L61 25Z" fill="'+p.base+'" stroke="#171218" stroke-width="3.2"/><path d="M30 39 Q50 46 71 39" fill="none" stroke="'+p.trim+'" stroke-width="2.5"/>';
-  if(c.class==='Hunter')headGear='<path d="M27 41 Q30 19 50 17 Q70 19 73 41 L65 54 Q59 41 50 37 Q41 41 35 54Z" fill="'+p.cloth+'" stroke="#171218" stroke-width="3.3"/>';
-  if(c.class==='Rogue')headGear='<path d="M26 42 Q30 17 50 16 Q70 17 74 42 L64 58 Q59 43 50 38 Q41 43 36 58Z" fill="'+p.dark+'" stroke="#171218" stroke-width="3.4"/>';
-  if(c.class==='Priest')headGear='<path d="M26 42 Q30 18 50 17 Q70 18 74 42 L66 53 Q59 40 50 36 Q41 40 34 53Z" fill="'+p.cloth+'" stroke="#171218" stroke-width="3.2"/><path d="M32 39 Q50 47 68 39" fill="none" stroke="'+p.trim+'" stroke-width="2.2"/>';
+  var x=120-50*s,y=18+(1-s)*4,face=creatorFaceShape(a.face),p=creatorClassPalette(c.class),hood='';
+  if(c.class==='Mage')hood='<path d="M24 44 Q27 16 50 14 Q73 16 76 44 L66 57 Q60 41 50 37 Q40 41 34 57Z" fill="url(#'+uid+'cloth)" stroke="#171216" stroke-width="3.5"/><path d="M35 29 L48 -4 L63 31Z" fill="url(#'+uid+'body)" stroke="#171216" stroke-width="3.2"/>';
+  if(c.class==='Hunter')hood='<path d="M25 44 Q29 17 50 15 Q71 17 75 44 L65 57 Q59 42 50 38 Q41 42 35 57Z" fill="url(#'+uid+'cloth)" stroke="#171216" stroke-width="3.4"/>';
+  if(c.class==='Rogue')hood='<path d="M24 44 Q28 16 50 14 Q72 16 76 44 L64 60 Q59 43 50 38 Q41 43 36 60Z" fill="url(#'+uid+'dark)" stroke="#171216" stroke-width="3.4"/>';
+  if(c.class==='Priest')hood='<path d="M25 44 Q29 17 50 15 Q71 17 75 44 L66 57 Q59 42 50 37 Q41 42 34 57Z" fill="url(#'+uid+'light)" stroke="#171216" stroke-width="3.2"/><path d="M32 39 Q50 46 68 39" fill="none" stroke="'+p.trim+'" stroke-width="2.2"/>';
   return '<g transform="translate('+x+' '+y+') scale('+s+')">'+
-    raceFeatureMarkup(a,race)+earsMarkup(race,skin,a.feature)+
-    '<path d="'+face+'" fill="'+skin+'" stroke="#171216" stroke-width="3.5" stroke-linejoin="round"/>'+
-    '<path d="'+face+'" fill="none" stroke="#fff1df" stroke-width="1.3" opacity=".16" transform="translate(-1 -1)"/>'+
-    hairMarkup(a,hair)+
-    '<ellipse cx="42.5" cy="54" rx="2.5" ry="5.2" fill="#171216"/><ellipse cx="57.5" cy="54" rx="2.5" ry="5.2" fill="#171216"/>'+
-    '<ellipse cx="42.5" cy="52.6" rx=".7" ry="1.2" fill="'+eye+'" opacity=".62"/><ellipse cx="57.5" cy="52.6" rx=".7" ry="1.2" fill="'+eye+'" opacity=".62"/>'+
-    '<path d="M46 70 Q50 72 54 70" fill="none" stroke="#6e433f" stroke-width="1.7" stroke-linecap="round" opacity=".82"/>'+
-    markingMarkup(a,race)+beardMarkup(a,hair)+headGear+
+    creatorRaceFeatureMarkup(a,race)+earsMarkup(race,skin,a.feature)+
+    '<path d="'+face+'" fill="url(#'+uid+'skin)" stroke="#171216" stroke-width="3.6" stroke-linejoin="round"/>'+
+    creatorHairMarkup(a,hair)+hood+
+    '<ellipse cx="42.5" cy="53.5" rx="2.45" ry="5.0" fill="#171216"/><ellipse cx="57.5" cy="53.5" rx="2.45" ry="5.0" fill="#171216"/>'+
+    '<ellipse cx="42.5" cy="52.2" rx=".65" ry="1.1" fill="'+eye+'" opacity=".62"/><ellipse cx="57.5" cy="52.2" rx=".65" ry="1.1" fill="'+eye+'" opacity=".62"/>'+
+    '<path d="M47 69 Q50 71 53 69" fill="none" stroke="#754741" stroke-width="1.7" stroke-linecap="round" opacity=".72"/>'+
+    markingMarkup(a,race)+creatorBeardMarkup(a,hair)+
   '</g>';
 }
-function creatorWeaponMarkup(c,p){
+function creatorWeaponMarkup(c,p,uid){
   var k=c.class||'Warrior';
-  if(k==='Warrior')return '<g transform="translate(39 107) rotate(-10)"><path d="M8 15 L18 113" stroke="#6a4730" stroke-width="8" stroke-linecap="round"/><path d="M10 13 L4 -34 L19 -38 L24 12Z" fill="#aab0b6" stroke="#171216" stroke-width="4"/><path d="M1 13 L25 10" stroke="'+p.trim+'" stroke-width="6"/></g><path d="M168 137 Q205 125 216 149 L210 219 Q191 238 168 220Z" fill="'+p.dark+'" stroke="#171216" stroke-width="4.5"/><path d="M190 137 V225 M170 177 H211" stroke="'+p.trim+'" stroke-width="3.5" opacity=".88"/><path d="M190 154 L200 176 L190 198 L180 176Z" fill="'+p.trim+'" opacity=".88"/>';
-  if(k==='Paladin')return '<g transform="translate(175 103) rotate(7)"><path d="M7 22 L1 125" stroke="#684c32" stroke-width="8" stroke-linecap="round"/><rect x="-10" y="-15" width="34" height="34" rx="5" fill="#a9966c" stroke="#171216" stroke-width="4"/><path d="M7 -14 V18 M-9 2 H23" stroke="'+p.trim+'" stroke-width="3"/></g><path d="M22 148 Q46 126 76 139 L72 216 Q51 233 29 217Z" fill="'+p.cloth+'" stroke="#171216" stroke-width="4.5"/><path d="M51 149 V218 M31 181 H72" stroke="'+p.trim+'" stroke-width="3"/>';
-  if(k==='Priest')return '<g transform="translate(181 78)"><path d="M0 29 L-5 190" stroke="#765639" stroke-width="8" stroke-linecap="round"/><circle cx="0" cy="11" r="14" fill="none" stroke="'+p.trim+'" stroke-width="4"/><path d="M0 -6 V28 M-16 11 H16" stroke="'+p.trim+'" stroke-width="3"/></g>';
-  if(k==='Druid')return '<g transform="translate(182 79)"><path d="M2 24 Q-8 102 -2 192" fill="none" stroke="#75533a" stroke-width="9" stroke-linecap="round"/><path d="M2 25 Q-22 10 -12 -10 M3 25 Q22 11 17 -7" fill="none" stroke="#75533a" stroke-width="6" stroke-linecap="round"/><path d="M-15 -3 Q-27 -2 -21 -15 Q-8 -14 -7 -5 M15 -1 Q28 0 23 -12 Q10 -14 8 -4" fill="#718a57" stroke="#263225" stroke-width="2.5"/></g>';
-  if(k==='Hunter')return '<g transform="translate(184 123)"><path d="M-2 -15 Q34 47 -4 116" fill="none" stroke="#9d7849" stroke-width="6"/><path d="M-2 -15 Q-29 50 -4 116" fill="none" stroke="#9d7849" stroke-width="6"/><path d="M-2 -15 L-4 116" stroke="#d0bc8d" stroke-width="1.8"/></g><path d="M48 111 L79 122 L72 211 L47 201Z" fill="#44382a" stroke="#171216" stroke-width="3.5"/><path d="M53 113 L49 78 M61 115 L61 77 M69 118 L73 85" stroke="#c4a86f" stroke-width="3.4"/>';
-  if(k==='Rogue')return '<g transform="translate(37 184) rotate(-20)"><path d="M0 0 L13 67" stroke="#b4b9bd" stroke-width="7"/><path d="M-8 1 H14" stroke="'+p.trim+'" stroke-width="5"/></g><g transform="translate(184 183) rotate(20)"><path d="M0 0 L-13 67" stroke="#b4b9bd" stroke-width="7"/><path d="M-14 1 H8" stroke="'+p.trim+'" stroke-width="5"/></g>';
-  if(k==='Mage')return '<g transform="translate(183 75)"><path d="M0 33 L-4 199" stroke="#6a4d3a" stroke-width="8" stroke-linecap="round"/><path d="M-1 26 L-11 7 L1 -9 L14 7Z" fill="#8dd4ec" stroke="#171216" stroke-width="3"/><circle cx="1" cy="7" r="17" fill="'+p.glow+'" opacity=".22"/></g>';
+  if(k==='Warrior')return '<g transform="translate(41 105) rotate(-9)"><path d="M8 15 L17 113" stroke="#69472f" stroke-width="8" stroke-linecap="round"/><path d="M9 13 L4 -34 L20 -38 L24 12Z" fill="url(#'+uid+'metal)" stroke="#171216" stroke-width="4"/><path d="M1 13 L25 10" stroke="'+p.trim+'" stroke-width="6"/></g><path d="M166 137 Q203 126 214 149 L209 218 Q191 236 168 219Z" fill="url(#'+uid+'dark)" stroke="#171216" stroke-width="4.5"/><path d="M190 139 V223 M171 177 H210" stroke="'+p.trim+'" stroke-width="3.5" opacity=".9"/><path d="M190 154 L200 176 L190 198 L180 176Z" fill="'+p.trim+'" opacity=".88"/>';
+  if(k==='Paladin')return '<g transform="translate(176 103) rotate(7)"><path d="M7 22 L1 125" stroke="#674b32" stroke-width="8" stroke-linecap="round"/><rect x="-10" y="-15" width="34" height="34" rx="5" fill="url(#'+uid+'metal)" stroke="#171216" stroke-width="4"/><path d="M7 -14 V18 M-9 2 H23" stroke="'+p.trim+'" stroke-width="3"/></g><path d="M23 148 Q46 128 76 139 L72 216 Q51 232 29 217Z" fill="url(#'+uid+'cloth)" stroke="#171216" stroke-width="4.5"/><path d="M51 149 V218 M31 181 H72" stroke="'+p.trim+'" stroke-width="3"/>';
+  if(k==='Priest')return '<g transform="translate(181 79)"><path d="M0 29 L-5 190" stroke="#765639" stroke-width="8" stroke-linecap="round"/><circle cx="0" cy="11" r="14" fill="none" stroke="'+p.trim+'" stroke-width="4"/><path d="M0 -6 V28 M-16 11 H16" stroke="'+p.trim+'" stroke-width="3"/></g>';
+  if(k==='Druid')return '<g transform="translate(182 80)"><path d="M2 24 Q-8 102 -2 192" fill="none" stroke="#75533a" stroke-width="9" stroke-linecap="round"/><path d="M2 25 Q-22 10 -12 -10 M3 25 Q22 11 17 -7" fill="none" stroke="#75533a" stroke-width="6" stroke-linecap="round"/><path d="M-15 -3 Q-27 -2 -21 -15 Q-8 -14 -7 -5 M15 -1 Q28 0 23 -12 Q10 -14 8 -4" fill="#718a57" stroke="#263225" stroke-width="2.5"/></g>';
+  if(k==='Hunter')return '<g transform="translate(184 123)"><path d="M-2 -15 Q34 47 -4 116" fill="none" stroke="#9d7849" stroke-width="6"/><path d="M-2 -15 Q-29 50 -4 116" fill="none" stroke="#9d7849" stroke-width="6"/><path d="M-2 -15 L-4 116" stroke="#d0bc8d" stroke-width="1.8"/></g><path d="M49 111 L79 122 L72 211 L47 201Z" fill="#44382a" stroke="#171216" stroke-width="3.5"/><path d="M54 113 L50 78 M62 115 L62 77 M70 118 L74 85" stroke="#c4a86f" stroke-width="3.4"/>';
+  if(k==='Rogue')return '<g transform="translate(38 184) rotate(-20)"><path d="M0 0 L13 67" stroke="url(#'+uid+'metal)" stroke-width="7"/><path d="M-8 1 H14" stroke="'+p.trim+'" stroke-width="5"/></g><g transform="translate(184 183) rotate(20)"><path d="M0 0 L-13 67" stroke="url(#'+uid+'metal)" stroke-width="7"/><path d="M-14 1 H8" stroke="'+p.trim+'" stroke-width="5"/></g>';
+  if(k==='Mage')return '<g transform="translate(183 75)"><path d="M0 33 L-4 199" stroke="#6a4d3a" stroke-width="8" stroke-linecap="round"/><path d="M-1 26 L-11 7 L1 -9 L14 7Z" fill="'+p.glow+'" stroke="#171216" stroke-width="3"/><circle cx="1" cy="7" r="17" fill="'+p.glow+'" opacity=".24"/></g>';
   return'';
 }
-function creatorBodyMarkup(c,p,race){
-  var k=c.class||'Warrior',q=creatorRaceBody(race),cx=120,w=76*q.width,left=cx-w/2,right=cx+w/2,waist=29*q.width;
-  var legH=54*q.leg,legTop=202,bootY=legTop+legH-10,bootW=31*q.boot;
-  var legs='<path d="M'+(cx-waist)+' '+legTop+' L'+(cx-8)+' '+legTop+' L'+(cx-12)+' '+bootY+' L'+(cx-31)+' '+bootY+' Q'+(cx-37)+' '+(bootY-18)+' '+(cx-28)+' '+(legTop+18)+'Z" fill="'+p.dark+'" stroke="#171216" stroke-width="4.5"/>'+
-    '<path d="M'+(cx+8)+' '+legTop+' L'+(cx+waist)+' '+legTop+' L'+(cx+31)+' '+bootY+' L'+(cx+12)+' '+bootY+' L'+(cx+8)+' '+(legTop+18)+'Z" fill="'+p.dark+'" stroke="#171216" stroke-width="4.5"/>'+
-    '<path d="M'+(cx-bootW-5)+' '+(bootY-4)+' Q'+(cx-22)+' '+(bootY-12)+' '+(cx-5)+' '+bootY+' L'+(cx-7)+' 281 L'+(cx-bootW-13)+' 281 Q'+(cx-bootW-17)+' 267 '+(cx-bootW-4)+' '+(bootY+2)+'Z" fill="#2a211e" stroke="#171216" stroke-width="4.5"/>'+
-    '<path d="M'+(cx+bootW+5)+' '+(bootY-4)+' Q'+(cx+22)+' '+(bootY-12)+' '+(cx+5)+' '+bootY+' L'+(cx+7)+' 281 L'+(cx+bootW+13)+' 281 Q'+(cx+bootW+17)+' 267 '+(cx+bootW+4)+' '+(bootY+2)+'Z" fill="#2a211e" stroke="#171216" stroke-width="4.5"/>';
-  var torso='<path d="M'+left+' 111 Q120 99 '+right+' 111 L'+(right+7)+' 198 Q120 217 '+(left-7)+' 198Z" fill="'+p.base+'" stroke="#171216" stroke-width="5"/><path d="M'+(left+8)+' 121 Q120 111 '+(right-8)+' 121" fill="none" stroke="'+p.light+'" stroke-width="3" opacity=".35"/>';
-  var armW=16*q.arm;
-  var arms='<path d="M'+(left+5)+' 127 Q'+(left-24)+' 140 '+(left-21)+' 188 Q'+(left-15)+' 207 '+(left+1)+' 190 L'+(left+13)+' 142Z" fill="'+p.base+'" stroke="#171216" stroke-width="5"/>'+
-    '<path d="M'+(right-5)+' 127 Q'+(right+24)+' 140 '+(right+21)+' 188 Q'+(right+15)+' 207 '+(right-1)+' 190 L'+(right-13)+' 142Z" fill="'+p.base+'" stroke="#171216" stroke-width="5"/>';
+function creatorBodyMarkup(c,p,race,uid){
+  var k=c.class||'Warrior',q=creatorRaceBody(race),cx=120,w=72*q.width,left=cx-w/2,right=cx+w/2,waist=27*q.width;
+  var legTop=198,bootY=252,bootW=30*q.boot;
+  var legs='<path d="M'+(cx-waist)+' '+legTop+' L'+(cx-8)+' '+legTop+' L'+(cx-12)+' '+bootY+' L'+(cx-30)+' '+bootY+' Q'+(cx-35)+' 231 '+(cx-27)+' 214Z" fill="url(#'+uid+'dark)" stroke="#171216" stroke-width="4.3"/>'+
+    '<path d="M'+(cx+8)+' '+legTop+' L'+(cx+waist)+' '+legTop+' L'+(cx+30)+' '+bootY+' L'+(cx+12)+' '+bootY+' L'+(cx+8)+' 214Z" fill="url(#'+uid+'dark)" stroke="#171216" stroke-width="4.3"/>'+
+    '<path d="M'+(cx-bootW-4)+' 246 Q'+(cx-22)+' 239 '+(cx-5)+' 251 L'+(cx-7)+' 279 L'+(cx-bootW-13)+' 279 Q'+(cx-bootW-16)+' 265 '+(cx-bootW-4)+' 252Z" fill="#2b211e" stroke="#171216" stroke-width="4.3"/>'+
+    '<path d="M'+(cx+bootW+4)+' 246 Q'+(cx+22)+' 239 '+(cx+5)+' 251 L'+(cx+7)+' 279 L'+(cx+bootW+13)+' 279 Q'+(cx+bootW+16)+' 265 '+(cx+bootW+4)+' 252Z" fill="#2b211e" stroke="#171216" stroke-width="4.3"/>';
+  var torso='<path d="M'+left+' 103 Q120 92 '+right+' 103 L'+(right+7)+' 194 Q120 211 '+(left-7)+' 194Z" fill="url(#'+uid+'body)" stroke="#171216" stroke-width="5"/>';
+  var arms='<path d="M'+(left+7)+' 119 Q'+(left-22)+' 131 '+(left-20)+' 177 Q'+(left-14)+' 197 '+(left+2)+' 181 L'+(left+13)+' 136Z" fill="url(#'+uid+'body)" stroke="#171216" stroke-width="5"/>'+
+    '<path d="M'+(right-7)+' 119 Q'+(right+22)+' 131 '+(right+20)+' 177 Q'+(right+14)+' 197 '+(right-2)+' 181 L'+(right-13)+' 136Z" fill="url(#'+uid+'body)" stroke="#171216" stroke-width="5"/>';
   var detail='';
-  if(k==='Warrior')detail='<path d="M'+(left-11)+' 122 Q'+(left+7)+' 103 '+(left+31)+' 120 L'+(left+21)+' 149 L'+(left-10)+' 141Z M'+(right+11)+' 122 Q'+(right-7)+' 103 '+(right-31)+' 120 L'+(right-21)+' 149 L'+(right+10)+' 141Z" fill="'+p.mid+'" stroke="#171216" stroke-width="4.2"/><path d="M82 129 L120 154 L158 129 M86 171 H154 M120 153 V203" fill="none" stroke="'+p.trim+'" stroke-width="3.2"/><path d="M77 113 L105 135 L92 206 L66 197Z" fill="'+p.cloth+'" stroke="#171216" stroke-width="3.2"/><path d="M83 142 Q120 166 157 142" fill="none" stroke="#f4c899" stroke-width="2" opacity=".22"/>';
-  if(k==='Paladin')detail='<path d="M'+(left-12)+' 120 Q'+(left+5)+' 103 '+(left+31)+' 119 L'+(left+21)+' 148 L'+(left-11)+' 141Z M'+(right+12)+' 120 Q'+(right-5)+' 103 '+(right-31)+' 119 L'+(right-21)+' 148 L'+(right+11)+' 141Z" fill="'+p.light+'" stroke="#171216" stroke-width="4.2"/><path d="M120 118 V201 M84 154 H156" stroke="'+p.trim+'" stroke-width="3.2"/><path d="M101 119 L120 143 L139 119" fill="'+p.cloth+'" opacity=".75"/><circle cx="120" cy="161" r="10" fill="'+p.trim+'" opacity=".88"/>';
-  if(k==='Priest')detail='<path d="M'+(left+5)+' 108 Q120 127 '+(right-5)+' 108 L'+(right+23)+' 236 Q120 260 '+(left-23)+' 236Z" fill="'+p.light+'" stroke="#171216" stroke-width="4.2"/><path d="M91 121 L120 151 L149 121 M120 150 V227" fill="none" stroke="'+p.trim+'" stroke-width="3"/><path d="M84 216 Q120 235 156 216" fill="none" stroke="'+p.trim+'" stroke-width="2.4"/>';
-  if(k==='Druid')detail='<path d="M'+(left-8)+' 115 Q120 99 '+(right+8)+' 115 L'+(right+16)+' 215 Q120 234 '+(left-16)+' 215Z" fill="'+p.base+'" stroke="#171216" stroke-width="5"/><path d="M74 132 Q92 110 109 126 Q94 151 74 146Z M166 132 Q148 110 131 126 Q146 151 166 146Z" fill="#688050" stroke="#293225" stroke-width="2.5"/><path d="M89 170 Q106 159 116 178 Q100 195 86 184Z M151 166 Q134 159 126 180 Q141 194 154 181Z" fill="#7d955d" stroke="#293225" stroke-width="2.5"/><circle cx="120" cy="170" r="6" fill="'+p.trim+'" opacity=".8"/>';
-  if(k==='Hunter')detail='<path d="M'+(left-7)+' 110 Q120 99 '+(right+6)+' 112 L'+(right+12)+' 207 Q120 224 '+(left-12)+' 207Z" fill="'+p.base+'" stroke="#171216" stroke-width="5"/><path d="M80 126 L153 192" stroke="#80593f" stroke-width="8"/><path d="M88 169 H151" stroke="'+p.trim+'" stroke-width="3"/><path d="M70 116 Q120 138 170 116 L160 147 Q120 164 80 147Z" fill="'+p.cloth+'" stroke="#171216" stroke-width="3"/>';
-  if(k==='Rogue')detail='<path d="M'+(left-3)+' 112 Q120 100 '+(right+3)+' 112 L'+(right+9)+' 205 Q120 221 '+(left-9)+' 205Z" fill="'+p.base+'" stroke="#171216" stroke-width="5"/><path d="M80 126 L158 186 M160 126 L82 186" stroke="#704d40" stroke-width="6"/><path d="M86 194 H154" stroke="'+p.trim+'" stroke-width="2.6"/><path d="M75 114 Q120 139 165 114 L157 150 Q120 165 83 150Z" fill="'+p.cloth+'" stroke="#171216" stroke-width="3.2"/>';
-  if(k==='Mage')detail='<path d="M'+(left+4)+' 108 Q120 99 '+(right-4)+' 108 L'+(right+22)+' 236 Q120 260 '+(left-22)+' 236Z" fill="'+p.base+'" stroke="#171216" stroke-width="5"/><path d="M90 119 L120 151 L150 119 M120 150 V226" fill="none" stroke="'+p.trim+'" stroke-width="3.2"/><path d="M83 204 Q120 223 157 204" fill="none" stroke="'+p.trim+'" stroke-width="2.7"/><circle cx="120" cy="177" r="7" fill="'+p.glow+'" opacity=".3"/>';
-  var racial='';
-  if(race==='Stoneborn')racial='<path d="M66 144 L54 137 L59 126 M174 144 L186 137 L181 126" fill="none" stroke="#cab8aa" stroke-width="4.5" opacity=".58"/>';
-  if(race==='Thornkin')racial='<path d="M73 136 L61 121 M167 136 L179 120 M86 203 L74 218" stroke="#536c42" stroke-width="4.5" stroke-linecap="round"/><path d="M60 122 l-7 -7 l2 10 M179 121 l7 -6 l-3 10" fill="#78965a"/>';
-  if(race==='Emberkin')racial='<path d="M79 181 Q92 172 100 189 M161 180 Q148 171 140 188" fill="none" stroke="#ef7b4e" stroke-width="2.8" opacity=".72"/>';
-  if(race==='Nymari')racial='<path d="M65 151 L53 141 L62 164 M175 151 L187 141 L178 164" fill="#61a4ae" opacity=".62"/>';
-  return legs+arms+torso+detail+racial;
+  if(k==='Warrior')detail='<path d="M'+(left-9)+' 111 Q'+(left+8)+' 95 '+(left+30)+' 111 L'+(left+21)+' 139 L'+(left-8)+' 134Z M'+(right+9)+' 111 Q'+(right-8)+' 95 '+(right-30)+' 111 L'+(right-21)+' 139 L'+(right+8)+' 134Z" fill="url(#'+uid+'metal)" stroke="#171216" stroke-width="4"/><path d="M84 121 L120 146 L156 121 M87 162 H153 M120 146 V196" fill="none" stroke="'+p.trim+'" stroke-width="3.1"/><path d="M80 103 L105 127 L93 202 L69 192Z" fill="url(#'+uid+'cloth)" stroke="#171216" stroke-width="3.1"/>';
+  if(k==='Paladin')detail='<path d="M'+(left-10)+' 110 Q'+(left+7)+' 94 '+(left+31)+' 110 L'+(left+21)+' 140 L'+(left-9)+' 134Z M'+(right+10)+' 110 Q'+(right-7)+' 94 '+(right-31)+' 110 L'+(right-21)+' 140 L'+(right+9)+' 134Z" fill="url(#'+uid+'metal)" stroke="#171216" stroke-width="4"/><path d="M120 109 V195 M85 149 H155" stroke="'+p.trim+'" stroke-width="3.1"/><path d="M100 109 L120 137 L140 109" fill="url(#'+uid+'cloth)" opacity=".82"/><circle cx="120" cy="157" r="10" fill="'+p.trim+'" opacity=".9"/>';
+  if(k==='Priest')detail='<path d="M'+(left+6)+' 101 Q120 119 '+(right-6)+' 101 L'+(right+21)+' 232 Q120 253 '+(left-21)+' 232Z" fill="url(#'+uid+'light)" stroke="#171216" stroke-width="4.2"/><path d="M92 114 L120 145 L148 114 M120 144 V224" fill="none" stroke="'+p.trim+'" stroke-width="3"/><path d="M86 214 Q120 232 154 214" fill="none" stroke="'+p.trim+'" stroke-width="2.4"/>';
+  if(k==='Druid')detail='<path d="M'+(left-6)+' 106 Q120 93 '+(right+6)+' 106 L'+(right+14)+' 211 Q120 228 '+(left-14)+' 211Z" fill="url(#'+uid+'body)" stroke="#171216" stroke-width="5"/><path d="M76 123 Q93 104 109 118 Q95 143 77 139Z M164 123 Q147 104 131 118 Q145 143 163 139Z" fill="#698154" stroke="#293225" stroke-width="2.4"/><path d="M90 164 Q106 154 116 172 Q101 188 88 180Z M150 160 Q134 154 126 174 Q140 188 153 177Z" fill="#7f9661" stroke="#293225" stroke-width="2.4"/><circle cx="120" cy="166" r="6" fill="'+p.trim+'" opacity=".82"/>';
+  if(k==='Hunter')detail='<path d="M'+(left-6)+' 103 Q120 93 '+(right+5)+' 105 L'+(right+10)+' 202 Q120 218 '+(left-10)+' 202Z" fill="url(#'+uid+'body)" stroke="#171216" stroke-width="5"/><path d="M82 119 L152 184" stroke="#805a40" stroke-width="8"/><path d="M89 164 H151" stroke="'+p.trim+'" stroke-width="3"/><path d="M72 106 Q120 129 168 106 L159 139 Q120 155 81 139Z" fill="url(#'+uid+'cloth)" stroke="#171216" stroke-width="3"/>';
+  if(k==='Rogue')detail='<path d="M'+(left-2)+' 104 Q120 93 '+(right+2)+' 104 L'+(right+8)+' 202 Q120 216 '+(left-8)+' 202Z" fill="url(#'+uid+'body)" stroke="#171216" stroke-width="5"/><path d="M82 119 L157 181 M158 119 L83 181" stroke="#704d40" stroke-width="5.5"/><path d="M88 190 H152" stroke="'+p.trim+'" stroke-width="2.5"/><path d="M76 105 Q120 130 164 105 L156 141 Q120 156 84 141Z" fill="url(#'+uid+'cloth)" stroke="#171216" stroke-width="3.1"/>';
+  if(k==='Mage')detail='<path d="M'+(left+4)+' 101 Q120 92 '+(right-4)+' 101 L'+(right+20)+' 232 Q120 253 '+(left-20)+' 232Z" fill="url(#'+uid+'body)" stroke="#171216" stroke-width="5"/><path d="M92 113 L120 145 L148 113 M120 144 V224" fill="none" stroke="'+p.trim+'" stroke-width="3.1"/><path d="M85 201 Q120 220 155 201" fill="none" stroke="'+p.trim+'" stroke-width="2.6"/><circle cx="120" cy="171" r="7" fill="'+p.glow+'" opacity=".34"/>';
+  return legs+arms+torso+detail;
 }
 function creatorFigureSVG(subject){
   var c=subject||{},race=c.race||c.appearance?.race||'Veyren';
   var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race),r=raceDef(a.race);
   var skin=r.skin[a.skinTone],eye=r.eyes[a.eyes],hair=HAIR[a.hairColor],p=creatorClassPalette(c.class);
-  var uid='cc3'+hash((c.id||c.name||race)+'|'+JSON.stringify(a)+'|'+(c.class||'Warrior')).toString(36);
-  return '<svg viewBox="0 0 240 300" role="img" aria-hidden="true" focusable="false" class="cb-creator-figure-svg cb-creator-figure-v3" data-race="'+esc(a.race)+'" data-class="'+esc(c.class||'Warrior')+'">'+
+  var uid='cc4'+hash((c.id||c.name||race)+'|'+JSON.stringify(a)+'|'+(c.class||'Warrior')).toString(36);
+  var skinLight=mixHex(skin,'#fff1dd',.18),skinDark=mixHex(skin,'#5f332d',.16);
+  return '<svg viewBox="0 0 240 300" role="img" aria-hidden="true" focusable="false" class="cb-creator-figure-svg cb-creator-figure-v4" data-race="'+esc(a.race)+'" data-class="'+esc(c.class||'Warrior')+'">'+
     '<defs>'+
-      '<radialGradient id="'+uid+'a" cx="50%" cy="46%" r="62%"><stop offset="0%" stop-color="'+p.glow+'" stop-opacity=".22"/><stop offset="72%" stop-color="'+p.glow+'" stop-opacity=".025"/><stop offset="100%" stop-color="'+p.glow+'" stop-opacity="0"/></radialGradient>'+
-      '<linearGradient id="'+uid+'warm" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fff3d8" stop-opacity=".16"/><stop offset="45%" stop-color="#fff" stop-opacity=".015"/><stop offset="100%" stop-color="#8c432b" stop-opacity=".16"/></linearGradient>'+
-      '<filter id="'+uid+'s" x="-35%" y="-30%" width="170%" height="175%"><feDropShadow dx="0" dy="5" stdDeviation="3.8" flood-color="#09070a" flood-opacity=".52"/></filter>'+
+      '<linearGradient id="'+uid+'body" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="'+p.light+'"/><stop offset="38%" stop-color="'+p.base+'"/><stop offset="100%" stop-color="'+p.dark+'"/></linearGradient>'+
+      '<linearGradient id="'+uid+'dark" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="'+p.mid+'"/><stop offset="100%" stop-color="'+p.dark+'"/></linearGradient>'+
+      '<linearGradient id="'+uid+'light" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="'+p.accent+'"/><stop offset="100%" stop-color="'+p.base+'"/></linearGradient>'+
+      '<linearGradient id="'+uid+'cloth" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="'+mixHex(p.cloth,'#ffffff',.18)+'"/><stop offset="100%" stop-color="'+mixHex(p.cloth,'#000000',.18)+'"/></linearGradient>'+
+      '<linearGradient id="'+uid+'metal" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#d4d6d8"/><stop offset="45%" stop-color="#8e949b"/><stop offset="100%" stop-color="#555a61"/></linearGradient>'+
+      '<linearGradient id="'+uid+'skin" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="'+skinLight+'"/><stop offset="70%" stop-color="'+skin+'"/><stop offset="100%" stop-color="'+skinDark+'"/></linearGradient>'+
+      '<radialGradient id="'+uid+'a" cx="50%" cy="46%" r="62%"><stop offset="0%" stop-color="'+p.glow+'" stop-opacity=".20"/><stop offset="72%" stop-color="'+p.glow+'" stop-opacity=".02"/><stop offset="100%" stop-color="'+p.glow+'" stop-opacity="0"/></radialGradient>'+
+      '<filter id="'+uid+'s" x="-35%" y="-30%" width="170%" height="175%"><feDropShadow dx="0" dy="5" stdDeviation="3.6" flood-color="#09070a" flood-opacity=".5"/></filter>'+
     '</defs>'+
-    '<ellipse cx="120" cy="282" rx="67" ry="10" fill="#000" opacity=".28"/><ellipse cx="120" cy="153" rx="108" ry="137" fill="url(#'+uid+'a)"/>'+
-    '<g filter="url(#'+uid+'s)">'+creatorWeaponMarkup(c,p)+creatorBodyMarkup(c,p,a.race)+creatorFaceMarkup(c,a,skin,eye,hair)+'</g>'+
-    '<path d="M52 42 Q120 10 188 42 L180 229 Q120 270 60 229Z" fill="url(#'+uid+'warm)" opacity=".23" pointer-events="none"/>'+
+    '<ellipse cx="120" cy="282" rx="65" ry="9" fill="#000" opacity=".25"/><ellipse cx="120" cy="151" rx="106" ry="134" fill="url(#'+uid+'a)"/>'+
+    '<g filter="url(#'+uid+'s)">'+creatorWeaponMarkup(c,p,uid)+creatorBodyMarkup(c,p,a.race,uid)+creatorFaceMarkup(c,a,skin,eye,hair,uid)+'</g>'+
   '</svg>';
 }
 function creatorFigureHTML(subject,opts){
   opts=opts||{};
   var c=subject||{},race=c.race||c.appearance?.race||'Veyren';
   var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
-  var cls='cb-creator-figure cb-creator-figure-v3-shell cb-creator-figure--'+esc((c.class||'Warrior').toLowerCase().replace(/[^a-z0-9]+/g,'-'));
-  return '<span class="'+cls+'" role="img" aria-label="'+esc(opts.label||((c.name||race)+' '+(c.class||'adventurer'))) +'" data-creator-race="'+esc(a.race)+'" data-creator-class="'+esc(c.class||'Warrior')+'" data-character-art="inn-match-v3">'+creatorFigureSVG({...c,appearance:a})+'</span>';
+  var cls='cb-creator-figure cb-creator-figure-v4-shell cb-creator-figure--'+esc((c.class||'Warrior').toLowerCase().replace(/[^a-z0-9]+/g,'-'));
+  return '<span class="'+cls+'" role="img" aria-label="'+esc(opts.label||((c.name||race)+' '+(c.class||'adventurer'))) +'" data-creator-race="'+esc(a.race)+'" data-creator-class="'+esc(c.class||'Warrior')+'" data-character-art="inn-match-v4">'+creatorFigureSVG({...c,appearance:a})+'</span>';
 }
 function paperSlotClass(slot,highlighted,item){
   var id=String(item?.baseItemId||item?.itemId||'').toLowerCase();
@@ -913,7 +948,7 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:22,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
+  version:23,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
   PAINTED_BODY_STANDARD:PAINTED_BODY_STANDARD,usesIllustratedBody:usesIllustratedBody,usesPaintedBody:usesPaintedBody,illustratedSignature:illustratedSignature,
   applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,characterModelHTML:characterModelHTML,worldAvatarHTML:worldAvatarHTML,worldAvatarSVG:worldAvatarSVG,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
