@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const CLASS_ORDER=['Warrior','Paladin','Priest','Druid','Hunter','Rogue','Mage','Shaman','Warlock'];
+const CLASS_ORDER=['Warrior','Paladin','Priest','Druid','Hunter','Rogue','Mage','Shaman','Warlock','Monk'];
 const CORE_SLOT_ORDER=['Head','Chest','Weapon'];
 const SLOT_ORDER=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring','Trinket','Relic'];
 const EQUIPMENT_POSITION_ORDER=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic'];
@@ -44,7 +44,8 @@ const CLASS_STAT_POOLS={
   Rogue:['agility','stamina','crit','haste'],
   Mage:['intellect','stamina','crit','haste'],
   Shaman:['intellect','stamina','healing','crit','haste'],
-  Warlock:['intellect','stamina','crit','haste']
+  Warlock:['intellect','stamina','crit','haste'],
+  Monk:['agility','intellect','stamina','armour','threat','healing','crit','haste']
 };
 const SPEC_IDEALS={
   'Warrior|Protection':['block','threat','stamina','armour'],'Warrior|Arms':['strength','crit','haste'],
@@ -52,11 +53,14 @@ const SPEC_IDEALS={
   'Priest|Holy':['healing','intellect','haste','crit'],'Druid|Restoration':['healing','haste','intellect','crit'],
   'Hunter|Marksman':['agility','crit','haste'],'Rogue|Assassination':['agility','crit','haste'],'Mage|Arcane':['intellect','crit','haste'],
   'Shaman|Restoration':['healing','intellect','haste','crit'],
-  'Warlock|Demonology':['intellect','haste','crit','stamina']
+  'Warlock|Demonology':['intellect','haste','crit','stamina'],
+  'Monk|Brewmaster':['stamina','armour','agility','haste','threat'],
+  'Monk|Mistweaver':['healing','intellect','haste','crit'],
+  'Monk|Windwalker':['agility','haste','crit','stamina']
 };
 const SET_META={
   Warrior:{name:'Warlord Set',raidName:'Housebreaker Plate'},Paladin:{name:'Sunward Set',raidName:'Gilded Vigil'},Priest:{name:'Saintglass Set',raidName:'Veil of the Attic'},Druid:{name:'Moonbark Set',raidName:'Nightbloom Regalia'},
-  Hunter:{name:'Hawkeye Set',raidName:'Blackwood Hunt'},Rogue:{name:'Shadecoil Set',raidName:'Silent Service'},Mage:{name:'Starweave Set',raidName:'Housebound Arcanum'},Shaman:{name:'Tempestcaller Set',raidName:'Stormcell Regalia'},Warlock:{name:'Dreadweave Set',raidName:'Netherlord Regalia'}
+  Hunter:{name:'Hawkeye Set',raidName:'Blackwood Hunt'},Rogue:{name:'Shadecoil Set',raidName:'Silent Service'},Mage:{name:'Starweave Set',raidName:'Housebound Arcanum'},Shaman:{name:'Tempestcaller Set',raidName:'Stormcell Regalia'},Warlock:{name:'Dreadweave Set',raidName:'Netherlord Regalia'},Monk:{name:'Celestial Way Set',raidName:'Grandmaster Regalia'}
 };
 const SET_BONUS_RULES={
   pieces2:{threshold:2,name:'Resonant Pair',outputScale:1.05,short:'+5% damage & healing output',description:'All damaging and healing abilities are 5% stronger.'},
@@ -83,7 +87,8 @@ const NAMES={
   Rogue:[['Shadowcap','Duskleather Tunic','Twin Knives'],['Nightfang Hood','Nightfang Jerkin','Venomshivs'],['Shadecoil Mask','Shadecoil Vest','Ghostfang Daggers'],['Shadecoil Cowl','Shadecoil Leathers','Shadecoil Blades'],['Silent Service Cowl','Silent Service Leathers','Silent Service Blades']],
   Mage:[['Novice Circlet','Blueweave Robe','Crystal Wand'],['Spellforge Circlet','Spellforge Mantle','Arcglass Rod'],['Starweave Crown','Starweave Vestment','Celestine Staff'],['Starweave Diadem','Starweave Robe','Starweave Focus'],['Housebound Diadem','Housebound Robe','Housebound Focus']],
   Shaman:[['Tidecaller Hood','Tidecaller Mail','Riverstone Mace'],['Stormspeaker Helm','Stormspeaker Hauberk','Tempest Mace'],['Deepcurrent Crown','Deepcurrent Mail','Tidemender Scepter'],['Tempestcaller Headdress','Tempestcaller Hauberk','Tempestcaller Hammer'],['Stormcell Headdress','Stormcell Hauberk','Stormcell Hammer']],
-  Warlock:[['Initiate Hood','Felwoven Robe','Ashen Staff'],['Dreadcaller Cowl','Dreadcaller Vestments','Demonspine Staff'],['Soulbinder Crown','Soulbinder Robe','Nether Rod'],['Dreadweave Horns','Dreadweave Vestments','Felheart Staff'],['Netherlord Crown','Netherlord Regalia','Tyrant Staff']]
+  Warlock:[['Initiate Hood','Felwoven Robe','Ashen Staff'],['Dreadcaller Cowl','Dreadcaller Vestments','Demonspine Staff'],['Soulbinder Crown','Soulbinder Robe','Nether Rod'],['Dreadweave Horns','Dreadweave Vestments','Felheart Staff'],['Netherlord Crown','Netherlord Regalia','Tyrant Staff']],
+  Monk:[['Wayfarer Headband','Wayfarer Gi','Training Staff'],['Jadefist Headguard','Jadefist Vest','Jadewood Staff'],['Cloudstep Crown','Cloudstep Raiment','Cloudpiercer Staff'],['Celestial Way Crown','Celestial Way Vest','Celestial Staff'],['Grandmaster Crown','Grandmaster Regalia','Grandmaster Staff']]
 };
 const TIER_PREFIX={
   Warrior:['Militia','Ashguard','Vaultforged','Warlord','Housebreaker'],
@@ -94,7 +99,8 @@ const TIER_PREFIX={
   Rogue:['Shadow','Nightfang','Shadecoil','Master Shadecoil','Silent Service'],
   Mage:['Novice','Spellforge','Starweave','Ascendant Starweave','Housebound'],
   Shaman:['Tidecaller','Stormspeaker','Deepcurrent','Tempestcaller','Stormcell'],
-  Warlock:['Initiate','Dreadcaller','Soulbinder','Dreadweave','Netherlord']
+  Warlock:['Initiate','Dreadcaller','Soulbinder','Dreadweave','Netherlord'],
+  Monk:['Wayfarer','Jadefist','Cloudstep','Celestial Way','Grandmaster']
 };
 const ARMOUR_NOUNS={
   plate:{Shoulders:'Shoulderguards',Hands:'Gauntlets',Waist:'Warbelt',Legs:'Legplates',Feet:'Greaves'},
@@ -102,8 +108,8 @@ const ARMOUR_NOUNS={
   cloth:{Shoulders:'Mantle',Hands:'Gloves',Waist:'Sash',Legs:'Leggings',Feet:'Slippers'},
   mail:{Shoulders:'Spaulders',Hands:'Grips',Waist:'Belt',Legs:'Legguards',Feet:'Boots'}
 };
-const OFFHAND_NOUN={Warrior:'Shield',Paladin:'Bulwark',Priest:'Scripture',Druid:'Idol',Hunter:'Quiver',Rogue:'Parrying Blade',Mage:'Grimoire',Shaman:'Totem',Warlock:'Grimoire'};
-const RELIC_NOUN={Warrior:'Crest',Paladin:'Libram',Priest:'Icon',Druid:'Totem',Hunter:'Trophy',Rogue:'Token',Mage:'Focus',Shaman:'Spirit Charm',Warlock:'Soulstone'};
+const OFFHAND_NOUN={Warrior:'Shield',Paladin:'Bulwark',Priest:'Scripture',Druid:'Idol',Hunter:'Quiver',Rogue:'Parrying Blade',Mage:'Grimoire',Shaman:'Totem',Warlock:'Grimoire',Monk:'Prayer Beads'};
+const RELIC_NOUN={Warrior:'Crest',Paladin:'Libram',Priest:'Icon',Druid:'Totem',Hunter:'Trophy',Rogue:'Token',Mage:'Focus',Shaman:'Spirit Charm',Warlock:'Soulstone',Monk:'Jade Idol'};
 const SLOT_GLYPHS={Head:'⛑',Shoulders:'⌃',Chest:'▣',Hands:'✋',Waist:'═',Legs:'║',Feet:'♟',Weapon:'⚔',OffHand:'🛡',Ring:'◉',Trinket:'◆',Relic:'◇'};
 function inferWeaponType(klass,name=''){
   const n=String(name).toLowerCase();
@@ -121,7 +127,7 @@ function inferWeaponType(klass,name=''){
   if(/(rod)/.test(n))return'rod';
   if(/(greatblade|greatsword|claymore)/.test(n))return'greatsword';
   if(/(sword|blade|blades|sabre|saber)/.test(n))return'sword';
-  return({Warrior:'sword',Paladin:'hammer',Priest:'staff',Druid:'staff',Hunter:'bow',Rogue:'dagger',Mage:'staff',Shaman:'mace',Warlock:'staff'})[klass]||'sword'
+  return({Warrior:'sword',Paladin:'hammer',Priest:'staff',Druid:'staff',Hunter:'bow',Rogue:'dagger',Mage:'staff',Shaman:'mace',Warlock:'staff',Monk:'staff'})[klass]||'sword'
 }
 function equipmentPositions(item){
   if(!item||typeof item!=='object')return[];
@@ -143,7 +149,7 @@ function inferOffHandType(klass,name=''){
   if(/\b(idol|totem)\b/.test(n))return'idol';
   if(/(focus|orb|crystal)/.test(n))return'focus';
   if(/\b(blade|dagger|knife|shiv)\b/.test(n))return'dagger';
-  return({Warrior:'shield',Paladin:'shield',Priest:'tome',Druid:'idol',Hunter:'quiver',Rogue:'dagger',Mage:'focus',Shaman:'idol',Warlock:'tome'})[klass]||'focus'
+  return({Warrior:'shield',Paladin:'shield',Priest:'tome',Druid:'idol',Hunter:'quiver',Rogue:'dagger',Mage:'focus',Shaman:'idol',Warlock:'tome',Monk:'focus'})[klass]||'focus'
 }
 function armourFamily(klass){return ['Warrior','Paladin'].includes(klass)?'plate':['Priest','Mage','Warlock'].includes(klass)?'cloth':klass==='Shaman'?'mail':'leather'}
 function nameFor(klass,tier,slot){
