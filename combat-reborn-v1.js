@@ -1076,6 +1076,7 @@ function threatMultiplier(u,a){
  if(u.class==='Paladin'&&u.spec==='Protection')base*=1+talentRank(u,'Guardian Oath')*.12+(a.id==='consecration'?talentRank(u,'Consecration')*.15:0);
  if(u.class==='Warrior'&&u.spec==='Protection')base*=1+talentRank(u,'Taunt Mastery')*.05;
  if(u.class==='Monk'&&u.spec==='Brewmaster')base*=1+(a.id==='keg-smash'?talentRank(u,'Keg Mastery')*.12:0);
+ if(u.class==='Death Knight'&&u.spec==='Blood')base*=1+(a.id==='heart-strike'?talentRank(u,'Heartbreaker')*.10:0);
  return base*Math.max(.1,1+statusBonus(u,'threatBonus'))
 }
 
@@ -1202,6 +1203,71 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
   if(ally&&healthRatio(ally)<.995){
    const heal=Math.max(1,Math.round(dealt*ratio));doHeal(ctx,u,ally,heal,ancient?'Ancient Teachings':'Fistweaving');
    if(ancient)talentTrigger(ctx,u,'Ancient Teachings',ally,{healing:heal,sourceAbility:a.name})
+  }
+ }
+ if(u.class==='Death Knight'){
+  if(u.spec==='Blood'){
+   if(a.id==='marrowrend'){
+    const ossuary=talentRank(u,'Ossuary'),duration=8000+ossuary*1000,reduction=.05+ossuary*.015;
+    applyStatus(ctx,u,u,{id:'bone-shield',name:'Bone Shield',kind:'buff',duration,effect:{incomingDamageReduction:reduction}});
+    if(ossuary)talentTrigger(ctx,u,'Ossuary',u,{duration,reduction})
+   }
+   if(a.id==='blood-boil'&&(r=talentRank(u,'Hemostasis'))){
+    applyStatus(ctx,u,u,{id:'hemostasis',name:'Hemostasis',kind:'buff',duration:9000,effect:{}});
+    talentTrigger(ctx,u,'Hemostasis',u,{rank:r})
+   }
+   if(a.id==='death-strike'){
+    const recent=(u.recentDamageTaken||[]).filter(x=>Number(x.at)>=ctx.time-5000).reduce((n,x)=>n+(Number(x.amount)||0),0);
+    const voracious=talentRank(u,'Voracious'),hemostasis=u.statuses?.['hemostasis']?talentRank(u,'Hemostasis'):0;
+    const heal=Math.max(u.maxHealth*.07,recent*(.30+voracious*.065))*(1+hemostasis*.08);
+    const effective=doHeal(ctx,u,u,heal,'Death Strike');
+    if(hemostasis)removeStatus(ctx,u,'hemostasis','consumed');
+    if((r=talentRank(u,'Blood Shield'))){
+     const reduction=.04+r*.025;applyStatus(ctx,u,u,{id:'blood-shield',name:'Blood Shield',kind:'buff',duration:5000,effect:{incomingDamageReduction:reduction}});
+     talentTrigger(ctx,u,'Blood Shield',u,{healing:effective,reduction,duration:5000})
+    }
+    if(voracious)talentTrigger(ctx,u,'Voracious',u,{recentDamage:Math.round(recent),healing:effective})
+   }
+  }
+  if(u.spec==='Frost'){
+   if(a.id==='frost-strike'&&(r=talentRank(u,'Icy Talons'))){
+    applyStatus(ctx,u,u,{id:'icy-talons',name:'Icy Talons',kind:'buff',duration:5000,effect:{haste:.035*r}});
+    talentTrigger(ctx,u,'Icy Talons',u,{duration:5000})
+   }
+   if(Number(a.cost)>0&&(r=talentRank(u,'Runic Empowerment'))&&ctx.rng()<.12*r){
+    gainResource(ctx,u,{name:'Runic Empowerment',gain:10+r*2});talentTrigger(ctx,u,'Runic Empowerment',u,{runicPower:10+r*2})
+   }
+   if(crit&&(r=talentRank(u,'Avalanche'))&&target.alive){
+    const extras=livingEnemies(ctx).filter(e=>e.id!==target.id).slice(0,2),splash=Math.max(1,Math.round(dealt*.08*r));
+    extras.forEach(e=>dealDamage(ctx,u,e,splash,'Avalanche',{damageType:'magic'}));
+    if(extras.length)talentTrigger(ctx,u,'Avalanche',extras[0],{targets:extras.length,damage:splash})
+   }
+  }
+  if(u.spec==='Unholy'){
+   const woundKey=u.id,wounds=()=>Math.max(0,Number(target.dkWounds?.[woundKey])||0);
+   target.dkWounds=target.dkWounds||{};
+   if(a.id==='festering-strike'){
+    const fest=talentRank(u,'Festering Wounds'),added=2+(fest>=2?1:0),next=Math.min(6,wounds()+added);target.dkWounds[woundKey]=next;
+    emit(ctx,'FESTERING_WOUND_CHANGED',{source:u.id,target:target.id,ability:'Festering Wounds',amount:added,result:'applied',position:copy(target.position),payload:{stacks:next}});
+    if(fest)talentTrigger(ctx,u,'Festering Wounds',target,{stacks:next,added})
+   }
+   if(a.id==='scourge-strike'&&wounds()>0){
+    const fest=talentRank(u,'Festering Wounds'),next=wounds()-1;target.dkWounds[woundKey]=next;
+    const burst=Math.max(1,Math.round((9+fest*2)*(u.baseStats?.outputScale||1)));
+    dealDamage(ctx,u,target,burst,'Festering Wound',{damageType:'magic'});
+    gainResource(ctx,u,{name:'Festering Wound',gain:6});
+    emit(ctx,'FESTERING_WOUND_CHANGED',{source:u.id,target:target.id,ability:'Festering Wound',amount:1,result:'burst',position:copy(target.position),payload:{stacks:next}});
+   }
+   if(a.id==='outbreak'&&target.alive){
+    const epidemic=talentRank(u,'Epidemic'),tick=Math.max(2,Math.round((5+epidemic)*(u.baseStats?.outputScale||1)));
+    applyStatus(ctx,u,target,{id:'virulent-plague-'+u.id,name:'Virulent Plague',kind:'debuff',duration:5600,effect:{damageOverTime:tick}});
+    [1700,3400,5100].forEach(at=>schedule(ctx,ctx.time+at,()=>{
+     if(!u.alive||!target.alive)return;dealDamage(ctx,u,target,tick,'Virulent Plague',{damageType:'magic'});
+     if(epidemic)livingEnemies(ctx).filter(e=>e.id!==target.id).slice(0,Math.min(2,epidemic)).forEach(e=>dealDamage(ctx,u,e,Math.max(1,Math.round(tick*.45)),'Epidemic',{damageType:'magic'}))
+    },'unholy-plague'));
+    if(epidemic)talentTrigger(ctx,u,'Epidemic',target,{ticks:3})
+   }
+   if(a.id==='death-coil'&&u.statuses?.['sudden-doom'])removeStatus(ctx,u,'sudden-doom','consumed')
   }
  }
 }
