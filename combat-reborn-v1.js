@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.22';
+const VERSION='1.3.23';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -180,12 +180,20 @@ const ABILITIES={
   {id:'dragonrage',name:'Dragonrage',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Unleash the full fury of the dragonflights and enter a major burst window.',range:30,damage:38,cost:2,gcd:1500,cd:60000,cleave:3,damageType:'magic'}
  ],
  Hunter:[
-  {id:'aimed-shot',name:'Aimed Shot',kind:'damage',unlockLevel:1,desc:'A slow, heavy ranged shot.',range:35,damage:31,cost:35,gcd:1500,cast:1500,cd:7000},
-  {id:'arcane-shot',name:'Arcane Shot',kind:'damage',unlockLevel:1,desc:'Reliable ranged damage.',range:35,damage:17,cost:20,gcd:1500,cd:0},
-  {id:'steady-shot',name:'Steady Shot',kind:'damage',unlockLevel:1,desc:'Generate Focus while maintaining ranged pressure.',range:35,damage:11,cost:0,gain:18,gcd:1500,cast:900,cd:0},
+  {id:'aimed-shot',name:'Aimed Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:1,desc:'A slow, heavy ranged shot.',range:35,damage:31,cost:35,gcd:1500,cast:1500,cd:7000},
+  {id:'arcane-shot',name:'Arcane Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:1,desc:'Reliable ranged damage.',range:35,damage:17,cost:20,gcd:1500,cd:0},
+  {id:'steady-shot',name:'Steady Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:1,desc:'Generate Focus while maintaining ranged pressure.',range:35,damage:11,cost:0,gain:18,gcd:1500,cast:900,cd:0},
+  {id:'multi-shot',name:'Multi-Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:5,desc:'Strike the target and nearby enemies.',range:35,damage:14,cost:30,gcd:1500,cd:6000,cleave:2},
+  {id:'kill-shot',name:'Kill Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:1,desc:'A finishing attack that is strongest against weakened enemies.',range:35,damage:24,cost:20,gcd:1500,cd:10000,executeBelow:.20,executeMultiplier:1.85},
+
+  {id:'cobra-shot',name:'Cobra Shot',kind:'damage',role:'dps',spec:'Beast Mastery',unlockLevel:1,desc:'Fire a fast shot while directing your beast, spending Focus for mobile pressure.',range:35,damage:18,cost:25,gcd:1500,cast:0,cd:0},
+  {id:'barbed-shot',name:'Barbed Shot',kind:'damage',role:'dps',spec:'Beast Mastery',unlockLevel:1,desc:'Wound the target, generate Focus and drive your permanent beast into a frenzy.',range:35,damage:16,cost:0,gain:18,gcd:1500,cast:0,cd:8000},
+  {id:'kill-command',name:'Kill Command',kind:'pet-command',role:'dps',spec:'Beast Mastery',unlockLevel:1,desc:'Command your permanent beast to tear into the target.',range:35,cost:30,gcd:1000,cd:7000,petCommand:'kill-command'},
+  {id:'beast-multi-shot',name:'Multi-Shot',kind:'damage',role:'dps',spec:'Beast Mastery',unlockLevel:5,desc:'Strike several enemies and trigger Beast Cleave when talented.',range:35,damage:13,cost:30,gcd:1500,cd:6000,cleave:3},
+  {id:'dire-beast',name:'Dire Beast',kind:'summon',role:'dps',spec:'Beast Mastery',unlockLevel:1,desc:'Call a temporary beast that attacks your target and generates Focus.',range:35,cost:0,gain:15,gcd:1500,cast:0,cd:24000,duration:12000,summonType:'dire-beast',summonCount:1},
+  {id:'stampede',name:'Stampede',kind:'summon',role:'dps',spec:'Beast Mastery',unlockLevel:1,desc:'Call a stampede of beasts through the enemy pack.',range:35,cost:20,gcd:1500,cast:700,cd:45000,duration:9000,summonType:'stampede-beast',summonCount:3},
+  {id:'bestial-wrath',name:'Bestial Wrath',kind:'pet-command',role:'dps',spec:'Beast Mastery',unlockLevel:1,desc:'Empower yourself and your permanent beast for a major burst window.',range:35,cost:20,gcd:1000,cd:60000,petCommand:'bestial-wrath'},
   {id:'counter-shot',name:'Counter Shot',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast from range.',range:35,cost:0,gcd:0,cd:24000},
-  {id:'multi-shot',name:'Multi-Shot',kind:'damage',unlockLevel:5,desc:'Strike the target and nearby enemies.',range:35,damage:14,cost:30,gcd:1500,cd:6000,cleave:2},
-  {id:'kill-shot',name:'Kill Shot',kind:'damage',unlockLevel:9,desc:'A finishing attack that is strongest against weakened enemies.',range:35,damage:24,cost:20,gcd:1500,cd:10000,executeBelow:.20,executeMultiplier:1.85},
   {id:'survival-instincts',name:'Survival Instincts',kind:'defensive',unlockLevel:13,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.20,gcd:0,cd:75000}
  ],
  Mage:[
@@ -444,7 +452,7 @@ const TALENT_SKILL_REQUIREMENTS={
   'consecration':'Consecration','ardent-defender':'Ardent Defender','holy-shock':'Holy Shock','radiant-wave':'Radiance',
   'guardian-spirit':'Guardian Spirit','divine-hymn':'Divine Hymn',
   'wild-growth':'Wild Growth','tranquility':'Tranquility','starfall':'Starfall','fury-of-elune':'Fury of Elune','celestial-alignment':'Celestial Alignment',
-  'kill-shot':'Kill Shot','garrote':'Garrote','envenom':'Envenom','arcane-barrage':'Barrage','blizzard':'Blizzard','frozen-orb':'Frozen Orb','glacial-spike':'Glacial Spike',
+  'kill-shot':'Kill Shot','dire-beast':'Dire Beast','stampede':'Stampede','bestial-wrath':'Bestial Wrath','garrote':'Garrote','envenom':'Envenom','arcane-barrage':'Barrage','blizzard':'Blizzard','frozen-orb':'Frozen Orb','glacial-spike':'Glacial Spike',
   'spirit-link-totem':'Spirit Link Totem','earthquake':'Earthquake','stormkeeper':'Stormkeeper','ascendance':'Ascendance','soul-strike':'Soul Strike','felstorm':'Felstorm','summon-demonic-tyrant':'Demonic Tyrant','rain-of-fire':'Rain of Fire','channel-demonfire':'Channel Demonfire','summon-infernal':'Summon Infernal',
   'breath-of-fire':'Breath of Fire','fortifying-brew':'Fortifying Brew','revival':'Revival','fists-of-fury':'Fists of Fury','touch-of-death':'Touch of Death',
   'rune-tap':'Rune Tap','dancing-rune-weapon':'Dancing Rune Weapon','vampiric-blood':'Vampiric Blood','remorseless-winter':'Remorseless Winter','breath-of-sindragosa':'Breath of Sindragosa','dark-transformation':'Dark Transformation','army-of-the-dead':'Army of the Dead','apocalypse':'Apocalypse',
@@ -524,6 +532,15 @@ const TALENT_RULES={
  'Careful Aim':'Deals extra damage to healthy enemies.',
  'Killer Instinct':'Deals extra damage to weakened enemies.',
  'Kill Shot':'Unlocks Kill Shot and improves its execute threshold and damage.',
+ 'Pack Leader':'Increases damage dealt by the permanent beast and temporary beasts.',
+ 'Killer Cobra':'Increases Cobra Shot damage and improves Focus efficiency.',
+ 'Barbed Wrath':'Barbed Shot grants a stronger and longer Frenzy to the permanent beast.',
+ 'Wild Call':'Kill Command helps recover Barbed Shot.',
+ 'Dire Beast':'Unlocks Dire Beast, a temporary beast summon that generates Focus.',
+ 'Beast Cleave':'Multi-Shot causes the permanent beast to cleave nearby enemies.',
+ 'Stampede':'Unlocks Stampede, calling several beasts into the fight.',
+ 'Thrill of the Hunt':'Pet commands grant a short critical-strike and haste surge.',
+ 'Bestial Wrath':'Unlocks Bestial Wrath, empowering both hunter and permanent beast.',
  'Ambush':'Increases opening damage.',
  'Venom':'Adds poison damage to attacks.',
  'Garrote':'Unlocks Garrote and strengthens its bleed.',
@@ -718,11 +735,17 @@ function talentDamageScale(ctx,u,a,target){
   }
  }
  if(u.class==='Hunter'){
-  m*=1+talentRank(u,'True Aim')*.03;
-  if(ctx.time>=Number(u.movingUntil||0))m*=1+talentRank(u,'Steady Focus')*.025;
-  if(hp>.80)m*=1+talentRank(u,'Careful Aim')*.055;
-  if(hp<.30)m*=1+talentRank(u,'Killer Instinct')*.065;
-  if(a.id==='kill-shot'&&talentRank(u,'Kill Shot'))m*=1.30;
+  if(u.spec==='Marksman'){
+   m*=1+talentRank(u,'True Aim')*.03;
+   if(ctx.time>=Number(u.movingUntil||0))m*=1+talentRank(u,'Steady Focus')*.025;
+   if(hp>.80)m*=1+talentRank(u,'Careful Aim')*.055;
+   if(hp<.30)m*=1+talentRank(u,'Killer Instinct')*.065;
+   if(a.id==='kill-shot'&&talentRank(u,'Kill Shot'))m*=1.30;
+  }
+  if(u.spec==='Beast Mastery'){
+   if(a.id==='cobra-shot')m*=1+talentRank(u,'Killer Cobra')*.045;
+   if(a.id==='barbed-shot')m*=1+talentRank(u,'Barbed Wrath')*.04;
+  }
  }
  if(u.class==='Rogue'){
   if(Number(u.damageActions||0)<1)m*=1+talentRank(u,'Ambush')*.08;
@@ -855,7 +878,7 @@ function talentHealingScale(ctx,u,a,target){
 }
 function talentCooldownScale(u,a){
  let m=1;
- if(u.class==='Hunter')m*=Math.max(.78,1-talentRank(u,'Rapid Fire')*.06);
+ if(u.class==='Hunter'&&u.spec==='Marksman')m*=Math.max(.78,1-talentRank(u,'Rapid Fire')*.06);
  if(u.class==='Mage'&&u.spec==='Arcane')m*=Math.max(.78,1-talentRank(u,'Arcane Flows')*.06);
  if(u.class==='Paladin'&&a.kind==='interrupt')m*=Math.max(.75,1-talentRank(u,'Hammer of Justice')*.10);
  if(u.class==='Warlock'&&a.kind==='summon')m*=Math.max(.78,1-talentRank(u,'Master Summoner')*.07);
@@ -867,6 +890,7 @@ function talentCooldownScale(u,a){
  return m
 }
 function talentResourceRegenScale(u){
+ if(u.class==='Hunter'&&u.spec==='Beast Mastery')return 1+talentRank(u,'Killer Cobra')*.04;
  if(u.class==='Rogue')return 1+talentRank(u,'Quick Recovery')*.08;
  if(u.class==='Monk'&&u.spec==='Mistweaver')return 1+talentRank(u,'Mana Tea')*.08;
  if(u.class==='Evoker'&&u.spec==='Preservation')return 1+talentRank(u,'Essence Attunement')*.08;
@@ -941,8 +965,15 @@ function defaultSkillLoadout(c,role){
   add(pool.find(a=>a.kind==='taunt'));
   add(pool.find(a=>a.kind==='interrupt'));
  }else{
-  pool.filter(a=>a.kind==='damage').slice(0,3).forEach(add);
-  add(pool.find(a=>a.kind==='interrupt'));
+  if(c?.class==='Hunter'&&c?.spec==='Beast Mastery'){
+   add(pool.find(a=>a.id==='cobra-shot'));
+   add(pool.find(a=>a.id==='barbed-shot'));
+   add(pool.find(a=>a.id==='kill-command'));
+   add(pool.find(a=>a.kind==='interrupt'));
+  }else{
+   pool.filter(a=>a.kind==='damage').slice(0,3).forEach(add);
+   add(pool.find(a=>a.kind==='interrupt'));
+  }
  }
  pool.forEach(add);
  return picked.slice(0,4).map(a=>a.id)
