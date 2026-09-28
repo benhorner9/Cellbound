@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.17';
+const VERSION='1.3.18';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -23,6 +23,7 @@ const RESOURCE_DEFS={
  Mage:{name:'Mana',max:100,start:100,regen:5},
  Warrior:{name:'Rage',max:100,start:20,regen:7},
  Paladin:{name:'Mana',max:100,start:100,regen:6},
+ 'Priest|Shadow':{name:'Insanity',max:100,start:0,regen:0},
  Priest:{name:'Mana',max:100,start:100,regen:7},
  Shaman:{name:'Mana',max:100,start:100,regen:7},
  Warlock:{name:'Mana',max:100,start:100,regen:5.5},
@@ -211,14 +212,24 @@ const ABILITIES={
   {id:'radiant-wave',name:'Radiant Wave',kind:'group-heal',role:'healer',unlockLevel:14,desc:'A powerful emergency party heal.',range:30,heal:27,cost:30,gcd:1500,cast:1800,cd:22000}
  ],
  Priest:[
-  {id:'heal',name:'Heal',kind:'heal',role:'healer',unlockLevel:1,desc:'Efficient direct healing.',range:30,heal:35,cost:13,gcd:1500,cast:1400,cd:0},
-  {id:'flash-heal',name:'Flash Heal',kind:'heal',role:'healer',unlockLevel:1,desc:'Fast emergency healing.',range:30,heal:29,cost:18,gcd:1500,cast:800,cd:0},
-  {id:'prayer-healing',name:'Prayer of Healing',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Restore health to the whole party.',range:30,heal:18,cost:22,gcd:1500,cast:1700,cd:6500},
-  {id:'silence',name:'Silence',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast from range.',range:30,cost:0,gcd:0,cd:30000},
-  {id:'smite',name:'Smite',kind:'damage',unlockLevel:4,desc:'A ranged holy attack for safe damage windows.',range:30,damage:13,cost:4,gcd:1500,cast:1200,cd:0},
-  {id:'soul-recall',name:'Soul Recall',kind:'battle-rez',role:'healer',unlockLevel:8,desc:'Return a fallen ally to combat. Very long cooldown.',range:30,cost:32,gcd:1500,cast:5000,cd:600000},
-  {id:'guardian-spirit',name:'Guardian Spirit',kind:'defensive',role:'healer',unlockLevel:12,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:90000},
-  {id:'divine-hymn',name:'Divine Hymn',kind:'group-heal',role:'healer',unlockLevel:16,desc:'A major emergency heal for the entire party.',range:30,heal:32,cost:34,gcd:1500,cast:2600,cd:35000}
+  {id:'heal',name:'Heal',kind:'heal',role:'healer',spec:'Holy',unlockLevel:1,desc:'Efficient direct healing.',range:30,heal:35,cost:13,gcd:1500,cast:1400,cd:0},
+  {id:'flash-heal',name:'Flash Heal',kind:'heal',role:'healer',spec:'Holy',unlockLevel:1,desc:'Fast emergency healing.',range:30,heal:29,cost:18,gcd:1500,cast:800,cd:0},
+  {id:'prayer-healing',name:'Prayer of Healing',kind:'group-heal',role:'healer',spec:'Holy',unlockLevel:1,desc:'Restore health to the whole party.',range:30,heal:18,cost:22,gcd:1500,cast:1700,cd:6500},
+  {id:'smite',name:'Smite',kind:'damage',role:'healer',spec:'Holy',unlockLevel:4,desc:'A ranged holy attack for safe damage windows.',range:30,damage:13,cost:4,gcd:1500,cast:1200,cd:0,damageType:'magic'},
+  {id:'soul-recall',name:'Soul Recall',kind:'battle-rez',role:'healer',spec:'Holy',unlockLevel:8,desc:'Return a fallen ally to combat. Very long cooldown.',range:30,cost:32,gcd:1500,cast:5000,cd:600000},
+  {id:'guardian-spirit',name:'Guardian Spirit',kind:'defensive',role:'healer',spec:'Holy',unlockLevel:12,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:90000},
+  {id:'divine-hymn',name:'Divine Hymn',kind:'group-heal',role:'healer',spec:'Holy',unlockLevel:1,desc:'A major emergency heal for the entire party.',range:30,heal:32,cost:34,gcd:1500,cast:2600,cd:35000},
+
+  {id:'mind-flay',name:'Mind Flay',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Channel shadow energy into the target and generate Insanity.',range:35,damage:18,cost:0,gain:12,gcd:1500,cast:1250,cd:0,damageType:'magic'},
+  {id:'mind-blast',name:'Mind Blast',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Assault the target’s mind for heavy shadow damage and Insanity.',range:35,damage:30,cost:0,gain:18,gcd:1500,cast:1200,cd:6500,damageType:'magic'},
+  {id:'devouring-plague',name:'Devouring Plague',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Spend Insanity to infect the target with a powerful devouring shadow plague.',range:35,damage:34,cost:50,gcd:1500,cast:0,cd:0,damageType:'magic'},
+  {id:'shadow-word-pain',name:'Shadow Word: Pain',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:4,desc:'Afflict the target with lingering shadow pain while generating Insanity.',range:35,damage:10,cost:0,gain:7,gcd:1500,cast:0,cd:7000,damageType:'magic'},
+  {id:'vampiric-touch',name:'Vampiric Touch',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:6,desc:'Apply a draining shadow curse that damages the target over time.',range:35,damage:15,cost:0,gain:10,gcd:1500,cast:1300,cd:11000,damageType:'magic'},
+  {id:'shadow-crash',name:'Shadow Crash',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Crash shadow energy into the target and nearby enemies.',range:35,damage:28,cost:0,gain:12,gcd:1500,cast:800,cd:14000,cleave:3,damageType:'magic'},
+  {id:'void-torrent',name:'Void Torrent',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Channel concentrated Void energy for heavy damage and rapid Insanity generation.',range:35,damage:42,cost:0,gain:28,gcd:1500,cast:1900,cd:30000,damageType:'magic'},
+  {id:'void-eruption',name:'Void Eruption',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Spend Insanity to erupt with Void energy and enter Voidform.',range:35,damage:44,cost:40,gcd:1500,cast:1100,cd:60000,cleave:3,damageType:'magic'},
+  {id:'dispersion',name:'Dispersion',kind:'defensive',role:'dps',spec:'Shadow',unlockLevel:8,desc:'Disperse into shadow, greatly reducing incoming damage for 6 seconds.',duration:6000,damageReduction:.40,gcd:0,cd:75000},
+  {id:'silence',name:'Silence',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast from range.',range:30,cost:0,gcd:0,cd:30000}
  ],
  Rogue:[
   {id:'mutilate',name:'Mutilate',kind:'damage',unlockLevel:1,desc:'Reliable melee damage.',range:5,damage:18,cost:35,gcd:1000,cd:0},
@@ -363,7 +374,9 @@ function gearSetState(c){
    haste:Number(e2.haste||0)+Number(e4.haste||0),
    critBonus:Number(e2.critBonus||0)+Number(e4.critBonus||0),
    incomingDamageReduction:Math.max(0,Number(e2.incomingDamageReduction||0)+Number(e4.incomingDamageReduction||0)),
-   talentSkillCooldownScale:Number(e2.talentSkillCooldownScale||1)*Number(e4.talentSkillCooldownScale||1)
+   talentSkillCooldownScale:Number(e2.talentSkillCooldownScale||1)*Number(e4.talentSkillCooldownScale||1),
+   resourceGainScale:Number(e2.resourceGainScale||1)*Number(e4.resourceGainScale||1),
+   periodicDamageScale:Number(e2.periodicDamageScale||1)*Number(e4.periodicDamageScale||1)
  }
 }
 
@@ -392,7 +405,8 @@ const TALENT_SKILL_REQUIREMENTS={
   'breath-of-fire':'Breath of Fire','fortifying-brew':'Fortifying Brew','revival':'Revival','fists-of-fury':'Fists of Fury','touch-of-death':'Touch of Death',
   'rune-tap':'Rune Tap','dancing-rune-weapon':'Dancing Rune Weapon','vampiric-blood':'Vampiric Blood','remorseless-winter':'Remorseless Winter','breath-of-sindragosa':'Breath of Sindragosa','dark-transformation':'Dark Transformation','army-of-the-dead':'Army of the Dead','apocalypse':'Apocalypse',
   'fel-barrage':'Fel Barrage','havoc-metamorphosis':'Metamorphosis','sigil-of-flame':'Sigil of Flame','spirit-bomb':'Spirit Bomb','vengeance-metamorphosis':'Metamorphosis',
-  'dream-breath':'Dream Breath','emerald-communion':'Emerald Communion','eternity-surge':'Eternity Surge','dragonrage':'Dragonrage'
+  'dream-breath':'Dream Breath','emerald-communion':'Emerald Communion','eternity-surge':'Eternity Surge','dragonrage':'Dragonrage',
+  'shadow-crash':'Shadow Crash','void-torrent':'Void Torrent','void-eruption':'Void Eruption'
 };
 const TALENT_RULES={
  'Shield Mastery':'More block chance and physical mitigation per rank.',
@@ -581,7 +595,16 @@ const TALENT_RULES={
  'Pyre':'Increases Pyre damage and area pressure.',
  'Scintillation':'Disintegrate can trigger an extra burst of blue magic.',
  'Power Swell':'Spending Essence grants a short haste surge.',
- 'Dragonrage':'Unlocks Dragonrage, a major Devastation burst window.'
+ 'Dragonrage':'Unlocks Dragonrage, a major Devastation burst window.',
+ 'Dark Thoughts':'Strengthens Mind Flay and Mind Blast and increases the Insanity generated by Mind Flay.',
+ 'Shadow Weaving':'Increases damage from Shadow Word: Pain, Vampiric Touch and Devouring Plague.',
+ 'Mind Devourer':'Mind Blast can make the next Devouring Plague free.',
+ 'Vampiric Embrace':'Lingering Shadow damage restores a portion of the Priest’s health.',
+ 'Shadow Crash':'Unlocks Shadow Crash as an equipable ranged cleave skill.',
+ 'Twist of Fate':'Increases Shadow damage against enemies below 35% health.',
+ 'Psychic Link':'Mind Blast and Devouring Plague splash damage into another nearby enemy.',
+ 'Void Torrent':'Unlocks Void Torrent, a heavy channel that generates a large amount of Insanity.',
+ 'Void Eruption':'Unlocks Void Eruption and grants a short Voidform burst window.'
 };
 function characterTalentRank(c,name){return Math.max(0,Number(c?.talents?.[c?.spec]?.[name])||0)}
 function talentRank(u,name){return Math.max(0,Number(u?.talentTree?.[name]??u?.original?.talents?.[u?.spec]?.[name])||0)}
@@ -618,6 +641,11 @@ function talentDamageScale(ctx,u,a,target){
   m*=1+talentRank(u,'Arcane Focus')*.03;
   if(a.id==='arcane-barrage'&&talentRank(u,'Barrage'))m*=1.28;
  }
+ if(u.class==='Priest'&&u.spec==='Shadow'){
+  if(['mind-flay','mind-blast'].includes(a.id))m*=1+talentRank(u,'Dark Thoughts')*.035;
+  if(['shadow-word-pain','vampiric-touch','devouring-plague'].includes(a.id))m*=1+talentRank(u,'Shadow Weaving')*.04;
+  if(hp<.35)m*=1+talentRank(u,'Twist of Fate')*.06;
+ }
  if(u.class==='Warlock'&&u.spec==='Demonology'){
   m*=1+talentRank(u,'Fel Knowledge')*.035;
   if(a.id==='demonbolt'&&u.statuses?.['demonic-core'])m*=1.12;
@@ -648,6 +676,33 @@ function talentDamageScale(ctx,u,a,target){
    if(temporary)m*=1+talentRank(u,'Unholy Pact')*.04;
    if(a.id==='death-and-decay-unholy')m*=1+talentRank(u,'Defile')*.06;
    if(a.id==='death-coil'&&u.statuses?.['sudden-doom'])m*=1.18;
+  }
+ }
+ if(u.class==='Priest'&&u.spec==='Shadow'){
+  if(a.id==='mind-blast'&&(r=talentRank(u,'Mind Devourer'))&&ctx.rng()<.16*r){
+   applyStatus(ctx,u,u,{id:'mind-devourer',name:'Mind Devourer',kind:'buff',duration:9000,effect:{}});
+   talentTrigger(ctx,u,'Mind Devourer',u,{duration:9000})
+  }
+  if(['mind-blast','devouring-plague'].includes(a.id)&&(r=talentRank(u,'Psychic Link'))&&target.alive){
+   const extra=livingEnemies(ctx).filter(e=>e.id!==target.id).sort((x,y)=>dist(target.position,x.position)-dist(target.position,y.position))[0];
+   if(extra&&dist(target.position,extra.position)<=20){
+    const splash=Math.max(1,Math.round(dealt*(.08+.07*r)));dealDamage(ctx,u,extra,splash,'Psychic Link',{damageType:'magic'});talentTrigger(ctx,u,'Psychic Link',extra,{damage:splash})
+   }
+  }
+  if(['shadow-word-pain','vampiric-touch','devouring-plague'].includes(a.id)&&target.alive){
+   const weaving=talentRank(u,'Shadow Weaving'),embrace=talentRank(u,'Vampiric Embrace'),setScale=Math.max(.5,Number(u?.setBonuses?.periodicDamageScale)||1);
+   const ratio=a.id==='shadow-word-pain'?.46:a.id==='vampiric-touch'?.52:.30,tick=Math.max(1,Math.round(dealt*ratio*(1+weaving*.04)*setScale));
+   const label=a.name,id=a.id+'-'+u.id;
+   applyStatus(ctx,u,target,{id,name:label,kind:'debuff',duration:5000,effect:{damageOverTime:tick}});
+   [1500,3000,4500].forEach(t=>schedule(ctx,ctx.time+t,()=>{
+    if(!u.alive||!target.alive)return;
+    const td=dealDamage(ctx,u,target,tick,label+' (DoT)',{damageType:'magic'});
+    if(embrace&&td>0)doHeal(ctx,u,u,Math.max(1,Math.round(td*(.025+.02*embrace))),'Vampiric Embrace')
+   },'shadow-dot'));
+  }
+  if(a.id==='void-eruption'){
+   applyStatus(ctx,u,u,{id:'voidform',name:'Voidform',kind:'buff',duration:10000,effect:{outgoingDamage:.20,haste:.12}});
+   talentTrigger(ctx,u,'Void Eruption',u,{duration:10000})
   }
  }
  if(u.class==='Demon Hunter'){
@@ -732,6 +787,9 @@ function talentResourceRegenScale(u){
 }
 function talentCost(ctx,u,a,cost){
  let value=cost;
+ if(u.class==='Priest'&&u.spec==='Shadow'&&a.id==='devouring-plague'&&u.statuses?.['mind-devourer']){
+  removeStatus(ctx,u,'mind-devourer','consumed');talentTrigger(ctx,u,'Mind Devourer',u,{saved:value,ability:a.name});value=0
+ }
  if(u.class==='Paladin'&&u.spec==='Holy'&&(a.kind==='heal'||a.kind==='group-heal'))value*=Math.max(.70,1-talentRank(u,'Grace')*.06);
  if(u.class==='Shaman'&&u.spec==='Restoration'&&(a.kind==='heal'||a.kind==='group-heal'))value*=Math.max(.76,1-talentRank(u,'Tidal Focus')*.03);
  if(u.class==='Monk'&&u.spec==='Mistweaver'&&(a.kind==='heal'||a.kind==='group-heal')){
@@ -1092,6 +1150,8 @@ function gainResource(ctx,u,a){
  let gain=Math.max(0,Number(a.gain)||0);
  if(u.class==='Death Knight'&&u.spec==='Blood'&&a.id==='heart-strike')gain+=talentRank(u,'Heartbreaker')*2;
  if(u.class==='Death Knight'&&u.spec==='Frost'&&a.id==='howling-blast')gain+=talentRank(u,'Rime')*2;
+ if(u.class==='Priest'&&u.spec==='Shadow'&&a.id==='mind-flay')gain+=talentRank(u,'Dark Thoughts')*2;
+ gain*=Math.max(.5,Number(u?.setBonuses?.resourceGainScale)||1);
  if(!gain)return;
  const before=u.resource.value;u.resource.value=clamp(before+gain,0,u.resource.max);
  const actual=u.resource.value-before;
