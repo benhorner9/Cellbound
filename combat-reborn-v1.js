@@ -557,7 +557,7 @@ function abilityPool(c,role){
  if(role==='tank'&&!pool.some(a=>a.kind==='taunt'))pool=defaults();
  if(role==='dps'&&!pool.some(a=>a.kind==='damage'||a.kind==='summon'||a.kind==='pet-command'))pool=defaults();
  if(role==='healer'&&!pool.some(a=>a.kind==='heal'||a.kind==='group-heal'))pool=(ROLE_FALLBACKS.healer||[]);
- if(role!=='healer'&&!pool.some(a=>a.kind==='damage'))pool.push({id:'basic-attack',name:'Basic Attack',kind:'damage',range:5,damage:10,cost:0,gcd:1500,cd:0,hiddenFallback:true});
+ if(role!=='healer'&&!pool.some(a=>a.kind==='damage'||a.kind==='summon'||a.kind==='pet-command'))pool.push({id:'basic-attack',name:'Basic Attack',kind:'damage',range:5,damage:10,cost:0,gcd:1500,cd:0,hiddenFallback:true});
  return pool.length?pool:(ROLE_FALLBACKS[role]||ROLE_FALLBACKS.dps)
 }
 function normalisePlayer(c,i){
@@ -1632,7 +1632,7 @@ function summonPet(ctx,owner,{type='felguard',name='Felguard',duration=0,countIn
  },def=defs[type]||defs.felguard,seq=++ctx.petSeq;
  const pos=openPosition(ctx,{x:owner.position.x+4+(countIndex%2)*2,y:owner.position.y+3+(countIndex%2?3:-3)},1.2);
  const dread=talentRank(owner,'Dread Calling'),master=talentRank(owner,'Master Summoner');
- const bonusDuration=type==='dreadstalker'?dread*1500:type==='tyrant'?master*1200:0;
+ const bonusDuration=duration>0?((type==='dreadstalker'?dread*1500:0)+master*750):0;
  const pet={
   id:'pet-'+String(owner.characterId||owner.id).replace(/^p-/,'')+'-'+type+'-'+seq,
   ownerId:owner.id,owner,role:'pet',class:'Warlock Pet',spec:type,name:name||def.name,type,visualArchetype:def.visual,
