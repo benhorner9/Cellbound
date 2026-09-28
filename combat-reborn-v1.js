@@ -3357,6 +3357,47 @@ function runSelfTests(){
   return ids.includes('lightning-bolt')&&!ids.includes('earthquake')&&!ids.includes('stormkeeper')&&!ids.includes('ascendance')
  });
 
+ const balanceTalents={'Starlight':3,'Twin Moons':2,"Nature's Balance":1,'Shooting Stars':1,'Starfall':1,'Soul of the Forest':1,'Fury of Elune':1,'Astral Communion':1,'Celestial Alignment':1};
+ const balanceParty=[
+  {id:'bdt',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15},
+  {id:'bdh',name:'Healer',class:'Priest',spec:'Holy',power:14,level:15},
+  {id:'bd',name:'Balance Druid',class:'Druid',spec:'Balance',power:14,level:15,skillLoadouts:{Balance:['wrath','starfire','starsurge','solar-beam']},talents:{Balance:balanceTalents}},
+  {id:'bd1',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15},
+  {id:'bd2',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15}
+ ];
+ const balanceRun=simulate({party:balanceParty,encounter:{...base,kind:'boss',level:15,enemyHealth:11000},tactics:{cooldownUse:'free'},seed:'balance-druid',maxDurationMs:24000});
+ test('Balance Druid Astral Power',()=>{
+  const druid=balanceRun.finalState.players.find(p=>p.id==='p-bd');
+  return druid?.role==='dps'&&druid?.resource?.name==='Astral Power'&&balanceRun.events.some(e=>e.type==='RESOURCE_GAINED'&&e.source==='p-bd')&&balanceRun.events.some(e=>e.type==='RESOURCE_SPENT'&&e.source==='p-bd'&&e.ability==='Starsurge')
+ });
+ test('Balance Druid Eclipse Cycle',()=>balanceRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-bd'&&e.ability==='Lunar Eclipse')&&balanceRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-bd'&&e.ability==='Solar Eclipse'));
+
+ const balanceDotParty=[
+  {id:'bdpt',name:'Tank',class:'Warrior',spec:'Protection',power:12,level:15},
+  {id:'bdph',name:'Healer',class:'Priest',spec:'Holy',power:12,level:15},
+  {id:'bdp',name:'Astral Druid',class:'Druid',spec:'Balance',power:12,level:15,skillLoadouts:{Balance:['moonfire','sunfire','starfall','solar-beam']},talents:{Balance:balanceTalents}},
+  {id:'bdp1',name:'Mage',class:'Mage',spec:'Arcane',power:12,level:15},
+  {id:'bdp2',name:'Hunter',class:'Hunter',spec:'Marksman',power:12,level:15}
+ ];
+ const balanceDotRun=simulate({party:balanceDotParty,encounter:{...base,kind:'boss',level:15,enemyHealth:10000},tactics:{cooldownUse:'free'},seed:'balance-dots',maxDurationMs:18000});
+ test('Balance Druid Astral DoTs',()=>balanceDotRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-bdp'&&e.ability==='Moonfire (DoT)')&&balanceDotRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-bdp'&&e.ability==='Sunfire (DoT)')&&balanceDotRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-bdp'&&e.ability==='Shooting Stars'));
+
+ const balanceAlignmentParty=balanceParty.map(x=>x.id==='bd'?{...x,id:'bda',name:'Aligned Druid',skillLoadouts:{Balance:['wrath','starfire','starsurge','celestial-alignment']}}:x);
+ const balanceAlignmentRun=simulate({party:balanceAlignmentParty,encounter:{...base,kind:'boss',level:15,enemyHealth:12000},tactics:{cooldownUse:'free'},seed:'balance-alignment',maxDurationMs:26000});
+ test('Balance Druid Celestial Alignment',()=>balanceAlignmentRun.events.some(e=>e.type==='BUFF_APPLIED'&&e.target==='p-bda'&&e.ability==='Celestial Alignment'));
+
+ const balanceLocked=simulate({party:[
+  {id:'bdlt',name:'Tank',class:'Warrior',spec:'Protection',power:12,level:15},
+  {id:'bdlh',name:'Healer',class:'Priest',spec:'Holy',power:12,level:15},
+  {id:'bdl',name:'Locked Balance',class:'Druid',spec:'Balance',power:12,level:15,skillLoadouts:{Balance:['starfall','fury-of-elune','celestial-alignment','wrath']},talents:{Balance:{}}},
+  {id:'bdl1',name:'Mage',class:'Mage',spec:'Arcane',power:12,level:15},
+  {id:'bdl2',name:'Hunter',class:'Hunter',spec:'Marksman',power:12,level:15}
+ ],encounter:{...base,level:15,enemyHealth:4000},seed:'balance-gates',maxDurationMs:2500});
+ test('Balance Druid Talent Skill Gates',()=>{
+  const ids=(balanceLocked.finalState.players.find(p=>p.id==='p-bdl')?.abilities||[]).map(a=>a.id);
+  return ids.includes('wrath')&&!ids.includes('starfall')&&!ids.includes('fury-of-elune')&&!ids.includes('celestial-alignment')
+ });
+
  const bloodTalents={'Heartbreaker':3,'Ossuary':3,'Hemostasis':2,'Rune Tap':1,'Blood Shield':2,'Voracious':2,'Dancing Rune Weapon':1,'Red Thirst':2,'Vampiric Blood':1};
  const bloodParty=[
   {id:'dkt',name:'Blood DK',class:'Death Knight',spec:'Blood',power:14,level:15,skillLoadouts:{Blood:['heart-strike','death-strike','dark-command','marrowrend']},talents:{Blood:bloodTalents}},
