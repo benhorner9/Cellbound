@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.11';
+const VERSION='1.3.12';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -11,7 +11,7 @@ const pct=(v,max)=>max>0?clamp(v/max*100,0,100):0;
 const CLASS_COLORS={
  'Death Knight':'#C41E3A','Demon Hunter':'#A330C9','Druid':'#FF7C0A','Evoker':'#33937F',
  'Hunter':'#AAD372','Mage':'#3FC7EB','Warrior':'#C69B6D','Paladin':'#F48CBA',
- 'Priest':'#FFFFFF','Rogue':'#FFF468','Shaman':'#0070DD'
+ 'Priest':'#FFFFFF','Rogue':'#FFF468','Shaman':'#0070DD','Warlock':'#8788EE'
 };
 
 const RESOURCE_DEFS={
@@ -25,6 +25,7 @@ const RESOURCE_DEFS={
  Paladin:{name:'Mana',max:100,start:100,regen:6},
  Priest:{name:'Mana',max:100,start:100,regen:7},
  Shaman:{name:'Mana',max:100,start:100,regen:7},
+ Warlock:{name:'Mana',max:100,start:100,regen:5.5},
  Rogue:{name:'Energy',max:100,start:100,regen:13}
 };
 
@@ -39,6 +40,7 @@ const CLASS_BUFFS={
  Druid:{id:'class-buff-wild-communion',name:'Wild Communion',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04,outgoingHealing:.04,resourceRegen:.04}},
  Paladin:{id:'class-buff-blessing-resolve',name:'Blessing of Resolve',scope:'party',duration:60000,cooldown:180000,effect:{incomingDamageReduction:.06}},
  Shaman:{id:'class-buff-bloodlust',name:'Bloodlust',scope:'party',duration:60000,cooldown:180000,effect:{haste:.10,resourceRegen:.05}},
+ Warlock:{id:'class-buff-demonic-pact',name:'Demonic Pact',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04}},
  Evoker:{id:'class-buff-draconic-resonance',name:'Draconic Resonance',scope:'party',duration:60000,cooldown:180000,effect:{haste:.06}}
 };
 
@@ -191,6 +193,18 @@ const ABILITIES={
   {id:'healing-rain',name:'Healing Rain',kind:'group-heal',role:'healer',unlockLevel:8,desc:'Call restorative rain over the party for broad recovery.',range:30,heal:16,cost:24,gcd:1500,cast:1200,cd:10000},
   {id:'astral-shift',name:'Astral Shift',kind:'defensive',unlockLevel:11,desc:'Shift partially into the spirit world, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000}
 
+ ],
+ Warlock:[
+  {id:'shadow-bolt',name:'Shadow Bolt',kind:'damage',unlockLevel:1,desc:'A reliable ranged shadow spell.',range:35,damage:19,cost:6,gcd:1500,cast:1450,cd:0},
+  {id:'demonbolt',name:'Demonbolt',kind:'damage',unlockLevel:1,desc:'Hurl concentrated demonic energy at the target.',range:35,damage:29,cost:11,gcd:1500,cast:1800,cd:6000},
+  {id:'hand-of-guldan',name:"Hand of Gul'dan",kind:'damage',unlockLevel:1,desc:'Call down fel energy on the target and nearby enemies.',range:35,damage:23,cost:15,gcd:1500,cast:1500,cd:7000,cleave:2},
+  {id:'axe-toss',name:'Axe Toss',kind:'interrupt',unlockLevel:1,desc:'Command your Felguard to hurl its weapon and interrupt an enemy cast.',range:30,cost:0,gcd:0,cd:20000},
+  {id:'call-dreadstalkers',name:'Call Dreadstalkers',kind:'summon',unlockLevel:1,desc:'Summon two Dreadstalkers to maul your enemies for a short time.',range:35,cost:16,gcd:1500,cast:1200,cd:20000,duration:12000,summonType:'dreadstalker',summonCount:2},
+  {id:'soul-strike',name:'Soul Strike',kind:'pet-command',unlockLevel:1,desc:'Command your Felguard to deliver a crushing soul-infused strike.',range:30,cost:8,gcd:1000,cd:10000,petCommand:'soul-strike'},
+  {id:'dark-pact',name:'Dark Pact',kind:'defensive',unlockLevel:5,desc:'Wrap yourself in demonic power, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000},
+  {id:'felstorm',name:'Felstorm',kind:'pet-command',unlockLevel:1,desc:'Command your Felguard to spin through several nearby enemies.',range:30,cost:12,gcd:1000,cd:18000,petCommand:'felstorm',cleave:3},
+  {id:'implosion',name:'Implosion',kind:'pet-command',unlockLevel:10,desc:'Detonate your temporary demons into the target for explosive area damage.',range:35,cost:10,gcd:1500,cd:16000,petCommand:'implosion',cleave:3},
+  {id:'summon-demonic-tyrant',name:'Summon Demonic Tyrant',kind:'summon',unlockLevel:1,desc:'Summon a Demonic Tyrant that bombards enemies and empowers your active demons.',range:35,cost:20,gcd:1500,cast:1600,cd:60000,duration:15000,summonType:'tyrant',summonCount:1}
  ]
 };
 
@@ -289,7 +303,7 @@ const TALENT_SKILL_REQUIREMENTS={
   'guardian-spirit':'Guardian Spirit','divine-hymn':'Divine Hymn',
   'wild-growth':'Wild Growth','tranquility':'Tranquility',
   'kill-shot':'Kill Shot','garrote':'Garrote','envenom':'Envenom','arcane-barrage':'Barrage',
-  'spirit-link-totem':'Spirit Link Totem'
+  'spirit-link-totem':'Spirit Link Totem','soul-strike':'Soul Strike','felstorm':'Felstorm','summon-demonic-tyrant':'Demonic Tyrant'
 };
 const TALENT_RULES={
  'Shield Mastery':'More block chance and physical mitigation per rank.',
@@ -380,7 +394,16 @@ const TALENT_RULES={
  'Earthen Ward':'Strengthens Stoneskin Totem and Spirit Link protection.',
  'Tidal Waves':'Riptide and Chain Heal grant a short haste buff for follow-up healing.',
  'Spirit Link Totem':'Unlocks Spirit Link Totem as an equipable combat skill for dangerous party pressure.',
- 'Ascendant Tide':'Under heavy pressure, empowers Restoration healing and briefly surges the active totem network.'
+ 'Ascendant Tide':'Under heavy pressure, empowers Restoration healing and briefly surges the active totem network.',
+ 'Demonic Bond':'Increases damage dealt by the Felguard and all temporary demons.',
+ 'Fel Knowledge':'Increases the damage of Warlock shadow and fel spells.',
+ 'Soul Strike':'Unlocks Soul Strike, an equipable command for the permanent Felguard.',
+ 'Dread Calling':'Increases Dreadstalker damage and duration.',
+ 'Pack Tactics':'Increases demon attack speed.',
+ 'Felstorm':'Unlocks Felstorm, an equipable Felguard area command.',
+ 'Demonic Core':'Demon attacks can trigger a short damage and haste surge for the Warlock.',
+ 'Master Summoner':'Extends temporary demon duration and reduces summon cooldowns.',
+ 'Demonic Tyrant':'Unlocks Summon Demonic Tyrant, a powerful temporary ranged demon.'
 };
 function characterTalentRank(c,name){return Math.max(0,Number(c?.talents?.[c?.spec]?.[name])||0)}
 function talentRank(u,name){return Math.max(0,Number(u?.talentTree?.[name]??u?.original?.talents?.[u?.spec]?.[name])||0)}
@@ -416,6 +439,10 @@ function talentDamageScale(ctx,u,a,target){
  if(u.class==='Mage'){
   m*=1+talentRank(u,'Arcane Focus')*.03;
   if(a.id==='arcane-barrage'&&talentRank(u,'Barrage'))m*=1.28;
+ }
+ if(u.class==='Warlock'&&u.spec==='Demonology'){
+  m*=1+talentRank(u,'Fel Knowledge')*.035;
+  if(a.id==='demonbolt'&&u.statuses?.['demonic-core'])m*=1.12;
  }
  const aura=livingPlayers(ctx).find(p=>p.class==='Hunter'&&talentRank(p,'Trueshot Aura')>0);
  if(aura&&['Hunter','Mage'].includes(u.class))m*=1.05;
@@ -454,6 +481,7 @@ function talentCooldownScale(u,a){
  if(u.class==='Hunter')m*=Math.max(.78,1-talentRank(u,'Rapid Fire')*.06);
  if(u.class==='Mage')m*=Math.max(.78,1-talentRank(u,'Arcane Flows')*.06);
  if(u.class==='Paladin'&&a.kind==='interrupt')m*=Math.max(.75,1-talentRank(u,'Hammer of Justice')*.10);
+ if(u.class==='Warlock'&&a.kind==='summon')m*=Math.max(.78,1-talentRank(u,'Master Summoner')*.07);
  return m
 }
 function talentResourceRegenScale(u){
