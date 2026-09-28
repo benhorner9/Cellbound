@@ -63,7 +63,10 @@ const classes={
     Marksman:{role:'dps',talents:['True Aim','Rapid Fire','Kill Shot']},
     'Beast Mastery':{role:'dps',talents:['Pack Leader','Dire Beast','Bestial Wrath']}
   }},
-  Rogue:{icon:'◆',glow:'#FFF468',specs:{Assassination:{role:'dps',talents:['Ambush','Venom','Eviscerate']}}},
+  Rogue:{icon:'◆',glow:'#FFF468',specs:{
+    Assassination:{role:'dps',talents:['Ambush','Venom','Eviscerate']},
+    Outlaw:{role:'dps',talents:['Opportunity','Blade Flurry','Killing Spree']}
+  }},
   Mage:{icon:'✦',glow:'#3FC7EB',specs:{
     Arcane:{role:'dps',talents:['Arcane Focus','Surge','Barrage']},
     Frost:{role:'dps',talents:['Piercing Cold','Fingers of Frost','Glacial Spike']}
