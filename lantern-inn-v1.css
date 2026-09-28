@@ -1399,3 +1399,35 @@ body.inn-character-open{overflow:hidden}
     transform:translate(34.4%,35%) scale(2.8)!important;
   }
 }
+
+
+/* ==========================================================================
+   Lantern Inn Fade Exit V13
+   The unreliable directional zoom is replaced by a clean scene transition:
+   fade the Inn to black, switch to Town Square while covered, then reveal it.
+   ========================================================================== */
+.inn-world.is-leaving-to-town .inn-scene-stage{
+  transform:none!important;
+  filter:none!important;
+}
+.inn-exit-curtain{
+  position:fixed;
+  inset:0;
+  z-index:2147483000;
+  background:#050607;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .30s ease;
+}
+.inn-exit-curtain.is-transitioning{
+  pointer-events:auto;
+}
+.inn-exit-curtain.is-active{
+  opacity:1;
+}
+.inn-world.is-leaving-to-town :is(.inn-heading,.inn-hint,.inn-empty,.inn-selection-panel){
+  opacity:1!important;
+}
+@media(prefers-reduced-motion:reduce){
+  .inn-exit-curtain{transition:none!important}
+}
