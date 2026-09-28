@@ -1226,3 +1226,153 @@ body.inn-character-open{overflow:hidden}
     width:30.6%!important;
   }
 }
+
+
+/* ==========================================================================
+   Lantern Inn Scene Integration Pass V11
+   Makes the supplied modular props read as one illustrated room rather than
+   separate cut-out assets.
+   ========================================================================== */
+
+/* Rear wall fittings: align both objects to the architecture rather than the
+   floor plane. */
+.inn-object-door{
+  left:10.45%!important;
+  top:-1.15%!important;
+  width:10.35%!important;
+}
+.inn-object-door .inn-object-art{
+  filter:
+    brightness(.84)
+    saturate(.84)
+    sepia(.13)
+    hue-rotate(-6deg)
+    contrast(1.03)
+    drop-shadow(0 5px 5px rgba(0,0,0,.30))!important;
+}
+
+.inn-object-bar{
+  left:60.9%!important;
+  top:5.9%!important;
+  width:29.4%!important;
+}
+.inn-object-bar .inn-object-art{
+  filter:
+    brightness(.84)
+    saturate(.84)
+    sepia(.14)
+    hue-rotate(-7deg)
+    contrast(1.025)
+    drop-shadow(0 8px 8px rgba(0,0,0,.31))!important;
+}
+
+/* Ground the bar into the room with a low, diffuse contact shadow. */
+.inn-object-bar::before{
+  content:"";
+  position:absolute;
+  z-index:0;
+  left:8%;
+  right:5%;
+  bottom:5.5%;
+  height:13%;
+  border-radius:50%;
+  background:radial-gradient(ellipse at center,rgba(13,8,6,.42) 0%,rgba(13,8,6,.22) 48%,rgba(13,8,6,0) 76%);
+  filter:blur(7px);
+  transform:scaleX(.96);
+  pointer-events:none;
+}
+
+/* The table was visually too 'stuck on'. Move it slightly further into the
+   room, reduce its dominance, and grade it toward the floor/firelight. */
+.inn-object-table{
+  left:29.1%!important;
+  top:43.8%!important;
+  width:41.8%!important;
+  z-index:74!important;
+}
+.inn-object-table .inn-object-art{
+  opacity:.98!important;
+  filter:
+    brightness(.82)
+    saturate(.82)
+    sepia(.18)
+    hue-rotate(-8deg)
+    contrast(1.025)
+    drop-shadow(0 9px 8px rgba(0,0,0,.28))!important;
+}
+
+/* A broad shadow is attached to the furniture footprint instead of the
+   character sprites. This makes the legs feel planted without creating the
+   floating oval effect the actors had. */
+.inn-object-table::before{
+  content:"";
+  position:absolute;
+  z-index:0;
+  left:10%;
+  right:10%;
+  top:63%;
+  height:22%;
+  border-radius:50%;
+  background:
+    radial-gradient(ellipse at center,rgba(13,8,6,.48) 0%,rgba(13,8,6,.28) 44%,rgba(13,8,6,.08) 66%,rgba(13,8,6,0) 79%);
+  filter:blur(9px);
+  transform:scaleX(.96) skewX(-1deg);
+  pointer-events:none;
+}
+
+/* Keep interaction feedback inside the same room lighting rather than making
+   the raw source asset suddenly pop brighter. */
+.inn-object-door:is(:hover,:focus-visible,.is-selected) .inn-object-art{
+  filter:
+    brightness(.93)
+    saturate(.90)
+    sepia(.11)
+    hue-rotate(-6deg)
+    contrast(1.035)
+    drop-shadow(0 5px 5px rgba(0,0,0,.30))!important;
+}
+.inn-object-bar:is(:hover,:focus-visible,.is-selected) .inn-object-art{
+  filter:
+    brightness(.93)
+    saturate(.90)
+    sepia(.12)
+    hue-rotate(-7deg)
+    contrast(1.035)
+    drop-shadow(0 8px 8px rgba(0,0,0,.31))!important;
+}
+.inn-object-table:is(:hover,:focus-visible,.is-selected) .inn-object-art{
+  filter:
+    brightness(.91)
+    saturate(.89)
+    sepia(.15)
+    hue-rotate(-8deg)
+    contrast(1.035)
+    drop-shadow(0 9px 8px rgba(0,0,0,.28))!important;
+}
+
+/* The table hit target follows the smaller/repositioned visual footprint. */
+.inn-object-table .inn-object-hit{
+  left:4%!important;
+  top:28%!important;
+  right:4%!important;
+  bottom:7%!important;
+  clip-path:ellipse(48% 40% at 50% 48%)!important;
+}
+
+@media(max-width:600px){
+  .inn-object-door{
+    left:10.4%!important;
+    top:-1.1%!important;
+    width:10.45%!important;
+  }
+  .inn-object-bar{
+    left:60.6%!important;
+    top:5.8%!important;
+    width:29.8%!important;
+  }
+  .inn-object-table{
+    left:28.8%!important;
+    top:43.5%!important;
+    width:42.4%!important;
+  }
+}
