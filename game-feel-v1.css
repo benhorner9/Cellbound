@@ -48,7 +48,8 @@ body[data-cb-view="chat"]{
 .main{
   position:relative;
   isolation:isolate;
-  transition:background .36s ease;
+  /* Keep the shell background stable during view swaps. Animating a large
+     multi-gradient surface can flash on iOS/WebKit while a view is composited. */
   background:
     radial-gradient(circle at 72% 4%,rgba(var(--cb-view-accent),.075),transparent 27%),
     radial-gradient(circle at 8% 94%,rgba(var(--cb-view-accent),.028),transparent 30%),
@@ -115,13 +116,18 @@ body[data-cb-view="trading"] .topbar:after{content:"⇄"}
 body[data-cb-view="pvp"] .topbar:after{content:"⚔"}
 body[data-cb-view="chat"] .topbar:after{content:"◌"}
 
-/* Fast, cinematic entrance. Nothing waits for this animation. */
+/* Lightweight entrance.
+   Do not animate opacity/filter on the full view: iOS/WebKit can briefly
+   drop the composited layer and expose the dark page beneath as a black flash. */
 .view.active.cb-view-entering{
-  animation:cbViewEnter .24s cubic-bezier(.2,.75,.25,1) both;
+  animation:cbViewEnter .16s cubic-bezier(.2,.75,.25,1) both;
+  will-change:transform;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
 }
 @keyframes cbViewEnter{
-  0%{opacity:.2;transform:translateY(7px);filter:blur(1.5px)}
-  100%{opacity:1;transform:none;filter:none}
+  0%{transform:translate3d(0,3px,0)}
+  100%{transform:translate3d(0,0,0)}
 }
 
 /* A small location stinger makes changing screens feel intentional. */
