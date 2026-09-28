@@ -1328,6 +1328,25 @@ function gainResource(ctx,u,a){
 function emitResourceState(ctx,u,result='state'){
  emit(ctx,'RESOURCE_STATE',{source:u.id,target:u.id,result,payload:{resource:u.resource.name,value:u.resource.value,max:u.resource.max}})
 }
+function emitComboPointState(ctx,u,result='state',ability=null,amount=0){
+ if(u?.class!=='Rogue'||u?.spec!=='Outlaw')return;
+ emit(ctx,'COMBO_POINTS_CHANGED',{source:u.id,target:u.id,ability,result,amount,payload:{value:Math.max(0,Number(u.comboPoints)||0),max:5}})
+}
+function gainComboPoints(ctx,u,amount,ability='Combo Point'){
+ if(u?.class!=='Rogue'||u?.spec!=='Outlaw')return 0;
+ const before=Math.max(0,Number(u.comboPoints)||0),gain=Math.max(0,Number(amount)||0);
+ u.comboPoints=clamp(before+gain,0,5);
+ const actual=u.comboPoints-before;
+ if(actual>0)emitComboPointState(ctx,u,'gained',ability,actual);
+ return actual
+}
+function spendComboPoints(ctx,u,requested,ability='Finisher'){
+ if(u?.class!=='Rogue'||u?.spec!=='Outlaw')return 0;
+ const before=Math.max(0,Number(u.comboPoints)||0),need=Math.max(0,Number(requested)||0),spent=Math.min(before,Math.max(need,before));
+ u.comboPoints=Math.max(0,before-spent);
+ if(spent>0)emitComboPointState(ctx,u,'spent',ability,spent);
+ return spent
+}
 function passiveResources(ctx){
  ctx.players.forEach(u=>{
   if(!u.alive)return;
@@ -2455,6 +2474,7 @@ function chooseAbility(ctx,u,target){
 function startAbility(ctx,u,a,target){
  const deadTarget=a?.kind==='battle-rez'&&target&&!target.alive;
  if(!u.alive||(!target?.alive&&!deadTarget)||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.gcdUntil||!cooldownReady(u,a))return false;
+ if(u.class==='Rogue'&&u.spec==='Outlaw'&&Number(a.comboCost)>0&&Math.max(0,Number(u.comboPoints)||0)<Number(a.comboCost))return false;
  if(!moveIntoRange(ctx,u,target,Number(a.range)||5))return false;
  if(!spendResource(ctx,u,a))return false;
  const haste=clamp(statusBonus(u,'haste')+Math.max(0,Number(u?.setBonuses?.haste)||0),0,.60),speed=1+haste;
@@ -2520,6 +2540,8 @@ function finishAbility(ctx,u,a,target){
  }else if(a.kind==='damage'){
   const rolled=rollDamage(ctx,u,a,target);
   const dealt=dealDamage(ctx,u,target,rolled.amount,a.name,{crit:rolled.crit,ability:a,damageType:a.damageType||(['Mage','Evoker','Shaman','Warlock'].includes(u.class)?'magic':'physical')});
+  u.lastOutlawComboSpent=0;
+  if(dealt>0&&u.class==='Rogue'&&u.spec==='Outlaw'&&a.finisher)u.lastOutlawComboSpent=spendComboPoints(ctx,u,Number(a.comboCost)||Math.max(1,Number(u.comboPoints)||0),a.name);
   if(dealt>0)talentAfterDamage(ctx,u,a,target,dealt,rolled.crit);
   if(dealt>0&&rolled.crit&&hasUnique(u,'heart-troll-king')&&ctx.rng()<.28){
    u.frenzyUntil=Math.max(Number(u.frenzyUntil)||0,ctx.time+6000);
@@ -3466,7 +3488,8 @@ function simulate(options={}){
     schedule(ctx,Number(st.expiresAt),()=>removeStatus(ctx,u,st.id,'expired'),'carried-status-expire')
    }
   });
-  emitResourceState(ctx,u,'initial')
+  emitResourceState(ctx,u,'initial');
+  if(u.class==='Rogue'&&u.spec==='Outlaw')emitComboPointState(ctx,u,'initial')
  });
  players.filter(u=>u.class==='Warlock'&&u.spec==='Demonology'&&u.alive).forEach(u=>summonPet(ctx,u,{type:'felguard',name:'Felguard'}));
  players.filter(u=>u.class==='Hunter'&&u.spec==='Beast Mastery'&&u.alive).forEach(u=>summonPet(ctx,u,{type:'hunter-beast',name:'Hunting Beast'}));
