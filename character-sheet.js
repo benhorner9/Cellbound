@@ -37,7 +37,8 @@ const classMeta={
   Hunter:{icon:'➶',accent:'#AAD372',primary:'Agility'},
   Rogue:{icon:'◆',accent:'#FFF468',primary:'Agility'},
   Mage:{icon:'✦',accent:'#3FC7EB',primary:'Intellect'},
-  Shaman:{icon:'⚡',accent:'#0070DD',primary:'Intellect'}
+  Shaman:{icon:'⚡',accent:'#0070DD',primary:'Intellect'},
+  Warlock:{icon:'✺',accent:'#8788EE',primary:'Intellect'}
 };
 
 const specs={
@@ -48,7 +49,8 @@ const specs={
   Hunter:{Marksman:'dps'},
   Rogue:{Assassination:'dps'},
   Mage:{Arcane:'dps'},
-  Shaman:{Restoration:'healer'}
+  Shaman:{Restoration:'healer'},
+  Warlock:{Demonology:'dps'}
 };
 
 const trees={
@@ -125,6 +127,17 @@ const trees={
     {id:'Tidal Waves',icon:'🌊',tier:3,col:1,max:2,req:'Chain Mastery',desc:'Riptide and Chain Heal accelerate your next restorative cast.'},
     {id:'Spirit Link Totem',icon:'◎',tier:3,col:3,max:1,req:'Earthen Ward',desc:'Unlock Spirit Link Totem as an equipable emergency combat skill.'},
     {id:'Ascendant Tide',icon:'✦',tier:4,col:2,max:1,req:'Spirit Link Totem',desc:'Capstone: enter an ascendant state that empowers healing and totems under heavy pressure.'}
+  ]},
+  Warlock:{Demonology:[
+    {id:'Demonic Bond',icon:'⛧',tier:0,col:1,max:3,desc:'Increase the damage dealt by your Felguard and temporary demons.'},
+    {id:'Fel Knowledge',icon:'✺',tier:0,col:3,max:3,desc:'Increase the power of your shadow and fel spells.'},
+    {id:'Soul Strike',icon:'◆',tier:1,col:0,max:1,req:'Demonic Bond',desc:'Unlock Soul Strike, commanding your Felguard to crush your target.'},
+    {id:'Dread Calling',icon:'☠',tier:1,col:2,max:2,desc:'Empower Dreadstalkers and keep them fighting for longer.'},
+    {id:'Pack Tactics',icon:'⛓',tier:2,col:1,max:2,req:'Soul Strike',desc:'Your demons attack faster and stay closer to your chosen target.'},
+    {id:'Felstorm',icon:'✹',tier:2,col:3,max:1,req:'Dread Calling',desc:'Unlock Felstorm, commanding your Felguard to cleave nearby enemies.'},
+    {id:'Demonic Core',icon:'◈',tier:3,col:1,max:2,req:'Pack Tactics',desc:'Demon attacks can empower your next burst of spell damage.'},
+    {id:'Master Summoner',icon:'◎',tier:3,col:3,max:2,req:'Felstorm',desc:'Improve the duration and recovery of temporary demon summons.'},
+    {id:'Demonic Tyrant',icon:'♛',tier:4,col:2,max:1,req:'Master Summoner',desc:'Capstone: unlock Summon Demonic Tyrant, a powerful temporary ranged demon.'}
   ]}
 };
 
@@ -152,10 +165,23 @@ const UI_SKILL_FALLBACKS={
     {id:'lightning-bolt',name:'Lightning Bolt',kind:'damage',unlockLevel:4,desc:'A ranged lightning attack for safe damage windows.',range:30,damage:13,cost:4,gcd:1500,cast:1200,cd:0},
     {id:'healing-rain',name:'Healing Rain',kind:'group-heal',role:'healer',unlockLevel:8,desc:'Call restorative rain over the party for broad recovery.',range:30,heal:16,cost:24,gcd:1500,cast:1200,cd:10000},
     {id:'astral-shift',name:'Astral Shift',kind:'defensive',unlockLevel:11,desc:'Shift partially into the spirit world, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000}
+  ],
+  Warlock:[
+    {id:'shadow-bolt',name:'Shadow Bolt',kind:'damage',unlockLevel:1,desc:'A reliable ranged shadow spell.',range:35,damage:19,cost:6,gcd:1500,cast:1450,cd:0},
+    {id:'demonbolt',name:'Demonbolt',kind:'damage',unlockLevel:1,desc:'Hurl concentrated demonic energy at the target.',range:35,damage:29,cost:11,gcd:1500,cast:1800,cd:6000},
+    {id:'hand-of-guldan',name:"Hand of Gul'dan",kind:'damage',unlockLevel:1,desc:'Call down fel energy on the target and nearby enemies.',range:35,damage:23,cost:15,gcd:1500,cast:1500,cd:7000,cleave:2},
+    {id:'axe-toss',name:'Axe Toss',kind:'interrupt',unlockLevel:1,desc:'Command your Felguard to hurl its weapon and interrupt an enemy cast.',range:30,cost:0,gcd:0,cd:20000},
+    {id:'call-dreadstalkers',name:'Call Dreadstalkers',kind:'summon',unlockLevel:1,desc:'Summon two Dreadstalkers to maul your enemies for a short time.',cost:16,gcd:1500,cast:1200,cd:20000,duration:12000,summonType:'dreadstalker',summonCount:2},
+    {id:'soul-strike',name:'Soul Strike',kind:'pet-command',unlockLevel:1,desc:'Command your Felguard to deliver a crushing soul-infused strike.',range:30,cost:8,gcd:1000,cd:10000,petCommand:'soul-strike',talentReq:'Soul Strike'},
+    {id:'dark-pact',name:'Dark Pact',kind:'defensive',unlockLevel:5,desc:'Wrap yourself in demonic power, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000},
+    {id:'felstorm',name:'Felstorm',kind:'pet-command',unlockLevel:1,desc:'Command your Felguard to spin through several nearby enemies.',range:30,cost:12,gcd:1000,cd:18000,petCommand:'felstorm',cleave:3,talentReq:'Felstorm'},
+    {id:'implosion',name:'Implosion',kind:'pet-command',unlockLevel:10,desc:'Detonate your temporary demons into the target for explosive area damage.',range:35,cost:10,gcd:1500,cd:16000,petCommand:'implosion',cleave:3},
+    {id:'summon-demonic-tyrant',name:'Summon Demonic Tyrant',kind:'summon',unlockLevel:1,desc:'Summon a Demonic Tyrant that bombards enemies and empowers your active demons.',cost:20,gcd:1500,cast:1600,cd:60000,duration:15000,summonType:'tyrant',summonCount:1,talentReq:'Demonic Tyrant'}
   ]
 };
 const UI_BUFF_FALLBACKS={
-  Shaman:{id:'class-buff-bloodlust',name:'Bloodlust',scope:'party',duration:60000,cooldown:180000,effect:{haste:.10,resourceRegen:.05}}
+  Shaman:{id:'class-buff-bloodlust',name:'Bloodlust',scope:'party',duration:60000,cooldown:180000,effect:{haste:.10,resourceRegen:.05}},
+  Warlock:{id:'class-buff-demonic-pact',name:'Demonic Pact',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04}}
 };
 function classBuffFor(c){
   // Character-sheet fallbacks are the UI contract for newly added classes.
@@ -194,10 +220,10 @@ function equippedSkillIds(c,spec=c?.spec){
   return out
 }
 function skillKindLabel(kind){
-  return ({damage:'Damage',heal:'Healing','group-heal':'Group Heal',interrupt:'Interrupt',taunt:'Taunt',defensive:'Defensive','battle-rez':'Battle Rez',totem:'Totem'})[kind]||'Utility'
+  return ({damage:'Damage',heal:'Healing','group-heal':'Group Heal',interrupt:'Interrupt',taunt:'Taunt',defensive:'Defensive','battle-rez':'Battle Rez',totem:'Totem',summon:'Summon','pet-command':'Pet Command'})[kind]||'Utility'
 }
 function skillIcon(kind){
-  return ({damage:'⚔',heal:'✚','group-heal':'✥',interrupt:'!',taunt:'◎',defensive:'◆','battle-rez':'♰',totem:'▲'})[kind]||'◇'
+  return ({damage:'⚔',heal:'✚','group-heal':'✥',interrupt:'!',taunt:'◎',defensive:'◆','battle-rez':'♰',totem:'▲',summon:'♜','pet-command':'⛧'})[kind]||'◇'
 }
 function skillCooldownText(skill){
   const ms=Math.max(0,Number(skill?.cd)||0);if(!ms)return'No cooldown';
