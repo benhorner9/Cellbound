@@ -1616,6 +1616,126 @@ function useShamanTotem(ctx,u,a){
  return true
 }
 
+function activePets(ctx,ownerId=null){
+ return (ctx.pets||[]).filter(p=>p.active&&(ownerId==null||p.ownerId===ownerId))
+}
+function summonPet(ctx,owner,{type='felguard',name='Felguard',duration=0,countIndex=0}={}){
+ if(!owner?.alive)return null;
+ const defs={
+  felguard:{name:'Felguard',range:5,baseDamage:9,interval:2200,attack:'Legion Strike',visual:'felguard'},
+  dreadstalker:{name:'Dreadstalker',range:5,baseDamage:6.5,interval:1800,attack:'Dreadbite',visual:'dreadstalker'},
+  tyrant:{name:'Demonic Tyrant',range:28,baseDamage:11,interval:2100,attack:'Demonfire',visual:'tyrant'}
+ },def=defs[type]||defs.felguard,seq=++ctx.petSeq;
+ const pos=openPosition(ctx,{x:owner.position.x+4+(countIndex%2)*2,y:owner.position.y+3+(countIndex%2?3:-3)},1.2);
+ const dread=talentRank(owner,'Dread Calling'),master=talentRank(owner,'Master Summoner');
+ const bonusDuration=type==='dreadstalker'?dread*1500:type==='tyrant'?master*1200:0;
+ const pet={
+  id:'pet-'+String(owner.characterId||owner.id).replace(/^p-/,'')+'-'+type+'-'+seq,
+  ownerId:owner.id,owner,role:'pet',class:'Warlock Pet',spec:type,name:name||def.name,type,visualArchetype:def.visual,
+  active:true,alive:true,position:pos,facing:0,target:null,currentCast:null,movingUntil:0,moveToken:0,
+  range:def.range,baseDamage:def.baseDamage,attackName:def.attack,baseInterval:def.interval,
+  nextAttack:ctx.time+450+countIndex*180,expiresAt:duration>0?ctx.time+duration+bonusDuration:0
+ };
+ ctx.pets.push(pet);ctx.units[pet.id]=pet;
+ emit(ctx,'PET_SUMMONED',{source:owner.id,target:pet.id,ability:pet.name,result:type==='felguard'?'permanent':'summoned',position:copy(pet.position),payload:{petId:pet.id,ownerId:owner.id,petType:type,name:pet.name,permanent:duration<=0,duration:pet.expiresAt?pet.expiresAt-ctx.time:0,visualArchetype:pet.visualArchetype,attackRange:pet.range}});
+ return pet
+}
+function dismissPet(ctx,pet,reason='expired'){
+ if(!pet?.active)return;
+ pet.active=false;pet.alive=false;delete ctx.units[pet.id];
+ emit(ctx,'PET_DISMISSED',{source:pet.ownerId,target:pet.id,ability:pet.name,result:reason,position:copy(pet.position),payload:{petId:pet.id,ownerId:pet.ownerId,petType:pet.type,name:pet.name}})
+}
+function permanentFelguard(ctx,owner){
+ return activePets(ctx,owner.id).find(p=>p.type==='felguard')||null
+}
+function petDamage(ctx,pet,target,base,ability,{cleave=0,multiplier=1}={}){
+ const owner=pet?.owner;if(!pet?.active||!owner?.alive||!target?.alive)return 0;
+ const bond=talentRank(owner,'Demonic Bond'),dread=talentRank(owner,'Dread Calling'),master=talentRank(owner,'Master Summoner');
+ let scale=(owner.baseStats?.outputScale||levelOutputScale(owner.level))*(1+bond*.05)*Math.max(.1,1+statusBonus(owner,'outgoingDamage'))*multiplier;
+ if(pet.type==='dreadstalker')scale*=1+dread*.08;
+ if(pet.type==='tyrant')scale*=1.18+master*.05;
+ const crit=ctx.rng()<(.08+talentCritBonus(owner)),amount=Math.max(1,Math.round(base*scale*(.91+ctx.rng()*.18)*(crit?1.5:1)));
+ const before=target.health;target.health=clamp(target.health-amount,0,target.maxHealth);const dealt=before-target.health;
+ emit(ctx,'DAMAGE_DEALT',{source:pet.id,target:target.id,ability,amount:dealt,result:crit?'critical':'hit',position:copy(target.position),payload:{targetHp:target.health,targetMax:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),damageType:'magic',kind:'damage',attackRange:pet.range,pet:true,petType:pet.type,ownerId:owner.id}});
+ const st=ctx.stats.players[owner.id];if(st){st.damage+=dealt;st.abilityDamage[ability]=(st.abilityDamage[ability]||0)+dealt}
+ addThreat(ctx,target,owner,dealt*.72,'pet');
+ const core=talentRank(owner,'Demonic Core');
+ if(core&&ctx.rng()<core*.09){
+  applyStatus(ctx,owner,owner,{id:'demonic-core',name:'Demonic Core',kind:'buff',duration:5000,effect:{outgoingDamage:.04*core,haste:.025*core}});
+  talentTrigger(ctx,owner,'Demonic Core',owner,{sourcePet:pet.name,duration:5000})
+ }
+ if(target.health<=0)killUnit(ctx,target,owner,ability);
+ if(cleave&&dealt>0)livingEnemies(ctx).filter(e=>e.alive&&e.id!==target.id).slice(0,cleave).forEach(e=>petDamage(ctx,pet,e,Math.max(1,base*.42),ability+' cleave',{multiplier}));
+ return dealt
+}
+function petMoveToward(ctx,pet,target){
+ const angle=Math.atan2(pet.position.y-target.position.y,pet.position.x-target.position.x),desired=pet.range>7?Math.min(22,pet.range*.72):4.2;
+ const to=openPosition(ctx,{x:target.position.x+Math.cos(angle)*desired,y:target.position.y+Math.sin(angle)*desired},1.2);
+ pet.target=target.id;moveTo(ctx,pet,to,300,'pet chase')
+}
+function petAI(ctx,pet){
+ if(!pet?.active)return;
+ const owner=pet.owner;
+ if(!owner?.alive){dismissPet(ctx,pet,'owner-defeated');return}
+ if(pet.expiresAt&&ctx.time>=pet.expiresAt){dismissPet(ctx,pet,'expired');return}
+ if(ctx.time<pet.movingUntil||ctx.time<pet.nextAttack)return;
+ const target=pickDamageTarget(ctx,owner);if(!target)return;
+ pet.target=target.id;updateFacing(pet,target);
+ if(!inRange(pet,target,pet.range)||!hasLineOfSight(ctx,pet,target)){petMoveToward(ctx,pet,target);pet.nextAttack=ctx.time+420;return}
+ emit(ctx,'ABILITY_START',{source:pet.id,target:target.id,ability:pet.attackName,result:'pet',position:copy(pet.position),payload:{kind:'damage',attackRange:pet.range,pet:true,petType:pet.type,ownerId:owner.id}});
+ petDamage(ctx,pet,target,pet.baseDamage,pet.attackName);
+ emit(ctx,'ABILITY_FINISH',{source:pet.id,target:target.id,ability:pet.attackName,result:'pet',position:copy(pet.position),payload:{kind:'damage',pet:true,petType:pet.type,ownerId:owner.id}});
+ const pack=talentRank(owner,'Pack Tactics'),haste=Math.max(0,statusBonus(owner,'haste'));
+ pet.nextAttack=ctx.time+Math.max(750,Math.round(pet.baseInterval*Math.max(.72,1-pack*.08)/(1+haste)))
+}
+function tickPets(ctx){activePets(ctx).slice().forEach(p=>petAI(ctx,p))}
+function resolveWarlockSummon(ctx,u,a,target){
+ if(u.class!=='Warlock'||u.spec!=='Demonology')return false;
+ const count=Math.max(1,Number(a.summonCount)||1),type=a.summonType||'dreadstalker';
+ if(type==='tyrant'){
+  activePets(ctx,u.id).forEach(p=>{if(p.type!=='tyrant')p.expiresAt=p.expiresAt?Math.max(p.expiresAt,ctx.time+8000):0});
+  applyStatus(ctx,u,u,{id:'tyrant-command',name:'Demonic Tyrant',kind:'buff',duration:Number(a.duration)||15000,effect:{outgoingDamage:.06}});
+  talentTrigger(ctx,u,'Demonic Tyrant',u,{duration:Number(a.duration)||15000})
+ }
+ for(let i=0;i<count;i++)summonPet(ctx,u,{type,duration:Number(a.duration)||12000,countIndex:i});
+ return true
+}
+function resolveWarlockPetCommand(ctx,u,a,target){
+ if(u.class!=='Warlock'||u.spec!=='Demonology')return false;
+ const guard=permanentFelguard(ctx,u);
+ if(a.petCommand==='implosion'){
+  const expend=activePets(ctx,u.id).filter(p=>p.type==='dreadstalker');
+  if(!expend.length)return false;
+  let total=0;expend.forEach(p=>{total+=petDamage(ctx,p,target,12,'Implosion',{cleave:Number(a.cleave)||2,multiplier:1.05});dismissPet(ctx,p,'imploded')});
+  emit(ctx,'PET_COMMAND',{source:u.id,target:target.id,ability:a.name,amount:total,result:'resolved',position:copy(target.position),payload:{petCommand:'implosion',demons:expend.length}});
+  return true
+ }
+ if(!guard?.active)return false;
+ if(!inRange(guard,target,Number(a.range)||30))petMoveToward(ctx,guard,target);
+ const command=a.petCommand||a.id;
+ emit(ctx,'PET_COMMAND',{source:u.id,target:target.id,ability:a.name,result:'commanded',position:copy(guard.position),payload:{petId:guard.id,petCommand:command}});
+ if(command==='soul-strike')petDamage(ctx,guard,target,26,a.name,{multiplier:1.08});
+ else if(command==='felstorm')petDamage(ctx,guard,target,19,a.name,{cleave:Number(a.cleave)||3,multiplier:1.04});
+ guard.nextAttack=Math.max(guard.nextAttack,ctx.time+650);
+ return true
+}
+function warlockSpecialReady(ctx,u,a,target){
+ if(!a||!cooldownReady(u,a)||(a.cost||0)>u.resource.value)return false;
+ if(a.kind==='summon'){
+  if(a.summonType==='tyrant'){
+   const bossLike=['boss','final','world-boss','event'].includes(ctx.encounter.kind);
+   if(!bossLike&&ctx.tactics.cooldownUse!=='free')return false
+  }
+  if(a.summonType==='dreadstalker'&&activePets(ctx,u.id).filter(p=>p.type==='dreadstalker').length>=2)return false;
+  return true
+ }
+ if(a.kind==='pet-command'){
+  if(a.petCommand==='implosion')return activePets(ctx,u.id).some(p=>p.type==='dreadstalker')&&(livingEnemies(ctx).length>=2||activePets(ctx,u.id).some(p=>p.type==='dreadstalker'&&p.expiresAt-ctx.time<3500));
+  return Boolean(permanentFelguard(ctx,u))
+ }
+ return false
+}
+
 function useDefensiveSkill(ctx,u,a){
  if(!a||a.kind!=='defensive'||!cooldownReady(u,a))return false;
  let duration=Math.max(1000,Number(a.duration)||8000),reduction=clamp(Number(a.damageReduction)||.20,0,.70);
