@@ -1459,19 +1459,33 @@ function finishAbility(ctx,u,a,target){
  }else if(a.kind==='heal'||a.kind==='group-heal'){
   const revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1;
   const base=(a.heal||24)*(1+Math.min(.28,u.power*.01))*(u.baseStats?.outputScale||levelOutputScale(u.level))*(.92+ctx.rng()*.16)*revivePenalty;
-  if(a.kind==='group-heal'){
+  if(a.kind==='group-heal'&&a.id==='chain-heal'){
+   let total=0,current=target,amount=base*talentHealingScale(ctx,u,a,target);
+   total+=doHeal(ctx,u,target,amount,a.name);
+   const reach=talentRank(u,'Ancestral Reach'),mastery=talentRank(u,'Chain Mastery'),used=new Set([target.id]);
+   const jumps=Math.min(4,(Number(a.chainBounces)||3)+(reach>=2?1:0)),bounceRange=(Number(a.chainRange)||16)+reach*3,falloff=Math.min(.91,(Number(a.chainFalloff)||.72)+mastery*.07+reach*.02);
+   for(let i=0;i<jumps;i++){
+    const next=livingPlayers(ctx).filter(p=>!used.has(p.id)&&hasLineOfSight(ctx,current,p)&&dist(current.position,p.position)<=bounceRange)
+     .sort((x,y)=>healthRatio(x)-healthRatio(y)||dist(current.position,x.position)-dist(current.position,y.position))[0];
+    if(!next)break;
+    amount*=falloff;used.add(next.id);
+    total+=doHeal(ctx,u,next,amount*talentHealingScale(ctx,u,a,next),a.name,{visualSource:current.id,chainBounce:i+1});
+    current=next
+   }
+   talentAfterGroupHeal(ctx,u,a,total)
+  }else if(a.kind==='group-heal'){
    let total=0;livingPlayers(ctx).filter(p=>hasLineOfSight(ctx,u,p)).forEach(p=>{total+=doHeal(ctx,u,p,base*talentHealingScale(ctx,u,a,p),a.name)});talentAfterGroupHeal(ctx,u,a,total)
   }else{
    const effective=doHeal(ctx,u,target,base*talentHealingScale(ctx,u,a,target),a.name);talentAfterHeal(ctx,u,a,target,effective)
   }
   if(a.hot){
-   const hotScale=u.class==='Druid'?1+talentRank(u,'Rejuvenation')*.18:1,hot=Math.max(1,a.hot*hotScale);
+   const hotScale=u.class==='Druid'?1+talentRank(u,'Rejuvenation')*.18:u.class==='Shaman'&&a.id==='riptide'?1+talentRank(u,'Riptide')*.25:1,hot=Math.max(1,a.hot*hotScale);
    applyStatus(ctx,u,target,{id:a.id+'-hot',name:a.name,kind:'buff',duration:3400,effect:{healingOverTime:hot}});
    [1600,3200].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)doHeal(ctx,u,target,hot,a.name+' (HoT)')},'hot'));
   }
  }else if(a.kind==='damage'){
   const rolled=rollDamage(ctx,u,a,target);
-  const dealt=dealDamage(ctx,u,target,rolled.amount,a.name,{crit:rolled.crit,ability:a,damageType:u.class==='Mage'||u.class==='Evoker'?'magic':'physical'});
+  const dealt=dealDamage(ctx,u,target,rolled.amount,a.name,{crit:rolled.crit,ability:a,damageType:['Mage','Evoker','Shaman'].includes(u.class)?'magic':'physical'});
   if(dealt>0)talentAfterDamage(ctx,u,a,target,dealt,rolled.crit);
   if(dealt>0&&rolled.crit&&hasUnique(u,'heart-troll-king')&&ctx.rng()<.28){
    u.frenzyUntil=Math.max(Number(u.frenzyUntil)||0,ctx.time+6000);
@@ -1508,6 +1522,7 @@ function tankNeedsTaunt(ctx,tank){
 function classBuffUseAllowed(ctx,u,buff){
  if(!buff||!u?.alive||(Number(u.cooldowns?.[buff.id])||0)>0)return false;
  if(ctx.time<500+(ctx.players.indexOf(u)*120))return false;
+ if(u.class==='Shaman'&&buff.totems)return true;
  if(buff.scope==='party'&&ctx.players.some(p=>p.statuses?.[buff.id]))return false;
  const policy=ctx.tactics?.cooldownUse||'difficult',bossLike=['boss','final','world-boss','event'].includes(ctx.encounter.kind);
  if(policy==='free')return true;
@@ -1515,8 +1530,36 @@ function classBuffUseAllowed(ctx,u,buff){
  if(policy==='difficult')return bossLike||combatPressure(ctx)>=.68;
  return bossLike
 }
+function activateShamanTotems(ctx,u,buff){
+ const mastery=talentRank(u,'Totemic Mastery'),ward=talentRank(u,'Earthen Ward');
+ const duration=Math.round((Number(buff.duration)||60000)*(1+mastery*.08)),potency=1+mastery*.10;
+ const defs=[
+  {id:'windfury',name:'Windfury Totem',dx:-5,dy:3,effect:{outgoingDamage:.03*potency,haste:.02*potency}},
+  {id:'stoneskin',name:'Stoneskin Totem',dx:5,dy:3,effect:{incomingDamageReduction:(.03+ward*.0125)*potency}},
+  {id:'healing-stream',name:'Healing Stream Totem',dx:0,dy:-5,effect:{incomingHealing:.03*potency}}
+ ];
+ u.cooldowns[buff.id]=Number(buff.cooldown)||180000;u.gcdUntil=Math.max(u.gcdUntil,ctx.time+500);
+ emit(ctx,'ABILITY_START',{source:u.id,target:u.id,ability:buff.name,result:'class-buff',position:copy(u.position),payload:{kind:'buff',scope:'party',duration,cooldown:buff.cooldown,totems:true}});
+ defs.forEach(def=>{
+  const pos=constrainToArena(ctx,{x:u.position.x+def.dx,y:u.position.y+def.dy},1.5),totemId='shaman-'+def.id+'-'+u.id+'-'+Math.round(ctx.time);
+  emit(ctx,'TOTEM_PLACED',{source:u.id,target:u.id,ability:def.name,result:'placed',position:copy(pos),payload:{totemId,totemType:def.id,duration,effect:copy(def.effect)}});
+  livingPlayers(ctx).forEach(target=>applyStatus(ctx,u,target,{id:'shaman-totem-'+def.id,name:def.name,kind:'buff',duration,effect:def.effect}));
+  schedule(ctx,ctx.time+duration,()=>emit(ctx,'TOTEM_EXPIRED',{source:u.id,target:u.id,ability:def.name,result:'expired',position:copy(pos),payload:{totemId,totemType:def.id}}),'totem-expire');
+  if(def.id==='healing-stream'){
+   const tick=Math.max(2,4*(u.baseStats?.outputScale||levelOutputScale(u.level))*potency);
+   for(let at=4000;at<duration;at+=4000)schedule(ctx,ctx.time+at,()=>{
+    if(ctx.finished||!u.alive)return;
+    livingPlayers(ctx).filter(p=>hasLineOfSight(ctx,u,p)).forEach(p=>doHeal(ctx,u,p,tick,'Healing Stream Totem'))
+   },'healing-stream-tick')
+  }
+ });
+ if(mastery)talentTrigger(ctx,u,'Totemic Mastery',u,{rank:mastery,duration,totems:defs.map(x=>x.name)});
+ emit(ctx,'ABILITY_FINISH',{source:u.id,target:u.id,ability:buff.name,result:'class-buff',position:copy(u.position),payload:{kind:'buff',scope:'party',duration,totems:true}});
+ return true
+}
 function activateClassBuff(ctx,u,buff){
  if(!classBuffUseAllowed(ctx,u,buff))return false;
+ if(u.class==='Shaman'&&buff.totems)return activateShamanTotems(ctx,u,buff);
  let duration=buff.duration,effect=copy(buff.effect||{});
  if(u.class==='Paladin'&&u.spec==='Holy'&&talentRank(u,'Aura Mastery')){
   duration=Math.round(duration*1.5);Object.keys(effect).forEach(k=>effect[k]=Number(effect[k])*1.35);talentTrigger(ctx,u,'Aura Mastery',u,{duration})
