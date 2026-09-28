@@ -51,7 +51,7 @@ const specs={
   Paladin:{Protection:'tank',Holy:'healer'},
   Priest:{Holy:'healer',Shadow:'dps'},
   Druid:{Restoration:'healer',Balance:'dps'},
-  Hunter:{Marksman:'dps'},
+  Hunter:{Marksman:'dps','Beast Mastery':'dps'},
   Rogue:{Assassination:'dps'},
   Mage:{Arcane:'dps',Frost:'dps'},
   Shaman:{Restoration:'healer',Elemental:'dps'},
@@ -143,9 +143,22 @@ const trees={
       {id:'Celestial Alignment',icon:'✦',tier:4,col:2,max:1,req:'Fury of Elune',desc:'Capstone: unlock Celestial Alignment, empowering both Solar and Lunar magic at once.'}
     ]
   },
-  Hunter:{Marksman:[
-    {id:'True Aim',icon:'◎',tier:0,col:1,max:3,desc:'Increase accuracy and ranged damage.'},{id:'Rapid Fire',icon:'➶',tier:0,col:3,max:2,desc:'Fire several shots in quick succession.'},{id:'Steady Focus',icon:'◈',tier:1,col:0,max:2,req:'True Aim',desc:'Maintain damage while stationary.'},{id:'Concussive Shot',icon:'◉',tier:1,col:2,max:1,desc:'Add useful control.'},{id:'Piercing Shots',icon:'⇢',tier:2,col:1,max:3,req:'Steady Focus',desc:'Critical shots cause bleeding.'},{id:'Trueshot Aura',icon:'✦',tier:2,col:3,max:1,req:'Rapid Fire',desc:'Improve party ranged output.'},{id:'Careful Aim',icon:'⊙',tier:3,col:1,max:2,req:'Piercing Shots',desc:'Deal extra damage to healthy targets.'},{id:'Killer Instinct',icon:'☠',tier:3,col:3,max:2,req:'Trueshot Aura',desc:'Improve finishing damage.'},{id:'Kill Shot',icon:'✹',tier:4,col:2,max:1,req:'Careful Aim',desc:'Capstone execute ability.'}
-  ]},
+  Hunter:{
+    Marksman:[
+      {id:'True Aim',icon:'◎',tier:0,col:1,max:3,desc:'Increase accuracy and ranged damage.'},{id:'Rapid Fire',icon:'➶',tier:0,col:3,max:2,desc:'Fire several shots in quick succession.'},{id:'Steady Focus',icon:'◈',tier:1,col:0,max:2,req:'True Aim',desc:'Maintain damage while stationary.'},{id:'Concussive Shot',icon:'◉',tier:1,col:2,max:1,desc:'Add useful control.'},{id:'Piercing Shots',icon:'⇢',tier:2,col:1,max:3,req:'Steady Focus',desc:'Critical shots cause bleeding.'},{id:'Trueshot Aura',icon:'✦',tier:2,col:3,max:1,req:'Rapid Fire',desc:'Improve party ranged output.'},{id:'Careful Aim',icon:'⊙',tier:3,col:1,max:2,req:'Piercing Shots',desc:'Deal extra damage to healthy targets.'},{id:'Killer Instinct',icon:'☠',tier:3,col:3,max:2,req:'Trueshot Aura',desc:'Improve finishing damage.'},{id:'Kill Shot',icon:'✹',tier:4,col:2,max:1,req:'Careful Aim',desc:'Capstone execute ability.'}
+    ],
+    'Beast Mastery':[
+      {id:'Pack Leader',icon:'🐾',tier:0,col:1,max:3,desc:'Increase damage dealt by your permanent beast and temporary beasts.'},
+      {id:'Killer Cobra',icon:'➶',tier:0,col:3,max:3,desc:'Increase Cobra Shot damage and improve Focus efficiency.'},
+      {id:'Barbed Wrath',icon:'✣',tier:1,col:0,max:2,req:'Pack Leader',desc:'Barbed Shot strengthens and accelerates your permanent beast.'},
+      {id:'Wild Call',icon:'↺',tier:1,col:2,max:2,desc:'Kill Command helps recover Barbed Shot more quickly.'},
+      {id:'Dire Beast',icon:'◆',tier:2,col:1,max:1,req:'Barbed Wrath',desc:'Unlock Dire Beast, calling a temporary beast into combat.'},
+      {id:'Beast Cleave',icon:'✹',tier:2,col:3,max:2,req:'Killer Cobra',desc:'Multi-Shot causes your beast to cleave nearby enemies for a short time.'},
+      {id:'Stampede',icon:'☷',tier:3,col:1,max:1,req:'Dire Beast',desc:'Unlock Stampede, calling several beasts through the enemy pack.'},
+      {id:'Thrill of the Hunt',icon:'✧',tier:3,col:3,max:2,req:'Beast Cleave',desc:'Pet commands grant a short critical-strike and haste surge.'},
+      {id:'Bestial Wrath',icon:'✦',tier:4,col:2,max:1,req:'Stampede',desc:'Capstone: unlock Bestial Wrath, empowering both hunter and beast for a major burst window.'}
+    ]
+  },
   Rogue:{Assassination:[
     {id:'Ambush',icon:'◆',tier:0,col:1,max:3,desc:'Increase opening burst.'},{id:'Venom',icon:'☣',tier:0,col:3,max:3,desc:'Improve poisons.'},{id:'Garrote',icon:'⌁',tier:1,col:0,max:2,req:'Ambush',desc:'Apply a powerful bleed from stealth.'},{id:'Quick Recovery',icon:'↺',tier:1,col:2,max:2,desc:'Recover resources faster.'},{id:'Mutilate',icon:'✕',tier:2,col:1,max:1,req:'Garrote',desc:'Unlock a brutal dual-weapon attack.'},{id:'Envenom',icon:'☠',tier:2,col:3,max:2,req:'Venom',desc:'Consume poison stacks for burst damage.'},{id:'Master Poisoner',icon:'♨',tier:3,col:1,max:2,req:'Mutilate',desc:'Enhance poison effectiveness.'},{id:'Cut to the Chase',icon:'➤',tier:3,col:3,max:2,req:'Envenom',desc:'Maintain damage buffs automatically.'},{id:'Eviscerate',icon:'✦',tier:4,col:2,max:1,req:'Master Poisoner',desc:'Capstone finishing strike.'}
   ]},
@@ -384,6 +397,23 @@ const UI_SKILL_FALLBACKS={
     {id:'barkskin',name:'Barkskin',kind:'defensive',unlockLevel:8,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.20,gcd:0,cd:60000},
     {id:'skull-bash',name:'Skull Bash',kind:'interrupt',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Interrupt an enemy cast.',range:13,cost:0,gcd:0,cd:15000}
   ],
+  Hunter:[
+    {id:'aimed-shot',name:'Aimed Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:1,desc:'A slow, heavy ranged shot.',range:35,damage:31,cost:35,gcd:1500,cast:1500,cd:7000},
+    {id:'arcane-shot',name:'Arcane Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:1,desc:'Reliable ranged damage.',range:35,damage:17,cost:20,gcd:1500,cd:0},
+    {id:'steady-shot',name:'Steady Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:1,desc:'Generate Focus while maintaining ranged pressure.',range:35,damage:11,cost:0,gain:18,gcd:1500,cast:900,cd:0},
+    {id:'multi-shot',name:'Multi-Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:5,desc:'Strike the target and nearby enemies.',range:35,damage:14,cost:30,gcd:1500,cd:6000,cleave:2},
+    {id:'kill-shot',name:'Kill Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:1,desc:'A finishing attack that becomes deadly against weakened enemies.',range:35,damage:24,cost:20,gcd:1500,cd:10000,executeBelow:.20,executeMultiplier:1.85,talentReq:'Kill Shot'},
+
+    {id:'cobra-shot',name:'Cobra Shot',kind:'damage',role:'dps',spec:'Beast Mastery',unlockLevel:1,desc:'Fire a fast shot while directing your beast, spending Focus for mobile pressure.',range:35,damage:18,cost:25,gcd:1500,cast:0,cd:0},
+    {id:'barbed-shot',name:'Barbed Shot',kind:'damage',role:'dps',spec:'Beast Mastery',unlockLevel:1,desc:'Wound the target, generate Focus and drive your permanent beast into a frenzy.',range:35,damage:16,cost:0,gain:18,gcd:1500,cast:0,cd:8000},
+    {id:'kill-command',name:'Kill Command',kind:'pet-command',role:'dps',spec:'Beast Mastery',unlockLevel:1,desc:'Command your permanent beast to tear into the target.',range:35,cost:30,gcd:1000,cd:7000,petCommand:'kill-command'},
+    {id:'beast-multi-shot',name:'Multi-Shot',kind:'damage',role:'dps',spec:'Beast Mastery',unlockLevel:5,desc:'Strike several enemies and trigger Beast Cleave when talented.',range:35,damage:13,cost:30,gcd:1500,cd:6000,cleave:3},
+    {id:'dire-beast',name:'Dire Beast',kind:'summon',role:'dps',spec:'Beast Mastery',unlockLevel:1,desc:'Call a temporary beast that attacks your target and generates Focus.',range:35,cost:0,gain:15,gcd:1500,cast:0,cd:24000,duration:12000,summonType:'dire-beast',summonCount:1,talentReq:'Dire Beast'},
+    {id:'stampede',name:'Stampede',kind:'summon',role:'dps',spec:'Beast Mastery',unlockLevel:1,desc:'Call a stampede of beasts through the enemy pack.',range:35,cost:20,gcd:1500,cast:700,cd:45000,duration:9000,summonType:'stampede-beast',summonCount:3,talentReq:'Stampede'},
+    {id:'bestial-wrath',name:'Bestial Wrath',kind:'pet-command',role:'dps',spec:'Beast Mastery',unlockLevel:1,desc:'Empower yourself and your permanent beast for a major burst window.',range:35,cost:20,gcd:1000,cd:60000,petCommand:'bestial-wrath',talentReq:'Bestial Wrath'},
+    {id:'counter-shot',name:'Counter Shot',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast from range.',range:35,cost:0,gcd:0,cd:24000},
+    {id:'survival-instincts',name:'Survival Instincts',kind:'defensive',unlockLevel:13,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.20,gcd:0,cd:75000}
+  ],
   Mage:[
     {id:'pyroblast',name:'Pyroblast',kind:'damage',role:'dps',spec:'Arcane',unlockLevel:1,desc:'A slow, devastating ranged spell.',range:35,damage:36,cost:14,gcd:1500,cast:2200,cd:8000,damageType:'magic'},
     {id:'fireball',name:'Fireball',kind:'damage',role:'dps',spec:'Arcane',unlockLevel:1,desc:'Reliable ranged spell damage.',range:35,damage:24,cost:8,gcd:1500,cast:1700,cd:0,damageType:'magic'},
@@ -543,6 +573,7 @@ const UI_BUFF_FALLBACKS={
   'Priest|Shadow':{id:'class-buff-shadow-inspiration',name:'Shadow Inspiration',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04,resourceRegen:.04}},
   Priest:{id:'class-buff-divine-inspiration',name:'Divine Inspiration',scope:'party',duration:60000,cooldown:180000,effect:{outgoingHealing:.05,incomingHealing:.05}},
   Druid:{id:'class-buff-wild-communion',name:'Wild Communion',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04,outgoingHealing:.04,resourceRegen:.04}},
+  Hunter:{id:'class-buff-predators-focus',name:"Predator's Focus",scope:'self',duration:60000,cooldown:180000,effect:{outgoingDamage:.15,haste:.10,resourceRegen:.10}},
   Mage:{id:'class-buff-arcane-empowerment',name:'Arcane Empowerment',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.05}},
   Shaman:{id:'class-buff-bloodlust',name:'Bloodlust',scope:'party',duration:60000,cooldown:180000,effect:{haste:.10,resourceRegen:.05}},
   Warlock:{id:'class-buff-demonic-pact',name:'Demonic Pact',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04}},
