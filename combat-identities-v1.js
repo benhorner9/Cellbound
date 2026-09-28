@@ -10,7 +10,7 @@ const ROLE_MAP={
   Rogue:{Assassination:'dps'},
   Mage:{Arcane:'dps',Frost:'dps'},
   Shaman:{Restoration:'healer',Elemental:'dps'},
-  Warlock:{Demonology:'dps'},
+  Warlock:{Demonology:'dps',Destruction:'dps'},
   Monk:{Brewmaster:'tank',Mistweaver:'healer',Windwalker:'dps'},
   'Death Knight':{Blood:'tank',Frost:'dps',Unholy:'dps'},
   'Demon Hunter':{Havoc:'dps',Vengeance:'tank'},
@@ -163,6 +163,12 @@ const SPECS={
       strength:'Sustained ranged pressure backed by a permanent Felguard and powerful temporary summons.',
       tradeoff:'A meaningful share of its output comes from demons, so pet-command and summon choices compete with direct spell slots.',
       damage:1.02,threat:.92,cooldown:1.00,magicTaken:.95,physicalTaken:1.06,petDamage:1.00
+    },
+    Destruction:{
+      title:'Ruin Caster',
+      strength:'Builds Soul Shards through burning pressure, then converts them into huge Chaos Bolt hits or heavy area fire.',
+      tradeoff:'Its hardest hits require shard setup and cast commitment, so wasted shards or interrupted Chaos Bolts sharply reduce burst.',
+      damage:1.08,threat:1.02,cooldown:.98,magicTaken:.94,physicalTaken:1.05,cleave:.26,burstEvery:5,burst:1.18
     }
   },
   Monk:{
