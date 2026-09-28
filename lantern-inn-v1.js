@@ -24,26 +24,42 @@ const slots={
  'party-front-right':{
   wide:[74.2,84],phone:[74.2,84],scale:1.10,phoneScale:1.04,depth:82,zone:'floor'
  },
- 'reserve-fireplace':{
-  wide:[27,43],phone:[27,43],scale:.79,phoneScale:.75,depth:42,zone:'background'
- },
- 'reserve-window-left':{
-  wide:[39,39],phone:[39,39],scale:.75,phoneScale:.71,depth:40,zone:'background'
- },
- 'reserve-window-right':{
-  wide:[61,39],phone:[61,39],scale:.75,phoneScale:.71,depth:40,zone:'background'
- },
- 'reserve-bar':{
-  wide:[79,42],phone:[79,42],scale:.79,phoneScale:.75,depth:44,zone:'behind-bar'
- },
  'reserve-door':{
-  wide:[18,42],phone:[18,42],scale:.77,phoneScale:.73,depth:41,zone:'background'
+  wide:[22,36],phone:[22,36],scale:.73,phoneScale:.69,depth:36,zone:'background'
+ },
+ 'reserve-left-back':{
+  wide:[16.5,46],phone:[16.5,46],scale:.79,phoneScale:.75,depth:47,zone:'background'
+ },
+ 'reserve-left-mid':{
+  wide:[15.5,60],phone:[15.5,60],scale:.88,phoneScale:.83,depth:62,zone:'floor'
+ },
+ 'reserve-left-front':{
+  wide:[17.5,79],phone:[17.5,79],scale:1.00,phoneScale:.94,depth:84,zone:'floor'
+ },
+ 'reserve-bar-left':{
+  wide:[69,38],phone:[69,38],scale:.75,phoneScale:.71,depth:44,zone:'behind-bar'
+ },
+ 'reserve-bar-right':{
+  wide:[83.5,39],phone:[83.5,39],scale:.77,phoneScale:.73,depth:44,zone:'behind-bar'
+ },
+ 'reserve-right-back':{
+  wide:[89,47],phone:[89,47],scale:.80,phoneScale:.76,depth:48,zone:'background'
+ },
+ 'reserve-right-mid':{
+  wide:[88,61],phone:[88,61],scale:.89,phoneScale:.84,depth:63,zone:'floor'
+ },
+ 'reserve-right-front':{
+  wide:[83.5,79],phone:[83.5,79],scale:1.00,phoneScale:.94,depth:84,zone:'floor'
+ },
+ 'reserve-hearth-edge':{
+  wide:[27.5,42],phone:[27.5,42],scale:.76,phoneScale:.72,depth:41,zone:'background'
  }
 }
 const perspectiveFor=y=>Math.max(.82,Math.min(1.02,.70+(Number(y)||50)*.0042));
-/* Party Table Ring V9: three behind the table, two outside its front corners. */
+/* Active party owns the table. Reserve adventurers are staged around the room
+   perimeter and never borrow active-party table positions. */
 const activeSlots=['party-back-left','party-back-centre','party-back-right','party-front-left','party-front-right'];
-const reserveSlots=['reserve-fireplace','reserve-window-left','reserve-window-right','reserve-bar','reserve-door'];
+const reserveSlots=['reserve-door','reserve-left-back','reserve-left-mid','reserve-left-front','reserve-bar-left','reserve-bar-right','reserve-right-back','reserve-right-mid','reserve-right-front','reserve-hearth-edge'];
 let root,world,ledger,partyDialog,partyMarker,partyNode,selectionPanel,selectionTitle,selectionCopy,selectionStatus,selectionAction,exitCurtain,returnFocus=null,characterFocus=null,lastKey='',selectedObject='',exitTimer=0;
 const objectCopy={
  party:{
@@ -243,8 +259,7 @@ function assign(roster,party){
   slot:activeSlots[i],
   active:true
  }));
- const used=new Set(placed.map(x=>x.slot));
- const free=[...reserveSlots,...activeSlots].filter(s=>!used.has(s));
+ const free=[...reserveSlots];
  return placed.concat(roster.filter(c=>!ids.has(String(c.id))).map((c,i)=>({c,slot:free[i],active:false}))).filter(p=>p.slot);
 }
 
