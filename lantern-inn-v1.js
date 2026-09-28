@@ -109,12 +109,12 @@ function leaveToTown(trigger){
  }
  clearTimeout(exitTimer);
  world.classList.add('is-leaving-to-town');
- exitTimer=setTimeout(()=>world.classList.add('is-fading-to-town'),500);
+ exitTimer=setTimeout(()=>world.classList.add('is-fading-to-town'),620);
  exitTimer=setTimeout(()=>{
   game()?.switchView?.('overview');
   world.classList.remove('is-leaving-to-town','is-fading-to-town');
   setObjectSelected('');
- },760);
+ },900);
 }
 function activateObject(kind,trigger){
  if(kind==='door'){leaveToTown(trigger);return}
