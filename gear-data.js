@@ -156,7 +156,7 @@ const items=[];
 CLASS_ORDER.forEach((klass,classIndex)=>{[1,2,3,4,5].forEach(tier=>{SLOT_ORDER.forEach((slot,slotIndex)=>{
   const meta=TIER_META[tier],itemLevel=ITEM_LEVELS[slot]?.[tier-1]||18+(tier-1)*8;
   const itemId=slug(klass)+'-t'+tier+'-'+slug(slot),name=nameFor(klass,tier,slot);
-  items.push({itemId,name,appearanceId:itemId,class:klass,classes:[klass],slot,tier,rarity:meta.rarity,tierLabel:meta.label,enabled:true,dropEnabled:meta.dropEnabled,itemLevel,power:0,classIndex,slotIndex,rowIndex:tier-1,...(slot==='Weapon'?{weaponType:inferWeaponType(klass,name)}:{}),...(slot==='OffHand'?{offHandType:inferOffHandType(klass,name)}:{})});
+  items.push({itemId,name,appearanceId:itemId,class:klass,classes:[klass],slot,tier,rarity:meta.rarity,tierLabel:meta.label,enabled:true,dropEnabled:meta.dropEnabled,raidExclusive:Boolean(meta.raidExclusive),itemLevel,power:0,classIndex,slotIndex,rowIndex:tier-1,...(slot==='Weapon'?{weaponType:inferWeaponType(klass,name)}:{}),...(slot==='OffHand'?{offHandType:inferOffHandType(klass,name)}:{})});
 })})});
 const byId=id=>items.find(x=>x.itemId===id)||null;
 const byName=name=>items.find(x=>x.name===name)||null;
