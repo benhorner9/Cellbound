@@ -1079,7 +1079,7 @@ function useTalentUtility(ctx,u){
  }
  if(u.class==='Shaman'&&u.spec==='Restoration'){
   const alive=livingPlayers(ctx),deep=alive.filter(p=>healthRatio(p)<.65),pressure=combatPressure(ctx);
-  if(talentRank(u,'Spirit Link Totem')&&deep.length>=2&&pressure>.55&&talentReady(ctx,u,'spirit-link-totem')){
+  if(talentRank(u,'Spirit Link Totem')&&deep.length>=2&&talentReady(ctx,u,'spirit-link-totem')){
    const ward=talentRank(u,'Earthen Ward'),duration=8000,id='spirit-link-'+u.id+'-'+Math.round(ctx.time);
    talentSetCooldown(ctx,u,'spirit-link-totem',75000);
    const pos=constrainToArena(ctx,{x:u.position.x+5,y:u.position.y-3},1.5),reduction=.12+ward*.025;
@@ -1091,7 +1091,7 @@ function useTalentUtility(ctx,u){
    schedule(ctx,ctx.time+duration,()=>emit(ctx,'TOTEM_EXPIRED',{source:u.id,target:u.id,ability:'Spirit Link Totem',result:'expired',position:copy(pos),payload:{totemId:id,totemType:'spirit-link'}}),'spirit-link-expire');
    u.gcdUntil=Math.max(u.gcdUntil,ctx.time+500);return true
   }
-  if(talentRank(u,'Ascendant Tide')&&pressure>.62&&talentReady(ctx,u,'ascendant-tide')){
+  if(talentRank(u,'Ascendant Tide')&&(pressure>.35||deep.length>=3)&&talentReady(ctx,u,'ascendant-tide')){
    talentSetCooldown(ctx,u,'ascendant-tide',65000);
    applyStatus(ctx,u,u,{id:'ascendant-tide',name:'Ascendant Tide',kind:'buff',duration:10000,effect:{outgoingHealing:.20,haste:.08}});
    alive.forEach(p=>applyStatus(ctx,u,p,{id:'ascendant-totems',name:'Ascendant Totems',kind:'buff',duration:10000,effect:{incomingHealing:.04,resourceRegen:.04}}));
