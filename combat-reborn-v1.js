@@ -4037,6 +4037,56 @@ function runSelfTests(){
   return ids.includes('cobra-shot')&&!ids.includes('dire-beast')&&!ids.includes('stampede')&&!ids.includes('bestial-wrath')
  });
 
+ const outlawTalents={'Opportunity':3,'Combat Potency':2,'Quick Draw':2,'Ruthlessness':1,'Blade Flurry':1,'Between the Eyes':1,'Adrenaline Rush':1,'Killing Spree':1,'Loaded Dice':1};
+ const outlawParty=[
+  {id:'ort',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15},
+  {id:'orh',name:'Healer',class:'Priest',spec:'Holy',power:14,level:15},
+  {id:'or',name:'Outlaw Rogue',class:'Rogue',spec:'Outlaw',power:14,level:15,skillLoadouts:{Outlaw:['sinister-strike','pistol-shot','dispatch','roll-the-bones']},talents:{Outlaw:outlawTalents}},
+  {id:'or1',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15},
+  {id:'or2',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15}
+ ];
+ const outlawRun=simulate({party:outlawParty,encounter:{...base,kind:'boss',level:15,enemyHealth:13000},tactics:{cooldownUse:'free'},seed:'outlaw-core',maxDurationMs:26000});
+ test('Outlaw Rogue Combo Points',()=>{
+  const rogue=outlawRun.finalState.players.find(p=>p.id==='p-or');
+  return rogue?.role==='dps'&&rogue?.resource?.name==='Energy'&&outlawRun.events.some(e=>e.type==='COMBO_POINTS_CHANGED'&&e.source==='p-or'&&e.result==='gained')&&outlawRun.events.some(e=>e.type==='COMBO_POINTS_CHANGED'&&e.source==='p-or'&&e.result==='spent')
+ });
+ test('Outlaw Opportunity and Quick Draw',()=>outlawRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-or'&&e.ability==='Opportunity')&&outlawRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-or'&&e.ability==='Quick Draw')&&outlawRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-or'&&e.ability==='Pistol Shot'));
+ test('Outlaw Roll the Bones',()=>outlawRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-or'&&e.ability==='Roll the Bones')&&outlawRun.events.some(e=>e.type==='BUFF_APPLIED'&&e.target==='p-or'&&String(e.ability||'').startsWith('Roll the Bones:')));
+
+ const outlawCleaveParty=[
+  {id:'oct',name:'Tank',class:'Warrior',spec:'Protection',power:13,level:15},
+  {id:'och',name:'Healer',class:'Priest',spec:'Holy',power:13,level:15},
+  {id:'oc',name:'Blade Rogue',class:'Rogue',spec:'Outlaw',power:13,level:15,skillLoadouts:{Outlaw:['sinister-strike','pistol-shot','dispatch','blade-flurry']},talents:{Outlaw:outlawTalents}},
+  {id:'oc1',name:'Mage',class:'Mage',spec:'Arcane',power:13,level:15},
+  {id:'oc2',name:'Hunter',class:'Hunter',spec:'Marksman',power:13,level:15}
+ ];
+ const outlawCleaveRun=simulate({party:outlawCleaveParty,encounter:{...base,kind:'boss',level:15,enemies:['Captain','Deckhand One','Deckhand Two'],enemyHealth:11000},tactics:{cooldownUse:'free'},seed:'outlaw-cleave',maxDurationMs:20000});
+ test('Outlaw Blade Flurry',()=>outlawCleaveRun.events.some(e=>e.type==='BUFF_APPLIED'&&e.target==='p-oc'&&e.ability==='Blade Flurry')&&outlawCleaveRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-oc'&&e.ability==='Blade Flurry'&&Number(e.payload?.targets)>0));
+
+ const outlawBurstParty=[
+  {id:'obt',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15},
+  {id:'obh',name:'Healer',class:'Priest',spec:'Holy',power:14,level:15},
+  {id:'ob',name:'Burst Rogue',class:'Rogue',spec:'Outlaw',power:14,level:15,skillLoadouts:{Outlaw:['sinister-strike','between-the-eyes','adrenaline-rush','killing-spree']},talents:{Outlaw:outlawTalents}},
+  {id:'ob1',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15},
+  {id:'ob2',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15}
+ ];
+ const outlawBurstRun=simulate({party:outlawBurstParty,encounter:{...base,kind:'boss',level:15,enemyHealth:15000},tactics:{cooldownUse:'free'},seed:'outlaw-burst',maxDurationMs:30000});
+ test('Outlaw Between the Eyes',()=>outlawBurstRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-ob'&&e.ability==='Between the Eyes')&&outlawBurstRun.events.some(e=>e.type==='BUFF_APPLIED'&&e.target==='p-ob'&&e.ability==='Between the Eyes'));
+ test('Outlaw Adrenaline Rush',()=>outlawBurstRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-ob'&&e.ability==='Adrenaline Rush')&&outlawBurstRun.events.some(e=>e.type==='BUFF_APPLIED'&&e.target==='p-ob'&&e.ability==='Adrenaline Rush'));
+ test('Outlaw Killing Spree',()=>outlawBurstRun.events.filter(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-ob'&&e.ability==='Killing Spree').length>=2);
+
+ const outlawLocked=simulate({party:[
+  {id:'rolt',name:'Tank',class:'Warrior',spec:'Protection',power:12,level:15},
+  {id:'rolh',name:'Healer',class:'Priest',spec:'Holy',power:12,level:15},
+  {id:'rol',name:'Locked Outlaw',class:'Rogue',spec:'Outlaw',power:12,level:15,skillLoadouts:{Outlaw:['blade-flurry','between-the-eyes','adrenaline-rush','killing-spree']},talents:{Outlaw:{}}},
+  {id:'rol1',name:'Mage',class:'Mage',spec:'Arcane',power:12,level:15},
+  {id:'rol2',name:'Hunter',class:'Hunter',spec:'Marksman',power:12,level:15}
+ ],encounter:{...base,level:15,enemyHealth:4000},seed:'outlaw-gates',maxDurationMs:2500});
+ test('Outlaw Rogue Talent Skill Gates',()=>{
+  const ids=(outlawLocked.finalState.players.find(p=>p.id==='p-rol')?.abilities||[]).map(a=>a.id);
+  return ids.includes('sinister-strike')&&!ids.includes('blade-flurry')&&!ids.includes('between-the-eyes')&&!ids.includes('adrenaline-rush')&&!ids.includes('killing-spree')
+ });
+
  const bloodTalents={'Heartbreaker':3,'Ossuary':3,'Hemostasis':2,'Rune Tap':1,'Blood Shield':2,'Voracious':2,'Dancing Rune Weapon':1,'Red Thirst':2,'Vampiric Blood':1};
  const bloodParty=[
   {id:'dkt',name:'Blood DK',class:'Death Knight',spec:'Blood',power:14,level:15,skillLoadouts:{Blood:['heart-strike','death-strike','dark-command','marrowrend']},talents:{Blood:bloodTalents}},
