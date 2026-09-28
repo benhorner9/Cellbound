@@ -1485,6 +1485,10 @@ function finishAbility(ctx,u,a,target){
  emit(ctx,'ABILITY_FINISH',{source:u.id,target:target.id,ability:a.name,result:'resolved',position:copy(u.position),payload:{kind:a.kind,castTime:Number(a.cast)||0}});
  if(a.kind==='battle-rez'){
   reviveUnit(ctx,u,target,a.name,{healthPct:35,resourcePct:20,combat:true});
+ }else if(a.kind==='summon'){
+  resolveWarlockSummon(ctx,u,a,target);
+ }else if(a.kind==='pet-command'){
+  resolveWarlockPetCommand(ctx,u,a,target);
  }else if(a.kind==='heal'||a.kind==='group-heal'){
   const revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1;
   const base=(a.heal||24)*(1+Math.min(.28,u.power*.01))*(u.baseStats?.outputScale||levelOutputScale(u.level))*(.92+ctx.rng()*.16)*revivePenalty;
@@ -1514,7 +1518,7 @@ function finishAbility(ctx,u,a,target){
   }
  }else if(a.kind==='damage'){
   const rolled=rollDamage(ctx,u,a,target);
-  const dealt=dealDamage(ctx,u,target,rolled.amount,a.name,{crit:rolled.crit,ability:a,damageType:['Mage','Evoker','Shaman'].includes(u.class)?'magic':'physical'});
+  const dealt=dealDamage(ctx,u,target,rolled.amount,a.name,{crit:rolled.crit,ability:a,damageType:['Mage','Evoker','Shaman','Warlock'].includes(u.class)?'magic':'physical'});
   if(dealt>0)talentAfterDamage(ctx,u,a,target,dealt,rolled.crit);
   if(dealt>0&&rolled.crit&&hasUnique(u,'heart-troll-king')&&ctx.rng()<.28){
    u.frenzyUntil=Math.max(Number(u.frenzyUntil)||0,ctx.time+6000);
@@ -1531,7 +1535,7 @@ function finishAbility(ctx,u,a,target){
   if(dealt>0&&target.alive&&u.role==='dps'&&shouldMistake(ctx,u,'threat',12000)){recordMistake(ctx,u,'threat','overcommitted before threat was secure',{target:target.id,ability:a.name});addThreat(ctx,target,u,dealt*(1.8+ctx.rng()*.8),'overcommit')}
   gainResource(ctx,u,a);
   if(a.selfHeal&&u.alive)doHeal(ctx,u,u,a.selfHeal,a.name);
-  if(a.cleave&&dealt>0)livingEnemies(ctx).filter(e=>e.id!==target.id).slice(0,a.cleave).forEach(e=>dealDamage(ctx,u,e,dealt*.42,a.name+' cleave',{ability:a,damageType:u.class==='Mage'?'magic':'physical'}));
+  if(a.cleave&&dealt>0)livingEnemies(ctx).filter(e=>e.id!==target.id).slice(0,a.cleave).forEach(e=>dealDamage(ctx,u,e,dealt*.42,a.name+' cleave',{ability:a,damageType:['Mage','Warlock'].includes(u.class)?'magic':'physical'}));
  }
 }
 
@@ -1773,6 +1777,11 @@ function playerAI(ctx,u){
  }
  const target=pickDamageTarget(ctx,u);
  if(!target)return;
+ if(u.class==='Warlock'&&u.spec==='Demonology'){
+  const priority=a=>a.summonType==='tyrant'?5:a.petCommand==='implosion'?4:a.summonType==='dreadstalker'?3:a.petCommand==='felstorm'?2:a.petCommand==='soul-strike'?1:0;
+  const specials=u.abilities.filter(a=>(a.kind==='summon'||a.kind==='pet-command')&&warlockSpecialReady(ctx,u,a,target)).sort((a,b)=>priority(b)-priority(a));
+  if(specials.length&&startAbility(ctx,u,specials[0],target))return
+ }
  if(u.role==='tank'){
   const loose=tankNeedsTaunt(ctx,u);
   if(loose){
@@ -2239,7 +2248,7 @@ function simulate(options={}){
   crowdControl:options.tactics?.crowdControl||'disabled'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
+ const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
  players.forEach((u,i)=>{if(players.length>5&&!options.party[i]?._combatPosition)u.position.y=20+i*60/Math.max(1,players.length-1);u.position=openPosition(ctx,u.position,1.35)});
  enemies.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),units:[...players,...enemies].map(u=>({id:u.id,position:copy(u.position),facing:u.facing,alive:u.alive,role:u.role,classification:u.classification,visualArchetype:u.visualArchetype,attackRange:u.attackRange,damageType:u.damageType})),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
@@ -2252,6 +2261,7 @@ function simulate(options={}){
   });
   emitResourceState(ctx,u,'initial')
  });
+ players.filter(u=>u.class==='Warlock'&&u.spec==='Demonology'&&u.alive).forEach(u=>summonPet(ctx,u,{type:'felguard',name:'Felguard'}));
  {
   const boss=enemies.find(e=>e.kind==='boss');
   if(boss){
@@ -2288,7 +2298,7 @@ function simulate(options={}){
   }
   if(!livingEnemies(ctx).length&&ctx.pendingResurrections<=0&&ctx.pendingHazards<=0){outcome='victory';break}
   if(!livingPlayers(ctx).length){outcome='defeat';break}
-  checkBossPhases(ctx);tickCooldowns(ctx);passiveResources(ctx);
+  checkBossPhases(ctx);tickCooldowns(ctx);passiveResources(ctx);tickPets(ctx);
   players.forEach(u=>playerAI(ctx,u));
   enemies.forEach(e=>{if(e.alive&&ctx.time>=e.nextAttack)enemyBasicAttack(ctx,e)});
   ctx.time+=TICK;
@@ -2297,6 +2307,7 @@ function simulate(options={}){
   if(sliceMode&&livingPlayers(ctx).length&&livingEnemies(ctx).length)outcome='ongoing';
   else if(!sliceMode)emit(ctx,'ENRAGE',{result:'timeout'});
  }
+ activePets(ctx).slice().forEach(p=>dismissPet(ctx,p,'combat-end'));
  ctx.finished=true;ctx.queue.length=0;
  players.filter(u=>u.alive).forEach(u=>emitResourceState(ctx,u,'final'));
  emit(ctx,'COMBAT_END',{result:outcome,payload:{durationMs:ctx.time}});
