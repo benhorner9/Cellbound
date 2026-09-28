@@ -521,3 +521,29 @@ linear-gradient(180deg,#142019,#09110e)}
 @media(max-width:560px){
   .character-creator .creator-panel>footer .creator-back{min-width:0!important;padding:8px 10px!important;font-size:.36rem!important}
 }
+
+/* Creator v6: back is the same primary component as continue */
+.character-creator .creator-panel>footer .on-primary.creator-back{
+  appearance:auto!important;
+  -webkit-appearance:none!important;
+  display:inline-block!important;
+  width:auto!important;
+  min-width:0!important;
+  min-height:42px!important;
+  padding:9px 15px!important;
+  border-radius:0!important;
+  font:inherit!important;
+  font-size:inherit!important;
+  font-weight:inherit!important;
+  letter-spacing:inherit!important;
+  text-transform:inherit!important;
+}
+.character-creator .creator-panel>footer .on-primary.creator-back,
+.character-creator .creator-panel>footer .on-primary.creator-back:hover,
+.character-creator .creator-panel>footer .on-primary.creator-back:focus{
+  border-color:revert-layer!important;
+  background:revert-layer!important;
+  color:revert-layer!important;
+  box-shadow:revert-layer!important;
+}
+.character-creator .creator-panel>footer .on-primary.creator-back .creator-back-arrow{font-size:inherit!important;line-height:inherit!important;color:inherit!important}
