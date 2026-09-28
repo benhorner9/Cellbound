@@ -38,7 +38,6 @@
 
   function updateHeader(view){
     const meta=VIEW_META[view]||{eyebrow:'GUILD COMMAND',label:'Cellbound'};
-    document.body.dataset.cbView=view;
     const topSmall=document.querySelector('.topbar>div:first-child>small');
     if(topSmall)topSmall.textContent=meta.eyebrow;
   }
@@ -120,9 +119,7 @@
   window.addEventListener('cellbound:view-changed',event=>{
     const view=event.detail?.view||activeView();
     updateHeader(view);
-    animateView(view);
     decorateHomeParty();
-    showStinger(view);
   });
 
   const roster=document.getElementById('overviewRoster');
@@ -145,6 +142,7 @@
     }).observe(resources,{subtree:true,characterData:true,childList:true});
   }
 
+  document.body.removeAttribute('data-cb-view');
   const first=activeView();
   updateHeader(first);
   decorateHomeParty();
