@@ -452,3 +452,45 @@ linear-gradient(180deg,#142019,#09110e)}
 .creator-confirm-member em span{position:relative;display:inline-block}
 .creator-confirm-member em span+span:before{content:"";position:absolute;left:-5px;top:50%;width:2px;height:2px;border-radius:50%;background:#76694f}
 @media(max-width:560px){.creator-back{min-width:0!important}.creator-back span{font-size:.32rem}.creator-confirm-member em{font-size:.3rem!important}}
+
+
+/* Creator v4: never truncate class copy; force Cellbound back-button treatment */
+.character-creator .creator-choice-grid .class-choice p,
+.character-creator .creator-choice-grid .race-card p{
+ display:block!important;
+ -webkit-line-clamp:unset!important;
+ -webkit-box-orient:initial!important;
+ overflow:visible!important;
+ text-overflow:clip!important;
+ white-space:normal!important;
+}
+.character-creator .creator-choice-grid .class-choice,
+.character-creator .creator-choice-grid .race-card{height:auto!important;min-height:116px!important;align-self:stretch}
+.character-creator .creator-panel>footer .creator-back{
+ appearance:none!important;
+ -webkit-appearance:none!important;
+ display:inline-flex!important;
+ align-items:center!important;
+ justify-content:center!important;
+ gap:9px!important;
+ width:auto!important;
+ min-width:168px!important;
+ min-height:44px!important;
+ padding:10px 16px!important;
+ border:1px solid rgba(205,171,98,.42)!important;
+ border-radius:0!important;
+ background:linear-gradient(180deg,#171914,#0c1212)!important;
+ box-shadow:inset 0 0 0 1px rgba(255,255,255,.025)!important;
+ color:#d6bd82!important;
+ font:900 .38rem/1 system-ui,sans-serif!important;
+ letter-spacing:.08em!important;
+ text-transform:uppercase!important;
+}
+.character-creator .creator-panel>footer .creator-back .creator-back-arrow{font-size:.68rem!important;line-height:.7;color:#e2c77f}
+.character-creator .creator-panel>footer .creator-back:hover,
+.character-creator .creator-panel>footer .creator-back:focus{background:linear-gradient(180deg,#211d14,#101514)!important;border-color:#b79a5e!important;color:#f0d89c!important}
+@media(max-width:560px){
+ .character-creator .creator-panel>footer .creator-back{min-width:132px!important;padding:9px 11px!important;font-size:.32rem!important}
+ .character-creator .creator-choice-grid .class-choice,
+ .character-creator .creator-choice-grid .race-card{min-height:90px!important}
+}
