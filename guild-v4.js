@@ -61,6 +61,11 @@ const classes={
     Brewmaster:{role:'tank',talents:['High Tolerance','Elusive Brawler','Fortifying Brew']},
     Mistweaver:{role:'healer',talents:['Mist Wrap','Lifecycles','Revival']},
     Windwalker:{role:'dps',talents:['Combo Strikes','Ferocity','Touch of Death']}
+  }},
+  'Death Knight':{icon:'☠',glow:'#C41E3A',specs:{
+    Blood:{role:'tank',talents:['Heartbreaker','Ossuary','Vampiric Blood']},
+    Frost:{role:'dps',talents:['Killing Machine','Icy Talons','Breath of Sindragosa']},
+    Unholy:{role:'dps',talents:['Festering Wounds','Dark Transformation','Apocalypse']}
   }}
 };
 
