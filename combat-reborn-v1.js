@@ -3495,6 +3495,50 @@ function runSelfTests(){
   return ids.includes('wrath')&&!ids.includes('starfall')&&!ids.includes('fury-of-elune')&&!ids.includes('celestial-alignment')
  });
 
+ const frostMageTalents={'Piercing Cold':3,'Ice Shards':2,'Fingers of Frost':2,'Brain Freeze':2,'Blizzard':1,'Shatter':1,'Frozen Orb':1,'Thermal Void':1,'Glacial Spike':1};
+ const frostMageParty=[
+  {id:'fmt',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15},
+  {id:'fmh',name:'Healer',class:'Priest',spec:'Holy',power:14,level:15},
+  {id:'fm',name:'Frost Mage',class:'Mage',spec:'Frost',power:14,level:15,skillLoadouts:{Frost:['frostbolt','flurry','ice-lance','counterspell']},talents:{Frost:frostMageTalents}},
+  {id:'fm1',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15},
+  {id:'fm2',name:'Rogue',class:'Rogue',spec:'Assassination',power:14,level:15}
+ ];
+ const frostMageRun=simulate({party:frostMageParty,encounter:{...base,kind:'boss',level:15,enemyHealth:12000},tactics:{cooldownUse:'free'},seed:'frost-mage-procs',maxDurationMs:26000});
+ test('Frost Mage Proc Cycle',()=>frostMageRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-fm'&&e.ability==='Fingers of Frost')&&frostMageRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-fm'&&e.ability==='Brain Freeze')&&frostMageRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-fm'&&e.ability==='Shatter'));
+ test("Frost Mage Winter's Chill",()=>frostMageRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-fm'&&e.ability==="Winter's Chill"));
+
+ const frostOrbParty=[
+  {id:'fot',name:'Tank',class:'Warrior',spec:'Protection',power:13,level:15},
+  {id:'foh',name:'Healer',class:'Priest',spec:'Holy',power:13,level:15},
+  {id:'fo',name:'Orb Mage',class:'Mage',spec:'Frost',power:13,level:15,skillLoadouts:{Frost:['frostbolt','frozen-orb','ice-lance','counterspell']},talents:{Frost:frostMageTalents}},
+  {id:'fo1',name:'Hunter',class:'Hunter',spec:'Marksman',power:13,level:15},
+  {id:'fo2',name:'Rogue',class:'Rogue',spec:'Assassination',power:13,level:15}
+ ];
+ const frostOrbRun=simulate({party:frostOrbParty,encounter:{...base,kind:'boss',level:15,enemies:['Boss','Add One','Add Two'],enemyHealth:10000},tactics:{cooldownUse:'free'},seed:'frost-mage-orb',maxDurationMs:12000});
+ test('Frost Mage Frozen Orb',()=>frostOrbRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-fo'&&e.ability==='Frozen Orb (Pulse)'));
+
+ const frostSpikeParty=[
+  {id:'fst',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15},
+  {id:'fsh',name:'Healer',class:'Priest',spec:'Holy',power:14,level:15},
+  {id:'fs',name:'Spike Mage',class:'Mage',spec:'Frost',power:14,level:15,skillLoadouts:{Frost:['frostbolt','ice-lance','flurry','glacial-spike']},talents:{Frost:frostMageTalents}},
+  {id:'fs1',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15},
+  {id:'fs2',name:'Rogue',class:'Rogue',spec:'Assassination',power:14,level:15}
+ ];
+ const frostSpikeRun=simulate({party:frostSpikeParty,encounter:{...base,kind:'boss',level:15,enemyHealth:12000},tactics:{cooldownUse:'free'},seed:'frost-mage-spike',maxDurationMs:26000});
+ test('Frost Mage Glacial Spike',()=>frostSpikeRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-fs'&&e.ability==='Glacial Spike'));
+
+ const frostLocked=simulate({party:[
+  {id:'fmlt',name:'Tank',class:'Warrior',spec:'Protection',power:12,level:15},
+  {id:'fmlh',name:'Healer',class:'Priest',spec:'Holy',power:12,level:15},
+  {id:'fml',name:'Locked Frost Mage',class:'Mage',spec:'Frost',power:12,level:15,skillLoadouts:{Frost:['blizzard','frozen-orb','glacial-spike','frostbolt']},talents:{Frost:{}}},
+  {id:'fml1',name:'Hunter',class:'Hunter',spec:'Marksman',power:12,level:15},
+  {id:'fml2',name:'Rogue',class:'Rogue',spec:'Assassination',power:12,level:15}
+ ],encounter:{...base,level:15,enemyHealth:4000},seed:'frost-mage-gates',maxDurationMs:2500});
+ test('Frost Mage Talent Skill Gates',()=>{
+  const ids=(frostLocked.finalState.players.find(p=>p.id==='p-fml')?.abilities||[]).map(a=>a.id);
+  return ids.includes('frostbolt')&&!ids.includes('blizzard')&&!ids.includes('frozen-orb')&&!ids.includes('glacial-spike')
+ });
+
  const bloodTalents={'Heartbreaker':3,'Ossuary':3,'Hemostasis':2,'Rune Tap':1,'Blood Shield':2,'Voracious':2,'Dancing Rune Weapon':1,'Red Thirst':2,'Vampiric Blood':1};
  const bloodParty=[
   {id:'dkt',name:'Blood DK',class:'Death Knight',spec:'Blood',power:14,level:15,skillLoadouts:{Blood:['heart-strike','death-strike','dark-command','marrowrend']},talents:{Blood:bloodTalents}},
