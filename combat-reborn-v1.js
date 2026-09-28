@@ -634,51 +634,6 @@ function talentTrigger(ctx,u,name,target=u,payload={}){
 }
 function talentDamageScale(ctx,u,a,target){
  let m=1,rank=0,hp=healthRatio(target);
- if(u.class==='Shaman'&&u.spec==='Elemental'){
-  const fire=['lava-burst','flame-shock'].includes(a.id),nature=['lightning-bolt','chain-lightning','earth-shock','earthquake','stormkeeper','ascendance'].includes(a.id);
-  const school=fire?'fire':nature?'nature':null,eq=talentRank(u,'Elemental Equilibrium');
-  if(eq&&school){
-   if(u.lastElementalSchool&&u.lastElementalSchool!==school){
-    applyStatus(ctx,u,u,{id:'elemental-equilibrium',name:'Elemental Equilibrium',kind:'buff',duration:5000,effect:{outgoingDamage:.025*eq}});
-    talentTrigger(ctx,u,'Elemental Equilibrium',u,{school,duration:5000})
-   }
-   u.lastElementalSchool=school
-  }
-  if(a.id==='flame-shock'&&target.alive){
-   const flame=talentRank(u,'Flame Shock'),surge=talentRank(u,'Lava Surge'),tick=Math.max(1,Math.round(dealt*.48*(1+flame*.08)));
-   applyStatus(ctx,u,target,{id:'flame-shock-'+u.id,name:'Flame Shock',kind:'debuff',duration:5100,effect:{damageOverTime:tick}});
-   [1600,3200,4800].forEach(t=>schedule(ctx,ctx.time+t,()=>{
-    if(!u.alive||!target.alive)return;
-    dealDamage(ctx,u,target,tick,'Flame Shock (DoT)',{damageType:'magic'});
-    if(surge){
-     u.talentCounters=u.talentCounters||{};u.talentCounters.lavaSurge=(Number(u.talentCounters.lavaSurge)||0)+1;
-     const threshold=Math.max(2,4-surge);
-     if(u.talentCounters.lavaSurge>=threshold){
-      u.talentCounters.lavaSurge=0;u.cooldowns['lava-burst']=0;
-      applyStatus(ctx,u,u,{id:'lava-surge',name:'Lava Surge',kind:'buff',duration:7000,effect:{haste:.04*surge}});
-      talentTrigger(ctx,u,'Lava Surge',u,{reset:'Lava Burst',duration:7000})
-     }
-    }
-   },'elemental-flame-shock'))
-  }
-  if(['earth-shock','earthquake'].includes(a.id)&&(r=talentRank(u,'Aftershock'))&&ctx.rng()<.18*r){
-   const refund=15+r*5;gainResource(ctx,u,{name:'Aftershock',gain:refund});talentTrigger(ctx,u,'Aftershock',u,{maelstrom:refund})
-  }
-  if(a.id==='lava-burst'&&(r=talentRank(u,'Master of the Elements'))){
-   applyStatus(ctx,u,u,{id:'master-elements',name:'Master of the Elements',kind:'buff',duration:6500,effect:{outgoingDamage:.045*r}});
-   talentTrigger(ctx,u,'Master of the Elements',u,{duration:6500})
-  }else if(nature&&u.statuses?.['master-elements']){
-   removeStatus(ctx,u,'master-elements','consumed')
-  }
-  if(a.id==='stormkeeper'){
-   applyStatus(ctx,u,u,{id:'stormkeeper',name:'Stormkeeper',kind:'buff',duration:9000,effect:{outgoingDamage:.16,haste:.12}});
-   talentTrigger(ctx,u,'Stormkeeper',u,{duration:9000})
-  }
-  if(a.id==='ascendance'){
-   applyStatus(ctx,u,u,{id:'elemental-ascendance',name:'Ascendance',kind:'buff',duration:10000,effect:{outgoingDamage:.22,haste:.15}});
-   talentTrigger(ctx,u,'Ascendance',u,{duration:10000})
-  }
- }
  if(u.class==='Warrior'&&u.spec==='Arms'){
   m*=1+talentRank(u,'Weapon Mastery')*.03;
   if((target?.currentCast||Number(target?.interruptedUntil)>ctx.time)&&(rank=talentRank(u,'Overpower')))m*=1+rank*.06;
@@ -1352,6 +1307,51 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
   if(a.id==='void-eruption'){
    applyStatus(ctx,u,u,{id:'voidform',name:'Voidform',kind:'buff',duration:10000,effect:{outgoingDamage:.20,haste:.12}});
    talentTrigger(ctx,u,'Void Eruption',u,{duration:10000})
+  }
+ }
+ if(u.class==='Shaman'&&u.spec==='Elemental'){
+  const fire=['lava-burst','flame-shock'].includes(a.id),nature=['lightning-bolt','chain-lightning','earth-shock','earthquake','stormkeeper','ascendance'].includes(a.id);
+  const school=fire?'fire':nature?'nature':null,eq=talentRank(u,'Elemental Equilibrium');
+  if(eq&&school){
+   if(u.lastElementalSchool&&u.lastElementalSchool!==school){
+    applyStatus(ctx,u,u,{id:'elemental-equilibrium',name:'Elemental Equilibrium',kind:'buff',duration:5000,effect:{outgoingDamage:.025*eq}});
+    talentTrigger(ctx,u,'Elemental Equilibrium',u,{school,duration:5000})
+   }
+   u.lastElementalSchool=school
+  }
+  if(a.id==='flame-shock'&&target.alive){
+   const flame=talentRank(u,'Flame Shock'),surge=talentRank(u,'Lava Surge'),tick=Math.max(1,Math.round(dealt*.48*(1+flame*.08)));
+   applyStatus(ctx,u,target,{id:'flame-shock-'+u.id,name:'Flame Shock',kind:'debuff',duration:5100,effect:{damageOverTime:tick}});
+   [1600,3200,4800].forEach(t=>schedule(ctx,ctx.time+t,()=>{
+    if(!u.alive||!target.alive)return;
+    dealDamage(ctx,u,target,tick,'Flame Shock (DoT)',{damageType:'magic'});
+    if(surge){
+     u.talentCounters=u.talentCounters||{};u.talentCounters.lavaSurge=(Number(u.talentCounters.lavaSurge)||0)+1;
+     const threshold=Math.max(2,4-surge);
+     if(u.talentCounters.lavaSurge>=threshold){
+      u.talentCounters.lavaSurge=0;u.cooldowns['lava-burst']=0;
+      applyStatus(ctx,u,u,{id:'lava-surge',name:'Lava Surge',kind:'buff',duration:7000,effect:{haste:.04*surge}});
+      talentTrigger(ctx,u,'Lava Surge',u,{reset:'Lava Burst',duration:7000})
+     }
+    }
+   },'elemental-flame-shock'))
+  }
+  if(['earth-shock','earthquake'].includes(a.id)&&(r=talentRank(u,'Aftershock'))&&ctx.rng()<.18*r){
+   const refund=15+r*5;gainResource(ctx,u,{name:'Aftershock',gain:refund});talentTrigger(ctx,u,'Aftershock',u,{maelstrom:refund})
+  }
+  if(a.id==='lava-burst'&&(r=talentRank(u,'Master of the Elements'))){
+   applyStatus(ctx,u,u,{id:'master-elements',name:'Master of the Elements',kind:'buff',duration:6500,effect:{outgoingDamage:.045*r}});
+   talentTrigger(ctx,u,'Master of the Elements',u,{duration:6500})
+  }else if(nature&&u.statuses?.['master-elements']){
+   removeStatus(ctx,u,'master-elements','consumed')
+  }
+  if(a.id==='stormkeeper'){
+   applyStatus(ctx,u,u,{id:'stormkeeper',name:'Stormkeeper',kind:'buff',duration:9000,effect:{outgoingDamage:.16,haste:.12}});
+   talentTrigger(ctx,u,'Stormkeeper',u,{duration:9000})
+  }
+  if(a.id==='ascendance'){
+   applyStatus(ctx,u,u,{id:'elemental-ascendance',name:'Ascendance',kind:'buff',duration:10000,effect:{outgoingDamage:.22,haste:.15}});
+   talentTrigger(ctx,u,'Ascendance',u,{duration:10000})
   }
  }
  if(u.class==='Warrior'&&u.spec==='Arms'){
