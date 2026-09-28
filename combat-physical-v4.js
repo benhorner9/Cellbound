@@ -225,6 +225,7 @@ function effect(scene,cls,source,target,life=320,allowUnanchored=false){
   n.style.left=(connection?a.x:b.x)-bounds.left+'px';n.style.top=(connection?a.y:b.y)-bounds.top+'px';
   if(connection){n.style.width=d.len+'px';n.style.setProperty('--cbl-angle',d.angle+'deg')}
  }
+ if(a&&b)n.dataset.cblPositioned='1';
  const fx={n,source,target,ends:performance.now()+life/scene.speed};scene.layer.appendChild(n);scene.effects.add(fx);return fx
 }
 function clearCast(u){if(!u)return;u.cast?.orb?.remove();u.cast?.beam?.remove();u.cast=null;u.el.classList.remove('cbl-casting');u.el.style.removeProperty('--cbl-charge')}
@@ -311,7 +312,7 @@ function livingEvent(e,opts={}){
  case'ENRAGE':if(u)u.el.dataset.aura='enrage';break;
  case'PHASE_CHANGE':emphasis(scene,'phase');if(scene.room)scene.room.dataset.wear=String(Math.min(3,Number(scene.room.dataset.wear||0)+1));if(u){effect(scene,'phase',null,u.el,1000);u.el.dataset.intensity='5'}break;
  case'GROUND_HAZARD_SPAWNED':
-  if(/plate|collapse|beam|debris|floor/i.test(e.ability||'')&&e.position){const f=effect(scene,'debris',null,null,650,true);if(f){f.n.style.left=e.position.x+'%';f.n.style.top=e.position.y+'%'}}break;
+  if(/plate|collapse|beam|debris|floor/i.test(e.ability||'')&&e.position){const f=effect(scene,'debris',null,null,650,true);if(f){f.n.style.left=e.position.x+'%';f.n.style.top=e.position.y+'%';f.n.dataset.cblPositioned='1'}}break;
  case'COMBAT_END':for(const h of scene.hazards.values())h.node.remove();scene.hazards.clear();for(const n of scene.totems.values())n.remove();scene.totems.clear();for(const n of scene.pets.values())n.remove();scene.pets.clear();scene.warnings.clear();scene.live=false;arena.classList.remove('cbl-live');for(const v of scene.units.values()){clearCast(v);v.animation?.cancel();if(!v.dead)state(v,'idle')}break;
  }
  wake();
@@ -342,19 +343,19 @@ function frame(){
     const progress=clamp((now-u.cast.start)/u.cast.duration,0,1);el.style.setProperty('--cbl-charge',String(progress));
     if(u.state==='channeling'&&u.target?.isConnected){
      if(!u.cast.beam){const n=document.createElement('i');n.className='cbl-fx connection channel '+family(u.cast.event,u);n.style.setProperty('--cbl-accent',u.p.accent);scene.layer.appendChild(n);u.cast.beam=n}
-     const a=pos(el),b=pos(u.target),d=direction(a,b),n=u.cast.beam;n.style.left=a.x-bounds.left+'px';n.style.top=a.y-bounds.top+'px';n.style.width=d.len+'px';n.style.setProperty('--cbl-angle',d.angle+'deg');
+     const a=pos(el),b=pos(u.target),d=direction(a,b),n=u.cast.beam;n.style.left=a.x-bounds.left+'px';n.style.top=a.y-bounds.top+'px';n.style.width=d.len+'px';n.style.setProperty('--cbl-angle',d.angle+'deg');n.dataset.cblPositioned='1';
     }else if((u.cast.destination||u.target?.isConnected&&u.target!==el)&&progress>Math.max(0,1-u.p.travel/scene.speed/u.cast.duration)&&!reduce()){
      if(!u.cast.orb){const n=document.createElement('i');n.className='cbl-fx cast-orb '+family(u.cast.event,u);n.style.setProperty('--cbl-accent',kind(u.action||u.cast.event,u)==='heal'?'#86f3b7':u.p.accent);scene.layer.appendChild(n);u.cast.orb=n}
      const a=pos(el),b=u.cast.destination?{x:bounds.left+u.cast.destination.x/100*bounds.width,y:bounds.top+u.cast.destination.y/100*bounds.height}:pos(u.target),travelFraction=Math.min(1,u.p.travel/scene.speed/u.cast.duration),t=clamp((progress-1+travelFraction)/travelFraction,0,1),n=u.cast.orb;
      n.style.setProperty('--cbl-angle',direction(a,b).angle+'deg');
-     n.style.left=(family(u.cast.event,u)==='rubble'?b.x-bounds.left:a.x+(b.x-a.x)*t-bounds.left)+'px';n.style.top=(family(u.cast.event,u)==='rubble'?b.y-bounds.top-60*(1-t):a.y+(b.y-a.y)*t-bounds.top-(family(u.cast.event,u)==='plate'?Math.sin(t*Math.PI)*24:0))+'px';
+     n.style.left=(family(u.cast.event,u)==='rubble'?b.x-bounds.left:a.x+(b.x-a.x)*t-bounds.left)+'px';n.style.top=(family(u.cast.event,u)==='rubble'?b.y-bounds.top-60*(1-t):a.y+(b.y-a.y)*t-bounds.top-(family(u.cast.event,u)==='plate'?Math.sin(t*Math.PI)*24:0))+'px';n.dataset.cblPositioned='1';
     }
    }
   }
   for(const f of scene.effects){
    if(now>=f.ends||f.target&&!f.target.isConnected){f.n.remove();scene.effects.delete(f);continue}
    if(f.target){const b=pos(f.target),a=f.source?.isConnected?pos(f.source):b,d=direction(a,b);
-    const connection=f.n.classList.contains('connection');f.n.style.left=(connection?a.x:b.x)-bounds.left+'px';f.n.style.top=(connection?a.y:b.y)-bounds.top+'px';
+    const connection=f.n.classList.contains('connection');f.n.style.left=(connection?a.x:b.x)-bounds.left+'px';f.n.style.top=(connection?a.y:b.y)-bounds.top+'px';f.n.dataset.cblPositioned='1';
     if(connection){f.n.style.width=d.len+'px';f.n.style.setProperty('--cbl-angle',d.angle+'deg')}
    }
   }
