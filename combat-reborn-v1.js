@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.8';
+const VERSION='1.3.9';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -11,7 +11,7 @@ const pct=(v,max)=>max>0?clamp(v/max*100,0,100):0;
 const CLASS_COLORS={
  'Death Knight':'#C41E3A','Demon Hunter':'#A330C9','Druid':'#FF7C0A','Evoker':'#33937F',
  'Hunter':'#AAD372','Mage':'#3FC7EB','Warrior':'#C69B6D','Paladin':'#F48CBA',
- 'Priest':'#FFFFFF','Rogue':'#FFF468'
+ 'Priest':'#FFFFFF','Rogue':'#FFF468','Shaman':'#0070DD'
 };
 
 const RESOURCE_DEFS={
@@ -24,6 +24,7 @@ const RESOURCE_DEFS={
  Warrior:{name:'Rage',max:100,start:20,regen:7},
  Paladin:{name:'Mana',max:100,start:100,regen:6},
  Priest:{name:'Mana',max:100,start:100,regen:7},
+ Shaman:{name:'Mana',max:100,start:100,regen:7},
  Rogue:{name:'Energy',max:100,start:100,regen:13}
 };
 
@@ -37,6 +38,7 @@ const CLASS_BUFFS={
  Priest:{id:'class-buff-divine-inspiration',name:'Divine Inspiration',scope:'party',duration:60000,cooldown:180000,effect:{outgoingHealing:.05,incomingHealing:.05}},
  Druid:{id:'class-buff-wild-communion',name:'Wild Communion',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04,outgoingHealing:.04,resourceRegen:.04}},
  Paladin:{id:'class-buff-blessing-resolve',name:'Blessing of Resolve',scope:'party',duration:60000,cooldown:180000,effect:{incomingDamageReduction:.06}},
+ Shaman:{id:'class-buff-totemic-circle',name:'Totemic Circle',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,incomingDamageReduction:.03,incomingHealing:.03},totems:true},
  Evoker:{id:'class-buff-draconic-resonance',name:'Draconic Resonance',scope:'party',duration:60000,cooldown:180000,effect:{haste:.06}}
 };
 
@@ -175,6 +177,15 @@ const ABILITIES={
   {id:'envenom',name:'Envenom',kind:'damage',unlockLevel:5,desc:'Spend Energy for a heavy poisoned strike.',range:5,damage:28,cost:45,gcd:1000,cd:6500},
   {id:'fan-of-knives',name:'Fan of Knives',kind:'damage',unlockLevel:9,desc:'Strike the target and nearby enemies.',range:8,damage:15,cost:35,gcd:1000,cd:7000,cleave:3},
   {id:'feint',name:'Feint',kind:'defensive',unlockLevel:13,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.20,gcd:0,cd:60000}
+ ],
+ Shaman:[
+  {id:'healing-wave',name:'Healing Wave',kind:'heal',role:'healer',unlockLevel:1,desc:'A dependable restorative cast for an injured ally.',range:30,heal:36,cost:14,gcd:1500,cast:1450,cd:0},
+  {id:'riptide',name:'Riptide',kind:'heal',role:'healer',unlockLevel:1,desc:'An instant tidal heal that continues restoring health briefly.',range:30,heal:23,cost:10,gcd:1500,cast:0,cd:6000,hot:7},
+  {id:'chain-heal',name:'Chain Heal',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Heal one ally, then bounce restorative energy through other injured party members.',range:30,heal:30,cost:20,gcd:1500,cast:1700,cd:0,chainBounces:3,chainFalloff:.72,chainRange:16},
+  {id:'wind-shear',name:'Wind Shear',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with a sharp burst of wind.',range:30,cost:0,gcd:0,cd:18000},
+  {id:'lightning-bolt',name:'Lightning Bolt',kind:'damage',unlockLevel:4,desc:'A ranged lightning attack for safe damage windows.',range:30,damage:13,cost:4,gcd:1500,cast:1200,cd:0},
+  {id:'healing-rain',name:'Healing Rain',kind:'group-heal',role:'healer',unlockLevel:8,desc:'Call restorative rain over the party for broad recovery.',range:30,heal:16,cost:24,gcd:1500,cast:1200,cd:10000},
+  {id:'astral-shift',name:'Astral Shift',kind:'defensive',unlockLevel:11,desc:'Shift partially into the spirit world, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000}
  ]
 };
 
@@ -354,7 +365,16 @@ const TALENT_RULES={
  'Arcane Flows':'Reduces Mage cooldowns.',
  'Arcane Power':'Automatically triggers a major damage cooldown in difficult combat.',
  'Nether Precision':'Increases spell critical chance.',
- 'Barrage':'Unlocks Arcane Barrage and makes it hit harder with splash damage.'
+ 'Barrage':'Unlocks Arcane Barrage and makes it hit harder with splash damage.',
+ 'Tidal Focus':'Increases Restoration healing and reduces the Mana cost of healing spells.',
+ 'Totemic Mastery':'Makes the Shaman’s Totemic Circle stronger and keeps its totems active longer.',
+ 'Riptide':'Strengthens Riptide and its lingering healing.',
+ 'Ancestral Reach':'Extends Chain Heal bounce range and improves later jumps.',
+ 'Chain Mastery':'Reduces the healing lost as Chain Heal jumps between allies.',
+ 'Earthen Ward':'Strengthens Stoneskin Totem and Spirit Link protection.',
+ 'Tidal Waves':'Riptide and Chain Heal grant a short haste buff for follow-up healing.',
+ 'Spirit Link Totem':'Under dangerous party pressure, places a visible defensive totem that links and stabilises allies.',
+ 'Ascendant Tide':'Under heavy pressure, empowers Restoration healing and briefly surges the active totem network.'
 };
 function characterTalentRank(c,name){return Math.max(0,Number(c?.talents?.[c?.spec]?.[name])||0)}
 function talentRank(u,name){return Math.max(0,Number(u?.talentTree?.[name]??u?.original?.talents?.[u?.spec]?.[name])||0)}
@@ -416,6 +436,11 @@ function talentHealingScale(ctx,u,a,target){
   if(a.kind==='group-heal')m*=1+talentRank(u,'Wild Growth')*.08;
   if(a.id==='tranquility'&&talentRank(u,'Tranquility'))m*=1.30;
  }
+ if(u.class==='Shaman'&&u.spec==='Restoration'){
+  m*=1+talentRank(u,'Tidal Focus')*.03;
+  if(a.id==='riptide')m*=1+talentRank(u,'Riptide')*.08;
+  if(a.id==='chain-heal')m*=1+talentRank(u,'Chain Mastery')*.025;
+ }
  return m
 }
 function talentCooldownScale(u,a){
@@ -432,6 +457,7 @@ function talentResourceRegenScale(u){
 function talentCost(ctx,u,a,cost){
  let value=cost;
  if(u.class==='Paladin'&&u.spec==='Holy'&&(a.kind==='heal'||a.kind==='group-heal'))value*=Math.max(.70,1-talentRank(u,'Grace')*.06);
+ if(u.class==='Shaman'&&u.spec==='Restoration'&&(a.kind==='heal'||a.kind==='group-heal'))value*=Math.max(.76,1-talentRank(u,'Tidal Focus')*.03);
  if(u.class==='Mage'&&value>0){
   const r=talentRank(u,'Clearcasting');
   if(r&&ctx.rng()<r*.08){talentTrigger(ctx,u,'Clearcasting',u,{saved:Math.round(value)});value=0}
