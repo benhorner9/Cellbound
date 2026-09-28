@@ -10,34 +10,34 @@ const game=()=>window.CellboundGame;
    Prop depth: Door 24 · Bar 46 · Party Table 74. */
 const slots={
  'party-back-left':{
-  wide:[38,64],phone:[38,64],scale:.88,phoneScale:.84,depth:72,zone:'behind-table'
+  wide:[38,64],phone:[38,64],scale:.95,phoneScale:.91,depth:72,zone:'behind-table'
  },
  'party-back-centre':{
-  wide:[50,62],phone:[50,62],scale:.86,phoneScale:.82,depth:72,zone:'behind-table'
+  wide:[50,62],phone:[50,62],scale:.93,phoneScale:.89,depth:72,zone:'behind-table'
  },
  'party-back-right':{
-  wide:[62,64],phone:[62,64],scale:.88,phoneScale:.84,depth:72,zone:'behind-table'
+  wide:[62,64],phone:[62,64],scale:.95,phoneScale:.91,depth:72,zone:'behind-table'
  },
  'party-front-left':{
-  wide:[25.5,76],phone:[25.5,76],scale:.98,phoneScale:.94,depth:82,zone:'floor'
+  wide:[25.5,76],phone:[25.5,76],scale:1.05,phoneScale:1.00,depth:82,zone:'floor'
  },
  'party-front-right':{
-  wide:[74.5,76],phone:[74.5,76],scale:.98,phoneScale:.94,depth:82,zone:'floor'
+  wide:[74.5,76],phone:[74.5,76],scale:1.05,phoneScale:1.00,depth:82,zone:'floor'
  },
  'reserve-fireplace':{
-  wide:[27,43],phone:[27,43],scale:.74,phoneScale:.70,depth:42,zone:'background'
+  wide:[27,43],phone:[27,43],scale:.79,phoneScale:.75,depth:42,zone:'background'
  },
  'reserve-window-left':{
-  wide:[39,39],phone:[39,39],scale:.70,phoneScale:.66,depth:40,zone:'background'
+  wide:[39,39],phone:[39,39],scale:.75,phoneScale:.71,depth:40,zone:'background'
  },
  'reserve-window-right':{
-  wide:[61,39],phone:[61,39],scale:.70,phoneScale:.66,depth:40,zone:'background'
+  wide:[61,39],phone:[61,39],scale:.75,phoneScale:.71,depth:40,zone:'background'
  },
  'reserve-bar':{
-  wide:[79,42],phone:[79,42],scale:.74,phoneScale:.70,depth:44,zone:'behind-bar'
+  wide:[79,42],phone:[79,42],scale:.79,phoneScale:.75,depth:44,zone:'behind-bar'
  },
  'reserve-door':{
-  wide:[18,42],phone:[18,42],scale:.72,phoneScale:.68,depth:41,zone:'background'
+  wide:[18,42],phone:[18,42],scale:.77,phoneScale:.73,depth:41,zone:'background'
  }
 }
 const perspectiveFor=y=>Math.max(.82,Math.min(1.02,.70+(Number(y)||50)*.0042));
