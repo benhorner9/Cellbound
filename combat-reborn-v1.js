@@ -3839,6 +3839,57 @@ function runSelfTests(){
   return ids.includes('incinerate')&&!ids.includes('rain-of-fire')&&!ids.includes('channel-demonfire')&&!ids.includes('summon-infernal')
  });
 
+ const beastTalents={'Pack Leader':3,'Killer Cobra':2,'Barbed Wrath':2,'Wild Call':2,'Dire Beast':1,'Beast Cleave':1,'Stampede':1,'Thrill of the Hunt':1,'Bestial Wrath':1};
+ const beastParty=[
+  {id:'bmt',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15},
+  {id:'bmh',name:'Healer',class:'Priest',spec:'Holy',power:14,level:15},
+  {id:'bm',name:'Beast Master',class:'Hunter',spec:'Beast Mastery',power:14,level:15,skillLoadouts:{'Beast Mastery':['cobra-shot','barbed-shot','kill-command','counter-shot']},talents:{'Beast Mastery':beastTalents}},
+  {id:'bm1',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15},
+  {id:'bm2',name:'Rogue',class:'Rogue',spec:'Assassination',power:14,level:15}
+ ];
+ const beastRun=simulate({party:beastParty,encounter:{...base,kind:'boss',level:15,enemyHealth:12000},tactics:{cooldownUse:'free'},seed:'beast-mastery-core',maxDurationMs:22000});
+ test('Beast Mastery Permanent Pet',()=>{
+  const hunter=beastRun.finalState.players.find(p=>p.id==='p-bm');
+  const summon=beastRun.events.find(e=>e.type==='PET_SUMMONED'&&e.source==='p-bm'&&e.payload?.petType==='hunter-beast'&&e.result==='permanent');
+  const hit=beastRun.events.find(e=>e.type==='DAMAGE_DEALT'&&e.payload?.ownerId==='p-bm'&&e.payload?.petType==='hunter-beast');
+  return hunter?.role==='dps'&&hunter?.resource?.name==='Focus'&&Boolean(summon&&hit)
+ });
+ test('Beast Mastery Kill Command',()=>beastRun.events.some(e=>e.type==='PET_COMMAND'&&e.source==='p-bm'&&e.ability==='Kill Command')&&beastRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.payload?.ownerId==='p-bm'&&e.ability==='Kill Command'));
+ test('Beast Mastery Frenzy and Wild Call',()=>beastRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-bm'&&e.ability==='Barbed Wrath')&&beastRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-bm'&&e.ability==='Wild Call')&&beastRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-bm'&&e.ability==='Thrill of the Hunt'));
+
+ const beastCleaveParty=[
+  {id:'bct',name:'Tank',class:'Warrior',spec:'Protection',power:13,level:15},
+  {id:'bch',name:'Healer',class:'Priest',spec:'Holy',power:13,level:15},
+  {id:'bc',name:'Cleave Hunter',class:'Hunter',spec:'Beast Mastery',power:13,level:15,skillLoadouts:{'Beast Mastery':['barbed-shot','beast-multi-shot','cobra-shot','counter-shot']},talents:{'Beast Mastery':beastTalents}},
+  {id:'bc1',name:'Mage',class:'Mage',spec:'Arcane',power:13,level:15},
+  {id:'bc2',name:'Rogue',class:'Rogue',spec:'Assassination',power:13,level:15}
+ ];
+ const beastCleaveRun=simulate({party:beastCleaveParty,encounter:{...base,kind:'boss',level:15,enemies:['Alpha','Add One','Add Two'],enemyHealth:10000},tactics:{cooldownUse:'free'},seed:'beast-mastery-cleave',maxDurationMs:18000});
+ test('Beast Mastery Beast Cleave',()=>beastCleaveRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-bc'&&e.ability==='Beast Cleave')&&beastCleaveRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.payload?.ownerId==='p-bc'&&e.ability==='Savage Bite cleave'));
+
+ const beastSummonParty=[
+  {id:'bst',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15},
+  {id:'bsh',name:'Healer',class:'Priest',spec:'Holy',power:14,level:15},
+  {id:'bs',name:'Pack Hunter',class:'Hunter',spec:'Beast Mastery',power:14,level:15,skillLoadouts:{'Beast Mastery':['kill-command','dire-beast','stampede','bestial-wrath']},talents:{'Beast Mastery':beastTalents}},
+  {id:'bs1',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15},
+  {id:'bs2',name:'Rogue',class:'Rogue',spec:'Assassination',power:14,level:15}
+ ];
+ const beastSummonRun=simulate({party:beastSummonParty,encounter:{...base,kind:'boss',level:15,enemyHealth:14000},tactics:{cooldownUse:'free'},seed:'beast-mastery-summons',maxDurationMs:26000});
+ test('Beast Mastery Dire Beast and Stampede',()=>beastSummonRun.events.some(e=>e.type==='PET_SUMMONED'&&e.source==='p-bs'&&e.payload?.petType==='dire-beast')&&beastSummonRun.events.some(e=>e.type==='PET_SUMMONED'&&e.source==='p-bs'&&e.payload?.petType==='stampede-beast'));
+ test('Beast Mastery Bestial Wrath',()=>beastSummonRun.events.some(e=>e.type==='BUFF_APPLIED'&&e.target==='p-bs'&&e.ability==='Bestial Wrath')&&beastSummonRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-bs'&&e.ability==='Bestial Wrath'));
+
+ const beastLocked=simulate({party:[
+  {id:'bmlt',name:'Tank',class:'Warrior',spec:'Protection',power:12,level:15},
+  {id:'bmlh',name:'Healer',class:'Priest',spec:'Holy',power:12,level:15},
+  {id:'bml',name:'Locked Beast Master',class:'Hunter',spec:'Beast Mastery',power:12,level:15,skillLoadouts:{'Beast Mastery':['dire-beast','stampede','bestial-wrath','cobra-shot']},talents:{'Beast Mastery':{}}},
+  {id:'bml1',name:'Mage',class:'Mage',spec:'Arcane',power:12,level:15},
+  {id:'bml2',name:'Rogue',class:'Rogue',spec:'Assassination',power:12,level:15}
+ ],encounter:{...base,level:15,enemyHealth:4000},seed:'beast-mastery-gates',maxDurationMs:2500});
+ test('Beast Mastery Talent Skill Gates',()=>{
+  const ids=(beastLocked.finalState.players.find(p=>p.id==='p-bml')?.abilities||[]).map(a=>a.id);
+  return ids.includes('cobra-shot')&&!ids.includes('dire-beast')&&!ids.includes('stampede')&&!ids.includes('bestial-wrath')
+ });
+
  const bloodTalents={'Heartbreaker':3,'Ossuary':3,'Hemostasis':2,'Rune Tap':1,'Blood Shield':2,'Voracious':2,'Dancing Rune Weapon':1,'Red Thirst':2,'Vampiric Blood':1};
  const bloodParty=[
   {id:'dkt',name:'Blood DK',class:'Death Knight',spec:'Blood',power:14,level:15,skillLoadouts:{Blood:['heart-strike','death-strike','dark-command','marrowrend']},talents:{Blood:bloodTalents}},
