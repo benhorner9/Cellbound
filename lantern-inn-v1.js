@@ -10,19 +10,19 @@ const game=()=>window.CellboundGame;
    Prop depth: Door 24 · Bar 46 · Party Table 74. */
 const slots={
  'party-back-left':{
-  wide:[38,64],phone:[38,64],scale:.95,phoneScale:.91,depth:72,zone:'behind-table'
+  wide:[38.5,69],phone:[38.5,69],scale:.97,phoneScale:.93,depth:72,zone:'behind-table'
  },
  'party-back-centre':{
-  wide:[50,62],phone:[50,62],scale:.93,phoneScale:.89,depth:72,zone:'behind-table'
+  wide:[50,67.5],phone:[50,67.5],scale:.95,phoneScale:.91,depth:72,zone:'behind-table'
  },
  'party-back-right':{
-  wide:[62,64],phone:[62,64],scale:.95,phoneScale:.91,depth:72,zone:'behind-table'
+  wide:[61.5,69],phone:[61.5,69],scale:.97,phoneScale:.93,depth:72,zone:'behind-table'
  },
  'party-front-left':{
-  wide:[25.5,76],phone:[25.5,76],scale:1.05,phoneScale:1.00,depth:82,zone:'floor'
+  wide:[25.8,84],phone:[25.8,84],scale:1.10,phoneScale:1.04,depth:82,zone:'floor'
  },
  'party-front-right':{
-  wide:[74.5,76],phone:[74.5,76],scale:1.05,phoneScale:1.00,depth:82,zone:'floor'
+  wide:[74.2,84],phone:[74.2,84],scale:1.10,phoneScale:1.04,depth:82,zone:'floor'
  },
  'reserve-fireplace':{
   wide:[27,43],phone:[27,43],scale:.79,phoneScale:.75,depth:42,zone:'background'
