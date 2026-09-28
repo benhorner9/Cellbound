@@ -775,6 +775,11 @@ function talentDamageScale(ctx,u,a,target){
  if(u.class==='Shaman'&&u.spec==='Elemental'){
   if(['lightning-bolt','chain-lightning','lava-burst'].includes(a.id))m*=1+talentRank(u,'Elemental Fury')*.035;
  }
+ if(u.class==='Hunter'&&u.spec==='Beast Mastery'){
+  const priority=a=>a.petCommand==='bestial-wrath'?5:a.summonType==='stampede-beast'?4:a.summonType==='dire-beast'?3:a.petCommand==='kill-command'?2:0;
+  const specials=u.abilities.filter(a=>(a.kind==='summon'||a.kind==='pet-command')&&hunterSpecialReady(ctx,u,a,target)).sort((a,b)=>priority(b)-priority(a));
+  if(specials.length&&startAbility(ctx,u,specials[0],target))return
+ }
  if(u.class==='Warlock'&&u.spec==='Demonology'){
   m*=1+talentRank(u,'Fel Knowledge')*.035;
   if(a.id==='demonbolt'&&u.statuses?.['demonic-core'])m*=1.12;
@@ -1459,6 +1464,14 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
   }
  }
 
+ if(u.class==='Hunter'&&u.spec==='Beast Mastery'){
+  const by=id=>pool.find(a=>a.id===id),barbed=by('barbed-shot'),multi=by('beast-multi-shot'),cobra=by('cobra-shot');
+  const frenzy=u.statuses?.['beast-frenzy'],remaining=frenzy?Math.max(0,Number(frenzy.expiresAt)-ctx.time):0;
+  if(barbed&&(!frenzy||remaining<2200))return{ability:barbed,target};
+  if(multi&&livingEnemies(ctx).length>=3&&talentRank(u,'Beast Cleave')>0)return{ability:multi,target};
+  if(cobra)return{ability:cobra,target};
+  if(barbed)return{ability:barbed,target}
+ }
  if(u.class==='Mage'&&u.spec==='Frost'){
   u.talentCounters=u.talentCounters||{};
   const fingers=talentRank(u,'Fingers of Frost'),brain=talentRank(u,'Brain Freeze'),procRate=Math.max(0,Number(u?.setBonuses?.frostProcRate)||0);
@@ -1652,7 +1665,19 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
    }
   }
  }
- if(u.class==='Hunter'){
+ if(u.class==='Hunter'&&u.spec==='Beast Mastery'){
+  if(a.id==='barbed-shot'){
+   const rank=talentRank(u,'Barbed Wrath'),duration=7000+rank*1200;
+   applyStatus(ctx,u,u,{id:'beast-frenzy',name:'Beast Frenzy',kind:'buff',duration,effect:{}});
+   talentTrigger(ctx,u,'Barbed Wrath',u,{duration,rank})
+  }
+  if(a.id==='beast-multi-shot'&&(r=talentRank(u,'Beast Cleave'))){
+   const duration=5000+r*500;
+   applyStatus(ctx,u,u,{id:'beast-cleave',name:'Beast Cleave',kind:'buff',duration,effect:{}});
+   talentTrigger(ctx,u,'Beast Cleave',u,{duration,rank:r})
+  }
+ }
+ if(u.class==='Hunter'&&u.spec==='Marksman'){
   if(crit&&(r=talentRank(u,'Piercing Shots'))&&target.alive){
    const tick=Math.max(1,Math.round(dealt*.04*r));
    applyStatus(ctx,u,target,{id:'piercing-shots',name:'Piercing Shots',kind:'debuff',duration:2600,effect:{damageOverTime:tick}});
