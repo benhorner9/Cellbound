@@ -1500,3 +1500,169 @@ body.town-expedition-focus-open{overflow:hidden}
     transform:translate(0,0) scale(1)
   }
 }
+
+
+/* ==========================================================================
+   Town Square Arch Integration v8
+   The two district arches now read as gateways built into the edges of the
+   plaza rather than freestanding cut-out props.
+   ========================================================================== */
+
+/* Push the gateways into the scene boundaries. Letting the outer stonework
+   disappear beyond the frame makes each arch feel connected to an off-screen
+   street instead of sitting independently on the plaza. */
+.town-cartoon-stage .town-landmark-expedition{
+  left:-2.6%!important;
+  top:8.7%!important;
+  width:19.4%!important;
+  transform-origin:50% 100%!important;
+}
+.town-cartoon-stage .town-landmark-merchant{
+  left:auto!important;
+  right:-2.6%!important;
+  top:8.7%!important;
+  width:19.4%!important;
+  transform-origin:50% 100%!important;
+}
+
+/* Match the square's softer, warmer stone and reduce the 'sticker' contrast. */
+.town-cartoon-stage .town-landmark-expedition .town-landmark-art{
+  transform:scaleY(.945);
+  transform-origin:50% 100%;
+  filter:
+    brightness(.84)
+    saturate(.76)
+    sepia(.10)
+    hue-rotate(-5deg)
+    contrast(1.025)
+    drop-shadow(0 10px 8px rgba(6,7,8,.36))!important;
+}
+.town-cartoon-stage .town-landmark-merchant .town-landmark-art{
+  transform:scaleY(.945);
+  transform-origin:50% 100%;
+  filter:
+    brightness(.86)
+    saturate(.78)
+    sepia(.12)
+    hue-rotate(-7deg)
+    contrast(1.025)
+    drop-shadow(0 10px 8px rgba(6,7,8,.36))!important;
+}
+.town-cartoon-stage .town-landmark-expedition .town-landmark-glow,
+.town-cartoon-stage .town-landmark-merchant .town-landmark-glow{
+  transform:scale(1.035) scaleY(.945)!important;
+  transform-origin:50% 100%!important;
+}
+
+/* Broad contact shadows tie the stone feet to the ground plane. */
+.town-cartoon-stage .town-landmark-expedition::before,
+.town-cartoon-stage .town-landmark-merchant::before{
+  content:"";
+  position:absolute;
+  z-index:0;
+  left:9%;
+  right:9%;
+  bottom:3%;
+  height:12%;
+  border-radius:50%;
+  background:
+    radial-gradient(ellipse at center,
+      rgba(8,7,8,.46) 0%,
+      rgba(8,7,8,.27) 45%,
+      rgba(8,7,8,.08) 67%,
+      rgba(8,7,8,0) 80%);
+  filter:blur(7px);
+  transform:scaleX(1.05);
+  pointer-events:none
+}
+
+/* A very soft dirt/ambient blend at the bases stops the bottom stones from
+   looking like a perfectly cut transparent PNG edge. */
+.town-cartoon-stage .town-landmark-expedition::after,
+.town-cartoon-stage .town-landmark-merchant::after{
+  content:"";
+  position:absolute;
+  z-index:1;
+  left:14%;
+  right:14%;
+  bottom:1.5%;
+  height:5.5%;
+  border-radius:50%;
+  background:rgba(59,49,45,.16);
+  filter:blur(6px);
+  pointer-events:none
+}
+
+/* Preserve the integrated colour grade while selected instead of snapping the
+   arches back to the brighter source artwork. */
+.town-cartoon-stage .town-landmark-expedition.is-selected .town-landmark-art{
+  transform:translateY(-1px) scaleX(1.01) scaleY(.954);
+  filter:
+    brightness(.94)
+    saturate(.84)
+    sepia(.08)
+    hue-rotate(-5deg)
+    contrast(1.035)
+    drop-shadow(0 12px 9px rgba(6,7,8,.38))!important;
+}
+.town-cartoon-stage .town-landmark-merchant.is-selected .town-landmark-art{
+  transform:translateY(-1px) scaleX(1.01) scaleY(.954);
+  filter:
+    brightness(.96)
+    saturate(.86)
+    sepia(.10)
+    hue-rotate(-7deg)
+    contrast(1.035)
+    drop-shadow(0 12px 9px rgba(6,7,8,.38))!important;
+}
+
+/* Keep the invisible touch areas aligned with the more architectural framing. */
+.town-square-hotspot-expedition{
+  left:0!important;
+  top:7%!important;
+  width:19.5%!important;
+  height:49%!important
+}
+.town-square-hotspot-merchant{
+  right:0!important;
+  top:7%!important;
+  width:19.5%!important;
+  height:49%!important
+}
+
+/* Camera pushes now target the actual new gateway centres. */
+.town-scene.is-entering-district[data-town-entry="expeditionRoad"] .town-cartoon-stage{
+  transform-origin:8.5% 31%!important;
+  transform:translate(14%,7%) scale(1.68)!important
+}
+.town-scene.is-entering-district[data-town-entry="merchantRoad"] .town-cartoon-stage{
+  transform-origin:91.5% 31%!important;
+  transform:translate(-14%,7%) scale(1.68)!important
+}
+
+@media(max-width:720px){
+  .town-cartoon-stage .town-landmark-expedition{
+    left:-2.8%!important;
+    top:8.5%!important;
+    width:19.8%!important
+  }
+  .town-cartoon-stage .town-landmark-merchant{
+    right:-2.8%!important;
+    top:8.5%!important;
+    width:19.8%!important
+  }
+  .town-square-hotspot-expedition,
+  .town-square-hotspot-merchant{
+    top:6.5%!important;
+    width:20%!important;
+    height:50%!important
+  }
+  .town-scene.is-entering-district[data-town-entry="expeditionRoad"] .town-cartoon-stage{
+    transform-origin:9% 32%!important;
+    transform:translate(9%,4%) scale(1.5)!important
+  }
+  .town-scene.is-entering-district[data-town-entry="merchantRoad"] .town-cartoon-stage{
+    transform-origin:91% 32%!important;
+    transform:translate(-9%,4%) scale(1.5)!important
+  }
+}
