@@ -53,7 +53,7 @@ const specs={
   Druid:{Restoration:'healer',Balance:'dps'},
   Hunter:{Marksman:'dps'},
   Rogue:{Assassination:'dps'},
-  Mage:{Arcane:'dps'},
+  Mage:{Arcane:'dps',Frost:'dps'},
   Shaman:{Restoration:'healer',Elemental:'dps'},
   Warlock:{Demonology:'dps'},
   Monk:{Brewmaster:'tank',Mistweaver:'healer',Windwalker:'dps'},
@@ -149,9 +149,22 @@ const trees={
   Rogue:{Assassination:[
     {id:'Ambush',icon:'◆',tier:0,col:1,max:3,desc:'Increase opening burst.'},{id:'Venom',icon:'☣',tier:0,col:3,max:3,desc:'Improve poisons.'},{id:'Garrote',icon:'⌁',tier:1,col:0,max:2,req:'Ambush',desc:'Apply a powerful bleed from stealth.'},{id:'Quick Recovery',icon:'↺',tier:1,col:2,max:2,desc:'Recover resources faster.'},{id:'Mutilate',icon:'✕',tier:2,col:1,max:1,req:'Garrote',desc:'Unlock a brutal dual-weapon attack.'},{id:'Envenom',icon:'☠',tier:2,col:3,max:2,req:'Venom',desc:'Consume poison stacks for burst damage.'},{id:'Master Poisoner',icon:'♨',tier:3,col:1,max:2,req:'Mutilate',desc:'Enhance poison effectiveness.'},{id:'Cut to the Chase',icon:'➤',tier:3,col:3,max:2,req:'Envenom',desc:'Maintain damage buffs automatically.'},{id:'Eviscerate',icon:'✦',tier:4,col:2,max:1,req:'Master Poisoner',desc:'Capstone finishing strike.'}
   ]},
-  Mage:{Arcane:[
-    {id:'Arcane Focus',icon:'✦',tier:0,col:1,max:3,desc:'Increase spell accuracy and power.'},{id:'Surge',icon:'⚡',tier:0,col:3,max:2,desc:'Burst arcane power for a short time.'},{id:'Clearcasting',icon:'◇',tier:1,col:0,max:2,req:'Arcane Focus',desc:'Chance to make spells cost no mana.'},{id:'Spell Impact',icon:'✷',tier:1,col:2,max:2,desc:'Increase critical spell damage.'},{id:'Presence of Mind',icon:'◉',tier:2,col:1,max:1,req:'Clearcasting',desc:'Make a cast instant.'},{id:'Arcane Flows',icon:'≈',tier:2,col:3,max:2,req:'Surge',desc:'Reduce cooldowns.'},{id:'Arcane Power',icon:'☄',tier:3,col:1,max:1,req:'Presence of Mind',desc:'Major spell-damage cooldown.'},{id:'Nether Precision',icon:'✧',tier:3,col:3,max:2,req:'Arcane Flows',desc:'Improve critical spell efficiency.'},{id:'Barrage',icon:'✹',tier:4,col:2,max:1,req:'Arcane Power',desc:'Capstone instant arcane barrage.'}
-  ]},
+  Mage:{
+    Arcane:[
+      {id:'Arcane Focus',icon:'✦',tier:0,col:1,max:3,desc:'Increase spell accuracy and power.'},{id:'Surge',icon:'⚡',tier:0,col:3,max:2,desc:'Burst arcane power for a short time.'},{id:'Clearcasting',icon:'◇',tier:1,col:0,max:2,req:'Arcane Focus',desc:'Chance to make spells cost no mana.'},{id:'Spell Impact',icon:'✷',tier:1,col:2,max:2,desc:'Increase critical spell damage.'},{id:'Presence of Mind',icon:'◉',tier:2,col:1,max:1,req:'Clearcasting',desc:'Make a cast instant.'},{id:'Arcane Flows',icon:'≈',tier:2,col:3,max:2,req:'Surge',desc:'Reduce cooldowns.'},{id:'Arcane Power',icon:'☄',tier:3,col:1,max:1,req:'Presence of Mind',desc:'Major spell-damage cooldown.'},{id:'Nether Precision',icon:'✧',tier:3,col:3,max:2,req:'Arcane Flows',desc:'Improve critical spell efficiency.'},{id:'Barrage',icon:'✹',tier:4,col:2,max:1,req:'Arcane Power',desc:'Capstone instant arcane barrage.'}
+    ],
+    Frost:[
+      {id:'Piercing Cold',icon:'❄',tier:0,col:1,max:3,desc:'Increase Frostbolt, Flurry and Ice Lance damage.'},
+      {id:'Ice Shards',icon:'✧',tier:0,col:3,max:3,desc:'Increase Frost spell critical chance.'},
+      {id:'Fingers of Frost',icon:'◇',tier:1,col:0,max:2,req:'Piercing Cold',desc:'Frostbolt and Blizzard can empower Ice Lance as though the target were frozen.'},
+      {id:'Brain Freeze',icon:'◉',tier:1,col:2,max:2,desc:'Frostbolt can make Flurry instant and prepare a Shatter combo.'},
+      {id:'Blizzard',icon:'☁',tier:2,col:1,max:1,req:'Ice Shards',desc:'Unlock Blizzard as a sustained area frost spell.'},
+      {id:'Shatter',icon:'✹',tier:2,col:3,max:2,req:'Fingers of Frost',desc:'Ice Lance and Glacial Spike deal much more damage to frozen or chilled targets.'},
+      {id:'Frozen Orb',icon:'◎',tier:3,col:1,max:1,req:'Blizzard',desc:'Unlock Frozen Orb, dealing repeated frost damage through enemy packs.'},
+      {id:'Thermal Void',icon:'↺',tier:3,col:3,max:2,req:'Shatter',desc:'Consuming Frost procs grants a short haste and damage surge.'},
+      {id:'Glacial Spike',icon:'✦',tier:4,col:2,max:1,req:'Frozen Orb',desc:'Capstone: unlock Glacial Spike, a devastating frost finisher that excels during Shatter windows.'}
+    ]
+  },
   Shaman:{
     Restoration:[
       {id:'Tidal Focus',icon:'≈',tier:0,col:1,max:3,desc:'Increase healing efficiency and the strength of restorative spells.'},
@@ -358,6 +371,22 @@ const UI_SKILL_FALLBACKS={
     {id:'barkskin',name:'Barkskin',kind:'defensive',unlockLevel:8,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.20,gcd:0,cd:60000},
     {id:'skull-bash',name:'Skull Bash',kind:'interrupt',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Interrupt an enemy cast.',range:13,cost:0,gcd:0,cd:15000}
   ],
+  Mage:[
+    {id:'pyroblast',name:'Pyroblast',kind:'damage',role:'dps',spec:'Arcane',unlockLevel:1,desc:'A slow, devastating ranged spell.',range:35,damage:36,cost:14,gcd:1500,cast:2200,cd:8000,damageType:'magic'},
+    {id:'fireball',name:'Fireball',kind:'damage',role:'dps',spec:'Arcane',unlockLevel:1,desc:'Reliable ranged spell damage.',range:35,damage:24,cost:8,gcd:1500,cast:1700,cd:0,damageType:'magic'},
+    {id:'fire-blast',name:'Fire Blast',kind:'damage',role:'dps',spec:'Arcane',unlockLevel:1,desc:'An instant burst of damage.',range:35,damage:16,cost:4,gcd:0,cast:0,cd:9000,damageType:'magic'},
+    {id:'arcane-barrage',name:'Arcane Barrage',kind:'damage',role:'dps',spec:'Arcane',unlockLevel:5,desc:'An instant ranged attack with a short cooldown.',range:35,damage:25,cost:12,gcd:1500,cd:5000,damageType:'magic',talentReq:'Barrage'},
+    {id:'arcane-nova',name:'Arcane Nova',kind:'damage',role:'dps',spec:'Arcane',unlockLevel:13,desc:'Burst the target and nearby enemies with arcane energy.',range:25,damage:22,cost:18,gcd:1500,cd:10000,cleave:3,damageType:'magic'},
+
+    {id:'frostbolt',name:'Frostbolt',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Launch a bolt of frost and fish for Frost procs.',range:35,damage:20,cost:6,gcd:1500,cast:1450,cd:0,damageType:'magic'},
+    {id:'ice-lance',name:'Ice Lance',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'An instant frost shard that becomes deadly against frozen targets.',range:35,damage:14,cost:5,gcd:1500,cast:0,cd:0,damageType:'magic'},
+    {id:'flurry',name:'Flurry',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'A rapid sequence of frost bolts that can prepare a Shatter window.',range:35,damage:27,cost:10,gcd:1500,cast:950,cd:8000,damageType:'magic'},
+    {id:'blizzard',name:'Blizzard',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Blanket the enemy pack in freezing magic.',range:35,damage:20,cost:16,gcd:1500,cast:1400,cd:8000,cleave:4,damageType:'magic',talentReq:'Blizzard'},
+    {id:'frozen-orb',name:'Frozen Orb',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Launch an orb that repeatedly lashes nearby enemies with frost.',range:35,damage:30,cost:18,gcd:1500,cast:700,cd:24000,cleave:3,damageType:'magic',talentReq:'Frozen Orb'},
+    {id:'glacial-spike',name:'Glacial Spike',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Hurl a massive spike of compressed ice for devastating burst.',range:35,damage:48,cost:24,gcd:1500,cast:1800,cd:18000,damageType:'magic',talentReq:'Glacial Spike'},
+    {id:'counterspell',name:'Counterspell',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast from range.',range:35,cost:0,gcd:0,cd:24000},
+    {id:'ice-barrier',name:'Ice Barrier',kind:'defensive',role:'dps',spec:'Frost',unlockLevel:8,desc:'Wrap yourself in ice, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:60000}
+  ],
   Shaman:[
     {id:'healing-wave',name:'Healing Wave',kind:'heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'A dependable restorative cast for an injured ally.',range:30,heal:36,cost:14,gcd:1500,cast:1450,cd:0},
     {id:'riptide',name:'Riptide',kind:'heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'An instant tidal heal that continues restoring health briefly.',range:30,heal:23,cost:10,gcd:1500,cast:0,cd:6000,hot:7},
@@ -492,6 +521,7 @@ const UI_BUFF_FALLBACKS={
   'Priest|Shadow':{id:'class-buff-shadow-inspiration',name:'Shadow Inspiration',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04,resourceRegen:.04}},
   Priest:{id:'class-buff-divine-inspiration',name:'Divine Inspiration',scope:'party',duration:60000,cooldown:180000,effect:{outgoingHealing:.05,incomingHealing:.05}},
   Druid:{id:'class-buff-wild-communion',name:'Wild Communion',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04,outgoingHealing:.04,resourceRegen:.04}},
+  Mage:{id:'class-buff-arcane-empowerment',name:'Arcane Empowerment',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.05}},
   Shaman:{id:'class-buff-bloodlust',name:'Bloodlust',scope:'party',duration:60000,cooldown:180000,effect:{haste:.10,resourceRegen:.05}},
   Warlock:{id:'class-buff-demonic-pact',name:'Demonic Pact',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04}},
   Monk:{id:'class-buff-mystic-touch',name:'Mystic Touch',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,outgoingHealing:.03}},
