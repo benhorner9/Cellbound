@@ -1045,6 +1045,12 @@ function talentAfterHeal(ctx,u,a,target,effective){
    schedule(ctx,ctx.time+1500,()=>{if(u.alive&&target.alive)doHeal(ctx,u,target,seed,'Living Seed')},'talent-living-seed')
   }
  }
+ if(u.class==='Shaman'&&u.spec==='Restoration'&&a.id==='riptide'){
+  if((r=talentRank(u,'Tidal Waves'))){
+   applyStatus(ctx,u,u,{id:'tidal-waves',name:'Tidal Waves',kind:'buff',duration:6000,effect:{haste:.04*r}});
+   talentTrigger(ctx,u,'Tidal Waves',u,{duration:6000})
+  }
+ }
 }
 function talentAfterGroupHeal(ctx,u,a,totalEffective){
  if(!u?.alive||totalEffective<=0)return;
@@ -1052,6 +1058,10 @@ function talentAfterGroupHeal(ctx,u,a,totalEffective){
   const pulse=Math.max(1,Math.round(totalEffective*.04));
   talentTrigger(ctx,u,'Flourish',u,{healingPerTarget:pulse});
   schedule(ctx,ctx.time+1400,()=>livingPlayers(ctx).filter(p=>hasLineOfSight(ctx,u,p)).forEach(p=>doHeal(ctx,u,p,pulse,'Flourish')),'talent-flourish')
+ }
+ if(u.class==='Shaman'&&u.spec==='Restoration'&&a.id==='chain-heal'){
+  const r=talentRank(u,'Tidal Waves');
+  if(r){applyStatus(ctx,u,u,{id:'tidal-waves',name:'Tidal Waves',kind:'buff',duration:6000,effect:{haste:.04*r}});talentTrigger(ctx,u,'Tidal Waves',u,{duration:6000})}
  }
 }
 function useTalentUtility(ctx,u){
@@ -1065,6 +1075,27 @@ function useTalentUtility(ctx,u){
   if(talentRank(u,'Tree of Life')&&combatPressure(ctx)>.52&&talentReady(ctx,u,'tree-of-life')){
    talentSetCooldown(ctx,u,'tree-of-life',60000);applyStatus(ctx,u,u,{id:'tree-of-life',name:'Tree of Life',kind:'buff',duration:10000,effect:{outgoingHealing:.22,haste:.10}});
    talentTrigger(ctx,u,'Tree of Life',u,{duration:10000});return true
+  }
+ }
+ if(u.class==='Shaman'&&u.spec==='Restoration'){
+  const alive=livingPlayers(ctx),deep=alive.filter(p=>healthRatio(p)<.65),pressure=combatPressure(ctx);
+  if(talentRank(u,'Spirit Link Totem')&&deep.length>=2&&pressure>.55&&talentReady(ctx,u,'spirit-link-totem')){
+   const ward=talentRank(u,'Earthen Ward'),duration=8000,id='spirit-link-'+u.id+'-'+Math.round(ctx.time);
+   talentSetCooldown(ctx,u,'spirit-link-totem',75000);
+   const pos=constrainToArena(ctx,{x:u.position.x+5,y:u.position.y-3},1.5),reduction=.12+ward*.025;
+   emit(ctx,'TOTEM_PLACED',{source:u.id,target:u.id,ability:'Spirit Link Totem',result:'placed',position:copy(pos),payload:{totemId:id,totemType:'spirit-link',duration,effect:{incomingDamageReduction:reduction}}});
+   alive.forEach(p=>applyStatus(ctx,u,p,{id:'spirit-link-totem',name:'Spirit Link Totem',kind:'buff',duration,effect:{incomingDamageReduction:reduction}}));
+   const avg=alive.reduce((n,p)=>n+healthRatio(p),0)/Math.max(1,alive.length);
+   alive.filter(p=>healthRatio(p)<avg).forEach(p=>doHeal(ctx,u,p,Math.max(1,(avg-healthRatio(p))*p.maxHealth*.42),'Spirit Link Totem'));
+   talentTrigger(ctx,u,'Spirit Link Totem',u,{duration,targets:alive.length});
+   schedule(ctx,ctx.time+duration,()=>emit(ctx,'TOTEM_EXPIRED',{source:u.id,target:u.id,ability:'Spirit Link Totem',result:'expired',position:copy(pos),payload:{totemId:id,totemType:'spirit-link'}}),'spirit-link-expire');
+   u.gcdUntil=Math.max(u.gcdUntil,ctx.time+500);return true
+  }
+  if(talentRank(u,'Ascendant Tide')&&pressure>.62&&talentReady(ctx,u,'ascendant-tide')){
+   talentSetCooldown(ctx,u,'ascendant-tide',65000);
+   applyStatus(ctx,u,u,{id:'ascendant-tide',name:'Ascendant Tide',kind:'buff',duration:10000,effect:{outgoingHealing:.20,haste:.08}});
+   alive.forEach(p=>applyStatus(ctx,u,p,{id:'ascendant-totems',name:'Ascendant Totems',kind:'buff',duration:10000,effect:{incomingHealing:.04,resourceRegen:.04}}));
+   talentTrigger(ctx,u,'Ascendant Tide',u,{duration:10000});return true
   }
  }
  if(u.class==='Mage'&&talentRank(u,'Arcane Power')&&talentReady(ctx,u,'arcane-power')&&(['boss','final','world-boss','event'].includes(ctx.encounter.kind)||combatPressure(ctx)>.55)){
@@ -1196,7 +1227,7 @@ function dealDamage(ctx,source,target,amount,ability,opts={}){
  return dealt;
 }
 
-function doHeal(ctx,healer,target,amount,ability){
+function doHeal(ctx,healer,target,amount,ability,opts={}){
  if(!healer?.alive||!target?.alive)return 0;
  const before=target.health,max=target.maxHealth;
  const healingScale=Math.max(.1,1+statusBonus(healer,'outgoingHealing'))*Math.max(.1,1+statusBonus(target,'incomingHealing'));
@@ -1212,7 +1243,7 @@ function doHeal(ctx,healer,target,amount,ability){
   emitResourceState(ctx,healer,'overflow-pressure')
  }
 
- emit(ctx,'HEAL_RECEIVED',{source:healer.id,target:target.id,ability,amount:effective,result:over?'overheal':'heal',position:copy(target.position),payload:{overhealing:over,targetHp:target.health,targetMax:max,targetHpPct:pct(target.health,max)}});
+ emit(ctx,'HEAL_RECEIVED',{source:healer.id,target:target.id,ability,amount:effective,result:over?'overheal':'heal',position:copy(target.position),payload:{overhealing:over,targetHp:target.health,targetMax:max,targetHpPct:pct(target.health,max),visualSource:opts.visualSource||null,chainBounce:Number(opts.chainBounce)||0}});
  livingEnemies(ctx).forEach(e=>addThreat(ctx,e,healer,effective*.5,'healing'));
  return effective;
 }
