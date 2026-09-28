@@ -199,7 +199,7 @@ function ensureCharacter(c){
   c.talents=c.talents||{};
   Object.keys(specs[c.class]||{}).forEach(spec=>{c.talents[spec]=c.talents[spec]||{}});
   c.skillLoadouts=c.skillLoadouts&&typeof c.skillLoadouts==='object'?c.skillLoadouts:{};
-  const buff=classBuffFor(c);if(buff&&!c.buffSkill)c.buffSkill=buff.id;
+  const buff=classBuffFor(c);if(buff)c.buffSkill=buff.id;
   return c;
 }
 function rarityClass(item){return `cb-rarity-${String(item?.rarity||'starter').toLowerCase()}`}
