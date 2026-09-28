@@ -2177,6 +2177,8 @@ function playerAI(ctx,u){
   if(specials.length&&startAbility(ctx,u,specials[0],target))return
  }
  if(u.class==='Death Knight'&&u.spec==='Blood'){
+  const bone=u.statuses?.['bone-shield'],marrow=u.abilities.find(a=>a.id==='marrowrend'&&cooldownReady(u,a));
+  if(marrow&&(!bone||Number(bone.expiresAt)-ctx.time<1800)&&startAbility(ctx,u,marrow,target))return;
   const recent=(u.recentDamageTaken||[]).filter(x=>Number(x.at)>=ctx.time-5000).reduce((n,x)=>n+(Number(x.amount)||0),0);
   const deathStrike=u.abilities.find(a=>a.id==='death-strike'&&cooldownReady(u,a)&&(a.cost||0)<=u.resource.value);
   if(deathStrike&&(healthRatio(u)<.82||recent>u.maxHealth*.12)&&startAbility(ctx,u,deathStrike,target))return
