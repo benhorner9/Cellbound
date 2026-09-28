@@ -1788,9 +1788,9 @@ function finishAbility(ctx,u,a,target){
  if(a.kind==='battle-rez'){
   reviveUnit(ctx,u,target,a.name,{healthPct:35,resourcePct:20,combat:true});
  }else if(a.kind==='summon'){
-  resolveWarlockSummon(ctx,u,a,target);
+  if(u.class==='Death Knight')resolveDeathKnightSummon(ctx,u,a,target);else resolveWarlockSummon(ctx,u,a,target);
  }else if(a.kind==='pet-command'){
-  resolveWarlockPetCommand(ctx,u,a,target);
+  if(u.class==='Death Knight')resolveDeathKnightPetCommand(ctx,u,a,target);else resolveWarlockPetCommand(ctx,u,a,target);
  }else if(a.kind==='heal'||a.kind==='group-heal'){
   const revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1;
   const base=(a.heal||24)*(1+Math.min(.28,u.power*.01))*(u.baseStats?.outputScale||levelOutputScale(u.level))*(.92+ctx.rng()*.16)*revivePenalty;
@@ -2066,6 +2066,49 @@ function warlockSpecialReady(ctx,u,a,target){
  }
  return false
 }
+function resolveDeathKnightSummon(ctx,u,a,target){
+ if(u.class!=='Death Knight'||u.spec!=='Unholy')return false;
+ const type=a.summonType||'army-ghoul';
+ let count=Math.max(1,Number(a.summonCount)||1);
+ if(type==='apocalypse-ghoul'){
+  const wounds=Math.max(0,Number(target?.dkWounds?.[u.id])||0);
+  if(wounds<=0)return false;
+  const burstCount=Math.min(4,wounds),burst=Math.max(1,Math.round((10+talentRank(u,'Festering Wounds')*2)*(u.baseStats?.outputScale||1)));
+  for(let i=0;i<burstCount;i++)if(target.alive)dealDamage(ctx,u,target,burst,'Apocalypse Wound',{damageType:'magic'});
+  target.dkWounds[u.id]=Math.max(0,wounds-burstCount);
+  count=Math.max(2,Math.min(4,burstCount));
+  emit(ctx,'FESTERING_WOUND_CHANGED',{source:u.id,target:target.id,ability:'Apocalypse',amount:burstCount,result:'burst',position:copy(target.position),payload:{stacks:target.dkWounds[u.id]}});
+  talentTrigger(ctx,u,'Apocalypse',target,{wounds:burstCount,summons:count})
+ }
+ for(let i=0;i<count;i++)summonPet(ctx,u,{type,duration:Number(a.duration)||12000,countIndex:i});
+ return true
+}
+function resolveDeathKnightPetCommand(ctx,u,a,target){
+ if(u.class!=='Death Knight'||u.spec!=='Unholy')return false;
+ const ghoul=permanentGhoul(ctx,u);if(!ghoul?.active)return false;
+ const command=a.petCommand||a.id;
+ if(command==='dark-transformation'){
+  const rank=Math.max(1,talentRank(u,'Dark Transformation')),duration=12000+rank*1000;
+  ghoul.empoweredUntil=ctx.time+duration;
+  applyStatus(ctx,u,u,{id:'dark-transformation',name:'Dark Transformation',kind:'buff',duration,effect:{outgoingDamage:.02*rank}});
+  emit(ctx,'PET_COMMAND',{source:u.id,target:ghoul.id,ability:a.name,result:'empowered',position:copy(ghoul.position),payload:{petId:ghoul.id,petCommand:command,duration}});
+  talentTrigger(ctx,u,'Dark Transformation',ghoul,{duration});
+  return true
+ }
+ return false
+}
+function deathKnightSpecialReady(ctx,u,a,target){
+ if(!a||!cooldownReady(u,a)||(a.cost||0)>u.resource.value)return false;
+ if(a.kind==='pet-command')return Boolean(permanentGhoul(ctx,u));
+ if(a.kind==='summon'){
+  const bossLike=['boss','final','world-boss','event'].includes(ctx.encounter.kind);
+  if(a.summonType==='army-ghoul'&&!bossLike&&ctx.tactics.cooldownUse!=='free')return false;
+  if(a.summonType==='army-ghoul'&&activePets(ctx,u.id).filter(p=>p.type==='army-ghoul').length)return false;
+  if(a.summonType==='apocalypse-ghoul'&&Math.max(0,Number(target?.dkWounds?.[u.id])||0)<=0)return false;
+  return true
+ }
+ return false
+}
 
 function useDefensiveSkill(ctx,u,a){
  if(!a||a.kind!=='defensive'||!cooldownReady(u,a))return false;
@@ -2088,6 +2131,10 @@ function useDefensiveSkill(ctx,u,a){
   if(removed>0)talentTrigger(ctx,u,'Purifying Brew',u,{removed,pool:Math.round(u.staggerPool)})
  }
  applyStatus(ctx,u,u,{id:a.id,name:a.name,kind:'buff',duration,effect:{incomingDamageReduction:reduction}});
+ if(u.class==='Death Knight'&&u.spec==='Blood'){
+  if(a.id==='vampiric-blood')applyStatus(ctx,u,u,{id:'vampiric-blood-healing',name:'Vampiric Blood',kind:'buff',duration,effect:{incomingHealing:.25}});
+  if(a.id==='dancing-rune-weapon')applyStatus(ctx,u,u,{id:'dancing-rune-weapon-threat',name:'Dancing Rune Weapon',kind:'buff',duration,effect:{threatBonus:.30,outgoingDamage:.06}})
+ }
  if(u.class==='Warrior'&&u.spec==='Protection'&&talentRank(u,'Bulwark')){
   livingPlayers(ctx).filter(p=>p.id!==u.id).forEach(p=>applyStatus(ctx,u,p,{id:'bulwark-party',name:'Bulwark',kind:'buff',duration:6000,effect:{incomingDamageReduction:.10}}));talentTrigger(ctx,u,'Bulwark',u,{targets:Math.max(0,livingPlayers(ctx).length-1),duration:6000})
  }
@@ -2122,6 +2169,16 @@ function playerAI(ctx,u){
   const priority=a=>a.summonType==='tyrant'?5:a.petCommand==='implosion'?4:a.summonType==='dreadstalker'?3:a.petCommand==='felstorm'?2:a.petCommand==='soul-strike'?1:0;
   const specials=u.abilities.filter(a=>(a.kind==='summon'||a.kind==='pet-command')&&warlockSpecialReady(ctx,u,a,target)).sort((a,b)=>priority(b)-priority(a));
   if(specials.length&&startAbility(ctx,u,specials[0],target))return
+ }
+ if(u.class==='Death Knight'&&u.spec==='Unholy'){
+  const priority=a=>a.summonType==='apocalypse-ghoul'?4:a.summonType==='army-ghoul'?3:a.petCommand==='dark-transformation'?2:0;
+  const specials=u.abilities.filter(a=>(a.kind==='summon'||a.kind==='pet-command')&&deathKnightSpecialReady(ctx,u,a,target)).sort((a,b)=>priority(b)-priority(a));
+  if(specials.length&&startAbility(ctx,u,specials[0],target))return
+ }
+ if(u.class==='Death Knight'&&u.spec==='Blood'){
+  const recent=(u.recentDamageTaken||[]).filter(x=>Number(x.at)>=ctx.time-5000).reduce((n,x)=>n+(Number(x.amount)||0),0);
+  const deathStrike=u.abilities.find(a=>a.id==='death-strike'&&cooldownReady(u,a)&&(a.cost||0)<=u.resource.value);
+  if(deathStrike&&(healthRatio(u)<.82||recent>u.maxHealth*.12)&&startAbility(ctx,u,deathStrike,target))return
  }
  if(u.role==='tank'){
   const loose=tankNeedsTaunt(ctx,u);
