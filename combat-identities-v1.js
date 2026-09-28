@@ -5,7 +5,7 @@ const ROLE_MAP={
   Warrior:{Protection:'tank',Arms:'dps'},
   Paladin:{Protection:'tank',Holy:'healer'},
   Priest:{Holy:'healer',Shadow:'dps'},
-  Druid:{Restoration:'healer'},
+  Druid:{Restoration:'healer',Balance:'dps'},
   Hunter:{Marksman:'dps'},
   Rogue:{Assassination:'dps'},
   Mage:{Arcane:'dps'},
@@ -105,6 +105,12 @@ const SPECS={
       strength:'Healing-over-time, movement and efficient sustained recovery.',
       tradeoff:'Direct emergency healing lands more slowly than Paladin or Priest healing.',
       damage:.76,threat:.92,healing:.90,healThreat:.92,hot:.36,physicalTaken:.98,magicTaken:.98
+    },
+    Balance:{
+      title:'Astral Shaper',
+      strength:'Cycles between Solar and Lunar Eclipse to amplify nature and arcane pressure, with strong sustained ranged cleave.',
+      tradeoff:'Its best damage depends on entering the correct Eclipse and converting Astral Power efficiently; broken cycles lower burst sharply.',
+      damage:1.06,threat:.96,cooldown:.98,physicalTaken:1.00,magicTaken:.94,cleave:.27
     }
   },
   Hunter:{
