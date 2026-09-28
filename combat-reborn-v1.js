@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.9';
+const VERSION='1.3.10';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -510,12 +510,19 @@ function defaultSkillLoadout(c,role){
 }
 function abilityPool(c,role){
  const unlocked=unlockedSkillPool(c,role),configured=Array.isArray(c?.skillLoadouts?.[c?.spec])?c.skillLoadouts[c.spec]:null;
+ const defaults=()=>defaultSkillLoadout(c,role).map(id=>unlocked.find(a=>a.id===id)).filter(Boolean);
  let pool;
- if(configured){
+ if(configured?.length){
   const byId=new Map(unlocked.map(a=>[a.id,a]));
   pool=[...new Set(configured)].slice(0,4).map(id=>byId.get(id)).filter(Boolean)
- }else pool=defaultSkillLoadout(c,role).map(id=>unlocked.find(a=>a.id===id)).filter(Boolean);
- if(role==='healer'&&!pool.some(a=>a.kind==='heal'||a.kind==='group-heal'))pool.push({id:'basic-caster-attack',name:'Basic Attack',kind:'damage',range:25,damage:9,cost:0,gcd:1500,cd:0,hiddenFallback:true});
+ }else pool=defaults();
+ // A stale or empty saved loadout must never make a character inert in combat.
+ // Fall back to the current spec defaults whenever the configured skills no longer
+ // contain a valid role action (important for classes/specs added to existing saves).
+ if(role==='healer'&&!pool.some(a=>a.kind==='heal'||a.kind==='group-heal'))pool=defaults();
+ if(role==='tank'&&!pool.some(a=>a.kind==='taunt'))pool=defaults();
+ if(role==='dps'&&!pool.some(a=>a.kind==='damage'))pool=defaults();
+ if(role==='healer'&&!pool.some(a=>a.kind==='heal'||a.kind==='group-heal'))pool=(ROLE_FALLBACKS.healer||[]);
  if(role!=='healer'&&!pool.some(a=>a.kind==='damage'))pool.push({id:'basic-attack',name:'Basic Attack',kind:'damage',range:5,damage:10,cost:0,gcd:1500,cd:0,hiddenFallback:true});
  return pool.length?pool:(ROLE_FALLBACKS[role]||ROLE_FALLBACKS.dps)
 }
