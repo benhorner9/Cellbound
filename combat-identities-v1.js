@@ -9,7 +9,8 @@ const ROLE_MAP={
   Hunter:{Marksman:'dps'},
   Rogue:{Assassination:'dps'},
   Mage:{Arcane:'dps'},
-  Shaman:{Restoration:'healer'}
+  Shaman:{Restoration:'healer'},
+  Warlock:{Demonology:'dps'}
 };
 
 const RACES={
@@ -126,6 +127,14 @@ const SPECS={
       strength:'Chain healing and persistent totems excel when damage is spread across the party.',
       tradeoff:'Less focused emergency tank healing than a Holy Paladin and strongest while its totems remain active.',
       damage:.79,threat:.94,healing:1.00,healThreat:.96,magicTaken:.96
+    }
+  },
+  Warlock:{
+    Demonology:{
+      title:'Demon Commander',
+      strength:'Sustained ranged pressure backed by a permanent Felguard and powerful temporary summons.',
+      tradeoff:'A meaningful share of its output comes from demons, so pet-command and summon choices compete with direct spell slots.',
+      damage:1.02,threat:.92,cooldown:1.00,magicTaken:.95,physicalTaken:1.06,petDamage:1.00
     }
   }
 };
