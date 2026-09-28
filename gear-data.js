@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const CLASS_ORDER=['Warrior','Paladin','Priest','Druid','Hunter','Rogue','Mage','Shaman','Warlock','Monk','Death Knight','Demon Hunter'];
+const CLASS_ORDER=['Warrior','Paladin','Priest','Druid','Hunter','Rogue','Mage','Shaman','Warlock','Monk','Death Knight','Demon Hunter','Evoker'];
 const CORE_SLOT_ORDER=['Head','Chest','Weapon'];
 const SLOT_ORDER=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring','Trinket','Relic'];
 const EQUIPMENT_POSITION_ORDER=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic'];
@@ -47,7 +47,8 @@ const CLASS_STAT_POOLS={
   Warlock:['intellect','stamina','crit','haste'],
   Monk:['agility','intellect','stamina','armour','threat','healing','crit','haste'],
   'Death Knight':['strength','stamina','armour','threat','crit','haste'],
-  'Demon Hunter':['agility','stamina','armour','threat','crit','haste']
+  'Demon Hunter':['agility','stamina','armour','threat','crit','haste'],
+  Evoker:['intellect','stamina','healing','crit','haste']
 };
 const SPEC_IDEALS={
   'Warrior|Protection':['block','threat','stamina','armour'],'Warrior|Arms':['strength','crit','haste'],
@@ -63,11 +64,13 @@ const SPEC_IDEALS={
   'Death Knight|Frost':['strength','crit','haste','stamina'],
   'Death Knight|Unholy':['strength','haste','crit','stamina'],
   'Demon Hunter|Havoc':['agility','haste','crit','stamina'],
-  'Demon Hunter|Vengeance':['stamina','armour','agility','threat','haste']
+  'Demon Hunter|Vengeance':['stamina','armour','agility','threat','haste'],
+  'Evoker|Preservation':['healing','intellect','haste','crit','stamina'],
+  'Evoker|Devastation':['intellect','crit','haste','stamina']
 };
 const SET_META={
   Warrior:{name:'Warlord Set',raidName:'Housebreaker Plate'},Paladin:{name:'Sunward Set',raidName:'Gilded Vigil'},Priest:{name:'Saintglass Set',raidName:'Veil of the Attic'},Druid:{name:'Moonbark Set',raidName:'Nightbloom Regalia'},
-  Hunter:{name:'Hawkeye Set',raidName:'Blackwood Hunt'},Rogue:{name:'Shadecoil Set',raidName:'Silent Service'},Mage:{name:'Starweave Set',raidName:'Housebound Arcanum'},Shaman:{name:'Tempestcaller Set',raidName:'Stormcell Regalia'},Warlock:{name:'Dreadweave Set',raidName:'Netherlord Regalia'},Monk:{name:'Celestial Way Set',raidName:'Grandmaster Regalia'},'Death Knight':{name:'Ebon Oath Set',raidName:'Grave Sovereign Plate'},'Demon Hunter':{name:'Felstalker Set',raidName:'Abyssal Hunt Regalia'}
+  Hunter:{name:'Hawkeye Set',raidName:'Blackwood Hunt'},Rogue:{name:'Shadecoil Set',raidName:'Silent Service'},Mage:{name:'Starweave Set',raidName:'Housebound Arcanum'},Shaman:{name:'Tempestcaller Set',raidName:'Stormcell Regalia'},Warlock:{name:'Dreadweave Set',raidName:'Netherlord Regalia'},Monk:{name:'Celestial Way Set',raidName:'Grandmaster Regalia'},'Death Knight':{name:'Ebon Oath Set',raidName:'Grave Sovereign Plate'},'Demon Hunter':{name:'Felstalker Set',raidName:'Abyssal Hunt Regalia'},Evoker:{name:'Chronoscale Set',raidName:'Aspectbound Regalia'}
 };
 const SET_BONUS_RULES={
   pieces2:{threshold:2,name:'Resonant Pair',outputScale:1.05,short:'+5% damage & healing output',description:'All damaging and healing abilities are 5% stronger.'},
@@ -97,7 +100,8 @@ const NAMES={
   Warlock:[['Initiate Hood','Felwoven Robe','Ashen Staff'],['Dreadcaller Cowl','Dreadcaller Vestments','Demonspine Staff'],['Soulbinder Crown','Soulbinder Robe','Nether Rod'],['Dreadweave Horns','Dreadweave Vestments','Felheart Staff'],['Netherlord Crown','Netherlord Regalia','Tyrant Staff']],
   Monk:[['Wayfarer Headband','Wayfarer Gi','Training Staff'],['Jadefist Headguard','Jadefist Vest','Jadewood Staff'],['Cloudstep Crown','Cloudstep Raiment','Cloudpiercer Staff'],['Celestial Way Crown','Celestial Way Vest','Celestial Staff'],['Grandmaster Crown','Grandmaster Regalia','Grandmaster Staff']],
   'Death Knight':[['Graveguard Helm','Graveguard Plate','Runed Greatsword'],['Rimebound Greathelm','Rimebound Warplate','Frostgrave Greatblade'],['Deathforged Crown','Deathforged Cuirass','Ebon Runeblade'],['Ebon Oath Greathelm','Ebon Oath Warplate','Ebon Oath Runeblade'],['Grave Sovereign Crown','Grave Sovereign Plate','Sovereign Runeblade']],
-  'Demon Hunter':[['Initiate Blindfold','Felhide Vest','Training Warglaive'],['Riftstalker Blindfold','Riftstalker Harness','Riftcarver Warglaive'],['Netherbound Visor','Netherbound Chestguard','Soulrend Warglaive'],['Felstalker Visor','Felstalker Harness','Felstalker Warglaive'],['Abyssal Hunt Visor','Abyssal Hunt Harness','Abyssal Warglaive']]
+  'Demon Hunter':[['Initiate Blindfold','Felhide Vest','Training Warglaive'],['Riftstalker Blindfold','Riftstalker Harness','Riftcarver Warglaive'],['Netherbound Visor','Netherbound Chestguard','Soulrend Warglaive'],['Felstalker Visor','Felstalker Harness','Felstalker Warglaive'],['Abyssal Hunt Visor','Abyssal Hunt Harness','Abyssal Warglaive']],
+  Evoker:[['Whelpling Crown','Whelpling Mail','Novice Dragonstaff'],['Emberwing Crown','Emberwing Mail','Emberglass Staff'],['Timewarden Crown','Timewarden Mail','Chronoflame Staff'],['Chronoscale Crown','Chronoscale Mail','Chronoscale Staff'],['Aspectbound Crown','Aspectbound Regalia','Aspectbound Staff']]
 };
 const TIER_PREFIX={
   Warrior:['Militia','Ashguard','Vaultforged','Warlord','Housebreaker'],
@@ -111,7 +115,8 @@ const TIER_PREFIX={
   Warlock:['Initiate','Dreadcaller','Soulbinder','Dreadweave','Netherlord'],
   Monk:['Wayfarer','Jadefist','Cloudstep','Celestial Way','Grandmaster'],
   'Death Knight':['Graveguard','Rimebound','Deathforged','Ebon Oath','Grave Sovereign'],
-  'Demon Hunter':['Initiate','Riftstalker','Netherbound','Felstalker','Abyssal Hunt']
+  'Demon Hunter':['Initiate','Riftstalker','Netherbound','Felstalker','Abyssal Hunt'],
+  Evoker:['Whelpling','Emberwing','Timewarden','Chronoscale','Aspectbound']
 };
 const ARMOUR_NOUNS={
   plate:{Shoulders:'Shoulderguards',Hands:'Gauntlets',Waist:'Warbelt',Legs:'Legplates',Feet:'Greaves'},
@@ -119,8 +124,8 @@ const ARMOUR_NOUNS={
   cloth:{Shoulders:'Mantle',Hands:'Gloves',Waist:'Sash',Legs:'Leggings',Feet:'Slippers'},
   mail:{Shoulders:'Spaulders',Hands:'Grips',Waist:'Belt',Legs:'Legguards',Feet:'Boots'}
 };
-const OFFHAND_NOUN={Warrior:'Shield',Paladin:'Bulwark',Priest:'Scripture',Druid:'Idol',Hunter:'Quiver',Rogue:'Parrying Blade',Mage:'Grimoire',Shaman:'Totem',Warlock:'Grimoire',Monk:'Prayer Beads','Death Knight':'Runic Sigil','Demon Hunter':'Off-hand Warglaive'};
-const RELIC_NOUN={Warrior:'Crest',Paladin:'Libram',Priest:'Icon',Druid:'Totem',Hunter:'Trophy',Rogue:'Token',Mage:'Focus',Shaman:'Spirit Charm',Warlock:'Soulstone',Monk:'Jade Idol','Death Knight':'Runeforge','Demon Hunter':'Fel Sigil'};
+const OFFHAND_NOUN={Warrior:'Shield',Paladin:'Bulwark',Priest:'Scripture',Druid:'Idol',Hunter:'Quiver',Rogue:'Parrying Blade',Mage:'Grimoire',Shaman:'Totem',Warlock:'Grimoire',Monk:'Prayer Beads','Death Knight':'Runic Sigil','Demon Hunter':'Off-hand Warglaive',Evoker:'Dragon Focus'};
+const RELIC_NOUN={Warrior:'Crest',Paladin:'Libram',Priest:'Icon',Druid:'Totem',Hunter:'Trophy',Rogue:'Token',Mage:'Focus',Shaman:'Spirit Charm',Warlock:'Soulstone',Monk:'Jade Idol','Death Knight':'Runeforge','Demon Hunter':'Fel Sigil',Evoker:'Dragonshard'};
 const SLOT_GLYPHS={Head:'⛑',Shoulders:'⌃',Chest:'▣',Hands:'✋',Waist:'═',Legs:'║',Feet:'♟',Weapon:'⚔',OffHand:'🛡',Ring:'◉',Trinket:'◆',Relic:'◇'};
 function inferWeaponType(klass,name=''){
   const n=String(name).toLowerCase();
@@ -139,7 +144,7 @@ function inferWeaponType(klass,name=''){
   if(/(rod)/.test(n))return'rod';
   if(/(greatblade|greatsword|claymore)/.test(n))return'greatsword';
   if(/(sword|blade|blades|sabre|saber)/.test(n))return'sword';
-  return({Warrior:'sword',Paladin:'hammer',Priest:'staff',Druid:'staff',Hunter:'bow',Rogue:'dagger',Mage:'staff',Shaman:'mace',Warlock:'staff',Monk:'staff','Death Knight':'greatsword','Demon Hunter':'sword'})[klass]||'sword'
+  return({Warrior:'sword',Paladin:'hammer',Priest:'staff',Druid:'staff',Hunter:'bow',Rogue:'dagger',Mage:'staff',Shaman:'mace',Warlock:'staff',Monk:'staff','Death Knight':'greatsword','Demon Hunter':'sword',Evoker:'staff'})[klass]||'sword'
 }
 function equipmentPositions(item){
   if(!item||typeof item!=='object')return[];
@@ -161,9 +166,9 @@ function inferOffHandType(klass,name=''){
   if(/\b(idol|totem)\b/.test(n))return'idol';
   if(/(focus|orb|crystal)/.test(n))return'focus';
   if(/\b(warglaive|glaive|blade|dagger|knife|shiv)\b/.test(n))return'dagger';
-  return({Warrior:'shield',Paladin:'shield',Priest:'tome',Druid:'idol',Hunter:'quiver',Rogue:'dagger',Mage:'focus',Shaman:'idol',Warlock:'tome',Monk:'focus','Death Knight':'focus','Demon Hunter':'dagger'})[klass]||'focus'
+  return({Warrior:'shield',Paladin:'shield',Priest:'tome',Druid:'idol',Hunter:'quiver',Rogue:'dagger',Mage:'focus',Shaman:'idol',Warlock:'tome',Monk:'focus','Death Knight':'focus','Demon Hunter':'dagger',Evoker:'focus'})[klass]||'focus'
 }
-function armourFamily(klass){return ['Warrior','Paladin','Death Knight'].includes(klass)?'plate':['Priest','Mage','Warlock'].includes(klass)?'cloth':klass==='Shaman'?'mail':'leather'}
+function armourFamily(klass){return ['Warrior','Paladin','Death Knight'].includes(klass)?'plate':['Priest','Mage','Warlock'].includes(klass)?'cloth':['Shaman','Evoker'].includes(klass)?'mail':'leather'}
 function nameFor(klass,tier,slot){
   const core=CORE_SLOT_ORDER.indexOf(slot);if(core>=0)return NAMES[klass][tier-1][core];
   const prefix=TIER_PREFIX[klass]?.[tier-1]||klass;
