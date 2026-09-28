@@ -1,0 +1,355 @@
+/* Cellbound Game Shell v1 — Step 1
+   Goal: make Guild Command feel like a dark-fantasy game hub without slowing navigation.
+   This is presentation-only: no routes, progression rules, or gameplay logic change. */
+
+:root{
+  --game-gold:#d5b36b;
+  --game-gold-bright:#f0d79a;
+  --game-gold-dim:#8e7444;
+  --game-ink:#060b0e;
+  --game-panel:#0a1215;
+  --game-panel-2:#0d171a;
+  --game-line:rgba(213,179,107,.16);
+  --game-line-strong:rgba(213,179,107,.34);
+  --game-copy:#9aa39d;
+}
+
+/* ==========================================================================
+   SHELL — less dashboard, more guild command room
+   ========================================================================== */
+html,body{background:#050a0d}
+
+.app-shell{
+  background:
+    radial-gradient(circle at 72% -8%,rgba(153,104,45,.10),transparent 30%),
+    radial-gradient(circle at 18% 110%,rgba(92,55,32,.08),transparent 32%),
+    linear-gradient(180deg,#091115 0%,#060c10 72%,#05090c 100%);
+}
+
+.sidebar{
+  border-right:1px solid rgba(213,179,107,.12);
+  background:
+    linear-gradient(180deg,rgba(10,15,17,.995),rgba(6,11,14,.985)),
+    #080d10;
+  box-shadow:18px 0 48px rgba(0,0,0,.18);
+}
+
+.brand{position:relative;padding-bottom:22px}
+.brand:after{
+  content:"";
+  position:absolute;left:8px;right:8px;bottom:8px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(213,179,107,.32),transparent)
+}
+.brand-mark{
+  border-color:rgba(213,179,107,.45);
+  color:var(--game-gold-bright);
+  border-radius:7px;
+  background:linear-gradient(145deg,#1a1711,#0b1113);
+  box-shadow:inset 0 0 18px rgba(213,179,107,.08),0 8px 24px rgba(0,0,0,.28)
+}
+.brand strong{color:#eee6d8;letter-spacing:.18em}
+.brand span{color:#7d745f}
+
+.nav-section-label{
+  color:#625b4c;
+  margin-top:13px;
+  letter-spacing:.19em
+}
+.primary-nav{scrollbar-color:rgba(213,179,107,.18) transparent}
+.primary-nav::-webkit-scrollbar-thumb{background:rgba(213,179,107,.18)}
+
+.nav-btn{
+  border-radius:2px;
+  color:#7d8781;
+  transition:background .14s ease,border-color .14s ease,color .14s ease,transform .12s ease
+}
+.nav-btn span{color:#726d60}
+.nav-btn:hover{
+  color:#e6ded0;
+  border-color:rgba(213,179,107,.13);
+  background:linear-gradient(90deg,rgba(72,57,32,.30),rgba(20,25,24,.10))
+}
+.nav-btn:active{transform:translateX(2px)}
+.nav-btn.active{
+  color:#f1eadc;
+  border-color:rgba(213,179,107,.22);
+  background:
+    linear-gradient(90deg,rgba(92,69,34,.48),rgba(32,30,23,.22) 58%,rgba(10,15,17,.06));
+  box-shadow:inset 0 1px 0 rgba(255,229,168,.035)
+}
+.nav-btn.active:before{
+  left:-1px;top:5px;bottom:5px;width:3px;
+  background:linear-gradient(180deg,#8a6a34,#ebc976,#8a6a34);
+  box-shadow:0 0 14px rgba(213,179,107,.24)
+}
+.nav-btn.active span{color:#e4c77f}
+
+.season-card{
+  border-color:rgba(213,179,107,.15);
+  background:
+    radial-gradient(circle at 100% 0,rgba(213,179,107,.07),transparent 52%),
+    rgba(15,18,17,.72)
+}
+.season-card small{color:#bd9b57}
+.season-card b{color:#e8e0d3}
+.season-card span{color:#776f62}
+.sign-out{color:#655f55}
+
+.main{
+  background:
+    linear-gradient(180deg,rgba(7,12,15,.10),rgba(7,12,15,.42)),
+    repeating-linear-gradient(135deg,rgba(255,255,255,.006) 0 1px,transparent 1px 8px);
+}
+
+.topbar{
+  height:88px;
+  border-bottom:1px solid rgba(213,179,107,.10)
+}
+.topbar small{color:#9b8350!important}
+.topbar h1{color:#eee8dd;letter-spacing:.01em}
+.sync-status{color:#65736e!important}
+
+.resource-strip{gap:5px}
+.resource-strip div{
+  min-width:94px;
+  padding:8px 11px;
+  border-color:rgba(213,179,107,.11);
+  background:
+    linear-gradient(180deg,rgba(24,24,20,.82),rgba(8,15,17,.84));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.02)
+}
+.resource-strip span{color:#746d5d}
+.resource-strip b{color:#ddd5c8}
+
+.panel{
+  border-color:rgba(213,179,107,.105);
+  background:linear-gradient(180deg,rgba(12,21,23,.94),rgba(7,13,16,.96))
+}
+.panel-head{border-bottom-color:rgba(213,179,107,.075)}
+.panel-head small{color:#a68d57!important}
+
+/* ==========================================================================
+   HOME — a playable command hub, not a web dashboard
+   ========================================================================== */
+#overview{padding-top:18px!important}
+#overview .home-command{gap:12px;max-width:1510px}
+
+#overview .home-continue-card{
+  min-height:390px;
+  border-color:rgba(213,179,107,.25);
+  background:#070d10;
+  box-shadow:0 28px 78px rgba(0,0,0,.46),inset 0 0 0 1px rgba(255,239,200,.018)
+}
+#overview .home-continue-card:before{
+  content:"";
+  position:absolute;inset:0;z-index:1;pointer-events:none;
+  box-shadow:inset 0 0 92px rgba(0,0,0,.46),inset 0 -1px 0 rgba(213,179,107,.12)
+}
+#overview .home-continue-art img{
+  filter:saturate(.9) contrast(1.08) brightness(.86);
+  transform:scale(1.012);
+  transition:transform .45s ease,filter .45s ease
+}
+#overview .home-continue-card:hover .home-continue-art img{
+  transform:scale(1.035);
+  filter:saturate(.98) contrast(1.08) brightness(.93)
+}
+#overview .home-continue-art:after{
+  background:
+    linear-gradient(90deg,rgba(3,7,9,.99) 0%,rgba(5,10,12,.92) 30%,rgba(5,10,12,.54) 58%,rgba(5,10,12,.18) 100%),
+    linear-gradient(0deg,rgba(3,7,9,.82),transparent 58%)
+}
+#overview .home-continue-copy{padding:44px 42px 36px;width:min(720px,64%)}
+#overview .home-continue-eyebrow span{color:#d2ad62}
+#overview .home-continue-eyebrow em{
+  border-color:rgba(213,179,107,.24);
+  background:rgba(32,27,18,.78);
+  color:#c9b078
+}
+#overview .home-continue-copy h2{
+  margin:10px 0 12px;
+  font-size:clamp(2.35rem,4vw,3.8rem);
+  color:#f2eee7;
+  text-shadow:0 4px 20px #000
+}
+#overview .home-continue-copy p{color:#aab0a9!important;font-size:.86rem!important}
+#overview .home-continue-meta span{
+  border-color:rgba(213,179,107,.12);
+  background:rgba(5,10,12,.76);
+  color:#898f87
+}
+#overview .home-continue-meta b{color:#e2ddd3}
+#overview .home-continue-meta span.ready{border-color:rgba(103,191,134,.3);color:#83d69f}
+#overview .home-continue-card .boss-pips span{height:3px;background:rgba(255,255,255,.11)}
+#overview .home-continue-card .boss-pips span.active{background:#d1a954;box-shadow:0 0 10px rgba(209,169,84,.22)}
+
+#overview .home-continue-actions button,
+#overview .home-panel-action,
+#overview .home-objective button{
+  border-radius:2px;
+  border-color:rgba(213,179,107,.22);
+  background:linear-gradient(180deg,rgba(57,46,29,.76),rgba(25,24,19,.84));
+  color:#e3c988;
+  transition:transform .12s ease,border-color .14s ease,background .14s ease
+}
+#overview .home-continue-actions button:hover,
+#overview .home-panel-action:hover,
+#overview .home-objective button:hover{
+  transform:translateY(-1px);
+  border-color:rgba(232,200,123,.48);
+  background:linear-gradient(180deg,#47371f,#29261a)
+}
+#overview .home-continue-actions button:first-child{
+  min-width:190px;
+  border-color:rgba(237,204,124,.46);
+  background:linear-gradient(180deg,#624921,#332a1a);
+  color:#f2dda7;
+  box-shadow:0 8px 28px rgba(0,0,0,.2)
+}
+
+/* Party should read as the thing the player is actually managing. */
+#overview .home-command-grid{gap:12px}
+#overview .home-party-panel,
+#overview .home-objective-panel{
+  border-color:rgba(213,179,107,.12);
+  box-shadow:0 18px 45px rgba(0,0,0,.25)
+}
+#overview .home-party-roster{background:rgba(213,179,107,.045)}
+#overview .home-party-member{
+  min-height:142px;
+  padding:17px 10px 13px;
+  background:
+    radial-gradient(circle at 50% 0,color-mix(in srgb,var(--party-class) 11%,transparent),transparent 43%),
+    linear-gradient(180deg,#101a1d,#081114);
+  border-top-width:2px
+}
+#overview .home-party-portrait{
+  width:64px;height:64px;margin-bottom:10px;
+  border-color:color-mix(in srgb,var(--party-class) 38%,rgba(213,179,107,.09));
+  background:#111b1f;
+  box-shadow:0 8px 22px rgba(0,0,0,.28)
+}
+#overview .home-party-copy b{color:#ece7de;font-size:.78rem}
+#overview .home-party-copy small{color:#858c86!important}
+#overview .home-party-copy span{color:#a39f94}
+#overview .home-objective{
+  min-height:205px;
+  background:
+    radial-gradient(circle at 90% 10%,rgba(213,179,107,.07),transparent 42%),
+    linear-gradient(135deg,rgba(62,49,26,.15),transparent 64%)
+}
+#overview .home-objective>span{color:#b59759}
+#overview .home-objective>b{font-size:1.3rem;color:#ece6dc}
+
+/* Destination cards become illustrated game destinations. */
+#overview .home-content-head{padding:7px 2px 0}
+#overview .home-content-head small{color:#a98d55}
+#overview .home-content-head h3{font-size:1.5rem;color:#efe9df}
+#overview .home-content-head>span{color:#777f79}
+
+#overview .home-destination-grid{gap:9px}
+#overview .home-destination{
+  min-height:174px!important;
+  padding:18px;
+  border-color:rgba(213,179,107,.14);
+  background-position:center!important;
+  background-size:cover!important;
+  box-shadow:0 16px 38px rgba(0,0,0,.22);
+  isolation:isolate;
+  transition:transform .16s ease,border-color .16s ease,filter .16s ease
+}
+#overview .home-destination:before{
+  content:"";
+  position:absolute;inset:0;z-index:-1;
+  background:
+    linear-gradient(180deg,rgba(4,8,10,.12) 0%,rgba(4,8,10,.44) 40%,rgba(4,8,10,.94) 100%),
+    linear-gradient(90deg,rgba(4,8,10,.76),rgba(4,8,10,.18));
+}
+#overview .home-destination:after{
+  content:"";
+  position:absolute;inset:0!important;z-index:-1;width:auto!important;height:auto!important;
+  border-radius:0!important;
+  background:linear-gradient(180deg,rgba(240,208,135,.025),transparent 42%);
+  box-shadow:inset 0 0 0 1px rgba(255,238,196,.016)
+}
+#overview .home-destination.quests{
+  background-image:url('./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp')!important
+}
+#overview .home-destination.dungeons{
+  background-image:url('./assets/dungeons/ashen-vault.webp')!important
+}
+#overview .home-destination.events{
+  background-image:url('./assets/world/twelve-below-key-art.webp')!important
+}
+#overview .home-destination.raids{
+  background-image:url('./assets/manor/manor-raid-hero.webp')!important;
+  background-position:62% 44%!important
+}
+#overview .home-destination>span{
+  width:36px;height:36px;
+  border-color:rgba(213,179,107,.28);
+  background:rgba(11,14,14,.76);
+  color:#dec27e;
+  box-shadow:0 5px 18px rgba(0,0,0,.24)
+}
+#overview .home-destination small{
+  margin-top:16px;color:#c2a25f!important;
+  text-shadow:0 2px 8px #000
+}
+#overview .home-destination b{
+  margin-top:4px;
+  color:#f1ebe1!important;
+  font-size:1.18rem;
+  text-shadow:0 2px 9px #000
+}
+#overview .home-destination em{
+  color:#aab0a8!important;
+  text-shadow:0 2px 8px #000
+}
+#overview .home-destination:hover{
+  transform:translateY(-3px);
+  border-color:rgba(225,191,111,.42);
+  filter:brightness(1.07)
+}
+#overview .home-destination:active{transform:translateY(-1px) scale(.995)}
+
+/* Status/log stay compact; they should support the game loop, not dominate it. */
+#overview .home-bottom-grid{gap:12px}
+#overview .home-pulse-panel,
+#overview .home-activity-panel{border-color:rgba(213,179,107,.10)}
+#overview .home-pulse-grid{background:rgba(213,179,107,.04)}
+#overview .home-pulse-grid button{background:#091215}
+#overview .home-pulse-grid button:hover{background:#121b1b}
+#overview .home-pulse-grid span{color:#81745a}
+#overview .home-pulse-grid b{color:#eee7db}
+
+/* ==========================================================================
+   RESPONSIVE — keep this fast and usable on iPad/mobile
+   ========================================================================== */
+@media(max-width:1100px){
+  #overview .home-continue-card{min-height:360px}
+  #overview .home-continue-copy{width:min(720px,72%)}
+  #overview .home-destination{min-height:158px!important}
+}
+
+@media(max-width:720px){
+  .topbar{border-bottom-color:rgba(213,179,107,.1)}
+  .brand-mark{border-radius:6px}
+  #overview{padding-top:10px!important}
+  #overview .home-continue-card{min-height:390px}
+  #overview .home-continue-copy{width:100%;padding:126px 16px 17px}
+  #overview .home-continue-copy h2{font-size:2rem}
+  #overview .home-party-member{min-height:132px}
+  #overview .home-party-portrait{width:56px;height:56px}
+  #overview .home-destination{min-height:138px!important}
+  #overview .home-destination small{margin-top:12px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .nav-btn,
+  #overview .home-continue-art img,
+  #overview .home-destination,
+  #overview .home-continue-actions button,
+  #overview .home-panel-action,
+  #overview .home-objective button{transition:none!important}
+}
