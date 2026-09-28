@@ -157,13 +157,25 @@ const UI_SKILL_FALLBACKS={
 const UI_BUFF_FALLBACKS={
   Shaman:{id:'class-buff-bloodlust',name:'Bloodlust',scope:'party',duration:60000,cooldown:180000,effect:{haste:.10,resourceRegen:.05}}
 };
-function classBuffFor(c){return combatEngine()?.CLASS_BUFFS?.[c?.class]||UI_BUFF_FALLBACKS[c?.class]||null}
+function classBuffFor(c){
+  // Character-sheet fallbacks are the UI contract for newly added classes.
+  // Prefer them when present so an older cached combat module cannot expose stale buff data.
+  return UI_BUFF_FALLBACKS[c?.class]||combatEngine()?.CLASS_BUFFS?.[c?.class]||null
+}
 function skillPoolFor(c,spec=c?.spec){
   const engine=combatEngine(),role=specs[c?.class]?.[spec]||'dps',copyChar={...c,spec};
   let pool=[];
   if(engine?.skills?.classSkillPool)pool=engine.skills.classSkillPool(copyChar,role)||[];
   if(!pool.length)pool=(engine?.ABILITIES?.[c?.class]||[]).filter(a=>!a.role||a.role===role);
-  if(!pool.length)pool=(UI_SKILL_FALLBACKS[c?.class]||[]).filter(a=>!a.role||a.role===role);
+
+  // Merge in the latest UI catalogue instead of using it only when the engine returns
+  // nothing. This prevents an older cached combat module from hiding newly-added skills.
+  const fallback=(UI_SKILL_FALLBACKS[c?.class]||[]).filter(a=>!a.role||a.role===role);
+  if(fallback.length){
+    const merged=new Map(pool.map(skill=>[skill.id,skill]));
+    fallback.forEach(skill=>merged.set(skill.id,{...(merged.get(skill.id)||{}),...skill}));
+    pool=[...merged.values()]
+  }
   return pool
 }
 function skillTalentMet(c,skill,spec=c?.spec){return !skill?.talentReq||Math.max(0,Number(c?.talents?.[spec]?.[skill.talentReq])||0)>0}
