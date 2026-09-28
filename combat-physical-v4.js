@@ -108,9 +108,9 @@ function petObject(scene,e){
  }
  if(e.type!=='PET_SUMMONED'||!e.position)return;
  const existing=scene.pets.get(id);if(existing){scene.units.delete(existing);existing.remove()}
- const type=String(e.payload?.petType||'demon').replace(/[^a-z0-9-]/gi,'-').toLowerCase(),n=document.createElement('div');
- n.className='cbl-pet class-warlock '+type;n.dataset.unit=id;n.dataset.petType=type;n.dataset.owner=String(e.payload?.ownerId||e.source||'');
- n.setAttribute('aria-label',String(e.payload?.name||e.ability||'Warlock demon'));
+ const type=String(e.payload?.petType||'demon').replace(/[^a-z0-9-]/gi,'-').toLowerCase(),ownerClass=String(e.payload?.ownerClass||'Warlock'),ownerKey=ownerClass.toLowerCase().replace(/[^a-z0-9]+/g,'-'),n=document.createElement('div');
+ n.className='cbl-pet class-'+ownerKey+' '+type;n.dataset.unit=id;n.dataset.petType=type;n.dataset.owner=String(e.payload?.ownerId||e.source||'');
+ n.setAttribute('aria-label',String(e.payload?.name||e.ability||(ownerClass==='Death Knight'?'Undead minion':'Warlock demon')));
  const body=document.createElement('i');body.className='cbl-pet-body';body.appendChild(document.createElement('b'));
  const label=document.createElement('span');label.className='cbl-pet-name';label.textContent=String(e.payload?.name||e.ability||'Demon');
  n.append(body,label);scene.arena.appendChild(n);scene.pets.set(id,n);
