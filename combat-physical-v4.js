@@ -5,7 +5,7 @@
 const FX=window.CellboundCombatFX=window.CellboundCombatFX||{};
 const baseMount=FX.mount?.bind(FX), baseEvent=FX.combatEvent?.bind(FX);
 const ARENA='.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena,#tbArena';
-const UNIT='.cb2d-unit,.quest-cb2d-unit,.wb2d-unit,.pvp2d-unit,.tb-unit';
+const UNIT='.cb2d-unit,.quest-cb2d-unit,.wb2d-unit,.pvp2d-unit,.tb-unit,.cbl-pet';
 const scenes=new Map();
 const reduce=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
