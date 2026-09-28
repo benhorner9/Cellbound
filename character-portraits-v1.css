@@ -919,3 +919,58 @@
     height:300px;
   }
 }
+
+
+/* Character Model V3 — Inn Match Pass */
+.cb-creator-figure-v3-shell{
+  display:block;
+  position:relative;
+  overflow:visible;
+  isolation:isolate;
+  filter:
+    drop-shadow(0 10px 8px rgba(0,0,0,.34))
+    drop-shadow(0 0 10px color-mix(in srgb,var(--creator-class,#d6a45f) 9%,transparent));
+}
+.cb-creator-figure-v3-shell .cb-creator-figure-v3{
+  display:block;
+  width:100%;
+  height:100%;
+  overflow:visible;
+  shape-rendering:geometricPrecision;
+}
+.creator-hero-model .cb-creator-figure-v3-shell{
+  width:min(100%,340px)!important;
+  height:430px!important;
+}
+.creator-race-model .cb-creator-figure-v3-shell,
+.creator-class-model .cb-creator-figure-v3-shell{
+  width:104px!important;
+  height:136px!important;
+}
+.cb-character-model-v2 .cb-model-preview-pair>.cb-creator-figure-v3-shell{
+  width:132px;
+  height:176px;
+}
+.inn-figure .cb-world-avatar-illustrated .cb-creator-figure-v3,
+.town-square-hero .cb-world-avatar-illustrated .cb-creator-figure-v3{
+  filter:saturate(.94) contrast(1.02);
+}
+.cb-creator-figure-v3 [data-race],
+.cb-creator-figure-v3 [data-class]{
+  vector-effect:non-scaling-stroke;
+}
+@media(max-width:720px){
+  .creator-hero-model .cb-creator-figure-v3-shell{
+    width:min(100%,300px)!important;
+    height:382px!important;
+  }
+  .creator-race-model .cb-creator-figure-v3-shell,
+  .creator-class-model .cb-creator-figure-v3-shell{
+    width:94px!important;
+    height:124px!important;
+  }
+  .cb-character-model-v2 .cb-model-preview-pair>.cb-creator-figure-v3-shell{
+    width:110px;
+    height:150px;
+  }
+}
