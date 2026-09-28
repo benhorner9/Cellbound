@@ -54,7 +54,7 @@ const specs={
   Hunter:{Marksman:'dps'},
   Rogue:{Assassination:'dps'},
   Mage:{Arcane:'dps'},
-  Shaman:{Restoration:'healer'},
+  Shaman:{Restoration:'healer',Elemental:'dps'},
   Warlock:{Demonology:'dps'},
   Monk:{Brewmaster:'tank',Mistweaver:'healer',Windwalker:'dps'},
   'Death Knight':{Blood:'tank',Frost:'dps',Unholy:'dps'},
@@ -139,17 +139,30 @@ const trees={
   Mage:{Arcane:[
     {id:'Arcane Focus',icon:'✦',tier:0,col:1,max:3,desc:'Increase spell accuracy and power.'},{id:'Surge',icon:'⚡',tier:0,col:3,max:2,desc:'Burst arcane power for a short time.'},{id:'Clearcasting',icon:'◇',tier:1,col:0,max:2,req:'Arcane Focus',desc:'Chance to make spells cost no mana.'},{id:'Spell Impact',icon:'✷',tier:1,col:2,max:2,desc:'Increase critical spell damage.'},{id:'Presence of Mind',icon:'◉',tier:2,col:1,max:1,req:'Clearcasting',desc:'Make a cast instant.'},{id:'Arcane Flows',icon:'≈',tier:2,col:3,max:2,req:'Surge',desc:'Reduce cooldowns.'},{id:'Arcane Power',icon:'☄',tier:3,col:1,max:1,req:'Presence of Mind',desc:'Major spell-damage cooldown.'},{id:'Nether Precision',icon:'✧',tier:3,col:3,max:2,req:'Arcane Flows',desc:'Improve critical spell efficiency.'},{id:'Barrage',icon:'✹',tier:4,col:2,max:1,req:'Arcane Power',desc:'Capstone instant arcane barrage.'}
   ]},
-  Shaman:{Restoration:[
-    {id:'Tidal Focus',icon:'≈',tier:0,col:1,max:3,desc:'Increase healing efficiency and the strength of restorative spells.'},
-    {id:'Totemic Mastery',icon:'⚑',tier:0,col:3,max:3,desc:'Strengthen your totems and keep their effects active for longer.'},
-    {id:'Riptide',icon:'≋',tier:1,col:0,max:2,req:'Tidal Focus',desc:'Improve Riptide and its lingering restorative effect.'},
-    {id:'Ancestral Reach',icon:'⌁',tier:1,col:2,max:2,desc:'Increase Chain Heal bounce range and improve later jumps.'},
-    {id:'Chain Mastery',icon:'⛓',tier:2,col:1,max:2,req:'Riptide',desc:'Chain Heal loses less strength as it jumps between allies.'},
-    {id:'Earthen Ward',icon:'⬢',tier:2,col:3,max:2,req:'Totemic Mastery',desc:'Strengthen defensive totems and their protection.'},
-    {id:'Tidal Waves',icon:'🌊',tier:3,col:1,max:2,req:'Chain Mastery',desc:'Riptide and Chain Heal accelerate your next restorative cast.'},
-    {id:'Spirit Link Totem',icon:'◎',tier:3,col:3,max:1,req:'Earthen Ward',desc:'Unlock Spirit Link Totem as an equipable emergency combat skill.'},
-    {id:'Ascendant Tide',icon:'✦',tier:4,col:2,max:1,req:'Spirit Link Totem',desc:'Capstone: enter an ascendant state that empowers healing and totems under heavy pressure.'}
-  ]},
+  Shaman:{
+    Restoration:[
+      {id:'Tidal Focus',icon:'≈',tier:0,col:1,max:3,desc:'Increase healing efficiency and the strength of restorative spells.'},
+      {id:'Totemic Mastery',icon:'⚑',tier:0,col:3,max:3,desc:'Strengthen your totems and keep their effects active for longer.'},
+      {id:'Riptide',icon:'≋',tier:1,col:0,max:2,req:'Tidal Focus',desc:'Improve Riptide and its lingering restorative effect.'},
+      {id:'Ancestral Reach',icon:'⌁',tier:1,col:2,max:2,desc:'Increase Chain Heal bounce range and improve later jumps.'},
+      {id:'Chain Mastery',icon:'⛓',tier:2,col:1,max:2,req:'Riptide',desc:'Chain Heal loses less strength as it jumps between allies.'},
+      {id:'Earthen Ward',icon:'⬢',tier:2,col:3,max:2,req:'Totemic Mastery',desc:'Strengthen defensive totems and their protection.'},
+      {id:'Tidal Waves',icon:'🌊',tier:3,col:1,max:2,req:'Chain Mastery',desc:'Riptide and Chain Heal accelerate your next restorative cast.'},
+      {id:'Spirit Link Totem',icon:'◎',tier:3,col:3,max:1,req:'Earthen Ward',desc:'Unlock Spirit Link Totem as an equipable emergency combat skill.'},
+      {id:'Ascendant Tide',icon:'✦',tier:4,col:2,max:1,req:'Spirit Link Totem',desc:'Capstone: enter an ascendant state that empowers healing and totems under heavy pressure.'}
+    ],
+    Elemental:[
+      {id:'Elemental Fury',icon:'⚡',tier:0,col:1,max:3,desc:'Increase Lightning Bolt, Chain Lightning and Lava Burst damage.'},
+      {id:'Flame Shock',icon:'🔥',tier:0,col:3,max:3,desc:'Increase Flame Shock’s lingering fire damage.'},
+      {id:'Lava Surge',icon:'☄',tier:1,col:0,max:2,req:'Flame Shock',desc:'Flame Shock ticks can reset Lava Burst and accelerate its next cast.'},
+      {id:'Elemental Equilibrium',icon:'◈',tier:1,col:2,max:2,desc:'Alternating fire and nature magic grants a short damage surge.'},
+      {id:'Aftershock',icon:'↺',tier:2,col:1,max:2,req:'Elemental Equilibrium',desc:'Maelstrom spenders can refund part of their cost.'},
+      {id:'Earthquake',icon:'◎',tier:2,col:3,max:1,req:'Lava Surge',desc:'Unlock Earthquake as a heavy area Maelstrom spender.'},
+      {id:'Master of the Elements',icon:'✧',tier:3,col:1,max:2,req:'Aftershock',desc:'Lava Burst empowers your next nature spell.'},
+      {id:'Stormkeeper',icon:'☁',tier:3,col:3,max:1,req:'Earthquake',desc:'Unlock Stormkeeper for a powerful lightning burst window.'},
+      {id:'Ascendance',icon:'✦',tier:4,col:2,max:1,req:'Master of the Elements',desc:'Capstone: unlock Ascendance and become a living storm for a major burst window.'}
+    ]
+  },
   Warlock:{Demonology:[
     {id:'Demonic Bond',icon:'⛧',tier:0,col:1,max:3,desc:'Increase the damage dealt by your Felguard and temporary demons.'},
     {id:'Fel Knowledge',icon:'✺',tier:0,col:3,max:3,desc:'Increase the power of your shadow and fel spells.'},
@@ -314,17 +327,26 @@ const UI_SKILL_FALLBACKS={
     {id:'silence',name:'Silence',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast from range.',range:30,cost:0,gcd:0,cd:30000}
   ],
   Shaman:[
-    {id:'healing-wave',name:'Healing Wave',kind:'heal',role:'healer',unlockLevel:1,desc:'A dependable restorative cast for an injured ally.',range:30,heal:36,cost:14,gcd:1500,cast:1450,cd:0},
-    {id:'riptide',name:'Riptide',kind:'heal',role:'healer',unlockLevel:1,desc:'An instant tidal heal that continues restoring health briefly.',range:30,heal:23,cost:10,gcd:1500,cast:0,cd:6000,hot:7},
-    {id:'chain-heal',name:'Chain Heal',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Heal one ally, then bounce restorative energy through other injured party members.',range:30,heal:30,cost:20,gcd:1500,cast:1700,cd:0,chainBounces:3,chainFalloff:.72,chainRange:16},
+    {id:'healing-wave',name:'Healing Wave',kind:'heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'A dependable restorative cast for an injured ally.',range:30,heal:36,cost:14,gcd:1500,cast:1450,cd:0},
+    {id:'riptide',name:'Riptide',kind:'heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'An instant tidal heal that continues restoring health briefly.',range:30,heal:23,cost:10,gcd:1500,cast:0,cd:6000,hot:7},
+    {id:'chain-heal',name:'Chain Heal',kind:'group-heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Heal one ally, then bounce restorative energy through other injured party members.',range:30,heal:30,cost:20,gcd:1500,cast:1700,cd:0,chainBounces:3,chainFalloff:.72,chainRange:16},
+    {id:'windfury-totem',name:'Windfury Totem',kind:'totem',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Place a Windfury Totem that increases party damage and haste while it remains active.',cost:8,gcd:1000,cd:45000,duration:20000,totemType:'windfury'},
+    {id:'stoneskin-totem',name:'Stoneskin Totem',kind:'totem',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Place a Stoneskin Totem that reduces damage taken by the party while it remains active.',cost:10,gcd:1000,cd:45000,duration:20000,totemType:'stoneskin'},
+    {id:'healing-stream-totem',name:'Healing Stream Totem',kind:'totem',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Place a Healing Stream Totem that pulses healing through the party while it remains active.',cost:12,gcd:1000,cd:30000,duration:20000,totemType:'healing-stream'},
+    {id:'spirit-link-totem',name:'Spirit Link Totem',kind:'totem',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Place an emergency Spirit Link Totem that protects and stabilises injured allies.',cost:18,gcd:1000,cd:75000,duration:8000,totemType:'spirit-link',talentReq:'Spirit Link Totem'},
+    {id:'restoration-lightning-bolt',name:'Lightning Bolt',kind:'damage',role:'healer',spec:'Restoration',unlockLevel:4,desc:'A ranged lightning attack for safe damage windows.',range:30,damage:13,cost:4,gcd:1500,cast:1200,cd:0,damageType:'magic'},
+    {id:'healing-rain',name:'Healing Rain',kind:'group-heal',role:'healer',spec:'Restoration',unlockLevel:8,desc:'Call restorative rain over the party for broad recovery.',range:30,heal:16,cost:24,gcd:1500,cast:1200,cd:10000},
+
+    {id:'lightning-bolt',name:'Lightning Bolt',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:1,desc:'Hurl lightning at the target and generate Maelstrom.',range:35,damage:19,cost:0,gain:12,gcd:1500,cast:1250,cd:0,damageType:'magic'},
+    {id:'lava-burst',name:'Lava Burst',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:1,desc:'Launch molten lava for heavy fire damage and generate Maelstrom.',range:35,damage:31,cost:0,gain:16,gcd:1500,cast:1400,cd:8000,damageType:'magic'},
+    {id:'earth-shock',name:'Earth Shock',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:1,desc:'Spend Maelstrom to strike the target with a violent earth shock.',range:35,damage:39,cost:60,gcd:1500,cast:0,cd:0,damageType:'magic'},
+    {id:'chain-lightning',name:'Chain Lightning',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:4,desc:'Arc lightning through the target and nearby enemies while generating Maelstrom.',range:35,damage:17,cost:0,gain:10,gcd:1500,cast:1350,cd:5000,cleave:3,damageType:'magic'},
+    {id:'flame-shock',name:'Flame Shock',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:6,desc:'Burn the target with fire that continues dealing damage and generates Maelstrom.',range:35,damage:12,cost:0,gain:8,gcd:1500,cast:0,cd:8000,damageType:'magic'},
+    {id:'earthquake',name:'Earthquake',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:1,desc:'Spend Maelstrom to rupture the ground beneath the enemy pack.',range:35,damage:34,cost:60,gcd:1500,cast:900,cd:6000,cleave:4,damageType:'magic',talentReq:'Earthquake'},
+    {id:'stormkeeper',name:'Stormkeeper',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:1,desc:'Call down a storm and enter a short lightning burst window.',range:35,damage:30,cost:0,gain:10,gcd:1500,cast:900,cd:45000,cleave:2,damageType:'magic',talentReq:'Stormkeeper'},
+    {id:'ascendance',name:'Ascendance',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:1,desc:'Become a living storm and unleash a major Elemental burst window.',range:35,damage:42,cost:30,gcd:1500,cast:900,cd:60000,cleave:3,damageType:'magic',talentReq:'Ascendance'},
     {id:'wind-shear',name:'Wind Shear',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with a sharp burst of wind.',range:30,cost:0,gcd:0,cd:18000},
-    {id:'windfury-totem',name:'Windfury Totem',kind:'totem',role:'healer',unlockLevel:1,desc:'Place a Windfury Totem that increases party damage and haste while it remains active.',cost:8,gcd:1000,cd:45000,duration:20000,totemType:'windfury'},
-    {id:'stoneskin-totem',name:'Stoneskin Totem',kind:'totem',role:'healer',unlockLevel:1,desc:'Place a Stoneskin Totem that reduces damage taken by the party while it remains active.',cost:10,gcd:1000,cd:45000,duration:20000,totemType:'stoneskin'},
-    {id:'healing-stream-totem',name:'Healing Stream Totem',kind:'totem',role:'healer',unlockLevel:1,desc:'Place a Healing Stream Totem that pulses healing through the party while it remains active.',cost:12,gcd:1000,cd:30000,duration:20000,totemType:'healing-stream'},
-    {id:'spirit-link-totem',name:'Spirit Link Totem',kind:'totem',role:'healer',unlockLevel:1,desc:'Place an emergency Spirit Link Totem that protects and stabilises injured allies.',cost:18,gcd:1000,cd:75000,duration:8000,totemType:'spirit-link',talentReq:'Spirit Link Totem'},
-    {id:'lightning-bolt',name:'Lightning Bolt',kind:'damage',unlockLevel:4,desc:'A ranged lightning attack for safe damage windows.',range:30,damage:13,cost:4,gcd:1500,cast:1200,cd:0},
-    {id:'healing-rain',name:'Healing Rain',kind:'group-heal',role:'healer',unlockLevel:8,desc:'Call restorative rain over the party for broad recovery.',range:30,heal:16,cost:24,gcd:1500,cast:1200,cd:10000},
-    {id:'astral-shift',name:'Astral Shift',kind:'defensive',unlockLevel:11,desc:'Shift partially into the spirit world, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000}
+    {id:'astral-shift',name:'Astral Shift',kind:'defensive',unlockLevel:8,desc:'Shift partially into the spirit world, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000}
   ],
   Warlock:[
     {id:'shadow-bolt',name:'Shadow Bolt',kind:'damage',unlockLevel:1,desc:'A reliable ranged shadow spell.',range:35,damage:19,cost:6,gcd:1500,cast:1450,cd:0},
