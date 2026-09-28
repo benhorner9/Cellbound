@@ -683,67 +683,8 @@ function talentDamageScale(ctx,u,a,target){
  if(u.class==='Paladin'){
   if(a.id==='consecration'&&(rank=talentRank(u,'Consecration')))m*=1+rank*.22;
  }
- if(u.class==='Mage'&&u.spec==='Frost'){
-  const by=id=>pool.find(a=>a.id===id),fingers=Boolean(u.statuses?.['fingers-of-frost']),brain=Boolean(u.statuses?.['brain-freeze']),chilled=Boolean(target?.statuses?.['winters-chill-'+u.id]);
-  const flurry=by('flurry'),lance=by('ice-lance'),spike=by('glacial-spike'),orb=by('frozen-orb'),blizzard=by('blizzard'),bolt=by('frostbolt');
-  if(brain&&flurry)return{ability:flurry,target};
-  if((fingers||chilled)&&spike)return{ability:spike,target};
-  if((fingers||chilled)&&lance)return{ability:lance,target};
-  if(orb&&(livingEnemies(ctx).length>=2||['boss','final'].includes(ctx.encounter.kind)))return{ability:orb,target};
-  if(blizzard&&livingEnemies(ctx).length>=3)return{ability:blizzard,target};
-  if(flurry&&cooldownReady(u,flurry)&&talentRank(u,'Brain Freeze')>0)return{ability:flurry,target};
-  if(bolt)return{ability:bolt,target};
- }
- if(u.class==='Mage'&&u.spec==='Frost'){
-  u.talentCounters=u.talentCounters||{};
-  const fingers=talentRank(u,'Fingers of Frost'),brain=talentRank(u,'Brain Freeze'),procRate=Math.max(0,Number(u?.setBonuses?.frostProcRate)||0);
-  if(['frostbolt','blizzard'].includes(a.id)){
-   if(fingers){
-    u.talentCounters.fingers=(Number(u.talentCounters.fingers)||0)+1;
-    const threshold=Math.max(1,5-fingers-procRate);
-    if(u.talentCounters.fingers>=threshold){
-     u.talentCounters.fingers=0;
-     applyStatus(ctx,u,u,{id:'fingers-of-frost',name:'Fingers of Frost',kind:'buff',duration:9000,effect:{critBonus:.06*fingers}});
-     talentTrigger(ctx,u,'Fingers of Frost',u,{duration:9000})
-    }
-   }
-   if(brain&&a.id==='frostbolt'){
-    u.talentCounters.brainFreeze=(Number(u.talentCounters.brainFreeze)||0)+1;
-    const threshold=Math.max(2,6-brain-procRate);
-    if(u.talentCounters.brainFreeze>=threshold){
-     u.talentCounters.brainFreeze=0;
-     applyStatus(ctx,u,u,{id:'brain-freeze',name:'Brain Freeze',kind:'buff',duration:9000,effect:{haste:.04*brain}});
-     talentTrigger(ctx,u,'Brain Freeze',u,{duration:9000})
-    }
-   }
-  }
-  if(a.id==='flurry'&&Number(u.brainFreezeFlurryUntil||0)>=ctx.time&&target.alive){
-   u.brainFreezeFlurryUntil=0;
-   applyStatus(ctx,u,target,{id:'winters-chill-'+u.id,name:"Winter's Chill",kind:'debuff',duration:5000,effect:{}});
-   talentTrigger(ctx,u,"Winter's Chill",target,{duration:5000})
-  }
-  if(['ice-lance','glacial-spike'].includes(a.id)){
-   const hadFingers=Boolean(u.statuses?.['fingers-of-frost']),chillId='winters-chill-'+u.id,hadChill=Boolean(target.statuses?.[chillId]);
-   if(hadFingers||hadChill){
-    if(hadFingers)removeStatus(ctx,u,'fingers-of-frost','consumed');
-    if(hadChill)removeStatus(ctx,target,chillId,'consumed');
-    const shatter=talentRank(u,'Shatter');if(shatter)talentTrigger(ctx,u,'Shatter',target,{ability:a.name});
-    const thermal=talentRank(u,'Thermal Void');
-    if(thermal){
-     applyStatus(ctx,u,u,{id:'thermal-void',name:'Thermal Void',kind:'buff',duration:5500,effect:{haste:.035*thermal,outgoingDamage:.025*thermal}});
-     talentTrigger(ctx,u,'Thermal Void',u,{duration:5500})
-    }
-   }
-  }
-  if(a.id==='frozen-orb'&&target.alive){
-   const tick=Math.max(1,Math.round(dealt*.38));
-   [1000,2000,3000].forEach(t=>schedule(ctx,ctx.time+t,()=>{
-    if(!u.alive)return;
-    const enemies=livingEnemies(ctx).slice(0,4);
-    enemies.forEach((enemy,i)=>dealDamage(ctx,u,enemy,Math.max(1,Math.round(tick*(i?0.55:1))),'Frozen Orb (Pulse)',{damageType:'magic'}))
-   },'frost-frozen-orb'))
-  }
- }
+
+
  if(u.class==='Druid'&&u.spec==='Balance'){
   if(['wrath','starfire'].includes(a.id))m*=1+talentRank(u,'Starlight')*.035;
   if(['starsurge','starfall'].includes(a.id))m*=1+talentRank(u,'Astral Communion')*.04;
@@ -1411,6 +1352,56 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
  if(!u?.alive||!target||dealt<=0)return;
  u.damageActions=(Number(u.damageActions)||0)+1;
  let r=0;
+ if(u.class==='Mage'&&u.spec==='Frost'){
+  u.talentCounters=u.talentCounters||{};
+  const fingers=talentRank(u,'Fingers of Frost'),brain=talentRank(u,'Brain Freeze'),procRate=Math.max(0,Number(u?.setBonuses?.frostProcRate)||0);
+  if(['frostbolt','blizzard'].includes(a.id)){
+   if(fingers){
+    u.talentCounters.fingers=(Number(u.talentCounters.fingers)||0)+1;
+    const threshold=Math.max(1,5-fingers-procRate);
+    if(u.talentCounters.fingers>=threshold){
+     u.talentCounters.fingers=0;
+     applyStatus(ctx,u,u,{id:'fingers-of-frost',name:'Fingers of Frost',kind:'buff',duration:9000,effect:{critBonus:.06*fingers}});
+     talentTrigger(ctx,u,'Fingers of Frost',u,{duration:9000})
+    }
+   }
+   if(brain&&a.id==='frostbolt'){
+    u.talentCounters.brainFreeze=(Number(u.talentCounters.brainFreeze)||0)+1;
+    const threshold=Math.max(2,6-brain-procRate);
+    if(u.talentCounters.brainFreeze>=threshold){
+     u.talentCounters.brainFreeze=0;
+     applyStatus(ctx,u,u,{id:'brain-freeze',name:'Brain Freeze',kind:'buff',duration:9000,effect:{haste:.04*brain}});
+     talentTrigger(ctx,u,'Brain Freeze',u,{duration:9000})
+    }
+   }
+  }
+  if(a.id==='flurry'&&Number(u.brainFreezeFlurryUntil||0)>=ctx.time&&target.alive){
+   u.brainFreezeFlurryUntil=0;
+   applyStatus(ctx,u,target,{id:'winters-chill-'+u.id,name:"Winter's Chill",kind:'debuff',duration:5000,effect:{}});
+   talentTrigger(ctx,u,"Winter's Chill",target,{duration:5000})
+  }
+  if(['ice-lance','glacial-spike'].includes(a.id)){
+   const hadFingers=Boolean(u.statuses?.['fingers-of-frost']),chillId='winters-chill-'+u.id,hadChill=Boolean(target.statuses?.[chillId]);
+   if(hadFingers||hadChill){
+    if(hadFingers)removeStatus(ctx,u,'fingers-of-frost','consumed');
+    if(hadChill)removeStatus(ctx,target,chillId,'consumed');
+    const shatter=talentRank(u,'Shatter');if(shatter)talentTrigger(ctx,u,'Shatter',target,{ability:a.name});
+    const thermal=talentRank(u,'Thermal Void');
+    if(thermal){
+     applyStatus(ctx,u,u,{id:'thermal-void',name:'Thermal Void',kind:'buff',duration:5500,effect:{haste:.035*thermal,outgoingDamage:.025*thermal}});
+     talentTrigger(ctx,u,'Thermal Void',u,{duration:5500})
+    }
+   }
+  }
+  if(a.id==='frozen-orb'&&target.alive){
+   const tick=Math.max(1,Math.round(dealt*.38));
+   [1000,2000,3000].forEach(t=>schedule(ctx,ctx.time+t,()=>{
+    if(!u.alive)return;
+    const enemies=livingEnemies(ctx).slice(0,4);
+    enemies.forEach((enemy,i)=>dealDamage(ctx,u,enemy,Math.max(1,Math.round(tick*(i?0.55:1))),'Frozen Orb (Pulse)',{damageType:'magic'}))
+   },'frost-frozen-orb'))
+  }
+ }
  if(u.class==='Druid'&&u.spec==='Balance'){
   u.talentCounters=u.talentCounters||{};
   const eclipseActive=Boolean(u.statuses?.['solar-eclipse']||u.statuses?.['lunar-eclipse']||u.statuses?.['celestial-alignment']);
@@ -2255,6 +2246,17 @@ function chooseAbility(ctx,u,target){
   }
   // Other healers preserve mana and watch incoming damage during safe windows.
   return null
+ }
+ if(u.class==='Mage'&&u.spec==='Frost'){
+  const by=id=>pool.find(a=>a.id===id),fingers=Boolean(u.statuses?.['fingers-of-frost']),brain=Boolean(u.statuses?.['brain-freeze']),chilled=Boolean(target?.statuses?.['winters-chill-'+u.id]);
+  const flurry=by('flurry'),lance=by('ice-lance'),spike=by('glacial-spike'),orb=by('frozen-orb'),blizzard=by('blizzard'),bolt=by('frostbolt');
+  if(brain&&flurry)return{ability:flurry,target};
+  if((fingers||chilled)&&spike)return{ability:spike,target};
+  if((fingers||chilled)&&lance)return{ability:lance,target};
+  if(orb&&(livingEnemies(ctx).length>=2||['boss','final'].includes(ctx.encounter.kind)))return{ability:orb,target};
+  if(blizzard&&livingEnemies(ctx).length>=3)return{ability:blizzard,target};
+  if(flurry&&cooldownReady(u,flurry)&&talentRank(u,'Brain Freeze')>0)return{ability:flurry,target};
+  if(bolt)return{ability:bolt,target};
  }
  if(u.class==='Druid'&&u.spec==='Balance'){
   const by=id=>pool.find(a=>a.id===id);
