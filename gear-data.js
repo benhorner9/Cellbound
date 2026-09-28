@@ -118,7 +118,11 @@ function setBonusState(c,setId){
 }
 function setBonusLines(item,character=null){
   if(!item?.setId||!item?.setName)return[];
-  const rules=setBonusRulesFor(character||item.class,character?.spec||null,item);
+  if(!character)return[
+    {threshold:2,name:'Adaptive Specialisation',short:'2pc changes with active spec',description:'The two-piece effect adapts to the wearer’s active specialisation.'},
+    {threshold:4,name:'Talent Ensemble',short:'4pc empowers talent skills',description:'The four-piece effect improves resource recovery and reduces recovery time on talent-unlocked skills; its secondary bonus adapts by role.'}
+  ];
+  const rules=setBonusRulesFor(character,character?.spec||null,item);
   return [rules.pieces2,rules.pieces4].map(rule=>({threshold:rule.threshold,name:rule.name,short:rule.short,description:rule.description}))
 }
 const NAMES={
