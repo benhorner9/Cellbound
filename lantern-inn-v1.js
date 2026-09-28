@@ -44,7 +44,7 @@ const perspectiveFor=y=>Math.max(.82,Math.min(1.02,.70+(Number(y)||50)*.0042));
 /* Party Table Ring V9: three behind the table, two outside its front corners. */
 const activeSlots=['party-back-left','party-back-centre','party-back-right','party-front-left','party-front-right'];
 const reserveSlots=['reserve-fireplace','reserve-window-left','reserve-window-right','reserve-bar','reserve-door'];
-let root,world,ledger,partyDialog,partyMarker,partyNode,selectionPanel,selectionTitle,selectionCopy,selectionStatus,selectionAction,returnFocus=null,characterFocus=null,lastKey='',selectedObject='',exitTimer=0;
+let root,world,ledger,partyDialog,partyMarker,partyNode,selectionPanel,selectionTitle,selectionCopy,selectionStatus,selectionAction,exitCurtain,returnFocus=null,characterFocus=null,lastKey='',selectedObject='',exitTimer=0;
 const objectCopy={
  party:{
   title:'Party Table',
@@ -68,7 +68,7 @@ const objectCopy={
   title:'Town Square',
   copy:'Leave the Lantern Inn and return to the guild quarter.',
   action:'Return to Town Square',
-  status(){return 'The camera will move to the door before leaving the Inn'}
+  status(){return 'The Inn will fade out before returning you to the Town Square'}
  }
 };
 function setObjectSelected(kind,{focusConfirm=false}={}){
@@ -109,12 +109,26 @@ function leaveToTown(trigger){
  }
  clearTimeout(exitTimer);
  world.classList.add('is-leaving-to-town');
- exitTimer=setTimeout(()=>world.classList.add('is-fading-to-town'),620);
+ if(!exitCurtain){
+  exitCurtain=document.querySelector('.inn-exit-curtain');
+  if(!exitCurtain){
+   exitCurtain=document.createElement('div');
+   exitCurtain.className='inn-exit-curtain';
+   exitCurtain.setAttribute('aria-hidden','true');
+   document.body.append(exitCurtain);
+  }
+ }
+ exitCurtain.classList.add('is-transitioning');
+ requestAnimationFrame(()=>requestAnimationFrame(()=>exitCurtain.classList.add('is-active')));
  exitTimer=setTimeout(()=>{
   game()?.switchView?.('overview');
   world.classList.remove('is-leaving-to-town','is-fading-to-town');
   setObjectSelected('');
- },900);
+  requestAnimationFrame(()=>{
+   exitCurtain.classList.remove('is-active');
+   exitTimer=setTimeout(()=>exitCurtain?.classList.remove('is-transitioning'),380);
+  });
+ },340);
 }
 function activateObject(kind,trigger){
  if(kind==='door'){leaveToTown(trigger);return}
@@ -152,6 +166,13 @@ function openTool(kind,trigger){
 }
 function mount(){
  root=document.getElementById('roster');if(!root||world)return;
+ exitCurtain=document.querySelector('.inn-exit-curtain');
+ if(!exitCurtain){
+  exitCurtain=document.createElement('div');
+  exitCurtain.className='inn-exit-curtain';
+  exitCurtain.setAttribute('aria-hidden','true');
+  document.body.append(exitCurtain);
+ }
  // Keep the live roster controls; the Bar moves them into a central modal.
  const original=[...root.children].filter(n=>!n.matches('.lw-scene,.lw-room-depth'));
  root.querySelectorAll(':scope > .lw-scene,:scope > .lw-room-depth').forEach(n=>n.remove());
