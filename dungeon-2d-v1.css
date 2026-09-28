@@ -478,6 +478,7 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 .cb2d-unit.class-paladin{--class-color:#F48CBA}
 .cb2d-unit.class-priest{--class-color:#FFFFFF}
 .cb2d-unit.class-rogue{--class-color:#FFF468}
+.cb2d-unit.class-monk{--class-color:#00FF98}
 .cb2d-number.crit{font-size:18px;font-weight:900;transform:translate(-50%,-8px) scale(1.12)}
 
 .cbr-analysis{
