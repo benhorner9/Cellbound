@@ -6,7 +6,7 @@ const ROLE_MAP={
   Paladin:{Protection:'tank',Holy:'healer'},
   Priest:{Holy:'healer',Shadow:'dps'},
   Druid:{Restoration:'healer',Balance:'dps'},
-  Hunter:{Marksman:'dps'},
+  Hunter:{Marksman:'dps','Beast Mastery':'dps'},
   Rogue:{Assassination:'dps'},
   Mage:{Arcane:'dps',Frost:'dps'},
   Shaman:{Restoration:'healer',Elemental:'dps'},
@@ -119,6 +119,12 @@ const SPECS={
       strength:'Reliable ranged pressure, fast target switching and strong priority damage.',
       tradeoff:'Lower peak boss burst than Rogue, Mage or Arms Warrior.',
       damage:.99,threat:.94,cooldown:.94,priorityDamage:1.13
+    },
+    'Beast Mastery':{
+      title:'Pack Commander',
+      strength:'Fights through a permanent beast companion, chaining pet commands and short beast summons while remaining highly mobile.',
+      tradeoff:'A large share of its damage comes from keeping the pet active and spending Focus on the right commands; poor pet uptime sharply reduces pressure.',
+      damage:.96,threat:.90,cooldown:.96,physicalTaken:1.01,magicTaken:.98,petDamage:1.10,cleave:.20
     }
   },
   Rogue:{
