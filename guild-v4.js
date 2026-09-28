@@ -70,6 +70,10 @@ const classes={
   'Demon Hunter':{icon:'⛧',glow:'#A330C9',specs:{
     Havoc:{role:'dps',talents:['Demon Blades','Furious Gaze','Metamorphosis']},
     Vengeance:{role:'tank',talents:['Thick Skin','Soul Cleave','Metamorphosis']}
+  }},
+  Evoker:{icon:'✧',glow:'#33937F',specs:{
+    Preservation:{role:'healer',talents:['Temporal Mending','Echoing Bloom','Emerald Communion']},
+    Devastation:{role:'dps',talents:['Dragonfire','Essence Burst','Dragonrage']}
   }}
 };
 
