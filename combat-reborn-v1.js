@@ -1006,6 +1006,7 @@ function threatMultiplier(u,a){
  let base=u.role==='tank'?(Number(a.threat)||2.5):1;
  if(u.class==='Paladin'&&u.spec==='Protection')base*=1+talentRank(u,'Guardian Oath')*.12+(a.id==='consecration'?talentRank(u,'Consecration')*.15:0);
  if(u.class==='Warrior'&&u.spec==='Protection')base*=1+talentRank(u,'Taunt Mastery')*.05;
+ if(u.class==='Monk'&&u.spec==='Brewmaster')base*=1+(a.id==='keg-smash'?talentRank(u,'Keg Mastery')*.12:0);
  return base*Math.max(.1,1+statusBonus(u,'threatBonus'))
 }
 
@@ -1113,6 +1114,27 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
    if(extra.length)talentTrigger(ctx,u,'Barrage',extra[0],{targets:extra.length})
   }
  }
+ if(u.class==='Monk'&&u.spec==='Windwalker'){
+  const combo=u.lastMonkAbility!==a.id;
+  if(combo&&(r=talentRank(u,'Momentum'))){
+   applyStatus(ctx,u,u,{id:'monk-momentum',name:'Momentum',kind:'buff',duration:4200,effect:{haste:.04*r}});
+   talentTrigger(ctx,u,'Momentum',u,{duration:4200,ability:a.name})
+  }
+  if((r=talentRank(u,'Jade Ignition'))&&(a.id==='spinning-crane-kick'||a.id==='fists-of-fury')&&target.alive){
+   const extras=livingEnemies(ctx).filter(e=>e.id!==target.id).slice(0,2),splash=Math.max(1,Math.round(dealt*.08*r));
+   extras.forEach(e=>dealDamage(ctx,u,e,splash,'Jade Ignition',{damageType:'physical'}));
+   if(extras.length)talentTrigger(ctx,u,'Jade Ignition',extras[0],{targets:extras.length,damage:splash})
+  }
+  u.lastMonkAbility=a.id
+ }
+ if(u.class==='Monk'&&u.spec==='Mistweaver'){
+  const ancient=talentRank(u,'Ancient Teachings'),rising=talentRank(u,'Rising Mist'),ratio=.18+ancient*.12+rising*.06;
+  const ally=[...livingPlayers(ctx)].sort((x,y)=>healthRatio(x)-healthRatio(y))[0];
+  if(ally&&healthRatio(ally)<.995){
+   const heal=Math.max(1,Math.round(dealt*ratio));doHeal(ctx,u,ally,heal,ancient?'Ancient Teachings':'Fistweaving');
+   if(ancient)talentTrigger(ctx,u,'Ancient Teachings',ally,{healing:heal,sourceAbility:a.name})
+  }
+ }
 }
 function talentAfterHeal(ctx,u,a,target,effective){
  if(!u?.alive||!target?.alive||effective<=0||a.kind!=='heal')return;
@@ -1169,6 +1191,21 @@ function talentAfterHeal(ctx,u,a,target,effective){
   if((r=talentRank(u,'Tidal Waves'))){
    applyStatus(ctx,u,u,{id:'tidal-waves',name:'Tidal Waves',kind:'buff',duration:6000,effect:{haste:.04*r}});
    talentTrigger(ctx,u,'Tidal Waves',u,{duration:6000})
+  }
+ }
+ if(u.class==='Monk'&&u.spec==='Mistweaver'){
+  u.lastMistHealId=a.id;
+  if((r=talentRank(u,'Enveloping Breath'))){
+   const others=livingPlayers(ctx).filter(p=>p.id!==target.id&&hasLineOfSight(ctx,u,p)).sort((x,y)=>healthRatio(x)-healthRatio(y)).slice(0,2);
+   const splash=Math.max(1,Math.round(effective*.07*r));others.forEach(p=>doHeal(ctx,u,p,splash,'Enveloping Breath'));
+   if(others.length)talentTrigger(ctx,u,'Enveloping Breath',others[0],{targets:others.length,healing:splash})
+  }
+  if(talentRank(u,'Jade Serpent')){
+   u.talentCounters.jadeSerpent=(Number(u.talentCounters.jadeSerpent)||0)+1;
+   if(u.talentCounters.jadeSerpent>=3){
+    u.talentCounters.jadeSerpent=0;const low=[...livingPlayers(ctx)].sort((x,y)=>healthRatio(x)-healthRatio(y))[0],heal=Math.max(1,Math.round(effective*.30));
+    if(low){doHeal(ctx,u,low,heal,'Jade Serpent');talentTrigger(ctx,u,'Jade Serpent',low,{healing:heal})}
+   }
   }
  }
 }
@@ -1861,11 +1898,21 @@ function useDefensiveSkill(ctx,u,a){
  if(!a||a.kind!=='defensive'||!cooldownReady(u,a))return false;
  let duration=Math.max(1000,Number(a.duration)||8000),reduction=clamp(Number(a.damageReduction)||.20,0,.70);
  if(u.class==='Paladin'&&a.id==='ardent-defender'&&talentRank(u,'Ardent Defender')){duration+=2000;reduction=Math.min(.70,reduction+.10)}
+ if(u.class==='Monk'&&u.spec==='Brewmaster'&&a.id==='celestial-brew'){
+  const rank=talentRank(u,'Celestial Brew'),high=Number(u.staggerPool||0)/Math.max(1,u.maxHealth)>.12;
+  reduction=Math.min(.60,reduction+rank*.045+(high?.05:0))
+ }
  u.cooldowns[a.id]=Math.max(1000,Math.round((Number(a.cd)||60000)*talentCooldownScale(u,a)));u.gcdUntil=Math.max(u.gcdUntil,ctx.time+300);
  emit(ctx,'ABILITY_START',{source:u.id,target:u.id,ability:a.name,result:'defensive',position:copy(u.position),payload:{kind:'defensive',duration}});
  if(Number(a.selfHealPct)>0){
   const before=u.health;u.health=clamp(u.health+Math.round(u.maxHealth*Number(a.selfHealPct)),0,u.maxHealth);
   emit(ctx,'HEAL_RECEIVED',{source:u.id,target:u.id,ability:a.name,amount:u.health-before,result:'self-heal',position:copy(u.position),payload:{targetHp:u.health,targetMax:u.maxHealth,targetHpPct:pct(u.health,u.maxHealth),overhealing:0}})
+ }
+ if(u.class==='Monk'&&u.spec==='Brewmaster'&&Number(a.purifyStagger)>0){
+  const before=Math.max(0,Number(u.staggerPool)||0),ratio=Math.min(.90,Number(a.purifyStagger)+talentRank(u,'Purifying Brew')*.12),removed=Math.round(before*ratio);
+  u.staggerPool=Math.max(0,before-removed);
+  emit(ctx,'STAGGER_PURIFIED',{source:u.id,target:u.id,ability:a.name,amount:removed,result:'purified',position:copy(u.position),payload:{pool:Math.round(u.staggerPool),poolPct:pct(u.staggerPool,u.maxHealth),ratio}});
+  if(removed>0)talentTrigger(ctx,u,'Purifying Brew',u,{removed,pool:Math.round(u.staggerPool)})
  }
  applyStatus(ctx,u,u,{id:a.id,name:a.name,kind:'buff',duration,effect:{incomingDamageReduction:reduction}});
  if(u.class==='Warrior'&&u.spec==='Protection'&&talentRank(u,'Bulwark')){
@@ -1886,6 +1933,10 @@ function playerAI(ctx,u){
  if(useTalentUtility(ctx,u))return;
  const equippedTotems=u.abilities.filter(a=>a.kind==='totem'&&cooldownReady(u,a));
  for(const totem of equippedTotems)if(useShamanTotem(ctx,u,totem))return;
+ if(u.class==='Monk'&&u.spec==='Brewmaster'){
+  const purify=u.abilities.find(a=>a.id==='purifying-brew'&&cooldownReady(u,a));
+  if(purify&&Number(u.staggerPool||0)/Math.max(1,u.maxHealth)>.07&&useDefensiveSkill(ctx,u,purify))return
+ }
  const defensiveThreshold=ctx.tactics.defensiveUsage==='aggressive'?.62:ctx.tactics.defensiveUsage==='conservative'?.38:.50;
  const defensive=u.abilities.find(a=>a.kind==='defensive'&&cooldownReady(u,a));
  if(defensive&&healthRatio(u)<defensiveThreshold){
