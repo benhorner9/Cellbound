@@ -89,6 +89,17 @@ function hazard(scene,e){
  if(/collapse|beam|debris|floor/i.test(e.ability||''))n.classList.add('rubble');
  scene.arena.appendChild(n);scene.hazards.set(id,{node:n,end:performance.now()+(Number(e.payload.duration)||10000)/scene.speed});
 }
+function totem(scene,e){
+ const id=String(e.payload?.totemId||'');if(!id)return;
+ if(e.type==='TOTEM_EXPIRED'){const old=scene.totems.get(id);if(old){old.remove();scene.totems.delete(id)}return}
+ if(e.type!=='TOTEM_PLACED'||!e.position)return;
+ scene.totems.get(id)?.remove();
+ const type=String(e.payload?.totemType||'totem').replace(/[^a-z0-9-]/gi,'-').toLowerCase();
+ const n=document.createElement('div');n.className='cbl-totem '+type;n.dataset.totemId=id;n.dataset.totemType=type;n.setAttribute('aria-label',String(e.ability||'Shaman totem'));
+ n.style.left=clamp(Number(e.position.x),0,100)+'%';n.style.top=clamp(Number(e.position.y),0,100)+'%';
+ const core=document.createElement('i'),rune=document.createElement('b'),label=document.createElement('span');
+ label.textContent=String(e.ability||'Totem').replace(/ Totem$/,'');n.append(core,rune,label);scene.arena.appendChild(n);scene.totems.set(id,n)
+}
 function mechanic(scene,e){
  const token=e.payload?.token;if(token==null)return;
  if(e.type==='MECHANIC_TELEGRAPH'){
@@ -126,7 +137,7 @@ function mount(target){
  arena.classList.add('cbl-scene');
  if(!scenes.has(arena)){
   const layer=document.createElement('div');layer.className='cbl-effects';layer.setAttribute('aria-hidden','true');arena.appendChild(layer);
-  scenes.set(arena,{arena,layer,units:new Map(),effects:new Set(),hazards:new Map(),warnings:new Map(),time:0,speed:1,live:true});
+  scenes.set(arena,{arena,layer,units:new Map(),effects:new Set(),hazards:new Map(),warnings:new Map(),totems:new Map(),time:0,speed:1,live:true});
   arena.classList.add('cbl-scene');
   const scene=scenes.get(arena);scene.resize=new ResizeObserver(()=>framing(scene,true));scene.resize.observe(arena);
  }
@@ -220,8 +231,10 @@ function livingEvent(e,opts={}){
  try{window.dispatchEvent(new CustomEvent('cellbound:combat-visual',{detail:{type:e.type,event:e,arena,source:u?.el,target:t?.el,audioCue:e.payload?.audioCue||e.type.toLowerCase()}}))}catch(_){}
  if(/^GROUND_HAZARD_/.test(e.type))hazard(scene,e);
  if(/^MECHANIC_/.test(e.type))mechanic(scene,e);
+ if(/^TOTEM_/.test(e.type))totem(scene,e);
  switch(e.type){
  case'COMBAT_START':
+  for(const n of scene.totems.values())n.remove();scene.totems.clear();
   scene.live=true;room(scene,e);emphasis(scene,'entry');arena.classList.add('cbl-live');arena.querySelectorAll(UNIT).forEach(el=>unit(scene,el));
   for(const v of e.payload?.units||[]){const a=unit(scene,resolve(v.id,opts,arena));if(a){enemyProfile(a,v);const group=String(v.id).match(/^p-(?:raid|maid)-(\d+)-/);if(group)a.el.dataset.raidParty=group[1];a.dead=v.alive===false;if(!a.dead)a.el.classList.remove('dead','dying');a.target=null;a.statuses.clear();a.el.dataset.control='';state(a,a.dead?'dead':'idle');setPosition(scene,a,v.position);a.el.style.setProperty('--cbl-facing',(v.facing||0)+'deg')}}framing(scene);break;
  case'MOVEMENT_START':
@@ -234,7 +247,13 @@ function livingEvent(e,opts={}){
   if(canAct(u)){clearCast(u);u.target=t?.el||null;u.cast={event:e,destination:e.payload?.hazardPosition||null,start:performance.now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');u.el.dataset.castStyle=u.p.cast;state(u,/channel|beam|drain/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el)}break;
  case'CAST_CANCELLED':case'CAST_FINISH':case'ABILITY_FINISH':clearCast(u);if(u&&!u.dead&&!controlled(u))state(u,'idle');break;
  case'DAMAGE_DEALT':if(t){if(canAct(u))strike(scene,u,t,e);else if(!['miss','missed','dodge','dodged','immune'].includes(e.result))effect(scene,'contact',null,t.el,220)}break;
- case'HEAL_RECEIVED':if(t){if(canAct(u))strike(scene,u,t,e,true);else effect(scene,'heal-ring',null,t.el,400)}break;
+ case'HEAL_RECEIVED':if(t){
+  const visualSource=e.payload?.visualSource?unit(scene,resolve(e.payload.visualSource,opts,arena)):u;
+  if(Number(e.payload?.chainBounce)>0&&visualSource){
+   const f=effect(scene,'connection heal chain',visualSource.el,t.el,430);if(f)f.n.style.setProperty('--cbl-accent','#76efac');
+   effect(scene,'heal-ring chain',null,t.el,460)
+  }else if(canAct(u))strike(scene,u,t,e,true);else effect(scene,'heal-ring',null,t.el,400)
+ }break;
  case'AGGRO_CHANGED':if(u&&t){face(u,t.el);effect(scene,'aggro',null,t.el,650)}break;
  case'CROWD_CONTROL':if(t){statuses(t,{type:'DEBUFF_APPLIED',statusEffects:[{id:'visual-control',cc:e.payload?.cc||'stun'}]});t.controlUntil=performance.now()+(Number(e.payload?.duration)||900)/scene.speed}break;
  case'BUFF_APPLIED':case'DEBUFF_APPLIED':case'BUFF_REMOVED':case'DEBUFF_REMOVED':statuses(t,e);break;
@@ -250,7 +269,7 @@ function livingEvent(e,opts={}){
  case'PHASE_CHANGE':emphasis(scene,'phase');if(scene.room)scene.room.dataset.wear=String(Math.min(3,Number(scene.room.dataset.wear||0)+1));if(u){effect(scene,'phase',null,u.el,1000);u.el.dataset.intensity='5'}break;
  case'GROUND_HAZARD_SPAWNED':
   if(/plate|collapse|beam|debris|floor/i.test(e.ability||'')&&e.position){const f=effect(scene,'debris',null,null,650);if(f){f.n.style.left=e.position.x+'%';f.n.style.top=e.position.y+'%'}}break;
- case'COMBAT_END':for(const h of scene.hazards.values())h.node.remove();scene.hazards.clear();scene.warnings.clear();scene.live=false;arena.classList.remove('cbl-live');for(const v of scene.units.values()){clearCast(v);v.animation?.cancel();if(!v.dead)state(v,'idle')}break;
+ case'COMBAT_END':for(const h of scene.hazards.values())h.node.remove();scene.hazards.clear();for(const n of scene.totems.values())n.remove();scene.totems.clear();scene.warnings.clear();scene.live=false;arena.classList.remove('cbl-live');for(const v of scene.units.values()){clearCast(v);v.animation?.cancel();if(!v.dead)state(v,'idle')}break;
  }
  wake();
 }
