@@ -3217,6 +3217,44 @@ function runSelfTests(){
   return ids.includes('mind-flay')&&!ids.includes('shadow-crash')&&!ids.includes('void-torrent')&&!ids.includes('void-eruption')
  });
 
+ const elementalTalents={'Elemental Fury':2,'Flame Shock':2,'Lava Surge':2,'Elemental Equilibrium':1,'Aftershock':1,'Earthquake':1,'Master of the Elements':1,'Stormkeeper':1,'Ascendance':1};
+ const elementalParty=[
+  {id:'elt',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15},
+  {id:'elh',name:'Healer',class:'Priest',spec:'Holy',power:14,level:15},
+  {id:'el',name:'Elemental Shaman',class:'Shaman',spec:'Elemental',power:14,level:15,skillLoadouts:{Elemental:['lightning-bolt','lava-burst','earth-shock','ascendance']},talents:{Elemental:elementalTalents}},
+  {id:'el1',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15},
+  {id:'el2',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15}
+ ];
+ const elementalRun=simulate({party:elementalParty,encounter:{...base,kind:'boss',level:15,enemyHealth:9500},tactics:{cooldownUse:'free'},seed:'elemental-shaman',maxDurationMs:20000});
+ test('Elemental Shaman Maelstrom',()=>{
+  const shaman=elementalRun.finalState.players.find(p=>p.id==='p-el');
+  return shaman?.role==='dps'&&shaman?.resource?.name==='Maelstrom'&&elementalRun.events.some(e=>e.type==='RESOURCE_GAINED'&&e.source==='p-el')&&elementalRun.events.some(e=>e.type==='RESOURCE_SPENT'&&e.source==='p-el')
+ });
+ test('Elemental Shaman Ascendance',()=>elementalRun.events.some(e=>e.type==='BUFF_APPLIED'&&e.target==='p-el'&&e.ability==='Ascendance'));
+
+ const elementalProcParty=[
+  {id:'ept',name:'Tank',class:'Warrior',spec:'Protection',power:12,level:15},
+  {id:'eph',name:'Healer',class:'Priest',spec:'Holy',power:12,level:15},
+  {id:'ep',name:'Proc Shaman',class:'Shaman',spec:'Elemental',power:12,level:15,skillLoadouts:{Elemental:['flame-shock','lava-burst','earthquake','stormkeeper']},talents:{Elemental:elementalTalents}},
+  {id:'ep1',name:'Mage',class:'Mage',spec:'Arcane',power:12,level:15},
+  {id:'ep2',name:'Hunter',class:'Hunter',spec:'Marksman',power:12,level:15}
+ ];
+ const elementalProcRun=simulate({party:elementalProcParty,encounter:{...base,kind:'boss',level:15,enemyHealth:10000},tactics:{cooldownUse:'free'},seed:'elemental-procs',maxDurationMs:18000});
+ test('Elemental Flame Shock and Lava Surge',()=>elementalProcRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-ep'&&e.ability==='Flame Shock (DoT)')&&elementalProcRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-ep'&&e.ability==='Lava Surge'));
+ test('Elemental Stormkeeper',()=>elementalProcRun.events.some(e=>e.type==='BUFF_APPLIED'&&e.target==='p-ep'&&e.ability==='Stormkeeper'));
+
+ const elementalLocked=simulate({party:[
+  {id:'ellt',name:'Tank',class:'Warrior',spec:'Protection',power:12,level:15},
+  {id:'ellh',name:'Healer',class:'Priest',spec:'Holy',power:12,level:15},
+  {id:'ell',name:'Locked Elemental',class:'Shaman',spec:'Elemental',power:12,level:15,skillLoadouts:{Elemental:['earthquake','stormkeeper','ascendance','lightning-bolt']},talents:{Elemental:{}}},
+  {id:'ell1',name:'Mage',class:'Mage',spec:'Arcane',power:12,level:15},
+  {id:'ell2',name:'Hunter',class:'Hunter',spec:'Marksman',power:12,level:15}
+ ],encounter:{...base,level:15,enemyHealth:3500},seed:'elemental-gates',maxDurationMs:2500});
+ test('Elemental Shaman Talent Skill Gates',()=>{
+  const ids=(elementalLocked.finalState.players.find(p=>p.id==='p-ell')?.abilities||[]).map(a=>a.id);
+  return ids.includes('lightning-bolt')&&!ids.includes('earthquake')&&!ids.includes('stormkeeper')&&!ids.includes('ascendance')
+ });
+
  const bloodTalents={'Heartbreaker':3,'Ossuary':3,'Hemostasis':2,'Rune Tap':1,'Blood Shield':2,'Voracious':2,'Dancing Rune Weapon':1,'Red Thirst':2,'Vampiric Blood':1};
  const bloodParty=[
   {id:'dkt',name:'Blood DK',class:'Death Knight',spec:'Blood',power:14,level:15,skillLoadouts:{Blood:['heart-strike','death-strike','dark-command','marrowrend']},talents:{Blood:bloodTalents}},
