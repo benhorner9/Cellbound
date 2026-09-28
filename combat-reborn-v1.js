@@ -3101,6 +3101,47 @@ function runSelfTests(){
   const ids=(dkLocked.finalState.players.find(p=>p.id==='p-dkl')?.abilities||[]).map(a=>a.id);
   return ids.includes('obliterate')&&!ids.includes('breath-of-sindragosa')&&!ids.includes('remorseless-winter')
  });
+
+ const preservationTalents={'Temporal Mending':3,'Essence Attunement':3,'Reversion':2,'Lifebind':2,'Echoing Bloom':2,'Dream Breath':1,'Time Lord':2,'Cycle of Life':2,'Emerald Communion':1};
+ const preservationParty=[
+  {id:'evt',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15,_combatHealthPct:58},
+  {id:'evp',name:'Preservation Evoker',class:'Evoker',spec:'Preservation',power:14,level:15,_combatHealthPct:72,skillLoadouts:{Preservation:['reversion','verdant-embrace','emerald-blossom','dream-breath']},talents:{Preservation:preservationTalents}},
+  {id:'evp1',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15,_combatHealthPct:66},
+  {id:'evp2',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15,_combatHealthPct:69},
+  {id:'evp3',name:'Rogue',class:'Rogue',spec:'Assassination',power:14,level:15,_combatHealthPct:74}
+ ];
+ const preservationRun=simulate({party:preservationParty,encounter:{...base,kind:'boss',level:15,enemies:[{name:'Passive Chronodummy',classification:'boss',passive:true}],enemyHealth:7000},tactics:{cooldownUse:'free'},seed:'evoker-preservation',maxDurationMs:7000});
+ test('Evoker Preservation Healing',()=>{
+  const ev=preservationRun.finalState.players.find(p=>p.id==='p-evp'),meter=preservationRun.summary.players.find(p=>p.id==='p-evp');
+  return ev?.role==='healer'&&Number(meter?.healing)>0&&preservationRun.events.some(e=>e.type==='HEAL_RECEIVED'&&e.source==='p-evp')
+ });
+
+ const devastationTalents={'Dragonfire':3,'Azure Mastery':3,'Essence Burst':2,'Burnout':2,'Eternity Surge':1,'Pyre':2,'Scintillation':2,'Power Swell':2,'Dragonrage':1};
+ const devastationParty=[
+  {id:'evdt',name:'Tank',class:'Warrior',spec:'Protection',power:14,level:15},
+  {id:'evdh',name:'Healer',class:'Priest',spec:'Holy',power:14,level:15},
+  {id:'evd',name:'Devastation Evoker',class:'Evoker',spec:'Devastation',power:14,level:15,skillLoadouts:{Devastation:['living-flame','disintegrate','eternity-surge','dragonrage']},talents:{Devastation:devastationTalents}},
+  {id:'evd1',name:'Mage',class:'Mage',spec:'Arcane',power:14,level:15},
+  {id:'evd2',name:'Hunter',class:'Hunter',spec:'Marksman',power:14,level:15}
+ ];
+ const devastationRun=simulate({party:devastationParty,encounter:{...base,kind:'boss',level:15,enemyHealth:8500},tactics:{cooldownUse:'free'},seed:'evoker-devastation',maxDurationMs:12000});
+ test('Evoker Devastation Essence',()=>{
+  const ev=devastationRun.finalState.players.find(p=>p.id==='p-evd');
+  return ev?.role==='dps'&&ev?.resource?.name==='Essence'&&devastationRun.events.some(e=>e.type==='RESOURCE_SPENT'&&e.source==='p-evd')&&devastationRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-evd')
+ });
+ test('Evoker Dragonrage',()=>devastationRun.events.some(e=>e.type==='BUFF_APPLIED'&&e.target==='p-evd'&&e.ability==='Dragonrage'));
+
+ const evokerLocked=simulate({party:[
+  {id:'evlt',name:'Tank',class:'Warrior',spec:'Protection',power:12,level:15},
+  {id:'evlh',name:'Healer',class:'Priest',spec:'Holy',power:12,level:15},
+  {id:'evl',name:'Locked Evoker',class:'Evoker',spec:'Devastation',power:12,level:15,skillLoadouts:{Devastation:['eternity-surge','dragonrage','living-flame','disintegrate']},talents:{Devastation:{}}},
+  {id:'evl1',name:'Mage',class:'Mage',spec:'Arcane',power:12,level:15},
+  {id:'evl2',name:'Hunter',class:'Hunter',spec:'Marksman',power:12,level:15}
+ ],encounter:{...base,level:15,enemyHealth:3500},seed:'evoker-gates',maxDurationMs:2500});
+ test('Evoker Talent Skill Gates',()=>{
+  const ids=(evokerLocked.finalState.players.find(p=>p.id==='p-evl')?.abilities||[]).map(a=>a.id);
+  return ids.includes('living-flame')&&ids.includes('disintegrate')&&!ids.includes('eternity-surge')&&!ids.includes('dragonrage')
+ });
  const mageOnly=[{id:'m',name:'Mage',class:'Mage',spec:'Arcane',power:2,level:2}];
  r=simulate({party:mageOnly,encounter:{...base,enemyHealth:900},seed:'resource'});
  test('Resource Starvation',()=>r.events.some(e=>e.type==='RESOURCE_SPENT'));
