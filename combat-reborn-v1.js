@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.23';
+const VERSION='1.3.24';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -262,12 +262,21 @@ const ABILITIES={
   {id:'silence',name:'Silence',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast from range.',range:30,cost:0,gcd:0,cd:30000}
  ],
  Rogue:[
-  {id:'mutilate',name:'Mutilate',kind:'damage',unlockLevel:1,desc:'Reliable melee damage.',range:5,damage:18,cost:35,gcd:1000,cd:0},
-  {id:'eviscerate',name:'Eviscerate',kind:'damage',unlockLevel:1,desc:'A hard-hitting finishing attack.',range:5,damage:30,cost:50,gcd:1000,cd:5000},
-  {id:'garrote',name:'Garrote',kind:'damage',unlockLevel:1,desc:'A sharp opening attack with a short cooldown.',range:5,damage:21,cost:30,gcd:1000,cd:7000},
+  {id:'mutilate',name:'Mutilate',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:1,desc:'Reliable melee damage.',range:5,damage:18,cost:35,gcd:1000,cd:0},
+  {id:'eviscerate',name:'Eviscerate',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:1,desc:'A hard-hitting finishing attack.',range:5,damage:30,cost:50,gcd:1000,cd:5000},
+  {id:'garrote',name:'Garrote',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:1,desc:'A sharp opening attack with a short cooldown.',range:5,damage:21,cost:30,gcd:1000,cd:7000},
+  {id:'envenom',name:'Envenom',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:5,desc:'Spend Energy for a heavy poisoned strike.',range:5,damage:28,cost:45,gcd:1000,cd:6500},
+  {id:'fan-of-knives',name:'Fan of Knives',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:9,desc:'Strike the target and nearby enemies.',range:8,damage:15,cost:35,gcd:1000,cd:7000,cleave:3},
+
+  {id:'sinister-strike',name:'Sinister Strike',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'A fast sabre strike that generates one Combo Point.',range:5,damage:17,cost:35,gcd:1000,cd:0,comboGain:1},
+  {id:'pistol-shot',name:'Pistol Shot',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Fire a pistol at short range; Opportunity empowers the shot.',range:18,damage:16,cost:20,gcd:1000,cd:0,comboGain:1},
+  {id:'dispatch',name:'Dispatch',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Spend Combo Points on a powerful melee finisher.',range:5,damage:34,cost:25,gcd:1000,cd:0,comboCost:4,finisher:true},
+  {id:'roll-the-bones',name:'Roll the Bones',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:4,desc:'Spend Combo Points to roll a temporary combat advantage.',range:5,damage:8,cost:15,gcd:1000,cd:12000,comboCost:3,finisher:true},
+  {id:'blade-flurry',name:'Blade Flurry',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Enter a cleaving stance that echoes melee damage into nearby enemies.',range:5,damage:18,cost:25,gcd:1000,cd:15000,cleave:2},
+  {id:'between-the-eyes',name:'Between the Eyes',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Spend Combo Points on a pistol finisher that creates a critical-strike window.',range:18,damage:38,cost:25,gcd:1000,cd:18000,comboCost:4,finisher:true},
+  {id:'adrenaline-rush',name:'Adrenaline Rush',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Enter a burst state with greatly increased Energy recovery and attack speed.',range:5,damage:14,cost:0,gcd:1000,cd:60000},
+  {id:'killing-spree',name:'Killing Spree',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Rapidly strike the target and nearby enemies in a short burst.',range:8,damage:42,cost:35,gcd:1000,cast:800,cd:60000,cleave:2},
   {id:'kick',name:'Kick',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast.',range:5,cost:0,gcd:0,cd:15000},
-  {id:'envenom',name:'Envenom',kind:'damage',unlockLevel:5,desc:'Spend Energy for a heavy poisoned strike.',range:5,damage:28,cost:45,gcd:1000,cd:6500},
-  {id:'fan-of-knives',name:'Fan of Knives',kind:'damage',unlockLevel:9,desc:'Strike the target and nearby enemies.',range:8,damage:15,cost:35,gcd:1000,cd:7000,cleave:3},
   {id:'feint',name:'Feint',kind:'defensive',unlockLevel:13,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.20,gcd:0,cd:60000}
  ],
  Shaman:[
@@ -428,7 +437,8 @@ function gearSetState(c){
    frostProcDamageScale:Number(e2.frostProcDamageScale||1)*Number(e4.frostProcDamageScale||1),
    frostProcRate:Number(e2.frostProcRate||0)+Number(e4.frostProcRate||0),
    petDamageScale:Number(e2.petDamageScale||1)*Number(e4.petDamageScale||1),
-   destructionSpenderScale:Number(e2.destructionSpenderScale||1)*Number(e4.destructionSpenderScale||1)
+   destructionSpenderScale:Number(e2.destructionSpenderScale||1)*Number(e4.destructionSpenderScale||1),
+   outlawFinisherScale:Number(e2.outlawFinisherScale||1)*Number(e4.outlawFinisherScale||1)
  }
 }
 
@@ -452,7 +462,7 @@ const TALENT_SKILL_REQUIREMENTS={
   'consecration':'Consecration','ardent-defender':'Ardent Defender','holy-shock':'Holy Shock','radiant-wave':'Radiance',
   'guardian-spirit':'Guardian Spirit','divine-hymn':'Divine Hymn',
   'wild-growth':'Wild Growth','tranquility':'Tranquility','starfall':'Starfall','fury-of-elune':'Fury of Elune','celestial-alignment':'Celestial Alignment',
-  'kill-shot':'Kill Shot','dire-beast':'Dire Beast','stampede':'Stampede','bestial-wrath':'Bestial Wrath','garrote':'Garrote','envenom':'Envenom','arcane-barrage':'Barrage','blizzard':'Blizzard','frozen-orb':'Frozen Orb','glacial-spike':'Glacial Spike',
+  'kill-shot':'Kill Shot','dire-beast':'Dire Beast','stampede':'Stampede','bestial-wrath':'Bestial Wrath','garrote':'Garrote','envenom':'Envenom','blade-flurry':'Blade Flurry','between-the-eyes':'Between the Eyes','adrenaline-rush':'Adrenaline Rush','killing-spree':'Killing Spree','arcane-barrage':'Barrage','blizzard':'Blizzard','frozen-orb':'Frozen Orb','glacial-spike':'Glacial Spike',
   'spirit-link-totem':'Spirit Link Totem','earthquake':'Earthquake','stormkeeper':'Stormkeeper','ascendance':'Ascendance','soul-strike':'Soul Strike','felstorm':'Felstorm','summon-demonic-tyrant':'Demonic Tyrant','rain-of-fire':'Rain of Fire','channel-demonfire':'Channel Demonfire','summon-infernal':'Summon Infernal',
   'breath-of-fire':'Breath of Fire','fortifying-brew':'Fortifying Brew','revival':'Revival','fists-of-fury':'Fists of Fury','touch-of-death':'Touch of Death',
   'rune-tap':'Rune Tap','dancing-rune-weapon':'Dancing Rune Weapon','vampiric-blood':'Vampiric Blood','remorseless-winter':'Remorseless Winter','breath-of-sindragosa':'Breath of Sindragosa','dark-transformation':'Dark Transformation','army-of-the-dead':'Army of the Dead','apocalypse':'Apocalypse',
@@ -550,6 +560,15 @@ const TALENT_RULES={
  'Master Poisoner':'Improves poison damage.',
  'Cut to the Chase':'Envenom grants a short haste buff.',
  'Eviscerate':'Strengthens Eviscerate as a finisher.',
+ 'Opportunity':'Sinister Strike builds toward an empowered Pistol Shot.',
+ 'Combat Potency':'Increases Outlaw Energy regeneration.',
+ 'Quick Draw':'Opportunity-empowered Pistol Shot deals more damage and generates extra Combo Points.',
+ 'Ruthlessness':'Spending Combo Points accelerates key Outlaw cooldowns.',
+ 'Blade Flurry':'Unlocks Blade Flurry, allowing melee attacks to echo into nearby enemies.',
+ 'Between the Eyes':'Unlocks a ranged Combo Point finisher that creates a critical-strike window.',
+ 'Adrenaline Rush':'Unlocks and strengthens a major Energy and haste burst window.',
+ 'Loaded Dice':'Roll the Bones grants stronger combat advantages.',
+ 'Killing Spree':'Unlocks Killing Spree, a rapid sequence of weapon strikes.',
  'Arcane Focus':'Increases spell damage.',
  'Surge':'Repeated spell hits can trigger a short damage surge.',
  'Clearcasting':'Spells can cost no Mana.',
@@ -748,10 +767,19 @@ function talentDamageScale(ctx,u,a,target){
   }
  }
  if(u.class==='Rogue'){
-  if(Number(u.damageActions||0)<1)m*=1+talentRank(u,'Ambush')*.08;
-  if(a.id==='mutilate'&&talentRank(u,'Mutilate'))m*=1.18;
-  if(a.id==='envenom'&&(rank=talentRank(u,'Envenom')))m*=1+rank*.10;
-  if(a.id==='eviscerate'&&talentRank(u,'Eviscerate'))m*=hp<.35?1.35:1.20;
+  if(u.spec==='Assassination'){
+   if(Number(u.damageActions||0)<1)m*=1+talentRank(u,'Ambush')*.08;
+   if(a.id==='mutilate'&&talentRank(u,'Mutilate'))m*=1.18;
+   if(a.id==='envenom'&&(rank=talentRank(u,'Envenom')))m*=1+rank*.10;
+   if(a.id==='eviscerate'&&talentRank(u,'Eviscerate'))m*=hp<.35?1.35:1.20;
+  }
+  if(u.spec==='Outlaw'){
+   if(a.id==='pistol-shot'&&u.statuses?.['opportunity'])m*=1.35+talentRank(u,'Quick Draw')*.10;
+   if(a.finisher){
+    const cp=Math.max(1,Math.min(5,Number(u.comboPoints)||0));
+    m*=(.78+cp*.12)*Math.max(1,Number(u?.setBonuses?.outlawFinisherScale)||1);
+   }
+  }
  }
  if(u.class==='Mage'){
   if(u.spec==='Arcane'){
@@ -892,7 +920,8 @@ function talentCooldownScale(u,a){
 }
 function talentResourceRegenScale(u){
  if(u.class==='Hunter'&&u.spec==='Beast Mastery')return 1+talentRank(u,'Killer Cobra')*.04;
- if(u.class==='Rogue')return 1+talentRank(u,'Quick Recovery')*.08;
+ if(u.class==='Rogue'&&u.spec==='Assassination')return 1+talentRank(u,'Quick Recovery')*.08;
+ if(u.class==='Rogue'&&u.spec==='Outlaw')return 1+talentRank(u,'Combat Potency')*.07;
  if(u.class==='Monk'&&u.spec==='Mistweaver')return 1+talentRank(u,'Mana Tea')*.08;
  if(u.class==='Evoker'&&u.spec==='Preservation')return 1+talentRank(u,'Essence Attunement')*.08;
  return 1
@@ -971,6 +1000,11 @@ function defaultSkillLoadout(c,role){
    add(pool.find(a=>a.id==='barbed-shot'));
    add(pool.find(a=>a.id==='kill-command'));
    add(pool.find(a=>a.kind==='interrupt'));
+  }else if(c?.class==='Rogue'&&c?.spec==='Outlaw'){
+   add(pool.find(a=>a.id==='sinister-strike'));
+   add(pool.find(a=>a.id==='pistol-shot'));
+   add(pool.find(a=>a.id==='dispatch'));
+   add(pool.find(a=>a.kind==='interrupt'));
   }else{
    pool.filter(a=>a.kind==='damage').slice(0,3).forEach(add);
    add(pool.find(a=>a.kind==='interrupt'));
@@ -1013,7 +1047,7 @@ function normalisePlayer(c,i){
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:startPosition,facing:0,
   target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:carriedStatuses(c),resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
-  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:copy(c?._combatTalentTimers||{}),talentFlags:copy(c?._combatTalentFlags||{}),talentCounters:copy(c?._combatTalentCounters||{}),damageActions:Math.max(0,Number(c?._combatDamageActions)||0),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),staggerPool:0,nextStaggerTick:0,staggerSourceId:null,lastMonkAbility:null,lastMistHealId:null,recentDamageTaken:[],dkWounds:{},soulFragments:0,
+  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:copy(c?._combatTalentTimers||{}),talentFlags:copy(c?._combatTalentFlags||{}),talentCounters:copy(c?._combatTalentCounters||{}),damageActions:Math.max(0,Number(c?._combatDamageActions)||0),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),staggerPool:0,nextStaggerTick:0,staggerSourceId:null,lastMonkAbility:null,lastMistHealId:null,recentDamageTaken:[],dkWounds:{},soulFragments:0,comboPoints:0,
   defensiveUntil:Math.max(0,Number(c?._combatDefensiveMs)||0),frenzyUntil:Math.max(0,Number(c?._combatFrenzyMs)||0),uniqueUsed:copy(c?._combatUniqueUsed||{}),nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
 }
