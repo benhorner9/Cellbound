@@ -40,7 +40,8 @@ const classMeta={
   Shaman:{icon:'⚡',accent:'#0070DD',primary:'Intellect'},
   Warlock:{icon:'✺',accent:'#8788EE',primary:'Intellect'},
   Monk:{icon:'☯',accent:'#00FF98',primary:'Agility'},
-  'Death Knight':{icon:'☠',accent:'#C41E3A',primary:'Strength'}
+  'Death Knight':{icon:'☠',accent:'#C41E3A',primary:'Strength'},
+  'Demon Hunter':{icon:'⛧',accent:'#A330C9',primary:'Agility'}
 };
 
 const specs={
@@ -54,7 +55,8 @@ const specs={
   Shaman:{Restoration:'healer'},
   Warlock:{Demonology:'dps'},
   Monk:{Brewmaster:'tank',Mistweaver:'healer',Windwalker:'dps'},
-  'Death Knight':{Blood:'tank',Frost:'dps',Unholy:'dps'}
+  'Death Knight':{Blood:'tank',Frost:'dps',Unholy:'dps'},
+  'Demon Hunter':{Havoc:'dps',Vengeance:'tank'}
 };
 
 const trees={
@@ -212,6 +214,30 @@ const trees={
       {id:'Defile',icon:'◉',tier:3,col:3,max:2,req:'Army of the Dead',desc:'Death and Decay becomes stronger and spreads plague damage.'},
       {id:'Apocalypse',icon:'✦',tier:4,col:2,max:1,req:'Unholy Pact',desc:'Capstone: unlock Apocalypse, bursting wounds and summoning additional undead.'}
     ]
+  },
+  'Demon Hunter':{
+    Havoc:[
+      {id:'Demon Blades',icon:'⚔',tier:0,col:1,max:3,desc:"Strengthen Demon's Bite and improve Fury generation."},
+      {id:'Furious Gaze',icon:'◉',tier:0,col:3,max:3,desc:'Eye Beam grants a short burst of haste after it finishes.'},
+      {id:'Initiative',icon:'➤',tier:1,col:0,max:2,req:'Demon Blades',desc:'Deal extra damage when opening on a fresh target.'},
+      {id:'Soul Rending',icon:'♥',tier:1,col:2,max:2,desc:'Heavy fel attacks return a portion of their damage as healing.'},
+      {id:'First Blood',icon:'✕',tier:2,col:1,max:2,req:'Initiative',desc:'Increase Blade Dance damage and cleave pressure.'},
+      {id:'Fel Barrage',icon:'✹',tier:2,col:3,max:1,req:'Furious Gaze',desc:'Unlock Fel Barrage as a high-impact area skill.'},
+      {id:'Demonic',icon:'⛧',tier:3,col:1,max:2,req:'First Blood',desc:'Eye Beam briefly awakens a demonic damage surge.'},
+      {id:'Chaos Theory',icon:'◆',tier:3,col:3,max:2,req:'Fel Barrage',desc:'Chaos Strike deals more damage and can refund Fury.'},
+      {id:'Metamorphosis',icon:'✦',tier:4,col:2,max:1,req:'Demonic',desc:'Capstone: unlock Metamorphosis for a major fel-powered burst window.'}
+    ],
+    Vengeance:[
+      {id:'Thick Skin',icon:'⬢',tier:0,col:1,max:3,desc:'Increase physical and magical resilience while tanking.'},
+      {id:'Soul Cleave',icon:'☠',tier:0,col:3,max:3,desc:'Soul Cleave restores more health from consumed Soul Fragments.'},
+      {id:'Fracture',icon:'✕',tier:1,col:0,max:2,req:'Thick Skin',desc:'Shear generates additional Fury and Soul Fragments.'},
+      {id:'Sigil of Flame',icon:'🔥',tier:1,col:2,max:1,desc:'Unlock Sigil of Flame for area damage and pack threat.'},
+      {id:'Feed the Demon',icon:'♨',tier:2,col:1,max:2,req:'Fracture',desc:'Reduce the recovery time of Vengeance defensive skills.'},
+      {id:'Spirit Bomb',icon:'◎',tier:2,col:3,max:1,req:'Soul Cleave',desc:'Unlock Spirit Bomb, consuming Soul Fragments for area damage and healing.'},
+      {id:'Soul Barrier',icon:'◇',tier:3,col:1,max:2,req:'Feed the Demon',desc:'Consuming Soul Fragments grants short additional mitigation.'},
+      {id:'Fiery Demise',icon:'✹',tier:3,col:3,max:2,req:'Spirit Bomb',desc:'Increase fel and fire damage dealt by Vengeance skills.'},
+      {id:'Metamorphosis',icon:'✦',tier:4,col:2,max:1,req:'Soul Barrier',desc:'Capstone: unlock a powerful Vengeance Metamorphosis defensive transformation.'}
+    ]
   }
 };
 
@@ -306,13 +332,35 @@ const UI_SKILL_FALLBACKS={
     {id:'army-of-the-dead',name:'Army of the Dead',kind:'summon',role:'dps',spec:'Unholy',unlockLevel:1,desc:'Summon a pack of temporary ghouls to tear into your enemies.',range:30,cost:35,gcd:1500,cast:1800,cd:75000,duration:14000,summonType:'army-ghoul',summonCount:4,talentReq:'Army of the Dead'},
     {id:'apocalypse',name:'Apocalypse',kind:'summon',role:'dps',spec:'Unholy',unlockLevel:1,desc:'Burst Festering Wounds and summon additional undead attackers.',range:5,cost:30,gcd:1500,cd:45000,duration:12000,summonType:'apocalypse-ghoul',summonCount:2,talentReq:'Apocalypse'},
     {id:'anti-magic-shell',name:'Anti-Magic Shell',kind:'defensive',role:'dps',spec:'Unholy',unlockLevel:8,desc:'Wrap yourself in anti-magic energy to reduce incoming damage.',duration:8000,damageReduction:.25,gcd:0,cd:75000}
+  ],
+  'Demon Hunter':[
+    {id:'demons-bite',name:"Demon's Bite",kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Generate Fury with a fast warglaive strike.',range:5,damage:16,cost:0,gain:24,gcd:1000,cd:0},
+    {id:'chaos-strike',name:'Chaos Strike',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Spend Fury on a heavy chaos-infused melee strike.',range:5,damage:28,cost:30,gcd:1000,cd:0,damageType:'magic'},
+    {id:'blade-dance',name:'Blade Dance',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Dance through the target and nearby enemies with both warglaives.',range:6,damage:20,cost:25,gcd:1000,cd:8000,cleave:3},
+    {id:'throw-glaive',name:'Throw Glaive',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:4,desc:'Throw a warglaive at a distant target while repositioning.',range:20,damage:15,cost:0,gain:8,gcd:1000,cd:6000},
+    {id:'eye-beam',name:'Eye Beam',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:6,desc:'Channel fel energy through enemies in front of you.',range:18,damage:32,cost:30,gcd:1000,cast:1200,cd:18000,cleave:3,damageType:'magic'},
+    {id:'fel-barrage',name:'Fel Barrage',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Unleash a violent fel barrage across the enemy pack.',range:18,damage:38,cost:35,gcd:1000,cd:22000,cleave:4,damageType:'magic',talentReq:'Fel Barrage'},
+    {id:'havoc-metamorphosis',name:'Metamorphosis',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Transform and crash into the target, opening a major demonic burst window.',range:12,damage:40,cost:20,gcd:1000,cd:60000,cleave:2,damageType:'magic',talentReq:'Metamorphosis'},
+    {id:'blur',name:'Blur',kind:'defensive',role:'dps',spec:'Havoc',unlockLevel:10,desc:'Blur your form, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.30,gcd:0,cd:75000},
+    {id:'disrupt',name:'Disrupt',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with fel force.',range:10,cost:0,gcd:0,cd:15000},
+
+    {id:'shear',name:'Shear',kind:'damage',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Rip into the target, generating Fury and a Soul Fragment.',range:5,damage:16,cost:0,gain:18,gcd:1000,cd:0,threat:2.6},
+    {id:'soul-cleave',name:'Soul Cleave',kind:'damage',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Spend Fury and consume Soul Fragments to damage the target and heal yourself.',range:5,damage:21,cost:30,gcd:1000,cd:0,threat:2.4,damageType:'magic'},
+    {id:'infernal-strike',name:'Infernal Strike',kind:'damage',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Leap into the pack in a burst of fel fire and heavy threat.',range:15,damage:17,cost:10,gain:8,gcd:1000,cd:10000,cleave:3,threat:2.8,damageType:'magic'},
+    {id:'torment',name:'Torment',kind:'taunt',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Torment the enemy and force its attention onto the Demon Hunter.',range:30,cost:0,gcd:0,cd:8000,threat:5},
+    {id:'sigil-of-flame',name:'Sigil of Flame',kind:'damage',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Burn enemies in a fel sigil for area damage and pack threat.',range:18,damage:20,cost:12,gain:8,gcd:1000,cd:12000,cleave:3,threat:2.7,damageType:'magic',talentReq:'Sigil of Flame'},
+    {id:'demon-spikes',name:'Demon Spikes',kind:'defensive',role:'tank',spec:'Vengeance',unlockLevel:5,desc:'Harden your body with demonic spikes to reduce incoming damage.',duration:7000,damageReduction:.25,gcd:0,cd:18000},
+    {id:'fiery-brand',name:'Fiery Brand',kind:'defensive',role:'tank',spec:'Vengeance',unlockLevel:9,desc:'Brand the enemy with fel fire while fortifying yourself against its assault.',duration:8000,damageReduction:.30,gcd:0,cd:60000},
+    {id:'spirit-bomb',name:'Spirit Bomb',kind:'damage',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Consume Soul Fragments in an explosive fel blast that also restores health.',range:10,damage:28,cost:30,gcd:1000,cd:15000,cleave:3,threat:2.9,damageType:'magic',talentReq:'Spirit Bomb'},
+    {id:'vengeance-metamorphosis',name:'Metamorphosis',kind:'defensive',role:'tank',spec:'Vengeance',unlockLevel:1,desc:'Transform into a towering demon, restoring health and greatly reducing damage taken.',duration:10000,damageReduction:.35,selfHealPct:.18,gcd:0,cd:90000,talentReq:'Metamorphosis'}
   ]
 };
 const UI_BUFF_FALLBACKS={
   Shaman:{id:'class-buff-bloodlust',name:'Bloodlust',scope:'party',duration:60000,cooldown:180000,effect:{haste:.10,resourceRegen:.05}},
   Warlock:{id:'class-buff-demonic-pact',name:'Demonic Pact',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04}},
   Monk:{id:'class-buff-mystic-touch',name:'Mystic Touch',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,outgoingHealing:.03}},
-  'Death Knight':{id:'class-buff-horn-of-winter',name:'Horn of Winter',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,resourceRegen:.04}}
+  'Death Knight':{id:'class-buff-horn-of-winter',name:'Horn of Winter',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,resourceRegen:.04}},
+  'Demon Hunter':{id:'class-buff-demonic-momentum',name:'Demonic Momentum',scope:'self',duration:60000,cooldown:180000,effect:{outgoingDamage:.15,haste:.10,resourceRegen:.15}}
 };
 function classBuffFor(c){
   // Character-sheet fallbacks are the UI contract for newly added classes.
