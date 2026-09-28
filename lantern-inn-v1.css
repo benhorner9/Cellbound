@@ -920,3 +920,105 @@ body.inn-character-open{overflow:hidden}
   .inn-heading h2{font-size:15px!important}
   .inn-heading p{font-size:8px!important}
 }
+
+
+/* Lantern Inn Wall Fit + Scale Pass V7
+   Final positional polish for the supplied V2 Inn assets. */
+
+/* Fit the door into the LEFT BACK WALL bay:
+   its threshold now meets the back-wall/floor seam instead of sitting on the floor. */
+.inn-object-door{
+  left:10.2%!important;
+  top:-4.4%!important;
+  width:10.6%!important;
+  z-index:24!important;
+}
+.inn-object-door .inn-object-art{
+  transform-origin:50% 100%;
+  filter:brightness(.89) saturate(.88) sepia(.09) hue-rotate(-5deg) contrast(1.04)
+    drop-shadow(0 5px 6px rgba(0,0,0,.32))!important;
+}
+
+/* Push the bar a little further into the rear-right of the room and reduce it
+   slightly so it reads as wall furniture rather than a foreground prop. */
+.inn-object-bar{
+  left:63.2%!important;
+  top:18.2%!important;
+  width:34.2%!important;
+  z-index:46!important;
+}
+
+/* The party should feel physically inside this larger room, so reduce every
+   character by roughly 12-15% while keeping the same depth/occlusion system. */
+.inn-adventurer{
+  width:74px!important;
+  height:130px!important;
+  min-height:130px!important;
+}
+.inn-figure{
+  width:82px!important;
+  height:142px!important;
+  scale:var(--inn-scale-wide,.64)!important;
+}
+.inn-illustrated-model,
+.inn-fallback-model{width:74px!important}
+.inn-illustrated-model .inn-figure{
+  width:82px!important;
+  height:142px!important;
+}
+.inn-illustrated-model .cb-world-avatar-illustrated{
+  width:82px!important;
+  height:142px!important;
+}
+.inn-adventurer:before{
+  width:43px!important;
+  height:6px!important;
+}
+
+/* Keep the selection masks aligned with the repositioned supplied assets. */
+.inn-object-door .inn-object-hit{
+  left:3%!important;
+  top:1%!important;
+  right:4%!important;
+  bottom:0!important;
+}
+.inn-object-bar .inn-object-hit{
+  left:2%!important;
+  top:4%!important;
+  right:2%!important;
+  bottom:2%!important;
+}
+
+@media(max-width:600px){
+  .inn-object-door{
+    left:10.1%!important;
+    top:-4.1%!important;
+    width:10.8%!important;
+  }
+  .inn-object-bar{
+    left:62.8%!important;
+    top:18%!important;
+    width:34.8%!important;
+  }
+  .inn-adventurer{
+    width:64px!important;
+    height:112px!important;
+    min-height:112px!important;
+  }
+  .inn-figure{
+    width:68px!important;
+    height:118px!important;
+    scale:var(--inn-scale-phone,.62)!important;
+  }
+  .inn-illustrated-model,
+  .inn-fallback-model{width:64px!important}
+  .inn-illustrated-model .inn-figure{
+    width:68px!important;
+    height:118px!important;
+  }
+  .inn-illustrated-model .cb-world-avatar-illustrated{
+    width:68px!important;
+    height:118px!important;
+  }
+  .inn-adventurer:before{width:38px!important}
+}
