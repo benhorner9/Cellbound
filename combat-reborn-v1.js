@@ -1588,8 +1588,9 @@ function chooseAbility(ctx,u,target){
   }
 
   // Dungeon healers proactively maintain the tank instead of waiting for a crisis.
-  const needsTank=tank&&tankRatio<((ctx.encounter.kind==='boss'||ctx.encounter.kind==='final')?.97:.92);
-  const needsSingle=low&&healthRatio(low)<.90;
+  const mistweaver=u.class==='Monk'&&u.spec==='Mistweaver';
+  const needsTank=tank&&tankRatio<(mistweaver?((ctx.encounter.kind==='boss'||ctx.encounter.kind==='final')?.91:.88):((ctx.encounter.kind==='boss'||ctx.encounter.kind==='final')?.97:.92));
+  const needsSingle=low&&healthRatio(low)<(mistweaver?.88:.90);
   if(single.length&&(needsTank||needsSingle)){
    let healTarget=needsSingle&&low&&healthRatio(low)<tankRatio?low:(tank||low);
    let ratio=healthRatio(healTarget),chosen=ratio<.58?single[0]:single[single.length-1];
@@ -1605,7 +1606,7 @@ function chooseAbility(ctx,u,target){
   // During safe windows those attacks become smart healing through fistweaving.
   if(u.class==='Monk'&&u.spec==='Mistweaver'){
    const martial=pool.filter(a=>a.kind==='damage').sort((a,b)=>(b.damage||0)-(a.damage||0));
-   if(martial.length&&avg>.95&&tankRatio>.96)return{ability:martial[0],target}
+   if(martial.length&&deep.length===0&&avg>.90&&tankRatio>.88)return{ability:martial[0],target}
   }
   // Other healers preserve mana and watch incoming damage during safe windows.
   return null
