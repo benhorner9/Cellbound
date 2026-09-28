@@ -202,6 +202,13 @@ function currentBossProgressionUnlocked(boss){const i=bosses.findIndex(b=>b.id==
 function normalizeCharacter(c,index=0){
   c.id=c.id||`legacy-${index}-${Date.now()}`;c.class=c.class||'Warrior';c.spec=c.spec||Object.keys(classDef(c).specs)[0];const rawLevel=Math.max(1,Number(c.level)||1),overCapLevels=Math.max(0,rawLevel-PLAYER_LEVEL_CAP);c.level=Math.min(PLAYER_LEVEL_CAP,rawLevel);c.xp=c.level>=PLAYER_LEVEL_CAP?0:Math.max(0,Number(c.xp)||0);if(overCapLevels>0)c.talent=Math.max(0,(Number(c.talent)||0)-overCapLevels);c.power=Math.max(1,Number(c.power)||1);
   c.race=c.race||'Veyren';c.raceTrait=c.raceTrait||window.CellboundIdentities?.getRace?.(c.race)?.trait||'';if(CP)c.appearance=CP.normalizeAppearance(c.appearance,c.id||c.name,c.race);c.talents=c.talents||talentState(c.class);c.knowledge=c.knowledge||{ashwarden:0,embermaw:0,vaultheart:0};c.equipment=c.equipment||{};
+  c.skillLoadouts=c.skillLoadouts&&typeof c.skillLoadouts==='object'?c.skillLoadouts:{};
+  const combat=window.CellboundCombatReborn,combatRole=classes[c.class]?.specs?.[c.spec]?.role||'dps',savedLoadout=Array.isArray(c.skillLoadouts[c.spec])?c.skillLoadouts[c.spec]:[];
+  if(combat?.skills?.classSkillPool&&combat?.skills?.defaultSkillLoadout){
+    const validIds=new Set(combat.skills.classSkillPool(c,combatRole).map(skill=>skill.id));
+    if(!savedLoadout.some(id=>validIds.has(id)))c.skillLoadouts[c.spec]=combat.skills.defaultSkillLoadout(c,combatRole);
+  }
+  const classBuff=combat?.CLASS_BUFFS?.[c.class];if(classBuff&&!c.buffSkill)c.buffSkill=classBuff.id;
   const starters=starterEquipment(c.class);
   ILVL_SLOTS.forEach(slot=>{
     const hasSlot=Object.prototype.hasOwnProperty.call(c.equipment,slot),existing=canonicalItem(c.equipment?.[slot]);
