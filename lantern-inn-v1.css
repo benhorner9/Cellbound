@@ -1135,3 +1135,94 @@ body.inn-character-open{overflow:hidden}
   }
   .inn-adventurer:before{width:46px!important;height:7px!important}
 }
+
+
+/* ==========================================================================
+   Lantern Inn Room Proportion Pass V10
+   Slightly larger actors, no detached floor ovals, and corrected rear-wall
+   placement for the supplied Door and Bar assets.
+   ========================================================================== */
+
+/* Remove the artificial oval beneath actors. Their sprite/drop-shadow provides
+   enough contact with the floor without making feet appear suspended above it. */
+.inn-adventurer:before{
+  display:none!important;
+}
+
+/* A small final size lift so the party reads at adult scale against the table. */
+.inn-adventurer{
+  width:92px!important;
+  height:168px!important;
+  min-height:168px!important;
+}
+.inn-figure{
+  width:100px!important;
+  height:178px!important;
+}
+.inn-illustrated-model,
+.inn-fallback-model{width:92px!important}
+.inn-illustrated-model .inn-figure{
+  width:100px!important;
+  height:178px!important;
+}
+.inn-illustrated-model .cb-world-avatar-illustrated{
+  width:100px!important;
+  height:178px!important;
+}
+.inn-fallback-model .cb-world-avatar,
+.inn-fallback-model .cb-paper-doll{
+  width:92px!important;
+  height:172px!important;
+}
+
+/* Seat the door on the back-wall/floor seam instead of leaving it too high. */
+.inn-object-door{
+  left:10.2%!important;
+  top:-2.1%!important;
+  width:10.6%!important;
+}
+
+/* Move the bar left and further toward the rear wall, with a slight scale-down
+   so its perspective matches the back of the room. */
+.inn-object-bar{
+  left:62.7%!important;
+  top:7.6%!important;
+  width:30.2%!important;
+}
+
+@media(max-width:600px){
+  .inn-adventurer{
+    width:80px!important;
+    height:144px!important;
+    min-height:144px!important;
+  }
+  .inn-figure{
+    width:86px!important;
+    height:152px!important;
+  }
+  .inn-illustrated-model,
+  .inn-fallback-model{width:80px!important}
+  .inn-illustrated-model .inn-figure{
+    width:86px!important;
+    height:152px!important;
+  }
+  .inn-illustrated-model .cb-world-avatar-illustrated{
+    width:86px!important;
+    height:152px!important;
+  }
+  .inn-fallback-model .cb-world-avatar,
+  .inn-fallback-model .cb-paper-doll{
+    width:80px!important;
+    height:146px!important;
+  }
+  .inn-object-door{
+    left:10.2%!important;
+    top:-2.0%!important;
+    width:10.7%!important;
+  }
+  .inn-object-bar{
+    left:62.4%!important;
+    top:7.4%!important;
+    width:30.6%!important;
+  }
+}
