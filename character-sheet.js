@@ -1014,7 +1014,7 @@ function overviewPanel(c,state){
 function buffEffectText(buff){return buff?Object.entries(buff.effect||{}).map(([key,value])=>{const labels={outgoingDamage:'Damage',incomingDamageReduction:'Damage taken',resourceRegen:'Resource regeneration',haste:'Haste',critBonus:'Critical chance',threatBonus:'Threat',outgoingHealing:'Healing done',incomingHealing:'Healing received'};return(labels[key]||key)+' '+(key==='incomingDamageReduction'?'−':'+')+Math.round(Number(value)*100)+'%'}).join(' · '):''}
 function classBuffProgressMarkup(c){
  const level=Math.max(1,Number(c.level)||1),unlocked=unlockedBuffIds(c),quests=buffQuestList(c),active=classBuffFor(c);
- return '<section class="cb-class-buff-progression"><div class="cb-skill-library-head"><div><small>CLASS DISCIPLINES</small><h4>Solo Class Trials</h4></div><span>'+unlocked.length+' / '+quests.length+' learned</span></div><div class="cb-class-buff-grid">'+quests.map(q=>{const learned=unlocked.includes(q.id),levelLocked=level<q.level,pvpLocked=!!q.pvp;return '<article class="cb-class-buff-card '+(learned?'learned ':'')+((levelLocked||pvpLocked)?'locked':'')+'"><small>LEVEL '+q.level+(q.pvp?' · PVP':'')+'</small><h4>'+escHtml(q.name)+'</h4><p>'+escHtml(q.desc)+'</p><span>'+escHtml(buffEffectText(q)||'PvP effects activate when PvP releases.')+'</span>'+(learned?'<button type="button" data-equip-buff="'+escHtml(q.id)+'" '+(active?.id===q.id?'disabled':'')+'>'+(active?.id===q.id?'EQUIPPED':'EQUIP BUFF')+'</button>':pvpLocked?'<strong>PVP NOT YET AVAILABLE</strong>':levelLocked?'<strong>REQUIRES LEVEL '+q.level+'</strong>':'<button type="button" data-class-buff-trial="'+escHtml(q.id)+'">BEGIN '+escHtml(q.trial.toUpperCase())+' →</button>')+'</article>'}).join('')+'</div></section>'
+ return '<section class="cb-class-buff-progression"><div class="cb-skill-library-head"><div><small>CLASS DISCIPLINES</small><h4>Solo Class Trials</h4></div><span>'+unlocked.length+' / '+quests.length+' learned</span></div><div class="cb-class-buff-grid">'+quests.map(q=>{const learned=unlocked.includes(q.id),levelLocked=level<q.level,pvpLocked=!!q.pvp;return '<article class="cb-class-buff-card '+(learned?'learned ':'')+((levelLocked||pvpLocked)?'locked':'')+'"><small>LEVEL '+q.level+(q.pvp?' · PVP':'')+'</small><h4>'+escHtml(q.name)+'</h4><p>'+escHtml(q.desc)+'</p><span>'+escHtml(buffEffectText(q)||'PvP effects activate when PvP releases.')+'</span>'+(learned?'<button type="button" data-equip-buff="'+escHtml(q.id)+'" '+(active?.id===q.id?'disabled':'')+'>'+(active?.id===q.id?'EQUIPPED':'EQUIP BUFF')+'</button>':pvpLocked?'<strong>PVP NOT YET AVAILABLE</strong>':levelLocked?'<strong>REQUIRES LEVEL '+q.level+'</strong>':'<button type="button" data-open-class-trials>OPEN QUEST JOURNAL →</button>')+'</article>'}).join('')+'</div></section>'
 }
 function skillsPanel(c){
  const spec=c.spec,pool=skillPoolFor(c,spec),level=Math.max(1,Number(c.level)||1),equipped=equippedSkillIds(c,spec),selected=Math.max(0,Math.min(3,Number(activeSkillSlot)||0)),byId=new Map(pool.map(s=>[s.id,s])),buff=classBuffFor(c);
@@ -1244,13 +1244,6 @@ function resetSkills(){
   activeSkillSlot=0;writeState(state);renderSheet()
 }
 
-function completeClassBuffTrial(buffId){
- if(!characterEditable())return;const state=readState(),c=ensureCharacter(getCharacter(state,currentId));if(!state||!c)return;
- const q=buffQuestList(c).find(x=>x.id===buffId);if(!q||q.pvp||Math.max(1,Number(c.level)||1)<q.level)return;
- if(!confirm(q.trial+' is a solo '+c.class+' trial for '+c.name+'.\n\nComplete the class challenge and learn '+q.name+'?'))return;
- if(!c.classBuffProgress.unlocked.includes(q.id))c.classBuffProgress.unlocked.push(q.id);c.buffSkill=q.id;
- state.activity=state.activity||[];state.activity.push(c.name+' completed the '+q.trial+' Class Trial and learned '+q.name+'.');writeState(state);renderSheet();window.CellboundFX?.quest?.({eyebrow:'CLASS TRIAL COMPLETE',title:q.name,copy:'Class buff learned and equipped.',tone:'story',duration:1600})
-}
 function equipClassBuff(buffId){
  if(!characterEditable())return;const state=readState(),c=ensureCharacter(getCharacter(state,currentId));if(!state||!c||!unlockedBuffIds(c).includes(buffId))return;const q=buffQuestList(c).find(x=>x.id===buffId);if(!q)return;c.buffSkill=buffId;state.activity=state.activity||[];state.activity.push(c.name+' equipped the '+q.name+' class buff.');writeState(state);renderSheet()
 }
@@ -1275,7 +1268,7 @@ document.addEventListener('click',event=>{
   if(!modal.hidden){
     const tab=event.target.closest('[data-sheet-tab]');if(tab){event.preventDefault();event.stopImmediatePropagation();currentTab=tab.dataset.sheetTab||'overview';activeSlot=null;renderSheet();return}
     const charJump=event.target.closest('[data-char-jump]');if(charJump){closeCharacter(charJump.dataset.charJump);return}
-    const buffTrial=event.target.closest('[data-class-buff-trial]');if(buffTrial){completeClassBuffTrial(buffTrial.dataset.classBuffTrial);return}
+    const openTrials=event.target.closest('[data-open-class-trials]');if(openTrials){closeCharacter('quests');return}
     const equipBuff=event.target.closest('[data-equip-buff]');if(equipBuff){equipClassBuff(equipBuff.dataset.equipBuff);return}
     const skillSlot=event.target.closest('[data-skill-slot]');if(skillSlot){activeSkillSlot=Math.max(0,Math.min(3,Number(skillSlot.dataset.skillSlot)||0));renderSheet();return}
     const equipSkillBtn=event.target.closest('[data-equip-skill]');if(equipSkillBtn){equipSkill(equipSkillBtn.dataset.equipSkill);return}
