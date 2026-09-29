@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-const VERSION='0.2.0';
+const VERSION='0.2.1';
 const CLASS_COLOURS={
  warrior:[.78,.61,.43,1],paladin:[.96,.55,.73,1],hunter:[.67,.83,.45,1],rogue:[1,.96,.41,1],priest:[1,1,1,1],
  'death-knight':[.77,.12,.23,1],shaman:[0,.44,.87,1],mage:[.25,.78,.92,1],warlock:[.53,.53,.93,1],
@@ -222,9 +222,16 @@ function toggle(){S.active?deactivate():activate()}
 function webglSupported(){try{const c=document.createElement('canvas');return Boolean(c.getContext('webgl'))}catch(_){return false}}
 function ensureButton(){
  const shell=document.querySelector('.cb2d-shell'),live=shell?.querySelector('.cb2d-live');if(!live)return;
- let btn=live.querySelector('[data-cb3d-toggle]');if(!btn){btn=document.createElement('button');btn.type='button';btn.dataset.cb3dToggle='1';btn.title='Experimental native 3D combat renderer';btn.addEventListener('click',toggle);const speed=live.querySelector('[data-speed]');live.insertBefore(btn,speed||live.lastElementChild)}
- const ok=webglSupported();btn.disabled=!ok;btn.textContent=!ok?'3D N/A':S.active?'2D VIEW':'3D TEST';btn.classList.toggle('active',S.active);
- if(!ok)btn.title='WebGL is unavailable; 2D combat remains active'
+ let btn=live.querySelector('[data-cb3d-toggle]');
+ if(!btn){
+  btn=document.createElement('button');btn.type='button';btn.dataset.cb3dToggle='1';btn.addEventListener('click',toggle);
+  const speed=live.querySelector('[data-speed]');live.insertBefore(btn,speed||live.lastElementChild)
+ }
+ const ok=webglSupported(),label=!ok?'3D N/A':S.active?'2D VIEW':'3D TEST',title=!ok?'WebGL is unavailable; 2D combat remains active':'Experimental native 3D combat renderer';
+ if(btn.disabled===ok)btn.disabled=!ok;
+ if(btn.textContent!==label)btn.textContent=label;
+ if(btn.title!==title)btn.title=title;
+ if(btn.classList.contains('active')!==S.active)btn.classList.toggle('active',S.active)
 }
 function event(e,result,ctx={}){
  if(!S.active||!e)return;if(S.arena!==arena()){const a=arena();if(a){mount(a);a.classList.add('cb3d-active');rebuild();startLoop()}}
@@ -249,7 +256,19 @@ function event(e,result,ctx={}){
   case'INTERRUPT':if(e.result==='success'){pulseUnit(e.target,[.9,.76,.35,.8]);clearTelegraph(e.payload?.token)}break;
  }
 }
-function observe(){ensureButton();const ob=new MutationObserver(()=>{ensureButton();if(S.active&&!arena()){S.active=false;destroyScene()}});ob.observe(document.documentElement,{childList:true,subtree:true})}
+let observerQueued=false;
+function observe(){
+ ensureButton();
+ const ob=new MutationObserver(()=>{
+  if(observerQueued)return;observerQueued=true;
+  requestAnimationFrame(()=>{
+   observerQueued=false;
+   if(!button())ensureButton();
+   if(S.active&&!arena()){S.active=false;destroyScene()}
+  })
+ });
+ ob.observe(document.documentElement,{childList:true,subtree:true})
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',observe,{once:true});else observe();
 window.CellboundCombat3D={version:VERSION,event,toggle,activate,deactivate,isActive:()=>S.active,rebuild};
 })();
