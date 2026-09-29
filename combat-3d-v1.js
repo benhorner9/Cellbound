@@ -226,34 +226,32 @@ function startLoop(){if(!S.frame){S.last=performance.now();S.frame=requestAnimat
 function showError(message){
  const a=arena();if(!a)return;let el=a.querySelector('.cb3d-error');if(!el){el=document.createElement('div');el.className='cb3d-error';a.appendChild(el)}el.textContent=message;setTimeout(()=>el.remove(),4200)
 }
-function activate(){
- if(S.active)return;const btn=button();
+function syncModeButtons(){
+ const b3=button(),b25=button25(),ok=webglSupported();
+ if(b3){const label=!ok?'3D N/A':S.active&&S.mode==='3d'?'2D VIEW':'3D TEST';if(b3.textContent!==label)b3.textContent=label;b3.disabled=!ok;b3.classList.toggle('active',S.active&&S.mode==='3d')}
+ if(b25){const label=!ok?'2.5D N/A':S.active&&S.mode==='2.5d'?'2D VIEW':'2.5D TEST';if(b25.textContent!==label)b25.textContent=label;b25.disabled=!ok;b25.classList.toggle('active',S.active&&S.mode==='2.5d')}
+}
+function activate(mode='3d'){
+ mode=mode==='2.5d'?'2.5d':'3d';
+ if(S.active){S.mode=mode;updateBadge();syncModeButtons();return}
  try{
-  const a=arena();if(!a)throw new Error('Combat arena is not open');mount(a);S.active=true;a.classList.add('cb3d-active');rebuild();startLoop();
-  if(btn){btn.disabled=false;btn.classList.add('active');btn.textContent='2D VIEW'}
+  const a=arena();if(!a)throw new Error('Combat arena is not open');S.mode=mode;mount(a);S.active=true;a.classList.add('cb3d-active');rebuild();startLoop();syncModeButtons()
  }catch(error){
-  console.warn('Cellbound 3D prototype unavailable',error);S.active=false;destroyScene();showError('3D could not start on this device. Combat has stayed in 2D.');
-  if(btn){btn.disabled=false;btn.classList.remove('active');btn.textContent='3D TEST'}
+  console.warn('Cellbound experimental renderer unavailable',error);S.active=false;destroyScene();showError((mode==='2.5d'?'2.5D':'3D')+' could not start on this device. Combat has stayed in 2D.');syncModeButtons()
  }
 }
 function deactivate(){
- if(!S.active)return;S.active=false;if(S.frame)cancelAnimationFrame(S.frame);S.frame=0;S.arena?.classList.remove('cb3d-active');if(S.layer)S.layer.hidden=true;
- const btn=button();if(btn){btn.classList.remove('active');btn.disabled=false;btn.textContent='3D TEST'}
+ if(!S.active)return;S.active=false;if(S.frame)cancelAnimationFrame(S.frame);S.frame=0;S.arena?.classList.remove('cb3d-active');if(S.layer)S.layer.hidden=true;syncModeButtons()
 }
-function toggle(){S.active?deactivate():activate()}
+function toggle3D(){S.active&&S.mode==='3d'?deactivate():activate('3d')}
+function toggle25D(){S.active&&S.mode==='2.5d'?deactivate():activate('2.5d')}
 function webglSupported(){try{const c=document.createElement('canvas');return Boolean(c.getContext('webgl'))}catch(_){return false}}
-function ensureButton(){
+function ensureButtons(){
  const shell=document.querySelector('.cb2d-shell'),live=shell?.querySelector('.cb2d-live');if(!live)return;
- let btn=live.querySelector('[data-cb3d-toggle]');
- if(!btn){
-  btn=document.createElement('button');btn.type='button';btn.dataset.cb3dToggle='1';btn.addEventListener('click',toggle);
-  const speed=live.querySelector('[data-speed]');live.insertBefore(btn,speed||live.lastElementChild)
- }
- const ok=webglSupported(),label=!ok?'3D N/A':S.active?'2D VIEW':'3D TEST',title=!ok?'WebGL is unavailable; 2D combat remains active':'Experimental native 3D combat renderer';
- if(btn.disabled===ok)btn.disabled=!ok;
- if(btn.textContent!==label)btn.textContent=label;
- if(btn.title!==title)btn.title=title;
- if(btn.classList.contains('active')!==S.active)btn.classList.toggle('active',S.active)
+ let b25=live.querySelector('[data-cb25d-toggle]'),b3=live.querySelector('[data-cb3d-toggle]'),speed=live.querySelector('[data-speed]');
+ if(!b25){b25=document.createElement('button');b25.type='button';b25.dataset.cb25dToggle='1';b25.title='Experimental 2.5D combat renderer';b25.addEventListener('click',toggle25D);live.insertBefore(b25,b3||speed||live.lastElementChild)}
+ if(!b3){b3=document.createElement('button');b3.type='button';b3.dataset.cb3dToggle='1';b3.title='Experimental native 3D combat renderer';b3.addEventListener('click',toggle3D);speed=live.querySelector('[data-speed]');live.insertBefore(b3,speed||live.lastElementChild)}
+ syncModeButtons()
 }
 function event(e,result,ctx={}){
  if(!S.active||!e)return;if(S.arena!==arena()){const a=arena();if(a){mount(a);a.classList.add('cb3d-active');rebuild();startLoop()}}
@@ -280,17 +278,17 @@ function event(e,result,ctx={}){
 }
 let observerQueued=false;
 function observe(){
- ensureButton();
+ ensureButtons();
  const ob=new MutationObserver(()=>{
   if(observerQueued)return;observerQueued=true;
   requestAnimationFrame(()=>{
    observerQueued=false;
-   if(!button())ensureButton();
+   if(!button()||!button25())ensureButtons();
    if(S.active&&!arena()){S.active=false;destroyScene()}
   })
  });
  ob.observe(document.documentElement,{childList:true,subtree:true})
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',observe,{once:true});else observe();
-window.CellboundCombat3D={version:VERSION,event,toggle,activate,deactivate,isActive:()=>S.active,rebuild};
+window.CellboundCombat3D={version:VERSION,event,toggle:toggle3D,toggle25D,activate,deactivate,isActive:()=>S.active,mode:()=>S.mode,rebuild};
 })();
