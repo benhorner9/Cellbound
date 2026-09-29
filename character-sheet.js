@@ -614,10 +614,23 @@ const UI_BUFF_FALLBACKS={
   'Demon Hunter':{id:'class-buff-demonic-momentum',name:'Demonic Momentum',scope:'self',duration:60000,cooldown:180000,effect:{outgoingDamage:.15,haste:.10,resourceRegen:.15}},
   Evoker:{id:'class-buff-draconic-resonance',name:'Draconic Resonance',scope:'party',duration:60000,cooldown:180000,effect:{haste:.06}}
 };
+const CLASS_BUFF_QUESTS={
+  Warrior:[{level:5,id:'warrior-guardian',name:'Challenging Presence',desc:'Generate 18% more threat and reduce damage taken by 6%.',scope:'self',effect:{threatBonus:.18,incomingDamageReduction:.06},trial:'Hold the Line'},{level:10,id:'warrior-battle-focus',name:'Battle Focus',desc:'Increase damage by 8% and resource regeneration by 6%.',scope:'self',effect:{outgoingDamage:.08,resourceRegen:.06},trial:'Break the Siege'}],
+  Priest:[{level:5,id:'priest-divine-inspiration',name:'Divine Inspiration',desc:'Increase healing done and received by 5%.',scope:'party',effect:{outgoingHealing:.05,incomingHealing:.05},trial:'The Vigil'},{level:10,id:'priest-inner-fire',name:'Inner Fire',desc:'Increase damage by 5% and resource regeneration by 4%.',scope:'self',effect:{outgoingDamage:.05,resourceRegen:.04},trial:'Light and Shadow'}],
+  Hunter:[{level:5,id:'hunter-predators-focus',name:"Predator's Focus",desc:'Increase damage by 10% and resource regeneration by 8%.',scope:'self',effect:{outgoingDamage:.10,resourceRegen:.08},trial:'The Patient Hunt'},{level:10,id:'hunter-pack-instinct',name:'Pack Instinct',desc:'Increase damage by 6% and critical chance by 6%.',scope:'self',effect:{outgoingDamage:.06,critBonus:.06},trial:'Run With the Pack'}],
+  Rogue:[{level:5,id:'rogue-killing-tempo',name:'Killing Tempo',desc:'Increase damage by 10% and critical chance by 6%.',scope:'self',effect:{outgoingDamage:.10,critBonus:.06},trial:'One Clean Cut'},{level:10,id:'rogue-relentless',name:'Relentless',desc:'Increase resource regeneration by 10% and damage by 5%.',scope:'self',effect:{resourceRegen:.10,outgoingDamage:.05},trial:'No Witnesses'}],
+  Mage:[{level:5,id:'mage-arcane-empowerment',name:'Arcane Empowerment',desc:'Increase party damage by 5%.',scope:'party',effect:{outgoingDamage:.05},trial:'Control the Current'},{level:10,id:'mage-flow-state',name:'Flow State',desc:'Increase haste by 7% and resource regeneration by 6%.',scope:'self',effect:{haste:.07,resourceRegen:.06},trial:'The Unbroken Cast'}]
+};
+const GENERIC_BUFF_QUESTS=[{level:5,id:'class-primary-discipline',name:'Class Discipline',desc:'Empower the core strengths of this class.',trial:'The First Discipline'},{level:10,id:'class-adaptive-discipline',name:'Adaptive Discipline',desc:'Adopt an alternative combat discipline.',trial:'The Second Discipline'}];
+function buffQuestList(c){
+ const base=CLASS_BUFF_QUESTS[c?.class]||GENERIC_BUFF_QUESTS;
+ const legacy=UI_BUFF_FALLBACKS[c?.class+'|'+c?.spec]||UI_BUFF_FALLBACKS[c?.class]||combatEngine()?.CLASS_BUFFS?.[c?.class+'|'+c?.spec]||combatEngine()?.CLASS_BUFFS?.[c?.class];
+ return base.map((q,i)=>({...q,id:(CLASS_BUFF_QUESTS[c?.class]?q.id:(legacy?.id||c?.class?.toLowerCase().replace(/\\s+/g,'-')+'-discipline')+'-'+(i+1)),name:CLASS_BUFF_QUESTS[c?.class]?q.name:(i?('Adaptive '+(legacy?.name||'Discipline')):(legacy?.name||q.name)),scope:q.scope||legacy?.scope||'self',effect:q.effect||legacy?.effect||{outgoingDamage:.04},duration:60000,cooldown:180000})).concat([{level:15,id:(c?.class||'class').toLowerCase().replace(/\\s+/g,'-')+'-pvp-discipline',name:'PvP Discipline',desc:'A specialist discipline for player-versus-player combat.',scope:'self',effect:{},duration:60000,cooldown:180000,trial:'Trial of Rivals',pvp:true}])
+}
+function unlockedBuffIds(c){return Array.isArray(c?.classBuffProgress?.unlocked)?c.classBuffProgress.unlocked:[]}
 function classBuffFor(c){
-  // Character-sheet fallbacks are the UI contract for newly added classes.
-  // Prefer them when present so an older cached combat module cannot expose stale buff data.
-  return UI_BUFF_FALLBACKS[c?.class+'|'+c?.spec]||UI_BUFF_FALLBACKS[c?.class]||combatEngine()?.CLASS_BUFFS?.[c?.class+'|'+c?.spec]||combatEngine()?.CLASS_BUFFS?.[c?.class]||null
+ const unlocked=unlockedBuffIds(c),list=buffQuestList(c),selected=c?.buffSkill;
+ return list.find(x=>x.id===selected&&unlocked.includes(x.id))||list.find(x=>unlocked.includes(x.id))||null
 }
 function skillPoolFor(c,spec=c?.spec){
   const engine=combatEngine(),role=specs[c?.class]?.[spec]||'dps',copyChar={...c,spec};
@@ -669,7 +682,9 @@ function ensureCharacter(c){
   Object.keys(specs[c.class]||{}).forEach(spec=>{c.talents[spec]=c.talents[spec]||{}});
   B?.syncLegacyTalentCounter?.(c);
   c.skillLoadouts=c.skillLoadouts&&typeof c.skillLoadouts==='object'?c.skillLoadouts:{};
-  const buff=classBuffFor(c);if(buff)c.buffSkill=buff.id;
+  c.classBuffProgress=c.classBuffProgress&&typeof c.classBuffProgress==='object'?c.classBuffProgress:{unlocked:[]};
+  c.classBuffProgress.unlocked=Array.isArray(c.classBuffProgress.unlocked)?c.classBuffProgress.unlocked:[];
+  if(c.buffSkill&&!c.classBuffProgress.unlocked.includes(c.buffSkill))c.buffSkill=null;
   return c;
 }
 function rarityClass(item){return `cb-rarity-${String(item?.rarity||'starter').toLowerCase()}`}
@@ -993,37 +1008,19 @@ function overviewPanel(c,state){
   </div>`;
 }
 
-function skillsPanel(c){
-  const engine=combatEngine(),spec=c.spec,role=roleOf(c),pool=skillPoolFor(c,spec),level=Math.max(1,Number(c.level)||1),equipped=equippedSkillIds(c,spec),selected=Math.max(0,Math.min(3,Number(activeSkillSlot)||0));
-  const byId=new Map(pool.map(s=>[s.id,s])),buff=classBuffFor(c);
-  const unlockedCount=pool.filter(s=>skillAvailable(c,s,spec)).length,nextUnlock=pool.filter(s=>(Number(s.unlockLevel)||1)>level).sort((a,b)=>(a.unlockLevel||1)-(b.unlockLevel||1))[0];
-  const slotCards=equipped.map((id,i)=>{
-    const skill=byId.get(id);
-    return '<button type="button" class="cb-skill-slot '+(i===selected?'active ':'')+(skill?'filled':'empty')+'" data-skill-slot="'+i+'"><small>SLOT '+(i+1)+'</small><i>'+skillIcon(skill?.kind)+'</i><span><b>'+escHtml(skill?.name||'Empty Skill Slot')+'</b><em>'+(skill?skillKindLabel(skill.kind)+' · '+skillCooldownText(skill):'Tap this slot, then choose a skill')+'</em></span></button>'
-  }).join('');
-  const library=pool.slice().sort((a,b)=>{
-    const al=skillAvailable(c,a,spec)?0:1,bl=skillAvailable(c,b,spec)?0:1;
-    return al-bl||(Number(a.unlockLevel)||1)-(Number(b.unlockLevel)||1)||String(a.name).localeCompare(String(b.name))
-  }).map(skill=>{
-    const unlock=Math.max(1,Number(skill.unlockLevel)||1),levelLocked=unlock>level,talentLocked=!skillTalentMet(c,skill,spec),locked=levelLocked||talentLocked,slot=equipped.indexOf(skill.id),isEquipped=slot>=0;
-    const cost=Number(skill.cost)||0,range=Number(skill.range)||0,lockTitle=talentLocked?'REQUIRES '+String(skill.talentReq||'TALENT').toUpperCase():'LEVEL '+unlock,lockCopy=talentLocked?'Learn the '+skill.talentReq+' talent to use this skill.':'Unlocks as this character levels up.';
-    return '<article class="cb-skill-card kind-'+escHtml(skill.kind)+' '+(locked?'locked ':'')+(isEquipped?'equipped':'')+'">'+
-      '<div class="cb-skill-card-icon">'+skillIcon(skill.kind)+'</div><div class="cb-skill-card-copy"><div><small>'+skillKindLabel(skill.kind)+'</small><h4>'+escHtml(skill.name)+'</h4></div><p>'+escHtml(skill.desc||'Combat skill.')+'</p>'+
-      '<div class="cb-skill-meta"><span>'+skillCooldownText(skill)+'</span>'+(cost?'<span>Cost '+cost+'</span>':'')+(range?'<span>Range '+range+'</span>':'')+'</div></div>'+
-      (locked?'<div class="cb-skill-lock"><b>'+escHtml(lockTitle)+'</b><span>'+escHtml(lockCopy)+'</span></div>':'<button type="button" class="cb-skill-equip '+(isEquipped?'equipped':'')+'" data-equip-skill="'+escHtml(skill.id)+'">'+(isEquipped?'MOVE TO SLOT '+(selected+1):'EQUIP TO SLOT '+(selected+1))+'</button>')+
-    '</article>'
-  }).join('');
-  const buffEffect=buff?Object.entries(buff.effect||{}).map(([key,value])=>{
-    const labels={outgoingDamage:'Damage',incomingDamageReduction:'Damage taken reduction',resourceRegen:'Resource regeneration',haste:'Haste',critBonus:'Critical chance',threatBonus:'Threat',outgoingHealing:'Healing done',incomingHealing:'Healing received'};
-    return (labels[key]||key)+' '+(key==='incomingDamageReduction'?'−':'+')+Math.round(Number(value)*100)+'%'
-  }).join(' · '):'No class buff configured.';
-  return '<div class="cb-skills-screen">'+
-   '<section class="cb-skills-hero"><div><small>COMBAT LOADOUT · '+escHtml(spec.toUpperCase())+'</small><h3>4 Skills + 1 Class Buff</h3><p>These four skills are used in combat. Unequipped skills will not be used in dungeons.</p></div><div class="cb-skill-progress"><span>UNLOCKED</span><b>'+unlockedCount+' / '+pool.length+'</b><small>'+(nextUnlock?'Next: '+escHtml(nextUnlock.name)+' at Level '+nextUnlock.unlockLevel:'All current skills unlocked')+'</small></div></section>'+
-   '<section class="cb-loadout-panel"><div class="cb-loadout-head"><div><small>ACTIVE SKILLS</small><h4>Select a slot, then choose a skill.</h4></div><button type="button" data-reset-skills>RESET DEFAULTS</button></div><div class="cb-skill-slots">'+slotCards+'</div><div class="cb-slot-actions"><span>Editing Slot '+(selected+1)+'</span>'+(equipped[selected]?'<button type="button" data-clear-skill="'+selected+'">CLEAR SLOT '+(selected+1)+'</button>':'<em>Slot '+(selected+1)+' is empty</em>')+'</div></section>'+
-   '<section class="cb-buff-slot-panel"><div class="cb-buff-slot-icon">▲</div><div><small>DEDICATED BUFF SLOT</small><h4>'+escHtml(buff?.name||'No Class Buff')+'</h4><p>'+escHtml(buffEffect)+'</p></div><strong>'+(buff?Math.round((buff.duration||60000)/1000)+'s ACTIVE · '+Math.round((buff.cooldown||180000)/60000)+'m CD':'UNAVAILABLE')+'</strong></section>'+
-   '<section class="cb-skill-library"><div class="cb-skill-library-head"><div><small>AVAILABLE SKILLS</small><h4>'+escHtml(c.class)+' · '+escHtml(spec)+'</h4></div><span>Level '+level+'</span></div><div class="cb-skill-grid">'+library+'</div></section>'+
-  '</div>'
+function buffEffectText(buff){return buff?Object.entries(buff.effect||{}).map(([key,value])=>{const labels={outgoingDamage:'Damage',incomingDamageReduction:'Damage taken',resourceRegen:'Resource regeneration',haste:'Haste',critBonus:'Critical chance',threatBonus:'Threat',outgoingHealing:'Healing done',incomingHealing:'Healing received'};return(labels[key]||key)+' '+(key==='incomingDamageReduction'?'−':'+')+Math.round(Number(value)*100)+'%'}).join(' · '):''}
+function classBuffProgressMarkup(c){
+ const level=Math.max(1,Number(c.level)||1),unlocked=unlockedBuffIds(c),quests=buffQuestList(c),active=classBuffFor(c);
+ return '<section class="cb-class-buff-progression"><div class="cb-skill-library-head"><div><small>CLASS DISCIPLINES</small><h4>Solo Class Trials</h4></div><span>'+unlocked.length+' / '+quests.length+' learned</span></div><div class="cb-class-buff-grid">'+quests.map(q=>{const learned=unlocked.includes(q.id),levelLocked=level<q.level,pvpLocked=!!q.pvp;return '<article class="cb-class-buff-card '+(learned?'learned ':'')+((levelLocked||pvpLocked)?'locked':'')+'"><small>LEVEL '+q.level+(q.pvp?' · PVP':'')+'</small><h4>'+escHtml(q.name)+'</h4><p>'+escHtml(q.desc)+'</p><span>'+escHtml(buffEffectText(q)||'PvP effects activate when PvP releases.')+'</span>'+(learned?'<button type="button" data-equip-buff="'+escHtml(q.id)+'" '+(active?.id===q.id?'disabled':'')+'>'+(active?.id===q.id?'EQUIPPED':'EQUIP BUFF')+'</button>':pvpLocked?'<strong>PVP NOT YET AVAILABLE</strong>':levelLocked?'<strong>REQUIRES LEVEL '+q.level+'</strong>':'<button type="button" data-class-buff-trial="'+escHtml(q.id)+'">BEGIN '+escHtml(q.trial.toUpperCase())+' →</button>')+'</article>'}).join('')+'</div></section>'
 }
+function skillsPanel(c){
+ const spec=c.spec,pool=skillPoolFor(c,spec),level=Math.max(1,Number(c.level)||1),equipped=equippedSkillIds(c,spec),selected=Math.max(0,Math.min(3,Number(activeSkillSlot)||0)),byId=new Map(pool.map(s=>[s.id,s])),buff=classBuffFor(c);
+ const unlockedCount=pool.filter(s=>skillAvailable(c,s,spec)).length,nextUnlock=pool.filter(s=>(Number(s.unlockLevel)||1)>level).sort((a,b)=>(a.unlockLevel||1)-(b.unlockLevel||1))[0];
+ const slotCards=equipped.map((id,i)=>{const skill=byId.get(id);return '<button type="button" class="cb-skill-slot '+(i===selected?'active ':'')+(skill?'filled':'empty')+'" data-skill-slot="'+i+'"><small>SLOT '+(i+1)+'</small><i>'+skillIcon(skill?.kind)+'</i><span><b>'+escHtml(skill?.name||'Empty Skill Slot')+'</b><em>'+(skill?skillKindLabel(skill.kind)+' · '+skillCooldownText(skill):'Tap this slot, then choose a skill')+'</em></span></button>'}).join('');
+ const library=pool.slice().sort((a,b)=>(skillAvailable(c,a,spec)?0:1)-(skillAvailable(c,b,spec)?0:1)||(a.unlockLevel||1)-(b.unlockLevel||1)).map(skill=>{const unlock=Math.max(1,Number(skill.unlockLevel)||1),talentLocked=!skillTalentMet(c,skill,spec),locked=unlock>level||talentLocked,isEquipped=equipped.includes(skill.id);return '<article class="cb-skill-card kind-'+escHtml(skill.kind)+' '+(locked?'locked ':'')+(isEquipped?'equipped':'')+'"><div class="cb-skill-card-icon">'+skillIcon(skill.kind)+'</div><div class="cb-skill-card-copy"><div><small>'+skillKindLabel(skill.kind)+'</small><h4>'+escHtml(skill.name)+'</h4></div><p>'+escHtml(skill.desc||'Combat skill.')+'</p></div>'+(locked?'<div class="cb-skill-lock"><b>'+(talentLocked?'REQUIRES '+escHtml(skill.talentReq).toUpperCase():'LEVEL '+unlock)+'</b></div>':'<button type="button" class="cb-skill-equip" data-equip-skill="'+escHtml(skill.id)+'">'+(isEquipped?'MOVE TO SLOT ':'EQUIP TO SLOT ')+(selected+1)+'</button>')+'</article>'}).join('');
+ return '<div class="cb-skills-screen"><section class="cb-skills-hero"><div><small>COMBAT LOADOUT · '+escHtml(spec.toUpperCase())+'</small><h3>4 Skills + 1 Class Buff</h3><p>Class buffs are earned through solo Class Trials beginning at Level 5.</p></div><div class="cb-skill-progress"><span>SKILLS UNLOCKED</span><b>'+unlockedCount+' / '+pool.length+'</b><small>'+(nextUnlock?'Next skill: '+escHtml(nextUnlock.name)+' at Level '+nextUnlock.unlockLevel:'All current skills unlocked')+'</small></div></section><section class="cb-loadout-panel"><div class="cb-loadout-head"><div><small>ACTIVE SKILLS</small><h4>Select a slot, then choose a skill.</h4></div><button type="button" data-reset-skills>RESET DEFAULTS</button></div><div class="cb-skill-slots">'+slotCards+'</div></section><section class="cb-buff-slot-panel '+(buff?'':'locked')+'"><div class="cb-buff-slot-icon">'+(buff?'▲':'◇')+'</div><div><small>DEDICATED CLASS BUFF</small><h4>'+escHtml(buff?.name||'Locked until Level 5 Class Trial')+'</h4><p>'+escHtml(buff?buffEffectText(buff):'Complete this character’s first solo Class Trial to unlock the fifth combat slot.')+'</p></div><strong>'+(buff?'EQUIPPED':'LOCKED')+'</strong></section>'+classBuffProgressMarkup(c)+'<section class="cb-skill-library"><div class="cb-skill-library-head"><div><small>AVAILABLE SKILLS</small><h4>'+escHtml(c.class)+' · '+escHtml(spec)+'</h4></div><span>Level '+level+'</span></div><div class="cb-skill-grid">'+library+'</div></section></div>'
+}
+
 function professionsPanel(c){
   const ent=window.CellboundGame?.getEntitlements?.()||{professionSlots:1,member:false};
   const slots=[0,1].map(i=>{
@@ -1243,6 +1240,17 @@ function resetSkills(){
   state.activity=state.activity||[];state.activity.push(c.name+' reset '+c.spec+' combat skills to the recommended defaults.');
   activeSkillSlot=0;writeState(state);renderSheet()
 }
+
+function completeClassBuffTrial(buffId){
+ if(!characterEditable())return;const state=readState(),c=ensureCharacter(getCharacter(state,currentId));if(!state||!c)return;
+ const q=buffQuestList(c).find(x=>x.id===buffId);if(!q||q.pvp||Math.max(1,Number(c.level)||1)<q.level)return;
+ if(!confirm(q.trial+' is a solo '+c.class+' trial for '+c.name+'.\n\nComplete the class challenge and learn '+q.name+'?'))return;
+ if(!c.classBuffProgress.unlocked.includes(q.id))c.classBuffProgress.unlocked.push(q.id);c.buffSkill=q.id;
+ state.activity=state.activity||[];state.activity.push(c.name+' completed the '+q.trial+' Class Trial and learned '+q.name+'.');writeState(state);renderSheet();window.CellboundFX?.quest?.({eyebrow:'CLASS TRIAL COMPLETE',title:q.name,copy:'Class buff learned and equipped.',tone:'story',duration:1600})
+}
+function equipClassBuff(buffId){
+ if(!characterEditable())return;const state=readState(),c=ensureCharacter(getCharacter(state,currentId));if(!state||!c||!unlockedBuffIds(c).includes(buffId))return;const q=buffQuestList(c).find(x=>x.id===buffId);if(!q)return;c.buffSkill=buffId;state.activity=state.activity||[];state.activity.push(c.name+' equipped the '+q.name+' class buff.');writeState(state);renderSheet()
+}
 function openCharacter(id){
   document.body.classList.add('character-sheet-open');
   returnView=document.querySelector('.view.active')?.id||'roster';
@@ -1264,6 +1272,8 @@ document.addEventListener('click',event=>{
   if(!modal.hidden){
     const tab=event.target.closest('[data-sheet-tab]');if(tab){event.preventDefault();event.stopImmediatePropagation();currentTab=tab.dataset.sheetTab||'overview';activeSlot=null;renderSheet();return}
     const charJump=event.target.closest('[data-char-jump]');if(charJump){closeCharacter(charJump.dataset.charJump);return}
+    const buffTrial=event.target.closest('[data-class-buff-trial]');if(buffTrial){completeClassBuffTrial(buffTrial.dataset.classBuffTrial);return}
+    const equipBuff=event.target.closest('[data-equip-buff]');if(equipBuff){equipClassBuff(equipBuff.dataset.equipBuff);return}
     const skillSlot=event.target.closest('[data-skill-slot]');if(skillSlot){activeSkillSlot=Math.max(0,Math.min(3,Number(skillSlot.dataset.skillSlot)||0));renderSheet();return}
     const equipSkillBtn=event.target.closest('[data-equip-skill]');if(equipSkillBtn){equipSkill(equipSkillBtn.dataset.equipSkill);return}
     const clearSkill=event.target.closest('[data-clear-skill]');if(clearSkill){clearSkillSlot(clearSkill.dataset.clearSkill);return}
