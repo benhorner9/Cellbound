@@ -428,7 +428,8 @@ for(const file of files){
     if(!combatRuntime.includes("emit(ctx,'INTERACTION_REQUIRED'")||!manorRuntime.includes("type:'interaction'")||!manorRuntime.includes('onEvent:handleRaidCombatEvent'))throw new Error('Manor Screech must be driven by Combat Reborn interaction events');
     const endgameStart=contents.indexOf('<section id="endgame" class="view">'),endgameEnd=contents.indexOf('<section id="world" class="view">',endgameStart);
     if(endgameStart<0||endgameEnd<0||contents.slice(endgameStart,endgameEnd).includes('manorRaidMount'))throw new Error('The Manor must not be mounted inside Endgame');
-    if(!contents.includes('dungeon-2d-v1.css')||!contents.includes('dungeon-2d-v1.js'))throw new Error('Ashen Vault 2D viewer assets are not linked from guild.html');\n    if(!contents.includes('combat-3d-v1.css')||!contents.includes('combat-3d-v1.js'))throw new Error('Optional 3D combat prototype assets are not linked from guild.html');
+    if(!contents.includes('dungeon-2d-v1.css')||!contents.includes('dungeon-2d-v1.js'))throw new Error('Ashen Vault 2D viewer assets are not linked from guild.html');
+    if(!contents.includes('combat-3d-v1.css')||!contents.includes('combat-3d-v1.js'))throw new Error('Optional 3D combat prototype assets are not linked from guild.html');
     if(!contents.includes('chaos-canyon-v1.css')||!contents.includes('chaos-canyon-v1.js')||!contents.includes('id="chaosCanyonMount"'))throw new Error('Chaos Canyon assets or mount are not linked from guild.html');
     if(!contents.includes('blackout-station-v1.css')||!contents.includes('blackout-station-v1.js')||!contents.includes('id="blackoutStationMount"'))throw new Error('Blackout Station assets or mount are not linked from guild.html');
     if(contents.includes('world-boss-2d-v1.css')||contents.includes('world-boss-2d-v1.js')||contents.includes('id="worldBossGrid"'))throw new Error('Legacy shared World Boss assets must not be linked from guild.html');
