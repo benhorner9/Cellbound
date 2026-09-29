@@ -133,17 +133,18 @@ function recipeHistory(prof,recipeId){
   return prof.craftHistory[recipeId]||{count:0,best:0,masterwork:false};
 }
 function craftXp(recipe,prof,tier,exactCount){
-  const history=recipeHistory(prof,recipe.id),gap=Math.max(0,(Number(prof.level)||1)-(Number(recipe.level)||1));
+  const history=recipeHistory(prof,recipe.id),gap=Math.max(0,(Number(prof.level)||1)-(Number(recipe.level)||1)),trainingScale=Math.max(.1,Number(recipe.trainingScale)||1);
   let relevance=1;
   if(gap>50)relevance=.04;else if(gap>35)relevance=.12;else if(gap>20)relevance=.35;else if(gap>10)relevance=.7;
   const freshness=history.count===0?1.7:history.count<3?1.15:1;
-  let xp=Math.round(((Number(recipe.xp)||18)*7+50)*relevance*freshness*tier.xp);
-  if(tier.key==='masterwork'&&!history.masterwork)xp+=120+Math.round((Number(recipe.level)||1)*3);
-  if(exactCount===3)xp+=20;
+  let xp=Math.round(((Number(recipe.xp)||18)*7+50)*relevance*freshness*tier.xp*trainingScale);
+  if(tier.key==='masterwork'&&!history.masterwork)xp+=Math.round((120+Math.round((Number(recipe.level)||1)*3))*trainingScale);
+  if(exactCount===3)xp+=Math.round(20*trainingScale);
   return Math.max(2,xp);
 }
 function craftXpLabel(recipe,prof){
   const h=recipeHistory(prof,recipe.id),gap=Math.max(0,prof.level-recipe.level);
+  if(recipe.crafterOnly)return'PERSONAL PERK · REDUCED TRAINING XP';
   if(gap>50)return'TRIVIAL XP';
   if(gap>35)return'LOW XP';
   if(h.count===0)return'FIRST CRAFT BONUS';
