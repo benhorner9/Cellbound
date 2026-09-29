@@ -34,7 +34,7 @@ const PROFESSIONS={
     {id:'alc-voidguard-flask',name:'Voidguard Flask',level:85,xp:68,inputs:{'cell-shards':6,'void-crystal':1},output:{category:'consumable',key:'voidguard-flask',name:'Voidguard Flask',quantity:1,payload:{effect:'character-flask',bonuses:{magicWardPct:8},charges:3,description:'Drink before combat. Take 8% less magic damage for the next 3 boss encounters. Only one Flask can be active.'}},endgame:true},
     {id:'alc-cell-shock',name:'Cell Shock Draught',level:100,xp:0,inputs:{'ancient-soul':3,'void-crystal':1},output:{category:'consumable',key:'cell-shock-draught',name:'Cell Shock Draught',quantity:1,payload:{effect:'clear-cell-shock',description:'Immediately clears one character’s Cell Shock.'}},endgame:true}
   ]},
-  Enchanting:{icon:'✥',summary:'Create temporary runes that add specialist stats to equipped items.',recipes:[
+  Enchanting:{icon:'✥',summary:'Create runes and glyphs that add specialist stats to equipped items.',recipes:[
     {id:'enc-binding-rune',name:'Binding Rune',level:1,xp:18,inputs:{'faded-cell-fragment':2},output:{category:'consumable',key:'binding-rune',name:'Binding Rune',quantity:1,payload:{effect:'gear-enhancement',slot:'Head',bonuses:{crit:2},charges:3,description:'Apply to an equipped Head item. +2% Critical Strike for the next 3 boss encounters.'}}},
     {id:'enc-steadfast-rune',name:'Steadfast Rune',level:10,xp:22,inputs:{'faded-cell-fragment':2,'zeltiran-iron':1},output:{category:'consumable',key:'steadfast-rune',name:'Steadfast Rune',quantity:1,payload:{effect:'gear-enhancement',slot:'Chest',bonuses:{stamina:3},charges:3,description:'Apply to an equipped Chest item. +3 Stamina for the next 3 boss encounters.'}}},
     {id:'enc-swiftstep-rune',name:'Swiftstep Rune',level:20,xp:28,inputs:{'ashen-soul-fragment':2},output:{category:'consumable',key:'swiftstep-rune',name:'Swiftstep Rune',quantity:1,payload:{effect:'gear-enhancement',slot:'Feet',bonuses:{haste:3},charges:3,description:'Apply to equipped Feet. +3% Haste for the next 3 boss encounters.'}}},
@@ -48,7 +48,7 @@ const PROFESSIONS={
     {id:'enc-voidward-glyph',name:'Voidward Glyph',level:85,xp:68,inputs:{'cell-shards':6,'void-crystal':1},output:{category:'consumable',key:'voidward-glyph',name:'Voidward Glyph',quantity:1,payload:{effect:'gear-enhancement',slot:'OffHand',bonuses:{magicWardPct:7},charges:3,description:'Apply to an equipped OffHand item. Take 7% less magic damage for the next 3 boss encounters.'}},endgame:true},
     {id:'enc-soulbound-glyph',name:'Soulbound Glyph',level:100,xp:0,inputs:{'ancient-soul':2,'void-crystal':2,'cell-shards':8},output:{category:'consumable',key:'soulbound-glyph',name:'Soulbound Glyph',quantity:1,payload:{effect:'gear-enhancement',slot:'Relic',bonuses:{damagePct:4,healing:4,stamina:4},charges:3,description:'Apply to an equipped Relic. +4% Damage, +4% Healing Power and +4 Stamina for the next 3 boss encounters.'}},endgame:true}
   ]},
-  Blacksmithing:{icon:'⚒',summary:'Forge whetstones and armour kits that temporarily empower equipped metal gear.',recipes:[
+  Blacksmithing:{icon:'⚒',summary:'Forge whetstones and armour kits that permanently modify equipped gear until replaced.',recipes:[
     {id:'bs-tempered-whetstone',name:'Tempered Whetstone',level:1,xp:20,inputs:{'zeltiran-iron':2,'faded-cell-fragment':1},output:{category:'consumable',key:'tempered-whetstone',name:'Tempered Whetstone',quantity:1,payload:{effect:'gear-enhancement',slot:'Weapon',bonuses:{damagePct:3},charges:3,description:'Apply to an equipped Weapon. +3% Damage for the next 3 boss encounters.'}}},
     {id:'bs-braced-buckle',name:'Braced Armour Kit',level:10,xp:24,inputs:{'zeltiran-iron':3,'faded-cell-fragment':1},output:{category:'consumable',key:'braced-armour-kit',name:'Braced Armour Kit',quantity:1,payload:{effect:'gear-enhancement',slot:'Waist',bonuses:{stamina:3},charges:3,description:'Apply to an equipped Waist item. +3 Stamina for the next 3 boss encounters.'}}},
     {id:'bs-ironclad-plate',name:'Ironclad Plate Kit',level:20,xp:30,inputs:{'zeltiran-iron':3,'ashen-soul-fragment':1},output:{category:'consumable',key:'ironclad-plate-kit',name:'Ironclad Plate Kit',quantity:1,payload:{effect:'gear-enhancement',slot:'Chest',bonuses:{armour:12},charges:3,description:'Apply to an equipped Chest item. +12 Armour for the next 3 boss encounters.'}}},
@@ -62,7 +62,7 @@ const PROFESSIONS={
     {id:'bs-vaultforged-whetstone',name:'Vaultforged Whetstone',level:80,xp:66,inputs:{'cell-shards':6,'vaultheart-crystal':1,'warden-iron':1},output:{category:'consumable',key:'vaultforged-whetstone',name:'Vaultforged Whetstone',quantity:1,payload:{effect:'gear-enhancement',slot:'Weapon',bonuses:{damagePct:6,crit:3},charges:3,description:'Apply to an equipped Weapon. +6% Damage and +3% Critical Strike for the next 3 boss encounters.'}},endgame:true},
     {id:'bs-soulforged-armour',name:'Soulforged Armour Kit',level:100,xp:0,inputs:{'ancient-soul':2,'void-crystal':1,'cell-shards':10},output:{category:'consumable',key:'soulforged-armour-kit',name:'Soulforged Armour Kit',quantity:1,payload:{effect:'gear-enhancement',slot:'Chest',bonuses:{armour:30,stamina:8},charges:3,description:'Apply to an equipped Chest item. +30 Armour and +8 Stamina for the next 3 boss encounters.'}},endgame:true}
   ]},
-  Leatherworking:{icon:'⌁',summary:'Craft grips, harnesses and wraps that provide temporary speed and precision bonuses.',recipes:[
+  Leatherworking:{icon:'⌁',summary:'Craft grips, harnesses and wraps that modify gear with speed and precision bonuses.',recipes:[
     {id:'lw-balanced-grip',name:'Balanced Grip',level:1,xp:20,inputs:{'faded-cell-fragment':2},output:{category:'consumable',key:'balanced-grip',name:'Balanced Grip',quantity:1,payload:{effect:'gear-enhancement',slot:'Weapon',bonuses:{haste:2},charges:3,description:'Apply to an equipped Weapon. +2% Haste for the next 3 boss encounters.'}}},
     {id:'lw-pathfinder-wrap',name:'Pathfinder Wrap',level:10,xp:24,inputs:{'faded-cell-fragment':2,'zeltiran-iron':1},output:{category:'consumable',key:'pathfinder-wrap',name:'Pathfinder Wrap',quantity:1,payload:{effect:'gear-enhancement',slot:'Feet',bonuses:{haste:2,stamina:2},charges:3,description:'Apply to equipped Feet. +2% Haste and +2 Stamina for the next 3 boss encounters.'}}},
     {id:'lw-padded-harness',name:'Padded Harness',level:20,xp:30,inputs:{'ashen-soul-fragment':2},output:{category:'consumable',key:'padded-harness',name:'Padded Harness',quantity:1,payload:{effect:'gear-enhancement',slot:'Chest',bonuses:{stamina:4},charges:3,description:'Apply to an equipped Chest item. +4 Stamina for the next 3 boss encounters.'}}},
@@ -76,7 +76,7 @@ const PROFESSIONS={
     {id:'lw-vaultstalker-grip',name:'Vaultstalker Grip',level:80,xp:66,inputs:{'cell-shards':6,'vaultheart-crystal':1,'ember-core':1},output:{category:'consumable',key:'vaultstalker-grip',name:'Vaultstalker Grip',quantity:1,payload:{effect:'gear-enhancement',slot:'Weapon',bonuses:{haste:5,crit:4},charges:3,description:'Apply to an equipped Weapon. +5% Haste and +4% Critical Strike for the next 3 boss encounters.'}},endgame:true},
     {id:'lw-voidbound-harness',name:'Voidbound Harness',level:100,xp:0,inputs:{'ancient-soul':2,'void-crystal':1,'cell-shards':10},output:{category:'consumable',key:'voidbound-harness',name:'Voidbound Harness',quantity:1,payload:{effect:'gear-enhancement',slot:'Chest',bonuses:{haste:6,crit:5,stamina:6},charges:3,description:'Apply to an equipped Chest item. +6% Haste, +5% Critical Strike and +6 Stamina for the next 3 boss encounters.'}},endgame:true}
   ]},
-  Tailoring:{icon:'✂',summary:'Weave spellthreads and linings that temporarily improve healing, casting and magical defence.',recipes:[
+  Tailoring:{icon:'✂',summary:'Weave spellthreads and linings that improve healing, casting and magical defence.',recipes:[
     {id:'tail-focus-thread',name:'Focus Thread',level:1,xp:20,inputs:{'faded-cell-fragment':2},output:{category:'consumable',key:'focus-thread',name:'Focus Thread',quantity:1,payload:{effect:'gear-enhancement',slot:'Head',bonuses:{intellect:3},charges:3,description:'Apply to an equipped Head item. +3 Intellect for the next 3 boss encounters.'}}},
     {id:'tail-quickweave-thread',name:'Quickweave Thread',level:10,xp:24,inputs:{'faded-cell-fragment':2,'zeltiran-iron':1},output:{category:'consumable',key:'quickweave-thread',name:'Quickweave Thread',quantity:1,payload:{effect:'gear-enhancement',slot:'Hands',bonuses:{haste:2,intellect:2},charges:3,description:'Apply to equipped Hands. +2% Haste and +2 Intellect for the next 3 boss encounters.'}}},
     {id:'tail-acolyte-lining',name:'Acolyte Lining',level:20,xp:30,inputs:{'ashen-soul-fragment':2},output:{category:'consumable',key:'acolyte-lining',name:'Acolyte Lining',quantity:1,payload:{effect:'gear-enhancement',slot:'Chest',bonuses:{healing:3},charges:3,description:'Apply to an equipped Chest item. +3% Healing Power for the next 3 boss encounters.'}}},
@@ -125,7 +125,7 @@ function itemSignature(item){return item?.rollId||item?.itemId||item?.name||null
 function activeBonuses(c){
   const totals={};
   const add=src=>Object.entries(src||{}).forEach(([k,v])=>totals[k]=(Number(totals[k])||0)+(Number(v)||0));
-  Object.values(c?.equipment||{}).forEach(item=>{if(item?.attachment?.bonuses)add(item.attachment.bonuses)});
+  Object.values(c?.equipment||{}).forEach(item=>{const a=item?.attachment;if(a?.bonuses&&(!a.crafterOnly||a.boundCharacterId===c?.id))add(a.bonuses)});
   Object.values(c?.activeEnhancements||{}).forEach(e=>{
     const item=c?.equipment?.[e.slot];
     if((Number(e.remainingBosses)||0)>0&&itemSignature(item)===e.targetSignature)add(e.bonuses);
@@ -136,7 +136,7 @@ function activeBonuses(c){
 function activeEffects(c){
   const out=[];
   Object.entries(c?.equipment||{}).forEach(([slot,item])=>{
-    const a=item?.attachment;if(a?.bonuses)out.push({kind:'attachment',name:a.name||a.key||'Attachment',slot,permanent:true,bonuses:a.bonuses,tier:a.tier||a.attachmentTier||null});
+    const a=item?.attachment;if(a?.bonuses&&(!a.crafterOnly||a.boundCharacterId===c?.id))out.push({kind:'attachment',name:a.name||a.key||'Attachment',slot,permanent:true,bonuses:a.bonuses,tier:a.tier||a.attachmentTier||null,crafterOnly:Boolean(a.crafterOnly)});
   });
   Object.values(c?.activeEnhancements||{}).forEach(e=>{
     const item=c?.equipment?.[e.slot],active=(Number(e.remainingBosses)||0)>0&&itemSignature(item)===e.targetSignature;
