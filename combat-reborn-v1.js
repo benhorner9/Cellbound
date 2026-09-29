@@ -422,7 +422,8 @@ function professionCombatBonuses(c){
 }
 function professionPrimaryValue(u){
  const b=u?.professionBonuses||{};
- let key=['Warrior','Paladin','Death Knight'].includes(u?.class)?'strength':['Hunter','Rogue','Demon Hunter'].includes(u?.class)?'agility':'intellect';
+ let key=['Warrior','Death Knight'].includes(u?.class)?'strength':['Hunter','Rogue','Demon Hunter'].includes(u?.class)?'agility':'intellect';
+ if(u?.class==='Paladin')key=u?.spec==='Holy'?'intellect':'strength';
  if(u?.class==='Monk')key=u?.spec==='Mistweaver'?'intellect':'agility';
  return Math.max(0,Number(b[key])||0)
 }
