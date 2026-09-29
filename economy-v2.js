@@ -22,13 +22,13 @@ function normalise(){
   s.roster.forEach(c=>{c.professions=Array.isArray(c.professions)?c.professions.slice(0,1):[null];while(c.professions.length<1)c.professions.push(null);c.professions=c.professions.map(p=>p?{...p,name:p.name,level:Math.max(1,Math.min(100,Number(p.level)||1)),xp:Math.max(0,Number(p.xp)||0),craftHistory:p.craftHistory&&typeof p.craftHistory==='object'?p.craftHistory:{},masterworks:Math.max(0,Number(p.masterworks)||0),projectsCompleted:Math.max(0,Number(p.projectsCompleted)||0)}:null);c.activeEnhancements=c.activeEnhancements&&typeof c.activeEnhancements==='object'?c.activeEnhancements:{};c.activeProfessionBuffs=Array.isArray(c.activeProfessionBuffs)?c.activeProfessionBuffs:[];});
 }
 function addConsumable(item,qty=1){
-  const s=state(),key=item.key||item.itemKey,name=item.name||item.itemName||key,payload=item.payload||{};
+  const s=state(),key=item.key||item.itemKey,name=item.name||item.itemName||key,payload=item.payload||{},meta=P?.recipeMetaForOutputKey?.(key),rarity=item.rarity||meta?.recipe?.output?.rarity||P?.craftedRarity?.(meta?.recipe?.level,meta?.recipe?.endgame)||'Uncommon';
   const found=s.consumables.find(x=>x.key===key);
-  if(found)found.quantity=(found.quantity||1)+qty;
-  else s.consumables.push({key,name,payload,quantity:qty});
+  if(found){found.quantity=(found.quantity||1)+qty;found.payload=payload||found.payload;found.rarity=rarity||found.rarity}
+  else s.consumables.push({key,name,payload,rarity,quantity:qty});
 }
 async function commit(render=true){
-  Game.save();await Game.persistState();if(render){Game.renderAll();renderProfessions();renderCrafted();renderSellOptions();}
+  Game.save();await Game.persistState();if(render){Game.renderAll();renderProfessions();renderSellOptions();}
 }
 async function processInbox(){
   const s=state();if(!s.tradeInbox.length)return false;
@@ -229,8 +229,7 @@ function renderProfessions(){
   work.querySelectorAll('[data-craft]').forEach(b=>b.onclick=()=>beginCraft(b.dataset.craft));
   work.querySelector('[data-craft-abandon]')?.addEventListener('click',abandonCraft);
   work.querySelectorAll('[data-craft-action]').forEach(b=>b.onclick=()=>resolveCraftStep(b.dataset.craftAction));
-  $$('#professionRecipeFilters [data-prof-recipe-filter]').forEach(b=>b.classList.toggle('active',b.dataset.profRecipeFilter===recipeFilter));
-  renderCrafted();
+  $('#professionRecipeFilters [data-prof-recipe-filter]').forEach(b=>b.classList.toggle('active',b.dataset.profRecipeFilter===recipeFilter));
 }
 function consumeStack(key){
   const s=state(),stack=s.consumables.find(x=>x.key===key);if(!stack)return null;
@@ -296,7 +295,7 @@ function bind(){
 }
 async function init(){
   Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,80);return;}P&&normalise();db=Game.getSupabase();user=Game.getUser();if(!db||!user)return;
-  bind();renderProfessions();renderCrafted();
+  bind();renderProfessions();
   window.CellboundEconomy={
     renderProfessions,
     loadMarket,
