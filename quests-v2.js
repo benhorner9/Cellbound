@@ -1237,6 +1237,7 @@ async function startNullQuest(){
 }
 async function playNullQuest(){
  const n=nullQ(),stage=nullStage(),p=party();if(p.length!==5){alert('Build a complete active five-character party before entering the Null Complex.');Game.switchView?.('party');return}
+ if(stage==='signal')return startNullQuest();
  if(stage==='entry')return nullComic('The Forgotten Facility','Dr. Elara Voss',['The doors still have power. Barely. Stay together. Whatever is transmitting from inside has been doing it without personnel for years.'],NULL_ART.entry,()=>nullAdvance('entry','splice','The party entered the abandoned Null Complex.'));
  if(stage==='splice'){
   const won=await runQuest2DFight({quest:NULL_QUEST.title,title:'First Contact',location:'Null Complex · Entry Wing',ambience:'A containment door opens by itself. Something unfolds from the dark.',enemies:['Splice'],combat:{kind:'boss',level:4,recommendedItemLevel:20,enemyHealth:620,mechanics:[['Backline Pounce','line',1500],['Cell Rend','cone',1700]]},completeText:'The specimen collapses. Its Cell structure continues changing even after death.'});if(!won)return;
@@ -1288,10 +1289,10 @@ async function finishNullQuest(){
  Game.switchView?.('world')
 }
 function nullActionHtml(){
- const n=nullQ(),st=nullStage();if(n.complete)return'<button data-nullquest-open-activity>OPEN THE NULL COMPLEX →</button>';
- if(!n.started)return'<button data-nullquest-start>INVESTIGATE THE SIGNAL →</button>';
- const labels={entry:'ENTER THE FACILITY →',splice:'OPEN THE CONTAINMENT DOOR →',recording:'SEARCH THE LAB →',zero:'ENTER CONTAINMENT WING →',components:'SEARCH FOR COMPONENTS →',overseer:'RESTORE POWER →',prototype:'FACE PROTOTYPE 07 →',escape:'RUN FOR THE TELEPORTER →'};
- return'<button data-nullquest-play>'+esc(labels[st]||'CONTINUE INVESTIGATION →')+'</button>'
+ const n=nullQ(),st=nullStage();if(n.complete)return'<button class="quest-primary" data-nullquest-open-activity>OPEN THE NULL COMPLEX →</button>';
+ if(!n.started)return'<button class="quest-primary" data-nullquest-start>INVESTIGATE THE SIGNAL →</button>';
+ const labels={signal:'INSPECT NULL//07 →',entry:'ENTER THE FACILITY →',splice:'OPEN THE CONTAINMENT DOOR →',recording:'SEARCH THE LAB →',zero:'ENTER CONTAINMENT WING →',components:'SEARCH FOR COMPONENTS →',overseer:'RESTORE POWER →',prototype:'FACE PROTOTYPE 07 →',escape:'RUN FOR THE TELEPORTER →'};
+ return'<button class="quest-primary" data-nullquest-play>'+esc(labels[st]||'CONTINUE INVESTIGATION →')+'</button>'
 }
 function renderNullQuestDetail(root,side){
  const n=nullQ(),d=nullDef(),known=[];if(n.started)known.push('NULL//07 is transmitting from a facility officially destroyed years ago.');if(n.done.includes('splice'))known.push('Altered Cell specimens inside the facility have been classified as Aberrants.');if(n.done.includes('recording'))known.push('Director Cael Orin used the Complex to deliberately alter living Cells.');if(n.done.includes('zero'))known.push('Subject Zero remains alive in a powered containment chamber.');if(n.done.includes('prototype'))known.push('Prototype 07 combined multiple Aberrant traits by design.');
