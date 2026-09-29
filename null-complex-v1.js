@@ -67,7 +67,7 @@ function move(dx,dy){
  if(room.type==='search'&&!room.searched)run.message='Searchable equipment and storage detected.';
  else if(room.type==='teleporter')run.message=allParts()?'Teleporter ready. Install the recovered components.':'Teleporter located. Components are still missing.';
  else run.message='Room secured. Choose the next route.';
- persist();render();openExplore()
+ persist();render();showRoom()
 }
 function encounter(room){
  const floor=run.floor,r=rng(run.seed+':fight:'+floor+':'+run.pos.x+':'+run.pos.y);
@@ -135,22 +135,34 @@ function wipe(reason){
 }
 function notice(msg){if(mount){const n=mount.querySelector('[data-null-notice]');if(n){n.textContent=msg;n.hidden=false}}}
 function roomName(room){return room?.type==='entrance'?'Entry Chamber':room?.type==='teleporter'?'Teleport Chamber':room?.type==='breach'?'Containment Breach':room?.type==='search'?'Research Chamber':room?.type==='combat'?'Experiment Chamber':'Facility Chamber'}
-function miniMapMarkup(){
- let out='';for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){const k=key(x,y),seen=run.visited[k],here=run.pos.x===x&&run.pos.y===y,c=run.map[k];let mark=here?'●':seen&&c.type==='entrance'?'E':seen&&c.type==='teleporter'?'T':seen?'·':'';out+='<i class="'+(seen?'seen ':'')+(here?'here ':'')+'">'+mark+'</i>'}return out
+function roomVisual(room){return room.type==='breach'?'breach':room.type==='teleporter'?'reactor':room.type==='search'?'lab':(['lab','containment','reactor','storage'][(run.pos.x+run.pos.y+run.floor)%4])}
+function roomProps(room){
+ const v=roomVisual(room),search=room.type==='search'&&!room.searched;
+ let html='<div class="null-scene-props '+v+'">';
+ if(v==='containment'||room.type==='breach')html+='<i class="null-prop tank a"></i><i class="null-prop tank b"></i>';
+ if(v==='storage'||search)html+='<i class="null-prop crate a"></i><i class="null-prop crate b"></i><i class="null-prop console"></i>';
+ if(v==='reactor')html+='<i class="null-prop reactor"></i>';
+ html+='<i class="null-door north"></i><i class="null-door south"></i><i class="null-door west"></i><i class="null-door east"></i></div>';return html
 }
-function ensureExplore(){
- if(exploreRoot?.isConnected)return exploreRoot;
- exploreRoot=document.createElement('div');exploreRoot.id='nullExplore';exploreRoot.className='null-explore-backdrop';document.body.appendChild(exploreRoot);return exploreRoot
+function controlsHtml(room){
+ const btn=(d,label,dx,dy)=>'<button data-null-door="'+d+'" data-dx="'+dx+'" data-dy="'+dy+'" '+(!canMove(dx,dy)?'disabled':'')+'>'+label+'</button>';
+ return '<div class="null-engine-controls">'+(room.type==='search'&&!room.searched?'<button class="search" data-null-search>SEARCH ROOM</button>':'')+'<div class="doors">'+btn('north','NORTH',0,-1)+btn('west','WEST',-1,0)+btn('east','EAST',1,0)+btn('south','SOUTH',0,1)+'</div>'+(atTele()&&allParts()?'<div class="extract"><button data-null-extract>EXTRACT · KEEP LOOT</button>'+(run.floor<MAX_FLOOR?'<button data-null-descend>DESCEND</button>':'')+'</div>':'')+'</div>'
 }
-function closeExplore(){if(exploreRoot)exploreRoot.remove();exploreRoot=null;render()}
-function openExplore(){
- if(!run){closeExplore();return}
- const root=ensureExplore(),room=roomAt(run.pos.x,run.pos.y),visual=room.type==='breach'?'breach':room.type==='teleporter'?'reactor':room.type==='search'?'lab':(['lab','containment','reactor','storage'][(run.pos.x+run.pos.y+run.floor)%4]);
- const ready=atTele()&&allParts();
- root.innerHTML='<section class="null-explore-shell"><header><div><small>THE NULL COMPLEX · FLOOR '+run.floor+' / '+MAX_FLOOR+'</small><h2>'+esc(roomName(room))+'</h2></div><div class="null-explore-risk"><small>AT RISK</small><b>'+Object.values(run.pending).reduce((a,b)=>a+b,0)+' MATERIALS</b><button type="button" data-null-leave>LEAVE VIEW</button></div></header><div class="null-explore-layout"><main><div class="cb2d-arena theme-null room-null-'+visual+' null-explore-arena"><div class="cb2d-floor"></div><div class="cb2d-environment"></div><div class="null-party-marker"><b>YOUR PARTY</b><span>Exploring room '+(run.pos.x+1)+','+(run.pos.y+1)+'</span></div><div class="null-room-message">'+esc(run.message||'Choose a route.')+'</div></div><div class="null-room-controls">'+(room.type==='search'&&!room.searched?'<button data-null-search>SEARCH THE ROOM</button>':'')+'<div class="null-door-controls"><button data-move="0,-1" '+(!canMove(0,-1)?'disabled':'')+'>NORTH</button><button data-move="-1,0" '+(!canMove(-1,0)?'disabled':'')+'>WEST</button><button data-move="1,0" '+(!canMove(1,0)?'disabled':'')+'>EAST</button><button data-move="0,1" '+(!canMove(0,1)?'disabled':'')+'>SOUTH</button></div>'+(ready?'<div class="null-extract"><button data-null-extract>EXTRACT · KEEP LOOT</button>'+(run.floor<MAX_FLOOR?'<button data-null-descend>DESCEND TO FLOOR '+(run.floor+1)+'</button>':'')+'</div>':'')+'</div></main><aside><small>DISCOVERED FLOOR</small><div class="null-mini-map">'+miniMapMarkup()+'</div><div class="null-parts">'+PARTS.map(p=>'<span class="'+(run.parts[p[0]]?'found':'')+'">'+p[2]+' '+p[1]+' <b>'+(run.parts[p[0]]?'FOUND':'MISSING')+'</b></span>').join('')+'</div><div class="null-loot"><small>UNBANKED LOOT</small>'+lootMarkup()+'</div><p>Move through the facility from inside the expedition. The map only records rooms you have already discovered.</p></aside></div></section>';
- root.querySelector('[data-null-leave]')?.addEventListener('click',closeExplore);root.querySelectorAll('[data-move]').forEach(b=>b.addEventListener('click',()=>{const [x,y]=b.dataset.move.split(',').map(Number);move(x,y)}));
- root.querySelector('[data-null-search]')?.addEventListener('click',()=>{search();openExplore()});root.querySelector('[data-null-extract]')?.addEventListener('click',()=>{extract();closeExplore()});root.querySelector('[data-null-descend]')?.addEventListener('click',()=>{descend();openExplore()})
+function bindExplore(view,room){
+ const root=view.root;
+ root.querySelectorAll('[data-null-door]').forEach(btn=>btn.addEventListener('click',async()=>{root.querySelectorAll('.null-engine-controls button').forEach(b=>b.disabled=true);const d=btn.dataset.nullDoor,pts={north:[{x:45,y:8},{x:48,y:7},{x:51,y:8},{x:54,y:9},{x:57,y:8}],south:[{x:45,y:91},{x:48,y:92},{x:51,y:91},{x:54,y:90},{x:57,y:91}],west:[{x:7,y:42},{x:8,y:46},{x:7,y:50},{x:8,y:54},{x:7,y:58}],east:[{x:93,y:42},{x:92,y:46},{x:93,y:50},{x:92,y:54},{x:93,y:58}]}[d];view.setStatus('Party moving '+d+'…');await view.moveParty(pts,700);view.close(true);move(Number(btn.dataset.dx),Number(btn.dataset.dy))}));
+ root.querySelector('[data-null-search]')?.addEventListener('click',async e=>{e.currentTarget.disabled=true;view.setStatus('Party searching the chamber…');await view.moveParty([{x:23,y:27},{x:72,y:28},{x:28,y:72},{x:70,y:70},{x:50,y:46}],850);await new Promise(q=>setTimeout(q,550));search();view.setStatus(run.message);setTimeout(()=>showRoom(),700)});
+ root.querySelector('[data-null-extract]')?.addEventListener('click',()=>{view.close(true);extract()});root.querySelector('[data-null-descend]')?.addEventListener('click',()=>{view.close(true);descend();showRoom()})
 }
+function showRoom(){
+ if(!run)return;
+ const viewer=window.CellboundDungeon2D;if(!viewer?.openSharedExploration){notice('Exploration engine is loading.');return}
+ const room=roomAt(run.pos.x,run.pos.y),party=(Game()?.getPartyCharacters?.()||[]);
+ const view=viewer.openSharedExploration({party,id:'null-'+run.floor+'-'+run.pos.x+'-'+run.pos.y,header:'THE NULL COMPLEX · FLOOR '+run.floor,title:roomName(room),theme:'null',room:'null-'+roomVisual(room),roomLabel:roomName(room),ambience:room.type==='search'?'Searchable equipment is scattered through the chamber.':room.type==='teleporter'?'The damaged teleporter dominates the chamber.':'The party advances through the abandoned facility.',environmentHtml:roomProps(room),controlsHtml:controlsHtml(room),status:run.message||'Choose a route.',shellClass:'null-combat-shell',arenaClass:'null-combat-arena'});
+ bindExplore(view,room)
+}
+function openExplore(){showRoom()}
+function closeExplore(){window.CellboundDungeon2D?.closeShared?.(true)}
 function mapMarkup(){
  let out='';for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){const k=key(x,y),seen=run.visited[k],here=run.pos.x===x&&run.pos.y===y,c=run.map[k];let mark='';
  if(here)mark='●';else if(seen&&c.type==='entrance')mark='E';else if(seen&&c.type==='teleporter')mark='T';else if(seen&&c.type==='search')mark=c.searched?'✓':'?';else if(seen&&(c.type==='combat'||c.type==='breach'))mark=c.cleared?'✓':'!';else if(seen)mark='·';
