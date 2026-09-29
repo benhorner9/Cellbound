@@ -1430,6 +1430,7 @@ function renderRebornEvent(e,result,replayMode=false){
  if(!run||!e)return;
  rebornDebugEvent(e,result);
  const visualSpeed=()=>combatPlaybackSpeed(replayMode?(run?.replaySpeed||1):(run?.speed||1));
+ try{window.CellboundCombat3D?.event?.(e,result,{replayMode,speed:visualSpeed()})}catch(error){console.warn('3D combat prototype recovered',e?.type,error)}
  window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#cb2dArena'),speed:visualSpeed});
  if(window.CellboundCombatStatuses?.handle(e,{resolve:cbrStatusTargets,speed:visualSpeed}))return;
  const srcChar=rebornPlayerByUnit(e.source),targetChar=rebornPlayerByUnit(e.target),enemyIdx=rebornEnemyIndex(e.target),sourceEnemyIdx=rebornEnemyIndex(e.source);
