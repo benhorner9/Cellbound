@@ -28,6 +28,12 @@ for(const file of files){
   if(file==='combat-polish-v2.css'){
     for(const hook of ['.cbvfx-layer','.cbvfx-events','.cbvfx-burst.damage','.cbvfx-burst.heal','.cbvfx-burst.interrupt','.cbvfx-burst.death','data-cbvfx-theme="ashen"','data-cbvfx-theme="hollow"','data-cbvfx-theme="chaos"','data-cbvfx-theme="blackout"','data-cbvfx-theme="pvp"','cbvfxLootReveal','prefers-reduced-motion'])if(!contents.includes(hook))throw new Error('Shared combat VFX styling is missing '+hook);
   }
+  if(file==='quests-v2.js'){
+    for(const hook of ["id:'signal-from-nowhere'","Prototype 07 — The Reconstituted","progression.nullComplexUnlocked","isNullComplexUnlocked"])if(!contents.includes(hook))throw new Error('Signal From Nowhere quest is missing '+hook);
+  }
+  if(file==='null-complex-v1.js'){
+    for(const hook of ['function unlocked()','Complete Signal From Nowhere','BEGIN SIGNAL FROM NOWHERE','3 × 3 facility'])if(!contents.includes(hook))throw new Error('Null Complex quest gate is missing '+hook);
+  }
   if(file==='economy-v2.js'){
     for(const hook of ['const WORKSHOP_ACTIONS=','function beginCraft(','async function resolveCraftStep(','function craftProjectMarkup(','FIRST CRAFT BONUS','MASTERWORK BONUS AVAILABLE','projectsCompleted','data-item-art-done="1"'])if(!contents.includes(hook))throw new Error('Profession project crafting runtime is missing '+hook);
     if(contents.includes('>CRAFT</button>'))throw new Error('Legacy profession spam-craft button returned');
