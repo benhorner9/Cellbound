@@ -1218,11 +1218,9 @@ const NULL_STAGES=[
 const nullQ=()=>ensure().nullComplex;
 const nullStage=()=>nullQ().complete?'complete':nullQ().stage||'signal';
 const nullDef=()=>NULL_STAGES.find(x=>x.id===nullStage())||NULL_STAGES[0];
-const NULL_ART={
- signal:'./assets/comics/null-complex/voss-signal.webp',entry:'./assets/comics/null-complex/facility-entry.webp',splice:'./assets/comics/null-complex/first-aberrant.webp',
- orin:'./assets/comics/null-complex/orin-recording.webp',zero:'./assets/comics/null-complex/subject-zero.webp',teleporter:'./assets/comics/null-complex/teleporter.webp',
- overseer:'./assets/comics/null-complex/overseer-awakens.webp',prototype:'./assets/comics/null-complex/prototype-07.webp',escape:'./assets/comics/null-complex/escape.webp',sting:'./assets/comics/null-complex/subject-zero-awake.webp'
-};
+// Null Complex bespoke comic artwork is loaded here only after the actual assets exist.
+// Empty values deliberately use Comic Scenes' illustrated fallback instead of rendering broken <img> elements.
+const NULL_ART={signal:'',entry:'',splice:'',orin:'',zero:'',teleporter:'',overseer:'',prototype:'',escape:'',sting:''};
 function nullHistory(text){const n=nullQ();n.history.push({at:new Date().toISOString(),text});n.history=n.history.slice(-30)}
 async function nullAdvance(done,next,note){const n=nullQ();if(done&&!n.done.includes(done))n.done.push(done);n.stage=next;if(note)nullHistory(note);await commit();selectedAdventure='null-complex-quest';render();if(next!=='complete')questToast('QUEST UPDATED',NULL_QUEST.title,nullDef().objective)}
 async function nullComic(title,speaker,text,art,done){
