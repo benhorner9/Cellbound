@@ -575,6 +575,14 @@ function qTargetControlsMarkup(){
   if(!questFight)return'';
   return '<div class="cb2d-controls quest-live-targets"><div class="quest-live-target-copy"><small>LIVE TARGET PRIORITY</small><b>Call the party target during combat.</b><span>Bring all three Hounds low, then finish them inside the Licked Wounds window.</span></div><div class="quest-live-target-grid">'+questFight.enemies.map((name,i)=>'<button type="button" data-q-target="'+i+'" class="'+(i===Number(questFight.focusTarget)?'active':'')+'"><span>'+esc(name)+'</span><small>100%</small><em><i style="width:100%"></i></em></button>').join('')+'</div></div>'
 }
+
+function qShowContinuation(end,{won,title,text,analysis=''}){
+ if(!end)return;
+ end.hidden=false;end.classList.add('quest-continuation-modal');
+ end.innerHTML='<div class="quest-continuation-card"><div class="quest-continuation-mark">'+(won?'✓':'×')+'</div><small>'+(won?'QUEST FIGHT COMPLETE':'QUEST FIGHT FAILED')+'</small><h3>'+esc(title)+'</h3><p>'+esc(text)+'</p>'+analysis+'<button class="quest-continuation-primary" data-q-continue>'+(won?'CONTINUE QUEST →':'RETURN TO QUEST →')+'</button></div>';
+ requestAnimationFrame(()=>end.classList.add('show'));
+ end.querySelector('[data-q-continue]')?.focus({preventScroll:true});
+}
 function qDraw(config,finish){
   const root=encounterRoot();root.className='cb2d-backdrop quest-cb2d-backdrop';root.hidden=false;document.body.classList.add('quest-cb2d-open');
   const visualClass=String(config.visualClass||'').replace(/[^a-z0-9-_ ]/gi,'').trim(),environmentMarkup=String(config.environmentMarkup||'');
@@ -798,13 +806,11 @@ async function runQuest2DFight(config){
             await wait(delay);if(tok!==encounterToken||settled)return;
             window.CellboundCombatStatuses?.clear?.(encounterRoot());encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(true);return
           }
-          end.hidden=false;
-          end.innerHTML='<div><small>QUEST FIGHT COMPLETE</small><h3>'+esc(config.title)+'</h3><p>'+esc(config.completeText||'The way forward is clear.')+'</p>'+qAnalysis(result)+'</div><button data-q-continue>CONTINUE QUEST →</button>';
+          qShowContinuation(end,{won:true,title:config.title,text:config.completeText||'The way forward is clear.',analysis:qAnalysis(result)});
           end.querySelector('[data-q-continue]').onclick=()=>{window.CellboundCombatStatuses?.clear?.(encounterRoot());encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(true)}
         }else{
-          end.hidden=false;
           Game.applyPartyCellShock?.(25);await Game.persistState?.();
-          end.innerHTML='<div><small>QUEST FIGHT FAILED</small><h3>'+esc(config.title)+'</h3><p>The party was defeated by the combat simulation. Review what happened, recover, and return when ready.</p>'+qAnalysis(result)+'</div><button data-q-continue>RETURN TO QUEST →</button>';
+          qShowContinuation(end,{won:false,title:config.title,text:'The party was defeated. Recover, review the result and return when ready.',analysis:qAnalysis(result)});
           end.querySelector('[data-q-continue]').onclick=()=>{window.CellboundCombatStatuses?.clear?.(encounterRoot());encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}
         }
       }catch(err){console.error('Quest Combat Reborn failed',err);encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}
