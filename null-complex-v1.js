@@ -18,7 +18,7 @@ const ENEMIES=[
  {name:'Null Stalker',classification:'elite',note:'Predatory phase experiment.'},
  {name:'Overseer Drone',classification:'elite',note:'Facility control construct.'}
 ];
-let run=null,mount=null;
+let run=null,mount=null,exploreRoot=null;
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 function hash(s){let h=2166136261;for(const ch of String(s)){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}return h>>>0}
 function rng(seed){let x=hash(seed)||1;return()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return(x>>>0)/4294967296}}
@@ -55,7 +55,7 @@ function start(){
  if(party.length!==5)return notice('A complete active party of five is required.');
  if(party.some(c=>G.isUnavailable?.(c)))return notice('A party member is recovering from Cell Shock.');
  if(attemptsLeft()<=0)return notice('No Null Complex attempts remain in this five-day cycle.');
- n.attemptsUsed++;run={id:'null-'+Date.now(),seed:'null-'+Date.now()+'-'+Math.random().toString(36).slice(2),startedAt:new Date().toISOString(),floor:1,pending:{},rooms:0};newFloor(1);persist();render()
+ n.attemptsUsed++;run={id:'null-'+Date.now(),seed:'null-'+Date.now()+'-'+Math.random().toString(36).slice(2),startedAt:new Date().toISOString(),floor:1,pending:{},rooms:0};newFloor(1);persist();render();openExplore()
 }
 function roomAt(x,y){return run?.map?.[key(x,y)]}
 function canMove(dx,dy){const x=run.pos.x+dx,y=run.pos.y+dy;return x>=0&&y>=0&&x<SIZE&&y<SIZE}
@@ -67,7 +67,7 @@ function move(dx,dy){
  if(room.type==='search'&&!room.searched)run.message='Searchable equipment and storage detected.';
  else if(room.type==='teleporter')run.message=allParts()?'Teleporter ready. Install the recovered components.':'Teleporter located. Components are still missing.';
  else run.message='Room secured. Choose the next route.';
- persist();render()
+ persist();render();openExplore()
 }
 function encounter(room){
  const floor=run.floor,r=rng(run.seed+':fight:'+floor+':'+run.pos.x+':'+run.pos.y);
@@ -134,6 +134,23 @@ function wipe(reason){
  Game()?.applyPartyCellShock?.(10+Math.min(15,floor));run=null;Game()?.save?.();Game()?.persistState?.();notice(reason+' All materials from this run were lost.');render()
 }
 function notice(msg){if(mount){const n=mount.querySelector('[data-null-notice]');if(n){n.textContent=msg;n.hidden=false}}}
+function roomName(room){return room?.type==='entrance'?'Entry Chamber':room?.type==='teleporter'?'Teleport Chamber':room?.type==='breach'?'Containment Breach':room?.type==='search'?'Research Chamber':room?.type==='combat'?'Experiment Chamber':'Facility Chamber'}
+function miniMapMarkup(){
+ let out='';for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){const k=key(x,y),seen=run.visited[k],here=run.pos.x===x&&run.pos.y===y,c=run.map[k];let mark=here?'●':seen&&c.type==='entrance'?'E':seen&&c.type==='teleporter'?'T':seen?'·':'';out+='<i class="'+(seen?'seen ':'')+(here?'here ':'')+'">'+mark+'</i>'}return out
+}
+function ensureExplore(){
+ if(exploreRoot?.isConnected)return exploreRoot;
+ exploreRoot=document.createElement('div');exploreRoot.id='nullExplore';exploreRoot.className='null-explore-backdrop';document.body.appendChild(exploreRoot);return exploreRoot
+}
+function closeExplore(){if(exploreRoot)exploreRoot.remove();exploreRoot=null}
+function openExplore(){
+ if(!run){closeExplore();return}
+ const root=ensureExplore(),room=roomAt(run.pos.x,run.pos.y),visual=room.type==='breach'?'breach':room.type==='teleporter'?'reactor':room.type==='search'?'lab':(['lab','containment','reactor','storage'][(run.pos.x+run.pos.y+run.floor)%4]);
+ const ready=atTele()&&allParts();
+ root.innerHTML='<section class="null-explore-shell"><header><div><small>THE NULL COMPLEX · FLOOR '+run.floor+' / '+MAX_FLOOR+'</small><h2>'+esc(roomName(room))+'</h2></div><div class="null-explore-risk"><small>AT RISK</small><b>'+Object.values(run.pending).reduce((a,b)=>a+b,0)+' MATERIALS</b></div></header><div class="null-explore-layout"><main><div class="cb2d-arena theme-null room-null-'+visual+' null-explore-arena"><div class="cb2d-floor"></div><div class="cb2d-environment"></div><div class="null-party-marker"><b>YOUR PARTY</b><span>Exploring room '+(run.pos.x+1)+','+(run.pos.y+1)+'</span></div><div class="null-room-message">'+esc(run.message||'Choose a route.')+'</div></div><div class="null-room-controls">'+(room.type==='search'&&!room.searched?'<button data-null-search>SEARCH THE ROOM</button>':'')+'<div class="null-door-controls"><button data-move="0,-1" '+(!canMove(0,-1)?'disabled':'')+'>NORTH</button><button data-move="-1,0" '+(!canMove(-1,0)?'disabled':'')+'>WEST</button><button data-move="1,0" '+(!canMove(1,0)?'disabled':'')+'>EAST</button><button data-move="0,1" '+(!canMove(0,1)?'disabled':'')+'>SOUTH</button></div>'+(ready?'<div class="null-extract"><button data-null-extract>EXTRACT · KEEP LOOT</button>'+(run.floor<MAX_FLOOR?'<button data-null-descend>DESCEND TO FLOOR '+(run.floor+1)+'</button>':'')+'</div>':'')+'</div></main><aside><small>DISCOVERED FLOOR</small><div class="null-mini-map">'+miniMapMarkup()+'</div><div class="null-parts">'+PARTS.map(p=>'<span class="'+(run.parts[p[0]]?'found':'')+'">'+p[2]+' '+p[1]+' <b>'+(run.parts[p[0]]?'FOUND':'MISSING')+'</b></span>').join('')+'</div><div class="null-loot"><small>UNBANKED LOOT</small>'+lootMarkup()+'</div><p>Move through the facility from inside the expedition. The map only records rooms you have already discovered.</p></aside></div></section>';
+ root.querySelectorAll('[data-move]').forEach(b=>b.addEventListener('click',()=>{const [x,y]=b.dataset.move.split(',').map(Number);move(x,y)}));
+ root.querySelector('[data-null-search]')?.addEventListener('click',()=>{search();openExplore()});root.querySelector('[data-null-extract]')?.addEventListener('click',()=>{extract();closeExplore()});root.querySelector('[data-null-descend]')?.addEventListener('click',()=>{descend();openExplore()})
+}
 function mapMarkup(){
  let out='';for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){const k=key(x,y),seen=run.visited[k],here=run.pos.x===x&&run.pos.y===y,c=run.map[k];let mark='';
  if(here)mark='●';else if(seen&&c.type==='entrance')mark='E';else if(seen&&c.type==='teleporter')mark='T';else if(seen&&c.type==='search')mark=c.searched?'✓':'?';else if(seen&&(c.type==='combat'||c.type==='breach'))mark=c.cleared?'✓':'!';else if(seen)mark='·';
@@ -161,8 +178,7 @@ function render(){
  '<div class="null-directions"><button data-move="0,-1" '+(!canMove(0,-1)?'disabled':'')+'>N</button><button data-move="-1,0" '+(!canMove(-1,0)?'disabled':'')+'>W</button><button data-move="1,0" '+(!canMove(1,0)?'disabled':'')+'>E</button><button data-move="0,1" '+(!canMove(0,1)?'disabled':'')+'>S</button></div>'+
  (ready?'<div class="null-extract"><button data-null-extract>EXTRACT · KEEP LOOT</button>'+(run.floor<MAX_FLOOR?'<button data-null-descend>DESCEND TO FLOOR '+(run.floor+1)+'</button>':'<b>FINAL FLOOR CLEARED · EXTRACT</b>')+'</div>':'')+
  '</div><p class="null-warning">If the party wipes, every material shown as At Risk is lost.</p><p data-null-notice hidden></p></section>';
- mount.querySelectorAll('[data-move]').forEach(b=>b.addEventListener('click',()=>{const [x,y]=b.dataset.move.split(',').map(Number);move(x,y)}));
- mount.querySelector('[data-null-search]')?.addEventListener('click',search);mount.querySelector('[data-null-extract]')?.addEventListener('click',extract);mount.querySelector('[data-null-descend]')?.addEventListener('click',descend)
+ openExplore()
 }
 function init(){if(!Game()?.ready){setTimeout(init,120);return}render();window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='world')render()})}
 window.CellboundNullComplex={VERSION,render,start,getRun:()=>run};init();
