@@ -168,11 +168,15 @@ function controlsHtml(room){
  const btn=(d,label,dx,dy)=>'<button data-null-door="'+d+'" data-dx="'+dx+'" data-dy="'+dy+'" '+(!canMove(dx,dy)?'disabled':'')+'>'+label+'</button>';
  return '<div class="null-engine-controls"><button class="leave" data-null-abandon>LEAVE · END RUN</button>'+(room.type==='search'&&!room.searched?'<button class="search" data-null-search>SEARCH ROOM</button>':'')+'<div class="doors">'+btn('north','NORTH',0,-1)+btn('west','WEST',-1,0)+btn('east','EAST',1,0)+btn('south','SOUTH',0,1)+'</div>'+(atTele()&&allParts()?'<div class="extract"><button data-null-extract>EXTRACT · KEEP LOOT</button>'+(run.floor<MAX_FLOOR?'<button data-null-descend>DESCEND</button>':'')+'</div>':'')+'</div>'
 }
+const WALK_FORMATION=[{x:40,y:40},{x:48,y:36},{x:48,y:50},{x:56,y:40},{x:56,y:54}];
+const DOOR_APPROACH={north:[{x:40,y:18},{x:45,y:17},{x:50,y:17},{x:55,y:17},{x:60,y:18}],south:[{x:40,y:72},{x:45,y:73},{x:50,y:73},{x:55,y:73},{x:60,y:72}],west:[{x:18,y:34},{x:17,y:40},{x:17,y:46},{x:17,y:52},{x:18,y:58}],east:[{x:72,y:34},{x:73,y:40},{x:73,y:46},{x:73,y:52},{x:72,y:58}]};
+const DOOR_ENTRY={north:[{x:40,y:14},{x:45,y:13},{x:50,y:13},{x:55,y:13},{x:60,y:14}],south:[{x:40,y:76},{x:45,y:77},{x:50,y:77},{x:55,y:77},{x:60,y:76}],west:[{x:14,y:34},{x:13,y:40},{x:13,y:46},{x:13,y:52},{x:14,y:58}],east:[{x:76,y:34},{x:77,y:40},{x:77,y:46},{x:77,y:52},{x:76,y:58}]};
+const SEARCH_POINTS=[{x:31,y:31},{x:62,y:31},{x:34,y:58},{x:60,y:58},{x:47,y:45}];
 function bindExplore(view,room){
  const root=view.root;
  root.querySelector('[data-null-abandon]')?.addEventListener('click',()=>{if(confirm('Leave The Null Complex? This ends the run and destroys all unbanked materials.'))abandon()});
- root.querySelectorAll('[data-null-door]').forEach(btn=>btn.addEventListener('click',async()=>{root.querySelectorAll('.null-engine-controls button').forEach(b=>b.disabled=true);const d=btn.dataset.nullDoor,pts={north:[{x:45,y:8},{x:48,y:7},{x:51,y:8},{x:54,y:9},{x:57,y:8}],south:[{x:45,y:91},{x:48,y:92},{x:51,y:91},{x:54,y:90},{x:57,y:91}],west:[{x:7,y:42},{x:8,y:46},{x:7,y:50},{x:8,y:54},{x:7,y:58}],east:[{x:93,y:42},{x:92,y:46},{x:93,y:50},{x:92,y:54},{x:93,y:58}]}[d];view.setStatus('Party moving '+d+'…');await view.moveParty(pts,700);view.close(true);move(Number(btn.dataset.dx),Number(btn.dataset.dy))}));
- root.querySelector('[data-null-search]')?.addEventListener('click',async e=>{e.currentTarget.disabled=true;view.setStatus('Party searching the chamber…');await view.moveParty([{x:23,y:27},{x:72,y:28},{x:28,y:72},{x:70,y:70},{x:50,y:46}],850);await new Promise(q=>setTimeout(q,550));search();view.setStatus(run.message);setTimeout(()=>showRoom(),700)});
+ root.querySelectorAll('[data-null-door]').forEach(btn=>btn.addEventListener('click',async()=>{root.querySelectorAll('.null-engine-controls button').forEach(b=>b.disabled=true);const d=btn.dataset.nullDoor;view.setStatus('Party moving '+d+'…');await view.moveParty(DOOR_APPROACH[d],560);await view.moveParty(DOOR_ENTRY[d],240);view.close(true);move(Number(btn.dataset.dx),Number(btn.dataset.dy))}));
+ root.querySelector('[data-null-search]')?.addEventListener('click',async e=>{e.currentTarget.disabled=true;view.setStatus('Party searching the chamber…');await view.moveParty(SEARCH_POINTS,650);await new Promise(q=>setTimeout(q,650));search();view.setStatus(run.message);await view.moveParty(WALK_FORMATION,520);setTimeout(()=>showRoom(),250)});
  root.querySelector('[data-null-extract]')?.addEventListener('click',()=>{view.close(true);extract()});root.querySelector('[data-null-descend]')?.addEventListener('click',()=>{view.close(true);descend();showRoom()})
 }
 function showRoom(){
@@ -181,7 +185,7 @@ function showRoom(){
  const room=roomAt(run.pos.x,run.pos.y),party=(Game()?.getPartyCharacters?.()||[]);
  const view=viewer.openSharedExploration({party,id:'null-'+run.floor+'-'+run.pos.x+'-'+run.pos.y,header:'THE NULL COMPLEX · FLOOR '+run.floor,title:roomName(room),theme:'null',room:'null-'+roomVisual(room),roomLabel:roomName(room),ambience:room.type==='search'?'Searchable equipment is scattered through the chamber.':room.type==='teleporter'?'The damaged teleporter dominates the chamber.':'The party advances through the abandoned facility.',environmentHtml:roomProps(room)+engineMiniMap(),controlsHtml:controlsHtml(room),status:run.message||'Choose a route.',shellClass:'null-combat-shell',arenaClass:'null-combat-arena'});
  bindExplore(view,room);
- if(run.enterFrom){const from=run.enterFrom;run.enterFrom=null;persist();const edge={west:[{x:7,y:42},{x:8,y:46},{x:7,y:50},{x:8,y:54},{x:7,y:58}],east:[{x:93,y:42},{x:92,y:46},{x:93,y:50},{x:92,y:54},{x:93,y:58}],north:[{x:45,y:8},{x:48,y:7},{x:51,y:8},{x:54,y:9},{x:57,y:8}],south:[{x:45,y:91},{x:48,y:92},{x:51,y:91},{x:54,y:90},{x:57,y:91}]}[from];const formation=[{x:32,y:38},{x:25,y:31},{x:25,y:68},{x:17,y:35},{x:17,y:65}];view.moveParty(edge,0).then(()=>view.moveParty(formation,650))}
+ if(run.enterFrom){const from=run.enterFrom;run.enterFrom=null;persist();view.moveParty(DOOR_ENTRY[from],0).then(()=>view.moveParty(DOOR_APPROACH[from],260)).then(()=>view.moveParty(WALK_FORMATION,520))}
 }
 function openExplore(){showRoom()}
 function closeExplore(){window.CellboundDungeon2D?.closeShared?.(true)}
