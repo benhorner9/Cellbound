@@ -342,3 +342,13 @@ radial-gradient(ellipse at 76% 74%,rgba(104,85,53,.08),transparent 22%)}
 .quest-live-target-grid button.active{border-color:#d7b56d;box-shadow:0 0 0 1px rgba(215,181,109,.22),0 0 20px rgba(215,181,109,.08);background:#251e16}.quest-live-target-grid button.active:after{content:"FOCUS";position:absolute;right:8px;top:7px;font-size:8px;letter-spacing:.12em;color:#e8cb91}
 .quest-live-target-grid button.defeated{opacity:.42;filter:grayscale(.7)}.quest-live-target-grid button.defeated em i{width:0!important}
 @media(max-width:780px){.quest-live-targets{grid-template-columns:1fr}.quest-live-target-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.quest-live-target-copy span{display:none}.quest-live-target-grid button{padding:9px;min-height:54px}}
+
+/* Quest combat continuation: modal result, no post-fight scrolling required */
+.quest-cb2d-shell .cb2d-end.quest-continuation-modal{position:absolute!important;inset:0!important;z-index:90!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:24px!important;background:rgba(3,8,9,.76)!important;backdrop-filter:blur(4px);opacity:0;transition:opacity .18s ease;overflow:auto}
+.quest-cb2d-shell .cb2d-end.quest-continuation-modal.show{opacity:1}
+.quest-continuation-card{width:min(560px,92vw);max-height:min(680px,88dvh);overflow:auto;padding:26px 28px 24px;border:1px solid rgba(201,169,98,.5);background:linear-gradient(180deg,#111918,#091110);box-shadow:0 24px 70px rgba(0,0,0,.58),inset 0 0 0 1px rgba(255,255,255,.025);text-align:center}
+.quest-continuation-mark{display:grid;place-items:center;width:46px;height:46px;margin:0 auto 12px;border:1px solid rgba(201,169,98,.55);border-radius:50%;color:#dcc27e;font-size:1.25rem;font-weight:900}
+.quest-continuation-card>small{color:#bda46c;font-weight:900;letter-spacing:.14em}.quest-continuation-card>h3{margin:7px 0 8px;font-family:Georgia,serif;font-size:1.55rem;color:#eee5cf}.quest-continuation-card>p{max-width:460px;margin:0 auto 18px;color:#9aa7a2;line-height:1.55}
+.quest-continuation-card .quest-cbr-summary{margin:16px 0}.quest-continuation-primary{width:100%;min-height:48px;margin-top:18px;border:1px solid #b99a58;background:linear-gradient(180deg,#342b18,#1c170d);color:#f0d797;font-weight:900;letter-spacing:.08em;cursor:pointer}
+.quest-continuation-primary:hover,.quest-continuation-primary:focus{background:linear-gradient(180deg,#44371e,#241d10);outline:1px solid rgba(232,199,124,.3);outline-offset:2px}
+@media(max-width:700px){.quest-cb2d-shell .cb2d-end.quest-continuation-modal{padding:14px!important}.quest-continuation-card{padding:21px 16px 18px;max-height:84dvh}.quest-continuation-card>h3{font-size:1.3rem}}
