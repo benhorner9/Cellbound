@@ -355,8 +355,19 @@ async function completeAshfall(){
   s.progression=s.progression||{};s.progression.ashenVaultUnlocked=true;s.gold=(Number(s.gold)||0)+120;s.renown=(Number(s.renown)||0)+75;
   ashfallHistory('The old forge key opened the route to The Ashen Vault.');s.activity.push('Quest complete: '+ASHFALL.title+'. The Ashen Vault was unlocked.');
   await commit();
+  if(window.CellboundComicScenes?.show){
+    await window.CellboundComicScenes.show({
+      eyebrow:'QUEST COMPLETE',title:ASHFALL.title,subtitle:'The road to the old forge is open.',page:'COMPLETE',theme:'ashen',
+      panels:[
+        {kind:'location',eyebrow:'THE EAST ROAD',title:'A Door in the Mountain',text:'The road is closed. The old forge is awake. And your guild now holds the only key anyone knows still exists.',wide:true},
+        {kind:'reveal',eyebrow:'REWARD',title:'+120 Gold · +75 Renown',text:'The Ashen Vault has been permanently unlocked.'},
+        {kind:'location',eyebrow:'DUNGEON UNLOCKED',title:'The Ashen Vault',text:'Quest gear gives you a reliable starting point. Better versions now wait inside the dungeon.'}
+      ],progressive:true,storyOnly:true,allowSkip:false,nextLabel:'NEXT PANEL →',continueLabel:'OPEN DUNGEON JOURNAL →'
+    });
+    Game.switchView?.('content');return
+  }
   const root=document.createElement('div');root.className='quest-unlock-backdrop quest-complete-backdrop';
-  root.innerHTML='<section class="quest-complete-card"><div class="quest-complete-rune">♜</div><small>QUEST COMPLETE</small><h2>'+ASHFALL.title+'</h2><p>The road is closed. The old forge is awake. And your guild now holds the only key anyone knows still exists.</p><div class="quest-complete-rewards"><article><span>GOLD</span><b>+120</b></article><article><span>RENOWN</span><b>+75</b></article><article><span>DUNGEON</span><b>UNLOCKED</b></article></div><div class="quest-complete-unlock"><small>PERMANENT UNLOCK</small><h3>The Ashen Vault</h3><p>Quest gear gives you a reliable starting point. Better versions now wait inside the dungeon.</p></div><button>OPEN DUNGEON JOURNAL →</button></section>';
+  root.innerHTML='<section class="quest-complete-card"><div class="quest-complete-rune">♜</div><small>QUEST COMPLETE</small><h2>'+ASHFALL.title+'</h2><p>The road is closed. The old forge is awake. And your guild now holds the only key anyone knows still exists.</p><div class="quest-complete-rewards"><article><span>GOLD</span><b>+120</b></article><article><span>RENOWN</span><b>+75</b></article><article><span>DUNGEON</span><b>UNLOCKED</b></article></div><button>OPEN DUNGEON JOURNAL →</button></section>';
   document.body.appendChild(root);root.querySelector('button').onclick=()=>{root.remove();Game.switchView?.('content')};
 }
 
