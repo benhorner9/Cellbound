@@ -2,6 +2,7 @@
 'use strict';
 
 const VERSION='1.3.25';
+// Balance baseline: 2026-09-29 role and progression audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
