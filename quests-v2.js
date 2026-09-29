@@ -134,6 +134,7 @@ function ensure(){
   q.ashfall=q.ashfall&&typeof q.ashfall==='object'?q.ashfall:{started:false,stage:'warning',done:[],complete:false,history:[]};
   q.ashfall.done=Array.isArray(q.ashfall.done)?q.ashfall.done:[];
   q.ashfall.history=Array.isArray(q.ashfall.history)?q.ashfall.history:[];
+  q.classTrials=q.classTrials&&typeof q.classTrials==='object'?q.classTrials:{};
   s.progression=s.progression&&typeof s.progression==='object'?s.progression:{};
   if(typeof s.progression.ashenVaultUnlocked!=='boolean')s.progression.ashenVaultUnlocked=Boolean(Number(s.dungeonCompletions)>0||Object.values(s.bossKills||{}).some(Boolean)||q.ashfall.complete);
   if(q.ashfall.complete)s.progression.ashenVaultUnlocked=true;
@@ -769,7 +770,7 @@ function qEncounterFromConfig(config){
   return{id:'quest-'+String(config.title||'fight').toLowerCase().replace(/[^a-z0-9]+/g,'-'),title:config.title,kind,level:Math.max(1,Number(meta.level)||1),recommendedItemLevel:Math.max(0,Number(meta.recommendedItemLevel)||0),enemyLevels:meta.enemyLevels||null,enemyTypes:meta.enemyTypes||null,enemies:[...config.enemies],enemyHealth:Number(meta.enemyHealth)|| (kind==='final'?900:kind==='boss'?700:330),mechanics:meta.mechanics||[],mechanicIntervalMs:Math.max(0,Number(meta.mechanicIntervalMs)||0),phases:meta.phases||[],environment:meta.environment||{},scaling:meta.scaling||{},resolveAtBossHealthPct:Math.max(0,Math.min(.95,Number(meta.resolveAtBossHealthPct)||0)),resolveLabel:meta.resolveLabel||null}
 }
 async function runQuest2DFight(config){
-  const p=party(),C=window.CellboundCombatStandard;if(p.length!==5||!C?.simulate)return false;
+  const p=Array.isArray(config?.participants)&&config.participants.length?config.participants:party(),C=window.CellboundCombatStandard;if((!config?.allowSolo&&p.length!==5)||(config?.allowSolo&&p.length!==1)||!C?.simulate)return false;
   const tok=++encounterToken;
   return await new Promise(resolve=>{
     let settled=false;const finish=value=>{if(settled)return;settled=true;resolve(value)};
@@ -1033,6 +1034,46 @@ async function finalizeEchoes(){
   root.querySelector('button').onclick=()=>{root.remove();Game.switchView?.('content');window.CellboundHollowSanctum?.renderCard?.()};
 }
 
+const CLASS_TRIALS={
+ Warrior:[['warrior-guardian',5,'Challenging Presence','Hold the Line','Prove you can decide where the enemy’s blade falls.','Ironbound Challenger',520],[ 'warrior-battle-focus',10,'Battle Focus','Break the Siege','Trade patience for pressure and break an enemy line alone.','Siegebreaker',780]],
+ Paladin:[['paladin-blessing-resolve',5,'Blessing of Resolve','Oath Under Fire','Stand firm while sacred resolve carries you through the assault.','Oathbreaker Shade',520],['paladin-radiant-purpose',10,'Radiant Purpose','The Unbroken Oath','Balance judgment and restoration under sustained pressure.','Fallen Justicar',780]],
+ Priest:[['priest-divine-inspiration',5,'Divine Inspiration','The Vigil','Endure a trial of faith and keep yourself standing.','Faithless Echo',500],['priest-inner-fire',10,'Inner Fire','Light and Shadow','Master the line between preservation and destruction.','Hollow Confessor',760]],
+ Druid:[['druid-wild-communion',5,'Wild Communion','Call of the Wild','Survive the wild’s test without the shelter of your party.','Briarheart Beast',520],['druid-primal-flow',10,'Primal Flow','The Changing Path','Adapt your rhythm as the battlefield changes around you.','Primal Warden',780]],
+ Hunter:[['hunter-predators-focus',5,"Predator's Focus",'The Patient Hunt','Track, position and finish dangerous prey alone.','Ashfang Alpha',500],['hunter-pack-instinct',10,'Pack Instinct','Run With the Pack','Overcome a predator that refuses to fight on your terms.','Razorpack Matriarch',760]],
+ Rogue:[['rogue-killing-tempo',5,'Killing Tempo','One Clean Cut','Control the engagement and end it before the enemy can recover.','Guild Enforcer',490],['rogue-relentless',10,'Relentless','No Witnesses','Maintain pressure through a prolonged duel with nowhere to hide.','Silent Auditor',750]],
+ Mage:[['mage-arcane-empowerment',5,'Arcane Empowerment','Control the Current','Control unstable magic while defeating what it has awakened.','Arcane Aberration',500],['mage-flow-state',10,'Flow State','The Unbroken Cast','Keep your spell rhythm while the arena fights back.','Spell-Eater',760]],
+ Shaman:[['shaman-bloodlust',5,'Bloodlust','Beat of the Storm','Match the storm’s tempo and overwhelm its guardian.','Stormbound Elemental',520],['shaman-ancestral-current',10,'Ancestral Current','Voices of the Ancestors','Survive an ancestral trial of endurance and control.','Restless Ancestor',780]],
+ Warlock:[['warlock-demonic-pact',5,'Demonic Pact','Terms of the Pact','Prove you command the bargain rather than serve it.','Lesser Pact Demon',510],['warlock-soul-hunger',10,'Soul Hunger','Feed the Darkness','Defeat a creature that grows more dangerous the longer it feeds.','Soul Devourer',790]],
+ Monk:[['monk-mystic-touch',5,'Mystic Touch','The Open Hand','Win through timing and control rather than brute force.','Wayward Disciple',500],['monk-inner-tempo',10,'Inner Tempo','Stillness in Motion','Keep your rhythm through a relentless martial trial.','Temple Challenger',760]],
+ 'Death Knight':[['death-knight-horn',5,'Horn of Winter','Wake the Fallen','Command the dead without becoming one of them.','Risen Champion',530],['death-knight-frozen-will',10,'Frozen Will','The Cold March','Advance through punishing cold and break its master.','Frostbound Revenant',800]],
+ 'Demon Hunter':[['demon-hunter-momentum',5,'Demonic Momentum','Embrace the Hunt','Turn aggression and movement into a weapon.','Fel Pursuer',520],['demon-hunter-fel-instinct',10,'Fel Instinct','Master the Demon','Control the power that would rather control you.','Inner Demon',800]],
+ Evoker:[['evoker-draconic-resonance',5,'Draconic Resonance','Echoes of the Flights','Awaken the resonance carried in your draconic blood.','Resonant Drake',510],['evoker-ancient-vitality',10,'Ancient Vitality','Legacy Awakened','Prove you can wield ancient power without being consumed by it.','Ancient Echo',780]]
+};
+function classTrialDefs(){
+ const out=[];(state()?.roster||[]).forEach(ch=>(CLASS_TRIALS[ch.class]||[]).forEach(x=>out.push({character:ch,id:x[0],level:x[1],buff:x[2],title:x[3],summary:x[4],enemy:x[5],health:x[6],key:'class-trial:'+ch.id+':'+x[0]})));return out
+}
+function classTrialDone(t){return Boolean(t?.character?.classBuffProgress?.unlocked?.includes(t.id))}
+function classTrialAvailable(t){return Number(t?.character?.level||1)>=t.level&&!classTrialDone(t)}
+function classTrialCard(t){
+ const done=classTrialDone(t),locked=Number(t.character.level||1)<t.level;
+ return {id:t.key,title:t.title,meta:t.character.name+' · '+t.character.class,difficulty:'Class Trial',status:done?'COMPLETE':locked?'LEVEL '+t.level:'AVAILABLE',complete:done,locked,icon:'✦'}
+}
+function renderClassTrialDetail(t,root,side){
+ const done=classTrialDone(t),locked=Number(t.character.level||1)<t.level;
+ root.innerHTML='<div class="quest-v3-hero"><div><small>SOLO CLASS TRIAL · LEVEL '+t.level+'</small><h2>'+esc(t.title)+'</h2><p>'+esc(t.character.name+' · '+t.character.class)+'</p></div><span class="quest-v3-status '+(done?'complete':'')+'">'+(done?'COMPLETE':locked?'LOCKED':'AVAILABLE')+'</span></div><div class="quest-v3-story"><p>'+esc(t.summary)+'</p></div><section class="quest-v3-clue"><small>CLASS CHALLENGE</small><h3>'+esc(t.enemy)+'</h3><p>This trial must be completed by '+esc(t.character.name)+' alone. Party members cannot enter.</p><em>Victory permanently teaches this character '+esc(t.buff)+'.</em></section><div class="quest-detail-action">'+(done?'<div class="quest-complete-stamp">BUFF LEARNED</div>':locked?'<div class="quest-action-block locked"><b>LOCKED</b><small>'+esc(t.character.name)+' must reach Level '+t.level+'. Current level: '+Number(t.character.level||1)+'.</small></div>':'<button class="quest-primary danger" data-class-trial-start="'+esc(t.key)+'">ENTER SOLO TRIAL →</button>')+'</div>';
+ side.innerHTML='<section><small>PARTICIPANT</small><div class="quest-history"><p>'+esc(t.character.name+' · '+t.character.class+' · '+t.character.spec)+'</p><p>Level '+Number(t.character.level||1)+' · Solo only</p></div></section><section><small>REWARD</small><div class="quest-reward-list"><p>'+esc(t.buff)+'</p><p>Permanent class-buff unlock for '+esc(t.character.name)+'</p></div></section>';
+ root.querySelector('[data-class-trial-start]')?.addEventListener('click',()=>startClassTrial(t.key))
+}
+async function startClassTrial(key){
+ const t=classTrialDefs().find(x=>x.key===key);if(!t||!classTrialAvailable(t))return;
+ showDialogue(t.title,'Class Mentor',['This trial belongs to you alone, '+t.character.name+'.','Show me that you understand what it means to fight as a '+t.character.class+'.'],async()=>{
+  const won=await runQuest2DFight({title:t.title,location:'Class Trial',participants:[t.character],allowSolo:true,partyLabel:'SOLO ADVENTURER',enemies:[t.enemy],ambience:t.summary,completeText:t.character.name+' has mastered '+t.buff+'.',combat:{kind:'boss',level:t.level,recommendedItemLevel:0,enemyHealth:t.health,mechanics:[[t.title+' Test','circles',Math.max(1600,2800-t.level*60)]]}});
+  if(!won)return;
+  const ch=(state()?.roster||[]).find(x=>x.id===t.character.id);if(!ch)return;ch.classBuffProgress=ch.classBuffProgress&&typeof ch.classBuffProgress==='object'?ch.classBuffProgress:{unlocked:[]};ch.classBuffProgress.unlocked=Array.isArray(ch.classBuffProgress.unlocked)?ch.classBuffProgress.unlocked:[];if(!ch.classBuffProgress.unlocked.includes(t.id))ch.classBuffProgress.unlocked.push(t.id);ch.buffSkill=t.id;
+  ensure().classTrials[t.key]={completedAt:new Date().toISOString(),characterId:ch.id,buffId:t.id};state().activity=state().activity||[];state().activity.push(ch.name+' completed '+t.title+' and learned '+t.buff+'.');await commit();selectedAdventure=t.key;questToast('CLASS TRIAL COMPLETE',t.buff,'Unlocked for '+ch.name+'.')
+ })
+}
+
 function requirementsHtml(){
   return QUEST.requirements.map((r,i)=>'<div class="quest-requirement '+(i===0?'met':'')+'"><i>'+(i===0?'✓':'•')+'</i><span>'+esc(r)+'</span></div>').join('');
 }
@@ -1109,7 +1150,8 @@ function renderList(){
     {id:'echoes',title:QUEST.title,meta:QUEST.length+' adventure · Zeltira',difficulty:QUEST.difficulty,status:complete()?'COMPLETE':q.started?'IN PROGRESS':echoesUnlocked()?'AVAILABLE':'LOCKED',complete:complete(),locked:!echoesUnlocked()&&!q.started},
     window.CellboundThirteenthBell?.card?.(),
     window.CellboundFourfoldLock?.card?.(),
-    window.CellboundNoWayBack?.card?.()
+    window.CellboundNoWayBack?.card?.(),
+    ...classTrialDefs().map(classTrialCard)
   ].filter(Boolean).filter(x=>selectedTab==='campaign'||(selectedTab==='active'&&!x.complete)||(selectedTab==='completed'&&x.complete));
   if(!cards.length){root.innerHTML='<div class="quest-list-empty">'+(selectedTab==='completed'?'No completed adventures yet.':'No active adventures.')+'</div>';return}
   if(!cards.some(x=>x.id===selectedAdventure))selectedAdventure=cards[0].id;
@@ -1119,6 +1161,7 @@ function renderList(){
 function renderDetail(){
   const root=$('#questJournalDetail'),side=$('#questJournalSide');if(!root||!side)return;
   if(selectedAdventure==='ashfall'){renderAshfallDetail(root,side);bindActions();return}
+  if(String(selectedAdventure).startsWith('class-trial:')){const t=classTrialDefs().find(x=>x.key===selectedAdventure);if(t){renderClassTrialDetail(t,root,side);return}}
   if(selectedAdventure==='thirteenth-bell'){window.CellboundThirteenthBell?.renderDetail?.(root,side);return}
   if(selectedAdventure==='fourfold-lock'){window.CellboundFourfoldLock?.renderDetail?.(root,side);return}
   if(selectedAdventure==='no-way-back'){window.CellboundNoWayBack?.renderDetail?.(root,side);return}
@@ -1175,12 +1218,12 @@ function renderHome(){
       setTimeout(()=>window.CellboundDungeonBrowser?.open?.(dungeon),40)
     }
   };
-  if(badge){const bell=window.CellboundThirteenthBell?.card?.(),fourfold=window.CellboundFourfoldLock?.card?.(),nwb=window.CellboundNoWayBack?.card?.(),open=(!a.complete?1:0)+(!complete()&&echoesUnlocked()?1:0)+(bell&&!bell.complete&&!bell.locked?1:0)+(fourfold&&!fourfold.complete&&!fourfold.locked?1:0)+(nwb&&!nwb.complete&&!nwb.locked?1:0);badge.textContent=open?String(open):'';badge.hidden=!open}
+  if(badge){const bell=window.CellboundThirteenthBell?.card?.(),fourfold=window.CellboundFourfoldLock?.card?.(),nwb=window.CellboundNoWayBack?.card?.(),open=(!a.complete?1:0)+(!complete()&&echoesUnlocked()?1:0)+(bell&&!bell.complete&&!bell.locked?1:0)+(fourfold&&!fourfold.complete&&!fourfold.locked?1:0)+(nwb&&!nwb.complete&&!nwb.locked?1:0)+classTrialDefs().filter(classTrialAvailable).length;badge.textContent=open?String(open):'';badge.hidden=!open}
 }
 function render(){
   if(!Game?.ready)return;const q=ensure();if(!q)return;
   $$('.quest-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.questTab===selectedTab));
-  const bellCard=window.CellboundThirteenthBell?.card?.(),fourfoldCard=window.CellboundFourfoldLock?.card?.(),nwbCard=window.CellboundNoWayBack?.card?.(),activeCount=(q.ashfall.complete?0:1)+(complete()?0:1)+(bellCard&&!bellCard.complete&&!bellCard.locked?1:0)+(fourfoldCard&&!fourfoldCard.complete&&!fourfoldCard.locked?1:0)+(nwbCard&&!nwbCard.complete&&!nwbCard.locked?1:0);
+  const bellCard=window.CellboundThirteenthBell?.card?.(),fourfoldCard=window.CellboundFourfoldLock?.card?.(),nwbCard=window.CellboundNoWayBack?.card?.(),classActive=classTrialDefs().filter(classTrialAvailable).length,activeCount=(q.ashfall.complete?0:1)+(complete()?0:1)+(bellCard&&!bellCard.complete&&!bellCard.locked?1:0)+(fourfoldCard&&!fourfoldCard.complete&&!fourfoldCard.locked?1:0)+(nwbCard&&!nwbCard.complete&&!nwbCard.locked?1:0)+classActive;
   const status=$('#questCampaignStatus');if(status)status.textContent=activeCount?activeCount+' ADVENTURE'+(activeCount===1?'':'S')+' IN PROGRESS':'CURRENT STORY COMPLETE';
   renderList();renderDetail();renderHome();window.CellboundHollowSanctum?.renderCard?.();
 }
