@@ -148,6 +148,7 @@ async function refreshStatus(){
   window.CellboundAdmin.isAdmin=Boolean(status.is_admin);
   window.CellboundAdmin.role=status.role||null;
   window.CellboundAdmin.autoClear=Boolean(status.auto_clear_cell_shock);
+  window.dispatchEvent(new CustomEvent('cellbound:admin-status',{detail:{isAdmin:window.CellboundAdmin.isAdmin,role:window.CellboundAdmin.role}}));
   if(wasAdmin!==window.CellboundAdmin.isAdmin)Game?.renderAll?.();
   render();
 }

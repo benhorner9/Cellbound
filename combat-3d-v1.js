@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-const VERSION='0.3.0';
+const VERSION='0.3.1';
 const CLASS_COLOURS={
  warrior:[.78,.61,.43,1],paladin:[.96,.55,.73,1],hunter:[.67,.83,.45,1],rogue:[1,.96,.41,1],priest:[1,1,1,1],
  'death-knight':[.77,.12,.23,1],shaman:[0,.44,.87,1],mage:[.25,.78,.92,1],warlock:[.53,.53,.93,1],
@@ -13,6 +13,8 @@ function pct(n,fallback=50){n=Number(n);return Number.isFinite(n)?Math.max(0,Mat
 function arena(){return document.getElementById('cb2dArena')}
 function button(){return document.querySelector('[data-cb3d-toggle]')}
 function button25(){return document.querySelector('[data-cb25d-toggle]')}
+function adminAllowed(){return window.CellboundAdmin?.isAdmin===true}
+function removeAdminButtons(){button()?.remove();button25()?.remove()}
 function worldPos(x,y){return{x:(pct(x)-50)*.14,y:0,z:(pct(y)-50)*.09}}
 function classKey(el){const c=[...(el?.classList||[])].find(x=>x.startsWith('class-'));return c?c.slice(6):''}
 function firstText(el){
@@ -227,11 +229,13 @@ function showError(message){
  const a=arena();if(!a)return;let el=a.querySelector('.cb3d-error');if(!el){el=document.createElement('div');el.className='cb3d-error';a.appendChild(el)}el.textContent=message;setTimeout(()=>el.remove(),4200)
 }
 function syncModeButtons(){
+ if(!adminAllowed()){if(S.active)deactivate();removeAdminButtons();return}
  const b3=button(),b25=button25(),ok=webglSupported();
- if(b3){const label=!ok?'3D N/A':S.active&&S.mode==='3d'?'2D VIEW':'3D TEST';if(b3.textContent!==label)b3.textContent=label;b3.disabled=!ok;b3.classList.toggle('active',S.active&&S.mode==='3d')}
- if(b25){const label=!ok?'2.5D N/A':S.active&&S.mode==='2.5d'?'2D VIEW':'2.5D TEST';if(b25.textContent!==label)b25.textContent=label;b25.disabled=!ok;b25.classList.toggle('active',S.active&&S.mode==='2.5d')}
+ if(b3){const label=!ok?'3D N/A':S.active&&S.mode==='3d'?'2D VIEW':'3D · ADMIN';if(b3.textContent!==label)b3.textContent=label;b3.disabled=!ok;b3.classList.toggle('active',S.active&&S.mode==='3d');b3.title='Admin-only experimental 3D combat renderer'}
+ if(b25){const label=!ok?'2.5D N/A':S.active&&S.mode==='2.5d'?'2D VIEW':'2.5D · ADMIN';if(b25.textContent!==label)b25.textContent=label;b25.disabled=!ok;b25.classList.toggle('active',S.active&&S.mode==='2.5d');b25.title='Admin-only experimental 2.5D combat renderer'}
 }
 function activate(mode='3d'){
+ if(!adminAllowed()){removeAdminButtons();return}
  mode=mode==='2.5d'?'2.5d':'3d';
  if(S.active){S.mode=mode;updateBadge();syncModeButtons();return}
  try{
@@ -247,10 +251,11 @@ function toggle3D(){S.active&&S.mode==='3d'?deactivate():activate('3d')}
 function toggle25D(){S.active&&S.mode==='2.5d'?deactivate():activate('2.5d')}
 function webglSupported(){try{const c=document.createElement('canvas');return Boolean(c.getContext('webgl'))}catch(_){return false}}
 function ensureButtons(){
+ if(!adminAllowed()){if(S.active)deactivate();removeAdminButtons();return}
  const shell=document.querySelector('.cb2d-shell'),live=shell?.querySelector('.cb2d-live');if(!live)return;
  let b25=live.querySelector('[data-cb25d-toggle]'),b3=live.querySelector('[data-cb3d-toggle]'),speed=live.querySelector('[data-speed]');
- if(!b25){b25=document.createElement('button');b25.type='button';b25.dataset.cb25dToggle='1';b25.title='Experimental 2.5D combat renderer';b25.addEventListener('click',toggle25D);live.insertBefore(b25,b3||speed||live.lastElementChild)}
- if(!b3){b3=document.createElement('button');b3.type='button';b3.dataset.cb3dToggle='1';b3.title='Experimental native 3D combat renderer';b3.addEventListener('click',toggle3D);speed=live.querySelector('[data-speed]');live.insertBefore(b3,speed||live.lastElementChild)}
+ if(!b25){b25=document.createElement('button');b25.type='button';b25.dataset.cb25dToggle='1';b25.addEventListener('click',toggle25D);live.insertBefore(b25,b3||speed||live.lastElementChild)}
+ if(!b3){b3=document.createElement('button');b3.type='button';b3.dataset.cb3dToggle='1';b3.addEventListener('click',toggle3D);speed=live.querySelector('[data-speed]');live.insertBefore(b3,speed||live.lastElementChild)}
  syncModeButtons()
 }
 function event(e,result,ctx={}){
@@ -279,11 +284,13 @@ function event(e,result,ctx={}){
 let observerQueued=false;
 function observe(){
  ensureButtons();
+ window.addEventListener('cellbound:admin-status',()=>ensureButtons());
  const ob=new MutationObserver(()=>{
   if(observerQueued)return;observerQueued=true;
   requestAnimationFrame(()=>{
    observerQueued=false;
-   if(!button()||!button25())ensureButtons();
+   if(adminAllowed()&&(!button()||!button25()))ensureButtons();
+   if(!adminAllowed()&&(button()||button25()))removeAdminButtons();
    if(S.active&&!arena()){S.active=false;destroyScene()}
   })
  });
