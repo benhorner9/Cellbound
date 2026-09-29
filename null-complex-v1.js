@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const VERSION='1.0.0',SIZE=10,MAX_FLOOR=10,ATTEMPTS=2,WINDOW_MS=5*24*60*60*1000;
+const VERSION='1.1.0',SIZE=3,MAX_FLOOR=10,ATTEMPTS=2,WINDOW_MS=5*24*60*60*1000;
 const Game=()=>window.CellboundGame,C=()=>window.CellboundCombatReborn;
 const PARTS=[['cable','Conduit Cable','⌁'],['cell','Power Cell','◈'],['fuse','Reactor Fuse','⌬']];
 const MATERIALS=[
@@ -34,16 +34,16 @@ function attemptsLeft(){const n=state();return n?Math.max(0,ATTEMPTS-n.attemptsU
 function persist(){const n=state();if(n)n.activeRun=run?JSON.parse(JSON.stringify(run)):null;Game()?.save?.();Game()?.persistState?.()}
 function key(x,y){return x+','+y}
 function generateFloor(floor,seed){
- const r=rng(seed+':'+floor),start={x:4,y:4},cells={};
+ const r=rng(seed+':'+floor),start={x:1,y:1},cells={};
  for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++)cells[key(x,y)]={x,y,type:'empty',searched:false,cleared:false};
  cells[key(start.x,start.y)].type='entrance';
  const available=Object.values(cells).filter(c=>c.type==='empty');
  const take=()=>available.splice(Math.floor(r()*available.length),1)[0];
  const tele=take();tele.type='teleporter';
- PARTS.forEach((p,i)=>{const c=take();c.type='search';c.part=p[0]});
- for(let i=0;i<18;i++){const c=take();if(c)c.type='search'}
- for(let i=0;i<22;i++){const c=take();if(c)c.type='combat'}
- for(let i=0;i<3;i++){const c=take();if(c)c.type='breach'}
+ PARTS.forEach(p=>{const c=take();c.type='search';c.part=p[0]});
+ const bonusSearch=take();if(bonusSearch)bonusSearch.type='search';
+ const breach=floor>=4&&r()>.55?take():null;if(breach)breach.type='breach';
+ while(available.length){const c=take();if(c)c.type=r()<(floor>=6?.72:.58)?'combat':'empty'}
  return{cells,start,teleporter:{x:tele.x,y:tele.y}}
 }
 function newFloor(floor){
