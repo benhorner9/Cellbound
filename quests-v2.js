@@ -1101,7 +1101,13 @@ const CLASS_TRIALS={
  Evoker:[['evoker-draconic-resonance',5,'Draconic Resonance','Echoes of the Flights','Awaken the resonance carried in your draconic blood.','Resonant Drake',510],['evoker-ancient-vitality',10,'Ancient Vitality','Legacy Awakened','Prove you can wield ancient power without being consumed by it.','Ancient Echo',780]]
 };
 function classTrialDefs(){
- const out=[];(state()?.roster||[]).forEach(ch=>(CLASS_TRIALS[ch.class]||[]).forEach(x=>out.push({character:ch,id:x[0],level:x[1],buff:x[2],title:x[3],summary:x[4],enemy:x[5],health:x[6],key:'class-trial:'+ch.id+':'+x[0]})));return out
+ const out=[];
+ (state()?.roster||[]).forEach(ch=>(CLASS_TRIALS[ch.class]||[]).forEach(x=>{
+  const level=Number(x[1])||1,unlocked=Boolean(ch?.classBuffProgress?.unlocked?.includes(x[0]));
+  if(Number(ch?.level||1)<level&&!unlocked)return;
+  out.push({character:ch,id:x[0],level,buff:x[2],title:x[3],summary:x[4],enemy:x[5],health:x[6],key:'class-trial:'+ch.id+':'+x[0]})
+ }));
+ return out
 }
 function classTrialDone(t){return Boolean(t?.character?.classBuffProgress?.unlocked?.includes(t.id))}
 function classTrialAvailable(t){return Number(t?.character?.level||1)>=t.level&&!classTrialDone(t)}
