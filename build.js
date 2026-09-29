@@ -42,7 +42,7 @@ for(const file of files){
     for(const hook of ['/* Profession Workshop V2 */','.profession-command-hero','.craft-project','.craft-action-grid','.profession-recipe-card'])if(!contents.includes(hook))throw new Error('Profession Workshop V2 styling is missing '+hook);
   }
   if(file==='profession-data.js'){
-    if(!contents.includes('const skillThreshold=level=>50+Math.max(1,level)*5;'))throw new Error('Profession project progression curve regressed');
+    if(!contents.includes('const skillThreshold=level=>100+Math.max(1,level)*5;'))throw new Error('Profession project progression curve regressed');
   }
   if(file==='item-art-v1.js'){
     if(!contents.includes("card.querySelector(':scope > .recipe-output-art')"))throw new Error('Profession recipe art duplication guard is missing');
