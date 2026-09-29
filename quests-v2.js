@@ -188,14 +188,28 @@ function dialogueRoot(){
  if(!root){root=document.createElement('div');root.id='questDialogue';root.className='quest-dialogue-backdrop';root.hidden=true;document.body.appendChild(root)}
  return root
 }
+const QUEST_COMIC_ART={
+ ashen:['./assets/dungeons/ashen-vault.webp','./assets/bosses/ashen-vault-vaultheart.webp','./assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp','./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp'],
+ hollow:['./assets/dungeons/hollow-sanctum.webp','./assets/bosses/hollow-sanctum-bound-choir.webp','./assets/comics/tutorial/moonlit_ruins_and_the_glowing_wardstone.webp','./assets/comics/tutorial/warden_s_descent_into_the_ruins.webp'],
+ zeltira:['./assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp','./assets/comics/tutorial/the_quartermaster_s_choice.webp','./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp','./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp'],
+ trial:['./assets/comics/tutorial/arcane_overload_a_warden_s_lesson.webp','./assets/comics/tutorial/the_warden_and_the_arcane_diadem.webp','./assets/comics/tutorial/arcane_forge_beneath_the_twilight_citadel.webp','./assets/comics/tutorial/moonlit_ruins_and_the_glowing_wardstone.webp']
+};
+function questComicArtSet(title,speaker){
+ const key=(String(title||'')+' '+String(speaker||'')).toLowerCase();
+ if(/trial|mentor/.test(key))return QUEST_COMIC_ART.trial;
+ if(/vault|forge|ash|elara/.test(key))return QUEST_COMIC_ART.ashen;
+ if(/seal|hollow|fragment|tessa|jory|bram|letter|bearer|pressure/.test(key))return QUEST_COMIC_ART.hollow;
+ return QUEST_COMIC_ART.zeltira
+}
 function comicPanels(title,speaker,beats){
- const list=Array.isArray(beats)?beats:[beats];
+ const list=Array.isArray(beats)?beats:[beats],art=questComicArtSet(title,speaker);
  return list.map((text,i)=>({
   kind:i===0?'location':'dialogue',
   eyebrow:i===0?'QUEST STORY':'',
   speaker,
   title:i===0?title:'',
   text:String(text||''),
+  artwork:art[i%art.length],
   wide:list.length===1
  }))
 }
@@ -359,9 +373,9 @@ async function completeAshfall(){
     await window.CellboundComicScenes.show({
       eyebrow:'QUEST COMPLETE',title:ASHFALL.title,subtitle:'The road to the old forge is open.',page:'COMPLETE',theme:'ashen',
       panels:[
-        {kind:'location',eyebrow:'THE EAST ROAD',title:'A Door in the Mountain',text:'The road is closed. The old forge is awake. And your guild now holds the only key anyone knows still exists.',wide:true},
-        {kind:'reveal',eyebrow:'REWARD',title:'+120 Gold · +75 Renown',text:'The Ashen Vault has been permanently unlocked.'},
-        {kind:'location',eyebrow:'DUNGEON UNLOCKED',title:'The Ashen Vault',text:'Quest gear gives you a reliable starting point. Better versions now wait inside the dungeon.'}
+        {kind:'location',eyebrow:'THE EAST ROAD',title:'A Door in the Mountain',text:'The road is closed. The old forge is awake. And your guild now holds the only key anyone knows still exists.',artwork:'./assets/dungeons/ashen-vault.webp',wide:true},
+        {kind:'reveal',eyebrow:'REWARD',title:'+120 Gold · +75 Renown',text:'The Ashen Vault has been permanently unlocked.',artwork:'./assets/comics/tutorial/the_warden_and_the_arcane_diadem.webp'},
+        {kind:'location',eyebrow:'DUNGEON UNLOCKED',title:'The Ashen Vault',text:'Quest gear gives you a reliable starting point. Better versions now wait inside the dungeon.',artwork:'./assets/bosses/ashen-vault-vaultheart.webp'}
       ],progressive:true,storyOnly:true,allowSkip:false,nextLabel:'NEXT PANEL →',continueLabel:'OPEN DUNGEON JOURNAL →'
     });
     Game.switchView?.('content');return
