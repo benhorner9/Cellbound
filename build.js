@@ -43,9 +43,11 @@ for(const file of files){
   }
   if(file==='profession-data.js'){
     if(!contents.includes('const skillThreshold=level=>100+Math.max(1,level)*5;'))throw new Error('Profession project progression curve regressed');
+    for(const hook of ['persistentAttachment=true','recipeMetaForOutputKey','item?.attachment?.bonuses','kind:\'attachment\''])if(!contents.includes(hook))throw new Error('Persistent profession attachment model is missing '+hook);
   }
   if(file==='item-art-v1.js'){
     if(!contents.includes("card.querySelector(':scope > .recipe-output-art')"))throw new Error('Profession recipe art duplication guard is missing');
+    if(!contents.includes('P?.craftedRarity?.(r.level,r.endgame)'))throw new Error('Crafted item artwork rarity no longer follows profession progression');
   }
   if(file==='evolution-v1.css'){
     for(const hook of ['/* Profession Workshop V2 layout ownership','#professions .recipe-list{','grid-template-columns:1fr!important','#professions .profession-recipe-card{'])if(!contents.includes(hook))throw new Error('Legacy profession layout override is not neutralised: '+hook);
@@ -61,6 +63,7 @@ for(const file of files){
     if(contents.includes("if(item.slot==='Weapon')return ['Weapon','OffHand']")||!contents.includes("if(item.slot==='Weapon')return ['Weapon']"))throw new Error('Character Equipment UI is allowing main-hand weapons into OffHand');
     if(!contents.includes("paperDollHTML?.(c")||!contents.includes('data-paper-doll-stage')||!contents.includes('LIVE EQUIPMENT VIEW'))throw new Error('Character Equipment visual paper doll is missing');
     if(!contents.includes('function fallbackEquipmentSlot')||!contents.includes('cb-recovery-armoury')||!contents.includes("if(!item||typeof item!=='object')return false")||contents.includes('activeSlot=null;\n    return equipmentFallback'))throw new Error('Equipment recovery mode must preserve the paper doll and slot controls');
+    for(const hook of ['function attachmentStacksForSlot','cb-attachment-panel','data-apply-attachment','function applyAttachmentToEquipped'])if(!contents.includes(hook))throw new Error('Character equipment attachment flow is missing '+hook);
   }
   if(file==='bank-v2.css'){
     if(!contents.includes('#bank .bank-card-v2[data-hidden="1"]{display:none!important}'))throw new Error('Bank category filtering must override card display so materials cannot leak into Equipment');
@@ -68,6 +71,7 @@ for(const file of files){
   if(file==='evolution-v1.js'){
     for(const hook of ['rosterClearFilters','rosterResultsLabel','Gear Watch','gearOrder='])if(!contents.includes(hook))throw new Error('Roster v2 filtering/enhancement is missing '+hook);
     for(const hook of ['bankMetricCrafting','data-bank-count','bank-filter-empty-v2',"bankCategory==='favorite'"])if(!contents.includes(hook))throw new Error('Bank v2 filtering/enhancement is missing '+hook);
+    for(const hook of ['function openBankResource','data-resource-open','applyBankAttachment','learnBankRecipe'])if(!contents.includes(hook))throw new Error('Bank crafted-item action flow is missing '+hook);
   }
   if(file==='character-portraits-v1.js'){
     for(const hook of ['window.CellboundPortraits','normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
@@ -448,6 +452,8 @@ for(const file of files){
     if(!hasVersionedAsset('roster-v2.css'))throw new Error('Roster v2 stylesheet is missing a cache version');
     for(const hook of ['class="roster-overview-strip"','id="rosterClearFilters"','id="rosterResultsLabel"','class="roster-grid roster-grid-v2"'])if(!contents.includes(hook))throw new Error('Roster v2 UI is missing '+hook);
     for(const hook of ['bank-v2.css','class="bank-category-tabs"','id="bankClearFilters"','id="bankResultsLabel"','class="bank-grid bank-grid-v2"','data-bank-category="Gear"'])if(!contents.includes(hook))throw new Error('Bank v2 UI is missing '+hook);
+    if(contents.includes('id="craftedInventory"'))throw new Error('Finished crafted goods must be managed through the Bank, not a duplicate Professions stock panel');
+    if(!contents.includes('<b>Crafted Items</b>'))throw new Error('Bank crafted-items category label is missing');
     if(!hasVersionedAsset('bank-v2.css'))throw new Error('Bank v2 stylesheet cache version must include category-isolation fix');
     if(!contents.includes('combat-polish-v2.css')||!contents.includes('combat-polish-v2.js'))throw new Error('Shared combat VFX polish assets are not linked from guild.html');
     if(!contents.includes('trading-post-v3.css')||!contents.includes('trading-post-v3.js')||!contents.includes('id="tpBrowseResults"'))throw new Error('Trading Post v3 assets or hooks are not linked from guild.html');
