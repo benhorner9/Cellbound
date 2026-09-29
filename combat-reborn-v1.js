@@ -415,6 +415,23 @@ function classMobility(c){
  return 1;
 }
 
+function professionCombatBonuses(c){
+ const raw=window.CellboundProfessions?.activeBonuses?.(c)||{},out={};
+ Object.entries(raw).forEach(([key,value])=>out[key]=Number(value)||0);
+ return out
+}
+function professionPrimaryValue(u){
+ const b=u?.professionBonuses||{};
+ let key=['Warrior','Paladin','Death Knight'].includes(u?.class)?'strength':['Hunter','Rogue','Demon Hunter'].includes(u?.class)?'agility':'intellect';
+ if(u?.class==='Monk')key=u?.spec==='Mistweaver'?'intellect':'agility';
+ return Math.max(0,Number(b[key])||0)
+}
+function professionOutputScale(u,kind='damage'){
+ const b=u?.professionBonuses||{},primary=professionPrimaryValue(u)*.004;
+ const direct=kind==='healing'?(Number(b.healing)||0)/100:(Number(b.damagePct)||0)/100;
+ return Math.max(.5,1+primary+direct)
+}
+
 
 function gearSetState(c){
  const counts={};
@@ -1043,7 +1060,7 @@ function normalisePlayer(c,i){
  const power=Math.max(1,Number(c?.power)||1);
  const defence=window.CellboundIdentities?.defenceProfile?.(c)||{physicalTaken:1,magicTaken:1,blockChance:0,blockMultiplier:.72,healthMultiplier:1};
  const level=Math.max(1,Number(c?.level)||1),baseHealth=Math.round(baseHp+(power*1.8)),healthScale=levelHealthScale(level),outputScale=levelOutputScale(level);
- const maxHealth=Math.round(baseHealth*healthScale*Math.max(1,Number(defence.healthMultiplier)||1)),startPct=clamp(c?._combatHealthPct==null?100:Number(c._combatHealthPct),0,100),startHealth=Math.round(maxHealth*startPct/100);
+ const professionBonuses=professionCombatBonuses(c),maxHealth=Math.round(baseHealth*healthScale*Math.max(1,Number(defence.healthMultiplier)||1)+Math.max(0,Number(professionBonuses.stamina)||0)*4),startPct=clamp(c?._combatHealthPct==null?100:Number(c._combatHealthPct),0,100),startHealth=Math.round(maxHealth*startPct/100);
  const carried=c?._combatResource,carriedValue=typeof carried==='number'?carried:Number(carried?.value);
  const resourceValue=Number.isFinite(carriedValue)?clamp(carriedValue,0,res.max):res.start;
  const setState=gearSetState(c),resourceRegen=(healer&&res.name==='Mana'?2.1:res.regen)*setState.resourceRegen;
@@ -1053,7 +1070,7 @@ function normalisePlayer(c,i){
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
   maxHealth,health:startHealth,alive:startHealth>0,position:startPosition,facing:0,
   target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:carriedStatuses(c),resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
-  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,baseStats:{baseHealth,healthScale,outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:copy(c?._combatTalentTimers||{}),talentFlags:copy(c?._combatTalentFlags||{}),talentCounters:copy(c?._combatTalentCounters||{}),damageActions:Math.max(0,Number(c?._combatDamageActions)||0),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),staggerPool:0,nextStaggerTick:0,staggerSourceId:null,lastMonkAbility:null,lastMistHealId:null,recentDamageTaken:[],dkWounds:{},soulFragments:0,comboPoints:0,
+  abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,professionBonuses,baseStats:{baseHealth,healthScale,outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:copy(c?._combatTalentTimers||{}),talentFlags:copy(c?._combatTalentFlags||{}),talentCounters:copy(c?._combatTalentCounters||{}),damageActions:Math.max(0,Number(c?._combatDamageActions)||0),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),staggerPool:0,nextStaggerTick:0,staggerSourceId:null,lastMonkAbility:null,lastMistHealId:null,recentDamageTaken:[],dkWounds:{},soulFragments:0,comboPoints:0,
   defensiveUntil:Math.max(0,Number(c?._combatDefensiveMs)||0),frenzyUntil:Math.max(0,Number(c?._combatFrenzyMs)||0),uniqueUsed:copy(c?._combatUniqueUsed||{}),nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
 }
@@ -1431,7 +1448,7 @@ function threatMultiplier(u,a){
  if(u.class==='Warrior'&&u.spec==='Protection')base*=1+talentRank(u,'Taunt Mastery')*.05;
  if(u.class==='Monk'&&u.spec==='Brewmaster')base*=1+(a.id==='keg-smash'?talentRank(u,'Keg Mastery')*.12:0);
  if(u.class==='Death Knight'&&u.spec==='Blood')base*=1+(a.id==='heart-strike'?talentRank(u,'Heartbreaker')*.10:0);
- return base*Math.max(.1,1+statusBonus(u,'threatBonus'))
+ return base*Math.max(.1,1+statusBonus(u,'threatBonus'))*Math.max(.1,1+(Number(u?.professionBonuses?.threat)||0)/100)
 }
 
 function topThreatTarget(ctx,e){
@@ -2194,12 +2211,12 @@ function itemLevelOutputMultiplier(ctx,u){
 function rollDamage(ctx,u,a,target){
  const power=1+Math.min(.35,u.power*.012),levelScale=u.baseStats?.outputScale||levelOutputScale(u.level),match=levelMatchMultiplier(u.level,target?.level||1);
  const variance=.9+ctx.rng()*.2,revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1,frenzy=u.frenzyUntil>ctx.time?1.15:1;
- let amount=(Number(a.damage)||12)*power*levelScale*match*variance*revivePenalty*frenzy*Math.max(.1,1+statusBonus(u,'outgoingDamage'))*talentDamageScale(ctx,u,a,target)*Math.max(.5,Number(u?.setBonuses?.damageScale)||1)*specDamageBalance(u)*itemLevelOutputMultiplier(ctx,u);
+ let amount=(Number(a.damage)||12)*power*levelScale*match*variance*revivePenalty*frenzy*Math.max(.1,1+statusBonus(u,'outgoingDamage'))*professionOutputScale(u,'damage')*talentDamageScale(ctx,u,a,target)*Math.max(.5,Number(u?.setBonuses?.damageScale)||1)*specDamageBalance(u)*itemLevelOutputMultiplier(ctx,u);
  let executeBelow=Number(a.executeBelow)||0,executeMultiplier=Math.max(1,Number(a.executeMultiplier)||1.5);
  if(u.class==='Hunter'&&a.id==='kill-shot'&&talentRank(u,'Kill Shot')){executeBelow=Math.max(executeBelow,.35);executeMultiplier=Math.max(executeMultiplier,2.05)}
  if(executeBelow>0&&healthRatio(target)<=executeBelow)amount*=executeMultiplier;
  let dkCrit=0;if(u.class==='Death Knight'&&u.spec==='Frost'&&['obliterate','frostwyrms-fury','breath-of-sindragosa'].includes(a.id))dkCrit=talentRank(u,'Killing Machine')*.05;
- const critChance=clamp(.12+statusBonus(u,'critBonus')+talentCritBonus(u)+dkCrit+Math.max(0,Number(u?.setBonuses?.critBonus)||0),0,.80);
+ const critChance=clamp(.12+statusBonus(u,'critBonus')+talentCritBonus(u)+dkCrit+Math.max(0,Number(u?.setBonuses?.critBonus)||0)+Math.max(0,Number(u?.professionBonuses?.crit)||0)/100,0,.80);
  if(ctx.rng()<critChance){amount*=1.5*talentCritMultiplier(u);return{amount,crit:true}}
  return{amount,crit:false};
 }
@@ -2219,9 +2236,12 @@ function mitigation(ctx,target,damageType='physical',opts={}){
  const profile=target?.defence||{},gearTaken=damageType==='magic'?(Number(profile.magicTaken)||1):(Number(profile.physicalTaken)||1);
  let value=target.role==='tank'?(damageType==='magic'?.82:.72):1;
  value*=gearTaken;value*=itemLevelIncomingMultiplier(ctx,target);
+ const profession=target?.professionBonuses||{};
+ if(damageType==='magic')value*=1-clamp((Number(profession.magicWardPct)||0)/100,0,.35);
+ if(damageType==='physical')value*=1-clamp((Number(profession.armour)||0)*.002,0,.18);
  value*=1-clamp(Number(target?.setBonuses?.incomingDamageReduction)||0,0,.35);
  if(opts.aggroHit&&target.role!=='tank')value*=target.role==='healer'?1.28:1.22;
- let blockChance=Number(profile.blockChance)||0;
+ let blockChance=(Number(profile.blockChance)||0)+Math.max(0,Number(target?.professionBonuses?.block)||0);
  if(target.class==='Warrior'&&target.spec==='Protection')blockChance+=talentRank(target,'Shield Mastery')*4;
  if(target.class==='Paladin'&&target.spec==='Protection'){
   blockChance+=talentRank(target,'Sacred Shield')*4;
@@ -2355,7 +2375,7 @@ function doHeal(ctx,healer,target,amount,ability,opts={}){
  if(!healer?.alive||!target?.alive)return 0;
  const before=target.health,max=target.maxHealth;
  const healingScale=Math.max(.1,1+statusBonus(healer,'outgoingHealing'))*Math.max(.1,1+statusBonus(target,'incomingHealing'));
- const raw=Math.max(1,Math.round(amount*healingScale*specHealingBalance(healer)*itemLevelOutputMultiplier(ctx,healer)));
+ const raw=Math.max(1,Math.round(amount*healingScale*professionOutputScale(healer,'healing')*specHealingBalance(healer)*itemLevelOutputMultiplier(ctx,healer)));
  target.health=clamp(before+raw,0,max);
  const effective=target.health-before,over=Math.max(0,raw-effective);
  const st=ctx.stats.players[healer.id];st.healing+=effective;st.overhealing+=over;st.abilityHealing[ability]=(st.abilityHealing[ability]||0)+effective;
@@ -2621,7 +2641,7 @@ function startAbility(ctx,u,a,target){
  if(u.class==='Rogue'&&u.spec==='Outlaw'&&Number(a.comboCost)>0&&Math.max(0,Number(u.comboPoints)||0)<Number(a.comboCost))return false;
  if(!moveIntoRange(ctx,u,target,Number(a.range)||5))return false;
  if(!spendResource(ctx,u,a))return false;
- const haste=clamp(statusBonus(u,'haste')+Math.max(0,Number(u?.setBonuses?.haste)||0),0,.60),speed=1+haste;
+ const haste=clamp(statusBonus(u,'haste')+Math.max(0,Number(u?.setBonuses?.haste)||0)+Math.max(0,Number(u?.professionBonuses?.haste)||0)/100,0,.60),speed=1+haste;
  let cast=Math.max(0,Math.round((Number(a.cast)||0)/speed));cast=talentCastTime(ctx,u,a,cast);
  const gcd=Math.max(0,Math.round((Number(a.gcd)||0)/speed)),cd=Math.max(0,Math.round((Number(a.cd)||0)*talentCooldownScale(u,a)));
  u.gcdUntil=ctx.time+gcd;u.cooldowns[a.id]=Math.max(cd,gcd);
