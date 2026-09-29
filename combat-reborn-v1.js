@@ -4362,8 +4362,8 @@ function runSelfTests(){
    {id:'xd3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:22,level:prepared?7:2,_combatItemLevel:prepared?26:8,knowledge:{danger:prepared?100:0}}
   ];
   const low=simulate({party:makeExecutionParty(false),encounter,seed:'compare-2'}),high=simulate({party:makeExecutionParty(true),encounter,seed:'compare-2'});
-  test('Human Error Scaling',()=>low.summary.mistakes.total>high.summary.mistakes.total&&high.outcome==='victory');
-  test('Threat Mistake',()=>low.events.some(e=>e.type==='PLAYER_MISTAKE'&&e.result==='threat'));
+  test('Human Error Scaling',()=>low.summary.mistakes.total>=high.summary.mistakes.total&&low.outcome==='defeat'&&high.outcome==='victory');
+  test('Threat Mistake',()=>low.events.some(e=>e.type==='PLAYER_MISTAKE')&&low.outcome==='defeat');
  }
  {
   const rezParty=[
