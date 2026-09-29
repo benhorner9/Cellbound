@@ -136,6 +136,10 @@ function wipe(reason){
 function notice(msg){if(mount){const n=mount.querySelector('[data-null-notice]');if(n){n.textContent=msg;n.hidden=false}}}
 function roomName(room){return room?.type==='entrance'?'Entry Chamber':room?.type==='teleporter'?'Teleport Chamber':room?.type==='breach'?'Containment Breach':room?.type==='search'?'Research Chamber':room?.type==='combat'?'Experiment Chamber':'Facility Chamber'}
 function roomVisual(room){return room.type==='breach'?'breach':room.type==='teleporter'?'reactor':room.type==='search'?'lab':(['lab','containment','reactor','storage'][(run.pos.x+run.pos.y+run.floor)%4])}
+function engineMiniMap(){
+ let cells='';for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){const k=key(x,y),seen=!!run.visited[k],here=run.pos.x===x&&run.pos.y===y,room=run.map[k],tele=seen&&room.type==='teleporter',entry=seen&&room.type==='entrance';cells+='<i class="'+(seen?'seen ':'')+(here?'current ':'')+(tele?'tele ':'')+(entry?'entry ':'')+'">'+(here?'●':tele?'T':entry?'E':'')+'</i>'}
+ return '<div class="null-engine-minimap"><header><b>FLOOR '+run.floor+'</b><span>'+Object.keys(run.visited).length+' / '+(SIZE*SIZE)+' ROOMS</span></header><div class="null-engine-minimap-grid">'+cells+'</div><footer><span><i class="you"></i>YOU</span><span><i class="known"></i>EXPLORED</span></footer></div>'
+}
 function roomProps(room){
  const v=roomVisual(room),search=room.type==='search'&&!room.searched;
  let html='<div class="null-scene-props '+v+'">';
@@ -158,7 +162,7 @@ function showRoom(){
  if(!run)return;
  const viewer=window.CellboundDungeon2D;if(!viewer?.openSharedExploration){notice('Exploration engine is loading.');return}
  const room=roomAt(run.pos.x,run.pos.y),party=(Game()?.getPartyCharacters?.()||[]);
- const view=viewer.openSharedExploration({party,id:'null-'+run.floor+'-'+run.pos.x+'-'+run.pos.y,header:'THE NULL COMPLEX · FLOOR '+run.floor,title:roomName(room),theme:'null',room:'null-'+roomVisual(room),roomLabel:roomName(room),ambience:room.type==='search'?'Searchable equipment is scattered through the chamber.':room.type==='teleporter'?'The damaged teleporter dominates the chamber.':'The party advances through the abandoned facility.',environmentHtml:roomProps(room),controlsHtml:controlsHtml(room),status:run.message||'Choose a route.',shellClass:'null-combat-shell',arenaClass:'null-combat-arena'});
+ const view=viewer.openSharedExploration({party,id:'null-'+run.floor+'-'+run.pos.x+'-'+run.pos.y,header:'THE NULL COMPLEX · FLOOR '+run.floor,title:roomName(room),theme:'null',room:'null-'+roomVisual(room),roomLabel:roomName(room),ambience:room.type==='search'?'Searchable equipment is scattered through the chamber.':room.type==='teleporter'?'The damaged teleporter dominates the chamber.':'The party advances through the abandoned facility.',environmentHtml:roomProps(room)+engineMiniMap(),controlsHtml:controlsHtml(room),status:run.message||'Choose a route.',shellClass:'null-combat-shell',arenaClass:'null-combat-arena'});
  bindExplore(view,room)
 }
 function openExplore(){showRoom()}
