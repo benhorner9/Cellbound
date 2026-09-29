@@ -487,3 +487,11 @@
   .cb-attachment-option{grid-template-columns:44px minmax(0,1fr)}
   .cb-attachment-option>button{grid-column:1/-1;width:100%}
 }
+
+
+.cb-current-attachment.is-inactive{
+  border-color:rgba(190,96,96,.22);
+  background:rgba(80,28,28,.16)
+}
+.cb-current-attachment.is-inactive small{color:#c57d7d}
+.cb-current-attachment.is-inactive span{color:#b99898}
