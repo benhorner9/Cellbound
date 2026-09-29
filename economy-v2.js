@@ -19,7 +19,7 @@ function normalise(){
   s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];
   s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];
   s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];
-  s.roster.forEach(c=>{c.professions=Array.isArray(c.professions)?c.professions.slice(0,2):[null,null];while(c.professions.length<2)c.professions.push(null);c.professions=c.professions.map(p=>p?{...p,name:p.name,level:Math.max(1,Math.min(100,Number(p.level)||1)),xp:Math.max(0,Number(p.xp)||0),craftHistory:p.craftHistory&&typeof p.craftHistory==='object'?p.craftHistory:{},masterworks:Math.max(0,Number(p.masterworks)||0),projectsCompleted:Math.max(0,Number(p.projectsCompleted)||0)}:null);c.activeEnhancements=c.activeEnhancements&&typeof c.activeEnhancements==='object'?c.activeEnhancements:{};c.activeProfessionBuffs=Array.isArray(c.activeProfessionBuffs)?c.activeProfessionBuffs:[];});
+  s.roster.forEach(c=>{c.professions=Array.isArray(c.professions)?c.professions.slice(0,1):[null];while(c.professions.length<1)c.professions.push(null);c.professions=c.professions.map(p=>p?{...p,name:p.name,level:Math.max(1,Math.min(100,Number(p.level)||1)),xp:Math.max(0,Number(p.xp)||0),craftHistory:p.craftHistory&&typeof p.craftHistory==='object'?p.craftHistory:{},masterworks:Math.max(0,Number(p.masterworks)||0),projectsCompleted:Math.max(0,Number(p.projectsCompleted)||0)}:null);c.activeEnhancements=c.activeEnhancements&&typeof c.activeEnhancements==='object'?c.activeEnhancements:{};c.activeProfessionBuffs=Array.isArray(c.activeProfessionBuffs)?c.activeProfessionBuffs:[];});
 }
 function addConsumable(item,qty=1){
   const s=state(),key=item.key||item.itemKey,name=item.name||item.itemName||key,payload=item.payload||{};
@@ -208,11 +208,10 @@ function renderProfessions(){
   list.querySelectorAll('[data-prof-char]').forEach(b=>b.onclick=()=>{selectedChar=b.dataset.profChar;selectedSlot=0;craftProject=null;lastCraftMessage='';renderProfessions();});
   const c=s.roster.find(x=>x.id===selectedChar);if(!c){work.innerHTML='<div class="profession-empty">No adventurer selected.</div>';return;}
   const slots=ent().professionSlots;$('#workshopTitle').textContent=`${c.name}'s Workshop`;
-  const slotHtml=[0,1].map(i=>{const p=c.professions[i],locked=i>=slots;return `<button class="profession-slot-card ${locked?'locked':''} ${selectedSlot===i&&!locked?'active':''}" data-prof-slot="${i}" ${locked?'disabled':''}><small>PROFESSION ${i+1}</small><b>${locked?'Membership Slot':p?.name||'Unlearned'}</b><p>${locked?'Unlocks with membership':p?`Skill ${p.level}/100 · ${p.projectsCompleted||0} projects`:'Choose a trade skill for this adventurer.'}</p></button>`;}).join('');
+  const slotHtml=[0].map(i=>{const p=c.professions[i];return `<button class="profession-slot-card ${selectedSlot===i?'active':''}" data-prof-slot="${i}"><small>PROFESSION</small><b>${p?.name||'Unlearned'}</b><p>${p?`Skill ${p.level}/100 · ${p.projectsCompleted||0} projects`:'Choose a trade skill for this adventurer.'}</p></button>`;}).join('');
   const prof=c.professions[selectedSlot];
   let body='';
-  if(selectedSlot>=slots)body='<div class="profession-empty">This profession slot is available with membership.</div>';
-  else if(!prof){
+  if(!prof){
     const choices=Object.entries(P.PROFESSIONS).filter(([n])=>!c.professions.some(p=>p?.name===n));
     body=`<div class="profession-choice-intro"><small>CHOOSE A CRAFT</small><h3>Give ${c.name} a workshop identity.</h3><p>Each profession now levels through completed projects, quality finishes and increasingly difficult recipes.</p></div><div class="profession-choices">${choices.map(([n,d])=>`<button class="profession-choice" data-learn-prof="${n}"><i>${d.icon}</i><span><b>${n}</b><small>${d.summary}</small></span><em>LEARN →</em></button>`).join('')}</div>`;
   }else{

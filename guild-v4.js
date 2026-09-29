@@ -151,7 +151,7 @@ const starterDefs=[
 ];
 const starterRoster=starterDefs.map(([id,name,klass,spec,level,power,knowledge,portrait])=>{
   const equipment=starterEquipment(klass);
-  return {id,name,class:klass,spec,level,power,gear:0,talent:1,knowledge:{ashwarden:knowledge,embermaw:0,vaultheart:0},portrait,gearItems:ILVL_SLOTS.map(slot=>equipment[slot]?.name||'Empty'),equipment,talents:talentState(klass),cellShock:0,cellShockLockedUntil:null,professions:[null,null]};
+  return {id,name,class:klass,spec,level,power,gear:0,talent:1,knowledge:{ashwarden:knowledge,embermaw:0,vaultheart:0},portrait,gearItems:ILVL_SLOTS.map(slot=>equipment[slot]?.name||'Empty'),equipment,talents:talentState(klass),cellShock:0,cellShockLockedUntil:null,professions:[null]};
 });
 function initialState(){
   return {
@@ -168,7 +168,7 @@ function entitlementFromAccount(a){
   const staffMember=Boolean(a?.staff_member);
   const member=staffMember||Boolean(a?.membership_override)||(until>Date.now());
   const isAdmin=Boolean(globalThis.CellboundAdmin?.isAdmin);
-  return {member,staffMember,isAdmin,chatBadge:a?.chat_badge||'player',playerModDiscountEligible:Boolean(a?.player_mod_discount_eligible),rosterCap:isAdmin?20:member?10:5,professionSlots:member?2:1,recoveryMinutes:member?MEMBER_RECOVERY_MINUTES:STANDARD_RECOVERY_MINUTES,membershipActiveUntil:a?.membership_active_until||null};
+  return {member,staffMember,isAdmin,chatBadge:a?.chat_badge||'player',playerModDiscountEligible:Boolean(a?.player_mod_discount_eligible),rosterCap:isAdmin?20:member?10:5,professionSlots:1,recoveryMinutes:member?MEMBER_RECOVERY_MINUTES:STANDARD_RECOVERY_MINUTES,membershipActiveUntil:a?.membership_active_until||null};
 }
 function entitlements(){return entitlementFromAccount(account);}
 function classDef(c){return classes[c.class]||classes.Warrior;}
@@ -257,7 +257,7 @@ function normalizeCharacter(c,index=0){
     c.equipment[slot]=existing||(hasSlot?null:starters[slot]);
   });
   ['Shoulders','Hands','Waist','Legs','Feet','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic'].forEach(slot=>{if(!(slot in c.equipment))c.equipment[slot]=null;});
-  c.gearItems=ILVL_SLOTS.map(slot=>c.equipment[slot]?.name||'Empty');c.cellShock=Math.max(0,Math.min(100,Number(c.cellShock)||0));c.cellShockLockedUntil=c.cellShockLockedUntil||null;c.professions=Array.isArray(c.professions)?c.professions.slice(0,2):[null,null];while(c.professions.length<2)c.professions.push(null);c.professions=c.professions.map(p=>p?{...p,name:p.name,level:Math.max(1,Math.min(100,Number(p.level)||1)),xp:Math.max(0,Number(p.xp)||0),craftHistory:p.craftHistory&&typeof p.craftHistory==='object'?p.craftHistory:{},masterworks:Math.max(0,Number(p.masterworks)||0),projectsCompleted:Math.max(0,Number(p.projectsCompleted)||0)}:null);
+  c.gearItems=ILVL_SLOTS.map(slot=>c.equipment[slot]?.name||'Empty');c.cellShock=Math.max(0,Math.min(100,Number(c.cellShock)||0));c.cellShockLockedUntil=c.cellShockLockedUntil||null;c.professions=Array.isArray(c.professions)?c.professions.slice(0,1):[null];while(c.professions.length<1)c.professions.push(null);c.professions=c.professions.map(p=>p?{...p,name:p.name,level:Math.max(1,Math.min(100,Number(p.level)||1)),xp:Math.max(0,Number(p.xp)||0),craftHistory:p.craftHistory&&typeof p.craftHistory==='object'?p.craftHistory:{},masterworks:Math.max(0,Number(p.masterworks)||0),projectsCompleted:Math.max(0,Number(p.projectsCompleted)||0)}:null);
   c.gear=characterItemLevel(c);return c;
 }
 function canonicalBank(raw){
@@ -373,7 +373,7 @@ async function refreshMembershipStatus({render=true,silent=false}={}){
   removeInvalidPartyMembers(state);
   const partyChanged=partyBefore!==JSON.stringify(partySlotIds());
   if(before!==after){
-    if(after)state.activity.push('Membership activated. Roster slots 6–10 and second profession slots are now available.');
+    if(after)state.activity.push('Membership activated. Roster slots 6–10 are now available.');
     else {
       const stored=Math.max(0,(state.roster&&state.roster.length||0)-5);
       state.activity.push('Membership ended. Roster slots 6–10 are locked'+(stored?' with '+stored+' adventurer'+(stored===1?'':'s')+' safely stored.':'.'));
@@ -565,7 +565,7 @@ async function createRecruit(){
     id:recruitUid(),name,race:race.id,raceTrait:window.CellboundIdentities?.getRace?.(race.id)?.trait||race.trait,class:klass,spec,role,
     level:1,xp:0,power:role==='tank'?30:role==='healer'?27:29,talent:1,portrait:recruitInitials(name),appearance:CP?.normalizeAppearance?.(recruitDraft.appearance,name,race.id)||recruitDraft.appearance,
     knowledge:{ashwarden:0,embermaw:0,vaultheart:0},equipment,gearItems:ILVL_SLOTS.map(slot=>equipment[slot]?.name||'Empty'),
-    talents:talentState(klass),cellShock:0,cellShockLockedUntil:null,professions:[null,null],recruitedAt:new Date().toISOString()
+    talents:talentState(klass),cellShock:0,cellShockLockedUntil:null,professions:[null],recruitedAt:new Date().toISOString()
   },state.roster.length);
   state.roster.push(ch);state.activity.push(name+' joined the guild in '+(e.isAdmin&&state.roster.length>10?'admin':'membership')+' roster slot '+state.roster.length+'.');
   closeRecruit();writeLocal();await persistState();

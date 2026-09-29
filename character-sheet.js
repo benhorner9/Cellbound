@@ -811,7 +811,7 @@ function paperDoll(c,state){
       <div class="cb-armoury-summary cb-stat-loadout-summary">
         <div><span>SLOTS FILLED</span><b>${equipped}/14</b></div>
         <div class="${upgradeCount?'has-upgrades':''}"><span>BANK UPGRADES</span><b>${upgradeCount}</b></div>
-        <div><span>PROFESSION SLOTS</span><b>${ent.professionSlots||1}</b></div>
+        <div><span>PROFESSION SLOTS</span><b>1</b></div>
         <div><span>ACCOUNT RULE</span><b>${ent.member?'MEMBER':'STANDARD'}</b></div>
       </div>
       <div class="cb-armoury-hint">${upgradeCount?`<strong>${upgradeCount} upgrade${upgradeCount===1?'':'s'} available</strong><span>Gold-marked equipment slots have a stronger compatible item waiting in the Guild Bank.</span>`:'<strong>Loadout current</strong><span>No higher Item Level upgrades are currently waiting in the Guild Bank.</span>'}</div>
@@ -1026,39 +1026,20 @@ function skillsPanel(c){
 }
 
 function professionsPanel(c){
-  const ent=window.CellboundGame?.getEntitlements?.()||{professionSlots:1,member:false};
-  const slots=[0,1].map(i=>{
-    const p=c.professions?.[i],locked=i>=ent.professionSlots,level=Math.max(0,Math.min(100,Number(p?.level)||0));
-    return `<article class="cb-profession-command-card ${locked?'locked':p?'trained':'empty'}">
-      <div class="cb-profession-command-icon">${locked?'◇':p?'⚒':'+'}</div>
-      <div><small>PROFESSION ${i+1}</small><h4>${locked?'Membership Slot':p?.name||'Unlearned'}</h4><p>${locked?'A second profession slot is available with membership.':p?'Keep crafting to raise this profession toward Skill 100.':'Choose a profession in the Guild Workshop.'}</p></div>
-      <div class="cb-profession-level"><span>${locked?'LOCKED':'SKILL'}</span><b>${locked?'—':level+'/100'}</b>${!locked?`<i><em style="width:${level}%"></em></i>`:''}</div>
-    </article>`
-  }).join('');
+  const p=c.professions?.[0],level=Math.max(0,Math.min(100,Number(p?.level)||0));
+  const slot=`<article class="cb-profession-command-card ${p?'trained':'empty'}">
+      <div class="cb-profession-command-icon">${p?'⚒':'+'}</div>
+      <div><small>PROFESSION</small><h4>${p?.name||'Unlearned'}</h4><p>${p?'Keep crafting to raise this profession toward Skill 100.':'Choose a profession in the Guild Workshop.'}</p></div>
+      <div class="cb-profession-level"><span>SKILL</span><b>${level+'/100'}</b><i><em style="width:${level}%"></em></i></div>
+    </article>`;
   return `<div class="cb-profession-command">
     <section class="cb-character-tab-hero">
-      <div><small>CRAFTING PROFILE</small><h3>Professions</h3><p>Profession assignments belong to this adventurer. Recipes, materials and crafting stay in the shared Guild Workshop.</p></div>
-      <div class="cb-character-tab-stat"><span>AVAILABLE SLOTS</span><b>${ent.professionSlots||1} / 2</b><small>${ent.member?'Membership active':'Standard account'}</small></div>
+      <div><small>CRAFTING PROFILE</small><h3>Professions</h3><p>Each adventurer can learn one profession. Recipes, materials and crafting stay in the shared Guild Workshop.</p></div>
+      <div class="cb-character-tab-stat"><span>AVAILABLE SLOTS</span><b>1 / 1</b><small>One profession per adventurer</small></div>
     </section>
-    <div class="cb-profession-command-grid">${slots}</div>
-    <section class="cb-character-action-banner"><div><small>GUILD WORKSHOP</small><b>Crafting happens at guild level.</b><span>Open Professions to manage recipes, reagents and preparation items without losing this character's assignments.</span></div><button type="button" data-char-jump="professions">OPEN GUILD WORKSHOP →</button></section>
-  </div>`;
-}
-
-function historyPanel(c,state){
-  const entries=(state?.activity||[]).filter(x=>String(x).includes(c.name)).slice(-12).reverse();
-  const reports=(state?.reports||[]).filter(r=>(r.knowledgeGain||[]).some(k=>k.name===c.name)).slice(-8).reverse();
-  const wins=reports.filter(r=>r.success).length;
-  return `<div class="cb-history-command">
-    <section class="cb-character-tab-hero">
-      <div><small>ADVENTURER RECORD</small><h3>History</h3><p>A readable record of this character's recent guild changes and expedition experience.</p></div>
-      <div class="cb-character-tab-stat"><span>RECORDED RUNS</span><b>${reports.length}</b><small>${wins} victories · ${reports.length-wins} wipes</small></div>
-    </section>
-    <div class="cb-history-columns">
-      <section class="cb-history-section"><header><small>GUILD ACTIVITY</small><h4>Recent Changes</h4></header><div class="cb-history-timeline">${entries.length?entries.map((x,i)=>`<article><i>${i===0?'NOW':'•'}</i><div><b>Guild Record</b><p>${x}</p></div></article>`).join(''):'<div class="cb-no-items">No notable guild activity recorded yet.</div>'}</div></section>
-      <section class="cb-history-section"><header><small>EXPEDITIONS</small><h4>Combat Record</h4></header><div class="cb-history-timeline">${reports.length?reports.map(r=>{return `<article class="${r.success?'victory':'wipe'}"><i>${r.success?'✓':'×'}</i><div><b>${r.success?'Victory':'Wipe'} · ${new Date(r.at).toLocaleDateString()}</b><p>Party iLvl ${Math.round(r.partyItemLevel||0)} · Expedition recorded.</p></div></article>`}).join(''):'<div class="cb-no-items">No expedition reports recorded yet.</div>'}</div></section>
-    </div>
-  </div>`;
+    <div class="cb-profession-command-grid">${slot}</div>
+    <section class="cb-character-action-banner"><div><small>GUILD WORKSHOP</small><b>Crafting happens at guild level.</b><span>Open Professions to manage recipes, reagents and preparation items without losing this character's assignment.</span></div><button type="button" data-char-jump="professions">OPEN GUILD WORKSHOP →</button></section>
+  </div>`
 }
 
 function fallbackEquipmentSlot(c,slot){
