@@ -565,6 +565,18 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   vm.runInContext(fs.readFileSync(path.join(__dirname,'item-art-v1.js'),'utf8'),sandbox,{filename:'item-art-v1.js'});
   const P=sandbox.CellboundProfessions,IA=sandbox.CellboundItemArt;
   if(!P||!IA)throw new Error('Complete item artwork runtime failed to load');
+  const professionEntries=Object.entries(P.PROFESSIONS||{});
+  if(professionEntries.length!==5)throw new Error('Profession catalogue must contain all five core professions');
+  const allRecipeIds=[];
+  const allOutputKeys=[];
+  for(const [name,def] of professionEntries){
+    const recipes=def.recipes||[];
+    if(recipes.length<10)throw new Error(name+' must have at least 10 craftable recipes across Skill 1-100');
+    if(!recipes.some(r=>Number(r.level)===1)||!recipes.some(r=>Number(r.level)===100))throw new Error(name+' profession progression must include Skill 1 and Skill 100 recipes');
+    for(const recipe of recipes){allRecipeIds.push(recipe.id);if(recipe.output?.key)allOutputKeys.push(recipe.output.key)}
+  }
+  if(new Set(allRecipeIds).size!==allRecipeIds.length)throw new Error('Profession recipe IDs must be unique');
+  if(new Set(allOutputKeys).size!==allOutputKeys.length)throw new Error('Profession crafted item keys must be unique');
   const missingGearArt=G.items.filter(x=>!G.artHTML(x,64).includes('<svg'));
   if(missingGearArt.length)throw new Error('Equipment missing full item artwork: '+missingGearArt.slice(0,5).map(x=>x.itemId).join(', '));
   const missingMaterialArt=Object.keys(P.MATERIALS||{}).filter(key=>!P.materialArtHTML(key,64).includes('<svg'));
