@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.24';
+const VERSION='1.3.25';
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -415,7 +415,7 @@ function gearSetState(c){
  Object.values(c?.equipment||{}).forEach(item=>{if(item?.setId)counts[item.setId]=(counts[item.setId]||0)+1});
  const gear=window.CellboundGear;
  const sets=Object.entries(counts).map(([id,pieces])=>{
-  const sample=Object.values(c?.equipment||{}).find(x=>x?.setId===id)||{},rules=gear?.setBonusRulesFor?.(c,c?.spec,sample)||gear?.SET_BONUS_RULES||{pieces2:{threshold:2,effects:{}},pieces4:{threshold:4,effects:{}}};
+  const sample=Object.values(c?.equipment||{}).find(x=>x?.setId===id)||{},rules=gear?.setBonusRulesFor?.(c,c?.spec,sample)||gear?.SET_BONUS_RULES||{pieces2:{threshold:2,effects:{incomingDamageReduction:.04}},pieces4:{threshold:4,effects:{resourceRegen:1.08,talentSkillCooldownScale:.90}}};
   const rank=pieces>=Number(rules.pieces4?.threshold||4)?2:pieces>=Number(rules.pieces2?.threshold||2)?1:0;
   return{id,pieces,name:sample?.setName||id,tier:Number(sample?.tier)||0,rules,rank}
  });
@@ -2138,10 +2138,47 @@ function useTalentUtility(ctx,u){
  }
  return false
 }
+// Role/spec balance multipliers are deliberately centralised here so direct skills,
+// pets and healing effects share the same tuning contract across progression.
+function progressionBlend(level,early,mid,end){
+ const l=Math.max(1,Number(level)||1);
+ if(l<=9)return early+(mid-early)*clamp((l-3)/6,0,1);
+ return mid+(end-mid)*clamp((l-9)/6,0,1)
+}
+function specDamageBalance(u){
+ const key=u.class+'|'+u.spec;
+ const curves={
+  'Warrior|Protection':[1.08,1.08,1.10],
+  'Paladin|Protection':[1.12,1.12,1.12],
+  'Monk|Brewmaster':[1.16,1.16,1.12],
+  'Death Knight|Blood':[.62,.64,.66],
+  'Demon Hunter|Vengeance':[.52,.54,.52],
+  'Warrior|Arms':[1.38,1.38,1.42],
+  'Rogue|Assassination':[1.28,1.16,1.10],
+  'Warlock|Destruction':[1.10,1.12,1.14],
+  'Death Knight|Frost':[1.12,1.12,1.12],
+  'Demon Hunter|Havoc':[.76,.78,.78],
+  'Hunter|Beast Mastery':[.88,.88,.86]
+ };
+ const v=curves[key];return v?progressionBlend(u.level,...v):1
+}
+function specHealingBalance(u){
+ const key=u.class+'|'+u.spec;
+ const curves={
+  'Paladin|Holy':[.94,.96,.98],
+  'Priest|Holy':[1.02,1.02,1.00],
+  'Druid|Restoration':[1.42,1.30,1.22],
+  'Shaman|Restoration':[1.65,1.08,.94],
+  'Monk|Mistweaver':[1.85,1.55,1.48],
+  'Evoker|Preservation':[1.34,1.12,1.02]
+ };
+ const v=curves[key];return v?progressionBlend(u.level,...v):1
+}
+
 function rollDamage(ctx,u,a,target){
  const power=1+Math.min(.35,u.power*.012),levelScale=u.baseStats?.outputScale||levelOutputScale(u.level),match=levelMatchMultiplier(u.level,target?.level||1);
  const variance=.9+ctx.rng()*.2,revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1,frenzy=u.frenzyUntil>ctx.time?1.15:1;
- let amount=(Number(a.damage)||12)*power*levelScale*match*variance*revivePenalty*frenzy*Math.max(.1,1+statusBonus(u,'outgoingDamage'))*talentDamageScale(ctx,u,a,target)*Math.max(.5,Number(u?.setBonuses?.damageScale)||1);
+ let amount=(Number(a.damage)||12)*power*levelScale*match*variance*revivePenalty*frenzy*Math.max(.1,1+statusBonus(u,'outgoingDamage'))*talentDamageScale(ctx,u,a,target)*Math.max(.5,Number(u?.setBonuses?.damageScale)||1)*specDamageBalance(u);
  let executeBelow=Number(a.executeBelow)||0,executeMultiplier=Math.max(1,Number(a.executeMultiplier)||1.5);
  if(u.class==='Hunter'&&a.id==='kill-shot'&&talentRank(u,'Kill Shot')){executeBelow=Math.max(executeBelow,.35);executeMultiplier=Math.max(executeMultiplier,2.05)}
  if(executeBelow>0&&healthRatio(target)<=executeBelow)amount*=executeMultiplier;
@@ -2299,7 +2336,7 @@ function doHeal(ctx,healer,target,amount,ability,opts={}){
  if(!healer?.alive||!target?.alive)return 0;
  const before=target.health,max=target.maxHealth;
  const healingScale=Math.max(.1,1+statusBonus(healer,'outgoingHealing'))*Math.max(.1,1+statusBonus(target,'incomingHealing'));
- const raw=Math.max(1,Math.round(amount*healingScale));
+ const raw=Math.max(1,Math.round(amount*healingScale*specHealingBalance(healer)));
  target.health=clamp(before+raw,0,max);
  const effective=target.health-before,over=Math.max(0,raw-effective);
  const st=ctx.stats.players[healer.id];st.healing+=effective;st.overhealing+=over;st.abilityHealing[ability]=(st.abilityHealing[ability]||0)+effective;
@@ -2779,7 +2816,7 @@ function permanentHunterBeast(ctx,owner){
 function petDamage(ctx,pet,target,base,ability,{cleave=0,multiplier=1}={}){
  const owner=pet?.owner;if(!pet?.active||!owner?.alive||!target?.alive)return 0;
  const bond=talentRank(owner,'Demonic Bond'),dread=talentRank(owner,'Dread Calling'),master=talentRank(owner,'Master Summoner');
- let scale=(owner.baseStats?.outputScale||levelOutputScale(owner.level))*(1+bond*.05)*Math.max(.1,1+statusBonus(owner,'outgoingDamage'))*multiplier*Math.max(.5,Number(owner?.setBonuses?.petDamageScale)||1);
+ let scale=(owner.baseStats?.outputScale||levelOutputScale(owner.level))*(1+bond*.05)*Math.max(.1,1+statusBonus(owner,'outgoingDamage'))*multiplier*Math.max(.5,Number(owner?.setBonuses?.petDamageScale)||1)*specDamageBalance(owner);
  if(pet.type==='dreadstalker')scale*=1+dread*.08;
  if(pet.type==='tyrant')scale*=1.18+master*.05;
  if(owner.class==='Hunter'&&owner.spec==='Beast Mastery'){
