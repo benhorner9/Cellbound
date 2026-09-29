@@ -1143,23 +1143,37 @@ function renderAshfallDetail(root,side){
     '<section><small>ADVENTURE JOURNAL</small><div class="quest-history">'+(a.history.slice(-6).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>No journal entries yet.</p>')+'</div></section>';
 }
 
+function questCards(){
+ const q=ensure(),a=q.ashfall;
+ return [
+  {id:'ashfall',title:ASHFALL.title,meta:ASHFALL.length+' adventure · Zeltira',difficulty:ASHFALL.difficulty,status:a.complete?'COMPLETE':a.started?'IN PROGRESS':'AVAILABLE',complete:a.complete,locked:false},
+  {id:'echoes',title:QUEST.title,meta:QUEST.length+' adventure · Zeltira',difficulty:QUEST.difficulty,status:complete()?'COMPLETE':q.started?'IN PROGRESS':echoesUnlocked()?'AVAILABLE':'LOCKED',complete:complete(),locked:!echoesUnlocked()&&!q.started},
+  window.CellboundThirteenthBell?.card?.(),
+  window.CellboundFourfoldLock?.card?.(),
+  window.CellboundNoWayBack?.card?.(),
+  ...classTrialDefs().map(classTrialCard)
+ ].filter(Boolean)
+}
+function cardsForSelectedTab(){
+ const all=questCards();
+ if(selectedTab==='completed')return all.filter(x=>x.complete);
+ if(selectedTab==='active')return all.filter(x=>!x.complete);
+ return all
+}
 function renderList(){
-  const root=$('#questJournalList');if(!root)return;const q=ensure(),a=q.ashfall;
-  const cards=[
-    {id:'ashfall',title:ASHFALL.title,meta:ASHFALL.length+' adventure · Zeltira',difficulty:ASHFALL.difficulty,status:a.complete?'COMPLETE':a.started?'IN PROGRESS':'AVAILABLE',complete:a.complete,locked:false},
-    {id:'echoes',title:QUEST.title,meta:QUEST.length+' adventure · Zeltira',difficulty:QUEST.difficulty,status:complete()?'COMPLETE':q.started?'IN PROGRESS':echoesUnlocked()?'AVAILABLE':'LOCKED',complete:complete(),locked:!echoesUnlocked()&&!q.started},
-    window.CellboundThirteenthBell?.card?.(),
-    window.CellboundFourfoldLock?.card?.(),
-    window.CellboundNoWayBack?.card?.(),
-    ...classTrialDefs().map(classTrialCard)
-  ].filter(Boolean).filter(x=>selectedTab==='campaign'||(selectedTab==='active'&&!x.complete)||(selectedTab==='completed'&&x.complete));
-  if(!cards.length){root.innerHTML='<div class="quest-list-empty">'+(selectedTab==='completed'?'No completed adventures yet.':'No active adventures.')+'</div>';return}
-  if(!cards.some(x=>x.id===selectedAdventure))selectedAdventure=cards[0].id;
-  root.innerHTML=cards.map(x=>'<button class="quest-v2-list-card '+(x.id===selectedAdventure?'selected':'')+(x.locked?' locked':'')+'" data-adventure="'+x.id+'"><div class="quest-v2-icon">'+(x.icon||(x.id==='ashfall'?'♜':'⌁'))+'</div><span><small>'+x.status+' · '+x.difficulty.toUpperCase()+'</small><b>'+x.title+'</b><em>'+x.meta+'</em></span></button>').join('');
-  root.querySelectorAll('[data-adventure]').forEach(b=>b.onclick=()=>{selectedAdventure=b.dataset.adventure;render()});
+ const root=$('#questJournalList');if(!root)return;const cards=cardsForSelectedTab();
+ if(!cards.some(x=>x.id===selectedAdventure))selectedAdventure=cards[0]?.id||null;
+ if(!cards.length){root.innerHTML='<div class="quest-list-empty">'+(selectedTab==='completed'?'No completed adventures yet.':selectedTab==='active'?'No active adventures.':'No adventures available.')+'</div>';return}
+ root.innerHTML=cards.map(x=>'<button class="quest-v2-list-card '+(x.id===selectedAdventure?'selected':'')+(x.locked?' locked':'')+'" data-adventure="'+x.id+'"><div class="quest-v2-icon">'+(x.icon||(x.id==='ashfall'?'♜':'⌁'))+'</div><span><small>'+x.status+' · '+x.difficulty.toUpperCase()+'</small><b>'+x.title+'</b><em>'+x.meta+'</em></span></button>').join('');
+ root.querySelectorAll('[data-adventure]').forEach(b=>b.onclick=()=>{selectedAdventure=b.dataset.adventure;render()})
 }
 function renderDetail(){
   const root=$('#questJournalDetail'),side=$('#questJournalSide');if(!root||!side)return;
+  const visible=cardsForSelectedTab();
+  if(!selectedAdventure||!visible.some(x=>x.id===selectedAdventure)){
+    root.innerHTML='<div class="quest-list-empty">'+(selectedTab==='completed'?'Select a completed quest to review its story and rewards.':selectedTab==='active'?'No active quest selected. Completed quests are available from the Completed tab.':'Select an adventure to view its details.')+'</div>';
+    side.innerHTML='';return
+  }
   if(selectedAdventure==='ashfall'){renderAshfallDetail(root,side);bindActions();return}
   if(String(selectedAdventure).startsWith('class-trial:')){const t=classTrialDefs().find(x=>x.key===selectedAdventure);if(t){renderClassTrialDetail(t,root,side);return}}
   if(selectedAdventure==='thirteenth-bell'){window.CellboundThirteenthBell?.renderDetail?.(root,side);return}
