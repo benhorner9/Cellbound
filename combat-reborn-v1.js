@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.25';
+const VERSION='1.3.26';
 // Balance baseline: 2026-09-29 role and progression audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
@@ -2176,10 +2176,20 @@ function specHealingBalance(u){
  const v=curves[key];return v?progressionBlend(u.level,...v):1
 }
 
+function itemLevelOutputMultiplier(ctx,u){
+ const recommended=Math.max(0,Number(ctx?.encounter?.recommendedItemLevel)||0),itemLevel=Math.max(0,Number(u?.itemLevel)||0);
+ if(!recommended)return 1;
+ if(!itemLevel)return .48;
+ const ratio=itemLevel/recommended;
+ if(ratio>=1)return Math.min(1.06,1+(ratio-1)*.10);
+ // Undergearing compounds: lower output means longer fights and more enemy mechanics.
+ return clamp(Math.pow(ratio,1.65),.42,1);
+}
+
 function rollDamage(ctx,u,a,target){
  const power=1+Math.min(.35,u.power*.012),levelScale=u.baseStats?.outputScale||levelOutputScale(u.level),match=levelMatchMultiplier(u.level,target?.level||1);
  const variance=.9+ctx.rng()*.2,revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1,frenzy=u.frenzyUntil>ctx.time?1.15:1;
- let amount=(Number(a.damage)||12)*power*levelScale*match*variance*revivePenalty*frenzy*Math.max(.1,1+statusBonus(u,'outgoingDamage'))*talentDamageScale(ctx,u,a,target)*Math.max(.5,Number(u?.setBonuses?.damageScale)||1)*specDamageBalance(u);
+ let amount=(Number(a.damage)||12)*power*levelScale*match*variance*revivePenalty*frenzy*Math.max(.1,1+statusBonus(u,'outgoingDamage'))*talentDamageScale(ctx,u,a,target)*Math.max(.5,Number(u?.setBonuses?.damageScale)||1)*specDamageBalance(u)*itemLevelOutputMultiplier(ctx,u);
  let executeBelow=Number(a.executeBelow)||0,executeMultiplier=Math.max(1,Number(a.executeMultiplier)||1.5);
  if(u.class==='Hunter'&&a.id==='kill-shot'&&talentRank(u,'Kill Shot')){executeBelow=Math.max(executeBelow,.35);executeMultiplier=Math.max(executeMultiplier,2.05)}
  if(executeBelow>0&&healthRatio(target)<=executeBelow)amount*=executeMultiplier;
@@ -2192,9 +2202,12 @@ function rollDamage(ctx,u,a,target){
 function itemLevelIncomingMultiplier(ctx,target){
  const recommended=Math.max(0,Number(ctx?.encounter?.recommendedItemLevel)||0),itemLevel=Math.max(0,Number(target?.itemLevel)||0);
  if(!recommended)return 1;
- if(!itemLevel)return 1.18;
- const delta=itemLevel-recommended;
- if(delta<0)return Math.min(1.55,1+Math.abs(delta)*.045);
+ if(!itemLevel)return 1.75;
+ const ratio=itemLevel/recommended,delta=itemLevel-recommended;
+ if(ratio<1){
+  // Incoming pressure rises sharply below the requirement instead of producing free clears.
+  return Math.min(1.85,1+Math.pow(1-ratio,1.18)*1.55);
+ }
  return Math.max(.82,1-delta*.018);
 }
 function mitigation(ctx,target,damageType='physical',opts={}){
@@ -2337,7 +2350,7 @@ function doHeal(ctx,healer,target,amount,ability,opts={}){
  if(!healer?.alive||!target?.alive)return 0;
  const before=target.health,max=target.maxHealth;
  const healingScale=Math.max(.1,1+statusBonus(healer,'outgoingHealing'))*Math.max(.1,1+statusBonus(target,'incomingHealing'));
- const raw=Math.max(1,Math.round(amount*healingScale*specHealingBalance(healer)));
+ const raw=Math.max(1,Math.round(amount*healingScale*specHealingBalance(healer)*itemLevelOutputMultiplier(ctx,healer)));
  target.health=clamp(before+raw,0,max);
  const effective=target.health-before,over=Math.max(0,raw-effective);
  const st=ctx.stats.players[healer.id];st.healing+=effective;st.overhealing+=over;st.abilityHealing[ability]=(st.abilityHealing[ability]||0)+effective;
@@ -2817,7 +2830,7 @@ function permanentHunterBeast(ctx,owner){
 function petDamage(ctx,pet,target,base,ability,{cleave=0,multiplier=1}={}){
  const owner=pet?.owner;if(!pet?.active||!owner?.alive||!target?.alive)return 0;
  const bond=talentRank(owner,'Demonic Bond'),dread=talentRank(owner,'Dread Calling'),master=talentRank(owner,'Master Summoner');
- let scale=(owner.baseStats?.outputScale||levelOutputScale(owner.level))*(1+bond*.05)*Math.max(.1,1+statusBonus(owner,'outgoingDamage'))*multiplier*Math.max(.5,Number(owner?.setBonuses?.petDamageScale)||1)*specDamageBalance(owner);
+ let scale=(owner.baseStats?.outputScale||levelOutputScale(owner.level))*(1+bond*.05)*Math.max(.1,1+statusBonus(owner,'outgoingDamage'))*multiplier*Math.max(.5,Number(owner?.setBonuses?.petDamageScale)||1)*specDamageBalance(owner)*itemLevelOutputMultiplier(ctx,owner);
  if(pet.type==='dreadstalker')scale*=1+dread*.08;
  if(pet.type==='tyrant')scale*=1.18+master*.05;
  if(owner.class==='Hunter'&&owner.spec==='Beast Mastery'){
