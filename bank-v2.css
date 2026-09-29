@@ -229,3 +229,46 @@
   #bank .bank-card-action{height:40px!important;min-height:40px!important}
   #bank .bank-upgrade-chip{top:76px!important}
 }
+
+
+/* Crafted items and persistent attachments */
+.bank-attachment-chip{border-color:rgba(111,196,151,.24)!important;color:#91d3ad!important}
+.bank-attachment-detail{
+  margin:10px 0;padding:11px 12px;border:1px solid rgba(111,196,151,.18);
+  background:rgba(21,57,42,.2)
+}
+.bank-attachment-detail small{display:block;color:#7da58c;font-size:.48rem;font-weight:900;letter-spacing:.09em}
+.bank-attachment-detail b{display:block;margin-top:4px;color:#d9eadf;font-size:.72rem}
+.bank-attachment-detail p{margin:4px 0 0!important;color:#9ac0a8!important;font-size:.58rem!important}
+.bank-attachment-detail span{display:block;margin-top:4px;color:#657a6d;font-size:.48rem}
+.bank-crafted-detail p{max-width:720px}
+.bank-crafted-targets,.bank-crafted-actions{
+  margin-top:12px;padding:14px;border:1px solid rgba(216,185,118,.12);
+  background:linear-gradient(180deg,#0d181c,#081115)
+}
+.bank-crafted-targets>header small,.bank-crafted-actions small{
+  color:#a18958;font-size:.49rem;font-weight:900;letter-spacing:.1em
+}
+.bank-crafted-targets>header h3,.bank-crafted-actions h3{
+  margin:4px 0;color:#e7dfcf;font:500 1rem Georgia,serif
+}
+.bank-crafted-targets>header p,.bank-crafted-actions p{
+  margin:0 0 10px;color:#7e8e88;font-size:.58rem;line-height:1.5
+}
+.bank-crafted-targets .bank-character-list button em{
+  color:#c7ad72;font-size:.47rem;font-style:normal;font-weight:900
+}
+.bank-crafted-actions{
+  display:flex;align-items:center;justify-content:space-between;gap:16px
+}
+.bank-crafted-actions>button,.bank-crafted-status{
+  flex:0 0 auto;min-height:42px;padding:0 14px;display:grid;place-items:center;
+  border:1px solid rgba(216,185,118,.24);background:#2e2718;color:#e6cf91;
+  font-size:.5rem;font-weight:900;letter-spacing:.06em
+}
+.bank-crafted-actions>button:disabled{opacity:.45}
+.bank-crafted-status{background:#0a1417;color:#82938d}
+@media(max-width:720px){
+  .bank-crafted-actions{align-items:stretch;flex-direction:column}
+  .bank-crafted-actions>button,.bank-crafted-status{width:100%}
+}

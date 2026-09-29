@@ -15,20 +15,34 @@ const professionDef=n=>P?.PROFESSIONS?.[n]||null;
 function normalise(){
   const s=state();if(!s)return;
   s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};
-  s.consumables=Array.isArray(s.consumables)?s.consumables:[];
+  s.consumables=(Array.isArray(s.consumables)?s.consumables:[]).map(stack=>{
+    const meta=P?.recipeMetaForOutputKey?.(stack?.key),latest=meta?.recipe?.output||{},latestPayload=latest.payload||{},attachment=latestPayload.effect==='gear-enhancement';
+    return attachment?{...stack,payload:{...(stack.payload||{}),...latestPayload,bonuses:{...(latestPayload.bonuses||stack.payload?.bonuses||{})}},rarity:stack.rarity||latest.rarity||P?.craftedRarity?.(meta?.recipe?.level,meta?.recipe?.endgame)||'Uncommon'}:stack
+  });
   s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];
   s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];
   s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];
-  s.roster.forEach(c=>{c.professions=Array.isArray(c.professions)?c.professions.slice(0,1):[null];while(c.professions.length<1)c.professions.push(null);c.professions=c.professions.map(p=>p?{...p,name:p.name,level:Math.max(1,Math.min(100,Number(p.level)||1)),xp:Math.max(0,Number(p.xp)||0),craftHistory:p.craftHistory&&typeof p.craftHistory==='object'?p.craftHistory:{},masterworks:Math.max(0,Number(p.masterworks)||0),projectsCompleted:Math.max(0,Number(p.projectsCompleted)||0)}:null);c.activeEnhancements=c.activeEnhancements&&typeof c.activeEnhancements==='object'?c.activeEnhancements:{};c.activeProfessionBuffs=Array.isArray(c.activeProfessionBuffs)?c.activeProfessionBuffs:[];});
+  s.roster.forEach(c=>{
+    c.professions=Array.isArray(c.professions)?c.professions.slice(0,1):[null];while(c.professions.length<1)c.professions.push(null);
+    c.professions=c.professions.map(p=>p?{...p,name:p.name,level:Math.max(1,Math.min(100,Number(p.level)||1)),xp:Math.max(0,Number(p.xp)||0),craftHistory:p.craftHistory&&typeof p.craftHistory==='object'?p.craftHistory:{},masterworks:Math.max(0,Number(p.masterworks)||0),projectsCompleted:Math.max(0,Number(p.projectsCompleted)||0)}:null);
+    c.activeEnhancements=c.activeEnhancements&&typeof c.activeEnhancements==='object'?c.activeEnhancements:{};
+    Object.entries(c.activeEnhancements).forEach(([slot,e])=>{
+      const item=c.equipment?.[slot],matches=item&&P?.itemSignature?.(item)===e?.targetSignature;if(!matches)return;
+      const meta=P?.recipeMetaForOutputKey?.(e.key),recipe=meta?.recipe;
+      item.attachment=item.attachment||{key:e.key,name:e.name,bonuses:{...(e.bonuses||{})},profession:meta?.profession||null,skill:Number(recipe?.level)||null,tier:P?.attachmentTier?.(recipe?.level)||null,rarity:recipe?.output?.rarity||'Uncommon',attachedAt:e.appliedAt||new Date().toISOString()};
+      delete c.activeEnhancements[slot]
+    });
+    c.activeProfessionBuffs=Array.isArray(c.activeProfessionBuffs)?c.activeProfessionBuffs:[];
+  });
 }
 function addConsumable(item,qty=1){
-  const s=state(),key=item.key||item.itemKey,name=item.name||item.itemName||key,payload=item.payload||{};
+  const s=state(),key=item.key||item.itemKey,name=item.name||item.itemName||key,payload=item.payload||{},meta=P?.recipeMetaForOutputKey?.(key),rarity=item.rarity||meta?.recipe?.output?.rarity||P?.craftedRarity?.(meta?.recipe?.level,meta?.recipe?.endgame)||'Uncommon';
   const found=s.consumables.find(x=>x.key===key);
-  if(found)found.quantity=(found.quantity||1)+qty;
-  else s.consumables.push({key,name,payload,quantity:qty});
+  if(found){found.quantity=(found.quantity||1)+qty;found.payload=payload||found.payload;found.rarity=rarity||found.rarity}
+  else s.consumables.push({key,name,payload,rarity,quantity:qty});
 }
 async function commit(render=true){
-  Game.save();await Game.persistState();if(render){Game.renderAll();renderProfessions();renderCrafted();renderSellOptions();}
+  Game.save();await Game.persistState();if(render){Game.renderAll();renderProfessions();renderSellOptions();}
 }
 async function processInbox(){
   const s=state();if(!s.tradeInbox.length)return false;
@@ -229,8 +243,7 @@ function renderProfessions(){
   work.querySelectorAll('[data-craft]').forEach(b=>b.onclick=()=>beginCraft(b.dataset.craft));
   work.querySelector('[data-craft-abandon]')?.addEventListener('click',abandonCraft);
   work.querySelectorAll('[data-craft-action]').forEach(b=>b.onclick=()=>resolveCraftStep(b.dataset.craftAction));
-  $$('#professionRecipeFilters [data-prof-recipe-filter]').forEach(b=>b.classList.toggle('active',b.dataset.profRecipeFilter===recipeFilter));
-  renderCrafted();
+  $('#professionRecipeFilters [data-prof-recipe-filter]').forEach(b=>b.classList.toggle('active',b.dataset.profRecipeFilter===recipeFilter));
 }
 function consumeStack(key){
   const s=state(),stack=s.consumables.find(x=>x.key===key);if(!stack)return null;
@@ -296,7 +309,7 @@ function bind(){
 }
 async function init(){
   Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,80);return;}P&&normalise();db=Game.getSupabase();user=Game.getUser();if(!db||!user)return;
-  bind();renderProfessions();renderCrafted();
+  bind();renderProfessions();
   window.CellboundEconomy={
     renderProfessions,
     loadMarket,

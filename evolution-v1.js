@@ -198,6 +198,78 @@ function bankUpgradeCount(item){
     return (Number(item.itemLevel)||0)>(Number(current?.itemLevel)||0);
   }).length;
 }
+function craftedMeta(key){
+  const meta=P?.recipeMetaForOutputKey?.(key)||null,recipe=meta?.recipe;
+  return{profession:meta?.profession||'Profession',recipe,rarity:recipe?.output?.rarity||P?.craftedRarity?.(recipe?.level,recipe?.endgame)||'Uncommon'}
+}
+function closeBankResource(){
+  const modal=$('#bankModal');if(modal)modal.hidden=true;document.body.classList.remove('bank-manage-open')
+}
+function consumeCraftedStack(key){
+  const s=state(),stack=(s?.consumables||[]).find(x=>x.key===key);if(!stack)return null;
+  stack.quantity=(Number(stack.quantity)||1)-1;if(stack.quantity<=0)s.consumables=s.consumables.filter(x=>x!==stack);return stack
+}
+async function applyBankAttachment(key,charId){
+  const s=state(),stack=(s?.consumables||[]).find(x=>x.key===key),payload=stack?.payload||{},c=s?.roster?.find(x=>x.id===charId),item=c?.equipment?.[payload.slot];
+  if(!stack||payload.effect!=='gear-enhancement'||!payload.persistentAttachment||!c||!item)return;
+  const existing=item.attachment;
+  if(existing&&existing.key!==key&&!confirm('Replace '+(existing.name||'the current attachment')+' on '+item.name+' with '+stack.name+'?'))return;
+  const meta=craftedMeta(key),recipe=meta.recipe;
+  item.attachment={key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},profession:meta.profession,skill:Number(recipe?.level)||null,tier:Number(payload.attachmentTier)||P?.attachmentTier?.(recipe?.level)||1,rarity:stack.rarity||meta.rarity,attachedAt:new Date().toISOString()};
+  consumeCraftedStack(key);s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push(stack.name+' attached to '+c.name+'’s '+item.name+'.');
+  await persist(true);closeBankResource();window.CellboundFX?.micro?.(stack.name+' attached','gold')
+}
+async function useBankFlask(key,charId){
+  const s=state(),stack=(s?.consumables||[]).find(x=>x.key===key),payload=stack?.payload||{},c=s?.roster?.find(x=>x.id===charId);
+  if(!stack||payload.effect!=='character-flask'||!c)return;
+  c.activeProfessionBuffs=Array.isArray(c.activeProfessionBuffs)?c.activeProfessionBuffs.filter(x=>x.kind!=='flask'):[];
+  c.activeProfessionBuffs.push({kind:'flask',key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},remainingBosses:Math.max(1,Number(payload.charges)||3),appliedAt:new Date().toISOString()});
+  consumeCraftedStack(key);s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push(c.name+' drank '+stack.name+'.');
+  await persist(true);closeBankResource();window.CellboundFX?.micro?.(stack.name+' used','cell')
+}
+async function useBankShockDraught(key,charId){
+  const s=state(),stack=(s?.consumables||[]).find(x=>x.key===key),c=s?.roster?.find(x=>x.id===charId);
+  if(!stack||!c)return;c.cellShock=0;c.cellShockLockedUntil=null;consumeCraftedStack(key);s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push(c.name+'’s Cell Shock was cleared with '+stack.name+'.');
+  await persist(true);closeBankResource();window.CellboundFX?.micro?.(c.name+' recovered','cell')
+}
+async function learnBankRecipe(recipeId){
+  const s=state(),scroll=(s?.recipeScrolls||[]).find(x=>x.recipeId===recipeId);if(!scroll)return;
+  s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];
+  if(!s.discoveredRecipes.includes(recipeId))s.discoveredRecipes.push(recipeId);
+  scroll.quantity=(Number(scroll.quantity)||1)-1;if(scroll.quantity<=0)s.recipeScrolls=s.recipeScrolls.filter(x=>x!==scroll);
+  s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push((scroll.name||'Recipe')+' learned.');
+  await persist(true);closeBankResource();window.CellboundFX?.micro?.('Recipe learned','gold')
+}
+function openBankResource(resourceKey){
+  const s=state(),modal=$('#bankModal'),detail=$('#bankDetail');if(!s||!modal||!detail)return;
+  if(resourceKey.startsWith('rec:')){
+    const recipeId=resourceKey.slice(4),scroll=(s.recipeScrolls||[]).find(x=>x.recipeId===recipeId),recipe=P?.recipeById?.(recipeId),known=(s.discoveredRecipes||[]).includes(recipeId);
+    if(!scroll)return;const art=window.CellboundItemArt?.artHTML?.({id:'recipe-'+recipeId,name:scroll.name,category:'recipe',rarity:'Rare'},112,'bank-resource-detail-art')||'▤';
+    detail.innerHTML=`<div class="detail-hero gear-detail-hero bank-crafted-detail"><div class="gear-detail-art">${art}</div><div><small>RARE · RECIPE SCROLL</small><h2>${esc(scroll.name)}</h2><p>${recipe?'Unlocks '+esc(recipe.name)+' for crafting.':'A rare profession recipe.'}</p><p>Quantity in Bank: ${scroll.quantity||1}</p></div></div><section class="bank-crafted-actions"><div><small>WORKSHOP KNOWLEDGE</small><h3>${known?'Recipe already known':'Learn this recipe'}</h3><p>${known?'This character account already knows the recipe. Extra copies can be traded.':'Consume one scroll to permanently add the recipe to your Guild Workshop.'}</p></div><button data-bank-learn-recipe="${recipeId}" ${known?'disabled':''}>${known?'KNOWN':'LEARN RECIPE'}</button></section>`;
+    detail.querySelector('[data-bank-learn-recipe]')?.addEventListener('click',()=>learnBankRecipe(recipeId));document.body.classList.add('bank-manage-open');modal.hidden=false;return
+  }
+  if(!resourceKey.startsWith('con:'))return;
+  const key=resourceKey.slice(4),stack=(s.consumables||[]).find(x=>x.key===key);if(!stack)return;
+  const payload=stack.payload||{},meta=craftedMeta(key),recipe=meta.recipe,art=P?.consumableArtHTML?.(key,112,'bank-resource-detail-art')||'⚗',description=payload.description||P?.bonusText?.(payload.bonuses)||'Crafted preparation item';
+  let actions='';
+  if(payload.effect==='gear-enhancement'&&payload.persistentAttachment){
+    const eligible=s.roster.slice(0,ent().rosterCap).filter(c=>!Game?.isUnavailable?.(c)&&c?.equipment?.[payload.slot]);
+    actions=`<section class="bank-crafted-targets"><header><small>CRAFTED ATTACHMENT · TIER ${payload.attachmentTier||P?.attachmentTier?.(recipe?.level)||1}</small><h3>Attach to equipped ${esc(payload.slot)}</h3><p>Attachments become part of the equipment item and remain on it until replaced.</p></header><div class="bank-character-list">${eligible.map(ch=>{const item=ch.equipment[payload.slot],existing=item?.attachment;return `<button data-bank-attach="${key}" data-bank-char="${ch.id}"><span class="avatar">${Game?.portraitHTML?.(ch,'sm')||esc(ch.name.slice(0,2))}</span><span><b>${esc(ch.name)}</b><small>${esc(item.name)} · iLvl ${Number(item.itemLevel)||0}</small></span><em>${existing?'REPLACES '+esc(existing.name||'ATTACHMENT'):'READY TO ATTACH'}</em></button>`}).join('')||'<p>No available character currently has a compatible item equipped.</p>'}</div></section>`;
+  }else if(payload.effect==='character-flask'){
+    const eligible=s.roster.slice(0,ent().rosterCap).filter(c=>!Game?.isUnavailable?.(c));
+    actions=`<section class="bank-crafted-targets"><header><small>PRE-COMBAT CONSUMABLE</small><h3>Choose an adventurer</h3><p>Only one Flask can be active on a character at a time.</p></header><div class="bank-character-list">${eligible.map(ch=>`<button data-bank-flask="${key}" data-bank-char="${ch.id}"><span class="avatar">${Game?.portraitHTML?.(ch,'sm')||esc(ch.name.slice(0,2))}</span><span><b>${esc(ch.name)}</b><small>${esc(ch.class)} · ${esc(ch.spec)}</small></span><em>USE FLASK</em></button>`).join('')}</div></section>`;
+  }else if(payload.effect==='clear-cell-shock'){
+    const eligible=s.roster.slice(0,ent().rosterCap);
+    actions=`<section class="bank-crafted-targets"><header><small>RECOVERY CONSUMABLE</small><h3>Clear Cell Shock</h3><p>Choose the character who should consume the draught.</p></header><div class="bank-character-list">${eligible.map(ch=>`<button data-bank-shock="${key}" data-bank-char="${ch.id}" ${Number(ch.cellShock)>0?'':'disabled'}><span class="avatar">${Game?.portraitHTML?.(ch,'sm')||esc(ch.name.slice(0,2))}</span><span><b>${esc(ch.name)}</b><small>Cell Shock ${Math.round(Number(ch.cellShock)||0)}%</small></span><em>${Number(ch.cellShock)>0?'USE':'NO SHOCK'}</em></button>`).join('')}</div></section>`;
+  }else if(payload.effect==='combat-potion'){
+    actions='<section class="bank-crafted-actions"><div><small>COMBAT CONSUMABLE</small><h3>Ready for your next dungeon</h3><p>This potion is consumed from the in-combat USE CONSUMABLE command and automatically targets the party member in most danger.</p></div><span class="bank-crafted-status">COMBAT USE</span></section>';
+  }
+  detail.innerHTML=`<div class="detail-hero gear-detail-hero bank-crafted-detail"><div class="gear-detail-art">${art}</div><div><small>${esc(meta.rarity.toUpperCase())} · ${payload.persistentAttachment?'ATTACHMENT':'CRAFTED ITEM'} · ${esc(meta.profession.toUpperCase())}${recipe?' · SKILL '+recipe.level:''}</small><h2>${esc(stack.name)}</h2><p>${esc(description)}</p><p>Quantity in Bank: ${stack.quantity||1}</p></div></div>${actions}`;
+  detail.querySelectorAll('[data-bank-attach]').forEach(b=>b.addEventListener('click',()=>applyBankAttachment(b.dataset.bankAttach,b.dataset.bankChar)));
+  detail.querySelectorAll('[data-bank-flask]').forEach(b=>b.addEventListener('click',()=>useBankFlask(b.dataset.bankFlask,b.dataset.bankChar)));
+  detail.querySelectorAll('[data-bank-shock]').forEach(b=>b.addEventListener('click',()=>useBankShockDraught(b.dataset.bankShock,b.dataset.bankChar)));
+  document.body.classList.add('bank-manage-open');modal.hidden=false
+}
 function scheduleBankEnhance(){
   if(bankEnhanceQueued)return;
   bankEnhanceQueued=true;
@@ -211,9 +283,9 @@ function enhanceBank(){
   const byId=new Map(s.bank.map(x=>[x.id,x]));
 
   const resourceModels=[
-    ...Object.entries(s.materials||{}).filter(([,q])=>Number(q)>0).map(([key,q])=>({key:`mat:${key}`,materialKey:key,name:P?.MATERIALS?.[key]?.name||key,category:'Reagent',rarity:P?.MATERIALS?.[key]?.rarity||'Common',quantity:Number(q),source:P?.MATERIALS?.[key]?.source||'Dungeon reagent',icon:P?.MATERIALS?.[key]?.icon||'◇',tradeState:'tradeable'})),
-    ...(s.consumables||[]).filter(x=>(x.quantity||0)>0).map(x=>({key:`con:${x.key}`,name:x.name,category:'Consumable',rarity:'Uncommon',quantity:x.quantity||1,source:'Crafted stock',icon:'⚗',tradeState:'tradeable'})),
-    ...(s.recipeScrolls||[]).filter(x=>(x.quantity||0)>0).map(x=>({key:`rec:${x.recipeId}`,name:x.name,category:'Recipe',rarity:'Rare',quantity:x.quantity||1,source:'Rare recipe scroll',icon:'▤',tradeState:'tradeable'}))
+    ...Object.entries(s.materials||{}).filter(([,q])=>Number(q)>0).map(([key,q])=>({key:`mat:${key}`,materialKey:key,name:P?.MATERIALS?.[key]?.name||key,category:'Reagent',displayCategory:'Material',rarity:P?.MATERIALS?.[key]?.rarity||'Common',quantity:Number(q),source:P?.MATERIALS?.[key]?.source||'Dungeon reagent',icon:P?.MATERIALS?.[key]?.icon||'◇',tradeState:'tradeable'})),
+    ...(s.consumables||[]).filter(x=>(x.quantity||0)>0).map(x=>{const meta=craftedMeta(x.key),payload=x.payload||meta.recipe?.output?.payload||{},attachment=payload.effect==='gear-enhancement'&&payload.persistentAttachment;return{key:`con:${x.key}`,name:x.name,category:'Consumable',displayCategory:attachment?'Attachment':'Consumable',rarity:x.rarity||meta.rarity,quantity:x.quantity||1,source:meta.recipe?`${meta.profession} · Skill ${meta.recipe.level}`:'Crafted stock',icon:attachment?'✥':'⚗',tradeState:'tradeable',payload}}),
+    ...(s.recipeScrolls||[]).filter(x=>(x.quantity||0)>0).map(x=>({key:`rec:${x.recipeId}`,name:x.name,category:'Recipe',displayCategory:'Recipe',rarity:'Rare',quantity:x.quantity||1,source:'Rare recipe scroll',icon:'▤',tradeState:'tradeable'}))
   ];
 
   const resourceSignature=resourceModels.map(x=>`${x.key}:${x.quantity}`).join('|');
@@ -226,9 +298,11 @@ function enhanceBank(){
       card.className=`bank-item evo-bank-resource bank-card-v2 bank-resource-card rarity-${String(item.rarity).toLowerCase()}`;
       card.dataset.evoKey=item.key;
       const art=item.materialKey&&P?.materialArtHTML?P.materialArtHTML(item.materialKey,66,'evo-resource-art'):item.category==='Consumable'&&P?.consumableArtHTML?P.consumableArtHTML(String(item.key).replace(/^con:/,''),66,'evo-resource-art'):item.category==='Recipe'&&window.CellboundItemArt?.artHTML?window.CellboundItemArt.artHTML({id:String(item.key).replace(/^rec:/,'recipe-'),name:item.name,category:'recipe',rarity:item.rarity},66,'evo-resource-art'):`<span class="evo-resource-icon">${esc(item.icon)}</span>`;
-      card.innerHTML=`<div class="bank-card-main"><div class="bank-icon gear-bank-icon">${art}</div><div class="bank-copy"><small>${esc(item.category.toUpperCase())} · ${esc(item.rarity.toUpperCase())}</small><h3>${esc(item.name)}</h3><div class="bank-card-preview"><span>${esc(item.source)}</span></div></div><div class="bank-qty">×${item.quantity}</div></div><div class="bank-card-foot"><span>Shared crafting stock</span><button class="bank-card-action" data-resource-jump="professions">OPEN PROFESSIONS →</button></div>`;
+      const actionable=item.category==='Consumable'||item.category==='Recipe',action=actionable?`<button class="bank-card-action" data-resource-open="${item.key}">${item.category==='Recipe'?'LEARN / VIEW →':item.payload?.persistentAttachment?'ATTACH / VIEW →':'USE / VIEW →'}</button>`:'<button class="bank-card-action" data-resource-jump="professions">OPEN WORKSHOP →</button>';
+      card.innerHTML=`<div class="bank-card-main"><div class="bank-icon gear-bank-icon">${art}</div><div class="bank-copy"><small>${esc((item.displayCategory||item.category).toUpperCase())} · ${esc(item.rarity.toUpperCase())}</small><h3>${esc(item.name)}</h3><div class="bank-card-preview"><span>${esc(item.source)}</span>${item.payload?.bonuses?`<span>${esc(P?.bonusText?.(item.payload.bonuses)||'')}</span>`:''}</div></div><div class="bank-qty">×${item.quantity}</div></div><div class="bank-card-foot"><span>${item.payload?.persistentAttachment?'Persistent gear modification':'Shared crafting stock'}</span>${action}</div>`;
       root.appendChild(card);
     });
+    root.querySelectorAll('[data-resource-open]').forEach(btn=>btn.addEventListener('click',()=>openBankResource(btn.dataset.resourceOpen)));
     root.querySelectorAll('[data-resource-jump]').forEach(btn=>btn.addEventListener('click',()=>Game.switchView('professions')));
   }
 

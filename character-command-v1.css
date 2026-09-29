@@ -441,3 +441,49 @@
   .cb-mastery-summary{grid-template-columns:1fr}
   .cb-mastery-summary>div{border-right:0;border-bottom:1px solid rgba(255,255,255,.04)}
 }
+
+
+/* Crafted item attachments */
+.cb-attachment-panel{
+  margin:10px 0 12px;padding:12px;border:1px solid rgba(216,185,118,.15);
+  background:linear-gradient(180deg,rgba(57,44,23,.16),#081216)
+}
+.cb-attachment-panel-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:9px
+}
+.cb-attachment-panel-head small,.cb-current-attachment small{
+  display:block;color:#a78d55;font-size:.45rem;font-weight:900;letter-spacing:.11em
+}
+.cb-attachment-panel-head h4{margin:3px 0 0;color:#e8dfca;font:500 .88rem Georgia,serif}
+.cb-attachment-panel-head>span{
+  flex:0 0 auto;padding:5px 7px;border:1px solid rgba(216,185,118,.12);
+  background:#091317;color:#95835b;font-size:.44rem;font-weight:900
+}
+.cb-current-attachment{
+  margin-bottom:8px;padding:10px 11px;border:1px solid rgba(93,193,145,.18);
+  background:rgba(24,60,44,.18)
+}
+.cb-current-attachment b{display:block;margin-top:3px;color:#d9e8dc;font-size:.68rem}
+.cb-current-attachment span{display:block;margin-top:3px;color:#93b69f;font-size:.54rem}
+.cb-current-attachment em{display:block;margin-top:4px;color:#627b6b;font-size:.45rem;font-style:normal}
+.cb-attachment-options{display:grid;gap:6px}
+.cb-attachment-option{
+  display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:9px;align-items:center;
+  padding:8px;border:1px solid rgba(255,255,255,.06);background:#091317
+}
+.cb-attachment-option.currently-attached{opacity:.62;border-color:rgba(93,193,145,.16)}
+.cb-attachment-option-art{width:48px;height:48px}
+.cb-attachment-option-copy{min-width:0}
+.cb-attachment-option-copy small{display:block;color:#766a50;font-size:.4rem;font-weight:900;letter-spacing:.07em}
+.cb-attachment-option-copy b{display:block;margin-top:2px;color:#ddd7c9;font-size:.62rem}
+.cb-attachment-option-copy span{display:block;margin-top:3px;color:#81918b;font-size:.5rem;line-height:1.4}
+.cb-attachment-option-copy em{display:block;margin-top:3px;color:#697a74;font-size:.44rem;font-style:normal}
+.cb-attachment-option>button{
+  min-height:38px;padding:0 10px;border:1px solid rgba(216,185,118,.2);
+  background:#2c2719;color:#dfc781;font-size:.45rem;font-weight:900;letter-spacing:.05em
+}
+.cb-attachment-option>button:disabled{opacity:.45}
+@media(max-width:720px){
+  .cb-attachment-option{grid-template-columns:44px minmax(0,1fr)}
+  .cb-attachment-option>button{grid-column:1/-1;width:100%}
+}

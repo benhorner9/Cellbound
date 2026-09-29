@@ -86,10 +86,35 @@ function bonusText(bonuses={}){
   const percent=new Set(['block','threat','healing','crit','haste','damagePct','magicWardPct']);
   return Object.entries(bonuses).map(([k,v])=>k==='magicWardPct'?'-'+v+'% '+(labels[k]||k):'+'+v+(percent.has(k)?'% ':' ')+(labels[k]||k)).join(' · ');
 }
+function craftedRarity(level=1,endgame=false){
+  if(endgame||Number(level)>=85)return'Epic';
+  if(Number(level)>=50)return'Rare';
+  return'Uncommon';
+}
+function attachmentTier(level=1){
+  const n=Math.max(1,Number(level)||1);
+  return n>=100?5:n>=75?4:n>=50?3:n>=25?2:1;
+}
+function recipeMetaForOutputKey(key){
+  for(const [profession,def] of Object.entries(PROFESSIONS))for(const recipe of(def.recipes||[]))if(recipe?.output?.key===key)return{profession,recipe};
+  return null
+}
+Object.entries(PROFESSIONS).forEach(([profession,def])=>(def.recipes||[]).forEach(recipe=>{
+  const output=recipe.output||{},payload=output.payload||{};
+  output.rarity=output.rarity||craftedRarity(recipe.level,recipe.endgame);
+  if(payload.effect==='gear-enhancement'){
+    payload.persistentAttachment=true;
+    payload.attachmentTier=attachmentTier(recipe.level);
+    delete payload.charges;
+    payload.description='Attach to an equipped '+payload.slot+' item. '+bonusText(payload.bonuses||{})+'. Remains on that item until replaced.';
+    output.category='consumable';
+  }
+}));
 function itemSignature(item){return item?.rollId||item?.itemId||item?.name||null}
 function activeBonuses(c){
   const totals={};
   const add=src=>Object.entries(src||{}).forEach(([k,v])=>totals[k]=(Number(totals[k])||0)+(Number(v)||0));
+  Object.values(c?.equipment||{}).forEach(item=>{if(item?.attachment?.bonuses)add(item.attachment.bonuses)});
   Object.values(c?.activeEnhancements||{}).forEach(e=>{
     const item=c?.equipment?.[e.slot];
     if((Number(e.remainingBosses)||0)>0&&itemSignature(item)===e.targetSignature)add(e.bonuses);
@@ -99,6 +124,9 @@ function activeBonuses(c){
 }
 function activeEffects(c){
   const out=[];
+  Object.entries(c?.equipment||{}).forEach(([slot,item])=>{
+    const a=item?.attachment;if(a?.bonuses)out.push({kind:'attachment',name:a.name||a.key||'Attachment',slot,permanent:true,bonuses:a.bonuses,tier:a.tier||a.attachmentTier||null});
+  });
   Object.values(c?.activeEnhancements||{}).forEach(e=>{
     const item=c?.equipment?.[e.slot],active=(Number(e.remainingBosses)||0)>0&&itemSignature(item)===e.targetSignature;
     if(active)out.push({kind:'enhancement',name:e.name,slot:e.slot,remainingBosses:e.remainingBosses,bonuses:e.bonuses});
@@ -131,5 +159,5 @@ const BOSS_REAGENTS={
 const recipeById=id=>Object.values(PROFESSIONS).flatMap(p=>p.recipes).find(r=>r.id===id)||null;
 const skillThreshold=level=>100+Math.max(1,level)*5;
 const rollReagents=bossId=>(BOSS_REAGENTS[bossId]||[]).map(r=>({key:r.key,quantity:r.min+Math.floor(Math.random()*(r.max-r.min+1))}));
-window.CellboundProfessions={MATERIALS,PROFESSIONS,BOSS_REAGENTS,recipeById,skillThreshold,rollReagents,materialRarityClass,materialArtHTML,bonusText,itemSignature,activeBonuses,activeEffects,consumeBossCharges};
+window.CellboundProfessions={MATERIALS,PROFESSIONS,BOSS_REAGENTS,recipeById,recipeMetaForOutputKey,craftedRarity,attachmentTier,skillThreshold,rollReagents,materialRarityClass,materialArtHTML,bonusText,itemSignature,activeBonuses,activeEffects,consumeBossCharges};
 })();

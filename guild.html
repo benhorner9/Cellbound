@@ -55,8 +55,8 @@
   <link rel="stylesheet" href="./roster-v2.css?v=2">
   <link rel="stylesheet" href="./character-portraits-v1.css?v=4">
   <link rel="stylesheet" href="./combat-portraits-v1.css?v=4">
-  <link rel="stylesheet" href="./bank-v2.css?v=2">
-  <link rel="stylesheet" href="./character-command-v1.css?v=1">
+  <link rel="stylesheet" href="./bank-v2.css?v=3">
+  <link rel="stylesheet" href="./character-command-v1.css?v=2">
   <link rel="stylesheet" href="./character-talents-v2.css?v=2">
   <link rel="stylesheet" href="./game-shell-v1.css?v=1">
   <link rel="stylesheet" href="./game-feel-v1.css?v=3">
@@ -225,7 +225,7 @@
         <button class="active" type="button" data-bank-category="all"><span>◇</span><b>All Items</b><em data-bank-count="all">0</em></button>
         <button type="button" data-bank-category="Gear"><span>▦</span><b>Equipment</b><em data-bank-count="Gear">0</em></button>
         <button type="button" data-bank-category="Reagent"><span>◆</span><b>Materials</b><em data-bank-count="Reagent">0</em></button>
-        <button type="button" data-bank-category="Consumable"><span>⚗</span><b>Consumables</b><em data-bank-count="Consumable">0</em></button>
+        <button type="button" data-bank-category="Consumable"><span>✥</span><b>Crafted Items</b><em data-bank-count="Consumable">0</em></button>
         <button type="button" data-bank-category="Recipe"><span>▤</span><b>Recipes</b><em data-bank-count="Recipe">0</em></button>
         <button type="button" data-bank-category="favorite"><span>★</span><b>Favourites</b><em data-bank-count="favorite">0</em></button>
         <button type="button" data-bank-category="junk"><span>×</span><b>Junk</b><em data-bank-count="junk">0</em></button>
@@ -260,8 +260,7 @@
         <div class="profession-main">
           <article class="panel workshop-panel"><div class="panel-head"><div><small>ACTIVE WORKSHOP</small><h3 id="workshopTitle">Choose an Adventurer</h3></div><div id="professionRecipeFilters" class="profession-recipe-filters"><button class="active" data-prof-recipe-filter="all">All</button><button data-prof-recipe-filter="ready">Ready</button><button data-prof-recipe-filter="locked">Locked</button><button data-prof-recipe-filter="rare">Rare</button></div></div><div id="professionWorkshop" class="profession-workshop"></div></article>
           <article class="panel"><div class="panel-head"><div><small>MATERIAL VAULT</small><h3>Workshop Reagents</h3></div><span class="panel-head-note">Materials used by the selected profession are highlighted.</span></div><div id="reagentGrid" class="reagent-grid"></div></article>
-          <article class="panel"><div class="panel-head"><div><small>FINISHED GOODS</small><h3>Preparation Stock</h3></div></div><div id="craftedInventory" class="crafted-inventory"></div></article>
-        </div>
+                  </div>
       </div>
     </section>
 
@@ -527,12 +526,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
 <script src="./class-build-v1.js?v=1"></script>
 <script src="./gear-data.js?v=30"></script>
-<script src="./profession-data.js?v=9"></script>
-<script src="./item-art-v1.js?v=1"></script>
+<script src="./profession-data.js?v=10"></script>
+<script src="./item-art-v1.js?v=2"></script>
 <script src="./character-portraits-v1.js?v=11"></script>
   <script src="./combat-portraits-v1.js?v=5"></script>
 <script src="./combat-identities-v1.js?v=40"></script>
-<script src="./combat-reborn-v1.js?v=31"></script>
+<script src="./combat-reborn-v1.js?v=33"></script>
 <script src="./combat-standard-v1.js?v=1"></script>
 <script src="./combat-status-ui-v1.js?v=10"></script>
 <script src="./endgame-data-v1.js?v=5"></script>
@@ -540,19 +539,19 @@
 <script src="./combat-polish-v2.js?v=1"></script>
 <script src="./combat-polish-v3.js?v=1"></script>
 <script src="./combat-physical-v4.js?v=10"></script>
-<script src="./guild-v4.js?v=69"></script>
+<script src="./guild-v4.js?v=70"></script>
 <script src="./pvp-combat-v1.js?v=2"></script>
 <script src="./pvp-viewer-v1.js?v=3"></script>
 <script src="./pvp-match-v1.js?v=3"></script>
 <script src="./pvp-v1.js?v=3"></script>
-<script src="./character-sheet.js?v=54"></script>
+<script src="./character-sheet.js?v=55"></script>
 <script src="./gear-character-patch.js?v=6"></script>
 <script src="./character-foundations-patch.js?v=3"></script>
-<script src="./economy-v2.js?v=13"></script>
+<script src="./economy-v2.js?v=15"></script>
 <script src="./trading-post-v3.js?v=7"></script>
 <script src="./social-v3.js?v=5"></script>
 <script src="./twelve-below-v1.js?v=15"></script>
-<script src="./evolution-v1.js?v=20"></script>
+<script src="./evolution-v1.js?v=21"></script>
 <script src="./expedition-presentation-v1.js?v=1"></script>
 <script src="./null-complex-v1.js?v=2"></script>
 <script src="./boss-dossier-v1.js?v=11"></script>

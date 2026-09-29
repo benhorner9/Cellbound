@@ -188,6 +188,11 @@ function canonicalItem(raw){if(!raw)return null;const base=G.byName(raw.name)||G
 function isBankUtility(item){return Boolean(item?.category==='utility'||item?.utilityType)}
 function bankUtilityArt(item,size=66){const icon=esc(item?.icon||'⚡');return window.CellboundItemArt?.artHTML?.(item,size,'bank-utility-art')||`<span class="bank-utility-art rarity-${String(item?.rarity||'rare').toLowerCase()}" style="width:${size}px;height:${size}px" aria-label="${esc(item?.name||'Utility item')}"><i>${icon}</i></span>`}
 function bankItemArt(item,size=66){return isBankUtility(item)?bankUtilityArt(item,size):G.artHTML(item,size)}
+function bankAttachmentMarkup(item){
+  const a=item?.attachment;if(!a?.bonuses)return'';
+  const meta=[a.profession,a.skill?'Skill '+a.skill:null,a.tier?'Tier '+a.tier:null].filter(Boolean).join(' · ');
+  return `<div class="bank-attachment-detail"><small>CRAFTED ATTACHMENT${meta?' · '+esc(meta.toUpperCase()):''}</small><b>✥ ${esc(a.name||'Attachment')}</b><p>${esc(P?.bonusText?.(a.bonuses)||'')}</p><span>Remains on this equipment until replaced.</span></div>`
+}
 function setBonusPanel(item,c=null){
   if(!item?.setId||!item?.setName)return'';
   const rules=c?(G.setBonusRulesFor?.(c,c.spec,item)||G.SET_BONUS_RULES):null;
@@ -884,7 +889,7 @@ function renderBank(){
     const preview=utility
       ?`<span>${esc(item.description||'Encounter utility item.')}</span>`
       :stats.slice(0,2).map(s=>`<span>${s.text}</span>`).join('')||'<span class="legacy">No rolled stats</span>';
-    const effect=item.uniqueEffect?`<span class="bank-effect-chip">✦ ${esc(item.uniqueEffect.name)}</span>`:'';
+    const effect=(item.uniqueEffect?`<span class="bank-effect-chip">✦ ${esc(item.uniqueEffect.name)}</span>`:'')+(item.attachment?`<span class="bank-effect-chip bank-attachment-chip">✥ ${esc(item.attachment.name||'Attachment')}</span>`:'');
     const flags=(item.favorite?'<i class="bank-flag favorite">★</i>':'')+(item.junk?'<i class="bank-flag junk">JUNK</i>':'');
     const qty=utility?`${Math.max(0,Number(item.charges)||0)}/${Math.max(1,Number(item.maxCharges)||5)} uses`:`×${item.quantity||1}`;
     const meta=utility
@@ -1024,7 +1029,7 @@ function bankCompareMarkup(ch,item){
     const a=Number(incoming[key]?.value)||0,b=Number(equipped[key]?.value)||0,d=a-b,label=incoming[key]?.label||equipped[key]?.label||key,unit=(incoming[key]?.unit||equipped[key]?.unit)==='percent'?'%':'';
     return '<span class="'+(d>0?'gain':d<0?'loss':'same')+'"><b>'+(d>0?'+':'')+d+unit+'</b>'+esc(label)+'</span>';
   }).join('');
-  const effect=item.uniqueEffect?'<p><strong>'+esc(item.uniqueEffect.name)+'</strong>'+esc(item.uniqueEffect.description)+'</p>':'';
+  const effect=(item.uniqueEffect?'<p><strong>'+esc(item.uniqueEffect.name)+'</strong>'+esc(item.uniqueEffect.description)+'</p>':'')+(item.attachment?'<p><strong>✥ '+esc(item.attachment.name||'Attachment')+'</strong>'+esc(P?.bonusText?.(item.attachment.bonuses)||'')+'</p>':'');
   return '<span class="bank-comparison"><span><small>CURRENT</small><b>'+esc(current?.name||('Empty '+item.slot))+'</b><em>iLvl '+(Number(current?.itemLevel)||0)+'</em></span><span class="bank-compare-delta '+(ilvlDelta>0?'gain':ilvlDelta<0?'loss':'')+'"><strong>'+(ilvlDelta>0?'+':'')+ilvlDelta+' iLvl</strong>'+(stats||'<span class="same"><b>—</b>No stat delta</span>')+'</span><span><small>NEW</small><b>'+esc(item.name)+'</b><em>iLvl '+(Number(item.itemLevel)||0)+'</em>'+effect+'</span></span>';
 }
 function selectJunkForBulk(){
@@ -1056,7 +1061,7 @@ function openBankItem(id){
         </div>
       </div>`;
 
-  const stats=G.statLines?.(item)||[];ui.bankDetail.innerHTML=`<div class="detail-hero gear-detail-hero"><div class="gear-detail-art">${G.artHTML(item,112)}</div><div><small>${tierText(item).toUpperCase()} · ${String(item.class||'All').toUpperCase()} · ${String(item.slot||'Gear').toUpperCase()}</small><h2>${item.name}</h2><div class="bank-detail-rolls">${stats.length?stats.map(s=>`<span>${s.text}</span>`).join(''):'<span class="legacy">Legacy item · no rolled stats</span>'}</div>${setBonusPanel(item)}${item.uniqueEffect?`<div class="bank-unique-detail"><small>UNIQUE EFFECT</small><b>${esc(item.uniqueEffect.name)}</b><p>${esc(item.uniqueEffect.description)}</p></div>`:''}<p>Dropped by ${item.source||'Unknown source'}</p><p>Quantity in bank: ${qty}</p></div></div>${flags}${upgrade}<div class="bank-manage"><h3>Equip to an adventurer</h3><p>Same Item Level can still be an upgrade if the roll better suits that character's spec.</p><div class="bank-character-list">${eligible.map(ch=>{const fit=G.rollFit?.(ch,item);return`<button data-equip-char="${ch.id}"><span class="avatar">${portraitHTML(ch,'sm')}</span><span><b>${ch.name}</b><small>${ch.race||'Veyren'} · ${ch.class} · ${ch.spec} · iLvl ${characterItemLevel(ch)}</small></span><em class="roll-fit ${fit?.tone||''}">${fit?.label||''}</em>${bankCompareMarkup(ch,item)}</button>`}).join('')||'<p>No available characters can use this item.</p>'}</div></div>${cleanup}`;
+  const stats=G.statLines?.(item)||[];ui.bankDetail.innerHTML=`<div class="detail-hero gear-detail-hero"><div class="gear-detail-art">${G.artHTML(item,112)}</div><div><small>${tierText(item).toUpperCase()} · ${String(item.class||'All').toUpperCase()} · ${String(item.slot||'Gear').toUpperCase()}</small><h2>${item.name}</h2><div class="bank-detail-rolls">${stats.length?stats.map(s=>`<span>${s.text}</span>`).join(''):'<span class="legacy">Legacy item · no rolled stats</span>'}</div>${setBonusPanel(item)}${item.uniqueEffect?`<div class="bank-unique-detail"><small>UNIQUE EFFECT</small><b>${esc(item.uniqueEffect.name)}</b><p>${esc(item.uniqueEffect.description)}</p></div>`:''}${bankAttachmentMarkup(item)}<p>Dropped by ${item.source||'Unknown source'}</p><p>Quantity in bank: ${qty}</p></div></div>${flags}${upgrade}<div class="bank-manage"><h3>Equip to an adventurer</h3><p>Same Item Level can still be an upgrade if the roll better suits that character's spec.</p><div class="bank-character-list">${eligible.map(ch=>{const fit=G.rollFit?.(ch,item);return`<button data-equip-char="${ch.id}"><span class="avatar">${portraitHTML(ch,'sm')}</span><span><b>${ch.name}</b><small>${ch.race||'Veyren'} · ${ch.class} · ${ch.spec} · iLvl ${characterItemLevel(ch)}</small></span><em class="roll-fit ${fit?.tone||''}">${fit?.label||''}</em>${bankCompareMarkup(ch,item)}</button>`}).join('')||'<p>No available characters can use this item.</p>'}</div></div>${cleanup}`;
   document.body.classList.add('bank-manage-open');ui.bankModal.hidden=false;
   ui.bankDetail.querySelectorAll('[data-equip-char]').forEach(b=>b.addEventListener('click',()=>equipBankItem(id,b.dataset.equipChar)));
   $('[data-bank-favorite]')?.addEventListener('click',()=>toggleBankFlag(id,'favorite'));

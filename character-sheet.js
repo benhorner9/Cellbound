@@ -740,11 +740,11 @@ function setSummaryMarkup(c){
   return `<section class="cb-set-summary"><div class="cb-stat-section-head"><span>SET BONUSES · ${escHtml(c.spec.toUpperCase())}</span><small>Bonuses adapt to the active specialisation</small></div>${[...sets.entries()].map(([id,item])=>{const count=G?.setPieceCount?.(c,id)||0,rules=setRuleData(c,item);return `<article class="cb-set-card"><header><div><small>ADAPTIVE EQUIPMENT SET</small><h4>${escHtml(item.setName||id)}</h4></div><b>${count}/4</b></header>${bonus(rules.pieces2,count)}${bonus(rules.pieces4,count)}</article>`}).join('')}</section>`
 }
 function equipmentSlot(c,slot,state){
-  const item=c.equipment?.[slot],upgrade=bestBankUpgrade(state,c,slot),prep=(window.CellboundProfessions?.activeEffects?.(c)||[]).find(x=>x.kind==='enhancement'&&x.slot===slot);
+  const item=c.equipment?.[slot],upgrade=bestBankUpgrade(state,c,slot),prep=(window.CellboundProfessions?.activeEffects?.(c)||[]).find(x=>(x.kind==='attachment'||x.kind==='enhancement')&&x.slot===slot);
   const art=item?(G?.artHTML?.(item,48,'cb-slot-art')||item.icon||slotIcons[slot]||'◇'):(slotIcons[slot]||'◇');
   return `<button class="cb-equip-slot ${item?rarityClass(item):'cb-empty'} ${upgrade?'has-upgrade':''}" data-slot="${slot}">
     <span class="cb-slot-icon">${art}</span>
-    <span class="cb-slot-copy"><small>${slot.replace(/(\d)/,' $1')}</small><b>${item?.name||'Empty'}</b>${item?.power?`<em>+${item.power} power</em>`:''}${item?`<span class="cb-slot-ilvl">Item Level ${item.itemLevel||0}</span><span class="cb-slot-roll">${(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll'}</span>${setInlineMarkup(c,item)}${prep?`<span class="cb-slot-roll cb-slot-prep">✥ ${prep.name} · ${window.CellboundProfessions?.bonusText?.(prep.bonuses)||''} · ${prep.remainingBosses} bosses</span>`:''}`:'<span class="cb-slot-ilvl">Empty equipment slot</span>'}</span>
+    <span class="cb-slot-copy"><small>${slot.replace(/(\d)/,' $1')}</small><b>${item?.name||'Empty'}</b>${item?.power?`<em>+${item.power} power</em>`:''}${item?`<span class="cb-slot-ilvl">Item Level ${item.itemLevel||0}</span><span class="cb-slot-roll">${(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll'}</span>${setInlineMarkup(c,item)}${prep?`<span class="cb-slot-roll cb-slot-prep">✥ ${prep.name} · ${window.CellboundProfessions?.bonusText?.(prep.bonuses)||''}${prep.permanent?' · ATTACHED':` · ${prep.remainingBosses} bosses`}</span>`:''}`:'<span class="cb-slot-ilvl">Empty equipment slot</span>'}</span>
     ${upgrade?`<span class="cb-slot-upgrade">+${upgrade.gain} ILVL</span>`:''}
   </button>`;
 }
@@ -846,6 +846,21 @@ function equippedUpgradeCost(item){
   return 4+tier*3+level*4;
 }
 function equippedCanUpgrade(item){return Boolean(item)&&(Number(item?.itemLevel)||0)<equippedUpgradeMax(item)}
+function attachmentStacksForSlot(state,slot){
+  return (Array.isArray(state?.consumables)?state.consumables:[]).filter(stack=>Number(stack?.quantity)>0&&stack?.payload?.effect==='gear-enhancement'&&stack?.payload?.persistentAttachment&&stack?.payload?.slot===slot)
+}
+function attachmentMeta(stack){
+  const P=window.CellboundProfessions,meta=P?.recipeMetaForOutputKey?.(stack?.key)||null,recipe=meta?.recipe;
+  return{profession:meta?.profession||'Profession',skill:Number(recipe?.level)||1,tier:Number(stack?.payload?.attachmentTier)||P?.attachmentTier?.(recipe?.level)||1,rarity:stack?.rarity||recipe?.output?.rarity||P?.craftedRarity?.(recipe?.level,recipe?.endgame)||'Uncommon'}
+}
+function attachmentCard(stack,current){
+  const P=window.CellboundProfessions,meta=attachmentMeta(stack),same=current?.key===stack.key,art=P?.consumableArtHTML?.(stack.key,48,'cb-attachment-art')||'✥';
+  return `<article class="cb-attachment-option ${same?'currently-attached':''}">
+    <div class="cb-attachment-option-art">${art}</div>
+    <div class="cb-attachment-option-copy"><small>${meta.profession.toUpperCase()} · SKILL ${meta.skill} · TIER ${meta.tier}</small><b>${escHtml(stack.name)}</b><span>${escHtml(P?.bonusText?.(stack.payload?.bonuses)||stack.payload?.description||'Gear attachment')}</span><em>${same?'Currently attached':meta.rarity+' · ×'+(stack.quantity||1)+' in Bank'}</em></div>
+    <button type="button" data-apply-attachment="${stack.key}" ${same?'disabled':''}>${same?'ATTACHED':current?'REPLACE':'ATTACH'}</button>
+  </article>`
+}
 function slotPicker(state,c,slot){
   const bank=Array.isArray(state?.bank)?state.bank:[];
   const candidates=bank.filter(item=>canUse(c,item)&&possibleSlots(item).includes(slot));
@@ -855,6 +870,15 @@ function slotPicker(state,c,slot){
   const upgradeCost=current?equippedUpgradeCost(current):0;
   const upgradeMax=current?equippedUpgradeMax(current):0;
   const nextIlvl=current?Math.min(upgradeMax,currentIlvl+2):0;
+  const attachments=current?attachmentStacksForSlot(state,slot):[];
+  const attached=current?.attachment||null;
+  const P=window.CellboundProfessions;
+  const currentAttachment=attached?`<div class="cb-current-attachment"><small>ATTACHED MODIFICATION</small><b>${escHtml(attached.name||attached.key||'Attachment')}</b><span>${escHtml(P?.bonusText?.(attached.bonuses)||'')}</span><em>Permanent on this item until replaced</em></div>`:'';
+  const attachmentPanel=current?`<section class="cb-attachment-panel">
+    <div class="cb-attachment-panel-head"><div><small>CRAFTED ATTACHMENTS</small><h4>Modify this ${escHtml(slot)}</h4></div><span>${attachments.length} compatible in Bank</span></div>
+    ${currentAttachment}
+    <div class="cb-attachment-options">${attachments.length?attachments.map(stack=>attachmentCard(stack,attached)).join(''):'<div class="cb-no-items">No compatible crafted attachments are stored in the Bank. Craft or buy one and it will appear here automatically.</div>'}</div>
+  </section>`:'';
   const currentActions=current?`<div class="cb-current-actions">
     <button type="button" class="cb-unequip-btn" data-unequip-slot="${slot}">UNEQUIP TO BANK</button>
     <button type="button" class="cb-upgrade-equipped-btn" data-upgrade-equipped="${slot}" ${equippedCanUpgrade(current)&&shards>=upgradeCost?'':'disabled'}>${equippedCanUpgrade(current)?`UPGRADE TO ILVL ${nextIlvl}`:'UPGRADE CAP REACHED'}</button>
@@ -864,8 +888,9 @@ function slotPicker(state,c,slot){
     <div class="cb-slot-drawer-head"><div><small>${slot}</small><h3>${current?.name||'Empty slot'}</h3></div><button data-close-slot>×</button></div>
     ${current?`<div class="cb-current-item ${rarityClass(current)}"><span>${G?.artHTML?.(current,56)||current.icon||slotIcons[slot]}</span><div><b>${current.name}</b><small>${current.rarity||'Starter'} · iLvl ${currentIlvl}${current.power?` · +${current.power} power`:''}${Number(current.upgradeLevel)>0?` · Upgrade ${Number(current.upgradeLevel)}`:''}</small><em class="cb-current-roll">${(G?.statLines?.(current)||[]).map(s=>s.text).join(' · ')||'Legacy roll'}</em>${setInlineMarkup(c,current)}</div></div>`:''}
     ${currentActions}
-    <p>Compatible Guild Bank items</p>
-    <div class="cb-slot-options">${candidates.length?candidates.sort((a,b)=>(b.itemLevel||0)-(a.itemLevel||0)).map(item=>{const delta=(Number(item.itemLevel)||0)-currentIlvl,fit=G?.rollFit?.(c,item),stats=(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll';return `<button data-equip-bank="${item.id}" data-equip-slot="${slot}" class="${rarityClass(item)}"><span>${G?.artHTML?.(item,48)||item.icon||'◇'}</span><div><b>${item.name}</b><small>${item.rarity} · iLvl ${item.itemLevel||0} · ×${item.quantity||1}</small><strong class="cb-option-roll">${stats}</strong>${setInlineMarkup(c,item)}<em class="${delta>0?'upgrade':delta<0?'downgrade':''}">${fit?.label||''}${delta===0?' · Same Item Level':delta>0?` · +${delta} Item Level`:` · ${delta} Item Level`}</em></div></button>`}).join(''):'<div class="cb-no-items">No compatible items are currently stored in the Bank.</div>'}</div>
+    ${attachmentPanel}
+    <p>Compatible Guild Bank equipment</p>
+    <div class="cb-slot-options">${candidates.length?candidates.sort((a,b)=>(b.itemLevel||0)-(a.itemLevel||0)).map(item=>{const delta=(Number(item.itemLevel)||0)-currentIlvl,fit=G?.rollFit?.(c,item),stats=(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll',attachment=item.attachment?` · ✥ ${item.attachment.name||'Attached'}`:'';return `<button data-equip-bank="${item.id}" data-equip-slot="${slot}" class="${rarityClass(item)}"><span>${G?.artHTML?.(item,48)||item.icon||'◇'}</span><div><b>${item.name}</b><small>${item.rarity} · iLvl ${item.itemLevel||0} · ×${item.quantity||1}${attachment}</small><strong class="cb-option-roll">${stats}</strong>${setInlineMarkup(c,item)}<em class="${delta>0?'upgrade':delta<0?'downgrade':''}">${fit?.label||''}${delta===0?' · Same Item Level':delta>0?` · +${delta} Item Level`:` · ${delta} Item Level`}</em></div></button>`}).join(''):'<div class="cb-no-items">No compatible items are currently stored in the Bank.</div>'}</div>
   </div>`;
 }
 function totalSpent(c,spec){return B?.talentSpent?.(c,spec)??Object.values(c.talents?.[spec]||{}).reduce((a,b)=>a+(Number(b)||0),0)}
@@ -1143,6 +1168,18 @@ function equipItem(bankId,slot){
   state.activity.push(old?`${c.name} replaced ${old.name} with ${item.name}.`:`${c.name} equipped ${item.name} from the Guild Bank.`);
   writeState(state);activeSlot=null;renderSheet();window.CellboundFX?.micro?.(item.name+' equipped','gold');window.CellboundFX?.pulse?.('.cb-current-item');
 }
+function applyAttachmentToEquipped(key,slot){
+  if(!characterEditable())return;
+  const state=readState(),c=ensureCharacter(getCharacter(state,currentId)),item=c?.equipment?.[slot],stack=state?.consumables?.find(x=>x.key===key),payload=stack?.payload||{};
+  if(!state||!c||!item||!stack||payload.effect!=='gear-enhancement'||!payload.persistentAttachment||payload.slot!==slot)return;
+  const existing=item.attachment;
+  if(existing&&existing.key!==key&&!confirm('Replace '+(existing.name||'the current attachment')+' on '+item.name+' with '+stack.name+'?'))return;
+  const meta=window.CellboundProfessions?.recipeMetaForOutputKey?.(key),recipe=meta?.recipe;
+  item.attachment={key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},profession:meta?.profession||null,skill:Number(recipe?.level)||null,tier:Number(payload.attachmentTier)||null,rarity:stack.rarity||recipe?.output?.rarity||'Uncommon',attachedAt:new Date().toISOString()};
+  stack.quantity=(Number(stack.quantity)||1)-1;if(stack.quantity<=0)state.consumables=state.consumables.filter(x=>x!==stack);
+  state.activity=state.activity||[];state.activity.push(`${stack.name} attached to ${c.name}'s ${item.name}.`);
+  writeState(state);activeSlot=slot;renderSheet();window.CellboundFX?.micro?.(stack.name+' attached','gold');window.CellboundFX?.pulse?.('.cb-current-attachment');
+}
 function unequipItem(slot){
   if(!characterEditable())return;
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId)),item=c?.equipment?.[slot];
@@ -1259,6 +1296,7 @@ document.addEventListener('click',event=>{
     const resetSkill=event.target.closest('[data-reset-skills]');if(resetSkill){resetSkills();return}
     const unequip=event.target.closest('[data-unequip-slot]');if(unequip){event.preventDefault();event.stopImmediatePropagation();unequipItem(unequip.dataset.unequipSlot);return}
     const upgradeEquipped=event.target.closest('[data-upgrade-equipped]');if(upgradeEquipped){event.preventDefault();event.stopImmediatePropagation();upgradeEquippedItem(upgradeEquipped.dataset.upgradeEquipped);return}
+    const applyAttachment=event.target.closest('[data-apply-attachment]');if(applyAttachment){event.preventDefault();event.stopImmediatePropagation();applyAttachmentToEquipped(applyAttachment.dataset.applyAttachment,activeSlot);return}
     const equip=event.target.closest('[data-equip-bank]');if(equip){event.preventDefault();event.stopImmediatePropagation();equipItem(equip.dataset.equipBank,equip.dataset.equipSlot);return}
     const closeSlot=event.target.closest('[data-close-slot]');if(closeSlot){event.preventDefault();event.stopImmediatePropagation();activeSlot=null;renderSheet();return}
     const slot=event.target.closest('[data-slot]');if(slot){event.preventDefault();event.stopImmediatePropagation();activeSlot=slot.dataset.slot;renderSheet();return}

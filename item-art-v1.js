@@ -246,7 +246,7 @@ function artHTML(item,size,extra){
 function findConsumable(key){
  const P=window.CellboundProfessions,all=Object.values(P?.PROFESSIONS||{}).flatMap(function(v){return v.recipes||[]});
  const r=all.find(function(v){return v?.output?.key===key});
- return r?.output?{...r.output,rarity:r.endgame?'Epic':'Uncommon'}:{key:key,itemId:key,name:key,category:'consumable',rarity:'Uncommon'}
+ return r?.output?{...r.output,rarity:r.output?.rarity||P?.craftedRarity?.(r.level,r.endgame)||(r.endgame?'Epic':'Uncommon')}:{key:key,itemId:key,name:key,category:'consumable',rarity:'Uncommon'}
 }
 function materialHTML(key,size,extra){
  const m=window.CellboundProfessions?.MATERIALS?.[key]||{};
