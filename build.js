@@ -377,7 +377,7 @@ for(const file of files){
     if(contents.includes('Each point also grants <b>+1 Power</b>'))throw new Error('Talent points must not inflate global Power across inactive specialisations');
   }
   if(file==='guild.html'){
-    const hasVersionedAsset=name=>new RegExp(name.replace(/\\./g,'\\\\.')+'\\\\?v=\\\\d+').test(contents);
+    const hasVersionedAsset=name=>new RegExp(name.replaceAll('.','\\.')+'\\?v=[0-9]+').test(contents);
     if(!hasVersionedAsset('boss-dossier-v1.css'))throw new Error('Boss dossier CSS cache version is stale in guild.html');
     if(!hasVersionedAsset('boss-dossier-v1.js'))throw new Error('Boss dossier cache version is stale in guild.html');
     if(!hasVersionedAsset('quests-v2.js')||!hasVersionedAsset('thirteenth-bell-v1.js')||!hasVersionedAsset('no-way-back-v1.js'))throw new Error('Progressive quest combat cache versions are stale in guild.html');
@@ -390,7 +390,7 @@ for(const file of files){
      if(!hasVersionedAsset('combat-portraits-v1.css')||!hasVersionedAsset('combat-portraits-v1.js'))throw new Error('Combat portrait assets are not linked from guild.html');
     if(!hasVersionedAsset('class-build-v1.js')||!hasVersionedAsset('gear-system.css')||!hasVersionedAsset('gear-data.js')||!hasVersionedAsset('combat-reborn-v1.js')||!hasVersionedAsset('guild-v4.js')||!hasVersionedAsset('character-sheet.js')||!hasVersionedAsset('combat-identities-v1.js')||!hasVersionedAsset('combat-status-ui-v1.js')||!hasVersionedAsset('combat-physical-v4.js')||!hasVersionedAsset('combat-physical-v4.css')||!hasVersionedAsset('trading-post-v3.js')||!hasVersionedAsset('dungeon-2d-v1.js')||!hasVersionedAsset('hollow-sanctum-v1.js')||!hasVersionedAsset('chaos-canyon-v1.js')||!hasVersionedAsset('blackout-station-v1.js')||!hasVersionedAsset('fractured-ages-v1.js'))throw new Error('Set bonus UI cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
-    const layoutSafetyMatch=contents.match(/<link rel="stylesheet" href="\\.\\/layout-safety-v1\\.css\\?v=\\d+">/),layoutSafetyLink=layoutSafetyMatch?.[0]||'';
+    const layoutSafetyLink=(contents.match(/<link rel="stylesheet" href="\.\/layout-safety-v1\.css\?v=[0-9]+">/)||[])[0]||'';
     if(!layoutSafetyLink||contents.lastIndexOf('<link rel="stylesheet"')!==contents.indexOf(layoutSafetyLink))throw new Error('Layout safety stylesheet must remain the final CSS layer in guild.html');
     if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
     if(!contents.includes('combat-reborn-v1.js'))throw new Error('Canonical Combat Reborn engine is not linked from guild.html');
