@@ -115,13 +115,11 @@ function chrome(body,stage){
     ['party-builder','Party'],
     ['first-expedition','Signal'],
     ['gear','Gear'],
-    ['dungeon-briefing','Expedition'],
+    ['dungeon-briefing','Combat'],
     ['loot-review','Loot'],
-    ['recovery-lesson','Shock'],
-    ['profession-choice','Craft'],
-    ['departure','Road']
+    ['quest-lesson','Contract']
   ];
-  const order={'party-builder':0,'zeltira-arrival':1,'first-expedition':1,'gear':2,'dungeon-briefing':3,'dungeon-running':3,'loot-review':4,'recovery-lesson':5,'profession-choice':6,'craft':6,'profession-use':6,'quest-lesson':7,'departure':7};
+  const order={'party-builder':0,'zeltira-arrival':1,'first-expedition':1,'gear':2,'dungeon-briefing':3,'dungeon-running':3,'loot-review':4,'quest-lesson':5,'departure':5};
   const at=order[stage]??0;
   return '<section class="onboard-shell"><header class="onboard-head"><div><small>CELLBOUND · FIRST EXPEDITION</small><h1>'+esc(stageTitle(stage))+'</h1></div><div class="onboard-progress">'+steps.map((x,i)=>'<span class="'+(i<at?'done':i===at?'active':'')+'"><i>'+(i+1)+'</i>'+x[1]+'</span>').join('')+'</div></header>'+body+'</section>';
 }
@@ -885,7 +883,7 @@ function tutorialLootItem(){
 function renderLootReview(){
   if(maybeTutorialComic('loot'))return;
   const s=state(),item=tutorialLootItem();
-  if(!item){s.onboarding.stage='recovery-lesson';Game.save();render();return}
+  if(!item){s.onboarding.stage='quest-lesson';s.onboarding.coreTrainingComplete=true;Game.save();render();return}
   const eligible=s.roster.filter(ch=>item.class===ch.class||item.classes==='all'||item.classes?.includes?.(ch.class));
   const stats=(G.statLines?.(item)||[]).map(x=>x.text).join(' · ')||'No bonus stats';
   const body='<div class="loot-school"><main><small>ZELTIRA · GUILD BANK</small><h2>The boss dropped an item. It does not equip itself.</h2><p>Drops are secured in the Guild Bank first. Read the roll, choose who benefits, then assign the item.</p><article class="tutorial-loot-card">'+G.artHTML(item,104)+'<div><small>'+esc(item.rarity||'GEAR')+' · '+esc(item.slot)+' · ITEM LEVEL '+(item.itemLevel||0)+'</small><h3>'+esc(item.name)+'</h3><div class="tutorial-loot-stats">'+(G.statLines?.(item)||[]).map(x=>'<span>'+esc(x.text)+'</span>').join('')+'</div><p>Dropped by the Hollow Warden · currently stored in the Guild Bank</p></div></article><div class="gear-school-rule"><b>Dungeon rolls are not fixed</b><span>If this same item drops again, its bonus stat can be different. A bad roll can be replaced later even when the Item Level is unchanged.</span></div></main><aside class="z-guide"><small>ASSIGN THE DROP</small><h2>Who should wear it?</h2><p>This item is restricted by class. The labels below compare its rolled stat against each compatible character’s current spec.</p><div class="tutorial-loot-characters">'+eligible.map(ch=>{const fit=G.rollFit?.(ch,item);return '<button data-tutorial-loot-char="'+ch.id+'"><span>'+esc(ch.portrait)+'</span><div><b>'+esc(ch.name)+'</b><small>'+esc(ch.class)+' · '+esc(ch.spec)+'</small><em class="'+esc(fit?.tone||'')+'">'+esc(fit?.label||'COMPATIBLE')+'</em></div></button>'}).join('')+'</div><p class="tutorial-roll-summary">'+esc(stats)+'</p></aside></div>';
@@ -900,7 +898,7 @@ async function equipTutorialLoot(charId){
   ch.equipment=ch.equipment||emptyEquipment();ch.equipment[item.slot]={...equipped,source:'Equipped'};
   ch.gearItems=['Head','Chest','Weapon'].map(slot=>ch.equipment[slot]?.name||'Empty');
   item.quantity=(Number(item.quantity)||1)-1;if(item.quantity<=0)s.bank=s.bank.filter(x=>x.id!==item.id);
-  s.onboarding.tutorialLootEquippedTo=ch.id;s.onboarding.stage='recovery-lesson';
+  s.onboarding.tutorialLootEquippedTo=ch.id;s.onboarding.stage='quest-lesson';s.onboarding.coreTrainingComplete=true;
   s.activity.push(ch.name+' equipped '+item.name+' from the Zeltiran Hollows.');
   Game.save();await Game.persistState();render();
 }
@@ -1015,8 +1013,7 @@ function renderQuestLesson(){
 }
 function renderDeparture(){
   if(maybeTutorialComic('departure'))return;
-  const s=state(),c=s.roster.find(x=>x.id===s.onboarding.professionCharacterId),prof=s.onboarding.professionName;
-  const body='<div class="zeltira-layout departure"><main>'+zeltiraMap('road')+'</main><aside class="z-guide"><small>ZELTIRA · EASTERN ROAD</small><h2>Your first expedition is over. Your first real contract is not.</h2><p class="guide-quote">“You have five people, a little gear and enough experience to know what can go wrong. That is more than most charters get.”</p><div class="tutorial-complete-list"><div><i>✓</i><span><b>Active five formed</b><small>Tank · Healer · Damage and flexible class identities</small></span></div><div><i>✓</i><span><b>Combat read live</b><small>HP · resources · threat · healing · interrupts · telegraphs · statuses</small></span></div><div><i>✓</i><span><b>Loot handled</b><small>Item Level · random rolls · Guild Bank assignment</small></span></div><div><i>✓</i><span><b>Cell Shock witnessed</b><small>Failure creates roster pressure without deleting progress</small></span></div><div><i>✓</i><span><b>Profession started</b><small>'+esc(c?.name||'Adventurer')+' · '+esc(prof||'Profession')+' · '+esc(s.onboarding.craftedItem||'first craft')+'</small></span></div></div><button id="beginAdventure" class="on-primary">LEAVE ZELTIRA · BEGIN THE EAST ROAD →</button></aside></div>';
+  const body='<div class="zeltira-layout departure"><main>'+zeltiraMap('road')+'</main><aside class="z-guide"><small>CHAPTER 0 · COMPLETE</small><h2>Your guild is ready. The world is not waiting.</h2><p class="guide-quote">“You know enough to make your own mistakes now. That is the useful kind of ready.”</p><div class="tutorial-complete-list"><div><i>✓</i><span><b>You built the active five</b><small>Tank · Healer · three Damage roles</small></span></div><div><i>✓</i><span><b>You read a live fight</b><small>Threat · healing · interrupts · telegraphs</small></span></div><div><i>✓</i><span><b>You made a gear decision</b><small>Item Level matters, but the roll and the character matter too</small></span></div><div><i>✓</i><span><b>You assigned your first drop</b><small>Loot belongs to the guild until you decide who wears it</small></span></div></div><div class="first-expedition-hook"><span>NEXT</span><b>Ashes on the East Road</b><small>Your first real quest begins the moment you leave this screen.</small></div><button id="beginAdventure" class="on-primary">BEGIN CELLBOUND →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'departure');
   $('#beginAdventure')?.addEventListener('click',completeOnboarding);
 }
