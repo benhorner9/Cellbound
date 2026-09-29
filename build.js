@@ -36,7 +36,7 @@ for(const file of files){
   }
   if(file==='economy-v2.js'){
     for(const hook of ['const WORKSHOP_ACTIONS=','function beginCraft(','async function resolveCraftStep(','function craftProjectMarkup(','FIRST CRAFT BONUS','MASTERWORK BONUS AVAILABLE','projectsCompleted','data-item-art-done="1"'])if(!contents.includes(hook))throw new Error('Profession project crafting runtime is missing '+hook);
-    for(const hook of ['function addConsumable(item,qty=1,boundCrafter=null)','payload.boundCharacterId=boundCrafter.id','recipe.crafterOnly?c:null','BOUND TO'])if(!contents.includes(hook))throw new Error('Crafter-only item binding runtime is missing '+hook);
+    for(const hook of ['function addConsumable(item,qty=1,boundCrafter=null)','payload.boundCharacterId=boundCrafter.id','recipe.crafterOnly?c:null','trainingScale=Math.max(.1,Number(recipe.trainingScale)||1)','BOUND TO'])if(!contents.includes(hook))throw new Error('Crafter-only item binding runtime is missing '+hook);
     for(const hook of ['latestPayload.effect===\'gear-enhancement\'','item.attachment=item.attachment||','delete c.activeEnhancements[slot]'])if(!contents.includes(hook))throw new Error('Legacy crafted enhancement migration is missing '+hook);
     if(contents.includes('>CRAFT</button>'))throw new Error('Legacy profession spam-craft button returned');
   }
@@ -46,7 +46,7 @@ for(const file of files){
   if(file==='profession-data.js'){
     if(!contents.includes('const skillThreshold=level=>100+Math.max(1,level)*5;'))throw new Error('Profession project progression curve regressed');
     for(const hook of ['persistentAttachment=true','recipeMetaForOutputKey','item?.attachment?.bonuses','kind:\'attachment\''])if(!contents.includes(hook))throw new Error('Persistent profession attachment model is missing '+hook);
-    for(const hook of ['crafterOnly:true','payload.crafterOnly=true','output.tradeState=\'soulbound\'','boundCharacterId===c?.id'])if(!contents.includes(hook))throw new Error('Crafter-only profession recipe contract is missing '+hook);
+    for(const hook of ['crafterOnly:true','trainingScale:.45','payload.crafterOnly=true','output.tradeState=\'soulbound\'','boundCharacterId===c?.id'])if(!contents.includes(hook))throw new Error('Crafter-only profession recipe contract is missing '+hook);
   }
   if(file==='item-art-v1.js'){
     if(!contents.includes("card.querySelector(':scope > .recipe-output-art')"))throw new Error('Profession recipe art duplication guard is missing');
