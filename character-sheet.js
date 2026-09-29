@@ -846,18 +846,18 @@ function equippedUpgradeCost(item){
   return 4+tier*3+level*4;
 }
 function equippedCanUpgrade(item){return Boolean(item)&&(Number(item?.itemLevel)||0)<equippedUpgradeMax(item)}
-function attachmentStacksForSlot(state,slot){
-  return (Array.isArray(state?.consumables)?state.consumables:[]).filter(stack=>Number(stack?.quantity)>0&&stack?.payload?.effect==='gear-enhancement'&&stack?.payload?.persistentAttachment&&stack?.payload?.slot===slot)
+function attachmentStacksForSlot(state,slot,c){
+  return (Array.isArray(state?.consumables)?state.consumables:[]).filter(stack=>Number(stack?.quantity)>0&&stack?.payload?.effect==='gear-enhancement'&&stack?.payload?.persistentAttachment&&stack?.payload?.slot===slot&&(!stack?.payload?.crafterOnly||stack.payload.boundCharacterId===c?.id))
 }
 function attachmentMeta(stack){
   const P=window.CellboundProfessions,meta=P?.recipeMetaForOutputKey?.(stack?.key)||null,recipe=meta?.recipe;
   return{profession:meta?.profession||'Profession',skill:Number(recipe?.level)||1,tier:Number(stack?.payload?.attachmentTier)||P?.attachmentTier?.(recipe?.level)||1,rarity:stack?.rarity||recipe?.output?.rarity||P?.craftedRarity?.(recipe?.level,recipe?.endgame)||'Uncommon'}
 }
 function attachmentCard(stack,current){
-  const P=window.CellboundProfessions,meta=attachmentMeta(stack),same=current?.key===stack.key,art=P?.consumableArtHTML?.(stack.key,48,'cb-attachment-art')||'✥';
+  const P=window.CellboundProfessions,meta=attachmentMeta(stack),same=current?.key===stack.key&&(!stack.payload?.crafterOnly||current?.boundCharacterId===stack.payload.boundCharacterId),art=P?.consumableArtHTML?.(stack.key,48,'cb-attachment-art')||'✥';
   return `<article class="cb-attachment-option ${same?'currently-attached':''}">
     <div class="cb-attachment-option-art">${art}</div>
-    <div class="cb-attachment-option-copy"><small>${meta.profession.toUpperCase()} · SKILL ${meta.skill} · TIER ${meta.tier}</small><b>${escHtml(stack.name)}</b><span>${escHtml(P?.bonusText?.(stack.payload?.bonuses)||stack.payload?.description||'Gear attachment')}</span><em>${same?'Currently attached':meta.rarity+' · ×'+(stack.quantity||1)+' in Bank'+(current?' · replaces current attachment':'')}</em></div>
+    <div class="cb-attachment-option-copy"><small>${meta.profession.toUpperCase()} · SKILL ${meta.skill} · TIER ${meta.tier}${stack.payload?.crafterOnly?' · CRAFTER ONLY':''}</small><b>${escHtml(stack.name)}</b><span>${escHtml(P?.bonusText?.(stack.payload?.bonuses)||stack.payload?.description||'Gear attachment')}</span><em>${same?'Currently attached':meta.rarity+' · ×'+(stack.quantity||1)+' in Bank'+(current?' · replaces current attachment':'')}</em></div>
     <button type="button" data-apply-attachment="${stack.key}" ${same?'disabled':''}>${same?'ATTACHED':current?'REPLACE':'ATTACH'}</button>
   </article>`
 }
@@ -870,10 +870,10 @@ function slotPicker(state,c,slot){
   const upgradeCost=current?equippedUpgradeCost(current):0;
   const upgradeMax=current?equippedUpgradeMax(current):0;
   const nextIlvl=current?Math.min(upgradeMax,currentIlvl+2):0;
-  const attachments=current?attachmentStacksForSlot(state,slot):[];
+  const attachments=current?attachmentStacksForSlot(state,slot,c):[];
   const attached=current?.attachment||null;
-  const P=window.CellboundProfessions;
-  const currentAttachment=attached?`<div class="cb-current-attachment"><small>ATTACHED MODIFICATION</small><b>${escHtml(attached.name||attached.key||'Attachment')}</b><span>${escHtml(P?.bonusText?.(attached.bonuses)||'')}</span><em>Permanent on this item. Applying another attachment destroys this one.</em></div>`:'';
+  const P=window.CellboundProfessions,attachmentUsable=!attached?.crafterOnly||attached?.boundCharacterId===c?.id;
+  const currentAttachment=attached?`<div class="cb-current-attachment ${attachmentUsable?'':'is-inactive'}"><small>${attached.crafterOnly?'CRAFTER-ONLY ATTACHMENT':'ATTACHED MODIFICATION'}</small><b>${escHtml(attached.name||attached.key||'Attachment')}</b><span>${escHtml(P?.bonusText?.(attached.bonuses)||'')}</span><em>${attachmentUsable?'Permanent on this item. Applying another attachment destroys this one.':'Inactive for '+escHtml(c.name)+' · bound to '+escHtml(attached.boundCharacterName||'its crafter')+'.'}</em></div>`:'';
   const attachmentPanel=current?`<section class="cb-attachment-panel">
     <div class="cb-attachment-panel-head"><div><small>CRAFTED ATTACHMENTS</small><h4>Modify this ${escHtml(slot)}</h4><p>Applying an attachment consumes it from the Bank. Replacing one permanently destroys the old attachment.</p></div><span>${attachments.length} compatible in Bank</span></div>
     ${currentAttachment}
@@ -1170,13 +1170,13 @@ function equipItem(bankId,slot){
 }
 function applyAttachmentToEquipped(key,slot){
   if(!characterEditable())return;
-  const state=readState(),c=ensureCharacter(getCharacter(state,currentId)),item=c?.equipment?.[slot],stack=state?.consumables?.find(x=>x.key===key),payload=stack?.payload||{};
-  if(!state||!c||!item||!stack||payload.effect!=='gear-enhancement'||!payload.persistentAttachment||payload.slot!==slot)return;
+  const state=readState(),c=ensureCharacter(getCharacter(state,currentId)),item=c?.equipment?.[slot],stack=state?.consumables?.find(x=>x.key===key&&(!x?.payload?.crafterOnly||x.payload.boundCharacterId===c?.id)),payload=stack?.payload||{};
+  if(!state||!c||!item||!stack||payload.effect!=='gear-enhancement'||!payload.persistentAttachment||payload.slot!==slot||payload.crafterOnly&&payload.boundCharacterId!==c.id)return;
   const existing=item.attachment;
-  if(existing?.key===key)return;
+  if(existing?.key===key&&(!payload.crafterOnly||existing?.boundCharacterId===payload.boundCharacterId))return;
   if(existing&&!confirm('Replace '+(existing.name||'the current attachment')+' on '+item.name+' with '+stack.name+'?\n\nThe existing attachment will be permanently destroyed and cannot be recovered.'))return;
   const meta=window.CellboundProfessions?.recipeMetaForOutputKey?.(key),recipe=meta?.recipe;
-  item.attachment={key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},profession:meta?.profession||null,skill:Number(recipe?.level)||null,tier:Number(payload.attachmentTier)||null,rarity:stack.rarity||recipe?.output?.rarity||'Uncommon',attachedAt:new Date().toISOString()};
+  item.attachment={key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},profession:meta?.profession||null,skill:Number(recipe?.level)||null,tier:Number(payload.attachmentTier)||null,rarity:stack.rarity||recipe?.output?.rarity||'Uncommon',crafterOnly:Boolean(payload.crafterOnly),boundCharacterId:payload.boundCharacterId||null,boundCharacterName:payload.boundCharacterName||null,attachedAt:new Date().toISOString()};
   stack.quantity=(Number(stack.quantity)||1)-1;if(stack.quantity<=0)state.consumables=state.consumables.filter(x=>x!==stack);
   state.activity=state.activity||[];state.activity.push(existing?`${stack.name} replaced ${existing.name||'an attachment'} on ${c.name}'s ${item.name}; the old attachment was destroyed.`:`${stack.name} attached to ${c.name}'s ${item.name}.`);
   writeState(state);activeSlot=slot;renderSheet();window.CellboundFX?.micro?.(stack.name+' attached','gold');window.CellboundFX?.pulse?.('.cb-current-attachment');

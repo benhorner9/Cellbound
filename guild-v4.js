@@ -191,7 +191,7 @@ function bankItemArt(item,size=66){return isBankUtility(item)?bankUtilityArt(ite
 function bankAttachmentMarkup(item){
   const a=item?.attachment;if(!a?.bonuses)return'';
   const meta=[a.profession,a.skill?'Skill '+a.skill:null,a.tier?'Tier '+a.tier:null].filter(Boolean).join(' · ');
-  return `<div class="bank-attachment-detail"><small>CRAFTED ATTACHMENT${meta?' · '+esc(meta.toUpperCase()):''}</small><b>✥ ${esc(a.name||'Attachment')}</b><p>${esc(P?.bonusText?.(a.bonuses)||'')}</p><span>Remains on this equipment until replaced.</span></div>`
+  return `<div class="bank-attachment-detail"><small>${a.crafterOnly?'CRAFTER ONLY · ':''}CRAFTED ATTACHMENT${meta?' · '+esc(meta.toUpperCase()):''}</small><b>✥ ${esc(a.name||'Attachment')}</b><p>${esc(P?.bonusText?.(a.bonuses)||'')}</p><span>${a.crafterOnly?'Soulbound to '+esc(a.boundCharacterName||'its crafter')+' · bonus only works for that character.':'Remains on this equipment until replaced.'}</span></div>`
 }
 function setBonusPanel(item,c=null){
   if(!item?.setId||!item?.setName)return'';

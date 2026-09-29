@@ -60,10 +60,10 @@ function quoteFor(category,key){
 function knownCommodities(){
   const map=new Map();
   Object.entries(P?.MATERIALS||{}).forEach(([key,m])=>map.set(commodityKey('material',key),{category:'material',key,name:m.name,rarity:m.rarity||'Common',payload:m}));
-  (state().consumables||[]).forEach(x=>map.set(commodityKey('consumable',x.key),{category:'consumable',key:x.key,name:x.name,rarity:'Common',payload:x.payload||{}}));
+  (state().consumables||[]).filter(x=>!x?.payload?.crafterOnly&&(x.tradeState||'tradeable')!=='soulbound').forEach(x=>map.set(commodityKey('consumable',x.key),{category:'consumable',key:x.key,name:x.name,rarity:x.rarity||'Common',payload:x.payload||{}}));
   (state().recipeScrolls||[]).forEach(x=>map.set(commodityKey('recipe',x.recipeId),{category:'recipe',key:x.recipeId,name:x.name,rarity:'Rare',payload:{recipeId:x.recipeId}}));
-  orders.forEach(o=>map.set(commodityKey(o.category,o.item_key),{category:o.category,key:o.item_key,name:o.item_name,rarity:o.rarity||'Common',payload:o.payload||{}}));
-  transactions.filter(t=>t.category!=='gear').forEach(t=>map.set(commodityKey(t.category,t.item_key),{category:t.category,key:t.item_key,name:t.item_name,rarity:t.rarity||'Common',payload:t.payload||{}}));
+  orders.filter(o=>!o?.payload?.crafterOnly).forEach(o=>map.set(commodityKey(o.category,o.item_key),{category:o.category,key:o.item_key,name:o.item_name,rarity:o.rarity||'Common',payload:o.payload||{}}));
+  transactions.filter(t=>t.category!=='gear'&&!t?.payload?.crafterOnly).forEach(t=>map.set(commodityKey(t.category,t.item_key),{category:t.category,key:t.item_key,name:t.item_name,rarity:t.rarity||'Common',payload:t.payload||{}}));
   return [...map.values()];
 }
 function filterState(){
@@ -269,7 +269,7 @@ async function cancelGear(id){
 async function placeCommodityOrder(e){
   e.preventDefault();if(actionBusy)return;
   const form=e.currentTarget,category=form.dataset.category,key=form.dataset.key;
-  const x=knownCommodities().find(v=>v.category===category&&v.key===key);if(!x)return;
+  const x=knownCommodities().find(v=>v.category===category&&v.key===key);if(!x||x.payload?.crafterOnly){alert('Crafter-only items are soulbound and cannot be traded.');return;}
   const side=$('#tpOrderSide')?.value||'buy',quantity=Math.max(1,Math.floor(Number($('#tpOrderQty')?.value)||1)),price=Math.max(1,Math.floor(Number($('#tpOrderPrice')?.value)||1));
   if(side==='sell'&&quantity>ownedCommodity(category,key)){alert('You do not own that quantity.');return}
   if(side==='buy'&&quantity*price>currentGold()){alert('Not enough Gold to reserve this order.');return}
@@ -339,7 +339,7 @@ async function cancelOrder(id){
   finally{actionBusy=false}
 }
 function tradeableBankItems(){
-  return (state().bank||[]).filter(x=>x&&x.id&&(x.tradeState||'tradeable')!=='soulbound'&&Number(x.quantity||1)>0);
+  return (state().bank||[]).filter(x=>x&&x.id&&(x.tradeState||'tradeable')!=='soulbound'&&!x?.attachment?.crafterOnly&&Number(x.quantity||1)>0);
 }
 function sellItemArt(item,size){
   return itemArtHTML(item,size||62,'tp-sell-art');
