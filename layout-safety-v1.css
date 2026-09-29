@@ -208,3 +208,82 @@ input,select,textarea,button{max-width:100%}
 @supports not (overflow:clip){
   html,body{overflow-x:hidden}
 }
+
+/* v2 — whole-game clipping and responsive containment pass */
+*{min-width:0}
+button,input,select,textarea{box-sizing:border-box}
+button{white-space:normal}
+p,h1,h2,h3,h4,h5,h6,b,strong,small,span,em{overflow-wrap:break-word}
+[data-view],.modal,.modal-card,.modal-content,.modal-body,
+.cb-command-sheet,.cb-skills-screen,.cb-loadout-panel,.cb-skill-library,
+.cb-class-buff-progression,.cb-class-buff-grid,.cb-class-buff-card,
+.quest-v3-hero,.quest-v3-story,.quest-v3-clue,.quest-v3-known,.quest-detail-action,
+.quest-v2-list-card,.quest-journal-detail,.quest-journal-side,
+.roster-card,.character-card,.gear-card,.item-card,
+.tp-card,.tp-listing,.bank-item,.profession-card,
+.dungeon-card,.dungeon-browser,.social-card{
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.cb-skill-slot>span,.cb-skill-card-copy,.cb-class-buff-card>*,
+.quest-v2-list-card>span,.quest-v3-hero>div{min-width:0}
+.cb-skill-slot b,.cb-skill-slot em,.cb-skill-card-copy h4,.cb-skill-card-copy p,
+.cb-class-buff-card h4,.cb-class-buff-card p,.cb-class-buff-card span,
+.quest-v2-list-card b,.quest-v2-list-card em,.quest-v3-hero h2,
+.quest-v3-clue h3,.quest-v3-clue p{
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+.modal-backdrop,.quest-dialogue-backdrop,.quest-gear-backdrop,.quest-puzzle-backdrop{
+  box-sizing:border-box;
+  padding:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left));
+}
+.modal-card,.quest-dialogue,.quest-gear-card,.quest-complete-card{
+  max-width:100%;
+  max-height:calc(100dvh - 20px);
+  overflow:auto;
+  overscroll-behavior:contain;
+}
+.cb2d-shell,.hs2d-unified-shell,.cc2d-unified-shell,.bs2d-shell,.pvp-match-shell,.fa-shell{
+  max-width:100vw!important;
+  max-height:100dvh!important;
+  box-sizing:border-box!important;
+}
+.cb2d-topbar,.cb2d-controls,.cb2d-meters,.cb2d-meter-grid,
+.quest-live-targets,.quest-live-target-grid{
+  min-width:0;
+  max-width:100%;
+}
+.cb2d-topbar>*{min-width:0}
+.cb2d-topbar h2,.cb2d-topbar h3,.cb2d-topbar span{overflow-wrap:anywhere}
+
+@media(max-width:1024px){
+  .cb-skill-slots{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .cb-class-buff-grid,.cb-skill-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .quest-v3-hero{gap:12px}
+  .quest-v3-hero>div{max-width:100%}
+}
+
+@media(max-width:720px){
+  .topbar{max-width:100vw;overflow:hidden}
+  .topbar .brand,.topbar .brand-copy{min-width:0}
+  .topbar .brand-copy>*{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .resource-strip{max-width:100%;overflow-x:auto;flex-wrap:nowrap!important;justify-content:flex-start!important;-webkit-overflow-scrolling:touch}
+  .resource-strip>div{flex:0 0 auto}
+  .cb-skill-slots,.cb-class-buff-grid,.cb-skill-grid{grid-template-columns:1fr!important}
+  .cb-skill-slot{width:100%;max-width:100%;text-align:left}
+  .cb-class-buff-card button,.cb-skill-card button{max-width:100%;white-space:normal}
+  .quest-v3-hero{display:flex!important;flex-direction:column!important;align-items:flex-start!important}
+  .quest-v3-status{max-width:100%;white-space:normal}
+  .quest-live-target-grid{grid-template-columns:1fr!important}
+  .cb2d-topbar{flex-wrap:wrap!important;height:auto!important;min-height:0!important}
+  .cb2d-controls{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+}
+
+@media(max-width:480px){
+  .main{padding-left:8px!important;padding-right:8px!important}
+  .modal-backdrop,.quest-dialogue-backdrop,.quest-gear-backdrop,.quest-puzzle-backdrop{padding:6px}
+  .modal-card,.quest-dialogue,.quest-gear-card,.quest-complete-card{max-height:calc(100dvh - 12px)}
+  .cb-command-sheet .cb-character-tabs button{flex-basis:96px!important;width:96px!important;min-width:96px!important}
+}
