@@ -547,3 +547,22 @@ linear-gradient(180deg,#142019,#09110e)}
   box-shadow:revert-layer!important;
 }
 .character-creator .creator-panel>footer .on-primary.creator-back .creator-back-arrow{font-size:inherit!important;line-height:inherit!important;color:inherit!important}
+
+
+/* Creator v7: dedicated secondary navigation — avoids Safari native button fallback */
+.character-creator .creator-panel>footer button.creator-back{
+  -webkit-appearance:none!important;appearance:none!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:7px!important;
+  width:auto!important;min-width:0!important;min-height:46px!important;padding:0 15px!important;
+  border:1px solid rgba(216,185,118,.30)!important;border-radius:0!important;
+  background:linear-gradient(180deg,#171914,#0c1212)!important;
+  color:#d8bd7d!important;box-shadow:none!important;
+  font-family:inherit!important;font-size:.5rem!important;font-weight:900!important;line-height:1!important;letter-spacing:.04em!important;
+  text-transform:none!important;text-decoration:none!important;-webkit-text-fill-color:#d8bd7d!important;
+}
+.character-creator .creator-panel>footer button.creator-back:hover,
+.character-creator .creator-panel>footer button.creator-back:focus{
+  border-color:rgba(216,185,118,.55)!important;background:linear-gradient(180deg,#211d14,#101514)!important;color:#efd69b!important;-webkit-text-fill-color:#efd69b!important;
+}
+.character-creator .creator-panel>footer button.creator-back .creator-back-arrow{font:inherit!important;color:inherit!important;-webkit-text-fill-color:inherit!important}
+@media(max-width:560px){.character-creator .creator-panel>footer button.creator-back{min-height:42px!important;padding:0 11px!important;font-size:.4rem!important}}
