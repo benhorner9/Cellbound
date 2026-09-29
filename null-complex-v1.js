@@ -61,6 +61,7 @@ function roomAt(x,y){return run?.map?.[key(x,y)]}
 function canMove(dx,dy){const x=run.pos.x+dx,y=run.pos.y+dy;return x>=0&&y>=0&&x<SIZE&&y<SIZE}
 function move(dx,dy){
  if(!run||!canMove(dx,dy))return;
+ run.enterFrom=dx<0?'east':dx>0?'west':dy<0?'south':'north';
  run.pos={x:run.pos.x+dx,y:run.pos.y+dy};run.visited[key(run.pos.x,run.pos.y)]=true;run.rooms++;
  const room=roomAt(run.pos.x,run.pos.y);
  if((room.type==='combat'||room.type==='breach')&&!room.cleared){fight(room);return}
@@ -171,7 +172,8 @@ function showRoom(){
  const viewer=window.CellboundDungeon2D;if(!viewer?.openSharedExploration){notice('Exploration engine is loading.');return}
  const room=roomAt(run.pos.x,run.pos.y),party=(Game()?.getPartyCharacters?.()||[]);
  const view=viewer.openSharedExploration({party,id:'null-'+run.floor+'-'+run.pos.x+'-'+run.pos.y,header:'THE NULL COMPLEX · FLOOR '+run.floor,title:roomName(room),theme:'null',room:'null-'+roomVisual(room),roomLabel:roomName(room),ambience:room.type==='search'?'Searchable equipment is scattered through the chamber.':room.type==='teleporter'?'The damaged teleporter dominates the chamber.':'The party advances through the abandoned facility.',environmentHtml:roomProps(room)+engineMiniMap(),controlsHtml:controlsHtml(room),status:run.message||'Choose a route.',shellClass:'null-combat-shell',arenaClass:'null-combat-arena'});
- bindExplore(view,room)
+ bindExplore(view,room);
+ if(run.enterFrom){const from=run.enterFrom;run.enterFrom=null;persist();const edge={west:[{x:7,y:42},{x:8,y:46},{x:7,y:50},{x:8,y:54},{x:7,y:58}],east:[{x:93,y:42},{x:92,y:46},{x:93,y:50},{x:92,y:54},{x:93,y:58}],north:[{x:45,y:8},{x:48,y:7},{x:51,y:8},{x:54,y:9},{x:57,y:8}],south:[{x:45,y:91},{x:48,y:92},{x:51,y:91},{x:54,y:90},{x:57,y:91}]}[from];const formation=[{x:32,y:38},{x:25,y:31},{x:25,y:68},{x:17,y:35},{x:17,y:65}];view.moveParty(edge,0).then(()=>view.moveParty(formation,650))}
 }
 function openExplore(){showRoom()}
 function closeExplore(){window.CellboundDungeon2D?.closeShared?.(true)}
