@@ -128,14 +128,22 @@ function abandon(){
  Game()?.getState?.()?.activity?.push('The Null Complex · expedition abandoned on Floor '+floor+'. All unbanked materials were lost.');
  run=null;window.CellboundDungeon2D?.closeShared?.(true);Game()?.save?.();Game()?.persistState?.();Game()?.renderAll?.();render()
 }
+function materialLabel(key){const m=MATERIALS.find(x=>x.key===key);return m?.name||String(key).split('-').map(x=>x.charAt(0).toUpperCase()+x.slice(1)).join(' ')}
+function extractionSummary(data){
+ window.CellboundDungeon2D?.closeShared?.(true);
+ const old=document.getElementById('nullRunComplete');if(old)old.remove();
+ const total=Object.values(data.materials).reduce((a,b)=>a+Number(b||0),0),loot=Object.entries(data.materials).sort((a,b)=>b[1]-a[1]).map(([k,q])=>'<div class="null-result-loot"><span><i></i><b>'+materialLabel(k)+'</b></span><strong>×'+q+'</strong></div>').join('')||'<p class="null-result-empty">No materials recovered.</p>';
+ const el=document.createElement('div');el.id='nullRunComplete';el.className='null-result-backdrop';el.innerHTML='<section class="null-result-card"><small>EXPEDITION COMPLETE</small><h2>THE NULL COMPLEX</h2><p>Extraction successful. Everything recovered during the expedition has been secured.</p><div class="null-result-stats"><div><span>FLOOR REACHED</span><b>'+data.floor+'</b></div><div><span>ROOMS EXPLORED</span><b>'+data.rooms+'</b></div><div><span>COMPONENTS</span><b>3 / 3</b></div><div><span>MATERIALS</span><b>'+total+'</b></div></div><div class="null-result-title"><span>EXTRACTED LOOT</span><i></i></div><div class="null-result-loot-list">'+loot+'</div><button data-null-result-close>RETURN TO ACTIVITIES</button></section>';document.body.appendChild(el);
+ el.querySelector('[data-null-result-close]').onclick=()=>{el.remove();render()}
+}
 function extract(){
  if(!atTele()||!allParts())return;
  awardPending(1+Math.floor(run.floor/2),true);
- const n=state(),floor=run.floor,pending={...run.pending};
+ const n=state(),floor=run.floor,pending={...run.pending},rooms=Object.keys(run.visited||{}).length;
  Object.entries(pending).forEach(([k,q])=>Game()?.addMaterial?.(k,q));
  n.bestFloor=Math.max(n.bestFloor,floor);n.runs.unshift({at:new Date().toISOString(),result:'extracted',floor,materials:pending});n.runs=n.runs.slice(0,20);n.activeRun=null;
  Game()?.getState?.()?.activity?.push('The Null Complex · extracted from Floor '+floor+' with '+Object.values(pending).reduce((a,b)=>a+b,0)+' profession materials.');
- run=null;Game()?.save?.();Game()?.persistState?.();Game()?.renderAll?.();render()
+ run=null;Game()?.save?.();Game()?.persistState?.();Game()?.renderAll?.();extractionSummary({floor,rooms,materials:pending})
 }
 function wipe(reason){
  const n=state(),floor=run?.floor||1;n.runs.unshift({at:new Date().toISOString(),result:'lost',floor,materials:{}});n.runs=n.runs.slice(0,20);n.activeRun=null;
