@@ -230,6 +230,26 @@
   width:4px;height:4px;border-radius:50%;background:#9b824b
 }
 .quest-detail-action{padding-top:14px}
+.quest-primary,
+.quest-detail-action>button{
+  min-height:46px;padding:0 17px;
+  border:1px solid rgba(216,185,118,.28);
+  background:linear-gradient(180deg,#211d13,#15150f);
+  color:#d9bd79;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.025);
+  font:900 .38rem/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:.08em;text-transform:uppercase;
+  cursor:pointer;touch-action:manipulation;
+  transition:border-color .15s ease,background .15s ease,color .15s ease,transform .08s ease
+}
+.quest-primary:hover,
+.quest-detail-action>button:hover{
+  border-color:rgba(216,185,118,.48);background:linear-gradient(180deg,#292216,#19170f);color:#efd28a
+}
+.quest-primary:active,
+.quest-detail-action>button:active{transform:translateY(1px)}
+.quest-primary:disabled,
+.quest-detail-action>button:disabled{opacity:.42;cursor:not-allowed;transform:none}
 .quest-v2-list-card em{color:#56645f}
 .quest-journal-side section>small{letter-spacing:.11em}
 .quest-reward-list p:last-child{color:#a18e63!important}
