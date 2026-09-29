@@ -1,17 +1,18 @@
 (function(){
 'use strict';
-const VERSION='0.2.1';
+const VERSION='0.3.0';
 const CLASS_COLOURS={
  warrior:[.78,.61,.43,1],paladin:[.96,.55,.73,1],hunter:[.67,.83,.45,1],rogue:[1,.96,.41,1],priest:[1,1,1,1],
  'death-knight':[.77,.12,.23,1],shaman:[0,.44,.87,1],mage:[.25,.78,.92,1],warlock:[.53,.53,.93,1],
  monk:[0,1,.6,1],druid:[1,.49,.04,1],'demon-hunter':[.64,.19,.79,1],evoker:[.2,.58,.5,1]
 };
-const S={active:false,arena:null,layer:null,canvas:null,gl:null,program:null,loc:null,buffers:{},labels:null,units:new Map(),moves:new Map(),effects:[],telegraphs:new Map(),hazards:new Map(),frame:0,last:0,resize:null,viewProj:null};
+const S={active:false,mode:'3d',arena:null,layer:null,canvas:null,gl:null,program:null,loc:null,buffers:{},labels:null,units:new Map(),moves:new Map(),effects:[],telegraphs:new Map(),hazards:new Map(),frame:0,last:0,resize:null,viewProj:null};
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function pct(n,fallback=50){n=Number(n);return Number.isFinite(n)?Math.max(0,Math.min(100,n)):fallback}
 function arena(){return document.getElementById('cb2dArena')}
 function button(){return document.querySelector('[data-cb3d-toggle]')}
+function button25(){return document.querySelector('[data-cb25d-toggle]')}
 function worldPos(x,y){return{x:(pct(x)-50)*.14,y:0,z:(pct(y)-50)*.09}}
 function classKey(el){const c=[...(el?.classList||[])].find(x=>x.startsWith('class-'));return c?c.slice(6):''}
 function firstText(el){
@@ -36,6 +37,10 @@ function mat4Mul(a,b){
 function perspective(fovy,aspect,near,far){
  const f=1/Math.tan(fovy/2),nf=1/(near-far),o=new Float32Array(16);
  o[0]=f/aspect;o[5]=f;o[10]=(far+near)*nf;o[11]=-1;o[14]=2*far*near*nf;return o
+}
+function orthographic(left,right,bottom,top,near,far){
+ const lr=1/(left-right),bt=1/(bottom-top),nf=1/(near-far),o=new Float32Array(16);
+ o[0]=-2*lr;o[5]=-2*bt;o[10]=2*nf;o[12]=(left+right)*lr;o[13]=(top+bottom)*bt;o[14]=(far+near)*nf;o[15]=1;return o
 }
 function normalize(v){const l=Math.hypot(v[0],v[1],v[2])||1;return[v[0]/l,v[1]/l,v[2]/l]}
 function cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]]}
