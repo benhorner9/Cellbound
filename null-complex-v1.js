@@ -148,7 +148,11 @@ function render(){
  const n=state();if(!n)return;
  if(!run&&n.activeRun){run=n.activeRun}
  if(!run){
-  mount.innerHTML='<section class="null-card null-landing"><div class="null-hero"><small>ROGUELIKE EXTRACTION EVENT</small><h3>The Null Complex</h3><p>An abandoned experimental facility rearranges itself every expedition. Recover the teleporter components, then extract your profession materials or descend deeper and risk everything.</p><div class="null-stats"><span><b>'+attemptsLeft()+'</b> / '+ATTEMPTS+' attempts</span><span>Resets every <b>5 days</b></span><span>Best extraction <b>Floor '+(n.bestFloor||'—')+'</b></span></div><button data-null-start '+(attemptsLeft()<=0?'disabled':'')+'>ENTER THE NULL COMPLEX</button><p data-null-notice hidden></p></div><div class="null-rules"><b>EXPEDITION RULES</b><span>10 × 10 shifting floor</span><span>Find Cable · Power Cell · Reactor Fuse</span><span>Extract safely or descend to Floor 10</span><span>Death loses every unbanked material</span></div></section>';
+  mount.innerHTML='<article class="tb-world-card null-world-card">'+
+   '<div class="tb-world-art null-world-art"><span>ABANDONED RESEARCH FACILITY</span><b>THE NULL COMPLEX</b></div>'+
+   '<div class="tb-world-copy"><div class="tb-world-kicker"><span>ROGUELIKE EXTRACTION EVENT</span><em>5-CHARACTER GUILD PARTY</em></div><h3>The Null Complex</h3><p>Explore a shifting 10 × 10 facility, recover the three teleporter components and decide whether to extract your profession materials or descend deeper and risk everything.</p>'+
+   '<div class="tb-world-stats"><span><small>ATTEMPTS</small><b>'+attemptsLeft()+' / '+ATTEMPTS+'</b></span><span><small>RESET</small><b>EVERY 5 DAYS</b></span><span><small>PERSONAL BEST</small><b>FLOOR '+(n.bestFloor||'—')+' / '+MAX_FLOOR+'</b></span><span><small>CHASE REWARD</small><b>PROFESSION MATERIALS</b></span></div>'+
+   '<div class="tb-world-actions"><button data-null-start '+(attemptsLeft()<=0?'disabled':'')+'>ENTER THE NULL COMPLEX →</button><small>'+(attemptsLeft()<=0?'Attempts exhausted until the next reset.':'Wipe before extraction and all unbanked materials are lost.')+'</small><p data-null-notice hidden></p></div></div></article>';
   mount.querySelector('[data-null-start]')?.addEventListener('click',start);return
  }
  const room=roomAt(run.pos.x,run.pos.y),ready=atTele()&&allParts();
