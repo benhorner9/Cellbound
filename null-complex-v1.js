@@ -120,6 +120,13 @@ function descend(){
  if(!atTele()||!allParts()||run.floor>=MAX_FLOOR)return;
  awardPending(1+Math.floor(run.floor/2),true);newFloor(run.floor+1);persist();render()
 }
+function abandon(){
+ if(!run)return;
+ const n=state(),floor=run.floor,lost={...run.pending};
+ n.runs.unshift({at:new Date().toISOString(),result:'abandoned',floor,materialsLost:lost});n.runs=n.runs.slice(0,20);n.activeRun=null;
+ Game()?.getState?.()?.activity?.push('The Null Complex · expedition abandoned on Floor '+floor+'. All unbanked materials were lost.');
+ run=null;window.CellboundDungeon2D?.closeShared?.(true);Game()?.save?.();Game()?.persistState?.();Game()?.renderAll?.();render()
+}
 function extract(){
  if(!atTele()||!allParts())return;
  awardPending(1+Math.floor(run.floor/2),true);
@@ -150,10 +157,11 @@ function roomProps(room){
 }
 function controlsHtml(room){
  const btn=(d,label,dx,dy)=>'<button data-null-door="'+d+'" data-dx="'+dx+'" data-dy="'+dy+'" '+(!canMove(dx,dy)?'disabled':'')+'>'+label+'</button>';
- return '<div class="null-engine-controls">'+(room.type==='search'&&!room.searched?'<button class="search" data-null-search>SEARCH ROOM</button>':'')+'<div class="doors">'+btn('north','NORTH',0,-1)+btn('west','WEST',-1,0)+btn('east','EAST',1,0)+btn('south','SOUTH',0,1)+'</div>'+(atTele()&&allParts()?'<div class="extract"><button data-null-extract>EXTRACT · KEEP LOOT</button>'+(run.floor<MAX_FLOOR?'<button data-null-descend>DESCEND</button>':'')+'</div>':'')+'</div>'
+ return '<div class="null-engine-controls"><button class="leave" data-null-abandon>LEAVE · END RUN</button>'+(room.type==='search'&&!room.searched?'<button class="search" data-null-search>SEARCH ROOM</button>':'')+'<div class="doors">'+btn('north','NORTH',0,-1)+btn('west','WEST',-1,0)+btn('east','EAST',1,0)+btn('south','SOUTH',0,1)+'</div>'+(atTele()&&allParts()?'<div class="extract"><button data-null-extract>EXTRACT · KEEP LOOT</button>'+(run.floor<MAX_FLOOR?'<button data-null-descend>DESCEND</button>':'')+'</div>':'')+'</div>'
 }
 function bindExplore(view,room){
  const root=view.root;
+ root.querySelector('[data-null-abandon]')?.addEventListener('click',()=>{if(confirm('Leave The Null Complex? This ends the run and destroys all unbanked materials.'))abandon()});
  root.querySelectorAll('[data-null-door]').forEach(btn=>btn.addEventListener('click',async()=>{root.querySelectorAll('.null-engine-controls button').forEach(b=>b.disabled=true);const d=btn.dataset.nullDoor,pts={north:[{x:45,y:8},{x:48,y:7},{x:51,y:8},{x:54,y:9},{x:57,y:8}],south:[{x:45,y:91},{x:48,y:92},{x:51,y:91},{x:54,y:90},{x:57,y:91}],west:[{x:7,y:42},{x:8,y:46},{x:7,y:50},{x:8,y:54},{x:7,y:58}],east:[{x:93,y:42},{x:92,y:46},{x:93,y:50},{x:92,y:54},{x:93,y:58}]}[d];view.setStatus('Party moving '+d+'…');await view.moveParty(pts,700);view.close(true);move(Number(btn.dataset.dx),Number(btn.dataset.dy))}));
  root.querySelector('[data-null-search]')?.addEventListener('click',async e=>{e.currentTarget.disabled=true;view.setStatus('Party searching the chamber…');await view.moveParty([{x:23,y:27},{x:72,y:28},{x:28,y:72},{x:70,y:70},{x:50,y:46}],850);await new Promise(q=>setTimeout(q,550));search();view.setStatus(run.message);setTimeout(()=>showRoom(),700)});
  root.querySelector('[data-null-extract]')?.addEventListener('click',()=>{view.close(true);extract()});root.querySelector('[data-null-descend]')?.addEventListener('click',()=>{view.close(true);descend();showRoom()})
