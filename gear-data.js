@@ -235,7 +235,7 @@ function setBonusRulesFor(characterOrClass,specArg=null,item=null){
   const character=typeof characterOrClass==='object'&&characterOrClass?characterOrClass:null;
   const klass=character?.class||String(characterOrClass||item?.class||'');
   const spec=character?.spec||specArg||'';
-  const role=BUILD?.roleFor?.(klass,spec)||'dps';
+  const role=BUILD?.roleFor?.(klass,spec)||((['Warrior|Protection','Paladin|Protection','Monk|Brewmaster','Death Knight|Blood','Demon Hunter|Vengeance'].includes(klass+'|'+spec))?'tank':(['Paladin|Holy','Priest|Holy','Druid|Restoration','Shaman|Restoration','Monk|Mistweaver','Evoker|Preservation'].includes(klass+'|'+spec))?'healer':'dps');
   const tier=setTier(item)||4;
   const raid=tier>=5;
   const twoAmount=raid?.06:.04,fourRegen=raid?1.10:1.06,talentCd=raid?.85:.90,haste=raid?.04:.03,crit=raid?.04:.03,mitigation=raid?.05:.035;
