@@ -28,6 +28,9 @@ for(const file of files){
   if(file==='combat-polish-v2.css'){
     for(const hook of ['.cbvfx-layer','.cbvfx-events','.cbvfx-burst.damage','.cbvfx-burst.heal','.cbvfx-burst.interrupt','.cbvfx-burst.death','data-cbvfx-theme="ashen"','data-cbvfx-theme="hollow"','data-cbvfx-theme="chaos"','data-cbvfx-theme="blackout"','data-cbvfx-theme="pvp"','cbvfxLootReveal','prefers-reduced-motion'])if(!contents.includes(hook))throw new Error('Shared combat VFX styling is missing '+hook);
   }
+  if(file==='combat-reborn-v1.js'){
+    for(const hook of ['function professionCombatBonuses','professionBonuses,baseStats','professionOutputScale(u,\'damage\')','professionOutputScale(healer,\'healing\')','u?.professionBonuses?.crit','u?.professionBonuses?.haste','profession.magicWardPct','profession.armour','professionBonuses?.block','professionBonuses?.threat'])if(!contents.includes(hook))throw new Error('Profession attachment combat integration is missing '+hook);
+  }
   if(file==='quests-v2.js'){
     for(const hook of ["id:'signal-from-nowhere'","Prototype 07 — The Reconstituted","progression.nullComplexUnlocked","isNullComplexUnlocked"])if(!contents.includes(hook))throw new Error('Signal From Nowhere quest is missing '+hook);
   }
@@ -36,6 +39,7 @@ for(const file of files){
   }
   if(file==='economy-v2.js'){
     for(const hook of ['const WORKSHOP_ACTIONS=','function beginCraft(','async function resolveCraftStep(','function craftProjectMarkup(','FIRST CRAFT BONUS','MASTERWORK BONUS AVAILABLE','projectsCompleted','data-item-art-done="1"'])if(!contents.includes(hook))throw new Error('Profession project crafting runtime is missing '+hook);
+    for(const hook of ['latestPayload.effect===\'gear-enhancement\'','item.attachment=item.attachment||','delete c.activeEnhancements[slot]'])if(!contents.includes(hook))throw new Error('Legacy crafted enhancement migration is missing '+hook);
     if(contents.includes('>CRAFT</button>'))throw new Error('Legacy profession spam-craft button returned');
   }
   if(file==='economy-v2.css'){
