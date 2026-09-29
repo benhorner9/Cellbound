@@ -36,6 +36,7 @@ for(const file of files){
   }
   if(file==='economy-v2.js'){
     for(const hook of ['const WORKSHOP_ACTIONS=','function beginCraft(','async function resolveCraftStep(','function craftProjectMarkup(','FIRST CRAFT BONUS','MASTERWORK BONUS AVAILABLE','projectsCompleted','data-item-art-done="1"'])if(!contents.includes(hook))throw new Error('Profession project crafting runtime is missing '+hook);
+    for(const hook of ['latestPayload.effect===\'gear-enhancement\'','item.attachment=item.attachment||','delete c.activeEnhancements[slot]'])if(!contents.includes(hook))throw new Error('Legacy crafted enhancement migration is missing '+hook);
     if(contents.includes('>CRAFT</button>'))throw new Error('Legacy profession spam-craft button returned');
   }
   if(file==='economy-v2.css'){
