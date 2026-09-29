@@ -77,12 +77,28 @@ function encounter(room){
  const ilvl=Game()?.partyItemLevel?.()||18;
  return{id:'null-'+floor+'-'+run.pos.x+'-'+run.pos.y,kind:room.type==='breach'?'event':'trash',level:Math.min(15,3+floor),recommendedItemLevel:Math.max(10,ilvl-2+floor),enemies,enemyHealth:Math.round((260+floor*95)*(room.type==='breach'?1.45:1)),scaling:{enemyDamage:1+floor*.075,enemyHealth:1+floor*.06},mechanics:floor>=3?[['Containment Pulse','circles',1600]]:[],affixes:floor>=7?['volatile-cells']:[]}
 }
-function fight(room){
- const engine=C();if(!engine?.simulate){notice('Combat engine is still loading. Try the room again.');return}
+async function fight(room){
+ const engine=C(),viewer=window.CellboundDungeon2D;
+ if(!engine?.simulate||!viewer?.playSharedEncounter){notice('Combat viewer is still loading. Try the room again.');return}
  const party=(Game()?.getPartyCharacters?.()||[]).map(c=>({...c,_combatItemLevel:Game()?.characterItemLevel?.(c)||0}));
  const enc=encounter(room),result=engine.simulate({party,encounter:enc,seed:run.seed+':'+enc.id},{zone:'null-complex'});
- run.lastCombat={outcome:result.outcome,enemies:enc.enemies.map(e=>e.name),damage:result.summary?.totalDamage||0,healing:result.summary?.totalHealing||0};
- if(result.outcome!=='victory'){wipe('The Aberrants overwhelmed the expedition.');return}
+ run.lastCombat={outcome:result.outcome,enemies:enc.enemies.map(e=>e.name),damage:result.summary?.totalDamage||0,healing:result.summary?.totalHealing||0};persist();
+ const roomVisual=room.type==='breach'?'breach':(['lab','containment','reactor','storage'][(run.pos.x+run.pos.y+run.floor)%4]);
+ const outcome=await viewer.playSharedEncounter({
+   party,encounter:enc,result,
+   header:'THE NULL COMPLEX · FLOOR '+run.floor,
+   title:room.type==='breach'?'Containment Breach':'Experiment Chamber',
+   subtitle:'NULL COMPLEX EXPEDITION',
+   planTitle:'The room has sealed. Eliminate the Aberrants.',
+   planCopy:'The same Combat Reborn movement, threat, healing, skills, talents and mechanics used by Cellbound dungeons are active here.',
+   theme:'null',room:'null-'+roomVisual,roomLabel:(room.type==='breach'?'CONTAINMENT BREACH':roomVisual.toUpperCase()+' CHAMBER'),
+   ambience:roomVisual==='containment'?'Cracked specimen tanks pulse behind the combat floor.':roomVisual==='reactor'?'Unstable reactor conduits arc around the chamber.':roomVisual==='storage'?'Broken supply racks and research crates line the room.':'Abandoned experiment benches and machinery surround the arena.',
+   shellClass:'null-combat-shell',arenaClass:'null-combat-arena',
+   route:[{id:'floor',title:'Floor '+run.floor},{id:enc.id,title:'Room '+(run.pos.x+1)+','+(run.pos.y+1)}],currentId:enc.id
+ });
+ if(!run)return;
+ viewer.closeShared?.(true);
+ if(outcome!=='victory'||result.outcome!=='victory'){wipe('The Aberrants overwhelmed the expedition.');return}
  room.cleared=true;run.message=(room.type==='breach'?'Containment breach purged. Bonus materials recovered.':'Aberrants eliminated.')+' The route is secure.';
  if(room.type==='breach')awardPending(2+Math.floor(run.floor/3),true);
  persist();render()
