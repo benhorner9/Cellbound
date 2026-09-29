@@ -140,10 +140,16 @@ function buildRenderer(){
  S.canvas=canvas;S.gl=gl;S.program=program;S.loc={pos:gl.getAttribLocation(program,'aPosition'),mvp:gl.getUniformLocation(program,'uMVP'),color:gl.getUniformLocation(program,'uColor')};
  S.buffers=makeGeometry(gl);gl.enable(gl.DEPTH_TEST);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.clearColor(.025,.035,.04,1)
 }
+function updateBadge(){
+ if(!S.layer)return;const badge=S.layer.querySelector('.cb3d-badge');if(!badge)return;
+ badge.innerHTML=S.mode==='2.5d'
+  ?'2.5D COMBAT PROTOTYPE<span>Orthographic standees · Combat Reborn simulation</span>'
+  :'3D COMBAT PROTOTYPE<span>Native WebGL · Combat Reborn simulation</span>'
+}
 function mount(a){
  destroyScene();S.arena=a;const layer=document.createElement('div');layer.className='cb3d-layer';layer.hidden=false;
- layer.innerHTML='<div class="cb3d-badge">3D COMBAT PROTOTYPE<span>Native WebGL · Combat Reborn simulation</span></div><div class="cb3d-labels"></div>';
- a.appendChild(layer);S.layer=layer;S.labels=layer.querySelector('.cb3d-labels');buildRenderer();layer.insertBefore(S.canvas,S.labels);resize();
+ layer.innerHTML='<div class="cb3d-badge"></div><div class="cb3d-labels"></div>';
+ a.appendChild(layer);S.layer=layer;S.labels=layer.querySelector('.cb3d-labels');updateBadge();buildRenderer();layer.insertBefore(S.canvas,S.labels);resize();
  if(window.ResizeObserver){S.resize=new ResizeObserver(resize);S.resize.observe(a)}else window.addEventListener('resize',resize,{passive:true})
 }
 function destroyScene(){
@@ -177,19 +183,30 @@ function spawnHazard(e){if(!e?.position)return;const p=worldPos(e.position.x,e.p
 function clearHazard(id){S.hazards.delete(String(id||''))}
 function drawWorld(now){
  const gl=S.gl;if(!gl)return;resize();gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.useProgram(S.program);
- const aspect=Math.max(.4,S.canvas.width/Math.max(1,S.canvas.height)),proj=perspective(Math.PI/4.1,aspect,.1,60),view=lookAt([8.6,9.5,10.7],[0,.35,0],[0,1,0]);S.viewProj=mat4Mul(proj,view);
- drawGeom(S.buffers.quad,model(0,-.03,0,16,1,10),[.055,.085,.085,1]);
- drawGeom(S.buffers.grid,model(0,.005,0,1,1,1),[.16,.24,.22,.34],gl.LINES);
- const wall=[.08,.11,.12,1];drawCube(0,.7,-5.05,16.2,1.4,.2,wall);drawCube(0,.7,5.05,16.2,1.4,.2,wall);drawCube(-8.05,.7,0,.2,1.4,10.2,wall);drawCube(8.05,.7,0,.2,1.4,10.2,wall);
+ const aspect=Math.max(.4,S.canvas.width/Math.max(1,S.canvas.height)),is25=S.mode==='2.5d';
+ const proj=is25?orthographic(-6.45*aspect,6.45*aspect,-6.45,6.45,-30,60):perspective(Math.PI/4.1,aspect,.1,60);
+ const view=is25?lookAt([7.6,11.8,10.8],[0,.2,0],[0,1,0]):lookAt([8.6,9.5,10.7],[0,.35,0],[0,1,0]);S.viewProj=mat4Mul(proj,view);
+ drawGeom(S.buffers.quad,model(0,-.03,0,16,1,10),is25?[.045,.067,.068,1]:[.055,.085,.085,1]);
+ drawGeom(S.buffers.grid,model(0,.005,0,1,1,1),is25?[.2,.29,.27,.38]:[.16,.24,.22,.34],gl.LINES);
+ const wall=[.08,.11,.12,1],wallY=is25?.25:.7,wallH=is25?.5:1.4;drawCube(0,wallY,-5.05,16.2,wallH,.2,wall);drawCube(0,wallY,5.05,16.2,wallH,.2,wall);drawCube(-8.05,wallY,0,.2,wallH,10.2,wall);drawCube(8.05,wallY,0,.2,wallH,10.2,wall);
  for(const t of S.telegraphs.values())for(const v of t){if(v.kind==='disc')drawDisc(v.x,v.z,v.r,v.color);else drawCube(v.x,.025,v.z,v.sx,.025,v.sz,v.color,v.ry)}
  for(const h of S.hazards.values())drawDisc(h.x,h.z,h.r,h.color);
  for(const u of S.units.values()){
-  const k=u.boss?1.5:(u.isEnemy?1.12:1),y=u.dead?.18:.55*k;
+  const k=u.boss?1.5:(u.isEnemy?1.12:1);
   if(u.dead){drawCube(u.pos.x,.16,u.pos.z,.95*k,.22,.55*k,[.25,.18,.17,.72],.65);continue}
   const base=u.colour||[.5,.6,.7,1],dark=[base[0]*.38,base[1]*.38,base[2]*.38,1];
-  drawCube(u.pos.x,.25*k,u.pos.z,.52*k,.5*k,.52*k,dark);
-  drawCube(u.pos.x,.78*k,u.pos.z,.64*k,.78*k,.52*k,base);
-  drawCube(u.pos.x,1.28*k,u.pos.z,.42*k,.42*k,.42*k,u.isEnemy?[.52,.22,.2,1]:[.72,.63,.55,1]);
+  if(is25){
+   const face=.61,outline=[.025,.035,.037,1];
+   drawDisc(u.pos.x,u.pos.z,.48*k,[0,0,0,.34]);
+   drawCube(u.pos.x,.66*k,u.pos.z,.78*k,1.3*k,.16*k,outline,face);
+   drawCube(u.pos.x,.67*k,u.pos.z-.01,.66*k,1.14*k,.13*k,base,face);
+   drawCube(u.pos.x,1.38*k,u.pos.z-.01,.45*k,.42*k,.13*k,u.isEnemy?[.52,.22,.2,1]:[.72,.63,.55,1],face);
+   drawCube(u.pos.x,.13,u.pos.z,.88*k,.15,.42*k,dark,face);
+  }else{
+   drawCube(u.pos.x,.25*k,u.pos.z,.52*k,.5*k,.52*k,dark);
+   drawCube(u.pos.x,.78*k,u.pos.z,.64*k,.78*k,.52*k,base);
+   drawCube(u.pos.x,1.28*k,u.pos.z,.42*k,.42*k,.42*k,u.isEnemy?[.52,.22,.2,1]:[.72,.63,.55,1]);
+  }
  }
  for(let i=S.effects.length-1;i>=0;i--){
   const fx=S.effects[i],t=Math.min(1,(now-fx.start)/Math.max(1,fx.duration));
@@ -199,7 +216,7 @@ function drawWorld(now){
  }
 }
 function updateLabels(){
- if(!S.viewProj)return;for(const u of S.units.values()){const q=projectPoint({x:u.pos.x,y:u.dead?.35:(u.boss?2.55:1.95),z:u.pos.z});if(!q||!q.visible){u.label.style.display='none';continue}u.label.style.display='block';u.label.style.left=q.x+'px';u.label.style.top=q.y+'px'}
+ if(!S.viewProj)return;for(const u of S.units.values()){const q=projectPoint({x:u.pos.x,y:u.dead?.35:(S.mode==='2.5d'?(u.boss?2.45:2.05):(u.boss?2.55:1.95)),z:u.pos.z});if(!q||!q.visible){u.label.style.display='none';continue}u.label.style.display='block';u.label.style.left=q.x+'px';u.label.style.top=q.y+'px'}
 }
 function tick(now){
  if(!S.active||!S.gl){S.frame=0;return}for(const[id,m]of S.moves){const u=S.units.get(id);if(!u){S.moves.delete(id);continue}const t=Math.min(1,(now-m.start)/m.duration),q=1-Math.pow(1-t,3);u.pos.x=m.from.x+(m.to.x-m.from.x)*q;u.pos.z=m.from.z+(m.to.z-m.from.z)*q;if(t>=1)S.moves.delete(id)}
