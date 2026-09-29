@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.26';
+const VERSION='1.3.27';
 // Balance baseline: 2026-09-29 role and progression audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
@@ -398,7 +398,12 @@ function carriedStatuses(c){
 function statusBonus(u,key){
  return Object.values(u?.statuses||{}).reduce((n,s)=>n+(Number(s?.effect?.[key])||0),0)
 }
-function classBuffFor(u){return CLASS_BUFFS[u?.class+'|'+u?.spec]||CLASS_BUFFS[u?.class]||null}
+function classBuffFor(u){
+ const unlocked=Array.isArray(u?.classBuffProgress?.unlocked)?u.classBuffProgress.unlocked:[];
+ if(!u?.buffSkill||!unlocked.includes(u.buffSkill))return null;
+ const custom=Array.isArray(u?.classBuffProgress?.buffs)?u.classBuffProgress.buffs.find(x=>x?.id===u.buffSkill):null;
+ return custom||CLASS_BUFFS[u?.class+'|'+u?.spec]||CLASS_BUFFS[u?.class]||null
+}
 function talentRanks(c){
  const tree=c?.talents?.[c?.spec]||{};
  return Object.values(tree).reduce((n,v)=>n+Math.max(0,Number(v)||0),0);
