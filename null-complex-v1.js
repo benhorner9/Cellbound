@@ -50,8 +50,10 @@ function newFloor(floor){
  const generated=generateFloor(floor,run.seed);
  run.floor=floor;run.map=generated.cells;run.pos={...generated.start};run.teleporter=generated.teleporter;run.parts={cable:false,cell:false,fuse:false};run.visited={[key(run.pos.x,run.pos.y)]:true};run.message='Floor '+floor+' entered. Locate the three teleporter components.';run.lastCombat=null
 }
+function unlocked(){const s=Game()?.getState?.();return Boolean(s?.progression?.nullComplexUnlocked||s?.questSystem?.nullComplex?.complete)}
 function start(){
  const G=Game(),n=state(),party=G?.getPartyCharacters?.()||[];
+ if(!unlocked())return notice('Complete Signal From Nowhere to unlock The Null Complex.');
  if(party.length!==5)return notice('A complete active party of five is required.');
  if(party.some(c=>G.isUnavailable?.(c)))return notice('A party member is recovering from Cell Shock.');
  if(attemptsLeft()<=0)return notice('No Null Complex attempts remain in this five-day cycle.');
@@ -203,12 +205,13 @@ function render(){
  const n=state();if(!n)return;
  if(!run&&n.activeRun){run=n.activeRun}
  if(!run){
+  const isUnlocked=unlocked();
   mount.innerHTML='<article class="tb-world-card null-world-card">'+
-   '<div class="tb-world-art null-world-art"><span>ABANDONED RESEARCH FACILITY</span><b>THE NULL COMPLEX</b></div>'+
-   '<div class="tb-world-copy"><div class="tb-world-kicker"><span>ROGUELIKE EXTRACTION EVENT</span><em>5-CHARACTER GUILD PARTY</em></div><h3>The Null Complex</h3><p>Explore a shifting 10 × 10 facility, recover the three teleporter components and decide whether to extract your profession materials or descend deeper and risk everything.</p>'+
+   '<div class="tb-world-art null-world-art"><span>'+(isUnlocked?'ABANDONED RESEARCH FACILITY':'QUEST LOCKED · SIGNAL FROM NOWHERE')+'</span><b>THE NULL COMPLEX</b></div>'+
+   '<div class="tb-world-copy"><div class="tb-world-kicker"><span>ROGUELIKE EXTRACTION EVENT</span><em>5-CHARACTER GUILD PARTY</em></div><h3>The Null Complex</h3><p>Explore a shifting 3 × 3 facility, recover the three teleporter components and decide whether to extract your profession materials or descend deeper and risk everything.</p>'+
    '<div class="tb-world-stats"><span><small>ATTEMPTS</small><b>'+attemptsLeft()+' / '+ATTEMPTS+'</b></span><span><small>RESET</small><b>EVERY 5 DAYS</b></span><span><small>PERSONAL BEST</small><b>FLOOR '+(n.bestFloor||'—')+' / '+MAX_FLOOR+'</b></span><span><small>CHASE REWARD</small><b>PROFESSION MATERIALS</b></span></div>'+
-   '<div class="tb-world-actions"><button data-null-start '+(attemptsLeft()<=0?'disabled':'')+'>ENTER THE NULL COMPLEX →</button><small>'+(attemptsLeft()<=0?'Attempts exhausted until the next reset.':'Wipe before extraction and all unbanked materials are lost.')+'</small><p data-null-notice hidden></p></div></div></article>';
-  mount.querySelector('[data-null-start]')?.addEventListener('click',start);return
+   '<div class="tb-world-actions">'+(isUnlocked?'<button data-null-start '+(attemptsLeft()<=0?'disabled':'')+'>ENTER THE NULL COMPLEX →</button><small>'+(attemptsLeft()<=0?'Attempts exhausted until the next reset.':'Wipe before extraction and all unbanked materials are lost.')+'</small>':'<button data-null-quest>BEGIN SIGNAL FROM NOWHERE →</button><small>Investigate NULL//07 to unlock this activity.</small>')<p data-null-notice hidden></p></div></div></article>';
+  mount.querySelector('[data-null-start]')?.addEventListener('click',start);mount.querySelector('[data-null-quest]')?.addEventListener('click',()=>{Game()?.switchView?.('quests');setTimeout(()=>window.CellboundQuests?.selectAdventure?.('null-complex-quest'),100)});return
  }
  const room=roomAt(run.pos.x,run.pos.y),ready=atTele()&&allParts();
  mount.innerHTML='<section class="null-card null-run"><header><div><small>THE NULL COMPLEX · ACTIVE EXPEDITION</small><h3>Floor '+run.floor+' <em>/ '+MAX_FLOOR+'</em></h3></div><div class="null-risk"><span>UNBANKED</span><b>'+Object.values(run.pending).reduce((a,b)=>a+b,0)+' materials</b></div></header><div class="null-layout"><div><div class="null-map">'+mapMarkup()+'</div><div class="null-legend"><span>● Party</span><span>T Teleporter</span><span>? Search</span><span>! Threat</span></div></div><aside><small>CURRENT ROOM</small><h4>'+esc(room.type==='entrance'?'Entry Chamber':room.type==='teleporter'?'Teleport Chamber':room.type==='breach'?'Containment Breach':room.type==='search'?'Search Area':room.type==='combat'?'Experiment Chamber':'Facility Room')+'</h4><p>'+esc(run.message||'Choose a route.')+'</p><div class="null-parts">'+PARTS.map(p=>'<span class="'+(run.parts[p[0]]?'found':'')+'">'+p[2]+' '+p[1]+' <b>'+(run.parts[p[0]]?'FOUND':'MISSING')+'</b></span>').join('')+'</div><div class="null-loot"><small>AT RISK</small>'+lootMarkup()+'</div></aside></div><div class="null-actions">'+
