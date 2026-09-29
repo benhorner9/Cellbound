@@ -65,6 +65,7 @@ for(const file of files){
     if(!contents.includes("paperDollHTML?.(c")||!contents.includes('data-paper-doll-stage')||!contents.includes('LIVE EQUIPMENT VIEW'))throw new Error('Character Equipment visual paper doll is missing');
     if(!contents.includes('function fallbackEquipmentSlot')||!contents.includes('cb-recovery-armoury')||!contents.includes("if(!item||typeof item!=='object')return false")||contents.includes('activeSlot=null;\n    return equipmentFallback'))throw new Error('Equipment recovery mode must preserve the paper doll and slot controls');
     for(const hook of ['function attachmentStacksForSlot','cb-attachment-panel','data-apply-attachment','function applyAttachmentToEquipped'])if(!contents.includes(hook))throw new Error('Character equipment attachment flow is missing '+hook);
+    if(!contents.includes('permanently destroyed and cannot be recovered'))throw new Error('Attachment replacement must explicitly destroy the previous crafted attachment');
   }
   if(file==='bank-v2.css'){
     if(!contents.includes('#bank .bank-card-v2[data-hidden="1"]{display:none!important}'))throw new Error('Bank category filtering must override card display so materials cannot leak into Equipment');
@@ -73,6 +74,7 @@ for(const file of files){
     for(const hook of ['rosterClearFilters','rosterResultsLabel','Gear Watch','gearOrder='])if(!contents.includes(hook))throw new Error('Roster v2 filtering/enhancement is missing '+hook);
     for(const hook of ['bankMetricCrafting','data-bank-count','bank-filter-empty-v2',"bankCategory==='favorite'"])if(!contents.includes(hook))throw new Error('Bank v2 filtering/enhancement is missing '+hook);
     for(const hook of ['function openBankResource','data-resource-open','applyBankAttachment','learnBankRecipe'])if(!contents.includes(hook))throw new Error('Bank crafted-item action flow is missing '+hook);
+    if(!contents.includes("'DESTROYS '+esc(existing.name||'ATTACHMENT')"))throw new Error('Bank attachment replacement must surface destructive overwrite');
   }
   if(file==='character-portraits-v1.js'){
     for(const hook of ['window.CellboundPortraits','normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
