@@ -28,6 +28,9 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
       - name: Build Cellbound
         run: npm run build
 
@@ -39,6 +42,7 @@ jobs:
           test -f dist/guild.html
           test -f dist/auth.js
           test -f dist/guild-v4.js
+          test -f dist/vendor/three.module.min.js
           test -f dist/assets/gear/cellbound-gear-atlas.webp
           ! grep -R --line-number -E 'href="/|src="/' dist/*.html
 

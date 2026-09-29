@@ -4,5 +4,8 @@
   "private": true,
   "scripts": {
     "build": "node build.js"
+  },
+  "dependencies": {
+    "three": "0.160.1"
   }
 }

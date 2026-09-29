@@ -1,7 +1,8 @@
 (function(){
 'use strict';
-const VERSION='0.1.0';
-const THREE_URL='https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.min.js';
+const VERSION='0.1.1';
+const THREE_URL='./vendor/three.module.min.js';
+let THREE=null;
 const CLASS_COLOURS={
  warrior:0xC69B6D,paladin:0xF48CBA,hunter:0xAAD372,rogue:0xFFF468,priest:0xFFFFFF,
  'death-knight':0xC41E3A,shaman:0x0070DD,mage:0x3FC7EB,warlock:0x8788EE,
@@ -11,16 +12,13 @@ let loadPromise=null;
 const S={active:false,loading:false,arena:null,layer:null,scene:null,camera:null,renderer:null,world:null,labels:null,badge:null,units:new Map(),moves:new Map(),effects:[],telegraphs:new Map(),hazards:new Map(),frame:0,last:0,resize:null};
 
 function loadThree(){
- if(window.THREE)return Promise.resolve(window.THREE);
+ if(THREE)return Promise.resolve(THREE);
  if(loadPromise)return loadPromise;
- loadPromise=new Promise((resolve,reject)=>{
-  const existing=document.querySelector('script[data-cellbound-three]');
-  if(existing){existing.addEventListener('load',()=>window.THREE?resolve(window.THREE):reject(new Error('Three.js unavailable')),{once:true});existing.addEventListener('error',()=>reject(new Error('Three.js failed to load')),{once:true});return}
-  const script=document.createElement('script');script.src=THREE_URL;script.async=true;script.dataset.cellboundThree='1';
-  script.onload=()=>window.THREE?resolve(window.THREE):reject(new Error('Three.js unavailable after load'));
-  script.onerror=()=>reject(new Error('Three.js failed to load'));
-  document.head.appendChild(script)
- });
+ const timeout=new Promise((_,reject)=>setTimeout(()=>reject(new Error('3D engine load timed out')),7000));
+ loadPromise=Promise.race([import(THREE_URL),timeout]).then(mod=>{
+  if(!mod?.WebGLRenderer)throw new Error('3D engine module is incomplete');
+  THREE=mod;return THREE
+ }).catch(error=>{loadPromise=null;throw error});
  return loadPromise
 }
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
@@ -52,7 +50,7 @@ function makeTextLabel(id,name,isEnemy){
  el.innerHTML='<b>'+esc(name)+'</b><em><i></i></em>';root.appendChild(el);return el
 }
 function makeUnit(id,name,isEnemy,boss,colour,pos){
- const T=window.THREE,g=new T.Group(),scale=boss?1.45:(isEnemy?1.12:1);
+ const T=THREE,g=new T.Group(),scale=boss?1.45:(isEnemy?1.12:1);
  const bodyMat=new T.MeshStandardMaterial({color:colour,roughness:.72,metalness:.08});
  const darkMat=new T.MeshStandardMaterial({color:isEnemy?0x211214:0x111719,roughness:.9});
  const body=new T.Mesh(new T.CylinderGeometry(.28*scale,.34*scale,.92*scale,10),bodyMat);body.position.y=.55*scale;g.add(body);
@@ -106,7 +104,7 @@ function resize(){
  S.renderer.setSize(w,h,false);S.camera.aspect=w/h;S.camera.updateProjectionMatrix()
 }
 function buildEnvironment(){
- const T=window.THREE;
+ const T=THREE;
  S.scene=new T.Scene();S.scene.background=new T.Color(0x06090b);S.scene.fog=new T.Fog(0x06090b,14,27);
  S.camera=new T.PerspectiveCamera(44,1,.1,80);S.camera.position.set(8.7,9.6,10.8);S.camera.lookAt(0,.3,0);
  S.renderer=new T.WebGLRenderer({antialias:true,alpha:false,powerPreference:'high-performance'});
@@ -150,19 +148,19 @@ function animateTo(id,x,y,duration=360,speed=1){
 }
 function snapTo(id,x,y){const u=ensureEventUnit(id,{position:{x,y}});if(!u)return;const p=worldPos(x,y);u.group.position.x=p.x;u.group.position.z=p.z;S.moves.delete(id)}
 function effectRing(pos,colour=0xffffff,duration=340,maxScale=2){
- const T=window.THREE,mat=new T.MeshBasicMaterial({color:colour,transparent:true,opacity:.8,depthWrite:false}),mesh=new T.Mesh(new T.RingGeometry(.22,.3,28),mat);
+ const T=THREE,mat=new T.MeshBasicMaterial({color:colour,transparent:true,opacity:.8,depthWrite:false}),mesh=new T.Mesh(new T.RingGeometry(.22,.3,28),mat);
  mesh.rotation.x=-Math.PI/2;mesh.position.set(pos.x,.035,pos.z);S.world.add(mesh);S.effects.push({mesh,mat,start:performance.now(),duration,maxScale});return mesh
 }
 function pulseUnit(id,colour){const u=S.units.get(String(id));if(u)effectRing(u.group.position,colour,320,2.6)}
 function projectile(source,target,colour=0xffffff,duration=260){
  const a=S.units.get(String(source)),b=S.units.get(String(target));if(!a||!b)return;
- const T=window.THREE,mat=new T.MeshBasicMaterial({color:colour}),mesh=new T.Mesh(new T.SphereGeometry(.095,8,6),mat);
+ const T=THREE,mat=new T.MeshBasicMaterial({color:colour}),mesh=new T.Mesh(new T.SphereGeometry(.095,8,6),mat);
  mesh.position.copy(a.group.position);mesh.position.y=.8;S.world.add(mesh);
  S.effects.push({mesh,mat,start:performance.now(),duration,from:a.group,to:b.group,projectile:true})
 }
 function unitPosition(id,fallback){const u=S.units.get(String(id));if(u)return{x:u.group.position.x,z:u.group.position.z};return fallback||{x:0,z:0}}
 function planeDisc(x,z,r,colour,opacity=.28){
- const T=window.THREE,mat=new T.MeshBasicMaterial({color:colour,transparent:true,opacity,depthWrite:false,side:T.DoubleSide}),mesh=new T.Mesh(new T.CircleGeometry(Math.max(.25,r),40),mat);
+ const T=THREE,mat=new T.MeshBasicMaterial({color:colour,transparent:true,opacity,depthWrite:false,side:T.DoubleSide}),mesh=new T.Mesh(new T.CircleGeometry(Math.max(.25,r),40),mat);
  mesh.rotation.x=-Math.PI/2;mesh.position.set(x,.018,z);S.world.add(mesh);return mesh
 }
 function telegraph(e){
@@ -173,10 +171,10 @@ function telegraph(e){
  else if(type==='circles'){
   const ids=(e.payload?.targetIds||[]);(ids.length?ids:[target]).filter(Boolean).forEach(id=>{const p=unitPosition(id);visuals.push(planeDisc(p.x,p.z,1.0,red,.28))})
  }else if(type==='line'||type==='healer-swipe'){
-  const T=window.THREE,dx=targetPos.x-sourcePos.x,dz=targetPos.z-sourcePos.z,len=Math.max(.6,Math.hypot(dx,dz)),mat=new T.MeshBasicMaterial({color:red,transparent:true,opacity:.34,depthWrite:false,side:T.DoubleSide}),mesh=new T.Mesh(new T.PlaneGeometry(len,.7),mat);
+  const T=THREE,dx=targetPos.x-sourcePos.x,dz=targetPos.z-sourcePos.z,len=Math.max(.6,Math.hypot(dx,dz)),mat=new T.MeshBasicMaterial({color:red,transparent:true,opacity:.34,depthWrite:false,side:T.DoubleSide}),mesh=new T.Mesh(new T.PlaneGeometry(len,.7),mat);
   mesh.rotation.x=-Math.PI/2;mesh.rotation.z=-Math.atan2(dz,dx);mesh.position.set((sourcePos.x+targetPos.x)/2,.025,(sourcePos.z+targetPos.z)/2);S.world.add(mesh);visuals.push(mesh)
  }else if(type==='cone'){
-  const T=window.THREE,mat=new T.MeshBasicMaterial({color:red,transparent:true,opacity:.32,depthWrite:false,side:T.DoubleSide}),mesh=new T.Mesh(new T.CircleGeometry(3.25,36,-Math.PI/4,Math.PI/2),mat);
+  const T=THREE,mat=new T.MeshBasicMaterial({color:red,transparent:true,opacity:.32,depthWrite:false,side:T.DoubleSide}),mesh=new T.Mesh(new T.CircleGeometry(3.25,36,-Math.PI/4,Math.PI/2),mat);
   mesh.rotation.x=-Math.PI/2;mesh.rotation.z=-Math.atan2(targetPos.z-sourcePos.z,targetPos.x-sourcePos.x);mesh.position.set(sourcePos.x,.028,sourcePos.z);S.world.add(mesh);visuals.push(mesh)
  }else if(type==='adds'){visuals.push(planeDisc(3.2,-1.7,.75,amber,.35),planeDisc(3.2,1.7,.75,amber,.35))}
  else visuals.push(planeDisc(sourcePos.x,sourcePos.z,.8,type==='interrupt'?amber:red,.28));
@@ -189,7 +187,7 @@ function spawnHazard(e){
 }
 function clearHazard(id){id=String(id||'');const v=S.hazards.get(id);if(v){removeVisual(v);S.hazards.delete(id)}}
 function updateLabels(){
- if(!S.camera||!S.renderer)return;const T=window.THREE,w=S.renderer.domElement.clientWidth,h=S.renderer.domElement.clientHeight;
+ if(!S.camera||!S.renderer)return;const T=THREE,w=S.renderer.domElement.clientWidth,h=S.renderer.domElement.clientHeight;
  for(const u of S.units.values()){
   if(!u.label)continue;const p=u.group.position.clone();p.y+=(u.boss?2.2:u.isEnemy?1.8:1.65);p.project(S.camera);
   const visible=p.z<1&&p.z>-1;u.label.style.display=visible?'block':'none';if(!visible)continue;
@@ -216,6 +214,7 @@ function tick(now){
 function startLoop(){if(!S.frame){S.last=performance.now();S.frame=requestAnimationFrame(tick)}}
 async function activate(){
  if(S.loading||S.active)return;const btn=button();S.loading=true;if(btn){btn.disabled=true;btn.textContent='LOADING 3D…'}
+ const safety=setTimeout(()=>{if(S.loading){S.loading=false;if(btn){btn.disabled=false;btn.textContent='3D TEST'}console.warn('3D activation safety timeout restored the 2D viewer')}},8500);
  try{
   await loadThree();const a=arena();if(!a)throw new Error('Combat arena is not open');
   mount(a);S.active=true;a.classList.add('cb3d-active');if(S.layer)S.layer.hidden=false;rebuild();startLoop();
@@ -223,7 +222,7 @@ async function activate(){
  }catch(error){
   console.warn('Cellbound 3D prototype unavailable',error);const a=arena();if(a){let msg=a.querySelector('.cb3d-error');if(!msg){msg=document.createElement('div');msg.className='cb3d-error';msg.textContent='3D prototype could not start. The normal 2D combat viewer is still available.';a.appendChild(msg);setTimeout(()=>msg.remove(),3500)}}
   if(btn){btn.disabled=false;btn.textContent='3D TEST'}
- }finally{S.loading=false}
+ }finally{clearTimeout(safety);S.loading=false}
 }
 function deactivate(){
  if(!S.active)return;S.active=false;if(S.frame)cancelAnimationFrame(S.frame);S.frame=0;
