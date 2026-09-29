@@ -84,7 +84,7 @@ function restoreDraft(){
 }
 function saveDraft(){
   const s=state();if(!s)return;
-  s.onboarding=s.onboarding||{version:2,complete:false,stage:'party-builder',zone:'zeltira'};
+  s.onboarding=s.onboarding||{version:3,complete:false,stage:'party-builder',zone:'zeltira'};
   s.onboarding.draft=clone(draft);Game.save();
 }
 function ensureRoot(){
@@ -112,12 +112,12 @@ function stageTitle(stage){
 }
 function chrome(body,stage){
   const steps=[
-    ['party-builder','Party'],
+    ['party-builder','Guild'],
     ['first-expedition','Signal'],
     ['gear','Gear'],
     ['dungeon-briefing','Combat'],
     ['loot-review','Loot'],
-    ['quest-lesson','Contract']
+    ['quest-lesson','Road']
   ];
   const order={'party-builder':0,'zeltira-arrival':1,'first-expedition':1,'gear':2,'dungeon-briefing':3,'dungeon-running':3,'loot-review':4,'quest-lesson':5,'departure':5};
   const at=order[stage]??0;
@@ -215,7 +215,7 @@ async function createParty(){
   s.roster=roster;s.party={tank:ids[0],healer:ids[1],dps:ids.slice(2,5)};
   s.renown=0;s.gold=250;s.bank=[];s.materials={};s.consumables=[];s.recipeScrolls=[];s.discoveredRecipes=[];s.tradeInbox=[];s.collectionHistory=[];s.reports=[];s.bossKills={ashwarden:false,embermaw:false,vaultheart:false};s.progression={ashenVaultUnlocked:false};s.questSystem=null;
   s.activity=['Your first party has been formed.','The road to Zeltira is open.'];
-  s.onboarding={version:2,complete:false,stage:'zeltira-arrival',zone:'zeltira',startedAt:s.onboarding?.startedAt||new Date().toISOString(),partyCreatedAt:new Date().toISOString(),firstExpeditionClues:[]};
+  s.onboarding={version:3,complete:false,stage:'zeltira-arrival',zone:'zeltira',startedAt:s.onboarding?.startedAt||new Date().toISOString(),partyCreatedAt:new Date().toISOString(),firstExpeditionClues:[]};
   Game.replaceState(clone(s));await Game.persistState();await syncPartyCharacters(roster);render();
   window.CellboundFX?.story?.('The Gate at Dusk','Five names are on the charter. Zeltira is waiting.',{eyebrow:'WELCOME TO CELLBOUND',tone:'story',duration:1600,particles:true});
 }
@@ -383,7 +383,7 @@ function maybeTutorialComic(id){
 }
 async function previewTutorialComics(){
   const C=window.CellboundComicScenes;if(!C?.show)return false;
-  const ids=['arrival','west-wall','gear','hollows','loot','shock','craft','contract','departure'];
+  const ids=['arrival','west-wall','gear','hollows','loot','contract','departure'];
   for(const id of ids){const cfg=tutorialComicConfig(id);if(cfg)await C.show({...cfg,eyebrow:'DEV PREVIEW · '+cfg.eyebrow})}
   return true
 }
