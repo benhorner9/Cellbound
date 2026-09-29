@@ -9,10 +9,6 @@ const buildId=String(process.env.GITHUB_SHA||process.env.CELLBOUND_BUILD||'local
 const buildNumber=String(process.env.GITHUB_RUN_NUMBER||process.env.CELLBOUND_BUILD_NUMBER||'0').trim();
 fs.rmSync(out,{recursive:true,force:true});
 fs.mkdirSync(out,{recursive:true});
-const threeModule=path.join(__dirname,'node_modules','three','build','three.module.min.js');
-if(!fs.existsSync(threeModule))throw new Error('Three.js dependency is missing. Run npm install before building.');
-const vendorDir=path.join(out,'vendor');fs.mkdirSync(vendorDir,{recursive:true});
-fs.copyFileSync(threeModule,path.join(vendorDir,'three.module.min.js'));
 const touchFix=`\n<style id="cellbound-ios-touch-fix">html,body{touch-action:manipulation;-webkit-text-size-adjust:100%}button,a,input,label,[role="button"]{touch-action:manipulation}@media (hover:none) and (pointer:coarse){input,select,textarea{font-size:16px!important}}</style>\n`;
 for(const file of files){
   const src=path.join(__dirname,file),dest=path.join(out,file);
