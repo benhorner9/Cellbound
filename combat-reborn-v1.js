@@ -2149,12 +2149,12 @@ function specDamageBalance(u){
  const key=u.class+'|'+u.spec;
  const curves={
   'Warrior|Protection':[1.08,1.08,1.10],
-  'Paladin|Protection':[1.12,1.12,1.12],
-  'Monk|Brewmaster':[1.16,1.16,1.12],
-  'Death Knight|Blood':[.62,.64,.66],
+  'Paladin|Protection':[1.18,1.22,1.30],
+  'Monk|Brewmaster':[1.20,1.24,1.30],
+  'Death Knight|Blood':[.62,.62,.58],
   'Demon Hunter|Vengeance':[.52,.54,.52],
-  'Warrior|Arms':[1.38,1.38,1.42],
-  'Rogue|Assassination':[1.28,1.16,1.10],
+  'Warrior|Arms':[1.80,1.65,1.42],
+  'Rogue|Assassination':[1.50,1.30,1.12],
   'Warlock|Destruction':[1.10,1.12,1.14],
   'Death Knight|Frost':[1.12,1.12,1.12],
   'Demon Hunter|Havoc':[.76,.78,.78],
@@ -2165,12 +2165,12 @@ function specDamageBalance(u){
 function specHealingBalance(u){
  const key=u.class+'|'+u.spec;
  const curves={
-  'Paladin|Holy':[.94,.96,.98],
-  'Priest|Holy':[1.02,1.02,1.00],
-  'Druid|Restoration':[1.42,1.30,1.22],
-  'Shaman|Restoration':[1.65,1.08,.94],
-  'Monk|Mistweaver':[1.85,1.55,1.48],
-  'Evoker|Preservation':[1.34,1.12,1.02]
+  'Paladin|Holy':[.94,.96,.90],
+  'Priest|Holy':[1.15,1.02,1.00],
+  'Druid|Restoration':[1.42,1.30,1.30],
+  'Shaman|Restoration':[1.65,1.08,1.35],
+  'Monk|Mistweaver':[1.85,1.55,1.35],
+  'Evoker|Preservation':[1.05,1.12,.92]
  };
  const v=curves[key];return v?progressionBlend(u.level,...v):1
 }
