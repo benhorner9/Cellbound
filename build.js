@@ -146,6 +146,7 @@ for(const file of files){
   }
   if(file==='combat-reborn-v1.js'){
     if(!contents.includes("if(!moveIntoRange(ctx,u,target,5))return true")||!contents.includes("_combatTalentTimers"))throw new Error('Bladestorm melee movement rule is missing');
+    for(const hook of ['function professionCombatBonuses','professionOutputScale(u,\'damage\')','professionOutputScale(healer,\'healing\')','professionBonuses?.haste','professionBonuses?.crit','professionBonuses?.block','profession.magicWardPct'])if(!contents.includes(hook))throw new Error('Profession attachments are not wired into real combat: '+hook);
     for(const hook of ["spec:'Havoc'","spec:'Vengeance'","id:'havoc-metamorphosis'","id:'spirit-bomb'","SOUL_FRAGMENT_CHANGED","'fel-barrage':'Fel Barrage'"])if(!contents.includes(hook))throw new Error('Demon Hunter combat kit is incomplete: '+hook);
     for(const hook of ["spec:'Preservation'","spec:'Devastation'","id:'reversion'","id:'disintegrate'","id:'emerald-communion'","id:'dragonrage'","'Essence Burst':'","Evoker Preservation Healing","Evoker Devastation Essence"])if(!contents.includes(hook))throw new Error('Evoker combat kit is incomplete: '+hook);
     for(const hook of ["'Priest|Shadow':{name:'Insanity'","spec:'Shadow'","id:'mind-flay'","id:'devouring-plague'","id:'shadow-crash'","id:'void-torrent'","id:'void-eruption'","Shadow Priest Insanity","Shadow Priest DoT Pressure","Shadow Priest Voidform","Shadow Priest Talent Skill Gates"])if(!contents.includes(hook))throw new Error('Shadow Priest combat migration is incomplete: '+hook);
