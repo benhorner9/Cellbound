@@ -1918,6 +1918,32 @@ function spawnSharedEncounter(s,result,options={}){
  });
  window.CellboundCombatPortraits?.refresh?.()
 }
+function openSharedExploration(options={}){
+ const extParty=Array.isArray(options.party)?options.party.filter(Boolean):[];
+ if(!extParty.length)throw new Error('Shared exploration viewer requires party.');
+ token++;const tok=token,encounter={id:options.id||'exploration',title:options.title||'Exploration',kind:'exploration',enemies:[]};
+ run={token:tok,stage:0,speed:1,externalMode:true,externalExploration:true,externalParty:extParty,externalStage:encounter,externalOnClose:options.onClose||null,
+ resources:{},cooldowns:{},statuses:{},reviveSickness:{},expeditionTimeMs:0,condition:Object.fromEntries(extParty.map(c=>[c.id,100])),hp:Object.fromEntries(extParty.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],damageDone:{},healingDone:{},overhealing:{},hitCount:{},identityTimers:{},log:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,shotSeq:0,groundHazards:{}};
+ sharedViewerShell({...options,subtitle:options.subtitle||'EXPLORATION',planTitle:options.planTitle||'Explore the room',planCopy:options.planCopy||'Choose a doorway to move into the next chamber.'});
+ const arena=$('#cb2dArena'),env=$('#cb2dEnvironment'),tag=$('#cb2dRoomTag'),units=$('#cb2dUnits');
+ if(arena)arena.className='cb2d-arena theme-'+esc(options.theme||'null')+' room-'+esc(options.room||'exploration')+' exploration-room';
+ if(env)env.innerHTML=options.environmentHtml||'';
+ if(tag)tag.innerHTML='<b>'+esc(options.roomLabel||options.title||'Room')+'</b><small>'+esc(options.ambience||'The party searches the chamber.')+'</small>';
+ if(units)units.innerHTML='';
+ extParty.forEach((ch,i)=>{const p=sharedFormationPosition(ch,i,extParty.length);addUnit('p-'+ch.id,ch.name,'party '+role(ch)+' profile-'+combatProfile(ch)+' '+classKey(ch),p.x,p.y,'');});
+ const controls=$('.cb2d-controls');if(controls)controls.innerHTML='<div class="cb2d-explore-controls">'+(options.controlsHtml||'')+'</div>';
+ const cast=$('.cb2d-cast');if(cast)cast.hidden=true;const meters=$('.cb2d-combat-meters');if(meters)meters.hidden=true;
+ const acts=$('.cb2d-actions');if(acts)acts.hidden=true;const plan=$('.cb2d-plan');if(plan)plan.innerHTML='<small>ROOM MODE</small><b>EXPLORATION</b><span>COMBAT STARTS AUTOMATICALLY WHEN HOSTILES ARE PRESENT</span>';
+ status(options.status||'Room secured · choose a route');window.CellboundCombatPortraits?.refresh?.();
+ return{
+  root:root(),arena,token:tok,
+  moveParty(points,duration=850){return new Promise(resolve=>{extParty.forEach((ch,i)=>{const p=points[i%points.length]||points[0];const u=$('[data-unit="p-'+ch.id+'"]');if(u){u.style.transition='left '+duration+'ms ease, top '+duration+'ms ease';u.style.left=p.x+'%';u.style.top=p.y+'%'}});setTimeout(resolve,duration+40)})},
+  setStatus:status,
+  setControls(html){const x=$('.cb2d-controls');if(x)x.innerHTML='<div class="cb2d-explore-controls">'+html+'</div>'},
+  setEnvironment(html){if(env)env.innerHTML=html},
+  close(silent=true){if(run?.externalExploration)close(Boolean(silent))}
+ }
+}
 async function playSharedEncounter(options={}){
  const extParty=Array.isArray(options.party)?options.party.filter(Boolean):[],encounter=options.encounter,result=options.result;
  if(!extParty.length||!encounter||!result)throw new Error('Shared combat viewer requires party, encounter and result.');
@@ -1964,7 +1990,7 @@ function init(){
  document.documentElement.dataset.cb2d='ready';
  syncEntryButton();
  setInterval(syncEntryButton,400);
- window.CellboundDungeon2D={open:openDungeon,briefing,currentRun:()=>run,playSharedEncounter,externalCharacters,closeShared:(silent=false)=>{if(run?.externalMode)close(Boolean(silent))}};
+ window.CellboundDungeon2D={open:openDungeon,briefing,currentRun:()=>run,openSharedExploration,playSharedEncounter,externalCharacters,closeShared:(silent=false)=>{if(run?.externalMode)close(Boolean(silent))}};
 }
 init();
 })();
