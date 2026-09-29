@@ -135,6 +135,8 @@ function ensure(){
   q.ashfall.done=Array.isArray(q.ashfall.done)?q.ashfall.done:[];
   q.ashfall.history=Array.isArray(q.ashfall.history)?q.ashfall.history:[];
   q.classTrials=q.classTrials&&typeof q.classTrials==='object'?q.classTrials:{};
+  q.nullComplex=q.nullComplex&&typeof q.nullComplex==='object'?q.nullComplex:{started:false,stage:'signal',done:[],complete:false,history:[],components:{cable:false,cell:false,fuse:false}};
+  q.nullComplex.done=Array.isArray(q.nullComplex.done)?q.nullComplex.done:[];q.nullComplex.history=Array.isArray(q.nullComplex.history)?q.nullComplex.history:[];q.nullComplex.components=q.nullComplex.components||{cable:false,cell:false,fuse:false};
   s.progression=s.progression&&typeof s.progression==='object'?s.progression:{};
   if(typeof s.progression.ashenVaultUnlocked!=='boolean')s.progression.ashenVaultUnlocked=Boolean(Number(s.dungeonCompletions)>0||Object.values(s.bossKills||{}).some(Boolean)||q.ashfall.complete);
   if(q.ashfall.complete)s.progression.ashenVaultUnlocked=true;
@@ -1200,9 +1202,90 @@ function renderAshfallDetail(root,side){
     '<section><small>ADVENTURE JOURNAL</small><div class="quest-history">'+(a.history.slice(-6).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>No journal entries yet.</p>')+'</div></section>';
 }
 
+
+const NULL_QUEST={id:'signal-from-nowhere',title:'Signal From Nowhere',difficulty:'Intermediate',length:'Long',start:'Dr. Elara Voss · Cell Research Annex',summary:'A dead research facility has started transmitting again. Follow the impossible signal, identify what survived inside and find a way back out.',rewards:['The Null Complex permanently unlocked','Null Complex field dossier','150 Gold','100 Guild Renown']};
+const NULL_STAGES=[
+ {id:'signal',label:'The Signal',objective:'Meet Dr. Elara Voss and inspect the NULL//07 transmission.'},
+ {id:'entry',label:'The Forgotten Facility',objective:'Follow the signal into the abandoned Null Complex.'},
+ {id:'splice',label:'First Contact',objective:'Survive the specimen waiting beyond the entry chamber.'},
+ {id:'recording',label:'The First Recording',objective:'Search the research chamber for the source of the old transmission.'},
+ {id:'zero',label:'Containment Wing',objective:'Push through the containment wing and inspect the sealed chamber.'},
+ {id:'components',label:'Repair the Teleporter',objective:'Recover the Conduit Cable, Power Cell and Reactor Fuse.'},
+ {id:'overseer',label:'The Overseer',objective:'Restore the teleporter before the facility finishes waking up.'},
+ {id:'prototype',label:'Prototype 07',objective:'Defeat the experiment released by the Overseer.'},
+ {id:'escape',label:'Escape',objective:'Return to the teleporter and get the party out.'}
+];
+const nullQ=()=>ensure().nullComplex;
+const nullStage=()=>nullQ().complete?'complete':nullQ().stage||'signal';
+const nullDef=()=>NULL_STAGES.find(x=>x.id===nullStage())||NULL_STAGES[0];
+const NULL_ART={
+ signal:'./assets/comics/null-complex/voss-signal.webp',entry:'./assets/comics/null-complex/facility-entry.webp',splice:'./assets/comics/null-complex/first-aberrant.webp',
+ orin:'./assets/comics/null-complex/orin-recording.webp',zero:'./assets/comics/null-complex/subject-zero.webp',teleporter:'./assets/comics/null-complex/teleporter.webp',
+ overseer:'./assets/comics/null-complex/overseer-awakens.webp',prototype:'./assets/comics/null-complex/prototype-07.webp',escape:'./assets/comics/null-complex/escape.webp',sting:'./assets/comics/null-complex/subject-zero-awake.webp'
+};
+function nullHistory(text){const n=nullQ();n.history.push({at:new Date().toISOString(),text});n.history=n.history.slice(-30)}
+async function nullAdvance(done,next,note){const n=nullQ();if(done&&!n.done.includes(done))n.done.push(done);n.stage=next;if(note)nullHistory(note);await commit();selectedAdventure='null-complex-quest';render();if(next!=='complete')questToast('QUEST UPDATED',NULL_QUEST.title,nullDef().objective)}
+async function nullComic(title,speaker,text,art,done){
+ const comic=window.CellboundComicScenes;if(comic?.show)await comic.show({eyebrow:'CELLBOUND · QUEST',title,subtitle:speaker,page:'SIGNAL FROM NOWHERE',theme:'null',panels:(Array.isArray(text)?text:[text]).map((t,i)=>({kind:i?'dialogue':'location',speaker,eyebrow:i?'':'QUEST STORY',title:i?'':title,text:t,artwork:art,wide:true})),progressive:true,storyOnly:true,allowSkip:true,skipLabel:'SKIP STORY',nextLabel:'NEXT PANEL →',continueLabel:'CONTINUE →'});
+ if(done)await done()
+}
+async function startNullQuest(){
+ const n=nullQ();if(n.complete)return;if(!n.started){n.started=true;n.startedAt=new Date().toISOString();nullHistory('Dr. Elara Voss isolated an impossible transmission marked NULL//07.');await commit()}
+ await nullComic('The Signal','Dr. Elara Voss',['This signal should not exist. The facility transmitting it was destroyed years ago.','NULL//07. Containment active. Personnel: zero. Subjects: forty-seven. And one final instruction: do not open the Complex.','I need a team I can trust. Follow the signal. Find out what is still alive in there.'],NULL_ART.signal,()=>nullAdvance('signal','entry','Voss traced NULL//07 to a sealed research facility omitted from every living map.'))
+}
+async function playNullQuest(){
+ const n=nullQ(),stage=nullStage(),p=party();if(p.length!==5){alert('Build a complete active five-character party before entering the Null Complex.');Game.switchView?.('party');return}
+ if(stage==='entry')return nullComic('The Forgotten Facility','Dr. Elara Voss',['The doors still have power. Barely.','Stay together. Whatever is transmitting from inside has been doing it without personnel for years.'],NULL_ART.entry,()=>nullAdvance('entry','splice','The party entered the abandoned Null Complex.'));
+ if(stage==='splice'){
+  const won=await runQuest2DFight({quest:NULL_QUEST.title,title:'First Contact',location:'Null Complex · Entry Wing',ambience:'A containment door opens by itself. Something unfolds from the dark.',enemies:['Splice'],combat:{kind:'boss',level:4,recommendedItemLevel:20,enemyHealth:620,mechanics:[['Backline Pounce','line',1500],['Cell Rend','cone',1700]]},completeText:'The specimen collapses. Its Cell structure continues changing even after death.'});if(!won)return;
+  return nullComic('First Contact','Dr. Elara Voss',['Whatever that was... it was not born like that.','Its Cell structure has been rewritten dozens of times. I am logging it as an Aberrant.'],NULL_ART.splice,()=>nullAdvance('splice','recording','Voss classified the altered specimen as an Aberrant.'));
+ }
+ if(stage==='recording')return nullComic('The First Recording','Director Cael Orin',['The Null Complex was built to answer a simple question: what happens when a Cell is deliberately altered rather than naturally developed?','We are not creating monsters. We are unlocking the next step in human potential.'],NULL_ART.orin,()=>nullAdvance('recording','zero','An archived recording identified Director Cael Orin and the original purpose of the Complex.'));
+ if(stage==='zero'){
+  const won=await runQuest2DFight({quest:NULL_QUEST.title,title:'Containment Wing',location:'Null Complex · Containment',ambience:'Two altered specimens move between the party and a chamber still drawing power.',enemies:['Bulwark Specimen','Siphon'],eliteIndex:0,combat:{kind:'boss',level:5,recommendedItemLevel:22,enemyTypes:['elite','elite'],enemyHealth:720,mechanics:[['Containment Guard','circles',1600],['Power Siphon','interrupt',1800]]},completeText:'The wing falls quiet. One containment chamber remains sealed.'});if(!won)return;
+  return nullComic('Subject Zero','Dr. Elara Voss',['That chamber is still drawing more power than the rest of this wing combined.','SUBJECT ZERO. Status: stable.','Do not touch it. We came for the signal, not whatever is behind that glass.'],NULL_ART.zero,()=>nullAdvance('zero','components','The party found Subject Zero alive inside a sealed containment chamber.'));
+ }
+ if(stage==='components')return playNullComponentSearch();
+ if(stage==='overseer')return nullComic('The Overseer','THE OVERSEER',['Unauthorized personnel detected.','Containment protocol resumed.','Experiment cycle commencing.'],NULL_ART.overseer,()=>nullAdvance('overseer','prototype','Restoring the teleporter woke the facility Overseer.'));
+ if(stage==='prototype')return playNullPrototype();
+ if(stage==='escape')return finishNullQuest()
+}
+async function playNullComponentSearch(){
+ const n=nullQ(),order=[['cable','Conduit Cable'],['cell','Power Cell'],['fuse','Reactor Fuse']],next=order.find(x=>!n.components[x[0]]);
+ if(!next){await nullComic('The Teleporter','Dr. Elara Voss',['That is all three. Get them back to the teleporter.','Something else just came online. Move.'],NULL_ART.teleporter,()=>nullAdvance('components','overseer','All three teleporter components were recovered.'));return}
+ const root=puzzleRoot();root.hidden=false;document.body.classList.add('quest-puzzle-open');const idx=order.findIndex(x=>x[0]===next[0]);
+ const places=[['Collapsed Cable Trench','Trace the live conduit through the damaged wall.'],['Emergency Power Bay','Reroute the surviving charge before removing the cell.'],['Reactor Service Console','Vent the auxiliary line before pulling the fuse.']];
+ root.innerHTML='<section class="quest-puzzle null-search-quest"><header><div><small>NULL COMPLEX · FIELD SEARCH '+(idx+1)+' / 3</small><h2>'+places[idx][0]+'</h2></div></header><div class="quest-v3-story"><p>'+places[idx][1]+'</p></div><div class="null-search-nodes"><button data-correct="'+(idx===0?1:0)+'">AUXILIARY HOUSING</button><button data-correct="'+(idx===0?0:1)+'">'+(idx===0?'LIVE CONDUIT':idx===1?'CHARGED CELL':'PRESSURE VENT')+'</button><button data-correct="0">SEALED STORAGE</button></div><p data-search-note>Inspect the room. Choose the system that matches Voss’s instructions.</p></section>';
+ root.querySelectorAll('.null-search-nodes button').forEach(b=>b.onclick=async()=>{if(b.dataset.correct!=='1'){root.querySelector('[data-search-note]').textContent='That is not the system Voss described. Check the room again.';return}n.components[next[0]]=true;nullHistory('Recovered '+next[1]+'.');root.hidden=true;document.body.classList.remove('quest-puzzle-open');await commit();questToast('COMPONENT RECOVERED',next[1],(idx+1)+' / 3 teleporter components secured.');if(idx===2)playNullComponentSearch();else render()})
+}
+async function playNullPrototype(){
+ await nullComic('Experiment Cycle','Dr. Elara Voss',['The Overseer opened a chamber I cannot identify.','Whatever comes through that door, it has multiple Cell signatures.'],NULL_ART.prototype);
+ const won=await runQuest2DFight({quest:NULL_QUEST.title,title:'Prototype 07 — The Reconstituted',location:'Null Complex · Experiment Core',ambience:'Prototype 07 tears free of its restraints. Its body changes shape as different Cell patterns surface.',phases:['Splice Pattern','Siphon Pattern','Reactor Pattern'],enemies:['Prototype 07 — The Reconstituted'],combat:{kind:'final',level:6,recommendedItemLevel:24,enemyHealth:1350,mechanicIntervalMs:4200,mechanics:[['Backline Pounce','line',1500],['Power Siphon','interrupt',1750],['Reactor Instability','circles',1600]],scaling:{enemyDamage:1.08}},completeText:'Prototype 07 collapses. The facility alarms immediately change pitch.'});if(!won)return;
+ await nullComic('Modifications','Dr. Elara Voss',['Those were not mutations.','They were modifications. Someone deliberately combined Aberrant traits.','The Complex is destabilising. Back to the teleporter. Now.'],NULL_ART.prototype,()=>nullAdvance('prototype','escape','Prototype 07 revealed that Aberrant traits had been deliberately combined.'))
+}
+async function finishNullQuest(){
+ await nullComic('Escape','Dr. Elara Voss',['Install the final component.','Do not wait for the system to stabilise. It is not going to.','Activate it. Now.'],NULL_ART.escape);
+ const n=nullQ(),s=state();n.complete=true;n.stage='complete';n.completedAt=new Date().toISOString();if(!n.done.includes('escape'))n.done.push('escape');s.progression=s.progression||{};s.progression.nullComplexUnlocked=true;s.gold=(Number(s.gold)||0)+150;s.renown=(Number(s.renown)||0)+100;nullHistory('The party escaped. Access to the Null Complex is now stable enough for repeat expeditions.');s.activity.push('Quest complete: Signal From Nowhere. The Null Complex was unlocked.');await commit();
+ await nullComic('After the Extraction','', ['Deep inside the empty facility, a containment monitor flickers back to life.','SUBJECT ZERO — STATUS: AWAKE'],NULL_ART.sting);
+ if(window.CellboundComicScenes?.show)await window.CellboundComicScenes.show({eyebrow:'QUEST COMPLETE',title:'Signal From Nowhere',subtitle:'ACTIVITY UNLOCKED',page:'COMPLETE',theme:'null',panels:[{kind:'location',eyebrow:'QUEST COMPLETE',title:'Signal From Nowhere',text:'The party escaped the facility. Whatever remains inside is far from over.',artwork:NULL_ART.signal,wide:true},{kind:'reveal',eyebrow:'ACTIVITY UNLOCKED',title:'THE NULL COMPLEX',text:'Repeatable extraction expeditions are now available: 2 attempts every 5 days.',artwork:NULL_ART.entry,wide:true}],progressive:true,storyOnly:true,allowSkip:false,continueLabel:'OPEN ACTIVITIES →'});
+ Game.switchView?.('world')
+}
+function nullActionHtml(){
+ const n=nullQ(),st=nullStage();if(n.complete)return'<button data-nullquest-open-activity>OPEN THE NULL COMPLEX →</button>';
+ if(!n.started)return'<button data-nullquest-start>INVESTIGATE THE SIGNAL →</button>';
+ const labels={entry:'ENTER THE FACILITY →',splice:'OPEN THE CONTAINMENT DOOR →',recording:'SEARCH THE LAB →',zero:'ENTER CONTAINMENT WING →',components:'SEARCH FOR COMPONENTS →',overseer:'RESTORE POWER →',prototype:'FACE PROTOTYPE 07 →',escape:'RUN FOR THE TELEPORTER →'};
+ return'<button data-nullquest-play>'+esc(labels[st]||'CONTINUE INVESTIGATION →')+'</button>'
+}
+function renderNullQuestDetail(root,side){
+ const n=nullQ(),d=nullDef(),known=[];if(n.started)known.push('NULL//07 is transmitting from a facility officially destroyed years ago.');if(n.done.includes('splice'))known.push('Altered Cell specimens inside the facility have been classified as Aberrants.');if(n.done.includes('recording'))known.push('Director Cael Orin used the Complex to deliberately alter living Cells.');if(n.done.includes('zero'))known.push('Subject Zero remains alive in a powered containment chamber.');if(n.done.includes('prototype'))known.push('Prototype 07 combined multiple Aberrant traits by design.');
+ root.innerHTML='<div class="quest-v3-hero"><div><small>'+NULL_QUEST.difficulty.toUpperCase()+' · '+NULL_QUEST.length.toUpperCase()+' ADVENTURE</small><h2>'+NULL_QUEST.title+'</h2><p>'+NULL_QUEST.start+'</p></div><span class="quest-v3-status '+(n.complete?'complete':'')+'">'+(n.complete?'COMPLETE':n.started?'IN PROGRESS':'AVAILABLE')+'</span></div><div class="quest-v3-story"><p>'+NULL_QUEST.summary+'</p></div><section class="quest-v3-clue"><small>'+(n.complete?'WHERE IT LED':'CURRENT OBJECTIVE')+'</small><h3>'+esc(n.complete?'The Null Complex':d.label)+'</h3><p>'+esc(n.complete?'The facility can now be entered as a repeatable extraction activity.':d.objective)+'</p></section><section class="quest-v3-known"><div class="quest-v3-section-head"><span>WHAT YOUR GUILD KNOWS</span><small>The dossier grows as you investigate.</small></div><div>'+(known.length?known.map(x=>'<p>'+esc(x)+'</p>').join(''):'<p class="quest-v3-unknown">Voss is waiting with the NULL//07 transmission.</p>')+'</div></section><div class="quest-detail-action">'+nullActionHtml()+'</div>';
+ side.innerHTML='<section><small>REWARDS</small><div class="quest-reward-list">'+NULL_QUEST.rewards.map(x=>'<p>'+esc(x)+'</p>').join('')+'</div></section><section><small>TELEPORTER COMPONENTS</small><div class="quest-reward-list">'+[['cable','Conduit Cable'],['cell','Power Cell'],['fuse','Reactor Fuse']].map(x=>'<p>'+esc(x[1])+' · '+(n.components[x[0]]?'RECOVERED':'MISSING')+'</p>').join('')+'</div></section><section><small>ADVENTURE JOURNAL</small><div class="quest-history">'+(n.history.slice(-7).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>No entries yet.</p>')+'</div></section>'
+}
+
 function questCards(){
  const q=ensure(),a=q.ashfall;
  return [
+  {id:'null-complex-quest',title:NULL_QUEST.title,meta:NULL_QUEST.length+' adventure · Null Complex',difficulty:NULL_QUEST.difficulty,status:nullQ().complete?'COMPLETE':nullQ().started?'IN PROGRESS':'AVAILABLE',complete:nullQ().complete,locked:false,icon:'◈'},
   {id:'ashfall',title:ASHFALL.title,meta:ASHFALL.length+' adventure · Zeltira',difficulty:ASHFALL.difficulty,status:a.complete?'COMPLETE':a.started?'IN PROGRESS':'AVAILABLE',complete:a.complete,locked:false},
   {id:'echoes',title:QUEST.title,meta:QUEST.length+' adventure · Zeltira',difficulty:QUEST.difficulty,status:complete()?'COMPLETE':q.started?'IN PROGRESS':echoesUnlocked()?'AVAILABLE':'LOCKED',complete:complete(),locked:!echoesUnlocked()&&!q.started},
   window.CellboundThirteenthBell?.card?.(),
@@ -1231,6 +1314,7 @@ function renderDetail(){
     root.innerHTML='<div class="quest-list-empty">'+(selectedTab==='completed'?'Select a completed quest to review its story and rewards.':selectedTab==='active'?'No active quest selected. Completed quests are available from the Completed tab.':'Select an adventure to view its details.')+'</div>';
     side.innerHTML='';return
   }
+  if(selectedAdventure==='null-complex-quest'){renderNullQuestDetail(root,side);bindActions();return}
   if(selectedAdventure==='ashfall'){renderAshfallDetail(root,side);bindActions();return}
   if(String(selectedAdventure).startsWith('class-trial:')){const t=classTrialDefs().find(x=>x.key===selectedAdventure);if(t){renderClassTrialDetail(t,root,side);return}}
   if(selectedAdventure==='thirteenth-bell'){window.CellboundThirteenthBell?.renderDetail?.(root,side);return}
@@ -1252,6 +1336,7 @@ function renderDetail(){
   bindActions();
 }
 function bindActions(){
+  $('[data-nullquest-start]')?.addEventListener('click',startNullQuest);$('[data-nullquest-play]')?.addEventListener('click',playNullQuest);$('[data-nullquest-open-activity]')?.addEventListener('click',()=>Game.switchView?.('world'));
   $('[data-ashfall-start]')?.addEventListener('click',startAshfall);
   $('[data-ashfall-tracks]')?.addEventListener('click',openAshfallTracks);
   $('[data-ashfall-ambush]')?.addEventListener('click',beginAshfallAmbush);
@@ -1310,7 +1395,7 @@ async function checkHistory(){if(currentStage()==='vault'&&latestAshenClear())aw
 function init(){
   Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,100);return}
   const q=ensure();if(q.started&&!complete())selectedAdventure='echoes';else if(q.ashfall?.complete&&echoesUnlocked())selectedAdventure='echoes';bind();render();checkHistory();setInterval(checkHistory,2500);
-  window.CellboundQuests={render,ensure,startAshfall,beginInvestigation,runQuest2DFight,runInteractiveQuest2DFight,selectAdventure:id=>{selectedAdventure=String(id||selectedAdventure);render()},isHollowUnlocked:()=>Boolean(ensure()?.flags?.hollowSanctumUnlocked)};
+  window.CellboundQuests={render,ensure,startAshfall,beginInvestigation,runQuest2DFight,runInteractiveQuest2DFight,selectAdventure:id=>{selectedAdventure=String(id||selectedAdventure);render()},isHollowUnlocked:()=>Boolean(ensure()?.flags?.hollowSanctumUnlocked),isNullComplexUnlocked:()=>Boolean(ensure()?.nullComplex?.complete||state()?.progression?.nullComplexUnlocked)};
 }
 init();
 })();
