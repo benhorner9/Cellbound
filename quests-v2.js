@@ -184,21 +184,47 @@ async function advance(done,next,note){
 }
 
 function dialogueRoot(){
-  let root=$('#questDialogue');
-  if(!root){root=document.createElement('div');root.id='questDialogue';root.className='quest-dialogue-backdrop';root.hidden=true;document.body.appendChild(root)}
-  return root;
+ let root=$('#questDialogue');
+ if(!root){root=document.createElement('div');root.id='questDialogue';root.className='quest-dialogue-backdrop';root.hidden=true;document.body.appendChild(root)}
+ return root
 }
-function showDialogue(title,speaker,beats,onDone){
-  const root=dialogueRoot();let index=0;
-  const draw=()=>{
-    root.innerHTML='<section class="quest-dialogue">'+speakerPortrait(speaker)+'<div><small>'+esc(speaker)+'</small><h3>'+esc(title)+'</h3><p>'+esc(beats[index])+'</p><div class="quest-dialogue-progress">'+beats.map((_,i)=>'<i class="'+(i<=index?'active':'')+'"></i>').join('')+'</div><button data-next>'+(index===beats.length-1?'CONTINUE →':'NEXT →')+'</button></div></section>';
-    root.querySelector('[data-next]').onclick=async()=>{
-      if(index<beats.length-1){index++;draw();return}
-      root.hidden=true;
-      if(onDone)await onDone();
-    };
-  };
-  draw();root.hidden=false;
+function comicPanels(title,speaker,beats){
+ const list=Array.isArray(beats)?beats:[beats];
+ return list.map((text,i)=>({
+  kind:i===0?'location':'dialogue',
+  eyebrow:i===0?'QUEST STORY':'',
+  speaker,
+  title:i===0?title:'',
+  text:String(text||''),
+  wide:list.length===1
+ }))
+}
+async function showDialogue(title,speaker,beats,onDone){
+ const comic=window.CellboundComicScenes;
+ if(comic?.show){
+  await comic.show({
+   eyebrow:'CELLBOUND · QUEST',
+   title,
+   subtitle:speaker,
+   page:'QUEST',
+   theme:'zeltira',
+   panels:comicPanels(title,speaker,beats),
+   progressive:true,
+   storyOnly:true,
+   allowSkip:true,
+   skipLabel:'SKIP STORY',
+   nextLabel:'NEXT PANEL →',
+   continueLabel:'CONTINUE QUEST →'
+  });
+  if(onDone)await onDone();
+  return
+ }
+ const root=dialogueRoot();let index=0;
+ const draw=()=>{
+  root.innerHTML='<section class="quest-dialogue">'+speakerPortrait(speaker)+'<div><small>'+esc(speaker)+'</small><h3>'+esc(title)+'</h3><p>'+esc(beats[index])+'</p><div class="quest-dialogue-progress">'+beats.map((_,i)=>'<i class="'+(i<=index?'active':'')+'"></i>').join('')+'</div><button data-next>'+(index===beats.length-1?'CONTINUE →':'NEXT →')+'</button></div></section>';
+  root.querySelector('[data-next]').onclick=async()=>{if(index<beats.length-1){index++;draw();return}root.hidden=true;if(onDone)await onDone()}
+ };
+ draw();root.hidden=false
 }
 
 
