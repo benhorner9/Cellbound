@@ -101,7 +101,7 @@ async function fight(room){
  if(outcome!=='victory'||result.outcome!=='victory'){wipe('The Aberrants overwhelmed the expedition.');return}
  room.cleared=true;run.message=(room.type==='breach'?'Containment breach purged. Bonus materials recovered.':'Aberrants eliminated.')+' The route is secure.';
  if(room.type==='breach')awardPending(2+Math.floor(run.floor/3),true);
- persist();render()
+ persist();render();showRoom()
 }
 function search(){
  const room=roomAt(run.pos.x,run.pos.y);if(!room||room.type!=='search'||room.searched)return;
