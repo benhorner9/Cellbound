@@ -854,7 +854,7 @@ function attachmentMeta(stack){
   return{profession:meta?.profession||'Profession',skill:Number(recipe?.level)||1,tier:Number(stack?.payload?.attachmentTier)||P?.attachmentTier?.(recipe?.level)||1,rarity:stack?.rarity||recipe?.output?.rarity||P?.craftedRarity?.(recipe?.level,recipe?.endgame)||'Uncommon'}
 }
 function attachmentCard(stack,current){
-  const P=window.CellboundProfessions,meta=attachmentMeta(stack),same=current?.key===stack.key,art=P?.consumableArtHTML?.(stack.key,48,'cb-attachment-art')||'✥';
+  const P=window.CellboundProfessions,meta=attachmentMeta(stack),same=current?.key===stack.key&&(!stack.payload?.crafterOnly||current?.boundCharacterId===stack.payload.boundCharacterId),art=P?.consumableArtHTML?.(stack.key,48,'cb-attachment-art')||'✥';
   return `<article class="cb-attachment-option ${same?'currently-attached':''}">
     <div class="cb-attachment-option-art">${art}</div>
     <div class="cb-attachment-option-copy"><small>${meta.profession.toUpperCase()} · SKILL ${meta.skill} · TIER ${meta.tier}${stack.payload?.crafterOnly?' · CRAFTER ONLY':''}</small><b>${escHtml(stack.name)}</b><span>${escHtml(P?.bonusText?.(stack.payload?.bonuses)||stack.payload?.description||'Gear attachment')}</span><em>${same?'Currently attached':meta.rarity+' · ×'+(stack.quantity||1)+' in Bank'+(current?' · replaces current attachment':'')}</em></div>
@@ -1173,7 +1173,7 @@ function applyAttachmentToEquipped(key,slot){
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId)),item=c?.equipment?.[slot],stack=state?.consumables?.find(x=>x.key===key&&(!x?.payload?.crafterOnly||x.payload.boundCharacterId===c?.id)),payload=stack?.payload||{};
   if(!state||!c||!item||!stack||payload.effect!=='gear-enhancement'||!payload.persistentAttachment||payload.slot!==slot||payload.crafterOnly&&payload.boundCharacterId!==c.id)return;
   const existing=item.attachment;
-  if(existing?.key===key)return;
+  if(existing?.key===key&&(!payload.crafterOnly||existing?.boundCharacterId===payload.boundCharacterId))return;
   if(existing&&!confirm('Replace '+(existing.name||'the current attachment')+' on '+item.name+' with '+stack.name+'?\n\nThe existing attachment will be permanently destroyed and cannot be recovered.'))return;
   const meta=window.CellboundProfessions?.recipeMetaForOutputKey?.(key),recipe=meta?.recipe;
   item.attachment={key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},profession:meta?.profession||null,skill:Number(recipe?.level)||null,tier:Number(payload.attachmentTier)||null,rarity:stack.rarity||recipe?.output?.rarity||'Uncommon',crafterOnly:Boolean(payload.crafterOnly),boundCharacterId:payload.boundCharacterId||null,boundCharacterName:payload.boundCharacterName||null,attachedAt:new Date().toISOString()};
