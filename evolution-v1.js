@@ -213,10 +213,11 @@ async function applyBankAttachment(key,charId){
   const s=state(),stack=(s?.consumables||[]).find(x=>x.key===key),payload=stack?.payload||{},c=s?.roster?.find(x=>x.id===charId),item=c?.equipment?.[payload.slot];
   if(!stack||payload.effect!=='gear-enhancement'||!payload.persistentAttachment||!c||!item)return;
   const existing=item.attachment;
-  if(existing&&existing.key!==key&&!confirm('Replace '+(existing.name||'the current attachment')+' on '+item.name+' with '+stack.name+'?'))return;
+  if(existing?.key===key)return;
+  if(existing&&!confirm('Replace '+(existing.name||'the current attachment')+' on '+item.name+' with '+stack.name+'?\n\nThe existing attachment will be permanently destroyed and cannot be recovered.'))return;
   const meta=craftedMeta(key),recipe=meta.recipe;
   item.attachment={key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},profession:meta.profession,skill:Number(recipe?.level)||null,tier:Number(payload.attachmentTier)||P?.attachmentTier?.(recipe?.level)||1,rarity:stack.rarity||meta.rarity,attachedAt:new Date().toISOString()};
-  consumeCraftedStack(key);s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push(stack.name+' attached to '+c.name+'’s '+item.name+'.');
+  consumeCraftedStack(key);s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push(existing?stack.name+' replaced '+(existing.name||'an attachment')+' on '+c.name+'’s '+item.name+'; the old attachment was destroyed.':stack.name+' attached to '+c.name+'’s '+item.name+'.');
   await persist(true);closeBankResource();window.CellboundFX?.micro?.(stack.name+' attached','gold')
 }
 async function useBankFlask(key,charId){
@@ -254,7 +255,7 @@ function openBankResource(resourceKey){
   let actions='';
   if(payload.effect==='gear-enhancement'&&payload.persistentAttachment){
     const eligible=s.roster.slice(0,ent().rosterCap).filter(c=>!Game?.isUnavailable?.(c)&&c?.equipment?.[payload.slot]);
-    actions=`<section class="bank-crafted-targets"><header><small>CRAFTED ATTACHMENT · TIER ${payload.attachmentTier||P?.attachmentTier?.(recipe?.level)||1}</small><h3>Attach to equipped ${esc(payload.slot)}</h3><p>Attachments become part of the equipment item and remain on it until replaced.</p></header><div class="bank-character-list">${eligible.map(ch=>{const item=ch.equipment[payload.slot],existing=item?.attachment;return `<button data-bank-attach="${key}" data-bank-char="${ch.id}"><span class="avatar">${Game?.portraitHTML?.(ch,'sm')||esc(ch.name.slice(0,2))}</span><span><b>${esc(ch.name)}</b><small>${esc(item.name)} · iLvl ${Number(item.itemLevel)||0}</small></span><em>${existing?'REPLACES '+esc(existing.name||'ATTACHMENT'):'READY TO ATTACH'}</em></button>`}).join('')||'<p>No available character currently has a compatible item equipped.</p>'}</div></section>`;
+    actions=`<section class="bank-crafted-targets"><header><small>CRAFTED ATTACHMENT · TIER ${payload.attachmentTier||P?.attachmentTier?.(recipe?.level)||1}</small><h3>Attach to equipped ${esc(payload.slot)}</h3><p>Applying an attachment consumes one from the Bank. If the item already has an attachment, replacing it permanently destroys the old one.</p></header><div class="bank-character-list">${eligible.map(ch=>{const item=ch.equipment[payload.slot],existing=item?.attachment;return `<button data-bank-attach="${key}" data-bank-char="${ch.id}" ${existing?.key===key?'disabled':''}><span class="avatar">${Game?.portraitHTML?.(ch,'sm')||esc(ch.name.slice(0,2))}</span><span><b>${esc(ch.name)}</b><small>${esc(item.name)} · iLvl ${Number(item.itemLevel)||0}</small></span><em>${existing?.key===key?'ALREADY ATTACHED':existing?'DESTROYS '+esc(existing.name||'ATTACHMENT'):'READY TO ATTACH'}</em></button>`}).join('')||'<p>No available character currently has a compatible item equipped.</p>'}</div></section>`;
   }else if(payload.effect==='character-flask'){
     const eligible=s.roster.slice(0,ent().rosterCap).filter(c=>!Game?.isUnavailable?.(c));
     actions=`<section class="bank-crafted-targets"><header><small>PRE-COMBAT CONSUMABLE</small><h3>Choose an adventurer</h3><p>Only one Flask can be active on a character at a time.</p></header><div class="bank-character-list">${eligible.map(ch=>`<button data-bank-flask="${key}" data-bank-char="${ch.id}"><span class="avatar">${Game?.portraitHTML?.(ch,'sm')||esc(ch.name.slice(0,2))}</span><span><b>${esc(ch.name)}</b><small>${esc(ch.class)} · ${esc(ch.spec)}</small></span><em>USE FLASK</em></button>`).join('')}</div></section>`;
