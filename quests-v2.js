@@ -1233,7 +1233,27 @@ async function nullComic(title,speaker,text,art,done){
 }
 async function startNullQuest(){
  const n=nullQ();if(n.complete)return;if(!n.started){n.started=true;n.startedAt=new Date().toISOString();nullHistory('Dr. Elara Voss isolated an impossible transmission marked NULL//07.');await commit()}
- await nullComic('The Signal','Dr. Elara Voss',['This signal should not exist. The facility transmitting it was destroyed years ago.','NULL//07. Containment active. Personnel: zero. Subjects: forty-seven. And one final instruction: do not open the Complex.','I need a team I can trust. Follow the signal. Find out what is still alive in there.'],NULL_ART.signal,()=>nullAdvance('signal','entry','Voss traced NULL//07 to a sealed research facility omitted from every living map.'))
+ const comic=window.CellboundComicScenes;
+ if(comic?.show)await comic.show({
+  eyebrow:'CELLBOUND · QUEST',
+  title:'The Signal',
+  subtitle:'Dr. Elara Voss',
+  page:'SIGNAL FROM NOWHERE',
+  theme:'null',
+  panels:[{kind:'location',speaker:'Dr. Elara Voss',artwork:NULL_ART.signal,wide:true}],
+  reveals:[
+   {panel:0,speaker:'Dr. Elara Voss',text:'This signal should not exist. The facility transmitting it was destroyed years ago.',placement:'bottom-left'},
+   {panel:0,speaker:'Dr. Elara Voss',text:'NULL//07. Containment active. Personnel: zero. Subjects: forty-seven. And one final instruction: do not open the Complex.',placement:'top-right'},
+   {panel:0,speaker:'Dr. Elara Voss',text:'I need a team I can trust. Follow the signal. Find out what is still alive in there.',placement:'bottom-right'}
+  ],
+  progressive:true,
+  storyOnly:true,
+  allowSkip:true,
+  skipLabel:'SKIP STORY',
+  nextLabel:'NEXT →',
+  continueLabel:'CONTINUE →'
+ });
+ await nullAdvance('signal','entry','Voss traced NULL//07 to a sealed research facility omitted from every living map.')
 }
 async function playNullQuest(){
  const n=nullQ(),stage=nullStage(),p=party();if(p.length!==5){alert('Build a complete active five-character party before entering the Null Complex.');Game.switchView?.('party');return}
