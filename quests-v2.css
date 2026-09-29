@@ -120,6 +120,67 @@
 .quest-puzzle-confirm{width:100%;min-height:42px;border:1px solid rgba(216,185,118,.22);background:#252014;color:#d9c488;font-size:.36rem;font-weight:900;letter-spacing:.08em}
 .quest-puzzle-confirm:disabled{opacity:.35}
 .quest-puzzle.solved{text-align:center;padding:30px}.quest-puzzle-solved{display:grid;place-items:center;width:76px;height:76px;margin:0 auto 12px;border:1px solid rgba(216,185,118,.22);border-radius:50%;color:#d2b36d;font-size:1.8rem}.quest-puzzle.solved>small{color:#8d784f;font-size:.32rem;font-weight:900;letter-spacing:.12em}.quest-puzzle.solved h2{margin:5px 0;color:#e8dfcc;font-family:Georgia,serif;font-size:1.3rem;font-weight:400}.quest-puzzle.solved p{max-width:520px;margin:0 auto;color:#7e8b86;font-size:.46rem;line-height:1.55}.quest-puzzle.solved button{width:min(300px,100%);min-height:44px;margin-top:15px;border:1px solid rgba(216,185,118,.23);background:#241f14;color:#dbc68e;font-size:.36rem;font-weight:900}
+/* Null Complex component-search controls */
+.null-search-quest{width:min(760px,94vw);padding:20px 22px}
+.null-search-quest>.quest-v3-story{padding:18px 22px 4px}
+.null-search-task{padding:10px 0 2px}
+.null-search-task>small{display:block;color:#758982;font-size:.31rem;font-weight:800;letter-spacing:.08em}
+.null-search-task h3{margin:10px 0 15px;color:#f0f1ef;font-size:1rem;line-height:1.3}
+.null-search-nodes{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-top:10px
+}
+.null-search-nodes button{
+  appearance:none;
+  -webkit-appearance:none;
+  min-width:0;
+  min-height:64px;
+  padding:12px 14px;
+  border:1px solid rgba(216,185,118,.22);
+  border-radius:0;
+  background:linear-gradient(180deg,#121b1b,#0b1214);
+  color:#d9c37f;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.02);
+  font:800 .42rem/1.35 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  letter-spacing:.05em;
+  text-align:center;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  cursor:pointer;
+  touch-action:manipulation
+}
+.null-search-nodes button:hover{
+  border-color:rgba(216,185,118,.48);
+  background:linear-gradient(180deg,#1b221c,#101815);
+  color:#f0d58c
+}
+.null-search-nodes button:active{transform:translateY(1px)}
+.null-search-nodes button:disabled{opacity:.42;cursor:not-allowed;transform:none}
+.null-search-task [data-search-note]{
+  margin:14px 0 0;
+  padding:10px 12px;
+  border-left:2px solid rgba(216,185,118,.35);
+  background:#091113;
+  color:#87948f;
+  font-size:.36rem;
+  line-height:1.5
+}
+.null-search-pressure{
+  flex:0 0 auto;
+  color:#c6cbc8;
+  font-size:.45rem;
+  letter-spacing:.03em
+}
+@media(max-width:760px){
+  .null-search-quest{width:min(680px,96vw);padding:16px}
+  .null-search-nodes{grid-template-columns:1fr}
+  .null-search-nodes button{min-height:54px;font-size:.55rem}
+  .null-search-task h3{font-size:.9rem}
+  .null-search-task [data-search-note]{font-size:.5rem}
+}
+
 
 /* Proper quest-complete screen */
 .quest-complete-card{
