@@ -35,11 +35,12 @@ function normalise(){
     c.activeProfessionBuffs=Array.isArray(c.activeProfessionBuffs)?c.activeProfessionBuffs:[];
   });
 }
-function addConsumable(item,qty=1){
-  const s=state(),key=item.key||item.itemKey,name=item.name||item.itemName||key,payload=item.payload||{},meta=P?.recipeMetaForOutputKey?.(key),rarity=item.rarity||meta?.recipe?.output?.rarity||P?.craftedRarity?.(meta?.recipe?.level,meta?.recipe?.endgame)||'Uncommon';
-  const found=s.consumables.find(x=>x.key===key);
-  if(found){found.quantity=(found.quantity||1)+qty;found.payload=payload||found.payload;found.rarity=rarity||found.rarity}
-  else s.consumables.push({key,name,payload,rarity,quantity:qty});
+function addConsumable(item,qty=1,boundCrafter=null){
+  const s=state(),key=item.key||item.itemKey,name=item.name||item.itemName||key,meta=P?.recipeMetaForOutputKey?.(key),payload={...(item.payload||{})},rarity=item.rarity||meta?.recipe?.output?.rarity||P?.craftedRarity?.(meta?.recipe?.level,meta?.recipe?.endgame)||'Uncommon';
+  if(payload.crafterOnly&&boundCrafter){payload.boundCharacterId=boundCrafter.id;payload.boundCharacterName=boundCrafter.name;payload.requiredProfession=payload.requiredProfession||meta?.profession||null}
+  const boundId=payload.boundCharacterId||null,found=s.consumables.find(x=>x.key===key&&(x.payload?.boundCharacterId||null)===boundId);
+  if(found){found.quantity=(found.quantity||1)+qty;found.payload={...(found.payload||{}),...payload};found.rarity=rarity||found.rarity;found.tradeState=payload.crafterOnly?'soulbound':(found.tradeState||item.tradeState||'tradeable')}
+  else s.consumables.push({key,name,payload,rarity,tradeState:payload.crafterOnly?'soulbound':(item.tradeState||'tradeable'),quantity:qty});
 }
 async function commit(render=true){
   Game.save();await Game.persistState();if(render){Game.renderAll();renderProfessions();renderSellOptions();}
@@ -184,7 +185,7 @@ async function finishCraftProject(c,prof,recipe,project){
     if(firstInput){s.materials[firstInput]=(Number(s.materials[firstInput])||0)+1;reclaimed=materialName(firstInput)}
   }
   const out=recipe.output,qty=out.quantity||1;
-  if(out.category==='consumable')addConsumable(out,qty);
+  if(out.category==='consumable')addConsumable(out,qty,recipe.crafterOnly?c:null);
   else if(out.category==='material')Game.addMaterial(out.key,qty);
   professionLevelUp(prof,xp);
   history.count=(Number(history.count)||0)+1;
@@ -193,7 +194,7 @@ async function finishCraftProject(c,prof,recipe,project){
   prof.craftHistory[recipe.id]=history;
   prof.projectsCompleted=(Number(prof.projectsCompleted)||0)+1;
   s.activity.push(c.name+' completed '+recipe.name+' as a '+tier.label.toLowerCase()+' '+prof.name+' project.');
-  lastCraftMessage=tier.label+' · '+out.name+' completed · +'+xp+' profession XP'+(reclaimed?' · recovered 1 '+reclaimed:'');
+  lastCraftMessage=tier.label+' · '+out.name+' completed'+(recipe.crafterOnly?' · BOUND TO '+c.name.toUpperCase():'')+' · +'+xp+' profession XP'+(reclaimed?' · recovered 1 '+reclaimed:'');
   craftProject=null;
   await commit();
 }
@@ -233,7 +234,7 @@ function renderProfessions(){
     const nextRecipe=def.recipes.find(r=>r.level>prof.level),masterworks=Number(prof.masterworks)||0,completed=Number(prof.projectsCompleted)||0;
     const profile=`<section class="profession-command-hero"><div class="profession-command-mark">${def.icon}</div><div class="profession-command-copy"><small>ACTIVE TRADE</small><h3>${prof.name}</h3><p>${def.summary}</p><div class="profession-skill-track"><span><b>SKILL ${prof.level}</b><em>${prof.level>=100?'MAXIMUM SKILL':prof.xp+' / '+need+' XP'}</em></span><i><b style="width:${pct}%"></b></i></div></div><div class="profession-command-stats"><span><small>PROJECTS</small><b>${completed}</b></span><span><small>MASTERWORKS</small><b>${masterworks}</b></span><span><small>NEXT RECIPE</small><b>${nextRecipe?'Skill '+nextRecipe.level:'All learned'}</b></span></div></section>`;
     const visible=def.recipes.filter(r=>{const discovered=!r.requiresDiscovery||s.discoveredRecipes.includes(r.id),levelOk=prof.level>=r.level,materialsOk=Object.entries(r.inputs).every(([k,q])=>(Number(s.materials[k])||0)>=q),ok=discovered&&levelOk&&materialsOk;if(recipeFilter==='ready')return ok;if(recipeFilter==='locked')return !ok;if(recipeFilter==='rare')return r.requiresDiscovery||r.endgame;return true});
-    const recipes=visible.map(r=>{const discovered=!r.requiresDiscovery||s.discoveredRecipes.includes(r.id),levelOk=prof.level>=r.level,materialsOk=Object.entries(r.inputs).every(([k,q])=>(Number(s.materials[k])||0)>=q),ok=discovered&&levelOk&&materialsOk,busy=Boolean(craftProject),lock=!discovered?'Recipe not discovered':!levelOk?`Requires skill ${r.level}`:!materialsOk?'Missing reagents':'',history=recipeHistory(prof,r.id),outputArt=r.output.category==='consumable'&&P?.consumableArtHTML?P.consumableArtHTML(r.output.key,60,'recipe-output-art'):'';return `<article class="recipe-card profession-recipe-card ${ok?'ready':'locked'} ${craftProject?.recipeId===r.id?'project-active':''}" ${outputArt?'data-item-art-done="1"':''}>${outputArt}<div class="recipe-main"><div class="recipe-kicker"><span>${r.endgame?'END-GAME · ':''}SKILL ${r.level}</span><em>${craftXpLabel(r,prof)}</em></div><h4>${r.name}</h4><p>${recipeInputs(r)} <i>→</i> <b>${r.output.name}</b></p><div class="recipe-history"><span>${history.count||0} completed</span><span>Best ${Math.round(history.best||0)}%</span><span>${history.masterwork?'✓ Masterwork achieved':'Masterwork bonus available'}</span></div>${lock?`<p class="recipe-lock-reason">${lock}</p>`:''}</div><button data-craft="${r.id}" ${ok&&!busy?'':'disabled'}>${busy?(craftProject?.recipeId===r.id?'IN PROGRESS':'WORKSHOP BUSY'):'START PROJECT'}</button></article>`;}).join('');
+    const recipes=visible.map(r=>{const discovered=!r.requiresDiscovery||s.discoveredRecipes.includes(r.id),levelOk=prof.level>=r.level,materialsOk=Object.entries(r.inputs).every(([k,q])=>(Number(s.materials[k])||0)>=q),ok=discovered&&levelOk&&materialsOk,busy=Boolean(craftProject),lock=!discovered?'Recipe not discovered':!levelOk?`Requires skill ${r.level}`:!materialsOk?'Missing reagents':'',history=recipeHistory(prof,r.id),outputArt=r.output.category==='consumable'&&P?.consumableArtHTML?P.consumableArtHTML(r.output.key,60,'recipe-output-art'):'';return `<article class="recipe-card profession-recipe-card ${ok?'ready':'locked'} ${craftProject?.recipeId===r.id?'project-active':''}" ${outputArt?'data-item-art-done="1"':''}>${outputArt}<div class="recipe-main"><div class="recipe-kicker"><span>${r.endgame?'END-GAME · ':''}${r.crafterOnly?'CRAFTER ONLY · ':''}SKILL ${r.level}</span><em>${craftXpLabel(r,prof)}</em></div><h4>${r.name}</h4><p>${recipeInputs(r)} <i>→</i> <b>${r.output.name}</b></p><div class="recipe-history"><span>${history.count||0} completed</span><span>Best ${Math.round(history.best||0)}%</span><span>${history.masterwork?'✓ Masterwork achieved':'Masterwork bonus available'}</span></div>${lock?`<p class="recipe-lock-reason">${lock}</p>`:''}</div><button data-craft="${r.id}" ${ok&&!busy?'':'disabled'}>${busy?(craftProject?.recipeId===r.id?'IN PROGRESS':'WORKSHOP BUSY'):'START PROJECT'}</button></article>`;}).join('');
     const activeRecipe=craftProject&&craftProject.charId===c.id&&craftProject.slot===selectedSlot?def.recipes.find(r=>r.id===craftProject.recipeId):null;
     body=profile+(lastCraftMessage?`<p class="craft-message profession-result-message">${lastCraftMessage}</p>`:'')+(activeRecipe?craftProjectMarkup(c,prof,activeRecipe):'')+`<div class="profession-recipe-heading"><div><small>WORK ORDERS</small><h3>Choose what to make.</h3></div><p>Harder and first-time projects award the most skill XP. Out-levelled recipes remain useful, but become poor training.</p></div><div class="recipe-list">${recipes||'<div class="profession-empty">No recipes match this filter.</div>'}</div>`;
   }
