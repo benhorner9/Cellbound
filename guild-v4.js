@@ -137,7 +137,7 @@ const nativeLocalSet=Storage.prototype.setItem;
 function talentState(className){
   const out={};Object.keys(classes[className]?.specs||{}).forEach(spec=>{out[spec]={}});return out;
 }
-function cloneGear(item,source='Starting Equipment'){return item?{...item,source,quantity:undefined}:null;}
+function cloneGear(item,source='Starting Equipment'){if(!item)return null;const out={...item,source,quantity:undefined};return G?.ensureSockets?.(out)||out;}
 function starterEquipment(klass){
   const set=G.starterSet(klass);
   return {Head:cloneGear(set.find(x=>x.slot==='Head')),Chest:cloneGear(set.find(x=>x.slot==='Chest')),Weapon:cloneGear(set.find(x=>x.slot==='Weapon')),Shoulders:null,Hands:null,Waist:null,Legs:null,Feet:null,OffHand:null,Ring1:null,Ring2:null,Trinket1:null,Trinket2:null,Relic:null};
@@ -971,15 +971,15 @@ function removeBankQuantity(item,quantity){
 }
 function disposeBankItem(id,mode){
   const item=state.bank.find(x=>x.id===id);if(!item||bankItemProtected(item))return;
-  const qty=bankCleanupQuantity(item),name=item.name||'item';
+  const qty=bankCleanupQuantity(item),name=item.name||'item',gemCount=(item.sockets||[]).filter(Boolean).length,gemWarning=gemCount?`\n\n${gemCount} socketed gem${gemCount===1?'':'s'} will be permanently destroyed.`:'';
   if(mode==='vendor'){
     const gold=bankVendorUnitValue(item)*qty;
-    if(!confirm(`Sell ${qty} × ${name} to the Guild Quartermaster for ${gold.toLocaleString()} Gold?\n\nThis cannot be undone.`))return;
+    if(!confirm(`Sell ${qty} × ${name} to the Guild Quartermaster for ${gold.toLocaleString()} Gold?${gemWarning}\n\nThis cannot be undone.`))return;
     removeBankQuantity(item,qty);state.gold=(Number(state.gold)||0)+gold;
     state.activity.push(`Sold ${qty} × ${name} to the Guild Quartermaster for ${gold} Gold.`);
   }else if(mode==='dismantle'){
     const yieldMap=bankDismantleYield(item,qty),summary=Object.entries(yieldMap).map(([key,n])=>`${P?.MATERIALS?.[key]?.name||key} ×${n}`).join(', ');
-    if(!confirm(`Dismantle ${qty} × ${name}?\n\nYou will receive: ${summary}.\n\nThis cannot be undone.`))return;
+    if(!confirm(`Dismantle ${qty} × ${name}?\n\nYou will receive: ${summary}.${gemWarning}\n\nThis cannot be undone.`))return;
     removeBankQuantity(item,qty);Object.entries(yieldMap).forEach(([key,n])=>addMaterial(key,n));
     state.activity.push(`Dismantled ${qty} × ${name}: ${summary}.`);
   }else return;
