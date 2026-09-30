@@ -198,3 +198,15 @@ body.cbcomic-open{overflow:hidden}
   .cbcomic-shell{height:100dvh!important;max-height:100dvh!important}
   .cbcomic-party-strip{max-height:54px;overflow:hidden}
 }
+
+
+/* Tutorial artwork visibility repair: image-backed panels must sit above the panel background. */
+.cbcomic-panel.has-art{background:#070b0e}
+.cbcomic-panel.has-art>img{z-index:0!important}
+.cbcomic-panel.has-art:after{z-index:1!important}
+.cbcomic-panel.has-art:before{z-index:2!important}
+.cbcomic-panel.has-art .cbcomic-panel-art{z-index:0!important;opacity:.06}
+.cbcomic-panel.has-art .cbcomic-panel-icon,
+.cbcomic-panel.has-art .cbcomic-panel-speaker,
+.cbcomic-panel.has-art .cbcomic-panel-caption,
+.cbcomic-panel.has-art .cbcomic-reveal-caption{z-index:3!important}
