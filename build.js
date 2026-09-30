@@ -161,6 +161,7 @@ for(const file of files){
     if(!contents.includes('const SLOT_STAT_BUDGET=')||!contents.includes('function effectiveStatBudget'))throw new Error('14-slot combat stat budgeting is missing');
     if(!contents.includes('[1,2,3,4,5].forEach(tier=>'))throw new Error('Central gear catalogue must include raid-exclusive Tier 5 templates');
     if(!contents.includes('const SET_BONUS_RULES=')||!contents.includes('function setPieceCount')||!contents.includes('function setBonusState')||!contents.includes('function setBonusLines'))throw new Error('Shared equipment set bonus rules are missing');
+    if(!contents.includes('pieces2:')||!contents.includes('pieces4:'))throw new Error('T4 set progression must use the 2/4-piece structure');
     if(!contents.includes("'Death Knight|Blood'")||!contents.includes("'Death Knight|Frost'")||!contents.includes("'Death Knight|Unholy'")||!contents.includes("raidName:'Grave Sovereign Plate'"))throw new Error('Death Knight T1-T5 gear/spec catalogue is incomplete');
     if(!contents.includes("'Demon Hunter|Havoc'")||!contents.includes("'Demon Hunter|Vengeance'")||!contents.includes("raidName:'Abyssal Hunt Regalia'"))throw new Error('Demon Hunter T1-T5 gear/spec catalogue is incomplete');
     if(!contents.includes("'Evoker|Preservation'")||!contents.includes("'Evoker|Devastation'")||!contents.includes("raidName:'Aspectbound Regalia'"))throw new Error('Evoker T1-T5 gear/spec catalogue is incomplete');
@@ -180,7 +181,6 @@ for(const file of files){
     if(!contents.includes("'fractured-ages':")||!contents.includes("itemLevel:gearBand(38,40,40)"))throw new Error('Fractured Ages Normal loot band regressed');
     if(!contents.includes("return{tiers:{3:.50,4:.50},itemLevel:gearBand(44,44,44)"))throw new Error('Peak Cellbound+ loot must cap at Item Level 44');
     if(!contents.includes('enemyHealth:1.50,enemyDamage:1.38')||!contents.includes('enemyHealth:1.60*(1+(t-1)*.08)'))throw new Error('Full-gear Heroic / Cellbound+ combat tuning is missing');
-    if(!contents.includes('pieces4:'))throw new Error('T4 set progression must use the 2/4-piece structure');
     if(!contents.includes('uniqueChance:{normal:0'))throw new Error('Tier 4 uniques must not leak into Normal difficulty');
   }
   if(file==='combat-identities-v1.js'){
