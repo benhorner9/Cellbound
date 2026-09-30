@@ -269,7 +269,7 @@ function renderProfessions(){
   work.querySelectorAll('[data-craft]').forEach(b=>b.onclick=()=>beginCraft(b.dataset.craft));
   work.querySelector('[data-craft-abandon]')?.addEventListener('click',abandonCraft);
   work.querySelectorAll('[data-craft-action]').forEach(b=>b.onclick=()=>resolveCraftStep(b.dataset.craftAction));
-  $('#professionRecipeFilters [data-prof-recipe-filter]').forEach(b=>b.classList.toggle('active',b.dataset.profRecipeFilter===recipeFilter));
+  document.querySelectorAll('#professionRecipeFilters [data-prof-recipe-filter]').forEach(b=>b.classList.toggle('active',b.dataset.profRecipeFilter===recipeFilter));
 }
 function consumeStack(key){
   const s=state(),stack=s.consumables.find(x=>x.key===key);if(!stack)return null;
