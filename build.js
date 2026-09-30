@@ -42,6 +42,8 @@ for(const file of files){
   }
   if(file==='quests-v2.js'){
     for(const hook of ["id:'signal-from-nowhere'","Prototype 07 — The Reconstituted","progression.nullComplexUnlocked","isNullComplexUnlocked"])if(!contents.includes(hook))throw new Error('Signal From Nowhere quest is missing '+hook);
+    for(const hook of ['function qCombatants()','participants:[...p]',"quest:t.character.class+' Class Trial'","String(config.quest||config.title||'Quest').toUpperCase()","Quest combat viewer failed to initialise"])if(!contents.includes(hook))throw new Error('Solo class trial combat safety is missing '+hook);
+    if(contents.includes('esc(config.quest.toUpperCase())'))throw new Error('Quest combat header can black-screen when a quest label is omitted');
   }
   if(file==='null-complex-v1.js'){
     for(const hook of ['function unlocked()','Complete Signal From Nowhere','BEGIN SIGNAL FROM NOWHERE','3 × 3 facility'])if(!contents.includes(hook))throw new Error('Null Complex quest gate is missing '+hook);
