@@ -68,7 +68,7 @@ const SPECS={
       title:'Execution Fighter',
       strength:'Heavy single-target pressure, execute damage and useful cleave.',
       tradeoff:'High personal threat and loses output when forced away from melee.',
-      damage:1.08,threat:1.08,physicalTaken:.95,cleave:.30,execute:.22,cooldown:.98
+      damage:1.12,threat:1.08,physicalTaken:.95,cleave:.30,execute:.22,cooldown:.98
     }
   },
   Paladin:{
@@ -228,7 +228,7 @@ const SPECS={
       title:'Fel Vanguard',
       strength:'Extremely mobile melee damage with fast Fury cycling, magical burst and strong cleave.',
       tradeoff:'Must stay aggressive and in melee range to keep Fury flowing; defensive tools compete with damage skills.',
-      damage:1.08,threat:.98,cooldown:.93,physicalTaken:.96,magicTaken:.92,cleave:.30
+      damage:1.01,threat:.98,cooldown:.93,physicalTaken:.96,magicTaken:.92,cleave:.30
     },
     Vengeance:{
       title:'Soul Warden',
@@ -248,7 +248,7 @@ const SPECS={
       title:'Dragonfire Artillery',
       strength:'High ranged magical burst with strong cleave and a flexible red/blue spell rotation.',
       tradeoff:'Its strongest attacks consume scarce Essence, so wasteful spending creates noticeable low-output windows.',
-      damage:1.09,threat:1.03,cooldown:.96,physicalTaken:1.04,magicTaken:.90,cleave:.30
+      damage:1.00,threat:1.03,cooldown:.96,physicalTaken:1.04,magicTaken:.90,cleave:.30
     }
   }
 };
