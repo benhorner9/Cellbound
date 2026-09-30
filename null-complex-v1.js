@@ -11,8 +11,8 @@ const NULL_RESOURCE_POOLS={
  facility:['salvaged-parts','tempering-flux','rune-dust','hollow-fibre','rough-gemstone']
 };
 const NULL_CATALYSTS=[
- {key:'ashen-soul-fragment',minFloor:2},{key:'cell-shards',minFloor:4},{key:'warden-iron',minFloor:4},
- {key:'ancient-soul',minFloor:6},{key:'void-crystal',minFloor:8}
+ {key:'ashen-soul-fragment',minFloor:3},{key:'warden-iron',minFloor:5},{key:'cell-shards',minFloor:6},
+ {key:'void-crystal',minFloor:9},{key:'ancient-soul',minFloor:10}
 ];
 const SEARCH_SOURCES=['lab','storage','reactor','containment'];
 const ENEMIES=[
@@ -129,7 +129,7 @@ function awardFromPool(pool,quantity,bonus=false,salt='loot'){
 }
 function maybeAwardCatalyst(bonus=false){
  const eligible=NULL_CATALYSTS.filter(x=>run.floor>=x.minFloor&&window.CellboundProfessions?.MATERIALS?.[x.key]);if(!eligible.length)return;
- const r=rng(run.seed+':catalyst:'+run.floor+':'+run.rooms+':'+Object.keys(run.pending).length),chance=bonus?.34:.16;
+ const r=rng(run.seed+':catalyst:'+run.floor+':'+run.rooms+':'+Object.keys(run.pending).length),chance=bonus?.22:.10;
  if(r()>chance)return;const pick=eligible[Math.floor(r()*eligible.length)];pendingAdd(pick.key,1)
 }
 function awardPending(quantity,bonus,source='facility'){
