@@ -86,6 +86,10 @@ for(const file of files){
   if(file==='trading-post-v3.js'){
     for(const hook of ["!x?.payload?.crafterOnly","!x?.attachment?.crafterOnly","Crafter-only items are soulbound and cannot be traded."])if(!contents.includes(hook))throw new Error('Trading Post crafter-only exclusion is missing '+hook);
   }
+  for(const stageFile of ['hollow-sanctum-v1.js','chaos-canyon-v1.js','fractured-ages-v1.js','blackout-station-v1.js']){
+    if(file===stageFile&&!contents.includes('consumeBossChargesOnce'))throw new Error(stageFile+' is missing profession boss-charge consumption');
+  }
+
   if(file==='character-portraits-v1.js'){
     for(const hook of ['window.CellboundPortraits','normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
     if(!contents.includes("if(item.slot&&item.slot!=='OffHand')return''"))throw new Error('Paper doll must not invent an OffHand visual for main-hand weapons');
@@ -601,6 +605,22 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   }
   if(new Set(allRecipeIds).size!==allRecipeIds.length)throw new Error('Profession recipe IDs must be unique');
   if(new Set(allOutputKeys).size!==allOutputKeys.length)throw new Error('Profession crafted item keys must be unique');
+  const allRecipes=professionEntries.flatMap(([,def])=>def.recipes||[]),bound=allRecipes.filter(r=>r.crafterOnly);
+  if(allRecipes.length!==120||bound.length!==20)throw new Error('Ten-profession catalogue must contain 120 recipes including 20 crafter-only rewards');
+  if(allRecipes.some(r=>Object.keys(r.inputs||{}).some(k=>!P.MATERIALS?.[k])))throw new Error('Profession recipe references unknown materials');
+  if(bound.some(r=>r.trainingScale!==.45||r.output?.tradeState!=='soulbound'||!r.output?.payload?.crafterOnly))throw new Error('Crafter-only items must stay character-bound');
+  const relicCore=P.PROFESSIONS.Reliccrafting.recipes.find(r=>r.output.key==='cellheart-core'),gadget=P.PROFESSIONS.Engineering.recipes.find(r=>r.output.key==='recovery-drone');
+  const char={id:'profession-validation',name:'Profession Test',equipment:{Relic:{attachment:{name:relicCore.name,attachmentFamily:'relic-core',bonuses:relicCore.output.payload.bonuses,proc:relicCore.output.payload.proc}}},activeProfessionBuffs:[
+    {kind:'flask',name:'Flask',bonuses:{damagePct:3},remainingBosses:3},
+    {kind:'food',name:'Food',bonuses:{stamina:3},remainingBosses:3},
+    {kind:'scroll',name:'Scroll',bonuses:{haste:3},remainingBosses:1},
+    {kind:'gadget',name:'Gadget',bonuses:gadget.output.payload.bonuses,proc:gadget.output.payload.proc,remainingBosses:1}
+  ]};
+  const prep=P.activeBonuses(char),proc=P.activeProcs(char);
+  if(prep.damagePct!==8||prep.haste!==3||!proc.openingBurstPct||!proc.triageHealPct)throw new Error('Flask/Food/Scroll/Gadget stacking or Relic Core special effect failed');
+  const charges={},first=P.consumeBossChargesOnce([char],'profession-test-boss',charges),again=P.consumeBossChargesOnce([char],'profession-test-boss',charges);
+  if(first.length!==2||again.length!==0||P.activeProcs(char).triageHealPct!==8)throw new Error('Preparation charges must expire exactly once per cleared boss');
+
   const missingGearArt=G.items.filter(x=>!G.artHTML(x,64).includes('<svg'));
   if(missingGearArt.length)throw new Error('Equipment missing full item artwork: '+missingGearArt.slice(0,5).map(x=>x.itemId).join(', '));
   const missingMaterialArt=Object.keys(P.MATERIALS||{}).filter(key=>!P.materialArtHTML(key,64).includes('<svg'));
