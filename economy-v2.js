@@ -238,6 +238,43 @@ async function learnProfession(charId,slot,name){
   if(!c||!characterUsable(c.id)||slot>=slots||!P.PROFESSIONS[name]||c.professions.some(p=>p?.name===name))return;
   c.professions[slot]={name,level:1,xp:0};selectedChar=charId;selectedSlot=slot;s.activity.push(`${c.name} learned ${name}.`);await commit();
 }
+function recipeAvailability(recipe,prof,s){
+  const discovered=!recipe.requiresDiscovery||s.discoveredRecipes.includes(recipe.id);
+  const levelOk=prof.level>=recipe.level;
+  const materialsOk=Object.entries(recipe.inputs).every(([key,qty])=>(Number(s.materials[key])||0)>=qty);
+  const ready=discovered&&levelOk&&materialsOk;
+  const lock=!discovered?'Recipe not discovered':!levelOk?`Requires skill ${recipe.level}`:!materialsOk?'Missing reagents':'';
+  return{discovered,levelOk,materialsOk,ready,lock};
+}
+function recipeMatchesFilter(recipe,prof,s){
+  const {ready}=recipeAvailability(recipe,prof,s);
+  if(recipeFilter==='ready')return ready;
+  if(recipeFilter==='locked')return !ready;
+  if(recipeFilter==='rare')return Boolean(recipe.requiresDiscovery||recipe.endgame);
+  return true;
+}
+function recipeCardMarkup(recipe,prof,s){
+  const {ready,lock}=recipeAvailability(recipe,prof,s);
+  const busy=Boolean(craftProject);
+  const history=recipeHistory(prof,recipe.id);
+  const outputArt=recipe.output.category==='consumable'&&P?.consumableArtHTML
+    ?P.consumableArtHTML(recipe.output.key,60,'recipe-output-art')
+    :'';
+  const stateClass=ready?'ready':'locked';
+  const projectClass=craftProject?.recipeId===recipe.id?' project-active':'';
+  const buttonLabel=busy?(craftProject?.recipeId===recipe.id?'IN PROGRESS':'WORKSHOP BUSY'):'START PROJECT';
+  return `<article class="recipe-card profession-recipe-card ${stateClass}${projectClass}" ${outputArt?'data-item-art-done="1"':''}>
+    ${outputArt}
+    <div class="recipe-main">
+      <div class="recipe-kicker"><span>${recipe.endgame?'END-GAME · ':''}${recipe.crafterOnly?'CRAFTER ONLY · ':''}SKILL ${recipe.level}</span><em>${craftXpLabel(recipe,prof)}</em></div>
+      <h4>${recipe.name}</h4>
+      <p>${recipeInputs(recipe)} <i>→</i> <b>${recipe.output.name}</b></p>
+      <div class="recipe-history"><span>${history.count||0} completed</span><span>Best ${Math.round(history.best||0)}%</span><span>${history.masterwork?'✓ Masterwork achieved':'Masterwork bonus available'}</span></div>
+      ${lock?`<p class="recipe-lock-reason">${lock}</p>`:''}
+    </div>
+    <button data-craft="${recipe.id}" ${ready&&!busy?'':'disabled'}>${buttonLabel}</button>
+  </article>`;
+}
 function renderProfessions(){
   if(!Game?.ready)return;normalise();const s=state(),list=$('#professionCharacterList'),work=$('#professionWorkshop'),grid=$('#reagentGrid');if(!list||!work||!grid)return;
   const usable=usableRoster();if(!selectedChar||!usable.some(c=>c.id===selectedChar))selectedChar=usable[0]?.id||null;
@@ -258,8 +295,8 @@ function renderProfessions(){
     const def=professionDef(prof.name),need=prof.level>=100?1:P.skillThreshold(prof.level),pct=prof.level>=100?100:Math.min(100,Math.round((prof.xp/need)*100));
     const nextRecipe=def.recipes.find(r=>r.level>prof.level),masterworks=Number(prof.masterworks)||0,completed=Number(prof.projectsCompleted)||0;
     const profile=`<section class="profession-command-hero"><div class="profession-command-mark">${def.icon}</div><div class="profession-command-copy"><small>ACTIVE TRADE</small><h3>${prof.name}</h3><p>${def.summary}</p><div class="profession-skill-track"><span><b>SKILL ${prof.level}</b><em>${prof.level>=100?'MAXIMUM SKILL':prof.xp+' / '+need+' XP'}</em></span><i><b style="width:${pct}%"></b></i></div></div><div class="profession-command-stats"><span><small>PROJECTS</small><b>${completed}</b></span><span><small>MASTERWORKS</small><b>${masterworks}</b></span><span><small>NEXT RECIPE</small><b>${nextRecipe?'Skill '+nextRecipe.level:'All learned'}</b></span></div></section>`;
-    const visible=def.recipes.filter(r=>{const discovered=!r.requiresDiscovery||s.discoveredRecipes.includes(r.id),levelOk=prof.level>=r.level,materialsOk=Object.entries(r.inputs).every(([k,q])=>(Number(s.materials[k])||0)>=q),ok=discovered&&levelOk&&materialsOk;if(recipeFilter==='ready')return ok;if(recipeFilter==='locked')return !ok;if(recipeFilter==='rare')return r.requiresDiscovery||r.endgame;return true});
-    const recipes=visible.map(r=>{const discovered=!r.requiresDiscovery||s.discoveredRecipes.includes(r.id),levelOk=prof.level>=r.level,materialsOk=Object.entries(r.inputs).every(([k,q])=>(Number(s.materials[k])||0)>=q),ok=discovered&&levelOk&&materialsOk,busy=Boolean(craftProject),lock=!discovered?'Recipe not discovered':!levelOk?`Requires skill ${r.level}`:!materialsOk?'Missing reagents':'',history=recipeHistory(prof,r.id),outputArt=r.output.category==='consumable'&&P?.consumableArtHTML?P.consumableArtHTML(r.output.key,60,'recipe-output-art'):'';return `<article class="recipe-card profession-recipe-card ${ok?'ready':'locked'} ${craftProject?.recipeId===r.id?'project-active':''}" ${outputArt?'data-item-art-done="1"':''}>${outputArt}<div class="recipe-main"><div class="recipe-kicker"><span>${r.endgame?'END-GAME · ':''}${r.crafterOnly?'CRAFTER ONLY · ':''}SKILL ${r.level}</span><em>${craftXpLabel(r,prof)}</em></div><h4>${r.name}</h4><p>${recipeInputs(r)} <i>→</i> <b>${r.output.name}</b></p><div class="recipe-history"><span>${history.count||0} completed</span><span>Best ${Math.round(history.best||0)}%</span><span>${history.masterwork?'✓ Masterwork achieved':'Masterwork bonus available'}</span></div>${lock?`<p class="recipe-lock-reason">${lock}</p>`:''}</div><button data-craft="${r.id}" ${ok&&!busy?'':'disabled'}>${busy?(craftProject?.recipeId===r.id?'IN PROGRESS':'WORKSHOP BUSY'):'START PROJECT'}</button></article>`;}).join('');
+    const visible=def.recipes.filter(r=>recipeMatchesFilter(r,prof,s));
+    const recipes=visible.map(r=>recipeCardMarkup(r,prof,s)).join('');
     const activeRecipe=craftProject&&craftProject.charId===c.id&&craftProject.slot===selectedSlot?def.recipes.find(r=>r.id===craftProject.recipeId):null;
     body=profile+(lastCraftMessage?`<p class="craft-message profession-result-message">${lastCraftMessage}</p>`:'')+(activeRecipe?craftProjectMarkup(c,prof,activeRecipe):'')+`<div class="profession-recipe-heading"><div><small>WORK ORDERS</small><h3>Choose what to make.</h3></div><p>Harder and first-time projects award the most skill XP. Out-levelled recipes remain useful, but become poor training.</p></div><div class="recipe-list">${recipes||'<div class="profession-empty">No recipes match this filter.</div>'}</div>`;
   }
