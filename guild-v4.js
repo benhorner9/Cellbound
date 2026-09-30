@@ -895,7 +895,7 @@ function renderBank(){
     const preview=utility
       ?`<span>${esc(item.description||'Encounter utility item.')}</span>`
       :stats.slice(0,2).map(s=>`<span>${s.text}</span>`).join('')||'<span class="legacy">No rolled stats</span>';
-    const effect=(item.uniqueEffect?`<span class="bank-effect-chip">✦ ${esc(item.uniqueEffect.name)}</span>`:'')+(item.attachment?`<span class="bank-effect-chip bank-attachment-chip">✥ ${esc(item.attachment.name||'Attachment')}</span>`:'');
+    const socketCount=Math.max(0,Number(item.socketCount)||0),filledSockets=(item.sockets||[]).filter(Boolean).length,effect=(item.uniqueEffect?`<span class="bank-effect-chip">✦ ${esc(item.uniqueEffect.name)}</span>`:'')+(item.attachment?`<span class="bank-effect-chip bank-attachment-chip">✥ ${esc(item.attachment.name||'Attachment')}</span>`:'')+(socketCount?`<span class="bank-effect-chip bank-socket-chip">◆ ${filledSockets}/${socketCount} SOCKETS</span>`:'');
     const flags=(item.favorite?'<i class="bank-flag favorite">★</i>':'')+(item.junk?'<i class="bank-flag junk">JUNK</i>':'');
     const qty=utility?`${Math.max(0,Number(item.charges)||0)}/${Math.max(1,Number(item.maxCharges)||5)} uses`:`×${item.quantity||1}`;
     const meta=utility
