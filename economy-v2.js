@@ -292,7 +292,7 @@ function tickCraft(){
   const now=Date.now();
   if(!craftLastTick){craftLastTick=now;craftProject.paused=false;updateCraftTimerUI();return}
   const delta=Math.max(0,now-craftLastTick);craftLastTick=now;craftProject.paused=false;craftProject.remainingMs=Math.max(0,(Number(craftProject.remainingMs)||0)-delta);
-  if(now-craftSaveAt>900){craftSaveAt=now;Game?.save?.()}
+  if(now-craftSaveAt>5000){craftSaveAt=now;Game?.save?.()}
   updateCraftTimerUI();
   if(craftProject.remainingMs<=0)finishTimedCraft()
 }
