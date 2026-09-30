@@ -893,6 +893,17 @@ function slotPicker(state,c,slot){
     <div class="cb-slot-options">${candidates.length?candidates.sort((a,b)=>(b.itemLevel||0)-(a.itemLevel||0)).map(item=>{const delta=(Number(item.itemLevel)||0)-currentIlvl,fit=G?.rollFit?.(c,item),stats=(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll',attachment=item.attachment?` · ✥ ${item.attachment.name||'Attached'}`:'',socketInfo=Number(item.socketCount)>0?` · ◆ ${G?.socketSummary?.(item)||''}`:'';return `<button data-equip-bank="${item.id}" data-equip-slot="${slot}" class="${rarityClass(item)}"><span>${G?.artHTML?.(item,48)||item.icon||'◇'}</span><div><b>${item.name}</b><small>${item.rarity} · iLvl ${item.itemLevel||0} · ×${item.quantity||1}${attachment}${socketInfo}</small><strong class="cb-option-roll">${stats}</strong>${setInlineMarkup(c,item)}<em class="${delta>0?'upgrade':delta<0?'downgrade':''}">${fit?.label||''}${delta===0?' · Same Item Level':delta>0?` · +${delta} Item Level`:` · ${delta} Item Level`}</em></div></button>`}).join(''):'<div class="cb-no-items">No compatible items are currently stored in the Bank.</div>'}</div>
   </div>`;
 }
+function refreshOpenEquipmentDrawer(state,c,slot){
+  activeSlot=slot;
+  const oldDrawer=detail?.querySelector?.('.cb-slot-drawer'),oldBackdrop=detail?.querySelector?.('.cb-slot-drawer-backdrop');
+  if(!oldDrawer||!oldBackdrop){renderSheet();return}
+  const scrollTop=oldDrawer.scrollTop,holder=document.createElement('div');
+  holder.innerHTML=slotPicker(state,c,slot);
+  const nextDrawer=holder.querySelector('.cb-slot-drawer'),nextBackdrop=holder.querySelector('.cb-slot-drawer-backdrop');
+  if(!nextDrawer||!nextBackdrop){renderSheet();return}
+  oldBackdrop.replaceWith(nextBackdrop);oldDrawer.replaceWith(nextDrawer);
+  requestAnimationFrame(()=>{nextDrawer.scrollTop=Math.min(scrollTop,Math.max(0,nextDrawer.scrollHeight-nextDrawer.clientHeight))})
+}
 function totalSpent(c,spec){return B?.talentSpent?.(c,spec)??Object.values(c.talents?.[spec]||{}).reduce((a,b)=>a+(Number(b)||0),0)}
 function talentBudget(c){return B?.talentBudgetForLevel?.(c?.level)??Math.max(1,Number(c?.level)||1)}
 function talentRemaining(c,spec){return B?.talentRemaining?.(c,spec)??Math.max(0,talentBudget(c)-totalSpent(c,spec))}
@@ -1173,7 +1184,7 @@ function applyAttachmentToEquipped(key,slot){
   item.attachment={key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},profession:meta?.profession||null,skill:Number(recipe?.level)||null,tier:Number(payload.attachmentTier)||null,rarity:stack.rarity||recipe?.output?.rarity||'Uncommon',attachmentFamily:payload.attachmentFamily||null,proc:{...(payload.proc||{})},procText:payload.procText||'',crafterOnly:Boolean(payload.crafterOnly),boundCharacterId:payload.boundCharacterId||null,boundCharacterName:payload.boundCharacterName||null,attachedAt:new Date().toISOString()};
   stack.quantity=(Number(stack.quantity)||1)-1;if(stack.quantity<=0)state.consumables=state.consumables.filter(x=>x!==stack);
   state.activity=state.activity||[];state.activity.push(existing?`${stack.name} replaced ${existing.name||'an attachment'} on ${c.name}'s ${item.name}; the old attachment was destroyed.`:`${stack.name} attached to ${c.name}'s ${item.name}.`);
-  writeState(state);activeSlot=slot;renderSheet();window.CellboundFX?.micro?.(stack.name+' attached','gold');window.CellboundFX?.pulse?.('.cb-current-attachment');
+  writeState(state);refreshOpenEquipmentDrawer(state,c,slot);window.CellboundFX?.micro?.(stack.name+' attached','gold');window.CellboundFX?.pulse?.('.cb-current-attachment');
 }
 function applyGemToEquipped(key,slot,index){
   if(!characterEditable())return;
@@ -1191,7 +1202,7 @@ function applyGemToEquipped(key,slot,index){
   item.sockets[index]={key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},rarity:stack.rarity||recipe?.output?.rarity||'Uncommon',profession:meta?.profession||'Jewelcrafting',skill:Number(recipe?.level)||null,crafterOnly:Boolean(payload.crafterOnly),boundCharacterId:payload.boundCharacterId||null,boundCharacterName:payload.boundCharacterName||null,socketedAt:new Date().toISOString()};
   stack.quantity=(Number(stack.quantity)||1)-1;if(stack.quantity<=0)state.consumables=state.consumables.filter(x=>x!==stack);
   state.activity=state.activity||[];state.activity.push(existing?`${stack.name} replaced ${existing.name||'a gem'} in ${c.name}'s ${item.name}; the old gem was destroyed.`:`${stack.name} socketed into ${c.name}'s ${item.name}.`);
-  writeState(state);activeSlot=slot;renderSheet();window.CellboundFX?.micro?.(stack.name+' socketed','gold');window.CellboundFX?.pulse?.('.cb-socket-panel');
+  writeState(state);refreshOpenEquipmentDrawer(state,c,slot);window.CellboundFX?.micro?.(stack.name+' socketed','gold');window.CellboundFX?.pulse?.('.cb-socket-panel');
 }
 function unequipItem(slot){
   if(!characterEditable())return;
