@@ -44,6 +44,7 @@ function createGridOverrideModule(){
 function gridOverrideModules(){return(state()?.bank||[]).filter(x=>x?.itemId===GRID_OVERRIDE_ID&&Number(x.charges)>0)}
 function activeGridOverride(){return gridOverrideModules().sort((a,b)=>(Number(a.charges)||0)-(Number(b.charges)||0))[0]||null}
 function gridOverrideCharges(){return gridOverrideModules().reduce((n,x)=>n+Math.max(0,Number(x.charges)||0),0)}
+function craftedGridOverrideStack(){return(state()?.consumables||[]).find(x=>x?.key==='grid-override-charge'&&!x?.payload?.crafterOnly&&Number(x.quantity)>0)||null}
 function gridOverrideArt(size=72){return window.CellboundItemArt?.artHTML?.(createGridOverrideModule(),size,'bs-override-art')||'<span class="bs-override-art" style="width:'+size+'px;height:'+size+'px" aria-label="Grid Override Module"><i>⚡</i></span>'}
 function root(){
  let e=$('#bs2dBackdrop');
@@ -177,32 +178,41 @@ function renderPuzzle(){
  const headerCopy=quick?'The station has been cleared before. Build any powered route from GRID INPUT to MAIN BREAKER.':'First clear protocol: restore the entire 15-tile circuit so every cable section is powered before the main breaker will close.';
  const stationTitle=run.powered?'Station online.':circuit.breakerLive&&quick?'Breaker path found.':progress>0?'Current is flowing.':'The station is dark.';
  const stationCopy=run.powered?'The main breaker is closed and the generator hall is live.':quick?(progress>0?'On repeat runs, reach the main breaker to start the station.':'Repeat runs only need one valid path from GRID INPUT to MAIN BREAKER.'):(progress>0?'Powered cable glows from the grid input. On your first clear, every tile must connect.':'First-clear rule: all 15 cable tiles must form one continuous powered circuit from GRID INPUT to MAIN BREAKER.');
- const override=activeGridOverride(),overrideCharges=gridOverrideCharges(),overrideReady=quick&&override&&!run.powered&&!run.overrideInProgress;
+ const override=activeGridOverride(),overrideCharges=gridOverrideCharges(),overrideReady=quick&&override&&!run.powered&&!run.overrideInProgress,craftedOverride=craftedGridOverrideStack(),craftedReady=quick&&craftedOverride&&!run.powered&&!run.overrideInProgress;
  const overridePanel='<div class="bs-override-panel '+(overrideReady?'ready':'')+'"><div><span>GRID OVERRIDE MODULE</span><b>'+(override?Math.max(0,Number(override.charges)||0)+' / '+Math.max(1,Number(override.maxCharges)||GRID_OVERRIDE_MAX_CHARGES)+' USES':'NOT OWNED')+'</b></div><p>'+(!quick?'Complete the grid manually once before Override Modules can be used.':override?'Consumes one charge and restores the grid automatically. No diagnostic penalty.': 'Rare 10% drop from Dr. Vex Calder. Tradeable on the Trading Post.')+'</p><button data-bs-override '+(overrideReady?'':'disabled')+'>'+(run.overrideInProgress?'OVERRIDING GRID…':overrideReady?'USE GRID OVERRIDE · '+Math.max(0,Number(override.charges)||0)+' CHARGES':!quick?'LOCKED UNTIL FIRST CLEAR':'NO MODULE AVAILABLE')+'</button>'+(overrideCharges>0?'<small>'+overrideCharges+' total charge'+(overrideCharges===1?'':'s')+' across your Bank</small>':'')+'</div>';
+ const engineeredPanel='<div class="bs-override-panel '+(craftedReady?'ready':'')+'"><div><span>ENGINEERING · GRID OVERRIDE CHARGE</span><b>'+(craftedOverride?Math.max(0,Number(craftedOverride.quantity)||0)+' CRAFTED':'NONE IN BANK')+'</b></div><p>'+(!quick?'Complete the grid manually once before using an Engineering Override Charge.':craftedOverride?'Consumes one crafted charge to reconnect the grid automatically with no diagnostic penalty.':'Engineers can craft tradeable, single-use alternatives to the rare module.')+'</p><button data-bs-crafted-override '+(craftedReady?'':'disabled')+'>'+(run.overrideInProgress?'OVERRIDING GRID…':craftedReady?'USE CRAFTED CHARGE':!quick?'LOCKED UNTIL FIRST CLEAR':'NO CRAFTED CHARGE')+'</button></div>';
  const cells=run.board.map((tile,pos)=>{
   const type=tile==null?null:CABLES[tile],ghost=clueGhost(pos,type);
   return tile==null
    ?'<div class="bs-grid-empty '+(cluePositions().has(pos)?'clue':'')+'" data-pos="'+pos+'"><span>EMPTY</span>'+ghost+'</div>'
    :'<button class="bs-grid-tile '+(circuit.connected.has(pos)?'live ':'')+(cluePositions().has(pos)?'clue ':'')+(cluePositions().has(pos)&&type===CABLES[pos]?'clue-correct':'')+'" data-tile-pos="'+pos+'" data-cable="'+type+'" aria-label="Cable tile">'+cableMarkup(type)+ghost+'</button>'
  }).join('');
- r.innerHTML='<section class="bs-puzzle-shell '+(run.powered?'powered':'')+'"><header><div><small>BLACKOUT STATION · GRID CONTROL · '+modeLabel+'</small><h2>Main Distribution Board</h2><p>'+headerCopy+'</p></div><button data-bs-close aria-label="Close dungeon">×</button></header><div class="bs-puzzle-layout"><main><div class="bs-grid-frame '+(circuit.complete?'solved':'')+'"><div class="bs-grid-source '+(progress>0?'live':'')+'"><span>GRID<br>INPUT</span></div><div class="bs-grid-board">'+cells+'</div><div class="bs-grid-breaker '+(circuit.complete?'live':'')+'"><span>MAIN<br>BREAKER</span></div></div><div class="bs-puzzle-readout"><span>MOVES <b>'+run.moves+'</b></span><span>GRID STATUS <b>'+gridState+'</b></span><span>RULE <b>'+modeLabel+'</b></span><span>CALDER OVERCHARGE <b>+'+overcharge+'%</b></span><button data-bs-reset '+(run.overrideInProgress?'disabled':'')+'>RESHUFFLE</button></div></main><aside><small>POWER RESTORATION</small><div class="bs-station-schematic '+(circuit.complete?'online':'')+'"><i></i><i></i><i></i><i></i><strong>'+progress+'%</strong></div><h3>'+stationTitle+'</h3><p>'+stationCopy+'</p><div class="bs-diagnostics"><div><span>EMERGENCY DIAGNOSTICS</span><b>'+run.cluesRemaining+' / 5</b></div><p>Each diagnostic reveals more of the original full-grid layout, but increases Dr. Vex Calder\'s maximum health by <strong>8%</strong>.</p><button data-bs-clue '+(run.cluesRemaining<=0||run.powered||run.overrideInProgress?'disabled':'')+'>USE DIAGNOSTIC · +8% BOSS HP</button></div>'+overridePanel+'<div class="bs-puzzle-log">'+run.log.slice(-5).reverse().map(x=>'<span>'+esc(x)+'</span>').join('')+'</div></aside></div></section>';
+ r.innerHTML='<section class="bs-puzzle-shell '+(run.powered?'powered':'')+'"><header><div><small>BLACKOUT STATION · GRID CONTROL · '+modeLabel+'</small><h2>Main Distribution Board</h2><p>'+headerCopy+'</p></div><button data-bs-close aria-label="Close dungeon">×</button></header><div class="bs-puzzle-layout"><main><div class="bs-grid-frame '+(circuit.complete?'solved':'')+'"><div class="bs-grid-source '+(progress>0?'live':'')+'"><span>GRID<br>INPUT</span></div><div class="bs-grid-board">'+cells+'</div><div class="bs-grid-breaker '+(circuit.complete?'live':'')+'"><span>MAIN<br>BREAKER</span></div></div><div class="bs-puzzle-readout"><span>MOVES <b>'+run.moves+'</b></span><span>GRID STATUS <b>'+gridState+'</b></span><span>RULE <b>'+modeLabel+'</b></span><span>CALDER OVERCHARGE <b>+'+overcharge+'%</b></span><button data-bs-reset '+(run.overrideInProgress?'disabled':'')+'>RESHUFFLE</button></div></main><aside><small>POWER RESTORATION</small><div class="bs-station-schematic '+(circuit.complete?'online':'')+'"><i></i><i></i><i></i><i></i><strong>'+progress+'%</strong></div><h3>'+stationTitle+'</h3><p>'+stationCopy+'</p><div class="bs-diagnostics"><div><span>EMERGENCY DIAGNOSTICS</span><b>'+run.cluesRemaining+' / 5</b></div><p>Each diagnostic reveals more of the original full-grid layout, but increases Dr. Vex Calder\'s maximum health by <strong>8%</strong>.</p><button data-bs-clue '+(run.cluesRemaining<=0||run.powered||run.overrideInProgress?'disabled':'')+'>USE DIAGNOSTIC · +8% BOSS HP</button></div>'+overridePanel+engineeredPanel+'<div class="bs-puzzle-log">'+run.log.slice(-5).reverse().map(x=>'<span>'+esc(x)+'</span>').join('')+'</div></aside></div></section>';
  r.querySelector('[data-bs-close]').onclick=close;
  r.querySelector('[data-bs-reset]').onclick=()=>{run.board=shuffledBoard();run.moves=0;run.log.push('The board was reshuffled. Diagnostics already used remain active.');renderPuzzle()};
  r.querySelector('[data-bs-clue]')?.addEventListener('click',useClue);
- r.querySelector('[data-bs-override]')?.addEventListener('click',useGridOverride);
+ r.querySelector('[data-bs-override]')?.addEventListener('click',()=>useGridOverride('module'));
+ r.querySelector('[data-bs-crafted-override]')?.addEventListener('click',()=>useGridOverride('crafted'));
  r.querySelectorAll('[data-tile-pos]').forEach(b=>{if(run.overrideInProgress)b.disabled=true;else b.onclick=()=>slideTile(Number(b.dataset.tilePos),blank)})
 }
-async function useGridOverride(){
+async function useGridOverride(source='module'){
  if(!run||run.powered||run.overrideInProgress)return;
- if(!run.quickReconnect){alert('Complete Blackout Station manually once before using a Grid Override Module.');return}
- const module=activeGridOverride();if(!module){alert('No Grid Override Module with charges remaining is in your Guild Bank.');renderPuzzle();return}
- if(!confirm('Use one Grid Override charge?\n\nThe grid will auto-complete with no Calder Overcharge penalty.'))return;
+ if(!run.quickReconnect){alert('Complete Blackout Station manually once before using an Override device.');return}
+ const crafted=source==='crafted',item=crafted?craftedGridOverrideStack():activeGridOverride();
+ if(!item){alert(crafted?'No crafted Grid Override Charge is in your Bank.':'No Grid Override Module with charges remaining is in your Guild Bank.');renderPuzzle();return}
+ if(!confirm('Consume one '+(crafted?'crafted Grid Override Charge':'Grid Override Module charge')+'?\n\nThe grid will auto-complete with no Calder Overcharge penalty.'))return;
  const tok=token;run.overrideInProgress=true;run.overrideUsed=true;
- module.charges=Math.max(0,(Number(module.charges)||0)-1);
- const usedFrom=Math.max(0,Number(module.charges)||0);
- if(module.charges<=0)state().bank=state().bank.filter(x=>x.id!==module.id);
  state().activity=Array.isArray(state().activity)?state().activity:[];
- state().activity.push('Grid Override Module used in Blackout Station. '+usedFrom+' charge'+(usedFrom===1?'':'s')+' remain on that module.');
+ if(crafted){
+   item.quantity=Math.max(0,(Number(item.quantity)||0)-1);
+   if(item.quantity<=0)state().consumables=state().consumables.filter(x=>x!==item);
+   state().activity.push('Crafted Engineering Grid Override Charge used in Blackout Station.');
+ }else{
+   item.charges=Math.max(0,(Number(item.charges)||0)-1);
+   const left=Math.max(0,Number(item.charges)||0);
+   if(item.charges<=0)state().bank=state().bank.filter(x=>x.id!==item.id);
+   state().activity.push('Grid Override Module used in Blackout Station. '+left+' charge'+(left===1?'':'s')+' remain on that module.')
+ }
  Game.save?.();await Game.persistState?.();
  if(tok!==token||!run)return;
  run.log.push('Grid Override accepted. Calder control code is forcing the distribution board online.');
