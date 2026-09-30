@@ -22,13 +22,14 @@ async function loadChat(markSeen=false){
   else if(newest>lastChatNewest)$('#chatUnread').textContent='NEW';
 }
 function chatRankBadge(role){
+  if(role==='owner')return'<span class="chat-rank owner" title="Cellbound Owner"><i>✦</i> OWNER</span>';
   if(role==='mod')return'<span class="chat-rank mod" title="Cellbound Moderator"><i>◆</i> MOD</span>';
   if(role==='player_mod')return'<span class="chat-rank player-mod" title="Cellbound Player Moderator"><i>◇</i> PLAYER MOD</span>';
   return'';
 }
 function renderChat(){
   const root=$('#chatMessages');if(!root)return;
-  root.innerHTML=chatRows.length?chatRows.map(m=>`<div class="chat-message ${m.sender_badge==='mod'?'from-mod':m.sender_badge==='player_mod'?'from-player-mod':''}"><div class="chat-meta"><div class="chat-speaker"><b>${esc(m.guild_label)}</b>${chatRankBadge(m.sender_badge)}</div><span>${timeLabel(m.created_at)}</span></div><p>${esc(m.body)}</p></div>`).join(''):'<div class="social-empty">No messages in this channel yet.</div>';
+  root.innerHTML=chatRows.length?chatRows.map(m=>`<div class="chat-message ${m.sender_badge==='owner'?'from-owner':m.sender_badge==='mod'?'from-mod':m.sender_badge==='player_mod'?'from-player-mod':''}"><div class="chat-meta"><div class="chat-speaker"><b>${esc(m.guild_label)}</b>${chatRankBadge(m.sender_badge)}</div><span>${timeLabel(m.created_at)}</span></div><p>${esc(m.body)}</p></div>`).join(''):'<div class="social-empty">No messages in this channel yet.</div>';
   root.scrollTop=root.scrollHeight;
 }
 async function sendChat(e){

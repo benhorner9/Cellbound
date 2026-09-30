@@ -392,7 +392,11 @@ for(const file of files){
   }
   if(file==='social-v3.js'){
     for(const id of ['hollow-sanctum','chaos-canyon','blackout-station','fractured-ages'])if(!contents.includes("id:'"+id+"'"))throw new Error('Party Finder is missing dungeon target '+id);
+    for(const hook of ["role==='owner'","chat-rank owner","m.sender_badge==='owner'?'from-owner'"])if(!contents.includes(hook))throw new Error('Owner chat badge support is missing '+hook);
     if(/get_world_bosses|join_world_boss|attack_world_boss|worldBosses|CellboundWorldBoss2D/.test(contents))throw new Error('Shared World Boss client paths must remain disabled');
+  }
+  if(file==='social-v3.css'){
+    for(const hook of ['.chat-rank.owner','.chat-message.from-owner','.chat-message.from-owner .chat-speaker>b'])if(!contents.includes(hook))throw new Error('Owner chat badge styling is missing '+hook);
   }
   if(file==='release-v1.js'){
     for(const id of ['#cc2dBackdrop','#bs2dBackdrop','#fracturedAgesBackdrop','#twelveBelowBackdrop','#thirteenthBellRoot','#fourfoldPuzzle'])if(!contents.includes(id))throw new Error('Release gate is missing active-gameplay protection for '+id);
