@@ -530,6 +530,7 @@ async function complete(){
  s.gold=(Number(s.gold)||0)+gold;s.renown=(Number(s.renown)||0)+renown;s.blackoutStationCompletions=(Number(s.blackoutStationCompletions)||0)+1;s.activity=Array.isArray(s.activity)?s.activity:[];
  Game.addMaterial?.('cell-shards',shards);if(gear)Game.addBankItem?.(gear);if(overrideDrop)Game.addBankItem?.(overrideDrop);
  s.activity.push('Blackout Station '+(mode==='cellbound'?'Cellbound+'+tier:mode)+' cleared. Dr. Vex Calder defeated after the grid restoration. Each adventurer earned '+XP+' XP.'+(gear?' '+gear.name+' was sent to the Guild Bank.':'')+(overrideDrop?' Rare drop: Grid Override Module (5 uses).':''));
+ window.CellboundProfessions?.consumeBossChargesOnce?.(party(),'blackout-station:'+run.endgame?.attemptId+':vex-calder',s);
  Game.save?.();await Game.persistState?.();await syncXp(gains);
  const deaths=metrics.deaths,failed=metrics.mechanicsFailed,score=Number(record?.score)||window.CellboundEndgameData?.scorePreview?.({difficulty:mode,tier,timeMs,targetTimeMs:run.endgame?.targetTimeMs||0,deaths,mechanicsFailed:failed,mistakes:metrics.mistakes})||0;
  window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'blackout-station',difficulty:mode,tier,score,timeMs}}));
