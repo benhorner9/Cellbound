@@ -48,7 +48,7 @@ function setChannel(next){
   loadChat(true);
 }
 function lockedGuildName(){
-  return String(Game?.getAccount?.()?.guild_name||state()?.socialDisplayName||'').trim()
+  return String(Game?.getAccount?.()?.guild_name||'').trim()
 }
 function renderGuildIdentity(){
   const name=lockedGuildName(),form=$('#guildNameForm'),locked=$('#guildNameLocked'),value=$('#guildNameLockedValue'),input=$('#guildNameInput');
