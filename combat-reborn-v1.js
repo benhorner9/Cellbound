@@ -1896,7 +1896,7 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
    if(a.id==='death-strike'){
     const recent=(u.recentDamageTaken||[]).filter(x=>Number(x.at)>=ctx.time-5000).reduce((n,x)=>n+(Number(x.amount)||0),0);
     const voracious=talentRank(u,'Voracious'),hemostasis=u.statuses?.['hemostasis']?talentRank(u,'Hemostasis'):0;
-    const heal=Math.max(u.maxHealth*.07,recent*(.30+voracious*.065))*(1+hemostasis*.08);
+    const heal=Math.max(u.maxHealth*.06,recent*(.20+voracious*.035))*(1+hemostasis*.06);
     const effective=doHeal(ctx,u,u,heal,'Death Strike');
     if(hemostasis)removeStatus(ctx,u,'hemostasis','consumed');
     if((r=talentRank(u,'Blood Shield'))){
@@ -1984,8 +1984,8 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
    if(a.id==='soul-cleave'||a.id==='spirit-bomb'){
     const available=Math.max(0,Number(u.soulFragments)||0),consume=a.id==='spirit-bomb'?available:Math.min(3,available),soulRank=talentRank(u,'Soul Cleave');
     u.soulFragments=Math.max(0,available-consume);
-    const pctHeal=a.id==='spirit-bomb'?.035:.045;
-    const healing=u.maxHealth*(pctHeal+consume*(.018+soulRank*.004));
+    const pctHeal=a.id==='spirit-bomb'?.022:.025;
+    const healing=u.maxHealth*(pctHeal+consume*(.010+soulRank*.002));
     doHeal(ctx,u,u,healing,a.name);
     emit(ctx,'SOUL_FRAGMENT_CHANGED',{source:u.id,target:u.id,ability:a.name,amount:consume,result:'consumed',position:copy(u.position),payload:{fragments:u.soulFragments}});
     if((r=talentRank(u,'Soul Barrier'))&&consume>0){
