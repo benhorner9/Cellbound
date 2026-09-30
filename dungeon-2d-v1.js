@@ -905,108 +905,6 @@ function microPosition(c,index){
  }
  move('p-'+c.id,clamp(x,10,82),clamp(y,10,90),320);
 }
-function combatLoop(s,tok){
- run.combatActive=true;
- const now=performance.now();run.combatStartedAt=now;run.lastMeterAt=0;renderCombatMeters();
- run.rtParty=Object.fromEntries(party().map((c,i)=>[c.id,{
-   nextAttack:now+180+i*120,
-   nextMove:now+80+i*55,
-   nextHeal:now+260,
-   nextSupport:now+900+i*100
- }]));
- run.rtEnemies=run.enemyHp.map((_,i)=>({
-   nextAttack:now+650+i*180+Math.random()*250,
-   nextMove:now+120+i*70
- }));
-
- const tank=party().find(c=>combatProfile(c)==='tank');
- if(tank){
-   run.enemyHp.forEach((v,i)=>{if(v>0)buildThreat(i,tank,120,'taunt')});
-   settleFormation(enemyIndex());
-   act('tank',tank.name+' · Pulling the pack');
- }
-
- return new Promise(resolve=>{
-   const tick=()=>{
-     if(tok!==token||!run||!run.combatActive){resolve();return}
-
-     const now=performance.now();
-     if(!run.lastMeterAt||now-run.lastMeterAt>250){run.lastMeterAt=now;renderCombatMeters()}
-     const targetIndex=enemyIndex();setFocusEnemy(targetIndex);
-     if(targetIndex<0){run.combatActive=false;resolve();return}
-
-     party().forEach(c=>{
-       if(hp(c.id)<=0)return;
-       const rt=run.rtParty[c.id]||(run.rtParty[c.id]={nextAttack:now,nextMove:now,nextHeal:now,nextSupport:now});
-       const profile=combatProfile(c);
-       const regen=I?.passiveRegen?.(c)||0;
-       if(regen>0&&now>=rt.nextRacePulse){
-         const before=hp(c.id);setHp(c.id,before+regen);const gained=Math.max(0,hp(c.id)-before);
-         if(gained>0)floating('p-'+c.id,'+'+gained,'heal');
-         rt.nextRacePulse=now+2400/(run.speed||1);updateRows();
-       }
-
-       if(now>=rt.nextMove){
-         microPosition(c,targetIndex);
-         rt.nextMove=now+(profile==='melee'?260:profile==='tank'?300:420)/(run.speed||1);
-       }
-
-       if(profile==='healer'){
-         const low=healerNeedsTarget();
-         if(low&&now>=rt.nextHeal){
-           fireHeal(c,low,tok);
-           rt.nextHeal=now+(820+Math.random()*220)/(run.speed||1);
-           rt.nextSupport=now+1250/(run.speed||1);
-         }else if(!low&&now>=rt.nextSupport){
-           act('healer',c.name+' · Holding safe healing range');
-           fireHealerDamage(c,targetIndex,tok);
-           rt.nextSupport=now+(1700+Math.random()*450)/(run.speed||1);
-         }
-         return;
-       }
-
-       if(now>=rt.nextAttack){
-         firePartyAttack(c,targetIndex,tok);
-         rt.nextAttack=now+(attackCooldown(c)+(Math.random()*180-90))/(run.speed||1);
-       }
-     });
-
-     run.enemyHp.forEach((v,i)=>{
-       if(v<=0)return;
-       const rt=run.rtEnemies[i]||(run.rtEnemies[i]={nextAttack:now,nextMove:now});
-       if(now>=rt.nextMove){
-         moveEnemyToThreat(i,s);
-         rt.nextMove=now+(220+Math.random()*120)/(run.speed||1);
-       }
-       if(now>=rt.nextAttack){
-         fireEnemyAttack(i,tok,s);
-         rt.nextAttack=now+enemyCooldown(s,i)/(run.speed||1);
-       }
-     });
-
-     setTimeout(tick,70);
-   };
-   tick();
- });
-}
-async function finishCombat(s,tok){
- run.allowKill=run.stageOutcome||!(s.kind==='boss'||s.kind==='final');
-
- if(run.allowKill){
-   const deadline=performance.now()+8000;
-   while(tok===token&&run?.combatActive&&enemyIndex()>=0&&performance.now()<deadline){
-     await delay(120);
-   }
-   if(run?.combatActive&&enemyIndex()>=0){
-     run.enemyHp.forEach((v,i)=>{if(v>0){setEnemyHp(i,0);floating('e-'+i,'FINISH','damage')}});
-   }
- }else{
-   await delay(650);
- }
-
- if(run)run.combatActive=false;
-}
-
 function arenaPoint(id){
  const arena=$('#cb2dArena'),u=$('[data-unit="'+id+'"]');if(!arena||!u)return null;
  const a=arena.getBoundingClientRect(),r=u.getBoundingClientRect();
@@ -1198,7 +1096,6 @@ function professionPrepBonus(){
    (Number(b.armour)||0)*.015+(Number(b.magicWardPct)||0)*.2},0);
  return clamp(score,0,8)
 }
-function chance(s){const avg=party().reduce((n,c)=>n+cond(c.id),0)/5,avgLevel=party().reduce((n,c)=>n+Math.max(1,Number(c.level)||1),0)/Math.max(1,party().length);return clamp(Math.round(s.base+(ilvl()-18)*2+(avgLevel-(s.level||1))*2.5+(avg-75)*.1+bonus(s)+professionPrepBonus()),35,97)}
 function learn(s,ok){const a=ok?(s.kind==='trash'||s.kind==='event'?3:7):5;party().forEach(c=>{c.knowledge=c.knowledge||{};const gain=Math.max(1,Math.round(a*(I?.knowledgeMultiplier?.(c)||1)));c.knowledge[s.knowledge]=clamp((Number(c.knowledge[s.knowledge])||0)+gain,0,100)});return a}
 function recordMaterialDrop(drop,bossName){
  if(!run?.loot||!drop)return;
@@ -1590,17 +1487,6 @@ function mountRebornReplayControls(){
  el.querySelector('[data-cbr-speed]').onclick=e=>{const speeds=[.5,1,2],i=speeds.indexOf(run.replaySpeed),next=speeds[(i+1)%speeds.length];run.replaySpeed=next;e.currentTarget.textContent=next+'×'};
  el.querySelector('[data-cbr-restart]').onclick=()=>{run.replayRestartRequested=true;run.replayPaused=false;const p=el.querySelector('[data-cbr-pause]');if(p)p.textContent='PAUSE'}
 }
-async function rebornReplayWait(ms,tok){
- let remaining=Math.max(0,Number(ms)||0);
- while(remaining>0){
-  if(tok!==token||!run)return'cancelled';
-  if(run.replayRestartRequested)return'restart';
-  if(run.replayPaused){await new Promise(r=>setTimeout(r,70));continue}
-  const step=Math.min(70,remaining),speed=combatPlaybackSpeed(run.replaySpeed);
-  await new Promise(r=>setTimeout(r,Math.max(8,Math.round(step/speed))));remaining-=step
- }
- return run.replayRestartRequested?'restart':'ok'
-}
 async function playRebornTimeline(result,tok,{replayMode=false}={}){
  const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
  run.combatActive=true;run.rebornTelegraphs={};ensureRebornHealingMeter();renderRebornHealingMeter();configureRebornViewer();
@@ -1804,8 +1690,6 @@ async function seamlessFrom(startIndex,tok){
    showRebornStartupFailure(e,s,tok)
  }
 }
-async function seamless(tok){return seamlessFrom(0,tok)}
-
 function lootRarityClass(item){return 'rarity-'+String(item?.rarity||'common').toLowerCase().replace(/[^a-z0-9-]/g,'')}
 function lootGearCard(item){
  const art=G?.artHTML?G.artHTML(item,72):(item.icon||'◇');
