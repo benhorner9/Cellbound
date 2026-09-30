@@ -13,12 +13,10 @@ const gold=v=>(Number(v)||0).toLocaleString()+'g';
 const qty=v=>(Number(v)||0).toLocaleString();
 const now=()=>Date.now();
 const state=()=>Game?.getState?.()||{};
-const mine=id=>user&&id===user.id;
 function age(ts){const n=Math.max(0,now()-new Date(ts).getTime()),m=Math.floor(n/60000);if(m<1)return'now';if(m<60)return m+'m';const h=Math.floor(m/60);if(h<24)return h+'h';return Math.floor(h/24)+'d'}
 function timeLeft(ts){const n=Math.max(0,new Date(ts).getTime()-now()),m=Math.ceil(n/60000);if(m<=0)return'Expired';if(m<60)return m+'m';const h=Math.ceil(m/60);if(h<24)return h+'h';return Math.ceil(h/24)+'d'}
 function rarityOf(x){return x?.rarity||x?.payload?.rarity||(x?.category==='material'&&P?.MATERIALS?.[x.item_key]?.rarity)||'Common'}
 function commodityKey(c,k){return c+'|'+k}
-function materialByKey(k){return P?.MATERIALS?.[k]||null}
 function commodityArt(category,key,size){
   if(category==='material'&&P?.materialArtHTML)return P.materialArtHTML(key,size||62,'tp-material-art');
   if(category==='consumable'&&P?.consumableArtHTML)return P.consumableArtHTML(key,size||62,'tp-consumable-art');
