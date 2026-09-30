@@ -317,10 +317,19 @@ function livingEvent(e,opts={}){
  }
  wake();
 }
-let raf=0,last=0;
-function wake(){if(!raf)raf=requestAnimationFrame(frame)}
+let raf=0,frameWatchdog=0,last=0;
+function wake(){
+ if(raf||frameWatchdog)return;
+ raf=requestAnimationFrame(frame);
+ frameWatchdog=setTimeout(()=>{
+  frameWatchdog=0;
+  if(raf){cancelAnimationFrame(raf);raf=0}
+  frame()
+ },80)
+}
 function frame(){
  const now=performance.now(); // Same clock as cast starts, effect expiry and state transitions.
+ if(frameWatchdog){clearTimeout(frameWatchdog);frameWatchdog=0}
  raf=0;if(now-last<32){wake();return}last=now;
  let active=false;
  for(const [arena,scene] of scenes){
