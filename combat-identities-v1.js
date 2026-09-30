@@ -90,7 +90,7 @@ const SPECS={
       title:'Crisis Healer',
       strength:'Best burst recovery when several allies are in danger.',
       tradeoff:'Large recovery windows generate noticeably more healing threat.',
-      damage:.78,threat:1,healing:1.04,healThreat:1.12,groupHeal:.20,physicalTaken:1.04
+      damage:.78,threat:1,healing:1.12,healThreat:1.12,groupHeal:.20,physicalTaken:1.04
     },
     Shadow:{
       title:'Void Prophet',
@@ -160,7 +160,7 @@ const SPECS={
       title:'Totemic Mender',
       strength:'Chain healing and persistent totems excel when damage is spread across the party.',
       tradeoff:'Less focused emergency tank healing than a Holy Paladin and strongest while its totems remain active.',
-      damage:.79,threat:.94,healing:1.00,healThreat:.96,magicTaken:.96
+      damage:.79,threat:.94,healing:1.08,healThreat:.96,magicTaken:.96
     },
     Elemental:{
       title:'Stormcaller',
