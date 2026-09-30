@@ -11,6 +11,11 @@
   font-size:.29rem;font-weight:950;letter-spacing:.08em;line-height:1.15;white-space:nowrap
 }
 .chat-rank i{font-size:.34rem;font-style:normal}
+.chat-rank.owner{
+  color:#fff0ad;border-color:rgba(255,215,101,.48);
+  background:linear-gradient(90deg,rgba(111,74,17,.78),rgba(54,34,9,.7));
+  box-shadow:0 0 14px rgba(255,205,76,.14)
+}
 .chat-rank.mod{
   color:#efd483;border-color:rgba(224,185,87,.30);
   background:linear-gradient(90deg,rgba(92,67,22,.58),rgba(39,31,15,.54));
@@ -20,8 +25,10 @@
   color:#82d9cf;border-color:rgba(76,196,185,.28);
   background:linear-gradient(90deg,rgba(20,71,69,.55),rgba(13,38,40,.55))
 }
+.chat-message.from-owner{border-left:2px solid rgba(255,215,101,.48);padding-left:8px;background:linear-gradient(90deg,rgba(83,55,10,.08),transparent 44%)}
 .chat-message.from-mod{border-left:2px solid rgba(224,185,87,.28);padding-left:8px}
 .chat-message.from-player-mod{border-left:2px solid rgba(76,196,185,.24);padding-left:8px}
+.chat-message.from-owner .chat-meta>b,.chat-message.from-owner .chat-speaker>b{color:#f2d875}
 .chat-message.from-mod .chat-meta>b,.chat-message.from-mod .chat-speaker>b{color:#e4c978}
 .chat-message.from-player-mod .chat-meta>b,.chat-message.from-player-mod .chat-speaker>b{color:#79d0c7}
 
