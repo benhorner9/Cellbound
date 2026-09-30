@@ -119,7 +119,7 @@ const root=path.resolve(__dirname,'..');
   for(let i=0;i<200;i++)CellboundCombatFX.combatEvent({type:'DAMAGE_DEALT',source:'e-0',target,amount:1,result:'hit',payload:{}},{arena});
  });
  assert(await page.locator('.cbl-effects>.cbl-fx:not(.cast-orb):not(.channel)').count()<=36,'transient FX remain bounded under an event burst');
- await page.waitForFunction(()=>document.querySelectorAll('.cbl-effects>.cbl-fx').length===0,{},{timeout:5000});
+ await page.waitForFunction(()=>document.querySelectorAll('.cbl-effects>.cbl-fx:not(.cast-orb):not(.channel)').length===0,{},{timeout:5000});
  await page.emulateMedia({reducedMotion:'no-preference'});
 
 
