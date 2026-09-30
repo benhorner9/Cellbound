@@ -3,20 +3,25 @@
 const VERSION='1.1.0',SIZE=3,MAX_FLOOR=10,ATTEMPTS=2,WINDOW_MS=5*24*60*60*1000;
 const Game=()=>window.CellboundGame,C=()=>window.CellboundCombatReborn;
 const PARTS=[['cable','Conduit Cable','⌁'],['cell','Power Cell','◈'],['fuse','Reactor Fuse','⌬']];
-const MATERIALS=[
- {key:'faded-cell-fragment',name:'Faded Cell Fragment',min:1},
- {key:'zeltiran-iron',name:'Zeltiran Iron',min:1},
- {key:'warden-iron',name:'Warden Iron',min:3},
- {key:'ancient-soul',name:'Ancient Soul',min:5},
- {key:'void-crystal',name:'Void Crystal',min:7}
+const NULL_RESOURCE_POOLS={
+ lab:['rune-dust','arcane-ink','etched-vellum','rough-gemstone','prismatic-shard'],
+ storage:['cavebeast-meat','hollowroot','emberleaf','spiritcap','hollow-fibre','etched-vellum'],
+ reactor:['salvaged-parts','conductive-coil','tempering-flux','zeltiran-iron','rune-dust'],
+ containment:['zeltiran-hide','razorhide','hollow-fibre','rough-gemstone','rune-dust'],
+ facility:['salvaged-parts','tempering-flux','rune-dust','hollow-fibre','rough-gemstone']
+};
+const NULL_CATALYSTS=[
+ {key:'ashen-soul-fragment',minFloor:2},{key:'cell-shards',minFloor:4},{key:'warden-iron',minFloor:4},
+ {key:'ancient-soul',minFloor:6},{key:'void-crystal',minFloor:8}
 ];
+const SEARCH_SOURCES=['lab','storage','reactor','containment'];
 const ENEMIES=[
- {name:'Splice',classification:'trash',note:'Fast failed specimen.'},
- {name:'Reactor Husk',classification:'trash',note:'Unstable experimental host.'},
- {name:'Siphon',classification:'elite',note:'Drains power from the party.'},
- {name:'Bulwark Specimen',classification:'elite',note:'Armoured containment subject.'},
- {name:'Null Stalker',classification:'elite',note:'Predatory phase experiment.'},
- {name:'Overseer Drone',classification:'elite',note:'Facility control construct.'}
+ {name:'Splice',classification:'trash',note:'Fast failed specimen.',resourceSource:'containment'},
+ {name:'Reactor Husk',classification:'trash',note:'Unstable experimental host.',resourceSource:'reactor'},
+ {name:'Siphon',classification:'elite',note:'Drains power from the party.',resourceSource:'lab'},
+ {name:'Bulwark Specimen',classification:'elite',note:'Armoured containment subject.',resourceSource:'containment'},
+ {name:'Null Stalker',classification:'elite',note:'Predatory phase experiment.',resourceSource:'containment'},
+ {name:'Overseer Drone',classification:'elite',note:'Facility control construct.',resourceSource:'reactor'}
 ];
 let run=null,mount=null,exploreRoot=null;
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -40,8 +45,8 @@ function generateFloor(floor,seed){
  const available=Object.values(cells).filter(c=>c.type==='empty');
  const take=()=>available.splice(Math.floor(r()*available.length),1)[0];
  const tele=take();tele.type='teleporter';
- PARTS.forEach(p=>{const c=take();c.type='search';c.part=p[0]});
- const bonusSearch=take();if(bonusSearch)bonusSearch.type='search';
+ PARTS.forEach((p,i)=>{const c=take();c.type='search';c.part=p[0];c.resourceSource=SEARCH_SOURCES[(i+floor)%SEARCH_SOURCES.length]});
+ const bonusSearch=take();if(bonusSearch){bonusSearch.type='search';bonusSearch.resourceSource=SEARCH_SOURCES[Math.floor(r()*SEARCH_SOURCES.length)]}
  const breach=floor>=4&&r()>.55?take():null;if(breach)breach.type='breach';
  while(available.length){const c=take();if(c)c.type=r()<(floor>=6?.72:.58)?'combat':'empty'}
  return{cells,start,teleporter:{x:tele.x,y:tele.y}}
@@ -76,7 +81,7 @@ function encounter(room){
  const floor=run.floor,r=rng(run.seed+':fight:'+floor+':'+run.pos.x+':'+run.pos.y);
  const count=room.type==='breach'?Math.min(4,2+Math.floor(floor/3)):Math.min(4,1+Math.floor(floor/4)+(r()>.6?1:0));
  const pool=ENEMIES.slice(0,Math.min(ENEMIES.length,2+Math.ceil(floor/2)));
- const enemies=Array.from({length:count},()=>{const e=pool[Math.floor(r()*pool.length)];return{name:e.name,classification:e.classification}});
+ const enemies=Array.from({length:count},()=>{const e=pool[Math.floor(r()*pool.length)];return{name:e.name,classification:e.classification,resourceSource:e.resourceSource||'facility'}});
  const ilvl=Game()?.partyItemLevel?.()||18;
  return{id:'null-'+floor+'-'+run.pos.x+'-'+run.pos.y,kind:room.type==='breach'?'event':'trash',level:Math.min(15,3+floor),recommendedItemLevel:Math.max(10,ilvl-2+floor),enemies,enemyHealth:Math.round((260+floor*95)*(room.type==='breach'?1.45:1)),scaling:{enemyDamage:1+floor*.075,enemyHealth:1+floor*.06},mechanics:floor>=3?[['Containment Pulse','circles',1600]]:[],affixes:floor>=7?['volatile-cells']:[]}
 }
@@ -103,25 +108,43 @@ async function fight(room){
  viewer.closeShared?.(true);
  if(outcome!=='victory'||result.outcome!=='victory'){wipe('The Aberrants overwhelmed the expedition.');return}
  room.cleared=true;run.message=(room.type==='breach'?'Containment breach purged. Bonus materials recovered.':'Aberrants eliminated.')+' The route is secure.';
- if(room.type==='breach')awardPending(2+Math.floor(run.floor/3),true);
+ awardEnemyPending(enc.enemies,1+Math.floor(run.floor/5));
+ if(room.type==='breach')awardPending(2+Math.floor(run.floor/3),true,'containment');
  persist();render();showRoom()
 }
 function search(){
  const room=roomAt(run.pos.x,run.pos.y);if(!room||room.type!=='search'||room.searched)return;
  room.searched=true;
  if(room.part&&!run.parts[room.part]){run.parts[room.part]=true;const p=PARTS.find(x=>x[0]===room.part);run.message=p[1]+' recovered.'}
- else{const qty=1+Math.floor(run.floor/3);awardPending(qty,false);run.message='Profession materials recovered. They remain at risk until extraction.'}
+ else{const qty=1+Math.floor(run.floor/3),source=room.resourceSource||'lab';awardPending(qty,false,source);run.message=(source==='storage'?'Sealed provisions':source==='reactor'?'Mechanical salvage':source==='containment'?'Specimen materials':'Research materials')+' recovered. They remain at risk until extraction.'}
  persist();render()
 }
-function awardPending(quantity,bonus){
- const eligible=MATERIALS.filter(m=>run.floor>=m.min),r=rng(run.seed+':loot:'+run.floor+':'+run.rooms+':'+Object.keys(run.pending).length),pick=eligible[Math.floor(r()*eligible.length)];
- const q=Math.max(1,quantity+(bonus?1:0));run.pending[pick.key]=(run.pending[pick.key]||0)+q
+function pendingAdd(key,quantity){
+ if(!key||quantity<=0)return;run.pending[key]=(run.pending[key]||0)+Math.max(1,Math.floor(quantity))
+}
+function awardFromPool(pool,quantity,bonus=false,salt='loot'){
+ const keys=(pool||[]).filter(k=>window.CellboundProfessions?.MATERIALS?.[k]);if(!keys.length)return;
+ const r=rng(run.seed+':'+salt+':'+run.floor+':'+run.rooms+':'+Object.keys(run.pending).length),key=keys[Math.floor(r()*keys.length)];
+ pendingAdd(key,Math.max(1,quantity+(bonus?1:0)));
+}
+function maybeAwardCatalyst(bonus=false){
+ const eligible=NULL_CATALYSTS.filter(x=>run.floor>=x.minFloor&&window.CellboundProfessions?.MATERIALS?.[x.key]);if(!eligible.length)return;
+ const r=rng(run.seed+':catalyst:'+run.floor+':'+run.rooms+':'+Object.keys(run.pending).length),chance=bonus?.34:.16;
+ if(r()>chance)return;const pick=eligible[Math.floor(r()*eligible.length)];pendingAdd(pick.key,1)
+}
+function awardPending(quantity,bonus,source='facility'){
+ awardFromPool(NULL_RESOURCE_POOLS[source]||NULL_RESOURCE_POOLS.facility,quantity,bonus,'room-'+source);maybeAwardCatalyst(bonus)
+}
+function awardEnemyPending(enemies=[],quantity=1){
+ const sources=[...new Set((enemies||[]).map(e=>e.resourceSource||'facility'))];
+ const pool=[...new Set(sources.flatMap(source=>NULL_RESOURCE_POOLS[source]||NULL_RESOURCE_POOLS.facility))];
+ awardFromPool(pool,quantity,false,'combat-'+sources.join('-'));maybeAwardCatalyst(false)
 }
 function allParts(){return PARTS.every(p=>run.parts[p[0]])}
 function atTele(){return run&&run.pos.x===run.teleporter.x&&run.pos.y===run.teleporter.y}
 function descend(){
  if(!atTele()||!allParts()||run.floor>=MAX_FLOOR)return;
- awardPending(1+Math.floor(run.floor/2),true);newFloor(run.floor+1);persist();render()
+ awardPending(1+Math.floor(run.floor/2),true,'facility');newFloor(run.floor+1);persist();render()
 }
 function abandon(){
  if(!run)return;
@@ -130,7 +153,7 @@ function abandon(){
  Game()?.getState?.()?.activity?.push('The Null Complex · expedition abandoned on Floor '+floor+'. All unbanked materials were lost.');
  run=null;window.CellboundDungeon2D?.closeShared?.(true);Game()?.save?.();Game()?.persistState?.();Game()?.renderAll?.();render()
 }
-function materialLabel(key){const m=MATERIALS.find(x=>x.key===key);return m?.name||String(key).split('-').map(x=>x.charAt(0).toUpperCase()+x.slice(1)).join(' ')}
+function materialLabel(key){const m=window.CellboundProfessions?.MATERIALS?.[key];return m?.name||String(key).split('-').map(x=>x.charAt(0).toUpperCase()+x.slice(1)).join(' ')}
 function extractionSummary(data){
  window.CellboundDungeon2D?.closeShared?.(true);
  const old=document.getElementById('nullRunComplete');if(old)old.remove();
@@ -140,7 +163,7 @@ function extractionSummary(data){
 }
 function extract(){
  if(!atTele()||!allParts())return;
- awardPending(1+Math.floor(run.floor/2),true);
+ awardPending(1+Math.floor(run.floor/2),true,'facility');
  const n=state(),floor=run.floor,pending={...run.pending},rooms=Object.keys(run.visited||{}).length;
  Object.entries(pending).forEach(([k,q])=>Game()?.addMaterial?.(k,q));
  n.bestFloor=Math.max(n.bestFloor,floor);n.runs.unshift({at:new Date().toISOString(),result:'extracted',floor,materials:pending});n.runs=n.runs.slice(0,20);n.activeRun=null;
@@ -152,8 +175,8 @@ function wipe(reason){
  Game()?.applyPartyCellShock?.(10+Math.min(15,floor));run=null;Game()?.save?.();Game()?.persistState?.();notice(reason+' All materials from this run were lost.');render()
 }
 function notice(msg){if(mount){const n=mount.querySelector('[data-null-notice]');if(n){n.textContent=msg;n.hidden=false}}}
-function roomName(room){return room?.type==='entrance'?'Entry Chamber':room?.type==='teleporter'?'Teleport Chamber':room?.type==='breach'?'Containment Breach':room?.type==='search'?'Research Chamber':room?.type==='combat'?'Experiment Chamber':'Facility Chamber'}
-function roomVisual(room){return room.type==='breach'?'breach':room.type==='teleporter'?'reactor':room.type==='search'?'lab':(['lab','containment','reactor','storage'][(run.pos.x+run.pos.y+run.floor)%4])}
+function roomName(room){if(room?.type==='search'){const names={lab:'Research Chamber',storage:'Supply Storage',reactor:'Maintenance Bay',containment:'Specimen Archive'};return names[room.resourceSource]||'Research Chamber'}return room?.type==='entrance'?'Entry Chamber':room?.type==='teleporter'?'Teleport Chamber':room?.type==='breach'?'Containment Breach':room?.type==='combat'?'Experiment Chamber':'Facility Chamber'}
+function roomVisual(room){return room.type==='breach'?'breach':room.type==='teleporter'?'reactor':room.type==='search'?(room.resourceSource||'lab'):(['lab','containment','reactor','storage'][(run.pos.x+run.pos.y+run.floor)%4])}
 function engineMiniMap(){
  let cells='';for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){const k=key(x,y),seen=!!run.visited[k],here=run.pos.x===x&&run.pos.y===y,room=run.map[k],tele=seen&&room.type==='teleporter',entry=seen&&room.type==='entrance';cells+='<i class="'+(seen?'seen ':'')+(here?'current ':'')+(tele?'tele ':'')+(entry?'entry ':'')+'">'+(here?'●':tele?'T':entry?'E':'')+'</i>'}
  return '<div class="null-engine-minimap"><header><b>FLOOR '+run.floor+'</b><span>'+Object.keys(run.visited).length+' / '+(SIZE*SIZE)+' ROOMS</span></header><div class="null-engine-minimap-grid">'+cells+'</div><footer><span><i class="you"></i>YOU</span><span><i class="known"></i>EXPLORED</span></footer></div>'
