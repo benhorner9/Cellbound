@@ -210,7 +210,7 @@ async function createParty(){
     id:ids[i],name:d.name.trim(),race:d.race,raceTrait:raceById(d.race).trait,class:d.klass,spec:d.spec,role:d.role,
     level:1,xp:0,power:d.role==='tank'?30:d.role==='healer'?27:29,talent:1,portrait:initials(d.name),appearance:CP?.normalizeAppearance?.(d.appearance,d.name,d.race)||d.appearance,
     knowledge:{ashwarden:0,embermaw:0,vaultheart:0},equipment:emptyEquipment(),gearItems:['Empty','Empty','Empty'],
-    cellShock:0,cellShockLockedUntil:null,professions:[null,null],tutorialNew:true,onboardingGearIssued:false
+    cellShock:0,cellShockLockedUntil:null,professions:[null],tutorialNew:true,onboardingGearIssued:false
   }));
   const s=state();
   s.roster=roster;s.party={tank:ids[0],healer:ids[1],dps:ids.slice(2,5)};
