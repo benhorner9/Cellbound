@@ -509,9 +509,6 @@ function awardXp(){
 async function syncXp(gains){
  if(!db)return;const user=Game.getUser?.();if(!user)return;try{await Promise.all(gains.map(x=>db.from('characters').update({level:x.afterLevel,xp:x.afterXp,last_played_at:new Date().toISOString()}).eq('user_id',user.id).eq('name',x.name)))}catch(e){console.warn('Blackout Station XP sync failed',e)}
 }
-function rollGear(){
- return window.CellboundEndgame?.rollChapterLoot?.('blackout-station',{difficulty:'normal',source:'Blackout Station · Dr. Vex Calder'})||null
-}
 function bsLootRarityClass(item){return'rarity-'+String(item?.rarity||'common').toLowerCase().replace(/[^a-z0-9-]/g,'')}
 function bsLootGearCard(item){
  const art=G?.artHTML?G.artHTML(item,72):(item?.icon||'◇'),stats=G?.statLines?.(item)||[];
