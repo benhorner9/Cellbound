@@ -224,6 +224,19 @@ async function applyBankAttachment(key,charId,boundCharacterId=null){
   consumeCraftedStack(key,boundCharacterId);s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push(existing?stack.name+' replaced '+(existing.name||'an attachment')+' on '+c.name+'’s '+item.name+'; the old attachment was destroyed.':stack.name+' attached to '+c.name+'’s '+item.name+'.');
   await persist(true);closeBankResource();window.CellboundFX?.micro?.(stack.name+' attached','gold')
 }
+async function applyBankGem(key,charId,slot,index,boundCharacterId=null){
+  const s=state(),stack=findCraftedStack(key,boundCharacterId),payload=stack?.payload||{},c=s?.roster?.find(x=>x.id===charId),item=c?.equipment?.[slot];
+  if(!stack||payload.effect!=='socket-gem'||payload.socketReady===false||!c||!item||payload.crafterOnly&&payload.boundCharacterId!==c.id)return;
+  G?.ensureSockets?.(item);index=Math.max(0,Number(index)||0);
+  if(index>=Math.max(0,Number(item.socketCount)||0))return;
+  const existing=item.sockets?.[index]||null,same=existing?.key===key&&(!payload.crafterOnly||existing?.boundCharacterId===payload.boundCharacterId);
+  if(same)return;
+  if(existing&&!confirm('Replace '+(existing.name||'the current gem')+' in '+item.name+' with '+stack.name+'?\n\nThe existing gem will be permanently destroyed and cannot be recovered.'))return;
+  const meta=craftedMeta(key),recipe=meta.recipe;
+  item.sockets[index]={key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},rarity:stack.rarity||meta.rarity,profession:meta.profession||'Jewelcrafting',skill:Number(recipe?.level)||null,crafterOnly:Boolean(payload.crafterOnly),boundCharacterId:payload.boundCharacterId||null,boundCharacterName:payload.boundCharacterName||null,socketedAt:new Date().toISOString()};
+  consumeCraftedStack(key,boundCharacterId);s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push(existing?stack.name+' replaced '+(existing.name||'a gem')+' in '+c.name+'’s '+item.name+'; the old gem was destroyed.':stack.name+' socketed into '+c.name+'’s '+item.name+'.');
+  await persist(true);closeBankResource();window.CellboundFX?.micro?.(stack.name+' socketed','gold')
+}
 async function useBankFlask(key,charId,boundCharacterId=null){
   const s=state(),stack=findCraftedStack(key,boundCharacterId),payload=stack?.payload||{},c=s?.roster?.find(x=>x.id===charId);
   if(!stack||payload.effect!=='character-flask'||!c||payload.crafterOnly&&payload.boundCharacterId!==c.id)return;
@@ -296,7 +309,10 @@ function openBankResource(resourceKey){
     const party=activePartyCharacters(s),kind=prepKind(payload.effect),ready=party.length===5;
     actions=`<section class="bank-crafted-actions"><div><small>PARTY ${prepLabel(kind)}</small><h3>Prepare the active five</h3><p>${ready?'Consumes one item and applies the effect to all five active party members.':'Set a complete active party of five before using this item.'}</p></div><button data-bank-party-prep="${key}" ${ready?'':'disabled'}>${ready?'PREPARE ACTIVE FIVE':'PARTY NOT READY'}</button></section>`;
   }else if(payload.effect==='socket-gem'){
-    actions='<section class="bank-crafted-actions"><div><small>JEWELCRAFTING · SOCKET GEM</small><h3>Gem ready for the socket system</h3><p>This gem can be crafted, stored and traded now. Applying or replacing gems will unlock when socketable equipment is added; no temporary workaround has been added.</p></div><span class="bank-crafted-status">SOCKETS COMING</span></section>';
+    const eligible=s.roster.slice(0,ent().rosterCap).filter(c=>!Game?.isUnavailable?.(c)&&(!payload.crafterOnly||payload.boundCharacterId===c.id));
+    const targets=[];
+    eligible.forEach(ch=>['Head','Chest','Weapon'].forEach(slot=>{const item=ch?.equipment?.[slot];if(!item)return;G?.ensureSockets?.(item);for(let index=0;index<Math.max(0,Number(item.socketCount)||0);index++)targets.push({ch,slot,item,index,gem:item.sockets?.[index]||null})}));
+    actions=`<section class="bank-crafted-targets bank-gem-targets"><header><small>${payload.crafterOnly?'CRAFTER ONLY · ':''}JEWELCRAFTING GEM</small><h3>Choose an equipped socket</h3><p>Inserting this gem consumes one from the Bank. Replacing a filled socket permanently destroys the old gem.</p></header><div class="bank-character-list">${targets.map(t=>{const same=t.gem?.key===key&&(!payload.crafterOnly||t.gem?.boundCharacterId===payload.boundCharacterId);return `<button data-bank-gem="${key}" data-bank-char="${t.ch.id}" data-bank-slot="${t.slot}" data-bank-socket="${t.index}" ${same?'disabled':''}><span class="avatar">${Game?.portraitHTML?.(t.ch,'sm')||esc(t.ch.name.slice(0,2))}</span><span><b>${esc(t.ch.name)} · ${esc(t.item.name)}</b><small>${esc(t.slot)} · Socket ${t.index+1} · ${t.gem?esc(t.gem.name||'Filled'):'Open Socket'}</small></span><em>${same?'ALREADY SOCKETED':t.gem?'DESTROYS '+esc(t.gem.name||'GEM'):'INSERT GEM'}</em></button>`}).join('')||'<p>No available character currently has an equipped item with a socket.</p>'}</div></section>`;
   }else if(payload.effect==='clear-cell-shock'){
     const eligible=s.roster.slice(0,ent().rosterCap);
     actions=`<section class="bank-crafted-targets"><header><small>RECOVERY CONSUMABLE</small><h3>Clear Cell Shock</h3><p>Choose the character who should consume the draught.</p></header><div class="bank-character-list">${eligible.map(ch=>`<button data-bank-shock="${key}" data-bank-char="${ch.id}" ${Number(ch.cellShock)>0?'':'disabled'}><span class="avatar">${Game?.portraitHTML?.(ch,'sm')||esc(ch.name.slice(0,2))}</span><span><b>${esc(ch.name)}</b><small>Cell Shock ${Math.round(Number(ch.cellShock)||0)}%</small></span><em>${Number(ch.cellShock)>0?'USE':'NO SHOCK'}</em></button>`).join('')}</div></section>`;
@@ -305,6 +321,7 @@ function openBankResource(resourceKey){
   }
   detail.innerHTML=`<div class="detail-hero gear-detail-hero bank-crafted-detail"><div class="gear-detail-art">${art}</div><div><small>${esc(meta.rarity.toUpperCase())} · ${payload.persistentAttachment?'ATTACHMENT':'CRAFTED ITEM'} · ${esc(meta.profession.toUpperCase())}${recipe?' · SKILL '+recipe.level:''}${payload.crafterOnly?' · CRAFTER ONLY':''}</small><h2>${esc(stack.name)}</h2><p>${esc(description)}</p>${payload.crafterOnly?`<p><strong>Soulbound to ${esc(payload.boundCharacterName||'its crafter')}</strong> · cannot be traded or used by another character.</p>`:''}<p>Quantity in Bank: ${stack.quantity||1}</p></div></div>${actions}`;
   detail.querySelectorAll('[data-bank-attach]').forEach(b=>b.addEventListener('click',()=>applyBankAttachment(b.dataset.bankAttach,b.dataset.bankChar,boundCharacterId)));
+  detail.querySelectorAll('[data-bank-gem]').forEach(b=>b.addEventListener('click',()=>applyBankGem(b.dataset.bankGem,b.dataset.bankChar,b.dataset.bankSlot,b.dataset.bankSocket,boundCharacterId)));
   detail.querySelectorAll('[data-bank-flask]').forEach(b=>b.addEventListener('click',()=>useBankFlask(b.dataset.bankFlask,b.dataset.bankChar,boundCharacterId)));
   detail.querySelectorAll('[data-bank-prep]').forEach(b=>b.addEventListener('click',()=>useBankPreparation(b.dataset.bankPrep,b.dataset.bankChar,boundCharacterId)));
   detail.querySelectorAll('[data-bank-party-prep]').forEach(b=>b.addEventListener('click',()=>useBankPartyPreparation(b.dataset.bankPartyPrep,boundCharacterId)));

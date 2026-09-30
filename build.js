@@ -37,7 +37,7 @@ for(const file of files){
   if(file==='economy-v2.js'){
     for(const hook of ['const WORKSHOP_ACTIONS=','function beginCraft(','async function resolveCraftStep(','function craftProjectMarkup(','FIRST CRAFT BONUS','MASTERWORK BONUS AVAILABLE','projectsCompleted','data-item-art-done="1"'])if(!contents.includes(hook))throw new Error('Profession project crafting runtime is missing '+hook);
     for(const hook of ['function addConsumable(item,qty=1,boundCrafter=null)','payload.boundCharacterId=boundCrafter.id','recipe.crafterOnly?c:null','trainingScale=Math.max(.1,Number(recipe.trainingScale)||1)','BOUND TO'])if(!contents.includes(hook))throw new Error('Crafter-only item binding runtime is missing '+hook);
-    for(const hook of ['latestPayload.effect===\'gear-enhancement\'','item.attachment=item.attachment||','delete c.activeEnhancements[slot]'])if(!contents.includes(hook))throw new Error('Legacy crafted enhancement migration is missing '+hook);
+    for(const hook of ["['gear-enhancement','socket-gem'].includes(latestPayload.effect)",'item.attachment=item.attachment||','delete c.activeEnhancements[slot]'])if(!contents.includes(hook))throw new Error('Legacy crafted item migration is missing '+hook);
     if(contents.includes('>CRAFT</button>'))throw new Error('Legacy profession spam-craft button returned');
   }
   if(file==='economy-v2.css'){
@@ -48,7 +48,7 @@ for(const file of files){
     for(const hook of ['persistentAttachment=true','recipeMetaForOutputKey','item?.attachment?.bonuses','kind:\'attachment\''])if(!contents.includes(hook))throw new Error('Persistent profession attachment model is missing '+hook);
     for(const hook of ["Jewelcrafting:{icon:'◆'","Engineering:{icon:'⚙'","Cooking:{icon:'♨'","Reliccrafting:{icon:'◈'","Scribing:{icon:'✒'","effect:'socket-gem'","effect:'character-gadget'","effect:'party-food'","attachmentFamily:'relic-core'","effect:'party-scroll'"])if(!contents.includes(hook))throw new Error('Expanded profession system is missing '+hook);
     for(const hook of ['crafterOnly:true','trainingScale:.45','payload.crafterOnly=true','output.tradeState=\'soulbound\'','boundCharacterId===c?.id'])if(!contents.includes(hook))throw new Error('Crafter-only profession recipe contract is missing '+hook);
-    for(const hook of ['socketReady:false','function activeProcs(c)','function consumeBossChargesOnce','SPECIAL_PREPARATIONS'])if(!contents.includes(hook))throw new Error('New profession runtime contract missing '+hook);
+    for(const hook of ['payload.socketReady=true','function activeProcs(c)','function consumeBossChargesOnce','SPECIAL_PREPARATIONS'])if(!contents.includes(hook))throw new Error('New profession runtime contract missing '+hook);
     if(!contents.includes('function activeBonuses(c,zone=null)')||!contents.includes('affinityZone===zone'))throw new Error('Scribing encounter affinity is missing');
   }
   if(file==='item-art-v1.js'){
@@ -71,21 +71,27 @@ for(const file of files){
     if(!contents.includes("paperDollHTML?.(c")||!contents.includes('data-paper-doll-stage')||!contents.includes('LIVE EQUIPMENT VIEW'))throw new Error('Character Equipment visual paper doll is missing');
     if(!contents.includes('function fallbackEquipmentSlot')||!contents.includes('cb-recovery-armoury')||!contents.includes("if(!item||typeof item!=='object')return false")||contents.includes('activeSlot=null;\n    return equipmentFallback'))throw new Error('Equipment recovery mode must preserve the paper doll and slot controls');
     for(const hook of ['function attachmentStacksForSlot','cb-attachment-panel','data-apply-attachment','function applyAttachmentToEquipped'])if(!contents.includes(hook))throw new Error('Character equipment attachment flow is missing '+hook);
+    for(const hook of ['function socketGemStacks','function socketPanel','data-apply-gem','function applyGemToEquipped'])if(!contents.includes(hook))throw new Error('Character equipment socket flow is missing '+hook);
     if(!contents.includes('permanently destroyed and cannot be recovered'))throw new Error('Attachment replacement must explicitly destroy the previous crafted attachment');
   }
   if(file==='bank-v2.css'){
     if(!contents.includes('#bank .bank-card-v2[data-hidden="1"]{display:none!important}'))throw new Error('Bank category filtering must override card display so materials cannot leak into Equipment');
+    for(const hook of ['.bank-socket-chip','.bank-socket-detail','.bank-socket-row'])if(!contents.includes(hook))throw new Error('Bank socket styling is missing '+hook);
+  }
+  if(file==='character-command-v1.css'){
+    for(const hook of ['.cb-socket-panel','.cb-socket-slot','.cb-socket-gem-option'])if(!contents.includes(hook))throw new Error('Character socket styling is missing '+hook);
   }
   if(file==='evolution-v1.js'){
     for(const hook of ['rosterClearFilters','rosterResultsLabel','Gear Watch','gearOrder='])if(!contents.includes(hook))throw new Error('Roster v2 filtering/enhancement is missing '+hook);
     for(const hook of ['bankMetricCrafting','data-bank-count','bank-filter-empty-v2',"bankCategory==='favorite'"])if(!contents.includes(hook))throw new Error('Bank v2 filtering/enhancement is missing '+hook);
     for(const hook of ['function openBankResource','data-resource-open','applyBankAttachment','learnBankRecipe'])if(!contents.includes(hook))throw new Error('Bank crafted-item action flow is missing '+hook);
-    for(const hook of ['function useBankPreparation','function useBankPartyPreparation','function activePartyCharacters','SOCKETS COMING','character-food','party-scroll'])if(!contents.includes(hook))throw new Error('Expanded profession Bank usage is missing '+hook);
+    if(!contents.includes('function applyBankGem')||!contents.includes('data-bank-socket'))throw new Error('Bank socket-gem application flow is missing');
+    for(const hook of ['function useBankPreparation','function useBankPartyPreparation','function activePartyCharacters','function applyBankGem','data-bank-gem','character-food','party-scroll'])if(!contents.includes(hook))throw new Error('Expanded profession Bank usage is missing '+hook);
     if(!contents.includes("'DESTROYS '+esc(existing.name||'ATTACHMENT')"))throw new Error('Bank attachment replacement must surface destructive overwrite');
     for(const hook of ['function findCraftedStack','boundCharacterId=split>=0','payload.boundCharacterId===c.id','Crafter only'])if(!contents.includes(hook))throw new Error('Bank crafter-only item ownership is missing '+hook);
   }
   if(file==='trading-post-v3.js'){
-    for(const hook of ["!x?.payload?.crafterOnly","!x?.attachment?.crafterOnly","Crafter-only items are soulbound and cannot be traded."])if(!contents.includes(hook))throw new Error('Trading Post crafter-only exclusion is missing '+hook);
+    for(const hook of ["!x?.payload?.crafterOnly","!x?.attachment?.crafterOnly","(x.sockets||[]).some(g=>g?.crafterOnly)","Crafter-only items are soulbound and cannot be traded."])if(!contents.includes(hook))throw new Error('Trading Post crafter-only exclusion is missing '+hook);
   }
   for(const stageFile of ['hollow-sanctum-v1.js','chaos-canyon-v1.js','fractured-ages-v1.js','blackout-station-v1.js']){
     if(file===stageFile&&!contents.includes('consumeBossChargesOnce'))throw new Error(stageFile+' is missing profession boss-charge consumption');
@@ -137,6 +143,7 @@ for(const file of files){
     if(!contents.includes("'Evoker|Preservation'")||!contents.includes("'Evoker|Devastation'")||!contents.includes("raidName:'Aspectbound Regalia'"))throw new Error('Evoker T1-T5 gear/spec catalogue is incomplete');
     for(const hook of ["'Priest|Shadow'","'Druid|Balance'","'Hunter|Beast Mastery'","'Rogue|Outlaw'","'Mage|Frost'","'Shaman|Elemental'","'Warlock|Destruction'"])if(!contents.includes(hook))throw new Error('Planned second-spec gear weighting is missing '+hook);
     if(!contents.includes('function setBonusRulesFor')||!contents.includes('talentSkillCooldownScale')||!contents.includes('specBias'))throw new Error('Adaptive spec-aware equipment foundation is incomplete');
+    for(const hook of ["SOCKET_ELIGIBLE_SLOTS=new Set(['Head','Chest','Weapon'])","SOCKET_CHANCE={1:.15,2:.40,3:.70,4:1,5:1}",'function socketCountFor','function ensureSockets','function socketBonusMap',"item.slot==='Chest'?2:1","'|sockets:'"])if(!contents.includes(hook))throw new Error('Equipment socket foundation is missing '+hook);
     for(const hook of ["'Priest|Holy'","'Priest|Shadow'","Saintglass Whispers","Voidbound Insight","Attic Veil Whispers","Voidborne Ascendance","periodicDamageScale","resourceGainScale"])if(!contents.includes(hook))throw new Error('Priest adaptive set migration is incomplete: '+hook);
     for(const hook of ["'Shaman|Restoration'","'Shaman|Elemental'","Tempestcaller Tides","Totemic Harmony","Tempestcaller Conduction","Stormcharged Insight","Stormcell Conduction","Primal Ascendance"])if(!contents.includes(hook))throw new Error('Shaman adaptive set migration is incomplete: '+hook);
     for(const hook of ["'Druid|Restoration'","'Druid|Balance'","Moonbark Renewal","Verdant Continuance","Moonbark Eclipse","Astral Convergence","Nightbloom Eclipse","Celestial Convergence","eclipseDamageScale"])if(!contents.includes(hook))throw new Error('Druid adaptive set migration is incomplete: '+hook);
@@ -604,11 +611,19 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     const recipes=def.recipes||[];
     if(recipes.length<10)throw new Error(name+' must have at least 10 craftable recipes across Skill 1-100');
     if(!recipes.some(r=>Number(r.level)===1)||!recipes.some(r=>Number(r.level)===100))throw new Error(name+' profession progression must include Skill 1 and Skill 100 recipes');
-    if(name==='Jewelcrafting'&&recipes.some(r=>r.output?.payload?.effect!=='socket-gem'||r.output?.payload?.socketReady!==false))throw new Error('Jewelcrafting must remain pending until real equipment sockets ship');
+    if(name==='Jewelcrafting'&&recipes.some(r=>r.output?.payload?.effect!=='socket-gem'||r.output?.payload?.socketReady!==true))throw new Error('Jewelcrafting gems must be enabled now that equipment sockets are live');
     for(const recipe of recipes){allRecipeIds.push(recipe.id);if(recipe.output?.key)allOutputKeys.push(recipe.output.key)}
   }
   if(new Set(allRecipeIds).size!==allRecipeIds.length)throw new Error('Profession recipe IDs must be unique');
   if(new Set(allOutputKeys).size!==allOutputKeys.length)throw new Error('Profession crafted item keys must be unique');
+  const socketProbe={tier:1,slot:'Head'},socketChest={tier:5,slot:'Chest'},socketHead={tier:5,slot:'Head'},socketRing={tier:5,slot:'Ring'};
+  if(G.socketCountFor(socketProbe,()=>.10)!==1||G.socketCountFor(socketProbe,()=>.20)!==0)throw new Error('Tier 1 socket chance must remain 15%');
+  if(G.socketCountFor({tier:2,slot:'Chest'},()=>.39)!==1||G.socketCountFor({tier:2,slot:'Chest'},()=>.41)!==0)throw new Error('Tier 2 socket chance must remain 40%');
+  if(G.socketCountFor({tier:3,slot:'Weapon'},()=>.69)!==1||G.socketCountFor({tier:3,slot:'Weapon'},()=>.71)!==0)throw new Error('Tier 3 socket chance must remain 70%');
+  if(G.socketCountFor({tier:4,slot:'Head'},()=>.99)!==1||G.socketCountFor(socketHead,()=>.99)!==1||G.socketCountFor(socketChest,()=>.99)!==2||G.socketCountFor(socketRing,()=>0)!==0)throw new Error('Tier 4/5 socket guarantees or eligible slots regressed');
+  const sigA={itemId:'socket-test',tier:4,slot:'Head',bonusStats:[],socketCount:1,sockets:[null]},sigB={itemId:'socket-test',tier:4,slot:'Head',bonusStats:[],socketCount:1,sockets:[{key:'faded-quartz',name:'Faded Quartz',bonuses:{crit:2}}]};
+  if(G.rollSignature(sigA)===G.rollSignature(sigB))throw new Error('Socket contents must be part of equipment stack identity');
+
   const allRecipes=professionEntries.flatMap(([,def])=>def.recipes||[]),bound=allRecipes.filter(r=>r.crafterOnly);
   if(allRecipes.length!==120||bound.length!==20)throw new Error('Ten-profession catalogue must contain 120 recipes including 20 crafter-only rewards');
   const notes=P.PROFESSIONS.Scribing.recipes.find(r=>r.output.key==='ashen-hunters-notes')?.output?.payload;
@@ -624,8 +639,10 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     {kind:'scroll',name:'Scroll',bonuses:{haste:3},remainingBosses:1},
     {kind:'gadget',name:'Gadget',bonuses:gadget.output.payload.bonuses,proc:gadget.output.payload.proc,remainingBosses:1}
   ]};
+  const socketGem=P.PROFESSIONS.Jewelcrafting.recipes.find(r=>r.output.key==='faded-quartz')?.output?.payload;
+  char.equipment.Head={socketCount:1,sockets:[{key:'faded-quartz',name:'Faded Quartz',bonuses:socketGem?.bonuses||{}}]};
   const prep=P.activeBonuses(char),proc=P.activeProcs(char);
-  if(prep.damagePct!==8||prep.haste!==3||!proc.openingBurstPct||!proc.triageHealPct)throw new Error('Flask/Food/Scroll/Gadget stacking or Relic Core special effect failed');
+  if(prep.damagePct!==8||prep.haste!==3||prep.crit!==2||!proc.openingBurstPct||!proc.triageHealPct)throw new Error('Socket/Flask/Food/Scroll/Gadget stacking or Relic Core special effect failed');
   const charges={},first=P.consumeBossChargesOnce([char],'profession-test-boss',charges),again=P.consumeBossChargesOnce([char],'profession-test-boss',charges);
   if(first.length!==2||again.length!==0||P.activeProcs(char).triageHealPct!==8)throw new Error('Preparation charges must expire exactly once per cleared boss');
 

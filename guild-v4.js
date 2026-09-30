@@ -137,7 +137,7 @@ const nativeLocalSet=Storage.prototype.setItem;
 function talentState(className){
   const out={};Object.keys(classes[className]?.specs||{}).forEach(spec=>{out[spec]={}});return out;
 }
-function cloneGear(item,source='Starting Equipment'){return item?{...item,source,quantity:undefined}:null;}
+function cloneGear(item,source='Starting Equipment'){if(!item)return null;const out={...item,source,quantity:undefined};return G?.ensureSockets?.(out,'roll')||out;}
 function starterEquipment(klass){
   const set=G.starterSet(klass);
   return {Head:cloneGear(set.find(x=>x.slot==='Head')),Chest:cloneGear(set.find(x=>x.slot==='Chest')),Weapon:cloneGear(set.find(x=>x.slot==='Weapon')),Shoulders:null,Hands:null,Waist:null,Legs:null,Feet:null,OffHand:null,Ring1:null,Ring2:null,Trinket1:null,Trinket2:null,Relic:null};
@@ -155,7 +155,7 @@ const starterRoster=starterDefs.map(([id,name,klass,spec,level,power,knowledge,p
 });
 function initialState(){
   return {
-    saveVersion:SAVE_VERSION,gearVersion:2,renown:0,gold:250,socialDisplayName:'',
+    saveVersion:SAVE_VERSION,gearVersion:3,renown:0,gold:250,socialDisplayName:'',
     roster:[],party:{tank:null,healer:null,dps:[null,null,null]},
     bossKills:{ashwarden:false,embermaw:false,vaultheart:false},progression:{ashenVaultUnlocked:false},reports:[],bank:[],materials:{},
     consumables:[],recipeScrolls:[],discoveredRecipes:[],tradeInbox:[],collectionHistory:[],
@@ -184,7 +184,7 @@ function charById(id){return state?.roster?.find(c=>c.id===id)||null;}
 function bossById(id){return bosses.find(b=>b.id===id)||bosses[0];}
 function bankTotal(){return (state?.bank||[]).reduce((n,item)=>n+(item.quantity||1),0);}
 function averageMastery(c){const vals=Object.values(c.knowledge||{});return vals.length?Math.round(vals.reduce((a,b)=>a+(Number(b)||0),0)/vals.length):0;}
-function canonicalItem(raw){if(!raw)return null;const base=G.byName(raw.name)||G.byId(raw.itemId);return base?{...base,...raw,itemLevel:raw.itemLevel||base.itemLevel,power:raw.power||base.power,tradeState:raw.tradeState||base.tradeState,visualKey:raw.visualKey||base.visualKey}:raw;}
+function canonicalItem(raw){if(!raw)return null;const base=G.byName(raw.name)||G.byId(raw.itemId),item=base?{...base,...raw,itemLevel:raw.itemLevel||base.itemLevel,power:raw.power||base.power,tradeState:raw.tradeState||base.tradeState,visualKey:raw.visualKey||base.visualKey}:{...raw};return G?.ensureSockets?.(item)||item;}
 function isBankUtility(item){return Boolean(item?.category==='utility'||item?.utilityType)}
 function bankUtilityArt(item,size=66){const icon=esc(item?.icon||'⚡');return window.CellboundItemArt?.artHTML?.(item,size,'bank-utility-art')||`<span class="bank-utility-art rarity-${String(item?.rarity||'rare').toLowerCase()}" style="width:${size}px;height:${size}px" aria-label="${esc(item?.name||'Utility item')}"><i>${icon}</i></span>`}
 function bankItemArt(item,size=66){return isBankUtility(item)?bankUtilityArt(item,size):G.artHTML(item,size)}
@@ -192,6 +192,12 @@ function bankAttachmentMarkup(item){
   const a=item?.attachment;if(!a?.bonuses)return'';
   const meta=[a.profession,a.skill?'Skill '+a.skill:null,a.tier?'Tier '+a.tier:null].filter(Boolean).join(' · ');
   return `<div class="bank-attachment-detail"><small>${a.crafterOnly?'CRAFTER ONLY · ':''}CRAFTED ATTACHMENT${meta?' · '+esc(meta.toUpperCase()):''}</small><b>✥ ${esc(a.name||'Attachment')}</b><p>${esc(P?.bonusText?.(a.bonuses)||'')}${a.procText?' · '+esc(a.procText):''}</p><span>${a.crafterOnly?'Soulbound to '+esc(a.boundCharacterName||'its crafter')+' · bonus only works for that character.':'Remains on this equipment until replaced.'}</span></div>`
+}
+function bankSocketMarkup(item){
+  const count=Math.max(0,Number(item?.socketCount)||0);
+  if(!count)return'';
+  const sockets=Array.isArray(item.sockets)?item.sockets:[];
+  return `<div class="bank-socket-detail"><div class="bank-socket-head"><small>JEWELCRAFTING SOCKETS</small><b>${sockets.filter(Boolean).length}/${count} FILLED</b></div><div class="bank-socket-list">${Array.from({length:count},(_,i)=>{const gem=sockets[i];return `<div class="bank-socket-row ${gem?'filled':'empty'}"><span>◆</span><div><b>${gem?esc(gem.name||'Socket Gem'):'Open Socket'}</b><small>${gem?esc(P?.bonusText?.(gem.bonuses)||''):'Insert a Jewelcrafting gem from the Character screen or Bank.'}</small>${gem?.crafterOnly?`<em>Soulbound to ${esc(gem.boundCharacterName||'its crafter')}</em>`:''}</div></div>`}).join('')}</div></div>`
 }
 function setBonusPanel(item,c=null){
   if(!item?.setId||!item?.setName)return'';
@@ -305,7 +311,7 @@ function migrateState(raw){
   const s=freshMarker?initialState():(validRaw?raw:initialState());
   if(freshMarker){s.onboarding.freshStartAt=freshStartedAt;s.activity=['Fresh Start ready. Build your first party to begin again.'];}
   const hadRoster=Array.isArray(s.roster)&&s.roster.length>0;
-  s.saveVersion=SAVE_VERSION;s.gearVersion=2;s.renown=Number(s.renown)||0;s.gold=Number(s.gold)||0;s.socialDisplayName=typeof s.socialDisplayName==='string'?s.socialDisplayName:'';
+  s.saveVersion=SAVE_VERSION;s.gearVersion=3;s.renown=Number(s.renown)||0;s.gold=Number(s.gold)||0;s.socialDisplayName=typeof s.socialDisplayName==='string'?s.socialDisplayName:'';
   s.roster=Array.isArray(s.roster)?s.roster.map(normalizeCharacter):[];
   s.progression=s.progression&&typeof s.progression==='object'?s.progression:{};if(typeof s.progression.ashenVaultUnlocked!=='boolean')s.progression.ashenVaultUnlocked=Boolean(Number(s.dungeonCompletions)>0||Object.values(s.bossKills||{}).some(Boolean)||s.questSystem?.ashfall?.complete);s.bank=canonicalBank(s.bank);s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};s.consumables=Array.isArray(s.consumables)?s.consumables:[];s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];s.collectionHistory=Array.isArray(s.collectionHistory)?s.collectionHistory:[];s.reports=Array.isArray(s.reports)?s.reports:[];s.activity=Array.isArray(s.activity)?s.activity:[];s.bossKills=s.bossKills||{ashwarden:false,embermaw:false,vaultheart:false};s.party=s.party||{tank:null,healer:null,dps:[null,null,null]};
   if(s.__fresh_start===true||!s.onboarding&&!hadRoster)s.onboarding={version:1,complete:false,stage:'party-builder',zone:'zeltira',startedAt:new Date().toISOString()};
@@ -889,7 +895,7 @@ function renderBank(){
     const preview=utility
       ?`<span>${esc(item.description||'Encounter utility item.')}</span>`
       :stats.slice(0,2).map(s=>`<span>${s.text}</span>`).join('')||'<span class="legacy">No rolled stats</span>';
-    const effect=(item.uniqueEffect?`<span class="bank-effect-chip">✦ ${esc(item.uniqueEffect.name)}</span>`:'')+(item.attachment?`<span class="bank-effect-chip bank-attachment-chip">✥ ${esc(item.attachment.name||'Attachment')}</span>`:'');
+    const socketCount=Math.max(0,Number(item.socketCount)||0),filledSockets=(item.sockets||[]).filter(Boolean).length,effect=(item.uniqueEffect?`<span class="bank-effect-chip">✦ ${esc(item.uniqueEffect.name)}</span>`:'')+(item.attachment?`<span class="bank-effect-chip bank-attachment-chip">✥ ${esc(item.attachment.name||'Attachment')}</span>`:'')+(socketCount?`<span class="bank-effect-chip bank-socket-chip">◆ ${filledSockets}/${socketCount} SOCKETS</span>`:'');
     const flags=(item.favorite?'<i class="bank-flag favorite">★</i>':'')+(item.junk?'<i class="bank-flag junk">JUNK</i>':'');
     const qty=utility?`${Math.max(0,Number(item.charges)||0)}/${Math.max(1,Number(item.maxCharges)||5)} uses`:`×${item.quantity||1}`;
     const meta=utility
@@ -965,15 +971,15 @@ function removeBankQuantity(item,quantity){
 }
 function disposeBankItem(id,mode){
   const item=state.bank.find(x=>x.id===id);if(!item||bankItemProtected(item))return;
-  const qty=bankCleanupQuantity(item),name=item.name||'item';
+  const qty=bankCleanupQuantity(item),name=item.name||'item',gemCount=(item.sockets||[]).filter(Boolean).length,gemWarning=gemCount?`\n\n${gemCount} socketed gem${gemCount===1?'':'s'} will be permanently destroyed.`:'';
   if(mode==='vendor'){
     const gold=bankVendorUnitValue(item)*qty;
-    if(!confirm(`Sell ${qty} × ${name} to the Guild Quartermaster for ${gold.toLocaleString()} Gold?\n\nThis cannot be undone.`))return;
+    if(!confirm(`Sell ${qty} × ${name} to the Guild Quartermaster for ${gold.toLocaleString()} Gold?${gemWarning}\n\nThis cannot be undone.`))return;
     removeBankQuantity(item,qty);state.gold=(Number(state.gold)||0)+gold;
     state.activity.push(`Sold ${qty} × ${name} to the Guild Quartermaster for ${gold} Gold.`);
   }else if(mode==='dismantle'){
     const yieldMap=bankDismantleYield(item,qty),summary=Object.entries(yieldMap).map(([key,n])=>`${P?.MATERIALS?.[key]?.name||key} ×${n}`).join(', ');
-    if(!confirm(`Dismantle ${qty} × ${name}?\n\nYou will receive: ${summary}.\n\nThis cannot be undone.`))return;
+    if(!confirm(`Dismantle ${qty} × ${name}?\n\nYou will receive: ${summary}.${gemWarning}\n\nThis cannot be undone.`))return;
     removeBankQuantity(item,qty);Object.entries(yieldMap).forEach(([key,n])=>addMaterial(key,n));
     state.activity.push(`Dismantled ${qty} × ${name}: ${summary}.`);
   }else return;
@@ -1029,7 +1035,7 @@ function bankCompareMarkup(ch,item){
     const a=Number(incoming[key]?.value)||0,b=Number(equipped[key]?.value)||0,d=a-b,label=incoming[key]?.label||equipped[key]?.label||key,unit=(incoming[key]?.unit||equipped[key]?.unit)==='percent'?'%':'';
     return '<span class="'+(d>0?'gain':d<0?'loss':'same')+'"><b>'+(d>0?'+':'')+d+unit+'</b>'+esc(label)+'</span>';
   }).join('');
-  const effect=(item.uniqueEffect?'<p><strong>'+esc(item.uniqueEffect.name)+'</strong>'+esc(item.uniqueEffect.description)+'</p>':'')+(item.attachment?'<p><strong>✥ '+esc(item.attachment.name||'Attachment')+'</strong>'+esc(P?.bonusText?.(item.attachment.bonuses)||'')+'</p>':'');
+  const gems=(item.sockets||[]).filter(Boolean),effect=(item.uniqueEffect?'<p><strong>'+esc(item.uniqueEffect.name)+'</strong>'+esc(item.uniqueEffect.description)+'</p>':'')+(item.attachment?'<p><strong>✥ '+esc(item.attachment.name||'Attachment')+'</strong>'+esc(P?.bonusText?.(item.attachment.bonuses)||'')+'</p>':'')+(Number(item.socketCount)>0?'<p><strong>◆ '+gems.length+'/'+item.socketCount+' sockets filled</strong>'+gems.map(g=>esc(g.name)+': '+esc(P?.bonusText?.(g.bonuses)||'')).join(' · ')+'</p>':'');
   return '<span class="bank-comparison"><span><small>CURRENT</small><b>'+esc(current?.name||('Empty '+item.slot))+'</b><em>iLvl '+(Number(current?.itemLevel)||0)+'</em></span><span class="bank-compare-delta '+(ilvlDelta>0?'gain':ilvlDelta<0?'loss':'')+'"><strong>'+(ilvlDelta>0?'+':'')+ilvlDelta+' iLvl</strong>'+(stats||'<span class="same"><b>—</b>No stat delta</span>')+'</span><span><small>NEW</small><b>'+esc(item.name)+'</b><em>iLvl '+(Number(item.itemLevel)||0)+'</em>'+effect+'</span></span>';
 }
 function selectJunkForBulk(){
@@ -1061,7 +1067,7 @@ function openBankItem(id){
         </div>
       </div>`;
 
-  const stats=G.statLines?.(item)||[];ui.bankDetail.innerHTML=`<div class="detail-hero gear-detail-hero"><div class="gear-detail-art">${G.artHTML(item,112)}</div><div><small>${tierText(item).toUpperCase()} · ${String(item.class||'All').toUpperCase()} · ${String(item.slot||'Gear').toUpperCase()}</small><h2>${item.name}</h2><div class="bank-detail-rolls">${stats.length?stats.map(s=>`<span>${s.text}</span>`).join(''):'<span class="legacy">Legacy item · no rolled stats</span>'}</div>${setBonusPanel(item)}${item.uniqueEffect?`<div class="bank-unique-detail"><small>UNIQUE EFFECT</small><b>${esc(item.uniqueEffect.name)}</b><p>${esc(item.uniqueEffect.description)}</p></div>`:''}${bankAttachmentMarkup(item)}<p>Dropped by ${item.source||'Unknown source'}</p><p>Quantity in bank: ${qty}</p></div></div>${flags}${upgrade}<div class="bank-manage"><h3>Equip to an adventurer</h3><p>Same Item Level can still be an upgrade if the roll better suits that character's spec.</p><div class="bank-character-list">${eligible.map(ch=>{const fit=G.rollFit?.(ch,item);return`<button data-equip-char="${ch.id}"><span class="avatar">${portraitHTML(ch,'sm')}</span><span><b>${ch.name}</b><small>${ch.race||'Veyren'} · ${ch.class} · ${ch.spec} · iLvl ${characterItemLevel(ch)}</small></span><em class="roll-fit ${fit?.tone||''}">${fit?.label||''}</em>${bankCompareMarkup(ch,item)}</button>`}).join('')||'<p>No available characters can use this item.</p>'}</div></div>${cleanup}`;
+  const stats=G.statLines?.(item)||[];ui.bankDetail.innerHTML=`<div class="detail-hero gear-detail-hero"><div class="gear-detail-art">${G.artHTML(item,112)}</div><div><small>${tierText(item).toUpperCase()} · ${String(item.class||'All').toUpperCase()} · ${String(item.slot||'Gear').toUpperCase()}</small><h2>${item.name}</h2><div class="bank-detail-rolls">${stats.length?stats.map(s=>`<span>${s.text}</span>`).join(''):'<span class="legacy">Legacy item · no rolled stats</span>'}</div>${setBonusPanel(item)}${item.uniqueEffect?`<div class="bank-unique-detail"><small>UNIQUE EFFECT</small><b>${esc(item.uniqueEffect.name)}</b><p>${esc(item.uniqueEffect.description)}</p></div>`:''}${bankAttachmentMarkup(item)}${bankSocketMarkup(item)}<p>Dropped by ${item.source||'Unknown source'}</p><p>Quantity in bank: ${qty}</p></div></div>${flags}${upgrade}<div class="bank-manage"><h3>Equip to an adventurer</h3><p>Same Item Level can still be an upgrade if the roll better suits that character's spec.</p><div class="bank-character-list">${eligible.map(ch=>{const fit=G.rollFit?.(ch,item);return`<button data-equip-char="${ch.id}"><span class="avatar">${portraitHTML(ch,'sm')}</span><span><b>${ch.name}</b><small>${ch.race||'Veyren'} · ${ch.class} · ${ch.spec} · iLvl ${characterItemLevel(ch)}</small></span><em class="roll-fit ${fit?.tone||''}">${fit?.label||''}</em>${bankCompareMarkup(ch,item)}</button>`}).join('')||'<p>No available characters can use this item.</p>'}</div></div>${cleanup}`;
   document.body.classList.add('bank-manage-open');ui.bankModal.hidden=false;
   ui.bankDetail.querySelectorAll('[data-equip-char]').forEach(b=>b.addEventListener('click',()=>equipBankItem(id,b.dataset.equipChar)));
   $('[data-bank-favorite]')?.addEventListener('click',()=>toggleBankFlag(id,'favorite'));

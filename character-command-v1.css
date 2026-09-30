@@ -495,3 +495,54 @@
 }
 .cb-current-attachment.is-inactive small{color:#c57d7d}
 .cb-current-attachment.is-inactive span{color:#b99898}
+
+
+/* Jewelcrafting sockets */
+.cb-socket-panel{
+  margin:10px 0 12px;padding:12px;border:1px solid rgba(92,155,214,.18);
+  background:linear-gradient(180deg,rgba(20,43,65,.28),#081216)
+}
+.cb-socket-panel.no-socket{opacity:.82}
+.cb-socket-panel-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:9px
+}
+.cb-socket-panel-head small,.cb-socket-slot header small{
+  display:block;color:#7ca8ca;font-size:.45rem;font-weight:900;letter-spacing:.11em
+}
+.cb-socket-panel-head h4{margin:3px 0 0;color:#e2e9ed;font:500 .88rem Georgia,serif}
+.cb-socket-panel-head p{margin:4px 0 0!important;color:#71858f!important;font-size:.5rem!important;line-height:1.45}
+.cb-socket-panel-head>span{
+  flex:0 0 auto;padding:5px 7px;border:1px solid rgba(92,155,214,.16);
+  background:#09151d;color:#8bb1cf;font-size:.44rem;font-weight:900
+}
+.cb-socket-list{display:grid;gap:8px}
+.cb-socket-slot{padding:9px;border:1px solid rgba(255,255,255,.06);background:#091317}
+.cb-socket-slot>header{display:grid;grid-template-columns:32px minmax(0,1fr);gap:8px;align-items:center;margin-bottom:7px}
+.cb-socket-slot>header>span{
+  width:30px;height:30px;display:grid;place-items:center;border:1px solid rgba(92,155,214,.22);
+  background:rgba(22,50,72,.35);color:#9bc5e4;font-size:.9rem;transform:rotate(45deg)
+}
+.cb-socket-slot>header>span::first-letter{transform:rotate(-45deg)}
+.cb-socket-slot header b{display:block;margin-top:2px;color:#e0e8eb;font-size:.66rem}
+.cb-socket-slot header em{display:block;margin-top:3px;color:#79909a;font-size:.47rem;font-style:normal}
+.cb-socket-slot.is-inactive{border-color:rgba(190,96,96,.2);background:rgba(74,26,26,.14)}
+.cb-socket-gem-options{display:grid;gap:6px}
+.cb-socket-gem-option{
+  display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:8px;align-items:center;
+  padding:7px;border:1px solid rgba(255,255,255,.05);background:#071014
+}
+.cb-socket-gem-option.currently-socketed{opacity:.6;border-color:rgba(92,155,214,.18)}
+.cb-socket-gem-art{width:42px;height:42px}
+.cb-socket-gem-option small{display:block;color:#6d8190;font-size:.39rem;font-weight:900;letter-spacing:.07em}
+.cb-socket-gem-option b{display:block;margin-top:2px;color:#dce6ea;font-size:.6rem}
+.cb-socket-gem-option span{display:block;margin-top:3px;color:#7f929a;font-size:.49rem}
+.cb-socket-gem-option em{display:block;margin-top:3px;color:#687a82;font-size:.43rem;font-style:normal}
+.cb-socket-gem-option>button{
+  min-height:36px;padding:0 10px;border:1px solid rgba(92,155,214,.2);
+  background:#172d3c;color:#a9d0eb;font-size:.44rem;font-weight:900;letter-spacing:.05em
+}
+.cb-socket-gem-option>button:disabled{opacity:.45}
+@media(max-width:720px){
+  .cb-socket-gem-option{grid-template-columns:42px minmax(0,1fr)}
+  .cb-socket-gem-option>button{grid-column:1/-1;width:100%}
+}

@@ -741,10 +741,13 @@ function setSummaryMarkup(c){
 }
 function equipmentSlot(c,slot,state){
   const item=c.equipment?.[slot],upgrade=bestBankUpgrade(state,c,slot),prep=(window.CellboundProfessions?.activeEffects?.(c)||[]).find(x=>(x.kind==='attachment'||x.kind==='enhancement')&&x.slot===slot);
+  if(item)G?.ensureSockets?.(item);
+  const socketCount=Math.max(0,Number(item?.socketCount)||0),filledSockets=(item?.sockets||[]).filter(Boolean).length;
+  const socketLine=socketCount?`<span class="cb-slot-roll cb-slot-sockets">◆ ${filledSockets}/${socketCount} SOCKETS${filledSockets?' · '+(item.sockets||[]).filter(Boolean).map(g=>g.name||'Gem').join(', '):''}</span>`:'';
   const art=item?(G?.artHTML?.(item,48,'cb-slot-art')||item.icon||slotIcons[slot]||'◇'):(slotIcons[slot]||'◇');
   return `<button class="cb-equip-slot ${item?rarityClass(item):'cb-empty'} ${upgrade?'has-upgrade':''}" data-slot="${slot}">
     <span class="cb-slot-icon">${art}</span>
-    <span class="cb-slot-copy"><small>${slot.replace(/(\d)/,' $1')}</small><b>${item?.name||'Empty'}</b>${item?.power?`<em>+${item.power} power</em>`:''}${item?`<span class="cb-slot-ilvl">Item Level ${item.itemLevel||0}</span><span class="cb-slot-roll">${(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll'}</span>${setInlineMarkup(c,item)}${prep?`<span class="cb-slot-roll cb-slot-prep">✥ ${prep.name} · ${window.CellboundProfessions?.bonusText?.(prep.bonuses)||''}${prep.permanent?' · ATTACHED':` · ${prep.remainingBosses} bosses`}</span>`:''}`:'<span class="cb-slot-ilvl">Empty equipment slot</span>'}</span>
+    <span class="cb-slot-copy"><small>${slot.replace(/(\d)/,' $1')}</small><b>${item?.name||'Empty'}</b>${item?.power?`<em>+${item.power} power</em>`:''}${item?`<span class="cb-slot-ilvl">Item Level ${item.itemLevel||0}</span><span class="cb-slot-roll">${(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll'}</span>${socketLine}${setInlineMarkup(c,item)}${prep?`<span class="cb-slot-roll cb-slot-prep">✥ ${prep.name} · ${window.CellboundProfessions?.bonusText?.(prep.bonuses)||''}${prep.permanent?' · ATTACHED':` · ${prep.remainingBosses} bosses`}</span>`:''}`:'<span class="cb-slot-ilvl">Empty equipment slot</span>'}</span>
     ${upgrade?`<span class="cb-slot-upgrade">+${upgrade.gain} ILVL</span>`:''}
   </button>`;
 }
@@ -861,10 +864,28 @@ function attachmentCard(stack,current){
     <button type="button" data-apply-attachment="${stack.key}" ${same?'disabled':''}>${same?'ATTACHED':current?'REPLACE':'ATTACH'}</button>
   </article>`
 }
+function socketGemStacks(state,c){
+  return (Array.isArray(state?.consumables)?state.consumables:[]).filter(stack=>Number(stack?.quantity)>0&&stack?.payload?.effect==='socket-gem'&&stack?.payload?.socketReady!==false&&(!stack?.payload?.crafterOnly||stack.payload.boundCharacterId===c?.id))
+}
+function socketGemMeta(stack){
+  const P=window.CellboundProfessions,meta=P?.recipeMetaForOutputKey?.(stack?.key)||null,recipe=meta?.recipe;
+  return{profession:meta?.profession||'Jewelcrafting',skill:Number(recipe?.level)||1,rarity:stack?.rarity||recipe?.output?.rarity||P?.craftedRarity?.(recipe?.level,recipe?.endgame)||'Uncommon'}
+}
+function socketGemCard(stack,currentGem,index){
+  const P=window.CellboundProfessions,meta=socketGemMeta(stack),same=currentGem?.key===stack.key&&(!stack.payload?.crafterOnly||currentGem?.boundCharacterId===stack.payload.boundCharacterId),art=P?.consumableArtHTML?.(stack.key,42,'cb-socket-gem-art')||'◆';
+  return `<article class="cb-socket-gem-option ${same?'currently-socketed':''}"><div class="cb-socket-gem-art">${art}</div><div><small>${meta.profession.toUpperCase()} · SKILL ${meta.skill}${stack.payload?.crafterOnly?' · CRAFTER ONLY':''}</small><b>${escHtml(stack.name)}</b><span>${escHtml(P?.bonusText?.(stack.payload?.bonuses)||'Socket bonus')}</span><em>${same?'Currently socketed':meta.rarity+' · ×'+(stack.quantity||1)+' in Bank'}</em></div><button type="button" data-apply-gem="${stack.key}" data-socket-index="${index}" ${same?'disabled':''}>${same?'SOCKETED':currentGem?'REPLACE':'INSERT'}</button></article>`
+}
+function socketPanel(state,c,item){
+  if(!item||!G?.socketEligible?.(item))return'';
+  G.ensureSockets?.(item);
+  const count=Math.max(0,Number(item.socketCount)||0),gems=socketGemStacks(state,c),P=window.CellboundProfessions;
+  if(!count)return `<section class="cb-socket-panel no-socket"><div class="cb-socket-panel-head"><div><small>JEWELCRAFTING SOCKETS</small><h4>No socket on this item</h4><p>This eligible ${escHtml(item.slot)} rolled without a socket. Higher-tier equipment has a better socket chance; Tier 4+ guarantees at least one.</p></div><span>0 SOCKETS</span></div></section>`;
+  return `<section class="cb-socket-panel"><div class="cb-socket-panel-head"><div><small>JEWELCRAFTING SOCKETS</small><h4>${count} socket${count===1?'':'s'} available</h4><p>Inserting a gem consumes it from the Bank. Replacing a gem permanently destroys the old one.</p></div><span>${(item.sockets||[]).filter(Boolean).length}/${count} FILLED</span></div><div class="cb-socket-list">${Array.from({length:count},(_,index)=>{const gem=item.sockets?.[index]||null,usable=!gem?.crafterOnly||gem.boundCharacterId===c?.id;return `<div class="cb-socket-slot ${gem?'filled':'empty'} ${usable?'':'is-inactive'}"><header><span>◆</span><div><small>SOCKET ${index+1}</small><b>${gem?escHtml(gem.name||'Socket Gem'):'Open Socket'}</b><em>${gem?(usable?escHtml(P?.bonusText?.(gem.bonuses)||''):'Inactive · bound to '+escHtml(gem.boundCharacterName||'its crafter')):'Choose a gem from the Bank'}</em></div></header><div class="cb-socket-gem-options">${gems.length?gems.map(stack=>socketGemCard(stack,gem,index)).join(''):'<div class="cb-no-items">No Jewelcrafting gems are currently stored in the Bank.</div>'}</div></div>`}).join('')}</div></section>`
+}
 function slotPicker(state,c,slot){
   const bank=Array.isArray(state?.bank)?state.bank:[];
   const candidates=bank.filter(item=>canUse(c,item)&&possibleSlots(item).includes(slot));
-  const current=c.equipment?.[slot];
+  const current=c.equipment?.[slot];if(current)G?.ensureSockets?.(current);
   const currentIlvl=Number(current?.itemLevel)||0;
   const shards=Number(state?.materials?.['cell-shards'])||0;
   const upgradeCost=current?equippedUpgradeCost(current):0;
@@ -874,6 +895,7 @@ function slotPicker(state,c,slot){
   const attached=current?.attachment||null;
   const P=window.CellboundProfessions,attachmentUsable=!attached?.crafterOnly||attached?.boundCharacterId===c?.id;
   const currentAttachment=attached?`<div class="cb-current-attachment ${attachmentUsable?'':'is-inactive'}"><small>${attached.crafterOnly?'CRAFTER-ONLY ATTACHMENT':'ATTACHED MODIFICATION'}</small><b>${escHtml(attached.name||attached.key||'Attachment')}</b><span>${escHtml(P?.bonusText?.(attached.bonuses)||'')}${attached.procText?' · '+escHtml(attached.procText):''}</span><em>${attachmentUsable?'Permanent on this item. Applying another attachment destroys this one.':'Inactive for '+escHtml(c.name)+' · bound to '+escHtml(attached.boundCharacterName||'its crafter')+'.'}</em></div>`:'';
+  const sockets=current?socketPanel(state,c,current):'';
   const attachmentPanel=current?`<section class="cb-attachment-panel">
     <div class="cb-attachment-panel-head"><div><small>CRAFTED ATTACHMENTS</small><h4>Modify this ${escHtml(slot)}</h4><p>Applying an attachment consumes it from the Bank. Replacing one permanently destroys the old attachment.</p></div><span>${attachments.length} compatible in Bank</span></div>
     ${currentAttachment}
@@ -888,9 +910,10 @@ function slotPicker(state,c,slot){
     <div class="cb-slot-drawer-head"><div><small>${slot}</small><h3>${current?.name||'Empty slot'}</h3></div><button data-close-slot>×</button></div>
     ${current?`<div class="cb-current-item ${rarityClass(current)}"><span>${G?.artHTML?.(current,56)||current.icon||slotIcons[slot]}</span><div><b>${current.name}</b><small>${current.rarity||'Starter'} · iLvl ${currentIlvl}${current.power?` · +${current.power} power`:''}${Number(current.upgradeLevel)>0?` · Upgrade ${Number(current.upgradeLevel)}`:''}</small><em class="cb-current-roll">${(G?.statLines?.(current)||[]).map(s=>s.text).join(' · ')||'Legacy roll'}</em>${setInlineMarkup(c,current)}</div></div>`:''}
     ${currentActions}
+    ${sockets}
     ${attachmentPanel}
     <p>Compatible Guild Bank equipment</p>
-    <div class="cb-slot-options">${candidates.length?candidates.sort((a,b)=>(b.itemLevel||0)-(a.itemLevel||0)).map(item=>{const delta=(Number(item.itemLevel)||0)-currentIlvl,fit=G?.rollFit?.(c,item),stats=(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll',attachment=item.attachment?` · ✥ ${item.attachment.name||'Attached'}`:'';return `<button data-equip-bank="${item.id}" data-equip-slot="${slot}" class="${rarityClass(item)}"><span>${G?.artHTML?.(item,48)||item.icon||'◇'}</span><div><b>${item.name}</b><small>${item.rarity} · iLvl ${item.itemLevel||0} · ×${item.quantity||1}${attachment}</small><strong class="cb-option-roll">${stats}</strong>${setInlineMarkup(c,item)}<em class="${delta>0?'upgrade':delta<0?'downgrade':''}">${fit?.label||''}${delta===0?' · Same Item Level':delta>0?` · +${delta} Item Level`:` · ${delta} Item Level`}</em></div></button>`}).join(''):'<div class="cb-no-items">No compatible items are currently stored in the Bank.</div>'}</div>
+    <div class="cb-slot-options">${candidates.length?candidates.sort((a,b)=>(b.itemLevel||0)-(a.itemLevel||0)).map(item=>{const delta=(Number(item.itemLevel)||0)-currentIlvl,fit=G?.rollFit?.(c,item),stats=(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll',attachment=item.attachment?` · ✥ ${item.attachment.name||'Attached'}`:'',socketInfo=Number(item.socketCount)>0?` · ◆ ${G?.socketSummary?.(item)||''}`:'';return `<button data-equip-bank="${item.id}" data-equip-slot="${slot}" class="${rarityClass(item)}"><span>${G?.artHTML?.(item,48)||item.icon||'◇'}</span><div><b>${item.name}</b><small>${item.rarity} · iLvl ${item.itemLevel||0} · ×${item.quantity||1}${attachment}${socketInfo}</small><strong class="cb-option-roll">${stats}</strong>${setInlineMarkup(c,item)}<em class="${delta>0?'upgrade':delta<0?'downgrade':''}">${fit?.label||''}${delta===0?' · Same Item Level':delta>0?` · +${delta} Item Level`:` · ${delta} Item Level`}</em></div></button>`}).join(''):'<div class="cb-no-items">No compatible items are currently stored in the Bank.</div>'}</div>
   </div>`;
 }
 function totalSpent(c,spec){return B?.talentSpent?.(c,spec)??Object.values(c.talents?.[spec]||{}).reduce((a,b)=>a+(Number(b)||0),0)}
@@ -1181,6 +1204,24 @@ function applyAttachmentToEquipped(key,slot){
   state.activity=state.activity||[];state.activity.push(existing?`${stack.name} replaced ${existing.name||'an attachment'} on ${c.name}'s ${item.name}; the old attachment was destroyed.`:`${stack.name} attached to ${c.name}'s ${item.name}.`);
   writeState(state);activeSlot=slot;renderSheet();window.CellboundFX?.micro?.(stack.name+' attached','gold');window.CellboundFX?.pulse?.('.cb-current-attachment');
 }
+function applyGemToEquipped(key,slot,index){
+  if(!characterEditable())return;
+  const state=readState(),c=ensureCharacter(getCharacter(state,currentId)),item=c?.equipment?.[slot];
+  if(!state||!c||!item)return;
+  G?.ensureSockets?.(item);
+  index=Math.max(0,Number(index)||0);
+  if(index>=Math.max(0,Number(item.socketCount)||0))return;
+  const stack=(state.consumables||[]).find(x=>x.key===key&&Number(x.quantity)>0&&x?.payload?.effect==='socket-gem'&&x?.payload?.socketReady!==false&&(!x?.payload?.crafterOnly||x.payload.boundCharacterId===c.id)),payload=stack?.payload||{};
+  if(!stack)return;
+  const existing=item.sockets?.[index]||null,same=existing?.key===key&&(!payload.crafterOnly||existing?.boundCharacterId===payload.boundCharacterId);
+  if(same)return;
+  if(existing&&!confirm('Replace '+(existing.name||'the current gem')+' in '+item.name+'?\n\nThe existing gem will be permanently destroyed and cannot be recovered.'))return;
+  const meta=window.CellboundProfessions?.recipeMetaForOutputKey?.(key),recipe=meta?.recipe;
+  item.sockets[index]={key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},rarity:stack.rarity||recipe?.output?.rarity||'Uncommon',profession:meta?.profession||'Jewelcrafting',skill:Number(recipe?.level)||null,crafterOnly:Boolean(payload.crafterOnly),boundCharacterId:payload.boundCharacterId||null,boundCharacterName:payload.boundCharacterName||null,socketedAt:new Date().toISOString()};
+  stack.quantity=(Number(stack.quantity)||1)-1;if(stack.quantity<=0)state.consumables=state.consumables.filter(x=>x!==stack);
+  state.activity=state.activity||[];state.activity.push(existing?`${stack.name} replaced ${existing.name||'a gem'} in ${c.name}'s ${item.name}; the old gem was destroyed.`:`${stack.name} socketed into ${c.name}'s ${item.name}.`);
+  writeState(state);activeSlot=slot;renderSheet();window.CellboundFX?.micro?.(stack.name+' socketed','gold');window.CellboundFX?.pulse?.('.cb-socket-panel');
+}
 function unequipItem(slot){
   if(!characterEditable())return;
   const state=readState(),c=ensureCharacter(getCharacter(state,currentId)),item=c?.equipment?.[slot];
@@ -1298,6 +1339,7 @@ document.addEventListener('click',event=>{
     const unequip=event.target.closest('[data-unequip-slot]');if(unequip){event.preventDefault();event.stopImmediatePropagation();unequipItem(unequip.dataset.unequipSlot);return}
     const upgradeEquipped=event.target.closest('[data-upgrade-equipped]');if(upgradeEquipped){event.preventDefault();event.stopImmediatePropagation();upgradeEquippedItem(upgradeEquipped.dataset.upgradeEquipped);return}
     const applyAttachment=event.target.closest('[data-apply-attachment]');if(applyAttachment){event.preventDefault();event.stopImmediatePropagation();applyAttachmentToEquipped(applyAttachment.dataset.applyAttachment,activeSlot);return}
+    const applyGem=event.target.closest('[data-apply-gem]');if(applyGem){event.preventDefault();event.stopImmediatePropagation();applyGemToEquipped(applyGem.dataset.applyGem,activeSlot,applyGem.dataset.socketIndex);return}
     const equip=event.target.closest('[data-equip-bank]');if(equip){event.preventDefault();event.stopImmediatePropagation();equipItem(equip.dataset.equipBank,equip.dataset.equipSlot);return}
     const closeSlot=event.target.closest('[data-close-slot]');if(closeSlot){event.preventDefault();event.stopImmediatePropagation();activeSlot=null;renderSheet();return}
     const slot=event.target.closest('[data-slot]');if(slot){event.preventDefault();event.stopImmediatePropagation();activeSlot=slot.dataset.slot;renderSheet();return}
