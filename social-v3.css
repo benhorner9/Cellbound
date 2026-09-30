@@ -39,3 +39,9 @@
   color:#536864;font-size:.34rem;font-weight:800;letter-spacing:.065em
 }
 .chat-safety-note i{color:#6ab9ad;font-size:.32rem;font-style:normal}
+
+.guild-name-locked{display:grid;gap:5px;padding:16px;border-top:1px solid rgba(255,255,255,.045);background:linear-gradient(135deg,rgba(36,50,47,.42),rgba(10,20,23,.68))}
+.guild-name-locked[hidden]{display:none}
+.guild-name-locked small{color:#71837f;font-size:.42rem;font-weight:900;letter-spacing:.11em}
+.guild-name-locked b{font-family:Georgia,serif;color:#e3d09a;font-size:1.05rem;font-weight:500}
+.guild-name-locked span{color:#657671;font-size:.48rem}
