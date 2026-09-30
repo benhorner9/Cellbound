@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.30';
+const VERSION='1.3.31';
 // Balance baseline: 2026-09-30 chapter-wide progression and role audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
@@ -1362,7 +1362,7 @@ function gainComboPoints(ctx,u,amount,ability='Combo Point'){
  return actual
 }
 function spendComboPoints(ctx,u,requested,ability='Finisher'){
- if(u?.class!=='Rogue'||u?.spec!=='Outlaw')return 0;
+ if(u?.class!=='Rogue')return 0;
  const before=Math.max(0,Number(u.comboPoints)||0),need=Math.max(0,Number(requested)||0),spent=Math.min(before,Math.max(need,before));
  u.comboPoints=Math.max(0,before-spent);
  if(spent>0)emitComboPointState(ctx,u,'spent',ability,spent);
@@ -4436,7 +4436,7 @@ function runSelfTests(){
   });
  }
  {
-  const sigilParty=[{id:'sigil',name:'Sigil Tank',class:'Warrior',spec:'Protection',power:24,level:8,_combatItemLevel:30,equipment:{Relic:{uniqueEffect:{id:'frostbound-sigil',name:'Frozen Response'}}}}];
+  const sigilParty=[{id:'sigil',name:'Sigil Tank',class:'Warrior',spec:'Protection',power:24,level:8,_combatItemLevel:30,skillLoadouts:{Protection:['shield-slam','revenge','taunt','pummel']},equipment:{Relic:{uniqueEffect:{id:'frostbound-sigil',name:'Frozen Response'}}}}];
   const sigil=simulate({party:sigilParty,encounter:{id:'sigil-test',kind:'boss',level:8,enemies:['Caster'],enemyHealth:900,mechanics:[['Dangerous Cast','interrupt',2400]]},tactics:{interruptPriority:'high'},seed:'sigil-effect'});
   test('Unique Frostbound Sigil',()=>sigil.events.some(e=>e.type==='UNIQUE_EFFECT_TRIGGER'&&e.result==='frostbound-sigil'));
 
