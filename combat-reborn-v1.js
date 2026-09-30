@@ -3700,7 +3700,7 @@ function simulate(options={}){
  };
  const environment=copy(encounter.environment||{blockers:[]});
  const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
- players.forEach((u,i)=>{if(players.length>5&&!options.party[i]?._combatPosition)u.position.y=20+i*60/Math.max(1,players.length-1);u.position=openPosition(ctx,u.position,1.35)});
+ players.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  enemies.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),units:[...players,...enemies].map(u=>({id:u.id,position:copy(u.position),facing:u.facing,alive:u.alive,role:u.role,classification:u.classification,visualArchetype:u.visualArchetype,attackRange:u.attackRange,damageType:u.damageType})),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
  players.forEach(u=>{
