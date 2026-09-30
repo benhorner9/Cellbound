@@ -99,6 +99,31 @@ const WORKSHOP_ACTIONS={
     {key:'precision',icon:'✂',label:'Align Thread',text:'Realign the weave with exact placement.'},
     {key:'tempo',icon:'↯',label:'Weave Pace',text:'Carry momentum through the open pattern.'},
     {key:'stability',icon:'◇',label:'Lock Seam',text:'Secure the weave before it loosens.'}
+  ],
+  Jewelcrafting:[
+    {key:'precision',icon:'◆',label:'Cut Facet',text:'Correct the angle before the cut is committed.'},
+    {key:'tempo',icon:'✧',label:'Polish Edge',text:'Work the surface while the crystal remains responsive.'},
+    {key:'stability',icon:'◇',label:'Set Fracture',text:'Stabilise the gem before internal stress spreads.'}
+  ],
+  Engineering:[
+    {key:'precision',icon:'⚙',label:'Calibrate',text:'Tune the mechanism to exact tolerances.'},
+    {key:'tempo',icon:'↯',label:'Power Circuit',text:'Drive current through the open circuit now.'},
+    {key:'stability',icon:'⬡',label:'Brace Assembly',text:'Lock the device before the housing shifts.'}
+  ],
+  Cooking:[
+    {key:'precision',icon:'♨',label:'Season',text:'Correct the balance before the flavour is fixed.'},
+    {key:'tempo',icon:'↯',label:'Work Heat',text:'Use the heat while the timing window is open.'},
+    {key:'stability',icon:'◇',label:'Set Dish',text:'Bring the preparation together before it breaks.'}
+  ],
+  Reliccrafting:[
+    {key:'precision',icon:'◈',label:'Align Core',text:'Seat the core geometry with exact placement.'},
+    {key:'tempo',icon:'↯',label:'Pulse Charge',text:'Push power through the core while it will accept it.'},
+    {key:'stability',icon:'⬡',label:'Bind Matrix',text:'Anchor the relic matrix before it destabilises.'}
+  ],
+  Scribing:[
+    {key:'precision',icon:'✒',label:'Inscribe',text:'Correct the line before the sigil is sealed.'},
+    {key:'tempo',icon:'↯',label:'Set Intent',text:'Commit the wording while the pattern is active.'},
+    {key:'stability',icon:'◇',label:'Seal Script',text:'Bind the manuscript before the ink loses charge.'}
   ]
 };
 const WORKSHOP_PROMPTS={
