@@ -10,7 +10,23 @@ const MATERIALS={
   'vaultheart-crystal':{name:'Vaultheart Crystal',rarity:'Rare',source:'The Vaultheart',icon:'◇',artIndex:5},
   'ancient-soul':{name:'Ancient Soul',rarity:'Epic',source:'Future end-game content',icon:'✧',artIndex:6,endgame:true},
   'void-crystal':{name:'Void Crystal',rarity:'Epic',source:'The Hollow Sanctum',icon:'◆',artIndex:7,endgame:true},
-  'cell-shards':{name:'Cell Shards',rarity:'Uncommon',source:'Dungeons, Cellbound+ and dismantling equipment',icon:'✧',artIndex:2,endgame:true}
+  'cell-shards':{name:'Cell Shards',rarity:'Uncommon',source:'Dungeons, Cellbound+ and dismantling equipment',icon:'✧',artIndex:2,endgame:true},
+  'hollowroot':{name:'Hollowroot',rarity:'Common',source:'Dungeon enemies and reward caches',icon:'❧'},
+  'emberleaf':{name:'Emberleaf',rarity:'Uncommon',source:'Ashen Vault and fire-aligned enemies',icon:'♨'},
+  'spiritcap':{name:'Spiritcap',rarity:'Rare',source:'Dungeon caves, ruins and rare reward caches',icon:'♧'},
+  'cavebeast-meat':{name:'Cavebeast Meat',rarity:'Common',source:'Beast enemies and dungeon provision caches',icon:'◒'},
+  'rune-dust':{name:'Rune Dust',rarity:'Common',source:'Arcane enemies, magical salvage and dungeon caches',icon:'✦'},
+  'zeltiran-hide':{name:'Zeltiran Hide',rarity:'Common',source:'Beast enemies and early dungeon caches',icon:'▱'},
+  'hollow-fibre':{name:'Hollow Fibre',rarity:'Common',source:'Humanoid enemies and dungeon caches',icon:'⌁'},
+  'razorhide':{name:'Razorhide',rarity:'Uncommon',source:'Elite beasts and bosses',icon:'◩'},
+  'ashen-silk':{name:'Ashen Silk',rarity:'Uncommon',source:'Ashen Vault casters and dungeon caches',icon:'≈'},
+  'rough-gemstone':{name:'Rough Gemstone',rarity:'Common',source:'Dungeon enemies and reward caches',icon:'◆'},
+  'prismatic-shard':{name:'Prismatic Shard',rarity:'Rare',source:'Elite enemies, bosses and rare caches',icon:'◇'},
+  'salvaged-parts':{name:'Salvaged Parts',rarity:'Common',source:'Constructs, machines and dungeon caches',icon:'⚙'},
+  'conductive-coil':{name:'Conductive Coil',rarity:'Uncommon',source:'Mechanical enemies and powered dungeon machinery',icon:'⌁'},
+  'tempering-flux':{name:'Tempering Flux',rarity:'Common',source:'Dungeon caches and metal salvage',icon:'◉'},
+  'arcane-ink':{name:'Arcane Ink',rarity:'Uncommon',source:'Caster enemies, archives and dungeon caches',icon:'✒'},
+  'etched-vellum':{name:'Etched Vellum',rarity:'Common',source:'Cultists, archives and dungeon caches',icon:'▤'}
 };
 function materialRarityClass(rarity='Common'){return 'material-rarity-'+String(rarity||'Common').toLowerCase().replace(/[^a-z0-9]+/g,'-')}
 function materialArtHTML(key,size=64,extra=''){
@@ -161,6 +177,92 @@ const PROFESSIONS={
     {id:'scr-cellbound-codex',name:'Cellbound Codex',level:100,xp:0,inputs:{'ancient-soul':2,'void-crystal':2,'cell-shards':10},output:{category:'consumable',key:'cellbound-codex',name:'Cellbound Codex',quantity:1,payload:{effect:'party-scroll',bonuses:{damagePct:3,healing:3,magicWardPct:3},charges:1,description:'Master tactical manuscript for the active five. +3% Damage, +3% Healing Power and 3% less magic damage taken for the next boss encounter.'}},endgame:true}
   ]}
 };
+const PROFESSION_REAGENT_TIERS={
+  Alchemy:[
+    [1,{'hollowroot':2}],[10,{'hollowroot':3}],[20,{'hollowroot':2,'emberleaf':1}],[30,{'hollowroot':2,'emberleaf':2}],
+    [35,{'hollowroot':2,'spiritcap':1,'emberleaf':1}],[40,{'hollowroot':2,'spiritcap':1}],[50,{'hollowroot':2,'spiritcap':2,'vaultheart-crystal':1}],
+    [60,{'hollowroot':2,'emberleaf':2,'ashen-soul-fragment':1}],[70,{'hollowroot':2,'spiritcap':2,'vaultheart-crystal':1,'cell-shards':1}],
+    [75,{'hollowroot':2,'emberleaf':2,'spiritcap':2,'vaultheart-crystal':1}],[85,{'spiritcap':3,'void-crystal':1,'cell-shards':2}],
+    [100,{'spiritcap':4,'ancient-soul':2,'void-crystal':1}]
+  ],
+  Enchanting:[
+    [1,{'rune-dust':2}],[10,{'rune-dust':3}],[20,{'rune-dust':3,'ashen-soul-fragment':1}],[25,{'rune-dust':3,'warden-iron':1}],
+    [30,{'rune-dust':4,'ashen-soul-fragment':1}],[40,{'rune-dust':4,'ember-core':1}],[50,{'rune-dust':4,'vaultheart-crystal':1}],
+    [60,{'rune-dust':4,'arcane-ink':1,'ashen-soul-fragment':1}],[70,{'rune-dust':4,'cell-shards':2,'vaultheart-crystal':1}],
+    [75,{'rune-dust':5,'arcane-ink':2,'vaultheart-crystal':1}],[85,{'rune-dust':5,'void-crystal':1,'cell-shards':2}],
+    [100,{'rune-dust':6,'ancient-soul':1,'void-crystal':1,'cell-shards':4}]
+  ],
+  Blacksmithing:[
+    [1,{'zeltiran-iron':2,'tempering-flux':1}],[10,{'zeltiran-iron':3,'tempering-flux':1}],[20,{'zeltiran-iron':3,'tempering-flux':2}],
+    [25,{'warden-iron':1,'tempering-flux':2}],[30,{'zeltiran-iron':3,'tempering-flux':2,'ashen-soul-fragment':1}],
+    [35,{'zeltiran-iron':4,'tempering-flux':2}],[45,{'warden-iron':1,'tempering-flux':2,'ember-core':1}],
+    [55,{'warden-iron':2,'tempering-flux':2,'cell-shards':1}],[65,{'warden-iron':2,'tempering-flux':3,'vaultheart-crystal':1}],
+    [75,{'warden-iron':3,'tempering-flux':3,'cell-shards':2}],[80,{'warden-iron':3,'tempering-flux':4,'vaultheart-crystal':1,'cell-shards':2}],
+    [100,{'warden-iron':4,'tempering-flux':5,'ancient-soul':1,'void-crystal':1,'cell-shards':4}]
+  ],
+  Leatherworking:[
+    [1,{'zeltiran-hide':2}],[10,{'zeltiran-hide':2,'hollow-fibre':1}],[20,{'zeltiran-hide':3,'hollow-fibre':1}],
+    [25,{'zeltiran-hide':2,'razorhide':1}],[30,{'zeltiran-hide':2,'razorhide':1,'hollow-fibre':1}],[35,{'razorhide':2,'hollow-fibre':1}],
+    [45,{'razorhide':2,'hollow-fibre':2,'ashen-soul-fragment':1}],[55,{'razorhide':2,'hollow-fibre':2,'cell-shards':1}],
+    [65,{'razorhide':3,'hollow-fibre':2,'vaultheart-crystal':1}],[75,{'razorhide':3,'hollow-fibre':2,'cell-shards':2}],
+    [80,{'razorhide':4,'hollow-fibre':2,'vaultheart-crystal':1}],[100,{'razorhide':5,'hollow-fibre':3,'void-crystal':1,'ancient-soul':1}]
+  ],
+  Tailoring:[
+    [1,{'hollow-fibre':2}],[10,{'hollow-fibre':3}],[20,{'hollow-fibre':3,'rune-dust':1}],[25,{'hollow-fibre':3,'ashen-silk':1}],
+    [30,{'hollow-fibre':3,'ashen-silk':2}],[35,{'hollow-fibre':2,'ashen-silk':2,'ember-core':1}],[45,{'hollow-fibre':2,'ashen-silk':3,'ashen-soul-fragment':1}],
+    [55,{'hollow-fibre':3,'ashen-silk':3,'rune-dust':1}],[65,{'hollow-fibre':3,'ashen-silk':4,'vaultheart-crystal':1}],
+    [75,{'hollow-fibre':4,'ashen-silk':4,'cell-shards':1}],[80,{'hollow-fibre':4,'ashen-silk':5,'vaultheart-crystal':1}],
+    [100,{'hollow-fibre':5,'ashen-silk':6,'void-crystal':1,'ancient-soul':1}]
+  ],
+  Jewelcrafting:[
+    [1,{'rough-gemstone':2}],[10,{'rough-gemstone':3}],[20,{'rough-gemstone':3,'prismatic-shard':1}],
+    [30,{'rough-gemstone':2,'prismatic-shard':2,'ember-core':1}],[35,{'rough-gemstone':2,'prismatic-shard':2,'ember-core':1}],
+    [45,{'prismatic-shard':3,'vaultheart-crystal':1}],[55,{'prismatic-shard':3,'warden-iron':1}],
+    [65,{'prismatic-shard':4,'vaultheart-crystal':1}],[75,{'prismatic-shard':4,'cell-shards':2,'vaultheart-crystal':1}],
+    [80,{'prismatic-shard':4,'void-crystal':1}],[90,{'prismatic-shard':5,'ancient-soul':1,'vaultheart-crystal':1}],
+    [100,{'prismatic-shard':6,'ancient-soul':1,'void-crystal':2}]
+  ],
+  Engineering:[
+    [1,{'salvaged-parts':2,'tempering-flux':1}],[10,{'salvaged-parts':2,'conductive-coil':1}],[20,{'salvaged-parts':3,'conductive-coil':1}],
+    [30,{'salvaged-parts':3,'conductive-coil':1,'warden-iron':1}],[35,{'salvaged-parts':3,'conductive-coil':2,'ember-core':1}],
+    [45,{'salvaged-parts':3,'conductive-coil':2,'vaultheart-crystal':1}],[55,{'salvaged-parts':4,'conductive-coil':2,'cell-shards':1,'ember-core':1}],
+    [65,{'salvaged-parts':4,'conductive-coil':3,'cell-shards':2,'vaultheart-crystal':1}],[75,{'salvaged-parts':5,'conductive-coil':3,'warden-iron':1,'cell-shards':2}],
+    [80,{'salvaged-parts':5,'conductive-coil':4,'void-crystal':1}],[90,{'salvaged-parts':6,'conductive-coil':4,'ancient-soul':1,'ember-core':1}],
+    [100,{'salvaged-parts':7,'conductive-coil':5,'ancient-soul':1,'void-crystal':1,'cell-shards':3}]
+  ],
+  Cooking:[
+    [1,{'cavebeast-meat':2,'hollowroot':1}],[10,{'cavebeast-meat':2,'hollowroot':2}],[20,{'cavebeast-meat':2,'emberleaf':1}],
+    [30,{'cavebeast-meat':3,'emberleaf':1}],[35,{'cavebeast-meat':2,'spiritcap':1}],[45,{'cavebeast-meat':3,'spiritcap':1,'hollowroot':1}],
+    [55,{'cavebeast-meat':3,'hollowroot':2,'emberleaf':1}],[65,{'cavebeast-meat':5,'hollowroot':3,'emberleaf':1}],
+    [75,{'cavebeast-meat':5,'spiritcap':2,'emberleaf':2}],[80,{'cavebeast-meat':5,'spiritcap':3,'void-crystal':1}],
+    [90,{'cavebeast-meat':6,'spiritcap':3,'ancient-soul':1}],[100,{'cavebeast-meat':8,'hollowroot':4,'emberleaf':3,'ancient-soul':1}]
+  ],
+  Reliccrafting:[
+    [1,{'rune-dust':1,'rough-gemstone':1}],[10,{'rune-dust':2,'rough-gemstone':1}],[20,{'rune-dust':2,'prismatic-shard':1,'ashen-soul-fragment':1}],
+    [30,{'rune-dust':2,'prismatic-shard':2,'ember-core':1}],[35,{'rune-dust':2,'prismatic-shard':2,'ember-core':1}],
+    [45,{'rune-dust':2,'prismatic-shard':3,'vaultheart-crystal':1}],[55,{'rune-dust':3,'prismatic-shard':2,'cell-shards':1,'warden-iron':1}],
+    [65,{'rune-dust':3,'prismatic-shard':3,'vaultheart-crystal':1,'cell-shards':1}],[75,{'rune-dust':4,'prismatic-shard':3,'cell-shards':2}],
+    [80,{'rune-dust':4,'prismatic-shard':4,'void-crystal':1}],[90,{'rune-dust':5,'prismatic-shard':4,'ancient-soul':1}],
+    [100,{'rune-dust':6,'prismatic-shard':5,'ancient-soul':1,'void-crystal':1,'cell-shards':2}]
+  ],
+  Scribing:[
+    [1,{'etched-vellum':2,'arcane-ink':1}],[10,{'etched-vellum':2,'arcane-ink':1,'rune-dust':1}],[20,{'etched-vellum':3,'arcane-ink':1,'ashen-soul-fragment':1}],
+    [30,{'etched-vellum':3,'arcane-ink':2,'ember-core':1}],[35,{'etched-vellum':3,'arcane-ink':2,'rune-dust':1}],
+    [45,{'etched-vellum':3,'arcane-ink':2,'vaultheart-crystal':1}],[55,{'etched-vellum':4,'arcane-ink':2,'ashen-soul-fragment':1}],
+    [65,{'etched-vellum':5,'arcane-ink':3,'vaultheart-crystal':1}],[75,{'etched-vellum':4,'arcane-ink':4,'cell-shards':1}],
+    [80,{'etched-vellum':5,'arcane-ink':4,'void-crystal':1}],[90,{'etched-vellum':6,'arcane-ink':4,'ancient-soul':1}],
+    [100,{'etched-vellum':7,'arcane-ink':5,'ancient-soul':1,'void-crystal':1,'cell-shards':2}]
+  ]
+};
+function professionReagentInputs(profession,level=1){
+  const tiers=PROFESSION_REAGENT_TIERS[profession]||[];
+  let selected=tiers[0]?.[1]||{};
+  for(const [required,inputs] of tiers){if(Number(level)>=required)selected=inputs;else break}
+  return {...selected};
+}
+Object.entries(PROFESSIONS).forEach(([profession,def])=>(def.recipes||[]).forEach(recipe=>{
+  recipe.inputs=professionReagentInputs(profession,recipe.level);
+}));
 function bonusText(bonuses={}){
   const labels={strength:'Strength',agility:'Agility',intellect:'Intellect',stamina:'Stamina',armour:'Armour',block:'Block',threat:'Threat',healing:'Healing Power',crit:'Critical Strike',haste:'Haste',damagePct:'Damage',magicWardPct:'Magic Damage Taken'};
   const percent=new Set(['block','threat','healing','crit','haste','damagePct','magicWardPct']);
@@ -297,8 +399,43 @@ const BOSS_REAGENTS={
   embermaw:[{key:'ashen-soul-fragment',min:2,max:4},{key:'ember-core',min:1,max:2}],
   vaultheart:[{key:'ashen-soul-fragment',min:3,max:5},{key:'vaultheart-crystal',min:1,max:2}]
 };
+const GENERAL_REAGENT_POOL=[
+  {key:'hollowroot',min:2,max:4},{key:'cavebeast-meat',min:2,max:4},{key:'rune-dust',min:2,max:4},
+  {key:'zeltiran-hide',min:2,max:4},{key:'hollow-fibre',min:2,max:4},{key:'rough-gemstone',min:2,max:4},
+  {key:'salvaged-parts',min:2,max:4},{key:'tempering-flux',min:1,max:3},{key:'arcane-ink',min:1,max:3},{key:'etched-vellum',min:2,max:4}
+];
+const BOSS_RESOURCE_POOLS={
+  ashwarden:[
+    {key:'razorhide',min:1,max:2},{key:'rune-dust',min:2,max:4},{key:'tempering-flux',min:1,max:3},
+    {key:'zeltiran-hide',min:2,max:4},{key:'hollow-fibre',min:2,max:4},{key:'rough-gemstone',min:2,max:3}
+  ],
+  embermaw:[
+    {key:'emberleaf',min:1,max:3},{key:'ashen-silk',min:1,max:3},{key:'conductive-coil',min:1,max:2},
+    {key:'salvaged-parts',min:2,max:4},{key:'hollowroot',min:2,max:4},{key:'cavebeast-meat',min:2,max:4}
+  ],
+  vaultheart:[
+    {key:'spiritcap',min:1,max:2},{key:'prismatic-shard',min:1,max:2},{key:'arcane-ink',min:1,max:3},
+    {key:'etched-vellum',min:2,max:4},{key:'rough-gemstone',min:2,max:4},{key:'rune-dust',min:2,max:4}
+  ]
+};
 const recipeById=id=>Object.values(PROFESSIONS).flatMap(p=>p.recipes).find(r=>r.id===id)||null;
 const skillThreshold=level=>100+Math.max(1,level)*5;
-const rollReagents=bossId=>(BOSS_REAGENTS[bossId]||[]).map(r=>({key:r.key,quantity:r.min+Math.floor(Math.random()*(r.max-r.min+1))}));
-window.CellboundProfessions={MATERIALS,PROFESSIONS,BOSS_REAGENTS,recipeById,recipeMetaForOutputKey,craftedRarity,attachmentTier,skillThreshold,rollReagents,materialRarityClass,materialArtHTML,bonusText,itemSignature,activeBonuses,activeProcs,specialText,activeEffects,consumeBossCharges,consumeBossChargesOnce};
+function rollMaterial(entry){return{key:entry.key,quantity:entry.min+Math.floor(Math.random()*(entry.max-entry.min+1))}}
+function randomReagentPicks(pool,count=1){
+  const choices=[...(pool||[])],picked=[];
+  while(choices.length&&picked.length<count){const i=Math.floor(Math.random()*choices.length);picked.push(rollMaterial(choices.splice(i,1)[0]))}
+  return picked;
+}
+function mergeReagentDrops(drops=[]){
+  const totals=new Map();
+  for(const d of drops||[])totals.set(d.key,(totals.get(d.key)||0)+Math.max(0,Number(d.quantity)||0));
+  return [...totals].map(([key,quantity])=>({key,quantity}));
+}
+function rollReagents(bossId){
+  const fixed=(BOSS_REAGENTS[bossId]||[]).map(rollMaterial);
+  const general=randomReagentPicks(GENERAL_REAGENT_POOL,3);
+  const themed=randomReagentPicks(BOSS_RESOURCE_POOLS[bossId]||GENERAL_REAGENT_POOL,1);
+  return mergeReagentDrops([...fixed,...general,...themed]);
+}
+window.CellboundProfessions={MATERIALS,PROFESSIONS,PROFESSION_REAGENT_TIERS,BOSS_REAGENTS,GENERAL_REAGENT_POOL,BOSS_RESOURCE_POOLS,recipeById,recipeMetaForOutputKey,craftedRarity,attachmentTier,skillThreshold,rollReagents,materialRarityClass,materialArtHTML,bonusText,itemSignature,activeBonuses,activeProcs,specialText,activeEffects,consumeBossCharges,consumeBossChargesOnce};
 })();
