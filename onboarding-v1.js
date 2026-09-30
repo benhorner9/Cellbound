@@ -48,9 +48,10 @@ const portraitHTML=(c,size='md')=>CP?.portraitHTML?.(c,{size})||'<span class="cb
 function roleOptions(role){
   const out=[];
   Object.entries(Game?.classes||{}).forEach(([klass,data])=>{
-    Object.entries(data.specs||{}).forEach(([spec,s])=>{
-      if(s.role===role)out.push({klass,spec,icon:data.icon,glow:data.glow});
-    });
+    const match=Object.entries(data.specs||{}).find(([,specData])=>specData.role===role);
+    if(!match)return;
+    const [spec]=match;
+    out.push({klass,spec,icon:data.icon,glow:data.glow});
   });
   return out;
 }
@@ -77,7 +78,7 @@ function restoreDraft(){
   if(Array.isArray(saved)&&saved.length===5){
     draft=saved.map((d,i)=>{
       const slot=SLOTS[i],race=RACES.some(r=>r.id===d.race&&r.roles.includes(slot.role))?d.race:(RACES.find(r=>r.roles.includes(slot.role))?.id||'Veyren');
-      const opts=roleOptions(slot.role),valid=opts.find(o=>o.klass===d.klass&&o.spec===d.spec)||opts[0];
+      const opts=roleOptions(slot.role),valid=opts.find(o=>o.klass===d.klass)||opts[0];
       const name=String(d.name||randomName(race)).slice(0,24);return{slot:slot.key,role:slot.role,race,klass:valid?.klass||'Warrior',spec:valid?.spec||'Arms',name,appearance:CP?.normalizeAppearance?.(d.appearance,name,race)||d.appearance||{race}};
     });
   }else draft=defaultDraft();
@@ -147,18 +148,18 @@ function renderPartyBuilder(){
   }).join('');
 
   const portrait=portraitHTML({name:d.name,race:d.race,class:d.klass,appearance:d.appearance},'lg');
-  const hero='<aside class="creator-hero">'+portrait+'<small>'+ROLE_LABEL[d.role]+' '+(slot.number||'')+'</small><h2>'+esc(d.name||'Unnamed')+'</h2><p>'+raceById(d.race).icon+' '+esc(d.race)+' · '+esc(d.klass)+' · '+esc(d.spec)+'</p><div class="creator-party-dots">'+draft.map((x,i)=>'<button data-slot="'+i+'" class="'+(i===activeSlot?'active':'')+'" title="'+esc(x.name)+'">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<span>'+ROLE_LABEL[x.role]+'</span></button>').join('')+'</div></aside>';
+  const hero='<aside class="creator-hero">'+portrait+'<small>'+ROLE_LABEL[d.role]+' '+(slot.number||'')+'</small><h2>'+esc(d.name||'Unnamed')+'</h2><p>'+raceById(d.race).icon+' '+esc(d.race)+' · '+esc(d.klass)+'</p><div class="creator-party-dots">'+draft.map((x,i)=>'<button data-slot="'+i+'" class="'+(i===activeSlot?'active':'')+'" title="'+esc(x.name)+'">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<span>'+ROLE_LABEL[x.role]+'</span></button>').join('')+'</div></aside>';
 
   let panel='';
   if(builderStep==='race'){
     panel='<section class="creator-panel"><header><small>STEP 1 OF 4</small><h2>Choose a race</h2><p>Choose the ancestry and passive that fits this adventurer.</p></header><div class="race-grid creator-choice-grid">'+availableRaces.map(r=>{const identity=window.CellboundIdentities?.getRace?.(r.id);return '<button class="race-card '+(d.race===r.id?'active':'')+'" data-race="'+r.id+'"><strong>'+r.icon+'</strong><div><b>'+r.id+'</b><small>'+r.trait+'</small><p>'+esc(identity?.strength||r.lore)+'</p></div></button>'}).join('')+'</div><footer><span></span><button class="on-primary" data-next-step="class">CONTINUE TO CLASS →</button></footer></section>';
   }else if(builderStep==='class'){
-    panel='<section class="creator-panel"><header><small>STEP 2 OF 4</small><h2>Choose a class</h2><p>Choose how this '+ROLE_LABEL[slot.role].toLowerCase()+' fights.</p></header><div class="class-grid creator-choice-grid">'+classes.map(o=>{const ci=window.CellboundIdentities?.getSpec?.(o.klass,o.spec);return '<button class="class-choice '+(d.klass===o.klass&&d.spec===o.spec?'active':'')+'" data-class="'+o.klass+'" data-spec="'+o.spec+'" style="--class-glow:'+o.glow+'"><strong>'+o.icon+'</strong><div><b>'+o.klass+'</b><small>'+o.spec+' · '+esc(ci?.title||ROLE_LABEL[slot.role])+'</small><p>'+esc(ci?.strength||'Reliable in this role.')+'</p></div></button>'}).join('')+'</div><footer><button class="creator-back" data-prev-step="race"><span class="creator-back-arrow">←</span><span>BACK TO RACE</span></button><button class="on-primary" data-next-step="appearance">CONTINUE TO APPEARANCE →</button></footer></section>';
+    panel='<section class="creator-panel"><header><small>STEP 2 OF 4</small><h2>Choose a class</h2><p>Choose the class for this '+ROLE_LABEL[slot.role].toLowerCase()+'. Talent paths are chosen later in the game.</p></header><div class="class-grid creator-choice-grid">'+classes.map(o=>{const ci=window.CellboundIdentities?.getSpec?.(o.klass,o.spec);return '<button class="class-choice '+(d.klass===o.klass?'active':'')+'" data-class="'+o.klass+'" data-spec="'+o.spec+'" style="--class-glow:'+o.glow+'"><strong>'+o.icon+'</strong><div><b>'+o.klass+'</b><small>'+esc(ROLE_LABEL[slot.role])+' · TALENTS CHOSEN IN GAME</small><p>'+esc(ci?.strength||'Reliable in this role.')+'</p></div></button>'}).join('')+'</div><footer><button class="creator-back" data-prev-step="race"><span class="creator-back-arrow">←</span><span>BACK TO RACE</span></button><button class="on-primary" data-next-step="appearance">CONTINUE TO APPEARANCE →</button></footer></section>';
   }else if(builderStep==='appearance'){
     const appearanceEditor=CP?.editorHTML?.(d.appearance,{characterClass:d.klass,name:d.name,race:d.race})||'';
     panel='<section class="creator-panel creator-appearance"><header><small>STEP 3 OF 4</small><h2>Appearance</h2><p>Shape the face you will recognise throughout Cellbound.</p></header><div class="creator-editor">'+appearanceEditor+'</div><footer><button class="creator-back" data-prev-step="class"><span class="creator-back-arrow">←</span><span>BACK TO CLASS</span></button><button class="on-primary" data-next-step="confirm">CONTINUE TO CONFIRM →</button></footer></section>';
   }else{
-    const formation=draft.map((x,i)=>'<button class="creator-confirm-member '+(i===activeSlot?'active':'')+'" data-slot="'+i+'">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<span><small>'+ROLE_LABEL[x.role]+' '+(SLOTS[i].number||'')+'</small><b>'+esc(x.name||'Unnamed')+'</b><em>'+esc(x.race)+' · '+esc(x.klass)+' · '+esc(x.spec)+'</em></span></button>').join('');
+    const formation=draft.map((x,i)=>'<button class="creator-confirm-member '+(i===activeSlot?'active':'')+'" data-slot="'+i+'">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<span><small>'+ROLE_LABEL[x.role]+' '+(SLOTS[i].number||'')+'</small><b>'+esc(x.name||'Unnamed')+'</b><em>'+esc(x.race)+' · '+esc(x.klass)+'</em></span></button>').join('');
     panel='<section class="creator-panel creator-confirm"><header><small>STEP 4 OF 4</small><h2>Confirm your party</h2><p>Name this adventurer, then check all five before entering Zeltira.</p></header><div class="name-builder creator-name"><input id="onboardName" maxlength="24" value="'+esc(d.name)+'" autocomplete="off" placeholder="Adventurer name"><button id="randomiseName">RANDOMISE</button></div><div class="creator-confirm-grid">'+formation+'</div><footer><button class="creator-back" data-prev-step="appearance"><span class="creator-back-arrow">←</span><span>BACK TO APPEARANCE</span></button><button id="confirmParty" class="on-primary" '+(allValid?'':'disabled')+'>CONFIRM PARTY & ENTER ZELTIRA →</button></footer><p class="builder-hint">'+(allValid?'Your charter is ready.':'All five characters need unique names of at least 2 characters.')+'</p></section>';
   }
 
@@ -174,7 +175,7 @@ function renderPartyBuilder(){
   const input=$('#onboardName');
   if(input)input.oninput=e=>{d.name=e.target.value;saveDraft();const btn=$('#confirmParty');if(btn)btn.disabled=!(draft.every(x=>x.name.trim().length>=2)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5)};
   $('#randomiseName')?.addEventListener('click',()=>{d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name));saveDraft();renderPartyBuilder()});
-  if(builderStep==='appearance')CP?.bindEditor?.(root,d.appearance,()=>{saveDraft()},{characterClass:d.klass,name:d.name});
+  if(builderStep==='appearance')CP?.bindEditor?.(root,d.appearance,()=>{saveDraft();renderPartyBuilder()},{characterClass:d.klass,name:d.name,race:d.race});
   $('#confirmParty')?.addEventListener('click',createParty);
 }
 function emptyEquipment(){
@@ -397,7 +398,7 @@ function zeltiraMap(active){
     ['road','East Road','Take the first real contract.']
   ];
   const order=['gate','resonance','quartermaster','hollows','workshop','road'],at=Math.max(0,order.indexOf(active));
-  return '<div class="z-map"><div class="z-map-road"></div>'+spots.map((s,i)=>'<div class="z-map-node '+(i<at?'done':i===at?'active':'')+'" data-node="'+s[0]+'"><i>'+(i<at?'✓':i+1)+'</i><b>'+s[1]+'</b><small>'+s[2]+'</small></div>').join('')+'<div class="z-well">◇<span>THE CELL WELL</span></div></div>';
+  return '<div class="z-map"><img class="z-map-art" src="./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp" alt="Zeltira at dusk"><div class="z-map-shade"></div><div class="z-map-road"></div>'+spots.map((s,i)=>'<div class="z-map-node '+(i<at?'done':i===at?'active':'')+'" data-node="'+s[0]+'"><i>'+(i<at?'✓':i+1)+'</i><b>'+s[1]+'</b><small>'+s[2]+'</small></div>').join('')+'<div class="z-well">◇<span>THE CELL WELL</span></div></div>';
 }
 async function setStage(next,extra){
   const s=state();s.onboarding=s.onboarding||{};
@@ -525,7 +526,8 @@ function unitMarkup(c,i){
   else if(profile==='melee')pos=[27,42+melee.indexOf(c)*16];
   else if(profile==='ranged')pos=[21,30+ranged.indexOf(c)*40];
   else pos=[15,64];
-  return '<div class="td-unit party '+r+' profile-'+profile+' '+tutorialClassKey(c)+'" data-td-party="'+c.id+'" style="left:'+pos[0]+'%;top:'+pos[1]+'%"><i></i><span>'+esc(c.name)+'<small class="td-unit-meta">Lv. '+Math.max(1,Number(c.level)||1)+'</small></span><em><b style="width:100%"></b></em></div>';
+  const resource=tdInitialResource(c),resourcePct=Math.max(0,Math.min(100,resource.value/resource.max*100));
+  return '<div class="cb2d-unit td-unit party '+r+' profile-'+profile+' '+tutorialClassKey(c)+'" data-unit="p-'+esc(c.id)+'" data-td-party="'+c.id+'" style="left:'+pos[0]+'%;top:'+pos[1]+'%"><i></i><span>'+esc(c.name)+'<small class="cb2d-unit-meta td-unit-meta">Lv. '+Math.max(1,Number(c.level)||1)+'</small></span><em class="cb2d-unit-hp"><b style="width:100%"></b></em><small class="cbr-resource '+tdResourceClass(resource.name)+'" data-resource="'+esc(resource.name)+'" title="'+esc(resource.name)+'"><i style="width:'+resourcePct+'%"></i></small></div>';
 }
 function tdInitialResource(c){
   const d=window.CellboundCombatReborn?.RESOURCE_DEFS?.[c?.class]||{name:'Power',max:100,start:100};
@@ -538,7 +540,7 @@ function tdSideRows(){
 function renderDungeonRunning(){
   const roster=state().roster;
   tutorialCombatStats={damage:Object.fromEntries(roster.map(c=>[c.id,0])),healing:Object.fromEntries(roster.map(c=>[c.id,0])),threat:Object.fromEntries(roster.map(c=>[c.id,0])),aggro:null,elapsed:0,currentEnemy:'—'};
-  const body='<div class="td-wrap"><div class="td-top"><div><small>FIRST EXPEDITION · ZELTIRAN HOLLOWS · LEVEL 1</small><h2 id="tdEncounter">Descending below Zeltira…</h2></div><b class="td-safe">PATHFINDER WARD ACTIVE</b></div><div class="td-route"><span class="active" data-td-route="0">1 · Rootling Nest</span><span data-td-route="1">2 · Collapsed Gallery</span><span data-td-route="2">3 · Hollow Warden</span></div><div class="td-live-layout"><main><div class="td-arena theme-hollows room-rootling-nest" id="tdArena"><div class="td-floor"></div><div class="td-environment" id="tdEnvironment"></div><div class="td-room-tag" id="tdRoomTag"></div><div id="tdEnemies"></div><div id="tdParty">'+roster.map(unitMarkup).join('')+'</div><div class="td-callout" id="tdCallout">Your party advances together.</div><div id="tdLesson" class="td-lesson" hidden></div></div><div class="td-bottom"><div class="td-actions"><div><i class="on-role tank"></i><b>Tank</b><span id="tdTankAction">Taking point</span></div><div><i class="on-role healer"></i><b>Healer</b><span id="tdHealAction">Following formation</span></div><div><i class="on-role dps"></i><b>Damage</b><span id="tdDpsAction">Acquiring targets</span></div></div><div class="td-feed" id="tdFeed">The Pathfinder ward closes behind the five.</div></div></main><aside class="td-live-hud"><div class="cb2d-cast td-cast-panel" id="tdCastPanel"><small>ENEMY CAST</small><div><b id="tdCastName">—</b><strong id="tdCastTime">—</strong></div><div class="cb2d-castbar"><i id="tdCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="tdDamageTotal">0 total</span></div><div id="tdDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="tdHealingTotal">0 total</span></div><div id="tdHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="tdThreatTarget">—</span></div><div id="tdThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-party td-party-panel"><small>PARTY CONDITION · ACTIVE FIVE</small><div id="tdPartyRows">'+tdSideRows()+'</div></div><div class="td-hud-note"><b>WATCH THE FIGHT</b><span>HP sits above class resource. Buffs and debuffs appear on the unit. Threat resets each encounter; damage and healing continue through the expedition.</span></div></aside></div></div>';
+  const body='<div class="td-wrap"><div class="td-top"><div><small>FIRST EXPEDITION · ZELTIRAN HOLLOWS · LEVEL 1</small><h2 id="tdEncounter">Descending below Zeltira…</h2></div><b class="td-safe">PATHFINDER WARD ACTIVE</b></div><div class="td-route"><span class="active" data-td-route="0">1 · Rootling Nest</span><span data-td-route="1">2 · Collapsed Gallery</span><span data-td-route="2">3 · Hollow Warden</span></div><div class="td-live-layout"><main><div class="cb2d-arena td-arena theme-hollows room-rootling-nest" data-cbvfx-theme="hollow" id="tdArena"><div class="cb2d-floor td-floor"></div><div class="td-environment" id="tdEnvironment"></div><div class="td-room-tag" id="tdRoomTag"></div><div id="tdEnemies"></div><div id="tdParty">'+roster.map(unitMarkup).join('')+'</div><div class="td-callout" id="tdCallout">Your party advances together.</div><div id="tdLesson" class="td-lesson" hidden></div></div><div class="td-bottom"><div class="td-actions"><div><i class="on-role tank"></i><b>Tank</b><span id="tdTankAction">Taking point</span></div><div><i class="on-role healer"></i><b>Healer</b><span id="tdHealAction">Following formation</span></div><div><i class="on-role dps"></i><b>Damage</b><span id="tdDpsAction">Acquiring targets</span></div></div><div class="td-feed" id="tdFeed">The Pathfinder ward closes behind the five.</div></div></main><aside class="td-live-hud"><div class="cb2d-cast td-cast-panel" id="tdCastPanel"><small>ENEMY CAST</small><div><b id="tdCastName">—</b><strong id="tdCastTime">—</strong></div><div class="cb2d-castbar"><i id="tdCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="tdDamageTotal">0 total</span></div><div id="tdDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="tdHealingTotal">0 total</span></div><div id="tdHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="tdThreatTarget">—</span></div><div id="tdThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-party td-party-panel"><small>PARTY CONDITION · ACTIVE FIVE</small><div id="tdPartyRows">'+tdSideRows()+'</div></div><div class="td-hud-note"><b>WATCH THE FIGHT</b><span>HP sits above class resource. Buffs and debuffs appear on the unit. Threat resets each encounter; damage and healing continue through the expedition.</span></div></aside></div></div>';
   ensureRoot().innerHTML=chrome(body,'dungeon-running');
   tdRenderMeters();
   const my=++tutorialToken;setTimeout(()=>runTutorialDungeon(my),350);
@@ -623,7 +625,11 @@ function tdThreatLine(enemyIndex,tank){
 function renderTdEnvironment(index){
   const arena=$('#tdArena'),root=$('#tdEnvironment'),tag=$('#tdRoomTag'),cfg=ZELTIRA_ROOMS[index]||ZELTIRA_ROOMS[0];
   if(!arena||!root)return;
-  arena.className='td-arena theme-hollows room-'+cfg.room+(index===2?' boss-room':'');
+  [...arena.classList].filter(name=>name.startsWith('room-')).forEach(name=>arena.classList.remove(name));
+  arena.classList.add('cb2d-arena','td-arena','theme-hollows','room-'+cfg.room);
+  arena.classList.toggle('boss-room',index===2);
+  arena.dataset.cbvfxTheme='hollow';
+  window.CellboundCombatFX?.mount?.(arena);
   root.innerHTML='';
   cfg.props.forEach((p,i)=>{
     const e=document.createElement('span');e.className='td-prop prop-'+p[0];e.style.left=p[1]+'%';e.style.top=p[2]+'%';
@@ -644,7 +650,7 @@ function spawnTdEnemies(encounter){
   root.innerHTML=names.map((n,i)=>{
     const y=names.length===1?50:36+i*(28/Math.max(1,names.length-1)),type=String(types[i]||((encounter.boss||encounter.combatKind==='boss')?'boss':'trash')).toLowerCase();
     const labels={trash:'TRASH',elite:'ELITE',boss:'BOSS',add:'ADD'},meta='Lv. '+baseLevel+' · '+(labels[type]||type.toUpperCase()),isBoss=type==='boss';
-    return '<div class="td-unit enemy '+(isBoss?'boss':'')+'" data-td-enemy="'+i+'" data-hp="'+(Number(encounter.enemyHealth)|| (isBoss?260:95))+'" data-max="'+(Number(encounter.enemyHealth)|| (isBoss?260:95))+'" style="left:72%;top:'+y+'%"><i></i><span>'+esc(n)+'<small class="td-unit-meta">'+esc(meta)+'</small></span><em><b style="width:100%"></b></em></div>';
+    return '<div class="cb2d-unit td-unit enemy '+(isBoss?'boss':'')+'" data-unit="e-'+i+'" data-td-enemy="'+i+'" data-hp="'+(Number(encounter.enemyHealth)|| (isBoss?260:95))+'" data-max="'+(Number(encounter.enemyHealth)|| (isBoss?260:95))+'" style="left:72%;top:'+y+'%"><i></i><span>'+esc(n)+'<small class="cb2d-unit-meta td-unit-meta">'+esc(meta)+'</small></span><em class="cb2d-unit-hp"><b style="width:100%"></b></em></div>';
   }).join('');
 }
 function setTdHp(index,hp){
@@ -715,16 +721,13 @@ function tdMechanicTelegraph(e){
 function tdRenderCombatEvent(e,telegraphs){
   if(tutorialCombatStats)tutorialCombatStats.elapsed=Math.max(Number(tutorialCombatStats.elapsed)||0,Number(e.timestamp)||0);
   const srcSel=tdSelectorFor(e.source),targetSel=tdSelectorFor(e.target),srcChar=tdEventCharacter(e.source),targetChar=tdEventCharacter(e.target);
+  try{window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#tdArena'),resolve:id=>{const sel=tdSelectorFor(id);return sel?$(sel):null},speed:1})}catch(error){console.warn('First Expedition living combat visual skipped',e?.type,error)}
   try{if(window.CellboundCombatStatuses?.handle(e,{resolve:tdStatusTargets,speed:1}))return}catch(error){console.warn('First Expedition status UI skipped',e?.type,error)}
   switch(e.type){
     case'COMBAT_START':tdFeed('The pull begins.');break;
     case'MOVEMENT_START':
-      if(srcSel&&e.payload?.to)tdMove(srcSel,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
+      break;
     case'ABILITY_START':
-      if(srcSel&&targetSel){
-        if(srcChar)tdProjectile(srcSel,targetSel,tdCombatKind(srcChar));
-        else tdProjectile(srcSel,targetSel,'enemy');
-      }
       if(srcChar){const r=tdRole(srcChar);tdAction(r==='tank'?'tank':r==='healer'?'healer':'dps',srcChar.name+' · '+(e.ability||'Action'))}
       break;
     case'DAMAGE_DEALT':
