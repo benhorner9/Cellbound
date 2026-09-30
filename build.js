@@ -276,6 +276,10 @@ for(const file of files){
   }
   if(file==='dungeon-2d-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Ashen Vault');
   if(file==='hollow-sanctum-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Hollow Sanctum');
+  if(file==='hollow-sanctum-v1.js'){
+    for(const hook of ["unitId='p-'+c.id","move('p-'+ch.id","if(id.startsWith('p-'))return party().some","CellboundCombatPortraits?.refresh?.()"])if(!contents.includes(hook))throw new Error('Hollow Sanctum must use canonical player IDs for combat portraits: '+hook);
+    if(contents.includes("addUnit('p'+i")||contents.includes("move('p'+i"))throw new Error('Legacy Hollow Sanctum p0-p4 player tokens break shared combat portraits');
+  }
   if(file==='chaos-canyon-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Chaos Canyon');
   if(file==='blackout-station-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Blackout Station');
   if(file==='fractured-ages-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Fractured Ages');
