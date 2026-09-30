@@ -164,7 +164,7 @@ for(const file of files){
   }
   if(file==='endgame-data-v1.js'){
     if(!contents.includes('raidExclusiveTier:5')||!contents.includes('powerCeiling:44'))throw new Error('Dungeon loot must stop below raid-exclusive Tier 5');
-    if(!contents.includes("'fractured-ages':")||!contents.includes("itemLevel:gearBand(38,40,42)"))throw new Error('Fractured Ages Normal loot band regressed');
+    if(!contents.includes("'fractured-ages':")||!contents.includes("itemLevel:gearBand(40,42,44)"))throw new Error('Fractured Ages Normal loot band regressed');
     if(!contents.includes("return{tiers:{3:.50,4:.50},itemLevel:gearBand(44,44,44)"))throw new Error('Peak Cellbound+ loot must cap at Item Level 44');
     if(!contents.includes('enemyHealth:1.50,enemyDamage:1.38')||!contents.includes('enemyHealth:1.60*(1+(t-1)*.08)'))throw new Error('Full-gear Heroic / Cellbound+ combat tuning is missing');
     if(!contents.includes('pieces4:'))throw new Error('T4 set progression must use the 2/4-piece structure');
@@ -317,6 +317,7 @@ for(const file of files){
     if(contents.includes("quality==='epic'?5"))throw new Error('Weekly rewards must never create Tier 5 gear');
     if(!contents.includes('function tierPickerMarkup')||contents.includes('<select data-eg-tier'))throw new Error('Endgame Hub must use the tap-friendly Cellbound+ tier picker');
     if(!contents.includes('function chapterEndgameUnlocked')||!contents.includes("difficulty==='cellbound')return chapterEndgameUnlocked()"))throw new Error('Cellbound+ must remain chapter-clear gated');
+    if(!contents.includes("Math.min(44,40+Math.floor(Math.max(0,s.tier-1)/4))"))throw new Error('Cellbound+ must use the unified endgame Item Level gate');
     if(contents.includes("cfg.diff.cellShardBase+(cfg.difficulty==='cellbound'?cfg.tier:0)"))throw new Error('Cellbound+ shard rewards must not double-count tier scaling');
   }
   if(file==='endgame-v1.css'){
@@ -580,6 +581,17 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   vm.runInContext(fs.readFileSync(path.join(__dirname,'endgame-data-v1.js'),'utf8'),sandbox,{filename:'endgame-data-v1.js'});
   const G=sandbox.CellboundGear,D=sandbox.CellboundEndgameData;
   if(!G||!D)throw new Error('Chapter 1 gear validation runtime failed to load');
+  const progression=[
+    ['ashen-vault','hollow-sanctum'],
+    ['hollow-sanctum','chaos-canyon'],
+    ['chaos-canyon','blackout-station'],
+    ['blackout-station','fractured-ages']
+  ];
+  for(const [from,to] of progression){
+    const profile=D.LOOT_PROFILES?.[from]?.normal?.itemLevel||{},core=['Head','Chest','Weapon'].map(slot=>Number(profile[slot])||0);
+    const average=core.reduce((n,x)=>n+x,0)/Math.max(1,core.length),gate=Number(D.DUNGEONS?.[to]?.normalItemLevel)||0;
+    if(average<gate)throw new Error(from+' Normal loot cannot reach '+to+' entry gate');
+  }
   const B=sandbox.CellboundBuildRules;
   if(!B||B.talentBudgetForLevel(1)!==1||B.talentBudgetForLevel(15)!==12)throw new Error('Per-spec talent budget foundation failed runtime validation');
   const adaptiveProbe={class:'Priest',spec:'Holy',equipment:{}},adaptiveRules=G.setBonusRulesFor(adaptiveProbe,'Holy',{tier:4,class:'Priest'});
