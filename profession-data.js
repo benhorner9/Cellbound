@@ -214,6 +214,10 @@ Object.entries(PROFESSIONS).forEach(([profession,def])=>(def.recipes||[]).forEac
   if(recipe.crafterOnly){payload.crafterOnly=true;payload.requiredProfession=profession;output.tradeState='soulbound'}
   if(SPECIAL_PREPARATIONS[output.key]){payload.proc={...SPECIAL_PREPARATIONS[output.key]};payload.procText=specialText(payload.proc);if(payload.effect==='character-gadget')payload.description=(payload.description||'Deploy before combat.')+' '+payload.procText}
   output.rarity=output.rarity||craftedRarity(recipe.level,recipe.endgame);
+  if(payload.effect==='socket-gem'){
+    payload.socketReady=true;
+    payload.description=(recipe.crafterOnly?'Crafter only. ':'')+'Insert into an open equipment socket. '+bonusText(payload.bonuses||{})+'. Replacing this gem later permanently destroys it.';
+  }
   if(payload.effect==='gear-enhancement'){
     payload.persistentAttachment=true;
     payload.attachmentTier=attachmentTier(recipe.level);
@@ -238,7 +242,10 @@ function activeProcs(c){
 function activeBonuses(c,zone=null){
   const totals={};
   const add=src=>Object.entries(src||{}).forEach(([k,v])=>totals[k]=(Number(totals[k])||0)+(Number(v)||0));
-  Object.values(c?.equipment||{}).forEach(item=>{const a=item?.attachment;if(a?.bonuses&&(!a.crafterOnly||a.boundCharacterId===c?.id))add(a.bonuses)});
+  Object.values(c?.equipment||{}).forEach(item=>{
+    const a=item?.attachment;if(a?.bonuses&&(!a.crafterOnly||a.boundCharacterId===c?.id))add(a.bonuses);
+    (Array.isArray(item?.sockets)?item.sockets:[]).forEach(gem=>{if(gem?.bonuses&&(!gem.crafterOnly||gem.boundCharacterId===c?.id))add(gem.bonuses)})
+  });
   Object.values(c?.activeEnhancements||{}).forEach(e=>{
     const item=c?.equipment?.[e.slot];
     if((Number(e.remainingBosses)||0)>0&&itemSignature(item)===e.targetSignature)add(e.bonuses);
@@ -250,6 +257,7 @@ function activeEffects(c){
   const out=[];
   Object.entries(c?.equipment||{}).forEach(([slot,item])=>{
     const a=item?.attachment;if(a?.bonuses&&(!a.crafterOnly||a.boundCharacterId===c?.id))out.push({kind:'attachment',name:a.name||a.key||'Attachment',slot,permanent:true,bonuses:a.bonuses,tier:a.tier||a.attachmentTier||null,crafterOnly:Boolean(a.crafterOnly)});
+    (Array.isArray(item?.sockets)?item.sockets:[]).forEach((gem,index)=>{if(gem?.bonuses&&(!gem.crafterOnly||gem.boundCharacterId===c?.id))out.push({kind:'socket-gem',name:gem.name||gem.key||'Socket Gem',slot,socketIndex:index,permanent:true,bonuses:gem.bonuses,crafterOnly:Boolean(gem.crafterOnly)})})
   });
   Object.values(c?.activeEnhancements||{}).forEach(e=>{
     const item=c?.equipment?.[e.slot],active=(Number(e.remainingBosses)||0)>0&&itemSignature(item)===e.targetSignature;
