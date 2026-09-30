@@ -13,7 +13,11 @@ const touchFix=`\n<style id="cellbound-ios-touch-fix">html,body{touch-action:man
 for(const file of files){
   const src=path.join(__dirname,file),dest=path.join(out,file);
   let contents=fs.readFileSync(src,'utf8');
-  if(file.endsWith('.js')){try{new Function(contents)}catch(err){throw new Error(`Syntax check failed for ${file}: ${err.message}`)}}
+  if(file.endsWith('.js')){
+    try{new Function(contents)}catch(err){throw new Error(`Syntax check failed for ${file}: ${err.message}`)}
+    const singletonCollectionCall=/(^|[^$])\$\([^\n;)]*\)\.(?:forEach|map|filter|some|every|reduce)\(/m;
+    if(singletonCollectionCall.test(contents))throw new Error('querySelector helper $ cannot be used as a collection in '+file+'; use $ instead');
+  }
   const playerCopyFiles=new Set(['guild.html','guild-v4.js','onboarding-v1.js','pvp-v1.js','endgame-v1.js','evolution-v1.js','quests-v2.js','dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','fractured-ages-v1.js','twelve-below-v1.js','thirteenth-bell-v1.js','fourfold-lock-v1.js','no-way-back-v1.js','manor-raid-v1.js']);
   if(playerCopyFiles.has(file)){
     for(const phrase of ['FARMABLE','authoritative Combat Reborn','authoritative Cellbound combat engine','proper 5v5 PvE','CHASE SYSTEM','UPDATE 2 · ENDGAME HUB','Title hook','Prestige cosmetic hook','normal endgame progression','repeat-run rule','randomized versions','Future Bellfoundry access hook','QUEST STRUCTURE','Combat Reborn final boss','simulation-driven','combat timeline rather than viewer buttons','COMBAT REBORN · RUN ANALYSIS','Pre-dungeon tactics are authoritative','stored combat timeline',' simulated time','Combat Reborn rules','actual Combat Reborn positions','NEW SYSTEM'])if(contents.includes(phrase))throw new Error('Player-facing copy regression in '+file+': '+phrase);
@@ -35,6 +39,7 @@ for(const file of files){
     for(const hook of ['function unlocked()','Complete Signal From Nowhere','BEGIN SIGNAL FROM NOWHERE','3 × 3 facility'])if(!contents.includes(hook))throw new Error('Null Complex quest gate is missing '+hook);
   }
   if(file==='economy-v2.js'){
+    if(!contents.includes("$('#professionRecipeFilters [data-prof-recipe-filter]').forEach"))throw new Error('Profession recipe filters must bind as a collection');
     for(const hook of ['const WORKSHOP_ACTIONS=','function beginCraft(','async function resolveCraftStep(','function craftProjectMarkup(','FIRST CRAFT BONUS','MASTERWORK BONUS AVAILABLE','projectsCompleted','data-item-art-done="1"'])if(!contents.includes(hook))throw new Error('Profession project crafting runtime is missing '+hook);
     for(const hook of ['function addConsumable(item,qty=1,boundCrafter=null)','payload.boundCharacterId=boundCrafter.id','recipe.crafterOnly?c:null','trainingScale=Math.max(.1,Number(recipe.trainingScale)||1)','BOUND TO'])if(!contents.includes(hook))throw new Error('Crafter-only item binding runtime is missing '+hook);
     for(const hook of ["['gear-enhancement','socket-gem'].includes(latestPayload.effect)",'item.attachment=item.attachment||','delete c.activeEnhancements[slot]'])if(!contents.includes(hook))throw new Error('Legacy crafted item migration is missing '+hook);
@@ -350,7 +355,7 @@ for(const file of files){
     if(!contents.includes("script.src='./combat-reborn-v1.js"))throw new Error('Ashen Vault recovery loader must reload the canonical combat engine');
   }
   if(file==='chaos-canyon-v1.js'){
-    if(!contents.includes("$('[data-cc]').forEach"))throw new Error('Chaos Canyon arena reflow selector regression detected');
+    if(!contents.includes("function ccReflowArena(ms=760){$('[data-cc]').forEach"))throw new Error('Chaos Canyon arena reflow selector regression detected');
     if(!contents.includes('async function ccFailNoHealer')||!contents.includes('await ccFailNoHealer(s,result)'))throw new Error('Chaos Canyon must surface healerless recovery failure instead of silently ending');
     if(!contents.includes('requestAnimationFrame(frame)'))throw new Error('Chaos Canyon combat playback must use the continuous frame clock');
   }
