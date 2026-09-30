@@ -381,6 +381,61 @@ function rollValue(key,tier,slot){
   return Math.max(1,Math.round(rand(min,max)*mult));
 }
 function rollId(){return globalThis.crypto?.randomUUID?crypto.randomUUID():Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10)}
+const SOCKET_ELIGIBLE_SLOTS=new Set(['Head','Chest','Weapon']);
+const SOCKET_CHANCE={1:.15,2:.40,3:.70,4:1,5:1};
+function socketEligible(item){return Boolean(item&&SOCKET_ELIGIBLE_SLOTS.has(String(item.slot||'')))}
+function deterministicFraction(seed){
+  let n=2166136261;for(const ch of String(seed||'socket')){n^=ch.charCodeAt(0);n=Math.imul(n,16777619)}return(n>>>0)/4294967295
+}
+function socketCountFor(item,roll=Math.random){
+  if(!socketEligible(item))return 0;
+  const tier=Math.max(1,Math.min(5,Number(item.tier)||1));
+  if(tier>=5)return item.slot==='Chest'?2:1;
+  if(tier>=4)return 1;
+  return roll()<Number(SOCKET_CHANCE[tier]||0)?1:0
+}
+function normaliseSocketEntry(entry){
+  if(!entry||typeof entry!=='object')return null;
+  return{
+    key:entry.key||entry.itemKey||entry.name||'gem',
+    name:entry.name||entry.key||'Socket Gem',
+    bonuses:{...(entry.bonuses||{})},
+    rarity:entry.rarity||'Uncommon',
+    profession:entry.profession||'Jewelcrafting',
+    skill:Number(entry.skill)||null,
+    crafterOnly:Boolean(entry.crafterOnly),
+    boundCharacterId:entry.boundCharacterId||null,
+    boundCharacterName:entry.boundCharacterName||null,
+    socketedAt:entry.socketedAt||null
+  }
+}
+function ensureSockets(raw,mode='legacy'){
+  if(!raw||typeof raw!=='object')return raw;
+  const item=raw;
+  if(!socketEligible(item)){item.socketCount=0;item.sockets=[];item.socketVersion=1;return item}
+  let count=Number(item.socketCount);
+  if(!Number.isFinite(count)){
+    const seed=[item.rollId,item.id,item.itemId,item.name,item.itemLevel,item.source,(item.bonusStats||[]).map(s=>s.key+':'+s.value).join(',')].filter(Boolean).join('|');
+    count=socketCountFor(item,mode==='roll'?Math.random:()=>deterministicFraction(seed));
+  }
+  const cap=Math.max(0,Math.min(item.tier>=5&&item.slot==='Chest'?2:1,Math.floor(count)));
+  item.socketCount=cap;
+  item.sockets=Array.from({length:cap},(_,i)=>normaliseSocketEntry(Array.isArray(item.sockets)?item.sockets[i]:null));
+  item.socketVersion=1;
+  return item
+}
+function socketBonusMap(item,wearerId=null){
+  const totals={};
+  (Array.isArray(item?.sockets)?item.sockets:[]).forEach(gem=>{
+    if(!gem||gem.crafterOnly&&gem.boundCharacterId!==wearerId)return;
+    Object.entries(gem.bonuses||{}).forEach(([k,v])=>totals[k]=(Number(totals[k])||0)+(Number(v)||0))
+  });
+  return totals
+}
+function socketSummary(item){
+  const count=Math.max(0,Number(item?.socketCount)||0),filled=(item?.sockets||[]).filter(Boolean).length;
+  return count?filled+'/'+count+' socket'+(count===1?'':'s')+' filled':'No sockets'
+}
 function rollItemAffixes(raw,context=null){
   if(!raw)return raw;
   const item={...raw},tier=Math.max(1,Math.min(5,Number(item.tier)||1)),count=TIER_META[tier]?.statCount||1;
@@ -388,7 +443,7 @@ function rollItemAffixes(raw,context=null){
   const base=[...(CLASS_STAT_POOLS[item.class]||['stamina','crit','haste'])],weighted=[...ideal.filter(x=>base.includes(x)),...ideal.filter(x=>base.includes(x)),...base],pool=[...new Set(weighted)],stats=[];
   while(stats.length<count&&pool.length){const weights=pool.map(key=>ideal.includes(key)?3:1),total=weights.reduce((a,b)=>a+b,0);let pick=Math.random()*total,i=0;for(;i<pool.length-1;i++){pick-=weights[i];if(pick<0)break}const key=pool.splice(i,1)[0];stats.push({key,value:rollValue(key,tier,item.slot)})}
   if(spec)item.specBias=spec;
-  item.bonusStats=stats;item.rollId=rollId();item.affixVersion=1;
+  item.bonusStats=stats;item.rollId=rollId();item.affixVersion=1;ensureSockets(item,'roll');
   item.appearanceId=item.appearanceId||item.baseItemId||item.itemId||slug(item.name||item.slot||'gear');
   if(tier===4){item.setId=slug(item.class)+'-t4';item.setName=SET_META[item.class]?.name||item.class+' Tier 4 Set'}
   if(tier===5){item.setId=slug(item.class)+'-t5';item.setName=SET_META[item.class]?.raidName||((SET_META[item.class]?.name||item.class)+' Raid Set');item.raidExclusive=true}
@@ -414,8 +469,10 @@ function aggregateStats(c){
   const out={};Object.values(c?.equipment||{}).forEach(item=>statLines(item).forEach(s=>out[s.key]=(Number(out[s.key])||0)+s.value));return out;
 }
 function rollSignature(item){
+  ensureSockets(item);
   const stats=statLines(item).sort((a,b)=>a.key.localeCompare(b.key)).map(s=>s.key+':'+s.value).join('|');
-  return stats+(item?.setId?'|set:'+item.setId:'');
+  const sockets='|sockets:'+Math.max(0,Number(item?.socketCount)||0)+':'+(item?.sockets||[]).map(g=>g?(g.key||g.name||'gem')+(g.crafterOnly?'@'+(g.boundCharacterId||'bound'):''):'empty').join(',');
+  return stats+(item?.setId?'|set:'+item.setId:'')+sockets;
 }
 function idealStats(c){return SPEC_IDEALS[`${c?.class||''}|${c?.spec||''}`]||[]}
 function rollFit(c,item){
@@ -450,7 +507,7 @@ function createQuestGear(c,slot,tier=1,profile='specialist',source='Quest Reward
   const base=items.find(x=>x.class===c.class&&x.tier===Math.max(1,Math.min(3,Number(tier)||1))&&x.slot===slot)||starterSet(c.class).find(x=>x.slot===slot);
   if(!base)return null;
   const keys=questProfileStats(c,profile,tier),profileName=profile==='sturdy'?'Stalwart':profile==='swift'?'Swift':'Specialist';
-  return {
+  const questItem={
     ...base,
     itemId:'quest-'+base.itemId+'-'+profile,
     baseItemId:base.itemId,
@@ -467,6 +524,7 @@ function createQuestGear(c,slot,tier=1,profile='specialist',source='Quest Reward
     tradeState:'soulbound',
     source
   };
+  return ensureSockets(questItem,'roll');
 }
 const ART_FIT={
   Head:{default:.91,Priest:.88,Druid:.89,Mage:.88},
@@ -505,5 +563,5 @@ function artHTML(item,size=64,extra=''){
   const slotClass='gear-slot-'+slug(canonical.slot||'item'),classClass='gear-class-'+slug(canonical.class||'all');
   return `<span class="gear-art tier-${canonical.tier||1} ${slotClass} ${classClass} ${extra}" data-gear-fit="${fit.toFixed(3)}" style="${artStyle(canonical,size)}" aria-label="${canonical.name}" title="${canonical.name}"><span class="gear-art-fallback" aria-hidden="true">${glyph}</span><span class="gear-art-cell" aria-hidden="true" style="position:absolute;overflow:hidden;width:${cell}px;height:${cell}px;left:${inset}px;top:${inset}px"><img class="gear-art-sprite" src="./assets/gear/cellbound-gear-atlas.webp?v=4" alt="" draggable="false" onerror="this.style.display='none'" style="position:absolute;max-width:none;width:${21*cell}px;height:${3*cell}px;left:-${pos.col*cell}px;top:-${pos.row*cell}px"></span></span>`;
 }
-window.CellboundGear={CLASS_ORDER,CORE_SLOT_ORDER,SLOT_ORDER,EQUIPMENT_POSITION_ORDER,SLOT_GLYPHS,TIER_META,ITEM_LEVELS,CHAPTER_GEAR,STAT_DEFS,SLOT_STAT_BUDGET,STAT_TYPE_BUDGET,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,SET_BONUS_RULES,SPEC_SET_BONUSES,setBonusRulesFor,setPieceCount,setBonusState,setBonusLines,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,effectiveStatBudget,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,questProfileStats,createQuestGear,inferWeaponType,inferOffHandType,equipmentPositions,canEquipInSlot,artFit,artStyle,artHTML};
+window.CellboundGear={CLASS_ORDER,CORE_SLOT_ORDER,SLOT_ORDER,EQUIPMENT_POSITION_ORDER,SLOT_GLYPHS,TIER_META,ITEM_LEVELS,CHAPTER_GEAR,STAT_DEFS,SLOT_STAT_BUDGET,STAT_TYPE_BUDGET,CLASS_STAT_POOLS,SPEC_IDEALS,SET_META,SET_BONUS_RULES,SPEC_SET_BONUSES,SOCKET_ELIGIBLE_SLOTS,SOCKET_CHANCE,setBonusRulesFor,setPieceCount,setBonusState,setBonusLines,NAMES,items,byId,byName,starterSet,poolForTier,rollItemAffixes,rollDungeonLoot,effectiveStatBudget,statLines,aggregateStats,rollSignature,idealStats,rollFit,itemScoreFor,questProfileStats,createQuestGear,socketEligible,socketCountFor,ensureSockets,socketBonusMap,socketSummary,inferWeaponType,inferOffHandType,equipmentPositions,canEquipInSlot,artFit,artStyle,artHTML};
 })();
