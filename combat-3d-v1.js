@@ -29,8 +29,6 @@ function unitColour(el,isEnemy){
  if(el?.classList?.contains('healer'))return[.42,.68,.55,1];
  return[.42,.58,.7,1]
 }
-function hexColour(arr){return arr}
-
 function mat4Mul(a,b){
  const o=new Float32Array(16);
  for(let c=0;c<4;c++)for(let r=0;r<4;r++)o[c*4+r]=a[r]*b[c*4]+a[4+r]*b[c*4+1]+a[8+r]*b[c*4+2]+a[12+r]*b[c*4+3];
