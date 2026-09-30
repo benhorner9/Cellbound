@@ -284,9 +284,6 @@ async function syncXp(gains){
  if(!db)return;const user=Game.getUser?.();if(!user)return;
  try{await Promise.all(gains.map(x=>db.from('characters').update({level:x.afterLevel,xp:x.afterXp,last_played_at:new Date().toISOString()}).eq('user_id',user.id).eq('name',x.name)))}catch(e){console.warn('Fractured Ages XP sync failed',e)}
 }
-function rollTemporalGear(){
- return window.CellboundEndgame?.rollChapterLoot?.('fractured-ages',{difficulty:'normal',source:'The Fractured Ages · Funhouse Escape'})||null
-}
 function gearCard(item){
  if(!item)return'<div class="cb2d-loot-empty">No temporal equipment recovered.</div>';
  const art=G?.artHTML?G.artHTML(item,78):'◇',stats=G?.statLines?.(item)||[],set=item?.setName?'<div class="cb2d-loot-set"><b>'+esc(item.setName)+'</b>'+(G?.setBonusLines?.(item)||[]).map(x=>'<span>'+x.threshold+'pc · '+esc(x.short)+'</span>').join('')+'</div>':'';

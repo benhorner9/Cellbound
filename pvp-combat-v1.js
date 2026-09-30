@@ -382,7 +382,6 @@ function act(ctx,u){
 function regen(ctx){
   ctx.units.forEach(u=>{if(!u.alive)return;const gain=(u.resource.regen||0)*(TICK/1000);if(gain>0&&u.resource.value<u.resource.max){u.resource.value=clamp(u.resource.value+gain,0,u.resource.max);if(ctx.time%1000===0)emit(ctx,'RESOURCE_STATE',{source:u.id,target:u.id,result:'regeneration',payload:{resource:u.resource.name,value:u.resource.value,max:u.resource.max}})}})
 }
-function teamCentroid(list){if(!list.length)return{x:50,y:50};return{x:list.reduce((n,u)=>n+u.position.x,0)/list.length,y:list.reduce((n,u)=>n+u.position.y,0)/list.length}}
 function assignCtfRoles(ctx,team){
   const units=ctx.units.filter(u=>u.team===team),available=[...units],routes=['top','mid','bottom'];
   available.forEach((u,i)=>{u.objectiveRole='skirmisher';u.ctfSlot=i;u.routePreference=routes[(i+(team==='red'?1:0))%routes.length]});
@@ -396,7 +395,6 @@ function assignCtfRoles(ctx,team){
   remaining.filter(u=>u.objectiveRole==='skirmisher').forEach((u,i)=>{u.objectiveRole=i%2===0?'escort':'skirmisher';if(u.objectiveRole==='escort')u.routePreference=runner?.routePreference||u.routePreference});
   emit(ctx,'OBJECTIVE_UPDATE',{result:'ctf-roles',payload:{team,runner:runner?.id||null,runnerRoute:runner?.routePreference||'mid',defenders:available.filter(u=>u.objectiveRole==='defender').map(u=>u.id),supports:healers.map(u=>u.id),escorts:available.filter(u=>u.objectiveRole==='escort').map(u=>u.id)}})
 }
-function ctfHomePoint(team){return team==='blue'?{x:16,y:50}:{x:84,y:50}}
 function ctfHoldPoint(u){
   const x=u.team==='blue'?20:80,y=clamp(35+(Number(u.ctfSlot)||0)%3*15,22,78);return{x,y}
 }
@@ -716,9 +714,6 @@ function chooseCarrier(ctx,team){
 function flagBase(team){return team==='blue'?{x:12,y:50}:{x:88,y:50}}
 function flagEnemy(team){return team==='blue'?'red':'blue'}
 function pvpDistanceToPoint(u,p){return Math.hypot((u.position.x-p.x),(u.position.y-p.y))}
-function travelFlagRunner(ctx,u,to,duration,reason,onArrive){
-  return objectiveTravel(ctx,u,to,reason,onArrive)
-}
 function resetFlag(ctx,flag,reason='returned',source=null){
   if(!flag)return;
   if(flag.carrier&&ctx.byId[flag.carrier])ctx.byId[flag.carrier].carryingFlag=null;

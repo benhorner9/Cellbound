@@ -600,20 +600,6 @@ const UI_SKILL_FALLBACKS={
     {id:'dragonrage',name:'Dragonrage',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Unleash the full fury of the dragonflights and enter a major burst window.',range:30,damage:38,cost:2,gcd:1500,cd:60000,cleave:3,damageType:'magic',talentReq:'Dragonrage'}
   ]
 };
-const UI_BUFF_FALLBACKS={
-  'Priest|Shadow':{id:'class-buff-shadow-inspiration',name:'Shadow Inspiration',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04,resourceRegen:.04}},
-  Priest:{id:'class-buff-divine-inspiration',name:'Divine Inspiration',scope:'party',duration:60000,cooldown:180000,effect:{outgoingHealing:.05,incomingHealing:.05}},
-  Druid:{id:'class-buff-wild-communion',name:'Wild Communion',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04,outgoingHealing:.04,resourceRegen:.04}},
-  Hunter:{id:'class-buff-predators-focus',name:"Predator's Focus",scope:'self',duration:60000,cooldown:180000,effect:{outgoingDamage:.15,haste:.10,resourceRegen:.10}},
-  Rogue:{id:'class-buff-killing-tempo',name:'Killing Tempo',scope:'self',duration:60000,cooldown:180000,effect:{outgoingDamage:.15,critBonus:.10}},
-  Mage:{id:'class-buff-arcane-empowerment',name:'Arcane Empowerment',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.05}},
-  Shaman:{id:'class-buff-bloodlust',name:'Bloodlust',scope:'party',duration:60000,cooldown:180000,effect:{haste:.10,resourceRegen:.05}},
-  Warlock:{id:'class-buff-demonic-pact',name:'Demonic Pact',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.04}},
-  Monk:{id:'class-buff-mystic-touch',name:'Mystic Touch',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,outgoingHealing:.03}},
-  'Death Knight':{id:'class-buff-horn-of-winter',name:'Horn of Winter',scope:'party',duration:60000,cooldown:180000,effect:{outgoingDamage:.03,resourceRegen:.04}},
-  'Demon Hunter':{id:'class-buff-demonic-momentum',name:'Demonic Momentum',scope:'self',duration:60000,cooldown:180000,effect:{outgoingDamage:.15,haste:.10,resourceRegen:.15}},
-  Evoker:{id:'class-buff-draconic-resonance',name:'Draconic Resonance',scope:'party',duration:60000,cooldown:180000,effect:{haste:.06}}
-};
 const CLASS_BUFF_QUESTS={
  Warrior:[{level:5,id:'warrior-guardian',name:'Challenging Presence',desc:'Generate 18% more threat and reduce damage taken by 6%.',scope:'self',effect:{threatBonus:.18,incomingDamageReduction:.06},trial:'Hold the Line'},{level:10,id:'warrior-battle-focus',name:'Battle Focus',desc:'Increase damage by 8% and resource regeneration by 6%.',scope:'self',effect:{outgoingDamage:.08,resourceRegen:.06},trial:'Break the Siege'},{level:15,id:'warrior-pvp',name:'Gladiator’s Resolve',desc:'A Warrior discipline forged for combat against rival parties.',trial:'Trial of the War Banner',pvp:true}],
  Paladin:[{level:5,id:'paladin-blessing-resolve',name:'Blessing of Resolve',desc:'Reduce damage taken by the party by 6%.',scope:'party',effect:{incomingDamageReduction:.06},trial:'Oath Under Fire'},{level:10,id:'paladin-radiant-purpose',name:'Radiant Purpose',desc:'Increase healing done by 5% and party damage by 3%.',scope:'party',effect:{outgoingHealing:.05,outgoingDamage:.03},trial:'The Unbroken Oath'},{level:15,id:'paladin-pvp',name:'Judicator’s Oath',desc:'A Paladin discipline prepared for rival-party combat.',trial:'Trial of Judgment',pvp:true}],
@@ -749,15 +735,6 @@ function equipmentSlot(c,slot,state){
     <span class="cb-slot-icon">${art}</span>
     <span class="cb-slot-copy"><small>${slot.replace(/(\d)/,' $1')}</small><b>${item?.name||'Empty'}</b>${item?.power?`<em>+${item.power} power</em>`:''}${item?`<span class="cb-slot-ilvl">Item Level ${item.itemLevel||0}</span><span class="cb-slot-roll">${(G?.statLines?.(item)||[]).map(s=>s.text).join(' · ')||'Legacy roll'}</span>${socketLine}${setInlineMarkup(c,item)}${prep?`<span class="cb-slot-roll cb-slot-prep">✥ ${prep.name} · ${window.CellboundProfessions?.bonusText?.(prep.bonuses)||''}${prep.permanent?' · ATTACHED':` · ${prep.remainingBosses} bosses`}</span>`:''}`:'<span class="cb-slot-ilvl">Empty equipment slot</span>'}</span>
     ${upgrade?`<span class="cb-slot-upgrade">+${upgrade.gain} ILVL</span>`:''}
-  </button>`;
-}
-function armouryFocus(c,slot,state,position){
-  const item=c.equipment?.[slot],upgrade=bestBankUpgrade(state,c,slot);
-  const art=item?(G?.artHTML?.(item,74,'cb-armoury-art')||item.icon||slotIcons[slot]):slotIcons[slot];
-  return `<button class="cb-armoury-focus cb-focus-${position} ${item?rarityClass(item):'cb-empty'} ${upgrade?'has-upgrade':''}" data-slot="${slot}" title="${slot}">
-    <span class="cb-armoury-focus-art">${art}</span>
-    <span class="cb-armoury-focus-label"><small>${slot}</small><b>${item?.name||'Empty'}</b></span>
-    ${upgrade?'<i>UPGRADE</i>':''}
   </button>`;
 }
 function paperDoll(c,state){
@@ -1149,12 +1126,6 @@ function renderSheet(){
   modal.hidden=false;
 }
 
-function removeFromParty(state,id){
-  if(!state.party)return;
-  if(state.party.tank===id)state.party.tank=null;
-  if(state.party.healer===id)state.party.healer=null;
-  if(Array.isArray(state.party.dps))state.party.dps=state.party.dps.map(x=>x===id?null:x);
-}
 function bankSlotForEquipped(slot,item){
   if(slot==='Trinket1'||slot==='Trinket2')return'Trinket';
   if(slot==='Ring1'||slot==='Ring2')return'Ring';

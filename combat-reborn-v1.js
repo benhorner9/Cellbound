@@ -409,13 +409,6 @@ function talentRanks(c){
  const tree=c?.talents?.[c?.spec]||{};
  return Object.values(tree).reduce((n,v)=>n+Math.max(0,Number(v)||0),0);
 }
-function classMobility(c){
- if(c.class==='Demon Hunter')return 1.35;
- if(c.class==='Hunter'||c.class==='Druid'||c.class==='Evoker')return 1.18;
- if(c.class==='Death Knight')return .86;
- return 1;
-}
-
 function professionCombatBonuses(c,zone=null){
  const raw=window.CellboundProfessions?.activeBonuses?.(c,zone)||{},out={};
  Object.entries(raw).forEach(([key,value])=>out[key]=Number(value)||0);
@@ -1388,12 +1381,6 @@ function passiveResources(ctx){
 }
 
 function deadPlayers(ctx){return ctx.players.filter(p=>!p.alive)}
-function encounterKnowledge(ctx,u){
- const key=ctx.encounter.knowledgeKey;
- if(key&&u.knowledge&&u.knowledge[key]!=null)return clamp(Number(u.knowledge[key])||0,0,100);
- const vals=Object.values(u.knowledge||{}).map(Number).filter(Number.isFinite);
- return vals.length?clamp(vals.reduce((a,b)=>a+b,0)/vals.length,0,100):0
-}
 function combatPressure(ctx){
  const live=livingPlayers(ctx),dead=ctx.players.length-live.length;
  const missing=live.length?live.reduce((n,p)=>n+(1-healthRatio(p)),0)/live.length:1;
@@ -3790,7 +3777,6 @@ function runSelfTests(){
  test('Raid Interaction Event',()=>r.events.some(e=>e.type==='INTERACTION_REQUIRED'&&e.ability==='Screech'&&e.payload?.interaction==='manor-screech'&&Number(e.payload?.durationMs)===4500));
  r=simulate({party,encounter:{...base,mechanics:[['Ground AoE','circle',1500]]},tactics:{movementDiscipline:'safety'},seed:'ground'});
  test('Ground AoE',()=>r.events.some(e=>e.type==='MOVEMENT_START'&&e.result==='mechanic response'));
- const weak=mockParty().map(x=>({...x,power:1,level:1}));
  r=simulate({party:[{id:'solo',name:'Solo Mage',class:'Mage',spec:'Arcane',power:1,level:1}],encounter:{...base,kind:'final',enemyHealth:5000,mechanics:[['Pulse','circle',700]]},seed:'death'});
  test('Player Death',()=>{const death=r.events.find(e=>e.type==='PLAYER_DEFEATED');if(!death)return false;return !r.events.some(e=>e.type==='ABILITY_START'&&e.source===death.target&&e.timestamp>death.timestamp)});
  r=simulate({party,encounter:{...base,kind:'final',enemyHealth:1600},seed:'healer'});

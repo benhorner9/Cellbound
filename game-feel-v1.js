@@ -19,49 +19,14 @@
     admin:{eyebrow:'DEVELOPER CONTROL',label:'Admin'}
   };
 
-  let stinger=null;
-  let stingerTimer=null;
-
   function activeView(){
     return document.querySelector('.view.active')?.id||'overview';
-  }
-
-  function ensureStinger(){
-    if(stinger&&document.body.contains(stinger))return stinger;
-    stinger=document.createElement('div');
-    stinger.className='cb-location-stinger';
-    stinger.setAttribute('aria-hidden','true');
-    stinger.innerHTML='<i></i><small>GUILD COMMAND</small><b>Home</b>';
-    document.body.appendChild(stinger);
-    return stinger;
   }
 
   function updateHeader(view){
     const meta=VIEW_META[view]||{eyebrow:'GUILD COMMAND',label:'Cellbound'};
     const topSmall=document.querySelector('.topbar>div:first-child>small');
     if(topSmall)topSmall.textContent=meta.eyebrow;
-  }
-
-  function showStinger(view){
-    if(view==='overview')return;
-    const el=ensureStinger();
-    const meta=VIEW_META[view]||{label:'Cellbound'};
-    const label=el.querySelector('b');
-    if(label)label.textContent=meta.label;
-    el.classList.remove('show');
-    void el.offsetWidth;
-    el.classList.add('show');
-    clearTimeout(stingerTimer);
-    stingerTimer=setTimeout(()=>el.classList.remove('show'),950);
-  }
-
-  function animateView(view){
-    const el=document.getElementById(view);
-    if(!el||!el.classList.contains('active'))return;
-    el.classList.remove('cb-view-entering');
-    void el.offsetWidth;
-    el.classList.add('cb-view-entering');
-    setTimeout(()=>el.classList.remove('cb-view-entering'),320);
   }
 
   function decorateHomeParty(){

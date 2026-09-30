@@ -9,7 +9,6 @@ const partyChars=()=>Game?.getPartyCharacters?.()||[];
 const partyReady=()=>partyChars().length===5&&!partyChars().some(c=>Game.isUnavailable(c));
 
 function timeLabel(v){const d=new Date(v),ms=Date.now()-d.getTime();if(ms<60000)return'now';if(ms<3600000)return Math.max(1,Math.floor(ms/60000))+'m';if(ms<86400000)return Math.floor(ms/3600000)+'h';return d.toLocaleDateString();}
-function guildLabel(){const x=state()?.socialDisplayName?.trim();return x||('Guild '+String(user?.id||'????').slice(0,4).toUpperCase());}
 async function saveState(){Game.save();await Game.persistState();}
 
 async function loadChat(markSeen=false){

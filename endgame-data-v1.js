@@ -23,18 +23,6 @@ const LOOT_RULES={
   dungeonTierCeiling:4,
   raidExclusiveTier:5
 };
-const SET_BONUS_FOUNDATION={
-  pieces2:{name:'Resonant Pair',description:'Two matching set pieces make all damaging and healing abilities 5% stronger.'},
-  pieces4:{name:'Cellbound Ensemble',description:'Four matching set pieces increase passive class-resource recovery by 12%.'}
-};
-const LEVEL_MILESTONES=[
-  {level:5,name:'Specialisation Established',description:'Your first meaningful build identity should be taking shape.'},
-  {level:10,name:'Class Mastery I',description:'Class-specific progression hooks can unlock here.'},
-  {level:15,name:'Signature Technique',description:'Future class quests and signature ability rewards hook here.'},
-  {level:20,name:'Advanced Talent Tier',description:'A deeper build milestone for future talent expansion.'},
-  {level:25,name:'Endgame Readiness',description:'The game begins recommending Heroic and scalable dungeon goals based on actual clears and gear.'}
-];
-
 const AFFIXES={
  'volatile-cells':{
    id:'volatile-cells',name:'Volatile Cells',tier:'minor',

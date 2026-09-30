@@ -31,7 +31,6 @@ const CANYON_ROOMS={
 };
 const CROSSING_ENV='<div class="ccenv ccenv-crossing"><div class="ccenv-chasm"></div><div class="ccenv-cliff left"></div><div class="ccenv-cliff right"></div><div class="ccenv-far-ledge"></div><i class="ccenv-root root1"></i><i class="ccenv-root root2"></i><span class="ccenv-cell c1"></span><span class="ccenv-cell c2"></span></div>';
 const XP=1600;
-function rollCanyonGear(){const G=window.CellboundGear,pool=(G?.items||[]).filter(x=>x.enabled&&Number(x.tier)>=3);if(!pool.length)return null;const base=pool[Math.floor(Math.random()*pool.length)];return G.rollItemAffixes?.({...base,source:'Chaos Canyon · Archdruid Vorran'})||{...base,source:'Chaos Canyon · Archdruid Vorran'}}
 const wait=ms=>new Promise(r=>setTimeout(r,Math.round(ms/((run&&run.speed)||1))));
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
@@ -94,12 +93,6 @@ function applyHsStrategyPreset(value){
    Object.assign(ccTactics,{pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced',bossPlan:'balanced'});
  }
 }
-function ccStrategyMarkup(){
- return '<div class="eg-prep-block"><small>EXPEDITION STYLE</small>'+
- '<div class="eg-prep-detail">Choose one overall plan. Interrupts, crowd control, cooldowns, adds, defensives and movement are handled automatically.</div>'+
- ccStrategyButtons('strategyPreset',[['safe','SAFE','Control'],['balanced','BALANCED','Standard'],['aggressive','AGGRESSIVE','Fast']])+
- '</div>';
-}
 function ccBindStrategy(){
  $$('[data-cc-pick]').forEach(b=>b.addEventListener('click',()=>{
   const [key,value]=b.dataset.ccPick.split('|');
@@ -135,7 +128,7 @@ function ccArenaPoint(x,y){const scale=ccArenaScale();return{x:50+(Number(x)-50)
 function addUnit(id,label,cls,x,y,big=false,meta=''){const e=document.createElement('div'),safe=ccSafePoint(id,x,y);e.className='cc2d-unit cb2d-unit '+cls+(big?' big':'');e.dataset.cc=id;e.dataset.rawX=safe.x;e.dataset.rawY=safe.y;const p=ccArenaPoint(safe.x,safe.y);e.style.left=p.x+'%';e.style.top=p.y+'%';e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="cc2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em><i></i></em>';$('#cc2dUnits').appendChild(e)}
 function ccSafePoint(id,x,y){return{x:Math.max(7,Math.min(93,Number(x)||50)),y:Math.max(11,Math.min(89,Number(y)||50))}}
 function move(id,x,y,ms=550){const e=$('[data-cc="'+id+'"]');if(!e)return;const safe=ccSafePoint(id,x,y);e.dataset.rawX=safe.x;e.dataset.rawY=safe.y;const p=ccArenaPoint(safe.x,safe.y);e.style.transitionDuration=ms+'ms';e.style.left=p.x+'%';e.style.top=p.y+'%'}
-function ccReflowArena(ms=760){$('[data-cc]').forEach(e=>{const x=Number(e.dataset.rawX),y=Number(e.dataset.rawY);if(Number.isFinite(x)&&Number.isFinite(y))move(e.dataset.cc,x,y,ms)})}
+function ccReflowArena(ms=760){document.querySelectorAll('[data-cc]').forEach(e=>{const x=Number(e.dataset.rawX),y=Number(e.dataset.rawY);if(Number.isFinite(x)&&Number.isFinite(y))move(e.dataset.cc,x,y,ms)})}
 function ccPoint(id){const arena=$('#cc2dArena'),e=$('[data-cc="'+id+'"]');if(!arena||!e)return null;const ar=arena.getBoundingClientRect(),r=e.getBoundingClientRect();return{x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,w:ar.width,h:ar.height}}
 function projectile(fromId,toId,kind='magic',ms=420){
  if(window.CellboundCombatFX?.living)return;
@@ -145,11 +138,6 @@ function projectile(fromId,toId,kind='magic',ms=420){
 }
 function ccFloat(id,text,kind='damage'){const p=ccPoint(id),arena=$('#cc2dArena');if(!p||!arena)return;const e=document.createElement('b');e.className='cc2d-float '+kind;e.textContent=text;e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),800)}
 function ccBar(id,pct){const bar=$('[data-cc="'+id+'"] > em i');if(bar)bar.style.width=Math.max(0,Math.min(100,pct))+'%'}
-function livingEnemyIds(){return $$('[data-cc^="e"]').filter(e=>!e.classList.contains('dead')).map(e=>e.dataset.cc)}
-function primaryEnemy(){return livingEnemyIds()[0]||null}
-function partyIndexes(){return party().map((c,i)=>({c,i,role:role(c)}))}
-function tankEntry(){return partyIndexes().find(x=>x.role==='tank')||partyIndexes()[0]}
-function healerEntry(){return partyIndexes().find(x=>x.role==='healer')||null}
 function ccTelegraph(type,label,sourceId,targetId,size=170){
  const layer=$('#cc2dTelegraphs'),a=sourceId?ccPoint(sourceId):null,b=targetId?ccPoint(targetId):null;if(!layer)return null;
  const e=document.createElement('div');e.className='cc2d-tele '+type+' dynamic';e.innerHTML='<span>'+esc(label)+'</span>';
@@ -160,24 +148,6 @@ function ccTelegraph(type,label,sourceId,targetId,size=170){
    e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.width=Math.max(220,Math.hypot(a.w,a.h)*.78)+'px';e.style.height='58px';e.style.transform='translateY(-50%) rotate('+angle+'deg)';
  }
  layer.appendChild(e);return e
-}
-async function ccMechanic(s,index){
- const tank=tankEntry(),healer=healerEntry(),players=partyIndexes(),bossId='e0';
- if(index===1){
-   const targets=players.filter(x=>x.role!=='tank'),target=targets[Math.floor(Math.random()*Math.max(1,targets.length))]||players[0];
-   const tg=ccTelegraph('line',s.mechanic,bossId,'p'+target.i);
-   feed(s.enemies[0]+' lines up '+target.c.name+' with '+s.mechanic+'.');
-   const y=parseFloat($('[data-cc="p'+target.i+'"]')?.style.top)||50;move('p'+target.i,28,y>50?25:78,430);
-   await wait(850);tg?.classList.add('impact');await wait(280);tg?.remove();return;
- }
- if(index===2){
-   const tg=ccTelegraph('circle',s.mechanic,bossId,bossId,210);feed(s.enemies[0]+' begins '+s.mechanic+' around itself.');
-   players.forEach((x,i)=>{if(x.role==='tank')move('p'+x.i,43,50,430);else move('p'+x.i,20+(i%2)*10,20+(i%3)*28,430)});
-   await wait(900);tg?.classList.add('impact');await wait(300);tg?.remove();return;
- }
- const target=players.filter(x=>x.role!=='tank')[0]||players[0],tg=ccTelegraph('circle',s.mechanic,bossId,'p'+target.i,145);
- feed('An echo locks onto '+target.c.name+'.');const y=parseFloat($('[data-cc="p'+target.i+'"]')?.style.top)||50;move('p'+target.i,24,y>50?22:78,420);
- await wait(820);tg?.classList.add('impact');await wait(260);tg?.remove();
 }
 function ccEnemyMeta(s,index){
  const level=Math.max(1,Number(s?.enemyLevels?.[index])||Number(s?.level)||1);

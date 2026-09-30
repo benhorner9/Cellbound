@@ -2,7 +2,6 @@
 'use strict';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const TITLE='No Way Back';
 const QUEST={
   id:'no-way-back',
@@ -540,57 +539,6 @@ function renderHoundsRetry(){
   root.innerHTML=chrome('BOSS FIGHT INTERRUPTED','The Three Hounds',
     '<div class="nwb-retry"><span>🐺</span><div><small>PACK BOND</small><h3>The pack still guards the Manor.</h3><p>Recover and challenge Grim, Fang and Wail again when you are ready. The encounter will restart cleanly from full health.</p><button data-hounds-retry>CHALLENGE THE HOUNDS AGAIN →</button></div></div>');
   bindClose();root.querySelector('[data-hounds-retry]').onclick=renderHoundsPrelude
-}
-function startHounds(){
-  const n=ensure(),p=party();if(p.length!==5){alert('Build a complete active five-character party before facing The Three Hounds.');Game.switchView?.('party');close();return}
-  const hs=[{id:'grim',name:'Grim',hp:100,deadAt:0,skill:'Bonebreaker'},{id:'fang',name:'Fang',hp:100,deadAt:0,skill:'Pounce'},{id:'wail',name:'Wail',hp:100,deadAt:0,skill:'Pack Howl'}];
-  let focus='grim',partyHp=100,seconds=0,revives=0,done=false,log=['The pack circles the party.'],special=0;
-  root.innerHTML=chrome('BOSS FIGHT · MANOR GROUNDS','The Three Hounds',
-    '<div class="nwb-hounds-fight"><aside><small>ACTIVE FIVE</small><div class="nwb-hound-party">'+p.map(c=>'<article>'+portraitHTML(c,'sm')+'<span><b>'+esc(c.name)+'</b><small>'+esc(c.class)+' · '+esc(c.spec)+'</small></span></article>').join('')+'</div><div class="nwb-party-vital"><span>PARTY CONDITION</span><div><i data-party-hp></i></div><b data-party-hp-text>100%</b></div><div class="nwb-combat-log" data-hound-log></div></aside><main><div class="nwb-pack-banner"><small>PACK BOND</small><b>Fallen hounds revive after 15 seconds.</b><span>Switch targets before the first body is licked back to life.</span></div><div class="nwb-hound-grid">'+hs.map(h=>'<article class="nwb-hound" data-hound="'+h.id+'"><div class="nwb-hound-portrait">◆</div><small>'+h.skill.toUpperCase()+'</small><h3>'+h.name+'</h3><div class="nwb-hound-hp"><i data-hound-bar="'+h.id+'"></i></div><b data-hound-hp="'+h.id+'">100%</b><em data-hound-revive="'+h.id+'"></em><button data-focus="'+h.id+'">FOCUS '+h.name.toUpperCase()+'</button></article>').join('')+'</div><div class="nwb-tactics"><button data-focus="spread">SPREAD DAMAGE</button><span data-focus-label>Current order: FOCUS GRIM</span></div></main></div>');
-  bindClose();
-  function addLog(t){log.push(t);log=log.slice(-6);const e=root.querySelector('[data-hound-log]');if(e)e.innerHTML=log.slice().reverse().map(x=>'<p>'+esc(x)+'</p>').join('')}
-  root.querySelectorAll('[data-focus]').forEach(b=>b.onclick=()=>{focus=b.dataset.focus;root.querySelectorAll('[data-focus]').forEach(x=>x.classList.toggle('active',x.dataset.focus===focus));const l=root.querySelector('[data-focus-label]');if(l)l.textContent='Current order: '+(focus==='spread'?'SPREAD DAMAGE':'FOCUS '+focus.toUpperCase());addLog(focus==='spread'?'The party spreads damage across the pack.':'The party focuses '+hs.find(x=>x.id===focus)?.name+'.')});
-  root.querySelector('[data-focus="grim"]').classList.add('active');addLog(log[0]);
-  function update(){
-    root.querySelector('[data-party-hp]').style.width=partyHp+'%';root.querySelector('[data-party-hp-text]').textContent=Math.ceil(partyHp)+'%';
-    hs.forEach(h=>{
-      const card=root.querySelector('[data-hound="'+h.id+'"]'),bar=root.querySelector('[data-hound-bar="'+h.id+'"]'),txt=root.querySelector('[data-hound-hp="'+h.id+'"]'),rev=root.querySelector('[data-hound-revive="'+h.id+'"]');
-      if(bar)bar.style.width=Math.max(0,h.hp)+'%';if(txt)txt.textContent=Math.max(0,Math.ceil(h.hp))+'%';card?.classList.toggle('dead',h.hp<=0);
-      if(rev)rev.textContent=h.hp<=0&&h.deadAt?('LICKED WOUNDS IN '+Math.max(0,Math.ceil(12-(Date.now()-h.deadAt)/1000))+'s'):''
-    })
-  }
-  async function win(){
-    if(done)return;done=true;clearInterval(tick);n.houndsDefeated=true;n.stage='gate';await save('The Three Hounds were brought down before their pack bond could restore them.');
-    window.CellboundFX?.victory?.(root.querySelector('.nwb-hound-grid'));notify('BOSS DEFEATED','The Three Hounds','Silas is already running for the Manor gates.');
-    setTimeout(()=>renderGateStory(),650)
-  }
-  async function lose(){
-    if(done)return;done=true;clearInterval(tick);Game.applyPartyCellShock?.(25);await Game.persistState?.();
-    story('PARTY DEFEATED','The Pack Holds','',[
-      'The hounds break the party formation before the final kill can be coordinated.',
-      'When the guild recovers, all three animals are back on their feet.',
-      'Bring their health down together. Once the first falls, the clock is running.'
-    ],()=>renderHoundsPrelude(),'TRY AGAIN →')
-  }
-  const tick=setInterval(()=>{
-    if(done)return;seconds+=.5;const living=hs.filter(h=>h.hp>0);
-    if(!living.length){win();return}
-    const total=2.5;
-    if(focus==='spread'){const each=total/living.length;living.forEach(h=>h.hp=Math.max(0,h.hp-each))}
-    else{
-      const target=hs.find(h=>h.id===focus&&h.hp>0);
-      if(target){target.hp=Math.max(0,target.hp-total*.68);const rest=living.filter(h=>h!==target);rest.forEach(h=>h.hp=Math.max(0,h.hp-(total*.32/Math.max(1,rest.length))))}
-      else living.forEach(h=>h.hp=Math.max(0,h.hp-total/living.length))
-    }
-    hs.forEach(h=>{if(h.hp<=0&&!h.deadAt){h.deadAt=Date.now();addLog(h.name+' falls. Pack Bond begins — 12 seconds.');window.CellboundFX?.death?.(root.querySelector('[data-hound="'+h.id+'"]'))}});
-    if(hs.every(h=>h.hp<=0)){update();win();return}
-    hs.forEach(h=>{if(h.hp<=0&&h.deadAt&&Date.now()-h.deadAt>=12000&&hs.some(x=>x.hp>0)){h.hp=35;h.deadAt=0;revives++;addLog('Licked Wounds! '+h.name+' returns at 35% health.');window.CellboundFX?.heal?.(root.querySelector('[data-hound="'+h.id+'"]'),35);notify('LICKED WOUNDS',h.name+' revived','The surviving pack restored a fallen hound.')}});
-    partyHp=Math.max(0,partyHp-living.length*.07);
-    special+=.5;if(special>=5){special=0;const attacker=living[Math.floor(Math.random()*living.length)];if(attacker){const hit=attacker.id==='grim'?4.5:attacker.id==='fang'?3.2:2.2;partyHp=Math.max(0,partyHp-hit);addLog(attacker.name+' uses '+attacker.skill+'.');if(attacker.id==='wail')hs.filter(h=>h.hp>0).forEach(h=>h.hp=Math.min(100,h.hp+1.5))}}
-    if(revives>=4)partyHp=Math.max(0,partyHp-.8);
-    update();if(partyHp<=0)lose()
-  },500);
-  root._cleanup=()=>{done=true;clearInterval(tick)};update()
 }
 function renderGateStory(){
   story('THE CHASE','Behind The Iron Gate','Silas Vane',[

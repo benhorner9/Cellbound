@@ -80,12 +80,6 @@ const HOLLOW_ROOMS={
 };
 const RELIC={itemId:'quest-blackglass-resonator',name:'Blackglass Resonator',class:'All',classes:'all',slot:'Relic',tier:3,rarity:'Rare',tierLabel:'Quest Relic',enabled:true,dropEnabled:false,itemLevel:30,power:10,tradeState:'soulbound',questArtMaterial:'void-crystal',lore:'Recovered from The Bound Choir beneath Zeltira.'};
 const XP=1200;
-function rollHollowGear(){
- const G=window.CellboundGear,pool=(G?.items||[]).filter(x=>x.tier===3&&x.enabled);
- if(!pool.length)return null;
- const base=pool[Math.floor(Math.random()*pool.length)];
- return G.rollItemAffixes?.({...base,source:'The Hollow Sanctum · The Bound Choir'})||{...base,source:'The Hollow Sanctum · The Bound Choir'};
-}
 const wait=ms=>new Promise(r=>setTimeout(r,Math.round(ms/((run&&run.speed)||1))));
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
@@ -184,12 +178,6 @@ function applyHsStrategyPreset(value){
    Object.assign(hsTactics,{pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced',bossPlan:'balanced'});
  }
 }
-function hsStrategyMarkup(){
- return '<div class="eg-prep-block"><small>EXPEDITION STYLE</small>'+
- '<div class="eg-prep-detail">Choose one overall plan. Interrupts, crowd control, cooldowns, adds, defensives and movement are handled automatically.</div>'+
- hsStrategyButtons('strategyPreset',[['safe','SAFE','Control'],['balanced','BALANCED','Standard'],['aggressive','AGGRESSIVE','Fast']])+
- '</div>';
-}
 function hsBindStrategy(){
  $$('[data-hs-pick]').forEach(b=>b.addEventListener('click',()=>{
   const [key,value]=b.dataset.hsPick.split('|');
@@ -237,11 +225,6 @@ function projectile(fromId,toId,kind='magic',ms=420){
 }
 function hsFloat(id,text,kind='damage'){const p=hsPoint(id),arena=$('#hs2dArena');if(!p||!arena)return;const e=document.createElement('b');e.className='hs2d-float '+kind;e.textContent=text;e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),800)}
 function hsBar(id,pct){const bar=$('[data-hs="'+id+'"] > em i');if(bar)bar.style.width=Math.max(0,Math.min(100,pct))+'%'}
-function livingEnemyIds(){return $$('[data-hs^="e"]').filter(e=>!e.classList.contains('dead')).map(e=>e.dataset.hs)}
-function primaryEnemy(){return livingEnemyIds()[0]||null}
-function partyIndexes(){return party().map((c,i)=>({c,i,role:role(c)}))}
-function tankEntry(){return partyIndexes().find(x=>x.role==='tank')||partyIndexes()[0]}
-function healerEntry(){return partyIndexes().find(x=>x.role==='healer')||null}
 function hsTelegraph(type,label,sourceId,targetId,size=170){
  const layer=$('#hs2dTelegraphs'),a=sourceId?hsPoint(sourceId):null,b=targetId?hsPoint(targetId):null;if(!layer)return null;
  const e=document.createElement('div');e.className='hs2d-tele '+type+' dynamic';e.innerHTML='<span>'+esc(label)+'</span>';
@@ -252,24 +235,6 @@ function hsTelegraph(type,label,sourceId,targetId,size=170){
    e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.width=Math.max(220,Math.hypot(a.w,a.h)*.78)+'px';e.style.height='58px';e.style.transform='translateY(-50%) rotate('+angle+'deg)';
  }
  layer.appendChild(e);return e
-}
-async function hsMechanic(s,index){
- const tank=tankEntry(),healer=healerEntry(),players=partyIndexes(),bossId='e0';
- if(index===1){
-   const targets=players.filter(x=>x.role!=='tank'),target=targets[Math.floor(Math.random()*Math.max(1,targets.length))]||players[0];
-   const tg=hsTelegraph('line',s.mechanic,bossId,'p'+target.i);
-   feed(s.enemies[0]+' lines up '+target.c.name+' with '+s.mechanic+'.');
-   const y=parseFloat($('[data-hs="p'+target.i+'"]')?.style.top)||50;move('p'+target.i,28,y>50?25:78,430);
-   await wait(850);tg?.classList.add('impact');await wait(280);tg?.remove();return;
- }
- if(index===2){
-   const tg=hsTelegraph('circle',s.mechanic,bossId,bossId,210);feed(s.enemies[0]+' begins '+s.mechanic+' around itself.');
-   players.forEach((x,i)=>{if(x.role==='tank')move('p'+x.i,43,50,430);else move('p'+x.i,20+(i%2)*10,20+(i%3)*28,430)});
-   await wait(900);tg?.classList.add('impact');await wait(300);tg?.remove();return;
- }
- const target=players.filter(x=>x.role!=='tank')[0]||players[0],tg=hsTelegraph('circle',s.mechanic,bossId,'p'+target.i,145);
- feed('An echo locks onto '+target.c.name+'.');const y=parseFloat($('[data-hs="p'+target.i+'"]')?.style.top)||50;move('p'+target.i,24,y>50?22:78,420);
- await wait(820);tg?.classList.add('impact');await wait(260);tg?.remove();
 }
 function hsEnemyMeta(s,index){
  const level=Math.max(1,Number(s?.enemyLevels?.[index])||Number(s?.level)||1);

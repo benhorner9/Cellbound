@@ -308,7 +308,6 @@ function tbSetPos(el,x,y,ms=500){
 function tbUnitPos(id){
  const el=$('[data-tb-unit="'+id+'"],[data-tb-boss="'+id+'"]');return el?{x:Number(el.dataset.x)||50,y:Number(el.dataset.y)||50}:null
 }
-function tbPartyIdFromCombat(id){return String(id||'').startsWith('p-')?String(id):null}
 function partyUnitMarkup(){
  return party().map((c,i)=>{
   const p=tbPartyFormation(c,i),r=roleOf(c),res=tbInitialResource(c),rk=tbResourceClass(res.name),rpct=clamp(res.value/res.max*100,0,100);

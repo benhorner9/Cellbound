@@ -10,7 +10,6 @@ const VERSION='3.0.0';
 const FX=window.CellboundCombatFX=window.CellboundCombatFX||{};
 const BASE_MOUNT=typeof FX.mount==='function'?FX.mount.bind(FX):null;
 const ARENA_SELECTOR='.cb2d-arena,.quest-cb2d-arena,.wb2d-arena,.pvp2d-arena,#tbArena';
-const UNIT_SELECTORS=['[data-unit]','[data-tb-unit]','[data-tb-boss]','[data-combat-id]','[data-pvp-unit]'];
 const hpValues=new WeakMap();
 const castTimers=new WeakMap();
 const reduce=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
