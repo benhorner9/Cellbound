@@ -447,7 +447,7 @@ const CONTENT_RESOURCE_PROFILES={
   ]
 };
 const recipeById=id=>Object.values(PROFESSIONS).flatMap(p=>p.recipes).find(r=>r.id===id)||null;
-const skillThreshold=level=>100+Math.max(1,level)*5;
+const skillThreshold=level=>160+Math.max(1,level)*7;
 function rollMaterial(entry){return{key:entry.key,quantity:entry.min+Math.floor(Math.random()*(entry.max-entry.min+1))}}
 function randomReagentPicks(pool,count=1){
   const choices=[...(pool||[])],picked=[];
@@ -467,8 +467,9 @@ function rollReagents(bossId){
 function rollContentReagents(contentId,options={}){
   const pool=CONTENT_RESOURCE_PROFILES[contentId]||GENERAL_REAGENT_POOL;
   const difficulty=String(options.difficulty||'normal').toLowerCase(),tier=Math.max(0,Number(options.tier)||0);
-  const count=Math.max(1,Number(options.count)||((difficulty==='normal')?3:4));
-  const bonus=difficulty==='heroic'?1:difficulty==='cellbound'?1+Math.floor(tier/5):0;
+  const defaultCount=difficulty==='cellbound'?4:difficulty==='raid'?5:3;
+  const count=Math.max(1,Number(options.count)||defaultCount);
+  const bonus=difficulty==='cellbound'?Math.floor(Math.max(0,tier-1)/7):0;
   return randomReagentPicks(pool,count).map(d=>({key:d.key,quantity:Math.max(1,d.quantity+bonus)}));
 }
 function formatReagentDrops(drops=[]){
