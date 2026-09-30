@@ -564,8 +564,8 @@ function qResourceClass(name){return 'resource-'+String(name||'power').toLowerCa
 function qCombatants(){return Array.isArray(questFight?.participants)&&questFight.participants.length?questFight.participants:party()}
 function qRows(){
   return qCombatants().map(c=>{
-    const hp=Math.max(0,Math.min(100,Number(questFight?.partyHp?.[c.id])||0)),def=qResourceDef(c),r=questFight?.resources?.[c.id]||def,max=Math.max(1,Number(r.max)||Number(def.max)||100),value=Math.max(0,Math.min(max,Number(r.value??def.start)||0)),name=r.name||def.name||'Power';
-    return '<div class="cb2d-party-row" data-q-row="'+c.id+'"><i class="cb2d-dot '+qClassKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+'Lv. '+Math.max(1,Number(c.level)||1)+' · '+qRole(c).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-q-side-hp="'+c.id+'" style="width:'+hp+'%"></i></em><em class="q2d-side-resource '+qResourceClass(name)+'" data-q-side-resource="'+c.id+'" title="'+esc(name)+'"><i style="width:'+(value/max*100)+'%"></i></em></span><strong data-q-hp-text="'+c.id+'">'+Math.round(hp)+' HP</strong></div>'
+    const hp=Math.max(0,Math.min(100,Number(questFight?.partyHp?.[c.id])||0)),def=qResourceDef(c),r=questFight?.resources?.[c.id]||def,max=Math.max(1,Number(r.max)||Number(def.max)||100),value=Math.max(0,Math.min(max,Number(r.value??def.start)||0)),name=r.name||def.name||'Power',featured=String(questFight?.featuredCharacterId||'')===String(c.id);
+    return '<div class="cb2d-party-row '+(featured?'trial-focus':'')+'" data-q-row="'+c.id+'"><i class="cb2d-dot '+qClassKey(c)+'"></i><span><b>'+esc(c.name)+(featured?' <em class="trial-focus-badge">TRIAL</em>':'')+'</b><small>'+'Lv. '+Math.max(1,Number(c.level)||1)+' · '+qRole(c).toUpperCase()+' · '+esc(c.spec)+(featured?' · FEATURED CHARACTER':'')+'</small><em class="cb2d-side-hp"><i data-q-side-hp="'+c.id+'" style="width:'+hp+'%"></i></em><em class="q2d-side-resource '+qResourceClass(name)+'" data-q-side-resource="'+c.id+'" title="'+esc(name)+'"><i style="width:'+(value/max*100)+'%"></i></em></span><strong data-q-hp-text="'+c.id+'">'+Math.round(hp)+' HP</strong></div>'
   }).join('');
 }
 function qRoute(){
@@ -669,7 +669,7 @@ function qEnemyMeta(index){
 }
 function qSpawn(){
   const p=qCombatants(),melee=p.filter(c=>qProfile(c)==='melee'),ranged=p.filter(c=>qProfile(c)==='ranged');
-  p.forEach((c,i)=>{qAddUnit('p-'+c.id,c.name,'party '+qRole(c)+' profile-'+qProfile(c)+' '+qClassKey(c),4,50+(i-2)*4);let x=16,y=50;if(qRole(c)==='tank'){x=30;y=50}else if(qProfile(c)==='melee'){x=23;y=43+melee.indexOf(c)*14}else if(qProfile(c)==='ranged'){x=17;y=28+ranged.indexOf(c)*44}else{x=12;y=61}setTimeout(()=>qMove('p-'+c.id,x,y,800),40)});
+  p.forEach((c,i)=>{const featured=String(questFight?.featuredCharacterId||'')===String(c.id);qAddUnit('p-'+c.id,c.name,'party '+qRole(c)+' profile-'+qProfile(c)+' '+qClassKey(c)+(featured?' trial-focus':''),4,50+(i-2)*4,'',featured?'TRIAL CHARACTER':'');let x=16,y=50;if(qRole(c)==='tank'){x=30;y=50}else if(qProfile(c)==='melee'){x=23;y=43+melee.indexOf(c)*14}else if(qProfile(c)==='ranged'){x=17;y=28+ranged.indexOf(c)*44}else{x=12;y=61}setTimeout(()=>qMove('p-'+c.id,x,y,800),40)});
   questFight.enemies.forEach((n,i)=>{const y=questFight.enemies.length===1?50:27+i*(46/Math.max(1,questFight.enemies.length-1)),m=qEnemyMeta(i),big=m.type==='elite'||m.type==='boss'||m.type==='world-boss',boss=m.type==='boss'||m.type==='world-boss';qAddUnit('e-'+i,n,boss?'enemy boss':big?'enemy big':'enemy',92,y,big?'big':'','Lv. '+m.level+' · '+m.label);setTimeout(()=>qMove('e-'+i,68,y,780),70)});
   p.forEach(c=>{qSetPartyHp(c,questFight.partyHp?.[c.id]??100);const r=questFight.resources?.[c.id],def=qResourceDef(c);qResourceVisual({type:'RESOURCE_STATE',source:'p-'+c.id,payload:{resource:r?.name||def.name,max:r?.max||def.max,value:r?.value??def.start}})});
   qRenderMeters(questFight.eliteIndex>=0?questFight.eliteIndex:0)
@@ -841,7 +841,7 @@ async function runQuest2DFight(config){
   return await new Promise(resolve=>{
     let settled=false;const finish=value=>{if(settled)return;settled=true;resolve(value)};
     const encounter=qEncounterFromConfig(config),entries=config.enemies||[],names=entries.map(x=>typeof x==='object'&&x?x.name||'Unknown Enemy':x),max=entries.map(x=>typeof x==='object'&&x&&Number(x.maxHealth||x.health)>0?Number(x.maxHealth||x.health):encounter.enemyHealth),carried=config.combatState&&typeof config.combatState==='object'?config.combatState:{};
-    questFight={token:tok,title:config.title,presentationKind:config.presentationKind||'quest',participants:[...p],phases:Array.isArray(config.phases)&&config.phases.length?config.phases:['Combat'],phase:Math.max(0,Number(config.phaseIndex)||0),speed:1,elapsedMs:0,wallClockStartAt:Number(config.wallClockStartAt)||Date.now(),enemies:names,level:encounter.level,enemyLevels:encounter.enemyLevels,enemyTypes:encounter.enemyTypes,eliteIndex:Number.isInteger(config.eliteIndex)?config.eliteIndex:-1,enemyMax:max,enemyHp:[...max],partyHp:Object.fromEntries(p.map(c=>[c.id,carried[c.id]?.healthPct==null?100:Number(carried[c.id].healthPct)])),resources:Object.fromEntries(p.map(c=>{const def=qResourceDef(c),r=carried[c.id]?.resource||def;return[c.id,{name:r.name||def.name,max:Number(r.max)||Number(def.max)||100,value:r.value==null?(Number(def.start)||0):Number(r.value)}]})),damage:Object.fromEntries(p.map(c=>[c.id,0])),healing:Object.fromEntries(p.map(c=>[c.id,0])),overhealing:Object.fromEntries(p.map(c=>[c.id,0])),threat:max.map(()=>Object.fromEntries(p.map(c=>[c.id,0]))),aggro:max.map(()=>null),log:[],telegraphs:{},finished:false};
+    questFight={token:tok,title:config.title,presentationKind:config.presentationKind||'quest',participants:[...p],featuredCharacterId:config.featuredCharacterId||null,phases:Array.isArray(config.phases)&&config.phases.length?config.phases:['Combat'],phase:Math.max(0,Number(config.phaseIndex)||0),speed:1,elapsedMs:0,wallClockStartAt:Number(config.wallClockStartAt)||Date.now(),enemies:names,level:encounter.level,enemyLevels:encounter.enemyLevels,enemyTypes:encounter.enemyTypes,eliteIndex:Number.isInteger(config.eliteIndex)?config.eliteIndex:-1,enemyMax:max,enemyHp:[...max],partyHp:Object.fromEntries(p.map(c=>[c.id,carried[c.id]?.healthPct==null?100:Number(carried[c.id].healthPct)])),resources:Object.fromEntries(p.map(c=>{const def=qResourceDef(c),r=carried[c.id]?.resource||def;return[c.id,{name:r.name||def.name,max:Number(r.max)||Number(def.max)||100,value:r.value==null?(Number(def.start)||0):Number(r.value)}]})),damage:Object.fromEntries(p.map(c=>[c.id,0])),healing:Object.fromEntries(p.map(c=>[c.id,0])),overhealing:Object.fromEntries(p.map(c=>[c.id,0])),threat:max.map(()=>Object.fromEntries(p.map(c=>[c.id,0]))),aggro:max.map(()=>null),log:[],telegraphs:{},finished:false};
     try{qDraw(config,finish);qSpawn();qLog(config.ambience)}
     catch(err){console.error('Quest combat viewer failed to initialise',err);const root=encounterRoot();root.hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false);return}
     if(encounter.kind==='boss'||encounter.kind==='final')window.CellboundFX?.boss?.(config.title,config.location||'');
@@ -1102,19 +1102,49 @@ async function finalizeEchoes(){
 }
 
 const CLASS_TRIALS={
- Warrior:[['warrior-guardian',5,'Challenging Presence','Hold the Line','Prove you can decide where the enemy’s blade falls.','Ironbound Challenger',520],[ 'warrior-battle-focus',10,'Battle Focus','Break the Siege','Trade patience for pressure and break an enemy line alone.','Siegebreaker',780]],
- Paladin:[['paladin-blessing-resolve',5,'Blessing of Resolve','Oath Under Fire','Stand firm while sacred resolve carries you through the assault.','Oathbreaker Shade',520],['paladin-radiant-purpose',10,'Radiant Purpose','The Unbroken Oath','Balance judgment and restoration under sustained pressure.','Fallen Justicar',780]],
- Priest:[['priest-divine-inspiration',5,'Divine Inspiration','The Vigil','Endure a trial of faith and keep yourself standing.','Faithless Echo',500],['priest-inner-fire',10,'Inner Fire','Light and Shadow','Master the line between preservation and destruction.','Hollow Confessor',760]],
- Druid:[['druid-wild-communion',5,'Wild Communion','Call of the Wild','Survive the wild’s test without the shelter of your party.','Briarheart Beast',520],['druid-primal-flow',10,'Primal Flow','The Changing Path','Adapt your rhythm as the battlefield changes around you.','Primal Warden',780]],
- Hunter:[['hunter-predators-focus',5,"Predator's Focus",'The Patient Hunt','Track, position and finish dangerous prey alone.','Ashfang Alpha',500],['hunter-pack-instinct',10,'Pack Instinct','Run With the Pack','Overcome a predator that refuses to fight on your terms.','Razorpack Matriarch',760]],
- Rogue:[['rogue-killing-tempo',5,'Killing Tempo','One Clean Cut','Control the engagement and end it before the enemy can recover.','Guild Enforcer',490],['rogue-relentless',10,'Relentless','No Witnesses','Maintain pressure through a prolonged duel with nowhere to hide.','Silent Auditor',750]],
- Mage:[['mage-arcane-empowerment',5,'Arcane Empowerment','Control the Current','Control unstable magic while defeating what it has awakened.','Arcane Aberration',500],['mage-flow-state',10,'Flow State','The Unbroken Cast','Keep your spell rhythm while the arena fights back.','Spell-Eater',760]],
- Shaman:[['shaman-bloodlust',5,'Bloodlust','Beat of the Storm','Match the storm’s tempo and overwhelm its guardian.','Stormbound Elemental',520],['shaman-ancestral-current',10,'Ancestral Current','Voices of the Ancestors','Survive an ancestral trial of endurance and control.','Restless Ancestor',780]],
- Warlock:[['warlock-demonic-pact',5,'Demonic Pact','Terms of the Pact','Prove you command the bargain rather than serve it.','Lesser Pact Demon',510],['warlock-soul-hunger',10,'Soul Hunger','Feed the Darkness','Defeat a creature that grows more dangerous the longer it feeds.','Soul Devourer',790]],
- Monk:[['monk-mystic-touch',5,'Mystic Touch','The Open Hand','Win through timing and control rather than brute force.','Wayward Disciple',500],['monk-inner-tempo',10,'Inner Tempo','Stillness in Motion','Keep your rhythm through a relentless martial trial.','Temple Challenger',760]],
- 'Death Knight':[['death-knight-horn',5,'Horn of Winter','Wake the Fallen','Command the dead without becoming one of them.','Risen Champion',530],['death-knight-frozen-will',10,'Frozen Will','The Cold March','Advance through punishing cold and break its master.','Frostbound Revenant',800]],
- 'Demon Hunter':[['demon-hunter-momentum',5,'Demonic Momentum','Embrace the Hunt','Turn aggression and movement into a weapon.','Fel Pursuer',520],['demon-hunter-fel-instinct',10,'Fel Instinct','Master the Demon','Control the power that would rather control you.','Inner Demon',800]],
- Evoker:[['evoker-draconic-resonance',5,'Draconic Resonance','Echoes of the Flights','Awaken the resonance carried in your draconic blood.','Resonant Drake',510],['evoker-ancient-vitality',10,'Ancient Vitality','Legacy Awakened','Prove you can wield ancient power without being consumed by it.','Ancient Echo',780]]
+ Warrior:[['warrior-guardian',5,'Challenging Presence','Hold the Line','Prove you can decide where the enemy’s blade falls.','Ironbound Challenger',520],['warrior-battle-focus',10,'Battle Focus','Break the Siege','Break an enemy line while your guild turns your pressure into an opening.','Siegebreaker',780]],
+ Paladin:[['paladin-blessing-resolve',5,'Blessing of Resolve','Oath Under Fire','Stand between danger and your allies while sacred resolve carries the party through the assault.','Oathbreaker Shade',520],['paladin-radiant-purpose',10,'Radiant Purpose','The Unbroken Oath','Balance judgment and restoration while the whole party is placed under sustained pressure.','Fallen Justicar',780]],
+ Priest:[['priest-divine-inspiration',5,'Divine Inspiration','The Vigil','Keep your allies standing while the trial tests the limits of your faith.','Faithless Echo',500],['priest-inner-fire',10,'Inner Fire','Light and Shadow','Master the line between preservation and destruction while the party depends on you.','Hollow Confessor',760]],
+ Druid:[['druid-wild-communion',5,'Wild Communion','Call of the Wild','Answer the wild’s test while adapting around the needs of your party.','Briarheart Beast',520],['druid-primal-flow',10,'Primal Flow','The Changing Path','Adapt your rhythm as the battlefield changes around the whole group.','Primal Warden',780]],
+ Hunter:[['hunter-predators-focus',5,"Predator's Focus",'The Patient Hunt','Track, position and finish dangerous prey while coordinating the party around its movement.','Ashfang Alpha',500],['hunter-pack-instinct',10,'Pack Instinct','Run With the Pack','Lead the group against a predator that refuses to fight on your terms.','Razorpack Matriarch',760]],
+ Rogue:[['rogue-killing-tempo',5,'Killing Tempo','One Clean Cut','Control the engagement and exploit the opening your party creates.','Guild Enforcer',490],['rogue-relentless',10,'Relentless','No Witnesses','Maintain pressure through a prolonged fight while dangerous casts and openings demand precision.','Silent Auditor',750]],
+ Mage:[['mage-arcane-empowerment',5,'Arcane Empowerment','Control the Current','Control unstable magic while your party contains what it has awakened.','Arcane Aberration',500],['mage-flow-state',10,'Flow State','The Unbroken Cast','Keep your spell rhythm while the arena forces the party to reposition.','Spell-Eater',760]],
+ Shaman:[['shaman-bloodlust',5,'Bloodlust','Beat of the Storm','Set the storm’s tempo and give your party the opening to overwhelm its guardian.','Stormbound Elemental',520],['shaman-ancestral-current',10,'Ancestral Current','Voices of the Ancestors','Guide the group through an ancestral trial of endurance and control.','Restless Ancestor',780]],
+ Warlock:[['warlock-demonic-pact',5,'Demonic Pact','Terms of the Pact','Prove you command the bargain while the party contains what answers it.','Lesser Pact Demon',510],['warlock-soul-hunger',10,'Soul Hunger','Feed the Darkness','Lead the party against a creature that grows more dangerous the longer it feeds.','Soul Devourer',790]],
+ Monk:[['monk-mystic-touch',5,'Mystic Touch','The Open Hand','Create control and space for the party through timing rather than brute force.','Wayward Disciple',500],['monk-inner-tempo',10,'Inner Tempo','Stillness in Motion','Keep your rhythm while the party survives a relentless martial trial.','Temple Challenger',760]],
+ 'Death Knight':[['death-knight-horn',5,'Horn of Winter','Wake the Fallen','Command the dead while your party withstands the pressure they bring.','Risen Champion',530],['death-knight-frozen-will',10,'Frozen Will','The Cold March','Lead the group through punishing cold and break its master.','Frostbound Revenant',800]],
+ 'Demon Hunter':[['demon-hunter-momentum',5,'Demonic Momentum','Embrace the Hunt','Turn aggression and movement into an opening the whole party can exploit.','Fel Pursuer',520],['demon-hunter-fel-instinct',10,'Fel Instinct','Master the Demon','Control the power that would rather consume you while the party holds the line.','Inner Demon',800]],
+ Evoker:[['evoker-draconic-resonance',5,'Draconic Resonance','Echoes of the Flights','Awaken the resonance in your draconic blood and use it to carry the party through the trial.','Resonant Drake',510],['evoker-ancient-vitality',10,'Ancient Vitality','Legacy Awakened','Prove your ancient power can strengthen a group without consuming you.','Ancient Echo',780]]
+};
+const CLASS_TRIAL_FOCUS={
+ Warrior:'Control the enemy’s attention and create safe space for the group.',
+ Paladin:'Stand between the enemy and your allies; the party succeeds when your protection holds.',
+ Priest:'Keep the group stable through repeated pressure while contributing whenever healing allows.',
+ Druid:'Adapt between pressure, movement and support as the encounter changes.',
+ Hunter:'Control range and priority targets while the party follows your opening.',
+ Rogue:'Punish dangerous casts and exploit short priority windows.',
+ Mage:'Maintain damage through movement and shut down dangerous enemy magic.',
+ Shaman:'Set the party tempo, answer pressure and interrupt key casts.',
+ Warlock:'Manage sustained pressure and priority threats without losing control of the fight.',
+ Monk:'Use movement and control to keep the group’s formation stable.',
+ 'Death Knight':'Anchor dangerous enemies and survive the pressure created by your own aggression.',
+ 'Demon Hunter':'Use movement aggressively without dragging the encounter out of formation.',
+ Evoker:'Balance positioning, burst and support while keeping the group together.'
+};
+const CLASS_TRIAL_MECHANICS={
+ Warrior:[['Challenge the Line','cone',1700],['Broken Formation','adds',1200]],
+ Paladin:[['Oathbound Frontal','cone',1700],['Sacred Burden','circles',1500]],
+ Priest:[['Trial of Faith','circles',1500],['Broken Litany','interrupt',1900]],
+ Druid:[['Briar Spread','circles',1500],['Wild Growth','adds',1250]],
+ Hunter:[['Predator Line','line',1500],['Pack Rush','adds',1200]],
+ Rogue:[['Killing Window','interrupt',1800],['Cut the Lane','line',1450]],
+ Mage:[['Unstable Current','interrupt',1900],['Arcane Scatter','circles',1450]],
+ Shaman:[['Storm Scatter','circles',1450],['Thunder Call','interrupt',1850]],
+ Warlock:[['Pact Spawn','adds',1200],['Soul Brand','circles',1500]],
+ Monk:[['Open Hand','line',1450],['Sweeping Form','cone',1650]],
+ 'Death Knight':[['Frozen Front','cone',1700],['Raise the Fallen','adds',1250]],
+ 'Demon Hunter':[['Fel Rush','line',1400],['Hunt Marks','circles',1450]],
+ Evoker:[['Resonant Marks','circles',1500],['Dragon Line','line',1450]]
 };
 function classTrialDefs(){
  const out=[];
@@ -1127,23 +1157,45 @@ function classTrialDefs(){
 }
 function classTrialDone(t){return Boolean(t?.character?.classBuffProgress?.unlocked?.includes(t.id))}
 function classTrialAvailable(t){return Number(t?.character?.level||1)>=t.level&&!classTrialDone(t)}
+function classTrialPartyState(t){
+ const members=party(),featured=members.some(c=>String(c.id)===String(t?.character?.id)),full=members.length===5;
+ return{members,featured,full,ready:featured&&full}
+}
+function classTrialFocus(t){return CLASS_TRIAL_FOCUS[t?.character?.class]||'Lead the party through a class-specific combat test.'}
+function classTrialMechanics(t){
+ const base=(CLASS_TRIAL_MECHANICS[t?.character?.class]||[['Trial Pressure','circles',1500],['Trial Cast','interrupt',1850]]).map(x=>[...x]);
+ if(Number(t?.level)>=10)base.push([t.title+' Final Test',qRole(t.character)==='tank'?'cone':'line',1450]);
+ return base
+}
+function classTrialCombat(t,members){
+ const avgLevel=members.length?members.reduce((n,c)=>n+Math.max(1,Number(c.level)||1),0)/members.length:t.level;
+ const partyIlvl=Math.max(1,Number(Game?.partyItemLevel?.())||1),expectedIlvl=t.level>=10?30:18;
+ const levelScale=1+Math.max(0,avgLevel-t.level)*.04,gearScale=1+Math.min(.4,Math.max(0,(partyIlvl-expectedIlvl)/expectedIlvl)*.55);
+ const groupHealth=Math.round((Number(t.health)||500)*(t.level>=10?4.4:3.8)*levelScale*gearScale);
+ return{kind:'boss',level:t.level,recommendedItemLevel:Math.max(1,Math.round(partyIlvl)),enemyHealth:groupHealth,mechanicIntervalMs:t.level>=10?2450:2850,mechanics:classTrialMechanics(t),scaling:{enemyDamage:t.level>=10?.9:.82,mechanicFrequency:t.level>=10?1.05:1.15}}
+}
 function classTrialCard(t){
- const done=classTrialDone(t),locked=Number(t.character.level||1)<t.level;
- return {id:t.key,title:t.title,meta:t.character.name+' · '+t.character.class,difficulty:'Class Trial',status:done?'COMPLETE':locked?'LEVEL '+t.level:'AVAILABLE',complete:done,locked,icon:'✦'}
+ const done=classTrialDone(t),locked=Number(t.character.level||1)<t.level,prep=classTrialPartyState(t);
+ const status=done?'COMPLETE':locked?'LEVEL '+t.level:!prep.featured?'ADD TO PARTY':!prep.full?'PARTY '+prep.members.length+'/5':'AVAILABLE';
+ return {id:t.key,title:t.title,meta:t.character.name+' · '+t.character.class,difficulty:'Class Trial',status,complete:done,locked,icon:'✦'}
 }
 function renderClassTrialDetail(t,root,side){
- const done=classTrialDone(t),locked=Number(t.character.level||1)<t.level;
- root.innerHTML='<div class="quest-v3-hero"><div><small>SOLO CLASS TRIAL · LEVEL '+t.level+'</small><h2>'+esc(t.title)+'</h2><p>'+esc(t.character.name+' · '+t.character.class)+'</p></div><span class="quest-v3-status '+(done?'complete':'')+'">'+(done?'COMPLETE':locked?'LOCKED':'AVAILABLE')+'</span></div><div class="quest-v3-story"><p>'+esc(t.summary)+'</p></div><section class="quest-v3-clue"><small>CLASS CHALLENGE</small><h3>'+esc(t.enemy)+'</h3><p>This trial must be completed by '+esc(t.character.name)+' alone. Party members cannot enter.</p><em>Victory permanently teaches this character '+esc(t.buff)+'.</em></section><div class="quest-detail-action">'+(done?'<div class="quest-complete-stamp">BUFF LEARNED</div>':locked?'<div class="quest-action-block locked"><b>LOCKED</b><small>'+esc(t.character.name)+' must reach Level '+t.level+'. Current level: '+Number(t.character.level||1)+'.</small></div>':'<button class="quest-primary danger" data-class-trial-start="'+esc(t.key)+'">ENTER SOLO TRIAL →</button>')+'</div>';
- side.innerHTML='<section><small>PARTICIPANT</small><div class="quest-history"><p>'+esc(t.character.name+' · '+t.character.class+' · '+t.character.spec)+'</p><p>Level '+Number(t.character.level||1)+' · Solo only</p></div></section><section><small>REWARD</small><div class="quest-reward-list"><p>'+esc(t.buff)+'</p><p>Permanent class-buff unlock for '+esc(t.character.name)+'</p></div></section>';
+ const done=classTrialDone(t),locked=Number(t.character.level||1)<t.level,prep=classTrialPartyState(t),partyIssue=!locked&&!done&&!prep.ready;
+ const action=done?'<div class="quest-complete-stamp">BUFF LEARNED</div>':locked?'<div class="quest-action-block locked"><b>LOCKED</b><small>'+esc(t.character.name)+' must reach Level '+t.level+'. Current level: '+Number(t.character.level||1)+'.</small></div>':!prep.featured?'<div class="quest-action-block locked"><b>FEATURED CHARACTER REQUIRED</b><small>Add '+esc(t.character.name)+' to your active party before entering this class trial.</small></div>':!prep.full?'<div class="quest-action-block locked"><b>COMPLETE PARTY REQUIRED</b><small>Build an active five-character party. Current party: '+prep.members.length+' / 5.</small></div>':'<button class="quest-primary danger" data-class-trial-start="'+esc(t.key)+'">ENTER PARTY TRIAL →</button>';
+ root.innerHTML='<div class="quest-v3-hero"><div><small>CLASS-LED PARTY TRIAL · LEVEL '+t.level+'</small><h2>'+esc(t.title)+'</h2><p>'+esc(t.character.name+' · '+t.character.class)+'</p></div><span class="quest-v3-status '+(done?'complete':'')+'">'+(done?'COMPLETE':locked?'LOCKED':partyIssue?'PARTY REQUIRED':'AVAILABLE')+'</span></div><div class="quest-v3-story"><p>'+esc(t.summary)+'</p></div><section class="quest-v3-clue"><small>TRIAL FOCUS</small><h3>'+esc(t.enemy)+'</h3><p>'+esc(t.character.name)+' must lead the active five through this encounter. '+esc(classTrialFocus(t))+'</p><em>The other four adventurers fight normally, but only '+esc(t.character.name)+' earns '+esc(t.buff)+' from victory.</em></section><div class="quest-detail-action">'+action+'</div>';
+ side.innerHTML='<section><small>FEATURED CHARACTER</small><div class="quest-history"><p>'+esc(t.character.name+' · '+t.character.class+' · '+t.character.spec)+'</p><p>Level '+Number(t.character.level||1)+' · Must be in active party</p></div></section><section><small>ACTIVE PARTY</small><div class="quest-history"><p>'+prep.members.length+' / 5 adventurers ready</p><p>'+(prep.featured?esc(t.character.name)+' is in the party':'Add '+esc(t.character.name)+' before entering')+'</p></div></section><section><small>REWARD</small><div class="quest-reward-list"><p>'+esc(t.buff)+'</p><p>Permanent class-buff unlock for '+esc(t.character.name)+' only</p></div></section>';
  root.querySelector('[data-class-trial-start]')?.addEventListener('click',()=>startClassTrial(t.key))
 }
 async function startClassTrial(key){
  const t=classTrialDefs().find(x=>x.key===key);if(!t||!classTrialAvailable(t))return;
- showDialogue(t.title,'Class Mentor',['This trial belongs to you alone, '+t.character.name+'.','Show me that you understand what it means to fight as a '+t.character.class+'.'],async()=>{
-  const won=await runQuest2DFight({quest:t.character.class+' Class Trial',title:t.title,location:'Class Trial',participants:[t.character],allowSolo:true,partyLabel:'SOLO ADVENTURER',enemies:[t.enemy],ambience:t.summary,completeText:t.character.name+' has mastered '+t.buff+'.',combat:{kind:'boss',level:t.level,recommendedItemLevel:0,enemyHealth:t.health,mechanics:[[t.title+' Test','circles',Math.max(1600,2800-t.level*60)]]}});
+ const prep=classTrialPartyState(t);
+ if(!prep.featured){questToast('PARTY REQUIRED',t.title,'Add '+t.character.name+' to your active party first.');return}
+ if(!prep.full){questToast('PARTY REQUIRED',t.title,'Build a complete active five before entering the trial.');return}
+ showDialogue(t.title,'Class Mentor',['This is your trial, '+t.character.name+', but no adventurer learns their role in isolation.','Lead your guild through the test. They can carry the fight with you, but the lesson — and the '+t.buff+' — belongs to you.'],async()=>{
+  const won=await runQuest2DFight({quest:t.character.class+' Class Trial',title:t.title,location:'Class Trial',participants:prep.members,featuredCharacterId:t.character.id,partyLabel:'CLASS-LED PARTY',enemies:[t.enemy],ambience:t.summary,completeText:t.character.name+' led the party through the trial and mastered '+t.buff+'.',combat:classTrialCombat(t,prep.members)});
   if(!won)return;
   const ch=(state()?.roster||[]).find(x=>x.id===t.character.id);if(!ch)return;ch.classBuffProgress=ch.classBuffProgress&&typeof ch.classBuffProgress==='object'?ch.classBuffProgress:{unlocked:[]};ch.classBuffProgress.unlocked=Array.isArray(ch.classBuffProgress.unlocked)?ch.classBuffProgress.unlocked:[];if(!ch.classBuffProgress.unlocked.includes(t.id))ch.classBuffProgress.unlocked.push(t.id);ch.buffSkill=t.id;
-  ensure().classTrials[t.key]={completedAt:new Date().toISOString(),characterId:ch.id,buffId:t.id};state().activity=state().activity||[];state().activity.push(ch.name+' completed '+t.title+' and learned '+t.buff+'.');await commit();selectedAdventure=t.key;questToast('CLASS TRIAL COMPLETE',t.buff,'Unlocked for '+ch.name+'.')
+  ensure().classTrials[t.key]={completedAt:new Date().toISOString(),characterId:ch.id,buffId:t.id,mode:'party',partyIds:prep.members.map(c=>c.id)};state().activity=state().activity||[];state().activity.push(ch.name+' led the party through '+t.title+' and learned '+t.buff+'.');await commit();selectedAdventure=t.key;questToast('CLASS TRIAL COMPLETE',t.buff,'Unlocked for '+ch.name+'.')
  })
 }
 

@@ -434,3 +434,32 @@ radial-gradient(ellipse at 76% 74%,rgba(104,85,53,.08),transparent 22%)}
 .quest-continuation-card .quest-cbr-summary{margin:16px 0}.quest-continuation-primary{width:100%;min-height:48px;margin-top:18px;border:1px solid #b99a58;background:linear-gradient(180deg,#342b18,#1c170d);color:#f0d797;font-weight:900;letter-spacing:.08em;cursor:pointer}
 .quest-continuation-primary:hover,.quest-continuation-primary:focus{background:linear-gradient(180deg,#44371e,#241d10);outline:1px solid rgba(232,199,124,.3);outline-offset:2px}
 @media(max-width:700px){.quest-cb2d-shell .cb2d-end.quest-continuation-modal{padding:14px!important}.quest-continuation-card{padding:21px 16px 18px;max-height:84dvh}.quest-continuation-card>h3{font-size:1.3rem}}
+
+
+/* Class-led party trial focus */
+.quest-cb2d-shell .cb2d-unit.trial-focus>i{
+  box-shadow:0 0 0 2px rgba(232,199,105,.72),0 0 18px rgba(232,199,105,.34)!important
+}
+.quest-cb2d-shell .cb2d-unit.trial-focus>span{
+  color:#f0d887
+}
+.quest-cb2d-shell .cb2d-party-row.trial-focus{
+  margin-left:-6px;
+  padding-left:6px;
+  border-left:2px solid rgba(232,199,105,.7);
+  background:linear-gradient(90deg,rgba(105,79,25,.16),transparent 70%)
+}
+.quest-cb2d-shell .trial-focus-badge{
+  display:inline-flex;
+  margin-left:5px;
+  padding:1px 4px;
+  border:1px solid rgba(232,199,105,.34);
+  border-radius:3px;
+  background:rgba(91,66,19,.48);
+  color:#e9cd79;
+  font-size:.28rem;
+  font-style:normal;
+  font-weight:900;
+  letter-spacing:.08em;
+  vertical-align:middle
+}
