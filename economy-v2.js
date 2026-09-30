@@ -430,7 +430,7 @@ function renderCrafted(){
     }else if(p.effect==='clear-cell-shock'){
       action='<select data-craft-target="'+x.key+'">'+usableRoster().map(c=>'<option value="'+c.id+'">'+c.name+' · Shock '+(c.cellShock||0)+'%</option>').join('')+'</select><button data-clear-shock="'+x.key+'">USE</button>';
     }else if(p.effect==='combat-potion'){
-      action='<em>Use during a dungeon with the USE CONSUMABLE combat command.</em>';
+      action='<em>Use during live combat with the USE POTION button. It automatically targets the living party member in the most danger.</em>';
     }
     const art=P?.consumableArtHTML?P.consumableArtHTML(x.key,48,'crafted-item-art'):'';return '<div class="crafted-card">'+art+'<strong>×'+(x.quantity||1)+'</strong><b>'+x.name+'</b><small>'+desc+'</small>'+action+'</div>';
   }).join('');
