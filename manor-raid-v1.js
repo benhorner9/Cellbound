@@ -164,11 +164,6 @@ function stageCombatDuration(stage){
  if(resultMs>0)return Math.max(STAGE_MIN_MS[stage]||0,resultMs);
  return Number(STAGES[stage]?.duration)||STAGE_MIN_MS[stage]||0
 }
-function bedroomRemaining(elapsed){
- const result=combatFor('bedroom')?.result;if(!result)return 20;
- const dead=(result.events||[]).filter(ev=>ev.type==='ENEMY_DEFEATED'&&Number(ev.timestamp)<=elapsed).length;
- return Math.max(0,20-dead)
-}
 async function failRaid(reason='The raid was defeated'){
  if(!session||session.status!=='active')return;
  if(isLeader()){
@@ -572,7 +567,6 @@ function stageName(id){return id==='maids'?'The Maids':id==='housebound'?'The Ma
 function stageRoom(id){return id==='maids'?'Dining Room / Kitchen':id==='victory'?'The Attic':STAGES[id]?.room||'The Manor'}
 function stageElapsed(){return Math.max(0,serverNow()-stamp(session?.state?.stageStartedAt))}
 function memberRows(){return groupMembers(session?.listing_id).sort((a,b)=>stamp(a.joined_at)-stamp(b.joined_at))}
-function allRaidChars(){return memberRows().flatMap((m,pi)=>(Array.isArray(m.party_snapshot)?m.party_snapshot:[]).map((c,ci)=>({...c,partyIndex:pi,charIndex:ci})))}
 function clearScreechPromptTimers(){
  screechPromptTimers.forEach(timer=>clearTimeout(timer));screechPromptTimers.clear()
 }
@@ -676,10 +670,6 @@ function unit(c,i,e){
  const engineHp=combatPlayerHp(c,e),danger=engineHp===null?90:engineHp;
  const hp=session.stage==='housebound'?bossHp('housebound',e):100,chosen=session.stage==='housebound'&&hp<=60&&hp>30&&i===Math.floor(e/6500)%10;
  return '<div class="mr-unit u'+i+' '+(chosen?'chosen':'')+'" style="--class:'+color+'"><div class="mr-unit-pic">'+p+'</div><span>'+esc(c.name)+'</span><div class="mr-unit-hp"><i style="width:'+Math.max(0,danger)+'%"></i></div></div>'
-}
-function raidRosterMarkup(chars,e){
- const rows=memberRows();
- return '<small>RAID ROSTER</small><div class="mr-roster-grid">'+rows.map((m,i)=>'<section><b>PARTY '+(i?'B':'A')+' · '+esc(m.guild_label)+'</b>'+((m.party_snapshot||[]).map(ch=>{const view={...ch,partyIndex:i},hp=combatPlayerHp(view,e);return'<span style="--class:'+(CLASS_COLORS[ch.class]||'#8aa')+'"><i></i>'+esc(ch.name)+'<em>'+esc(ch.role||'dps')+(hp!==null?' · '+Math.round(hp)+'%':'')+'</em></span>'}).join(''))+'</section>').join('')+'</div>'
 }
 function masterPenaltyStacks(){return Math.max(0,Number(session?.state?.masterScreechFailures)||0)}
 async function driveMaids(e){
