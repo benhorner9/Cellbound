@@ -132,7 +132,7 @@ const SPECS={
       title:'Boss Assassin',
       strength:'Exceptional single-target damage with strong personal threat control.',
       tradeoff:'Very little pack damage and vulnerable when mechanics force movement.',
-      damage:1.12,threat:.72,cooldown:.84,execute:.18,opening:.26,physicalTaken:1.03
+      damage:1.22,threat:.72,cooldown:.84,execute:.18,opening:.26,physicalTaken:1.03
     },
     Outlaw:{
       title:'Freeblade Duelist',
