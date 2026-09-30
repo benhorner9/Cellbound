@@ -60,7 +60,7 @@ for(const file of files){
     for(const hook of ['/* Profession Workshop V2 layout ownership','#professions .recipe-list{','grid-template-columns:1fr!important','#professions .profession-recipe-card{'])if(!contents.includes(hook))throw new Error('Legacy profession layout override is not neutralised: '+hook);
   }
   if(file==='character-sheet.js'){
-    for(const hook of ['const CHARACTER_TABS=','cb-command-character-header','cb-header-metrics','cb-command-overview','cb-profession-command','cb-history-command','cb-talent-command-v2','cb-talent-tier','cb-talent-inline-detail','data-char-jump','returnView='])if(!contents.includes(hook))throw new Error('Character Command redesign is missing '+hook);
+    for(const hook of ['const CHARACTER_TABS=','cb-command-character-header','cb-header-metrics','cb-command-overview','cb-profession-command',"currentTab==='history'",'cb-talent-command-v2','cb-talent-tier','cb-talent-inline-detail','data-char-jump','returnView='])if(!contents.includes(hook))throw new Error('Character Command redesign is missing '+hook);
     if(contents.includes("['knowledge','⌁','Mastery'")||contents.includes('function knowledgePanel'))throw new Error('Mastery must remain removed from the character screen');
     if(!contents.includes('function setSummaryMarkup')||!contents.includes('function setInlineMarkup')||!contents.includes('SET BONUSES'))throw new Error('Character equipment set bonus progress UI is missing');
     if(contents.includes('esc(item.setName)')||contents.includes('esc(rule.name)')||contents.includes('esc(rule.short)')||contents.includes('esc(rule.description)')||contents.includes('esc(item.setName||id)'))throw new Error('Tier 4 set UI is calling an undefined escape helper and will break the equipment drawer');
