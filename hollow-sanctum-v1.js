@@ -79,7 +79,7 @@ const HOLLOW_ROOMS={
  }
 };
 const RELIC={itemId:'quest-blackglass-resonator',name:'Blackglass Resonator',class:'All',classes:'all',slot:'Relic',tier:3,rarity:'Rare',tierLabel:'Quest Relic',enabled:true,dropEnabled:false,itemLevel:30,power:10,tradeState:'soulbound',questArtMaterial:'void-crystal',lore:'Recovered from The Bound Choir beneath Zeltira.'};
-const XP=500;
+const XP=1200;
 function rollHollowGear(){
  const G=window.CellboundGear,pool=(G?.items||[]).filter(x=>x.tier===3&&x.enabled);
  if(!pool.length)return null;
@@ -114,7 +114,7 @@ function readiness(){
  const p=party();if(!unlocked())return{ok:false,reason:'The Hollow Sanctum has not been discovered. Complete Echoes Beneath Zeltira.'};
  if(p.length!==5)return{ok:false,reason:'Build a complete five-character party first.'};
  const bad=p.find(c=>Game.isUnavailable?.(c));if(bad)return{ok:false,reason:bad.name+' is still recovering from Cell Shock.'};
- if(ilvl()<24)return{ok:false,reason:'Party Item Level '+ilvl()+'. The Hollow Sanctum requires Item Level 24.'};
+ const req=Math.max(24,Number(hsEndgameConfig()?.recommendedItemLevel)||24);if(ilvl()<req)return{ok:false,reason:'Party Item Level '+ilvl()+'. '+(hsEndgameConfig()?.diff?.name||'Normal')+' requires Item Level '+req+'.'};
  return{ok:true,reason:'The seal is open.'}
 }
 function renderCard(){
@@ -714,13 +714,13 @@ async function start(){
  await hsRunFrom(Math.min(STAGES.length-1,Number(run.stage)||0),tok)
 }
 async function complete(){
- const s=state(),q=qstate(),first=!q.flags.hollowFirstClear,metrics=hsRunMetrics();run.endgameMetrics=metrics;const record=await window.CellboundEndgame?.recordRun?.('hollow-sanctum',metrics);run.endgameRecord=record&&!record.error?record:null;const gains=awardXp(),mode=run.endgame?.difficulty||'normal',tier=Number(run.endgame?.tier)||0,gear=window.CellboundEndgame?.rollClearLoot?.('hollow-sanctum','choir',mode==='normal'?.70:mode==='heroic'?.78:.85)||null,gold=mode==='normal'?220:mode==='heroic'?300:340+tier*12,renown=mode==='normal'?100:mode==='heroic'?135:150+tier*5;s.gold=(Number(s.gold)||0)+gold;s.renown=(Number(s.renown)||0)+renown;const shards=window.CellboundEndgame?.shardReward?.('hollow-sanctum')||0;if(shards)Game.addMaterial?.('cell-shards',shards);const chase=window.CellboundEndgame?.rollChase?.('hollow-sanctum');if(chase)s.activity.push('Very rare collection reward: '+chase.name+'.');Game.addMaterial?.('void-crystal',first?2:1);const professionDrops=window.CellboundProfessions?.rollContentReagents?.('hollow-sanctum',{difficulty:mode,tier})||[];professionDrops.forEach(d=>Game.addMaterial?.(d.key,d.quantity));q.flags.hollowFirstClear=true;q.hollowCompletions=(Number(q.hollowCompletions)||0)+1;
- if(gear)Game.addBankItem?.(gear);
+ const s=state(),q=qstate(),first=!q.flags.hollowFirstClear,metrics=hsRunMetrics();run.endgameMetrics=metrics;const record=await window.CellboundEndgame?.recordRun?.('hollow-sanctum',metrics);run.endgameRecord=record&&!record.error?record:null;const gains=awardXp(),mode=run.endgame?.difficulty||'normal',tier=Number(run.endgame?.tier)||0,gearDrops=window.CellboundEndgame?.rollClearLootBundle?.('hollow-sanctum','choir')||[window.CellboundEndgame?.rollClearLoot?.('hollow-sanctum','choir',1)].filter(Boolean),gold=mode==='normal'?220:mode==='heroic'?300:340+tier*12,renown=mode==='normal'?100:mode==='heroic'?135:150+tier*5;s.gold=(Number(s.gold)||0)+gold;s.renown=(Number(s.renown)||0)+renown;const shards=window.CellboundEndgame?.shardReward?.('hollow-sanctum')||0;if(shards)Game.addMaterial?.('cell-shards',shards);const chase=window.CellboundEndgame?.rollChase?.('hollow-sanctum');if(chase)s.activity.push('Very rare collection reward: '+chase.name+'.');Game.addMaterial?.('void-crystal',first?2:1);const professionDrops=window.CellboundProfessions?.rollContentReagents?.('hollow-sanctum',{difficulty:mode,tier})||[];professionDrops.forEach(d=>Game.addMaterial?.(d.key,d.quantity));q.flags.hollowFirstClear=true;q.hollowCompletions=(Number(q.hollowCompletions)||0)+1;
+ gearDrops.forEach(item=>Game.addBankItem?.(item));
  if(first)Game.addBankItem?.({...RELIC,source:'The Bound Choir · First Clear'});
- s.activity.push('The Hollow Sanctum · '+(run.endgame?.label||'Normal')+' cleared. Score '+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'. Each adventurer earned '+XP+' XP.'+(gear?' '+gear.name+' was sent to the Guild Bank.':'')+(first?' Blackglass Resonator added to the Guild Bank.':'')+(professionDrops.length?' Profession materials: '+window.CellboundProfessions?.formatReagentDrops?.(professionDrops)+'.':''));
+ s.activity.push('The Hollow Sanctum · '+(run.endgame?.label||'Normal')+' cleared. Score '+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'. Each adventurer earned '+XP+' XP.'+(gearDrops.length?' '+gearDrops.length+' equipment drops were sent to the Guild Bank.':'')+(first?' Blackglass Resonator added to the Guild Bank.':'')+(professionDrops.length?' Profession materials: '+window.CellboundProfessions?.formatReagentDrops?.(professionDrops)+'.':''));
  Game.save?.();await Game.persistState?.();await syncXp(gains);run.done=true;window.dispatchEvent(new CustomEvent('cellbound:hollow-complete',{detail:{firstClear:first,difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs}}));window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'hollow-sanctum',difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs}}));
  const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end cb2d-loot-screen cb2d-results-screen';$('.hs2d-shell')?.classList.add('results-mode');
- const lootGear=[gear,...(first?[RELIC]:[])].filter(Boolean),materials=[
+ const lootGear=[...gearDrops,...(first?[RELIC]:[])].filter(Boolean),materials=[
    {key:'void-crystal',name:'Void Crystal',quantity:first?2:1,source:'The Hollow Sanctum',rarity:'Rare'},
    ...(shards?[{key:'cell-shards',name:'Cell Shards',quantity:shards,source:'Endgame Reward',rarity:'Rare'}]:[]),
    ...professionDrops.map(d=>({key:d.key,name:window.CellboundProfessions?.MATERIALS?.[d.key]?.name||d.key,quantity:d.quantity,source:'Hollow Sanctum salvage',rarity:window.CellboundProfessions?.MATERIALS?.[d.key]?.rarity||'Common'}))
