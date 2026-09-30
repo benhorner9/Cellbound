@@ -281,7 +281,10 @@ function updateCraftTimerUI(){
   if(status)status.textContent=craftFocusActive()?'WORKSHOP ACTIVE':'PAUSED · RETURN TO PROFESSIONS';
 }
 function pauseCraftTimer(){
-  if(!craftProject)return;craftLastTick=0;craftProject.paused=true;Game?.save?.();updateCraftTimerUI()
+  if(!craftProject)return;
+  const changed=Boolean(craftLastTick)||craftProject.paused!==true;craftLastTick=0;craftProject.paused=true;
+  if(changed)Game?.save?.();updateCraftTimerUI();
+  if(craftTicker){clearInterval(craftTicker);craftTicker=null}
 }
 function tickCraft(){
   if(!craftProject){craftLastTick=0;if(craftTicker){clearInterval(craftTicker);craftTicker=null}return}
