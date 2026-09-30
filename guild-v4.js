@@ -137,7 +137,7 @@ const nativeLocalSet=Storage.prototype.setItem;
 function talentState(className){
   const out={};Object.keys(classes[className]?.specs||{}).forEach(spec=>{out[spec]={}});return out;
 }
-function cloneGear(item,source='Starting Equipment'){if(!item)return null;const out={...item,source,quantity:undefined};return G?.ensureSockets?.(out)||out;}
+function cloneGear(item,source='Starting Equipment'){if(!item)return null;const out={...item,source,quantity:undefined};return G?.ensureSockets?.(out,'roll')||out;}
 function starterEquipment(klass){
   const set=G.starterSet(klass);
   return {Head:cloneGear(set.find(x=>x.slot==='Head')),Chest:cloneGear(set.find(x=>x.slot==='Chest')),Weapon:cloneGear(set.find(x=>x.slot==='Weapon')),Shoulders:null,Hands:null,Waist:null,Legs:null,Feet:null,OffHand:null,Ring1:null,Ring2:null,Trinket1:null,Trinket2:null,Relic:null};
