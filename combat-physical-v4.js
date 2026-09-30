@@ -226,7 +226,7 @@ function effect(scene,cls,source,target,life=320,allowUnanchored=false){
   if(connection){n.style.width=d.len+'px';n.style.setProperty('--cbl-angle',d.angle+'deg')}
  }
  if(a&&b)n.dataset.cblPositioned='1';
- const fx={n,source,target,ends:performance.now()+life/scene.speed};scene.layer.appendChild(n);scene.effects.add(fx);return fx
+ const ttl=Math.max(60,life/scene.speed),fx={n,source,target,ends:performance.now()+ttl,timer:0};scene.layer.appendChild(n);scene.effects.add(fx);fx.timer=setTimeout(()=>{if(scene.effects.has(fx)){fx.n.remove();scene.effects.delete(fx)}},ttl+80);return fx
 }
 function clearCast(u){if(!u)return;u.cast?.orb?.remove();u.cast?.beam?.remove();u.cast=null;u.el.classList.remove('cbl-casting');u.el.style.removeProperty('--cbl-charge')}
 function strike(scene,u,t,e,heal=false){
@@ -275,7 +275,7 @@ function livingEvent(e,opts={}){
  if(/^TOTEM_/.test(e.type))totem(scene,e);
  switch(e.type){
  case'COMBAT_START':
-  for(const f of scene.effects){f.n.remove()}scene.effects.clear();
+  for(const f of scene.effects){clearTimeout(f.timer);f.n.remove()}scene.effects.clear();
   for(const n of scene.totems.values())n.remove();scene.totems.clear();for(const n of scene.pets.values())n.remove();scene.pets.clear();
   scene.live=true;room(scene,e);emphasis(scene,'entry');arena.classList.add('cbl-live');arena.querySelectorAll(UNIT).forEach(el=>unit(scene,el));
   for(const v of e.payload?.units||[]){const a=unit(scene,resolve(v.id,opts,arena));if(a){enemyProfile(a,v);const group=String(v.id).match(/^p-(?:raid|maid)-(\d+)-/);if(group)a.el.dataset.raidParty=group[1];a.dead=v.alive===false;if(!a.dead)a.el.classList.remove('dead','dying');a.target=null;a.statuses.clear();a.el.dataset.control='';state(a,a.dead?'dead':'idle');setPosition(scene,a,v.position);a.el.style.setProperty('--cbl-facing',(v.facing||0)+'deg')}}framing(scene);break;
@@ -333,7 +333,7 @@ function frame(){
  raf=0;if(now-last<32){wake();return}last=now;
  let active=false;
  for(const [arena,scene] of scenes){
-  if(!arena.isConnected){for(const u of scene.units.values()){u.animation?.cancel();clearCast(u)}scene.resize?.disconnect();scene.camera?.cancel();scenes.delete(arena);continue}
+  if(!arena.isConnected){for(const u of scene.units.values()){u.animation?.cancel();clearCast(u)}for(const f of scene.effects){clearTimeout(f.timer);f.n.remove()}scene.effects.clear();scene.resize?.disconnect();scene.camera?.cancel();scenes.delete(arena);continue}
   if(!arena.getClientRects().length){scene.live=false;for(const u of scene.units.values()){u.animation?.cancel();clearCast(u)}continue}
   for(const entry of scene.warnings.values())if(now-entry.start>=entry.duration*.7)for(const n of entry.nodes)n.dataset.phase='imminent';
   for(const h of scene.hazards.values())if(now>=h.end-900/scene.speed)h.node.dataset.phase='expiring';
@@ -362,7 +362,7 @@ function frame(){
    }
   }
   for(const f of scene.effects){
-   if(now>=f.ends||f.target&&!f.target.isConnected){f.n.remove();scene.effects.delete(f);continue}
+   if(now>=f.ends||f.target&&!f.target.isConnected){clearTimeout(f.timer);f.n.remove();scene.effects.delete(f);continue}
    if(f.target){const b=pos(f.target),a=f.source?.isConnected?pos(f.source):b,d=direction(a,b);
     const connection=f.n.classList.contains('connection');f.n.style.left=(connection?a.x:b.x)-bounds.left+'px';f.n.style.top=(connection?a.y:b.y)-bounds.top+'px';f.n.dataset.cblPositioned='1';
     if(connection){f.n.style.width=d.len+'px';f.n.style.setProperty('--cbl-angle',d.angle+'deg')}
