@@ -226,7 +226,8 @@ function effect(scene,cls,source,target,life=320,allowUnanchored=false){
   if(connection){n.style.width=d.len+'px';n.style.setProperty('--cbl-angle',d.angle+'deg')}
  }
  if(a&&b)n.dataset.cblPositioned='1';
- const fx={n,source,target,ends:performance.now()+life/scene.speed};scene.layer.appendChild(n);scene.effects.add(fx);return fx
+ const duration=life/scene.speed,fx={n,source,target,ends:performance.now()+duration};scene.layer.appendChild(n);scene.effects.add(fx);
+ setTimeout(()=>{if(scene.effects.has(fx)){n.remove();scene.effects.delete(fx)}},Math.max(60,duration+80));return fx
 }
 function clearCast(u){if(!u)return;u.cast?.orb?.remove();u.cast?.beam?.remove();u.cast=null;u.el.classList.remove('cbl-casting');u.el.style.removeProperty('--cbl-charge')}
 function strike(scene,u,t,e,heal=false){

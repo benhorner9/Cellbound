@@ -188,7 +188,7 @@ for(const file of files){
     for(const hook of ["spec:'Outlaw'","id:'sinister-strike'","id:'pistol-shot'","id:'dispatch'","id:'roll-the-bones'","id:'blade-flurry'","id:'between-the-eyes'","id:'adrenaline-rush'","id:'killing-spree'","COMBO_POINTS_CHANGED","Opportunity","Quick Draw","Ruthlessness","Outlaw Rogue Combo Points","Outlaw Roll the Bones","Outlaw Blade Flurry","Outlaw Between the Eyes","Outlaw Killing Spree","Outlaw Rogue Talent Skill Gates"])if(!contents.includes(hook))throw new Error('Outlaw Rogue combat migration is incomplete: '+hook);
     if(!contents.includes("_combatPosition")||!contents.includes("data.currentPosition"))throw new Error('Combat slice position persistence is missing');
     if(!contents.includes("focusSelectedDamageOnly")||!contents.includes("!target.focusSelected"))throw new Error('Focus-selected damage gating is missing');
-    if(!contents.includes("const VERSION='1.3.27'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
+    if(!contents.includes("const VERSION='1.3.28'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
     for(const hook of ['setBonusRulesFor','talentSkillCooldownScale','incomingDamageReduction','setBonuses?.damageScale','setBonuses?.healingScale'])if(!contents.includes(hook))throw new Error('Combat adaptive set foundation is missing '+hook);
   }
   if(file==='combat-status-ui-v1.js'){
@@ -675,6 +675,49 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     throw new Error('Combat Reborn self-tests failed: '+(failed||'test runtime unavailable'));
   }
   console.log('Combat Reborn self-tests passed: '+result.passed+'/'+result.total+'.');
+  // Role-balance smoke tests use equal level / equal item level fixtures so class tuning
+  // cannot silently drift back toward role-defining output gaps.
+  const balanceEngine=sandbox.CellboundCombatReborn;
+  const balanceChar=(id,cls,spec)=>({id,name:id,class:cls,spec,level:15,power:10,_combatItemLevel:50});
+  const dpsSpecs=[
+    ['Warrior','Arms'],['Priest','Shadow'],['Druid','Balance'],['Hunter','Marksman'],['Hunter','Beast Mastery'],
+    ['Rogue','Assassination'],['Rogue','Outlaw'],['Mage','Arcane'],['Mage','Frost'],['Shaman','Elemental'],
+    ['Warlock','Demonology'],['Warlock','Destruction'],['Monk','Windwalker'],['Death Knight','Frost'],
+    ['Death Knight','Unholy'],['Demon Hunter','Havoc'],['Evoker','Devastation']
+  ];
+  const average=values=>values.reduce((n,v)=>n+Number(v||0),0)/Math.max(1,values.length);
+  const dpsAudit=dpsSpecs.map(([cls,spec])=>{
+    const samples=Array.from({length:3},(_,i)=>{
+      const run=balanceEngine.simulate({party:[balanceChar('audit-dps',cls,spec)],encounter:{id:'build-dps-audit',kind:'boss',level:15,recommendedItemLevel:50,enemies:[{name:'Target Dummy',classification:'boss',passive:true,absoluteHealth:true,maxHealth:999999}],mechanics:[]},seed:'build-dps-'+cls+'-'+spec+'-'+i,maxDurationMs:45000,tactics:{cooldownUse:'bosses'}});
+      return run.summary.players[0]?.dps||0
+    });
+    return{key:cls+'|'+spec,dps:average(samples)}
+  });
+  const dpsMin=Math.min(...dpsAudit.map(x=>x.dps)),dpsMax=Math.max(...dpsAudit.map(x=>x.dps));
+  if(dpsMin<22.5||dpsMax>25.5||dpsMax/dpsMin>1.12)throw new Error('DPS role balance drifted: '+dpsAudit.map(x=>x.key+'='+x.dps.toFixed(1)).join(', '));
+  const healerSpecs=[['Priest','Holy'],['Paladin','Holy'],['Druid','Restoration'],['Shaman','Restoration'],['Monk','Mistweaver'],['Evoker','Preservation']];
+  const healerAudit=healerSpecs.map(([cls,spec])=>{
+    const samples=Array.from({length:3},(_,i)=>{
+      const party=[balanceChar('audit-tank','Death Knight','Blood'),balanceChar('audit-heal',cls,spec),balanceChar('audit-d1','Mage','Arcane'),balanceChar('audit-d2','Hunter','Marksman'),balanceChar('audit-d3','Rogue','Assassination')];
+      const run=balanceEngine.simulate({party,encounter:{id:'build-heal-audit',kind:'boss',level:15,recommendedItemLevel:50,enemies:[{name:'Pressure Boss',classification:'boss',allAttacksAoe:true,absoluteHealth:true,maxHealth:999999}],mechanics:[],scaling:{enemyDamage:.22}},seed:'build-heal-'+cls+'-'+spec+'-'+i,maxDurationMs:45000,tactics:{cooldownUse:'bosses',defensiveUsage:'standard'}});
+      const healer=run.summary.players.find(x=>x.id==='p-audit-heal');
+      return{hps:healer?.hps||0,deaths:run.summary.deaths}
+    });
+    return{key:cls+'|'+spec,hps:average(samples.map(x=>x.hps)),deaths:average(samples.map(x=>x.deaths))}
+  });
+  if(healerAudit.some(x=>x.hps<13||x.hps>20||x.deaths>.34))throw new Error('Healer role balance drifted: '+healerAudit.map(x=>x.key+'='+x.hps.toFixed(1)+'hps/'+x.deaths.toFixed(2)+' deaths').join(', '));
+  const tankSpecs=[['Warrior','Protection'],['Paladin','Protection'],['Death Knight','Blood'],['Demon Hunter','Vengeance'],['Monk','Brewmaster']];
+  const tankAudit=tankSpecs.map(([cls,spec])=>{
+    const samples=Array.from({length:2},(_,i)=>{
+      const party=[balanceChar('audit-tank',cls,spec),balanceChar('audit-heal','Druid','Restoration'),balanceChar('audit-d1','Mage','Arcane'),balanceChar('audit-d2','Hunter','Marksman'),balanceChar('audit-d3','Rogue','Assassination')];
+      const run=balanceEngine.simulate({party,encounter:{id:'build-tank-audit',kind:'boss',level:15,recommendedItemLevel:50,enemies:[{name:'Pressure Boss',classification:'boss',absoluteHealth:true,maxHealth:999999}],mechanics:[],scaling:{enemyDamage:.42}},seed:'build-tank-'+cls+'-'+spec+'-'+i,maxDurationMs:45000,tactics:{cooldownUse:'bosses',defensiveUsage:'standard'}});
+      const tank=run.summary.players.find(x=>x.id==='p-audit-tank');
+      return{taken:tank?.damageTaken||0,deaths:tank?.deaths||0,threatLost:tank?.threatLost||0}
+    });
+    return{key:cls+'|'+spec,taken:average(samples.map(x=>x.taken)),deaths:average(samples.map(x=>x.deaths)),threatLost:average(samples.map(x=>x.threatLost))}
+  });
+  if(tankAudit.some(x=>x.deaths>0||x.threatLost>0||x.taken>650))throw new Error('Tank role balance drifted: '+tankAudit.map(x=>x.key+'='+x.taken.toFixed(1)+' taken/'+x.threatLost.toFixed(1)+' threat lost').join(', '));
+  console.log('Role balance smoke tests passed: DPS '+dpsMin.toFixed(1)+'-'+dpsMax.toFixed(1)+', healers '+healerAudit.map(x=>x.hps.toFixed(1)).join('/')+' HPS, tanks stable.');
   const raidParty=[
     {id:'rt1',name:'Tank A',class:'Warrior',spec:'Protection',power:44,level:15,itemLevel:44},
     {id:'rh1',name:'Healer A',class:'Priest',spec:'Holy',power:44,level:15,itemLevel:44},
