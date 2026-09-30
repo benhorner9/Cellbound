@@ -128,6 +128,7 @@ const root=path.resolve(__dirname,'..');
  assert(Math.abs(resizePosition.px-resizePosition.x/100*resizePosition.width)<1,'resize preserves normalized positions');
  await page.setViewportSize({width:1024,height:768});
  await page.emulateMedia({reducedMotion:'reduce'});
+ await page.evaluate(()=>window.__cbSetTestReducedMotion?.(true));
  await page.evaluate(()=>sceneSend('PHASE_CHANGE',{}, {ability:'Room Collapse'}));
  assert.equal(await page.locator('#cb2dArena').evaluate(el=>el.getAnimations().filter(a=>a.playState==='running').length),0,'reduced motion suppresses camera emphasis');
  await page.evaluate(()=>{
@@ -138,6 +139,7 @@ const root=path.resolve(__dirname,'..');
  assert(await page.locator('.cbl-effects>.cbl-fx:not(.cast-orb):not(.channel)').count()<=36,'transient FX remain bounded under an event burst');
  await page.waitForFunction(()=>document.querySelectorAll('.cbl-effects>.cbl-fx').length===0,{},{timeout:5000});
  await page.emulateMedia({reducedMotion:'no-preference'});
+ await page.evaluate(()=>window.__cbSetTestReducedMotion?.(false));
 
 
  await page.screenshot({path:'/tmp/cellbound-living-combat.png'});
