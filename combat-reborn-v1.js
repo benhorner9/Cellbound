@@ -1014,7 +1014,7 @@ function defaultSkillLoadout(c,role){
  }else if(role==='tank'){
   pool.filter(a=>a.kind==='damage').slice(0,2).forEach(add);
   add(pool.find(a=>a.kind==='taunt'));
-  add(pool.find(a=>a.kind==='interrupt'));
+  add(pool.find(a=>a.kind==='defensive'));
  }else{
   if(c?.class==='Hunter'&&c?.spec==='Beast Mastery'){
    add(pool.find(a=>a.id==='cobra-shot'));
