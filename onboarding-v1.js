@@ -31,12 +31,6 @@ const SLOTS=[
   {key:'dps3',role:'dps',label:'Damage',number:'3'}
 ];
 const ROLE_LABEL={tank:'Tank',healer:'Healer',dps:'Damage'};
-const ROLE_DESC={
-  tank:'Controls enemies, takes the first hit and protects the formation.',
-  healer:'Keeps the party standing and stabilises dangerous moments.',
-  dps:'Deals damage, handles priority targets and helps stop dangerous casts.'
-};
-
 let Game=null,G=null,P=null,CP=null,db=null,user=null;
 let draft=[],activeSlot=0,builderStep='race',tutorialToken=0,tutorialCombatStats=null,tutorialComicBusy=false;
 
@@ -569,10 +563,6 @@ function tdFloat(selector,text,kind){
   const arena=$('#tdArena'),p=tdPoint(selector);if(!arena||!p)return;
   const e=document.createElement('span');e.className='td-number '+(kind||'damage');e.textContent=text;e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),750);
 }
-function tdProjectile(from,to,kind){
-  const arena=$('#tdArena'),a=tdPoint(from),b=tdPoint(to);if(!arena||!a||!b)return;
-  const dx=b.x-a.x,dy=b.y-a.y,angle=Math.atan2(dy,dx)*180/Math.PI,e=document.createElement('i');e.className='td-shot '+(kind||'');e.style.left=a.x+'px';e.style.top=a.y+'px';e.style.transform='rotate('+angle+'deg)';arena.appendChild(e);requestAnimationFrame(()=>e.style.transform='translate('+dx+'px,'+dy+'px) rotate('+angle+'deg)');setTimeout(()=>e.remove(),430);
-}
 function tdFeed(text){
   const e=$('#tdFeed');if(e)e.innerHTML=esc(text)+'<br>'+e.innerHTML.split('<br>').slice(0,3).join('<br>');
 }
@@ -598,11 +588,6 @@ function tdFormationPoint(c,index){
     return{x:ep.x-31-i*3,y:[31,69,48][i]||50};
   }
   return{x:ep.x-42,y:66};
-}
-function tdMovePartyIntoPositions(index){
-  state().roster.forEach(c=>{
-    const p=tdFormationPoint(c,index);tdMove('[data-td-party="'+c.id+'"]',p.x,p.y,520)
-  });
 }
 function tdRegroup(){
   const melee=state().roster.filter(x=>tdProfile(x)==='melee'),ranged=state().roster.filter(x=>tdProfile(x)==='ranged');
@@ -669,7 +654,6 @@ function tdSelectorFor(unitId){
 function tdEventCharacter(unitId){
   const id=String(unitId||'');return id.startsWith('p-')?state().roster.find(c=>String(c.id)===id.slice(2)):null;
 }
-function tdCombatKind(c){return c?.class==='Mage'?'magic':c?.class==='Hunter'?'arrow':['Priest','Druid','Evoker'].includes(c?.class)?'magic':'slash'}
 function tdEnemyName(index){return $('[data-td-enemy="'+index+'"] span')?.textContent||'Enemy'}
 function tdSetPartyHpByEvent(c,pct){
   const value=Math.max(0,Math.min(100,Number(pct)||0)),el=$('[data-td-party="'+c.id+'"]'),bar=el?.querySelector('em b');if(bar)bar.style.width=value+'%';
