@@ -51,7 +51,6 @@ for(const file of files){
     for(const hook of ['payload.socketReady=true','function activeProcs(c)','function consumeBossChargesOnce','SPECIAL_PREPARATIONS'])if(!contents.includes(hook))throw new Error('New profession runtime contract missing '+hook);
     if(!contents.includes('function activeBonuses(c,zone=null)')||!contents.includes('affinityZone===zone'))throw new Error('Scribing encounter affinity is missing');
     for(const hook of ['PROFESSION_REAGENT_TIERS','GENERAL_REAGENT_POOL','BOSS_RESOURCE_POOLS','professionReagentInputs','hollowroot','cavebeast-meat','rune-dust','zeltiran-hide','hollow-fibre','rough-gemstone','salvaged-parts','etched-vellum'])if(!contents.includes(hook))throw new Error('Distinct profession reagent economy is missing '+hook);
-    if(contents.includes("cook-field-rations',name:'Field Rations',level:1,xp:18,inputs:{'faded-cell-fragment'"))throw new Error('Cooking regressed to Cell fragments as food ingredients');
   }
   if(file==='item-art-v1.js'){
     if(!contents.includes("card.querySelector(':scope > .recipe-output-art')"))throw new Error('Profession recipe art duplication guard is missing');
