@@ -272,3 +272,24 @@
   .bank-crafted-actions{align-items:stretch;flex-direction:column}
   .bank-crafted-actions>button,.bank-crafted-status{width:100%}
 }
+
+
+/* Jewelcrafting sockets */
+.bank-socket-chip{border-color:rgba(92,155,214,.24)!important;color:#9dc9e7!important}
+.bank-socket-detail{
+  margin:10px 0;padding:11px 12px;border:1px solid rgba(92,155,214,.18);
+  background:rgba(18,44,63,.22)
+}
+.bank-socket-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.bank-socket-head small{color:#78a7c8;font-size:.48rem;font-weight:900;letter-spacing:.09em}
+.bank-socket-head b{color:#9bc7e5;font-size:.5rem}
+.bank-socket-list{display:grid;gap:6px}
+.bank-socket-row{
+  display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:center;
+  padding:8px;border:1px solid rgba(255,255,255,.05);background:#091317
+}
+.bank-socket-row>span{display:grid;place-items:center;color:#91bddb;font-size:.8rem}
+.bank-socket-row b{display:block;color:#dce6e9;font-size:.62rem}
+.bank-socket-row small{display:block;margin-top:2px;color:#78909a;font-size:.49rem}
+.bank-socket-row em{display:block;margin-top:3px;color:#bd8f8f;font-size:.44rem;font-style:normal}
+.bank-gem-targets .bank-character-list button em{color:#9bc7e5}
