@@ -80,8 +80,8 @@ async function mount(page,seedState=null){
     await route.fulfill({path:file});
   });
   await page.goto('https://cellbound.test/guild.html',{waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>window.CellboundGame?.ready===true,{},{timeout:10000});
-  await page.waitForFunction(()=>Boolean(window.CellboundOnboarding),{},{timeout:10000});
+  await page.waitForFunction(()=>window.CellboundGame?.ready===true,{},{timeout:10000,polling:50});
+  await page.waitForFunction(()=>Boolean(window.CellboundOnboarding),{},{timeout:10000,polling:50});
   return errors;
 }
 
@@ -109,7 +109,7 @@ async function creatorPlaythrough(browser){
   assert.equal(await page.locator('.creator-confirm-member').count(),5,'confirm screen includes all five adventurers');
   assert.equal(await page.locator('#confirmParty').isDisabled(),false,'generated party is valid');
   await page.locator('#confirmParty').click();
-  await page.waitForFunction(()=>window.CellboundGame.getState()?.roster?.length===5,{},{timeout:10000});
+  await page.waitForFunction(()=>window.CellboundGame.getState()?.roster?.length===5,{},{timeout:10000,polling:50});
   const slots=await page.evaluate(()=>CellboundGame.getState().roster.map(c=>c.professions?.length));
   assert.deepEqual(slots,[1,1,1,1,1],'fresh characters start with exactly one profession slot');
   assert.deepEqual(errors,[],'creator/onboarding emitted no browser errors');
@@ -119,7 +119,7 @@ async function creatorPlaythrough(browser){
 async function mainGamePlaythrough(browser){
   const page=await browser.newPage({viewport:{width:1024,height:1366}});
   const errors=await mount(page,matureState());
-  await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true);
+  await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
   assert.equal(await page.locator('#rosterCount').textContent(),'5 / 5');
 
   await page.evaluate(()=>{
