@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.29';
+const VERSION='1.3.30';
 // Balance baseline: 2026-09-30 chapter-wide progression and role audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
@@ -2184,7 +2184,8 @@ function specDamageBalance(u){
   'Warlock|Destruction':[1.10,1.12,1.14],
   'Death Knight|Frost':[1.12,1.12,1.12],
   'Demon Hunter|Havoc':[.72,.70,.68],
-  'Hunter|Beast Mastery':[.94,.97,1.00]
+  'Hunter|Beast Mastery':[.94,.97,1.00],
+  'Evoker|Devastation':[.92,.92,.92]
  };
  const v=curves[key];return v?progressionBlend(u.level,...v):1
 }
