@@ -1014,7 +1014,7 @@ function defaultSkillLoadout(c,role){
  }else if(role==='tank'){
   pool.filter(a=>a.kind==='damage').slice(0,2).forEach(add);
   add(pool.find(a=>a.kind==='taunt'));
-  add(pool.find(a=>a.kind==='defensive'));
+  add(pool.find(a=>a.kind==='defensive'&&((Number(a.damageReduction)||0)>0||(Number(a.selfHealPct)||0)>0))||pool.find(a=>a.kind==='defensive')||pool.find(a=>a.kind==='interrupt'));
  }else{
   if(c?.class==='Hunter'&&c?.spec==='Beast Mastery'){
    add(pool.find(a=>a.id==='cobra-shot'));
