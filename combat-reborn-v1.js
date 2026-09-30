@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.31';
+const VERSION='1.3.32';
 // Balance baseline: 2026-09-30 chapter-wide progression and role audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
@@ -232,6 +232,7 @@ const ABILITIES={
   {id:'avengers-shield',name:"Avenger's Shield",kind:'damage',role:'tank',unlockLevel:1,desc:'Ranged tank attack with strong threat and cleave.',range:30,damage:20,cost:5,gcd:1500,cd:6000,threat:3,cleave:2},
   {id:'judgement',name:'Judgement',kind:'damage',unlockLevel:1,desc:'A reliable ranged holy attack.',range:30,damage:17,cost:4,gcd:1500,cd:3500,threat:1.7},
   {id:'hand-reckoning',name:'Hand of Reckoning',kind:'taunt',role:'tank',unlockLevel:1,desc:'Force an enemy to attack the Paladin.',range:30,cost:0,gcd:0,cd:8000,threat:5},
+  {id:'word-of-glory',name:'Word of Glory',kind:'defensive',role:'tank',unlockLevel:4,desc:'Call on holy power to restore health during sustained pressure.',duration:1000,damageReduction:0,selfHealPct:.16,gcd:0,cd:20000},
   {id:'holy-light',name:'Holy Light',kind:'heal',role:'healer',unlockLevel:1,desc:'A strong efficient direct heal.',range:30,heal:37,cost:14,gcd:1500,cast:1500,cd:0},
   {id:'holy-shock',name:'Holy Shock',kind:'heal',role:'healer',unlockLevel:1,desc:'An instant heal with a short cooldown.',range:30,heal:25,cost:9,gcd:1500,cast:0,cd:6000},
   {id:'light-of-dawn',name:'Light of Dawn',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Restore health to the whole party.',range:30,heal:20,cost:16,gcd:1500,cast:0,cd:6000},
@@ -1012,9 +1013,13 @@ function defaultSkillLoadout(c,role){
   heals.slice(0,3).forEach(add);
   add(pool.find(a=>a.kind==='interrupt'));
  }else if(role==='tank'){
-  pool.filter(a=>a.kind==='damage').slice(0,2).forEach(add);
-  add(pool.find(a=>a.kind==='taunt'));
-  add(pool.find(a=>a.kind==='defensive'&&((Number(a.damageReduction)||0)>0||(Number(a.selfHealPct)||0)>0))||pool.find(a=>a.kind==='defensive')||pool.find(a=>a.kind==='interrupt'));
+  if(c?.class==='Monk'&&c?.spec==='Brewmaster'){
+   add(pool.find(a=>a.id==='keg-smash'));add(pool.find(a=>a.kind==='taunt'));add(pool.find(a=>a.id==='purifying-brew'));add(pool.find(a=>a.id==='celestial-brew'));
+  }else if(c?.class==='Paladin'&&c?.spec==='Protection'){
+   add(pool.find(a=>a.id==='avengers-shield'));add(pool.find(a=>a.kind==='taunt'));add(pool.find(a=>a.id==='word-of-glory'));add(pool.find(a=>a.id==='ardent-defender'));
+  }else{
+   pool.filter(a=>a.kind==='damage').slice(0,2).forEach(add);add(pool.find(a=>a.kind==='taunt'));add(pool.find(a=>a.kind==='defensive'&&((Number(a.damageReduction)||0)>0||(Number(a.selfHealPct)||0)>0))||pool.find(a=>a.kind==='defensive')||pool.find(a=>a.kind==='interrupt'));
+  }
  }else{
   if(c?.class==='Hunter'&&c?.spec==='Beast Mastery'){
    add(pool.find(a=>a.id==='cobra-shot'));
@@ -1896,7 +1901,7 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
    if(a.id==='death-strike'){
     const recent=(u.recentDamageTaken||[]).filter(x=>Number(x.at)>=ctx.time-5000).reduce((n,x)=>n+(Number(x.amount)||0),0);
     const voracious=talentRank(u,'Voracious'),hemostasis=u.statuses?.['hemostasis']?talentRank(u,'Hemostasis'):0;
-    const heal=Math.max(u.maxHealth*.06,recent*(.20+voracious*.035))*(1+hemostasis*.06);
+    const heal=Math.max(u.maxHealth*.05,recent*(.16+voracious*.025))*(1+hemostasis*.05);
     const effective=doHeal(ctx,u,u,heal,'Death Strike');
     if(hemostasis)removeStatus(ctx,u,'hemostasis','consumed');
     if((r=talentRank(u,'Blood Shield'))){
@@ -1984,8 +1989,8 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
    if(a.id==='soul-cleave'||a.id==='spirit-bomb'){
     const available=Math.max(0,Number(u.soulFragments)||0),consume=a.id==='spirit-bomb'?available:Math.min(3,available),soulRank=talentRank(u,'Soul Cleave');
     u.soulFragments=Math.max(0,available-consume);
-    const pctHeal=a.id==='spirit-bomb'?.018:.019;
-    const healing=u.maxHealth*(pctHeal+consume*(.0075+soulRank*.0015));
+    const pctHeal=a.id==='spirit-bomb'?.013:.014;
+    const healing=u.maxHealth*(pctHeal+consume*(.0050+soulRank*.0010));
     doHeal(ctx,u,u,healing,a.name);
     emit(ctx,'SOUL_FRAGMENT_CHANGED',{source:u.id,target:u.id,ability:a.name,amount:consume,result:'consumed',position:copy(u.position),payload:{fragments:u.soulFragments}});
     if((r=talentRank(u,'Soul Barrier'))&&consume>0){
