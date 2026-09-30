@@ -46,6 +46,7 @@ for(const file of files){
   if(file==='profession-data.js'){
     if(!contents.includes('const skillThreshold=level=>100+Math.max(1,level)*5;'))throw new Error('Profession project progression curve regressed');
     for(const hook of ['persistentAttachment=true','recipeMetaForOutputKey','item?.attachment?.bonuses','kind:\'attachment\''])if(!contents.includes(hook))throw new Error('Persistent profession attachment model is missing '+hook);
+    for(const hook of ["Jewelcrafting:{icon:'◆'","Engineering:{icon:'⚙'","Cooking:{icon:'♨'","Reliccrafting:{icon:'◈'","Scribing:{icon:'✒'","effect:'socket-gem'","effect:'character-gadget'","effect:'party-food'","attachmentFamily:'relic-core'","effect:'party-scroll'"])if(!contents.includes(hook))throw new Error('Expanded profession system is missing '+hook);
     for(const hook of ['crafterOnly:true','trainingScale:.45','payload.crafterOnly=true','output.tradeState=\'soulbound\'','boundCharacterId===c?.id'])if(!contents.includes(hook))throw new Error('Crafter-only profession recipe contract is missing '+hook);
   }
   if(file==='item-art-v1.js'){
@@ -76,6 +77,7 @@ for(const file of files){
     for(const hook of ['rosterClearFilters','rosterResultsLabel','Gear Watch','gearOrder='])if(!contents.includes(hook))throw new Error('Roster v2 filtering/enhancement is missing '+hook);
     for(const hook of ['bankMetricCrafting','data-bank-count','bank-filter-empty-v2',"bankCategory==='favorite'"])if(!contents.includes(hook))throw new Error('Bank v2 filtering/enhancement is missing '+hook);
     for(const hook of ['function openBankResource','data-resource-open','applyBankAttachment','learnBankRecipe'])if(!contents.includes(hook))throw new Error('Bank crafted-item action flow is missing '+hook);
+    for(const hook of ['function useBankPreparation','function useBankPartyPreparation','function activePartyCharacters','SOCKETS COMING','character-food','party-scroll'])if(!contents.includes(hook))throw new Error('Expanded profession Bank usage is missing '+hook);
     if(!contents.includes("'DESTROYS '+esc(existing.name||'ATTACHMENT')"))throw new Error('Bank attachment replacement must surface destructive overwrite');
     for(const hook of ['function findCraftedStack','boundCharacterId=split>=0','payload.boundCharacterId===c.id','Crafter only'])if(!contents.includes(hook))throw new Error('Bank crafter-only item ownership is missing '+hook);
   }
@@ -582,7 +584,8 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   const P=sandbox.CellboundProfessions,IA=sandbox.CellboundItemArt;
   if(!P||!IA)throw new Error('Complete item artwork runtime failed to load');
   const professionEntries=Object.entries(P.PROFESSIONS||{});
-  if(professionEntries.length!==5)throw new Error('Profession catalogue must contain all five core professions');
+  if(professionEntries.length!==10)throw new Error('Profession catalogue must contain all ten professions');
+  for(const name of ['Alchemy','Enchanting','Blacksmithing','Leatherworking','Tailoring','Jewelcrafting','Engineering','Cooking','Reliccrafting','Scribing'])if(!P.PROFESSIONS?.[name])throw new Error('Profession catalogue missing '+name);
   const allRecipeIds=[];
   const allOutputKeys=[];
   for(const [name,def] of professionEntries){
