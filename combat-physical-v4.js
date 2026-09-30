@@ -344,9 +344,9 @@ function frame(){
     if(u.state==='channeling'&&u.target?.isConnected){
      if(!u.cast.beam){const n=document.createElement('i');n.className='cbl-fx connection channel '+family(u.cast.event,u);n.style.setProperty('--cbl-accent',u.p.accent);scene.layer.appendChild(n);u.cast.beam=n}
      const a=pos(el),b=pos(u.target),d=direction(a,b),n=u.cast.beam;n.style.left=a.x-bounds.left+'px';n.style.top=a.y-bounds.top+'px';n.style.width=d.len+'px';n.style.setProperty('--cbl-angle',d.angle+'deg');n.dataset.cblPositioned='1';
-    }else if((u.cast.destination||u.target?.isConnected&&u.target!==el)&&progress>Math.max(0,1-u.p.travel/scene.speed/u.cast.duration)&&!reduce()){
+    }else if((u.cast.destination||u.target?.isConnected&&u.target!==el)&&progress>Math.max(0,1-u.p.travel/scene.speed/u.cast.duration)){
      if(!u.cast.orb){const n=document.createElement('i');n.className='cbl-fx cast-orb '+family(u.cast.event,u);n.style.setProperty('--cbl-accent',kind(u.action||u.cast.event,u)==='heal'?'#86f3b7':u.p.accent);scene.layer.appendChild(n);u.cast.orb=n}
-     const a=pos(el),b=u.cast.destination?{x:bounds.left+u.cast.destination.x/100*bounds.width,y:bounds.top+u.cast.destination.y/100*bounds.height}:pos(u.target),travelFraction=Math.min(1,u.p.travel/scene.speed/u.cast.duration),t=clamp((progress-1+travelFraction)/travelFraction,0,1),n=u.cast.orb;
+     const a=pos(el),b=u.cast.destination?{x:bounds.left+u.cast.destination.x/100*bounds.width,y:bounds.top+u.cast.destination.y/100*bounds.height}:pos(u.target),travelFraction=Math.min(1,u.p.travel/scene.speed/u.cast.duration),t=reduce()?1:clamp((progress-1+travelFraction)/travelFraction,0,1),n=u.cast.orb;
      n.style.setProperty('--cbl-angle',direction(a,b).angle+'deg');
      n.style.left=(family(u.cast.event,u)==='rubble'?b.x-bounds.left:a.x+(b.x-a.x)*t-bounds.left)+'px';n.style.top=(family(u.cast.event,u)==='rubble'?b.y-bounds.top-60*(1-t):a.y+(b.y-a.y)*t-bounds.top-(family(u.cast.event,u)==='plate'?Math.sin(t*Math.PI)*24:0))+'px';n.dataset.cblPositioned='1';
     }
