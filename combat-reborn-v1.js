@@ -1179,6 +1179,28 @@ function constrainToArena(ctx,pos,pad=1.35){
  }
  return p
 }
+function arenaCenter(ctx){
+ const b=arenaBounds(ctx),arena=ctx?.environment?.arena;
+ const x=arena?.shape==='ellipse'&&Number.isFinite(Number(arena.cx))?Number(arena.cx):(b.left+b.right)/2;
+ const y=arena?.shape==='ellipse'&&Number.isFinite(Number(arena.cy))?Number(arena.cy):(b.top+b.bottom)/2;
+ return constrainToArena(ctx,{x,y},2)
+}
+function bossEngagementPosition(ctx,pos){
+ const b=arenaBounds(ctx),arena=ctx?.environment?.arena,home=arenaCenter(ctx);
+ if(arena?.shape==='ellipse'){
+  const rx=Math.max(5,(Number(arena.rx)||((b.right-b.left)/2))*.62),ry=Math.max(5,(Number(arena.ry)||((b.bottom-b.top)/2))*.62);
+  const raw=constrainToArena(ctx,pos,2),dx=raw.x-home.x,dy=raw.y-home.y,norm=Math.sqrt((dx*dx)/(rx*rx)+(dy*dy)/(ry*ry));
+  return norm<=1?raw:{x:home.x+dx/norm*.985,y:home.y+dy/norm*.985}
+ }
+ const width=b.right-b.left,height=b.bottom-b.top;
+ const insetX=Math.min(Math.max(4,width*.16),Math.max(2,width/2-2)),insetY=Math.min(Math.max(4,height*.14),Math.max(2,height/2-2));
+ return{x:clamp(Number(pos?.x)||home.x,b.left+insetX,b.right-insetX),y:clamp(Number(pos?.y)||home.y,b.top+insetY,b.bottom-insetY)}
+}
+function formationBaseAngle(ctx,target){
+ if(!target?.position)return Math.PI;
+ const home=arenaCenter(ctx),dx=home.x-target.position.x,dy=home.y-target.position.y,drift=Math.hypot(dx,dy);
+ return drift>12?Math.atan2(dy,dx):Math.PI
+}
 function enforceArenaBounds(ctx,reason='arena boundary'){
  [...ctx.players,...ctx.enemies].filter(u=>u?.alive).forEach(u=>{
   const safe=constrainToArena(ctx,u.position,1.7);
@@ -1298,7 +1320,7 @@ function meleeFormationPoint(ctx,u,target){
  const radius=u.role==='tank'?4.15:4.4;
  if(u.role==='tank'){
    // Keep roster membership stable across deaths/revives so survivors do not reshuffle.
-   const tanks=ctx.players.filter(p=>p.role==='tank'),slot=stableUnitIndex(ctx,u,tanks),angle=Math.PI+(slot-(tanks.length-1)/2)*.68;
+   const tanks=ctx.players.filter(p=>p.role==='tank'),slot=stableUnitIndex(ctx,u,tanks),angle=formationBaseAngle(ctx,target)+(slot-(tanks.length-1)/2)*.68;
    return{x:target.position.x+Math.cos(angle)*radius,y:target.position.y+Math.sin(angle)*radius}
  }
  const melee=ctx.players.filter(p=>p.role!=='tank'&&combatRangeStyle(p)==='melee'),slot=stableUnitIndex(ctx,u,melee);
@@ -1306,12 +1328,13 @@ function meleeFormationPoint(ctx,u,target){
  return{x:target.position.x+Math.cos(angle)*ring,y:target.position.y+Math.sin(angle)*ring}
 }
 function rangedFormationPoint(ctx,u,target,range){
+ const base=formationBaseAngle(ctx,target);
  if(u.role==='healer'){
-   const healers=ctx.players.filter(p=>p.role==='healer'),slot=stableUnitIndex(ctx,u,healers),angle=Math.PI+symmetricFormationOffset(slot)*.72,desired=21;
+   const healers=ctx.players.filter(p=>p.role==='healer'),slot=stableUnitIndex(ctx,u,healers),angle=base+symmetricFormationOffset(slot)*.72,desired=21;
    return{x:target.position.x+Math.cos(angle)*desired,y:target.position.y+Math.sin(angle)*desired}
  }
  const ranged=ctx.players.filter(p=>p.role!=='tank'&&p.role!=='healer'&&combatRangeStyle(p)==='ranged'),slot=stableUnitIndex(ctx,u,ranged);
- const angle=Math.PI+symmetricFormationOffset(slot),desired=Math.max(11,Math.min((Number(range)||25)*.60,18.5));
+ const angle=base+symmetricFormationOffset(slot),desired=Math.max(11,Math.min((Number(range)||25)*.60,18.5));
  return{x:target.position.x+Math.cos(angle)*desired,y:target.position.y+Math.sin(angle)*desired}
 }
 function supportFormationAnchor(ctx,u,target){
@@ -3243,6 +3266,16 @@ function enemyBasicAttack(ctx,e){
  if(!e.alive||ctx.time<e.movingUntil||isCrowdControlled(e))return;
  if(e.passive){e.nextAttack=ctx.time+1000;return}
  const live=livingPlayers(ctx);if(!live.length)return;
+ // Ordinary boss chasing is confined to a broad central engagement zone. Mechanics can
+ // still deliberately move a boss elsewhere, but the normal threat loop cannot drag the
+ // entire encounter into a wall or corner.
+ if(e.kind==='boss'&&!ctx.activeEnemyCast){
+  const safe=bossEngagementPosition(ctx,e.position);
+  if(dist(e.position,safe)>1.25){
+   moveTo(ctx,e,safe,500,'boss recenter');
+   e.nextAttack=ctx.time+580;return
+  }
+ }
  const randomTarget=e.targeting==='random',target=randomTarget?live[Math.floor(ctx.rng()*live.length)]:(topThreatTarget(ctx,e)||live[0]);if(!target)return;
  setAggro(ctx,e,target,randomTarget?'random targeting':'threat');
  const range=Math.max(2,Number(e.attackRange)||5);
@@ -3250,7 +3283,8 @@ function enemyBasicAttack(ctx,e){
  const separated=range<=7?nearestMeleePoint(target,e,ctx):null;
  if(!inRange(e,target,range)||!hasLineOfSight(ctx,e,target)||(crowded&&dist(e.position,separated)>1)){
   const destination=range>7?visibleCastPoint(ctx,e,target,range,e.position):separated;
-  moveTo(ctx,e,destination,320,!hasLineOfSight(ctx,e,target)?'line of sight':range>7?'ranged position':'chase target');
+  const chaseDestination=e.kind==='boss'&&!ctx.activeEnemyCast?bossEngagementPosition(ctx,destination):destination;
+  moveTo(ctx,e,chaseDestination,320,!hasLineOfSight(ctx,e,target)?'line of sight':range>7?'ranged position':'chase target');
   e.nextAttack=ctx.time+450;return;
  }
  updateFacing(e,target);
@@ -3273,16 +3307,27 @@ function mechanicStat(ctx,type,failed){
 }
 function planMovement(ctx,u,type,anchor){
  if(!u.alive)return;
+ const home=arenaCenter(ctx),live=livingPlayers(ctx),i=Math.max(0,live.findIndex(p=>p.id===u.id)),count=Math.max(1,live.length),origin=anchor?.position||home,base=anchor?.position?formationBaseAngle(ctx,anchor):0;
  let to=copy(u.position);
  if(type==='cone'){
-  if(u.role==='tank')to={x:58,y:50};
-  else to={x:34,y:20+(ctx.players.indexOf(u)%4)*18};
+  if(u.role==='tank'&&anchor?.position)to=meleeFormationPoint(ctx,u,anchor);
+  else{
+   const spread=(i-(count-1)/2)*.42,angle=base+Math.PI*.58+spread,radius=14+(i%2)*2.5;
+   to={x:origin.x+Math.cos(angle)*radius,y:origin.y+Math.sin(angle)*radius}
+  }
  }else if(type==='circle'||type==='circles'){
-  const i=ctx.players.indexOf(u);to={x:18+(i%3)*18,y:18+Math.floor(i/3)*58};
+  // Spread around the encounter rather than repeatedly fleeing toward fixed map corners.
+  // If the boss has drifted, use the centre-facing side of the arena for the spread.
+  const drift=dist(origin,home),centreBias=drift>12?.38:0;
+  const spreadOrigin={x:origin.x+(home.x-origin.x)*centreBias,y:origin.y+(home.y-origin.y)*centreBias};
+  const angle=base-Math.PI*.72+(i/count)*Math.PI*1.44,radius=u.role==='tank'?7.5:14+(i%2)*3;
+  to={x:spreadOrigin.x+Math.cos(angle)*radius,y:spreadOrigin.y+Math.sin(angle)*radius}
  }else if(type==='line'){
-  to={x:u.position.x,y:u.position.y+(u.position.y<50?-14:14)};
+  const dx=u.position.x-origin.x,dy=u.position.y-origin.y,len=Math.hypot(dx,dy)||1,px=-dy/len,py=dx/len;
+  const a=openPosition(ctx,{x:u.position.x+px*12,y:u.position.y+py*12},1.7),b=openPosition(ctx,{x:u.position.x-px*12,y:u.position.y-py*12},1.7);
+  to=dist(a,home)<=dist(b,home)?a:b
  }
- moveTo(ctx,u,to,320,'mechanic response');
+ moveTo(ctx,u,openPosition(ctx,to,1.7),320,'mechanic response');
 }
 function mechanicResponse(ctx,u,type,duration,enemy){
  const baseReaction=executionReaction(ctx,u,'movement');
@@ -4400,6 +4445,20 @@ function runSelfTests(){
   if(normalFormationEnds.length<3)return false;
   const xs=normalFormationEnds.map(p=>p.x),ys=normalFormationEnds.map(p=>p.y);
   return Math.max(...xs)-Math.min(...xs)<34&&Math.max(...ys)-Math.min(...ys)<38
+ });
+ const driftRun=simulate({party:[
+  {id:'dt',name:'Tank',class:'Warrior',spec:'Protection',power:18,level:10},
+  {id:'dh',name:'Healer',class:'Priest',spec:'Holy',power:18,level:10},
+  {id:'dd1',name:'Melee',class:'Rogue',spec:'Assassination',power:18,level:10},
+  {id:'dd2',name:'Caster',class:'Mage',spec:'Arcane',power:18,level:10},
+  {id:'dd3',name:'Ranged',class:'Hunter',spec:'Marksman',power:18,level:10}
+ ],encounter:{id:'corner-drift',title:'Corner Drift',kind:'boss',enemies:['Drift Boss'],enemyHealth:9000,mechanicIntervalMs:720,mechanics:[['Spread','circles',900],['Line','line',900]]},seed:'corner-drift-v2',maxDurationMs:6500});
+ const driftBoss=driftRun.finalState.enemies.find(e=>e.kind==='boss'),driftParty=driftRun.finalState.players.filter(p=>p.alive);
+ test('Boss Cannot Be Dragged Into A Corner',()=>!!driftBoss&&driftBoss.position.x>16&&driftBoss.position.x<84&&driftBoss.position.y>15&&driftBoss.position.y<85);
+ test('Party Does Not Collapse Into A Corner',()=>{
+  if(driftParty.length<3)return false;
+  const cornerCount=driftParty.filter(p=>(p.position.x<22||p.position.x>78)&&(p.position.y<22||p.position.y>78)).length;
+  return cornerCount<Math.ceil(driftParty.length/2)
  });
  const displacement=simulate({party:[
   {id:'kt',name:'Tank',class:'Warrior',spec:'Protection',power:9,level:10},
