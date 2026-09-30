@@ -49,6 +49,7 @@ for(const file of files){
     for(const hook of ["Jewelcrafting:{icon:'◆'","Engineering:{icon:'⚙'","Cooking:{icon:'♨'","Reliccrafting:{icon:'◈'","Scribing:{icon:'✒'","effect:'socket-gem'","effect:'character-gadget'","effect:'party-food'","attachmentFamily:'relic-core'","effect:'party-scroll'"])if(!contents.includes(hook))throw new Error('Expanded profession system is missing '+hook);
     for(const hook of ['crafterOnly:true','trainingScale:.45','payload.crafterOnly=true','output.tradeState=\'soulbound\'','boundCharacterId===c?.id'])if(!contents.includes(hook))throw new Error('Crafter-only profession recipe contract is missing '+hook);
     for(const hook of ['socketReady:false','function activeProcs(c)','function consumeBossChargesOnce','SPECIAL_PREPARATIONS'])if(!contents.includes(hook))throw new Error('New profession runtime contract missing '+hook);
+    if(!contents.includes('function activeBonuses(c,zone=null)')||!contents.includes('affinityZone===zone'))throw new Error('Scribing encounter affinity is missing');
   }
   if(file==='item-art-v1.js'){
     if(!contents.includes("card.querySelector(':scope > .recipe-output-art')"))throw new Error('Profession recipe art duplication guard is missing');
@@ -89,6 +90,8 @@ for(const file of files){
   for(const stageFile of ['hollow-sanctum-v1.js','chaos-canyon-v1.js','fractured-ages-v1.js','blackout-station-v1.js']){
     if(file===stageFile&&!contents.includes('consumeBossChargesOnce'))throw new Error(stageFile+' is missing profession boss-charge consumption');
   }
+  if(file==='blackout-station-v1.js'&&!contents.includes('craftedGridOverrideStack'))throw new Error('Crafted Engineering grid bypass is not integrated');
+  if(file==='combat-standard-v1.js'&&!contents.includes('professionZone:meta.zone'))throw new Error('Combat gateway must pass encounter zone for Scribing');
 
   if(file==='character-portraits-v1.js'){
     for(const hook of ['window.CellboundPortraits','normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
@@ -163,6 +166,7 @@ for(const file of files){
   }
   if(file==='combat-reborn-v1.js'){
     for(const hook of ['professionProcs,relicOpeningUsed:false','professionProcs?.openingBurstPct','professionProcs?.executeDamagePct','professionProcs?.lowHealthWardPct','professionProcs?.triageHealPct'])if(!contents.includes(hook))throw new Error('Conditional profession combat effect is missing '+hook);
+    if(!contents.includes('normalisePlayer(c,i,options.professionZone)'))throw new Error('Scribing encounter affinity must enter combat player normalisation');
     if(!contents.includes("if(!moveIntoRange(ctx,u,target,5))return true")||!contents.includes("_combatTalentTimers"))throw new Error('Bladestorm melee movement rule is missing');
     for(const hook of ['function professionCombatBonuses','professionOutputScale(u,\'damage\')','professionOutputScale(healer,\'healing\')','professionBonuses?.haste','professionBonuses?.crit','professionBonuses?.block','profession.magicWardPct'])if(!contents.includes(hook))throw new Error('Profession attachments are not wired into real combat: '+hook);
     for(const hook of ["spec:'Havoc'","spec:'Vengeance'","id:'havoc-metamorphosis'","id:'spirit-bomb'","SOUL_FRAGMENT_CHANGED","'fel-barrage':'Fel Barrage'"])if(!contents.includes(hook))throw new Error('Demon Hunter combat kit is incomplete: '+hook);
@@ -607,6 +611,10 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   if(new Set(allOutputKeys).size!==allOutputKeys.length)throw new Error('Profession crafted item keys must be unique');
   const allRecipes=professionEntries.flatMap(([,def])=>def.recipes||[]),bound=allRecipes.filter(r=>r.crafterOnly);
   if(allRecipes.length!==120||bound.length!==20)throw new Error('Ten-profession catalogue must contain 120 recipes including 20 crafter-only rewards');
+  const notes=P.PROFESSIONS.Scribing.recipes.find(r=>r.output.key==='ashen-hunters-notes')?.output?.payload;
+  const scribe={activeProfessionBuffs:[{kind:'scroll',name:'Ashen Notes',remainingBosses:1,bonuses:notes?.bonuses||{},affinityZone:notes?.affinityZone,affinityBonuses:notes?.affinityBonuses||{}}]};
+  if(P.activeBonuses(scribe).damagePct!==2||P.activeBonuses(scribe,'ashen-vault').damagePct!==5||P.activeBonuses(scribe,'chaos-canyon').damagePct!==2)throw new Error('Scribing zone affinity must only apply in the matching dungeon');
+
   if(allRecipes.some(r=>Object.keys(r.inputs||{}).some(k=>!P.MATERIALS?.[k])))throw new Error('Profession recipe references unknown materials');
   if(bound.some(r=>r.trainingScale!==.45||r.output?.tradeState!=='soulbound'||!r.output?.payload?.crafterOnly))throw new Error('Crafter-only items must stay character-bound');
   const relicCore=P.PROFESSIONS.Reliccrafting.recipes.find(r=>r.output.key==='cellheart-core'),gadget=P.PROFESSIONS.Engineering.recipes.find(r=>r.output.key==='recovery-drone');
