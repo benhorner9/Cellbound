@@ -220,7 +220,7 @@ async function applyBankAttachment(key,charId,boundCharacterId=null){
   if(existing?.key===key&&(!payload.crafterOnly||existing?.boundCharacterId===payload.boundCharacterId))return;
   if(existing&&!confirm('Replace '+(existing.name||'the current attachment')+' on '+item.name+' with '+stack.name+'?\n\nThe existing attachment will be permanently destroyed and cannot be recovered.'))return;
   const meta=craftedMeta(key),recipe=meta.recipe;
-  item.attachment={key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},profession:meta.profession,skill:Number(recipe?.level)||null,tier:Number(payload.attachmentTier)||P?.attachmentTier?.(recipe?.level)||1,rarity:stack.rarity||meta.rarity,crafterOnly:Boolean(payload.crafterOnly),boundCharacterId:payload.boundCharacterId||null,boundCharacterName:payload.boundCharacterName||null,attachedAt:new Date().toISOString()};
+  item.attachment={key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},profession:meta.profession,skill:Number(recipe?.level)||null,tier:Number(payload.attachmentTier)||P?.attachmentTier?.(recipe?.level)||1,rarity:stack.rarity||meta.rarity,attachmentFamily:payload.attachmentFamily||null,proc:{...(payload.proc||{})},procText:payload.procText||'',crafterOnly:Boolean(payload.crafterOnly),boundCharacterId:payload.boundCharacterId||null,boundCharacterName:payload.boundCharacterName||null,attachedAt:new Date().toISOString()};
   consumeCraftedStack(key,boundCharacterId);s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push(existing?stack.name+' replaced '+(existing.name||'an attachment')+' on '+c.name+'’s '+item.name+'; the old attachment was destroyed.':stack.name+' attached to '+c.name+'’s '+item.name+'.');
   await persist(true);closeBankResource();window.CellboundFX?.micro?.(stack.name+' attached','gold')
 }
@@ -231,6 +231,32 @@ async function useBankFlask(key,charId,boundCharacterId=null){
   c.activeProfessionBuffs.push({kind:'flask',key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},remainingBosses:Math.max(1,Number(payload.charges)||3),appliedAt:new Date().toISOString()});
   consumeCraftedStack(key,boundCharacterId);s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push(c.name+' drank '+stack.name+'.');
   await persist(true);closeBankResource();window.CellboundFX?.micro?.(stack.name+' used','cell')
+}
+function activePartyCharacters(s){
+  const ids=[s?.party?.tank,s?.party?.healer,...(Array.isArray(s?.party?.dps)?s.party.dps:[])].filter(Boolean);
+  return [...new Set(ids)].map(id=>s?.roster?.find(c=>c.id===id)).filter(Boolean)
+}
+function prepKind(effect){
+  return effect==='character-food'||effect==='party-food'?'food':effect==='character-scroll'||effect==='party-scroll'?'scroll':effect==='character-gadget'?'gadget':null
+}
+function prepLabel(kind){return kind==='food'?'FOOD':kind==='scroll'?'TACTICAL SCROLL':'GADGET'}
+async function useBankPreparation(key,charId,boundCharacterId=null){
+  const s=state(),stack=findCraftedStack(key,boundCharacterId),payload=stack?.payload||{},kind=prepKind(payload.effect),c=s?.roster?.find(x=>x.id===charId);
+  if(!stack||!kind||!c||payload.crafterOnly&&payload.boundCharacterId!==c.id)return;
+  c.activeProfessionBuffs=Array.isArray(c.activeProfessionBuffs)?c.activeProfessionBuffs.filter(x=>x.kind!==kind):[];
+  c.activeProfessionBuffs.push({kind,key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},proc:{...(payload.proc||{})},affinityZone:payload.affinityZone||null,affinityBonuses:{...(payload.affinityBonuses||{})},remainingBosses:Math.max(1,Number(payload.charges)||1),appliedAt:new Date().toISOString()});
+  consumeCraftedStack(key,boundCharacterId);s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push(c.name+' prepared '+stack.name+'.');
+  await persist(true);closeBankResource();window.CellboundFX?.micro?.(stack.name+' prepared','cell')
+}
+async function useBankPartyPreparation(key,boundCharacterId=null){
+  const s=state(),stack=findCraftedStack(key,boundCharacterId),payload=stack?.payload||{},kind=prepKind(payload.effect),party=activePartyCharacters(s);
+  if(!stack||!kind||party.length!==5)return;
+  party.forEach(c=>{
+    c.activeProfessionBuffs=Array.isArray(c.activeProfessionBuffs)?c.activeProfessionBuffs.filter(x=>x.kind!==kind):[];
+    c.activeProfessionBuffs.push({kind,key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},proc:{...(payload.proc||{})},affinityZone:payload.affinityZone||null,affinityBonuses:{...(payload.affinityBonuses||{})},remainingBosses:Math.max(1,Number(payload.charges)||1),appliedAt:new Date().toISOString()})
+  });
+  consumeCraftedStack(key,boundCharacterId);s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push(stack.name+' prepared the active five.');
+  await persist(true);closeBankResource();window.CellboundFX?.micro?.(stack.name+' prepared the active five','gold')
 }
 async function useBankShockDraught(key,charId,boundCharacterId=null){
   const s=state(),stack=findCraftedStack(key,boundCharacterId),payload=stack?.payload||{},c=s?.roster?.find(x=>x.id===charId);
@@ -263,6 +289,14 @@ function openBankResource(resourceKey){
   }else if(payload.effect==='character-flask'){
     const eligible=s.roster.slice(0,ent().rosterCap).filter(c=>!Game?.isUnavailable?.(c)&&(!payload.crafterOnly||payload.boundCharacterId===c.id));
     actions=`<section class="bank-crafted-targets"><header><small>${payload.crafterOnly?'CRAFTER ONLY · ':''}PRE-COMBAT CONSUMABLE</small><h3>Choose an adventurer</h3><p>Only one Flask can be active on a character at a time.</p></header><div class="bank-character-list">${eligible.map(ch=>`<button data-bank-flask="${key}" data-bank-char="${ch.id}"><span class="avatar">${Game?.portraitHTML?.(ch,'sm')||esc(ch.name.slice(0,2))}</span><span><b>${esc(ch.name)}</b><small>${esc(ch.class)} · ${esc(ch.spec)}</small></span><em>USE FLASK</em></button>`).join('')}</div></section>`;
+  }else if(['character-food','character-scroll','character-gadget'].includes(payload.effect)){
+    const kind=prepKind(payload.effect),eligible=s.roster.slice(0,ent().rosterCap).filter(c=>!Game?.isUnavailable?.(c)&&(!payload.crafterOnly||payload.boundCharacterId===c.id));
+    actions=`<section class="bank-crafted-targets"><header><small>${payload.crafterOnly?'CRAFTER ONLY · ':''}${prepLabel(kind)}</small><h3>Choose an adventurer</h3><p>Using this consumes one item. It occupies the ${prepLabel(kind).toLowerCase()} preparation slot without replacing Flask, Food, Scroll or Gadget effects from other categories.</p></header><div class="bank-character-list">${eligible.map(ch=>`<button data-bank-prep="${key}" data-bank-char="${ch.id}"><span class="avatar">${Game?.portraitHTML?.(ch,'sm')||esc(ch.name.slice(0,2))}</span><span><b>${esc(ch.name)}</b><small>${esc(ch.class)} · ${esc(ch.spec)}</small></span><em>PREPARE</em></button>`).join('')}</div></section>`;
+  }else if(['party-food','party-scroll'].includes(payload.effect)){
+    const party=activePartyCharacters(s),kind=prepKind(payload.effect),ready=party.length===5;
+    actions=`<section class="bank-crafted-actions"><div><small>PARTY ${prepLabel(kind)}</small><h3>Prepare the active five</h3><p>${ready?'Consumes one item and applies the effect to all five active party members.':'Set a complete active party of five before using this item.'}</p></div><button data-bank-party-prep="${key}" ${ready?'':'disabled'}>${ready?'PREPARE ACTIVE FIVE':'PARTY NOT READY'}</button></section>`;
+  }else if(payload.effect==='socket-gem'){
+    actions='<section class="bank-crafted-actions"><div><small>JEWELCRAFTING · SOCKET GEM</small><h3>Gem ready for the socket system</h3><p>This gem can be crafted, stored and traded now. Applying or replacing gems will unlock when socketable equipment is added; no temporary workaround has been added.</p></div><span class="bank-crafted-status">SOCKETS COMING</span></section>';
   }else if(payload.effect==='clear-cell-shock'){
     const eligible=s.roster.slice(0,ent().rosterCap);
     actions=`<section class="bank-crafted-targets"><header><small>RECOVERY CONSUMABLE</small><h3>Clear Cell Shock</h3><p>Choose the character who should consume the draught.</p></header><div class="bank-character-list">${eligible.map(ch=>`<button data-bank-shock="${key}" data-bank-char="${ch.id}" ${Number(ch.cellShock)>0?'':'disabled'}><span class="avatar">${Game?.portraitHTML?.(ch,'sm')||esc(ch.name.slice(0,2))}</span><span><b>${esc(ch.name)}</b><small>Cell Shock ${Math.round(Number(ch.cellShock)||0)}%</small></span><em>${Number(ch.cellShock)>0?'USE':'NO SHOCK'}</em></button>`).join('')}</div></section>`;
@@ -272,6 +306,8 @@ function openBankResource(resourceKey){
   detail.innerHTML=`<div class="detail-hero gear-detail-hero bank-crafted-detail"><div class="gear-detail-art">${art}</div><div><small>${esc(meta.rarity.toUpperCase())} · ${payload.persistentAttachment?'ATTACHMENT':'CRAFTED ITEM'} · ${esc(meta.profession.toUpperCase())}${recipe?' · SKILL '+recipe.level:''}${payload.crafterOnly?' · CRAFTER ONLY':''}</small><h2>${esc(stack.name)}</h2><p>${esc(description)}</p>${payload.crafterOnly?`<p><strong>Soulbound to ${esc(payload.boundCharacterName||'its crafter')}</strong> · cannot be traded or used by another character.</p>`:''}<p>Quantity in Bank: ${stack.quantity||1}</p></div></div>${actions}`;
   detail.querySelectorAll('[data-bank-attach]').forEach(b=>b.addEventListener('click',()=>applyBankAttachment(b.dataset.bankAttach,b.dataset.bankChar,boundCharacterId)));
   detail.querySelectorAll('[data-bank-flask]').forEach(b=>b.addEventListener('click',()=>useBankFlask(b.dataset.bankFlask,b.dataset.bankChar,boundCharacterId)));
+  detail.querySelectorAll('[data-bank-prep]').forEach(b=>b.addEventListener('click',()=>useBankPreparation(b.dataset.bankPrep,b.dataset.bankChar,boundCharacterId)));
+  detail.querySelectorAll('[data-bank-party-prep]').forEach(b=>b.addEventListener('click',()=>useBankPartyPreparation(b.dataset.bankPartyPrep,boundCharacterId)));
   detail.querySelectorAll('[data-bank-shock]').forEach(b=>b.addEventListener('click',()=>useBankShockDraught(b.dataset.bankShock,b.dataset.bankChar,boundCharacterId)));
   document.body.classList.add('bank-manage-open');modal.hidden=false
 }
@@ -289,7 +325,7 @@ function enhanceBank(){
 
   const resourceModels=[
     ...Object.entries(s.materials||{}).filter(([,q])=>Number(q)>0).map(([key,q])=>({key:`mat:${key}`,materialKey:key,name:P?.MATERIALS?.[key]?.name||key,category:'Reagent',displayCategory:'Material',rarity:P?.MATERIALS?.[key]?.rarity||'Common',quantity:Number(q),source:P?.MATERIALS?.[key]?.source||'Dungeon reagent',icon:P?.MATERIALS?.[key]?.icon||'◇',tradeState:'tradeable'})),
-    ...(s.consumables||[]).filter(x=>(x.quantity||0)>0).map(x=>{const meta=craftedMeta(x.key),payload=x.payload||meta.recipe?.output?.payload||{},attachment=payload.effect==='gear-enhancement'&&payload.persistentAttachment,bound=payload.boundCharacterId||null;return{key:`con:${x.key}${bound?'::'+bound:''}`,itemKey:x.key,name:x.name,category:'Consumable',displayCategory:attachment?'Attachment':'Consumable',rarity:x.rarity||meta.rarity,quantity:x.quantity||1,source:payload.crafterOnly?`${meta.profession} · Crafter only · ${payload.boundCharacterName||'Bound'}`:meta.recipe?`${meta.profession} · Skill ${meta.recipe.level}`:'Crafted stock',icon:attachment?'✥':'⚗',tradeState:payload.crafterOnly?'soulbound':'tradeable',payload}}),
+    ...(s.consumables||[]).filter(x=>(x.quantity||0)>0).map(x=>{const meta=craftedMeta(x.key),payload=x.payload||meta.recipe?.output?.payload||{},attachment=payload.effect==='gear-enhancement'&&payload.persistentAttachment,bound=payload.boundCharacterId||null,label=payload.effect==='socket-gem'?'Socket Gem':attachment&&payload.attachmentFamily==='relic-core'?'Relic Core':attachment?'Attachment':['character-food','party-food'].includes(payload.effect)?'Food':['character-scroll','party-scroll'].includes(payload.effect)?'Scroll':payload.effect==='character-gadget'?'Gadget':'Consumable';return{key:`con:${x.key}${bound?'::'+bound:''}`,itemKey:x.key,name:x.name,category:'Consumable',displayCategory:label,rarity:x.rarity||meta.rarity,quantity:x.quantity||1,source:payload.crafterOnly?`${meta.profession} · Crafter only · ${payload.boundCharacterName||'Bound'}`:meta.recipe?`${meta.profession} · Skill ${meta.recipe.level}`:'Crafted stock',icon:payload.effect==='socket-gem'?'◆':payload.attachmentFamily==='relic-core'?'◈':attachment?'✥':payload.effect==='character-gadget'?'⚙':['character-food','party-food'].includes(payload.effect)?'♨':['character-scroll','party-scroll'].includes(payload.effect)?'✒':'⚗',tradeState:payload.crafterOnly?'soulbound':'tradeable',payload}}),
     ...(s.recipeScrolls||[]).filter(x=>(x.quantity||0)>0).map(x=>({key:`rec:${x.recipeId}`,name:x.name,category:'Recipe',displayCategory:'Recipe',rarity:'Rare',quantity:x.quantity||1,source:'Rare recipe scroll',icon:'▤',tradeState:'tradeable'}))
   ];
 

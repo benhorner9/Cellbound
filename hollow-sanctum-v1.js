@@ -688,6 +688,10 @@ async function hsRunFrom(startIndex,tok){
   $('#hs2dTitle').textContent=s.title;const type=$('#hs2dType');if(type)type.textContent=s.kind;
   $('.hs2d-route').innerHTML=STAGES.map((x,j)=>'<span class="'+(j<i?'done':j===i?'current':'')+'"><i>'+(j+1)+'</i>'+esc(x.title)+'</span>').join('');
   if(!await fightStage(s,tok,i)){await hsSaveRuntime('failed');return}
+  if(['boss','final'].includes(s.combatKind)){
+    const expired=window.CellboundProfessions?.consumeBossChargesOnce?.(party(),'hollow-sanctum:'+run.endgame?.attemptId+':'+s.id,state())||[];
+    expired.forEach(x=>feed(x+' expired.'));Game.save?.();await Game.persistState?.()
+  }
   run.stage=i+1;run.runtimeStageStartedAt=0;await hsSaveRuntime('between')
  }
  if(tok!==token||!run)return;

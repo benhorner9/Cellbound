@@ -255,6 +255,8 @@ async function fightStage(s){
  if(!won){await showFailure(s);return}
  const carry=carryCombatState(combatResult);
  if(!carry.ok){await failRecovery(s,carry.reason);return}
+ window.CellboundProfessions?.consumeBossChargesOnce?.(party(),'fractured-ages:'+run.endgame?.attemptId+':'+s.id,state());
+ Game.save?.();await Game.persistState?.();
  run.results.push({id:s.id,boss:s.boss,combatResult});
  if(s.id==='funhouse'){await showMaskFall();return}
  run.stage++;run.runtimeStageStartedAt=0;await faSaveRuntime('between');return transition()

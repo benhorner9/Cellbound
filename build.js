@@ -46,10 +46,14 @@ for(const file of files){
   if(file==='profession-data.js'){
     if(!contents.includes('const skillThreshold=level=>100+Math.max(1,level)*5;'))throw new Error('Profession project progression curve regressed');
     for(const hook of ['persistentAttachment=true','recipeMetaForOutputKey','item?.attachment?.bonuses','kind:\'attachment\''])if(!contents.includes(hook))throw new Error('Persistent profession attachment model is missing '+hook);
+    for(const hook of ["Jewelcrafting:{icon:'◆'","Engineering:{icon:'⚙'","Cooking:{icon:'♨'","Reliccrafting:{icon:'◈'","Scribing:{icon:'✒'","effect:'socket-gem'","effect:'character-gadget'","effect:'party-food'","attachmentFamily:'relic-core'","effect:'party-scroll'"])if(!contents.includes(hook))throw new Error('Expanded profession system is missing '+hook);
     for(const hook of ['crafterOnly:true','trainingScale:.45','payload.crafterOnly=true','output.tradeState=\'soulbound\'','boundCharacterId===c?.id'])if(!contents.includes(hook))throw new Error('Crafter-only profession recipe contract is missing '+hook);
+    for(const hook of ['socketReady:false','function activeProcs(c)','function consumeBossChargesOnce','SPECIAL_PREPARATIONS'])if(!contents.includes(hook))throw new Error('New profession runtime contract missing '+hook);
+    if(!contents.includes('function activeBonuses(c,zone=null)')||!contents.includes('affinityZone===zone'))throw new Error('Scribing encounter affinity is missing');
   }
   if(file==='item-art-v1.js'){
     if(!contents.includes("card.querySelector(':scope > .recipe-output-art')"))throw new Error('Profession recipe art duplication guard is missing');
+    for(const hook of ["effect==='socket-gem'","effect==='character-gadget'","effect==='party-food'","effect==='party-scroll'","attachmentFamily==='relic-core'"])if(!contents.includes(hook))throw new Error('New crafted item artwork type is missing '+hook);
     if(!contents.includes('P?.craftedRarity?.(r.level,r.endgame)'))throw new Error('Crafted item artwork rarity no longer follows profession progression');
   }
   if(file==='evolution-v1.css'){
@@ -76,12 +80,19 @@ for(const file of files){
     for(const hook of ['rosterClearFilters','rosterResultsLabel','Gear Watch','gearOrder='])if(!contents.includes(hook))throw new Error('Roster v2 filtering/enhancement is missing '+hook);
     for(const hook of ['bankMetricCrafting','data-bank-count','bank-filter-empty-v2',"bankCategory==='favorite'"])if(!contents.includes(hook))throw new Error('Bank v2 filtering/enhancement is missing '+hook);
     for(const hook of ['function openBankResource','data-resource-open','applyBankAttachment','learnBankRecipe'])if(!contents.includes(hook))throw new Error('Bank crafted-item action flow is missing '+hook);
+    for(const hook of ['function useBankPreparation','function useBankPartyPreparation','function activePartyCharacters','SOCKETS COMING','character-food','party-scroll'])if(!contents.includes(hook))throw new Error('Expanded profession Bank usage is missing '+hook);
     if(!contents.includes("'DESTROYS '+esc(existing.name||'ATTACHMENT')"))throw new Error('Bank attachment replacement must surface destructive overwrite');
     for(const hook of ['function findCraftedStack','boundCharacterId=split>=0','payload.boundCharacterId===c.id','Crafter only'])if(!contents.includes(hook))throw new Error('Bank crafter-only item ownership is missing '+hook);
   }
   if(file==='trading-post-v3.js'){
     for(const hook of ["!x?.payload?.crafterOnly","!x?.attachment?.crafterOnly","Crafter-only items are soulbound and cannot be traded."])if(!contents.includes(hook))throw new Error('Trading Post crafter-only exclusion is missing '+hook);
   }
+  for(const stageFile of ['hollow-sanctum-v1.js','chaos-canyon-v1.js','fractured-ages-v1.js','blackout-station-v1.js']){
+    if(file===stageFile&&!contents.includes('consumeBossChargesOnce'))throw new Error(stageFile+' is missing profession boss-charge consumption');
+  }
+  if(file==='blackout-station-v1.js'&&!contents.includes('craftedGridOverrideStack'))throw new Error('Crafted Engineering grid bypass is not integrated');
+  if(file==='combat-standard-v1.js'&&!contents.includes('professionZone:meta.zone'))throw new Error('Combat gateway must pass encounter zone for Scribing');
+
   if(file==='character-portraits-v1.js'){
     for(const hook of ['window.CellboundPortraits','normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
     if(!contents.includes("if(item.slot&&item.slot!=='OffHand')return''"))throw new Error('Paper doll must not invent an OffHand visual for main-hand weapons');
@@ -154,6 +165,8 @@ for(const file of files){
     if(!contents.includes("Rogue:{Assassination:'dps',Outlaw:'dps'}")||!contents.includes("title:'Freeblade Duelist'"))throw new Error('Outlaw Rogue combat identity is missing');
   }
   if(file==='combat-reborn-v1.js'){
+    for(const hook of ['professionProcs,relicOpeningUsed:false','professionProcs?.openingBurstPct','professionProcs?.executeDamagePct','professionProcs?.lowHealthWardPct','professionProcs?.triageHealPct'])if(!contents.includes(hook))throw new Error('Conditional profession combat effect is missing '+hook);
+    if(!contents.includes('normalisePlayer(c,i,options.professionZone)'))throw new Error('Scribing encounter affinity must enter combat player normalisation');
     if(!contents.includes("if(!moveIntoRange(ctx,u,target,5))return true")||!contents.includes("_combatTalentTimers"))throw new Error('Bladestorm melee movement rule is missing');
     for(const hook of ['function professionCombatBonuses','professionOutputScale(u,\'damage\')','professionOutputScale(healer,\'healing\')','professionBonuses?.haste','professionBonuses?.crit','professionBonuses?.block','profession.magicWardPct'])if(!contents.includes(hook))throw new Error('Profession attachments are not wired into real combat: '+hook);
     for(const hook of ["spec:'Havoc'","spec:'Vengeance'","id:'havoc-metamorphosis'","id:'spirit-bomb'","SOUL_FRAGMENT_CHANGED","'fel-barrage':'Fel Barrage'"])if(!contents.includes(hook))throw new Error('Demon Hunter combat kit is incomplete: '+hook);
@@ -582,17 +595,40 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   const P=sandbox.CellboundProfessions,IA=sandbox.CellboundItemArt;
   if(!P||!IA)throw new Error('Complete item artwork runtime failed to load');
   const professionEntries=Object.entries(P.PROFESSIONS||{});
-  if(professionEntries.length!==5)throw new Error('Profession catalogue must contain all five core professions');
+  if(professionEntries.length!==10)throw new Error('Profession catalogue must contain all ten professions');
+  for(const name of ['Jewelcrafting','Engineering','Cooking','Reliccrafting','Scribing'])if((P.PROFESSIONS[name]?.recipes||[]).filter(r=>r.crafterOnly).length!==2)throw new Error(name+' must include exactly two crafter-only rewards');
+  for(const name of ['Alchemy','Enchanting','Blacksmithing','Leatherworking','Tailoring','Jewelcrafting','Engineering','Cooking','Reliccrafting','Scribing'])if(!P.PROFESSIONS?.[name])throw new Error('Profession catalogue missing '+name);
   const allRecipeIds=[];
   const allOutputKeys=[];
   for(const [name,def] of professionEntries){
     const recipes=def.recipes||[];
     if(recipes.length<10)throw new Error(name+' must have at least 10 craftable recipes across Skill 1-100');
     if(!recipes.some(r=>Number(r.level)===1)||!recipes.some(r=>Number(r.level)===100))throw new Error(name+' profession progression must include Skill 1 and Skill 100 recipes');
+    if(name==='Jewelcrafting'&&recipes.some(r=>r.output?.payload?.effect!=='socket-gem'||r.output?.payload?.socketReady!==false))throw new Error('Jewelcrafting must remain pending until real equipment sockets ship');
     for(const recipe of recipes){allRecipeIds.push(recipe.id);if(recipe.output?.key)allOutputKeys.push(recipe.output.key)}
   }
   if(new Set(allRecipeIds).size!==allRecipeIds.length)throw new Error('Profession recipe IDs must be unique');
   if(new Set(allOutputKeys).size!==allOutputKeys.length)throw new Error('Profession crafted item keys must be unique');
+  const allRecipes=professionEntries.flatMap(([,def])=>def.recipes||[]),bound=allRecipes.filter(r=>r.crafterOnly);
+  if(allRecipes.length!==120||bound.length!==20)throw new Error('Ten-profession catalogue must contain 120 recipes including 20 crafter-only rewards');
+  const notes=P.PROFESSIONS.Scribing.recipes.find(r=>r.output.key==='ashen-hunters-notes')?.output?.payload;
+  const scribe={activeProfessionBuffs:[{kind:'scroll',name:'Ashen Notes',remainingBosses:1,bonuses:notes?.bonuses||{},affinityZone:notes?.affinityZone,affinityBonuses:notes?.affinityBonuses||{}}]};
+  if(P.activeBonuses(scribe).damagePct!==2||P.activeBonuses(scribe,'ashen-vault').damagePct!==5||P.activeBonuses(scribe,'chaos-canyon').damagePct!==2)throw new Error('Scribing zone affinity must only apply in the matching dungeon');
+
+  if(allRecipes.some(r=>Object.keys(r.inputs||{}).some(k=>!P.MATERIALS?.[k])))throw new Error('Profession recipe references unknown materials');
+  if(bound.some(r=>r.trainingScale!==.45||r.output?.tradeState!=='soulbound'||!r.output?.payload?.crafterOnly))throw new Error('Crafter-only items must stay character-bound');
+  const relicCore=P.PROFESSIONS.Reliccrafting.recipes.find(r=>r.output.key==='cellheart-core'),gadget=P.PROFESSIONS.Engineering.recipes.find(r=>r.output.key==='recovery-drone');
+  const char={id:'profession-validation',name:'Profession Test',equipment:{Relic:{attachment:{name:relicCore.name,attachmentFamily:'relic-core',bonuses:relicCore.output.payload.bonuses,proc:relicCore.output.payload.proc}}},activeProfessionBuffs:[
+    {kind:'flask',name:'Flask',bonuses:{damagePct:3},remainingBosses:3},
+    {kind:'food',name:'Food',bonuses:{stamina:3},remainingBosses:3},
+    {kind:'scroll',name:'Scroll',bonuses:{haste:3},remainingBosses:1},
+    {kind:'gadget',name:'Gadget',bonuses:gadget.output.payload.bonuses,proc:gadget.output.payload.proc,remainingBosses:1}
+  ]};
+  const prep=P.activeBonuses(char),proc=P.activeProcs(char);
+  if(prep.damagePct!==8||prep.haste!==3||!proc.openingBurstPct||!proc.triageHealPct)throw new Error('Flask/Food/Scroll/Gadget stacking or Relic Core special effect failed');
+  const charges={},first=P.consumeBossChargesOnce([char],'profession-test-boss',charges),again=P.consumeBossChargesOnce([char],'profession-test-boss',charges);
+  if(first.length!==2||again.length!==0||P.activeProcs(char).triageHealPct!==8)throw new Error('Preparation charges must expire exactly once per cleared boss');
+
   const missingGearArt=G.items.filter(x=>!G.artHTML(x,64).includes('<svg'));
   if(missingGearArt.length)throw new Error('Equipment missing full item artwork: '+missingGearArt.slice(0,5).map(x=>x.itemId).join(', '));
   const missingMaterialArt=Object.keys(P.MATERIALS||{}).filter(key=>!P.materialArtHTML(key,64).includes('<svg'));
