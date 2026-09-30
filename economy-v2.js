@@ -16,8 +16,8 @@ function normalise(){
   const s=state();if(!s)return;
   s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};
   s.consumables=(Array.isArray(s.consumables)?s.consumables:[]).map(stack=>{
-    const meta=P?.recipeMetaForOutputKey?.(stack?.key),latest=meta?.recipe?.output||{},latestPayload=latest.payload||{},attachment=latestPayload.effect==='gear-enhancement';
-    return attachment?{...stack,payload:{...(stack.payload||{}),...latestPayload,bonuses:{...(latestPayload.bonuses||stack.payload?.bonuses||{})}},rarity:stack.rarity||latest.rarity||P?.craftedRarity?.(meta?.recipe?.level,meta?.recipe?.endgame)||'Uncommon'}:stack
+    const meta=P?.recipeMetaForOutputKey?.(stack?.key),latest=meta?.recipe?.output||{},latestPayload=latest.payload||{},refreshable=['gear-enhancement','socket-gem'].includes(latestPayload.effect);
+    return refreshable?{...stack,payload:{...(stack.payload||{}),...latestPayload,bonuses:{...(latestPayload.bonuses||stack.payload?.bonuses||{})}},rarity:stack.rarity||latest.rarity||P?.craftedRarity?.(meta?.recipe?.level,meta?.recipe?.endgame)||'Uncommon'}:stack
   });
   s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];
   s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];
