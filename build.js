@@ -42,7 +42,9 @@ for(const file of files){
   }
   if(file==='quests-v2.js'){
     for(const hook of ["id:'signal-from-nowhere'","Prototype 07 — The Reconstituted","progression.nullComplexUnlocked","isNullComplexUnlocked"])if(!contents.includes(hook))throw new Error('Signal From Nowhere quest is missing '+hook);
-    for(const hook of ['function qCombatants()','participants:[...p]',"quest:t.character.class+' Class Trial'","String(config.quest||config.title||'Quest').toUpperCase()","Quest combat viewer failed to initialise"])if(!contents.includes(hook))throw new Error('Solo class trial combat safety is missing '+hook);
+    for(const hook of ['function qCombatants()','participants:[...p]',"String(config.quest||config.title||'Quest').toUpperCase()","Quest combat viewer failed to initialise"])if(!contents.includes(hook))throw new Error('Quest combat safety is missing '+hook);
+    for(const hook of ['function classTrialPartyState(','function classTrialMechanics(','function classTrialCombat(','featuredCharacterId:t.character.id',"partyLabel:'CLASS-LED PARTY'","ENTER PARTY TRIAL →","mode:'party'"])if(!contents.includes(hook))throw new Error('Class-led party trial flow is missing '+hook);
+    if(contents.includes("participants:[t.character]")||contents.includes("allowSolo:true")||contents.includes('ENTER SOLO TRIAL')||contents.includes('SOLO CLASS TRIAL'))throw new Error('Legacy solo class-trial flow returned');
     if(contents.includes('esc(config.quest.toUpperCase())'))throw new Error('Quest combat header can black-screen when a quest label is omitted');
   }
   if(file==='null-complex-v1.js'){
@@ -458,6 +460,7 @@ for(const file of files){
   }
   if(file==='quests-v2.css'){
     if(!contents.includes('transition-property:left,top,transform,opacity,filter'))throw new Error('Quest combat units must animate left/top movement instead of snapping');
+    for(const hook of ['/* Class-led party trial focus */','.cb2d-unit.trial-focus','.cb2d-party-row.trial-focus','.trial-focus-badge'])if(!contents.includes(hook))throw new Error('Class-trial featured-character styling is missing '+hook);
   }
   if(file==='onboarding-v1.js'){
     if(!contents.includes('function tdRenderCombatEvent')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('First Expedition combat must use continuous playback');
