@@ -142,17 +142,6 @@ function starterEquipment(klass){
   const set=G.starterSet(klass);
   return {Head:cloneGear(set.find(x=>x.slot==='Head')),Chest:cloneGear(set.find(x=>x.slot==='Chest')),Weapon:cloneGear(set.find(x=>x.slot==='Weapon')),Shoulders:null,Hands:null,Waist:null,Legs:null,Feet:null,OffHand:null,Ring1:null,Ring2:null,Trinket1:null,Trinket2:null,Relic:null};
 }
-const starterDefs=[
-  ['r1','Thane Alder','Warrior','Protection',6,48,18,'TA'],
-  ['r2','Mira Voss','Priest','Holy',6,45,12,'MV'],
-  ['r3','Kael Renn','Warrior','Arms',6,52,22,'KR'],
-  ['r4','Sera Vale','Hunter','Marksman',5,44,9,'SV'],
-  ['r5','Orin Pell','Mage','Arcane',5,46,14,'OP']
-];
-const starterRoster=starterDefs.map(([id,name,klass,spec,level,power,knowledge,portrait])=>{
-  const equipment=starterEquipment(klass);
-  return {id,name,class:klass,spec,level,power,gear:0,talent:1,knowledge:{ashwarden:knowledge,embermaw:0,vaultheart:0},portrait,gearItems:ILVL_SLOTS.map(slot=>equipment[slot]?.name||'Empty'),equipment,talents:talentState(klass),cellShock:0,cellShockLockedUntil:null,professions:[null]};
-});
 function initialState(){
   return {
     saveVersion:SAVE_VERSION,gearVersion:3,renown:0,gold:250,socialDisplayName:'',
@@ -175,15 +164,11 @@ function classDef(c){return classes[c.class]||classes.Warrior;}
 function specDef(c){return classDef(c)?.specs?.[c.spec];}
 function roleOf(c){return specDef(c)?.role||'dps';}
 function roleLabel(role){return role==='dps'?'Damage':role[0].toUpperCase()+role.slice(1);}
-function levelHpBonus(c){return Math.round(Math.max(0,(Number(c?.level)||1)-1)*3)}
-function levelOutputBonus(c){return Math.round(Math.max(0,(Number(c?.level)||1)-1)*2)}
-function partyAverageLevel(){const p=partyCharacters();return p.length?Math.round(p.reduce((n,c)=>n+Math.max(1,Number(c.level)||1),0)/p.length):1}
 function combatClassKey(c){return 'class-'+String(c?.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}
 function portraitHTML(c,size='md',className=''){return CP?.portraitHTML?.(c,{size,className})||`<span class="cb-portrait cb-portrait--${esc(size)} ${esc(className)}"><b>${esc(c?.portrait||String(c?.name||'?').slice(0,2).toUpperCase())}</b></span>`}
 function charById(id){return state?.roster?.find(c=>c.id===id)||null;}
 function bossById(id){return bosses.find(b=>b.id===id)||bosses[0];}
 function bankTotal(){return (state?.bank||[]).reduce((n,item)=>n+(item.quantity||1),0);}
-function averageMastery(c){const vals=Object.values(c.knowledge||{});return vals.length?Math.round(vals.reduce((a,b)=>a+(Number(b)||0),0)/vals.length):0;}
 function canonicalItem(raw){if(!raw)return null;const base=G.byName(raw.name)||G.byId(raw.itemId),item=base?{...base,...raw,itemLevel:raw.itemLevel||base.itemLevel,power:raw.power||base.power,tradeState:raw.tradeState||base.tradeState,visualKey:raw.visualKey||base.visualKey}:{...raw};return G?.ensureSockets?.(item)||item;}
 function isBankUtility(item){return Boolean(item?.category==='utility'||item?.utilityType)}
 function bankUtilityArt(item,size=66){const icon=esc(item?.icon||'⚡');return window.CellboundItemArt?.artHTML?.(item,size,'bank-utility-art')||`<span class="bank-utility-art rarity-${String(item?.rarity||'rare').toLowerCase()}" style="width:${size}px;height:${size}px" aria-label="${esc(item?.name||'Utility item')}"><i>${icon}</i></span>`}
@@ -248,8 +233,6 @@ function canUseItem(c,item){
   return classOk&&roleOk;
 }
 function tierText(item){return `Tier ${item?.tier||1} · ${item?.rarity||'Common'} · iLvl ${item?.itemLevel||0}`;}
-function currentBossProgressionUnlocked(boss){const i=bosses.findIndex(b=>b.id===boss.id);return i<=0||Boolean(state.bossKills[bosses[i-1].id]);}
-
 function normalizeCharacter(c,index=0){
   c.id=c.id||`legacy-${index}-${Date.now()}`;c.class=c.class||'Warrior';c.spec=c.spec||Object.keys(classDef(c).specs)[0];const rawLevel=Math.max(1,Number(c.level)||1),overCapLevels=Math.max(0,rawLevel-PLAYER_LEVEL_CAP);c.level=Math.min(PLAYER_LEVEL_CAP,rawLevel);c.xp=c.level>=PLAYER_LEVEL_CAP?0:Math.max(0,Number(c.xp)||0);if(overCapLevels>0)c.talent=Math.max(0,(Number(c.talent)||0)-overCapLevels);c.power=Math.max(1,Number(c.power)||1);
   c.race=c.race||'Veyren';c.raceTrait=c.raceTrait||window.CellboundIdentities?.getRace?.(c.race)?.trait||'';if(CP)c.appearance=CP.normalizeAppearance(c.appearance,c.id||c.name,c.race);c.talents=c.talents||talentState(c.class);Object.keys(classDef(c)?.specs||{}).forEach(spec=>{c.talents[spec]=c.talents[spec]||{}});B?.syncLegacyTalentCounter?.(c);c.knowledge=c.knowledge||{ashwarden:0,embermaw:0,vaultheart:0};c.equipment=c.equipment||{};
@@ -448,7 +431,6 @@ function renderTop(){
   if(!state)return;const e=entitlements(),pi=partyItemLevel(),unlocked=Math.min(state.roster.length,e.rosterCap);
   ui.renown.textContent=state.renown;ui.gold.textContent=state.gold.toLocaleString();ui.rosterCount.textContent=`${unlocked} / ${e.rosterCap}`;if(ui.bankCount)ui.bankCount.textContent=bankTotal();if(ui.dungeonProgress)ui.dungeonProgress.textContent=`${Object.values(state.bossKills).filter(Boolean).length} / 3 bosses`;if(ui.partyIlvlTop)ui.partyIlvlTop.textContent=pi||'—';if(ui.membershipStatus){ui.membershipStatus.textContent=e.member?'MEMBER':'STANDARD';ui.membershipStatus.dataset.member=e.member?'1':'0';}
 }
-function shockMarkup(c){const pct=Math.round(c.cellShock||0),locked=isUnavailable(c);return `<div class="cell-shock-row"><div><span>Cell Shock</span><b>${pct}%${locked?` · ${formatRemaining(c)}`:''}</b></div><div class="cell-shock-bar"><i style="width:${pct}%"></i></div></div>`;}
 function rosterCard(c,index){
   const role=roleOf(c),unlocked=isRosterSlotUnlocked(index),recovering=isUnavailable(c),ilvl=characterItemLevel(c),classKey=combatClassKey(c),active=flatPartyIds().includes(c.id);
   const lockedLabel=index>=10?'ADMIN LOCKED':'MEMBERSHIP LOCKED';
@@ -1084,7 +1066,6 @@ function addBankItem(raw,record=true){
   const canonical=canonicalItem(raw);if(!canonical)return;const sig=G.rollSignature?.(canonical)||'';const existing=!canonical.nonStackable&&state.bank.find(x=>x.itemId===canonical.itemId&&(G.rollSignature?.(x)||'')===sig);if(existing){existing.quantity=(existing.quantity||1)+1;existing.source=raw.source||existing.source;}else state.bank.push({...canonical,id:`bank-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,quantity:1,source:raw.source||'Unknown'});if(record)state.collectionHistory.push({itemId:canonical.itemId,name:canonical.name,tier:canonical.tier,itemLevel:canonical.itemLevel,bonusStats:canonical.bonusStats||[],source:raw.source||'Unknown',at:new Date().toISOString()});
 }
 function addMaterial(key,quantity=1){if(!key||quantity<=0)return;state.materials[key]=(Number(state.materials[key])||0)+quantity;}
-function awardReagents(boss){if(!P)return[];const drops=P.rollReagents(boss.id);drops.forEach(d=>addMaterial(d.key,d.quantity));if(boss.id==='vaultheart'&&!state.discoveredRecipes.includes('enc-vault-glyph')&&!state.recipeScrolls.some(x=>x.recipeId==='enc-vault-glyph')&&Math.random()<.12){state.recipeScrolls.push({recipeId:'enc-vault-glyph',name:'Recipe: Vaultheart Glyph',quantity:1});drops.push({key:'recipe:enc-vault-glyph',quantity:1,recipe:true});state.activity.push('Rare recipe scroll dropped: Vaultheart Glyph.');}return drops;}
 function equipBankItem(itemId,charId){
   const item=state.bank.find(x=>x.id===itemId),c=charById(charId);if(!item||!c||!canUseItem(c,item)||isUnavailable(c))return;
   const slot=item.slot,incoming=canonicalItem(item);
