@@ -287,3 +287,133 @@ p,h1,h2,h3,h4,h5,h6,b,strong,small,span,em{overflow-wrap:break-word}
   .modal-card,.quest-dialogue,.quest-gear-card,.quest-complete-card{max-height:calc(100dvh - 12px)}
   .cb-command-sheet .cb-character-tabs button{flex-basis:96px!important;width:96px!important;min-width:96px!important}
 }
+
+
+/* iPad / landscape live-combat viewport lock
+   The combat arena must stay visible while party HP remains accessible.
+   Lock the live two-column viewer to the viewport and scroll only the party list. */
+body.cb2d-open,
+body.hs2d-open,
+body.cc2d-open,
+body.bs2d-open{
+  overflow:hidden;
+}
+
+@media (min-width:1051px) and (min-height:650px){
+  body.cb2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
+  body.hs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
+  body.cc2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
+  body.bs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode){
+    display:grid;
+    grid-template-rows:auto auto minmax(0,1fr) auto;
+    height:calc(100dvh - 32px)!important;
+    max-height:calc(100dvh - 32px)!important;
+    overflow:hidden!important;
+    overscroll-behavior:none;
+  }
+
+  body.cb2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-layout,
+  body.hs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-layout,
+  body.cc2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-layout,
+  body.bs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-layout{
+    height:auto;
+    min-height:0!important;
+    overflow:hidden;
+  }
+
+  body.cb2d-open .cb2d-layout>main,
+  body.hs2d-open .cb2d-layout>main,
+  body.cc2d-open .cb2d-layout>main,
+  body.bs2d-open .cb2d-layout>main{
+    display:grid;
+    grid-template-rows:minmax(0,1fr) auto minmax(72px,96px);
+    min-height:0;
+    overflow:hidden;
+  }
+
+  body.cb2d-open .cb2d-layout>main>.cb2d-arena,
+  body.hs2d-open .cb2d-layout>main>.cb2d-arena,
+  body.cc2d-open .cb2d-layout>main>.cb2d-arena,
+  body.bs2d-open .cb2d-layout>main>.cb2d-arena{
+    height:auto!important;
+    min-height:0!important;
+    align-self:stretch;
+  }
+
+  body.cb2d-open .cb2d-layout>main>.cb2d-feed,
+  body.hs2d-open .cb2d-layout>main>.cb2d-feed,
+  body.cc2d-open .cb2d-layout>main>.cb2d-feed,
+  body.bs2d-open .cb2d-layout>main>.cb2d-feed{
+    min-height:0;
+    max-height:96px;
+    overflow:hidden;
+  }
+
+  body.cb2d-open .cb2d-layout>main>.cb2d-feed>:last-child,
+  body.hs2d-open .cb2d-layout>main>.cb2d-feed>:last-child,
+  body.cc2d-open .cb2d-layout>main>.cb2d-feed>:last-child,
+  body.bs2d-open .cb2d-layout>main>.cb2d-feed>:last-child{
+    min-height:0;
+    max-height:74px;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  body.cb2d-open .cb2d-layout>aside,
+  body.hs2d-open .cb2d-layout>aside,
+  body.cc2d-open .cb2d-layout>aside,
+  body.bs2d-open .cb2d-layout>aside{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:auto auto auto minmax(0,1fr);
+    gap:8px;
+    min-height:0;
+    overflow:hidden;
+    align-content:stretch;
+  }
+
+  body.cb2d-open .cb2d-layout>aside>div,
+  body.hs2d-open .cb2d-layout>aside>div,
+  body.cc2d-open .cb2d-layout>aside>div,
+  body.bs2d-open .cb2d-layout>aside>div{
+    margin-bottom:0;
+    min-width:0;
+  }
+
+  body.cb2d-open .cb2d-layout>aside>.cb2d-party,
+  body.hs2d-open .cb2d-layout>aside>.cb2d-party,
+  body.cc2d-open .cb2d-layout>aside>.cb2d-party,
+  body.bs2d-open .cb2d-layout>aside>.cb2d-party{
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+    overflow:hidden;
+  }
+
+  body.cb2d-open .cb2d-layout>aside>.cb2d-party>div,
+  body.hs2d-open .cb2d-layout>aside>.cb2d-party>div,
+  body.cc2d-open .cb2d-layout>aside>.cb2d-party>div,
+  body.bs2d-open .cb2d-layout>aside>.cb2d-party>div{
+    min-height:0;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    padding-right:3px;
+    scrollbar-width:thin;
+  }
+
+  body.cb2d-open .cb2d-layout>aside>.cb2d-plan,
+  body.hs2d-open .cb2d-layout>aside>.cb2d-plan,
+  body.cc2d-open .cb2d-layout>aside>.cb2d-plan,
+  body.bs2d-open .cb2d-layout>aside>.cb2d-plan{
+    display:none!important;
+  }
+
+  body.cb2d-open .cb2d-party-row,
+  body.hs2d-open .cb2d-party-row,
+  body.cc2d-open .cb2d-party-row,
+  body.bs2d-open .cb2d-party-row{
+    padding:6px 0;
+  }
+}
