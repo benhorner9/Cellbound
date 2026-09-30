@@ -197,8 +197,9 @@ for(const file of files){
     for(const hook of ["spec:'Outlaw'","id:'sinister-strike'","id:'pistol-shot'","id:'dispatch'","id:'roll-the-bones'","id:'blade-flurry'","id:'between-the-eyes'","id:'adrenaline-rush'","id:'killing-spree'","COMBO_POINTS_CHANGED","Opportunity","Quick Draw","Ruthlessness","Outlaw Rogue Combo Points","Outlaw Roll the Bones","Outlaw Blade Flurry","Outlaw Between the Eyes","Outlaw Killing Spree","Outlaw Rogue Talent Skill Gates"])if(!contents.includes(hook))throw new Error('Outlaw Rogue combat migration is incomplete: '+hook);
     if(!contents.includes("_combatPosition")||!contents.includes("data.currentPosition"))throw new Error('Combat slice position persistence is missing');
     if(!contents.includes("focusSelectedDamageOnly")||!contents.includes("!target.focusSelected"))throw new Error('Focus-selected damage gating is missing');
-    if(!contents.includes("const VERSION='1.3.27'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
+    if(!contents.includes("const VERSION='1.3.30'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
     for(const hook of ['setBonusRulesFor','talentSkillCooldownScale','incomingDamageReduction','setBonuses?.damageScale','setBonuses?.healingScale'])if(!contents.includes(hook))throw new Error('Combat adaptive set foundation is missing '+hook);
+    for(const hook of ["'Evoker|Devastation':[.92,.92,.92]","add(pool.find(a=>a.kind==='defensive'))","range:30,heal:24,cost:18,gcd:1500,cast:1700,cd:6500","range:30,heal:34,cost:15,gcd:1500,cast:1700,cd:0,chainBounces:3","range:30,heal:20,cost:16,gcd:1500,cast:0,cd:6000"])if(!contents.includes(hook))throw new Error('Chapter-wide role balance contract is missing '+hook);
   }
   if(file==='combat-status-ui-v1.js'){
     if(!contents.includes("version:'2.1.0'"))throw new Error('Combat status UI smart-overhead version is missing');
