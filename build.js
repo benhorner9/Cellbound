@@ -143,6 +143,8 @@ for(const file of files){
     if(contents.includes('<span>Mastery</span>')&&contents.includes('function rosterCard'))throw new Error('Roster cards must not reintroduce the removed Mastery stat');
     for(const hook of ['roster-character-card','roster-card-metrics','roster-shock-line','roster-card-actions'])if(!contents.includes(hook))throw new Error('Roster v2 card renderer is missing '+hook);
     if(!contents.includes('function setBonusPanel')||!contents.includes('gear-set-panel'))throw new Error('Guild Bank set bonus explanation is missing');
+    for(const hook of ['function bankEquipmentSlots','function bankEquipSlot','data-equip-slot="','equipBankItem(id,b.dataset.equipChar,b.dataset.equipSlot)'])if(!contents.includes(hook))throw new Error('Guild Bank dual equipment slots must equip directly from the Bank');
+    if(contents.includes('const slot=item.slot,incoming=canonicalItem(item)'))throw new Error('Guild Bank cannot equip Ring/Trinket items into their abstract catalogue slot');
   }
   if(file==='gear-system.css'){
     for(const hook of ['.gear-set-panel','.cb-set-summary','.cb2d-loot-set','.tp-set-bonus'])if(!contents.includes(hook))throw new Error('Equipment set bonus styling is missing '+hook);
