@@ -572,9 +572,6 @@ function tdAction(role,text){
 function tdMove(selector,x,y,ms=360){
   const e=$(selector);if(!e)return;const sx=Math.max(8,Math.min(92,Number(x)||50)),sy=Math.max(12,Math.min(88,Number(y)||50));e.style.transitionDuration=ms+'ms';requestAnimationFrame(()=>{e.style.left=sx+'%';e.style.top=sy+'%'});
 }
-function tdPct(selector){
-  const e=$(selector);return e?{x:parseFloat(e.style.left)||50,y:parseFloat(e.style.top)||50}:{x:50,y:50};
-}
 function tdRegroup(){
   const melee=state().roster.filter(x=>tdProfile(x)==='melee'),ranged=state().roster.filter(x=>tdProfile(x)==='ranged');
   state().roster.forEach(c=>{
