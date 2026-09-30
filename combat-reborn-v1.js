@@ -2178,7 +2178,7 @@ function specDamageBalance(u){
   'Death Knight|Blood':[.62,.62,.58],
   'Demon Hunter|Vengeance':[.52,.54,.52],
   'Warrior|Arms':[1.86,1.78,1.65],
-  'Rogue|Assassination':[1.08,.94,.82],
+  'Rogue|Assassination':[1.08,.94,.92],
   'Rogue|Outlaw':[1.08,1.10,1.12],
   'Mage|Frost':[1.06,1.09,1.12],
   'Warlock|Destruction':[1.10,1.12,1.14],
