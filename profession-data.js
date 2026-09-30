@@ -179,19 +179,62 @@ function recipeMetaForOutputKey(key){
   for(const [profession,def] of Object.entries(PROFESSIONS))for(const recipe of(def.recipes||[]))if(recipe?.output?.key===key)return{profession,recipe};
   return null
 }
+const SPECIAL_PREPARATIONS={
+  'echo-core':{openingBurstPct:4},
+  'pulse-core':{openingBurstPct:6},
+  'guardian-core':{lowHealthWardPct:3},
+  'corewrights-heart':{lowHealthWardPct:4,triageHealPct:3},
+  'ember-core-matrix':{executeDamagePct:5},
+  'mender-core':{triageHealPct:6},
+  'bulwark-core':{lowHealthWardPct:5},
+  'vault-core':{openingBurstPct:8},
+  'soulwrights-core':{executeDamagePct:6,triageHealPct:6},
+  'void-core':{lowHealthWardPct:7},
+  'ancient-core':{openingBurstPct:10},
+  'cellheart-core':{openingBurstPct:10,executeDamagePct:8,triageHealPct:8},
+  'field-stabiliser':{lowHealthWardPct:3},
+  'engineers-emergency-rig':{lowHealthWardPct:5},
+  'barrier-projector':{lowHealthWardPct:6},
+  'targeting-array':{openingBurstPct:6},
+  'recovery-drone':{triageHealPct:8},
+  'master-engineers-rig':{lowHealthWardPct:6,openingBurstPct:5},
+  'grid-override-charge':{openingBurstPct:7},
+  'singularity-device':{openingBurstPct:10}
+};
+function specialText(proc={}){
+  return [
+    proc.openingBurstPct?'First attack each encounter: +'+proc.openingBurstPct+'% damage.':null,
+    proc.executeDamagePct?'Targets below 35% HP: +'+proc.executeDamagePct+'% damage.':null,
+    proc.lowHealthWardPct?'Below 40% HP: '+proc.lowHealthWardPct+'% less damage taken.':null,
+    proc.triageHealPct?'Healing allies below 40% HP: +'+proc.triageHealPct+'% healing.':null
+  ].filter(Boolean).join(' ');
+}
 Object.entries(PROFESSIONS).forEach(([profession,def])=>(def.recipes||[]).forEach(recipe=>{
   const output=recipe.output||{},payload=output.payload||{};
   if(recipe.crafterOnly){payload.crafterOnly=true;payload.requiredProfession=profession;output.tradeState='soulbound'}
+  if(SPECIAL_PREPARATIONS[output.key]){payload.proc={...SPECIAL_PREPARATIONS[output.key]};payload.procText=specialText(payload.proc)}
   output.rarity=output.rarity||craftedRarity(recipe.level,recipe.endgame);
   if(payload.effect==='gear-enhancement'){
     payload.persistentAttachment=true;
     payload.attachmentTier=attachmentTier(recipe.level);
     delete payload.charges;
-    payload.description='Attach to an equipped '+payload.slot+' item. '+bonusText(payload.bonuses||{})+'. Remains on that item until replaced.';
+    payload.description='Attach to an equipped '+payload.slot+' item. '+bonusText(payload.bonuses||{})+'. '+(payload.procText?payload.procText+' ':'')+'Remains on that item until replaced.';
     output.category='consumable';
   }
 }));
 function itemSignature(item){return item?.rollId||item?.itemId||item?.name||null}
+function activeProcs(c){
+  const totals={};
+  const add=src=>Object.entries(src||{}).forEach(([k,v])=>totals[k]=(Number(totals[k])||0)+(Number(v)||0));
+  Object.values(c?.equipment||{}).forEach(item=>{
+    const a=item?.attachment;
+    if(a?.attachmentFamily==='relic-core'&&(!a.crafterOnly||a.boundCharacterId===c?.id))add(a.proc)
+  });
+  (Array.isArray(c?.activeProfessionBuffs)?c.activeProfessionBuffs:[]).forEach(e=>{
+    if(e.kind==='gadget'&&(Number(e.remainingBosses)||0)>0)add(e.proc)
+  });
+  return totals;
+}
 function activeBonuses(c){
   const totals={};
   const add=src=>Object.entries(src||{}).forEach(([k,v])=>totals[k]=(Number(totals[k])||0)+(Number(v)||0));
@@ -240,5 +283,5 @@ const BOSS_REAGENTS={
 const recipeById=id=>Object.values(PROFESSIONS).flatMap(p=>p.recipes).find(r=>r.id===id)||null;
 const skillThreshold=level=>100+Math.max(1,level)*5;
 const rollReagents=bossId=>(BOSS_REAGENTS[bossId]||[]).map(r=>({key:r.key,quantity:r.min+Math.floor(Math.random()*(r.max-r.min+1))}));
-window.CellboundProfessions={MATERIALS,PROFESSIONS,BOSS_REAGENTS,recipeById,recipeMetaForOutputKey,craftedRarity,attachmentTier,skillThreshold,rollReagents,materialRarityClass,materialArtHTML,bonusText,itemSignature,activeBonuses,activeEffects,consumeBossCharges};
+window.CellboundProfessions={MATERIALS,PROFESSIONS,BOSS_REAGENTS,recipeById,recipeMetaForOutputKey,craftedRarity,attachmentTier,skillThreshold,rollReagents,materialRarityClass,materialArtHTML,bonusText,itemSignature,activeBonuses,activeProcs,specialText,activeEffects,consumeBossCharges};
 })();
