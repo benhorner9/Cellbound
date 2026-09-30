@@ -1179,6 +1179,20 @@ function constrainToArena(ctx,pos,pad=1.35){
  }
  return p
 }
+function arenaCenter(ctx){
+ const b=arenaBounds(ctx),arena=ctx?.environment?.arena;
+ const x=arena?.shape==='ellipse'&&Number.isFinite(Number(arena.cx))?Number(arena.cx):(b.left+b.right)/2;
+ const y=arena?.shape==='ellipse'&&Number.isFinite(Number(arena.cy))?Number(arena.cy):(b.top+b.bottom)/2;
+ return constrainToArena(ctx,{x,y},2)
+}
+function formationBaseAngle(ctx,target){
+ if(!target?.position)return Math.PI;
+ const home=arenaCenter(ctx),dx=home.x-target.position.x,dy=home.y-target.position.y,drift=Math.hypot(dx,dy);
+ // The default composition keeps the party to the left of an enemy. Once an encounter
+ // drifts away from the room centre, flip the formation onto the centre-facing side so
+ // movement mechanics cannot ratchet the whole fight into a wall or corner.
+ return drift>15?Math.atan2(dy,dx):Math.PI
+}
 function enforceArenaBounds(ctx,reason='arena boundary'){
  [...ctx.players,...ctx.enemies].filter(u=>u?.alive).forEach(u=>{
   const safe=constrainToArena(ctx,u.position,1.7);
@@ -1298,7 +1312,7 @@ function meleeFormationPoint(ctx,u,target){
  const radius=u.role==='tank'?4.15:4.4;
  if(u.role==='tank'){
    // Keep roster membership stable across deaths/revives so survivors do not reshuffle.
-   const tanks=ctx.players.filter(p=>p.role==='tank'),slot=stableUnitIndex(ctx,u,tanks),angle=Math.PI+(slot-(tanks.length-1)/2)*.68;
+   const tanks=ctx.players.filter(p=>p.role==='tank'),slot=stableUnitIndex(ctx,u,tanks),angle=formationBaseAngle(ctx,target)+(slot-(tanks.length-1)/2)*.68;
    return{x:target.position.x+Math.cos(angle)*radius,y:target.position.y+Math.sin(angle)*radius}
  }
  const melee=ctx.players.filter(p=>p.role!=='tank'&&combatRangeStyle(p)==='melee'),slot=stableUnitIndex(ctx,u,melee);
@@ -1306,12 +1320,13 @@ function meleeFormationPoint(ctx,u,target){
  return{x:target.position.x+Math.cos(angle)*ring,y:target.position.y+Math.sin(angle)*ring}
 }
 function rangedFormationPoint(ctx,u,target,range){
+ const base=formationBaseAngle(ctx,target);
  if(u.role==='healer'){
-   const healers=ctx.players.filter(p=>p.role==='healer'),slot=stableUnitIndex(ctx,u,healers),angle=Math.PI+symmetricFormationOffset(slot)*.72,desired=21;
+   const healers=ctx.players.filter(p=>p.role==='healer'),slot=stableUnitIndex(ctx,u,healers),angle=base+symmetricFormationOffset(slot)*.72,desired=21;
    return{x:target.position.x+Math.cos(angle)*desired,y:target.position.y+Math.sin(angle)*desired}
  }
  const ranged=ctx.players.filter(p=>p.role!=='tank'&&p.role!=='healer'&&combatRangeStyle(p)==='ranged'),slot=stableUnitIndex(ctx,u,ranged);
- const angle=Math.PI+symmetricFormationOffset(slot),desired=Math.max(11,Math.min((Number(range)||25)*.60,18.5));
+ const angle=base+symmetricFormationOffset(slot),desired=Math.max(11,Math.min((Number(range)||25)*.60,18.5));
  return{x:target.position.x+Math.cos(angle)*desired,y:target.position.y+Math.sin(angle)*desired}
 }
 function supportFormationAnchor(ctx,u,target){
@@ -3243,6 +3258,17 @@ function enemyBasicAttack(ctx,e){
  if(!e.alive||ctx.time<e.movingUntil||isCrowdControlled(e))return;
  if(e.passive){e.nextAttack=ctx.time+1000;return}
  const live=livingPlayers(ctx);if(!live.length)return;
+ // Bosses can be pulled by repeated avoid mechanics. Between active mechanics, gently
+ // leash them back toward the room's engagement centre before the fight gets pinned
+ // against an edge. Scripted boss movement still wins while a mechanic is active.
+ if(e.kind==='boss'&&!ctx.activeEnemyCast){
+  const home=arenaCenter(ctx),drift=dist(e.position,home);
+  if(drift>29){
+   const step=Math.min(9,drift-22),dx=(home.x-e.position.x)/drift,dy=(home.y-e.position.y)/drift;
+   moveTo(ctx,e,{x:e.position.x+dx*step,y:e.position.y+dy*step},520,'boss recenter');
+   e.nextAttack=ctx.time+620;return
+  }
+ }
  const randomTarget=e.targeting==='random',target=randomTarget?live[Math.floor(ctx.rng()*live.length)]:(topThreatTarget(ctx,e)||live[0]);if(!target)return;
  setAggro(ctx,e,target,randomTarget?'random targeting':'threat');
  const range=Math.max(2,Number(e.attackRange)||5);
@@ -3273,16 +3299,25 @@ function mechanicStat(ctx,type,failed){
 }
 function planMovement(ctx,u,type,anchor){
  if(!u.alive)return;
+ const home=arenaCenter(ctx),live=livingPlayers(ctx),i=Math.max(0,live.findIndex(p=>p.id===u.id)),count=Math.max(1,live.length),origin=anchor?.position||home,base=anchor?.position?formationBaseAngle(ctx,anchor):0;
  let to=copy(u.position);
  if(type==='cone'){
-  if(u.role==='tank')to={x:58,y:50};
-  else to={x:34,y:20+(ctx.players.indexOf(u)%4)*18};
+  if(u.role==='tank'&&anchor?.position)to=meleeFormationPoint(ctx,u,anchor);
+  else{
+   const spread=(i-(count-1)/2)*.42,angle=base+Math.PI*.58+spread,radius=14+(i%2)*2.5;
+   to={x:origin.x+Math.cos(angle)*radius,y:origin.y+Math.sin(angle)*radius}
+  }
  }else if(type==='circle'||type==='circles'){
-  const i=ctx.players.indexOf(u);to={x:18+(i%3)*18,y:18+Math.floor(i/3)*58};
+  // Spread symmetrically around the encounter instead of always fleeing to the
+  // upper-left. A shorter tank radius keeps the boss from following the tank to a wall.
+  const angle=base-Math.PI*.72+(i/count)*Math.PI*1.44,radius=u.role==='tank'?7.5:14+(i%2)*3;
+  to={x:origin.x+Math.cos(angle)*radius,y:origin.y+Math.sin(angle)*radius}
  }else if(type==='line'){
-  to={x:u.position.x,y:u.position.y+(u.position.y<50?-14:14)};
+  const dx=u.position.x-origin.x,dy=u.position.y-origin.y,len=Math.hypot(dx,dy)||1,px=-dy/len,py=dx/len;
+  const a=openPosition(ctx,{x:u.position.x+px*12,y:u.position.y+py*12},1.7),b=openPosition(ctx,{x:u.position.x-px*12,y:u.position.y-py*12},1.7);
+  to=dist(a,home)<=dist(b,home)?a:b
  }
- moveTo(ctx,u,to,320,'mechanic response');
+ moveTo(ctx,u,openPosition(ctx,to,1.7),320,'mechanic response');
 }
 function mechanicResponse(ctx,u,type,duration,enemy){
  const baseReaction=executionReaction(ctx,u,'movement');
@@ -4400,6 +4435,19 @@ function runSelfTests(){
   if(normalFormationEnds.length<3)return false;
   const xs=normalFormationEnds.map(p=>p.x),ys=normalFormationEnds.map(p=>p.y);
   return Math.max(...xs)-Math.min(...xs)<34&&Math.max(...ys)-Math.min(...ys)<38
+ });
+ const driftRun=simulate({party:[
+  {id:'dt',name:'Tank',class:'Warrior',spec:'Protection',power:18,level:10},
+  {id:'dh',name:'Healer',class:'Priest',spec:'Holy',power:18,level:10},
+  {id:'dd1',name:'Melee',class:'Rogue',spec:'Assassination',power:18,level:10},
+  {id:'dd2',name:'Caster',class:'Mage',spec:'Arcane',power:18,level:10},
+  {id:'dd3',name:'Ranged',class:'Hunter',spec:'Marksman',power:18,level:10}
+ ],encounter:{id:'corner-drift',title:'Corner Drift',kind:'boss',enemies:['Drift Boss'],enemyHealth:8000,mechanicIntervalMs:720,mechanics:[['Spread','circles',900]]},seed:'corner-drift',maxDurationMs:5200});
+ const driftMoves=driftRun.events.filter(e=>e.type==='MOVEMENT_END'&&e.result==='mechanic response'&&e.position).map(e=>e.position);
+ test('Mechanic Movement Avoids Corner Bias',()=>{
+  if(driftMoves.length<5)return false;
+  const meanX=driftMoves.reduce((n,p)=>n+p.x,0)/driftMoves.length,meanY=driftMoves.reduce((n,p)=>n+p.y,0)/driftMoves.length;
+  return meanX>38&&meanX<72&&meanY>24&&meanY<76
  });
  const displacement=simulate({party:[
   {id:'kt',name:'Tank',class:'Warrior',spec:'Protection',power:9,level:10},
