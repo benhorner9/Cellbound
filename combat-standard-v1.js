@@ -16,7 +16,7 @@ function engineVersion(){
 }
 function simulate(options={},meta={}){
   const engine=core();
-  const result=engine.simulate(options);
+  const result=engine.simulate(meta?.zone?{...options,professionZone:meta.zone}:options);
   if(!result||!Array.isArray(result.events)||!result.finalState)throw new Error('Combat Reborn returned an invalid combat result');
   result.combatModel=MODEL;
   result.engineVersion=result.engineVersion||engineVersion();
