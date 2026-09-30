@@ -170,15 +170,16 @@ function close(silentExternal=false){
  if(wasExternal&&!silentExternal&&typeof callback==='function'){try{callback()}catch(error){console.warn('Shared combat close callback failed',error)}}
 }
 function knowledge(key){const p=party();return p.length?Math.round(p.reduce((n,c)=>n+(Number(c.knowledge&&c.knowledge[key])||0),0)/p.length):0}
-function readiness(){
+function readiness(normalOnly=false){
  const p=party(),s=state();
  if(!Game||!Game.ready)return{ok:false,reason:'Guild data is still loading.'};
  if(s?.onboarding?.complete===true&&s?.progression?.ashenVaultUnlocked===false)return{ok:false,reason:'Complete Ashes on the East Road in the Quest Journal to unlock The Ashen Vault.'};
  if(p.length!==5)return{ok:false,reason:'Build a complete five-character party in Party Builder first.'};
  const locked=p.find(c=>Game.isUnavailable(c));
  if(locked)return{ok:false,reason:locked.name+' is still recovering from Cell Shock.'};
- const req=Math.max(18,Number(endgameConfig()?.recommendedItemLevel)||18);if(ilvl()<req)return{ok:false,reason:'Party Item Level '+ilvl()+'. '+(endgameConfig()?.diff?.name||'Normal')+' requires Item Level '+req+'.'};
- return{ok:true,reason:'Ready to enter.'};
+ const cfg=normalOnly?null:endgameConfig(),req=normalOnly?18:Math.max(18,Number(cfg?.recommendedItemLevel)||18),label=normalOnly?'Normal':(cfg?.diff?.name||'Normal');
+ if(ilvl()<req)return{ok:false,reason:'Party Item Level '+ilvl()+'. '+label+' requires Item Level '+req+'.'};
+ return{ok:true,reason:normalOnly?'Normal difficulty is available.':'Ready to enter.'};
 }
 function ready(){return readiness().ok}
 function groupButtons(key,items){return '<div class="cb2d-plan-row" data-plan="'+key+'">'+items.map(x=>'<button class="'+(tactics[key]===x[0]?'active':'')+'" data-pick="'+key+':'+x[0]+'"><b>'+x[1]+'</b><small>'+x[2]+'</small></button>').join('')+'</div>'}
@@ -221,15 +222,15 @@ function bindEndgamePrep(){
 }
 
 function briefing(){
- const gate=readiness(),r=root();document.body.classList.add('cb2d-open');r.hidden=false;
- if(!gate.ok){
-   r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · ENTRY CHECK</small><h2>Dungeon entry is currently blocked.</h2></div><button data-close aria-label="Close dungeon">×</button></header><div class="cb2d-blocked"><b>NOT READY</b><p>'+esc(gate.reason)+'</p><button data-party>OPEN PARTY BUILDER →</button></div></section>';
+ const baseGate=readiness(true),gate=readiness(),r=root();document.body.classList.add('cb2d-open');r.hidden=false;
+ if(!baseGate.ok){
+   r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · ENTRY CHECK</small><h2>Dungeon entry is currently blocked.</h2></div><button data-close aria-label="Close dungeon">×</button></header><div class="cb2d-blocked"><b>NOT READY</b><p>'+esc(baseGate.reason)+'</p><button data-party>OPEN PARTY BUILDER →</button></div></section>';
    r.querySelector('[data-close]').onclick=close;
    r.querySelector('[data-party]').onclick=()=>{close();Game.switchView('party')};
    return;
  }
 
- r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LEVELS 3–5 · ILVL 18+ · TACTICAL BRIEFING</small><h2>Set the plan once. Then watch the dungeon run.</h2></div><button data-close aria-label="Close dungeon">×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">These tactics stay in place for the whole run. Your party will move, react and fight automatically; your job is to choose the approach before the pull.</p>'+endgamePrepMarkup()+'<h3>Expedition Style</h3><p class="cb2d-intro">Choose the overall approach. Your party handles interrupts, crowd control, cooldowns, adds, defensives and movement automatically from this plan.</p>'+groupButtons('preset',[['safe','SAFE','Slower pulls, earlier defensives and stronger mechanic control.'],['balanced','BALANCED','Standard pace with sensible reactions to danger.'],['aggressive','AGGRESSIVE','Faster pulls, freer cooldown use and more boss pressure.']])+'</main><aside><small>ACTIVE FIVE · PARTY LV '+partyLevel()+' · ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>Lv. '+Math.max(1,Number(c.level)||1)+' · '+esc(c.class)+' · '+esc(c.spec)+'</small></span><strong>'+String(role(c)).toUpperCase()+'</strong></div>').join('')+'<div class="cb2d-prep-summary"><small>ACTIVE PROFESSION PREP</small>'+party().map(c=>{const fx=P?.activeEffects?.(c)||[];return fx.length?'<p><b>'+esc(c.name)+'</b><span>'+fx.map(x=>esc(x.name)+' · '+x.remainingBosses+' bosses').join('<br>')+'</span></p>':''}).join('')+'</div><button class="cb2d-start" data-start>BEGIN EXPEDITION →</button></aside></div></section>';
+ r.innerHTML='<section class="cb2d-shell cb2d-brief"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LEVELS 3–5 · ILVL 18+ · TACTICAL BRIEFING</small><h2>Set the plan once. Then watch the dungeon run.</h2></div><button data-close aria-label="Close dungeon">×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">These tactics stay in place for the whole run. Your party will move, react and fight automatically; your job is to choose the approach before the pull.</p>'+endgamePrepMarkup()+'<h3>Expedition Style</h3><p class="cb2d-intro">Choose the overall approach. Your party handles interrupts, crowd control, cooldowns, adds, defensives and movement automatically from this plan.</p>'+groupButtons('preset',[['safe','SAFE','Slower pulls, earlier defensives and stronger mechanic control.'],['balanced','BALANCED','Standard pace with sensible reactions to danger.'],['aggressive','AGGRESSIVE','Faster pulls, freer cooldown use and more boss pressure.']])+'</main><aside><small>ACTIVE FIVE · PARTY LV '+partyLevel()+' · ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>Lv. '+Math.max(1,Number(c.level)||1)+' · '+esc(c.class)+' · '+esc(c.spec)+'</small></span><strong>'+String(role(c)).toUpperCase()+'</strong></div>').join('')+'<div class="cb2d-prep-summary"><small>ACTIVE PROFESSION PREP</small>'+party().map(c=>{const fx=P?.activeEffects?.(c)||[];return fx.length?'<p><b>'+esc(c.name)+'</b><span>'+fx.map(x=>esc(x.name)+' · '+x.remainingBosses+' bosses').join('<br>')+'</span></p>':''}).join('')+'</div><div class="cb2d-prep-summary"><small>SELECTED DIFFICULTY</small><p><b>'+(gate.ok?'READY':'ITEM LEVEL REQUIRED')+'</b><span>'+esc(gate.reason)+'</span></p></div><button class="cb2d-start" data-start '+(gate.ok?'':'disabled')+'>BEGIN EXPEDITION →</button></aside></div></section>';
  r.querySelector('[data-close]').onclick=close;
  r.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{const a=b.dataset.pick.split(':');if(a[0]==='preset')applyTacticsPreset(a[1]);else tactics[a[0]]=a[1];r.querySelectorAll('[data-plan="'+a[0]+'"] button').forEach(x=>x.classList.toggle('active',x===b))});
  r.querySelector('[data-start]').onclick=start;
@@ -267,6 +268,7 @@ function ashenRestoreRuntime(attempt){
 }
 
 async function start(){
+ const gate=readiness();if(!gate.ok){briefing();return}
  const startButton=root().querySelector('[data-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
  await Game.persistState?.();
  const service=await waitForEndgame(),eg=endgameConfig(),attempt=await service?.beginOrResumeAttempt?.('ashen-vault')||await service?.beginAttempt?.('ashen-vault');
@@ -1703,7 +1705,7 @@ function openDungeon(options){
 
 function syncEntryButton(){
  const b=$('#enterDungeonBtn');if(!b||!Game?.ready)return;
- const gate=readiness();
+ const gate=readiness(true);
  b.disabled=false;
  b.setAttribute('aria-disabled',gate.ok?'false':'true');
  b.title=gate.reason;
