@@ -536,6 +536,30 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 .cbr-plan-lock-copy b{display:block;margin-top:3px;color:#e7f2f9;font-size:12px}
 .cbr-plan-lock-copy span{display:block;margin-top:4px;color:#8092a2;font-size:10px;line-height:1.45}
 
+.cb2d-controls.cbr-plan-lock.has-consumable{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(150px,190px);
+  gap:10px;
+  align-items:center
+}
+.cb2d-potion-button{
+  min-height:50px!important;
+  padding:8px 10px!important;
+  border:1px solid rgba(105,198,151,.24)!important;
+  border-radius:7px;
+  background:linear-gradient(180deg,rgba(22,60,44,.9),rgba(10,29,24,.94))!important;
+  color:#d7efe2!important;
+  text-align:left
+}
+.cb2d-potion-button b{color:#d9f2e3!important;font-size:.48rem!important;letter-spacing:.04em}
+.cb2d-potion-button small{color:#83ab96!important;font-size:.34rem!important;line-height:1.35}
+.cb2d-potion-button:not([disabled]):active{transform:translateY(1px)}
+.cb2d-potion-button[disabled]{opacity:.42;cursor:not-allowed}
+@media(max-width:760px){
+  .cb2d-controls.cbr-plan-lock.has-consumable{grid-template-columns:1fr}
+  .cb2d-controls.cbr-plan-lock.has-consumable .cb2d-potion-button{width:100%}
+}
+
 .cbr-replay-controls{
   position:absolute;left:12px;top:12px;z-index:60;display:flex;gap:6px;padding:6px;
   border:1px solid rgba(129,193,231,.24);border-radius:10px;background:rgba(4,10,16,.86);
