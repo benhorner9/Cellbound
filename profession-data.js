@@ -406,16 +406,44 @@ const GENERAL_REAGENT_POOL=[
 ];
 const BOSS_RESOURCE_POOLS={
   ashwarden:[
-    {key:'razorhide',min:1,max:2},{key:'rune-dust',min:2,max:4},{key:'tempering-flux',min:1,max:3},
-    {key:'zeltiran-hide',min:2,max:4},{key:'hollow-fibre',min:2,max:4},{key:'rough-gemstone',min:2,max:3}
+    {key:'hollowroot',min:1,max:3},{key:'tempering-flux',min:1,max:3},{key:'rune-dust',min:1,max:3},
+    {key:'zeltiran-iron',min:1,max:3},{key:'hollow-fibre',min:1,max:2}
   ],
   embermaw:[
-    {key:'emberleaf',min:1,max:3},{key:'ashen-silk',min:1,max:3},{key:'conductive-coil',min:1,max:2},
-    {key:'salvaged-parts',min:2,max:4},{key:'hollowroot',min:2,max:4},{key:'cavebeast-meat',min:2,max:4}
+    {key:'cavebeast-meat',min:2,max:4},{key:'zeltiran-hide',min:1,max:3},{key:'emberleaf',min:1,max:3},
+    {key:'hollowroot',min:1,max:3},{key:'razorhide',min:1,max:2}
   ],
   vaultheart:[
-    {key:'spiritcap',min:1,max:2},{key:'prismatic-shard',min:1,max:2},{key:'arcane-ink',min:1,max:3},
-    {key:'etched-vellum',min:2,max:4},{key:'rough-gemstone',min:2,max:4},{key:'rune-dust',min:2,max:4}
+    {key:'rough-gemstone',min:2,max:4},{key:'prismatic-shard',min:1,max:2},{key:'rune-dust',min:2,max:4},
+    {key:'arcane-ink',min:1,max:3},{key:'etched-vellum',min:2,max:4},{key:'spiritcap',min:1,max:2}
+  ]
+};
+const CONTENT_RESOURCE_PROFILES={
+  'hollow-sanctum':[
+    {key:'rune-dust',min:2,max:4},{key:'rough-gemstone',min:2,max:4},{key:'prismatic-shard',min:1,max:2},
+    {key:'arcane-ink',min:1,max:3},{key:'etched-vellum',min:2,max:4}
+  ],
+  'chaos-canyon':[
+    {key:'cavebeast-meat',min:2,max:5},{key:'zeltiran-hide',min:2,max:4},{key:'razorhide',min:1,max:2},
+    {key:'hollowroot',min:2,max:4},{key:'emberleaf',min:1,max:3},{key:'spiritcap',min:1,max:2}
+  ],
+  'blackout-station':[
+    {key:'salvaged-parts',min:2,max:5},{key:'conductive-coil',min:1,max:3},{key:'tempering-flux',min:1,max:3},
+    {key:'zeltiran-iron',min:1,max:3},{key:'rune-dust',min:1,max:3}
+  ],
+  'fractured-ages':[
+    {key:'zeltiran-iron',min:1,max:3},{key:'tempering-flux',min:1,max:3},{key:'etched-vellum',min:2,max:4},
+    {key:'arcane-ink',min:1,max:3},{key:'salvaged-parts',min:2,max:4},{key:'conductive-coil',min:1,max:2},
+    {key:'prismatic-shard',min:1,max:2},{key:'rune-dust',min:2,max:4}
+  ],
+  manor:[
+    {key:'hollow-fibre',min:2,max:5},{key:'ashen-silk',min:1,max:3},{key:'etched-vellum',min:2,max:4},
+    {key:'arcane-ink',min:1,max:3},{key:'salvaged-parts',min:2,max:4},{key:'conductive-coil',min:1,max:2},
+    {key:'tempering-flux',min:1,max:3}
+  ],
+  'null-complex':[
+    {key:'salvaged-parts',min:2,max:4},{key:'conductive-coil',min:1,max:2},{key:'rune-dust',min:1,max:3},
+    {key:'arcane-ink',min:1,max:2},{key:'rough-gemstone',min:1,max:3},{key:'hollow-fibre',min:1,max:3}
   ]
 };
 const recipeById=id=>Object.values(PROFESSIONS).flatMap(p=>p.recipes).find(r=>r.id===id)||null;
@@ -433,9 +461,18 @@ function mergeReagentDrops(drops=[]){
 }
 function rollReagents(bossId){
   const fixed=(BOSS_REAGENTS[bossId]||[]).map(rollMaterial);
-  const general=randomReagentPicks(GENERAL_REAGENT_POOL,3);
-  const themed=randomReagentPicks(BOSS_RESOURCE_POOLS[bossId]||GENERAL_REAGENT_POOL,1);
-  return mergeReagentDrops([...fixed,...general,...themed]);
+  const themed=randomReagentPicks(BOSS_RESOURCE_POOLS[bossId]||GENERAL_REAGENT_POOL,3);
+  return mergeReagentDrops([...fixed,...themed]);
 }
-window.CellboundProfessions={MATERIALS,PROFESSIONS,PROFESSION_REAGENT_TIERS,BOSS_REAGENTS,GENERAL_REAGENT_POOL,BOSS_RESOURCE_POOLS,recipeById,recipeMetaForOutputKey,craftedRarity,attachmentTier,skillThreshold,rollReagents,materialRarityClass,materialArtHTML,bonusText,itemSignature,activeBonuses,activeProcs,specialText,activeEffects,consumeBossCharges,consumeBossChargesOnce};
+function rollContentReagents(contentId,options={}){
+  const pool=CONTENT_RESOURCE_PROFILES[contentId]||GENERAL_REAGENT_POOL;
+  const difficulty=String(options.difficulty||'normal').toLowerCase(),tier=Math.max(0,Number(options.tier)||0);
+  const count=Math.max(1,Number(options.count)||((difficulty==='normal')?3:4));
+  const bonus=difficulty==='heroic'?1:difficulty==='cellbound'?1+Math.floor(tier/5):0;
+  return randomReagentPicks(pool,count).map(d=>({key:d.key,quantity:Math.max(1,d.quantity+bonus)}));
+}
+function formatReagentDrops(drops=[]){
+  return (drops||[]).map(d=>(MATERIALS[d.key]?.name||d.key)+' ×'+d.quantity).join(', ');
+}
+window.CellboundProfessions={MATERIALS,PROFESSIONS,PROFESSION_REAGENT_TIERS,BOSS_REAGENTS,GENERAL_REAGENT_POOL,BOSS_RESOURCE_POOLS,CONTENT_RESOURCE_PROFILES,recipeById,recipeMetaForOutputKey,craftedRarity,attachmentTier,skillThreshold,rollReagents,rollContentReagents,formatReagentDrops,materialRarityClass,materialArtHTML,bonusText,itemSignature,activeBonuses,activeProcs,specialText,activeEffects,consumeBossCharges,consumeBossChargesOnce};
 })();
