@@ -201,7 +201,7 @@ const LOOT_PROFILES={
    heroic:{tiers:{3:.92,4:.08},itemLevel:gearBand(38,40,42)}
  },
  'fractured-ages':{
-   normal:{tiers:{3:1},itemLevel:gearBand(40,42,44)},
+   normal:{tiers:{3:1},itemLevel:gearBand(38,40,40)},
    heroic:{tiers:{3:.90,4:.10},itemLevel:gearBand(42,43,44)}
  }
 };
