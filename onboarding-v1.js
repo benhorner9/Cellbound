@@ -576,19 +576,6 @@ function tdPct(selector){
   const e=$(selector);return e?{x:parseFloat(e.style.left)||50,y:parseFloat(e.style.top)||50}:{x:50,y:50};
 }
 function tdEnemyPct(index){return tdPct('[data-td-enemy="'+index+'"]')}
-function tdFormationPoint(c,index){
-  const ep=tdEnemyPct(index),profile=tdProfile(c);
-  if(profile==='tank')return{x:ep.x-9,y:ep.y};
-  if(profile==='melee'){
-    const m=state().roster.filter(x=>tdProfile(x)==='melee'),i=Math.max(0,m.indexOf(c)),offset=[-10,10,-15][i]||0;
-    return{x:ep.x-14-(i%2)*2,y:ep.y+offset};
-  }
-  if(profile==='ranged'){
-    const r=state().roster.filter(x=>tdProfile(x)==='ranged'),i=Math.max(0,r.indexOf(c));
-    return{x:ep.x-31-i*3,y:[31,69,48][i]||50};
-  }
-  return{x:ep.x-42,y:66};
-}
 function tdRegroup(){
   const melee=state().roster.filter(x=>tdProfile(x)==='melee'),ranged=state().roster.filter(x=>tdProfile(x)==='ranged');
   state().roster.forEach(c=>{
