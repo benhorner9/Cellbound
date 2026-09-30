@@ -275,6 +275,15 @@ function consumeBossCharges(chars=[]){
   });
   return expired;
 }
+function consumeBossChargesOnce(chars=[],encounterKey='',state=null){
+  const key=String(encounterKey||'').trim();
+  if(!key||!state)return[];
+  state.professionBossChargeClaims=Array.isArray(state.professionBossChargeClaims)?state.professionBossChargeClaims:[];
+  if(state.professionBossChargeClaims.includes(key))return[];
+  state.professionBossChargeClaims.push(key);
+  state.professionBossChargeClaims=state.professionBossChargeClaims.slice(-250);
+  return consumeBossCharges(chars);
+}
 const BOSS_REAGENTS={
   ashwarden:[{key:'ashen-soul-fragment',min:2,max:4},{key:'warden-iron',min:1,max:2}],
   embermaw:[{key:'ashen-soul-fragment',min:2,max:4},{key:'ember-core',min:1,max:2}],
@@ -283,5 +292,5 @@ const BOSS_REAGENTS={
 const recipeById=id=>Object.values(PROFESSIONS).flatMap(p=>p.recipes).find(r=>r.id===id)||null;
 const skillThreshold=level=>100+Math.max(1,level)*5;
 const rollReagents=bossId=>(BOSS_REAGENTS[bossId]||[]).map(r=>({key:r.key,quantity:r.min+Math.floor(Math.random()*(r.max-r.min+1))}));
-window.CellboundProfessions={MATERIALS,PROFESSIONS,BOSS_REAGENTS,recipeById,recipeMetaForOutputKey,craftedRarity,attachmentTier,skillThreshold,rollReagents,materialRarityClass,materialArtHTML,bonusText,itemSignature,activeBonuses,activeProcs,specialText,activeEffects,consumeBossCharges};
+window.CellboundProfessions={MATERIALS,PROFESSIONS,BOSS_REAGENTS,recipeById,recipeMetaForOutputKey,craftedRarity,attachmentTier,skillThreshold,rollReagents,materialRarityClass,materialArtHTML,bonusText,itemSignature,activeBonuses,activeProcs,specialText,activeEffects,consumeBossCharges,consumeBossChargesOnce};
 })();
