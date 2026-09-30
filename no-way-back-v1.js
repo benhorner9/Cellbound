@@ -2,7 +2,6 @@
 'use strict';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const TITLE='No Way Back';
 const QUEST={
   id:'no-way-back',
