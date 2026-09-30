@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.27';
+const VERSION='1.3.28';
 // Balance baseline: 2026-09-29 role and progression audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
@@ -2177,24 +2177,35 @@ function specDamageBalance(u){
   'Monk|Brewmaster':[1.20,1.24,1.30],
   'Death Knight|Blood':[.62,.62,.58],
   'Demon Hunter|Vengeance':[.52,.54,.52],
-  'Warrior|Arms':[1.80,1.65,1.42],
-  'Rogue|Assassination':[1.50,1.30,1.12],
-  'Warlock|Destruction':[1.10,1.12,1.14],
-  'Death Knight|Frost':[1.12,1.12,1.12],
-  'Demon Hunter|Havoc':[.76,.78,.78],
-  'Hunter|Beast Mastery':[.88,.88,.86]
+  'Warrior|Arms':[2.10,2.15,2.18],
+  'Priest|Shadow':[.82,.82,.82],
+  'Druid|Balance':[.95,.97,.97],
+  'Hunter|Marksman':[1.30,1.32,1.34],
+  'Hunter|Beast Mastery':[.95,.95,.96],
+  'Rogue|Assassination':[2.12,2.12,2.13],
+  'Rogue|Outlaw':[1.35,1.40,1.40],
+  'Mage|Arcane':[1.10,1.10,1.12],
+  'Mage|Frost':[1.20,1.22,1.22],
+  'Shaman|Elemental':[1,1,1],
+  'Warlock|Demonology':[.88,.90,.90],
+  'Warlock|Destruction':[1.01,1.02,1.01],
+  'Monk|Windwalker':[.96,.98,.98],
+  'Death Knight|Frost':[1.10,1.10,1.11],
+  'Death Knight|Unholy':[.88,.88,.88],
+  'Demon Hunter|Havoc':[.69,.69,.70],
+  'Evoker|Devastation':[.92,.92,.93]
  };
  const v=curves[key];return v?progressionBlend(u.level,...v):1
 }
 function specHealingBalance(u){
  const key=u.class+'|'+u.spec;
  const curves={
-  'Paladin|Holy':[.94,.96,.90],
-  'Priest|Holy':[1.15,1.02,1.00],
-  'Druid|Restoration':[1.42,1.30,1.30],
-  'Shaman|Restoration':[1.65,1.08,1.35],
-  'Monk|Mistweaver':[1.85,1.55,1.35],
-  'Evoker|Preservation':[1.05,1.12,.92]
+  'Paladin|Holy':[1.12,1.34,1.26],
+  'Priest|Holy':[1.62,1.24,1.20],
+  'Druid|Restoration':[1.18,1.18,1.12],
+  'Shaman|Restoration':[1.90,1.90,1.78],
+  'Monk|Mistweaver':[1.40,1.30,1.25],
+  'Evoker|Preservation':[.94,.98,.94]
  };
  const v=curves[key];return v?progressionBlend(u.level,...v):1
 }
@@ -2558,7 +2569,8 @@ function chooseAbility(ctx,u,target){
   const needsSingle=low&&healthRatio(low)<(mistweaver?.88:.90);
   if(single.length&&(needsTank||needsSingle)){
    let healTarget=needsSingle&&low&&healthRatio(low)<tankRatio?low:(tank||low);
-   let ratio=healthRatio(healTarget),chosen=ratio<.58?single[0]:single[single.length-1];
+   const efficient=[...single].sort((a,b)=>((b.heal||0)/Math.max(1,b.cost||1))-((a.heal||0)/Math.max(1,a.cost||1)))[0];
+   let ratio=healthRatio(healTarget),chosen=ratio<.58?single[0]:efficient;
    if(injured.length>=2&&shouldMistake(ctx,u,'triage',6500)){
     const alternatives=alive.filter(p=>p.id!==healTarget?.id&&healthRatio(p)<.98).sort((a,b)=>healthRatio(b)-healthRatio(a));
     if(alternatives.length){healTarget=alternatives[0];ratio=healthRatio(healTarget);chosen=single[0]}
