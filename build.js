@@ -164,7 +164,7 @@ for(const file of files){
   }
   if(file==='endgame-data-v1.js'){
     if(!contents.includes('raidExclusiveTier:5')||!contents.includes('powerCeiling:44'))throw new Error('Dungeon loot must stop below raid-exclusive Tier 5');
-    if(!contents.includes("'fractured-ages':")||!contents.includes("itemLevel:gearBand(40,42,44)"))throw new Error('Fractured Ages Normal loot band regressed');
+    if(!contents.includes("'fractured-ages':")||!contents.includes("itemLevel:gearBand(38,40,40)"))throw new Error('Fractured Ages Normal loot band regressed');
     if(!contents.includes("return{tiers:{3:.50,4:.50},itemLevel:gearBand(44,44,44)"))throw new Error('Peak Cellbound+ loot must cap at Item Level 44');
     if(!contents.includes('enemyHealth:1.50,enemyDamage:1.38')||!contents.includes('enemyHealth:1.60*(1+(t-1)*.08)'))throw new Error('Full-gear Heroic / Cellbound+ combat tuning is missing');
     if(!contents.includes('pieces4:'))throw new Error('T4 set progression must use the 2/4-piece structure');
