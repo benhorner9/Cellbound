@@ -315,6 +315,8 @@ for(const file of files){
     if(!contents.includes('CellboundExpeditionPresentation'))throw new Error(file+' is not wired to the shared PvE expedition presentation');
     if(contents.includes('<select data-')&&contents.includes('-tier'))throw new Error(file+' still uses the broken native Cellbound+ tier selector');
     if(!contents.includes('tierPickerMarkup')||!contents.includes("querySelectorAll('[data-"))throw new Error(file+' is not using the shared tap-friendly Cellbound+ tier picker');
+    for(const hook of ['function readiness(normalOnly=false)','baseGate=readiness(true),gate=readiness()'])if(!contents.includes(hook))throw new Error(file+' must keep the briefing/difficulty selector accessible when only the selected difficulty Item Level is too high: '+hook);
+    if((contents.match(/readiness\(true\)/g)||[]).length<2)throw new Error(file+' must use Normal readiness for the dungeon browser and briefing access gate');
   }
   if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','fractured-ages-v1.js'].includes(file)){
     if(file!=='dungeon-2d-v1.js'&&!contents.includes('rollClearLootBundle'))throw new Error(file+' must use the balanced multi-drop clear reward bundle');
