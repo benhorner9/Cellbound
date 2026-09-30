@@ -311,6 +311,7 @@ function setSync(text,tone='ok'){if(!ui.syncStatus)return;ui.syncStatus.textCont
 function writeLocal(){if(!state)return;nativeLocalSet.call(localStorage,STORAGE,JSON.stringify(state));}
 async function persistState(){
   if(!currentUser||!state)return;
+  if(account?.guild_name)state.socialDisplayName=account.guild_name;
   const snapshot=JSON.parse(JSON.stringify(state));setSync('Saving…','busy');
   saveSerial=saveSerial.then(async()=>{
     const {error}=await supabaseClient.from('guild_accounts').upsert({user_id:currentUser.id,game_state:snapshot,updated_at:new Date().toISOString()},{onConflict:'user_id'});
@@ -322,18 +323,19 @@ function save(){writeLocal();clearTimeout(syncTimer);syncTimer=setTimeout(()=>pe
 async function loadAccount(user){
   currentUser=user;setSync('Loading…','busy');
   const [accountResult,identityResult]=await Promise.all([
-    supabaseClient.from('guild_accounts').select('user_id,game_state,membership_active_until,membership_override,updated_at').eq('user_id',user.id).maybeSingle(),
+    supabaseClient.from('guild_accounts').select('user_id,game_state,guild_name,membership_active_until,membership_override,updated_at').eq('user_id',user.id).maybeSingle(),
     supabaseClient.rpc('cellbound_social_identity')
   ]);
   const {data,error}=accountResult,identity=identityResult?.data;
   if(error){
     console.error('Cellbound account load failed',error);
-    account={user_id:user.id,membership_active_until:null,membership_override:false,staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible)};
+    account={user_id:user.id,guild_name:null,membership_active_until:null,membership_override:false,staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible)};
     state=migrateState(localCandidate(user.id)||initialState());setSync('Local fallback','error');writeLocal();return;
   }
   if(identityResult?.error)console.warn('Cellbound social identity unavailable',identityResult.error);
-  account={...(data||{user_id:user.id,membership_active_until:null,membership_override:false}),staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible)};
+  account={...(data||{user_id:user.id,guild_name:null,membership_active_until:null,membership_override:false}),staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible)};
   state=migrateState(data?.game_state&&Object.keys(data.game_state).length?data.game_state:(localCandidate(user.id)||initialState()));
+  if(account.guild_name)state.socialDisplayName=account.guild_name;
   removeInvalidPartyMembers(state);nativeLocalSet.call(localStorage,LOCAL_OWNER,user.id);writeLocal();
   if(!data){await supabaseClient.from('guild_accounts').insert({user_id:user.id,game_state:state,updated_at:new Date().toISOString()});}
   else await persistState();
@@ -345,9 +347,10 @@ async function refreshStateFromServer({render=true}={}){
   clearTimeout(syncTimer);
   try{
     await saveSerial;
-    const {data,error}=await supabaseClient.from('guild_accounts').select('game_state,updated_at').eq('user_id',currentUser.id).maybeSingle();
+    const {data,error}=await supabaseClient.from('guild_accounts').select('game_state,guild_name,updated_at').eq('user_id',currentUser.id).maybeSingle();
     if(error||!data?.game_state){if(error)console.warn('Cellbound state refresh failed',error);return false;}
-    state=migrateState(data.game_state);removeInvalidPartyMembers(state);nativeLocalSet.call(localStorage,LOCAL_OWNER,currentUser.id);writeLocal();
+    if(account)account.guild_name=data.guild_name||account.guild_name||null;
+    state=migrateState(data.game_state);if(account?.guild_name)state.socialDisplayName=account.guild_name;removeInvalidPartyMembers(state);nativeLocalSet.call(localStorage,LOCAL_OWNER,currentUser.id);writeLocal();
     if(render)renderAll();setSync('Saved','ok');return true;
   }catch(err){console.warn('Cellbound state refresh failed',err);return false;}
 }
