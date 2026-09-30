@@ -137,6 +137,7 @@ for(const file of files){
     for(const hook of ['#party .party-choice{','grid-template-columns:56px minmax(0,1fr) auto','#party .party-choice>div:nth-child(2){','text-overflow:ellipsis'])if(!contents.includes(hook))throw new Error('Active Party portrait/text spacing is missing '+hook);
   }
   if(file==='guild-v4.js'){
+    for(const hook of ["select('user_id,game_state,guild_name,membership_active_until","if(account?.guild_name)state.socialDisplayName=account.guild_name","select('game_state,guild_name,updated_at')"])if(!contents.includes(hook))throw new Error('Account-level guild-name lock sync is missing '+hook);
     if(contents.includes('renderBosses()'))throw new Error('Legacy renderBosses call returned to the dungeon view');
     if(!contents.includes('const PLAYER_LEVEL_CAP=15;')||!contents.includes('getLevelCap:()=>PLAYER_LEVEL_CAP'))throw new Error('Player level cap regression');
     if(contents.includes("$('"+".bank-category-tabs [data-bank-category]"+").forEach"))throw new Error('Bank category buttons cannot call forEach on a single-element selector');
@@ -393,10 +394,12 @@ for(const file of files){
   if(file==='social-v3.js'){
     for(const id of ['hollow-sanctum','chaos-canyon','blackout-station','fractured-ages'])if(!contents.includes("id:'"+id+"'"))throw new Error('Party Finder is missing dungeon target '+id);
     for(const hook of ["role==='owner'","chat-rank owner","m.sender_badge==='owner'?'from-owner'"])if(!contents.includes(hook))throw new Error('Owner chat badge support is missing '+hook);
+    for(const hook of ['function lockedGuildName()','function renderGuildIdentity()',"db.rpc('cellbound_lock_guild_name'",'permanent for this account'])if(!contents.includes(hook))throw new Error('Permanent guild-name lock UI is missing '+hook);
+    if(contents.includes('Your guild is now known as'))throw new Error('Legacy freely editable guild-name flow returned');
     if(/get_world_bosses|join_world_boss|attack_world_boss|worldBosses|CellboundWorldBoss2D/.test(contents))throw new Error('Shared World Boss client paths must remain disabled');
   }
   if(file==='social-v3.css'){
-    for(const hook of ['.chat-rank.owner','.chat-message.from-owner','.chat-message.from-owner .chat-speaker>b'])if(!contents.includes(hook))throw new Error('Owner chat badge styling is missing '+hook);
+    for(const hook of ['.chat-rank.owner','.chat-message.from-owner','.chat-message.from-owner .chat-speaker>b','.guild-name-locked','.guild-name-locked[hidden]'])if(!contents.includes(hook))throw new Error('Social identity styling is missing '+hook);
   }
   if(file==='release-v1.js'){
     for(const id of ['#cc2dBackdrop','#bs2dBackdrop','#fracturedAgesBackdrop','#twelveBelowBackdrop','#thirteenthBellRoot','#fourfoldPuzzle'])if(!contents.includes(id))throw new Error('Release gate is missing active-gameplay protection for '+id);
@@ -490,6 +493,7 @@ for(const file of files){
   }
   if(file==='guild.html'){
     const hasVersionedAsset=name=>new RegExp(name.replaceAll('.','\\.')+'\\?v=[0-9]+').test(contents);
+    for(const hook of ['LOCK GUILD NAME','guildNameLocked','PERMANENT GUILD NAME','Locked to this account.'])if(!contents.includes(hook))throw new Error('Permanent guild-name identity UI is missing '+hook);
     if(!hasVersionedAsset('boss-dossier-v1.css'))throw new Error('Boss dossier CSS cache version is stale in guild.html');
     if(!hasVersionedAsset('boss-dossier-v1.js'))throw new Error('Boss dossier cache version is stale in guild.html');
     if(!hasVersionedAsset('quests-v2.js')||!hasVersionedAsset('thirteenth-bell-v1.js')||!hasVersionedAsset('no-way-back-v1.js'))throw new Error('Progressive quest combat cache versions are stale in guild.html');
