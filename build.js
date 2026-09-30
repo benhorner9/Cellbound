@@ -45,7 +45,7 @@ for(const file of files){
   }
   if(file==='profession-data.js'){
     if(!contents.includes('const skillThreshold=level=>100+Math.max(1,level)*5;'))throw new Error('Profession project progression curve regressed');
-    for(const hook of ['persistentAttachment=true','recipeMetaForOutputKey','item?.attachment?.bonuses','kind:\'attachment\''])if(!contents.includes(hook))throw new Error('Persistent profession attachment model is missing '+hook);
+    for(const hook of ['persistentAttachment=true','recipeMetaForOutputKey','const a=item?.attachment','kind:\'attachment\''])if(!contents.includes(hook))throw new Error('Persistent profession attachment model is missing '+hook);
     for(const hook of ["Jewelcrafting:{icon:'◆'","Engineering:{icon:'⚙'","Cooking:{icon:'♨'","Reliccrafting:{icon:'◈'","Scribing:{icon:'✒'","effect:'socket-gem'","effect:'character-gadget'","effect:'party-food'","attachmentFamily:'relic-core'","effect:'party-scroll'"])if(!contents.includes(hook))throw new Error('Expanded profession system is missing '+hook);
     for(const hook of ['crafterOnly:true','trainingScale:.45','payload.crafterOnly=true','output.tradeState=\'soulbound\'','boundCharacterId===c?.id'])if(!contents.includes(hook))throw new Error('Crafter-only profession recipe contract is missing '+hook);
     for(const hook of ['payload.socketReady=true','function activeProcs(c)','function consumeBossChargesOnce','SPECIAL_PREPARATIONS'])if(!contents.includes(hook))throw new Error('New profession runtime contract missing '+hook);
@@ -60,7 +60,7 @@ for(const file of files){
     for(const hook of ['/* Profession Workshop V2 layout ownership','#professions .recipe-list{','grid-template-columns:1fr!important','#professions .profession-recipe-card{'])if(!contents.includes(hook))throw new Error('Legacy profession layout override is not neutralised: '+hook);
   }
   if(file==='character-sheet.js'){
-    for(const hook of ['const CHARACTER_TABS=','cb-command-character-header','cb-header-metrics','cb-command-overview','cb-profession-command','cb-history-command','cb-talent-command-v2','cb-talent-tier','cb-talent-inline-detail','data-char-jump','returnView='])if(!contents.includes(hook))throw new Error('Character Command redesign is missing '+hook);
+    for(const hook of ['const CHARACTER_TABS=','cb-command-character-header','cb-header-metrics','cb-command-overview','cb-profession-command',"currentTab==='history'",'cb-talent-command-v2','cb-talent-tier','cb-talent-inline-detail','data-char-jump','returnView='])if(!contents.includes(hook))throw new Error('Character Command redesign is missing '+hook);
     if(contents.includes("['knowledge','⌁','Mastery'")||contents.includes('function knowledgePanel'))throw new Error('Mastery must remain removed from the character screen');
     if(!contents.includes('function setSummaryMarkup')||!contents.includes('function setInlineMarkup')||!contents.includes('SET BONUSES'))throw new Error('Character equipment set bonus progress UI is missing');
     if(contents.includes('esc(item.setName)')||contents.includes('esc(rule.name)')||contents.includes('esc(rule.short)')||contents.includes('esc(rule.description)')||contents.includes('esc(item.setName||id)'))throw new Error('Tier 4 set UI is calling an undefined escape helper and will break the equipment drawer');
@@ -208,7 +208,7 @@ for(const file of files){
   }
   if(file==='blackout-station-v1.js'){
     if(!contents.includes("GRID_OVERRIDE_DROP_CHANCE=.10")||!contents.includes('GRID_OVERRIDE_MAX_CHARGES=5'))throw new Error('Grid Override Module must remain a 10% five-charge Blackout drop');
-    if(!contents.includes('async function useGridOverride()')||!contents.includes("if(!run.quickReconnect)"))throw new Error('Grid Override must remain gated behind a manual first clear');
+    if(!contents.includes("async function useGridOverride(source='module')")||!contents.includes("if(!run.quickReconnect)"))throw new Error('Grid Override must remain gated behind a manual first clear');
     if(!contents.includes("tradeState:'tradeable'")||!contents.includes('nonStackable:true'))throw new Error('Grid Override Module must remain tradeable and non-stackable');
     if(!contents.includes("overrideDrop=Math.random()<GRID_OVERRIDE_DROP_CHANCE?createGridOverrideModule():null"))throw new Error('Grid Override drop must remain an independent 10% roll from equipment loot');
   }
