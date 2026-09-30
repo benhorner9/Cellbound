@@ -220,7 +220,7 @@ async function applyBankAttachment(key,charId,boundCharacterId=null){
   if(existing?.key===key&&(!payload.crafterOnly||existing?.boundCharacterId===payload.boundCharacterId))return;
   if(existing&&!confirm('Replace '+(existing.name||'the current attachment')+' on '+item.name+' with '+stack.name+'?\n\nThe existing attachment will be permanently destroyed and cannot be recovered.'))return;
   const meta=craftedMeta(key),recipe=meta.recipe;
-  item.attachment={key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},profession:meta.profession,skill:Number(recipe?.level)||null,tier:Number(payload.attachmentTier)||P?.attachmentTier?.(recipe?.level)||1,rarity:stack.rarity||meta.rarity,crafterOnly:Boolean(payload.crafterOnly),boundCharacterId:payload.boundCharacterId||null,boundCharacterName:payload.boundCharacterName||null,attachedAt:new Date().toISOString()};
+  item.attachment={key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},profession:meta.profession,skill:Number(recipe?.level)||null,tier:Number(payload.attachmentTier)||P?.attachmentTier?.(recipe?.level)||1,rarity:stack.rarity||meta.rarity,attachmentFamily:payload.attachmentFamily||null,proc:{...(payload.proc||{})},procText:payload.procText||'',crafterOnly:Boolean(payload.crafterOnly),boundCharacterId:payload.boundCharacterId||null,boundCharacterName:payload.boundCharacterName||null,attachedAt:new Date().toISOString()};
   consumeCraftedStack(key,boundCharacterId);s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push(existing?stack.name+' replaced '+(existing.name||'an attachment')+' on '+c.name+'’s '+item.name+'; the old attachment was destroyed.':stack.name+' attached to '+c.name+'’s '+item.name+'.');
   await persist(true);closeBankResource();window.CellboundFX?.micro?.(stack.name+' attached','gold')
 }
@@ -244,7 +244,7 @@ async function useBankPreparation(key,charId,boundCharacterId=null){
   const s=state(),stack=findCraftedStack(key,boundCharacterId),payload=stack?.payload||{},kind=prepKind(payload.effect),c=s?.roster?.find(x=>x.id===charId);
   if(!stack||!kind||!c||payload.crafterOnly&&payload.boundCharacterId!==c.id)return;
   c.activeProfessionBuffs=Array.isArray(c.activeProfessionBuffs)?c.activeProfessionBuffs.filter(x=>x.kind!==kind):[];
-  c.activeProfessionBuffs.push({kind,key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},remainingBosses:Math.max(1,Number(payload.charges)||1),appliedAt:new Date().toISOString()});
+  c.activeProfessionBuffs.push({kind,key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},proc:{...(payload.proc||{})},remainingBosses:Math.max(1,Number(payload.charges)||1),appliedAt:new Date().toISOString()});
   consumeCraftedStack(key,boundCharacterId);s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push(c.name+' prepared '+stack.name+'.');
   await persist(true);closeBankResource();window.CellboundFX?.micro?.(stack.name+' prepared','cell')
 }
@@ -253,7 +253,7 @@ async function useBankPartyPreparation(key,boundCharacterId=null){
   if(!stack||!kind||party.length!==5)return;
   party.forEach(c=>{
     c.activeProfessionBuffs=Array.isArray(c.activeProfessionBuffs)?c.activeProfessionBuffs.filter(x=>x.kind!==kind):[];
-    c.activeProfessionBuffs.push({kind,key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},remainingBosses:Math.max(1,Number(payload.charges)||1),appliedAt:new Date().toISOString()})
+    c.activeProfessionBuffs.push({kind,key:stack.key,name:stack.name,bonuses:{...(payload.bonuses||{})},proc:{...(payload.proc||{})},remainingBosses:Math.max(1,Number(payload.charges)||1),appliedAt:new Date().toISOString()})
   });
   consumeCraftedStack(key,boundCharacterId);s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push(stack.name+' prepared the active five.');
   await persist(true);closeBankResource();window.CellboundFX?.micro?.(stack.name+' prepared the active five','gold')
