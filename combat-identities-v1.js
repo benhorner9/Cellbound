@@ -62,7 +62,7 @@ const SPECS={
       title:'Boss Anchor',
       strength:'Best single-target threat and physical boss control.',
       tradeoff:'Weaker at instantly controlling several enemies and less comfortable into magic.',
-      singleThreat:2.95,packThreat:2.28,groupThreat:.08,physicalTaken:.88,magicTaken:1.04,damage:.96,tauntLead:1.25
+      singleThreat:2.95,packThreat:2.28,groupThreat:.08,physicalTaken:.88,magicTaken:.96,damage:.96,tauntLead:1.25
     },
     Arms:{
       title:'Execution Fighter',
