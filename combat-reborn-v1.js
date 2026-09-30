@@ -2184,12 +2184,14 @@ function specDamageBalance(u){
   'Monk|Brewmaster':[1.20,1.24,1.30],
   'Death Knight|Blood':[.62,.62,.58],
   'Demon Hunter|Vengeance':[.52,.54,.52],
-  'Warrior|Arms':[1.80,1.65,1.42],
-  'Rogue|Assassination':[1.50,1.30,1.12],
+  'Warrior|Arms':[1.86,1.78,1.65],
+  'Rogue|Assassination':[1.08,.94,.82],
+  'Rogue|Outlaw':[1.08,1.10,1.12],
+  'Mage|Frost':[1.06,1.09,1.12],
   'Warlock|Destruction':[1.10,1.12,1.14],
   'Death Knight|Frost':[1.12,1.12,1.12],
-  'Demon Hunter|Havoc':[.76,.78,.78],
-  'Hunter|Beast Mastery':[.88,.88,.86]
+  'Demon Hunter|Havoc':[.72,.70,.68],
+  'Hunter|Beast Mastery':[.94,.97,1.00]
  };
  const v=curves[key];return v?progressionBlend(u.level,...v):1
 }
