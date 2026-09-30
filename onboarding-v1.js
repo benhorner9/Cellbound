@@ -940,7 +940,7 @@ function renderProfessionChoice(){
 async function learnTutorialProfession(){
   const s=state(),c=s.roster.find(x=>x.id===s.onboarding.professionCharacterId),name=s.onboarding.professionName;
   if(!c||!P.PROFESSIONS[name])return;
-  c.professions=Array.isArray(c.professions)?c.professions:[null,null];c.professions[0]={name,level:1,xp:0};
+  c.professions=Array.isArray(c.professions)?c.professions.slice(0,1):[null];c.professions[0]={name,level:1,xp:0};
   s.onboarding.stage='craft';s.activity.push(c.name+' learned '+name+' in Zeltira.');
   Game.save();await Game.persistState();render();
 }
