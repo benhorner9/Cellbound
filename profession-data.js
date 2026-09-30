@@ -19,7 +19,7 @@ const MATERIALS={
   'zeltiran-hide':{name:'Zeltiran Hide',rarity:'Common',source:'Beast enemies and early dungeon caches',icon:'▱'},
   'hollow-fibre':{name:'Hollow Fibre',rarity:'Common',source:'Humanoid enemies and dungeon caches',icon:'⌁'},
   'razorhide':{name:'Razorhide',rarity:'Uncommon',source:'Elite beasts and bosses',icon:'◩'},
-  'ashen-silk':{name:'Ashen Silk',rarity:'Uncommon',source:'Ashen Vault casters and dungeon caches',icon:'≈'},
+  'ashen-silk':{name:'Ashen Silk',rarity:'Uncommon',source:'Glassweb Crawlers, caster enemies and dungeon caches',icon:'≈'},
   'rough-gemstone':{name:'Rough Gemstone',rarity:'Common',source:'Dungeon enemies and reward caches',icon:'◆'},
   'prismatic-shard':{name:'Prismatic Shard',rarity:'Rare',source:'Elite enemies, bosses and rare caches',icon:'◇'},
   'salvaged-parts':{name:'Salvaged Parts',rarity:'Common',source:'Constructs, machines and dungeon caches',icon:'⚙'},
@@ -421,7 +421,7 @@ const BOSS_RESOURCE_POOLS={
 const CONTENT_RESOURCE_PROFILES={
   'hollow-sanctum':[
     {key:'rune-dust',min:2,max:4},{key:'rough-gemstone',min:2,max:4},{key:'prismatic-shard',min:1,max:2},
-    {key:'arcane-ink',min:1,max:3},{key:'etched-vellum',min:2,max:4}
+    {key:'arcane-ink',min:1,max:3},{key:'etched-vellum',min:2,max:4},{key:'ashen-silk',min:1,max:3}
   ],
   'chaos-canyon':[
     {key:'cavebeast-meat',min:2,max:5},{key:'zeltiran-hide',min:2,max:4},{key:'razorhide',min:1,max:2},
