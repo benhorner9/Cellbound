@@ -108,7 +108,7 @@ function rewardBand(kills){
  if(kills<=11)return{label:'EXALTED SEPULCHRE CACHE',tone:'exalted'};
  return{label:'TWELVEFOLD RELIQUARY',tone:'reliquary'}
 }
-function relicChance(kills){if(kills>=12)return 1;if(kills>=10)return .35;if(kills>=7)return .18;if(kills>=4)return .08;if(kills>=1)return .03;return 0}
+function relicChance(kills){if(kills>=12)return .55;if(kills>=10)return .25;if(kills>=7)return .12;if(kills>=4)return .05;if(kills>=1)return .02;return 0}
 function formatTime(ms){const sec=Math.max(0,Math.floor(ms/1000)),m=Math.floor(sec/60),s=sec%60;return m+':'+String(s).padStart(2,'0')}
 
 function renderCard(){
@@ -245,7 +245,7 @@ function chooseRelic(){
  return pool[Math.floor(Math.random()*pool.length)]||eligible[0]||RELICS[0]
 }
 function applyRewards(result){
- const e=eventState(),kills=result.kills,band=rewardBand(kills),gold=kills*42+(kills>=6?80:0)+(kills>=10?120:0),renown=kills*11+(kills===12?60:0),shards=kills*2+Math.floor(kills/3)*3;
+ const e=eventState(),kills=result.kills,band=rewardBand(kills),gold=kills*42+(kills>=6?80:0)+(kills>=10?120:0),renown=kills*11+(kills===12?60:0),shards=kills+Math.floor(kills/4)*2+(kills===12?2:0);
  state().gold=(Number(state().gold)||0)+gold;state().renown=(Number(state().renown)||0)+renown;if(shards)Game.addMaterial?.('cell-shards',shards);
  let relic=null;const firstFull=kills===12&&!e.firstFullClear;
  if(firstFull||Math.random()<relicChance(kills)){relic={...chooseRelic(),source:'The Twelve Below',tradeState:'soulbound'};Game.addBankItem?.(relic)}
@@ -492,7 +492,7 @@ function showResults(){
  root.innerHTML='<section class="cb2d-shell cb2d-loot-screen tb-results"><header class="cb2d-head"><div><small>THE TWELVE BELOW · ATTEMPT COMPLETE</small><h2>'+r.kills+' of 12 defeated</h2></div><button data-tb-close aria-label="Close Twelve Below">×</button></header>'+
  '<div class="tb-result-hero '+w.band.tone+'"><div><small>'+w.band.label+'</small><h3>'+(r.kills===12?'No vice remains buried.':r.outcome==='defeat'?'The burial ground claimed the party.':'The guild withdrew from the Sepulchre.')+'</h3><p>Every additional vice defeated improved the reward cache.</p></div><strong>'+r.kills+' / 12</strong></div>'+
  '<div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+w.gold+'</b><small>Guild treasury</small></article><article><span>RENOWN</span><b>+'+w.renown+'</b><small>Guild reputation</small></article><article><span>CELL SHARDS</span><b>+'+w.shards+'</b><small>Relic material</small></article><article><span>BEST</span><b>'+eventState().bestKills+' / 12</b><small>Personal record</small></article></div>'+
- (w.relic?'<section class="tb-relic-drop"><div class="tb-relic-icon">'+esc(w.relic.icon||'◇')+'</div><div><small>ANCIENT RELIC · '+String(w.relic.relicRole).toUpperCase()+'</small><h3>'+esc(w.relic.name)+'</h3><p>'+esc(w.relic.uniqueEffect.description)+'</p><span>Sent to Guild Bank</span></div></section>':'<section class="tb-no-relic"><small>RELIC ROLL</small><h3>No relic recovered this attempt.</h3><p>Higher boss counts dramatically improve the relic chance. A 12/12 clear guarantees one.</p></section>')+
+ (w.relic?'<section class="tb-relic-drop"><div class="tb-relic-icon">'+esc(w.relic.icon||'◇')+'</div><div><small>ANCIENT RELIC · '+String(w.relic.relicRole).toUpperCase()+'</small><h3>'+esc(w.relic.name)+'</h3><p>'+esc(w.relic.uniqueEffect.description)+'</p><span>Sent to Guild Bank</span></div></section>':'<section class="tb-no-relic"><small>RELIC ROLL</small><h3>No relic recovered this attempt.</h3><p>Higher boss counts dramatically improve the relic chance. Your first 12/12 clear guarantees one; later full clears still have the best repeat chance.</p></section>')+
  '<section class="cbr-analysis"><div class="cbr-analysis-head"><div><small>RUN ANALYSIS</small><h4>How long your five held the burial ground.</h4></div></div><div class="cbr-analysis-grid"><article><span>TIME</span><b>'+formatTime(r.endMs)+'</b></article><article><span>DAMAGE</span><b>'+Math.round(r.totals.damage).toLocaleString()+'</b></article><article><span>HEALING</span><b>'+Math.round(r.totals.healing).toLocaleString()+'</b></article><article><span>AVOIDABLE</span><b>'+Math.round(r.totals.avoidable).toLocaleString()+'</b></article><article><span>MISTAKES</span><b>'+r.totals.mistakes+'</b></article><article><span>DEATHS</span><b>'+r.totals.deaths+'</b></article><article><span>INTERRUPTS</span><b>'+r.totals.interrupts+'/'+r.totals.interruptAttempts+'</b></article><article><span>TOMBS OPENED</span><b>'+Math.min(12,Math.floor(r.endMs/SPAWN_MS)+1)+'</b></article></div><div class="cbr-analysis-list">'+resultPlayerRows()+'</div></section>'+
  '<footer class="cb2d-loot-actions"><button data-tb-close>RETURN TO WORLD EVENT →</button></footer></section>';
  root.querySelectorAll('[data-tb-close]').forEach(b=>b.onclick=close);renderCard();
