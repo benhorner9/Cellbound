@@ -31,11 +31,15 @@ function formatTime(ms){
  const total=Math.max(0,Math.round((Number(ms)||0)/1000)),m=Math.floor(total/60),s=total%60;
  return m+':'+String(s).padStart(2,'0')
 }
+function chapterEndgameUnlocked(){
+ const ids=Object.keys(D.DUNGEONS||{});
+ return ids.length>0&&ids.every(id=>Number(progressFor(id)?.normal_clears||0)>0)
+}
 function difficultyUnlocked(id,difficulty,tier=1){
  const p=progressFor(id);
  if(difficulty==='normal')return true;
  if(difficulty==='heroic')return Boolean(p.heroic_unlocked);
- if(difficulty==='cellbound')return Boolean(p.cellbound_unlocked)&&Number(tier)<=Math.max(1,Number(p.highest_tier)||1);
+ if(difficulty==='cellbound')return chapterEndgameUnlocked()&&Boolean(p.cellbound_unlocked)&&Number(tier)<=Math.max(1,Number(p.highest_tier)||1);
  return false
 }
 function currentConfig(id){
@@ -57,7 +61,8 @@ function affixMarkup(ids){
 function progressCopy(id){
  const p=progressFor(id);
  if(!p.normal_clears)return'Complete Normal to unlock Heroic.';
- if(!p.heroic_clears)return'Heroic unlocked. Complete it to unlock Cellbound+1.';
+ if(!p.heroic_clears)return'Heroic unlocked. Complete it while progressing through the chapter.';
+ if(!chapterEndgameUnlocked())return'Cellbound+ opens after every Chapter 1 dungeon has been cleared on Normal.';
  if(p.highest_tier<20)return'Cellbound+'+Math.max(1,p.highest_tier)+' available. Complete your highest tier to unlock the next.';
  return'Cellbound+20 cleared. Push score, time and seasonal rankings.'
 }
@@ -378,8 +383,29 @@ function rollClearLoot(dungeonId,bossId=null,chance=.7,opts={}){
  const item=D.DUNGEONS[dungeonId]?rollPersonalLoot(dungeonId,bossId):rollChapterLoot(dungeonId,opts);
  recordClearLootOutcome(dungeonId,Boolean(item));return item
 }
+function rollClearLootBundle(dungeonId,bossId=null,opts={}){
+ const cfg=currentConfig(dungeonId),drops=[],seen=new Set(),baseCount=Math.max(1,Number(opts.baseCount)||2);
+ const thirdChance=cfg.difficulty==='cellbound'
+   ?Math.min(.50,.20+Math.max(1,Number(cfg.tier)||1)*.015)
+   :cfg.difficulty==='heroic'?.18:.08;
+ const count=baseCount+(Math.random()<thirdChance?1:0);
+ for(let i=0;i<count;i++){
+   let item=null;
+   for(let attempt=0;attempt<5;attempt++){
+     const candidate=D.DUNGEONS[dungeonId]?rollPersonalLoot(dungeonId,bossId):rollChapterLoot(dungeonId,opts);
+     if(!candidate)continue;
+     const key=[candidate.class,candidate.slot,candidate.tier,candidate.itemId].join('|');
+     item=candidate;
+     if(!seen.has(key)){seen.add(key);break}
+     if(attempt===4)seen.add(key)
+   }
+   if(item)drops.push(item)
+ }
+ recordClearLootOutcome(dungeonId,drops.length>0);
+ return drops
+}
 function shardReward(dungeonId){
- const cfg=currentConfig(dungeonId);return Math.max(1,Math.round(cfg.diff.cellShardBase+(cfg.difficulty==='cellbound'?cfg.tier:0)))
+ const cfg=currentConfig(dungeonId);return Math.max(1,Math.round(cfg.diff.cellShardBase))
 }
 function rollChase(dungeonId){
  const cfg=currentConfig(dungeonId),state=Game?.getState?.();if(!state)return null;
@@ -402,7 +428,7 @@ async function claimWeekly(){
  const quality=data?.quality||'starter',tier=quality==='epic'?4:quality==='rare'?3:quality==='uncommon'?2:1;
  const pool=G.items.filter(x=>x.tier===tier&&x.enabled),base=pool[Math.floor(Math.random()*Math.max(1,pool.length))];
  if(base)Game.addBankItem?.(G.rollItemAffixes({...base,source:'Weekly Endgame Vault'}));
- Game.addMaterial?.('cell-shards',quality==='epic'?40:quality==='rare'?28:quality==='uncommon'?18:10);
+ Game.addMaterial?.('cell-shards',quality==='epic'?32:quality==='rare'?22:quality==='uncommon'?14:8);
  Game.save?.();await Game.persistState?.();await refresh()
 }
 function achievementName(id){return ACHIEVEMENT_DEFS[id]?.name||String(id||'Achievement').replace(/-/g,' ')}
@@ -432,7 +458,7 @@ async function init(){
  window.addEventListener('cellbound:dungeon-complete',()=>refresh());
  await refresh();
  window.CellboundEndgame={
-   refresh,render,currentConfig,stageConfig,beginAttempt,beginOrResumeAttempt,resumeAttempt,saveRuntime,recordRun,rollPersonalLoot,rollChapterLoot,rollClearLoot,clearLootGuaranteed,recordClearLootOutcome,shardReward,rollChase,
+   refresh,render,currentConfig,stageConfig,beginAttempt,beginOrResumeAttempt,resumeAttempt,saveRuntime,recordRun,rollPersonalLoot,rollChapterLoot,rollClearLoot,rollClearLootBundle,clearLootGuaranteed,recordClearLootOutcome,shardReward,rollChase,
    progressFor,difficultyUnlocked,choose,prepare,runSummaryLabel,achievementName,debugSnapshot,tierPickerMarkup,getSelection:id=>({...selection[id]})
  }
 }
