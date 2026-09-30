@@ -44,7 +44,7 @@ for(const file of files){
     for(const hook of ['/* Profession Workshop V2 */','.profession-command-hero','.craft-project','.craft-action-grid','.profession-recipe-card'])if(!contents.includes(hook))throw new Error('Profession Workshop V2 styling is missing '+hook);
   }
   if(file==='profession-data.js'){
-    if(!contents.includes('const skillThreshold=level=>100+Math.max(1,level)*5;'))throw new Error('Profession project progression curve regressed');
+    if(!contents.includes('const skillThreshold=level=>160+Math.max(1,level)*7;'))throw new Error('Profession project progression curve regressed');
     for(const hook of ['persistentAttachment=true','recipeMetaForOutputKey','const a=item?.attachment','kind:\'attachment\''])if(!contents.includes(hook))throw new Error('Persistent profession attachment model is missing '+hook);
     for(const hook of ["Jewelcrafting:{icon:'◆'","Engineering:{icon:'⚙'","Cooking:{icon:'♨'","Reliccrafting:{icon:'◈'","Scribing:{icon:'✒'","effect:'socket-gem'","effect:'character-gadget'","effect:'party-food'","attachmentFamily:'relic-core'","effect:'party-scroll'"])if(!contents.includes(hook))throw new Error('Expanded profession system is missing '+hook);
     for(const hook of ['crafterOnly:true','trainingScale:.45','payload.crafterOnly=true','output.tradeState=\'soulbound\'','boundCharacterId===c?.id'])if(!contents.includes(hook))throw new Error('Crafter-only profession recipe contract is missing '+hook);
@@ -59,6 +59,7 @@ for(const file of files){
   }
   if(file==='null-complex-v1.js'){
     for(const hook of ['NULL_RESOURCE_POOLS','NULL_CATALYSTS','resourceSource','awardEnemyPending','Supply Storage','Maintenance Bay','Specimen Archive'])if(!contents.includes(hook))throw new Error('Null Complex ecological reagent sourcing is missing '+hook);
+    if(!contents.includes("{key:'ancient-soul',minFloor:10}")||!contents.includes("chance=bonus?.22:.10"))throw new Error('Null Complex catalyst balance regressed');
   }
   if(file==='item-art-v1.js'){
     if(!contents.includes("card.querySelector(':scope > .recipe-output-art')"))throw new Error('Profession recipe art duplication guard is missing');
@@ -163,8 +164,8 @@ for(const file of files){
   }
   if(file==='endgame-data-v1.js'){
     if(!contents.includes('raidExclusiveTier:5')||!contents.includes('powerCeiling:44'))throw new Error('Dungeon loot must stop below raid-exclusive Tier 5');
-    if(!contents.includes("'fractured-ages':")||!contents.includes("itemLevel:gearBand(38,39,40)"))throw new Error('Fractured Ages Normal loot must remain below Cellbound+ Tier 4 power');
-    if(!contents.includes("return{tiers:{3:.55,4:.45},itemLevel:gearBand(42,43,44)"))throw new Error('Peak Cellbound+ loot must cap at Item Level 44');
+    if(!contents.includes("'fractured-ages':")||!contents.includes("itemLevel:gearBand(38,40,42)"))throw new Error('Fractured Ages Normal loot band regressed');
+    if(!contents.includes("return{tiers:{3:.50,4:.50},itemLevel:gearBand(44,44,44)"))throw new Error('Peak Cellbound+ loot must cap at Item Level 44');
     if(!contents.includes('enemyHealth:1.50,enemyDamage:1.38')||!contents.includes('enemyHealth:1.60*(1+(t-1)*.08)'))throw new Error('Full-gear Heroic / Cellbound+ combat tuning is missing');
     if(!contents.includes('pieces4:'))throw new Error('T4 set progression must use the 2/4-piece structure');
     if(!contents.includes('uniqueChance:{normal:0'))throw new Error('Tier 4 uniques must not leak into Normal difficulty');
@@ -277,6 +278,10 @@ for(const file of files){
     if(contents.includes('<select data-')&&contents.includes('-tier'))throw new Error(file+' still uses the broken native Cellbound+ tier selector');
     if(!contents.includes('tierPickerMarkup')||!contents.includes("querySelectorAll('[data-"))throw new Error(file+' is not using the shared tap-friendly Cellbound+ tier picker');
   }
+  if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','fractured-ages-v1.js'].includes(file)){
+    if(file!=='dungeon-2d-v1.js'&&!contents.includes('rollClearLootBundle'))throw new Error(file+' must use the balanced multi-drop clear reward bundle');
+    if(!contents.includes('recommendedItemLevel')||!contents.includes('requires Item Level'))throw new Error(file+' must enforce selected-difficulty Item Level requirements');
+  }
   if(file==='pvp-viewer-v1.css'){
     for(const hook of [".pvp2d-lower{","height:132px","max-height:132px",".pvp2d-feed{","overflow-y:auto","height:264px",".pvp2d-lower>section.pvp2d-meters","grid-template-columns:repeat(3,minmax(0,1fr))",".pvp2d-map{",".pvp2d-map-block",".pvp2d-map-area.tunnel",".pvp2d-hill-site",".pvp2d-hill.rotating","score-tick","pvpScoreTick","shifting-court","veilspire-arena",".pvp2d-arena-storm",".pvp2d-storm-fog","pvpStormDrift"])if(!contents.includes(hook))throw new Error('PvP combat feed/map/healing-meter presentation is missing '+hook);
   }
@@ -307,10 +312,12 @@ for(const file of files){
   if(file==='endgame-v1.js'){
     for(const hook of ['resume_dungeon_attempt','save_dungeon_attempt_runtime','function beginOrResumeAttempt','function saveRuntime'])if(!contents.includes(hook))throw new Error('Resumable dungeon service is missing '+hook);
     if(!contents.includes("dungeonCard('chaos-canyon')")||!contents.includes("leaderboardMarkup('chaos-canyon')"))throw new Error('Chaos Canyon must remain visible in the Endgame Hub');
-    if(!contents.includes('function rollClearLoot')||!contents.includes('function clearLootGuaranteed'))throw new Error('Dungeon clear loot must retain bad-luck protection');
+    if(!contents.includes('function rollClearLoot')||!contents.includes('function rollClearLootBundle')||!contents.includes('function clearLootGuaranteed'))throw new Error('Dungeon clear loot must retain two-drop pacing and bad-luck protection');
     if(!contents.includes("Number(x.tier)<Number(D.LOOT_RULES?.raidExclusiveTier||5)"))throw new Error('Dungeon loot pools must exclude raid-exclusive Tier 5');
     if(contents.includes("quality==='epic'?5"))throw new Error('Weekly rewards must never create Tier 5 gear');
     if(!contents.includes('function tierPickerMarkup')||contents.includes('<select data-eg-tier'))throw new Error('Endgame Hub must use the tap-friendly Cellbound+ tier picker');
+    if(!contents.includes('function chapterEndgameUnlocked')||!contents.includes("difficulty==='cellbound')return chapterEndgameUnlocked()"))throw new Error('Cellbound+ must remain chapter-clear gated');
+    if(contents.includes("cfg.diff.cellShardBase+(cfg.difficulty==='cellbound'?cfg.tier:0)"))throw new Error('Cellbound+ shard rewards must not double-count tier scaling');
   }
   if(file==='endgame-v1.css'){
     for(const hook of ['.eg-tier-picker{','.eg-tier-picker-head{','.eg-tier-strip{','.eg-tier-strip button.active{','-webkit-overflow-scrolling:touch'])if(!contents.includes(hook))throw new Error('Cellbound+ tier picker styling is missing '+hook);
@@ -320,6 +327,7 @@ for(const file of files){
     if((contents.match(/itemLevel:42,power:10,statBudgetMultiplier:1/g)||[]).length!==6)throw new Error('Twelve Below relics must remain six iLvl 42 endgame chase pieces');
     if(contents.includes("toISOString().slice(0,10)"))throw new Error('Twelve Below daily reset must use local calendar time');
     if(!contents.includes('requestAnimationFrame(frame)'))throw new Error('Twelve Below playback must use the continuous frame clock');
+    if(!contents.includes("if(kills>=12)return .55")||!contents.includes("shards=kills+Math.floor(kills/4)*2+(kills===12?2:0)"))throw new Error('Twelve Below chase reward balance regressed');
     for(const hook of ['function burialCryptMarkup','function tbAtmosphere','function tbArenaBurst','tb-depth-backdrop','tb-crypt-ring','tb-soul-braziers','tb-grave-fog','TB_VICE_COLORS'])if(!contents.includes(hook))throw new Error('Twelve Below visual-reborn runtime is missing '+hook);
   }
   if(file==='twelve-below-v1.css'){
