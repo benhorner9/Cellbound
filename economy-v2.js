@@ -256,6 +256,7 @@ async function finishTimedCraft(){
     returnReservedInputs(project);setCraftProject(null);craftLastTick=0;craftCompleting=false;lastCraftMessage='The work order could not be completed. Reserved reagents were returned.';await commit();return
   }
   const quantity=Math.max(1,Number(project.quantity)||1),history=recipeHistory(prof,recipe.id),firstInput=Object.keys(recipe.inputs)[0];
+  prof.craftHistory[recipe.id]=history;
   let xpTotal=0,masterworks=0,best=0,reclaimed=0;
   for(let i=0;i<quantity;i++){
     const quality=timedCraftQuality(recipe,prof),tier=qualityTier(quality),xp=craftXp(recipe,prof,tier,0);
