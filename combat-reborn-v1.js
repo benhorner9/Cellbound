@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.32';
+const VERSION='1.4.0';
 // Balance baseline: 2026-09-30 chapter-wide progression and role audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
@@ -1050,6 +1050,12 @@ function abilityPool(c,role){
  if(role!=='healer'&&!pool.some(a=>a.kind==='damage'||a.kind==='summon'||a.kind==='pet-command'))pool.push({id:'basic-attack',name:'Basic Attack',kind:'damage',range:5,damage:10,cost:0,gcd:1500,cd:0,hiddenFallback:true});
  return pool.length?pool:(ROLE_FALLBACKS[role]||ROLE_FALLBACKS.dps)
 }
+function initialPartyPosition(i,role){
+ const group=Math.floor(Math.max(0,i)/5),slot=((Math.max(0,i)%5)+5)%5;
+ const ySlots=[50,42,35,58,65],groupOffset=group%2?1.5:-1.5;
+ const xBase=role==='tank'?40:role==='healer'?22:29;
+ return{x:clamp(xBase-Math.min(4,group*2.25),8,46),y:clamp(ySlots[slot]+groupOffset,12,88)}
+}
 function normalisePlayer(c,i,zone=null){
  const role=inferredRole(c),res=resourceDef(c),tank=role==='tank',healer=role==='healer';
  const baseHp=tank?185:healer?115:125;
@@ -1061,9 +1067,9 @@ function normalisePlayer(c,i,zone=null){
  const resourceValue=Number.isFinite(carriedValue)?clamp(carriedValue,0,res.max):res.start;
  const setState=gearSetState(c),resourceRegen=(healer&&res.name==='Mana'?2.1:res.regen)*setState.resourceRegen;
  const itemLevel=Math.max(0,Number(c?._combatItemLevel??c?.itemLevel??c?.gear)||0),carriedCooldowns=copy(c?._combatCooldowns||{}),carriedPosition=c?._combatPosition;
- const startPosition=carriedPosition&&Number.isFinite(Number(carriedPosition.x))&&Number.isFinite(Number(carriedPosition.y))?{x:Number(carriedPosition.x),y:Number(carriedPosition.y)}:{x:tank?42:role==='healer'?18:28,y:26+i*12};
+ const startPosition=carriedPosition&&Number.isFinite(Number(carriedPosition.x))&&Number.isFinite(Number(carriedPosition.y))?{x:Number(carriedPosition.x),y:Number(carriedPosition.y)}:initialPartyPosition(i,role);
  return{
-  id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,
+  id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,partyIndex:i,
   maxHealth,health:startHealth,alive:startHealth>0,position:startPosition,facing:0,
   target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:carriedStatuses(c),resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
   abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,professionBonuses,professionProcs,relicOpeningUsed:false,baseStats:{baseHealth,healthScale,outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:copy(c?._combatTalentTimers||{}),talentFlags:copy(c?._combatTalentFlags||{}),talentCounters:copy(c?._combatTalentCounters||{}),damageActions:Math.max(0,Number(c?._combatDamageActions)||0),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),staggerPool:0,nextStaggerTick:0,staggerSourceId:null,lastMonkAbility:null,lastMistHealId:null,recentDamageTaken:[],dkWounds:{},soulFragments:0,comboPoints:0,
@@ -1274,47 +1280,73 @@ function nearestMeleePoint(enemy,u,ctx){
  return{x:enemy.position.x+Math.cos(angle)*4,y:enemy.position.y+Math.sin(angle)*4}
 }
 function stableUnitIndex(ctx,u,list){
- const idx=list.findIndex(x=>x.id===u.id);return idx<0?0:idx
+ const idx=list.findIndex(x=>x.id===u.id);return idx<0?Math.max(0,Number(u?.partyIndex)||0):idx
 }
-function isMeleeCombatant(u){
- return (u?.abilities||[]).some(a=>a.kind==='damage'&&(Number(a.range)||5)<=7)
+function combatRangeStyle(u){
+ if(u?.role==='tank')return'tank';
+ if(u?.role==='healer')return'healer';
+ const damage=(u?.abilities||[]).filter(a=>a.kind==='damage'),melee=damage.filter(a=>(Number(a.range)||5)<=7).length,ranged=damage.filter(a=>(Number(a.range)||5)>7).length;
+ if(melee||ranged)return melee>=ranged?'melee':'ranged';
+ return['Rogue','Warrior','Demon Hunter','Death Knight','Monk'].includes(u?.class)?'melee':'ranged'
+}
+function isMeleeCombatant(u){return combatRangeStyle(u)==='melee'||combatRangeStyle(u)==='tank'}
+function symmetricFormationOffset(slot){
+ const sequence=[0,-.48,.48,-.84,.84,-1.12,1.12];
+ return sequence[slot%sequence.length]+Math.floor(slot/sequence.length)*(slot%2?-.18:.18)
 }
 function meleeFormationPoint(ctx,u,target){
  const radius=u.role==='tank'?4.15:4.4;
  if(u.role==='tank'){
-   // Tank owns the front of the enemy. With enemies entering from the right side of the arena,
-   // this places the tank on the party-facing side and keeps the boss facing away from melee DPS.
-   const tanks=ctx.players.filter(p=>p.alive&&p.role==='tank'),slot=stableUnitIndex(ctx,u,tanks),angle=Math.PI+(slot-(tanks.length-1)/2)*.75;
+   // Keep roster membership stable across deaths/revives so survivors do not reshuffle.
+   const tanks=ctx.players.filter(p=>p.role==='tank'),slot=stableUnitIndex(ctx,u,tanks),angle=Math.PI+(slot-(tanks.length-1)/2)*.68;
    return{x:target.position.x+Math.cos(angle)*radius,y:target.position.y+Math.sin(angle)*radius}
  }
- const melee=ctx.players.filter(p=>p.alive&&p.role!=='tank'&&isMeleeCombatant(p));
- const slot=stableUnitIndex(ctx,u,melee);
- // Rear arc slots: centre-rear first, then alternate upper/lower flanks.
- const angles=[0,-1.38,1.38,-0.82,0.82,-1.12,1.12];
- const angle=angles[slot%angles.length];
- const ring=radius+(Math.floor(slot/angles.length)*1.15);
+ const melee=ctx.players.filter(p=>p.role!=='tank'&&combatRangeStyle(p)==='melee'),slot=stableUnitIndex(ctx,u,melee);
+ const angles=[0,-1.18,1.18,-.72,.72,-1.48,1.48],angle=angles[slot%angles.length],ring=radius+(Math.floor(slot/angles.length)*1.05);
  return{x:target.position.x+Math.cos(angle)*ring,y:target.position.y+Math.sin(angle)*ring}
 }
 function rangedFormationPoint(ctx,u,target,range){
- const ranged=ctx.players.filter(p=>p.alive&&!isMeleeCombatant(p)&&p.role!=='tank');
- const slot=stableUnitIndex(ctx,u,ranged);
- const angle=ranged.length<=1?Math.PI:2.12+slot*2.04/(ranged.length-1),desired=Math.max(10,Math.min((Number(range)||25)*.72,22));
+ if(u.role==='healer'){
+   const healers=ctx.players.filter(p=>p.role==='healer'),slot=stableUnitIndex(ctx,u,healers),angle=Math.PI+symmetricFormationOffset(slot)*.72,desired=21;
+   return{x:target.position.x+Math.cos(angle)*desired,y:target.position.y+Math.sin(angle)*desired}
+ }
+ const ranged=ctx.players.filter(p=>p.role!=='tank'&&p.role!=='healer'&&combatRangeStyle(p)==='ranged'),slot=stableUnitIndex(ctx,u,ranged);
+ const angle=Math.PI+symmetricFormationOffset(slot),desired=Math.max(11,Math.min((Number(range)||25)*.60,18.5));
  return{x:target.position.x+Math.cos(angle)*desired,y:target.position.y+Math.sin(angle)*desired}
 }
-function moveIntoRange(ctx,u,target,range){
- const r=Math.max(2,Number(range)||5),los=hasLineOfSight(ctx,u,target);
+function supportFormationAnchor(ctx,u,target){
+ const enemy=pickDamageTarget(ctx,u);
+ return enemy?.alive?enemy:target
+}
+function moveIntoRange(ctx,u,target,range,abilityKind='damage'){
+ const r=Math.max(2,Number(range)||5),los=hasLineOfSight(ctx,u,target),supportive=u.role==='healer'&&['heal','group-heal','battle-rez','defensive','support'].includes(String(abilityKind||''));
+ if(supportive){
+   const targetInRange=inRange(u,target,r);
+   if(targetInRange&&los){
+     // Healers hold a party backline; they do not orbit whichever ally currently needs a heal.
+     const anchor=supportFormationAnchor(ctx,u,target),urgent=target?.maxHealth>0&&target.health/target.maxHealth<.62;
+     if(anchor&&anchor.id!==target.id&&!urgent){
+       const formation=rangedFormationPoint(ctx,u,anchor,Math.max(25,r)),desired=visibleCastPoint(ctx,u,anchor,Math.max(25,r),formation);
+       if(dist(u.position,desired)>9){moveTo(ctx,u,desired,480,'return to formation');return false}
+     }
+     return true
+   }
+   const angle=Math.atan2(u.position.y-target.position.y,u.position.x-target.position.x),radius=Math.min(18,Math.max(6,r*.72));
+   const desired=visibleCastPoint(ctx,u,target,r,{x:target.position.x+Math.cos(angle)*radius,y:target.position.y+Math.sin(angle)*radius});
+   moveTo(ctx,u,desired,480,!los?'line of sight':'support range');return false
+ }
  if(r<=7){
    const formation=meleeFormationPoint(ctx,u,target),desired=visibleCastPoint(ctx,u,target,r,formation),slotDistance=dist(u.position,desired),combatRange=inRange(u,target,r);
-   const tolerance=u.role==='tank'?1.75:2.25;
+   const tolerance=u.role==='tank'?2.1:3.75;
    if(combatRange&&los&&slotDistance<=tolerance)return true;
-   if(combatRange&&los&&target.movingUntil>ctx.time&&slotDistance<=3.25)return true;
-   moveTo(ctx,u,desired,520,!los?'line of sight':u.role==='tank'?'tank positioning':'melee formation');
+   if(combatRange&&los&&target.movingUntil>ctx.time&&slotDistance<=4.75)return true;
+   moveTo(ctx,u,desired,500,!los?'line of sight':u.role==='tank'?'tank positioning':'melee formation');
    return false
  }
- const formation=rangedFormationPoint(ctx,u,target,r),desired=visibleCastPoint(ctx,u,target,r,formation);
- if(inRange(u,target,r)&&los&&dist(u.position,desired)<=3.5)return true;
- if(inRange(u,target,r)&&los&&target.movingUntil>ctx.time)return true;
- moveTo(ctx,u,desired,520,!los?'line of sight':'move into range');
+ const formation=rangedFormationPoint(ctx,u,target,r),desired=visibleCastPoint(ctx,u,target,r,formation),slotDistance=dist(u.position,desired);
+ if(inRange(u,target,r)&&los&&slotDistance<=6.25)return true;
+ if(inRange(u,target,r)&&los&&target.movingUntil>ctx.time&&slotDistance<=9)return true;
+ moveTo(ctx,u,desired,500,!los?'line of sight':'ranged formation');
  return false
 }
 function cooldownReady(u,a){return (u.cooldowns[a.id]||0)<=0}
@@ -2649,7 +2681,7 @@ function startAbility(ctx,u,a,target){
  const deadTarget=a?.kind==='battle-rez'&&target&&!target.alive;
  if(!u.alive||(!target?.alive&&!deadTarget)||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.gcdUntil||!cooldownReady(u,a))return false;
  if(u.class==='Rogue'&&Number(a.comboCost)>0&&Math.max(0,Number(u.comboPoints)||0)<Number(a.comboCost))return false;
- if(!moveIntoRange(ctx,u,target,Number(a.range)||5))return false;
+ if(!moveIntoRange(ctx,u,target,Number(a.range)||5,a.kind))return false;
  if(!spendResource(ctx,u,a))return false;
  const haste=clamp(statusBonus(u,'haste')+Math.max(0,Number(u?.setBonuses?.haste)||0)+Math.max(0,Number(u?.professionBonuses?.haste)||0)/100,0,.60),speed=1+haste;
  let cast=Math.max(0,Math.round((Number(a.cast)||0)/speed));cast=talentCastTime(ctx,u,a,cast);
@@ -3449,6 +3481,17 @@ function resolveMechanic(ctx,e,m,token){
   }
   mechanicStat(ctx,'tank-mark',false);scheduleNextMechanic(ctx);return
  }
+ if(m.type==='knockback'||m.type==='pull'){
+  const pull=m.type==='pull',distance=Math.max(3,Number(m.distance)||(pull?8:14)),impactDamage=Math.max(0,Number(m.damage)||0);
+  livingPlayers(ctx).forEach(p=>{
+   const dx=p.position.x-e.position.x,dy=p.position.y-e.position.y,len=Math.hypot(dx,dy)||1,ux=dx/len,uy=dy/len;
+   const raw=pull?{x:e.position.x+ux*distance,y:e.position.y+uy*distance}:{x:p.position.x+ux*distance,y:p.position.y+uy*distance};
+   const to=openPosition(ctx,raw,1.7);
+   if(impactDamage)dealDamage(ctx,e,p,impactDamage*enemyPressure(ctx,e,p),m.name,{damageType:m.damageType||'physical',avoidable:false});
+   moveTo(ctx,p,to,Math.max(300,Number(m.travelMs)||520),m.type);
+  });
+  mechanicStat(ctx,m.type,false);scheduleNextMechanic(ctx);return
+ }
  if(m.type==='cone'){
   const tank=livingPlayers(ctx).find(p=>p.role==='tank');if(tank){e.target=tank.id;updateFacing(e,tank)}
   let failed=false;
@@ -3497,7 +3540,9 @@ function startMechanic(ctx,m){
  const live=livingPlayers(ctx);
  ctx.activeEnemyCast=castState;
 
- if(m.type==='cone'){
+ if(m.type==='knockback'||m.type==='pull'){
+  castState.targetId=enemy.id;castState.targetIds=live.map(p=>p.id);
+ }else if(m.type==='cone'){
   const tank=live.find(p=>p.role==='tank')||live[0];castState.targetId=tank?.id||null;castState.targetIds=tank?[tank.id]:[];
   let badFacing=false;
   if(tank&&shouldMistake(ctx,tank,'tank',6000)){
@@ -3655,7 +3700,7 @@ function simulate(options={}){
  };
  const environment=copy(encounter.environment||{blockers:[]});
  const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
- players.forEach((u,i)=>{if(players.length>5&&!options.party[i]?._combatPosition)u.position.y=20+i*60/Math.max(1,players.length-1);u.position=openPosition(ctx,u.position,1.35)});
+ players.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  enemies.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),units:[...players,...enemies].map(u=>({id:u.id,position:copy(u.position),facing:u.facing,alive:u.alive,role:u.role,classification:u.classification,visualArchetype:u.visualArchetype,attackRange:u.attackRange,damageType:u.damageType})),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
  players.forEach(u=>{
@@ -3771,7 +3816,7 @@ function runSelfTests(){
  test('Tank Aggro',()=>!r.events.some(e=>e.type==='AGGRO_CHANGED'&&e.target==='p-d1'&&e.timestamp>5000));
  r=simulate({party,encounter:{...base,mechanics:[['Frontal','cone',1400]]},seed:'cone'});
  test('Frontal Cone',()=>r.events.some(e=>e.type==='MECHANIC_TELEGRAPH'&&e.payload.mechanicType==='cone'));
- r=simulate({party,encounter:{...base,enemyHealth:800,mechanicIntervalMs:1800,mechanics:[['Adds','adds',900]]},seed:'adds',maxDurationMs:5000});
+ r=simulate({party,encounter:{...base,enemyHealth:800,mechanicIntervalMs:1800,mechanics:[['Adds','adds',900]]},seed:'adds',maxDurationMs:7500});
  test('Adds',()=>r.events.some(e=>e.type==='ADD_SPAWNED')&&r.events.some(e=>e.type==='ADD_DEFEATED'));
  r=simulate({party,encounter:{...base,enemyHealth:5000,mechanicIntervalMs:900,mechanics:[{name:'Screech',type:'interaction',duration:600,interaction:'manor-screech',interactionDurationMs:4500}]},seed:'interaction-event',maxDurationMs:2600});
  test('Raid Interaction Event',()=>r.events.some(e=>e.type==='INTERACTION_REQUIRED'&&e.ability==='Screech'&&e.payload?.interaction==='manor-screech'&&Number(e.payload?.durationMs)===4500));
@@ -4350,6 +4395,20 @@ function runSelfTests(){
   {id:'jh',name:'Healer',class:'Priest',spec:'Holy',power:10,level:10}
  ],encounter:{...base,enemyHealth:1200,mechanics:[]},seed:'movement-smoothing'});
  test('Movement Smoothing',()=>r.events.filter(e=>e.type==='MOVEMENT_START'&&String(e.source||'').startsWith('p-')).length<45);
+ const normalFormationEnds=r.events.filter(e=>e.type==='MOVEMENT_END'&&['tank positioning','melee formation','ranged formation','return to formation'].includes(e.result)).map(e=>e.position).filter(Boolean);
+ test('Compact Stable Formation',()=>{
+  if(normalFormationEnds.length<3)return false;
+  const xs=normalFormationEnds.map(p=>p.x),ys=normalFormationEnds.map(p=>p.y);
+  return Math.max(...xs)-Math.min(...xs)<34&&Math.max(...ys)-Math.min(...ys)<38
+ });
+ const displacement=simulate({party:[
+  {id:'kt',name:'Tank',class:'Warrior',spec:'Protection',power:9,level:10},
+  {id:'kh',name:'Healer',class:'Priest',spec:'Holy',power:9,level:10},
+  {id:'kd1',name:'Melee',class:'Rogue',spec:'Assassination',power:9,level:10},
+  {id:'kd2',name:'Caster',class:'Mage',spec:'Arcane',power:9,level:10},
+  {id:'kd3',name:'Ranged',class:'Hunter',spec:'Marksman',power:9,level:10}
+ ],encounter:{id:'forced-movement',title:'Forced Movement',kind:'boss',enemies:['Force Boss'],enemyHealth:6000,mechanicIntervalMs:650,mechanics:[{name:'Repulsive Wave',type:'knockback',duration:650,distance:10}]},seed:'forced-movement',maxDurationMs:3200});
+ test('Boss Knockback Movement',()=>displacement.events.some(e=>e.type==='MOVEMENT_START'&&e.result==='knockback'));
  r=simulate({party:[
   {id:'ht',name:'Tank',class:'Warrior',spec:'Protection',power:28,level:10},
   {id:'hh',name:'Healer',class:'Paladin',spec:'Holy',power:28,level:10},

@@ -8,11 +8,17 @@ const initial=a.events.find(e=>e.type==='COMBAT_START').payload.units;
 assert.equal(initial.length,11);
 assert(initial.every(u=>u.position.x>=0&&u.position.x<=100&&u.position.y>=0&&u.position.y<=100),'raid begins inside arena');
 assert.equal(new Set(initial.filter(u=>u.id.startsWith('p-')).map(u=>u.position.x+':'+u.position.y)).size,10,'raid initial positions are distinct');
+const initialPlayers=initial.filter(u=>u.id.startsWith('p-')),initialXs=initialPlayers.map(u=>u.position.x),initialYs=initialPlayers.map(u=>u.position.y);
+assert(Math.max(...initialXs)-Math.min(...initialXs)<28&&Math.max(...initialYs)-Math.min(...initialYs)<38,'raid begins in a compact party footprint');
 const tankMoves=a.events.filter(e=>e.type==='MOVEMENT_END'&&e.result==='tank positioning');
 assert(tankMoves.some(e=>e.source==='p-raid-0')&&tankMoves.some(e=>e.source==='p-raid-5'),'both tanks receive authoritative formation paths');
 const roles=['p-raid-0','p-raid-5'].map(id=>tankMoves.find(e=>e.source===id).position);
 assert(Math.hypot(roles[0].x-roles[1].x,roles[0].y-roles[1].y)>2,'tanks do not share a formation slot');
-console.log('Living combat authority checks passed: deterministic events, legal 10-player starting positions, separate tank slots.');
+const formationMoves=a.events.filter(e=>e.type==='MOVEMENT_END'&&['tank positioning','melee formation','ranged formation','return to formation'].includes(e.result)&&e.position);
+assert(formationMoves.length>=6,'raid receives shared formation movement');
+const fx=formationMoves.map(e=>e.position.x),fy=formationMoves.map(e=>e.position.y);
+assert(Math.max(...fx)-Math.min(...fx)<38&&Math.max(...fy)-Math.min(...fy)<42,'normal formation movement stays compact around the encounter');
+console.log('Living combat authority checks passed: deterministic events, compact formation, legal 10-player positions, separate tank slots.');
 
 const pack=sandbox.window.CellboundCombatReborn.simulate({...options,encounter:{id:'crowded-pack',kind:'event',enemies:Array.from({length:20},(_,i)=>({name:'Thrall '+i,classification:'trash'})),enemyHealth:10000,scaling:{enemyDamage:.05},mechanics:[]},maxDurationMs:10000});
 assert(pack.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source?.startsWith('e-')&&e.timestamp>5000),'crowded enemies must still attack after settling');
