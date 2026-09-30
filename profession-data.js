@@ -153,8 +153,8 @@ const PROFESSIONS={
     {id:'scr-scribes-seal',name:"Scribe's Seal",level:30,xp:34,inputs:{'ashen-soul-fragment':2,'ember-core':1},crafterOnly:true,trainingScale:.45,output:{category:'consumable',key:'scribes-seal',name:"Scribe's Seal",quantity:1,payload:{effect:'character-scroll',bonuses:{damagePct:2,crit:2,magicWardPct:2},charges:1,description:'Crafter only. +2% Damage, +2% Critical Strike and 2% less magic damage taken for the next boss encounter.'}}},
     {id:'scr-quickening',name:'Scroll of Quickening',level:35,xp:38,inputs:{'ashen-soul-fragment':2,'ember-core':1},output:{category:'consumable',key:'scroll-of-quickening',name:'Scroll of Quickening',quantity:1,payload:{effect:'character-scroll',bonuses:{haste:4},charges:1,description:'Read before combat. +4% Haste for the next boss encounter.'}}},
     {id:'scr-mending',name:'Scroll of Mending',level:45,xp:46,inputs:{'ashen-soul-fragment':2,'vaultheart-crystal':1},output:{category:'consumable',key:'scroll-of-mending',name:'Scroll of Mending',quantity:1,payload:{effect:'character-scroll',bonuses:{healing:6},charges:1,description:'Read before combat. +6% Healing Power for the next boss encounter.'}}},
-    {id:'scr-ashen-hunters-notes',name:"Ashen Hunter's Notes",level:55,xp:52,inputs:{'ashen-soul-fragment':3,'cell-shards':1,'ember-core':1},output:{category:'consumable',key:'ashen-hunters-notes',name:"Ashen Hunter's Notes",quantity:1,payload:{effect:'character-scroll',bonuses:{damagePct:4},charges:1,description:'Encounter manuscript. +4% Damage for the next boss encounter.'}}},
-    {id:'scr-vault-manuscript',name:'Vaultward Manuscript',level:65,xp:58,inputs:{'ashen-soul-fragment':2,'cell-shards':2,'vaultheart-crystal':1},output:{category:'consumable',key:'vaultward-manuscript',name:'Vaultward Manuscript',quantity:1,payload:{effect:'party-scroll',bonuses:{magicWardPct:3,stamina:2},charges:1,description:'Read to the active five. Every party member takes 3% less magic damage and gains +2 Stamina for the next boss encounter.'}}},
+    {id:'scr-ashen-hunters-notes',name:"Ashen Hunter's Notes",level:55,xp:52,inputs:{'ashen-soul-fragment':3,'cell-shards':1,'ember-core':1},output:{category:'consumable',key:'ashen-hunters-notes',name:"Ashen Hunter's Notes",quantity:1,payload:{effect:'character-scroll',bonuses:{damagePct:2},affinityZone:'ashen-vault',affinityBonuses:{damagePct:3},charges:1,description:'Encounter manuscript. +2% Damage for the next boss encounter; an additional +3% Damage inside Ashen Vault (5% total).'}}},
+    {id:'scr-vault-manuscript',name:'Vaultward Manuscript',level:65,xp:58,inputs:{'ashen-soul-fragment':2,'cell-shards':2,'vaultheart-crystal':1},output:{category:'consumable',key:'vaultward-manuscript',name:'Vaultward Manuscript',quantity:1,payload:{effect:'party-scroll',bonuses:{magicWardPct:3,stamina:2},affinityZone:'ashen-vault',affinityBonuses:{magicWardPct:2},charges:1,description:'Read to the active five. All gain +2 Stamina and take 3% less magic damage; an additional 2% less magic damage inside Ashen Vault for the next boss encounter.'}}},
     {id:'scr-archivists-command',name:"Archivist's Command",level:75,xp:62,inputs:{'cell-shards':4,'vaultheart-crystal':1},crafterOnly:true,trainingScale:.45,output:{category:'consumable',key:'archivists-command',name:"Archivist's Command",quantity:1,payload:{effect:'character-scroll',bonuses:{damagePct:3,haste:3,crit:3},charges:1,description:'Crafter only. +3% Damage, +3% Haste and +3% Critical Strike for the next boss encounter.'}}},
     {id:'scr-voidward-manuscript',name:'Voidward Manuscript',level:80,xp:66,inputs:{'cell-shards':5,'void-crystal':1},output:{category:'consumable',key:'voidward-manuscript',name:'Voidward Manuscript',quantity:1,payload:{effect:'party-scroll',bonuses:{magicWardPct:5},charges:1,description:'Read to the active five. Every party member takes 5% less magic damage for the next boss encounter.'}},endgame:true},
     {id:'scr-ancient-battleplan',name:'Ancient Battleplan',level:90,xp:72,inputs:{'ancient-soul':1,'cell-shards':7,'ember-core':1},output:{category:'consumable',key:'ancient-battleplan',name:'Ancient Battleplan',quantity:1,payload:{effect:'party-scroll',bonuses:{crit:3,haste:3},charges:1,description:'Read to the active five. +3% Critical Strike and +3% Haste for the next boss encounter.'}},endgame:true},
@@ -235,7 +235,7 @@ function activeProcs(c){
   });
   return totals;
 }
-function activeBonuses(c){
+function activeBonuses(c,zone=null){
   const totals={};
   const add=src=>Object.entries(src||{}).forEach(([k,v])=>totals[k]=(Number(totals[k])||0)+(Number(v)||0));
   Object.values(c?.equipment||{}).forEach(item=>{const a=item?.attachment;if(a?.bonuses&&(!a.crafterOnly||a.boundCharacterId===c?.id))add(a.bonuses)});
@@ -243,7 +243,7 @@ function activeBonuses(c){
     const item=c?.equipment?.[e.slot];
     if((Number(e.remainingBosses)||0)>0&&itemSignature(item)===e.targetSignature)add(e.bonuses);
   });
-  (Array.isArray(c?.activeProfessionBuffs)?c.activeProfessionBuffs:[]).forEach(e=>{if((Number(e.remainingBosses)||0)>0)add(e.bonuses)});
+  (Array.isArray(c?.activeProfessionBuffs)?c.activeProfessionBuffs:[]).forEach(e=>{if((Number(e.remainingBosses)||0)>0){add(e.bonuses);if(zone&&e.affinityZone===zone)add(e.affinityBonuses)}});
   return totals;
 }
 function activeEffects(c){
