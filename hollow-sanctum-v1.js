@@ -104,16 +104,17 @@ function qstate(){return state()?.questSystem}
 function unlocked(){return Boolean(qstate()?.flags?.hollowSanctumUnlocked)}
 function firstCleared(){return Boolean(qstate()?.flags?.hollowFirstClear)}
 function root(){let e=$('#hs2dBackdrop');if(e)return e;e=document.createElement('div');e.id='hs2dBackdrop';e.className='hs2d-backdrop';e.hidden=true;document.body.appendChild(e);return e}
-function readiness(){
+function readiness(normalOnly=false){
  const p=party();if(!unlocked())return{ok:false,reason:'The Hollow Sanctum has not been discovered. Complete Echoes Beneath Zeltira.'};
  if(p.length!==5)return{ok:false,reason:'Build a complete five-character party first.'};
  const bad=p.find(c=>Game.isUnavailable?.(c));if(bad)return{ok:false,reason:bad.name+' is still recovering from Cell Shock.'};
- const req=Math.max(24,Number(hsEndgameConfig()?.recommendedItemLevel)||24);if(ilvl()<req)return{ok:false,reason:'Party Item Level '+ilvl()+'. '+(hsEndgameConfig()?.diff?.name||'Normal')+' requires Item Level '+req+'.'};
- return{ok:true,reason:'The seal is open.'}
+ const cfg=normalOnly?null:hsEndgameConfig(),req=normalOnly?24:Math.max(24,Number(cfg?.recommendedItemLevel)||24),label=normalOnly?'Normal':(cfg?.diff?.name||'Normal');
+ if(ilvl()<req)return{ok:false,reason:'Party Item Level '+ilvl()+'. '+label+' requires Item Level '+req+'.'};
+ return{ok:true,reason:normalOnly?'Normal difficulty is available.':'The seal is open.'}
 }
 function renderCard(){
  const card=$('#hollowDungeonCard'),mount=$('#hollowSanctumMount');if((!card&&!mount)||!Game?.ready)return;
- const q=qstate(),open=Boolean(q?.flags?.hollowSanctumUnlocked),done=Boolean(q?.flags?.hollowFirstClear),clears=Number(q?.hollowCompletions)||0,pi=ilvl(),gate=readiness();
+ const q=qstate(),open=Boolean(q?.flags?.hollowSanctumUnlocked),done=Boolean(q?.flags?.hollowFirstClear),clears=Number(q?.hollowCompletions)||0,pi=ilvl(),gate=readiness(true);
  if(card){
   card.innerHTML='<article class="dungeon-browser-card hollow '+(open?'unlocked':'locked')+'" data-dungeon-card="hollow-sanctum">'+
    '<div class="dungeon-browser-art has-image hollow-art"><img src="./assets/dungeons/hollow-sanctum.webp" alt="" loading="lazy" decoding="async"><span>'+(open?'ZELTIRA UNDERDEEP':'UNKNOWN SIGNAL')+'</span><strong>◇</strong></div>'+
@@ -191,12 +192,12 @@ async function hsWaitForEndgame(){
 }
 
 function briefing(){
- const gate=readiness(),r=root();r.hidden=false;document.body.classList.add('hs2d-open');
- if(!gate.ok){
-   r.innerHTML='<section class="cb2d-shell cb2d-brief hs2d-unified-shell"><header class="cb2d-head"><div><small>THE HOLLOW SANCTUM · ENTRY CHECK</small><h2>Dungeon entry is currently blocked.</h2></div><button data-close aria-label="Close dungeon">×</button></header><div class="cb2d-blocked"><b>NOT READY</b><p>'+esc(gate.reason)+'</p><button data-action>'+(unlocked()?'OPEN PARTY BUILDER':'OPEN QUEST JOURNAL')+' →</button></div></section>';
+ const baseGate=readiness(true),gate=readiness(),r=root();r.hidden=false;document.body.classList.add('hs2d-open');
+ if(!baseGate.ok){
+   r.innerHTML='<section class="cb2d-shell cb2d-brief hs2d-unified-shell"><header class="cb2d-head"><div><small>THE HOLLOW SANCTUM · ENTRY CHECK</small><h2>Dungeon entry is currently blocked.</h2></div><button data-close aria-label="Close dungeon">×</button></header><div class="cb2d-blocked"><b>NOT READY</b><p>'+esc(baseGate.reason)+'</p><button data-action>'+(unlocked()?'OPEN PARTY BUILDER':'OPEN QUEST JOURNAL')+' →</button></div></section>';
    r.querySelector('[data-close]').onclick=close;r.querySelector('[data-action]').onclick=()=>{close();Game.switchView?.(unlocked()?'party':'quests')};return
  }
- r.innerHTML='<section class="cb2d-shell cb2d-brief hs2d-unified-shell"><header class="cb2d-head"><div><small>THE HOLLOW SANCTUM · LEVELS 6–8 · ILVL 24+ · TACTICAL BRIEFING</small><h2>Set the plan once. Then watch the dungeon run.</h2></div><button data-close aria-label="Close dungeon">×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">The Hollow Sanctum uses the same combat rules as every dungeon. Only its rooms, enemies and encounter mechanics change.</p>'+hsEndgamePrepMarkup()+'<h3>Expedition Style</h3><p class="cb2d-intro">Choose the pace. Your party uses it to time interrupts, defensives, crowd control and movement.</p>'+hsStrategyButtons('strategyPreset',[['safe','SAFE','Slower pulls, earlier defensives and stronger mechanic control.'],['balanced','BALANCED','Standard pace with sensible reactions to danger.'],['aggressive','AGGRESSIVE','Faster pulls, freer cooldown use and more boss pressure.']])+'<h3>Encounter Intelligence</h3><div class="hs2d-intel"><span><b>Gallery of Echoes</b><small>Moving packs and pulse damage</small></span><span><b>Glassjaw Sentinel</b><small>Line fractures across the chamber</small></span><span><b>The Bound Choir</b><small>Large resonance zones and interrupts</small></span></div></main><aside><small>ACTIVE FIVE · PARTY LV '+partyLevel()+' · ILVL '+ilvl()+'</small>'+party().map(ch=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(ch)+'"></i><span><b>'+esc(ch.name)+'</b><small>Lv. '+Math.max(1,Number(ch.level)||1)+' · '+esc(ch.class)+' · '+esc(ch.spec)+'</small></span><strong>'+String(role(ch)).toUpperCase()+'</strong></div>').join('')+'<div class="cb2d-prep-summary"><small>KNOWN REWARD</small><p><b>Blackglass Resonator</b><span>'+(firstCleared()?'First-clear relic already recovered':'First-clear relic · Item Level 30')+'</span></p></div><button class="cb2d-start" data-start>BEGIN EXPEDITION →</button></aside></div></section>';
+ r.innerHTML='<section class="cb2d-shell cb2d-brief hs2d-unified-shell"><header class="cb2d-head"><div><small>THE HOLLOW SANCTUM · LEVELS 6–8 · ILVL 24+ · TACTICAL BRIEFING</small><h2>Set the plan once. Then watch the dungeon run.</h2></div><button data-close aria-label="Close dungeon">×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">The Hollow Sanctum uses the same combat rules as every dungeon. Only its rooms, enemies and encounter mechanics change.</p>'+hsEndgamePrepMarkup()+'<h3>Expedition Style</h3><p class="cb2d-intro">Choose the pace. Your party uses it to time interrupts, defensives, crowd control and movement.</p>'+hsStrategyButtons('strategyPreset',[['safe','SAFE','Slower pulls, earlier defensives and stronger mechanic control.'],['balanced','BALANCED','Standard pace with sensible reactions to danger.'],['aggressive','AGGRESSIVE','Faster pulls, freer cooldown use and more boss pressure.']])+'<h3>Encounter Intelligence</h3><div class="hs2d-intel"><span><b>Gallery of Echoes</b><small>Moving packs and pulse damage</small></span><span><b>Glassjaw Sentinel</b><small>Line fractures across the chamber</small></span><span><b>The Bound Choir</b><small>Large resonance zones and interrupts</small></span></div></main><aside><small>ACTIVE FIVE · PARTY LV '+partyLevel()+' · ILVL '+ilvl()+'</small>'+party().map(ch=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(ch)+'"></i><span><b>'+esc(ch.name)+'</b><small>Lv. '+Math.max(1,Number(ch.level)||1)+' · '+esc(ch.class)+' · '+esc(ch.spec)+'</small></span><strong>'+String(role(ch)).toUpperCase()+'</strong></div>').join('')+'<div class="cb2d-prep-summary"><small>KNOWN REWARD</small><p><b>Blackglass Resonator</b><span>'+(firstCleared()?'First-clear relic already recovered':'First-clear relic · Item Level 30')+'</span></p></div><div class="cb2d-prep-summary"><small>SELECTED DIFFICULTY</small><p><b>'+(gate.ok?'READY':'ITEM LEVEL REQUIRED')+'</b><span>'+esc(gate.reason)+'</span></p></div><button class="cb2d-start" data-start '+(gate.ok?'':'disabled')+'>BEGIN EXPEDITION →</button></aside></div></section>';
  r.querySelector('[data-close]').onclick=close;r.querySelector('[data-start]').onclick=start;
  try{hsBindEndgamePrep()}catch(error){console.warn('Hollow difficulty controls failed to bind',error)}
  hsBindStrategy()
@@ -664,6 +665,7 @@ async function hsRunFrom(startIndex,tok){
 }
 
 async function start(){
+ const gate=readiness();if(!gate.ok){briefing();return}
  const startButton=root().querySelector('[data-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
  await Game.persistState?.();
  const service=await hsWaitForEndgame(),eg=hsEndgameConfig(),attempt=await service?.beginOrResumeAttempt?.('hollow-sanctum')||await service?.beginAttempt?.('hollow-sanctum');

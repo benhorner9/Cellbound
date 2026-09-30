@@ -51,12 +51,13 @@ function root(){
  if(e)return e;
  e=document.createElement('div');e.id='bs2dBackdrop';e.className='bs2d-backdrop';e.hidden=true;document.body.appendChild(e);return e
 }
-function readiness(){
+function readiness(normalOnly=false){
  const p=party();
  if(p.length!==5)return{ok:false,reason:'Build a complete five-character party first.'};
  const bad=p.find(c=>Game?.isUnavailable?.(c));if(bad)return{ok:false,reason:bad.name+' is still recovering from Cell Shock.'};
- const req=Math.max(ENTRY_ILVL,Number(bsEndgameConfig()?.recommendedItemLevel)||ENTRY_ILVL);if(ilvl()<req)return{ok:false,reason:'Party Item Level '+ilvl()+'. '+(bsEndgameConfig()?.diff?.name||'Normal')+' requires Item Level '+req+'.'};
- return{ok:true,reason:'The station is ready to investigate.'}
+ const cfg=normalOnly?null:bsEndgameConfig(),req=normalOnly?ENTRY_ILVL:Math.max(ENTRY_ILVL,Number(cfg?.recommendedItemLevel)||ENTRY_ILVL),label=normalOnly?'Normal':(cfg?.diff?.name||'Normal');
+ if(ilvl()<req)return{ok:false,reason:'Party Item Level '+ilvl()+'. '+label+' requires Item Level '+req+'.'};
+ return{ok:true,reason:normalOnly?'Normal difficulty is available.':'The station is ready to investigate.'}
 }
 function bsEndgameConfig(){
  const E=window.CellboundEndgame;
@@ -82,7 +83,7 @@ async function bsWaitForEndgame(){
 
 function renderCard(){
  const card=$('#blackoutStationCard'),mount=$('#blackoutStationMount');if((!card&&!mount)||!Game?.ready)return;
- const s=state(),clears=Number(s?.blackoutStationCompletions)||0,gate=readiness(),pi=ilvl();
+ const s=state(),clears=Number(s?.blackoutStationCompletions)||0,gate=readiness(true),pi=ilvl();
  if(card)card.innerHTML='<article class="dungeon-browser-card blackout-station unlocked" data-dungeon-card="blackout-station"><div class="dungeon-browser-art has-image blackout-station-art"><img src="./assets/dungeons/blackout-station.webp" alt="" loading="lazy" decoding="async"><span>ABANDONED GRID</span><strong>⚡</strong></div><div class="dungeon-browser-copy"><div class="dungeon-browser-heading"><div><small>DUNGEON</small><h3>Blackout Station</h3></div><b id="blackoutStationStatus">'+(clears?'CLEARED':'AVAILABLE')+'</b></div><p>Restore a dead power station, then survive Dr. Vex Calder\'s lethal role circuits.</p><div class="dungeon-browser-meta"><span>2 stages</span><span>iLvl '+ENTRY_ILVL+'+</span><span>Party iLvl '+(pi||'—')+'</span></div><div class="dungeon-browser-actions"><button type="button" data-dungeon-more="blackout-station">MORE INFO →</button></div></div></article>';
  if(!mount)return;
  mount.innerHTML='<div class="dungeon-detail-toolbar"><div><small>DUNGEON JOURNAL</small><b>Blackout Station</b></div><button type="button" data-dungeon-close>CLOSE DETAILS ×</button></div>'+
@@ -99,7 +100,11 @@ function renderCard(){
  mount.querySelector('[data-bs-enter]')?.addEventListener('click',openDungeon)
 }
 function briefing(){
- const gate=readiness(),r=root();r.hidden=false;document.body.classList.add('bs2d-open');
+ const baseGate=readiness(true),gate=readiness(),r=root();r.hidden=false;document.body.classList.add('bs2d-open');
+ if(!baseGate.ok){
+  r.innerHTML='<section class="cb2d-shell cb2d-brief bs2d-shell"><header class="cb2d-head"><div><small>BLACKOUT STATION · ENTRY CHECK</small><h2>Dungeon entry is currently blocked.</h2></div><button data-bs-close aria-label="Close dungeon">×</button></header><div class="cb2d-blocked"><b>NOT READY</b><p>'+esc(baseGate.reason)+'</p><button data-bs-party>OPEN PARTY BUILDER →</button></div></section>';
+  r.querySelector('[data-bs-close]').onclick=close;r.querySelector('[data-bs-party]').onclick=()=>{close();Game.switchView?.('party')};return
+ }
  r.innerHTML='<section class="cb2d-shell cb2d-brief bs2d-shell"><header class="cb2d-head"><div><small>BLACKOUT STATION · DUNGEON 4 · ILVL '+ENTRY_ILVL+'+</small><h2>Restore the grid. Survive the overload.</h2></div><button data-bs-close aria-label="Close dungeon">×</button></header><div class="cb2d-brief-grid"><main><p class="cb2d-intro">There are no trash packs here. The expedition begins at a dead control board. Solve the sliding cable puzzle and the station powers up, revealing Dr. Vex Calder in the generator hall.</p>'+bsEndgamePrepMarkup()+'<div class="bs-brief-rules"><article><span>1</span><div><b>ALIGN THE GRID</b><p>Slide adjacent cable tiles into the empty space until every section returns to the correct circuit layout.</p></div></article><article><span>2</span><div><b>WATCH THE LIGHTS</b><p>At 75%, 50% and 25% boss health, Calder pulls the power and the room goes dark.</p></div></article><article><span>3</span><div><b>GET TO YOUR ROLE CIRCUIT</b><p><strong class="bs-red">RED = TANK</strong> · <strong class="bs-yellow">YELLOW = DAMAGE</strong> · <strong class="bs-blue">BLUE = HEALER</strong>. The shockwave is lethal outside the correct colour.</p></div></article></div></main><aside><small>ACTIVE FIVE · PARTY ILVL '+(ilvl()||'—')+'</small>'+party().map(ch=>'<div class="cb2d-brief-member"><i class="cb2d-dot '+classKey(ch)+'"></i><span><b>'+esc(ch.name)+'</b><small>'+esc(ch.class)+' · '+esc(ch.spec)+' · '+role(ch).toUpperCase()+'</small></span></div>').join('')+'<div class="cb2d-prep-summary bs-entry-status"><small>STATION STATUS</small><p><b>GRID OFFLINE</b><span>Restore the distribution board to open the Generator Hall.</span></p><p><b>CALDER DETECTED</b><span>Role circuits become critical once Emergency Overload begins.</span></p></div><button class="cb2d-start bs2d-start" data-bs-start '+(!gate.ok?'disabled':'')+'>BEGIN RESTORATION →</button><p class="bs-entry-ready">'+esc(gate.reason)+'</p></aside></div></section>';
  r.querySelector('[data-bs-close]').onclick=close;
  r.querySelector('[data-bs-start]')?.addEventListener('click',startRun);
