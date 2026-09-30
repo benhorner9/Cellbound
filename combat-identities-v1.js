@@ -76,7 +76,7 @@ const SPECS={
       title:'Pack Guardian',
       strength:'Excellent multi-target threat, add control and magical defence.',
       tradeoff:'Lower sustained single-target threat than a Protection Warrior.',
-      singleThreat:2.18,packThreat:2.32,groupThreat:.56,physicalTaken:.94,magicTaken:.87,damage:.92,tauntLead:1.16
+      singleThreat:2.18,packThreat:2.32,groupThreat:.56,physicalTaken:.90,magicTaken:.87,damage:.92,tauntLead:1.16
     },
     Holy:{
       title:'Tank Keeper',
@@ -188,7 +188,7 @@ const SPECS={
       title:'Staggering Brewmaster',
       strength:'Smooths dangerous physical spikes through Stagger while controlling packs with mobile melee pressure.',
       tradeoff:'Some damage is delayed rather than erased, so poor Purifying Brew timing can let the Stagger pool become dangerous.',
-      singleThreat:2.34,packThreat:2.52,groupThreat:.34,physicalTaken:.96,magicTaken:.98,damage:.91,tauntLead:1.18
+      singleThreat:2.34,packThreat:2.52,groupThreat:.34,physicalTaken:.92,magicTaken:.96,damage:.91,tauntLead:1.18
     },
     Mistweaver:{
       title:'Martial Mender',
@@ -208,7 +208,7 @@ const SPECS={
       title:'Blood Warden',
       strength:'Turns recent incoming damage into powerful Death Strike healing while maintaining relentless single-target threat.',
       tradeoff:'Survival is reactive; wasting Runic Power before a heavy hit leaves fewer resources for recovery.',
-      singleThreat:2.70,packThreat:2.20,groupThreat:.20,physicalTaken:.91,magicTaken:.94,damage:.90,tauntLead:1.22
+      singleThreat:2.70,packThreat:2.20,groupThreat:.20,physicalTaken:.93,magicTaken:.95,damage:.90,tauntLead:1.22
     },
     Frost:{
       title:'Rime Reaper',
@@ -234,7 +234,7 @@ const SPECS={
       title:'Soul Warden',
       strength:'Mobile tank that converts enemy souls into self-healing while controlling packs with fel damage.',
       tradeoff:'Survival depends on generating and spending Soul Fragments well rather than relying on passive block.',
-      singleThreat:2.48,packThreat:2.58,groupThreat:.30,physicalTaken:.91,magicTaken:.88,damage:.93,tauntLead:1.22
+      singleThreat:2.48,packThreat:2.58,groupThreat:.30,physicalTaken:.95,magicTaken:.93,damage:.93,tauntLead:1.22
     }
   },
   Evoker:{
