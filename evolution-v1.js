@@ -398,6 +398,11 @@ function enhanceBank(){
 
   visible.sort((a,b)=>{
     const ia=a.item,ib=b.item;
+    if(bankCategory==='all'){
+      const categoryOrder={Gear:0,Consumable:1,Reagent:2,Recipe:3};
+      const groupDelta=(categoryOrder[a.category]??9)-(categoryOrder[b.category]??9);
+      if(groupDelta)return groupDelta;
+    }
     if(bankSort==='ilvl-desc')return (ib.itemLevel||0)-(ia.itemLevel||0);
     if(bankSort==='ilvl-asc')return (ia.itemLevel||0)-(ib.itemLevel||0);
     if(bankSort==='rarity')return (rarityRank[ib.rarity]||0)-(rarityRank[ia.rarity]||0);
