@@ -1,8 +1,8 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.27';
-// Balance baseline: 2026-09-29 role and progression audit.
+const VERSION='1.3.28';
+// Balance baseline: 2026-09-30 chapter-wide progression and role audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
@@ -181,11 +181,11 @@ const ABILITIES={
   {id:'dragonrage',name:'Dragonrage',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Unleash the full fury of the dragonflights and enter a major burst window.',range:30,damage:38,cost:2,gcd:1500,cd:60000,cleave:3,damageType:'magic'}
  ],
  Hunter:[
-  {id:'aimed-shot',name:'Aimed Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:1,desc:'A slow, heavy ranged shot.',range:35,damage:31,cost:35,gcd:1500,cast:1500,cd:7000},
-  {id:'arcane-shot',name:'Arcane Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:1,desc:'Reliable ranged damage.',range:35,damage:17,cost:20,gcd:1500,cd:0},
-  {id:'steady-shot',name:'Steady Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:1,desc:'Generate Focus while maintaining ranged pressure.',range:35,damage:11,cost:0,gain:18,gcd:1500,cast:900,cd:0},
+  {id:'aimed-shot',name:'Aimed Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:1,desc:'A slow, heavy ranged shot.',range:35,damage:36,cost:35,gcd:1500,cast:1500,cd:7000},
+  {id:'arcane-shot',name:'Arcane Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:1,desc:'Reliable ranged damage.',range:35,damage:20,cost:20,gcd:1500,cd:0},
+  {id:'steady-shot',name:'Steady Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:1,desc:'Generate Focus while maintaining ranged pressure.',range:35,damage:12,cost:0,gain:18,gcd:1500,cast:900,cd:0},
   {id:'multi-shot',name:'Multi-Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:5,desc:'Strike the target and nearby enemies.',range:35,damage:14,cost:30,gcd:1500,cd:6000,cleave:2},
-  {id:'kill-shot',name:'Kill Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:1,desc:'A finishing attack that is strongest against weakened enemies.',range:35,damage:24,cost:20,gcd:1500,cd:10000,executeBelow:.20,executeMultiplier:1.85},
+  {id:'kill-shot',name:'Kill Shot',kind:'damage',role:'dps',spec:'Marksman',unlockLevel:1,desc:'A finishing attack that is strongest against weakened enemies.',range:35,damage:29,cost:20,gcd:1500,cd:10000,executeBelow:.20,executeMultiplier:1.85},
 
   {id:'cobra-shot',name:'Cobra Shot',kind:'damage',role:'dps',spec:'Beast Mastery',unlockLevel:1,desc:'Fire a fast shot while directing your beast, spending Focus for mobile pressure.',range:35,damage:18,cost:25,gcd:1500,cast:0,cd:0},
   {id:'barbed-shot',name:'Barbed Shot',kind:'damage',role:'dps',spec:'Beast Mastery',unlockLevel:1,desc:'Wound the target, generate Focus and drive your permanent beast into a frenzy.',range:35,damage:16,cost:0,gain:18,gcd:1500,cast:0,cd:8000},
@@ -218,15 +218,15 @@ const ABILITIES={
   {id:'shield-slam',name:'Shield Slam',kind:'damage',role:'tank',unlockLevel:1,desc:'High-threat melee strike.',range:5,damage:21,cost:20,gain:8,gcd:1500,cd:6000,threat:3},
   {id:'revenge',name:'Revenge',kind:'damage',role:'tank',unlockLevel:1,desc:'Reliable tank damage with increased threat.',range:5,damage:16,cost:15,gcd:1500,cd:3000,threat:2.5},
   {id:'taunt',name:'Taunt',kind:'taunt',role:'tank',unlockLevel:1,desc:'Force an enemy to attack the Warrior.',range:30,cost:0,gcd:0,cd:8000,threat:5},
-  {id:'mortal-strike',name:'Mortal Strike',kind:'damage',role:'dps',unlockLevel:1,desc:'Heavy single-target weapon damage.',range:5,damage:29,cost:30,gcd:1500,cd:6000},
-  {id:'slam',name:'Slam',kind:'damage',role:'dps',unlockLevel:1,desc:'Reliable melee damage.',range:5,damage:18,cost:18,gcd:1500,cd:0},
-  {id:'execute',name:'Execute',kind:'damage',role:'dps',unlockLevel:1,desc:'A finishing strike that becomes deadly against weakened enemies.',range:5,damage:22,cost:25,gcd:1500,cd:7000,executeBelow:.25,executeMultiplier:1.9},
+  {id:'mortal-strike',name:'Mortal Strike',kind:'damage',role:'dps',unlockLevel:1,desc:'Heavy single-target weapon damage.',range:5,damage:38,cost:30,gcd:1500,cd:6000},
+  {id:'slam',name:'Slam',kind:'damage',role:'dps',unlockLevel:1,desc:'Reliable melee damage.',range:5,damage:24,cost:18,gcd:1500,cd:0},
+  {id:'execute',name:'Execute',kind:'damage',role:'dps',unlockLevel:1,desc:'A finishing strike that becomes deadly against weakened enemies.',range:5,damage:30,cost:25,gcd:1500,cd:7000,executeBelow:.25,executeMultiplier:1.9},
   {id:'pummel',name:'Pummel',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast.',range:5,cost:0,gcd:0,cd:15000},
   {id:'shield-wall',name:'Shield Wall',kind:'defensive',role:'tank',unlockLevel:6,desc:'Greatly reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.40,gcd:0,cd:90000},
   {id:'sweeping-strike',name:'Sweeping Strike',kind:'damage',role:'dps',unlockLevel:6,desc:'Strike the target and nearby enemies.',range:5,damage:20,cost:24,gcd:1500,cd:9000,cleave:2},
   {id:'thunder-clap',name:'Thunder Clap',kind:'damage',role:'tank',unlockLevel:10,desc:'Damage several enemies while generating extra threat.',range:8,damage:17,cost:18,gcd:1500,cd:8000,cleave:3,threat:2.7},
   {id:'rallying-guard',name:'Rallying Guard',kind:'defensive',role:'dps',unlockLevel:10,desc:'Brace for danger and reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.20,gcd:0,cd:75000},
-  {id:'overpower',name:'Overpower',kind:'damage',role:'dps',unlockLevel:14,desc:'A powerful strike with a short cooldown.',range:5,damage:27,cost:18,gcd:1500,cd:5000}
+  {id:'overpower',name:'Overpower',kind:'damage',role:'dps',unlockLevel:14,desc:'A powerful strike with a short cooldown.',range:5,damage:32,cost:18,gcd:1500,cd:5000}
  ],
  Paladin:[
   {id:'avengers-shield',name:"Avenger's Shield",kind:'damage',role:'tank',unlockLevel:1,desc:'Ranged tank attack with strong threat and cleave.',range:30,damage:20,cost:5,gcd:1500,cd:6000,threat:3,cleave:2},
@@ -251,9 +251,9 @@ const ABILITIES={
   {id:'guardian-spirit',name:'Guardian Spirit',kind:'defensive',role:'healer',spec:'Holy',unlockLevel:12,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:90000},
   {id:'divine-hymn',name:'Divine Hymn',kind:'group-heal',role:'healer',spec:'Holy',unlockLevel:1,desc:'A major emergency heal for the entire party.',range:30,heal:32,cost:34,gcd:1500,cast:2600,cd:35000},
 
-  {id:'mind-flay',name:'Mind Flay',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Channel shadow energy into the target and generate Insanity.',range:35,damage:18,cost:0,gain:12,gcd:1500,cast:1250,cd:0,damageType:'magic'},
-  {id:'mind-blast',name:'Mind Blast',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Assault the target’s mind for heavy shadow damage and Insanity.',range:35,damage:30,cost:0,gain:18,gcd:1500,cast:1200,cd:6500,damageType:'magic'},
-  {id:'devouring-plague',name:'Devouring Plague',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Spend Insanity to infect the target with a powerful devouring shadow plague.',range:35,damage:34,cost:50,gcd:1500,cast:0,cd:0,damageType:'magic'},
+  {id:'mind-flay',name:'Mind Flay',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Channel shadow energy into the target and generate Insanity.',range:35,damage:15,cost:0,gain:12,gcd:1500,cast:1250,cd:0,damageType:'magic'},
+  {id:'mind-blast',name:'Mind Blast',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Assault the target’s mind for heavy shadow damage and Insanity.',range:35,damage:26,cost:0,gain:18,gcd:1500,cast:1200,cd:6500,damageType:'magic'},
+  {id:'devouring-plague',name:'Devouring Plague',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Spend Insanity to infect the target with a powerful devouring shadow plague.',range:35,damage:28,cost:50,gcd:1500,cast:0,cd:0,damageType:'magic'},
   {id:'shadow-word-pain',name:'Shadow Word: Pain',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:4,desc:'Afflict the target with lingering shadow pain while generating Insanity.',range:35,damage:10,cost:0,gain:7,gcd:1500,cast:0,cd:7000,damageType:'magic'},
   {id:'vampiric-touch',name:'Vampiric Touch',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:6,desc:'Apply a draining shadow curse that damages the target over time.',range:35,damage:15,cost:0,gain:10,gcd:1500,cast:1300,cd:11000,damageType:'magic'},
   {id:'shadow-crash',name:'Shadow Crash',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Crash shadow energy into the target and nearby enemies.',range:35,damage:28,cost:0,gain:12,gcd:1500,cast:800,cd:14000,cleave:3,damageType:'magic'},
@@ -263,15 +263,15 @@ const ABILITIES={
   {id:'silence',name:'Silence',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast from range.',range:30,cost:0,gcd:0,cd:30000}
  ],
  Rogue:[
-  {id:'mutilate',name:'Mutilate',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:1,desc:'Reliable melee damage.',range:5,damage:18,cost:35,gcd:1000,cd:0},
-  {id:'eviscerate',name:'Eviscerate',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:1,desc:'A hard-hitting finishing attack.',range:5,damage:30,cost:50,gcd:1000,cd:5000},
-  {id:'garrote',name:'Garrote',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:1,desc:'A sharp opening attack with a short cooldown.',range:5,damage:21,cost:30,gcd:1000,cd:7000},
-  {id:'envenom',name:'Envenom',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:5,desc:'Spend Energy for a heavy poisoned strike.',range:5,damage:28,cost:45,gcd:1000,cd:6500},
+  {id:'mutilate',name:'Mutilate',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:1,desc:'Reliable melee damage.',range:5,damage:24,cost:35,gcd:1000,cd:0},
+  {id:'eviscerate',name:'Eviscerate',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:1,desc:'A hard-hitting finishing attack.',range:5,damage:40,cost:50,gcd:1000,cd:5000},
+  {id:'garrote',name:'Garrote',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:1,desc:'A sharp opening attack with a short cooldown.',range:5,damage:28,cost:30,gcd:1000,cd:7000},
+  {id:'envenom',name:'Envenom',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:5,desc:'Spend Energy for a heavy poisoned strike.',range:5,damage:38,cost:45,gcd:1000,cd:6500},
   {id:'fan-of-knives',name:'Fan of Knives',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:9,desc:'Strike the target and nearby enemies.',range:8,damage:15,cost:35,gcd:1000,cd:7000,cleave:3},
 
-  {id:'sinister-strike',name:'Sinister Strike',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'A fast sabre strike that generates one Combo Point.',range:5,damage:17,cost:35,gcd:1000,cd:0,comboGain:1},
-  {id:'pistol-shot',name:'Pistol Shot',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Fire a pistol at short range; Opportunity empowers the shot.',range:18,damage:16,cost:20,gcd:1000,cd:0,comboGain:1},
-  {id:'dispatch',name:'Dispatch',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Spend Combo Points on a powerful melee finisher.',range:5,damage:34,cost:25,gcd:1000,cd:0,comboCost:4,finisher:true},
+  {id:'sinister-strike',name:'Sinister Strike',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'A fast sabre strike that generates one Combo Point.',range:5,damage:21,cost:35,gcd:1000,cd:0,comboGain:1},
+  {id:'pistol-shot',name:'Pistol Shot',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Fire a pistol at short range; Opportunity empowers the shot.',range:18,damage:19,cost:20,gcd:1000,cd:0,comboGain:1},
+  {id:'dispatch',name:'Dispatch',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Spend Combo Points on a powerful melee finisher.',range:5,damage:43,cost:25,gcd:1000,cd:0,comboCost:4,finisher:true},
   {id:'roll-the-bones',name:'Roll the Bones',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:4,desc:'Spend Combo Points to roll a temporary combat advantage.',range:5,damage:8,cost:15,gcd:1000,cd:12000,comboCost:3,finisher:true},
   {id:'blade-flurry',name:'Blade Flurry',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Enter a cleaving stance that echoes melee damage into nearby enemies.',range:5,damage:18,cost:25,gcd:1000,cd:15000,cleave:2},
   {id:'between-the-eyes',name:'Between the Eyes',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Spend Combo Points on a pistol finisher that creates a critical-strike window.',range:18,damage:38,cost:25,gcd:1000,cd:18000,comboCost:4,finisher:true},
@@ -1652,7 +1652,7 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
   }
   if(['shadow-word-pain','vampiric-touch','devouring-plague'].includes(a.id)&&target.alive){
    const weaving=talentRank(u,'Shadow Weaving'),embrace=talentRank(u,'Vampiric Embrace'),setScale=Math.max(.5,Number(u?.setBonuses?.periodicDamageScale)||1);
-   const ratio=a.id==='shadow-word-pain'?.46:a.id==='vampiric-touch'?.52:.30,tick=Math.max(1,Math.round(dealt*ratio*(1+weaving*.04)*setScale));
+   const ratio=a.id==='shadow-word-pain'?.46:a.id==='vampiric-touch'?.52:.24,tick=Math.max(1,Math.round(dealt*ratio*(1+weaving*.04)*setScale));
    const label=a.name,id=a.id+'-'+u.id;
    applyStatus(ctx,u,target,{id,name:label,kind:'debuff',duration:5000,effect:{damageOverTime:tick}});
    [1500,3000,4500].forEach(t=>schedule(ctx,ctx.time+t,()=>{
