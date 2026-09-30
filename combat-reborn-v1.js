@@ -1192,7 +1192,8 @@ function bossEngagementPosition(ctx,pos){
   const raw=constrainToArena(ctx,pos,2),dx=raw.x-home.x,dy=raw.y-home.y,norm=Math.sqrt((dx*dx)/(rx*rx)+(dy*dy)/(ry*ry));
   return norm<=1?raw:{x:home.x+dx/norm*.985,y:home.y+dy/norm*.985}
  }
- const insetX=Math.max(12,(b.right-b.left)*.16),insetY=Math.max(11,(b.bottom-b.top)*.14);
+ const width=b.right-b.left,height=b.bottom-b.top;
+ const insetX=Math.min(Math.max(4,width*.16),Math.max(2,width/2-2)),insetY=Math.min(Math.max(4,height*.14),Math.max(2,height/2-2));
  return{x:clamp(Number(pos?.x)||home.x,b.left+insetX,b.right-insetX),y:clamp(Number(pos?.y)||home.y,b.top+insetY,b.bottom-insetY)}
 }
 function formationBaseAngle(ctx,target){
