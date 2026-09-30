@@ -575,7 +575,6 @@ function tdMove(selector,x,y,ms=360){
 function tdPct(selector){
   const e=$(selector);return e?{x:parseFloat(e.style.left)||50,y:parseFloat(e.style.top)||50}:{x:50,y:50};
 }
-function tdEnemyPct(index){return tdPct('[data-td-enemy="'+index+'"]')}
 function tdRegroup(){
   const melee=state().roster.filter(x=>tdProfile(x)==='melee'),ranged=state().roster.filter(x=>tdProfile(x)==='ranged');
   state().roster.forEach(c=>{
