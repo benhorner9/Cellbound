@@ -180,6 +180,7 @@ for(const file of files){
     if(!contents.includes("Warlock:{Demonology:'dps',Destruction:'dps'}")||!contents.includes("title:'Ruin Caster'"))throw new Error('Destruction Warlock combat identity is missing');
     if(!contents.includes("Hunter:{Marksman:'dps','Beast Mastery':'dps'}")||!contents.includes("title:'Pack Commander'"))throw new Error('Beast Mastery Hunter combat identity is missing');
     if(!contents.includes("Rogue:{Assassination:'dps',Outlaw:'dps'}")||!contents.includes("title:'Freeblade Duelist'"))throw new Error('Outlaw Rogue combat identity is missing');
+    if(!contents.includes("damage:1.22,threat:.72,cooldown:.84,execute:.18,opening:.26")||!contents.includes("physicalTaken:.88,magicTaken:.96,damage:.96"))throw new Error('Final role balance identity tuning regressed');
   }
   if(file==='combat-reborn-v1.js'){
     for(const hook of ['professionProcs,relicOpeningUsed:false','professionProcs?.openingBurstPct','professionProcs?.executeDamagePct','professionProcs?.lowHealthWardPct','professionProcs?.triageHealPct'])if(!contents.includes(hook))throw new Error('Conditional profession combat effect is missing '+hook);
@@ -201,6 +202,7 @@ for(const file of files){
     for(const hook of ['setBonusRulesFor','talentSkillCooldownScale','incomingDamageReduction','setBonuses?.damageScale','setBonuses?.healingScale'])if(!contents.includes(hook))throw new Error('Combat adaptive set foundation is missing '+hook);
     for(const hook of ["'Evoker|Devastation':[.92,.92,.92]","add(pool.find(a=>a.kind==='defensive'))","range:30,heal:24,cost:18,gcd:1500,cast:1700,cd:6500","range:30,heal:34,cost:15,gcd:1500,cast:1700,cd:0,chainBounces:3","range:30,heal:20,cost:16,gcd:1500,cast:0,cd:6000"])if(!contents.includes(hook))throw new Error('Chapter-wide role balance contract is missing '+hook);
     if(!contents.includes("function spendComboPoints(ctx,u,requested,ability='Finisher'){\n if(u?.class!=='Rogue')return 0;"))throw new Error('Rogue combo-point spending regressed');
+    for(const hook of ["comboGain:2","comboCost:4,finisher:true","'Rogue|Assassination':[1.08,.94,.92]","Math.max(u.maxHealth*.06,recent*(.20+voracious*.035))","const pctHeal=a.id==='spirit-bomb'?.018:.019","Assassination Rogue Combo Points"])if(!contents.includes(hook))throw new Error('Final combat balance contract is missing '+hook);
   }
   if(file==='combat-status-ui-v1.js'){
     if(!contents.includes("version:'2.1.0'"))throw new Error('Combat status UI smart-overhead version is missing');
