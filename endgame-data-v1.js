@@ -185,23 +185,23 @@ function gearBand(head,chest,weapon){
 }
 const LOOT_PROFILES={
  'ashen-vault':{
-   normal:{tiers:{1:.70,2:.30},itemLevel:gearBand(18,20,22)},
-   heroic:{tiers:{2:.72,3:.28},itemLevel:gearBand(22,24,26)}
+   normal:{tiers:{1:.70,2:.30},itemLevel:gearBand(22,24,26)},
+   heroic:{tiers:{2:.72,3:.28},itemLevel:gearBand(24,26,28)}
  },
  'hollow-sanctum':{
-   normal:{tiers:{2:.85,3:.15},itemLevel:gearBand(24,26,28)},
-   heroic:{tiers:{2:.20,3:.78,4:.02},itemLevel:gearBand(28,30,32)}
+   normal:{tiers:{2:.85,3:.15},itemLevel:gearBand(28,30,32)},
+   heroic:{tiers:{2:.20,3:.78,4:.02},itemLevel:gearBand(30,32,34)}
  },
  'chaos-canyon':{
-   normal:{tiers:{2:.35,3:.65},itemLevel:gearBand(30,32,34)},
+   normal:{tiers:{2:.35,3:.65},itemLevel:gearBand(32,34,36)},
    heroic:{tiers:{3:.95,4:.05},itemLevel:gearBand(34,36,38)}
  },
  'blackout-station':{
-   normal:{tiers:{3:1},itemLevel:gearBand(34,36,38)},
+   normal:{tiers:{3:1},itemLevel:gearBand(36,38,40)},
    heroic:{tiers:{3:.92,4:.08},itemLevel:gearBand(38,40,42)}
  },
  'fractured-ages':{
-   normal:{tiers:{3:1},itemLevel:gearBand(38,40,42)},
+   normal:{tiers:{3:1},itemLevel:gearBand(40,42,44)},
    heroic:{tiers:{3:.90,4:.10},itemLevel:gearBand(42,43,44)}
  }
 };
