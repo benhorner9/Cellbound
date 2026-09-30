@@ -275,6 +275,11 @@ for(const file of files){
   if(file==='fractured-ages-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Fractured Ages');
   if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','fractured-ages-v1.js'].includes(file)){
     if(!contents.includes('RETURN HOME →')||(!contents.includes("switchView?.('overview')")&&!contents.includes("switchView('overview')")))throw new Error('Dungeon completion flow must end on loot/results with a Return Home action: '+file);
+    const compactHook=file==='dungeon-2d-v1.js'?'compactDungeonResults(e)':'CellboundDungeonResults?.compact?.';
+    if(!contents.includes(compactHook))throw new Error('Dungeon completion screen must use the compact results dashboard: '+file);
+  }
+  if(file==='dungeon-2d-v1.css'){
+    for(const hook of ['.cb2d-results-compact .cb2d-loot-actions','.cb2d-result-details>summary','.cb2d-result-details[open]>summary'])if(!contents.includes(hook))throw new Error('Compact dungeon results styling is missing '+hook);
   }
   if(file==='twelve-below-v1.js'&&!contents.includes('aria-label="Close Twelve Below"'))throw new Error('Accessible close control is missing from Twelve Below');
   if(file==='fourfold-lock-v1.js'&&!contents.includes('aria-label="Close map"'))throw new Error('Accessible close control is missing from Fourfold Lock');

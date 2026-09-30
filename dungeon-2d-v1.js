@@ -541,6 +541,34 @@ function enterResultsMode(){
 function exitResultsMode(){
  const shell=$('.cb2d-shell');if(shell){shell.classList.remove('results-mode');shell.scrollTop=0}
 }
+function compactDungeonResults(rootEl){
+ if(!rootEl)return;
+ const wrap=rootEl.matches?.('.cb2d-loot-wrap')?rootEl:rootEl.querySelector?.('.cb2d-loot-wrap');
+ if(!wrap||wrap.dataset.compactResults==='1')return;
+ const actions=wrap.querySelector('.cb2d-loot-actions'),currency=wrap.querySelector('.cb2d-loot-currency');
+ if(actions&&currency)currency.insertAdjacentElement('afterend',actions);
+ const candidates=Array.from(wrap.children).filter(section=>section.matches?.('.cb2d-loot-section,.cbr-analysis,.cbr-progress-earned,.eg-unlock-panel,.bs-run-summary,.fa-mystery-log'));
+ candidates.forEach(section=>{
+  if(section.classList.contains('bs-override-drop-section')||section.querySelector('.cb2d-loot-gear'))return;
+  let title=section.querySelector('.cb2d-loot-title span')?.textContent||section.querySelector('.cbr-analysis-head small')?.textContent||'RUN DETAILS';
+  const first=section.firstElementChild;if(first?.tagName==='SMALL'&&first.textContent)title=first.textContent;
+  let hint='Tap to view';
+  if(section.classList.contains('cb2d-xp-section'))hint='Character XP and level progress';
+  else if(section.querySelector('.cb2d-loot-materials'))hint='Crafting rewards secured';
+  else if(section.classList.contains('cbr-analysis'))hint='Damage, healing, mechanics and replay';
+  else if(section.classList.contains('cbr-progress-earned')||section.classList.contains('eg-unlock-panel'))hint='Unlocks and clear progression';
+  else if(section.classList.contains('bs-run-summary'))hint='Puzzle and encounter breakdown';
+  else if(section.classList.contains('fa-mystery-log'))hint='Story record';
+  const detail=document.createElement('details');detail.className='cb2d-result-details';
+  if(section.classList.contains('cbr-analysis'))detail.classList.add('cb2d-analysis-details');
+  const summary=document.createElement('summary'),label=document.createElement('span'),note=document.createElement('small');
+  label.textContent=String(title||'RUN DETAILS').trim();note.textContent=hint;summary.append(label,note);
+  wrap.insertBefore(detail,section);detail.append(summary,section)
+ });
+ wrap.querySelector('.cb2d-loot-gear')?.closest('.cb2d-loot-section')?.classList.add('cb2d-primary-loot');
+ wrap.dataset.compactResults='1';wrap.classList.add('cb2d-results-compact');
+ rootEl.scrollTop=0
+}
 async function stageClearTransition(s,nextStage,tok){
  if(tok!==token||!run)return;
  run.combatActive=false;run.mechanicActive=false;
@@ -1515,7 +1543,7 @@ function finish(ok,s){
    '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>PROFESSION REAGENTS</span><small>Available immediately for crafting</small></div><div class="cb2d-loot-materials">'+(materials.length?materials.map(lootMaterialCard).join(''):'<div class="cb2d-loot-empty">No profession reagents recovered.</div>')+'</div></section>'+
    '<footer class="cb2d-loot-actions"><button data-loot-bank>VIEW GUILD BANK</button><button class="primary" data-loot-return>RETURN HOME →</button></footer>'+
    '</div>';
- animateXpGrowth(e);appendRebornAnalysis(e);e.querySelector('[data-loot-bank]').onclick=()=>{close();Game.switchView('bank')};
+ animateXpGrowth(e);appendRebornAnalysis(e);compactDungeonResults(e);e.querySelector('[data-loot-bank]').onclick=()=>{close();Game.switchView('bank')};
  e.querySelector('[data-loot-return]').onclick=()=>{close();Game.switchView('overview')}
 }
 async function override(t,b){
@@ -1650,6 +1678,7 @@ document.addEventListener('click',e=>{
  const b=e.target.closest&&e.target.closest('#enterDungeonBtn');if(!b)return;
  e.preventDefault();e.stopImmediatePropagation();briefing();
 },true);
+window.CellboundDungeonResults=Object.assign(window.CellboundDungeonResults||{},{compact:compactDungeonResults});
 function init(){
  Game=window.CellboundGame;G=window.CellboundGear;P=window.CellboundProfessions;
  if(!Game||!Game.ready){setTimeout(init,120);return}
