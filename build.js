@@ -134,6 +134,7 @@ for(const file of files){
     for(const hook of ['#party .party-choice{','grid-template-columns:56px minmax(0,1fr) auto','#party .party-choice>div:nth-child(2){','text-overflow:ellipsis'])if(!contents.includes(hook))throw new Error('Active Party portrait/text spacing is missing '+hook);
   }
   if(file==='guild-v4.js'){
+    if(contents.includes('renderBosses()'))throw new Error('Legacy renderBosses call returned to the dungeon view');
     if(!contents.includes('const PLAYER_LEVEL_CAP=15;')||!contents.includes('getLevelCap:()=>PLAYER_LEVEL_CAP'))throw new Error('Player level cap regression');
     if(contents.includes("$('"+".bank-category-tabs [data-bank-category]"+").forEach"))throw new Error('Bank category buttons cannot call forEach on a single-element selector');
     if(!contents.includes("document.querySelectorAll('.bank-category-tabs [data-bank-category]').forEach"))throw new Error('Bank category buttons must bind through querySelectorAll');
