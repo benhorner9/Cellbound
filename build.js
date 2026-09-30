@@ -323,6 +323,27 @@ for(const file of files){
   if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','quests-v2.js','pvp-viewer-v1.js'].includes(file)){
     if(!contents.includes('CellboundCombatFX'))throw new Error(file+' is not wired to the shared combat VFX layer');
   }
+  if(file==='dungeon-2d-v1.js'){
+    for(const hook of ['function combatPotionStacks(','function combatPotionButtonMarkup(','function useCombatPotion(','data-combat-potion','data-shared-potion','combatPotionSummary,combatPotionButtonMarkup,refreshCombatPotionButton,useCombatPotion'])if(!contents.includes(hook))throw new Error('Shared combat potion runtime is missing '+hook);
+    if(contents.includes("find(y=>!y.payload?.effect)"))throw new Error('Combat potion command must never consume an unrelated consumable');
+  }
+  if(['hollow-sanctum-v1.js','chaos-canyon-v1.js'].includes(file)){
+    for(const hook of ['CellboundDungeon2D','useCombatPotion','refreshCombatPotionButton'])if(!contents.includes(hook))throw new Error(file+' is missing shared combat potion integration '+hook);
+    if(contents.includes("||list[0]"))throw new Error(file+' can still consume a non-potion item from the combat consumable button');
+  }
+  if(file==='blackout-station-v1.js'){
+    for(const hook of ['function bsUseCombatPotion(','data-bs-potion','combatPotionButtonMarkup','refreshCombatPotionButton'])if(!contents.includes(hook))throw new Error('Blackout Station combat potion control is missing '+hook);
+  }
+  if(file==='quests-v2.js'){
+    for(const hook of ['function qPotionMarkup(','function qUseCombatPotion(','data-q-potion','combatPotionButtonMarkup','refreshCombatPotionButton'])if(!contents.includes(hook))throw new Error('Quest/Fractured Ages combat potion control is missing '+hook);
+  }
+  if(file==='dungeon-2d-v1.css'){
+    for(const hook of ['.cb2d-controls.cbr-plan-lock.has-consumable','.cb2d-potion-button','.cb2d-potion-button[disabled]'])if(!contents.includes(hook))throw new Error('Shared combat potion styling is missing '+hook);
+  }
+  if(file==='quests-v2.css'&&!contents.includes('.quest-live-targets>.cb2d-potion-button'))throw new Error('Quest target controls must leave room for the potion action');
+  if(file==='blackout-station-v1.css'&&!contents.includes('.bs-authority>.cb2d-potion-button'))throw new Error('Blackout Station potion action styling is missing');
+  if(file==='economy-v2.js'&&!contents.includes('USE POTION button'))throw new Error('Crafted combat potions must explain their live-combat use');
+
   if(file==='pvp-viewer-v1.js'){
     for(const hook of ["const VERSION='2.0.0'","requestAnimationFrame(frame)","'DAMAGE_DEALT'","'HEAL_RECEIVED'","'PLAYER_DEFEATED'","'FLAG_STATE'","'ARENA_STATE'","LOS_BLOCKED","mapMarkup","Cellwind Bastion","VEILSPIRE","pvp2d-arena-storm","storm-progress","Battle Fatigue","updateArenaStorm","pvp2d-hill-site","hill-rotate","hill-roles","hill-contested","hill-score","updateHill","score-tick","$(root,'[data-pvp2d-hill-site]')","ctf-opening","ctf-roles","ctf-standoff","FLAG STANDOFF","objectiveBadge","e.payload?.from","dataNode","viewer recovery active","carryFlagVisual","resetFlagVisual","REAL TIME","window.CellboundPvPViewer"])if(!contents.includes(hook))throw new Error('PvP 2D viewer is missing '+hook);
     if(/data-pvp-speed|pb\.speed|simTime\s*\+=\s*delta\s*\*/.test(contents))throw new Error('PvP viewer must be locked to real-time 1x playback');

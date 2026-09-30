@@ -455,6 +455,11 @@ async function playTimeline(result,tok){
   raf=requestAnimationFrame(frame)
  })
 }
+function bsUseCombatPotion(button){
+ const helper=window.CellboundDungeon2D,used=helper?.useCombatPotion?.({state:state(),members:party(),getHp:c=>Number(run?.hp?.[c.id])||0,setHp:(c,v)=>{run.hp[c.id]=v}});
+ if(!used?.ok){feed(used?.reason==='full'?'The party is already at full health.':'No combat potions remain. Craft or buy one before the next run.');helper?.refreshCombatPotionButton?.(button,state());return}
+ renderPartyRows();helper?.refreshCombatPotionButton?.(button,state());feed(used.item.name+' restores '+used.target.name+' for '+used.healApplied+' HP.')
+}
 function drawCombat(){
  const r=root(),oc=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT;r.hidden=false;
  r.innerHTML='<section class="cb2d-shell bs2d-shell">'+
@@ -462,7 +467,7 @@ function drawCombat(){
  '<div class="cb2d-route bs2d-route"><span class="done"><i>1</i>Grid Alignment</span><span class="current"><i>2</i>Dr. Vex Calder</span></div>'+
  '<div class="cb2d-layout"><main>'+
  '<div id="bsArena" class="cb2d-arena bs-arena"><div class="cb2d-floor bs-station-env"><div class="bs-generator g1"></div><div class="bs-generator g2"></div><div class="bs-transformer t1"></div><div class="bs-transformer t2"></div><div class="bs-cable-floor"></div></div><div class="cb2d-ground-legend"><span class="danger">RED · TANK</span><span class="spawn">YELLOW · DAMAGE</span><span class="aggro">BLUE · HEALER</span></div><div id="bsRoleZones" class="bs-role-zones"></div><div id="bsTelegraphs"></div><div id="bsUnits"></div><div id="bsFx"></div><div class="cb2d-room-tag"><small>GENERATOR HALL</small><b>Main turbine chamber</b></div><div class="cb2d-caption"><span>FINAL BOSS</span><b id="bsStatus">Power restored. Calder engages.</b></div></div>'+
- '<div class="cb2d-controls bs-authority"><div><b>TACTICS LOCKED</b><small>The party follows your selected plan. Role circuits react to live positions.</small></div><div><b>CALDER OVERCHARGE</b><small>+'+oc+'% maximum health from diagnostics used.</small></div></div>'+
+ '<div class="cb2d-controls bs-authority"><div><b>TACTICS LOCKED</b><small>The party follows your selected plan. Role circuits react to live positions.</small></div><div><b>CALDER OVERCHARGE</b><small>+'+oc+'% maximum health from diagnostics used.</small></div>'+(window.CellboundDungeon2D?.combatPotionButtonMarkup?.('data-bs-potion')||'<button type="button" data-bs-potion disabled><b>USE POTION · ×0</b><small>No combat potions available</small></button>')+'</div>'+
  '<div class="cb2d-feed"><small>COMBAT FEED</small><div id="bsFeed"></div></div></main>'+
  '<aside><div class="cb2d-cast" id="bsCast"><small>ENEMY CAST</small><div><b id="bsCastName">—</b><strong id="bsCastTime">—</strong></div><div class="cb2d-castbar"><i id="bsCastFill"></i></div></div>'+
  '<div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span>LIVE</span></div><div id="bsDamage" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span>LIVE</span></div><div id="bsHealing" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span>Calder</span></div><div id="bsThreat" class="cb2d-meter-list"></div></section></div>'+
@@ -472,6 +477,8 @@ function drawCombat(){
  '<div id="bsEnd" class="cb2d-end" hidden></div></section>';
  r.querySelector('[data-bs-close]').onclick=close;
  r.querySelector('[data-bs-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
+ r.querySelector('[data-bs-potion]')?.addEventListener('click',e=>bsUseCombatPotion(e.currentTarget));
+ window.CellboundDungeon2D?.refreshCombatPotionButton?.(r.querySelector('[data-bs-potion]'),state());
  renderPartyRows();
  const p=party();p.forEach((c,i)=>addUnit('p'+i,c.name,'party '+role(c)+' '+classKey(c),role(c)==='tank'?38:role(c)==='healer'?18:26,24+i*13));
  p.forEach(c=>mountResource(c));
