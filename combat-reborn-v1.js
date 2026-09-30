@@ -3778,7 +3778,7 @@ function runSelfTests(){
  test('Tank Aggro',()=>!r.events.some(e=>e.type==='AGGRO_CHANGED'&&e.target==='p-d1'&&e.timestamp>5000));
  r=simulate({party,encounter:{...base,mechanics:[['Frontal','cone',1400]]},seed:'cone'});
  test('Frontal Cone',()=>r.events.some(e=>e.type==='MECHANIC_TELEGRAPH'&&e.payload.mechanicType==='cone'));
- r=simulate({party,encounter:{...base,mechanics:[['Adds','adds',900]]},seed:'adds'});
+ r=simulate({party,encounter:{...base,enemyHealth:800,mechanicIntervalMs:1800,mechanics:[['Adds','adds',900]]},seed:'adds',maxDurationMs:5000});
  test('Adds',()=>r.events.some(e=>e.type==='ADD_SPAWNED')&&r.events.some(e=>e.type==='ADD_DEFEATED'));
  r=simulate({party,encounter:{...base,enemyHealth:5000,mechanicIntervalMs:900,mechanics:[{name:'Screech',type:'interaction',duration:600,interaction:'manor-screech',interactionDurationMs:4500}]},seed:'interaction-event',maxDurationMs:2600});
  test('Raid Interaction Event',()=>r.events.some(e=>e.type==='INTERACTION_REQUIRED'&&e.ability==='Screech'&&e.payload?.interaction==='manor-screech'&&Number(e.payload?.durationMs)===4500));
@@ -4146,6 +4146,16 @@ function runSelfTests(){
   const rogue=outlawRun.finalState.players.find(p=>p.id==='p-or');
   return rogue?.role==='dps'&&rogue?.resource?.name==='Energy'&&outlawRun.events.some(e=>e.type==='COMBO_POINTS_CHANGED'&&e.source==='p-or'&&e.result==='gained')&&outlawRun.events.some(e=>e.type==='COMBO_POINTS_CHANGED'&&e.source==='p-or'&&e.result==='spent')
  });
+
+ const assassinParty=[
+  {id:'rat',name:'Tank',class:'Warrior',spec:'Protection',power:12,level:15},
+  {id:'rah',name:'Healer',class:'Priest',spec:'Holy',power:12,level:15},
+  {id:'ra',name:'Assassin',class:'Rogue',spec:'Assassination',power:12,level:15,skillLoadouts:{Assassination:['mutilate','garrote','eviscerate','kick']},talents:{Assassination:{Mutilate:1,Garrote:2,Eviscerate:1}}},
+  {id:'ra1',name:'Mage',class:'Mage',spec:'Arcane',power:12,level:15},
+  {id:'ra2',name:'Hunter',class:'Hunter',spec:'Marksman',power:12,level:15}
+ ];
+ const assassinRun=simulate({party:assassinParty,encounter:{...base,kind:'boss',level:15,enemyHealth:4500},seed:'assassination-combo',maxDurationMs:9000});
+ test('Assassination Rogue Combo Points',()=>assassinRun.events.some(e=>e.type==='COMBO_POINTS_CHANGED'&&e.source==='p-ra'&&e.result==='gained')&&assassinRun.events.some(e=>e.type==='COMBO_POINTS_CHANGED'&&e.source==='p-ra'&&e.result==='spent')&&assassinRun.events.some(e=>e.type==='ABILITY_FINISH'&&e.source==='p-ra'&&e.ability==='Eviscerate'&&e.result==='resolved'));
  test('Outlaw Opportunity and Quick Draw',()=>outlawRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-or'&&e.ability==='Opportunity')&&outlawRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-or'&&e.ability==='Quick Draw')&&outlawRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-or'&&e.ability==='Pistol Shot'));
  test('Outlaw Roll the Bones',()=>outlawRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-or'&&e.ability==='Roll the Bones')&&outlawRun.events.some(e=>e.type==='BUFF_APPLIED'&&e.target==='p-or'&&String(e.ability||'').startsWith('Roll the Bones:')));
 
