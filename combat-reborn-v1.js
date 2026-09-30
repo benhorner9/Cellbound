@@ -3778,7 +3778,7 @@ function runSelfTests(){
  const base={id:'test',title:'Test Enemy',kind:'boss',enemies:['Test Boss'],enemyHealth:420,mechanics:[]},party=mockParty();
  const tests=[];
  const test=(name,fn)=>{try{tests.push({name,pass:!!fn()})}catch(error){tests.push({name,pass:false,error:String(error?.message||error)})}};
- let r=simulate({party,encounter:{...base,mechanics:[['Critical Cast','interrupt',2200]]},tactics:{interruptPriority:'high'},seed:'interrupt'});
+ let r=simulate({party,encounter:{...base,enemyHealth:5000,mechanicIntervalMs:900,mechanics:[['Critical Cast','interrupt',2200]]},tactics:{interruptPriority:'high'},seed:'interrupt',maxDurationMs:5000});
  test('Interrupt',()=>r.events.some(e=>e.type==='INTERRUPT'&&e.result==='success'));
  r=simulate({party,encounter:base,seed:'aggro'});
  test('Tank Aggro',()=>!r.events.some(e=>e.type==='AGGRO_CHANGED'&&e.target==='p-d1'&&e.timestamp>5000));
