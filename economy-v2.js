@@ -4,7 +4,6 @@ const G=window.CellboundGear,P=window.CellboundProfessions,CP=window.CellboundPo
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 let Game=null,db=null,user=null,selectedChar=null,selectedSlot=0,tradeFilter='all',market=[],lastCraftMessage='',craftProject=null,recipeFilter='all';
 
-const clone=x=>JSON.parse(JSON.stringify(x));
 const state=()=>Game?.getState?.();
 const ent=()=>Game?.getEntitlements?.()||{professionSlots:1};
 const usableRoster=()=>state()?.roster?.filter(c=>Game?.isCharacterRosterUnlocked?.(c.id)!==false)||[];
