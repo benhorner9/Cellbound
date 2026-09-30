@@ -499,11 +499,9 @@ function ccOverride(kind,button){
  if(kind==='defensive'){party().forEach(ch=>run.hp[ch.id]=Math.min(100,(Number(run.hp[ch.id])||0)+5));ccUpdateSidebar();ccAct('tank','Defensives committed');feed('Override: defensive cooldowns committed.')}
  if(kind==='burn'){ccTactics.bossPlan='burn';ccAct('dps','Damage cooldowns committed');feed('Override: burn boss.')}
  if(kind==='consumable'){
-   const st=state(),list=(st?.consumables||[]).filter(x=>(x.quantity||0)>0),item=list.find(x=>x.payload?.effect==='combat-potion')||list[0];
-   if(!item){feed('No combat consumables remain.');return}
-   const target=[...party()].sort((a,b)=>(Number(run.hp[a.id])||0)-(Number(run.hp[b.id])||0))[0],heal=Math.max(0,Number(item.payload?.healHp)||18);
-   if(target)run.hp[target.id]=Math.min(100,(Number(run.hp[target.id])||0)+heal);
-   item.quantity--;if(item.quantity<=0)st.consumables=st.consumables.filter(x=>x!==item);Game.save?.();ccUpdateSidebar();feed(item.name+' used on '+(target?.name||'the party')+'.')
+   const helper=window.CellboundDungeon2D,used=helper?.useCombatPotion?.({state:state(),members:party(),getHp:c=>Number(run.hp[c.id])||0,setHp:(c,v)=>{run.hp[c.id]=v}});
+   if(!used?.ok){feed(used?.reason==='full'?'The party is already at full health.':'No combat potions remain. Craft or buy one before the next run.');helper?.refreshCombatPotionButton?.(button,state());return}
+   ccUpdateSidebar();helper?.refreshCombatPotionButton?.(button,state());feed(used.item.name+' restores '+used.target.name+' for '+used.healApplied+' HP.')
  }
 }
 function ccLootRarityClass(item){return 'rarity-'+String(item?.rarity||'common').toLowerCase().replace(/[^a-z0-9-]/g,'')}
@@ -539,6 +537,7 @@ function draw(){
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.done&&!confirm('Leave Chaos Canyon?'))return;close()};
  r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  r.querySelectorAll('[data-cc-override]').forEach(b=>b.onclick=()=>ccOverride(b.dataset.ccOverride,b));
+ window.CellboundDungeon2D?.refreshCombatPotionButton?.(r.querySelector('[data-cc-override="consumable"]'),state());
  stageEnvironment(s);ccRenderMeters();ccUpdateSidebar();feed('The party enters Chaos Canyon.')
 }
 function ccRunMetrics(){
