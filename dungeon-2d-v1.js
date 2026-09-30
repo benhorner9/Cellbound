@@ -664,11 +664,6 @@ function updateAggro(index){
  }
  return target;
 }
-function threatTarget(index){
- const id=run?.aggro?.[index],c=party().find(x=>x.id===id&&hp(x.id)>0);
- if(c)return c;
- return updateAggro(index)||party().find(x=>hp(x.id)>0)||null;
-}
 function showThreatLink(index,target){
  const arena=$('#cb2dArena'),a=point('e-'+index),b=point('p-'+target.id);if(!arena||!a||!b)return;
  let line=arena.querySelector('[data-threat-line="'+index+'"]');
