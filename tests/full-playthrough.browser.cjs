@@ -93,8 +93,7 @@ async function creatorPlaythrough(browser){
 
   await page.locator('[data-next-step="class"]').click();
   assert(await page.locator('[data-class]').count()>=1,'class choices render');
-  const classLabels=await page.locator('[data-class] .class-choice, [data-class]').count();
-  assert(classLabels>=1,'damage/tank/healer class choices remain usable');
+  assert(await page.locator('[data-class]').count()>=1,'damage/tank/healer class choices remain usable');
 
   await page.locator('[data-next-step="appearance"]').click();
   await page.waitForSelector('[data-appearance-editor]');
@@ -133,8 +132,8 @@ async function mainGamePlaythrough(browser){
     CellboundGame.renderAll();
   });
 
-  CellboundViews=['overview','roster','party','bank','professions','quests','content','world','raids','trading','pvp','chat'];
-  for(const view of CellboundViews){
+  const views=['overview','roster','party','bank','professions','quests','content','world','raids','trading','pvp','chat'];
+  for(const view of views){
     await page.evaluate(v=>CellboundGame.switchView(v),view);
     await page.waitForTimeout(50);
     assert.equal(await page.locator('#'+view).evaluate(el=>el.classList.contains('active')),true,view+' view activates');
