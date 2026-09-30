@@ -48,9 +48,11 @@ for(const file of files){
     for(const hook of ['persistentAttachment=true','recipeMetaForOutputKey','item?.attachment?.bonuses','kind:\'attachment\''])if(!contents.includes(hook))throw new Error('Persistent profession attachment model is missing '+hook);
     for(const hook of ["Jewelcrafting:{icon:'◆'","Engineering:{icon:'⚙'","Cooking:{icon:'♨'","Reliccrafting:{icon:'◈'","Scribing:{icon:'✒'","effect:'socket-gem'","effect:'character-gadget'","effect:'party-food'","attachmentFamily:'relic-core'","effect:'party-scroll'"])if(!contents.includes(hook))throw new Error('Expanded profession system is missing '+hook);
     for(const hook of ['crafterOnly:true','trainingScale:.45','payload.crafterOnly=true','output.tradeState=\'soulbound\'','boundCharacterId===c?.id'])if(!contents.includes(hook))throw new Error('Crafter-only profession recipe contract is missing '+hook);
+    for(const hook of ['socketReady:false','function activeProcs(c)','function consumeBossChargesOnce','SPECIAL_PREPARATIONS'])if(!contents.includes(hook))throw new Error('New profession runtime contract missing '+hook);
   }
   if(file==='item-art-v1.js'){
     if(!contents.includes("card.querySelector(':scope > .recipe-output-art')"))throw new Error('Profession recipe art duplication guard is missing');
+    for(const hook of ["effect==='socket-gem'","effect==='character-gadget'","effect==='party-food'","effect==='party-scroll'","attachmentFamily==='relic-core'"])if(!contents.includes(hook))throw new Error('New crafted item artwork type is missing '+hook);
     if(!contents.includes('P?.craftedRarity?.(r.level,r.endgame)'))throw new Error('Crafted item artwork rarity no longer follows profession progression');
   }
   if(file==='evolution-v1.css'){
@@ -156,6 +158,7 @@ for(const file of files){
     if(!contents.includes("Rogue:{Assassination:'dps',Outlaw:'dps'}")||!contents.includes("title:'Freeblade Duelist'"))throw new Error('Outlaw Rogue combat identity is missing');
   }
   if(file==='combat-reborn-v1.js'){
+    for(const hook of ['professionProcs,relicOpeningUsed:false','professionProcs?.openingBurstPct','professionProcs?.executeDamagePct','professionProcs?.lowHealthWardPct','professionProcs?.triageHealPct'])if(!contents.includes(hook))throw new Error('Conditional profession combat effect is missing '+hook);
     if(!contents.includes("if(!moveIntoRange(ctx,u,target,5))return true")||!contents.includes("_combatTalentTimers"))throw new Error('Bladestorm melee movement rule is missing');
     for(const hook of ['function professionCombatBonuses','professionOutputScale(u,\'damage\')','professionOutputScale(healer,\'healing\')','professionBonuses?.haste','professionBonuses?.crit','professionBonuses?.block','profession.magicWardPct'])if(!contents.includes(hook))throw new Error('Profession attachments are not wired into real combat: '+hook);
     for(const hook of ["spec:'Havoc'","spec:'Vengeance'","id:'havoc-metamorphosis'","id:'spirit-bomb'","SOUL_FRAGMENT_CHANGED","'fel-barrage':'Fel Barrage'"])if(!contents.includes(hook))throw new Error('Demon Hunter combat kit is incomplete: '+hook);
@@ -585,6 +588,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   if(!P||!IA)throw new Error('Complete item artwork runtime failed to load');
   const professionEntries=Object.entries(P.PROFESSIONS||{});
   if(professionEntries.length!==10)throw new Error('Profession catalogue must contain all ten professions');
+  for(const name of ['Jewelcrafting','Engineering','Cooking','Reliccrafting','Scribing'])if((P.PROFESSIONS[name]?.recipes||[]).filter(r=>r.crafterOnly).length!==2)throw new Error(name+' must include exactly two crafter-only rewards');
   for(const name of ['Alchemy','Enchanting','Blacksmithing','Leatherworking','Tailoring','Jewelcrafting','Engineering','Cooking','Reliccrafting','Scribing'])if(!P.PROFESSIONS?.[name])throw new Error('Profession catalogue missing '+name);
   const allRecipeIds=[];
   const allOutputKeys=[];
@@ -592,6 +596,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     const recipes=def.recipes||[];
     if(recipes.length<10)throw new Error(name+' must have at least 10 craftable recipes across Skill 1-100');
     if(!recipes.some(r=>Number(r.level)===1)||!recipes.some(r=>Number(r.level)===100))throw new Error(name+' profession progression must include Skill 1 and Skill 100 recipes');
+    if(name==='Jewelcrafting'&&recipes.some(r=>r.output?.payload?.effect!=='socket-gem'||r.output?.payload?.socketReady!==false))throw new Error('Jewelcrafting must remain pending until real equipment sockets ship');
     for(const recipe of recipes){allRecipeIds.push(recipe.id);if(recipe.output?.key)allOutputKeys.push(recipe.output.key)}
   }
   if(new Set(allRecipeIds).size!==allRecipeIds.length)throw new Error('Profession recipe IDs must be unique');
