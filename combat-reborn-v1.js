@@ -415,8 +415,8 @@ function classMobility(c){
  return 1;
 }
 
-function professionCombatBonuses(c){
- const raw=window.CellboundProfessions?.activeBonuses?.(c)||{},out={};
+function professionCombatBonuses(c,zone=null){
+ const raw=window.CellboundProfessions?.activeBonuses?.(c,zone)||{},out={};
  Object.entries(raw).forEach(([key,value])=>out[key]=Number(value)||0);
  return out
 }
@@ -1055,13 +1055,13 @@ function abilityPool(c,role){
  if(role!=='healer'&&!pool.some(a=>a.kind==='damage'||a.kind==='summon'||a.kind==='pet-command'))pool.push({id:'basic-attack',name:'Basic Attack',kind:'damage',range:5,damage:10,cost:0,gcd:1500,cd:0,hiddenFallback:true});
  return pool.length?pool:(ROLE_FALLBACKS[role]||ROLE_FALLBACKS.dps)
 }
-function normalisePlayer(c,i){
+function normalisePlayer(c,i,zone=null){
  const role=inferredRole(c),res=resourceDef(c),tank=role==='tank',healer=role==='healer';
  const baseHp=tank?185:healer?115:125;
  const power=Math.max(1,Number(c?.power)||1);
  const defence=window.CellboundIdentities?.defenceProfile?.(c)||{physicalTaken:1,magicTaken:1,blockChance:0,blockMultiplier:.72,healthMultiplier:1};
  const level=Math.max(1,Number(c?.level)||1),baseHealth=Math.round(baseHp+(power*1.8)),healthScale=levelHealthScale(level),outputScale=levelOutputScale(level);
- const professionBonuses=professionCombatBonuses(c),professionProcs=window.CellboundProfessions?.activeProcs?.(c)||{},maxHealth=Math.round(baseHealth*healthScale*Math.max(1,Number(defence.healthMultiplier)||1)+Math.max(0,Number(professionBonuses.stamina)||0)*4),startPct=clamp(c?._combatHealthPct==null?100:Number(c._combatHealthPct),0,100),startHealth=Math.round(maxHealth*startPct/100);
+ const professionBonuses=professionCombatBonuses(c,zone),professionProcs=window.CellboundProfessions?.activeProcs?.(c)||{},maxHealth=Math.round(baseHealth*healthScale*Math.max(1,Number(defence.healthMultiplier)||1)+Math.max(0,Number(professionBonuses.stamina)||0)*4),startPct=clamp(c?._combatHealthPct==null?100:Number(c._combatHealthPct),0,100),startHealth=Math.round(maxHealth*startPct/100);
  const carried=c?._combatResource,carriedValue=typeof carried==='number'?carried:Number(carried?.value);
  const resourceValue=Number.isFinite(carriedValue)?clamp(carriedValue,0,res.max):res.start;
  const setState=gearSetState(c),resourceRegen=(healer&&res.name==='Mana'?2.1:res.regen)*setState.resourceRegen;
@@ -3633,7 +3633,7 @@ function simulate(options={}){
  const encounter=copy(options.encounter||{});
  encounter.mechanics=normaliseMechanics(encounter);
  const seed=options.seed||[encounter.id||'encounter',Date.now(),(options.party||[]).map(x=>x.id).join('-')].join(':');
- const players=(options.party||[]).map(normalisePlayer),enemies=normaliseEnemies(encounter),units={};
+ const players=(options.party||[]).map((c,i)=>normalisePlayer(c,i,options.professionZone)),enemies=normaliseEnemies(encounter),units={};
  [...players,...enemies].forEach(u=>units[u.id]=u);enemies.forEach(e=>players.forEach(p=>e.threat[p.id]=0));
  const tactics={
   interruptPriority:options.tactics?.interruptPriority||options.tactics?.interrupts||'standard',
