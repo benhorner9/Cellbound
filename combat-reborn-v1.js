@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.28';
+const VERSION='1.3.29';
 // Balance baseline: 2026-09-30 chapter-wide progression and role audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
@@ -263,11 +263,11 @@ const ABILITIES={
   {id:'silence',name:'Silence',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast from range.',range:30,cost:0,gcd:0,cd:30000}
  ],
  Rogue:[
-  {id:'mutilate',name:'Mutilate',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:1,desc:'Reliable melee damage.',range:5,damage:24,cost:35,gcd:1000,cd:0},
-  {id:'eviscerate',name:'Eviscerate',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:1,desc:'A hard-hitting finishing attack.',range:5,damage:40,cost:50,gcd:1000,cd:5000},
-  {id:'garrote',name:'Garrote',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:1,desc:'A sharp opening attack with a short cooldown.',range:5,damage:28,cost:30,gcd:1000,cd:7000},
-  {id:'envenom',name:'Envenom',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:5,desc:'Spend Energy for a heavy poisoned strike.',range:5,damage:38,cost:45,gcd:1000,cd:6500},
-  {id:'fan-of-knives',name:'Fan of Knives',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:9,desc:'Strike the target and nearby enemies.',range:8,damage:15,cost:35,gcd:1000,cd:7000,cleave:3},
+  {id:'mutilate',name:'Mutilate',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:1,desc:'Strike with both weapons and generate two Combo Points.',range:5,damage:24,cost:35,gcd:1000,cd:0,comboGain:2},
+  {id:'eviscerate',name:'Eviscerate',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:1,desc:'Spend Combo Points on a hard-hitting finishing attack.',range:5,damage:40,cost:25,gcd:1000,cd:5000,comboCost:4,finisher:true},
+  {id:'garrote',name:'Garrote',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:1,desc:'Open a bleeding wound and generate one Combo Point.',range:5,damage:28,cost:30,gcd:1000,cd:7000,comboGain:1},
+  {id:'envenom',name:'Envenom',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:5,desc:'Spend Combo Points on a heavy poisoned finisher.',range:5,damage:38,cost:30,gcd:1000,cd:6500,comboCost:4,finisher:true},
+  {id:'fan-of-knives',name:'Fan of Knives',kind:'damage',role:'dps',spec:'Assassination',unlockLevel:9,desc:'Strike the target and nearby enemies, generating one Combo Point.',range:8,damage:15,cost:35,gcd:1000,cd:7000,cleave:3,comboGain:1},
 
   {id:'sinister-strike',name:'Sinister Strike',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'A fast sabre strike that generates one Combo Point.',range:5,damage:21,cost:35,gcd:1000,cd:0,comboGain:1},
   {id:'pistol-shot',name:'Pistol Shot',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Fire a pistol at short range; Opportunity empowers the shot.',range:18,damage:19,cost:20,gcd:1000,cd:0,comboGain:1},
@@ -794,6 +794,10 @@ function talentDamageScale(ctx,u,a,target){
   if(u.spec==='Assassination'){
    if(Number(u.damageActions||0)<1)m*=1+talentRank(u,'Ambush')*.08;
    if(a.id==='mutilate'&&talentRank(u,'Mutilate'))m*=1.18;
+   if(a.finisher){
+    const cp=Math.max(1,Math.min(5,Number(u.comboPoints)||0));
+    m*=.80+cp*.10;
+   }
    if(a.id==='envenom'&&(rank=talentRank(u,'Envenom')))m*=1+rank*.10;
    if(a.id==='eviscerate'&&talentRank(u,'Eviscerate'))m*=hp<.35?1.35:1.20;
   }
@@ -1353,11 +1357,11 @@ function emitResourceState(ctx,u,result='state'){
  emit(ctx,'RESOURCE_STATE',{source:u.id,target:u.id,result,payload:{resource:u.resource.name,value:u.resource.value,max:u.resource.max}})
 }
 function emitComboPointState(ctx,u,result='state',ability=null,amount=0){
- if(u?.class!=='Rogue'||u?.spec!=='Outlaw')return;
+ if(u?.class!=='Rogue')return;
  emit(ctx,'COMBO_POINTS_CHANGED',{source:u.id,target:u.id,ability,result,amount,payload:{value:Math.max(0,Number(u.comboPoints)||0),max:5}})
 }
 function gainComboPoints(ctx,u,amount,ability='Combo Point'){
- if(u?.class!=='Rogue'||u?.spec!=='Outlaw')return 0;
+ if(u?.class!=='Rogue')return 0;
  const before=Math.max(0,Number(u.comboPoints)||0),gain=Math.max(0,Number(amount)||0);
  u.comboPoints=clamp(before+gain,0,5);
  const actual=u.comboPoints-before;
@@ -1830,6 +1834,8 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
   }
  }
  if(u.class==='Rogue'&&u.spec==='Assassination'){
+  if(Number(a.comboGain)>0)gainComboPoints(ctx,u,Number(a.comboGain),a.name);
+  const spent=Math.max(0,Number(u.lastRogueComboSpent)||0);
   const venom=talentRank(u,'Venom'),master=talentRank(u,'Master Poisoner'),setScale=Math.max(.5,Number(u?.setBonuses?.periodicDamageScale)||1);
   if((venom||master)&&target.alive){
    const tick=Math.max(1,Math.round(dealt*(venom*.018+master*.025)*setScale));
@@ -1845,8 +1851,9 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
    [1200,2400].forEach(t=>schedule(ctx,ctx.time+t,()=>{if(u.alive&&target.alive)dealDamage(ctx,u,target,tick,'Garrote Bleed',{damageType:'physical'})},'talent-garrote'))
   }
   if(a.id==='envenom'&&(r=talentRank(u,'Cut to the Chase'))){
-   applyStatus(ctx,u,u,{id:'cut-to-the-chase',name:'Cut to the Chase',kind:'buff',duration:6000,effect:{haste:.04*r,outgoingDamage:.025*r}});
-   talentTrigger(ctx,u,'Cut to the Chase',u,{duration:6000})
+   const duration=5000+spent*350;
+   applyStatus(ctx,u,u,{id:'cut-to-the-chase',name:'Cut to the Chase',kind:'buff',duration,effect:{haste:.04*r,outgoingDamage:.025*r}});
+   talentTrigger(ctx,u,'Cut to the Chase',u,{duration,comboPoints:spent})
   }
  }
  if(u.class==='Mage'){
@@ -2576,6 +2583,16 @@ function chooseAbility(ctx,u,target){
   // Other healers preserve mana and watch incoming damage during safe windows.
   return null
  }
+ if(u.class==='Rogue'&&u.spec==='Assassination'){
+  const by=id=>pool.find(a=>a.id===id),cp=Math.max(0,Number(u.comboPoints)||0),hp=healthRatio(target);
+  const mutilate=by('mutilate'),garrote=by('garrote'),envenom=by('envenom'),eviscerate=by('eviscerate'),fan=by('fan-of-knives');
+  if(cp>=4&&eviscerate&&hp<.35)return{ability:eviscerate,target};
+  if(cp>=4&&envenom)return{ability:envenom,target};
+  if(cp>=4&&eviscerate)return{ability:eviscerate,target};
+  if(garrote)return{ability:garrote,target};
+  if(mutilate)return{ability:mutilate,target};
+  if(fan)return{ability:fan,target}
+ }
  if(u.class==='Rogue'&&u.spec==='Outlaw'){
   const by=id=>pool.find(a=>a.id===id),cp=Math.max(0,Number(u.comboPoints)||0),enemyCount=livingEnemies(ctx).length;
   const sinister=by('sinister-strike'),pistol=by('pistol-shot'),dispatch=by('dispatch'),roll=by('roll-the-bones'),blade=by('blade-flurry'),eyes=by('between-the-eyes'),rush=by('adrenaline-rush'),spree=by('killing-spree');
@@ -2643,7 +2660,7 @@ function chooseAbility(ctx,u,target){
 function startAbility(ctx,u,a,target){
  const deadTarget=a?.kind==='battle-rez'&&target&&!target.alive;
  if(!u.alive||(!target?.alive&&!deadTarget)||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.gcdUntil||!cooldownReady(u,a))return false;
- if(u.class==='Rogue'&&u.spec==='Outlaw'&&Number(a.comboCost)>0&&Math.max(0,Number(u.comboPoints)||0)<Number(a.comboCost))return false;
+ if(u.class==='Rogue'&&Number(a.comboCost)>0&&Math.max(0,Number(u.comboPoints)||0)<Number(a.comboCost))return false;
  if(!moveIntoRange(ctx,u,target,Number(a.range)||5))return false;
  if(!spendResource(ctx,u,a))return false;
  const haste=clamp(statusBonus(u,'haste')+Math.max(0,Number(u?.setBonuses?.haste)||0)+Math.max(0,Number(u?.professionBonuses?.haste)||0)/100,0,.60),speed=1+haste;
@@ -2709,8 +2726,11 @@ function finishAbility(ctx,u,a,target){
  }else if(a.kind==='damage'){
   const rolled=rollDamage(ctx,u,a,target);
   const dealt=dealDamage(ctx,u,target,rolled.amount,a.name,{crit:rolled.crit,ability:a,damageType:a.damageType||(['Mage','Evoker','Shaman','Warlock'].includes(u.class)?'magic':'physical')});
-  u.lastOutlawComboSpent=0;
-  if(dealt>0&&u.class==='Rogue'&&u.spec==='Outlaw'&&a.finisher)u.lastOutlawComboSpent=spendComboPoints(ctx,u,Number(a.comboCost)||Math.max(1,Number(u.comboPoints)||0),a.name);
+  u.lastRogueComboSpent=0;u.lastOutlawComboSpent=0;
+  if(dealt>0&&u.class==='Rogue'&&a.finisher){
+   u.lastRogueComboSpent=spendComboPoints(ctx,u,Number(a.comboCost)||Math.max(1,Number(u.comboPoints)||0),a.name);
+   if(u.spec==='Outlaw')u.lastOutlawComboSpent=u.lastRogueComboSpent
+  }
   if(dealt>0)talentAfterDamage(ctx,u,a,target,dealt,rolled.crit);
   if(dealt>0&&rolled.crit&&hasUnique(u,'heart-troll-king')&&ctx.rng()<.28){
    u.frenzyUntil=Math.max(Number(u.frenzyUntil)||0,ctx.time+6000);
@@ -3658,7 +3678,7 @@ function simulate(options={}){
    }
   });
   emitResourceState(ctx,u,'initial');
-  if(u.class==='Rogue'&&u.spec==='Outlaw')emitComboPointState(ctx,u,'initial')
+  if(u.class==='Rogue')emitComboPointState(ctx,u,'initial')
  });
  players.filter(u=>u.class==='Warlock'&&u.spec==='Demonology'&&u.alive).forEach(u=>summonPet(ctx,u,{type:'felguard',name:'Felguard'}));
  players.filter(u=>u.class==='Hunter'&&u.spec==='Beast Mastery'&&u.alive).forEach(u=>summonPet(ctx,u,{type:'hunter-beast',name:'Hunting Beast'}));
