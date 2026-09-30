@@ -213,7 +213,6 @@ function showRoom(){
  if(run.enterFrom){const from=run.enterFrom;run.enterFrom=null;persist();view.moveParty(DOOR_ENTRY[from],0).then(()=>view.moveParty(DOOR_APPROACH[from],260)).then(()=>view.moveParty(WALK_FORMATION,520))}
 }
 function openExplore(){showRoom()}
-function closeExplore(){window.CellboundDungeon2D?.closeShared?.(true)}
 function mapMarkup(){
  let out='';for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){const k=key(x,y),seen=run.visited[k],here=run.pos.x===x&&run.pos.y===y,c=run.map[k];let mark='';
  if(here)mark='●';else if(seen&&c.type==='entrance')mark='E';else if(seen&&c.type==='teleporter')mark='T';else if(seen&&c.type==='search')mark=c.searched?'✓':'?';else if(seen&&(c.type==='combat'||c.type==='breach'))mark=c.cleared?'✓':'!';else if(seen)mark='·';
