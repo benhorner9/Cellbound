@@ -782,3 +782,172 @@
 @media(max-width:430px){
   .reagent-grid{grid-template-columns:1fr}
 }
+
+
+/* Timed batch crafting */
+.recipe-batch-order{
+  display:grid;
+  gap:6px;
+  align-self:stretch;
+  min-width:142px;
+  padding:8px;
+  border:1px solid rgba(216,185,118,.1);
+  border-radius:6px;
+  background:rgba(9,20,24,.8)
+}
+.recipe-batch-order>small{
+  color:#8d7d59;
+  font-size:.29rem;
+  font-weight:900;
+  letter-spacing:.08em
+}
+.recipe-batch-order>div{
+  display:grid;
+  grid-template-columns:32px minmax(48px,1fr) 32px;
+  gap:5px
+}
+.recipe-batch-order>div button,
+.recipe-batch-order>div input{
+  min-width:0;
+  height:34px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:4px;
+  background:#0b1518;
+  color:#d7dfdc;
+  text-align:center
+}
+.recipe-batch-order>div button{
+  padding:0;
+  font-size:.7rem;
+  font-weight:900
+}
+.recipe-batch-order>div input{
+  width:100%;
+  padding:0 4px;
+  font-size:.5rem;
+  font-weight:800;
+  appearance:textfield
+}
+.recipe-batch-order>div input::-webkit-inner-spin-button,
+.recipe-batch-order>div input::-webkit-outer-spin-button{appearance:none;margin:0}
+.recipe-batch-order>em{
+  color:#758780;
+  font-size:.3rem;
+  font-style:normal;
+  text-align:center
+}
+.recipe-batch-order>button{
+  min-height:38px;
+  padding:0 8px;
+  border:1px solid rgba(216,185,118,.28);
+  border-radius:5px;
+  background:linear-gradient(180deg,#40331c,#241d13);
+  color:#ead394;
+  font-size:.36rem;
+  font-weight:900;
+  letter-spacing:.05em
+}
+.recipe-batch-order.busy{
+  align-content:center;
+  opacity:.68
+}
+.recipe-batch-order.busy>button{
+  background:#0c171a;
+  border-color:rgba(255,255,255,.07);
+  color:#65746f
+}
+.timed-craft-project{
+  box-shadow:inset 0 0 0 1px rgba(216,185,118,.04),0 12px 30px rgba(0,0,0,.18)
+}
+.craft-timer-head{
+  display:flex;
+  justify-content:space-between;
+  gap:14px;
+  align-items:end;
+  padding:13px 14px 8px
+}
+.craft-timer-head>span{
+  display:grid;
+  gap:4px
+}
+.craft-timer-head b{
+  color:#78d2b5;
+  font-size:.36rem;
+  letter-spacing:.09em
+}
+.craft-timer-head small{
+  color:#6e7d78;
+  font-size:.31rem
+}
+.craft-timer-head strong{
+  color:#e3cf91;
+  font-family:Georgia,serif;
+  font-size:1.25rem;
+  font-weight:500
+}
+.craft-timer-track{
+  height:10px;
+  margin:0 14px 12px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.05);
+  border-radius:999px;
+  background:#172225
+}
+.craft-timer-track>i{
+  display:block;
+  width:0;
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,#4f8e80,#9bc8a9,#d5bc71);
+  transition:width .25s linear
+}
+.craft-batch-rules{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  border-top:1px solid rgba(255,255,255,.04);
+  background:rgba(0,0,0,.09)
+}
+.craft-batch-rules>span{
+  padding:10px 12px;
+  border-right:1px solid rgba(255,255,255,.04)
+}
+.craft-batch-rules>span:last-child{border-right:0}
+.craft-batch-rules b{
+  display:block;
+  color:#a99564;
+  font-size:.29rem;
+  letter-spacing:.07em
+}
+.craft-batch-rules small{
+  display:block;
+  margin-top:4px;
+  color:#667671;
+  font-size:.31rem;
+  line-height:1.4
+}
+@media(max-width:760px){
+  .profession-recipe-card{
+    grid-template-columns:52px minmax(0,1fr)!important
+  }
+  .recipe-batch-order{
+    grid-column:1/-1;
+    min-width:0;
+    grid-template-columns:minmax(150px,.8fr) minmax(120px,.7fr) minmax(160px,1fr);
+    align-items:center
+  }
+  .recipe-batch-order>small{grid-column:1}
+  .recipe-batch-order>div{grid-column:1;grid-row:2}
+  .recipe-batch-order>em{grid-column:2;grid-row:2}
+  .recipe-batch-order>button{grid-column:3;grid-row:1/3;height:100%}
+  .craft-batch-rules{grid-template-columns:1fr}
+  .craft-batch-rules>span{border-right:0;border-bottom:1px solid rgba(255,255,255,.04)}
+  .craft-batch-rules>span:last-child{border-bottom:0}
+}
+@media(max-width:520px){
+  .recipe-batch-order{grid-template-columns:1fr}
+  .recipe-batch-order>small,
+  .recipe-batch-order>div,
+  .recipe-batch-order>em,
+  .recipe-batch-order>button{grid-column:1;grid-row:auto}
+  .craft-timer-head{align-items:center}
+}

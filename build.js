@@ -50,13 +50,13 @@ for(const file of files){
   }
   if(file==='economy-v2.js'){
     if(!contents.includes("document.querySelectorAll('#professionRecipeFilters [data-prof-recipe-filter]').forEach"))throw new Error('Profession recipe filters must bind as a collection');
-    for(const hook of ['const WORKSHOP_ACTIONS=','function beginCraft(','async function resolveCraftStep(','function craftProjectMarkup(','FIRST CRAFT BONUS','MASTERWORK BONUS AVAILABLE','projectsCompleted','data-item-art-done="1"'])if(!contents.includes(hook))throw new Error('Profession project crafting runtime is missing '+hook);
+    for(const hook of ['function beginCraft(','function maxCraftable(','function craftBatchDurationMs(','function craftFocusActive(','async function finishTimedCraft(','function tickCraft(','function craftProjectMarkup(','s.workshopCraftProject','data-craft-qty','data-craft-progress','FIRST CRAFT BONUS','MASTERWORK BONUS AVAILABLE','projectsCompleted','data-item-art-done="1"'])if(!contents.includes(hook))throw new Error('Timed batch profession crafting runtime is missing '+hook);
     for(const hook of ['function addConsumable(item,qty=1,boundCrafter=null)','payload.boundCharacterId=boundCrafter.id','recipe.crafterOnly?c:null','trainingScale=Math.max(.1,Number(recipe.trainingScale)||1)','BOUND TO'])if(!contents.includes(hook))throw new Error('Crafter-only item binding runtime is missing '+hook);
     for(const hook of ["['gear-enhancement','socket-gem'].includes(latestPayload.effect)",'item.attachment=item.attachment||','delete c.activeEnhancements[slot]'])if(!contents.includes(hook))throw new Error('Legacy crafted item migration is missing '+hook);
-    if(contents.includes('>CRAFT</button>'))throw new Error('Legacy profession spam-craft button returned');
+    if(contents.includes('>CRAFT</button>')||contents.includes('data-craft-action')||contents.includes('resolveCraftStep'))throw new Error('Legacy profession action-step crafting returned');
   }
   if(file==='economy-v2.css'){
-    for(const hook of ['/* Profession Workshop V2 */','.profession-command-hero','.craft-project','.craft-action-grid','.profession-recipe-card'])if(!contents.includes(hook))throw new Error('Profession Workshop V2 styling is missing '+hook);
+    for(const hook of ['/* Profession Workshop V2 */','.profession-command-hero','.craft-project','.profession-recipe-card','/* Timed batch crafting */','.recipe-batch-order','.craft-timer-track','.craft-batch-rules'])if(!contents.includes(hook))throw new Error('Timed Profession Workshop styling is missing '+hook);
   }
   if(file==='profession-data.js'){
     if(!contents.includes('const skillThreshold=level=>160+Math.max(1,level)*7;'))throw new Error('Profession project progression curve regressed');
