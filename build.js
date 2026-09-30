@@ -45,7 +45,7 @@ for(const file of files){
   }
   if(file==='profession-data.js'){
     if(!contents.includes('const skillThreshold=level=>100+Math.max(1,level)*5;'))throw new Error('Profession project progression curve regressed');
-    for(const hook of ['persistentAttachment=true','recipeMetaForOutputKey','item?.attachment?.bonuses','kind:\'attachment\''])if(!contents.includes(hook))throw new Error('Persistent profession attachment model is missing '+hook);
+    for(const hook of ['persistentAttachment=true','recipeMetaForOutputKey','const a=item?.attachment','kind:\'attachment\''])if(!contents.includes(hook))throw new Error('Persistent profession attachment model is missing '+hook);
     for(const hook of ["Jewelcrafting:{icon:'◆'","Engineering:{icon:'⚙'","Cooking:{icon:'♨'","Reliccrafting:{icon:'◈'","Scribing:{icon:'✒'","effect:'socket-gem'","effect:'character-gadget'","effect:'party-food'","attachmentFamily:'relic-core'","effect:'party-scroll'"])if(!contents.includes(hook))throw new Error('Expanded profession system is missing '+hook);
     for(const hook of ['crafterOnly:true','trainingScale:.45','payload.crafterOnly=true','output.tradeState=\'soulbound\'','boundCharacterId===c?.id'])if(!contents.includes(hook))throw new Error('Crafter-only profession recipe contract is missing '+hook);
     for(const hook of ['payload.socketReady=true','function activeProcs(c)','function consumeBossChargesOnce','SPECIAL_PREPARATIONS'])if(!contents.includes(hook))throw new Error('New profession runtime contract missing '+hook);
