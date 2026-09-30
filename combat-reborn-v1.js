@@ -1984,8 +1984,8 @@ function talentAfterDamage(ctx,u,a,target,dealt,crit){
    if(a.id==='soul-cleave'||a.id==='spirit-bomb'){
     const available=Math.max(0,Number(u.soulFragments)||0),consume=a.id==='spirit-bomb'?available:Math.min(3,available),soulRank=talentRank(u,'Soul Cleave');
     u.soulFragments=Math.max(0,available-consume);
-    const pctHeal=a.id==='spirit-bomb'?.022:.025;
-    const healing=u.maxHealth*(pctHeal+consume*(.010+soulRank*.002));
+    const pctHeal=a.id==='spirit-bomb'?.018:.019;
+    const healing=u.maxHealth*(pctHeal+consume*(.0075+soulRank*.0015));
     doHeal(ctx,u,u,healing,a.name);
     emit(ctx,'SOUL_FRAGMENT_CHANGED',{source:u.id,target:u.id,ability:a.name,amount:consume,result:'consumed',position:copy(u.position),payload:{fragments:u.soulFragments}});
     if((r=talentRank(u,'Soul Barrier'))&&consume>0){
