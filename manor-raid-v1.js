@@ -3,8 +3,6 @@
 window.CellboundCombatStandard?.register?.('manor-raid',{kind:'raid',execution:'local-coop',ui:'shared-cb2d'});
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-const RAID_ID='manor';
-const RAID_NAME='The Manor';
 const CLASS_COLORS={Warrior:'#C69B6D',Paladin:'#F48CBA',Priest:'#FFFFFF',Druid:'#FF7C0A',Hunter:'#AAD372',Rogue:'#FFF468',Mage:'#3FC7EB',Monk:'#00FF98',Shaman:'#0070DD',Warlock:'#8788EE','Death Knight':'#C41E3A','Demon Hunter':'#A330C9',Evoker:'#33937F'};
 const SET_NAMES={Warrior:'Housebreaker Plate',Paladin:'Gilded Vigil',Priest:'Veil of the Attic',Druid:'Nightbloom Regalia',Hunter:'Blackwood Hunt',Rogue:'Silent Service',Mage:'Housebound Arcanum',Monk:'Stillhouse Vestments',Shaman:'Stormcell Regalia',Warlock:'Ashen Covenant','Death Knight':'Grave Manor Plate','Demon Hunter':'Nightglass Harness',Evoker:'Emberwing Regalia'};
 const RAID_RECOMMENDED_ILVL=38;
@@ -87,7 +85,6 @@ function syncServerClock(serverStamp,localReference=Date.now()){
  const ms=stamp(serverStamp);if(ms)serverClockOffset=ms-localReference
 }
 const stamp=v=>new Date(v||0).getTime()||0;
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function snapshot(){
  return party().map(c=>JSON.parse(JSON.stringify({
    id:c.id,name:c.name,class:c.class,spec:c.spec,role:roleOf(c),level:Number(c.level)||1,power:Number(c.power)||1,
@@ -581,15 +578,6 @@ function stageRoom(id){return id==='maids'?'Dining Room / Kitchen':id==='victory
 function stageElapsed(){return Math.max(0,serverNow()-stamp(session?.state?.stageStartedAt))}
 function memberRows(){return groupMembers(session?.listing_id).sort((a,b)=>stamp(a.joined_at)-stamp(b.joined_at))}
 function allRaidChars(){return memberRows().flatMap((m,pi)=>(Array.isArray(m.party_snapshot)?m.party_snapshot:[]).map((c,ci)=>({...c,partyIndex:pi,charIndex:ci})))}
-function renderRaidShell(){
- const root=ensureOverlay();if(!session)return;
- if(session.status==='failed'){renderWipeShell();return}
- if(session.status==='completed'||session.stage==='victory'){renderVictoryShell();return}
- root.innerHTML='<section class="mr-raid-shell"><header class="mr-raid-head"><div><small>THE MANOR · '+esc(stageRoom(session.stage).toUpperCase())+'</small><h2>'+esc(stageName(session.stage))+'</h2></div><div class="mr-raid-head-center"><span>COMBAT REBORN</span><b>10 CHARACTERS · '+memberRows().length+'/2 COMMANDERS</b></div><button data-mr-close>×</button></header>'+
- '<div class="mr-stage-tabs">'+['butler','maids','engineer','bedroom','housebound'].map((x,i)=>'<span class="'+(x===session.stage?'active':'')+'"><i>'+(i+1)+'</i>'+stageName(x)+'</span>').join('')+'</div>'+
- '<div id="mrArenaHost"></div><aside class="mr-raid-side"><div id="mrMechanics"></div><div id="mrRaidRoster"></div></aside><div id="mrScreechHost"></div></section>';
- root.querySelector('[data-mr-close]')?.addEventListener('click',closeRaid);lastStage=session.stage
-}
 function clearScreechPromptTimers(){
  screechPromptTimers.forEach(timer=>clearTimeout(timer));screechPromptTimers.clear()
 }
@@ -687,15 +675,6 @@ function bossHp(stage,e){
  if(stage==='housebound'){const masterHp=masterBossHp(e);if(masterHp!==null)return masterHp}
  const engineHp=combatBossHp(stage,e);if(engineHp!==null)return engineHp;
  const d=STAGES[stage]?.duration||1;return Math.max(0,100-(e/d)*100)
-}
-function paintStage(e){
- const arena=$('#mrArenaHost'),mech=$('#mrMechanics'),roster=$('#mrRaidRoster');if(!arena||!mech||!roster)return;
- if(session.stage==='maids'){paintMaids(arena,mech,roster,e);return}
- if(session.stage==='bedroom'){paintBedroom(arena,mech,roster,e);return}
- const hp=bossHp(session.stage,e),chars=allRaidChars(),phase=session.stage==='housebound'?(hp>60?1:hp>30?2:3):1,call=combatCallout(session.stage,e);
- arena.innerHTML='<div class="mr-arena stage-'+session.stage+' phase-'+phase+'">'+arenaDecor(session.stage,e)+'<div class="mr-boss"><span class="mr-boss-icon">'+bossIcon(session.stage)+'</span><b>'+esc(stageName(session.stage))+'</b><div class="mr-boss-hp"><i style="width:'+hp.toFixed(1)+'%"></i></div><small>'+Math.ceil(hp)+'%</small></div><div class="mr-units">'+chars.map((ch,i)=>unit(ch,i,e)).join('')+'</div>'+stageCallout(session.stage,e,call)+'</div>';
- mech.innerHTML=mechanicsMarkup(session.stage,e,phase)+(call?'<div class="mr-engine-event"><small>ENGINE EVENT</small><b>'+esc(call.ability||call.payload?.name||call.type)+'</b><span>'+Math.round((Number(call.timestamp)||0)/100)/10+'s</span></div>':'');
- roster.innerHTML=raidRosterMarkup(chars,e)
 }
 function bossIcon(stage){return stage==='butler'?'♜':stage==='engineer'?'⚙':stage==='bedroom'?'☗':'◈'}
 function unit(c,i,e){
