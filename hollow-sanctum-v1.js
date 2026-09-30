@@ -225,10 +225,6 @@ function projectile(fromId,toId,kind='magic',ms=420){
 }
 function hsFloat(id,text,kind='damage'){const p=hsPoint(id),arena=$('#hs2dArena');if(!p||!arena)return;const e=document.createElement('b');e.className='hs2d-float '+kind;e.textContent=text;e.style.left=p.x+'px';e.style.top=p.y+'px';arena.appendChild(e);setTimeout(()=>e.remove(),800)}
 function hsBar(id,pct){const bar=$('[data-hs="'+id+'"] > em i');if(bar)bar.style.width=Math.max(0,Math.min(100,pct))+'%'}
-function livingEnemyIds(){return $$('[data-hs^="e"]').filter(e=>!e.classList.contains('dead')).map(e=>e.dataset.hs)}
-function partyIndexes(){return party().map((c,i)=>({c,i,role:role(c)}))}
-function tankEntry(){return partyIndexes().find(x=>x.role==='tank')||partyIndexes()[0]}
-function healerEntry(){return partyIndexes().find(x=>x.role==='healer')||null}
 function hsTelegraph(type,label,sourceId,targetId,size=170){
  const layer=$('#hs2dTelegraphs'),a=sourceId?hsPoint(sourceId):null,b=targetId?hsPoint(targetId):null;if(!layer)return null;
  const e=document.createElement('div');e.className='hs2d-tele '+type+' dynamic';e.innerHTML='<span>'+esc(label)+'</span>';
