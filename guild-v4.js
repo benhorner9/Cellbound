@@ -416,7 +416,7 @@ function switchView(id){
   if(id==='bank')renderBank();
   if(id==='professions')window.CellboundEconomy?.renderProfessions?.();
   if(id==='trading')window.CellboundEconomy?.renderTrading?.();
-  if(id==='content'){renderBosses();safeFeatureRender('hollow-sanctum',()=>window.CellboundHollowSanctum?.renderCard?.());safeFeatureRender('chaos-canyon',()=>window.CellboundChaosCanyon?.renderCard?.());safeFeatureRender('blackout-station',()=>window.CellboundBlackoutStation?.renderCard?.());safeFeatureRender('fractured-ages',()=>window.CellboundFracturedAges?.renderCard?.())}
+  if(id==='content'){safeFeatureRender('hollow-sanctum',()=>window.CellboundHollowSanctum?.renderCard?.());safeFeatureRender('chaos-canyon',()=>window.CellboundChaosCanyon?.renderCard?.());safeFeatureRender('blackout-station',()=>window.CellboundBlackoutStation?.renderCard?.());safeFeatureRender('fractured-ages',()=>window.CellboundFracturedAges?.renderCard?.())}
   if(id==='raids')window.CellboundManorRaid?.refresh?.();
   if(id==='endgame'){window.CellboundEndgame?.render?.();renderReports()}
   if(id==='roster')renderRoster();
