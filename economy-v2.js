@@ -149,9 +149,9 @@ function shuffleNeeds(){
   return a;
 }
 function qualityTier(score){
-  if(score>=90)return{key:'masterwork',label:'MASTERWORK',xp:1.3};
-  if(score>=65)return{key:'fine',label:'FINE',xp:1.1};
-  return{key:'standard',label:'STANDARD',xp:.9};
+  if(score>=90)return{key:'masterwork',label:'MASTERWORK',xp:1.25};
+  if(score>=65)return{key:'fine',label:'FINE',xp:1.08};
+  return{key:'standard',label:'STANDARD',xp:.92};
 }
 function recipeHistory(prof,recipeId){
   prof.craftHistory=prof.craftHistory&&typeof prof.craftHistory==='object'?prof.craftHistory:{};
@@ -161,10 +161,10 @@ function craftXp(recipe,prof,tier,exactCount){
   const history=recipeHistory(prof,recipe.id),gap=Math.max(0,(Number(prof.level)||1)-(Number(recipe.level)||1)),trainingScale=Math.max(.1,Number(recipe.trainingScale)||1);
   let relevance=1;
   if(gap>50)relevance=.04;else if(gap>35)relevance=.12;else if(gap>20)relevance=.35;else if(gap>10)relevance=.7;
-  const freshness=history.count===0?1.7:history.count<3?1.15:1;
-  let xp=Math.round(((Number(recipe.xp)||18)*7+50)*relevance*freshness*tier.xp*trainingScale);
-  if(tier.key==='masterwork'&&!history.masterwork)xp+=Math.round((120+Math.round((Number(recipe.level)||1)*3))*trainingScale);
-  if(exactCount===3)xp+=Math.round(20*trainingScale);
+  const freshness=history.count===0?1.45:history.count<3?1.10:1;
+  let xp=Math.round(((Number(recipe.xp)||18)*5.5+35)*relevance*freshness*tier.xp*trainingScale);
+  if(tier.key==='masterwork'&&!history.masterwork)xp+=Math.round((90+Math.round((Number(recipe.level)||1)*2))*trainingScale);
+  if(exactCount===3)xp+=Math.round(15*trainingScale);
   return Math.max(2,xp);
 }
 function craftXpLabel(recipe,prof){
