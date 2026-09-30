@@ -116,9 +116,9 @@ const RECRUIT_NAMES={
   Nymari:['Ori Quill','Nima Voss','Tali Renn','Perrin Vox','Lumi Pell','Caro Venn']
 };
 const bosses=[
-  {id:'ashwarden',name:'Ash Warden Kael',level:4,rune:'♜',glow:'#8c4e35',requiredItemLevel:18,recommendedItemLevel:20,recommendedPower:42,mechanic:'Tank pressure and frontal cleave.',tier2Chance:.35},
-  {id:'embermaw',name:'Embermaw',level:4,rune:'♨',glow:'#b66232',requiredItemLevel:22,recommendedItemLevel:24,recommendedPower:56,mechanic:'Heavy group damage and interrupt checks.',tier2Chance:.40},
-  {id:'vaultheart',name:'The Vaultheart',level:5,rune:'◇',glow:'#805b98',requiredItemLevel:26,recommendedItemLevel:29,recommendedPower:68,mechanic:'Multi-phase encounter with burst windows.',tier2Chance:.50}
+  {id:'ashwarden',name:'Ash Warden Kael',level:4,rune:'♜',glow:'#8c4e35',requiredItemLevel:18,recommendedItemLevel:18,recommendedPower:42,mechanic:'Tank pressure and frontal cleave.',tier2Chance:.35},
+  {id:'embermaw',name:'Embermaw',level:4,rune:'♨',glow:'#b66232',requiredItemLevel:18,recommendedItemLevel:20,recommendedPower:56,mechanic:'Heavy group damage and interrupt checks.',tier2Chance:.40},
+  {id:'vaultheart',name:'The Vaultheart',level:5,rune:'◇',glow:'#805b98',requiredItemLevel:18,recommendedItemLevel:22,recommendedPower:68,mechanic:'Multi-phase encounter with burst windows.',tier2Chance:.50}
 ];
 
 let state=null;
