@@ -650,20 +650,6 @@ function maintainPosition(c,index,fast=false){
  const distance=Math.hypot(desired.x-current.x,desired.y-current.y);
  if(distance>2.5)move('p-'+c.id,desired.x,desired.y,fast?220:420);
 }
-function updateAggro(index){
- const table=run?.threat?.[index];if(!table)return null;
- const living=party().filter(c=>hp(c.id)>0);
- let target=living.sort((a,b)=>(table[b.id]||0)-(table[a.id]||0))[0]||null;
- const tank=living.find(c=>combatProfile(c)==='tank');
- if(tank&&target&&target.id!==tank.id&&(table[tank.id]||0)>=(table[target.id]||0)*.88)target=tank;
- const previous=run.aggro[index];run.aggro[index]=target?.id||null;
- if(previous!==run.aggro[index]&&target){
-   showThreatLink(index,target);
-   const label=combatProfile(target)==='tank'?'THREAT HELD':'AGGRO LOST';
-   floating('p-'+target.id,label,combatProfile(target)==='tank'?'threat':'incoming');
- }
- return target;
-}
 function showThreatLink(index,target){
  const arena=$('#cb2dArena'),a=point('e-'+index),b=point('p-'+target.id);if(!arena||!a||!b)return;
  let line=arena.querySelector('[data-threat-line="'+index+'"]');
