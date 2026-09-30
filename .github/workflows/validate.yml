@@ -59,6 +59,11 @@ jobs:
           node tests/full-playthrough.browser.cjs
           CELLBOUND_TEST_ENGINE=webkit node tests/full-playthrough.browser.cjs
 
+      - name: Login screen browser regression
+        run: |
+          node tests/login-screen.browser.cjs
+          CELLBOUND_TEST_ENGINE=webkit node tests/login-screen.browser.cjs
+
       - name: Save combat and playthrough captures
         if: always()
         uses: actions/upload-artifact@v4
@@ -67,4 +72,5 @@ jobs:
           path: |
             /tmp/cellbound-living-combat.png
             /tmp/cellbound-full-playthrough.png
+            /tmp/cellbound-login-screen.png
           if-no-files-found: ignore
