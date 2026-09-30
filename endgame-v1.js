@@ -45,7 +45,7 @@ function difficultyUnlocked(id,difficulty,tier=1){
 function currentConfig(id){
  const s=selection[id]||selection['ashen-vault'],dungeon=D.DUNGEONS[id],diff=D.difficultyConfig(s.difficulty,s.tier);
  const affixes=s.difficulty==='cellbound'?D.affixesForTier(s.tier,server.rotation||{}):[];
- const recommendedItemLevel=s.difficulty==='normal'?dungeon.normalItemLevel:s.difficulty==='heroic'?dungeon.heroicItemLevel:dungeon.cellboundItemLevel+Math.floor(Math.max(0,s.tier-1)/3);
+ const recommendedItemLevel=s.difficulty==='normal'?dungeon.normalItemLevel:s.difficulty==='heroic'?dungeon.heroicItemLevel:Math.min(44,40+Math.floor(Math.max(0,s.tier-1)/4));
  return{dungeon,difficulty:s.difficulty,tier:s.difficulty==='cellbound'?s.tier:0,diff,affixes,targetTimeMs:dungeon.timerMs,recommendedItemLevel,seasonId:server.season?.id||D.SEASON.id}
 }
 function choose(id,difficulty,tier){
@@ -70,9 +70,9 @@ function readyGuidance(cfg){
  const pi=Number(Game?.partyItemLevel?.())||0,p=progressFor(cfg.dungeon.id);
  const gap=pi-cfg.recommendedItemLevel;
  if(!difficultyUnlocked(cfg.dungeon.id,cfg.difficulty,cfg.tier))return'Clear the previous difficulty first.';
- if(gap>=4)return'Party appears comfortably geared. Execution and strategy are now the main gains.';
- if(gap>=0)return'Party appears ready. Review affixes and strategy before entering.';
- return'Party is '+Math.abs(gap)+' Item Levels below the recommended level. You can still enter, but mistakes will hurt more.'
+ if(gap>=4)return'Party is comfortably above the entry requirement. Execution and strategy are now the main gains.';
+ if(gap>=0)return'Party meets the entry requirement. Review affixes and strategy before entering.';
+ return'Party is '+Math.abs(gap)+' Item Levels below the entry requirement.'
 }
 function lootNames(id){
  const d=D.DUNGEONS[id];
@@ -117,7 +117,7 @@ function dungeonCard(id){
    '<div class="eg-mode-tabs">'+modeButtons+'</div>'+tier+
    '<div class="eg-dungeon-grid">'+
      '<section><small>SELECTED RUN</small><h4>'+esc(cfg.diff.name)+'</h4><p>'+esc(cfg.diff.description)+'</p><div class="eg-affixes">'+affixMarkup(cfg.affixes)+'</div></section>'+
-     '<section><small>READINESS</small><h4>iLvl '+cfg.recommendedItemLevel+' recommended</h4><p>'+esc(readyGuidance(cfg))+'</p><strong>'+esc(progressCopy(id))+'</strong></section>'+
+     '<section><small>READINESS</small><h4>iLvl '+cfg.recommendedItemLevel+' required</h4><p>'+esc(readyGuidance(cfg))+'</p><strong>'+esc(progressCopy(id))+'</strong></section>'+
      '<section><small>REWARDS</small><h4>'+esc(D.rewardBand(cfg.difficulty,cfg.tier,id).label)+'</h4><p>'+lootNames(id).map(esc).join(' · ')+'</p><strong>Cell Shards · boss loot · rare collectibles</strong></section>'+
    '</div>'+
    '<div class="eg-boss-strip">'+cfg.dungeon.bosses.map(b=>'<span><b>'+esc(b.name)+'</b><small>'+esc(b.signature)+'</small></span>').join('')+'</div>'+bossLootMarkup(id)+
