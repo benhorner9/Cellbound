@@ -650,25 +650,6 @@ function maintainPosition(c,index,fast=false){
  const distance=Math.hypot(desired.x-current.x,desired.y-current.y);
  if(distance>2.5)move('p-'+c.id,desired.x,desired.y,fast?220:420);
 }
-function buildThreat(index,c,amount,source='damage'){
- if(!run?.threat?.[index]||!c)return;
- const profile=combatProfile(c),table=run.threat[index];
- let value=Math.max(0,Number(amount)||0);
- if(source==='taunt'&&profile==='tank'){
-   const highest=Math.max(0,...Object.values(table).map(Number));
-   const lead=I?.tauntLead?.(c)||1.15;
-   const snap=Math.max(Number(table[c.id])||0,highest*lead+Math.max(70,value*.6));
-   table[c.id]=snap;
-   updateAggro(index);queueCombatMeterRender();return;
- }
- if(value<=0)return;
- const enemyCount=run.enemyHp.filter(v=>v>0).length;
- if(source==='heal')value*=1.5*(I?.healThreatMultiplier?.(c)||1);
- else if(source==='group')value*=1;
- else value*=I?.damageThreatMultiplier?.(c,{enemyCount})||(profile==='tank'?2.4:1);
- table[c.id]=(Number(table[c.id])||0)+value;
- updateAggro(index);queueCombatMeterRender();
-}
 function updateAggro(index){
  const table=run?.threat?.[index];if(!table)return null;
  const living=party().filter(c=>hp(c.id)>0);
@@ -697,16 +678,6 @@ function showThreatLink(index,target){
  line.classList.toggle('danger',combatProfile(target)!=='tank');
  clearTimeout(line._timer);line._timer=setTimeout(()=>line.remove(),900);
 }
-function moveEnemyToThreat(index,s){
- if(run?.mechanicActive||run.enemyHp[index]<=0)return;
- const target=threatTarget(index);if(!target)return;
- const t=pctPosition('p-'+target.id),e=pctPosition('e-'+index);
- const boss=s.kind==='boss'||s.kind==='final';
- const desiredX=clamp(t.x+(combatProfile(target)==='tank'?8:4),boss?52:40,84);
- const packOffsets=[-10,0,10,-16,16];const desiredY=clamp(t.y+(packOffsets[index%packOffsets.length]||0),14,86);
- if(Math.hypot(desiredX-e.x,desiredY-e.y)>3)move('e-'+index,desiredX,desiredY,boss?500:360);
- showThreatLink(index,target);
-}
 function settleFormation(index){
  party().filter(c=>hp(c.id)>0).forEach(c=>maintainPosition(c,index,true));
 }
@@ -725,7 +696,6 @@ function ability(c){
  if(c.class==='Paladin')return'Judgement';
  return role(c)==='tank'?'Shield Strike':'Heavy Slash';
 }
-function enemyTarget(index){return threatTarget(index)}
 function enemyIndex(){
  if(!run)return-1;
  const floor=run.allowKill?0:.16;
