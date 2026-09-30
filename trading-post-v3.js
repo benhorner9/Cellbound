@@ -141,7 +141,7 @@ function renderStats(rows){
 function gearCard(l){
   const g=gearFor(l),utility=isUtilityItem(g),stats=G?.statLines?.(g)||[],rarity=rarityOf(l),ilvl=Number(l.item_level||g.itemLevel)||0;
   const meta=utility?'<span class="tp-rarity-'+slug(rarity)+'">'+esc(rarity)+'</span> · Utility':'<span class="tp-rarity-'+slug(rarity)+'">'+esc(rarity)+'</span> · '+esc(l.item_class||g.class||'Any')+' · '+esc(l.slot||g.slot||'Gear');
-  const detail=utility?Math.max(0,Number(g.charges)||0)+' / '+Math.max(1,Number(g.maxCharges)||5)+' uses · '+esc(l.seller_label||'Player Guild')+' · '+age(l.created_at):'Item Level '+ilvl+' · '+esc(l.seller_label||'Player Guild')+' · '+age(l.created_at);
+  const socketText=!utility&&Number(g.socketCount)>0?' · ◆ '+(g.sockets||[]).filter(Boolean).length+'/'+g.socketCount+' sockets':'',detail=utility?Math.max(0,Number(g.charges)||0)+' / '+Math.max(1,Number(g.maxCharges)||5)+' uses · '+esc(l.seller_label||'Player Guild')+' · '+age(l.created_at):'Item Level '+ilvl+socketText+' · '+esc(l.seller_label||'Player Guild')+' · '+age(l.created_at);
   return '<article class="tp-result-card rarity-'+slug(rarity)+(selected?.kind==='gear'&&selected.id===l.id?' selected':'')+'" data-gear-id="'+esc(l.id)+'">'+
     '<div class="tp-result-art">'+gearArt(l,58)+'</div>'+
     '<div class="tp-result-copy"><small>'+meta+'</small><h4>'+esc(l.item_name)+'</h4><p>'+detail+'</p>'+
@@ -194,12 +194,12 @@ function gearInspector(l){
   const g=gearFor(l),utility=isUtilityItem(g),rarity=rarityOf(l),stats=G?.statLines?.(g)||[];
   const heroMeta=utility?esc(rarity)+' · Utility':esc(rarity)+' · '+esc(l.item_class||g.class||'Any');
   const heroDetail=utility?Math.max(0,Number(g.charges)||0)+' / '+Math.max(1,Number(g.maxCharges)||5)+' uses · '+esc(l.seller_label||'Player Guild'):esc(l.slot||g.slot||'Gear')+' · Item Level '+Number(l.item_level||g.itemLevel||0)+' · '+esc(l.seller_label||'Player Guild');
-  const itemSection=utility?'<div class="tp-inspector-section"><small>UTILITY EFFECT</small><div class="tp-stat-chips"><span>Blackout Station grid override</span><span>'+Math.max(0,Number(g.charges)||0)+'/'+Math.max(1,Number(g.maxCharges)||5)+' uses remaining</span></div><p>'+esc(g.description||'Automatically restores the Blackout Station grid after your first manual clear.')+'</p></div>':'<div class="tp-inspector-section"><small>ITEM ROLL</small><div class="tp-stat-chips">'+(stats.length?stats.map(s=>'<span>'+esc(s.text)+'</span>').join(''):'<span>No rolled stats</span>')+'</div>'+(g.uniqueEffect?'<p>'+esc(g.uniqueEffect.name)+' · '+esc(g.uniqueEffect.description)+'</p>':'')+'</div>';
+  const socketSection=!utility&&Number(g.socketCount)>0?'<div class="tp-inspector-section"><small>JEWELCRAFTING SOCKETS</small><div class="tp-stat-chips">'+Array.from({length:g.socketCount},(_,i)=>{const gem=g.sockets?.[i];return '<span>'+(gem?'◆ '+esc(gem.name)+' · '+esc(window.CellboundProfessions?.bonusText?.(gem.bonuses)||''):'◇ Open Socket')+'</span>'}).join('')+'</div></div>':'',itemSection=utility?'<div class="tp-inspector-section"><small>UTILITY EFFECT</small><div class="tp-stat-chips"><span>Blackout Station grid override</span><span>'+Math.max(0,Number(g.charges)||0)+'/'+Math.max(1,Number(g.maxCharges)||5)+' uses remaining</span></div><p>'+esc(g.description||'Automatically restores the Blackout Station grid after your first manual clear.')+'</p></div>':'<div class="tp-inspector-section"><small>ITEM ROLL</small><div class="tp-stat-chips">'+(stats.length?stats.map(s=>'<span>'+esc(s.text)+'</span>').join(''):'<span>No rolled stats</span>')+'</div>'+(g.uniqueEffect?'<p>'+esc(g.uniqueEffect.name)+' · '+esc(g.uniqueEffect.description)+'</p>':'')+'</div>';
   const setSection=!utility&&g?.setName?'<div class="tp-inspector-section tp-set-section"><small>EQUIPMENT SET · '+esc(g.setName)+'</small>'+(G?.setBonusLines?.(g)||[]).map(x=>'<div class="tp-set-bonus"><b>'+x.threshold+' PIECES · '+esc(x.name)+'</b><span>'+esc(x.short)+'</span><p>'+esc(x.description)+'</p></div>').join('')+'</div>':'';
   return '<div class="tp-inspector-content">'+
     '<div class="tp-inspector-hero"><div class="tp-inspector-art">'+gearArt(l,76)+'</div><div><small class="tp-rarity-'+slug(rarity)+'">'+heroMeta+'</small><h3>'+esc(l.item_name)+'</h3><p>'+heroDetail+'</p></div></div>'+
     '<div><div class="tp-quote-grid"><div><span>Price</span><b>'+gold(l.unit_price)+'</b></div><div><span>Time left</span><b>'+(l.expires_at?timeLeft(l.expires_at):'48h')+'</b></div></div>'+
-    itemSection+setSection+
+    itemSection+socketSection+setSection+
     '<div class="tp-inspector-section"><small>'+ (utility?'USAGE':'YOUR COMPARISON') +'</small>'+compatibleCompare(g)+'</div></div>'+
     '<div><div class="tp-inspector-section"><small>MARKET ACTIONS</small><div class="tp-action-row">'+
     (l.is_own?'<button type="button" class="danger" data-cancel-gear="'+esc(l.id)+'">CANCEL LISTING</button>':'<button type="button" data-buy-gear="'+esc(l.id)+'">BUY FOR '+gold(l.unit_price)+'</button>')+
@@ -339,7 +339,7 @@ async function cancelOrder(id){
   finally{actionBusy=false}
 }
 function tradeableBankItems(){
-  return (state().bank||[]).filter(x=>x&&x.id&&(x.tradeState||'tradeable')!=='soulbound'&&!x?.attachment?.crafterOnly&&Number(x.quantity||1)>0);
+  return (state().bank||[]).filter(x=>x&&x.id&&(x.tradeState||'tradeable')!=='soulbound'&&!x?.attachment?.crafterOnly&&!(x.sockets||[]).some(g=>g?.crafterOnly)&&Number(x.quantity||1)>0);
 }
 function sellItemArt(item,size){
   return itemArtHTML(item,size||62,'tp-sell-art');
@@ -371,7 +371,7 @@ function renderGearSellOptions(){
     :esc(selected.rarity||'Common')+' · '+esc(selected.class||'Any');
   const selectedDetail=selectedUtility
     ?Math.max(0,Number(selected.charges)||0)+' / '+Math.max(1,Number(selected.maxCharges)||5)+' uses · Tradeable'
-    :esc(selected.slot||'Gear')+' · Item Level '+Number(selected.itemLevel||0)+' · ×'+Number(selected.quantity||1)+' in Bank';
+    :esc(selected.slot||'Gear')+' · Item Level '+Number(selected.itemLevel||0)+(Number(selected.socketCount)>0?' · ◆ '+(selected.sockets||[]).filter(Boolean).length+'/'+selected.socketCount+' sockets':'')+' · ×'+Number(selected.quantity||1)+' in Bank';
   selectedRoot.innerHTML='<article class="tp-sell-selected-card rarity-'+slug(selected.rarity||'Common')+'">'+
     '<div class="tp-sell-selected-art">'+sellItemArt(selected,68)+'</div>'+
     '<div class="tp-sell-selected-copy"><small>'+selectedMeta+'</small><b>'+esc(selected.name||'Unknown item')+'</b><span>'+selectedDetail+'</span></div>'+
