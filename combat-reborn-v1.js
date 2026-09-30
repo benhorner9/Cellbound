@@ -234,7 +234,7 @@ const ABILITIES={
   {id:'hand-reckoning',name:'Hand of Reckoning',kind:'taunt',role:'tank',unlockLevel:1,desc:'Force an enemy to attack the Paladin.',range:30,cost:0,gcd:0,cd:8000,threat:5},
   {id:'holy-light',name:'Holy Light',kind:'heal',role:'healer',unlockLevel:1,desc:'A strong efficient direct heal.',range:30,heal:37,cost:14,gcd:1500,cast:1500,cd:0},
   {id:'holy-shock',name:'Holy Shock',kind:'heal',role:'healer',unlockLevel:1,desc:'An instant heal with a short cooldown.',range:30,heal:25,cost:9,gcd:1500,cast:0,cd:6000},
-  {id:'light-of-dawn',name:'Light of Dawn',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Restore health to the whole party.',range:30,heal:16,cost:18,gcd:1500,cast:0,cd:7000},
+  {id:'light-of-dawn',name:'Light of Dawn',kind:'group-heal',role:'healer',unlockLevel:1,desc:'Restore health to the whole party.',range:30,heal:20,cost:16,gcd:1500,cast:0,cd:6000},
   {id:'rebuke',name:'Rebuke',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast.',range:5,cost:0,gcd:0,cd:15000},
   {id:'ardent-defender',name:'Ardent Defender',kind:'defensive',role:'tank',unlockLevel:6,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.30,gcd:0,cd:75000},
   {id:'flash-of-light',name:'Flash of Light',kind:'heal',role:'healer',unlockLevel:6,desc:'A fast emergency heal at a higher mana cost.',range:30,heal:30,cost:19,gcd:1500,cast:800,cd:0},
@@ -245,7 +245,7 @@ const ABILITIES={
  Priest:[
   {id:'heal',name:'Heal',kind:'heal',role:'healer',spec:'Holy',unlockLevel:1,desc:'Efficient direct healing.',range:30,heal:35,cost:13,gcd:1500,cast:1400,cd:0},
   {id:'flash-heal',name:'Flash Heal',kind:'heal',role:'healer',spec:'Holy',unlockLevel:1,desc:'Fast emergency healing.',range:30,heal:29,cost:18,gcd:1500,cast:800,cd:0},
-  {id:'prayer-healing',name:'Prayer of Healing',kind:'group-heal',role:'healer',spec:'Holy',unlockLevel:1,desc:'Restore health to the whole party.',range:30,heal:18,cost:22,gcd:1500,cast:1700,cd:6500},
+  {id:'prayer-healing',name:'Prayer of Healing',kind:'group-heal',role:'healer',spec:'Holy',unlockLevel:1,desc:'Restore health to the whole party.',range:30,heal:24,cost:18,gcd:1500,cast:1700,cd:6500},
   {id:'smite',name:'Smite',kind:'damage',role:'healer',spec:'Holy',unlockLevel:4,desc:'A ranged holy attack for safe damage windows.',range:30,damage:13,cost:4,gcd:1500,cast:1200,cd:0,damageType:'magic'},
   {id:'soul-recall',name:'Soul Recall',kind:'battle-rez',role:'healer',spec:'Holy',unlockLevel:8,desc:'Return a fallen ally to combat. Very long cooldown.',range:30,cost:32,gcd:1500,cast:5000,cd:600000},
   {id:'guardian-spirit',name:'Guardian Spirit',kind:'defensive',role:'healer',spec:'Holy',unlockLevel:12,desc:'Reduce incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:90000},
@@ -283,7 +283,7 @@ const ABILITIES={
  Shaman:[
   {id:'healing-wave',name:'Healing Wave',kind:'heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'A dependable restorative cast for an injured ally.',range:30,heal:36,cost:14,gcd:1500,cast:1450,cd:0},
   {id:'riptide',name:'Riptide',kind:'heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'An instant tidal heal that continues restoring health briefly.',range:30,heal:23,cost:10,gcd:1500,cast:0,cd:6000,hot:7},
-  {id:'chain-heal',name:'Chain Heal',kind:'group-heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Heal one ally, then bounce restorative energy through other injured party members.',range:30,heal:30,cost:20,gcd:1500,cast:1700,cd:0,chainBounces:3,chainFalloff:.72,chainRange:16},
+  {id:'chain-heal',name:'Chain Heal',kind:'group-heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Heal one ally, then bounce restorative energy through other injured party members.',range:30,heal:34,cost:15,gcd:1500,cast:1700,cd:0,chainBounces:3,chainFalloff:.72,chainRange:16},
   {id:'windfury-totem',name:'Windfury Totem',kind:'totem',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Place a Windfury Totem that increases party damage and haste while it remains active.',cost:8,gcd:1000,cd:45000,duration:20000,totemType:'windfury'},
   {id:'stoneskin-totem',name:'Stoneskin Totem',kind:'totem',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Place a Stoneskin Totem that reduces damage taken by the party while it remains active.',cost:10,gcd:1000,cd:45000,duration:20000,totemType:'stoneskin'},
   {id:'healing-stream-totem',name:'Healing Stream Totem',kind:'totem',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Place a Healing Stream Totem that pulses healing through the party while it remains active.',cost:12,gcd:1000,cd:30000,duration:20000,totemType:'healing-stream'},
@@ -1008,16 +1008,9 @@ function defaultSkillLoadout(c,role){
  const pool=unlockedSkillPool(c,role),picked=[];
  const add=a=>{if(a&&!picked.includes(a)&&picked.length<4)picked.push(a)};
  if(role==='healer'){
-  const heals=pool.filter(a=>a.kind==='heal'||a.kind==='group-heal'),battleRez=pool.find(a=>a.kind==='battle-rez');
-  if(battleRez){
-   add(heals.find(a=>a.kind==='heal'));
-   add(heals.find(a=>a.kind==='group-heal')||heals.find(a=>a.kind==='heal'&&!picked.includes(a)));
-   add(pool.find(a=>a.kind==='interrupt'));
-   add(battleRez);
-  }else{
-   heals.slice(0,3).forEach(add);
-   add(pool.find(a=>a.kind==='interrupt'));
-  }
+  const heals=pool.filter(a=>a.kind==='heal'||a.kind==='group-heal');
+  heals.slice(0,3).forEach(add);
+  add(pool.find(a=>a.kind==='interrupt'));
  }else if(role==='tank'){
   pool.filter(a=>a.kind==='damage').slice(0,2).forEach(add);
   add(pool.find(a=>a.kind==='taunt'));
