@@ -97,6 +97,7 @@ for(const file of files){
     if(!contents.includes('function fallbackEquipmentSlot')||!contents.includes('cb-recovery-armoury')||!contents.includes("if(!item||typeof item!=='object')return false")||contents.includes('activeSlot=null;\n    return equipmentFallback'))throw new Error('Equipment recovery mode must preserve the paper doll and slot controls');
     for(const hook of ['function attachmentStacksForSlot','cb-attachment-panel','data-apply-attachment','function applyAttachmentToEquipped'])if(!contents.includes(hook))throw new Error('Character equipment attachment flow is missing '+hook);
     for(const hook of ['function socketGemStacks','function socketPanel','data-apply-gem','function applyGemToEquipped'])if(!contents.includes(hook))throw new Error('Character equipment socket flow is missing '+hook);
+    for(const hook of ['function refreshOpenEquipmentDrawer','refreshOpenEquipmentDrawer(state,c,slot);window.CellboundFX?.micro?.(stack.name+\' attached\'','refreshOpenEquipmentDrawer(state,c,slot);window.CellboundFX?.micro?.(stack.name+\' socketed\''])if(!contents.includes(hook))throw new Error('Gear attachment/socket actions must keep the equipment drawer open: '+hook);
     if(!contents.includes('permanently destroyed and cannot be recovered'))throw new Error('Attachment replacement must explicitly destroy the previous crafted attachment');
   }
   if(file==='bank-v2.css'){
