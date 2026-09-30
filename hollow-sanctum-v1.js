@@ -699,7 +699,7 @@ async function complete(){
  '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>PROFESSION REAGENTS</span><small>Available immediately for crafting</small></div><div class="cb2d-loot-materials">'+materials.map(hsLootMaterialCard).join('')+'</div></section>'+
  hsCombatAnalysisHTML()+
  '<footer class="cb2d-loot-actions"><button data-loot-bank>VIEW GUILD BANK</button><button class="primary" data-loot-return>RETURN HOME →</button></footer></div>';
- hsAnimateXp(end);
+ window.CellboundDungeonResults?.compact?.(end);hsAnimateXp(end);
  end.querySelector('[data-hs-replay]')?.addEventListener('click',hsReplayFinalFight);
  end.querySelector('[data-loot-bank]').onclick=()=>{close();Game.switchView?.('bank')};
  end.querySelector('[data-loot-return]').onclick=()=>{close();Game.switchView?.('overview')}
