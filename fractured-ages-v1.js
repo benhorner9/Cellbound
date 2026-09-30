@@ -110,16 +110,17 @@ async function faWaitForEndgame(){
 }
 
 function root(){let e=$('#fracturedAgesBackdrop');if(e)return e;e=document.createElement('div');e.id='fracturedAgesBackdrop';e.className='fa-backdrop';e.hidden=true;document.body.appendChild(e);return e}
-function readiness(){
+function readiness(normalOnly=false){
  if(!unlocked())return{ok:false,reason:'Complete The Fourfold Lock to discover this dungeon.'};
  const p=party();if(p.length!==5)return{ok:false,reason:'Build a complete five-character party first.'};
  const bad=p.find(c=>Game.isUnavailable?.(c));if(bad)return{ok:false,reason:bad.name+' is recovering from Cell Shock.'};
- const req=Math.max(ENTRY_ILVL,Number(faEndgameConfig()?.recommendedItemLevel)||ENTRY_ILVL);if(ilvl()<req)return{ok:false,reason:'Party Item Level '+ilvl()+'. '+(faEndgameConfig()?.diff?.name||'Normal')+' requires Item Level '+req+'.'};
- return{ok:true,reason:'The lockbox is open. The route through time is stable — for now.'}
+ const cfg=normalOnly?null:faEndgameConfig(),req=normalOnly?ENTRY_ILVL:Math.max(ENTRY_ILVL,Number(cfg?.recommendedItemLevel)||ENTRY_ILVL),label=normalOnly?'Normal':(cfg?.diff?.name||'Normal');
+ if(ilvl()<req)return{ok:false,reason:'Party Item Level '+ilvl()+'. '+label+' requires Item Level '+req+'.'};
+ return{ok:true,reason:normalOnly?'Normal difficulty is available.':'The lockbox is open. The route through time is stable — for now.'}
 }
 function renderCard(){
  const card=$('#fracturedAgesCard'),mount=$('#fracturedAgesMount');if((!card&&!mount)||!Game?.ready)return;
- const open=unlocked(),clears=clearCount(),gate=readiness(),pi=ilvl();
+ const open=unlocked(),clears=clearCount(),gate=readiness(true),pi=ilvl();
  if(card)card.innerHTML='<article class="dungeon-browser-card fractured-ages '+(open?'unlocked':'locked')+'" data-dungeon-card="fractured-ages"><div class="dungeon-browser-art has-image fractured-ages-art"><img src="./assets/dungeons/fractured-ages.webp" alt="" loading="lazy" decoding="async"><span>'+(open?'TIME FRACTURE':'UNKNOWN AGE')+'</span><strong>⌛</strong></div><div class="dungeon-browser-copy"><div class="dungeon-browser-heading"><div><small>DUNGEON</small><h3>'+(open?'The Fractured Ages':'Undiscovered Dungeon')+'</h3></div><b id="fracturedAgesStatus">'+(open?(clears?'CLEARED':'NEWLY UNLOCKED'):'QUEST LOCKED')+'</b></div><p>'+(open?'Five encounters across impossible ages, ending in a 5v5 fight inside the Old Man’s Funhouse.':'Four strange keyholes point toward something outside ordinary time.')+'</p><div class="dungeon-browser-meta"><span>5 encounters</span><span>'+(open?'iLvl '+ENTRY_ILVL+'+':'Fourfold Lock')+'</span><span>Party iLvl '+(pi||'—')+'</span></div><div class="dungeon-browser-actions"><button type="button" data-dungeon-more="fractured-ages">MORE INFO →</button></div></div></article>';
  if(!mount)return;
  const route=STAGES.map((s,i)=>'<div class="dungeon-stage '+(clears?'complete':'')+'" data-kind="'+(i===4?'final':'boss')+'"><div class="dungeon-stage-rune">'+(clears?'✓':i===4?'✦':'◇')+'</div><div class="dungeon-stage-copy"><b>'+(i+1)+'. '+esc(s.era)+' · '+esc(s.boss)+'</b><small>'+esc(s.blurb)+'</small></div><span class="dungeon-stage-tag">'+(i===4?'5V5 FINAL':'BOSS')+'</span></div>').join('');
@@ -139,9 +140,9 @@ function renderCard(){
 function openDungeon(options){Game=window.CellboundGame;if(!Game?.ready)return;db=Game.getSupabase?.();if(options?.difficulty)window.CellboundEndgame?.choose?.('fractured-ages',options.difficulty,options.tier||1);briefing()}
 function close(){run=null;const r=root();r.hidden=true;document.body.classList.remove('fa-open');Game?.switchView?.('content');renderCard()}
 function briefing(){
- const gate=readiness(),r=root();r.hidden=false;document.body.classList.add('fa-open');
- if(!gate.ok){r.innerHTML='<section class="fa-shell fa-brief"><header><div><small>THE FRACTURED AGES · ENTRY CHECK</small><h2>The timeline will not open.</h2></div><button data-fa-close aria-label="Close dungeon">×</button></header><div class="fa-blocked"><b>NOT READY</b><p>'+esc(gate.reason)+'</p><button data-fa-party>OPEN PARTY BUILDER →</button></div></section>';r.querySelector('[data-fa-close]').onclick=close;r.querySelector('[data-fa-party]').onclick=()=>{close();Game.switchView?.('party')};return}
- r.innerHTML='<section class="fa-shell fa-brief"><header><div><small>THE FRACTURED AGES · LEVELS 14–18 · ILVL '+ENTRY_ILVL+'+</small><h2>A journey through five impossible encounters.</h2></div><button data-fa-close aria-label="Close dungeon">×</button></header><div class="fa-brief-grid"><main><p>The Chronomap tears open five fractures. Every fracture is fought in full combat, with movement, threat, resources, interrupts and mechanics carrying through the run.</p>'+faEndgamePrepMarkup()+'<div class="fa-era-strip">'+STAGES.map((s,i)=>'<span><i>'+(i+1)+'</i><b>'+esc(s.era)+'</b><small>'+esc(s.boss)+'</small></span>').join('')+'</div><div class="fa-warning"><b>THE FINAL FRACTURE</b><span>The Old Man does not fight alone. Your active five will face five enemies at once.</span></div></main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="fa-party"><span>'+esc(c.portrait||c.name.slice(0,2))+'</span><div><b>'+esc(c.name)+'</b><small>Lv. '+Math.max(1,Number(c.level)||1)+' · '+esc(c.class)+' · '+esc(c.spec)+'</small></div></div>').join('')+'<button class="fa-start" data-fa-start>STEP THROUGH THE FIRST FRACTURE →</button></aside></div></section>';
+ const baseGate=readiness(true),gate=readiness(),r=root();r.hidden=false;document.body.classList.add('fa-open');
+ if(!baseGate.ok){r.innerHTML='<section class="fa-shell fa-brief"><header><div><small>THE FRACTURED AGES · ENTRY CHECK</small><h2>The timeline will not open.</h2></div><button data-fa-close aria-label="Close dungeon">×</button></header><div class="fa-blocked"><b>NOT READY</b><p>'+esc(baseGate.reason)+'</p><button data-fa-party>OPEN PARTY BUILDER →</button></div></section>';r.querySelector('[data-fa-close]').onclick=close;r.querySelector('[data-fa-party]').onclick=()=>{close();Game.switchView?.('party')};return}
+ r.innerHTML='<section class="fa-shell fa-brief"><header><div><small>THE FRACTURED AGES · LEVELS 14–18 · ILVL '+ENTRY_ILVL+'+</small><h2>A journey through five impossible encounters.</h2></div><button data-fa-close aria-label="Close dungeon">×</button></header><div class="fa-brief-grid"><main><p>The Chronomap tears open five fractures. Every fracture is fought in full combat, with movement, threat, resources, interrupts and mechanics carrying through the run.</p>'+faEndgamePrepMarkup()+'<div class="fa-era-strip">'+STAGES.map((s,i)=>'<span><i>'+(i+1)+'</i><b>'+esc(s.era)+'</b><small>'+esc(s.boss)+'</small></span>').join('')+'</div><div class="fa-warning"><b>THE FINAL FRACTURE</b><span>The Old Man does not fight alone. Your active five will face five enemies at once.</span></div></main><aside><small>ACTIVE FIVE · PARTY ILVL '+ilvl()+'</small>'+party().map(c=>'<div class="fa-party"><span>'+esc(c.portrait||c.name.slice(0,2))+'</span><div><b>'+esc(c.name)+'</b><small>Lv. '+Math.max(1,Number(c.level)||1)+' · '+esc(c.class)+' · '+esc(c.spec)+'</small></div></div>').join('')+'<div class="cb2d-prep-summary"><small>SELECTED DIFFICULTY</small><p><b>'+(gate.ok?'READY':'ITEM LEVEL REQUIRED')+'</b><span>'+esc(gate.reason)+'</span></p></div><button class="fa-start" data-fa-start '+(gate.ok?'':'disabled')+'>STEP THROUGH THE FIRST FRACTURE →</button></aside></div></section>';
  r.querySelector('[data-fa-close]').onclick=close;r.querySelector('[data-fa-start]').onclick=startRun;
  try{faBindEndgamePrep()}catch(error){console.warn('Fractured Ages difficulty controls failed to bind',error)}
 }
@@ -169,6 +170,7 @@ function faRestoreRuntime(attempt){
 }
 
 async function startRun(){
+ const gate=readiness();if(!gate.ok){briefing();return}
  const startButton=root().querySelector('[data-fa-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
  await Game.persistState?.();
  const service=await faWaitForEndgame(),eg=faEndgameConfig(),attempt=await service?.beginOrResumeAttempt?.('fractured-ages')||await service?.beginAttempt?.('fractured-ages');
