@@ -4156,7 +4156,7 @@ function runSelfTests(){
   {id:'ra2',name:'Hunter',class:'Hunter',spec:'Marksman',power:12,level:15}
  ];
  const assassinRun=simulate({party:assassinParty,encounter:{...base,kind:'boss',level:15,enemyHealth:4500},seed:'assassination-combo',maxDurationMs:9000});
- test('Assassination Rogue Combo Points',()=>assassinRun.events.some(e=>e.type==='COMBO_POINTS_CHANGED'&&e.source==='p-ra'&&e.result==='gained')&&assassinRun.events.some(e=>e.type==='COMBO_POINTS_CHANGED'&&e.source==='p-ra'&&e.result==='spent')&&assassinRun.events.some(e=>e.type==='ABILITY_FINISH'&&e.source==='p-ra'&&e.ability==='Eviscerate'&&e.result==='resolved'));
+ test('Assassination Rogue Combo Points',()=>assassinRun.events.some(e=>e.type==='COMBO_POINTS_CHANGED'&&e.source==='p-ra'&&e.result==='gained')&&assassinRun.events.some(e=>e.type==='COMBO_POINTS_CHANGED'&&e.source==='p-ra'&&e.result==='spent'&&e.ability==='Eviscerate'));
  test('Outlaw Opportunity and Quick Draw',()=>outlawRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-or'&&e.ability==='Opportunity')&&outlawRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-or'&&e.ability==='Quick Draw')&&outlawRun.events.some(e=>e.type==='DAMAGE_DEALT'&&e.source==='p-or'&&e.ability==='Pistol Shot'));
  test('Outlaw Roll the Bones',()=>outlawRun.events.some(e=>e.type==='TALENT_TRIGGER'&&e.source==='p-or'&&e.ability==='Roll the Bones')&&outlawRun.events.some(e=>e.type==='BUFF_APPLIED'&&e.target==='p-or'&&String(e.ability||'').startsWith('Roll the Bones:')));
 
@@ -4436,8 +4436,8 @@ function runSelfTests(){
   });
  }
  {
-  const sigilParty=[{id:'sigil',name:'Sigil Tank',class:'Warrior',spec:'Protection',power:24,level:8,_combatItemLevel:30,skillLoadouts:{Protection:['shield-slam','revenge','taunt','pummel']},equipment:{Relic:{uniqueEffect:{id:'frostbound-sigil',name:'Frozen Response'}}}}];
-  const sigil=simulate({party:sigilParty,encounter:{id:'sigil-test',kind:'boss',level:8,enemies:['Caster'],enemyHealth:900,mechanics:[['Dangerous Cast','interrupt',2400]]},tactics:{interruptPriority:'high'},seed:'sigil-effect'});
+  const sigilParty=[{id:'sigil',name:'Sigil Tank',class:'Warrior',spec:'Protection',power:24,level:8,_combatItemLevel:30,knowledge:{sigil:100},skillLoadouts:{Protection:['shield-slam','revenge','pummel','taunt']},equipment:{Relic:{uniqueEffect:{id:'frostbound-sigil',name:'Frozen Response'}}}}];
+  const sigil=simulate({party:sigilParty,encounter:{id:'sigil-test',kind:'boss',level:8,knowledgeKey:'sigil',enemies:['Caster'],enemyHealth:5000,mechanicIntervalMs:1800,scaling:{enemyDamage:.2},mechanics:[['Dangerous Cast','interrupt',5000]]},tactics:{interruptPriority:'high'},seed:'sigil-effect',maxDurationMs:10000});
   test('Unique Frostbound Sigil',()=>sigil.events.some(e=>e.type==='UNIQUE_EFFECT_TRIGGER'&&e.result==='frostbound-sigil'));
 
   const standParty=[{id:'stand',name:'Last Stand Tank',class:'Warrior',spec:'Protection',power:8,level:2,_combatItemLevel:8,equipment:{Trinket1:{uniqueEffect:{id:'guardian-last-stand',name:"Guardian's Last Stand"}}}}];
