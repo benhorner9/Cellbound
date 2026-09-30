@@ -212,7 +212,7 @@ function specialText(proc={}){
 Object.entries(PROFESSIONS).forEach(([profession,def])=>(def.recipes||[]).forEach(recipe=>{
   const output=recipe.output||{},payload=output.payload||{};
   if(recipe.crafterOnly){payload.crafterOnly=true;payload.requiredProfession=profession;output.tradeState='soulbound'}
-  if(SPECIAL_PREPARATIONS[output.key]){payload.proc={...SPECIAL_PREPARATIONS[output.key]};payload.procText=specialText(payload.proc)}
+  if(SPECIAL_PREPARATIONS[output.key]){payload.proc={...SPECIAL_PREPARATIONS[output.key]};payload.procText=specialText(payload.proc);if(payload.effect==='character-gadget')payload.description=(payload.description||'Deploy before combat.')+' '+payload.procText}
   output.rarity=output.rarity||craftedRarity(recipe.level,recipe.endgame);
   if(payload.effect==='gear-enhancement'){
     payload.persistentAttachment=true;
