@@ -255,23 +255,24 @@ function spawnStage(s){
  stageEnvironment(s);$('#hs2dUnits').innerHTML='';$('#hs2dTelegraphs').innerHTML='';$('#hs2dFx').innerHTML='';
  const p=party(),room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery;
  p.forEach((c,i)=>{
-  const r=role(c),entryY=30+i*10,target=hsRoomPoint(room.party,i,[r==='tank'?40:r==='healer'?25:31,31+i*9]);
-  addUnit('p'+i,c.name,'party '+r+' '+classKey(c),7,entryY);
-  setTimeout(()=>move('p'+i,target[0],target[1],780),40+i*20)
+  const r=role(c),entryY=30+i*10,target=hsRoomPoint(room.party,i,[r==='tank'?40:r==='healer'?25:31,31+i*9]),unitId='p-'+c.id;
+  addUnit(unitId,c.name,'party '+r+' '+classKey(c),7,entryY);
+  setTimeout(()=>move(unitId,target[0],target[1],780),40+i*20)
  });
  s.enemies.forEach((n,i)=>{
   const m=hsEnemyMeta(s,i),big=m.type==='boss'||m.type==='world-boss'||(s.id==='sentinel'&&m.type==='elite'),target=hsRoomPoint(room.enemies,i,[68,big?50:33+i*17]);
   addUnit('e'+i,n,big?'enemy boss':'enemy',94,target[1],big,'Lv. '+m.level+' · '+m.label);
   setTimeout(()=>move('e'+i,target[0],target[1],820),90+i*30)
- })
+ });
+ requestAnimationFrame(()=>window.CellboundCombatPortraits?.refresh?.())
 }
 function hsRegroup(ms=380){
  const s=STAGES[run?.stage],room=HOLLOW_ROOMS[s?.id]||HOLLOW_ROOMS.gallery;
- party().forEach((ch,i)=>{if((Number(run?.hp?.[ch.id])||0)<=0)return;const r=role(ch),p=hsRoomPoint(room.party,i,[r==='tank'?40:r==='healer'?25:31,31+i*9]);move('p'+i,p[0],p[1],ms)})
+ party().forEach((ch,i)=>{if((Number(run?.hp?.[ch.id])||0)<=0)return;const r=role(ch),p=hsRoomPoint(room.party,i,[r==='tank'?40:r==='healer'?25:31,31+i*9]);move('p-'+ch.id,p[0],p[1],ms)})
 }
 function hsRenderId(unitId){
  const id=String(unitId||'');
- if(id.startsWith('p-')){const charId=id.slice(2),i=party().findIndex(x=>String(x.id)===charId);return i>=0?'p'+i:null}
+ if(id.startsWith('p-'))return party().some(x=>String(x.id)===id.slice(2))?id:null;
  if(/^e-\d+$/.test(id))return'e'+Number(id.slice(2));
  return id
 }
