@@ -47,11 +47,27 @@ function setChannel(next){
   if($('#chatInput'))$('#chatInput').placeholder='Message '+(channel==='party'?'Party Finder':channel[0].toUpperCase()+channel.slice(1))+'…';
   loadChat(true);
 }
+function lockedGuildName(){
+  return String(Game?.getAccount?.()?.guild_name||state()?.socialDisplayName||'').trim()
+}
+function renderGuildIdentity(){
+  const name=lockedGuildName(),form=$('#guildNameForm'),locked=$('#guildNameLocked'),value=$('#guildNameLockedValue'),input=$('#guildNameInput');
+  if(form)form.hidden=Boolean(name);
+  if(locked)locked.hidden=!name;
+  if(value)value.textContent=name;
+  if(input&&!name)input.value='';
+}
 async function saveGuildName(e){
   e.preventDefault();const input=$('#guildNameInput'),name=(input?.value||'').trim().replace(/\s+/g,' ');
+  if(lockedGuildName()){renderGuildIdentity();return}
   if(name.length<3||name.length>24){input.setCustomValidity('Use 3–24 characters');input.reportValidity();setTimeout(()=>input.setCustomValidity(''),1200);return;}
-  state().socialDisplayName=name;state().activity.push(`Your guild is now known as ${name}.`);await saveState();
-  input.value=name;await Promise.all([loadChat(true),loadGroups()]);
+  if(!confirm('Lock your guild name as “'+name+'”? This name is permanent for this account and cannot be changed later.'))return;
+  const {data,error}=await db.rpc('cellbound_lock_guild_name',{p_name:name});
+  if(error){input.setCustomValidity(error.message||'Guild name could not be locked');input.reportValidity();setTimeout(()=>input.setCustomValidity(''),1800);return}
+  const locked=String(data||name).trim();state().socialDisplayName=locked;
+  const account=Game?.getAccount?.();if(account)account.guild_name=locked;
+  state().activity.push(`Your guild name is permanently locked as ${locked}.`);await saveState();
+  renderGuildIdentity();await Promise.all([loadChat(true),loadGroups()]);
 }
 function renderTargetOptions(){
   const sel=$('#partyFinderTarget');if(!sel)return;
@@ -116,13 +132,13 @@ function bind(){
   $('#partyFinderForm')?.addEventListener('submit',createGroup);
   $('#refreshSocial')?.addEventListener('click',()=>refreshAll(true));
   window.addEventListener('cellbound:view-changed',e=>{
-    if(e.detail?.view==='chat'){loadChat(true);loadGroups();}
+    if(e.detail?.view==='chat'){renderGuildIdentity();loadChat(true);loadGroups();}
   });
 }
 async function init(){
   Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,80);return;}
   db=Game.getSupabase();user=Game.getUser();if(!db||!user)return;
-  if($('#guildNameInput'))$('#guildNameInput').value=state().socialDisplayName||'';
+  renderGuildIdentity();
   bind();await refreshAll(false);
   timer=setInterval(()=>refreshAll(false),5000);
   window.addEventListener('beforeunload',()=>clearInterval(timer),{once:true});
