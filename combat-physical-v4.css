@@ -201,3 +201,61 @@
 .cbl-pet.class-death-knight[data-combat-state="attacking"] .cbl-pet-body{
   filter:brightness(1.22);box-shadow:inset 0 0 12px #8ed9d955,0 0 16px #c41e3a88
 }
+
+
+/* Living combat cast readability v4.3 */
+.cbl-unit{--cbl-charge:0}
+.cbl-cast-glyph{
+ position:absolute;left:50%;top:50%;width:46px;height:46px;translate:-50% -50%;
+ border:2px solid color-mix(in srgb,var(--cbl-accent) 78%,white 22%);border-radius:50%;
+ pointer-events:none;z-index:-1;opacity:.34;
+ box-shadow:0 0 calc(5px + var(--cbl-charge)*13px) color-mix(in srgb,var(--cbl-accent) 72%,transparent);
+ scale:calc(.88 + var(--cbl-charge)*.16);
+ animation:cblCastOrbit 1.25s linear infinite
+}
+.cbl-cast-glyph:before,.cbl-cast-glyph:after{content:'';position:absolute;inset:5px;border:1px dashed currentColor;border-radius:50%;opacity:.7}
+.cbl-cast-glyph:after{inset:12px;border-style:solid;opacity:calc(.22 + var(--cbl-charge)*.48)}
+.cbl-cast-glyph.fire{border-color:#ff9b63}.cbl-cast-glyph.frost{border-color:#9de8ff}.cbl-cast-glyph.lightning{border-color:#aeeaff}
+.cbl-cast-glyph.arcane{border-color:#bca8ff}.cbl-cast-glyph.holy{border-color:#fff0a8}.cbl-cast-glyph.nature{border-color:#94dfa3}
+.cbl-cast-glyph.poison{border-color:#b6da69}.cbl-cast-glyph.shadow{border-color:#bd9ae8}
+.cbl-cast-name{
+ position:absolute;left:50%;bottom:calc(100% + 5px);translate:-50% 0;max-width:112px;
+ padding:2px 5px;border:1px solid #ffffff24;border-radius:5px;background:#071016d9;color:#eef5f7;
+ font:700 8px/1.15 system-ui,sans-serif;letter-spacing:.035em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ pointer-events:none;z-index:20;text-shadow:0 1px 2px #000
+}
+.cbl-unit.boss[data-boss-cast] .cbl-cast-glyph{width:76px;height:76px;border-width:3px;opacity:.55}
+.cbl-unit.boss[data-boss-cast="mechanic"] .cbl-cast-name{color:#ffd5a0;border-color:#e4aa665e;font-size:9px}
+.cbl-mechanic-callout{
+ position:absolute;left:50%;top:7%;translate:-50% 0;z-index:30;min-width:150px;max-width:min(72%,330px);
+ display:grid;gap:2px;justify-items:center;padding:6px 11px;border:1px solid #de725f80;border-radius:7px;
+ background:#100c0ae8;color:#ffe9da;pointer-events:none;text-align:center;box-shadow:0 4px 16px #0008
+}
+.cbl-mechanic-callout strong{font:800 10px/1.2 system-ui,sans-serif;letter-spacing:.045em}
+.cbl-mechanic-callout span{font:700 7px/1 system-ui,sans-serif;letter-spacing:.12em;color:#dcae91}
+.cbl-mechanic-callout[data-phase="imminent"]{border-color:#ffc17d;box-shadow:0 0 0 2px #ffae5e25,0 4px 16px #0008}
+.cbl-mechanic-callout[data-phase="safe"]{border-color:#79c99d;color:#d8ffea}
+.cbl-mechanic-callout[data-phase="impact"]{border-color:#ff775f;background:#26100ee8}
+.cbl-mechanic-marker{
+ position:absolute;left:50%;top:50%;translate:-50% -50%;width:54px;height:54px;z-index:-1;
+ border:2px dashed #ef7864;border-radius:50%;pointer-events:none;opacity:.78;animation:cblMechanicMark .72s ease-in-out infinite alternate
+}
+.cbl-mechanic-marker.line{border-radius:20%;rotate:45deg}.cbl-mechanic-marker.cone{border-radius:50% 10% 50% 50%;rotate:45deg}
+.cbl-mechanic-marker.knockback,.cbl-mechanic-marker.pull{width:62px;height:62px;border-style:double;border-width:4px}
+.cbl-mechanic-marker[data-phase="imminent"]{border-style:solid;opacity:1}
+.cbl-mechanic-marker[data-phase="safe"]{border-color:#78c99e;animation:none}
+.cbl-mechanic-marker[data-phase="impact"]{border-color:#ffbd8e;scale:1.2;animation:none}
+.cbl-fx.force{width:52px;height:52px;border:3px solid #d9b28d;border-radius:50%;animation:cblForce .42s ease-out both}
+.cbl-fx.force.pull{border-style:dashed}.cbl-fx.force.knockback{border-style:double}
+@keyframes cblCastOrbit{to{rotate:360deg}}
+@keyframes cblMechanicMark{to{scale:1.12;opacity:.46}}
+@keyframes cblForce{from{opacity:.9;scale:.65}to{opacity:0;scale:1.55}}
+@media(max-width:600px){
+ .cbl-cast-name{max-width:82px;font-size:7px}.cbl-cast-glyph{width:39px;height:39px}
+ .cbl-unit.boss[data-boss-cast] .cbl-cast-glyph{width:62px;height:62px}
+ .cbl-mechanic-callout{top:5%;max-width:76%;padding:5px 8px}
+}
+@media(prefers-reduced-motion:reduce){
+ .cbl-cast-glyph,.cbl-mechanic-marker,.cbl-fx.force{animation:none!important}
+ .cbl-cast-glyph{opacity:.5;scale:1}.cbl-mechanic-marker{opacity:.9}
+}
