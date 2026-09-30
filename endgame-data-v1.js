@@ -67,13 +67,13 @@ const DIFFICULTIES={
    id:'normal',name:'Normal',label:'NORMAL',
    description:'Forgiving introduction to the dungeon. Learn the route, bosses and core mechanics.',
    enemyHealth:1,enemyDamage:1,castSpeed:1,mechanicFrequency:1,addCountBonus:0,
-   lootTier:[1,2,3],cellShardBase:4
+   lootTier:[1,2,3],cellShardBase:3
  },
  heroic:{
    id:'heroic',name:'Heroic',label:'HEROIC',
    description:'Faster casts, heavier damage and additional encounter mechanics.',
    enemyHealth:1.50,enemyDamage:1.38,castSpeed:.82,mechanicFrequency:.82,addCountBonus:0,
-   lootTier:[2,3,4],cellShardBase:10
+   lootTier:[2,3,4],cellShardBase:7
  }
 };
 
@@ -186,11 +186,11 @@ function gearBand(head,chest,weapon){
 const LOOT_PROFILES={
  'ashen-vault':{
    normal:{tiers:{1:.70,2:.30},itemLevel:gearBand(18,20,22)},
-   heroic:{tiers:{2:.70,3:.30},itemLevel:gearBand(26,28,30)}
+   heroic:{tiers:{2:.72,3:.28},itemLevel:gearBand(22,24,26)}
  },
  'hollow-sanctum':{
    normal:{tiers:{2:.85,3:.15},itemLevel:gearBand(24,26,28)},
-   heroic:{tiers:{2:.25,3:.73,4:.02},itemLevel:gearBand(30,32,34)}
+   heroic:{tiers:{2:.20,3:.78,4:.02},itemLevel:gearBand(28,30,32)}
  },
  'chaos-canyon':{
    normal:{tiers:{2:.35,3:.65},itemLevel:gearBand(30,32,34)},
@@ -201,16 +201,16 @@ const LOOT_PROFILES={
    heroic:{tiers:{3:.92,4:.08},itemLevel:gearBand(38,40,42)}
  },
  'fractured-ages':{
-   normal:{tiers:{3:1},itemLevel:gearBand(38,39,40)},
+   normal:{tiers:{3:1},itemLevel:gearBand(38,40,42)},
    heroic:{tiers:{3:.90,4:.10},itemLevel:gearBand(42,43,44)}
  }
 };
 function cellboundLootProfile(tier=1){
  const t=Math.max(1,Math.min(20,Number(tier)||1));
- if(t>=15)return{tiers:{3:.55,4:.45},itemLevel:gearBand(42,43,44),band:'Peak Cellbound'};
- if(t>=10)return{tiers:{3:.70,4:.30},itemLevel:gearBand(40,41,42),band:'High Cellbound'};
- if(t>=5)return{tiers:{3:.85,4:.15},itemLevel:gearBand(38,39,40),band:'Mid Cellbound'};
- return{tiers:{3:.95,4:.05},itemLevel:gearBand(36,37,38),band:'Entry Cellbound'}
+ if(t>=15)return{tiers:{3:.50,4:.50},itemLevel:gearBand(44,44,44),band:'Peak Cellbound'};
+ if(t>=10)return{tiers:{3:.68,4:.32},itemLevel:gearBand(42,43,44),band:'High Cellbound'};
+ if(t>=5)return{tiers:{3:.82,4:.18},itemLevel:gearBand(41,42,43),band:'Mid Cellbound'};
+ return{tiers:{3:.92,4:.08},itemLevel:gearBand(40,41,42),band:'Entry Cellbound'}
 }
 function lootProfileFor(dungeonId,difficulty='normal',tier=0){
  if(difficulty==='cellbound'){
@@ -310,7 +310,7 @@ function difficultyConfig(mode='normal',tier=0){
    mechanicFrequency:clamp(.80-(t-1)*.012,.56,.80),
    addCountBonus:t>=15?2:t>=8?1:0,
    lootTier:[3,4],
-   cellShardBase:12+t*2
+   cellShardBase:8+t
  }
 }
 function affixesForTier(tier,rotation={}){
