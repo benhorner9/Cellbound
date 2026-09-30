@@ -7,6 +7,21 @@ const root=path.resolve(__dirname,'..');
  const page=await browser.newPage({viewport:{width:1024,height:768}}),errors=[];
  page.on('pageerror',e=>{errors.push(String(e));console.error(e.stack||String(e))});
  await page.emulateMedia({reducedMotion:'no-preference'});
+ await page.evaluate(()=>{
+  const nativeMatchMedia=window.matchMedia.bind(window);
+  window.__cbTestReducedMotion=false;
+  window.__cbSetTestReducedMotion=value=>{window.__cbTestReducedMotion=Boolean(value)};
+  window.matchMedia=query=>{
+   if(String(query).includes('prefers-reduced-motion')){
+    const native=nativeMatchMedia(query);
+    return {matches:Boolean(window.__cbTestReducedMotion),media:native.media||String(query),onchange:null,
+      addListener:native.addListener?.bind(native)||(()=>{}),removeListener:native.removeListener?.bind(native)||(()=>{}),
+      addEventListener:native.addEventListener?.bind(native)||(()=>{}),removeEventListener:native.removeEventListener?.bind(native)||(()=>{}),
+      dispatchEvent:native.dispatchEvent?.bind(native)||(()=>true)}
+   }
+   return nativeMatchMedia(query)
+  };
+ });
  page.on('console',msg=>{if(/visual skipped|visual recovered/.test(msg.text()))errors.push(msg.text())});
  await page.setContent('<body style="background:#10171d"><div class="cb2d-arena" id="cb2dArena" style="width:900px;height:560px;position:relative"></div></body>');
  for(const f of ['dungeon-2d-v1.css','combat-portraits-v1.css','combat-polish-v2.css','combat-polish-v3.css','combat-physical-v4.css'])await page.addStyleTag({content:fs.readFileSync(path.join(root,'dist',f),'utf8')});
@@ -46,6 +61,7 @@ const root=path.resolve(__dirname,'..');
  await page.evaluate(()=>send('MOVEMENT_END','p-a',null,{}, {position:{x:38,y:70}}));
  assert.equal(await page.locator('[data-unit="p-a"]').getAttribute('data-x'),'38');
  await page.emulateMedia({reducedMotion:'reduce'});
+ await page.evaluate(()=>window.__cbSetTestReducedMotion?.(true));
  await page.evaluate(()=>{send('CAST_START','p-m','e-0',{duration:700});send('INTERRUPT','p-t','e-0',{}, {result:'success'})});
  assert(await page.locator('.cbl-fx.interrupt').count()>0,'reduced motion preserves mechanic feedback');
  await page.screenshot({path:'/tmp/cellbound-living-combat.png'});
@@ -54,6 +70,7 @@ const root=path.resolve(__dirname,'..');
  assert.deepEqual(errors,[]);
  // Exercise the production shared viewer with real Combat Reborn events and portraits.
  await page.emulateMedia({reducedMotion:'no-preference'});
+ await page.evaluate(()=>window.__cbSetTestReducedMotion?.(false));
  await page.setContent('<base href="https://cellbound.test/"><body style="background:#081115;color:white"></body>');
  await page.route('https://cellbound.test/**',async route=>{
   const relative=new URL(route.request().url()).pathname.slice(1),file=path.resolve(root,'dist',relative);
