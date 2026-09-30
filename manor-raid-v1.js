@@ -850,8 +850,9 @@ async function claimLoot(id){
    const {data,error}=await db.rpc('claim_manor_raid_rewards',{p_session_id:id});if(error)throw error;
    const defs=Array.isArray(data)?data:[],items=defs.map((d,i)=>makeTier5Item(d,i));
    items.forEach(x=>Game.addBankItem?.(x));
+   const professionDrops=window.CellboundProfessions?.rollContentReagents?.('manor',{difficulty:'raid',count:5})||[];professionDrops.forEach(d=>Game.addMaterial?.(d.key,d.quantity));
    s.raidRewardClaims[id]=items.map(x=>({itemId:x.itemId,name:x.name,tier:x.tier,itemLevel:x.itemLevel,class:x.class,slot:x.slot,bonusStats:x.bonusStats,setId:x.setId,setName:x.setName,source:x.source}));
-   s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push('The Manor cleared. Two Tier 5 raid items were secured.');
+   s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push('The Manor cleared. Two Tier 5 raid items were secured.'+(professionDrops.length?' Manor materials: '+window.CellboundProfessions?.formatReagentDrops?.(professionDrops)+'.':''));
    Game.save?.();await Game.persistState?.();Game.renderAll?.();renderLootDrops(s.raidRewardClaims[id]);if(btn)btn.textContent='REWARDS SECURED'
  }catch(e){if(btn)btn.disabled=false;alert(e.message||'Could not claim raid loot')}
 }
