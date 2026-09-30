@@ -51,6 +51,14 @@ for(const file of files){
     for(const hook of ['payload.socketReady=true','function activeProcs(c)','function consumeBossChargesOnce','SPECIAL_PREPARATIONS'])if(!contents.includes(hook))throw new Error('New profession runtime contract missing '+hook);
     if(!contents.includes('function activeBonuses(c,zone=null)')||!contents.includes('affinityZone===zone'))throw new Error('Scribing encounter affinity is missing');
     for(const hook of ['PROFESSION_REAGENT_TIERS','GENERAL_REAGENT_POOL','BOSS_RESOURCE_POOLS','professionReagentInputs','hollowroot','cavebeast-meat','rune-dust','zeltiran-hide','hollow-fibre','rough-gemstone','salvaged-parts','etched-vellum'])if(!contents.includes(hook))throw new Error('Distinct profession reagent economy is missing '+hook);
+    for(const hook of ['CONTENT_RESOURCE_PROFILES','function rollContentReagents','hollow-sanctum','chaos-canyon','blackout-station','fractured-ages','manor'])if(!contents.includes(hook))throw new Error('Content-specific reagent ecology is missing '+hook);
+    if(contents.includes('const general=randomReagentPicks(GENERAL_REAGENT_POOL,3)'))throw new Error('Boss reagent drops regressed to the global random material bag');
+  }
+  for(const themedFile of ['hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','fractured-ages-v1.js','manor-raid-v1.js']){
+    if(file===themedFile&&!contents.includes('rollContentReagents'))throw new Error(themedFile+' is missing thematic profession material rewards');
+  }
+  if(file==='null-complex-v1.js'){
+    for(const hook of ['NULL_RESOURCE_POOLS','NULL_CATALYSTS','resourceSource','awardEnemyPending','Supply Storage','Maintenance Bay','Specimen Archive'])if(!contents.includes(hook))throw new Error('Null Complex ecological reagent sourcing is missing '+hook);
   }
   if(file==='item-art-v1.js'){
     if(!contents.includes("card.querySelector(':scope > .recipe-output-art')"))throw new Error('Profession recipe art duplication guard is missing');
