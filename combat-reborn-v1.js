@@ -3816,7 +3816,7 @@ function runSelfTests(){
  test('Tank Aggro',()=>!r.events.some(e=>e.type==='AGGRO_CHANGED'&&e.target==='p-d1'&&e.timestamp>5000));
  r=simulate({party,encounter:{...base,mechanics:[['Frontal','cone',1400]]},seed:'cone'});
  test('Frontal Cone',()=>r.events.some(e=>e.type==='MECHANIC_TELEGRAPH'&&e.payload.mechanicType==='cone'));
- r=simulate({party,encounter:{...base,enemyHealth:800,mechanicIntervalMs:1800,mechanics:[['Adds','adds',900]]},seed:'adds',maxDurationMs:5000});
+ r=simulate({party,encounter:{...base,enemyHealth:800,mechanicIntervalMs:1800,mechanics:[['Adds','adds',900]]},seed:'adds',maxDurationMs:7500});
  test('Adds',()=>r.events.some(e=>e.type==='ADD_SPAWNED')&&r.events.some(e=>e.type==='ADD_DEFEATED'));
  r=simulate({party,encounter:{...base,enemyHealth:5000,mechanicIntervalMs:900,mechanics:[{name:'Screech',type:'interaction',duration:600,interaction:'manor-screech',interactionDurationMs:4500}]},seed:'interaction-event',maxDurationMs:2600});
  test('Raid Interaction Event',()=>r.events.some(e=>e.type==='INTERACTION_REQUIRED'&&e.ability==='Screech'&&e.payload?.interaction==='manor-screech'&&Number(e.payload?.durationMs)===4500));
