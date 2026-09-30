@@ -117,63 +117,6 @@ body[data-cb-view="trading"] .topbar:after{content:"⇄"}
 body[data-cb-view="pvp"] .topbar:after{content:"⚔"}
 body[data-cb-view="chat"] .topbar:after{content:"◌"}
 
-/* Lightweight entrance.
-   Do not animate opacity/filter on the full view: iOS/WebKit can briefly
-   drop the composited layer and expose the dark page beneath as a black flash. */
-.view.active.cb-view-entering{
-  animation:cbViewEnter .16s cubic-bezier(.2,.75,.25,1) both;
-  will-change:transform;
-  backface-visibility:hidden;
-  -webkit-backface-visibility:hidden;
-}
-@keyframes cbViewEnter{
-  0%{transform:translate3d(0,3px,0)}
-  100%{transform:translate3d(0,0,0)}
-}
-
-/* A small location stinger makes changing screens feel intentional. */
-.cb-location-stinger{
-  position:fixed;
-  left:calc(250px + 28px);
-  top:77px;
-  z-index:1200;
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:7px 11px;
-  border:1px solid rgba(var(--cb-view-accent),.22);
-  background:linear-gradient(90deg,rgba(7,12,14,.96),rgba(13,17,17,.9));
-  color:#d9d0c0;
-  box-shadow:0 10px 35px rgba(0,0,0,.35);
-  pointer-events:none;
-  opacity:0;
-  transform:translateY(-6px);
-}
-.cb-location-stinger.show{
-  animation:cbStinger .88s ease both;
-}
-.cb-location-stinger i{
-  width:5px;height:5px;
-  transform:rotate(45deg);
-  background:var(--cb-view-accent-strong);
-  box-shadow:0 0 12px rgba(var(--cb-view-accent),.34)
-}
-.cb-location-stinger small{
-  color:#807868;
-  font-size:.45rem;
-  font-weight:900;
-  letter-spacing:.14em
-}
-.cb-location-stinger b{
-  font:500 .72rem Georgia,serif;
-  letter-spacing:.03em
-}
-@keyframes cbStinger{
-  0%{opacity:0;transform:translateY(-7px)}
-  16%,72%{opacity:1;transform:none}
-  100%{opacity:0;transform:translateY(-3px)}
-}
-
 /* Buttons receive a brief physical press instead of feeling like web controls. */
 .app-shell button.cb-pressed{
   transform:translateY(1px) scale(.992)!important;
@@ -254,43 +197,14 @@ body[data-cb-view="chat"] .topbar:after{content:"◌"}
 }
 .view.active>.section-intro small{color:var(--cb-view-accent-strong)!important}
 
-/* Preserve clean gameplay layers. These effects belong to command UI only. */
-body:has(.cb2d-backdrop) .cb-location-stinger,
-body:has(.hs2d-backdrop) .cb-location-stinger,
-body:has(.cc2d-backdrop) .cb-location-stinger,
-body:has(.bs2d-backdrop) .cb-location-stinger,
-body:has(.fa-backdrop) .cb-location-stinger,
-body:has(.pvp-match-backdrop) .cb-location-stinger{display:none}
-
 @media(max-width:1050px){
   .main:before{left:82px}
-  .cb-location-stinger{left:100px}
 }
 @media(max-width:760px){
   .main:before{left:64px}
-  .cb-location-stinger{
-    left:76px;
-    top:60px;
-    max-width:calc(100vw - 88px);
-    padding:6px 9px
-  }
-  .cb-location-stinger small{display:none}
   .topbar:after{font-size:4rem}
 }
 @media(prefers-reduced-motion:reduce){
   .main:before{animation:none}
-  .view.active.cb-view-entering,
-  .cb-location-stinger.show,
   .resource-strip b.cb-resource-pulse{animation:none!important}
-  .cb-location-stinger.show{opacity:1;transform:none}
-}
-
-
-/* Navigation stability: tab changes must remain an instant content swap. */
-.view.active.cb-view-entering{
-  animation:none!important;
-  transform:none!important;
-  opacity:1!important;
-  filter:none!important;
-  will-change:auto!important;
 }
