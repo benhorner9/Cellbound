@@ -1377,7 +1377,7 @@ function moveTo(ctx,u,pos,duration=420,reason='positioning'){
   emit(ctx,'CAST_CANCELLED',{source:u.id,target:u.currentCast.target,ability:u.currentCast.ability,result:'movement',position:from});
   u.currentCast=null;
  }
- const collisionFinal=bodyRoute.pathing&&!bodyRoute.forcedStop?environmentRoute.point:null,legDistance=dist(from,to),remainingDistance=collisionFinal?dist(to,collisionFinal):0,totalDistance=Math.max(.01,legDistance+remainingDistance);
+ const continuousReroute=u.role==='enemy'||u.role==='pet'||isMeleeCombatant(u),collisionFinal=bodyRoute.pathing&&!bodyRoute.forcedStop&&continuousReroute?environmentRoute.point:null,legDistance=dist(from,to),remainingDistance=collisionFinal?dist(to,collisionFinal):0,totalDistance=Math.max(.01,legDistance+remainingDistance);
  const travel=collisionFinal?Math.max(90,Math.min(baseTravel-90,Math.round(baseTravel*(legDistance/totalDistance)))):baseTravel;
  const continuationTravel=collisionFinal?Math.max(90,baseTravel-travel):0;
  const token=++u.moveToken;u.position=from;u.moveStartedAt=ctx.time;u.moveFrom=copy(from);u.moveTo=copy(to);u.movingUntil=ctx.time+travel;
