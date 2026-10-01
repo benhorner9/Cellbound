@@ -31,10 +31,10 @@ const HOLLOW_ROOMS={
   description:'A fractured guardian court suspended above a spectral gulf.',
   art:'./assets/hollow-sanctum/rooms/sentinel.webp?v=2',
   liveProfile:'hollow-sentinel',
-  route:{entry:{x:17,y:97},entryInside:{x:30,y:80},partyAnchors:[[43,66],[36,69],[48,73],[32,76],[40,80]],exitPath:[{x:61,y:48},{x:72,y:35},{x:83,y:23},{x:97,y:10}],spread:2.0},
+  route:{entry:{x:2,y:27},entryInside:{x:18,y:31},partyAnchors:[[38,47],[31,44],[35,53],[26,40],[28,57]],exitPath:[{x:61,y:42},{x:73,y:30},{x:84,y:17},{x:98,y:5}],spread:2.0},
   enemyAnchors:[[62,43]],
   bounds:{left:10,right:91,top:10,bottom:90},
-  walkable:[[26,13],[72,10],[89,23],[92,55],[82,78],[62,89],[28,88],[11,72],[10,43],[16,24]],
+  walkable:[[18,16],[72,10],[89,23],[92,55],[82,78],[62,89],[28,88],[11,72],[9,48],[8,31],[14,22]],
   blockers:[
    {id:'sentinel-fire-nw',shape:'ellipse',x:13,y:24,rx:5,ry:8,blocksLos:false},
    {id:'sentinel-fire-east',shape:'ellipse',x:83,y:39,rx:5,ry:8,blocksLos:false},
