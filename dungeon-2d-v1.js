@@ -686,7 +686,7 @@ function compactDungeonResults(rootEl){
   if(section.classList.contains('cb2d-xp-section'))hint='Character XP and level progress';
   else if(section.querySelector('.cb2d-loot-materials'))hint='Crafting rewards secured';
   else if(section.classList.contains('cbr-analysis'))hint='Damage, healing, mechanics and replay';
-  else if(section.classList.contains('cbr-progress-earned')||section.classList.contains('eg-unlock-panel'))hint='Unlocks and clear progression';
+  else if(section.classList.contains('cbr-progress-earned')||section.classList.contains('eg-unlock-panel'))hint='Unlocks from this clear';
   else if(section.classList.contains('bs-run-summary'))hint='Puzzle and encounter breakdown';
   else if(section.classList.contains('fa-mystery-log'))hint='Story record';
   const detail=document.createElement('details');detail.className='cb2d-result-details';
