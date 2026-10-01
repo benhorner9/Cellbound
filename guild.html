@@ -133,8 +133,8 @@
         </div>
 
         <article class="panel home-progression-panel">
-          <div class="panel-head"><div><small>CHAPTER PROGRESSION</small><h3>The Road Ahead</h3></div><span class="panel-head-note">Clear content to push the guild deeper.</span></div>
-          <div id="overviewProgress" class="home-progress-track" aria-label="Chapter progression"></div>
+          <div class="panel-head"><div><small>CHAPTER PATH</small><h3>Next Clears</h3></div><span class="panel-head-note">Clear quests and dungeons to open the next route.</span></div>
+          <div id="overviewProgress" class="home-progress-track" aria-label="Chapter path"></div>
         </article>
 
         <div class="home-secondary-grid">
@@ -144,13 +144,13 @@
           </article>
 
           <article class="panel home-routes-panel">
-            <div class="panel-head"><div><small>OTHER ROUTES</small><h3>Guild Destinations</h3></div><span class="panel-head-note">Fast access without leaving Guild Command.</span></div>
+            <div class="panel-head"><div><small>QUICK ACCESS</small><h3>Destinations</h3></div><span class="panel-head-note">Jump straight to another guild screen.</span></div>
             <nav class="home-destination-grid" aria-label="Home quick access">
               <button type="button" class="home-destination quests" data-jump="quests"><span>⌁</span><small>STORY</small><b>Quests</b><em>Continue the campaign</em></button>
               <button type="button" class="home-destination dungeons" data-jump="content"><span>▱</span><small>PVE</small><b>Dungeons</b><em id="homeDungeonStatus">Choose a dungeon</em></button>
-              <button type="button" class="home-destination events" data-jump="world"><span>✦</span><small>ACTIVITIES</small><b>Side Content</b><em id="homeEventStatus">The Twelve Below</em></button>
+              <button type="button" class="home-destination events" data-jump="world"><span>✦</span><small>ACTIVITIES</small><b>Activities</b><em id="homeEventStatus">The Twelve Below</em></button>
               <button type="button" class="home-destination raids" data-jump="raids"><span>♜</span><small>ENDGAME</small><b>Raids</b><em id="homeRaidStatus">The Manor</em></button>
-              <button type="button" class="home-destination trading" data-jump="trading"><span>⇄</span><small>ECONOMY</small><b>Trading Post</b><em>Buy, sell and prepare</em></button>
+              <button type="button" class="home-destination trading" data-jump="trading"><span>⇄</span><small>MARKET</small><b>Trading Post</b><em>Buy, sell and prepare</em></button>
               <button type="button" class="home-destination pvp" data-jump="pvp"><span>⚔</span><small>COMBAT</small><b>PvP</b><em>Locked · coming later</em></button>
             </nav>
           </article>
@@ -172,7 +172,7 @@
 
     <section id="roster" class="view">
       <div class="section-intro roster-intro">
-        <div><small>GUILD ROSTER</small><h2>Your Adventurers</h2><p>See who is ready, who needs attention and which five are currently deployed.</p></div>
+        <div><small>GUILD ROSTER</small><h2>Your Adventurers</h2><p>Check readiness, recovery and your active five.</p></div>
         <div class="roster-intro-actions"><button class="ghost-btn" type="button" data-jump="party">MANAGE ACTIVE PARTY →</button></div>
       </div>
 
@@ -209,8 +209,8 @@
 
     <section id="bank" class="view">
       <div class="section-intro bank-intro">
-        <div><small>GUILD VAULT</small><h2>Bank</h2><p>Your shared storage for equipment, crafting materials and preparation items.</p></div>
-        <div class="bank-intro-actions"><button id="bankBulkToggle" class="ghost-btn" type="button" aria-pressed="false">CLEAN UP BANK</button></div>
+        <div><small>GUILD VAULT</small><h2>Bank</h2><p>Shared storage for equipment, reagents and crafted items.</p></div>
+        <div class="bank-intro-actions"><button id="bankBulkToggle" class="ghost-btn" type="button" aria-pressed="false">BULK CLEANUP</button></div>
       </div>
 
       <section id="bankSummary" class="bank-overview-strip" aria-label="Bank summary">
@@ -254,7 +254,7 @@
     </section>
 
     <section id="professions" class="view">
-      <div class="section-intro"><div><small>WORKSHOP & MASTERY</small><h2>Professions</h2><p>Choose a recipe, set the batch size and commit focused workshop time. Crafting pauses whenever you leave Professions or background the game.</p></div><b class="economy-badge">FOCUSED CRAFTING</b></div>
+      <div class="section-intro"><div><small>WORKSHOP</small><h2>Professions</h2><p>Choose a recipe, set a batch and craft while this screen stays open.</p></div><b class="economy-badge">PAUSES OFF-SCREEN</b></div>
       <div class="profession-layout">
         <aside class="panel profession-roster-panel"><div class="panel-head"><div><small>CRAFTING ROSTER</small><h3>Artisans</h3></div></div><div id="professionCharacterList" class="profession-character-list"></div></aside>
         <div class="profession-main">
@@ -265,7 +265,7 @@
     </section>
 
     <section id="trading" class="view">
-      <div class="section-intro"><div><small>PLAYER ECONOMY</small><h2>Trading Post</h2><p>Buy and sell equipment, reagents and crafted goods. Check prices before you trade.</p></div></div>
+      <div class="section-intro"><div><small>MARKET</small><h2>Trading Post</h2><p>Buy and sell equipment, reagents and crafted items.</p></div></div>
 
       <div class="tp-shell">
         <div class="tp-market-bar">
@@ -305,7 +305,7 @@
           <main class="tp-main-stack">
             <section class="tp-view" data-tp-view="browse">
               <article class="tp-panel">
-                <div class="tp-panel-head"><div><small>FIND EXACTLY WHAT YOU NEED</small><h3>Market Filters</h3></div></div>
+                <div class="tp-panel-head"><div><small>FILTERS</small><h3>Find Items</h3></div></div>
                 <div class="tp-panel-body">
                   <div class="tp-filters">
                     <select id="tpClass"><option value="all">All classes</option><option>Warrior</option><option>Paladin</option><option>Priest</option><option>Druid</option><option>Hunter</option><option>Rogue</option><option>Mage</option></select>
@@ -359,7 +359,7 @@
     </section>
 
     <section id="chat" class="view">
-      <div class="section-intro"><div><small>PLAYER NETWORK</small><h2>Social</h2><p>Talk, trade and form groups from one place.</p></div><button id="refreshSocial" class="ghost-btn">REFRESH</button></div>
+      <div class="section-intro"><div><small>SOCIAL</small><h2>Social</h2><p>Talk, trade and form groups from one place.</p></div><button id="refreshSocial" class="ghost-btn">REFRESH</button></div>
       <div class="social-layout">
         <div class="panel chat-panel">
           <div class="chat-tabs"><button class="active" data-chat-channel="world">WORLD</button><button data-chat-channel="trade">TRADE</button><button data-chat-channel="party">PARTY FINDER</button></div>
@@ -377,7 +377,7 @@
     </section>
 
     <section id="pvp" class="view">
-      <div class="section-intro"><div><small>PLAYER VERSUS PLAYER</small><h2>The Crucible</h2><p>Fight battlegrounds, earn PvP gear and climb the Arena ladder.</p></div></div>
+      <div class="section-intro"><div><small>PLAYER VERSUS PLAYER</small><h2>The Crucible</h2><p>PvP is locked while the launch game is being finished.</p></div></div>
       <div id="pvpMount"></div>
     </section>
 
@@ -388,13 +388,13 @@
     <section id="endgame" class="view">
       <div id="endgameHub"></div>
       <section class="endgame-run-history">
-        <div class="section-intro"><div><small>EXPEDITION HISTORY</small><h2>Run Reports</h2><p>Review clears, wipes, Cell Shock gains, encounter mastery and recent dungeon expeditions in the same place as your endgame progression.</p></div></div>
+        <div class="section-intro"><div><small>EXPEDITION HISTORY</small><h2>Run Reports</h2><p>Review clears, wipes, Cell Shock gains and recent dungeon runs.</p></div></div>
         <div id="reportsList" class="reports-list"></div>
       </section>
     </section>
 
     <section id="world" class="view">
-      <div class="section-intro"><div><small>SIDE ACTIVITIES</small><h2>Activities</h2><p>Minigames, special encounters and repeatable challenges live here. The Twelve Below is currently active in the Sepulchre.</p></div></div>
+      <div class="section-intro"><div><small>SIDE ACTIVITIES</small><h2>Activities</h2><p>Repeatable challenges and special expeditions.</p></div></div>
       <div id="twelveBelowMount"></div>
       <div id="nullComplexMount"></div>
     </section>
@@ -455,7 +455,7 @@
           <div class="panel-head"><div><small>FORMATION</small><h3>Active Five</h3></div><b id="readinessLabel">NOT READY</b></div>
           <div id="partySlots" class="party-slots"></div>
           <div class="readiness"><div class="readiness-line"><span>Party Readiness</span><b id="readinessText">0%</b></div><div class="readiness-bar"><i id="readinessFill"></i></div><p id="readinessHint">Fill all five slots to enter combat.</p></div>
-          <div class="party-dungeon-cta"><div><small>COMBAT ENTRY</small><b>Choose a dungeon when your party is ready.</b><span>Combat opens in a dedicated full-screen expedition.</span></div><button id="partyOpenDungeons" type="button">OPEN DUNGEON JOURNAL →</button></div>
+          <div class="party-dungeon-cta"><div><small>COMBAT ENTRY</small><b>Choose a dungeon when your party is ready.</b><span>Choose a dungeon to start an expedition.</span></div><button id="partyOpenDungeons" type="button">OPEN DUNGEON JOURNAL →</button></div>
         </div>
         <div class="selection-panel panel"><div class="panel-head"><div><small>AVAILABLE</small><h3>Choose Adventurers</h3></div></div><div id="partyRoster" class="party-roster"></div></div>
       </div>
