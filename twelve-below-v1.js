@@ -174,7 +174,7 @@ function remapEvents(events,aliveBosses,offset){
  })
 }
 function simulateRun(){
- const Combat=window.CellboundCombatStandard;if(!Combat?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
+ const Combat=window.CellboundCombatStandard;if(!Combat?.simulate)throw new Error('Combat could not start. Reload and try again.');
  const original=party(),pi=Game.partyItemLevel();
  let carried=original.map(c=>({...c,_combatItemLevel:Game.characterItemLevel(c)})),aliveBosses=[],defeated=new Set(),timeline=[],segments=[],endMs=0,outcome='overrun';
  const spawned=new Set();
