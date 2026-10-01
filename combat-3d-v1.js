@@ -143,8 +143,8 @@ function buildRenderer(){
 function updateBadge(){
  if(!S.layer)return;const badge=S.layer.querySelector('.cb3d-badge');if(!badge)return;
  badge.innerHTML=S.mode==='2.5d'
-  ?'2.5D COMBAT PROTOTYPE<span>Orthographic standees · Combat Reborn simulation</span>'
-  :'3D COMBAT PROTOTYPE<span>Native WebGL · Combat Reborn simulation</span>'
+  ?'2.5D COMBAT PROTOTYPE<span>Orthographic standees · combat preview</span>'
+  :'3D COMBAT PROTOTYPE<span>Native WebGL · combat preview</span>'
 }
 function mount(a){
  destroyScene();S.arena=a;const layer=document.createElement('div');layer.className='cb3d-layer';layer.hidden=false;
