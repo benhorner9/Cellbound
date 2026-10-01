@@ -775,7 +775,7 @@ async function tdPlayCombat(result,my){
 }
 async function fightTdPack(encounter,my){
   spawnTdEnemies(encounter);await sleep(350);
-  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
+  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat could not start. Reload and try again.');
   const roster=state().roster;
   roster.forEach(c=>tdSetPartyHpByEvent(c,100));
   const combatParty=roster.map(c=>Object.assign({},c,{power:Math.max(Number(c.power)||1,30),_combatHealthPct:100}));
