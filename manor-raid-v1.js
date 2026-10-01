@@ -135,7 +135,7 @@ function combatFor(stage,side=null){
  try{
    const result=E.simulate({party:p,encounter:enc,seed:seedKey,maxDurationMs:180000},{zone:'manor-raid'});
    const pack={result,party:p,encounter:enc};combatCache.set(key,pack);return pack
- }catch(error){console.warn('Manor shared combat simulation failed',stage,error);return null}
+ }catch(error){console.warn('The Manor fight could not start',stage,error);return null}
 }
 function hpPctAt(result,elapsed,targetId,fallback=100){
  let hp=fallback;
