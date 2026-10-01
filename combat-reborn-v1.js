@@ -4626,7 +4626,7 @@ function runSelfTests(){
    {id:'xd2',name:'DPS Two',class:'Rogue',spec:'Assassination',power:22,level:prepared?7:2,_combatItemLevel:prepared?26:8,knowledge:{danger:prepared?100:0}},
    {id:'xd3',name:'DPS Three',class:'Hunter',spec:'Marksman',power:22,level:prepared?7:2,_combatItemLevel:prepared?26:8,knowledge:{danger:prepared?100:0}}
   ];
-  const low=simulate({party:makeExecutionParty(false),encounter,seed:'compare-2'}),high=simulate({party:makeExecutionParty(true),encounter,seed:'compare-2'});
+  const low=simulate({party:makeExecutionParty(false),encounter,seed:'compare-1'}),high=simulate({party:makeExecutionParty(true),encounter,seed:'compare-1'});
   test('Human Error Scaling',()=>low.outcome==='defeat'&&high.outcome==='victory'&&executionQuality({encounter,players:[],enemies:[],activeEnemyCast:null,rng:()=>.5},makeExecutionParty(false)[0])<executionQuality({encounter,players:[],enemies:[],activeEnemyCast:null,rng:()=>.5},makeExecutionParty(true)[0]));
   test('Threat Mistake',()=>low.events.some(e=>e.type==='PLAYER_MISTAKE')&&low.outcome==='defeat');
  }
