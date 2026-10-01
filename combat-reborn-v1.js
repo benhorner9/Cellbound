@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.4.0';
+const VERSION='1.5.0';
 // Balance baseline: 2026-09-30 chapter-wide progression and role audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
