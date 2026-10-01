@@ -26,6 +26,10 @@ for(const file of files){
     const singletonCollectionCall=/(^|[^$])\$\([^\n;)]*\)\.(?:forEach|map|filter|some|every|reduce)\(/m;
     if(singletonCollectionCall.test(contents))throw new Error('querySelector helper $ cannot be used as a collection in '+file+'; use document.querySelectorAll instead');
   }
+  if(/sb_secret_|SUPABASE_SERVICE_ROLE(?:_KEY)?|service[_-]?role[_-]?key/i.test(contents))throw new Error('Server-only Supabase credential marker found in shipped asset '+file);
+  if(file==='auth.js'){
+    for(const hook of ['const NEW_PASSWORD_MIN=12',"creds(true,NEW_PASSWORD_MIN)","password.value.length<NEW_PASSWORD_MIN"])if(!contents.includes(hook))throw new Error('New/reset password hardening is missing '+hook);
+  }
   const playerCopyFiles=new Set(['guild.html','guild-v4.js','onboarding-v1.js','pvp-v1.js','endgame-v1.js','evolution-v1.js','quests-v2.js','dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','fractured-ages-v1.js','twelve-below-v1.js','thirteenth-bell-v1.js','fourfold-lock-v1.js','no-way-back-v1.js','manor-raid-v1.js']);
   if(playerCopyFiles.has(file)){
     for(const phrase of ['FARMABLE','authoritative Combat Reborn','authoritative Cellbound combat engine','proper 5v5 PvE','CHASE SYSTEM','UPDATE 2 · ENDGAME HUB','Title hook','Prestige cosmetic hook','normal endgame progression','repeat-run rule','randomized versions','Future Bellfoundry access hook','QUEST STRUCTURE','Combat Reborn final boss','simulation-driven','combat timeline rather than viewer buttons','COMBAT REBORN · RUN ANALYSIS','Pre-dungeon tactics are authoritative','stored combat timeline',' simulated time','Combat Reborn rules','actual Combat Reborn positions','NEW SYSTEM'])if(contents.includes(phrase))throw new Error('Player-facing copy regression in '+file+': '+phrase);
