@@ -1243,9 +1243,50 @@ function settlePhysicalSpace(ctx,units){
 }
 
 function environmentBlockers(ctx){return Array.isArray(ctx?.environment?.blockers)?ctx.environment.blockers:[]}
+function walkablePolygon(ctx){
+ const raw=ctx?.environment?.walkable;if(!Array.isArray(raw)||raw.length<3)return null;
+ const poly=raw.map(p=>Array.isArray(p)?{x:Number(p[0]),y:Number(p[1])}:{x:Number(p?.x),y:Number(p?.y)}).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y));
+ return poly.length>=3?poly:null
+}
 function arenaBounds(ctx){
  const raw=ctx?.environment?.bounds||{},left=Number.isFinite(Number(raw.left))?Number(raw.left):4,right=Number.isFinite(Number(raw.right))?Number(raw.right):96,top=Number.isFinite(Number(raw.top))?Number(raw.top):5,bottom=Number.isFinite(Number(raw.bottom))?Number(raw.bottom):95;
  return{left:clamp(Math.min(left,right-4),0,98),right:clamp(Math.max(right,left+4),2,100),top:clamp(Math.min(top,bottom-4),0,98),bottom:clamp(Math.max(bottom,top+4),2,100)}
+}
+function pointInPolygon(p,poly){
+ if(!p||!poly?.length)return false;let inside=false;
+ for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+  const a=poly[i],b=poly[j],cross=((a.y>p.y)!==(b.y>p.y))&&(p.x<(b.x-a.x)*(p.y-a.y)/((b.y-a.y)||1e-9)+a.x);
+  if(cross)inside=!inside
+ }
+ return inside
+}
+function polygonCenter(poly){
+ if(!poly?.length)return{x:50,y:50};
+ return{x:poly.reduce((n,p)=>n+p.x,0)/poly.length,y:poly.reduce((n,p)=>n+p.y,0)/poly.length}
+}
+function closestPointOnSegment(p,a,b){
+ const dx=b.x-a.x,dy=b.y-a.y,len=dx*dx+dy*dy||1,t=clamp(((p.x-a.x)*dx+(p.y-a.y)*dy)/len,0,1);
+ return{x:a.x+dx*t,y:a.y+dy*t}
+}
+function closestPointOnPolygon(p,poly){
+ let best=null,bestD=Infinity;
+ for(let i=0;i<poly.length;i++){
+  const q=closestPointOnSegment(p,poly[i],poly[(i+1)%poly.length]),d=dist(p,q);
+  if(d<bestD){bestD=d;best=q}
+ }
+ return{point:best||copy(p),distance:bestD}
+}
+function constrainToWalkable(ctx,pos,pad=0){
+ const poly=walkablePolygon(ctx);if(!poly)return pos;
+ let p={x:Number(pos?.x)||50,y:Number(pos?.y)||50},nearest=closestPointOnPolygon(p,poly),inside=pointInPolygon(p,poly);
+ if(inside&&nearest.distance>=pad)return p;
+ const edge=nearest.point,center=polygonCenter(poly),dx=center.x-edge.x,dy=center.y-edge.y,len=Math.hypot(dx,dy)||1,step=Math.max(.15,pad+.18);
+ p={x:edge.x+dx/len*step,y:edge.y+dy/len*step};
+ if(!pointInPolygon(p,poly)){
+  const cx=center.x-p.x,cy=center.y-p.y,cl=Math.hypot(cx,cy)||1;
+  p={x:p.x+cx/cl*(step+.35),y:p.y+cy/cl*(step+.35)}
+ }
+ return p
 }
 function pointInsideArena(ctx,p,pad=0){
  if(!p)return false;
@@ -1254,8 +1295,12 @@ function pointInsideArena(ctx,p,pad=0){
  const arena=ctx?.environment?.arena;
  if(arena?.shape==='ellipse'){
   const cx=Number(arena.cx)||50,cy=Number(arena.cy)||50,rx=Math.max(3,(Number(arena.rx)||((b.right-b.left)/2))-pad),ry=Math.max(3,(Number(arena.ry)||((b.bottom-b.top)/2))-pad);
-  const dx=(p.x-cx)/rx,dy=(p.y-cy)/ry;
-  return dx*dx+dy*dy<=1.0001
+  const dx=(p.x-cx)/rx,dy=(p.y-cy)/ry;if(dx*dx+dy*dy>1.0001)return false
+ }
+ const poly=walkablePolygon(ctx);
+ if(poly){
+  if(!pointInPolygon(p,poly))return false;
+  if(pad>0&&closestPointOnPolygon(p,poly).distance<pad)return false
  }
  return true
 }
@@ -1268,24 +1313,24 @@ function constrainToArena(ctx,pos,pad=1.35){
   const dx=p.x-cx,dy=p.y-cy,norm=Math.sqrt((dx*dx)/(rx*rx)+(dy*dy)/(ry*ry));
   if(norm>1){const scale=.985/norm;p={x:cx+dx*scale,y:cy+dy*scale}}
  }
- return p
+ p=constrainToWalkable(ctx,p,pad);
+ return{x:clamp(p.x,b.left+pad,b.right-pad),y:clamp(p.y,b.top+pad,b.bottom-pad)}
 }
 function arenaCenter(ctx){
- const b=arenaBounds(ctx),arena=ctx?.environment?.arena;
- const x=arena?.shape==='ellipse'&&Number.isFinite(Number(arena.cx))?Number(arena.cx):(b.left+b.right)/2;
- const y=arena?.shape==='ellipse'&&Number.isFinite(Number(arena.cy))?Number(arena.cy):(b.top+b.bottom)/2;
- return constrainToArena(ctx,{x,y},2)
+ const b=arenaBounds(ctx),arena=ctx?.environment?.arena,poly=walkablePolygon(ctx);
+ const center=poly?polygonCenter(poly):{x:arena?.shape==='ellipse'&&Number.isFinite(Number(arena.cx))?Number(arena.cx):(b.left+b.right)/2,y:arena?.shape==='ellipse'&&Number.isFinite(Number(arena.cy))?Number(arena.cy):(b.top+b.bottom)/2};
+ return constrainToArena(ctx,center,2)
 }
 function bossEngagementPosition(ctx,pos){
  const b=arenaBounds(ctx),arena=ctx?.environment?.arena,home=arenaCenter(ctx);
  if(arena?.shape==='ellipse'){
   const rx=Math.max(5,(Number(arena.rx)||((b.right-b.left)/2))*.62),ry=Math.max(5,(Number(arena.ry)||((b.bottom-b.top)/2))*.62);
   const raw=constrainToArena(ctx,pos,2),dx=raw.x-home.x,dy=raw.y-home.y,norm=Math.sqrt((dx*dx)/(rx*rx)+(dy*dy)/(ry*ry));
-  return norm<=1?raw:{x:home.x+dx/norm*.985,y:home.y+dy/norm*.985}
+  return constrainToArena(ctx,norm<=1?raw:{x:home.x+dx/norm*.985,y:home.y+dy/norm*.985},2)
  }
  const width=b.right-b.left,height=b.bottom-b.top;
  const insetX=Math.min(Math.max(4,width*.16),Math.max(2,width/2-2)),insetY=Math.min(Math.max(4,height*.14),Math.max(2,height/2-2));
- return{x:clamp(Number(pos?.x)||home.x,b.left+insetX,b.right-insetX),y:clamp(Number(pos?.y)||home.y,b.top+insetY,b.bottom-insetY)}
+ return constrainToArena(ctx,{x:clamp(Number(pos?.x)||home.x,b.left+insetX,b.right-insetX),y:clamp(Number(pos?.y)||home.y,b.top+insetY,b.bottom-insetY)},2)
 }
 function formationBaseAngle(ctx,target){
  if(!target?.position)return Math.PI;
@@ -1294,12 +1339,26 @@ function formationBaseAngle(ctx,target){
 }
 function enforceArenaBounds(ctx,reason='arena boundary'){
  [...ctx.players,...ctx.enemies].filter(u=>u?.alive).forEach(u=>{
-  const safe=constrainToArena(ctx,u.position,1.7);
+  const safe=openPosition(ctx,u.position,1.7);
   if(dist(u.position,safe)>.35)moveTo(ctx,u,safe,320,reason)
  })
 }
+function blockerPolygon(b){
+ const raw=b?.points;if(!Array.isArray(raw)||raw.length<3)return null;
+ const poly=raw.map(p=>Array.isArray(p)?{x:Number(p[0]),y:Number(p[1])}:{x:Number(p?.x),y:Number(p?.y)}).filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y));
+ return poly.length>=3?poly:null
+}
 function blockerBounds(b,pad=0){
- const w=Math.max(0,Number(b?.w)||0)/2+pad,h=Math.max(0,Number(b?.h)||0)/2+pad,x=Number(b?.x)||0,y=Number(b?.y)||0;
+ const shape=String(b?.shape||'rect').toLowerCase(),x=Number(b?.x)||0,y=Number(b?.y)||0;
+ if(shape==='polygon'){
+  const poly=blockerPolygon(b)||[{x,y}],xs=poly.map(p=>p.x),ys=poly.map(p=>p.y);
+  return{left:Math.min(...xs)-pad,right:Math.max(...xs)+pad,top:Math.min(...ys)-pad,bottom:Math.max(...ys)+pad}
+ }
+ if(shape==='circle'||shape==='ellipse'){
+  const rx=Math.max(0,Number(b?.rx)||Number(b?.r)||0)+pad,ry=Math.max(0,Number(b?.ry)||Number(b?.r)||0)+pad;
+  return{left:x-rx,right:x+rx,top:y-ry,bottom:y+ry}
+ }
+ const w=Math.max(0,Number(b?.w)||0)/2+pad,h=Math.max(0,Number(b?.h)||0)/2+pad;
  return{left:x-w,right:x+w,top:y-h,bottom:y+h}
 }
 function pointInRect(p,r){return !!p&&p.x>=r.left&&p.x<=r.right&&p.y>=r.top&&p.y<=r.bottom}
@@ -1317,11 +1376,41 @@ function lineHitsRect(a,b,r){
  const tl={x:r.left,y:r.top},tr={x:r.right,y:r.top},br={x:r.right,y:r.bottom},bl={x:r.left,y:r.bottom};
  return segmentsCross(a,b,tl,tr)||segmentsCross(a,b,tr,br)||segmentsCross(a,b,br,bl)||segmentsCross(a,b,bl,tl)
 }
+function pointInBlocker(p,blocker,pad=0){
+ const shape=String(blocker?.shape||'rect').toLowerCase();
+ if(shape==='polygon'){
+  const poly=blockerPolygon(blocker);if(!poly)return false;
+  if(pointInPolygon(p,poly))return true;
+  return pad>0&&closestPointOnPolygon(p,poly).distance<=pad
+ }
+ if(shape==='circle'||shape==='ellipse'){
+  const x=Number(blocker?.x)||0,y=Number(blocker?.y)||0,rx=Math.max(.01,Number(blocker?.rx)||Number(blocker?.r)||0)+pad,ry=Math.max(.01,Number(blocker?.ry)||Number(blocker?.r)||0)+pad;
+  const dx=(p.x-x)/rx,dy=(p.y-y)/ry;return dx*dx+dy*dy<=1
+ }
+ return pointInRect(p,blockerBounds(blocker,pad))
+}
+function lineHitsEllipse(a,b,blocker,pad=0){
+ const x=Number(blocker?.x)||0,y=Number(blocker?.y)||0,rx=Math.max(.01,Number(blocker?.rx)||Number(blocker?.r)||0)+pad,ry=Math.max(.01,Number(blocker?.ry)||Number(blocker?.r)||0)+pad;
+ const aa={x:(a.x-x)/rx,y:(a.y-y)/ry},bb={x:(b.x-x)/rx,y:(b.y-y)/ry},q=closestPointOnSegment({x:0,y:0},aa,bb);
+ return q.x*q.x+q.y*q.y<=1
+}
+function lineHitsPolygon(a,b,poly,pad=0){
+ if(pointInPolygon(a,poly)||pointInPolygon(b,poly))return true;
+ for(let i=0;i<poly.length;i++)if(segmentsCross(a,b,poly[i],poly[(i+1)%poly.length]))return true;
+ if(pad>0){const samples=6;for(let i=1;i<samples;i++){const t=i/samples,p={x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t};if(closestPointOnPolygon(p,poly).distance<=pad)return true}}
+ return false
+}
+function lineHitsBlocker(a,b,blocker,pad=0){
+ const shape=String(blocker?.shape||'rect').toLowerCase();
+ if(shape==='polygon'){const poly=blockerPolygon(blocker);return !!poly&&lineHitsPolygon(a,b,poly,pad)}
+ if(shape==='circle'||shape==='ellipse')return lineHitsEllipse(a,b,blocker,pad);
+ return lineHitsRect(a,b,blockerBounds(blocker,pad))
+}
 function segmentBlocker(ctx,a,b,kind='movement',pad=0){
  return environmentBlockers(ctx).find(blocker=>{
    if(kind==='los'&&blocker.blocksLos===false)return false;
    if(kind==='movement'&&blocker.blocksMovement===false)return false;
-   return lineHitsRect(a,b,blockerBounds(blocker,pad))
+   return lineHitsBlocker(a,b,blocker,pad)
  })||null
 }
 function hasLineOfSight(ctx,a,b){
@@ -1329,30 +1418,46 @@ function hasLineOfSight(ctx,a,b){
  if(!pointInsideArena(ctx,ap,0)||!pointInsideArena(ctx,bp,0))return false;
  return !segmentBlocker(ctx,ap,bp,'los',0)
 }
+function blockerWaypoints(blocker,pad=2.2){
+ const shape=String(blocker?.shape||'rect').toLowerCase(),center={x:Number(blocker?.x)||0,y:Number(blocker?.y)||0};
+ if(shape==='polygon'){
+  const poly=blockerPolygon(blocker);if(!poly)return[];
+  const c=polygonCenter(poly);
+  return poly.map(p=>{const dx=p.x-c.x,dy=p.y-c.y,len=Math.hypot(dx,dy)||1;return{x:p.x+dx/len*pad,y:p.y+dy/len*pad}})
+ }
+ const r=blockerBounds(blocker,pad);
+ if(shape==='circle'||shape==='ellipse'){
+  return[{x:r.left,y:center.y},{x:r.right,y:center.y},{x:center.x,y:r.top},{x:center.x,y:r.bottom},{x:r.left,y:r.top},{x:r.left,y:r.bottom},{x:r.right,y:r.top},{x:r.right,y:r.bottom}]
+ }
+ return[{x:r.left,y:r.top},{x:r.left,y:r.bottom},{x:r.right,y:r.top},{x:r.right,y:r.bottom}]
+}
 function openPosition(ctx,pos,pad=1.35){
  let p=constrainToArena(ctx,pos,pad);
- for(const blocker of environmentBlockers(ctx)){
-   if(blocker.blocksMovement===false)continue;
-   const r=blockerBounds(blocker,pad);if(!pointInRect(p,r))continue;
-   const options=[
-    {x:r.left-.2,y:p.y},{x:r.right+.2,y:p.y},{x:p.x,y:r.top-.2},{x:p.x,y:r.bottom+.2}
-   ].map(q=>constrainToArena(ctx,q,pad))
-    .filter(q=>!environmentBlockers(ctx).some(b=>b.blocksMovement!==false&&pointInRect(q,blockerBounds(b,pad*.7))));
-   if(options.length)p=options.sort((a,b)=>dist(a,pos)-dist(b,pos))[0]
+ for(let pass=0;pass<4;pass++){
+  const hit=environmentBlockers(ctx).find(b=>b.blocksMovement!==false&&pointInBlocker(p,b,pad));
+  if(!hit)break;
+  const shape=String(hit?.shape||'rect').toLowerCase(),c=shape==='polygon'?polygonCenter(blockerPolygon(hit)):({x:Number(hit?.x)||0,y:Number(hit?.y)||0});
+  let options=blockerWaypoints(hit,pad+.5);
+  if(shape==='polygon'||shape==='circle'||shape==='ellipse'){
+    const dx=p.x-c.x,dy=p.y-c.y,len=Math.hypot(dx,dy)||1,box=blockerBounds(hit,pad+.3),reach=Math.max(box.right-box.left,box.bottom-box.top)/2+.35;
+    options.push({x:c.x+dx/len*reach,y:c.y+dy/len*reach})
+  }
+  options=options.map(q=>constrainToArena(ctx,q,pad))
+   .filter(q=>pointInsideArena(ctx,q,Math.min(1,pad*.65)))
+   .filter(q=>!environmentBlockers(ctx).some(b=>b!==hit&&b.blocksMovement!==false&&pointInBlocker(q,b,pad*.7)));
+  if(options.length)p=options.sort((a,b)=>dist(a,pos)-dist(b,pos))[0];else break
  }
  return constrainToArena(ctx,p,pad)
 }
 function navigationWaypoint(ctx,from,destination){
  const dest=openPosition(ctx,destination,1.35),hit=segmentBlocker(ctx,from,dest,'movement',1.25);
  if(!hit)return{point:dest,pathing:false,final:dest};
- const r=blockerBounds(hit,2.2),corners=[
-  {x:r.left,y:r.top},{x:r.left,y:r.bottom},{x:r.right,y:r.top},{x:r.right,y:r.bottom}
- ].map(p=>constrainToArena(ctx,p,1.35))
+ const candidates=blockerWaypoints(hit,2.2).map(p=>openPosition(ctx,p,1.35))
   .filter(p=>pointInsideArena(ctx,p,1))
-  .filter(p=>!environmentBlockers(ctx).some(b=>b.blocksMovement!==false&&pointInRect(p,blockerBounds(b,.7))))
+  .filter(p=>!environmentBlockers(ctx).some(b=>b!==hit&&b.blocksMovement!==false&&pointInBlocker(p,b,.7)))
   .filter(p=>!segmentBlocker(ctx,from,p,'movement',.65));
- if(!corners.length)return{point:dest,pathing:false,final:dest};
- const point=corners.sort((a,b)=>{
+ if(!candidates.length)return{point:openPosition(ctx,from,1.35),pathing:true,final:dest,blocker:hit.id||'environment'};
+ const point=candidates.sort((a,b)=>{
    const ap=dist(from,a)+dist(a,dest)+(segmentBlocker(ctx,a,dest,'movement',.65)?18:0);
    const bp=dist(from,b)+dist(b,dest)+(segmentBlocker(ctx,b,dest,'movement',.65)?18:0);
    return ap-bp
@@ -1361,14 +1466,13 @@ function navigationWaypoint(ctx,from,destination){
 }
 function visibleCastPoint(ctx,u,target,range,preferred){
  const maxRange=Math.max(2,Number(range)||5),pref=openPosition(ctx,preferred||u.position,1.35);
- const valid=p=>dist(p,target.position)<=maxRange&&!segmentBlocker(ctx,p,target.position,'los',0)&&!environmentBlockers(ctx).some(b=>b.blocksMovement!==false&&pointInRect(p,blockerBounds(b,1.1)));
+ const valid=p=>pointInsideArena(ctx,p,1)&&dist(p,target.position)<=maxRange&&!segmentBlocker(ctx,p,target.position,'los',0)&&!environmentBlockers(ctx).some(b=>b.blocksMovement!==false&&pointInBlocker(p,b,1.1));
  if(valid(pref))return pref;
  const base=Math.atan2(u.position.y-target.position.y,u.position.x-target.position.x),radius=maxRange<=7?Math.min(4.35,maxRange-.35):Math.min(20,Math.max(8,maxRange*.68));
  const offsets=[0,.38,-.38,.76,-.76,1.15,-1.15,1.55,-1.55,2.1,-2.1,Math.PI];
  const candidates=offsets.map(off=>openPosition(ctx,{x:target.position.x+Math.cos(base+off)*radius,y:target.position.y+Math.sin(base+off)*radius},1.35)).filter(valid);
  return candidates.sort((a,b)=>dist(u.position,a)-dist(u.position,b))[0]||pref
 }
-
 function moveTo(ctx,u,pos,duration=420,reason='positioning'){
  if(!u?.alive)return false;
  const from=copy(physicalPosition(ctx,u)),environmentRoute=navigationWaypoint(ctx,from,pos),bodyRoute=collisionWaypoint(ctx,u,from,environmentRoute.point,reason),to=bodyRoute.point,baseTravel=Math.max(80,Number(duration)||420);
