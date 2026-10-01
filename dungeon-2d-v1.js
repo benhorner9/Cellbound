@@ -20,7 +20,7 @@ const ASHEN_ROOMS={
    route:{entry:{x:21,y:92},entryInside:{x:28,y:70},engage:{x:61,y:43},partyAnchors:[{x:45,y:56},{x:39,y:50},{x:37,y:60},{x:31,y:52},{x:31,y:63}],exitPath:[{x:61,y:43},{x:72,y:36},{x:82,y:29},{x:90,y:23}],spread:2.5},enemyAnchors:[{x:61,y:37},{x:68,y:45},{x:69,y:58}],
    bounds:{left:12,right:84,top:24,bottom:83},
    walkable:[[18,32],[38,27],[72,30],[82,42],[79,64],[66,79],[33,80],[17,66],[14,46]],
-   life:{profile:'ash-gate',particles:24,mix:['ash','ember','ash','smoke'],depthMin:.945,depthMax:1.055,light:'rgba(255,116,54,.26)'},
+   life:{profile:'ash-gate',particles:24,mix:['ash','ember','ash','smoke'],depthMin:.945,depthMax:1.055,light:'rgba(255,116,54,.26)',hotspots:[{type:'fire',x:15,y:31,w:11,h:18,i:.72,d:0},{type:'fire',x:79,y:31,w:11,h:18,i:.68,d:.7},{type:'lava',x:56,y:53,w:30,h:14,r:-7,i:.5,d:.4},{type:'lava',x:36,y:72,w:25,h:11,r:8,i:.38,d:1.2}]},
    occluders:[
      {clip:'polygon(0 0,12% 0,10% 24%,6% 48%,11% 72%,17% 100%,0 100%)',opacity:.93},
      {clip:'polygon(88% 0,100% 0,100% 100%,91% 100%,94% 72%,90% 46%,92% 22%)',opacity:.94}
@@ -38,7 +38,7 @@ const ASHEN_ROOMS={
    route:{entry:{x:50,y:94},entryInside:{x:50,y:72},engage:{x:50,y:42},partyAnchors:[{x:50,y:60},{x:44,y:64},{x:56,y:64},{x:41,y:70},{x:59,y:70}],exitPath:[{x:50,y:38},{x:50,y:24},{x:50,y:10},{x:50,y:3}],spread:2.2},enemyAnchors:[{x:50,y:32},{x:39,y:40},{x:61,y:40}],
    bounds:{left:10,right:90,top:18,bottom:82},
    walkable:[[17,24],[30,19],[70,19],[84,26],[89,44],[86,68],[73,79],[29,79],[14,68],[11,45]],
-   life:{profile:'ember-hall',particles:28,mix:['ember','ash','ember','smoke'],depthMin:.94,depthMax:1.06,light:'rgba(255,139,61,.28)'},
+   life:{profile:'ember-hall',particles:28,mix:['ember','ash','ember','smoke'],depthMin:.94,depthMax:1.06,light:'rgba(255,139,61,.28)',hotspots:[{type:'fire',x:18,y:28,w:10,h:17,i:.8,d:0},{type:'fire',x:82,y:28,w:10,h:17,i:.8,d:.45},{type:'fire',x:18,y:72,w:10,h:17,i:.74,d:.8},{type:'fire',x:82,y:72,w:10,h:17,i:.74,d:1.15},{type:'glow',x:50,y:48,w:42,h:26,i:.28,d:.3}]},
    occluders:[
      {clip:'polygon(0 72%,9% 66%,17% 79%,22% 100%,0 100%)',opacity:.9},
      {clip:'polygon(100% 70%,91% 65%,83% 80%,78% 100%,100% 100%)',opacity:.9}
@@ -50,7 +50,7 @@ const ASHEN_ROOMS={
    art:'./assets/ashen-vault/battlefields/kael.avif',artPosition:'50% 50%',
    route:{entry:{x:50,y:95},entryInside:{x:50,y:70},engage:{x:50,y:47},partyAnchors:[{x:50,y:61},{x:44,y:65},{x:56,y:65},{x:42,y:71},{x:58,y:71}],exitPath:[{x:50,y:31},{x:50,y:19},{x:50,y:9},{x:50,y:2}],spread:2.1},enemyAnchors:[{x:50,y:43}],
    bounds:{left:15,right:85,top:14,bottom:78},arena:{shape:'ellipse',cx:50,cy:46,rx:33,ry:30},
-   life:{profile:'warden-seal',particles:30,mix:['ember','ember','ash','smoke'],depthMin:.94,depthMax:1.065,light:'rgba(255,101,46,.30)'},
+   life:{profile:'warden-seal',particles:30,mix:['ember','ember','ash','smoke'],depthMin:.94,depthMax:1.065,light:'rgba(255,101,46,.30)',hotspots:[{type:'fire',x:18,y:28,w:10,h:17,i:.76,d:0},{type:'fire',x:82,y:28,w:10,h:17,i:.76,d:.55},{type:'fire',x:18,y:70,w:10,h:17,i:.68,d:1.1},{type:'fire',x:82,y:70,w:10,h:17,i:.68,d:.25},{type:'rune',x:50,y:47,w:34,h:27,i:.62,d:.2}]},
    occluders:[
      {clip:'polygon(0 77%,12% 69%,20% 82%,26% 100%,0 100%)',opacity:.9},
      {clip:'polygon(100% 76%,88% 69%,80% 83%,75% 100%,100% 100%)',opacity:.9}
@@ -63,7 +63,7 @@ const ASHEN_ROOMS={
    route:{entry:{x:17,y:18},entryInside:{x:28,y:33},engage:{x:61,y:54},partyAnchors:[{x:38,y:39},{x:33,y:35},{x:34,y:43},{x:28,y:32},{x:28,y:46}],exitPath:[{x:58,y:55},{x:68,y:64},{x:78,y:73},{x:89,y:84}],spread:2.2},enemyAnchors:[{x:61,y:50},{x:69,y:62}],
    bounds:{left:14,right:84,top:24,bottom:82},
    walkable:[[24,38],[39,31],[60,35],[76,47],[79,61],[67,73],[48,74],[31,65],[22,53]],
-   life:{profile:'furnace',particles:34,mix:['ember','ember','smoke','ember','ash'],depthMin:.94,depthMax:1.065,light:'rgba(255,102,34,.34)'},
+   life:{profile:'furnace',particles:34,mix:['ember','ember','smoke','ember','ash'],depthMin:.94,depthMax:1.065,light:'rgba(255,102,34,.34)',hotspots:[{type:'vent',x:82,y:24,w:13,h:17,i:.82,d:0},{type:'vent',x:88,y:51,w:14,h:20,i:.9,d:.7},{type:'vent',x:84,y:78,w:13,h:18,i:.78,d:1.4},{type:'lava',x:52,y:38,w:29,h:12,r:37,i:.66,d:.2},{type:'lava',x:40,y:65,w:31,h:12,r:38,i:.58,d:.85},{type:'heat',x:62,y:55,w:48,h:45,i:.54,d:.4}]},
    occluders:[
      {clip:'polygon(0 0,13% 0,11% 25%,15% 48%,10% 73%,18% 100%,0 100%)',opacity:.92},
      {clip:'polygon(87% 0,100% 0,100% 100%,82% 100%,90% 72%,85% 48%,89% 24%)',opacity:.92}
@@ -80,7 +80,7 @@ const ASHEN_ROOMS={
    art:'./assets/ashen-vault/battlefields/embermaw.avif',artPosition:'50% 50%',
    route:{entry:{x:7,y:51},entryInside:{x:27,y:51},engage:{x:50,y:51},partyAnchors:[{x:42,y:50},{x:39,y:46},{x:39,y:55},{x:35,y:44},{x:35,y:58}],exitPath:[{x:66,y:51},{x:78,y:51},{x:91,y:51},{x:97,y:51}],spread:2.0},enemyAnchors:[{x:50,y:50}],
    bounds:{left:16,right:84,top:18,bottom:82},arena:{shape:'ellipse',cx:50,cy:50,rx:32,ry:29},
-   life:{profile:'embermaw',particles:38,mix:['ember','ember','ember','smoke','ash'],depthMin:.935,depthMax:1.07,light:'rgba(255,91,30,.38)'},
+   life:{profile:'embermaw',particles:38,mix:['ember','ember','ember','smoke','ash'],depthMin:.935,depthMax:1.07,light:'rgba(255,91,30,.38)',hotspots:[{type:'rune',x:50,y:50,w:43,h:38,i:.66,d:.15},{type:'lava',x:50,y:26,w:13,h:27,r:90,i:.72,d:.3},{type:'lava',x:72,y:50,w:24,h:11,r:0,i:.72,d:.65},{type:'lava',x:50,y:74,w:13,h:27,r:90,i:.72,d:1.0},{type:'lava',x:28,y:50,w:24,h:11,r:0,i:.72,d:1.35},{type:'heat',x:50,y:50,w:58,h:55,i:.72,d:.25}]},
    occluders:[
      {clip:'polygon(0 78%,13% 68%,22% 82%,29% 100%,0 100%)',opacity:.88},
      {clip:'polygon(100% 78%,87% 68%,78% 82%,71% 100%,100% 100%)',opacity:.88}
@@ -100,7 +100,7 @@ const ASHEN_ROOMS={
    route:{entry:{x:5,y:56},entryInside:{x:25,y:56},engage:{x:59,y:48},partyAnchors:[{x:38,y:54},{x:33,y:49},{x:34,y:60},{x:28,y:47},{x:28,y:64}],exitPath:[{x:66,y:43},{x:74,y:35},{x:82,y:27},{x:91,y:20}],spread:2.3},enemyAnchors:[{x:62,y:42},{x:66,y:53},{x:57,y:61}],
    bounds:{left:12,right:88,top:20,bottom:84},
    walkable:[[22,31],[38,24],[67,24],[82,34],[86,52],[81,69],[68,80],[31,80],[17,69],[14,48]],
-   life:{profile:'vault-depths',particles:20,mix:['ash','smoke','ash','ember'],depthMin:.95,depthMax:1.05,light:'rgba(192,107,98,.18)'},
+   life:{profile:'vault-depths',particles:20,mix:['ash','smoke','ash','ember'],depthMin:.95,depthMax:1.05,light:'rgba(192,107,98,.18)',hotspots:[{type:'relic',x:20,y:29,w:14,h:19,i:.36,d:0},{type:'relic',x:80,y:29,w:14,h:19,i:.34,d:.9},{type:'relic',x:22,y:71,w:14,h:19,i:.3,d:.45},{type:'relic',x:78,y:71,w:14,h:19,i:.3,d:1.3},{type:'glow',x:51,y:51,w:39,h:27,i:.18,d:.2}]},
    occluders:[
      {clip:'polygon(0 70%,10% 66%,18% 80%,24% 100%,0 100%)',opacity:.94},
      {clip:'polygon(100% 70%,90% 66%,82% 80%,76% 100%,100% 100%)',opacity:.94}
@@ -112,7 +112,7 @@ const ASHEN_ROOMS={
    art:'./assets/ashen-vault/battlefields/vaultheart.avif',artPosition:'50% 50%',
    route:{entry:{x:50,y:96},entryInside:{x:50,y:77},engage:{x:50,y:58},partyAnchors:[{x:50,y:66},{x:44,y:70},{x:56,y:70},{x:41,y:76},{x:59,y:76}],exitPath:[],spread:2.0},enemyAnchors:[{x:50,y:29}],
    bounds:{left:13,right:87,top:14,bottom:83},arena:{shape:'ellipse',cx:50,cy:49,rx:34,ry:32},
-   life:{profile:'vaultheart',particles:34,mix:['ember','smoke','ember','ash'],depthMin:.935,depthMax:1.07,light:'rgba(255,103,52,.30)'},
+   life:{profile:'vaultheart',particles:34,mix:['ember','smoke','ember','ash'],depthMin:.935,depthMax:1.07,light:'rgba(255,103,52,.30)',hotspots:[{type:'core',x:50,y:42,w:25,h:28,i:.88,d:0},{type:'rune',x:50,y:52,w:48,h:40,i:.58,d:.3},{type:'fire',x:19,y:27,w:10,h:17,i:.65,d:.8},{type:'fire',x:81,y:27,w:10,h:17,i:.65,d:1.15},{type:'heat',x:50,y:46,w:58,h:50,i:.5,d:.2}]},
    occluders:[
      {clip:'polygon(0 77%,13% 68%,21% 81%,27% 100%,0 100%)',opacity:.9},
      {clip:'polygon(100% 77%,87% 68%,79% 81%,73% 100%,100% 100%)',opacity:.9}
@@ -472,6 +472,16 @@ function ashParticle(type,i){
  e.style.setProperty('--size',(2+(i%3))+'px');
  return e
 }
+function roomHotspot(h,i){
+ const e=document.createElement('i'),type=String(h?.type||'glow').replace(/[^a-z0-9-]/gi,'').toLowerCase();
+ e.className='cb2d-room-hotspot '+type;e.setAttribute('aria-hidden','true');
+ e.style.setProperty('--hx',(Number(h?.x)||50)+'%');e.style.setProperty('--hy',(Number(h?.y)||50)+'%');
+ e.style.setProperty('--hw',Math.max(4,Number(h?.w)||16)+'%');e.style.setProperty('--hh',Math.max(4,Number(h?.h)||16)+'%');
+ e.style.setProperty('--hi',String(Math.max(.08,Math.min(1.2,Number(h?.i)||.5))));
+ e.style.setProperty('--hd',(-Math.abs(Number(h?.d)||i*.31))+'s');e.style.setProperty('--hr',(Number(h?.r)||0)+'deg');
+ if(type==='vent'){for(let n=0;n<3;n++){const spark=document.createElement('b');spark.style.setProperty('--spark-x',(28+n*22)+'%');spark.style.setProperty('--spark-delay',(-n*.27-i*.13)+'s');e.appendChild(spark)}}
+ return e
+}
 let ashenBattlefieldsPreloaded=false;
 function preloadAshenBattlefields(){
  if(ashenBattlefieldsPreloaded)return;
@@ -495,6 +505,8 @@ function renderDungeonEnvironment(s){
    arena.style.setProperty('--cb2d-room-light',life.light||'rgba(255,115,48,.26)');
    const depth=document.createElement('div');depth.className='cb2d-bespoke-depth';root.appendChild(depth);
    const living=document.createElement('div');living.className='cb2d-bespoke-life';living.setAttribute('aria-hidden','true');root.appendChild(living);
+   const hotspots=document.createElement('div');hotspots.className='cb2d-room-hotspots';hotspots.setAttribute('aria-hidden','true');
+   (life.hotspots||[]).forEach((h,i)=>hotspots.appendChild(roomHotspot(h,i)));root.appendChild(hotspots);
    (cfg.occluders||[]).forEach((o,i)=>{
      const fg=document.createElement('div');fg.className='cb2d-bespoke-foreground-layer';fg.dataset.occluder=String(i);
      fg.style.clipPath=o.clip;fg.style.opacity=String(o.opacity??.92);fg.setAttribute('aria-hidden','true');arena.appendChild(fg)
@@ -1347,8 +1359,11 @@ function renderRebornEvent(e,result,replayMode=false){
    }
    break;
   case'RESOURCE_SPENT':case'RESOURCE_GAINED':case'RESOURCE_STATE':rebornResourceVisual(e);break;
-  case'PHASE_CHANGE':
-   flash(String(e.ability||'PHASE CHANGE').toUpperCase(),true);window.CellboundCombatFX?.phase?.($('#cb2dArena'));window.CellboundFX?.phase?.(e.ability||'Boss phase changed',e.payload?.healthPct);status(e.ability||'Boss phase changed');log((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');break;
+  case'PHASE_CHANGE':{
+   const arena=$('#cb2dArena');flash(String(e.ability||'PHASE CHANGE').toUpperCase(),true);window.CellboundCombatFX?.phase?.(arena);window.CellboundFX?.phase?.(e.ability||'Boss phase changed',e.payload?.healthPct);status(e.ability||'Boss phase changed');log((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');
+   if(arena?.dataset?.bespokeBattlefield==='1'){arena.classList.remove('ambient-surge');requestAnimationFrame(()=>arena.classList.add('ambient-surge'));setTimeout(()=>arena?.classList.remove('ambient-surge'),1350)}
+   break;
+  }
   case'ENRAGE':
    flash(e.result==='hard'?'HARD ENRAGE':'ENRAGE',true);status(e.result==='hard'?'Hard enrage — finish the boss now':(e.ability||'Boss enraged'));log((e.ability||'The boss enrages')+'.');break;
   case'UNIQUE_EFFECT_TRIGGER':
