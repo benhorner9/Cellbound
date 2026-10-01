@@ -201,8 +201,15 @@ function setPosition(scene,u,p,duration=0){
  if(scene.position){scene.position(u.el,p,reduce()?0:duration/scene.speed);return}
  const el=u.el,x=clamp(Number(p.x),0,100),y=clamp(Number(p.y),0,100);
  el.dataset.x=String(x);el.dataset.y=String(y);el.style.transitionDuration=(reduce()?0:duration/scene.speed)+'ms';
- if(scene.arena.id==='cb2dArena'&&el.dataset.unit){el.style.setProperty('--unit-x',x/100*scene.arena.clientWidth+'px');el.style.setProperty('--unit-y',y/100*scene.arena.clientHeight+'px')}
- else{el.style.left=x+'%';el.style.top=y+'%'}
+ if(scene.arena.id==='cb2dArena'&&el.dataset.unit){
+   el.style.setProperty('--unit-x',x/100*scene.arena.clientWidth+'px');el.style.setProperty('--unit-y',y/100*scene.arena.clientHeight+'px');
+   if(scene.arena.dataset.bespokeBattlefield==='1'){
+     const min=Number(scene.arena.dataset.depthMin)||.94,max=Number(scene.arena.dataset.depthMax)||1.06,t=clamp((y-10)/80,0,1);
+     el.style.setProperty('--cb2d-depth-scale',(min+(max-min)*t).toFixed(3));el.style.zIndex=String(20+Math.round(y))
+   }else{
+     el.style.removeProperty('--cb2d-depth-scale');el.style.removeProperty('z-index')
+   }
+ }else{el.style.left=x+'%';el.style.top=y+'%'}
 }
 function kind(e,u){
  const k=e.payload?.kind;
@@ -309,20 +316,21 @@ function livingEvent(e,opts={}){
   for(const v of e.payload?.units||[]){const a=unit(scene,resolve(v.id,opts,arena));if(a){enemyProfile(a,v);const group=String(v.id).match(/^p-(?:raid|maid)-(\d+)-/);if(group)a.el.dataset.raidParty=group[1];a.dead=v.alive===false;if(!a.dead)a.el.classList.remove('dead','dying');a.target=null;a.statuses.clear();a.el.dataset.control='';state(a,a.dead?'dead':'idle');setPosition(scene,a,v.position);a.el.style.setProperty('--cbl-facing',(v.facing||0)+'deg')}}framing(scene);break;
  case'MOVEMENT_START':
   if(u&&!u.dead){u.el.dataset.intent=String(e.result||'moving');setPosition(scene,u,e.payload?.to,Number(e.payload?.duration)||420);clearCast(u);state(u,['knockback','pull'].includes(e.result)?'displaced':'moving',performance.now()+(Number(e.payload?.duration)||420)/scene.speed);if(['knockback','pull'].includes(e.result))effect(scene,'force '+e.result,null,u.el,420);if(e.position&&e.payload?.to){const d=direction(e.position,e.payload.to);u.el.style.setProperty('--cbl-facing',d.angle+'deg');u.target=null}}break;
- case'MOVEMENT_END':if(u&&!u.dead){setPosition(scene,u,e.position);state(u,controlled(u)?'controlled':'idle');if(t)face(u,t.el)}break;
+ case'MOVEMENT_END':if(u&&!u.dead){setPosition(scene,u,e.position);state(u,controlled(u)?'controlled':'idle');if(t)face(u,t.el);if(arena.dataset.bespokeBattlefield==='1'&&arena.classList.contains('theme-ashen')&&!reduce())effect(scene,'ground-kick',null,u.el,360)}break;
  case'ABILITY_START':
   if(canAct(u)){enemyProfile(u,e.payload||{});u.action=e;if(t)face(u,t.el);state(u,kind(e,u)==='heal'?'healing':'attacking',performance.now()+450/scene.speed);
    if(!(e.payload?.castTime>0))motion(u,[{scale:'.97'},{scale:'1'}],210,scene)}break;
  case'CAST_START':
   if(canAct(u)){clearCast(u);u.target=t?.el||null;u.cast={event:e,destination:e.payload?.hazardPosition||null,start:performance.now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');u.el.dataset.castStyle=u.p.cast;state(u,/channel|beam|drain|torrent|disintegrate/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el);mountCastVisual(u,e)}break;
  case'CAST_CANCELLED':case'CAST_FINISH':case'ABILITY_FINISH':clearCast(u);if(u&&!u.dead&&!controlled(u))state(u,'idle');break;
- case'DAMAGE_DEALT':if(t){if(canAct(u))strike(scene,u,t,e);else if(!['miss','missed','dodge','dodged','immune'].includes(e.result))effect(scene,'contact',null,t.el,220)}break;
+ case'DAMAGE_DEALT':if(t){if(canAct(u))strike(scene,u,t,e);else if(!['miss','missed','dodge','dodged','immune'].includes(e.result))effect(scene,'contact',null,t.el,220);if(arena.dataset.bespokeBattlefield==='1'&&!['miss','missed','dodge','dodged','immune'].includes(e.result)){const floor=effect(scene,'floor-light '+family(e,u),null,t.el,e.result==='critical'?390:250);if(floor)floor.n.style.setProperty('--cbl-accent',u?.p?.accent||'#ff9a55')}}break;
  case'HEAL_RECEIVED':if(t){
   const visualSource=e.payload?.visualSource?unit(scene,resolve(e.payload.visualSource,opts,arena)):u;
   if(Number(e.payload?.chainBounce)>0&&visualSource){
    const f=effect(scene,'connection heal chain',visualSource.el,t.el,430);if(f)f.n.style.setProperty('--cbl-accent','#76efac');
    effect(scene,'heal-ring chain',null,t.el,460)
-  }else if(canAct(u))strike(scene,u,t,e,true);else effect(scene,'heal-ring',null,t.el,400)
+  }else if(canAct(u))strike(scene,u,t,e,true);else effect(scene,'heal-ring',null,t.el,400);
+  if(arena.dataset.bespokeBattlefield==='1'){const floor=effect(scene,'floor-light heal',null,t.el,320);if(floor)floor.n.style.setProperty('--cbl-accent','#76efac')}
  }break;
  case'AGGRO_CHANGED':if(u&&t){face(u,t.el);effect(scene,'aggro',null,t.el,650)}break;
  case'CROWD_CONTROL':if(t){statuses(t,{type:'DEBUFF_APPLIED',statusEffects:[{id:'visual-control',cc:e.payload?.cc||'stun'}]});t.controlUntil=performance.now()+(Number(e.payload?.duration)||900)/scene.speed}break;
@@ -402,7 +410,7 @@ function frame(){
 }
 function combatEvent(e,opts={}){try{livingEvent(e,opts)}catch(error){console.warn('Living combat visual skipped',e?.type,error)}}
 FX.mount=mount;FX.combatEvent=combatEvent;FX.physicalEvent=combatEvent;
-FX.encounterThemes=THEMES;FX.ownsHazards=true;FX.visualProfiles=PROFILES;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.3.0';FX.living=true;
+FX.encounterThemes=THEMES;FX.ownsHazards=true;FX.visualProfiles=PROFILES;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.4.0';FX.living=true;
 // Legacy public entry points remain callable but no longer duplicate shared reactions.
 for(const name of ['impact','heal','death','spawn','interrupt']){const old=FX[name];FX[name]=function(el,...args){if(el?.closest?.('.cbl-scene'))return;return old?.(el,...args)}}
 })();
