@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.4.0';
+const VERSION='1.5.0';
 // Balance baseline: 2026-09-30 chapter-wide progression and role audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
@@ -1070,8 +1070,8 @@ function normalisePlayer(c,i,zone=null){
  const startPosition=carriedPosition&&Number.isFinite(Number(carriedPosition.x))&&Number.isFinite(Number(carriedPosition.y))?{x:Number(carriedPosition.x),y:Number(carriedPosition.y)}:initialPartyPosition(i,role);
  return{
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,partyIndex:i,
-  maxHealth,health:startHealth,alive:startHealth>0,position:startPosition,facing:0,
-  target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:carriedStatuses(c),resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
+  maxHealth,health:startHealth,alive:startHealth>0,position:startPosition,facing:0,bodyRadius:1.3,
+  target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,moveStartedAt:0,moveFrom:null,moveTo:null,nextResourceState:0,cooldowns:carriedCooldowns,statuses:carriedStatuses(c),resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
   abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,professionBonuses,professionProcs,relicOpeningUsed:false,baseStats:{baseHealth,healthScale,outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:copy(c?._combatTalentTimers||{}),talentFlags:copy(c?._combatTalentFlags||{}),talentCounters:copy(c?._combatTalentCounters||{}),damageActions:Math.max(0,Number(c?._combatDamageActions)||0),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),staggerPool:0,nextStaggerTick:0,staggerSourceId:null,lastMonkAbility:null,lastMistHealId:null,recentDamageTaken:[],dkWounds:{},soulFragments:0,comboPoints:0,
   defensiveUntil:Math.max(0,Number(c?._combatDefensiveMs)||0),frenzyUntil:Math.max(0,Number(c?._combatFrenzyMs)||0),uniqueUsed:copy(c?._combatUniqueUsed||{}),nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
@@ -1090,7 +1090,8 @@ function normaliseEnemies(encounter){
   return{
    id:'e-'+i,name,role:'enemy',kind:classification==='boss'||classification==='world-boss'?'boss':'enemy',classification,classificationLabel:rule.label,level,
    maxHealth,health:currentHealth,alive:currentHealth>0,position:(data.currentPosition&&Number.isFinite(Number(data.currentPosition.x))&&Number.isFinite(Number(data.currentPosition.y)))?{x:Number(data.currentPosition.x),y:Number(data.currentPosition.y)}:{x:68,y:raw.length===1?50:30+i*(40/Math.max(1,raw.length-1))},facing:180,
-   target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},movingUntil:0,moveToken:0,nextAttack:900+i*220,currentCast:null,
+   bodyRadius:Math.max(.9,Number(data.bodyRadius)||(classification==='world-boss'?3.1:classification==='boss'?2.8:classification==='elite'?1.6:1.15)),
+   target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},movingUntil:0,moveToken:0,moveStartedAt:0,moveFrom:null,moveTo:null,nextAttack:900+i*220,currentCast:null,
    isAdd:false,priority:Number.isFinite(Number(data.priority))?Number(data.priority):(i===0?2:1),focusSelected:Boolean(data.focusSelected),damageScale:rule.damage*damageMult,phaseDamageScale:1,hardEnraged:false,
    visualArchetype:data.visualArchetype||null,targeting:String(data.targeting||'threat').toLowerCase(),attackRange:Math.max(2,Number(data.attackRange)||5),attackName:data.attackName||null,damageType:data.damageType||'physical',allAttacksAoe:Boolean(data.allAttacksAoe),passive:Boolean(data.passive),addGroup:data.addGroup||null
   }
@@ -1150,6 +1151,96 @@ function livingEnemies(ctx){return ctx.enemies.filter(x=>x.alive)}
 function getUnit(ctx,id){return ctx.units[id]||null}
 function inRange(a,b,r){return dist(a.position,b.position)<=r}
 function updateFacing(a,b){if(!a||!b)return;a.facing=Math.atan2(b.position.y-a.position.y,b.position.x-a.position.x)}
+
+function bodyRadius(u){
+ if(!u)return 0;
+ if(Number.isFinite(Number(u.bodyRadius)))return Math.max(.35,Number(u.bodyRadius));
+ if(u.role==='pet')return .75;
+ if(u.classification==='world-boss')return 3.1;
+ if(u.kind==='boss'||u.classification==='boss')return 2.8;
+ if(u.classification==='elite')return 1.6;
+ if(u.role==='enemy')return 1.15;
+ return 1.3
+}
+function unitTeam(u){return u?.role==='enemy'||u?.kind==='boss'?'enemy':'party'}
+function physicalPosition(ctx,u){
+ if(!u?.position)return{x:50,y:50};
+ const start=Number(u.moveStartedAt)||0,end=Number(u.movingUntil)||0;
+ if(u.moveFrom&&u.moveTo&&end>start&&ctx?.time>=start&&ctx.time<end){
+  const t=clamp((ctx.time-start)/(end-start),0,1);
+  return{x:u.moveFrom.x+(u.moveTo.x-u.moveFrom.x)*t,y:u.moveFrom.y+(u.moveTo.y-u.moveFrom.y)*t}
+ }
+ return u.position
+}
+function physicalUnits(ctx,exclude=null){
+ const pets=(ctx?.pets||[]).filter(p=>p?.active&&p?.alive),all=[...(ctx?.players||[]),...(ctx?.enemies||[]),...pets];
+ return all.filter(u=>u&&u!==exclude&&u.alive!==false&&(u.role!=='pet'||u.active!==false))
+}
+function bodyClearance(a,b){
+ const petPair=a?.role==='pet'||b?.role==='pet',same=unitTeam(a)===unitTeam(b),soft=petPair?.76:same?.88:1;
+ return Math.max(.7,(bodyRadius(a)+bodyRadius(b))*soft)
+}
+function bodyOverlap(ctx,u,pos,ignoreIds=[]){
+ const ignored=new Set(ignoreIds||[]);
+ return physicalUnits(ctx,u).map(other=>({other,pos:physicalPosition(ctx,other),clearance:bodyClearance(u,other)}))
+  .filter(x=>!ignored.has(x.other.id)&&dist(pos,x.pos)<x.clearance-.02)
+  .sort((a,b)=>(dist(pos,a.pos)-a.clearance)-(dist(pos,b.pos)-b.clearance))[0]||null
+}
+function openPhysicalPosition(ctx,u,pos,pad=1.35,ignoreIds=[]){
+ let p=openPosition(ctx,pos,Math.max(pad,bodyRadius(u)*.68));
+ if(ctx?.physicalSpace===false)return p;
+ for(let pass=0;pass<10;pass++){
+  const hit=bodyOverlap(ctx,u,p,ignoreIds);if(!hit)break;
+  let dx=p.x-hit.pos.x,dy=p.y-hit.pos.y,len=Math.hypot(dx,dy);
+  if(len<.001){
+   const seed=hashSeed(String(u?.id||'unit')+'|'+String(hit.other?.id||'other')),angle=(seed%6283)/1000;
+   dx=Math.cos(angle);dy=Math.sin(angle);len=1
+  }
+  const push=hit.clearance+Math.min(.5,.16+pass*.04);
+  p=openPosition(ctx,{x:hit.pos.x+dx/len*push,y:hit.pos.y+dy/len*push},Math.max(pad,bodyRadius(u)*.68))
+ }
+ return p
+}
+function segmentBodyHit(ctx,u,a,b,ignoreIds=[]){
+ if(ctx?.physicalSpace===false)return null;
+ const ignored=new Set(ignoreIds||[]),vx=b.x-a.x,vy=b.y-a.y,aa=vx*vx+vy*vy;if(aa<.0001)return null;
+ let best=null;
+ for(const other of physicalUnits(ctx,u)){
+  if(ignored.has(other.id))continue;
+  const c=physicalPosition(ctx,other),clearance=bodyClearance(u,other)+.12,fx=a.x-c.x,fy=a.y-c.y;
+  const bb=2*(fx*vx+fy*vy),cc=fx*fx+fy*fy-clearance*clearance,disc=bb*bb-4*aa*cc;
+  if(disc<0)continue;
+  const root=Math.sqrt(disc),t1=(-bb-root)/(2*aa),t2=(-bb+root)/(2*aa),t=t1>=.035&&t1<=.965?t1:(t2>=.035&&t2<=.965?t2:null);
+  if(t==null)continue;
+  if(!best||t<best.t)best={other,center:c,clearance,t}
+ }
+ return best
+}
+function collisionWaypoint(ctx,u,from,destination,reason='positioning'){
+ const forced=reason==='knockback'||reason==='pull',dest=openPhysicalPosition(ctx,u,destination,1.35);
+ const hit=segmentBodyHit(ctx,u,from,dest);
+ if(!hit)return{point:dest,pathing:false,body:null,forcedStop:false};
+ const dx=dest.x-from.x,dy=dest.y-from.y,len=Math.hypot(dx,dy)||1;
+ if(forced){
+  const t=Math.max(.02,hit.t-.08),contact=openPhysicalPosition(ctx,u,{x:from.x+dx*t,y:from.y+dy*t},1.35,[hit.other.id]);
+  return{point:contact,pathing:true,body:hit.other,forcedStop:true}
+ }
+ const px=-dy/len,py=dx/len,forward=Math.min(1.2,hit.clearance*.25),side=hit.clearance+1.0;
+ const candidates=[
+  {x:hit.center.x+px*side+dx/len*forward,y:hit.center.y+py*side+dy/len*forward},
+  {x:hit.center.x-px*side+dx/len*forward,y:hit.center.y-py*side+dy/len*forward}
+ ].map(p=>openPhysicalPosition(ctx,u,p,1.35,[hit.other.id]))
+  .filter(p=>pointInsideArena(ctx,p,bodyRadius(u)*.45))
+  .filter(p=>!segmentBlocker(ctx,from,p,'movement',Math.max(.65,bodyRadius(u)*.5)));
+ if(!candidates.length)return{point:dest,pathing:false,body:null,forcedStop:false};
+ const point=candidates.sort((a,b)=>(dist(from,a)+dist(a,dest))-(dist(from,b)+dist(b,dest)))[0];
+ return{point,pathing:true,body:hit.other,forcedStop:false}
+}
+function settlePhysicalSpace(ctx,units){
+ if(ctx?.physicalSpace===false)return;
+ const list=(units||physicalUnits(ctx)).filter(u=>u?.alive!==false);
+ for(let pass=0;pass<3;pass++)for(const u of list)u.position=openPhysicalPosition(ctx,u,u.position,1.35)
+}
 
 function environmentBlockers(ctx){return Array.isArray(ctx?.environment?.blockers)?ctx.environment.blockers:[]}
 function arenaBounds(ctx){
@@ -1280,26 +1371,27 @@ function visibleCastPoint(ctx,u,target,range,preferred){
 
 function moveTo(ctx,u,pos,duration=420,reason='positioning'){
  if(!u?.alive)return false;
- const from=copy(u.position),route=navigationWaypoint(ctx,from,pos),to=route.point,travel=Math.max(80,Number(duration)||420);
+ const from=copy(physicalPosition(ctx,u)),environmentRoute=navigationWaypoint(ctx,from,pos),bodyRoute=collisionWaypoint(ctx,u,from,environmentRoute.point,reason),to=bodyRoute.point,travel=Math.max(80,Number(duration)||420);
  if(dist(from,to)<.5)return true;
  if(u.currentCast){
   emit(ctx,'CAST_CANCELLED',{source:u.id,target:u.currentCast.target,ability:u.currentCast.ability,result:'movement',position:from});
   u.currentCast=null;
  }
- const token=++u.moveToken;u.movingUntil=ctx.time+travel;
- emit(ctx,'MOVEMENT_START',{source:u.id,target:u.target,position:from,result:reason,payload:{to,duration:travel,navigation:route.pathing?'waypoint':'direct',finalTo:route.final,blocker:route.blocker||null}});
+ const token=++u.moveToken;u.position=from;u.moveStartedAt=ctx.time;u.moveFrom=copy(from);u.moveTo=copy(to);u.movingUntil=ctx.time+travel;
+ const pathing=environmentRoute.pathing||bodyRoute.pathing;
+ emit(ctx,'MOVEMENT_START',{source:u.id,target:u.target,position:from,result:reason,payload:{to,duration:travel,navigation:pathing?'waypoint':'direct',finalTo:environmentRoute.final,blocker:environmentRoute.blocker||bodyRoute.body?.id||null,bodyCollision:bodyRoute.body?{unitId:bodyRoute.body.id,name:bodyRoute.body.name||bodyRoute.body.id,radius:bodyRadius(bodyRoute.body),forcedStop:bodyRoute.forcedStop}:null,bodyRadius:bodyRadius(u)}});
  schedule(ctx,ctx.time+travel,()=>{
   if(!u.alive||u.moveToken!==token)return;
-  u.position=to;u.movingUntil=0;
-  emit(ctx,'MOVEMENT_END',{source:u.id,target:u.target,position:copy(to),result:reason,payload:{from,duration:travel,navigation:route.pathing?'waypoint':'direct',finalTo:route.final,blocker:route.blocker||null}})
+  u.position=openPhysicalPosition(ctx,u,to,1.35);u.movingUntil=0;u.moveStartedAt=0;u.moveFrom=null;u.moveTo=null;
+  emit(ctx,'MOVEMENT_END',{source:u.id,target:u.target,position:copy(u.position),result:reason,payload:{from,duration:travel,navigation:pathing?'waypoint':'direct',finalTo:environmentRoute.final,blocker:environmentRoute.blocker||bodyRoute.body?.id||null,bodyCollision:bodyRoute.body?{unitId:bodyRoute.body.id,name:bodyRoute.body.name||bodyRoute.body.id,radius:bodyRadius(bodyRoute.body),forcedStop:bodyRoute.forcedStop}:null,bodyRadius:bodyRadius(u)}})
  },'movement-end');
  return false
 }
 function nearestMeleePoint(enemy,u,ctx){
  const pack=ctx?ctx.enemies.filter(e=>e.alive&&e.target===enemy.id&&e.attackRange<=7):[];
- const slot=pack.findIndex(e=>e.id===u.id);
+ const slot=pack.findIndex(e=>e.id===u.id),radius=Math.max(4,Math.min(4.8,bodyClearance(enemy,u)+.45));
  const angle=pack.length>1&&slot>=0?-Math.PI/2+slot*Math.PI*2/pack.length:Math.atan2(u.position.y-enemy.position.y,u.position.x-enemy.position.x);
- return{x:enemy.position.x+Math.cos(angle)*4,y:enemy.position.y+Math.sin(angle)*4}
+ return{x:enemy.position.x+Math.cos(angle)*radius,y:enemy.position.y+Math.sin(angle)*radius}
 }
 function stableUnitIndex(ctx,u,list){
  const idx=list.findIndex(x=>x.id===u.id);return idx<0?Math.max(0,Number(u?.partyIndex)||0):idx
@@ -1317,7 +1409,7 @@ function symmetricFormationOffset(slot){
  return sequence[slot%sequence.length]+Math.floor(slot/sequence.length)*(slot%2?-.18:.18)
 }
 function meleeFormationPoint(ctx,u,target){
- const radius=u.role==='tank'?4.15:4.4;
+ const clearance=bodyClearance(u,target)+.4,radius=Math.max(u.role==='tank'?4.15:4.4,Math.min(4.85,clearance));
  if(u.role==='tank'){
    // Keep roster membership stable across deaths/revives so survivors do not reshuffle.
    const tanks=ctx.players.filter(p=>p.role==='tank'),slot=stableUnitIndex(ctx,u,tanks),angle=formationBaseAngle(ctx,target)+(slot-(tanks.length-1)/2)*.68;
@@ -2898,12 +2990,12 @@ function summonPet(ctx,owner,{type='felguard',name='Felguard',duration=0,countIn
  const pet={
   id:'pet-'+String(owner.characterId||owner.id).replace(/^p-/,'')+'-'+type+'-'+seq,
   ownerId:owner.id,owner,role:'pet',class:owner.class+' Pet',spec:type,name:name||def.name,type,visualArchetype:def.visual,empoweredUntil:0,
-  active:true,alive:true,position:pos,facing:0,target:null,currentCast:null,movingUntil:0,moveToken:0,
+  active:true,alive:true,position:pos,facing:0,bodyRadius:type==='infernal'?1.15:type==='tyrant'?1:.75,target:null,currentCast:null,movingUntil:0,moveToken:0,moveStartedAt:0,moveFrom:null,moveTo:null,
   range:def.range,baseDamage:def.baseDamage,attackName:def.attack,baseInterval:def.interval,
   nextAttack:ctx.time+450+countIndex*180,expiresAt:duration>0?ctx.time+duration+bonusDuration:0
  };
- ctx.pets.push(pet);ctx.units[pet.id]=pet;
- emit(ctx,'PET_SUMMONED',{source:owner.id,target:pet.id,ability:pet.name,result:duration<=0?'permanent':'summoned',position:copy(pet.position),payload:{petId:pet.id,ownerId:owner.id,ownerClass:owner.class,petType:type,name:pet.name,permanent:duration<=0,duration:pet.expiresAt?pet.expiresAt-ctx.time:0,visualArchetype:pet.visualArchetype,attackRange:pet.range}});
+ ctx.pets.push(pet);ctx.units[pet.id]=pet;pet.position=openPhysicalPosition(ctx,pet,pet.position,1.05);
+ emit(ctx,'PET_SUMMONED',{source:owner.id,target:pet.id,ability:pet.name,result:duration<=0?'permanent':'summoned',position:copy(pet.position),payload:{petId:pet.id,ownerId:owner.id,ownerClass:owner.class,petType:type,name:pet.name,permanent:duration<=0,duration:pet.expiresAt?pet.expiresAt-ctx.time:0,visualArchetype:pet.visualArchetype,attackRange:pet.range,bodyRadius:bodyRadius(pet)}});
  return pet
 }
 function dismissPet(ctx,pet,reason='expired'){
@@ -3413,11 +3505,11 @@ function spawnAdds(ctx,e,mechanic={}){
  const requested=Number(mechanic.addCount),wanted=Number.isFinite(requested)?Math.max(1,Math.min(5,Math.round(requested))):2+Math.max(0,Math.min(2,Number(ctx.encounter.scaling?.addCountBonus)||0));
  const count=Math.max(0,Math.min(wanted,maxActive-active)),addName=String(mechanic.addName||'Cave Spawn');
  for(let i=0;i<count;i++){
-  const id='add-'+ctx.addSeq++,level=Math.max(1,Number(e.level)||Number(ctx.encounter.level)||1),rule=enemyClassRule('add'),healthScale=Math.max(.25,Number(mechanic.healthScale)||1),maxHealth=Math.round(72*levelHealthScale(level)*rule.health*scalingValue(ctx,'enemyHealth',1)*healthScale),add={id,name:addName,role:'enemy',kind:'enemy',classification:'add',classificationLabel:rule.label,level,maxHealth,health:maxHealth,alive:true,position:{x:Number(mechanic.x)||74,y:Number(mechanic.y)||(i?66:34)},facing:180,target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},nextAttack:ctx.time+600+i*150,currentCast:null,isAdd:true,priority:Number.isFinite(Number(mechanic.priority))?Number(mechanic.priority):3,damageScale:rule.damage*scalingValue(ctx,'enemyDamage',1)*Math.max(.25,Number(mechanic.damageScale)||1),visualArchetype:mechanic.visualArchetype||null,targeting:String(mechanic.targeting||'threat').toLowerCase(),attackRange:Math.max(2,Number(mechanic.attackRange)||5),attackName:mechanic.attackName||null,damageType:mechanic.damageType||'physical',allAttacksAoe:Boolean(mechanic.allAttacksAoe),passive:Boolean(mechanic.passive),addGroup:group};
-  add.movingUntil=0;add.moveToken=0;ctx.enemies.push(add);ctx.units[id]=add;ctx.players.forEach(p=>add.threat[p.id]=0);
+  const id='add-'+ctx.addSeq++,level=Math.max(1,Number(e.level)||Number(ctx.encounter.level)||1),rule=enemyClassRule('add'),healthScale=Math.max(.25,Number(mechanic.healthScale)||1),maxHealth=Math.round(72*levelHealthScale(level)*rule.health*scalingValue(ctx,'enemyHealth',1)*healthScale),add={id,name:addName,role:'enemy',kind:'enemy',classification:'add',classificationLabel:rule.label,level,maxHealth,health:maxHealth,alive:true,position:{x:Number(mechanic.x)||74,y:Number(mechanic.y)||(i?66:34)},facing:180,bodyRadius:Math.max(.9,Number(mechanic.bodyRadius)||1.1),target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},nextAttack:ctx.time+600+i*150,currentCast:null,isAdd:true,priority:Number.isFinite(Number(mechanic.priority))?Number(mechanic.priority):3,damageScale:rule.damage*scalingValue(ctx,'enemyDamage',1)*Math.max(.25,Number(mechanic.damageScale)||1),visualArchetype:mechanic.visualArchetype||null,targeting:String(mechanic.targeting||'threat').toLowerCase(),attackRange:Math.max(2,Number(mechanic.attackRange)||5),attackName:mechanic.attackName||null,damageType:mechanic.damageType||'physical',allAttacksAoe:Boolean(mechanic.allAttacksAoe),passive:Boolean(mechanic.passive),addGroup:group};
+  add.movingUntil=0;add.moveToken=0;add.moveStartedAt=0;add.moveFrom=null;add.moveTo=null;ctx.enemies.push(add);ctx.units[id]=add;add.position=openPhysicalPosition(ctx,add,add.position,1.15);ctx.players.forEach(p=>add.threat[p.id]=0);
   const random=livingPlayers(ctx)[Math.floor(ctx.rng()*livingPlayers(ctx).length)];if(random)add.threat[random.id]=120;
   setAggro(ctx,add,topThreatTarget(ctx,add),'spawn');
-  emit(ctx,'ADD_SPAWNED',{source:e.id,target:add.id,ability:mechanic.spawnAbility||'Summon',result:'spawned',position:copy(add.position),payload:{name:add.name,maxHealth:add.maxHealth,target:add.target,level:add.level,classification:add.classification,classificationLabel:add.classificationLabel,visualArchetype:add.visualArchetype,attackRange:add.attackRange,damageType:add.damageType,addGroup:group}});
+  emit(ctx,'ADD_SPAWNED',{source:e.id,target:add.id,ability:mechanic.spawnAbility||'Summon',result:'spawned',position:copy(add.position),payload:{name:add.name,maxHealth:add.maxHealth,target:add.target,level:add.level,classification:add.classification,classificationLabel:add.classificationLabel,visualArchetype:add.visualArchetype,attackRange:add.attackRange,damageType:add.damageType,addGroup:group,bodyRadius:bodyRadius(add)}});
   if(ctx.tactics?.crowdControl==='priority-elites'){
     const controller=livingPlayers(ctx).filter(p=>p.role==='dps').sort((a,b)=>executionQuality(ctx,b)-executionQuality(ctx,a))[0];
     if(controller&&i===0){applyStatus(ctx,controller,add,{id:'tactical-control-add-'+id,name:'Tactical Crowd Control',kind:'debuff',duration:1800,cc:'stun'});emit(ctx,'CROWD_CONTROL',{source:controller.id,target:add.id,ability:'Tactical Crowd Control',result:'applied',payload:{duration:1800,policy:'priority-elites'}})}
@@ -3744,10 +3836,11 @@ function simulate(options={}){
   crowdControl:options.tactics?.crowdControl||'disabled'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
+ const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
  players.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  enemies.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
- emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),units:[...players,...enemies].map(u=>({id:u.id,position:copy(u.position),facing:u.facing,alive:u.alive,role:u.role,classification:u.classification,visualArchetype:u.visualArchetype,attackRange:u.attackRange,damageType:u.damageType})),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel}))}});
+ settlePhysicalSpace(ctx,[...players,...enemies]);
+ emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,physicalSpace:ctx.physicalSpace,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),units:[...players,...enemies].map(u=>({id:u.id,position:copy(u.position),facing:u.facing,alive:u.alive,role:u.role,classification:u.classification,visualArchetype:u.visualArchetype,attackRange:u.attackRange,damageType:u.damageType,bodyRadius:bodyRadius(u)})),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel,bodyRadius:bodyRadius(e)}))}});
  players.forEach(u=>{
   Object.values(u.statuses||{}).forEach(st=>{
    if(Number(st.expiresAt)>0){
@@ -4394,6 +4487,11 @@ function runSelfTests(){
   const unique=new Set(ends.map(p=>p?Math.round(p.x*10)+'/'+Math.round(p.y*10):''));
   return unique.size>=3
  });
+ test('Physical Space Bodies',()=>{
+  const units=[...r.finalState.players,...r.finalState.enemies].filter(u=>u.alive);
+  return units.every((u,i)=>units.slice(i+1).every(v=>dist(u.position,v.position)>=bodyClearance(u,v)-.18))
+ });
+ test('Physical Collision Metadata',()=>r.events.some(e=>e.type==='COMBAT_START'&&e.payload?.physicalSpace===true&&e.payload?.units?.every(u=>Number(u.bodyRadius)>0)));
  test('Resource Bars',()=>r.events.filter(e=>e.type==='RESOURCE_STATE'&&e.result==='initial').length===5);
  r=simulate({party:[
   {id:'rt',name:'Tank',class:'Warrior',spec:'Protection',power:10,level:10,_combatResource:{value:44}},
