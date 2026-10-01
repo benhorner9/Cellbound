@@ -622,6 +622,25 @@ function stageEnemyMeta(s,index){
  return{level,type,label:labels[type]||type.toUpperCase()}
 }
 function enemyMetaText(s,index){const m=stageEnemyMeta(s,index);return'Lv. '+m.level+' · '+m.label}
+function ensureRoomFade(){
+ const arena=$('#cb2dArena');if(!arena)return null;
+ let fade=arena.querySelector('.cb2d-room-fade');
+ if(!fade){fade=document.createElement('div');fade.className='cb2d-room-fade';fade.setAttribute('aria-hidden','true');arena.appendChild(fade)}
+ return fade
+}
+function setRoomFade(black,duration=520){
+ const fade=ensureRoomFade();if(!fade)return;
+ fade.style.setProperty('--cb2d-room-fade-ms',Math.max(0,Number(duration)||0)+'ms');
+ if(black){fade.classList.add('is-black');fade.classList.remove('is-clear')}
+ else{fade.classList.remove('is-black');fade.classList.add('is-clear')}
+}
+function roomFadeInDuringEntry(){
+ if(!run?.roomTransitionBlack)return;
+ const fade=ensureRoomFade();if(!fade)return;
+ fade.classList.add('is-black');fade.classList.remove('is-clear');
+ requestAnimationFrame(()=>requestAnimationFrame(()=>setRoomFade(false,680)));
+ run.roomTransitionBlack=false
+}
 function clearArenaEphemera(){
  const arena=$('#cb2dArena');if(!arena)return;
  arena.classList.remove('travelling','between-stages','stage-cleared');
@@ -713,7 +732,8 @@ function spawn(s){
    const meta=stageEnemyMeta(s,i),boss=meta.type==='boss'||meta.type==='world-boss',p=stageEnemyPosition(s,i);
    addUnit('e-'+i,n,boss?'enemy boss':'enemy',p.x,p.y,boss?'big':'',enemyMetaText(s,i))
  });
- setTimeout(()=>arena?.classList.remove('room-entering'),620)
+ if(run?.roomTransitionBlack)roomFadeInDuringEntry();
+ setTimeout(()=>arena?.classList.remove('room-entering'),720)
 }
 function point(id){
  const arena=$('#cb2dArena'),u=$('[data-unit="'+id+'"]');if(!arena||!u)return null;
@@ -995,13 +1015,26 @@ async function travelDeeper(currentStage,nextStage,tok){
  act('tank','Leading the route');act('healer','Following the group');act('dps','Moving to the next pull');
  log('The party regroups and advances toward '+nextStage.title+'.');
  const chars=party(),route=ashenRoute(currentStage),path=Array.isArray(route.exitPath)&&route.exitPath.length?route.exitPath:[{x:88,y:50}],spread=Number(route.spread)||2.2;
- for(let step=0;step<path.length;step++){
-   const point=path[step],from=path[Math.max(0,step-1)]||point,to=path[Math.min(path.length-1,step+1)]||point,duration=step===path.length-1?300:360;
+ // Start from the exact end-of-fight positions. Do not send the party back to
+ // any default formation before beginning the room exit.
+ const current=Object.fromEntries(chars.map(c=>[c.id,pctPosition('p-'+c.id)]));
+ const centroid=chars.reduce((acc,c)=>{const p=current[c.id];acc.x+=p.x;acc.y+=p.y;return acc},{x:0,y:0});
+ centroid.x/=Math.max(1,chars.length);centroid.y/=Math.max(1,chars.length);
+ // Skip exit waypoints that would visibly send the group backwards.
+ let startIndex=0,best=Infinity;
+ path.forEach((p,i)=>{const d=Math.hypot(p.x-centroid.x,p.y-centroid.y);if(d<best){best=d;startIndex=i}});
+ if(startIndex>0&&best>18)startIndex=0;
+ const activePath=path.slice(startIndex);
+ for(let step=0;step<activePath.length;step++){
+   const point=activePath[step],from=step===0?centroid:activePath[step-1],to=activePath[Math.min(activePath.length-1,step+1)]||point;
+   const finalStep=step===activePath.length-1,duration=finalStep?520:380;
+   if(finalStep)setRoomFade(true,duration+120);
    chars.forEach((c,i)=>{const p=routeOffset(point,from,to,i,spread);move('p-'+c.id,p.x,p.y,duration)});
    await delay(duration+35);if(tok!==token||!run)return
  }
+ run.roomTransitionBlack=true;
  const banner=document.createElement('div');banner.className='cb2d-travel-banner';banner.innerHTML='<small>MOVING DEEPER</small><b>'+esc(nextStage.title)+'</b>';$('#cb2dArena')?.appendChild(banner);
- await delay(260);banner.remove();arena?.classList.remove('travelling')
+ await delay(150);banner.remove();arena?.classList.remove('travelling')
 }
 function bonus(s){let b=run.override||0;if(tactics.aggression==='aggressive')b+=4;if(tactics.aggression==='safe'&&s.kind==='trash')b+=4;if(tactics.defensives==='early')b+=3;if(tactics.defensives==='save'&&s.kind==='final')b+=5;if(tactics.adds==='full'&&s.mechanics.some(m=>m[1]==='adds'))b+=4;return b}
 function learn(s,ok){const a=ok?(s.kind==='trash'||s.kind==='event'?3:7):5;party().forEach(c=>{c.knowledge=c.knowledge||{};const gain=Math.max(1,Math.round(a*(I?.knowledgeMultiplier?.(c)||1)));c.knowledge[s.knowledge]=clamp((Number(c.knowledge[s.knowledge])||0)+gain,0,100)});return a}
@@ -1384,7 +1417,15 @@ function renderRebornEvent(e,result,replayMode=false){
   case'CAST_FINISH':
    rebornCastClear('CAST COMPLETE');if(String(e.source||'').startsWith('e-'))log((e.ability||'Enemy cast')+' completes.');break;
   case'COMBAT_END':
-   rebornCastClear();status(e.result==='victory'?'Encounter cleared':'Party defeated');run.stageOutcome=e.result==='victory';if(e.result==='victory')window.CellboundCombatFX?.victory?.($('#cb2dArena'));else window.CellboundFX?.wipe?.('The expedition has collapsed inside The Ashen Vault.');regroup();break;
+   rebornCastClear();status(e.result==='victory'?'Encounter cleared':'Party defeated');run.stageOutcome=e.result==='victory';
+   if(e.result==='victory'){
+     // Preserve the party exactly where the fight ended. The room transition now
+     // begins from the live combat positions instead of snapping back to formation.
+     window.CellboundCombatFX?.victory?.($('#cb2dArena'))
+   }else{
+     window.CellboundFX?.wipe?.('The expedition has collapsed inside The Ashen Vault.')
+   }
+   break;
  }
 }
 function configureRebornViewer(){
