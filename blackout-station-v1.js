@@ -382,8 +382,16 @@ function hideRoleZones(immediate=false){
  const speed=Math.max(.25,Number(run?.speed)||1),delay=Math.max(70,120/speed);
  setTimeout(()=>{if(!layer.isConnected||layer.dataset.zoneEpoch!==epoch)return;layer.innerHTML='';layer.classList.remove('resolving')},delay)
 }
+function bsStripDirectionBlips(){
+ const arena=$('#bsArena');if(!arena)return;
+ arena.querySelectorAll('.cbl-facing').forEach(n=>n.remove());
+ arena.querySelectorAll('.cb2d-unit>i:not(.cbl-ground):not(.cbl-cast-glyph)').forEach(n=>{
+   if(!n.classList.contains('cbl-ground')&&!n.classList.contains('cbl-cast-glyph'))n.style.display='none'
+ })
+}
 function eventRender(e){
  window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#bsArena'),resolve:id=>statusTargets(id)?.[0],speed:()=>run?.speed||1});
+ bsStripDirectionBlips();
  try{if(window.CellboundCombatStatuses?.handle(e,{resolve:statusTargets,speed:()=>run?.speed||1}))return}catch(error){console.warn('Blackout Station status UI skipped',e?.type,error)}
 
  const src=renderId(e.source),target=renderId(e.target),srcChar=charFor(e.source),targetChar=charFor(e.target);
@@ -511,7 +519,7 @@ function drawCombat(){
  p.forEach((c,i)=>{const start=starts[i]||[30+i*7,70];addUnit('p'+i,c.name,'party '+role(c)+' '+classKey(c),start[0],start[1],false,c.id)});
  p.forEach(c=>mountResource(c));
  addUnit('e0','Dr. Vex Calder','enemy boss',62,42,true);renderMeters();
- requestAnimationFrame(()=>window.CellboundCombatPortraits?.refresh?.());
+ requestAnimationFrame(()=>{window.CellboundCombatPortraits?.refresh?.();bsStripDirectionBlips()});
  feed('Power restored. Dr. Vex Calder enters the reactor core.')
 }
 async function startBoss(resumed=false){

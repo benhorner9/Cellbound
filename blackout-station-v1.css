@@ -1174,3 +1174,29 @@ body.bs2d-open{overflow:hidden}
     width:32px;height:32px;
   }
 }
+
+
+/* Blackout Station legacy direction marker hard-disable v2 */
+/* Remove both generations of directional UI: the old dot-arrow and Living Combat facing ring. */
+.bs-arena.bs-live-room .cbl-facing{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  width:0!important;
+  height:0!important;
+  background:none!important;
+  box-shadow:none!important;
+}
+.bs-arena.bs-live-room .cb2d-unit>i:not(.cbl-ground):not(.cbl-cast-glyph){
+  display:none!important;
+}
+.bs-arena.bs-live-room .cb2d-unit>i:after{
+  content:none!important;
+  display:none!important;
+  border:0!important;
+  opacity:0!important;
+}
+/* The portrait itself is now the only persistent circular character marker. */
+.bs-arena.bs-live-room .cb2d-unit.cb-combat-has-portrait>.cb-combat-portrait{
+  outline:0!important;
+}
