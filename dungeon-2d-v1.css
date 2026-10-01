@@ -1173,3 +1173,145 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
   .cb2d-arena.theme-ashen .cb2d-prop{opacity:.64;filter:brightness(.68) saturate(.76) drop-shadow(0 5px 7px rgba(0,0,0,.45))}
   .cb2d-arena.theme-ashen .cb2d-floor{filter:brightness(.62) saturate(.76) contrast(1.07)}
 }
+
+
+/* Ashen Vault cinematic composition v2 */
+.cb2d-arena.theme-ashen{
+  isolation:isolate;
+  height:auto!important;
+  min-height:560px;
+  max-height:650px;
+  aspect-ratio:1.62/1;
+  background:#050607!important;
+  border-color:rgba(224,139,67,.2);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.65),0 18px 48px rgba(0,0,0,.28);
+}
+.cb2d-arena.theme-ashen .cb2d-floor{
+  inset:-1px;
+  background-color:#050607!important;
+  transform:scale(1.155)!important;
+  transform-origin:50% 50%;
+  filter:brightness(.83) saturate(1.03) contrast(1.08)!important;
+}
+.cb2d-arena.theme-ashen.room-vaultheart-sanctum .cb2d-floor{
+  filter:brightness(.78) saturate(.96) contrast(1.1)!important;
+}
+.cb2d-arena.theme-ashen .cb2d-floor:before{
+  box-shadow:inset 0 0 34px rgba(0,0,0,.42),inset 0 0 92px rgba(0,0,0,.2)!important;
+}
+.cb2d-arena.theme-ashen .cb2d-floor:after{
+  background:
+    radial-gradient(ellipse at 50% 48%,transparent 34%,rgba(3,4,5,.06) 64%,rgba(2,3,4,.26) 100%),
+    linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.12))!important;
+}
+.cb2d-arena.theme-ashen::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:3;
+  pointer-events:none;
+  background:
+    linear-gradient(90deg,rgba(255,91,24,.06),transparent 9% 91%,rgba(255,91,24,.06)),
+    linear-gradient(180deg,rgba(255,121,38,.035),transparent 14% 84%,rgba(0,0,0,.16));
+  box-shadow:inset 0 0 0 1px rgba(244,149,70,.08),inset 0 0 28px rgba(0,0,0,.28);
+}
+.cb2d-arena.theme-ashen::after{
+  content:"";
+  position:absolute;
+  left:0;right:0;bottom:0;height:20%;
+  z-index:3;
+  pointer-events:none;
+  background:linear-gradient(180deg,transparent,rgba(2,3,4,.24));
+}
+.cb2d-arena.theme-ashen .cb2d-environment{z-index:2;overflow:visible}
+.cb2d-arena.theme-ashen .cb2d-prop{
+  opacity:.96!important;
+  filter:brightness(.96) saturate(1.08) contrast(1.03) drop-shadow(0 10px 12px rgba(0,0,0,.55))!important;
+}
+.cb2d-arena.theme-ashen .cb2d-prop.depth-back{z-index:1}
+.cb2d-arena.theme-ashen .cb2d-prop.depth-front{z-index:4;filter:brightness(.9) saturate(1.05) drop-shadow(0 14px 15px rgba(0,0,0,.62))!important}
+.cb2d-arena.theme-ashen .cb2d-prop.prop-gate,
+.cb2d-arena.theme-ashen .cb2d-prop.prop-vault-door{
+  width:180px!important;height:105px!important;
+}
+.cb2d-arena.theme-ashen .cb2d-prop.prop-pillar{width:64px!important;height:106px!important}
+.cb2d-arena.theme-ashen .cb2d-prop.prop-pillar-broken{width:70px!important;height:96px!important}
+.cb2d-arena.theme-ashen .cb2d-prop.prop-brazier{width:49px!important;height:76px!important}
+.cb2d-arena.theme-ashen .cb2d-prop.prop-chain{width:78px!important;height:90px!important}
+.cb2d-arena.theme-ashen .cb2d-prop.prop-furnace{width:96px!important;height:92px!important}
+.cb2d-arena.theme-ashen .cb2d-prop.prop-rubble{width:78px!important;height:72px!important}
+
+.cb2d-arena.theme-ashen.room-hall-embers .cb2d-floor,
+.cb2d-arena.theme-ashen.room-warden-seal .cb2d-floor,
+.cb2d-arena.theme-ashen.room-embermaw-forge .cb2d-floor,
+.cb2d-arena.theme-ashen.room-vaultheart-sanctum .cb2d-floor{
+  transform:scale(1.19)!important;
+}
+.cb2d-arena.theme-ashen.room-furnace-passage .cb2d-floor{
+  transform:scale(1.21)!important;
+}
+.cb2d-arena.theme-ashen.room-vault-depths .cb2d-floor{
+  transform:scale(1.17)!important;
+}
+
+.cb2d-arena.theme-ashen .cb2d-room-tag{
+  left:12px;top:12px;
+  max-width:260px;
+  padding:8px 10px;
+  border-color:rgba(230,151,76,.18);
+  background:linear-gradient(180deg,rgba(8,10,10,.86),rgba(5,7,8,.72));
+  box-shadow:0 8px 24px rgba(0,0,0,.2);
+}
+.cb2d-arena.theme-ashen .cb2d-room-tag b{color:#d9c5a0;font-size:.5rem}
+.cb2d-arena.theme-ashen .cb2d-room-tag small{color:#c27c48;font-size:.38rem}
+.cb2d-arena.theme-ashen .cb2d-caption{
+  left:12px;bottom:12px;
+  background:rgba(4,7,8,.88);
+  border-color:rgba(226,142,67,.18);
+  backdrop-filter:blur(6px);
+}
+.cb2d-arena.theme-ashen .cb2d-ground-legend{right:12px;top:12px}
+.cb2d-arena.theme-ashen .cb2d-ground-legend span{
+  background:rgba(4,7,8,.86);
+  border-color:rgba(255,255,255,.08);
+  backdrop-filter:blur(5px);
+}
+.cb2d-arena.theme-ashen #cb2dUnits{z-index:7}
+.cb2d-arena.theme-ashen #cb2dTelegraphs{z-index:5}
+.cb2d-arena.theme-ashen .cb2d-unit>span{
+  top:32px;
+  min-width:112px;
+  padding:2px 5px;
+  border-radius:3px;
+  background:rgba(2,4,5,.72);
+  text-shadow:0 1px 4px #000;
+}
+.cb2d-arena.theme-ashen .cb2d-unit.enemy.big>span,
+.cb2d-arena.theme-ashen .cb2d-unit.enemy.boss>span{top:46px}
+.cb2d-arena.theme-ashen.boss-room{
+  border-color:rgba(236,113,57,.28);
+  box-shadow:inset 0 0 0 1px rgba(255,126,53,.06),0 18px 52px rgba(0,0,0,.34);
+}
+.cb2d-arena.theme-ashen.boss-room .cb2d-environment:after{
+  content:"";
+  position:absolute;
+  inset:8% 12%;
+  z-index:0;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(233,92,33,.08),transparent 64%);
+  filter:blur(16px);
+  pointer-events:none;
+}
+@media(max-width:1050px){
+  .cb2d-arena.theme-ashen{min-height:500px;max-height:610px}
+}
+@media(max-width:760px){
+  .cb2d-arena.theme-ashen{min-height:390px;max-height:none;aspect-ratio:1.38/1}
+  .cb2d-arena.theme-ashen .cb2d-floor{transform:scale(1.2)!important}
+  .cb2d-arena.theme-ashen .cb2d-prop{opacity:.82!important}
+  .cb2d-arena.theme-ashen .cb2d-prop.depth-front{opacity:.74!important}
+  .cb2d-arena.theme-ashen .cb2d-room-tag{max-width:205px}
+}
+@media(max-width:480px){
+  .cb2d-arena.theme-ashen{min-height:335px}
+}
