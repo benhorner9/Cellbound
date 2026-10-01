@@ -1071,7 +1071,7 @@ function normalisePlayer(c,i,zone=null){
  return{
   id:'p-'+c.id,characterId:c.id,name:c.name||('Adventurer '+(i+1)),class:c.class||'Unknown',spec:c.spec||'',role,partyIndex:i,
   maxHealth,health:startHealth,alive:startHealth>0,position:startPosition,facing:0,bodyRadius:1.3,
-  target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,moveStartedAt:0,moveFrom:null,moveTo:null,collisionMoveUntil:0,nextResourceState:0,cooldowns:carriedCooldowns,statuses:carriedStatuses(c),resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
+  target:null,focus:null,gcdUntil:0,currentCast:null,movingUntil:0,moveToken:0,moveStartedAt:0,moveFrom:null,moveTo:null,nextResourceState:0,cooldowns:carriedCooldowns,statuses:carriedStatuses(c),resource:{name:res.name,max:res.max,value:resourceValue,regen:resourceRegen},
   abilities:copy(abilityPool(c,role)),power,level,itemLevel,defence,professionBonuses,professionProcs,relicOpeningUsed:false,baseStats:{baseHealth,healthScale,outputScale},setBonuses:setState,talents:talentRanks(c),talentTree:copy(c?.talents?.[c?.spec]||{}),talentTimers:copy(c?._combatTalentTimers||{}),talentFlags:copy(c?._combatTalentFlags||{}),talentCounters:copy(c?._combatTalentCounters||{}),damageActions:Math.max(0,Number(c?._combatDamageActions)||0),knowledge:copy(c.knowledge||{}),uniqueEffects:equippedUniqueEffects(c),staggerPool:0,nextStaggerTick:0,staggerSourceId:null,lastMonkAbility:null,lastMistHealId:null,recentDamageTaken:[],dkWounds:{},soulFragments:0,comboPoints:0,
   defensiveUntil:Math.max(0,Number(c?._combatDefensiveMs)||0),frenzyUntil:Math.max(0,Number(c?._combatFrenzyMs)||0),uniqueUsed:copy(c?._combatUniqueUsed||{}),nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
@@ -1380,7 +1380,6 @@ function moveTo(ctx,u,pos,duration=420,reason='positioning'){
  const continuousReroute=baseTravel>=180&&(u.role==='enemy'||u.role==='pet'||isMeleeCombatant(u)),collisionFinal=bodyRoute.pathing&&!bodyRoute.forcedStop&&continuousReroute?environmentRoute.point:null,legDistance=dist(from,to),remainingDistance=collisionFinal?dist(to,collisionFinal):0,totalDistance=Math.max(.01,legDistance+remainingDistance);
  const travel=collisionFinal?Math.max(90,Math.min(baseTravel-90,Math.round(baseTravel*(legDistance/totalDistance)))):baseTravel;
  const continuationTravel=collisionFinal?Math.max(90,baseTravel-travel):0;
- if(bodyRoute.body&&!bodyRoute.forcedStop&&u.role!=='enemy'&&u.role!=='pet')u.collisionMoveUntil=Math.max(Number(u.collisionMoveUntil)||0,ctx.time+baseTravel);
  const token=++u.moveToken;u.position=from;u.moveStartedAt=ctx.time;u.moveFrom=copy(from);u.moveTo=copy(to);u.movingUntil=ctx.time+travel;
  const pathing=environmentRoute.pathing||bodyRoute.pathing;
  emit(ctx,'MOVEMENT_START',{source:u.id,target:u.target,position:from,result:reason,payload:{to,duration:travel,navigation:pathing?'waypoint':'direct',finalTo:environmentRoute.final,blocker:environmentRoute.blocker||bodyRoute.body?.id||null,bodyCollision:bodyRoute.body?{unitId:bodyRoute.body.id,name:bodyRoute.body.name||bodyRoute.body.id,radius:bodyRadius(bodyRoute.body),forcedStop:bodyRoute.forcedStop}:null,bodyRadius:bodyRadius(u),collisionContinuation:Boolean(collisionFinal)}});
@@ -2797,16 +2796,11 @@ function chooseAbility(ctx,u,target){
  const usable=dmg.find(a=>(a.cost||0)<=u.resource.value&&cooldownReady(u,a))||dmg[dmg.length-1];
  return{ability:usable,target};
 }
-function canAttackDuringCollisionMove(ctx,u,a,target){
- if(!ctx?.physicalSpace||ctx.time>=Number(u?.movingUntil)||ctx.time>=Number(u?.collisionMoveUntil)||!isMeleeCombatant(u)||a?.kind!=='damage'||Number(a?.cast||0)>0||!target?.alive)return false;
- const range=Math.max(2,Number(a.range)||5),up=physicalPosition(ctx,u),tp=physicalPosition(ctx,target);
- return dist(up,tp)<=range+.35&&hasLineOfSight(ctx,up,tp)
-}
 function startAbility(ctx,u,a,target){
- const deadTarget=a?.kind==='battle-rez'&&target&&!target.alive,movingAttack=canAttackDuringCollisionMove(ctx,u,a,target);
- if(!u.alive||(!target?.alive&&!deadTarget)||u.currentCast||(ctx.time<u.movingUntil&&!movingAttack)||ctx.time<u.gcdUntil||!cooldownReady(u,a))return false;
+ const deadTarget=a?.kind==='battle-rez'&&target&&!target.alive;
+ if(!u.alive||(!target?.alive&&!deadTarget)||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.gcdUntil||!cooldownReady(u,a))return false;
  if(u.class==='Rogue'&&Number(a.comboCost)>0&&Math.max(0,Number(u.comboPoints)||0)<Number(a.comboCost))return false;
- if(!movingAttack&&!moveIntoRange(ctx,u,target,Number(a.range)||5,a.kind))return false;
+ if(!moveIntoRange(ctx,u,target,Number(a.range)||5,a.kind))return false;
  if(!spendResource(ctx,u,a))return false;
  const haste=clamp(statusBonus(u,'haste')+Math.max(0,Number(u?.setBonuses?.haste)||0)+Math.max(0,Number(u?.professionBonuses?.haste)||0)/100,0,.60),speed=1+haste;
  let cast=Math.max(0,Math.round((Number(a.cast)||0)/speed));cast=talentCastTime(ctx,u,a,cast);
@@ -3298,14 +3292,8 @@ function useDefensiveSkill(ctx,u,a){
 }
 
 function playerAI(ctx,u){
- if(!u.alive||u.currentCast||ctx.time<u.nextDecision||ctx.time<u.gcdUntil)return;
+ if(!u.alive||u.currentCast||ctx.time<u.movingUntil||ctx.time<u.nextDecision||ctx.time<u.gcdUntil)return;
  if(Number(u.mechanicHoldUntil)>ctx.time)return;
- if(ctx.time<u.movingUntil){
-  if(ctx.time>=Number(u.collisionMoveUntil)||!isMeleeCombatant(u))return;
-  const movingTarget=pickDamageTarget(ctx,u),movingPick=movingTarget?chooseAbility(ctx,u,movingTarget):null;
-  if(!movingPick||!canAttackDuringCollisionMove(ctx,u,movingPick.ability,movingPick.target))return;
-  u.nextDecision=ctx.time+160;startAbility(ctx,u,movingPick.ability,movingPick.target);return
- }
  u.nextDecision=ctx.time+160;
  const buff=classBuffFor(u);if(buff&&activateClassBuff(ctx,u,buff))return;
  if(useTalentUtility(ctx,u))return;
