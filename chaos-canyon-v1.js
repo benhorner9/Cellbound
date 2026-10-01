@@ -170,7 +170,7 @@ function setStatus(text){const e=$('#cc2dStatus');if(e)e.textContent=text}
 function feed(text){if(!run)return;run.log.push(text);const e=$('#cc2dFeed');if(e)e.innerHTML=run.log.slice(-7).reverse().map(x=>'<p>'+esc(x)+'</p>').join('')}
 function ccArenaScale(){return STAGES[run?.stage]?.id==='vorran'?[1,.78,.55,.30][Math.max(0,Math.min(3,Number(run?.vorranShrink)||0))]:1}
 function ccArenaPoint(x,y){const scale=ccArenaScale();return{x:50+(Number(x)-50)*scale,y:50+(Number(y)-50)*scale}}
-function addUnit(id,label,cls,x,y,big=false,meta=''){const e=document.createElement('div'),safe=ccSafePoint(id,x,y);e.className='cc2d-unit cb2d-unit '+cls+(big?' big':'');e.dataset.cc=id;e.dataset.rawX=safe.x;e.dataset.rawY=safe.y;const p=ccArenaPoint(safe.x,safe.y);e.style.left=p.x+'%';e.style.top=p.y+'%';e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="cc2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em><i></i></em>';$('#cc2dUnits').appendChild(e)}
+function addUnit(id,label,cls,x,y,big=false,meta='',characterId=null){const e=document.createElement('div'),safe=ccSafePoint(id,x,y);e.className='cc2d-unit cb2d-unit '+cls+(big?' big':'');e.dataset.cc=id;if(characterId)e.dataset.unit='p-'+characterId;e.dataset.rawX=safe.x;e.dataset.rawY=safe.y;const p=ccArenaPoint(safe.x,safe.y);e.style.left=p.x+'%';e.style.top=p.y+'%';e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="cc2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em><i></i></em>';$('#cc2dUnits').appendChild(e)}
 function ccSafePoint(id,x,y){const arena=$('#cc2dArena'),transit=arena?.classList.contains('travelling')||arena?.classList.contains('room-entering');return{x:Math.max(transit?2:7,Math.min(transit?98:93,Number(x)||50)),y:Math.max(transit?2:11,Math.min(transit?98:89,Number(y)||50))}}
 function move(id,x,y,ms=550){const e=$('[data-cc="'+id+'"]');if(!e)return;const safe=ccSafePoint(id,x,y);e.dataset.rawX=safe.x;e.dataset.rawY=safe.y;const p=ccArenaPoint(safe.x,safe.y);e.style.transitionDuration=ms+'ms';e.style.left=p.x+'%';e.style.top=p.y+'%'}
 function ccReflowArena(ms=760){document.querySelectorAll('[data-cc]').forEach(e=>{const x=Number(e.dataset.rawX),y=Number(e.dataset.rawY);if(Number.isFinite(x)&&Number.isFinite(y))move(e.dataset.cc,x,y,ms)})}
@@ -259,9 +259,10 @@ function spawnStage(s){
  const arena=$('#cc2dArena');arena?.classList.add('room-entering');
  chars.forEach((c,i)=>{
   const start=ccRouteOffset(entry,entry,inside,i,spread),target=ccPartyPosition(s,i);
-  addUnit('p'+i,c.name,'party '+role(c)+' '+classKey(c),start.x,start.y);
+  addUnit('p'+i,c.name,'party '+role(c)+' '+classKey(c),start.x,start.y,false,'',c.id);
   setTimeout(()=>move('p'+i,target.x,target.y,650),35+i*22)
  });
+ requestAnimationFrame(()=>window.CellboundCombatPortraits?.refresh?.());
  // Hostiles belong to the room and are already waiting for the party.
  s.enemies.forEach((n,i)=>{
   const m=ccEnemyMeta(s,i),big=m.type==='boss'||m.type==='world-boss'||(s.id==='sentinel'&&m.type==='elite'),target=ccEnemyPosition(s,i);
