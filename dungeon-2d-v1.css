@@ -1541,3 +1541,212 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 @media(prefers-reduced-motion:reduce){
   .cb2d-arena .cb2d-room-fade{transition-duration:120ms!important}
 }
+
+
+/* Ashen Vault animated ambience v2 */
+.cb2d-room-hotspots{
+  position:absolute;inset:0;z-index:3;overflow:hidden;pointer-events:none;
+  contain:layout paint style;
+}
+.cb2d-room-hotspot{
+  position:absolute;left:var(--hx);top:var(--hy);width:var(--hw);height:var(--hh);
+  display:block;pointer-events:none;transform:translate(-50%,-50%) rotate(var(--hr,0deg));
+  transform-origin:50% 50%;opacity:var(--hi,.5);mix-blend-mode:screen;
+  will-change:transform,opacity,filter;
+}
+.cb2d-room-hotspot:before,.cb2d-room-hotspot:after{
+  content:"";position:absolute;inset:0;pointer-events:none;border-radius:50%;
+}
+.cb2d-room-hotspot.fire:before{
+  inset:-36%;
+  background:radial-gradient(ellipse at 50% 58%,rgba(255,201,100,.52) 0 8%,rgba(255,112,39,.34) 18%,rgba(214,53,16,.14) 40%,transparent 70%);
+  filter:blur(8px);
+  animation:cb2dFireGlow 1.34s ease-in-out infinite alternate;
+  animation-delay:var(--hd);
+}
+.cb2d-room-hotspot.fire:after{
+  left:28%;right:28%;top:6%;bottom:15%;border-radius:52% 48% 58% 42% / 72% 68% 32% 28%;
+  background:
+    radial-gradient(ellipse at 52% 72%,rgba(255,244,180,.94) 0 8%,rgba(255,177,69,.82) 18%,rgba(255,78,24,.52) 44%,transparent 72%);
+  filter:blur(1.4px);
+  transform-origin:50% 85%;
+  animation:cb2dFlameFlicker .46s steps(2,end) infinite;
+  animation-delay:var(--hd);
+}
+.cb2d-room-hotspot.lava{
+  border-radius:45%;
+  background:
+    radial-gradient(ellipse at 25% 55%,rgba(255,222,126,.54),transparent 28%),
+    radial-gradient(ellipse at 72% 45%,rgba(255,85,26,.42),transparent 34%),
+    linear-gradient(90deg,transparent 0,rgba(255,67,16,.16) 12%,rgba(255,187,67,.42) 34%,rgba(255,77,19,.18) 64%,transparent 100%);
+  background-size:180% 100%;
+  filter:blur(4px) saturate(1.18);
+  animation:cb2dLavaFlow 3.2s linear infinite,cb2dLavaBreath 1.9s ease-in-out infinite alternate;
+  animation-delay:var(--hd),var(--hd);
+}
+.cb2d-room-hotspot.lava:after{
+  inset:22% 4%;
+  background:linear-gradient(90deg,transparent,rgba(255,242,166,.44),rgba(255,103,27,.18),transparent);
+  filter:blur(3px);border-radius:50%;
+  animation:cb2dLavaThread 2.15s ease-in-out infinite;
+  animation-delay:var(--hd);
+}
+.cb2d-room-hotspot.rune:before{
+  inset:12%;border:2px solid rgba(255,126,50,.24);
+  box-shadow:inset 0 0 18px rgba(255,87,28,.20),0 0 22px rgba(255,82,27,.17);
+  animation:cb2dRunePulse 2.65s ease-in-out infinite;
+  animation-delay:var(--hd);
+}
+.cb2d-room-hotspot.rune:after{
+  inset:31%;border:1px solid rgba(255,190,91,.27);
+  box-shadow:0 0 18px rgba(255,99,33,.22);
+  animation:cb2dRunePulse 2.65s ease-in-out infinite reverse;
+  animation-delay:var(--hd);
+}
+.cb2d-room-hotspot.core:before{
+  inset:-22%;
+  background:radial-gradient(circle,rgba(255,247,196,.72) 0 5%,rgba(255,155,62,.48) 13%,rgba(255,62,21,.24) 35%,transparent 69%);
+  filter:blur(5px);
+  animation:cb2dCorePulse 1.9s ease-in-out infinite;
+  animation-delay:var(--hd);
+}
+.cb2d-room-hotspot.core:after{
+  inset:26%;border:2px solid rgba(255,222,139,.52);
+  box-shadow:0 0 14px rgba(255,148,62,.62),inset 0 0 12px rgba(255,91,28,.48);
+  animation:cb2dCoreRing 3.6s linear infinite;
+}
+.cb2d-room-hotspot.vent:before{
+  inset:-25%;
+  background:radial-gradient(ellipse,rgba(255,181,76,.46),rgba(255,76,23,.19) 35%,transparent 70%);
+  filter:blur(7px);
+  animation:cb2dVentBreath 1.5s ease-in-out infinite alternate;
+  animation-delay:var(--hd);
+}
+.cb2d-room-hotspot.vent:after{
+  left:20%;right:20%;top:56%;bottom:18%;
+  background:linear-gradient(0deg,rgba(255,92,26,.08),rgba(255,213,126,.42),transparent);
+  filter:blur(2px);border-radius:50%;
+  animation:cb2dVentJet .82s ease-out infinite;
+  animation-delay:var(--hd);
+}
+.cb2d-room-hotspot.vent>b{
+  position:absolute;left:var(--spark-x);bottom:28%;width:3px;height:3px;border-radius:50%;
+  background:rgba(255,219,131,.9);box-shadow:0 0 7px rgba(255,104,30,.7);
+  animation:cb2dVentSpark 1.25s ease-out infinite;animation-delay:var(--spark-delay);
+}
+.cb2d-room-hotspot.heat{
+  border-radius:38%;
+  background:
+    repeating-linear-gradient(93deg,transparent 0 8px,rgba(255,181,112,.045) 9px 11px,transparent 12px 21px),
+    radial-gradient(ellipse,rgba(255,106,41,.075),transparent 68%);
+  filter:blur(5px);
+  animation:cb2dLocalHeat 2.8s ease-in-out infinite alternate;
+  animation-delay:var(--hd);
+}
+.cb2d-room-hotspot.relic:before{
+  inset:-18%;
+  background:radial-gradient(ellipse,rgba(221,157,122,.18),rgba(134,82,92,.09) 36%,transparent 68%);
+  filter:blur(6px);
+  animation:cb2dRelicPulse 3.8s ease-in-out infinite;
+  animation-delay:var(--hd);
+}
+.cb2d-room-hotspot.relic:after{
+  inset:35%;background:radial-gradient(circle,rgba(240,181,129,.36),transparent 68%);
+  filter:blur(2px);
+  animation:cb2dRelicPulse 2.9s ease-in-out infinite reverse;
+  animation-delay:var(--hd);
+}
+.cb2d-room-hotspot.glow{
+  border-radius:50%;
+  background:radial-gradient(ellipse,rgba(255,135,62,.22),rgba(190,66,31,.07) 42%,transparent 72%);
+  filter:blur(10px);
+  animation:cb2dGlowBreathe 4.4s ease-in-out infinite alternate;
+  animation-delay:var(--hd);
+}
+.cb2d-arena.theme-ashen.boss-room.cbl-live .cb2d-room-hotspot{
+  filter:brightness(1.08) saturate(1.08);
+}
+.cb2d-arena.theme-ashen.boss-room.cbl-live .cb2d-room-hotspot.rune,
+.cb2d-arena.theme-ashen.boss-room.cbl-live .cb2d-room-hotspot.core{
+  opacity:calc(var(--hi,.5) * 1.08);
+}
+.cb2d-arena.theme-ashen.ambient-surge .cb2d-room-hotspot{
+  filter:brightness(1.55) saturate(1.25);
+}
+.cb2d-arena.theme-ashen.ambient-surge .cb2d-bespoke-life:before{
+  opacity:1;filter:blur(7px) brightness(1.3);
+}
+@keyframes cb2dFireGlow{
+  0%{transform:scale(.91,.86);opacity:.58;filter:blur(9px) brightness(.85)}
+  42%{transform:scale(1.04,.98);opacity:.88}
+  68%{transform:scale(.96,1.08);opacity:.67}
+  100%{transform:scale(1.12,.95);opacity:1;filter:blur(6px) brightness(1.18)}
+}
+@keyframes cb2dFlameFlicker{
+  0%{transform:skewX(-4deg) scale(.88,1.02) translateY(2%)}
+  25%{transform:skewX(5deg) scale(1.05,.93) translateY(-4%)}
+  50%{transform:skewX(-2deg) scale(.94,1.10) translateY(-1%)}
+  75%{transform:skewX(7deg) scale(1.02,.88) translateY(3%)}
+  100%{transform:skewX(-5deg) scale(.9,1.05) translateY(-3%)}
+}
+@keyframes cb2dLavaFlow{
+  from{background-position:0 0}
+  to{background-position:180% 0}
+}
+@keyframes cb2dLavaBreath{
+  from{opacity:.56;filter:blur(4.6px) brightness(.9) saturate(1.08)}
+  to{opacity:1;filter:blur(3px) brightness(1.2) saturate(1.28)}
+}
+@keyframes cb2dLavaThread{
+  0%,100%{transform:translateX(-8%) scaleX(.86);opacity:.28}
+  50%{transform:translateX(10%) scaleX(1.08);opacity:.72}
+}
+@keyframes cb2dRunePulse{
+  0%,100%{transform:scale(.94);opacity:.26}
+  45%{transform:scale(1.025);opacity:.78}
+  65%{transform:scale(.99);opacity:.48}
+}
+@keyframes cb2dCorePulse{
+  0%,100%{transform:scale(.86);opacity:.62}
+  50%{transform:scale(1.13);opacity:1}
+}
+@keyframes cb2dCoreRing{
+  from{transform:rotate(0deg) scale(.94)}
+  50%{transform:rotate(180deg) scale(1.06)}
+  to{transform:rotate(360deg) scale(.94)}
+}
+@keyframes cb2dVentBreath{
+  from{transform:scale(.86,.94);opacity:.48}
+  to{transform:scale(1.10,1.04);opacity:.96}
+}
+@keyframes cb2dVentJet{
+  0%{transform:translateY(14%) scale(.7);opacity:0}
+  32%{opacity:.72}
+  100%{transform:translateY(-48%) scale(1.25,.78);opacity:0}
+}
+@keyframes cb2dVentSpark{
+  0%{transform:translate(0,0) scale(.6);opacity:0}
+  18%{opacity:1}
+  100%{transform:translate(14px,-44px) scale(1.1);opacity:0}
+}
+@keyframes cb2dLocalHeat{
+  from{transform:translate(-50%,-50%) rotate(var(--hr,0deg)) skewX(-1deg) scale(.98,1);opacity:.25}
+  to{transform:translate(-50%,-50%) rotate(var(--hr,0deg)) skewX(1.1deg) scale(1.025,1.05);opacity:.62}
+}
+@keyframes cb2dRelicPulse{
+  0%,100%{transform:scale(.92);opacity:.22}
+  50%{transform:scale(1.07);opacity:.6}
+}
+@keyframes cb2dGlowBreathe{
+  from{transform:scale(.94);opacity:.36}
+  to{transform:scale(1.08);opacity:.75}
+}
+@media(prefers-reduced-motion:reduce){
+  .cb2d-room-hotspot,.cb2d-room-hotspot:before,.cb2d-room-hotspot:after,.cb2d-room-hotspot>b{animation:none!important}
+  .cb2d-room-hotspot{opacity:calc(var(--hi,.5) * .55)}
+}
+@media(max-width:760px){
+  .cb2d-room-hotspots{opacity:.78}
+  .cb2d-room-hotspot.heat{opacity:calc(var(--hi,.5) * .65)}
+  .cb2d-room-hotspot.vent>b:nth-child(3){display:none}
+}
