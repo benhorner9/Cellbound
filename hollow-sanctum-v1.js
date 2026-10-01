@@ -349,7 +349,7 @@ function hsRenderRebornEvent(e){
  }catch(error){console.warn('Hollow Sanctum status visual skipped',e?.type,error)}
  const src=hsRenderId(e.source),target=hsRenderId(e.target),srcChar=hsCharacter(e.source),targetChar=hsCharacter(e.target);
  switch(e.type){
-  case'COMBAT_START':{const arena=$('#hs2dArena');window.CellboundCombatFX?.mount?.(arena);if(['boss','final'].includes(String(STAGES[run.stage]?.kind||'')))window.CellboundCombatFX?.boss?.(arena,STAGES[run.stage]?.title||'Boss');setStatus('Combat simulation live.');feed('Combat begins.');break;}
+  case'COMBAT_START':{const arena=$('#hs2dArena');window.CellboundCombatFX?.mount?.(arena);if(['boss','final'].includes(String(STAGES[run.stage]?.kind||'')))window.CellboundCombatFX?.boss?.(arena,STAGES[run.stage]?.title||'Boss');setStatus('Combat ready.');feed('Combat begins.');break;}
   case'MOVEMENT_START':if(window.CellboundCombatFX?.ownsMovement)break;if(src&&e.payload?.to)move(src,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
   case'ABILITY_START':
    if(srcChar)hsAct(role(srcChar),srcChar.name+' · '+(e.ability||'Ability'));
@@ -453,7 +453,7 @@ function hsProgressEarned(){
    ?'<span><i>★</i><b>NEW BEST · '+score.toLocaleString()+' score</b></span>'
    :record.previousBestScore?'<span><i>↔</i><b>Previous best '+Number(record.previousBestScore).toLocaleString()+' · this run '+score.toLocaleString()+'</b></span>':'';
  if(!unlocks.length&&!achievements.length&&!comparison)return'';
- return'<section class="cbr-progress-earned"><small>RUN PROGRESSION</small><h4>What changed after this clear.</h4><div>'+comparison+unlocks.map(x=>'<span><i>↗</i><b>'+esc(x)+'</b></span>').join('')+achievements.map(id=>'<span><i>◆</i><b>Achievement: '+esc(window.CellboundEndgame?.achievementName?.(id)||id)+'</b></span>').join('')+'</div></section>'
+ return'<section class="cbr-progress-earned"><small>RUN RESULTS</small><h4>After this clear.</h4><div>'+comparison+unlocks.map(x=>'<span><i>↗</i><b>'+esc(x)+'</b></span>').join('')+achievements.map(id=>'<span><i>◆</i><b>Achievement: '+esc(window.CellboundEndgame?.achievementName?.(id)||id)+'</b></span>').join('')+'</div></section>'
 }
 
 
