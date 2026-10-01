@@ -959,3 +959,139 @@ body.bs2d-open{overflow:hidden}
   .bs-grid-frame.solved .bs-cable:before,.bs-grid-frame.solved .bs-cable:after,
   .bs-grid-source.live:before,.bs-puzzle-shell:not(.powered) .bs-grid-frame{animation:none!important}
 }
+
+
+/* Blackout Station exact cable alignment pass v3 */
+/*
+ * The puzzle logic enters at tile 4 (row 2) and exits at tile 11 (row 3).
+ * The rig uses the square board itself as its height reference, so 37.5% and
+ * 62.5% are the exact vertical centres of those rows on desktop and iPad.
+ */
+.bs-grid-frame{
+  --bs-port-width:96px;
+  --bs-port-gap:16px;
+  --bs-pipe-overlap:9px;
+}
+.bs-grid-rig{
+  position:relative;
+  width:min(900px,100%);
+  box-sizing:border-box;
+  padding-inline:calc(var(--bs-port-width) + var(--bs-port-gap));
+}
+.bs-grid-rig>.bs-grid-board{
+  width:100%;
+  max-width:none;
+  box-sizing:border-box;
+}
+.bs-grid-rig>.bs-grid-source,
+.bs-grid-rig>.bs-grid-breaker{
+  top:auto;
+  bottom:auto;
+  margin:0;
+}
+.bs-grid-rig>.bs-grid-source{
+  left:0;
+  top:37.5%;
+  transform:translateY(-50%);
+}
+.bs-grid-rig>.bs-grid-breaker{
+  right:0;
+  top:62.5%;
+  transform:translateY(-50%);
+}
+.bs-grid-rig>.bs-grid-source,
+.bs-grid-rig>.bs-grid-breaker{
+  width:var(--bs-port-width);
+}
+.bs-grid-rig>.bs-grid-source:after{
+  width:calc(var(--bs-port-gap) + 2px);
+  right:calc((var(--bs-port-gap) + 2px) * -1);
+}
+.bs-grid-rig>.bs-grid-breaker:before{
+  width:calc(var(--bs-port-gap) + 2px);
+  left:calc((var(--bs-port-gap) + 2px) * -1);
+}
+
+/* Every cable reaches through the tile gap, so connected pieces physically meet. */
+.bs-cable.h:before{
+  left:calc(var(--bs-pipe-overlap) * -1)!important;
+  right:calc(var(--bs-pipe-overlap) * -1)!important;
+}
+.bs-cable.v:before{
+  top:calc(var(--bs-pipe-overlap) * -1)!important;
+  bottom:calc(var(--bs-pipe-overlap) * -1)!important;
+}
+.bs-cable.sw:before,.bs-cable.se:before{
+  top:44%!important;
+  bottom:calc(var(--bs-pipe-overlap) * -1)!important;
+  height:auto!important;
+}
+.bs-cable.nw:before,.bs-cable.ne:before{
+  top:calc(var(--bs-pipe-overlap) * -1)!important;
+  bottom:44%!important;
+  height:auto!important;
+}
+.bs-cable.sw:after,.bs-cable.nw:after{
+  left:calc(var(--bs-pipe-overlap) * -1)!important;
+  right:44%!important;
+  width:auto!important;
+}
+.bs-cable.ne:after,.bs-cable.se:after{
+  left:44%!important;
+  right:calc(var(--bs-pipe-overlap) * -1)!important;
+  width:auto!important;
+}
+
+/* Keep all pipe centre-lines at precisely 50% of each tile. */
+.bs-cable.h:before,
+.bs-cable.sw:after,.bs-cable.nw:after,.bs-cable.ne:after,.bs-cable.se:after{
+  top:44%!important;
+  height:12%!important;
+}
+.bs-cable.v:before,
+.bs-cable.sw:before,.bs-cable.nw:before,.bs-cable.ne:before,.bs-cable.se:before{
+  left:44%!important;
+  width:12%!important;
+}
+
+/* Hide overflow only at the outside edge of the whole board, not per tile. */
+.bs-grid-board{overflow:hidden}
+.bs-grid-tile,.bs-grid-empty{overflow:visible}
+.bs-grid-empty{z-index:1}
+.bs-grid-tile{z-index:2}
+.bs-grid-tile:focus-visible{z-index:4}
+
+/* The outer cabinet masks pipe overlap cleanly around the four board edges. */
+.bs-grid-board:after{
+  content:"";
+  position:absolute;inset:0;z-index:8;pointer-events:none;
+  border:9px solid #080e11;
+  box-shadow:inset 0 0 0 1px rgba(112,147,154,.18);
+}
+
+/* Ensure clues and touch targets remain above neighbouring pipe overlap. */
+.bs-clue-ghost{z-index:9}
+.bs-grid-tile> .bs-cable{z-index:1}
+.bs-grid-tile{isolation:isolate}
+.bs-grid-tile.live{z-index:3}
+
+/* Exact responsive port geometry. */
+@media(max-width:1100px){
+  .bs-grid-frame{
+    --bs-port-width:82px;
+    --bs-port-gap:13px;
+    --bs-pipe-overlap:8px;
+  }
+  .bs-grid-rig{width:min(820px,100%)}
+}
+@media(max-width:620px){
+  .bs-grid-frame{
+    --bs-port-width:42px;
+    --bs-port-gap:6px;
+    --bs-pipe-overlap:5px;
+  }
+  .bs-grid-rig{width:100%}
+  .bs-grid-rig>.bs-grid-source,.bs-grid-rig>.bs-grid-breaker{height:90px}
+  .bs-grid-rig>.bs-grid-source:after,
+  .bs-grid-rig>.bs-grid-breaker:before{height:7px}
+}

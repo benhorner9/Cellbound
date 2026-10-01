@@ -134,6 +134,8 @@ for(const file of files){
     if(file===stageFile&&!contents.includes('consumeBossChargesOnce'))throw new Error(stageFile+' is missing profession boss-charge consumption');
   }
   if(file==='blackout-station-v1.js'&&!contents.includes('craftedGridOverrideStack'))throw new Error('Crafted Engineering grid bypass is not integrated');
+  if(file==='blackout-station-v1.js'&&!contents.includes('bs-grid-rig'))throw new Error('Blackout distribution board alignment rig is missing');
+  if(file==='blackout-station-v1.css'&&(!contents.includes('top:37.5%')||!contents.includes('top:62.5%')||!contents.includes('Blackout Station exact cable alignment pass v3')))throw new Error('Blackout source/breaker alignment contract is missing');
   if(file==='combat-standard-v1.js'&&!contents.includes('professionZone:meta.zone'))throw new Error('Combat gateway must pass encounter zone for Scribing');
 
   if(file==='character-portraits-v1.js'){
