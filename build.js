@@ -623,6 +623,23 @@ for(const htmlFile of ['index.html','guild.html']){
   for(const ref of localRuntimeRefs)if(!fs.existsSync(path.join(out,ref)))throw new Error(`HTML references runtime asset missing from production package: ${htmlFile} -> ${ref}`);
 }
 for(const file of assets){const src=path.join(__dirname,file),dest=path.join(out,file);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest)}
+/* Reconstruct bespoke Ashen Vault battlefields from repository-safe base64 sources. */
+{
+  const slugs=['broken-gate','hall-embers','kael','furnace','embermaw','vault-depths','vaultheart'];
+  const sourceDir=path.join(__dirname,'asset-source','ashen-vault','battlefields');
+  const outputDir=path.join(out,'assets','ashen-vault','battlefields');
+  fs.mkdirSync(outputDir,{recursive:true});
+  for(const slug of slugs){
+    const source=path.join(sourceDir,slug+'.avif.b64');
+    if(!fs.existsSync(source))throw new Error('Missing bespoke Ashen Vault battlefield source: '+slug);
+    const encoded=fs.readFileSync(source,'utf8').replace(/\\s+/g,'');
+    const bytes=Buffer.from(encoded,'base64');
+    if(bytes.length<12000)throw new Error('Bespoke Ashen Vault battlefield failed reconstruction: '+slug);
+    const output=path.join(outputDir,slug+'.avif');
+    fs.writeFileSync(output,bytes);
+    if(!fs.existsSync(output)||fs.statSync(output).size<12000)throw new Error('Missing bespoke Ashen Vault battlefield in production package: '+slug)
+  }
+}
 for(const file of ["assets/comics/null-complex/voss-signal.webp","assets/comics/null-complex/facility-entry.webp","assets/comics/null-complex/first-aberrant.webp","assets/comics/null-complex/orin-recording.webp","assets/comics/null-complex/subject-zero.webp","assets/comics/null-complex/teleporter.webp","assets/comics/null-complex/overseer-awakens.webp","assets/comics/null-complex/prototype-07.webp","assets/comics/null-complex/escape.webp","assets/comics/null-complex/subject-zero-awake.webp"]){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing Null Complex comic artwork in production package: ${file}`)}
 for(const file of ['assets/comics/thirteenth-bell/sealed_letter.jpg','assets/comics/thirteenth-bell/greywake_arrival.jpg','assets/comics/thirteenth-bell/locked_house.jpg','assets/comics/thirteenth-bell/final_run.jpg','assets/comics/thirteenth-bell/bellkeeper.jpg','assets/comics/thirteenth-bell/bell_breaks.jpg','assets/comics/thirteenth-bell/greywake_freed.jpg','assets/comics/thirteenth-bell/departure.jpg']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing Thirteenth Bell comic artwork in production package: ${file}`)}
 for(const file of ['assets/dungeons/ashen-vault.webp','assets/dungeons/hollow-sanctum.webp','assets/dungeons/chaos-canyon.webp','assets/dungeons/blackout-station.webp','assets/dungeons/fractured-ages.webp']){if(!fs.existsSync(path.join(out,file)))throw new Error(`Missing Dungeon Journal artwork in production package: ${file}`)}

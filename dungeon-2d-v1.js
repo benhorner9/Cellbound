@@ -17,114 +17,82 @@ const ASHEN_ROOMS={
  'broken-gate':{
    room:'broken-gate',label:'Collapsed Vault Entrance',
    ambience:'Ash drifts through a shattered seal.',
-   props:[
-     ['pillar-broken',8,23,-8,1.55,'depth-back'],['brazier',15,31,0,1.35,'depth-back'],
-     ['pillar',86,23,2,1.55,'depth-back'],['brazier',79,31,0,1.35,'depth-back'],
-     ['pillar-broken',8,82,8,1.48,'depth-front'],['gate',90,76,0,1.62,'depth-front'],
-     ['chain',22,88,-72,1.35,'depth-front'],['rubble',21,76,-8,1.35,'depth-front'],
-     ['rubble',73,83,6,1.18,'depth-front']
-   ],
+   art:'./assets/ashen-vault/battlefields/broken-gate.avif',
+   artPosition:'50% 50%',
+   bounds:{left:12,right:87,top:17,bottom:86},
    blockers:[
-     {id:'broken-gate-door',x:90,y:76,w:14,h:21},{id:'broken-pillar-north',x:8,y:23,w:7,h:22},{id:'broken-pillar-south',x:8,y:82,w:7,h:18},
-     {id:'rubble-west',x:21,y:76,w:8,h:7,blocksLos:false},{id:'rubble-east',x:73,y:83,w:8,h:7,blocksLos:false}
+     {id:'broken-gate-arch',x:88,y:25,w:13,h:22},
+     {id:'broken-pillar-nw',x:8,y:19,w:8,h:21},
+     {id:'broken-rubble-sw',x:13,y:80,w:13,h:12,blocksLos:false},
+     {id:'broken-rubble-ne',x:72,y:17,w:10,h:8,blocksLos:false}
    ]
  },
  'hall-embers':{
    room:'hall-embers',label:'Ember Processional Hall',
    ambience:'Old braziers still breathe beneath the ash.',
-   props:[
-     ['pillar',9,19,0,1.55,'depth-back'],['pillar',91,19,0,1.55,'depth-back'],
-     ['pillar',9,81,0,1.62,'depth-front'],['pillar',91,81,0,1.62,'depth-front'],
-     ['brazier',18,28,0,1.35,'depth-back'],['brazier',82,28,0,1.35,'depth-back'],
-     ['brazier',18,73,0,1.35,'depth-front'],['brazier',82,73,0,1.35,'depth-front'],
-     ['chain',50,8,90,1.2,'depth-back']
-   ],
+   art:'./assets/ashen-vault/battlefields/hall-embers.avif',
+   artPosition:'50% 50%',
+   bounds:{left:12,right:88,top:15,bottom:86},
    blockers:[
-     {id:'hall-pillar-nw',x:9,y:19,w:7,h:22},{id:'hall-pillar-sw',x:9,y:81,w:7,h:22},
-     {id:'hall-pillar-ne',x:91,y:19,w:7,h:22},{id:'hall-pillar-se',x:91,y:81,w:7,h:22},
-     {id:'hall-brazier-nw',x:18,y:28,w:5,h:8,blocksLos:false},{id:'hall-brazier-ne',x:82,y:28,w:5,h:8,blocksLos:false},
-     {id:'hall-brazier-sw',x:18,y:73,w:5,h:8,blocksLos:false},{id:'hall-brazier-se',x:82,y:73,w:5,h:8,blocksLos:false}
+     {id:'hall-pillar-nw',x:8,y:20,w:8,h:20},
+     {id:'hall-pillar-ne',x:92,y:20,w:8,h:20},
+     {id:'hall-pillar-sw',x:8,y:81,w:8,h:20},
+     {id:'hall-pillar-se',x:92,y:81,w:8,h:20}
    ]
  },
  'kael':{
    room:'warden-seal',label:'The Warden Seal',
    ambience:'Chains hold an ancient oath around the chamber.',
-   props:[
-     ['pillar',9,18,0,1.6,'depth-back'],['pillar',91,18,0,1.6,'depth-back'],
-     ['pillar',9,82,0,1.7,'depth-front'],['pillar',91,82,0,1.7,'depth-front'],
-     ['brazier',18,28,0,1.38,'depth-back'],['brazier',82,28,0,1.38,'depth-back'],
-     ['brazier',18,72,0,1.38,'depth-front'],['brazier',82,72,0,1.38,'depth-front'],
-     ['chain',23,12,-48,1.5,'depth-back'],['chain',77,12,48,1.5,'depth-back'],
-     ['chain',22,88,48,1.5,'depth-front'],['chain',78,88,-48,1.5,'depth-front']
-   ],
-   blockers:[
-     {id:'warden-pillar-nw',x:9,y:18,w:7,h:22},{id:'warden-pillar-ne',x:91,y:18,w:7,h:22},
-     {id:'warden-pillar-sw',x:9,y:82,w:7,h:22},{id:'warden-pillar-se',x:91,y:82,w:7,h:22},
-     {id:'warden-brazier-nw',x:18,y:28,w:5,h:8,blocksLos:false},{id:'warden-brazier-ne',x:82,y:28,w:5,h:8,blocksLos:false}
-   ]
+   art:'./assets/ashen-vault/battlefields/kael.avif',
+   artPosition:'50% 50%',
+   bounds:{left:9,right:91,top:8,bottom:92},
+   arena:{shape:'ellipse',cx:50,cy:50,rx:39,ry:37},
+   blockers:[]
  },
  'furnace':{
    room:'furnace-passage',label:'Furnace Passage',
    ambience:'Heat pulses through cracked iron channels.',
-   props:[
-     ['pillar',8,22,0,1.5,'depth-back'],['furnace',88,20,0,1.65,'depth-back'],
-     ['furnace',91,52,0,1.82,'depth-back'],['furnace',88,83,0,1.7,'depth-front'],
-     ['pillar-broken',10,82,-5,1.42,'depth-front'],['brazier',18,31,0,1.22,'depth-back'],
-     ['chain',72,12,58,1.55,'depth-back'],['chain',73,88,-58,1.55,'depth-front'],
-     ['rubble',20,78,0,1.2,'depth-front']
-   ],
+   art:'./assets/ashen-vault/battlefields/furnace.avif',
+   artPosition:'50% 50%',
+   bounds:{left:11,right:89,top:13,bottom:88},
    blockers:[
-     {id:'furnace-main',x:91,y:52,w:12,h:25},{id:'furnace-north',x:88,y:20,w:11,h:20},{id:'furnace-south',x:88,y:83,w:11,h:20},
-     {id:'passage-pillar-nw',x:8,y:22,w:7,h:20},{id:'passage-pillar-sw',x:10,y:82,w:7,h:17}
+     {id:'furnace-nw-works',x:8,y:18,w:11,h:18},
+     {id:'furnace-ne-works',x:91,y:19,w:12,h:20},
+     {id:'furnace-sw-works',x:8,y:82,w:13,h:17},
+     {id:'furnace-se-works',x:92,y:80,w:12,h:18},
+     {id:'furnace-east-channel',x:82,y:51,w:8,h:14,blocksLos:false}
    ]
  },
  'embermaw':{
    room:'embermaw-forge',label:'The Ember Forge',
    ambience:'The floor itself glows beneath Embermaw.',
-   props:[
-     ['furnace',12,17,0,1.62,'depth-back'],['furnace',88,17,0,1.62,'depth-back'],
-     ['furnace',10,82,0,1.72,'depth-front'],['furnace',90,82,0,1.72,'depth-front'],
-     ['brazier',23,25,0,1.2,'depth-back'],['brazier',77,25,0,1.2,'depth-back'],
-     ['chain',30,9,-58,1.55,'depth-back'],['chain',70,9,58,1.55,'depth-back'],
-     ['chain',26,91,58,1.55,'depth-front'],['chain',74,91,-58,1.55,'depth-front']
-   ],
-   blockers:[
-     {id:'embermaw-furnace-nw',x:12,y:17,w:11,h:20},{id:'embermaw-furnace-ne',x:88,y:17,w:11,h:20},
-     {id:'embermaw-furnace-sw',x:10,y:82,w:11,h:20},{id:'embermaw-furnace-se',x:90,y:82,w:11,h:20}
-   ]
+   art:'./assets/ashen-vault/battlefields/embermaw.avif',
+   artPosition:'50% 50%',
+   bounds:{left:8,right:92,top:9,bottom:91},
+   arena:{shape:'ellipse',cx:50,cy:51,rx:40,ry:36},
+   blockers:[]
  },
  'vault-depths':{
    room:'vault-depths',label:'Sealed Vault Depths',
    ambience:'Dead reliquaries line the path inward.',
-   props:[
-     ['pillar',8,19,0,1.5,'depth-back'],['pillar-broken',91,20,6,1.42,'depth-back'],
-     ['gate',9,52,0,1.32,'depth-back'],['gate',91,52,0,1.32,'depth-back'],
-     ['pillar-broken',9,83,-5,1.52,'depth-front'],['pillar',91,82,0,1.58,'depth-front'],
-     ['brazier',20,29,0,1.18,'depth-back'],['brazier',80,29,0,1.18,'depth-back'],
-     ['brazier',22,72,0,1.22,'depth-front'],['brazier',78,72,0,1.22,'depth-front'],
-     ['rubble',18,83,0,1.2,'depth-front']
-   ],
+   art:'./assets/ashen-vault/battlefields/vault-depths.avif',
+   artPosition:'50% 50%',
+   bounds:{left:13,right:87,top:14,bottom:86},
    blockers:[
-     {id:'depths-gate-west',x:9,y:52,w:12,h:20},{id:'depths-gate-east',x:91,y:52,w:12,h:20},
-     {id:'depths-pillar-nw',x:8,y:19,w:7,h:20},{id:'depths-pillar-ne',x:91,y:20,w:7,h:18},
-     {id:'depths-pillar-sw',x:9,y:83,w:7,h:18},{id:'depths-pillar-se',x:91,y:82,w:7,h:20}
+     {id:'depths-shrine-nw',x:9,y:18,w:11,h:20},
+     {id:'depths-shrine-ne',x:91,y:20,w:11,h:20},
+     {id:'depths-shrine-sw',x:9,y:81,w:12,h:19},
+     {id:'depths-shrine-se',x:91,y:80,w:12,h:19}
    ]
  },
  'vaultheart':{
    room:'vaultheart-sanctum',label:'The Vaultheart Sanctum',
    ambience:'A sealed Cell reliquary hums beneath the final chamber.',
-   props:[
-     ['pillar',8,18,0,1.62,'depth-back'],['pillar',92,18,0,1.62,'depth-back'],
-     ['pillar',8,82,0,1.72,'depth-front'],['pillar',92,82,0,1.72,'depth-front'],
-     ['brazier',19,27,0,1.35,'depth-back'],['brazier',81,27,0,1.35,'depth-back'],
-     ['brazier',19,74,0,1.35,'depth-front'],['brazier',81,74,0,1.35,'depth-front'],
-     ['chain',28,9,-58,1.55,'depth-back'],['chain',72,9,58,1.55,'depth-back'],
-     ['chain',24,91,58,1.55,'depth-front'],['chain',76,91,-58,1.55,'depth-front']
-   ],
-   blockers:[
-     {id:'vaultheart-pillar-nw',x:8,y:18,w:7,h:22},{id:'vaultheart-pillar-ne',x:92,y:18,w:7,h:22},
-     {id:'vaultheart-pillar-sw',x:8,y:82,w:7,h:22},{id:'vaultheart-pillar-se',x:92,y:82,w:7,h:22}
-   ]
+   art:'./assets/ashen-vault/battlefields/vaultheart.avif',
+   artPosition:'50% 50%',
+   bounds:{left:8,right:92,top:8,bottom:92},
+   arena:{shape:'ellipse',cx:50,cy:51,rx:40,ry:37},
+   blockers:[]
  }
 };
 let Game=null,G=null,P=null,run=null,token=0,rebornLoaderPromise=null,requestedRunOptions=null;
@@ -349,6 +317,7 @@ function useCombatPotion(options={}){
  return{ok:true,item,target,healApplied:nextHp-beforeHp,conditionApplied:nextCondition==null?0:nextCondition-beforeCondition,remaining:combatPotionSummary(st).count}
 }
 function drawViewer(){
+ preloadAshenBattlefields();
  const s=currentStageDef(),r=root();r.hidden=false;
  r.innerHTML='<section class="cb2d-shell"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LIVE 2D DUNGEON</small><h2 id="cb2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close aria-label="Close dungeon">×</button></div></header><div class="cb2d-route" id="cb2dRoute">'+route()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena" id="cb2dArena"><div class="cb2d-floor"></div><div class="cb2d-environment" id="cb2dEnvironment"></div><div class="cb2d-room-tag" id="cb2dRoomTag"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div><div class="cb2d-caption"><span id="cb2dType">'+s.kind.toUpperCase()+'</span><b id="cb2dStatus">Entering encounter…</b></div></div><div class="cb2d-controls cbr-plan-lock has-consumable" data-reborn="1"><div class="cbr-plan-lock-copy"><small>TACTICS LOCKED</small><b>Your plan is set for this fight.</b><span>The party follows the tactics chosen before the expedition.</span></div>'+combatPotionButtonMarkup('data-combat-potion')+'</div><div class="cb2d-feed"><small>COMBAT FEED</small><p id="cb2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="cb2dDamageTotal">0 total</span></div><div id="cb2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="cb2dHealingTotal">0 total</span></div><div id="cb2dHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="cb2dThreatTarget">No target</span></div><div id="cb2dThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>PARTY CONDITION · ILVL '+ilvl()+'</small><div id="cb2dRows">'+rows()+'</div></div><div class="cb2d-plan"><small>PERSISTENT TACTICS</small><b>'+tactics.aggression.toUpperCase()+' PULLS · '+tactics.cooldowns.toUpperCase()+' COOLDOWNS</b><span>'+tactics.interruptAssignment.toUpperCase()+' INTERRUPTS · '+tactics.cc.toUpperCase()+' CC · '+tactics.bossPlan.toUpperCase()+' BOSSES</span></div></aside></div><div class="cb2d-end" id="cb2dEnd" hidden></div></section>';
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.resolved&&!confirm('Leave the Ashen Vault?'))return;close()};
@@ -466,17 +435,36 @@ function ashParticle(type,i){
  e.style.setProperty('--drift',(-18+(i%7)*6)+'px');
  return e
 }
+let ashenBattlefieldsPreloaded=false;
+function preloadAshenBattlefields(){
+ if(ashenBattlefieldsPreloaded)return;
+ ashenBattlefieldsPreloaded=true;
+ Object.values(ASHEN_ROOMS).forEach(cfg=>{
+   if(!cfg.art)return;
+   const img=new Image();img.decoding='async';img.src=cfg.art
+ })
+}
 function renderDungeonEnvironment(s){
  const arena=$('#cb2dArena'),root=$('#cb2dEnvironment'),tag=$('#cb2dRoomTag');if(!arena||!root)return;
  const cfg=ASHEN_ROOMS[s.id]||ASHEN_ROOMS['broken-gate'];
  arena.className='cb2d-arena theme-ashen room-'+cfg.room+(s.kind==='boss'||s.kind==='final'?' boss-room':'');
  root.innerHTML='';
- (cfg.props||[]).forEach((p,i)=>{
-   const e=document.createElement('span');e.className='cb2d-prop prop-'+p[0];
-   e.style.left=p[1]+'%';e.style.top=p[2]+'%';e.style.setProperty('--rot',(p[3]||0)+'deg');e.style.setProperty('--scale',String(p[4]||1));if(p[5])e.classList.add(p[5]);e.dataset.prop=i;root.appendChild(e)
- });
+ if(cfg.art){
+   arena.dataset.bespokeBattlefield='1';
+   arena.dataset.collisionProfile=s.id;
+   arena.style.setProperty('--cb2d-battlefield','url("'+cfg.art+'")');
+   arena.style.setProperty('--cb2d-battlefield-position',cfg.artPosition||'50% 50%');
+   const depth=document.createElement('div');depth.className='cb2d-bespoke-depth';root.appendChild(depth)
+ }else{
+   delete arena.dataset.bespokeBattlefield;delete arena.dataset.collisionProfile;
+   arena.style.removeProperty('--cb2d-battlefield');arena.style.removeProperty('--cb2d-battlefield-position');
+   (cfg.props||[]).forEach((p,i)=>{
+     const e=document.createElement('span');e.className='cb2d-prop prop-'+p[0];
+     e.style.left=p[1]+'%';e.style.top=p[2]+'%';e.style.setProperty('--rot',(p[3]||0)+'deg');e.style.setProperty('--scale',String(p[4]||1));if(p[5])e.classList.add(p[5]);e.dataset.prop=i;root.appendChild(e)
+   })
+ }
  const ambience=document.createElement('div');ambience.className='cb2d-ambience';
- for(let i=0;i<13;i++)ambience.appendChild(ashParticle(i%4===0?'ember':'ash',i));
+ for(let i=0;i<18;i++)ambience.appendChild(ashParticle(i%3===0?'ember':'ash',i));
  root.appendChild(ambience);
  if(tag)tag.innerHTML='<b>'+esc(cfg.label)+'</b><small>'+esc(cfg.ambience)+'</small>'
 }
@@ -1102,7 +1090,13 @@ function rebornTactics(){
 function rebornEncounter(s){
  const room=ASHEN_ROOMS[s.id]||{};
  const recommendedItemLevel=s.level<=3?18:s.level===4?20:22;
- const base={id:s.id,title:s.title,kind:s.kind,level:s.level||1,recommendedItemLevel,knowledgeKey:s.knowledge||s.id,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies:[...s.enemies],enemyHealth:s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120,mechanics:s.mechanics.map(m=>Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}),environment:{room:room.room||s.id,blockers:(room.blockers||[]).map(b=>({...b,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false}))}};
+ const environment={
+   room:room.room||s.id,
+   blockers:(room.blockers||[]).map(b=>({...b,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false})),
+   bounds:room.bounds?{...room.bounds}:undefined,
+   arena:room.arena?{...room.arena}:undefined
+ };
+ const base={id:s.id,title:s.title,kind:s.kind,level:s.level||1,recommendedItemLevel,knowledgeKey:s.knowledge||s.id,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies:[...s.enemies],enemyHealth:s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120,mechanics:s.mechanics.map(m=>Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}),environment};
  return window.CellboundEndgame?.stageConfig?.('ashen-vault',base)||base
 }
 function copyObject(v){return JSON.parse(JSON.stringify(v||{}))}

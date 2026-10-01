@@ -62,6 +62,9 @@ const PROP_PATHS={
  cable:'M0 5H18V25H42V48H60M0 13H10V33H34V56H60'
 };
 function room(scene,e){
+ if(scene?.arena?.dataset?.bespokeBattlefield==='1'){
+   scene.room?.remove?.();scene.room=null;delete scene.arena.dataset.room;return
+ }
  const name=String(e?.payload?.encounter||'').toLowerCase();
  const theme=scene.arena.classList.contains('theme-manor')||/manor|butler|maid|engineer/.test(name)?'manor':scene.arena.dataset.cbvfxTheme||'world';
  const key=THEMES[theme]?theme:theme.startsWith('fractured')?'fractured':'world';
