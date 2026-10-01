@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.1.0';
+const VERSION='1.2.0';
 const states=new WeakMap();
 const PROFILES={
   'ash-gate':{intensity:.52,heat:.44,pulse:.00,center:[.50,.50],radius:.18,warm:1,cool:0,core:[1,.46,.12]},
@@ -14,6 +14,13 @@ const PROFILES={
   'hollow-gallery':{intensity:.68,heat:.34,pulse:.06,center:[.50,.42],radius:.24,warm:.34,cool:1.0,core:[.12,.96,.88]},
   'hollow-sentinel':{intensity:.82,heat:.48,pulse:.10,center:[.56,.48],radius:.28,warm:.28,cool:1.08,core:[.10,1.0,.90]},
   'hollow-choir':{intensity:.96,heat:.52,pulse:.30,center:[.50,.39],radius:.27,warm:.30,cool:1.14,core:[.10,1.0,.90]},
+  'canyon-mouth':{intensity:.48,heat:.20,pulse:.03,center:[.50,.43],radius:.22,warm:.08,cool:.18,green:.62,core:[.18,1.0,.38]},
+  'canyon-thorn':{intensity:.62,heat:.24,pulse:.04,center:[.50,.43],radius:.24,warm:.06,cool:.20,green:.78,core:[.16,1.0,.36]},
+  'canyon-sentinel':{intensity:.72,heat:.30,pulse:.12,center:[.50,.50],radius:.28,warm:.05,cool:.25,green:.92,core:[.14,1.0,.34]},
+  'canyon-crossing':{intensity:.68,heat:.34,pulse:.06,center:[.50,.46],radius:.25,warm:.04,cool:.36,green:.76,core:[.14,.98,.38]},
+  'canyon-warden':{intensity:.76,heat:.28,pulse:.10,center:[.54,.49],radius:.27,warm:.05,cool:.22,green:.92,core:[.13,1.0,.32]},
+  'canyon-wildheart':{intensity:.88,heat:.36,pulse:.13,center:[.50,.44],radius:.30,warm:.04,cool:.28,green:1.04,core:[.12,1.0,.30]},
+  'canyon-vorran':{intensity:1.00,heat:.42,pulse:.32,center:[.50,.47],radius:.31,warm:.04,cool:.24,green:1.16,core:[.10,1.0,.28]},
   'ashen':{intensity:.62,heat:.48,pulse:.00,center:[.50,.50],radius:.20,warm:1,cool:0,core:[1,.46,.12]}
 };
 
@@ -29,6 +36,7 @@ const FS=[
 'uniform float u_surge;',
 'uniform float u_warm;',
 'uniform float u_cool;',
+'uniform float u_green;',
 'uniform vec3 u_coreColor;',
 'uniform vec2 u_center;',
 'uniform float u_radius;',
@@ -48,7 +56,15 @@ const FS=[
 '  float teal=smoothstep(.025,.30,c.g-c.r)*smoothstep(-.035,.22,c.b-c.r);',
 '  return teal*smoothstep(.18,.60,sat)*smoothstep(.12,.72,lum);',
 '}',
-'float activeMask(vec3 c){return max(warmMask(c)*u_warm,coolMask(c)*u_cool);}',
+'float greenMask(vec3 c){',
+'  float mx=max(c.r,max(c.g,c.b));',
+'  float mn=min(c.r,min(c.g,c.b));',
+'  float sat=(mx-mn)/(mx+.015);',
+'  float lum=dot(c,vec3(.2126,.7152,.0722));',
+'  float green=smoothstep(.08,.34,c.g-c.r)*smoothstep(.02,.25,c.g-c.b);',
+'  return green*smoothstep(.22,.62,sat)*smoothstep(.20,.68,lum);',
+'}',
+'float activeMask(vec3 c){return max(max(warmMask(c)*u_warm,coolMask(c)*u_cool),greenMask(c)*u_green);}',
 'void main(){',
 '  vec2 uv=v_uv;',
 '  vec3 original=texture2D(u_tex,uv).rgb;',
@@ -64,17 +80,20 @@ const FS=[
 '  vec3 c=texture2D(u_tex,clamp(uv+offset,0.0,1.0)).rgb;',
 '  float warm=warmMask(c)*u_warm;',
 '  float cool=coolMask(c)*u_cool;',
+'  float green=greenMask(c)*u_green;',
 '  float flow=.5+.5*sin((uv.x*57.0+uv.y*29.0)-u_time*2.15+sin(uv.y*19.0+u_time*.61));',
 '  float flick=.5+.5*sin(u_time*7.1+uv.x*91.0+uv.y*53.0+sin(uv.x*17.0-u_time*1.9));',
 '  float liveMix=mix(flick,flow,.56);',
 '  float warmEnergy=warm*(.026+.095*liveMix)*u_intensity*(1.0+u_surge*.48);',
 '  float coolEnergy=cool*(.022+.090*liveMix)*u_intensity*(1.0+u_surge*.52);',
+'  float greenEnergy=green*(.020+.080*liveMix)*u_intensity*(1.0+u_surge*.56);',
 '  c+=vec3(warmEnergy*1.12,warmEnergy*.47,-warmEnergy*.075);',
 '  c+=vec3(coolEnergy*.10,coolEnergy*.84,coolEnergy*.76);',
+'  c+=vec3(greenEnergy*.12,greenEnergy*.88,greenEnergy*.30);',
 '  float d=distance(uv,u_center);',
 '  float core=(1.0-smoothstep(u_radius*.28,u_radius,d))*u_pulse;',
 '  float beat=.52+.48*sin(u_time*2.65);',
-'  float pulse=core*beat*(.040+.055*max(warm,cool))*(1.0+u_surge*.75);',
+'  float pulse=core*beat*(.040+.055*max(warm,max(cool,green)))*(1.0+u_surge*.75);',
 '  c+=u_coreColor*pulse;',
 '  gl_FragColor=vec4(clamp(c,0.0,1.0),1.0);',
 '}'
@@ -111,7 +130,7 @@ function create(arena){
   const loc={
     time:gl.getUniformLocation(p,'u_time'),intensity:gl.getUniformLocation(p,'u_intensity'),heat:gl.getUniformLocation(p,'u_heat'),
     pulse:gl.getUniformLocation(p,'u_pulse'),surge:gl.getUniformLocation(p,'u_surge'),warm:gl.getUniformLocation(p,'u_warm'),
-    cool:gl.getUniformLocation(p,'u_cool'),coreColor:gl.getUniformLocation(p,'u_coreColor'),center:gl.getUniformLocation(p,'u_center'),
+    cool:gl.getUniformLocation(p,'u_cool'),green:gl.getUniformLocation(p,'u_green'),coreColor:gl.getUniformLocation(p,'u_coreColor'),center:gl.getUniformLocation(p,'u_center'),
     radius:gl.getUniformLocation(p,'u_radius')
   };
   const state={arena,canvas,gl,p,tex,loc,src:'',profile:'ashen',loaded:false,raf:0,start:performance.now(),token:0,dpr:1,ro:null,reduced:matchMedia('(prefers-reduced-motion: reduce)').matches};
@@ -140,6 +159,7 @@ function frame(state,now){
   gl.uniform1f(state.loc.surge,state.reduced?0:surge);
   gl.uniform1f(state.loc.warm,Number(p.warm??1));
   gl.uniform1f(state.loc.cool,Number(p.cool??0));
+  gl.uniform1f(state.loc.green,Number(p.green??0));
   gl.uniform3f(state.loc.coreColor,Number(p.core?.[0]??1),Number(p.core?.[1]??.46),Number(p.core?.[2]??.12));
   gl.uniform2f(state.loc.center,p.center[0],1-p.center[1]);
   gl.uniform1f(state.loc.radius,p.radius);

@@ -22,12 +22,57 @@ const ROUTE=[
  {id:'crossing',title:'Chaos Crossing',puzzle:true},{id:'warden',title:'Chaos Warden'},{id:'wildheart',title:'Wildheart Passage'},{id:'vorran',title:'Archdruid Vorran'}
 ];
 const CANYON_ROOMS={
- 'canyon-mouth':{zone:'CANYON ENTRANCE',description:'Sunlight cuts between sheer walls as corrupted wildlife blocks the trail.',environment:'<div class="ccenv ccenv-canyon-mouth"><div class="ccenv-sky"></div><div class="ccenv-cliff left"></div><div class="ccenv-cliff right"></div><div class="ccenv-path"></div><i class="ccenv-rock r1"></i><i class="ccenv-rock r2"></i><i class="ccenv-rock r3"></i><i class="ccenv-shrub s1"></i><i class="ccenv-shrub s2"></i><span class="ccenv-cell c1"></span><span class="ccenv-cell c2"></span></div>',party:[[31,34],[29,50],[31,66],[21,41],[21,59]],enemies:[[69,31],[73,50],[69,69]],bounds:{left:8,right:92,top:8,bottom:92},blockers:[{id:'mouth-rock-1',x:28,y:23,w:8,h:12},{id:'mouth-rock-2',x:73,y:81,w:7,h:10},{id:'mouth-rock-3',x:72,y:14,w:5,h:7}]},
- 'thorn-trail':{zone:'THORN TRAIL',description:'Roots have punched through the canyon floor and squeezed the path into a kill lane.',environment:'<div class="ccenv ccenv-thorn-trail"><div class="ccenv-cliff left"></div><div class="ccenv-cliff right"></div><div class="ccenv-path narrow"></div><i class="ccenv-root root1"></i><i class="ccenv-root root2"></i><i class="ccenv-root root3"></i><i class="ccenv-thorn t1"></i><i class="ccenv-thorn t2"></i><span class="ccenv-cell c1"></span></div>',party:[[34,50],[28,35],[28,65],[20,43],[20,57]],enemies:[[69,34],[73,50],[69,66]],bounds:{left:18,right:82,top:7,bottom:93},blockers:[{id:'trail-root-1',x:21,y:36,w:28,h:7,blocksLos:false},{id:'trail-root-2',x:80,y:68,w:29,h:7,blocksLos:false},{id:'trail-root-3',x:27,y:80,w:25,h:7,blocksLos:false}]},
- sentinel:{zone:'SENTINEL BASIN',description:'A stone guardian waits inside a circular basin held together by living roots.',environment:'<div class="ccenv ccenv-sentinel"><div class="ccenv-basin"></div><div class="ccenv-ring outer"></div><div class="ccenv-ring inner"></div><i class="ccenv-pillar p1"></i><i class="ccenv-pillar p2"></i><i class="ccenv-pillar p3"></i><i class="ccenv-pillar p4"></i><i class="ccenv-root root1"></i><i class="ccenv-root root2"></i><span class="ccenv-cell c1"></span><span class="ccenv-cell c2"></span></div>',party:[[42,50],[31,34],[31,66],[24,43],[24,57]],enemies:[[69,50]],bounds:{left:13,right:87,top:10,bottom:90},arena:{shape:'ellipse',cx:50,cy:50,rx:37,ry:40},blockers:[{id:'sentinel-pillar-nw',x:26.5,y:21.5,w:5,h:13},{id:'sentinel-pillar-sw',x:26.5,y:78.5,w:5,h:13},{id:'sentinel-pillar-ne',x:73.5,y:21.5,w:5,h:13},{id:'sentinel-pillar-se',x:73.5,y:78.5,w:5,h:13}]},
- warden:{zone:"WARDEN'S SHELF",description:'The crossing ends at a brutal stone shelf. Every Chaos Scar makes the guardian hit harder.',environment:'<div class="ccenv ccenv-warden"><div class="ccenv-cliff left"></div><div class="ccenv-cliff right"></div><div class="ccenv-wild-floor"></div><i class="ccenv-root root1"></i><i class="ccenv-root root2"></i><i class="ccenv-fracture f1"></i><i class="ccenv-fracture f2"></i><span class="ccenv-cell c1"></span><span class="ccenv-cell c2"></span><span class="ccenv-cell c3"></span></div>',party:[[43,50],[31,34],[31,66],[24,42],[24,58]],enemies:[[70,50]],bounds:{left:13,right:87,top:10,bottom:90},arena:{shape:'ellipse',cx:50,cy:50,rx:37,ry:40},blockers:[{id:'warden-root-1',x:21,y:36,w:28,h:7,blocksLos:false},{id:'warden-root-2',x:80,y:68,w:29,h:7,blocksLos:false}]},
- wildheart:{zone:'WILDHEART PASSAGE',description:'Stone floats above twisted trees. Vorran’s influence is impossible to mistake now.',environment:'<div class="ccenv ccenv-wildheart"><div class="ccenv-cliff left"></div><div class="ccenv-cliff right"></div><div class="ccenv-path"></div><i class="ccenv-tree tr1"></i><i class="ccenv-tree tr2"></i><i class="ccenv-floatrock fr1"></i><i class="ccenv-floatrock fr2"></i><i class="ccenv-root root1"></i><span class="ccenv-cell c1"></span><span class="ccenv-cell c2"></span></div>',party:[[34,50],[27,35],[27,65],[20,43],[20,57]],enemies:[[69,33],[73,50],[69,67]],bounds:{left:8,right:92,top:7,bottom:93},blockers:[{id:'wildheart-tree-1',x:22,y:36,w:8,h:42},{id:'wildheart-tree-2',x:86,y:74,w:8,h:42},{id:'wildheart-rock-1',x:66.5,y:21.5,w:7,h:9,blocksMovement:false},{id:'wildheart-rock-2',x:38.5,y:80.5,w:7,h:9,blocksMovement:false}]},
- vorran:{zone:'HEART OF CHAOS',description:'The Druid stands inside a living arena. The canyon itself begins closing around him.',environment:'<div class="ccenv ccenv-vorran"><div class="ccenv-void"></div><div class="ccenv-vorran-floor"></div><div class="ccenv-ring outer"></div><div class="ccenv-ring inner"></div><i class="ccenv-root vr1"></i><i class="ccenv-root vr2"></i><i class="ccenv-root vr3"></i><i class="ccenv-root vr4"></i><span class="ccenv-cell c1"></span><span class="ccenv-cell c2"></span><span class="ccenv-cell c3"></span><span class="ccenv-cell c4"></span></div>',party:[[45,50],[32,33],[32,67],[25,42],[25,58]],enemies:[[70,50]],bounds:{left:13,right:87,top:9,bottom:91},arena:{shape:'ellipse',cx:50,cy:50,rx:37,ry:41},blockers:[]}
+ 'canyon-mouth':{
+  zone:'CANYON ENTRANCE',description:'Sunlight cuts through the woodland canyon as corrupted wildlife blocks the old druid road.',
+  art:'./assets/chaos-canyon/rooms/canyon-mouth.webp?v=1',liveProfile:'canyon-mouth',
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:84},partyAnchors:[[50,67],[44,71],[56,71],[41,77],[59,77]],exitPath:[{x:50,y:53},{x:50,y:34},{x:50,y:17},{x:50,y:3}],spread:2.1},
+  enemies:[[50,36],[41,44],[59,44]],
+  bounds:{left:10,right:90,top:10,bottom:90},walkable:[[25,12],[75,12],[89,28],[91,70],[76,88],[24,88],[9,70],[11,28]],
+  blockers:[{id:'mouth-left-stone',x:15,y:37,w:8,h:26},{id:'mouth-right-stone',x:85,y:37,w:8,h:26}]
+ },
+ 'thorn-trail':{
+  zone:'THORN TRAIL',description:'Ancient roots and thorn-vines squeeze the canyon road into a living kill lane.',
+  art:'./assets/chaos-canyon/rooms/thorn-trail.webp?v=1',liveProfile:'canyon-thorn',
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:84},partyAnchors:[[50,67],[45,71],[55,71],[42,77],[58,77]],exitPath:[{x:50,y:53},{x:50,y:34},{x:50,y:17},{x:50,y:3}],spread:1.9},
+  enemies:[[50,36],[42,44],[58,44]],
+  bounds:{left:15,right:85,top:9,bottom:91},walkable:[[35,10],[65,10],[78,26],[82,69],[69,89],[31,89],[18,69],[22,26]],
+  blockers:[{id:'trail-thorns-left',x:20,y:43,w:8,h:38,blocksLos:false},{id:'trail-thorns-right',x:80,y:43,w:8,h:38,blocksLos:false}]
+ },
+ sentinel:{
+  zone:'SENTINEL BASIN',description:'A druidic guardian waits on an old runestone court suspended above waterfalls and mist.',
+  art:'./assets/chaos-canyon/rooms/sentinel.webp?v=1',liveProfile:'canyon-sentinel',
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:83},partyAnchors:[[50,68],[44,72],[56,72],[41,78],[59,78]],exitPath:[{x:50,y:54},{x:50,y:35},{x:50,y:18},{x:50,y:3}],spread:2.0},
+  enemies:[[50,40]],
+  bounds:{left:10,right:90,top:9,bottom:91},arena:{shape:'ellipse',cx:50,cy:52,rx:39,ry:37},
+  blockers:[{id:'sentinel-left-pillar',x:15,y:34,w:7,h:24},{id:'sentinel-right-pillar',x:85,y:34,w:7,h:24}]
+ },
+ warden:{
+  zone:"WARDEN'S SHELF",description:'The crossing ends on a broad woodland shelf where the Chaos Warden controls the canyon path.',
+  art:'./assets/chaos-canyon/rooms/warden.webp?v=1',liveProfile:'canyon-warden',
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:83},partyAnchors:[[50,67],[44,71],[56,71],[41,77],[59,77]],exitPath:[{x:42,y:52},{x:31,y:35},{x:20,y:19},{x:9,y:4}],spread:2.0},
+  enemies:[[58,42]],
+  bounds:{left:8,right:92,top:8,bottom:91},walkable:[[18,9],[82,9],[92,27],[91,70],[75,89],[25,89],[8,70],[9,27]],
+  blockers:[{id:'warden-left-root',x:10,y:48,w:9,h:42,blocksLos:false},{id:'warden-right-edge',x:90,y:52,w:7,h:36,blocksLos:false}]
+ },
+ wildheart:{
+  zone:'WILDHEART PASSAGE',description:'Floating stone and glowing roots mark the canyon where Vorran has bent the woodland to his will.',
+  art:'./assets/chaos-canyon/rooms/wildheart.webp?v=1',liveProfile:'canyon-wildheart',
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:84},partyAnchors:[[50,68],[44,72],[56,72],[41,78],[59,78]],exitPath:[{x:50,y:54},{x:50,y:35},{x:50,y:18},{x:50,y:3}],spread:2.0},
+  enemies:[[50,38],[41,46],[59,46]],
+  bounds:{left:9,right:91,top:8,bottom:91},walkable:[[24,10],[76,10],[91,27],[91,71],[76,89],[24,89],[9,71],[9,27]],
+  blockers:[{id:'wildheart-left-root',x:11,y:46,w:8,h:42,blocksLos:false},{id:'wildheart-right-root',x:89,y:46,w:8,h:42,blocksLos:false}]
+ },
+ vorran:{
+  zone:'HEART OF CHAOS',description:'Vorran stands inside the Rootheart. The ritual floor will not survive the fight.',
+  art:'./assets/chaos-canyon/rooms/vorran.webp?v=1',liveProfile:'canyon-vorran',
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:84},partyAnchors:[[50,70],[44,74],[56,74],[41,80],[59,80]],exitPath:[],spread:2.0},
+  enemies:[[50,38]],
+  bounds:{left:11,right:89,top:13,bottom:90},arena:{shape:'ellipse',cx:50,cy:54,rx:38,ry:34},blockers:[]
+ }
+};
+const CANYON_CROSSING={
+ zone:'THE CHASM',description:'Seven unstable stepping stones wind across a mist-filled canyon gulf.',
+ art:'./assets/chaos-canyon/rooms/crossing.webp?v=1',liveProfile:'canyon-crossing'
 };
 const CROSSING_ENV='<div class="ccenv ccenv-crossing"><div class="ccenv-chasm"></div><div class="ccenv-cliff left"></div><div class="ccenv-cliff right"></div><div class="ccenv-far-ledge"></div><i class="ccenv-root root1"></i><i class="ccenv-root root2"></i><span class="ccenv-cell c1"></span><span class="ccenv-cell c2"></span></div>';
 const XP=1600;
@@ -126,7 +171,7 @@ function feed(text){if(!run)return;run.log.push(text);const e=$('#cc2dFeed');if(
 function ccArenaScale(){return STAGES[run?.stage]?.id==='vorran'?[1,.78,.55,.30][Math.max(0,Math.min(3,Number(run?.vorranShrink)||0))]:1}
 function ccArenaPoint(x,y){const scale=ccArenaScale();return{x:50+(Number(x)-50)*scale,y:50+(Number(y)-50)*scale}}
 function addUnit(id,label,cls,x,y,big=false,meta=''){const e=document.createElement('div'),safe=ccSafePoint(id,x,y);e.className='cc2d-unit cb2d-unit '+cls+(big?' big':'');e.dataset.cc=id;e.dataset.rawX=safe.x;e.dataset.rawY=safe.y;const p=ccArenaPoint(safe.x,safe.y);e.style.left=p.x+'%';e.style.top=p.y+'%';e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="cc2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em><i></i></em>';$('#cc2dUnits').appendChild(e)}
-function ccSafePoint(id,x,y){return{x:Math.max(7,Math.min(93,Number(x)||50)),y:Math.max(11,Math.min(89,Number(y)||50))}}
+function ccSafePoint(id,x,y){const arena=$('#cc2dArena'),transit=arena?.classList.contains('travelling')||arena?.classList.contains('room-entering');return{x:Math.max(transit?2:7,Math.min(transit?98:93,Number(x)||50)),y:Math.max(transit?2:11,Math.min(transit?98:89,Number(y)||50))}}
 function move(id,x,y,ms=550){const e=$('[data-cc="'+id+'"]');if(!e)return;const safe=ccSafePoint(id,x,y);e.dataset.rawX=safe.x;e.dataset.rawY=safe.y;const p=ccArenaPoint(safe.x,safe.y);e.style.transitionDuration=ms+'ms';e.style.left=p.x+'%';e.style.top=p.y+'%'}
 function ccReflowArena(ms=760){document.querySelectorAll('[data-cc]').forEach(e=>{const x=Number(e.dataset.rawX),y=Number(e.dataset.rawY);if(Number.isFinite(x)&&Number.isFinite(y))move(e.dataset.cc,x,y,ms)})}
 function ccPoint(id){const arena=$('#cc2dArena'),e=$('[data-cc="'+id+'"]');if(!arena||!e)return null;const ar=arena.getBoundingClientRect(),r=e.getBoundingClientRect();return{x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,w:ar.width,h:ar.height}}
@@ -155,28 +200,75 @@ function ccEnemyMeta(s,index){
  const labels={trash:'TRASH',elite:'ELITE',boss:'BOSS','world-boss':'WORLD BOSS',add:'ADD'};
  return{level,type,label:labels[type]||type.toUpperCase()}
 }
+function ccRouteOffset(point,from,to,slot=0,spread=2){
+ const dx=(Number(to?.x)||Number(point.x))-(Number(from?.x)||Number(point.x)),dy=(Number(to?.y)||Number(point.y))-(Number(from?.y)||Number(point.y)),len=Math.hypot(dx,dy)||1;
+ const offsets=[0,-1,1,-2,2],amount=(offsets[slot%offsets.length]||0)*spread;
+ return{x:Number(point.x)+(-dy/len)*amount,y:Number(point.y)+(dx/len)*amount}
+}
+function ccPartyPosition(s,i){
+ const room=CANYON_ROOMS[s?.id]||CANYON_ROOMS['canyon-mouth'],p=room.route?.partyAnchors?.[i]||room.route?.entryInside||{x:35,y:50};
+ return Array.isArray(p)?{x:Number(p[0]),y:Number(p[1])}:{x:Number(p.x),y:Number(p.y)}
+}
+function ccEnemyPosition(s,i){
+ const room=CANYON_ROOMS[s?.id]||CANYON_ROOMS['canyon-mouth'],p=room.enemies?.[i]||room.enemies?.[room.enemies.length-1]||[68,50];
+ return Array.isArray(p)?{x:Number(p[0]),y:Number(p[1])}:{x:Number(p.x),y:Number(p.y)}
+}
+function ccEnsureFade(){
+ const arena=$('#cc2dArena');if(!arena)return null;let fade=arena.querySelector('.cc2d-room-fade');
+ if(!fade){fade=document.createElement('div');fade.className='cc2d-room-fade';fade.setAttribute('aria-hidden','true');arena.appendChild(fade)}return fade
+}
+function ccSetFade(black,duration=560){
+ const fade=ccEnsureFade();if(!fade)return;fade.style.setProperty('--cc-fade-ms',Math.max(0,Number(duration)||0)+'ms');fade.classList.toggle('is-black',Boolean(black))
+}
+function ccNatureLayer(arena,roomId){
+ arena?.querySelector('.cc2d-nature-life')?.remove();if(!arena)return;
+ const layer=document.createElement('div');layer.className='cc2d-nature-life room-'+String(roomId||'canyon');
+ for(let i=0;i<9;i++){const leaf=document.createElement('i');leaf.className='leaf';leaf.style.setProperty('--x',(8+((i*17)%84))+'%');leaf.style.setProperty('--y',(5+((i*23)%76))+'%');leaf.style.setProperty('--d',(-i*.61)+'s');leaf.style.setProperty('--dur',(5.5+(i%4)*1.15)+'s');leaf.style.setProperty('--drift',(-26+(i%6)*11)+'px');layer.appendChild(leaf)}
+ for(let i=0;i<3;i++){const mist=document.createElement('b');mist.className='mist';mist.style.setProperty('--my',(18+i*25)+'%');mist.style.setProperty('--md',(-i*2.1)+'s');layer.appendChild(mist)}
+ arena.appendChild(layer)
+}
+function ccVorranCollapseLayer(arena){
+ arena?.querySelector('.cc-vorran-collapse')?.remove();if(!arena)return;
+ const layer=document.createElement('div');layer.className='cc-vorran-collapse';layer.setAttribute('aria-hidden','true');
+ const pieces=[
+  [1,1,30,43,-70,-28,-18],[1,1,70,43,70,-28,18],[1,1,34,66,-58,42,-14],[1,1,66,66,58,42,14],
+  [2,2,39,39,-50,-30,-18],[2,2,61,39,50,-30,18],[2,2,38,61,-46,34,-12],[2,2,62,61,46,34,12],
+  [3,3,44,43,-34,-24,-15],[3,3,56,43,34,-24,15],[3,3,44,58,-30,28,-10],[3,3,56,58,30,28,10]
+ ];
+ layer.innerHTML='<span class="cc-vorran-void"></span><span class="cc-vorran-cracks"></span>'+pieces.map(p=>'<i class="cc-vorran-chunk phase-'+p[0]+'" style="--x:'+p[2]+'%;--y:'+p[3]+'%;--dx:'+p[4]+'px;--dy:'+p[5]+'px;--rot:'+p[6]+'deg"></i>').join('');
+ arena.appendChild(layer)
+}
 function stageEnvironment(s){
- const room=CANYON_ROOMS[s.id]||CANYON_ROOMS['canyon-mouth'],arena=$('#cc2dArena'),environment=$('#cc2dEnvironment');
- arena.className='cb2d-arena cc2d-arena cc2d-unified-arena stage-'+s.id;run.vorranShrink=0;
- if(environment)environment.innerHTML=room.environment||'';
- const tag=$('#cc2dRoom');if(tag)tag.innerHTML='<em>'+esc(room.zone||'HOLLOW SANCTUM')+'</em><b>'+esc(s.title)+'</b><small>'+esc(room.description||'The sanctum closes around the party.')+'</small>'
+ const room=CANYON_ROOMS[s.id]||CANYON_ROOMS['canyon-mouth'],arena=$('#cc2dArena'),environment=$('#cc2dEnvironment'),src=room.art;
+ arena.className='cb2d-arena cc2d-arena cc2d-unified-arena canyon-live-room stage-'+s.id;
+ arena.dataset.chaosRoom=s.id;arena.dataset.bespokeBattlefield='1';
+ if(s.id!=='vorran')run.vorranShrink=0;else run.vorranShrink=Math.max(0,Number(run.vorranShrink)||0);
+ if(environment)environment.innerHTML='<img class="cc2d-room-art" src="'+src+'" alt="" decoding="async" draggable="false">';
+ (window.CellboundLivingScenes||window.CellboundAshenLiveScenes)?.mount?.(arena,{src,profile:room.liveProfile||'canyon-mouth'});
+ ccNatureLayer(arena,s.id);if(s.id==='vorran')ccVorranCollapseLayer(arena);
+ if(s.id==='vorran'&&run.vorranShrink){for(let n=1;n<=run.vorranShrink;n++)arena.classList.add('vorran-shrink-'+n)}
+ const tag=$('#cc2dRoom');if(tag)tag.innerHTML='<em>'+esc(room.zone||'CHAOS CANYON')+'</em><b>'+esc(s.title)+'</b><small>'+esc(room.description||'The woodland canyon closes around the party.')+'</small>';
+ ccEnsureFade()
 }
 function ccRoomPoint(room,index,fallback){
  const p=room?.[index];return Array.isArray(p)&&p.length>=2?p:fallback
 }
 function spawnStage(s){
  stageEnvironment(s);$('#cc2dUnits').innerHTML='';$('#cc2dTelegraphs').innerHTML='';$('#cc2dFx').innerHTML='';
- const p=party(),room=CANYON_ROOMS[s.id]||CANYON_ROOMS['canyon-mouth'];
- p.forEach((c,i)=>{
-  const r=role(c),entryY=30+i*10,target=ccRoomPoint(room.party,i,[r==='tank'?40:r==='healer'?25:31,31+i*9]);
-  addUnit('p'+i,c.name,'party '+r+' '+classKey(c),7,entryY);
-  setTimeout(()=>move('p'+i,target[0],target[1],780),40+i*20)
+ const chars=party(),room=CANYON_ROOMS[s.id]||CANYON_ROOMS['canyon-mouth'],route=room.route||{},entry=route.entry||{x:4,y:50},inside=route.entryInside||{x:18,y:50},spread=Number(route.spread)||2;
+ const arena=$('#cc2dArena');arena?.classList.add('room-entering');
+ chars.forEach((c,i)=>{
+  const start=ccRouteOffset(entry,entry,inside,i,spread),target=ccPartyPosition(s,i);
+  addUnit('p'+i,c.name,'party '+role(c)+' '+classKey(c),start.x,start.y);
+  setTimeout(()=>move('p'+i,target.x,target.y,650),35+i*22)
  });
+ // Hostiles belong to the room and are already waiting for the party.
  s.enemies.forEach((n,i)=>{
-  const m=ccEnemyMeta(s,i),big=m.type==='boss'||m.type==='world-boss'||(s.id==='sentinel'&&m.type==='elite'),target=ccRoomPoint(room.enemies,i,[68,big?50:33+i*17]);
-  addUnit('e'+i,n,big?'enemy boss':'enemy',94,target[1],big,'Lv. '+m.level+' · '+m.label);
-  setTimeout(()=>move('e'+i,target[0],target[1],820),90+i*30)
- })
+  const m=ccEnemyMeta(s,i),big=m.type==='boss'||m.type==='world-boss'||(s.id==='sentinel'&&m.type==='elite'),target=ccEnemyPosition(s,i);
+  addUnit('e'+i,n,big?'enemy boss':'enemy',target.x,target.y,big,'Lv. '+m.level+' · '+m.label)
+ });
+ if(run?.roomTransitionBlack){const fade=ccEnsureFade();fade?.classList.add('is-black');requestAnimationFrame(()=>requestAnimationFrame(()=>ccSetFade(false,720)));run.roomTransitionBlack=false}else ccSetFade(false,0);
+ setTimeout(()=>arena?.classList.remove('room-entering'),760)
 }
 function ccRegroup(ms=380){
  const s=STAGES[run?.stage],room=CANYON_ROOMS[s?.id]||CANYON_ROOMS['canyon-mouth'];
@@ -190,7 +282,14 @@ function ccRenderId(unitId){
 }
 function ccCharacter(unitId){const id=String(unitId||'');return id.startsWith('p-')?party().find(x=>String(x.id)===id.slice(2)):null}
 function ccAttackKind(c){return c?.class==='Hunter'?'arrow':['Mage','Priest','Druid','Evoker'].includes(c?.class)?'magic':'slash'}
-function ccRebornEncounter(s){const room=CANYON_ROOMS[s.id]||{},base={id:s.id,title:s.title,kind:s.combatKind||'trash',level:s.level||1,recommendedItemLevel:s.level<=9?30:s.level===10?32:34,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies:[...s.enemies],enemyHealth:s.enemyHealth,mechanics:(s.mechanics||[]).map(m=>Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}),phases:(s.phases||[]).map(p=>({...p,arenaBounds:p.arenaBounds?{...p.arenaBounds}:null,arena:p.arena?{...p.arena}:null,addMechanics:(p.addMechanics||[]).map(m=>({...m}))})),environment:{room:s.id,bounds:{...(room.bounds||{})},arena:room.arena?{...room.arena}:null,blockers:(room.blockers||[]).map(b=>({...b,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false}))}};let cfg=window.CellboundEndgame?.stageConfig?.('chaos-canyon',base)||base;cfg={...cfg,scaling:{...(cfg.scaling||{})},environment:{...base.environment,...(cfg.environment||{}),bounds:{...base.environment.bounds,...(cfg.environment?.bounds||{})},arena:cfg.environment?.arena||base.environment.arena,blockers:Array.isArray(cfg.environment?.blockers)?cfg.environment.blockers:base.environment.blockers}};if(s.id==='warden'&&run?.chaosScar){const scar=Math.min(40,Math.max(0,Number(run.chaosScar)||0)*5);cfg.scaling.enemyDamage=(Number(cfg.scaling.enemyDamage)||1)*(1+scar/100);cfg.chaosScarPct=scar}return cfg}
+function ccRebornEncounter(s){
+ const room=CANYON_ROOMS[s.id]||{},enemies=s.enemies.map((name,i)=>({name,currentPosition:ccEnemyPosition(s,i)}));
+ const base={id:s.id,title:s.title,kind:s.combatKind||'trash',level:s.level||1,recommendedItemLevel:s.level<=9?30:s.level===10?32:34,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies,enemyHealth:s.enemyHealth,mechanics:(s.mechanics||[]).map(m=>Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}),phases:(s.phases||[]).map(p=>({...p,arenaBounds:p.arenaBounds?{...p.arenaBounds}:null,arena:p.arena?{...p.arena}:null,addMechanics:(p.addMechanics||[]).map(m=>({...m}))})),environment:{room:s.id,bounds:{...(room.bounds||{})},arena:room.arena?{...room.arena}:null,walkable:Array.isArray(room.walkable)?room.walkable.map(p=>[Number(p[0]),Number(p[1])]):undefined,blockers:(room.blockers||[]).map(b=>({...b,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false}))}};
+ let cfg=window.CellboundEndgame?.stageConfig?.('chaos-canyon',base)||base;
+ cfg={...cfg,scaling:{...(cfg.scaling||{})},environment:{...base.environment,...(cfg.environment||{}),bounds:{...base.environment.bounds,...(cfg.environment?.bounds||{})},arena:cfg.environment?.arena||base.environment.arena,walkable:cfg.environment?.walkable||base.environment.walkable,blockers:Array.isArray(cfg.environment?.blockers)?cfg.environment.blockers:base.environment.blockers}};
+ if(s.id==='warden'&&run?.chaosScar){const scar=Math.min(40,Math.max(0,Number(run.chaosScar)||0)*5);cfg.scaling.enemyDamage=(Number(cfg.scaling.enemyDamage)||1)*(1+scar/100);cfg.chaosScarPct=scar}
+ return cfg
+}
 function ccResultHealth(result){
  (result?.finalState?.players||[]).forEach(p=>{const c=party().find(x=>String(x.id)===String(p.characterId));if(c)run.hp[c.id]=Math.max(0,Math.min(100,p.maxHealth?Math.round(p.health/p.maxHealth*100):0))})
 }
@@ -256,7 +355,7 @@ function ccRenderRebornEvent(e){
    if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));run.hp[targetChar.id]=pct;ccBar(target,pct);ccFloat(target,'+'+Math.round(Number(e.amount)||0),'heal');window.CellboundCombatFX?.heal?.($('[data-cc="'+target+'"]'));ccUpdateSidebar()}
    if(srcChar){run.healingDone[srcChar.id]=(Number(run.healingDone?.[srcChar.id])||0)+(Number(e.amount)||0);run.overhealing[srcChar.id]=(Number(run.overhealing?.[srcChar.id])||0)+(Number(e.payload?.overhealing)||0);ccRenderMeters()}
    break;
-  case'PHASE_CHANGE':{window.CellboundCombatFX?.phase?.($('#cc2dArena'));window.CellboundFX?.phase?.(e.ability||'Boss phase',e.payload?.healthPct);feed((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');setStatus(e.ability||'Phase change');if(STAGES[run.stage]?.id==='vorran'){run.vorranShrink=Math.min(3,(Number(run.vorranShrink)||0)+1);const arena=$('#cc2dArena');if(arena)arena.classList.add('vorran-shrink-'+run.vorranShrink);ccReflowArena();feed(run.vorranShrink>=3?'There is nowhere left to run. Vorran forces the entire party into the centre.':'The canyon closes further around the party.');}break;}
+  case'PHASE_CHANGE':{const arena=$('#cc2dArena');window.CellboundCombatFX?.phase?.(arena);window.CellboundFX?.phase?.(e.ability||'Boss phase',e.payload?.healthPct);feed((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');setStatus(e.ability||'Phase change');arena?.classList.add('ambient-surge');setTimeout(()=>arena?.classList.remove('ambient-surge'),1350);if(STAGES[run.stage]?.id==='vorran'){run.vorranShrink=Math.min(3,(Number(run.vorranShrink)||0)+1);if(arena){arena.classList.add('vorran-shrink-'+run.vorranShrink,'vorran-collapse-pulse');setTimeout(()=>arena?.classList.remove('vorran-collapse-pulse'),980)}ccReflowArena(820);window.CellboundFX?.phase?.('The Rootheart floor collapses',e.payload?.healthPct);feed(run.vorranShrink>=3?'The final floor ring breaks away. Only the Rootheart core remains.':'The outer ritual floor cracks and falls into the canyon.');}break;}
   case'ENRAGE':feed((e.ability||'The boss enrages')+'.');setStatus(e.result==='hard'?'HARD ENRAGE — finish now':(e.ability||'Enrage'));break;
   case'UNIQUE_EFFECT_TRIGGER':if(srcChar){feed(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');ccFloat(src,e.ability||'UNIQUE','heal');setStatus((e.ability||'Unique effect')+' activated.')}break;
   case'CROWD_CONTROL':if(srcChar){feed(srcChar.name+' controls a priority enemy.');if(target)ccFloat(target,'CONTROLLED','heal')}break;
@@ -289,7 +388,7 @@ function ccRenderRebornEvent(e){
    if(target){const el=$('[data-cc="'+target+'"]');if(el){el.classList.add('dead');window.CellboundCombatFX?.death?.(el)}ccBar(target,0);if(targetChar){run.hp[targetChar.id]=0;feed(targetChar.name+' is defeated.');ccUpdateSidebar()}}
    break;
   case'DEFENSIVE_ACTIVATED':if(srcChar)feed(srcChar.name+' activates a defensive.');break;
-  case'COMBAT_END':ccCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');if(e.result==='victory')window.CellboundCombatFX?.victory?.($('#cc2dArena'));else window.CellboundFX?.wipe?.('The party has fallen inside Chaos Canyon.');ccRegroup(260);break;
+  case'COMBAT_END':ccCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');if(e.result==='victory')window.CellboundCombatFX?.victory?.($('#cc2dArena'));else window.CellboundFX?.wipe?.('The party has fallen inside Chaos Canyon.');break;
  }
 }
 async function ccPlayTimeline(result,tok){
@@ -427,10 +526,10 @@ function ccPuzzleMarkup(step,remaining){const progress=Array.from({length:7},(_,
 async function runChaosCrossing(tok){
  if(tok!==token||!run)return false;const arena=$('#cc2dArena'),environment=$('#cc2dEnvironment'),units=$('#cc2dUnits'),tele=$('#cc2dTelegraphs'),fx=$('#cc2dFx'),room=$('#cc2dRoom');if(!arena)return false;
  run.puzzleActive=true;$('#cc2dTitle').textContent='Chaos Crossing';$('.cc2d-route').innerHTML=ccRouteMarkup('crossing',true);const type=$('.cc2d-caption span');if(type)type.textContent='PUZZLE';
- arena.className='cb2d-arena cc2d-arena cc2d-unified-arena stage-crossing puzzle-active';if(environment)environment.innerHTML=CROSSING_ENV;if(units)units.innerHTML='';if(tele)tele.innerHTML='';if(fx)fx.innerHTML='';if(room)room.innerHTML='<em>THE CHASM</em><b>Chaos Crossing</b><small>Seven steps. One stable stone at each step.</small>';
+ arena.className='cb2d-arena cc2d-arena cc2d-unified-arena canyon-live-room stage-crossing puzzle-active';arena.dataset.chaosRoom='crossing';arena.dataset.bespokeBattlefield='1';const src=CANYON_CROSSING.art;if(environment)environment.innerHTML='<img class="cc2d-room-art" src="'+src+'" alt="" decoding="async" draggable="false">';(window.CellboundLivingScenes||window.CellboundAshenLiveScenes)?.mount?.(arena,{src,profile:CANYON_CROSSING.liveProfile});ccNatureLayer(arena,'crossing');ccEnsureFade();if(run?.roomTransitionBlack){const fade=ccEnsureFade();fade?.classList.add('is-black');requestAnimationFrame(()=>requestAnimationFrame(()=>ccSetFade(false,720)));run.roomTransitionBlack=false}else ccSetFade(false,0);if(units)units.innerHTML='';if(tele)tele.innerHTML='';if(fx)fx.innerHTML='';if(room)room.innerHTML='<em>THE CHASM</em><b>Chaos Crossing</b><small>Seven unstable steps above the mist. One route holds.</small>';
  setStatus('Choose a stone to cross the chasm.');feed('The party reaches Chaos Crossing. The route ahead has no safe markings.');let overlay=document.createElement('div');overlay.id='cc2dPuzzleOverlay';arena.appendChild(overlay);
  for(let step=0;step<7;step++){if(tok!==token||!run)return false;let remaining=[0,1,2],correct=ccCorrectStone(step),crossed=false;while(!crossed){overlay.innerHTML=ccPuzzleMarkup(step,remaining);ccUpdateScar();const choice=await new Promise(resolve=>overlay.querySelectorAll('[data-cc-stone]').forEach(b=>b.onclick=()=>resolve(Number(b.dataset.ccStone))));if(tok!==token||!run)return false;const button=overlay.querySelector('[data-cc-stone="'+choice+'"]');overlay.querySelectorAll('button').forEach(b=>b.disabled=true);if(choice===correct){button?.classList.add('safe');setStatus('Stable stone — move forward.');feed('Step '+(step+1)+': the stone holds.');await wait(430);crossed=true}else{run.chaosScar=Math.min(8,(Number(run.chaosScar)||0)+1);remaining=remaining.filter(x=>x!==choice);button?.classList.add('broken');arena.classList.add('puzzle-fall');setStatus('The stone collapses — Chaos Scar increases.');feed('The party falls from step '+(step+1)+'. Chaos Scar is now +'+ccScarPct()+'% damage taken.');ccUpdateScar();await wait(650);arena.classList.remove('puzzle-fall')}}}
- overlay.innerHTML='<div class="cc2d-puzzle cc2d-puzzle-complete"><small>CHAOS CROSSING</small><h3>Other side reached</h3><p>The party carries <b>+'+ccScarPct()+'% damage taken</b> into the Chaos Warden encounter.</p></div>';setStatus('Crossing complete. The Chaos Warden waits ahead.');await wait(900);overlay.remove();run.puzzleActive=false;ccUpdateScar();return true
+ overlay.innerHTML='<div class="cc2d-puzzle cc2d-puzzle-complete"><small>CHAOS CROSSING</small><h3>Other side reached</h3><p>The party carries <b>+'+ccScarPct()+'% damage taken</b> into the Chaos Warden encounter.</p></div>';setStatus('Crossing complete. The Chaos Warden waits ahead.');await wait(650);ccSetFade(true,560);await wait(600);run.roomTransitionBlack=true;overlay.remove();run.puzzleActive=false;ccUpdateScar();return true
 }
 
 async function fightStage(s,tok,index){
@@ -439,7 +538,7 @@ async function fightStage(s,tok,index){
  spawnStage(s);setStatus('Entering '+s.title+'…');feed('The party enters '+s.title+'.');await wait(650);if(tok!==token)return false;
  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
  if(s.id==='warden'&&run?.chaosScar)ccApplyScarStatus();
- const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:run.hp[c.id],_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0}));
+ const combatParty=party().map((c,i)=>Object.assign({},c,{_combatHealthPct:run.hp[c.id],_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0,_combatPosition:ccPartyPosition(s,i)}));
  const tactics={...ccTactics,interruptPriority:ccTactics.bossPlan==='control'?'high':ccTactics.interruptPriority,addPriority:ccTactics.bossPlan==='burn'?'boss':ccTactics.addPriority,defensiveUsage:ccTactics.bossPlan==='control'?'aggressive':ccTactics.defensiveUsage,cooldownUse:ccTactics.bossPlan==='burn'?'free':ccTactics.cooldownUse};const result=C.simulate({party:combatParty,encounter:ccRebornEncounter(s),tactics,seed:[run.endgame?.seed||'chaos-canyon',s.id,index].join(':')},{zone:'chaos-canyon'});
  result.stageId=s.id;result.stageTitle=s.title;result.startHp={...run.hp};run.history.push(result);
  const won=await ccPlayTimeline(result,tok);ccResultHealth(result);
@@ -573,6 +672,23 @@ function ccRestoreRuntime(attempt){
  run.endgame={...(saved.endgame||{}),attemptId:attempt.attemptId,seed:attempt.seed,difficulty:attempt.difficulty,tier:Number(attempt.tier)||0,targetTimeMs:Number(attempt.targetTimeMs)||Number(saved.endgame?.targetTimeMs)||0,dungeonVersion:Number(attempt.dungeonVersion)||Number(saved.endgame?.dungeonVersion)||2};
  return run
 }
+async function ccTravelDeeper(currentStage,tok){
+ if(tok!==token||!run)return;
+ const arena=$('#cc2dArena'),room=CANYON_ROOMS[currentStage?.id]||CANYON_ROOMS['canyon-mouth'],route=room.route||{},path=Array.isArray(route.exitPath)?route.exitPath:[],chars=party(),spread=Number(route.spread)||2;
+ if(!path.length)return;
+ arena?.classList.add('travelling');setStatus('Path clear · moving deeper into Chaos Canyon');
+ const pos=Object.fromEntries(chars.map((c,i)=>{const e=$('[data-cc="p'+i+'"]');return[c.id,{x:Number.parseFloat(e?.style.left)||50,y:Number.parseFloat(e?.style.top)||50}]}));
+ const centroid=chars.reduce((a,c)=>{a.x+=pos[c.id].x;a.y+=pos[c.id].y;return a},{x:0,y:0});centroid.x/=Math.max(1,chars.length);centroid.y/=Math.max(1,chars.length);
+ let start=0,best=Infinity;path.forEach((p,i)=>{const d=Math.hypot(Number(p.x)-centroid.x,Number(p.y)-centroid.y);if(d<best){best=d;start=i}});if(start>0&&best>18)start=0;
+ const active=path.slice(start);
+ for(let step=0;step<active.length;step++){
+  const point=active[step],from=step===0?centroid:active[step-1],to=active[Math.min(step+1,active.length-1)]||point,finalStep=step===active.length-1,duration=finalStep?560:390;
+  if(finalStep)ccSetFade(true,duration+100);
+  chars.forEach((ch,i)=>{if((Number(run.hp[ch.id])||0)<=0)return;const p=ccRouteOffset(point,from,to,i,spread);move('p'+i,p.x,p.y,duration)});
+  await wait(duration+35);if(tok!==token||!run)return
+ }
+ run.roomTransitionBlack=true;arena?.classList.remove('travelling')
+}
 async function ccRunFrom(startIndex,tok){
  for(let i=Math.max(0,Number(startIndex)||0);i<STAGES.length;i++){
   if(tok!==token||!run)return;
@@ -582,7 +698,7 @@ async function ccRunFrom(startIndex,tok){
   run._restored=false;
   await ccSaveRuntime('stage');
   const s=STAGES[i];
-  if(s.combatKind==='final')await window.CellboundBossDossier?.show?.('vorran');else if(i>0)await window.CellboundExpeditionPresentation?.room?.('chaos-canyon',{title:s.title,index:i,total:STAGES.length,kind:s.kind});
+  if(s.combatKind==='final')await window.CellboundBossDossier?.show?.('vorran');
   if(/boss/i.test(String(s.kind||s.combatKind||'')))window.CellboundFX?.boss?.(s.title);
   $('#cc2dTitle').textContent=s.title;$('.cc2d-route').innerHTML=ccRouteMarkup(s.id,false);
   if(!await fightStage(s,tok,i)){await ccSaveRuntime('failed');return}
@@ -590,6 +706,7 @@ async function ccRunFrom(startIndex,tok){
     const expired=window.CellboundProfessions?.consumeBossChargesOnce?.(party(),'chaos-canyon:'+run.endgame?.attemptId+':'+s.id,state())||[];
     expired.forEach(x=>feed(x+' expired.'));Game.save?.();await Game.persistState?.()
   }
+  if(i<STAGES.length-1)await ccTravelDeeper(s,tok);
   if(i===2){if(!await runChaosCrossing(tok)){await ccSaveRuntime('failed');return}}
   run.stage=i+1;run.runtimeStageStartedAt=0;await ccSaveRuntime('between')
  }
