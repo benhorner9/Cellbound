@@ -2,6 +2,7 @@
 'use strict';
 
 const PVP_ENABLED=false;
+const pvpEnabled=()=>PVP_ENABLED||window.CellboundAdmin?.role==='owner';
 const PVP_LOCK_MESSAGE='PvP is currently locked while the launch game is being finished. Battlegrounds, Arena, PvP gear and progression will return in a future update.';
 
 const $=s=>document.querySelector(s);
@@ -192,7 +193,7 @@ function lockedMarkup(){
 }
 function render(){
   const mount=$('#pvpMount');if(!mount||!game()?.ready)return;
-  if(!PVP_ENABLED){mount.innerHTML=lockedMarkup();return}
+  if(!pvpEnabled()){mount.innerHTML=lockedMarkup();return}
   const p=ensureState();if(!p)return;maybeSettleSeason(p);
   mount.innerHTML=`${pvpHeader(p)}<div class="pvp-body">${activeTab==='battlegrounds'?battlegroundMarkup(p):activeTab==='arena'?arenaMarkup(p):activeTab==='armoury'?armouryMarkup(p):leaderboardMarkup(p)}</div>`;
   bind();
@@ -289,7 +290,8 @@ function buyGear(tier,slot){
   game()?.save?.();render()
 }
 
-window.CellboundPvP={version:'1.3.0',enabled:PVP_ENABLED,render,arenaUnlocked,getRank:()=>PVP_ENABLED?bgRank(ensureState()):null,getState:()=>PVP_ENABLED?ensureState():null};
+window.CellboundPvP={version:'1.3.1',get enabled(){return pvpEnabled()},render,arenaUnlocked,getRank:()=>pvpEnabled()?bgRank(ensureState()):null,getState:()=>pvpEnabled()?ensureState():null};
 window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='pvp')render()});
-let bootTries=0;const boot=setInterval(()=>{bootTries++;if(game()?.ready){clearInterval(boot);if(PVP_ENABLED)ensureState();if($('#pvp')?.classList.contains('active'))render()}else if(bootTries>80)clearInterval(boot)},125);
+window.addEventListener('cellbound:admin-status',()=>{if(pvpEnabled())ensureState();if($('#pvp')?.classList.contains('active'))render()});
+let bootTries=0;const boot=setInterval(()=>{bootTries++;if(game()?.ready){clearInterval(boot);if(pvpEnabled())ensureState();if($('#pvp')?.classList.contains('active'))render()}else if(bootTries>80)clearInterval(boot)},125);
 })();
