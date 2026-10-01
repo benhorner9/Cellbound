@@ -528,7 +528,7 @@ async function startBoss(resumed=false){
   const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:100,_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0}));
   let result=C.simulate({party:combatParty,encounter:bossEncounter(),tactics:{pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced'},seed:'blackout-station:'+run.seed},{zone:'blackout-station'});
   const hasCombat=(result.events||[]).some(e=>e.type==='DAMAGE_DEALT'||e.type==='HEAL_RECEIVED'||e.type==='ABILITY_START');
-  if(!hasCombat)throw new Error('Combat Reborn produced no actionable events.');
+  if(!hasCombat)throw new Error('Combat ended without any actions.');
   run.result=result;
   if(!run.runtimeStageStartedAt)run.runtimeStageStartedAt=Date.now();
   await bsSaveRuntime('combat');
