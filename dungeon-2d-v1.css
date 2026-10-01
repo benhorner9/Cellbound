@@ -1518,3 +1518,26 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
   .cb2d-bespoke-foreground-layer{opacity:.86!important}
   .cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-ambient.smoke{opacity:.2}
 }
+
+
+/* Ashen Vault room crossfade v1 */
+.cb2d-arena .cb2d-room-fade{
+  position:absolute;
+  inset:0;
+  z-index:60;
+  pointer-events:none;
+  background:#020303;
+  opacity:0;
+  transition:opacity var(--cb2d-room-fade-ms,520ms) ease;
+}
+.cb2d-arena .cb2d-room-fade.is-black{opacity:1}
+.cb2d-arena .cb2d-room-fade.is-clear{opacity:0}
+.cb2d-arena.travelling .cb2d-room-tag,
+.cb2d-arena.room-entering .cb2d-room-tag{
+  transition:opacity 240ms ease;
+}
+.cb2d-arena.travelling .cb2d-room-tag{opacity:.35}
+.cb2d-arena.room-entering .cb2d-room-tag{opacity:.72}
+@media(prefers-reduced-motion:reduce){
+  .cb2d-arena .cb2d-room-fade{transition-duration:120ms!important}
+}
