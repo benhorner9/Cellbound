@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.5.0';
+const VERSION='1.5.1';
 // Balance baseline: 2026-09-30 chapter-wide progression and role audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
@@ -1451,11 +1451,13 @@ function moveIntoRange(ctx,u,target,range,abilityKind='damage'){
    moveTo(ctx,u,desired,480,!los?'line of sight':'support range');return false
  }
  if(r<=7){
-   const formation=meleeFormationPoint(ctx,u,target),desired=visibleCastPoint(ctx,u,target,r,formation),slotDistance=dist(u.position,desired),combatRange=inRange(u,target,r);
-   const tolerance=u.role==='tank'?2.1:3.75;
-   if(combatRange&&los&&slotDistance<=tolerance)return true;
-   if(combatRange&&los&&target.movingUntil>ctx.time&&slotDistance<=4.75)return true;
-   moveTo(ctx,u,desired,500,!los?'line of sight':u.role==='tank'?'tank positioning':'melee formation');
+   const formation=meleeFormationPoint(ctx,u,target),desired=visibleCastPoint(ctx,u,target,r,formation),combatRange=inRange(u,target,r);
+   const current=physicalPosition(ctx,u),targetPos=physicalPosition(ctx,target),tooClose=dist(current,targetPos)<bodyClearance(u,target)*.94;
+   // Collision should shape how melee reaches the fight, not consume attacks simply
+   // because a character is a little off its preferred formation slot. Once a melee
+   // combatant has a clear, non-overlapping position inside attack range, let them act.
+   if(combatRange&&los&&!tooClose)return true;
+   moveTo(ctx,u,desired,tooClose?300:420,!los?'line of sight':u.role==='tank'?'tank positioning':'melee formation');
    return false
  }
  const formation=rangedFormationPoint(ctx,u,target,r),desired=visibleCastPoint(ctx,u,target,r,formation),slotDistance=dist(u.position,desired);
