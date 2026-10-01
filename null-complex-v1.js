@@ -98,7 +98,7 @@ async function fight(room){
    title:room.type==='breach'?'Containment Breach':'Experiment Chamber',
    subtitle:'NULL COMPLEX EXPEDITION',
    planTitle:'The room has sealed. Eliminate the Aberrants.',
-   planCopy:'The same Combat Reborn movement, threat, healing, skills, talents and mechanics used by Cellbound dungeons are active here.',
+   planCopy:'The room uses the same movement, threat, healing, skills, talents and mechanics as dungeons.',
    theme:'null',room:'null-'+roomVisual,roomLabel:(room.type==='breach'?'CONTAINMENT BREACH':roomVisual.toUpperCase()+' CHAMBER'),
    ambience:roomVisual==='containment'?'Cracked specimen tanks pulse behind the combat floor.':roomVisual==='reactor'?'Unstable reactor conduits arc around the chamber.':roomVisual==='storage'?'Broken supply racks and research crates line the room.':'Abandoned experiment benches and machinery surround the arena.',
    shellClass:'null-combat-shell',arenaClass:'null-combat-arena',
