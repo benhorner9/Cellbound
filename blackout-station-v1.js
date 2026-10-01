@@ -11,6 +11,7 @@ const ROLE_ZONES={
  dps:{x:48,y:74,radius:14,color:'yellow',label:'DAMAGE'},
  healer:{x:73,y:27,radius:9,color:'blue',label:'HEALER'}
 };
+const BLACKOUT_REACTOR_SCENE='./assets/blackout-station/rooms/reactor-core.webp?v=1';
 const CABLES=['se','sw','se','sw','nw','v','v','v','se','nw','v','ne','ne','h','nw'];
 const CABLE_LINKS={h:['w','e'],v:['n','s'],ne:['n','e'],nw:['n','w'],se:['s','e'],sw:['s','w']};
 const GRID_INPUT_INDEX=4,GRID_BREAKER_INDEX=11;
@@ -271,8 +272,8 @@ function renderId(id){
  return s
 }
 function charFor(id){const s=String(id||'');return s.startsWith('p-')?party().find(c=>String(c.id)===s.slice(2)):null}
-function addUnit(id,label,cls,x,y,big=false){
- const e=document.createElement('div');e.className='bs-unit cb2d-unit '+cls+(big?' big':'');e.dataset.bs=id;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+'</span><em class="cb2d-unit-hp"><i></i></em>';$('#bsUnits')?.appendChild(e)
+function addUnit(id,label,cls,x,y,big=false,characterId=null){
+ const e=document.createElement('div');e.className='bs-unit cb2d-unit '+cls+(big?' big':'');e.dataset.bs=id;if(characterId)e.dataset.unit='p-'+characterId;e.style.left=x+'%';e.style.top=y+'%';e.innerHTML='<i></i><span>'+esc(label)+'</span><em class="cb2d-unit-hp"><i></i></em>';$('#bsUnits')?.appendChild(e)
 }
 function bsSafePoint(x,y){return{x:Math.max(7,Math.min(93,Number(x)||50)),y:Math.max(11,Math.min(89,Number(y)||50))}}
 function move(id,x,y,ms=420){const e=$('[data-bs="'+id+'"]');if(!e)return;const p=bsSafePoint(x,y);e.style.transitionDuration=Math.round(ms/Math.max(.25,Number(run?.speed)||1))+'ms';e.style.left=p.x+'%';e.style.top=p.y+'%'}
@@ -386,7 +387,7 @@ function eventRender(e){
 
  const src=renderId(e.source),target=renderId(e.target),srcChar=charFor(e.source),targetChar=charFor(e.target);
  switch(e.type){
-  case'COMBAT_START':{hideRoleZones(true);$('#bsArena')?.classList.remove('shockwave');window.CellboundCombatFX?.boss?.($('#bsArena'),'Dr. Vex Calder');const oc=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT;setStatus('Generator hall combat live'+(oc?' · CALDER OVERCHARGE +'+oc+'%':'')+'.');feed('Dr. Vex Calder steps into the restored light.'+(oc?' Diagnostics have increased his maximum health by '+oc+'%.':''));break}
+  case'COMBAT_START':{hideRoleZones(true);$('#bsArena')?.classList.remove('shockwave');bsPowerSurge(650);window.CellboundCombatFX?.boss?.($('#bsArena'),'Dr. Vex Calder');const oc=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT;setStatus('Generator hall combat live'+(oc?' · CALDER OVERCHARGE +'+oc+'%':'')+'.');feed('Dr. Vex Calder steps into the restored light.'+(oc?' Diagnostics have increased his maximum health by '+oc+'%.':''));break}
   case'MOVEMENT_START':if(window.CellboundCombatFX?.ownsMovement)break;
    if(src&&e.payload?.to){run.movementEpoch=run.movementEpoch||{};run.movementEpoch[src]=(Number(run.movementEpoch[src])||0)+1;move(src,e.payload.to.x,e.payload.to.y,e.payload.duration||420)}
    break;
@@ -410,7 +411,7 @@ function eventRender(e){
    run.aggro=targetChar?.id||null;
    if(e.payload?.threat)Object.entries(e.payload.threat).forEach(([id,v])=>{const ch=charFor(id);if(ch)run.threat[ch.id]=Number(v)||0});
    queueMeterRender();break;
-  case'PHASE_CHANGE':window.CellboundCombatFX?.phase?.($('#bsArena'));window.CellboundFX?.phase?.(e.ability||'Power instability',e.payload?.healthPct);hideRoleZones(true);setStatus(e.ability||'Power instability');feed((e.ability||'Calder changes phase')+'. The station lights begin to fail.');break;
+  case'PHASE_CHANGE':window.CellboundCombatFX?.phase?.($('#bsArena'));window.CellboundFX?.phase?.(e.ability||'Power instability',e.payload?.healthPct);bsPowerSurge(900);hideRoleZones(true);setStatus(e.ability||'Power instability');feed((e.ability||'Calder changes phase')+'. The reactor surges and the station lights begin to fail.');break;
   case'MECHANIC_TELEGRAPH':
    window.CellboundCombatFX?.mechanic?.($('#bsArena'),'warning');
    if(e.payload?.mechanicType==='role-circles'){showRoleZones(e.payload.zones);setStatus('ROLE CIRCUITS — RED TANK · YELLOW DAMAGE · BLUE HEALER');feed('Calder pulls the power. Get every character into the correct coloured circuit.')}
@@ -465,13 +466,32 @@ function bsUseCombatPotion(button){
  if(!used?.ok){feed(used?.reason==='full'?'The party is already at full health.':'No combat potions remain. Craft or buy one before the next run.');helper?.refreshCombatPotionButton?.(button,state());return}
  renderPartyRows();helper?.refreshCombatPotionButton?.(button,state());feed(used.item.name+' restores '+used.target.name+' for '+used.healApplied+' HP.')
 }
+function bsReactorLifeMarkup(){
+ return '<div class="bs-reactor-life" aria-hidden="true">'+
+   '<i class="bs-reactor-glow glow-left"></i><i class="bs-reactor-glow glow-right"></i><i class="bs-reactor-glow glow-core"></i>'+
+   '<i class="bs-steam steam-a"></i><i class="bs-steam steam-b"></i><i class="bs-steam steam-c"></i>'+
+   '<i class="bs-electric-arc arc-a"></i><i class="bs-electric-arc arc-b"></i><i class="bs-electric-arc arc-c"></i>'+
+ '</div>'
+}
+function bsMountReactorScene(){
+ const arena=$('#bsArena');if(!arena)return;
+ arena.dataset.bespokeBattlefield='1';arena.dataset.blackoutRoom='reactor-core';
+ (window.CellboundLivingScenes||window.CellboundAshenLiveScenes)?.mount?.(arena,{src:BLACKOUT_REACTOR_SCENE,profile:'blackout-reactor'})
+}
+function bsPowerSurge(ms=760){
+ const arena=$('#bsArena');if(!arena)return;
+ const epoch=(Number(arena.dataset.powerSurgeEpoch)||0)+1;arena.dataset.powerSurgeEpoch=String(epoch);
+ arena.classList.add('ambient-surge','bs-power-surge');
+ setTimeout(()=>{if(arena.isConnected&&arena.dataset.powerSurgeEpoch===String(epoch))arena.classList.remove('ambient-surge','bs-power-surge')},Math.max(220,Number(ms)||760))
+}
+
 function drawCombat(){
  const r=root(),oc=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT;r.hidden=false;
  r.innerHTML='<section class="cb2d-shell bs2d-shell">'+
  '<header class="cb2d-head"><div><small>BLACKOUT STATION · LIVE 2D DUNGEON</small><h2 id="bsTitle">Dr. Vex Calder</h2></div><div class="cb2d-live"><i></i>LIVE <button data-bs-speed>'+run.speed+'×</button><button data-bs-close aria-label="Close dungeon">×</button></div></header>'+
  '<div class="cb2d-route bs2d-route"><span class="done"><i>1</i>Grid Alignment</span><span class="current"><i>2</i>Dr. Vex Calder</span></div>'+
  '<div class="cb2d-layout"><main>'+
- '<div id="bsArena" class="cb2d-arena bs-arena"><div class="cb2d-floor bs-station-env"><div class="bs-generator g1"></div><div class="bs-generator g2"></div><div class="bs-transformer t1"></div><div class="bs-transformer t2"></div><div class="bs-cable-floor"></div></div><div class="cb2d-ground-legend"><span class="danger">RED · TANK</span><span class="spawn">YELLOW · DAMAGE</span><span class="aggro">BLUE · HEALER</span></div><div id="bsRoleZones" class="bs-role-zones"></div><div id="bsTelegraphs"></div><div id="bsUnits"></div><div id="bsFx"></div><div class="cb2d-room-tag"><small>GENERATOR HALL</small><b>Main turbine chamber</b></div><div class="cb2d-caption"><span>FINAL BOSS</span><b id="bsStatus">Power restored. Calder engages.</b></div></div>'+
+ '<div id="bsArena" class="cb2d-arena bs-arena bs-live-room"><div class="cb2d-floor bs-station-env"><img class="bs-room-art" src="'+BLACKOUT_REACTOR_SCENE+'" alt="" decoding="async" draggable="false"></div>'+bsReactorLifeMarkup()+'<div class="cb2d-ground-legend"><span class="danger">RED · TANK</span><span class="spawn">YELLOW · DAMAGE</span><span class="aggro">BLUE · HEALER</span></div><div id="bsRoleZones" class="bs-role-zones"></div><div id="bsTelegraphs"></div><div id="bsUnits"></div><div id="bsFx"></div><div class="cb2d-room-tag"><small>REACTOR CORE</small><b>Main turbine chamber</b></div><div class="cb2d-caption"><span>FINAL BOSS</span><b id="bsStatus">Power restored. Calder engages.</b></div></div>'+
  '<div class="cb2d-controls bs-authority"><div><b>TACTICS LOCKED</b><small>The party follows your selected plan. Role circuits react to live positions.</small></div><div><b>CALDER OVERCHARGE</b><small>+'+oc+'% maximum health from diagnostics used.</small></div>'+(window.CellboundDungeon2D?.combatPotionButtonMarkup?.('data-bs-potion')||'<button type="button" data-bs-potion disabled><b>USE POTION · ×0</b><small>No combat potions available</small></button>')+'</div>'+
  '<div class="cb2d-feed"><small>COMBAT FEED</small><div id="bsFeed"></div></div></main>'+
  '<aside><div class="cb2d-cast" id="bsCast"><small>ENEMY CAST</small><div><b id="bsCastName">—</b><strong id="bsCastTime">—</strong></div><div class="cb2d-castbar"><i id="bsCastFill"></i></div></div>'+
@@ -485,10 +505,13 @@ function drawCombat(){
  r.querySelector('[data-bs-potion]')?.addEventListener('click',e=>bsUseCombatPotion(e.currentTarget));
  window.CellboundDungeon2D?.refreshCombatPotionButton?.(r.querySelector('[data-bs-potion]'),state());
  renderPartyRows();
- const p=party();p.forEach((c,i)=>addUnit('p'+i,c.name,'party '+role(c)+' '+classKey(c),role(c)==='tank'?38:role(c)==='healer'?18:26,24+i*13));
+ bsMountReactorScene();
+ const p=party(),starts=[[40,60],[27,67],[34,73],[45,76],[54,72]];
+ p.forEach((c,i)=>{const start=starts[i]||[30+i*7,70];addUnit('p'+i,c.name,'party '+role(c)+' '+classKey(c),start[0],start[1],false,c.id)});
  p.forEach(c=>mountResource(c));
- addUnit('e0','Dr. Vex Calder','enemy boss',68,50,true);renderMeters();
- feed('Power restored. Dr. Vex Calder enters the generator hall.')
+ addUnit('e0','Dr. Vex Calder','enemy boss',62,42,true);renderMeters();
+ requestAnimationFrame(()=>window.CellboundCombatPortraits?.refresh?.());
+ feed('Power restored. Dr. Vex Calder enters the reactor core.')
 }
 async function startBoss(resumed=false){
  if(!run)return;if(!resumed)await window.CellboundBossDossier?.show?.('vex-calder');drawCombat();window.CellboundFX?.boss?.('Dr. Vex Calder','Restore the grid. Survive the role circuits.');const tok=token,C=window.CellboundCombatStandard;if(!C?.simulate){setStatus('Combat failed to start');feed('The encounter could not start. Reload and try again.');return}

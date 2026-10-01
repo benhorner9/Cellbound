@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.2.0';
+const VERSION='1.3.0';
 const states=new WeakMap();
 const PROFILES={
   'ash-gate':{intensity:.52,heat:.44,pulse:.00,center:[.50,.50],radius:.18,warm:1,cool:0,core:[1,.46,.12]},
@@ -21,6 +21,7 @@ const PROFILES={
   'canyon-warden':{intensity:.76,heat:.28,pulse:.10,center:[.54,.49],radius:.27,warm:.05,cool:.22,green:.92,core:[.13,1.0,.32]},
   'canyon-wildheart':{intensity:.88,heat:.36,pulse:.13,center:[.50,.44],radius:.30,warm:.04,cool:.28,green:1.04,core:[.12,1.0,.30]},
   'canyon-vorran':{intensity:1.00,heat:.42,pulse:.32,center:[.50,.47],radius:.31,warm:.04,cool:.24,green:1.16,core:[.10,1.0,.28]},
+  'blackout-reactor':{intensity:.88,heat:.48,pulse:.22,center:[.50,.20],radius:.29,warm:.52,cool:1.20,green:.02,core:[.18,.78,1.0]},
   'ashen':{intensity:.62,heat:.48,pulse:.00,center:[.50,.50],radius:.20,warm:1,cool:0,core:[1,.46,.12]}
 };
 

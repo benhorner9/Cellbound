@@ -446,3 +446,74 @@ body.bs2d-open{overflow:hidden}
 .bs-entry-ready{margin:10px 0 0!important;padding:9px 10px;border-left:2px solid #58b9b0;background:rgba(66,143,137,.06);color:#8fa8a3!important;font-size:.5rem!important;line-height:1.45!important}
 .bs2d-shell.results-mode .cb2d-xp-section,.bs2d-shell.results-mode .cbr-analysis{border-color:rgba(86,185,176,.14);background:linear-gradient(180deg,#081315,#061012)}
 .bs2d-shell.results-mode .cbr-analysis-head small,.bs2d-shell.results-mode .cb2d-xp-section .cb2d-loot-title>span{color:#79cec6}
+
+
+/* Blackout Station rendered Reactor Core battlefield v1 */
+.bs-arena.bs-live-room{
+  position:relative;height:auto!important;min-height:0!important;aspect-ratio:16/9;
+  overflow:hidden;background:#050a0d;isolation:isolate;
+}
+.bs-arena.bs-live-room .bs-station-env{position:absolute;inset:0;z-index:0;background:#050a0d!important;filter:none}
+.bs-room-art{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;
+  display:block;user-select:none;-webkit-user-drag:none;opacity:1;transition:opacity .22s ease;
+  filter:saturate(1.04) contrast(1.025) brightness(.98);
+}
+.bs-arena.bs-live-room .cb2d-live-scene{
+  position:absolute;inset:0;width:100%;height:100%;z-index:1;display:block;pointer-events:none;
+  opacity:0;transition:opacity .24s ease,filter .18s ease;image-rendering:auto;
+}
+.bs-arena.bs-live-room[data-live-scene-ready="1"] .cb2d-live-scene{opacity:1}
+.bs-arena.bs-live-room[data-live-scene-ready="1"] .bs-room-art{opacity:0}
+.bs-reactor-life{position:absolute;inset:0;z-index:3;overflow:hidden;pointer-events:none}
+.bs-reactor-glow{
+  position:absolute;border-radius:50%;mix-blend-mode:screen;filter:blur(10px);
+  background:radial-gradient(circle,rgba(83,224,255,.24),rgba(40,155,225,.10) 38%,transparent 70%);
+  animation:bsReactorBreathe 2.8s ease-in-out infinite alternate;
+}
+.bs-reactor-glow.glow-left{left:-5%;top:14%;width:24%;height:48%;animation-delay:-.7s}
+.bs-reactor-glow.glow-right{right:-5%;top:18%;width:24%;height:48%;animation-delay:-1.4s}
+.bs-reactor-glow.glow-core{left:35%;top:-8%;width:30%;height:32%;opacity:.46;animation-duration:3.4s}
+.bs-steam{
+  position:absolute;width:24%;height:18%;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(226,239,242,.15),rgba(205,225,230,.055) 48%,transparent 72%);
+  filter:blur(13px);opacity:.25;animation:bsSteamDrift 7.5s ease-in-out infinite alternate;
+}
+.bs-steam.steam-a{left:-6%;top:31%;animation-delay:-1.3s}
+.bs-steam.steam-b{right:-9%;top:57%;animation-delay:-4.1s;animation-duration:9s}
+.bs-steam.steam-c{left:38%;top:5%;width:18%;height:13%;animation-delay:-3.2s;opacity:.17}
+.bs-electric-arc{
+  position:absolute;height:2px;transform-origin:left center;opacity:.18;
+  background:linear-gradient(90deg,transparent,rgba(150,235,255,.95) 18% 74%,transparent);
+  box-shadow:0 0 5px rgba(85,201,255,.9),0 0 12px rgba(64,159,255,.45);
+  animation:bsArcFlicker 2.2s steps(1,end) infinite;
+}
+.bs-electric-arc.arc-a{left:4%;top:35%;width:14%;transform:rotate(-19deg);animation-delay:-.4s}
+.bs-electric-arc.arc-b{right:3%;top:35%;width:13%;transform:rotate(198deg);animation-delay:-1.2s}
+.bs-electric-arc.arc-c{left:43%;top:15%;width:14%;transform:rotate(2deg);animation-delay:-1.7s}
+@keyframes bsReactorBreathe{from{transform:scale(.94);opacity:.28}to{transform:scale(1.08);opacity:.62}}
+@keyframes bsSteamDrift{from{transform:translate3d(-5%,8%,0) scale(.92);opacity:.14}to{transform:translate3d(32%,-22%,0) scale(1.14);opacity:.34}}
+@keyframes bsArcFlicker{0%,15%,18%,54%,58%,100%{opacity:.10}16%,17%,55%,57%{opacity:.72}76%{opacity:.34}}
+.bs-arena.bs-live-room:after{
+  z-index:4;background:linear-gradient(180deg,rgba(0,0,0,.04),transparent 20% 76%,rgba(0,0,0,.10)),
+             linear-gradient(90deg,rgba(0,0,0,.07),transparent 10% 90%,rgba(0,0,0,.07));
+  box-shadow:inset 0 0 48px rgba(0,0,0,.18);
+}
+.bs-arena.bs-live-room #bsRoleZones{z-index:5}
+.bs-arena.bs-live-room #bsTelegraphs{z-index:6}
+.bs-arena.bs-live-room #bsUnits{z-index:7}
+.bs-arena.bs-live-room #bsFx{z-index:12}
+.bs-arena.bs-live-room .cb2d-ground-legend,
+.bs-arena.bs-live-room .cb2d-room-tag,
+.bs-arena.bs-live-room .cb2d-caption{z-index:20}
+.bs-arena.bs-live-room .bs-unit{filter:drop-shadow(0 7px 5px rgba(0,0,0,.56)) drop-shadow(0 0 4px rgba(83,208,255,.12))}
+.bs-arena.bs-live-room.blackout .cb2d-live-scene{filter:brightness(.20) saturate(.65)}
+.bs-arena.bs-live-room.blackout .bs-room-art{filter:brightness(.20) saturate(.65)}
+.bs-arena.bs-live-room.blackout .bs-reactor-life{opacity:.16}
+.bs-arena.bs-live-room.bs-power-surge .cb2d-live-scene{filter:brightness(1.12) saturate(1.13)}
+.bs-arena.bs-live-room.bs-power-surge .bs-reactor-life{filter:brightness(1.35)}
+.bs-arena.bs-live-room.bs-power-surge .bs-electric-arc{animation-duration:.55s}
+@media(prefers-reduced-motion:reduce){
+ .bs-reactor-life *{animation:none!important}
+ .bs-arena.bs-live-room .cb2d-live-scene,.bs-room-art{transition:none!important}
+}
