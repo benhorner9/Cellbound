@@ -4496,6 +4496,21 @@ function runSelfTests(){
   return units.every((u,i)=>units.slice(i+1).every(v=>dist(u.position,v.position)>=bodyClearance(u,v)-.18))
  });
  test('Physical Collision Metadata',()=>r.events.some(e=>e.type==='COMBAT_START'&&e.payload?.physicalSpace===true&&e.payload?.units?.every(u=>Number(u.bodyRadius)>0)));
+ {
+  const collisionParty=[
+   {id:'ct',name:'Tank',class:'Warrior',spec:'Protection',power:18,level:10,_combatItemLevel:30},
+   {id:'ch',name:'Healer',class:'Priest',spec:'Holy',power:18,level:10,_combatItemLevel:30},
+   {id:'cm1',name:'Rogue',class:'Rogue',spec:'Assassination',power:18,level:10,_combatItemLevel:30},
+   {id:'cm2',name:'Arms',class:'Warrior',spec:'Arms',power:18,level:10,_combatItemLevel:30},
+   {id:'cm3',name:'Havoc',class:'Demon Hunter',spec:'Havoc',power:18,level:10,_combatItemLevel:30}
+  ],collisionEncounter={id:'collision-uptime-test',kind:'boss',level:10,recommendedItemLevel:30,enemies:[{name:'Boss',classification:'boss'}],enemyHealth:10000,mechanicIntervalMs:1500,mechanics:[['Spread','circles',1200],['Line','line',1200],['Frontal','cone',1350]]};
+  let physicalDamage=0,baselineDamage=0,collisionRoutes=0;
+  for(let i=0;i<4;i++){
+   const seed='collision-uptime-'+i,physical=simulate({party:collisionParty,encounter:{...collisionEncounter,physicalSpace:true},seed,maxDurationMs:30000}),baseline=simulate({party:collisionParty,encounter:{...collisionEncounter,physicalSpace:false},seed,maxDurationMs:30000});
+   physicalDamage+=physical.summary.totalDamage;baselineDamage+=baseline.summary.totalDamage;collisionRoutes+=physical.events.filter(e=>e.type==='MOVEMENT_START'&&e.payload?.bodyCollision).length
+  }
+  test('Collision Melee Uptime',()=>collisionRoutes>0&&physicalDamage>=baselineDamage*.96)
+ }
  test('Resource Bars',()=>r.events.filter(e=>e.type==='RESOURCE_STATE'&&e.result==='initial').length===5);
  r=simulate({party:[
   {id:'rt',name:'Tank',class:'Warrior',spec:'Protection',power:10,level:10,_combatResource:{value:44}},
