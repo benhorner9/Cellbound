@@ -263,7 +263,7 @@ function renderHub(){
  const mine=myMembership(),mineRows=myGroup?groupMembers(myGroup.id):[],comp=roleSummary(mineRows),recommended=compositionClass(mineRows)==='recommended';
  let body='';
  if(session?.status==='active'){
-   body='<section class="mr-card mr-current"><div><small>RAID IN PROGRESS</small><h3>'+esc(stageName(session.stage))+'</h3><p>Combat Reborn is resolving the ten-character fight inside the Manor.</p></div><button data-mr-enter>ENTER RAID →</button></section>';
+   body='<section class="mr-card mr-current"><div><small>RAID IN PROGRESS</small><h3>'+esc(stageName(session.stage))+'</h3><p>The ten-character fight is already underway inside the Manor.</p></div><button data-mr-enter>ENTER RAID →</button></section>';
  }else if(session?.status==='failed'){
    const leader=myGroup?.leader_id===user.id,count=mineRows.length,canRetry=leader&&count===2&&Number(lockout?.runsRemaining??0)>0;
    body='<section class="mr-card mr-current mr-failed"><div><small>RAID WIPE · ATTEMPT SPENT</small><h3>'+esc(session.state?.failureReason||'The Manor claimed the raid')+'</h3><p>This raid attempt is over. There is no checkpoint recovery after a wipe; starting again begins from The Butler and consumes another raid charge.</p></div><div class="mr-current-actions">'+(canRetry?'<button data-mr-rerun>START A NEW RAID ATTEMPT →</button>':'<span>'+(leader?'No runs remain this reset.':'Raid group closing…')+'</span>')+'</div></section>';
@@ -523,7 +523,7 @@ async function syncSharedRaidView(force=false){
    roomLabel:room,ambience:(session.stage==='maids'?'Your five-character party is separated from the other commander. Screech links both rooms.':'The raid fights together as one ten-character group.')+recoveryNote,
    shellClass:'cb2d-manor-raid',arenaClass:'cb2d-manor-arena',
    planTitle:'The Manor uses the same combat rules as every dungeon.',
-   planCopy:'Combat Reborn controls movement, threat, resources, healing, interrupts, deaths and boss mechanics. Raid-only interactions are layered over the same event stream.',
+   planCopy:'Movement, threat, resources, healing, interrupts and boss mechanics use the same rules as dungeons. Raid mechanics are added on top.',
    onEvent:handleRaidCombatEvent,
    onClose:()=>closeRaid(true)
  }).catch(error=>console.error('Manor shared viewer failed',error));
