@@ -17,9 +17,13 @@ const ASHEN_ROOMS={
  'broken-gate':{
    room:'broken-gate',label:'Collapsed Vault Entrance',
    ambience:'Ash drifts through a shattered seal.',
-   art:'./assets/ashen-vault/battlefields/broken-gate.avif',
-   artPosition:'50% 50%',
+   art:'./assets/ashen-vault/battlefields/broken-gate.avif',artPosition:'50% 50%',
    bounds:{left:12,right:87,top:17,bottom:86},
+   life:{profile:'ash-gate',particles:24,mix:['ash','ember','ash','smoke'],depthMin:.945,depthMax:1.055,light:'rgba(255,116,54,.26)'},
+   occluders:[
+     {clip:'polygon(0 0,12% 0,10% 24%,6% 48%,11% 72%,17% 100%,0 100%)',opacity:.93},
+     {clip:'polygon(88% 0,100% 0,100% 100%,91% 100%,94% 72%,90% 46%,92% 22%)',opacity:.94}
+   ],
    blockers:[
      {id:'broken-gate-arch',x:88,y:25,w:13,h:22},
      {id:'broken-pillar-nw',x:8,y:19,w:8,h:21},
@@ -30,68 +34,83 @@ const ASHEN_ROOMS={
  'hall-embers':{
    room:'hall-embers',label:'Ember Processional Hall',
    ambience:'Old braziers still breathe beneath the ash.',
-   art:'./assets/ashen-vault/battlefields/hall-embers.avif',
-   artPosition:'50% 50%',
+   art:'./assets/ashen-vault/battlefields/hall-embers.avif',artPosition:'50% 50%',
    bounds:{left:12,right:88,top:15,bottom:86},
+   life:{profile:'ember-hall',particles:28,mix:['ember','ash','ember','smoke'],depthMin:.94,depthMax:1.06,light:'rgba(255,139,61,.28)'},
+   occluders:[
+     {clip:'polygon(0 72%,9% 66%,17% 79%,22% 100%,0 100%)',opacity:.9},
+     {clip:'polygon(100% 70%,91% 65%,83% 80%,78% 100%,100% 100%)',opacity:.9}
+   ],
    blockers:[
-     {id:'hall-pillar-nw',x:8,y:20,w:8,h:20},
-     {id:'hall-pillar-ne',x:92,y:20,w:8,h:20},
-     {id:'hall-pillar-sw',x:8,y:81,w:8,h:20},
-     {id:'hall-pillar-se',x:92,y:81,w:8,h:20}
+     {id:'hall-pillar-nw',x:8,y:20,w:8,h:20},{id:'hall-pillar-ne',x:92,y:20,w:8,h:20},
+     {id:'hall-pillar-sw',x:8,y:81,w:8,h:20},{id:'hall-pillar-se',x:92,y:81,w:8,h:20}
    ]
  },
  'kael':{
    room:'warden-seal',label:'The Warden Seal',
    ambience:'Chains hold an ancient oath around the chamber.',
-   art:'./assets/ashen-vault/battlefields/kael.avif',
-   artPosition:'50% 50%',
-   bounds:{left:9,right:91,top:8,bottom:92},
-   arena:{shape:'ellipse',cx:50,cy:50,rx:39,ry:37},
+   art:'./assets/ashen-vault/battlefields/kael.avif',artPosition:'50% 50%',
+   bounds:{left:9,right:91,top:8,bottom:92},arena:{shape:'ellipse',cx:50,cy:50,rx:39,ry:37},
+   life:{profile:'warden-seal',particles:30,mix:['ember','ember','ash','smoke'],depthMin:.94,depthMax:1.065,light:'rgba(255,101,46,.30)'},
+   occluders:[
+     {clip:'polygon(0 77%,12% 69%,20% 82%,26% 100%,0 100%)',opacity:.9},
+     {clip:'polygon(100% 76%,88% 69%,80% 83%,75% 100%,100% 100%)',opacity:.9}
+   ],
    blockers:[]
  },
  'furnace':{
    room:'furnace-passage',label:'Furnace Passage',
    ambience:'Heat pulses through cracked iron channels.',
-   art:'./assets/ashen-vault/battlefields/furnace.avif',
-   artPosition:'50% 50%',
+   art:'./assets/ashen-vault/battlefields/furnace.avif',artPosition:'50% 50%',
    bounds:{left:11,right:89,top:13,bottom:88},
+   life:{profile:'furnace',particles:34,mix:['ember','ember','smoke','ember','ash'],depthMin:.94,depthMax:1.065,light:'rgba(255,102,34,.34)'},
+   occluders:[
+     {clip:'polygon(0 0,13% 0,11% 25%,15% 48%,10% 73%,18% 100%,0 100%)',opacity:.92},
+     {clip:'polygon(87% 0,100% 0,100% 100%,82% 100%,90% 72%,85% 48%,89% 24%)',opacity:.92}
+   ],
    blockers:[
-     {id:'furnace-nw-works',x:8,y:18,w:11,h:18},
-     {id:'furnace-ne-works',x:91,y:19,w:12,h:20},
-     {id:'furnace-sw-works',x:8,y:82,w:13,h:17},
-     {id:'furnace-se-works',x:92,y:80,w:12,h:18},
+     {id:'furnace-nw-works',x:8,y:18,w:11,h:18},{id:'furnace-ne-works',x:91,y:19,w:12,h:20},
+     {id:'furnace-sw-works',x:8,y:82,w:13,h:17},{id:'furnace-se-works',x:92,y:80,w:12,h:18},
      {id:'furnace-east-channel',x:82,y:51,w:8,h:14,blocksLos:false}
    ]
  },
  'embermaw':{
    room:'embermaw-forge',label:'The Ember Forge',
    ambience:'The floor itself glows beneath Embermaw.',
-   art:'./assets/ashen-vault/battlefields/embermaw.avif',
-   artPosition:'50% 50%',
-   bounds:{left:8,right:92,top:9,bottom:91},
-   arena:{shape:'ellipse',cx:50,cy:51,rx:40,ry:36},
+   art:'./assets/ashen-vault/battlefields/embermaw.avif',artPosition:'50% 50%',
+   bounds:{left:8,right:92,top:9,bottom:91},arena:{shape:'ellipse',cx:50,cy:51,rx:40,ry:36},
+   life:{profile:'embermaw',particles:38,mix:['ember','ember','ember','smoke','ash'],depthMin:.935,depthMax:1.07,light:'rgba(255,91,30,.38)'},
+   occluders:[
+     {clip:'polygon(0 78%,13% 68%,22% 82%,29% 100%,0 100%)',opacity:.88},
+     {clip:'polygon(100% 78%,87% 68%,78% 82%,71% 100%,100% 100%)',opacity:.88}
+   ],
    blockers:[]
  },
  'vault-depths':{
    room:'vault-depths',label:'Sealed Vault Depths',
    ambience:'Dead reliquaries line the path inward.',
-   art:'./assets/ashen-vault/battlefields/vault-depths.avif',
-   artPosition:'50% 50%',
+   art:'./assets/ashen-vault/battlefields/vault-depths.avif',artPosition:'50% 50%',
    bounds:{left:13,right:87,top:14,bottom:86},
+   life:{profile:'vault-depths',particles:20,mix:['ash','smoke','ash','ember'],depthMin:.95,depthMax:1.05,light:'rgba(192,107,98,.18)'},
+   occluders:[
+     {clip:'polygon(0 70%,10% 66%,18% 80%,24% 100%,0 100%)',opacity:.94},
+     {clip:'polygon(100% 70%,90% 66%,82% 80%,76% 100%,100% 100%)',opacity:.94}
+   ],
    blockers:[
-     {id:'depths-shrine-nw',x:9,y:18,w:11,h:20},
-     {id:'depths-shrine-ne',x:91,y:20,w:11,h:20},
-     {id:'depths-shrine-sw',x:9,y:81,w:12,h:19},
-     {id:'depths-shrine-se',x:91,y:80,w:12,h:19}
+     {id:'depths-shrine-nw',x:9,y:18,w:11,h:20},{id:'depths-shrine-ne',x:91,y:20,w:11,h:20},
+     {id:'depths-shrine-sw',x:9,y:81,w:12,h:19},{id:'depths-shrine-se',x:91,y:80,w:12,h:19}
    ]
  },
  'vaultheart':{
    room:'vaultheart-sanctum',label:'The Vaultheart Sanctum',
    ambience:'A sealed Cell reliquary hums beneath the final chamber.',
-   art:'./assets/ashen-vault/battlefields/vaultheart.avif',
-   artPosition:'50% 50%',
-   bounds:{left:8,right:92,top:8,bottom:92},
-   arena:{shape:'ellipse',cx:50,cy:51,rx:40,ry:37},
+   art:'./assets/ashen-vault/battlefields/vaultheart.avif',artPosition:'50% 50%',
+   bounds:{left:8,right:92,top:8,bottom:92},arena:{shape:'ellipse',cx:50,cy:51,rx:40,ry:37},
+   life:{profile:'vaultheart',particles:34,mix:['ember','smoke','ember','ash'],depthMin:.935,depthMax:1.07,light:'rgba(255,103,52,.30)'},
+   occluders:[
+     {clip:'polygon(0 77%,13% 68%,21% 81%,27% 100%,0 100%)',opacity:.9},
+     {clip:'polygon(100% 77%,87% 68%,79% 81%,73% 100%,100% 100%)',opacity:.9}
+   ],
    blockers:[]
  }
 };
@@ -390,10 +409,17 @@ function combatSafePoint(id,x,y){
 }
 function applyUnitPosition(e,x,y,instant=false){
  if(!e)return;
- const safe=combatSafePoint(e.dataset.unit,x,y),p=unitPixelPosition(safe.x,safe.y);
+ const safe=combatSafePoint(e.dataset.unit,x,y),p=unitPixelPosition(safe.x,safe.y),arena=$('#cb2dArena');
  e.dataset.x=String(safe.x);e.dataset.y=String(safe.y);
  if(instant)e.style.transitionDuration='0ms';
- e.style.setProperty('--unit-x',p.x+'px');e.style.setProperty('--unit-y',p.y+'px')
+ e.style.setProperty('--unit-x',p.x+'px');e.style.setProperty('--unit-y',p.y+'px');
+ if(arena?.dataset?.bespokeBattlefield==='1'){
+   const min=Number(arena.dataset.depthMin)||.94,max=Number(arena.dataset.depthMax)||1.06,t=clamp((safe.y-10)/80,0,1);
+   e.style.setProperty('--cb2d-depth-scale',(min+(max-min)*t).toFixed(3));
+   e.style.zIndex=String(20+Math.round(safe.y))
+ }else{
+   e.style.removeProperty('--cb2d-depth-scale');e.style.removeProperty('z-index')
+ }
 }
 function addUnit(id,label,cls,x,y,size,meta=''){
  const e=document.createElement('div');e.className='cb2d-unit '+cls+' '+(size||'');e.dataset.unit=id;e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="cb2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em class="cb2d-unit-hp"><i></i></em>';$('#cb2dUnits').appendChild(e);applyUnitPosition(e,x,y,true)
@@ -429,10 +455,12 @@ function setFocusEnemy(index){
 }
 function ashParticle(type,i){
  const e=document.createElement('i');e.className='cb2d-ambient '+type;
- e.style.setProperty('--x',(6+((i*17)%88))+'%');
- e.style.setProperty('--delay',(-((i*0.73)%5))+'s');
- e.style.setProperty('--dur',(3.8+(i%5)*.55)+'s');
- e.style.setProperty('--drift',(-18+(i%7)*6)+'px');
+ e.style.setProperty('--x',(4+((i*17)%92))+'%');
+ e.style.setProperty('--y',(6+((i*23)%78))+'%');
+ e.style.setProperty('--delay',(-((i*.73)%7))+'s');
+ e.style.setProperty('--dur',(type==='smoke'?7.2+(i%5)*.8:3.8+(i%5)*.55)+'s');
+ e.style.setProperty('--drift',(-22+(i%7)*7)+'px');
+ e.style.setProperty('--size',(2+(i%3))+'px');
  return e
 }
 let ashenBattlefieldsPreloaded=false;
@@ -446,29 +474,37 @@ function preloadAshenBattlefields(){
 }
 function renderDungeonEnvironment(s){
  const arena=$('#cb2dArena'),root=$('#cb2dEnvironment'),tag=$('#cb2dRoomTag');if(!arena||!root)return;
- const cfg=ASHEN_ROOMS[s.id]||ASHEN_ROOMS['broken-gate'];
+ const cfg=ASHEN_ROOMS[s.id]||ASHEN_ROOMS['broken-gate'],life=cfg.life||{};
  arena.className='cb2d-arena theme-ashen room-'+cfg.room+(s.kind==='boss'||s.kind==='final'?' boss-room':'');
+ arena.querySelectorAll('.cb2d-bespoke-foreground-layer').forEach(n=>n.remove());
  root.innerHTML='';
  if(cfg.art){
-   arena.dataset.bespokeBattlefield='1';
-   arena.dataset.collisionProfile=s.id;
+   arena.dataset.bespokeBattlefield='1';arena.dataset.collisionProfile=s.id;arena.dataset.roomLife=life.profile||'ashen';
+   arena.dataset.depthMin=String(life.depthMin??.94);arena.dataset.depthMax=String(life.depthMax??1.06);
    arena.style.setProperty('--cb2d-battlefield','url("'+cfg.art+'")');
    arena.style.setProperty('--cb2d-battlefield-position',cfg.artPosition||'50% 50%');
-   const depth=document.createElement('div');depth.className='cb2d-bespoke-depth';root.appendChild(depth)
+   arena.style.setProperty('--cb2d-room-light',life.light||'rgba(255,115,48,.26)');
+   const depth=document.createElement('div');depth.className='cb2d-bespoke-depth';root.appendChild(depth);
+   const living=document.createElement('div');living.className='cb2d-bespoke-life';living.setAttribute('aria-hidden','true');root.appendChild(living);
+   (cfg.occluders||[]).forEach((o,i)=>{
+     const fg=document.createElement('div');fg.className='cb2d-bespoke-foreground-layer';fg.dataset.occluder=String(i);
+     fg.style.clipPath=o.clip;fg.style.opacity=String(o.opacity??.92);fg.setAttribute('aria-hidden','true');arena.appendChild(fg)
+   })
  }else{
-   delete arena.dataset.bespokeBattlefield;delete arena.dataset.collisionProfile;
-   arena.style.removeProperty('--cb2d-battlefield');arena.style.removeProperty('--cb2d-battlefield-position');
+   delete arena.dataset.bespokeBattlefield;delete arena.dataset.collisionProfile;delete arena.dataset.roomLife;delete arena.dataset.depthMin;delete arena.dataset.depthMax;
+   arena.style.removeProperty('--cb2d-battlefield');arena.style.removeProperty('--cb2d-battlefield-position');arena.style.removeProperty('--cb2d-room-light');
    (cfg.props||[]).forEach((p,i)=>{
      const e=document.createElement('span');e.className='cb2d-prop prop-'+p[0];
      e.style.left=p[1]+'%';e.style.top=p[2]+'%';e.style.setProperty('--rot',(p[3]||0)+'deg');e.style.setProperty('--scale',String(p[4]||1));if(p[5])e.classList.add(p[5]);e.dataset.prop=i;root.appendChild(e)
    })
  }
  const ambience=document.createElement('div');ambience.className='cb2d-ambience';
- for(let i=0;i<18;i++)ambience.appendChild(ashParticle(i%3===0?'ember':'ash',i));
+ const mix=Array.isArray(life.mix)&&life.mix.length?life.mix:['ash','ash','ember'],count=Math.max(12,Number(life.particles)||18);
+ for(let i=0;i<count;i++)ambience.appendChild(ashParticle(mix[i%mix.length],i));
  root.appendChild(ambience);
- if(tag)tag.innerHTML='<b>'+esc(cfg.label)+'</b><small>'+esc(cfg.ambience)+'</small>'
+ if(tag)tag.innerHTML='<b>'+esc(cfg.label)+'</b><small>'+esc(cfg.ambience)+'</small>';
+ requestAnimationFrame(()=>syncUnitPixelPositions())
 }
-
 function resourceClass(name){
  return 'resource-'+String(name||'power').toLowerCase().replace(/[^a-z0-9]+/g,'-')
 }
