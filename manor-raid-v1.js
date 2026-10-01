@@ -522,7 +522,7 @@ async function syncSharedRaidView(force=false){
    route:sharedRaidRoute(),currentId:session.stage,theme:'manor',room:'manor-'+session.stage,
    roomLabel:room,ambience:(session.stage==='maids'?'Your five-character party is separated from the other commander. Screech links both rooms.':'The raid fights together as one ten-character group.')+recoveryNote,
    shellClass:'cb2d-manor-raid',arenaClass:'cb2d-manor-arena',
-   planTitle:'The Manor uses the same combat system as every dungeon.',
+   planTitle:'The Manor uses the same combat rules as every dungeon.',
    planCopy:'Combat Reborn controls movement, threat, resources, healing, interrupts, deaths and boss mechanics. Raid-only interactions are layered over the same event stream.',
    onEvent:handleRaidCombatEvent,
    onClose:()=>closeRaid(true)
