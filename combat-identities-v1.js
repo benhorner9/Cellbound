@@ -80,7 +80,7 @@ const SPECS={
     },
     Holy:{
       title:'Tank Keeper',
-      strength:'Powerful direct healing and exceptional tank stabilisation.',
+      strength:'Strong direct healing and reliable tank stabilisation.',
       tradeoff:'Less efficient when the whole party needs sustained recovery.',
       damage:.82,threat:.90,healing:1.16,healThreat:.88,magicTaken:.94
     }
@@ -172,8 +172,8 @@ const SPECS={
   Warlock:{
     Demonology:{
       title:'Demon Commander',
-      strength:'Sustained ranged pressure backed by a permanent Felguard and powerful temporary summons.',
-      tradeoff:'A meaningful share of its output comes from demons, so pet-command and summon choices compete with direct spell slots.',
+      strength:'Sustained ranged pressure backed by a permanent Felguard and temporary burst summons.',
+      tradeoff:'Much of its damage comes from demons, so pet commands and summons compete with direct spell slots.',
       damage:1.02,threat:.92,cooldown:1.00,magicTaken:.95,physicalTaken:1.06,petDamage:1.00
     },
     Destruction:{
@@ -206,7 +206,7 @@ const SPECS={
   'Death Knight':{
     Blood:{
       title:'Blood Warden',
-      strength:'Turns recent incoming damage into powerful Death Strike healing while maintaining relentless single-target threat.',
+      strength:'Turns recent incoming damage into heavy Death Strike healing while maintaining single-target threat.',
       tradeoff:'Survival is reactive; wasting Runic Power before a heavy hit leaves fewer resources for recovery.',
       singleThreat:2.70,packThreat:2.20,groupThreat:.20,physicalTaken:.93,magicTaken:.95,damage:.90,tauntLead:1.22
     },
@@ -240,7 +240,7 @@ const SPECS={
   Evoker:{
     Preservation:{
       title:'Temporal Lifebinder',
-      strength:'Proactive ranged healing that layers time magic, echoes and powerful group recovery around Essence windows.',
+      strength:'Proactive ranged healing that layers time magic, echoes and large group recovery around Essence windows.',
       tradeoff:'Shorter range than other healers and poor Essence timing can leave the party exposed during consecutive damage spikes.',
       damage:.82,threat:.90,healing:1.04,healThreat:.92,physicalTaken:1.01,magicTaken:.91,cooldown:.96
     },
