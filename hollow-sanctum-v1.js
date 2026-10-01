@@ -14,40 +14,46 @@ const STAGES=[
 const HOLLOW_ROOMS={
  gallery:{
   zone:'GALLERY OF ECHOES',
-  description:'A drowned processional hall where pale crystal light bleeds through the stone.',
-  scene:'gallery',
-  route:{entry:{x:50,y:97},entryInside:{x:50,y:79},partyAnchors:[[50,65],[44,69],[56,69],[41,75],[59,75]],exitPath:[{x:50,y:54},{x:50,y:34},{x:50,y:16},{x:50,y:3}],spread:2.1},
-  enemyAnchors:[[50,33],[40,40],[60,40]],
-  bounds:{left:17,right:83,top:14,bottom:85},
-  walkable:[[29,16],[71,16],[82,29],[82,72],[70,84],[30,84],[18,72],[18,29]],
+  description:'A candlelit processional hall where teal soul-fire leaks through ancient stone.',
+  art:'./assets/hollow-sanctum/rooms/gallery.webp',
+  liveProfile:'hollow-gallery',
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:83},partyAnchors:[[50,68],[44,72],[56,72],[41,78],[59,78]],exitPath:[{x:50,y:55},{x:50,y:36},{x:50,y:18},{x:50,y:3}],spread:2.1},
+  enemyAnchors:[[50,35],[40,43],[60,43]],
+  bounds:{left:11,right:89,top:11,bottom:89},
+  walkable:[[30,12],[70,12],[86,25],[91,48],[88,75],[74,87],[26,87],[12,75],[9,48],[14,25]],
   blockers:[
-   {id:'gallery-pillar-nw',x:23,y:25,w:7,h:14},{id:'gallery-pillar-ne',x:77,y:25,w:7,h:14},
-   {id:'gallery-pillar-sw',x:23,y:72,w:7,h:14},{id:'gallery-pillar-se',x:77,y:72,w:7,h:14}
+   {id:'gallery-column-nw',x:18,y:27,w:8,h:20},{id:'gallery-column-ne',x:82,y:27,w:8,h:20},
+   {id:'gallery-column-sw',x:16,y:72,w:9,h:18},{id:'gallery-column-se',x:84,y:72,w:9,h:18}
   ]
  },
  sentinel:{
   zone:'GUARDIAN CHAMBER',
-  description:'A suspended reliquary crossing guarded above a bottomless spectral gulf.',
-  scene:'sentinel',
-  route:{entry:{x:8,y:89},entryInside:{x:25,y:73},partyAnchors:[[40,61],[34,65],[43,69],[30,72],[37,76]],exitPath:[{x:58,y:48},{x:69,y:38},{x:80,y:27},{x:94,y:12}],spread:2.0},
-  enemyAnchors:[[64,42]],
-  bounds:{left:13,right:88,top:14,bottom:86},
-  walkable:[[17,76],[27,84],[42,72],[55,60],[69,48],[84,34],[88,22],[78,15],[65,25],[51,38],[38,51],[25,62]],
+  description:'A fractured guardian court suspended above a spectral gulf.',
+  art:'./assets/hollow-sanctum/rooms/sentinel.webp',
+  liveProfile:'hollow-sentinel',
+  route:{entry:{x:17,y:97},entryInside:{x:30,y:80},partyAnchors:[[43,66],[36,69],[48,73],[32,76],[40,80]],exitPath:[{x:61,y:48},{x:72,y:35},{x:83,y:23},{x:97,y:10}],spread:2.0},
+  enemyAnchors:[[62,43]],
+  bounds:{left:10,right:91,top:10,bottom:90},
+  walkable:[[26,13],[72,10],[89,23],[92,55],[82,78],[62,89],[28,88],[11,72],[10,43],[16,24]],
   blockers:[
-   {id:'sentinel-relic-nw',shape:'ellipse',x:24,y:34,rx:5,ry:8,blocksLos:false},
-   {id:'sentinel-relic-se',shape:'ellipse',x:76,y:61,rx:5,ry:8,blocksLos:false}
+   {id:'sentinel-fire-nw',shape:'ellipse',x:13,y:24,rx:5,ry:8,blocksLos:false},
+   {id:'sentinel-fire-east',shape:'ellipse',x:83,y:39,rx:5,ry:8,blocksLos:false},
+   {id:'sentinel-fire-south',shape:'ellipse',x:54,y:77,rx:5,ry:8,blocksLos:false}
   ]
  },
  choir:{
   zone:'INNER SHRINE',
-  description:'The sanctum heart: a circular ritual floor beneath a chained crystal reliquary.',
-  scene:'choir',
-  route:{entry:{x:50,y:97},entryInside:{x:50,y:80},partyAnchors:[[50,67],[44,71],[56,71],[41,77],[59,77]],exitPath:[],spread:2.0},
-  enemyAnchors:[[50,30]],
-  bounds:{left:14,right:86,top:12,bottom:87},
-  arena:{shape:'ellipse',cx:50,cy:51,rx:34,ry:33},
+  description:'The sanctum heart, where the Bound Choir hangs above a living ritual floor.',
+  art:'./assets/hollow-sanctum/rooms/choir.webp',
+  liveProfile:'hollow-choir',
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:84},partyAnchors:[[50,69],[44,73],[56,73],[41,79],[59,79]],exitPath:[],spread:2.0},
+  enemyAnchors:[[50,35]],
+  bounds:{left:9,right:91,top:10,bottom:91},
+  arena:{shape:'ellipse',cx:50,cy:54,rx:40,ry:35},
   blockers:[
-   {id:'choir-core',shape:'ellipse',x:50,y:45,rx:7,ry:9,blocksLos:true,blocksMovement:true}
+   {id:'choir-suspended-core',shape:'ellipse',x:50,y:31,rx:8,ry:11,blocksLos:true,blocksMovement:true},
+   {id:'choir-front-pillar-left',x:13,y:73,w:8,h:24,blocksLos:false},
+   {id:'choir-front-pillar-right',x:87,y:73,w:8,h:24,blocksLos:false}
   ]
  }
 };
@@ -231,74 +237,6 @@ function hsEnemyMeta(s,index){
  return{level,type,label:labels[type]||type.toUpperCase()}
 }
 
-function hsSceneDefs(){
- return '<defs>'+
- '<linearGradient id="hsStone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#252b31"/><stop offset=".48" stop-color="#171c21"/><stop offset="1" stop-color="#0b0f13"/></linearGradient>'+
- '<linearGradient id="hsTeal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9fff4"/><stop offset=".26" stop-color="#5ce7da"/><stop offset=".72" stop-color="#109d9b"/><stop offset="1" stop-color="#08494f"/></linearGradient>'+
- '<radialGradient id="hsVoid"><stop offset="0" stop-color="#15363b"/><stop offset=".5" stop-color="#07181d"/><stop offset="1" stop-color="#03080b"/></radialGradient>'+
- '<radialGradient id="hsCandle"><stop offset="0" stop-color="#fff0bd"/><stop offset=".18" stop-color="#ffc565"/><stop offset=".52" stop-color="#de7336"/><stop offset="1" stop-color="#6d2e20" stop-opacity="0"/></radialGradient>'+
- '<filter id="hsGlow"><feGaussianBlur stdDeviation="7"/></filter>'+
- '<filter id="hsSoft"><feGaussianBlur stdDeviation="18"/></filter>'+
- '</defs>'
-}
-function hsCandles(points){
- return points.map((p,i)=>'<g class="hsv-candle" style="--d:'+((i%5)*-.19)+'s" transform="translate('+p[0]+' '+p[1]+')"><ellipse class="hsv-fireglow" cx="0" cy="-12" rx="30" ry="42" fill="url(#hsCandle)"/><path d="M0 -27 C-10 -17 -9 -5 0 2 C9 -7 10 -18 0 -27Z" fill="#ffd487"/><rect x="-3" y="0" width="6" height="18" rx="2" fill="#d7bd91"/></g>').join('')
-}
-function hsSceneGallery(){
- const candles=hsCandles([[275,205],[1325,205],[285,690],[1315,690],[520,160],[1080,160]]);
- return '<svg class="hs-live-scene hs-live-gallery" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">'+hsSceneDefs()+
- '<rect width="1600" height="900" fill="#050a0d"/><ellipse class="hsv-mist" cx="800" cy="300" rx="650" ry="210" fill="#3dd9d1" opacity=".055" filter="url(#hsSoft)"/>'+
- '<path d="M160 820 L285 122 L1315 122 L1440 820 Z" fill="url(#hsStone)" stroke="#384047" stroke-width="6"/>'+
- '<path d="M305 770 L390 190 L1210 190 L1295 770 Z" fill="#1b2227" stroke="#4c555b" stroke-width="4"/>'+
- '<path d="M435 770 L485 190 M650 770 L675 190 M865 770 L850 190 M1080 770 L1030 190" stroke="#2f3a3f" stroke-width="5" opacity=".7"/>'+
- '<path class="hsv-crack" d="M415 675 L540 610 L505 550 L680 495 L645 410 L790 360" fill="none" stroke="#47e5da" stroke-width="7"/>'+
- '<path class="hsv-crack slow" d="M1190 690 L1070 620 L1110 555 L930 500 L970 425 L820 365" fill="none" stroke="#2bc3c0" stroke-width="6"/>'+
- '<g fill="url(#hsStone)" stroke="#465057" stroke-width="4">'+
- '<rect x="205" y="125" width="75" height="210"/><rect x="1320" y="125" width="75" height="210"/><rect x="205" y="565" width="75" height="210"/><rect x="1320" y="565" width="75" height="210"/>'+
- '</g>'+
- '<g class="hsv-shard"><path d="M236 130 l-24 70 25 48 25-48z" fill="url(#hsTeal)"/><path d="M1358 130 l-24 70 25 48 25-48z" fill="url(#hsTeal)"/></g>'+
- '<path d="M575 115 Q800 -75 1025 115 L1025 210 L955 210 Q800 80 645 210 L575 210Z" fill="#10171b" stroke="#39454a" stroke-width="8"/>'+
- '<path class="hsv-portal" d="M652 197 Q800 88 948 197 L928 222 Q800 128 672 222Z" fill="#3fe2d5" opacity=".24" filter="url(#hsGlow)"/>'+
- candles+
- '<g opacity=".38"><path d="M70 785 Q150 705 215 790" fill="none" stroke="#17242a" stroke-width="55"/><path d="M1385 790 Q1450 705 1530 785" fill="none" stroke="#17242a" stroke-width="55"/></g>'+
- '</svg>'
-}
-function hsSceneSentinel(){
- const candles=hsCandles([[370,640],[560,510],[880,345],[1180,210],[1165,565],[760,690]]);
- return '<svg class="hs-live-scene hs-live-sentinel" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">'+hsSceneDefs()+
- '<rect width="1600" height="900" fill="url(#hsVoid)"/><ellipse class="hsv-mist" cx="810" cy="440" rx="760" ry="300" fill="#42e5db" opacity=".07" filter="url(#hsSoft)"/>'+
- '<path d="M105 830 L315 790 L1470 70 L1285 48 Z" fill="#131a1f" stroke="#354249" stroke-width="9"/>'+
- '<path d="M170 780 L328 735 L1390 110 L1260 95 Z" fill="#21292e" stroke="#58636a" stroke-width="5"/>'+
- '<path d="M305 735 L425 750 L470 690 L610 695 L650 620 L820 610 L865 525 L1010 520 L1050 435 L1195 425 L1240 330 L1360 300" fill="none" stroke="#2d383e" stroke-width="6"/>'+
- '<path class="hsv-crack" d="M300 720 L470 650 L520 590 L690 560 L760 495 L930 445 L990 385 L1165 330 L1240 260" fill="none" stroke="#46e7dc" stroke-width="8"/>'+
- '<g class="hsv-rune"><circle cx="800" cy="480" r="126" fill="none" stroke="#49e5dc" stroke-width="7" opacity=".35"/><circle cx="800" cy="480" r="86" fill="none" stroke="#55fff0" stroke-width="3" opacity=".3"/><path d="M800 365 L845 455 L940 480 L845 505 L800 595 L755 505 L660 480 L755 455Z" fill="none" stroke="#42d4cf" stroke-width="5" opacity=".42"/></g>'+
- '<g class="hsv-shard"><path d="M322 690 l-32 -88 36 -74 34 74z" fill="url(#hsTeal)"/><path d="M1240 304 l-32 -88 36 -74 34 74z" fill="url(#hsTeal)"/></g>'+
- candles+
- '<g stroke="#465159" stroke-width="18" opacity=".8"><path d="M165 782 L1285 76"/><path d="M265 840 L1455 100"/></g>'+
- '<g stroke="#1e282e" stroke-width="7" opacity=".8"><path d="M205 765 L1285 80"/><path d="M285 815 L1435 105"/></g>'+
- '</svg>'
-}
-function hsSceneChoir(){
- const candles=hsCandles([[250,625],[1350,625],[315,285],[1285,285],[515,175],[1085,175],[430,720],[1170,720]]);
- return '<svg class="hs-live-scene hs-live-choir" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">'+hsSceneDefs()+
- '<rect width="1600" height="900" fill="#05090c"/><ellipse class="hsv-mist" cx="800" cy="430" rx="690" ry="350" fill="#39d8d0" opacity=".065" filter="url(#hsSoft)"/>'+
- '<ellipse cx="800" cy="486" rx="610" ry="330" fill="url(#hsStone)" stroke="#3f494f" stroke-width="9"/>'+
- '<ellipse cx="800" cy="486" rx="430" ry="235" fill="#1b2227" stroke="#756c58" stroke-width="6"/>'+
- '<ellipse class="hsv-rune" cx="800" cy="486" rx="255" ry="140" fill="none" stroke="#48e7da" stroke-width="7" opacity=".34"/>'+
- '<path class="hsv-rune slow" d="M800 332 L842 433 L970 486 L842 539 L800 640 L758 539 L630 486 L758 433Z" fill="none" stroke="#59fff1" stroke-width="5" opacity=".38"/>'+
- '<g class="hsv-crack" fill="none" stroke="#40dcd4" stroke-width="7"><path d="M800 485 L800 720"/><path d="M800 485 L1035 610"/><path d="M800 485 L565 610"/><path d="M800 485 L565 365"/><path d="M800 485 L1035 365"/></g>'+
- '<g class="hsv-core"><ellipse cx="800" cy="342" rx="85" ry="125" fill="#43e8dc" opacity=".20" filter="url(#hsSoft)"/><path d="M800 205 L730 337 L800 455 L870 337Z" fill="url(#hsTeal)" stroke="#a0fff6" stroke-width="5"/></g>'+
- '<g stroke="#273239" stroke-width="14" opacity=".9"><path d="M610 0 L725 270"/><path d="M990 0 L875 270"/><path d="M460 0 L690 260"/><path d="M1140 0 L910 260"/></g>'+
- candles+
- '<path d="M505 120 Q800 -60 1095 120" fill="none" stroke="#30383e" stroke-width="70"/>'+
- '<path d="M520 118 Q800 -25 1080 118" fill="none" stroke="#141b20" stroke-width="44"/>'+
- '</svg>'
-}
-function hsSceneMarkup(id){
- if(id==='sentinel')return hsSceneSentinel();
- if(id==='choir')return hsSceneChoir();
- return hsSceneGallery()
-}
 function hsRouteOffset(point,from,to,slot=0,spread=2){
  const dx=(Number(to?.x)||Number(point.x))-(Number(from?.x)||Number(point.x)),dy=(Number(to?.y)||Number(point.y))-(Number(from?.y)||Number(point.y)),len=Math.hypot(dx,dy)||1;
  const offsets=[0,-1,1,-2,2],amount=(offsets[slot%offsets.length]||0)*spread;
@@ -320,10 +258,12 @@ function hsSetFade(black,duration=560){
  const fade=hsEnsureFade();if(!fade)return;fade.style.setProperty('--hs-fade-ms',Math.max(0,Number(duration)||0)+'ms');fade.classList.toggle('is-black',Boolean(black))
 }
 function stageEnvironment(s){
- const room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery,arena=$('#hs2dArena'),environment=$('#hs2dEnvironment');
+ const room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery,arena=$('#hs2dArena'),environment=$('#hs2dEnvironment'),src=room.art;
  arena.className='cb2d-arena hs2d-arena hs2d-unified-arena hollow-live-room stage-'+s.id;
- arena.dataset.hollowRoom=s.id;
- if(environment)environment.innerHTML=hsSceneMarkup(room.scene||s.id);
+ arena.dataset.hollowRoom=s.id;arena.dataset.bespokeBattlefield='1';
+ if(environment)environment.innerHTML='<img class="hs2d-room-art" src="'+src+'" alt="" decoding="async" draggable="false">';
+ const renderer=window.CellboundLivingScenes||window.CellboundAshenLiveScenes;
+ renderer?.mount?.(arena,{src,profile:room.liveProfile||'hollow-gallery'});
  const tag=$('#hs2dRoom');if(tag)tag.innerHTML='<em>'+esc(room.zone||'HOLLOW SANCTUM')+'</em><b>'+esc(s.title)+'</b><small>'+esc(room.description||'The sanctum closes around the party.')+'</small>';
  hsEnsureFade()
 }

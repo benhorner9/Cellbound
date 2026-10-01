@@ -1,17 +1,20 @@
 (()=>{
 'use strict';
 
-const VERSION='1.0.0';
+const VERSION='1.1.0';
 const states=new WeakMap();
 const PROFILES={
-  'ash-gate':{intensity:.52,heat:.44,pulse:.00,center:[.50,.50],radius:.18},
-  'ember-hall':{intensity:.72,heat:.52,pulse:.00,center:[.50,.50],radius:.18},
-  'warden-seal':{intensity:.76,heat:.58,pulse:.16,center:[.50,.47],radius:.22},
-  'furnace':{intensity:.96,heat:1.00,pulse:.00,center:[.56,.54],radius:.20},
-  'embermaw':{intensity:1.05,heat:.92,pulse:.18,center:[.50,.50],radius:.26},
-  'vault-depths':{intensity:.34,heat:.18,pulse:.08,center:[.50,.51],radius:.24},
-  'vaultheart':{intensity:.88,heat:.64,pulse:.27,center:[.50,.43],radius:.25},
-  'ashen':{intensity:.62,heat:.48,pulse:.00,center:[.50,.50],radius:.20}
+  'ash-gate':{intensity:.52,heat:.44,pulse:.00,center:[.50,.50],radius:.18,warm:1,cool:0,core:[1,.46,.12]},
+  'ember-hall':{intensity:.72,heat:.52,pulse:.00,center:[.50,.50],radius:.18,warm:1,cool:0,core:[1,.46,.12]},
+  'warden-seal':{intensity:.76,heat:.58,pulse:.16,center:[.50,.47],radius:.22,warm:1,cool:0,core:[1,.46,.12]},
+  'furnace':{intensity:.96,heat:1.00,pulse:.00,center:[.56,.54],radius:.20,warm:1,cool:0,core:[1,.46,.12]},
+  'embermaw':{intensity:1.05,heat:.92,pulse:.18,center:[.50,.50],radius:.26,warm:1,cool:0,core:[1,.46,.12]},
+  'vault-depths':{intensity:.34,heat:.18,pulse:.08,center:[.50,.51],radius:.24,warm:1,cool:0,core:[1,.46,.12]},
+  'vaultheart':{intensity:.88,heat:.64,pulse:.27,center:[.50,.43],radius:.25,warm:1,cool:0,core:[1,.46,.12]},
+  'hollow-gallery':{intensity:.68,heat:.34,pulse:.06,center:[.50,.42],radius:.24,warm:.34,cool:1.0,core:[.12,.96,.88]},
+  'hollow-sentinel':{intensity:.82,heat:.48,pulse:.10,center:[.56,.48],radius:.28,warm:.28,cool:1.08,core:[.10,1.0,.90]},
+  'hollow-choir':{intensity:.96,heat:.52,pulse:.30,center:[.50,.39],radius:.27,warm:.30,cool:1.14,core:[.10,1.0,.90]},
+  'ashen':{intensity:.62,heat:.48,pulse:.00,center:[.50,.50],radius:.20,warm:1,cool:0,core:[1,.46,.12]}
 };
 
 const VS='attribute vec2 a_pos;varying vec2 v_uv;void main(){v_uv=(a_pos+1.0)*0.5;gl_Position=vec4(a_pos,0.0,1.0);}';
@@ -24,9 +27,12 @@ const FS=[
 'uniform float u_heat;',
 'uniform float u_pulse;',
 'uniform float u_surge;',
+'uniform float u_warm;',
+'uniform float u_cool;',
+'uniform vec3 u_coreColor;',
 'uniform vec2 u_center;',
 'uniform float u_radius;',
-'float hotMask(vec3 c){',
+'float warmMask(vec3 c){',
 '  float mx=max(c.r,max(c.g,c.b));',
 '  float mn=min(c.r,min(c.g,c.b));',
 '  float sat=(mx-mn)/(mx+.015);',
@@ -34,32 +40,42 @@ const FS=[
 '  float warm=smoothstep(.055,.34,c.r-c.b)*smoothstep(.008,.24,c.g-c.b);',
 '  return warm*smoothstep(.24,.63,sat)*smoothstep(.15,.68,lum);',
 '}',
+'float coolMask(vec3 c){',
+'  float mx=max(c.r,max(c.g,c.b));',
+'  float mn=min(c.r,min(c.g,c.b));',
+'  float sat=(mx-mn)/(mx+.015);',
+'  float lum=dot(c,vec3(.2126,.7152,.0722));',
+'  float teal=smoothstep(.025,.30,c.g-c.r)*smoothstep(-.035,.22,c.b-c.r);',
+'  return teal*smoothstep(.18,.60,sat)*smoothstep(.12,.72,lum);',
+'}',
+'float activeMask(vec3 c){return max(warmMask(c)*u_warm,coolMask(c)*u_cool);}',
 'void main(){',
 '  vec2 uv=v_uv;',
 '  vec3 original=texture2D(u_tex,uv).rgb;',
-'  float hot0=hotMask(original);',
-'  float below1=hotMask(texture2D(u_tex,clamp(uv+vec2(0.0,.026),0.0,1.0)).rgb);',
-'  float below2=hotMask(texture2D(u_tex,clamp(uv+vec2(0.0,.052),0.0,1.0)).rgb);',
-'  float haze=clamp((below1*.74+below2*.38)*(1.0-hot0*.42),0.0,1.0);',
+'  float active0=activeMask(original);',
+'  float below1=activeMask(texture2D(u_tex,clamp(uv+vec2(0.0,.026),0.0,1.0)).rgb);',
+'  float below2=activeMask(texture2D(u_tex,clamp(uv+vec2(0.0,.052),0.0,1.0)).rgb);',
+'  float haze=clamp((below1*.74+below2*.38)*(1.0-active0*.42),0.0,1.0);',
 '  float wave=sin(uv.y*137.0+u_time*2.35)+.52*sin(uv.y*61.0-u_time*1.52);',
 '  float selfWave=sin(uv.y*238.0+u_time*4.25+uv.x*27.0);',
 '  float selfLift=cos(uv.x*173.0-u_time*3.55);',
 '  vec2 offset=vec2(wave*.00078*u_heat*haze,0.0);',
-'  offset+=vec2(selfWave*.00072,selfLift*.00024)*hot0*u_intensity;',
+'  offset+=vec2(selfWave*.00072,selfLift*.00024)*active0*u_intensity;',
 '  vec3 c=texture2D(u_tex,clamp(uv+offset,0.0,1.0)).rgb;',
-'  float hot=hotMask(c);',
+'  float warm=warmMask(c)*u_warm;',
+'  float cool=coolMask(c)*u_cool;',
 '  float flow=.5+.5*sin((uv.x*57.0+uv.y*29.0)-u_time*2.15+sin(uv.y*19.0+u_time*.61));',
 '  float flick=.5+.5*sin(u_time*7.1+uv.x*91.0+uv.y*53.0+sin(uv.x*17.0-u_time*1.9));',
 '  float liveMix=mix(flick,flow,.56);',
-'  float energy=hot*(.032+.105*liveMix)*u_intensity*(1.0+u_surge*.48);',
-'  c.r+=energy*1.12;',
-'  c.g+=energy*.47;',
-'  c.b-=energy*.075;',
+'  float warmEnergy=warm*(.026+.095*liveMix)*u_intensity*(1.0+u_surge*.48);',
+'  float coolEnergy=cool*(.022+.090*liveMix)*u_intensity*(1.0+u_surge*.52);',
+'  c+=vec3(warmEnergy*1.12,warmEnergy*.47,-warmEnergy*.075);',
+'  c+=vec3(coolEnergy*.10,coolEnergy*.84,coolEnergy*.76);',
 '  float d=distance(uv,u_center);',
 '  float core=(1.0-smoothstep(u_radius*.28,u_radius,d))*u_pulse;',
 '  float beat=.52+.48*sin(u_time*2.65);',
-'  float pulse=core*beat*(.045+.06*hot)*(1.0+u_surge*.75);',
-'  c+=vec3(pulse,pulse*.46,pulse*.12);',
+'  float pulse=core*beat*(.040+.055*max(warm,cool))*(1.0+u_surge*.75);',
+'  c+=u_coreColor*pulse;',
 '  gl_FragColor=vec4(clamp(c,0.0,1.0),1.0);',
 '}'
 ].join('');
@@ -94,7 +110,8 @@ function create(arena){
   gl.uniform1i(gl.getUniformLocation(p,'u_tex'),0);
   const loc={
     time:gl.getUniformLocation(p,'u_time'),intensity:gl.getUniformLocation(p,'u_intensity'),heat:gl.getUniformLocation(p,'u_heat'),
-    pulse:gl.getUniformLocation(p,'u_pulse'),surge:gl.getUniformLocation(p,'u_surge'),center:gl.getUniformLocation(p,'u_center'),
+    pulse:gl.getUniformLocation(p,'u_pulse'),surge:gl.getUniformLocation(p,'u_surge'),warm:gl.getUniformLocation(p,'u_warm'),
+    cool:gl.getUniformLocation(p,'u_cool'),coreColor:gl.getUniformLocation(p,'u_coreColor'),center:gl.getUniformLocation(p,'u_center'),
     radius:gl.getUniformLocation(p,'u_radius')
   };
   const state={arena,canvas,gl,p,tex,loc,src:'',profile:'ashen',loaded:false,raf:0,start:performance.now(),token:0,dpr:1,ro:null,reduced:matchMedia('(prefers-reduced-motion: reduce)').matches};
@@ -121,6 +138,9 @@ function frame(state,now){
   gl.uniform1f(state.loc.heat,state.reduced?0:p.heat);
   gl.uniform1f(state.loc.pulse,state.reduced?0:p.pulse);
   gl.uniform1f(state.loc.surge,state.reduced?0:surge);
+  gl.uniform1f(state.loc.warm,Number(p.warm??1));
+  gl.uniform1f(state.loc.cool,Number(p.cool??0));
+  gl.uniform3f(state.loc.coreColor,Number(p.core?.[0]??1),Number(p.core?.[1]??.46),Number(p.core?.[2]??.12));
   gl.uniform2f(state.loc.center,p.center[0],1-p.center[1]);
   gl.uniform1f(state.loc.radius,p.radius);
   gl.drawArrays(gl.TRIANGLES,0,6);
@@ -154,5 +174,5 @@ function unmount(arena){
   arena.removeAttribute('data-live-scene-ready');state.canvas?.remove();states.delete(arena)
 }
 window.addEventListener('pagehide',()=>{document.querySelectorAll('.cb2d-arena').forEach(a=>unmount(a))},{once:true});
-window.CellboundAshenLiveScenes={VERSION,mount,unmount};
+window.CellboundAshenLiveScenes={VERSION,mount,unmount};window.CellboundLivingScenes=window.CellboundAshenLiveScenes;
 })();
