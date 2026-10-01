@@ -736,7 +736,7 @@ async function hsTravelDeeper(currentStage,nextStage,tok){
  for(let step=0;step<active.length;step++){
   const point=active[step],from=step===0?centroid:active[step-1],to=active[Math.min(step+1,active.length-1)]||point,finalStep=step===active.length-1,duration=finalStep?560:390;
   if(finalStep)hsSetFade(true,duration+100);
-  chars.forEach((c,i)=>{if((Number(run.hp[c.id])||0)<=0)return;const p=hsRouteOffset(point,from,to,i,spread);move('p-'+c.id,p.x,p.y,duration)});
+  chars.forEach((ch,i)=>{if((Number(run.hp[ch.id])||0)<=0)return;const p=hsRouteOffset(point,from,to,i,spread);move('p-'+ch.id,p.x,p.y,duration)});
   await wait(duration+35);if(tok!==token||!run)return
  }
  run.roomTransitionBlack=true;arena?.classList.remove('travelling')
