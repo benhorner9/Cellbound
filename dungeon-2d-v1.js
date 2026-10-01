@@ -511,14 +511,13 @@ function renderDungeonEnvironment(s){
    arena.style.setProperty('--cb2d-battlefield-position',cfg.artPosition||'50% 50%');
    arena.style.setProperty('--cb2d-room-light',life.light||'rgba(255,115,48,.26)');
    const depth=document.createElement('div');depth.className='cb2d-bespoke-depth';root.appendChild(depth);
-   const living=document.createElement('div');living.className='cb2d-bespoke-life';living.setAttribute('aria-hidden','true');root.appendChild(living);
-   const hotspots=document.createElement('div');hotspots.className='cb2d-room-hotspots';hotspots.setAttribute('aria-hidden','true');
-   (life.hotspots||[]).forEach((h,i)=>hotspots.appendChild(roomHotspot(h,i)));root.appendChild(hotspots);
+   window.CellboundAshenLiveScenes?.mount?.(arena,{src:cfg.art,profile:life.profile||'ashen'});
    (cfg.occluders||[]).forEach((o,i)=>{
      const fg=document.createElement('div');fg.className='cb2d-bespoke-foreground-layer';fg.dataset.occluder=String(i);
      fg.style.clipPath=o.clip;fg.style.opacity=String(o.opacity??.92);fg.setAttribute('aria-hidden','true');arena.appendChild(fg)
    })
  }else{
+   window.CellboundAshenLiveScenes?.unmount?.(arena);
    delete arena.dataset.bespokeBattlefield;delete arena.dataset.collisionProfile;delete arena.dataset.roomLife;delete arena.dataset.depthMin;delete arena.dataset.depthMax;
    arena.style.removeProperty('--cb2d-battlefield');arena.style.removeProperty('--cb2d-battlefield-position');arena.style.removeProperty('--cb2d-room-light');
    (cfg.props||[]).forEach((p,i)=>{

@@ -1791,3 +1791,25 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
   .cb2d-room-hotspot.heat{opacity:calc(var(--hi,.5) * .65)}
   .cb2d-room-hotspot.vent>b:nth-child(3){display:none}
 }
+
+
+/* Ashen Vault true live-scene renderer v1 */
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-live-scene{
+  position:absolute;inset:0;width:100%;height:100%;z-index:1;display:block;
+  pointer-events:none;opacity:0;transition:opacity .24s ease;
+  image-rendering:auto;
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"][data-live-scene-ready="1"] .cb2d-live-scene{opacity:1}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-floor{transition:opacity .24s ease}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"][data-live-scene-ready="1"] .cb2d-floor{opacity:0!important}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-room-hotspots,
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-bespoke-life{display:none!important}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-bespoke-depth{
+  z-index:2;
+  background:linear-gradient(90deg,rgba(0,0,0,.065),transparent 8% 92%,rgba(0,0,0,.065)),
+             linear-gradient(180deg,transparent 76%,rgba(0,0,0,.075));
+  box-shadow:inset 0 -24px 42px rgba(0,0,0,.055);
+}
+@media(prefers-reduced-motion:reduce){
+  .cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-live-scene{transition:none}
+}
