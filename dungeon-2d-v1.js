@@ -1146,7 +1146,7 @@ function ensureCombatRebornEngine(){
    const finish=(ok,error)=>{
      if(settled)return;settled=true;clearTimeout(timeout);
      if(ok&&combatRebornReady())resolve(window.CellboundCombatReborn);
-     else reject(error||new Error('Combat Reborn engine failed to initialise'))
+     else reject(error||new Error('Combat failed to initialise. Reload and try again.'))
    };
    const script=document.createElement('script');
    script.src='./combat-reborn-v1.js?v=1&recover=1';
@@ -1155,7 +1155,7 @@ function ensureCombatRebornEngine(){
    script.onload=()=>finish(true);
    script.onerror=()=>finish(false,new Error('Combat core asset could not be loaded'));
    document.head.appendChild(script);
-   const timeout=setTimeout(()=>finish(false,new Error('Combat Reborn runtime timed out while loading')),8000);
+   const timeout=setTimeout(()=>finish(false,new Error('Combat took too long to load. Reload and try again.')),8000);
  }).finally(()=>{rebornLoaderPromise=null});
  return rebornLoaderPromise
 }
@@ -1517,7 +1517,7 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
  })
 }
 function runRebornStage(s){
- const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway is unavailable');
+ const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat could not start. Reload and try again.');
  const startHp=Object.fromEntries(party().map(c=>[c.id,hp(c.id)]));
  const combatParty=party().map((c,i)=>Object.assign({},c,{_combatHealthPct:hp(c.id),_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0,_combatPosition:stagePartyPosition(s,c,i)}));
  const result=C.simulate({party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:[run.endgame?.seed||'ashen-vault',s.id,run.stage].join(':')},{zone:'ashen-vault'});
