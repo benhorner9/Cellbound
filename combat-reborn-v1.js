@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.5.0';
+const VERSION='1.5.1';
 // Balance baseline: 2026-09-30 chapter-wide progression and role audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
@@ -1177,7 +1177,7 @@ function physicalUnits(ctx,exclude=null){
  return all.filter(u=>u&&u!==exclude&&u.alive!==false&&(u.role!=='pet'||u.active!==false))
 }
 function bodyClearance(a,b){
- const petPair=a?.role==='pet'||b?.role==='pet',same=unitTeam(a)===unitTeam(b),soft=petPair?.76:same?.88:1;
+ const petPair=a?.role==='pet'||b?.role==='pet',same=unitTeam(a)===unitTeam(b),soft=petPair?.70:same?.82:1;
  return Math.max(.7,(bodyRadius(a)+bodyRadius(b))*soft)
 }
 function bodyOverlap(ctx,u,pos,ignoreIds=[]){
@@ -1371,19 +1371,23 @@ function visibleCastPoint(ctx,u,target,range,preferred){
 
 function moveTo(ctx,u,pos,duration=420,reason='positioning'){
  if(!u?.alive)return false;
- const from=copy(physicalPosition(ctx,u)),environmentRoute=navigationWaypoint(ctx,from,pos),bodyRoute=collisionWaypoint(ctx,u,from,environmentRoute.point,reason),to=bodyRoute.point,travel=Math.max(80,Number(duration)||420);
+ const from=copy(physicalPosition(ctx,u)),environmentRoute=navigationWaypoint(ctx,from,pos),bodyRoute=collisionWaypoint(ctx,u,from,environmentRoute.point,reason),to=bodyRoute.point,baseTravel=Math.max(80,Number(duration)||420);
  if(dist(from,to)<.5)return true;
  if(u.currentCast){
   emit(ctx,'CAST_CANCELLED',{source:u.id,target:u.currentCast.target,ability:u.currentCast.ability,result:'movement',position:from});
   u.currentCast=null;
  }
+ const collisionFinal=bodyRoute.pathing&&!bodyRoute.forcedStop?environmentRoute.point:null,legDistance=dist(from,to),remainingDistance=collisionFinal?dist(to,collisionFinal):0,totalDistance=Math.max(.01,legDistance+remainingDistance);
+ const travel=collisionFinal?Math.max(90,Math.min(baseTravel-90,Math.round(baseTravel*(legDistance/totalDistance)))):baseTravel;
+ const continuationTravel=collisionFinal?Math.max(90,baseTravel-travel):0;
  const token=++u.moveToken;u.position=from;u.moveStartedAt=ctx.time;u.moveFrom=copy(from);u.moveTo=copy(to);u.movingUntil=ctx.time+travel;
  const pathing=environmentRoute.pathing||bodyRoute.pathing;
- emit(ctx,'MOVEMENT_START',{source:u.id,target:u.target,position:from,result:reason,payload:{to,duration:travel,navigation:pathing?'waypoint':'direct',finalTo:environmentRoute.final,blocker:environmentRoute.blocker||bodyRoute.body?.id||null,bodyCollision:bodyRoute.body?{unitId:bodyRoute.body.id,name:bodyRoute.body.name||bodyRoute.body.id,radius:bodyRadius(bodyRoute.body),forcedStop:bodyRoute.forcedStop}:null,bodyRadius:bodyRadius(u)}});
+ emit(ctx,'MOVEMENT_START',{source:u.id,target:u.target,position:from,result:reason,payload:{to,duration:travel,navigation:pathing?'waypoint':'direct',finalTo:environmentRoute.final,blocker:environmentRoute.blocker||bodyRoute.body?.id||null,bodyCollision:bodyRoute.body?{unitId:bodyRoute.body.id,name:bodyRoute.body.name||bodyRoute.body.id,radius:bodyRadius(bodyRoute.body),forcedStop:bodyRoute.forcedStop}:null,bodyRadius:bodyRadius(u),collisionContinuation:Boolean(collisionFinal)}});
  schedule(ctx,ctx.time+travel,()=>{
   if(!u.alive||u.moveToken!==token)return;
   u.position=openPhysicalPosition(ctx,u,to,1.35);u.movingUntil=0;u.moveStartedAt=0;u.moveFrom=null;u.moveTo=null;
-  emit(ctx,'MOVEMENT_END',{source:u.id,target:u.target,position:copy(u.position),result:reason,payload:{from,duration:travel,navigation:pathing?'waypoint':'direct',finalTo:environmentRoute.final,blocker:environmentRoute.blocker||bodyRoute.body?.id||null,bodyCollision:bodyRoute.body?{unitId:bodyRoute.body.id,name:bodyRoute.body.name||bodyRoute.body.id,radius:bodyRadius(bodyRoute.body),forcedStop:bodyRoute.forcedStop}:null,bodyRadius:bodyRadius(u)}})
+  emit(ctx,'MOVEMENT_END',{source:u.id,target:u.target,position:copy(u.position),result:reason,payload:{from,duration:travel,navigation:pathing?'waypoint':'direct',finalTo:environmentRoute.final,blocker:environmentRoute.blocker||bodyRoute.body?.id||null,bodyCollision:bodyRoute.body?{unitId:bodyRoute.body.id,name:bodyRoute.body.name||bodyRoute.body.id,radius:bodyRadius(bodyRoute.body),forcedStop:bodyRoute.forcedStop}:null,bodyRadius:bodyRadius(u),collisionContinuation:Boolean(collisionFinal)}});
+  if(collisionFinal&&dist(u.position,collisionFinal)>.55)moveTo(ctx,u,collisionFinal,continuationTravel,reason)
  },'movement-end');
  return false
 }
@@ -1452,9 +1456,9 @@ function moveIntoRange(ctx,u,target,range,abilityKind='damage'){
  }
  if(r<=7){
    const formation=meleeFormationPoint(ctx,u,target),desired=visibleCastPoint(ctx,u,target,r,formation),slotDistance=dist(u.position,desired),combatRange=inRange(u,target,r);
-   const tolerance=u.role==='tank'?2.1:3.75;
+   const tolerance=u.role==='tank'?(ctx.physicalSpace?2.65:2.1):(ctx.physicalSpace?5.1:3.75);
    if(combatRange&&los&&slotDistance<=tolerance)return true;
-   if(combatRange&&los&&target.movingUntil>ctx.time&&slotDistance<=4.75)return true;
+   if(combatRange&&los&&target.movingUntil>ctx.time&&slotDistance<=(ctx.physicalSpace?5.6:4.75))return true;
    moveTo(ctx,u,desired,500,!los?'line of sight':u.role==='tank'?'tank positioning':'melee formation');
    return false
  }
