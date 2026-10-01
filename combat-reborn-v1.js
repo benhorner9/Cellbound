@@ -1456,7 +1456,8 @@ function moveIntoRange(ctx,u,target,range,abilityKind='damage'){
  }
  if(r<=7){
    const formation=meleeFormationPoint(ctx,u,target),desired=visibleCastPoint(ctx,u,target,r,formation),slotDistance=dist(u.position,desired),combatRange=inRange(u,target,r);
-   const tolerance=u.role==='tank'?(ctx.physicalSpace?3.35:2.1):(ctx.physicalSpace?6.35:3.75);
+   if(combatRange&&los&&ctx.physicalSpace&&u.role!=='tank')return true;
+   const tolerance=u.role==='tank'?(ctx.physicalSpace?3.35:2.1):3.75;
    if(combatRange&&los&&slotDistance<=tolerance)return true;
    if(combatRange&&los&&target.movingUntil>ctx.time&&slotDistance<=(ctx.physicalSpace?6.75:4.75))return true;
    moveTo(ctx,u,desired,500,!los?'line of sight':u.role==='tank'?'tank positioning':'melee formation');
