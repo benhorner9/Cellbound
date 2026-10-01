@@ -15,7 +15,7 @@ const HOLLOW_ROOMS={
  gallery:{
   zone:'GALLERY OF ECHOES',
   description:'A candlelit processional hall where teal soul-fire leaks through ancient stone.',
-  art:'./assets/hollow-sanctum/rooms/gallery.webp',
+  art:'./assets/hollow-sanctum/rooms/gallery.webp?v=2',
   liveProfile:'hollow-gallery',
   route:{entry:{x:50,y:98},entryInside:{x:50,y:83},partyAnchors:[[50,68],[44,72],[56,72],[41,78],[59,78]],exitPath:[{x:50,y:55},{x:50,y:36},{x:50,y:18},{x:50,y:3}],spread:2.1},
   enemyAnchors:[[50,35],[40,43],[60,43]],
@@ -29,7 +29,7 @@ const HOLLOW_ROOMS={
  sentinel:{
   zone:'GUARDIAN CHAMBER',
   description:'A fractured guardian court suspended above a spectral gulf.',
-  art:'./assets/hollow-sanctum/rooms/sentinel.webp',
+  art:'./assets/hollow-sanctum/rooms/sentinel.webp?v=2',
   liveProfile:'hollow-sentinel',
   route:{entry:{x:17,y:97},entryInside:{x:30,y:80},partyAnchors:[[43,66],[36,69],[48,73],[32,76],[40,80]],exitPath:[{x:61,y:48},{x:72,y:35},{x:83,y:23},{x:97,y:10}],spread:2.0},
   enemyAnchors:[[62,43]],
@@ -44,7 +44,7 @@ const HOLLOW_ROOMS={
  choir:{
   zone:'INNER SHRINE',
   description:'The sanctum heart, where the Bound Choir hangs above a living ritual floor.',
-  art:'./assets/hollow-sanctum/rooms/choir.webp',
+  art:'./assets/hollow-sanctum/rooms/choir.webp?v=2',
   liveProfile:'hollow-choir',
   route:{entry:{x:50,y:98},entryInside:{x:50,y:84},partyAnchors:[[50,69],[44,73],[56,73],[41,79],[59,79]],exitPath:[],spread:2.0},
   enemyAnchors:[[50,35]],
