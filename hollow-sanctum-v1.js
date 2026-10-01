@@ -13,69 +13,42 @@ const STAGES=[
 
 const HOLLOW_ROOMS={
  gallery:{
-  zone:'ENTRANCE HALL',
-  description:'Collapsed entrance hall lined with crystal-veined stone.',
-  environment:
-   '<div class="hsenv hsenv-gallery">'+
-    '<div class="hsenv-depth-wall"></div>'+
-    '<div class="hsenv-walkway"></div>'+
-    '<div class="hsenv-arch hsenv-arch-entry"></div><div class="hsenv-arch hsenv-arch-exit"></div>'+
-    '<i class="hsenv-pillar p1"></i><i class="hsenv-pillar p2"></i><i class="hsenv-pillar p3"></i><i class="hsenv-pillar p4"></i><i class="hsenv-pillar p5"></i><i class="hsenv-pillar p6"></i>'+
-    '<i class="hsenv-plinth pl1"></i><i class="hsenv-plinth pl2"></i>'+
-    '<span class="hsenv-crystal c1"></span><span class="hsenv-crystal c2"></span><span class="hsenv-crystal c3"></span><span class="hsenv-crystal c4"></span>'+
-    '<div class="hsenv-mirror m1"></div><div class="hsenv-mirror m2"></div>'+
-   '</div>',
-  party:[[30,35],[30,50],[30,65],[21,42],[21,58]],
-  enemies:[[66,34],[72,50],[66,66]],
+  zone:'GALLERY OF ECHOES',
+  description:'A drowned processional hall where pale crystal light bleeds through the stone.',
+  scene:'gallery',
+  route:{entry:{x:50,y:97},entryInside:{x:50,y:79},partyAnchors:[[50,65],[44,69],[56,69],[41,75],[59,75]],exitPath:[{x:50,y:54},{x:50,y:34},{x:50,y:16},{x:50,y:3}],spread:2.1},
+  enemyAnchors:[[50,33],[40,40],[60,40]],
+  bounds:{left:17,right:83,top:14,bottom:85},
+  walkable:[[29,16],[71,16],[82,29],[82,72],[70,84],[30,84],[18,72],[18,29]],
   blockers:[
-   {id:'gallery-pillar-1',x:15,y:14,w:5,h:16},{id:'gallery-pillar-2',x:40,y:14,w:5,h:16},{id:'gallery-pillar-3',x:65,y:14,w:5,h:16},
-   {id:'gallery-pillar-4',x:15,y:86,w:5,h:16},{id:'gallery-pillar-5',x:40,y:86,w:5,h:16},{id:'gallery-pillar-6',x:65,y:86,w:5,h:16},
-   {id:'gallery-plinth-n',x:82,y:20,w:7,h:12},{id:'gallery-plinth-s',x:82,y:80,w:7,h:12}
-  ],
-  bounds:{left:5,right:95,top:6,bottom:94}
+   {id:'gallery-pillar-nw',x:23,y:25,w:7,h:14},{id:'gallery-pillar-ne',x:77,y:25,w:7,h:14},
+   {id:'gallery-pillar-sw',x:23,y:72,w:7,h:14},{id:'gallery-pillar-se',x:77,y:72,w:7,h:14}
+  ]
  },
  sentinel:{
   zone:'GUARDIAN CHAMBER',
-  description:'A broken guardian chamber built around a fractured relic core.',
-  environment:
-   '<div class="hsenv hsenv-sentinel">'+
-    '<div class="hsenv-octagon"></div>'+
-    '<div class="hsenv-ring ring1"></div><div class="hsenv-ring ring2"></div>'+
-    '<div class="hsenv-pedestal"><i></i><b></b></div>'+
-    '<div class="hsenv-alcove a1"></div><div class="hsenv-alcove a2"></div><div class="hsenv-alcove a3"></div><div class="hsenv-alcove a4"></div>'+
-    '<div class="hsenv-statue s1"></div><div class="hsenv-statue s2"></div>'+
-    '<span class="hsenv-crystal c1"></span><span class="hsenv-crystal c2"></span><span class="hsenv-crystal c3"></span>'+
-   '</div>',
-  party:[[42,50],[31,34],[31,66],[25,43],[25,57]],
-  enemies:[[67,50]],
+  description:'A suspended reliquary crossing guarded above a bottomless spectral gulf.',
+  scene:'sentinel',
+  route:{entry:{x:8,y:89},entryInside:{x:25,y:73},partyAnchors:[[40,61],[34,65],[43,69],[30,72],[37,76]],exitPath:[{x:58,y:48},{x:69,y:38},{x:80,y:27},{x:94,y:12}],spread:2.0},
+  enemyAnchors:[[64,42]],
+  bounds:{left:13,right:88,top:14,bottom:86},
+  walkable:[[17,76],[27,84],[42,72],[55,60],[69,48],[84,34],[88,22],[78,15],[65,25],[51,38],[38,51],[25,62]],
   blockers:[
-   {id:'sentinel-statue-n',x:29,y:25,w:5,h:16},{id:'sentinel-statue-s',x:29,y:75,w:5,h:16},
-   {id:'sentinel-pedestal',x:67,y:50,w:10,h:14,blocksLos:true,blocksMovement:true}
-  ],
-  bounds:{left:8,right:94,top:8,bottom:92}
+   {id:'sentinel-relic-nw',shape:'ellipse',x:24,y:34,rx:5,ry:8,blocksLos:false},
+   {id:'sentinel-relic-se',shape:'ellipse',x:76,y:61,rx:5,ry:8,blocksLos:false}
+  ]
  },
  choir:{
   zone:'INNER SHRINE',
-  description:'A shrine hall where the sanctum’s voices were chained into crystal.',
-  environment:
-   '<div class="hsenv hsenv-choir">'+
-    '<div class="hsenv-apse"></div>'+
-    '<div class="hsenv-processional"></div>'+
-    '<div class="hsenv-steps step1"></div><div class="hsenv-steps step2"></div><div class="hsenv-steps step3"></div>'+
-    '<div class="hsenv-dais"></div>'+
-    '<div class="hsenv-ritual-ring outer"></div><div class="hsenv-ritual-ring inner"></div>'+
-    '<div class="hsenv-choir-bank left"></div><div class="hsenv-choir-bank right"></div>'+
-    '<div class="hsenv-reliquary"><i></i><i></i><i></i></div>'+
-    '<span class="hsenv-hanging h1"></span><span class="hsenv-hanging h2"></span><span class="hsenv-hanging h3"></span><span class="hsenv-hanging h4"></span>'+
-    '<span class="hsenv-crystal c1"></span><span class="hsenv-crystal c2"></span><span class="hsenv-crystal c3"></span><span class="hsenv-crystal c4"></span>'+
-   '</div>',
-  party:[[45,50],[31,32],[31,68],[25,42],[25,58]],
-  enemies:[[71,50]],
+  description:'The sanctum heart: a circular ritual floor beneath a chained crystal reliquary.',
+  scene:'choir',
+  route:{entry:{x:50,y:97},entryInside:{x:50,y:80},partyAnchors:[[50,67],[44,71],[56,71],[41,77],[59,77]],exitPath:[],spread:2.0},
+  enemyAnchors:[[50,30]],
+  bounds:{left:14,right:86,top:12,bottom:87},
+  arena:{shape:'ellipse',cx:50,cy:51,rx:34,ry:33},
   blockers:[
-   {id:'choir-bank-n',x:84,y:15,w:27,h:13},{id:'choir-bank-s',x:84,y:85,w:27,h:13},
-   {id:'choir-reliquary',x:92,y:50,w:8,h:34}
-  ],
-  bounds:{left:6,right:94,top:6,bottom:94}
+   {id:'choir-core',shape:'ellipse',x:50,y:45,rx:7,ry:9,blocksLos:true,blocksMovement:true}
+  ]
  }
 };
 const RELIC={itemId:'quest-blackglass-resonator',name:'Blackglass Resonator',class:'All',classes:'all',slot:'Relic',tier:3,rarity:'Rare',tierLabel:'Quest Relic',enabled:true,dropEnabled:false,itemLevel:30,power:10,tradeState:'soulbound',questArtMaterial:'void-crystal',lore:'Recovered from The Bound Choir beneath Zeltira.'};
@@ -214,9 +187,23 @@ async function syncXp(gains){
 }
 function setStatus(text){const e=$('#hs2dStatus');if(e)e.textContent=text}
 function feed(text){if(!run)return;run.log.push(text);const e=$('#hs2dFeed');if(e)e.innerHTML=run.log.slice(-7).reverse().map(x=>'<p>'+esc(x)+'</p>').join('')}
-function addUnit(id,label,cls,x,y,big=false,meta=''){const e=document.createElement('div'),p=hsSafePoint(id,x,y);e.className='hs2d-unit cb2d-unit '+cls+(big?' big':'');e.dataset.hs=id;e.style.left=p.x+'%';e.style.top=p.y+'%';e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="hs2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em><i></i></em>';$('#hs2dUnits').appendChild(e)}
-function hsSafePoint(id,x,y){return{x:Math.max(7,Math.min(93,Number(x)||50)),y:Math.max(11,Math.min(89,Number(y)||50))}}
-function move(id,x,y,ms=550){const e=$('[data-hs="'+id+'"]');if(!e)return;const p=hsSafePoint(id,x,y);e.style.transitionDuration=ms+'ms';e.style.left=p.x+'%';e.style.top=p.y+'%'}
+function hsDepthScale(y){
+ const t=Math.max(0,Math.min(1,(Number(y)-12)/76));return .94+t*.12
+}
+function hsApplyDepth(e,y){
+ if(!e)return;e.style.setProperty('--hs-depth-scale',hsDepthScale(y).toFixed(3));e.style.zIndex=String(20+Math.round(Number(y)||50))
+}
+function addUnit(id,label,cls,x,y,big=false,meta=''){
+ const e=document.createElement('div'),p=hsSafePoint(id,x,y);e.className='hs2d-unit cb2d-unit '+cls+(big?' big':'');e.dataset.hs=id;e.style.left=p.x+'%';e.style.top=p.y+'%';hsApplyDepth(e,p.y);
+ e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="hs2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em><i></i></em>';$('#hs2dUnits').appendChild(e)
+}
+function hsSafePoint(id,x,y){
+ const arena=$('#hs2dArena'),transit=arena?.classList.contains('travelling')||arena?.classList.contains('room-entering');
+ return{x:Math.max(transit?2:7,Math.min(transit?98:93,Number(x)||50)),y:Math.max(transit?2:11,Math.min(transit?98:89,Number(y)||50))}
+}
+function move(id,x,y,ms=550){
+ const e=$('[data-hs="'+id+'"]');if(!e)return;const p=hsSafePoint(id,x,y);e.style.transitionDuration=ms+'ms';e.style.left=p.x+'%';e.style.top=p.y+'%';hsApplyDepth(e,p.y)
+}
 function hsPoint(id){const arena=$('#hs2dArena'),e=$('[data-hs="'+id+'"]');if(!arena||!e)return null;const ar=arena.getBoundingClientRect(),r=e.getBoundingClientRect();return{x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,w:ar.width,h:ar.height}}
 function projectile(fromId,toId,kind='magic',ms=420){
  if(window.CellboundCombatFX?.living)return;
@@ -243,34 +230,124 @@ function hsEnemyMeta(s,index){
  const labels={trash:'TRASH',elite:'ELITE',boss:'BOSS','world-boss':'WORLD BOSS',add:'ADD'};
  return{level,type,label:labels[type]||type.toUpperCase()}
 }
+
+function hsSceneDefs(){
+ return '<defs>'+
+ '<linearGradient id="hsStone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#252b31"/><stop offset=".48" stop-color="#171c21"/><stop offset="1" stop-color="#0b0f13"/></linearGradient>'+
+ '<linearGradient id="hsTeal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b9fff4"/><stop offset=".26" stop-color="#5ce7da"/><stop offset=".72" stop-color="#109d9b"/><stop offset="1" stop-color="#08494f"/></linearGradient>'+
+ '<radialGradient id="hsVoid"><stop offset="0" stop-color="#15363b"/><stop offset=".5" stop-color="#07181d"/><stop offset="1" stop-color="#03080b"/></radialGradient>'+
+ '<radialGradient id="hsCandle"><stop offset="0" stop-color="#fff0bd"/><stop offset=".18" stop-color="#ffc565"/><stop offset=".52" stop-color="#de7336"/><stop offset="1" stop-color="#6d2e20" stop-opacity="0"/></radialGradient>'+
+ '<filter id="hsGlow"><feGaussianBlur stdDeviation="7"/></filter>'+
+ '<filter id="hsSoft"><feGaussianBlur stdDeviation="18"/></filter>'+
+ '</defs>'
+}
+function hsCandles(points){
+ return points.map((p,i)=>'<g class="hsv-candle" style="--d:'+((i%5)*-.19)+'s" transform="translate('+p[0]+' '+p[1]+')"><ellipse class="hsv-fireglow" cx="0" cy="-12" rx="30" ry="42" fill="url(#hsCandle)"/><path d="M0 -27 C-10 -17 -9 -5 0 2 C9 -7 10 -18 0 -27Z" fill="#ffd487"/><rect x="-3" y="0" width="6" height="18" rx="2" fill="#d7bd91"/></g>').join('')
+}
+function hsSceneGallery(){
+ const candles=hsCandles([[275,205],[1325,205],[285,690],[1315,690],[520,160],[1080,160]]);
+ return '<svg class="hs-live-scene hs-live-gallery" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">'+hsSceneDefs()+
+ '<rect width="1600" height="900" fill="#050a0d"/><ellipse class="hsv-mist" cx="800" cy="300" rx="650" ry="210" fill="#3dd9d1" opacity=".055" filter="url(#hsSoft)"/>'+
+ '<path d="M160 820 L285 122 L1315 122 L1440 820 Z" fill="url(#hsStone)" stroke="#384047" stroke-width="6"/>'+
+ '<path d="M305 770 L390 190 L1210 190 L1295 770 Z" fill="#1b2227" stroke="#4c555b" stroke-width="4"/>'+
+ '<path d="M435 770 L485 190 M650 770 L675 190 M865 770 L850 190 M1080 770 L1030 190" stroke="#2f3a3f" stroke-width="5" opacity=".7"/>'+
+ '<path class="hsv-crack" d="M415 675 L540 610 L505 550 L680 495 L645 410 L790 360" fill="none" stroke="#47e5da" stroke-width="7"/>'+
+ '<path class="hsv-crack slow" d="M1190 690 L1070 620 L1110 555 L930 500 L970 425 L820 365" fill="none" stroke="#2bc3c0" stroke-width="6"/>'+
+ '<g fill="url(#hsStone)" stroke="#465057" stroke-width="4">'+
+ '<rect x="205" y="125" width="75" height="210"/><rect x="1320" y="125" width="75" height="210"/><rect x="205" y="565" width="75" height="210"/><rect x="1320" y="565" width="75" height="210"/>'+
+ '</g>'+
+ '<g class="hsv-shard"><path d="M236 130 l-24 70 25 48 25-48z" fill="url(#hsTeal)"/><path d="M1358 130 l-24 70 25 48 25-48z" fill="url(#hsTeal)"/></g>'+
+ '<path d="M575 115 Q800 -75 1025 115 L1025 210 L955 210 Q800 80 645 210 L575 210Z" fill="#10171b" stroke="#39454a" stroke-width="8"/>'+
+ '<path class="hsv-portal" d="M652 197 Q800 88 948 197 L928 222 Q800 128 672 222Z" fill="#3fe2d5" opacity=".24" filter="url(#hsGlow)"/>'+
+ candles+
+ '<g opacity=".38"><path d="M70 785 Q150 705 215 790" fill="none" stroke="#17242a" stroke-width="55"/><path d="M1385 790 Q1450 705 1530 785" fill="none" stroke="#17242a" stroke-width="55"/></g>'+
+ '</svg>'
+}
+function hsSceneSentinel(){
+ const candles=hsCandles([[370,640],[560,510],[880,345],[1180,210],[1165,565],[760,690]]);
+ return '<svg class="hs-live-scene hs-live-sentinel" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">'+hsSceneDefs()+
+ '<rect width="1600" height="900" fill="url(#hsVoid)"/><ellipse class="hsv-mist" cx="810" cy="440" rx="760" ry="300" fill="#42e5db" opacity=".07" filter="url(#hsSoft)"/>'+
+ '<path d="M105 830 L315 790 L1470 70 L1285 48 Z" fill="#131a1f" stroke="#354249" stroke-width="9"/>'+
+ '<path d="M170 780 L328 735 L1390 110 L1260 95 Z" fill="#21292e" stroke="#58636a" stroke-width="5"/>'+
+ '<path d="M305 735 L425 750 L470 690 L610 695 L650 620 L820 610 L865 525 L1010 520 L1050 435 L1195 425 L1240 330 L1360 300" fill="none" stroke="#2d383e" stroke-width="6"/>'+
+ '<path class="hsv-crack" d="M300 720 L470 650 L520 590 L690 560 L760 495 L930 445 L990 385 L1165 330 L1240 260" fill="none" stroke="#46e7dc" stroke-width="8"/>'+
+ '<g class="hsv-rune"><circle cx="800" cy="480" r="126" fill="none" stroke="#49e5dc" stroke-width="7" opacity=".35"/><circle cx="800" cy="480" r="86" fill="none" stroke="#55fff0" stroke-width="3" opacity=".3"/><path d="M800 365 L845 455 L940 480 L845 505 L800 595 L755 505 L660 480 L755 455Z" fill="none" stroke="#42d4cf" stroke-width="5" opacity=".42"/></g>'+
+ '<g class="hsv-shard"><path d="M322 690 l-32 -88 36 -74 34 74z" fill="url(#hsTeal)"/><path d="M1240 304 l-32 -88 36 -74 34 74z" fill="url(#hsTeal)"/></g>'+
+ candles+
+ '<g stroke="#465159" stroke-width="18" opacity=".8"><path d="M165 782 L1285 76"/><path d="M265 840 L1455 100"/></g>'+
+ '<g stroke="#1e282e" stroke-width="7" opacity=".8"><path d="M205 765 L1285 80"/><path d="M285 815 L1435 105"/></g>'+
+ '</svg>'
+}
+function hsSceneChoir(){
+ const candles=hsCandles([[250,625],[1350,625],[315,285],[1285,285],[515,175],[1085,175],[430,720],[1170,720]]);
+ return '<svg class="hs-live-scene hs-live-choir" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true">'+hsSceneDefs()+
+ '<rect width="1600" height="900" fill="#05090c"/><ellipse class="hsv-mist" cx="800" cy="430" rx="690" ry="350" fill="#39d8d0" opacity=".065" filter="url(#hsSoft)"/>'+
+ '<ellipse cx="800" cy="486" rx="610" ry="330" fill="url(#hsStone)" stroke="#3f494f" stroke-width="9"/>'+
+ '<ellipse cx="800" cy="486" rx="430" ry="235" fill="#1b2227" stroke="#756c58" stroke-width="6"/>'+
+ '<ellipse class="hsv-rune" cx="800" cy="486" rx="255" ry="140" fill="none" stroke="#48e7da" stroke-width="7" opacity=".34"/>'+
+ '<path class="hsv-rune slow" d="M800 332 L842 433 L970 486 L842 539 L800 640 L758 539 L630 486 L758 433Z" fill="none" stroke="#59fff1" stroke-width="5" opacity=".38"/>'+
+ '<g class="hsv-crack" fill="none" stroke="#40dcd4" stroke-width="7"><path d="M800 485 L800 720"/><path d="M800 485 L1035 610"/><path d="M800 485 L565 610"/><path d="M800 485 L565 365"/><path d="M800 485 L1035 365"/></g>'+
+ '<g class="hsv-core"><ellipse cx="800" cy="342" rx="85" ry="125" fill="#43e8dc" opacity=".20" filter="url(#hsSoft)"/><path d="M800 205 L730 337 L800 455 L870 337Z" fill="url(#hsTeal)" stroke="#a0fff6" stroke-width="5"/></g>'+
+ '<g stroke="#273239" stroke-width="14" opacity=".9"><path d="M610 0 L725 270"/><path d="M990 0 L875 270"/><path d="M460 0 L690 260"/><path d="M1140 0 L910 260"/></g>'+
+ candles+
+ '<path d="M505 120 Q800 -60 1095 120" fill="none" stroke="#30383e" stroke-width="70"/>'+
+ '<path d="M520 118 Q800 -25 1080 118" fill="none" stroke="#141b20" stroke-width="44"/>'+
+ '</svg>'
+}
+function hsSceneMarkup(id){
+ if(id==='sentinel')return hsSceneSentinel();
+ if(id==='choir')return hsSceneChoir();
+ return hsSceneGallery()
+}
+function hsRouteOffset(point,from,to,slot=0,spread=2){
+ const dx=(Number(to?.x)||Number(point.x))-(Number(from?.x)||Number(point.x)),dy=(Number(to?.y)||Number(point.y))-(Number(from?.y)||Number(point.y)),len=Math.hypot(dx,dy)||1;
+ const offsets=[0,-1,1,-2,2],amount=(offsets[slot%offsets.length]||0)*spread;
+ return{x:Number(point.x)+(-dy/len)*amount,y:Number(point.y)+(dx/len)*amount}
+}
+function hsPartyStagePosition(s,i){
+ const room=HOLLOW_ROOMS[s?.id]||HOLLOW_ROOMS.gallery,p=room.route?.partyAnchors?.[i]||room.route?.entryInside||[35,50];
+ return Array.isArray(p)?{x:Number(p[0]),y:Number(p[1])}:{x:Number(p.x),y:Number(p.y)}
+}
+function hsEnemyStagePosition(s,i){
+ const room=HOLLOW_ROOMS[s?.id]||HOLLOW_ROOMS.gallery,p=room.enemyAnchors?.[i]||room.enemyAnchors?.[room.enemyAnchors.length-1]||[68,50];
+ return Array.isArray(p)?{x:Number(p[0]),y:Number(p[1])}:{x:Number(p.x),y:Number(p.y)}
+}
+function hsEnsureFade(){
+ const arena=$('#hs2dArena');if(!arena)return null;let fade=arena.querySelector('.hs2d-room-fade');
+ if(!fade){fade=document.createElement('div');fade.className='hs2d-room-fade';fade.setAttribute('aria-hidden','true');arena.appendChild(fade)}return fade
+}
+function hsSetFade(black,duration=560){
+ const fade=hsEnsureFade();if(!fade)return;fade.style.setProperty('--hs-fade-ms',Math.max(0,Number(duration)||0)+'ms');fade.classList.toggle('is-black',Boolean(black))
+}
 function stageEnvironment(s){
  const room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery,arena=$('#hs2dArena'),environment=$('#hs2dEnvironment');
- arena.className='cb2d-arena hs2d-arena hs2d-unified-arena stage-'+s.id;
- if(environment)environment.innerHTML=room.environment||'';
- const tag=$('#hs2dRoom');if(tag)tag.innerHTML='<em>'+esc(room.zone||'HOLLOW SANCTUM')+'</em><b>'+esc(s.title)+'</b><small>'+esc(room.description||'The sanctum closes around the party.')+'</small>'
-}
-function hsRoomPoint(room,index,fallback){
- const p=room?.[index];return Array.isArray(p)&&p.length>=2?p:fallback
+ arena.className='cb2d-arena hs2d-arena hs2d-unified-arena hollow-live-room stage-'+s.id;
+ arena.dataset.hollowRoom=s.id;
+ if(environment)environment.innerHTML=hsSceneMarkup(room.scene||s.id);
+ const tag=$('#hs2dRoom');if(tag)tag.innerHTML='<em>'+esc(room.zone||'HOLLOW SANCTUM')+'</em><b>'+esc(s.title)+'</b><small>'+esc(room.description||'The sanctum closes around the party.')+'</small>';
+ hsEnsureFade()
 }
 function spawnStage(s){
  stageEnvironment(s);$('#hs2dUnits').innerHTML='';$('#hs2dTelegraphs').innerHTML='';$('#hs2dFx').innerHTML='';
- const p=party(),room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery;
- p.forEach((c,i)=>{
-  const r=role(c),entryY=30+i*10,target=hsRoomPoint(room.party,i,[r==='tank'?40:r==='healer'?25:31,31+i*9]),unitId='p-'+c.id;
-  addUnit(unitId,c.name,'party '+r+' '+classKey(c),7,entryY);
-  setTimeout(()=>move(unitId,target[0],target[1],780),40+i*20)
+ const chars=party(),room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery,route=room.route||{},entry=route.entry||{x:5,y:50},inside=route.entryInside||{x:20,y:50},spread=Number(route.spread)||2;
+ const arena=$('#hs2dArena');arena?.classList.add('room-entering');
+ chars.forEach((c,i)=>{
+  const start=hsRouteOffset(entry,entry,inside,i,spread),target=hsPartyStagePosition(s,i),unitId='p-'+c.id;
+  addUnit(unitId,c.name,'party '+role(c)+' '+classKey(c),start.x,start.y);
+  setTimeout(()=>move(unitId,target.x,target.y,620),35+i*22)
  });
+ // Hostiles belong to the room. They are waiting when the party enters.
  s.enemies.forEach((n,i)=>{
-  const m=hsEnemyMeta(s,i),big=m.type==='boss'||m.type==='world-boss'||(s.id==='sentinel'&&m.type==='elite'),target=hsRoomPoint(room.enemies,i,[68,big?50:33+i*17]);
-  addUnit('e'+i,n,big?'enemy boss':'enemy',94,target[1],big,'Lv. '+m.level+' · '+m.label);
-  setTimeout(()=>move('e'+i,target[0],target[1],820),90+i*30)
+  const m=hsEnemyMeta(s,i),big=m.type==='boss'||m.type==='world-boss'||(s.id==='sentinel'&&m.type==='elite'),target=hsEnemyStagePosition(s,i);
+  addUnit('e'+i,n,big?'enemy boss':'enemy',target.x,target.y,big,'Lv. '+m.level+' · '+m.label)
  });
+ if(run?.roomTransitionBlack){
+  const fade=hsEnsureFade();fade?.classList.add('is-black');requestAnimationFrame(()=>requestAnimationFrame(()=>hsSetFade(false,720)));run.roomTransitionBlack=false
+ }else hsSetFade(false,0);
+ setTimeout(()=>arena?.classList.remove('room-entering'),760);
  requestAnimationFrame(()=>window.CellboundCombatPortraits?.refresh?.())
 }
-function hsRegroup(ms=380){
- const s=STAGES[run?.stage],room=HOLLOW_ROOMS[s?.id]||HOLLOW_ROOMS.gallery;
- party().forEach((ch,i)=>{if((Number(run?.hp?.[ch.id])||0)<=0)return;const r=role(ch),p=hsRoomPoint(room.party,i,[r==='tank'?40:r==='healer'?25:31,31+i*9]);move('p-'+ch.id,p[0],p[1],ms)})
-}
+
 function hsRenderId(unitId){
  const id=String(unitId||'');
  if(id.startsWith('p-'))return party().some(x=>String(x.id)===id.slice(2))?id:null;
@@ -279,7 +356,13 @@ function hsRenderId(unitId){
 }
 function hsCharacter(unitId){const id=String(unitId||'');return id.startsWith('p-')?party().find(x=>String(x.id)===id.slice(2)):null}
 function hsAttackKind(c){return c?.class==='Hunter'?'arrow':['Mage','Priest','Druid','Evoker'].includes(c?.class)?'magic':'slash'}
-function hsRebornEncounter(s){const room=HOLLOW_ROOMS[s.id]||{},base={id:s.id,title:s.title,kind:s.combatKind||'trash',level:s.level||1,recommendedItemLevel:s.level<=6?24:s.level===7?26:28,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies:[...s.enemies],enemyHealth:s.enemyHealth,mechanics:(s.mechanics||[]).map(m=>Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}),environment:{room:s.id,bounds:{...(room.bounds||{})},blockers:(room.blockers||[]).map(b=>({...b,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false}))}};return window.CellboundEndgame?.stageConfig?.('hollow-sanctum',base)||base}
+function hsRebornEncounter(s){
+ const room=HOLLOW_ROOMS[s.id]||{};
+ const enemies=s.enemies.map((name,i)=>({name,currentPosition:hsEnemyStagePosition(s,i)}));
+ const environment={room:s.id,bounds:{...(room.bounds||{})},arena:room.arena?{...room.arena}:undefined,walkable:Array.isArray(room.walkable)?room.walkable.map(p=>[Number(p[0]),Number(p[1])]):undefined,blockers:(room.blockers||[]).map(b=>({...b,points:Array.isArray(b.points)?b.points.map(p=>[Number(p[0]),Number(p[1])]):b.points,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false}))};
+ const base={id:s.id,title:s.title,kind:s.combatKind||'trash',level:s.level||1,recommendedItemLevel:s.level<=6?24:s.level===7?26:28,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies,enemyHealth:s.enemyHealth,mechanics:(s.mechanics||[]).map(m=>Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}),environment};
+ return window.CellboundEndgame?.stageConfig?.('hollow-sanctum',base)||base
+}
 function hsResultHealth(result){
  (result?.finalState?.players||[]).forEach(p=>{const c=party().find(x=>String(x.id)===String(p.characterId));if(c)run.hp[c.id]=Math.max(0,Math.min(100,p.maxHealth?Math.round(p.health/p.maxHealth*100):0))})
 }
@@ -346,7 +429,7 @@ function hsRenderRebornEvent(e){
    if(target&&targetChar){const pct=Math.max(0,Math.min(100,Number(e.payload?.targetHpPct)||0));run.hp[targetChar.id]=pct;hsBar(target,pct);hsFloat(target,'+'+Math.round(Number(e.amount)||0),'heal');window.CellboundCombatFX?.heal?.($('[data-hs="'+target+'"]'));hsUpdateSidebar()}
    if(srcChar){run.healingDone[srcChar.id]=(Number(run.healingDone?.[srcChar.id])||0)+(Number(e.amount)||0);run.overhealing[srcChar.id]=(Number(run.overhealing?.[srcChar.id])||0)+(Number(e.payload?.overhealing)||0);hsRenderMeters()}
    break;
-  case'PHASE_CHANGE':window.CellboundCombatFX?.phase?.($('#hs2dArena'));window.CellboundFX?.phase?.(e.ability||'Boss phase',e.payload?.healthPct);feed((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');setStatus(e.ability||'Phase change');break;
+  case'PHASE_CHANGE':window.CellboundCombatFX?.phase?.($('#hs2dArena'));window.CellboundFX?.phase?.(e.ability||'Boss phase',e.payload?.healthPct);feed((e.ability||'The boss changes phase')+' at '+Math.round(Number(e.payload?.healthPct)||0)+'% health.');setStatus(e.ability||'Phase change');const a=$('#hs2dArena');a?.classList.add('ambient-surge');setTimeout(()=>a?.classList.remove('ambient-surge'),1200);break;
   case'ENRAGE':feed((e.ability||'The boss enrages')+'.');setStatus(e.result==='hard'?'HARD ENRAGE — finish now':(e.ability||'Enrage'));break;
   case'UNIQUE_EFFECT_TRIGGER':if(srcChar){feed(srcChar.name+' triggers '+(e.ability||'a unique item effect')+'.');hsFloat(src,e.ability||'UNIQUE','heal');setStatus((e.ability||'Unique effect')+' activated.')}break;
   case'CROWD_CONTROL':if(srcChar){feed(srcChar.name+' controls a priority enemy.');if(target)hsFloat(target,'CONTROLLED','heal')}break;
@@ -379,7 +462,7 @@ function hsRenderRebornEvent(e){
    if(target){const el=$('[data-hs="'+target+'"]');if(el){el.classList.add('dead');window.CellboundCombatFX?.death?.(el)}hsBar(target,0);if(targetChar){run.hp[targetChar.id]=0;feed(targetChar.name+' is defeated.');hsUpdateSidebar()}}
    break;
   case'DEFENSIVE_ACTIVATED':if(srcChar)feed(srcChar.name+' activates a defensive.');break;
-  case'COMBAT_END':hsCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');if(e.result==='victory')window.CellboundCombatFX?.victory?.($('#hs2dArena'));else window.CellboundFX?.wipe?.('The party has fallen inside The Hollow Sanctum.');hsRegroup(260);break;
+  case'COMBAT_END':hsCastClear();setStatus(e.result==='victory'?'Path clear.':'Party defeated.');if(e.result==='victory')window.CellboundCombatFX?.victory?.($('#hs2dArena'));else window.CellboundFX?.wipe?.('The party has fallen inside The Hollow Sanctum.');break;
  }
 }
 async function hsPlayTimeline(result,tok){
@@ -506,7 +589,7 @@ async function fightStage(s,tok,index){
  run.threat=Object.fromEntries(party().map(ch=>[ch.id,0]));run.aggro=null;hsRenderMeters();
  spawnStage(s);setStatus('Entering '+s.title+'…');feed('The party enters '+s.title+'.');await wait(650);if(tok!==token)return false;
  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
- const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:run.hp[c.id],_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0}));
+ const combatParty=party().map((c,i)=>Object.assign({},c,{_combatHealthPct:run.hp[c.id],_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0,_combatPosition:hsPartyStagePosition(s,i)}));
  const tactics={...hsTactics,interruptPriority:hsTactics.bossPlan==='control'?'high':hsTactics.interruptPriority,addPriority:hsTactics.bossPlan==='burn'?'boss':hsTactics.addPriority,defensiveUsage:hsTactics.bossPlan==='control'?'aggressive':hsTactics.defensiveUsage,cooldownUse:hsTactics.bossPlan==='burn'?'free':hsTactics.cooldownUse};const result=C.simulate({party:combatParty,encounter:hsRebornEncounter(s),tactics,seed:[run.endgame?.seed||'hollow-sanctum',s.id,index].join(':')},{zone:'hollow-sanctum'});
  result.stageId=s.id;result.stageTitle=s.title;result.startHp={...run.hp};run.history.push(result);
  const won=await hsPlayTimeline(result,tok);hsResultHealth(result);
@@ -640,6 +723,24 @@ function hsRestoreRuntime(attempt){
  run.endgame={...(saved.endgame||{}),attemptId:attempt.attemptId,seed:attempt.seed,difficulty:attempt.difficulty,tier:Number(attempt.tier)||0,targetTimeMs:Number(attempt.targetTimeMs)||Number(saved.endgame?.targetTimeMs)||0,dungeonVersion:Number(attempt.dungeonVersion)||Number(saved.endgame?.dungeonVersion)||2};
  return run
 }
+async function hsTravelDeeper(currentStage,nextStage,tok){
+ if(tok!==token||!run)return;
+ const arena=$('#hs2dArena'),room=HOLLOW_ROOMS[currentStage?.id]||HOLLOW_ROOMS.gallery,route=room.route||{},path=Array.isArray(route.exitPath)?route.exitPath:[],chars=party(),spread=Number(route.spread)||2;
+ if(!path.length)return;
+ arena?.classList.add('travelling');setStatus('Path clear · moving deeper into the Sanctum');
+ feed('The party advances toward '+nextStage.title+'.');
+ const positions=Object.fromEntries(chars.map(c=>{const e=$('[data-hs="p-'+c.id+'"]');return[c.id,{x:Number.parseFloat(e?.style.left)||50,y:Number.parseFloat(e?.style.top)||50}]}));
+ const centroid=chars.reduce((a,c)=>{a.x+=positions[c.id].x;a.y+=positions[c.id].y;return a},{x:0,y:0});centroid.x/=Math.max(1,chars.length);centroid.y/=Math.max(1,chars.length);
+ let startIndex=0,best=Infinity;path.forEach((p,i)=>{const d=Math.hypot(Number(p.x)-centroid.x,Number(p.y)-centroid.y);if(d<best){best=d;startIndex=i}});if(startIndex>0&&best>18)startIndex=0;
+ const active=path.slice(startIndex);
+ for(let step=0;step<active.length;step++){
+  const point=active[step],from=step===0?centroid:active[step-1],to=active[Math.min(step+1,active.length-1)]||point,finalStep=step===active.length-1,duration=finalStep?560:390;
+  if(finalStep)hsSetFade(true,duration+100);
+  chars.forEach((c,i)=>{if((Number(run.hp[c.id])||0)<=0)return;const p=hsRouteOffset(point,from,to,i,spread);move('p-'+c.id,p.x,p.y,duration)});
+  await wait(duration+35);if(tok!==token||!run)return
+ }
+ run.roomTransitionBlack=true;arena?.classList.remove('travelling')
+}
 async function hsRunFrom(startIndex,tok){
  for(let i=Math.max(0,Number(startIndex)||0);i<STAGES.length;i++){
   if(tok!==token||!run)return;
@@ -649,7 +750,7 @@ async function hsRunFrom(startIndex,tok){
   run._restored=false;
   await hsSaveRuntime('stage');
   const s=STAGES[i];
-  if(s.combatKind==='final')await window.CellboundBossDossier?.show?.('bound-choir');else if(i>0)await window.CellboundExpeditionPresentation?.room?.('hollow-sanctum',{title:s.title,index:i,total:STAGES.length,kind:s.kind});
+  if(s.combatKind==='final')await window.CellboundBossDossier?.show?.('bound-choir');
   if(/boss/i.test(String(s.kind||s.combatKind||'')))window.CellboundFX?.boss?.(s.title);
   $('#hs2dTitle').textContent=s.title;const type=$('#hs2dType');if(type)type.textContent=s.kind;
   $('.hs2d-route').innerHTML=STAGES.map((x,j)=>'<span class="'+(j<i?'done':j===i?'current':'')+'"><i>'+(j+1)+'</i>'+esc(x.title)+'</span>').join('');
@@ -658,6 +759,7 @@ async function hsRunFrom(startIndex,tok){
     const expired=window.CellboundProfessions?.consumeBossChargesOnce?.(party(),'hollow-sanctum:'+run.endgame?.attemptId+':'+s.id,state())||[];
     expired.forEach(x=>feed(x+' expired.'));Game.save?.();await Game.persistState?.()
   }
+  if(i<STAGES.length-1)await hsTravelDeeper(s,STAGES[i+1],tok);
   run.stage=i+1;run.runtimeStageStartedAt=0;await hsSaveRuntime('between')
  }
  if(tok!==token||!run)return;

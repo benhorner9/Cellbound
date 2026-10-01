@@ -790,3 +790,70 @@
   box-shadow:0 0 28px rgba(166,111,197,.38)!important;
 }
 .hollow-journal-art .journal-eyebrow{color:#b79ac7}
+
+
+/* Hollow Sanctum living battlefield v3 */
+.hs2d-arena.hollow-live-room{
+  height:auto!important;min-height:0!important;aspect-ratio:16/9;
+  background:#03080b;isolation:isolate;
+}
+.hs2d-arena.hollow-live-room .hs2d-floor{
+  background:linear-gradient(180deg,#071014,#030609)!important;
+}
+.hs2d-arena.hollow-live-room .hs2d-environment{z-index:1;filter:none!important;opacity:1!important}
+.hs-live-scene{
+  position:absolute;inset:0;width:100%;height:100%;display:block;overflow:hidden;
+  filter:saturate(1.08) contrast(1.035) brightness(.98);
+}
+.hs-live-scene .hsv-crack{filter:drop-shadow(0 0 8px rgba(68,237,224,.55));animation:hsvCrack 2.9s ease-in-out infinite alternate}
+.hs-live-scene .hsv-crack.slow{animation-duration:4.1s}
+.hs-live-scene .hsv-rune{transform-box:fill-box;transform-origin:center;filter:drop-shadow(0 0 8px rgba(67,232,220,.35));animation:hsvRune 3.6s ease-in-out infinite}
+.hs-live-scene .hsv-rune.slow{animation-duration:5.1s;animation-direction:reverse}
+.hs-live-scene .hsv-core{transform-box:fill-box;transform-origin:center;filter:drop-shadow(0 0 16px rgba(70,238,225,.52));animation:hsvCore 2.4s ease-in-out infinite}
+.hs-live-scene .hsv-shard{filter:drop-shadow(0 0 14px rgba(65,232,221,.5));animation:hsvShard 2.1s ease-in-out infinite alternate}
+.hs-live-scene .hsv-mist{transform-box:fill-box;transform-origin:center;animation:hsvMist 7s ease-in-out infinite alternate}
+.hs-live-scene .hsv-portal{animation:hsvPortal 2.8s ease-in-out infinite alternate}
+.hs-live-scene .hsv-candle{transform-box:fill-box;transform-origin:center;animation:hsvCandle 1.1s ease-in-out infinite alternate;animation-delay:var(--d)}
+.hs-live-scene .hsv-fireglow{filter:url(#hsGlow);animation:hsvFireGlow 1.35s ease-in-out infinite alternate;animation-delay:var(--d)}
+.hs2d-arena.hollow-live-room #hs2dTelegraphs{z-index:5}
+.hs2d-arena.hollow-live-room #hs2dUnits{z-index:7}
+.hs2d-arena.hollow-live-room #hs2dFx{z-index:12}
+.hs2d-arena.hollow-live-room .hs2d-unit{
+  transform:translate(-50%,-50%) scale(var(--hs-depth-scale,1));
+  transform-origin:50% 75%;
+  filter:drop-shadow(0 7px 5px rgba(0,0,0,.52)) drop-shadow(0 0 4px rgba(72,225,215,.13));
+  transition:left .55s ease,top .55s ease,opacity .3s ease,transform .25s ease;
+}
+.hs2d-arena.hollow-live-room .hs2d-unit.attack{transform:translate(-50%,-50%) scale(calc(var(--hs-depth-scale,1) * 1.13))}
+.hs2d-arena.hollow-live-room .hs2d-unit.dead{opacity:.2;transform:translate(-50%,-50%) rotate(72deg) scale(calc(var(--hs-depth-scale,1) * .82))}
+.hs2d-arena.hollow-live-room .hs2d-unit:before{
+  content:"";position:absolute;left:50%;top:72%;width:42px;height:15px;border-radius:50%;transform:translate(-50%,-50%);
+  background:radial-gradient(ellipse,rgba(0,0,0,.72),rgba(0,0,0,.28) 45%,transparent 72%);
+  filter:blur(.5px);z-index:-1;
+}
+.hs2d-arena.hollow-live-room .hs2d-unit.big:before{width:72px;height:24px}
+.hs2d-room-fade{
+  position:absolute;inset:0;z-index:60;pointer-events:none;background:#020608;opacity:0;
+  transition:opacity var(--hs-fade-ms,560ms) ease;
+}
+.hs2d-room-fade.is-black{opacity:1}
+.hs2d-arena.hollow-live-room.travelling .hs2d-room,
+.hs2d-arena.hollow-live-room.room-entering .hs2d-room{transition:opacity .25s ease}
+.hs2d-arena.hollow-live-room.travelling .hs2d-room{opacity:.32}
+.hs2d-arena.hollow-live-room.ambient-surge .hs-live-scene{filter:saturate(1.22) contrast(1.06) brightness(1.16)}
+@keyframes hsvCrack{from{opacity:.55;stroke-width:5}to{opacity:1;stroke-width:8}}
+@keyframes hsvRune{0%,100%{opacity:.34;transform:scale(.985)}50%{opacity:.72;transform:scale(1.02)}}
+@keyframes hsvCore{0%,100%{opacity:.82;transform:translateY(0) scale(.97)}50%{opacity:1;transform:translateY(-8px) scale(1.04)}}
+@keyframes hsvShard{from{opacity:.68;transform:translateY(2px)}to{opacity:1;transform:translateY(-4px)}}
+@keyframes hsvMist{from{opacity:.035;transform:translateX(-18px) scale(.98)}to{opacity:.09;transform:translateX(22px) scale(1.03)}}
+@keyframes hsvPortal{from{opacity:.16}to{opacity:.42}}
+@keyframes hsvCandle{from{transform:scale(.94,1.02) skewX(-1deg)}to{transform:scale(1.04,.96) skewX(2deg)}}
+@keyframes hsvFireGlow{from{opacity:.4;transform:scale(.9)}to{opacity:.92;transform:scale(1.12)}}
+@media(max-width:760px){
+ .hs2d-arena.hollow-live-room{aspect-ratio:16/9}
+ .hs-live-scene{filter:saturate(1.04) contrast(1.025) brightness(.98)}
+}
+@media(prefers-reduced-motion:reduce){
+ .hs-live-scene *{animation:none!important}
+ .hs2d-room-fade{transition-duration:120ms!important}
+}
