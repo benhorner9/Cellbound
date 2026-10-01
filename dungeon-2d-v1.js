@@ -38,7 +38,14 @@ const ASHEN_ROOMS={
    route:{entry:{x:50,y:94},entryInside:{x:50,y:72},engage:{x:50,y:42},partyAnchors:[{x:50,y:60},{x:44,y:64},{x:56,y:64},{x:41,y:70},{x:59,y:70}],exitPath:[{x:50,y:38},{x:50,y:24},{x:50,y:10},{x:50,y:3}],spread:2.2},enemyAnchors:[{x:50,y:32},{x:39,y:40},{x:61,y:40}],
    bounds:{left:10,right:90,top:18,bottom:82},
    walkable:[[17,24],[30,19],[70,19],[84,26],[89,44],[86,68],[73,79],[29,79],[14,68],[11,45]],
-   life:{profile:'ember-hall',particles:28,mix:['ember','ash','ember','smoke'],depthMin:.94,depthMax:1.06,light:'rgba(255,139,61,.28)',hotspots:[{type:'fire',x:18,y:28,w:10,h:17,i:.8,d:0},{type:'fire',x:82,y:28,w:10,h:17,i:.8,d:.45},{type:'fire',x:18,y:72,w:10,h:17,i:.74,d:.8},{type:'fire',x:82,y:72,w:10,h:17,i:.74,d:1.15},{type:'glow',x:50,y:48,w:42,h:26,i:.28,d:.3}]},
+   life:{profile:'ember-hall',particles:24,mix:['ember','ash','ember','smoke'],depthMin:.94,depthMax:1.06,light:'rgba(255,139,61,.24)',hotspots:[
+     {type:'fireglow',x:40.2,y:10.4,w:6.2,h:9.0,i:.78,d:0},
+     {type:'fireglow',x:59.4,y:10.4,w:6.2,h:9.0,i:.78,d:.31},
+     {type:'fireglow',x:23.0,y:16.2,w:6.8,h:10.0,i:.72,d:.18},
+     {type:'fireglow',x:72.3,y:16.2,w:6.8,h:10.0,i:.72,d:.53},
+     {type:'fireglow',x:9.7,y:60.6,w:8.0,h:11.0,i:.82,d:.42},
+     {type:'fireglow',x:85.3,y:60.0,w:8.0,h:11.0,i:.82,d:.76}
+   ]},
    occluders:[
      {clip:'polygon(0 72%,9% 66%,17% 79%,22% 100%,0 100%)',opacity:.9},
      {clip:'polygon(100% 70%,91% 65%,83% 80%,78% 100%,100% 100%)',opacity:.9}
