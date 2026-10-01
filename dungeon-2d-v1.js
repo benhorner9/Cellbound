@@ -18,85 +18,112 @@ const ASHEN_ROOMS={
    room:'broken-gate',label:'Collapsed Vault Entrance',
    ambience:'Ash drifts through a shattered seal.',
    props:[
-     ['gate',86,48,0,1.05],['pillar-broken',9,18,-10,.9],['pillar-broken',11,82,13,.82],
-     ['rubble',18,16,0,1],['rubble',18,84,0,.85],['chain',77,15,18,.9],['brazier',79,79,0,.8]
+     ['pillar-broken',8,23,-8,1.55,'depth-back'],['brazier',15,31,0,1.35,'depth-back'],
+     ['pillar',86,23,2,1.55,'depth-back'],['brazier',79,31,0,1.35,'depth-back'],
+     ['pillar-broken',8,82,8,1.48,'depth-front'],['gate',90,76,0,1.62,'depth-front'],
+     ['chain',22,88,-72,1.35,'depth-front'],['rubble',21,76,-8,1.35,'depth-front'],
+     ['rubble',73,83,6,1.18,'depth-front']
    ],
    blockers:[
-     {id:'broken-gate-door',x:86,y:48,w:11,h:38},{id:'broken-pillar-north',x:9,y:18,w:5,h:17},{id:'broken-pillar-south',x:11,y:82,w:5,h:16},
-     {id:'rubble-north',x:18,y:16,w:7,h:5,blocksLos:false},{id:'rubble-south',x:18,y:84,w:7,h:5,blocksLos:false}
+     {id:'broken-gate-door',x:90,y:76,w:14,h:21},{id:'broken-pillar-north',x:8,y:23,w:7,h:22},{id:'broken-pillar-south',x:8,y:82,w:7,h:18},
+     {id:'rubble-west',x:21,y:76,w:8,h:7,blocksLos:false},{id:'rubble-east',x:73,y:83,w:8,h:7,blocksLos:false}
    ]
  },
  'hall-embers':{
    room:'hall-embers',label:'Ember Processional Hall',
    ambience:'Old braziers still breathe beneath the ash.',
    props:[
-     ['pillar',8,20,0,.95],['pillar',8,80,0,.95],['pillar',88,20,0,.95],['pillar',88,80,0,.95],
-     ['brazier',18,24,0,.8],['brazier',18,76,0,.8],['vault-mark',72,50,0,1.1]
+     ['pillar',9,19,0,1.55,'depth-back'],['pillar',91,19,0,1.55,'depth-back'],
+     ['pillar',9,81,0,1.62,'depth-front'],['pillar',91,81,0,1.62,'depth-front'],
+     ['brazier',18,28,0,1.35,'depth-back'],['brazier',82,28,0,1.35,'depth-back'],
+     ['brazier',18,73,0,1.35,'depth-front'],['brazier',82,73,0,1.35,'depth-front'],
+     ['chain',50,8,90,1.2,'depth-back']
    ],
    blockers:[
-     {id:'hall-pillar-nw',x:8,y:20,w:5,h:21},{id:'hall-pillar-sw',x:8,y:80,w:5,h:21},
-     {id:'hall-pillar-ne',x:88,y:20,w:5,h:21},{id:'hall-pillar-se',x:88,y:80,w:5,h:21},
-     {id:'hall-brazier-n',x:18,y:24,w:4,h:7,blocksLos:false},{id:'hall-brazier-s',x:18,y:76,w:4,h:7,blocksLos:false}
+     {id:'hall-pillar-nw',x:9,y:19,w:7,h:22},{id:'hall-pillar-sw',x:9,y:81,w:7,h:22},
+     {id:'hall-pillar-ne',x:91,y:19,w:7,h:22},{id:'hall-pillar-se',x:91,y:81,w:7,h:22},
+     {id:'hall-brazier-nw',x:18,y:28,w:5,h:8,blocksLos:false},{id:'hall-brazier-ne',x:82,y:28,w:5,h:8,blocksLos:false},
+     {id:'hall-brazier-sw',x:18,y:73,w:5,h:8,blocksLos:false},{id:'hall-brazier-se',x:82,y:73,w:5,h:8,blocksLos:false}
    ]
  },
  'kael':{
    room:'warden-seal',label:'The Warden Seal',
    ambience:'Chains hold an ancient oath around the chamber.',
    props:[
-     ['seal-ring',66,50,0,1.05],['chain',87,23,-18,1],['chain',87,77,18,1],
-     ['statue',10,22,0,.9],['statue',10,78,0,.9],['brazier',83,50,0,.95]
+     ['pillar',9,18,0,1.6,'depth-back'],['pillar',91,18,0,1.6,'depth-back'],
+     ['pillar',9,82,0,1.7,'depth-front'],['pillar',91,82,0,1.7,'depth-front'],
+     ['brazier',18,28,0,1.38,'depth-back'],['brazier',82,28,0,1.38,'depth-back'],
+     ['brazier',18,72,0,1.38,'depth-front'],['brazier',82,72,0,1.38,'depth-front'],
+     ['chain',23,12,-48,1.5,'depth-back'],['chain',77,12,48,1.5,'depth-back'],
+     ['chain',22,88,48,1.5,'depth-front'],['chain',78,88,-48,1.5,'depth-front']
    ],
    blockers:[
-     {id:'warden-statue-n',x:10,y:22,w:5,h:16},{id:'warden-statue-s',x:10,y:78,w:5,h:16},
-     {id:'warden-brazier',x:83,y:50,w:4,h:7,blocksLos:false}
+     {id:'warden-pillar-nw',x:9,y:18,w:7,h:22},{id:'warden-pillar-ne',x:91,y:18,w:7,h:22},
+     {id:'warden-pillar-sw',x:9,y:82,w:7,h:22},{id:'warden-pillar-se',x:91,y:82,w:7,h:22},
+     {id:'warden-brazier-nw',x:18,y:28,w:5,h:8,blocksLos:false},{id:'warden-brazier-ne',x:82,y:28,w:5,h:8,blocksLos:false}
    ]
  },
  'furnace':{
    room:'furnace-passage',label:'Furnace Passage',
    ambience:'Heat pulses through cracked iron channels.',
    props:[
-     ['furnace',88,50,0,1.05],['vent',70,22,0,.9],['vent',70,78,0,.9],
-     ['pipe',10,16,8,1],['pipe',10,84,-8,1],['ember-crack',49,18,14,1.1],['ember-crack',53,83,-11,.9]
+     ['pillar',8,22,0,1.5,'depth-back'],['furnace',88,20,0,1.65,'depth-back'],
+     ['furnace',91,52,0,1.82,'depth-back'],['furnace',88,83,0,1.7,'depth-front'],
+     ['pillar-broken',10,82,-5,1.42,'depth-front'],['brazier',18,31,0,1.22,'depth-back'],
+     ['chain',72,12,58,1.55,'depth-back'],['chain',73,88,-58,1.55,'depth-front'],
+     ['rubble',20,78,0,1.2,'depth-front']
    ],
    blockers:[
-     {id:'furnace-main',x:88,y:50,w:10,h:25},{id:'furnace-pipe-n',x:10,y:16,w:16,h:5},{id:'furnace-pipe-s',x:10,y:84,w:16,h:5},
-     {id:'vent-n',x:70,y:22,w:5,h:8,blocksLos:false},{id:'vent-s',x:70,y:78,w:5,h:8,blocksLos:false}
+     {id:'furnace-main',x:91,y:52,w:12,h:25},{id:'furnace-north',x:88,y:20,w:11,h:20},{id:'furnace-south',x:88,y:83,w:11,h:20},
+     {id:'passage-pillar-nw',x:8,y:22,w:7,h:20},{id:'passage-pillar-sw',x:10,y:82,w:7,h:17}
    ]
  },
  'embermaw':{
    room:'embermaw-forge',label:'The Ember Forge',
    ambience:'The floor itself glows beneath Embermaw.',
    props:[
-     ['forge-ring',66,50,0,1.12],['furnace',88,18,0,.85],['furnace',88,82,0,.85],
-     ['chain',9,28,16,.9],['chain',9,72,-16,.9],['ember-crack',43,20,20,1.05],['ember-crack',45,80,-18,1]
+     ['furnace',12,17,0,1.62,'depth-back'],['furnace',88,17,0,1.62,'depth-back'],
+     ['furnace',10,82,0,1.72,'depth-front'],['furnace',90,82,0,1.72,'depth-front'],
+     ['brazier',23,25,0,1.2,'depth-back'],['brazier',77,25,0,1.2,'depth-back'],
+     ['chain',30,9,-58,1.55,'depth-back'],['chain',70,9,58,1.55,'depth-back'],
+     ['chain',26,91,58,1.55,'depth-front'],['chain',74,91,-58,1.55,'depth-front']
    ],
    blockers:[
-     {id:'embermaw-furnace-n',x:88,y:18,w:9,h:21},{id:'embermaw-furnace-s',x:88,y:82,w:9,h:21}
+     {id:'embermaw-furnace-nw',x:12,y:17,w:11,h:20},{id:'embermaw-furnace-ne',x:88,y:17,w:11,h:20},
+     {id:'embermaw-furnace-sw',x:10,y:82,w:11,h:20},{id:'embermaw-furnace-se',x:90,y:82,w:11,h:20}
    ]
  },
  'vault-depths':{
    room:'vault-depths',label:'Sealed Vault Depths',
    ambience:'Dead reliquaries line the path inward.',
    props:[
-     ['coffer',10,20,-8,.85],['coffer',10,80,7,.85],['coffer',88,16,9,.85],['coffer',88,84,-7,.85],
-     ['soul-urn',78,30,0,.75],['soul-urn',78,70,0,.75],['vault-mark',65,50,0,.9]
+     ['pillar',8,19,0,1.5,'depth-back'],['pillar-broken',91,20,6,1.42,'depth-back'],
+     ['gate',9,52,0,1.32,'depth-back'],['gate',91,52,0,1.32,'depth-back'],
+     ['pillar-broken',9,83,-5,1.52,'depth-front'],['pillar',91,82,0,1.58,'depth-front'],
+     ['brazier',20,29,0,1.18,'depth-back'],['brazier',80,29,0,1.18,'depth-back'],
+     ['brazier',22,72,0,1.22,'depth-front'],['brazier',78,72,0,1.22,'depth-front'],
+     ['rubble',18,83,0,1.2,'depth-front']
    ],
    blockers:[
-     {id:'coffer-nw',x:10,y:20,w:8,h:6},{id:'coffer-sw',x:10,y:80,w:8,h:6},{id:'coffer-ne',x:88,y:16,w:8,h:6},{id:'coffer-se',x:88,y:84,w:8,h:6},
-     {id:'urn-n',x:78,y:30,w:4,h:9},{id:'urn-s',x:78,y:70,w:4,h:9}
+     {id:'depths-gate-west',x:9,y:52,w:12,h:20},{id:'depths-gate-east',x:91,y:52,w:12,h:20},
+     {id:'depths-pillar-nw',x:8,y:19,w:7,h:20},{id:'depths-pillar-ne',x:91,y:20,w:7,h:18},
+     {id:'depths-pillar-sw',x:9,y:83,w:7,h:18},{id:'depths-pillar-se',x:91,y:82,w:7,h:20}
    ]
  },
  'vaultheart':{
    room:'vaultheart-sanctum',label:'The Vaultheart Sanctum',
    ambience:'A sealed Cell reliquary hums beneath the final chamber.',
    props:[
-     ['vault-door',90,50,0,1.1],['heart-sigil',65,50,0,1.18],
-     ['containment',9,22,0,.9],['containment',9,78,0,.9],['crystal',80,18,-8,.85],['crystal',80,82,8,.85],
-     ['chain',86,28,-15,.9],['chain',86,72,15,.9]
+     ['pillar',8,18,0,1.62,'depth-back'],['pillar',92,18,0,1.62,'depth-back'],
+     ['pillar',8,82,0,1.72,'depth-front'],['pillar',92,82,0,1.72,'depth-front'],
+     ['brazier',19,27,0,1.35,'depth-back'],['brazier',81,27,0,1.35,'depth-back'],
+     ['brazier',19,74,0,1.35,'depth-front'],['brazier',81,74,0,1.35,'depth-front'],
+     ['chain',28,9,-58,1.55,'depth-back'],['chain',72,9,58,1.55,'depth-back'],
+     ['chain',24,91,58,1.55,'depth-front'],['chain',76,91,-58,1.55,'depth-front']
    ],
    blockers:[
-     {id:'vaultheart-door',x:90,y:50,w:12,h:39},{id:'containment-n',x:9,y:22,w:5,h:18},{id:'containment-s',x:9,y:78,w:5,h:18},
-     {id:'crystal-n',x:80,y:18,w:4,h:10},{id:'crystal-s',x:80,y:82,w:4,h:10}
+     {id:'vaultheart-pillar-nw',x:8,y:18,w:7,h:22},{id:'vaultheart-pillar-ne',x:92,y:18,w:7,h:22},
+     {id:'vaultheart-pillar-sw',x:8,y:82,w:7,h:22},{id:'vaultheart-pillar-se',x:92,y:82,w:7,h:22}
    ]
  }
 };
@@ -446,7 +473,7 @@ function renderDungeonEnvironment(s){
  root.innerHTML='';
  (cfg.props||[]).forEach((p,i)=>{
    const e=document.createElement('span');e.className='cb2d-prop prop-'+p[0];
-   e.style.left=p[1]+'%';e.style.top=p[2]+'%';e.style.setProperty('--rot',(p[3]||0)+'deg');e.style.setProperty('--scale',String(p[4]||1));e.dataset.prop=i;root.appendChild(e)
+   e.style.left=p[1]+'%';e.style.top=p[2]+'%';e.style.setProperty('--rot',(p[3]||0)+'deg');e.style.setProperty('--scale',String(p[4]||1));if(p[5])e.classList.add(p[5]);e.dataset.prop=i;root.appendChild(e)
  });
  const ambience=document.createElement('div');ambience.className='cb2d-ambience';
  for(let i=0;i<13;i++)ambience.appendChild(ashParticle(i%4===0?'ember':'ash',i));
