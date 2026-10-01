@@ -881,7 +881,7 @@ async function runQuest2DFight(config){
           qShowContinuation(end,{won:false,title:config.title,text:'The party was defeated. Recover, review the result and return when ready.',analysis:qAnalysis(result)});
           end.querySelector('[data-q-continue]').onclick=()=>{window.CellboundCombatStatuses?.clear?.(encounterRoot());encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}
         }
-      }catch(err){console.error('Quest Combat Reborn failed',err);encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}
+      }catch(err){console.error('Quest combat could not start',err);encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}
     })();
   });
 }
