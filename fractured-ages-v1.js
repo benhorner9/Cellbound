@@ -10,6 +10,15 @@ const roleOf=c=>Game?.classes?.[c?.class]?.specs?.[c?.spec]?.role||'dps';
 const ilvl=()=>Math.round(Number(Game?.partyItemLevel?.())||0);
 const unlocked=()=>Boolean(state()?.progression?.fracturedAgesUnlocked);
 const clearCount=()=>Number(state()?.fracturedAgesCompletions)||0;
+
+function faSceneMarkup(id,src){
+ return '<div class="fa-live-room fa-room-'+id+'" data-fa-room="'+id+'">'+
+  '<img class="fa-room-art" src="'+src+'" alt="" draggable="false" decoding="async">'+
+  '<div class="fa-room-life" aria-hidden="true">'+
+   '<i class="fa-life fa-life-a"></i><i class="fa-life fa-life-b"></i><i class="fa-life fa-life-c"></i>'+
+   '<i class="fa-particle fa-particle-a"></i><i class="fa-particle fa-particle-b"></i><i class="fa-particle fa-particle-c"></i>'+
+  '</div></div>'
+}
 const STAGES=[
  {
   id:'high-noon',era:'HIGH NOON',subtitle:'A western settlement trapped at twelve o’clock',boss:'Deadeye Mercer',level:14,visual:'fa-high-noon',
@@ -22,7 +31,7 @@ const STAGES=[
     {name:'Ricochet Line',type:'line',duration:1300},
     {name:'High Noon',type:'interrupt',duration:1900,priority:'critical'}
    ],phases:[{id:'quickdraw',name:'Quickdraw',atPct:40,damageScale:1.22}]},
-  environment:'<div class="fa-env-west"><i class="fa-sun"></i><span class="fa-building b1"></span><span class="fa-building b2"></span><span class="fa-water-tower"></span><span class="fa-dust d1"></span><span class="fa-dust d2"></span></div>'
+  art:'./assets/fractured-ages/rooms/high-noon.webp',environment:faSceneMarkup('high-noon','./assets/fractured-ages/rooms/high-noon.webp')
  },
  {
   id:'iron-kingdom',era:'IRON KINGDOM',subtitle:'A fortress built over a place older than its crown',boss:'The Hollow Knight',level:15,visual:'fa-iron-kingdom',
@@ -35,7 +44,7 @@ const STAGES=[
     {name:'Execution',type:'line',duration:1450},
     {name:'Armour Reforge',type:'self-heal',duration:1850,healPct:.07,priority:'critical'}
    ],phases:[{id:'armour-crack',name:'Armour Cracks',atPct:65,damageScale:1.18},{id:'blade-unbound',name:'Blade Unbound',atPct:30,damageScale:1.34}]},
-  environment:'<div class="fa-env-iron"><span class="fa-wall w1"></span><span class="fa-wall w2"></span><i class="fa-banner x1"></i><i class="fa-banner x2"></i><span class="fa-throne"></span></div>'
+  art:'./assets/fractured-ages/rooms/iron-kingdom.webp',environment:faSceneMarkup('iron-kingdom','./assets/fractured-ages/rooms/iron-kingdom.webp')
  },
  {
   id:'first-kingdom',era:'FIRST KINGDOM',subtitle:'A sun temple from before the recorded kingdoms',boss:'Amun-Rael',level:16,visual:'fa-first-kingdom',
@@ -49,7 +58,7 @@ const STAGES=[
     {name:'Call the Sunbound',type:'adds',duration:1200,addName:'Sunbound Servant',addCount:2},
     {name:'Light and Shadow',type:'role-circles',duration:2050,zones:{tank:{x:30,y:28,radius:11,label:'SHADOW'},dps:{x:65,y:50,radius:13,label:'SUN'},healer:{x:30,y:72,radius:11,label:'SHADOW'}}}
    ],phases:[{id:'temple-falls',name:'The Temple Collapses',atPct:35,damageScale:1.22,arenaBounds:{left:20,right:80,top:16,bottom:84}}]},
-  environment:'<div class="fa-env-first"><i class="fa-sun-disc"></i><span class="fa-pillar p1"></span><span class="fa-pillar p2"></span><span class="fa-pillar p3"></span><span class="fa-pillar p4"></span><span class="fa-sand"></span></div>'
+  art:'./assets/fractured-ages/rooms/first-kingdom.webp',environment:faSceneMarkup('first-kingdom','./assets/fractured-ages/rooms/first-kingdom.webp')
  },
  {
   id:'silent-frontier',era:'SILENT FRONTIER',subtitle:'A lunar outpost beneath a dead sky',boss:'Commander Veyra',level:17,visual:'fa-silent-frontier',
@@ -63,7 +72,7 @@ const STAGES=[
     {name:'Grav Minefield',type:'circles',duration:1350},
     {name:'Deploy Drones',type:'adds',duration:1050,addName:'Lunar Drone',addCount:3}
    ],phases:[{id:'bullet-hell',name:'No Safe Orbit',atPct:28,damageScale:1.30,arenaBounds:{left:22,right:78,top:20,bottom:80}}]},
-  environment:'<div class="fa-env-moon"><i class="fa-earth"></i><span class="fa-crater c1"></span><span class="fa-crater c2"></span><span class="fa-base"></span><span class="fa-starfield"></span></div>'
+  art:'./assets/fractured-ages/rooms/silent-frontier.webp',environment:faSceneMarkup('silent-frontier','./assets/fractured-ages/rooms/silent-frontier.webp')
  },
  {
   id:'funhouse',era:'THE FUNHOUSE',subtitle:'A place that should not exist in any age',boss:'The Old Man — Keeper of Ages',level:18,visual:'fa-funhouse',
@@ -84,7 +93,7 @@ const STAGES=[
     {name:'Rewind',type:'self-heal',duration:1750,healPct:.09,priority:'critical'},
     {name:'Broken Timeline',type:'role-circles',duration:1900,zones:{tank:{x:28,y:28,radius:10,label:'PAST'},dps:{x:66,y:50,radius:13,label:'NOW'},healer:{x:28,y:72,radius:10,label:'FUTURE'}}}
    ],phases:[{id:'mirrors-break',name:'Mirrors Break',atPct:55,damageScale:1.18},{id:'last-act',name:'Last Act',atPct:30,damageScale:1.30,arenaBounds:{left:19,right:81,top:17,bottom:83}}]},
-  environment:'<div class="fa-env-funhouse"><span class="fa-clock k1">Ⅻ</span><span class="fa-clock k2">Ⅳ</span><span class="fa-clock k3">?</span><i class="fa-mirror m1"></i><i class="fa-mirror m2"></i><i class="fa-door"></i><span class="fa-confetti"></span></div>'
+  art:'./assets/fractured-ages/rooms/funhouse.webp',environment:faSceneMarkup('funhouse','./assets/fractured-ages/rooms/funhouse.webp')
  }
 ];
 function faEndgameConfig(){
@@ -243,6 +252,14 @@ async function fightStage(s){
  const Q=window.CellboundQuests;if(!Q?.runQuest2DFight){root().hidden=false;return}
  let combatResult=null;
  const combat=window.CellboundEndgame?.stageConfig?.('fractured-ages',{id:s.id,...s.combat})||{id:s.id,...s.combat};
+ const mountStage=()=>{
+   const arena=document.querySelector('#q2dArena'),shell=arena?.closest('.quest-cb2d-shell');
+   if(!arena||!shell||!shell.classList.contains(s.visual))return false;
+   arena.dataset.bespokeBattlefield='1';arena.dataset.faRoom=s.id;arena.dataset.depthMin='.96';arena.dataset.depthMax='1.06';
+   requestAnimationFrame(()=>window.CellboundCombatPortraits?.refresh?.());
+   return true
+ };
+ let mountTries=0;const mountTimer=setInterval(()=>{mountTries++;if(mountStage()||mountTries>40)clearInterval(mountTimer)},50);
  const won=await Q.runQuest2DFight({
   quest:'The Fractured Ages',title:s.boss,location:s.era,ambience:s.intro,
   presentationKind:'dungeon',phases:STAGES.map(x=>x.era),phaseIndex:run.stage,partyLabel:'PARTY CONDITION · ILVL '+ilvl(),
