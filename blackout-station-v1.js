@@ -291,10 +291,11 @@ function bsCombatProfile(c){
 }
 function bsFormationPoint(ch,i){
  const boss=bsUnitPosition('e0'),profile=bsCombatProfile(ch),members=party(),same=members.filter(x=>bsCombatProfile(x)===profile),slot=Math.max(0,same.indexOf(ch));
- if(profile==='tank')return bsSafePoint(boss.x-11,boss.y);
- if(profile==='melee'){const ys=[-11,11,-18,18];return bsSafePoint(boss.x-15-(slot%2)*2,boss.y+(ys[slot]||0))}
- if(profile==='ranged'){const ys=[-18,18,0];return bsSafePoint(boss.x-32-(slot%2)*3,boss.y+(ys[slot]||0))}
- return bsSafePoint(boss.x-39,boss.y+14)
+ // Keep the Calder room readable: one clear front line, melee flanks, ranged back line, healer rear.
+ if(profile==='tank')return bsSafePoint(boss.x-15,boss.y+2);
+ if(profile==='melee'){const ys=[-15,15,-23,23];return bsSafePoint(boss.x-19-(slot%2)*2,boss.y+(ys[slot]||0))}
+ if(profile==='ranged'){const ys=[-21,21,0];return bsSafePoint(boss.x-36-(slot%2)*4,boss.y+(ys[slot]||0))}
+ return bsSafePoint(boss.x-42,boss.y+16)
 }
 function bsRegroup(ms=360,epochs=null){
  party().forEach((ch,i)=>{

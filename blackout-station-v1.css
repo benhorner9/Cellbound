@@ -1095,3 +1095,82 @@ body.bs2d-open{overflow:hidden}
   .bs-grid-rig>.bs-grid-source:after,
   .bs-grid-rig>.bs-grid-breaker:before{height:7px}
 }
+
+
+/* Blackout Station combat clarity pass v1 */
+/*
+ * Blackout's rendered arena already carries the environmental information.
+ * Keep only gameplay-critical overlays in the battlefield itself.
+ */
+.bs-arena.bs-live-room .cbl-unit>.cbl-facing{
+  display:none!important;
+}
+.bs-arena.bs-live-room .cbl-unit.party>.cbl-cast-glyph{
+  display:none!important;
+}
+.bs-arena.bs-live-room .cbl-unit.party>.cbl-cast-name{
+  display:none!important;
+}
+.bs-arena.bs-live-room .cb2d-unit.focused:before{
+  display:none!important;
+}
+
+/* Status information remains fully available in Party Condition; don't duplicate it above portraits. */
+.bs-arena.bs-live-room .cbs-strip:not(.mirror){
+  display:none!important;
+}
+
+/* Portraits should read as the character, not as a stack of nested rings. */
+.bs-arena.bs-live-room .cb2d-unit.cb-combat-has-portrait>.cb-combat-portrait{
+  border-width:1px;
+  box-shadow:
+    0 2px 7px rgba(0,0,0,.62),
+    0 0 6px color-mix(in srgb,var(--cb-combat-class,#76d7d0) 24%,transparent);
+}
+.bs-arena.bs-live-room .cbl-unit.cbl-casting :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait){
+  box-shadow:0 2px 7px rgba(0,0,0,.62)!important;
+}
+
+/* Keep only the boss cast presentation in-arena; the side cast bar remains authoritative. */
+.bs-arena.bs-live-room .cbl-unit.boss>.cbl-cast-glyph{
+  opacity:.28!important;
+}
+.bs-arena.bs-live-room .cbl-unit.boss>.cbl-cast-name{
+  bottom:calc(100% + 8px);
+  font-size:7px;
+  opacity:.82;
+}
+
+/* Health/resource are the only persistent overhead bars. */
+.bs-arena.bs-live-room .bs-unit.cb2d-unit.party .cb2d-unit-hp{
+  top:-21px;
+  width:48px;
+  height:4px;
+}
+.bs-arena.bs-live-room .bs-unit.cb2d-unit.party .cbr-resource{
+  top:-14px;
+  width:48px;
+  height:3px;
+}
+
+/* Grounding should be a shadow, not another coloured marker. */
+.bs-arena.bs-live-room .cbl-unit>.cbl-ground{
+  width:38px!important;
+  height:12px!important;
+  top:70%!important;
+  opacity:.58!important;
+  background:radial-gradient(ellipse,rgba(0,0,0,.76) 0 28%,rgba(0,0,0,.34) 46%,transparent 74%)!important;
+  box-shadow:none!important;
+}
+
+/* Reduce non-essential floating presentation labels in this busy five-player boss room. */
+.bs-arena.bs-live-room .cbvfx3-label:not(.crit):not(.guard):not(.avoid),
+.bs-arena.bs-live-room .cbvfx3-aggro-label{
+  display:none!important;
+}
+
+@media(max-width:900px){
+  .bs-arena.bs-live-room .cb2d-unit.cb-combat-has-portrait>.cb-combat-portrait{
+    width:32px;height:32px;
+  }
+}
