@@ -1365,3 +1365,156 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
     transform:none!important;filter:saturate(1.08) contrast(1.04) brightness(1.01)!important;
   }
 }
+
+
+/* Ashen Vault living-room integration v1 */
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"]{
+  --cb2d-room-light:rgba(255,115,48,.26);
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-unit{
+  transform:translate3d(var(--unit-x,0px),var(--unit-y,0px),0) translate(-50%,-50%) scale(var(--cb2d-depth-scale,1));
+  transform-origin:50% 72%;
+  filter:drop-shadow(0 6px 5px rgba(0,0,0,.5)) drop-shadow(0 0 4px var(--cb2d-room-light));
+  will-change:transform;
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-unit>span{
+  text-shadow:0 2px 4px #000,0 0 8px rgba(0,0,0,.7);
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cbl-unit>.cbl-ground{
+  width:42px!important;height:15px!important;top:69%!important;
+  opacity:.82!important;
+  background:radial-gradient(ellipse at center,rgba(0,0,0,.82) 0 28%,rgba(0,0,0,.46) 45%,transparent 74%)!important;
+  box-shadow:0 0 12px var(--cb2d-room-light),0 7px 11px rgba(0,0,0,.34)!important;
+  filter:blur(.25px);
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cbl-unit.boss>.cbl-ground{
+  width:76px!important;height:25px!important;top:70%!important;opacity:.88!important;
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cbl-unit[data-combat-state="moving"]>.cbl-ground{
+  opacity:.62!important;transform:translate(-50%,-50%) scaleX(1.08)!important;
+}
+.cb2d-bespoke-life{
+  position:absolute;inset:0;z-index:1;overflow:hidden;pointer-events:none;
+  mix-blend-mode:screen;
+}
+.cb2d-bespoke-life:before{
+  content:"";position:absolute;inset:-12%;
+  background:
+    radial-gradient(ellipse at 14% 78%,rgba(255,91,31,.13),transparent 28%),
+    radial-gradient(ellipse at 86% 74%,rgba(255,126,45,.11),transparent 26%),
+    radial-gradient(ellipse at 50% 52%,rgba(255,164,76,.045),transparent 34%);
+  filter:blur(10px);opacity:.68;
+  animation:cb2dRoomFireBreath 4.6s ease-in-out infinite alternate;
+}
+.cb2d-bespoke-life:after{
+  content:"";position:absolute;left:-10%;right:-10%;bottom:-4%;height:46%;
+  background:
+    repeating-linear-gradient(96deg,transparent 0 11px,rgba(255,150,76,.025) 13px 15px,transparent 17px 31px),
+    linear-gradient(180deg,transparent,rgba(255,95,32,.05));
+  filter:blur(7px);opacity:.52;
+  transform-origin:50% 100%;
+  animation:cb2dHeatHaze 5.2s ease-in-out infinite alternate;
+}
+.cb2d-arena[data-room-life="ash-gate"] .cb2d-bespoke-life:before{opacity:.48}
+.cb2d-arena[data-room-life="ember-hall"] .cb2d-bespoke-life:before{opacity:.72}
+.cb2d-arena[data-room-life="warden-seal"] .cb2d-bespoke-life:before,
+.cb2d-arena[data-room-life="vaultheart"] .cb2d-bespoke-life:before{
+  background:
+    radial-gradient(circle at 50% 52%,rgba(255,98,38,.14),transparent 18%),
+    radial-gradient(ellipse at 15% 78%,rgba(255,111,38,.12),transparent 25%),
+    radial-gradient(ellipse at 85% 78%,rgba(255,111,38,.12),transparent 25%);
+  animation-duration:3.5s;
+}
+.cb2d-arena[data-room-life="furnace"] .cb2d-bespoke-life:after,
+.cb2d-arena[data-room-life="embermaw"] .cb2d-bespoke-life:after{opacity:.82;filter:blur(8px)}
+.cb2d-arena[data-room-life="embermaw"] .cb2d-bespoke-life:before{opacity:.92;animation-duration:2.9s}
+.cb2d-arena[data-room-life="vault-depths"] .cb2d-bespoke-life{mix-blend-mode:normal;opacity:.58}
+.cb2d-arena[data-room-life="vault-depths"] .cb2d-bespoke-life:before{
+  background:radial-gradient(ellipse at 50% 60%,rgba(135,96,108,.055),transparent 38%);
+  opacity:.42;
+}
+.cb2d-bespoke-foreground-layer{
+  position:absolute;inset:0;z-index:8;pointer-events:none;
+  background-image:var(--cb2d-battlefield);background-size:cover;background-repeat:no-repeat;
+  background-position:var(--cb2d-battlefield-position,50% 50%);
+  filter:saturate(1.11) contrast(1.045) brightness(1.03);
+  transform:translateZ(0);
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-ambience{z-index:4;mix-blend-mode:screen}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-ambient{
+  width:var(--size,3px);height:var(--size,3px);
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-ambient.ash{
+  background:rgba(215,204,181,.22);box-shadow:0 0 5px rgba(255,181,119,.06);
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-ambient.ember{
+  background:rgba(255,143,67,.8);box-shadow:0 0 10px rgba(255,102,39,.52);
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-ambient.smoke{
+  width:52px;height:34px;bottom:-26px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(60,48,43,.18),rgba(20,18,18,.08) 45%,transparent 72%);
+  filter:blur(8px);opacity:.36;
+  animation:cb2dSmokeRise var(--dur) ease-in-out infinite;animation-delay:var(--delay);
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-tg.circle,
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-tg.line,
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-tg.cone,
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-tg.circles>i{
+  filter:drop-shadow(0 0 8px rgba(242,79,54,.34)) saturate(1.12);
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-tg.circle,
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-tg.circles>i{
+  box-shadow:inset 0 0 26px rgba(255,78,50,.12),0 0 18px rgba(229,70,45,.18);
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cbl-fx.ground-kick{
+  width:52px;height:22px;margin-top:14px;border:0;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(194,152,111,.18),rgba(75,55,43,.12) 45%,transparent 72%);
+  filter:blur(1.2px);opacity:.7;animation:cb2dGroundKick .36s ease-out both;
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cbl-fx.ground-kick:before,
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cbl-fx.ground-kick:after{
+  content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;border-radius:50%;
+  background:rgba(231,188,128,.4);box-shadow:-13px 1px 0 rgba(183,137,99,.28),11px -2px 0 rgba(220,161,105,.28),18px 2px 0 rgba(150,107,81,.22);
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cbl-fx.ground-kick:after{transform:scale(.72) translate(-7px,-5px);opacity:.6}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cbl-fx.floor-light{
+  width:76px;height:34px;margin-top:15px;border:0;border-radius:50%;
+  background:radial-gradient(ellipse,var(--cbl-accent) 0,transparent 68%);
+  filter:blur(5px);opacity:.18;mix-blend-mode:screen;
+  animation:cb2dFloorLight .34s ease-out both;
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cbl-fx.floor-light.heal{opacity:.14}
+@keyframes cb2dRoomFireBreath{
+  from{transform:scale(.985) translate3d(-.7%,.3%,0);filter:blur(11px) brightness(.9)}
+  to{transform:scale(1.025) translate3d(.7%,-.5%,0);filter:blur(8px) brightness(1.12)}
+}
+@keyframes cb2dHeatHaze{
+  from{transform:skewX(-.6deg) translateY(1px) scaleY(.985);opacity:.36}
+  to{transform:skewX(.7deg) translateY(-3px) scaleY(1.03);opacity:.66}
+}
+@keyframes cb2dSmokeRise{
+  0%{transform:translate3d(0,20px,0) scale(.8);opacity:0}
+  18%{opacity:.28}
+  75%{opacity:.18}
+  100%{transform:translate3d(var(--drift),-310px,0) scale(1.7);opacity:0}
+}
+@keyframes cb2dGroundKick{
+  0%{transform:translate(-50%,-50%) scale(.55);opacity:.68}
+  100%{transform:translate(-50%,-50%) scale(1.45);opacity:0}
+}
+@keyframes cb2dFloorLight{
+  0%{transform:translate(-50%,-50%) scale(.6);opacity:.06}
+  28%{opacity:.28}
+  100%{transform:translate(-50%,-50%) scale(1.35);opacity:0}
+}
+@media(prefers-reduced-motion:reduce){
+  .cb2d-bespoke-life:before,.cb2d-bespoke-life:after,
+  .cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-ambient.smoke{animation:none!important}
+  .cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-ambient{animation:none!important;opacity:.16}
+  .cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cbl-fx.ground-kick{display:none}
+}
+@media(max-width:760px){
+  .cb2d-bespoke-life:after{opacity:.38}
+  .cb2d-bespoke-foreground-layer{opacity:.86!important}
+  .cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-ambient.smoke{opacity:.2}
+}
