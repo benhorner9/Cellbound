@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.5.0';
+const VERSION='1.5.1';
 // Balance baseline: 2026-09-30 chapter-wide progression and role audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
@@ -1177,7 +1177,7 @@ function physicalUnits(ctx,exclude=null){
  return all.filter(u=>u&&u!==exclude&&u.alive!==false&&(u.role!=='pet'||u.active!==false))
 }
 function bodyClearance(a,b){
- const petPair=a?.role==='pet'||b?.role==='pet',same=unitTeam(a)===unitTeam(b),soft=petPair?.76:same?.88:1;
+ const petPair=a?.role==='pet'||b?.role==='pet',same=unitTeam(a)===unitTeam(b),soft=petPair?.70:same?.82:1;
  return Math.max(.7,(bodyRadius(a)+bodyRadius(b))*soft)
 }
 function bodyOverlap(ctx,u,pos,ignoreIds=[]){
@@ -1371,19 +1371,23 @@ function visibleCastPoint(ctx,u,target,range,preferred){
 
 function moveTo(ctx,u,pos,duration=420,reason='positioning'){
  if(!u?.alive)return false;
- const from=copy(physicalPosition(ctx,u)),environmentRoute=navigationWaypoint(ctx,from,pos),bodyRoute=collisionWaypoint(ctx,u,from,environmentRoute.point,reason),to=bodyRoute.point,travel=Math.max(80,Number(duration)||420);
+ const from=copy(physicalPosition(ctx,u)),environmentRoute=navigationWaypoint(ctx,from,pos),bodyRoute=collisionWaypoint(ctx,u,from,environmentRoute.point,reason),to=bodyRoute.point,baseTravel=Math.max(80,Number(duration)||420);
  if(dist(from,to)<.5)return true;
  if(u.currentCast){
   emit(ctx,'CAST_CANCELLED',{source:u.id,target:u.currentCast.target,ability:u.currentCast.ability,result:'movement',position:from});
   u.currentCast=null;
  }
+ const continuousReroute=baseTravel>=180&&(u.role==='enemy'||u.role==='pet'||isMeleeCombatant(u)),collisionFinal=bodyRoute.pathing&&!bodyRoute.forcedStop&&continuousReroute?environmentRoute.point:null,legDistance=dist(from,to),remainingDistance=collisionFinal?dist(to,collisionFinal):0,totalDistance=Math.max(.01,legDistance+remainingDistance);
+ const travel=collisionFinal?Math.max(90,Math.min(baseTravel-90,Math.round(baseTravel*(legDistance/totalDistance)))):baseTravel;
+ const continuationTravel=collisionFinal?Math.max(90,baseTravel-travel):0;
  const token=++u.moveToken;u.position=from;u.moveStartedAt=ctx.time;u.moveFrom=copy(from);u.moveTo=copy(to);u.movingUntil=ctx.time+travel;
  const pathing=environmentRoute.pathing||bodyRoute.pathing;
- emit(ctx,'MOVEMENT_START',{source:u.id,target:u.target,position:from,result:reason,payload:{to,duration:travel,navigation:pathing?'waypoint':'direct',finalTo:environmentRoute.final,blocker:environmentRoute.blocker||bodyRoute.body?.id||null,bodyCollision:bodyRoute.body?{unitId:bodyRoute.body.id,name:bodyRoute.body.name||bodyRoute.body.id,radius:bodyRadius(bodyRoute.body),forcedStop:bodyRoute.forcedStop}:null,bodyRadius:bodyRadius(u)}});
+ emit(ctx,'MOVEMENT_START',{source:u.id,target:u.target,position:from,result:reason,payload:{to,duration:travel,navigation:pathing?'waypoint':'direct',finalTo:environmentRoute.final,blocker:environmentRoute.blocker||bodyRoute.body?.id||null,bodyCollision:bodyRoute.body?{unitId:bodyRoute.body.id,name:bodyRoute.body.name||bodyRoute.body.id,radius:bodyRadius(bodyRoute.body),forcedStop:bodyRoute.forcedStop}:null,bodyRadius:bodyRadius(u),collisionContinuation:Boolean(collisionFinal)}});
  schedule(ctx,ctx.time+travel,()=>{
   if(!u.alive||u.moveToken!==token)return;
   u.position=openPhysicalPosition(ctx,u,to,1.35);u.movingUntil=0;u.moveStartedAt=0;u.moveFrom=null;u.moveTo=null;
-  emit(ctx,'MOVEMENT_END',{source:u.id,target:u.target,position:copy(u.position),result:reason,payload:{from,duration:travel,navigation:pathing?'waypoint':'direct',finalTo:environmentRoute.final,blocker:environmentRoute.blocker||bodyRoute.body?.id||null,bodyCollision:bodyRoute.body?{unitId:bodyRoute.body.id,name:bodyRoute.body.name||bodyRoute.body.id,radius:bodyRadius(bodyRoute.body),forcedStop:bodyRoute.forcedStop}:null,bodyRadius:bodyRadius(u)}})
+  emit(ctx,'MOVEMENT_END',{source:u.id,target:u.target,position:copy(u.position),result:reason,payload:{from,duration:travel,navigation:pathing?'waypoint':'direct',finalTo:environmentRoute.final,blocker:environmentRoute.blocker||bodyRoute.body?.id||null,bodyCollision:bodyRoute.body?{unitId:bodyRoute.body.id,name:bodyRoute.body.name||bodyRoute.body.id,radius:bodyRadius(bodyRoute.body),forcedStop:bodyRoute.forcedStop}:null,bodyRadius:bodyRadius(u),collisionContinuation:Boolean(collisionFinal)}});
+  if(collisionFinal&&dist(u.position,collisionFinal)>.55)moveTo(ctx,u,collisionFinal,continuationTravel,reason)
  },'movement-end');
  return false
 }
@@ -1452,9 +1456,10 @@ function moveIntoRange(ctx,u,target,range,abilityKind='damage'){
  }
  if(r<=7){
    const formation=meleeFormationPoint(ctx,u,target),desired=visibleCastPoint(ctx,u,target,r,formation),slotDistance=dist(u.position,desired),combatRange=inRange(u,target,r);
-   const tolerance=u.role==='tank'?2.1:3.75;
+   if(combatRange&&los&&ctx.physicalSpace&&u.role!=='tank')return true;
+   const tolerance=u.role==='tank'?(ctx.physicalSpace?3.35:2.1):3.75;
    if(combatRange&&los&&slotDistance<=tolerance)return true;
-   if(combatRange&&los&&target.movingUntil>ctx.time&&slotDistance<=4.75)return true;
+   if(combatRange&&los&&target.movingUntil>ctx.time&&slotDistance<=(ctx.physicalSpace?6.75:4.75))return true;
    moveTo(ctx,u,desired,500,!los?'line of sight':u.role==='tank'?'tank positioning':'melee formation');
    return false
  }
@@ -4492,6 +4497,21 @@ function runSelfTests(){
   return units.every((u,i)=>units.slice(i+1).every(v=>dist(u.position,v.position)>=bodyClearance(u,v)-.18))
  });
  test('Physical Collision Metadata',()=>r.events.some(e=>e.type==='COMBAT_START'&&e.payload?.physicalSpace===true&&e.payload?.units?.every(u=>Number(u.bodyRadius)>0)));
+ {
+  const collisionParty=[
+   {id:'ct',name:'Tank',class:'Warrior',spec:'Protection',power:18,level:10,_combatItemLevel:30},
+   {id:'ch',name:'Healer',class:'Priest',spec:'Holy',power:18,level:10,_combatItemLevel:30},
+   {id:'cm1',name:'Rogue',class:'Rogue',spec:'Assassination',power:18,level:10,_combatItemLevel:30},
+   {id:'cm2',name:'Arms',class:'Warrior',spec:'Arms',power:18,level:10,_combatItemLevel:30},
+   {id:'cm3',name:'Havoc',class:'Demon Hunter',spec:'Havoc',power:18,level:10,_combatItemLevel:30}
+  ],collisionEncounter={id:'collision-uptime-test',kind:'boss',level:10,recommendedItemLevel:30,enemies:[{name:'Boss',classification:'boss'}],enemyHealth:10000,mechanicIntervalMs:1500,mechanics:[['Spread','circles',1200],['Line','line',1200],['Frontal','cone',1350]]};
+  let physicalDamage=0,baselineDamage=0,collisionRoutes=0;
+  for(let i=0;i<4;i++){
+   const seed='collision-uptime-'+i,physical=simulate({party:collisionParty,encounter:{...collisionEncounter,physicalSpace:true},seed,maxDurationMs:30000}),baseline=simulate({party:collisionParty,encounter:{...collisionEncounter,physicalSpace:false},seed,maxDurationMs:30000});
+   physicalDamage+=physical.summary.totalDamage;baselineDamage+=baseline.summary.totalDamage;collisionRoutes+=physical.events.filter(e=>e.type==='MOVEMENT_START'&&e.payload?.bodyCollision).length
+  }
+  test('Collision Melee Uptime',()=>collisionRoutes>0&&physicalDamage>=baselineDamage*.96)
+ }
  test('Resource Bars',()=>r.events.filter(e=>e.type==='RESOURCE_STATE'&&e.result==='initial').length===5);
  r=simulate({party:[
   {id:'rt',name:'Tank',class:'Warrior',spec:'Protection',power:10,level:10,_combatResource:{value:44}},
