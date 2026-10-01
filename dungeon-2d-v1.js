@@ -17,7 +17,7 @@ const ASHEN_ROOMS={
  'broken-gate':{
    room:'broken-gate',label:'Collapsed Vault Entrance',ambience:'Ash drifts through a shattered seal.',
    art:'./assets/ashen-vault/battlefields/broken-gate.avif',artPosition:'50% 50%',
-   route:{entry:{x:21,y:92},entryInside:{x:28,y:70},engage:{x:61,y:43},exitPath:[{x:61,y:43},{x:72,y:36},{x:82,y:29},{x:90,y:23}],spread:2.5},enemyAnchors:[{x:61,y:37},{x:68,y:45},{x:69,y:58}],
+   route:{entry:{x:21,y:92},entryInside:{x:28,y:70},engage:{x:61,y:43},partyAnchors:[{x:45,y:56},{x:39,y:50},{x:37,y:60},{x:31,y:52},{x:31,y:63}],exitPath:[{x:61,y:43},{x:72,y:36},{x:82,y:29},{x:90,y:23}],spread:2.5},enemyAnchors:[{x:61,y:37},{x:68,y:45},{x:69,y:58}],
    bounds:{left:12,right:84,top:24,bottom:83},
    walkable:[[18,32],[38,27],[72,30],[82,42],[79,64],[66,79],[33,80],[17,66],[14,46]],
    life:{profile:'ash-gate',particles:24,mix:['ash','ember','ash','smoke'],depthMin:.945,depthMax:1.055,light:'rgba(255,116,54,.26)'},
@@ -35,7 +35,7 @@ const ASHEN_ROOMS={
  'hall-embers':{
    room:'hall-embers',label:'Ember Processional Hall',ambience:'Old braziers still breathe beneath the ash.',
    art:'./assets/ashen-vault/battlefields/hall-embers.avif',artPosition:'50% 50%',
-   route:{entry:{x:50,y:94},entryInside:{x:50,y:72},engage:{x:50,y:42},exitPath:[{x:50,y:38},{x:50,y:24},{x:50,y:10},{x:50,y:3}],spread:2.2},enemyAnchors:[{x:50,y:32},{x:39,y:40},{x:61,y:40}],
+   route:{entry:{x:50,y:94},entryInside:{x:50,y:72},engage:{x:50,y:42},partyAnchors:[{x:50,y:60},{x:44,y:64},{x:56,y:64},{x:41,y:70},{x:59,y:70}],exitPath:[{x:50,y:38},{x:50,y:24},{x:50,y:10},{x:50,y:3}],spread:2.2},enemyAnchors:[{x:50,y:32},{x:39,y:40},{x:61,y:40}],
    bounds:{left:10,right:90,top:18,bottom:82},
    walkable:[[17,24],[30,19],[70,19],[84,26],[89,44],[86,68],[73,79],[29,79],[14,68],[11,45]],
    life:{profile:'ember-hall',particles:28,mix:['ember','ash','ember','smoke'],depthMin:.94,depthMax:1.06,light:'rgba(255,139,61,.28)'},
@@ -48,7 +48,7 @@ const ASHEN_ROOMS={
  'kael':{
    room:'warden-seal',label:'The Warden Seal',ambience:'Chains hold an ancient oath around the chamber.',
    art:'./assets/ashen-vault/battlefields/kael.avif',artPosition:'50% 50%',
-   route:{entry:{x:50,y:95},entryInside:{x:50,y:70},engage:{x:50,y:47},exitPath:[{x:50,y:31},{x:50,y:19},{x:50,y:9},{x:50,y:2}],spread:2.1},enemyAnchors:[{x:50,y:43}],
+   route:{entry:{x:50,y:95},entryInside:{x:50,y:70},engage:{x:50,y:47},partyAnchors:[{x:50,y:61},{x:44,y:65},{x:56,y:65},{x:42,y:71},{x:58,y:71}],exitPath:[{x:50,y:31},{x:50,y:19},{x:50,y:9},{x:50,y:2}],spread:2.1},enemyAnchors:[{x:50,y:43}],
    bounds:{left:15,right:85,top:14,bottom:78},arena:{shape:'ellipse',cx:50,cy:46,rx:33,ry:30},
    life:{profile:'warden-seal',particles:30,mix:['ember','ember','ash','smoke'],depthMin:.94,depthMax:1.065,light:'rgba(255,101,46,.30)'},
    occluders:[
@@ -60,7 +60,7 @@ const ASHEN_ROOMS={
  'furnace':{
    room:'furnace-passage',label:'Furnace Passage',ambience:'Heat pulses through cracked iron channels.',
    art:'./assets/ashen-vault/battlefields/furnace.avif',artPosition:'50% 50%',
-   route:{entry:{x:17,y:18},entryInside:{x:28,y:33},engage:{x:61,y:54},exitPath:[{x:58,y:55},{x:68,y:64},{x:78,y:73},{x:89,y:84}],spread:2.2},enemyAnchors:[{x:61,y:50},{x:69,y:62}],
+   route:{entry:{x:17,y:18},entryInside:{x:28,y:33},engage:{x:61,y:54},partyAnchors:[{x:38,y:39},{x:33,y:35},{x:34,y:43},{x:28,y:32},{x:28,y:46}],exitPath:[{x:58,y:55},{x:68,y:64},{x:78,y:73},{x:89,y:84}],spread:2.2},enemyAnchors:[{x:61,y:50},{x:69,y:62}],
    bounds:{left:14,right:84,top:24,bottom:82},
    walkable:[[24,38],[39,31],[60,35],[76,47],[79,61],[67,73],[48,74],[31,65],[22,53]],
    life:{profile:'furnace',particles:34,mix:['ember','ember','smoke','ember','ash'],depthMin:.94,depthMax:1.065,light:'rgba(255,102,34,.34)'},
@@ -78,7 +78,7 @@ const ASHEN_ROOMS={
  'embermaw':{
    room:'embermaw-forge',label:'The Ember Forge',ambience:'The floor itself glows beneath Embermaw.',
    art:'./assets/ashen-vault/battlefields/embermaw.avif',artPosition:'50% 50%',
-   route:{entry:{x:7,y:51},entryInside:{x:27,y:51},engage:{x:50,y:51},exitPath:[{x:66,y:51},{x:78,y:51},{x:91,y:51},{x:97,y:51}],spread:2.0},enemyAnchors:[{x:50,y:50}],
+   route:{entry:{x:7,y:51},entryInside:{x:27,y:51},engage:{x:50,y:51},partyAnchors:[{x:42,y:50},{x:39,y:46},{x:39,y:55},{x:35,y:44},{x:35,y:58}],exitPath:[{x:66,y:51},{x:78,y:51},{x:91,y:51},{x:97,y:51}],spread:2.0},enemyAnchors:[{x:50,y:50}],
    bounds:{left:16,right:84,top:18,bottom:82},arena:{shape:'ellipse',cx:50,cy:50,rx:32,ry:29},
    life:{profile:'embermaw',particles:38,mix:['ember','ember','ember','smoke','ash'],depthMin:.935,depthMax:1.07,light:'rgba(255,91,30,.38)'},
    occluders:[
@@ -97,7 +97,7 @@ const ASHEN_ROOMS={
  'vault-depths':{
    room:'vault-depths',label:'Sealed Vault Depths',ambience:'Dead reliquaries line the path inward.',
    art:'./assets/ashen-vault/battlefields/vault-depths.avif',artPosition:'50% 50%',
-   route:{entry:{x:5,y:56},entryInside:{x:25,y:56},engage:{x:59,y:48},exitPath:[{x:66,y:43},{x:74,y:35},{x:82,y:27},{x:91,y:20}],spread:2.3},enemyAnchors:[{x:62,y:42},{x:66,y:53},{x:57,y:61}],
+   route:{entry:{x:5,y:56},entryInside:{x:25,y:56},engage:{x:59,y:48},partyAnchors:[{x:38,y:54},{x:33,y:49},{x:34,y:60},{x:28,y:47},{x:28,y:64}],exitPath:[{x:66,y:43},{x:74,y:35},{x:82,y:27},{x:91,y:20}],spread:2.3},enemyAnchors:[{x:62,y:42},{x:66,y:53},{x:57,y:61}],
    bounds:{left:12,right:88,top:20,bottom:84},
    walkable:[[22,31],[38,24],[67,24],[82,34],[86,52],[81,69],[68,80],[31,80],[17,69],[14,48]],
    life:{profile:'vault-depths',particles:20,mix:['ash','smoke','ash','ember'],depthMin:.95,depthMax:1.05,light:'rgba(192,107,98,.18)'},
@@ -110,7 +110,7 @@ const ASHEN_ROOMS={
  'vaultheart':{
    room:'vaultheart-sanctum',label:'The Vaultheart Sanctum',ambience:'A sealed Cell reliquary hums beneath the final chamber.',
    art:'./assets/ashen-vault/battlefields/vaultheart.avif',artPosition:'50% 50%',
-   route:{entry:{x:50,y:96},entryInside:{x:50,y:77},engage:{x:50,y:58},exitPath:[],spread:2.0},enemyAnchors:[{x:50,y:29}],
+   route:{entry:{x:50,y:96},entryInside:{x:50,y:77},engage:{x:50,y:58},partyAnchors:[{x:50,y:66},{x:44,y:70},{x:56,y:70},{x:41,y:76},{x:59,y:76}],exitPath:[],spread:2.0},enemyAnchors:[{x:50,y:29}],
    bounds:{left:13,right:87,top:14,bottom:83},arena:{shape:'ellipse',cx:50,cy:49,rx:34,ry:32},
    life:{profile:'vaultheart',particles:34,mix:['ember','smoke','ember','ash'],depthMin:.935,depthMax:1.07,light:'rgba(255,103,52,.30)'},
    occluders:[
@@ -413,7 +413,8 @@ function unitPixelPosition(x,y){
  return{x:(clamp(Number(x)||0,0,100)/100)*arena.clientWidth,y:(clamp(Number(y)||0,0,100)/100)*arena.clientHeight}
 }
 function combatSafePoint(id,x,y){
- return{x:clamp(Number(x)||50,8,92),y:clamp(Number(y)||50,12,88)}
+ const arena=$('#cb2dArena'),transit=arena?.classList.contains('travelling')||arena?.classList.contains('room-entering');
+ return{x:clamp(Number(x)||50,transit?2:8,transit?98:92),y:clamp(Number(y)||50,transit?2:12,transit?98:88)}
 }
 function applyUnitPosition(e,x,y,instant=false){
  if(!e)return;
@@ -676,29 +677,44 @@ async function stageClearTransition(s,nextStage,tok){
  await delay(650);
  banner.remove();arena.classList.remove('stage-cleared')
 }
+function ashenRoute(s){return ASHEN_ROOMS[s?.id]?.route||{}}
+function routeOffset(point,from,to,slot=0,spread=2.2){
+ const a=from||point,b=to||point,dx=Number(b.x)-Number(a.x),dy=Number(b.y)-Number(a.y),len=Math.hypot(dx,dy)||1;
+ const offsets=[0,-1,1,-2,2],amount=(offsets[slot%offsets.length]||0)*spread;
+ return{x:Number(point.x)+(-dy/len)*amount,y:Number(point.y)+(dx/len)*amount}
+}
+function stagePartyPosition(s,c,i){
+ const route=ashenRoute(s),anchors=Array.isArray(route.partyAnchors)?route.partyAnchors:[];
+ const p=anchors[i]||route.entryInside||{x:28,y:50};
+ return{x:Number(p.x),y:Number(p.y)}
+}
+function stageEnemyPosition(s,i){
+ const anchors=ASHEN_ROOMS[s?.id]?.enemyAnchors||[],p=anchors[i]||anchors[anchors.length-1]||{x:68,y:s?.enemies?.length===1?50:30+i*(40/Math.max(1,(s?.enemies?.length||1)-1))};
+ return{x:Number(p.x),y:Number(p.y)}
+}
 function spawn(s){
  clearArenaEphemera();renderDungeonEnvironment(s);$('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
+ const arena=$('#cb2dArena'),route=ashenRoute(s);arena?.classList.add('room-entering');
  const max=s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120;
  run.enemyMax=s.enemies.map(()=>max);run.enemyHp=s.enemies.map(()=>max);
  run.threat=s.enemies.map(()=>Object.fromEntries(party().map(c=>[c.id,0])));
  run.aggro=s.enemies.map(()=>null);
  // Damage and healing are dungeon-long meters. Threat is encounter-only.
  run.combatStartedAt=0;run.lastMeterAt=0;renderCombatMeters();renderRebornHealingMeter();
- const melee=party().filter(c=>combatProfile(c)==='melee');
- const ranged=party().filter(c=>combatProfile(c)==='ranged');
+ const entry=route.entry||{x:4,y:50},inside=route.entryInside||{x:16,y:50},spread=Number(route.spread)||2.2;
  party().forEach((c,i)=>{
-   addUnit('p-'+c.id,c.name,'party '+role(c)+' profile-'+combatProfile(c)+' '+classKey(c),4,50+(i-2)*4,'');mountRebornResourceBar(c);
+   const start=routeOffset(entry,entry,inside,i,spread),target=stagePartyPosition(s,c,i);
+   addUnit('p-'+c.id,c.name,'party '+role(c)+' profile-'+combatProfile(c)+' '+classKey(c),start.x,start.y,'');mountRebornResourceBar(c);
    const unit=$('[data-unit="p-'+c.id+'"]');if(unit){unit.dataset.uiSlot=String(i);unit.style.setProperty('--label-shift-x',(i===0?-12:i===1?12:i===2?-20:i===3?20:0)+'px');unit.style.setProperty('--status-shift-x',(i===0?-10:i===1?10:i===2?-18:i===3?18:0)+'px')}
-   let x=16,y=50;
-   if(combatProfile(c)==='tank'){x=30;y=50}
-   else if(combatProfile(c)==='melee'){x=23;y=43+(melee.indexOf(c)*14)}
-   else if(combatProfile(c)==='ranged'){x=17;y=28+(ranged.indexOf(c)*44)}
-   else{x=12;y=61}
-   setTimeout(()=>{move('p-'+c.id,x,y,900);const bar=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(bar)bar.style.width=hp(c.id)+'%'},40)
+   setTimeout(()=>{move('p-'+c.id,target.x,target.y,560);const bar=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(bar)bar.style.width=hp(c.id)+'%'},35+i*18)
  });
- s.enemies.forEach((n,i)=>{const meta=stageEnemyMeta(s,i),boss=meta.type==='boss'||meta.type==='world-boss';const y=s.enemies.length===1?50:30+i*(40/Math.max(1,s.enemies.length-1));addUnit('e-'+i,n,boss?'enemy boss':'enemy',92,y,boss?'big':'',enemyMetaText(s,i));setTimeout(()=>move('e-'+i,68,y,850),60)});
+ // Hostiles belong to the room: they are already waiting when the party enters.
+ s.enemies.forEach((n,i)=>{
+   const meta=stageEnemyMeta(s,i),boss=meta.type==='boss'||meta.type==='world-boss',p=stageEnemyPosition(s,i);
+   addUnit('e-'+i,n,boss?'enemy boss':'enemy',p.x,p.y,boss?'big':'',enemyMetaText(s,i))
+ });
+ setTimeout(()=>arena?.classList.remove('room-entering'),620)
 }
-
 function point(id){
  const arena=$('#cb2dArena'),u=$('[data-unit="'+id+'"]');if(!arena||!u)return null;
  const a=arena.getBoundingClientRect(),r=u.getBoundingClientRect();
@@ -971,22 +987,22 @@ async function mechanic(s,m,tok){
    await cast(name,ms,tok);clearTelegraph(v,'impact');await delay(550);$$('[data-unit^="add-"]').forEach(e=>e.remove());run.mechanicActive=false;return
  }
 }
-async function travelDeeper(nextStage,tok){
+async function travelDeeper(currentStage,nextStage,tok){
  if(tok!==token||!run)return;
  const arena=$('#cb2dArena');arena?.classList.add('travelling');
  run.mechanicActive=false;setFocusEnemy(-1);$('#cb2dTelegraphs').innerHTML='';
  status('Path clear · moving deeper into the Vault');
  act('tank','Leading the route');act('healer','Following the group');act('dps','Moving to the next pull');
  log('The party regroups and advances toward '+nextStage.title+'.');
- const chars=party();
- const travelY=[50,60,35,47,73];
- chars.forEach((c,i)=>move('p-'+c.id,46+(combatProfile(c)==='tank'?6:0),travelY[i]||50,500));
- await delay(520);
- chars.forEach((c,i)=>move('p-'+c.id,88,travelY[i]||50,720));
+ const chars=party(),route=ashenRoute(currentStage),path=Array.isArray(route.exitPath)&&route.exitPath.length?route.exitPath:[{x:88,y:50}],spread=Number(route.spread)||2.2;
+ for(let step=0;step<path.length;step++){
+   const point=path[step],from=path[Math.max(0,step-1)]||point,to=path[Math.min(path.length-1,step+1)]||point,duration=step===path.length-1?300:360;
+   chars.forEach((c,i)=>{const p=routeOffset(point,from,to,i,spread);move('p-'+c.id,p.x,p.y,duration)});
+   await delay(duration+35);if(tok!==token||!run)return
+ }
  const banner=document.createElement('div');banner.className='cb2d-travel-banner';banner.innerHTML='<small>MOVING DEEPER</small><b>'+esc(nextStage.title)+'</b>';$('#cb2dArena')?.appendChild(banner);
- await delay(760);banner.remove();arena?.classList.remove('travelling')
+ await delay(260);banner.remove();arena?.classList.remove('travelling')
 }
-
 function bonus(s){let b=run.override||0;if(tactics.aggression==='aggressive')b+=4;if(tactics.aggression==='safe'&&s.kind==='trash')b+=4;if(tactics.defensives==='early')b+=3;if(tactics.defensives==='save'&&s.kind==='final')b+=5;if(tactics.adds==='full'&&s.mechanics.some(m=>m[1]==='adds'))b+=4;return b}
 function learn(s,ok){const a=ok?(s.kind==='trash'||s.kind==='event'?3:7):5;party().forEach(c=>{c.knowledge=c.knowledge||{};const gain=Math.max(1,Math.round(a*(I?.knowledgeMultiplier?.(c)||1)));c.knowledge[s.knowledge]=clamp((Number(c.knowledge[s.knowledge])||0)+gain,0,100)});return a}
 function recordMaterialDrop(drop,bossName){
@@ -1141,7 +1157,8 @@ function rebornEncounter(s){
    arena:room.arena?{...room.arena}:undefined,
    walkable:Array.isArray(room.walkable)?room.walkable.map(p=>[Number(p[0]),Number(p[1])]):undefined
  };
- const base={id:s.id,title:s.title,kind:s.kind,level:s.level||1,recommendedItemLevel,knowledgeKey:s.knowledge||s.id,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies:[...s.enemies],enemyHealth:s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120,mechanics:s.mechanics.map(m=>Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}),environment};
+ const enemies=s.enemies.map((name,i)=>({name,currentPosition:stageEnemyPosition(s,i)}));
+ const base={id:s.id,title:s.title,kind:s.kind,level:s.level||1,recommendedItemLevel,knowledgeKey:s.knowledge||s.id,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies,enemyHealth:s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120,mechanics:s.mechanics.map(m=>Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}),environment};
  return window.CellboundEndgame?.stageConfig?.('ashen-vault',base)||base
 }
 function copyObject(v){return JSON.parse(JSON.stringify(v||{}))}
@@ -1440,7 +1457,7 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
 function runRebornStage(s){
  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway is unavailable');
  const startHp=Object.fromEntries(party().map(c=>[c.id,hp(c.id)]));
- const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:hp(c.id),_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0}));
+ const combatParty=party().map((c,i)=>Object.assign({},c,{_combatHealthPct:hp(c.id),_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0,_combatPosition:stagePartyPosition(s,c,i)}));
  const result=C.simulate({party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:[run.endgame?.seed||'ashen-vault',s.id,run.stage].join(':')},{zone:'ashen-vault'});
  result.stageId=s.id;result.stageTitle=s.title;result.startHp=startHp;return result
 }
@@ -1564,7 +1581,7 @@ async function seamlessFrom(startIndex,tok){
      await ashenSaveRuntime('failed');
      return
    }
-   if(i<STAGES.length-1){party().forEach(c=>{if(hp(c.id)>0)setHp(c.id,Math.min(100,hp(c.id)+6))});recoverDungeonResources();advanceDungeonCooldowns(5000);updateRows();await stageClearTransition(s,STAGES[i+1],tok);await travelDeeper(STAGES[i+1],tok)}
+   if(i<STAGES.length-1){party().forEach(c=>{if(hp(c.id)>0)setHp(c.id,Math.min(100,hp(c.id)+6))});recoverDungeonResources();advanceDungeonCooldowns(5000);updateRows();await stageClearTransition(s,STAGES[i+1],tok);await travelDeeper(s,STAGES[i+1],tok)}
    run.stage=i+1;run.runtimeStageStartedAt=0;await ashenSaveRuntime('between')
   }
   const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;
