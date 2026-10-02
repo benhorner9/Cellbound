@@ -628,10 +628,10 @@ window.CellboundDungeonGenerator={
   open,
   close,
   isOwner,
-  getDraft:()=>JSON.parse(JSON.stringify(draft||freshDraft())),
-  validate:()=>validate(),
-  generateConfig:()=>configObject(),
-  artPrompt:scene=>artPrompt(scene)
+  getDraft:()=>isOwner()?JSON.parse(JSON.stringify(draft||freshDraft())):null,
+  validate:()=>isOwner()?validate():['Owner access required.'],
+  generateConfig:()=>isOwner()?configObject():null,
+  artPrompt:scene=>isOwner()?artPrompt(scene):''
 };
 init();
 })();
