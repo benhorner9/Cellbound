@@ -107,16 +107,31 @@ function stageTitle(stage){
 }
 function chrome(body,stage){
   const steps=[
-    ['party-builder','Guild'],
-    ['first-expedition','Signal'],
-    ['gear','Gear'],
-    ['dungeon-briefing','Combat'],
-    ['loot-review','Loot'],
-    ['quest-lesson','Road']
+    ['party-builder','Charter'],
+    ['first-expedition','Mystery'],
+    ['gear','Loadout'],
+    ['dungeon-briefing','Descent'],
+    ['loot-review','Spoils'],
+    ['quest-lesson','Contract']
   ];
-  const order={'party-builder':0,'zeltira-arrival':1,'first-expedition':1,'gear':2,'dungeon-briefing':3,'dungeon-running':3,'loot-review':4,'quest-lesson':5,'departure':5};
-  const at=order[stage]??0;
-  return '<section class="onboard-shell"><header class="onboard-head"><div><small>CELLBOUND · FIRST EXPEDITION</small><h1>'+esc(stageTitle(stage))+'</h1></div><div class="onboard-progress">'+steps.map((x,i)=>'<span class="'+(i<at?'done':i===at?'active':'')+'"><i>'+(i+1)+'</i>'+x[1]+'</span>').join('')+'</div></header>'+body+'</section>';
+  const order={'party-builder':0,'zeltira-arrival':1,'first-expedition':1,'gear':2,'dungeon-briefing':3,'dungeon-running':3,'loot-review':4,'recovery-lesson':4,'profession-choice':4,'craft':4,'profession-use':4,'quest-lesson':5,'departure':5};
+  const objectives={
+    'party-builder':['FORM THE FIVE','Build a Tank, Healer and three Damage adventurers.'],
+    'zeltira-arrival':['WRONG NIGHT TO ARRIVE','Meet Warden Elara at Zeltira’s gate.'],
+    'first-expedition':['READ THE RESONANCE','Inspect the west wall and make a field deduction.'],
+    'gear':['MAKE THE LOADOUT CALL','Choose gear for the job, not just the number.'],
+    'dungeon-briefing':['YOUR FIRST DESCENT','Set three commands, then watch them play out in live combat.'],
+    'dungeon-running':['COMMAND THE HOLLOWS','Choose the approach. Combat Reborn handles the fight.'],
+    'loot-review':['DECIDE WHAT THE DROP MEANS','Read, compare and assign the reward.'],
+    'recovery-lesson':['FAILURE HAS A COST','Learn how Cell Shock changes the next decision.'],
+    'profession-choice':['TURN LOOT INTO PREPARATION','Give one adventurer a profession.'],
+    'craft':['MAKE SOMETHING USEFUL','Spend recovered reagents on your first craft.'],
+    'profession-use':['PREPARE THE NEXT RUN','Use the thing you just made.'],
+    'quest-lesson':['THE TRAINING WARD COMES OFF','Accept your first real contract.'],
+    'departure':['CHAPTER 0 COMPLETE','Leave Zeltira with a guild that is actually yours.']
+  };
+  const at=order[stage]??0,obj=objectives[stage]||['FIRST EXPEDITION','Follow the trail beneath Zeltira.'];
+  return '<section class="onboard-shell onboard-v4"><header class="onboard-head"><div><small>CHAPTER 0 · THE FIRST RESONANCE</small><h1>'+esc(stageTitle(stage))+'</h1></div><div class="onboard-progress">'+steps.map((x,i)=>'<span class="'+(i<at?'done':i===at?'active':'')+'"><i>'+(i+1)+'</i>'+x[1]+'</span>').join('')+'</div></header><div class="onboard-objective"><span>'+esc(obj[0])+'</span><b>'+esc(obj[1])+'</b><em>PATHFINDER WARD · TRAINING SAFETY ACTIVE</em></div>'+body+'</section>';
 }
 function show(){
   const root=ensureRoot();root.hidden=false;document.documentElement.dataset.onboarding='1';
@@ -473,9 +488,16 @@ async function issueStarterGear(trainingWeapon){
 }
 function renderDungeonBriefing(){
   if(maybeTutorialComic('hollows'))return;
-  const body='<div class="dungeon-brief-layout"><main><div class="tutorial-dungeon-art"><span>FIRST EXPEDITION · THE ZELTIRAN HOLLOWS</span><h2>The resonance ends below the oldest part of the city.</h2><p>Elara has put a Pathfinder ward on your charter. It can pull the party out if all five fall, but it cannot fight for them. This is the same combat used everywhere else in Cellbound. Watch threat, healing, interrupts and movement.</p><div class="tutorial-route"><div><i>1</i><b>Rootling Nest</b><small>Threat & formation</small></div><div><i>2</i><b>Collapsed Gallery</b><small>Healing & interrupts</small></div><div><i>3</i><b>Hollow Warden</b><small>Telegraphs & boss pressure</small></div></div></div></main><aside class="z-guide"><small>WARDEN ELARA · LAST WORD</small><h2>Watch what the party actually does.</h2><div class="role-lessons"><div><i class="on-role tank"></i><b>Tank</b><span>Establishes threat and controls where dangerous enemies face.</span></div><div><i class="on-role healer"></i><b>Healer</b><span>Repairs damage while keeping a safe position.</span></div><div><i class="on-role dps"></i><b>Damage</b><span>Burns priority targets and covers dangerous interrupts.</span></div></div><p>The right side of the combat screen will show the same HP, resources, damage, healing, threat and status information used in later dungeons.</p><button id="enterTutorialDungeon" class="on-primary">DESCEND INTO THE HOLLOWS →</button></aside></div>';
+  const roster=state().roster||[],tank=roster.find(c=>tdRole(c)==='tank'),healer=roster.find(c=>tdRole(c)==='healer');
+  const body='<div class="tutorial-descent-brief">'+
+    '<main class="tutorial-descent-hero"><div class="tutorial-descent-art"><img src="./assets/comics/tutorial/warden_s_descent_into_the_ruins.webp" alt=""><div></div><span>THE ZELTIRAN HOLLOWS</span><h2>The wardstone is pointing down.</h2><p>This is not a fake training window. Your first descent now runs through the same Combat Reborn simulation and shared combat viewer used by Cellbound dungeons.</p></div>'+
+    '<div class="tutorial-route-v4"><article><i>01</i><span><small>THREAT</small><b>Rootling Nest</b><p>Call the opening pull and watch who owns the enemies.</p></span></article><article><i>02</i><span><small>INTERRUPTS</small><b>Collapsed Gallery</b><p>A dangerous cast forces you to decide what deserves attention.</p></span></article><article><i>03</i><span><small>MOVEMENT</small><b>Hollow Warden</b><p>Read real telegraphs while the party fights the boss.</p></span></article></div></main>'+
+    '<aside class="tutorial-command-brief"><small>WARDEN ELARA · FIELD BRIEF</small><h2>You give the order. Then you watch what it costs.</h2><p class="guide-quote">“A guild master does not swing five weapons. You make the call that decides where those weapons are when it matters.”</p>'+
+    '<div class="tutorial-party-check"><div><span>TANK</span><b>'+esc(tank?.name||'Your Tank')+'</b></div><div><span>HEALER</span><b>'+esc(healer?.name||'Your Healer')+'</b></div><div><span>DAMAGE</span><b>'+Math.max(0,roster.filter(c=>tdRole(c)==='dps').length)+' ready</b></div></div>'+
+    '<div class="tutorial-live-contract"><strong>LIVE COMBAT</strong><span>Real positions · threat · class resources · casts · interrupts · healing · telegraphs · damage meters</span></div>'+
+    '<button id="enterTutorialDungeon" class="on-primary">OPEN THE DESCENT →</button></aside></div>';
   ensureRoot().innerHTML=chrome(body,'dungeon-briefing');
-  $('#enterTutorialDungeon')?.addEventListener('click',async()=>{await setStage('dungeon-running');});
+  $('#enterTutorialDungeon')?.addEventListener('click',async()=>{await setStage('dungeon-running',{tutorialEncounterIndex:0,tutorialCombatReports:{},tutorialCommandChoices:{}});});
 }
 function tdRole(c){return Game.classes?.[c.class]?.specs?.[c.spec]?.role||'dps'}
 function tdProfile(c){
@@ -531,13 +553,227 @@ function tdResourceClass(name){return'resource-'+String(name||'power').toLowerCa
 function tdSideRows(){
   return state().roster.map(c=>{const r=tdInitialResource(c),pct=Math.max(0,Math.min(100,r.value/r.max*100));return'<div class="cb2d-party-row td-party-row"><i class="cb2d-dot '+tutorialClassKey(c)+'"></i><span class="td-side-copy" data-td-side="'+c.id+'"><b>'+esc(c.name)+'</b><small>'+tdRole(c).toUpperCase()+' · '+esc(c.spec)+'</small><em class="cb2d-side-hp"><i data-td-side-hp="'+c.id+'" style="width:100%"></i></em><em class="td-side-resource '+tdResourceClass(r.name)+'" data-td-side-resource="'+c.id+'" title="'+esc(r.name)+'"><i style="width:'+pct+'%"></i></em></span><strong data-td-side-text="'+c.id+'">100 HP</strong></div>'}).join('')
 }
+function tutorialRebornEncounters(){
+  return[
+    {
+      id:'rootling-nest',name:'Rootling Nest',lesson:'THREAT & FORMATION',room:'rootling-nest',kind:'trash',level:1,
+      enemies:[{name:'Rootling',classification:'trash'},{name:'Rootling',classification:'trash'}],enemyHealth:118,
+      ambience:'Pale roots twitch through the old masonry. Two shapes move ahead.',
+      brief:'Two Rootlings are waiting in a narrow chamber. Decide how the party opens.',
+      watch:'Watch the gold aggro link and the Threat Meter. The Tank should own both enemies before Damage settles in.',
+      mechanics:[],
+      orders:[
+        {id:'tank-first',icon:'◆',title:'Tank sets the pull',copy:'Let the Tank establish threat before the rest of the party commits.',recommended:true,tactics:{pullStyle:'safe',interruptPriority:'standard',defensiveUsage:'standard',movementDiscipline:'safety'}},
+        {id:'full-send',icon:'⚔',title:'Everyone opens together',copy:'Faster opening damage, but the Tank gets less time to establish control.',tactics:{pullStyle:'aggressive',interruptPriority:'standard',defensiveUsage:'standard',movementDiscipline:'balanced'}},
+        {id:'healer-forward',icon:'✚',title:'Healer takes point',copy:'Keep the Tank back and let the Healer cross the room first.',tactics:{pullStyle:'normal',interruptPriority:'low',defensiveUsage:'conservative',movementDiscipline:'balanced'}}
+      ]
+    },
+    {
+      id:'collapsed-gallery',name:'Collapsed Gallery',lesson:'INTERRUPTS & TRIAGE',room:'collapsed-gallery',kind:'boss',level:1,
+      enemies:[{name:'Cell-Sick Marauder',classification:'elite'}],enemyHealth:455,
+      ambience:'A lone marauder is breathing Cell-light into a cracked stone mask.',
+      brief:'The Marauder has a long cast called Hollow Scream. Decide what the party prioritises.',
+      watch:'Keep an eye on ENEMY CAST and the interrupt events. Prevented damage is easier to manage than repaired damage.',
+      mechanics:[{name:'Hollow Scream',type:'interrupt',duration:2200,priority:'critical',danger:'high'}],
+      orders:[
+        {id:'kick-scream',icon:'!',title:'Interrupt Hollow Scream',copy:'Damage holds an interrupt for the dangerous cast instead of tunnelling the target.',recommended:true,tactics:{pullStyle:'safe',interruptPriority:'high',interruptAssignment:'dps-rotation',defensiveUsage:'standard',movementDiscipline:'safety'}},
+        {id:'heal-through',icon:'✚',title:'Heal through the scream',copy:'Leave interrupts at low priority and ask the Healer to repair the result.',tactics:{pullStyle:'normal',interruptPriority:'low',defensiveUsage:'aggressive',movementDiscipline:'balanced'}},
+        {id:'burn-first',icon:'⚔',title:'Race the cast',copy:'Push maximum pressure and hope the Marauder dies before the scream matters.',tactics:{pullStyle:'aggressive',interruptPriority:'danger-only',defensiveUsage:'conservative',movementDiscipline:'balanced'}}
+      ]
+    },
+    {
+      id:'hollow-warden',name:'Hollow Warden',lesson:'BOSS TELEGRAPHS',room:'warden-chamber',kind:'boss',level:1,
+      enemies:[{name:'The Hollow Warden',classification:'boss'}],enemyHealth:610,mechanicIntervalMs:3100,
+      ambience:'The dead wardstone has roots wrapped around something that is still moving.',
+      brief:'The Warden cleaves the front of the arena and erupts spores under the party. Set the movement rule.',
+      watch:'This is the real dungeon language: visible telegraphs, facing, movement, healing pressure and class resources all at once.',
+      mechanics:[
+        {name:'Rootbound Cleave',type:'cone',duration:1850,danger:'high'},
+        {name:'Spore Bloom',type:'circles',duration:1700,danger:'high'}
+      ],
+      orders:[
+        {id:'safety-first',icon:'◎',title:'Tank turns it. Everyone moves.',copy:'Keep the boss facing away from the group and favour safe movement over greed.',recommended:true,tactics:{pullStyle:'safe',interruptPriority:'high',defensiveUsage:'aggressive',movementDiscipline:'safety'}},
+        {id:'stack-front',icon:'▲',title:'Stack on the Tank',copy:'Keep the party tight at the front of the boss and minimise travel.',tactics:{pullStyle:'normal',interruptPriority:'standard',defensiveUsage:'standard',movementDiscipline:'balanced'}},
+        {id:'greed-damage',icon:'⚔',title:'Ignore movement for damage',copy:'Commit to pressure and accept more mechanic risk.',tactics:{pullStyle:'aggressive',interruptPriority:'standard',defensiveUsage:'conservative',movementDiscipline:'balanced'}}
+      ]
+    }
+  ]
+}
+function tutorialRebornRoute(){
+  return tutorialRebornEncounters().map(e=>({id:e.id,title:e.name}))
+}
+function tutorialCommandChoice(encounter){
+  const id=state()?.onboarding?.tutorialCommandChoices?.[encounter.id];
+  return encounter.orders.find(x=>x.id===id)||null
+}
+function tutorialCombatParty(){
+  return (state()?.roster||[]).map(c=>Object.assign({},c,{
+    power:Math.max(Number(c.power)||1,30),
+    itemLevel:Math.max(Number(Game?.characterItemLevel?.(c))||0,18),
+    _combatItemLevel:Math.max(Number(Game?.characterItemLevel?.(c))||0,18),
+    _combatHealthPct:100
+  }))
+}
+function tutorialCombatReport(result,encounter,order){
+  const sum=result?.summary||{},players=Array.isArray(sum.players)?sum.players:[],top=[...players].sort((a,b)=>(Number(b.damage)||0)-(Number(a.damage)||0))[0];
+  const ints=sum.interrupts||{},mechs=sum.mechanics||{},mistakes=sum.mistakes||{};
+  return{
+    outcome:result?.outcome||'defeat',
+    commandId:order?.id||null,commandHit:Boolean(order?.recommended),
+    duration:Number(sum.durationSeconds)||0,deaths:Number(sum.deaths)||0,
+    damage:Number(sum.totalDamage)||0,healing:Number(sum.totalHealing)||0,
+    interrupts:Number(ints.success)||0,interruptAttempts:Number(ints.attempts)||0,missedInterrupts:Number(ints.missedCritical)||0,
+    mechanicsAvoided:Number(mechs.avoided)||0,mechanicsFailed:Number(mechs.failed)||0,mistakes:Number(mistakes.total)||0,
+    topDamage:top?.name||'—',topDamageValue:Number(top?.damage)||0,
+    engine:result?.combatModel||'Combat Reborn',engineVersion:result?.engineVersion||null,
+    encounterId:encounter.id
+  }
+}
+function tutorialReportGrade(report){
+  if(report.outcome!=='victory')return{tone:'danger',title:'WARD EXTRACTION',copy:'The Pathfinder ward pulled the party clear. Change the order and try the room again.'};
+  if(report.deaths===0&&report.mechanicsFailed===0&&report.missedInterrupts===0)return{tone:'clean',title:'CLEAN CLEAR',copy:'The plan held. Now look at the numbers that explain why.'};
+  return{tone:'scrappy',title:'SCRAPPY CLEAR',copy:'The party got through, but the report shows where the run became expensive.'}
+}
+async function launchTutorialRebornEncounter(index){
+  const s=state(),list=tutorialRebornEncounters(),encounter=list[index],order=encounter&&tutorialCommandChoice(encounter);
+  if(!s?.onboarding||!encounter||!order)return;
+  const Standard=window.CellboundCombatStandard,Viewer=window.CellboundDungeon2D;
+  const hint=$('#tutorialCombatHint');
+  if(!Standard?.simulate||!Viewer?.playSharedEncounter){
+    if(hint)hint.textContent='The live combat viewer is still loading. Try again in a moment.';
+    return
+  }
+  const launch=$('#launchTutorialReborn');if(launch){launch.disabled=true;launch.textContent='OPENING COMBAT…'}
+  const party=tutorialCombatParty(),combatEncounter={
+    id:encounter.id,title:encounter.name,kind:encounter.kind,level:encounter.level,
+    enemies:encounter.enemies,enemyHealth:encounter.enemyHealth,mechanics:encounter.mechanics||[],
+    mechanicIntervalMs:encounter.mechanicIntervalMs||null,
+    environment:{bounds:{left:7,right:93,top:9,bottom:91}}
+  };
+  let result;
+  try{
+    result=Standard.simulate({
+      party,encounter:combatEncounter,tactics:{
+        addPriority:'immediate',cooldownUse:'difficult',crowdControl:'disabled',
+        ...order.tactics
+      },seed:['zeltira-tutorial-v4',encounter.id,order.id].join(':')
+    },{zone:'zeltira-first-expedition'});
+  }catch(error){
+    console.error('Tutorial Combat Reborn simulation failed',error);
+    if(hint)hint.textContent='The combat simulation could not start. Refresh and try this room again.';
+    if(launch){launch.disabled=false;launch.textContent='ENTER LIVE COMBAT →'}
+    return
+  }
+  if(result?.combatModel!=='Combat Reborn'){
+    console.error('Tutorial combat did not return Combat Reborn',result);
+    if(hint)hint.textContent='The shared combat engine did not initialise correctly.';
+    if(launch){launch.disabled=false;launch.textContent='ENTER LIVE COMBAT →'}
+    return
+  }
+  hide();
+  let outcome='cancelled';
+  try{
+    outcome=await Viewer.playSharedEncounter({
+      party,encounter:combatEncounter,result,
+      header:'CHAPTER 0 · FIRST EXPEDITION',title:encounter.name,
+      subtitle:'LIVE LESSON · '+encounter.lesson,
+      planTitle:order.title,planCopy:encounter.watch,
+      theme:'hollow',room:encounter.room,roomLabel:encounter.name,ambience:encounter.ambience,
+      route:tutorialRebornRoute(),currentId:encounter.id,
+      shellClass:'tutorial-reborn-shell',arenaClass:'tutorial-reborn-arena'
+    });
+  }catch(error){
+    console.error('Tutorial shared Combat Reborn viewer failed',error);
+    outcome='cancelled'
+  }
+  await sleep(650);
+  try{Viewer.closeShared?.(true)}catch{}
+  show();
+  if(outcome==='cancelled'){renderDungeonRunning();return}
+  const report=tutorialCombatReport(result,encounter,order);
+  report.outcome=outcome==='victory'?'victory':'defeat';
+  s.onboarding.tutorialCombatReports=s.onboarding.tutorialCombatReports&&typeof s.onboarding.tutorialCombatReports==='object'?s.onboarding.tutorialCombatReports:{};
+  s.onboarding.tutorialCombatReports[encounter.id]=report;
+  Game.save();await Game.persistState?.();renderDungeonRunning()
+}
+async function finishTutorialDungeonV4(){
+  const s=state();if(!s?.onboarding)return;
+  if(s.onboarding.tutorialDungeonComplete){s.onboarding.stage='loot-review';Game.save();await Game.persistState?.();render();return}
+  s.materials['faded-cell-fragment']=(Number(s.materials['faded-cell-fragment'])||0)+4;
+  s.materials['zeltiran-iron']=(Number(s.materials['zeltiran-iron'])||0)+2;
+  const target=s.roster.find(x=>tdRole(x)==='dps')||s.roster[0];
+  const base=(G.items||[]).find(x=>x.class===target.class&&x.tier===1&&x.slot==='Head');
+  let loot=base?G.rollItemAffixes({...base,source:'Zeltiran Hollows · Hollow Warden'}):null;
+  for(let tries=0;loot&&G.rollFit?.(target,loot)?.matches===0&&tries<12;tries++)loot=G.rollItemAffixes({...base,source:'Zeltiran Hollows · Hollow Warden'});
+  if(loot){
+    Game.addBankItem(loot);
+    const bank=[...(s.bank||[])].reverse().find(x=>x.itemId===loot.itemId&&x.source==='Zeltiran Hollows · Hollow Warden');
+    s.onboarding.tutorialLootBankId=bank?.id||null;s.onboarding.tutorialLootCharacterId=target.id;
+  }
+  s.onboarding.tutorialDungeonComplete=true;s.onboarding.stage='loot-review';
+  const reports=s.onboarding.tutorialCombatReports||{},stars=tutorialRebornEncounters().filter(e=>reports[e.id]?.commandHit&&reports[e.id]?.outcome==='victory').length;
+  s.onboarding.tutorialCommandStars=stars;
+  s.activity.push('The First Resonance ended with the Hollow Warden’s defeat. The guild earned '+stars+'/3 command reads, a gear drop and profession reagents.');
+  Game.save();await Game.persistState?.();
+  if(db&&user)await db.from('characters').update({tutorial_stage:'review_loot',last_played_at:new Date().toISOString()}).eq('user_id',user.id);
+  window.CellboundFX?.story?.('The Hollows are silent','First Expedition Clear',{eyebrow:'CHAPTER 0 · '+stars+'/3 COMMAND READS',tone:'gold',duration:1500});
+  render()
+}
 function renderDungeonRunning(){
-  const roster=state().roster;
-  tutorialCombatStats={damage:Object.fromEntries(roster.map(c=>[c.id,0])),healing:Object.fromEntries(roster.map(c=>[c.id,0])),threat:Object.fromEntries(roster.map(c=>[c.id,0])),aggro:null,elapsed:0,currentEnemy:'—'};
-  const body='<div class="td-wrap"><div class="td-top"><div><small>FIRST EXPEDITION · ZELTIRAN HOLLOWS · LEVEL 1</small><h2 id="tdEncounter">Descending below Zeltira…</h2></div><b class="td-safe">PATHFINDER WARD ACTIVE</b></div><div class="td-route"><span class="active" data-td-route="0">1 · Rootling Nest</span><span data-td-route="1">2 · Collapsed Gallery</span><span data-td-route="2">3 · Hollow Warden</span></div><div class="td-live-layout"><main><div class="cb2d-arena td-arena theme-hollows room-rootling-nest" data-cbvfx-theme="hollow" id="tdArena"><div class="cb2d-floor td-floor"></div><div class="td-environment" id="tdEnvironment"></div><div class="td-room-tag" id="tdRoomTag"></div><div id="tdEnemies"></div><div id="tdParty">'+roster.map(unitMarkup).join('')+'</div><div class="td-callout" id="tdCallout">Your party advances together.</div><div id="tdLesson" class="td-lesson" hidden></div></div><div class="td-bottom"><div class="td-actions"><div><i class="on-role tank"></i><b>Tank</b><span id="tdTankAction">Taking point</span></div><div><i class="on-role healer"></i><b>Healer</b><span id="tdHealAction">Following formation</span></div><div><i class="on-role dps"></i><b>Damage</b><span id="tdDpsAction">Acquiring targets</span></div></div><div class="td-feed" id="tdFeed">The Pathfinder ward closes behind the five.</div></div></main><aside class="td-live-hud"><div class="cb2d-cast td-cast-panel" id="tdCastPanel"><small>ENEMY CAST</small><div><b id="tdCastName">—</b><strong id="tdCastTime">—</strong></div><div class="cb2d-castbar"><i id="tdCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="tdDamageTotal">0 total</span></div><div id="tdDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="tdHealingTotal">0 total</span></div><div id="tdHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="tdThreatTarget">—</span></div><div id="tdThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-party td-party-panel"><small>PARTY CONDITION · ACTIVE FIVE</small><div id="tdPartyRows">'+tdSideRows()+'</div></div><div class="td-hud-note"><b>WATCH THE FIGHT</b><span>HP sits above class resource. Buffs and debuffs appear on the unit. Threat resets each encounter; damage and healing continue through the expedition.</span></div></aside></div></div>';
+  const s=state();s.onboarding=s.onboarding||{};
+  if(s.onboarding.tutorialDungeonComplete){s.onboarding.stage='loot-review';Game.save();render();return}
+  const encounters=tutorialRebornEncounters();
+  const index=Math.max(0,Math.min(encounters.length-1,Number(s.onboarding.tutorialEncounterIndex)||0));
+  s.onboarding.tutorialEncounterIndex=index;
+  s.onboarding.tutorialCombatReports=s.onboarding.tutorialCombatReports&&typeof s.onboarding.tutorialCombatReports==='object'?s.onboarding.tutorialCombatReports:{};
+  s.onboarding.tutorialCommandChoices=s.onboarding.tutorialCommandChoices&&typeof s.onboarding.tutorialCommandChoices==='object'?s.onboarding.tutorialCommandChoices:{};
+  const encounter=encounters[index],report=s.onboarding.tutorialCombatReports[encounter.id],selected=tutorialCommandChoice(encounter);
+  const cleared=encounters.filter(e=>s.onboarding.tutorialCombatReports[e.id]?.outcome==='victory').length;
+  const stars=encounters.filter(e=>s.onboarding.tutorialCombatReports[e.id]?.outcome==='victory'&&s.onboarding.tutorialCombatReports[e.id]?.commandHit).length;
+  const route='<div class="tutorial-reborn-route">'+encounters.map((e,i)=>{const r=s.onboarding.tutorialCombatReports[e.id],cls=i===index?'active':r?.outcome==='victory'?'done':'';return'<div class="'+cls+'"><i>'+(r?.outcome==='victory'?'✓':i+1)+'</i><span><small>'+esc(e.lesson)+'</small><b>'+esc(e.name)+'</b></span></div>'}).join('')+'</div>';
+  let content='';
+  if(report){
+    const grade=tutorialReportGrade(report),order=encounter.orders.find(x=>x.id===report.commandId);
+    const metrics=[
+      ['TIME',Math.round(report.duration)+'s'],
+      ['DEATHS',String(report.deaths)],
+      ['INTERRUPTS',report.interrupts+'/'+report.interruptAttempts],
+      ['MECHANICS',report.mechanicsAvoided+'✓ · '+report.mechanicsFailed+'✕'],
+      ['DAMAGE',Math.round(report.damage).toLocaleString()],
+      ['HEALING',Math.round(report.healing).toLocaleString()]
+    ];
+    const lesson=report.outcome!=='victory'
+      ?'The ward saved the roster. Change the command and watch how the same room behaves differently.'
+      :report.commandHit
+        ?'That was the read Elara was looking for. The result should make the lesson visible rather than merely telling you the answer.'
+        :'You cleared it, but not with the safest call. That is useful too: Cellbound lets a messy plan succeed until harder content stops forgiving it.';
+    content='<section class="tutorial-after-action '+grade.tone+'"><div class="tutorial-report-head"><div><small>AFTER ACTION · '+esc(report.engine)+'</small><h2>'+esc(grade.title)+'</h2><p>'+esc(grade.copy)+'</p></div><strong class="'+(report.commandHit?'hit':'miss')+'">'+(report.commandHit?'★ COMMAND READ':'◇ RISKY CALL')+'</strong></div>'+
+      '<div class="tutorial-report-command"><span>YOUR ORDER</span><b>'+esc(order?.title||'Unknown order')+'</b><p>'+esc(lesson)+'</p></div>'+
+      '<div class="tutorial-report-metrics">'+metrics.map(x=>'<article><span>'+x[0]+'</span><b>'+x[1]+'</b></article>').join('')+'</div>'+
+      '<div class="tutorial-report-detail"><div><span>TOP DAMAGE</span><b>'+esc(report.topDamage)+'</b><small>'+Math.round(report.topDamageValue).toLocaleString()+' damage</small></div><div><span>MISTAKES</span><b>'+report.mistakes+'</b><small>'+report.missedInterrupts+' critical interrupts missed</small></div></div>'+
+      (report.outcome==='victory'
+        ?'<button id="tutorialCombatContinue" class="on-primary">'+(index===encounters.length-1?'CLAIM THE WARDEN’S SPOILS →':'MOVE DEEPER →')+'</button>'
+        :'<div class="tutorial-report-actions"><button id="tutorialCombatRetry" class="on-primary">CHANGE ORDER & RETRY →</button></div>')+
+      '</section>';
+  }else{
+    content='<section class="tutorial-command-board"><div class="tutorial-command-head"><div><small>ROOM '+(index+1)+' OF '+encounters.length+' · '+esc(encounter.lesson)+'</small><h2>'+esc(encounter.name)+'</h2><p>'+esc(encounter.brief)+'</p></div><div class="tutorial-command-score"><span>ROOMS CLEARED</span><b>'+cleared+' / '+encounters.length+'</b><em>'+stars+' ★ command reads</em></div></div>'+
+      '<div class="tutorial-command-watch"><i>◎</i><span><small>WATCH THIS IN THE LIVE VIEWER</small><b>'+esc(encounter.watch)+'</b></span></div>'+
+      '<div class="tutorial-command-grid">'+encounter.orders.map(o=>'<button class="'+(selected?.id===o.id?'active':'')+'" data-tutorial-command="'+esc(o.id)+'"><i>'+o.icon+'</i><span><b>'+esc(o.title)+'</b><small>'+esc(o.copy)+'</small></span><em>'+(selected?.id===o.id?'ORDER SET':'SET ORDER')+'</em></button>').join('')+'</div>'+
+      '<div class="tutorial-command-footer"><div><span>ENGINE</span><b>COMBAT REBORN · SHARED DUNGEON VIEWER</b><small>Nothing is staged after you press Enter. The result is simulated first and the real event stream is played back.</small></div><button id="launchTutorialReborn" class="on-primary" '+(selected?'':'disabled')+'>ENTER LIVE COMBAT →</button></div><p id="tutorialCombatHint">'+(selected?'Order locked. Enter when ready.':'Choose an order before entering the room.')+'</p></section>';
+  }
+  const body='<div class="tutorial-reborn-hub">'+route+'<div class="tutorial-reborn-stage">'+content+'</div></div>';
   ensureRoot().innerHTML=chrome(body,'dungeon-running');
-  tdRenderMeters();
-  const my=++tutorialToken;setTimeout(()=>runTutorialDungeon(my),350);
+  $$('[data-tutorial-command]').forEach(b=>b.onclick=()=>{
+    s.onboarding.tutorialCommandChoices[encounter.id]=b.dataset.tutorialCommand;Game.save();renderDungeonRunning()
+  });
+  $('#launchTutorialReborn')?.addEventListener('click',()=>launchTutorialRebornEncounter(index));
+  $('#tutorialCombatRetry')?.addEventListener('click',()=>{
+    delete s.onboarding.tutorialCombatReports[encounter.id];delete s.onboarding.tutorialCommandChoices[encounter.id];Game.save();renderDungeonRunning()
+  });
+  $('#tutorialCombatContinue')?.addEventListener('click',async()=>{
+    if(index>=encounters.length-1){await finishTutorialDungeonV4();return}
+    s.onboarding.tutorialEncounterIndex=index+1;Game.save();await Game.persistState?.();renderDungeonRunning()
+  });
 }
 function tdLesson(title,text,options,correct,success){
   return new Promise(resolve=>{
@@ -799,52 +1035,9 @@ async function fightTdPack(encounter,my){
   await sleep(650);return true
 }
 
-async function runTutorialDungeon(my){
-  if(my!==tutorialToken||onboarding().stage!=='dungeon-running')return;
-  const encounters=[
-    {id:'rootling-nest',name:'Rootling Nest',level:1,enemyTypes:['trash','trash'],mobs:['Rootling','Rootling'],boss:false,enemyHealth:105,mechanics:[]},
-    {id:'collapsed-gallery',name:'Collapsed Gallery',level:1,enemyTypes:['elite'],mobs:['Cell-Sick Marauder'],boss:false,combatKind:'boss',enemyHealth:420,mechanics:[['Hollow Scream','interrupt',1800]]},
-    {id:'hollow-warden',name:'Hollow Warden',level:1,enemyTypes:['boss'],mobs:['The Hollow Warden'],boss:true,enemyHealth:520,mechanics:[['Rootbound Cleave','cone',1700]]}
-  ];
-  for(let i=0;i<encounters.length;i++){
-    if(my!==tutorialToken)return;
-    $$('[data-td-route]').forEach((x,j)=>x.classList.toggle('active',j===i));
-    const e=encounters[i];renderTdEnvironment(i);$('#tdEncounter').textContent=e.name;
-    if(i===0){
-      $('#tdCallout').textContent='Decide who starts the pull.';
-      await tdLesson('Who should enter first?','Two enemies are waiting ahead and neither has chosen a target yet.',['Send the Tank in first','Send the Healer in first','Let Damage race for the first hit'],0,'Exactly. The Tank establishes threat before everyone else commits.');
-    }else if(i===1){
-      $('#tdCallout').textContent='The Tank is taking damage.';
-      await tdLesson('Who stabilises the Tank?','The Tank is doing their job and absorbing repeated hits.',['The Healer restores them from a safe position','The Tank abandons the enemies','Damage stops attacking and waits'],0,'Correct. Healing keeps the pull stable while the Tank continues holding threat.');
-      await tdLesson('A dangerous cast begins','The Cell-Sick Marauder starts a long cast called Hollow Scream.',['Ignore it and heal through everything','Damage switches attention and interrupts it','The Healer runs into melee range'],1,'Correct. Interrupting dangerous casts prevents damage instead of forcing the Healer to repair it afterwards.');
-    }else{
-      $('#tdCallout').textContent='Read the boss telegraph.';
-      await tdLesson('The boss raises a frontal cleave','A wide attack is aimed through the Tank toward the group.',['Tank turns the boss away while the party stays behind it','Everyone stacks directly in front','Healer takes the attack instead'],0,'Correct. Positioning is part of tanking: control where the boss faces so avoidable damage never reaches the group.');
-    }
-    tdFeed('Entering '+e.name+'.');const won=await fightTdPack(e,my);if(!won){i--;await sleep(700);continue}
-  }
-  if(my!==tutorialToken)return;
-  $('#tdEncounter').textContent='First Expedition Complete';$('#tdCallout').textContent='The resonance beneath Zeltira has gone silent.';
-  tdFeed('The Hollow Warden falls. Something in the chamber stops answering the Cell Well. Gear and reagents remain among the roots.');await sleep(900);
-  const s=state();
-  if(s.onboarding.stage==='dungeon-running'&&!s.onboarding.tutorialDungeonComplete){
-    s.materials['faded-cell-fragment']=(Number(s.materials['faded-cell-fragment'])||0)+4;
-    s.materials['zeltiran-iron']=(Number(s.materials['zeltiran-iron'])||0)+2;
-    const target=s.roster.find(x=>tdRole(x)==='dps')||s.roster[0];
-    const base=(G.items||[]).find(x=>x.class===target.class&&x.tier===1&&x.slot==='Head');
-    let loot=base?G.rollItemAffixes({...base,source:'Zeltiran Hollows · Hollow Warden'}):null;
-    for(let tries=0;loot&&G.rollFit?.(target,loot)?.matches===0&&tries<12;tries++)loot=G.rollItemAffixes({...base,source:'Zeltiran Hollows · Hollow Warden'});
-    if(loot){
-      Game.addBankItem(loot);
-      const bank=[...(s.bank||[])].reverse().find(x=>x.itemId===loot.itemId&&x.source==='Zeltiran Hollows · Hollow Warden');
-      s.onboarding.tutorialLootBankId=bank?.id||null;s.onboarding.tutorialLootCharacterId=target.id;
-    }
-    s.onboarding.tutorialDungeonComplete=true;s.onboarding.stage='loot-review';
-    s.activity.push('The First Resonance ended with the Hollow Warden’s defeat. A gear drop and profession reagents were recovered from the chamber.');
-    Game.save();await Game.persistState();
-    if(db&&user)await db.from('characters').update({tutorial_stage:'review_loot',last_played_at:new Date().toISOString()}).eq('user_id',user.id);
-  }
-  render();
+async function runTutorialDungeon(){
+  const index=Math.max(0,Math.min(tutorialRebornEncounters().length-1,Number(onboarding().tutorialEncounterIndex)||0));
+  return launchTutorialRebornEncounter(index)
 }
 function tutorialLootItem(){
   const s=state(),id=s?.onboarding?.tutorialLootBankId;
@@ -1019,7 +1212,7 @@ async function init(){
   if(!Game?.ready){setTimeout(init,100);return}
   G=window.CellboundGear;P=window.CellboundProfessions;CP=window.CellboundPortraits;db=Game.getSupabase?.();user=Game.getUser?.();
   if(!G||!P)return;
-  window.CellboundCombatStandard?.register?.('zeltira-first-expedition',{kind:'onboarding-dungeon',execution:'local',ui:'shared-combat-contract'});
+  window.CellboundCombatStandard?.register?.('zeltira-first-expedition',{kind:'onboarding-dungeon',execution:'local',ui:'shared-cb2d'});
   render();
   window.CellboundOnboarding={render,RACES,previewTutorialComics,tutorialComicConfig};
 }
