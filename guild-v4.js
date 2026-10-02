@@ -402,9 +402,9 @@ async function loadAccount(user){
   state=migrateState(sourceRaw);
   if(account.guild_name)state.socialDisplayName=account.guild_name;
   removeInvalidPartyMembers(state);nativeLocalSet.call(localStorage,LOCAL_OWNER,user.id);writeLocal();
-  await persistState();
+  const saved=await persistState();
   lastMembershipMember=entitlements().member;
-  setSync('Saved','ok');
+  if(saved)setSync('Saved','ok');
 }
 async function refreshStateFromServer({render=true}={}){
   if(!currentUser||!supabaseClient)return false;
