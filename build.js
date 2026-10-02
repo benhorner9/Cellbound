@@ -153,10 +153,7 @@ for(const file of files){
     if(!contents.includes('var baseFigure=illustratedBaseFigure(model')||contents.includes('paperBodyBase(model,a,skin,profile,uid)'))throw new Error('Equipped gear must layer over the same v9 illustrated character body used by the base model');
     for(const hook of ['leftRingX=fit.leftHand','rightRingX=fit.rightHand','fit.weaponX','fit.offhandX','fit.leftLeg','fit.rightLeg'])if(!contents.includes(hook))throw new Error('Adaptive equipment fitting is missing '+hook);
     if(!contents.includes("chestTop:gender===1?121:119"))throw new Error('Global chest armour realignment is missing');
-    const shieldIndex=contents.indexOf('paperOffHandBack(model,highlighted)');
-    const bodyIndex=contents.indexOf('baseFigure+');
-    const weaponIndex=contents.lastIndexOf('paperWeapon(model,highlighted)+paperOffHandFront(model,highlighted)');
-    if(!(shieldIndex>=0&&bodyIndex>shieldIndex&&weaponIndex>bodyIndex))throw new Error('Equipment layer order must keep shields behind while main-hand and non-shield off-hands render in front');
+    if(!contents.includes("paperBackLayer(model)+\n    paperOffHandBack(model,highlighted)+\n    baseFigure+")||!contents.includes("paperWeapon(model,highlighted)+paperOffHandFront(model,highlighted)+"))throw new Error('Equipment layer order must keep shields behind while main-hand and non-shield off-hands render in front');
     for(const hook of ['if(tier>=2)','if(tier>=3)','if(tier>=4)','if(tier>=5)'])if(!contents.includes(hook))throw new Error('Tier silhouette progression is missing '+hook);
   }
   if(file==='roster-v2.css'){
