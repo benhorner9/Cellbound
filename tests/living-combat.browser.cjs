@@ -50,7 +50,7 @@ const root=path.resolve(__dirname,'..');
  await page.evaluate(()=>send('MECHANIC_TELEGRAPH','e-0','p-t',{duration:900,mechanicType:'line',token:'visual-line',targetIds:['p-t']},{ability:'Arc Beam'}));
  assert.equal(await page.locator('.cbl-mechanic-callout').count(),1,'shared mechanic callout is visible');
  assert.equal(await page.locator('[data-unit="p-t"] .cbl-mechanic-marker').count(),1,'targeted mechanic marks the affected unit');
- await page.waitForTimeout(680);
+ await page.waitForFunction(()=>document.querySelector('.cbl-mechanic-callout')?.dataset.phase==='imminent',{},{timeout:5000,polling:25});
  assert.equal(await page.locator('.cbl-mechanic-callout').getAttribute('data-phase'),'imminent');
  await page.evaluate(()=>send('MECHANIC_RESOLVE','e-0','p-t',{mechanicType:'line',token:'visual-line'},{ability:'Arc Beam',result:'avoided'}));
  await page.waitForTimeout(300);
