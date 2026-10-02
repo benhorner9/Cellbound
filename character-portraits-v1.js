@@ -470,11 +470,14 @@ function paperBodyBase(c,a,skin,p,uid){
     :'<path d="M'+(120-s+12)+' 158 Q120 172 '+(120+s-12)+' 158 M120 163 V215 M'+(120-w+6)+' 219 Q120 229 '+(120+w-6)+' 219" fill="none" stroke="'+mixHex(skin,'#ffffff',.18)+'" stroke-width="1.4" opacity=".28"/>';
   var raceDetails=paperRaceTorsoDetails(c,p)+paperRaceArmDetails(c,p,lx,rx)+paperRaceLegDetails(c,p);
   var accentGlow='<path d="M'+(120-s+5)+' 143 Q120 132 '+(120+s-5)+' 143" fill="none" stroke="'+accent+'" stroke-width="1.4" opacity=".18"/>';
+  var legClass=itemForSlot(c,'Legs')?'cb-paper-base-legs':'cb-paper-empty-legs';
+  var feetClass=itemForSlot(c,'Feet')?'cb-paper-base-feet':'cb-paper-empty-feet';
+  var chestClass=itemForSlot(c,'Chest')?'cb-paper-base-chest':'cb-paper-empty-chest';
   return '<g class="cb-paper-base-model" data-base-race="'+esc(race)+'">'+
-    '<g class="cb-paper-empty-legs">'+leftLeg+rightLeg+'</g>'+
-    '<g class="cb-paper-empty-feet">'+feet+'</g>'+
+    '<g class="'+legClass+'">'+leftLeg+rightLeg+'</g>'+
+    '<g class="'+feetClass+'">'+feet+'</g>'+
     '<g class="cb-paper-arms">'+leftArm+rightArm+hands+'</g>'+
-    neck+'<g class="cb-paper-empty-chest">'+torso+under+anatomy+'</g>'+raceDetails+accentGlow+'</g>';
+    neck+'<g class="'+chestClass+'">'+torso+under+anatomy+'</g>'+raceDetails+accentGlow+'</g>';
 }
 function paperBackLayer(c){
   var chest=itemForSlot(c,'Chest')||itemForSlot(c,'Shoulders');
