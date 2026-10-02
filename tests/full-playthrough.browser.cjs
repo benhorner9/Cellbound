@@ -350,14 +350,16 @@ async function coreGameplayLoopPlaythrough(browser){
 
   const bossReagent=await page.evaluate(()=>{
     const entry=CellboundProfessions.BOSS_RESOURCE_POOLS?.ashwarden?.find(x=>x.key==='hollowroot');
-    if(!entry)throw new Error('Ash Warden resource pool no longer contains Hollowroot');
-    const drop={key:entry.key,quantity:Math.max(1,Number(entry.min)||1)};
+    const need=Number(CellboundProfessions.recipeById('alc-field-potion')?.inputs?.hollowroot)||0;
+    if(!entry||!need)throw new Error('Ash Warden/Alchemy starter reagent contract is missing');
+    if(need<Number(entry.min)||need>Number(entry.max))throw new Error('Starter Alchemy requirement cannot be satisfied by a valid Ash Warden Hollowroot roll');
+    const drop={key:entry.key,quantity:need,min:Number(entry.min),max:Number(entry.max)};
     CellboundGame.addMaterial(drop.key,drop.quantity);
     CellboundGame.renderAll();
     return drop;
   });
   assert.equal(bossReagent.key,'hollowroot','Ash Warden resource pool supplies the starter Alchemy reagent');
-  assert(Number(bossReagent.quantity)>=2,'Ash Warden Hollowroot minimum is enough to start the first Alchemy craft');
+  assert(bossReagent.quantity>=bossReagent.min&&bossReagent.quantity<=bossReagent.max,'starter craft uses a legal Ash Warden Hollowroot drop quantity');
   assert(await page.evaluate(()=>Number(CellboundGame.getState().materials?.hollowroot)>=2),'dungeon profession reagents enter shared Guild materials');
 
   await page.evaluate(()=>CellboundGame.switchView('professions'));
