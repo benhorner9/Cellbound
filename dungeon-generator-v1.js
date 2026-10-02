@@ -463,6 +463,10 @@ function renderOutput(){
     '<button type="button" data-dg-output="art" class="'+(activeOutput==='art'?'active':'')+'">ART MANIFEST</button>'+
     '</div><div class="dg-output-actions"><button type="button" data-dg-copy>COPY</button><button type="button" data-dg-download>DOWNLOAD</button></div>'+
     '<textarea id="dgOutputText" readonly aria-label="Generated dungeon output">'+esc(value)+'</textarea>';
+  bindOutput();
+}
+function bindOutput(){
+  const root=$('#dgOutput');if(!root)return;
 }
 function setMessage(text,tone='ok'){
   const el=$('#dgMessage');if(!el)return;
