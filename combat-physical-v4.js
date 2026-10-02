@@ -75,7 +75,8 @@ function room(scene,e){
  scene.arena.prepend(n);scene.room=n;scene.arena.dataset.room=key;
 }
 function emphasis(scene,kind){
- if(reduce()||performance.now()<(scene.emphasisUntil||0))return;
+ if(reduce()){scene.camera?.cancel();scene.camera=null;return}
+ if(performance.now()<(scene.emphasisUntil||0))return;
  scene.emphasisUntil=performance.now()+2500;scene.camera?.cancel();
  // A sub-percent emphasis leaves the full arena in frame and never follows a unit.
  scene.camera=scene.arena.animate([{scale:1},{scale:.996,offset:.35},{scale:1}],{duration:kind==='death'?950:650,easing:'ease-out'});
