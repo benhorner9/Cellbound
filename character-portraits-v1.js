@@ -671,27 +671,60 @@ function weaponMarkup(type,pal,v,tier,item){
 function paperWeapon(c,highlighted){
   var item=itemForSlot(c,'Weapon'),tier=clampTier(item&&item.tier);
   if(!item)return'';
-  var pal=gearPalette(c,item,tier,'Weapon'),type=weaponType(item,c),v=pal.variant;
-  return '<g class="'+paperSlotClass('Weapon',highlighted,item)+'" data-weapon-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'Weapon'))+'">'+weaponMarkup(type,pal,v,tier,item)+'</g>';
+  var pal=gearPalette(c,item,tier,'Weapon'),type=weaponType(item,c),v=pal.variant,p=bodyProfile(c.race||c.appearance?.race||'Veyren');
+  var dx=(120+p.shoulder+8)-200;
+  return '<g class="'+paperSlotClass('Weapon',highlighted,item)+'" transform="translate('+dx+' 0)" data-weapon-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'Weapon'))+'">'+weaponMarkup(type,pal,v,tier,item)+'</g>';
 }
 function offHandMarkup(type,pal,v,tier,item){
+  var klass=gearClass(item),out='';
   if(type==='shield'){
-    var shape=v%3===0?'M26 174 Q48 155 70 174 L66 248 Q49 270 31 248Z':v%3===1?'M27 169 L70 177 L64 250 L49 266 L32 248Z':'M26 178 L48 159 L70 178 L62 252 L48 267 L34 252Z';
-    return '<path d="'+shape+'" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="3"/><path d="M48 170 L48 255 M31 205 L66 205" stroke="'+pal.light+'" stroke-width="2.3" opacity=".62"/>'+itemRune(item,'OffHand',pal,48,211,.8);
+    var shape=v%3===0?'M22 168 Q48 150 74 168 L69 252 Q49 275 28 252Z':v%3===1?'M23 166 L74 174 L67 252 L49 271 L29 250Z':'M22 176 L48 154 L74 176 L65 255 L48 273 L31 255Z';
+    out='<path d="'+shape+'" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="3.2"/><path d="M48 168 L48 257 M29 205 L69 205" stroke="'+pal.light+'" stroke-width="2.3" opacity=".58"/>';
+    if(klass==='Paladin')out+=motifMarkup('sun',48,211,1.15,pal.glow)+'<path d="M31 185 Q48 174 66 185" fill="none" stroke="'+pal.trim+'" stroke-width="2"/>';
+    else if(klass==='Warrior')out+='<path d="M34 185 L48 171 L62 185 L60 238 L48 252 L36 238Z" fill="none" stroke="'+pal.trim+'" stroke-width="2.4"/>';
+    else out+=itemRune(item,'OffHand',pal,48,211,.8);
+    return out;
   }
-  if(type==='quiver')return '<path d="M31 164 L65 174 L58 263 L35 257Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="2.5"/><path d="M38 164 L33 130 M46 167 L45 128 M55 168 L59 132" stroke="'+pal.light+'" stroke-width="3"/>';
-  if(type==='tome')return '<g transform="rotate(-8 48 216)"><rect x="28" y="187" width="42" height="57" rx="4" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><path d="M49 189 V242" stroke="'+pal.trim+'" stroke-width="2"/>'+itemRune(item,'OffHand',pal,49,215,.7)+'</g>';
-  if(type==='idol')return '<path d="M32 238 Q48 182 64 238 L58 258 H38Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="48" cy="221" r="7" fill="'+pal.glow+'" opacity=".7"/>';
-  if(type==='dagger')return '<path d="M52 236 L26 307" stroke="'+pal.light+'" stroke-width="5.5"/><path d="M29 304 L19 325 L33 316Z" fill="'+pal.trim+'"/><path d="M45 242 L60 248" stroke="'+pal.trim+'" stroke-width="4"/>';
-  return '<circle cx="49" cy="216" r="'+(v%2?18:21)+'" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/>'+itemRune(item,'OffHand',pal,49,216,1)+(tier>=4?'<circle cx="49" cy="216" r="6" fill="'+pal.glow+'" opacity=".65" class="cb-paper-glow"/>':'');
+  if(type==='quiver'){
+    out='<path d="M31 164 L65 174 L58 263 L35 257Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="2.5"/><path d="M38 164 L33 128 M46 167 L45 124 M55 168 L59 129 M34 143 L31 133 L38 136 M45 140 L42 130 L49 134 M58 144 L63 134 L56 136" stroke="'+pal.light+'" stroke-width="2.6"/>';
+    if(klass==='Hunter')out+=motifMarkup('arrow',48,212,.8,pal.glow);
+    return out;
+  }
+  if(type==='tome'){
+    out='<g transform="rotate(-8 48 216)"><rect x="27" y="184" width="44" height="61" rx="5" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><path d="M49 186 V243" stroke="'+pal.trim+'" stroke-width="2"/>'+itemRune(item,'OffHand',pal,49,215,.7)+'</g>';
+    if(klass==='Priest')out+='<ellipse cx="49" cy="175" rx="14" ry="4" fill="none" stroke="'+pal.glow+'" stroke-width="2" opacity=".65"/>';
+    if(klass==='Warlock')out+='<path d="M32 188 q-8 -12 -5 -19 M65 188 q8 -12 5 -19" fill="none" stroke="'+pal.glow+'" stroke-width="2"/>';
+    return out;
+  }
+  if(type==='idol'){
+    if(klass==='Shaman')return '<path d="M31 205 L40 188 L56 188 L65 205 L60 249 L48 264 L36 249Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="48" cy="220" r="9" fill="'+pal.glow+'" opacity=".72" class="cb-paper-glow"/><path d="M35 250 L30 279 M48 261 L48 289 M60 250 L66 279" stroke="'+pal.trim+'" stroke-width="2"/><path d="M27 279 h7 M44 289 h8 M63 279 h7" stroke="'+pal.glow+'" stroke-width="2"/>';
+    if(klass==='Druid')return '<path d="M32 238 Q48 182 64 238 L58 258 H38Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="3"/><path d="M48 204 Q32 214 40 231 Q53 223 48 204Z" fill="'+pal.glow+'" opacity=".55"/>';
+    return '<path d="M32 238 Q48 182 64 238 L58 258 H38Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="3"/><circle cx="48" cy="221" r="7" fill="'+pal.glow+'" opacity=".7"/>';
+  }
+  if(type==='dagger'){
+    if(klass==='Demon Hunter')return '<path d="M56 220 Q36 190 24 215 Q43 221 49 241 Q42 260 27 267 Q45 282 61 250 Q68 237 56 220Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/><path d="M48 231 L62 229" stroke="'+pal.glow+'" stroke-width="2"/>';
+    return '<path d="M52 236 L26 307" stroke="'+pal.light+'" stroke-width="5.5"/><path d="M29 304 L19 325 L33 316Z" fill="'+pal.trim+'"/><path d="M45 242 L60 248" stroke="'+pal.trim+'" stroke-width="4"/>';
+  }
+  if(klass==='Monk'){
+    return '<circle cx="49" cy="216" r="16" fill="none" stroke="'+pal.trim+'" stroke-width="2"/><circle cx="49" cy="216" r="4" fill="'+pal.glow+'"/><circle cx="49" cy="194" r="4" fill="'+pal.base+'"/><circle cx="67" cy="203" r="4" fill="'+pal.base+'"/><circle cx="67" cy="229" r="4" fill="'+pal.base+'"/><circle cx="31" cy="203" r="4" fill="'+pal.base+'"/><circle cx="31" cy="229" r="4" fill="'+pal.base+'"/>';
+  }
+  if(klass==='Death Knight'){
+    return '<path d="M49 188 L67 207 L58 235 L49 252 L40 235 L31 207Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="2.7"/><circle cx="49" cy="219" r="7" fill="'+pal.glow+'" opacity=".72" class="cb-paper-glow"/>';
+  }
+  if(klass==='Evoker'){
+    return '<path d="M49 185 L63 205 L58 235 L49 252 L40 235 L35 205Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="2.7"/><path d="M35 205 L22 194 L30 220 M63 205 L76 194 L68 220" fill="'+pal.trim+'" opacity=".58"/><circle cx="49" cy="218" r="7" fill="'+pal.glow+'" opacity=".74"/>';
+  }
+  out='<circle cx="49" cy="216" r="'+(v%2?18:21)+'" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="3"/>'+itemRune(item,'OffHand',pal,49,216,1);
+  if(tier>=4)out+='<circle cx="49" cy="216" r="6" fill="'+pal.glow+'" opacity=".65" class="cb-paper-glow"/>';
+  return out;
 }
 function paperOffHand(c,highlighted){
   var item=itemForSlot(c,'OffHand'),tier=clampTier(item&&item.tier);
   if(!item)return'';
-  // Never invent a shield/focus visual for a main-hand weapon stored in OffHand.
   if(item.slot&&item.slot!=='OffHand')return'';
-  var pal=gearPalette(c,item,tier,'OffHand'),type=offHandType(item,c),v=pal.variant;
-  return '<g class="'+paperSlotClass('OffHand',highlighted,item)+'" data-offhand-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'OffHand'))+'">'+offHandMarkup(type,pal,v,tier,item)+'</g>';
+  var pal=gearPalette(c,item,tier,'OffHand'),type=offHandType(item,c),v=pal.variant,p=bodyProfile(c.race||c.appearance?.race||'Veyren');
+  var dx=type==='quiver'?5:(120-p.shoulder-8)-48;
+  return '<g class="'+paperSlotClass('OffHand',highlighted,item)+'" transform="translate('+dx+' 0)" data-offhand-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'OffHand'))+'">'+offHandMarkup(type,pal,v,tier,item)+'</g>';
 }
 function paperAccessories(c,highlighted){
   var out='',ring1=itemForSlot(c,'Ring1'),ring2=itemForSlot(c,'Ring2'),tr1=itemForSlot(c,'Trinket1'),tr2=itemForSlot(c,'Trinket2'),relic=itemForSlot(c,'Relic');
