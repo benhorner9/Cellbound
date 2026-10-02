@@ -553,19 +553,24 @@ function paperFeet(c,skin,highlighted){
 }
 function paperArms(c,skin,highlighted){
   var hands=itemForSlot(c,'Hands'),tier=clampTier(hands&&hands.tier),pal=gearPalette(c,hands,tier||1,'Hands');
-  var p=bodyProfile(c.race||c.appearance?.race||'Veyren'),shoulder=p.shoulder,arm=p.arm;
-  var leftX=120-shoulder,rightX=120+shoulder,aw=Math.max(5.5,arm*.48);
+  var p=bodyProfile(c.race||c.appearance?.race||'Veyren'),shoulder=p.shoulder,arm=p.arm,leftX=120-shoulder,rightX=120+shoulder,aw=Math.max(5.5,arm*.48);
   var left='M'+(leftX-aw)+' 148 Q'+(leftX-aw-10)+' 176 '+(leftX-aw-11)+' 207 Q'+(leftX-aw-10)+' 232 '+(leftX-aw-5)+' 263 L'+(leftX+aw-1)+' 263 Q'+(leftX+aw-3)+' 232 '+(leftX+aw+4)+' 207 Q'+(leftX+aw+5)+' 177 '+(leftX+aw)+' 148Z';
   var right='M'+(rightX+aw)+' 148 Q'+(rightX+aw+10)+' 176 '+(rightX+aw+11)+' 207 Q'+(rightX+aw+10)+' 232 '+(rightX+aw+5)+' 263 L'+(rightX-aw+1)+' 263 Q'+(rightX-aw+3)+' 232 '+(rightX-aw-4)+' 207 Q'+(rightX-aw-5)+' 177 '+(rightX-aw)+' 148Z';
-  var details=paperRaceArmDetails(c,p,leftX,rightX);
-  var scale=p.hand||1,klass=gearClass(hands),heavy=['Warrior','Paladin','Death Knight'].includes(klass),bulk=heavy?4:0;
-  var hw=(10*scale)+bulk,hh=29*scale;
-  return '<g class="cb-paper-arms"><path d="'+left+'" fill="'+skin+'" stroke="#182027" stroke-width="2.2"/><path d="'+right+'" fill="'+skin+'" stroke="#182027" stroke-width="2.2"/><ellipse cx="'+(leftX-7)+'" cy="208" rx="'+(aw+1)+'" ry="'+(aw*.72)+'" fill="'+skin+'" opacity=".96"/><ellipse cx="'+(rightX+7)+'" cy="208" rx="'+(aw+1)+'" ry="'+(aw*.72)+'" fill="'+skin+'" opacity=".96"/>'+details+'</g>'+
-    '<g class="'+paperSlotClass('Hands',highlighted,hands)+'" data-item-key="'+esc(itemIdentity(hands,'Hands'))+'">'+
-    '<path d="M'+(leftX-hw-5)+' 257 Q'+(leftX-hw/2)+' 250 '+leftX+' 258 L'+(leftX-2)+' '+(258+hh)+' Q'+(leftX-hw-2)+' '+(292+bulk)+' '+(leftX-hw-8)+' '+(279+bulk)+'Z" fill="'+(tier?pal.base:skin)+'" stroke="#111820" stroke-width="2.2"/>'+
-    '<path d="M'+(rightX+hw+5)+' 257 Q'+(rightX+hw/2)+' 250 '+rightX+' 258 L'+(rightX+2)+' '+(258+hh)+' Q'+(rightX+hw+2)+' '+(292+bulk)+' '+(rightX+hw+8)+' '+(279+bulk)+'Z" fill="'+(tier?pal.base:skin)+'" stroke="#111820" stroke-width="2.2"/>'+
-    (hands&&heavy?'<path d="M'+(leftX-hw-5)+' 264 L'+(leftX+1)+' 268 M'+(rightX+hw+5)+' 264 L'+(rightX-1)+' 268" stroke="'+pal.trim+'" stroke-width="2.2"/>':'')+
-    (hands?itemRune(hands,'Hands',pal,leftX-8,273,.48)+itemRune(hands,'Hands',pal,rightX+8,273,.48):'')+'</g>';
+  var body='<g class="cb-paper-arms"><path d="'+left+'" fill="'+skin+'" stroke="#182027" stroke-width="2.2"/><path d="'+right+'" fill="'+skin+'" stroke="#182027" stroke-width="2.2"/>'+paperRaceArmDetails(c,p,leftX,rightX)+'</g>';
+  if(!hands)return body+'<g class="cb-paper-underlayer cb-paper-empty-hands"><ellipse cx="'+(leftX-8)+'" cy="276" rx="8" ry="12" fill="'+skin+'" stroke="#111820" stroke-width="2"/><ellipse cx="'+(rightX+8)+'" cy="276" rx="8" ry="12" fill="'+skin+'" stroke="#111820" stroke-width="2"/></g>';
+  var gp=gearProfile(hands),klass=gearClass(hands),scale=p.hand||1,bulk=gp.family==='plate'?5:gp.family==='mail'?3:gp.family==='cloth'?-1:1,hw=10*scale+bulk,hh=(gp.family==='plate'?35:gp.family==='mail'?32:27)*scale;
+  var gear='<g class="'+paperSlotClass('Hands',highlighted,hands)+'" data-item-key="'+esc(itemIdentity(hands,'Hands'))+'">'+
+    '<path d="M'+(leftX-hw-5)+' 255 Q'+(leftX-hw/2)+' 249 '+leftX+' 258 L'+(leftX-2)+' '+(258+hh)+' Q'+(leftX-hw-2)+' '+(291+bulk)+' '+(leftX-hw-8)+' '+(279+bulk)+'Z" fill="'+pal.base+'" stroke="#10171b" stroke-width="2.4"/>'+
+    '<path d="M'+(rightX+hw+5)+' 255 Q'+(rightX+hw/2)+' 249 '+rightX+' 258 L'+(rightX+2)+' '+(258+hh)+' Q'+(rightX+hw+2)+' '+(291+bulk)+' '+(rightX+hw+8)+' '+(279+bulk)+'Z" fill="'+pal.base+'" stroke="#10171b" stroke-width="2.4"/>';
+  if(gp.family==='plate')gear+='<path d="M'+(leftX-hw-4)+' 264 L'+(leftX+1)+' 269 M'+(rightX+hw+4)+' 264 L'+(rightX-1)+' 269" stroke="'+pal.trim+'" stroke-width="2.4"/><path d="M'+(leftX-hw-3)+' 278 L'+(leftX-2)+' 283 M'+(rightX+hw+3)+' 278 L'+(rightX+2)+' 283" stroke="'+pal.light+'" stroke-width="1.5" opacity=".5"/>';
+  else if(gp.family==='mail')gear+='<path d="M'+(leftX-hw)+' 266 H'+(leftX+2)+' M'+(rightX-hw+2)+' 266 H'+(rightX+hw)+'" stroke="'+pal.trim+'" stroke-width="2"/>';
+  else gear+='<path d="M'+(leftX-hw+2)+' 268 L'+(leftX+1)+' 273 M'+(rightX+hw-2)+' 268 L'+(rightX-1)+' 273" stroke="'+pal.trim+'" stroke-width="2"/>';
+  if(klass==='Paladin')gear+=motifMarkup('sun',leftX-8,274,.45,pal.glow)+motifMarkup('sun',rightX+8,274,.45,pal.glow);
+  else if(klass==='Druid')gear+='<path d="M'+(leftX-13)+' 273 q-9 5 -4 13 M'+(rightX+13)+' 273 q9 5 4 13" fill="none" stroke="'+pal.trim+'" stroke-width="2"/>';
+  else if(klass==='Shaman')gear+='<path d="M'+(leftX-12)+' 273 l6 7 l6 -7 M'+(rightX+12)+' 273 l-6 7 l-6 -7" fill="none" stroke="'+pal.glow+'" stroke-width="1.8"/>';
+  else if(klass==='Death Knight'||klass==='Demon Hunter')gear+='<path d="M'+(leftX-13)+' 270 l-7 8 l8 -1 M'+(rightX+13)+' 270 l7 8 l-8 -1" fill="'+pal.trim+'" opacity=".75"/>';
+  else gear+=itemRune(hands,'Hands',pal,leftX-8,273,.46)+itemRune(hands,'Hands',pal,rightX+8,273,.46);
+  return body+gear+'</g>';
 }
 function paperChest(c,highlighted){
   var item=itemForSlot(c,'Chest');
