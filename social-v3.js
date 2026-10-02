@@ -15,7 +15,7 @@ async function loadChat(markSeen=false){
   if(!db||!user)return;
   const {data,error}=await db.from('chat_messages').select('id,user_id,guild_label,channel,body,sender_badge,created_at').eq('channel',channel).order('created_at',{ascending:false}).limit(80);
   if(error){console.warn(error);return;}
-  chatRows=(data||[]).reverse();renderChat();
+  chatRows=(data||[]).reverse();renderChat();window.dispatchEvent(new CustomEvent('cellbound:chat-feed',{detail:{channel,messages:chatRows.slice(-12).map(m=>({guild_label:String(m.guild_label||''),body:String(m.body||''),created_at:m.created_at}))}}));
   const newest=chatRows.length?new Date(chatRows[chatRows.length-1].created_at).getTime():0;
   const active=document.querySelector('#chat.view.active');
   if(markSeen||active){lastChatNewest=Math.max(lastChatNewest,newest);$('#chatUnread').textContent='';}
