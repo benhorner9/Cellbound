@@ -40,3 +40,29 @@
 .cb-lw-hotspot-ring{
   pointer-events:none!important;
 }
+
+/* Living World selection feedback: glow the label only, never the map area. */
+.cb-lw-hotspot-ring{
+  display:none!important;
+  opacity:0!important;
+  filter:none!important;
+  background:none!important;
+  border:0!important;
+}
+.cb-lw-hotspot:hover .cb-lw-hotspot-label,
+.cb-lw-hotspot:focus-visible .cb-lw-hotspot-label,
+.cb-lw-hotspot.is-selected .cb-lw-hotspot-label{
+  border-color:#efd18d!important;
+  background:#071013f2!important;
+  box-shadow:
+    0 0 0 1px #efd18d55,
+    0 0 14px #e8c66d88,
+    0 8px 20px #0009!important;
+  filter:none!important;
+}
+.cb-lw-hotspot.is-selected .cb-lw-hotspot-label{
+  box-shadow:
+    0 0 0 1px #f3d58c88,
+    0 0 18px #efc861aa,
+    0 9px 24px #000a!important;
+}
