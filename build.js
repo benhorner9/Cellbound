@@ -148,10 +148,16 @@ for(const file of files){
   if(file==='combat-standard-v1.js'&&!contents.includes('professionZone:meta.zone'))throw new Error('Combat gateway must pass encounter zone for Scribing');
 
   if(file==='character-portraits-v1.js'){
-    for(const hook of ['window.CellboundPortraits','normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','gearFitProfile','paperHeadGearOnly','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
+    for(const hook of ['window.CellboundPortraits','normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','gearFitProfile','paperHeadGearOnly','tierVisualProfile','tierChestAdornment','tierHeadAdornment','tierWeaponAdornment','tierOffHandAdornment','paperOffHandBack','paperOffHandFront','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
     if(!contents.includes("if(item.slot&&item.slot!=='OffHand')return''"))throw new Error('Paper doll must not invent an OffHand visual for main-hand weapons');
     if(!contents.includes('var baseFigure=illustratedBaseFigure(model')||contents.includes('paperBodyBase(model,a,skin,profile,uid)'))throw new Error('Equipped gear must layer over the same v9 illustrated character body used by the base model');
     for(const hook of ['leftRingX=fit.leftHand','rightRingX=fit.rightHand','fit.weaponX','fit.offhandX','fit.leftLeg','fit.rightLeg'])if(!contents.includes(hook))throw new Error('Adaptive equipment fitting is missing '+hook);
+    if(!contents.includes("chestTop:gender===1?121:119"))throw new Error('Global chest armour realignment is missing');
+    const shieldIndex=contents.indexOf('paperOffHandBack(model,highlighted)');
+    const bodyIndex=contents.indexOf('baseFigure+');
+    const weaponIndex=contents.lastIndexOf('paperWeapon(model,highlighted)+paperOffHandFront(model,highlighted)');
+    if(!(shieldIndex>=0&&bodyIndex>shieldIndex&&weaponIndex>bodyIndex))throw new Error('Equipment layer order must keep shields behind while main-hand and non-shield off-hands render in front');
+    for(const hook of ['if(tier>=2)','if(tier>=3)','if(tier>=4)','if(tier>=5)'])if(!contents.includes(hook))throw new Error('Tier silhouette progression is missing '+hook);
   }
   if(file==='roster-v2.css'){
     if(!contents.includes('.roster-card-portrait{')||!contents.includes('border:0;')||!contents.includes('background:none;')||!contents.includes('box-shadow:none'))throw new Error('Roster portrait wrapper must stay frameless');
