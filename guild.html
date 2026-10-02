@@ -436,6 +436,24 @@
             <div id="blackoutStationCard" class="dungeon-browser-slot"></div>
             <div id="fracturedAgesCard" class="dungeon-browser-slot"></div>
           </div>
+
+              <div id="ashenDungeonDetail" class="dungeon-detail-panel" hidden>
+                <div class="dungeon-detail-toolbar"><div><small>DUNGEON JOURNAL</small><b>The Ashen Vault</b></div><button type="button" data-dungeon-close>CLOSE DETAILS ×</button></div>
+                <div class="dungeon-journal-hero">
+                  <div class="dungeon-journal-art has-image" data-dungeon-art="ashen-vault"><img src="./assets/dungeons/ashen-vault.webp" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="journal-eyebrow">CURO HINTERLANDS · DUNGEON</span><h3>The Ashen Vault</h3><p>The old forge has begun breathing again. Ashbound cultists are feeding something beneath the mountain.</p><div class="journal-badges"><span>5 adventurers</span><span>10–15 min</span><span id="journalPartyIlvl">Party iLvl —</span></div></div>
+                  <div class="journal-entry-panel"><small>ENTRY REQUIREMENT</small><b>Quest Access · Party Item Level 18</b><p id="journalEntryHint">Build a complete party before entering.</p><button id="enterDungeonBtn">ENTER THE ASHEN VAULT</button></div>
+                </div>
+                <div class="dungeon-journal-layout">
+                  <article class="panel dungeon-route-panel"><div class="panel-head"><div><small>DUNGEON ROUTE</small><h3>Expedition Path</h3></div><b>7 STAGES</b></div><div id="dungeonRoute" class="dungeon-route"></div></article>
+                  <aside class="panel dungeon-intel-panel"><div class="panel-head"><div><small>ENCOUNTER INTELLIGENCE</small><h3>What Your Guild Knows</h3></div></div><div id="dungeonIntel" class="dungeon-intel"></div></aside>
+                </div>
+              </div>
+
+              <div id="hollowSanctumMount" class="dungeon-detail-panel hollow-sanctum-mount" hidden></div>
+              <div id="chaosCanyonMount" class="dungeon-detail-panel chaos-canyon-mount" hidden></div>
+              <div id="blackoutStationMount" class="dungeon-detail-panel blackout-station-mount" hidden></div>
+              <div id="fracturedAgesMount" class="dungeon-detail-panel fractured-ages-mount" hidden></div>
+
         </details>
 
         <details class="dungeon-episode" data-dungeon-episode="2">
@@ -450,22 +468,6 @@
         </details>
       </div>
 
-      <div id="ashenDungeonDetail" class="dungeon-detail-panel" hidden>
-        <div class="dungeon-detail-toolbar"><div><small>DUNGEON JOURNAL</small><b>The Ashen Vault</b></div><button type="button" data-dungeon-close>CLOSE DETAILS ×</button></div>
-        <div class="dungeon-journal-hero">
-          <div class="dungeon-journal-art has-image" data-dungeon-art="ashen-vault"><img src="./assets/dungeons/ashen-vault.webp" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="journal-eyebrow">CURO HINTERLANDS · DUNGEON</span><h3>The Ashen Vault</h3><p>The old forge has begun breathing again. Ashbound cultists are feeding something beneath the mountain.</p><div class="journal-badges"><span>5 adventurers</span><span>10–15 min</span><span id="journalPartyIlvl">Party iLvl —</span></div></div>
-          <div class="journal-entry-panel"><small>ENTRY REQUIREMENT</small><b>Quest Access · Party Item Level 18</b><p id="journalEntryHint">Build a complete party before entering.</p><button id="enterDungeonBtn">ENTER THE ASHEN VAULT</button></div>
-        </div>
-        <div class="dungeon-journal-layout">
-          <article class="panel dungeon-route-panel"><div class="panel-head"><div><small>DUNGEON ROUTE</small><h3>Expedition Path</h3></div><b>7 STAGES</b></div><div id="dungeonRoute" class="dungeon-route"></div></article>
-          <aside class="panel dungeon-intel-panel"><div class="panel-head"><div><small>ENCOUNTER INTELLIGENCE</small><h3>What Your Guild Knows</h3></div></div><div id="dungeonIntel" class="dungeon-intel"></div></aside>
-        </div>
-      </div>
-
-      <div id="hollowSanctumMount" class="dungeon-detail-panel hollow-sanctum-mount" hidden></div>
-      <div id="chaosCanyonMount" class="dungeon-detail-panel chaos-canyon-mount" hidden></div>
-      <div id="blackoutStationMount" class="dungeon-detail-panel blackout-station-mount" hidden></div>
-      <div id="fracturedAgesMount" class="dungeon-detail-panel fractured-ages-mount" hidden></div>
     </section>
 
     <section id="party" class="view">
