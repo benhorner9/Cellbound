@@ -30,6 +30,41 @@ function matureState(){
   };
 }
 
+function coreLoopState(){
+  const coreGear=(klass,slot,ilvl)=>({
+    name:'Core Loop '+klass+' '+slot,
+    itemId:'core-loop-'+klass.toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-'+slot.toLowerCase(),
+    class:klass,classes:[klass],slot,tier:2,rarity:'Uncommon',itemLevel:ilvl,baseItemLevel:ilvl,power:0,source:'Core loop seed'
+  });
+  const defs=[
+    ['tank','Aegis','Warrior','Protection',30,'Alchemy'],
+    ['heal','Mercy','Priest','Holy',30,null],
+    ['mage','Ember','Mage','Arcane',30,null],
+    ['hunt','Fletch','Hunter','Marksman',30,null],
+    ['rogue','Shade','Rogue','Assassination',25,null]
+  ];
+  const chars=defs.map(([id,name,klass,spec,ilvl,profession])=>({
+    id,name,race:'Veyren',class:klass,spec,level:15,xp:0,power:70,
+    knowledge:{ashwarden:100,embermaw:100,vaultheart:100},
+    equipment:{
+      Head:coreGear(klass,'Head',ilvl),Chest:coreGear(klass,'Chest',ilvl),Weapon:coreGear(klass,'Weapon',ilvl),
+      Shoulders:null,Hands:null,Waist:null,Legs:null,Feet:null,OffHand:null,Ring1:null,Ring2:null,Trinket1:null,Trinket2:null,Relic:null
+    },
+    gearItems:[],talents:{},cellShock:0,cellShockLockedUntil:null,
+    professions:[profession?{name:profession,level:1,xp:0,craftHistory:{},masterworks:0,projectsCompleted:0}:null]
+  }));
+  return {
+    saveVersion:6,gearVersion:3,renown:200,gold:1200,socialDisplayName:'Core Loop Guild',
+    roster:chars,party:{tank:'tank',healer:'heal',dps:['mage','hunt','rogue']},
+    bossKills:{ashwarden:true,embermaw:true,vaultheart:true},
+    progression:{ashenVaultUnlocked:true},
+    questSystem:{version:2,started:true,currentStage:'complete',stageDone:[],flags:{hollowSanctumUnlocked:true,hollowFirstClear:true},rewardClaims:{},ashfall:{started:true,stage:'complete',done:['warning','tracks','ambush','key'],complete:true,history:[]}},
+    reports:[],bank:[],materials:{},consumables:[],recipeScrolls:[],discoveredRecipes:[],
+    tradeInbox:[],collectionHistory:[],activity:['Core gameplay loop release state loaded.'],
+    onboarding:{version:3,complete:true,stage:'complete',zone:'zeltira'}
+  };
+}
+
 async function mount(page,seedState=null,owner=false,options={}){
   const errors=[];
   page.on('pageerror',e=>errors.push('pageerror: '+String(e)));
@@ -275,6 +310,102 @@ async function mainGamePlaythrough(browser){
 }
 
 
+async function coreGameplayLoopPlaythrough(browser){
+  const page=await browser.newPage({viewport:{width:1024,height:1366}});
+  const errors=await mount(page,coreLoopState());
+  page.on('dialog',dialog=>dialog.accept());
+  await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
+
+  assert.equal(await page.evaluate(()=>CellboundGame.partyItemLevel()),29,'core loop begins one Item Level below Chaos Canyon');
+  await page.evaluate(()=>CellboundChaosCanyon.open());
+  await page.waitForSelector('#cc2dBackdrop:not([hidden]) .cb2d-blocked',{timeout:5000});
+  assert((await page.locator('#cc2dBackdrop .cb2d-blocked').innerText()).includes('requires Item Level 30'),'harder dungeon explains the exact Item Level gate');
+  await page.locator('#cc2dBackdrop [data-close]').click();
+
+  const bankIds=await page.evaluate(()=>{
+    const G=CellboundGear,Game=CellboundGame;
+    const salvage=G.items.find(x=>x.class==='Mage'&&Number(x.tier)===1&&x.slot==='Head');
+    const upgrade=G.items.find(x=>x.class==='Rogue'&&Number(x.tier)===4&&x.slot==='Weapon');
+    if(!salvage||!upgrade)throw new Error('Core loop fixtures missing from gear catalogue');
+    Game.addBankItem({...salvage,source:'Core Loop Salvage'},false);
+    Game.addBankItem({...salvage,source:'Core Loop Salvage'},false);
+    Game.addBankItem({...upgrade,itemLevel:40,baseItemLevel:40,source:'Core Loop Upgrade'},false);
+    Game.renderAll();
+    const s=Game.getState();
+    return{
+      salvage:s.bank.find(x=>x.source==='Core Loop Salvage')?.id,
+      upgrade:s.bank.find(x=>x.source==='Core Loop Upgrade')?.id
+    };
+  });
+  assert(bankIds.salvage&&bankIds.upgrade,'core loop fixtures enter the Guild Bank');
+
+  await page.evaluate(()=>CellboundGame.switchView('bank'));
+  await page.locator('[data-bank-item="'+bankIds.salvage+'"]').click();
+  await page.waitForSelector('[data-bank-dismantle]');
+  await page.locator('[data-bank-cleanup-all]').click();
+  await page.locator('[data-bank-dismantle]').click();
+  await page.waitForFunction(()=>Number(CellboundGame.getState().materials?.['faded-cell-fragment'])>=2,{},{timeout:5000,polling:50});
+  assert.equal(await page.evaluate(()=>Number(CellboundGame.getState().materials?.['faded-cell-fragment'])||0),2,'dismantling two Tier 1 caster items returns salvage material');
+  assert(await page.evaluate(()=>Number(CellboundGame.getState().materials?.['cell-shards'])>=4),'dismantling also feeds the item-upgrade currency loop');
+
+  const bossReagent=await page.evaluate(()=>{
+    const entry=CellboundProfessions.BOSS_RESOURCE_POOLS?.ashwarden?.find(x=>x.key==='hollowroot');
+    const need=Number(CellboundProfessions.recipeById('alc-field-potion')?.inputs?.hollowroot)||0;
+    if(!entry||!need)throw new Error('Ash Warden/Alchemy starter reagent contract is missing');
+    if(need<Number(entry.min)||need>Number(entry.max))throw new Error('Starter Alchemy requirement cannot be satisfied by a valid Ash Warden Hollowroot roll');
+    const drop={key:entry.key,quantity:need,min:Number(entry.min),max:Number(entry.max)};
+    CellboundGame.addMaterial(drop.key,drop.quantity);
+    CellboundGame.renderAll();
+    return drop;
+  });
+  assert.equal(bossReagent.key,'hollowroot','Ash Warden resource pool supplies the starter Alchemy reagent');
+  assert(bossReagent.quantity>=bossReagent.min&&bossReagent.quantity<=bossReagent.max,'starter craft uses a legal Ash Warden Hollowroot drop quantity');
+  assert(await page.evaluate(()=>Number(CellboundGame.getState().materials?.hollowroot)>=2),'dungeon profession reagents enter shared Guild materials');
+
+  await page.evaluate(()=>CellboundGame.switchView('professions'));
+  await page.waitForSelector('#professionCharacterList [data-prof-char="tank"]',{timeout:5000});
+  await page.locator('#professionCharacterList [data-prof-char="tank"]').click();
+  await page.waitForSelector('#professionWorkshop [data-craft="alc-field-potion"]',{timeout:5000});
+  const craftReady=await page.evaluate(()=>{
+    const s=CellboundGame.getState(),button=document.querySelector('#professionWorkshop [data-craft="alc-field-potion"]'),card=button?.closest('.profession-recipe-card');
+    return{
+      disabled:Boolean(button?.disabled),
+      profession:s.roster.find(c=>c.id==='tank')?.professions?.[0]||null,
+      hollowroot:Number(s.materials?.hollowroot)||0,
+      inputs:CellboundProfessions.recipeById('alc-field-potion')?.inputs||{},
+      reason:card?.querySelector('.recipe-lock-reason')?.textContent||''
+    };
+  });
+  assert.equal(craftReady.disabled,false,'dismantled materials must make the first Alchemy recipe craftable: '+JSON.stringify(craftReady));
+  await page.locator('#professionWorkshop [data-craft="alc-field-potion"]').click();
+  await page.waitForFunction(()=>Boolean(CellboundGame.getState().workshopCraftProject),{},{timeout:5000,polling:50});
+  await page.evaluate(()=>{CellboundGame.getState().workshopCraftProject.remainingMs=1});
+  await page.waitForFunction(()=>{
+    const s=CellboundGame.getState();
+    return !s.workshopCraftProject&&s.consumables?.some(x=>x.key==='field-recovery-potion'&&Number(x.quantity)>0);
+  },{},{timeout:5000,polling:50});
+  assert.equal(await page.evaluate(()=>Number(CellboundGame.getState().materials?.hollowroot)||0),0,'crafting consumes the dungeon profession reagents');
+  assert.equal(await page.evaluate(()=>Number(CellboundGame.getState().materials?.['faded-cell-fragment'])||0),2,'salvage materials remain available for their own economy path');
+  assert(await page.evaluate(()=>CellboundGame.getState().consumables.some(x=>x.key==='field-recovery-potion'&&Number(x.quantity)>0)),'completed craft returns a usable preparation item to shared Guild stock');
+
+  await page.evaluate(()=>CellboundGame.switchView('bank'));
+  await page.locator('[data-bank-item="'+bankIds.upgrade+'"]').click();
+  await page.waitForSelector('[data-equip-char="rogue"]',{timeout:5000});
+  await page.locator('[data-equip-char="rogue"]').click();
+  await page.waitForFunction(()=>CellboundGame.partyItemLevel()>=30,{},{timeout:5000,polling:50});
+  assert.equal(await page.evaluate(()=>CellboundGame.partyItemLevel()),30,'equipping the recovered upgrade raises the active party through the next dungeon gate');
+  assert.equal(await page.evaluate(()=>CellboundGame.getState().roster.find(c=>c.id==='rogue')?.equipment?.Weapon?.itemLevel),40,'Bank equip action placed the real upgrade on the intended character');
+
+  await page.evaluate(()=>CellboundChaosCanyon.open());
+  await page.waitForSelector('#cc2dBackdrop:not([hidden]) [data-start]',{timeout:5000});
+  assert.equal(await page.locator('#cc2dBackdrop [data-start]').isDisabled(),false,'the same harder dungeon becomes enterable after progression raises party Item Level');
+  assert((await page.locator('#cc2dBackdrop').innerText()).includes('ILVL 30+'),'unlocked briefing still communicates the progression requirement');
+  await page.locator('#cc2dBackdrop [data-close]').click();
+
+  assert.equal(errors.filter(e=>!e.includes('Endgame state failed')).length,0,'core gameplay loop emitted no unexpected browser errors');
+  await page.close();
+}
+
 async function ownerDungeonGeneratorPlaythrough(browser){
   const page=await browser.newPage({viewport:{width:1024,height:1366}});
   const errors=await mount(page,matureState(),true);
@@ -323,7 +454,8 @@ async function ownerDungeonGeneratorPlaythrough(browser){
     await creatorPlaythrough(browser);
     await persistenceReloadPlaythrough(browser);
     await mainGamePlaythrough(browser);
+    await coreGameplayLoopPlaythrough(browser);
     await ownerDungeonGeneratorPlaythrough(browser);
-    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, party, roster, bank, professions, quests, dungeons, activities, raids, market, PvP/social shell, owner dungeon generator and responsive layouts.');
+    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, owner dungeon generator and responsive layouts.');
   }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});
