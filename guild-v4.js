@@ -4,7 +4,6 @@ const G=window.CellboundGear;
 const B=window.CellboundBuildRules;
 const P=window.CellboundProfessions;
 const CP=window.CellboundPortraits;
-const CS=window.CellboundCharacterSuit;
 if(!G){console.error('Cellbound gear catalogue failed to load.');return;}
 
 const SUPABASE_URL='https://jvydqeikdpelmtloulnd.supabase.co';
@@ -166,7 +165,7 @@ function specDef(c){return classDef(c)?.specs?.[c.spec];}
 function roleOf(c){return specDef(c)?.role||'dps';}
 function roleLabel(role){return role==='dps'?'Damage':role[0].toUpperCase()+role.slice(1);}
 function combatClassKey(c){return 'class-'+String(c?.class||'unknown').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')}
-function portraitHTML(c,size='md',className=''){return CS?.portraitHTML?.(c,{size,className})||CP?.portraitHTML?.(c,{size,className})||`<span class="cb-portrait cb-portrait--${esc(size)} ${esc(className)}"><b>${esc(c?.portrait||String(c?.name||'?').slice(0,2).toUpperCase())}</b></span>`}
+function portraitHTML(c,size='md',className=''){return CP?.portraitHTML?.(c,{size,className})||`<span class="cb-portrait cb-portrait--${esc(size)} ${esc(className)}"><b>${esc(c?.portrait||String(c?.name||'?').slice(0,2).toUpperCase())}</b></span>`}
 function charById(id){return state?.roster?.find(c=>c.id===id)||null;}
 function bossById(id){return bosses.find(b=>b.id===id)||bosses[0];}
 function bankTotal(){return (state?.bank||[]).reduce((n,item)=>n+(item.quantity||1),0);}
@@ -516,7 +515,7 @@ function openRecruit(slotIndex){
   const e=entitlements();
   if(e.rosterCap<=5||!state.onboarding?.complete||state.roster.length>=e.rosterCap||slotIndex!==state.roster.length)return;
   const klass=Object.keys(classes)[0],spec=Object.keys(classes[klass]?.specs||{})[0];
-  recruitDraft={race:'Veyren',klass,spec,name:recruitRandomName('Veyren'),appearance:CS?.randomAppearance?.('Veyren')||CP?.randomAppearance?.('Veyren')||{race:'Veyren'}};renderRecruitModal()
+  recruitDraft={race:'Veyren',klass,spec,name:recruitRandomName('Veyren'),appearance:CP?.randomAppearance?.('Veyren')||{race:'Veyren'}};renderRecruitModal()
 }
 function closeRecruit(){
   const root=$('#recruitAdventurerModal');if(root)root.hidden=true;document.body.classList.remove('recruit-adventurer-open');recruitDraft=null
@@ -524,8 +523,8 @@ function closeRecruit(){
 function renderRecruitModal(){
   const root=ensureRecruitModal();if(!recruitDraft)return;
   const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],specs=Object.entries(classes[recruitDraft.klass]?.specs||{}),role=classes[recruitDraft.klass]?.specs?.[recruitDraft.spec]?.role||'dps';
-  recruitDraft.appearance=CS?.normalizeAppearance?.(recruitDraft.appearance,recruitDraft.name||recruitDraft.race,recruitDraft.race)||CP?.normalizeAppearance?.(recruitDraft.appearance,recruitDraft.name||recruitDraft.race,recruitDraft.race)||recruitDraft.appearance||{race:recruitDraft.race};
-  const appearanceEditor=CS?.editorHTML?.(recruitDraft.appearance,{characterClass:recruitDraft.klass,name:recruitDraft.name,race:recruitDraft.race})||CP?.editorHTML?.(recruitDraft.appearance,{characterClass:recruitDraft.klass,name:recruitDraft.name,race:recruitDraft.race})||'';
+  recruitDraft.appearance=CP?.normalizeAppearance?.(recruitDraft.appearance,recruitDraft.name||recruitDraft.race,recruitDraft.race)||recruitDraft.appearance||{race:recruitDraft.race};
+  const appearanceEditor=CP?.editorHTML?.(recruitDraft.appearance,{characterClass:recruitDraft.klass,name:recruitDraft.name,race:recruitDraft.race})||'';
   root.hidden=false;document.body.classList.add('recruit-adventurer-open');
   const e=entitlements(),adminSlot=e.isAdmin&&state.roster.length>=10;
   root.innerHTML='<section class="recruit-modal"><button class="modal-close" data-close-recruit>×</button>'+
@@ -540,12 +539,12 @@ function renderRecruitModal(){
     '<div class="recruit-preview">'+portraitHTML({race:recruitDraft.race,appearance:recruitDraft.appearance,class:recruitDraft.klass,name:recruitDraft.name},'lg')+'<div><small>NEW LEVEL 1 ADVENTURER</small><b>'+esc(recruitDraft.name||'Unnamed')+'</b><span>'+race.id+' · '+recruitDraft.klass+' · '+recruitDraft.spec+' · '+roleLabel(role)+'</span></div></div>'+
     '<footer><small>Starts with basic equipment · 0% Cell Shock · independent spec builds and professions</small><button class="on-primary" data-confirm-recruit>CONFIRM RECRUIT →</button></footer></section>';
   root.querySelector('[data-close-recruit]').onclick=closeRecruit;
-  root.querySelector('#recruitRace').onchange=e=>{recruitDraft.race=e.target.value;recruitDraft.name=recruitRandomName(recruitDraft.race);recruitDraft.appearance=CS?.randomAppearance?.(recruitDraft.race)||CP?.randomAppearance?.(recruitDraft.race)||{race:recruitDraft.race};renderRecruitModal()};
+  root.querySelector('#recruitRace').onchange=e=>{recruitDraft.race=e.target.value;recruitDraft.name=recruitRandomName(recruitDraft.race);recruitDraft.appearance=CP?.randomAppearance?.(recruitDraft.race)||{race:recruitDraft.race};renderRecruitModal()};
   root.querySelector('#recruitClass').onchange=e=>{recruitDraft.klass=e.target.value;recruitDraft.spec=Object.keys(classes[recruitDraft.klass]?.specs||{})[0];renderRecruitModal()};
   root.querySelector('#recruitSpec').onchange=e=>{recruitDraft.spec=e.target.value;renderRecruitModal()};
   root.querySelector('#recruitName').oninput=e=>{recruitDraft.name=e.target.value};
   root.querySelector('[data-random-recruit]').onclick=()=>{recruitDraft.name=recruitRandomName(recruitDraft.race);renderRecruitModal()};
-  (CS?.bindEditor||CP?.bindEditor)?.(root,recruitDraft.appearance,(appearance,field)=>{if(field==='race'&&appearance?.race){recruitDraft.race=appearance.race}renderRecruitModal()},{characterClass:recruitDraft.klass,name:recruitDraft.name,race:recruitDraft.race});
+  CP?.bindEditor?.(root,recruitDraft.appearance,()=>renderRecruitModal(),{characterClass:recruitDraft.klass,name:recruitDraft.name});
   root.querySelector('[data-confirm-recruit]').onclick=createRecruit;
 }
 async function createRecruit(){
@@ -560,7 +559,7 @@ async function createRecruit(){
   const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],klass=recruitDraft.klass,spec=recruitDraft.spec,role=classes[klass]?.specs?.[spec]?.role||'dps',equipment=starterEquipment(klass);
   const ch=normalizeCharacter({
     id:recruitUid(),name,race:race.id,raceTrait:window.CellboundIdentities?.getRace?.(race.id)?.trait||race.trait,class:klass,spec,role,
-    level:1,xp:0,power:role==='tank'?30:role==='healer'?27:29,talent:1,portrait:recruitInitials(name),appearance:CS?.normalizeAppearance?.(recruitDraft.appearance,name,race.id)||CP?.normalizeAppearance?.(recruitDraft.appearance,name,race.id)||recruitDraft.appearance,
+    level:1,xp:0,power:role==='tank'?30:role==='healer'?27:29,talent:1,portrait:recruitInitials(name),appearance:CP?.normalizeAppearance?.(recruitDraft.appearance,name,race.id)||recruitDraft.appearance,
     knowledge:{ashwarden:0,embermaw:0,vaultheart:0},equipment,gearItems:ILVL_SLOTS.map(slot=>equipment[slot]?.name||'Empty'),
     talents:talentState(klass),cellShock:0,cellShockLockedUntil:null,professions:[null],recruitedAt:new Date().toISOString()
   },state.roster.length);
