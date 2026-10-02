@@ -349,7 +349,19 @@ async function coreGameplayLoopPlaythrough(browser){
   assert(await page.evaluate(()=>Number(CellboundGame.getState().materials?.['cell-shards'])>=4),'dismantling also feeds the item-upgrade currency loop');
 
   await page.evaluate(()=>CellboundGame.switchView('professions'));
-  await page.waitForSelector('#professionWorkshop [data-craft="alc-field-potion"]:not([disabled])',{timeout:5000});
+  await page.waitForSelector('#professionCharacterList [data-prof-char="tank"]',{timeout:5000});
+  await page.locator('#professionCharacterList [data-prof-char="tank"]').click();
+  await page.waitForSelector('#professionWorkshop [data-craft="alc-field-potion"]',{timeout:5000});
+  const craftReady=await page.evaluate(()=>{
+    const s=CellboundGame.getState(),button=document.querySelector('#professionWorkshop [data-craft="alc-field-potion"]'),card=button?.closest('.profession-recipe-card');
+    return{
+      disabled:Boolean(button?.disabled),
+      profession:s.roster.find(c=>c.id==='tank')?.professions?.[0]||null,
+      fragments:Number(s.materials?.['faded-cell-fragment'])||0,
+      reason:card?.querySelector('.recipe-lock-reason')?.textContent||''
+    };
+  });
+  assert.equal(craftReady.disabled,false,'dismantled materials must make the first Alchemy recipe craftable: '+JSON.stringify(craftReady));
   await page.locator('#professionWorkshop [data-craft="alc-field-potion"]').click();
   await page.waitForFunction(()=>Boolean(CellboundGame.getState().workshopCraftProject),{},{timeout:5000,polling:50});
   await page.evaluate(()=>{CellboundGame.getState().workshopCraftProject.remainingMs=1});
