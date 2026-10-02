@@ -299,7 +299,13 @@ function migrateState(raw){
   s.progression=s.progression&&typeof s.progression==='object'?s.progression:{};if(typeof s.progression.ashenVaultUnlocked!=='boolean')s.progression.ashenVaultUnlocked=Boolean(Number(s.dungeonCompletions)>0||Object.values(s.bossKills||{}).some(Boolean)||s.questSystem?.ashfall?.complete);s.bank=canonicalBank(s.bank);s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};s.consumables=Array.isArray(s.consumables)?s.consumables:[];s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];s.collectionHistory=Array.isArray(s.collectionHistory)?s.collectionHistory:[];s.reports=Array.isArray(s.reports)?s.reports:[];s.activity=Array.isArray(s.activity)?s.activity:[];s.bossKills=s.bossKills||{ashwarden:false,embermaw:false,vaultheart:false};s.party=s.party||{tank:null,healer:null,dps:[null,null,null]};
   if(s.__fresh_start===true||!s.onboarding&&!hadRoster)s.onboarding={version:3,complete:false,stage:'party-builder',zone:'zeltira',startedAt:new Date().toISOString()};
   else if(!s.onboarding&&hadRoster)s.onboarding={version:3,complete:true,stage:'complete',zone:'zeltira',legacy:true};
-  repairInvalidOffHands(s);s.roster.forEach(c=>refreshRecovery(c));delete s.__fresh_start;return s;
+  // A populated roster and the party-builder stage cannot both be authoritative.
+  // This repairs saves created while cloud persistence was unavailable.
+  if(hadRoster&&s.onboarding?.stage==='party-builder'){
+    s.onboarding={...s.onboarding,complete:false,stage:'zeltira-arrival',zone:s.onboarding.zone||'zeltira',partyCreatedAt:s.onboarding.partyCreatedAt||new Date().toISOString()};
+    delete s.onboarding.draft;
+  }
+  repairInvalidOffHands(s);s.roster.forEach(c=>refreshRecovery(c));delete s.__fresh_start;delete s.fresh_start_at;return s;
 }
 function localCandidate(userId){
   const owner=localStorage.getItem(LOCAL_OWNER);
@@ -310,12 +316,27 @@ function localCandidate(userId){
 function setSync(text,tone='ok'){if(!ui.syncStatus)return;ui.syncStatus.textContent=text;ui.syncStatus.dataset.tone=tone;}
 function writeLocal(){if(!state)return;nativeLocalSet.call(localStorage,STORAGE,JSON.stringify(state));}
 async function persistState(){
-  if(!currentUser||!state)return;
+  if(!currentUser||!state)return false;
   if(account?.guild_name)state.socialDisplayName=account.guild_name;
-  const snapshot=JSON.parse(JSON.stringify(state));setSync('Saving…','busy');
+  const snapshot=JSON.parse(JSON.stringify(state)),savedAt=new Date().toISOString();setSync('Saving…','busy');
   saveSerial=saveSerial.then(async()=>{
-    const {error}=await supabaseClient.from('guild_accounts').upsert({user_id:currentUser.id,game_state:snapshot,updated_at:new Date().toISOString()},{onConflict:'user_id'});
-    if(error){console.error('Cellbound save failed',error);setSync('Save issue','error');return false;}setSync('Saved','ok');return true;
+    // Account security intentionally grants players UPDATE only on game_state/updated_at.
+    // Do not use PostgREST upsert here: ON CONFLICT also tries to UPDATE user_id and is rejected.
+    let {data,error}=await supabaseClient.from('guild_accounts')
+      .update({game_state:snapshot,updated_at:savedAt})
+      .eq('user_id',currentUser.id)
+      .select('user_id')
+      .maybeSingle();
+    if(!error&&!data){
+      const inserted=await supabaseClient.from('guild_accounts')
+        .insert({user_id:currentUser.id,game_state:snapshot,updated_at:savedAt})
+        .select('user_id')
+        .maybeSingle();
+      data=inserted.data;error=inserted.error;
+    }
+    if(error){console.error('Cellbound save failed',error);setSync('Save issue','error');return false;}
+    if(!data){console.error('Cellbound save failed: no account row was written');setSync('Save issue','error');return false;}
+    setSync('Saved','ok');return true;
   });
   return saveSerial;
 }
@@ -334,11 +355,20 @@ async function loadAccount(user){
   }
   if(identityResult?.error)console.warn('Cellbound social identity unavailable',identityResult.error);
   account={...(data||{user_id:user.id,guild_name:null,membership_active_until:null,membership_override:false}),staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible)};
-  state=migrateState(data?.game_state&&Object.keys(data.game_state).length?data.game_state:(localCandidate(user.id)||initialState()));
+  const remoteRaw=data?.game_state&&typeof data.game_state==='object'&&Object.keys(data.game_state).length?data.game_state:null;
+  const localRaw=localCandidate(user.id);
+  const remoteRoster=Array.isArray(remoteRaw?.roster)?remoteRaw.roster.length:0;
+  const localRoster=Array.isArray(localRaw?.roster)?localRaw.roster.length:0;
+  // Never throw away a populated browser save because an older/failed cloud save is empty.
+  // Fresh Start clears the browser save first, so a populated local roster here is always newer playable progress.
+  const sourceRaw=localRoster>0&&remoteRoster===0?localRaw:(remoteRaw||localRaw||initialState());
+  state=migrateState(sourceRaw);
   if(account.guild_name)state.socialDisplayName=account.guild_name;
   removeInvalidPartyMembers(state);nativeLocalSet.call(localStorage,LOCAL_OWNER,user.id);writeLocal();
-  if(!data){await supabaseClient.from('guild_accounts').insert({user_id:user.id,game_state:state,updated_at:new Date().toISOString()});}
-  else await persistState();
+  if(!data){
+    const created=await supabaseClient.from('guild_accounts').insert({user_id:user.id,game_state:state,updated_at:new Date().toISOString()});
+    if(created.error)console.error('Cellbound account creation save failed',created.error);
+  }else await persistState();
   lastMembershipMember=entitlements().member;
   setSync('Saved','ok');
 }
