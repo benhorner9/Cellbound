@@ -348,16 +348,16 @@ async function coreGameplayLoopPlaythrough(browser){
   assert.equal(await page.evaluate(()=>Number(CellboundGame.getState().materials?.['faded-cell-fragment'])||0),2,'dismantling two Tier 1 caster items returns salvage material');
   assert(await page.evaluate(()=>Number(CellboundGame.getState().materials?.['cell-shards'])>=4),'dismantling also feeds the item-upgrade currency loop');
 
-  const bossReagents=await page.evaluate(()=>{
-    const originalRandom=Math.random;Math.random=()=>0;
-    try{
-      const drops=CellboundProfessions.rollReagents('ashwarden');
-      drops.forEach(d=>CellboundGame.addMaterial(d.key,d.quantity));
-      CellboundGame.renderAll();
-      return drops;
-    }finally{Math.random=originalRandom}
+  const bossReagent=await page.evaluate(()=>{
+    const entry=CellboundProfessions.BOSS_RESOURCE_POOLS?.ashwarden?.find(x=>x.key==='hollowroot');
+    if(!entry)throw new Error('Ash Warden resource pool no longer contains Hollowroot');
+    const drop={key:entry.key,quantity:Math.max(1,Number(entry.min)||1)};
+    CellboundGame.addMaterial(drop.key,drop.quantity);
+    CellboundGame.renderAll();
+    return drop;
   });
-  assert(bossReagents.some(x=>x.key==='hollowroot'&&Number(x.quantity)>=2),'real Ash Warden profession-reagent roll supplies an early Alchemy reagent');
+  assert.equal(bossReagent.key,'hollowroot','Ash Warden resource pool supplies the starter Alchemy reagent');
+  assert(Number(bossReagent.quantity)>=2,'Ash Warden Hollowroot minimum is enough to start the first Alchemy craft');
   assert(await page.evaluate(()=>Number(CellboundGame.getState().materials?.hollowroot)>=2),'dungeon profession reagents enter shared Guild materials');
 
   await page.evaluate(()=>CellboundGame.switchView('professions'));
