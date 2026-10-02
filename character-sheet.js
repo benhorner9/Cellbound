@@ -6,7 +6,8 @@ const G=window.CellboundGear;
 const B=window.CellboundBuildRules;
 const I=window.CellboundIdentities;
 const CP=window.CellboundPortraits;
-const portraitHTML=(c,size='lg')=>CP?.portraitHTML?.(c,{size})||'<span class="cb-portrait cb-portrait--'+size+'"><b>'+String(c?.portrait||c?.name||'?').slice(0,2).toUpperCase()+'</b></span>';
+const CS=window.CellboundCharacterSuit;
+const portraitHTML=(c,size='lg')=>CS?.portraitHTML?.(c,{size})||CP?.portraitHTML?.(c,{size})||'<span class="cb-portrait cb-portrait--'+size+'"><b>'+String(c?.portrait||c?.name||'?').slice(0,2).toUpperCase()+'</b></span>';
 const modal=document.getElementById('characterModal');
 const detail=document.getElementById('characterDetail');
 if(!modal||!detail)return;
@@ -756,7 +757,7 @@ function paperDoll(c,state){
   const setLabel=setExample?.setName||G?.SET_META?.[c.class]?.name||(setCount?c.class+' Set':'');
   const raceAccent=CP?.RACES?.[c.race||c.appearance?.race||'Veyren']?.accent||'#76d7d0';
   const showingGear=armouryModelMode==='equipped';
-  const visual=CP?.paperDollHTML?.(c,{size:'equipment',highlightedSlot:showingGear?activeSlot:null,accent:showingGear?meta.accent:raceAccent,showGear:showingGear})||portraitHTML(c,'hero');
+  const visual=showingGear?(CP?.paperDollHTML?.(c,{size:'equipment',highlightedSlot:activeSlot,accent:meta.accent,showGear:true})||portraitHTML(c,'hero')):(CS?.previewHTML?.(c,{className:'cs-model--armoury'})||CP?.paperDollHTML?.(c,{size:'equipment',accent:raceAccent,showGear:false})||portraitHTML(c,'hero'));
   const coreStats=['Strength','Agility','Intellect','Stamina'];
   const combatStats=['Armour','Crit','Haste','Block','Threat','Healing'];
   return `<div class="cb-paperdoll cb-armoury-screen cb-armoury-stats-screen" style="--cb-accent:${meta.accent}">
