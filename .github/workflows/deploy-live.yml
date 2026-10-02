@@ -50,6 +50,6 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
           port: ${{ secrets.FTP_PORT || 21 }}
-          server-dir: ./cb/
+          server-dir: ./
           local-dir: ./dist/
           log-level: standard
