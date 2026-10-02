@@ -43,7 +43,7 @@ for(const file of files){
   }
 
   if(file==='living-world-v1.js'){
-    for(const hook of ["cellbound-owner-living-world-v1","toLowerCase()==='owner'","cellbound:admin-status","data-lw-place","data-lw-service","zelitra-town-square.webp","cb-lw-hotspot","OWNER PREVIEW · PHASE 1"])if(!contents.includes(hook))throw new Error('Living World owner gate/navigation is missing '+hook);
+    for(const hook of ["cellbound-owner-living-world-v1","toLowerCase()==='owner'","cellbound:admin-status","data-lw-place","data-lw-service","zelitra-town-square.webp","cb-lw-hotspot","OWNER PREVIEW · PHASE 2","data-lw-interact","openInterior","inn-interior.webp"])if(!contents.includes(hook))throw new Error('Living World owner gate/navigation is missing '+hook);
   }
   if(file==='home-v2.css'){
     for(const hook of [".home-destination.raids","url('./assets/manor/manor-raid-hero.webp')",".home-destination.raids:after"])if(!contents.includes(hook))throw new Error('Home Manor raid artwork styling is missing '+hook);
@@ -664,6 +664,35 @@ for(const file of assets){const src=path.join(__dirname,file),dest=path.join(out
     pos=dataEnd;
   }
   if(found!==allowed.size)throw new Error('Living World art archive incomplete: '+found+'/'+allowed.size);
+}
+
+/* Reconstruct the owner-only Living World Phase 2 interior art bundle. */
+{
+  const archivePath=path.join(__dirname,'asset-source','living-world-phase2-assets.zip');
+  if(!fs.existsSync(archivePath))throw new Error('Missing Living World phase 2 art archive');
+  const zip=fs.readFileSync(archivePath);
+  const outputDir=path.join(out,'assets','living-world');
+  fs.mkdirSync(outputDir,{recursive:true});
+  const allowed=new Set(['inn-interior.webp','bank-interior.webp','craft-interior.webp','quests-interior.webp','dungeons-interior.webp','market-interior.webp','social-interior.webp','guild-interior.webp']);
+  let pos=0,found=0;
+  while(pos+30<=zip.length&&zip.readUInt32LE(pos)===0x04034b50){
+    const flags=zip.readUInt16LE(pos+6),method=zip.readUInt16LE(pos+8);
+    const compressedSize=zip.readUInt32LE(pos+18),nameLen=zip.readUInt16LE(pos+26),extraLen=zip.readUInt16LE(pos+28);
+    if(flags&0x08)throw new Error('Living World phase 2 archive uses unsupported data descriptors');
+    const name=zip.subarray(pos+30,pos+30+nameLen).toString('utf8');
+    const dataStart=pos+30+nameLen+extraLen,dataEnd=dataStart+compressedSize;
+    if(dataEnd>zip.length)throw new Error('Living World phase 2 archive is truncated');
+    if(allowed.has(name)){
+      const packed=zip.subarray(dataStart,dataEnd);
+      const bytes=method===8?zlib.inflateRawSync(packed):method===0?packed:null;
+      if(!bytes||bytes.length<12000)throw new Error('Living World phase 2 asset failed reconstruction: '+name);
+      if(bytes.subarray(0,4).toString('ascii')!=='RIFF'||bytes.subarray(8,12).toString('ascii')!=='WEBP')throw new Error('Living World phase 2 asset is not WebP: '+name);
+      fs.writeFileSync(path.join(outputDir,name),bytes);
+      found++;
+    }
+    pos=dataEnd;
+  }
+  if(found!==allowed.size)throw new Error('Living World phase 2 art archive incomplete: '+found+'/'+allowed.size);
 }
 
 /* Reconstruct bespoke Ashen Vault battlefields from repository-safe base64 sources. */
