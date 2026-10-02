@@ -13,24 +13,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Inspect public domain routing
+      - name: Probe public paths
         shell: bash
         run: |
           set -u
-          echo "DNS: playcellbound.com"
-          getent ahostsv4 playcellbound.com || true
-          echo
-          echo "DNS: www.playcellbound.com"
-          getent ahostsv4 www.playcellbound.com || true
-          echo
-          echo "DNS: ftp.webkraftstudios.com"
-          getent ahostsv4 ftp.webkraftstudios.com || true
-          echo
-          echo "HTTPS HEAD: playcellbound.com"
-          curl -k -sS -I --max-time 15 https://playcellbound.com/ || true
-          echo
-          echo "HTTP HEAD: playcellbound.com"
-          curl -sS -I --max-time 15 http://playcellbound.com/ || true
-          echo
-          echo "HTTPS HEAD: www.playcellbound.com"
-          curl -k -sS -I --max-time 15 https://www.playcellbound.com/ || true
+          for url in             "https://playcellbound.com/"             "https://playcellbound.com/index.html"             "https://playcellbound.com/guild.html"             "https://playcellbound.com/cb/"             "https://playcellbound.com/cb/index.html"             "https://playcellbound.com/CB/"             "https://playcellbound.com/CB/index.html"             "https://playcellbound.com/dev/"             "https://playcellbound.com/game.html"; do
+            code=$(curl -k -sS -o /tmp/body -w "%{http_code}" --max-time 15 "$url" || true)
+            size=$(wc -c </tmp/body 2>/dev/null || echo 0)
+            title=$(grep -io '<title>[^<]*' /tmp/body 2>/dev/null | head -1 | sed 's/<title>//I' || true)
+            echo "$code | $size bytes | $url | $title"
+          done
