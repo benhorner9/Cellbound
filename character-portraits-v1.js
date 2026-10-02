@@ -633,7 +633,7 @@ function paperShoulders(c,highlighted){
   return '<g class="'+paperSlotClass('Shoulders',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Shoulders'))+'">'+left+right+detail+(tier>=5?'<path d="M'+(lx-extent+1)+' '+(145-rise)+' L'+(lx-extent-5)+' '+(132-rise)+' M'+(rx+extent-1)+' '+(145-rise)+' L'+(rx+extent+5)+' '+(132-rise)+'" stroke="'+pal.glow+'" stroke-width="2.6" opacity=".7" class="cb-paper-set-glow"/>':'')+'</g>';
 }
 function weaponMarkup(type,pal,v,tier,item){
-  var g='';
+  var g='',klass=gearClass(item);
   if(type==='bow'){
     g='<path d="M190 116 Q225 206 188 316" fill="none" stroke="'+pal.base+'" stroke-width="'+(7+v%3)+'"/><path d="M190 116 L188 316" stroke="'+pal.trim+'" stroke-width="2"/><path d="M188 205 L220 195" stroke="'+pal.light+'" stroke-width="3"/><path d="M220 195 L213 192 L216 201Z" fill="'+pal.trim+'"/>';
   }else if(type==='crossbow'){
