@@ -27,10 +27,9 @@ function positions(){return G()?.EQUIPMENT_POSITION_ORDER||['Head','Shoulders','
 function slotForPosition(pos){return pos?.startsWith('Ring')?'Ring':pos?.startsWith('Trinket')?'Trinket':pos}
 function allItems(){return (G()?.items||[]).filter(x=>x&&x.enabled!==false)}
 function canonicalItem(){
-  const items=allItems();
-  const direct=items.find(x=>x.itemId===state.itemId);
+  const items=allItems(),slot=slotForPosition(state.position);
+  const direct=items.find(x=>x.itemId===state.itemId&&x.class===state.klass&&Number(x.tier)===Number(state.tier)&&x.slot===slot);
   if(direct)return direct;
-  const slot=slotForPosition(state.position);
   return items.find(x=>x.class===state.klass&&Number(x.tier)===Number(state.tier)&&x.slot===slot)||items[0]||null
 }
 function syncFromItem(item){
@@ -144,7 +143,8 @@ function statsHTML(){
 }
 function render(){
   const mount=$('#characterFitViewerMount');if(!mount||!opened||!isOwner())return;
-  const item=canonicalItem();if(item&&!state.itemId)syncFromItem(item);
+  const item=canonicalItem();
+  if(item&&state.itemId!==item.itemId){state.itemId=item.itemId;saveState()}
   const compareClass='cfv-compare-'+state.compare;
   mount.innerHTML='<section class="cfv-shell">'+
     '<header class="cfv-header"><div><small>OWNER CHARACTER LAB</small><h2>Character Fit Viewer</h2><p>Inspect every equipment piece against every v9 race, sex and body frame without changing live character data.</p></div><div class="cfv-header-actions"><button id="cfvAudit" type="button">RUN 36-BODY AUDIT</button><button id="cfvClose" type="button">CLOSE</button></div></header>'+
