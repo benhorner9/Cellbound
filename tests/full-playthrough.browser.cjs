@@ -30,11 +30,11 @@ function matureState(){
   };
 }
 
-async function mount(page,seedState=null){
+async function mount(page,seedState=null,owner=false){
   const errors=[];
   page.on('pageerror',e=>errors.push('pageerror: '+String(e)));
   page.on('console',msg=>{if(msg.type()==='error')errors.push('console: '+msg.text())});
-  await page.addInitScript(({seed})=>{
+  await page.addInitScript(({seed,owner})=>{
     window.__CELLBOUND_TEST_SEED=seed;
     const user={id:'playthrough-user',email:'playthrough@example.test'};
     function query(table){
@@ -60,7 +60,10 @@ async function mount(page,seedState=null){
       },
       from:query,
       rpc:async(name)=>{
-        if(name==='cellbound_social_identity')return{data:{staff_member:false,chat_badge:'player',player_mod_discount_eligible:false},error:null};
+        if(name==='cellbound_social_identity')return{data:{staff_member:owner,chat_badge:owner?'owner':'player',player_mod_discount_eligible:false},error:null};
+        if(name==='cellbound_admin_status')return{data:owner?{is_admin:true,role:'owner',auto_clear_cell_shock:false}:{is_admin:false,role:null,auto_clear_cell_shock:false},error:null};
+        if(name==='cellbound_release_status')return{data:null,error:null};
+        if(name==='cellbound_admin_market_summary')return{data:{active_gear:0,buy_orders:0,sell_orders:0,trades_24:0,volume_24:0,tax_24:0,top_items:[]},error:null};
         return{data:[],error:null};
       },
       channel:()=>{const c={on:()=>c,subscribe:()=>c,unsubscribe:()=>Promise.resolve()};return c},
@@ -69,7 +72,7 @@ async function mount(page,seedState=null){
       storage:{from:()=>({getPublicUrl:()=>({data:{publicUrl:''}})})}
     };
     window.supabase={createClient:()=>client};
-  },{seed:seedState});
+  },{seed:seedState,owner});
   await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:''}));
   await page.route('https://cellbound.test/**',async route=>{
     const u=new URL(route.request().url()),relative=u.pathname.replace(/^\/+/,'')||'index.html';
@@ -121,6 +124,7 @@ async function mainGamePlaythrough(browser){
   const errors=await mount(page,matureState());
   await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
   assert.equal(await page.locator('#rosterCount').textContent(),'5 / 5');
+  assert.equal(await page.locator('#dungeonGeneratorEntry').isVisible(),false,'non-owner accounts cannot see the dungeon generator');
 
   await page.evaluate(()=>{
     const s=CellboundGame.getState(),P=CellboundProfessions;
@@ -211,11 +215,55 @@ async function mainGamePlaythrough(browser){
   await page.close();
 }
 
+
+async function ownerDungeonGeneratorPlaythrough(browser){
+  const page=await browser.newPage({viewport:{width:1024,height:1366}});
+  const errors=await mount(page,matureState(),true);
+  await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
+  await page.waitForFunction(()=>window.CellboundAdmin?.role==='owner',{},{timeout:10000,polling:50});
+  await page.evaluate(()=>CellboundGame.switchView('admin'));
+  await page.waitForSelector('#dungeonGeneratorEntry:not([hidden])',{timeout:5000});
+  await page.locator('#openDungeonGenerator').click();
+  await page.waitForSelector('#dungeonGeneratorMount:not([hidden]) .dg-shell',{timeout:5000});
+
+  const values={
+    'basics.name':'Automation Keep',
+    'identity.concept':'A ruined keep under siege by Cell-corrupted knights.',
+    'identity.theme':'Medieval castle',
+    'identity.location':'Mountain fortress',
+    'scenes.0.name':'Outer Gate',
+    'scenes.0.environment':'Broken castle gate and stone approach.',
+    'scenes.1.name':'Throne Hall',
+    'scenes.1.environment':'Ruined royal throne hall with an open central floor.',
+    'scenes.1.bossName':'The Iron Regent'
+  };
+  for(const [pathName,value] of Object.entries(values)){
+    const input=page.locator('[data-dg-path="'+pathName+'"]');
+    await input.fill(value);
+  }
+  await page.waitForFunction(()=>!document.querySelector('#dgGenerate')?.disabled);
+  await page.locator('#dgGenerate').click();
+  await page.waitForSelector('#dgOutputText');
+  const brief=await page.locator('#dgOutputText').inputValue();
+  assert(brief.includes('Automation Keep'),'owner generator produces the dungeon brief');
+  assert(brief.includes('COMBAT REBORN STANDARD'),'generated brief automatically includes the shared combat contract');
+
+  await page.locator('[data-dg-output="config"]').click();
+  const config=JSON.parse(await page.locator('#dgOutputText').inputValue());
+  assert.equal(config.combatStandard.engine,'Combat Reborn','game config is pinned to Combat Reborn');
+  assert.equal(config.scenes.length,2,'generated config preserves the route');
+  assert(config.scenes[0].art.prompt.includes('No characters, enemies, UI, text'),'art prompts preserve clean battle-art requirements');
+  assert.equal(config.scenes[1].boss.name,'The Iron Regent','boss builder feeds the generated config');
+  assert.deepEqual(errors,[],'owner dungeon generator emitted no browser errors');
+  await page.close();
+}
+
 (async()=>{
   const browser=await engine.launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
   try{
     await creatorPlaythrough(browser);
     await mainGamePlaythrough(browser);
-    console.log('Full Cellbound browser playthrough passed: creator, party, roster, bank, professions, quests, dungeons, activities, raids, market, PvP/social shell and responsive layouts.');
+    await ownerDungeonGeneratorPlaythrough(browser);
+    console.log('Full Cellbound browser playthrough passed: creator, party, roster, bank, professions, quests, dungeons, activities, raids, market, PvP/social shell, owner dungeon generator and responsive layouts.');
   }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});
