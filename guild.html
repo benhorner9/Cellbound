@@ -59,7 +59,7 @@
   <link rel="stylesheet" href="./bank-v2.css?v=5">
   <link rel="stylesheet" href="./character-command-v1.css?v=5">
   <link rel="stylesheet" href="./character-talents-v2.css?v=2">
-  <link rel="stylesheet" href="./game-shell-v1.css?v=1">
+  <link rel="stylesheet" href="./game-shell-v1.css?v=2">
   <link rel="stylesheet" href="./game-feel-v1.css?v=3">
   <link rel="stylesheet" href="./home-loop-v1.css?v=1">
   <link rel="stylesheet" href="./layout-safety-v1.css?v=2">
@@ -79,9 +79,34 @@
 
       <div class="nav-section-label">ADVENTURE</div>
       <button class="nav-btn" data-hub="adventure" data-view="quests" data-mobile-core><span>⌁</span><b>Quests</b><em id="questNavBadge"></em></button>
-      <button class="nav-btn" data-hub="adventure" data-view="content" data-mobile-core><span>▱</span><b>Dungeons</b></button>
+      <button class="nav-btn nav-route-alias" data-hub="adventure" data-view="content" data-mobile-core><span>▱</span><b>Dungeons</b></button>
+
+      <details class="campaign-nav" data-campaign-nav open>
+        <summary class="campaign-nav-root"><span>◈</span><b>Campaigns</b><em>2 ARCS</em></summary>
+        <div class="campaign-nav-body">
+          <details class="campaign-nav-group" data-campaign-group="fractured-frontier" open>
+            <summary><div><small>CAMPAIGN I</small><b>The Fractured Frontier</b></div><span>⌄</span></summary>
+            <div class="campaign-nav-items">
+              <button type="button" data-campaign-view="content" data-campaign-target="ashen-vault"><i>01</i><b>The Ashen Vault</b></button>
+              <button type="button" data-campaign-view="content" data-campaign-target="hollow-sanctum"><i>02</i><b>The Hollow Sanctum</b></button>
+              <button type="button" data-campaign-view="content" data-campaign-target="chaos-canyon"><i>03</i><b>Chaos Canyon</b></button>
+              <button type="button" data-campaign-view="content" data-campaign-target="blackout-station"><i>04</i><b>Blackout Station</b></button>
+              <button type="button" data-campaign-view="content" data-campaign-target="fractured-ages"><i>05</i><b>The Fractured Ages</b></button>
+              <button type="button" data-campaign-view="raids" data-campaign-target="manor"><i>RAID</i><b>The Manor</b></button>
+            </div>
+          </details>
+          <details class="campaign-nav-group" data-campaign-group="the-experiment">
+            <summary><div><small>CAMPAIGN II</small><b>The Experiment</b></div><span>⌄</span></summary>
+            <div class="campaign-nav-items">
+              <button type="button" data-campaign-view="quests" data-campaign-target="null-complex-quest"><i>STORY</i><b>Signal From Nowhere</b></button>
+              <button type="button" data-campaign-view="world" data-campaign-target="null-complex"><i>ACTIVITY</i><b>The Null Complex</b></button>
+            </div>
+          </details>
+        </div>
+      </details>
+
       <button class="nav-btn" data-hub="adventure" data-view="world"><span>✦</span><b>Activities</b></button>
-      <button class="nav-btn" data-hub="adventure" data-view="raids"><span>♜</span><b>Raids</b></button>
+      <button class="nav-btn nav-route-alias" data-hub="adventure" data-view="raids"><span>♜</span><b>Raids</b></button>
 
       <div class="nav-section-label">MARKET</div>
       <button class="nav-btn" data-hub="market" data-view="trading"><span>⇄</span><b>Trading Post</b></button>
@@ -546,7 +571,7 @@
 <script src="./combat-polish-v2.js?v=1"></script>
 <script src="./combat-polish-v3.js?v=1"></script>
 <script src="./combat-physical-v4.js?v=11"></script>
-<script src="./guild-v4.js?v=76"></script>
+<script src="./guild-v4.js?v=77"></script>
 <script src="./pvp-combat-v1.js?v=2"></script>
 <script src="./pvp-viewer-v1.js?v=3"></script>
 <script src="./pvp-match-v1.js?v=3"></script>
