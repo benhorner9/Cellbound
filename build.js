@@ -1039,6 +1039,46 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   }
   console.log('PvP combat self-tests passed: '+result.passed+'/'+result.total+'.');
 }
+{
+  const playthrough=fs.readFileSync(path.join(__dirname,'tests/full-playthrough.browser.cjs'),'utf8');
+  for(const hook of [
+    'function coreGameplayLoopPlaythrough(browser)',
+    "CellboundGame.partyItemLevel()),29",
+    "data-bank-dismantle",
+    "alc-field-potion",
+    "workshopCraftProject.remainingMs=1",
+    "data-equip-char=\"rogue\"",
+    "CellboundGame.partyItemLevel()>=30",
+    "the same harder dungeon becomes enterable after progression raises party Item Level"
+  ])if(!playthrough.includes(hook))throw new Error('Beta core gameplay loop regression coverage is missing '+hook);
+
+  const quests=fs.readFileSync(path.join(__dirname,'quests-v2.js'),'utf8');
+  for(const hook of [
+    "G?.createQuestGear?.(c,slot,tier,profile",
+    "Game.addBankItem?.(item)",
+    "s.progression.ashenVaultUnlocked=true",
+    "q.flags.hollowSanctumUnlocked=true"
+  ])if(!quests.includes(hook))throw new Error('Quest-to-Bank/unlock core loop contract is missing '+hook);
+
+  const bank=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
+  for(const hook of [
+    'function equipBankItem(',
+    'function bankDismantleYield(',
+    "add('cell-shards'",
+    "Object.entries(yieldMap).forEach(([key,n])=>addMaterial(key,n))"
+  ])if(!bank.includes(hook))throw new Error('Bank equipment/salvage core loop contract is missing '+hook);
+
+  const economy=fs.readFileSync(path.join(__dirname,'economy-v2.js'),'utf8');
+  for(const hook of [
+    'function beginCraft(',
+    'function finishTimedCraft(',
+    'reserveCraftInputs(',
+    "if(out.category==='consumable')addConsumable"
+  ])if(!economy.includes(hook))throw new Error('Profession crafting core loop contract is missing '+hook);
+
+  console.log('Beta core gameplay loop contract is release-gated.');
+}
+
 console.log('Cellbound build complete.');
 console.log('Build verification passed: scripts parse and required UI hooks/assets are present.');
 
