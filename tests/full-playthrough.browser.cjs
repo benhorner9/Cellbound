@@ -30,11 +30,11 @@ function matureState(){
   };
 }
 
-async function mount(page,seedState=null,owner=false){
+async function mount(page,seedState=null,owner=false,options={}){
   const errors=[];
   page.on('pageerror',e=>errors.push('pageerror: '+String(e)));
   page.on('console',msg=>{if(msg.type()==='error')errors.push('console: '+msg.text())});
-  await page.addInitScript(({seed,owner})=>{
+  await page.addInitScript(({seed,owner,remoteUpdatedAt})=>{
     window.__CELLBOUND_TEST_SEED=seed;
     const user={id:'playthrough-user',email:'playthrough@example.test'};
     function query(table){
@@ -45,7 +45,7 @@ async function mount(page,seedState=null,owner=false){
       for(const method of ['insert','upsert','update','delete'])q[method]=()=>q;
       q.maybeSingle=async()=>({data:table==='guild_accounts'?{
         user_id:user.id,game_state:window.__CELLBOUND_TEST_SEED,
-        membership_active_until:null,membership_override:false,updated_at:new Date().toISOString()
+        membership_active_until:null,membership_override:false,updated_at:remoteUpdatedAt||new Date().toISOString()
       }:null,error:null});
       q.single=async()=>({data:null,error:null});
       q.then=(resolve,reject)=>Promise.resolve({data:[],error:null}).then(resolve,reject);
@@ -72,7 +72,7 @@ async function mount(page,seedState=null,owner=false){
       storage:{from:()=>({getPublicUrl:()=>({data:{publicUrl:''}})})}
     };
     window.supabase={createClient:()=>client};
-  },{seed:seedState,owner});
+  },{seed:seedState,owner,remoteUpdatedAt:options.remoteUpdatedAt||null});
   await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:''}));
   await page.route('https://cellbound.test/**',async route=>{
     const u=new URL(route.request().url()),relative=u.pathname.replace(/^\/+/,'')||'index.html';
@@ -117,6 +117,54 @@ async function creatorPlaythrough(browser){
   assert.deepEqual(slots,[1,1,1,1,1],'fresh characters start with exactly one profession slot');
   assert.deepEqual(errors,[],'creator/onboarding emitted no browser errors');
   await page.close();
+}
+
+async function persistenceReloadPlaythrough(browser){
+  const page=await browser.newPage({viewport:{width:1024,height:1366}});
+  const remote=matureState();
+  const errors=await mount(page,remote,false,{remoteUpdatedAt:'2026-10-01T00:00:00.000Z'});
+  await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
+
+  await page.evaluate(()=>{
+    const s=CellboundGame.getState();
+    s.gold=7777;
+    s.activity.push('Pending save survives a fast reload.');
+    CellboundGame.save();
+  });
+  assert.equal(await page.evaluate(()=>Boolean(localStorage.getItem('cellbound-management-pending-save-v1'))),true,'save marks the browser snapshot pending before cloud debounce');
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>window.CellboundGame?.ready===true,{},{timeout:10000,polling:50});
+  assert.equal(await page.evaluate(()=>CellboundGame.getState().gold),7777,'newer pending local state wins over an older cloud snapshot after reload');
+  assert.equal(await page.evaluate(()=>CellboundGame.getState().roster.length),5,'fast reload preserves the complete roster');
+
+  await page.evaluate(()=>{
+    const s=JSON.parse(localStorage.getItem('cellbound-management-reboot-v3'));
+    s.gold=1;
+    localStorage.setItem('cellbound-management-reboot-v3',JSON.stringify(s));
+    localStorage.setItem('cellbound-management-pending-save-v1',JSON.stringify({
+      userId:'playthrough-user',token:'stale-test',at:'2026-09-01T00:00:00.000Z'
+    }));
+  });
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>window.CellboundGame?.ready===true,{},{timeout:10000,polling:50});
+  assert.equal(await page.evaluate(()=>CellboundGame.getState().gold),5000,'newer cloud state beats a stale pending browser snapshot');
+  assert.deepEqual(errors,[],'persistence reload test emitted no browser errors');
+  await page.close();
+
+  const draftPage=await browser.newPage({viewport:{width:1024,height:1366}});
+  const draftErrors=await mount(draftPage,null,false,{remoteUpdatedAt:'2026-10-01T00:00:00.000Z'});
+  await draftPage.waitForFunction(()=>window.CellboundGame?.ready===true,{},{timeout:10000,polling:50});
+  await draftPage.evaluate(()=>{
+    const s=CellboundGame.getState();
+    s.roster=[];
+    s.onboarding={...(s.onboarding||{}),complete:false,stage:'party-builder',draft:{marker:'reload-draft'}};
+    CellboundGame.save();
+  });
+  await draftPage.reload({waitUntil:'domcontentloaded'});
+  await draftPage.waitForFunction(()=>window.CellboundGame?.ready===true,{},{timeout:10000,polling:50});
+  assert.equal(await draftPage.evaluate(()=>CellboundGame.getState()?.onboarding?.draft?.marker),'reload-draft','zero-roster onboarding draft survives reload');
+  assert.deepEqual(draftErrors,[],'onboarding persistence test emitted no browser errors');
+  await draftPage.close();
 }
 
 async function mainGamePlaythrough(browser){
@@ -262,8 +310,9 @@ async function ownerDungeonGeneratorPlaythrough(browser){
   const browser=await engine.launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
   try{
     await creatorPlaythrough(browser);
+    await persistenceReloadPlaythrough(browser);
     await mainGamePlaythrough(browser);
     await ownerDungeonGeneratorPlaythrough(browser);
-    console.log('Full Cellbound browser playthrough passed: creator, party, roster, bank, professions, quests, dungeons, activities, raids, market, PvP/social shell, owner dungeon generator and responsive layouts.');
+    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, party, roster, bank, professions, quests, dungeons, activities, raids, market, PvP/social shell, owner dungeon generator and responsive layouts.');
   }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});
