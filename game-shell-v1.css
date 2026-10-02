@@ -484,5 +484,6 @@ html,body{background:#050a0d}
 
 @media (max-width:720px){
   .campaign-nav{display:none}
-  .nav-route-alias{display:flex!important}
+  .nav-route-alias[data-mobile-core]{display:flex!important}
+  .nav-route-alias:not([data-mobile-core]){display:none!important}
 }
