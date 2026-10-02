@@ -1,6 +1,7 @@
 const fs=require('fs');
 const path=require('path');
 const vm=require('vm');
+const zlib=require('zlib');
 const files=['index.html','styles.css','auth.js','guild.html','guild.css','bank.css','character-sheet.css','gear-system.css','item-art-v1.css','foundations.css','presentation-fx-v1.css','combat-polish-v2.css','economy-v2.css','trading-post-v3.css','social-v3.css','pvp-v1.css','pvp-viewer-v1.css','pvp-match-v1.css','evolution-v1.css','dungeon-2d-v1.css','combat-3d-v1.css','expedition-presentation-v1.css','null-complex-v1.css','boss-dossier-v1.css','combat-status-ui-v1.css','combat-vitals-ui-v1.css','endgame-v1.css','manor-raid-v1.css','twelve-below-v1.css','admin-v1.css','living-world-v1.css','dungeon-generator-v1.css','release-v1.css','comic-scenes-v1.css','onboarding-v1.css','hollow-sanctum-v1.css','chaos-canyon-v1.css','blackout-station-v1.css','thirteenth-bell-v1.css','fourfold-lock-v1.css','no-way-back-v1.css','fractured-ages-v1.css','dungeon-theme-v1.css','quests-v1.css','quests-v2.css','mobile-v1.css','readability-v1.css','ui-readability-v2.css','ui-polish-v3.css','home-v2.css','command-ui-v1.css','roster-v2.css','character-portraits-v1.css','combat-portraits-v1.css','bank-v2.css','character-command-v1.css','character-talents-v2.css','game-shell-v1.css','game-feel-v1.css','home-loop-v1.css','layout-safety-v1.css','class-build-v1.js','gear-data.js','profession-data.js','item-art-v1.js','character-portraits-v1.js','combat-portraits-v1.js','combat-identities-v1.js','combat-reborn-v1.js','combat-standard-v1.js','combat-status-ui-v1.js','endgame-data-v1.js','presentation-fx-v1.js','combat-polish-v2.js','guild-v4.js','character-sheet.js','gear-character-patch.js','character-foundations-patch.js','economy-v2.js','trading-post-v3.js','social-v3.js','pvp-combat-v1.js','pvp-viewer-v1.js','pvp-match-v1.js','pvp-v1.js','evolution-v1.js','expedition-presentation-v1.js','null-complex-v1.js','boss-dossier-v1.js','ashen-live-scenes-v1.js','dungeon-2d-v1.js','combat-3d-v1.js','twelve-below-v1.js','admin-v1.js','living-world-v1.js','dungeon-generator-v1.js','release-v1.js','comic-scenes-v1.js','onboarding-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','thirteenth-bell-v1.js','endgame-v1.js','manor-raid-v1.js','quests-v2.js','fourfold-lock-v1.js','no-way-back-v1.js','fractured-ages-v1.js','mobile-v1.js','game-feel-v1.js'];
 files.push('combat-polish-v3.js','combat-polish-v3.css','combat-physical-v4.js','combat-physical-v4.css');
 const assets=['assets/gear/cellbound-gear-atlas.webp','assets/combat/status-icons-v1.webp','assets/bosses/ashen-vault-vaultheart.webp','assets/bosses/hollow-sanctum-bound-choir.webp','assets/bosses/chaos-canyon-vorran.webp','assets/bosses/blackout-station-calder.webp','assets/bosses/fractured-ages-old-man.webp','assets/bosses/no-way-back-three-hounds-v3.jpg','assets/bosses/no-way-back-silas-vane-v3.jpg','assets/ashen-vault/environment/floor-atlas.png','assets/ashen-vault/environment/props-atlas.png','assets/ashen-vault/battlefields/broken-gate.avif','assets/ashen-vault/battlefields/hall-embers.avif','assets/ashen-vault/battlefields/kael.avif','assets/ashen-vault/battlefields/furnace.avif','assets/ashen-vault/battlefields/embermaw.avif','assets/ashen-vault/battlefields/vault-depths.avif','assets/ashen-vault/battlefields/vaultheart.avif','assets/chaos-canyon/rooms/canyon-mouth.webp','assets/chaos-canyon/rooms/thorn-trail.webp','assets/chaos-canyon/rooms/sentinel.webp','assets/chaos-canyon/rooms/crossing.webp','assets/chaos-canyon/rooms/warden.webp','assets/chaos-canyon/rooms/wildheart.webp','assets/chaos-canyon/rooms/vorran.webp','assets/hollow-sanctum/rooms/gallery.webp','assets/hollow-sanctum/rooms/sentinel.webp','assets/hollow-sanctum/rooms/choir.webp','assets/blackout-station/rooms/reactor-core.webp','assets/fractured-ages/rooms/high-noon.webp','assets/fractured-ages/rooms/iron-kingdom.webp','assets/fractured-ages/rooms/first-kingdom.webp','assets/fractured-ages/rooms/silent-frontier.webp','assets/fractured-ages/rooms/funhouse.webp','assets/dungeons/ashen-vault.webp','assets/dungeons/hollow-sanctum.webp','assets/dungeons/chaos-canyon.webp','assets/dungeons/blackout-station.webp','assets/dungeons/fractured-ages.webp','assets/world/twelve-below-key-art.webp','assets/manor/manor-butler.webp','assets/manor/manor-maids.webp','assets/manor/manor-engineer.webp','assets/manor/manor-master.webp','assets/manor/manor-raid-hero.webp','assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp','assets/comics/tutorial/moonlit_ruins_and_the_glowing_wardstone.webp','assets/comics/tutorial/the_quartermaster_s_choice.webp','assets/comics/tutorial/warden_s_descent_into_the_ruins.webp','assets/comics/tutorial/the_warden_and_the_arcane_diadem.webp','assets/comics/tutorial/arcane_overload_a_warden_s_lesson.webp','assets/comics/tutorial/arcane_forge_beneath_the_twilight_citadel.webp','assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp','assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp','assets/comics/thirteenth-bell/sealed_letter.jpg','assets/comics/thirteenth-bell/greywake_arrival.jpg','assets/comics/thirteenth-bell/locked_house.jpg','assets/comics/thirteenth-bell/final_run.jpg','assets/comics/thirteenth-bell/bellkeeper.jpg','assets/comics/thirteenth-bell/bell_breaks.jpg','assets/comics/thirteenth-bell/greywake_freed.jpg','assets/comics/thirteenth-bell/departure.jpg','assets/comics/null-complex/voss-signal.webp','assets/comics/null-complex/facility-entry.webp','assets/comics/null-complex/first-aberrant.webp','assets/comics/null-complex/orin-recording.webp','assets/comics/null-complex/subject-zero.webp','assets/comics/null-complex/teleporter.webp','assets/comics/null-complex/overseer-awakens.webp','assets/comics/null-complex/prototype-07.webp','assets/comics/null-complex/escape.webp','assets/comics/null-complex/subject-zero-awake.webp'];
@@ -42,7 +43,7 @@ for(const file of files){
   }
 
   if(file==='living-world-v1.js'){
-    for(const hook of ["cellbound-owner-living-world-v1","toLowerCase()==='owner'","cellbound:admin-status","data-lw-place","data-lw-service"])if(!contents.includes(hook))throw new Error('Living World owner gate/navigation is missing '+hook);
+    for(const hook of ["cellbound-owner-living-world-v1","toLowerCase()==='owner'","cellbound:admin-status","data-lw-place","data-lw-service","zelitra-town-square.webp","cb-lw-hotspot","OWNER PREVIEW · PHASE 1"])if(!contents.includes(hook))throw new Error('Living World owner gate/navigation is missing '+hook);
   }
   if(file==='home-v2.css'){
     for(const hook of [".home-destination.raids","url('./assets/manor/manor-raid-hero.webp')",".home-destination.raids:after"])if(!contents.includes(hook))throw new Error('Home Manor raid artwork styling is missing '+hook);
@@ -634,7 +635,37 @@ for(const htmlFile of ['index.html','guild.html']){
   const localRuntimeRefs=[...html.matchAll(/(?:src|href)="\.\/([^"?]+\.(?:js|css))(?:\?[^"]*)?"/g)].map(m=>m[1]);
   for(const ref of localRuntimeRefs)if(!fs.existsSync(path.join(out,ref)))throw new Error(`HTML references runtime asset missing from production package: ${htmlFile} -> ${ref}`);
 }
+
 for(const file of assets){const src=path.join(__dirname,file),dest=path.join(out,file);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(src,dest)}
+/* Reconstruct the owner-only Living World art bundle from one repository-safe archive. */
+{
+  const archivePath=path.join(__dirname,'asset-source','living-world-phase1-assets.zip');
+  if(!fs.existsSync(archivePath))throw new Error('Missing Living World phase 1 art archive');
+  const zip=fs.readFileSync(archivePath);
+  const outputDir=path.join(out,'assets','living-world');
+  fs.mkdirSync(outputDir,{recursive:true});
+  const allowed=new Set(['zelitra-town-square.webp','lantern-inn.webp','bank.webp','artisans-hall.webp','warden-post.webp','expedition-gate.webp','merchant-exchange.webp','common-house.webp']);
+  let pos=0,found=0;
+  while(pos+30<=zip.length&&zip.readUInt32LE(pos)===0x04034b50){
+    const flags=zip.readUInt16LE(pos+6),method=zip.readUInt16LE(pos+8);
+    const compressedSize=zip.readUInt32LE(pos+18),nameLen=zip.readUInt16LE(pos+26),extraLen=zip.readUInt16LE(pos+28);
+    if(flags&0x08)throw new Error('Living World archive uses unsupported data descriptors');
+    const name=zip.subarray(pos+30,pos+30+nameLen).toString('utf8');
+    const dataStart=pos+30+nameLen+extraLen,dataEnd=dataStart+compressedSize;
+    if(dataEnd>zip.length)throw new Error('Living World archive is truncated');
+    if(allowed.has(name)){
+      const packed=zip.subarray(dataStart,dataEnd);
+      const bytes=method===8?zlib.inflateRawSync(packed):method===0?packed:null;
+      if(!bytes||bytes.length<12000)throw new Error('Living World asset failed reconstruction: '+name);
+      if(bytes.subarray(0,4).toString('ascii')!=='RIFF'||bytes.subarray(8,12).toString('ascii')!=='WEBP')throw new Error('Living World asset is not WebP: '+name);
+      fs.writeFileSync(path.join(outputDir,name),bytes);
+      found++;
+    }
+    pos=dataEnd;
+  }
+  if(found!==allowed.size)throw new Error('Living World art archive incomplete: '+found+'/'+allowed.size);
+}
+
 /* Reconstruct bespoke Ashen Vault battlefields from repository-safe base64 sources. */
 {
   const slugs=['broken-gate','hall-embers','kael','furnace','embermaw','vault-depths','vaultheart'];
