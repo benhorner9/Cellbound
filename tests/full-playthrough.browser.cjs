@@ -345,8 +345,20 @@ async function coreGameplayLoopPlaythrough(browser){
   await page.locator('[data-bank-cleanup-all]').click();
   await page.locator('[data-bank-dismantle]').click();
   await page.waitForFunction(()=>Number(CellboundGame.getState().materials?.['faded-cell-fragment'])>=2,{},{timeout:5000,polling:50});
-  assert.equal(await page.evaluate(()=>Number(CellboundGame.getState().materials?.['faded-cell-fragment'])||0),2,'dismantling two Tier 1 caster items yields the two fragments needed for the first Alchemy craft');
+  assert.equal(await page.evaluate(()=>Number(CellboundGame.getState().materials?.['faded-cell-fragment'])||0),2,'dismantling two Tier 1 caster items returns salvage material');
   assert(await page.evaluate(()=>Number(CellboundGame.getState().materials?.['cell-shards'])>=4),'dismantling also feeds the item-upgrade currency loop');
+
+  const bossReagents=await page.evaluate(()=>{
+    const originalRandom=Math.random;Math.random=()=>0;
+    try{
+      const drops=CellboundProfessions.rollReagents('ashwarden');
+      drops.forEach(d=>CellboundGame.addMaterial(d.key,d.quantity));
+      CellboundGame.renderAll();
+      return drops;
+    }finally{Math.random=originalRandom}
+  });
+  assert(bossReagents.some(x=>x.key==='hollowroot'&&Number(x.quantity)>=2),'real Ash Warden profession-reagent roll supplies an early Alchemy reagent');
+  assert(await page.evaluate(()=>Number(CellboundGame.getState().materials?.hollowroot)>=2),'dungeon profession reagents enter shared Guild materials');
 
   await page.evaluate(()=>CellboundGame.switchView('professions'));
   await page.waitForSelector('#professionCharacterList [data-prof-char="tank"]',{timeout:5000});
@@ -357,7 +369,8 @@ async function coreGameplayLoopPlaythrough(browser){
     return{
       disabled:Boolean(button?.disabled),
       profession:s.roster.find(c=>c.id==='tank')?.professions?.[0]||null,
-      fragments:Number(s.materials?.['faded-cell-fragment'])||0,
+      hollowroot:Number(s.materials?.hollowroot)||0,
+      inputs:CellboundProfessions.recipeById('alc-field-potion')?.inputs||{},
       reason:card?.querySelector('.recipe-lock-reason')?.textContent||''
     };
   });
@@ -369,7 +382,8 @@ async function coreGameplayLoopPlaythrough(browser){
     const s=CellboundGame.getState();
     return !s.workshopCraftProject&&s.consumables?.some(x=>x.key==='field-recovery-potion'&&Number(x.quantity)>0);
   },{},{timeout:5000,polling:50});
-  assert.equal(await page.evaluate(()=>Number(CellboundGame.getState().materials?.['faded-cell-fragment'])||0),0,'crafting consumes the recovered dismantle materials');
+  assert.equal(await page.evaluate(()=>Number(CellboundGame.getState().materials?.hollowroot)||0),0,'crafting consumes the dungeon profession reagents');
+  assert.equal(await page.evaluate(()=>Number(CellboundGame.getState().materials?.['faded-cell-fragment'])||0),2,'salvage materials remain available for their own economy path');
   assert(await page.evaluate(()=>CellboundGame.getState().consumables.some(x=>x.key==='field-recovery-potion'&&Number(x.quantity)>0)),'completed craft returns a usable preparation item to shared Guild stock');
 
   await page.evaluate(()=>CellboundGame.switchView('bank'));
