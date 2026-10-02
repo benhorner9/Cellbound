@@ -422,7 +422,7 @@ function gearFitProfile(c,item){
     leftLeg:120-p.hip*.47,rightLeg:120+p.hip*.47,
     legHalf:legHalf,calfHalf:calfHalf,footHalf:footHalf,
     chestTop:gender===1?121:119,chestBottom:252,
-    weaponX:rightHand+8,offhandX:leftHand-8,
+    weaponX:rightHand-2,offhandX:leftHand-8,
     headGearScaleX:gender===1?.94:1
   };
 }
@@ -874,12 +874,62 @@ function weaponMarkup(type,pal,v,tier,item){
   if(tier>=4&&!pal.set)g+='<circle cx="196" cy="176" r="2.4" fill="'+pal.glow+'" opacity=".6" class="cb-paper-glow"/>';
   return g;
 }
+function weaponFitProfile(c,item){
+  var fit=gearFitProfile(c,item),type=weaponType(item,c),klass=gearClass(item);
+  var map={
+    bow:{pivotX:190,pivotY:205,dx:-4,dy:-2,rotate:-4,scale:.96},
+    crossbow:{pivotX:202,pivotY:214,dx:-4,dy:-2,rotate:-4,scale:.94},
+    spear:{pivotX:200,pivotY:283,dx:-2,dy:0,rotate:-2,scale:1},
+    axe:{pivotX:203,pivotY:283,dx:-2,dy:0,rotate:-5,scale:1},
+    hammer:{pivotX:203,pivotY:283,dx:-2,dy:0,rotate:-4,scale:1},
+    mace:{pivotX:203,pivotY:283,dx:-2,dy:0,rotate:-4,scale:.99},
+    dagger:{pivotX:188,pivotY:240,dx:-3,dy:0,rotate:-7,scale:.98},
+    wand:{pivotX:201,pivotY:283,dx:-2,dy:0,rotate:-4,scale:.98},
+    focus:{pivotX:197,pivotY:283,dx:-3,dy:0,rotate:-4,scale:.97},
+    scepter:{pivotX:201,pivotY:283,dx:-2,dy:0,rotate:-4,scale:.99},
+    rod:{pivotX:201,pivotY:283,dx:-2,dy:0,rotate:-4,scale:.99},
+    staff:{pivotX:200,pivotY:283,dx:-2,dy:0,rotate:-2,scale:1},
+    greatsword:{pivotX:203,pivotY:283,dx:-2,dy:0,rotate:-3,scale:1.02},
+    sword:{pivotX:203,pivotY:283,dx:-2,dy:0,rotate:-5,scale:1}
+  };
+  var p=Object.assign({},map[type]||map.sword);
+  var classNudge={
+    Warrior:{dx:-1,dy:0,rotate:-1},
+    Paladin:{dx:-1,dy:0,rotate:0},
+    Priest:{dx:-2,dy:0,rotate:1},
+    Druid:{dx:-2,dy:0,rotate:1},
+    Hunter:{dx:-3,dy:-1,rotate:0},
+    Rogue:{dx:-2,dy:1,rotate:-2},
+    Mage:{dx:-2,dy:0,rotate:1},
+    Shaman:{dx:-1,dy:0,rotate:0},
+    Warlock:{dx:-2,dy:0,rotate:1},
+    Monk:{dx:-2,dy:0,rotate:1},
+    'Death Knight':{dx:-1,dy:0,rotate:-1},
+    'Demon Hunter':{dx:-2,dy:1,rotate:-2},
+    Evoker:{dx:-2,dy:0,rotate:1}
+  }[klass]||{dx:0,dy:0,rotate:0};
+  var frameNudge=fit.frame===0?-1:fit.frame===2?1:0;
+  return {
+    type:type,klass:klass,
+    anchorX:fit.weaponX+p.dx+classNudge.dx+frameNudge,
+    anchorY:fit.handY+p.dy+classNudge.dy,
+    pivotX:p.pivotX,pivotY:p.pivotY,
+    rotate:p.rotate+classNudge.rotate,
+    scale:p.scale,
+    handScale:Math.max(.94,Math.min(1.08,fit.p.hand||1)),
+    body:fit
+  };
+}
 function paperWeapon(c,highlighted){
   var item=itemForSlot(c,'Weapon'),tier=clampTier(item&&item.tier);
   if(!item)return'';
-  var pal=gearPalette(c,item,tier,'Weapon'),type=weaponType(item,c),v=pal.variant,fit=gearFitProfile(c,item),tv=tierVisualProfile(tier);
-  var scale=Math.max(.94,Math.min(1.08,fit.p.hand||1))*tv.weapon;
-  return '<g class="'+paperSlotClass('Weapon',highlighted,item)+'" transform="translate('+fit.weaponX+' '+fit.handY+') scale('+scale+') translate(-200 -283)" data-weapon-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'Weapon'))+'">'+weaponMarkup(type,pal,v,tier,item)+tierWeaponAdornment(item,pal,tier,type)+'</g>';
+  var pal=gearPalette(c,item,tier,'Weapon'),type=weaponType(item,c),v=pal.variant,wf=weaponFitProfile(c,item),tv=tierVisualProfile(tier);
+  var scale=wf.handScale*wf.scale*tv.weapon;
+  return '<g class="'+paperSlotClass('Weapon',highlighted,item)+' cb-paper-front-weapon" data-render-layer="front" data-weapon-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'Weapon'))+'" data-grip-x="'+wf.anchorX.toFixed(2)+'" data-grip-y="'+wf.anchorY.toFixed(2)+'">'+
+    '<g transform="translate('+wf.anchorX+' '+wf.anchorY+') rotate('+wf.rotate+') scale('+scale+') translate(-'+wf.pivotX+' -'+wf.pivotY+')">'+
+      weaponMarkup(type,pal,v,tier,item)+tierWeaponAdornment(item,pal,tier,type)+
+    '</g>'+
+  '</g>';
 }
 function offHandMarkup(type,pal,v,tier,item){
   var klass=gearClass(item),out='';
@@ -1141,7 +1191,8 @@ function paperDollSVG(c,opts){
     paperLegs(model,skin,highlighted)+paperFeet(model,skin,highlighted)+
     paperArms(model,skin,highlighted)+paperChest(model,highlighted)+paperWaist(model,highlighted)+paperShoulders(model,highlighted)+paperAccessories(model,highlighted)+
     '<g transform="translate('+headX+' '+headY+') scale('+headScale+')">'+paperHeadGearOnly(model,highlighted)+'</g>'+
-    paperWeapon(model,highlighted)+paperOffHandFront(model,highlighted)+
+    paperOffHandFront(model,highlighted)+
+    paperWeapon(model,highlighted)+
     '</svg>';
 }
 function paperDollHTML(subject,opts){
@@ -1159,7 +1210,7 @@ function visualProfile(subject,item,slot){
 window.CellboundPortraits={
   version:9,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
-  applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,bodyProfile:bodyProfile,gearFitProfile:gearFitProfile,
+  applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,bodyProfile:bodyProfile,gearFitProfile:gearFitProfile,weaponFitProfile:weaponFitProfile,
   visualProfile:visualProfile,weaponType:weaponType,offHandType:offHandType,
   editorHTML:editorHTML,bindEditor:bindEditor
 };
