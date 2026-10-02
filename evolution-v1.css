@@ -961,3 +961,127 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:1px solid 
     width:100%!important
   }
 }
+
+
+/* Dungeon Journal episode dropdowns */
+.dungeon-episode-list{
+  display:grid;
+  gap:12px;
+  margin-bottom:18px;
+}
+.dungeon-episode{
+  overflow:hidden;
+  border:1px solid rgba(216,185,118,.13);
+  background:linear-gradient(180deg,rgba(13,23,25,.94),rgba(7,14,17,.96));
+  box-shadow:var(--cb-shadow);
+}
+.dungeon-episode>summary{
+  list-style:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.dungeon-episode>summary::-webkit-details-marker{display:none}
+.dungeon-episode-summary{
+  min-height:76px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  padding:15px 18px;
+  cursor:pointer;
+  user-select:none;
+  background:
+    linear-gradient(90deg,rgba(216,185,118,.055),transparent 44%),
+    #0a1316;
+  transition:background .16s ease,border-color .16s ease;
+}
+.dungeon-episode-summary:hover{
+  background:
+    linear-gradient(90deg,rgba(216,185,118,.09),transparent 52%),
+    #0b1518;
+}
+.dungeon-episode-summary small{
+  display:block;
+  color:#9c8150;
+  font-size:.42rem;
+  font-weight:900;
+  letter-spacing:.16em;
+}
+.dungeon-episode-summary h3{
+  margin:3px 0 0;
+  color:#eee6d8;
+  font-family:Georgia,serif;
+  font-size:1.28rem;
+  font-weight:400;
+}
+.dungeon-episode-summary p{
+  margin:5px 0 0;
+  color:#74817c;
+  font-size:.52rem;
+  line-height:1.4;
+}
+.dungeon-episode-summary>span{
+  flex:none;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.dungeon-episode-summary>span b{
+  padding:5px 8px;
+  border:1px solid rgba(216,185,118,.12);
+  color:#95835f;
+  font-size:.4rem;
+  letter-spacing:.1em;
+}
+.dungeon-episode-summary>span i{
+  color:#c3a766;
+  font-size:.8rem;
+  font-style:normal;
+  transition:transform .16s ease;
+}
+.dungeon-episode[open]>.dungeon-episode-summary{
+  border-bottom:1px solid rgba(216,185,118,.10);
+}
+.dungeon-episode[open]>.dungeon-episode-summary>span i{
+  transform:rotate(180deg);
+}
+.dungeon-episode-grid{
+  margin:0;
+  padding:14px;
+}
+.dungeon-episode-empty{
+  display:flex;
+  align-items:center;
+  gap:13px;
+  min-height:88px;
+  padding:18px;
+  color:#66736e;
+}
+.dungeon-episode-empty>i{
+  width:38px;
+  height:38px;
+  display:grid;
+  place-items:center;
+  flex:none;
+  border:1px solid rgba(216,185,118,.12);
+  color:#7f6f50;
+  font-style:normal;
+}
+.dungeon-episode-empty b{
+  display:block;
+  color:#9a968b;
+  font-size:.62rem;
+}
+.dungeon-episode-empty span{
+  display:block;
+  margin-top:4px;
+  color:#626e69;
+  font-size:.5rem;
+}
+
+@media(max-width:620px){
+  .dungeon-episode-summary{min-height:68px;padding:12px 13px;gap:10px}
+  .dungeon-episode-summary h3{font-size:1.08rem}
+  .dungeon-episode-summary p{display:none}
+  .dungeon-episode-summary>span b{display:none}
+  .dungeon-episode-grid{padding:10px}
+}
