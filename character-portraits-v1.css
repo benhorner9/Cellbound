@@ -587,3 +587,55 @@
   .cb-paper-slot{transition:none}
   .cb-paper-set-glow,.cb-paper-glow{filter:none}
 }
+
+
+/* Character model v5 — illustrated race base + modular equipment layers */
+.cb-paper-doll--equipment{
+  width:min(100%,268px);
+  height:382px;
+}
+.cb-paper-doll--equipment svg{
+  shape-rendering:geometricPrecision;
+  text-rendering:geometricPrecision;
+}
+.cb-paper-doll--equipment .cb-paper-arms,
+.cb-paper-doll--equipment .cb-paper-head,
+.cb-paper-doll--equipment .cb-paper-underlayer{
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.22));
+}
+.cb-paper-doll--equipment .cb-paper-slot{
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.28));
+}
+.cb-paper-doll--equipment .cb-paper-slot.is-set-item{
+  filter:
+    drop-shadow(0 2px 2px rgba(0,0,0,.3))
+    drop-shadow(0 0 3px color-mix(in srgb,var(--cbp-set-glow,var(--cbp-accent)) 28%,transparent));
+}
+.cb-paper-doll--equipment .cb-paper-back-layer{
+  filter:drop-shadow(0 5px 5px rgba(0,0,0,.28));
+}
+.cb-paper-doll--equipment .cb-paper-race-detail{
+  opacity:.92;
+}
+.cb-paper-doll--equipment svg path,
+.cb-paper-doll--equipment svg rect,
+.cb-paper-doll--equipment svg circle,
+.cb-paper-doll--equipment svg ellipse{
+  stroke-linejoin:round;
+  stroke-linecap:round;
+}
+.cb-equipment-visual-model{
+  height:350px;
+}
+@media(max-width:1100px){
+  .cb-paper-doll--equipment{width:236px;height:350px}
+  .cb-equipment-visual-model{height:322px}
+}
+@media(max-width:850px){
+  .cb-paper-doll--equipment{width:258px;height:376px}
+  .cb-equipment-visual-model{height:362px}
+}
+@media(max-width:620px){
+  .cb-paper-doll--equipment{width:218px;height:330px}
+  .cb-equipment-visual-model{height:316px}
+}
