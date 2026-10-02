@@ -148,7 +148,7 @@ for(const file of files){
   if(file==='combat-standard-v1.js'&&!contents.includes('professionZone:meta.zone'))throw new Error('Combat gateway must pass encounter zone for Scribing');
 
   if(file==='character-portraits-v1.js'){
-    for(const hook of ['window.CellboundPortraits','normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','gearFitProfile','weaponFitProfile','paperHeadGearOnly','tierVisualProfile','tierChestAdornment','tierHeadAdornment','tierWeaponAdornment','tierOffHandAdornment','paperOffHandBack','paperOffHandFront','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
+    for(const hook of ['window.CellboundPortraits','CHARACTER_MODEL_VERSION=9',"CHARACTER_MODEL_CONTRACT='v9-beta-locked'","EQUIPMENT_LAYER_CONTRACT='shield-back|body|armour|front-offhand|mainhand-front'",'normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','gearFitProfile','weaponFitProfile','paperHeadGearOnly','tierVisualProfile','tierChestAdornment','tierHeadAdornment','tierWeaponAdornment','tierOffHandAdornment','paperOffHandBack','paperOffHandFront','data-chest-top','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
     if(!contents.includes("if(item.slot&&item.slot!=='OffHand')return''"))throw new Error('Paper doll must not invent an OffHand visual for main-hand weapons');
     if(!contents.includes('var baseFigure=illustratedBaseFigure(model')||contents.includes('paperBodyBase(model,a,skin,profile,uid)'))throw new Error('Equipped gear must layer over the same v9 illustrated character body used by the base model');
     for(const hook of ['leftRingX=fit.leftHand','rightRingX=fit.rightHand','fit.weaponX','fit.offhandX','fit.leftLeg','fit.rightLeg'])if(!contents.includes(hook))throw new Error('Adaptive equipment fitting is missing '+hook);
@@ -165,7 +165,7 @@ for(const file of files){
     for(const hook of ['#party .party-choice{','grid-template-columns:56px minmax(0,1fr) auto','#party .party-choice>div:nth-child(2){','text-overflow:ellipsis'])if(!contents.includes(hook))throw new Error('Active Party portrait/text spacing is missing '+hook);
   }
   if(file==='character-fit-viewer-v1.js'){
-    for(const hook of ['function isOwner()','function auditCurrent()','36 bodies','compare===\'frames\'','compare===\'sexes\'','compare===\'races\'','AUTO CYCLE ITEMS','SHOW FIT POINTS','gearFitProfile'])if(!contents.includes(hook))throw new Error('Owner Character Fit Viewer is missing '+hook);
+    for(const hook of ['function isOwner()','function auditCurrent()','function auditBetaMatrix()','function validateCharacter(','36 bodies','RUN BETA MATRIX','CP()?.modelContract','compare===\'frames\'','compare===\'sexes\'','compare===\'races\'','AUTO CYCLE ITEMS','SHOW FIT POINTS','gearFitProfile','main-hand weapon is not on the front layer','shield must remain behind the body'])if(!contents.includes(hook))throw new Error('Owner Character Fit Viewer is missing '+hook);
     if(!contents.includes("toLowerCase()==='owner'"))throw new Error('Character Fit Viewer must remain owner-only');
     if(contents.includes('Game.save')||contents.includes('persistState'))throw new Error('Character Fit Viewer must not mutate live game state');
   }
@@ -701,6 +701,54 @@ for(const file of files){
     }
   }
 
+}
+
+/* Beta character/equipment lock: every generated catalogue loadout must render
+   safely on every v9 race/sex/frame combination at every gear tier. */
+{
+  const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;sandbox.globalThis=sandbox;
+  vm.createContext(sandbox);
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'class-build-v1.js'),'utf8'),sandbox,{filename:'class-build-v1.js'});
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'gear-data.js'),'utf8'),sandbox,{filename:'gear-data.js'});
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),sandbox,{filename:'character-portraits-v1.js'});
+  const G=sandbox.CellboundGear,P=sandbox.CellboundPortraits;
+  if(!G||!P)throw new Error('Beta character/equipment lock runtime failed to load');
+  if(P.version!==9||P.modelContract!=='v9-beta-locked')throw new Error('Character model v9 beta lock is missing');
+  if(P.equipmentLayerContract!=='shield-back|body|armour|front-offhand|mainhand-front')throw new Error('Equipment layer contract changed without an intentional beta model revision');
+  const races=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'],positions=G.EQUIPMENT_POSITION_ORDER;
+  const slotFor=pos=>pos.startsWith('Ring')?'Ring':pos.startsWith('Trinket')?'Trinket':pos;
+  const tiers=[1,2,3,4,5].map(t=>P.tierVisualProfile(t));
+  for(let i=1;i<tiers.length;i++){
+    const before=tiers[i-1],after=tiers[i];
+    if(!(after.shoulder>before.shoulder&&after.chest>before.chest&&after.collar>before.collar&&after.weapon>before.weapon))throw new Error('Gear tier silhouette progression is not strictly increasing from Tier '+i+' to Tier '+(i+1));
+  }
+  let checked=0;
+  for(const klass of G.CLASS_ORDER)for(const tier of [1,2,3,4,5])for(const race of races)for(const gender of [0,1])for(const frame of [0,1,2]){
+    const equipment={};
+    for(const pos of positions){
+      const slot=slotFor(pos),item=G.items.find(x=>x.class===klass&&Number(x.tier)===tier&&x.slot===slot);
+      if(!item)throw new Error('Character beta matrix is missing '+klass+' Tier '+tier+' '+pos);
+      equipment[pos]=item;
+    }
+    const appearance={race,gender,frame,skinTone:2,face:0,hair:0,hairColor:0,facialHair:0,marking:0,eyes:0,feature:0};
+    const c={id:'beta-lock-'+checked,name:'Beta Lock',race,class:klass,spec:'',level:15,power:100,appearance,equipment};
+    const html=P.paperDollHTML(c,{size:'equipment',showGear:true}),fit=P.gearFitProfile(c),wf=P.weaponFitProfile(c,equipment.Weapon);
+    if(/NaN|undefined/.test(html))throw new Error('Broken character SVG in beta matrix: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
+    for(const key of ['leftShoulder','rightShoulder','leftHand','rightHand','waistHalf','hipHalf','leftLeg','rightLeg','weaponX','offhandX'])if(!Number.isFinite(fit[key]))throw new Error('Invalid '+key+' in beta matrix: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
+    if(![wf.anchorX,wf.anchorY,wf.pivotX,wf.pivotY,wf.rotate,wf.scale].every(Number.isFinite))throw new Error('Invalid main-hand weapon fit in beta matrix: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
+    for(const pos of positions)if(!html.includes('cb-paper-slot-'+pos.toLowerCase()))throw new Error('Missing '+pos+' render in beta matrix: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
+    const chestTop=Number(html.match(/data-chest-top="([0-9.]+)"/)?.[1]);
+    if(!Number.isFinite(chestTop)||chestTop>121.01)throw new Error('Chest armour dropped below the locked upper-torso anchor: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
+    const baseAt=html.indexOf('cb-illustrated-base'),weaponAt=html.indexOf('cb-paper-front-weapon'),offType=P.offHandType(equipment.OffHand,c),offAt=html.indexOf('data-offhand-type="'+offType+'"');
+    if(baseAt<0||weaponAt<0||offAt<0)throw new Error('Required equipment layer marker missing in beta matrix: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
+    if(weaponAt<baseAt)throw new Error('Main-hand weapon fell behind the character body: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
+    if(offType==='shield'&&offAt>baseAt)throw new Error('Shield moved in front of the body: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
+    if(offType!=='shield'&&(offAt<baseAt||weaponAt<offAt))throw new Error('Front off-hand/main-hand layer order regressed: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
+    checked++;
+  }
+  const expected=G.CLASS_ORDER.length*5*races.length*2*3;
+  if(checked!==expected)throw new Error('Character beta matrix coverage incomplete: '+checked+' / '+expected);
+  console.log('Character v9 beta lock passed '+checked+' class/tier/body combinations.');
 }
 
 for(const htmlFile of ['index.html','guild.html']){

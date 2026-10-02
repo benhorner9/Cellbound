@@ -114,6 +114,31 @@ function groupedItemOptions(){
     return '<optgroup label="'+esc(klass)+'">'+rows+'</optgroup>';
   }).join('');
 }
+function validateCharacter(c,{highlight='',requireFull=false}={}){
+  const P=CP(),html=P.paperDollHTML(c,{size:'equipment',highlightedSlot:highlight,showGear:true}),fit=P.gearFitProfile(c);
+  const nums=['leftShoulder','rightShoulder','leftHand','rightHand','waistHalf','hipHalf','leftLeg','rightLeg','weaponX','offhandX'];
+  if(nums.some(k=>!Number.isFinite(fit[k])))throw new Error('invalid anchors');
+  if(/NaN|undefined/.test(html))throw new Error('invalid SVG output');
+  if(!(fit.leftShoulder<fit.rightShoulder&&fit.leftLeg<fit.rightLeg&&fit.waistHalf>0&&fit.hipHalf>0))throw new Error('invalid body anchor ordering');
+  if(c.equipment?.Chest){
+    const match=html.match(/data-chest-top="([0-9.]+)"/),top=Number(match?.[1]);
+    if(!Number.isFinite(top)||top>121.01)throw new Error('chest armour is not locked to the raised torso anchor');
+  }
+  const baseAt=html.indexOf('cb-illustrated-base'),weaponAt=html.indexOf('cb-paper-front-weapon');
+  if(c.equipment?.Weapon&&(weaponAt<0||weaponAt<baseAt))throw new Error('main-hand weapon is not on the front layer');
+  if(c.equipment?.OffHand){
+    const type=P.offHandType(c.equipment.OffHand,c),offAt=html.indexOf('data-offhand-type="'+type+'"');
+    if(offAt<0)throw new Error('off-hand layer missing');
+    if(type==='shield'&&offAt>baseAt)throw new Error('shield must remain behind the body');
+    if(type!=='shield'&&offAt<baseAt)throw new Error('non-shield off-hand must remain in front');
+    if(c.equipment?.Weapon&&type!=='shield'&&weaponAt<offAt)throw new Error('main-hand must remain above front off-hand');
+  }
+  if(requireFull){
+    for(const pos of positions())if(!c.equipment?.[pos])throw new Error('catalogue missing '+pos);
+    for(const pos of positions())if(!html.includes('cb-paper-slot-'+String(pos).toLowerCase()))throw new Error('render missing '+pos);
+  }
+  return html;
+}
 function auditCurrent(){
   const P=CP(),item=canonicalItem();
   if(!P?.paperDollHTML||!P?.gearFitProfile)return{ok:0,total:0,failures:['Character visual engine unavailable.']};
@@ -122,20 +147,39 @@ function auditCurrent(){
   const failures=[];let ok=0;
   for(const body of cases){
     try{
-      const c=character(body),html=P.paperDollHTML(c,{size:'equipment',highlightedSlot:state.loadout==='single'?state.position:'',showGear:state.loadout!=='base'}),fit=P.gearFitProfile(c);
-      const nums=['leftShoulder','rightShoulder','leftHand','rightHand','waistHalf','hipHalf','leftLeg','rightLeg','weaponX','offhandX'];
-      if(nums.some(k=>!Number.isFinite(fit[k])))throw new Error('invalid anchors');
-      if(/NaN|undefined/.test(html))throw new Error('invalid SVG output');
+      const c=character(body),html=validateCharacter(c,{highlight:state.loadout==='single'?state.position:''});
       if(state.loadout==='single'&&item&&!html.includes('cb-paper-slot-'+String(state.position).toLowerCase()))throw new Error('selected slot missing');
       ok++;
     }catch(error){failures.push(body.race+' '+GENDER_NAMES[body.gender]+' '+FRAME_NAMES[body.frame]+': '+(error?.message||error))}
   }
   return{ok,total:cases.length,failures};
 }
+function auditBetaMatrix(){
+  const P=CP(),classes=G()?.CLASS_ORDER||[];
+  if(!P?.paperDollHTML||!P?.gearFitProfile||!classes.length)return{ok:0,total:0,failures:['Character visual engine unavailable.']};
+  const failures=[];let ok=0,total=0;
+  for(const klass of classes)for(const tier of [1,2,3,4,5])for(const race of RACES)for(const gender of [0,1])for(const frame of [0,1,2]){
+    total++;
+    try{
+      const a={race,gender,frame,skinTone:Number(state.skinTone)||0,face:0,hair:0,hairColor:0,facialHair:0,marking:0,eyes:0,feature:0};
+      const c={id:'beta-fit-'+klass+'-'+tier+'-'+race+'-'+gender+'-'+frame,name:'Beta Fit',race,class:klass,spec:'',level:15,power:100,cellShock:0,appearance:a,equipment:loadoutFor(klass,tier,'full',null,null)};
+      validateCharacter(c,{requireFull:true});
+      ok++;
+    }catch(error){
+      if(failures.length<30)failures.push(klass+' T'+tier+' · '+race+' '+GENDER_NAMES[gender]+' '+FRAME_NAMES[frame]+': '+(error?.message||error));
+    }
+  }
+  const tiers=[1,2,3,4,5].map(t=>P.tierVisualProfile?.(t));
+  if(tiers.some(x=>!x)||tiers.some((x,i)=>i&&!(x.shoulder>tiers[i-1].shoulder&&x.chest>tiers[i-1].chest&&x.weapon>tiers[i-1].weapon))){
+    failures.push('Tier silhouette contract is not strictly progressive from T1 to T5.');
+  }
+  return{ok,total,failures};
+}
 function statsHTML(){
   const item=canonicalItem(),count=allItems().length;
   return '<div class="cfv-stats">'+
     '<div><span>CATALOGUE</span><b>'+count+' items</b></div>'+
+    '<div><span>MODEL LOCK</span><b>'+esc(CP()?.modelContract||'unlocked')+'</b></div>'+
     '<div><span>BODY MATRIX</span><b>36 bodies</b></div>'+
     '<div><span>VIEWING</span><b>'+esc(state.loadout==='full'?'Full set':state.loadout==='single'?'Single item':'Base only')+'</b></div>'+
     '<div><span>ITEM</span><b>'+esc(item?item.slot+' · T'+item.tier:'None')+'</b></div>'+
@@ -147,7 +191,7 @@ function render(){
   if(item&&state.itemId!==item.itemId){state.itemId=item.itemId;saveState()}
   const compareClass='cfv-compare-'+state.compare;
   mount.innerHTML='<section class="cfv-shell">'+
-    '<header class="cfv-header"><div><small>OWNER CHARACTER LAB</small><h2>Character Fit Viewer</h2><p>Inspect every equipment piece against every v9 race, sex and body frame without changing live character data.</p></div><div class="cfv-header-actions"><button id="cfvAudit" type="button">RUN 36-BODY AUDIT</button><button id="cfvClose" type="button">CLOSE</button></div></header>'+
+    '<header class="cfv-header"><div><small>OWNER CHARACTER LAB · V9 BETA LOCK</small><h2>Character Fit Viewer</h2><p>Inspect every equipment piece against every v9 race, sex and body frame without changing live character data.</p></div><div class="cfv-header-actions"><button id="cfvAudit" type="button">RUN 36-BODY AUDIT</button><button id="cfvBetaAudit" type="button">RUN BETA MATRIX</button><button id="cfvClose" type="button">CLOSE</button></div></header>'+
     statsHTML()+
     '<div class="cfv-toolbar">'+
       '<label><span>RACE</span><select id="cfvRace">'+RACES.map(x=>option(x,x,state.race)).join('')+'</select></label>'+
@@ -199,14 +243,17 @@ function toggleAuto(){
   if(autoTimer){clearInterval(autoTimer);autoTimer=null;render();return}
   autoTimer=setInterval(()=>stepItem(1),1300);render();
 }
-function runAudit(){
-  const el=$('#cfvAuditResult'),result=auditCurrent();
-  if(!el)return;
-  el.hidden=false;
-  el.dataset.tone=result.failures.length?'error':'ok';
+function showAuditResult(result,label){
+  const el=$('#cfvAuditResult');if(!el)return;
+  el.hidden=false;el.dataset.tone=result.failures.length?'error':'ok';
   el.innerHTML=result.failures.length
-    ?'<b>'+result.ok+' / '+result.total+' BODY CONFIGURATIONS PASSED</b><span>'+esc(result.failures.slice(0,4).join(' · '))+(result.failures.length>4?' · +'+(result.failures.length-4)+' more':'')+'</span>'
-    :'<b>'+result.ok+' / '+result.total+' BODY CONFIGURATIONS PASSED</b><span>No missing layers, invalid anchors or broken SVG values were found for this loadout.</span>';
+    ?'<b>'+result.ok+' / '+result.total+' '+esc(label)+' PASSED</b><span>'+esc(result.failures.slice(0,4).join(' · '))+(result.failures.length>4?' · +'+(result.failures.length-4)+' more':'')+'</span>'
+    :'<b>'+result.ok+' / '+result.total+' '+esc(label)+' PASSED</b><span>No missing layers, invalid anchors, bad chest anchors, layer-order faults or broken SVG values were found.</span>';
+}
+function runAudit(){showAuditResult(auditCurrent(),'BODY CONFIGURATIONS')}
+function runBetaAudit(){
+  const el=$('#cfvAuditResult');if(el){el.hidden=false;el.dataset.tone='busy';el.innerHTML='<b>RUNNING V9 BETA MATRIX…</b><span>Checking every class, tier, race, sex and frame combination.</span>'}
+  setTimeout(()=>showAuditResult(auditBetaMatrix(),'BETA CONFIGURATIONS'),0);
 }
 function bind(){
   setValue('cfvRace','race');
@@ -227,6 +274,7 @@ function bind(){
   $('#cfvAuto')?.addEventListener('click',toggleAuto);
   $('#cfvAnchors')?.addEventListener('click',()=>{state.anchors=!state.anchors;commit()});
   $('#cfvAudit')?.addEventListener('click',runAudit);
+  $('#cfvBetaAudit')?.addEventListener('click',runBetaAudit);
   $('#cfvClose')?.addEventListener('click',close);
 }
 function open(){
@@ -252,6 +300,6 @@ function init(){
   window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='admin')setTimeout(syncAccess,0)});
   syncAccess();
 }
-window.CellboundCharacterFitViewer={open,close,render,isOwner,auditCurrent};
+window.CellboundCharacterFitViewer={open,close,render,isOwner,auditCurrent,auditBetaMatrix};
 init();
 })();
