@@ -12,6 +12,7 @@ const REMEMBER_KEY='cellbound-remember-device';
 const STORAGE='cellbound-management-reboot-v3';
 const PREVIOUS_STORAGE='cellbound-management-reboot-v2';
 const LOCAL_OWNER='cellbound-management-owner';
+const PENDING_SAVE='cellbound-management-pending-save-v1';
 const SAVE_VERSION=6;
 const PLAYER_LEVEL_CAP=15;
 const PVE_WIPE_CELL_SHOCK=25;
@@ -132,6 +133,7 @@ let recoveringTicker=null;
 let membershipTicker=null;
 let lastMembershipMember=null;
 let recruitDraft=null;
+let saveNonce=0;
 const nativeLocalSet=Storage.prototype.setItem;
 
 function talentState(className){
@@ -310,37 +312,72 @@ function migrateState(raw){
 function localCandidate(userId){
   const owner=localStorage.getItem(LOCAL_OWNER);
   if(owner&&userId&&owner!==userId)return null;
-  for(const key of [STORAGE,PREVIOUS_STORAGE]){try{const raw=JSON.parse(localStorage.getItem(key));if(raw?.roster?.length)return raw;}catch{}}
+  for(const key of [STORAGE,PREVIOUS_STORAGE]){
+    try{
+      const raw=JSON.parse(localStorage.getItem(key));
+      if(raw&&typeof raw==='object'&&(Array.isArray(raw.roster)||raw.onboarding||Number(raw.saveVersion)>0))return raw;
+    }catch{}
+  }
+  return null;
+}
+function pendingSaveMeta(userId){
+  try{
+    const meta=JSON.parse(localStorage.getItem(PENDING_SAVE));
+    if(meta?.userId===userId&&meta.token&&Number.isFinite(Date.parse(meta.at)))return meta;
+  }catch{}
   return null;
 }
 function setSync(text,tone='ok'){if(!ui.syncStatus)return;ui.syncStatus.textContent=text;ui.syncStatus.dataset.tone=tone;}
 function writeLocal(){if(!state)return;nativeLocalSet.call(localStorage,STORAGE,JSON.stringify(state));}
-async function persistState(){
+function markPendingLocal(){
+  if(!currentUser||!state)return null;
+  writeLocal();
+  const meta={userId:currentUser.id,at:new Date().toISOString(),token:`${currentUser.id}:${Date.now()}:${++saveNonce}`};
+  nativeLocalSet.call(localStorage,PENDING_SAVE,JSON.stringify(meta));
+  return meta;
+}
+function clearPendingLocal(token){
+  const meta=pendingSaveMeta(currentUser?.id);
+  if(meta?.token===token)localStorage.removeItem(PENDING_SAVE);
+}
+async function persistState({reusePending=false}={}){
   if(!currentUser||!state)return false;
   if(account?.guild_name)state.socialDisplayName=account.guild_name;
-  const snapshot=JSON.parse(JSON.stringify(state)),savedAt=new Date().toISOString();setSync('Saving…','busy');
-  saveSerial=saveSerial.then(async()=>{
-    // Account security intentionally grants players UPDATE only on game_state/updated_at.
-    // Do not use PostgREST upsert here: ON CONFLICT also tries to UPDATE user_id and is rejected.
-    let {data,error}=await supabaseClient.from('guild_accounts')
-      .update({game_state:snapshot,updated_at:savedAt})
-      .eq('user_id',currentUser.id)
-      .select('user_id')
-      .maybeSingle();
-    if(!error&&!data){
-      const inserted=await supabaseClient.from('guild_accounts')
-        .insert({user_id:currentUser.id,game_state:snapshot,updated_at:savedAt})
+  // Actual mutations get a new pending timestamp. Lifecycle/network retries must
+  // preserve the original timestamp so stale local data cannot outrank newer
+  // progress saved from another device.
+  const pending=(reusePending&&pendingSaveMeta(currentUser.id))||markPendingLocal();
+  const snapshot=JSON.parse(JSON.stringify(state)),savedAt=pending?.at||new Date().toISOString();setSync('Saving…','busy');
+  saveSerial=saveSerial.catch(error=>{console.warn('Previous Cellbound save rejected; retrying latest state',error);return false;}).then(async()=>{
+    try{
+      // Account security intentionally grants players UPDATE only on game_state/updated_at.
+      // Do not use PostgREST upsert here: ON CONFLICT also tries to UPDATE user_id and is rejected.
+      let {data,error}=await supabaseClient.from('guild_accounts')
+        .update({game_state:snapshot,updated_at:savedAt})
+        .eq('user_id',currentUser.id)
         .select('user_id')
         .maybeSingle();
-      data=inserted.data;error=inserted.error;
+      if(!error&&!data){
+        const inserted=await supabaseClient.from('guild_accounts')
+          .insert({user_id:currentUser.id,game_state:snapshot,updated_at:savedAt})
+          .select('user_id')
+          .maybeSingle();
+        data=inserted.data;error=inserted.error;
+      }
+      if(error){console.error('Cellbound save failed',error);setSync('Save issue','error');return false;}
+      if(!data){console.error('Cellbound save failed: no account row was written');setSync('Save issue','error');return false;}
+      clearPendingLocal(pending?.token);setSync('Saved','ok');return true;
+    }catch(error){
+      console.error('Cellbound save failed unexpectedly',error);setSync('Save issue','error');return false;
     }
-    if(error){console.error('Cellbound save failed',error);setSync('Save issue','error');return false;}
-    if(!data){console.error('Cellbound save failed: no account row was written');setSync('Save issue','error');return false;}
-    setSync('Saved','ok');return true;
   });
   return saveSerial;
 }
-function save(){writeLocal();clearTimeout(syncTimer);syncTimer=setTimeout(()=>persistState(),120);return saveSerial;}
+function save(){markPendingLocal();clearTimeout(syncTimer);syncTimer=setTimeout(()=>{syncTimer=null;persistState({reusePending:true});},120);return saveSerial;}
+function flushPendingSave(){
+  if(!currentUser||!pendingSaveMeta(currentUser.id))return;
+  clearTimeout(syncTimer);syncTimer=null;persistState({reusePending:true});
+}
 async function loadAccount(user){
   currentUser=user;setSync('Loading…','busy');
   const [accountResult,identityResult]=await Promise.all([
@@ -359,24 +396,25 @@ async function loadAccount(user){
   const localRaw=localCandidate(user.id);
   const remoteRoster=Array.isArray(remoteRaw?.roster)?remoteRaw.roster.length:0;
   const localRoster=Array.isArray(localRaw?.roster)?localRaw.roster.length:0;
-  // Never throw away a populated browser save because an older/failed cloud save is empty.
-  // Fresh Start clears the browser save first, so a populated local roster here is always newer playable progress.
-  const sourceRaw=localRoster>0&&remoteRoster===0?localRaw:(remoteRaw||localRaw||initialState());
+  const pending=pendingSaveMeta(user.id),pendingAt=Date.parse(pending?.at||''),remoteAt=Date.parse(data?.updated_at||'');
+  const localPendingNewer=Boolean(localRaw&&pending&&Number.isFinite(pendingAt)&&(!Number.isFinite(remoteAt)||pendingAt>remoteAt));
+  const localPlayableRecovery=Boolean(localRaw&&localRoster>0&&remoteRoster===0);
+  // Cloud is authoritative unless this browser has a demonstrably newer unsynced snapshot.
+  // The roster recovery path remains for legacy saves created while cloud persistence was broken.
+  if(pending&&!localPendingNewer&&Number.isFinite(remoteAt)&&pendingAt<=remoteAt)localStorage.removeItem(PENDING_SAVE);
+  const sourceRaw=(localPendingNewer||localPlayableRecovery)?localRaw:(remoteRaw||localRaw||initialState());
   state=migrateState(sourceRaw);
   if(account.guild_name)state.socialDisplayName=account.guild_name;
   removeInvalidPartyMembers(state);nativeLocalSet.call(localStorage,LOCAL_OWNER,user.id);writeLocal();
-  if(!data){
-    const created=await supabaseClient.from('guild_accounts').insert({user_id:user.id,game_state:state,updated_at:new Date().toISOString()});
-    if(created.error)console.error('Cellbound account creation save failed',created.error);
-  }else await persistState();
+  const saved=await persistState();
   lastMembershipMember=entitlements().member;
-  setSync('Saved','ok');
+  if(saved)setSync('Saved','ok');
 }
 async function refreshStateFromServer({render=true}={}){
   if(!currentUser||!supabaseClient)return false;
   clearTimeout(syncTimer);
   try{
-    await saveSerial;
+    if(pendingSaveMeta(currentUser.id))await persistState({reusePending:true});else await saveSerial.catch(()=>false);
     const {data,error}=await supabaseClient.from('guild_accounts').select('game_state,guild_name,updated_at').eq('user_id',currentUser.id).maybeSingle();
     if(error||!data?.game_state){if(error)console.warn('Cellbound state refresh failed',error);return false;}
     if(account)account.guild_name=data.guild_name||account.guild_name||null;
@@ -1200,7 +1238,8 @@ $('#signOut')?.addEventListener('click',async()=>{clearTimeout(syncTimer);await 
   await loadAccount(data.session.user);window.CellboundGame.ready=true;renderAll();recoveringTicker=setInterval(tickRecovery,1000);
   membershipTicker=setInterval(()=>refreshMembershipStatus({render:true,silent:true}),30000);
   window.addEventListener('focus',()=>refreshMembershipStatus({render:true,silent:true}));
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshMembershipStatus({render:true,silent:true})});
-  window.addEventListener('beforeunload',()=>{if(membershipTicker)clearInterval(membershipTicker)},{once:true});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshMembershipStatus({render:true,silent:true});else flushPendingSave()});
+  window.addEventListener('pagehide',flushPendingSave);
+  window.addEventListener('beforeunload',()=>{flushPendingSave();if(membershipTicker)clearInterval(membershipTicker)},{once:true});
 })();
 })();

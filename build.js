@@ -175,7 +175,8 @@ for(const file of files){
   if(file==='guild-v4.js'){
     for(const hook of ["select('user_id,game_state,guild_name,membership_active_until","if(account?.guild_name)state.socialDisplayName=account.guild_name","select('game_state,guild_name,updated_at')"])if(!contents.includes(hook))throw new Error('Account-level guild-name lock sync is missing '+hook);
     if(contents.includes("from('guild_accounts').upsert"))throw new Error('Guild saves must not use upsert because account security forbids UPDATE on user_id');
-    for(const hook of [".update({game_state:snapshot,updated_at:savedAt})",".insert({user_id:currentUser.id,game_state:snapshot,updated_at:savedAt})","localRoster>0&&remoteRoster===0","hadRoster&&s.onboarding?.stage==='party-builder'"])if(!contents.includes(hook))throw new Error('Resilient cloud save/recovery path is missing '+hook);
+    for(const hook of [".update({game_state:snapshot,updated_at:savedAt})",".insert({user_id:currentUser.id,game_state:snapshot,updated_at:savedAt})","localRoster>0&&remoteRoster===0","hadRoster&&s.onboarding?.stage==='party-builder'","cellbound-management-pending-save-v1","markPendingLocal()","localPendingNewer","flushPendingSave()","persistState({reusePending:true})","raw.onboarding||Number(raw.saveVersion)>0"])if(!contents.includes(hook))throw new Error('Resilient cloud save/recovery path is missing '+hook);
+    if(!contents.includes("saveSerial.catch(error=>"))throw new Error('Save queue must recover after an unexpected rejected write');
     if(contents.includes('renderBosses()'))throw new Error('Legacy renderBosses call returned to the dungeon view');
     if(!contents.includes('const PLAYER_LEVEL_CAP=15;')||!contents.includes('getLevelCap:()=>PLAYER_LEVEL_CAP'))throw new Error('Player level cap regression');
     if(contents.includes("$('"+".bank-category-tabs [data-bank-category]"+").forEach"))throw new Error('Bank category buttons cannot call forEach on a single-element selector');
