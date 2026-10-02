@@ -1,6 +1,10 @@
 (()=>{
 'use strict';
 
+const CHARACTER_MODEL_VERSION=9;
+const CHARACTER_MODEL_CONTRACT='v9-beta-locked';
+const EQUIPMENT_LAYER_CONTRACT='shield-back|body|armour|front-offhand|mainhand-front';
+
 const CLASS_COLORS={
   Warrior:'#C69B6D',Paladin:'#F48CBA',Priest:'#FFFFFF',Druid:'#FF7C0A',
   Hunter:'#AAD372',Rogue:'#FFF468',Mage:'#3FC7EB',Shaman:'#0070DD',
@@ -796,7 +800,7 @@ function paperChest(c,highlighted){
   else if(klass==='Evoker')torso+='<path d="M100 164 Q120 176 140 164 L136 212 Q120 224 104 212Z" fill="none" stroke="'+pal.trim+'" stroke-width="2.4"/><path d="M106 178 L120 164 L134 178 L120 194Z" fill="'+pal.glow+'" opacity=".4"/>';
   else torso+=itemRune(item,'Chest',pal,120,186,.85);
   torso+=tierChestAdornment(tier,pal,gs,gw,gh,top,klass);
-  return '<g class="'+paperSlotClass('Chest',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Chest'))+'">'+torso+'</g>';
+  return '<g class="'+paperSlotClass('Chest',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Chest'))+'" data-chest-top="'+top.toFixed(2)+'">'+torso+'</g>';
 }
 function paperWaist(c,highlighted){
   var item=itemForSlot(c,'Waist');if(!item)return'';
@@ -1208,9 +1212,10 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:9,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
+  version:CHARACTER_MODEL_VERSION,modelContract:CHARACTER_MODEL_CONTRACT,equipmentLayerContract:EQUIPMENT_LAYER_CONTRACT,
+  RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
-  applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,bodyProfile:bodyProfile,gearFitProfile:gearFitProfile,weaponFitProfile:weaponFitProfile,
+  applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,bodyProfile:bodyProfile,gearFitProfile:gearFitProfile,weaponFitProfile:weaponFitProfile,tierVisualProfile:tierVisualProfile,
   visualProfile:visualProfile,weaponType:weaponType,offHandType:offHandType,
   editorHTML:editorHTML,bindEditor:bindEditor
 };
