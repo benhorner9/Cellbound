@@ -34,7 +34,7 @@ async function mount(page,seedState=null,owner=false,options={}){
   const errors=[];
   page.on('pageerror',e=>errors.push('pageerror: '+String(e)));
   page.on('console',msg=>{if(msg.type()==='error')errors.push('console: '+msg.text())});
-  await page.addInitScript(({seed,owner,remoteUpdatedAt})=>{
+  await page.addInitScript(({seed,owner,remoteUpdatedAt,failWrites})=>{
     window.__CELLBOUND_TEST_SEED=seed;
     const user={id:'playthrough-user',email:'playthrough@example.test'};
     function query(table){
@@ -42,11 +42,15 @@ async function mount(page,seedState=null,owner=false,options={}){
       for(const method of ['select','eq','neq','gte','gt','lte','lt','like','ilike','is','in','contains','containedBy','or','not','order','limit','range','match']){
         q[method]=()=>q;
       }
-      for(const method of ['insert','upsert','update','delete'])q[method]=()=>q;
-      q.maybeSingle=async()=>({data:table==='guild_accounts'?{
-        user_id:user.id,game_state:window.__CELLBOUND_TEST_SEED,
-        membership_active_until:null,membership_override:false,updated_at:remoteUpdatedAt||new Date().toISOString()
-      }:null,error:null});
+      q._write=false;
+      for(const method of ['insert','upsert','update','delete'])q[method]=()=>{q._write=true;return q};
+      q.maybeSingle=async()=>{
+        if(q._write&&failWrites)return{data:null,error:{message:'simulated offline save'}};
+        return{data:table==='guild_accounts'?{
+          user_id:user.id,game_state:window.__CELLBOUND_TEST_SEED,
+          membership_active_until:null,membership_override:false,updated_at:remoteUpdatedAt||new Date().toISOString()
+        }:null,error:null};
+      };
       q.single=async()=>({data:null,error:null});
       q.then=(resolve,reject)=>Promise.resolve({data:[],error:null}).then(resolve,reject);
       return q;
@@ -72,7 +76,7 @@ async function mount(page,seedState=null,owner=false,options={}){
       storage:{from:()=>({getPublicUrl:()=>({data:{publicUrl:''}})})}
     };
     window.supabase={createClient:()=>client};
-  },{seed:seedState,owner,remoteUpdatedAt:options.remoteUpdatedAt||null});
+  },{seed:seedState,owner,remoteUpdatedAt:options.remoteUpdatedAt||null,failWrites:Boolean(options.failWrites)});
   await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:''}));
   await page.route('https://cellbound.test/**',async route=>{
     const u=new URL(route.request().url()),relative=u.pathname.replace(/^\/+/,'')||'index.html';
@@ -122,7 +126,7 @@ async function creatorPlaythrough(browser){
 async function persistenceReloadPlaythrough(browser){
   const page=await browser.newPage({viewport:{width:1024,height:1366}});
   const remote=matureState();
-  const errors=await mount(page,remote,false,{remoteUpdatedAt:'2026-10-01T00:00:00.000Z'});
+  const errors=await mount(page,remote,false,{remoteUpdatedAt:'2026-10-01T00:00:00.000Z',failWrites:true});
   await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
 
   await page.evaluate(()=>{
@@ -148,11 +152,11 @@ async function persistenceReloadPlaythrough(browser){
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.CellboundGame?.ready===true,{},{timeout:10000,polling:50});
   assert.equal(await page.evaluate(()=>CellboundGame.getState().gold),5000,'newer cloud state beats a stale pending browser snapshot');
-  assert.deepEqual(errors,[],'persistence reload test emitted no browser errors');
+  assert.equal(errors.some(e=>!e.includes('Cellbound save failed')),false,'persistence reload test emitted no unexpected browser errors');
   await page.close();
 
   const draftPage=await browser.newPage({viewport:{width:1024,height:1366}});
-  const draftErrors=await mount(draftPage,null,false,{remoteUpdatedAt:'2026-10-01T00:00:00.000Z'});
+  const draftErrors=await mount(draftPage,null,false,{remoteUpdatedAt:'2026-10-01T00:00:00.000Z',failWrites:true});
   await draftPage.waitForFunction(()=>window.CellboundGame?.ready===true,{},{timeout:10000,polling:50});
   await draftPage.evaluate(()=>{
     const s=CellboundGame.getState();
@@ -163,7 +167,7 @@ async function persistenceReloadPlaythrough(browser){
   await draftPage.reload({waitUntil:'domcontentloaded'});
   await draftPage.waitForFunction(()=>window.CellboundGame?.ready===true,{},{timeout:10000,polling:50});
   assert.equal(await draftPage.evaluate(()=>CellboundGame.getState()?.onboarding?.draft?.marker),'reload-draft','zero-roster onboarding draft survives reload');
-  assert.deepEqual(draftErrors,[],'onboarding persistence test emitted no browser errors');
+  assert.equal(draftErrors.some(e=>!e.includes('Cellbound save failed')),false,'onboarding persistence test emitted no unexpected browser errors');
   await draftPage.close();
 }
 
