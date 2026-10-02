@@ -426,47 +426,8 @@ function switchView(id){
   if(id==='quests')window.CellboundQuests?.render?.();
   window.dispatchEvent(new CustomEvent('cellbound:view-changed',{detail:{view:id,workspace:hub}}));
 }
-function clearCampaignSelection(){
-  $('[data-campaign-view]').forEach(button=>button.classList.remove('active'));
-}
-function openCampaignDestination(button){
-  const view=String(button?.dataset?.campaignView||'');
-  const target=String(button?.dataset?.campaignTarget||'');
-  if(!view)return;
-  clearCampaignSelection();
-  button.classList.add('active');
-  const group=button.closest?.('.campaign-nav-group');
-  const root=button.closest?.('.campaign-nav');
-  if(group)group.open=true;
-  if(root)root.open=true;
-  switchView(view);
-  setTimeout(()=>{
-    if(view==='content'&&target){
-      safeFeatureRender('campaign-'+target,()=>{
-        if(target==='hollow-sanctum')window.CellboundHollowSanctum?.renderCard?.();
-        if(target==='chaos-canyon')window.CellboundChaosCanyon?.renderCard?.();
-        if(target==='blackout-station')window.CellboundBlackoutStation?.renderCard?.();
-        if(target==='fractured-ages')window.CellboundFracturedAges?.renderCard?.();
-        window.CellboundDungeonBrowser?.open?.(target);
-      });
-      return
-    }
-    if(view==='quests'&&target){
-      window.CellboundQuests?.selectAdventure?.(target);
-      return
-    }
-    if(view==='world'&&target==='null-complex'){
-      $('#nullComplexMount')?.scrollIntoView?.({behavior:'smooth',block:'start'});
-      return
-    }
-    if(view==='raids'&&target==='manor'){
-      $('#manorRaidMount')?.scrollIntoView?.({behavior:'smooth',block:'start'});
-    }
-  },40)
-}
-$('.nav-btn[data-view]').forEach(b=>b.addEventListener('click',()=>{clearCampaignSelection();switchView(b.dataset.view)}));
-$('[data-campaign-view]').forEach(b=>b.addEventListener('click',()=>openCampaignDestination(b)));
-$('[data-jump]').forEach(b=>b.addEventListener('click',()=>{clearCampaignSelection();switchView(b.dataset.jump)}));
+$$('.nav-btn[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));
+$$('[data-jump]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.jump)));
 
 
 function renderTop(){
