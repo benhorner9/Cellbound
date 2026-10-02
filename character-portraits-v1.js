@@ -379,32 +379,30 @@ function gearPalette(c,item,tier,slot){
 }
 
 function bodyProfile(subject,appearanceOverride){
-  var c=typeof subject==='string'?{race:subject,appearance:appearanceOverride||{}}:(subject||{});
-  var race=c.race||c.appearance?.race||appearanceOverride?.race||'Veyren';
-  var a=appearanceOverride||c.appearance||c;
-  var key=c.id||c.name||race;
+  var ch=typeof subject==='string'?{race:subject,appearance:appearanceOverride||{}}:(subject||{});
+  var race=ch.race||ch.appearance?.race||appearanceOverride?.race||'Veyren';
+  var a=appearanceOverride||ch.appearance||ch;
+  var key=ch.id||ch.name||race;
   var gender=int(a.gender,2,seeded(key,'gender',2));
   var frame=int(a.frame,3,seeded(key,'frame',3));
   var base=({
-    Stoneborn:{shoulder:55,waist:34,hip:38,leg:19,arm:16,neck:18,headScale:1.05,hand:1.12},
-    Aelari:{shoulder:42,waist:24,hip:28,leg:12,arm:10,neck:11,headScale:.98,hand:.92},
-    Thornkin:{shoulder:49,waist:29,hip:33,leg:15,arm:13,neck:14,headScale:1.01,hand:1},
-    Emberkin:{shoulder:49,waist:29,hip:32,leg:15,arm:13,neck:14,headScale:1.01,hand:1},
-    Nymari:{shoulder:45,waist:27,hip:31,leg:14,arm:12,neck:13,headScale:1,hand:.98},
-    Veyren:{shoulder:46,waist:29,hip:32,leg:14,arm:12,neck:14,headScale:1,hand:1}
-  })[race]||{shoulder:46,waist:29,hip:32,leg:14,arm:12,neck:14,headScale:1,hand:1};
+    Stoneborn:{shoulder:60,waist:35,hip:39,leg:20,arm:18,neck:20,headScale:1.08,hand:1.15},
+    Aelari:{shoulder:44,waist:24,hip:29,leg:13,arm:10.5,neck:11,headScale:.97,hand:.92},
+    Thornkin:{shoulder:50,waist:28,hip:33,leg:15.5,arm:13.5,neck:14,headScale:1,hand:1},
+    Emberkin:{shoulder:53,waist:30,hip:33,leg:16,arm:14.5,neck:15,headScale:1,hand:1.02},
+    Nymari:{shoulder:46,waist:26,hip:32,leg:14.5,arm:12,neck:12.5,headScale:.99,hand:.97},
+    Veyren:{shoulder:47,waist:27,hip:31,leg:14.5,arm:12,neck:13,headScale:.99,hand:.98}
+  })[race]||{shoulder:47,waist:27,hip:31,leg:14.5,arm:12,neck:13,headScale:.99,hand:.98};
   var gs=gender===1
-    ?{shoulder:.92,waist:.91,hip:1.10,leg:.94,arm:.90,neck:.88,headScale:1.01,hand:.94}
-    :{shoulder:1.04,waist:1.03,hip:.96,leg:1.03,arm:1.06,neck:1.05,headScale:.995,hand:1.03};
+    ?{shoulder:.88,waist:.88,hip:1.12,leg:.96,arm:.88,neck:.86,headScale:1.01,hand:.93}
+    :{shoulder:1.07,waist:1.04,hip:.95,leg:1.05,arm:1.10,neck:1.06,headScale:.99,hand:1.05};
   var fs=[
-    {shoulder:.95,waist:.94,hip:.97,leg:.92,arm:.90,neck:.96,headScale:1.01,hand:.96},
+    {shoulder:.93,waist:.92,hip:.96,leg:.94,arm:.88,neck:.95,headScale:1.01,hand:.96},
     {shoulder:1,waist:1,hip:1,leg:1,arm:1,neck:1,headScale:1,hand:1},
-    {shoulder:1.07,waist:1.05,hip:1.03,leg:1.08,arm:1.14,neck:1.06,headScale:.99,hand:1.06}
+    {shoulder:1.10,waist:1.06,hip:1.04,leg:1.08,arm:1.16,neck:1.07,headScale:.99,hand:1.07}
   ][frame]||{shoulder:1,waist:1,hip:1,leg:1,arm:1,neck:1,headScale:1,hand:1};
   var out={gender:gender,frame:frame};
-  ['shoulder','waist','hip','leg','arm','neck','headScale','hand'].forEach(function(k){
-    out[k]=base[k]*gs[k]*fs[k];
-  });
+  ['shoulder','waist','hip','leg','arm','neck','headScale','hand'].forEach(function(k){out[k]=base[k]*gs[k]*fs[k]});
   return out;
 }
 function paperRaceArmDetails(c,p,leftX,rightX){
@@ -861,6 +859,121 @@ function paperTierAura(c){
   if(set&&set.count>=4)out+='<path d="M57 119 Q120 69 183 119" fill="none" stroke="'+accent+'" stroke-width="2.2" opacity=".32" class="cb-paper-set-glow"/>'+motifMarkup(set.visual.motif,120,112,1.15,accent);
   return out;
 }
+
+function illustratedHairFull(a,hair,race){
+  var female=Number(a.gender)===1,h=Number(a.hair)||0;
+  if(race==='Emberkin'){
+    var flames=female
+      ?'<path d="M92 59 Q82 34 101 41 Q94 18 116 34 Q121 8 131 35 Q148 17 145 46 Q166 35 151 68 Q138 50 120 48 Q103 49 92 59Z" fill="#ff7138" stroke="#552116" stroke-width="2.2"/><path d="M98 57 Q94 42 108 45 Q107 27 119 42 Q126 22 130 44 Q143 33 141 57Z" fill="#ffbf55" opacity=".72"/>'
+      :'<path d="M93 62 Q85 39 103 44 Q97 22 115 36 Q121 13 130 38 Q146 25 143 50 Q157 40 150 67 Q136 51 120 50 Q104 51 93 62Z" fill="#ff7138" stroke="#552116" stroke-width="2.2"/><path d="M102 57 Q98 44 111 47 Q111 31 120 44 Q128 29 132 47 Q141 39 140 58Z" fill="#ffd06d" opacity=".68"/>';
+    return flames;
+  }
+  if(race==='Stoneborn'){
+    return '<path d="M94 65 L98 44 L106 50 L111 34 L119 46 L128 29 L134 48 L145 39 L147 65 Q134 52 120 53 Q106 53 94 65Z" fill="#9a958f" stroke="#3b3f43" stroke-width="2.4"/><path d="M100 48 L106 40 L112 50 M126 43 L131 34 L137 51" fill="none" stroke="#e0c487" stroke-width="2" opacity=".7"/>';
+  }
+  var longHair=female&&(h===3||h===5||race==='Aelari'||race==='Veyren'||race==='Nymari');
+  if(longHair){
+    var hc=race==='Nymari'?mixHex(hair,'#0b4160',.35):race==='Veyren'?mixHex(hair,'#d8d0ef',.35):hair;
+    return '<path d="M90 66 Q90 38 120 34 Q150 39 151 68 L160 177 Q146 164 145 112 Q139 82 132 70 Q120 64 108 70 Q100 84 97 112 Q95 161 80 179 Q88 122 90 66Z" fill="'+hc+'" stroke="#141a20" stroke-width="2.6"/><path d="M98 59 Q111 40 130 45 Q142 48 148 65 Q137 55 126 59 Q113 53 98 59Z" fill="'+mixHex(hc,'#ffffff',.18)+'" opacity=".45"/>';
+  }
+  if(h===0)return race==='Aelari'?'<path d="M97 56 Q120 41 143 57" fill="none" stroke="'+mixHex(hair,'#ffffff',.28)+'" stroke-width="5" opacity=".65"/>':'';
+  if(h===4)return '<path d="M94 61 Q98 41 116 39 L121 22 L126 40 Q145 42 148 61 Q135 52 121 54 Q108 51 94 61Z" fill="'+hair+'" stroke="#141a20" stroke-width="2.4"/>';
+  return '<path d="M94 63 Q96 40 120 37 Q145 41 148 64 Q137 55 124 57 Q111 51 94 63Z" fill="'+hair+'" stroke="#141a20" stroke-width="2.4"/><path d="M99 54 Q111 42 126 44" fill="none" stroke="'+mixHex(hair,'#ffffff',.18)+'" stroke-width="2" opacity=".4"/>';
+}
+function illustratedRaceBodyDetails(c,a,p,skin,accent){
+  var race=c.race||a.race||'Veyren',female=p.gender===1;
+  if(race==='Stoneborn'){
+    return '<g class="cb-illustrated-race-detail">'+
+      '<path d="M82 132 l14 -13 l12 8 l12 -16 l12 16 l14 -8 l13 14 l-10 12 l-14 -5 l-15 10 l-16 -10 l-14 5Z" fill="#9d9a95" stroke="#44484a" stroke-width="2.4"/>'+
+      '<path d="M84 166 l17 -14 l12 9 l12 -13 l14 12 l17 -10 l12 16 l-15 11 l-11 -7 l-14 8 l-16 -8 l-12 8Z" fill="none" stroke="#d8bd7b" stroke-width="2.2" opacity=".72"/>'+
+      '<path d="M92 218 l16 -13 l11 8 l11 -12 l13 11 l14 -8 M86 285 l15 -12 l12 9 M154 280 l-15 -10 l-11 9 M91 333 l12 -11 l10 8 M151 333 l-13 -11 l-11 8" fill="none" stroke="#e0c487" stroke-width="2.1" opacity=".72"/>'+
+      '<path d="M73 155 l-16 -9 l8 -12 l17 7 M167 155 l16 -9 l-8 -12 l-17 7 M73 201 l-13 4 l3 -15 l13 -5 M167 201 l13 4 l-3 -15 l-13 -5" fill="#a29d94" stroke="#4a4e50" stroke-width="2"/>'+
+      '</g>';
+  }
+  if(race==='Thornkin'){
+    return '<g class="cb-illustrated-race-detail">'+
+      '<path d="M102 122 Q91 104 84 92 M107 119 Q98 99 103 86 M137 119 Q143 98 154 88 M142 123 Q154 104 162 99" fill="none" stroke="#5f442c" stroke-width="4.2" stroke-linecap="round"/>'+
+      '<path d="M82 94 l-10 -4 l8 10 l-9 4 M103 87 l-8 -6 l6 11 M154 89 l9 -6 l-5 11 M162 99 l10 -5 l-7 11" fill="#719b52" opacity=".9"/>'+
+      '<path d="M90 160 Q102 181 96 207 T100 252 M151 160 Q139 181 145 208 T141 253 M101 272 Q88 297 98 327 T94 361 M139 272 Q151 296 142 326 T146 360" fill="none" stroke="#5f442c" stroke-width="3.1" opacity=".9"/>'+
+      '<path d="M93 187 l-10 -4 l7 11 M148 190 l11 -5 l-8 12 M98 310 l-10 2 l8 7 M143 307 l10 1 l-8 7" fill="#79a958"/>'+
+      '<path d="M108 151 Q120 163 132 151 M103 214 Q120 230 137 214" fill="none" stroke="#a9cc7f" stroke-width="1.4" opacity=".5"/>'+
+      '</g>';
+  }
+  if(race==='Emberkin'){
+    return '<g class="cb-illustrated-race-detail">'+
+      '<path d="M91 146 l10 14 l-8 15 l13 16 l-9 18 l13 14 l-8 18 M149 146 l-10 14 l8 15 l-13 16 l9 18 l-13 14 l8 18 M104 252 l9 16 l-8 18 l11 18 l-8 21 l9 17 l-7 19 M136 252 l-9 16 l8 18 l-11 18 l8 21 l-9 17 l7 19" fill="none" stroke="#ff6d37" stroke-width="3.2" filter="url(#'+''+'glow)" opacity=".95"/>'+
+      '<path d="M108 166 l12 12 l11 -13 M105 201 l15 14 l15 -14 M111 292 l9 12 l10 -12 M106 332 l13 12 l14 -14" fill="none" stroke="#ffb45d" stroke-width="1.6" opacity=".72"/>'+
+      '<path d="M75 142 Q61 162 72 183 Q58 198 72 216 M165 142 Q179 162 168 183 Q182 198 168 216 M79 231 Q65 244 75 260 M161 231 Q175 244 165 260" fill="none" stroke="#ff7a3b" stroke-width="5" stroke-linecap="round" opacity=".85"/>'+
+      '</g>';
+  }
+  if(race==='Nymari'){
+    return '<g class="cb-illustrated-race-detail">'+
+      '<path d="M91 166 Q78 181 88 196 L96 188Z M149 166 Q162 181 152 196 L144 188Z M101 271 Q86 288 98 305 L105 295Z M139 271 Q154 288 142 305 L135 295Z" fill="#64bfd7" stroke="#a1f5ff" stroke-width="1.5" opacity=".62"/>'+
+      '<path d="M101 158 Q120 144 139 158 M96 205 Q120 224 144 205 M101 286 Q111 300 102 316 M139 286 Q129 300 138 316" fill="none" stroke="#a4f9ff" stroke-width="1.8" opacity=".72"/>'+
+      '<path d="M93 226 Q105 236 96 248 M147 226 Q135 236 144 248 M99 344 q10 10 0 19 M141 344 q-10 10 0 19" fill="none" stroke="#8aefff" stroke-width="1.6" opacity=".62"/>'+
+      '</g>';
+  }
+  if(race==='Aelari'){
+    return '<g class="cb-illustrated-race-detail">'+
+      '<path d="M101 155 Q120 143 139 155 M101 200 Q120 217 139 200 M97 283 Q107 294 101 307 M143 283 Q133 294 139 307" fill="none" stroke="#8fe8ff" stroke-width="1.8" opacity=".72"/>'+
+      '<path d="M94 224 l8 10 l-7 11 M146 224 l-8 10 l7 11 M101 337 l7 9 l-7 10 M139 337 l-7 9 l7 10" fill="none" stroke="#b9f5ff" stroke-width="1.5" opacity=".56"/>'+
+      '</g>';
+  }
+  return '<g class="cb-illustrated-race-detail">'+
+    '<path d="M100 158 Q120 144 140 158 M99 207 Q120 222 141 207 M96 288 q13 12 3 25 M144 288 q-13 12 -3 25" fill="none" stroke="#c6a8ff" stroke-width="1.8" opacity=".72"/>'+
+    '<path d="M88 183 q12 8 5 20 M152 183 q-12 8 -5 20 M96 332 q11 8 1 20 M144 332 q-11 8 -1 20" fill="none" stroke="#b387ff" stroke-width="1.7" opacity=".6"/>'+
+    '</g>';
+}
+function illustratedBaseFigure(c,a,skin,eye,hair,p,uid){
+  var race=c.race||a.race||'Veyren',accent=raceDef(race).accent||'#76d7d0',female=p.gender===1;
+  var s=p.shoulder,w=p.waist,h=p.hip,arm=p.arm,leg=p.leg;
+  var headW=(female?20:22)*(race==='Stoneborn'?1.08:1),headH=(female?28:29);
+  var jaw=female?13:15,headTop=44,chin=105;
+  var lx=120-s,rx=120+s;
+  var upperArm=Math.max(8,arm*.63),fore=Math.max(6.5,arm*.48);
+  var thigh=Math.max(12.5,leg*.86),calf=Math.max(8.8,leg*.62);
+  var hipL=120-h,hipR=120+h;
+  var lLeg=120-h*.48,rLeg=120+h*.48;
+  var face='<path d="M'+(120-headW)+' 59 Q120 '+headTop+' '+(120+headW)+' 59 Q'+(120+headW-2)+' 86 '+(120+jaw)+' 98 Q120 '+chin+' '+(120-jaw)+' 98 Q'+(120-headW+2)+' 86 '+(120-headW)+' 59Z" fill="url(#'+uid+'skin)" stroke="#141a1f" stroke-width="2.4"/>'+
+    '<path d="M108 73 Q112 69 117 72 M123 72 Q128 69 132 73" fill="none" stroke="#212329" stroke-width="1.8" stroke-linecap="round"/>'+
+    '<ellipse cx="113.5" cy="77" rx="2.7" ry="3.2" fill="'+eye+'"/><ellipse cx="126.5" cy="77" rx="2.7" ry="3.2" fill="'+eye+'"/>'+
+    '<circle cx="114.2" cy="76.2" r=".75" fill="#fff" opacity=".82"/><circle cx="127.2" cy="76.2" r=".75" fill="#fff" opacity=".82"/>'+
+    '<path d="M120 78 L117.8 87 Q120 89 122.6 87" fill="none" stroke="'+mixHex(skin,'#2a2525',.46)+'" stroke-width="1.2" stroke-linecap="round"/>'+
+    '<path d="M113 93 Q120 '+(female?96:95)+' 127 93" fill="none" stroke="'+(race==='Emberkin'?'#ff8050':'#5a3439')+'" stroke-width="1.5" stroke-linecap="round"/>';
+  var ears='';
+  if(race==='Aelari'||race==='Veyren')ears='<path d="M'+(120-headW+2)+' 70 L'+(race==='Aelari'?72:82)+' 61 L'+(120-headW+5)+' 82Z M'+(120+headW-2)+' 70 L'+(race==='Aelari'?168:158)+' 61 L'+(120+headW-5)+' 82Z" fill="url(#'+uid+'skin)" stroke="#141a1f" stroke-width="2"/>';
+  else if(race==='Nymari')ears='<path d="M'+(120-headW+1)+' 70 Q84 60 82 78 Q91 83 '+(120-headW+5)+' 82Z M'+(120+headW-1)+' 70 Q156 60 158 78 Q149 83 '+(120+headW-5)+' 82Z" fill="#66bed2" stroke="#a3f6ff" stroke-width="1.7"/>';
+  else ears='<ellipse cx="'+(120-headW+1)+'" cy="76" rx="4.2" ry="7" fill="url(#'+uid+'skin)" stroke="#141a1f" stroke-width="1.7"/><ellipse cx="'+(120+headW-1)+'" cy="76" rx="4.2" ry="7" fill="url(#'+uid+'skin)" stroke="#141a1f" stroke-width="1.7"/>';
+  var neck='<path d="M'+(120-p.neck*.42)+' 99 L'+(120-p.neck*.46)+' 126 Q120 137 '+(120+p.neck*.46)+' 126 L'+(120+p.neck*.42)+' 99Z" fill="url(#'+uid+'skin)" stroke="#141a1f" stroke-width="2.2"/>';
+  var torso='<path d="M'+(lx+4)+' 126 C'+(lx-1)+' 143 '+(lx+2)+' 176 '+(120-w-4)+' 205 C'+(120-w-2)+' 223 '+(hipL+5)+' 239 '+(hipL+4)+' 251 Q120 264 '+(hipR-4)+' 251 C'+(hipR-5)+' 239 '+(120+w+2)+' 223 '+(120+w+4)+' 205 C'+(rx-2)+' 176 '+(rx+1)+' 143 '+(rx-4)+' 126 Q120 112 '+(lx+4)+' 126Z" fill="url(#'+uid+'skin)" stroke="#141a1f" stroke-width="2.6"/>';
+  var leftArm='<path d="M'+(lx+5)+' 132 C'+(lx-upperArm-2)+' 142 '+(lx-upperArm-5)+' 170 '+(lx-upperArm-4)+' 194 C'+(lx-upperArm-2)+' 215 '+(lx-fore-5)+' 240 '+(lx-fore-4)+' 266 Q'+(lx-2)+' 275 '+(lx+fore-1)+' 266 C'+(lx+fore)+' 239 '+(lx+upperArm+2)+' 214 '+(lx+upperArm+3)+' 193 C'+(lx+upperArm+5)+' 169 '+(lx+upperArm+2)+' 142 '+(lx+5)+' 132Z" fill="url(#'+uid+'skin)" stroke="#141a1f" stroke-width="2.4"/>';
+  var rightArm='<path d="M'+(rx-5)+' 132 C'+(rx+upperArm+2)+' 142 '+(rx+upperArm+5)+' 170 '+(rx+upperArm+4)+' 194 C'+(rx+upperArm+2)+' 215 '+(rx+fore+5)+' 240 '+(rx+fore+4)+' 266 Q'+(rx+2)+' 275 '+(rx-fore+1)+' 266 C'+(rx-fore)+' 239 '+(rx-upperArm-2)+' 214 '+(rx-upperArm-3)+' 193 C'+(rx-upperArm-5)+' 169 '+(rx-upperArm-2)+' 142 '+(rx-5)+' 132Z" fill="url(#'+uid+'skin)" stroke="#141a1f" stroke-width="2.4"/>';
+  var hands='<path d="M'+(lx-fore-4)+' 262 Q'+(lx-10)+' 278 '+(lx-7)+' 291 Q'+(lx-1)+' 299 '+(lx+8)+' 291 Q'+(lx+11)+' 278 '+(lx+fore)+' 262Z" fill="url(#'+uid+'skin)" stroke="#141a1f" stroke-width="2"/><path d="M'+(rx+fore+4)+' 262 Q'+(rx+10)+' 278 '+(rx+7)+' 291 Q'+(rx+1)+' 299 '+(rx-8)+' 291 Q'+(rx-11)+' 278 '+(rx-fore)+' 262Z" fill="url(#'+uid+'skin)" stroke="#141a1f" stroke-width="2"/>'+
+    '<path d="M'+(lx-5)+' 284 l-4 10 M'+lx+' 285 l-1 11 M'+(lx+5)+' 283 l2 10 M'+(rx+5)+' 284 l4 10 M'+rx+' 285 l1 11 M'+(rx-5)+' 283 l-2 10" stroke="'+mixHex(skin,'#171b20',.28)+'" stroke-width="1" opacity=".6"/>';
+  var leftLeg='<path d="M'+(hipL+5)+' 246 Q'+(lLeg-thigh)+' 269 '+(lLeg-thigh+1)+' 304 C'+(lLeg-thigh+2)+' 330 '+(lLeg-calf-2)+' 351 '+(lLeg-calf)+' 371 Q'+lLeg+' 379 '+(lLeg+calf)+' 371 C'+(lLeg+calf+1)+' 350 '+(lLeg+thigh-2)+' 329 '+(lLeg+thigh-1)+' 304 Q'+(lLeg+thigh)+' 271 117 253Z" fill="url(#'+uid+'skin)" stroke="#141a1f" stroke-width="2.6"/>';
+  var rightLeg='<path d="M'+(hipR-5)+' 246 Q'+(rLeg+thigh)+' 269 '+(rLeg+thigh-1)+' 304 C'+(rLeg+thigh-2)+' 330 '+(rLeg+calf+2)+' 351 '+(rLeg+calf)+' 371 Q'+rLeg+' 379 '+(rLeg-calf)+' 371 C'+(rLeg-calf-1)+' 350 '+(rLeg-thigh+2)+' 329 '+(rLeg-thigh+1)+' 304 Q'+(rLeg-thigh)+' 271 123 253Z" fill="url(#'+uid+'skin)" stroke="#141a1f" stroke-width="2.6"/>';
+  var feet='<path d="M'+(lLeg-calf-1)+' 365 Q'+(lLeg-11)+' 378 '+(lLeg-18)+' 391 Q'+(lLeg-1)+' 398 '+(lLeg+18)+' 392 L'+(lLeg+calf)+' 370Z" fill="url(#'+uid+'skin)" stroke="#141a1f" stroke-width="2.2"/><path d="M'+(rLeg+calf+1)+' 365 Q'+(rLeg+11)+' 378 '+(rLeg+18)+' 391 Q'+(rLeg+1)+' 398 '+(rLeg-18)+' 392 L'+(rLeg-calf)+' 370Z" fill="url(#'+uid+'skin)" stroke="#141a1f" stroke-width="2.2"/>';
+  var under=female
+    ?'<path d="M'+(lx+14)+' 150 Q120 139 '+(rx-14)+' 150 L'+(120+w+2)+' 190 Q120 199 '+(120-w-2)+' 190Z" fill="#272229" stroke="#101419" stroke-width="2"/><path d="M'+(hipL+4)+' 244 Q120 255 '+(hipR-4)+' 244 L'+(hipR-1)+' 278 Q120 288 '+(hipL+1)+' 278Z" fill="#2d2528" stroke="#101419" stroke-width="2"/>'
+    :'<path d="M'+(hipL+2)+' 244 Q120 254 '+(hipR-2)+' 244 L'+hipR+' 280 Q120 289 '+hipL+' 280Z" fill="#2d2528" stroke="#101419" stroke-width="2"/>';
+  var anatomy=female
+    ?'<path d="M'+(lx+15)+' 143 Q120 156 '+(rx-15)+' 143 M'+(120-w+8)+' 215 Q120 224 '+(120+w-8)+' 215 M'+(lLeg-thigh+4)+' 304 Q'+lLeg+' 314 '+(lLeg+thigh-4)+' 304 M'+(rLeg-thigh+4)+' 304 Q'+rLeg+' 314 '+(rLeg+thigh-4)+' 304" fill="none" stroke="'+mixHex(skin,'#ffffff',.26)+'" stroke-width="1.35" opacity=".34"/>'
+    :'<path d="M'+(lx+10)+' 145 Q120 160 '+(rx-10)+' 145 M102 174 Q120 184 138 174 M120 159 V220 M'+(120-w+7)+' 211 Q120 226 '+(120+w-7)+' 211 M'+(lLeg-thigh+4)+' 302 Q'+lLeg+' 314 '+(lLeg+thigh-4)+' 302 M'+(rLeg-thigh+4)+' 302 Q'+rLeg+' 314 '+(rLeg+thigh-4)+' 302" fill="none" stroke="'+mixHex(skin,'#ffffff',.28)+'" stroke-width="1.45" opacity=".36"/>';
+  var shoulders='<path d="M'+(lx+5)+' 131 Q'+(lx+18)+' 119 '+(120-10)+' 126 M'+(rx-5)+' 131 Q'+(rx-18)+' 119 '+(120+10)+' 126" fill="none" stroke="'+mixHex(skin,'#ffffff',.22)+'" stroke-width="1.4" opacity=".3"/>';
+  var markings=illustratedRaceBodyDetails(c,a,p,skin,accent);
+  var hairFull=illustratedHairFull(a,hair,race);
+  var faceMarks='';
+  if(race==='Veyren')faceMarks='<path d="M104 67 q5 6 1 13 M135 67 q-5 6 -1 13 M109 91 q11 6 22 0" fill="none" stroke="#c3a8ff" stroke-width="1.3" opacity=".72"/>';
+  if(race==='Aelari')faceMarks='<path d="M105 66 l5 -7 l4 7 M135 66 l-5 -7 l-4 7 M120 52 v8" fill="none" stroke="#9aefff" stroke-width="1.4" opacity=".75"/>';
+  if(race==='Nymari')faceMarks='<path d="M105 68 q6 -6 10 0 M135 68 q-6 -6 -10 0 M108 91 q12 7 24 0" fill="none" stroke="#9af7ff" stroke-width="1.4" opacity=".78"/>';
+  if(race==='Thornkin')faceMarks='<path d="M106 62 q-6 -8 -10 -3 M134 62 q6 -8 10 -3 M111 93 q9 4 18 0" fill="none" stroke="#3e5e32" stroke-width="1.7" opacity=".7"/>';
+  if(race==='Emberkin')faceMarks='<path d="M104 64 l8 7 l-6 9 M136 64 l-8 7 l6 9 M114 93 l6 -5 l6 5" fill="none" stroke="#ff7a45" stroke-width="1.8" opacity=".9"/>';
+  if(race==='Stoneborn')faceMarks='<path d="M103 63 l7 5 l-4 8 l7 5 M137 63 l-7 5 l4 8 l-7 5" fill="none" stroke="#dfc27f" stroke-width="1.5" opacity=".72"/>';
+  return '<g class="cb-illustrated-base" data-race="'+esc(race)+'" data-gender="'+(female?'female':'male')+'">'+
+    leftLeg+rightLeg+feet+leftArm+rightArm+hands+neck+torso+under+anatomy+shoulders+markings+ears+face+faceMarks+hairFull+
+    '</g>';
+}
+
 function paperDollSVG(c,opts){
   opts=opts||{};
   var race=c.race||(c.appearance&&c.appearance.race)||'Veyren';
@@ -870,15 +983,18 @@ function paperDollSVG(c,opts){
   var showGear=opts.showGear!==false;
   var model=showGear?c:Object.assign({},c,{equipment:{}});
   var uid='pd'+hash((c.id||c.name||race)+'|'+JSON.stringify(a)+'|'+(showGear?'gear':'base')).toString(36);
-  var skinLight=mixHex(skin,'#ffffff',.15),skinDark=mixHex(skin,'#111820',.20);
+  var skinLight=mixHex(skin,'#ffffff',.18),skinDark=mixHex(skin,'#0d1216',.25);
   var headScale=profile.headScale||1,headX=70+(50*(1-headScale)),headY=20+(50*(1-headScale));
-  return '<svg viewBox="0 0 240 410" data-race="'+esc(race)+'" data-gender="'+(a.gender===1?'female':'male')+'" data-frame="'+esc(optionText('frame',a.frame,race).toLowerCase())+'" data-model-mode="'+(showGear?'equipped':'base')+'" role="img" aria-hidden="true" focusable="false">'+
-    '<defs><radialGradient id="'+uid+'a" cx="50%" cy="46%" r="54%"><stop offset="0%" stop-color="'+accent+'" stop-opacity=".14"/><stop offset="70%" stop-color="'+accent+'" stop-opacity=".025"/><stop offset="100%" stop-color="'+accent+'" stop-opacity="0"/></radialGradient><linearGradient id="'+uid+'skin" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="'+skinLight+'"/><stop offset="48%" stop-color="'+skin+'"/><stop offset="100%" stop-color="'+skinDark+'"/></linearGradient></defs>'+
-    '<ellipse cx="120" cy="214" rx="110" ry="180" fill="url(#'+uid+'a)"/>'+
-    '<ellipse cx="120" cy="392" rx="'+Math.max(66,profile.shoulder+23)+'" ry="10" fill="#000" opacity=".38"/>'+
-    (showGear?paperTierAura(model):'')+
+  var baseBg='<ellipse cx="120" cy="214" rx="110" ry="180" fill="url(#'+uid+'a)"/><ellipse cx="120" cy="394" rx="'+Math.max(70,profile.shoulder+27)+'" ry="10" fill="#000" opacity=".38"/>';
+  var defs='<defs><radialGradient id="'+uid+'a" cx="50%" cy="44%" r="56%"><stop offset="0%" stop-color="'+accent+'" stop-opacity=".15"/><stop offset="68%" stop-color="'+accent+'" stop-opacity=".025"/><stop offset="100%" stop-color="'+accent+'" stop-opacity="0"/></radialGradient><linearGradient id="'+uid+'skin" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="'+skinLight+'"/><stop offset="46%" stop-color="'+skin+'"/><stop offset="100%" stop-color="'+skinDark+'"/></linearGradient><filter id="'+uid+'shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000" flood-opacity=".34"/></filter></defs>';
+  if(!showGear){
+    return '<svg viewBox="0 0 240 410" data-race="'+esc(race)+'" data-gender="'+(a.gender===1?'female':'male')+'" data-frame="'+esc(optionText('frame',a.frame,race).toLowerCase())+'" data-model-mode="base" role="img" aria-hidden="true" focusable="false">'+defs+baseBg+illustratedBaseFigure(model,a,skin,eye,hair,profile,uid)+'</svg>';
+  }
+  return '<svg viewBox="0 0 240 410" data-race="'+esc(race)+'" data-gender="'+(a.gender===1?'female':'male')+'" data-frame="'+esc(optionText('frame',a.frame,race).toLowerCase())+'" data-model-mode="equipped" role="img" aria-hidden="true" focusable="false">'+
+    defs+baseBg+
+    paperTierAura(model)+
     paperBodyBase(model,a,skin,profile,uid)+
-    (showGear?paperBackLayer(model):'')+
+    paperBackLayer(model)+
     paperLegs(model,skin,highlighted)+paperFeet(model,skin,highlighted)+
     paperWeapon(model,highlighted)+paperOffHand(model,highlighted)+
     paperArms(model,skin,highlighted)+paperChest(model,highlighted)+paperWaist(model,highlighted)+paperShoulders(model,highlighted)+paperAccessories(model,highlighted)+
@@ -898,7 +1014,7 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:7,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
+  version:8,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
   applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,bodyProfile:bodyProfile,
   visualProfile:visualProfile,weaponType:weaponType,offHandType:offHandType,
