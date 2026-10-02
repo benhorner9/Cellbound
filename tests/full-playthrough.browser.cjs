@@ -34,9 +34,14 @@ async function mount(page,seedState=null,owner=false,options={}){
   const errors=[];
   page.on('pageerror',e=>errors.push('pageerror: '+String(e)));
   page.on('console',msg=>{if(msg.type()==='error')errors.push('console: '+msg.text())});
-  await page.addInitScript(({seed,owner,remoteUpdatedAt,failWrites})=>{
+  await page.addInitScript(({seed,owner,remoteUpdatedAt,failWrites,localSeed,pendingSeed})=>{
     window.__CELLBOUND_TEST_SEED=seed;
     const user={id:'playthrough-user',email:'playthrough@example.test'};
+    if(localSeed){
+      localStorage.setItem('cellbound-management-owner',user.id);
+      localStorage.setItem('cellbound-management-reboot-v3',JSON.stringify(localSeed));
+    }
+    if(pendingSeed)localStorage.setItem('cellbound-management-pending-save-v1',JSON.stringify(pendingSeed));
     function query(table){
       const q={};
       for(const method of ['select','eq','neq','gte','gt','lte','lt','like','ilike','is','in','contains','containedBy','or','not','order','limit','range','match']){
@@ -76,7 +81,7 @@ async function mount(page,seedState=null,owner=false,options={}){
       storage:{from:()=>({getPublicUrl:()=>({data:{publicUrl:''}})})}
     };
     window.supabase={createClient:()=>client};
-  },{seed:seedState,owner,remoteUpdatedAt:options.remoteUpdatedAt||null,failWrites:Boolean(options.failWrites)});
+  },{seed:seedState,owner,remoteUpdatedAt:options.remoteUpdatedAt||null,failWrites:Boolean(options.failWrites),localSeed:options.localSeed||null,pendingSeed:options.pendingSeed||null});
   await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:''}));
   await page.route('https://cellbound.test/**',async route=>{
     const u=new URL(route.request().url()),relative=u.pathname.replace(/^\/+/,'')||'index.html';
@@ -141,19 +146,21 @@ async function persistenceReloadPlaythrough(browser){
   assert.equal(await page.evaluate(()=>CellboundGame.getState().gold),7777,'newer pending local state wins over an older cloud snapshot after reload');
   assert.equal(await page.evaluate(()=>CellboundGame.getState().roster.length),5,'fast reload preserves the complete roster');
 
-  await page.evaluate(()=>{
-    const s=JSON.parse(localStorage.getItem('cellbound-management-reboot-v3'));
-    s.gold=1;
-    localStorage.setItem('cellbound-management-reboot-v3',JSON.stringify(s));
-    localStorage.setItem('cellbound-management-pending-save-v1',JSON.stringify({
-      userId:'playthrough-user',token:'stale-test',at:'2026-09-01T00:00:00.000Z'
-    }));
-  });
-  await page.reload({waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>window.CellboundGame?.ready===true,{},{timeout:10000,polling:50});
-  assert.equal(await page.evaluate(()=>CellboundGame.getState().gold),5000,'newer cloud state beats a stale pending browser snapshot');
   assert.equal(errors.some(e=>!e.includes('Cellbound save failed')),false,'persistence reload test emitted no unexpected browser errors');
   await page.close();
+
+  const staleLocal={...remote,gold:1,activity:[...(remote.activity||[]),'This stale browser snapshot must not win.']};
+  const stalePage=await browser.newPage({viewport:{width:1024,height:1366}});
+  const staleErrors=await mount(stalePage,remote,false,{
+    remoteUpdatedAt:'2026-10-01T00:00:00.000Z',
+    localSeed:staleLocal,
+    pendingSeed:{userId:'playthrough-user',token:'stale-test',at:'2026-09-01T00:00:00.000Z'}
+  });
+  await stalePage.waitForFunction(()=>window.CellboundGame?.ready===true,{},{timeout:10000,polling:50});
+  assert.equal(await stalePage.evaluate(()=>CellboundGame.getState().gold),5000,'newer cloud state beats a stale pending browser snapshot');
+  assert.equal(await stalePage.evaluate(()=>localStorage.getItem('cellbound-management-pending-save-v1')),null,'stale pending marker is cleared once newer cloud state wins');
+  assert.deepEqual(staleErrors,[],'stale local recovery test emitted no browser errors');
+  await stalePage.close();
 
   const draftPage=await browser.newPage({viewport:{width:1024,height:1366}});
   const draftErrors=await mount(draftPage,null,false,{remoteUpdatedAt:'2026-10-01T00:00:00.000Z',failWrites:true});
