@@ -1076,6 +1076,20 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "if(out.category==='consumable')addConsumable"
   ])if(!economy.includes(hook))throw new Error('Profession crafting core loop contract is missing '+hook);
 
+  const professions=fs.readFileSync(path.join(__dirname,'profession-data.js'),'utf8');
+  for(const hook of [
+    "Alchemy:[\n    [1,{'hollowroot':2}]",
+    "function rollReagents(bossId)",
+    "function rollContentReagents(contentId"
+  ])if(!professions.includes(hook))throw new Error('Dungeon profession-reagent loop contract is missing '+hook);
+
+  const ashen=fs.readFileSync(path.join(__dirname,'dungeon-2d-v1.js'),'utf8');
+  for(const hook of [
+    'P.rollReagents(s.bossId)',
+    'Game.addMaterial(d.key,d.quantity)',
+    'PROFESSION REAGENTS'
+  ])if(!ashen.includes(hook))throw new Error('Ashen Vault must deliver profession reagents into shared Guild materials: '+hook);
+
   console.log('Beta core gameplay loop contract is release-gated.');
 }
 
