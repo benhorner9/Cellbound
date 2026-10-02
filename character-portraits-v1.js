@@ -604,29 +604,39 @@ function paperChest(c,highlighted){
 }
 function paperWaist(c,highlighted){
   var item=itemForSlot(c,'Waist');if(!item)return'';
-  var tier=clampTier(item.tier),pal=gearPalette(c,item,tier,'Waist'),v=pal.variant;
-  return '<g class="'+paperSlotClass('Waist',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Waist'))+'">'+
-    '<path d="M91 238 Q120 '+(v%2?246:242)+' 149 238 L149 254 Q120 263 91 254Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="2.4"/>'+
-    '<rect x="'+(v%2?113:111)+'" y="242" width="'+(v%2?14:18)+'" height="12" rx="2" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="2"/>'+
-    itemRune(item,'Waist',pal,120,248,.45)+
-    '</g>';
+  var tier=clampTier(item.tier),pal=gearPalette(c,item,tier,'Waist'),v=pal.variant,klass=gearClass(item),gp=gearProfile(item),p=bodyProfile(c.race||c.appearance?.race||'Veyren'),w=p.waist+(gp.bulk-1)*7;
+  var out='<path d="M'+(120-w-3)+' 237 Q120 '+(v%2?246:242)+' '+(120+w+3)+' 237 L'+(120+w+2)+' 255 Q120 264 '+(120-w-2)+' 255Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="2.4"/><rect x="111" y="241" width="18" height="13" rx="3" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="2"/>'+itemRune(item,'Waist',pal,120,248,.48);
+  if(['Paladin','Priest','Mage','Warlock','Shaman','Evoker'].includes(klass))out+='<path d="M110 255 L116 320 L120 337 L124 320 L130 255Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="1.8" opacity=".9"/>';
+  if(klass==='Warrior'||klass==='Death Knight')out+='<path d="M'+(120-w-7)+' 246 L'+(120-w+1)+' 262 M'+(120+w+7)+' 246 L'+(120+w-1)+' 262" stroke="'+pal.trim+'" stroke-width="4"/>';
+  if(klass==='Hunter'||klass==='Rogue'||klass==='Demon Hunter')out+='<path d="M'+(120-w)+' 247 L'+(120-w-8)+' 270 M'+(120+w)+' 247 L'+(120+w+8)+' 270" stroke="'+pal.trim+'" stroke-width="3"/>';
+  if(klass==='Monk')out+='<path d="M'+(120+w)+' 247 Q157 271 147 319" fill="none" stroke="'+pal.trim+'" stroke-width="5" stroke-linecap="round"/>';
+  if(klass==='Druid')out+='<path d="M'+(120-w)+' 251 q-14 12 -2 25 q15 -5 13 -20 M'+(120+w)+' 251 q14 12 2 25 q-15 -5 -13 -20" fill="'+pal.trim+'" opacity=".48"/>';
+  return '<g class="'+paperSlotClass('Waist',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Waist'))+'">'+out+'</g>';
 }
 function paperShoulders(c,highlighted){
   var item=itemForSlot(c,'Shoulders'),tier=clampTier(item&&item.tier);
   if(!item)return'';
-  var pal=gearPalette(c,item,tier,'Shoulders'),p=bodyProfile(c.race||c.appearance?.race||'Veyren'),s=p.shoulder,v=pal.variant,klass=gearClass(item);
-  var heavy=['Warrior','Paladin','Death Knight'].includes(klass),cloth=['Mage','Priest','Druid','Warlock'].includes(klass);
-  var extent=(pal.set?22:tier>=4?18:tier>=3?14:10)+(heavy?5:cloth?-2:0);
-  var rise=heavy?7:cloth?-1:2;
-  var left=pal.set&&v%2
-    ?'<path d="M'+(120-s-4)+' '+(145-rise)+' L'+(120-s-extent-3)+' '+(139-rise)+' L'+(120-s-extent)+' 159 L'+(120-s+7)+' 170 L'+(120-s+15)+' 148Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="2.7"/>'
-    :'<path d="M'+(120-s-4)+' '+(146-rise)+' Q'+(120-s-extent)+' '+(141-rise)+' '+(120-s-extent)+' 159 L'+(120-s+7)+' 169 L'+(120-s+14)+' 148Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="2.5"/>';
-  var right=pal.set&&v%2
-    ?'<path d="M'+(120+s+4)+' '+(145-rise)+' L'+(120+s+extent+3)+' '+(139-rise)+' L'+(120+s+extent)+' 159 L'+(120+s-7)+' 170 L'+(120+s-15)+' 148Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="2.7"/>'
-    :'<path d="M'+(120+s+4)+' '+(146-rise)+' Q'+(120+s+extent)+' '+(141-rise)+' '+(120+s+extent)+' 159 L'+(120+s-7)+' 169 L'+(120+s-14)+' 148Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="2.5"/>';
-  return '<g class="'+paperSlotClass('Shoulders',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Shoulders'))+'">'+left+right+
-    itemRune(item,'Shoulders',pal,120-s-3,154-rise*.35,.55)+itemRune(item,'Shoulders',pal,120+s+3,154-rise*.35,.55)+
-    (pal.set?'<path d="M'+(120-s-18)+' '+(145-rise)+' L'+(120-s-25)+' '+(132-rise)+' M'+(120+s+18)+' '+(145-rise)+' L'+(120+s+25)+' '+(132-rise)+'" stroke="'+pal.glow+'" stroke-width="3" opacity=".7" class="cb-paper-set-glow"/>':'')+'</g>';
+  var pal=gearPalette(c,item,tier,'Shoulders'),p=bodyProfile(c.race||c.appearance?.race||'Veyren'),s=p.shoulder,v=pal.variant,klass=gearClass(item),gp=gearProfile(item);
+  var extent=(pal.set?22:tier>=4?18:tier>=3?14:10)*gp.shoulder+(gp.family==='plate'?5:gp.family==='cloth'?-1:1);
+  var rise=(gp.family==='plate'?8:gp.family==='mail'?4:gp.family==='cloth'?0:2)+(tier>=5?2:0);
+  var lx=120-s,rx=120+s;
+  var left='<path d="M'+(lx-4)+' '+(146-rise)+' Q'+(lx-extent)+' '+(139-rise)+' '+(lx-extent-2)+' 158 L'+(lx+6)+' 171 L'+(lx+15)+' 148Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="2.7"/>';
+  var right='<path d="M'+(rx+4)+' '+(146-rise)+' Q'+(rx+extent)+' '+(139-rise)+' '+(rx+extent+2)+' 158 L'+(rx-6)+' 171 L'+(rx-15)+' 148Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="2.7"/>';
+  var detail='';
+  if(klass==='Paladin')detail=motifMarkup('sun',lx-5,153-rise*.3,.65,pal.glow)+motifMarkup('sun',rx+5,153-rise*.3,.65,pal.glow);
+  else if(klass==='Priest')detail='<path d="M'+(lx-6)+' '+(151-rise)+' q6 -13 12 0 M'+(rx-6)+' '+(151-rise)+' q6 -13 12 0" fill="none" stroke="'+pal.glow+'" stroke-width="2"/>';
+  else if(klass==='Druid')detail='<path d="M'+(lx-9)+' '+(145-rise)+' q-16 -14 -18 -25 M'+(rx+9)+' '+(145-rise)+' q16 -14 18 -25" fill="none" stroke="'+pal.trim+'" stroke-width="4" stroke-linecap="round"/>';
+  else if(klass==='Hunter')detail='<path d="M'+(lx-10)+' '+(149-rise)+' l-14 -10 l6 18 M'+(rx+10)+' '+(149-rise)+' l14 -10 l-6 18" fill="'+pal.trim+'" opacity=".75"/>';
+  else if(klass==='Rogue')detail='<path d="M'+(lx-10)+' '+(153-rise)+' l-10 -6 l9 14 M'+(rx+10)+' '+(153-rise)+' l10 -6 l-9 14" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="1.5"/>';
+  else if(klass==='Mage')detail=motifMarkup('star',lx-4,153-rise*.3,.58,pal.glow)+motifMarkup('star',rx+4,153-rise*.3,.58,pal.glow);
+  else if(klass==='Shaman')detail='<path d="M'+(lx-6)+' '+(150-rise)+' l-11 8 l8 6 M'+(rx+6)+' '+(150-rise)+' l11 8 l-8 6" fill="none" stroke="'+pal.glow+'" stroke-width="2.4"/>';
+  else if(klass==='Warlock')detail='<path d="M'+(lx-6)+' '+(145-rise)+' q-12 -15 -8 -25 M'+(rx+6)+' '+(145-rise)+' q12 -15 8 -25" fill="none" stroke="'+pal.glow+'" stroke-width="3"/>';
+  else if(klass==='Monk')detail='<circle cx="'+lx+'" cy="'+(155-rise)+'" r="4" fill="none" stroke="'+pal.glow+'" stroke-width="2"/><circle cx="'+rx+'" cy="'+(155-rise)+'" r="4" fill="none" stroke="'+pal.glow+'" stroke-width="2"/>';
+  else if(klass==='Death Knight')detail='<path d="M'+(lx-extent)+' '+(145-rise)+' l-9 -16 l16 8 M'+(rx+extent)+' '+(145-rise)+' l9 -16 l-16 8" fill="'+pal.trim+'" opacity=".9"/>';
+  else if(klass==='Demon Hunter')detail='<path d="M'+(lx-5)+' '+(150-rise)+' l-11 -8 l5 15 M'+(rx+5)+' '+(150-rise)+' l11 -8 l-5 15" fill="'+pal.glow+'" opacity=".55"/>';
+  else if(klass==='Evoker')detail='<path d="M'+(lx-extent+3)+' '+(148-rise)+' l-11 -12 l17 4 M'+(rx+extent-3)+' '+(148-rise)+' l11 -12 l-17 4" fill="'+pal.light+'" opacity=".55"/>';
+  else detail=itemRune(item,'Shoulders',pal,lx-3,154-rise*.3,.55)+itemRune(item,'Shoulders',pal,rx+3,154-rise*.3,.55);
+  return '<g class="'+paperSlotClass('Shoulders',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Shoulders'))+'">'+left+right+detail+(tier>=5?'<path d="M'+(lx-extent+1)+' '+(145-rise)+' L'+(lx-extent-5)+' '+(132-rise)+' M'+(rx+extent-1)+' '+(145-rise)+' L'+(rx+extent+5)+' '+(132-rise)+'" stroke="'+pal.glow+'" stroke-width="2.6" opacity=".7" class="cb-paper-set-glow"/>':'')+'</g>';
 }
 function weaponMarkup(type,pal,v,tier,item){
   var g='';
