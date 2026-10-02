@@ -467,7 +467,7 @@ function paperLegs(c,skin,highlighted){
   var p=bodyProfile(c.race||c.appearance?.race||'Veyren');
   var sx=Math.max(.9,Math.min(1.16,(p.leg||14)/14));
   var transform='translate(120 0) scale('+sx+' 1) translate(-120 0)';
-  var base='<g class="cb-paper-underlayer cb-paper-base-legs" transform="'+transform+'">'+
+  var base='<g class="cb-paper-underlayer cb-paper-empty-legs cb-paper-base-legs" transform="'+transform+'">'+
     '<path d="M92 246 L116 246 L112 355 L84 355 Q84 322 89 286Z" fill="#1a2327" stroke="#111820" stroke-width="2.4"/>'+
     '<path d="M124 246 L148 246 L156 355 L128 355 L124 286Z" fill="#1a2327" stroke="#111820" stroke-width="2.4"/>'+
     '<path d="M96 270 L112 274 M128 274 L144 270" stroke="#303b40" stroke-width="1.5" opacity=".55"/></g>';
@@ -493,7 +493,7 @@ function paperFeet(c,skin,highlighted){
   var p=bodyProfile(c.race||c.appearance?.race||'Veyren');
   var sx=Math.max(.9,Math.min(1.16,(p.leg||14)/14));
   var transform='translate(120 0) scale('+sx+' 1) translate(-120 0)';
-  var base='<g class="cb-paper-underlayer cb-paper-base-feet" transform="'+transform+'">'+
+  var base='<g class="cb-paper-underlayer cb-paper-empty-feet cb-paper-base-feet" transform="'+transform+'">'+
     '<path d="M86 348 L111 348 L111 386 L76 386 Q74 377 84 370Z" fill="#202a2d" stroke="#111820" stroke-width="2"/>'+
     '<path d="M129 348 L154 348 L164 386 L129 386 L129 369Z" fill="#202a2d" stroke="#111820" stroke-width="2"/>'+
     '<path d="M82 369 L110 369 M130 369 L158 369" stroke="#59686b" stroke-width="1.4" opacity=".42"/></g>';
