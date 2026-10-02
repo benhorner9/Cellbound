@@ -4,3 +4,27 @@
 @media(max-width:900px){.cb-lw-head{grid-template-columns:1fr auto}.cb-lw-res{grid-row:2;grid-column:1/-1;overflow:auto}.cb-lw-wrap{padding:14px 9px 24px}.cb-lw-stage{border-radius:16px}.cb-lw-hotspot-label{padding:5px 7px;grid-template-columns:19px auto}.cb-lw-hotspot-label i{width:17px;height:17px}.cb-lw-hotspot-label b{font-size:8px}.cb-lw-hotspot-label small{display:none}.cb-lw-dest{grid-template-columns:145px 1fr;min-height:170px;gap:11px}.cb-lw-dest-art{height:145px}.cb-lw-dest-actions{grid-column:1/-1;grid-template-columns:.7fr 1.4fr 1fr}.cb-lw-dest-actions .go{min-height:42px}.cb-lw-districts{overflow:auto;justify-content:flex-start}.cb-lw-districts>span{position:sticky;left:0;background:#0b1517;padding-right:8px}.cb-lw-return{grid-template-columns:auto 1fr}.cb-lw-return button:last-child{display:none}}
 @media(max-width:640px){.cb-lw-head{padding:8px 9px}.cb-lw-brand b{font-size:11px}.cb-lw-brand>span{width:34px;height:34px}.cb-lw-res span{padding:6px 8px}.cb-lw-intro{display:grid;align-items:start}.cb-lw-intro em{justify-self:start}.cb-lw-stage{aspect-ratio:auto;height:min(72vh,680px);min-height:520px}.cb-lw-bg{object-fit:cover;object-position:center}.cb-lw-hotspot-label{opacity:.82}.cb-lw-hint{left:8px;top:8px;max-width:calc(100% - 16px)}.cb-lw-hint span{display:none}.cb-lw-dest{left:8px;right:8px;bottom:8px;grid-template-columns:95px 1fr;padding:9px;gap:9px;min-height:154px}.cb-lw-dest-art{height:108px}.cb-lw-dest-copy h2{font-size:21px}.cb-lw-dest-copy>p{font-size:10px;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.cb-lw-npc-line{padding:6px}.cb-lw-npc-line em{display:none}.cb-lw-dest-actions{grid-template-columns:1fr 1.8fr}.cb-lw-dest-actions .close{display:none}.cb-lw-districts button{white-space:nowrap}.cb-lw-player{width:32px;height:45px}.cb-lw-player i{width:18px;height:26px}}
 @media(prefers-reduced-motion:reduce){.cb-lw-camera,.cb-lw-player,.cb-lw-hotspot-ring,.cb-lw-hotspot-label,.cb-lw-ambient,.cb-lw-dest{transition:none!important;animation:none!important}}
+
+/* Living World hard-static scene: only the player marker is allowed to move. */
+.cb-lw,.cb-lw-wrap,.cb-lw-stage,.cb-lw-camera{overflow-anchor:none!important}
+.cb-lw-camera,.cb-lw-bg,.cb-lw-ambient{transform:none!important;transition:none!important;animation:none!important}
+.cb-lw-hotspot,.cb-lw-hotspot-ring,.cb-lw-hotspot-label{
+  transition:none!important;
+  animation:none!important;
+}
+.cb-lw-hotspot-label{
+  transform:translate(-50%,0)!important;
+}
+.cb-lw-hotspot:hover .cb-lw-hotspot-label,
+.cb-lw-hotspot:focus-visible .cb-lw-hotspot-label,
+.cb-lw-hotspot.is-selected .cb-lw-hotspot-label{
+  transform:translate(-50%,0)!important;
+}
+.cb-lw-hotspot.is-selected .cb-lw-hotspot-ring{
+  animation:none!important;
+}
+.cb-lw-dest{
+  animation:none!important;
+  transform:none!important;
+  transition:none!important;
+}
