@@ -165,7 +165,7 @@ for(const file of files){
     for(const hook of ['#party .party-choice{','grid-template-columns:56px minmax(0,1fr) auto','#party .party-choice>div:nth-child(2){','text-overflow:ellipsis'])if(!contents.includes(hook))throw new Error('Active Party portrait/text spacing is missing '+hook);
   }
   if(file==='character-fit-viewer-v1.js'){
-    for(const hook of ['function isOwner()','function auditCurrent()','function auditBetaMatrix()','function validateCharacter(','36 bodies','RUN BETA MATRIX','v9-beta-locked','compare===\'frames\'','compare===\'sexes\'','compare===\'races\'','AUTO CYCLE ITEMS','SHOW FIT POINTS','gearFitProfile','main-hand weapon is not on the front layer','shield must remain behind the body'])if(!contents.includes(hook))throw new Error('Owner Character Fit Viewer is missing '+hook);
+    for(const hook of ['function isOwner()','function auditCurrent()','function auditBetaMatrix()','function validateCharacter(','36 bodies','RUN BETA MATRIX','CP()?.modelContract','compare===\'frames\'','compare===\'sexes\'','compare===\'races\'','AUTO CYCLE ITEMS','SHOW FIT POINTS','gearFitProfile','main-hand weapon is not on the front layer','shield must remain behind the body'])if(!contents.includes(hook))throw new Error('Owner Character Fit Viewer is missing '+hook);
     if(!contents.includes("toLowerCase()==='owner'"))throw new Error('Character Fit Viewer must remain owner-only');
     if(contents.includes('Game.save')||contents.includes('persistState'))throw new Error('Character Fit Viewer must not mutate live game state');
   }
