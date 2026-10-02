@@ -1,6 +1,8 @@
 (()=>{
 'use strict';
 
+let SVG_UID=0;
+
 const CLASS_COLORS={
   Warrior:'#C69B6D',Paladin:'#F48CBA',Priest:'#FFFFFF',Druid:'#FF7C0A',
   Hunter:'#AAD372',Rogue:'#FFF468',Mage:'#3FC7EB',Shaman:'#0070DD',
@@ -160,7 +162,7 @@ function raceFeatureMarkup(a,race){
 }
 function svgFor(a,accent){
   var r=raceDef(a.race),skin=r.skin[a.skinTone],eye=r.eyes[a.eyes],hair=HAIR[a.hairColor];
-  var uid='p'+hash(JSON.stringify(a)+'|'+accent).toString(36);
+  var uid='p'+hash(JSON.stringify(a)+'|'+accent).toString(36)+'-'+(++SVG_UID).toString(36);
   var face=facePath(a.face);
   var bg1='#111a22',bg2='#080c11';
   return '<svg viewBox="0 0 100 100" role="img" aria-hidden="true" focusable="false">'+
@@ -626,7 +628,7 @@ function paperDollSVG(c,opts){
   var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
   var r=raceDef(a.race),skin=r.skin[a.skinTone],eye=r.eyes[a.eyes],hair=HAIR[a.hairColor];
   var accent=opts.accent||paperAccent(c),highlighted=opts.highlightedSlot||'',profile=bodyProfile(race);
-  var uid='pd'+hash((c.id||c.name||race)+'|'+JSON.stringify(a)).toString(36);
+  var uid='pd'+hash((c.id||c.name||race)+'|'+JSON.stringify(a)).toString(36)+'-'+(++SVG_UID).toString(36);
   var neck='<path d="M108 110 L108 143 Q120 151 132 143 L132 110Z" fill="'+skin+'" stroke="#182027" stroke-width="2.5"/>';
   var under='<path d="M91 237 Q120 250 149 237 L151 269 Q120 281 89 269Z" fill="#162126" stroke="#111820" stroke-width="3"/>';
   var headScale=profile.headScale||1,headX=70+(50*(1-headScale)),headY=20+(50*(1-headScale));

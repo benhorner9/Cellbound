@@ -260,7 +260,7 @@ const UNIQUE_ITEMS={
  'guardian-last-stand':{
    itemId:'guardian-last-stand',name:"Guardian's Last Stand",slot:'Trinket1',classes:['Warrior','Paladin','Death Knight','Demon Hunter','Druid'],tier:4,rarity:'Epic',
    itemLevel:40,power:9,minDifficulty:'heroic',questArtMaterial:'warden-iron',
-   uniqueEffect:{id:'guardian-last-stand',name:'Last Stand',description:'Dropping below 20% health automatically triggers a powerful defensive once per encounter.'},
+   uniqueEffect:{id:'guardian-last-stand',name:'Last Stand',description:'Dropping below 20% health automatically triggers a major defensive once per encounter.'},
    source:'The Vaultheart · Heroic / Cellbound+'
  },
  'embercore-staff':{
@@ -317,7 +317,7 @@ function scorePreview({difficulty='normal',tier=0,timeMs=0,targetTimeMs=0,deaths
 }
 function rewardBand(mode,tier=0,dungeonId='ashen-vault'){
  const profile=lootProfileFor(dungeonId,mode,tier),cap=Math.max(...Object.values(profile.itemLevel||{}).map(Number).filter(Number.isFinite),0);
- if(mode==='normal')return{label:'Chapter 1 dungeon progression',powerCap:cap};
+ if(mode==='normal')return{label:'Chapter 1 dungeon path',powerCap:cap};
  if(mode==='heroic')return{label:'Strong Tier 2–3 gear · rare early Tier 4',powerCap:cap};
  if(tier<5)return{label:'Tier 3 endgame gear · rare Tier 4',powerCap:cap};
  if(tier<10)return{label:'Tier 3 with growing Tier 4 chance',powerCap:cap};

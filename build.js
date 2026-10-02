@@ -36,9 +36,14 @@ for(const file of files){
   if(file==='auth.js'){
     for(const hook of ['const NEW_PASSWORD_MIN=12',"creds(true,NEW_PASSWORD_MIN)","password.value.length<NEW_PASSWORD_MIN"])if(!contents.includes(hook))throw new Error('New/reset password hardening is missing '+hook);
   }
-  const playerCopyFiles=new Set(['guild.html','guild-v4.js','onboarding-v1.js','pvp-v1.js','endgame-v1.js','evolution-v1.js','quests-v2.js','dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','fractured-ages-v1.js','twelve-below-v1.js','thirteenth-bell-v1.js','fourfold-lock-v1.js','no-way-back-v1.js','manor-raid-v1.js']);
+  const playerCopyFiles=new Set(['guild.html','guild-v4.js','onboarding-v1.js','pvp-v1.js','endgame-v1.js','evolution-v1.js','quests-v2.js','dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','fractured-ages-v1.js','twelve-below-v1.js','thirteenth-bell-v1.js','fourfold-lock-v1.js','no-way-back-v1.js','manor-raid-v1.js','null-complex-v1.js','trading-post-v3.js','presentation-fx-v1.js','combat-3d-v1.js']);
   if(playerCopyFiles.has(file)){
-    for(const phrase of ['FARMABLE','authoritative Combat Reborn','authoritative Cellbound combat engine','proper 5v5 PvE','CHASE SYSTEM','UPDATE 2 · ENDGAME HUB','Title hook','Prestige cosmetic hook','normal endgame progression','repeat-run rule','randomized versions','Future Bellfoundry access hook','QUEST STRUCTURE','Combat Reborn final boss','simulation-driven','combat timeline rather than viewer buttons','COMBAT REBORN · RUN ANALYSIS','Pre-dungeon tactics are authoritative','stored combat timeline',' simulated time','Combat Reborn rules','actual Combat Reborn positions','NEW SYSTEM'])if(contents.includes(phrase))throw new Error('Player-facing copy regression in '+file+': '+phrase);
+    for(const phrase of ['FARMABLE','authoritative Combat Reborn','authoritative Cellbound combat engine','proper 5v5 PvE','CHASE SYSTEM','UPDATE 2 · ENDGAME HUB','Title hook','Prestige cosmetic hook','normal endgame progression','repeat-run rule','randomized versions','Future Bellfoundry access hook','QUEST STRUCTURE','Combat Reborn final boss','simulation-driven','combat timeline rather than viewer buttons','COMBAT REBORN · RUN ANALYSIS','Pre-dungeon tactics are authoritative','stored combat timeline',' simulated time','Combat Reborn rules','actual Combat Reborn positions','NEW SYSTEM','NEW CONTENT UNLOCKED','PLAYER ECONOMY','Combat simulation live','RUN PROGRESSION','Clear content to','A Journey Through the Ages','COMBAT REBORN · SHARED CB2D VIEWER','Your party follows the shared Combat Reborn engine.','Combat Reborn controls movement'])if(contents.includes(phrase))throw new Error('Player-facing copy regression in '+file+': '+phrase);
+  }
+  if(file==='guild.html'){
+    const ids=[...contents.matchAll(/\\bid="([^"]+)"/g)].map(match=>match[1]),seen=new Set(),duplicates=new Set();
+    ids.forEach(id=>seen.has(id)?duplicates.add(id):seen.add(id));
+    if(duplicates.size)throw new Error('Duplicate DOM ids in guild.html: '+[...duplicates].join(', '));
   }
 
   if(file==='home-v2.css'){

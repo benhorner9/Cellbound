@@ -1,6 +1,8 @@
 (function(){
 'use strict';
 
+let SVG_UID=0;
+
 const RARITY={
  Common:['#b9c1be','#53615f'],
  Uncommon:['#65dc86','#1f6943'],
@@ -237,18 +239,19 @@ function artBody(p,x,seed){
 function artHTML(item,size,extra){
  if(!item)return '';
  size=Math.max(20,Math.round(Number(size)||64));extra=extra||'';
- const x={...item},seed=detailSeed(x),p=palette(x),tier=tierOf(x),uid='cbia'+seed.toString(36),title=esc(x.name||idOf(x));
+ const x={...item},seed=detailSeed(x),p=palette(x),tier=tierOf(x),uid='cbia'+seed.toString(36)+'-'+(++SVG_UID).toString(36),title=esc(x.name||idOf(x));
  const body=artBody(p,x,seed),pvp=pvpBand(x);
  const cls=['cb-item-art','cb-item-'+slug(kindOf(x)),'rarity-'+slug(rarityOf(x)),pvp?'cb-item-pvp':'',extra].filter(Boolean).join(' ');
  const svg='<svg viewBox="0 0 128 128" role="img" aria-label="'+title+'" focusable="false"><defs>'+
- '<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+p.a+'"/><stop offset="1" stop-color="'+p.b+'"/></linearGradient>'+
- '<linearGradient id="m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+p.a+'"/><stop offset=".48" stop-color="'+p.b+'"/><stop offset="1" stop-color="'+p.rarity+'"/></linearGradient>'+
+ '<linearGradient id="'+uid+'g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+p.a+'"/><stop offset="1" stop-color="'+p.b+'"/></linearGradient>'+
+ '<linearGradient id="'+uid+'m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+p.a+'"/><stop offset=".48" stop-color="'+p.b+'"/><stop offset="1" stop-color="'+p.rarity+'"/></linearGradient>'+
  '<filter id="'+uid+'"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity=".65"/></filter></defs>'+
  frame(seed,p,tier)+runes(seed,p,tier)+'<g filter="url(#'+uid+')">'+body+'</g>'+
  (tier>=4?'<circle cx="64" cy="64" r="52" fill="none" stroke="'+p.rarity+'" stroke-width="1.5" opacity=".38"/>':'')+
  (pvp?'<path d="M20 105 L36 89 M108 105 L92 89" stroke="'+p.gold+'" stroke-width="4" opacity=".8"/>':'')+
  '</svg>';
- return '<span class="'+esc(cls)+'" style="width:'+size+'px;height:'+size+'px" data-item-art="'+esc(idOf(x))+'" data-item-kind="'+esc(kindOf(x))+'" title="'+title+'">'+svg+'</span>'
+ const scopedSvg=svg.replaceAll('url(#g)','url(#'+uid+'g)').replaceAll('url(#m)','url(#'+uid+'m)');
+ return '<span class="'+esc(cls)+'" style="width:'+size+'px;height:'+size+'px" data-item-art="'+esc(idOf(x))+'" data-item-kind="'+esc(kindOf(x))+'" title="'+title+'">'+scopedSvg+'</span>'
 }
 function findConsumable(key){
  const P=window.CellboundProfessions,all=Object.values(P?.PROFESSIONS||{}).flatMap(function(v){return v.recipes||[]});

@@ -3,7 +3,7 @@
 
 const PVP_ENABLED=false;
 const pvpEnabled=()=>PVP_ENABLED||window.CellboundAdmin?.role==='owner';
-const PVP_LOCK_MESSAGE='PvP is currently locked while the launch game is being finished. Battlegrounds, Arena, PvP gear and progression will return in a future update.';
+const PVP_LOCK_MESSAGE='PvP is locked while the launch game is being finished. Battlegrounds, Arena and PvP gear will return in a later update.';
 
 const $=s=>document.querySelector(s);
 const $$=s=>[...document.querySelectorAll(s)];

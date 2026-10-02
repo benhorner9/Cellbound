@@ -199,11 +199,62 @@ async function mainGamePlaythrough(browser){
   await page.evaluate(()=>CellboundGame.switchView('chat'));
   assert(await page.locator('#chat').isVisible(),'social view renders');
 
-  for(const size of [{width:768,height:1024},{width:390,height:844},{width:1024,height:1366}]){
+  const duplicateIds=await page.evaluate(()=>{
+    const counts={};document.querySelectorAll('[id]').forEach(el=>counts[el.id]=(counts[el.id]||0)+1);
+    return Object.entries(counts).filter(([,count])=>count>1).map(([id,count])=>({id,count}));
+  });
+  assert.deepEqual(duplicateIds,[],'rendered game has no duplicate DOM ids');
+
+  async function auditView(view,size){
+    await page.evaluate(v=>CellboundGame.switchView(v),view);
+    await page.waitForTimeout(90);
+    const audit=await page.evaluate(v=>{
+      const root=document.getElementById(v);
+      const visible=el=>{
+        const style=getComputedStyle(el),rect=el.getBoundingClientRect();
+        return style.display!=='none'&&style.visibility!=='hidden'&&Number(style.opacity)!==0&&rect.width>0&&rect.height>0;
+      };
+      const canScrollX=el=>{
+        for(let p=el.parentElement;p&&p!==document.body;p=p.parentElement){
+          const s=getComputedStyle(p);
+          if((s.overflowX==='auto'||s.overflowX==='scroll')&&p.scrollWidth>p.clientWidth+2)return true;
+        }
+        return false;
+      };
+      const controls=[...root.querySelectorAll('button,a[href],input,select,textarea,[role="button"]')].filter(visible);
+      const unnamed=controls.filter(el=>{
+        const text=String(el.textContent||'').trim();
+        const label=String(el.getAttribute('aria-label')||el.getAttribute('title')||el.getAttribute('placeholder')||'').trim();
+        const wrapped=String(el.closest('label')?.textContent||'').trim();
+        return !text&&!label&&!wrapped;
+      }).map(el=>el.id||el.outerHTML.slice(0,120));
+      const offscreen=controls.filter(el=>{
+        if(canScrollX(el))return false;
+        const r=el.getBoundingClientRect();
+        return r.left<-3||r.right>window.innerWidth+3;
+      }).map(el=>el.id||String(el.textContent||'').trim().slice(0,60)||el.tagName);
+      const text=String(root.innerText||'');
+      const broken=[...new Set((text.match(/\bundefined\b|\bNaN\b|\[object Object\]/g)||[]))];
+      const technical=['Combat Reborn','Combat simulation','NEW CONTENT UNLOCKED','PLAYER ECONOMY','RUN PROGRESSION','Clear content to']
+        .filter(phrase=>text.includes(phrase));
+      const rect=root.getBoundingClientRect();
+      return{
+        visible:visible(root),
+        rootOverflow:rect.left<-3||rect.right>window.innerWidth+3,
+        unnamed,offscreen,broken,technical
+      };
+    },view);
+    assert.equal(audit.visible,true,view+' remains visible at '+size.width+'px');
+    assert.equal(audit.rootOverflow,false,view+' stays within the viewport at '+size.width+'px');
+    assert.deepEqual(audit.unnamed,[],view+' has no unnamed visible controls at '+size.width+'px');
+    assert.deepEqual(audit.offscreen,[],view+' has no off-screen controls at '+size.width+'px');
+    assert.deepEqual(audit.broken,[],view+' has no broken placeholder values at '+size.width+'px');
+    assert.deepEqual(audit.technical,[],view+' exposes no implementation copy at '+size.width+'px');
+  }
+
+  for(const size of [{width:390,height:844},{width:768,height:1024},{width:1024,height:1366}]){
     await page.setViewportSize(size);
-    await page.evaluate(()=>CellboundGame.switchView('overview'));
-    await page.waitForTimeout(80);
-    assert.equal(await page.locator('#overview').isVisible(),true,'core UI survives '+size.width+'px viewport');
+    for(const view of views)await auditView(view,size);
   }
 
   assert.deepEqual(errors,[],'main-game playthrough emitted no browser errors');

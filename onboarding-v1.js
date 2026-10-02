@@ -306,7 +306,7 @@ function tutorialComicConfig(id){
         {kind:'npc',eyebrow:'THE POINT',title:'Your next decision changes.',text:'Use another character, recover, or prepare better for the next attempt.'}
       ],
       choices:[
-        {id:'delete',icon:'?',label:'Does a wipe delete our progress?',reply:'No. Your items and progression remain. Cell Shock changes availability, not ownership.'},
+        {id:'delete',icon:'?',label:'Does a wipe delete our progress?',reply:'No. You keep your items. Cell Shock only affects when that character can fight again.'},
         {id:'recover',icon:'◇',label:'Can Cell Shock be recovered?',reply:'Yes. Time clears it, membership shortens recovery, and rare crafted preparation can remove it.'},
         {id:'show',icon:'→',label:'Show us what reaching 100% looks like.',reply:'Watch the ward record. Your real roster will not be changed by this demonstration.'}
       ]
@@ -317,12 +317,12 @@ function tutorialComicConfig(id){
       line:'Dungeon reagents are not vendor rubbish. They become preparation for the next fight.',
       panels:[
         {kind:'craft',artwork:'./assets/comics/tutorial/arcane_forge_beneath_the_twilight_citadel.webp',eyebrow:'REAGENTS',title:'The Hollows left materials behind.',text:'Faded Cell Fragments and Zeltiran Iron are useful because professions consume them.',icon:'⚒'},
-        {kind:'npc',eyebrow:'PROFESSIONS',title:'Power with an expiry date',text:'Enhancements, flasks, runes and potions complement dungeon gear rather than replacing it.'},
+        {kind:'npc',eyebrow:'PROFESSIONS',title:'Power with an expiry date',text:'Crafted attachments and consumables support the gear you earn from quests and dungeons.'},
         {kind:'loot',eyebrow:'FIRST CRAFT',title:'Choose who learns.',text:'Profession ownership belongs to a character and persists beyond the tutorial.',icon:'⚗'}
       ],
       choices:[
         {id:'replace',icon:'?',label:'Does crafting replace dungeon gear?',reply:'No. The strongest foundation still comes from quests and dungeons. Professions prepare that gear and the people wearing it.'},
-        {id:'trade',icon:'⇄',label:'Can crafted items be traded?',reply:'Many can. A useful profession can become part of the player economy as well as your own preparation.'},
+        {id:'trade',icon:'⇄',label:'Can crafted items be traded?',reply:'Many can. Sell tradeable crafts on the Trading Post or use them yourself.'},
         {id:'choose',icon:'⚒',label:'Let us choose a profession.',reply:'Pick the adventurer first. Then decide what job you want that character to bring to the guild.'}
       ]
     },
@@ -344,11 +344,11 @@ function tutorialComicConfig(id){
     departure:{
       theme:'road',eyebrow:'FIRST EXPEDITION COMPLETE',title:'Beyond Zeltira',subtitle:'Eastern Road',page:'IX · DEPARTURE',
       speaker:'Warden Elara Vey',speakerRole:'FAREWELL',speakerMark:'EV',
-      line:'You have five people, a little gear and enough experience to know what can go wrong. That is more than most charters get.',
+      line:'You have five people, some gear and enough training to know what can go wrong. That is more than most charters get.',
       panels:[
         {kind:'location',artwork:'./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp',eyebrow:'DAWN',title:'The eastern gate opens.',text:'For the first time, the route ahead belongs entirely to your guild.',icon:'☼'},
-        {kind:'npc',eyebrow:'ELARA',title:'No more training ward',text:'The systems you learned remain. The safety net does not.'},
-        {kind:'location',eyebrow:'THE ROAD',title:'Quest · Dungeon · Endgame',text:'The tutorial ends where the actual game begins.',icon:'→'}
+        {kind:'npc',eyebrow:'ELARA',title:'No more training ward',text:'The rules you learned remain. The safety net does not.'},
+        {kind:'location',eyebrow:'THE ROAD',title:'Quests · Dungeons · Activities',text:'Training ends here. The road ahead is yours.',icon:'→'}
       ],
       choices:[
         {id:'advice',icon:'?',label:'Any final advice?',reply:'Read the fight. Read the item. Read the room. Most bad outcomes tell you what you missed.'},
@@ -775,7 +775,7 @@ async function tdPlayCombat(result,my){
 }
 async function fightTdPack(encounter,my){
   spawnTdEnemies(encounter);await sleep(350);
-  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
+  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat could not start. Reload and try again.');
   const roster=state().roster;
   roster.forEach(c=>tdSetPartyHpByEvent(c,100));
   const combatParty=roster.map(c=>Object.assign({},c,{power:Math.max(Number(c.power)||1,30),_combatHealthPct:100}));
@@ -875,7 +875,7 @@ async function equipTutorialLoot(charId){
 function renderRecoveryLesson(){
   if(maybeTutorialComic('shock'))return;
   const mins=Game.getEntitlements?.().recoveryMinutes||60,lead=state().roster.find(c=>tdRole(c)==='tank')||state().roster[0];
-  const body='<div class="growth-school shock-story"><main><small>ZELTIRA · PATHFINDER WARD</small><h2>The ward saved the party from the penalty. Elara wants you to see what it absorbed.</h2><p>A failed run adds Cell Shock to every participating character. This training record does not change your roster.</p><div class="shock-simulation" id="shockSimulation"><div class="shock-sim-character"><span>'+esc(lead?.portrait||'??')+'</span><div><b>'+esc(lead?.name||'Your Tank')+'</b><small>TRAINING PROJECTION · NOT REAL SHOCK</small></div></div><div class="shock-sim-meter"><div><i id="shockSimFill" style="width:0%"></i></div><strong id="shockSimValue">0%</strong></div><p id="shockSimCopy">Run the ward record to see how repeated wipes create recovery pressure.</p><button id="runShockSimulation" class="on-primary">PLAY FAILURE RECORD →</button><button id="clearShockSimulation" class="on-primary" hidden>DISCHARGE THE WARD & CONTINUE →</button></div></main><aside class="z-guide"><small>CELL SHOCK</small><h2>Failure changes roster decisions.</h2><div class="growth-cards compact"><article><strong>25% PER WIPE</strong><b>Pressure accumulates</b><p>A failed run adds shock instead of deleting progress.</p></article><article><strong>100%</strong><b>Character unavailable</b><p>At the cap, that adventurer must recover before entering again.</p></article><article><strong>'+mins+' MIN</strong><b>Your current recovery</b><p>Recovery time depends on your account.</p></article></div><p>Failure changes your next decision without erasing progress.</p></aside></div>';
+  const body='<div class="growth-school shock-story"><main><small>ZELTIRA · PATHFINDER WARD</small><h2>The ward saved the party from the penalty. Elara wants you to see what it absorbed.</h2><p>A failed run adds Cell Shock to every participating character. This training record does not change your roster.</p><div class="shock-simulation" id="shockSimulation"><div class="shock-sim-character"><span>'+esc(lead?.portrait||'??')+'</span><div><b>'+esc(lead?.name||'Your Tank')+'</b><small>TRAINING PROJECTION · NOT REAL SHOCK</small></div></div><div class="shock-sim-meter"><div><i id="shockSimFill" style="width:0%"></i></div><strong id="shockSimValue">0%</strong></div><p id="shockSimCopy">Run the ward record to see Cell Shock build after repeated wipes.</p><button id="runShockSimulation" class="on-primary">PLAY FAILURE RECORD →</button><button id="clearShockSimulation" class="on-primary" hidden>DISCHARGE THE WARD & CONTINUE →</button></div></main><aside class="z-guide"><small>CELL SHOCK</small><h2>Failure changes roster decisions.</h2><div class="growth-cards compact"><article><strong>25% PER WIPE</strong><b>Pressure accumulates</b><p>A failed run adds shock instead of deleting progress.</p></article><article><strong>100%</strong><b>Character unavailable</b><p>At the cap, that adventurer must recover before entering again.</p></article><article><strong>'+mins+' MIN</strong><b>Your current recovery</b><p>Recovery time depends on your account.</p></article></div><p>Failure changes your next decision without erasing progress.</p></aside></div>';
   ensureRoot().innerHTML=chrome(body,'recovery-lesson');
   $('#runShockSimulation')?.addEventListener('click',async e=>{
     e.currentTarget.disabled=true;
@@ -898,7 +898,7 @@ function renderProfessionChoice(){
   const chars=s.roster.map(c=>'<button class="prof-char-choice '+(c.id===selectedChar?'active':'')+'" data-prof-char="'+c.id+'"><span>'+c.portrait+'</span><div><b>'+esc(c.name)+'</b><small>'+esc(c.race)+' · '+esc(c.class)+'</small></div></button>').join('');
   const profs=Object.entries(P.PROFESSIONS).map(([name,p])=>'<button class="prof-choice '+(name===selectedProf?'active':'')+'" data-prof="'+name+'"><strong>'+p.icon+'</strong><div><b>'+name+'</b><p>'+p.summary+'</p><small>FIRST RECIPE · '+esc(p.recipes[0].name)+'</small></div></button>').join('');
   const mats='<div class="loot-material"><i>'+(P?.materialArtHTML?P.materialArtHTML('faded-cell-fragment',34,'tutorial-material-art'):'◇')+'</i><span><b>Faded Cell Fragment ×'+(s.materials['faded-cell-fragment']||0)+'</b><small>Recovered from the Hollows</small></span></div><div class="loot-material"><i>'+(P?.materialArtHTML?P.materialArtHTML('zeltiran-iron',34,'tutorial-material-art'):'⬡')+'</i><span><b>Zeltiran Iron ×'+(s.materials['zeltiran-iron']||0)+'</b><small>Recovered from the Hollows</small></span></div>';
-  const body='<div class="profession-tutorial"><aside><small>DUNGEON LOOT</small><h2>These are reagents.</h2><p>Reagents are used by professions. Professions do not replace dungeon gear — they turn dungeon drops into temporary enhancements, flasks, runes and potions that are consumed through play.</p>'+mats+'</aside><main><div class="builder-section-head"><div><small>01</small><h3>Who learns the profession?</h3></div><p>Every adventurer can learn one profession. Choose carefully — that trade becomes part of the character.</p></div><div class="prof-char-grid">'+chars+'</div><div class="builder-section-head"><div><small>02</small><h3>Choose their first profession</h3></div><p>This choice becomes part of the character and persists after the tutorial.</p></div><div class="prof-grid">'+profs+'</div><button id="confirmProfession" class="on-primary" '+(selectedChar&&selectedProf?'':'disabled')+'>LEARN '+esc(selectedProf||'A PROFESSION')+' →</button></main></div>';
+  const body='<div class="profession-tutorial"><aside><small>DUNGEON LOOT</small><h2>These are reagents.</h2><p>Reagents are used by professions. Professions turn reagents into attachments and consumables that support dungeon gear.</p>'+mats+'</aside><main><div class="builder-section-head"><div><small>01</small><h3>Who learns the profession?</h3></div><p>Every adventurer can learn one profession. Choose carefully — that trade becomes part of the character.</p></div><div class="prof-char-grid">'+chars+'</div><div class="builder-section-head"><div><small>02</small><h3>Choose their first profession</h3></div><p>This choice becomes part of the character and persists after the tutorial.</p></div><div class="prof-grid">'+profs+'</div><button id="confirmProfession" class="on-primary" '+(selectedChar&&selectedProf?'':'disabled')+'>LEARN '+esc(selectedProf||'A PROFESSION')+' →</button></main></div>';
   ensureRoot().innerHTML=chrome(body,'profession-choice');
   $$('[data-prof-char]').forEach(b=>b.onclick=()=>{s.onboarding.professionCharacterId=b.dataset.profChar;Game.save();renderProfessionChoice()});
   $$('[data-prof]').forEach(b=>b.onclick=()=>{s.onboarding.professionName=b.dataset.prof;Game.save();renderProfessionChoice()});

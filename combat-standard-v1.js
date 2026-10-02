@@ -7,7 +7,7 @@ const zones=new Map();
 
 function core(){
   const engine=window.CellboundCombatReborn;
-  if(!engine||typeof engine.simulate!=='function')throw new Error('Combat Reborn engine is unavailable');
+  if(!engine||typeof engine.simulate!=='function')throw new Error('Combat could not start');
   return engine
 }
 function engineVersion(){
@@ -17,7 +17,7 @@ function engineVersion(){
 function simulate(options={},meta={}){
   const engine=core();
   const result=engine.simulate(meta?.zone?{...options,professionZone:meta.zone}:options);
-  if(!result||!Array.isArray(result.events)||!result.finalState)throw new Error('Combat Reborn returned an invalid combat result');
+  if(!result||!Array.isArray(result.events)||!result.finalState)throw new Error('Combat ended without a valid result');
   result.combatModel=MODEL;
   result.engineVersion=result.engineVersion||engineVersion();
   result.combatContract=CONTRACT_VERSION;
@@ -26,7 +26,7 @@ function simulate(options={},meta={}){
 }
 function assertServerPayload(payload,zone='server-combat'){
   if(!payload||payload.combatModel!==MODEL){
-    throw new Error(zone+' did not return the required Combat Reborn combat model');
+    throw new Error(zone+' returned invalid combat data');
   }
   return payload
 }

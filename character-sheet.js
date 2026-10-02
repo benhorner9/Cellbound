@@ -66,7 +66,7 @@ const trees={
   Warrior:{
     Protection:[
       {id:'Shield Mastery',icon:'🛡',tier:0,col:1,max:3,desc:'Increase block and reduce incoming physical damage.'},
-      {id:'Last Stand',icon:'♥',tier:0,col:3,max:1,desc:'Gain a powerful emergency health increase.'},
+      {id:'Last Stand',icon:'♥',tier:0,col:3,max:1,desc:'Gain a large emergency health increase.'},
       {id:'Iron Discipline',icon:'⛓',tier:1,col:0,max:3,req:'Shield Mastery',desc:'Improve armour while a shield is equipped.'},
       {id:'Taunt Mastery',icon:'!',tier:1,col:2,max:2,desc:'Improve threat generation and taunt reliability.'},
       {id:'Hold the Line',icon:'▰',tier:2,col:1,max:2,req:'Iron Discipline',desc:'Blocking grants a short defensive buff.'},
@@ -84,7 +84,7 @@ const trees={
       {id:'Executioner',icon:'☠',tier:2,col:3,max:3,req:'Deep Wounds',desc:'Deal more damage to weakened bosses.'},
       {id:'Mortal Strike',icon:'✕',tier:3,col:1,max:1,req:'Sweeping Blows',desc:'Unlock the signature Arms attack.'},
       {id:'Blood Frenzy',icon:'🔥',tier:3,col:3,max:2,req:'Executioner',desc:'Bleeding targets increase attack speed.'},
-      {id:'Bladestorm',icon:'✹',tier:4,col:2,max:1,req:'Mortal Strike',desc:'Capstone: unleash a devastating weapon storm.'}
+      {id:'Bladestorm',icon:'✹',tier:4,col:2,max:1,req:'Mortal Strike',desc:'Capstone: spin through nearby enemies with repeated weapon strikes.'}
     ]
   },
   Paladin:{
@@ -95,7 +95,7 @@ const trees={
       {id:'Hammer of Justice',icon:'🔨',tier:1,col:2,max:2,desc:'Improve control and interruption.'},
       {id:'Consecration',icon:'◎',tier:2,col:1,max:1,req:'Righteous Guard',desc:'Consecrate the ground beneath the party.'},
       {id:'Divine Ward',icon:'◇',tier:2,col:3,max:2,req:'Guardian Oath',desc:'Reduce incoming magical damage.'},
-      {id:'Ardent Defender',icon:'🔥',tier:3,col:1,max:1,req:'Consecration',desc:'Powerful defensive cooldown.'},
+      {id:'Ardent Defender',icon:'🔥',tier:3,col:1,max:1,req:'Consecration',desc:'Major defensive cooldown.'},
       {id:'Holy Bastion',icon:'▣',tier:3,col:3,max:2,req:'Divine Ward',desc:'Increase block while under sustained pressure.'},
       {id:'Divine Guardian',icon:'✦',tier:4,col:2,max:1,req:'Ardent Defender',desc:'Capstone: protect the entire party from heavy damage.'}
     ],
@@ -108,12 +108,12 @@ const trees={
       {id:'Sacred Hands',icon:'✋',tier:2,col:3,max:3,req:'Grace',desc:'Increase healing on low-health allies.'},
       {id:'Aura Mastery',icon:'✺',tier:3,col:1,max:1,req:'Beacon',desc:'Empower your active aura.'},
       {id:'Radiance',icon:'☼',tier:3,col:3,max:2,req:'Sacred Hands',desc:'Spread healing to nearby party members.'},
-      {id:'Divine Hymn',icon:'♫',tier:4,col:2,max:1,req:'Aura Mastery',desc:'Capstone: unleash a raid-saving wave of holy healing.'}
+      {id:'Divine Hymn',icon:'♫',tier:4,col:2,max:1,req:'Aura Mastery',desc:'Capstone: channel heavy healing across the party.'}
     ]
   },
   Priest:{
     Holy:[
-      {id:'Renew',icon:'✚',tier:0,col:1,max:3,desc:'Improve healing over time.'},{id:'Serenity',icon:'◌',tier:0,col:3,max:2,desc:'Increase efficient direct healing.'},{id:'Prayer of Mending',icon:'✧',tier:1,col:0,max:2,req:'Renew',desc:'Healing jumps between allies.'},{id:'Focused Will',icon:'◇',tier:1,col:2,max:2,desc:'Increase healing under pressure.'},{id:'Circle of Healing',icon:'◎',tier:2,col:1,max:1,req:'Prayer of Mending',desc:'Heal several party members at once.'},{id:'Spirit of Redemption',icon:'♰',tier:2,col:3,max:1,req:'Serenity',desc:'Continue healing briefly after defeat.'},{id:'Guardian Spirit',icon:'翼',tier:3,col:1,max:1,req:'Circle of Healing',desc:'Protect an ally from lethal damage.'},{id:'Divine Insight',icon:'✦',tier:3,col:3,max:2,req:'Spirit of Redemption',desc:'Gain powerful healing procs.'},{id:'Divine Hymn',icon:'♫',tier:4,col:2,max:1,req:'Guardian Spirit',desc:'Capstone group healing channel.'}
+      {id:'Renew',icon:'✚',tier:0,col:1,max:3,desc:'Improve healing over time.'},{id:'Serenity',icon:'◌',tier:0,col:3,max:2,desc:'Increase efficient direct healing.'},{id:'Prayer of Mending',icon:'✧',tier:1,col:0,max:2,req:'Renew',desc:'Healing jumps between allies.'},{id:'Focused Will',icon:'◇',tier:1,col:2,max:2,desc:'Increase healing under pressure.'},{id:'Circle of Healing',icon:'◎',tier:2,col:1,max:1,req:'Prayer of Mending',desc:'Heal several party members at once.'},{id:'Spirit of Redemption',icon:'♰',tier:2,col:3,max:1,req:'Serenity',desc:'Continue healing briefly after defeat.'},{id:'Guardian Spirit',icon:'翼',tier:3,col:1,max:1,req:'Circle of Healing',desc:'Protect an ally from lethal damage.'},{id:'Divine Insight',icon:'✦',tier:3,col:3,max:2,req:'Spirit of Redemption',desc:'Gain bonus healing procs.'},{id:'Divine Hymn',icon:'♫',tier:4,col:2,max:1,req:'Guardian Spirit',desc:'Capstone group healing channel.'}
     ],
     Shadow:[
       {id:'Dark Thoughts',icon:'◉',tier:0,col:1,max:3,desc:'Strengthen Mind Flay and Mind Blast and improve Insanity generation.'},
@@ -123,7 +123,7 @@ const trees={
       {id:'Shadow Crash',icon:'✹',tier:2,col:1,max:1,req:'Shadow Weaving',desc:'Unlock Shadow Crash as a ranged area-damage and Insanity-generating skill.'},
       {id:'Twist of Fate',icon:'☠',tier:2,col:3,max:2,req:'Mind Devourer',desc:'Deal increased damage to weakened enemies.'},
       {id:'Psychic Link',icon:'⛓',tier:3,col:1,max:2,req:'Shadow Crash',desc:'Mind Blast and Devouring Plague splash shadow damage into another nearby enemy.'},
-      {id:'Void Torrent',icon:'◎',tier:3,col:3,max:1,req:'Twist of Fate',desc:'Unlock Void Torrent, a powerful channel that rapidly generates Insanity.'},
+      {id:'Void Torrent',icon:'◎',tier:3,col:3,max:1,req:'Twist of Fate',desc:'Unlock Void Torrent, a channel that rapidly generates Insanity.'},
       {id:'Void Eruption',icon:'✦',tier:4,col:2,max:1,req:'Psychic Link',desc:'Capstone: unlock Void Eruption and enter a short Voidform burst window.'}
     ]
   },
@@ -136,7 +136,7 @@ const trees={
       {id:'Twin Moons',icon:'☾',tier:0,col:3,max:3,desc:'Increase Moonfire and Sunfire periodic damage.'},
       {id:"Nature's Balance",icon:'◈',tier:1,col:0,max:2,req:'Starlight',desc:'Improve Astral Power generation and make Eclipse cycles easier to maintain.'},
       {id:'Shooting Stars',icon:'✧',tier:1,col:2,max:2,req:'Twin Moons',desc:'Periodic astral damage can generate additional Astral Power.'},
-      {id:'Starfall',icon:'✹',tier:2,col:1,max:1,req:'Shooting Stars',desc:'Unlock Starfall as a powerful area Astral Power spender.'},
+      {id:'Starfall',icon:'✹',tier:2,col:1,max:1,req:'Shooting Stars',desc:'Unlock Starfall as an area Astral Power spender.'},
       {id:'Soul of the Forest',icon:'❈',tier:2,col:3,max:2,req:"Nature's Balance",desc:'Solar and Lunar Eclipse empower their matching spells more strongly.'},
       {id:'Fury of Elune',icon:'☄',tier:3,col:1,max:1,req:'Starfall',desc:'Unlock Fury of Elune as an astral beam that damages packs and generates Astral Power.'},
       {id:'Astral Communion',icon:'◎',tier:3,col:3,max:2,req:'Soul of the Forest',desc:'Starsurge and Starfall gain stronger finishers and can return Astral Power.'},
@@ -161,7 +161,7 @@ const trees={
   },
   Rogue:{
     Assassination:[
-      {id:'Ambush',icon:'◆',tier:0,col:1,max:3,desc:'Increase opening burst.'},{id:'Venom',icon:'☣',tier:0,col:3,max:3,desc:'Improve poisons.'},{id:'Garrote',icon:'⌁',tier:1,col:0,max:2,req:'Ambush',desc:'Apply a powerful bleed from stealth.'},{id:'Quick Recovery',icon:'↺',tier:1,col:2,max:2,desc:'Recover resources faster.'},{id:'Mutilate',icon:'✕',tier:2,col:1,max:1,req:'Garrote',desc:'Unlock a brutal dual-weapon attack.'},{id:'Envenom',icon:'☠',tier:2,col:3,max:2,req:'Venom',desc:'Consume poison stacks for burst damage.'},{id:'Master Poisoner',icon:'♨',tier:3,col:1,max:2,req:'Mutilate',desc:'Enhance poison effectiveness.'},{id:'Cut to the Chase',icon:'➤',tier:3,col:3,max:2,req:'Envenom',desc:'Maintain damage buffs automatically.'},{id:'Eviscerate',icon:'✦',tier:4,col:2,max:1,req:'Master Poisoner',desc:'Capstone finishing strike.'}
+      {id:'Ambush',icon:'◆',tier:0,col:1,max:3,desc:'Increase opening burst.'},{id:'Venom',icon:'☣',tier:0,col:3,max:3,desc:'Improve poisons.'},{id:'Garrote',icon:'⌁',tier:1,col:0,max:2,req:'Ambush',desc:'Apply a heavy bleed from stealth.'},{id:'Quick Recovery',icon:'↺',tier:1,col:2,max:2,desc:'Recover resources faster.'},{id:'Mutilate',icon:'✕',tier:2,col:1,max:1,req:'Garrote',desc:'Unlock a brutal dual-weapon attack.'},{id:'Envenom',icon:'☠',tier:2,col:3,max:2,req:'Venom',desc:'Consume poison stacks for burst damage.'},{id:'Master Poisoner',icon:'♨',tier:3,col:1,max:2,req:'Mutilate',desc:'Enhance poison effectiveness.'},{id:'Cut to the Chase',icon:'➤',tier:3,col:3,max:2,req:'Envenom',desc:'Maintain damage buffs automatically.'},{id:'Eviscerate',icon:'✦',tier:4,col:2,max:1,req:'Master Poisoner',desc:'Capstone finishing strike.'}
     ],
     Outlaw:[
       {id:'Opportunity',icon:'✧',tier:0,col:1,max:3,desc:'Sinister Strike builds toward an empowered Pistol Shot.'},
@@ -211,7 +211,7 @@ const trees={
       {id:'Aftershock',icon:'↺',tier:2,col:1,max:2,req:'Elemental Equilibrium',desc:'Maelstrom spenders can refund part of their cost.'},
       {id:'Earthquake',icon:'◎',tier:2,col:3,max:1,req:'Lava Surge',desc:'Unlock Earthquake as a heavy area Maelstrom spender.'},
       {id:'Master of the Elements',icon:'✧',tier:3,col:1,max:2,req:'Aftershock',desc:'Lava Burst empowers your next nature spell.'},
-      {id:'Stormkeeper',icon:'☁',tier:3,col:3,max:1,req:'Earthquake',desc:'Unlock Stormkeeper for a powerful lightning burst window.'},
+      {id:'Stormkeeper',icon:'☁',tier:3,col:3,max:1,req:'Earthquake',desc:'Unlock Stormkeeper for a major lightning burst window.'},
       {id:'Ascendance',icon:'✦',tier:4,col:2,max:1,req:'Master of the Elements',desc:'Capstone: unlock Ascendance and become a living storm for a major burst window.'}
     ]
   },
@@ -225,7 +225,7 @@ const trees={
       {id:'Felstorm',icon:'✹',tier:2,col:3,max:1,req:'Dread Calling',desc:'Unlock Felstorm, commanding your Felguard to cleave nearby enemies.'},
       {id:'Demonic Core',icon:'◈',tier:3,col:1,max:2,req:'Pack Tactics',desc:'Demon attacks can empower your next burst of spell damage.'},
       {id:'Master Summoner',icon:'◎',tier:3,col:3,max:2,req:'Felstorm',desc:'Improve the duration and recovery of temporary demon summons.'},
-      {id:'Demonic Tyrant',icon:'♛',tier:4,col:2,max:1,req:'Master Summoner',desc:'Capstone: unlock Summon Demonic Tyrant, a powerful temporary ranged demon.'}
+      {id:'Demonic Tyrant',icon:'♛',tier:4,col:2,max:1,req:'Master Summoner',desc:'Capstone: summon a temporary ranged Demonic Tyrant.'}
     ],
     Destruction:[
       {id:'Eradication',icon:'☄',tier:0,col:1,max:3,desc:'Chaos Bolt leaves the target vulnerable to your next destructive spells.'},
@@ -267,7 +267,7 @@ const trees={
       {id:'Ferocity',icon:'✹',tier:0,col:3,max:3,desc:'Increase core martial damage.'},
       {id:'Rising Sun Kick',icon:'☀',tier:1,col:0,max:2,req:'Combo Strikes',desc:'Increase Rising Sun Kick damage.'},
       {id:'Dance of the Wind',icon:'◌',tier:1,col:2,max:2,desc:'Improve defensive movement and personal mitigation.'},
-      {id:'Fists of Fury',icon:'✊',tier:2,col:1,max:1,req:'Rising Sun Kick',desc:'Unlock Fists of Fury, a powerful cleaving technique.'},
+      {id:'Fists of Fury',icon:'✊',tier:2,col:1,max:1,req:'Rising Sun Kick',desc:'Unlock Fists of Fury, a cleaving channeled attack.'},
       {id:'Jade Ignition',icon:'◆',tier:2,col:3,max:2,req:'Ferocity',desc:'Area attacks deal additional cleave damage.'},
       {id:'Momentum',icon:'➤',tier:3,col:1,max:2,req:'Fists of Fury',desc:'Successful Combo Strikes grant a short haste surge.'},
       {id:'Serenity',icon:'◇',tier:3,col:3,max:2,req:'Dance of the Wind',desc:'Reduce martial ability costs and cooldowns.'},
@@ -330,7 +330,7 @@ const trees={
       {id:'Spirit Bomb',icon:'◎',tier:2,col:3,max:1,req:'Soul Cleave',desc:'Unlock Spirit Bomb, consuming Soul Fragments for area damage and healing.'},
       {id:'Soul Barrier',icon:'◇',tier:3,col:1,max:2,req:'Feed the Demon',desc:'Consuming Soul Fragments grants short additional mitigation.'},
       {id:'Fiery Demise',icon:'✹',tier:3,col:3,max:2,req:'Spirit Bomb',desc:'Increase fel and fire damage dealt by Vengeance skills.'},
-      {id:'Metamorphosis',icon:'✦',tier:4,col:2,max:1,req:'Soul Barrier',desc:'Capstone: unlock a powerful Vengeance Metamorphosis defensive transformation.'}
+      {id:'Metamorphosis',icon:'✦',tier:4,col:2,max:1,req:'Soul Barrier',desc:'Capstone: unlock Vengeance Metamorphosis as a major defensive transformation.'}
     ]
   },
   Evoker:{
@@ -340,7 +340,7 @@ const trees={
       {id:'Reversion',icon:'↺',tier:1,col:0,max:2,req:'Temporal Mending',desc:'Strengthen Reversion and its healing-over-time effect.'},
       {id:'Lifebind',icon:'⛓',tier:1,col:2,max:2,desc:'Verdant Embrace echoes healing onto another injured ally.'},
       {id:'Echoing Bloom',icon:'✿',tier:2,col:1,max:2,req:'Reversion',desc:'Emerald Blossom restores more health and leaves a short echo.'},
-      {id:'Dream Breath',icon:'☁',tier:2,col:3,max:1,req:'Essence Attunement',desc:'Unlock Dream Breath as a powerful party-wide healing breath.'},
+      {id:'Dream Breath',icon:'☁',tier:2,col:3,max:1,req:'Essence Attunement',desc:'Unlock Dream Breath as a party-wide healing breath.'},
       {id:'Time Lord',icon:'◈',tier:3,col:1,max:2,req:'Echoing Bloom',desc:'Reduce Preservation cooldowns and improve haste during emergency healing.'},
       {id:'Cycle of Life',icon:'◎',tier:3,col:3,max:2,req:'Dream Breath',desc:'Group heals can trigger an additional delayed restorative pulse.'},
       {id:'Emerald Communion',icon:'✦',tier:4,col:2,max:1,req:'Time Lord',desc:'Capstone: unlock Emerald Communion, a major emergency party heal.'}
@@ -382,7 +382,7 @@ const UI_SKILL_FALLBACKS={
 
     {id:'mind-flay',name:'Mind Flay',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Channel shadow energy into the target and generate Insanity.',range:35,damage:18,cost:0,gain:12,gcd:1500,cast:1250,cd:0,damageType:'magic'},
     {id:'mind-blast',name:'Mind Blast',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Assault the target’s mind for heavy shadow damage and Insanity.',range:35,damage:30,cost:0,gain:18,gcd:1500,cast:1200,cd:6500,damageType:'magic'},
-    {id:'devouring-plague',name:'Devouring Plague',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Spend Insanity to infect the target with a powerful devouring shadow plague.',range:35,damage:34,cost:50,gcd:1500,cast:0,cd:0,damageType:'magic'},
+    {id:'devouring-plague',name:'Devouring Plague',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Spend Insanity to infect the target with Devouring Plague.',range:35,damage:34,cost:50,gcd:1500,cast:0,cd:0,damageType:'magic'},
     {id:'shadow-word-pain',name:'Shadow Word: Pain',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:4,desc:'Afflict the target with lingering shadow pain while generating Insanity.',range:35,damage:10,cost:0,gain:7,gcd:1500,cast:0,cd:7000,damageType:'magic'},
     {id:'vampiric-touch',name:'Vampiric Touch',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:6,desc:'Apply a draining shadow curse that damages the target over time.',range:35,damage:15,cost:0,gain:10,gcd:1500,cast:1300,cd:11000,damageType:'magic'},
     {id:'shadow-crash',name:'Shadow Crash',kind:'damage',role:'dps',spec:'Shadow',unlockLevel:1,desc:'Crash shadow energy into the target and nearby enemies.',range:35,damage:28,cost:0,gain:12,gcd:1500,cast:800,cd:14000,cleave:3,damageType:'magic',talentReq:'Shadow Crash'},
@@ -396,7 +396,7 @@ const UI_SKILL_FALLBACKS={
     {id:'regrowth',name:'Regrowth',kind:'heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'A stronger direct heal for injured allies.',range:30,heal:34,cost:18,gcd:1500,cast:1100,cd:0},
     {id:'wild-growth',name:'Wild Growth',kind:'group-heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'Restore health to the whole party.',range:30,heal:15,cost:22,gcd:1500,cast:0,cd:8000},
     {id:'restoration-wrath',name:'Wrath',kind:'damage',role:'healer',spec:'Restoration',unlockLevel:4,desc:'A ranged nature attack for safe damage windows.',range:30,damage:14,cost:4,gcd:1500,cast:1200,cd:0,damageType:'magic'},
-    {id:'tranquility',name:'Tranquility',kind:'group-heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'A powerful emergency party heal with a long cooldown.',range:30,heal:30,cost:32,gcd:1500,cast:2500,cd:30000,talentReq:'Tranquility'},
+    {id:'tranquility',name:'Tranquility',kind:'group-heal',role:'healer',spec:'Restoration',unlockLevel:1,desc:'A large emergency party heal with a long cooldown.',range:30,heal:30,cost:32,gcd:1500,cast:2500,cd:30000,talentReq:'Tranquility'},
 
     {id:'wrath',name:'Wrath',kind:'damage',role:'dps',spec:'Balance',unlockLevel:1,desc:'Cast nature magic to generate Astral Power and move toward Lunar Eclipse.',range:35,damage:19,cost:0,gain:10,gcd:1500,cast:1200,cd:0,damageType:'magic',school:'nature'},
     {id:'starfire',name:'Starfire',kind:'damage',role:'dps',spec:'Balance',unlockLevel:1,desc:'Cast arcane stellar magic to generate Astral Power and move toward Solar Eclipse.',range:35,damage:22,cost:0,gain:12,gcd:1500,cast:1450,cd:0,cleave:1,damageType:'magic',school:'arcane'},
@@ -436,7 +436,7 @@ const UI_SKILL_FALLBACKS={
 
     {id:'sinister-strike',name:'Sinister Strike',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'A fast sabre strike that generates one Combo Point.',range:5,damage:17,cost:35,gcd:1000,cd:0,comboGain:1},
     {id:'pistol-shot',name:'Pistol Shot',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Fire a pistol at short range; Opportunity makes it faster, stronger and more productive.',range:18,damage:16,cost:20,gcd:1000,cd:0,comboGain:1},
-    {id:'dispatch',name:'Dispatch',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Spend Combo Points on a powerful melee finisher.',range:5,damage:34,cost:25,gcd:1000,cd:0,comboCost:4,finisher:true},
+    {id:'dispatch',name:'Dispatch',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Spend Combo Points on a heavy melee finisher.',range:5,damage:34,cost:25,gcd:1000,cd:0,comboCost:4,finisher:true},
     {id:'roll-the-bones',name:'Roll the Bones',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:4,desc:'Spend Combo Points to roll a temporary combat advantage.',range:5,damage:8,cost:15,gcd:1000,cd:12000,comboCost:3,finisher:true},
     {id:'blade-flurry',name:'Blade Flurry',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Enter a cleaving stance that echoes melee damage into nearby enemies.',range:5,damage:18,cost:25,gcd:1000,cd:15000,cleave:2,talentReq:'Blade Flurry'},
     {id:'between-the-eyes',name:'Between the Eyes',kind:'damage',role:'dps',spec:'Outlaw',unlockLevel:1,desc:'Spend Combo Points on a pistol finisher that creates a critical-strike window.',range:18,damage:38,cost:25,gcd:1000,cd:18000,comboCost:4,finisher:true,talentReq:'Between the Eyes'},
@@ -479,7 +479,7 @@ const UI_SKILL_FALLBACKS={
     {id:'flame-shock',name:'Flame Shock',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:6,desc:'Burn the target with fire that continues dealing damage and generates Maelstrom.',range:35,damage:12,cost:0,gain:8,gcd:1500,cast:0,cd:8000,damageType:'magic'},
     {id:'earthquake',name:'Earthquake',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:1,desc:'Spend Maelstrom to rupture the ground beneath the enemy pack.',range:35,damage:34,cost:60,gcd:1500,cast:900,cd:6000,cleave:4,damageType:'magic',talentReq:'Earthquake'},
     {id:'stormkeeper',name:'Stormkeeper',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:1,desc:'Call down a storm and enter a short lightning burst window.',range:35,damage:30,cost:0,gain:10,gcd:1500,cast:900,cd:45000,cleave:2,damageType:'magic',talentReq:'Stormkeeper'},
-    {id:'ascendance',name:'Ascendance',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:1,desc:'Become a living storm and unleash a major Elemental burst window.',range:35,damage:42,cost:30,gcd:1500,cast:900,cd:60000,cleave:3,damageType:'magic',talentReq:'Ascendance'},
+    {id:'ascendance',name:'Ascendance',kind:'damage',role:'dps',spec:'Elemental',unlockLevel:1,desc:'Become a living storm and enter a major Elemental burst window.',range:35,damage:42,cost:30,gcd:1500,cast:900,cd:60000,cleave:3,damageType:'magic',talentReq:'Ascendance'},
     {id:'wind-shear',name:'Wind Shear',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with a sharp burst of wind.',range:30,cost:0,gcd:0,cd:18000},
     {id:'astral-shift',name:'Astral Shift',kind:'defensive',unlockLevel:8,desc:'Shift partially into the spirit world, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.25,gcd:0,cd:75000}
   ],
@@ -523,7 +523,7 @@ const UI_SKILL_FALLBACKS={
     {id:'windwalker-blackout-kick',name:'Blackout Kick',kind:'damage',role:'dps',unlockLevel:1,desc:'A fast finishing kick in the Windwalker rotation.',range:5,damage:20,cost:26,gcd:1000,cd:3000},
     {id:'windwalker-rising-sun-kick',name:'Rising Sun Kick',kind:'damage',role:'dps',unlockLevel:1,desc:'A heavy martial strike with a short cooldown.',range:5,damage:31,cost:32,gcd:1000,cd:8000},
     {id:'spinning-crane-kick',name:'Spinning Crane Kick',kind:'damage',role:'dps',unlockLevel:5,desc:'Spin through the target and nearby enemies.',range:7,damage:17,cost:28,gcd:1000,cd:7000,cleave:3},
-    {id:'fists-of-fury',name:'Fists of Fury',kind:'damage',role:'dps',unlockLevel:1,desc:'Unleash a powerful flurry that cleaves nearby enemies.',range:6,damage:34,cost:38,gcd:1000,cast:1300,cd:18000,cleave:2,talentReq:'Fists of Fury'},
+    {id:'fists-of-fury',name:'Fists of Fury',kind:'damage',role:'dps',unlockLevel:1,desc:'Channel a flurry that cleaves nearby enemies.',range:6,damage:34,cost:38,gcd:1000,cast:1300,cd:18000,cleave:2,talentReq:'Fists of Fury'},
     {id:'touch-of-death',name:'Touch of Death',kind:'damage',role:'dps',unlockLevel:1,desc:'A devastating finishing technique against weakened enemies.',range:5,damage:30,cost:20,gcd:1000,cd:30000,executeBelow:.20,executeMultiplier:2.4,talentReq:'Touch of Death'},
     {id:'touch-of-karma',name:'Touch of Karma',kind:'defensive',role:'dps',unlockLevel:9,desc:'Reduce incoming damage for a short period.',duration:7000,damageReduction:.25,gcd:0,cd:75000},
     {id:'spear-hand-strike',name:'Spear Hand Strike',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with a precise hand strike.',range:5,cost:0,gcd:0,cd:15000}
@@ -546,7 +546,7 @@ const UI_SKILL_FALLBACKS={
     {id:'remorseless-winter',name:'Remorseless Winter',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Surround yourself with a freezing storm that cleaves nearby enemies.',range:8,damage:24,cost:18,gcd:1200,cd:14000,cleave:3,damageType:'magic',talentReq:'Remorseless Winter'},
     {id:'frostscythe',name:'Frostscythe',kind:'damage',role:'dps',spec:'Frost',unlockLevel:7,desc:'Sweep a frozen blade through several enemies.',range:7,damage:21,cost:0,gain:10,gcd:1200,cd:9000,cleave:3,damageType:'magic'},
     {id:'frostwyrms-fury',name:"Frostwyrm's Fury",kind:'damage',role:'dps',spec:'Frost',unlockLevel:11,desc:'Call a frostwyrm across the battlefield for heavy cleave damage.',range:30,damage:38,cost:35,gcd:1500,cast:1000,cd:45000,cleave:4,damageType:'magic'},
-    {id:'breath-of-sindragosa',name:'Breath of Sindragosa',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Unleash a devastating cone of frost into the enemy pack.',range:20,damage:45,cost:50,gcd:1500,cast:1200,cd:60000,cleave:4,damageType:'magic',talentReq:'Breath of Sindragosa'},
+    {id:'breath-of-sindragosa',name:'Breath of Sindragosa',kind:'damage',role:'dps',spec:'Frost',unlockLevel:1,desc:'Release a heavy cone of frost into the enemy pack.',range:20,damage:45,cost:50,gcd:1500,cast:1200,cd:60000,cleave:4,damageType:'magic',talentReq:'Breath of Sindragosa'},
     {id:'icebound-fortitude',name:'Icebound Fortitude',kind:'defensive',role:'dps',unlockLevel:8,desc:'Harden yourself against incoming damage.',duration:8000,damageReduction:.25,gcd:0,cd:75000},
 
     {id:'festering-strike',name:'Festering Strike',kind:'damage',role:'dps',spec:'Unholy',unlockLevel:1,desc:'Strike the target, generate Runic Power and apply Festering Wounds.',range:5,damage:20,cost:0,gain:15,gcd:1200,cd:3500},
@@ -565,7 +565,7 @@ const UI_SKILL_FALLBACKS={
     {id:'blade-dance',name:'Blade Dance',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Dance through the target and nearby enemies with both warglaives.',range:6,damage:20,cost:25,gcd:1000,cd:8000,cleave:3},
     {id:'throw-glaive',name:'Throw Glaive',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:4,desc:'Throw a warglaive at a distant target while repositioning.',range:20,damage:15,cost:0,gain:8,gcd:1000,cd:6000},
     {id:'eye-beam',name:'Eye Beam',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:6,desc:'Channel fel energy through enemies in front of you.',range:18,damage:32,cost:30,gcd:1000,cast:1200,cd:18000,cleave:3,damageType:'magic'},
-    {id:'fel-barrage',name:'Fel Barrage',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Unleash a violent fel barrage across the enemy pack.',range:18,damage:38,cost:35,gcd:1000,cd:22000,cleave:4,damageType:'magic',talentReq:'Fel Barrage'},
+    {id:'fel-barrage',name:'Fel Barrage',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Fire a fel barrage across the enemy pack.',range:18,damage:38,cost:35,gcd:1000,cd:22000,cleave:4,damageType:'magic',talentReq:'Fel Barrage'},
     {id:'havoc-metamorphosis',name:'Metamorphosis',kind:'damage',role:'dps',spec:'Havoc',unlockLevel:1,desc:'Transform and crash into the target, opening a major demonic burst window.',range:12,damage:40,cost:20,gcd:1000,cd:60000,cleave:2,damageType:'magic',talentReq:'Metamorphosis'},
     {id:'blur',name:'Blur',kind:'defensive',role:'dps',spec:'Havoc',unlockLevel:10,desc:'Blur your form, reducing incoming damage for 8 seconds.',duration:8000,damageReduction:.30,gcd:0,cd:75000},
     {id:'disrupt',name:'Disrupt',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with fel force.',range:10,cost:0,gcd:0,cd:15000},
@@ -586,7 +586,7 @@ const UI_SKILL_FALLBACKS={
     {id:'emerald-blossom',name:'Emerald Blossom',kind:'group-heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Bloom emerald magic through the party.',range:25,heal:18,cost:2,gcd:1500,cast:1000,cd:8000},
     {id:'dream-breath',name:'Dream Breath',kind:'group-heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Breathe restorative energy across the party.',range:25,heal:29,cost:3,gcd:1500,cast:1600,cd:22000,talentReq:'Dream Breath'},
     {id:'temporal-anomaly',name:'Temporal Anomaly',kind:'group-heal',role:'healer',spec:'Preservation',unlockLevel:8,desc:'Send a temporal pulse through allies for broad recovery.',range:25,heal:16,cost:2,gcd:1500,cast:900,cd:12000},
-    {id:'emerald-communion',name:'Emerald Communion',kind:'group-heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Commune with emerald magic for a powerful emergency party heal.',range:25,heal:38,cost:4,gcd:1500,cast:1800,cd:60000,talentReq:'Emerald Communion'},
+    {id:'emerald-communion',name:'Emerald Communion',kind:'group-heal',role:'healer',spec:'Preservation',unlockLevel:1,desc:'Commune with emerald magic for a large emergency party heal.',range:25,heal:38,cost:4,gcd:1500,cast:1800,cd:60000,talentReq:'Emerald Communion'},
     {id:'preservation-living-flame',name:'Living Flame',kind:'damage',role:'healer',spec:'Preservation',unlockLevel:4,desc:'A safe ranged damage spell for quiet healing windows.',range:25,damage:14,cost:0,gcd:1500,cast:1200,cd:0,damageType:'magic'},
     {id:'quell',name:'Quell',kind:'interrupt',unlockLevel:1,desc:'Interrupt an enemy cast with draconic force.',range:25,cost:0,gcd:0,cd:24000},
     {id:'obsidian-scales',name:'Obsidian Scales',kind:'defensive',unlockLevel:8,desc:'Harden your scales to reduce incoming damage.',duration:8000,damageReduction:.25,gcd:0,cd:75000},
@@ -597,7 +597,7 @@ const UI_SKILL_FALLBACKS={
     {id:'fire-breath',name:'Fire Breath',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:4,desc:'Breathe red dragonfire through the enemy pack.',range:22,damage:27,cost:1,gcd:1500,cast:1200,cd:14000,cleave:3,damageType:'magic'},
     {id:'pyre',name:'Pyre',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:6,desc:'Spend Essence to explode dragonfire across nearby enemies.',range:30,damage:25,cost:2,gcd:1500,cd:6000,cleave:3,damageType:'magic'},
     {id:'eternity-surge',name:'Eternity Surge',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Release a devastating blast of blue dragon magic.',range:30,damage:40,cost:3,gcd:1500,cast:1700,cd:18000,cleave:2,damageType:'magic',talentReq:'Eternity Surge'},
-    {id:'dragonrage',name:'Dragonrage',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Unleash the full fury of the dragonflights and enter a major burst window.',range:30,damage:38,cost:2,gcd:1500,cd:60000,cleave:3,damageType:'magic',talentReq:'Dragonrage'}
+    {id:'dragonrage',name:'Dragonrage',kind:'damage',role:'dps',spec:'Devastation',unlockLevel:1,desc:'Enter a major dragonflight burst window.',range:30,damage:38,cost:2,gcd:1500,cd:60000,cleave:3,damageType:'magic',talentReq:'Dragonrage'}
   ]
 };
 const CLASS_BUFF_QUESTS={

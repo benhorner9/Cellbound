@@ -157,7 +157,7 @@ function openMap(){
 }
 async function finish(){
  const q=ensure();if(!q.mapSolved||q.complete)return;
- story('A Journey Through the Ages','Strange Old Man',[
+ story('Beyond the Fourfold Lock','Strange Old Man',[
   'Well. You opened it.',
   'You looked at that map and saw places. That was your first mistake.',
   'They were not places. They were moments.',
@@ -169,7 +169,7 @@ async function finish(){
   const s=state();s.progression.fracturedAgesUnlocked=true;s.gold=(Number(s.gold)||0)+400;s.renown=(Number(s.renown)||0)+250;
   s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push('Quest complete: The Fourfold Lock. The Fractured Ages was unlocked.');
   await commit('The Strange Old Man opened a route into The Fractured Ages.');
-  window.CellboundFX?.unlock?.('The Fractured Ages','A fifth dungeon has appeared beyond the normal world.');
+  window.CellboundFX?.unlock?.('The Fractured Ages','A new dungeon route is open: The Fractured Ages.');
   completion()
  },'FOLLOW THE OLD MAN')
 }

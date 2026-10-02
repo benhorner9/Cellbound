@@ -80,7 +80,7 @@ function key(name){
  flash('arcane');shake('soft');callout({eyebrow:'LOCK MECHANISM OPENED',title:name||'Key Inserted',tone:'arcane',duration:1400});particles('arcane',10)
 }
 function unlock(title,copy){
- flash('gold',true);particles('gold',24);card({eyebrow:'NEW CONTENT UNLOCKED',title:title||'Unlocked',copy:copy||'',icon:'◇',tone:'gold',duration:1900})
+ flash('gold',true);particles('gold',24);card({eyebrow:'NEW ROUTE UNLOCKED',title:title||'Unlocked',copy:copy||'',icon:'◇',tone:'gold',duration:1900})
 }
 function loot(item={}){
  const rarity=String(item.rarity||'').toLowerCase(),t=rarity==='legendary'||rarity==='epic'?'arcane':rarity==='rare'?'ice':'gold';

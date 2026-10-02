@@ -6,7 +6,7 @@ const BOSSES={
     dungeon:'The Ashen Vault',name:'The Vaultheart',title:'The Living Core Beneath the Vault',theme:'ashen',artwork:'./assets/bosses/ashen-vault-vaultheart.webp',
     description:'Buried beneath the Ashen Vault is something the old forge was built to contain. The Vaultheart floods the chamber with unstable Cell energy while fractures tear open around the party.',
     abilities:[
-      {icon:'area',name:'Core Pulse',text:'A powerful area blast forces the party away from unstable ground.'},
+      {icon:'area',name:'Core Pulse',text:'An area blast forces the party away from unstable ground.'},
       {icon:'adds',name:'Fracture Spawn',text:'Temporal fractures open and release additional enemies into the chamber.'},
       {icon:'line',name:'Rupture Beam',text:'A dangerous line attack cuts directly through the arena.'},
       {icon:'phase',name:'Core Collapse',text:'The chamber destabilises as the Vaultheart reaches its final stage.'}
@@ -37,7 +37,7 @@ const BOSSES={
   },
   'vex-calder':{
     dungeon:'Blackout Station',name:'Dr. Vex Calder',title:'Architect of the Blackout',theme:'blackout',artwork:'./assets/bosses/blackout-station-calder.webp',
-    description:'With the station powered again, Calder finally reveals himself inside the generator hall. He turns the restored grid against the party, forcing every role to survive the very system they repaired.',
+    description:'With the station powered again, Calder finally reveals himself inside the generator hall. He turns the restored grid against the party, forcing every role to survive the grid they repaired.',
     abilities:[
       {icon:'roles',name:'Role Circuits',text:'Tank, healer and damage roles must move into the correct coloured circuit.'},
       {icon:'phase',name:'Power Instability',text:'The station begins failing as Calder pushes the grid beyond its limits.'},

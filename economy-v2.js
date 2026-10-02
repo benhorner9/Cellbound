@@ -1,7 +1,8 @@
 (()=>{
 'use strict';
 const G=window.CellboundGear,P=window.CellboundProfessions,CP=window.CellboundPortraits;
-const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const $=s=>document.querySelector(s),$=s=>[...document.querySelectorAll(s)];
+const escAttr=s=>String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 let Game=null,db=null,user=null,selectedChar=null,selectedSlot=0,tradeFilter='all',market=[],lastCraftMessage='',craftProject=null,recipeFilter='all',craftQtyDraft={},craftTicker=null,craftLastTick=0,craftSaveAt=0,craftCompleting=false;
 
 const state=()=>Game?.getState?.();
@@ -339,7 +340,7 @@ function recipeCardMarkup(recipe,prof,s){
   const stateClass=ready?'ready':'locked',projectClass=craftProject?.recipeId===recipe.id?' project-active':'',qty=craftQuantity(recipe.id,max),duration=craftTime(craftBatchDurationMs(recipe,qty)),yieldQty=(Number(recipe.output.quantity)||1)*qty;
   const controls=busy
     ?'<div class="recipe-batch-order busy"><small>'+(craftProject?.recipeId===recipe.id?'THIS BATCH IS RUNNING':'WORKSHOP BUSY')+'</small><button disabled>'+(craftProject?.recipeId===recipe.id?'IN PROGRESS':'WAIT FOR ACTIVE ORDER')+'</button></div>'
-    :'<div class="recipe-batch-order"><small>AMOUNT · MAX '+max+'</small><div><button type="button" data-craft-qty-minus="'+recipe.id+'" '+(qty<=1?'disabled':'')+'>−</button><input type="number" inputmode="numeric" min="1" max="'+Math.max(1,max)+'" value="'+qty+'" data-craft-qty="'+recipe.id+'" '+(ready?'':'disabled')+'><button type="button" data-craft-qty-plus="'+recipe.id+'" '+(qty>=max?'disabled':'')+'>+</button></div><em>Yields ×'+yieldQty+' · '+duration+'</em><button data-craft="'+recipe.id+'" '+(ready?'':'disabled')+'>START WORK ORDER</button></div>';
+    :'<div class="recipe-batch-order"><small>AMOUNT · MAX '+max+'</small><div><button type="button" data-craft-qty-minus="'+recipe.id+'" '+(qty<=1?'disabled':'')+'>−</button><input type="number" inputmode="numeric" min="1" max="'+Math.max(1,max)+'" value="'+qty+'" data-craft-qty="'+recipe.id+'" aria-label="Craft quantity for '+escAttr(recipe.name)+'" '+(ready?'':'disabled')+'><button type="button" data-craft-qty-plus="'+recipe.id+'" '+(qty>=max?'disabled':'')+'>+</button></div><em>Yields ×'+yieldQty+' · '+duration+'</em><button data-craft="'+recipe.id+'" '+(ready?'':'disabled')+'>START WORK ORDER</button></div>';
   return `<article class="recipe-card profession-recipe-card ${stateClass}${projectClass}" ${outputArt?'data-item-art-done="1"':''}>
     ${outputArt}
     <div class="recipe-main">
