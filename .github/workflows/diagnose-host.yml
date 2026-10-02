@@ -24,7 +24,7 @@ jobs:
           set -euo pipefail
           PORT="${FTP_PORT:-21}"
           echo "ROOT"
-          curl --silent --show-error --ssl-reqd --user "$FTP_USERNAME:$FTP_PASSWORD" "ftp://$FTP_SERVER:$PORT/" --list-only | sed -n '1,80p'
+          curl --insecure --silent --show-error --ssl-reqd --user "$FTP_USERNAME:$FTP_PASSWORD" "ftp://$FTP_SERVER:$PORT/" --list-only | sed -n '1,120p'
           echo
           echo "CB"
-          curl --silent --show-error --ssl-reqd --user "$FTP_USERNAME:$FTP_PASSWORD" "ftp://$FTP_SERVER:$PORT/cb/" --list-only | sed -n '1,80p' || true
+          curl --insecure --silent --show-error --ssl-reqd --user "$FTP_USERNAME:$FTP_PASSWORD" "ftp://$FTP_SERVER:$PORT/cb/" --list-only | sed -n '1,120p' || true
