@@ -245,7 +245,7 @@ async function ownerDungeonGeneratorPlaythrough(browser){
   await page.locator('#dgGenerate').click();
   await page.waitForSelector('#dgOutputText');
   const brief=await page.locator('#dgOutputText').inputValue();
-  assert(brief.includes('Automation Keep'),'owner generator produces the dungeon brief');
+  assert(brief.includes('AUTOMATION KEEP'),'owner generator produces the dungeon brief');
   assert(brief.includes('COMBAT REBORN STANDARD'),'generated brief automatically includes the shared combat contract');
 
   await page.locator('[data-dg-output="config"]').click();
