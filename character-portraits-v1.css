@@ -405,7 +405,13 @@
   isolation:isolate;
 }
 .cb-paper-doll svg{display:block;width:100%;height:100%;overflow:visible}
-.cb-paper-doll--equipment{width:min(100%,230px);height:350px;margin:0 auto}
+.cb-paper-race-detail{pointer-events:none}
+.cb-paper-race-stoneborn{filter:drop-shadow(0 1px 1px rgba(0,0,0,.22))}
+.cb-paper-race-thornkin{filter:drop-shadow(0 0 3px rgba(126,157,98,.14))}
+.cb-paper-race-emberkin{filter:drop-shadow(0 0 4px rgba(255,139,83,.2))}
+.cb-paper-race-nymari{filter:drop-shadow(0 0 4px rgba(147,244,245,.16))}
+.cb-paper-race-aelari{filter:drop-shadow(0 0 3px rgba(225,199,255,.12))}
+.cb-paper-doll--equipment{width:min(100%,248px);height:365px;margin:0 auto}
 .cb-paper-slot{
   transition:filter .18s ease,opacity .18s ease,transform .18s ease;
   transform-box:fill-box;
@@ -538,7 +544,7 @@
   position:relative;
   z-index:2;
   width:100%;
-  height:322px;
+  height:336px;
   display:grid;
   place-items:center
 }
