@@ -467,6 +467,9 @@ function renderOutput(){
 }
 function bindOutput(){
   const root=$('#dgOutput');if(!root)return;
+  root.querySelectorAll('[data-dg-output]').forEach(btn=>btn.addEventListener('click',()=>{activeOutput=btn.dataset.dgOutput;renderOutput()}));
+  root.querySelector('[data-dg-copy]')?.addEventListener('click',copyOutput);
+  root.querySelector('[data-dg-download]')?.addEventListener('click',downloadOutput);
 }
 function setMessage(text,tone='ok'){
   const el=$('#dgMessage');if(!el)return;
