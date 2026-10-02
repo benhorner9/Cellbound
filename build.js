@@ -503,7 +503,9 @@ for(const file of files){
     for(const hook of ['/* Class-led party trial focus */','.cb2d-unit.trial-focus','.cb2d-party-row.trial-focus','.trial-focus-badge'])if(!contents.includes(hook))throw new Error('Class-trial featured-character styling is missing '+hook);
   }
   if(file==='onboarding-v1.js'){
-    if(!contents.includes('function tdRenderCombatEvent')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('First Expedition combat must use continuous playback');
+    for(const hook of ['function tutorialRebornEncounters()','function launchTutorialRebornEncounter(','function tutorialCombatReport(','function finishTutorialDungeonV4(','Viewer.playSharedEncounter({',"result?.combatModel!=='Combat Reborn'","ui:'shared-cb2d'","tutorialCombatReports","tutorialCommandChoices","COMBAT REBORN · SHARED DUNGEON VIEWER"])if(!contents.includes(hook))throw new Error('Chapter 0 Combat Reborn tutorial is missing '+hook);
+    if(contents.includes("const my=++tutorialToken;setTimeout(()=>runTutorialDungeon"))throw new Error('Legacy custom tutorial combat viewer returned as the active dungeon path');
+    if(!contents.includes("theme:'hollow',room:encounter.room")||!contents.includes('route:tutorialRebornRoute(),currentId:encounter.id'))throw new Error('Tutorial must use the shared dungeon viewer with room and route context');
   }
   if(file==='guild-v4.js'){
     if(!contents.includes("'Death Knight':{icon:'☠'")||!contents.includes("Blood:{role:'tank'")||!contents.includes("Frost:{role:'dps'")||!contents.includes("Unholy:{role:'dps'"))throw new Error('Death Knight must expose Blood, Frost and Unholy as playable specialisations');
@@ -967,6 +969,15 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   if(!raid.events.some(e=>e.type==='GROUND_HAZARD_SPAWNED'))throw new Error('Combat Reborn raid smoke test did not produce persistent floor hazards');
   if(!raid.events.some(e=>e.type==='TANK_MARK'))throw new Error('Combat Reborn raid smoke test did not produce tank-mark mechanics');
   console.log('Combat Reborn 10-character Manor smoke test passed.');
+  sandbox.CellboundCombatStandard.register('zeltira-first-expedition',{kind:'onboarding-dungeon',execution:'local',ui:'shared-cb2d'});
+  const tutorial=sandbox.CellboundCombatStandard.simulate({party:raidParty.slice(0,5),seed:'build-zeltira-tutorial',encounter:{
+    id:'hollow-warden',title:'Hollow Warden',kind:'boss',level:1,enemies:[{name:'The Hollow Warden',classification:'boss'}],enemyHealth:610,mechanicIntervalMs:3100,
+    mechanics:[{name:'Rootbound Cleave',type:'cone',duration:1850,danger:'high'},{name:'Spore Bloom',type:'circles',duration:1700,danger:'high'}],
+    environment:{bounds:{left:7,right:93,top:9,bottom:91}}
+  },tactics:{pullStyle:'safe',interruptPriority:'high',defensiveUsage:'aggressive',movementDiscipline:'safety'}},{zone:'zeltira-first-expedition'});
+  if(tutorial.combatModel!=='Combat Reborn'||tutorial.combatZone!=='zeltira-first-expedition')throw new Error('Chapter 0 tutorial did not use the standard Combat Reborn gateway');
+  if(!tutorial.events.some(e=>e.type==='COMBAT_START')||!tutorial.events.some(e=>e.type==='MECHANIC_TELEGRAPH'))throw new Error('Chapter 0 tutorial smoke test did not produce the shared combat event stream');
+  console.log('Chapter 0 Combat Reborn tutorial smoke test passed.');
 }
 {
   const pvpCode=fs.readFileSync(path.join(__dirname,'pvp-combat-v1.js'),'utf8');
