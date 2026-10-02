@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Inspect FTP layout
+      - name: Inspect web-root routing
         shell: bash
         env:
           FTP_SERVER: ${{ secrets.FTP_SERVER }}
@@ -23,8 +23,11 @@ jobs:
         run: |
           set -euo pipefail
           PORT="${FTP_PORT:-21}"
-          echo "ROOT"
-          curl --insecure --silent --show-error --ssl-reqd --user "$FTP_USERNAME:$FTP_PASSWORD" "ftp://$FTP_SERVER:$PORT/" --list-only | sed -n '1,120p'
+          echo "ROOT FILES"
+          curl --insecure --silent --show-error --ssl-reqd --user "$FTP_USERNAME:$FTP_PASSWORD" "ftp://$FTP_SERVER:$PORT/" --list-only | grep -E '^(index.html|guild.html|auth.js|\.htaccess|cb)$' || true
           echo
-          echo "CB"
-          curl --insecure --silent --show-error --ssl-reqd --user "$FTP_USERNAME:$FTP_PASSWORD" "ftp://$FTP_SERVER:$PORT/cb/" --list-only | sed -n '1,120p' || true
+          echo "HTACCESS"
+          curl --insecure --silent --show-error --ssl-reqd --user "$FTP_USERNAME:$FTP_PASSWORD" "ftp://$FTP_SERVER:$PORT/.htaccess" || true
+          echo
+          echo "INDEX HEAD"
+          curl --insecure --silent --show-error --ssl-reqd --user "$FTP_USERNAME:$FTP_PASSWORD" "ftp://$FTP_SERVER:$PORT/index.html" | sed -n '1,25p'
