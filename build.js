@@ -625,10 +625,10 @@ for(const file of files){
   if(swordView===spearView||!swordView.includes('data-weapon-type="sword"')||!spearView.includes('data-weapon-type="spear"'))throw new Error('Sword-to-spear paper doll visual swap failed');
   if(!swordView.includes('cb-paper-slot-waist')||!swordView.includes('cb-paper-slot-ring1'))throw new Error('14-slot paper doll accessory coverage failed');
   const emptyArmour=P.paperDollHTML({...base,equipment:{}},{});
-  if(!emptyArmour.includes('cb-paper-empty-chest')||!emptyArmour.includes('cb-paper-empty-legs')||!emptyArmour.includes('cb-paper-empty-feet'))throw new Error('Unequipped paper doll must show clean underlayers instead of leftover armour');
+  if(!emptyArmour.includes('cb-illustrated-base')||emptyArmour.includes('cb-paper-slot-chest')||emptyArmour.includes('cb-paper-slot-legs')||emptyArmour.includes('cb-paper-slot-feet'))throw new Error('Unequipped paper doll must render the clean v9 illustrated character body without equipment layers');
   const chestItem={name:'Test Chest',itemId:'warrior-t2-chest',class:'Warrior',slot:'Chest',tier:2};
   const chestView=P.paperDollHTML({...base,equipment:{Chest:chestItem}},{});
-  if(chestView.includes('cb-paper-empty-chest')||!chestView.includes('data-item-key="warrior-t2-chest"'))throw new Error('Equipping a replacement chest must fully replace the empty/previous visual layer');
+  if(!chestView.includes('cb-illustrated-base')||!chestView.includes('data-item-key="warrior-t2-chest"'))throw new Error('Equipped chest must layer over the same v9 illustrated character body');
   const setEquipment={};
   ['Head','Shoulders','Chest','Hands'].forEach(slot=>setEquipment[slot]={name:'Warlord '+slot,itemId:'warrior-t4-'+slot.toLowerCase(),class:'Warrior',slot,tier:4,setId:'warrior-t4',setName:'Warlord Set'});
   const setView=P.paperDollHTML({...base,equipment:setEquipment},{highlightedSlot:'Chest'});
@@ -645,6 +645,40 @@ for(const file of files){
     gear.OffHand={name:klass+' Test Offhand',itemId:klass+'-offhand',class:klass,slot:'OffHand',tier:5,offHandType};
     const html=P.paperDollHTML({...base,id:'class-'+klass,name:klass,class:klass,race:'Aelari',appearance:{...appearance,race:'Aelari'},equipment:gear},{});
     if(!html.includes('data-gear-class="'+klass+'"')||!html.includes('cb-paper-slot-head')||!html.includes('cb-paper-slot-feet'))throw new Error('Complete modular class visual failed for '+klass);
+  }
+
+  const fitRaces=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'];
+  for(const race of fitRaces){
+    for(const gender of [0,1]){
+      for(const frame of [0,1,2]){
+        const appearanceCase={...appearance,race,gender,frame};
+        const fit=P.gearFitProfile({id:'fit-'+race+'-'+gender+'-'+frame,race,appearance:appearanceCase});
+        const numeric=['leftShoulder','rightShoulder','leftHand','rightHand','waistHalf','hipHalf','leftLeg','rightLeg','legHalf','calfHalf','footHalf','weaponX','offhandX'];
+        if(numeric.some(k=>!Number.isFinite(fit[k])))throw new Error('Non-finite equipment anchor for '+race+' gender '+gender+' frame '+frame);
+        if(!(fit.leftShoulder<fit.rightShoulder&&fit.leftLeg<fit.rightLeg&&fit.waistHalf>0&&fit.hipHalf>0))throw new Error('Invalid equipment anchor ordering for '+race+' gender '+gender+' frame '+frame);
+        const gear={
+          Head:{name:'Fit Head',itemId:'fit-head',class:'Warrior',slot:'Head',tier:5,setId:'fit'},
+          Shoulders:{name:'Fit Shoulders',itemId:'fit-shoulders',class:'Warrior',slot:'Shoulders',tier:5,setId:'fit'},
+          Chest:{name:'Fit Chest',itemId:'fit-chest',class:'Warrior',slot:'Chest',tier:5,setId:'fit'},
+          Hands:{name:'Fit Hands',itemId:'fit-hands',class:'Warrior',slot:'Hands',tier:5,setId:'fit'},
+          Waist:{name:'Fit Waist',itemId:'fit-waist',class:'Warrior',slot:'Waist',tier:5,setId:'fit'},
+          Legs:{name:'Fit Legs',itemId:'fit-legs',class:'Warrior',slot:'Legs',tier:5,setId:'fit'},
+          Feet:{name:'Fit Feet',itemId:'fit-feet',class:'Warrior',slot:'Feet',tier:5,setId:'fit'},
+          Weapon:{name:'Fit Sword',itemId:'fit-weapon',class:'Warrior',slot:'Weapon',tier:5,weaponType:'sword'},
+          OffHand:{name:'Fit Shield',itemId:'fit-offhand',class:'Warrior',slot:'OffHand',tier:5,offHandType:'shield'},
+          Ring1:{name:'Fit Ring 1',itemId:'fit-ring-1',class:'Warrior',slot:'Ring',tier:5},
+          Ring2:{name:'Fit Ring 2',itemId:'fit-ring-2',class:'Warrior',slot:'Ring',tier:5},
+          Trinket1:{name:'Fit Trinket 1',itemId:'fit-trinket-1',class:'Warrior',slot:'Trinket',tier:5},
+          Trinket2:{name:'Fit Trinket 2',itemId:'fit-trinket-2',class:'Warrior',slot:'Trinket',tier:5},
+          Relic:{name:'Fit Relic',itemId:'fit-relic',class:'Warrior',slot:'Relic',tier:5}
+        };
+        const html=P.paperDollHTML({id:'fit-'+race+'-'+gender+'-'+frame,name:'Fit',race,class:'Warrior',appearance:appearanceCase,equipment:gear},{});
+        for(const slot of ['head','shoulders','chest','hands','waist','legs','feet','weapon','offhand','ring1','ring2','trinket1','trinket2','relic']){
+          if(!html.includes('cb-paper-slot-'+slot))throw new Error('Missing fitted '+slot+' layer for '+race+' gender '+gender+' frame '+frame);
+        }
+        if(/NaN|undefined/.test(html))throw new Error('Broken fitted equipment markup for '+race+' gender '+gender+' frame '+frame);
+      }
+    }
   }
 
 }
