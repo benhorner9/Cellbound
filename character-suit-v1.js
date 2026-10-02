@@ -1,16 +1,16 @@
 (()=>{
 'use strict';
 
-const VERSION=1;
-const ENGINE='character-suit-v1';
-const ATLAS='./assets/characters/character-suit-atlas-v1.webp';
+const VERSION=2;
+const ENGINE='character-suit-v2';
+const ATLAS='./assets/characters/character-suit-atlas-v2.webp';
 const RACES={
-  Veyren:{accent:'#8e69d7',label:'Arcane detail',trait:'Adaptable',crop:{male:[18,64,122,348],female:[126,64,124,348]}},
-  Stoneborn:{accent:'#d5b675',label:'Stone ridge',trait:'Unyielding',crop:{male:[274,64,142,348],female:[402,64,108,348]}},
-  Aelari:{accent:'#55c8ff',label:'Ear style',trait:'Soul Attuned',crop:{male:[529,64,128,348],female:[642,64,126,348]}},
-  Thornkin:{accent:'#7ab969',label:'Growth',trait:'Living Guard',crop:{male:[783,64,126,348],female:[900,64,116,348]}},
-  Emberkin:{accent:'#ff7548',label:'Flame crown',trait:'Fierce Blood',crop:{male:[1025,64,128,348],female:[1138,64,136,348]}},
-  Nymari:{accent:'#58d8e8',label:'Fin crest',trait:'Quickmind',crop:{male:[1281,64,127,348],female:[1395,64,141,348]}}
+  Veyren:{accent:'#8e69d7',label:'Arcane detail',trait:'Adaptable',crop:{male:[38,84,100,326],female:[165,84,96,326]}},
+  Stoneborn:{accent:'#d5b675',label:'Stone ridge',trait:'Unyielding',crop:{male:[282,82,110,328],female:[428,82,88,328]}},
+  Aelari:{accent:'#55c8ff',label:'Ear style',trait:'Soul Attuned',crop:{male:[545,84,103,326],female:[683,84,88,326]}},
+  Thornkin:{accent:'#7ab969',label:'Growth',trait:'Living Guard',crop:{male:[800,82,102,328],female:[920,82,98,328]}},
+  Emberkin:{accent:'#ff7548',label:'Flame crown',trait:'Fierce Blood',crop:{male:[1048,82,103,328],female:[1178,82,88,328]}},
+  Nymari:{accent:'#58d8e8',label:'Fin crest',trait:'Quickmind',crop:{male:[1290,82,108,328],female:[1425,82,106,328]}}
 };
 const FIELDS={
   gender:2,frame:3,skinTone:6,face:4,hair:4,hairColor:6,marking:5,eyes:6,feature:4
@@ -52,8 +52,8 @@ function cropFor(a){
 function frameScale(a){return [0.92,1,1.08][clampIndex(a.frame,3,1)]}
 function toneFilter(a){
   const tone=clampIndex(a.skinTone,6,2);
-  const brightness=[.84,.92,1,1.06,1.12,1.18][tone];
-  const saturation=[.88,.94,1,1.03,1.06,1.09][tone];
+  const brightness=[.92,.96,1,1.025,1.05,1.075][tone];
+  const saturation=[.94,.97,1,1.015,1.03,1.045][tone];
   return `brightness(${brightness}) saturate(${saturation})`;
 }
 function hairFilter(a){
@@ -88,10 +88,12 @@ function featureOverlay(a){
 function spriteSVG(a,opts={}){
   const crop=cropFor(a),[x,y,w,h]=crop;
   const scale=frameScale(a);
-  const vbPad=opts.portrait?18:0;
-  const viewY=y;
-  const viewH=opts.portrait?Math.min(112,h):h;
-  return `<svg class="cs-sprite-svg" viewBox="${x-vbPad} ${viewY} ${w+vbPad*2} ${viewH}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${esc(a.race+' '+genderName(a.gender))}"><g transform="translate(${x+w/2} 0) scale(${scale} 1) translate(${-(x+w/2)} 0)" style="filter:${toneFilter(a)}"><image href="${ATLAS}" x="0" y="0" width="1536" height="500" preserveAspectRatio="none"/></g></svg>`;
+  const portrait=Boolean(opts.portrait);
+  const viewX=portrait?x-Math.max(5,w*.06):x;
+  const viewY=portrait?Math.max(88,y+4):y;
+  const viewW=portrait?w+Math.max(10,w*.12):w;
+  const viewH=portrait?Math.min(112,h*.36):h;
+  return `<svg class="cs-sprite-svg" viewBox="${viewX} ${viewY} ${viewW} ${viewH}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${esc(a.race+' '+genderName(a.gender))}"><defs><linearGradient id="csFade${a.race}${a.gender}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="white"/><stop offset=".93" stop-color="white"/><stop offset="1" stop-color="black"/></linearGradient><mask id="csMask${a.race}${a.gender}"><rect x="${viewX}" y="${viewY}" width="${viewW}" height="${viewH}" fill="url(#csFade${a.race}${a.gender})"/></mask></defs><g mask="url(#csMask${a.race}${a.gender})" transform="translate(${x+w/2} 0) scale(${scale} 1) translate(${-(x+w/2)} 0)" style="filter:${toneFilter(a)}"><image href="${ATLAS}" x="0" y="0" width="1536" height="500" preserveAspectRatio="none"/></g></svg>`;
 }
 function previewHTML(subject,opts={}){
   const c=subject||{},race=c.race||c.appearance?.race||'Veyren';
@@ -141,15 +143,12 @@ function editorHTML(appearance,opts={}){
       <aside class="cs-controls">
         <div class="cs-segment"><span>BODY TYPE</span><div><button type="button" data-cs-gender="0" class="${a.gender===0?'active':''}">MALE</button><button type="button" data-cs-gender="1" class="${a.gender===1?'active':''}">FEMALE</button></div></div>
         <div class="cs-frames"><span>BODY FRAME</span><div>${frameChoices(a)}</div></div>
-        <div class="cs-control-grid">
+        <div class="cs-control-grid cs-control-grid--authored">
           ${control('skinTone','Skin tone',a)}
-          ${control('face','Face',a)}
-          ${control('hair','Hair style',a)}
-          ${control('hairColor','Hair colour',a)}
           ${control('marking','Markings',a)}
-          ${control('eyes','Eye colour',a)}
           ${control('feature',race.label,a)}
         </div>
+        <div class="cs-authored-note"><b>AUTHORED BASE</b><span>Face, hair and silhouette come from the race artwork instead of the old mannequin system. More interchangeable art layers will be added without changing this body.</span></div>
         <button type="button" class="cs-randomise" data-cs-randomise>✦ RANDOMISE CHARACTER</button>
       </aside>
     </div>
