@@ -15,6 +15,7 @@ let dirty=false;
 let currentId=null;
 let currentTab='overview';
 let activeSlot=null;
+let armouryModelMode='base';
 let selectedTalentId=null;
 let selectedTalentSpec=null;
 let selectedTreeSpec=null;
@@ -753,7 +754,9 @@ function paperDoll(c,state){
   const setCount=dominantSetKey?setCounts[dominantSetKey]:0;
   const setExample=setVisualItems.find(x=>(x.item.setId||x.item.setName||String(x.item.baseItemId||x.item.itemId||'').replace(/-(head|shoulders|chest|hands|waist|legs|feet|weapon|offhand|ring|trinket|relic)$/i,''))===dominantSetKey)?.item;
   const setLabel=setExample?.setName||G?.SET_META?.[c.class]?.name||(setCount?c.class+' Set':'');
-  const visual=CP?.paperDollHTML?.(c,{size:'equipment',highlightedSlot:activeSlot,accent:meta.accent})||portraitHTML(c,'hero');
+  const raceAccent=CP?.RACES?.[c.race||c.appearance?.race||'Veyren']?.accent||'#76d7d0';
+  const showingGear=armouryModelMode==='equipped';
+  const visual=CP?.paperDollHTML?.(c,{size:'equipment',highlightedSlot:showingGear?activeSlot:null,accent:showingGear?meta.accent:raceAccent,showGear:showingGear})||portraitHTML(c,'hero');
   const coreStats=['Strength','Agility','Intellect','Stamina'];
   const combatStats=['Armour','Crit','Haste','Block','Threat','Healing'];
   return `<div class="cb-paperdoll cb-armoury-screen cb-armoury-stats-screen" style="--cb-accent:${meta.accent}">
@@ -761,11 +764,15 @@ function paperDoll(c,state){
     <section class="cb-armoury-stage cb-stat-command">
       <div class="cb-armoury-heading"><div><small>CHARACTER ARMOURY</small><h3>${c.name}</h3><p>${c.race||'Veyren'} · ${c.class} · ${c.spec}</p></div><span class="cb-role-pill cb-role-${role}">${roleLabel(role)}</span></div>
 
-      <div class="cb-equipment-visual-stage" data-paper-doll-stage>
-        <div class="cb-equipment-visual-meta"><span>LIVE EQUIPMENT VIEW</span><b>${visibleEquipped}/14 visual slots equipped</b></div>
-        ${setCount?`<div class="cb-equipment-set-visual"><strong>${escHtml(setLabel)}</strong><span>${setCount} set piece${setCount===1?'':'s'} shaping this look${setCount>=4?' · full prestige':''}</span></div>`:''}
+      <div class="cb-equipment-visual-stage" data-paper-doll-stage data-model-view="${armouryModelMode}">
+        <div class="cb-equipment-visual-meta"><span>${showingGear?'EQUIPPED MODEL':'RACE BASE MODEL'}</span><b>${showingGear?visibleEquipped+'/14 visual slots equipped':(c.race||'Veyren')+' · '+((c.appearance?.gender??0)===1?'Female':'Male')}</b></div>
+        <div class="cb-model-mode-switch" aria-label="Character model view">
+          <button type="button" data-model-mode="base" class="${showingGear?'':'active'}">BASE MODEL</button>
+          <button type="button" data-model-mode="equipped" class="${showingGear?'active':''}">EQUIPPED</button>
+        </div>
+        ${showingGear&&setCount?`<div class="cb-equipment-set-visual"><strong>${escHtml(setLabel)}</strong><span>${setCount} set piece${setCount===1?'':'s'} shaping this look${setCount>=4?' · full prestige':''}</span></div>`:''}
         <div class="cb-equipment-visual-model">${visual}</div>
-        <div class="cb-equipment-visual-foot"><span>${activeSlot?`Inspecting ${activeSlot}`:'Select a gear slot to highlight it on the character.'}</span><em>Appearance updates instantly with equipped gear.</em></div>
+        <div class="cb-equipment-visual-foot"><span>${showingGear?(activeSlot?`Inspecting ${activeSlot}`:'Select a gear slot to highlight it on the character.'):'Race, body, face and appearance only.'}</span><em>${showingGear?'Current equipment layered over the base model.':'Gear hidden so the character foundation can be inspected.'}</em></div>
       </div>
 
       <div class="cb-stat-hero">
@@ -1293,7 +1300,7 @@ function equipClassBuff(buffId){
 function openCharacter(id){
   document.body.classList.add('character-sheet-open');
   returnView=document.querySelector('.view.active')?.id||'roster';
-  currentId=id;currentTab='overview';activeSlot=null;activeSkillSlot=0;activeLoadoutSlot='skill';selectedTalentId=null;selectedTalentSpec=null;selectedTreeSpec=null;renderSheet()
+  currentId=id;currentTab='overview';activeSlot=null;armouryModelMode='base';activeSkillSlot=0;activeLoadoutSlot='skill';selectedTalentId=null;selectedTalentSpec=null;selectedTreeSpec=null;renderSheet()
 }
 function closeCharacter(targetView=returnView){
   modal.hidden=true;document.body.classList.remove('character-sheet-open');activeSlot=null;
@@ -1324,6 +1331,7 @@ document.addEventListener('click',event=>{
     const applyGem=event.target.closest('[data-apply-gem]');if(applyGem){event.preventDefault();event.stopImmediatePropagation();applyGemToEquipped(applyGem.dataset.applyGem,activeSlot,applyGem.dataset.socketIndex);return}
     const equip=event.target.closest('[data-equip-bank]');if(equip){event.preventDefault();event.stopImmediatePropagation();equipItem(equip.dataset.equipBank,equip.dataset.equipSlot);return}
     const closeSlot=event.target.closest('[data-close-slot]');if(closeSlot){event.preventDefault();event.stopImmediatePropagation();activeSlot=null;renderSheet();return}
+    const modelMode=event.target.closest('[data-model-mode]');if(modelMode){event.preventDefault();event.stopImmediatePropagation();armouryModelMode=modelMode.dataset.modelMode==='equipped'?'equipped':'base';if(armouryModelMode==='base')activeSlot=null;renderSheet();return}
     const slot=event.target.closest('[data-slot]');if(slot){event.preventDefault();event.stopImmediatePropagation();activeSlot=slot.dataset.slot;renderSheet();return}
     const node=event.target.closest('[data-talent-node]');if(node){selectedTalentId=node.dataset.talentNode;selectedTalentSpec=node.dataset.treeSpec;renderSheet();return}
     const invest=event.target.closest('[data-invest-talent]');if(invest){investTalent(invest.dataset.treeSpec,invest.dataset.investTalent);return}
