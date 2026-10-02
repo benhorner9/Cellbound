@@ -631,6 +631,20 @@ for(const file of files){
   ['Head','Shoulders','Chest','Hands'].forEach(slot=>setEquipment[slot]={name:'Warlord '+slot,itemId:'warrior-t4-'+slot.toLowerCase(),class:'Warrior',slot,tier:4,setId:'warrior-t4',setName:'Warlord Set'});
   const setView=P.paperDollHTML({...base,equipment:setEquipment},{highlightedSlot:'Chest'});
   if(!setView.includes('set-pieces-4')||!setView.includes('cb-paper-set-glow')||!setView.includes('is-set-item'))throw new Error('Set prestige visual treatment failed');
+  const classVisualCases=[
+    ['Warrior','greatsword','shield'],['Paladin','hammer','shield'],['Priest','staff','tome'],['Druid','staff','idol'],
+    ['Hunter','bow','quiver'],['Rogue','dagger','dagger'],['Mage','staff','focus'],['Shaman','hammer','idol'],
+    ['Warlock','staff','tome'],['Monk','staff','focus'],['Death Knight','greatsword','focus'],['Demon Hunter','sword','dagger'],['Evoker','staff','focus']
+  ];
+  for(const [klass,weaponType,offHandType] of classVisualCases){
+    const gear={};
+    ['Head','Shoulders','Chest','Hands','Waist','Legs','Feet'].forEach(slot=>gear[slot]={name:klass+' Test '+slot,itemId:klass.toLowerCase().replace(/[^a-z]+/g,'-')+'-t5-'+slot.toLowerCase(),class:klass,slot,tier:5,setId:klass+'-t5',setName:klass+' Raid Set'});
+    gear.Weapon={name:klass+' Test Weapon',itemId:klass+'-weapon',class:klass,slot:'Weapon',tier:5,weaponType};
+    gear.OffHand={name:klass+' Test Offhand',itemId:klass+'-offhand',class:klass,slot:'OffHand',tier:5,offHandType};
+    const html=P.paperDollHTML({...base,id:'class-'+klass,name:klass,class:klass,race:'Aelari',appearance:{...appearance,race:'Aelari'},equipment:gear},{});
+    if(!html.includes('data-gear-class="'+klass+'"')||!html.includes('cb-paper-slot-head')||!html.includes('cb-paper-slot-feet'))throw new Error('Complete modular class visual failed for '+klass);
+  }
+
 }
 
 for(const htmlFile of ['index.html','guild.html']){
