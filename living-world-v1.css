@@ -28,3 +28,15 @@
   transform:none!important;
   transition:none!important;
 }
+
+/* Living World interaction precision: only visible destination labels accept pointer input. */
+.cb-lw-hotspot{
+  pointer-events:none!important;
+}
+.cb-lw-hotspot-label{
+  pointer-events:auto!important;
+  cursor:pointer;
+}
+.cb-lw-hotspot-ring{
+  pointer-events:none!important;
+}
