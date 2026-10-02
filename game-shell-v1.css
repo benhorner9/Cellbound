@@ -480,7 +480,7 @@ html,body{background:#050a0d}
   text-overflow:ellipsis;
   white-space:nowrap;
 }
-.nav-route-alias{display:none!important}
+.nav-route-alias{display:flex!important}
 
 @media (max-width:720px){
   .campaign-nav{display:none}
