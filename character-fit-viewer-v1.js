@@ -79,12 +79,12 @@ function character(overrides={}){
 }
 function anchorSVG(c){
   if(!state.anchors||!CP()?.gearFitProfile)return'';
-  const f=CP().gearFitProfile(c),marks=[
+  const f=CP().gearFitProfile(c),wf=CP()?.weaponFitProfile?.(c,c?.equipment?.Weapon),marks=[
     [f.leftShoulder,f.shoulderY,'SH'],[f.rightShoulder,f.shoulderY,'SH'],
     [f.leftHand,f.handY,'H'],[f.rightHand,f.handY,'H'],
     [120-f.waistHalf,f.waistY,'W'],[120+f.waistHalf,f.waistY,'W'],
     [f.leftLeg,302,'L'],[f.rightLeg,302,'L'],
-    [f.weaponX,f.handY,'MH'],[f.offhandX,f.handY,'OH']
+    [wf?.anchorX??f.weaponX,wf?.anchorY??f.handY,'MH'],[f.offhandX,f.handY,'OH']
   ];
   return '<svg class="cfv-anchor-layer" viewBox="0 0 240 410" aria-hidden="true">'+
     marks.map(([x,y,l])=>'<g><circle cx="'+x+'" cy="'+y+'" r="3.2"/><text x="'+(x+5)+'" y="'+(y-4)+'">'+l+'</text></g>').join('')+
