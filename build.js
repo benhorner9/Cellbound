@@ -148,12 +148,13 @@ for(const file of files){
   if(file==='combat-standard-v1.js'&&!contents.includes('professionZone:meta.zone'))throw new Error('Combat gateway must pass encounter zone for Scribing');
 
   if(file==='character-portraits-v1.js'){
-    for(const hook of ['window.CellboundPortraits','normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','gearFitProfile','paperHeadGearOnly','tierVisualProfile','tierChestAdornment','tierHeadAdornment','tierWeaponAdornment','tierOffHandAdornment','paperOffHandBack','paperOffHandFront','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
+    for(const hook of ['window.CellboundPortraits','normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','gearFitProfile','weaponFitProfile','paperHeadGearOnly','tierVisualProfile','tierChestAdornment','tierHeadAdornment','tierWeaponAdornment','tierOffHandAdornment','paperOffHandBack','paperOffHandFront','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
     if(!contents.includes("if(item.slot&&item.slot!=='OffHand')return''"))throw new Error('Paper doll must not invent an OffHand visual for main-hand weapons');
     if(!contents.includes('var baseFigure=illustratedBaseFigure(model')||contents.includes('paperBodyBase(model,a,skin,profile,uid)'))throw new Error('Equipped gear must layer over the same v9 illustrated character body used by the base model');
     for(const hook of ['leftRingX=fit.leftHand','rightRingX=fit.rightHand','fit.weaponX','fit.offhandX','fit.leftLeg','fit.rightLeg'])if(!contents.includes(hook))throw new Error('Adaptive equipment fitting is missing '+hook);
     if(!contents.includes("chestTop:gender===1?121:119"))throw new Error('Global chest armour realignment is missing');
-    if(!contents.includes("paperBackLayer(model)+\n    paperOffHandBack(model,highlighted)+\n    baseFigure+")||!contents.includes("paperWeapon(model,highlighted)+paperOffHandFront(model,highlighted)+"))throw new Error('Equipment layer order must keep shields behind while main-hand and non-shield off-hands render in front');
+    if(!contents.includes("paperBackLayer(model)+\n    paperOffHandBack(model,highlighted)+\n    baseFigure+")||!contents.includes("paperOffHandFront(model,highlighted)+\n    paperWeapon(model,highlighted)+"))throw new Error('Equipment layer order must keep shields behind, non-shield off-hands in front, and main-hand weapon topmost');
+    for(const hook of ["data-render-layer=\"front\"","data-grip-x","data-grip-y","anchorX:fit.weaponX","pivotX:","pivotY:"])if(!contents.includes(hook))throw new Error('Type-aware front weapon fitting is missing '+hook);
     for(const hook of ['if(tier>=2)','if(tier>=3)','if(tier>=4)','if(tier>=5)'])if(!contents.includes(hook))throw new Error('Tier silhouette progression is missing '+hook);
   }
   if(file==='roster-v2.css'){
@@ -658,6 +659,9 @@ for(const file of files){
     gear.OffHand={name:klass+' Test Offhand',itemId:klass+'-offhand',class:klass,slot:'OffHand',tier:5,offHandType};
     const html=P.paperDollHTML({...base,id:'class-'+klass,name:klass,class:klass,race:'Aelari',appearance:{...appearance,race:'Aelari'},equipment:gear},{});
     if(!html.includes('data-gear-class="'+klass+'"')||!html.includes('cb-paper-slot-head')||!html.includes('cb-paper-slot-feet'))throw new Error('Complete modular class visual failed for '+klass);
+    if(!html.includes('cb-paper-front-weapon')||!html.includes('data-render-layer="front"')||!html.includes('data-grip-x=')||!html.includes('data-grip-y='))throw new Error('Main-hand weapon is not front-aligned for '+klass);
+    const wf=P.weaponFitProfile({...base,id:'weapon-fit-'+klass,name:klass,class:klass,race:'Aelari',appearance:{...appearance,race:'Aelari'},equipment:gear},gear.Weapon);
+    if(!wf||![wf.anchorX,wf.anchorY,wf.pivotX,wf.pivotY,wf.rotate,wf.scale].every(Number.isFinite))throw new Error('Invalid main-hand alignment profile for '+klass);
   }
 
   const fitRaces=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'];
