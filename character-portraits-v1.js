@@ -779,6 +779,7 @@ function paperDollSVG(c,opts){
     '<ellipse cx="120" cy="214" rx="110" ry="180" fill="url(#'+uid+'a)"/>'+
     '<ellipse cx="120" cy="392" rx="'+Math.max(66,profile.shoulder+23)+'" ry="10" fill="#000" opacity=".38"/>'+
     paperTierAura(c)+
+    paperBackLayer(c)+
     paperLegs(c,skin,highlighted)+paperFeet(c,skin,highlighted)+
     paperWeapon(c,highlighted)+paperOffHand(c,highlighted)+
     paperArms(c,skin,highlighted)+under+paperChest(c,highlighted)+paperWaist(c,highlighted)+paperShoulders(c,highlighted)+paperAccessories(c,highlighted)+
@@ -799,7 +800,7 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:4,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
+  version:5,RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
   applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,
   visualProfile:visualProfile,weaponType:weaponType,offHandType:offHandType,
