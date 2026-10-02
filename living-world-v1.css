@@ -118,3 +118,9 @@
 @keyframes lwPopulationIdle{to{transform:translateX(-50%) translateY(-2px)}}
 @media(max-width:900px){.cb-lw-npc,.cb-lw-peer{width:56px!important;height:70px!important}.cb-lw-npc-face,.cb-lw-peer-avatar{width:37px;height:37px}.cb-lw-npc-label,.cb-lw-peer-label{top:39px;padding:3px 5px}.cb-lw-npc-label small,.cb-lw-peer-label small{display:none}.cb-lw-pop-card{right:8px;top:48px;width:min(390px,calc(100% - 16px))}}
 @media(prefers-reduced-motion:reduce){.cb-lw-npc-face,.cb-lw-peer-avatar{animation:none!important}}
+
+/* NPC approach feedback: only the nameplate highlights while the guild walks over. */
+.cb-lw-npc.is-targeted .cb-lw-npc-label{
+  border-color:#efd18d!important;
+  box-shadow:0 0 0 1px #efd18d55,0 0 14px #e8c66d88,0 6px 16px #0009!important;
+}

@@ -43,7 +43,7 @@ for(const file of files){
   }
 
   if(file==='living-world-v1.js'){
-    for(const hook of ["cellbound-owner-living-world-v1","toLowerCase()==='owner'","cellbound:admin-status","data-lw-place","data-lw-service","zelitra-town-square.webp","cb-lw-hotspot","OWNER PREVIEW · PHASE 3","data-lw-interact","openInterior","inn-interior.webp","data-lw-npc","data-lw-peer","cellbound:world-presence"])if(!contents.includes(hook))throw new Error('Living World owner gate/navigation is missing '+hook);
+    for(const hook of ["cellbound-owner-living-world-v1","toLowerCase()==='owner'","cellbound:admin-status","data-lw-place","data-lw-service","zelitra-town-square.webp","cb-lw-hotspot","OWNER PREVIEW · PHASE 3","data-lw-interact","openInterior","inn-interior.webp","data-lw-npc","data-lw-peer","cellbound:world-presence","approachNpc","interiorNode=target;showNpc(id)"])if(!contents.includes(hook))throw new Error('Living World owner gate/navigation is missing '+hook);
   }
   if(file==='world-presence-v1.js'){
     for(const hook of ["cellbound_world_presence_heartbeat","cellbound_world_presence_leave","cellbound:world-presence","VIEW_ZONE","12000"])if(!contents.includes(hook))throw new Error('Living World presence runtime is missing '+hook);
