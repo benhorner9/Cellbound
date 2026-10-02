@@ -340,10 +340,14 @@ function clearPendingLocal(token){
   const meta=pendingSaveMeta(currentUser?.id);
   if(meta?.token===token)localStorage.removeItem(PENDING_SAVE);
 }
-async function persistState(){
+async function persistState({reusePending=false}={}){
   if(!currentUser||!state)return false;
   if(account?.guild_name)state.socialDisplayName=account.guild_name;
-  const pending=markPendingLocal(),snapshot=JSON.parse(JSON.stringify(state)),savedAt=pending?.at||new Date().toISOString();setSync('Saving…','busy');
+  // Actual mutations get a new pending timestamp. Lifecycle/network retries must
+  // preserve the original timestamp so stale local data cannot outrank newer
+  // progress saved from another device.
+  const pending=(reusePending&&pendingSaveMeta(currentUser.id))||markPendingLocal();
+  const snapshot=JSON.parse(JSON.stringify(state)),savedAt=pending?.at||new Date().toISOString();setSync('Saving…','busy');
   saveSerial=saveSerial.catch(error=>{console.warn('Previous Cellbound save rejected; retrying latest state',error);return false;}).then(async()=>{
     try{
       // Account security intentionally grants players UPDATE only on game_state/updated_at.
@@ -369,10 +373,10 @@ async function persistState(){
   });
   return saveSerial;
 }
-function save(){markPendingLocal();clearTimeout(syncTimer);syncTimer=setTimeout(()=>{syncTimer=null;persistState();},120);return saveSerial;}
+function save(){markPendingLocal();clearTimeout(syncTimer);syncTimer=setTimeout(()=>{syncTimer=null;persistState({reusePending:true});},120);return saveSerial;}
 function flushPendingSave(){
   if(!currentUser||!pendingSaveMeta(currentUser.id))return;
-  clearTimeout(syncTimer);syncTimer=null;persistState();
+  clearTimeout(syncTimer);syncTimer=null;persistState({reusePending:true});
 }
 async function loadAccount(user){
   currentUser=user;setSync('Loading…','busy');
@@ -410,7 +414,7 @@ async function refreshStateFromServer({render=true}={}){
   if(!currentUser||!supabaseClient)return false;
   clearTimeout(syncTimer);
   try{
-    if(pendingSaveMeta(currentUser.id))await persistState();else await saveSerial.catch(()=>false);
+    if(pendingSaveMeta(currentUser.id))await persistState({reusePending:true});else await saveSerial.catch(()=>false);
     const {data,error}=await supabaseClient.from('guild_accounts').select('game_state,guild_name,updated_at').eq('user_id',currentUser.id).maybeSingle();
     if(error||!data?.game_state){if(error)console.warn('Cellbound state refresh failed',error);return false;}
     if(account)account.guild_name=data.guild_name||account.guild_name||null;
