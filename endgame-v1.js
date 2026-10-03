@@ -136,13 +136,13 @@ const ACHIEVEMENT_DEFS={
 };
 function achievementMarkup(){
  const unlocked=new Map((server.achievements||[]).map(a=>[a.achievement_id,a]));
- return '<section class="eg-achievements panel"><div class="panel-head"><div><small>ENDGAME ACHIEVEMENTS</small><h3>Dungeon Mastery</h3></div><b>'+unlocked.size+' / '+Object.keys(ACHIEVEMENT_DEFS).length+' UNLOCKED</b></div><div class="eg-achievement-grid">'+Object.entries(ACHIEVEMENT_DEFS).map(([id,a])=>{
+ return '<section class="eg-achievements panel"><div class="panel-head"><div><small>DUNGEON ACHIEVEMENTS</small><h3>Dungeon Mastery</h3></div><b>'+unlocked.size+' / '+Object.keys(ACHIEVEMENT_DEFS).length+' UNLOCKED</b></div><div class="eg-achievement-grid">'+Object.entries(ACHIEVEMENT_DEFS).map(([id,a])=>{
    const row=unlocked.get(id);return '<article class="'+(row?'unlocked':'locked')+'"><i>'+(row?'✓':'◇')+'</i><span><b>'+esc(a.name)+'</b><small>'+esc(a.description)+'</small><em>'+(row?'Unlocked '+new Date(row.unlocked_at).toLocaleDateString():esc(a.reward))+'</em></span></article>'
  }).join('')+'</div></section>'
 }
 function collectionMarkup(){
  const list=Game?.getState?.()?.collections||[];
- return '<section class="eg-collections panel"><div class="panel-head"><div><small>RARE DROPS</small><h3>Rare Finds</h3></div><b>'+list.length+' FOUND</b></div><div class="eg-collection-list">'+(list.length?list.slice(-8).reverse().map(x=>'<article><i>'+(window.CellboundItemArt?.collectionHTML?.(x,48,'endgame-collection-art')||((x.kind==='mount'?'♞':x.kind==='pet'?'◆':x.kind==='cell'?'◈':'◇')))+'</i><span><b>'+esc(x.name)+'</b><small>'+esc(String(x.rarity||'Rare').toUpperCase())+' · '+esc(x.kind||'collection')+'</small><em>'+esc(x.source||'Endgame')+'</em></span></article>').join(''):'<p class="eg-empty">Rare mounts, pets and Cells can drop from endgame dungeons. These drops are collectible; they do not increase combat power.</p>')+'</div></section>'
+ return '<section class="eg-collections panel"><div class="panel-head"><div><small>RARE DROPS</small><h3>Rare Finds</h3></div><b>'+list.length+' FOUND</b></div><div class="eg-collection-list">'+(list.length?list.slice(-8).reverse().map(x=>'<article><i>'+(window.CellboundItemArt?.collectionHTML?.(x,48,'endgame-collection-art')||((x.kind==='mount'?'♞':x.kind==='pet'?'◆':x.kind==='cell'?'◈':'◇')))+'</i><span><b>'+esc(x.name)+'</b><small>'+esc(String(x.rarity||'Rare').toUpperCase())+' · '+esc(x.kind||'collection')+'</small><em>'+esc(x.source||'Dungeon')+'</em></span></article>').join(''):'<p class="eg-empty">Rare mounts, pets and Cells can drop from higher-difficulty dungeons. These drops are collectible; they do not increase combat power.</p>')+'</div></section>'
 }
 
 
@@ -154,7 +154,7 @@ function milestoneMarkup(){
 
 function weeklyMarkup(){
  const w=server.weekly||{},points=Number(w.progress_points)||0,highest=Number(w.highest_tier)||0,pct=clamp(points/60*100,0,100),claimed=Boolean(w.reward_claimed);
- return'<article class="eg-weekly panel"><div><small>WEEKLY ENDGAME</small><h3>Weekly Vault</h3><p>Dungeon clears build weekly progress. There is no daily login requirement.</p></div><div class="eg-weekly-progress"><span><b>'+points+' / 60 points</b><em>Highest Cellbound+ '+highest+'</em></span><div><i style="width:'+pct+'%"></i></div><button data-eg-weekly '+(points>=60&&!claimed?'':'disabled')+'>'+(claimed?'CLAIMED':points>=60?'CLAIM WEEKLY REWARD':'KEEP PLAYING')+'</button></div></article>'
+ return'<article class="eg-weekly panel"><div><small>WEEKLY VAULT</small><h3>Weekly Vault</h3><p>Dungeon clears build weekly progress. There is no daily login requirement.</p></div><div class="eg-weekly-progress"><span><b>'+points+' / 60 points</b><em>Highest Cellbound+ '+highest+'</em></span><div><i style="width:'+pct+'%"></i></div><button data-eg-weekly '+(points>=60&&!claimed?'':'disabled')+'>'+(claimed?'CLAIMED':points>=60?'CLAIM WEEKLY REWARD':'KEEP PLAYING')+'</button></div></article>'
 }
 function leaderboardMarkup(id){
  const rows=leaderboards[id]||[],view=leaderboardView[id]||{scope:'overall'},cfg=currentConfig(id),partyClasses=[...new Set((Game?.getPartyCharacters?.()||[]).map(c=>c.class))];
@@ -167,7 +167,7 @@ function render(){
  const root=$('#endgameHub');if(!root||!Game?.ready)return;
  const rotation=server.rotation||{},minor=D.AFFIXES[rotation.minor_affix],major=D.AFFIXES[rotation.major_affix];
  root.innerHTML=
- '<section class="eg-hero"><div><small>ENDGAME</small><h2>Push beyond Normal.</h2><p>Learn the route on Normal, step up to Heroic, then climb Cellbound+ with rotating affixes, scores and weekly rewards.</p></div><div class="eg-season"><span>SEASON</span><b>'+esc(server.season?.name||D.SEASON.name)+'</b><small>'+esc(minor?.name||'No minor affix')+' · '+esc(major?.name||'No major affix')+'</small></div></section>'+
+ '<section class="eg-hero"><div><small>DUNGEON MASTERY</small><h2>Push beyond Normal.</h2><p>Learn the route on Normal, step up to Heroic, then climb Cellbound+ with rotating affixes, scores and weekly rewards.</p></div><div class="eg-season"><span>SEASON</span><b>'+esc(server.season?.name||D.SEASON.name)+'</b><small>'+esc(minor?.name||'No minor affix')+' · '+esc(major?.name||'No major affix')+'</small></div></section>'+
  weeklyMarkup()+milestoneMarkup()+achievementMarkup()+collectionMarkup()+
  '<div class="eg-content">'+dungeonCard('ashen-vault')+dungeonCard('hollow-sanctum')+dungeonCard('chaos-canyon')+'</div>'+
  '<div class="eg-leaderboards">'+leaderboardMarkup('ashen-vault')+leaderboardMarkup('hollow-sanctum')+leaderboardMarkup('chaos-canyon')+'</div>';
@@ -249,7 +249,7 @@ function stageConfig(dungeonId,stage){
 }
 
 async function beginAttempt(dungeonId){
- const cfg=currentConfig(dungeonId);if(!db)return{error:new Error('Endgame service unavailable')};
+ const cfg=currentConfig(dungeonId);if(!db)return{error:new Error('Dungeon service unavailable')};
  const {data,error}=await db.rpc('begin_dungeon_attempt',{
    p_dungeon_id:dungeonId,p_difficulty:cfg.difficulty,p_tier:cfg.tier,
    p_dungeon_version:cfg.dungeon.version,p_season_id:cfg.seasonId
@@ -258,7 +258,7 @@ async function beginAttempt(dungeonId){
  attempts[dungeonId]=data;return data
 }
 async function resumeAttempt(dungeonId){
- if(!db)return{active:false,error:new Error('Endgame service unavailable')};
+ if(!db)return{active:false,error:new Error('Dungeon service unavailable')};
  const {data,error}=await db.rpc('resume_dungeon_attempt',{p_dungeon_id:dungeonId});
  if(error){console.warn('Dungeon attempt could not be resumed',error);return{active:false,error}}
  if(!data?.active)return data||{active:false};
@@ -428,7 +428,7 @@ async function claimWeekly(){
  if(error){alert(error.message||'Weekly reward is not ready.');return}
  const quality=data?.quality||'starter',tier=quality==='epic'?4:quality==='rare'?3:quality==='uncommon'?2:1;
  const pool=G.items.filter(x=>x.tier===tier&&x.enabled&&(!Game?.isBetaClassPlayable||Game.isBetaClassPlayable(x.class))),base=pool[Math.floor(Math.random()*Math.max(1,pool.length))];
- if(base)Game.addBankItem?.(G.rollItemAffixes({...base,source:'Weekly Endgame Vault'}));
+ if(base)Game.addBankItem?.(G.rollItemAffixes({...base,source:'Weekly Vault'}));
  Game.addMaterial?.('cell-shards',quality==='epic'?32:quality==='rare'?22:quality==='uncommon'?14:8);
  Game.save?.();await Game.persistState?.();await refresh()
 }
