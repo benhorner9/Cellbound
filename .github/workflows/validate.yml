@@ -3,6 +3,7 @@ name: Validate Cellbound
 on:
   pull_request:
     branches:
+      - staging
       - main
   workflow_dispatch:
 
@@ -15,7 +16,7 @@ concurrency:
 
 jobs:
   validate:
-    name: Production build validation
+    name: Cellbound build validation
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
