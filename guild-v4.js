@@ -495,7 +495,7 @@ function switchView(id){
   if(id==='bank')renderBank();
   if(id==='professions')window.CellboundEconomy?.renderProfessions?.();
   if(id==='trading')window.CellboundEconomy?.renderTrading?.();
-  if(id==='content'){safeFeatureRender('hollow-sanctum',()=>window.CellboundHollowSanctum?.renderCard?.());safeFeatureRender('chaos-canyon',()=>window.CellboundChaosCanyon?.renderCard?.());safeFeatureRender('blackout-station',()=>window.CellboundBlackoutStation?.renderCard?.());safeFeatureRender('fractured-ages',()=>window.CellboundFracturedAges?.renderCard?.())}
+  if(id==='content'){safeFeatureRender('hollow-sanctum',()=>window.CellboundHollowSanctum?.renderCard?.())}
   if(id==='raids')window.CellboundManorRaid?.refresh?.();
   if(id==='endgame'){window.CellboundEndgame?.render?.();renderReports()}
   if(id==='roster')renderRoster();
@@ -772,15 +772,12 @@ function renderOverview(){
     const stages=[
       {id:'ashen-vault',label:'Ashen Vault',kind:'DUNGEON',done:ashenDone,open:ashenOpen},
       {id:'hollow-sanctum',label:'Hollow Sanctum',kind:'DUNGEON',done:hollowDone,open:hollowOpen},
-      {id:'chaos-canyon',label:'Chaos Canyon',kind:'DUNGEON',done:false,open:false,future:true},
-      {id:'blackout-station',label:'Blackout Station',kind:'DUNGEON',done:false,open:false,future:true},
-      {id:'fractured-ages',label:'Fractured Ages',kind:'DUNGEON',done:false,open:false,future:true},
       {id:'manor',label:'The Manor',kind:'RAID',done:Boolean(state?.progression?.manorRaidCleared),open:manorUnlocked}
     ];
     progress.innerHTML=stages.map((stage,index)=>{
       const current=stage.id===dungeon.id&&!stage.done;
-      const cls=stage.future?'locked future':stage.done?'done':current?'current':stage.open?'open':'locked';
-      const status=stage.future?'FUTURE UPDATE':stage.done?'CLEARED':current?'NEXT':stage.open?'OPEN':'LOCKED';
+      const cls=stage.done?'done':current?'current':stage.open?'open':'locked';
+      const status=stage.done?'CLEARED':current?'NEXT':stage.open?'OPEN':'LOCKED';
       return `<button type="button" class="home-progress-stage ${cls}" data-home-stage="${stage.id}" ${stage.open||stage.done?'':'disabled'}><i class="node">${stage.done?'✓':index+1}</i><small>${stage.kind}</small><b>${stage.label}</b><em>${status}</em></button>`;
     }).join('');
     progress.querySelectorAll('[data-home-stage]').forEach(button=>button.addEventListener('click',()=>{
@@ -1228,7 +1225,7 @@ function renderReports(){
   ui.reportsList.innerHTML=state.reports.map(r=>{const b=bossById(r.boss),loot=G.byId(r.lootItemId)||G.byName(r.loot);return `<article class="report-card"><div><div class="report-result ${r.success?'kill':'wipe'}">${r.success?'VICTORY':'WIPE'}</div><small>${new Date(r.at).toLocaleString()}</small></div><div><h3>${b?.name||'Encounter'}</h3><p>${r.success?'The party won. Existing Cell Shock remains.':`The party gained ${r.cellShockGain||PVE_WIPE_CELL_SHOCK}% Cell Shock and Mastery.`}${loot?` Loot: ${loot.name} · iLvl ${r.lootItemLevel||loot.itemLevel||'—'} → Guild Bank.`:''}${r.reagents?.length?` Reagents: ${r.reagents.map(d=>`${P?.MATERIALS?.[d.key]?.name||'Recipe'} ×${d.quantity}`).join(', ')}.`:''}</p></div><div class="report-gain"><b>Mastery gained</b>${r.knowledgeGain.map(k=>`<span>${k.name} +${k.gain}%</span>`).join('')}</div></article>`;}).join('');
 }
 function safeFeatureRender(label,fn){try{fn?.()}catch(error){console.warn('Cellbound UI refresh isolated:',label,error)}}
-function renderAll(){if(!state)return;state.roster.forEach(c=>{refreshRecovery(c);c.gear=characterItemLevel(c);});renderTop();renderOverview();renderRoster();renderParty();renderBank();renderReports();writeLocal();safeFeatureRender('quests',()=>window.CellboundQuests?.render?.());safeFeatureRender('hollow-sanctum',()=>window.CellboundHollowSanctum?.renderCard?.());safeFeatureRender('chaos-canyon',()=>window.CellboundChaosCanyon?.renderCard?.());safeFeatureRender('blackout-station',()=>window.CellboundBlackoutStation?.renderCard?.());safeFeatureRender('fractured-ages',()=>window.CellboundFracturedAges?.renderCard?.());}
+function renderAll(){if(!state)return;state.roster.forEach(c=>{refreshRecovery(c);c.gear=characterItemLevel(c);});renderTop();renderOverview();renderRoster();renderParty();renderBank();renderReports();writeLocal();safeFeatureRender('quests',()=>window.CellboundQuests?.render?.());safeFeatureRender('hollow-sanctum',()=>window.CellboundHollowSanctum?.renderCard?.());}
 function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(c=>{if(refreshRecovery(c)){state.activity.push(`${c.name} has fully recovered from Cell Shock.`);changed=true;}});if(changed)save();if(state.roster.some(c=>isUnavailable(c)))renderAll();}
 
 window.CellboundGame={
