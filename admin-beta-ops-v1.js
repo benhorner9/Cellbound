@@ -75,7 +75,15 @@ function bind(){
  $('#adminPlayerLookup')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();lookupPlayer()}});
  $('#adminPlayerRecoveryActions')?.querySelectorAll('[data-recover-player]').forEach(b=>b.addEventListener('click',()=>recoverPlayer(b.dataset.recoverPlayer)));
  window.addEventListener('cellbound:admin-status',e=>{if(e.detail?.isAdmin){refreshReports();renderPlayer()}});
- window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='admin'&&adminReady()){refreshReports();renderPlayer()}})
+ window.addEventListener('cellbound:admin-panel-changed',e=>{
+  if(e.detail?.panel==='reports'&&adminReady())refreshReports();
+  if(e.detail?.panel==='players'&&adminReady())renderPlayer();
+ });
+ window.addEventListener('cellbound:view-changed',e=>{
+  if(e.detail?.view!=='admin'||!adminReady())return;
+  if(window.CellboundAdmin?.panel==='reports')refreshReports();
+  if(window.CellboundAdmin?.panel==='players')renderPlayer();
+ })
 }
 async function init(){
  Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,120);return}
