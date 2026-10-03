@@ -333,3 +333,243 @@
  .cc-centre .name-builder{grid-template-columns:minmax(0,1fr) auto}
  .cc-centre .name-builder button{min-height:44px}
 }
+
+
+/* Creation Centre v2.2 screenshot fixes */
+/* Kill the duplicate appearance-preview canvas: the full character is already visible on the left. */
+.cc-centre .cc-editor-basic .cb-appearance-preview{
+ display:flex!important;
+ align-items:center!important;
+ justify-content:flex-end!important;
+ width:100%!important;
+ min-height:0!important;
+ height:auto!important;
+ margin:0 0 7px!important;
+ padding:0!important;
+ border:0!important;
+ border-radius:0!important;
+ background:none!important;
+ box-shadow:none!important;
+ overflow:visible!important;
+}
+.cc-centre .cc-editor-basic .cb-appearance-preview:before,
+.cc-centre .cc-editor-basic .cb-appearance-preview:after{display:none!important;content:none!important}
+.cc-centre .cc-editor-basic .cb-appearance-preview>.cb-paper-doll,
+.cc-centre .cc-editor-basic .cb-appearance-preview>.cb-appearance-race-label{display:none!important}
+.cc-centre .cc-editor-basic [data-appearance-randomize]{
+ display:inline-flex!important;
+ width:auto!important;
+ min-width:170px!important;
+ min-height:34px!important;
+ margin:0!important;
+ padding:6px 12px!important;
+ align-items:center;
+ justify-content:center
+}
+.cc-centre .cc-editor-features .cb-appearance-preview{display:none!important}
+
+/* Use only the space each step needs instead of holding a 500px frame on every page. */
+.cc-centre.cc-step-race .cc-preview-stage{height:470px}
+.cc-centre.cc-step-appearance .cc-preview-stage{height:400px}
+.cc-centre.cc-step-features .cc-preview-stage{height:350px}
+.cc-centre.cc-step-class .cc-preview-stage{height:350px}
+.cc-centre.cc-step-identity .cc-preview-stage{height:330px}
+.cc-centre.cc-step-confirm .cc-preview-stage{height:470px}
+
+.cc-centre.cc-step-appearance .cc-preview-model>.cb-paper-doll--creator{height:290px;max-height:290px}
+.cc-centre.cc-step-features .cc-preview-model>.cb-paper-doll--creator,
+.cc-centre.cc-step-class .cc-preview-model>.cb-paper-doll--creator{height:245px;max-height:245px}
+.cc-centre.cc-step-identity .cc-preview-model>.cb-paper-doll--creator{height:225px;max-height:225px}
+
+/* Race cards: no ghost artwork column when the main preview already shows the selected race. */
+.cc-centre .race-card{
+ display:flex!important;
+ align-items:center!important;
+ justify-content:flex-start!important;
+ height:88px!important;
+ min-height:88px!important;
+ padding:11px 34px 11px 14px!important;
+ text-align:left!important
+}
+.cc-centre .cc-race-art{display:none!important}
+.cc-centre .cc-race-copy{
+ display:grid!important;
+ align-content:center!important;
+ gap:4px!important;
+ width:100%!important;
+ padding:0!important
+}
+.cc-centre .cc-race-copy b{font-size:15px!important;line-height:1.1!important}
+.cc-centre .cc-race-copy p{
+ display:-webkit-box!important;
+ -webkit-line-clamp:2!important;
+ -webkit-box-orient:vertical!important;
+ margin:0!important;
+ min-height:0!important;
+ max-width:38ch;
+ overflow:hidden!important;
+ font-size:10px!important;
+ line-height:1.35!important
+}
+
+/* Appearance controls: strict equal columns and rows. */
+.cc-centre .cb-appearance-controls{
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ column-gap:10px!important;
+ row-gap:0!important
+}
+.cc-centre .cb-creation-group{
+ margin:7px 0 1px!important;
+ padding:0 0 5px!important;
+ line-height:1!important
+}
+.cc-centre .cb-appearance-control{
+ grid-template-columns:minmax(82px,1fr) 132px!important;
+ min-height:40px!important;
+ height:40px!important;
+ padding:4px 0!important;
+ gap:8px!important
+}
+.cc-centre .cb-appearance-control>span{
+ font-size:10px!important;
+ line-height:1!important;
+ letter-spacing:.035em!important;
+ text-transform:uppercase!important
+}
+.cc-centre .cb-appearance-control>div{
+ display:grid!important;
+ grid-template-columns:32px 64px 32px!important;
+ width:132px!important;
+ gap:2px!important
+}
+.cc-centre .cb-appearance-control button{
+ width:32px!important;
+ min-width:32px!important;
+ height:30px!important;
+ min-height:30px!important;
+ padding:0!important
+}
+.cc-centre .cb-appearance-control b{
+ display:block!important;
+ width:64px!important;
+ max-width:64px!important;
+ overflow:hidden!important;
+ text-overflow:ellipsis!important;
+ white-space:nowrap!important;
+ text-align:center!important;
+ font-size:9px!important
+}
+
+/* Class cards: clean two-line cards and suppress stale/invalid legacy labels such as NaN. */
+.cc-centre .class-grid{
+ grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ gap:8px!important
+}
+.cc-centre .class-choice{
+ height:72px!important;
+ min-height:72px!important;
+ padding:9px 30px 9px 10px!important
+}
+.cc-centre .class-choice>div{display:grid!important;align-content:center!important;gap:3px!important}
+.cc-centre .class-choice b{font-size:15px!important;line-height:1!important}
+.cc-centre .class-choice span{font-size:10px!important;line-height:1.2!important}
+.cc-centre .class-choice small,
+.cc-centre .class-choice em,
+.cc-centre .class-choice>div>*:nth-child(n+3){display:none!important}
+
+/* Compact founding-party selector beneath the main preview. */
+.cc-centre .creator-party-dots{
+ gap:5px!important;
+ margin-top:0!important;
+ padding:7px 8px 8px!important
+}
+.cc-centre .creator-party-dots button{
+ min-height:54px!important;
+ padding:5px 2px!important
+}
+.cc-centre .creator-party-dots .cb-portrait{
+ width:30px!important;
+ height:30px!important
+}
+.cc-centre .creator-party-dots span{
+ margin-top:2px!important;
+ font-size:8px!important;
+ letter-spacing:.04em!important
+}
+
+/* Confirmation list is information, not another giant panel. */
+.cc-centre .creator-confirm-grid{
+ display:grid!important;
+ gap:5px!important;
+ margin-top:8px!important;
+ padding:0!important;
+ overflow:visible!important
+}
+.cc-centre .creator-confirm-member{
+ grid-template-columns:38px minmax(0,1fr)!important;
+ gap:8px!important;
+ min-height:48px!important;
+ padding:5px 8px!important
+}
+.cc-centre .creator-confirm-member .cb-portrait{
+ width:34px!important;
+ height:34px!important
+}
+.cc-centre .creator-confirm-member b{font-size:10px!important;line-height:1.1!important}
+.cc-centre .creator-confirm-member em{font-size:8px!important;line-height:1.1!important}
+
+/* Remove inherited creator padding/scroll behaviour from the old onboarding wizard. */
+.cc-centre .creator-choice-grid{
+ padding:0!important;
+ overflow:visible!important
+}
+.cc-centre .creator-panel{
+ display:flex!important;
+ grid-template-rows:none!important;
+ overflow:visible!important
+}
+.cc-centre .creator-panel>footer{flex:0 0 auto}
+
+/* Tighter one-line hierarchy so text does not drift across the panel. */
+.cc-centre .cc-panel-heading{display:grid!important;gap:2px!important}
+.cc-centre .cc-panel-heading>span,
+.cc-centre .cc-panel-heading h2,
+.cc-centre .cc-panel-heading p{max-width:100%!important}
+.cc-centre .cc-panel-heading h2{line-height:1.05!important}
+.cc-centre .cc-panel-heading p{line-height:1.3!important}
+
+/* iPad landscape - the supplied screenshots are around this width. */
+@media(min-width:761px) and (max-width:1180px){
+ .cc-centre{padding:11px 12px 13px!important}
+ .cc-layout{
+  grid-template-columns:minmax(260px,.84fr) minmax(420px,1.16fr)!important;
+  gap:9px 12px!important
+ }
+ .cc-centre .creator-panel{padding:12px!important}
+ .cc-centre .race-card{height:82px!important;min-height:82px!important}
+ .cc-centre .cc-race-copy p{-webkit-line-clamp:2!important}
+ .cc-centre .cb-appearance-control{
+  grid-template-columns:minmax(74px,1fr) 124px!important
+ }
+ .cc-centre .cb-appearance-control>div{
+  grid-template-columns:30px 60px 30px!important;
+  width:124px!important
+ }
+ .cc-centre .cb-appearance-control button{width:30px!important;min-width:30px!important}
+ .cc-centre .cb-appearance-control b{width:60px!important;max-width:60px!important}
+}
+
+/* Phones stay single-column and avoid over-constraining value rows. */
+@media(max-width:520px){
+ .cc-centre.cc-step-race .cc-preview-stage,
+ .cc-centre.cc-step-appearance .cc-preview-stage,
+ .cc-centre.cc-step-features .cc-preview-stage,
+ .cc-centre.cc-step-class .cc-preview-stage,
+ .cc-centre.cc-step-identity .cc-preview-stage,
+ .cc-centre.cc-step-confirm .cc-preview-stage{height:245px!important}
+ .cc-centre .cb-appearance-controls{grid-template-columns:1fr!important}
+ .cc-centre .cb-appearance-control{
+  grid-template-columns:minmax(86px,1fr) 132px!important
+ }
+ .cc-centre .race-card{height:76px!important;min-height:76px!important}
+}
