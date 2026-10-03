@@ -49,15 +49,15 @@ function ensureLauncher(){
  root.querySelectorAll('[data-quick-report]').forEach(btn=>btn.addEventListener('click',()=>openReport(btn.dataset.quickReport)));
 }
 function openReport(kind='bug'){
- const from=activeView();
+ const from=activeView(),category=$('#betaReportCategory'),message=$('#betaReportMessage');
  if(from!=='support')reportOrigin=from;
+ if(category)category.value=kind==='feature'?'feature':'bug';
+ if(message)message.hidden=true;
  setLauncherOpen(false);
  Game?.switchView?.('support');
+ renderBuild();
  setTimeout(()=>{
-  const category=$('#betaReportCategory'),summary=$('#betaReportSummary'),message=$('#betaReportMessage');
-  if(category)category.value=kind==='feature'?'feature':'bug';
-  if(message)message.hidden=true;
-  renderBuild();
+  const summary=$('#betaReportSummary');
   summary?.focus?.({preventScroll:true});
   $('#betaReportForm')?.scrollIntoView?.({behavior:'smooth',block:'start'});
  },40);
