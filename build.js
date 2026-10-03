@@ -721,7 +721,7 @@ for(const file of files){
   vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),sandbox,{filename:'character-portraits-v1.js'});
   const G=sandbox.CellboundGear,P=sandbox.CellboundPortraits;
   if(!G||!P)throw new Error('Beta character/equipment lock runtime failed to load');
-  if(P.version!==10||P.modelContract!=='v10-race-foundation')throw new Error('Character model v9 beta lock is missing');
+  if(P.version!==11||P.modelContract!=='v11-race-foundation-hair')throw new Error('Character model v11 beta lock is missing');
   if(P.equipmentLayerContract!=='body|shield|armour|front-offhand|mainhand-front')throw new Error('Equipment layer contract changed without an intentional beta model revision');
   const races=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'],positions=G.EQUIPMENT_POSITION_ORDER;
   const slotFor=pos=>pos.startsWith('Ring')?'Ring':pos.startsWith('Trinket')?'Trinket':pos;
