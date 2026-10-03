@@ -157,8 +157,10 @@ async function creatorPlaythrough(browser){
   assert.equal(await page.locator('#confirmParty').isDisabled(),false,'generated party is valid');
   await page.locator('#confirmParty').click();
   await page.waitForFunction(()=>window.CellboundGame.getState()?.roster?.length===5,{},{timeout:10000,polling:50});
-  const slots=await page.evaluate(()=>CellboundGame.getState().roster.map(c=>c.professions?.length));
-  assert.deepEqual(slots,[1,1,1,1,1],'fresh characters start with exactly one profession slot');
+  const fresh=await page.evaluate(()=>({slots:CellboundGame.getState().roster.map(c=>c.professions?.length),classes:CellboundGame.getState().roster.map(c=>c.class)}));
+  assert.deepEqual(fresh.slots,[1,1,1,1,1],'fresh characters start with exactly one profession slot');
+  assert(fresh.classes.every(c=>CellboundGame.isBetaClassPlayable(c)),'fresh guild creator only produces beta-playable classes');
+  assert(fresh.classes.includes('Paladin'),'beta creator supplies the healer slot through Paladin');
   assert.deepEqual(errors,[],'creator/onboarding emitted no browser errors');
   await page.close();
 }
@@ -418,6 +420,17 @@ async function betaContentLockPlaythrough(browser){
   assert.deepEqual(await page.evaluate(()=>CellboundGame.betaPlayableClasses),['Warrior','Paladin','Hunter','Rogue','Mage'],'beta exposes exactly the five launch classes');
   assert.equal(await page.evaluate(()=>['Priest','Druid','Shaman','Warlock','Monk','Death Knight','Demon Hunter','Evoker'].every(x=>!CellboundGame.isBetaClassPlayable(x))),true,'future classes remain gameplay-locked');
   assert.deepEqual(await page.evaluate(()=>CellboundGame.betaDungeons),['ashen-vault','hollow-sanctum'],'beta exposes exactly Ashen Vault and Hollow Sanctum as dungeons');
+
+  const oldSaveLock=await page.evaluate(()=>{
+    const s=CellboundGame.getState(),healer=s.roster.find(c=>c.id==='heal');
+    const original={class:healer.class,spec:healer.spec};
+    healer.class='Priest';healer.spec='Holy';CellboundGame.renderAll();
+    const result={partyCount:CellboundGame.getPartyCharacters().length,playable:CellboundGame.isCharacterBetaPlayable(healer)};
+    healer.class=original.class;healer.spec=original.spec;CellboundGame.renderAll();
+    return result;
+  });
+  assert.equal(oldSaveLock.playable,false,'future-class characters from old saves are preserved but beta-locked');
+  assert.equal(oldSaveLock.partyCount,4,'an old-save future class cannot remain in the playable active five');
 
   await page.evaluate(()=>CellboundGame.switchView('content'));
   await page.waitForTimeout(100);
