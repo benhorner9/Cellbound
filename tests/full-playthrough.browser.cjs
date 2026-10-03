@@ -120,6 +120,13 @@ async function mount(page,seedState=null,owner=false,options={}){
   await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:''}));
   await page.route('https://cellbound.test/**',async route=>{
     const u=new URL(route.request().url()),relative=u.pathname.replace(/^\/+/,'')||'index.html';
+    if(relative==='guild.html'){
+      const shell=path.resolve(root,'guild.html');
+      const html=fs.readFileSync(shell,'utf8')
+        .replace(/<meta\s+http-equiv=["']refresh["'][^>]*>/i,'')
+        .replace(/<script>\s*window\.location\.replace\(["']\.\/index\.html["']\);?\s*<\/script>/i,'');
+      await route.fulfill({status:200,contentType:'text/html',body:html});return;
+    }
     const file=path.resolve(root,'dist',relative);
     if(!file.startsWith(path.resolve(root,'dist')+path.sep)||!fs.existsSync(file)){
       await route.fulfill({status:404,body:''});return;
