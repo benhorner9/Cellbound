@@ -260,7 +260,7 @@ async function mainGamePlaythrough(browser){
     CellboundGame.renderAll();
   });
 
-  const views=['overview','roster','party','bank','professions','quests','content','world','raids','trading','pvp','chat'];
+  const views=['overview','roster','party','bank','professions','quests','content','world','raids','trading','pvp','chat','support'];
   for(const view of views){
     await page.evaluate(v=>CellboundGame.switchView(v),view);
     await page.waitForTimeout(50);
@@ -326,6 +326,16 @@ async function mainGamePlaythrough(browser){
   assert(await page.locator('#pvp').isVisible(),'PvP locked view renders safely');
   await page.evaluate(()=>CellboundGame.switchView('chat'));
   assert(await page.locator('#chat').isVisible(),'social view renders');
+
+  await page.evaluate(()=>CellboundGame.switchView('support'));
+  await page.waitForFunction(()=>Boolean(window.CellboundBetaOps),{},{timeout:5000,polling:50});
+  assert(await page.locator('#betaReportForm').isVisible(),'beta support form renders');
+  assert(await page.locator('#betaPatchNotes .beta-note').count()>=1,'beta patch notes render');
+  await page.locator('#betaReportSummary').fill('QA support ticket');
+  await page.locator('#betaReportDetails').fill('The automated beta operations playthrough is testing the support submission path.');
+  await page.locator('#betaReportSubmit').click();
+  await page.waitForFunction(()=>document.querySelector('#betaReportMessage')?.textContent?.includes('Report sent'),{},{timeout:5000,polling:50});
+  assert((await page.locator('#betaReportMessage').textContent()).includes('Report sent'),'beta report submission path completes');
 
   for(const size of [{width:768,height:1024},{width:390,height:844},{width:1024,height:1366}]){
     await page.setViewportSize(size);
@@ -601,6 +611,10 @@ async function ownerDungeonGeneratorPlaythrough(browser){
   await page.waitForFunction(()=>window.CellboundAdmin?.role==='owner',{},{timeout:10000,polling:50});
   await page.evaluate(()=>CellboundGame.switchView('admin'));
   await page.waitForSelector('#dungeonGeneratorEntry:not([hidden])',{timeout:5000});
+  await page.waitForFunction(()=>Boolean(window.CellboundAdminBetaOps),{},{timeout:5000,polling:50});
+  assert(await page.locator('#adminBetaReportQueue').isVisible(),'owner can access the beta report triage queue');
+  assert(await page.locator('#adminPlayerLookup').isVisible(),'owner can access targeted player recovery');
+  assert.equal(await page.locator('#adminPlayerRecoveryActions [data-recover-player]').count(),3,'recovery console exposes only the three audited support actions');
   await page.locator('#openDungeonGenerator').click();
   await page.waitForSelector('#dungeonGeneratorMount:not([hidden]) .dg-shell',{timeout:5000});
 
@@ -646,6 +660,6 @@ async function ownerDungeonGeneratorPlaythrough(browser){
     await betaClassAndNullGatePlaythrough(browser);
     await breakGamePlaythrough(browser);
     await ownerDungeonGeneratorPlaythrough(browser);
-    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, five-class beta lock, all dungeon content retained, Manor-gated Null Complex, adversarial corrupted-save repair, rapid-action protection, Cell Shock recovery, dungeon refresh/resume, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, owner dungeon generator and responsive layouts.');
+    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, five-class beta lock, all dungeon content retained, Manor-gated Null Complex, adversarial corrupted-save repair, rapid-action protection, Cell Shock recovery, dungeon refresh/resume, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, beta support intake, admin triage/recovery, owner dungeon generator and responsive layouts.');
   }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});
