@@ -501,6 +501,7 @@ const WORKSPACES={
   market:{label:'Market',views:[['trading','Trading Post']]},
   pvp:{label:'Combat',views:[['pvp','PvP']]},
   social:{label:'Social',views:[['chat','Social']]},
+  support:{label:'Support',views:[['support','Beta Support']]},
   admin:{label:'Admin',views:[['admin','Admin']]}
 };
 const VIEW_WORKSPACE={};
