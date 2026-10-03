@@ -460,17 +460,18 @@ async function betaContentLockPlaythrough(browser){
 
   await page.evaluate(()=>CellboundGame.switchView('content'));
   await page.waitForTimeout(100);
+  assert.equal(await page.locator('[data-dungeon-card]').count(),2,'Dungeon Journal renders only Ashen Vault and Hollow Sanctum');
+  assert.equal(await page.locator('[data-dungeon-card="ashen-vault"]').count(),1,'Ashen Vault remains mounted for beta');
+  assert.equal(await page.locator('[data-dungeon-card="hollow-sanctum"]').count(),1,'Hollow Sanctum remains mounted for beta');
   for(const id of ['chaos-canyon','blackout-station','fractured-ages']){
-    const card=page.locator('[data-dungeon-card="'+id+'"]');
-    await card.waitFor({state:'visible',timeout:5000});
-    assert((await card.innerText()).includes('FUTURE UPDATE'),'future dungeon '+id+' is visibly locked');
+    assert.equal(await page.locator('[data-dungeon-card="'+id+'"]').count(),0,'future dungeon '+id+' is not rendered in beta');
   }
-  await page.evaluate(()=>CellboundChaosCanyon.open());
-  assert.equal(await page.locator('#cc2dBackdrop:not([hidden])').count(),0,'direct Chaos Canyon entry cannot bypass the beta lock');
-  await page.evaluate(()=>CellboundBlackoutStation.open());
-  assert.equal(await page.locator('#bs2dBackdrop:not([hidden])').count(),0,'direct Blackout Station entry cannot bypass the beta lock');
-  await page.evaluate(()=>CellboundFracturedAges.open());
-  assert.equal(await page.locator('#fracturedAgesBackdrop:not([hidden])').count(),0,'direct Fractured Ages entry cannot bypass the beta lock');
+  const futureRuntime=await page.evaluate(()=>({
+    chaos:typeof window.CellboundChaosCanyon,
+    blackout:typeof window.CellboundBlackoutStation,
+    fractured:typeof window.CellboundFracturedAges
+  }));
+  assert.deepEqual(futureRuntime,{chaos:'undefined',blackout:'undefined',fractured:'undefined'},'future dungeon runtimes are not loaded by the beta shell');
 
   await page.evaluate(()=>{CellboundGame.switchView('quests');CellboundQuests.selectAdventure('null-complex-quest')});
   await page.waitForSelector('[data-adventure="null-complex-quest"]',{timeout:5000});
