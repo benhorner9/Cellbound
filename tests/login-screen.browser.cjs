@@ -41,7 +41,8 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   assert(mobilePanel&&mobilePanel.x>=0&&mobilePanel.x+mobilePanel.width<=390,'mobile Coming Soon card stays in viewport');
   assert(await page.locator('.coming-soon-card h1').isVisible(),'mobile Coming Soon title remains visible');
 
-  const authPage=await browser.newPage({viewport:{width:390,height:844}});
+  await page.screenshot({path:'/tmp/cellbound-login-screen.png',fullPage:true});
+  const authPage=page;
   const authErrors=[];authPage.on('pageerror',e=>authErrors.push(String(e)));
   await authPage.goto('https://cellbound.test/auth-test.html',{waitUntil:'networkidle'});
   await authPage.locator('#email').fill('beta@example.test');
@@ -55,10 +56,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   const resetCall=await authPage.evaluate(()=>window.__authCalls.find(x=>x[0]==='reset'));
   assert.equal(resetCall[2].redirectTo,'https://cellbound.test/index.html','password reset email returns to the current Cellbound host');
   assert.deepEqual(authErrors,[],'auth email redirect harness emitted no browser errors');
-  await authPage.close();
-
   assert.deepEqual(errors,[]);
-  await page.screenshot({path:'/tmp/cellbound-login-screen.png',fullPage:true});
   await browser.close();
   console.log('Cellbound public/auth regression passed: holding-page layout plus verification and password-reset return URLs.');
 })().catch(e=>{console.error(e);process.exit(1)});
