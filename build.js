@@ -1128,8 +1128,12 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   for(const hook of [
     "async function markManorCleared()",
     "s.progression.manorRaidCleared=true",
-    "Signal From Nowhere is now available."
-  ])if(!manor.includes(hook))throw new Error('Manor completion persistence is missing '+hook);
+    "Signal From Nowhere is now available.",
+    "Game.isBetaClassPlayable(requested)?requested"
+  ])if(!manor.includes(hook))throw new Error('Manor completion/reward beta contract is missing '+hook);
+
+  const endgame=fs.readFileSync(path.join(__dirname,'endgame-v1.js'),'utf8');
+  if(!endgame.includes("Game.isBetaClassPlayable(x.class)"))throw new Error('Weekly endgame rewards must exclude unavailable beta classes');
 
   const nullComplex=fs.readFileSync(path.join(__dirname,'null-complex-v1.js'),'utf8');
   for(const hook of [
