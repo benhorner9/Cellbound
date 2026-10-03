@@ -1162,8 +1162,30 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   console.log('Five-class beta lock passed with full dungeon content retained and Null Complex Manor-gated.');
 }
 
+{
+  const balance=fs.readFileSync(path.join(__dirname,'balance-v1.js'),'utf8');
+  for(const hook of [
+    "SHIPWRIGHT_KIT_COST=1000",
+    "ashesEastRoad:1850",
+    "fracturedAgesFirstClear:4050",
+    "return [0,.35,.60,.85][n]||.35"
+  ])if(!balance.includes(hook))throw new Error('Beta balance contract is missing '+hook);
+
+  const shell=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  if(!/balance-v1\.js\?v=\d+/.test(shell))throw new Error('Beta balance runtime is not versioned in guild.html');
+
+  const guild=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
+  for(const hook of ['function awardPartyXp(', 'averagePartyLevel', 'BAL?.PVE_WIPE_CELL_SHOCK'])if(!guild.includes(hook))throw new Error('Shared beta progression balance is missing '+hook);
+
+  const bell=fs.readFileSync(path.join(__dirname,'thirteenth-bell-v1.js'),'utf8');
+  if(!bell.includes('hollowFirstClear'))throw new Error('The Thirteenth Bell must follow a Hollow Sanctum clear');
+
+  console.log('Beta Step 6 progression and economy contracts are release-gated.');
+}
+
 console.log('Cellbound build complete.');
 console.log('Build verification passed: scripts parse and required UI hooks/assets are present.');
 
+require('./tests/beta-balance.cjs');
 require('./tests/living-combat.authority.cjs');
 for(const name of ['combat-polish-v3','combat-physical-v4'])for(const ext of ['js','css']){if(!fs.existsSync(path.join(out,name+'.'+ext)))throw new Error('Missing shared living combat asset: '+name+'.'+ext)}
