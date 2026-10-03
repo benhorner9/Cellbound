@@ -110,7 +110,7 @@ begin
 
   select coalesce(jsonb_agg(x order by (x->>'completions')::int desc),'[]'::jsonb) into v_quests
   from (
-    select jsonb_build_object('id',coalesce(properties->>'quest_id','unknown'),'name',coalesce(max(properties->>'quest_name'),properties->>'quest_id','Unknown quest'),'completions',count(*),'unique_players',count(distinct user_id)) x
+    select jsonb_build_object('id',coalesce(properties->>'quest_id','unknown'),'name',coalesce(max(properties->>'quest_name'),min(coalesce(properties->>'quest_id','unknown')),'Unknown quest'),'completions',count(*),'unique_players',count(distinct user_id)) x
     from public.analytics_events
     where channel=v_channel and created_at>=v_since and event_name='quest_completed'
     group by coalesce(properties->>'quest_id','unknown')
