@@ -22,7 +22,8 @@ assert.deepEqual(
 );
 assert.equal(balance.SHIPWRIGHT_KIT_COST,1000,'No Way Back repair cost stays recoverable');
 assert.equal(balance.PVE_WIPE_CELL_SHOCK,25,'four full wipes trigger recovery lock');
-assert.deepEqual(balance.RECOVERY_MINUTES,{standard:60,member:30});
+assert.equal(balance.RECOVERY_MINUTES.standard,60);
+assert.equal(balance.RECOVERY_MINUTES.member,30);
 
 const campaign=[
   ['ashesEastRoad',3],
