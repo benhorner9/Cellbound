@@ -2,10 +2,10 @@
 'use strict';
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-let Game=null,db=null,user=null,bound=false,loading=false;
+let Game=null,db=null,user=null,bound=false,loading=false,reportOrigin=null,launcherOpen=false;
 const PATCH_NOTES=[
  {label:'Beta Operations',date:'3 Oct 2026',title:'Ready for real testers',items:[
-  'Added an in-game beta report form with automatic build and screen context.',
+  'Added an always-available Report Bug / Request button with automatic build and screen context.',
   'Added a private admin triage queue and safe recovery tools for stuck tester accounts.',
   'Hardened save recovery, repeated actions, dungeon resume and account verification links.',
   'Completed the beta progression, economy and UI polish passes.'
@@ -21,17 +21,46 @@ function buildLabel(){
  return id==='development'?'Development build':id.slice(0,12)+(number?' · #'+number:'')
 }
 function activeView(){return document.querySelector('.view.active')?.id||'unknown'}
-function contextSnapshot(){
+function contextSnapshot(view=reportOrigin||activeView()){
  const state=Game?.getState?.()||{},party=Game?.getPartyCharacters?.()||[];
- return{url:location.pathname,view:activeView(),viewport:{width:window.innerWidth,height:window.innerHeight},platform:navigator.platform||'',userAgent:String(navigator.userAgent||'').slice(0,320),rosterCount:Array.isArray(state.roster)?state.roster.length:0,partyCount:party.length,partyItemLevel:Number(Game?.partyItemLevel?.())||0,averagePartyLevel:Number(Game?.averagePartyLevel?.())||0,online:navigator.onLine!==false}
+ return{url:location.pathname,view,viewport:{width:window.innerWidth,height:window.innerHeight},platform:navigator.platform||'',userAgent:String(navigator.userAgent||'').slice(0,320),rosterCount:Array.isArray(state.roster)?state.roster.length:0,partyCount:party.length,partyItemLevel:Number(Game?.partyItemLevel?.())||0,averagePartyLevel:Number(Game?.averagePartyLevel?.())||0,online:navigator.onLine!==false}
 }
 function statusLabel(v){return({new:'NEW',triaged:'TRIAGED',in_progress:'IN PROGRESS',fixed:'FIXED',closed:'CLOSED'})[v]||String(v||'NEW').toUpperCase()}
 function severityLabel(v){return({low:'MINOR',medium:'NORMAL',high:'HIGH',blocker:'BLOCKER'})[v]||String(v||'NORMAL').toUpperCase()}
 function setMessage(text,tone='ok'){const el=$('#betaReportMessage');if(!el)return;el.hidden=false;el.dataset.tone=tone;el.textContent=text}
 function renderBuild(){
  const build=$('#betaSupportBuild');if(build)build.textContent=buildLabel();
- const current=$('#betaSupportView');if(current)current.textContent=activeView().replace(/-/g,' ');
+ const current=$('#betaSupportView');if(current)current.textContent=(reportOrigin||activeView()).replace(/-/g,' ');
  const notes=$('#betaPatchNotes');if(notes)notes.innerHTML=PATCH_NOTES.map(note=>'<article class="beta-note"><header><span><small>'+esc(note.label)+'</small><b>'+esc(note.title)+'</b></span><em>'+esc(note.date)+'</em></header><ul>'+note.items.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul></article>').join('')
+}
+function setLauncherOpen(open){
+ launcherOpen=Boolean(open);
+ const root=$('#betaQuickReport'),trigger=$('#betaQuickReportTrigger'),menu=$('#betaQuickReportMenu');
+ if(root)root.dataset.open=launcherOpen?'1':'0';
+ if(trigger)trigger.setAttribute('aria-expanded',launcherOpen?'true':'false');
+ if(menu)menu.hidden=!launcherOpen;
+}
+function ensureLauncher(){
+ if($('#betaQuickReport'))return;
+ const root=document.createElement('div');root.id='betaQuickReport';root.className='beta-quick-report';root.dataset.open='0';
+ root.innerHTML='<button id="betaQuickReportTrigger" class="beta-quick-report-trigger" type="button" aria-expanded="false" aria-controls="betaQuickReportMenu"><span>!</span><b>REPORT BUG / REQUEST</b></button><div id="betaQuickReportMenu" class="beta-quick-report-menu" hidden><small>BETA FEEDBACK</small><button type="button" data-quick-report="bug"><span>!</span><div><b>Report a bug</b><em>Something is broken or not working.</em></div></button><button type="button" data-quick-report="feature"><span>+</span><div><b>Request a feature</b><em>Suggest an improvement or new idea.</em></div></button></div>';
+ document.body.appendChild(root);
+ root.querySelector('#betaQuickReportTrigger')?.addEventListener('click',()=>setLauncherOpen(!launcherOpen));
+ root.querySelectorAll('[data-quick-report]').forEach(btn=>btn.addEventListener('click',()=>openReport(btn.dataset.quickReport)));
+}
+function openReport(kind='bug'){
+ const from=activeView();
+ if(from!=='support')reportOrigin=from;
+ setLauncherOpen(false);
+ Game?.switchView?.('support');
+ setTimeout(()=>{
+  const category=$('#betaReportCategory'),summary=$('#betaReportSummary'),message=$('#betaReportMessage');
+  if(category)category.value=kind==='feature'?'feature':'bug';
+  if(message)message.hidden=true;
+  renderBuild();
+  summary?.focus?.({preventScroll:true});
+  $('#betaReportForm')?.scrollIntoView?.({behavior:'smooth',block:'start'});
+ },40);
 }
 function reportCard(r){
  const stamp=r.created_at?new Date(r.created_at).toLocaleString():'';
@@ -54,11 +83,12 @@ async function submitReport(event){
  if(summary.length<4){setMessage('Give the report a short title so we can find it later.','error');return}
  if(details.length<8){setMessage('Add a little more detail: what you did, what happened and what you expected.','error');return}
  if(submit){submit.disabled=true;submit.textContent='SENDING REPORT…'}
- const payload={category,severity,summary,details,page_view:activeView(),build_id:String(window.CELLBOUND_BUILD||'development').slice(0,80),build_number:Number(window.CELLBOUND_BUILD_NUMBER||0)||0,context:contextSnapshot()};
+ const sourceView=reportOrigin||activeView();
+ const payload={category,severity,summary,details,page_view:sourceView,build_id:String(window.CELLBOUND_BUILD||'development').slice(0,80),build_number:Number(window.CELLBOUND_BUILD_NUMBER||0)||0,context:contextSnapshot(sourceView)};
  try{
   const {data,error}=await db.from('beta_reports').insert(payload).select('id,created_at').single();if(error)throw error;
   if(form)form.reset();if($('#betaReportSeverity'))$('#betaReportSeverity').value='medium';
-  setMessage('Report sent'+(data?.id?' · reference '+String(data.id).slice(0,8):'')+'. Thanks — it is now in the beta queue.','ok');await refreshReports()
+  setMessage('Report sent'+(data?.id?' · reference '+String(data.id).slice(0,8):'')+'. Thanks — it is now in the beta queue.','ok');reportOrigin=null;renderBuild();await refreshReports()
  }catch(error){setMessage(error?.message||'The report could not be sent. Try again after reconnecting.','error')}
  finally{if(submit){submit.disabled=false;submit.textContent='SEND BETA REPORT →'}}
 }
@@ -66,13 +96,15 @@ function bind(){
  if(bound)return;bound=true;
  $('#betaReportForm')?.addEventListener('submit',submitReport);
  $('#betaRefreshReports')?.addEventListener('click',refreshReports);
+ document.addEventListener('pointerdown',e=>{if(launcherOpen&&!e.target.closest?.('#betaQuickReport'))setLauncherOpen(false)});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&launcherOpen)setLauncherOpen(false)});
  window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='support'){renderBuild();refreshReports()}});
  window.addEventListener('online',()=>{if(activeView()==='support')refreshReports()})
 }
 async function init(){
  Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,120);return}
  db=Game.getSupabase?.();user=Game.getUser?.();if(!db||!user)return;
- bind();renderBuild();refreshReports();window.CellboundBetaOps={refresh:refreshReports,patchNotes:PATCH_NOTES,contextSnapshot}
+ ensureLauncher();bind();renderBuild();refreshReports();window.CellboundBetaOps={refresh:refreshReports,patchNotes:PATCH_NOTES,contextSnapshot,openReport}
 }
 init();
 })();
