@@ -7,6 +7,7 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const G=window.CellboundGear;
 const CP=window.CellboundPortraits;
+const BAL=window.CellboundBalance;
 
 let Game=null,selectedTab='active',selectedAdventure='ashfall',encounterToken=0,questFight=null;
 
@@ -372,13 +373,14 @@ async function completeAshfall(){
   a.complete=true;a.stage='complete';a.completedAt=new Date().toISOString();if(!a.done.includes('key'))a.done.push('key');
   s.progression=s.progression||{};s.progression.ashenVaultUnlocked=true;s.gold=(Number(s.gold)||0)+120;s.renown=(Number(s.renown)||0)+75;
   ashfallHistory('The old forge key opened the route to The Ashen Vault.');s.activity.push('Quest complete: '+ASHFALL.title+'. The Ashen Vault was unlocked.');
+  await Game.awardPartyXp?.(BAL?.CAMPAIGN_XP?.ashesEastRoad||1850,{source:'Quest complete · '+ASHFALL.title});
   await commit();
   if(window.CellboundComicScenes?.show){
     await window.CellboundComicScenes.show({
       eyebrow:'QUEST COMPLETE',title:ASHFALL.title,subtitle:'The road to the old forge is open.',page:'COMPLETE',theme:'ashen',
       panels:[
         {kind:'location',eyebrow:'THE EAST ROAD',title:'A Door in the Mountain',text:'The road is closed. The old forge is awake. And your guild now holds the only key anyone knows still exists.',artwork:'./assets/dungeons/ashen-vault.webp',wide:true},
-        {kind:'reveal',eyebrow:'REWARD',title:'+120 Gold · +75 Renown',text:'The Ashen Vault has been permanently unlocked.',artwork:'./assets/comics/tutorial/the_warden_and_the_arcane_diadem.webp'},
+        {kind:'reveal',eyebrow:'REWARD',title:'+120 Gold · +75 Renown · +'+(BAL?.CAMPAIGN_XP?.ashesEastRoad||1850)+' XP',text:'The active five grow stronger and The Ashen Vault is permanently unlocked.',artwork:'./assets/comics/tutorial/the_warden_and_the_arcane_diadem.webp'},
         {kind:'location',eyebrow:'DUNGEON UNLOCKED',title:'The Ashen Vault',text:'Quest gear gives you a reliable starting point. Better versions now wait inside the dungeon.',artwork:'./assets/bosses/ashen-vault-vaultheart.webp'}
       ],progressive:true,storyOnly:true,allowSkip:false,nextLabel:'NEXT PANEL →',continueLabel:'OPEN DUNGEON JOURNAL →'
     });
@@ -1095,6 +1097,7 @@ async function finalizeEchoes(){
   setItemStatus('blackened-fragment','used');setItemStatus('resonance-map','archived');
   addHistory('The Hollow Seal was opened. The Hollow Sanctum was discovered beneath Zeltira.');
   s.activity.push('Quest complete: '+QUEST.title+'. The Hollow Sanctum was discovered.');
+  await Game.awardPartyXp?.(BAL?.CAMPAIGN_XP?.echoesBeneathZeltira||1800,{source:'Quest complete · '+QUEST.title});
   await commit();
 
   const root=document.createElement('div');root.className='quest-unlock-backdrop quest-complete-backdrop';
@@ -1221,8 +1224,8 @@ function knownFacts(q){
   return facts;
 }
 function visibleRewards(){
-  if(complete())return ['250 Gold','150 Guild Renown','3 × Tier 2 quest gear choices','The Hollow Sanctum unlocked'];
-  return ['Tier 2 quest gear at major milestones','250 Gold','150 Guild Renown','The Hollow Sanctum discovery'];
+  if(complete())return ['250 Gold','150 Guild Renown',(BAL?.CAMPAIGN_XP?.echoesBeneathZeltira||1800)+' XP each','3 × Tier 2 quest gear choices','The Hollow Sanctum unlocked'];
+  return ['Tier 2 quest gear at major milestones','250 Gold','150 Guild Renown',(BAL?.CAMPAIGN_XP?.echoesBeneathZeltira||1800)+' XP each','The Hollow Sanctum discovery'];
 }
 function actionHtml(){
   const q=ensure(),stage=currentStage();
@@ -1265,7 +1268,7 @@ function renderAshfallDetail(root,side){
     '<section class="quest-v3-clue"><small>'+(a.complete?'WHERE IT LED':'CURRENT CLUE')+'</small><h3>'+esc(a.complete?'The Ashen Vault':d.label)+'</h3><p>'+esc(a.complete?'The old forge entrance is open. Repeat runs can drop stronger versions of the gear earned on this road.':d.objective)+'</p>'+(a.complete?'':'<em>'+esc(d.hint)+'</em>')+'</section>'+
     '<section class="quest-v3-known"><div class="quest-v3-section-head"><span>WHAT YOUR GUILD KNOWS</span><small>Investigation notes are recorded as you uncover them.</small></div><div>'+(facts.length?facts.map(x=>'<p>'+esc(x)+'</p>').join(''):'<p class="quest-v3-unknown">Warden Elara is waiting at Zeltira’s east gate.</p>')+'</div></section>'+
     '<div class="quest-detail-action">'+ashfallActionHtml()+'</div>';
-  side.innerHTML='<section><small>REWARDS</small><div class="quest-reward-list"><p>3 × Tier 1 quest gear choices</p><p>Reliable spec-focused stats</p><p>Dungeon drops can roll stronger stats</p><p>The Ashen Vault permanently unlocked</p></div></section>'+
+  side.innerHTML='<section><small>REWARDS</small><div class="quest-reward-list"><p>3 × Tier 1 quest gear choices</p><p>'+(BAL?.CAMPAIGN_XP?.ashesEastRoad||1850)+' XP each</p><p>Reliable spec-focused stats</p><p>Dungeon drops can roll stronger stats</p><p>The Ashen Vault permanently unlocked</p></div></section>'+
     '<section><small>QUEST REWARD HISTORY</small><div class="quest-history">'+(Object.values(q.rewardClaims||{}).filter(x=>String(x?.itemName||'')&&['Head','Chest','Weapon'].includes(x.slot)&&String(x.tier)==='1').map(x=>'<p>'+esc(x.characterName+' · '+x.itemName)+'</p>').join('')||'<p>No quest equipment claimed yet.</p>')+'</div></section>'+
     '<section><small>ADVENTURE JOURNAL</small><div class="quest-history">'+(a.history.slice(-6).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>No journal entries yet.</p>')+'</div></section>';
 }
