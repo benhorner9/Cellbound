@@ -16,7 +16,9 @@ const KEY_SOURCES={
 };
 let Game=null;
 const state=()=>Game?.getState?.();
+const betaLocked=()=>Boolean(Game?.isBetaDungeonPlayable&&!Game.isBetaDungeonPlayable('fractured-ages'));
 function available(){
+ if(betaLocked())return false;
  const s=state();
  return Boolean(s?.progression?.ashenVaultUnlocked!==false&&s?.questSystem?.flags?.hollowSanctumUnlocked)
 }
@@ -53,6 +55,7 @@ function story(title,speaker,lines,onDone,buttonText){
  draw()
 }
 async function start(){
+ if(betaLocked()){notify('FUTURE UPDATE',QUEST.title,'The Fourfold Lock will return when its four dungeons are released.');return}
  const q=ensure();if(!available()&&!q.started)return;
  if(q.started){Game.switchView?.('quests');return}
  story('An Unremarkable Box','Strange Old Man',[
@@ -188,11 +191,12 @@ function stageCopy(q){
  return['The Fourfold Lock','Follow the old man’s trail.']
 }
 function card(){
- const q=ensure();if(!q)return null;const locked=!available()&&!q.started;
- return{id:'fourfold-lock',title:QUEST.title,meta:'Long adventure · Four dungeons',difficulty:QUEST.difficulty,status:q.complete?'COMPLETE':q.started?'IN PROGRESS':locked?'LOCKED':'AVAILABLE',complete:q.complete,locked,icon:'⌗'}
+ const q=ensure();if(!q)return null;const future=betaLocked(),locked=future||(!available()&&!q.started);
+ return{id:'fourfold-lock',title:QUEST.title,meta:future?'Future adventure · Four dungeons':'Long adventure · Four dungeons',difficulty:QUEST.difficulty,status:q.complete?'COMPLETE':future?'FUTURE UPDATE':q.started?'IN PROGRESS':locked?'LOCKED':'AVAILABLE',complete:q.complete,locked,icon:'⌗'}
 }
 function actionHtml(q){
  if(q.complete)return'<button data-fourfold-dungeon>OPEN THE FRACTURED AGES →</button>';
+ if(betaLocked())return'<div class="quest-action-block locked"><b>FUTURE UPDATE</b><small>The Fourfold Lock requires expeditions that are being held for a later Cellbound update.</small></div>';
  if(!q.started)return available()?'<button data-fourfold-start>APPROACH THE OLD MAN →</button>':'<button disabled>DISCOVER THE HOLLOW SANCTUM FIRST</button>';
  if(q.stage==='keys'||q.stage==='box'){
   if(insertCount(q)===4)return'<button data-fourfold-open>OPEN THE LOCKBOX →</button>';
@@ -209,8 +213,8 @@ function keysMarkup(q){
  }).join('')
 }
 function renderDetail(root,side){
- const q=ensure(),locked=!available()&&!q.started,[label,copy]=stageCopy(q);
- root.innerHTML='<div class="quest-v3-hero fourfold-quest-hero"><div><small>MYSTERY · LONG ADVENTURE</small><h2>The Fourfold Lock</h2><p>'+esc(QUEST.start)+'</p></div><span class="quest-v3-status '+(q.complete?'complete':'')+'">'+(q.complete?'COMPLETE':q.started?'IN PROGRESS':locked?'LOCKED':'AVAILABLE')+'</span></div><div class="quest-v3-story"><p>'+esc(QUEST.summary)+'</p></div><section class="quest-v3-clue"><small>'+(q.complete?'WHERE IT LED':'CURRENT CLUE')+'</small><h3>'+esc(label)+'</h3><p>'+esc(copy)+'</p></section>'+(q.started&&!q.complete?'<section class="fourfold-lockbox"><div class="fourfold-box"><span>⌗</span><b>THE LOCKBOX</b><small>'+insertCount(q)+' / 4 LOCKS OPEN</small></div><div class="fourfold-key-grid">'+keysMarkup(q)+'</div></section>':'')+'<div class="quest-detail-action">'+actionHtml(q)+'</div>';
+ const q=ensure(),future=betaLocked(),locked=future||(!available()&&!q.started),[label,copy]=stageCopy(q);
+ root.innerHTML='<div class="quest-v3-hero fourfold-quest-hero"><div><small>MYSTERY · LONG ADVENTURE</small><h2>The Fourfold Lock</h2><p>'+esc(QUEST.start)+'</p></div><span class="quest-v3-status '+(q.complete?'complete':'')+'">'+(q.complete?'COMPLETE':future?'FUTURE UPDATE':q.started?'IN PROGRESS':locked?'LOCKED':'AVAILABLE')+'</span></div><div class="quest-v3-story"><p>'+esc(QUEST.summary)+'</p></div><section class="quest-v3-clue"><small>'+(q.complete?'WHERE IT LED':'CURRENT CLUE')+'</small><h3>'+esc(label)+'</h3><p>'+esc(copy)+'</p></section>'+(q.started&&!q.complete?'<section class="fourfold-lockbox"><div class="fourfold-box"><span>⌗</span><b>THE LOCKBOX</b><small>'+insertCount(q)+' / 4 LOCKS OPEN</small></div><div class="fourfold-key-grid">'+keysMarkup(q)+'</div></section>':'')+'<div class="quest-detail-action">'+actionHtml(q)+'</div>';
  side.innerHTML='<section><small>QUEST RULE</small><div class="quest-reward-list"><p>Each current dungeon final clear can reveal its unique key.</p><p>Base drop chance: 5%</p><p>Hidden bad-luck protection increases the chance after repeated misses.</p></div></section><section><small>REWARDS</small><div class="quest-reward-list">'+QUEST.rewards.map(x=>'<p>'+esc(x)+'</p>').join('')+'</div></section><section><small>ADVENTURE JOURNAL</small><div class="quest-history">'+(q.history.slice(-7).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>The old man has not spoken to your guild yet.</p>')+'</div></section>'+(document.querySelector('#adminNav:not([hidden])')&&q.started&&!q.complete?'<section class="fourfold-dev"><small>DEV TESTING</small><button data-fourfold-dev-keys>GRANT FOUR KEYS</button></section>':'');
  bindDetail()
 }
@@ -224,14 +228,14 @@ function bindDetail(){
  $('[data-fourfold-dev-keys]')?.addEventListener('click',async()=>{const q=ensure();Object.keys(KEY_SOURCES).forEach(id=>q.keys[id]=q.keys[id]||{foundAt:new Date().toISOString(),attempt:'DEV'});q.stage='box';await commit('Developer test: all four keys granted.');notify('DEV TEST','Four keys granted','Use each key on the lockbox to continue.')})
 }
 function homeState(){
- const q=ensure();if(!q||q.complete||(!q.started&&!available()))return{active:false};
+ const q=ensure();if(betaLocked()||!q||q.complete||(!q.started&&!available()))return{active:false};
  const [label,copy]=stageCopy(q);return{active:true,small:'MYSTERY ADVENTURE',title:q.started?copy:'A strange old man is waiting in Zeltira Marketplace.',label}
 }
 function open(){window.CellboundQuests?.selectAdventure?.('fourfold-lock');Game.switchView?.('quests')}
 function renderMarketplace(){
  const host=$('#trading');if(!host||!Game?.ready)return;let mount=$('#fourfoldMarketEncounter');
  if(!mount){mount=document.createElement('div');mount.id='fourfoldMarketEncounter';const intro=host.querySelector('.section-intro');intro?.insertAdjacentElement('afterend',mount)}
- const q=ensure();if((!available()&&!q.started)||q.complete){mount.innerHTML='';return}
+ const q=ensure();if(betaLocked()||(!available()&&!q.started)||q.complete){mount.innerHTML='';return}
  const waiting=!q.started||q.stage==='return';
  if(!waiting){mount.innerHTML='<article class="fourfold-market gone"><span>⌛</span><div><small>ZELTIRA MARKETPLACE</small><b>The old man is gone.</b><p>The place where he sat is empty. The lockbox is the only proof he was ever here.</p></div><button data-fourfold-journal>OPEN QUEST</button></article>';mount.querySelector('[data-fourfold-journal]').onclick=open;return}
  mount.innerHTML='<article class="fourfold-market"><span class="fourfold-market-npc">⌛</span><div><small>ZELTIRA MARKETPLACE · STRANGE ENCOUNTER</small><b>'+(q.stage==='return'?'He is waiting for you.':'A strange old man is watching the crowd.')+'</b><p>'+(q.stage==='return'?'He glances at the ash still clinging to your hands and smiles.':'Nobody else seems interested in him. The moment you look his way, he taps a small metal box beside his boot.')+'</p></div><button data-fourfold-market>'+(q.stage==='return'?'SPEAK TO HIM':'APPROACH')+'</button></article>';
