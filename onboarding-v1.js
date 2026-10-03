@@ -215,8 +215,14 @@ async function syncPartyCharacters(roster){
 async function createParty(){
   const names=draft.map(x=>x.name.trim());
   if(names.some(x=>x.length<2)||new Set(names.map(x=>x.toLowerCase())).size!==5)return;
-  const ids=draft.map(()=>uid());
-  const roster=draft.map((d,i)=>({
+  const safeDraft=draft.map((d,i)=>{
+    const slot=SLOTS[i],options=roleOptions(slot.role),valid=options.find(o=>o.klass===d.klass&&o.spec===d.spec)||options.find(o=>o.klass===d.klass)||options[0];
+    if(!valid)throw new Error('No beta-playable class is available for '+slot.role);
+    return{...d,klass:valid.klass,spec:valid.spec,role:slot.role};
+  });
+  draft=safeDraft;saveDraft();
+  const ids=safeDraft.map(()=>uid());
+  const roster=safeDraft.map((d,i)=>({
     id:ids[i],name:d.name.trim(),race:d.race,raceTrait:raceById(d.race).trait,class:d.klass,spec:d.spec,role:d.role,
     level:1,xp:0,power:d.role==='tank'?30:d.role==='healer'?27:29,talent:1,portrait:initials(d.name),appearance:CP?.normalizeAppearance?.(d.appearance,d.name,d.race)||d.appearance,
     knowledge:{ashwarden:0,embermaw:0,vaultheart:0},equipment:emptyEquipment(),gearItems:['Empty','Empty','Empty'],
