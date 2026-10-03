@@ -2,32 +2,139 @@
 'use strict';
 const P=window.CellboundPortraits;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const STEPS=['race','appearance','class','confirm'];
-const LORE={Veyren:'Shadow-touched wanderers, with dusky skin, long ears and ancient runes.',Stoneborn:'Living stone: broad mineral bodies, fractured ridges and crystal veins.',Aelari:'Celestial descendants with luminous eyes and pale, arcane markings.',Thornkin:'Living woodland, shaped by bark, roots, branches and new growth.',Emberkin:'Volcanic kin with charcoal skin and heat glowing beneath its surface.',Nymari:'Children of deep water, with fins, smooth scales and luminous markings.'};
+const STEPS=['race','appearance','features','class','identity','confirm'];
+const STEP_NAMES={race:'Race',appearance:'Appearance',features:'Features',class:'Class',identity:'Identity',confirm:'Confirm'};
+const STEP_COPY={
+ race:['Choose your ancestry','Your race defines the body beneath every piece of gear.'],
+ appearance:['Shape your adventurer','Refine the face, frame, colouring and hair.'],
+ features:['Add race features','Choose the details that make this race unmistakably yours.'],
+ class:['Choose a calling','Class changes your fighting style and equipment, not your anatomy.'],
+ identity:['Name your adventurer','Give this guild member a name before they join your roster.'],
+ confirm:['Ready to join the guild','Check the final details, then create your character.']
+};
+const LORE={
+ Veyren:'Shadow-touched wanderers with dusky skin, long ears and ancient runes.',
+ Stoneborn:'Living stone with broad mineral bodies, fractured ridges and crystal veins.',
+ Aelari:'Celestial descendants with luminous eyes and pale arcane markings.',
+ Thornkin:'Living woodland shaped by bark, roots, branches and new growth.',
+ Emberkin:'Volcanic kin with charcoal skin and heat glowing beneath the surface.',
+ Nymari:'Children of deep water with fins, smooth scales and luminous markings.'
+};
+const ROLE_COPY={
+ Warrior:'Front-line fighter',Paladin:'Armoured protector',Hunter:'Ranged damage',
+ Rogue:'Melee damage',Mage:'Arcane damage'
+};
+const BASIC_FIELDS=new Set(['frame','skinTone','face','brows','nose','mouth','eyeShape','eyes','hair','hairColor','facialHair']);
+const FEATURE_FIELDS=new Set(['marking','feature','pattern','featureColor','texture','glow']);
+
+function stepHeader(step,index){
+ const copy=STEP_COPY[step]||['Create your character',''];
+ return '<div class="cc-panel-heading"><span>STEP '+(index+1)+' OF '+STEPS.length+'</span><h2>'+esc(copy[0])+'</h2><p>'+esc(copy[1])+'</p></div>';
+}
+function navHTML(step){
+ return '<nav class="creator-steps cc-rail" aria-label="Character creation steps">'+STEPS.map((s,i)=>
+  '<button type="button" class="creator-step '+(s===step?'active':'')+'" data-builder-step="'+s+'" aria-current="'+(s===step?'step':'false')+'">'+
+   '<i>'+(i+1)+'</i><span>'+esc(STEP_NAMES[s])+'</span>'+
+  '</button>'
+ ).join('')+'</nav>';
+}
+function editorBlock(d,mode){
+ return '<div class="cc-editor-scope cc-editor-'+mode+'">'+P.editorHTML(d.appearance,{name:d.name,race:d.race})+'</div>';
+}
+function racePanel(o,d){
+ return '<div class="race-grid creator-choice-grid">'+o.races.map(r=>
+  '<button type="button" class="race-card '+(r.id===d.race?'active':'')+'" data-race="'+esc(r.id)+'" aria-pressed="'+(r.id===d.race)+'">'+
+   '<div class="cc-race-art">'+P.paperDollHTML({race:r.id,appearance:{...d.appearance,race:r.id}},{size:'race-choice',showGear:false})+'</div>'+
+   '<div class="cc-race-copy"><b>'+esc(r.id)+'</b><p>'+esc(LORE[r.id]||'')+'</p>'+(r.trait?'<small>'+esc(r.trait)+'</small>':'')+'</div>'+
+  '</button>'
+ ).join('')+'</div>'+
+ '<div class="cc-inline-section"><div><b>Body</b><span>Choose the base model.</span></div><div class="cc-segmented" aria-label="Body">'+
+ ['Male','Female'].map((name,i)=>'<button type="button" data-cc-sex="'+i+'" aria-pressed="'+(d.appearance.gender===i)+'">'+name+'</button>').join('')+
+ '</div></div>';
+}
+function classPanel(o,d){
+ return '<div class="class-grid creator-choice-grid">'+o.classes.map(c=>{
+  const active=d.klass===c.klass&&d.spec===c.spec;
+  return '<button type="button" class="class-choice '+(active?'active':'')+'" data-class="'+esc(c.klass)+'" data-spec="'+esc(c.spec)+'" aria-pressed="'+active+'">'+
+   '<strong aria-hidden="true">'+esc(c.icon||'◇')+'</strong><div><b>'+esc(c.klass)+'</b><span>'+esc(ROLE_COPY[c.klass]||c.label||c.spec||'Adventurer')+'</span>'+
+   (c.label&&ROLE_COPY[c.klass]?'<small>'+esc(c.label)+'</small>':'')+'</div>'+
+  '</button>';
+ }).join('')+'</div>';
+}
+function identityPanel(d){
+ return '<div class="cc-identity-card"><label class="cc-name-label" for="ccCharacterName">Character name</label>'+
+  '<div class="name-builder"><input id="ccCharacterName" maxlength="24" autocomplete="off" value="'+esc(d.name)+'" placeholder="Enter a name"><button type="button" data-cc-random-name>Randomise</button></div>'+
+  '<p class="cc-field-help">2–24 characters. You can review everything on the next step.</p></div>'+
+  '<div class="cc-mini-summary"><div><span>Race</span><b>'+esc(d.race)+'</b></div><div><span>Class</span><b>'+esc(d.klass)+'</b></div></div>';
+}
+function confirmPanel(o,d){
+ const gender=Number(d.appearance.gender)===1?'Female':'Male';
+ return '<div class="cc-final-card"><span class="cc-final-kicker">GUILD RECRUIT</span><h3 data-cc-name>'+esc(d.name||'Unnamed')+'</h3>'+
+  '<div class="cc-final-grid"><div><span>Race</span><b>'+esc(d.race)+'</b></div><div><span>Body</span><b>'+gender+'</b></div><div><span>Class</span><b>'+esc(d.klass)+'</b></div><div><span>Specialism</span><b>'+esc(d.spec||'Starting path')+'</b></div></div>'+
+  (o.confirmHTML||'')+'</div><p class="cc-validation" role="status">'+esc(o.hint||'Everything look right? Create the character to add them to your roster.')+'</p>';
+}
+function scopeAppearance(root,step){
+ root.querySelectorAll('.cc-editor-scope .cb-appearance-control').forEach(row=>{
+  const btn=row.querySelector('[data-appearance-field]');
+  const field=btn&&btn.dataset.appearanceField;
+  row.hidden=step==='appearance'?!BASIC_FIELDS.has(field):step==='features'?!FEATURE_FIELDS.has(field):false;
+ });
+ root.querySelectorAll('.cc-editor-scope .cb-creation-group').forEach(h=>{
+  const name=(h.textContent||'').trim();
+  h.hidden=step==='appearance'?!(name==='Face'||name==='Hair'):step==='features'?!(name==='Markings'||name==='Race features'):false;
+ });
+ const random=root.querySelector('.cc-editor-features [data-appearance-randomize]');
+ if(random)random.hidden=true;
+}
 function render(o){
- const d=o.draft,root=o.mount;if(!root||!d)return;
+ const d=o.draft,root=o.mount;if(!root||!d||!P)return;
  d.appearance=P.normalizeAppearance(d.appearance,d.name||d.race,d.race);
  const step=STEPS.includes(o.step)?o.step:'race',index=STEPS.indexOf(step);
  const subject={name:d.name,race:d.race,class:d.klass,appearance:d.appearance,equipment:{}};
- const names={race:'Race',appearance:'Appearance',class:'Class',confirm:'Name & confirm'};
  const preview=P.paperDollHTML(subject,{size:'creator',showGear:false});
- let panel='';
- if(step==='race')panel='<h2>Choose your ancestry</h2><p>Race shapes your character. Equipment will tell their story.</p><div class="race-grid creator-choice-grid">'+o.races.map(r=>'<button type="button" class="race-card '+(r.id===d.race?'active':'')+'" data-race="'+esc(r.id)+'" aria-pressed="'+(r.id===d.race)+'">'+P.paperDollHTML({race:r.id,appearance:{...d.appearance,race:r.id}},{size:'race-choice',showGear:false})+'<div><b>'+esc(r.id)+'</b><p>'+esc(LORE[r.id])+'</p><small>'+esc(r.trait||'')+'</small></div></button>').join('')+'</div><div class="cc-sex" aria-label="Body">'+['Male','Female'].map((name,i)=>'<button type="button" data-cc-sex="'+i+'" aria-pressed="'+(d.appearance.gender===i)+'">'+name+'</button>').join('')+'</div>';
- if(step==='appearance')panel='<h2>Make them yours</h2><p>'+esc(d.race)+' · '+esc(LORE[d.race])+'</p>'+P.editorHTML(d.appearance,{name:d.name,race:d.race});
- if(step==='class')panel='<h2>Choose a calling</h2><p>Your anatomy stays the same. Armour, weapons and skills define your class.</p><div class="class-grid creator-choice-grid">'+o.classes.map(c=>'<button type="button" class="class-choice '+(d.klass===c.klass&&d.spec===c.spec?'active':'')+'" data-class="'+esc(c.klass)+'" data-spec="'+esc(c.spec)+'" aria-pressed="'+(d.klass===c.klass&&d.spec===c.spec)+'"><strong>'+esc(c.icon||'◇')+'</strong><div><b>'+esc(c.klass)+'</b><small>'+esc(c.label||c.spec||'')+'</small></div></button>').join('')+'</div>';
- if(step==='confirm')panel='<h2>'+esc(o.confirmTitle||'Confirm your adventurer')+'</h2><label class="cc-name-label" for="ccCharacterName">Character name</label><div class="name-builder"><input id="ccCharacterName" maxlength="24" autocomplete="off" value="'+esc(d.name)+'" placeholder="Adventurer name"><button type="button" data-cc-random-name>RANDOMISE</button></div><div class="cc-summary"><b data-cc-name>'+esc(d.name||'Unnamed')+'</b><span>'+esc(d.race)+' · '+esc(d.klass)+'</span></div>'+(o.confirmHTML||'')+'<p class="cc-validation" role="status">'+esc(o.hint||'Review your character, then confirm to create them.')+'</p>';
- root.innerHTML='<div class="character-creator cc-centre"><header class="cc-header"><div><small>CREATION CENTRE</small><h1>'+esc(o.title||'A new guild member')+'</h1></div>'+(o.onClose?'<button type="button" data-cc-close aria-label="Close Creation Centre">×</button>':'')+'</header><nav class="creator-steps" aria-label="Character creation steps">'+STEPS.map((s,i)=>'<button type="button" class="creator-step '+(s===step?'active':'')+'" data-builder-step="'+s+'" aria-current="'+(s===step?'step':'false')+'"><i>'+(i+1)+'</i><span>'+names[s]+'</span></button>').join('')+'</nav><div class="creator-stage"><aside class="creator-hero">'+preview+'<h2 data-cc-name>'+esc(d.name||'Unnamed')+'</h2><p>'+esc(d.race)+' · '+esc(d.klass)+'</p>'+(o.partyHTML||'')+'</aside><main><section class="creator-panel">'+panel+'<footer>'+(index?'<button type="button" class="creator-back" data-prev-step="'+STEPS[index-1]+'">← BACK</button>':'<span></span>')+(index<3?'<button type="button" class="on-primary" data-next-step="'+STEPS[index+1]+'">CONTINUE →</button>':'<button type="button" class="on-primary" data-cc-confirm '+(o.valid===false?'disabled':'')+'>'+esc(o.confirmLabel||'CONFIRM CHARACTER')+'</button>')+'</footer></section></main></div></div>';
+ let body='';
+ if(step==='race')body=racePanel(o,d);
+ if(step==='appearance')body=editorBlock(d,'basic');
+ if(step==='features')body=editorBlock(d,'features');
+ if(step==='class')body=classPanel(o,d);
+ if(step==='identity')body=identityPanel(d);
+ if(step==='confirm')body=confirmPanel(o,d);
+ const previewName=d.name||'New recruit';
+ root.innerHTML=
+ '<div class="character-creator cc-centre">'+
+  '<header class="cc-header"><div class="cc-brand"><span class="cc-brand-mark" aria-hidden="true">◇</span><div><small>CREATION CENTRE</small><h1>'+esc(o.title||'Forge a guild member')+'</h1></div></div>'+
+  (o.onClose?'<button type="button" class="cc-close" data-cc-close aria-label="Close Creation Centre">×</button>':'')+'</header>'+
+  '<div class="cc-layout">'+
+   navHTML(step)+
+   '<aside class="creator-hero cc-preview-stage"><div class="cc-preview-glow" aria-hidden="true"></div><span class="cc-preview-label">'+esc(d.race)+' · '+(Number(d.appearance.gender)===1?'Female':'Male')+'</span>'+
+    '<div class="cc-preview-model">'+preview+'</div>'+
+    '<div class="cc-preview-identity"><h2 data-cc-name>'+esc(previewName)+'</h2><p>'+esc(d.klass||'Choose a class')+'</p></div>'+(o.partyHTML||'')+
+   '</aside>'+
+   '<main class="cc-workbench"><section class="creator-panel">'+stepHeader(step,index)+body+
+    '<footer>'+(index?'<button type="button" class="creator-back" data-prev-step="'+STEPS[index-1]+'">← Back</button>':'<span></span>')+
+    (index<STEPS.length-1?'<button type="button" class="on-primary" data-next-step="'+STEPS[index+1]+'">Continue →</button>':'<button type="button" class="on-primary cc-create" data-cc-confirm '+(o.valid===false?'disabled':'')+'>'+esc(o.confirmLabel||'Create character')+'</button>')+
+    '</footer></section></main>'+
+  '</div>'+
+ '</div>';
  const change=()=>o.onChange?.(d);
  root.querySelectorAll('[data-builder-step],[data-next-step],[data-prev-step]').forEach(b=>b.onclick=()=>o.onStep?.(b.dataset.builderStep||b.dataset.nextStep||b.dataset.prevStep));
  root.querySelectorAll('button[data-race]').forEach(b=>b.onclick=()=>{d.race=b.dataset.race;d.appearance=P.normalizeAppearance(d.appearance,d.name,d.race);change()});
  root.querySelectorAll('[data-cc-sex]').forEach(b=>b.onclick=()=>{d.appearance.gender=Number(b.dataset.ccSex);change()});
  root.querySelectorAll('button[data-class]').forEach(b=>b.onclick=()=>{d.klass=b.dataset.class;d.spec=b.dataset.spec;change()});
  P.bindEditor(root,d.appearance,change,{name:d.name,race:d.race});
- const input=root.querySelector('#ccCharacterName');if(input)input.oninput=()=>{d.name=input.value;root.querySelectorAll('[data-cc-name]').forEach(n=>n.textContent=d.name||'Unnamed');o.onName?.(d);const button=root.querySelector('[data-cc-confirm]');if(button)button.disabled=o.isValid?!o.isValid():d.name.trim().length<2};
+ scopeAppearance(root,step);
+ const input=root.querySelector('#ccCharacterName');
+ if(input)input.oninput=()=>{
+  d.name=input.value;
+  root.querySelectorAll('[data-cc-name]').forEach(n=>n.textContent=d.name||'New recruit');
+  o.onName?.(d);
+  const button=root.querySelector('[data-cc-confirm]');
+  if(button)button.disabled=o.isValid?!o.isValid():d.name.trim().length<2;
+ };
  root.querySelector('[data-cc-random-name]')?.addEventListener('click',()=>{o.onRandomName?.(d);change()});
  root.querySelector('[data-cc-confirm]')?.addEventListener('click',async e=>{const b=e.currentTarget;if(b.disabled)return;b.disabled=true;try{await o.onConfirm?.()}finally{if(b.isConnected)b.disabled=false}});
  root.querySelector('[data-cc-close]')?.addEventListener('click',o.onClose);
  root.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>o.onSlot?.(Number(b.dataset.slot)));
 }
-window.CellboundCreationCentre={render,descriptions:LORE,version:1};
+window.CellboundCreationCentre={render,descriptions:LORE,version:2};
 })();
