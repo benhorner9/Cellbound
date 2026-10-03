@@ -1100,6 +1100,64 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   console.log('Beta core gameplay loop contract is release-gated.');
 }
 
+{
+  const guild=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
+  for(const hook of [
+    "const BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue','Mage'])",
+    "isCharacterBetaPlayable(c)",
+    "state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&isCharacterBetaPlayable(c)",
+    "betaPlayableClasses:BETA_PLAYABLE_CLASSES"
+  ])if(!guild.includes(hook))throw new Error('Five-class beta contract is missing '+hook);
+
+  const onboarding=fs.readFileSync(path.join(__dirname,'onboarding-v1.js'),'utf8');
+  for(const hook of [
+    "Game?.isBetaClassPlayable&&!Game.isBetaClassPlayable(klass)",
+    "const safeDraft=draft.map",
+    "No beta-playable class is available for "
+  ])if(!onboarding.includes(hook))throw new Error('Character creator beta-class lock is missing '+hook);
+
+  const quests=fs.readFileSync(path.join(__dirname,'quests-v2.js'),'utf8');
+  for(const hook of [
+    "const manorCleared=()=>",
+    "const nullQuestAvailable=()=>",
+    "LOCKED UNTIL THE MANOR",
+    "Complete The Manor raid before investigating NULL//07."
+  ])if(!quests.includes(hook))throw new Error('Manor-gated Null Complex quest contract is missing '+hook);
+
+  const manor=fs.readFileSync(path.join(__dirname,'manor-raid-v1.js'),'utf8');
+  for(const hook of [
+    "async function markManorCleared()",
+    "s.progression.manorRaidCleared=true",
+    "Signal From Nowhere is now available."
+  ])if(!manor.includes(hook))throw new Error('Manor completion persistence is missing '+hook);
+
+  const nullComplex=fs.readFileSync(path.join(__dirname,'null-complex-v1.js'),'utf8');
+  for(const hook of [
+    "function manorCleared()",
+    "manorCleared()&&(s?.progression?.nullComplexUnlocked",
+    "Complete The Manor raid before investigating the Null Complex."
+  ])if(!nullComplex.includes(hook))throw new Error('Null Complex activity Manor gate is missing '+hook);
+
+  const shell=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  for(const hook of [
+    'chaos-canyon-v1.js',
+    'blackout-station-v1.js',
+    'fractured-ages-v1.js',
+    'id="chaosCanyonMount"',
+    'id="blackoutStationMount"',
+    'id="fracturedAgesMount"'
+  ])if(!shell.includes(hook))throw new Error('Full dungeon content must remain included during beta: '+hook);
+
+  const playthrough=fs.readFileSync(path.join(__dirname,'tests/full-playthrough.browser.cjs'),'utf8');
+  for(const hook of [
+    'function betaClassAndNullGatePlaythrough(browser)',
+    'all dungeon runtimes remain included',
+    'The Manor clear unlocks Signal From Nowhere'
+  ])if(!playthrough.includes(hook))throw new Error('Five-class/full-content beta regression coverage is missing '+hook);
+
+  console.log('Five-class beta lock passed with full dungeon content retained and Null Complex Manor-gated.');
+}
+
 console.log('Cellbound build complete.');
 console.log('Build verification passed: scripts parse and required UI hooks/assets are present.');
 
