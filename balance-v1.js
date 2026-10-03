@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION=1;
+const VERSION=2;
 const PLAYER_LEVEL_CAP=15;
 const PVE_WIPE_CELL_SHOCK=25;
 const RECOVERY_MINUTES=Object.freeze({standard:60,member:30});
@@ -35,6 +35,14 @@ const FIRST_CLEAR_XP=Object.freeze({
   'fractured-ages':CAMPAIGN_XP.fracturedAgesFirstClear
 });
 
+const DUNGEON_SHARDS=Object.freeze({
+  'ashen-vault':Object.freeze({normal:3,heroic:7,cellboundBase:9}),
+  'hollow-sanctum':Object.freeze({normal:5,heroic:9,cellboundBase:10}),
+  'chaos-canyon':Object.freeze({normal:7,heroic:11,cellboundBase:11}),
+  'blackout-station':Object.freeze({normal:9,heroic:13,cellboundBase:12}),
+  'fractured-ages':Object.freeze({normal:12,heroic:16,cellboundBase:14})
+});
+
 function xpNeeded(level){
   return 800+Math.max(0,(Number(level)||1)-1)*250
 }
@@ -48,6 +56,11 @@ function dungeonXp(id,{difficulty='normal',firstClear=false}={}){
   if(firstClear&&mode==='normal'&&FIRST_CLEAR_XP[id])return FIRST_CLEAR_XP[id];
   return DUNGEON_REPEAT_XP[id]?.[mode]||DUNGEON_REPEAT_XP[id]?.normal||0
 }
+function dungeonShards(id,{difficulty='normal',tier=0}={}){
+  const profile=DUNGEON_SHARDS[id]||DUNGEON_SHARDS['ashen-vault'],mode=String(difficulty||'normal').toLowerCase();
+  if(mode==='cellbound')return Math.max(1,Number(profile.cellboundBase)||9)+Math.max(1,Math.floor(Number(tier)||1));
+  return Math.max(1,Number(profile[mode]??profile.normal)||1)
+}
 function fourfoldKeyChance(attempt){
   const n=Math.max(1,Math.floor(Number(attempt)||1));
   if(n>=4)return 1;
@@ -56,7 +69,7 @@ function fourfoldKeyChance(attempt){
 
 window.CellboundBalance={
   VERSION,PLAYER_LEVEL_CAP,PVE_WIPE_CELL_SHOCK,RECOVERY_MINUTES,SHIPWRIGHT_KIT_COST,
-  CAMPAIGN_XP,DUNGEON_REPEAT_XP,FIRST_CLEAR_XP,
-  xpNeeded,xpToReachLevel,dungeonXp,fourfoldKeyChance
+  CAMPAIGN_XP,DUNGEON_REPEAT_XP,FIRST_CLEAR_XP,DUNGEON_SHARDS,
+  xpNeeded,xpToReachLevel,dungeonXp,dungeonShards,fourfoldKeyChance
 };
 })();
