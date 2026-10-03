@@ -160,12 +160,23 @@ async function mount(page,seedState=null,owner=false,options={}){
   return errors;
 }
 
-async function creatorPlaythrough(browser){
-  const page=await browser.newPage({viewport:{width:1024,height:1366}});
+async function creatorPlaythrough(browser,viewport={width:1024,height:1366}){
+  const page=await browser.newPage({viewport});
   const errors=await mount(page,null);
   await page.waitForSelector('#cellboundOnboarding:not([hidden]) .character-creator');
   assert.equal(await page.locator('.creator-party-dots button').count(),5,'creator shows all five party roles');
 
+  for(const race of ['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari']){
+    await page.locator('button[data-race="'+race+'"]').click();
+    for(const gender of [0,1]){
+      await page.locator('[data-cc-sex="'+gender+'"]').click();
+      const model=page.locator('.creator-hero .cb-paper-doll svg').first();
+      assert.equal(await model.getAttribute('data-race'),race);
+      assert.equal(await model.getAttribute('data-gender'),gender?'female':'male');
+      assert(await model.locator('image').count()>0,'Every race uses a painted asset');
+    }
+  }
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'Creator fits the viewport');
   await page.locator('[data-builder-step="class"]').click();
   assert(await page.locator('[data-class]').count()>=1,'class choices render');
   assert(await page.locator('[data-class]').count()>=1,'damage/tank/healer class choices remain usable');
@@ -190,6 +201,11 @@ async function creatorPlaythrough(browser){
   assert.equal(fresh.allBeta,true,'fresh guild creator only produces beta-playable classes');
   assert(fresh.classes.includes('Paladin'),'Paladin can fill the beta healer role');
   assert(fresh.classes.every(c=>['Warrior','Paladin','Hunter','Rogue','Mage'].includes(c)),'fresh party contains only the five beta classes');
+  const createdAppearance=await page.evaluate(()=>CellboundGame.getState().roster.map(c=>({id:c.id,race:c.race,appearance:c.appearance})));
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>window.CellboundGame?.ready===true);
+  assert.deepEqual(await page.evaluate(()=>CellboundGame.getState().roster.map(c=>({id:c.id,race:c.race,appearance:c.appearance}))),createdAppearance,'Created appearances survive refresh');
+  await page.screenshot({path:'/tmp/cellbound-creator-'+viewport.width+'.png',fullPage:true});
   assert.deepEqual(errors,[],'creator/onboarding emitted no browser errors');
   await page.close();
 }
@@ -680,6 +696,7 @@ async function ownerDungeonGeneratorPlaythrough(browser){
   const browser=await engine.launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
   try{
     await creatorPlaythrough(browser);
+    await creatorPlaythrough(browser,{width:390,height:844});
     await persistenceReloadPlaythrough(browser);
     await mainGamePlaythrough(browser);
     await coreGameplayLoopPlaythrough(browser);

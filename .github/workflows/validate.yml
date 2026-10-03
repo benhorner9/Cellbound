@@ -30,7 +30,9 @@ jobs:
           node-version: '20'
 
       - name: Build and run regressions
-        run: npm run build
+        run: |
+          npm run build
+          npm run test:appearance
 
       - name: Verify deployment package
         shell: bash
@@ -74,4 +76,5 @@ jobs:
             /tmp/cellbound-living-combat.png
             /tmp/cellbound-full-playthrough.png
             /tmp/cellbound-login-screen.png
+            /tmp/cellbound-creator-*.png
           if-no-files-found: ignore
