@@ -1255,6 +1255,14 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   console.log('Beta Step 9 operations contracts are release-gated.');
 }
 
+if(process.env.GITHUB_BASE_REF==='staging'||process.env.CELLBOUND_CHANNEL==='staging'){
+  const stagingGuild=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  if(/http-equiv=["']refresh["'][^>]*index\.html/i.test(stagingGuild)||/location\.replace\(["']\.\/index\.html["']\)/.test(stagingGuild)){
+    throw new Error('Staging guild.html must not force-redirect authenticated players back to index.html');
+  }
+  console.log('Staging navigation guard passed: Guild Command remains directly playable.');
+}
+
 console.log('Cellbound build complete.');
 console.log('Build verification passed: scripts parse and required UI hooks/assets are present.');
 
