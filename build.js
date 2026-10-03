@@ -155,7 +155,7 @@ for(const file of files){
   if(file==='combat-standard-v1.js'&&!contents.includes('professionZone:meta.zone'))throw new Error('Combat gateway must pass encounter zone for Scribing');
 
   if(file==='character-portraits-v1.js'){
-    for(const hook of ['window.CellboundPortraits','CHARACTER_MODEL_VERSION=9',"CHARACTER_MODEL_CONTRACT='v9-beta-locked'","EQUIPMENT_LAYER_CONTRACT='shield-back|body|armour|front-offhand|mainhand-front'",'normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','gearFitProfile','weaponFitProfile','paperHeadGearOnly','tierVisualProfile','tierChestAdornment','tierHeadAdornment','tierWeaponAdornment','tierOffHandAdornment','paperOffHandBack','paperOffHandFront','data-chest-top','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
+    for(const hook of ['window.CellboundPortraits','CHARACTER_MODEL_VERSION=10',"CHARACTER_MODEL_CONTRACT='v10-race-foundation'","EQUIPMENT_LAYER_CONTRACT='shield-back|body|armour|front-offhand|mainhand-front'",'normalizeAppearance','randomAppearance','portraitHTML','paperDollHTML','paperDollSVG','paperChest','paperWeapon','paperWaist','paperAccessories','visualProfile','weaponType','offHandType','setGroupId','gearFitProfile','weaponFitProfile','paperHeadGearOnly','tierVisualProfile','tierChestAdornment','tierHeadAdornment','tierWeaponAdornment','tierOffHandAdornment','paperOffHandBack','paperOffHandFront','data-chest-top','editorHTML','bindEditor'])if(!contents.includes(hook))throw new Error('Character portrait/equipment visual engine is missing '+hook);
     if(!contents.includes("if(item.slot&&item.slot!=='OffHand')return''"))throw new Error('Paper doll must not invent an OffHand visual for main-hand weapons');
     if(!contents.includes('var baseFigure=illustratedBaseFigure(model')||contents.includes('paperBodyBase(model,a,skin,profile,uid)'))throw new Error('Equipped gear must layer over the same v9 illustrated character body used by the base model');
     for(const hook of ['leftRingX=fit.leftHand','rightRingX=fit.rightHand','fit.weaponX','fit.offhandX','fit.leftLeg','fit.rightLeg'])if(!contents.includes(hook))throw new Error('Adaptive equipment fitting is missing '+hook);
@@ -720,7 +720,7 @@ for(const file of files){
   vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),sandbox,{filename:'character-portraits-v1.js'});
   const G=sandbox.CellboundGear,P=sandbox.CellboundPortraits;
   if(!G||!P)throw new Error('Beta character/equipment lock runtime failed to load');
-  if(P.version!==9||P.modelContract!=='v9-beta-locked')throw new Error('Character model v9 beta lock is missing');
+  if(P.version!==10||P.modelContract!=='v10-race-foundation')throw new Error('Character model v9 beta lock is missing');
   if(P.equipmentLayerContract!=='shield-back|body|armour|front-offhand|mainhand-front')throw new Error('Equipment layer contract changed without an intentional beta model revision');
   const races=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'],positions=G.EQUIPMENT_POSITION_ORDER;
   const slotFor=pos=>pos.startsWith('Ring')?'Ring':pos.startsWith('Trinket')?'Trinket':pos;

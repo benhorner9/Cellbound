@@ -1,8 +1,8 @@
 (()=>{
 'use strict';
 
-const CHARACTER_MODEL_VERSION=9;
-const CHARACTER_MODEL_CONTRACT='v9-beta-locked';
+const CHARACTER_MODEL_VERSION=10;
+const CHARACTER_MODEL_CONTRACT='v10-race-foundation';
 const EQUIPMENT_LAYER_CONTRACT='shield-back|body|armour|front-offhand|mainhand-front';
 
 const CLASS_COLORS={
@@ -26,7 +26,7 @@ const RACES={
   },
   Aelari:{
     accent:'#55c8ff',
-    skin:['#d8c8ea','#c2afe0','#aa94cf','#927abb','#7863a1','#5e4c84'],
+    skin:['#f2e5db','#e6d5d0','#d8c5cd','#cebdc7','#baaeba','#aaa1b6'],
     eyes:['#9cf3ff','#dcb4ff','#9effda','#f7dd83','#d7efff','#ffc6e4'],
     featureLabel:'Ear style'
   },
@@ -51,10 +51,10 @@ const RACES={
 };
 
 const HAIR=['#17191c','#33251f','#5a3827','#8a5a35','#b88b59','#d8c9a6','#7a3030','#d4d9df'];
-const COUNTS={gender:2,frame:3,skinTone:6,face:4,hair:6,hairColor:8,facialHair:4,marking:5,eyes:6,feature:4};
+const COUNTS={gender:2,frame:3,skinTone:6,face:4,hair:6,hairColor:8,facialHair:4,marking:5,eyes:6,feature:4,brows:3,nose:3,mouth:3,glow:4};
 const LABELS={
   gender:'Body',frame:'Frame',skinTone:'Skin',face:'Face',hair:'Hair',hairColor:'Hair color',
-  facialHair:'Facial hair',marking:'Marking',eyes:'Eyes'
+  facialHair:'Facial hair',marking:'Marking',eyes:'Eye colour',brows:'Brows',nose:'Nose',mouth:'Mouth',glow:'Glow intensity'
 };
 
 function esc(v){
@@ -79,17 +79,19 @@ function normalizeAppearance(input,seed,raceOverride){
   var race=raceOverride||src.race||'Veyren';
   if(!RACES[race])race='Veyren';
   var key=seed||src.seed||src.id||src.name||race;
-  var out=Object.assign({},src,{race:race});
+  var out=Object.assign({},src,{race:race,appearanceVersion:1});
   Object.keys(COUNTS).forEach(function(field){
-    out[field]=int(src[field],COUNTS[field],seeded(key,field,COUNTS[field]));
+    out[field]=int(src[field],COUNTS[field],['brows','nose','mouth'].includes(field)?1:field==='glow'?2:seeded(key,field,COUNTS[field]));
   });
   if(out.gender===1)out.facialHair=0;
+  out.appearanceVersion=1;
   return out;
 }
 function randomAppearance(race){
   var out={race:RACES[race]?race:'Veyren'};
   Object.keys(COUNTS).forEach(function(field){out[field]=Math.floor(Math.random()*COUNTS[field])});
   if(out.gender===1)out.facialHair=0;
+  out.appearanceVersion=1;
   return out;
 }
 function applyToCharacter(c){
@@ -210,10 +212,12 @@ function portraitHTML(subject,opts){
   var size=opts.size||'md';
   var cls='cb-portrait cb-portrait--'+esc(size)+(opts.className?' '+esc(opts.className):'');
   var label=opts.label||c.name||a.race+' adventurer';
-  return '<span class="'+cls+'" style="--cbp-accent:'+accent+'" role="img" aria-label="'+esc(label)+'">'+svgFor(a,accent)+'</span>';
+  return '<span class="'+cls+'" style="--cbp-accent:'+accent+'" role="img" aria-label="'+esc(label)+'">'+paperDollSVG(Object.assign({},c,{appearance:a}),{showGear:false,portrait:true})+'</span>';
 }
 function optionText(field,value,race){
   if(field==='gender')return Number(value)===1?'Female':'Male';
+  if(field==='glow')return ['Subtle','Soft','Bright','Radiant'][Number(value)];
+  if(field==='hair')return ['Bald','Cropped','Swept','Long','Crest','Braided'][Number(value)];
   if(field==='frame')return ['Lean','Balanced','Strong'][Number(value)]||'Balanced';
   if(field==='hair'&&value===0)return 'None';
   if(field==='facialHair'&&value===0)return 'None';
@@ -223,12 +227,13 @@ function optionText(field,value,race){
 function editorHTML(appearance,opts){
   opts=opts||{};
   var a=normalizeAppearance(appearance,opts.seed,appearance?.race||opts.race);
-  var fields=['gender','frame','skinTone','face','hair','hairColor'];
+  var fields=['gender','frame','skinTone','face','brows','nose','mouth','eyes','hair','hairColor'];
   if(a.gender===0)fields.push('facialHair');
-  fields.push('marking','eyes','feature');
+  fields.push('marking','feature','glow');
+  var groups={gender:'Body',face:'Face',hair:'Hair',marking:'Markings',feature:'Race features'};
   var rows=fields.map(function(field){
     var label=field==='feature'?(raceDef(a.race).featureLabel||'Race detail'):(LABELS[field]||field);
-    return '<div class="cb-appearance-control"><span>'+esc(label)+'</span><div><button type="button" data-appearance-field="'+field+'" data-direction="-1" aria-label="Previous '+esc(label)+'">‹</button><b>'+esc(optionText(field,a[field],a.race))+'</b><button type="button" data-appearance-field="'+field+'" data-direction="1" aria-label="Next '+esc(label)+'">›</button></div></div>';
+    return (groups[field]?'<h3 class="cb-creation-group">'+groups[field]+'</h3>':'')+'<div class="cb-appearance-control"><span>'+esc(label)+'</span><div><button type="button" data-appearance-field="'+field+'" data-direction="-1" aria-label="Previous '+esc(label)+'">‹</button><b>'+esc(optionText(field,a[field],a.race))+'</b><button type="button" data-appearance-field="'+field+'" data-direction="1" aria-label="Next '+esc(label)+'">›</button></div></div>';
   }).join('');
   var preview={race:a.race,appearance:a,name:opts.name||'Character',equipment:{}};
   return '<div class="cb-appearance-editor" data-appearance-editor><div class="cb-appearance-preview">'+paperDollHTML(preview,{size:'creator',showGear:false,label:(opts.name||'Character')+' race base model preview'})+'<small class="cb-appearance-race-label">'+esc(a.race)+' · '+esc(optionText('gender',a.gender,a.race))+' · '+esc(optionText('frame',a.frame,a.race))+'</small><button type="button" data-appearance-randomize>RANDOMISE APPEARANCE</button></div><div class="cb-appearance-controls">'+rows+'</div></div>';
@@ -429,6 +434,23 @@ function gearFitProfile(c,item){
     weaponX:rightHand-2,offhandX:leftHand-8,
     headGearScaleX:gender===1?.94:1
   };
+}
+// Shared anatomical coordinates in the 240 x 410 model space. No class input.
+function anatomicalAnchors(c){
+  var f=gearFitProfile(c);
+  return {head:{x:120,y:60},face:{x:120,y:78},neck:{x:120,y:112},
+    leftShoulder:{x:f.leftShoulder,y:f.shoulderY},rightShoulder:{x:f.rightShoulder,y:f.shoulderY},
+    chest:{x:120,y:(f.chestTop+f.chestBottom)/2},waist:{x:120,y:f.waistY},
+    leftHand:{x:f.leftHand,y:f.handY},rightHand:{x:f.rightHand,y:f.handY},
+    mainHand:{x:f.weaponX,y:f.handY},offHand:{x:f.offhandX,y:f.handY},
+    back:{x:120,y:150},leftFoot:{x:f.leftLeg,y:380},rightFoot:{x:f.rightLeg,y:380}};
+}
+function equipmentCoverage(c){
+  var head=itemForSlot(c,'Head');
+  if(!head)return {hair:false,growth:false};
+  var style=gearProfile(head).head;
+  var open=['crown','halo','antlers','diadem','headdress','horns','band','blindfold','dragoncrown','deathcrown'].includes(style);
+  return {hair:!open,growth:!open};
 }
 function tierVisualProfile(tier){
   var t=Math.max(1,Math.min(5,Number(tier)||1));
@@ -1027,22 +1049,15 @@ function paperTierAura(c){
 
 function illustratedHairFull(a,hair,race){
   var female=Number(a.gender)===1,h=Number(a.hair)||0;
-  if(race==='Emberkin'){
-    var flames=female
-      ?'<path d="M92 59 Q82 34 101 41 Q94 18 116 34 Q121 8 131 35 Q148 17 145 46 Q166 35 151 68 Q138 50 120 48 Q103 49 92 59Z" fill="#ff7138" stroke="#552116" stroke-width="2.2"/><path d="M98 57 Q94 42 108 45 Q107 27 119 42 Q126 22 130 44 Q143 33 141 57Z" fill="#ffbf55" opacity=".72"/>'
-      :'<path d="M93 62 Q85 39 103 44 Q97 22 115 36 Q121 13 130 38 Q146 25 143 50 Q157 40 150 67 Q136 51 120 50 Q104 51 93 62Z" fill="#ff7138" stroke="#552116" stroke-width="2.2"/><path d="M102 57 Q98 44 111 47 Q111 31 120 44 Q128 29 132 47 Q141 39 140 58Z" fill="#ffd06d" opacity=".68"/>';
-    return flames;
-  }
-  if(race==='Stoneborn'){
-    return '<path d="M94 65 L98 44 L106 50 L111 34 L119 46 L128 29 L134 48 L145 39 L147 65 Q134 52 120 53 Q106 53 94 65Z" fill="#9a958f" stroke="#3b3f43" stroke-width="2.4"/><path d="M100 48 L106 40 L112 50 M126 43 L131 34 L137 51" fill="none" stroke="#e0c487" stroke-width="2" opacity=".7"/>';
-  }
-  var longHair=female&&(h===3||h===5||race==='Aelari'||race==='Veyren'||race==='Nymari');
+  if(h===0)return '';
+  var longHair=h===3||h===5;
   if(longHair){
     var hc=race==='Nymari'?mixHex(hair,'#0b4160',.35):race==='Veyren'?mixHex(hair,'#d8d0ef',.35):hair;
-    return '<path d="M90 66 Q90 38 120 34 Q150 39 151 68 L160 177 Q146 164 145 112 Q139 82 132 70 Q120 64 108 70 Q100 84 97 112 Q95 161 80 179 Q88 122 90 66Z" fill="'+hc+'" stroke="#141a20" stroke-width="2.6"/><path d="M98 59 Q111 40 130 45 Q142 48 148 65 Q137 55 126 59 Q113 53 98 59Z" fill="'+mixHex(hc,'#ffffff',.18)+'" opacity=".45"/>';
+    var braid=h===5?'<path d="M91 85 Q78 100 93 111 Q78 123 91 137 Q79 149 86 164 M149 85 Q162 100 147 111 Q162 123 149 137 Q161 149 154 164" fill="none" stroke="'+mixHex(hc,'#ffffff',.28)+'" stroke-width="3"/>':'';
+    return braid+'<path d="M90 66 Q90 38 120 34 Q150 39 151 68 L160 177 Q146 164 145 112 Q139 82 132 70 Q120 64 108 70 Q100 84 97 112 Q95 161 80 179 Q88 122 90 66Z" fill="'+hc+'" stroke="#141a20" stroke-width="2.6"/><path d="M98 59 Q111 40 130 45 Q142 48 148 65 Q137 55 126 59 Q113 53 98 59Z" fill="'+mixHex(hc,'#ffffff',.18)+'" opacity=".45"/>';
   }
-  if(h===0)return race==='Aelari'?'<path d="M97 56 Q120 41 143 57" fill="none" stroke="'+mixHex(hair,'#ffffff',.28)+'" stroke-width="5" opacity=".65"/>':'';
   if(h===4)return '<path d="M94 61 Q98 41 116 39 L121 22 L126 40 Q145 42 148 61 Q135 52 121 54 Q108 51 94 61Z" fill="'+hair+'" stroke="#141a20" stroke-width="2.4"/>';
+  if(h===2)return '<path d="M93 65 Q86 36 119 34 Q151 36 150 63 Q130 43 106 68 L96 77Z" fill="'+hair+'" stroke="#141a20" stroke-width="2.4"/>';
   return '<path d="M94 63 Q96 40 120 37 Q145 41 148 64 Q137 55 124 57 Q111 51 94 63Z" fill="'+hair+'" stroke="#141a20" stroke-width="2.4"/><path d="M99 54 Q111 42 126 44" fill="none" stroke="'+mixHex(hair,'#ffffff',.18)+'" stroke-width="2" opacity=".4"/>';
 }
 function illustratedRaceBodyDetails(c,a,p,skin,accent,uid){
@@ -1090,11 +1105,11 @@ function illustratedRaceBodyDetails(c,a,p,skin,accent,uid){
     '<path d="M88 176 q12 8 5 19 M152 176 q-12 8 -5 19" fill="none" stroke="#9e73ef" stroke-width="1.7" opacity=".66"/>'+
     '</g>';
 }
-function illustratedBaseFigure(c,a,skin,eye,hair,p,uid){
+function illustratedBaseFigure(c,a,skin,eye,hair,p,uid,portrait){
   var race=c.race||a.race||'Veyren',accent=raceDef(race).accent||'#76d7d0',female=p.gender===1;
   var s=p.shoulder,w=p.waist,h=p.hip,arm=p.arm,leg=p.leg;
-  var headW=(female?18.5:20.5)*(race==='Stoneborn'?1.06:1),headTop=race==='Stoneborn'?43:45,chin=female?102:104;
-  var jaw=female?11.8:14.5,lx=120-s,rx=120+s;
+  var headW=([.93,1,1.06,.98][a.face]||1)*(female?18.5:20.5)*(race==='Stoneborn'?1.06:1),headTop=race==='Stoneborn'?43:45,chin=female?102:104;
+  var jaw=(female?11.8:14.5)+[-2,0,2,1][a.face],lx=120-s,rx=120+s;
   var ua=Math.max(8.2,arm*.64),el=Math.max(6.8,arm*.50),fw=Math.max(5.9,arm*.43);
   var thigh=Math.max(13,leg*.90),knee=Math.max(9.2,leg*.61),calf=Math.max(9.6,leg*.68);
   var hipL=120-h,hipR=120+h,lLeg=120-h*.47,rLeg=120+h*.47;
@@ -1107,9 +1122,12 @@ function illustratedBaseFigure(c,a,skin,eye,hair,p,uid){
     '<path d="M120 78 L118 86 Q120 88 122.5 86" fill="none" stroke="'+mixHex(skin,'#30242a',.46)+'" stroke-width="1.1" stroke-linecap="round"/>'+
     '<path d="M113 92 Q120 '+(female?96:95)+' 127 92" fill="none" stroke="'+(race==='Emberkin'?'#ff8953':'#59363c')+'" stroke-width="1.35" stroke-linecap="round"/>';
 
+  face=face.replace('Q113 68','Q113 '+(66+a.brows*2)).replace('Q127 68','Q127 '+(66+a.brows*2));
+  face=face.replace('L118 86','L'+(117+a.nose)+' '+(84+a.nose*2));
+  face=face.replace('M113 92 Q120 '+(female?96:95)+' 127 92','M'+(114-a.mouth)+' 92 Q120 '+(93+a.mouth*2)+' '+(126+a.mouth)+' 92');
   var ears='';
   if(race==='Aelari'||race==='Veyren'){
-    var tip=race==='Aelari'?72:80;
+    var tip=(race==='Aelari'?72:80)-a.feature*2;
     ears='<path d="M'+(120-headW+2)+' 68 L'+tip+' 58 L'+(120-headW+4)+' 82Z M'+(120+headW-2)+' 68 L'+(240-tip)+' 58 L'+(120+headW-4)+' 82Z" fill="url(#'+uid+'skin)" stroke="'+outline+'" stroke-width="1.6"/>';
   }else if(race==='Nymari'){
     ears='<path d="M'+(120-headW+1)+' 69 Q84 58 82 76 Q91 82 '+(120-headW+5)+' 80Z M'+(120+headW-1)+' 69 Q156 58 158 76 Q149 82 '+(120+headW-5)+' 80Z" fill="url(#'+uid+'fin)" stroke="#9af1ff" stroke-width="1.3"/>';
@@ -1147,8 +1165,10 @@ function illustratedBaseFigure(c,a,skin,eye,hair,p,uid){
 
   var sideShade='<path d="M'+(lx+7)+' 136 Q'+(lx+1)+' 174 '+(120-w-1)+' 207 Q'+(120-w+2)+' 230 '+(hipL+8)+' 245" fill="none" stroke="'+shadow+'" stroke-width="4" opacity=".14"/><path d="M'+(lLeg-thigh+3)+' 272 Q'+(lLeg-thigh+4)+' 328 '+(lLeg-calf+2)+' 364 M'+(rLeg+thigh-3)+' 272 Q'+(rLeg+thigh-4)+' 328 '+(rLeg+calf-2)+' 364" fill="none" stroke="'+shadow+'" stroke-width="3" opacity=".13"/>';
   var markings=illustratedRaceBodyDetails(c,a,p,skin,accent,uid);
-  var hairFull=illustratedHairFull(a,hair,race);
+  var coverage=equipmentCoverage(c);
+  var hairFull=coverage.hair?'':'<g data-appearance-part="hair">'+illustratedHairFull(a,hair,race)+'</g>';
 
+  markings='<g opacity="'+(.35+a.glow*.21)+'">'+markings+'</g>';
   var faceMarks='';
   if(race==='Veyren')faceMarks='<path d="M104 65 q5 6 1 13 M136 65 q-5 6 -1 13 M110 91 q10 5 20 0" fill="none" stroke="#c4a9ff" stroke-width="1.2" opacity=".75"/>';
   if(race==='Aelari')faceMarks='<path d="M105 65 l5 -7 l4 7 M135 65 l-5 -7 l-4 7 M120 52 v8" fill="none" stroke="#9aefff" stroke-width="1.25" opacity=".8"/>';
@@ -1164,8 +1184,13 @@ function illustratedBaseFigure(c,a,skin,eye,hair,p,uid){
     ?'<path d="M101 54 Q91 41 84 38 M108 51 Q103 36 107 29 M132 51 Q139 35 151 30 M139 55 Q151 42 159 40" fill="none" stroke="#594029" stroke-width="3" stroke-linecap="round"/><path d="M84 38 l-9 -3 l7 8 M107 29 l-7 -4 l5 8 M151 30 l8 -4 l-5 8 M159 40 l9 -4 l-6 9" fill="#79a557"/>'
     :'';
 
+  var customFace='<g transform="translate(84 43) scale(.72)">'+markingMarkup(a,race)+beardMarkup(a,race==='Stoneborn'?mixHex(skin,'#cdb78a',.45):hair)+'</g>';
+  var growth=coverage.growth?'':'<g transform="translate(70 20)">'+raceFeatureMarkup(a,race)+'</g>';
+  if(coverage.growth){stoneHead='';thornHead=''}
+  if(race==='Stoneborn'&&stoneHead)stoneHead='<g transform="translate(120 57) scale('+(0.85+a.feature*.12)+') translate(-120 -57)">'+stoneHead+'</g>';
+  if(race==='Thornkin'&&thornHead)thornHead='<g transform="translate(120 57) scale('+(0.75+a.feature*.15)+') translate(-120 -57)">'+thornHead+'</g>';
   return '<g class="cb-illustrated-base" data-race="'+esc(race)+'" data-gender="'+(female?'female':'male')+'">'+
-    leftLeg+rightLeg+feet+leftArm+rightArm+hands+neck+torso+sideShade+under+anatomy+markings+ears+face+faceMarks+stoneHead+thornHead+hairFull+
+    (portrait?'':leftLeg+rightLeg+feet+leftArm+rightArm+hands+neck+torso+sideShade+under+anatomy+markings)+ears+face+faceMarks+customFace+hairFull+stoneHead+thornHead+growth+
     '</g>';
 }
 
@@ -1173,6 +1198,7 @@ function paperDollSVG(c,opts){
   opts=opts||{};
   var race=c.race||(c.appearance&&c.appearance.race)||'Veyren';
   var a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
+  c=Object.assign({},c,{race:a.race,appearance:a});
   var r=raceDef(a.race),skin=r.skin[a.skinTone],eye=r.eyes[a.eyes],hair=HAIR[a.hairColor];
   var accent=opts.accent||paperAccent(c),highlighted=opts.highlightedSlot||'',profile=bodyProfile(c,a);
   var showGear=opts.showGear!==false;
@@ -1182,11 +1208,11 @@ function paperDollSVG(c,opts){
   var headScale=profile.headScale||1,headX=70+(50*(1-headScale)),headY=20+(50*(1-headScale));
   var baseBg='<ellipse cx="120" cy="214" rx="110" ry="180" fill="url(#'+uid+'a)"/><ellipse cx="120" cy="394" rx="'+Math.max(70,profile.shoulder+27)+'" ry="10" fill="#000" opacity=".38"/>';
   var defs='<defs><radialGradient id="'+uid+'a" cx="50%" cy="44%" r="56%"><stop offset="0%" stop-color="'+accent+'" stop-opacity=".15"/><stop offset="68%" stop-color="'+accent+'" stop-opacity=".025"/><stop offset="100%" stop-color="'+accent+'" stop-opacity="0"/></radialGradient><linearGradient id="'+uid+'skin" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="'+skinLight+'"/><stop offset="46%" stop-color="'+skin+'"/><stop offset="100%" stop-color="'+skinDark+'"/></linearGradient><linearGradient id="'+uid+'crystal" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#ebe2cf"/><stop offset="48%" stop-color="#aaa59d"/><stop offset="100%" stop-color="#716f70"/></linearGradient><linearGradient id="'+uid+'fin" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#a8f7ff"/><stop offset="50%" stop-color="#69bad1"/><stop offset="100%" stop-color="#346e8b"/></linearGradient><filter id="'+uid+'shadow" x="-50%" y="-50%" width="200%" height="200%"><feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000" flood-opacity=".34"/></filter><filter id="'+uid+'softGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation=".18"/></filter></defs>';
-  var baseFigure=illustratedBaseFigure(model,a,skin,eye,hair,profile,uid);
+  var baseFigure=illustratedBaseFigure(model,a,skin,eye,hair,profile,uid,opts.portrait);
   if(!showGear){
-    return '<svg viewBox="0 0 240 410" data-race="'+esc(race)+'" data-gender="'+(a.gender===1?'female':'male')+'" data-frame="'+esc(optionText('frame',a.frame,race).toLowerCase())+'" data-model-mode="base" role="img" aria-hidden="true" focusable="false">'+defs+baseBg+baseFigure+'</svg>';
+    return '<svg viewBox="'+(opts.portrait?'65 15 110 110':'0 0 240 410')+'" data-race="'+esc(race)+'" data-gender="'+(a.gender===1?'female':'male')+'" data-frame="'+esc(optionText('frame',a.frame,race).toLowerCase())+'" data-model-mode="base" role="img" aria-hidden="true" focusable="false">'+defs+baseBg+baseFigure+'</svg>';
   }
-  return '<svg viewBox="0 0 240 410" data-race="'+esc(race)+'" data-gender="'+(a.gender===1?'female':'male')+'" data-frame="'+esc(optionText('frame',a.frame,race).toLowerCase())+'" data-model-mode="equipped" role="img" aria-hidden="true" focusable="false">'+
+  return '<svg viewBox="'+(opts.portrait?'65 15 110 110':'0 0 240 410')+'" data-race="'+esc(race)+'" data-gender="'+(a.gender===1?'female':'male')+'" data-frame="'+esc(optionText('frame',a.frame,race).toLowerCase())+'" data-model-mode="equipped" role="img" aria-hidden="true" focusable="false">'+
     defs+baseBg+
     paperTierAura(model)+
     paperBackLayer(model)+
@@ -1213,6 +1239,7 @@ function visualProfile(subject,item,slot){
 
 window.CellboundPortraits={
   version:CHARACTER_MODEL_VERSION,modelContract:CHARACTER_MODEL_CONTRACT,equipmentLayerContract:EQUIPMENT_LAYER_CONTRACT,
+  anatomicalAnchors:anatomicalAnchors,equipmentCoverage:equipmentCoverage,appearanceVersion:1,
   RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
   applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,bodyProfile:bodyProfile,gearFitProfile:gearFitProfile,weaponFitProfile:weaponFitProfile,tierVisualProfile:tierVisualProfile,

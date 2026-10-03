@@ -710,3 +710,15 @@
   .cb-model-mode-switch{top:34px;right:8px}
   .cb-model-mode-switch button{padding:5px 7px;font-size:.28rem}
 }
+
+/* Creation Centre: large race silhouettes, touch-sized controls and face-safe crops. */
+.cb-creation-group{grid-column:1/-1;margin:14px 0 2px;color:#dec99e;font-size:13px;letter-spacing:.12em;text-transform:uppercase}
+.cb-appearance-control button{min-width:44px;min-height:44px}
+.creator-hero>.cb-paper-doll--creator{width:min(100%,270px);height:390px;display:block;margin:auto}
+.creator-choice-grid .race-card{display:grid;grid-template-columns:90px minmax(0,1fr);align-items:center;text-align:left;min-height:170px}
+.cb-paper-doll--race-choice{width:90px;height:155px;display:block}
+.cb-paper-doll--race-choice svg{width:100%;height:100%}
+.cb-portrait>svg{display:block;width:100%;height:100%;border-radius:inherit}
+.cb-appearance-preview{background:radial-gradient(ellipse at center,#49405144,transparent 70%)}
+@media(max-width:700px){.creator-stage{grid-template-columns:1fr}.creator-hero>.cb-paper-doll--creator{height:260px}.creator-choice-grid .race-card{grid-template-columns:70px minmax(0,1fr);min-height:140px}.cb-paper-doll--race-choice{width:70px;height:130px}.cb-appearance-controls{min-width:0}}
+@media(prefers-reduced-motion:reduce){.cb-paper-doll *,.cb-portrait *{animation:none!important;transition:none!important}}
