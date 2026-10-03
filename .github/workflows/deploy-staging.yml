@@ -52,6 +52,6 @@ jobs:
           password: ${{ secrets.STAGING_FTP_PASSWORD }}
           protocol: ftps
           port: ${{ secrets.STAGING_FTP_PORT || 21 }}
-          server-dir: ./CB/
+          server-dir: ./cb/
           local-dir: ./dist/
           log-level: standard
