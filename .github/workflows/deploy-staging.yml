@@ -41,6 +41,8 @@ jobs:
           test -f dist/guild.html
           test -f dist/auth.js
           test -f dist/guild-v4.js
+          ! grep -F 'http-equiv="refresh" content="0;url=./index.html"' dist/guild.html
+          ! grep -F 'window.location.replace("./index.html")' dist/guild.html
           test -f dist/assets/gear/cellbound-gear-atlas.webp
           ! grep -R --line-number -E 'href="/|src="/' dist/*.html
 
