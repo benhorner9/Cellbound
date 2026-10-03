@@ -74,9 +74,6 @@ function renderTargetOptions(){
   const s=state()||{},options=[];
   if(s?.progression?.ashenVaultUnlocked!==false)options.push({type:'dungeon',id:'ashen-vault',label:'The Ashen Vault'});
   if(s?.questSystem?.flags?.hollowSanctumUnlocked)options.push({type:'dungeon',id:'hollow-sanctum',label:'The Hollow Sanctum'});
-  options.push({type:'dungeon',id:'chaos-canyon',label:'Chaos Canyon'});
-  options.push({type:'dungeon',id:'blackout-station',label:'Blackout Station'});
-  if(s?.progression?.fracturedAgesUnlocked)options.push({type:'dungeon',id:'fractured-ages',label:'The Fractured Ages'});
   if(s?.progression?.manorRaidUnlocked)options.push({type:'raid',id:'manor',label:'The Manor'});
   const before=sel.value;
   sel.innerHTML=options.map(o=>`<option value="${o.type}|${o.id}|${esc(o.label)}">${o.type==='raid'?'Raid':'Dungeon'} · ${esc(o.label)}</option>`).join('');
@@ -87,7 +84,7 @@ async function loadGroups(){
   const now=new Date().toISOString();
   const {data,error}=await db.from('party_finder_listings').select('*').in('content_type',['dungeon','raid']).in('status',['open','full']).gt('expires_at',now).order('created_at',{ascending:false}).limit(40);
   if(error){console.warn(error);groups=[];groupMembers=[];renderGroups();return;}
-  groups=data||[];
+  groups=(data||[]).filter(g=>g.content_type!=='dungeon'||!Game?.isBetaDungeonPlayable||Game.isBetaDungeonPlayable(g.target_id));
   if(groups.length){
     const ids=groups.map(x=>x.id);
     const {data:m,error:me}=await db.from('party_finder_members').select('*').in('listing_id',ids).order('joined_at',{ascending:true});
@@ -109,6 +106,7 @@ function renderGroups(){
 async function createGroup(e){
   e.preventDefault();if(!partyReady()){alert('Build a complete available five-character party first.');return;}
   const [type,id,label]=($('#partyFinderTarget')?.value||'dungeon|ashen-vault|The Ashen Vault').split('|'),cap=type==='raid'?2:Math.max(2,Math.min(8,Number($('#partyFinderCap')?.value)||4)),note=($('#partyFinderNote')?.value||'').trim();
+  if(type==='dungeon'&&Game?.isBetaDungeonPlayable&&!Game.isBetaDungeonPlayable(id)){alert('That dungeon is reserved for a future Cellbound update.');renderTargetOptions();return}
   const {data,error}=await db.rpc('create_party_finder_listing',{p_content_type:type,p_target_id:id,p_target_label:label,p_note:note,p_party_ilvl:partyIlvl(),p_player_cap:cap});
   if(error){alert(error.message||'Could not create group');return;}
   if(type==='raid'&&data)await window.CellboundManorRaid?.syncPartyToListing?.(data);
@@ -117,6 +115,7 @@ async function createGroup(e){
 async function joinGroup(id){
   if(!partyReady()){alert('Build a complete available five-character party first.');return;}
   const target=groups.find(x=>x.id===id);
+  if(target?.content_type==='dungeon'&&Game?.isBetaDungeonPlayable&&!Game.isBetaDungeonPlayable(target.target_id)){alert('That dungeon is reserved for a future Cellbound update.');await loadGroups();return}
   const {error}=await db.rpc('join_party_finder_listing',{p_listing_id:id,p_party_ilvl:partyIlvl()});
   if(error){alert(error.message||'Could not join group');return;}
   if(target?.content_type==='raid')await window.CellboundManorRaid?.syncPartyToListing?.(id);
