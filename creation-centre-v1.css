@@ -11,3 +11,5 @@
 .cc-centre .creator-step{font-size:12px;letter-spacing:0}
 .cc-centre .creator-party-dots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr))}
 @media(max-width:700px){.cc-centre .creator-hero{position:static}.cc-centre .creator-step{font-size:11px}.cc-centre .creator-party-dots{margin-top:8px}.cc-centre .creator-party-dots button{display:block;text-align:center}}
+.cc-centre .cb-appearance-preview{display:block;margin-bottom:14px}
+.cc-centre .cb-appearance-preview>.cb-paper-doll,.cc-centre .cb-appearance-preview>.cb-appearance-race-label{display:none}
