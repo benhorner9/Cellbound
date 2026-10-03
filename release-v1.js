@@ -4,6 +4,7 @@ const $=s=>document.querySelector(s);
 let Game=null,db=null,timer=null,busy=false,lastRequired=null,pendingInfo=null;
 const currentBuild=()=>String(window.CELLBOUND_BUILD||'development');
 const currentBuildNumber=()=>Number(window.CELLBOUND_BUILD_NUMBER||0)||0;
+const releaseGateEnabled=()=>/^(?:www\.)?playcellbound\.com$/i.test(String(location.hostname||''));
 
 function overlay(){
   let el=$('#cellboundUpdateGate');
@@ -105,6 +106,22 @@ async function check(){
 async function init(){
   Game=window.CellboundGame;
   if(!Game?.ready){setTimeout(init,120);return}
+  // Release enforcement is production-only. Staging/dev builds use a separate
+  // deployment stream and must never be forced to match the production build.
+  if(!releaseGateEnabled()){
+    hideGate();
+    window.CellboundRelease={
+      currentBuild:currentBuild(),
+      requiredBuild:null,
+      currentBuildNumber:currentBuildNumber(),
+      requiredBuildNumber:null,
+      message:null,
+      publishedAt:null,
+      channel:'development',
+      refresh:async()=>{hideGate();return null}
+    };
+    return;
+  }
   db=Game.getSupabase?.();
   if(!db)return;
   await check();
