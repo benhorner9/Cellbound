@@ -1275,6 +1275,18 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   console.log('Beta analytics collection and Admin dashboard are release-gated.');
 }
 
+{
+  const shell=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  for(const hook of ['class="admin-workspace-nav"','data-admin-panel-tab="reports"','data-admin-panel-tab="analytics"','data-admin-panel-tab="players"','data-admin-panel-tab="tools"','<option value="open" selected>Open reports</option>'])
+    if(!shell.includes(hook))throw new Error('Admin UX workspace contract is missing '+hook);
+
+  const admin=fs.readFileSync(path.join(__dirname,'admin-v1.js'),'utf8');
+  for(const hook of ['function setPanel(panel','cellbound:admin-panel-changed','admin-panel-filtered'])
+    if(!admin.includes(hook))throw new Error('Admin UX runtime is missing '+hook);
+
+  console.log('Admin workspace optimization is release-gated.');
+}
+
 if(process.env.GITHUB_BASE_REF==='staging'||process.env.CELLBOUND_CHANNEL==='staging'){
   const stagingGuild=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
   if(/http-equiv=["']refresh["'][^>]*index\.html/i.test(stagingGuild)||/location\.replace\(["']\.\/index\.html["']\)/.test(stagingGuild)){
@@ -1290,5 +1302,6 @@ require('./tests/beta-balance.cjs');
 require('./tests/beta-ui-polish.cjs');
 require('./tests/beta-operations.cjs');
 require('./tests/beta-analytics.cjs');
+require('./tests/admin-ux.cjs');
 require('./tests/living-combat.authority.cjs');
 for(const name of ['combat-polish-v3','combat-physical-v4'])for(const ext of ['js','css']){if(!fs.existsSync(path.join(out,name+'.'+ext)))throw new Error('Missing shared living combat asset: '+name+'.'+ext)}
