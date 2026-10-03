@@ -85,9 +85,6 @@ function navHTML(step){
   '</button>'
  ).join('')+'</nav>';
 }
-function editorBlock(d,mode){
- return '<div class="cc-editor-scope cc-editor-'+mode+'">'+P.editorHTML(d.appearance,{name:d.name,race:d.race})+'</div>';
-}
 function racePanel(o,d){
  return '<div class="race-grid creator-choice-grid">'+o.races.map(r=>
   '<button type="button" class="race-card '+(r.id===d.race?'active':'')+'" data-race="'+esc(r.id)+'" aria-pressed="'+(r.id===d.race)+'">'+
