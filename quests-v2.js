@@ -347,6 +347,8 @@ async function beginAshfallAmbush(){
   const won=await runQuest2DFight({
     quest:ASHFALL.title,title:'The Cinder Cart',location:'Old Forge Approach',
     ambience:alertLevel>=2?'A whistle answers from above the road. You were heard. Another sentry is already moving.':'The tracks end at a second cart, burnt down to its ironwork. Nobody is visible. That is the problem.',
+    visualClass:'quest-ashfall-cinder-cart',
+    environmentMarkup:'<img class="quest-battlefield-art quest-battlefield-art--ashfall" src="./assets/quests/ashes-east-road-cinder-cart.webp" alt=""><i class="quest-battlefield-shade"></i>',
     phases:['Ambush','Signal Flare','Cinder Breath'],enemies,eliteIndex:1,
     combat:{kind:'boss',level:2,recommendedItemLevel:18,enemyTypes:alertLevel>=2?['trash','elite','trash','trash']:['trash','elite','trash'],enemyHealth:alertLevel>=2?600:520,scaling:alertLevel>=2?{enemyDamage:1.08}:{enemyDamage:1},mechanics:alertLevel>=2?[['Signal Flare','interrupt',1800],['Ash Whistle','interrupt',1500],['Cinder Breath','cone',1700]]:[['Signal Flare','interrupt',1800],['Cinder Breath','cone',1700]]},
     completeText:'The ambush is broken. The Ashbound Runner drops a heavy iron key stamped with the old forge seal.'
