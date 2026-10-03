@@ -34,6 +34,8 @@
   <link rel="stylesheet" href="./endgame-v1.css?v=5">
 <link rel="stylesheet" href="./twelve-below-v1.css?v=5">
 <link rel="stylesheet" href="./admin-v1.css?v=4">
+<link rel="stylesheet" href="./beta-ops-v1.css?v=1">
+<link rel="stylesheet" href="./admin-beta-ops-v1.css?v=1">
 <link rel="stylesheet" href="./living-world-v1.css?v=2">
 <link rel="stylesheet" href="./dungeon-generator-v1.css?v=1">
 <link rel="stylesheet" href="./character-fit-viewer-v1.css?v=1">
@@ -95,6 +97,7 @@
 
       <div class="nav-section-label">SOCIAL</div>
       <button class="nav-btn" data-hub="social" data-view="chat"><span>◌</span><b>Social</b><em id="chatNavBadge"></em></button>
+      <button class="nav-btn" data-hub="support" data-view="support"><span>!</span><b>Beta Support</b></button>
 
       <button id="adminNav" class="nav-btn" data-hub="admin" data-view="admin" hidden><span>⚙</span><b>Admin</b><em>DEV</em></button>
       <button id="mobileNavMore" class="nav-btn nav-more" type="button" data-mobile-more aria-expanded="false" aria-controls="mobileNavSheet"><span>•••</span><b>More</b></button>
@@ -487,6 +490,35 @@
       </div>
     </section>
 
+    <section id="support" class="view">
+      <div class="section-intro"><div><small>FOUNDING BETA</small><h2>Beta Support</h2><p>Found something wrong? Send it straight to the Cellbound beta queue with the build and screen details attached automatically.</p></div><div class="content-status"><span>Build</span><b id="betaSupportBuild">Checking…</b></div></div>
+      <div class="beta-support-grid">
+        <article class="beta-panel">
+          <div class="beta-panel-head"><div><small>REPORT A PROBLEM</small><h3>Tell us what broke.</h3><p>Keep it simple: what were you doing, what happened, and what should have happened instead.</p></div><span class="beta-build-chip">Context attached automatically</span></div>
+          <form id="betaReportForm" class="beta-form">
+            <div class="beta-form-row">
+              <label><span>TYPE</span><select id="betaReportCategory"><option value="bug">Bug</option><option value="ui">UI / visual</option><option value="balance">Balance</option><option value="account">Account / save</option><option value="other">Other</option></select></label>
+              <label><span>IMPACT</span><select id="betaReportSeverity"><option value="low">Minor</option><option value="medium" selected>Normal</option><option value="high">High</option><option value="blocker">Blocker — cannot continue</option></select></label>
+            </div>
+            <label><span>SHORT TITLE</span><input id="betaReportSummary" maxlength="120" autocomplete="off" placeholder="Example: Dungeon stays on loading screen"></label>
+            <label><span>WHAT HAPPENED?</span><textarea id="betaReportDetails" maxlength="4000" placeholder="What did you do? What happened? What did you expect?"></textarea></label>
+            <div class="beta-report-hint">Current build, screen, viewport, party Item Level and device information are attached to the report. Your save itself is not copied into the ticket.</div>
+            <button id="betaReportSubmit" type="submit">SEND BETA REPORT →</button>
+            <p id="betaReportMessage" class="beta-report-message" hidden></p>
+          </form>
+        </article>
+        <article class="beta-panel">
+          <div class="beta-panel-head"><div><small>YOUR REPORTS</small><h3>What you have sent.</h3><p>Team notes and status changes appear here when a report is reviewed.</p></div><button id="betaRefreshReports" type="button">REFRESH</button></div>
+          <div class="beta-panel-head"><div><small>CURRENT SCREEN</small><h3 id="betaSupportView">support</h3></div><b id="betaReportCount" class="beta-build-chip">NONE YET</b></div>
+          <div id="betaMyReports" class="beta-ticket-list"><div class="beta-empty">Checking your reports…</div></div>
+        </article>
+        <article class="beta-panel beta-notes">
+          <div class="beta-panel-head"><div><small>BUILD NOTES</small><h3>What changed.</h3><p>Short beta-facing notes for the current launch push. Full implementation detail stays in the development log.</p></div></div>
+          <div id="betaPatchNotes"></div>
+        </article>
+      </div>
+    </section>
+
     <section id="admin" class="view admin-view">
       <div class="section-intro"><div><small>DEVELOPER CONTROL</small><h2>Admin</h2><p>Private testing controls for authorised Cellbound administrators.</p></div><b id="adminRole" class="economy-badge">ADMIN</b></div>
       <div class="admin-shell">
@@ -534,6 +566,28 @@
           </div>
           <div id="adminMarketTop" class="admin-market-top"><span>No market history yet.</span></div>
         </article>
+        <article class="admin-card admin-beta-card">
+          <small>BETA SUPPORT QUEUE</small><h3>Tester Reports</h3>
+          <p>Reports arrive with the tester's build and screen context. Move them through the queue and leave a short note the tester can see.</p>
+          <div class="admin-beta-toolbar">
+            <select id="adminBetaStatus"><option value="">All open and closed</option><option value="new">New</option><option value="triaged">Triaged</option><option value="in_progress">In progress</option><option value="fixed">Fixed</option><option value="closed">Closed</option></select>
+            <button id="adminBetaRefresh" type="button">REFRESH QUEUE</button>
+            <b id="adminBetaReportCount">0 SHOWN</b>
+          </div>
+          <div id="adminBetaReportQueue" class="admin-beta-queue"><div class="admin-beta-empty">Loading beta queue…</div></div>
+        </article>
+        <article class="admin-card admin-beta-card">
+          <small>PLAYER RECOVERY</small><h3>Unstick a Tester</h3>
+          <p>Find a tester by exact email, guild name or account ID. Recovery actions are narrow on purpose and do not expose a general save editor.</p>
+          <div class="admin-player-search"><input id="adminPlayerLookup" maxlength="120" placeholder="Email, guild name or account ID"><button id="adminFindPlayer" type="button">FIND PLAYER</button></div>
+          <div id="adminPlayerResult"><div class="admin-beta-empty">Find a player by exact email, guild name or account ID.</div></div>
+          <div id="adminPlayerRecoveryActions" class="admin-player-actions">
+            <button type="button" data-recover-player="cell_shock" disabled>CLEAR CELL SHOCK</button>
+            <button type="button" data-recover-player="dungeon_attempts" disabled>ABANDON STUCK DUNGEONS</button>
+            <button type="button" data-recover-player="twelve_below" disabled>RESTORE TWELVE BELOW</button>
+          </div>
+          <p id="adminBetaOpsMessage" class="admin-beta-ops-message" hidden></p>
+        </article>
         <article id="dungeonGeneratorEntry" class="admin-card admin-generator-entry" hidden>
           <small>OWNER TOOL</small><h3>Dungeon Generator</h3>
           <p>Build a complete dungeon brief, Combat Reborn scene config and art manifest from one guided form. Shared combat rules are attached automatically.</p>
@@ -578,7 +632,8 @@
 <script src="./combat-polish-v2.js?v=1"></script>
 <script src="./combat-polish-v3.js?v=1"></script>
 <script src="./combat-physical-v4.js?v=12"></script>
-<script src="./guild-v4.js?v=83"></script>
+<script src="./guild-v4.js?v=84"></script>
+<script src="./beta-ops-v1.js?v=1"></script>
 <script src="./pvp-combat-v1.js?v=2"></script>
 <script src="./pvp-viewer-v1.js?v=3"></script>
 <script src="./pvp-match-v1.js?v=3"></script>
@@ -610,6 +665,7 @@
 <script src="./no-way-back-v1.js?v=12"></script>
 <script src="./fractured-ages-v1.js?v=13"></script>
 <script src="./admin-v1.js?v=9"></script>
+<script src="./admin-beta-ops-v1.js?v=1"></script>
 <script src="./world-presence-v1.js?v=1"></script>
 <script src="./living-world-v1.js?v=3"></script>
 <script src="./dungeon-generator-v1.js?v=1"></script>
