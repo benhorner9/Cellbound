@@ -77,7 +77,10 @@ const combatCache=new Map();
 const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
 const roleOf=c=>Game?.classes?.[c?.class]?.specs?.[c?.spec]?.role||c?.role||'dps';
-const partyReady=()=>party().length===5&&!party().some(c=>Game?.isUnavailable?.(c));
+const partyLevelReady=list=>(list||party()).length===5&&(list||party()).every(c=>Math.max(1,Number(c.level)||1)>=15);
+const partyReady=()=>party().length===5&&!party().some(c=>Game?.isUnavailable?.(c))&&partyLevelReady();
+const partyReadyReason=()=>party().length!==5?'Build a complete five-character party first.':party().some(c=>Game?.isUnavailable?.(c))?'Recover from Cell Shock before entering The Manor.':!partyLevelReady()?'Every active adventurer must reach Level 15 before entering The Manor.':'Ready';
+const raidRowsReady=rows=>(rows||[]).length===2&&(rows||[]).every(row=>Array.isArray(row.party_snapshot)&&partyLevelReady(row.party_snapshot));
 const unlocked=()=>Boolean(state()?.progression?.manorRaidUnlocked);
 const now=()=>Date.now();
 const serverNow=()=>Date.now()+serverClockOffset;
@@ -222,7 +225,7 @@ async function markManorCleared(){
  return true
 }
 async function syncParty(listingId){
- if(!partyReady())throw new Error('Build a complete available five-character party first.');
+ if(!partyReady())throw new Error(partyReadyReason());
  const {error}=await db.rpc('sync_party_finder_party',{p_listing_id:listingId,p_party_snapshot:snapshot(),p_party_ilvl:Number(Game.partyItemLevel?.())||0});
  if(error)throw error;
 }
@@ -287,7 +290,7 @@ function renderHub(){
    body='<section class="mr-card mr-group"><header><div><small>YOUR RAID GROUP</small><h3>'+esc(myGroup.guild_label)+' · '+count+'/2 players</h3></div><span class="'+(count===2?'ready':'waiting')+'">'+(count===2?'READY':'WAITING')+'</span></header>'+
    '<div class="mr-group-parties">'+mineRows.map((m,i)=>partyPanel(m,i)).join('')+(count<2?'<div class="mr-empty-party"><b>PARTY B</b><span>Waiting for another player…</span></div>':'')+'</div>'+
    '<div class="mr-comp '+(recommended?'recommended':'custom')+'"><b>Raid composition</b><span>'+comp.tank+' Tanks · '+comp.healer+' Healers · '+comp.dps+' Damage</span><em>'+(recommended?'RECOMMENDED 2 / 2 / 6':'CUSTOM COMPOSITION ALLOWED')+'</em></div>'+
-   '<footer><button class="secondary" data-mr-sync>LOCK IN CURRENT PARTY</button><button class="secondary" data-mr-leave>'+(leader?'CLOSE GROUP':'LEAVE GROUP')+'</button>'+(leader&&count===2?'<button data-mr-start>ENTER THE MANOR →</button>':'')+(count===2&&!leader?'<span>Waiting for the group leader to open the Manor.</span>':'')+'</footer></section>';
+   '<footer><button class="secondary" data-mr-sync>LOCK IN CURRENT PARTY</button><button class="secondary" data-mr-leave>'+(leader?'CLOSE GROUP':'LEAVE GROUP')+'</button>'+(leader&&count===2?'<button data-mr-start '+(raidRowsReady(mineRows)?'':'disabled')+'>'+(raidRowsReady(mineRows)?'ENTER THE MANOR →':'LEVEL 15 REQUIRED')+'</button>':'')+(count===2&&!leader?'<span>Waiting for the group leader to open the Manor.</span>':'')+'</footer></section>';
  }else{
    const open=groups.filter(g=>groupMembers(g.id).length<2);
    body='<section class="mr-card mr-finder"><header><div><small>RAID FINDER</small><h3>Form a two-player raid</h3><p>Each player brings their active five-character party. 2 Tanks / 2 Healers / 6 Damage is recommended, not required.</p></div><button data-mr-create '+(partyReady()&&Number(lockout?.runsRemaining??3)>0?'':'disabled')+'>CREATE RAID GROUP</button></header>'+
@@ -324,14 +327,14 @@ function bindHub(){
 }
 async function createGroup(){
  try{
-   if(!partyReady())throw new Error('Build a complete available five-character party first.');
+   if(!partyReady())throw new Error(partyReadyReason());
    const {data,error}=await db.rpc('create_party_finder_listing',{p_content_type:'raid',p_target_id:'manor',p_target_label:'The Manor',p_note:'First raid · 10 characters',p_party_ilvl:Number(Game.partyItemLevel?.())||0,p_player_cap:2});
    if(error)throw error;await syncParty(data);await fetchHub()
  }catch(e){alert(e.message||'Could not create raid group')}
 }
 async function joinGroup(id){
  try{
-   if(!partyReady())throw new Error('Build a complete available five-character party first.');
+   if(!partyReady())throw new Error(partyReadyReason());
    const {error}=await db.rpc('join_party_finder_listing',{p_listing_id:id,p_party_ilvl:Number(Game.partyItemLevel?.())||0});if(error)throw error;
    await syncParty(id);await fetchHub()
  }catch(e){alert(e.message||'Could not join raid group')}
@@ -342,7 +345,10 @@ async function leaveGroup(){
 }
 async function startRaid(){
  try{
+   if(!partyReady())throw new Error(partyReadyReason());
    await syncParty(myGroup.id);
+   const {data:latest,error:membersError}=await db.from('party_finder_members').select('listing_id,user_id,party_snapshot').eq('listing_id',myGroup.id);if(membersError)throw membersError;
+   if(!raidRowsReady(latest||[]))throw new Error('Both raid parties must contain five Level 15 adventurers before The Manor can begin.');
    const {data,error}=await db.rpc('start_manor_raid',{p_listing_id:myGroup.id});if(error)throw error;
    await fetchHub();await openRaid(data)
  }catch(e){alert(e.message||'The Manor could not be started')}
