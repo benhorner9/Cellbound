@@ -426,7 +426,7 @@ async function claimWeekly(){
  const {data,error}=await db.rpc('claim_weekly_dungeon_reward');
  if(error){alert(error.message||'Weekly reward is not ready.');return}
  const quality=data?.quality||'starter',tier=quality==='epic'?4:quality==='rare'?3:quality==='uncommon'?2:1;
- const pool=G.items.filter(x=>x.tier===tier&&x.enabled),base=pool[Math.floor(Math.random()*Math.max(1,pool.length))];
+ const pool=G.items.filter(x=>x.tier===tier&&x.enabled&&(!Game?.isBetaClassPlayable||Game.isBetaClassPlayable(x.class))),base=pool[Math.floor(Math.random()*Math.max(1,pool.length))];
  if(base)Game.addBankItem?.(G.rollItemAffixes({...base,source:'Weekly Endgame Vault'}));
  Game.addMaterial?.('cell-shards',quality==='epic'?32:quality==='rare'?22:quality==='uncommon'?14:8);
  Game.save?.();await Game.persistState?.();await refresh()

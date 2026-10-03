@@ -55,10 +55,11 @@ function newFloor(floor){
  const generated=generateFloor(floor,run.seed);
  run.floor=floor;run.map=generated.cells;run.pos={...generated.start};run.teleporter=generated.teleporter;run.parts={cable:false,cell:false,fuse:false};run.visited={[key(run.pos.x,run.pos.y)]:true};run.message='Floor '+floor+' entered. Locate the three teleporter components.';run.lastCombat=null
 }
-function unlocked(){const s=Game()?.getState?.();return Boolean(s?.progression?.nullComplexUnlocked||s?.questSystem?.nullComplex?.complete)}
+function manorCleared(){const s=Game()?.getState?.();return Boolean(s?.progression?.manorRaidCleared||Object.keys(s?.raidRewardClaims||{}).length)}
+function unlocked(){const s=Game()?.getState?.();return Boolean(manorCleared()&&(s?.progression?.nullComplexUnlocked||s?.questSystem?.nullComplex?.complete))}
 function start(){
  const G=Game(),n=state(),party=G?.getPartyCharacters?.()||[];
- if(!unlocked())return notice('Complete Signal From Nowhere to unlock The Null Complex.');
+ if(!unlocked())return notice(manorCleared()?'Complete Signal From Nowhere to unlock The Null Complex.':'Complete The Manor raid before investigating the Null Complex.');
  if(party.length!==5)return notice('A complete active party of five is required.');
  if(party.some(c=>G.isUnavailable?.(c)))return notice('A party member is recovering from Cell Shock.');
  if(attemptsLeft()<=0)return notice('No Null Complex attempts remain in this five-day cycle.');
