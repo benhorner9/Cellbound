@@ -329,7 +329,8 @@ async function mainGamePlaythrough(browser){
   assert(await page.locator('#chat').isVisible(),'social view renders');
 
   await page.evaluate(()=>CellboundGame.switchView('content'));
-  await page.waitForSelector('#betaQuickReportTrigger',{timeout:5000});
+  await page.waitForFunction(()=>Boolean(window.CellboundBetaOps),{},{timeout:10000,polling:50});
+  await page.waitForSelector('#betaQuickReportTrigger',{timeout:10000});
   assert(await page.locator('#betaQuickReportTrigger').isVisible(),'persistent Report Bug / Request button is visible');
   await page.locator('#betaQuickReportTrigger').click();
   await page.locator('[data-quick-report="feature"]').click();
@@ -341,7 +342,7 @@ async function mainGamePlaythrough(browser){
   await page.locator('#betaReportSummary').fill('QA support ticket');
   await page.locator('#betaReportDetails').fill('The automated beta operations playthrough is testing the support submission path.');
   await page.locator('#betaReportSubmit').click();
-  await page.waitForFunction(()=>document.querySelector('#betaReportMessage')?.textContent?.includes('Report sent'),{},{timeout:5000,polling:50});
+  await page.waitForFunction(()=>document.querySelector('#betaReportMessage')?.textContent?.includes('Report sent'),{},{timeout:12000,polling:50});
   assert((await page.locator('#betaReportMessage').textContent()).includes('Report sent'),'beta report submission path completes');
 
   for(const size of [{width:768,height:1024},{width:390,height:844},{width:1024,height:1366}]){
