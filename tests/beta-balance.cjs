@@ -51,8 +51,15 @@ for(const id of Object.keys(balance.DUNGEON_REPEAT_XP)){
   assert(first>=repeat,'first clear should never pay less XP than repeat: '+id);
 }
 
+const dungeonOrder=['ashen-vault','hollow-sanctum','chaos-canyon','blackout-station','fractured-ages'];
+assert.deepEqual(dungeonOrder.map(id=>balance.dungeonShards(id,{difficulty:'normal'})),[3,5,7,9,12],'normal shard rewards scale with dungeon depth');
+assert.deepEqual(dungeonOrder.map(id=>balance.dungeonShards(id,{difficulty:'heroic'})),[7,9,11,13,16],'heroic shard rewards scale with dungeon depth');
+for(const id of dungeonOrder){
+  assert(balance.dungeonShards(id,{difficulty:'cellbound',tier:20})>balance.dungeonShards(id,{difficulty:'heroic'}),id+' Cellbound+ rewards stay above Heroic');
+}
+
 const endgame=load('endgame-data-v1.js').CellboundEndgameData;
-const ids=['ashen-vault','hollow-sanctum','chaos-canyon','blackout-station','fractured-ages'];
+const ids=dungeonOrder;
 assert.deepEqual(ids.map(id=>endgame.DUNGEONS[id].normalItemLevel),[18,24,30,34,38],'normal iLvl ladder remains smooth');
 for(let i=0;i<ids.length-1;i++){
   const profile=endgame.lootProfileFor(ids[i],'normal',0),cap=Math.max(...Object.values(profile.itemLevel).map(Number));
@@ -66,5 +73,12 @@ const boat=fs.readFileSync(path.join(root,'no-way-back-v1.js'),'utf8');
 assert(boat.includes('SHIPWRIGHT_KIT_COST'),'No Way Back uses the balance contract');
 const manor=fs.readFileSync(path.join(root,'manor-raid-v1.js'),'utf8');
 assert(manor.includes('Every active adventurer must reach Level 15'),'Manor enforces its displayed level requirement');
+for(const file of ['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','fractured-ages-v1.js']){
+  const src=fs.readFileSync(path.join(root,file),'utf8');
+  assert(src.includes('BAL?.dungeonXp?.')||file==='dungeon-2d-v1.js'&&src.includes("BAL?.dungeonXp?.('ashen-vault'"),file+' must use first-clear/repeat XP from the balance contract');
+  assert(src.includes('Game?.xpNeeded?.')||src.includes('Game?.xpNeeded?.('),file+' must use the shared beta level curve');
+}
+const endgameRuntime=fs.readFileSync(path.join(root,'endgame-v1.js'),'utf8');
+assert(endgameRuntime.includes('BAL?.dungeonShards?.'),'Endgame shard rewards use the dungeon-depth balance curve');
 
-console.log('Beta balance regression passed: campaign XP, dungeon gear ladder, Fourfold pity, boat economy, Cell Shock and Manor level gate.');
+console.log('Beta balance regression passed: exact Level 15 campaign curve, first-clear/repeat XP, dungeon gear and shard ladders, Fourfold pity, boat economy, Cell Shock and Manor gate.');
