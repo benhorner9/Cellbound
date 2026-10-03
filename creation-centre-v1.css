@@ -29,17 +29,17 @@
 .cc-preview-stage:before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 42%,rgba(115,145,128,.13),transparent 48%),linear-gradient(0deg,rgba(213,182,117,.035) 1px,transparent 1px);background-size:auto,100% 72px;pointer-events:none}
 .cc-preview-label{position:absolute;z-index:4;top:10px;left:10px;padding:5px 7px;border:1px solid rgba(213,182,117,.25);background:rgba(5,12,14,.8);color:#cbb789;font-size:9px;letter-spacing:.1em;text-transform:uppercase}
 .cc-preview-glow{position:absolute;z-index:0;left:50%;top:42%;width:64%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(112,145,127,.17),transparent 67%)}
-.cc-preview-model{position:relative;z-index:1;display:grid!important;place-items:center!important;flex:1 1 auto!important;width:100%!important;min-height:0!important;overflow:hidden!important;padding:34px 10px 4px!important}
+.cc-preview-model{position:relative;z-index:1;display:grid!important;place-items:center!important;flex:1 1 auto!important;width:100%!important;min-height:0!important;overflow:hidden!important;padding:28px 10px 2px!important}
 .cc-preview-model>.cb-paper-doll--creator{
  display:block!important;
  width:auto!important;
  height:100%!important;
  max-width:92%!important;
- max-height:326px!important;
+ max-height:338px!important;
  aspect-ratio:240/410!important;
  margin:0 auto!important;
  flex:0 1 auto!important;
- transform:scale(.95)!important;
+ transform:translateY(3px) scale(1.055)!important;
  transform-origin:center center!important
 }
 .cc-preview-model>.cb-paper-doll--creator svg{display:block!important;width:100%!important;height:100%!important;overflow:visible!important}
@@ -101,7 +101,7 @@
  .cc-layout{grid-template-columns:minmax(270px,.82fr) minmax(420px,1.18fr);gap:8px 10px}
  .cc-centre .creator-panel{padding:11px!important}.cc-panel-heading h2{font-size:21px}
  .cc-preview-stage{height:438px}.cc-step-appearance .cc-preview-stage,.cc-step-features .cc-preview-stage,.cc-step-class .cc-preview-stage{height:410px}.cc-step-identity .cc-preview-stage{height:385px}.cc-step-confirm .cc-preview-stage{height:480px}
- .cc-preview-model>.cb-paper-doll--creator{max-height:305px!important}
+ .cc-preview-model>.cb-paper-doll--creator{max-height:318px!important}
  .cc-options-grid{gap:0 8px}.cc-option-row{grid-template-columns:minmax(78px,1fr) 118px;gap:5px}.cc-option-stepper{grid-template-columns:28px 58px 28px;width:118px}.cc-option-stepper button{width:28px!important;min-width:28px!important}.cc-option-stepper b{width:58px;max-width:58px}
 }
 
