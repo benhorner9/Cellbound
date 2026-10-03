@@ -1116,7 +1116,8 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
 
   const noWayBack=fs.readFileSync(path.join(__dirname,'no-way-back-v1.js'),'utf8');
   const prereqBlock=noWayBack.match(/function prereqs\(\)\{([\s\S]*?)\n\}/)?.[1]||'';
-  for(const hook of ['Ashes on the East Road','Echoes Beneath Zeltira','The Thirteenth Bell'])if(!prereqBlock.includes(hook))throw new Error('Beta Manor route is missing prerequisite '+hook);
+  for(const hook of ['Ashes on the East Road','The Hollow Sanctum','hollowFirstClear','The Thirteenth Bell'])if(!prereqBlock.includes(hook))throw new Error('Beta Manor route is missing prerequisite '+hook);
+  if(prereqBlock.includes('Echoes Beneath Zeltira'))throw new Error('The Manor beta route must require the Hollow Sanctum clear, not merely its discovery');
   if(prereqBlock.includes('The Fourfold Lock'))throw new Error('The Manor cannot depend on future-update Fourfold content during beta');
 
   const quests=fs.readFileSync(path.join(__dirname,'quests-v2.js'),'utf8');
@@ -1139,7 +1140,9 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     "['Warrior','Paladin','Hunter','Rogue','Mage']",
     "['ashen-vault','hollow-sanctum']",
     'Signal From Nowhere is locked before a Manor clear',
-    'a persisted Manor clear unlocks Signal From Nowhere'
+    'a persisted Manor clear unlocks Signal From Nowhere',
+    'an old-save future class cannot remain in the playable active five',
+    'fresh guild creator only produces beta-playable classes'
   ])if(!playthrough.includes(hook))throw new Error('Beta content-lock browser regression is missing '+hook);
 
   console.log('Beta content package is release-gated.');
