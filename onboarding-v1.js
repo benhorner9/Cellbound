@@ -328,7 +328,7 @@ function tutorialComicConfig(id){
         {kind:'npc',eyebrow:'THE POINT',title:'Your next decision changes.',text:'Use another character, recover, or prepare better for the next attempt.'}
       ],
       choices:[
-        {id:'delete',icon:'?',label:'Does a wipe delete our progress?',reply:'No. Your items and progression remain. Cell Shock changes availability, not ownership.'},
+        {id:'delete',icon:'?',label:'Does a wipe delete our progress?',reply:'No. Your items and completed objectives remain. Cell Shock changes availability, not ownership.'},
         {id:'recover',icon:'◇',label:'Can Cell Shock be recovered?',reply:'Yes. Time clears it, membership shortens recovery, and rare crafted preparation can remove it.'},
         {id:'show',icon:'→',label:'Show us what reaching 100% looks like.',reply:'Watch the ward record. Your real roster will not be changed by this demonstration.'}
       ]
@@ -370,7 +370,7 @@ function tutorialComicConfig(id){
       panels:[
         {kind:'location',artwork:'./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp',eyebrow:'DAWN',title:'The eastern gate opens.',text:'For the first time, the route ahead belongs entirely to your guild.',icon:'☼'},
         {kind:'npc',eyebrow:'ELARA',title:'No more training ward',text:'The systems you learned remain. The safety net does not.'},
-        {kind:'location',eyebrow:'THE ROAD',title:'Quest · Dungeon · Endgame',text:'The tutorial ends where the actual game begins.',icon:'→'}
+        {kind:'location',eyebrow:'THE ROAD',title:'Quest · Dungeon · Raid',text:'Your first real adventure starts here.',icon:'→'}
       ],
       choices:[
         {id:'advice',icon:'?',label:'Any final advice?',reply:'Read the fight. Read the item. Read the room. Most bad outcomes tell you what you missed.'},
@@ -497,7 +497,7 @@ function renderDungeonBriefing(){
   if(maybeTutorialComic('hollows'))return;
   const roster=state().roster||[],tank=roster.find(c=>tdRole(c)==='tank'),healer=roster.find(c=>tdRole(c)==='healer');
   const body='<div class="tutorial-descent-brief">'+
-    '<main class="tutorial-descent-hero"><div class="tutorial-descent-art"><img src="./assets/comics/tutorial/warden_s_descent_into_the_ruins.webp" alt=""><div></div><span>THE ZELTIRAN HOLLOWS</span><h2>The wardstone is pointing down.</h2><p>This is not a fake training window. Your first descent now runs through the same Combat Reborn simulation and shared combat viewer used by Cellbound dungeons.</p></div>'+
+    '<main class="tutorial-descent-hero"><div class="tutorial-descent-art"><img src="./assets/comics/tutorial/warden_s_descent_into_the_ruins.webp" alt=""><div></div><span>THE ZELTIRAN HOLLOWS</span><h2>The wardstone is pointing down.</h2><p>Your first descent is a real fight. Choose the party’s focus, read the mechanics and carry the result forward.</p></div>'+
     '<div class="tutorial-route-v4"><article><i>01</i><span><small>THREAT</small><b>Rootling Nest</b><p>Call the opening pull and watch who owns the enemies.</p></span></article><article><i>02</i><span><small>INTERRUPTS</small><b>Collapsed Gallery</b><p>A dangerous cast forces you to decide what deserves attention.</p></span></article><article><i>03</i><span><small>MOVEMENT</small><b>Hollow Warden</b><p>Read real telegraphs while the party fights the boss.</p></span></article></div></main>'+
     '<aside class="tutorial-command-brief"><small>WARDEN ELARA · FIELD BRIEF</small><h2>You give the order. Then you watch what it costs.</h2><p class="guide-quote">“A guild master does not swing five weapons. You make the call that decides where those weapons are when it matters.”</p>'+
     '<div class="tutorial-party-check"><div><span>TANK</span><b>'+esc(tank?.name||'Your Tank')+'</b></div><div><span>HEALER</span><b>'+esc(healer?.name||'Your Healer')+'</b></div><div><span>DAMAGE</span><b>'+Math.max(0,roster.filter(c=>tdRole(c)==='dps').length)+' ready</b></div></div>'+
@@ -667,7 +667,7 @@ async function launchTutorialRebornEncounter(index){
     },{zone:'zeltira-first-expedition'});
   }catch(error){
     console.error('Tutorial Combat Reborn simulation failed',error);
-    if(hint)hint.textContent='The combat simulation could not start. Refresh and try this room again.';
+    if(hint)hint.textContent='The fight could not start. Refresh and try this room again.';
     if(launch){launch.disabled=false;launch.textContent='ENTER LIVE COMBAT →'}
     return
   }
@@ -753,8 +753,8 @@ function renderDungeonRunning(){
       ?'The ward saved the roster. Change the command and watch how the same room behaves differently.'
       :report.commandHit
         ?'That was the read Elara was looking for. The result should make the lesson visible rather than merely telling you the answer.'
-        :'You cleared it, but not with the safest call. That is useful too: Cellbound lets a messy plan succeed until harder content stops forgiving it.';
-    content='<section class="tutorial-after-action '+grade.tone+'"><div class="tutorial-report-head"><div><small>AFTER ACTION · '+esc(report.engine)+'</small><h2>'+esc(grade.title)+'</h2><p>'+esc(grade.copy)+'</p></div><strong class="'+(report.commandHit?'hit':'miss')+'">'+(report.commandHit?'★ COMMAND READ':'◇ RISKY CALL')+'</strong></div>'+
+        :'You cleared it, but not with the safest call. That is useful too: a messy plan can work here, but harder fights will punish it.';
+    content='<section class="tutorial-after-action '+grade.tone+'"><div class="tutorial-report-head"><div><small>AFTER ACTION</small><h2>'+esc(grade.title)+'</h2><p>'+esc(grade.copy)+'</p></div><strong class="'+(report.commandHit?'hit':'miss')+'">'+(report.commandHit?'★ COMMAND READ':'◇ RISKY CALL')+'</strong></div>'+
       '<div class="tutorial-report-command"><span>YOUR ORDER</span><b>'+esc(order?.title||'Unknown order')+'</b><p>'+esc(lesson)+'</p></div>'+
       '<div class="tutorial-report-metrics">'+metrics.map(x=>'<article><span>'+x[0]+'</span><b>'+x[1]+'</b></article>').join('')+'</div>'+
       '<div class="tutorial-report-detail"><div><span>TOP DAMAGE</span><b>'+esc(report.topDamage)+'</b><small>'+Math.round(report.topDamageValue).toLocaleString()+' damage</small></div><div><span>MISTAKES</span><b>'+report.mistakes+'</b><small>'+report.missedInterrupts+' critical interrupts missed</small></div></div>'+
