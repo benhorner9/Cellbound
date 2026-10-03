@@ -100,6 +100,14 @@ const classes={
   }}
 };
 
+const BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue','Mage']);
+const BETA_PLAYABLE_CLASS_SET=new Set(BETA_PLAYABLE_CLASSES);
+const BETA_DUNGEONS=Object.freeze(['ashen-vault','hollow-sanctum']);
+const BETA_DUNGEON_SET=new Set(BETA_DUNGEONS);
+function isBetaClassPlayable(name){return BETA_PLAYABLE_CLASS_SET.has(String(name||''))}
+function isBetaDungeonPlayable(id){return BETA_DUNGEON_SET.has(String(id||''))}
+function isCharacterBetaPlayable(c){return Boolean(c&&isBetaClassPlayable(c.class))}
+
 const RECRUIT_RACES=[
   {id:'Veyren',icon:'◇',trait:'Adaptable'},
   {id:'Stoneborn',icon:'⬡',trait:'Unyielding'},
@@ -213,7 +221,7 @@ function writePartySlots(ids){
   state.party.tank=slots[0]||null;state.party.healer=slots[1]||null;state.party.dps=[slots[2]||null,slots[3]||null,slots[4]||null]
 }
 function flatPartyIds(){return partySlotIds().filter(Boolean);}
-function partyCharacters(){return flatPartyIds().map(charById).filter(c=>c&&isCharacterRosterUnlocked(c.id));}
+function partyCharacters(){return flatPartyIds().map(charById).filter(c=>c&&isCharacterRosterUnlocked(c.id)&&isCharacterBetaPlayable(c));}
 function partyItemLevel(){const chars=partyCharacters();return chars.length===5?Math.round(chars.reduce((sum,c)=>sum+characterItemLevel(c),0)/5):0;}
 function isRosterSlotUnlocked(index){return index<entitlements().rosterCap;}
 function isCharacterRosterUnlocked(id){const i=state?.roster?.findIndex(c=>c.id===id)??-1;return i>=0&&isRosterSlotUnlocked(i);}
@@ -503,11 +511,11 @@ function renderTop(){
   ui.renown.textContent=state.renown;ui.gold.textContent=state.gold.toLocaleString();ui.rosterCount.textContent=`${unlocked} / ${e.rosterCap}`;if(ui.bankCount)ui.bankCount.textContent=bankTotal();if(ui.dungeonProgress)ui.dungeonProgress.textContent=`${Object.values(state.bossKills).filter(Boolean).length} / 3 bosses`;if(ui.partyIlvlTop)ui.partyIlvlTop.textContent=pi||'—';if(ui.membershipStatus){ui.membershipStatus.textContent=e.member?'MEMBER':'STANDARD';ui.membershipStatus.dataset.member=e.member?'1':'0';}
 }
 function rosterCard(c,index){
-  const role=roleOf(c),unlocked=isRosterSlotUnlocked(index),recovering=isUnavailable(c),ilvl=characterItemLevel(c),classKey=combatClassKey(c),active=flatPartyIds().includes(c.id);
+  const role=roleOf(c),unlocked=isRosterSlotUnlocked(index),betaPlayable=isCharacterBetaPlayable(c),recovering=isUnavailable(c),ilvl=characterItemLevel(c),classKey=combatClassKey(c),active=betaPlayable&&flatPartyIds().includes(c.id);
   const lockedLabel=index>=10?'ADMIN LOCKED':'MEMBERSHIP LOCKED';
-  const shock=Math.round(Number(c.cellShock)||0),meta=classDef(c),status=!unlocked?lockedLabel:recovering?'RECOVERING':active?'ACTIVE PARTY':'AVAILABLE';
-  const statusClass=!unlocked?'locked':recovering?'recovering':active?'active':'ready';
-  return `<article class="char-card roster-character-card ${classKey} ${!unlocked?'roster-locked':''} ${recovering?'shock-locked':''} ${active?'is-active':''}" data-role="${role}" data-class-name="${c.class}" style="--roster-accent:${meta?.glow||'#7F8B88'};--glow:${meta?.glow||'#7F8B88'}">
+  const shock=Math.round(Number(c.cellShock)||0),meta=classDef(c),status=!unlocked?lockedLabel:!betaPlayable?'FUTURE UPDATE':recovering?'RECOVERING':active?'ACTIVE PARTY':'AVAILABLE';
+  const statusClass=!unlocked||!betaPlayable?'locked':recovering?'recovering':active?'active':'ready';
+  return `<article class="char-card roster-character-card ${classKey} ${!unlocked||!betaPlayable?'roster-locked':''} ${recovering?'shock-locked':''} ${active?'is-active':''}" data-role="${role}" data-class-name="${c.class}" style="--roster-accent:${meta?.glow||'#7F8B88'};--glow:${meta?.glow||'#7F8B88'}">
     ${!unlocked?'<div class="member-slot-ribbon">'+(index>=10?'ADMIN SLOT ':'MEMBERSHIP SLOT ')+(index+1)+'</div>':''}
     <div class="roster-card-head">
       <div class="roster-card-portrait">${portraitHTML(c,'md')}<i>${meta?.icon||'◇'}</i></div>
@@ -582,7 +590,7 @@ function ensureRecruitModal(){
 function openRecruit(slotIndex){
   const e=entitlements();
   if(e.rosterCap<=5||!state.onboarding?.complete||state.roster.length>=e.rosterCap||slotIndex!==state.roster.length)return;
-  const klass=Object.keys(classes)[0],spec=Object.keys(classes[klass]?.specs||{})[0];
+  const klass=BETA_PLAYABLE_CLASSES[0],spec=Object.keys(classes[klass]?.specs||{})[0];
   recruitDraft={race:'Veyren',klass,spec,name:recruitRandomName('Veyren'),appearance:CP?.randomAppearance?.('Veyren')||{race:'Veyren'}};renderRecruitModal()
 }
 function closeRecruit(){
@@ -599,7 +607,7 @@ function renderRecruitModal(){
     '<header><small>'+(adminSlot?'ADMIN ROSTER':'MEMBERSHIP ROSTER')+' · SLOT '+(state.roster.length+1)+' OF '+e.rosterCap+'</small><h2>Recruit Adventurer</h2><p>'+(e.isAdmin?'Admin accounts can maintain up to 20 adventurers.':'Membership adds five roster slots. Recruit them whenever you need them.')+'</p></header>'+
     '<div class="recruit-body">'+
       '<label><span>Race</span><select id="recruitRace">'+RECRUIT_RACES.map(r=>'<option value="'+r.id+'" '+(r.id===recruitDraft.race?'selected':'')+'>'+r.icon+' '+r.id+' · '+r.trait+'</option>').join('')+'</select></label>'+
-      '<label><span>Class</span><select id="recruitClass">'+Object.entries(classes).map(([name,d])=>'<option value="'+name+'" '+(name===recruitDraft.klass?'selected':'')+'>'+d.icon+' '+name+'</option>').join('')+'</select></label>'+
+      '<label><span>Class</span><select id="recruitClass">'+Object.entries(classes).filter(([name])=>isBetaClassPlayable(name)).map(([name,d])=>'<option value="'+name+'" '+(name===recruitDraft.klass?'selected':'')+'>'+d.icon+' '+name+'</option>').join('')+'</select></label>'+
       '<label><span>Specialisation</span><select id="recruitSpec">'+specs.map(([name,d])=>'<option value="'+name+'" '+(name===recruitDraft.spec?'selected':'')+'>'+name+' · '+roleLabel(d.role)+'</option>').join('')+'</select></label>'+
       '<div class="recruit-appearance-wrap"><small>APPEARANCE</small>'+appearanceEditor+'</div>'+ 
       '<label class="recruit-name-label"><span>Name</span><div class="recruit-name"><input id="recruitName" maxlength="24" autocomplete="off" value="'+esc(recruitDraft.name)+'"><button type="button" data-random-recruit>RANDOMISE</button></div></label>'+
@@ -624,7 +632,9 @@ async function createRecruit(){
   if(name.length<2||name.length>24||state.roster.some(c=>String(c.name||'').toLowerCase()===name.toLowerCase())){
     const input=$('#recruitName');if(input){input.setCustomValidity('Use a unique name between 2 and 24 characters.');input.reportValidity();setTimeout(()=>input.setCustomValidity(''),1800)}return
   }
-  const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],klass=recruitDraft.klass,spec=recruitDraft.spec,role=classes[klass]?.specs?.[spec]?.role||'dps',equipment=starterEquipment(klass);
+  const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],klass=recruitDraft.klass,spec=recruitDraft.spec;
+  if(!isBetaClassPlayable(klass)){alert(klass+' is reserved for a future Cellbound update.');renderRecruitModal();return}
+  const role=classes[klass]?.specs?.[spec]?.role||'dps',equipment=starterEquipment(klass);
   const ch=normalizeCharacter({
     id:recruitUid(),name,race:race.id,raceTrait:window.CellboundIdentities?.getRace?.(race.id)?.trait||race.trait,class:klass,spec,role,
     level:1,xp:0,power:role==='tank'?30:role==='healer'?27:29,talent:1,portrait:recruitInitials(name),appearance:CP?.normalizeAppearance?.(recruitDraft.appearance,name,race.id)||recruitDraft.appearance,
@@ -677,11 +687,7 @@ function renderOverview(){
   let dungeon;
   if(!ashenOpen||!ashenDone)dungeon={id:'ashen-vault',name:'The Ashen Vault',tag:ashenOpen?'AVAILABLE':'QUEST LOCKED',copy:'Break through the furnace halls and reach the living Vaultheart.',pips:3,active:Math.min(3,Object.values(state?.bossKills||{}).filter(Boolean).length||1),req:18};
   else if(hollowOpen&&!hollowDone)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:'NEWLY UNLOCKED',copy:'Descend beneath Zeltira and face the Bound Choir.',pips:3,active:1,req:24};
-  else if(!chaosDone)dungeon={id:'chaos-canyon',name:'Chaos Canyon',tag:'AVAILABLE',copy:'Cross Vorran’s living canyon and break the Druid at its heart.',pips:3,active:1,req:30};
-  else if(!blackoutDone)dungeon={id:'blackout-station',name:'Blackout Station',tag:'AVAILABLE',copy:'Restore the dead grid and survive Dr. Vex Calder’s role circuits.',pips:2,active:1,req:34};
-  else if(fracturedOpen&&!fracturedDone)dungeon={id:'fractured-ages',name:'The Fractured Ages',tag:'NEWLY UNLOCKED',copy:'Follow the Strange Old Man through impossible eras.',pips:5,active:1,req:38};
-  else if(fracturedOpen)dungeon={id:'fractured-ages',name:'The Fractured Ages',tag:'CLEARED',copy:'Return for temporal gear, stronger rolls and another encounter with the Old Man.',pips:5,active:5,req:38};
-  else if(hollowOpen)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:hollowDone?'CLEARED':'AVAILABLE',copy:hollowDone?'Return to the Sanctum for another run.':'The Hollow Sanctum is open when your party is ready.',pips:3,active:hollowDone?3:1,req:24};
+  else if(hollowOpen)dungeon={id:'hollow-sanctum',name:'The Hollow Sanctum',tag:hollowDone?'CLEARED':'AVAILABLE',copy:hollowDone?'Return to the Sanctum for another run while the frontier expands.':'The Hollow Sanctum is open when your party is ready.',pips:3,active:hollowDone?3:1,req:24};
   else dungeon={id:'ashen-vault',name:'The Ashen Vault',tag:'CLEARED',copy:'The Ashen Vault remains open while you follow the next lead.',pips:3,active:3,req:18};
 
   const roles=party.reduce((out,c)=>{const role=roleOf(c);out[role]=(out[role]||0)+1;return out;},{tank:0,healer:0,dps:0});
@@ -763,20 +769,18 @@ function renderOverview(){
 
   const progress=$('#overviewProgress');
   if(progress){
-    const chaosOpen=hollowDone||chaosDone||blackoutDone||fracturedOpen;
-    const blackoutOpen=chaosDone||blackoutDone||fracturedOpen;
     const stages=[
       {id:'ashen-vault',label:'Ashen Vault',kind:'DUNGEON',done:ashenDone,open:ashenOpen},
       {id:'hollow-sanctum',label:'Hollow Sanctum',kind:'DUNGEON',done:hollowDone,open:hollowOpen},
-      {id:'chaos-canyon',label:'Chaos Canyon',kind:'DUNGEON',done:chaosDone,open:chaosOpen},
-      {id:'blackout-station',label:'Blackout Station',kind:'DUNGEON',done:blackoutDone,open:blackoutOpen},
-      {id:'fractured-ages',label:'Fractured Ages',kind:'DUNGEON',done:fracturedDone,open:fracturedOpen},
-      {id:'manor',label:'The Manor',kind:'RAID',done:false,open:manorUnlocked}
+      {id:'chaos-canyon',label:'Chaos Canyon',kind:'DUNGEON',done:false,open:false,future:true},
+      {id:'blackout-station',label:'Blackout Station',kind:'DUNGEON',done:false,open:false,future:true},
+      {id:'fractured-ages',label:'Fractured Ages',kind:'DUNGEON',done:false,open:false,future:true},
+      {id:'manor',label:'The Manor',kind:'RAID',done:Boolean(state?.progression?.manorRaidCleared),open:manorUnlocked}
     ];
     progress.innerHTML=stages.map((stage,index)=>{
       const current=stage.id===dungeon.id&&!stage.done;
-      const cls=stage.done?'done':current?'current':stage.open?'open':'locked';
-      const status=stage.done?'CLEARED':current?'NEXT':stage.open?'OPEN':'LOCKED';
+      const cls=stage.future?'locked future':stage.done?'done':current?'current':stage.open?'open':'locked';
+      const status=stage.future?'FUTURE UPDATE':stage.done?'CLEARED':current?'NEXT':stage.open?'OPEN':'LOCKED';
       return `<button type="button" class="home-progress-stage ${cls}" data-home-stage="${stage.id}" ${stage.open||stage.done?'':'disabled'}><i class="node">${stage.done?'✓':index+1}</i><small>${stage.kind}</small><b>${stage.label}</b><em>${status}</em></button>`;
     }).join('');
     progress.querySelectorAll('[data-home-stage]').forEach(button=>button.addEventListener('click',()=>{
@@ -1183,7 +1187,7 @@ $('#bankBulkDismantle')?.addEventListener('click',()=>disposeBankBulk('dismantle
 
 function removeChar(id){writePartySlots(partySlotIds().map(x=>x===id?null:x))}
 function assignChar(id){
-  const c=charById(id);if(!c||!isCharacterRosterUnlocked(id)||isUnavailable(c))return;
+  const c=charById(id);if(!c||!isCharacterRosterUnlocked(id)||!isCharacterBetaPlayable(c)||isUnavailable(c))return;
   const slots=partySlotIds();if(slots.includes(id))return;
   const idx=slots.findIndex(x=>!x);if(idx<0)return;
   slots[idx]=id;writePartySlots(slots);save();renderAll()
@@ -1201,17 +1205,19 @@ function partyReadiness(){
   const ids=flatPartyIds();
   if(ids.length<5)return{score:ids.length*20,ready:false,hint:'Fill all five party slots. Any role composition is allowed.'};
   const chars=ids.map(charById);
-  if(chars.some(c=>!c||isUnavailable(c)))return{score:60,ready:false,hint:'A party member is recovering from 100% Cell Shock. Rotate them out before entering combat.'};
+  if(chars.some(c=>!c))return{score:60,ready:false,hint:'One selected adventurer could not be loaded.'};
+  if(chars.some(c=>!isCharacterBetaPlayable(c)))return{score:60,ready:false,hint:'A selected class is reserved for a future update. Replace that adventurer for beta content.'};
+  if(chars.some(c=>isUnavailable(c)))return{score:60,ready:false,hint:'A party member is recovering from 100% Cell Shock. Rotate them out before entering combat.'};
   if(ids.some(id=>!isCharacterRosterUnlocked(id)))return{score:60,ready:false,hint:'A selected character is outside your currently unlocked roster slots.'};
   const pi=partyItemLevel(),avgLevel=Math.round(chars.reduce((s,c)=>s+Math.max(1,Number(c.level)||1),0)/5),composition=partyComposition(chars);
   return{score:100,ready:true,hint:`${composition} · Party Lv ${avgLevel} · iLvl ${pi}. Choose a dungeon to check its specific entry requirement.`};
 }
 function renderParty(){
   const slots=partySlotIds();ui.partySlots.innerHTML=slots.map((id,i)=>slotHtml(i,id)).join('');ui.partySlots.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',()=>{removeChar(b.dataset.remove);save();renderAll();}));
-  const selected=new Set(flatPartyIds());ui.partyRoster.innerHTML=state.roster.map((c,i)=>{const slotLocked=!isRosterSlotUnlocked(i),shock=isUnavailable(c),disabled=selected.has(c.id)||slotLocked||shock||selected.size>=5;return `<button class="party-choice ${slotLocked?'roster-locked':''} ${shock?'shock-locked':''}" data-pick="${c.id}" ${disabled?'disabled':''}><div class="avatar">${portraitHTML(c,'sm')}</div><div><b>${c.name}</b><small>Lv. ${c.level} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}</small></div><em>${slotLocked?'Member slot':shock?`Recovering ${formatRemaining(c)}`:`${roleLabel(roleOf(c))} · Shock ${c.cellShock||0}%`}</em></button>`;}).join('');
+  const selected=new Set(flatPartyIds());ui.partyRoster.innerHTML=state.roster.map((c,i)=>{const slotLocked=!isRosterSlotUnlocked(i),betaLocked=!isCharacterBetaPlayable(c),shock=isUnavailable(c),disabled=selected.has(c.id)||slotLocked||betaLocked||shock||selected.size>=5;return `<button class="party-choice ${slotLocked||betaLocked?'roster-locked':''} ${shock?'shock-locked':''}" data-pick="${c.id}" ${disabled?'disabled':''}><div class="avatar">${portraitHTML(c,'sm')}</div><div><b>${c.name}</b><small>Lv. ${c.level} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}</small></div><em>${slotLocked?'Member slot':betaLocked?'Future update':shock?`Recovering ${formatRemaining(c)}`:`${roleLabel(roleOf(c))} · Shock ${c.cellShock||0}%`}</em></button>`;}).join('');
   ui.partyRoster.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>assignChar(b.dataset.pick)));const r=partyReadiness();ui.readinessFill.style.width=`${r.score}%`;ui.readinessText.textContent=`${r.score}%`;ui.readinessLabel.textContent=r.ready?'READY':'NOT READY';ui.readinessLabel.className=r.ready?'good':'';ui.readinessHint.textContent=r.hint;
 }
-$('#autoFill')?.addEventListener('click',()=>{const available=state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&!isUnavailable(c)).sort((a,b)=>characterItemLevel(b)-characterItemLevel(a)||b.power-a.power).slice(0,5);writePartySlots(available.map(c=>c.id));save();renderAll();});
+$('#autoFill')?.addEventListener('click',()=>{const available=state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&isCharacterBetaPlayable(c)&&!isUnavailable(c)).sort((a,b)=>characterItemLevel(b)-characterItemLevel(a)||b.power-a.power).slice(0,5);writePartySlots(available.map(c=>c.id));save();renderAll();});
 $('#partyOpenDungeons')?.addEventListener('click',()=>switchView('content'));
 
 function applyCellShock(c,amount){
@@ -1228,6 +1234,7 @@ function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(
 window.CellboundGame={
   ready:false,getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getLevelCap:()=>PLAYER_LEVEL_CAP,getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,refreshStateFromServer,
   characterItemLevel,partyItemLevel,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,portraitHTML,
+  betaPlayableClasses:BETA_PLAYABLE_CLASSES,betaDungeons:BETA_DUNGEONS,isBetaClassPlayable,isBetaDungeonPlayable,isCharacterBetaPlayable,
   addBankItem,addMaterial,renderAll,switchView,starterEquipment,
   getPartyCharacters:()=>partyCharacters(),
   applyPartyCellShock:(amount=PVE_WIPE_CELL_SHOCK)=>{const chars=partyCharacters();chars.forEach(ch=>applyCellShock(ch,amount));save();renderAll();return chars.map(ch=>({id:ch.id,name:ch.name,cellShock:ch.cellShock}));}
