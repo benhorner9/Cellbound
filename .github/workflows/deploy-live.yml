@@ -1,27 +1,26 @@
-name: Deploy Cellbound Live
+name: Deploy Cellbound Production
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: cellbound-live-deploy-v3
-  cancel-in-progress: true
+  group: cellbound-production-deploy
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
-    name: Build and deploy via FTPS
+    name: Promote approved build to playcellbound.com
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - name: Check out Cellbound
+      - name: Check out approved Cellbound build
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -42,7 +41,7 @@ jobs:
           test -f dist/assets/gear/cellbound-gear-atlas.webp
           ! grep -R --line-number -E 'href="/|src="/' dist/*.html
 
-      - name: Deploy Cellbound to shared hosting
+      - name: Deploy approved build to playcellbound.com
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
           server: ${{ secrets.FTP_SERVER }}
