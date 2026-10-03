@@ -766,7 +766,7 @@ function renderOverview(){
 
   const readiness=$('#overviewReadiness'),readinessBadge=$('#homeReadinessBadge');
   if(readinessBadge){
-    readinessBadge.textContent=missionReady?'READY TO ENTER':!questReady?'CONTENT LOCKED':'NEEDS ATTENTION';
+    readinessBadge.textContent=missionReady?'READY TO ENTER':!questReady?'QUEST LOCKED':'NEEDS ATTENTION';
     readinessBadge.className=missionReady?'ready':!questReady?'blocked':'warn';
   }
   if(readiness){
