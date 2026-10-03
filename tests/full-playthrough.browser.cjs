@@ -125,7 +125,9 @@ async function mount(page,seedState=null,owner=false,options={}){
       await route.fulfill({status:404,body:''});return;
     }
     if(relative==='guild.html'){
-      const html=fs.readFileSync(file,'utf8').replace(/<meta\s+http-equiv=["']refresh["'][^>]*>/i,'');
+      const html=fs.readFileSync(file,'utf8')
+        .replace(/<meta\s+http-equiv=["']refresh["'][^>]*>/i,'')
+        .replace(/<script>\s*window\.location\.replace\(["']\.\/index\.html["']\);?\s*<\/script>/i,'');
       await route.fulfill({status:200,contentType:'text/html',body:html});return;
     }
     await route.fulfill({path:file});
