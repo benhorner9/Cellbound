@@ -628,30 +628,15 @@ function closeRecruit(){
 }
 function renderRecruitModal(){
   const root=ensureRecruitModal();if(!recruitDraft)return;
-  const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],specs=Object.entries(classes[recruitDraft.klass]?.specs||{}),role=classes[recruitDraft.klass]?.specs?.[recruitDraft.spec]?.role||'dps';
-  recruitDraft.appearance=CP?.normalizeAppearance?.(recruitDraft.appearance,recruitDraft.name||recruitDraft.race,recruitDraft.race)||recruitDraft.appearance||{race:recruitDraft.race};
-  const appearanceEditor=CP?.editorHTML?.(recruitDraft.appearance,{characterClass:recruitDraft.klass,name:recruitDraft.name,race:recruitDraft.race})||'';
   root.hidden=false;document.body.classList.add('recruit-adventurer-open');
-  const e=entitlements(),adminSlot=e.isAdmin&&state.roster.length>=10;
-  root.innerHTML='<section class="recruit-modal"><button class="modal-close" data-close-recruit>×</button>'+
-    '<header><small>'+(adminSlot?'ADMIN ROSTER':'MEMBERSHIP ROSTER')+' · SLOT '+(state.roster.length+1)+' OF '+e.rosterCap+'</small><h2>Recruit Adventurer</h2><p>'+(e.isAdmin?'Admin accounts can maintain up to 20 adventurers.':'Membership adds five roster slots. Recruit them whenever you need them.')+'</p></header>'+
-    '<div class="recruit-body">'+
-      '<label><span>Race</span><select id="recruitRace">'+RECRUIT_RACES.map(r=>'<option value="'+r.id+'" '+(r.id===recruitDraft.race?'selected':'')+'>'+r.icon+' '+r.id+' · '+r.trait+'</option>').join('')+'</select></label>'+
-      '<label><span>Class</span><select id="recruitClass">'+Object.entries(classes).filter(([name])=>isBetaClassPlayable(name)).map(([name,d])=>'<option value="'+name+'" '+(name===recruitDraft.klass?'selected':'')+'>'+d.icon+' '+name+'</option>').join('')+'</select></label>'+
-      '<label><span>Specialisation</span><select id="recruitSpec">'+specs.map(([name,d])=>'<option value="'+name+'" '+(name===recruitDraft.spec?'selected':'')+'>'+name+' · '+roleLabel(d.role)+'</option>').join('')+'</select></label>'+
-      '<div class="recruit-appearance-wrap"><small>APPEARANCE</small>'+appearanceEditor+'</div>'+ 
-      '<label class="recruit-name-label"><span>Name</span><div class="recruit-name"><input id="recruitName" maxlength="24" autocomplete="off" value="'+esc(recruitDraft.name)+'"><button type="button" data-random-recruit>RANDOMISE</button></div></label>'+
-    '</div>'+
-    '<div class="recruit-preview">'+portraitHTML({race:recruitDraft.race,appearance:recruitDraft.appearance,class:recruitDraft.klass,name:recruitDraft.name},'lg')+'<div><small>NEW LEVEL 1 ADVENTURER</small><b>'+esc(recruitDraft.name||'Unnamed')+'</b><span>'+race.id+' · '+recruitDraft.klass+' · '+recruitDraft.spec+' · '+roleLabel(role)+'</span></div></div>'+
-    '<footer><small>Starts with basic equipment · 0% Cell Shock · independent spec builds and professions</small><button class="on-primary" data-confirm-recruit>CONFIRM RECRUIT →</button></footer></section>';
-  root.querySelector('[data-close-recruit]').onclick=closeRecruit;
-  root.querySelector('#recruitRace').onchange=e=>{recruitDraft.race=e.target.value;recruitDraft.name=recruitRandomName(recruitDraft.race);recruitDraft.appearance=CP?.randomAppearance?.(recruitDraft.race)||{race:recruitDraft.race};renderRecruitModal()};
-  root.querySelector('#recruitClass').onchange=e=>{recruitDraft.klass=e.target.value;recruitDraft.spec=Object.keys(classes[recruitDraft.klass]?.specs||{})[0];renderRecruitModal()};
-  root.querySelector('#recruitSpec').onchange=e=>{recruitDraft.spec=e.target.value;renderRecruitModal()};
-  root.querySelector('#recruitName').oninput=e=>{recruitDraft.name=e.target.value};
-  root.querySelector('[data-random-recruit]').onclick=()=>{recruitDraft.name=recruitRandomName(recruitDraft.race);renderRecruitModal()};
-  CP?.bindEditor?.(root,recruitDraft.appearance,()=>renderRecruitModal(),{characterClass:recruitDraft.klass,name:recruitDraft.name});
-  root.querySelector('[data-confirm-recruit]').onclick=createRecruit;
+  root.innerHTML='<section class="recruit-modal"><div data-creation-mount></div></section>';
+  const valid=()=>{const n=String(recruitDraft.name||'').trim();return n.length>=2&&n.length<=24&&!state.roster.some(c=>String(c.name||'').toLowerCase()===n.toLowerCase())};
+  const choices=Object.entries(classes).filter(([name])=>isBetaClassPlayable(name)).flatMap(([klass,c])=>Object.entries(c.specs||{}).map(([spec,d])=>({klass,spec,label:spec+' · '+roleLabel(d.role),icon:c.icon})));
+  window.CellboundCreationCentre.render({mount:root.querySelector('[data-creation-mount]'),draft:recruitDraft,step:recruitDraft.creationStep||'race',
+    races:RECRUIT_RACES,classes:choices,title:'Recruit a guild member',confirmLabel:'CONFIRM RECRUIT →',valid:valid(),isValid:valid,
+    hint:'Choose a unique name. Your recruit starts at level 1 with basic equipment.',onStep:step=>{recruitDraft.creationStep=step;renderRecruitModal()},
+    onChange:()=>renderRecruitModal(),onName:()=>{},onRandomName:()=>{recruitDraft.name=recruitRandomName(recruitDraft.race)},onClose:closeRecruit,onConfirm:createRecruit
+  });
 }
 async function createRecruit(){
   if(!recruitDraft)return;
@@ -660,7 +645,7 @@ async function createRecruit(){
   if(e.rosterCap<=5||state.roster.length>=e.rosterCap){closeRecruit();renderAll();return}
   const name=String(recruitDraft.name||'').trim().replace(/\s+/g,' ');
   if(name.length<2||name.length>24||state.roster.some(c=>String(c.name||'').toLowerCase()===name.toLowerCase())){
-    const input=$('#recruitName');if(input){input.setCustomValidity('Use a unique name between 2 and 24 characters.');input.reportValidity();setTimeout(()=>input.setCustomValidity(''),1800)}return
+    const input=$('#ccCharacterName');if(input){input.setCustomValidity('Use a unique name between 2 and 24 characters.');input.reportValidity();setTimeout(()=>input.setCustomValidity(''),1800)}return
   }
   const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],klass=recruitDraft.klass,spec=recruitDraft.spec;
   if(!isBetaClassPlayable(klass)){alert('That class is not available during beta.');renderRecruitModal();return}

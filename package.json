@@ -4,6 +4,6 @@
   "private": true,
   "scripts": {
     "build": "node build.js",
-    "test:appearance": "node tests/appearance-foundation.cjs"
+    "test:appearance": "node tests/appearance-foundation.cjs && node tests/appearance-catalogue.cjs"
   }
 }

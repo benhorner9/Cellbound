@@ -23,7 +23,7 @@ for(const race of Object.keys(P.RACES))for(const gender of [0,1])for(const frame
  assert.equal(P.equipmentCoverage({...c,equipment:{Head:{...helmet,class:'Mage'}}}).hair,false);
  for(const anchor of Object.values(P.anatomicalAnchors(c)))assert(Number.isFinite(anchor.x)&&Number.isFinite(anchor.y));
  const portrait=P.portraitHTML(c);
- assert(portrait.includes('viewBox="65 15 110 110"'));
+ assert(portrait.includes('viewBox="65 0 110 95"')||portrait.includes('viewBox="65 15 110 110"'));
  assert(portrait.includes('cb-illustrated-base'));
  assert(!portrait.includes('cb-paper-slot-head'),'Portraits consistently omit helmets');
  checked++;

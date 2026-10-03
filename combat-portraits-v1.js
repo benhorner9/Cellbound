@@ -30,10 +30,11 @@ const BOSS_ART=[
   {match:['the old man','keeper of ages'],name:'The Old Man',art:'./assets/bosses/fractured-ages-old-man.webp'}
 ];
 
+let matchCharacters=[];
 function roster(){
   const list=window.CellboundGame?.getState?.()?.roster,external=window.CellboundDungeon2D?.externalCharacters?.();
   const own=Array.isArray(list)?list:[],remote=Array.isArray(external)?external:[];
-  return own.concat(remote.filter(c=>!own.some(x=>String(x?.id||'')===String(c?.id||''))));
+  return own.concat(matchCharacters,remote.filter(c=>!own.some(x=>String(x?.id||'')===String(c?.id||''))));
 }
 function key(v){return String(v||'').trim().replace(/[^a-zA-Z0-9_-]+/g,'-')}
 function unitName(el){
@@ -61,6 +62,7 @@ function refFor(el){
 }
 function findCharacter(el){
   const chars=roster(),ref=refFor(el),name=unitName(el);
+  const match=matchCharacters.find(c=>String(c.id)===String(el.dataset.pvp2dUnit));if(match)return match;
   if(ref){
     const exact=chars.find(c=>String(c?.id||'')===ref);
     if(exact)return exact;
@@ -110,13 +112,17 @@ function mountMonster(el){
  el.classList.add('cb-combat-has-monster-portrait');el.appendChild(n);
 }
 function mount(el,c){
-  if(!el||!c||el.classList.contains('cb-combat-has-portrait'))return;
+  if(!el||!c)return;
+  const key=JSON.stringify([c.race,c.appearance,c.equipment,c.pvpEquipment]);
+  if(el._cbAppearanceKey===key)return;
+  el._cbAppearanceKey=key;el.querySelector('.cb-combat-portrait')?.remove();
   const color=CP.CLASS_COLORS?.[c.class]||'#76d7d0';
-  const html=CP.portraitHTML(c,{size:'fill',className:'cb-combat-face',label:(c.name||'Character')+' combat portrait'});
+  const model=el.matches('.pvp2d-unit')&&c.pvpEquipment?{...c,equipment:c.pvpEquipment}:c;
+  const html=CP.paperDollHTML(model,{size:'combat',label:(c.name||'Character')+' combat character'});
   if(!html)return;
 
   el.style.setProperty('--cb-combat-class',color);
-  el.classList.add('cb-combat-has-portrait');
+  el.classList.add('cb-combat-has-portrait','cb-combat-full-model');
 
   if(el.matches('.pvp2d-unit')){
     const token=el.querySelector('.pvp2d-token');
@@ -154,5 +160,5 @@ function start(){
 }
 if(document.body)start();else document.addEventListener('DOMContentLoaded',start,{once:true});
 
-window.CellboundCombatPortraits={refresh,upgrade,bosses:BOSS_ART,monsters:MONSTERS,version:'1.2.0'};
+window.CellboundCombatPortraits={registerCharacters:characters=>{matchCharacters=Array.isArray(characters)?characters.slice(0,40):[]},refresh,upgrade,bosses:BOSS_ART,monsters:MONSTERS,version:'1.2.0'};
 })();

@@ -166,11 +166,11 @@ async function creatorPlaythrough(browser){
   await page.waitForSelector('#cellboundOnboarding:not([hidden]) .character-creator');
   assert.equal(await page.locator('.creator-party-dots button').count(),5,'creator shows all five party roles');
 
-  await page.locator('[data-next-step="class"]').click();
+  await page.locator('[data-builder-step="class"]').click();
   assert(await page.locator('[data-class]').count()>=1,'class choices render');
   assert(await page.locator('[data-class]').count()>=1,'damage/tank/healer class choices remain usable');
 
-  await page.locator('[data-next-step="appearance"]').click();
+  await page.locator('[data-builder-step="appearance"]').click();
   await page.waitForSelector('[data-appearance-editor]');
   const before=await page.locator('[data-appearance-editor]').innerHTML();
   await page.locator('[data-appearance-field]').first().click();
@@ -180,10 +180,10 @@ async function creatorPlaythrough(browser){
   await page.locator('[data-appearance-randomize]').click();
   await page.waitForSelector('[data-appearance-editor]');
 
-  await page.locator('[data-next-step="confirm"]').click();
+  await page.locator('[data-builder-step="confirm"]').click();
   assert.equal(await page.locator('.creator-confirm-member').count(),5,'confirm screen includes all five adventurers');
-  assert.equal(await page.locator('#confirmParty').isDisabled(),false,'generated party is valid');
-  await page.locator('#confirmParty').click();
+  assert.equal(await page.locator('[data-cc-confirm]').isDisabled(),false,'generated party is valid');
+  await page.locator('[data-cc-confirm]').click();
   await page.waitForFunction(()=>window.CellboundGame.getState()?.roster?.length===5,{},{timeout:10000,polling:50});
   const fresh=await page.evaluate(()=>({slots:CellboundGame.getState().roster.map(c=>c.professions?.length),classes:CellboundGame.getState().roster.map(c=>c.class),allBeta:CellboundGame.getState().roster.every(c=>CellboundGame.isCharacterBetaPlayable(c))}));
   assert.deepEqual(fresh.slots,[1,1,1,1,1],'fresh characters start with exactly one profession slot');

@@ -1,32 +1,35 @@
-# Character rebuild — development foundation
+# Character rebuild — draft implementation
 
-This branch is a partial foundation for the supplied October 3 character brief. It is not the completed visual rebuild and must not be promoted to production.
+Not complete and not approved for staging/live deployment. User requested completion before staging, so this branch remains isolated until remaining assets and QA are resolved.
 
 ## Implemented
 
-- Appearance schema version 1, additive normalization retaining existing fields and progression.
-- Model contract v10; existing race/sex/frame fitting retained with named anatomical anchors exposed.
-- Portraits crop the same illustrated base used by the full character. Portraits consistently omit helmets.
-- Face, brow, nose, mouth, hair, hair colour, skin, eye colour, markings, race detail and glow controls affect rendered geometry/colour.
-- Bald option respected; Emberkin horns separate from hair; closed headgear suppresses incompatible hair/head growths.
-- Aelari pale skin palette distinct from Veyren.
-- Onboarding race previews enlarged, full-body hero, appearance before class.
-- Living World local leader replaces generic pawn with shared appearance/equipment renderer; updates only when configuration changes.
+- Unified Creation Centre used by both founding-party onboarding and later recruitment. Large race previews; race/appearance/class/name-confirm flow; race/sex switching; explicit submit; existing role/class restrictions retained.
+- Appearance schema 1 with additive defaults. Shared portrait/body/world/combat renderer; model contract v10; class-independent anatomy.
+- Modular face, brows, nose, mouth, eye shape/colour, hair, beard, skin, marking, feature, body pattern, surface detail, feature colour and glow controls.
+- Eight painted body assets: male/female Veyren, Stoneborn, Emberkin, Nymari. Tintable grayscale layers with preserved alpha, 480 × 820 WebP, about 52–76 KB each. Aelari and Thornkin still use the vector fallback; these are NOT finished race models.
+- Common anatomical equipment mapping for painted assets, adjusted leg/hand anchors, material shading, visible main-hand grip, helmet coverage and catalogue SVG gradient ID isolation.
+- Shared full character models in existing combat player mounts; PvP viewer retains appearance/equipment in its character snapshots. Existing raid snapshots already preserve those fields.
+- Shared local Living World leader. Remote world peers currently represent guild presence, not a supplied character appearance; that integration remains outside verified coverage.
+- Bounded 64-entry render cache; shared image cache through stable asset URLs; reduced-motion rules.
 
-## Validation
+## Validation and limits
 
-`npm run build` passes existing release gates including the gear/body matrix.
-`node tests/appearance-foundation.cjs` passes 36 race/sex/frame combinations, checking class-independent anatomy, actual visible control changes, serialization, helmet coverage, named anchors and non-destructive defaults.
-Static SVG render reviewed. Existing procedural bodies remain far below supplied concept sheet quality. Do not count this as completion of twelve new race assets.
-Local Playwright browser unavailable; download failed with invalid/truncated archive. No browser/iPad, authenticated create/save/logout/login, live combat or raid performance acceptance claimed.
-No player data, production branch or production deployment changed.
+- `npm run build`: existing release gates, 2,340 class/tier/body combinations, 780-item artwork coverage, 113 Combat Reborn engine checks, 10-character raid and tutorial smoke checks pass.
+- `node tests/appearance-foundation.cjs`: 36 race/sex/frame combinations, actual control changes, class-independent anatomy, serialized appearance and non-destructive defaults.
+- `node tests/appearance-catalogue.cjs`: render all 780 catalogue items on twelve race/sex bases, validate slot markers and linked assets. This checks render structure, not visual clipping acceptance.
+- Static painted-body/equipment renders inspected and hand/leg attachment positions adjusted. Full visual matrix still required.
+- No browser/iPad/authenticated creation/logout/login checks claimed. Playwright browser unavailable; its download returned an invalid archive. OS browser install was unavailable in this environment.
+- Browser playthrough selectors updated for the shared creator, but the suite has not run here.
+- No database/player data, staging branch or production branch changed.
 
-## Remaining, in brief order
+## Blockers before completing/deploying
 
-1. Author twelve higher-quality modular bases from supplied sheets; body/face/hair layering and fitted silhouette review. Current vectors are an interim renderer only.
-2. Complete unified Creation Centre for onboarding and recruitment (recruitment still uses its existing shell with shared appearance controls). Race-specific modular choices need richer art and independent feature controls.
-3. Audit every current catalogue item across twelve bodies and supported builds; improve material art, grips, masks and high-tier sets. Existing equipment framework is retained, not newly audited in full.
-4. Integrate full-body combat presentation. Combat portraits inherit the shared face, but combat actors still need a verified shared full-model adapter. Remote Living World peers do not yet transmit appearance.
-5. Confirm inspection/remote party payloads retain appearance; authenticated migration/save verification without altering progression.
-6. iPad first, then iPhone/desktop browser QA; five- and ten-character frame/memory measurements, clipping review, refresh/update-loop test.
-7. Deploy verified candidate to staging only. Production requires explicit user approval after dev acceptance.
+1. Image-generation service rejected one request in the final race batch with an output safety block. Aelari and Thornkin remain unfinished. Do not retry the blocked request without a revised user request; request fully covering neutral base garments or user-supplied finished base art.
+2. Complete visual fitting review for all race/sex builds, including hair, headgear, two-handed poses, shoulder bounds and boots; refine painted-body overlays where needed.
+3. Browser/iPad end-to-end verification, authenticated persistence, remote inspection payload coverage, five/ten-character actual frame-time measurement.
+4. Only then merge/deploy staging and verify the deployment; production still requires user approval.
+
+## Asset provenance
+
+Built-in image-generation tool, not the fallback API. Prompt family: two adult male/female front-facing reusable grayscale race bases in a consistent illustrated fantasy style, bald with no equipment, neutral base garments, transparent background; race-specific anatomy from the supplied brief. Packaging trims empty alpha margins and resizes to a standard runtime canvas without altering artwork. The generated source sheets are preserved separately; runtime assets reside in `assets/characters/race-bases/`.

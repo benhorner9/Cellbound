@@ -331,14 +331,14 @@ function handleEvent(pb,e){
   }
 }
 function buildUnits(match){
-  const blue=(match.playerUnits||[]).map((u,i)=>({id:engineId('blue',u,i),rawId:u.id,name:u.name,portrait:u.portrait,class:u.class||'Warrior',spec:u.spec||'',role:u.role||'dps',team:'blue',alive:true,resource:resourceName(u),position:initialPoint('blue',i,(match.playerUnits||[]).length,match.kind,match.mode)}));
-  const red=(match.enemyUnits||[]).map((u,i)=>({id:engineId('red',u,i),rawId:u.id,name:u.name,portrait:u.portrait||'◆',class:u.class||'Warrior',spec:u.spec||'',role:u.role||'dps',team:'red',alive:true,resource:resourceName(u),position:initialPoint('red',i,(match.enemyUnits||[]).length,match.kind,match.mode)}));
+  const blue=(match.playerUnits||[]).map((u,i)=>({id:engineId('blue',u,i),rawId:u.id,race:u.race,appearance:u.appearance,equipment:u.pvpEquipment||u.equipment||{},name:u.name,portrait:u.portrait,class:u.class||'Warrior',spec:u.spec||'',role:u.role||'dps',team:'blue',alive:true,resource:resourceName(u),position:initialPoint('blue',i,(match.playerUnits||[]).length,match.kind,match.mode)}));
+  const red=(match.enemyUnits||[]).map((u,i)=>({id:engineId('red',u,i),rawId:u.id,race:u.race,appearance:u.appearance,equipment:u.pvpEquipment||u.equipment||{},name:u.name,portrait:u.portrait||'◆',class:u.class||'Warrior',spec:u.spec||'',role:u.role||'dps',team:'red',alive:true,resource:resourceName(u),position:initialPoint('red',i,(match.enemyUnits||[]).length,match.kind,match.mode)}));
   return[...blue,...red]
 }
 function stop(){if(activePlayback){activePlayback.cancelled=true;cancelAnimationFrame(activePlayback.raf);activePlayback=null}}
 function play({stage,match,result,onComplete}={}){
   if(!stage||!match||!result){onComplete?.();return}stop();
-  const units=buildUnits(match),map=result?.map||match?.map||null;stage.innerHTML=shellMarkup(match,units,map);stage.scrollIntoView?.({behavior:'smooth',block:'nearest'});
+  const units=buildUnits(match),map=result?.map||match?.map||null;window.CellboundCombatPortraits?.registerCharacters?.(units);stage.innerHTML=shellMarkup(match,units,map);stage.scrollIntoView?.({behavior:'smooth',block:'nearest'});
   const pb={root:stage,match,result,units,unitMap:Object.fromEntries(units.map(u=>[u.id,u])),stats:Object.fromEntries(units.map(u=>[u.id,{damage:0,healing:0,kills:0,deaths:0}])),feed:[],cancelled:false,raf:0,meterDirty:false,lastMeterAt:0};
   activePlayback=pb;
   const events=(result.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));let index=0,simTime=0,wallAnchor=Date.now();
