@@ -268,7 +268,9 @@ function startRun(){
   if(btn){btn.disabled=false;btn.textContent='BEGIN SURVIVAL →'}
   alert(error.message||'The burial ground could not be entered.');openBriefing();return
  }
- run={result,rewards:null,rewardsApplied:false,damage:{},healing:{},threat:{},resources:Object.fromEntries(party().map(c=>['p-'+c.id,tbInitialResource(c)])),activeBosses:new Set(),defeated:new Set(),elapsed:0};
+ const analyticsId=globalThis.crypto?.randomUUID?.()||('tb-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2));
+ run={analyticsId,result,rewards:null,rewardsApplied:false,damage:{},healing:{},threat:{},resources:Object.fromEntries(party().map(c=>['p-'+c.id,tbInitialResource(c)])),activeBosses:new Set(),defeated:new Set(),elapsed:0};
+ window.CellboundAnalytics?.track?.('activity_started',{activity_id:'twelve-below',activity_name:'The Twelve Below',run_id:analyticsId,party_item_level:Number(Game.partyItemLevel?.())||0},{key:'activity_started:'+analyticsId});
  renderLive();window.CellboundFX?.story?.('The Sepulchre of Twelve','One tomb opens now. Another follows every twenty seconds.',{eyebrow:'PRIVATE WORLD EVENT',tone:'danger',duration:1450});
  requestAnimationFrame(()=>playTimeline(result.timeline))
 }
@@ -488,6 +490,7 @@ function resultPlayerRows(){
 }
 function showResults(){
  const root=ensureBackdrop(),r=run.result,w=run.rewards;
+ if(run?.analyticsId)window.CellboundAnalytics?.track?.('activity_completed',{activity_id:'twelve-below',activity_name:'The Twelve Below',run_id:run.analyticsId,kills:Number(r.kills)||0,outcome:r.outcome||'',time_ms:Number(r.endMs)||0,deaths:Number(r.totals?.deaths)||0,mistakes:Number(r.totals?.mistakes)||0},{key:'activity_completed:'+run.analyticsId});
  root.innerHTML='<section class="cb2d-shell cb2d-loot-screen tb-results"><header class="cb2d-head"><div><small>THE TWELVE BELOW · ATTEMPT COMPLETE</small><h2>'+r.kills+' of 12 defeated</h2></div><button data-tb-close aria-label="Close Twelve Below">×</button></header>'+
  '<div class="tb-result-hero '+w.band.tone+'"><div><small>'+w.band.label+'</small><h3>'+(r.kills===12?'No vice remains buried.':r.outcome==='defeat'?'The burial ground claimed the party.':'The guild withdrew from the Sepulchre.')+'</h3><p>Every additional vice defeated improved the reward cache.</p></div><strong>'+r.kills+' / 12</strong></div>'+
  '<div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+w.gold+'</b><small>Guild treasury</small></article><article><span>RENOWN</span><b>+'+w.renown+'</b><small>Guild reputation</small></article><article><span>CELL SHARDS</span><b>+'+w.shards+'</b><small>Relic material</small></article><article><span>BEST</span><b>'+eventState().bestKills+' / 12</b><small>Personal record</small></article></div>'+
