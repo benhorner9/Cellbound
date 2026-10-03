@@ -124,6 +124,10 @@ async function mount(page,seedState=null,owner=false,options={}){
     if(!file.startsWith(path.resolve(root,'dist')+path.sep)||!fs.existsSync(file)){
       await route.fulfill({status:404,body:''});return;
     }
+    if(relative==='guild.html'){
+      const html=fs.readFileSync(file,'utf8').replace(/<meta\s+http-equiv=["']refresh["'][^>]*>/i,'');
+      await route.fulfill({status:200,contentType:'text/html',body:html});return;
+    }
     await route.fulfill({path:file});
   });
   await page.goto('https://cellbound.test/guild.html',{waitUntil:'domcontentloaded'});
