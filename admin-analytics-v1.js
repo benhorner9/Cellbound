@@ -83,15 +83,16 @@ function bind(){
   $('#adminAnalyticsRefresh')?.addEventListener('click',refresh);
   $('#adminAnalyticsDays')?.addEventListener('change',refresh);
   $('#adminAnalyticsChannel')?.addEventListener('change',refresh);
-  window.addEventListener('cellbound:admin-status',e=>{if(e.detail?.isAdmin)refresh()});
-  window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='admin'&&adminReady())refresh()})
+  window.addEventListener('cellbound:admin-status',e=>{if(e.detail?.isAdmin&&window.CellboundAdmin?.panel==='analytics')refresh()});
+  window.addEventListener('cellbound:admin-panel-changed',e=>{if(e.detail?.panel==='analytics'&&adminReady())refresh()});
+  window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='admin'&&adminReady()&&window.CellboundAdmin?.panel==='analytics')refresh()})
 }
 async function init(){
   Game=window.CellboundGame;if(!Game?.ready){setTimeout(init,120);return}
   db=Game.getSupabase?.();if(!db){setTimeout(init,250);return}
   bind();
   const channel=$('#adminAnalyticsChannel');if(channel)channel.value=window.CellboundAnalytics?.channel?.()==='production'?'production':'staging';
-  if(adminReady())refresh();
+  if(adminReady()&&window.CellboundAdmin?.panel==='analytics')refresh();
   window.CellboundAdminAnalytics={refresh,getData:()=>lastData}
 }
 init();
