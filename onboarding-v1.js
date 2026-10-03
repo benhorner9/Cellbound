@@ -42,6 +42,7 @@ const portraitHTML=(c,size='md')=>CP?.portraitHTML?.(c,{size})||'<span class="cb
 function roleOptions(role){
   const out=[];
   Object.entries(Game?.classes||{}).forEach(([klass,data])=>{
+    if(Game?.isBetaClassPlayable&&!Game.isBetaClassPlayable(klass))return;
     const match=Object.entries(data.specs||{}).find(([,specData])=>specData.role===role);
     if(!match)return;
     const [spec]=match;
