@@ -182,15 +182,15 @@ async function creatorPlaythrough(browser,viewport={width:1024,height:1366}){
   assert(await page.locator('[data-class]').count()>=1,'damage/tank/healer class choices remain usable');
 
   await page.locator('[data-builder-step="appearance"]').click();
-  await page.waitForSelector('[data-appearance-editor]');
-  const before=await page.locator('[data-appearance-editor]').innerHTML();
+  await page.waitForSelector('.cc-editor-appearance');
+  const before=await page.locator('.cc-editor-appearance').innerHTML();
   await page.locator('[data-appearance-field]').first().click();
   await page.waitForTimeout(30);
-  const after=await page.locator('[data-appearance-editor]').innerHTML();
+  const after=await page.locator('.cc-editor-appearance').innerHTML();
   assert.notEqual(after,before,'appearance controls rerender the preview');
   await page.screenshot({path:'/tmp/cellbound-creator-appearance-'+viewport.width+'.png',fullPage:true});
   await page.locator('[data-appearance-randomize]').click();
-  await page.waitForSelector('[data-appearance-editor]');
+  await page.waitForSelector('.cc-editor-appearance');
 
   await page.locator('[data-builder-step="confirm"]').click();
   assert.equal(await page.locator('.creator-confirm-member').count(),5,'confirm screen includes all five adventurers');

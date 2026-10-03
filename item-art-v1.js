@@ -90,6 +90,8 @@ function pvpBand(x){const n=String(x?.name||'');return Object.keys(PVP).find(fun
 function palette(x){
  const pvp=pvpBand(x),rar=RARITY[rarityOf(x)]||RARITY.Common,klass=CLASS[classOf(x)];
  const base=pvp?PVP[pvp]:(klass||rar);
+ const shared=!pvp&&window.CellboundPortraits?.visualProfile?.({},x,x?.slot)?.palette;
+ if(shared)return {a:shared.base,b:shared.dark,rarity:rar[0],dark:shared.dark,ink:'#273036',gold:shared.trim};
  return {a:base[0],b:base[1],rarity:rar[0],dark:'#071014',ink:'#dce8e5',gold:'#d9b86f'}
 }
 function detailSeed(x){return hash(idOf(x)+'|'+slotOf(x)+'|'+classOf(x)+'|'+tierOf(x))}
