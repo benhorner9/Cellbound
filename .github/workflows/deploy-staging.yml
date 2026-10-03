@@ -1,6 +1,9 @@
 name: Deploy Cellbound Staging
 
 on:
+  push:
+    branches:
+      - staging
   workflow_dispatch:
 
 permissions:
@@ -12,15 +15,15 @@ concurrency:
 
 jobs:
   build-and-deploy:
-    name: Deploy main to cb.athleticsmanagergame.com
+    name: Deploy staging to cb.athleticsmanagergame.com
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
-      - name: Check out Cellbound
+      - name: Check out Cellbound staging
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: staging
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -41,7 +44,7 @@ jobs:
           test -f dist/assets/gear/cellbound-gear-atlas.webp
           ! grep -R --line-number -E 'href="/|src="/' dist/*.html
 
-      - name: Deploy candidate build to staging
+      - name: Deploy staging build
         uses: SamKirkland/FTP-Deploy-Action@v4.3.6
         with:
           server: ${{ secrets.STAGING_FTP_SERVER }}
