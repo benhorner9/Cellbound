@@ -684,21 +684,25 @@ linear-gradient(180deg,#142019,#09110e)}
 #cb2dBackdrop .tutorial-reborn-shell .cb2d-arena .cb2d-floor{opacity:1}
 #cb2dBackdrop .tutorial-reborn-shell .room-rootling-nest .cb2d-floor{
   background:
-    radial-gradient(ellipse at 68% 51%,rgba(83,145,92,.16),transparent 23%),
-    repeating-radial-gradient(ellipse at 58% 55%,transparent 0 34px,rgba(87,70,44,.10) 36px 39px,transparent 42px 58px),
-    linear-gradient(160deg,#152219,#07100c 70%)
+    linear-gradient(90deg,rgba(4,9,6,.22),transparent 24%,transparent 76%,rgba(4,9,6,.18)),
+    linear-gradient(180deg,rgba(4,9,6,.06),transparent 55%,rgba(3,7,5,.20)),
+    url("./assets/tutorial/battlefields/rootling-nest.webp") center/cover no-repeat!important;
+  box-shadow:inset 0 0 70px rgba(1,5,3,.30)
 }
 #cb2dBackdrop .tutorial-reborn-shell .room-collapsed-gallery .cb2d-floor{
   background:
-    linear-gradient(90deg,transparent 0 18%,rgba(121,120,94,.08) 18% 21%,transparent 21% 47%,rgba(121,120,94,.06) 47% 50%,transparent 50%),
-    radial-gradient(ellipse at 68% 50%,rgba(93,131,101,.11),transparent 25%),
-    linear-gradient(180deg,#141d18,#07100d)
+    linear-gradient(90deg,rgba(5,8,7,.18),transparent 22%,transparent 78%,rgba(5,8,7,.20)),
+    linear-gradient(180deg,rgba(6,9,8,.08),transparent 52%,rgba(3,6,5,.23)),
+    url("./assets/tutorial/battlefields/collapsed-gallery.webp") center/cover no-repeat!important;
+  box-shadow:inset 0 0 76px rgba(1,4,3,.32)
 }
 #cb2dBackdrop .tutorial-reborn-shell .room-warden-chamber .cb2d-floor{
   background:
-    radial-gradient(circle at 68% 50%,transparent 0 12%,rgba(111,171,126,.13) 12.5% 13%,transparent 13.5% 24%,rgba(123,108,69,.08) 24.5% 25.5%,transparent 26%),
-    radial-gradient(circle at 68% 50%,rgba(80,147,100,.11),transparent 34%),
-    linear-gradient(180deg,#152119,#07100d)
+    radial-gradient(circle at 68% 50%,rgba(104,178,126,.08),transparent 24%),
+    linear-gradient(90deg,rgba(4,8,6,.18),transparent 22%,transparent 78%,rgba(4,8,6,.20)),
+    linear-gradient(180deg,rgba(4,8,6,.04),transparent 55%,rgba(2,5,4,.24)),
+    url("./assets/tutorial/battlefields/hollow-warden.webp") center/cover no-repeat!important;
+  box-shadow:inset 0 0 82px rgba(1,5,3,.34)
 }
 #cb2dBackdrop .tutorial-reborn-shell .cb2d-room-tag small{color:#769085}
 #cb2dBackdrop .tutorial-reborn-shell .cbr-plan-lock-copy small{color:#80bfa4}
