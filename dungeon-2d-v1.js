@@ -144,7 +144,7 @@ const ilvl=()=>{
 const currentStageDef=()=>run?.externalStage||STAGES[run?.stage||0];
 const partyLevel=()=>{const p=party();return p.length?Math.round(p.reduce((n,c)=>n+Math.max(1,Number(c.level)||1),0)/p.length):1};
 const ASHEN_VAULT_XP=900;
-function xpNeeded(level){return 800+Math.max(0,(Number(level)||1)-1)*250}
+function xpNeeded(level){return Game?.xpNeeded?.(level)||BAL?.xpNeeded?.(level)||800+Math.max(0,(Number(level)||1)-1)*250}
 function awardPartyXp(amount){
  const gains=[],cap=Math.max(1,Number(Game?.getLevelCap?.())||15);
  party().forEach(c=>{
