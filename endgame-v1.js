@@ -5,23 +5,18 @@ const D=window.CellboundEndgameData,G=window.CellboundGear;
 if(!D||!G){console.error('Cellbound endgame data failed to load.');return}
 
 const $=s=>document.querySelector(s);
+const BETA_DUNGEON_IDS=['ashen-vault','hollow-sanctum'];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 
 let Game=null,db=null,user=null,server={season:D.SEASON,rotation:{},progress:[],weekly:{},recentRuns:[],achievements:[]},leaderboards={},attempts={};
 const selection={
  'ashen-vault':{difficulty:'normal',tier:1},
- 'hollow-sanctum':{difficulty:'normal',tier:1},
- 'chaos-canyon':{difficulty:'normal',tier:1},
- 'blackout-station':{difficulty:'normal',tier:1},
- 'fractured-ages':{difficulty:'normal',tier:1}
+ 'hollow-sanctum':{difficulty:'normal',tier:1}
 };
 const leaderboardView={
  'ashen-vault':{scope:'overall',klass:null},
- 'hollow-sanctum':{scope:'overall',klass:null},
- 'chaos-canyon':{scope:'overall',klass:null},
- 'blackout-station':{scope:'overall',klass:null},
- 'fractured-ages':{scope:'overall',klass:null}
+ 'hollow-sanctum':{scope:'overall',klass:null}
 };
 
 const progressFor=id=>(server.progress||[]).find(x=>x.dungeon_id===id)||{
@@ -32,7 +27,7 @@ function formatTime(ms){
  return m+':'+String(s).padStart(2,'0')
 }
 function chapterEndgameUnlocked(){
- const ids=Object.keys(D.DUNGEONS||{});
+ const ids=BETA_DUNGEON_IDS;
  return ids.length>0&&ids.every(id=>Number(progressFor(id)?.normal_clears||0)>0)
 }
 function difficultyUnlocked(id,difficulty,tier=1){
@@ -170,7 +165,6 @@ function render(){
  '<section class="eg-hero"><div><small>ENDGAME</small><h2>Push beyond Normal.</h2><p>Learn the route on Normal, step up to Heroic, then climb Cellbound+ with rotating affixes, scores and weekly rewards.</p></div><div class="eg-season"><span>SEASON</span><b>'+esc(server.season?.name||D.SEASON.name)+'</b><small>'+esc(minor?.name||'No minor affix')+' · '+esc(major?.name||'No major affix')+'</small></div></section>'+
  weeklyMarkup()+milestoneMarkup()+achievementMarkup()+collectionMarkup()+
  '<div class="eg-content">'+dungeonCard('ashen-vault')+dungeonCard('hollow-sanctum')+'</div>'+
- '<section class="panel eg-future-content"><small>FUTURE DUNGEONS</small><h3>The frontier will expand after beta.</h3><p>Chaos Canyon, Blackout Station and The Fractured Ages are intentionally held for future updates.</p></section>'+
  '<div class="eg-leaderboards">'+leaderboardMarkup('ashen-vault')+leaderboardMarkup('hollow-sanctum')+'</div>';
  bind()
 }
@@ -196,12 +190,12 @@ async function refresh(){
  const {data,error}=await db.rpc('get_endgame_state');
  if(error){console.warn('Endgame state failed',error);return}
  server=data||server;
- for(const id of Object.keys(D.DUNGEONS)){
+ for(const id of BETA_DUNGEON_IDS){
    const p=progressFor(id),s=selection[id];s.tier=clamp(s.tier,1,Math.max(1,Number(p.highest_tier)||1));
    if(s.difficulty==='heroic'&&!p.heroic_unlocked)s.difficulty='normal';
    if(s.difficulty==='cellbound'&&!p.cellbound_unlocked)s.difficulty=p.heroic_unlocked?'heroic':'normal'
  }
- await Promise.all(Object.keys(D.DUNGEONS).map(loadLeaderboard));
+ await Promise.all(BETA_DUNGEON_IDS.map(loadLeaderboard));
  render()
 }
 function prepare(id){
@@ -214,15 +208,6 @@ function prepare(id){
  }else if(id==='hollow-sanctum'){
    Game.switchView?.('content');
    setTimeout(()=>window.CellboundHollowSanctum?.open?.({difficulty:cfg.difficulty,tier:cfg.tier}),80)
- }else if(id==='chaos-canyon'){
-   Game.switchView?.('content');
-   setTimeout(()=>window.CellboundChaosCanyon?.open?.({difficulty:cfg.difficulty,tier:cfg.tier}),80)
- }else if(id==='blackout-station'){
-   Game.switchView?.('content');
-   setTimeout(()=>window.CellboundBlackoutStation?.open?.({difficulty:cfg.difficulty,tier:cfg.tier}),80)
- }else if(id==='fractured-ages'){
-   Game.switchView?.('content');
-   setTimeout(()=>window.CellboundFracturedAges?.open?.({difficulty:cfg.difficulty,tier:cfg.tier}),80)
  }
 }
 function stageConfig(dungeonId,stage){
