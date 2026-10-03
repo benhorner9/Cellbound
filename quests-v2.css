@@ -466,16 +466,39 @@ radial-gradient(ellipse at 76% 74%,rgba(104,85,53,.08),transparent 22%)}
 
 
 /* Ashes on the East Road — Combat Reborn battlefield plate */
-.quest-cb2d-shell.quest-ashfall-cinder-cart .quest-cb2d-arena{background:#120b08}
-.quest-cb2d-shell.quest-ashfall-cinder-cart .cb2d-floor{background:linear-gradient(180deg,rgba(20,10,7,.10),rgba(11,6,5,.24))!important}
-.quest-cb2d-shell.quest-ashfall-cinder-cart .quest-cb2d-environment{overflow:hidden;background:none!important}
+.quest-cb2d-shell.quest-ashfall-cinder-cart .quest-cb2d-arena{
+  background:#120b08;
+}
+.quest-cb2d-shell.quest-ashfall-cinder-cart .cb2d-floor{
+  background:linear-gradient(180deg,rgba(20,10,7,.10),rgba(11,6,5,.24))!important;
+}
+.quest-cb2d-shell.quest-ashfall-cinder-cart .quest-cb2d-environment{
+  overflow:hidden;background:none!important;
+}
 .quest-cb2d-shell.quest-ashfall-cinder-cart .quest-cb2d-environment:before,
-.quest-cb2d-shell.quest-ashfall-cinder-cart .quest-cb2d-environment:after{display:none!important}
-.quest-battlefield-art{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover;object-position:center;pointer-events:none;user-select:none}
-.quest-battlefield-art--ashfall{filter:saturate(.96) contrast(1.04) brightness(.86)}
-.quest-battlefield-shade{position:absolute;inset:0;display:block;pointer-events:none;background:linear-gradient(90deg,rgba(5,4,4,.17),transparent 24%,transparent 76%,rgba(5,4,4,.18)),linear-gradient(180deg,rgba(5,4,4,.08),transparent 32%,transparent 72%,rgba(5,4,4,.18));box-shadow:inset 0 0 42px rgba(0,0,0,.30)}
+.quest-cb2d-shell.quest-ashfall-cinder-cart .quest-cb2d-environment:after{
+  display:none!important;
+}
+.quest-battlefield-art{
+  position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover;object-position:center;
+  pointer-events:none;user-select:none;
+}
+.quest-battlefield-art--ashfall{
+  filter:saturate(.96) contrast(1.04) brightness(.86);
+}
+.quest-battlefield-shade{
+  position:absolute;inset:0;display:block;pointer-events:none;
+  background:
+    linear-gradient(90deg,rgba(5,4,4,.17),transparent 24%,transparent 76%,rgba(5,4,4,.18)),
+    linear-gradient(180deg,rgba(5,4,4,.08),transparent 32%,transparent 72%,rgba(5,4,4,.18));
+  box-shadow:inset 0 0 42px rgba(0,0,0,.30);
+}
 .quest-cb2d-shell.quest-ashfall-cinder-cart #q2dTelegraphs,
-.quest-cb2d-shell.quest-ashfall-cinder-cart #q2dUnits{position:absolute;inset:0;z-index:5}
+.quest-cb2d-shell.quest-ashfall-cinder-cart #q2dUnits{
+  position:absolute;inset:0;z-index:5;
+}
 .quest-cb2d-shell.quest-ashfall-cinder-cart .cb2d-room-tag,
 .quest-cb2d-shell.quest-ashfall-cinder-cart .cb2d-ground-legend,
-.quest-cb2d-shell.quest-ashfall-cinder-cart .cb2d-caption{z-index:8}
+.quest-cb2d-shell.quest-ashfall-cinder-cart .cb2d-caption{
+  z-index:8;
+}

@@ -55,10 +55,11 @@ function newFloor(floor){
  const generated=generateFloor(floor,run.seed);
  run.floor=floor;run.map=generated.cells;run.pos={...generated.start};run.teleporter=generated.teleporter;run.parts={cable:false,cell:false,fuse:false};run.visited={[key(run.pos.x,run.pos.y)]:true};run.message='Floor '+floor+' entered. Locate the three teleporter components.';run.lastCombat=null
 }
-function unlocked(){const s=Game()?.getState?.();return Boolean(s?.progression?.nullComplexUnlocked||s?.questSystem?.nullComplex?.complete)}
+function manorCleared(){const s=Game()?.getState?.();return Boolean(s?.progression?.manorRaidCleared||Object.keys(s?.raidRewardClaims||{}).length)}
+function unlocked(){const s=Game()?.getState?.();return Boolean(manorCleared()&&(s?.progression?.nullComplexUnlocked||s?.questSystem?.nullComplex?.complete))}
 function start(){
  const G=Game(),n=state(),party=G?.getPartyCharacters?.()||[];
- if(!unlocked())return notice('Complete Signal From Nowhere to unlock The Null Complex.');
+ if(!unlocked())return notice(manorCleared()?'Complete Signal From Nowhere to unlock The Null Complex.':'Complete The Manor raid before investigating the Null Complex.');
  if(party.length!==5)return notice('A complete active party of five is required.');
  if(party.some(c=>G.isUnavailable?.(c)))return notice('A party member is recovering from Cell Shock.');
  if(attemptsLeft()<=0)return notice('No Null Complex attempts remain in this five-day cycle.');
@@ -229,7 +230,7 @@ function render(){
  if(!run){
   const isUnlocked=unlocked();
   mount.innerHTML='<article class="tb-world-card null-world-card">'+
-   '<div class="tb-world-art has-key-art null-world-art"><img class="tb-world-key-art null-world-key-art" src="./assets/comics/null-complex/facility-entry.webp?v=1" alt="" aria-hidden="true" decoding="async" loading="eager"><span>'+(isUnlocked?'ABANDONED RESEARCH FACILITY':'QUEST LOCKED · SIGNAL FROM NOWHERE')+'</span><b>THE NULL COMPLEX</b></div>'+
+   '<div class="tb-world-art null-world-art"><span>'+(isUnlocked?'ABANDONED RESEARCH FACILITY':'QUEST LOCKED · SIGNAL FROM NOWHERE')+'</span><b>THE NULL COMPLEX</b></div>'+
    '<div class="tb-world-copy"><div class="tb-world-kicker"><span>ROGUELIKE EXTRACTION EVENT</span><em>5-CHARACTER GUILD PARTY</em></div><h3>The Null Complex</h3><p>Explore a shifting 3 × 3 facility, recover the three teleporter components and decide whether to extract your profession materials or descend deeper and risk everything.</p>'+
    '<div class="tb-world-stats"><span><small>ATTEMPTS</small><b>'+attemptsLeft()+' / '+ATTEMPTS+'</b></span><span><small>RESET</small><b>EVERY 5 DAYS</b></span><span><small>PERSONAL BEST</small><b>FLOOR '+(n.bestFloor||'—')+' / '+MAX_FLOOR+'</b></span><span><small>CHASE REWARD</small><b>PROFESSION MATERIALS</b></span></div>'+
    '<div class="tb-world-actions">'+(isUnlocked?'<button data-null-start '+(attemptsLeft()<=0?'disabled':'')+'>ENTER THE NULL COMPLEX →</button><small>'+(attemptsLeft()<=0?'Attempts exhausted until the next reset.':'Wipe before extraction and all unbanked materials are lost.')+'</small>':'<button data-null-quest>BEGIN SIGNAL FROM NOWHERE →</button><small>Investigate NULL//07 to unlock this activity.</small>')+'<p data-null-notice hidden></p></div></div></article>';

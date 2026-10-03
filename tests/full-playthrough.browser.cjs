@@ -9,7 +9,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
 function matureState(){
   const chars=[
     ['tank','Aegis','Warrior','Protection'],
-    ['heal','Mercy','Priest','Holy'],
+    ['heal','Mercy','Paladin','Holy'],
     ['mage','Ember','Mage','Arcane'],
     ['hunt','Fletch','Hunter','Marksman'],
     ['rogue','Shade','Rogue','Assassination']
@@ -23,7 +23,7 @@ function matureState(){
     saveVersion:6,gearVersion:3,renown:120,gold:5000,socialDisplayName:'Playthrough Guild',
     roster:chars,party:{tank:'tank',healer:'heal',dps:['mage','hunt','rogue']},
     bossKills:{ashwarden:true,embermaw:true,vaultheart:true},
-    progression:{ashenVaultUnlocked:true,nullComplexUnlocked:true},
+    progression:{ashenVaultUnlocked:true,nullComplexUnlocked:true,manorRaidCleared:true},
     reports:[],bank:[],materials:{},consumables:[],recipeScrolls:[],discoveredRecipes:[],
     tradeInbox:[],collectionHistory:[],activity:['Automated release playthrough state loaded.'],
     onboarding:{version:3,complete:true,stage:'complete',zone:'zeltira'}
@@ -38,7 +38,7 @@ function coreLoopState(){
   });
   const defs=[
     ['tank','Aegis','Warrior','Protection',30,'Alchemy'],
-    ['heal','Mercy','Priest','Holy',30,null],
+    ['heal','Mercy','Paladin','Holy',30,null],
     ['mage','Ember','Mage','Arcane',30,null],
     ['hunt','Fletch','Hunter','Marksman',30,null],
     ['rogue','Shade','Rogue','Assassination',25,null]
@@ -69,7 +69,7 @@ async function mount(page,seedState=null,owner=false,options={}){
   const errors=[];
   page.on('pageerror',e=>errors.push('pageerror: '+String(e)));
   page.on('console',msg=>{if(msg.type()==='error')errors.push('console: '+msg.text())});
-  await page.addInitScript(({seed,owner,remoteUpdatedAt,failWrites,localSeed,pendingSeed})=>{
+  await page.addInitScript(({seed,owner,remoteUpdatedAt,failWrites,localSeed,pendingSeed,simulateDungeonRuntime})=>{
     window.__CELLBOUND_TEST_SEED=seed;
     const user={id:'playthrough-user',email:'playthrough@example.test'};
     if(localSeed){
@@ -77,6 +77,9 @@ async function mount(page,seedState=null,owner=false,options={}){
       localStorage.setItem('cellbound-management-reboot-v3',JSON.stringify(localSeed));
     }
     if(pendingSeed)localStorage.setItem('cellbound-management-pending-save-v1',JSON.stringify(pendingSeed));
+    const TEST_ATTEMPT_KEY='cellbound-test-dungeon-attempt-v1',TEST_BEGIN_KEY='cellbound-test-dungeon-begins-v1';
+    const readAttempt=()=>{try{return JSON.parse(localStorage.getItem(TEST_ATTEMPT_KEY)||'null')}catch{return null}};
+    const writeAttempt=value=>localStorage.setItem(TEST_ATTEMPT_KEY,JSON.stringify(value));
     function query(table){
       const q={};
       for(const method of ['select','eq','neq','gte','gt','lte','lt','like','ilike','is','in','contains','containedBy','or','not','order','limit','range','match']){
@@ -103,11 +106,28 @@ async function mount(page,seedState=null,owner=false,options={}){
         onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})
       },
       from:query,
-      rpc:async(name)=>{
+      rpc:async(name,args={})=>{
         if(name==='cellbound_social_identity')return{data:{staff_member:owner,chat_badge:owner?'owner':'player',player_mod_discount_eligible:false},error:null};
         if(name==='cellbound_admin_status')return{data:owner?{is_admin:true,role:'owner',auto_clear_cell_shock:false}:{is_admin:false,role:null,auto_clear_cell_shock:false},error:null};
         if(name==='cellbound_release_status')return{data:null,error:null};
         if(name==='cellbound_admin_market_summary')return{data:{active_gear:0,buy_orders:0,sell_orders:0,trades_24:0,volume_24:0,tax_24:0,top_items:[]},error:null};
+        if(simulateDungeonRuntime&&name==='resume_dungeon_attempt'){
+          const saved=readAttempt();return{data:saved?.active?saved:{active:false},error:null};
+        }
+        if(simulateDungeonRuntime&&name==='begin_dungeon_attempt'){
+          const count=Math.max(0,Number(localStorage.getItem(TEST_BEGIN_KEY))||0)+1;localStorage.setItem(TEST_BEGIN_KEY,String(count));
+          const existing=readAttempt();if(existing?.active)return{data:existing,error:null};
+          const attempt={active:true,attemptId:'qa-attempt-1',seed:'qa-resume-seed',difficulty:args.p_difficulty||'normal',tier:Number(args.p_tier)||0,dungeonVersion:Number(args.p_dungeon_version)||2,seasonId:args.p_season_id||'qa',targetTimeMs:720000,runtimeState:{}};
+          writeAttempt(attempt);return{data:attempt,error:null};
+        }
+        if(simulateDungeonRuntime&&name==='save_dungeon_attempt_runtime'){
+          const saved=readAttempt()||{active:true,attemptId:args.p_attempt_id||'qa-attempt-1'};
+          const next={...saved,active:true,runtimeState:args.p_runtime_state||{},runtimeUpdatedAt:new Date().toISOString()};writeAttempt(next);return{data:{ok:true},error:null};
+        }
+        if(simulateDungeonRuntime&&name==='record_dungeon_run_v3'){
+          const saved=readAttempt();if(saved)writeAttempt({...saved,active:false});
+          return{data:{valid:true,score:1234,newUnlocks:[]},error:null};
+        }
         return{data:[],error:null};
       },
       channel:()=>{const c={on:()=>c,subscribe:()=>c,unsubscribe:()=>Promise.resolve()};return c},
@@ -116,10 +136,17 @@ async function mount(page,seedState=null,owner=false,options={}){
       storage:{from:()=>({getPublicUrl:()=>({data:{publicUrl:''}})})}
     };
     window.supabase={createClient:()=>client};
-  },{seed:seedState,owner,remoteUpdatedAt:options.remoteUpdatedAt||null,failWrites:Boolean(options.failWrites),localSeed:options.localSeed||null,pendingSeed:options.pendingSeed||null});
+  },{seed:seedState,owner,remoteUpdatedAt:options.remoteUpdatedAt||null,failWrites:Boolean(options.failWrites),localSeed:options.localSeed||null,pendingSeed:options.pendingSeed||null,simulateDungeonRuntime:Boolean(options.simulateDungeonRuntime)});
   await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:''}));
   await page.route('https://cellbound.test/**',async route=>{
     const u=new URL(route.request().url()),relative=u.pathname.replace(/^\/+/,'')||'index.html';
+    if(relative==='guild.html'){
+      const shell=path.resolve(root,'guild.html');
+      const html=fs.readFileSync(shell,'utf8')
+        .replace(/<meta\s+http-equiv=["']refresh["'][^>]*>/i,'')
+        .replace(/<script>\s*window\.location\.replace\(["']\.\/index\.html["']\);?\s*<\/script>/i,'');
+      await route.fulfill({status:200,contentType:'text/html',body:html});return;
+    }
     const file=path.resolve(root,'dist',relative);
     if(!file.startsWith(path.resolve(root,'dist')+path.sep)||!fs.existsSync(file)){
       await route.fulfill({status:404,body:''});return;
@@ -157,8 +184,11 @@ async function creatorPlaythrough(browser){
   assert.equal(await page.locator('#confirmParty').isDisabled(),false,'generated party is valid');
   await page.locator('#confirmParty').click();
   await page.waitForFunction(()=>window.CellboundGame.getState()?.roster?.length===5,{},{timeout:10000,polling:50});
-  const slots=await page.evaluate(()=>CellboundGame.getState().roster.map(c=>c.professions?.length));
-  assert.deepEqual(slots,[1,1,1,1,1],'fresh characters start with exactly one profession slot');
+  const fresh=await page.evaluate(()=>({slots:CellboundGame.getState().roster.map(c=>c.professions?.length),classes:CellboundGame.getState().roster.map(c=>c.class),allBeta:CellboundGame.getState().roster.every(c=>CellboundGame.isCharacterBetaPlayable(c))}));
+  assert.deepEqual(fresh.slots,[1,1,1,1,1],'fresh characters start with exactly one profession slot');
+  assert.equal(fresh.allBeta,true,'fresh guild creator only produces beta-playable classes');
+  assert(fresh.classes.includes('Paladin'),'Paladin can fill the beta healer role');
+  assert(fresh.classes.every(c=>['Warrior','Paladin','Hunter','Rogue','Mage'].includes(c)),'fresh party contains only the five beta classes');
   assert.deepEqual(errors,[],'creator/onboarding emitted no browser errors');
   await page.close();
 }
@@ -230,7 +260,7 @@ async function mainGamePlaythrough(browser){
     CellboundGame.renderAll();
   });
 
-  const views=['overview','roster','party','bank','professions','quests','content','world','raids','trading','pvp','chat'];
+  const views=['overview','roster','party','bank','professions','quests','content','world','raids','trading','pvp','chat','support'];
   for(const view of views){
     await page.evaluate(v=>CellboundGame.switchView(v),view);
     await page.waitForTimeout(50);
@@ -296,6 +326,22 @@ async function mainGamePlaythrough(browser){
   assert(await page.locator('#pvp').isVisible(),'PvP locked view renders safely');
   await page.evaluate(()=>CellboundGame.switchView('chat'));
   assert(await page.locator('#chat').isVisible(),'social view renders');
+
+  await page.evaluate(()=>CellboundGame.switchView('content'));
+  await page.waitForSelector('#betaQuickReportTrigger',{timeout:5000});
+  assert(await page.locator('#betaQuickReportTrigger').isVisible(),'persistent Report Bug / Request button is visible');
+  await page.locator('#betaQuickReportTrigger').click();
+  await page.locator('[data-quick-report="feature"]').click();
+  await page.waitForFunction(()=>document.querySelector('#support')?.classList.contains('active'),{},{timeout:5000,polling:50});
+  assert.equal(await page.locator('#betaReportCategory').inputValue(),'feature','feature-request shortcut preselects the correct category');
+  assert.equal((await page.locator('#betaSupportView').textContent()).trim(),'content','quick report preserves the originating screen');
+  assert(await page.locator('#betaReportForm').isVisible(),'beta support form renders');
+  assert(await page.locator('#betaPatchNotes .beta-note').count()>=1,'beta patch notes render');
+  await page.locator('#betaReportSummary').fill('QA support ticket');
+  await page.locator('#betaReportDetails').fill('The automated beta operations playthrough is testing the support submission path.');
+  await page.locator('#betaReportSubmit').click();
+  await page.waitForFunction(()=>document.querySelector('#betaReportMessage')?.textContent?.includes('Report sent'),{},{timeout:5000,polling:50});
+  assert((await page.locator('#betaReportMessage').textContent()).includes('Report sent'),'beta report submission path completes');
 
   for(const size of [{width:768,height:1024},{width:390,height:844},{width:1024,height:1366}]){
     await page.setViewportSize(size);
@@ -384,7 +430,9 @@ async function coreGameplayLoopPlaythrough(browser){
     const s=CellboundGame.getState();
     return !s.workshopCraftProject&&s.consumables?.some(x=>x.key==='field-recovery-potion'&&Number(x.quantity)>0);
   },{},{timeout:5000,polling:50});
-  assert.equal(await page.evaluate(()=>Number(CellboundGame.getState().materials?.hollowroot)||0),0,'crafting consumes the dungeon profession reagents');
+  const hollowrootAfter=await page.evaluate(()=>Number(CellboundGame.getState().materials?.hollowroot)||0);
+  const hollowrootCost=Number(craftReady.inputs?.hollowroot)||0,expectedAfter=Math.max(0,craftReady.hollowroot-hollowrootCost);
+  assert(hollowrootAfter===expectedAfter||hollowrootAfter===expectedAfter+1,'crafting consumes the recipe Hollowroot cost, with at most one reagent reclaimed by a masterwork');
   assert.equal(await page.evaluate(()=>Number(CellboundGame.getState().materials?.['faded-cell-fragment'])||0),2,'salvage materials remain available for their own economy path');
   assert(await page.evaluate(()=>CellboundGame.getState().consumables.some(x=>x.key==='field-recovery-potion'&&Number(x.quantity)>0)),'completed craft returns a usable preparation item to shared Guild stock');
 
@@ -406,6 +454,162 @@ async function coreGameplayLoopPlaythrough(browser){
   await page.close();
 }
 
+async function betaClassAndNullGatePlaythrough(browser){
+  const seed=matureState();
+  seed.progression.manorRaidCleared=false;
+  seed.progression.nullComplexUnlocked=false;
+  seed.raidRewardClaims={};
+  seed.questSystem=null;
+  const page=await browser.newPage({viewport:{width:1024,height:1366}});
+  const errors=await mount(page,seed);
+  await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
+
+  assert.deepEqual(await page.evaluate(()=>CellboundGame.betaPlayableClasses),['Warrior','Paladin','Hunter','Rogue','Mage'],'beta exposes exactly the five selected classes');
+  assert.equal(await page.evaluate(()=>['Priest','Druid','Shaman','Warlock','Monk','Death Knight','Demon Hunter','Evoker'].every(x=>!CellboundGame.isBetaClassPlayable(x))),true,'all other classes are unavailable during beta');
+
+  const oldSaveLock=await page.evaluate(()=>{
+    const s=CellboundGame.getState(),healer=s.roster.find(c=>c.id==='heal');
+    const original={class:healer.class,spec:healer.spec};
+    healer.class='Priest';healer.spec='Holy';CellboundGame.renderAll();
+    const result={partyCount:CellboundGame.getPartyCharacters().length,playable:CellboundGame.isCharacterBetaPlayable(healer)};
+    healer.class=original.class;healer.spec=original.spec;CellboundGame.renderAll();
+    return result;
+  });
+  assert.equal(oldSaveLock.playable,false,'future-class characters from old saves remain preserved but unavailable');
+  assert.equal(oldSaveLock.partyCount,4,'an unavailable old-save class cannot participate in the active five');
+
+  const contentRuntime=await page.evaluate(()=>({
+    hollow:typeof window.CellboundHollowSanctum,
+    chaos:typeof window.CellboundChaosCanyon,
+    blackout:typeof window.CellboundBlackoutStation,
+    fractured:typeof window.CellboundFracturedAges
+  }));
+  assert.deepEqual(contentRuntime,{hollow:'object',chaos:'object',blackout:'object',fractured:'object'},'all dungeon runtimes remain included');
+
+  await page.evaluate(()=>{CellboundGame.switchView('quests');CellboundQuests.selectAdventure('null-complex-quest')});
+  await page.waitForSelector('[data-adventure="null-complex-quest"]',{timeout:5000});
+  assert((await page.locator('[data-adventure="null-complex-quest"]').innerText()).includes('LOCKED'),'Signal From Nowhere is locked before The Manor');
+  assert((await page.locator('#questJournalDetail').innerText()).includes('LOCKED UNTIL THE MANOR'),'Null quest explains its Manor requirement');
+
+  await page.evaluate(()=>{CellboundGame.getState().progression.manorRaidCleared=true;CellboundGame.renderAll();CellboundQuests.selectAdventure('null-complex-quest')});
+  await page.waitForTimeout(80);
+  assert((await page.locator('[data-adventure="null-complex-quest"]').innerText()).includes('AVAILABLE'),'The Manor clear unlocks Signal From Nowhere');
+
+  assert.equal(errors.filter(e=>!e.includes('Endgame state failed')).length,0,'beta class/Null gate validation emitted no unexpected browser errors');
+  await page.close();
+}
+
+async function breakGamePlaythrough(browser){
+  // Corrupted/legacy save: duplicate party ids, unavailable beta class, negative stacks and currencies.
+  const corrupt=matureState();
+  corrupt.roster[1]={...corrupt.roster[1],class:'Priest',spec:'Holy',level:99,xp:999};
+  corrupt.party={tank:'tank',healer:'heal',dps:['mage','mage','rogue']};
+  corrupt.bank=[{id:'bad-stack',name:'Corrupt Scrap',itemId:'corrupt-scrap',class:'Warrior',slot:'Head',tier:1,rarity:'Common',itemLevel:18,baseItemLevel:18,power:1,quantity:-9,source:'Legacy corruption'}];
+  corrupt.materials={'cell-shards':-50,hollowroot:3.9};
+  corrupt.consumables=[{key:'bad-potion',name:'Bad Potion',quantity:-4,payload:{effect:'combat-potion'}},{key:'good-potion',name:'Good Potion',quantity:2,payload:{effect:'combat-potion'}}];
+  const corruptPage=await browser.newPage({viewport:{width:1024,height:1366}});
+  const corruptErrors=await mount(corruptPage,corrupt);
+  const repaired=await corruptPage.evaluate(()=>{
+    const s=CellboundGame.getState(),slots=[s.party.tank,s.party.healer,...s.party.dps];
+    return{
+      slots,
+      unique:slots.filter(Boolean).length===new Set(slots.filter(Boolean)).size,
+      oldPriestInParty:slots.includes('heal'),
+      badQty:s.bank.find(x=>x.id==='bad-stack')?.quantity,
+      shards:s.materials['cell-shards'],
+      hollowroot:s.materials.hollowroot,
+      consumables:s.consumables.map(x=>[x.key,x.quantity]),
+      oldPriestLevel:s.roster.find(x=>x.id==='heal')?.level
+    };
+  });
+  assert.equal(repaired.unique,true,'corrupted saves cannot duplicate the same adventurer across party slots');
+  assert.equal(repaired.oldPriestInParty,false,'locked beta classes are removed from corrupted active-party state');
+  assert.equal(repaired.badQty,1,'negative Bank stack quantities are repaired to one');
+  assert.equal(repaired.shards,0,'negative material balances are clamped to zero');
+  assert.equal(repaired.hollowroot,3,'fractional material balances are normalised');
+  assert.deepEqual(repaired.consumables,[['good-potion',2]],'invalid consumable stacks are removed');
+  assert.equal(repaired.oldPriestLevel,15,'legacy over-cap levels are clamped to the beta cap');
+  assert.equal(corruptErrors.filter(e=>!e.includes('Endgame state failed')).length,0,'corrupted save recovery emitted no unexpected browser errors');
+  await corruptPage.close();
+
+  // Rapid UI and Bank mutations: detached/repeated click events must not double-spend.
+  const spamPage=await browser.newPage({viewport:{width:1024,height:1366}});
+  const spamErrors=await mount(spamPage,matureState());
+  spamPage.on('dialog',dialog=>dialog.accept());
+  await spamPage.evaluate(()=>{
+    const views=['overview','roster','party','bank','professions','quests','content','world','raids','trading','pvp','chat'];
+    for(let i=0;i<80;i++)CellboundGame.switchView(views[i%views.length]);
+    CellboundGame.switchView('bank');
+    const s=CellboundGame.getState();s.materials['cell-shards']=100;
+    const base=CellboundGear.items.find(x=>x.class==='Warrior'&&x.slot==='Head'&&Number(x.tier)===1)||CellboundGear.items.find(x=>x.class==='Warrior'&&x.slot==='Head');
+    CellboundGame.addBankItem({...base,itemLevel:18,baseItemLevel:18,tier:1,upgradeLevel:0,source:'QA Upgrade Spam'},false);
+    CellboundGame.renderAll();
+  });
+  assert.equal(await spamPage.locator('.view.active').count(),1,'rapid navigation leaves exactly one active screen');
+  const upgradeId=await spamPage.evaluate(()=>CellboundGame.getState().bank.find(x=>x.source==='QA Upgrade Spam')?.id);
+  assert(upgradeId,'upgrade-spam fixture exists');
+  await spamPage.locator('[data-bank-item="'+upgradeId+'"]').click();
+  await spamPage.waitForSelector('[data-bank-upgrade]');
+  await spamPage.evaluate(()=>{
+    const button=document.querySelector('[data-bank-upgrade]');
+    button.dispatchEvent(new MouseEvent('click',{bubbles:true}));
+    button.dispatchEvent(new MouseEvent('click',{bubbles:true}));
+  });
+  await spamPage.waitForTimeout(40);
+  const upgradeResult=await spamPage.evaluate(id=>{
+    const s=CellboundGame.getState(),item=s.bank.find(x=>x.id===id);
+    return{itemLevel:item?.itemLevel,upgradeLevel:item?.upgradeLevel,shards:s.materials['cell-shards']};
+  },upgradeId);
+  assert.equal(upgradeResult.itemLevel,20,'rapid upgrade presses advance the item exactly one step');
+  assert.equal(upgradeResult.upgradeLevel,1,'rapid upgrade presses record one upgrade');
+  assert.equal(upgradeResult.shards,93,'rapid upgrade presses spend Cell Shards once');
+
+  // Repeated wipes: Cell Shock caps at 100, removes locked characters, then recovers cleanly.
+  const shock=await spamPage.evaluate(()=>{
+    CellboundGame.switchView('party');
+    for(let i=0;i<5;i++)CellboundGame.applyPartyCellShock(25);
+    const s=CellboundGame.getState(),after=s.roster.slice(0,5).map(c=>({id:c.id,shock:c.cellShock,locked:Boolean(c.cellShockLockedUntil)}));
+    const partyCount=CellboundGame.getPartyCharacters().length;
+    s.roster.slice(0,5).forEach(c=>{c.cellShockLockedUntil=new Date(Date.now()-1000).toISOString()});
+    CellboundGame.renderAll();
+    return{after,partyCount,recovered:s.roster.slice(0,5).map(c=>({shock:c.cellShock,locked:Boolean(c.cellShockLockedUntil)}))};
+  });
+  assert(shock.after.every(x=>x.shock===100&&x.locked),'repeated wipes cap every active adventurer at 100% Cell Shock');
+  assert.equal(shock.partyCount,0,'100% Cell Shock removes locked adventurers from the active party');
+  assert(shock.recovered.every(x=>x.shock===0&&!x.locked),'expired Cell Shock locks recover without stale state');
+  assert.equal(spamErrors.filter(e=>!e.includes('Endgame state failed')).length,0,'rapid-action abuse emitted no unexpected browser errors');
+  await spamPage.close();
+
+  // Refresh in the middle of a persisted dungeon phase and concurrent entry requests.
+  const resumePage=await browser.newPage({viewport:{width:1024,height:1366}});
+  const resumeErrors=await mount(resumePage,matureState(),false,{simulateDungeonRuntime:true});
+  const firstAttempt=await resumePage.evaluate(async()=>{
+    localStorage.removeItem('cellbound-test-dungeon-attempt-v1');
+    localStorage.removeItem('cellbound-test-dungeon-begins-v1');
+    const [a,b]=await Promise.all([
+      CellboundEndgame.beginOrResumeAttempt('ashen-vault'),
+      CellboundEndgame.beginOrResumeAttempt('ashen-vault')
+    ]);
+    await CellboundEndgame.saveRuntime('ashen-vault',{version:1,kind:'ashen-vault',phase:'combat',stage:2,stageStartedAt:123456,run:{stage:2,endgame:{attemptId:a.attemptId},hp:{tank:72}}});
+    return{a:a.attemptId,b:b.attemptId,begins:Number(localStorage.getItem('cellbound-test-dungeon-begins-v1'))||0};
+  });
+  assert.equal(firstAttempt.a,firstAttempt.b,'concurrent dungeon entry calls share one server attempt');
+  assert.equal(firstAttempt.begins,1,'concurrent dungeon entry calls create only one attempt');
+  await resumePage.reload({waitUntil:'domcontentloaded'});
+  await resumePage.waitForFunction(()=>window.CellboundGame?.ready===true&&window.CellboundEndgame,{},{timeout:10000,polling:50});
+  const resumed=await resumePage.evaluate(async()=>{
+    const attempt=await CellboundEndgame.beginOrResumeAttempt('ashen-vault');
+    return{resumed:attempt.resumed,attemptId:attempt.attemptId,phase:attempt.runtimeState?.phase,stage:attempt.runtimeState?.stage,begins:Number(localStorage.getItem('cellbound-test-dungeon-begins-v1'))||0};
+  });
+  assert.equal(resumed.resumed,true,'refresh during a saved combat phase resumes the existing dungeon attempt');
+  assert.equal(resumed.attemptId,'qa-attempt-1','refresh preserves the server attempt id');
+  assert.equal(resumed.phase,'combat','refresh preserves the active combat phase');
+  assert.equal(resumed.stage,2,'refresh preserves dungeon stage progress');
+  assert.equal(resumed.begins,1,'refresh/resume does not create a duplicate dungeon attempt');
+  assert.equal(resumeErrors.filter(e=>!e.includes('Endgame state failed')).length,0,'dungeon refresh/resume abuse emitted no unexpected browser errors');
+  await resumePage.close();
+}
+
 async function ownerDungeonGeneratorPlaythrough(browser){
   const page=await browser.newPage({viewport:{width:1024,height:1366}});
   const errors=await mount(page,matureState(),true);
@@ -413,6 +617,10 @@ async function ownerDungeonGeneratorPlaythrough(browser){
   await page.waitForFunction(()=>window.CellboundAdmin?.role==='owner',{},{timeout:10000,polling:50});
   await page.evaluate(()=>CellboundGame.switchView('admin'));
   await page.waitForSelector('#dungeonGeneratorEntry:not([hidden])',{timeout:5000});
+  await page.waitForFunction(()=>Boolean(window.CellboundAdminBetaOps),{},{timeout:5000,polling:50});
+  assert(await page.locator('#adminBetaReportQueue').isVisible(),'owner can access the beta report triage queue');
+  assert(await page.locator('#adminPlayerLookup').isVisible(),'owner can access targeted player recovery');
+  assert.equal(await page.locator('#adminPlayerRecoveryActions [data-recover-player]').count(),3,'recovery console exposes only the three audited support actions');
   await page.locator('#openDungeonGenerator').click();
   await page.waitForSelector('#dungeonGeneratorMount:not([hidden]) .dg-shell',{timeout:5000});
 
@@ -455,7 +663,9 @@ async function ownerDungeonGeneratorPlaythrough(browser){
     await persistenceReloadPlaythrough(browser);
     await mainGamePlaythrough(browser);
     await coreGameplayLoopPlaythrough(browser);
+    await betaClassAndNullGatePlaythrough(browser);
+    await breakGamePlaythrough(browser);
     await ownerDungeonGeneratorPlaythrough(browser);
-    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, owner dungeon generator and responsive layouts.');
+    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, five-class beta lock, all dungeon content retained, Manor-gated Null Complex, adversarial corrupted-save repair, rapid-action protection, Cell Shock recovery, dungeon refresh/resume, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, beta support intake, admin triage/recovery, owner dungeon generator and responsive layouts.');
   }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});

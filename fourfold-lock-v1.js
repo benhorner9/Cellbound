@@ -1,12 +1,13 @@
 (()=>{
 'use strict';
+const BAL=window.CellboundBalance;
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const QUEST={
  id:'fourfold-lock',title:'The Fourfold Lock',difficulty:'Mystery',length:'Long',
  start:'A Strange Old Man · Zeltira Marketplace',
  summary:'A strange old man has left your guild a lockbox with four unmatched keyholes. The only clue he offered was simple: “Find what fits.”',
- rewards:['The Fractured Ages permanently unlocked','400 Gold','250 Guild Renown']
+ rewards:['The Fractured Ages permanently unlocked','400 Gold','250 Guild Renown',(BAL?.CAMPAIGN_XP?.fourfoldLock||3800)+' XP each']
 };
 const KEY_SOURCES={
  'ashen-vault':{id:'cinder-key',name:'Cinder-Iron Key',icon:'♨',place:'The Ashen Vault',copy:'Warm metal scarred by furnace soot. Its teeth resemble no modern lock.'},
@@ -68,10 +69,7 @@ async function start(){
 }
 function keyCount(q=ensure()){return Object.keys(KEY_SOURCES).filter(id=>q.keys[id]).length}
 function insertCount(q=ensure()){return Object.keys(KEY_SOURCES).filter(id=>q.inserted[id]).length}
-function rollChance(attempt){
- if(attempt>=15)return 1;
- return Math.min(.35,.05+Math.max(0,attempt-8)*.03)
-}
+function rollChance(attempt){return BAL?.fourfoldKeyChance?.(attempt)??(attempt>=4?1:[0,.35,.60,.85][Math.max(1,Number(attempt)||1)])}
 async function dungeonComplete(detail){
  const id=detail?.id,q=ensure(),def=KEY_SOURCES[id];
  if(!def||!q?.started||q.complete||q.keys[id])return;
@@ -168,6 +166,7 @@ async function finish(){
   q.complete=true;q.stage='complete';q.completedAt=new Date().toISOString();
   const s=state();s.progression.fracturedAgesUnlocked=true;s.gold=(Number(s.gold)||0)+400;s.renown=(Number(s.renown)||0)+250;
   s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push('Quest complete: The Fourfold Lock. The Fractured Ages was unlocked.');
+  await Game.awardPartyXp?.(BAL?.CAMPAIGN_XP?.fourfoldLock||3800,{source:'Quest complete · The Fourfold Lock'});
   await commit('The Strange Old Man opened a route into The Fractured Ages.');
   window.CellboundFX?.unlock?.('The Fractured Ages','A fifth dungeon has appeared beyond the normal world.');
   completion()
@@ -175,7 +174,7 @@ async function finish(){
 }
 function completion(){
  const root=document.createElement('div');root.className='fourfold-complete-backdrop';
- root.innerHTML='<section class="fourfold-complete"><small>QUEST COMPLETE</small><h2>The Fourfold Lock</h2><p>The box is empty. The map is ash. Somewhere beyond the marketplace, history has stopped behaving.</p><div><article><span>GOLD</span><b>+400</b></article><article><span>RENOWN</span><b>+250</b></article><article><span>DUNGEON</span><b>UNLOCKED</b></article></div><section><small>PERMANENT UNLOCK</small><h3>The Fractured Ages</h3><p>Follow the Strange Old Man through a western shootout, an iron kingdom, an ancient temple, the lunar frontier and whatever waits at the end of time.</p></section><button>OPEN DUNGEON JOURNAL →</button></section>';
+ root.innerHTML='<section class="fourfold-complete"><small>QUEST COMPLETE</small><h2>The Fourfold Lock</h2><p>The box is empty. The map is ash. Somewhere beyond the marketplace, history has stopped behaving.</p><div><article><span>GOLD</span><b>+400</b></article><article><span>RENOWN</span><b>+250</b></article><article><span>PARTY XP</span><b>+'+(BAL?.CAMPAIGN_XP?.fourfoldLock||3800)+'</b></article><article><span>DUNGEON</span><b>UNLOCKED</b></article></div><section><small>PERMANENT UNLOCK</small><h3>The Fractured Ages</h3><p>Follow the Strange Old Man through a western shootout, an iron kingdom, an ancient temple, the lunar frontier and whatever waits at the end of time.</p></section><button>OPEN DUNGEON JOURNAL →</button></section>';
  document.body.appendChild(root);root.querySelector('button').onclick=()=>{root.remove();Game.switchView?.('content');setTimeout(()=>window.CellboundDungeonBrowser?.open?.('fractured-ages'),50)}
 }
 function stageCopy(q){
@@ -211,7 +210,7 @@ function keysMarkup(q){
 function renderDetail(root,side){
  const q=ensure(),locked=!available()&&!q.started,[label,copy]=stageCopy(q);
  root.innerHTML='<div class="quest-v3-hero fourfold-quest-hero"><div><small>MYSTERY · LONG ADVENTURE</small><h2>The Fourfold Lock</h2><p>'+esc(QUEST.start)+'</p></div><span class="quest-v3-status '+(q.complete?'complete':'')+'">'+(q.complete?'COMPLETE':q.started?'IN PROGRESS':locked?'LOCKED':'AVAILABLE')+'</span></div><div class="quest-v3-story"><p>'+esc(QUEST.summary)+'</p></div><section class="quest-v3-clue"><small>'+(q.complete?'WHERE IT LED':'CURRENT CLUE')+'</small><h3>'+esc(label)+'</h3><p>'+esc(copy)+'</p></section>'+(q.started&&!q.complete?'<section class="fourfold-lockbox"><div class="fourfold-box"><span>⌗</span><b>THE LOCKBOX</b><small>'+insertCount(q)+' / 4 LOCKS OPEN</small></div><div class="fourfold-key-grid">'+keysMarkup(q)+'</div></section>':'')+'<div class="quest-detail-action">'+actionHtml(q)+'</div>';
- side.innerHTML='<section><small>QUEST RULE</small><div class="quest-reward-list"><p>Each current dungeon final clear can reveal its unique key.</p><p>Base drop chance: 5%</p><p>Hidden bad-luck protection increases the chance after repeated misses.</p></div></section><section><small>REWARDS</small><div class="quest-reward-list">'+QUEST.rewards.map(x=>'<p>'+esc(x)+'</p>').join('')+'</div></section><section><small>ADVENTURE JOURNAL</small><div class="quest-history">'+(q.history.slice(-7).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>The old man has not spoken to your guild yet.</p>')+'</div></section>'+(document.querySelector('#adminNav:not([hidden])')&&q.started&&!q.complete?'<section class="fourfold-dev"><small>DEV TESTING</small><button data-fourfold-dev-keys>GRANT FOUR KEYS</button></section>':'');
+ side.innerHTML='<section><small>QUEST RULE</small><div class="quest-reward-list"><p>Each current dungeon final clear can reveal its unique key.</p><p>Key chance: 35% → 60% → 85%.</p><p>The fourth eligible clear is guaranteed if the key has not dropped.</p></div></section><section><small>REWARDS</small><div class="quest-reward-list">'+QUEST.rewards.map(x=>'<p>'+esc(x)+'</p>').join('')+'</div></section><section><small>ADVENTURE JOURNAL</small><div class="quest-history">'+(q.history.slice(-7).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>The old man has not spoken to your guild yet.</p>')+'</div></section>'+(document.querySelector('#adminNav:not([hidden])')&&q.started&&!q.complete?'<section class="fourfold-dev"><small>DEV TESTING</small><button data-fourfold-dev-keys>GRANT FOUR KEYS</button></section>':'');
  bindDetail()
 }
 function bindDetail(){
