@@ -13,14 +13,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Probe live site
+      - name: Compare staging and production
         shell: bash
         run: |
           set -euo pipefail
-          for url in             "https://playcellbound.com/"             "https://playcellbound.com/index.html"             "https://www.playcellbound.com/"; do
+          for url in "https://cb.athleticsmanagergame.com/" "https://playcellbound.com/"; do
             echo "URL: $url"
-            curl -k -sS -D - -o /tmp/body --max-time 20 "$url" | sed -n '1,12p'
-            echo "BODY:"
-            sed -n '1,8p' /tmp/body
+            curl -k -sS -o /tmp/body -D /tmp/headers --max-time 20 "$url" || true
+            sed -n '1,12p' /tmp/headers
+            echo "TITLE:"
+            grep -io '<title>[^<]*' /tmp/body | head -1 || true
+            echo "COMING_SOON_MARKER:"
+            grep -io 'Coming Soon' /tmp/body | head -1 || true
+            echo "LOGIN_MARKER:"
+            grep -io 'Return to your guild' /tmp/body | head -1 || true
             echo
           done
