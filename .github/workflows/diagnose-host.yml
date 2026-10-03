@@ -13,13 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Probe public paths
+      - name: Validate refreshed FTP secrets
         shell: bash
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.FTP_PORT }}
         run: |
-          set -u
-          for url in             "https://playcellbound.com/"             "https://playcellbound.com/index.html"             "https://playcellbound.com/guild.html"             "https://playcellbound.com/cb/"             "https://playcellbound.com/cb/index.html"             "https://playcellbound.com/CB/"             "https://playcellbound.com/CB/index.html"             "https://playcellbound.com/dev/"             "https://playcellbound.com/game.html"; do
-            code=$(curl -k -sS -o /tmp/body -w "%{http_code}" --max-time 15 "$url" || true)
-            size=$(wc -c </tmp/body 2>/dev/null || echo 0)
-            title=$(grep -io '<title>[^<]*' /tmp/body 2>/dev/null | head -1 | sed 's/<title>//I' || true)
-            echo "$code | $size bytes | $url | $title"
-          done
+          set -euo pipefail
+          PORT="${FTP_PORT:-21}"
+          curl --insecure --silent --show-error --ssl-reqd             --user "$FTP_USERNAME:$FTP_PASSWORD"             "ftp://$FTP_SERVER:$PORT/" --list-only | sed -n '1,20p'
