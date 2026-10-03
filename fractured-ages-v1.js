@@ -8,7 +8,7 @@ const state=()=>Game?.getState?.();
 const party=()=>Game?.getPartyCharacters?.()||[];
 const roleOf=c=>Game?.classes?.[c?.class]?.specs?.[c?.spec]?.role||'dps';
 const ilvl=()=>Math.round(Number(Game?.partyItemLevel?.())||0);
-const unlocked=()=>Boolean(state()?.progression?.fracturedAgesUnlocked);
+const unlocked=()=>Boolean((!Game?.isBetaDungeonPlayable||Game.isBetaDungeonPlayable('fractured-ages'))&&state()?.progression?.fracturedAgesUnlocked);
 const clearCount=()=>Number(state()?.fracturedAgesCompletions)||0;
 
 function faSceneMarkup(id,src){
@@ -120,6 +120,7 @@ async function faWaitForEndgame(){
 
 function root(){let e=$('#fracturedAgesBackdrop');if(e)return e;e=document.createElement('div');e.id='fracturedAgesBackdrop';e.className='fa-backdrop';e.hidden=true;document.body.appendChild(e);return e}
 function readiness(normalOnly=false){
+ if(Game?.isBetaDungeonPlayable&&!Game.isBetaDungeonPlayable('fractured-ages'))return{ok:false,reason:'The Fractured Ages is reserved for a future Cellbound update.'};
  if(!unlocked())return{ok:false,reason:'Complete The Fourfold Lock to discover this dungeon.'};
  const p=party();if(p.length!==5)return{ok:false,reason:'Build a complete five-character party first.'};
  const bad=p.find(c=>Game.isUnavailable?.(c));if(bad)return{ok:false,reason:bad.name+' is recovering from Cell Shock.'};
@@ -129,6 +130,11 @@ function readiness(normalOnly=false){
 }
 function renderCard(){
  const card=$('#fracturedAgesCard'),mount=$('#fracturedAgesMount');if((!card&&!mount)||!Game?.ready)return;
+ if(Game?.isBetaDungeonPlayable&&!Game.isBetaDungeonPlayable('fractured-ages')){
+  if(card)card.innerHTML='<article class="dungeon-browser-card fractured-ages locked future-update" data-dungeon-card="fractured-ages"><div class="dungeon-browser-art has-image fractured-ages-art locked-image"><img src="./assets/dungeons/fractured-ages.webp" alt="" loading="lazy" decoding="async"><span>FUTURE EXPEDITION</span><strong>⌛</strong></div><div class="dungeon-browser-copy"><div class="dungeon-browser-heading"><div><small>DUNGEON</small><h3>The Fractured Ages</h3></div><b id="fracturedAgesStatus">FUTURE UPDATE</b></div><p>This expedition is being held back for a future Cellbound content update.</p><div class="dungeon-browser-meta"><span>Beta locked</span><span>Coming later</span></div><div class="dungeon-browser-actions"><button type="button" data-dungeon-more="fractured-ages">MORE INFO →</button></div></div></article>';
+  if(mount)mount.innerHTML='<div class="dungeon-detail-toolbar"><div><small>DUNGEON JOURNAL</small><b>The Fractured Ages</b></div><button type="button" data-dungeon-close>CLOSE DETAILS ×</button></div><section class="panel" style="padding:28px"><small>FUTURE CONTENT</small><h2>The Fractured Ages</h2><p>This dungeon is intentionally unavailable during the beta. It will be released in a future update.</p></section>';
+  return
+ }
  const open=unlocked(),clears=clearCount(),gate=readiness(true),pi=ilvl();
  if(card)card.innerHTML='<article class="dungeon-browser-card fractured-ages '+(open?'unlocked':'locked')+'" data-dungeon-card="fractured-ages"><div class="dungeon-browser-art has-image fractured-ages-art"><img src="./assets/dungeons/fractured-ages.webp" alt="" loading="lazy" decoding="async"><span>'+(open?'TIME FRACTURE':'UNKNOWN AGE')+'</span><strong>⌛</strong></div><div class="dungeon-browser-copy"><div class="dungeon-browser-heading"><div><small>DUNGEON</small><h3>'+(open?'The Fractured Ages':'Undiscovered Dungeon')+'</h3></div><b id="fracturedAgesStatus">'+(open?(clears?'CLEARED':'NEWLY UNLOCKED'):'QUEST LOCKED')+'</b></div><p>'+(open?'Five encounters across impossible ages, ending in a 5v5 fight inside the Old Man’s Funhouse.':'Four strange keyholes point toward something outside ordinary time.')+'</p><div class="dungeon-browser-meta"><span>5 encounters</span><span>'+(open?'iLvl '+ENTRY_ILVL+'+':'Fourfold Lock')+'</span><span>Party iLvl '+(pi||'—')+'</span></div><div class="dungeon-browser-actions"><button type="button" data-dungeon-more="fractured-ages">MORE INFO →</button></div></div></article>';
  if(!mount)return;
@@ -146,7 +152,7 @@ function renderCard(){
  mount.querySelector('[data-fa-quests]')?.addEventListener('click',()=>Game.switchView?.('quests'));
  try{window.CellboundDungeonBrowser?.refresh?.()}catch(e){}
 }
-function openDungeon(options){Game=window.CellboundGame;if(!Game?.ready)return;db=Game.getSupabase?.();if(options?.difficulty)window.CellboundEndgame?.choose?.('fractured-ages',options.difficulty,options.tier||1);briefing()}
+function openDungeon(options){Game=window.CellboundGame;if(!Game?.ready)return;if(Game?.isBetaDungeonPlayable&&!Game.isBetaDungeonPlayable('fractured-ages')){renderCard();Game.switchView?.('content');return}db=Game.getSupabase?.();if(options?.difficulty)window.CellboundEndgame?.choose?.('fractured-ages',options.difficulty,options.tier||1);briefing()}
 function close(){run=null;const r=root();r.hidden=true;document.body.classList.remove('fa-open');Game?.switchView?.('content');renderCard()}
 function briefing(){
  const baseGate=readiness(true),gate=readiness(),r=root();r.hidden=false;document.body.classList.add('fa-open');
