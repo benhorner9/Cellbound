@@ -17,7 +17,7 @@ for(const hook of ['cellbound_admin_beta_reports','cellbound_admin_update_beta_r
   assert(admin.includes(hook),'Admin beta operations runtime is missing '+hook);
 }
 
-const migration=read('supabase/migrations/20261003174500_beta_operations_foundation.sql');
+const migration=read('supabase/migrations/20261003181012_beta_operations_foundation.sql');
 for(const hook of [
   'alter table public.beta_reports enable row level security',
   'grant insert (category,severity,summary,details,page_view,build_id,build_number,context)',
