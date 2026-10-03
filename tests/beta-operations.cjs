@@ -8,7 +8,7 @@ for(const hook of ['data-view="support"','id="betaReportForm"','id="betaMyReport
 }
 
 const player=read('beta-ops-v1.js');
-for(const hook of ["db.from('beta_reports').insert(payload)",'contextSnapshot()','page_view:activeView()','PATCH_NOTES','Report sent']){
+for(const hook of ["db.from('beta_reports').insert(payload)",'contextSnapshot(sourceView)','page_view:sourceView','PATCH_NOTES','Report sent','ensureLauncher()','openReport(kind','data-quick-report="feature"']){
   assert(player.includes(hook),'Player beta support runtime is missing '+hook);
 }
 
@@ -18,6 +18,7 @@ for(const hook of ['cellbound_admin_beta_reports','cellbound_admin_update_beta_r
 }
 
 const migration=read('supabase/migrations/20261003181012_beta_operations_foundation.sql');
+const featureMigration=read('supabase/migrations/20261003185957_beta_report_feature_requests.sql');
 for(const hook of [
   'alter table public.beta_reports enable row level security',
   'grant insert (category,severity,summary,details,page_view,build_id,build_number,context)',
@@ -30,6 +31,7 @@ for(const hook of [
 ])assert(migration.includes(hook),'Beta operations database contract is missing '+hook);
 assert(!migration.includes('grant update on table public.beta_reports to authenticated'),'Players must not receive direct beta report update rights');
 assert(!migration.includes('grant delete on table public.beta_reports to authenticated'),'Players must not receive direct beta report delete rights');
+assert(featureMigration.includes("'feature'::text"),'Beta reports must allow feature-request category');
 
 const playbook=read('BETA_OPERATIONS.md'),log=read('BETA_CHANGELOG.md');
 for(const hook of ['Daily loop','Severity','Recovery rules','Beta release checklist'])assert(playbook.includes(hook),'Beta operations playbook is missing '+hook);

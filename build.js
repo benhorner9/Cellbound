@@ -1231,12 +1231,12 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     'id="betaMyReports"',
     'id="adminBetaReportQueue"',
     'id="adminPlayerLookup"',
-    'beta-ops-v1.js?v=1',
+    'beta-ops-v1.js?v=2',
     'admin-beta-ops-v1.js?v=1'
   ])if(!shell.includes(hook))throw new Error('Beta Step 9 game/admin support surface is missing '+hook);
 
   const playerOps=fs.readFileSync(path.join(__dirname,'beta-ops-v1.js'),'utf8');
-  for(const hook of ["db.from('beta_reports').insert(payload)",'contextSnapshot()','PATCH_NOTES','refreshReports'])
+  for(const hook of ["db.from('beta_reports').insert(payload)",'contextSnapshot(sourceView)','PATCH_NOTES','refreshReports','ensureLauncher()','openReport(kind','data-quick-report="feature"'])
     if(!playerOps.includes(hook))throw new Error('Beta Step 9 player support runtime is missing '+hook);
 
   const adminOps=fs.readFileSync(path.join(__dirname,'admin-beta-ops-v1.js'),'utf8');
@@ -1244,8 +1244,10 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     if(!adminOps.includes(hook))throw new Error('Beta Step 9 admin operations runtime is missing '+hook);
 
   const migration=fs.readFileSync(path.join(__dirname,'supabase/migrations/20261003181012_beta_operations_foundation.sql'),'utf8');
+  const featureMigration=fs.readFileSync(path.join(__dirname,'supabase/migrations/20261003185957_beta_report_feature_requests.sql'),'utf8');
   for(const hook of ['alter table public.beta_reports enable row level security','with check ((select auth.uid()) = user_id)','revoke all on table public.beta_reports from anon, authenticated','cellbound_admin_recover_player'])
     if(!migration.includes(hook))throw new Error('Beta Step 9 database security contract is missing '+hook);
+  if(!featureMigration.includes("'feature'::text"))throw new Error('Beta feature-request category migration is missing');
 
   if(!fs.existsSync(path.join(__dirname,'BETA_OPERATIONS.md'))||!fs.existsSync(path.join(__dirname,'BETA_CHANGELOG.md')))
     throw new Error('Beta Step 9 operations documentation is missing');

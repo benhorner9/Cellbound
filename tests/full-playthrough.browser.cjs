@@ -327,8 +327,14 @@ async function mainGamePlaythrough(browser){
   await page.evaluate(()=>CellboundGame.switchView('chat'));
   assert(await page.locator('#chat').isVisible(),'social view renders');
 
-  await page.evaluate(()=>CellboundGame.switchView('support'));
-  await page.waitForFunction(()=>Boolean(window.CellboundBetaOps),{},{timeout:5000,polling:50});
+  await page.evaluate(()=>CellboundGame.switchView('content'));
+  await page.waitForSelector('#betaQuickReportTrigger',{timeout:5000});
+  assert(await page.locator('#betaQuickReportTrigger').isVisible(),'persistent Report Bug / Request button is visible');
+  await page.locator('#betaQuickReportTrigger').click();
+  await page.locator('[data-quick-report="feature"]').click();
+  await page.waitForFunction(()=>document.querySelector('#support')?.classList.contains('active'),{},{timeout:5000,polling:50});
+  assert.equal(await page.locator('#betaReportCategory').inputValue(),'feature','feature-request shortcut preselects the correct category');
+  assert.equal((await page.locator('#betaSupportView').textContent()).trim(),'content','quick report preserves the originating screen');
   assert(await page.locator('#betaReportForm').isVisible(),'beta support form renders');
   assert(await page.locator('#betaPatchNotes .beta-note').count()>=1,'beta patch notes render');
   await page.locator('#betaReportSummary').fill('QA support ticket');
