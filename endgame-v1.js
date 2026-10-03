@@ -8,7 +8,7 @@ const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 
-let Game=null,db=null,user=null,server={season:D.SEASON,rotation:{},progress:[],weekly:{},recentRuns:[],achievements:[]},leaderboards={},attempts={};
+let Game=null,db=null,user=null,server={season:D.SEASON,rotation:{},progress:[],weekly:{},recentRuns:[],achievements:[]},leaderboards={},attempts={},attemptStartPromises={};
 const selection={
  'ashen-vault':{difficulty:'normal',tier:1},
  'hollow-sanctum':{difficulty:'normal',tier:1},
@@ -277,12 +277,17 @@ async function resumeAttempt(dungeonId){
  return attempt
 }
 async function beginOrResumeAttempt(dungeonId){
- const resumed=await resumeAttempt(dungeonId);
- const runtime=resumed?.runtimeState;
- if(resumed?.active&&runtime&&typeof runtime==='object'&&Number(runtime.version)>=1&&!['failed','completed','abandoned'].includes(String(runtime.phase||''))){
-   return{...resumed,resumed:true}
- }
- return beginAttempt(dungeonId)
+ if(attemptStartPromises[dungeonId])return attemptStartPromises[dungeonId];
+ const pending=(async()=>{
+   const resumed=await resumeAttempt(dungeonId);
+   const runtime=resumed?.runtimeState;
+   if(resumed?.active&&runtime&&typeof runtime==='object'&&Number(runtime.version)>=1&&!['failed','completed','abandoned'].includes(String(runtime.phase||''))){
+     return{...resumed,resumed:true}
+   }
+   return beginAttempt(dungeonId)
+ })();
+ attemptStartPromises[dungeonId]=pending;
+ try{return await pending}finally{delete attemptStartPromises[dungeonId]}
 }
 async function saveRuntime(dungeonId,runtimeState){
  let attempt=attempts[dungeonId];
