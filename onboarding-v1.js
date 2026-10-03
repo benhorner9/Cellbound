@@ -419,7 +419,7 @@ function zeltiraMap(active){
 async function setStage(next,extra){
   const s=state();s.onboarding=s.onboarding||{};
   Object.assign(s.onboarding,extra||{}, {stage:next,zone:'zeltira'});
-  Game.save();await Game.persistState();window.CellboundAnalytics?.track?.('profession_learned',{character_id:c.id,class:c.class,race:c.race,profession:name,source:'onboarding'},{key:'profession_learned:'+c.id+':'+name});render();
+  Game.save();await Game.persistState();render();
   const moments={
     'first-expedition':['FIELD CONTRACT','The First Resonance','Read the scene. Follow what the Cell is telling you.','story'],
     'dungeon-briefing':['EXPEDITION READY','Below Zeltira','Your first real descent is waiting.','danger'],
@@ -1109,7 +1109,9 @@ async function learnTutorialProfession(){
   if(!c||!P.PROFESSIONS[name])return;
   c.professions=Array.isArray(c.professions)?c.professions.slice(0,1):[null];c.professions[0]={name,level:1,xp:0};
   s.onboarding.stage='craft';s.activity.push(c.name+' learned '+name+' in Zeltira.');
-  Game.save();await Game.persistState();render();
+  Game.save();await Game.persistState();
+  window.CellboundAnalytics?.track?.('profession_learned',{character_id:c.id,class:c.class,race:c.race,profession:name,source:'onboarding'},{key:'profession_learned:'+c.id+':'+name});
+  render();
 }
 function recipeInputs(recipe){
   return Object.entries(recipe.inputs).map(([key,q])=>{
