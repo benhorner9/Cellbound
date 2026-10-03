@@ -13,14 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Validate refreshed FTP secrets
+      - name: Probe live site
         shell: bash
-        env:
-          FTP_SERVER: ${{ secrets.FTP_SERVER }}
-          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
-          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-          FTP_PORT: ${{ secrets.FTP_PORT }}
         run: |
           set -euo pipefail
-          PORT="${FTP_PORT:-21}"
-          curl --insecure --silent --show-error --ssl-reqd             --user "$FTP_USERNAME:$FTP_PASSWORD"             "ftp://$FTP_SERVER:$PORT/" --list-only | sed -n '1,20p'
+          for url in             "https://playcellbound.com/"             "https://playcellbound.com/index.html"             "https://www.playcellbound.com/"; do
+            echo "URL: $url"
+            curl -k -sS -D - -o /tmp/body --max-time 20 "$url" | sed -n '1,12p'
+            echo "BODY:"
+            sed -n '1,8p' /tmp/body
+            echo
+          done
