@@ -87,7 +87,7 @@ function anchorSVG(c){
     [wf?.anchorX??f.weaponX,wf?.anchorY??f.handY,'MH'],[f.offhandX,f.handY,'OH']
   ];
   return '<svg class="cfv-anchor-layer" viewBox="0 0 240 410" aria-hidden="true">'+
-    marks.map(([x,y,l])=>'<g><circle cx="'+x+'" cy="'+y+'" r="3.2"/><text x="'+(x+5)+'" y="'+(y-4)+'">'+l+'</text></g>').join('')+
+    marks.map(([x,rawY,l])=>{const y=CP().rigY?.(c.race,rawY)??rawY;return '<g><circle cx="'+x+'" cy="'+y+'" r="3.2"/><text x="'+(x+5)+'" y="'+(y-4)+'">'+l+'</text></g>'}).join('')+
     '<path d="M'+(120-f.hipHalf)+' 252 H'+(120+f.hipHalf)+' M'+(120-f.waistHalf)+' 247 H'+(120+f.waistHalf)+'" />'+
   '</svg>';
 }
@@ -129,7 +129,7 @@ function validateCharacter(c,{highlight='',requireFull=false}={}){
   if(c.equipment?.OffHand){
     const type=P.offHandType(c.equipment.OffHand,c),offAt=html.indexOf('data-offhand-type="'+type+'"');
     if(offAt<0)throw new Error('off-hand layer missing');
-    if(type==='shield'&&offAt>baseAt)throw new Error('shield must remain behind the body');
+    if(type==='shield'&&offAt<baseAt)throw new Error('shield must remain above the body');
     if(type!=='shield'&&offAt<baseAt)throw new Error('non-shield off-hand must remain in front');
     if(c.equipment?.Weapon&&type!=='shield'&&weaponAt<offAt)throw new Error('main-hand must remain above front off-hand');
   }

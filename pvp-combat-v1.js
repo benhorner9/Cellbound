@@ -145,7 +145,7 @@ function normalize(raw,team,index,count,opts){
   const maxHealth=Math.round((role==='tank'?1420:role==='healer'?1050:1120)*(1+(level-1)*.018)*(1+pvpDefence/420));
   const r=resourceDef(raw),position=initialPoint(team,index,count,opts.kind,opts.mode);
   return{
-    id:unitId(team,raw,index),characterId:raw?.id||raw?.characterId||null,name:raw?.name||('Combatant '+(index+1)),portrait:raw?.portrait||'◆',class:raw?.class||'Warrior',spec:raw?.spec||'',role,team,
+    id:unitId(team,raw,index),characterId:raw?.id||raw?.characterId||null,name:raw?.name||('Combatant '+(index+1)),portrait:raw?.portrait||'◆',race:raw?.race||'Veyren',appearance:raw?.appearance||null,equipment:raw?.pvpEquipment||raw?.equipment||{},class:raw?.class||'Warrior',spec:raw?.spec||'',role,team,
     level,pvpPower,pvpDefence,controlResistance:control,maxHealth,health:maxHealth,alive:true,position,resource:{name:r.name,max:r.max,value:r.start,regen:r.regen},
     nextAction:500+index*85,nextControl:5000+index*300,nextDefensive:9000+index*500,disabledUntil:0,guardedUntil:0,guardSource:null,defensiveUntil:0,
     respawnAt:0,kills:0,deaths:0,damage:0,healing:0,interrupts:0,cc:0,objectives:0,carryingFlag:null,flagIntent:null,objectiveRole:null,ctfSlot:index,kothSlot:index,arenaSlot:index,objectiveEpoch:0,lastObjectiveNotice:0,lastStormMove:0
@@ -798,7 +798,7 @@ function simulate({blue=[],red=[],kind='arena',mode='arena',size=null,seed='cell
   runScheduled(ctx);
   const win=winner(ctx),score=kind==='arena'?{blue:living(ctx,'blue').length,red:living(ctx,'red').length}:{blue:Math.round(ctx.objective.blue),red:Math.round(ctx.objective.red)};
   emit(ctx,'COMBAT_END',{result:win==='blue'?'victory':'defeat',payload:{winner:win,kind,mode,score:copy(score)}});
-  const finalUnits=ctx.units.map(u=>({id:u.id,characterId:u.characterId,name:u.name,class:u.class,spec:u.spec,role:u.role,team:u.team,health:u.health,maxHealth:u.maxHealth,alive:u.alive,position:copy(u.position),kills:u.kills,deaths:u.deaths,damage:u.damage,healing:u.healing,objectives:u.objectives}));
+  const finalUnits=ctx.units.map(u=>({id:u.id,characterId:u.characterId,name:u.name,race:u.race,appearance:u.appearance,equipment:u.equipment,class:u.class,spec:u.spec,role:u.role,team:u.team,health:u.health,maxHealth:u.maxHealth,alive:u.alive,position:copy(u.position),kills:u.kills,deaths:u.deaths,damage:u.damage,healing:u.healing,objectives:u.objectives}));
   return{
     version:VERSION,kind,mode,size:ctx.size,map:ctx.map?copy(ctx.map):null,winner:win,outcome:win==='blue'?'victory':'defeat',durationMs:ctx.time,events:ctx.events.sort((a,b)=>a.timestamp-b.timestamp),
     score,scoreText:score.blue+'–'+score.red,objective:copy(ctx.objective),summary:{blue:ctx.stats.blue,red:ctx.stats.red},finalState:{units:finalUnits}

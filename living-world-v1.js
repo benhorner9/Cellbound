@@ -120,8 +120,19 @@ function showNpc(id){let n=NPCS.find(x=>x.id===id),card=root?.querySelector('[da
 function showPeer(key){let p=presencePeers.find(x=>x.presence_key===key),card=root?.querySelector('[data-lw-pop-card]');if(!p||!card)return;let label=ZONE_LABEL[p.zone]||'Zeltira';card.innerHTML='<div class="cb-lw-pop-portrait cb-lw-peer-card-avatar">◇</div><div class="cb-lw-pop-copy"><small>ONLINE GUILD</small><h3>'+esc(p.guild_name)+'</h3><p>Currently active around '+esc(label)+'.</p></div><div class="cb-lw-pop-actions"><button type="button" class="go" data-lw-peer-social>OPEN SOCIAL</button><button type="button" data-lw-pop-close>CLOSE</button></div>';card.hidden=false;card.querySelector('[data-lw-peer-social]').onclick=()=>service('chat','Social',currentInterior?{type:'interior',key:currentInterior}:{type:'town'});card.querySelector('[data-lw-pop-close]').onclick=closePopCard}
 
 function guildName(){let account=window.CellboundGame?.getAccount?.(),state=window.CellboundGame?.getState?.();return String(account?.guild_name||state?.socialDisplayName||'Guild').trim()||'Guild'}
-function actor(){let e=root?.querySelector('[data-lw-player]');if(e){e.style.setProperty('--px',pos.x);e.style.setProperty('--py',pos.y);let label=e.querySelector('[data-lw-guild-name]');if(label){label.textContent=guildName();label.title=guildName()}}}
-function interiorActor(){let e=root?.querySelector('[data-lw-interior-player]');if(e){e.style.setProperty('--px',ipos.x);e.style.setProperty('--py',ipos.y);let label=e.querySelector('[data-lw-interior-guild-name]');if(label){label.textContent=guildName();label.title=guildName()}}}
+// The guild leader uses the same appearance and equipment as the roster.
+function renderWorldCharacter(el){
+  const state=window.CellboundGame?.getState?.(),P=window.CellboundPortraits;
+  const c=state?.roster?.find(x=>x.id===state.party?.tank)||state?.roster?.[0];
+  if(!c||!P?.paperDollHTML||!el)return;
+  const key=JSON.stringify([c.id,c.race,c.appearance,c.equipment]);
+  if(el._appearanceKey===key)return;
+  el._appearanceKey=key;
+  const target=el.querySelector(':scope > i');
+  if(target){target.innerHTML=P.paperDollHTML(c,{size:'world'});el.classList.add('has-character-model')}
+}
+function actor(){let e=root?.querySelector('[data-lw-player]');if(e){renderWorldCharacter(e);e.style.setProperty('--px',pos.x);e.style.setProperty('--py',pos.y);let label=e.querySelector('[data-lw-guild-name]');if(label){label.textContent=guildName();label.title=guildName()}}}
+function interiorActor(){let e=root?.querySelector('[data-lw-interior-player]');if(e){renderWorldCharacter(e);e.style.setProperty('--px',ipos.x);e.style.setProperty('--py',ipos.y);let label=e.querySelector('[data-lw-interior-guild-name]');if(label){label.textContent=guildName();label.title=guildName()}}}
 function move(x,y){pos.x=clamp(Number(x)||50,5,95);pos.y=clamp(Number(y)||69,18,91);actor()}
 function roadDistance(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
 function nearestRoad(point){let best=null,bestD=Infinity;for(const [id,node] of Object.entries(ROAD)){let d=roadDistance(point,node);if(d<bestD){best=id;bestD=d}}return best}

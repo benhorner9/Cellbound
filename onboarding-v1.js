@@ -143,50 +143,18 @@ function hide(){
 
 function renderPartyBuilder(){
   show();restoreDraft();
-  const d=draft[activeSlot],slot=SLOTS[activeSlot],availableRaces=RACES;
-  const classes=roleOptions(slot.role);
-  const steps=['race','class','appearance','confirm'];
-  if(!steps.includes(builderStep))builderStep='race';
-  const stepIndex=steps.indexOf(builderStep);
-  const allValid=draft.every(x=>x.name.trim().length>=2)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5;
-  d.appearance=CP?.normalizeAppearance?.(d.appearance,d.name||d.race,d.race)||d.appearance||{race:d.race};
-
-  const stepNav=steps.map((step,i)=>{
-    const labels={race:'Race',class:'Class',appearance:'Appearance',confirm:'Confirm'};
-    const unlocked=i<=stepIndex||(step==='class'&&d.race)||(step==='appearance'&&d.klass)||(step==='confirm'&&d.appearance);
-    return '<button class="creator-step '+(step===builderStep?'active':'')+' '+(i<stepIndex?'done':'')+'" data-builder-step="'+step+'" '+(unlocked?'':'disabled')+'><i>'+(i+1)+'</i><span>'+labels[step]+'</span></button>';
-  }).join('');
-
-  const portrait=portraitHTML({name:d.name,race:d.race,class:d.klass,appearance:d.appearance},'lg');
-  const hero='<aside class="creator-hero">'+portrait+'<small>'+ROLE_LABEL[d.role]+' '+(slot.number||'')+'</small><h2>'+esc(d.name||'Unnamed')+'</h2><p>'+raceById(d.race).icon+' '+esc(d.race)+' · '+esc(d.klass)+'</p><div class="creator-party-dots">'+draft.map((x,i)=>'<button data-slot="'+i+'" class="'+(i===activeSlot?'active':'')+'" title="'+esc(x.name)+'">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<span>'+ROLE_LABEL[x.role]+'</span></button>').join('')+'</div></aside>';
-
-  let panel='';
-  if(builderStep==='race'){
-    panel='<section class="creator-panel"><header><small>STEP 1 OF 4</small><h2>Choose a race</h2><p>Choose the ancestry and passive that fits this adventurer.</p></header><div class="race-grid creator-choice-grid">'+availableRaces.map(r=>{const identity=window.CellboundIdentities?.getRace?.(r.id);return '<button class="race-card '+(d.race===r.id?'active':'')+'" data-race="'+r.id+'"><strong>'+r.icon+'</strong><div><b>'+r.id+'</b><small>'+r.trait+'</small><p>'+esc(identity?.strength||r.lore)+'</p></div></button>'}).join('')+'</div><footer><span></span><button class="on-primary" data-next-step="class">CONTINUE TO CLASS →</button></footer></section>';
-  }else if(builderStep==='class'){
-    panel='<section class="creator-panel"><header><small>STEP 2 OF 4</small><h2>Choose a class</h2><p>Choose the class for this '+ROLE_LABEL[slot.role].toLowerCase()+'. Talent paths are chosen later in the game.</p></header><div class="class-grid creator-choice-grid">'+classes.map(o=>{const ci=window.CellboundIdentities?.getSpec?.(o.klass,o.spec);return '<button class="class-choice '+(d.klass===o.klass?'active':'')+'" data-class="'+o.klass+'" data-spec="'+o.spec+'" style="--class-glow:'+o.glow+'"><strong>'+o.icon+'</strong><div><b>'+o.klass+'</b><small>'+esc(ROLE_LABEL[slot.role])+' · TALENTS CHOSEN IN GAME</small><p>'+esc(ci?.strength||'Reliable in this role.')+'</p></div></button>'}).join('')+'</div><footer><button class="creator-back" data-prev-step="race"><span class="creator-back-arrow">←</span><span>BACK TO RACE</span></button><button class="on-primary" data-next-step="appearance">CONTINUE TO APPEARANCE →</button></footer></section>';
-  }else if(builderStep==='appearance'){
-    const appearanceEditor=CP?.editorHTML?.(d.appearance,{characterClass:d.klass,name:d.name,race:d.race})||'';
-    panel='<section class="creator-panel creator-appearance"><header><small>STEP 3 OF 4</small><h2>Appearance</h2><p>Shape the face you will recognise throughout Cellbound.</p></header><div class="creator-editor">'+appearanceEditor+'</div><footer><button class="creator-back" data-prev-step="class"><span class="creator-back-arrow">←</span><span>BACK TO CLASS</span></button><button class="on-primary" data-next-step="confirm">CONTINUE TO CONFIRM →</button></footer></section>';
-  }else{
-    const formation=draft.map((x,i)=>'<button class="creator-confirm-member '+(i===activeSlot?'active':'')+'" data-slot="'+i+'">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<span><small>'+ROLE_LABEL[x.role]+' '+(SLOTS[i].number||'')+'</small><b>'+esc(x.name||'Unnamed')+'</b><em>'+esc(x.race)+' · '+esc(x.klass)+'</em></span></button>').join('');
-    panel='<section class="creator-panel creator-confirm"><header><small>STEP 4 OF 4</small><h2>Confirm your party</h2><p>Name this adventurer, then check all five before entering Zeltira.</p></header><div class="name-builder creator-name"><input id="onboardName" maxlength="24" value="'+esc(d.name)+'" autocomplete="off" placeholder="Adventurer name"><button id="randomiseName">RANDOMISE</button></div><div class="creator-confirm-grid">'+formation+'</div><footer><button class="creator-back" data-prev-step="appearance"><span class="creator-back-arrow">←</span><span>BACK TO APPEARANCE</span></button><button id="confirmParty" class="on-primary" '+(allValid?'':'disabled')+'>CONFIRM PARTY & ENTER ZELTIRA →</button></footer><p class="builder-hint">'+(allValid?'Your charter is ready.':'All five characters need unique names of at least 2 characters.')+'</p></section>';
-  }
-
-  const body='<div class="character-creator"><nav class="creator-steps">'+stepNav+'</nav><div class="creator-stage">'+hero+'<main>'+panel+'</main></div></div>';
-  const root=ensureRoot();root.innerHTML=chrome(body,'party-builder');
-
-  root.querySelectorAll('[data-builder-step]').forEach(btn=>btn.onclick=()=>{if(!btn.disabled){builderStep=btn.dataset.builderStep;renderPartyBuilder()}});
-  root.querySelectorAll('[data-next-step]').forEach(btn=>btn.onclick=()=>{builderStep=btn.dataset.nextStep;renderPartyBuilder()});
-  root.querySelectorAll('[data-prev-step]').forEach(btn=>btn.onclick=()=>{builderStep=btn.dataset.prevStep;renderPartyBuilder()});
-  root.querySelectorAll('[data-slot]').forEach(btn=>btn.onclick=()=>{activeSlot=Number(btn.dataset.slot);builderStep='race';renderPartyBuilder()});
-  root.querySelectorAll('[data-race]').forEach(btn=>btn.onclick=()=>{d.race=btn.dataset.race;d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name));d.appearance=CP?.randomAppearance?.(d.race)||{race:d.race};saveDraft();renderPartyBuilder()});
-  root.querySelectorAll('[data-class]').forEach(btn=>btn.onclick=()=>{d.klass=btn.dataset.class;d.spec=btn.dataset.spec;saveDraft();renderPartyBuilder()});
-  const input=$('#onboardName');
-  if(input)input.oninput=e=>{d.name=e.target.value;saveDraft();const btn=$('#confirmParty');if(btn)btn.disabled=!(draft.every(x=>x.name.trim().length>=2)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5)};
-  $('#randomiseName')?.addEventListener('click',()=>{d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name));saveDraft();renderPartyBuilder()});
-  if(builderStep==='appearance')CP?.bindEditor?.(root,d.appearance,()=>{saveDraft();renderPartyBuilder()},{characterClass:d.klass,name:d.name,race:d.race});
-  $('#confirmParty')?.addEventListener('click',createParty);
+  const d=draft[activeSlot],slot=SLOTS[activeSlot];
+  const valid=()=>draft.every(x=>x.name.trim().length>=2&&x.name.trim().length<=24)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5;
+  const root=ensureRoot();root.innerHTML=chrome('<div data-creation-mount></div>','party-builder');
+  window.CellboundCreationCentre.render({mount:root.querySelector('[data-creation-mount]'),draft:d,step:builderStep,
+    races:RACES,classes:roleOptions(slot.role),title:'Build your founding party',confirmTitle:'Confirm your party',confirmLabel:'CONFIRM PARTY & ENTER ZELTIRA →',
+    partyHTML:'<div class="creator-party-dots">'+draft.map((x,i)=>'<button data-slot="'+i+'" class="'+(i===activeSlot?'active':'')+'" title="'+esc(x.name)+'">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<span>'+ROLE_LABEL[x.role]+'</span></button>').join('')+'</div>',
+    confirmHTML:'<div class="creator-confirm-grid">'+draft.map((x,i)=>'<button class="creator-confirm-member" data-slot="'+i+'">'+portraitHTML({name:x.name,race:x.race,appearance:x.appearance},'sm')+'<span><b>'+esc(x.name)+'</b><em>'+esc(x.race)+' · '+esc(x.klass)+'</em></span></button>').join('')+'</div>',
+    hint:valid()?'Your charter is ready.':'All five characters need unique names of at least 2 characters.',valid:valid(),isValid:valid,
+    onStep:step=>{builderStep=step;renderPartyBuilder()},onSlot:i=>{activeSlot=i;builderStep='race';renderPartyBuilder()},
+    onChange:()=>{saveDraft();renderPartyBuilder()},onName:()=>saveDraft(),
+    onRandomName:()=>{d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name))},onConfirm:createParty
+  });
 }
 function emptyEquipment(){
   return{Head:null,Chest:null,Weapon:null,Shoulders:null,Hands:null,Waist:null,Legs:null,Feet:null,OffHand:null,Ring1:null,Ring2:null,Trinket1:null,Trinket2:null,Relic:null};

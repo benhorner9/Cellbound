@@ -238,11 +238,11 @@ function artHTML(item,size,extra){
  if(!item)return '';
  size=Math.max(20,Math.round(Number(size)||64));extra=extra||'';
  const x={...item},seed=detailSeed(x),p=palette(x),tier=tierOf(x),uid='cbia'+seed.toString(36),title=esc(x.name||idOf(x));
- const body=artBody(p,x,seed),pvp=pvpBand(x);
+ const body=artBody(p,x,seed).replace(/url\(#g\)/g,'url(#'+uid+'g)').replace(/url\(#m\)/g,'url(#'+uid+'m)'),pvp=pvpBand(x);
  const cls=['cb-item-art','cb-item-'+slug(kindOf(x)),'rarity-'+slug(rarityOf(x)),pvp?'cb-item-pvp':'',extra].filter(Boolean).join(' ');
  const svg='<svg viewBox="0 0 128 128" role="img" aria-label="'+title+'" focusable="false"><defs>'+
- '<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+p.a+'"/><stop offset="1" stop-color="'+p.b+'"/></linearGradient>'+
- '<linearGradient id="m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+p.a+'"/><stop offset=".48" stop-color="'+p.b+'"/><stop offset="1" stop-color="'+p.rarity+'"/></linearGradient>'+
+ '<linearGradient id="'+uid+'g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+p.a+'"/><stop offset="1" stop-color="'+p.b+'"/></linearGradient>'+
+ '<linearGradient id="'+uid+'m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+p.a+'"/><stop offset=".35" stop-color="'+p.ink+'"/><stop offset=".46" stop-color="'+p.a+'"/><stop offset=".7" stop-color="'+p.b+'"/><stop offset="1" stop-color="'+p.rarity+'"/></linearGradient>'+
  '<filter id="'+uid+'"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity=".65"/></filter></defs>'+
  frame(seed,p,tier)+runes(seed,p,tier)+'<g filter="url(#'+uid+')">'+body+'</g>'+
  (tier>=4?'<circle cx="64" cy="64" r="52" fill="none" stroke="'+p.rarity+'" stroke-width="1.5" opacity=".38"/>':'')+
