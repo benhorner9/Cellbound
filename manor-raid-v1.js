@@ -69,7 +69,7 @@ const SCREECH_COLOURS=[
 ];
 const SCREECH_TIMEOUT_MS=4500;
 let Game=null,db=null,user=null,mount=null,groups=[],members=[],lockout=null,myGroup=null,session=null,pendingRewardSession=null;
-let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false,raidRealtime=null,readyLaunchTimer=null,serverClockOffset=0;
+let hubTimer=null,raidTimer=null,paintTimer=null,advancing=false,raidStartBusy=false,lastStage='',lastScreechAt=0,screechOpen=false,sharedStageKey='',closingRaid=false,raidRealtime=null,readyLaunchTimer=null,serverClockOffset=0;
 const handledScreechTokens=new Set();
 const resolvingScreechTokens=new Set();
 const screechPromptTimers=new Map();
@@ -344,6 +344,7 @@ async function leaveGroup(){
  if(error){alert(error.message);return}await fetchHub()
 }
 async function startRaid(){
+ if(raidStartBusy)return;raidStartBusy=true;
  try{
    if(!partyReady())throw new Error(partyReadyReason());
    await syncParty(myGroup.id);
@@ -352,6 +353,7 @@ async function startRaid(){
    const {data,error}=await db.rpc('start_manor_raid',{p_listing_id:myGroup.id});if(error)throw error;
    await fetchHub();await openRaid(data)
  }catch(e){alert(e.message||'The Manor could not be started')}
+ finally{raidStartBusy=false}
 }
 function ensureOverlay(){
  let root=$('#manorRaidOverlay');if(root)return root;

@@ -133,6 +133,7 @@ let account=null;
 let currentUser=null;
 let bankBulkMode=false;
 const bankBulkSelected=new Set();
+const bankUpgradeCooldowns=new Map();
 let saveSerial=Promise.resolve();
 let syncTimer=null;
 let recoveringTicker=null;
@@ -214,7 +215,9 @@ function characterItemLevel(c){
 }
 function partySlotIds(){return [state?.party?.tank,state?.party?.healer,...(state?.party?.dps||[])].slice(0,5)}
 function writePartySlots(ids){
-  const slots=[...(ids||[])].slice(0,5);while(slots.length<5)slots.push(null);
+  const seen=new Set(),slots=[...(ids||[])].slice(0,5).map(id=>{
+    if(!id||seen.has(id))return null;seen.add(id);return id
+  });while(slots.length<5)slots.push(null);
   state.party=state.party&&typeof state.party==='object'?state.party:{tank:null,healer:null,dps:[null,null,null]};
   state.party.tank=slots[0]||null;state.party.healer=slots[1]||null;state.party.dps=[slots[2]||null,slots[3]||null,slots[4]||null]
 }
@@ -285,7 +288,7 @@ function normalizeCharacter(c,index=0){
   c.gear=characterItemLevel(c);return c;
 }
 function canonicalBank(raw){
-  const out=[];(Array.isArray(raw)?raw:[]).forEach(item=>{const canon=canonicalItem(item);if(!canon?.name)return;const sig=G.rollSignature?.(canon)||'';const found=!canon.nonStackable&&out.find(x=>x.itemId===canon.itemId&&(G.rollSignature?.(x)||'')===sig&&x.source===item.source);if(found)found.quantity+=(item.quantity||1);else out.push({...canon,id:item.id||`bank-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,quantity:item.quantity||1,source:item.source||'Previous loot'});});return out;
+  const out=[];(Array.isArray(raw)?raw:[]).forEach(item=>{const canon=canonicalItem(item);if(!canon?.name)return;const quantity=Math.max(1,Math.floor(Number(item.quantity)||1)),sig=G.rollSignature?.(canon)||'',found=!canon.nonStackable&&out.find(x=>x.itemId===canon.itemId&&(G.rollSignature?.(x)||'')===sig&&x.source===item.source);if(found)found.quantity+=quantity;else out.push({...canon,id:item.id||`bank-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,quantity,source:item.source||'Previous loot'});});return out;
 }
 function repairInvalidOffHands(s){
   if(!s||!Array.isArray(s.roster))return 0;
@@ -313,9 +316,11 @@ function repairInvalidOffHands(s){
   return repaired;
 }
 function removeInvalidPartyMembers(s){
-  const allowed=new Set((s.roster||[]).filter((c,i)=>isRosterSlotUnlocked(i)&&!isUnavailable(c)).map(c=>c.id));
-  if(!allowed.has(s.party?.tank))s.party.tank=null;if(!allowed.has(s.party?.healer))s.party.healer=null;
-  s.party.dps=Array.isArray(s.party?.dps)?s.party.dps.slice(0,3):[null,null,null];while(s.party.dps.length<3)s.party.dps.push(null);s.party.dps=s.party.dps.map(id=>allowed.has(id)?id:null);
+  const allowed=new Set((s.roster||[]).filter((c,i)=>isRosterSlotUnlocked(i)&&isCharacterBetaPlayable(c)&&!isUnavailable(c)).map(c=>c.id)),seen=new Set();
+  const clean=id=>{if(!allowed.has(id)||seen.has(id))return null;seen.add(id);return id};
+  s.party=s.party&&typeof s.party==='object'?s.party:{tank:null,healer:null,dps:[null,null,null]};
+  s.party.tank=clean(s.party.tank);s.party.healer=clean(s.party.healer);
+  s.party.dps=Array.isArray(s.party.dps)?s.party.dps.slice(0,3):[null,null,null];while(s.party.dps.length<3)s.party.dps.push(null);s.party.dps=s.party.dps.map(clean);
 }
 function migrateState(raw){
   const freshMarker=raw&&raw.__fresh_start===true;
@@ -326,7 +331,7 @@ function migrateState(raw){
   const hadRoster=Array.isArray(s.roster)&&s.roster.length>0;
   s.saveVersion=SAVE_VERSION;s.gearVersion=3;s.renown=Number(s.renown)||0;s.gold=Number(s.gold)||0;s.socialDisplayName=typeof s.socialDisplayName==='string'?s.socialDisplayName:'';
   s.roster=Array.isArray(s.roster)?s.roster.map(normalizeCharacter):[];
-  s.progression=s.progression&&typeof s.progression==='object'?s.progression:{};if(typeof s.progression.ashenVaultUnlocked!=='boolean')s.progression.ashenVaultUnlocked=Boolean(Number(s.dungeonCompletions)>0||Object.values(s.bossKills||{}).some(Boolean)||s.questSystem?.ashfall?.complete);s.bank=canonicalBank(s.bank);s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};s.consumables=Array.isArray(s.consumables)?s.consumables:[];s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];s.collectionHistory=Array.isArray(s.collectionHistory)?s.collectionHistory:[];s.reports=Array.isArray(s.reports)?s.reports:[];s.activity=Array.isArray(s.activity)?s.activity:[];s.bossKills=s.bossKills||{ashwarden:false,embermaw:false,vaultheart:false};s.party=s.party||{tank:null,healer:null,dps:[null,null,null]};
+  s.progression=s.progression&&typeof s.progression==='object'?s.progression:{};if(typeof s.progression.ashenVaultUnlocked!=='boolean')s.progression.ashenVaultUnlocked=Boolean(Number(s.dungeonCompletions)>0||Object.values(s.bossKills||{}).some(Boolean)||s.questSystem?.ashfall?.complete);s.bank=canonicalBank(s.bank);s.materials=s.materials&&typeof s.materials==='object'?Object.fromEntries(Object.entries(s.materials).map(([k,v])=>[k,Math.max(0,Math.floor(Number(v)||0))])):{};s.consumables=(Array.isArray(s.consumables)?s.consumables:[]).map(x=>({...x,quantity:Math.max(0,Math.floor(Number(x?.quantity)||0))})).filter(x=>x.quantity>0);s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];s.collectionHistory=Array.isArray(s.collectionHistory)?s.collectionHistory:[];s.reports=Array.isArray(s.reports)?s.reports:[];s.activity=Array.isArray(s.activity)?s.activity:[];s.bossKills=s.bossKills||{ashwarden:false,embermaw:false,vaultheart:false};s.party=s.party||{tank:null,healer:null,dps:[null,null,null]};
   if(s.__fresh_start===true||!s.onboarding&&!hadRoster)s.onboarding={version:3,complete:false,stage:'party-builder',zone:'zeltira',startedAt:new Date().toISOString()};
   else if(!s.onboarding&&hadRoster)s.onboarding={version:3,complete:true,stage:'complete',zone:'zeltira',legacy:true};
   // A populated roster and the party-builder stage cannot both be authoritative.
@@ -1081,10 +1086,12 @@ function bankUpgradeCost(item){
 }
 function bankCanUpgrade(item){return (Number(item?.itemLevel)||0)<bankUpgradeMax(item);}
 function upgradeBankItem(id){
+  const now=Date.now();if((bankUpgradeCooldowns.get(id)||0)>now)return;
   const item=state.bank.find(x=>x.id===id);if(!item||!bankCanUpgrade(item))return;
   const cost=bankUpgradeCost(item),available=Number(state.materials?.['cell-shards'])||0,next=Math.min(bankUpgradeMax(item),(Number(item.itemLevel)||0)+2);
   if(available<cost){alert('You need '+cost+' Cell Shards. You currently have '+available+'.');return;}
   if(!confirm('Upgrade '+item.name+' from Item Level '+item.itemLevel+' to '+next+' for '+cost+' Cell Shards?'))return;
+  bankUpgradeCooldowns.set(id,now+800);setTimeout(()=>{if((bankUpgradeCooldowns.get(id)||0)<=Date.now())bankUpgradeCooldowns.delete(id)},850);
   const detailScroll=Math.max(0,Number(ui.bankDetail?.scrollTop)||0);
   let target=item;
   if((Number(item.quantity)||1)>1){

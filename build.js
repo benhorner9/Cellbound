@@ -1183,6 +1183,45 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   console.log('Beta Step 6 progression and economy contracts are release-gated.');
 }
 
+{
+  const guild=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
+  for(const hook of [
+    'const bankUpgradeCooldowns=new Map()',
+    'const seen=new Set(),slots=',
+    'isCharacterBetaPlayable(c)&&!isUnavailable(c)',
+    'Math.max(1,Math.floor(Number(item.quantity)||1))',
+    "Math.max(0,Math.floor(Number(x?.quantity)||0))",
+    'bankUpgradeCooldowns.set(id,now+800)'
+  ])if(!guild.includes(hook))throw new Error('Beta Step 8 save/action hardening is missing '+hook);
+
+  const endgame=fs.readFileSync(path.join(__dirname,'endgame-v1.js'),'utf8');
+  for(const hook of ['attemptStartPromises={}', 'if(attemptStartPromises[dungeonId])return attemptStartPromises[dungeonId]', 'delete attemptStartPromises[dungeonId]'])
+    if(!endgame.includes(hook))throw new Error('Beta Step 8 dungeon-start dedupe is missing '+hook);
+
+  const manor=fs.readFileSync(path.join(__dirname,'manor-raid-v1.js'),'utf8');
+  for(const hook of ['raidStartBusy=false', 'if(raidStartBusy)return;raidStartBusy=true', 'finally{raidStartBusy=false}'])
+    if(!manor.includes(hook))throw new Error('Beta Step 8 Manor start guard is missing '+hook);
+
+  const playthrough=fs.readFileSync(path.join(__dirname,'tests/full-playthrough.browser.cjs'),'utf8');
+  for(const hook of [
+    'async function breakGamePlaythrough(browser)',
+    'corrupted saves cannot duplicate the same adventurer across party slots',
+    'rapid upgrade presses spend Cell Shards once',
+    'repeated wipes cap every active adventurer at 100% Cell Shock',
+    'concurrent dungeon entry calls create only one attempt',
+    'refresh during a saved combat phase resumes the existing dungeon attempt'
+  ])if(!playthrough.includes(hook))throw new Error('Beta Step 8 adversarial browser coverage is missing '+hook);
+
+  const auth=fs.readFileSync(path.join(__dirname,'auth.js'),'utf8');
+  for(const hook of ["const authReturnUrl=()=>new URL('./index.html',location.href).href", 'emailRedirectTo:authReturnUrl()', 'redirectTo:authReturnUrl()'])
+    if(!auth.includes(hook))throw new Error('Beta Step 8 auth return-path hardening is missing '+hook);
+  const login=fs.readFileSync(path.join(__dirname,'tests/login-screen.browser.cjs'),'utf8');
+  for(const hook of ['verification email returns to the current Cellbound host', 'password reset email returns to the current Cellbound host'])
+    if(!login.includes(hook))throw new Error('Beta Step 8 auth redirect regression is missing '+hook);
+
+  console.log('Beta Step 8 break-game QA contracts are release-gated.');
+}
+
 console.log('Cellbound build complete.');
 console.log('Build verification passed: scripts parse and required UI hooks/assets are present.');
 
