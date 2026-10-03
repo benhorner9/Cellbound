@@ -69,7 +69,7 @@ async function mount(page,seedState=null,owner=false,options={}){
   const errors=[];
   page.on('pageerror',e=>errors.push('pageerror: '+String(e)));
   page.on('console',msg=>{if(msg.type()==='error')errors.push('console: '+msg.text())});
-  await page.addInitScript(({seed,owner,remoteUpdatedAt,failWrites,localSeed,pendingSeed})=>{
+  await page.addInitScript(({seed,owner,remoteUpdatedAt,failWrites,localSeed,pendingSeed,simulateDungeonRuntime})=>{
     window.__CELLBOUND_TEST_SEED=seed;
     const user={id:'playthrough-user',email:'playthrough@example.test'};
     if(localSeed){
@@ -77,6 +77,9 @@ async function mount(page,seedState=null,owner=false,options={}){
       localStorage.setItem('cellbound-management-reboot-v3',JSON.stringify(localSeed));
     }
     if(pendingSeed)localStorage.setItem('cellbound-management-pending-save-v1',JSON.stringify(pendingSeed));
+    const TEST_ATTEMPT_KEY='cellbound-test-dungeon-attempt-v1',TEST_BEGIN_KEY='cellbound-test-dungeon-begins-v1';
+    const readAttempt=()=>{try{return JSON.parse(localStorage.getItem(TEST_ATTEMPT_KEY)||'null')}catch{return null}};
+    const writeAttempt=value=>localStorage.setItem(TEST_ATTEMPT_KEY,JSON.stringify(value));
     function query(table){
       const q={};
       for(const method of ['select','eq','neq','gte','gt','lte','lt','like','ilike','is','in','contains','containedBy','or','not','order','limit','range','match']){
@@ -103,11 +106,28 @@ async function mount(page,seedState=null,owner=false,options={}){
         onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})
       },
       from:query,
-      rpc:async(name)=>{
+      rpc:async(name,args={})=>{
         if(name==='cellbound_social_identity')return{data:{staff_member:owner,chat_badge:owner?'owner':'player',player_mod_discount_eligible:false},error:null};
         if(name==='cellbound_admin_status')return{data:owner?{is_admin:true,role:'owner',auto_clear_cell_shock:false}:{is_admin:false,role:null,auto_clear_cell_shock:false},error:null};
         if(name==='cellbound_release_status')return{data:null,error:null};
         if(name==='cellbound_admin_market_summary')return{data:{active_gear:0,buy_orders:0,sell_orders:0,trades_24:0,volume_24:0,tax_24:0,top_items:[]},error:null};
+        if(simulateDungeonRuntime&&name==='resume_dungeon_attempt'){
+          const saved=readAttempt();return{data:saved?.active?saved:{active:false},error:null};
+        }
+        if(simulateDungeonRuntime&&name==='begin_dungeon_attempt'){
+          const count=Math.max(0,Number(localStorage.getItem(TEST_BEGIN_KEY))||0)+1;localStorage.setItem(TEST_BEGIN_KEY,String(count));
+          const existing=readAttempt();if(existing?.active)return{data:existing,error:null};
+          const attempt={active:true,attemptId:'qa-attempt-1',seed:'qa-resume-seed',difficulty:args.p_difficulty||'normal',tier:Number(args.p_tier)||0,dungeonVersion:Number(args.p_dungeon_version)||2,seasonId:args.p_season_id||'qa',targetTimeMs:720000,runtimeState:{}};
+          writeAttempt(attempt);return{data:attempt,error:null};
+        }
+        if(simulateDungeonRuntime&&name==='save_dungeon_attempt_runtime'){
+          const saved=readAttempt()||{active:true,attemptId:args.p_attempt_id||'qa-attempt-1'};
+          const next={...saved,active:true,runtimeState:args.p_runtime_state||{},runtimeUpdatedAt:new Date().toISOString()};writeAttempt(next);return{data:{ok:true},error:null};
+        }
+        if(simulateDungeonRuntime&&name==='record_dungeon_run_v3'){
+          const saved=readAttempt();if(saved)writeAttempt({...saved,active:false});
+          return{data:{valid:true,score:1234,newUnlocks:[]},error:null};
+        }
         return{data:[],error:null};
       },
       channel:()=>{const c={on:()=>c,subscribe:()=>c,unsubscribe:()=>Promise.resolve()};return c},
@@ -116,7 +136,7 @@ async function mount(page,seedState=null,owner=false,options={}){
       storage:{from:()=>({getPublicUrl:()=>({data:{publicUrl:''}})})}
     };
     window.supabase={createClient:()=>client};
-  },{seed:seedState,owner,remoteUpdatedAt:options.remoteUpdatedAt||null,failWrites:Boolean(options.failWrites),localSeed:options.localSeed||null,pendingSeed:options.pendingSeed||null});
+  },{seed:seedState,owner,remoteUpdatedAt:options.remoteUpdatedAt||null,failWrites:Boolean(options.failWrites),localSeed:options.localSeed||null,pendingSeed:options.pendingSeed||null,simulateDungeonRuntime:Boolean(options.simulateDungeonRuntime)});
   await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:''}));
   await page.route('https://cellbound.test/**',async route=>{
     const u=new URL(route.request().url()),relative=u.pathname.replace(/^\/+/,'')||'index.html';
@@ -463,6 +483,117 @@ async function betaClassAndNullGatePlaythrough(browser){
   await page.close();
 }
 
+async function breakGamePlaythrough(browser){
+  // Corrupted/legacy save: duplicate party ids, unavailable beta class, negative stacks and currencies.
+  const corrupt=matureState();
+  corrupt.roster.push({id:'old-priest',name:'Archive',race:'Veyren',class:'Priest',spec:'Holy',level:99,xp:999,power:1,equipment:{},gearItems:[],talents:{},cellShock:0,cellShockLockedUntil:null,professions:[null]});
+  corrupt.party={tank:'tank',healer:'old-priest',dps:['mage','mage','rogue']};
+  corrupt.bank=[{id:'bad-stack',name:'Corrupt Scrap',itemId:'corrupt-scrap',class:'Warrior',slot:'Head',tier:1,rarity:'Common',itemLevel:18,baseItemLevel:18,power:1,quantity:-9,source:'Legacy corruption'}];
+  corrupt.materials={'cell-shards':-50,hollowroot:3.9};
+  corrupt.consumables=[{key:'bad-potion',name:'Bad Potion',quantity:-4,payload:{effect:'combat-potion'}},{key:'good-potion',name:'Good Potion',quantity:2,payload:{effect:'combat-potion'}}];
+  const corruptPage=await browser.newPage({viewport:{width:1024,height:1366}});
+  const corruptErrors=await mount(corruptPage,corrupt);
+  const repaired=await corruptPage.evaluate(()=>{
+    const s=CellboundGame.getState(),slots=[s.party.tank,s.party.healer,...s.party.dps];
+    return{
+      slots,
+      unique:slots.filter(Boolean).length===new Set(slots.filter(Boolean)).size,
+      oldPriestInParty:slots.includes('old-priest'),
+      badQty:s.bank.find(x=>x.id==='bad-stack')?.quantity,
+      shards:s.materials['cell-shards'],
+      hollowroot:s.materials.hollowroot,
+      consumables:s.consumables.map(x=>[x.key,x.quantity]),
+      oldPriestLevel:s.roster.find(x=>x.id==='old-priest')?.level
+    };
+  });
+  assert.equal(repaired.unique,true,'corrupted saves cannot duplicate the same adventurer across party slots');
+  assert.equal(repaired.oldPriestInParty,false,'locked beta classes are removed from corrupted active-party state');
+  assert.equal(repaired.badQty,1,'negative Bank stack quantities are repaired to one');
+  assert.equal(repaired.shards,0,'negative material balances are clamped to zero');
+  assert.equal(repaired.hollowroot,3,'fractional material balances are normalised');
+  assert.deepEqual(repaired.consumables,[['good-potion',2]],'invalid consumable stacks are removed');
+  assert.equal(repaired.oldPriestLevel,15,'legacy over-cap levels are clamped to the beta cap');
+  assert.equal(corruptErrors.filter(e=>!e.includes('Endgame state failed')).length,0,'corrupted save recovery emitted no unexpected browser errors');
+  await corruptPage.close();
+
+  // Rapid UI and Bank mutations: detached/repeated click events must not double-spend.
+  const spamPage=await browser.newPage({viewport:{width:1024,height:1366}});
+  const spamErrors=await mount(spamPage,matureState());
+  spamPage.on('dialog',dialog=>dialog.accept());
+  await spamPage.evaluate(()=>{
+    const views=['overview','roster','party','bank','professions','quests','content','world','raids','trading','pvp','chat'];
+    for(let i=0;i<80;i++)CellboundGame.switchView(views[i%views.length]);
+    CellboundGame.switchView('bank');
+    const s=CellboundGame.getState();s.materials['cell-shards']=100;
+    const base=CellboundGear.items.find(x=>x.class==='Warrior'&&x.slot==='Head'&&Number(x.tier)===1)||CellboundGear.items.find(x=>x.class==='Warrior'&&x.slot==='Head');
+    CellboundGame.addBankItem({...base,itemLevel:18,baseItemLevel:18,tier:1,upgradeLevel:0,source:'QA Upgrade Spam'},false);
+    CellboundGame.renderAll();
+  });
+  assert.equal(await spamPage.locator('.view.active').count(),1,'rapid navigation leaves exactly one active screen');
+  const upgradeId=await spamPage.evaluate(()=>CellboundGame.getState().bank.find(x=>x.source==='QA Upgrade Spam')?.id);
+  assert(upgradeId,'upgrade-spam fixture exists');
+  await spamPage.locator('[data-bank-item="'+upgradeId+'"]').click();
+  await spamPage.waitForSelector('[data-bank-upgrade]');
+  await spamPage.evaluate(()=>{
+    const button=document.querySelector('[data-bank-upgrade]');
+    button.dispatchEvent(new MouseEvent('click',{bubbles:true}));
+    button.dispatchEvent(new MouseEvent('click',{bubbles:true}));
+  });
+  await spamPage.waitForTimeout(40);
+  const upgradeResult=await spamPage.evaluate(id=>{
+    const s=CellboundGame.getState(),item=s.bank.find(x=>x.id===id);
+    return{itemLevel:item?.itemLevel,upgradeLevel:item?.upgradeLevel,shards:s.materials['cell-shards']};
+  },upgradeId);
+  assert.equal(upgradeResult.itemLevel,20,'rapid upgrade presses advance the item exactly one step');
+  assert.equal(upgradeResult.upgradeLevel,1,'rapid upgrade presses record one upgrade');
+  assert.equal(upgradeResult.shards,93,'rapid upgrade presses spend Cell Shards once');
+
+  // Repeated wipes: Cell Shock caps at 100, removes locked characters, then recovers cleanly.
+  const shock=await spamPage.evaluate(()=>{
+    CellboundGame.switchView('party');
+    for(let i=0;i<5;i++)CellboundGame.applyPartyCellShock(25);
+    const s=CellboundGame.getState(),after=s.roster.slice(0,5).map(c=>({id:c.id,shock:c.cellShock,locked:Boolean(c.cellShockLockedUntil)}));
+    const partyCount=CellboundGame.getPartyCharacters().length;
+    s.roster.slice(0,5).forEach(c=>{c.cellShockLockedUntil=new Date(Date.now()-1000).toISOString()});
+    CellboundGame.renderAll();
+    return{after,partyCount,recovered:s.roster.slice(0,5).map(c=>({shock:c.cellShock,locked:Boolean(c.cellShockLockedUntil)}))};
+  });
+  assert(shock.after.every(x=>x.shock===100&&x.locked),'repeated wipes cap every active adventurer at 100% Cell Shock');
+  assert.equal(shock.partyCount,0,'100% Cell Shock removes locked adventurers from the active party');
+  assert(shock.recovered.every(x=>x.shock===0&&!x.locked),'expired Cell Shock locks recover without stale state');
+  assert.equal(spamErrors.filter(e=>!e.includes('Endgame state failed')).length,0,'rapid-action abuse emitted no unexpected browser errors');
+  await spamPage.close();
+
+  // Refresh in the middle of a persisted dungeon phase and concurrent entry requests.
+  const resumePage=await browser.newPage({viewport:{width:1024,height:1366}});
+  const resumeErrors=await mount(resumePage,matureState(),false,{simulateDungeonRuntime:true});
+  const firstAttempt=await resumePage.evaluate(async()=>{
+    localStorage.removeItem('cellbound-test-dungeon-attempt-v1');
+    localStorage.removeItem('cellbound-test-dungeon-begins-v1');
+    const [a,b]=await Promise.all([
+      CellboundEndgame.beginOrResumeAttempt('ashen-vault'),
+      CellboundEndgame.beginOrResumeAttempt('ashen-vault')
+    ]);
+    await CellboundEndgame.saveRuntime('ashen-vault',{version:1,kind:'ashen-vault',phase:'combat',stage:2,stageStartedAt:123456,run:{stage:2,endgame:{attemptId:a.attemptId},hp:{tank:72}}});
+    return{a:a.attemptId,b:b.attemptId,begins:Number(localStorage.getItem('cellbound-test-dungeon-begins-v1'))||0};
+  });
+  assert.equal(firstAttempt.a,firstAttempt.b,'concurrent dungeon entry calls share one server attempt');
+  assert.equal(firstAttempt.begins,1,'concurrent dungeon entry calls create only one attempt');
+  await resumePage.reload({waitUntil:'domcontentloaded'});
+  await resumePage.waitForFunction(()=>window.CellboundGame?.ready===true&&window.CellboundEndgame,{},{timeout:10000,polling:50});
+  const resumed=await resumePage.evaluate(async()=>{
+    const attempt=await CellboundEndgame.beginOrResumeAttempt('ashen-vault');
+    return{resumed:attempt.resumed,attemptId:attempt.attemptId,phase:attempt.runtimeState?.phase,stage:attempt.runtimeState?.stage,begins:Number(localStorage.getItem('cellbound-test-dungeon-begins-v1'))||0};
+  });
+  assert.equal(resumed.resumed,true,'refresh during a saved combat phase resumes the existing dungeon attempt');
+  assert.equal(resumed.attemptId,'qa-attempt-1','refresh preserves the server attempt id');
+  assert.equal(resumed.phase,'combat','refresh preserves the active combat phase');
+  assert.equal(resumed.stage,2,'refresh preserves dungeon stage progress');
+  assert.equal(resumed.begins,1,'refresh/resume does not create a duplicate dungeon attempt');
+  assert.equal(resumeErrors.filter(e=>!e.includes('Endgame state failed')).length,0,'dungeon refresh/resume abuse emitted no unexpected browser errors');
+  await resumePage.close();
+}
+
 async function ownerDungeonGeneratorPlaythrough(browser){
   const page=await browser.newPage({viewport:{width:1024,height:1366}});
   const errors=await mount(page,matureState(),true);
@@ -513,7 +644,8 @@ async function ownerDungeonGeneratorPlaythrough(browser){
     await mainGamePlaythrough(browser);
     await coreGameplayLoopPlaythrough(browser);
     await betaClassAndNullGatePlaythrough(browser);
+    await breakGamePlaythrough(browser);
     await ownerDungeonGeneratorPlaythrough(browser);
-    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, five-class beta lock, all dungeon content retained, Manor-gated Null Complex, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, owner dungeon generator and responsive layouts.');
+    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, five-class beta lock, all dungeon content retained, Manor-gated Null Complex, adversarial corrupted-save repair, rapid-action protection, Cell Shock recovery, dungeon refresh/resume, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, owner dungeon generator and responsive layouts.');
   }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});
