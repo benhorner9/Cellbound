@@ -1282,6 +1282,8 @@ const NULL_STAGES=[
  {id:'escape',label:'Escape',objective:'Return to the teleporter and get the party out.'}
 ];
 const nullQ=()=>ensure().nullComplex;
+const manorCleared=()=>Boolean(state()?.progression?.manorRaidCleared||Object.keys(state()?.raidRewardClaims||{}).length);
+const nullQuestAvailable=()=>Boolean(nullQ()?.complete||manorCleared());
 const nullStage=()=>nullQ().complete?'complete':nullQ().stage||'signal';
 const nullDef=()=>NULL_STAGES.find(x=>x.id===nullStage())||NULL_STAGES[0];
 // Null Complex bespoke comic artwork is loaded here only after the actual assets exist.
@@ -1298,7 +1300,9 @@ async function nullComic(title,speaker,text,art,done){
  if(done)await done()
 }
 async function startNullQuest(){
- const n=nullQ();if(n.complete)return;if(!n.started){n.started=true;n.startedAt=new Date().toISOString();nullHistory('Dr. Elara Voss isolated an impossible transmission marked NULL//07.');await commit()}
+ const n=nullQ();if(n.complete)return;
+ if(!nullQuestAvailable()){questToast('QUEST LOCKED',NULL_QUEST.title,'Complete The Manor raid before investigating NULL//07.');Game.switchView?.('raids');return}
+ if(!n.started){n.started=true;n.startedAt=new Date().toISOString();nullHistory('Dr. Elara Voss isolated an impossible transmission marked NULL//07.');await commit()}
  const comic=window.CellboundComicScenes;
  if(comic?.show)await comic.show({
   eyebrow:'CELLBOUND · QUEST',
@@ -1322,7 +1326,9 @@ async function startNullQuest(){
  await nullAdvance('signal','entry','Voss traced NULL//07 to a sealed research facility omitted from every living map.')
 }
 async function playNullQuest(){
- const n=nullQ(),stage=nullStage(),p=party();if(p.length!==5){alert('Build a complete active five-character party before entering the Null Complex.');Game.switchView?.('party');return}
+ const n=nullQ(),stage=nullStage(),p=party();
+ if(!nullQuestAvailable()){questToast('QUEST LOCKED',NULL_QUEST.title,'Complete The Manor raid before investigating NULL//07.');Game.switchView?.('raids');return}
+ if(p.length!==5){alert('Build a complete active five-character party before entering the Null Complex.');Game.switchView?.('party');return}
  if(stage==='signal')return startNullQuest();
  if(stage==='entry')return nullComic('The Forgotten Facility','Dr. Elara Voss',['The doors still have power. Barely. Stay together. Whatever is transmitting from inside has been doing it without personnel for years.'],NULL_ART.entry,()=>nullAdvance('entry','splice','The party entered the abandoned Null Complex.'));
  if(stage==='splice'){
@@ -1377,26 +1383,27 @@ async function finishNullQuest(){
 }
 function nullActionHtml(){
  const n=nullQ(),st=nullStage();if(n.complete)return'<button class="quest-primary" data-nullquest-open-activity>OPEN THE NULL COMPLEX →</button>';
+ if(!nullQuestAvailable())return'<div class="quest-action-block locked"><b>LOCKED UNTIL THE MANOR</b><small>Defeat The Master of the Manor before Dr. Elara Voss receives the NULL//07 signal.</small></div>';
  if(!n.started)return'<button class="quest-primary" data-nullquest-start>INVESTIGATE THE SIGNAL →</button>';
  const labels={signal:'INSPECT NULL//07 →',entry:'ENTER THE FACILITY →',splice:'OPEN THE CONTAINMENT DOOR →',recording:'SEARCH THE LAB →',zero:'ENTER CONTAINMENT WING →',components:'SEARCH FOR COMPONENTS →',overseer:'RESTORE POWER →',prototype:'FACE PROTOTYPE 07 →',escape:'RUN FOR THE TELEPORTER →'};
  return'<button class="quest-primary" data-nullquest-play>'+esc(labels[st]||'CONTINUE INVESTIGATION →')+'</button>'
 }
 function renderNullQuestDetail(root,side){
  const n=nullQ(),d=nullDef(),known=[];if(n.started)known.push('NULL//07 is transmitting from a facility officially destroyed years ago.');if(n.done.includes('splice'))known.push('Altered Cell specimens inside the facility have been classified as Aberrants.');if(n.done.includes('recording'))known.push('Director Cael Orin used the Complex to deliberately alter living Cells.');if(n.done.includes('zero'))known.push('Subject Zero remains alive in a powered containment chamber.');if(n.done.includes('prototype'))known.push('Prototype 07 combined multiple Aberrant traits by design.');
- root.innerHTML='<div class="quest-v3-hero"><div><small>'+NULL_QUEST.difficulty.toUpperCase()+' · '+NULL_QUEST.length.toUpperCase()+' ADVENTURE</small><h2>'+NULL_QUEST.title+'</h2><p>'+NULL_QUEST.start+'</p></div><span class="quest-v3-status '+(n.complete?'complete':'')+'">'+(n.complete?'COMPLETE':n.started?'IN PROGRESS':'AVAILABLE')+'</span></div><div class="quest-v3-story"><p>'+NULL_QUEST.summary+'</p></div><section class="quest-v3-clue"><small>'+(n.complete?'WHERE IT LED':'CURRENT OBJECTIVE')+'</small><h3>'+esc(n.complete?'The Null Complex':d.label)+'</h3><p>'+esc(n.complete?'The facility can now be entered as a repeatable extraction activity.':d.objective)+'</p></section><section class="quest-v3-known"><div class="quest-v3-section-head"><span>WHAT YOUR GUILD KNOWS</span><small>The dossier grows as you investigate.</small></div><div>'+(known.length?known.map(x=>'<p>'+esc(x)+'</p>').join(''):'<p class="quest-v3-unknown">Voss is waiting with the NULL//07 transmission.</p>')+'</div></section><div class="quest-detail-action">'+nullActionHtml()+'</div>';
- side.innerHTML='<section><small>REWARDS</small><div class="quest-reward-list">'+NULL_QUEST.rewards.map(x=>'<p>'+esc(x)+'</p>').join('')+'</div></section><section><small>TELEPORTER COMPONENTS</small><div class="quest-reward-list">'+[['cable','Conduit Cable'],['cell','Power Cell'],['fuse','Reactor Fuse']].map(x=>'<p>'+esc(x[1])+' · '+(n.components[x[0]]?'RECOVERED':'MISSING')+'</p>').join('')+'</div></section><section><small>ADVENTURE JOURNAL</small><div class="quest-history">'+(n.history.slice(-7).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>No entries yet.</p>')+'</div></section>'
+ root.innerHTML='<div class="quest-v3-hero"><div><small>'+NULL_QUEST.difficulty.toUpperCase()+' · '+NULL_QUEST.length.toUpperCase()+' ADVENTURE</small><h2>'+NULL_QUEST.title+'</h2><p>'+NULL_QUEST.start+'</p></div><span class="quest-v3-status '+(n.complete?'complete':'')+'">'+(n.complete?'COMPLETE':!nullQuestAvailable()?'LOCKED':n.started?'IN PROGRESS':'AVAILABLE')+'</span></div><div class="quest-v3-story"><p>'+NULL_QUEST.summary+'</p></div><section class="quest-v3-clue"><small>'+(n.complete?'WHERE IT LED':'CURRENT OBJECTIVE')+'</small><h3>'+esc(n.complete?'The Null Complex':d.label)+'</h3><p>'+esc(n.complete?'The facility can now be entered as a repeatable extraction activity.':d.objective)+'</p></section><section class="quest-v3-known"><div class="quest-v3-section-head"><span>WHAT YOUR GUILD KNOWS</span><small>The dossier grows as you investigate.</small></div><div>'+(known.length?known.map(x=>'<p>'+esc(x)+'</p>').join(''):'<p class="quest-v3-unknown">Voss is waiting with the NULL//07 transmission.</p>')+'</div></section><div class="quest-detail-action">'+nullActionHtml()+'</div>';
+ side.innerHTML='<section><small>REQUIREMENT</small><div class="quest-reward-list"><p>'+(manorCleared()?'✓ The Manor cleared':'The Manor raid must be completed first')+'</p></div></section><section><small>REWARDS</small><div class="quest-reward-list">'+NULL_QUEST.rewards.map(x=>'<p>'+esc(x)+'</p>').join('')+'</div></section><section><small>TELEPORTER COMPONENTS</small><div class="quest-reward-list">'+[['cable','Conduit Cable'],['cell','Power Cell'],['fuse','Reactor Fuse']].map(x=>'<p>'+esc(x[1])+' · '+(n.components[x[0]]?'RECOVERED':'MISSING')+'</p>').join('')+'</div></section><section><small>ADVENTURE JOURNAL</small><div class="quest-history">'+(n.history.slice(-7).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>No entries yet.</p>')+'</div></section>'
 }
 
 function questCards(){
  const q=ensure(),a=q.ashfall;
  return [
-  {id:'null-complex-quest',title:NULL_QUEST.title,meta:NULL_QUEST.length+' adventure · Null Complex',difficulty:NULL_QUEST.difficulty,status:nullQ().complete?'COMPLETE':nullQ().started?'IN PROGRESS':'AVAILABLE',complete:nullQ().complete,locked:false,icon:'◈'},
+  {id:'null-complex-quest',title:NULL_QUEST.title,meta:NULL_QUEST.length+' adventure · Requires The Manor',difficulty:NULL_QUEST.difficulty,status:nullQ().complete?'COMPLETE':!nullQuestAvailable()?'LOCKED':nullQ().started?'IN PROGRESS':'AVAILABLE',complete:nullQ().complete,locked:!nullQuestAvailable()&&!nullQ().complete,icon:'◈'},
   {id:'ashfall',title:ASHFALL.title,meta:ASHFALL.length+' adventure · Zeltira',difficulty:ASHFALL.difficulty,status:a.complete?'COMPLETE':a.started?'IN PROGRESS':'AVAILABLE',complete:a.complete,locked:false},
   {id:'echoes',title:QUEST.title,meta:QUEST.length+' adventure · Zeltira',difficulty:QUEST.difficulty,status:complete()?'COMPLETE':q.started?'IN PROGRESS':echoesUnlocked()?'AVAILABLE':'LOCKED',complete:complete(),locked:!echoesUnlocked()&&!q.started},
   window.CellboundThirteenthBell?.card?.(),
   window.CellboundFourfoldLock?.card?.(),
   window.CellboundNoWayBack?.card?.(),
-  ...classTrialDefs().map(classTrialCard)
+  ...classTrialDefs().filter(t=>!Game?.isBetaClassPlayable||Game.isBetaClassPlayable(t.character.class)).map(classTrialCard)
  ].filter(Boolean)
 }
 function cardsForSelectedTab(){
