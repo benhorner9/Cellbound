@@ -34,6 +34,7 @@
 <link rel="stylesheet" href="./admin-v1.css?v=4">
 <link rel="stylesheet" href="./beta-ops-v1.css?v=2">
 <link rel="stylesheet" href="./admin-beta-ops-v1.css?v=1">
+<link rel="stylesheet" href="./admin-analytics-v1.css?v=1">
 <link rel="stylesheet" href="./living-world-v1.css?v=2">
 <link rel="stylesheet" href="./dungeon-generator-v1.css?v=1">
 <link rel="stylesheet" href="./character-fit-viewer-v1.css?v=1">
@@ -564,6 +565,30 @@
           </div>
           <div id="adminMarketTop" class="admin-market-top"><span>No market history yet.</span></div>
         </article>
+        <article class="admin-card admin-analytics-card">
+          <div class="admin-analytics-head">
+            <div><small>BETA ANALYTICS</small><h3>Player Behaviour</h3><p>Track what testers actually choose and play: class/race popularity, dungeon starts and clears, progression, professions and feature usage. Staging and production stay separated.</p></div>
+            <div class="admin-analytics-controls">
+              <select id="adminAnalyticsChannel" aria-label="Analytics channel"><option value="staging">Dev / Staging</option><option value="production">Production</option></select>
+              <select id="adminAnalyticsDays" aria-label="Analytics period"><option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option><option value="365">365 days</option></select>
+              <button id="adminAnalyticsRefresh" type="button">REFRESH ANALYTICS</button>
+            </div>
+          </div>
+          <div class="admin-analytics-meta"><span id="adminAnalyticsCurrent">STAGING · 30 DAYS</span><span id="adminAnalyticsSince">TRACKING STARTED WITH THIS BUILD</span></div>
+          <div id="adminAnalyticsKpis" class="admin-analytics-kpis"><article><small>ANALYTICS</small><b>—</b></article></div>
+          <div class="admin-analytics-grid">
+            <section class="admin-analytics-panel"><header><div><small>CHARACTER CHOICES</small><h4>Most Popular Classes</h4></div><span>CREATIONS</span></header><div id="adminAnalyticsClasses"></div></section>
+            <section class="admin-analytics-panel"><header><div><small>CHARACTER CHOICES</small><h4>Most Popular Races</h4></div><span>CREATIONS</span></header><div id="adminAnalyticsRaces"></div></section>
+            <section class="admin-analytics-panel wide"><header><div><small>PVE FUNNEL</small><h4>Dungeon Starts & Clears</h4></div><span>PERIOD TOTALS</span></header><div id="adminAnalyticsDungeons"></div></section>
+            <section class="admin-analytics-panel"><header><div><small>COMBINATIONS</small><h4>Class + Race</h4></div><span>TOP 12</span></header><div id="adminAnalyticsCombos"></div></section>
+            <section class="admin-analytics-panel"><header><div><small>STORY</small><h4>Quest Completion</h4></div><span>CLEARS</span></header><div id="adminAnalyticsQuests"></div></section>
+            <section class="admin-analytics-panel"><header><div><small>DISCOVERY</small><h4>Feature Usage</h4></div><span>SCREEN OPENS</span></header><div id="adminAnalyticsFeatures"></div></section>
+            <section class="admin-analytics-panel"><header><div><small>PROGRESSION</small><h4>Level Milestones</h4></div><span>REACHED</span></header><div id="adminAnalyticsLevels"></div></section>
+            <section class="admin-analytics-panel"><header><div><small>CRAFTING</small><h4>Professions</h4></div><span>LEARNED / CRAFTED</span></header><div id="adminAnalyticsProfessions"></div></section>
+            <section class="admin-analytics-panel"><header><div><small>ACTIVITY</small><h4>Daily Active Testers</h4></div><span>PLAYERS</span></header><div id="adminAnalyticsDaily"></div></section>
+          </div>
+          <p id="adminAnalyticsError" class="admin-analytics-error" hidden></p>
+        </article>
         <article class="admin-card admin-beta-card">
           <small>BETA SUPPORT QUEUE</small><h3>Tester Reports</h3>
           <p>Reports arrive with the tester's build and screen context. Move them through the queue and leave a short note the tester can see.</p>
@@ -630,7 +655,8 @@
 <script src="./combat-polish-v2.js?v=1"></script>
 <script src="./combat-polish-v3.js?v=1"></script>
 <script src="./combat-physical-v4.js?v=12"></script>
-<script src="./guild-v4.js?v=84"></script>
+<script src="./guild-v4.js?v=85"></script>
+<script src="./analytics-v1.js?v=1"></script>
 <script src="./beta-ops-v1.js?v=2"></script>
 <script src="./pvp-combat-v1.js?v=2"></script>
 <script src="./pvp-viewer-v1.js?v=3"></script>
@@ -664,6 +690,7 @@
 <script src="./fractured-ages-v1.js?v=13"></script>
 <script src="./admin-v1.js?v=9"></script>
 <script src="./admin-beta-ops-v1.js?v=1"></script>
+<script src="./admin-analytics-v1.js?v=1"></script>
 <script src="./world-presence-v1.js?v=1"></script>
 <script src="./living-world-v1.js?v=3"></script>
 <script src="./dungeon-generator-v1.js?v=1"></script>

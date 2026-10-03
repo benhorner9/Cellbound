@@ -351,6 +351,7 @@ async function startRaid(){
    const {data:latest,error:membersError}=await db.from('party_finder_members').select('listing_id,user_id,party_snapshot').eq('listing_id',myGroup.id);if(membersError)throw membersError;
    if(!raidRowsReady(latest||[]))throw new Error('Both raid parties must contain five Level 15 adventurers before The Manor can begin.');
    const {data,error}=await db.rpc('start_manor_raid',{p_listing_id:myGroup.id});if(error)throw error;
+   window.CellboundAnalytics?.track?.('raid_started',{raid_id:'manor',raid_name:'The Manor',session_id:data?.id||'',listing_id:myGroup.id,party_item_level:Number(Game.partyItemLevel?.())||0},{key:data?.id?'raid_started:'+data.id:null});
    await fetchHub();await openRaid(data)
  }catch(e){alert(e.message||'The Manor could not be started')}
  finally{raidStartBusy=false}
@@ -769,6 +770,7 @@ function renderWipeShell(){
 }
 function renderVictoryShell(){
  markManorCleared().catch(error=>console.warn('Could not persist Manor clear progression',error));
+ if(session?.id)window.CellboundAnalytics?.track?.('raid_completed',{raid_id:'manor',raid_name:'The Manor',session_id:session.id},{key:'raid_completed:'+session.id});
  const root=ensureOverlay(),claimed=Boolean(state()?.raidRewardClaims?.[session.id]);
  root.innerHTML='<section class="mr-raid-shell mr-victory-shell"><header class="mr-raid-head"><div><small>THE MANOR · THE ATTIC</small><h2>Raid Complete</h2></div><button data-mr-close>×</button></header><div class="mr-victory-art"><span>◈</span><small>THE HOUSE FALLS SILENT</small><h1>The Master of the Manor</h1><p>The creature collapses into the attic floorboards. Every door below unlocks at once.</p></div><div class="mr-victory-loot"><small>PERSONAL RAID LOOT</small><h2>2 × Tier 5 Items</h2><p>Orange-framed Chapter 1 raid equipment. Four rolled stats with Tier 5 raid-set progression.</p><button data-mr-claim '+(claimed?'disabled':'')+'>'+(claimed?'REWARDS SECURED':'REVEAL RAID LOOT →')+'</button><div id="mrLootDrops"></div></div></section>';
  root.querySelector('[data-mr-close]')?.addEventListener('click',closeRaid);

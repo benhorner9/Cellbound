@@ -1,5 +1,15 @@
 # Cellbound Beta Development Log
 
+## 2026-10-03 — Beta Analytics
+
+- Added channel-separated gameplay telemetry for staging and production.
+- Character creation now records class, race, spec and role so popularity can be measured historically.
+- Added level, quest, profession, crafting, gear, Cell Shock, dungeon, raid, activity and screen-usage events.
+- Added an aggregate-only Beta Analytics dashboard to Admin.
+- Added class/race popularity, dungeon start/clear funnel, feature usage, level milestones, professions and daily active tester views.
+- Existing roster characters are observed once when analytics first loads so the dev dashboard has a starting baseline.
+
+
 ## 2026-10-03 — Step 9: Beta Operations
 
 - Added in-game Beta Support for tester reports.

@@ -375,6 +375,7 @@ async function completeAshfall(){
   ashfallHistory('The old forge key opened the route to The Ashen Vault.');s.activity.push('Quest complete: '+ASHFALL.title+'. The Ashen Vault was unlocked.');
   await Game.awardPartyXp?.(BAL?.CAMPAIGN_XP?.ashesEastRoad||1850,{source:'Quest complete · '+ASHFALL.title});
   await commit();
+  window.CellboundAnalytics?.track?.('quest_completed',{quest_id:'ashes-east-road',quest_name:ASHFALL.title},{key:'quest_completed:ashes-east-road'});
   if(window.CellboundComicScenes?.show){
     await window.CellboundComicScenes.show({
       eyebrow:'QUEST COMPLETE',title:ASHFALL.title,subtitle:'The road to the old forge is open.',page:'COMPLETE',theme:'ashen',
@@ -1099,6 +1100,7 @@ async function finalizeEchoes(){
   s.activity.push('Quest complete: '+QUEST.title+'. The Hollow Sanctum was discovered.');
   await Game.awardPartyXp?.(BAL?.CAMPAIGN_XP?.echoesBeneathZeltira||1800,{source:'Quest complete · '+QUEST.title});
   await commit();
+  window.CellboundAnalytics?.track?.('quest_completed',{quest_id:'echoes-beneath-zeltira',quest_name:QUEST.title},{key:'quest_completed:echoes-beneath-zeltira'});
 
   const root=document.createElement('div');root.className='quest-unlock-backdrop quest-complete-backdrop';
   root.innerHTML='<section class="quest-complete-card"><div class="quest-complete-rune">⌁</div><small>QUEST COMPLETE</small><h2>'+QUEST.title+'</h2><p>A forgotten survey route has opened into something older beneath Zeltira. The Hollow Sanctum is no longer sealed.</p><div class="quest-complete-rewards"><article><span>GOLD</span><b>+250</b></article><article><span>RENOWN</span><b>+150</b></article><article><span>DISCOVERY</span><b>PERMANENT</b></article></div><div class="quest-complete-unlock"><small>PERMANENT UNLOCK</small><h3>The Hollow Sanctum</h3><p>Void Crystal can now be recovered from the depths. A unique first-clear Relic waits inside.</p></div><button>OPEN DUNGEON JOURNAL →</button></section>';
@@ -1200,7 +1202,7 @@ async function startClassTrial(key){
   const won=await runQuest2DFight({quest:t.character.class+' Class Trial',title:t.title,location:'Class Trial',participants:prep.members,featuredCharacterId:t.character.id,partyLabel:'CLASS-LED PARTY',enemies:[t.enemy],ambience:t.summary,completeText:t.character.name+' led the party through the trial and mastered '+t.buff+'.',combat:classTrialCombat(t,prep.members)});
   if(!won)return;
   const ch=(state()?.roster||[]).find(x=>x.id===t.character.id);if(!ch)return;ch.classBuffProgress=ch.classBuffProgress&&typeof ch.classBuffProgress==='object'?ch.classBuffProgress:{unlocked:[]};ch.classBuffProgress.unlocked=Array.isArray(ch.classBuffProgress.unlocked)?ch.classBuffProgress.unlocked:[];if(!ch.classBuffProgress.unlocked.includes(t.id))ch.classBuffProgress.unlocked.push(t.id);ch.buffSkill=t.id;
-  ensure().classTrials[t.key]={completedAt:new Date().toISOString(),characterId:ch.id,buffId:t.id,mode:'party',partyIds:prep.members.map(c=>c.id)};state().activity=state().activity||[];state().activity.push(ch.name+' led the party through '+t.title+' and learned '+t.buff+'.');await commit();selectedAdventure=t.key;questToast('CLASS TRIAL COMPLETE',t.buff,'Unlocked for '+ch.name+'.')
+  ensure().classTrials[t.key]={completedAt:new Date().toISOString(),characterId:ch.id,buffId:t.id,mode:'party',partyIds:prep.members.map(c=>c.id)};state().activity=state().activity||[];state().activity.push(ch.name+' led the party through '+t.title+' and learned '+t.buff+'.');await commit();window.CellboundAnalytics?.track?.('quest_completed',{quest_id:t.key,quest_name:t.title,class:ch.class,character_id:ch.id},{key:'quest_completed:'+t.key});selectedAdventure=t.key;questToast('CLASS TRIAL COMPLETE',t.buff,'Unlocked for '+ch.name+'.')
  })
 }
 
@@ -1381,7 +1383,7 @@ async function playNullPrototype(){
 }
 async function finishNullQuest(){
  await nullComic('Escape','Dr. Elara Voss',['Install the final component. Do not wait for the system to stabilise. Activate it. Now.'],NULL_ART.escape);
- const n=nullQ(),s=state();n.complete=true;n.stage='complete';n.completedAt=new Date().toISOString();if(!n.done.includes('escape'))n.done.push('escape');s.progression=s.progression||{};s.progression.nullComplexUnlocked=true;s.gold=(Number(s.gold)||0)+150;s.renown=(Number(s.renown)||0)+100;nullHistory('The party escaped. Access to the Null Complex is now stable enough for repeat expeditions.');s.activity.push('Quest complete: Signal From Nowhere. The Null Complex was unlocked.');await commit();
+ const n=nullQ(),s=state();n.complete=true;n.stage='complete';n.completedAt=new Date().toISOString();if(!n.done.includes('escape'))n.done.push('escape');s.progression=s.progression||{};s.progression.nullComplexUnlocked=true;s.gold=(Number(s.gold)||0)+150;s.renown=(Number(s.renown)||0)+100;nullHistory('The party escaped. Access to the Null Complex is now stable enough for repeat expeditions.');s.activity.push('Quest complete: Signal From Nowhere. The Null Complex was unlocked.');await commit();window.CellboundAnalytics?.track?.('quest_completed',{quest_id:'signal-from-nowhere',quest_name:'Signal From Nowhere'},{key:'quest_completed:signal-from-nowhere'});
  await nullComic('After the Extraction','', ['Deep inside the empty facility, a containment monitor flickers back to life.','SUBJECT ZERO — STATUS: AWAKE'],NULL_ART.sting);
  if(window.CellboundComicScenes?.show)await window.CellboundComicScenes.show({eyebrow:'QUEST COMPLETE',title:'Signal From Nowhere',subtitle:'ACTIVITY UNLOCKED',page:'COMPLETE',theme:'null',panels:[{kind:'location',eyebrow:'QUEST COMPLETE',title:'Signal From Nowhere',text:'The party escaped the facility. Whatever remains inside is far from over.',artwork:NULL_ART.signal,wide:true},{kind:'reveal',eyebrow:'ACTIVITY UNLOCKED',title:'THE NULL COMPLEX',text:'Repeatable extraction expeditions are now available: 2 attempts every 5 days.',artwork:NULL_ART.entry,wide:true}],progressive:true,storyOnly:true,allowSkip:false,continueLabel:'OPEN ACTIVITIES →'});
  Game.switchView?.('world')

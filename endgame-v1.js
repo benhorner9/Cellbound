@@ -255,7 +255,9 @@ async function beginAttempt(dungeonId){
    p_dungeon_version:cfg.dungeon.version,p_season_id:cfg.seasonId
  });
  if(error){console.warn('Dungeon attempt could not start',error);return{error}}
- attempts[dungeonId]=data;return data
+ attempts[dungeonId]=data;
+ window.CellboundAnalytics?.track?.('dungeon_started',{dungeon_id:dungeonId,dungeon_name:cfg.dungeon?.name||cfg.dungeon?.title||dungeonId,difficulty:cfg.difficulty,tier:Number(cfg.tier)||0,attempt_id:data?.attemptId||''},{key:data?.attemptId?'dungeon_started:'+data.attemptId:null});
+ return data
 }
 async function resumeAttempt(dungeonId){
  if(!db)return{active:false,error:new Error('Dungeon service unavailable')};
@@ -321,6 +323,8 @@ async function recordRun(dungeonId,metrics){
  if(error){console.warn('Dungeon run was not recorded',error);return{error}}
  delete attempts[dungeonId];
  if(data?.valid===false){console.warn('Dungeon run failed integrity checks',data);return{error:new Error(data.reason||'Run integrity check failed'),...data}}
+ const cfg=currentConfig(dungeonId);
+ window.CellboundAnalytics?.track?.('dungeon_completed',{dungeon_id:dungeonId,dungeon_name:cfg.dungeon?.name||cfg.dungeon?.title||dungeonId,difficulty:attempt?.difficulty||cfg.difficulty,tier:Number(attempt?.tier??cfg.tier)||0,attempt_id:attempt.attemptId,time_ms:Math.max(1,Math.round(metrics.timeMs||0)),deaths:Math.max(0,Math.round(metrics.deaths||0)),mechanics_failed:Math.max(0,Math.round(metrics.mechanicsFailed||0)),score:Number(data?.score)||0},{key:'dungeon_completed:'+attempt.attemptId});
  await refresh();
  const after=progressFor(dungeonId),newUnlocks=[];
  if(!before.heroic_unlocked&&after.heroic_unlocked)newUnlocks.push('Heroic difficulty unlocked');

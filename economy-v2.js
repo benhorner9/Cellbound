@@ -272,6 +272,7 @@ async function finishTimedCraft(){
   professionLevelUp(prof,xpTotal);prof.craftHistory[recipe.id]=history;prof.projectsCompleted=(Number(prof.projectsCompleted)||0)+quantity;
   s.activity.push(c.name+' completed '+recipe.name+' ×'+quantity+' after '+craftTime(project.totalMs)+' of focused workshop time.');
   lastCraftMessage=out.name+' ×'+outputQuantity+' completed'+(recipe.crafterOnly?' · BOUND TO '+c.name.toUpperCase():'')+' · +'+xpTotal+' profession XP'+(masterworks?' · '+masterworks+' masterwork'+(masterworks===1?'':'s'):'')+(reclaimed?' · '+reclaimed+' reagent'+(reclaimed===1?'':'s')+' reclaimed':'');
+  window.CellboundAnalytics?.track?.('craft_completed',{character_id:c.id,class:c.class,race:c.race,profession:prof.name,recipe_id:recipe.id,recipe_name:recipe.name,quantity,output_quantity:outputQuantity,output_category:out.category||'',masterworks});
   setCraftProject(null);craftLastTick=0;craftCompleting=false;await commit()
 }
 function updateCraftTimerUI(){
@@ -315,6 +316,7 @@ async function learnProfession(charId,slot,name){
   const s=state(),c=s.roster.find(x=>x.id===charId),slots=ent().professionSlots;
   if(!c||!characterUsable(c.id)||slot>=slots||!P.PROFESSIONS[name]||c.professions.some(p=>p?.name===name))return;
   c.professions[slot]={name,level:1,xp:0};selectedChar=charId;selectedSlot=slot;s.activity.push(`${c.name} learned ${name}.`);await commit();
+  window.CellboundAnalytics?.track?.('profession_learned',{character_id:c.id,class:c.class,race:c.race,profession:name,source:'workshop'},{key:'profession_learned:'+c.id+':'+name});
 }
 function recipeAvailability(recipe,prof,s){
   const discovered=!recipe.requiresDiscovery||s.discoveredRecipes.includes(recipe.id);

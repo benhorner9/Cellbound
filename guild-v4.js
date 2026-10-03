@@ -238,7 +238,11 @@ async function awardPartyXp(amount,{source='Progression'}={}){
   });
   state.activity=Array.isArray(state.activity)?state.activity:[];
   state.activity.push(source+': active five earned '+reward.toLocaleString()+' XP each.');
-  gains.filter(x=>x.levels>0).forEach(x=>state.activity.push(x.name+' reached Level '+x.afterLevel+'.'));
+  gains.filter(x=>x.levels>0).forEach(x=>{
+    state.activity.push(x.name+' reached Level '+x.afterLevel+'.');
+    const ch=chars.find(c=>c.id===x.id);
+    for(let level=x.beforeLevel+1;level<=x.afterLevel;level++)window.CellboundAnalytics?.levelReached?.(ch,level,source)
+  });
   save();await persistState();
   if(currentUser){
     const now=new Date().toISOString();
@@ -672,6 +676,7 @@ async function createRecruit(){
   const combatStyle=['Mage','Priest','Druid','Hunter'].includes(ch.class)?'ranged':'melee';
   const mirror=await supabaseClient.from('characters').insert({user_id:currentUser.id,name:ch.name,combat_style:combatStyle,tutorial_complete:true,creation_complete:true,appearance:{...(ch.appearance||{}),race:ch.race,class:ch.class,spec:ch.spec,role,roster_slot:state.roster.length-1,recruited:true},level:1,xp:0,current_hp:100,max_hp:100,current_location:'zeltira',tutorial_stage:'complete',tutorial_reward_claimed:true,last_played_at:new Date().toISOString()});
   if(mirror.error)console.warn('Recruit character mirror record skipped',mirror.error);
+  window.CellboundAnalytics?.characterCreated?.(ch,'recruit');
   renderAll()
 }
 
@@ -917,6 +922,7 @@ function disposeBankBulk(mode){
     items.forEach(item=>removeBankQuantity(item,Math.max(1,Number(item.quantity)||1)));
     Object.entries(yieldMap).forEach(([key,n])=>addMaterial(key,n));
     state.activity.push(`Bulk dismantled ${units} item${units===1?'':'s'} from ${items.length} bank stack${items.length===1?'':'s'}: ${materialSummary}.`);
+    window.CellboundAnalytics?.track?.('item_dismantled',{quantity:units,stacks:items.length,mode:'bulk'});
   }else return;
   bankBulkSelected.clear();
   bankBulkMode=false;
@@ -1071,6 +1077,7 @@ function disposeBankItem(id,mode){
     if(!confirm(`Dismantle ${qty} × ${name}?\n\nYou will receive: ${summary}.${gemWarning}\n\nThis cannot be undone.`))return;
     removeBankQuantity(item,qty);Object.entries(yieldMap).forEach(([key,n])=>addMaterial(key,n));
     state.activity.push(`Dismantled ${qty} × ${name}: ${summary}.`);
+    window.CellboundAnalytics?.track?.('item_dismantled',{quantity:qty,item_name:name,item_id:item.itemId||'',tier:Number(item.tier)||0,rarity:item.rarity||'',mode:'single'});
   }else return;
   save();ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open');renderAll();switchView('bank');
 }
@@ -1194,7 +1201,7 @@ function equipBankItem(itemId,charId,requestedSlot=null){
   const old=canonicalItem(c.equipment?.[slot]);
   if(old?.name){c.power=Math.max(1,(Number(c.power)||1)-(Number(old.power)||0));addBankItem({...old,source:`Unequipped from ${c.name}`},false)}
   c.equipment[slot]={...incoming,source:'Equipped'};c.power=Math.max(1,(Number(c.power)||1)+(Number(incoming?.power)||0));
-  c.gearItems=ILVL_SLOTS.map(s=>c.equipment?.[s]?.name||'Empty');c.gear=characterItemLevel(c);item.quantity=(item.quantity||1)-1;if(item.quantity<=0)state.bank=state.bank.filter(x=>x.id!==item.id);state.activity.push(`${c.name} equipped ${item.name} to ${String(slot).replace(/(\d)/,' $1')} (iLvl ${item.itemLevel}).`);save();ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open');renderAll();switchView('bank');
+  c.gearItems=ILVL_SLOTS.map(s=>c.equipment?.[s]?.name||'Empty');c.gear=characterItemLevel(c);item.quantity=(item.quantity||1)-1;if(item.quantity<=0)state.bank=state.bank.filter(x=>x.id!==item.id);state.activity.push(`${c.name} equipped ${item.name} to ${String(slot).replace(/(\d)/,' $1')} (iLvl ${item.itemLevel}).`);window.CellboundAnalytics?.track?.('item_equipped',{character_id:c.id,class:c.class,race:c.race,item_id:item.itemId||'',item_name:item.name,slot,item_level:Number(item.itemLevel)||0,tier:Number(item.tier)||0});save();ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open');renderAll();switchView('bank');
 }
 $('[data-bank-close]')?.addEventListener('click',()=>{ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open')});ui.bankModal?.addEventListener('click',e=>{if(e.target===ui.bankModal){ui.bankModal.hidden=true;document.body.classList.remove('bank-manage-open')}});
 function setBankCategory(value){
@@ -1271,7 +1278,7 @@ window.CellboundGame={
   betaPlayableClasses:BETA_PLAYABLE_CLASSES,isBetaClassPlayable,isCharacterBetaPlayable,
   addBankItem,addMaterial,renderAll,switchView,starterEquipment,
   getPartyCharacters:()=>partyCharacters(),
-  applyPartyCellShock:(amount=PVE_WIPE_CELL_SHOCK)=>{const chars=partyCharacters();chars.forEach(ch=>applyCellShock(ch,amount));save();renderAll();return chars.map(ch=>({id:ch.id,name:ch.name,cellShock:ch.cellShock}));}
+  applyPartyCellShock:(amount=PVE_WIPE_CELL_SHOCK)=>{const chars=partyCharacters();chars.forEach(ch=>applyCellShock(ch,amount));window.CellboundAnalytics?.track?.('cell_shock_applied',{amount:Number(amount)||0,party_size:chars.length,locked:chars.filter(ch=>isUnavailable(ch)).length});save();renderAll();return chars.map(ch=>({id:ch.id,name:ch.name,cellShock:ch.cellShock}));}
 };
 $('#signOut')?.addEventListener('click',async()=>{clearTimeout(syncTimer);await persistState();await supabaseClient.auth.signOut();location.replace('./index.html');});
 (async()=>{
