@@ -9,7 +9,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
 function matureState(){
   const chars=[
     ['tank','Aegis','Warrior','Protection'],
-    ['heal','Mercy','Priest','Holy'],
+    ['heal','Mercy','Paladin','Holy'],
     ['mage','Ember','Mage','Arcane'],
     ['hunt','Fletch','Hunter','Marksman'],
     ['rogue','Shade','Rogue','Assassination']
@@ -23,7 +23,7 @@ function matureState(){
     saveVersion:6,gearVersion:3,renown:120,gold:5000,socialDisplayName:'Playthrough Guild',
     roster:chars,party:{tank:'tank',healer:'heal',dps:['mage','hunt','rogue']},
     bossKills:{ashwarden:true,embermaw:true,vaultheart:true},
-    progression:{ashenVaultUnlocked:true,nullComplexUnlocked:true},
+    progression:{ashenVaultUnlocked:true,nullComplexUnlocked:true,manorRaidCleared:true},
     reports:[],bank:[],materials:{},consumables:[],recipeScrolls:[],discoveredRecipes:[],
     tradeInbox:[],collectionHistory:[],activity:['Automated release playthrough state loaded.'],
     onboarding:{version:3,complete:true,stage:'complete',zone:'zeltira'}
@@ -38,7 +38,7 @@ function coreLoopState(){
   });
   const defs=[
     ['tank','Aegis','Warrior','Protection',30,'Alchemy'],
-    ['heal','Mercy','Priest','Holy',30,null],
+    ['heal','Mercy','Paladin','Holy',30,null],
     ['mage','Ember','Mage','Arcane',30,null],
     ['hunt','Fletch','Hunter','Marksman',30,null],
     ['rogue','Shade','Rogue','Assassination',25,null]
@@ -157,8 +157,11 @@ async function creatorPlaythrough(browser){
   assert.equal(await page.locator('#confirmParty').isDisabled(),false,'generated party is valid');
   await page.locator('#confirmParty').click();
   await page.waitForFunction(()=>window.CellboundGame.getState()?.roster?.length===5,{},{timeout:10000,polling:50});
-  const slots=await page.evaluate(()=>CellboundGame.getState().roster.map(c=>c.professions?.length));
-  assert.deepEqual(slots,[1,1,1,1,1],'fresh characters start with exactly one profession slot');
+  const fresh=await page.evaluate(()=>({slots:CellboundGame.getState().roster.map(c=>c.professions?.length),classes:CellboundGame.getState().roster.map(c=>c.class),allBeta:CellboundGame.getState().roster.every(c=>CellboundGame.isCharacterBetaPlayable(c))}));
+  assert.deepEqual(fresh.slots,[1,1,1,1,1],'fresh characters start with exactly one profession slot');
+  assert.equal(fresh.allBeta,true,'fresh guild creator only produces beta-playable classes');
+  assert(fresh.classes.includes('Paladin'),'Paladin can fill the beta healer role');
+  assert(fresh.classes.every(c=>['Warrior','Paladin','Hunter','Rogue','Mage'].includes(c)),'fresh party contains only the five beta classes');
   assert.deepEqual(errors,[],'creator/onboarding emitted no browser errors');
   await page.close();
 }
@@ -406,6 +409,51 @@ async function coreGameplayLoopPlaythrough(browser){
   await page.close();
 }
 
+async function betaClassAndNullGatePlaythrough(browser){
+  const seed=matureState();
+  seed.progression.manorRaidCleared=false;
+  seed.progression.nullComplexUnlocked=false;
+  seed.raidRewardClaims={};
+  seed.questSystem=null;
+  const page=await browser.newPage({viewport:{width:1024,height:1366}});
+  const errors=await mount(page,seed);
+  await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
+
+  assert.deepEqual(await page.evaluate(()=>CellboundGame.betaPlayableClasses),['Warrior','Paladin','Hunter','Rogue','Mage'],'beta exposes exactly the five selected classes');
+  assert.equal(await page.evaluate(()=>['Priest','Druid','Shaman','Warlock','Monk','Death Knight','Demon Hunter','Evoker'].every(x=>!CellboundGame.isBetaClassPlayable(x))),true,'all other classes are unavailable during beta');
+
+  const oldSaveLock=await page.evaluate(()=>{
+    const s=CellboundGame.getState(),healer=s.roster.find(c=>c.id==='heal');
+    const original={class:healer.class,spec:healer.spec};
+    healer.class='Priest';healer.spec='Holy';CellboundGame.renderAll();
+    const result={partyCount:CellboundGame.getPartyCharacters().length,playable:CellboundGame.isCharacterBetaPlayable(healer)};
+    healer.class=original.class;healer.spec=original.spec;CellboundGame.renderAll();
+    return result;
+  });
+  assert.equal(oldSaveLock.playable,false,'future-class characters from old saves remain preserved but unavailable');
+  assert.equal(oldSaveLock.partyCount,4,'an unavailable old-save class cannot participate in the active five');
+
+  const contentRuntime=await page.evaluate(()=>({
+    hollow:typeof window.CellboundHollowSanctum,
+    chaos:typeof window.CellboundChaosCanyon,
+    blackout:typeof window.CellboundBlackoutStation,
+    fractured:typeof window.CellboundFracturedAges
+  }));
+  assert.deepEqual(contentRuntime,{hollow:'object',chaos:'object',blackout:'object',fractured:'object'},'all dungeon runtimes remain included');
+
+  await page.evaluate(()=>{CellboundGame.switchView('quests');CellboundQuests.selectAdventure('null-complex-quest')});
+  await page.waitForSelector('[data-adventure="null-complex-quest"]',{timeout:5000});
+  assert((await page.locator('[data-adventure="null-complex-quest"]').innerText()).includes('LOCKED'),'Signal From Nowhere is locked before The Manor');
+  assert((await page.locator('#questJournalDetail').innerText()).includes('LOCKED UNTIL THE MANOR'),'Null quest explains its Manor requirement');
+
+  await page.evaluate(()=>{CellboundGame.getState().progression.manorRaidCleared=true;CellboundGame.renderAll();CellboundQuests.selectAdventure('null-complex-quest')});
+  await page.waitForTimeout(80);
+  assert((await page.locator('[data-adventure="null-complex-quest"]').innerText()).includes('AVAILABLE'),'The Manor clear unlocks Signal From Nowhere');
+
+  assert.equal(errors.filter(e=>!e.includes('Endgame state failed')).length,0,'beta class/Null gate validation emitted no unexpected browser errors');
+  await page.close();
+}
+
 async function ownerDungeonGeneratorPlaythrough(browser){
   const page=await browser.newPage({viewport:{width:1024,height:1366}});
   const errors=await mount(page,matureState(),true);
@@ -455,7 +503,8 @@ async function ownerDungeonGeneratorPlaythrough(browser){
     await persistenceReloadPlaythrough(browser);
     await mainGamePlaythrough(browser);
     await coreGameplayLoopPlaythrough(browser);
+    await betaClassAndNullGatePlaythrough(browser);
     await ownerDungeonGeneratorPlaythrough(browser);
-    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, owner dungeon generator and responsive layouts.');
+    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, five-class beta lock, all dungeon content retained, Manor-gated Null Complex, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, owner dungeon generator and responsive layouts.');
   }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});
