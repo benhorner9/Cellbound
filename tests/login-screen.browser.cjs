@@ -26,20 +26,38 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   });
 
   await page.goto('https://cellbound.test/index.html',{waitUntil:'networkidle'});
-  assert.equal((await page.locator('.coming-soon-kicker').textContent()).trim(),'CELLBOUND');
-  assert.equal((await page.locator('.coming-soon-card h1').textContent()).trim(),'Coming Soon');
-  assert((await page.locator('.coming-soon-card').innerText()).includes('The gates of Zeltira are being prepared.'),'public gate explains the current release state');
-  assert.equal((await page.locator('.coming-soon-note').textContent()).trim(),'Founding Season');
-  assert(await page.locator('.coming-soon-world img').evaluate(img=>img.complete&&img.naturalWidth>0),'Coming Soon world artwork loads');
+  const productionGate=await page.locator('.coming-soon-card').count()>0;
+  if(productionGate){
+    assert.equal((await page.locator('.coming-soon-kicker').textContent()).trim(),'CELLBOUND');
+    assert.equal((await page.locator('.coming-soon-card h1').textContent()).trim(),'Coming Soon');
+    assert((await page.locator('.coming-soon-card').innerText()).includes('The gates of Zeltira are being prepared.'),'public gate explains the current release state');
+    assert.equal((await page.locator('.coming-soon-note').textContent()).trim(),'Founding Season');
+    assert(await page.locator('.coming-soon-world img').evaluate(img=>img.complete&&img.naturalWidth>0),'Coming Soon world artwork loads');
 
-  const panel=await page.locator('.coming-soon-card').boundingBox();
-  assert(panel&&panel.x>=0&&panel.x+panel.width<=1024,'desktop Coming Soon card stays in viewport');
+    const panel=await page.locator('.coming-soon-card').boundingBox();
+    assert(panel&&panel.x>=0&&panel.x+panel.width<=1024,'desktop Coming Soon card stays in viewport');
 
-  await page.setViewportSize({width:390,height:844});
-  await page.waitForTimeout(100);
-  const mobilePanel=await page.locator('.coming-soon-card').boundingBox();
-  assert(mobilePanel&&mobilePanel.x>=0&&mobilePanel.x+mobilePanel.width<=390,'mobile Coming Soon card stays in viewport');
-  assert(await page.locator('.coming-soon-card h1').isVisible(),'mobile Coming Soon title remains visible');
+    await page.setViewportSize({width:390,height:844});
+    await page.waitForTimeout(100);
+    const mobilePanel=await page.locator('.coming-soon-card').boundingBox();
+    assert(mobilePanel&&mobilePanel.x>=0&&mobilePanel.x+mobilePanel.width<=390,'mobile Coming Soon card stays in viewport');
+    assert(await page.locator('.coming-soon-card h1').isVisible(),'mobile Coming Soon title remains visible');
+  }else{
+    assert(await page.locator('#login-form').isVisible(),'staging login form is visible');
+    assert(await page.locator('#email').isVisible(),'staging email field is visible');
+    assert(await page.locator('#password').isVisible(),'staging password field is visible');
+    assert.equal((await page.locator('.brand-lockup b').textContent()).trim(),'CELLBOUND');
+    assert(await page.locator('.login-world img').evaluate(img=>img.complete&&img.naturalWidth>0),'staging login world artwork loads');
+
+    const panel=await page.locator('.gate-panel').boundingBox();
+    assert(panel&&panel.x>=0&&panel.x+panel.width<=1024,'desktop staging login panel stays in viewport');
+
+    await page.setViewportSize({width:390,height:844});
+    await page.waitForTimeout(100);
+    const mobilePanel=await page.locator('.gate-panel').boundingBox();
+    assert(mobilePanel&&mobilePanel.x>=0&&mobilePanel.x+mobilePanel.width<=390,'mobile staging login panel stays in viewport');
+    assert(await page.locator('#login-form').isVisible(),'mobile staging login remains usable');
+  }
 
   await page.screenshot({path:'/tmp/cellbound-login-screen.png',fullPage:true});
   const authPage=page;
@@ -58,5 +76,5 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
   assert.deepEqual(authErrors,[],'auth email redirect harness emitted no browser errors');
   assert.deepEqual(errors,[]);
   await browser.close();
-  console.log('Cellbound public/auth regression passed: holding-page layout plus verification and password-reset return URLs.');
+  console.log('Cellbound public/auth regression passed: production holding page or staging login layout plus verification and password-reset return URLs.');
 })().catch(e=>{console.error(e);process.exit(1)});
