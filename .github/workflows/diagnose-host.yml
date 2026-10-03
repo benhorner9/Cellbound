@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Verify staging-production separation
+      - name: Verify staging and production
         shell: bash
         run: |
           set -euo pipefail
