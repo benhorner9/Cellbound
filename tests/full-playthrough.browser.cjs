@@ -128,7 +128,11 @@ async function mount(page,seedState=null,owner=false,options={}){
   });
   await page.goto('https://cellbound.test/guild.html',{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.CellboundGame?.ready===true,{},{timeout:10000,polling:50});
-  await page.waitForFunction(()=>Boolean(window.CellboundOnboarding),{},{timeout:10000,polling:50});
+  try{
+    await page.waitForFunction(()=>Boolean(window.CellboundOnboarding),{},{timeout:10000,polling:50});
+  }catch(error){
+    throw new Error('Onboarding failed to initialise: '+(errors.join(' | ')||error.message));
+  }
   return errors;
 }
 
