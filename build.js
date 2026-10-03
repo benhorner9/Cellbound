@@ -1265,7 +1265,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     if(!analytics.includes(hook))throw new Error('Beta analytics runtime is missing '+hook);
 
   const adminAnalytics=fs.readFileSync(path.join(__dirname,'admin-analytics-v1.js'),'utf8');
-  for(const hook of ['cellbound_admin_analytics_summary','Most Popular Classes','Dungeon Starts & Clears'])
+  for(const hook of ['cellbound_admin_analytics_summary','adminAnalyticsClasses','adminAnalyticsDungeons','completion_rate','daily_activity'])
     if(!adminAnalytics.includes(hook))throw new Error('Beta analytics dashboard runtime is missing '+hook);
 
   const analyticsMigration=fs.readFileSync(path.join(__dirname,'supabase/migrations/20261003195133_beta_analytics_foundation.sql'),'utf8');
