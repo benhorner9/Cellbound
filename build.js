@@ -1212,6 +1212,13 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     'refresh during a saved combat phase resumes the existing dungeon attempt'
   ])if(!playthrough.includes(hook))throw new Error('Beta Step 8 adversarial browser coverage is missing '+hook);
 
+  const auth=fs.readFileSync(path.join(__dirname,'auth.js'),'utf8');
+  for(const hook of ["const authReturnUrl=()=>new URL('./index.html',location.href).href", 'emailRedirectTo:authReturnUrl()', 'redirectTo:authReturnUrl()'])
+    if(!auth.includes(hook))throw new Error('Beta Step 8 auth return-path hardening is missing '+hook);
+  const login=fs.readFileSync(path.join(__dirname,'tests/login-screen.browser.cjs'),'utf8');
+  for(const hook of ['verification email returns to the current Cellbound host', 'password reset email returns to the current Cellbound host'])
+    if(!login.includes(hook))throw new Error('Beta Step 8 auth redirect regression is missing '+hook);
+
   console.log('Beta Step 8 break-game QA contracts are release-gated.');
 }
 
