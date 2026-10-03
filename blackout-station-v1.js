@@ -53,6 +53,7 @@ function root(){
  e=document.createElement('div');e.id='bs2dBackdrop';e.className='bs2d-backdrop';e.hidden=true;document.body.appendChild(e);return e
 }
 function readiness(normalOnly=false){
+ if(Game?.isBetaDungeonPlayable&&!Game.isBetaDungeonPlayable('blackout-station'))return{ok:false,reason:'Blackout Station is reserved for a future Cellbound update.'};
  const p=party();
  if(p.length!==5)return{ok:false,reason:'Build a complete five-character party first.'};
  const bad=p.find(c=>Game?.isUnavailable?.(c));if(bad)return{ok:false,reason:bad.name+' is still recovering from Cell Shock.'};
@@ -83,6 +84,13 @@ async function bsWaitForEndgame(){
 }
 
 function renderCard(){
+ const betaAvailable=!Game?.isBetaDungeonPlayable||Game.isBetaDungeonPlayable('blackout-station');
+ if(!betaAvailable){
+  const card=$('#blackoutStationCard'),mount=$('#blackoutStationMount');
+  if(card)card.innerHTML='<article class="dungeon-browser-card locked future-update" data-dungeon-card="blackout-station"><div class="dungeon-browser-art has-image locked-image"><img src="./assets/dungeons/blackout-station.webp" alt="" loading="lazy" decoding="async"><span>FUTURE EXPEDITION</span><strong>◇</strong></div><div class="dungeon-browser-copy"><div class="dungeon-browser-heading"><div><small>DUNGEON</small><h3>Blackout Station</h3></div><b>FUTURE UPDATE</b></div><p>This expedition is being held back for a future Cellbound content update.</p><div class="dungeon-browser-meta"><span>Beta locked</span><span>Coming later</span></div><div class="dungeon-browser-actions"><button type="button" data-dungeon-more="blackout-station">MORE INFO →</button></div></div></article>';
+  if(mount)mount.innerHTML='<div class="dungeon-detail-toolbar"><div><small>DUNGEON JOURNAL</small><b>Blackout Station</b></div><button type="button" data-dungeon-close>CLOSE DETAILS ×</button></div><section class="panel" style="padding:28px"><small>FUTURE CONTENT</small><h2>Blackout Station</h2><p>This dungeon is intentionally unavailable during the beta. It will be released in a future update.</p></section>';
+  return
+ }
  const card=$('#blackoutStationCard'),mount=$('#blackoutStationMount');if((!card&&!mount)||!Game?.ready)return;
  const s=state(),clears=Number(s?.blackoutStationCompletions)||0,gate=readiness(true),pi=ilvl();
  if(card)card.innerHTML='<article class="dungeon-browser-card blackout-station unlocked" data-dungeon-card="blackout-station"><div class="dungeon-browser-art has-image blackout-station-art"><img src="./assets/dungeons/blackout-station.webp" alt="" loading="lazy" decoding="async"><span>ABANDONED GRID</span><strong>⚡</strong></div><div class="dungeon-browser-copy"><div class="dungeon-browser-heading"><div><small>DUNGEON</small><h3>Blackout Station</h3></div><b id="blackoutStationStatus">'+(clears?'CLEARED':'AVAILABLE')+'</b></div><p>Restore a dead power station, then survive Dr. Vex Calder\'s lethal role circuits.</p><div class="dungeon-browser-meta"><span>2 stages</span><span>iLvl '+ENTRY_ILVL+'+</span><span>Party iLvl '+(pi||'—')+'</span></div><div class="dungeon-browser-actions"><button type="button" data-dungeon-more="blackout-station">MORE INFO →</button></div></div></article>';
@@ -111,7 +119,8 @@ function briefing(){
  r.querySelector('[data-bs-start]')?.addEventListener('click',startRun);
  try{bsBindEndgamePrep()}catch(error){console.warn('Blackout Station difficulty controls failed to bind',error)}
 }
-function openDungeon(options){Game=window.CellboundGame;if(!Game?.ready)return;db=Game.getSupabase?.();if(options?.difficulty)window.CellboundEndgame?.choose?.('blackout-station',options.difficulty,options.tier||1);briefing()}
+function openDungeon(options){
+ if(Game?.isBetaDungeonPlayable&&!Game.isBetaDungeonPlayable('blackout-station')){renderCard();Game.switchView?.('content');return}Game=window.CellboundGame;if(!Game?.ready)return;db=Game.getSupabase?.();if(options?.difficulty)window.CellboundEndgame?.choose?.('blackout-station',options.difficulty,options.tier||1);briefing()}
 function close(){
  token++;run=null;document.body.classList.remove('bs2d-open');const r=root();r.hidden=true;Game?.switchView?.('content');renderCard()
 }
