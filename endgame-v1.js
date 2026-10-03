@@ -169,8 +169,9 @@ function render(){
  root.innerHTML=
  '<section class="eg-hero"><div><small>ENDGAME</small><h2>Push beyond Normal.</h2><p>Learn the route on Normal, step up to Heroic, then climb Cellbound+ with rotating affixes, scores and weekly rewards.</p></div><div class="eg-season"><span>SEASON</span><b>'+esc(server.season?.name||D.SEASON.name)+'</b><small>'+esc(minor?.name||'No minor affix')+' · '+esc(major?.name||'No major affix')+'</small></div></section>'+
  weeklyMarkup()+milestoneMarkup()+achievementMarkup()+collectionMarkup()+
- '<div class="eg-content">'+dungeonCard('ashen-vault')+dungeonCard('hollow-sanctum')+dungeonCard('chaos-canyon')+'</div>'+
- '<div class="eg-leaderboards">'+leaderboardMarkup('ashen-vault')+leaderboardMarkup('hollow-sanctum')+leaderboardMarkup('chaos-canyon')+'</div>';
+ '<div class="eg-content">'+dungeonCard('ashen-vault')+dungeonCard('hollow-sanctum')+'</div>'+
+ '<section class="panel eg-future-content"><small>FUTURE DUNGEONS</small><h3>The frontier will expand after beta.</h3><p>Chaos Canyon, Blackout Station and The Fractured Ages are intentionally held for future updates.</p></section>'+
+ '<div class="eg-leaderboards">'+leaderboardMarkup('ashen-vault')+leaderboardMarkup('hollow-sanctum')+'</div>';
  bind()
 }
 function bind(){
@@ -204,6 +205,7 @@ async function refresh(){
  render()
 }
 function prepare(id){
+ if(Game?.isBetaDungeonPlayable&&!Game.isBetaDungeonPlayable(id))return;
  const cfg=currentConfig(id);
  if(!difficultyUnlocked(id,cfg.difficulty,cfg.tier))return;
  if(id==='ashen-vault'){
