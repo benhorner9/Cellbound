@@ -36,7 +36,7 @@ function prereqs(){
   const q=qroot()||{};
   return[
     ['Ashes on the East Road',!!q.ashfall?.complete],
-    ['Echoes Beneath Zeltira',!!q.flags?.hollowSanctumUnlocked],
+    ['The Hollow Sanctum',!!q.flags?.hollowFirstClear],
     ['The Thirteenth Bell',!!q.thirteenthBell?.complete]
   ]
 }
@@ -638,7 +638,7 @@ function renderDetail(main,side){
 }
 function actionHtml(n,c){
   if(n.complete)return'<div class="quest-complete-stamp">RAID ATTUNEMENT COMPLETE</div>';
-  if(c.locked)return'<div class="quest-action-block locked"><b>LOCKED</b><small>Complete Ashes on the East Road, Echoes Beneath Zeltira and The Thirteenth Bell before Silas appears at the harbour.</small></div>';
+  if(c.locked)return'<div class="quest-action-block locked"><b>LOCKED</b><small>Complete Ashes on the East Road, clear The Hollow Sanctum and finish The Thirteenth Bell before Silas appears at the harbour.</small></div>';
   if(!n.started)return'<button class="quest-primary nwb-primary" data-nwb-start>MEET THE SAILOR →</button>';
   return'<button class="quest-primary nwb-primary" data-nwb-open>CONTINUE NO WAY BACK →</button>'
 }
