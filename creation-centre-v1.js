@@ -101,7 +101,7 @@ function render(o){
  if(step==='confirm')body=confirmPanel(o,d);
  const previewName=d.name||'New recruit';
  root.innerHTML=
- '<div class="character-creator cc-centre">'+
+ '<div class="character-creator cc-centre cc-step-'+step+'">'+
   '<header class="cc-header"><div class="cc-brand"><span class="cc-brand-mark" aria-hidden="true">◇</span><div><small>CREATION CENTRE</small><h1>'+esc(o.title||'Forge a guild member')+'</h1></div></div>'+
   (o.onClose?'<button type="button" class="cc-close" data-cc-close aria-label="Close Creation Centre">×</button>':'')+'</header>'+
   '<div class="cc-layout">'+
