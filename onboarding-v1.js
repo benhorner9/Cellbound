@@ -233,7 +233,7 @@ async function createParty(){
   s.renown=0;s.gold=250;s.bank=[];s.materials={};s.consumables=[];s.recipeScrolls=[];s.discoveredRecipes=[];s.tradeInbox=[];s.collectionHistory=[];s.reports=[];s.bossKills={ashwarden:false,embermaw:false,vaultheart:false};s.progression={ashenVaultUnlocked:false};s.questSystem=null;
   s.activity=['Your first party has been formed.','The road to Zeltira is open.'];
   s.onboarding={version:3,complete:false,stage:'zeltira-arrival',zone:'zeltira',startedAt:s.onboarding?.startedAt||new Date().toISOString(),partyCreatedAt:new Date().toISOString(),firstExpeditionClues:[]};
-  Game.replaceState(clone(s));await Game.persistState();await syncPartyCharacters(roster);render();
+  Game.replaceState(clone(s));await Game.persistState();await syncPartyCharacters(roster);roster.forEach(ch=>window.CellboundAnalytics?.characterCreated?.(ch,'onboarding'));render();
   window.CellboundFX?.story?.('The Gate at Dusk','Five names are on the charter. Zeltira is waiting.',{eyebrow:'WELCOME TO CELLBOUND',tone:'story',duration:1600,particles:true});
 }
 
@@ -419,7 +419,7 @@ function zeltiraMap(active){
 async function setStage(next,extra){
   const s=state();s.onboarding=s.onboarding||{};
   Object.assign(s.onboarding,extra||{}, {stage:next,zone:'zeltira'});
-  Game.save();await Game.persistState();render();
+  Game.save();await Game.persistState();window.CellboundAnalytics?.track?.('profession_learned',{character_id:c.id,class:c.class,race:c.race,profession:name,source:'onboarding'},{key:'profession_learned:'+c.id+':'+name});render();
   const moments={
     'first-expedition':['FIELD CONTRACT','The First Resonance','Read the scene. Follow what the Cell is telling you.','story'],
     'dungeon-briefing':['EXPEDITION READY','Below Zeltira','Your first real descent is waiting.','danger'],
@@ -1143,6 +1143,7 @@ async function craftTutorialItem(){
   prof.xp=(Number(prof.xp)||0)+(recipe.xp||0);
   s.onboarding.craftedItem=out.name;s.onboarding.craftedKey=out.key;s.onboarding.stage='profession-use';s.onboarding.professionComplete=true;
   s.activity.push(c.name+' crafted '+out.name+' — a profession preparation item is ready to use.');
+  window.CellboundAnalytics?.track?.('craft_completed',{character_id:c.id,class:c.class,profession:prof.name,recipe_id:recipe.id,recipe_name:recipe.name,quantity:1,output_category:out.category||'',source:'onboarding'});
   Game.save();await Game.persistState();
   if(db&&user)await db.from('characters').update({tutorial_stage:'tutorial_complete',last_played_at:new Date().toISOString()}).eq('user_id',user.id);
   render();
