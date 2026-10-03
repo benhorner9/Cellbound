@@ -4,6 +4,7 @@ const G=window.CellboundGear;
 const B=window.CellboundBuildRules;
 const P=window.CellboundProfessions;
 const CP=window.CellboundPortraits;
+const BAL=window.CellboundBalance;
 if(!G){console.error('Cellbound gear catalogue failed to load.');return;}
 
 const SUPABASE_URL='https://jvydqeikdpelmtloulnd.supabase.co';
@@ -14,10 +15,10 @@ const PREVIOUS_STORAGE='cellbound-management-reboot-v2';
 const LOCAL_OWNER='cellbound-management-owner';
 const PENDING_SAVE='cellbound-management-pending-save-v1';
 const SAVE_VERSION=6;
-const PLAYER_LEVEL_CAP=15;
-const PVE_WIPE_CELL_SHOCK=25;
-const STANDARD_RECOVERY_MINUTES=60;
-const MEMBER_RECOVERY_MINUTES=30;
+const PLAYER_LEVEL_CAP=Number(BAL?.PLAYER_LEVEL_CAP)||15;
+const PVE_WIPE_CELL_SHOCK=Number(BAL?.PVE_WIPE_CELL_SHOCK)||25;
+const STANDARD_RECOVERY_MINUTES=Number(BAL?.RECOVERY_MINUTES?.standard)||60;
+const MEMBER_RECOVERY_MINUTES=Number(BAL?.RECOVERY_MINUTES?.member)||30;
 const LEGACY_ILVL_SLOTS=['Head','Chest','Weapon'];
 const ILVL_SLOTS=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic'];
 const SLOT_ITEM_LEVEL=G.ITEM_LEVELS||{Head:[18,24,32,40,46],Chest:[20,26,34,42,48],Weapon:[22,28,36,44,50]};
@@ -100,6 +101,11 @@ const classes={
   }}
 };
 
+const BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue','Mage']);
+const BETA_PLAYABLE_CLASS_SET=new Set(BETA_PLAYABLE_CLASSES);
+function isBetaClassPlayable(name){return BETA_PLAYABLE_CLASS_SET.has(String(name||''))}
+function isCharacterBetaPlayable(c){return Boolean(c&&isBetaClassPlayable(c.class))}
+
 const RECRUIT_RACES=[
   {id:'Veyren',icon:'◇',trait:'Adaptable'},
   {id:'Stoneborn',icon:'⬡',trait:'Unyielding'},
@@ -127,6 +133,7 @@ let account=null;
 let currentUser=null;
 let bankBulkMode=false;
 const bankBulkSelected=new Set();
+const bankUpgradeCooldowns=new Map();
 let saveSerial=Promise.resolve();
 let syncTimer=null;
 let recoveringTicker=null;
@@ -208,13 +215,37 @@ function characterItemLevel(c){
 }
 function partySlotIds(){return [state?.party?.tank,state?.party?.healer,...(state?.party?.dps||[])].slice(0,5)}
 function writePartySlots(ids){
-  const slots=[...(ids||[])].slice(0,5);while(slots.length<5)slots.push(null);
+  const seen=new Set(),slots=[...(ids||[])].slice(0,5).map(id=>{
+    if(!id||seen.has(id))return null;seen.add(id);return id
+  });while(slots.length<5)slots.push(null);
   state.party=state.party&&typeof state.party==='object'?state.party:{tank:null,healer:null,dps:[null,null,null]};
   state.party.tank=slots[0]||null;state.party.healer=slots[1]||null;state.party.dps=[slots[2]||null,slots[3]||null,slots[4]||null]
 }
 function flatPartyIds(){return partySlotIds().filter(Boolean);}
-function partyCharacters(){return flatPartyIds().map(charById).filter(c=>c&&isCharacterRosterUnlocked(c.id));}
+function partyCharacters(){return flatPartyIds().map(charById).filter(c=>c&&isCharacterRosterUnlocked(c.id)&&isCharacterBetaPlayable(c));}
 function partyItemLevel(){const chars=partyCharacters();return chars.length===5?Math.round(chars.reduce((sum,c)=>sum+characterItemLevel(c),0)/5):0;}
+function averagePartyLevel(){const chars=partyCharacters();return chars.length===5?Math.round(chars.reduce((sum,c)=>sum+Math.max(1,Number(c.level)||1),0)/5):0}
+function xpNeeded(level){return BAL?.xpNeeded?.(level)||800+Math.max(0,(Number(level)||1)-1)*250}
+async function awardPartyXp(amount,{source='Progression'}={}){
+  const chars=partyCharacters(),reward=Math.max(0,Math.round(Number(amount)||0));if(chars.length!==5||!reward)return[];
+  const gains=chars.map(c=>{
+    const beforeLevel=Math.min(PLAYER_LEVEL_CAP,Math.max(1,Number(c.level)||1)),beforeXp=beforeLevel>=PLAYER_LEVEL_CAP?0:Math.max(0,Number(c.xp)||0),beforeNeed=xpNeeded(beforeLevel);
+    let level=beforeLevel,xp=beforeLevel>=PLAYER_LEVEL_CAP?0:beforeXp+reward,levels=0;
+    while(level<PLAYER_LEVEL_CAP&&xp>=xpNeeded(level)){xp-=xpNeeded(level);level++;levels++}
+    if(level>=PLAYER_LEVEL_CAP){level=PLAYER_LEVEL_CAP;xp=0}
+    c.level=level;c.xp=xp;if(levels)c.talent=(Number(c.talent)||0)+levels;
+    return{id:c.id,name:c.name,amount:beforeLevel>=PLAYER_LEVEL_CAP?0:reward,beforeLevel,beforeXp,beforeNeed,afterLevel:level,afterXp:xp,afterNeed:xpNeeded(level),levels,capped:level>=PLAYER_LEVEL_CAP}
+  });
+  state.activity=Array.isArray(state.activity)?state.activity:[];
+  state.activity.push(source+': active five earned '+reward.toLocaleString()+' XP each.');
+  gains.filter(x=>x.levels>0).forEach(x=>state.activity.push(x.name+' reached Level '+x.afterLevel+'.'));
+  save();await persistState();
+  if(currentUser){
+    const now=new Date().toISOString();
+    try{await Promise.all(gains.map(x=>supabaseClient.from('characters').update({level:x.afterLevel,xp:x.afterXp,last_played_at:now}).eq('user_id',currentUser.id).eq('name',x.name)))}catch(error){console.warn('Campaign XP mirror sync failed',error)}
+  }
+  renderAll();return gains
+}
 function isRosterSlotUnlocked(index){return index<entitlements().rosterCap;}
 function isCharacterRosterUnlocked(id){const i=state?.roster?.findIndex(c=>c.id===id)??-1;return i>=0&&isRosterSlotUnlocked(i);}
 function recoveryRemainingMs(c){if(!c?.cellShockLockedUntil)return 0;return Math.max(0,new Date(c.cellShockLockedUntil).getTime()-Date.now());}
@@ -257,7 +288,7 @@ function normalizeCharacter(c,index=0){
   c.gear=characterItemLevel(c);return c;
 }
 function canonicalBank(raw){
-  const out=[];(Array.isArray(raw)?raw:[]).forEach(item=>{const canon=canonicalItem(item);if(!canon?.name)return;const sig=G.rollSignature?.(canon)||'';const found=!canon.nonStackable&&out.find(x=>x.itemId===canon.itemId&&(G.rollSignature?.(x)||'')===sig&&x.source===item.source);if(found)found.quantity+=(item.quantity||1);else out.push({...canon,id:item.id||`bank-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,quantity:item.quantity||1,source:item.source||'Previous loot'});});return out;
+  const out=[];(Array.isArray(raw)?raw:[]).forEach(item=>{const canon=canonicalItem(item);if(!canon?.name)return;const quantity=Math.max(1,Math.floor(Number(item.quantity)||1)),sig=G.rollSignature?.(canon)||'',found=!canon.nonStackable&&out.find(x=>x.itemId===canon.itemId&&(G.rollSignature?.(x)||'')===sig&&x.source===item.source);if(found)found.quantity+=quantity;else out.push({...canon,id:item.id||`bank-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,quantity,source:item.source||'Previous loot'});});return out;
 }
 function repairInvalidOffHands(s){
   if(!s||!Array.isArray(s.roster))return 0;
@@ -285,9 +316,11 @@ function repairInvalidOffHands(s){
   return repaired;
 }
 function removeInvalidPartyMembers(s){
-  const allowed=new Set((s.roster||[]).filter((c,i)=>isRosterSlotUnlocked(i)&&!isUnavailable(c)).map(c=>c.id));
-  if(!allowed.has(s.party?.tank))s.party.tank=null;if(!allowed.has(s.party?.healer))s.party.healer=null;
-  s.party.dps=Array.isArray(s.party?.dps)?s.party.dps.slice(0,3):[null,null,null];while(s.party.dps.length<3)s.party.dps.push(null);s.party.dps=s.party.dps.map(id=>allowed.has(id)?id:null);
+  const allowed=new Set((s.roster||[]).filter((c,i)=>isRosterSlotUnlocked(i)&&isCharacterBetaPlayable(c)&&!isUnavailable(c)).map(c=>c.id)),seen=new Set();
+  const clean=id=>{if(!allowed.has(id)||seen.has(id))return null;seen.add(id);return id};
+  s.party=s.party&&typeof s.party==='object'?s.party:{tank:null,healer:null,dps:[null,null,null]};
+  s.party.tank=clean(s.party.tank);s.party.healer=clean(s.party.healer);
+  s.party.dps=Array.isArray(s.party.dps)?s.party.dps.slice(0,3):[null,null,null];while(s.party.dps.length<3)s.party.dps.push(null);s.party.dps=s.party.dps.map(clean);
 }
 function migrateState(raw){
   const freshMarker=raw&&raw.__fresh_start===true;
@@ -298,7 +331,7 @@ function migrateState(raw){
   const hadRoster=Array.isArray(s.roster)&&s.roster.length>0;
   s.saveVersion=SAVE_VERSION;s.gearVersion=3;s.renown=Number(s.renown)||0;s.gold=Number(s.gold)||0;s.socialDisplayName=typeof s.socialDisplayName==='string'?s.socialDisplayName:'';
   s.roster=Array.isArray(s.roster)?s.roster.map(normalizeCharacter):[];
-  s.progression=s.progression&&typeof s.progression==='object'?s.progression:{};if(typeof s.progression.ashenVaultUnlocked!=='boolean')s.progression.ashenVaultUnlocked=Boolean(Number(s.dungeonCompletions)>0||Object.values(s.bossKills||{}).some(Boolean)||s.questSystem?.ashfall?.complete);s.bank=canonicalBank(s.bank);s.materials=s.materials&&typeof s.materials==='object'?s.materials:{};s.consumables=Array.isArray(s.consumables)?s.consumables:[];s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];s.collectionHistory=Array.isArray(s.collectionHistory)?s.collectionHistory:[];s.reports=Array.isArray(s.reports)?s.reports:[];s.activity=Array.isArray(s.activity)?s.activity:[];s.bossKills=s.bossKills||{ashwarden:false,embermaw:false,vaultheart:false};s.party=s.party||{tank:null,healer:null,dps:[null,null,null]};
+  s.progression=s.progression&&typeof s.progression==='object'?s.progression:{};if(typeof s.progression.ashenVaultUnlocked!=='boolean')s.progression.ashenVaultUnlocked=Boolean(Number(s.dungeonCompletions)>0||Object.values(s.bossKills||{}).some(Boolean)||s.questSystem?.ashfall?.complete);s.bank=canonicalBank(s.bank);s.materials=s.materials&&typeof s.materials==='object'?Object.fromEntries(Object.entries(s.materials).map(([k,v])=>[k,Math.max(0,Math.floor(Number(v)||0))])):{};s.consumables=(Array.isArray(s.consumables)?s.consumables:[]).map(x=>({...x,quantity:Math.max(0,Math.floor(Number(x?.quantity)||0))})).filter(x=>x.quantity>0);s.recipeScrolls=Array.isArray(s.recipeScrolls)?s.recipeScrolls:[];s.discoveredRecipes=Array.isArray(s.discoveredRecipes)?s.discoveredRecipes:[];s.tradeInbox=Array.isArray(s.tradeInbox)?s.tradeInbox:[];s.collectionHistory=Array.isArray(s.collectionHistory)?s.collectionHistory:[];s.reports=Array.isArray(s.reports)?s.reports:[];s.activity=Array.isArray(s.activity)?s.activity:[];s.bossKills=s.bossKills||{ashwarden:false,embermaw:false,vaultheart:false};s.party=s.party||{tank:null,healer:null,dps:[null,null,null]};
   if(s.__fresh_start===true||!s.onboarding&&!hadRoster)s.onboarding={version:3,complete:false,stage:'party-builder',zone:'zeltira',startedAt:new Date().toISOString()};
   else if(!s.onboarding&&hadRoster)s.onboarding={version:3,complete:true,stage:'complete',zone:'zeltira',legacy:true};
   // A populated roster and the party-builder stage cannot both be authoritative.
@@ -468,6 +501,7 @@ const WORKSPACES={
   market:{label:'Market',views:[['trading','Trading Post']]},
   pvp:{label:'Combat',views:[['pvp','PvP']]},
   social:{label:'Social',views:[['chat','Social']]},
+  support:{label:'Support',views:[['support','Beta Support']]},
   admin:{label:'Admin',views:[['admin','Admin']]}
 };
 const VIEW_WORKSPACE={};
@@ -503,10 +537,10 @@ function renderTop(){
   ui.renown.textContent=state.renown;ui.gold.textContent=state.gold.toLocaleString();ui.rosterCount.textContent=`${unlocked} / ${e.rosterCap}`;if(ui.bankCount)ui.bankCount.textContent=bankTotal();if(ui.dungeonProgress)ui.dungeonProgress.textContent=`${Object.values(state.bossKills).filter(Boolean).length} / 3 bosses`;if(ui.partyIlvlTop)ui.partyIlvlTop.textContent=pi||'—';if(ui.membershipStatus){ui.membershipStatus.textContent=e.member?'MEMBER':'STANDARD';ui.membershipStatus.dataset.member=e.member?'1':'0';}
 }
 function rosterCard(c,index){
-  const role=roleOf(c),unlocked=isRosterSlotUnlocked(index),recovering=isUnavailable(c),ilvl=characterItemLevel(c),classKey=combatClassKey(c),active=flatPartyIds().includes(c.id);
+  const role=roleOf(c),unlocked=isRosterSlotUnlocked(index),betaPlayable=isCharacterBetaPlayable(c),recovering=isUnavailable(c),ilvl=characterItemLevel(c),classKey=combatClassKey(c),active=betaPlayable&&flatPartyIds().includes(c.id);
   const lockedLabel=index>=10?'ADMIN LOCKED':'MEMBERSHIP LOCKED';
-  const shock=Math.round(Number(c.cellShock)||0),meta=classDef(c),status=!unlocked?lockedLabel:recovering?'RECOVERING':active?'ACTIVE PARTY':'AVAILABLE';
-  const statusClass=!unlocked?'locked':recovering?'recovering':active?'active':'ready';
+  const shock=Math.round(Number(c.cellShock)||0),meta=classDef(c),status=!unlocked?lockedLabel:!betaPlayable?'CLASS UNAVAILABLE':recovering?'RECOVERING':active?'ACTIVE PARTY':'AVAILABLE';
+  const statusClass=!unlocked||!betaPlayable?'locked':recovering?'recovering':active?'active':'ready';
   return `<article class="char-card roster-character-card ${classKey} ${!unlocked?'roster-locked':''} ${recovering?'shock-locked':''} ${active?'is-active':''}" data-role="${role}" data-class-name="${c.class}" style="--roster-accent:${meta?.glow||'#7F8B88'};--glow:${meta?.glow||'#7F8B88'}">
     ${!unlocked?'<div class="member-slot-ribbon">'+(index>=10?'ADMIN SLOT ':'MEMBERSHIP SLOT ')+(index+1)+'</div>':''}
     <div class="roster-card-head">
@@ -582,7 +616,7 @@ function ensureRecruitModal(){
 function openRecruit(slotIndex){
   const e=entitlements();
   if(e.rosterCap<=5||!state.onboarding?.complete||state.roster.length>=e.rosterCap||slotIndex!==state.roster.length)return;
-  const klass=Object.keys(classes)[0],spec=Object.keys(classes[klass]?.specs||{})[0];
+  const klass=BETA_PLAYABLE_CLASSES[0],spec=Object.keys(classes[klass]?.specs||{})[0];
   recruitDraft={race:'Veyren',klass,spec,name:recruitRandomName('Veyren'),appearance:CP?.randomAppearance?.('Veyren')||{race:'Veyren'}};renderRecruitModal()
 }
 function closeRecruit(){
@@ -599,7 +633,7 @@ function renderRecruitModal(){
     '<header><small>'+(adminSlot?'ADMIN ROSTER':'MEMBERSHIP ROSTER')+' · SLOT '+(state.roster.length+1)+' OF '+e.rosterCap+'</small><h2>Recruit Adventurer</h2><p>'+(e.isAdmin?'Admin accounts can maintain up to 20 adventurers.':'Membership adds five roster slots. Recruit them whenever you need them.')+'</p></header>'+
     '<div class="recruit-body">'+
       '<label><span>Race</span><select id="recruitRace">'+RECRUIT_RACES.map(r=>'<option value="'+r.id+'" '+(r.id===recruitDraft.race?'selected':'')+'>'+r.icon+' '+r.id+' · '+r.trait+'</option>').join('')+'</select></label>'+
-      '<label><span>Class</span><select id="recruitClass">'+Object.entries(classes).map(([name,d])=>'<option value="'+name+'" '+(name===recruitDraft.klass?'selected':'')+'>'+d.icon+' '+name+'</option>').join('')+'</select></label>'+
+      '<label><span>Class</span><select id="recruitClass">'+Object.entries(classes).filter(([name])=>isBetaClassPlayable(name)).map(([name,d])=>'<option value="'+name+'" '+(name===recruitDraft.klass?'selected':'')+'>'+d.icon+' '+name+'</option>').join('')+'</select></label>'+
       '<label><span>Specialisation</span><select id="recruitSpec">'+specs.map(([name,d])=>'<option value="'+name+'" '+(name===recruitDraft.spec?'selected':'')+'>'+name+' · '+roleLabel(d.role)+'</option>').join('')+'</select></label>'+
       '<div class="recruit-appearance-wrap"><small>APPEARANCE</small>'+appearanceEditor+'</div>'+ 
       '<label class="recruit-name-label"><span>Name</span><div class="recruit-name"><input id="recruitName" maxlength="24" autocomplete="off" value="'+esc(recruitDraft.name)+'"><button type="button" data-random-recruit>RANDOMISE</button></div></label>'+
@@ -624,7 +658,9 @@ async function createRecruit(){
   if(name.length<2||name.length>24||state.roster.some(c=>String(c.name||'').toLowerCase()===name.toLowerCase())){
     const input=$('#recruitName');if(input){input.setCustomValidity('Use a unique name between 2 and 24 characters.');input.reportValidity();setTimeout(()=>input.setCustomValidity(''),1800)}return
   }
-  const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],klass=recruitDraft.klass,spec=recruitDraft.spec,role=classes[klass]?.specs?.[spec]?.role||'dps',equipment=starterEquipment(klass);
+  const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],klass=recruitDraft.klass,spec=recruitDraft.spec;
+  if(!isBetaClassPlayable(klass)){alert('That class is not available during beta.');renderRecruitModal();return}
+  const role=classes[klass]?.specs?.[spec]?.role||'dps',equipment=starterEquipment(klass);
   const ch=normalizeCharacter({
     id:recruitUid(),name,race:race.id,raceTrait:window.CellboundIdentities?.getRace?.(race.id)?.trait||race.trait,class:klass,spec,role,
     level:1,xp:0,power:role==='tank'?30:role==='healer'?27:29,talent:1,portrait:recruitInitials(name),appearance:CP?.normalizeAppearance?.(recruitDraft.appearance,name,race.id)||recruitDraft.appearance,
@@ -736,7 +772,7 @@ function renderOverview(){
 
   const readiness=$('#overviewReadiness'),readinessBadge=$('#homeReadinessBadge');
   if(readinessBadge){
-    readinessBadge.textContent=missionReady?'READY TO ENTER':!questReady?'CONTENT LOCKED':'NEEDS ATTENTION';
+    readinessBadge.textContent=missionReady?'READY TO ENTER':!questReady?'QUEST LOCKED':'NEEDS ATTENTION';
     readinessBadge.className=missionReady?'ready':!questReady?'blocked':'warn';
   }
   if(readiness){
@@ -1051,10 +1087,12 @@ function bankUpgradeCost(item){
 }
 function bankCanUpgrade(item){return (Number(item?.itemLevel)||0)<bankUpgradeMax(item);}
 function upgradeBankItem(id){
+  const now=Date.now();if((bankUpgradeCooldowns.get(id)||0)>now)return;
   const item=state.bank.find(x=>x.id===id);if(!item||!bankCanUpgrade(item))return;
   const cost=bankUpgradeCost(item),available=Number(state.materials?.['cell-shards'])||0,next=Math.min(bankUpgradeMax(item),(Number(item.itemLevel)||0)+2);
   if(available<cost){alert('You need '+cost+' Cell Shards. You currently have '+available+'.');return;}
   if(!confirm('Upgrade '+item.name+' from Item Level '+item.itemLevel+' to '+next+' for '+cost+' Cell Shards?'))return;
+  bankUpgradeCooldowns.set(id,now+800);setTimeout(()=>{if((bankUpgradeCooldowns.get(id)||0)<=Date.now())bankUpgradeCooldowns.delete(id)},850);
   const detailScroll=Math.max(0,Number(ui.bankDetail?.scrollTop)||0);
   let target=item;
   if((Number(item.quantity)||1)>1){
@@ -1183,7 +1221,7 @@ $('#bankBulkDismantle')?.addEventListener('click',()=>disposeBankBulk('dismantle
 
 function removeChar(id){writePartySlots(partySlotIds().map(x=>x===id?null:x))}
 function assignChar(id){
-  const c=charById(id);if(!c||!isCharacterRosterUnlocked(id)||isUnavailable(c))return;
+  const c=charById(id);if(!c||!isCharacterRosterUnlocked(id)||!isCharacterBetaPlayable(c)||isUnavailable(c))return;
   const slots=partySlotIds();if(slots.includes(id))return;
   const idx=slots.findIndex(x=>!x);if(idx<0)return;
   slots[idx]=id;writePartySlots(slots);save();renderAll()
@@ -1201,17 +1239,19 @@ function partyReadiness(){
   const ids=flatPartyIds();
   if(ids.length<5)return{score:ids.length*20,ready:false,hint:'Fill all five party slots. Any role composition is allowed.'};
   const chars=ids.map(charById);
-  if(chars.some(c=>!c||isUnavailable(c)))return{score:60,ready:false,hint:'A party member is recovering from 100% Cell Shock. Rotate them out before entering combat.'};
+  if(chars.some(c=>!c))return{score:60,ready:false,hint:'One selected adventurer could not be loaded.'};
+  if(chars.some(c=>!isCharacterBetaPlayable(c)))return{score:60,ready:false,hint:'A selected class is unavailable during beta. Replace that adventurer.'};
+  if(chars.some(c=>isUnavailable(c)))return{score:60,ready:false,hint:'A party member is recovering from 100% Cell Shock. Rotate them out before entering combat.'};
   if(ids.some(id=>!isCharacterRosterUnlocked(id)))return{score:60,ready:false,hint:'A selected character is outside your currently unlocked roster slots.'};
   const pi=partyItemLevel(),avgLevel=Math.round(chars.reduce((s,c)=>s+Math.max(1,Number(c.level)||1),0)/5),composition=partyComposition(chars);
   return{score:100,ready:true,hint:`${composition} · Party Lv ${avgLevel} · iLvl ${pi}. Choose a dungeon to check its specific entry requirement.`};
 }
 function renderParty(){
   const slots=partySlotIds();ui.partySlots.innerHTML=slots.map((id,i)=>slotHtml(i,id)).join('');ui.partySlots.querySelectorAll('[data-remove]').forEach(b=>b.addEventListener('click',()=>{removeChar(b.dataset.remove);save();renderAll();}));
-  const selected=new Set(flatPartyIds());ui.partyRoster.innerHTML=state.roster.map((c,i)=>{const slotLocked=!isRosterSlotUnlocked(i),shock=isUnavailable(c),disabled=selected.has(c.id)||slotLocked||shock||selected.size>=5;return `<button class="party-choice ${slotLocked?'roster-locked':''} ${shock?'shock-locked':''}" data-pick="${c.id}" ${disabled?'disabled':''}><div class="avatar">${portraitHTML(c,'sm')}</div><div><b>${c.name}</b><small>Lv. ${c.level} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}</small></div><em>${slotLocked?'Member slot':shock?`Recovering ${formatRemaining(c)}`:`${roleLabel(roleOf(c))} · Shock ${c.cellShock||0}%`}</em></button>`;}).join('');
+  const selected=new Set(flatPartyIds());ui.partyRoster.innerHTML=state.roster.map((c,i)=>{const slotLocked=!isRosterSlotUnlocked(i),betaLocked=!isCharacterBetaPlayable(c),shock=isUnavailable(c),disabled=selected.has(c.id)||slotLocked||betaLocked||shock||selected.size>=5;return `<button class="party-choice ${slotLocked||betaLocked?'roster-locked':''} ${shock?'shock-locked':''}" data-pick="${c.id}" ${disabled?'disabled':''}><div class="avatar">${portraitHTML(c,'sm')}</div><div><b>${c.name}</b><small>Lv. ${c.level} · ${c.class} · ${c.spec} · iLvl ${characterItemLevel(c)}</small></div><em>${slotLocked?'Member slot':betaLocked?'Unavailable in beta':shock?`Recovering ${formatRemaining(c)}`:`${roleLabel(roleOf(c))} · Shock ${c.cellShock||0}%`}</em></button>`;}).join('');
   ui.partyRoster.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>assignChar(b.dataset.pick)));const r=partyReadiness();ui.readinessFill.style.width=`${r.score}%`;ui.readinessText.textContent=`${r.score}%`;ui.readinessLabel.textContent=r.ready?'READY':'NOT READY';ui.readinessLabel.className=r.ready?'good':'';ui.readinessHint.textContent=r.hint;
 }
-$('#autoFill')?.addEventListener('click',()=>{const available=state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&!isUnavailable(c)).sort((a,b)=>characterItemLevel(b)-characterItemLevel(a)||b.power-a.power).slice(0,5);writePartySlots(available.map(c=>c.id));save();renderAll();});
+$('#autoFill')?.addEventListener('click',()=>{const available=state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&isCharacterBetaPlayable(c)&&!isUnavailable(c)).sort((a,b)=>characterItemLevel(b)-characterItemLevel(a)||b.power-a.power).slice(0,5);writePartySlots(available.map(c=>c.id));save();renderAll();});
 $('#partyOpenDungeons')?.addEventListener('click',()=>switchView('content'));
 
 function applyCellShock(c,amount){
@@ -1227,7 +1267,8 @@ function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(
 
 window.CellboundGame={
   ready:false,getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getLevelCap:()=>PLAYER_LEVEL_CAP,getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,refreshStateFromServer,
-  characterItemLevel,partyItemLevel,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,portraitHTML,
+  characterItemLevel,partyItemLevel,averagePartyLevel,xpNeeded,awardPartyXp,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,portraitHTML,
+  betaPlayableClasses:BETA_PLAYABLE_CLASSES,isBetaClassPlayable,isCharacterBetaPlayable,
   addBankItem,addMaterial,renderAll,switchView,starterEquipment,
   getPartyCharacters:()=>partyCharacters(),
   applyPartyCellShock:(amount=PVE_WIPE_CELL_SHOCK)=>{const chars=partyCharacters();chars.forEach(ch=>applyCellShock(ch,amount));save();renderAll();return chars.map(ch=>({id:ch.id,name:ch.name,cellShock:ch.cellShock}));}

@@ -2,7 +2,7 @@ const fs=require('fs');
 const path=require('path');
 const vm=require('vm');
 const zlib=require('zlib');
-const files=['index.html','styles.css','auth.js','guild.html','guild.css','bank.css','character-sheet.css','gear-system.css','item-art-v1.css','foundations.css','presentation-fx-v1.css','combat-polish-v2.css','economy-v2.css','trading-post-v3.css','social-v3.css','pvp-v1.css','pvp-viewer-v1.css','pvp-match-v1.css','evolution-v1.css','dungeon-2d-v1.css','combat-3d-v1.css','expedition-presentation-v1.css','null-complex-v1.css','boss-dossier-v1.css','combat-status-ui-v1.css','combat-vitals-ui-v1.css','endgame-v1.css','manor-raid-v1.css','twelve-below-v1.css','admin-v1.css','living-world-v1.css','dungeon-generator-v1.css','character-fit-viewer-v1.css','release-v1.css','comic-scenes-v1.css','onboarding-v1.css','hollow-sanctum-v1.css','chaos-canyon-v1.css','blackout-station-v1.css','thirteenth-bell-v1.css','fourfold-lock-v1.css','no-way-back-v1.css','fractured-ages-v1.css','dungeon-theme-v1.css','quests-v1.css','quests-v2.css','mobile-v1.css','readability-v1.css','ui-readability-v2.css','ui-polish-v3.css','home-v2.css','command-ui-v1.css','roster-v2.css','character-portraits-v1.css','combat-portraits-v1.css','bank-v2.css','character-command-v1.css','character-talents-v2.css','game-shell-v1.css','game-feel-v1.css','home-loop-v1.css','layout-safety-v1.css','class-build-v1.js','gear-data.js','profession-data.js','item-art-v1.js','character-portraits-v1.js','combat-portraits-v1.js','combat-identities-v1.js','combat-reborn-v1.js','combat-standard-v1.js','combat-status-ui-v1.js','endgame-data-v1.js','presentation-fx-v1.js','combat-polish-v2.js','guild-v4.js','character-sheet.js','gear-character-patch.js','character-foundations-patch.js','economy-v2.js','trading-post-v3.js','social-v3.js','pvp-combat-v1.js','pvp-viewer-v1.js','pvp-match-v1.js','pvp-v1.js','evolution-v1.js','expedition-presentation-v1.js','null-complex-v1.js','boss-dossier-v1.js','ashen-live-scenes-v1.js','dungeon-2d-v1.js','combat-3d-v1.js','twelve-below-v1.js','admin-v1.js','world-presence-v1.js','living-world-v1.js','dungeon-generator-v1.js','character-fit-viewer-v1.js','release-v1.js','comic-scenes-v1.js','onboarding-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','thirteenth-bell-v1.js','endgame-v1.js','manor-raid-v1.js','quests-v2.js','fourfold-lock-v1.js','no-way-back-v1.js','fractured-ages-v1.js','mobile-v1.js','game-feel-v1.js'];
+const files=['index.html','styles.css','auth.js','guild.html','guild.css','bank.css','character-sheet.css','gear-system.css','item-art-v1.css','foundations.css','presentation-fx-v1.css','combat-polish-v2.css','economy-v2.css','trading-post-v3.css','social-v3.css','pvp-v1.css','pvp-viewer-v1.css','pvp-match-v1.css','evolution-v1.css','dungeon-2d-v1.css','combat-3d-v1.css','expedition-presentation-v1.css','null-complex-v1.css','boss-dossier-v1.css','combat-status-ui-v1.css','combat-vitals-ui-v1.css','endgame-v1.css','manor-raid-v1.css','twelve-below-v1.css','admin-v1.css','beta-ops-v1.css','admin-beta-ops-v1.css','living-world-v1.css','dungeon-generator-v1.css','character-fit-viewer-v1.css','release-v1.css','comic-scenes-v1.css','onboarding-v1.css','hollow-sanctum-v1.css','chaos-canyon-v1.css','blackout-station-v1.css','thirteenth-bell-v1.css','fourfold-lock-v1.css','no-way-back-v1.css','fractured-ages-v1.css','dungeon-theme-v1.css','quests-v1.css','quests-v2.css','mobile-v1.css','readability-v1.css','ui-readability-v2.css','ui-polish-v3.css','home-v2.css','command-ui-v1.css','roster-v2.css','character-portraits-v1.css','combat-portraits-v1.css','bank-v2.css','character-command-v1.css','character-talents-v2.css','game-shell-v1.css','game-feel-v1.css','home-loop-v1.css','layout-safety-v1.css','class-build-v1.js','gear-data.js','profession-data.js','balance-v1.js','item-art-v1.js','character-portraits-v1.js','combat-portraits-v1.js','combat-identities-v1.js','combat-reborn-v1.js','combat-standard-v1.js','combat-status-ui-v1.js','endgame-data-v1.js','presentation-fx-v1.js','combat-polish-v2.js','guild-v4.js','character-sheet.js','gear-character-patch.js','character-foundations-patch.js','economy-v2.js','trading-post-v3.js','social-v3.js','pvp-combat-v1.js','pvp-viewer-v1.js','pvp-match-v1.js','pvp-v1.js','evolution-v1.js','expedition-presentation-v1.js','null-complex-v1.js','boss-dossier-v1.js','ashen-live-scenes-v1.js','dungeon-2d-v1.js','combat-3d-v1.js','twelve-below-v1.js','admin-v1.js','beta-ops-v1.js','admin-beta-ops-v1.js','world-presence-v1.js','living-world-v1.js','dungeon-generator-v1.js','character-fit-viewer-v1.js','release-v1.js','comic-scenes-v1.js','onboarding-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','thirteenth-bell-v1.js','endgame-v1.js','manor-raid-v1.js','quests-v2.js','fourfold-lock-v1.js','no-way-back-v1.js','fractured-ages-v1.js','mobile-v1.js','game-feel-v1.js'];
 files.push('combat-polish-v3.js','combat-polish-v3.css','combat-physical-v4.js','combat-physical-v4.css');
 const assets=['assets/gear/cellbound-gear-atlas.webp','assets/combat/status-icons-v1.webp','assets/bosses/ashen-vault-vaultheart.webp','assets/bosses/hollow-sanctum-bound-choir.webp','assets/bosses/chaos-canyon-vorran.webp','assets/bosses/blackout-station-calder.webp','assets/bosses/fractured-ages-old-man.webp','assets/bosses/no-way-back-three-hounds-v3.jpg','assets/bosses/no-way-back-silas-vane-v3.jpg','assets/ashen-vault/environment/floor-atlas.png','assets/ashen-vault/environment/props-atlas.png','assets/ashen-vault/battlefields/broken-gate.avif','assets/ashen-vault/battlefields/hall-embers.avif','assets/ashen-vault/battlefields/kael.avif','assets/ashen-vault/battlefields/furnace.avif','assets/ashen-vault/battlefields/embermaw.avif','assets/ashen-vault/battlefields/vault-depths.avif','assets/ashen-vault/battlefields/vaultheart.avif','assets/chaos-canyon/rooms/canyon-mouth.webp','assets/chaos-canyon/rooms/thorn-trail.webp','assets/chaos-canyon/rooms/sentinel.webp','assets/chaos-canyon/rooms/crossing.webp','assets/chaos-canyon/rooms/warden.webp','assets/chaos-canyon/rooms/wildheart.webp','assets/chaos-canyon/rooms/vorran.webp','assets/hollow-sanctum/rooms/gallery.webp','assets/hollow-sanctum/rooms/sentinel.webp','assets/hollow-sanctum/rooms/choir.webp','assets/blackout-station/rooms/reactor-core.webp','assets/fractured-ages/rooms/high-noon.webp','assets/fractured-ages/rooms/iron-kingdom.webp','assets/fractured-ages/rooms/first-kingdom.webp','assets/fractured-ages/rooms/silent-frontier.webp','assets/fractured-ages/rooms/funhouse.webp','assets/dungeons/ashen-vault.webp','assets/dungeons/hollow-sanctum.webp','assets/dungeons/chaos-canyon.webp','assets/dungeons/blackout-station.webp','assets/dungeons/fractured-ages.webp','assets/quests/ashes-east-road-cinder-cart.webp','assets/tutorial/battlefields/rootling-nest.webp','assets/tutorial/battlefields/collapsed-gallery.webp','assets/tutorial/battlefields/hollow-warden.webp','assets/world/twelve-below-key-art.webp','assets/manor/manor-butler.webp','assets/manor/manor-maids.webp','assets/manor/manor-engineer.webp','assets/manor/manor-master.webp','assets/manor/manor-raid-hero.webp','assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp','assets/comics/tutorial/moonlit_ruins_and_the_glowing_wardstone.webp','assets/comics/tutorial/the_quartermaster_s_choice.webp','assets/comics/tutorial/warden_s_descent_into_the_ruins.webp','assets/comics/tutorial/the_warden_and_the_arcane_diadem.webp','assets/comics/tutorial/arcane_overload_a_warden_s_lesson.webp','assets/comics/tutorial/arcane_forge_beneath_the_twilight_citadel.webp','assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp','assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp','assets/comics/thirteenth-bell/sealed_letter.jpg','assets/comics/thirteenth-bell/greywake_arrival.jpg','assets/comics/thirteenth-bell/locked_house.jpg','assets/comics/thirteenth-bell/final_run.jpg','assets/comics/thirteenth-bell/bellkeeper.jpg','assets/comics/thirteenth-bell/bell_breaks.jpg','assets/comics/thirteenth-bell/greywake_freed.jpg','assets/comics/thirteenth-bell/departure.jpg','assets/comics/null-complex/voss-signal.webp','assets/comics/null-complex/facility-entry.webp','assets/comics/null-complex/first-aberrant.webp','assets/comics/null-complex/orin-recording.webp','assets/comics/null-complex/subject-zero.webp','assets/comics/null-complex/teleporter.webp','assets/comics/null-complex/overseer-awakens.webp','assets/comics/null-complex/prototype-07.webp','assets/comics/null-complex/escape.webp','assets/comics/null-complex/subject-zero-awake.webp'];
 for(const required of ['assets/hollow-sanctum/rooms/gallery.webp','assets/hollow-sanctum/rooms/sentinel.webp','assets/hollow-sanctum/rooms/choir.webp']){
@@ -67,6 +67,9 @@ for(const file of files){
     for(const hook of ['function classTrialPartyState(','function classTrialMechanics(','function classTrialCombat(','featuredCharacterId:t.character.id',"partyLabel:'CLASS-LED PARTY'","ENTER PARTY TRIAL →","mode:'party'"])if(!contents.includes(hook))throw new Error('Class-led party trial flow is missing '+hook);
     if(contents.includes("participants:[t.character]")||contents.includes("allowSolo:true")||contents.includes('ENTER SOLO TRIAL')||contents.includes('SOLO CLASS TRIAL'))throw new Error('Legacy solo class-trial flow returned');
     if(contents.includes('esc(config.quest.toUpperCase())'))throw new Error('Quest combat header can black-screen when a quest label is omitted');
+    if(contents.includes("title:'The Cinder Cart'")){
+      for(const hook of ["visualClass:'quest-ashfall-cinder-cart'","assets/quests/ashes-east-road-cinder-cart.webp","quest-battlefield-art--ashfall"])if(!contents.includes(hook))throw new Error('Ashes on the East Road Combat Reborn battlefield wiring is missing '+hook);
+    }
   }
   if(file==='null-complex-v1.js'){
     for(const hook of ['function unlocked()','Complete Signal From Nowhere','BEGIN SIGNAL FROM NOWHERE','3 × 3 facility'])if(!contents.includes(hook))throw new Error('Null Complex quest gate is missing '+hook);
@@ -182,7 +185,7 @@ for(const file of files){
     for(const hook of [".update({game_state:snapshot,updated_at:savedAt})",".insert({user_id:currentUser.id,game_state:snapshot,updated_at:savedAt})","localRoster>0&&remoteRoster===0","hadRoster&&s.onboarding?.stage==='party-builder'","cellbound-management-pending-save-v1","markPendingLocal()","localPendingNewer","flushPendingSave()","persistState({reusePending:true})","raw.onboarding||Number(raw.saveVersion)>0"])if(!contents.includes(hook))throw new Error('Resilient cloud save/recovery path is missing '+hook);
     if(!contents.includes("saveSerial.catch(error=>"))throw new Error('Save queue must recover after an unexpected rejected write');
     if(contents.includes('renderBosses()'))throw new Error('Legacy renderBosses call returned to the dungeon view');
-    if(!contents.includes('const PLAYER_LEVEL_CAP=15;')||!contents.includes('getLevelCap:()=>PLAYER_LEVEL_CAP'))throw new Error('Player level cap regression');
+    if(!contents.includes("const PLAYER_LEVEL_CAP=Number(BAL?.PLAYER_LEVEL_CAP)||15;")||!contents.includes('getLevelCap:()=>PLAYER_LEVEL_CAP'))throw new Error('Player level cap must come from the shared beta balance contract');
     if(contents.includes("$('"+".bank-category-tabs [data-bank-category]"+").forEach"))throw new Error('Bank category buttons cannot call forEach on a single-element selector');
     if(!contents.includes("document.querySelectorAll('.bank-category-tabs [data-bank-category]').forEach"))throw new Error('Bank category buttons must bind through querySelectorAll');
     if(!contents.includes('function isBankUtility')||!contents.includes('!canonical.nonStackable&&state.bank.find')||!contents.includes('!canon.nonStackable&&out.find'))throw new Error('Guild Bank must preserve non-stackable charge-bearing utility items');
@@ -1097,8 +1100,166 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   console.log('Beta core gameplay loop contract is release-gated.');
 }
 
+{
+  const guild=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
+  for(const hook of [
+    "const BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue','Mage'])",
+    "isCharacterBetaPlayable(c)",
+    "state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&isCharacterBetaPlayable(c)",
+    "betaPlayableClasses:BETA_PLAYABLE_CLASSES"
+  ])if(!guild.includes(hook))throw new Error('Five-class beta contract is missing '+hook);
+
+  const onboarding=fs.readFileSync(path.join(__dirname,'onboarding-v1.js'),'utf8');
+  for(const hook of [
+    "Game?.isBetaClassPlayable&&!Game.isBetaClassPlayable(klass)",
+    "const safeDraft=draft.map",
+    "No beta-playable class is available for "
+  ])if(!onboarding.includes(hook))throw new Error('Character creator beta-class lock is missing '+hook);
+
+  const quests=fs.readFileSync(path.join(__dirname,'quests-v2.js'),'utf8');
+  for(const hook of [
+    "const manorCleared=()=>",
+    "const nullQuestAvailable=()=>",
+    "LOCKED UNTIL THE MANOR",
+    "Complete The Manor raid before investigating NULL//07."
+  ])if(!quests.includes(hook))throw new Error('Manor-gated Null Complex quest contract is missing '+hook);
+
+  const manor=fs.readFileSync(path.join(__dirname,'manor-raid-v1.js'),'utf8');
+  for(const hook of [
+    "async function markManorCleared()",
+    "s.progression.manorRaidCleared=true",
+    "Signal From Nowhere is now available.",
+    "Game.isBetaClassPlayable(requested)?requested"
+  ])if(!manor.includes(hook))throw new Error('Manor completion/reward beta contract is missing '+hook);
+
+  const endgame=fs.readFileSync(path.join(__dirname,'endgame-v1.js'),'utf8');
+  if(!endgame.includes("Game.isBetaClassPlayable(x.class)"))throw new Error('Weekly endgame rewards must exclude unavailable beta classes');
+
+  const nullComplex=fs.readFileSync(path.join(__dirname,'null-complex-v1.js'),'utf8');
+  for(const hook of [
+    "function manorCleared()",
+    "manorCleared()&&(s?.progression?.nullComplexUnlocked",
+    "Complete The Manor raid before investigating the Null Complex."
+  ])if(!nullComplex.includes(hook))throw new Error('Null Complex activity Manor gate is missing '+hook);
+
+  const shell=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  for(const hook of [
+    'chaos-canyon-v1.js',
+    'blackout-station-v1.js',
+    'fractured-ages-v1.js',
+    'id="chaosCanyonMount"',
+    'id="blackoutStationMount"',
+    'id="fracturedAgesMount"'
+  ])if(!shell.includes(hook))throw new Error('Full dungeon content must remain included during beta: '+hook);
+
+  const playthrough=fs.readFileSync(path.join(__dirname,'tests/full-playthrough.browser.cjs'),'utf8');
+  for(const hook of [
+    'function betaClassAndNullGatePlaythrough(browser)',
+    'all dungeon runtimes remain included',
+    'The Manor clear unlocks Signal From Nowhere'
+  ])if(!playthrough.includes(hook))throw new Error('Five-class/full-content beta regression coverage is missing '+hook);
+
+  console.log('Five-class beta lock passed with full dungeon content retained and Null Complex Manor-gated.');
+}
+
+{
+  const balance=fs.readFileSync(path.join(__dirname,'balance-v1.js'),'utf8');
+  for(const hook of [
+    "SHIPWRIGHT_KIT_COST=1000",
+    "ashesEastRoad:1850",
+    "fracturedAgesFirstClear:4050",
+    "return [0,.35,.60,.85][n]||.35"
+  ])if(!balance.includes(hook))throw new Error('Beta balance contract is missing '+hook);
+
+  const shell=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  if(!/balance-v1\.js\?v=\d+/.test(shell))throw new Error('Beta balance runtime is not versioned in guild.html');
+
+  const guild=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
+  for(const hook of ['function awardPartyXp(', 'averagePartyLevel', 'BAL?.PVE_WIPE_CELL_SHOCK'])if(!guild.includes(hook))throw new Error('Shared beta progression balance is missing '+hook);
+
+  const bell=fs.readFileSync(path.join(__dirname,'thirteenth-bell-v1.js'),'utf8');
+  if(!bell.includes('hollowFirstClear'))throw new Error('The Thirteenth Bell must follow a Hollow Sanctum clear');
+
+  console.log('Beta Step 6 progression and economy contracts are release-gated.');
+}
+
+{
+  const guild=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
+  for(const hook of [
+    'const bankUpgradeCooldowns=new Map()',
+    'const seen=new Set(),slots=',
+    'isCharacterBetaPlayable(c)&&!isUnavailable(c)',
+    'Math.max(1,Math.floor(Number(item.quantity)||1))',
+    "Math.max(0,Math.floor(Number(x?.quantity)||0))",
+    'bankUpgradeCooldowns.set(id,now+800)'
+  ])if(!guild.includes(hook))throw new Error('Beta Step 8 save/action hardening is missing '+hook);
+
+  const endgame=fs.readFileSync(path.join(__dirname,'endgame-v1.js'),'utf8');
+  for(const hook of ['attemptStartPromises={}', 'if(attemptStartPromises[dungeonId])return attemptStartPromises[dungeonId]', 'delete attemptStartPromises[dungeonId]'])
+    if(!endgame.includes(hook))throw new Error('Beta Step 8 dungeon-start dedupe is missing '+hook);
+
+  const manor=fs.readFileSync(path.join(__dirname,'manor-raid-v1.js'),'utf8');
+  for(const hook of ['raidStartBusy=false', 'if(raidStartBusy)return;raidStartBusy=true', 'finally{raidStartBusy=false}'])
+    if(!manor.includes(hook))throw new Error('Beta Step 8 Manor start guard is missing '+hook);
+
+  const playthrough=fs.readFileSync(path.join(__dirname,'tests/full-playthrough.browser.cjs'),'utf8');
+  for(const hook of [
+    'async function breakGamePlaythrough(browser)',
+    'corrupted saves cannot duplicate the same adventurer across party slots',
+    'rapid upgrade presses spend Cell Shards once',
+    'repeated wipes cap every active adventurer at 100% Cell Shock',
+    'concurrent dungeon entry calls create only one attempt',
+    'refresh during a saved combat phase resumes the existing dungeon attempt'
+  ])if(!playthrough.includes(hook))throw new Error('Beta Step 8 adversarial browser coverage is missing '+hook);
+
+  const auth=fs.readFileSync(path.join(__dirname,'auth.js'),'utf8');
+  for(const hook of ["const authReturnUrl=()=>new URL('./index.html',location.href).href", 'emailRedirectTo:authReturnUrl()', 'redirectTo:authReturnUrl()'])
+    if(!auth.includes(hook))throw new Error('Beta Step 8 auth return-path hardening is missing '+hook);
+  const login=fs.readFileSync(path.join(__dirname,'tests/login-screen.browser.cjs'),'utf8');
+  for(const hook of ['verification email returns to the current Cellbound host', 'password reset email returns to the current Cellbound host'])
+    if(!login.includes(hook))throw new Error('Beta Step 8 auth redirect regression is missing '+hook);
+
+  console.log('Beta Step 8 break-game QA contracts are release-gated.');
+}
+
+
+{
+  const shell=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  for(const hook of [
+    'data-view="support"',
+    'id="betaReportForm"',
+    'id="betaMyReports"',
+    'id="adminBetaReportQueue"',
+    'id="adminPlayerLookup"',
+    'beta-ops-v1.js?v=2',
+    'admin-beta-ops-v1.js?v=1'
+  ])if(!shell.includes(hook))throw new Error('Beta Step 9 game/admin support surface is missing '+hook);
+
+  const playerOps=fs.readFileSync(path.join(__dirname,'beta-ops-v1.js'),'utf8');
+  for(const hook of ["db.from('beta_reports').insert(payload)",'contextSnapshot(sourceView)','PATCH_NOTES','refreshReports','ensureLauncher()','openReport(kind','data-quick-report="feature"'])
+    if(!playerOps.includes(hook))throw new Error('Beta Step 9 player support runtime is missing '+hook);
+
+  const adminOps=fs.readFileSync(path.join(__dirname,'admin-beta-ops-v1.js'),'utf8');
+  for(const hook of ['cellbound_admin_beta_reports','cellbound_admin_update_beta_report','cellbound_admin_player_lookup','cellbound_admin_recover_player'])
+    if(!adminOps.includes(hook))throw new Error('Beta Step 9 admin operations runtime is missing '+hook);
+
+  const migration=fs.readFileSync(path.join(__dirname,'supabase/migrations/20261003181012_beta_operations_foundation.sql'),'utf8');
+  const featureMigration=fs.readFileSync(path.join(__dirname,'supabase/migrations/20261003185957_beta_report_feature_requests.sql'),'utf8');
+  for(const hook of ['alter table public.beta_reports enable row level security','with check ((select auth.uid()) = user_id)','revoke all on table public.beta_reports from anon, authenticated','cellbound_admin_recover_player'])
+    if(!migration.includes(hook))throw new Error('Beta Step 9 database security contract is missing '+hook);
+  if(!featureMigration.includes("'feature'::text"))throw new Error('Beta feature-request category migration is missing');
+
+  if(!fs.existsSync(path.join(__dirname,'BETA_OPERATIONS.md'))||!fs.existsSync(path.join(__dirname,'BETA_CHANGELOG.md')))
+    throw new Error('Beta Step 9 operations documentation is missing');
+
+  console.log('Beta Step 9 operations contracts are release-gated.');
+}
+
 console.log('Cellbound build complete.');
 console.log('Build verification passed: scripts parse and required UI hooks/assets are present.');
 
+require('./tests/beta-balance.cjs');
+require('./tests/beta-ui-polish.cjs');
+require('./tests/beta-operations.cjs');
 require('./tests/living-combat.authority.cjs');
 for(const name of ['combat-polish-v3','combat-physical-v4'])for(const ext of ['js','css']){if(!fs.existsSync(path.join(out,name+'.'+ext)))throw new Error('Missing shared living combat asset: '+name+'.'+ext)}

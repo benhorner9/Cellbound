@@ -1,5 +1,6 @@
 (()=>{
 'use strict';
+const BAL=window.CellboundBalance;
 window.CellboundCombatStandard?.register?.('hollow-sanctum',{kind:'dungeon',execution:'local',ui:'shared-cb2d'});
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -119,7 +120,7 @@ function renderCard(){
     '<article class="intel-card"><div class="intel-card-head"><b>Glassjaw Sentinel</b><span>'+(done?'FIELD NOTES':'DISCOVERED')+'</span></div><p>Fracture Line targets a lane through the chamber while Glassjaw Sweep pressures the tank. Position the group around the guardian rather than stacking behind the target.</p></article>'+
     '<article class="intel-card"><div class="intel-card-head"><b>The Bound Choir</b><span>'+(done?'FIELD NOTES':'DISCOVERED')+'</span></div><p>Resonance Collapse controls space, Shattering Hymn must be interrupted, and Echo Choir adds force target swaps during the ritual.</p></article>'+
     '<article class="intel-card"><div class="intel-card-head"><b>Expedition Record</b><span>'+clears+' clear'+(clears===1?'':'s')+'</span></div><p>'+(clears?'The Hollow Seal is open. The Bound Choir can be challenged again on any unlocked difficulty.':'No successful expedition has been recorded yet.')+'</p></article>'+
-    '<article class="intel-card"><div class="intel-card-head"><b>Known Rewards</b><span>TIER 3</span></div><p>Class equipment and Void Crystals can be recovered here. The first clear awards the Blackglass Resonator relic, with endgame rewards expanding on higher difficulties.</p></article>'+
+    '<article class="intel-card"><div class="intel-card-head"><b>Known Rewards</b><span>TIER 3</span></div><p>Class equipment and Void Crystals can be recovered here. The first clear awards the Blackglass Resonator relic, with stronger rewards available on higher difficulties.</p></article>'+
    '</div></aside>'+
   '</div>';
  mount.querySelector('[data-hs-enter]')?.addEventListener('click',openDungeon);
@@ -183,10 +184,11 @@ function briefing(){
 }
 function openDungeon(options){Game=window.CellboundGame;if(!Game?.ready)return;db=Game.getSupabase?.();requestedRunOptions=options||null;if(options?.difficulty)window.CellboundEndgame?.choose?.('hollow-sanctum',options.difficulty,options.tier||1);briefing()}
 function close(){token++;run=null;document.body.classList.remove('hs2d-open');const r=root();r.hidden=true;Game?.switchView?.('content');renderCard()}
-function hpNeed(level){return 800+Math.max(0,(Number(level)||1)-1)*250}
+function hpNeed(level){return Game?.xpNeeded?.(level)||BAL?.xpNeeded?.(level)||800+Math.max(0,(Number(level)||1)-1)*250}
 function awardXp(){
+ const reward=Number(run?.xpReward)||XP;
  const cap=Math.max(1,Number(Game?.getLevelCap?.())||15);
- return party().map(c=>{const beforeLevel=Math.min(cap,Math.max(1,Number(c.level)||1)),beforeXp=beforeLevel>=cap?0:Math.max(0,Number(c.xp)||0),beforeNeed=hpNeed(beforeLevel);let level=beforeLevel,xp=beforeLevel>=cap?0:beforeXp+XP,levels=0;while(level<cap&&xp>=hpNeed(level)){xp-=hpNeed(level);level++;levels++}if(level>=cap){level=cap;xp=0}c.level=level;c.xp=xp;if(levels){c.talent=(Number(c.talent)||0)+levels}return{name:c.name,beforeLevel,beforeXp,beforeNeed,afterLevel:level,afterXp:xp,afterNeed:hpNeed(level),levels,capped:level>=cap}})
+ return party().map(c=>{const beforeLevel=Math.min(cap,Math.max(1,Number(c.level)||1)),beforeXp=beforeLevel>=cap?0:Math.max(0,Number(c.xp)||0),beforeNeed=hpNeed(beforeLevel);let level=beforeLevel,xp=beforeLevel>=cap?0:beforeXp+reward,levels=0;while(level<cap&&xp>=hpNeed(level)){xp-=hpNeed(level);level++;levels++}if(level>=cap){level=cap;xp=0}c.level=level;c.xp=xp;if(levels){c.talent=(Number(c.talent)||0)+levels}return{name:c.name,amount:beforeLevel>=cap?0:reward,beforeLevel,beforeXp,beforeNeed,afterLevel:level,afterXp:xp,afterNeed:hpNeed(level),levels,capped:level>=cap}})
 }
 async function syncXp(gains){
  if(!db)return;const user=Game.getUser?.();if(!user)return;try{await Promise.all(gains.map(x=>db.from('characters').update({level:x.afterLevel,xp:x.afterXp,last_played_at:new Date().toISOString()}).eq('user_id',user.id).eq('name',x.name)))}catch(e){console.warn('Hollow XP sync failed',e)}
@@ -349,7 +351,7 @@ function hsRenderRebornEvent(e){
  }catch(error){console.warn('Hollow Sanctum status visual skipped',e?.type,error)}
  const src=hsRenderId(e.source),target=hsRenderId(e.target),srcChar=hsCharacter(e.source),targetChar=hsCharacter(e.target);
  switch(e.type){
-  case'COMBAT_START':{const arena=$('#hs2dArena');window.CellboundCombatFX?.mount?.(arena);if(['boss','final'].includes(String(STAGES[run.stage]?.kind||'')))window.CellboundCombatFX?.boss?.(arena,STAGES[run.stage]?.title||'Boss');setStatus('Combat simulation live.');feed('Combat begins.');break;}
+  case'COMBAT_START':{const arena=$('#hs2dArena');window.CellboundCombatFX?.mount?.(arena);if(['boss','final'].includes(String(STAGES[run.stage]?.kind||'')))window.CellboundCombatFX?.boss?.(arena,STAGES[run.stage]?.title||'Boss');setStatus('Combat underway.');feed('Combat begins.');break;}
   case'MOVEMENT_START':if(window.CellboundCombatFX?.ownsMovement)break;if(src&&e.payload?.to)move(src,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
   case'ABILITY_START':
    if(srcChar)hsAct(role(srcChar),srcChar.name+' · '+(e.ability||'Ability'));
@@ -439,7 +441,7 @@ function hsStageSummary(result){
 function hsFailureDiagnosis(result){
  const s=result?.summary||{},ints=s.interrupts||{},m=s.mechanics||{},players=s.players||[],causes=[],changes=[];
  const missed=Number(ints.missedCritical)||0,threat=players.reduce((n,p)=>n+(Number(p.threatLost)||0),0),avoidable=players.reduce((n,p)=>n+(Number(p.avoidableDamage)||0),0);
- if(missed){causes.push(missed+' critical interrupt'+(missed===1?' was':'s were')+' missed');changes.push('Use a stricter interrupt plan or DPS rotation.')}
+ if(missed){causes.push(missed+' critical interrupt'+(missed===1?' was':'s were')+' missed');changes.push('Use a stricter interrupt plan or damage rotation.')}
  if(Number(m.failed)){causes.push(Number(m.failed)+' mechanics failed');changes.push('Use safer positioning and control the dangerous mechanics first.')}
  if(threat){causes.push(threat+' threat losses broke formation');changes.push('Use Safe pull style or a Control boss plan.')}
  if(avoidable){causes.push(Math.round(avoidable).toLocaleString()+' avoidable damage was taken')}
@@ -453,7 +455,7 @@ function hsProgressEarned(){
    ?'<span><i>★</i><b>NEW BEST · '+score.toLocaleString()+' score</b></span>'
    :record.previousBestScore?'<span><i>↔</i><b>Previous best '+Number(record.previousBestScore).toLocaleString()+' · this run '+score.toLocaleString()+'</b></span>':'';
  if(!unlocks.length&&!achievements.length&&!comparison)return'';
- return'<section class="cbr-progress-earned"><small>RUN PROGRESSION</small><h4>What changed after this clear.</h4><div>'+comparison+unlocks.map(x=>'<span><i>↗</i><b>'+esc(x)+'</b></span>').join('')+achievements.map(id=>'<span><i>◆</i><b>Achievement: '+esc(window.CellboundEndgame?.achievementName?.(id)||id)+'</b></span>').join('')+'</div></section>'
+ return'<section class="cbr-progress-earned"><small>CLEAR RESULTS</small><h4>Rewards and unlocks from this clear.</h4><div>'+comparison+unlocks.map(x=>'<span><i>↗</i><b>'+esc(x)+'</b></span>').join('')+achievements.map(id=>'<span><i>◆</i><b>Achievement: '+esc(window.CellboundEndgame?.achievementName?.(id)||id)+'</b></span>').join('')+'</div></section>'
 }
 
 
@@ -605,7 +607,7 @@ function hsLootMaterialCard(m){
 }
 function hsXpCard(x){
  const ch=party().find(c=>c.name===x.name),portrait=ch?.portrait||String(x.name||'?').slice(0,2).toUpperCase(),start=Math.max(0,Math.min(100,x.beforeXp/Math.max(1,x.beforeNeed)*100)),end=Math.max(0,Math.min(100,x.afterXp/Math.max(1,x.afterNeed)*100));
- return '<article class="cb2d-xp-card" data-hs-xp data-start="'+start.toFixed(2)+'" data-end="'+end.toFixed(2)+'" data-levels="'+Number(x.levels||0)+'"><div class="cb2d-xp-avatar">'+esc(portrait)+'</div><div class="cb2d-xp-copy"><div><span><b>'+esc(x.name)+'</b><small>Level '+x.beforeLevel+(x.afterLevel!==x.beforeLevel?' → '+x.afterLevel:'')+'</small></span>'+(x.capped?'<em class="cb2d-level-up">MAX LEVEL</em>':x.levels?'<em class="cb2d-level-up">LEVEL UP</em>':'<em>+'+XP+' XP</em>')+'</div><div class="cb2d-xp-bar"><i style="width:'+start.toFixed(2)+'%"></i></div><p><span>'+x.beforeXp+' / '+x.beforeNeed+' XP</span><strong>+'+XP+' XP</strong><span>'+x.afterXp+' / '+x.afterNeed+' XP</span></p></div></article>'
+ return '<article class="cb2d-xp-card" data-hs-xp data-start="'+start.toFixed(2)+'" data-end="'+end.toFixed(2)+'" data-levels="'+Number(x.levels||0)+'"><div class="cb2d-xp-avatar">'+esc(portrait)+'</div><div class="cb2d-xp-copy"><div><span><b>'+esc(x.name)+'</b><small>Level '+x.beforeLevel+(x.afterLevel!==x.beforeLevel?' → '+x.afterLevel:'')+'</small></span>'+(x.capped?'<em class="cb2d-level-up">MAX LEVEL</em>':x.levels?'<em class="cb2d-level-up">LEVEL UP</em>':'<em>+'+(run?.xpReward||XP)+' XP</em>')+'</div><div class="cb2d-xp-bar"><i style="width:'+start.toFixed(2)+'%"></i></div><p><span>'+x.beforeXp+' / '+x.beforeNeed+' XP</span><strong>+'+(run?.xpReward||XP)+' XP</strong><span>'+x.afterXp+' / '+x.afterNeed+' XP</span></p></div></article>'
 }
 function hsAnimateXp(rootEl){
  [...(rootEl?.querySelectorAll('[data-hs-xp]')||[])].forEach((row,index)=>{const bar=row.querySelector('.cb2d-xp-bar i'),end=Number(row.dataset.end)||0,levels=Number(row.dataset.levels)||0;if(!bar)return;setTimeout(()=>{if(!levels){bar.style.width=end+'%';return}bar.style.width='100%';setTimeout(()=>{row.classList.add('levelled');bar.style.transition='none';bar.style.width='0%';requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!bar.isConnected)return;bar.style.transition='width .8s cubic-bezier(.2,.75,.25,1)';bar.style.width=end+'%'}))},760)},220+index*90)})
@@ -723,20 +725,20 @@ async function start(){
  await hsRunFrom(Math.min(STAGES.length-1,Number(run.stage)||0),tok)
 }
 async function complete(){
- const s=state(),q=qstate(),first=!q.flags.hollowFirstClear,metrics=hsRunMetrics();run.endgameMetrics=metrics;const record=await window.CellboundEndgame?.recordRun?.('hollow-sanctum',metrics);run.endgameRecord=record&&!record.error?record:null;const gains=awardXp(),mode=run.endgame?.difficulty||'normal',tier=Number(run.endgame?.tier)||0,gearDrops=window.CellboundEndgame?.rollClearLootBundle?.('hollow-sanctum','choir')||[window.CellboundEndgame?.rollClearLoot?.('hollow-sanctum','choir',1)].filter(Boolean),gold=mode==='normal'?220:mode==='heroic'?300:340+tier*12,renown=mode==='normal'?100:mode==='heroic'?135:150+tier*5;s.gold=(Number(s.gold)||0)+gold;s.renown=(Number(s.renown)||0)+renown;const shards=window.CellboundEndgame?.shardReward?.('hollow-sanctum')||0;if(shards)Game.addMaterial?.('cell-shards',shards);const chase=window.CellboundEndgame?.rollChase?.('hollow-sanctum');if(chase)s.activity.push('Very rare collection reward: '+chase.name+'.');Game.addMaterial?.('void-crystal',first?2:1);const professionDrops=window.CellboundProfessions?.rollContentReagents?.('hollow-sanctum',{difficulty:mode,tier})||[];professionDrops.forEach(d=>Game.addMaterial?.(d.key,d.quantity));q.flags.hollowFirstClear=true;q.hollowCompletions=(Number(q.hollowCompletions)||0)+1;
+ const s=state(),q=qstate(),first=!q.flags.hollowFirstClear,metrics=hsRunMetrics();run.endgameMetrics=metrics;const record=await window.CellboundEndgame?.recordRun?.('hollow-sanctum',metrics);run.endgameRecord=record&&!record.error?record:null;const mode=run.endgame?.difficulty||'normal';run.xpReward=BAL?.dungeonXp?.('hollow-sanctum',{difficulty:mode,firstClear:first})||(first&&mode==='normal'?4350:XP);const gains=awardXp(),tier=Number(run.endgame?.tier)||0,gearDrops=window.CellboundEndgame?.rollClearLootBundle?.('hollow-sanctum','choir')||[window.CellboundEndgame?.rollClearLoot?.('hollow-sanctum','choir',1)].filter(Boolean),gold=mode==='normal'?220:mode==='heroic'?300:340+tier*12,renown=mode==='normal'?100:mode==='heroic'?135:150+tier*5;s.gold=(Number(s.gold)||0)+gold;s.renown=(Number(s.renown)||0)+renown;const shards=window.CellboundEndgame?.shardReward?.('hollow-sanctum')||0;if(shards)Game.addMaterial?.('cell-shards',shards);const chase=window.CellboundEndgame?.rollChase?.('hollow-sanctum');if(chase)s.activity.push('Very rare collection reward: '+chase.name+'.');Game.addMaterial?.('void-crystal',first?2:1);const professionDrops=window.CellboundProfessions?.rollContentReagents?.('hollow-sanctum',{difficulty:mode,tier})||[];professionDrops.forEach(d=>Game.addMaterial?.(d.key,d.quantity));q.flags.hollowFirstClear=true;q.hollowCompletions=(Number(q.hollowCompletions)||0)+1;
  gearDrops.forEach(item=>Game.addBankItem?.(item));
  if(first)Game.addBankItem?.({...RELIC,source:'The Bound Choir · First Clear'});
- s.activity.push('The Hollow Sanctum · '+(run.endgame?.label||'Normal')+' cleared. Score '+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'. Each adventurer earned '+XP+' XP.'+(gearDrops.length?' '+gearDrops.length+' equipment drops were sent to the Guild Bank.':'')+(first?' Blackglass Resonator added to the Guild Bank.':'')+(professionDrops.length?' Profession materials: '+window.CellboundProfessions?.formatReagentDrops?.(professionDrops)+'.':''));
+ s.activity.push('The Hollow Sanctum · '+(run.endgame?.label||'Normal')+' cleared. Score '+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'. Each adventurer earned '+(run?.xpReward||XP)+' XP.'+(gearDrops.length?' '+gearDrops.length+' equipment drops were sent to the Guild Bank.':'')+(first?' Blackglass Resonator added to the Guild Bank.':'')+(professionDrops.length?' Profession materials: '+window.CellboundProfessions?.formatReagentDrops?.(professionDrops)+'.':''));
  Game.save?.();await Game.persistState?.();await syncXp(gains);run.done=true;window.dispatchEvent(new CustomEvent('cellbound:hollow-complete',{detail:{firstClear:first,difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs}}));window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'hollow-sanctum',difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs}}));
  const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end cb2d-loot-screen cb2d-results-screen';$('.hs2d-shell')?.classList.add('results-mode');
  const lootGear=[...gearDrops,...(first?[RELIC]:[])].filter(Boolean),materials=[
    {key:'void-crystal',name:'Void Crystal',quantity:first?2:1,source:'The Hollow Sanctum',rarity:'Rare'},
-   ...(shards?[{key:'cell-shards',name:'Cell Shards',quantity:shards,source:'Endgame Reward',rarity:'Rare'}]:[]),
+   ...(shards?[{key:'cell-shards',name:'Cell Shards',quantity:shards,source:'Dungeon Clear',rarity:'Rare'}]:[]),
    ...professionDrops.map(d=>({key:d.key,name:window.CellboundProfessions?.MATERIALS?.[d.key]?.name||d.key,quantity:d.quantity,source:'Hollow Sanctum salvage',rarity:window.CellboundProfessions?.MATERIALS?.[d.key]?.rarity||'Common'}))
  ];
  end.innerHTML='<div class="cb2d-loot-wrap">'+
  '<header class="cb2d-loot-head"><div><small>THE HOLLOW SANCTUM · '+esc(run.endgame?.label||'NORMAL').toUpperCase()+' · CLEARED</small><h3>Expedition Rewards</h3><p>The Bound Choir has fallen. Everything below has already been secured to your guild.</p></div><div class="cb2d-loot-complete">✓<span>DUNGEON<br>COMPLETE</span></div></header>'+
- '<div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+gold+'</b><small>Added to Guild treasury</small></article><article><span>RENOWN</span><b>+'+renown+'</b><small>Guild reputation earned</small></article><article><span>PARTY XP</span><b>+'+XP+'</b><small>Earned by each adventurer</small></article><article><span>BOSS CHESTS</span><b>'+lootGear.length+'</b><small>Gear drops secured</small></article><article><span>RUN SCORE</span><b>'+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'</b><small>'+hsFormatTime(metrics.timeMs)+' run time</small></article></div>'+
+ '<div class="cb2d-loot-currency"><article><span>GOLD</span><b>+'+gold+'</b><small>Added to Guild treasury</small></article><article><span>RENOWN</span><b>+'+renown+'</b><small>Guild reputation earned</small></article><article><span>PARTY XP</span><b>+'+(run?.xpReward||XP)+'</b><small>Earned by each adventurer</small></article><article><span>BOSS CHESTS</span><b>'+lootGear.length+'</b><small>Gear drops secured</small></article><article><span>RUN SCORE</span><b>'+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'</b><small>'+hsFormatTime(metrics.timeMs)+' run time</small></article></div>'+
  hsProgressEarned()+
  '<section class="cb2d-loot-section cb2d-xp-section"><div class="cb2d-loot-title"><span>PARTY EXPERIENCE</span><small>Active party XP</small></div><div class="cb2d-xp-grid">'+gains.map(hsXpCard).join('')+'</div></section>'+
  '<section class="cb2d-loot-section"><div class="cb2d-loot-title"><span>GEAR ACQUIRED</span><small>Sent to Guild Bank</small></div><div class="cb2d-loot-gear">'+(lootGear.length?lootGear.map((item,i)=>hsLootGearCard(item,i===1?'FIRST-CLEAR RELIC':'DUNGEON DROP')).join(''):'<div class="cb2d-loot-empty">No gear dropped.</div>')+'</div></section>'+

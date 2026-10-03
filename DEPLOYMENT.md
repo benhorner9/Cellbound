@@ -1,44 +1,48 @@
 # Cellbound deployment route
 
-Cellbound uses a staging-first release flow.
+Cellbound uses separate development/staging and production branches.
 
-## Staging
+## Development / staging
 
-All gameplay, UI, balance, content and bug-fix updates are tested first at:
+The active playable development build is:
 
 - https://cb.athleticsmanagergame.com
 
-The `main` branch is the candidate build. Use the **Deploy Cellbound Staging** GitHub Actions workflow to publish the current `main` build to staging.
+The `staging` branch is the working game branch. Gameplay, UI, balance, content and bug-fix changes are made and tested there first.
 
-Staging uses separate GitHub Actions secrets:
+Pushes to `staging` deploy to the legacy Athletics Manager `/cb/` directory.
+
+Staging uses:
 
 - `STAGING_FTP_SERVER`
 - `STAGING_FTP_USERNAME`
 - `STAGING_FTP_PASSWORD`
-- `STAGING_FTP_PORT` (optional; defaults to 21)
+- `STAGING_FTP_PORT` (defaults to 21)
 
 ## Production
 
-Production is:
+The public site is:
 
 - https://playcellbound.com
 
-Production must not deploy automatically when code changes. After a build has been tested and approved on staging, use the **Deploy Cellbound Production** workflow to promote the current `main` build to production.
+The `main` branch is the production branch. While Cellbound is not publicly launched, production shows a Coming Soon page and redirects the game entry back to that page.
+
+Production does not deploy automatically. The **Deploy Cellbound Production** workflow is manual-only.
 
 Production uses:
 
 - `FTP_SERVER`
 - `FTP_USERNAME`
 - `FTP_PASSWORD`
-- `FTP_PORT` (optional; defaults to 21)
+- `FTP_PORT` (defaults to 21)
 
-## Release rule
+## Current release rule
 
-1. Make/update Cellbound on `main`.
-2. Deploy `main` to staging.
-3. Test on `cb.athleticsmanagergame.com`, with iPad as a primary test target.
-4. Fix issues on `main` and redeploy staging until approved.
-5. Manually run the production workflow.
-6. Verify `playcellbound.com` after promotion.
+1. Make game changes on `staging`.
+2. Let staging deploy to `cb.athleticsmanagergame.com`.
+3. Test the playable build there, with iPad as a primary target.
+4. Fix and redeploy staging until approved.
+5. Keep `playcellbound.com` on Coming Soon until public launch.
+6. At launch, promote the approved staging build to `main`, remove the production holding-page redirect, run the production workflow manually, and verify `playcellbound.com`.
 
-Never use the production workflow as the first test of a change.
+Never use production as the first test of a change.

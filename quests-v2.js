@@ -7,6 +7,7 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const G=window.CellboundGear;
 const CP=window.CellboundPortraits;
+const BAL=window.CellboundBalance;
 
 let Game=null,selectedTab='active',selectedAdventure='ashfall',encounterToken=0,questFight=null;
 
@@ -372,13 +373,14 @@ async function completeAshfall(){
   a.complete=true;a.stage='complete';a.completedAt=new Date().toISOString();if(!a.done.includes('key'))a.done.push('key');
   s.progression=s.progression||{};s.progression.ashenVaultUnlocked=true;s.gold=(Number(s.gold)||0)+120;s.renown=(Number(s.renown)||0)+75;
   ashfallHistory('The old forge key opened the route to The Ashen Vault.');s.activity.push('Quest complete: '+ASHFALL.title+'. The Ashen Vault was unlocked.');
+  await Game.awardPartyXp?.(BAL?.CAMPAIGN_XP?.ashesEastRoad||1850,{source:'Quest complete · '+ASHFALL.title});
   await commit();
   if(window.CellboundComicScenes?.show){
     await window.CellboundComicScenes.show({
       eyebrow:'QUEST COMPLETE',title:ASHFALL.title,subtitle:'The road to the old forge is open.',page:'COMPLETE',theme:'ashen',
       panels:[
         {kind:'location',eyebrow:'THE EAST ROAD',title:'A Door in the Mountain',text:'The road is closed. The old forge is awake. And your guild now holds the only key anyone knows still exists.',artwork:'./assets/dungeons/ashen-vault.webp',wide:true},
-        {kind:'reveal',eyebrow:'REWARD',title:'+120 Gold · +75 Renown',text:'The Ashen Vault has been permanently unlocked.',artwork:'./assets/comics/tutorial/the_warden_and_the_arcane_diadem.webp'},
+        {kind:'reveal',eyebrow:'REWARD',title:'+120 Gold · +75 Renown · +'+(BAL?.CAMPAIGN_XP?.ashesEastRoad||1850)+' XP',text:'The active five grow stronger and The Ashen Vault is permanently unlocked.',artwork:'./assets/comics/tutorial/the_warden_and_the_arcane_diadem.webp'},
         {kind:'location',eyebrow:'DUNGEON UNLOCKED',title:'The Ashen Vault',text:'Quest gear gives you a reliable starting point. Better versions now wait inside the dungeon.',artwork:'./assets/bosses/ashen-vault-vaultheart.webp'}
       ],progressive:true,storyOnly:true,allowSkip:false,nextLabel:'NEXT PANEL →',continueLabel:'OPEN DUNGEON JOURNAL →'
     });
@@ -755,7 +757,7 @@ function qRenderRebornEvent(e){
   if(window.CellboundCombatStatuses?.handle(e,{resolve:qStatusTargets,speed:()=>questFight?.speed||1}))return;
   const srcChar=qEventCharacter(e.source),targetChar=qEventCharacter(e.target),enemyIndex=qEventEnemyIndex(e.target),sourceEnemy=qEventEnemyIndex(e.source);
   switch(e.type){
-    case'COMBAT_START':{const arena=document.querySelector('.quest-cb2d-arena');window.CellboundCombatFX?.mount?.(arena);if(String(questFight?.presentationKind||'')==='dungeon')window.CellboundCombatFX?.boss?.(arena,questFight?.title||'Boss');qStatus('Combat simulation live');qLog('Combat begins.');break;}
+    case'COMBAT_START':{const arena=document.querySelector('.quest-cb2d-arena');window.CellboundCombatFX?.mount?.(arena);if(String(questFight?.presentationKind||'')==='dungeon')window.CellboundCombatFX?.boss?.(arena,questFight?.title||'Boss');qStatus('Combat underway');qLog('Combat begins.');break;}
     case'MOVEMENT_START':if(window.CellboundCombatFX?.ownsMovement)break;if(e.payload?.to)qMove(e.source,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
     case'ABILITY_START':
       if(e.source&&e.target){
@@ -1095,6 +1097,7 @@ async function finalizeEchoes(){
   setItemStatus('blackened-fragment','used');setItemStatus('resonance-map','archived');
   addHistory('The Hollow Seal was opened. The Hollow Sanctum was discovered beneath Zeltira.');
   s.activity.push('Quest complete: '+QUEST.title+'. The Hollow Sanctum was discovered.');
+  await Game.awardPartyXp?.(BAL?.CAMPAIGN_XP?.echoesBeneathZeltira||1800,{source:'Quest complete · '+QUEST.title});
   await commit();
 
   const root=document.createElement('div');root.className='quest-unlock-backdrop quest-complete-backdrop';
@@ -1150,7 +1153,7 @@ const CLASS_TRIAL_MECHANICS={
 };
 function classTrialDefs(){
  const out=[];
- (state()?.roster||[]).forEach(ch=>(CLASS_TRIALS[ch.class]||[]).forEach(x=>{
+ (state()?.roster||[]).filter(ch=>!Game?.isBetaClassPlayable||Game.isBetaClassPlayable(ch.class)).forEach(ch=>(CLASS_TRIALS[ch.class]||[]).forEach(x=>{
   const level=Number(x[1])||1,unlocked=Boolean(ch?.classBuffProgress?.unlocked?.includes(x[0]));
   if(Number(ch?.level||1)<level&&!unlocked)return;
   out.push({character:ch,id:x[0],level,buff:x[2],title:x[3],summary:x[4],enemy:x[5],health:x[6],key:'class-trial:'+ch.id+':'+x[0]})
@@ -1221,8 +1224,8 @@ function knownFacts(q){
   return facts;
 }
 function visibleRewards(){
-  if(complete())return ['250 Gold','150 Guild Renown','3 × Tier 2 quest gear choices','The Hollow Sanctum unlocked'];
-  return ['Tier 2 quest gear at major milestones','250 Gold','150 Guild Renown','The Hollow Sanctum discovery'];
+  if(complete())return ['250 Gold','150 Guild Renown',(BAL?.CAMPAIGN_XP?.echoesBeneathZeltira||1800)+' XP each','3 × Tier 2 quest gear choices','The Hollow Sanctum unlocked'];
+  return ['Tier 2 quest gear at major milestones','250 Gold','150 Guild Renown',(BAL?.CAMPAIGN_XP?.echoesBeneathZeltira||1800)+' XP each','The Hollow Sanctum discovery'];
 }
 function actionHtml(){
   const q=ensure(),stage=currentStage();
@@ -1265,7 +1268,7 @@ function renderAshfallDetail(root,side){
     '<section class="quest-v3-clue"><small>'+(a.complete?'WHERE IT LED':'CURRENT CLUE')+'</small><h3>'+esc(a.complete?'The Ashen Vault':d.label)+'</h3><p>'+esc(a.complete?'The old forge entrance is open. Repeat runs can drop stronger versions of the gear earned on this road.':d.objective)+'</p>'+(a.complete?'':'<em>'+esc(d.hint)+'</em>')+'</section>'+
     '<section class="quest-v3-known"><div class="quest-v3-section-head"><span>WHAT YOUR GUILD KNOWS</span><small>Investigation notes are recorded as you uncover them.</small></div><div>'+(facts.length?facts.map(x=>'<p>'+esc(x)+'</p>').join(''):'<p class="quest-v3-unknown">Warden Elara is waiting at Zeltira’s east gate.</p>')+'</div></section>'+
     '<div class="quest-detail-action">'+ashfallActionHtml()+'</div>';
-  side.innerHTML='<section><small>REWARDS</small><div class="quest-reward-list"><p>3 × Tier 1 quest gear choices</p><p>Reliable spec-focused stats</p><p>Dungeon drops can roll stronger stats</p><p>The Ashen Vault permanently unlocked</p></div></section>'+
+  side.innerHTML='<section><small>REWARDS</small><div class="quest-reward-list"><p>3 × Tier 1 quest gear choices</p><p>'+(BAL?.CAMPAIGN_XP?.ashesEastRoad||1850)+' XP each</p><p>Reliable spec-focused stats</p><p>Dungeon drops can roll stronger stats</p><p>The Ashen Vault permanently unlocked</p></div></section>'+
     '<section><small>QUEST REWARD HISTORY</small><div class="quest-history">'+(Object.values(q.rewardClaims||{}).filter(x=>String(x?.itemName||'')&&['Head','Chest','Weapon'].includes(x.slot)&&String(x.tier)==='1').map(x=>'<p>'+esc(x.characterName+' · '+x.itemName)+'</p>').join('')||'<p>No quest equipment claimed yet.</p>')+'</div></section>'+
     '<section><small>ADVENTURE JOURNAL</small><div class="quest-history">'+(a.history.slice(-6).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>No journal entries yet.</p>')+'</div></section>';
 }
@@ -1284,6 +1287,8 @@ const NULL_STAGES=[
  {id:'escape',label:'Escape',objective:'Return to the teleporter and get the party out.'}
 ];
 const nullQ=()=>ensure().nullComplex;
+const manorCleared=()=>Boolean(state()?.progression?.manorRaidCleared||Object.keys(state()?.raidRewardClaims||{}).length);
+const nullQuestAvailable=()=>Boolean(nullQ()?.complete||manorCleared());
 const nullStage=()=>nullQ().complete?'complete':nullQ().stage||'signal';
 const nullDef=()=>NULL_STAGES.find(x=>x.id===nullStage())||NULL_STAGES[0];
 // Null Complex bespoke comic artwork is loaded here only after the actual assets exist.
@@ -1300,7 +1305,9 @@ async function nullComic(title,speaker,text,art,done){
  if(done)await done()
 }
 async function startNullQuest(){
- const n=nullQ();if(n.complete)return;if(!n.started){n.started=true;n.startedAt=new Date().toISOString();nullHistory('Dr. Elara Voss isolated an impossible transmission marked NULL//07.');await commit()}
+ const n=nullQ();if(n.complete)return;
+ if(!nullQuestAvailable()){questToast('QUEST LOCKED',NULL_QUEST.title,'Complete The Manor raid before investigating NULL//07.');Game.switchView?.('raids');return}
+ if(!n.started){n.started=true;n.startedAt=new Date().toISOString();nullHistory('Dr. Elara Voss isolated an impossible transmission marked NULL//07.');await commit()}
  const comic=window.CellboundComicScenes;
  if(comic?.show)await comic.show({
   eyebrow:'CELLBOUND · QUEST',
@@ -1324,7 +1331,9 @@ async function startNullQuest(){
  await nullAdvance('signal','entry','Voss traced NULL//07 to a sealed research facility omitted from every living map.')
 }
 async function playNullQuest(){
- const n=nullQ(),stage=nullStage(),p=party();if(p.length!==5){alert('Build a complete active five-character party before entering the Null Complex.');Game.switchView?.('party');return}
+ const n=nullQ(),stage=nullStage(),p=party();
+ if(!nullQuestAvailable()){questToast('QUEST LOCKED',NULL_QUEST.title,'Complete The Manor raid before investigating NULL//07.');Game.switchView?.('raids');return}
+ if(p.length!==5){alert('Build a complete active five-character party before entering the Null Complex.');Game.switchView?.('party');return}
  if(stage==='signal')return startNullQuest();
  if(stage==='entry')return nullComic('The Forgotten Facility','Dr. Elara Voss',['The doors still have power. Barely. Stay together. Whatever is transmitting from inside has been doing it without personnel for years.'],NULL_ART.entry,()=>nullAdvance('entry','splice','The party entered the abandoned Null Complex.'));
  if(stage==='splice'){
@@ -1379,20 +1388,21 @@ async function finishNullQuest(){
 }
 function nullActionHtml(){
  const n=nullQ(),st=nullStage();if(n.complete)return'<button class="quest-primary" data-nullquest-open-activity>OPEN THE NULL COMPLEX →</button>';
+ if(!nullQuestAvailable())return'<div class="quest-action-block locked"><b>LOCKED UNTIL THE MANOR</b><small>Defeat The Master of the Manor before Dr. Elara Voss receives the NULL//07 signal.</small></div>';
  if(!n.started)return'<button class="quest-primary" data-nullquest-start>INVESTIGATE THE SIGNAL →</button>';
  const labels={signal:'INSPECT NULL//07 →',entry:'ENTER THE FACILITY →',splice:'OPEN THE CONTAINMENT DOOR →',recording:'SEARCH THE LAB →',zero:'ENTER CONTAINMENT WING →',components:'SEARCH FOR COMPONENTS →',overseer:'RESTORE POWER →',prototype:'FACE PROTOTYPE 07 →',escape:'RUN FOR THE TELEPORTER →'};
  return'<button class="quest-primary" data-nullquest-play>'+esc(labels[st]||'CONTINUE INVESTIGATION →')+'</button>'
 }
 function renderNullQuestDetail(root,side){
  const n=nullQ(),d=nullDef(),known=[];if(n.started)known.push('NULL//07 is transmitting from a facility officially destroyed years ago.');if(n.done.includes('splice'))known.push('Altered Cell specimens inside the facility have been classified as Aberrants.');if(n.done.includes('recording'))known.push('Director Cael Orin used the Complex to deliberately alter living Cells.');if(n.done.includes('zero'))known.push('Subject Zero remains alive in a powered containment chamber.');if(n.done.includes('prototype'))known.push('Prototype 07 combined multiple Aberrant traits by design.');
- root.innerHTML='<div class="quest-v3-hero"><div><small>'+NULL_QUEST.difficulty.toUpperCase()+' · '+NULL_QUEST.length.toUpperCase()+' ADVENTURE</small><h2>'+NULL_QUEST.title+'</h2><p>'+NULL_QUEST.start+'</p></div><span class="quest-v3-status '+(n.complete?'complete':'')+'">'+(n.complete?'COMPLETE':n.started?'IN PROGRESS':'AVAILABLE')+'</span></div><div class="quest-v3-story"><p>'+NULL_QUEST.summary+'</p></div><section class="quest-v3-clue"><small>'+(n.complete?'WHERE IT LED':'CURRENT OBJECTIVE')+'</small><h3>'+esc(n.complete?'The Null Complex':d.label)+'</h3><p>'+esc(n.complete?'The facility can now be entered as a repeatable extraction activity.':d.objective)+'</p></section><section class="quest-v3-known"><div class="quest-v3-section-head"><span>WHAT YOUR GUILD KNOWS</span><small>The dossier grows as you investigate.</small></div><div>'+(known.length?known.map(x=>'<p>'+esc(x)+'</p>').join(''):'<p class="quest-v3-unknown">Voss is waiting with the NULL//07 transmission.</p>')+'</div></section><div class="quest-detail-action">'+nullActionHtml()+'</div>';
- side.innerHTML='<section><small>REWARDS</small><div class="quest-reward-list">'+NULL_QUEST.rewards.map(x=>'<p>'+esc(x)+'</p>').join('')+'</div></section><section><small>TELEPORTER COMPONENTS</small><div class="quest-reward-list">'+[['cable','Conduit Cable'],['cell','Power Cell'],['fuse','Reactor Fuse']].map(x=>'<p>'+esc(x[1])+' · '+(n.components[x[0]]?'RECOVERED':'MISSING')+'</p>').join('')+'</div></section><section><small>ADVENTURE JOURNAL</small><div class="quest-history">'+(n.history.slice(-7).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>No entries yet.</p>')+'</div></section>'
+ root.innerHTML='<div class="quest-v3-hero"><div><small>'+NULL_QUEST.difficulty.toUpperCase()+' · '+NULL_QUEST.length.toUpperCase()+' ADVENTURE</small><h2>'+NULL_QUEST.title+'</h2><p>'+NULL_QUEST.start+'</p></div><span class="quest-v3-status '+(n.complete?'complete':'')+'">'+(n.complete?'COMPLETE':!nullQuestAvailable()?'LOCKED':n.started?'IN PROGRESS':'AVAILABLE')+'</span></div><div class="quest-v3-story"><p>'+NULL_QUEST.summary+'</p></div><section class="quest-v3-clue"><small>'+(n.complete?'WHERE IT LED':'CURRENT OBJECTIVE')+'</small><h3>'+esc(n.complete?'The Null Complex':d.label)+'</h3><p>'+esc(n.complete?'The facility can now be entered as a repeatable extraction activity.':d.objective)+'</p></section><section class="quest-v3-known"><div class="quest-v3-section-head"><span>WHAT YOUR GUILD KNOWS</span><small>The dossier grows as you investigate.</small></div><div>'+(known.length?known.map(x=>'<p>'+esc(x)+'</p>').join(''):'<p class="quest-v3-unknown">Voss is waiting with the NULL//07 transmission.</p>')+'</div></section><div class="quest-detail-action">'+nullActionHtml()+'</div>';
+ side.innerHTML='<section><small>REQUIREMENT</small><div class="quest-reward-list"><p>'+(manorCleared()?'✓ The Manor cleared':'The Manor raid must be completed first')+'</p></div></section><section><small>REWARDS</small><div class="quest-reward-list">'+NULL_QUEST.rewards.map(x=>'<p>'+esc(x)+'</p>').join('')+'</div></section><section><small>TELEPORTER COMPONENTS</small><div class="quest-reward-list">'+[['cable','Conduit Cable'],['cell','Power Cell'],['fuse','Reactor Fuse']].map(x=>'<p>'+esc(x[1])+' · '+(n.components[x[0]]?'RECOVERED':'MISSING')+'</p>').join('')+'</div></section><section><small>ADVENTURE JOURNAL</small><div class="quest-history">'+(n.history.slice(-7).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>No entries yet.</p>')+'</div></section>'
 }
 
 function questCards(){
  const q=ensure(),a=q.ashfall;
  return [
-  {id:'null-complex-quest',title:NULL_QUEST.title,meta:NULL_QUEST.length+' adventure · Null Complex',difficulty:NULL_QUEST.difficulty,status:nullQ().complete?'COMPLETE':nullQ().started?'IN PROGRESS':'AVAILABLE',complete:nullQ().complete,locked:false,icon:'◈'},
+  {id:'null-complex-quest',title:NULL_QUEST.title,meta:NULL_QUEST.length+' adventure · Requires The Manor',difficulty:NULL_QUEST.difficulty,status:nullQ().complete?'COMPLETE':!nullQuestAvailable()?'LOCKED':nullQ().started?'IN PROGRESS':'AVAILABLE',complete:nullQ().complete,locked:!nullQuestAvailable()&&!nullQ().complete,icon:'◈'},
   {id:'ashfall',title:ASHFALL.title,meta:ASHFALL.length+' adventure · Zeltira',difficulty:ASHFALL.difficulty,status:a.complete?'COMPLETE':a.started?'IN PROGRESS':'AVAILABLE',complete:a.complete,locked:false},
   {id:'echoes',title:QUEST.title,meta:QUEST.length+' adventure · Zeltira',difficulty:QUEST.difficulty,status:complete()?'COMPLETE':q.started?'IN PROGRESS':echoesUnlocked()?'AVAILABLE':'LOCKED',complete:complete(),locked:!echoesUnlocked()&&!q.started},
   window.CellboundThirteenthBell?.card?.(),
