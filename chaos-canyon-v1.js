@@ -159,7 +159,7 @@ function briefing(){
 }
 function openDungeon(options){Game=window.CellboundGame;if(!Game?.ready)return;db=Game.getSupabase?.();requestedRunOptions=options||null;if(options?.difficulty)window.CellboundEndgame?.choose?.('chaos-canyon',options.difficulty,options.tier||1);briefing()}
 function close(){token++;run=null;document.body.classList.remove('cc2d-open');const r=root();r.hidden=true;Game?.switchView?.('content');renderCard()}
-function hpNeed(level){return 800+Math.max(0,(Number(level)||1)-1)*250}
+function hpNeed(level){return Game?.xpNeeded?.(level)||BAL?.xpNeeded?.(level)||800+Math.max(0,(Number(level)||1)-1)*250}
 function awardXp(){
  const reward=Number(run?.xpReward)||XP;
  const cap=Math.max(1,Number(Game?.getLevelCap?.())||15);
