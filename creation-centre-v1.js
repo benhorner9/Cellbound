@@ -27,6 +27,53 @@ const ROLE_COPY={
 const BASIC_FIELDS=new Set(['frame','skinTone','face','brows','nose','mouth','eyeShape','eyes','hair','hairColor','facialHair']);
 const FEATURE_FIELDS=new Set(['marking','feature','pattern','featureColor','texture','glow']);
 
+const FIELD_LABELS={
+ frame:'Frame',skinTone:'Skin',face:'Face',brows:'Brows',nose:'Nose',mouth:'Mouth',
+ eyeShape:'Eye shape',eyes:'Eye colour',hair:'Hair',hairColor:'Hair colour',
+ facialHair:'Facial hair',marking:'Marking',feature:'Race detail',pattern:'Body pattern',
+ featureColor:'Feature colour',texture:'Surface detail',glow:'Glow intensity'
+};
+const APPEARANCE_GROUPS=[
+ ['Body',['frame','skinTone']],
+ ['Face',['face','brows','nose','mouth','eyeShape','eyes']],
+ ['Hair',['hair','hairColor','facialHair']]
+];
+const FEATURE_GROUPS=[
+ ['Markings',['marking']],
+ ['Race features',['feature','pattern','featureColor','texture','glow']]
+];
+function fieldLabel(field,race){
+ if(field==='feature')return P.RACES?.[race]?.featureLabel||'Race detail';
+ return FIELD_LABELS[field]||field;
+}
+function fieldValue(field,value){
+ const n=Number(value)||0,count=P.COUNTS?.[field]||1;
+ if(field==='frame')return ['Lean','Balanced','Strong'][n]||'Balanced';
+ if(field==='hair')return ['Bald','Cropped','Swept','Long','Crest','Braided'][n]||'Bald';
+ if(field==='facialHair')return ['None','Stubble','Goatee','Full beard'][n]||'None';
+ if(field==='glow')return ['Subtle','Soft','Bright','Radiant'][n]||'Soft';
+ return String(n+1).padStart(2,'0')+' / '+String(count).padStart(2,'0');
+}
+function optionRow(d,field){
+ const label=fieldLabel(field,d.race),value=fieldValue(field,d.appearance[field]);
+ return '<div class="cc-option-row" data-cc-option="'+esc(field)+'">'+
+  '<span class="cc-option-label">'+esc(label)+'</span>'+
+  '<div class="cc-option-stepper">'+
+   '<button type="button" data-appearance-field="'+esc(field)+'" data-direction="-1" aria-label="Previous '+esc(label)+'">‹</button>'+
+   '<b>'+esc(value)+'</b>'+
+   '<button type="button" data-appearance-field="'+esc(field)+'" data-direction="1" aria-label="Next '+esc(label)+'">›</button>'+
+  '</div>'+
+ '</div>';
+}
+function editorBlock(d,mode){
+ const groups=mode==='features'?FEATURE_GROUPS:APPEARANCE_GROUPS;
+ const content=groups.map(([title,fields])=>{
+  const visible=fields.filter(field=>field!=='facialHair'||Number(d.appearance.gender)===0);
+  return '<section class="cc-option-group"><h3>'+esc(title)+'</h3><div class="cc-options-grid">'+visible.map(field=>optionRow(d,field)).join('')+'</div></section>';
+ }).join('');
+ const random=mode==='appearance'?'<div class="cc-editor-tools"><button type="button" data-appearance-randomize>Randomise appearance</button></div>':'';
+ return '<div class="cc-editor cc-editor-'+mode+'">'+random+content+'</div>';
+}
 function stepHeader(step,index){
  const copy=STEP_COPY[step]||['Create your character',''];
  return '<div class="cc-panel-heading"><span>STEP '+(index+1)+' OF '+STEPS.length+'</span><h2>'+esc(copy[0])+'</h2><p>'+esc(copy[1])+'</p></div>';
@@ -55,9 +102,10 @@ function racePanel(o,d){
 function classPanel(o,d){
  return '<div class="class-grid creator-choice-grid">'+o.classes.map(c=>{
   const active=d.klass===c.klass&&d.spec===c.spec;
+  const role=ROLE_COPY[c.klass]||'Adventurer';
   return '<button type="button" class="class-choice '+(active?'active':'')+'" data-class="'+esc(c.klass)+'" data-spec="'+esc(c.spec)+'" aria-pressed="'+active+'">'+
-   '<strong aria-hidden="true">'+esc(c.icon||'◇')+'</strong><div><b>'+esc(c.klass)+'</b><span>'+esc(ROLE_COPY[c.klass]||c.label||c.spec||'Adventurer')+'</span>'+
-+'</div>'+
+   '<strong aria-hidden="true">'+esc(c.icon||'◇')+'</strong>'+
+   '<span class="cc-class-copy"><b>'+esc(c.klass)+'</b><small>'+esc(role)+'</small></span>'+
   '</button>';
  }).join('')+'</div>';
 }
@@ -73,19 +121,7 @@ function confirmPanel(o,d){
   '<div class="cc-final-grid"><div><span>Race</span><b>'+esc(d.race)+'</b></div><div><span>Body</span><b>'+gender+'</b></div><div><span>Class</span><b>'+esc(d.klass)+'</b></div><div><span>Specialism</span><b>'+esc(d.spec||'Starting path')+'</b></div></div>'+
   (o.confirmHTML||'')+'</div><p class="cc-validation" role="status">'+esc(o.hint||'Everything look right? Create the character to add them to your roster.')+'</p>';
 }
-function scopeAppearance(root,step){
- root.querySelectorAll('.cc-editor-scope .cb-appearance-control').forEach(row=>{
-  const btn=row.querySelector('[data-appearance-field]');
-  const field=btn&&btn.dataset.appearanceField;
-  row.hidden=step==='appearance'?!BASIC_FIELDS.has(field):step==='features'?!FEATURE_FIELDS.has(field):false;
- });
- root.querySelectorAll('.cc-editor-scope .cb-creation-group').forEach(h=>{
-  const name=(h.textContent||'').trim();
-  h.hidden=step==='appearance'?!(name==='Body'||name==='Face'||name==='Hair'):step==='features'?!(name==='Markings'||name==='Race features'):false;
- });
- const random=root.querySelector('.cc-editor-features [data-appearance-randomize]');
- if(random)random.hidden=true;
-}
+function scopeAppearance(){}
 function render(o){
  const d=o.draft,root=o.mount;if(!root||!d||!P)return;
  d.appearance=P.normalizeAppearance(d.appearance,d.name||d.race,d.race);
