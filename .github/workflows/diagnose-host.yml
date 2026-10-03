@@ -13,19 +13,29 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Verify staging and production
+      - name: Verify swapped staging and production
         shell: bash
         run: |
           set -euo pipefail
-          for url in "https://cb.athleticsmanagergame.com/" "https://playcellbound.com/"; do
-            echo "URL: $url"
-            curl -k -sS -o /tmp/body -D /tmp/headers --max-time 20 "$url"
-            sed -n '1,10p' /tmp/headers
-            echo "TITLE:"
-            grep -io '<title>[^<]*' /tmp/body | head -1 || true
-            echo "COMING_SOON:"
-            grep -io 'Coming Soon' /tmp/body | head -1 || true
-            echo "LOGIN:"
-            grep -io 'Return to your guild' /tmp/body | head -1 || true
-            echo
-          done
+
+          echo "=== DEV HOME ==="
+          curl -k -sS -o /tmp/dev -D /tmp/devh --max-time 20 https://cb.athleticsmanagergame.com/
+          sed -n '1,10p' /tmp/devh
+          grep -io '<title>[^<]*' /tmp/dev | head -1 || true
+          grep -io 'Return to your guild' /tmp/dev | head -1 || true
+          grep -io 'Coming Soon' /tmp/dev | head -1 || true
+
+          echo
+          echo "=== LIVE HOME ==="
+          curl -k -sS -o /tmp/live -D /tmp/liveh --max-time 20 https://playcellbound.com/
+          sed -n '1,10p' /tmp/liveh
+          grep -io '<title>[^<]*' /tmp/live | head -1 || true
+          grep -io 'Return to your guild' /tmp/live | head -1 || true
+          grep -io 'Coming Soon' /tmp/live | head -1 || true
+
+          echo
+          echo "=== LIVE GAME ENTRY ==="
+          curl -k -sS -L -o /tmp/liveguild -D /tmp/liveguildh --max-time 20 https://playcellbound.com/guild.html
+          sed -n '1,20p' /tmp/liveguildh
+          grep -io '<title>[^<]*' /tmp/liveguild | head -1 || true
+          grep -io 'Coming Soon' /tmp/liveguild | head -1 || true
