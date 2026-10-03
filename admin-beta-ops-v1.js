@@ -9,11 +9,14 @@ function fmtDate(v){try{return new Date(v).toLocaleString()}catch{return''}}
 function severity(v){return({low:'MINOR',medium:'NORMAL',high:'HIGH',blocker:'BLOCKER'})[v]||String(v||'').toUpperCase()}
 function reportMarkup(r){
  const player=r.guild_name||r.email||String(r.user_id||'').slice(0,8);
- return '<article class="admin-beta-ticket" data-report="'+esc(r.id)+'"><header><span><small>'+esc(severity(r.severity))+' · '+esc(String(r.category||'bug').toUpperCase())+'</small><b>'+esc(r.summary||'Report')+'</b><em>'+esc(player)+'</em></span><strong>'+esc(String(r.status||'new').replace('_',' ').toUpperCase())+'</strong></header><p>'+esc(r.details||'')+'</p><div class="admin-beta-meta"><span>'+esc(r.page_view||'unknown view')+'</span><span>'+esc(String(r.build_id||'').slice(0,12))+' #'+(Number(r.build_number)||0)+'</span><span>'+esc(fmtDate(r.created_at))+'</span></div><label><span>Team note</span><textarea data-admin-beta-note maxlength="2000">'+esc(r.admin_note||'')+'</textarea></label><div class="admin-beta-actions"><button data-beta-status="triaged">TRIAGE</button><button data-beta-status="in_progress">IN PROGRESS</button><button data-beta-status="fixed">FIXED</button><button data-beta-status="closed">CLOSE</button></div></article>'
+ return '<article class="admin-beta-ticket" data-report="'+esc(r.id)+'" data-status="'+esc(r.status||'new')+'" data-severity="'+esc(r.severity||'medium')+'"><header><span><small>'+esc(severity(r.severity))+' · '+esc(String(r.category||'bug').toUpperCase())+'</small><b>'+esc(r.summary||'Report')+'</b><em>'+esc(player)+'</em></span><strong>'+esc(String(r.status||'new').replace('_',' ').toUpperCase())+'</strong></header><p>'+esc(r.details||'')+'</p><div class="admin-beta-meta"><span>'+esc(r.page_view||'unknown view')+'</span><span>'+esc(String(r.build_id||'').slice(0,12))+' #'+(Number(r.build_number)||0)+'</span><span>'+esc(fmtDate(r.created_at))+'</span></div><label><span>Team note</span><textarea data-admin-beta-note maxlength="2000">'+esc(r.admin_note||'')+'</textarea></label><div class="admin-beta-actions"><button data-beta-status="triaged">TRIAGE</button><button data-beta-status="in_progress">IN PROGRESS</button><button data-beta-status="fixed">FIXED</button><button data-beta-status="closed">CLOSE</button></div></article>'
 }
 function renderReports(){
- const root=$('#adminBetaReportQueue'),count=$('#adminBetaReportCount');if(!root)return;
+ const root=$('#adminBetaReportQueue'),count=$('#adminBetaReportCount'),navCount=$('#adminNavReportCount');if(!root)return;
+ const open=reports.filter(r=>!['fixed','closed'].includes(String(r.status||'new'))).length;
+ const blockers=reports.filter(r=>String(r.severity)==='blocker'&&!['fixed','closed'].includes(String(r.status||'new'))).length;
  if(count)count.textContent=reports.length+' SHOWN';
+ if(navCount)navCount.textContent=open+(open===1?' open':' open')+(blockers?' · '+blockers+' blocker'+(blockers===1?'':'s'):'');
  root.innerHTML=reports.length?reports.map(reportMarkup).join(''):'<div class="admin-beta-empty">No reports match this queue.</div>';
  root.querySelectorAll('[data-beta-status]').forEach(btn=>btn.addEventListener('click',()=>updateReport(btn.closest('[data-report]')?.dataset.report,btn.dataset.betaStatus,btn.closest('[data-report]')?.querySelector('[data-admin-beta-note]')?.value||'')))
 }
@@ -21,9 +24,15 @@ async function refreshReports(){
  if(!adminReady()||loading)return;loading=true;
  const root=$('#adminBetaReportQueue');if(root)root.innerHTML='<div class="admin-beta-empty">Loading beta queue…</div>';
  try{
-  const filter=$('#adminBetaStatus')?.value||'';
-  const {data,error}=await db.rpc('cellbound_admin_beta_reports',{p_status:filter||null,p_limit:100});
-  if(error)throw error;reports=Array.isArray(data)?data:[];renderReports()
+  const filter=$('#adminBetaStatus')?.value||'open',rpcStatus=filter==='open'?'':filter;
+  const {data,error}=await db.rpc('cellbound_admin_beta_reports',{p_status:rpcStatus||null,p_limit:100});
+  if(error)throw error;
+  const rows=Array.isArray(data)?data:[];
+  const severityRank={blocker:0,high:1,medium:2,low:3},statusRank={new:0,triaged:1,in_progress:2,fixed:3,closed:4};
+  reports=rows
+    .filter(r=>filter!=='open'||!['fixed','closed'].includes(String(r.status||'new')))
+    .sort((a,b)=>(severityRank[a.severity]??9)-(severityRank[b.severity]??9)||(statusRank[a.status]??9)-(statusRank[b.status]??9)||new Date(b.created_at||0)-new Date(a.created_at||0));
+  renderReports()
  }catch(error){reports=[];if(root)root.innerHTML='<div class="admin-beta-empty error">Could not load beta reports.</div>';console.warn('Admin beta queue unavailable',error)}
  finally{loading=false}
 }
