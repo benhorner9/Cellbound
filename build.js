@@ -1243,7 +1243,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   for(const hook of ['cellbound_admin_beta_reports','cellbound_admin_update_beta_report','cellbound_admin_player_lookup','cellbound_admin_recover_player'])
     if(!adminOps.includes(hook))throw new Error('Beta Step 9 admin operations runtime is missing '+hook);
 
-  const migration=fs.readFileSync(path.join(__dirname,'supabase/migrations/20261003174500_beta_operations_foundation.sql'),'utf8');
+  const migration=fs.readFileSync(path.join(__dirname,'supabase/migrations/20261003181012_beta_operations_foundation.sql'),'utf8');
   for(const hook of ['alter table public.beta_reports enable row level security','with check ((select auth.uid()) = user_id)','revoke all on table public.beta_reports from anon, authenticated','cellbound_admin_recover_player'])
     if(!migration.includes(hook))throw new Error('Beta Step 9 database security contract is missing '+hook);
 
