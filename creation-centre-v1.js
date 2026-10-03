@@ -127,7 +127,7 @@ function render(o){
  const preview=P.paperDollHTML(subject,{size:'creator',showGear:false});
  let body='';
  if(step==='race')body=racePanel(o,d);
- if(step==='appearance')body=editorBlock(d,'basic');
+ if(step==='appearance')body=editorBlock(d,'appearance');
  if(step==='features')body=editorBlock(d,'features');
  if(step==='class')body=classPanel(o,d);
  if(step==='identity')body=identityPanel(d);
