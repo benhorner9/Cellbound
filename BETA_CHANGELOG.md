@@ -1,5 +1,16 @@
 # Cellbound Beta Development Log
 
+## 2026-10-03 — Admin UX Optimization
+
+- Reworked Admin into five focused workspaces: Overview, Reports, Analytics, Players and Tools.
+- Added a sticky workspace switcher with build/environment context.
+- Beta Reports now defaults to actionable open tickets and prioritises blockers/high-impact reports.
+- Added clearer report severity/status scanning and an always-visible open-report count.
+- Beta Analytics now loads only when its workspace is opened.
+- Moved release publishing and owner-only utilities away from everyday beta operations.
+- Preserved server-side admin/owner permission checks and existing recovery safeguards.
+
+
 ## 2026-10-03 — Beta Analytics
 
 - Added channel-separated gameplay telemetry for staging and production.

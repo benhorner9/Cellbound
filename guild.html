@@ -519,9 +519,21 @@
     </section>
 
     <section id="admin" class="view admin-view">
-      <div class="section-intro"><div><small>DEVELOPER CONTROL</small><h2>Admin</h2><p>Private testing controls for authorised Cellbound administrators.</p></div><b id="adminRole" class="economy-badge">ADMIN</b></div>
+      <div class="section-intro admin-intro"><div><small>DEVELOPER CONTROL</small><h2>Admin Command</h2><p>Run the beta from one place: triage tester issues, read behaviour, recover accounts and manage development tools.</p></div><b id="adminRole" class="economy-badge">ADMIN</b></div>
+      <nav class="admin-workspace-nav" aria-label="Admin workspace">
+        <button type="button" data-admin-panel-tab="overview" class="active" aria-selected="true"><span>OVERVIEW</span><small>Health & test controls</small></button>
+        <button type="button" data-admin-panel-tab="reports" aria-selected="false"><span>REPORTS</span><small id="adminNavReportCount">Beta queue</small></button>
+        <button type="button" data-admin-panel-tab="analytics" aria-selected="false"><span>ANALYTICS</span><small>Player behaviour</small></button>
+        <button type="button" data-admin-panel-tab="players" aria-selected="false"><span>PLAYERS</span><small>Recovery tools</small></button>
+        <button type="button" data-admin-panel-tab="tools" aria-selected="false"><span>TOOLS</span><small>Release & owner tools</small></button>
+      </nav>
+      <div class="admin-workspace-meta">
+        <span><small>BUILD</small><b id="adminWorkspaceBuild">Checking…</b></span>
+        <span><small>ENVIRONMENT</small><b id="adminWorkspaceEnvironment">DEV / STAGING</b></span>
+        <span><small>SUPABASE</small><b>SERVER VERIFIED</b></span>
+      </div>
       <div class="admin-shell">
-        <article class="admin-card">
+        <article class="admin-card" data-admin-panel="overview">
           <small>TESTING OVERRIDES</small><h3>Cell Shock Controls</h3>
           <p>Clear recovery pressure instantly while testing encounters, or keep auto-clear enabled so Cell Shock is removed whenever it is applied.</p>
           <div class="admin-status-grid">
@@ -541,7 +553,7 @@
           </div>
           <p id="adminMessage" class="admin-message" hidden></p>
         </article>
-        <article class="admin-card admin-release-card">
+        <article class="admin-card admin-release-card" data-admin-panel="tools">
           <small>LIVE RELEASE CONTROL</small><h3>Publish Cellbound Update</h3>
           <p>Mark the build you are currently running as the required live version. Players on older builds will be updated once they are out of active gameplay.</p>
           <div class="admin-status-grid">
@@ -553,7 +565,7 @@
             <button id="adminPublishUpdate">PUBLISH UPDATE<small>Older clients are flagged immediately. Active dungeon runs and open gameplay modals are allowed to finish first.</small></button>
           </div>
         </article>
-        <article class="admin-card admin-market-card">
+        <article class="admin-card admin-market-card" data-admin-panel="overview">
           <small>PLAYER ECONOMY</small><h3>Trading Post Overview</h3>
           <p>Live market health for the Cellbound Exchange. Use this to watch activity, gold movement and the effectiveness of the 5% economy sink.</p>
           <div class="admin-status-grid">
@@ -565,7 +577,7 @@
           </div>
           <div id="adminMarketTop" class="admin-market-top"><span>No market history yet.</span></div>
         </article>
-        <article class="admin-card admin-analytics-card">
+        <article class="admin-card admin-analytics-card" data-admin-panel="analytics">
           <div class="admin-analytics-head">
             <div><small>BETA ANALYTICS</small><h3>Player Behaviour</h3><p>Track what testers actually choose and play: class/race popularity, dungeon starts and clears, progression, professions and feature usage. Staging and production stay separated.</p></div>
             <div class="admin-analytics-controls">
@@ -589,17 +601,17 @@
           </div>
           <p id="adminAnalyticsError" class="admin-analytics-error" hidden></p>
         </article>
-        <article class="admin-card admin-beta-card">
+        <article class="admin-card admin-beta-card" data-admin-panel="reports">
           <small>BETA SUPPORT QUEUE</small><h3>Tester Reports</h3>
           <p>Reports arrive with the tester's build and screen context. Move them through the queue and leave a short note the tester can see.</p>
           <div class="admin-beta-toolbar">
-            <select id="adminBetaStatus"><option value="">All open and closed</option><option value="new">New</option><option value="triaged">Triaged</option><option value="in_progress">In progress</option><option value="fixed">Fixed</option><option value="closed">Closed</option></select>
+            <select id="adminBetaStatus"><option value="open" selected>Open reports</option><option value="">All reports</option><option value="new">New</option><option value="triaged">Triaged</option><option value="in_progress">In progress</option><option value="fixed">Fixed</option><option value="closed">Closed</option></select>
             <button id="adminBetaRefresh" type="button">REFRESH QUEUE</button>
             <b id="adminBetaReportCount">0 SHOWN</b>
           </div>
           <div id="adminBetaReportQueue" class="admin-beta-queue"><div class="admin-beta-empty">Loading beta queue…</div></div>
         </article>
-        <article class="admin-card admin-beta-card">
+        <article class="admin-card admin-beta-card" data-admin-panel="players">
           <small>PLAYER RECOVERY</small><h3>Unstick a Tester</h3>
           <p>Find a tester by exact email, guild name or account ID. Recovery actions are narrow on purpose and do not expose a general save editor.</p>
           <div class="admin-player-search"><input id="adminPlayerLookup" maxlength="120" placeholder="Email, guild name or account ID"><button id="adminFindPlayer" type="button">FIND PLAYER</button></div>
@@ -611,17 +623,17 @@
           </div>
           <p id="adminBetaOpsMessage" class="admin-beta-ops-message" hidden></p>
         </article>
-        <article id="dungeonGeneratorEntry" class="admin-card admin-generator-entry" hidden>
+        <article id="dungeonGeneratorEntry" class="admin-card admin-generator-entry" data-admin-panel="tools" hidden>
           <small>OWNER TOOL</small><h3>Dungeon Generator</h3>
           <p>Build a complete dungeon brief, Combat Reborn scene config and art manifest from one guided form. Shared combat rules are attached automatically.</p>
           <div class="admin-actions"><button id="openDungeonGenerator" type="button">OPEN DUNGEON GENERATOR<small>Owner only · drafts stay on this device until you choose to use the generated package.</small></button></div>
         </article>
-        <article id="characterFitViewerEntry" class="admin-card admin-character-fit-entry" hidden>
+        <article id="characterFitViewerEntry" class="admin-card admin-character-fit-entry" data-admin-panel="tools" hidden>
           <small>OWNER TOOL</small><h3>Character Fit Viewer</h3>
           <p>Inspect every v9 body size and every equipment piece without editing a live character. Compare frames, sexes and races side by side.</p>
           <div class="admin-actions"><button id="openCharacterFitViewer" type="button">OPEN CHARACTER FIT VIEWER<small>Owner only · 36 body combinations · complete item catalogue · fit-point overlay.</small></button></div>
         </article>
-        <aside class="admin-card">
+        <aside class="admin-card" data-admin-panel="overview">
           <small>ADMIN SAFETY</small><h3>Private Developer Tools</h3>
           <p class="admin-warning">This tab is authorised by Supabase, not by a visible email check in the browser. Even if someone tampers with the page, the admin actions still fail unless the signed-in account is authorised server-side.</p>
           <p>Auto-clear is intended for development and encounter testing. Disable it when you want to test the normal Cell Shock and recovery loop.</p>

@@ -618,17 +618,29 @@ async function ownerDungeonGeneratorPlaythrough(browser){
   await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
   await page.waitForFunction(()=>window.CellboundAdmin?.role==='owner',{},{timeout:10000,polling:50});
   await page.evaluate(()=>CellboundGame.switchView('admin'));
-  await page.waitForSelector('#dungeonGeneratorEntry:not([hidden])',{timeout:5000});
   await page.waitForFunction(()=>Boolean(window.CellboundAdminBetaOps),{},{timeout:5000,polling:50});
-  assert(await page.locator('#adminBetaReportQueue').isVisible(),'owner can access the beta report triage queue');
-  assert(await page.locator('#adminPlayerLookup').isVisible(),'owner can access targeted player recovery');
-  assert.equal(await page.locator('#adminPlayerRecoveryActions [data-recover-player]').count(),3,'recovery console exposes only the three audited support actions');
   await page.waitForFunction(()=>Boolean(window.CellboundAdminAnalytics),{},{timeout:5000,polling:50});
-  assert(await page.locator('#adminAnalyticsKpis').isVisible(),'owner can access Beta Analytics');
+  assert(await page.locator('.admin-workspace-nav').isVisible(),'Admin opens with focused workspace navigation');
+  assert(await page.locator('[data-admin-panel-tab="overview"]').evaluate(el=>el.classList.contains('active')),'Admin defaults to Overview');
+
+  await page.locator('[data-admin-panel-tab="reports"]').click();
+  assert(await page.locator('#adminBetaReportQueue').isVisible(),'Reports workspace exposes beta triage');
+  assert.equal(await page.locator('#adminBetaStatus').inputValue(),'open','Reports defaults to actionable open tickets');
+
+  await page.locator('[data-admin-panel-tab="players"]').click();
+  assert(await page.locator('#adminPlayerLookup').isVisible(),'Players workspace exposes targeted recovery');
+  assert.equal(await page.locator('#adminPlayerRecoveryActions [data-recover-player]').count(),3,'recovery console exposes only the three audited support actions');
+
+  await page.locator('[data-admin-panel-tab="analytics"]').click();
+  assert(await page.locator('#adminAnalyticsKpis').isVisible(),'Analytics workspace exposes Beta Analytics');
   await page.waitForFunction(()=>document.querySelector('#adminAnalyticsClasses')?.textContent?.includes('Warrior'),{},{timeout:5000,polling:50});
   assert((await page.locator('#adminAnalyticsDungeons').innerText()).includes('The Ashen Vault'),'analytics dashboard renders dungeon starts and clears');
   assert((await page.locator('#adminAnalyticsRaces').innerText()).includes('Veyren'),'analytics dashboard renders race popularity');
   assert.equal(await page.locator('#adminAnalyticsChannel').inputValue(),'staging','dev analytics defaults to the staging channel');
+
+  await page.locator('[data-admin-panel-tab="tools"]').click();
+  await page.waitForSelector('#dungeonGeneratorEntry:not([hidden])',{timeout:5000});
+  assert(await page.locator('#dungeonGeneratorEntry').isVisible(),'owner tools appear only inside Tools workspace');
   await page.locator('#openDungeonGenerator').click();
   await page.waitForSelector('#dungeonGeneratorMount:not([hidden]) .dg-shell',{timeout:5000});
 

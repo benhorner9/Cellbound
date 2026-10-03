@@ -8,8 +8,30 @@ let status={is_admin:false,role:null,auto_clear_cell_shock:false};
 let bound=false;
 let releaseStatus=null;
 let marketStatus=null;
+let activePanel=sessionStorage.getItem('cellbound-admin-panel-v1')||'overview';
 
-window.CellboundAdmin={autoClear:false,role:null,isAdmin:false};
+window.CellboundAdmin={autoClear:false,role:null,isAdmin:false,panel:activePanel};
+
+function setPanel(panel,{scroll=false}={}){
+  const allowed=new Set(['overview','reports','analytics','players','tools']);
+  activePanel=allowed.has(panel)?panel:'overview';
+  sessionStorage.setItem('cellbound-admin-panel-v1',activePanel);
+  window.CellboundAdmin.panel=activePanel;
+  document.querySelectorAll('[data-admin-panel]').forEach(el=>el.classList.toggle('admin-panel-filtered',el.dataset.adminPanel!==activePanel));
+  document.querySelectorAll('[data-admin-panel-tab]').forEach(btn=>{
+    const on=btn.dataset.adminPanelTab===activePanel;
+    btn.classList.toggle('active',on);
+    btn.setAttribute('aria-selected',on?'true':'false');
+  });
+  window.dispatchEvent(new CustomEvent('cellbound:admin-panel-changed',{detail:{panel:activePanel}}));
+  if(scroll)document.querySelector('.admin-workspace-nav')?.scrollIntoView?.({behavior:'smooth',block:'start'});
+}
+function environmentLabel(){
+  const host=String(location.hostname||'').toLowerCase();
+  if(host==='cb.athleticsmanagergame.com')return'DEV / STAGING';
+  if(/(?:^|\.)playcellbound\.com$/.test(host))return'PRODUCTION';
+  return'LOCAL / PREVIEW';
+}
 
 function rosterStats(){
   const roster=Game?.getState?.()?.roster||[];
@@ -18,7 +40,7 @@ function rosterStats(){
   return{roster,affected,peak};
 }
 function render(){
-  const nav=$('#adminNav'),view=$('#admin'),badge=$('#adminRole'),auto=$('#adminAutoState'),shock=$('#adminShockSummary'),account=$('#adminAccount'),toggle=$('#adminAutoToggle'),build=$('#adminCurrentBuild'),published=$('#adminPublishedBuild');
+  const nav=$('#adminNav'),view=$('#admin'),badge=$('#adminRole'),auto=$('#adminAutoState'),shock=$('#adminShockSummary'),account=$('#adminAccount'),toggle=$('#adminAutoToggle'),build=$('#adminCurrentBuild'),published=$('#adminPublishedBuild'),workspaceBuild=$('#adminWorkspaceBuild'),workspaceEnvironment=$('#adminWorkspaceEnvironment');
   if(!status.is_admin){if(nav)nav.hidden=true;return}
   if(nav)nav.hidden=false;
   if(view)view.dataset.adminReady='1';
@@ -33,7 +55,10 @@ function render(){
     toggle.textContent=status.auto_clear_cell_shock?'DISABLE AUTO-CLEAR':'ENABLE AUTO-CLEAR';
     toggle.dataset.enabled=status.auto_clear_cell_shock?'1':'0';
   }
-  if(build)build.textContent=String(window.CELLBOUND_BUILD||'development').slice(0,12)+' · #'+(Number(window.CELLBOUND_BUILD_NUMBER||0)||'—');
+  const buildText=String(window.CELLBOUND_BUILD||'development').slice(0,12)+' · #'+(Number(window.CELLBOUND_BUILD_NUMBER||0)||'—');
+  if(build)build.textContent=buildText;
+  if(workspaceBuild)workspaceBuild.textContent=buildText;
+  if(workspaceEnvironment)workspaceEnvironment.textContent=environmentLabel();
   if(published)published.textContent=releaseStatus?.build_id?(String(releaseStatus.build_id).slice(0,12)+' · #'+(releaseStatus.build_number||'—')):'Not published yet';
   const mg=$('#adminMarketGear'),mo=$('#adminMarketOrders'),mt=$('#adminMarketTrades'),mv=$('#adminMarketVolume'),mx=$('#adminMarketTax'),top=$('#adminMarketTop');
   if(mg)mg.textContent=marketStatus?String(Number(marketStatus.active_gear)||0):'—';
@@ -185,6 +210,7 @@ async function publishUpdate(){
 }
 function bind(){
   if(bound)return;bound=true;
+  document.querySelectorAll('[data-admin-panel-tab]').forEach(btn=>btn.addEventListener('click',()=>setPanel(btn.dataset.adminPanelTab,{scroll:true})));
   $('#adminResetShock')?.addEventListener('click',resetShock);
   $('#adminResetTwelve')?.addEventListener('click',resetTwelveBelow);
   $('#adminPreviewTutorialComics')?.addEventListener('click',previewTutorialComics);
@@ -192,7 +218,7 @@ function bind(){
   $('#adminAutoToggle')?.addEventListener('click',toggleAuto);
   $('#adminRefresh')?.addEventListener('click',async()=>{await refreshStatus();await Promise.all([refreshRelease(),refreshMarket()]);clearLocalShock();message('Admin status refreshed.','ok')});
   $('#adminPublishUpdate')?.addEventListener('click',publishUpdate);
-  window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='admin')setTimeout(render,0)});
+  window.addEventListener('cellbound:view-changed',e=>{if(e.detail?.view==='admin')setTimeout(()=>{setPanel(activePanel);render()},0)});
 }
 async function init(){
   Game=window.CellboundGame;
@@ -200,6 +226,7 @@ async function init(){
   db=Game.getSupabase?.();
   if(!db)return;
   bind();
+  setPanel(activePanel);
   await refreshStatus();
   await Promise.all([refreshRelease(),refreshMarket()]);
   setInterval(()=>{if(status.auto_clear_cell_shock)clearLocalShock()},500);
