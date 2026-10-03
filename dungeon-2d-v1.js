@@ -687,7 +687,7 @@ function compactDungeonResults(rootEl){
   if(section.classList.contains('cb2d-xp-section'))hint='Character XP and level progress';
   else if(section.querySelector('.cb2d-loot-materials'))hint='Crafting rewards secured';
   else if(section.classList.contains('cbr-analysis'))hint='Damage, healing, mechanics and replay';
-  else if(section.classList.contains('cbr-progress-earned')||section.classList.contains('eg-unlock-panel'))hint='Unlocks and clear progression';
+  else if(section.classList.contains('cbr-progress-earned')||section.classList.contains('eg-unlock-panel'))hint='Unlocks and clear rewards';
   else if(section.classList.contains('bs-run-summary'))hint='Puzzle and encounter breakdown';
   else if(section.classList.contains('fa-mystery-log'))hint='Story record';
   const detail=document.createElement('details');detail.className='cb2d-result-details';
@@ -1650,7 +1650,7 @@ async function seamlessFrom(startIndex,tok){
   const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;
   const mode=run.endgame?.difficulty||'normal',tier=Number(run.endgame?.tier)||0,first=Number(st.dungeonCompletions||0)===0,gold=mode==='normal'?120:mode==='heroic'?190:220+tier*10,renown=mode==='normal'?60:mode==='heroic'?90:100+tier*4,xp=BAL?.dungeonXp?.('ashen-vault',{difficulty:mode,firstClear:first})||(first&&mode==='normal'?2850:mode==='normal'?ASHEN_VAULT_XP:mode==='heroic'?1050:1200);
   st.gold+=gold;st.renown+=renown;run.loot.gold+=gold;run.loot.renown+=renown;run.loot.xp=xp;
-  const shards=window.CellboundEndgame?.shardReward?.('ashen-vault')||0;if(shards){Game.addMaterial('cell-shards',shards);recordMaterialDrop({key:'cell-shards',quantity:shards},'Endgame Reward')}
+  const shards=window.CellboundEndgame?.shardReward?.('ashen-vault')||0;if(shards){Game.addMaterial('cell-shards',shards);recordMaterialDrop({key:'cell-shards',quantity:shards},'Dungeon Clear')}
   const chase=window.CellboundEndgame?.rollChase?.('ashen-vault');if(chase){st.activity.push('Very rare collection reward: '+chase.name+'.');flash('LEGENDARY DROP',false)}
   const metrics=endgameRunMetrics();run.endgameMetrics=metrics;
   const record=await window.CellboundEndgame?.recordRun?.('ashen-vault',metrics);run.endgameRecord=record&&!record.error?record:null;

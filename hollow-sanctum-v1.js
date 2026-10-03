@@ -120,7 +120,7 @@ function renderCard(){
     '<article class="intel-card"><div class="intel-card-head"><b>Glassjaw Sentinel</b><span>'+(done?'FIELD NOTES':'DISCOVERED')+'</span></div><p>Fracture Line targets a lane through the chamber while Glassjaw Sweep pressures the tank. Position the group around the guardian rather than stacking behind the target.</p></article>'+
     '<article class="intel-card"><div class="intel-card-head"><b>The Bound Choir</b><span>'+(done?'FIELD NOTES':'DISCOVERED')+'</span></div><p>Resonance Collapse controls space, Shattering Hymn must be interrupted, and Echo Choir adds force target swaps during the ritual.</p></article>'+
     '<article class="intel-card"><div class="intel-card-head"><b>Expedition Record</b><span>'+clears+' clear'+(clears===1?'':'s')+'</span></div><p>'+(clears?'The Hollow Seal is open. The Bound Choir can be challenged again on any unlocked difficulty.':'No successful expedition has been recorded yet.')+'</p></article>'+
-    '<article class="intel-card"><div class="intel-card-head"><b>Known Rewards</b><span>TIER 3</span></div><p>Class equipment and Void Crystals can be recovered here. The first clear awards the Blackglass Resonator relic, with endgame rewards expanding on higher difficulties.</p></article>'+
+    '<article class="intel-card"><div class="intel-card-head"><b>Known Rewards</b><span>TIER 3</span></div><p>Class equipment and Void Crystals can be recovered here. The first clear awards the Blackglass Resonator relic, with stronger rewards available on higher difficulties.</p></article>'+
    '</div></aside>'+
   '</div>';
  mount.querySelector('[data-hs-enter]')?.addEventListener('click',openDungeon);
@@ -351,7 +351,7 @@ function hsRenderRebornEvent(e){
  }catch(error){console.warn('Hollow Sanctum status visual skipped',e?.type,error)}
  const src=hsRenderId(e.source),target=hsRenderId(e.target),srcChar=hsCharacter(e.source),targetChar=hsCharacter(e.target);
  switch(e.type){
-  case'COMBAT_START':{const arena=$('#hs2dArena');window.CellboundCombatFX?.mount?.(arena);if(['boss','final'].includes(String(STAGES[run.stage]?.kind||'')))window.CellboundCombatFX?.boss?.(arena,STAGES[run.stage]?.title||'Boss');setStatus('Combat simulation live.');feed('Combat begins.');break;}
+  case'COMBAT_START':{const arena=$('#hs2dArena');window.CellboundCombatFX?.mount?.(arena);if(['boss','final'].includes(String(STAGES[run.stage]?.kind||'')))window.CellboundCombatFX?.boss?.(arena,STAGES[run.stage]?.title||'Boss');setStatus('Combat underway.');feed('Combat begins.');break;}
   case'MOVEMENT_START':if(window.CellboundCombatFX?.ownsMovement)break;if(src&&e.payload?.to)move(src,e.payload.to.x,e.payload.to.y,e.payload.duration||420);break;
   case'ABILITY_START':
    if(srcChar)hsAct(role(srcChar),srcChar.name+' · '+(e.ability||'Ability'));
@@ -441,7 +441,7 @@ function hsStageSummary(result){
 function hsFailureDiagnosis(result){
  const s=result?.summary||{},ints=s.interrupts||{},m=s.mechanics||{},players=s.players||[],causes=[],changes=[];
  const missed=Number(ints.missedCritical)||0,threat=players.reduce((n,p)=>n+(Number(p.threatLost)||0),0),avoidable=players.reduce((n,p)=>n+(Number(p.avoidableDamage)||0),0);
- if(missed){causes.push(missed+' critical interrupt'+(missed===1?' was':'s were')+' missed');changes.push('Use a stricter interrupt plan or DPS rotation.')}
+ if(missed){causes.push(missed+' critical interrupt'+(missed===1?' was':'s were')+' missed');changes.push('Use a stricter interrupt plan or damage rotation.')}
  if(Number(m.failed)){causes.push(Number(m.failed)+' mechanics failed');changes.push('Use safer positioning and control the dangerous mechanics first.')}
  if(threat){causes.push(threat+' threat losses broke formation');changes.push('Use Safe pull style or a Control boss plan.')}
  if(avoidable){causes.push(Math.round(avoidable).toLocaleString()+' avoidable damage was taken')}
@@ -455,7 +455,7 @@ function hsProgressEarned(){
    ?'<span><i>★</i><b>NEW BEST · '+score.toLocaleString()+' score</b></span>'
    :record.previousBestScore?'<span><i>↔</i><b>Previous best '+Number(record.previousBestScore).toLocaleString()+' · this run '+score.toLocaleString()+'</b></span>':'';
  if(!unlocks.length&&!achievements.length&&!comparison)return'';
- return'<section class="cbr-progress-earned"><small>RUN PROGRESSION</small><h4>What changed after this clear.</h4><div>'+comparison+unlocks.map(x=>'<span><i>↗</i><b>'+esc(x)+'</b></span>').join('')+achievements.map(id=>'<span><i>◆</i><b>Achievement: '+esc(window.CellboundEndgame?.achievementName?.(id)||id)+'</b></span>').join('')+'</div></section>'
+ return'<section class="cbr-progress-earned"><small>CLEAR RESULTS</small><h4>Rewards and unlocks from this clear.</h4><div>'+comparison+unlocks.map(x=>'<span><i>↗</i><b>'+esc(x)+'</b></span>').join('')+achievements.map(id=>'<span><i>◆</i><b>Achievement: '+esc(window.CellboundEndgame?.achievementName?.(id)||id)+'</b></span>').join('')+'</div></section>'
 }
 
 
@@ -733,7 +733,7 @@ async function complete(){
  const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end cb2d-loot-screen cb2d-results-screen';$('.hs2d-shell')?.classList.add('results-mode');
  const lootGear=[...gearDrops,...(first?[RELIC]:[])].filter(Boolean),materials=[
    {key:'void-crystal',name:'Void Crystal',quantity:first?2:1,source:'The Hollow Sanctum',rarity:'Rare'},
-   ...(shards?[{key:'cell-shards',name:'Cell Shards',quantity:shards,source:'Endgame Reward',rarity:'Rare'}]:[]),
+   ...(shards?[{key:'cell-shards',name:'Cell Shards',quantity:shards,source:'Dungeon Clear',rarity:'Rare'}]:[]),
    ...professionDrops.map(d=>({key:d.key,name:window.CellboundProfessions?.MATERIALS?.[d.key]?.name||d.key,quantity:d.quantity,source:'Hollow Sanctum salvage',rarity:window.CellboundProfessions?.MATERIALS?.[d.key]?.rarity||'Common'}))
  ];
  end.innerHTML='<div class="cb2d-loot-wrap">'+
