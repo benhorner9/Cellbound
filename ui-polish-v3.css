@@ -161,3 +161,35 @@ html,body{max-width:100%;overscroll-behavior-x:none}
   overflow-wrap:normal;
   word-break:normal
 }
+
+
+/* Beta Step 7 — interaction resilience
+   Covers full-screen overlays as well as the main app shell. */
+html{-webkit-text-size-adjust:100%}
+
+body :is(button,a,[role="button"],input,select,textarea):focus-visible{
+  outline:2px solid rgba(116,204,198,.82);
+  outline-offset:3px
+}
+
+body :is(button,a,[role="button"]){
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:rgba(116,204,198,.12)
+}
+
+@media(max-width:900px){
+  body :is(input[type="text"],input[type="search"],input[type="email"],input[type="password"],input[type="number"],select,textarea){
+    font-size:16px
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  body *,
+  body *:before,
+  body *:after{
+    scroll-behavior:auto!important;
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important
+  }
+}
