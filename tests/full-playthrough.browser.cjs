@@ -188,6 +188,7 @@ async function creatorPlaythrough(browser,viewport={width:1024,height:1366}){
   await page.waitForTimeout(30);
   const after=await page.locator('[data-appearance-editor]').innerHTML();
   assert.notEqual(after,before,'appearance controls rerender the preview');
+  await page.screenshot({path:'/tmp/cellbound-creator-appearance-'+viewport.width+'.png',fullPage:true});
   await page.locator('[data-appearance-randomize]').click();
   await page.waitForSelector('[data-appearance-editor]');
 
