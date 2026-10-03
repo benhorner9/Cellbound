@@ -5,12 +5,12 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const STEPS=['race','appearance','features','class','identity','confirm'];
 const STEP_NAMES={race:'Race',appearance:'Appearance',features:'Features',class:'Class',identity:'Identity',confirm:'Confirm'};
 const STEP_COPY={
- race:['Choose your ancestry','Your race defines the body beneath every piece of gear.'],
- appearance:['Shape your adventurer','Refine the face, frame, colouring and hair.'],
- features:['Add race features','Choose the details that make this race unmistakably yours.'],
- class:['Choose a calling','Class changes your fighting style and equipment, not your anatomy.'],
- identity:['Name your adventurer','Give this guild member a name before they join your roster.'],
- confirm:['Ready to join the guild','Check the final details, then create your character.']
+ race:['Choose your ancestry','Pick the race and body you want to build from.'],
+ appearance:['Shape your adventurer','Adjust the core look of your character.'],
+ features:['Add race features','Choose the details unique to this race.'],
+ class:['Choose a calling','Pick how this character fights.'],
+ identity:['Name your adventurer','Give this recruit their final name.'],
+ confirm:['Ready to join the guild','Check the details and create your character.']
 };
 const LORE={
  Veyren:'Shadow-touched wanderers with dusky skin, long ears and ancient runes.',
@@ -45,7 +45,7 @@ function racePanel(o,d){
  return '<div class="race-grid creator-choice-grid">'+o.races.map(r=>
   '<button type="button" class="race-card '+(r.id===d.race?'active':'')+'" data-race="'+esc(r.id)+'" aria-pressed="'+(r.id===d.race)+'">'+
    '<div class="cc-race-art">'+P.paperDollHTML({race:r.id,appearance:{...d.appearance,race:r.id}},{size:'race-choice',showGear:false})+'</div>'+
-   '<div class="cc-race-copy"><b>'+esc(r.id)+'</b><p>'+esc(LORE[r.id]||'')+'</p>'+(r.trait?'<small>'+esc(r.trait)+'</small>':'')+'</div>'+
+   '<div class="cc-race-copy"><b>'+esc(r.id)+'</b><p>'+esc(LORE[r.id]||'')+'</p>'+'</div>'+
   '</button>'
  ).join('')+'</div>'+
  '<div class="cc-inline-section"><div><b>Body</b><span>Choose the base model.</span></div><div class="cc-segmented" aria-label="Body">'+
@@ -57,7 +57,7 @@ function classPanel(o,d){
   const active=d.klass===c.klass&&d.spec===c.spec;
   return '<button type="button" class="class-choice '+(active?'active':'')+'" data-class="'+esc(c.klass)+'" data-spec="'+esc(c.spec)+'" aria-pressed="'+active+'">'+
    '<strong aria-hidden="true">'+esc(c.icon||'◇')+'</strong><div><b>'+esc(c.klass)+'</b><span>'+esc(ROLE_COPY[c.klass]||c.label||c.spec||'Adventurer')+'</span>'+
-   (c.label&&ROLE_COPY[c.klass]?'<small>'+esc(c.label)+'</small>':'')+'</div>'+
++'</div>'+
   '</button>';
  }).join('')+'</div>';
 }
