@@ -1075,6 +1075,22 @@ function paperTierAura(c){
   return out;
 }
 
+
+function paintedHairFit(a,race){
+  var female=Number(a.gender)===1,h=Number(a.hair)||0;
+  var fits={
+    Veyren:{m:[0,4,.91,.86],f:[0,5,.89,.86]},
+    Stoneborn:{m:[0,7,.96,.82],f:[0,6,.92,.84]},
+    Aelari:{m:[0,4,.88,.87],f:[0,5,.86,.88]},
+    Thornkin:{m:[0,7,.92,.84],f:[0,7,.90,.85]},
+    Emberkin:{m:[0,7,.92,.84],f:[0,7,.90,.85]},
+    Nymari:{m:[0,5,.90,.87],f:[0,6,.88,.88]}
+  };
+  var v=(fits[race]||fits.Veyren)[female?'f':'m'].slice();
+  if(h===3||h===5){v[1]+=1;v[3]+=.02}
+  if(h===4){v[1]-=2;v[3]-=.02}
+  return 'translate('+v[0]+' '+v[1]+') translate(120 0) scale('+v[2]+' '+v[3]+') translate(-120 0)';
+}
 function illustratedHairFull(a,hair,race,uid){
   var h=Number(a.hair)||0;if(h===0)return '';
   var dark=mixHex(hair,'#090d11',.48),deep=mixHex(hair,'#000000',.25),light=mixHex(hair,'#ffffff',.24);
@@ -1287,7 +1303,7 @@ function illustratedBaseFigure(c,a,skin,eye,hair,p,uid,portrait){
   [lx,rx].forEach(x=>{for(var i=-1;i<=1;i++)fingers+='<path d="M'+(x+i*3)+' 282 l1 10"/>';fingers+='<path d="M'+(x+7)+' 276 l-4 8"/>'});
   hands+=fingers+'</g>';
   var coverage=equipmentCoverage(c);
-  var hairFull=coverage.hair?'':'<g data-appearance-part="hair">'+(PAINTED_RACES.has(race)?'<g transform="translate(120 2) scale(.88 .90) translate(-120 0)">':'')+illustratedHairFull(a,hair,race,uid)+(PAINTED_RACES.has(race)?'</g>':'')+'</g>';
+  var hairFull=coverage.hair?'':'<g data-appearance-part="hair" data-hair-race="'+esc(race)+'" data-hair-style="'+a.hair+'">'+(PAINTED_RACES.has(race)?'<g transform="'+paintedHairFit(a,race)+'">':'')+illustratedHairFull(a,hair,race,uid)+(PAINTED_RACES.has(race)?'</g>':'')+'</g>';
 
   markings='<g opacity="'+(.35+a.glow*.21)+'">'+markings+'</g>';
   var faceMarks='';
