@@ -1043,13 +1043,13 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   const playthrough=fs.readFileSync(path.join(__dirname,'tests/full-playthrough.browser.cjs'),'utf8');
   for(const hook of [
     'function coreGameplayLoopPlaythrough(browser)',
-    "CellboundGame.partyItemLevel()),29",
+    "CellboundGame.partyItemLevel()),23",
     "data-bank-dismantle",
     "alc-field-potion",
     "workshopCraftProject.remainingMs=1",
     "data-equip-char=\"rogue\"",
-    "CellboundGame.partyItemLevel()>=30",
-    "the same harder dungeon becomes enterable after progression raises party Item Level"
+    "CellboundGame.partyItemLevel()>=24",
+    "the second beta dungeon becomes enterable after progression raises party Item Level"
   ])if(!playthrough.includes(hook))throw new Error('Beta core gameplay loop regression coverage is missing '+hook);
 
   const quests=fs.readFileSync(path.join(__dirname,'quests-v2.js'),'utf8');
@@ -1091,6 +1091,58 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   ])if(!ashen.includes(hook))throw new Error('Ashen Vault must deliver profession reagents into shared Guild materials: '+hook);
 
   console.log('Beta core gameplay loop contract is release-gated.');
+}
+{
+  const guild=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
+  for(const hook of [
+    "const BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue','Mage'])",
+    "const BETA_DUNGEONS=Object.freeze(['ashen-vault','hollow-sanctum'])",
+    "isCharacterBetaPlayable(c)",
+    "state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&isCharacterBetaPlayable(c)",
+    "betaPlayableClasses:BETA_PLAYABLE_CLASSES",
+    "betaDungeons:BETA_DUNGEONS"
+  ])if(!guild.includes(hook))throw new Error('Beta class/content contract is missing '+hook);
+
+  const onboarding=fs.readFileSync(path.join(__dirname,'onboarding-v1.js'),'utf8');
+  if(!onboarding.includes("Game?.isBetaClassPlayable&&!Game.isBetaClassPlayable(klass)"))throw new Error('Character creator must hide future classes during beta');
+
+  for(const [file,id] of [['chaos-canyon-v1.js','chaos-canyon'],['blackout-station-v1.js','blackout-station'],['fractured-ages-v1.js','fractured-ages']]){
+    const contents=fs.readFileSync(path.join(__dirname,file),'utf8');
+    if(!contents.includes("isBetaDungeonPlayable('"+id+"')")||!contents.includes('FUTURE UPDATE'))throw new Error(file+' must refuse direct beta entry and present future-update status');
+  }
+
+  const fourfold=fs.readFileSync(path.join(__dirname,'fourfold-lock-v1.js'),'utf8');
+  for(const hook of ["const betaLocked=()=>","FUTURE UPDATE","if(betaLocked())"])if(!fourfold.includes(hook))throw new Error('The Fourfold Lock must remain reserved for a future update: '+hook);
+
+  const noWayBack=fs.readFileSync(path.join(__dirname,'no-way-back-v1.js'),'utf8');
+  const prereqBlock=noWayBack.match(/function prereqs\(\)\{([\s\S]*?)\n\}/)?.[1]||'';
+  for(const hook of ['Ashes on the East Road','Echoes Beneath Zeltira','The Thirteenth Bell'])if(!prereqBlock.includes(hook))throw new Error('Beta Manor route is missing prerequisite '+hook);
+  if(prereqBlock.includes('The Fourfold Lock'))throw new Error('The Manor cannot depend on future-update Fourfold content during beta');
+
+  const quests=fs.readFileSync(path.join(__dirname,'quests-v2.js'),'utf8');
+  for(const hook of [
+    "const manorCleared=()=>",
+    "const nullQuestAvailable=()=>",
+    "LOCKED UNTIL THE MANOR",
+    "Requires The Manor"
+  ])if(!quests.includes(hook))throw new Error('Signal From Nowhere Manor gate is missing '+hook);
+
+  const manor=fs.readFileSync(path.join(__dirname,'manor-raid-v1.js'),'utf8');
+  for(const hook of ['async function markManorCleared()','progression.manorRaidCleared=true','Signal From Nowhere is now available'])if(!manor.includes(hook))throw new Error('Manor clear persistence is missing '+hook);
+
+  const nullComplex=fs.readFileSync(path.join(__dirname,'null-complex-v1.js'),'utf8');
+  for(const hook of ['function manorCleared()','manorCleared()&&(s?.progression?.nullComplexUnlocked','Complete The Manor raid before investigating the Null Complex'])if(!nullComplex.includes(hook))throw new Error('Null Complex activity must remain behind the Manor story gate: '+hook);
+
+  const playthrough=fs.readFileSync(path.join(__dirname,'tests/full-playthrough.browser.cjs'),'utf8');
+  for(const hook of [
+    'function betaContentLockPlaythrough(browser)',
+    "['Warrior','Paladin','Hunter','Rogue','Mage']",
+    "['ashen-vault','hollow-sanctum']",
+    'Signal From Nowhere is locked before a Manor clear',
+    'a persisted Manor clear unlocks Signal From Nowhere'
+  ])if(!playthrough.includes(hook))throw new Error('Beta content-lock browser regression is missing '+hook);
+
+  console.log('Beta content package is release-gated.');
 }
 
 console.log('Cellbound build complete.');
