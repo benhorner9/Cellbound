@@ -295,7 +295,7 @@ async function showMaskFall(){
  if(!run||run.done)return;
  await completeRun()
 }
-function hpNeed(level){return 800+Math.max(0,(Number(level)||1)-1)*250}
+function hpNeed(level){return Game?.xpNeeded?.(level)||BAL?.xpNeeded?.(level)||800+Math.max(0,(Number(level)||1)-1)*250}
 function awardXp(){
  const reward=Number(run?.xpReward)||XP;
  const cap=Math.max(1,Number(Game?.getLevelCap?.())||15);
