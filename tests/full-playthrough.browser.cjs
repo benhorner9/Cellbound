@@ -165,6 +165,23 @@ async function creatorPlaythrough(browser,viewport={width:1024,height:1366}){
   const errors=await mount(page,null);
   await page.waitForSelector('#cellboundOnboarding:not([hidden]) .character-creator');
   assert.equal(await page.locator('.creator-party-dots button').count(),5,'creator shows all five party roles');
+  // Measure actual SVG geometry: a breastplate must end above the hip/leg slots.
+  const plateFit=await page.evaluate(()=>{
+    const P=CellboundPortraits,host=document.createElement('div'),failures=[];
+    host.style.cssText='position:fixed;left:-2000px;width:240px;height:410px;visibility:hidden';document.body.append(host);
+    let checked=0;
+    for(const race of Object.keys(P.RACES))for(const gender of [0,1])for(const frame of [0,1,2])for(const tier of [1,2,3,4,5]){
+      const c={id:'plate-fit-'+checked,race,class:'Warrior',appearance:{gender,frame},equipment:{Chest:{id:'plate-chest-'+tier,slot:'Chest',class:'Warrior',tier}}};
+      host.innerHTML=P.paperDollSVG(c);
+      const chest=host.querySelector('.cb-paper-slot-chest'),box=chest?.getBBox();
+      if(!box||box.width<20||box.height<20||box.y+box.height>247)failures.push({race,gender,frame,tier,reason:'chest exceeds waist',bottom:box?.y+box?.height});
+      if(host.querySelector('[data-armour-part="cuisse"],[data-armour-part="poleyn"],[data-armour-part="greave"]'))failures.push({race,tier,reason:'chest creates leg equipment'});
+      checked++;
+    }
+    host.remove();return {checked,failures};
+  });
+  assert.equal(plateFit.checked,180);assert.deepEqual(plateFit.failures,[],'Plate chest ends at waist across every race, sex, build and tier');
+
 
   for(const race of ['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari']){
     await page.locator('button[data-race="'+race+'"]').click();
