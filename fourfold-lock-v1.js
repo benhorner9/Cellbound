@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 const BAL=window.CellboundBalance;
-const $=s=>document.querySelector(s),$=s=>[...document.querySelectorAll(s)];
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const QUEST={
  id:'fourfold-lock',title:'The Fourfold Lock',difficulty:'Mystery',length:'Long',
