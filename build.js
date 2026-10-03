@@ -411,7 +411,8 @@ for(const file of files){
   }
   if(file==='endgame-v1.js'){
     for(const hook of ['resume_dungeon_attempt','save_dungeon_attempt_runtime','function beginOrResumeAttempt','function saveRuntime'])if(!contents.includes(hook))throw new Error('Resumable dungeon service is missing '+hook);
-    if(!contents.includes("dungeonCard('chaos-canyon')")||!contents.includes("leaderboardMarkup('chaos-canyon')"))throw new Error('Chaos Canyon must remain visible in the Endgame Hub');
+    if(contents.includes("dungeonCard('chaos-canyon')")||contents.includes("leaderboardMarkup('chaos-canyon')"))throw new Error('Future dungeons must not be active in the beta Endgame Hub');
+    if(!contents.includes("dungeonCard('ashen-vault')")||!contents.includes("dungeonCard('hollow-sanctum')")||!contents.includes('Chaos Canyon, Blackout Station and The Fractured Ages are intentionally held for future updates.')||!contents.includes("!Game.isBetaDungeonPlayable(id)"))throw new Error('Beta Endgame Hub content lock is incomplete');
     if(!contents.includes('function rollClearLoot')||!contents.includes('function rollClearLootBundle')||!contents.includes('function clearLootGuaranteed'))throw new Error('Dungeon clear loot must retain two-drop pacing and bad-luck protection');
     if(!contents.includes("Number(x.tier)<Number(D.LOOT_RULES?.raidExclusiveTier||5)"))throw new Error('Dungeon loot pools must exclude raid-exclusive Tier 5');
     if(contents.includes("quality==='epic'?5"))throw new Error('Weekly rewards must never create Tier 5 gear');
@@ -435,7 +436,9 @@ for(const file of files){
     for(const hook of ['TWELVE BELOW — SEPULCHRE VISUAL REBORN','.tb-depth-backdrop','.tb-floor-seal','.tb-crypt-marker','.tb-soul-braziers','.tb-grave-fog','.tb-spectral-pass','.tb-soul-burst','tbCryptWake','tbSoulFlame'])if(!contents.includes(hook))throw new Error('Twelve Below sepulchre visual layer is missing '+hook);
   }
   if(file==='social-v3.js'){
-    for(const id of ['hollow-sanctum','chaos-canyon','blackout-station','fractured-ages'])if(!contents.includes("id:'"+id+"'"))throw new Error('Party Finder is missing dungeon target '+id);
+    for(const id of ['ashen-vault','hollow-sanctum'])if(!contents.includes("id:'"+id+"'"))throw new Error('Party Finder is missing beta dungeon target '+id);
+    for(const id of ['chaos-canyon','blackout-station','fractured-ages'])if(contents.includes("options.push({type:'dungeon',id:'"+id+"'"))throw new Error('Future dungeon leaked into beta Party Finder: '+id);
+    if(!contents.includes("Game.isBetaDungeonPlayable(g.target_id)")||!contents.includes("Game.isBetaDungeonPlayable(id)"))throw new Error('Party Finder must reject legacy/direct future-dungeon listings');
     for(const hook of ["role==='owner'","chat-rank owner","m.sender_badge==='owner'?'from-owner'"])if(!contents.includes(hook))throw new Error('Owner chat badge support is missing '+hook);
     for(const hook of ['function lockedGuildName()','function renderGuildIdentity()',"db.rpc('cellbound_lock_guild_name'",'permanent for this account'])if(!contents.includes(hook))throw new Error('Permanent guild-name lock UI is missing '+hook);
     if(contents.includes('Your guild is now known as'))throw new Error('Legacy freely editable guild-name flow returned');
