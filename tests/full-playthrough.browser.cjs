@@ -111,6 +111,7 @@ async function mount(page,seedState=null,owner=false,options={}){
         if(name==='cellbound_admin_status')return{data:owner?{is_admin:true,role:'owner',auto_clear_cell_shock:false}:{is_admin:false,role:null,auto_clear_cell_shock:false},error:null};
         if(name==='cellbound_release_status')return{data:null,error:null};
         if(name==='cellbound_admin_market_summary')return{data:{active_gear:0,buy_orders:0,sell_orders:0,trades_24:0,volume_24:0,tax_24:0,top_items:[]},error:null};
+        if(name==='cellbound_admin_analytics_summary')return{data:{channel:args.p_channel||'staging',days:Number(args.p_days)||30,since:new Date(Date.now()-86400000).toISOString(),overview:{active_testers:3,sessions:7,events:48,characters_tracked:15,quests_completed:4,crafts_completed:6,items_equipped:9,items_dismantled:3},classes:[{name:'Warrior',count:5},{name:'Mage',count:4}],races:[{name:'Veyren',count:6},{name:'Nymari',count:3}],class_race:[{class:'Warrior',race:'Veyren',count:3}],dungeons:[{id:'ashen-vault',name:'The Ashen Vault',starts:8,completions:6,unique_players:3,completion_rate:75}],quests:[{id:'ashes-east-road',name:'Ashes on the East Road',completions:3,unique_players:3}],features:[{name:'content',opens:12,unique_players:3}],levels:[{level:5,characters:4,players:3}],professions:[{name:'Alchemy',learned:2,crafts:5,players:2}],daily_activity:[{date:'2026-10-03',players:3,sessions:7}]},error:null};
         if(simulateDungeonRuntime&&name==='resume_dungeon_attempt'){
           const saved=readAttempt();return{data:saved?.active?saved:{active:false},error:null};
         }
@@ -621,6 +622,12 @@ async function ownerDungeonGeneratorPlaythrough(browser){
   assert(await page.locator('#adminBetaReportQueue').isVisible(),'owner can access the beta report triage queue');
   assert(await page.locator('#adminPlayerLookup').isVisible(),'owner can access targeted player recovery');
   assert.equal(await page.locator('#adminPlayerRecoveryActions [data-recover-player]').count(),3,'recovery console exposes only the three audited support actions');
+  await page.waitForFunction(()=>Boolean(window.CellboundAdminAnalytics),{},{timeout:5000,polling:50});
+  assert(await page.locator('#adminAnalyticsKpis').isVisible(),'owner can access Beta Analytics');
+  await page.waitForFunction(()=>document.querySelector('#adminAnalyticsClasses')?.textContent?.includes('Warrior'),{},{timeout:5000,polling:50});
+  assert((await page.locator('#adminAnalyticsDungeons').innerText()).includes('The Ashen Vault'),'analytics dashboard renders dungeon starts and clears');
+  assert((await page.locator('#adminAnalyticsRaces').innerText()).includes('Veyren'),'analytics dashboard renders race popularity');
+  assert.equal(await page.locator('#adminAnalyticsChannel').inputValue(),'staging','dev analytics defaults to the staging channel');
   await page.locator('#openDungeonGenerator').click();
   await page.waitForSelector('#dungeonGeneratorMount:not([hidden]) .dg-shell',{timeout:5000});
 
@@ -666,6 +673,6 @@ async function ownerDungeonGeneratorPlaythrough(browser){
     await betaClassAndNullGatePlaythrough(browser);
     await breakGamePlaythrough(browser);
     await ownerDungeonGeneratorPlaythrough(browser);
-    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, five-class beta lock, all dungeon content retained, Manor-gated Null Complex, adversarial corrupted-save repair, rapid-action protection, Cell Shock recovery, dungeon refresh/resume, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, beta support intake, admin triage/recovery, owner dungeon generator and responsive layouts.');
+    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, five-class beta lock, all dungeon content retained, Manor-gated Null Complex, adversarial corrupted-save repair, rapid-action protection, Cell Shock recovery, dungeon refresh/resume, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, beta support intake, admin triage/recovery, beta analytics, owner dungeon generator and responsive layouts.');
   }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});
