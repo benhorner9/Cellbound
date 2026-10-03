@@ -1,5 +1,8 @@
 (()=>{
 'use strict';
+const BAL=window.CellboundBalance;
+const SHIPWRIGHT_KIT_COST=Number(BAL?.SHIPWRIGHT_KIT_COST)||1000;
+const SHIPWRIGHT_KIT_COST_LABEL=SHIPWRIGHT_KIT_COST.toLocaleString();
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const TITLE='No Way Back';
@@ -180,7 +183,7 @@ function renderRepairs(){
   root.innerHTML=chrome('SILAS’S BOAT · HARBOUR','Make Her Seaworthy',
     '<div class="nwb-boat-hero"><div class="nwb-boat-art"><div class="nwb-sail '+(n.sailRepaired?'fixed':'torn')+'"></div><div class="nwb-hull '+(n.repairKit?'fixed':'holed')+'"></div><span class="nwb-mast"></span><span class="nwb-water"></span></div><div><small>REPAIRS '+repairStatus()+' / 3</small><h3>The island is still out of reach.</h3><p>Everything needed for the crossing can be solved from here. The route chart, once recovered, will remain known even if the boat is later lost at sea.</p></div></div>'+
     '<div class="nwb-repair-grid">'+
-      repairCard('hull','HULL','Timber & Nails',n.repairKit,'The hull is taking water. A Shipwright’s Repair Kit is permanently stocked at the Trading Post for 5,000 gold.',n.repairKit?'HULL REPAIRED':'BUY AT TRADING POST')+
+      repairCard('hull','HULL','Timber & Nails',n.repairKit,'The hull is taking water. A Shipwright’s Repair Kit is permanently stocked at the Trading Post for '+SHIPWRIGHT_KIT_COST_LABEL+' gold.',n.repairKit?'HULL REPAIRED':'BUY AT TRADING POST')+
       repairCard('sail','SAIL','Torn Canvas',n.sailRepaired,'Rebuild the torn sail before the wind tears it apart completely.',n.sailRepaired?'SAIL REPAIRED':'STITCH THE SAIL')+
       repairCard('map','CHART','Missing Map',n.mapSolved,'Reconstruct Silas’s remembered route from harbour landmarks.',n.mapSolved?'ROUTE RECORDED':'PLOT THE ROUTE')+
     '</div><div class="nwb-ready-bar '+(ready?'ready':'')+'"><div><small>'+ (ready?'BOAT READY':'CROSSING LOCKED') +'</small><b>'+ (ready?'The tide is turning. Manor Island is reachable.':'Complete all three repairs before leaving the harbour.') +'</b></div><button data-nwb-depart '+(ready?'':'disabled')+'>CAST OFF →</button></div>');
@@ -294,7 +297,7 @@ function renderSailingReady(){
   const n=ensure();
   if(!n.repairKit||!n.sailRepaired||!n.mapSolved){n.stage='repairs';renderRepairs();return}
   root.innerHTML=chrome('MANOR ISLAND · CROSSING','The Open Water',
-    '<div class="nwb-voyage-ready"><div class="nwb-sea-window"><div class="nwb-distant-manor">⌂</div><div class="nwb-sea-boat">⚓</div></div><div><small>VOYAGE '+(Number(n.voyageAttempts)+1)+'</small><h3>Reach the island without losing the boat.</h3><p>Steer around rocks and wreckage. Squalls tear the sail; impacts damage the hull. The chart will survive a failed crossing, but the hull repair and sail will need to be replaced.</p><div class="nwb-voyage-warning"><b>FAILURE COST</b><span>New 5,000 gold hull kit + repair the sail again</span></div><button data-voyage-start>TAKE THE HELM →</button></div></div>');
+    '<div class="nwb-voyage-ready"><div class="nwb-sea-window"><div class="nwb-distant-manor">⌂</div><div class="nwb-sea-boat">⚓</div></div><div><small>VOYAGE '+(Number(n.voyageAttempts)+1)+'</small><h3>Reach the island without losing the boat.</h3><p>Steer around rocks and wreckage. Squalls tear the sail; impacts damage the hull. The chart will survive a failed crossing, but the hull repair and sail will need to be replaced.</p><div class="nwb-voyage-warning"><b>FAILURE COST</b><span>New '+SHIPWRIGHT_KIT_COST_LABEL+' gold hull kit + repair the sail again</span></div><button data-voyage-start>TAKE THE HELM →</button></div></div>');
   bindClose();root.querySelector('[data-voyage-start]').onclick=startVoyage
 }
 async function startVoyage(){
@@ -645,13 +648,13 @@ function actionHtml(n,c){
 }
 function devControls(n){
   if(!document.querySelector('#adminNav:not([hidden])'))return'';
-  return'<section class="nwb-dev"><small>DEV TESTING</small><button data-nwb-dev-unlock>UNLOCK ATTUNEMENT QUEST</button><button data-nwb-dev-gold>GRANT 5,000 GOLD</button><button data-nwb-dev-boat>PREPARE BOAT</button></section>'
+  return'<section class="nwb-dev"><small>DEV TESTING</small><button data-nwb-dev-unlock>UNLOCK ATTUNEMENT QUEST</button><button data-nwb-dev-gold>GRANT '+SHIPWRIGHT_KIT_COST_LABEL+' GOLD</button><button data-nwb-dev-boat>PREPARE BOAT</button></section>'
 }
 function bindDetail(main,side){
   main.querySelector('[data-nwb-start]')?.addEventListener('click',start);
   main.querySelector('[data-nwb-open]')?.addEventListener('click',open);
   side.querySelector('[data-nwb-dev-unlock]')?.addEventListener('click',async()=>{const n=ensure();n.devUnlocked=true;await save('Developer testing override enabled for No Way Back.');window.CellboundQuests?.render?.()});
-  side.querySelector('[data-nwb-dev-gold]')?.addEventListener('click',async()=>{state().gold=(Number(state().gold)||0)+5000;await save('Developer testing: 5,000 gold granted.');notify('DEV TEST','5,000 gold granted','Use the Trading Post listing normally.')});
+  side.querySelector('[data-nwb-dev-gold]')?.addEventListener('click',async()=>{state().gold=(Number(state().gold)||0)+SHIPWRIGHT_KIT_COST;await save('Developer testing: '+SHIPWRIGHT_KIT_COST_LABEL+' gold granted.');notify('DEV TEST',SHIPWRIGHT_KIT_COST_LABEL+' gold granted','Use the Trading Post listing normally.')});
   side.querySelector('[data-nwb-dev-boat]')?.addEventListener('click',async()=>{const n=ensure();n.started=true;n.ropeSolved=true;n.repairKit=true;n.sailRepaired=true;n.mapSolved=true;n.stage='sailing';await save('Developer testing: the boat was prepared.');open()})
 }
 function renderTrading(){
@@ -659,12 +662,12 @@ function renderTrading(){
   let mount=$('#nwbTradingListing');if(!mount){mount=document.createElement('div');mount.id='nwbTradingListing';mount.className='nwb-trading-mount';host.querySelector('.section-intro')?.insertAdjacentElement('afterend',mount)}
   const n=ensure();if(!n?.started||n.complete||n.repairKit||!['repairs','sailing'].includes(n.stage)){mount.innerHTML='';return}
   const gold=Number(state()?.gold)||0;
-  mount.innerHTML='<article class="nwb-trade-listing"><div class="nwb-trade-art">▰<i>⚒</i></div><div><small>QUEST STOCK · ALWAYS AVAILABLE</small><h3>Shipwright’s Repair Kit</h3><p>Seasoned timber, pitch and iron nails. Enough to make Silas’s hull seaworthy for one crossing attempt.</p><span>Required for <b>No Way Back</b></span></div><div class="nwb-trade-price"><small>FIXED PRICE</small><b>5,000 GOLD</b><em>You have '+gold.toLocaleString()+'</em><button data-buy-repair '+(gold<5000?'disabled':'')+'>'+(gold<5000?'INSUFFICIENT GOLD':'BUY KIT →')+'</button></div></article>';
+  mount.innerHTML='<article class="nwb-trade-listing"><div class="nwb-trade-art">▰<i>⚒</i></div><div><small>QUEST STOCK · ALWAYS AVAILABLE</small><h3>Shipwright’s Repair Kit</h3><p>Seasoned timber, pitch and iron nails. Enough to make Silas’s hull seaworthy for one crossing attempt.</p><span>Required for <b>No Way Back</b></span></div><div class="nwb-trade-price"><small>FIXED PRICE</small><b>'+SHIPWRIGHT_KIT_COST_LABEL+' GOLD</b><em>You have '+gold.toLocaleString()+'</em><button data-buy-repair '+(gold<SHIPWRIGHT_KIT_COST?'disabled':'')+'>'+(gold<SHIPWRIGHT_KIT_COST?'INSUFFICIENT GOLD':'BUY KIT →')+'</button></div></article>';
   mount.querySelector('[data-buy-repair]')?.addEventListener('click',async()=>{
-    const s=state(),n=ensure();if(n.repairKit)return;if((Number(s.gold)||0)<5000){notify('TRADING POST','Not enough gold','The Shipwright’s Repair Kit costs 5,000 gold.');return}
-    s.gold=Number(s.gold)-5000;n.repairKit=true;
-    await save('A Shipwright’s Repair Kit was bought from the Trading Post for 5,000 gold and used to patch the hull.');
-    notify('QUEST ITEM PURCHASED','Hull repaired','5,000 gold spent. Return to No Way Back.');
+    const s=state(),n=ensure();if(n.repairKit)return;if((Number(s.gold)||0)<SHIPWRIGHT_KIT_COST){notify('TRADING POST','Not enough gold','The Shipwright’s Repair Kit costs '+SHIPWRIGHT_KIT_COST_LABEL+' gold.');return}
+    s.gold=Number(s.gold)-SHIPWRIGHT_KIT_COST;n.repairKit=true;
+    await save('A Shipwright’s Repair Kit was bought from the Trading Post for '+SHIPWRIGHT_KIT_COST_LABEL+' gold and used to patch the hull.');
+    notify('QUEST ITEM PURCHASED','Hull repaired',SHIPWRIGHT_KIT_COST_LABEL+' gold spent. Return to No Way Back.');
     renderTrading()
   })
 }

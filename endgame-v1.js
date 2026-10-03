@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const D=window.CellboundEndgameData,G=window.CellboundGear;
+const D=window.CellboundEndgameData,G=window.CellboundGear,BAL=window.CellboundBalance;
 if(!D||!G){console.error('Cellbound endgame data failed to load.');return}
 
 const $=s=>document.querySelector(s);
@@ -405,7 +405,8 @@ function rollClearLootBundle(dungeonId,bossId=null,opts={}){
  return drops
 }
 function shardReward(dungeonId){
- const cfg=currentConfig(dungeonId);return Math.max(1,Math.round(cfg.diff.cellShardBase))
+ const cfg=currentConfig(dungeonId);
+ return BAL?.dungeonShards?.(dungeonId,{difficulty:cfg.difficulty,tier:cfg.tier})||Math.max(1,Math.round(cfg.diff.cellShardBase))
 }
 function rollChase(dungeonId){
  const cfg=currentConfig(dungeonId),state=Game?.getState?.();if(!state)return null;

@@ -1,5 +1,6 @@
 (()=>{
 'use strict';
+const BAL=window.CellboundBalance;
 window.CellboundCombatStandard?.register?.('ashen-vault',{kind:'dungeon',execution:'local',ui:'shared-cb2d'});
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -143,7 +144,7 @@ const ilvl=()=>{
 const currentStageDef=()=>run?.externalStage||STAGES[run?.stage||0];
 const partyLevel=()=>{const p=party();return p.length?Math.round(p.reduce((n,c)=>n+Math.max(1,Number(c.level)||1),0)/p.length):1};
 const ASHEN_VAULT_XP=900;
-function xpNeeded(level){return 800+Math.max(0,(Number(level)||1)-1)*250}
+function xpNeeded(level){return Game?.xpNeeded?.(level)||BAL?.xpNeeded?.(level)||800+Math.max(0,(Number(level)||1)-1)*250}
 function awardPartyXp(amount){
  const gains=[],cap=Math.max(1,Number(Game?.getLevelCap?.())||15);
  party().forEach(c=>{
@@ -1647,7 +1648,7 @@ async function seamlessFrom(startIndex,tok){
    run.stage=i+1;run.runtimeStageStartedAt=0;await ashenSaveRuntime('between')
   }
   const st=state();st.dungeonHistory=Array.isArray(st.dungeonHistory)?st.dungeonHistory:[];st.dungeonCompletions=Number(st.dungeonCompletions)||0;
-  const mode=run.endgame?.difficulty||'normal',tier=Number(run.endgame?.tier)||0,gold=mode==='normal'?120:mode==='heroic'?190:220+tier*10,renown=mode==='normal'?60:mode==='heroic'?90:100+tier*4,xp=mode==='normal'?ASHEN_VAULT_XP:mode==='heroic'?1050:1200;
+  const mode=run.endgame?.difficulty||'normal',tier=Number(run.endgame?.tier)||0,first=Number(st.dungeonCompletions||0)===0,gold=mode==='normal'?120:mode==='heroic'?190:220+tier*10,renown=mode==='normal'?60:mode==='heroic'?90:100+tier*4,xp=BAL?.dungeonXp?.('ashen-vault',{difficulty:mode,firstClear:first})||(first&&mode==='normal'?2850:mode==='normal'?ASHEN_VAULT_XP:mode==='heroic'?1050:1200);
   st.gold+=gold;st.renown+=renown;run.loot.gold+=gold;run.loot.renown+=renown;run.loot.xp=xp;
   const shards=window.CellboundEndgame?.shardReward?.('ashen-vault')||0;if(shards){Game.addMaterial('cell-shards',shards);recordMaterialDrop({key:'cell-shards',quantity:shards},'Endgame Reward')}
   const chase=window.CellboundEndgame?.rollChase?.('ashen-vault');if(chase){st.activity.push('Very rare collection reward: '+chase.name+'.');flash('LEGENDARY DROP',false)}

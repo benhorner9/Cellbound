@@ -4,6 +4,7 @@
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const BAL=window.CellboundBalance;
 const TITLE='The Thirteenth Bell';
 const LOCATION_META={
   watchmaker:{name:"The Watchmaker",icon:"◴",copy:"A dismantled clock keeps stopping at 12:13.",cost:2},
@@ -43,8 +44,8 @@ function ensure(){
   return b
 }
 function unlocked(){
-  const q=qroot(),s=state();
-  return Boolean(q?.flags?.hollowSanctumUnlocked||Number(s?.dungeonCompletions)>0||Number(s?.hollowSanctumCompletions)>0||Number(s?.chaosCanyonCompletions)>0||Number(s?.blackoutStationCompletions)>0)
+  const q=qroot(),s=state(),b=q?.thirteenthBell;
+  return Boolean(b?.started||b?.complete||q?.flags?.hollowFirstClear||Number(q?.hollowCompletions)>0||Number(s?.hollowSanctumCompletions)>0||Number(s?.chaosCanyonCompletions)>0||Number(s?.blackoutStationCompletions)>0)
 }
 function solvedCount(){const b=ensure();return SOLVE_ORDER.filter(x=>b?.solved?.[x]).length}
 function addFact(id,text){
@@ -87,7 +88,7 @@ function renderDetail(main,side){
     '<div class="quest-detail-action">'+actionHtml(b,c)+'</div>';
   side.innerHTML='<section><small>WHAT TO EXPECT</small><div class="quest-reward-list"><p>Investigate Greywake across repeated loops</p><p>Solve five distinct puzzles</p><p>Connect evidence between loops</p><p>Finish the final loop before midnight</p><p>Face the Bellkeeper</p></div></section>'+
     '<section><small>DISCOVERIES</small><div class="bell-side-progress">'+SOLVE_ORDER.map(id=>'<p class="'+(b.solved[id]?'done':'')+'"><i>'+(b.solved[id]?'✓':'·')+'</i><span>'+esc(LOCATION_META[id].name)+'</span></p>').join('')+'</div></section>'+
-    '<section><small>REWARDS</small><div class="quest-reward-list"><p>500 Gold</p><p>300 Guild Renown</p><p>The Thirteenth Chime relic</p><p>Greywake world location</p><p>Bellfoundry clue</p></div></section>'+
+    '<section><small>REWARDS</small><div class="quest-reward-list"><p>500 Gold</p><p>300 Guild Renown</p><p>'+(BAL?.CAMPAIGN_XP?.thirteenthBell||2550)+' XP each</p><p>The Thirteenth Chime relic</p><p>Greywake world location</p><p>Bellfoundry clue</p></div></section>'+
     '<section><small>LOOP RECORD</small><div class="quest-history">'+(b.history.slice(-6).reverse().map(h=>'<p>'+esc(h.text)+'</p>').join('')||'<p>No loop has been entered yet.</p>')+'</div></section>';
   main.querySelector('[data-bell-action]')?.addEventListener('click',()=>{
     if(c.locked){alert('Continue the main adventure until your guild has opened the deeper roads beneath Zeltira.');return}
@@ -439,6 +440,7 @@ async function finish(ending){
   s.relics=s.relics&&typeof s.relics==='object'?s.relics:{};s.relics.thirteenthChime={name:'The Thirteenth Chime',unlockedAt:new Date().toISOString(),effect:'A bell-bound relic carrying one echo of the final loop. Its deeper power has not awakened.'};
   s.activity=Array.isArray(s.activity)?s.activity:[];s.activity.push('Quest complete: '+TITLE+'. Greywake returned to the world.');
   history('The guild chose to '+({break:'break the Bell and return Greywake cleanly',complete:'complete the Bell and stabilise Greywake',silence:'silence the Thirteenth Hour itself'}[ending])+'.');
+  await Game.awardPartyXp?.(BAL?.CAMPAIGN_XP?.thirteenthBell||2550,{source:'Quest complete · '+TITLE});
   await save(false);renderCompletion();window.CellboundFX?.victory?.({eyebrow:'QUEST COMPLETE',title:TITLE,copy:'Greywake has returned to the world.'})
 }
 async function renderCompletion(){
@@ -453,7 +455,7 @@ async function renderCompletion(){
     ]
   });
   root.innerHTML=chrome('QUEST COMPLETE',TITLE,
-    '<div class="bell-complete"><div class="bell-complete-mark">XIII</div><small>REWARDS SECURED</small><h3>Greywake has returned.</h3><div><article><span>GOLD</span><b>+500</b></article><article><span>RENOWN</span><b>+300</b></article><article><span>RELIC</span><b>THE THIRTEENTH CHIME</b></article><article><span>LOCATION</span><b>GREYWAKE</b></article></div><button data-bell-finish>RETURN TO QUEST JOURNAL →</button></div>'
+    '<div class="bell-complete"><div class="bell-complete-mark">XIII</div><small>REWARDS SECURED</small><h3>Greywake has returned.</h3><div><article><span>GOLD</span><b>+500</b></article><article><span>RENOWN</span><b>+300</b></article><article><span>PARTY XP</span><b>+'+(BAL?.CAMPAIGN_XP?.thirteenthBell||2550)+'</b></article><article><span>RELIC</span><b>THE THIRTEENTH CHIME</b></article><article><span>LOCATION</span><b>GREYWAKE</b></article></div><button data-bell-finish>RETURN TO QUEST JOURNAL →</button></div>'
   );bindClose();root.querySelector('[data-bell-finish]').onclick=()=>{close();window.CellboundQuests?.render?.()}
 }
 async function renderAftermath(){
