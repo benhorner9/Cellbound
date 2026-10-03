@@ -1,0 +1,35 @@
+name: Diagnose Cellbound Staging Host
+
+on:
+  push:
+    branches:
+      - staging
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect staging FTP layout
+        shell: bash
+        env:
+          FTP_SERVER: ${{ secrets.STAGING_FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.STAGING_FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.STAGING_FTP_PASSWORD }}
+          FTP_PORT: ${{ secrets.STAGING_FTP_PORT }}
+        run: |
+          set -euo pipefail
+          PORT="${FTP_PORT:-21}"
+          for path in "/" "/CB/" "/cb/"; do
+            echo "===== $path ====="
+            curl --insecure --silent --show-error --ssl-reqd               --user "$FTP_USERNAME:$FTP_PASSWORD"               "ftp://$FTP_SERVER:$PORT$path" --list-only | sed -n '1,80p' || true
+            echo
+          done
+          for path in "/index.html" "/CB/index.html" "/cb/index.html"; do
+            echo "===== $path marker ====="
+            curl --insecure --silent --show-error --ssl-reqd               --user "$FTP_USERNAME:$FTP_PASSWORD"               "ftp://$FTP_SERVER:$PORT$path" 2>/dev/null |               grep -Eio 'Cellbound — Coming Soon|Return to your guild|Coming Soon' | head -5 || true
+            echo
+          done
