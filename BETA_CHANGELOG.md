@@ -3,6 +3,8 @@
 ## 2026-10-03 — Step 9: Beta Operations
 
 - Added in-game Beta Support for tester reports.
+- Added a persistent Report Bug / Request launcher available from anywhere in the game.
+- Feature requests now have their own report category, and quick reports preserve the originating screen.
 - Reports capture build, active screen, viewport and lightweight party/progression context automatically.
 - Added private admin triage queue with tester-visible team notes.
 - Added safe player lookup and recovery for Cell Shock, stuck dungeon attempts and Twelve Below attempts.
