@@ -9,7 +9,7 @@ const engine=process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium;
 function matureState(){
   const chars=[
     ['tank','Aegis','Warrior','Protection'],
-    ['heal','Mercy','Priest','Holy'],
+    ['heal','Mercy','Paladin','Holy'],
     ['mage','Ember','Mage','Arcane'],
     ['hunt','Fletch','Hunter','Marksman'],
     ['rogue','Shade','Rogue','Assassination']
@@ -37,11 +37,11 @@ function coreLoopState(){
     class:klass,classes:[klass],slot,tier:2,rarity:'Uncommon',itemLevel:ilvl,baseItemLevel:ilvl,power:0,source:'Core loop seed'
   });
   const defs=[
-    ['tank','Aegis','Warrior','Protection',30,'Alchemy'],
-    ['heal','Mercy','Priest','Holy',30,null],
-    ['mage','Ember','Mage','Arcane',30,null],
-    ['hunt','Fletch','Hunter','Marksman',30,null],
-    ['rogue','Shade','Rogue','Assassination',25,null]
+    ['tank','Aegis','Warrior','Protection',24,'Alchemy'],
+    ['heal','Mercy','Paladin','Holy',24,null],
+    ['mage','Ember','Mage','Arcane',24,null],
+    ['hunt','Fletch','Hunter','Marksman',24,null],
+    ['rogue','Shade','Rogue','Assassination',19,null]
   ];
   const chars=defs.map(([id,name,klass,spec,ilvl,profession])=>({
     id,name,race:'Veyren',class:klass,spec,level:15,xp:0,power:70,
@@ -316,11 +316,11 @@ async function coreGameplayLoopPlaythrough(browser){
   page.on('dialog',dialog=>dialog.accept());
   await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
 
-  assert.equal(await page.evaluate(()=>CellboundGame.partyItemLevel()),29,'core loop begins one Item Level below Chaos Canyon');
-  await page.evaluate(()=>CellboundChaosCanyon.open());
-  await page.waitForSelector('#cc2dBackdrop:not([hidden]) .cb2d-blocked',{timeout:5000});
-  assert((await page.locator('#cc2dBackdrop .cb2d-blocked').innerText()).includes('requires Item Level 30'),'harder dungeon explains the exact Item Level gate');
-  await page.locator('#cc2dBackdrop [data-close]').click();
+  assert.equal(await page.evaluate(()=>CellboundGame.partyItemLevel()),23,'core loop begins one Item Level below The Hollow Sanctum');
+  await page.evaluate(()=>CellboundHollowSanctum.open());
+  await page.waitForSelector('#hs2dBackdrop:not([hidden]) .cb2d-blocked',{timeout:5000});
+  assert((await page.locator('#hs2dBackdrop .cb2d-blocked').innerText()).includes('requires Item Level 24'),'beta progression explains the exact Hollow Sanctum Item Level gate');
+  await page.locator('#hs2dBackdrop [data-close]').click();
 
   const bankIds=await page.evaluate(()=>{
     const G=CellboundGear,Game=CellboundGame;
@@ -392,17 +392,58 @@ async function coreGameplayLoopPlaythrough(browser){
   await page.locator('[data-bank-item="'+bankIds.upgrade+'"]').click();
   await page.waitForSelector('[data-equip-char="rogue"]',{timeout:5000});
   await page.locator('[data-equip-char="rogue"]').click();
-  await page.waitForFunction(()=>CellboundGame.partyItemLevel()>=30,{},{timeout:5000,polling:50});
-  assert.equal(await page.evaluate(()=>CellboundGame.partyItemLevel()),30,'equipping the recovered upgrade raises the active party through the next dungeon gate');
+  await page.waitForFunction(()=>CellboundGame.partyItemLevel()>=24,{},{timeout:5000,polling:50});
+  assert.equal(await page.evaluate(()=>CellboundGame.partyItemLevel()),24,'equipping the recovered upgrade raises the active party through the second beta dungeon gate');
   assert.equal(await page.evaluate(()=>CellboundGame.getState().roster.find(c=>c.id==='rogue')?.equipment?.Weapon?.itemLevel),40,'Bank equip action placed the real upgrade on the intended character');
 
-  await page.evaluate(()=>CellboundChaosCanyon.open());
-  await page.waitForSelector('#cc2dBackdrop:not([hidden]) [data-start]',{timeout:5000});
-  assert.equal(await page.locator('#cc2dBackdrop [data-start]').isDisabled(),false,'the same harder dungeon becomes enterable after progression raises party Item Level');
-  assert((await page.locator('#cc2dBackdrop').innerText()).includes('ILVL 30+'),'unlocked briefing still communicates the progression requirement');
-  await page.locator('#cc2dBackdrop [data-close]').click();
+  await page.evaluate(()=>CellboundHollowSanctum.open());
+  await page.waitForSelector('#hs2dBackdrop:not([hidden]) [data-start]',{timeout:5000});
+  assert.equal(await page.locator('#hs2dBackdrop [data-start]').isDisabled(),false,'the second beta dungeon becomes enterable after progression raises party Item Level');
+  assert((await page.locator('#hs2dBackdrop').innerText()).includes('ILVL 24+'),'unlocked beta briefing still communicates the progression requirement');
+  await page.locator('#hs2dBackdrop [data-close]').click();
 
   assert.equal(errors.filter(e=>!e.includes('Endgame state failed')).length,0,'core gameplay loop emitted no unexpected browser errors');
+  await page.close();
+}
+
+async function betaContentLockPlaythrough(browser){
+  const seed=coreLoopState();
+  seed.progression.nullComplexUnlocked=false;
+  seed.progression.manorRaidCleared=false;
+  seed.questSystem.nullComplex={started:false,stage:'signal',done:[],complete:false,history:[],components:{cable:false,cell:false,fuse:false},searchPressure:0};
+  const page=await browser.newPage({viewport:{width:1024,height:1366}});
+  const errors=await mount(page,seed);
+  await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
+
+  assert.deepEqual(await page.evaluate(()=>CellboundGame.betaPlayableClasses),['Warrior','Paladin','Hunter','Rogue','Mage'],'beta exposes exactly the five launch classes');
+  assert.equal(await page.evaluate(()=>['Priest','Druid','Shaman','Warlock','Monk','Death Knight','Demon Hunter','Evoker'].every(x=>!CellboundGame.isBetaClassPlayable(x))),true,'future classes remain gameplay-locked');
+  assert.deepEqual(await page.evaluate(()=>CellboundGame.betaDungeons),['ashen-vault','hollow-sanctum'],'beta exposes exactly Ashen Vault and Hollow Sanctum as dungeons');
+
+  await page.evaluate(()=>CellboundGame.switchView('content'));
+  await page.waitForTimeout(100);
+  for(const id of ['chaos-canyon','blackout-station','fractured-ages']){
+    const card=page.locator('[data-dungeon-card="'+id+'"]');
+    await card.waitFor({state:'visible',timeout:5000});
+    assert((await card.innerText()).includes('FUTURE UPDATE'),'future dungeon '+id+' is visibly locked');
+  }
+  await page.evaluate(()=>CellboundChaosCanyon.open());
+  assert.equal(await page.locator('#cc2dBackdrop:not([hidden])').count(),0,'direct Chaos Canyon entry cannot bypass the beta lock');
+  await page.evaluate(()=>CellboundBlackoutStation.open());
+  assert.equal(await page.locator('#bs2dBackdrop:not([hidden])').count(),0,'direct Blackout Station entry cannot bypass the beta lock');
+  await page.evaluate(()=>CellboundFracturedAges.open());
+  assert.equal(await page.locator('#fracturedAgesBackdrop:not([hidden])').count(),0,'direct Fractured Ages entry cannot bypass the beta lock');
+
+  await page.evaluate(()=>{CellboundGame.switchView('quests');CellboundQuests.selectAdventure('null-complex-quest')});
+  await page.waitForSelector('[data-adventure="null-complex-quest"]',{timeout:5000});
+  assert((await page.locator('[data-adventure="null-complex-quest"]').innerText()).includes('LOCKED'),'Signal From Nowhere is locked before a Manor clear');
+  assert((await page.locator('#questJournalDetail').innerText()).includes('LOCKED UNTIL THE MANOR'),'Null Complex detail explains the raid requirement');
+
+  await page.evaluate(()=>{CellboundGame.getState().progression.manorRaidCleared=true;CellboundGame.renderAll();CellboundQuests.selectAdventure('null-complex-quest')});
+  await page.waitForTimeout(80);
+  assert((await page.locator('[data-adventure="null-complex-quest"]').innerText()).includes('AVAILABLE'),'a persisted Manor clear unlocks Signal From Nowhere');
+  assert((await page.locator('#questJournalDetail').innerText()).includes('INVESTIGATE THE SIGNAL'),'the Null Complex quest becomes actionable only after The Manor');
+
+  assert.equal(errors.filter(e=>!e.includes('Endgame state failed')).length,0,'beta content lock emitted no unexpected browser errors');
   await page.close();
 }
 
@@ -455,7 +496,8 @@ async function ownerDungeonGeneratorPlaythrough(browser){
     await persistenceReloadPlaythrough(browser);
     await mainGamePlaythrough(browser);
     await coreGameplayLoopPlaythrough(browser);
+    await betaContentLockPlaythrough(browser);
     await ownerDungeonGeneratorPlaythrough(browser);
-    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, owner dungeon generator and responsive layouts.');
+    console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, beta class/dungeon locks, Manor-gated Null Complex, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, second-beta-dungeon unlock, activities, raids, market, PvP/social shell, owner dungeon generator and responsive layouts.');
   }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exit(1)});
