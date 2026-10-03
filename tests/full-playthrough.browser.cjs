@@ -395,7 +395,8 @@ async function coreGameplayLoopPlaythrough(browser){
     return !s.workshopCraftProject&&s.consumables?.some(x=>x.key==='field-recovery-potion'&&Number(x.quantity)>0);
   },{},{timeout:5000,polling:50});
   const hollowrootAfter=await page.evaluate(()=>Number(CellboundGame.getState().materials?.hollowroot)||0);
-  assert.equal(hollowrootAfter,Math.max(0,craftReady.hollowroot-(Number(craftReady.inputs?.hollowroot)||0)),'crafting consumes exactly the recipe Hollowroot cost');
+  const hollowrootCost=Number(craftReady.inputs?.hollowroot)||0,expectedAfter=Math.max(0,craftReady.hollowroot-hollowrootCost);
+  assert(hollowrootAfter===expectedAfter||hollowrootAfter===expectedAfter+1,'crafting consumes the recipe Hollowroot cost, with at most one reagent reclaimed by a masterwork');
   assert.equal(await page.evaluate(()=>Number(CellboundGame.getState().materials?.['faded-cell-fragment'])||0),2,'salvage materials remain available for their own economy path');
   assert(await page.evaluate(()=>CellboundGame.getState().consumables.some(x=>x.key==='field-recovery-potion'&&Number(x.quantity)>0)),'completed craft returns a usable preparation item to shared Guild stock');
 
