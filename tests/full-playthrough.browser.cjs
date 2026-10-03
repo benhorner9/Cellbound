@@ -134,7 +134,18 @@ async function mount(page,seedState=null,owner=false,options={}){
   try{
     await page.waitForFunction(()=>window.CellboundGame?.ready===true,{},{timeout:10000,polling:50});
   }catch(error){
-    throw new Error('CellboundGame failed to become ready: '+(errors.join(' | ')||error.message));
+    const diag=await page.evaluate(()=>({
+      readyState:document.readyState,
+      gameType:typeof window.CellboundGame,
+      gameReady:window.CellboundGame?.ready,
+      gear:Boolean(window.CellboundGear),
+      professions:Boolean(window.CellboundProfessions),
+      portraits:Boolean(window.CellboundPortraits),
+      supabase:Boolean(window.supabase),
+      bodyClass:document.body?.className||'',
+      scripts:[...document.scripts].slice(-12).map(x=>x.getAttribute('src')||'inline')
+    })).catch(e=>({diagnosticError:String(e)}));
+    throw new Error('CellboundGame failed to become ready: '+JSON.stringify(diag)+' | '+(errors.join(' | ')||error.message));
   }
   try{
     await page.waitForFunction(()=>Boolean(window.CellboundOnboarding),{},{timeout:10000,polling:50});
