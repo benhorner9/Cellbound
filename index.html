@@ -4,100 +4,108 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#090d0f" />
-  <title>Cellbound — Coming Soon</title>
-  <meta name="description" content="Cellbound is being prepared for its next expedition." />
+  <title>Cellbound</title>
+  <meta name="description" content="Build a guild, master dungeons and lead your adventurers through Cellbound." />
   <link rel="stylesheet" href="./styles.css?v=2" />
-  <style>
-    .coming-soon-shell{
-      min-height:100vh;
-      display:grid;
-      place-items:center;
-      position:relative;
-      overflow:hidden;
-      background:#090d0f;
-      color:#f4efe3;
-      text-align:center;
-      padding:24px;
-    }
-    .coming-soon-world{
-      position:absolute;
-      inset:0;
-      z-index:0;
-    }
-    .coming-soon-world img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      opacity:.34;
-      filter:saturate(.75) contrast(1.08);
-    }
-    .coming-soon-world::after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background:
-        radial-gradient(circle at 50% 40%, rgba(42,76,76,.12), transparent 36%),
-        linear-gradient(180deg, rgba(9,13,15,.35), rgba(9,13,15,.92));
-    }
-    .coming-soon-card{
-      position:relative;
-      z-index:1;
-      width:min(680px,100%);
-      padding:48px 32px;
-      border:1px solid rgba(220,196,139,.28);
-      background:rgba(8,12,14,.82);
-      box-shadow:0 24px 80px rgba(0,0,0,.45);
-      backdrop-filter:blur(8px);
-    }
-    .coming-soon-kicker{
-      margin:0 0 12px;
-      letter-spacing:.24em;
-      font-size:.78rem;
-      font-weight:800;
-      color:#cbb786;
-    }
-    .coming-soon-card h1{
-      margin:0;
-      font-size:clamp(3rem,10vw,6rem);
-      line-height:.9;
-      letter-spacing:-.04em;
-      text-transform:uppercase;
-    }
-    .coming-soon-card p{
-      margin:22px auto 0;
-      max-width:520px;
-      color:#c7c3b8;
-      font-size:1.05rem;
-      line-height:1.7;
-    }
-    .coming-soon-divider{
-      width:84px;
-      height:1px;
-      margin:28px auto;
-      background:rgba(220,196,139,.5);
-    }
-    .coming-soon-note{
-      margin:0 !important;
-      font-size:.82rem !important;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      color:#8f958f !important;
-    }
-  </style>
 </head>
 <body>
-  <main class="coming-soon-shell">
-    <div class="coming-soon-world" aria-hidden="true">
+  <main class="login-shell">
+    <div class="login-world" aria-hidden="true">
       <img src="./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp" alt="" />
+      <div class="login-world__wash"></div>
+      <div class="login-world__mist login-world__mist--one"></div>
+      <div class="login-world__mist login-world__mist--two"></div>
     </div>
 
-    <section class="coming-soon-card" aria-label="Cellbound coming soon">
-      <p class="coming-soon-kicker">CELLBOUND</p>
-      <h1>Coming Soon</h1>
-      <div class="coming-soon-divider" aria-hidden="true"></div>
-      <p>The gates of Zeltira are being prepared. Cellbound is currently in development and will open to new guildmasters soon.</p>
-      <p class="coming-soon-note">Development build</p>
+    <header class="topbar">
+      <div class="brand-lockup">
+        <div class="cell-mark" aria-hidden="true">
+          <span class="cell-mark__ring cell-mark__ring--outer"></span>
+          <span class="cell-mark__ring cell-mark__ring--inner"></span>
+          <span class="cell-mark__crystal"></span>
+          <span class="cell-mark__flare"></span>
+        </div>
+        <div>
+          <b>CELLBOUND</b>
+          <small>Guild Command</small>
+        </div>
+      </div>
+      <div class="world-status"><span></span><b>Zeltira</b><em>Founding Season</em></div>
+    </header>
+
+    <section class="world-intro" aria-label="Cellbound introduction">
+      <div class="world-intro__eyebrow"><i></i> THE GATES OF ZELTIRA</div>
+      <h1>Build the guild<br><strong>they remember.</strong></h1>
+      <p>Recruit your roster, forge the right party and lead them through dungeons, raids and the places beyond the city walls.</p>
+
+      <div class="command-strip" aria-label="Cellbound game features">
+        <span><i>01</i><b>Recruit</b><small>Build your roster</small></span>
+        <span><i>02</i><b>Prepare</b><small>Gear & professions</small></span>
+        <span><i>03</i><b>Command</b><small>Survive the expedition</small></span>
+      </div>
     </section>
+
+    <section class="gate-panel" aria-label="Cellbound account login">
+      <div class="gate-panel__ornament gate-panel__ornament--top" aria-hidden="true"></div>
+      <div class="gate-panel__ornament gate-panel__ornament--bottom" aria-hidden="true"></div>
+
+      <div class="gate-panel__seal" aria-hidden="true">
+        <div class="cell-mark">
+          <span class="cell-mark__ring cell-mark__ring--outer"></span>
+          <span class="cell-mark__ring cell-mark__ring--inner"></span>
+          <span class="cell-mark__crystal"></span>
+          <span class="cell-mark__flare"></span>
+        </div>
+      </div>
+
+      <p class="gate-panel__kicker">GUILD LEDGER</p>
+      <h2>Return to your guild</h2>
+      <p id="login-intro" class="gate-panel__intro">Identify yourself at the gate to continue.</p>
+
+      <form id="login-form">
+        <label for="email">Guildmaster email</label>
+        <div class="field">
+          <span class="field-rune" aria-hidden="true">✦</span>
+          <input id="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+        </div>
+
+        <div class="label-row">
+          <label for="password">Password</label>
+          <button id="forgot-password" class="text-button" type="button">Forgot password?</button>
+        </div>
+        <div class="field">
+          <span class="field-rune" aria-hidden="true">◇</span>
+          <input id="password" type="password" placeholder="Enter your password" autocomplete="current-password" required />
+          <button id="toggle-password" class="eye-button" type="button">Show</button>
+        </div>
+
+        <label class="remember">
+          <input id="remember-device" type="checkbox" />
+          <span>Remember this device</span>
+        </label>
+
+        <button id="enter-button" class="enter-button" type="submit">
+          <span>ENTER ZELTIRA</span>
+          <b aria-hidden="true">→</b>
+        </button>
+      </form>
+
+      <p id="login-message" class="gate-panel__message" aria-live="polite" hidden></p>
+
+      <div class="divider"><span>NO GUILD YET?</span></div>
+      <button id="create-account" class="create-button" type="button">FOUND A NEW GUILD</button>
+
+      <p class="legal">Your account keeps your roster, progression and guild state together. New and reset passwords require at least 12 characters.</p>
+    </section>
+
+    <footer>
+      <span>© 2026 CELLBOUND</span>
+      <span class="footer-rune">◇</span>
+      <span>PRE-ALPHA · FOUNDING SEASON</span>
+    </footer>
   </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.116.0/dist/umd/supabase.min.js"></script>
+  <script src="./auth.js?v=2"></script>
 </body>
 </html>
