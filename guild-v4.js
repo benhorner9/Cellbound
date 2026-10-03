@@ -4,6 +4,7 @@ const G=window.CellboundGear;
 const B=window.CellboundBuildRules;
 const P=window.CellboundProfessions;
 const CP=window.CellboundPortraits;
+const BAL=window.CellboundBalance;
 if(!G){console.error('Cellbound gear catalogue failed to load.');return;}
 
 const SUPABASE_URL='https://jvydqeikdpelmtloulnd.supabase.co';
@@ -14,10 +15,10 @@ const PREVIOUS_STORAGE='cellbound-management-reboot-v2';
 const LOCAL_OWNER='cellbound-management-owner';
 const PENDING_SAVE='cellbound-management-pending-save-v1';
 const SAVE_VERSION=6;
-const PLAYER_LEVEL_CAP=15;
-const PVE_WIPE_CELL_SHOCK=25;
-const STANDARD_RECOVERY_MINUTES=60;
-const MEMBER_RECOVERY_MINUTES=30;
+const PLAYER_LEVEL_CAP=Number(BAL?.PLAYER_LEVEL_CAP)||15;
+const PVE_WIPE_CELL_SHOCK=Number(BAL?.PVE_WIPE_CELL_SHOCK)||25;
+const STANDARD_RECOVERY_MINUTES=Number(BAL?.RECOVERY_MINUTES?.standard)||60;
+const MEMBER_RECOVERY_MINUTES=Number(BAL?.RECOVERY_MINUTES?.member)||30;
 const LEGACY_ILVL_SLOTS=['Head','Chest','Weapon'];
 const ILVL_SLOTS=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic'];
 const SLOT_ITEM_LEVEL=G.ITEM_LEVELS||{Head:[18,24,32,40,46],Chest:[20,26,34,42,48],Weapon:[22,28,36,44,50]};
@@ -220,6 +221,28 @@ function writePartySlots(ids){
 function flatPartyIds(){return partySlotIds().filter(Boolean);}
 function partyCharacters(){return flatPartyIds().map(charById).filter(c=>c&&isCharacterRosterUnlocked(c.id)&&isCharacterBetaPlayable(c));}
 function partyItemLevel(){const chars=partyCharacters();return chars.length===5?Math.round(chars.reduce((sum,c)=>sum+characterItemLevel(c),0)/5):0;}
+function averagePartyLevel(){const chars=partyCharacters();return chars.length===5?Math.round(chars.reduce((sum,c)=>sum+Math.max(1,Number(c.level)||1),0)/5):0}
+function xpNeeded(level){return BAL?.xpNeeded?.(level)||800+Math.max(0,(Number(level)||1)-1)*250}
+async function awardPartyXp(amount,{source='Progression'}={}){
+  const chars=partyCharacters(),reward=Math.max(0,Math.round(Number(amount)||0));if(chars.length!==5||!reward)return[];
+  const gains=chars.map(c=>{
+    const beforeLevel=Math.min(PLAYER_LEVEL_CAP,Math.max(1,Number(c.level)||1)),beforeXp=beforeLevel>=PLAYER_LEVEL_CAP?0:Math.max(0,Number(c.xp)||0),beforeNeed=xpNeeded(beforeLevel);
+    let level=beforeLevel,xp=beforeLevel>=PLAYER_LEVEL_CAP?0:beforeXp+reward,levels=0;
+    while(level<PLAYER_LEVEL_CAP&&xp>=xpNeeded(level)){xp-=xpNeeded(level);level++;levels++}
+    if(level>=PLAYER_LEVEL_CAP){level=PLAYER_LEVEL_CAP;xp=0}
+    c.level=level;c.xp=xp;if(levels)c.talent=(Number(c.talent)||0)+levels;
+    return{id:c.id,name:c.name,amount:beforeLevel>=PLAYER_LEVEL_CAP?0:reward,beforeLevel,beforeXp,beforeNeed,afterLevel:level,afterXp:xp,afterNeed:xpNeeded(level),levels,capped:level>=PLAYER_LEVEL_CAP}
+  });
+  state.activity=Array.isArray(state.activity)?state.activity:[];
+  state.activity.push(source+': active five earned '+reward.toLocaleString()+' XP each.');
+  gains.filter(x=>x.levels>0).forEach(x=>state.activity.push(x.name+' reached Level '+x.afterLevel+'.'));
+  save();await persistState();
+  if(currentUser){
+    const now=new Date().toISOString();
+    try{await Promise.all(gains.map(x=>supabaseClient.from('characters').update({level:x.afterLevel,xp:x.afterXp,last_played_at:now}).eq('user_id',currentUser.id).eq('name',x.name)))}catch(error){console.warn('Campaign XP mirror sync failed',error)}
+  }
+  renderAll();return gains
+}
 function isRosterSlotUnlocked(index){return index<entitlements().rosterCap;}
 function isCharacterRosterUnlocked(id){const i=state?.roster?.findIndex(c=>c.id===id)??-1;return i>=0&&isRosterSlotUnlocked(i);}
 function recoveryRemainingMs(c){if(!c?.cellShockLockedUntil)return 0;return Math.max(0,new Date(c.cellShockLockedUntil).getTime()-Date.now());}
@@ -1236,7 +1259,7 @@ function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(
 
 window.CellboundGame={
   ready:false,getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getLevelCap:()=>PLAYER_LEVEL_CAP,getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,refreshStateFromServer,
-  characterItemLevel,partyItemLevel,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,portraitHTML,
+  characterItemLevel,partyItemLevel,averagePartyLevel,xpNeeded,awardPartyXp,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,portraitHTML,
   betaPlayableClasses:BETA_PLAYABLE_CLASSES,isBetaClassPlayable,isCharacterBetaPlayable,
   addBankItem,addMaterial,renderAll,switchView,starterEquipment,
   getPartyCharacters:()=>partyCharacters(),
