@@ -486,8 +486,8 @@ async function betaClassAndNullGatePlaythrough(browser){
 async function breakGamePlaythrough(browser){
   // Corrupted/legacy save: duplicate party ids, unavailable beta class, negative stacks and currencies.
   const corrupt=matureState();
-  corrupt.roster.push({id:'old-priest',name:'Archive',race:'Veyren',class:'Priest',spec:'Holy',level:99,xp:999,power:1,equipment:{},gearItems:[],talents:{},cellShock:0,cellShockLockedUntil:null,professions:[null]});
-  corrupt.party={tank:'tank',healer:'old-priest',dps:['mage','mage','rogue']};
+  corrupt.roster[1]={...corrupt.roster[1],class:'Priest',spec:'Holy',level:99,xp:999};
+  corrupt.party={tank:'tank',healer:'heal',dps:['mage','mage','rogue']};
   corrupt.bank=[{id:'bad-stack',name:'Corrupt Scrap',itemId:'corrupt-scrap',class:'Warrior',slot:'Head',tier:1,rarity:'Common',itemLevel:18,baseItemLevel:18,power:1,quantity:-9,source:'Legacy corruption'}];
   corrupt.materials={'cell-shards':-50,hollowroot:3.9};
   corrupt.consumables=[{key:'bad-potion',name:'Bad Potion',quantity:-4,payload:{effect:'combat-potion'}},{key:'good-potion',name:'Good Potion',quantity:2,payload:{effect:'combat-potion'}}];
@@ -498,12 +498,12 @@ async function breakGamePlaythrough(browser){
     return{
       slots,
       unique:slots.filter(Boolean).length===new Set(slots.filter(Boolean)).size,
-      oldPriestInParty:slots.includes('old-priest'),
+      oldPriestInParty:slots.includes('heal'),
       badQty:s.bank.find(x=>x.id==='bad-stack')?.quantity,
       shards:s.materials['cell-shards'],
       hollowroot:s.materials.hollowroot,
       consumables:s.consumables.map(x=>[x.key,x.quantity]),
-      oldPriestLevel:s.roster.find(x=>x.id==='old-priest')?.level
+      oldPriestLevel:s.roster.find(x=>x.id==='heal')?.level
     };
   });
   assert.equal(repaired.unique,true,'corrupted saves cannot duplicate the same adventurer across party slots');
