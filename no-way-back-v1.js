@@ -3,7 +3,7 @@
 const BAL=window.CellboundBalance;
 const SHIPWRIGHT_KIT_COST=Number(BAL?.SHIPWRIGHT_KIT_COST)||1000;
 const SHIPWRIGHT_KIT_COST_LABEL=SHIPWRIGHT_KIT_COST.toLocaleString();
-const $=s=>document.querySelector(s),$=s=>[...document.querySelectorAll(s)];
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const TITLE='No Way Back';
 const QUEST={
