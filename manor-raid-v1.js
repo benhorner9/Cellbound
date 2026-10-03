@@ -211,6 +211,16 @@ function roleSummary(rows){
 function compositionClass(rows){
  const c=roleSummary(rows);return c.tank>=2&&c.healer>=2&&c.dps>=6?'recommended':'custom'
 }
+async function markManorCleared(){
+ const s=state();if(!s)return false;
+ s.progression=s.progression&&typeof s.progression==='object'?s.progression:{};
+ if(s.progression.manorRaidCleared)return false;
+ s.progression.manorRaidCleared=true;
+ s.activity=Array.isArray(s.activity)?s.activity:[];
+ s.activity.push('The Manor raid was cleared. Signal From Nowhere is now available.');
+ Game.save?.();await Game.persistState?.();Game.renderAll?.();
+ return true
+}
 async function syncParty(listingId){
  if(!partyReady())throw new Error('Build a complete available five-character party first.');
  const {error}=await db.rpc('sync_party_finder_party',{p_listing_id:listingId,p_party_snapshot:snapshot(),p_party_ilvl:Number(Game.partyItemLevel?.())||0});
@@ -235,6 +245,7 @@ async function fetchHub(){
    }
    const {data:completed,error:completedError}=await db.from('raid_sessions').select('*').eq('raid_id','manor').eq('status','completed').order('completed_at',{ascending:false}).limit(12);
    if(completedError)throw completedError;
+   if((completed||[]).length)await markManorCleared();
    const localClaims=state()?.raidRewardClaims&&typeof state().raidRewardClaims==='object'?state().raidRewardClaims:{};
    pendingRewardSession=(completed||[]).find(s=>!localClaims[s.id])||null;
    renderHub();
@@ -749,6 +760,7 @@ function renderWipeShell(){
  root.querySelector('[data-mr-close]')?.addEventListener('click',closeRaid);root.querySelector('[data-mr-wipe-close]')?.addEventListener('click',closeRaid);lastStage='failed'
 }
 function renderVictoryShell(){
+ markManorCleared().catch(error=>console.warn('Could not persist Manor clear progression',error));
  const root=ensureOverlay(),claimed=Boolean(state()?.raidRewardClaims?.[session.id]);
  root.innerHTML='<section class="mr-raid-shell mr-victory-shell"><header class="mr-raid-head"><div><small>THE MANOR · THE ATTIC</small><h2>Raid Complete</h2></div><button data-mr-close>×</button></header><div class="mr-victory-art"><span>◈</span><small>THE HOUSE FALLS SILENT</small><h1>The Master of the Manor</h1><p>The creature collapses into the attic floorboards. Every door below unlocks at once.</p></div><div class="mr-victory-loot"><small>PERSONAL RAID LOOT</small><h2>2 × Tier 5 Items</h2><p>Orange-framed Chapter 1 raid equipment. Four rolled stats with Tier 5 raid-set progression.</p><button data-mr-claim '+(claimed?'disabled':'')+'>'+(claimed?'REWARDS SECURED':'REVEAL RAID LOOT →')+'</button><div id="mrLootDrops"></div></div></section>';
  root.querySelector('[data-mr-close]')?.addEventListener('click',closeRaid);
@@ -758,7 +770,7 @@ async function showVictory(id){await loadSession(id);const root=ensureOverlay();
 async function claimLoot(id){
  const btn=$('[data-mr-claim]');if(btn)btn.disabled=true;
  try{
-   const s=state();s.raidRewardClaims=s.raidRewardClaims&&typeof s.raidRewardClaims==='object'?s.raidRewardClaims:{};
+   const s=state();s.progression=s.progression&&typeof s.progression==='object'?s.progression:{};s.progression.manorRaidCleared=true;s.raidRewardClaims=s.raidRewardClaims&&typeof s.raidRewardClaims==='object'?s.raidRewardClaims:{};
    if(s.raidRewardClaims[id]){renderLootDrops(s.raidRewardClaims[id]);return}
    const {data,error}=await db.rpc('claim_manor_raid_rewards',{p_session_id:id});if(error)throw error;
    const defs=Array.isArray(data)?data:[],items=defs.map((d,i)=>makeTier5Item(d,i));
