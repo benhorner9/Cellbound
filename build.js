@@ -412,7 +412,7 @@ for(const file of files){
   if(file==='endgame-v1.js'){
     for(const hook of ['resume_dungeon_attempt','save_dungeon_attempt_runtime','function beginOrResumeAttempt','function saveRuntime'])if(!contents.includes(hook))throw new Error('Resumable dungeon service is missing '+hook);
     if(contents.includes("dungeonCard('chaos-canyon')")||contents.includes("leaderboardMarkup('chaos-canyon')"))throw new Error('Future dungeons must not be active in the beta Endgame Hub');
-    if(!contents.includes("dungeonCard('ashen-vault')")||!contents.includes("dungeonCard('hollow-sanctum')")||!contents.includes('Chaos Canyon, Blackout Station and The Fractured Ages are intentionally held for future updates.')||!contents.includes("!Game.isBetaDungeonPlayable(id)"))throw new Error('Beta Endgame Hub content lock is incomplete');
+    if(!contents.includes("const BETA_DUNGEON_IDS=['ashen-vault','hollow-sanctum']")||!contents.includes("dungeonCard('ashen-vault')")||!contents.includes("dungeonCard('hollow-sanctum')")||!contents.includes("!Game.isBetaDungeonPlayable(id)"))throw new Error('Beta Endgame Hub content lock is incomplete');
     if(!contents.includes('function rollClearLoot')||!contents.includes('function rollClearLootBundle')||!contents.includes('function clearLootGuaranteed'))throw new Error('Dungeon clear loot must retain two-drop pacing and bad-luck protection');
     if(!contents.includes("Number(x.tier)<Number(D.LOOT_RULES?.raidExclusiveTier||5)"))throw new Error('Dungeon loot pools must exclude raid-exclusive Tier 5');
     if(contents.includes("quality==='epic'?5"))throw new Error('Weekly rewards must never create Tier 5 gear');
@@ -524,7 +524,7 @@ for(const file of files){
     if(!contents.includes("Rogue:{icon:'◆'")||!contents.includes("Assassination:{role:'dps'")||!contents.includes("Outlaw:{role:'dps'"))throw new Error('Rogue must expose Assassination and Outlaw as playable specialisations');
     if(!contents.includes('B?.syncLegacyTalentCounter?.(c)')||!contents.includes("Object.keys(classes[className]?.specs||{}).forEach(spec=>{out[spec]={}})"))throw new Error('Guild must use independent per-spec build points without auto-selected fresh talents');
     if(!contents.includes("id:'ashen-vault',name:'The Ashen Vault'")||!contents.includes("id:'hollow-sanctum',name:'The Hollow Sanctum'"))throw new Error('Overview Next Mission must stay on the two beta dungeons');
-    for(const hook of ["id:'chaos-canyon',label:'Chaos Canyon',kind:'DUNGEON',done:false,open:false,future:true","id:'blackout-station',label:'Blackout Station',kind:'DUNGEON',done:false,open:false,future:true","id:'fractured-ages',label:'Fractured Ages',kind:'DUNGEON',done:false,open:false,future:true"])if(!contents.includes(hook))throw new Error('Future dungeon roadmap lock is missing '+hook);
+    if(contents.includes("future:true"))throw new Error('Future dungeon roadmap entries must not render during beta');
     if(!contents.includes("c.equipment[slot]=existing||(hasSlot?null:starters[slot])"))throw new Error('Explicitly unequipped core slots must stay empty after state normalization');
     if(contents.includes("existing||(keepBare&&hasSlot?null:starters[slot])"))throw new Error('Legacy starter restoration would re-equip removed Head/Chest/Weapon items');
     if(!contents.includes('function repairInvalidOffHands')||!contents.includes("G?.canEquipInSlot?.(off,'OffHand')")||!contents.includes('repairInvalidOffHands(s);'))throw new Error('Legacy main-hand weapons are not being recovered from OffHand');
@@ -554,7 +554,7 @@ for(const file of files){
     if(!hasVersionedAsset('endgame-v1.css')||!hasVersionedAsset('endgame-v1.js'))throw new Error('Cellbound+ tier picker assets are stale in guild.html');
     if(!hasVersionedAsset('character-portraits-v1.css')||!hasVersionedAsset('character-portraits-v1.js'))throw new Error('Character portrait identity assets are not linked from guild.html');
      if(!hasVersionedAsset('combat-portraits-v1.css')||!hasVersionedAsset('combat-portraits-v1.js'))throw new Error('Combat portrait assets are not linked from guild.html');
-    if(!hasVersionedAsset('class-build-v1.js')||!hasVersionedAsset('gear-system.css')||!hasVersionedAsset('gear-data.js')||!hasVersionedAsset('combat-reborn-v1.js')||!hasVersionedAsset('guild-v4.js')||!hasVersionedAsset('character-sheet.js')||!hasVersionedAsset('combat-identities-v1.js')||!hasVersionedAsset('combat-status-ui-v1.js')||!hasVersionedAsset('combat-physical-v4.js')||!hasVersionedAsset('combat-physical-v4.css')||!hasVersionedAsset('trading-post-v3.js')||!hasVersionedAsset('dungeon-2d-v1.js')||!hasVersionedAsset('hollow-sanctum-v1.js')||!hasVersionedAsset('chaos-canyon-v1.js')||!hasVersionedAsset('blackout-station-v1.js')||!hasVersionedAsset('fractured-ages-v1.js'))throw new Error('Set bonus UI cache versions are stale in guild.html');
+    if(!hasVersionedAsset('class-build-v1.js')||!hasVersionedAsset('gear-system.css')||!hasVersionedAsset('gear-data.js')||!hasVersionedAsset('combat-reborn-v1.js')||!hasVersionedAsset('guild-v4.js')||!hasVersionedAsset('character-sheet.js')||!hasVersionedAsset('combat-identities-v1.js')||!hasVersionedAsset('combat-status-ui-v1.js')||!hasVersionedAsset('combat-physical-v4.js')||!hasVersionedAsset('combat-physical-v4.css')||!hasVersionedAsset('trading-post-v3.js')||!hasVersionedAsset('dungeon-2d-v1.js')||!hasVersionedAsset('hollow-sanctum-v1.js'))throw new Error('Beta core asset cache versions are stale in guild.html');
     if(contents.includes('\\n<link')||contents.includes('\\n<script'))throw new Error('guild.html contains literal newline escape text between asset tags');
     const layoutSafetyLink=(contents.match(/<link rel="stylesheet" href="\.\/layout-safety-v1\.css\?v=[0-9]+">/)||[])[0]||'';
     if(!layoutSafetyLink||contents.lastIndexOf('<link rel="stylesheet"')!==contents.indexOf(layoutSafetyLink))throw new Error('Layout safety stylesheet must remain the final CSS layer in guild.html');
@@ -596,8 +596,7 @@ for(const file of files){
     if(endgameStart<0||endgameEnd<0||contents.slice(endgameStart,endgameEnd).includes('manorRaidMount'))throw new Error('The Manor must not be mounted inside Endgame');
     if(!contents.includes('dungeon-2d-v1.css')||!contents.includes('dungeon-2d-v1.js'))throw new Error('Ashen Vault 2D viewer assets are not linked from guild.html');
     if(!contents.includes('combat-3d-v1.css')||!contents.includes('combat-3d-v1.js'))throw new Error('Optional 3D combat prototype assets are not linked from guild.html');
-    if(!contents.includes('chaos-canyon-v1.css')||!contents.includes('chaos-canyon-v1.js')||!contents.includes('id="chaosCanyonMount"'))throw new Error('Chaos Canyon assets or mount are not linked from guild.html');
-    if(!contents.includes('blackout-station-v1.css')||!contents.includes('blackout-station-v1.js')||!contents.includes('id="blackoutStationMount"'))throw new Error('Blackout Station assets or mount are not linked from guild.html');
+    for(const hook of ['chaos-canyon-v1.css','chaos-canyon-v1.js','blackout-station-v1.css','blackout-station-v1.js','fractured-ages-v1.css','fractured-ages-v1.js','id="chaosCanyonMount"','id="blackoutStationMount"','id="fracturedAgesMount"'])if(contents.includes(hook))throw new Error('Future dungeon runtime leaked into beta guild.html: '+hook);
     if(contents.includes('world-boss-2d-v1.css')||contents.includes('world-boss-2d-v1.js')||contents.includes('id="worldBossGrid"'))throw new Error('Legacy shared World Boss assets must not be linked from guild.html');
     if(!contents.includes('admin-v1.css')||!contents.includes('admin-v1.js')||!contents.includes('id=\"adminNav\"'))throw new Error('Admin panel assets or navigation hook are not linked from guild.html');
     if(!contents.includes('release-v1.css')||!contents.includes('release-v1.js')||!contents.includes('CELLBOUND_BUILD'))throw new Error('Release gate assets or build hook are not linked from guild.html');
@@ -1110,10 +1109,8 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   const onboarding=fs.readFileSync(path.join(__dirname,'onboarding-v1.js'),'utf8');
   if(!onboarding.includes("Game?.isBetaClassPlayable&&!Game.isBetaClassPlayable(klass)"))throw new Error('Character creator must hide future classes during beta');
 
-  for(const [file,id] of [['chaos-canyon-v1.js','chaos-canyon'],['blackout-station-v1.js','blackout-station'],['fractured-ages-v1.js','fractured-ages']]){
-    const contents=fs.readFileSync(path.join(__dirname,file),'utf8');
-    if(!contents.includes("isBetaDungeonPlayable('"+id+"')")||!contents.includes('FUTURE UPDATE'))throw new Error(file+' must refuse direct beta entry and present future-update status');
-  }
+  const betaShell=fs.readFileSync(path.join(__dirname,'guild.html'),'utf8');
+  for(const hook of ['chaos-canyon-v1.js','blackout-station-v1.js','fractured-ages-v1.js','chaosCanyonCard','blackoutStationCard','fracturedAgesCard'])if(betaShell.includes(hook))throw new Error('Future dungeon must stay unmounted in beta: '+hook);
 
   const fourfold=fs.readFileSync(path.join(__dirname,'fourfold-lock-v1.js'),'utf8');
   for(const hook of ["const betaLocked=()=>","FUTURE UPDATE","if(betaLocked())"])if(!fourfold.includes(hook))throw new Error('The Fourfold Lock must remain reserved for a future update: '+hook);
