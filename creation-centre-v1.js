@@ -81,7 +81,7 @@ function scopeAppearance(root,step){
  });
  root.querySelectorAll('.cc-editor-scope .cb-creation-group').forEach(h=>{
   const name=(h.textContent||'').trim();
-  h.hidden=step==='appearance'?!(name==='Face'||name==='Hair'):step==='features'?!(name==='Markings'||name==='Race features'):false;
+  h.hidden=step==='appearance'?!(name==='Body'||name==='Face'||name==='Hair'):step==='features'?!(name==='Markings'||name==='Race features'):false;
  });
  const random=root.querySelector('.cc-editor-features [data-appearance-randomize]');
  if(random)random.hidden=true;
