@@ -3,10 +3,11 @@
 
 const RIG=window.CellboundCharacterRig;
 if(!RIG||RIG.contract!=='master-rig-v1')throw new Error('Cellbound master character rig is not loaded');
-const CHARACTER_MODEL_VERSION=13;
+const CHARACTER_MODEL_VERSION=14;
 const PAINTED_RACES=new Set(['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari']);
 const USE_RASTER_RACE_BASES=false;
-const CHARACTER_MODEL_CONTRACT='v13-master-vector-races';
+const FORGE_BASE_CONTRACT='character-forge-v1';
+const CHARACTER_MODEL_CONTRACT='v14-character-forge-bases';
 const EQUIPMENT_LAYER_CONTRACT='body|shield|armour|front-offhand|mainhand-front';
 
 const CLASS_COLORS={
@@ -605,6 +606,10 @@ function paintedBody(c,a,p,uid,skin,eye,hair,headDetails,bodyDetails,portrait){
 }
 function illustratedBaseFigure(c,a,skin,eye,hair,p,uid,portrait){
   var race=c.race||a.race||'Veyren',accent=raceDef(race).accent||'#76d7d0',female=p.gender===1;
+  if(PAINTED_RACES.has(race)){
+    var forgeSrc='./assets/characters/forge-bases/'+race.toLowerCase()+'-'+(a.gender?'female':'male')+'.png';
+    return '<g class="cb-illustrated-base cb-forge-base" data-race="'+esc(race)+'" data-gender="'+(a.gender?'female':'male')+'" data-base-art="'+FORGE_BASE_CONTRACT+'"><image href="'+forgeSrc+'" x="-16.6667" y="0" width="273.3334" height="410" preserveAspectRatio="none"/></g>';
+  }
   var s=p.shoulder,w=p.waist,h=p.hip,arm=p.arm,leg=p.leg;
   var headW=([.93,1,1.06,.98][a.face]||1)*(female?18.5:20.5)*(race==='Stoneborn'?1.06:1),headTop=race==='Stoneborn'?43:45,chin=female?102:104;
   var jaw=(female?11.8:14.5)+[-2,0,2,1][a.face],lx=120-s,rx=120+s;
@@ -796,7 +801,7 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:CHARACTER_MODEL_VERSION,modelContract:CHARACTER_MODEL_CONTRACT,equipmentLayerContract:EQUIPMENT_LAYER_CONTRACT,baseArtContract:'master-vector-v1',
+  version:CHARACTER_MODEL_VERSION,modelContract:CHARACTER_MODEL_CONTRACT,equipmentLayerContract:EQUIPMENT_LAYER_CONTRACT,baseArtContract:FORGE_BASE_CONTRACT,
   rigContract:RIG.contract,masterRigCount:RIG.masterRigCount,masterRig:RIG.masterRig,rig:RIG.resolve,fitSlot:RIG.fitSlot,
   anatomicalAnchors:anatomicalAnchors,rigY:(race,y)=>RIG.rigY(y),equipmentCoverage:equipmentCoverage,appearanceVersion:1,
   RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,headRig:PAINTED_HEAD_RIG,hairFit:paintedHairFit,
