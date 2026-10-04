@@ -16,7 +16,7 @@ Equipment no longer uses the painterly illustrated-v2 sheets as its primary worn
 
 Inventory equipment icons and worn equipment now use the same `forge-vector-v1` source contract. An item therefore keeps the same silhouette, trim language and variant between loot/inventory views and the character model.
 
-The existing illustrated-v2 WebP atlases remain in the build as a fallback for materials, consumables, recipes, keys and collection rewards. Gameplay IDs, stats, drops, sockets, profession data, equipment records and progression are unchanged.
+Materials, consumables, recipes, keys, crafting outputs, utility items and collection rewards now use the same `forge-vector-v1` language as equipment. The illustrated-v2 WebP sheets remain packaged only as a compatibility safety net while the new renderer beds in; normal item resolution no longer depends on them. Gameplay IDs, stats, drops, sockets, profession data, equipment records and progression are unchanged.
 
 ## Character fit
 
@@ -42,8 +42,9 @@ The item ID/class/slot also seeds a deterministic motif variant. This gives cata
 
 `tests/illustrated-items.cjs` verifies that:
 
-- every equipment item resolves to `forge-vector-v1`
-- equipment icons do not fall back to the old painted atlases
+- every equipment and non-equipment item resolves to `forge-vector-v1`
+- materials, consumables, recipes, keys and collection rewards no longer fall back to the old painted atlases
+- Warrior T1–T5 helms render as five distinct silhouettes following the approved progression from plain iron to raid-tier crown
 - inventory and worn models share the same source key
 - all five beta class families render across every race and both body sexes
 - the Character Forge base remains the body beneath the equipment
