@@ -869,7 +869,7 @@ function paperChest(c,highlighted,skin){
   else if(cloth)torso+='<path d="M'+(120-gs+7)+' 156 Q120 '+(v%2?168:178)+' '+(120+gs-7)+' 156 M'+(120-gw+1)+' 214 Q120 226 '+(120+gw-1)+' 214" fill="none" stroke="'+pal.trim+'" stroke-width="'+(tier>=3?2.6:1.9)+'"/><path d="M120 155 V235" stroke="'+pal.light+'" stroke-width="1.7" opacity=".32"/>';
   else torso+='<path d="M'+(120-gs+6)+' 164 L'+(120+gw-1)+' 221 M'+(120+gs-6)+' 164 L'+(120-gw+1)+' 221" fill="none" stroke="'+pal.trim+'" stroke-width="2.1" opacity=".72"/>';
   var detailProfile=Object.assign({},p,{shoulder:gs,waist:gw});
-  torso+=itemRune(item,'Chest',pal,120,184,pal.set?.motif?.9:.72)+betaChestDetail(item,pal,tier,detailProfile);
+  torso+=itemRune(item,'Chest',pal,120,184,(pal.set&&pal.set.motif)?0.9:0.72)+betaChestDetail(item,pal,tier,detailProfile);
   if(pal.set)torso+='<path d="M'+(120-gw+6)+' 204 Q120 215 '+(120+gw-6)+' 204" fill="none" stroke="'+pal.glow+'" stroke-width="2" opacity=".65" class="cb-paper-set-glow"/>';
   return '<g class="'+paperSlotClass('Chest',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Chest'))+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-chest-left="'+(120-gs).toFixed(2)+'" data-chest-right="'+(120+gs).toFixed(2)+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'">'+torso+'</g>';
 }
