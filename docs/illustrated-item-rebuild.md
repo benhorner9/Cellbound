@@ -1,31 +1,53 @@
-# Illustrated item rebuild — staging
+# Forge item model rebuild — staging
 
-Replaces the legacy equipment atlas, embedded material atlas, procedural item icons and procedural wearable geometry with 301 illustrated sprites. Item IDs, stats, drop rules, equipment records, inventory and progression are unchanged. No migration is required.
+This pass moves equipped gear onto the same visual language as the Character Forge bases.
 
-## Shared asset contract
+## Direction
 
-`item-atlas-v2.js` registers ten compressed WebP sheets (5.55 MB total), trim rectangles and left/right registrations. `item-visuals-v2.js` resolves slot, class family, tier and weapon type for both icons and worn pieces. The browser caches each sheet across characters and slots; the existing bounded character markup cache remains in use. There are no per-character bitmap copies or continuously recomputed composites.
+Equipment no longer uses the painterly illustrated-v2 sheets as its primary worn model. Armour, weapons, off-hands and accessories are rendered as scalable vector pieces with the same core cues as the approved Forge characters:
 
-Five independently illustrated beta armour families have five authored tiers each, covering chest, shoulders, hands, waist, legs and feet. A further 25 helmets, 60 weapon/off-hand sprites, 30 accessory/consumable sprites and 36 crafting/loot sprites cover the wider catalogue through reusable families. These are family-based assets, not 925 individually commissioned item paintings. Non-beta classes use explicitly declared compatible families until dedicated art is added.
+- heavy dark outer line
+- clean, readable silhouettes
+- low-poly / faceted shading
+- restrained highlights instead of painted texture
+- class colour accents
+- stronger ornamentation as item tier rises
+- deterministic item variants so catalogue pieces do not all look identical
 
-The same race/sex/build anatomical profile drives independent torso, shoulder, hand, leg and foot fitting. Equipment uses final painted-model coordinates instead of the old piecewise body warp. Chest coverage ends at the waist; legs own trousers and Mage robe skirts. Helmets suppress incompatible hair/growth; cloth hoods have a face-opening mask. Portraits consistently omit helmets. Main-hand and off-hand metadata determine sprite and grip placement.
+Inventory equipment icons and worn equipment now use the same `forge-vector-v1` source contract. An item therefore keeps the same silhouette, trim language and variant between loot/inventory views and the character model.
 
-## Production
+The existing illustrated-v2 WebP atlases remain in the build as a fallback for materials, consumables, recipes, keys and collection rewards. Gameplay IDs, stats, drops, sockets, profession data, equipment records and progression are unchanged.
 
-Artwork was produced with the built-in image generation tool. Prompts and generation IDs are recorded in `tools/item-art-sources.json`; original generated PNGs remain in the session's generated-image directory. Compressed source sheets are committed under `assets/items/illustrated-v2/`.
+## Character fit
 
-`node tools/pack-item-art.cjs` registers the committed sheets; an optional JSON manifest can point at replacement source PNGs. `--encode` writes compressed sheets. This development utility requires Sharp. Registration uses alpha boundaries and connected component bounds to exclude neighbouring-cell fragments; runtime rendering does not run pixel analysis.
+The renderer continues to use `master-rig-v1` and the approved `character-forge-v1` race bases. Slot geometry is fitted independently for chest, shoulders, hands, waist, legs, feet and head. Main hand and off-hand continue to use the rig's hand anchors and weapon-type metadata.
+
+The five beta classes receive their own family silhouette language:
+
+- Warrior — hard plate geometry and central reinforcement
+- Paladin — brighter plate, crest/crown details and ceremonial trim
+- Hunter — layered leather, straps and practical ranged gear
+- Rogue — dark fitted leather with crossed panels and low profile pieces
+- Mage — shaped cloth, arcane trim and cleaner vertical lines
+
+Classes outside the beta roster inherit the compatible family mapping but retain their own class accent colour. That keeps the catalogue renderable without changing beta class availability.
+
+## Tier language
+
+Tier 1 stays deliberately plain. Tier 2 introduces trim motifs. Tier 3 adds a stronger central detail. Tier 4 adds glow/ornamentation. Tier 5 receives the strongest trim and prestige treatment.
+
+The item ID/class/slot also seeds a deterministic motif variant. This gives catalogue pieces a stable identity without requiring a separate bitmap for every stat roll.
 
 ## Verification
 
-- `npm run build`: existing gameplay, economy, combat, deployment and model contracts.
-- `npm run test:appearance`: 36 base combinations, 2,700 slot-ownership cases, 9,360 catalogue renders and the bounded ten-character markup cache.
-- `tests/illustrated-items.cjs`: all 301 sprite bounds, deployed atlas presence, 925 catalogue/material/recipe mappings, 60 full race/sex/class outfits, source agreement between icons and wearables, non-mutating render calls, distinct tier sources and crossbow/bow identity.
-- Static visual review: beta class comparisons and all twelve race/sex bases with equipped T5 examples, shown below.
-- Pull-request CI runs Chromium and WebKit full-game, creator/reload, combat and login regressions. Physical iPad/iPhone responsiveness and every possible mixed set still require hands-on staging review; automated renders are not a substitute for that acceptance step.
+`tests/illustrated-items.cjs` verifies that:
 
-![Five class comparison](item-art-review/classes.webp)
+- every equipment item resolves to `forge-vector-v1`
+- equipment icons do not fall back to the old painted atlases
+- inventory and worn models share the same source key
+- all five beta class families render across every race and both body sexes
+- the Character Forge base remains the body beneath the equipment
+- rendering does not mutate item or character state
+- the 301 illustrated atlas sprites still ship for non-equipment fallback items
 
-![Twelve race and sex examples](item-art-review/races.webp)
-
-Deploy only to staging. Production promotion requires the user's later approval.
+Deploy only to staging. Production promotion requires later approval.
