@@ -47,7 +47,7 @@ const engine=engineName==='webkit'?webkit:chromium;
           if(!svg.includes('data-equipment-fit="v3"')||!svg.includes('data-weapon-pose="side-held-v1"'))failures.push(klass+' T'+tier+' model missing fit v3 / side-held contract');
           if(!svg.includes('cb-paper-side-weapon')||!svg.includes('data-weapon-pose="side-held"'))failures.push(klass+' T'+tier+' weapon is not side-held');
           const fit=P.gearFitProfile(c);
-          if(fit.weaponX<fit.baseRightHand)failures.push(klass+' T'+tier+' weapon moved inward across body');
+          if(fit.weaponX<fit.weaponSideMin)failures.push(klass+' T'+tier+' weapon moved inward across body');
           if(!svg.includes('data-palette-mode="gear-owned"'))failures.push(klass+' T'+tier+' root missing gear-owned palette contract');
           if(!svg.includes('data-class-visual="'+classSlug+'"'))failures.push(klass+' T'+tier+' worn class signature missing');
           if(!svg.includes('data-palette-mode="'+mode+'"'))failures.push(klass+' T'+tier+' worn palette mode should be '+mode);
