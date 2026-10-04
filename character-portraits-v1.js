@@ -88,12 +88,17 @@ function normalizeAppearance(input,seed,raceOverride){
   Object.keys(COUNTS).forEach(function(field){
     out[field]=int(src[field],COUNTS[field],['brows','nose','mouth','eyeShape','texture'].includes(field)?1:['pattern','featureColor'].includes(field)?0:field==='glow'?2:seeded(key,field,COUNTS[field]));
   });
-  if(out.gender===1)out.facialHair=0;
+  if(PAINTED_RACES.has(race)){
+    var gender=out.gender;
+    Object.assign(out,{gender:gender,frame:1,skinTone:0,face:0,brows:0,nose:0,mouth:0,eyeShape:0,eyes:0,hair:0,hairColor:0,facialHair:0,marking:0,feature:0,pattern:0,featureColor:0,texture:0,glow:0});
+  }else if(out.gender===1)out.facialHair=0;
   out.appearanceVersion=1;
   return out;
 }
 function randomAppearance(race){
-  var out={race:RACES[race]?race:'Veyren'};
+  var resolved=RACES[race]?race:'Veyren';
+  if(PAINTED_RACES.has(resolved))return normalizeAppearance({race:resolved,gender:Math.random()<.5?0:1},'forge-random',resolved);
+  var out={race:resolved};
   Object.keys(COUNTS).forEach(function(field){out[field]=Math.floor(Math.random()*COUNTS[field])});
   if(out.gender===1)out.facialHair=0;
   out.appearanceVersion=1;
