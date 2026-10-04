@@ -190,7 +190,8 @@ async function creatorPlaythrough(browser,viewport={width:1024,height:1366}){
       const model=page.locator('.creator-hero .cb-paper-doll svg').first();
       assert.equal(await model.getAttribute('data-race'),race);
       assert.equal(await model.getAttribute('data-gender'),gender?'female':'male');
-      assert(await model.locator('image').count()>0,'Every race uses a painted asset');
+      assert.equal(await model.locator('.cb-master-vector-base[data-base-art="master-vector-v1"]').count(),1,'Every race uses the V13 master vector base');
+      assert.equal(await model.locator('image[href*="race-bases"]').count(),0,'Legacy raster race base is retired');
     }
   }
   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'Creator fits the viewport');

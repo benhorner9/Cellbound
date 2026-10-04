@@ -194,7 +194,7 @@ function render(){
   if(item&&state.itemId!==item.itemId){state.itemId=item.itemId;saveState()}
   const compareClass='cfv-compare-'+state.compare;
   mount.innerHTML='<section class="cfv-shell">'+
-    '<header class="cfv-header"><div><small>OWNER CHARACTER LAB · V12 MASTER RIG</small><h2>Character Fit Viewer</h2><p>Inspect equipment against 12 fixed race/sex master rigs plus the Lean, Balanced and Strong deformation variants without changing live character data.</p></div><div class="cfv-header-actions"><button id="cfvAudit" type="button">RUN MASTER RIG AUDIT</button><button id="cfvBetaAudit" type="button">RUN BETA MATRIX</button><button id="cfvClose" type="button">CLOSE</button></div></header>'+
+    '<header class="cfv-header"><div><small>OWNER CHARACTER LAB · V13 MASTER VECTOR</small><h2>Character Fit Viewer</h2><p>Inspect equipment against 12 fixed race/sex master rigs plus the Lean, Balanced and Strong deformation variants without changing live character data.</p></div><div class="cfv-header-actions"><button id="cfvAudit" type="button">RUN MASTER RIG AUDIT</button><button id="cfvBetaAudit" type="button">RUN BETA MATRIX</button><button id="cfvClose" type="button">CLOSE</button></div></header>'+
     statsHTML()+
     '<div class="cfv-toolbar">'+
       '<label><span>RACE</span><select id="cfvRace">'+RACES.map(x=>option(x,x,state.race)).join('')+'</select></label>'+
@@ -255,7 +255,7 @@ function showAuditResult(result,label){
 }
 function runAudit(){showAuditResult(auditCurrent(),'MASTER RIG + FRAME CONFIGURATIONS')}
 function runBetaAudit(){
-  const el=$('#cfvAuditResult');if(el){el.hidden=false;el.dataset.tone='busy';el.innerHTML='<b>RUNNING V12 RIG MATRIX…</b><span>Checking every class, tier, race, sex and frame combination.</span>'}
+  const el=$('#cfvAuditResult');if(el){el.hidden=false;el.dataset.tone='busy';el.innerHTML='<b>RUNNING V13 VECTOR RIG MATRIX…</b><span>Checking every class, tier, race, sex and frame combination.</span>'}
   setTimeout(()=>showAuditResult(auditBetaMatrix(),'BETA CONFIGURATIONS'),0);
 }
 function bind(){
