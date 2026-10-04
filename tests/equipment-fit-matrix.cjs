@@ -28,6 +28,8 @@ for(const item of G.items){
     assert(!/NaN|Infinity|undefined/.test(html),item.itemId+' broken SVG on '+race+'/'+gender);
     assert(html.includes('data-equipment-fit="v3"'),item.itemId+' missing v3 model fit contract');
     assert(html.includes('cb-paper-slot-'+pos.toLowerCase()),item.itemId+' missing '+pos+' layer');
+    assert(fit.legHalf>=12.5&&fit.calfHalf>=10.5,item.itemId+' lower-body rig regressed to skinny proportions on '+race+'/'+gender);
+    if(item.slot==='Legs')assert(html.includes('data-leg-fit="anatomical-v2"'),item.itemId+' legs are not using anatomical lower-body fit');
     assert(html.includes('data-fit-version="3"'),item.itemId+' did not use equipment fit v3');
     assert(html.includes('data-alignment="v3"'),item.itemId+' missing v3 slot alignment marker');
 
