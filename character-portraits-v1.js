@@ -5,9 +5,10 @@ const RIG=window.CellboundCharacterRig||null;
 const CHARACTER_MODEL_VERSION=15;
 const CHARACTER_MODEL_CONTRACT='classic-paper-doll-v1';
 const BASE_ART_CONTRACT='classic-paper-doll-v1';
-const EQUIPMENT_LAYER_CONTRACT='shield-back|body|armour|front-offhand|mainhand-front';
+const EQUIPMENT_LAYER_CONTRACT='shield-back|body|armour|front-offhand|mainhand-side';
 const RACE_IDENTITY_VERSION=2;
-const EQUIPMENT_FIT_VERSION=2;
+const EQUIPMENT_FIT_VERSION=3;
+const WEAPON_POSE_VERSION=1;
 const ITEM_VISUALS_VERSION=2;
 
 const CLASS_COLORS={
@@ -463,12 +464,43 @@ function bodyProfile(race,appearance){
 function paperFit(c){
   if(RIG?.gearFitProfile)return RIG.gearFitProfile(c||{});
   var race=c?.race||c?.appearance?.race||'Veyren',p=bodyProfile(race,c?.appearance),reach=Math.max(5.5,p.arm*.5);
+  var leftShoulder=120-p.shoulder,rightShoulder=120+p.shoulder,leftHand=leftShoulder-reach,baseRightHand=rightShoulder+reach;
+  var weapon=itemForSlot(c,'Weapon'),type=weapon?weaponType(weapon,c):'',long=['staff','spear','bow','crossbow'].includes(type),compact=['dagger','wand','focus','scepter','rod'].includes(type);
+  var offset=weapon?Math.max(long?22:compact?15:18,p.arm*(long?1.05:compact?.72:.86)):0;
+  var rightHand=weapon?Math.min(214,Math.max(baseRightHand+offset,rightShoulder+17)):baseRightHand,angle=weapon?(type==='bow'?7:type==='crossbow'?10:type==='staff'||type==='spear'?6:type==='dagger'?14:9):0;
   return {race,gender:Number(c?.appearance?.gender)||0,frame:Number(c?.appearance?.frame)||1,p,centerX:120,
-    leftShoulder:120-p.shoulder,rightShoulder:120+p.shoulder,
-    leftHand:120-p.shoulder-reach,rightHand:120+p.shoulder+reach,handY:283,
+    leftShoulder,rightShoulder,leftHand,rightHand,baseRightHand,handY:283,
     waistY:247,waistHalf:Math.max(p.waist,p.hip*.70),hipHalf:p.hip,
     leftLeg:120-p.hip*.47,rightLeg:120+p.hip*.47,legHalf:Math.max(10.5,p.leg*.82),footHalf:Math.max(10,p.leg*.72),
-    weaponX:120+p.shoulder+reach,offhandX:120-p.shoulder-reach};
+    weaponX:rightHand,weaponY:283,weaponAngle:angle,weaponPose:weapon?'side-held':'rest',weaponKind:type||'none',
+    offhandX:leftHand,offhandY:283};
+}
+function fitFamily(klass){
+  return String(klass||'Warrior').toLowerCase().replace(/\s+/g,'-');
+}
+function clothLowerStyle(item){
+  var k=gearClass(item),tier=Math.max(1,clampTier(item&&item.tier)||1);
+  if(k==='Mage')return ({1:'trousers',2:'split-robe',3:'trousers',4:'robe',5:'split-robe'})[tier];
+  if(k==='Priest')return ({1:'trousers',2:'robe',3:'split-robe',4:'robe',5:'robe'})[tier];
+  if(k==='Warlock')return ({1:'trousers',2:'split-robe',3:'robe',4:'asym-robe',5:'split-robe'})[tier];
+  if(k==='Druid')return ({1:'trousers',2:'kilt',3:'trousers',4:'kilt',5:'split-robe'})[tier];
+  return 'trousers';
+}
+function lowerSilhouetteMarkup(item,pal,p,style){
+  var hip=Math.max(27,p.hip||32),left=120-hip*.93,right=120+hip*.93;
+  if(style==='robe'){
+    return '<path d="M'+left+' 247 Q120 258 '+right+' 247 L'+(120+hip*.78)+' 352 Q120 364 '+(120-hip*.78)+' 352Z" fill="'+pal.base+'" stroke="#111820" stroke-width="3"/><path d="M'+(120-hip*.66)+' 279 Q120 291 '+(120+hip*.66)+' 279 M'+(120-hip*.62)+' 326 Q120 337 '+(120+hip*.62)+' 326" fill="none" stroke="'+pal.trim+'" stroke-width="2" opacity=".72"/>';
+  }
+  if(style==='split-robe'){
+    return '<path d="M'+left+' 247 Q'+(120-hip*.12)+' 257 '+(120-4)+' 260 L'+(120-9)+' 348 L'+(120-hip*.78)+' 352Z" fill="'+pal.base+'" stroke="#111820" stroke-width="3"/><path d="M'+right+' 247 Q'+(120+hip*.12)+' 257 '+(120+4)+' 260 L'+(120+9)+' 348 L'+(120+hip*.78)+' 352Z" fill="'+pal.base+'" stroke="#111820" stroke-width="3"/><path d="M'+(120-hip*.72)+' 282 L'+(120-10)+' 292 M'+(120+hip*.72)+' 282 L'+(120+10)+' 292" stroke="'+pal.trim+'" stroke-width="2"/>';
+  }
+  if(style==='asym-robe'){
+    return '<path d="M'+left+' 247 Q120 258 '+right+' 247 L'+(120+hip*.62)+' 337 L'+(120+10)+' 350 L'+(120-4)+' 302 L'+(120-hip*.76)+' 347Z" fill="'+pal.base+'" stroke="#111820" stroke-width="3"/><path d="M'+(120-hip*.72)+' 281 Q120 292 '+(120+hip*.68)+' 279" fill="none" stroke="'+pal.trim+'" stroke-width="2.2"/>';
+  }
+  if(style==='kilt'){
+    return '<path d="M'+left+' 247 Q120 258 '+right+' 247 L'+(120+hip*.78)+' 319 Q120 330 '+(120-hip*.78)+' 319Z" fill="'+pal.base+'" stroke="#111820" stroke-width="3"/><path d="M'+(120-hip*.54)+' 262 V312 M120 260 V318 M'+(120+hip*.54)+' 262 V312" stroke="'+pal.trim+'" stroke-width="1.7" opacity=".62"/>';
+  }
+  return '';
 }
 function paperRaceArmDetails(c,p,leftX,rightX){
   var race=c.race||c.appearance?.race||'Veyren';
@@ -773,8 +805,7 @@ function paperHeadMarkup(c,a,skin,eye,hair,highlighted){
   return base+'<g class="'+paperSlotClass('Head',highlighted,helm)+'" data-item-key="'+esc(itemIdentity(helm,'Head'))+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(helm))+'">'+helmet+'</g>';
 }
 function paperLegs(c,skin,highlighted){
-  var item=itemForSlot(c,'Legs');
-  var p=bodyProfile(c.race||c.appearance?.race||'Veyren',c.appearance);
+  var item=itemForSlot(c,'Legs'),fit=paperFit(c),p=fit.p;
   var sx=Math.max(.82,Math.min(1.32,((p.hip||32)/32)*.65+((p.leg||14)/14)*.35));
   var transform='translate(120 0) scale('+sx+' 1) translate(-120 0)';
   var base='<g class="cb-paper-underlayer cb-paper-base-legs" transform="'+transform+'">'+
@@ -782,17 +813,18 @@ function paperLegs(c,skin,highlighted){
     '<path d="M124 246 L148 246 L156 355 L128 355 L124 286Z" fill="'+skin+'" stroke="#111820" stroke-width="2.4"/>'+
     paperRaceLegDetails(c)+'</g>';
   if(!item)return base;
-  var tier=clampTier(item.tier),pal=gearPalette(c,item,tier||1,'Legs'),v=pal.variant,klass=gearClass(item);
-  var heavy=['Warrior','Paladin','Death Knight'].includes(klass),cloth=['Mage','Priest','Druid','Warlock'].includes(klass);
-  var gear='<g class="'+paperSlotClass('Legs',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Legs'))+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'" transform="'+transform+'">'+
-    '<path d="M91 247 L116 247 L112 354 L82 354 Q83 322 88 285Z" fill="'+pal.base+'" stroke="#111820" stroke-width="3"/>'+
-    '<path d="M124 247 L149 247 L158 354 L128 354 L124 286Z" fill="'+pal.base+'" stroke="#111820" stroke-width="3"/>';
-  if(heavy){
-    gear+='<path d="M87 286 L115 286 L113 317 Q101 324 86 316Z M125 286 L153 286 L157 316 Q141 324 127 317Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="1.8" opacity=".92"/>';
-  }else if(cloth){
-    gear+='<path d="M87 250 Q120 273 153 250 L151 293 Q120 311 89 293Z" fill="'+pal.dark+'" opacity=".48"/>';
+  var tier=clampTier(item.tier),pal=gearPalette(c,item,tier||1,'Legs'),v=pal.variant,klass=gearClass(item),style=clothLowerStyle(item);
+  var heavy=['Warrior','Paladin','Death Knight'].includes(klass),cloth=['Mage','Priest','Druid','Warlock'].includes(klass),robe=cloth&&style!=='trousers';
+  var gear='<g class="'+paperSlotClass('Legs',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Legs'))+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v3" data-lower-silhouette="'+style+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'" transform="'+transform+'">';
+  if(robe){
+    gear+=lowerSilhouetteMarkup(item,pal,p,style);
+    if(style==='kilt')gear+='<path d="M92 314 L113 314 L111 354 L84 354Z M127 314 L148 314 L156 354 L129 354Z" fill="'+pal.dark+'" stroke="#111820" stroke-width="2.2"/>';
   }else{
-    gear+=(v%2?'<path d="M93 268 L113 276 M127 276 L147 268" fill="none" stroke="'+pal.trim+'" stroke-width="3"/>':'<path d="M88 298 L111 304 M129 304 L152 298" fill="none" stroke="'+pal.trim+'" stroke-width="3"/>');
+    gear+='<path d="M91 247 L116 247 L112 354 L82 354 Q83 322 88 285Z" fill="'+pal.base+'" stroke="#111820" stroke-width="3"/>'+
+      '<path d="M124 247 L149 247 L158 354 L128 354 L124 286Z" fill="'+pal.base+'" stroke="#111820" stroke-width="3"/>';
+    if(heavy)gear+='<path d="M87 286 L115 286 L113 317 Q101 324 86 316Z M125 286 L153 286 L157 316 Q141 324 127 317Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="1.8" opacity=".92"/>';
+    else if(cloth)gear+='<path d="M87 250 Q120 273 153 250 L151 293 Q120 311 89 293Z" fill="'+pal.dark+'" opacity=".48"/>';
+    else gear+=(v%2?'<path d="M93 268 L113 276 M127 276 L147 268" fill="none" stroke="'+pal.trim+'" stroke-width="3"/>':'<path d="M88 298 L111 304 M129 304 L152 298" fill="none" stroke="'+pal.trim+'" stroke-width="3"/>');
   }
   gear+=itemRune(item,'Legs',pal,101,286,.55)+itemRune(item,'Legs',pal,139,286,.55)+betaLegDetail(item,pal,tier);
   if(pal.set)gear+='<path d="M88 323 L111 329 M129 329 L153 323" stroke="'+pal.glow+'" stroke-width="2.5" opacity=".7" class="cb-paper-set-glow"/>';
@@ -929,8 +961,16 @@ function paperWeapon(c,highlighted){
   var item=itemForSlot(c,'Weapon'),tier=clampTier(item&&item.tier);
   if(!item)return'';
   var pal=gearPalette(c,item,tier,'Weapon'),type=weaponType(item,c),v=pal.variant,fit=paperFit(c);
-  var gx=fit.weaponX||fit.rightHand||191,gy=fit.handY||283,dx=gx-191,dy=gy-244;
-  return '<g class="'+paperSlotClass('Weapon',highlighted,item)+' cb-paper-front-weapon" data-weapon-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'Weapon'))+'" data-render-layer="front" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-grip-x="'+gx.toFixed(2)+'" data-grip-y="'+gy.toFixed(2)+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'" transform="translate('+dx.toFixed(2)+' '+dy.toFixed(2)+')">'+weaponMarkup(type,pal,v,tier,item)+'</g>';
+  var gx=fit.weaponX||fit.rightHand||191,gy=fit.weaponY||fit.handY||283,angle=Number(fit.weaponAngle)||0;
+  var hand=itemForSlot(c,'Hands'),handFill,handStroke='#111820';
+  if(hand)handFill=gearPalette(c,hand,clampTier(hand.tier)||1,'Hands').base;
+  else{
+    var race=c.race||c.appearance?.race||'Veyren',a=normalizeAppearance(c.appearance||c,c.id||c.name||race,race);
+    handFill=raceDef(a.race).skin[a.skinTone];
+  }
+  var transform='translate('+gx.toFixed(2)+' '+gy.toFixed(2)+') rotate('+angle.toFixed(2)+') translate(-191 -244)';
+  var grip='<ellipse class="cb-paper-weapon-grip-hand" cx="'+gx.toFixed(2)+'" cy="'+gy.toFixed(2)+'" rx="6.2" ry="7.4" fill="'+handFill+'" stroke="'+handStroke+'" stroke-width="1.8"/>';
+  return '<g class="'+paperSlotClass('Weapon',highlighted,item)+' cb-paper-side-weapon" data-weapon-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'Weapon'))+'" data-render-layer="mainhand-side" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v3" data-weapon-pose="side-held" data-weapon-angle="'+angle.toFixed(2)+'" data-grip-x="'+gx.toFixed(2)+'" data-grip-y="'+gy.toFixed(2)+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'" transform="'+transform+'">'+weaponMarkup(type,pal,v,tier,item)+'</g>'+grip;
 }
 function offHandBaseMarkup(type,pal,v,tier,item){
   if(type==='shield'){
