@@ -14,3 +14,13 @@
 .admin-player-result{box-shadow:inset 0 1px 0 rgba(255,255,255,.02)}
 @media(max-width:900px){.admin-beta-toolbar{top:68px}}
 @media(max-width:560px){.admin-beta-toolbar{position:static;padding:0;border:0;background:transparent;backdrop-filter:none}.admin-beta-queue{max-height:none}.admin-beta-ticket{padding:11px}.admin-beta-ticket header{align-items:flex-start}.admin-beta-ticket header strong{font-size:.39rem}}
+
+.admin-player-tool-section{margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.055)}
+.admin-player-tool-section>small{display:block;color:#817763;font-size:.42rem;font-weight:900;letter-spacing:.12em}
+.admin-player-account-tools{margin-top:14px}
+.admin-player-account-tools .admin-player-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.admin-player-account-tools button{min-height:58px;padding:9px 11px;text-align:left}
+.admin-player-account-tools button em{display:block;margin-top:4px;color:#847e70;font-size:.4rem;font-style:normal;font-weight:600;line-height:1.35}
+.admin-player-account-tools .admin-player-danger{border-color:rgba(200,95,78,.24);background:#21120f;color:#e0a294}
+.admin-player-account-tools .admin-player-danger:hover:not(:disabled){border-color:rgba(211,101,82,.45);background:#2a1511}
+@media(max-width:620px){.admin-player-account-tools .admin-player-actions{grid-template-columns:1fr}}
