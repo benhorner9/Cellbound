@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const sandbox={window:{}};vm.createContext(sandbox);for(const file of ['item-atlas-v2.js','item-visuals-v2.js'])vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../'+file),'utf8'),sandbox);vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../character-portraits-v1.js'),'utf8'),sandbox);
+const sandbox={window:{}};vm.createContext(sandbox);for(const file of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js'])vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../'+file),'utf8'),sandbox);vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../character-portraits-v1.js'),'utf8'),sandbox);
 const P=sandbox.window.CellboundPortraits;
 // Strip definition identifiers: a control must alter geometry, not just an SVG ID.
 const geometry=s=>s.replace(/pd[a-z0-9]+/g,'ID');

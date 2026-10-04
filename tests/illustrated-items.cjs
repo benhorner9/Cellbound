@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
 const root=path.resolve(__dirname,'..'),context={console};context.window=context;vm.createContext(context);
-for(const file of ['gear-data.js','profession-data.js','item-atlas-v2.js','item-visuals-v2.js','character-portraits-v1.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),context);
+for(const file of ['gear-data.js','profession-data.js','item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js','character-portraits-v1.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),context);
 const V=context.CellboundItemVisuals,P=context.CellboundPortraits,G=context.CellboundGear;
 let sprites=0,bytes=0;
 for(const atlas of Object.values(V.atlases)){

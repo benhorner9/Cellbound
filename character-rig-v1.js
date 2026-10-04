@@ -1,0 +1,294 @@
+(()=>{
+'use strict';
+
+/*
+ * Cellbound Master Character Rig V1
+ * ---------------------------------
+ * One authoritative anatomical contract for the 12 race/sex base bodies.
+ * Class, equipment tier and item art never alter the master body itself.
+ * Lean/Balanced/Strong remain appearance choices, but are lightweight
+ * deformations of a canonical race/sex rig rather than extra body masters.
+ */
+const VERSION=1;
+const CONTRACT='master-rig-v1';
+const CANVAS=Object.freeze({width:240,height:410,viewBox:'0 0 240 410',centerX:120});
+const RACES=Object.freeze(['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari']);
+const SEXES=Object.freeze(['male','female']);
+const REQUIRED_ANCHORS=Object.freeze([
+  'head','crown','hairline','face','neck',
+  'leftShoulder','rightShoulder','chest','waist','leftHip','rightHip',
+  'leftHand','rightHand','mainHand','offHand','back',
+  'leftKnee','rightKnee','leftAnkle','rightAnkle','leftFoot','rightFoot'
+]);
+const LAYER_ORDER=Object.freeze([
+  'base','markings','hair-back','shield-back','armour','hair-front','front-offhand','mainhand-front','effects'
+]);
+
+const RACE_GEOMETRY=Object.freeze({
+  Stoneborn:{shoulder:60,waist:35,hip:39,leg:20,arm:18,neck:20,headScale:1.08,hand:1.15},
+  Aelari:{shoulder:44,waist:24,hip:29,leg:13,arm:10.5,neck:11,headScale:.97,hand:.92},
+  Thornkin:{shoulder:50,waist:28,hip:33,leg:15.5,arm:13.5,neck:14,headScale:1,hand:1},
+  Emberkin:{shoulder:53,waist:30,hip:33,leg:16,arm:14.5,neck:15,headScale:1,hand:1.02},
+  Nymari:{shoulder:46,waist:26,hip:32,leg:14.5,arm:12,neck:12.5,headScale:.99,hand:.97},
+  Veyren:{shoulder:47,waist:27,hip:31,leg:14.5,arm:12,neck:13,headScale:.99,hand:.98}
+});
+const SEX_SCALE=Object.freeze({
+  male:{shoulder:1.07,waist:1.04,hip:.95,leg:1.05,arm:1.10,neck:1.06,headScale:.99,hand:1.05},
+  female:{shoulder:.88,waist:.88,hip:1.12,leg:.96,arm:.88,neck:.86,headScale:1.01,hand:.93}
+});
+const FRAME_DEFORM=Object.freeze([
+  Object.freeze({id:'lean',label:'Lean',shoulder:.93,waist:.92,hip:.96,leg:.94,arm:.88,neck:.95,headScale:1.01,hand:.96,x:.94}),
+  Object.freeze({id:'balanced',label:'Balanced',shoulder:1,waist:1,hip:1,leg:1,arm:1,neck:1,headScale:1,hand:1,x:1}),
+  Object.freeze({id:'strong',label:'Strong',shoulder:1.10,waist:1.06,hip:1.04,leg:1.08,arm:1.16,neck:1.07,headScale:.99,hand:1.07,x:1.06})
+]);
+
+// Measurements taken from the approved painted base images in the final 240 x 410 canvas.
+const CALIBRATION=Object.freeze({
+  Veyren:{
+    male:{hand:[58,182,220],head:[120,20,33]},female:{hand:[63,177,218],head:[120.5,20,34]}
+  },
+  Stoneborn:{
+    male:{hand:[46,194,226],head:[120,23,35]},female:{hand:[58,182,218],head:[119.5,23,36]}
+  },
+  Aelari:{
+    male:{hand:[68,172,212],head:[121,20,33]},female:{hand:[70,170,210],head:[120.5,20,34]}
+  },
+  Thornkin:{
+    male:{hand:[63,177,214],head:[121,22,35]},female:{hand:[69,171,211],head:[120,22,35]}
+  },
+  Emberkin:{
+    male:{hand:[52,188,225],head:[120,20,33]},female:{hand:[60,180,219],head:[120.5,20,34]}
+  },
+  Nymari:{
+    male:{hand:[54,186,223],head:[120.5,20,34]},female:{hand:[62,178,218],head:[120.5,20,35]}
+  }
+});
+
+const RACE_FIT=Object.freeze({
+  Veyren:{width:.98,chestY:0,shoulderY:0},
+  Stoneborn:{width:1.04,chestY:1,shoulderY:2},
+  Aelari:{width:.96,chestY:0,shoulderY:0},
+  Thornkin:{width:1,chestY:1,shoulderY:1},
+  Emberkin:{width:1.01,chestY:1,shoulderY:1},
+  Nymari:{width:.97,chestY:0,shoulderY:0}
+});
+const FAMILY_FIT=Object.freeze({
+  warrior:{chest:.90,shoulder:1},
+  paladin:{chest:.92,shoulder:1.04},
+  hunter:{chest:.84,shoulder:.91},
+  rogue:{chest:.80,shoulder:.82},
+  mage:{chest:.85,shoulder:.88}
+});
+
+function clamp(n,min,max){return Math.max(min,Math.min(max,Number(n)||0))}
+function raceOf(subject,override){const race=override?.race||(typeof subject==='string'?subject:subject?.race||subject?.appearance?.race)||'Veyren';return RACES.includes(race)?race:'Veyren'}
+function genderIndex(subject,override){
+  const raw=override?.gender??subject?.appearance?.gender??subject?.gender??0;
+  return Number(raw)===1?1:0;
+}
+function sexName(subject,override){return genderIndex(subject,override)?'female':'male'}
+function frameIndex(subject,override){return clamp(Math.round(Number(override?.frame??subject?.appearance?.frame??subject?.frame??1)),0,2)}
+function rigY(y){
+  const n=Number(y)||0;
+  return n<=110?n*.8-16:n<=247?72+(n-110)*107/137:n<=283?179+(n-247)*59/36:238+(n-283)*172/127;
+}
+function unrigY(y){
+  const n=Number(y)||0;
+  return n<=72?(n+16)/.8:n<=179?110+(n-72)*137/107:n<=238?247+(n-179)*36/59:283+(n-238)*127/172;
+}
+function scaleMeasurements(race,sex,frame){
+  const base=RACE_GEOMETRY[race]||RACE_GEOMETRY.Veyren;
+  const gs=SEX_SCALE[sex]||SEX_SCALE.male;
+  const fs=FRAME_DEFORM[frame]||FRAME_DEFORM[1];
+  const out={gender:sex==='female'?1:0,frame};
+  for(const key of ['shoulder','waist','hip','leg','arm','neck','headScale','hand'])out[key]=base[key]*gs[key]*fs[key];
+  return out;
+}
+function canonicalMeasurements(race,sex){return scaleMeasurements(race,sex,1)}
+function masterKey(race,sex){return String(race).toLowerCase()+':'+sex}
+
+function canonicalAnchors(race,sex){
+  const p=canonicalMeasurements(race,sex),cal=CALIBRATION[race][sex],female=sex==='female';
+  const shoulderY=rigY(race==='Stoneborn'?130:female?133:131);
+  const chestTop=rigY(female?121:119),chestBottom=rigY(252),waistY=rigY(247);
+  const leftShoulder=120-p.shoulder,rightShoulder=120+p.shoulder;
+  const leftHip=120-p.hip*.80,rightHip=120+p.hip*.80;
+  return {
+    head:{x:cal.head[0],y:cal.head[1]+20},
+    crown:{x:cal.head[0],y:cal.head[1]},
+    hairline:{x:cal.head[0],y:cal.head[1]+24},
+    face:{x:cal.head[0],y:76},
+    neck:{x:120,y:rigY(112)},
+    leftShoulder:{x:leftShoulder,y:shoulderY},rightShoulder:{x:rightShoulder,y:shoulderY},
+    chest:{x:120,y:(chestTop+chestBottom)/2},
+    waist:{x:120,y:waistY},
+    leftHip:{x:leftHip,y:rigY(257)},rightHip:{x:rightHip,y:rigY(257)},
+    leftHand:{x:cal.hand[0],y:cal.hand[2]},rightHand:{x:cal.hand[1],y:cal.hand[2]},
+    mainHand:{x:cal.hand[1],y:cal.hand[2]},offHand:{x:cal.hand[0]-8,y:cal.hand[2]},
+    back:{x:120,y:rigY(150)},
+    leftKnee:{x:leftHip,y:rigY(322)},rightKnee:{x:rightHip,y:rigY(322)},
+    leftAnkle:{x:leftHip,y:rigY(365)},rightAnkle:{x:rightHip,y:rigY(365)},
+    leftFoot:{x:leftHip,y:rigY(380)},rightFoot:{x:rightHip,y:rigY(380)}
+  };
+}
+function masterBounds(race,sex){
+  const p=canonicalMeasurements(race,sex),a=canonicalAnchors(race,sex),fit=RACE_FIT[race]||RACE_FIT.Veyren;
+  return {
+    head:{x:a.crown.x-calibration(race,sex).head[2]*.72,y:Math.max(0,a.crown.y-7),w:calibration(race,sex).head[2]*1.44,h:62},
+    chest:{x:120-p.shoulder*.92*fit.width,y:rigY(sex==='female'?121:119)+fit.chestY,w:p.shoulder*1.84*fit.width,h:112},
+    waist:{x:120-Math.max(p.waist*1.15,p.hip*.78)*fit.width,y:rigY(247)-4,w:Math.max(p.waist*2.3,p.hip*1.56)*fit.width,h:22},
+    hands:{left:{x:a.leftHand.x-p.hand*9.5,y:a.leftHand.y-32,w:p.hand*19,h:43},right:{x:a.rightHand.x-p.hand*9.5,y:a.rightHand.y-32,w:p.hand*19,h:43}},
+    feet:{left:{x:a.leftFoot.x-p.leg*.74,y:rigY(348),w:p.leg*1.48,h:399-rigY(348)},right:{x:a.rightFoot.x-p.leg*.74,y:rigY(348),w:p.leg*1.48,h:399-rigY(348)}}
+  };
+}
+function calibration(race,sex){return CALIBRATION[race]?.[sex]||CALIBRATION.Veyren.male}
+function buildMaster(race,sex){
+  const a=canonicalAnchors(race,sex),p=canonicalMeasurements(race,sex);
+  return Object.freeze({
+    id:masterKey(race,sex),race,sex,
+    canvas:CANVAS,
+    baseAsset:'./assets/characters/race-bases/'+race.toLowerCase()+'-'+sex+'.webp',
+    measurements:Object.freeze({...p}),
+    calibration:Object.freeze({
+      hand:Object.freeze([...calibration(race,sex).hand]),
+      head:Object.freeze([...calibration(race,sex).head])
+    }),
+    anchors:Object.freeze(Object.fromEntries(Object.entries(a).map(([k,v])=>[k,Object.freeze({...v})]))),
+    bounds:Object.freeze(masterBounds(race,sex))
+  });
+}
+const MASTER_RIGS=Object.freeze(Object.fromEntries(RACES.flatMap(r=>SEXES.map(s=>[masterKey(r,s),buildMaster(r,s)]))));
+
+function masterRig(subject,override){
+  const race=raceOf(subject,override),sex=sexName(subject,override);
+  return MASTER_RIGS[masterKey(race,sex)];
+}
+function bodyProfile(subject,appearanceOverride){
+  return scaleMeasurements(raceOf(subject,appearanceOverride),sexName(subject,appearanceOverride),frameIndex(subject,appearanceOverride));
+}
+
+// Compatibility fit profile used by the renderer. X is anatomical; legacy Y values
+// remain available to older slot code while final-canvas anchors come from anchors().
+function gearFitProfile(subject){
+  const race=raceOf(subject),p=bodyProfile(subject),sex=sexName(subject),gender=p.gender,frame=p.frame;
+  const cal=calibration(race,sex),deform=FRAME_DEFORM[frame]||FRAME_DEFORM[1];
+  const shoulderY=race==='Stoneborn'?130:gender===1?133:131;
+  const leftShoulder=120-p.shoulder,rightShoulder=120+p.shoulder;
+  const leftHand=120+(cal.hand[0]-120)*deform.x,rightHand=120+(cal.hand[1]-120)*deform.x;
+  const handY=unrigY(cal.hand[2]);
+  const hipHalf=p.hip,waistHalf=Math.max(p.waist,p.hip*.70);
+  return {
+    race,gender,frame,p,centerX:120,shoulderY,
+    leftShoulder,rightShoulder,leftHand,rightHand,handY,
+    waistY:247,waistHalf,hipHalf,
+    leftLeg:120-p.hip*.80,rightLeg:120+p.hip*.80,
+    legHalf:Math.max(11.5,p.leg*.82),calfHalf:Math.max(8.8,p.leg*.62),footHalf:Math.max(11,p.leg*.72),
+    chestTop:gender===1?121:119,chestBottom:252,
+    weaponX:rightHand,offhandX:leftHand-8,
+    headGearScaleX:(gender===1?.75:.78)*([.94,1,1.05,.98][subject?.appearance?.face]||1)
+  };
+}
+function anchors(subject){
+  const race=raceOf(subject),sex=sexName(subject),frame=frameIndex(subject),m=masterRig(subject),p=bodyProfile(subject),d=FRAME_DEFORM[frame];
+  const x=x=>120+(x-120)*d.x;
+  const a=Object.fromEntries(Object.entries(m.anchors).map(([k,v])=>[k,{x:x(v.x),y:v.y}]));
+  const shoulderY=rigY(race==='Stoneborn'?130:sex==='female'?133:131);
+  a.leftShoulder={x:120-p.shoulder,y:shoulderY};a.rightShoulder={x:120+p.shoulder,y:shoulderY};
+  a.leftHip={x:120-p.hip*.80,y:rigY(257)};a.rightHip={x:120+p.hip*.80,y:rigY(257)};
+  a.leftKnee={x:a.leftHip.x,y:rigY(322)};a.rightKnee={x:a.rightHip.x,y:rigY(322)};
+  a.leftAnkle={x:a.leftHip.x,y:rigY(365)};a.rightAnkle={x:a.rightHip.x,y:rigY(365)};
+  a.leftFoot={x:a.leftHip.x,y:rigY(380)};a.rightFoot={x:a.rightHip.x,y:rigY(380)};
+  return a;
+}
+function anchor(subject,name){return anchors(subject)[name]||null}
+function headRig(subject){
+  const race=raceOf(subject),sex=sexName(subject),cal=calibration(race,sex);
+  return {centerX:cal.head[0],crownY:cal.head[1],width:cal.head[2]};
+}
+function hairFit(appearance,raceOverride){
+  const race=RACES.includes(raceOverride)?raceOverride:raceOf(appearance),sex=Number(appearance?.gender)===1?'female':'male';
+  const h=calibration(race,sex).head,face=[.94,1,1.05,.98][appearance?.face]||1;
+  return 'translate('+(120+(h[0]-120)*face)+' '+((h[1]-2+16)/.8)+') scale('+(h[2]/50*face)+' .8) translate(-120 -36)';
+}
+
+function fitSlot(subject,slot,options){
+  const f=gearFitProfile(subject),p=f.p,race=f.race,frame=f.frame;
+  const opts=options||{},family=String(opts.family||'warrior').toLowerCase(),tier=clamp(Math.round(opts.tier||1),1,5);
+  const rf=RACE_FIT[race]||RACE_FIT.Veyren,ff=FAMILY_FIT[family]||FAMILY_FIT.warrior;
+  const topBase=rigY(f.chestTop),waistBase=rigY(f.waistY),chestBottom=Math.min(rigY(f.chestBottom),waistBase+12);
+  if(slot==='Chest'){
+    const width=p.shoulder*2*ff.chest*rf.width,top=topBase+rf.chestY,bottom=chestBottom+(family==='mage'?3:family==='paladin'?2:0);
+    return{x:120-width/2,y:top,w:width,h:Math.max(98,bottom-top),top,bottom};
+  }
+  if(slot==='Waist'){
+    const width=Math.max(p.waist*2.25,p.hip*1.55)*rf.width,y=waistBase-4;
+    return{x:120-width/2,y,w:width,h:family==='mage'?22:18};
+  }
+  if(slot==='Shoulders'){
+    const width=p.arm*2.35*ff.shoulder*(race==='Stoneborn'?1.08:1),h=(32+(tier-1)*1.4)*(family==='paladin'?1.06:1);
+    const inset=family==='rogue'?4:family==='mage'?5:family==='hunter'?4:6;
+    const leftCenter=f.leftShoulder+inset,rightCenter=f.rightShoulder-inset,y=rigY(f.shoulderY)-h*.32+rf.shoulderY;
+    return{leftX:leftCenter-width/2,rightX:rightCenter-width/2,y,w:width,h,leftCenter,rightCenter};
+  }
+  if(slot==='Legs'){
+    const width=p.hip*2.12*(race==='Stoneborn'?1.03:1),y=waistBase-1,bottom=rigY(356);
+    return{x:120-width/2,y,w:width,h:Math.max(150,bottom-y)+(family==='mage'?28:0)};
+  }
+  if(slot==='Feet'){
+    const width=f.footHalf*2.05,y=rigY(348),bottom=399;
+    return{leftX:f.leftLeg-width/2,rightX:f.rightLeg-width/2,y,w:width,h:bottom-y};
+  }
+  if(slot==='Hands'){
+    const width=p.hand*19,y=rigY(f.handY)-32;
+    return{leftX:f.leftHand-width/2,rightX:f.rightHand-width/2,y,w:width,h:43};
+  }
+  if(slot==='Head'){
+    const h=headRig(subject),face=[.94,1,1.05,.98][subject?.appearance?.face]||1,w=h.width*1.28*face;
+    return{x:120+(h.centerX-120)*face-w/2,y:h.crownY-7,w,h:55};
+  }
+  if(slot==='Back'){
+    const a=anchors(subject),w=p.shoulder*2.05,h=Math.max(120,rigY(330)-a.back.y);
+    return{x:120-w/2,y:a.back.y-8,w,h};
+  }
+  return null;
+}
+function equipmentCoverage(subject){
+  const head=subject?.equipment?.Head;
+  return {hair:Boolean(head),growth:Boolean(head)};
+}
+function resolve(subject){
+  return {contract:CONTRACT,master:masterRig(subject),frame:FRAME_DEFORM[frameIndex(subject)],profile:bodyProfile(subject),anchors:anchors(subject)};
+}
+function validateAll(){
+  const errors=[];
+  const rigs=Object.values(MASTER_RIGS);
+  if(rigs.length!==12)errors.push('Expected 12 master rigs, found '+rigs.length);
+  for(const rig of rigs){
+    for(const name of REQUIRED_ANCHORS){
+      const a=rig.anchors[name];
+      if(!a||!Number.isFinite(a.x)||!Number.isFinite(a.y))errors.push(rig.id+': missing/invalid anchor '+name);
+      else if(a.x<0||a.x>CANVAS.width||a.y<0||a.y>CANVAS.height)errors.push(rig.id+': anchor out of bounds '+name);
+    }
+    if(!(rig.anchors.leftShoulder.x<rig.anchors.rightShoulder.x))errors.push(rig.id+': shoulder order invalid');
+    if(!(rig.anchors.leftHand.x<rig.anchors.rightHand.x))errors.push(rig.id+': hand order invalid');
+    if(!(rig.anchors.leftFoot.x<rig.anchors.rightFoot.x))errors.push(rig.id+': foot order invalid');
+    for(const frame of [0,1,2]){
+      const subject={race:rig.race,appearance:{gender:rig.sex==='female'?1:0,frame}};
+      for(const slot of ['Head','Shoulders','Chest','Hands','Waist','Legs','Feet']){
+        const b=fitSlot(subject,slot,{family:'warrior',tier:1});
+        if(!b)errors.push(rig.id+': no fit for '+slot);
+        else for(const key of ['y','w','h'])if(!Number.isFinite(b[key]))errors.push(rig.id+': invalid '+slot+' '+key);
+      }
+    }
+  }
+  return {ok:errors.length===0,count:rigs.length,contract:CONTRACT,errors};
+}
+
+window.CellboundCharacterRig=Object.freeze({
+  version:VERSION,contract:CONTRACT,canvas:CANVAS,races:RACES,sexes:SEXES,
+  requiredAnchors:REQUIRED_ANCHORS,layerOrder:LAYER_ORDER,frameDeform:FRAME_DEFORM,
+  masterRigCount:12,masterRigs:MASTER_RIGS,
+  masterKey,masterRig,resolve,bodyProfile,gearFitProfile,anchors,anchor,
+  rigY,unrigY,headRig,hairFit,fitSlot,equipmentCoverage,validateAll
+});
+})();
