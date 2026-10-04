@@ -103,7 +103,12 @@ const classes={
 
 const BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue','Mage']);
 const BETA_PLAYABLE_CLASS_SET=new Set(BETA_PLAYABLE_CLASSES);
-function isBetaClassPlayable(name){return BETA_PLAYABLE_CLASS_SET.has(String(name||''))}
+function hasStaffClassBypass(){
+  const admin=globalThis.CellboundAdmin;
+  const role=String(admin?.role||'').toLowerCase();
+  return Boolean(admin?.isAdmin&&(role==='owner'||role==='admin'));
+}
+function isBetaClassPlayable(name){return hasStaffClassBypass()||BETA_PLAYABLE_CLASS_SET.has(String(name||''))}
 function isCharacterBetaPlayable(c){return Boolean(c&&isBetaClassPlayable(c.class))}
 
 const RECRUIT_RACES=[
