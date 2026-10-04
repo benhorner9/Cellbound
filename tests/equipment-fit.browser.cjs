@@ -33,11 +33,13 @@ const engine=engineName==='webkit'?webkit:chromium;
         const dy=y<b.y?b.y-y:y>b.y+b.h?y-(b.y+b.h):0;
         return Math.hypot(dx,dy);
       };
+      const childBox=(svg,selector)=>{const el=svg.querySelector(selector);return el?modelBox(svg,el):null};
+      const contains=(b,x,y,pad=1)=>Boolean(b&&x>=b.x-pad&&x<=b.x+b.w+pad&&y>=b.y-pad&&y<=b.y+b.h+pad);
       const anchorFor=(item,pos,fit)=>{
         if(item.slot==='Weapon')return[fit.weaponX,fit.weaponY];
         if(item.slot==='OffHand')return[fit.offhandX,fit.offhandY];
         if(item.slot==='Hands')return[fit.leftHand,fit.handY];
-        if(item.slot==='Shoulders')return[fit.leftShoulder,150];
+        if(item.slot==='Shoulders')return[fit.leftPad,151];
         if(item.slot==='Waist')return[120,247];
         if(item.slot==='Chest')return[120,190];
         if(item.slot==='Legs')return[120,300];
@@ -68,7 +70,11 @@ const engine=engineName==='webkit'?webkit:chromium;
           if(distance(b,ax,ay)>max)fail(item,race,gender,'visual misses anatomical anchor by '+distance(b,ax,ay).toFixed(1),b);
 
           if(item.slot==='Hands'){
-            if(distance(b,fit.rightHand,fit.handY)>14)fail(item,race,gender,'right glove misses right hand',b);
+            const lb=childBox(svg,'.cb-paper-glove-left'),rb=childBox(svg,'.cb-paper-glove-right');
+            if(!contains(lb,fit.leftHand,fit.handY-4,2))fail(item,race,gender,'left glove does not wrap left hand',lb);
+            if(!contains(rb,fit.rightHand,fit.handY-4,2))fail(item,race,gender,'right glove does not wrap right hand',rb);
+            if(lb&&lb.w>fit.p.hand*17+8)fail(item,race,gender,'left glove is oversized for hand',lb);
+            if(rb&&rb.w>fit.p.hand*17+8)fail(item,race,gender,'right glove is oversized for hand',rb);
           }
           if(item.slot==='Weapon'){
             if(!svg.outerHTML.includes('cb-paper-side-weapon')||!svg.outerHTML.includes('data-weapon-pose="side-held"'))fail(item,race,gender,'weapon is not using side-held presentation',b);
@@ -76,7 +82,31 @@ const engine=engineName==='webkit'?webkit:chromium;
             if(distance(b,fit.weaponX,fit.weaponY)>8)fail(item,race,gender,'weapon misses side-held grip',b);
           }
           if(item.slot==='Shoulders'){
-            if(distance(b,fit.rightShoulder,150)>24)fail(item,race,gender,'right shoulder misses shoulder anchor',b);
+            const lb=childBox(svg,'.cb-paper-pad-left'),rb=childBox(svg,'.cb-paper-pad-right');
+            if(!contains(lb,fit.leftPad,151,4))fail(item,race,gender,'left pad floats away from fitted pad centre',lb);
+            if(!contains(rb,fit.rightPad,151,4))fail(item,race,gender,'right pad floats away from fitted pad centre',rb);
+            if(distance(lb,fit.leftShoulder,151)>8)fail(item,race,gender,'left pad no longer overlaps shoulder joint',lb);
+            if(distance(rb,fit.rightShoulder,151)>8)fail(item,race,gender,'right pad no longer overlaps shoulder joint',rb);
+          }
+          if(item.slot==='Chest'){
+            const shell=childBox(svg,'.cb-paper-chest-shell');
+            if(!shell||shell.w>fit.p.shoulder*1.9+8)fail(item,race,gender,'chest shell is too wide for torso',shell);
+            if(shell&&shell.y+shell.h<235)fail(item,race,gender,'chest shell leaves waist gap',shell);
+          }
+          if(item.slot==='Waist'){
+            const belt=childBox(svg,'.cb-paper-waist-belt');
+            if(!belt||belt.w>fit.waistHalf*2+9)fail(item,race,gender,'belt is too wide for waist',belt);
+          }
+          if(item.slot==='Legs'&&P.clothLowerStyle(item)==='trousers'){
+            const lb=childBox(svg,'.cb-paper-leg-left'),rb=childBox(svg,'.cb-paper-leg-right');
+            if(!contains(lb,fit.leftLeg,280,3)||!contains(rb,fit.rightLeg,280,3))fail(item,race,gender,'leg armour misses leg centres',{left:lb,right:rb});
+            if(lb&&rb&&rb.x-(lb.x+lb.w)>16)fail(item,race,gender,'leg armour gap is too large',{left:lb,right:rb});
+          }
+          if(item.slot==='Feet'){
+            const lb=childBox(svg,'.cb-paper-boot-left'),rb=childBox(svg,'.cb-paper-boot-right');
+            if(!contains(lb,fit.leftLeg,370,3)||!contains(rb,fit.rightLeg,370,3))fail(item,race,gender,'boots miss ankle centres',{left:lb,right:rb});
+            if(lb&&lb.w>fit.footHalf*2.8+8)fail(item,race,gender,'left boot is oversized',lb);
+            if(rb&&rb.w>fit.footHalf*2.8+8)fail(item,race,gender,'right boot is oversized',rb);
           }
           checked++;
         }
@@ -103,17 +133,25 @@ const engine=engineName==='webkit'?webkit:chromium;
         const weapon=svg.querySelector('.cb-paper-side-weapon');
         if(!weapon||weapon.getAttribute('data-weapon-pose')!=='side-held')fail({itemId:klass+'-T'+tier+'-Weapon'},race,gender,'full loadout missing side-held weapon');
         if(fit.weaponX<fit.weaponSideMin)fail({itemId:klass+'-T'+tier+'-Weapon'},race,gender,'full loadout weapon crosses torso');
+        const chest=childBox(svg,'.cb-paper-chest-shell'),belt=childBox(svg,'.cb-paper-waist-belt');
+        if(chest&&belt&&belt.y-(chest.y+chest.h)>5)fail({itemId:klass+'-T'+tier+'-Chest/Waist'},race,gender,'visible chest-to-waist gap',{chest,belt});
+        const lp=childBox(svg,'.cb-paper-pad-left'),rp=childBox(svg,'.cb-paper-pad-right');
+        if(!contains(lp,fit.leftPad,151,4)||!contains(rp,fit.rightPad,151,4))fail({itemId:klass+'-T'+tier+'-Shoulders'},race,gender,'full loadout pads float from body',{left:lp,right:rp});
+        const lg=childBox(svg,'.cb-paper-glove-left'),rg=childBox(svg,'.cb-paper-glove-right');
+        if(!contains(lg,fit.leftHand,fit.handY-4,2)||!contains(rg,fit.rightHand,fit.handY-4,2))fail({itemId:klass+'-T'+tier+'-Hands'},race,gender,'full loadout gloves miss hands',{left:lg,right:rg});
+        const lb=childBox(svg,'.cb-paper-boot-left'),rb=childBox(svg,'.cb-paper-boot-right');
+        if(!contains(lb,fit.leftLeg,370,3)||!contains(rb,fit.rightLeg,370,3))fail({itemId:klass+'-T'+tier+'-Feet'},race,gender,'full loadout boots miss ankles',{left:lb,right:rb});
         loadoutChecks++;
       }
       return{checked,total:G.items.length*12,itemCount:G.items.length,loadoutChecks,expectedLoadouts:G.CLASS_ORDER.length*5*6*2*3,failures,fitVersion:P.equipmentFitVersion,rigFitVersion:R.fitVersion};
     });
 
-    assert.equal(result.fitVersion,3);
-    assert.equal(result.rigFitVersion,3);
+    assert.equal(result.fitVersion,4);
+    assert.equal(result.rigFitVersion,4);
     assert.equal(result.checked,result.total);
     assert.equal(result.loadoutChecks,result.expectedLoadouts);
     assert.deepEqual(result.failures,[],'Rendered equipment fit failures: '+JSON.stringify(result.failures,null,2));
-    console.log(engineName+' equipment fit v3 passed '+result.checked+' individual item/body combinations plus '+result.loadoutChecks+' complete loadouts across all 36 race/sex/frame bodies, including side-held weapon visibility.');
+    console.log(engineName+' equipment fit v4 passed '+result.checked+' individual item/body combinations plus '+result.loadoutChecks+' complete loadouts: shoulders, gloves, torso/waist, legs, boots and side-held weapons all body-fitted.');
     await page.screenshot({path:'/tmp/cellbound-equipment-fit-'+engineName+'.png'});
   }finally{
     await browser.close();
