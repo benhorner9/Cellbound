@@ -1088,10 +1088,16 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   const guild=fs.readFileSync(path.join(__dirname,'guild-v4.js'),'utf8');
   for(const hook of [
     "const BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue','Mage'])",
+    "function adminRole()",
+    "role==='owner'||role==='admin'",
+    "function hasStaffClassAccess()",
+    "hasStaffClassAccess()||BETA_PLAYABLE_CLASS_SET.has",
+    "supabaseClient.rpc('cellbound_admin_status')",
     "isCharacterBetaPlayable(c)",
     "state.roster.filter((c,i)=>isRosterSlotUnlocked(i)&&isCharacterBetaPlayable(c)",
+    "getPlayableClasses:availableClassNames",
     "betaPlayableClasses:BETA_PLAYABLE_CLASSES"
-  ])if(!guild.includes(hook))throw new Error('Five-class beta contract is missing '+hook);
+  ])if(!guild.includes(hook))throw new Error('Beta class lock / Owner-Admin bypass contract is missing '+hook);
 
   const onboarding=fs.readFileSync(path.join(__dirname,'onboarding-v1.js'),'utf8');
   for(const hook of [
