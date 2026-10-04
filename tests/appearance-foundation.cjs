@@ -11,7 +11,7 @@ assert.equal(P.rigContract,'master-rig-v1');
 assert.equal(P.equipmentFitVersion,2);
 assert.equal(sandbox.CellboundCharacterRig.fitVersion,2);
 assert.equal(P.masterRigCount,12);
-assert.equal(P.raceIdentityVersion,1);
+assert.equal(P.raceIdentityVersion,2);
 
 let checked=0;
 for(const race of Object.keys(P.RACES))for(const gender of [0,1]){
@@ -19,7 +19,7 @@ for(const race of Object.keys(P.RACES))for(const gender of [0,1]){
  const c={id:'existing',name:'Keeper',race,class:'Warrior',level:15,appearance,equipment:{},inventory:[{id:'preserved'}],talents:{a:3}};
  const before=JSON.stringify(c),base=P.paperDollSVG(c,{showGear:false});
  assert(base.includes('data-character-style="classic-paper-doll"'));
- assert(base.includes('data-race-identity="v1"'));
+ assert(base.includes('data-race-identity="v2"'));
  assert(base.includes('data-equipment-fit="v2"'));
  assert(base.includes('cb-paper-race-'+race.toLowerCase()),race+' must expose a race-specific body detail layer');
  assert(base.includes('data-base-art="classic-paper-doll-v1"'));
@@ -42,7 +42,12 @@ for(const race of Object.keys(P.RACES)){
  const female=P.paperDollSVG({id:'sex-'+race,race,class:'Warrior',appearance:{race,gender:1,frame:1,hair:0,feature:0},equipment:{}},{showGear:false});
  assert.notEqual(male,female,race+' male/female bodies must remain visually distinct');
 }
-console.log('Classic race identity foundation: '+checked+' race/sex states; six unique race signatures, sex variants, serialization and anchors passed.');
+const profiles=Object.fromEntries(Object.keys(P.RACES).map(race=>[race,P.bodyProfile({race,appearance:{race,gender:0,frame:1}})]));
+assert(profiles.Stoneborn.shoulder>profiles.Emberkin.shoulder&&profiles.Emberkin.shoulder>profiles.Thornkin.shoulder&&profiles.Thornkin.shoulder>profiles.Veyren.shoulder&&profiles.Veyren.shoulder>profiles.Nymari.shoulder&&profiles.Nymari.shoulder>profiles.Aelari.shoulder,'Race V2 shoulder silhouettes must remain deliberately separated');
+assert(profiles.Stoneborn.waist-profiles.Aelari.waist>=18,'Stoneborn and Aelari torso mass must remain visually distinct');
+assert(profiles.Nymari.hip>profiles.Veyren.hip&&profiles.Nymari.hip>profiles.Aelari.hip,'Nymari lower-body silhouette must remain fluid/wider through the hips');
+assert(profiles.Stoneborn.hand>1.2&&profiles.Aelari.hand<.9,'Extremity scale must preserve Stoneborn mass and Aelari delicacy');
+console.log('Race Identity V2 foundation: '+checked+' race/sex states; six unique race signatures, sex variants, serialization and anchors passed.');
 
 for(const race of Object.keys(P.RACES))for(const gender of [0,1])for(const frame of [0,1,2])for(const klass of ['Warrior','Paladin','Hunter','Rogue','Mage'])for(const tier of [1,2,3,4,5]){
  const c={id:'slot-fit',race,class:klass,appearance:{gender,frame},equipment:{}};
