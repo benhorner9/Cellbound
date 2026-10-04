@@ -726,7 +726,7 @@ function illustratedEquipment(c,highlighted,uid){
    attrs='data-wearable-fit="anatomical-v2"';
   }else if(slot==='Waist'){
    body=draw(fit.x,fit.y,fit.w,fit.h);
-   attrs='data-waist-design="body-fitted" data-wearable-fit="anatomical-v2"';
+   attrs='data-waist-design="'+(V.families[gearClass(item)]==='mage'?'short-sash':'body-fitted')+'" data-wearable-fit="master-rig-v1"';
   }else if(slot==='Shoulders'){
    body=draw(fit.leftX,fit.y,fit.w,fit.h,0)+draw(fit.rightX,fit.y,fit.w,fit.h,1);
    attrs='data-wearable-fit="anatomical-v2" data-left-shoulder-x="'+(fit.leftX+fit.w/2).toFixed(2)+'" data-right-shoulder-x="'+(fit.rightX+fit.w/2).toFixed(2)+'"';
