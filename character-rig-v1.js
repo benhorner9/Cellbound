@@ -9,7 +9,8 @@
  * Lean/Balanced/Strong remain appearance choices, but are lightweight
  * deformations of a canonical race/sex rig rather than extra body masters.
  */
-const VERSION=1;
+const VERSION=2;
+const FIT_VERSION=2;
 const CONTRACT='master-rig-v1';
 const CANVAS=Object.freeze({width:240,height:410,viewBox:'0 0 240 410',centerX:120});
 const RACES=Object.freeze(['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari']);
@@ -25,16 +26,16 @@ const LAYER_ORDER=Object.freeze([
 ]);
 
 const RACE_GEOMETRY=Object.freeze({
-  Stoneborn:{shoulder:60,waist:35,hip:39,leg:20,arm:18,neck:20,headScale:1.08,hand:1.15},
-  Aelari:{shoulder:44,waist:24,hip:29,leg:13,arm:10.5,neck:11,headScale:.97,hand:.92},
-  Thornkin:{shoulder:50,waist:28,hip:33,leg:15.5,arm:13.5,neck:14,headScale:1,hand:1},
-  Emberkin:{shoulder:53,waist:30,hip:33,leg:16,arm:14.5,neck:15,headScale:1,hand:1.02},
-  Nymari:{shoulder:46,waist:26,hip:32,leg:14.5,arm:12,neck:12.5,headScale:.99,hand:.97},
-  Veyren:{shoulder:47,waist:27,hip:31,leg:14.5,arm:12,neck:13,headScale:.99,hand:.98}
+  Stoneborn:{shoulder:58,waist:36,hip:40,leg:19,arm:17.5,neck:20,headScale:1.07,hand:1.18},
+  Aelari:{shoulder:40,waist:23,hip:28,leg:11.5,arm:9.8,neck:10.5,headScale:.96,hand:.90},
+  Thornkin:{shoulder:50,waist:29,hip:33,leg:15.5,arm:13.8,neck:14.5,headScale:1.02,hand:1.02},
+  Emberkin:{shoulder:51,waist:30,hip:33,leg:15.5,arm:14.2,neck:15,headScale:1.02,hand:1.04},
+  Nymari:{shoulder:44,waist:26,hip:31,leg:13.5,arm:11.4,neck:12.5,headScale:.99,hand:.95},
+  Veyren:{shoulder:46,waist:27,hip:31,leg:13.5,arm:11.6,neck:13,headScale:.99,hand:.97}
 });
 const SEX_SCALE=Object.freeze({
-  male:{shoulder:1.07,waist:1.04,hip:.95,leg:1.05,arm:1.10,neck:1.06,headScale:.99,hand:1.05},
-  female:{shoulder:.88,waist:.88,hip:1.12,leg:.96,arm:.88,neck:.86,headScale:1.01,hand:.93}
+  male:{shoulder:1,waist:1,hip:1,leg:1,arm:1,neck:1,headScale:1,hand:1},
+  female:{shoulder:.95,waist:.94,hip:1.04,leg:1,arm:.94,neck:.94,headScale:1,hand:.96}
 });
 const FRAME_DEFORM=Object.freeze([
   Object.freeze({id:'lean',label:'Lean',shoulder:.93,waist:.92,hip:.96,leg:.94,arm:.88,neck:.95,headScale:1.01,hand:.96,x:.94}),
@@ -116,6 +117,8 @@ function canonicalAnchors(race,sex){
   const chestTop=rigY(female?121:119),chestBottom=rigY(252),waistY=rigY(247);
   const leftShoulder=120-p.shoulder,rightShoulder=120+p.shoulder;
   const leftHip=120-p.hip*.47,rightHip=120+p.hip*.47;
+  const handReach=Math.max(5.5,p.arm*.50);
+  const leftHand=leftShoulder-handReach,rightHand=rightShoulder+handReach;
   return {
     head:{x:cal.head[0],y:cal.head[1]+20},
     crown:{x:cal.head[0],y:cal.head[1]},
@@ -126,8 +129,8 @@ function canonicalAnchors(race,sex){
     chest:{x:120,y:(chestTop+chestBottom)/2},
     waist:{x:120,y:waistY},
     leftHip:{x:leftHip,y:rigY(257)},rightHip:{x:rightHip,y:rigY(257)},
-    leftHand:{x:cal.hand[0],y:cal.hand[2]},rightHand:{x:cal.hand[1],y:cal.hand[2]},
-    mainHand:{x:cal.hand[1],y:cal.hand[2]},offHand:{x:cal.hand[0]-8,y:cal.hand[2]},
+    leftHand:{x:leftHand,y:rigY(283)},rightHand:{x:rightHand,y:rigY(283)},
+    mainHand:{x:rightHand,y:rigY(283)},offHand:{x:leftHand,y:rigY(283)},
     back:{x:120,y:rigY(150)},
     leftKnee:{x:leftHip,y:rigY(322)},rightKnee:{x:rightHip,y:rigY(322)},
     leftAnkle:{x:leftHip,y:rigY(365)},rightAnkle:{x:rightHip,y:rigY(365)},
@@ -174,29 +177,31 @@ function bodyProfile(subject,appearanceOverride){
 // remain available to older slot code while final-canvas anchors come from anchors().
 function gearFitProfile(subject){
   const race=raceOf(subject),p=bodyProfile(subject),sex=sexName(subject),gender=p.gender,frame=p.frame;
-  const cal=calibration(race,sex),deform=FRAME_DEFORM[frame]||FRAME_DEFORM[1];
   const shoulderY=race==='Stoneborn'?130:gender===1?133:131;
   const leftShoulder=120-p.shoulder,rightShoulder=120+p.shoulder;
-  const leftHand=120+(cal.hand[0]-120)*deform.x,rightHand=120+(cal.hand[1]-120)*deform.x;
-  const handY=unrigY(cal.hand[2]);
+  const handReach=Math.max(5.5,p.arm*.50);
+  const leftHand=leftShoulder-handReach,rightHand=rightShoulder+handReach;
+  const handY=283;
   const hipHalf=p.hip,waistHalf=Math.max(p.waist,p.hip*.70);
   return {
     race,gender,frame,p,centerX:120,shoulderY,
     leftShoulder,rightShoulder,leftHand,rightHand,handY,
     waistY:247,waistHalf,hipHalf,
     leftLeg:120-p.hip*.47,rightLeg:120+p.hip*.47,
-    legHalf:Math.max(11.5,p.leg*.82),calfHalf:Math.max(8.8,p.leg*.62),footHalf:Math.max(11,p.leg*.72),
+    legHalf:Math.max(10.5,p.leg*.82),calfHalf:Math.max(8.2,p.leg*.62),footHalf:Math.max(10,p.leg*.72),
     chestTop:gender===1?121:119,chestBottom:252,
-    weaponX:rightHand,offhandX:leftHand-8,
-    headGearScaleX:(gender===1?.75:.78)*([.94,1,1.05,.98][subject?.appearance?.face]||1)
+    weaponX:rightHand,offhandX:leftHand,
+    headGearScaleX:(gender===1?.94:1)*([.94,1,1.05,.98][subject?.appearance?.face]||1)
   };
 }
 function anchors(subject){
-  const race=raceOf(subject),sex=sexName(subject),frame=frameIndex(subject),m=masterRig(subject),p=bodyProfile(subject),d=FRAME_DEFORM[frame];
+  const race=raceOf(subject),sex=sexName(subject),frame=frameIndex(subject),m=masterRig(subject),p=bodyProfile(subject),d=FRAME_DEFORM[frame],f=gearFitProfile(subject);
   const x=x=>120+(x-120)*d.x;
   const a=Object.fromEntries(Object.entries(m.anchors).map(([k,v])=>[k,{x:x(v.x),y:v.y}]));
   const shoulderY=rigY(race==='Stoneborn'?130:sex==='female'?133:131);
-  a.leftShoulder={x:120-p.shoulder,y:shoulderY};a.rightShoulder={x:120+p.shoulder,y:shoulderY};
+  a.leftShoulder={x:f.leftShoulder,y:shoulderY};a.rightShoulder={x:f.rightShoulder,y:shoulderY};
+  a.leftHand={x:f.leftHand,y:rigY(f.handY)};a.rightHand={x:f.rightHand,y:rigY(f.handY)};
+  a.mainHand={...a.rightHand};a.offHand={...a.leftHand};
   a.leftHip={x:120-p.hip*.47,y:rigY(257)};a.rightHip={x:120+p.hip*.47,y:rigY(257)};
   a.leftKnee={x:a.leftHip.x,y:rigY(322)};a.rightKnee={x:a.rightHip.x,y:rigY(322)};
   a.leftAnkle={x:a.leftHip.x,y:rigY(365)};a.rightAnkle={x:a.rightHip.x,y:rigY(365)};
@@ -288,7 +293,7 @@ function validateAll(){
 }
 
 window.CellboundCharacterRig=Object.freeze({
-  version:VERSION,contract:CONTRACT,canvas:CANVAS,races:RACES,sexes:SEXES,
+  version:VERSION,fitVersion:FIT_VERSION,contract:CONTRACT,canvas:CANVAS,races:RACES,sexes:SEXES,
   requiredAnchors:REQUIRED_ANCHORS,layerOrder:LAYER_ORDER,frameDeform:FRAME_DEFORM,
   masterRigCount:12,masterRigs:MASTER_RIGS,
   masterKey,masterRig,resolve,bodyProfile,gearFitProfile,anchors,anchor,
