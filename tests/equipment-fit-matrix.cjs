@@ -6,8 +6,8 @@ for(const file of ['gear-data.js','item-atlas-v2.js','item-visuals-v2.js','chara
 }
 const G=ctx.CellboundGear,P=ctx.CellboundPortraits,R=ctx.CellboundCharacterRig;
 assert(G&&P&&R);
-assert.equal(R.fitVersion,2);
-assert.equal(P.equipmentFitVersion,2);
+assert.equal(R.fitVersion,3);
+assert.equal(P.equipmentFitVersion,3);
 
 const races=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'];
 const slotPosition=item=>item.slot==='Ring'?'Ring1':item.slot==='Trinket'?'Trinket1':item.slot;
@@ -26,18 +26,21 @@ for(const item of G.items){
     const c={id:'fit-'+item.itemId+'-'+race+'-'+gender,race,class:item.class,appearance,equipment:{[pos]:item}};
     const html=P.paperDollSVG(c),fit=P.gearFitProfile(c);
     assert(!/NaN|Infinity|undefined/.test(html),item.itemId+' broken SVG on '+race+'/'+gender);
-    assert(html.includes('data-equipment-fit="v2"'),item.itemId+' missing v2 model fit contract');
+    assert(html.includes('data-equipment-fit="v3"'),item.itemId+' missing v3 model fit contract');
     assert(html.includes('cb-paper-slot-'+pos.toLowerCase()),item.itemId+' missing '+pos+' layer');
-    assert(html.includes('data-fit-version="2"'),item.itemId+' did not use universal slot fitting');
+    assert(html.includes('data-fit-version="3"'),item.itemId+' did not use equipment fit v3');
+    assert(html.includes('data-alignment="v3"'),item.itemId+' missing v3 slot alignment marker');
 
     if(item.slot==='Weapon'){
-      assert(near(num(html,'data-grip-x'),fit.weaponX),item.itemId+' main-hand X not on hand for '+race+'/'+gender);
-      assert(near(num(html,'data-grip-y'),fit.handY),item.itemId+' main-hand Y not on hand for '+race+'/'+gender);
-      const weaponAt=html.indexOf('cb-paper-front-weapon'),headAt=html.indexOf('cb-paper-head');
-      assert(weaponAt>headAt,item.itemId+' main-hand must render in front');
+      assert(near(num(html,'data-grip-x'),fit.weaponX),item.itemId+' main-hand X not on side-held grip for '+race+'/'+gender);
+      assert(near(num(html,'data-grip-y'),fit.weaponY),item.itemId+' main-hand Y not on side-held grip for '+race+'/'+gender);
+      assert(fit.weaponX>=fit.baseRightHand,item.itemId+' side-held weapon must not move inward');
+      const weaponAt=html.indexOf('cb-paper-side-weapon'),headAt=html.indexOf('cb-paper-head');
+      assert(weaponAt>headAt,item.itemId+' side-held main-hand must render above body/head');
+      assert(html.includes('data-weapon-pose="side-held"'),item.itemId+' missing side-held weapon pose');
     }else if(item.slot==='OffHand'){
       assert(near(num(html,'data-grip-x'),fit.offhandX),item.itemId+' off-hand X not on hand for '+race+'/'+gender);
-      assert(near(num(html,'data-grip-y'),fit.handY),item.itemId+' off-hand Y not on hand for '+race+'/'+gender);
+      assert(near(num(html,'data-grip-y'),fit.offhandY),item.itemId+' off-hand Y not on hand for '+race+'/'+gender);
       const type=P.offHandType(item,c),offAt=html.indexOf('data-offhand-type="'+type+'"'),armsAt=html.indexOf('cb-paper-arms'),headAt=html.indexOf('cb-paper-head');
       if(type==='shield')assert(offAt>=0&&offAt<armsAt,item.itemId+' shield must stay behind body');
       else assert(offAt>headAt,item.itemId+' front off-hand must render above body/head');
@@ -77,12 +80,23 @@ for(const klass of G.CLASS_ORDER)for(const tier of [1,2,3,4,5])for(const race of
   const c={id:'loadout-'+bodyChecks,race,class:klass,appearance:{race,gender,frame,skinTone:1,face:0,hair:0,hairColor:0,facialHair:0,marking:0,eyes:0,feature:0},equipment};
   const html=P.paperDollSVG(c),fit=P.gearFitProfile(c);
   assert(!/NaN|Infinity|undefined/.test(html));
-  assert(html.includes('data-equipment-fit="v2"'));
+  assert(html.includes('data-equipment-fit="v3"'));
   for(const pos of G.EQUIPMENT_POSITION_ORDER)assert(html.includes('cb-paper-slot-'+pos.toLowerCase()),klass+' '+race+' frame '+frame+' missing '+pos);
-  const weaponHtml=html.slice(html.indexOf('cb-paper-front-weapon'));
+  const weaponAt=html.indexOf('cb-paper-side-weapon'),weaponHtml=weaponAt>=0?html.slice(weaponAt):'';
+  assert(weaponAt>=0,klass+' '+race+' frame '+frame+' missing side-held weapon');
   assert(near(num(weaponHtml,'data-grip-x'),fit.weaponX),klass+' '+race+' frame '+frame+' weapon mismatch');
-  assert(near(num(weaponHtml,'data-grip-y'),fit.handY),klass+' '+race+' frame '+frame+' weapon Y mismatch');
+  assert(near(num(weaponHtml,'data-grip-y'),fit.weaponY),klass+' '+race+' frame '+frame+' weapon Y mismatch');
+  assert(fit.weaponX>=fit.baseRightHand,klass+' '+race+' frame '+frame+' weapon moved across body instead of to side');
   bodyChecks++;
 }
 assert.equal(bodyChecks,G.CLASS_ORDER.length*5*6*2*3);
-console.log('Universal equipment fit: '+itemChecks+' item/body checks across all 12 master models; '+bodyChecks+' complete loadouts across all 36 race/sex/frame bodies.');
+for(const klass of ['Mage','Priest','Warlock','Druid']){
+ const styles=[1,2,3,4,5].map(tier=>{
+  const item=G.items.find(x=>x.class===klass&&Number(x.tier)===tier&&x.slot==='Legs');assert(item);
+  return P.clothLowerStyle(item);
+ });
+ assert(new Set(styles).size>=2,klass+' must mix trouser and robe/skirt silhouettes across tiers');
+ assert(styles.includes('trousers'),klass+' must retain at least one trouser tier');
+ assert(styles.some(x=>x!=='trousers'),klass+' must include at least one robe/skirt tier');
+}
+console.log('Equipment fit v3: '+itemChecks+' item/body checks across all 12 master models; '+bodyChecks+' complete loadouts across all 36 race/sex/frame bodies; side-held weapons and varied cloth lowers verified.');
