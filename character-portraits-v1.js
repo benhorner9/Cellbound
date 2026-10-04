@@ -817,7 +817,7 @@ function paperLegs(c,skin,highlighted){
     gear+=lowerSilhouetteMarkup(item,pal,p,style);
     if(style==='kilt')gear+='<path d="'+legPath(lc)+' M'+legPath(rc)+'" fill="'+pal.dark+'" stroke="#111820" stroke-width="2.1" opacity=".88"/>';
   }else{
-    gear+='<path d="'+legPath(lc)+'" fill="'+pal.base+'" stroke="#111820" stroke-width="2.7"/><path d="'+legPath(rc)+'" fill="'+pal.base+'" stroke="#111820" stroke-width="2.7"/>';
+    gear+='<path class="cb-paper-leg-left" d="'+legPath(lc)+'" fill="'+pal.base+'" stroke="#111820" stroke-width="2.7"/><path class="cb-paper-leg-right" d="'+legPath(rc)+'" fill="'+pal.base+'" stroke="#111820" stroke-width="2.7"/>';
     if(heavy)gear+='<path d="M'+(lc-uh*.92)+' 286 L'+(lc+uh*.92)+' 286 L'+(lc+ch*.95)+' 316 Q'+lc+' 322 '+(lc-ch*.95)+' 316Z M'+(rc-uh*.92)+' 286 L'+(rc+uh*.92)+' 286 L'+(rc+ch*.95)+' 316 Q'+rc+' 322 '+(rc-ch*.95)+' 316Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="1.6"/>';
     else gear+='<path d="M'+(lc-uh*.72)+' 298 H'+(lc+uh*.72)+' M'+(rc-uh*.72)+' 298 H'+(rc+uh*.72)+'" stroke="'+pal.trim+'" stroke-width="2" opacity=".72"/>';
   }
@@ -832,7 +832,7 @@ function paperFeet(c,skin,highlighted){
   if(!item)return base;
   var tier=clampTier(item.tier),pal=gearPalette(c,item,tier||1,'Feet'),klass=gearClass(item),heavy=['Warrior','Paladin','Death Knight'].includes(klass);
   var gear='<g class="'+paperSlotClass('Feet',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Feet'))+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-left-foot-x="'+lc.toFixed(2)+'" data-right-foot-x="'+rc.toFixed(2)+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'">'+
-    '<path d="'+footPath(lc,-1)+'" fill="'+pal.dark+'" stroke="#0c1115" stroke-width="2.7"/><path d="'+footPath(rc,1)+'" fill="'+pal.dark+'" stroke="#0c1115" stroke-width="2.7"/>';
+    '<path class="cb-paper-boot-left" d="'+footPath(lc,-1)+'" fill="'+pal.dark+'" stroke="#0c1115" stroke-width="2.7"/><path class="cb-paper-boot-right" d="'+footPath(rc,1)+'" fill="'+pal.dark+'" stroke="#0c1115" stroke-width="2.7"/>';
   if(heavy)gear+='<path d="M'+(lc-fh*.92)+' 350 H'+(lc+fh*.92)+' V369 H'+(lc-fh*.92)+'Z M'+(rc-fh*.92)+' 350 H'+(rc+fh*.92)+' V369 H'+(rc-fh*.92)+'Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="1.6"/>';
   else gear+='<path d="M'+(lc-fh*.78)+' 366 H'+(lc+fh*.78)+' M'+(rc-fh*.78)+' 366 H'+(rc+fh*.78)+'" stroke="'+pal.trim+'" stroke-width="2"/>';
   gear+=classGlyph(klass,pal,lc,373,.28)+classGlyph(klass,pal,rc,373,.28);
@@ -850,8 +850,8 @@ function paperArms(c,skin,highlighted){
   return '<g class="cb-paper-arms" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4"><path d="'+left+'" fill="'+skin+'" stroke="#182027" stroke-width="2.2"/><path d="'+right+'" fill="'+skin+'" stroke="#182027" stroke-width="2.2"/>'+
     '<ellipse cx="'+lh+'" cy="'+(handY-3)+'" rx="'+Math.max(4.5,aw*.68)+'" ry="'+Math.max(6.5,aw*.9)+'" fill="'+skin+'"/><ellipse cx="'+rh+'" cy="'+(handY-3)+'" rx="'+Math.max(4.5,aw*.68)+'" ry="'+Math.max(6.5,aw*.9)+'" fill="'+skin+'"/>'+details+'</g>'+
     '<g class="'+paperSlotClass('Hands',highlighted,hands)+'" data-item-key="'+esc(itemIdentity(hands,'Hands'))+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-left-hand-x="'+lh.toFixed(2)+'" data-right-hand-x="'+rh.toFixed(2)+'" data-hand-y="'+handY.toFixed(2)+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(hands))+'">'+
-    '<path d="M'+(lh-hw)+' '+top+' Q'+lh+' '+(top-4)+' '+(lh+hw)+' '+top+' L'+(lh+hw*.78)+' '+bottom+' Q'+lh+' '+(bottom+5)+' '+(lh-hw*.78)+' '+bottom+'Z" fill="'+(tier?pal.base:skin)+'" stroke="#111820" stroke-width="2"/>'+
-    '<path d="M'+(rh-hw)+' '+top+' Q'+rh+' '+(top-4)+' '+(rh+hw)+' '+top+' L'+(rh+hw*.78)+' '+bottom+' Q'+rh+' '+(bottom+5)+' '+(rh-hw*.78)+' '+bottom+'Z" fill="'+(tier?pal.base:skin)+'" stroke="#111820" stroke-width="2"/>'+
+    '<path class="cb-paper-glove-left" d="M'+(lh-hw)+' '+top+' Q'+lh+' '+(top-4)+' '+(lh+hw)+' '+top+' L'+(lh+hw*.78)+' '+bottom+' Q'+lh+' '+(bottom+5)+' '+(lh-hw*.78)+' '+bottom+'Z" fill="'+(tier?pal.base:skin)+'" stroke="#111820" stroke-width="2"/>'+
+    '<path class="cb-paper-glove-right" d="M'+(rh-hw)+' '+top+' Q'+rh+' '+(top-4)+' '+(rh+hw)+' '+top+' L'+(rh+hw*.78)+' '+bottom+' Q'+rh+' '+(bottom+5)+' '+(rh-hw*.78)+' '+bottom+'Z" fill="'+(tier?pal.base:skin)+'" stroke="#111820" stroke-width="2"/>'+
     (hands&&heavy?'<path d="M'+(lh-hw*.92)+' '+(top+7)+' H'+(lh+hw*.92)+' M'+(rh-hw*.92)+' '+(top+7)+' H'+(rh+hw*.92)+'" stroke="'+pal.trim+'" stroke-width="1.8"/>':'')+
     (hands?itemRune(hands,'Hands',pal,lh,handY-4,.4)+itemRune(hands,'Hands',pal,rh,handY-4,.4)+betaHandDetail(hands,pal,tier,lh,rh,handY,hw):'')+'</g>';
 }
@@ -863,7 +863,7 @@ function paperChest(c,highlighted,skin){
   var heavy=['Warrior','Paladin','Death Knight'].includes(klass),cloth=['Mage','Priest','Druid','Warlock'].includes(klass),leather=['Hunter','Rogue','Demon Hunter','Monk'].includes(klass),mail=['Shaman','Evoker'].includes(klass),v=pal.variant;
   var topFactor=heavy?.88:mail?.84:cloth?.77:leather?.80:.82;
   var gs=p.shoulder*topFactor,gw=Math.max(p.waist*(heavy?1.04:1),p.hip*(heavy?.67:.62)),base=pal.base;
-  var torso='<path d="M'+(120-gs)+' '+top+' Q120 '+(top-9)+' '+(120+gs)+' '+top+' Q'+(120+gs)+' 188 '+(120+gw)+' '+bottom+' Q120 '+(bottom+8)+' '+(120-gw)+' '+bottom+' Q'+(120-gs)+' 188 '+(120-gs)+' '+top+'Z" fill="'+base+'" stroke="#10171b" stroke-width="2.8"/>';
+  var torso='<path class="cb-paper-chest-shell" d="M'+(120-gs)+' '+top+' Q120 '+(top-9)+' '+(120+gs)+' '+top+' Q'+(120+gs)+' 188 '+(120+gw)+' '+bottom+' Q120 '+(bottom+8)+' '+(120-gw)+' '+bottom+' Q'+(120-gs)+' 188 '+(120-gs)+' '+top+'Z" fill="'+base+'" stroke="#10171b" stroke-width="2.8"/>';
   if(heavy)torso+='<path d="M'+(120-gs+4)+' 154 L120 '+(v%2?173:180)+' L'+(120+gs-4)+' 154 L'+(120+gw-2)+' 221 L120 240 L'+(120-gw+2)+' 221Z" fill="'+pal.dark+'" opacity=".58"/><path d="M120 149 V236 M'+(120-gs+10)+' 185 H'+(120+gs-10)+'" stroke="'+pal.trim+'" stroke-width="'+(tier>=3?2.7:2)+'"/>';
   else if(mail)torso+='<path d="M'+(120-gs+7)+' 158 Q120 169 '+(120+gs-7)+' 158 M'+(120-gw+2)+' 207 Q120 217 '+(120+gw-2)+' 207" fill="none" stroke="'+pal.trim+'" stroke-width="2.2"/>';
   else if(cloth)torso+='<path d="M'+(120-gs+7)+' 156 Q120 '+(v%2?168:178)+' '+(120+gs-7)+' 156 M'+(120-gw+1)+' 214 Q120 226 '+(120+gw-1)+' 214" fill="none" stroke="'+pal.trim+'" stroke-width="'+(tier>=3?2.6:1.9)+'"/><path d="M120 155 V235" stroke="'+pal.light+'" stroke-width="1.7" opacity=".32"/>';
@@ -878,7 +878,7 @@ function paperWaist(c,highlighted){
   var fit=paperFit(c),tier=clampTier(item.tier),pal=gearPalette(c,item,tier,'Waist'),v=pal.variant;
   var half=fit.waistHalf,x1=120-half,x2=120+half,top=236,bottom=253,buckleW=v%2?12:16;
   return '<g class="'+paperSlotClass('Waist',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Waist'))+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-fit-left="'+x1.toFixed(2)+'" data-fit-right="'+x2.toFixed(2)+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'">'+
-    '<path d="M'+x1+' '+top+' Q120 241 '+x2+' '+top+' L'+x2+' '+bottom+' Q120 258 '+x1+' '+bottom+'Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="2.2"/>'+
+    '<path class="cb-paper-waist-belt" d="M'+x1+' '+top+' Q120 241 '+x2+' '+top+' L'+x2+' '+bottom+' Q120 258 '+x1+' '+bottom+'Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="2.2"/>'+
     '<rect x="'+(120-buckleW/2)+'" y="240" width="'+buckleW+'" height="11" rx="2" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="1.8"/>'+
     itemRune(item,'Waist',pal,120,246,.4)+betaWaistDetail(item,pal,tier,x1,x2)+'</g>';
 }
@@ -887,10 +887,10 @@ function paperShoulders(c,highlighted){
   var pal=gearPalette(c,item,tier,'Shoulders'),fit=paperFit(c),p=fit.p,klass=gearClass(item),heavy=['Warrior','Paladin','Death Knight'].includes(klass),cloth=['Mage','Priest','Druid','Warlock'].includes(klass);
   var lc=fit.leftPad||120-p.shoulder*.82,rc=fit.rightPad||120+p.shoulder*.82;
   var hw=Math.max(9,p.arm*.62)+(heavy?2.5:cloth?0:1)+(tier>=4?1.8:0),top=heavy?139:142,bottom=165,rise=heavy?4:cloth?0:2;
-  var pad=function(x,side){var outer=x+side*hw,inner=x-side*hw;return '<path d="M'+inner+' '+(top+5)+' Q'+x+' '+(top-rise)+' '+outer+' '+(top+5)+' L'+(outer-side*2)+' '+(bottom-3)+' Q'+x+' '+(bottom+3)+' '+inner+' '+(bottom-1)+'Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="2.3"/>'};
+  var pad=function(x,side,name){var outer=x+side*hw,inner=x-side*hw;return '<path class="cb-paper-pad-'+name+'" d="M'+inner+' '+(top+5)+' Q'+x+' '+(top-rise)+' '+outer+' '+(top+5)+' L'+(outer-side*2)+' '+(bottom-3)+' Q'+x+' '+(bottom+3)+' '+inner+' '+(bottom-1)+'Z" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="2.3"/>'};
   var localFit={leftShoulder:lc,rightShoulder:rc};
   return '<g class="'+paperSlotClass('Shoulders',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Shoulders'))+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-left-shoulder-x="'+fit.leftShoulder.toFixed(2)+'" data-right-shoulder-x="'+fit.rightShoulder.toFixed(2)+'" data-left-pad-x="'+lc.toFixed(2)+'" data-right-pad-x="'+rc.toFixed(2)+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'">'+
-    pad(lc,-1)+pad(rc,1)+itemRune(item,'Shoulders',pal,lc,153,.44)+itemRune(item,'Shoulders',pal,rc,153,.44)+
+    pad(lc,-1,'left')+pad(rc,1,'right')+itemRune(item,'Shoulders',pal,lc,153,.44)+itemRune(item,'Shoulders',pal,rc,153,.44)+
     (pal.set?'<path d="M'+lc+' '+(top-2)+' L'+lc+' '+(top-10)+' M'+rc+' '+(top-2)+' L'+rc+' '+(top-10)+'" stroke="'+pal.glow+'" stroke-width="2.2" opacity=".65" class="cb-paper-set-glow"/>':'')+
     betaShoulderDetail(item,pal,tier,localFit,rise)+'</g>';
 }
