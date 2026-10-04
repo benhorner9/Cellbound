@@ -4058,7 +4058,7 @@ function checkBossPhases(ctx){
 function mechanicKey(m,index=0){return String(m?.id||m?.name||m?.type||('mechanic-'+index))}
 function refillMechanicBag(ctx,list){
  const bag=list.map((_,i)=>i);
- for(let i=bag.length-1;i>0;i--){const j=Math.floor(ctx.rng()*(i+1)),tmp=bag[i];bag[i]=bag[j];bag[j]=tmp}
+ for(let i=bag.length-1;i>0;i--){const j=Math.floor((ctx.mechanicRng||ctx.rng)()*(i+1)),tmp=bag[i];bag[i]=bag[j];bag[j]=tmp}
  if(bag.length>1&&ctx.lastMechanicKey&&mechanicKey(list[bag[0]],bag[0])===ctx.lastMechanicKey){
   const swap=bag.findIndex((idx,i)=>i>0&&mechanicKey(list[idx],idx)!==ctx.lastMechanicKey);
   if(swap>0){const tmp=bag[0];bag[0]=bag[swap];bag[swap]=tmp}
@@ -4113,7 +4113,7 @@ function simulate(options={}){
   crowdControl:options.tactics?.crowdControl||'disabled'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicBag:Array.isArray(options.initialMechanicBag)?copy(options.initialMechanicBag):[],lastMechanicKey:options.initialLastMechanicKey||null,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,activeGroundHazards:{},commandFocusId:null,commandFocusUntil:0,commandCooldownUntil:0,finished:false,onEvent:options.onEvent||null};
+ const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),mechanicRng:rngFrom(seed+':mechanics'),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicBag:Array.isArray(options.initialMechanicBag)?copy(options.initialMechanicBag):[],lastMechanicKey:options.initialLastMechanicKey||null,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,activeGroundHazards:{},commandFocusId:null,commandFocusUntil:0,commandCooldownUntil:0,finished:false,onEvent:options.onEvent||null};
  players.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  enemies.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  settlePhysicalSpace(ctx,[...players,...enemies]);
