@@ -21,7 +21,8 @@ for(const race of Object.keys(P.RACES))for(const gender of [0,1]){
  assert(!base.includes('assets/characters/forge-bases/'));
  assert(!base.includes('cb-forge-base'));
  assert.equal(JSON.stringify(c),before,'Rendering must not mutate character data');
- assert.equal(base,P.paperDollSVG({...c,class:'Mage'},{showGear:false}),'Class must not change the unequipped classic base');
+ const mageBase=P.paperDollSVG({...c,class:'Mage'},{showGear:false});
+ assert(mageBase.includes('data-model-mode="base"')&&mageBase.includes('data-character-style="classic-paper-doll"'),'Class accent may change the stage glow but must keep the same classic base renderer');
  const helmet={slot:'Head',class:'Warrior',tier:2,name:'Iron Helm'};
  assert.equal(P.equipmentCoverage({...c,equipment:{Head:helmet}}).hair,true);
  const anchors=P.anatomicalAnchors(c);for(const a of Object.values(anchors))assert(Number.isFinite(a.x)&&Number.isFinite(a.y));
