@@ -79,8 +79,9 @@ for(const klass of G.CLASS_ORDER)for(const tier of [1,2,3,4,5])for(const race of
   assert(!/NaN|Infinity|undefined/.test(html));
   assert(html.includes('data-equipment-fit="v2"'));
   for(const pos of G.EQUIPMENT_POSITION_ORDER)assert(html.includes('cb-paper-slot-'+pos.toLowerCase()),klass+' '+race+' frame '+frame+' missing '+pos);
-  assert(near(num(html,'data-grip-x'),fit.weaponX),klass+' '+race+' frame '+frame+' weapon mismatch');
-  assert(near(num(html,'data-grip-y'),fit.handY),klass+' '+race+' frame '+frame+' weapon Y mismatch');
+  const weaponHtml=html.slice(html.indexOf('cb-paper-front-weapon'));
+  assert(near(num(weaponHtml,'data-grip-x'),fit.weaponX),klass+' '+race+' frame '+frame+' weapon mismatch');
+  assert(near(num(weaponHtml,'data-grip-y'),fit.handY),klass+' '+race+' frame '+frame+' weapon Y mismatch');
   bodyChecks++;
 }
 assert.equal(bodyChecks,G.CLASS_ORDER.length*5*6*2*3);
