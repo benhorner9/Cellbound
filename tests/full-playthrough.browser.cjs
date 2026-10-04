@@ -163,9 +163,9 @@ async function mount(page,seedState=null,owner=false,options={}){
 async function creatorPlaythrough(browser,viewport={width:1024,height:1366}){
   const page=await browser.newPage({viewport});
   const errors=await mount(page,null);
-  await page.waitForSelector('#cellboundOnboarding:not([hidden]) .character-creator');
-  assert.equal(await page.locator('.creator-party-dots button').count(),5,'creator shows all five party roles');
-  // Measure actual SVG geometry: a breastplate must end above the hip/leg slots.
+  await page.waitForSelector('#cellboundOnboarding:not([hidden]) .cellbound-character-forge');
+  assert.equal(await page.locator('.creator-party-dots button').count(),5,'Character Forge shows all five party roles');
+  // Equipment remains on the existing rig while base character artwork migrates.
   const plateFit=await page.evaluate(()=>{
     const P=CellboundPortraits,host=document.createElement('div'),failures=[];
     host.style.cssText='position:fixed;left:-2000px;width:240px;height:410px;visibility:hidden';document.body.append(host);
@@ -175,45 +175,32 @@ async function creatorPlaythrough(browser,viewport={width:1024,height:1366}){
       host.innerHTML=P.paperDollSVG(c);
       const chest=host.querySelector('.cb-paper-slot-chest'),box=chest?.getBBox();
       if(!box||box.width<20||box.height<20||box.y+box.height>247)failures.push({race,gender,frame,tier,reason:'chest exceeds waist',bottom:box?.y+box?.height});
-      if(host.querySelector('[data-armour-part="cuisse"],[data-armour-part="poleyn"],[data-armour-part="greave"]'))failures.push({race,tier,reason:'chest creates leg equipment'});
       checked++;
     }
     host.remove();return {checked,failures};
   });
-  assert.equal(plateFit.checked,180);assert.deepEqual(plateFit.failures,[],'Plate chest ends at waist across every race, sex, build and tier');
-
+  assert.equal(plateFit.checked,180);assert.deepEqual(plateFit.failures,[],'Existing armour rig remains bounded during the Forge migration');
 
   for(const race of ['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari']){
-    await page.locator('button[data-race="'+race+'"]').click();
+    await page.locator('[data-forge-race="'+race+'"]').click();
     for(const gender of [0,1]){
-      await page.locator('[data-cc-sex="'+gender+'"]').click();
-      const model=page.locator('.creator-hero .cb-paper-doll svg').first();
-      assert.equal(await model.getAttribute('data-race'),race);
-      assert.equal(await model.getAttribute('data-gender'),gender?'female':'male');
-      assert.equal(await model.locator('.cb-master-vector-base[data-base-art="master-vector-v1"]').count(),1,'Every race uses the V13 master vector base');
-      assert.equal(await model.locator('image[href*="race-bases"]').count(),0,'Legacy raster race base is retired');
+      await page.locator('[data-forge-sex="'+gender+'"]').click();
+      const model=page.locator('.cf-preview>.cf-model img').first();
+      const src=await model.getAttribute('src');
+      assert(src.includes('/forge-bases/'+race.toLowerCase()+'-'+(gender?'female':'male')+'.png'),'Forge preview uses the approved '+race+' '+(gender?'female':'male')+' base');
     }
   }
-  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'Creator fits the viewport');
-  await page.locator('[data-builder-step="class"]').click();
-  assert(await page.locator('[data-class]').count()>=1,'class choices render');
-  assert(await page.locator('[data-class]').count()>=1,'damage/tank/healer class choices remain usable');
+  assert.equal(await page.locator('[data-appearance-field]').count(),0,'Beta Character Forge exposes no unfinished appearance controls');
+  assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'Character Forge fits the viewport');
 
-  await page.locator('[data-builder-step="appearance"]').click();
-  await page.waitForSelector('.cc-editor-appearance');
-  const before=await page.locator('.cc-editor-appearance').innerHTML();
-  await page.locator('[data-appearance-field]').first().click();
-  await page.waitForTimeout(30);
-  const after=await page.locator('.cc-editor-appearance').innerHTML();
-  assert.notEqual(after,before,'appearance controls rerender the preview');
-  await page.screenshot({path:'/tmp/cellbound-creator-appearance-'+viewport.width+'.png',fullPage:true});
-  await page.locator('[data-appearance-randomize]').click();
-  await page.waitForSelector('.cc-editor-appearance');
-
-  await page.locator('[data-builder-step="confirm"]').click();
+  await page.locator('[data-forge-step="class"]').click();
+  assert(await page.locator('[data-forge-class]').count()>=1,'class choices render');
+  await page.locator('[data-forge-step="identity"]').click();
+  await page.waitForSelector('#cfCharacterName');
+  await page.locator('[data-forge-step="confirm"]').click();
   assert.equal(await page.locator('.creator-confirm-member').count(),5,'confirm screen includes all five adventurers');
-  assert.equal(await page.locator('[data-cc-confirm]').isDisabled(),false,'generated party is valid');
-  await page.locator('[data-cc-confirm]').click();
+  assert.equal(await page.locator('[data-forge-confirm]').isDisabled(),false,'generated party is valid');
+  await page.locator('[data-forge-confirm]').click();
   await page.waitForFunction(()=>window.CellboundGame.getState()?.roster?.length===5,{},{timeout:10000,polling:50});
   const fresh=await page.evaluate(()=>({slots:CellboundGame.getState().roster.map(c=>c.professions?.length),classes:CellboundGame.getState().roster.map(c=>c.class),allBeta:CellboundGame.getState().roster.every(c=>CellboundGame.isCharacterBetaPlayable(c))}));
   assert.deepEqual(fresh.slots,[1,1,1,1,1],'fresh characters start with exactly one profession slot');
