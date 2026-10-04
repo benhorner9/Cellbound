@@ -338,6 +338,51 @@ function refreshCombatPotionButton(button,st=state()){
  button.disabled=!info.count;
  button.innerHTML='<b>USE POTION · ×'+info.count+'</b><small>'+(info.item?esc(label)+' · +'+info.heal+' HP'+(info.condition?' · +'+info.condition+' Condition':''):'No combat potions available')+'</small>'
 }
+const LIVE_COMBAT_COMMANDS=[
+ {id:'focus',label:'FOCUS',hint:'Priority target'},
+ {id:'spread',label:'SPREAD',hint:'Escape / create space'},
+ {id:'interrupt',label:'INTERRUPT',hint:'Stop the current cast'},
+ {id:'defensive',label:'DEFENSIVE',hint:'Protect the whole party'},
+ {id:'burn',label:'BURN',hint:'Commit damage cooldowns'}
+];
+function combatCommandDeckMarkup(potionAttribute='data-combat-potion',title='Command the party',copy='React to the fight. Commands alter the live Combat Reborn result.'){
+ return '<div class="cbr-command-copy"><small>PARTY COMMANDS</small><b id="cbrCommandPrompt">'+esc(title)+'</b><span id="cbrCommandStatus">'+esc(copy)+'</span></div>'+
+  '<div class="cbr-command-grid">'+LIVE_COMBAT_COMMANDS.map(cmd=>'<button type="button" class="cbr-command" data-combat-command="'+cmd.id+'"><b>'+cmd.label+'</b><small>'+cmd.hint+'</small></button>').join('')+
+  combatPotionButtonMarkup(potionAttribute)+'</div>'
+}
+function commandRecommendationFor(e){
+ const type=String(e?.payload?.mechanicType||'');
+ if(type==='interrupt'||type==='self-heal')return{command:'interrupt',title:'Interrupt '+(e.ability||'the cast')};
+ if(['circle','circles','target-circle','persistent-circle','line'].includes(type))return{command:'spread',title:(e.ability||'Mechanic')+' · spread now'};
+ if(type==='adds')return{command:'focus',title:'Adds incoming · focus priority'};
+ if(type==='tank-mark'||type==='cone')return{command:'defensive',title:(e.ability||'Heavy hit')+' · prepare defensives'};
+ return null
+}
+function setCombatCommandPrompt(e=null){
+ const prompt=$('#cbrCommandPrompt'),statusEl=$('#cbrCommandStatus'),rec=commandRecommendationFor(e);
+ $('[data-combat-command]').forEach(b=>b.classList.toggle('recommended',!!rec&&b.dataset.combatCommand===rec.command));
+ if(prompt)prompt.textContent=rec?.title||'Command the party';
+ if(statusEl)statusEl.textContent=rec?'Recommended command highlighted. Your party still acts autonomously.':'React to mechanics or change the pace of the fight.'
+}
+function bindCombatCommandButtons(){
+ $('[data-combat-command]').forEach(button=>button.onclick=()=>issueCombatCommand(button.dataset.combatCommand,button))
+}
+function issueCombatCommand(type,button){
+ if(!run||run.resolved)return;
+ const playback=run.rebornPlayback;if(!playback?.issueCommand){log('Party commands are unavailable for this encounter.');return}
+ const now=Number(playback.now?.())||0,cooldownUntil=Number(run.commandCooldownUntil)||0;
+ if(now<cooldownUntil){status('Command recovery · '+Math.max(.1,(cooldownUntil-now)/1000).toFixed(1)+'s');return}
+ const response=playback.issueCommand(type,{});
+ if(!response?.ok){status(response?.reason==='replay'?'Replay cannot be changed':'Command could not be issued');return}
+ run.commandCooldownUntil=now+3000;
+ button?.classList.add('active');setTimeout(()=>button?.classList.remove('active'),420);
+ $('[data-combat-command]').forEach(b=>b.disabled=true);
+ const wallCooldown=Math.max(700,Math.round(3000/combatPlaybackSpeed(run?.speed||1)));
+ setTimeout(()=>{if(!run?.resolved)$('[data-combat-command]').forEach(b=>b.disabled=false)},wallCooldown);
+ const labels={focus:'Focus target',spread:'Spread out',interrupt:'Interrupt now',defensive:'Defensive stance',burn:'Burn phase'};
+ status(labels[type]||'Party command');log('Commander: '+(labels[type]||type)+'.');
+ setCombatCommandPrompt()
+}
 function useCombatPotion(options={}){
  const st=options.state||state(),members=(options.members||party()).filter(Boolean),getHealth=options.getHp||(()=>100),setHealth=options.setHp||(()=>{}),getCondition=options.getCondition||null,setConditionValue=options.setCondition||null;
  const stacks=combatPotionStacks(st),item=stacks[0];if(!item)return{ok:false,reason:'empty'};
@@ -354,10 +399,11 @@ function useCombatPotion(options={}){
 function drawViewer(){
  preloadAshenBattlefields();
  const s=currentStageDef(),r=root();r.hidden=false;
- r.innerHTML='<section class="cb2d-shell"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LIVE 2D DUNGEON</small><h2 id="cb2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close aria-label="Close dungeon">×</button></div></header><div class="cb2d-route" id="cb2dRoute">'+route()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena" id="cb2dArena"><div class="cb2d-floor"></div><div class="cb2d-environment" id="cb2dEnvironment"></div><div class="cb2d-room-tag" id="cb2dRoomTag"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div><div class="cb2d-caption"><span id="cb2dType">'+s.kind.toUpperCase()+'</span><b id="cb2dStatus">Entering encounter…</b></div></div><div class="cb2d-controls cbr-plan-lock has-consumable" data-reborn="1"><div class="cbr-plan-lock-copy"><small>TACTICS LOCKED</small><b>Your plan is set for this fight.</b><span>The party follows the tactics chosen before the expedition.</span></div>'+combatPotionButtonMarkup('data-combat-potion')+'</div><div class="cb2d-feed"><small>COMBAT FEED</small><p id="cb2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="cb2dDamageTotal">0 total</span></div><div id="cb2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="cb2dHealingTotal">0 total</span></div><div id="cb2dHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="cb2dThreatTarget">No target</span></div><div id="cb2dThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>PARTY CONDITION · ILVL '+ilvl()+'</small><div id="cb2dRows">'+rows()+'</div></div><div class="cb2d-plan"><small>PERSISTENT TACTICS</small><b>'+tactics.aggression.toUpperCase()+' PULLS · '+tactics.cooldowns.toUpperCase()+' COOLDOWNS</b><span>'+tactics.interruptAssignment.toUpperCase()+' INTERRUPTS · '+tactics.cc.toUpperCase()+' CC · '+tactics.bossPlan.toUpperCase()+' BOSSES</span></div></aside></div><div class="cb2d-end" id="cb2dEnd" hidden></div></section>';
+ r.innerHTML='<section class="cb2d-shell"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LIVE 2D DUNGEON</small><h2 id="cb2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close aria-label="Close dungeon">×</button></div></header><div class="cb2d-route" id="cb2dRoute">'+route()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena" id="cb2dArena"><div class="cb2d-floor"></div><div class="cb2d-environment" id="cb2dEnvironment"></div><div class="cb2d-room-tag" id="cb2dRoomTag"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div><div class="cb2d-caption"><span id="cb2dType">'+s.kind.toUpperCase()+'</span><b id="cb2dStatus">Entering encounter…</b></div></div><div class="cb2d-controls cbr-command-panel" data-reborn="1">'+combatCommandDeckMarkup('data-combat-potion')+'</div><div class="cb2d-feed"><small>COMBAT FEED</small><p id="cb2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="cb2dDamageTotal">0 total</span></div><div id="cb2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="cb2dHealingTotal">0 total</span></div><div id="cb2dHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="cb2dThreatTarget">No target</span></div><div id="cb2dThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>PARTY CONDITION · ILVL '+ilvl()+'</small><div id="cb2dRows">'+rows()+'</div></div><div class="cb2d-plan"><small>PERSISTENT TACTICS</small><b>'+tactics.aggression.toUpperCase()+' PULLS · '+tactics.cooldowns.toUpperCase()+' COOLDOWNS</b><span>'+tactics.interruptAssignment.toUpperCase()+' INTERRUPTS · '+tactics.cc.toUpperCase()+' CC · '+tactics.bossPlan.toUpperCase()+' BOSSES</span></div></aside></div><div class="cb2d-end" id="cb2dEnd" hidden></div></section>';
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.resolved&&!confirm('Leave the Ashen Vault?'))return;close()};
  r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  r.querySelector('[data-combat-potion]')?.addEventListener('click',e=>override('consumable',e.currentTarget));
+ bindCombatCommandButtons();setCombatCommandPrompt();
  feed();renderCombatMeters();renderRebornHealingMeter();
 }
 function feed(){const e=$('#cb2dFeed');if(e&&run)e.innerHTML=run.log.slice(-6).map(esc).join('<br>')}
@@ -1401,9 +1447,9 @@ function renderRebornEvent(e,result,replayMode=false){
    if(sourceEnemyIdx>=0&&targetChar){run.aggro[sourceEnemyIdx]=targetChar.id;showThreatLink(sourceEnemyIdx,targetChar);queueCombatMeterRender();if(role(targetChar)!=='tank')log(targetChar.name+' pulls aggro.')}
    break;
   case'MECHANIC_TELEGRAPH':
-   rebornTelegraph(e);status((e.ability||'Mechanic')+' incoming');break;
+   rebornTelegraph(e);setCombatCommandPrompt(e);status((e.ability||'Mechanic')+' incoming');break;
   case'MECHANIC_RESOLVE':
-   clearRebornTelegraph(e.payload?.token,'impact');break; // Engine movement events own regrouping.
+   clearRebornTelegraph(e.payload?.token,'impact');setCombatCommandPrompt();break; // Engine movement events own regrouping.
   case'GROUND_HAZARD_SPAWNED':
    if(!window.CellboundCombatFX?.ownsHazards)spawnGroundHazardVisual(e);status((e.ability||'Ground hazard')+' active');log((e.ability||'A ground hazard')+' remains active.');break;
   case'GROUND_HAZARD_TICK':{
@@ -1420,6 +1466,12 @@ function renderRebornEvent(e,result,replayMode=false){
    flash('OVERCLOCK',true);status(e.ability||'Turrets overclocked');log((e.ability||'Adds')+' empowers active adds.');break;
   case'INTERACTION_REQUIRED':
    flash(String(e.ability||'INTERACTION').toUpperCase(),true);status((e.ability||'Interaction')+' · response required');log((e.ability||'An encounter interaction')+' requires a response.');break;
+  case'PARTY_COMMAND':
+   if(e.result!=='cooldown'&&e.result!=='unknown'){flash('COMMAND · '+String(e.ability||'').toUpperCase(),false);log('Party command executed: '+String(e.ability||'command').replace(/-/g,' ')+'.')}
+   break;
+  case'ENEMY_BEHAVIOUR':
+   if(e.result==='support')log('Enemy support unit reinforces '+(e.target||'an ally')+'.');
+   break;
   case'INTERRUPT':
    if(e.result==='success'){rebornCastClear('INTERRUPTED');clearRebornTelegraph(e.payload?.token,'safe');flash('INTERRUPTED',false);window.CellboundCombatFX?.interrupt?.($('[data-unit="'+e.target+'"]')||$('#cb2dArena'));log((srcChar?.name||'A player')+' interrupts '+(e.payload?.interruptedAbility||'the cast')+'.');act('dps','Interrupt successful')}
    else if(e.result==='failed')log((srcChar?.name||'A player')+' misses an interrupt.');
@@ -1450,10 +1502,17 @@ function renderRebornEvent(e,result,replayMode=false){
    break;
  }
 }
-function configureRebornViewer(){
- const controls=$('.cb2d-controls');if(!controls||controls.dataset.reborn==='1')return;
- controls.dataset.reborn='1';controls.classList.add('cbr-plan-lock');
- controls.innerHTML='<div class="cbr-plan-lock-copy"><small>TACTICS LOCKED</small><b>Replay uses the original fight.</b><span>Tactics and outcomes cannot be changed during replay.</span></div>'
+function configureRebornViewer(replayMode=false){
+ const controls=$('.cb2d-controls');if(!controls)return;
+ controls.dataset.reborn='1';
+ if(replayMode){
+  controls.className='cb2d-controls cbr-plan-lock';
+  controls.innerHTML='<div class="cbr-plan-lock-copy"><small>REPLAY</small><b>Replay uses the completed fight.</b><span>Party commands are disabled while reviewing the original event stream.</span></div>';
+  return
+ }
+ if(!controls.classList.contains('cbr-command-panel')){
+  controls.className='cb2d-controls cbr-command-panel';controls.innerHTML=combatCommandDeckMarkup('data-combat-potion');bindCombatCommandButtons();setCombatCommandPrompt()
+ }
 }
 function removeRebornReplayControls(){const x=$('#cbrReplayControls');if(x)x.remove()}
 function mountRebornReplayControls(){
@@ -1467,8 +1526,8 @@ function mountRebornReplayControls(){
  el.querySelector('[data-cbr-restart]').onclick=()=>{run.replayRestartRequested=true;run.replayPaused=false;const p=el.querySelector('[data-cbr-pause]');if(p)p.textContent='PAUSE'}
 }
 async function playRebornTimeline(result,tok,{replayMode=false}={}){
- const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
- run.combatActive=true;run.rebornTelegraphs={};ensureRebornHealingMeter();renderRebornHealingMeter();configureRebornViewer();
+ let activeResult=result,events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
+ run.combatActive=true;run.rebornResult=result;run.rebornTelegraphs={};ensureRebornHealingMeter();renderRebornHealingMeter();configureRebornViewer(replayMode);
  if(replayMode)mountRebornReplayControls();
  if(!events.length){run.combatActive=false;return replayMode?'done':(result?.outcome==='victory'?'victory':'defeat')}
 
@@ -1483,9 +1542,26 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
      simTime=Math.max(simTime,simAnchor+Math.max(0,Date.now()-wallAnchor)*speed);
      return simTime
    };
+   const issueCommand=(type,payload={})=>{
+     if(replayMode)return{ok:false,reason:'replay'};
+     const simulation=run?.rebornSimulation,C=window.CellboundCombatStandard;
+     if(!simulation||!C?.simulate)return{ok:false,reason:'unsupported'};
+     const now=readClock(),atMs=Math.max(0,Math.round(now+120)),command={id:'live-'+(++run.commandSeq),type,atMs,targetId:payload?.targetId||null};
+     const nextCommands=[...(run.rebornCommands||[]),command];
+     let replanned;
+     try{replanned=C.simulate({...simulation.options,commandTimeline:nextCommands},simulation.meta||{})}
+     catch(error){console.warn('Live combat command replan failed',type,error);return{ok:false,reason:'simulation'}}
+     run.rebornCommands=nextCommands;run.rebornResult=replanned;activeResult=replanned;
+     // Keep the object supplied by shared encounters authoritative for its caller too.
+     try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,replanned)}catch(_){}
+     events=(replanned?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
+     const nextIndex=events.findIndex(ev=>(Number(ev.timestamp)||0)>now+4);index=nextIndex<0?events.length:nextIndex;
+     return{ok:true,command,result:replanned}
+   };
+   if(!replayMode)run.rebornPlayback={issueCommand,now:readClock,result:()=>activeResult};
    const finishPlayback=value=>{
      if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
-     if(run)run.combatActive=false;
+     if(run){run.combatActive=false;run.rebornPlayback=null;run.rebornResult=activeResult}
      resolve(value)
    };
    const frame=()=>{
@@ -1509,7 +1585,7 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
        index++;handled++
      }
      if(index>=events.length){
-       finishPlayback(replayMode?'done':(result?.outcome==='victory'?'victory':'defeat'));
+       finishPlayback(replayMode?'done':(activeResult?.outcome==='victory'?'victory':'defeat'));
        return
      }
      raf=requestAnimationFrame(frame)
@@ -1521,7 +1597,9 @@ function runRebornStage(s){
  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway is unavailable');
  const startHp=Object.fromEntries(party().map(c=>[c.id,hp(c.id)]));
  const combatParty=party().map((c,i)=>Object.assign({},c,{_combatHealthPct:hp(c.id),_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0,_combatPosition:stagePartyPosition(s,c,i)}));
- const result=C.simulate({party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:[run.endgame?.seed||'ashen-vault',s.id,run.stage].join(':')},{zone:'ashen-vault'});
+ const simOptions={party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:[run.endgame?.seed||'ashen-vault',s.id,run.stage].join(':')};
+ run.rebornCommands=[];run.commandSeq=0;run.commandCooldownUntil=0;run.rebornSimulation={options:simOptions,meta:{zone:'ashen-vault'}};
+ const result=C.simulate(simOptions,run.rebornSimulation.meta);
  result.stageId=s.id;result.stageTitle=s.title;result.startHp=startHp;return result
 }
 function captureRebornResult(result){
@@ -1632,8 +1710,10 @@ async function seamlessFrom(startIndex,tok){
    if(tok!==token||!run)return;
    status('Encounter ready');
    const result=runRebornStage(s);
-   captureRebornResult(result);run.stageOutcome=result.outcome==='victory';run.allowKill=true;
+   run.stageOutcome=result.outcome==='victory';run.allowKill=true;
    await playRebornTimeline(result,tok);
+   if(tok!==token||!run)return;
+   const commandedResult=run.rebornResult||result;captureRebornResult(commandedResult);run.stageOutcome=commandedResult.outcome==='victory';
    if(!await resolveStage(s)||tok!==token){await ashenSaveRuntime('failed');return}
    const recovered=await recoverFallenBetweenStages(tok);
    if(!recovered||tok!==token){
@@ -1748,7 +1828,7 @@ function sharedRows(){
 function sharedViewerShell(options={}){
  const s=currentStageDef(),r=root();r.hidden=false;document.body.classList.add('cb2d-open');
  const header=options.header||'CELLBOUND · LIVE 2D COMBAT',route=sharedRouteMarkup(options.route,options.currentId||s?.id),subtitle=options.subtitle||'TACTICS LOCKED';
- r.innerHTML='<section class="cb2d-shell cb2d-shared-shell '+esc(options.shellClass||'')+'"><header class="cb2d-head"><div><small>'+esc(header)+'</small><h2 id="cb2dTitle">'+esc(options.title||s?.title||'Combat')+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close aria-label="Close combat">×</button></div></header><div class="cb2d-route" id="cb2dRoute">'+route+'</div><div class="cb2d-layout"><main><div class="cb2d-arena '+esc(options.arenaClass||'')+'" id="cb2dArena"><div class="cb2d-floor"></div><div class="cb2d-environment" id="cb2dEnvironment"></div><div class="cb2d-room-tag" id="cb2dRoomTag"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div><div class="cb2d-caption"><span id="cb2dType">'+esc(String(s?.kind||'combat').toUpperCase())+'</span><b id="cb2dStatus">Entering encounter…</b></div></div><div class="cb2d-controls cbr-plan-lock has-consumable" data-reborn="1"><div class="cbr-plan-lock-copy"><small>'+esc(subtitle)+'</small><b>'+esc(options.planTitle||'Your party follows the shared Combat Reborn engine.')+'</b><span>'+esc(options.planCopy||'Movement, targeting, threat, casts, interrupts, healing and mechanics are driven by the same event stream as dungeons.')+'</span></div>'+combatPotionButtonMarkup('data-shared-potion')+'</div><div class="cb2d-feed"><small>COMBAT FEED</small><p id="cb2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="cb2dDamageTotal">0 total</span></div><div id="cb2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="cb2dHealingTotal">0 total</span></div><div id="cb2dHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="cb2dThreatTarget">No target</span></div><div id="cb2dThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>PARTY CONDITION · '+party().length+' CHARACTERS · ILVL '+ilvl()+'</small><div id="cb2dRows">'+sharedRows()+'</div></div><div class="cb2d-plan"><small>COMBAT MODEL</small><b>COMBAT REBORN · SHARED CB2D VIEWER</b><span>REAL POSITIONS · THREAT · RESOURCES · BUFFS / DEBUFFS</span></div></aside></div><div class="cb2d-end" id="cb2dEnd" hidden></div></section>';
+ r.innerHTML='<section class="cb2d-shell cb2d-shared-shell '+esc(options.shellClass||'')+'"><header class="cb2d-head"><div><small>'+esc(header)+'</small><h2 id="cb2dTitle">'+esc(options.title||s?.title||'Combat')+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close aria-label="Close combat">×</button></div></header><div class="cb2d-route" id="cb2dRoute">'+route+'</div><div class="cb2d-layout"><main><div class="cb2d-arena '+esc(options.arenaClass||'')+'" id="cb2dArena"><div class="cb2d-floor"></div><div class="cb2d-environment" id="cb2dEnvironment"></div><div class="cb2d-room-tag" id="cb2dRoomTag"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div><div class="cb2d-caption"><span id="cb2dType">'+esc(String(s?.kind||'combat').toUpperCase())+'</span><b id="cb2dStatus">Entering encounter…</b></div></div><div class="cb2d-controls cbr-command-panel" data-reborn="1">'+combatCommandDeckMarkup('data-shared-potion',options.planTitle||'Command the party',options.planCopy||'React to the fight while Combat Reborn handles rotations and movement.')+'</div><div class="cb2d-feed"><small>COMBAT FEED</small><p id="cb2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="cb2dDamageTotal">0 total</span></div><div id="cb2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="cb2dHealingTotal">0 total</span></div><div id="cb2dHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="cb2dThreatTarget">No target</span></div><div id="cb2dThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>PARTY CONDITION · '+party().length+' CHARACTERS · ILVL '+ilvl()+'</small><div id="cb2dRows">'+sharedRows()+'</div></div><div class="cb2d-plan"><small>COMBAT MODEL</small><b>COMBAT REBORN · SHARED CB2D VIEWER</b><span>REAL POSITIONS · THREAT · RESOURCES · BUFFS / DEBUFFS</span></div></aside></div><div class="cb2d-end" id="cb2dEnd" hidden></div></section>';
  r.querySelector('[data-close]').onclick=close;
  r.querySelector('[data-speed]').onclick=e=>{if(!run)return;run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  r.querySelector('[data-shared-potion]')?.addEventListener('click',e=>{
@@ -1756,6 +1836,7 @@ function sharedViewerShell(options={}){
    if(!used.ok){log(used.reason==='full'?'The party is already at full recovery.':'No combat potions remain.');refreshCombatPotionButton(e.currentTarget);return}
    floating('p-'+used.target.id,'+'+used.healApplied,'heal');updateRows();refreshCombatPotionButton(e.currentTarget);log(used.item.name+' restores '+used.target.name+' for '+used.healApplied+' HP'+(used.conditionApplied?' and '+used.conditionApplied+' Condition':'')+'.')
  });
+ bindCombatCommandButtons();setCombatCommandPrompt();
  feed();renderCombatMeters();renderRebornHealingMeter()
 }
 function sharedFormationPosition(c,index,total){
@@ -1833,7 +1914,9 @@ async function playSharedEncounter(options={}){
    hitCount:Object.fromEntries(extParty.map(c=>[c.id,0])),identityTimers:{},combatStartedAt:0,lastMeterAt:0,log:[(options.title||encounter.title||'Encounter')+' begins.'],
    override:0,forceInterrupt:false,rewards:[],loot:{gear:[],materials:{},gold:0,renown:0,xp:0},resolved:false,combatActive:false,mechanicActive:false,allowKill:true,stageOutcome:true,shotSeq:0,
    rebornHistory:[],rebornReplay:null,rebornResult:result,rebornTelegraphs:{},groundHazards:{},rebornCastTimer:null,
-   runtimeStageStartedAt:Number(options.startAt)||0};
+   runtimeStageStartedAt:Number(options.startAt)||0,rebornCommands:[],commandSeq:0,commandCooldownUntil:0};
+ const startTactics=result?.events?.find(e=>e.type==='COMBAT_START')?.payload?.tactics||options.tactics||{};
+ run.rebornSimulation={options:{party:extParty,encounter:copyObject(encounter),tactics:copyObject(startTactics),seed:result.seed},meta:options.zone?{zone:options.zone}:{}};
  sharedViewerShell(options);spawnSharedEncounter(run.externalStage,result,options);
  const outcome=await playRebornTimeline(result,tok);
  if(tok!==token||!run)return'cancelled';
