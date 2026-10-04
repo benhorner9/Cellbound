@@ -34,8 +34,8 @@ const engine=engineName==='webkit'?webkit:chromium;
         return Math.hypot(dx,dy);
       };
       const anchorFor=(item,pos,fit)=>{
-        if(item.slot==='Weapon')return[fit.weaponX,fit.handY];
-        if(item.slot==='OffHand')return[fit.offhandX,fit.handY];
+        if(item.slot==='Weapon')return[fit.weaponX,fit.weaponY];
+        if(item.slot==='OffHand')return[fit.offhandX,fit.offhandY];
         if(item.slot==='Hands')return[fit.leftHand,fit.handY];
         if(item.slot==='Shoulders')return[fit.leftShoulder,150];
         if(item.slot==='Waist')return[120,247];
@@ -62,12 +62,18 @@ const engine=engineName==='webkit'?webkit:chromium;
           if(![b.x,b.y,b.w,b.h].every(Number.isFinite)||b.w<1||b.h<1){
             fail(item,race,gender,'empty/invalid visual bounds',b);checked++;continue;
           }
-          if(b.x<-22||b.x+b.w>262||b.y<-22||b.y+b.h>432)fail(item,race,gender,'visual escapes character canvas',b);
+          const margin=item.slot==='Weapon'?8:22;
+          if(b.x<-margin||b.x+b.w>240+margin||b.y<-22||b.y+b.h>432)fail(item,race,gender,'visual escapes character canvas',b);
           const [ax,ay]=anchorFor(item,pos,fit),max=item.slot==='Shoulders'?24:item.slot==='Head'?25:item.slot==='Trinket'||item.slot==='Relic'?18:14;
           if(distance(b,ax,ay)>max)fail(item,race,gender,'visual misses anatomical anchor by '+distance(b,ax,ay).toFixed(1),b);
 
           if(item.slot==='Hands'){
             if(distance(b,fit.rightHand,fit.handY)>14)fail(item,race,gender,'right glove misses right hand',b);
+          }
+          if(item.slot==='Weapon'){
+            if(!svg.outerHTML.includes('cb-paper-side-weapon')||!svg.outerHTML.includes('data-weapon-pose="side-held"'))fail(item,race,gender,'weapon is not using side-held presentation',b);
+            if(fit.weaponX<fit.baseRightHand)fail(item,race,gender,'weapon grip moved inward over torso',b);
+            if(distance(b,fit.weaponX,fit.weaponY)>8)fail(item,race,gender,'weapon misses side-held grip',b);
           }
           if(item.slot==='Shoulders'){
             if(distance(b,fit.rightShoulder,150)>24)fail(item,race,gender,'right shoulder misses shoulder anchor',b);
@@ -78,11 +84,11 @@ const engine=engineName==='webkit'?webkit:chromium;
       return{checked,total:G.items.length*12,itemCount:G.items.length,failures,fitVersion:P.equipmentFitVersion,rigFitVersion:R.fitVersion};
     });
 
-    assert.equal(result.fitVersion,2);
-    assert.equal(result.rigFitVersion,2);
+    assert.equal(result.fitVersion,3);
+    assert.equal(result.rigFitVersion,3);
     assert.equal(result.checked,result.total);
     assert.deepEqual(result.failures,[],'Rendered equipment fit failures: '+JSON.stringify(result.failures,null,2));
-    console.log(engineName+' universal equipment fit passed '+result.checked+' rendered item/body combinations ('+result.itemCount+' catalogue items × 12 race/sex master models).');
+    console.log(engineName+' equipment fit v3 passed '+result.checked+' rendered item/body combinations ('+result.itemCount+' catalogue items × 12 race/sex master models), including side-held weapon visibility.');
     await page.screenshot({path:'/tmp/cellbound-equipment-fit-'+engineName+'.png'});
   }finally{
     await browser.close();
