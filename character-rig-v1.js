@@ -211,7 +211,7 @@ function weaponPose(subject,baseRightHand,p,shoulderX){
   const long=['staff','spear','bow','crossbow'].includes(kind);
   const compact=['dagger','wand','focus','scepter','rod'].includes(kind);
   const offset=Math.max(long?22:compact?15:18,p.arm*(long?1.05:compact?.72:.86));
-  const x=Math.min(214,Math.max(baseRightHand+offset,shoulderX+17));
+  const x=Math.min(202,Math.max(baseRightHand+offset,shoulderX+17));
   const angle=kind==='bow'?7:kind==='crossbow'?10:kind==='staff'||kind==='spear'?6:kind==='dagger'?14:9;
   return {active:true,kind,x,y:283,angle,side:'right'};
 }
