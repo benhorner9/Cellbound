@@ -379,7 +379,7 @@ function ccRenderRebornEvent(e){
   case'PARTY_COMMAND':if(e.result!=='cooldown'){feed('Party executes '+String(e.ability||'command').replace(/-/g,' ')+'.')}break;
   case'MECHANIC_TELEGRAPH':
    setStatus((e.ability||'Mechanic')+' incoming…');feed((e.ability||'A mechanic')+' is telegraphed.');ccMechanicFromEvent(e);{
-    const mt=String(e.payload?.mechanicType||''),rec=mt==='interrupt'?'interrupt':(['circle','circles','line'].includes(mt)?'spread':mt==='adds'?'focus':mt==='cone'?'defensive':null);
+    const mt=String(e.payload?.mechanicType||''),rec=['interrupt','self-heal'].includes(mt)?'interrupt':(['circle','circles','line','target-circle','persistent-circle'].includes(mt)?'spread':mt==='adds'?'focus':mt==='cone'?'defensive':null);
     document.querySelectorAll('[data-cc-override]').forEach(b=>b.classList.toggle('recommended',!!rec&&b.dataset.ccOverride===rec))
    }break;
   case'MECHANIC_RESOLVE':ccClearMechanic(e.payload?.token,true);/* Engine events own return-to-formation movement. */document.querySelectorAll('[data-cc-override]').forEach(b=>b.classList.remove('recommended'));break;
