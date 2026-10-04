@@ -1222,7 +1222,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     'id="adminBetaReportQueue"',
     'id="adminPlayerLookup"',
     'beta-ops-v1.js?v=2',
-    'admin-beta-ops-v1.js?v=1'
+    'admin-beta-ops-v1.js?v=2'
   ])if(!shell.includes(hook))throw new Error('Beta Step 9 game/admin support surface is missing '+hook);
 
   const playerOps=fs.readFileSync(path.join(__dirname,'beta-ops-v1.js'),'utf8');
