@@ -471,7 +471,7 @@ function paperFit(c){
   return {race,gender:Number(c?.appearance?.gender)||0,frame:Number(c?.appearance?.frame)||1,p,centerX:120,
     leftShoulder,rightShoulder,leftHand,rightHand,baseRightHand,handY:283,
     waistY:247,waistHalf:Math.max(p.waist,p.hip*.70),hipHalf:p.hip,
-    leftLeg:120-p.hip*.47,rightLeg:120+p.hip*.47,legHalf:Math.max(10.5,p.leg*.82),footHalf:Math.max(10,p.leg*.72),
+    leftLeg:120-p.hip*.47,rightLeg:120+p.hip*.47,legHalf:Math.max(12.5,p.leg*.90),calfHalf:Math.max(10.5,p.leg*.72),footHalf:Math.max(11,p.leg*.76),
     weaponX:rightHand,weaponY:283,weaponAngle:angle,weaponPose:weapon?'side-held':'rest',weaponKind:type||'none',weaponSideMin:sideMin,
     offhandX:leftHand,offhandY:283};
 }
@@ -806,28 +806,56 @@ function paperHeadMarkup(c,a,skin,eye,hair,highlighted){
 }
 function paperLegs(c,skin,highlighted){
   var item=itemForSlot(c,'Legs'),fit=paperFit(c),p=fit.p;
-  var sx=Math.max(.82,Math.min(1.32,((p.hip||32)/32)*.65+((p.leg||14)/14)*.35));
-  var transform='translate(120 0) scale('+sx+' 1) translate(-120 0)';
-  var base='<g class="cb-paper-underlayer cb-paper-base-legs" transform="'+transform+'">'+
-    '<path d="M92 246 L116 246 L112 355 L84 355 Q84 322 89 286Z" fill="'+skin+'" stroke="#111820" stroke-width="2.4"/>'+
-    '<path d="M124 246 L148 246 L156 355 L128 355 L124 286Z" fill="'+skin+'" stroke="#111820" stroke-width="2.4"/>'+
+  // Build the legs from the actual body rig rather than stretching one narrow
+  // legacy trouser silhouette. This keeps the hips/thighs connected to the torso
+  // and lets Lean/Balanced/Strong plus race anatomy read correctly.
+  var leftHip=fit.leftLeg,rightHip=fit.rightLeg;
+  var thigh=Math.max(12.5,fit.legHalf||p.leg*.90),calf=Math.max(10.5,fit.calfHalf||p.leg*.72);
+  var stance=Math.max(3.5,Math.min(6.5,(p.hip||32)*.11));
+  var leftAnkle=leftHip-stance,rightAnkle=rightHip+stance;
+  var top=246,knee=307,bottom=355;
+  function legPath(cxTop,cxBottom,thighHalf,calfHalf,fill,stroke,sw){
+    var mid=(cxTop+cxBottom)/2;
+    return '<path d="M'+(cxTop-thighHalf)+' '+top+
+      ' Q'+(cxTop-thighHalf*1.04)+' 277 '+(mid-calfHalf*1.02)+' '+knee+
+      ' Q'+(cxBottom-calfHalf*1.06)+' 332 '+(cxBottom-calfHalf*.92)+' '+bottom+
+      ' L'+(cxBottom+calfHalf*.92)+' '+bottom+
+      ' Q'+(cxBottom+calfHalf*1.06)+' 332 '+(mid+calfHalf*1.02)+' '+knee+
+      ' Q'+(cxTop+thighHalf*1.04)+' 277 '+(cxTop+thighHalf)+' '+top+'Z" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'"/>';
+  }
+  var base='<g class="cb-paper-underlayer cb-paper-base-legs" data-leg-fit="anatomical-v2">'+
+    legPath(leftHip,leftAnkle,thigh,calf,skin,'#111820',2.4)+
+    legPath(rightHip,rightAnkle,thigh,calf,skin,'#111820',2.4)+
     paperRaceLegDetails(c)+'</g>';
   if(!item)return base;
   var tier=clampTier(item.tier),pal=gearPalette(c,item,tier||1,'Legs'),v=pal.variant,klass=gearClass(item),style=clothLowerStyle(item);
   var heavy=['Warrior','Paladin','Death Knight'].includes(klass),cloth=['Mage','Priest','Druid','Warlock'].includes(klass),robe=cloth&&style!=='trousers';
-  var gear='<g class="'+paperSlotClass('Legs',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Legs'))+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v3" data-lower-silhouette="'+style+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'" transform="'+transform+'">';
+  var armourThigh=thigh+(heavy?4.2:cloth?2.2:3),armourCalf=calf+(heavy?3.6:cloth?1.8:2.6);
+  var gear='<g class="'+paperSlotClass('Legs',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Legs'))+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v3" data-leg-fit="anatomical-v2" data-lower-silhouette="'+style+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'">';
   if(robe){
     gear+=lowerSilhouetteMarkup(item,pal,p,style);
-    if(style==='kilt')gear+='<path d="M92 314 L113 314 L111 354 L84 354Z M127 314 L148 314 L156 354 L129 354Z" fill="'+pal.dark+'" stroke="#111820" stroke-width="2.2"/>';
+    if(style==='kilt'){
+      gear+=legPath(leftHip,leftAnkle,armourThigh*.90,armourCalf,pal.dark,'#111820',2.2)+
+        legPath(rightHip,rightAnkle,armourThigh*.90,armourCalf,pal.dark,'#111820',2.2);
+    }
   }else{
-    gear+='<path d="M91 247 L116 247 L112 354 L82 354 Q83 322 88 285Z" fill="'+pal.base+'" stroke="#111820" stroke-width="3"/>'+
-      '<path d="M124 247 L149 247 L158 354 L128 354 L124 286Z" fill="'+pal.base+'" stroke="#111820" stroke-width="3"/>';
-    if(heavy)gear+='<path d="M87 286 L115 286 L113 317 Q101 324 86 316Z M125 286 L153 286 L157 316 Q141 324 127 317Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="1.8" opacity=".92"/>';
-    else if(cloth)gear+='<path d="M87 250 Q120 273 153 250 L151 293 Q120 311 89 293Z" fill="'+pal.dark+'" opacity=".48"/>';
-    else gear+=(v%2?'<path d="M93 268 L113 276 M127 276 L147 268" fill="none" stroke="'+pal.trim+'" stroke-width="3"/>':'<path d="M88 298 L111 304 M129 304 L152 298" fill="none" stroke="'+pal.trim+'" stroke-width="3"/>');
+    gear+=legPath(leftHip,leftAnkle,armourThigh,armourCalf,pal.base,'#111820',3)+
+      legPath(rightHip,rightAnkle,armourThigh,armourCalf,pal.base,'#111820',3);
+    if(heavy){
+      var lmid=(leftHip+leftAnkle)/2,rmid=(rightHip+rightAnkle)/2;
+      gear+='<path d="M'+(lmid-armourCalf-2)+' 286 L'+(lmid+armourCalf+2)+' 286 L'+(lmid+armourCalf)+' 318 Q'+lmid+' 326 '+(lmid-armourCalf)+' 318Z M'+(rmid-armourCalf-2)+' 286 L'+(rmid+armourCalf+2)+' 286 L'+(rmid+armourCalf)+' 318 Q'+rmid+' 326 '+(rmid-armourCalf)+' 318Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="1.8" opacity=".92"/>';
+    }else if(cloth){
+      var outer=Math.max(p.hip*.94,thigh+2);
+      gear+='<path d="M'+(120-outer)+' 250 Q120 273 '+(120+outer)+' 250 L'+(120+outer-2)+' 293 Q120 311 '+(120-outer+2)+' 293Z" fill="'+pal.dark+'" opacity=".48"/>';
+    }else{
+      var lmid2=(leftHip+leftAnkle)/2,rmid2=(rightHip+rightAnkle)/2;
+      gear+=v%2
+        ?'<path d="M'+(lmid2-armourCalf*.65)+' 268 L'+(lmid2+armourCalf*.65)+' 276 M'+(rmid2-armourCalf*.65)+' 276 L'+(rmid2+armourCalf*.65)+' 268" fill="none" stroke="'+pal.trim+'" stroke-width="3"/>'
+        :'<path d="M'+(lmid2-armourCalf*.78)+' 298 L'+(lmid2+armourCalf*.78)+' 304 M'+(rmid2-armourCalf*.78)+' 304 L'+(rmid2+armourCalf*.78)+' 298" fill="none" stroke="'+pal.trim+'" stroke-width="3"/>';
+    }
   }
-  gear+=itemRune(item,'Legs',pal,101,286,.55)+itemRune(item,'Legs',pal,139,286,.55)+betaLegDetail(item,pal,tier);
-  if(pal.set)gear+='<path d="M88 323 L111 329 M129 329 L153 323" stroke="'+pal.glow+'" stroke-width="2.5" opacity=".7" class="cb-paper-set-glow"/>';
+  gear+=itemRune(item,'Legs',pal,leftHip,286,.55)+itemRune(item,'Legs',pal,rightHip,286,.55)+betaLegDetail(item,pal,tier);
+  if(pal.set)gear+='<path d="M'+(leftAnkle-armourCalf*.8)+' 323 L'+(leftAnkle+armourCalf*.8)+' 329 M'+(rightAnkle-armourCalf*.8)+' 329 L'+(rightAnkle+armourCalf*.8)+' 323" stroke="'+pal.glow+'" stroke-width="2.5" opacity=".7" class="cb-paper-set-glow"/>';
   return base+gear+'</g>';
 }
 function paperFeet(c,skin,highlighted){
