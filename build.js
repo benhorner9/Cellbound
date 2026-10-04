@@ -641,7 +641,7 @@ for(const file of files){
 {
   const portraitSandbox={console,Math,Date};portraitSandbox.window=portraitSandbox;portraitSandbox.globalThis=portraitSandbox;
   vm.createContext(portraitSandbox);
-  for(const file of ['item-atlas-v2.js','item-visuals-v2.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),portraitSandbox);
+  for(const file of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),portraitSandbox);
   vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),portraitSandbox,{filename:'character-portraits-v1.js'});
   const P=portraitSandbox.CellboundPortraits;
   if(!P?.paperDollHTML||!P?.visualProfile)throw new Error('Equipment Visuals V2 runtime failed to load');
@@ -717,17 +717,17 @@ for(const file of files){
 }
 
 /* Beta character/equipment lock: every generated catalogue loadout must render
-   safely on every v9 race/sex/frame combination at every gear tier. */
+   safely on all 12 master rigs and their frame deformations at every gear tier. */
 {
   const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;sandbox.globalThis=sandbox;
   vm.createContext(sandbox);
   vm.runInContext(fs.readFileSync(path.join(__dirname,'class-build-v1.js'),'utf8'),sandbox,{filename:'class-build-v1.js'});
   vm.runInContext(fs.readFileSync(path.join(__dirname,'gear-data.js'),'utf8'),sandbox,{filename:'gear-data.js'});
-  for(const file of ['item-atlas-v2.js','item-visuals-v2.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),sandbox);
+  for(const file of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),sandbox);
   vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),sandbox,{filename:'character-portraits-v1.js'});
   const G=sandbox.CellboundGear,P=sandbox.CellboundPortraits;
   if(!G||!P)throw new Error('Beta character/equipment lock runtime failed to load');
-  if(P.version!==11||P.modelContract!=='v11-race-foundation-hair')throw new Error('Character model v11 beta lock is missing');
+  if(P.version!==12||P.modelContract!=='v12-master-rig'||P.rigContract!=='master-rig-v1'||P.masterRigCount!==12)throw new Error('Character model v12 master-rig lock is missing');
   if(P.equipmentLayerContract!=='body|shield|armour|front-offhand|mainhand-front')throw new Error('Equipment layer contract changed without an intentional beta model revision');
   const races=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'],positions=G.EQUIPMENT_POSITION_ORDER;
   const slotFor=pos=>pos.startsWith('Ring')?'Ring':pos.startsWith('Trinket')?'Trinket':pos;
@@ -932,7 +932,7 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   if(fractured.itemLevel?.Weapon!==40||Math.max(...Object.keys(fractured.tiers||{}).map(Number))>4)throw new Error('Fractured Ages loot profile exceeds Chapter 1 Normal ceiling');
   if(peak.itemLevel?.Weapon!==44||Number(peak.tiers?.[5]||0)>0)throw new Error('Cellbound+ exceeds Tier 4 / Item Level 44 ceiling');
   vm.runInContext(fs.readFileSync(path.join(__dirname,'profession-data.js'),'utf8'),sandbox,{filename:'profession-data.js'});
-  for(const file of ['item-atlas-v2.js','item-visuals-v2.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),sandbox);
+  for(const file of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),sandbox);
   vm.runInContext(fs.readFileSync(path.join(__dirname,'item-art-v1.js'),'utf8'),sandbox,{filename:'item-art-v1.js'});
   const P=sandbox.CellboundProfessions,IA=sandbox.CellboundItemArt;
   if(!P||!IA)throw new Error('Complete item artwork runtime failed to load');
