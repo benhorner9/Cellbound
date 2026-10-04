@@ -161,7 +161,7 @@ for(const file of files){
     if(rigAt<0||portraitAt<0||rigAt>portraitAt)throw new Error('Master character rig must load before the portrait renderer');
   }
   if(file==='character-forge-v1.js'){
-    for(const hook of ["window.CellboundCharacterForge","const STEPS=['form','class','identity','confirm']","assets/characters/forge-bases/","data-forge-sex","data-forge-race","data-forge-class"])if(!contents.includes(hook))throw new Error('Character Forge runtime is missing '+hook);
+    for(const hook of ["window.CellboundCharacterForge","const STEPS=['form','class','identity','confirm']","function modelSVG(","classic-paper-doll-v1","data-forge-sex","data-forge-race","data-forge-class"])if(!contents.includes(hook))throw new Error('Character Forge classic paper-doll runtime is missing '+hook);
     for(const retired of ['data-appearance-field','data-appearance-randomize','cc-editor-appearance'])if(contents.includes(retired))throw new Error('Character Forge must remain race/sex only for beta: '+retired);
   }
   if(file==='character-rig-v1.js'){
@@ -171,8 +171,8 @@ for(const file of files){
     if(!audit?.ok||audit.count!==12)throw new Error('Master character rig validation failed: '+JSON.stringify(audit?.errors||audit));
   }
   if(file==='character-portraits-v1.js'){
-    for(const hook of ['window.CellboundPortraits','normalizeAppearance','illustratedEquipment','baseFigure+illustratedEquipment(model,highlighted,uid)','data-equipment-renderer="illustrated-v2"','data-grip-x','data-grip-y','data-chest-bottom','gearFitProfile',"CHARACTER_MODEL_VERSION=14","CHARACTER_MODEL_CONTRACT='v14-character-forge-bases'","FORGE_BASE_CONTRACT='character-forge-v1'",'assets/characters/forge-bases/','cb-forge-base','const RIG=window.CellboundCharacterRig','return RIG.fitSlot(c,slot','rigContract:RIG.contract','masterRigCount:RIG.masterRigCount','baseArtContract:FORGE_BASE_CONTRACT','data-base-art="'])if(!contents.includes(hook))throw new Error('Shared master-rig illustrated equipment contract missing '+hook);
-    if(contents.includes('function paperChest(')||contents.includes('function articulatedPlate('))throw new Error('Legacy procedural equipment must remain retired');
+    for(const hook of ['window.CellboundPortraits','normalizeAppearance','function paperChest(','function paperShoulders(','function paperLegs(','function paperFeet(','function paperWeapon(','function paperOffHand(','data-character-style="classic-paper-doll"','data-grip-x="191"','data-grip-y="244"',"CHARACTER_MODEL_VERSION=15","CHARACTER_MODEL_CONTRACT='classic-paper-doll-v1'","BASE_ART_CONTRACT='classic-paper-doll-v1'",'const RIG=window.CellboundCharacterRig||null','rigContract:RIG?.contract','masterRigCount:RIG?.masterRigCount','baseArtContract:BASE_ART_CONTRACT'])if(!contents.includes(hook))throw new Error('Classic paper-doll character/equipment contract missing '+hook);
+    if(contents.includes('illustratedEquipment(')||contents.includes('cb-forge-base'))throw new Error('Painted/Forge character renderer must remain disabled during the classic visual rollback');
   }
   if(file==='roster-v2.css'){
     if(!contents.includes('.roster-card-portrait{')||!contents.includes('border:0;')||!contents.includes('background:none;')||!contents.includes('box-shadow:none'))throw new Error('Roster portrait wrapper must stay frameless');
@@ -210,7 +210,8 @@ for(const file of files){
     for(const hook of ['.gear-set-panel','.cb-set-summary','.cb2d-loot-set','.tp-set-bonus'])if(!contents.includes(hook))throw new Error('Equipment set bonus styling is missing '+hook);
   }
   if(file==='item-art-v1.js'){
-    for(const hook of ["window.CellboundItemArt","CellboundItemVisuals.icon","function materialHTML","function consumableHTML","function collectionHTML","frostbound-sigil","relic-oathstone-dominion","grid-override-module","enhancePvp","enhanceCrafting"])if(!contents.includes(hook))throw new Error('Complete item artwork system is missing '+hook);
+    for(const hook of ["window.CellboundItemArt","CELLBOUND_ITEM_ART_DIRECTION='classic-flat-v1'","function artBody(","function genericGear(","function materialHTML","function consumableHTML","function collectionHTML","frostbound-sigil","relic-oathstone-dominion","grid-override-module","enhancePvp","enhanceCrafting"])if(!contents.includes(hook))throw new Error('Classic flat item artwork system is missing '+hook);
+    if(contents.includes('CellboundItemVisuals.icon'))throw new Error('Classic item icons must not delegate to the newer Forge vector renderer');
   }
   if(file==='class-build-v1.js'){
     for(const hook of ["CURRENT_SPEC_POINT_CAP=12","TALENT_TIER_REQUIREMENTS=[0,2,4,6,8]","'Priest|Shadow':'dps'","'Hunter|Beast Mastery':'dps'","function talentBudgetForLevel","function talentRemaining"])if(!contents.includes(hook))throw new Error('Class build foundation is incomplete: '+hook);
