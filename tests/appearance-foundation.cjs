@@ -9,7 +9,7 @@ assert.equal(P.modelContract,'v14-character-forge-bases');
 assert.equal(P.baseArtContract,'character-forge-v1');
 
 const geometry=s=>s.replace(/pd[a-z0-9]+/g,'ID').replace(/data-frame="[^"]+"/g,'data-frame="FRAME"');
-const hiddenFields=['frame','skinTone','face','brows','nose','mouth','hair','hairColor','facialHair','eyes','marking','feature','glow','pattern','featureColor','texture','eyeShape'];
+const hiddenFields=['skinTone','face','brows','nose','mouth','hair','hairColor','facialHair','eyes','marking','feature','glow','pattern','featureColor','texture','eyeShape'];
 let checked=0;
 for(const race of Object.keys(P.RACES))for(const gender of [0,1]){
  const appearance=P.normalizeAppearance({gender,frame:1,hair:0,facialHair:0,face:0,feature:0,marking:0},'same-seed',race);
