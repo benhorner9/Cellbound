@@ -16,7 +16,7 @@ const num=(html,name)=>{
   return m?Number(m[1]):NaN;
 };
 const near=(a,b,t=.11)=>Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<=t;
-const families={Warrior:'warrior',Paladin:'paladin',Hunter:'hunter',Rogue:'rogue',Mage:'mage',Priest:'mage',Warlock:'mage',Druid:'hunter',Shaman:'hunter',Monk:'rogue',Evoker:'mage','Death Knight':'warrior','Demon Hunter':'rogue'};
+const families=Object.fromEntries(G.CLASS_ORDER.map(k=>[k,k.toLowerCase().replace(/\s+/g,'-')]));
 
 let itemChecks=0;
 for(const item of G.items){
