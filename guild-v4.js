@@ -645,7 +645,7 @@ async function createRecruit(){
   if(e.rosterCap<=5||state.roster.length>=e.rosterCap){closeRecruit();renderAll();return}
   const name=String(recruitDraft.name||'').trim().replace(/\s+/g,' ');
   if(name.length<2||name.length>24||state.roster.some(c=>String(c.name||'').toLowerCase()===name.toLowerCase())){
-    const input=$('#ccCharacterName');if(input){input.setCustomValidity('Use a unique name between 2 and 24 characters.');input.reportValidity();setTimeout(()=>input.setCustomValidity(''),1800)}return
+    const input=$('#cfCharacterName');if(input){input.setCustomValidity('Use a unique name between 2 and 24 characters.');input.reportValidity();setTimeout(()=>input.setCustomValidity(''),1800)}return
   }
   const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],klass=recruitDraft.klass,spec=recruitDraft.spec;
   if(!isBetaClassPlayable(klass)){alert('That class is not available during beta.');renderRecruitModal();return}
