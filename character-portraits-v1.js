@@ -781,29 +781,73 @@ function paperDollSVG(c,opts){
   return svg;
 }
 // Painted equipment uses final model coordinates, avoiding the old torso/leg warp.
+function illustratedWearableFit(c,item,slot){
+ const V=window.CellboundItemVisuals,f=gearFitProfile(c,item),p=f.p;
+ const family=V.families[gearClass(item)]||'warrior',race=f.race,t=V.tier(item);
+ const raceWidth={Stoneborn:1.04,Aelari:.96,Thornkin:1.00,Emberkin:1.01,Nymari:.97,Veyren:.98}[race]||1;
+ const classChest={warrior:.90,paladin:.92,hunter:.84,rogue:.80,mage:.85}[family]||.86;
+ const classShoulder={warrior:1.00,paladin:1.04,hunter:.91,rogue:.82,mage:.88}[family]||.90;
+ const topBase=rigY(f.chestTop),waistBase=rigY(f.waistY),chestBottom=Math.min(rigY(f.chestBottom),waistBase+12);
+ if(slot==='Chest'){
+  const width=p.shoulder*2*classChest*raceWidth;
+  const top=topBase+({Stoneborn:1,Aelari:0,Thornkin:1,Emberkin:1,Nymari:0,Veyren:0}[race]||0);
+  const bottom=chestBottom+(family==='mage'?3:family==='paladin'?2:0);
+  return{x:120-width/2,y:top,w:width,h:Math.max(98,bottom-top),top,bottom};
+ }
+ if(slot==='Waist'){
+  const width=Math.max(p.waist*2.25,p.hip*1.55)*raceWidth;
+  const y=waistBase-4;
+  return{x:120-width/2,y,w:width,h:family==='mage'?22:18};
+ }
+ if(slot==='Shoulders'){
+  const width=p.arm*2.35*classShoulder*(race==='Stoneborn'?1.08:1);
+  const h=(32+(t-1)*1.4)*(family==='paladin'?1.06:1);
+  const inset=family==='rogue'?4:family==='mage'?5:family==='hunter'?4:6;
+  const leftCenter=f.leftShoulder+inset,rightCenter=f.rightShoulder-inset;
+  const y=rigY(f.shoulderY)-h*.32+({Stoneborn:2,Aelari:0,Thornkin:1,Emberkin:1,Nymari:0,Veyren:0}[race]||0);
+  return{leftX:leftCenter-width/2,rightX:rightCenter-width/2,y,w:width,h};
+ }
+ if(slot==='Legs'){
+  const width=p.hip*2.12*(race==='Stoneborn'?1.03:1);
+  const y=waistBase-1,bottom=rigY(356);
+  return{x:120-width/2,y,w:width,h:Math.max(150,bottom-y)+(family==='mage'?28:0)};
+ }
+ if(slot==='Feet'){
+  const width=f.footHalf*2.05,y=rigY(348),bottom=399;
+  return{leftX:f.leftLeg-width/2,rightX:f.rightLeg-width/2,y,w:width,h:bottom-y};
+ }
+ if(slot==='Hands'){
+  const width=p.hand*19,y=(PAINTED_RACES.has(f.race)?rigY(f.handY):f.handY)-32;
+  return{leftX:f.leftHand-width/2,rightX:f.rightHand-width/2,y,w:width,h:43};
+ }
+ return null;
+}
 function illustratedEquipment(c,highlighted,uid){
  const V=window.CellboundItemVisuals;if(!V)throw new Error('Illustrated item visuals are not loaded');
  const f=gearFitProfile(c),p=f.p,handY=PAINTED_RACES.has(f.race)?rigY(f.handY):f.handY;
- const sprite=(item,slot,x,y,w,h,part)=>V.sprite(V.resolve(item,slot),x,y,w,h,part);
  const group=(slot,item,body,attrs='')=>'<g class="'+paperSlotClass(slot,highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,slot))+'" data-gear-class="'+esc(gearClass(item))+'" data-gear-tier="'+V.tier(item)+'" '+attrs+'>'+body+'</g>';
  let out=paperTierAura(c);
  for(const slot of ['Legs','Feet','Chest','Waist','Shoulders','Hands','Head','Ring1','Ring2','Trinket1','Trinket2','Relic','OffHand','Weapon']){
   const item=itemForSlot(c,slot);if(!item)continue;if(slot==='OffHand'&&item.slot&&item.slot!=='OffHand')continue;
-  let body='',attrs='';const a=V.resolve(item,slot),draw=(x,y,w,h,part)=>V.sprite(a,x,y,w,h,part);
+  let body='',attrs='';const a=V.resolve(item,slot),draw=(x,y,w,h,part)=>V.sprite(a,x,y,w,h,part),fit=illustratedWearableFit(c,item,slot);
   if(slot==='Chest'){
-   const w=p.shoulder*1.56,top=78,bottom=190;
-   body=draw(120-w/2,top,w,bottom-top);attrs='data-chest-top="'+top+'" data-chest-bottom="'+bottom+'"';
+   body=draw(fit.x,fit.y,fit.w,fit.h);
+   attrs='data-chest-top="'+fit.top.toFixed(2)+'" data-chest-bottom="'+fit.bottom.toFixed(2)+'" data-chest-width="'+fit.w.toFixed(2)+'" data-wearable-fit="anatomical-v2"';
   }else if(slot==='Legs'){
-   const w=p.hip*2.22;body=draw(120-w/2,178,w,V.families[gearClass(item)]==='mage'?202:173);
+   body=draw(fit.x,fit.y,fit.w,fit.h);
+   attrs='data-wearable-fit="anatomical-v2"';
   }else if(slot==='Feet'){
-   const w=f.footHalf*2.05;body=draw(f.leftLeg-w/2,326,w,70,0)+draw(f.rightLeg-w/2,326,w,70,1);
+   body=draw(fit.leftX,fit.y,fit.w,fit.h,0)+draw(fit.rightX,fit.y,fit.w,fit.h,1);
+   attrs='data-wearable-fit="anatomical-v2"';
   }else if(slot==='Waist'){
-   const w=p.waist*2.35;body=draw(120-w/2,177,w,18);attrs='data-waist-design="short-sash"';
+   body=draw(fit.x,fit.y,fit.w,fit.h);
+   attrs='data-waist-design="body-fitted" data-wearable-fit="anatomical-v2"';
   }else if(slot==='Shoulders'){
-   const w=p.arm*2.3,h=34+(V.tier(item)-1)*1.5;
-   body=draw(120-p.shoulder*.78-w/2,82,w,h,0)+draw(120+p.shoulder*.78-w/2,82,w,h,1);
+   body=draw(fit.leftX,fit.y,fit.w,fit.h,0)+draw(fit.rightX,fit.y,fit.w,fit.h,1);
+   attrs='data-wearable-fit="anatomical-v2" data-left-shoulder-x="'+(fit.leftX+fit.w/2).toFixed(2)+'" data-right-shoulder-x="'+(fit.rightX+fit.w/2).toFixed(2)+'"';
   }else if(slot==='Hands'){
-   const w=p.hand*19;body=draw(f.leftHand-w/2,handY-32,w,43,0)+draw(f.rightHand-w/2,handY-32,w,43,1);
+   body=draw(fit.leftX,fit.y,fit.w,fit.h,0)+draw(fit.rightX,fit.y,fit.w,fit.h,1);
+   attrs='data-wearable-fit="anatomical-v2"';
   }else if(slot==='Head'){
    const rig=PAINTED_HEAD_RIG[f.race][p.gender],w=rig[2]*1.28,h=55,x=rig[0]-w/2,y=rig[1]-7;
    body=draw(x,y,w,h);
@@ -819,7 +863,6 @@ function illustratedEquipment(c,highlighted,uid){
    body='<g transform="rotate('+angle+' '+x+' '+handY+')">'+draw(x-w/2,handY-h*grip,w,h)+'</g>';
    attrs='data-'+(main?'weapon':'offhand')+'-type="'+esc(type)+'" data-render-layer="front" data-grip-x="'+x+'" data-grip-y="'+handY+'"';
    if(main)body='<g class="cb-paper-front-weapon">'+body+'</g>';
-   // A small glove crop overlaps the grip so the handle sits inside the hand.
    const glove=itemForSlot(c,'Hands');if(glove&&main){const ga=V.resolve(glove,'Hands'),r=ga.pair?.[1];if(r){const gripAsset={...ga,rect:[r[0]+r[2]*.25,r[1]+r[3]*.61,r[2]*.5,r[3]*.15]};body+=V.sprite(gripAsset,x-4,handY-2,8,5)}}
   }else{
    const ring=slot.startsWith('Ring'),x=ring?(slot==='Ring1'?f.leftHand:f.rightHand):slot==='Trinket1'?106:slot==='Trinket2'?134:120;
@@ -827,7 +870,7 @@ function illustratedEquipment(c,highlighted,uid){
   }
   out+=group(slot,item,body,attrs);
  }
- return '<g data-equipment-renderer="illustrated-v2">'+out+'</g>';
+ return '<g data-equipment-renderer="illustrated-v2" data-wearable-fit-version="2">'+out+'</g>';
 }
 
 function paperDollSVGUncached(c,opts){
