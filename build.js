@@ -166,7 +166,7 @@ for(const file of files){
     if(!audit?.ok||audit.count!==12)throw new Error('Master character rig validation failed: '+JSON.stringify(audit?.errors||audit));
   }
   if(file==='character-portraits-v1.js'){
-    for(const hook of ['window.CellboundPortraits','normalizeAppearance','illustratedEquipment','baseFigure+illustratedEquipment(model,highlighted,uid)','data-equipment-renderer="illustrated-v2"','data-grip-x','data-grip-y','data-chest-bottom','gearFitProfile',"CHARACTER_MODEL_VERSION=12","CHARACTER_MODEL_CONTRACT='v12-master-rig'",'const RIG=window.CellboundCharacterRig','return RIG.fitSlot(c,slot','rigContract:RIG.contract','masterRigCount:RIG.masterRigCount'])if(!contents.includes(hook))throw new Error('Shared master-rig illustrated equipment contract missing '+hook);
+    for(const hook of ['window.CellboundPortraits','normalizeAppearance','illustratedEquipment','baseFigure+illustratedEquipment(model,highlighted,uid)','data-equipment-renderer="illustrated-v2"','data-grip-x','data-grip-y','data-chest-bottom','gearFitProfile',"CHARACTER_MODEL_VERSION=13","CHARACTER_MODEL_CONTRACT='v13-master-vector-races'",'const RIG=window.CellboundCharacterRig','return RIG.fitSlot(c,slot','rigContract:RIG.contract','masterRigCount:RIG.masterRigCount',"baseArtContract:'master-vector-v1'",'data-base-art="master-vector-v1"'])if(!contents.includes(hook))throw new Error('Shared master-rig illustrated equipment contract missing '+hook);
     if(contents.includes('function paperChest(')||contents.includes('function articulatedPlate('))throw new Error('Legacy procedural equipment must remain retired');
   }
   if(file==='roster-v2.css'){
@@ -727,7 +727,7 @@ for(const file of files){
   vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),sandbox,{filename:'character-portraits-v1.js'});
   const G=sandbox.CellboundGear,P=sandbox.CellboundPortraits;
   if(!G||!P)throw new Error('Beta character/equipment lock runtime failed to load');
-  if(P.version!==12||P.modelContract!=='v12-master-rig'||P.rigContract!=='master-rig-v1'||P.masterRigCount!==12)throw new Error('Character model v12 master-rig lock is missing');
+  if(P.version!==13||P.modelContract!=='v13-master-vector-races'||P.baseArtContract!=='master-vector-v1'||P.rigContract!=='master-rig-v1'||P.masterRigCount!==12)throw new Error('Character model v13 master-vector lock is missing');
   if(P.equipmentLayerContract!=='body|shield|armour|front-offhand|mainhand-front')throw new Error('Equipment layer contract changed without an intentional beta model revision');
   const races=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'],positions=G.EQUIPMENT_POSITION_ORDER;
   const slotFor=pos=>pos.startsWith('Ring')?'Ring':pos.startsWith('Trinket')?'Trinket':pos;
