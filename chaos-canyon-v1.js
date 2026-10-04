@@ -376,9 +376,13 @@ function ccRenderRebornEvent(e){
    run.aggro=targetChar?.id||null;if(e.payload?.threat&&typeof e.payload.threat==='object'){Object.entries(e.payload.threat).forEach(([id,v])=>{const ch=ccCharacter(id);if(ch)run.threat[ch.id]=Number(v)||0})}ccRenderMeters();
    if(targetChar&&role(targetChar)!=='tank')feed(targetChar.name+' pulls aggro from the Tank.');
    break;
+  case'PARTY_COMMAND':if(e.result!=='cooldown'){feed('Party executes '+String(e.ability||'command').replace(/-/g,' ')+'.')}break;
   case'MECHANIC_TELEGRAPH':
-   setStatus((e.ability||'Mechanic')+' incoming…');feed((e.ability||'A mechanic')+' is telegraphed.');ccMechanicFromEvent(e);break;
-  case'MECHANIC_RESOLVE':ccClearMechanic(e.payload?.token,true);/* Engine events own return-to-formation movement. */break;
+   setStatus((e.ability||'Mechanic')+' incoming…');feed((e.ability||'A mechanic')+' is telegraphed.');ccMechanicFromEvent(e);{
+    const mt=String(e.payload?.mechanicType||''),rec=mt==='interrupt'?'interrupt':(['circle','circles','line'].includes(mt)?'spread':mt==='adds'?'focus':mt==='cone'?'defensive':null);
+    document.querySelectorAll('[data-cc-override]').forEach(b=>b.classList.toggle('recommended',!!rec&&b.dataset.ccOverride===rec))
+   }break;
+  case'MECHANIC_RESOLVE':ccClearMechanic(e.payload?.token,true);/* Engine events own return-to-formation movement. */document.querySelectorAll('[data-cc-override]').forEach(b=>b.classList.remove('recommended'));break;
   case'CAST_START':if(String(e.result||'')==='enemy'){ccCastStart(e.ability||'Enemy Cast',e.payload?.duration)}if(e.payload?.interruptible)feed((e.ability||'Cast')+' can be interrupted.');break;
   case'CAST_FINISH':ccCastClear();break;
   case'INTERRUPT':
@@ -395,12 +399,25 @@ function ccRenderRebornEvent(e){
  }
 }
 async function ccPlayTimeline(result,tok){
- const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
+ let activeResult=result,events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
  if(!run)return false;run.telegraphs={};
  if(!events.length)return result?.outcome==='victory';
  return await new Promise(resolve=>{
    let index=0,simTime=0,wallAnchor=Number(run?.runtimeStageStartedAt)||Date.now(),simAnchor=0,lastSpeed=null,finished=false,raf=0;
-   const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);resolve(value)};
+   const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);if(run?.liveCombat)run.liveCombat.issue=null;resolve(value)};
+   const issueCommand=(type,payload={})=>{
+    const live=run?.liveCombat,C=window.CellboundCombatStandard;if(!live?.options||!C?.simulate)return{ok:false,reason:'unavailable'};
+    const now=Math.max(0,Number(simTime)||0);if(now<Number(live.cooldownUntil||0))return{ok:false,reason:'cooldown',remainingMs:live.cooldownUntil-now};
+    const command={id:'cc-live-'+(++live.seq),type:String(type||''),atMs:Math.round(now+120),targetId:payload?.targetId||null},next=[...(live.commands||[]),command];
+    let replanned;try{replanned=C.simulate({...live.options,commandTimeline:next},live.meta||{})}catch(error){console.warn('chaos-canyon-v1.js live command replan failed',type,error);return{ok:false,reason:'simulation'}}
+    replanned.stageId=result.stageId;replanned.stageTitle=result.stageTitle;replanned.startHp=result.startHp;
+    live.commands=next;live.cooldownUntil=now+3200;live.result=replanned;activeResult=replanned;
+    try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,replanned)}catch(_){}
+    events=(replanned.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
+    const nextIndex=events.findIndex(e=>(Number(e.timestamp)||0)>now+4);index=nextIndex<0?events.length:nextIndex;
+    return{ok:true,command,result:replanned}
+   };
+   if(run?.liveCombat){run.liveCombat.issue=issueCommand;run.liveCombat.now=()=>simTime}
    const frame=()=>{
      if(finished)return;
      if(tok!==token||!run){finish(false);return}
@@ -414,7 +431,7 @@ async function ccPlayTimeline(result,tok){
        try{ccRenderRebornEvent(event)}
        catch(error){console.error('Chaos Canyon combat visual recovered',event?.type||'UNKNOWN_EVENT',event?.ability||'',error)}
      }
-     if(index>=events.length){finish(result?.outcome==='victory');return}
+     if(index>=events.length){finish(activeResult?.outcome==='victory');return}
      raf=requestAnimationFrame(frame)
    };
    raf=requestAnimationFrame(frame)
@@ -542,7 +559,8 @@ async function fightStage(s,tok,index){
  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
  if(s.id==='warden'&&run?.chaosScar)ccApplyScarStatus();
  const combatParty=party().map((c,i)=>Object.assign({},c,{_combatHealthPct:run.hp[c.id],_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0,_combatPosition:ccPartyPosition(s,i)}));
- const tactics={...ccTactics,interruptPriority:ccTactics.bossPlan==='control'?'high':ccTactics.interruptPriority,addPriority:ccTactics.bossPlan==='burn'?'boss':ccTactics.addPriority,defensiveUsage:ccTactics.bossPlan==='control'?'aggressive':ccTactics.defensiveUsage,cooldownUse:ccTactics.bossPlan==='burn'?'free':ccTactics.cooldownUse};const result=C.simulate({party:combatParty,encounter:ccRebornEncounter(s),tactics,seed:[run.endgame?.seed||'chaos-canyon',s.id,index].join(':')},{zone:'chaos-canyon'});
+ const tactics={...ccTactics,interruptPriority:ccTactics.bossPlan==='control'?'high':ccTactics.interruptPriority,addPriority:ccTactics.bossPlan==='burn'?'boss':ccTactics.addPriority,defensiveUsage:ccTactics.bossPlan==='control'?'aggressive':ccTactics.defensiveUsage,cooldownUse:ccTactics.bossPlan==='burn'?'free':ccTactics.cooldownUse},simOptions={party:combatParty,encounter:ccRebornEncounter(s),tactics,seed:[run.endgame?.seed||'chaos-canyon',s.id,index].join(':')},simMeta={zone:'chaos-canyon'};const result=C.simulate(simOptions,simMeta);
+ run.liveCombat={options:simOptions,meta:simMeta,commands:[],seq:0,cooldownUntil:0,result};
  result.stageId=s.id;result.stageTitle=s.title;result.startHp={...run.hp};run.history.push(result);
  const won=await ccPlayTimeline(result,tok);ccResultHealth(result);
  (result?.finalState?.players||[]).forEach(p=>{
@@ -594,17 +612,30 @@ function ccCastStart(name,duration){
  const panel=$('#cc2dCastPanel'),label=$('#cc2dCastName'),time=$('#cc2dCastTime'),fill=$('#cc2dCastFill');if(panel)panel.hidden=false;if(label)label.textContent=name||'Enemy cast';if(time)time.textContent=((Number(duration)||0)/1000).toFixed(1)+'s';if(fill){fill.style.transition='none';fill.style.width='0%';requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!fill.isConnected)return;fill.style.transition='width '+Math.max(.1,(Number(duration)||500)/1000/(run?.speed||1))+'s linear';fill.style.width='100%'}))}
 }
 function ccCastClear(){const panel=$('#cc2dCastPanel'),label=$('#cc2dCastName'),time=$('#cc2dCastTime'),fill=$('#cc2dCastFill');if(panel)panel.hidden=false;if(label)label.textContent='—';if(time)time.textContent='—';if(fill){fill.style.transition='none';fill.style.width='0%'}}
+function ccCommandMessage(kind){
+ return kind==='focus'?'Focus priority target':kind==='interrupt'?'Interrupt now':kind==='defensive'?'Defensive stance':kind==='spread'?'Spread out':kind==='burn'?'Burn boss':'Party command'
+}
 function ccOverride(kind,button){
  if(!run)return;if(button){button.classList.add('active');setTimeout(()=>button.classList.remove('active'),450)}
- if(kind==='focus'){ccTactics.bossPlan='burn';ccAct('dps','Focusing priority target');feed('Override: focus priority target.')}
- if(kind==='interrupt'){ccTactics.interruptPriority='high';ccAct('dps','Interrupt priority raised');feed('Override: interrupt priority raised.')}
- if(kind==='defensive'){party().forEach(ch=>run.hp[ch.id]=Math.min(100,(Number(run.hp[ch.id])||0)+5));ccUpdateSidebar();ccAct('tank','Defensives committed');feed('Override: defensive cooldowns committed.')}
- if(kind==='burn'){ccTactics.bossPlan='burn';ccAct('dps','Damage cooldowns committed');feed('Override: burn boss.')}
  if(kind==='consumable'){
    const helper=window.CellboundDungeon2D,used=helper?.useCombatPotion?.({state:state(),members:party(),getHp:c=>Number(run.hp[c.id])||0,setHp:(c,v)=>{run.hp[c.id]=v}});
    if(!used?.ok){feed(used?.reason==='full'?'The party is already at full health.':'No combat potions remain. Craft or buy one before the next run.');helper?.refreshCombatPotionButton?.(button,state());return}
-   ccUpdateSidebar();helper?.refreshCombatPotionButton?.(button,state());feed(used.item.name+' restores '+used.target.name+' for '+used.healApplied+' HP.')
+   ccUpdateSidebar();helper?.refreshCombatPotionButton?.(button,state());feed(used.item.name+' restores '+used.target.name+' for '+used.healApplied+' HP.');return
  }
+ const response=run.liveCombat?.issue?.(kind,{});
+ if(!response?.ok){
+   feed(response?.reason==='cooldown'?'Commander call recovering — choose your next moment.':'That command is not available right now.');
+   return
+ }
+ document.querySelectorAll('[data-cc-override]').forEach(b=>{if(b.dataset.ccOverride!=='consumable')b.disabled=true});
+ const cooldown=Math.max(700,Math.round(3200/Math.max(.25,Number(run.speed)||1)));
+ setTimeout(()=>{if(run)document.querySelectorAll('[data-cc-override]').forEach(b=>{if(b.dataset.ccOverride!=='consumable')b.disabled=false})},cooldown);
+ if(kind==='focus')ccAct('dps','Focusing priority target');
+ if(kind==='interrupt')ccAct('dps','Interrupt command issued');
+ if(kind==='defensive')ccAct('tank','Party defensives committed');
+ if(kind==='spread')ccAct('dps','Party spreading from danger');
+ if(kind==='burn')ccAct('dps','Damage cooldowns committed');
+ feed('Commander: '+ccCommandMessage(kind)+'.')
 }
 function ccLootRarityClass(item){return 'rarity-'+String(item?.rarity||'common').toLowerCase().replace(/[^a-z0-9-]/g,'')}
 function ccLootGearCard(item,label='DUNGEON DROP'){
@@ -628,7 +659,7 @@ function draw(){
  r.innerHTML='<section class="cb2d-shell cc2d-unified-shell"><header class="cb2d-head"><div><small>CHAOS CANYON · LIVE 2D DUNGEON</small><h2 id="cc2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close aria-label="Close dungeon">×</button></div></header>'+
  '<div class="cb2d-route cc2d-route">'+ccRouteMarkup(s.id,false)+'</div>'+
  '<div class="cb2d-layout"><main><div class="cb2d-arena cc2d-arena cc2d-unified-arena" id="cc2dArena"><div class="cb2d-floor cc2d-floor"></div><div class="cc2d-environment" id="cc2dEnvironment"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="cc2dTelegraphs"></div><div id="cc2dUnits"></div><div id="cc2dFx"></div><div class="cc2d-room cb2d-room-tag" id="cc2dRoom"></div><div class="cc2d-scar" id="cc2dScar" hidden></div><div class="cb2d-caption cc2d-caption"><span>'+esc(s.kind)+'</span><b id="cc2dStatus">Descending…</b></div></div>'+
- '<div class="cb2d-controls"><button data-cc-override="focus"><b>FOCUS TARGET</b><small>Force priority damage.</small></button><button data-cc-override="interrupt"><b>INTERRUPT NOW</b><small>Raise interrupt priority.</small></button><button data-cc-override="defensive"><b>DEFENSIVE</b><small>Stabilise the group.</small></button><button data-cc-override="burn"><b>BURN BOSS</b><small>Commit damage cooldowns.</small></button><button data-cc-override="consumable"><b>USE CONSUMABLE</b><small>Use available stock.</small></button></div>'+
+ '<div class="cb2d-controls"><button data-cc-override="focus"><b>FOCUS TARGET</b><small>Force priority damage.</small></button><button data-cc-override="interrupt"><b>INTERRUPT NOW</b><small>Raise interrupt priority.</small></button><button data-cc-override="defensive"><b>DEFENSIVE</b><small>Stabilise the group.</small></button><button data-cc-override="spread"><b>SPREAD OUT</b><small>Move clear of danger.</small></button><button data-cc-override="burn"><b>BURN BOSS</b><small>Commit damage cooldowns.</small></button><button data-cc-override="consumable"><b>USE CONSUMABLE</b><small>Use available stock.</small></button></div>'+
  '<div class="cb2d-feed cc2d-unified-feed"><small>COMBAT FEED</small><div id="cc2dFeed"></div></div></main>'+
  '<aside><div class="cb2d-cast" id="cc2dCastPanel"><small>ENEMY CAST</small><div><b id="cc2dCastName">—</b><strong id="cc2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cc2dCastFill"></i></div></div>'+
  '<div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="cc2dDamageTotal">0 total</span></div><div id="cc2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="cc2dHealingTotal">0 total</span></div><div id="cc2dHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="cc2dThreatTarget">No target</span></div><div id="cc2dThreatMeter" class="cb2d-meter-list"></div></section></div>'+
