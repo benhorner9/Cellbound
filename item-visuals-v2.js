@@ -28,10 +28,10 @@ const CLASS_COLOURS={
   'Demon Hunter':'#A330C9',Evoker:'#33937F'
 };
 const FAMILY_BASE={
-  warrior:'#59636c',paladin:'#d8c79e',hunter:'#52654b',rogue:'#393846',mage:'#435a8c'
+  warrior:'#8b817a',paladin:'#d8c79e',hunter:'#52654b',rogue:'#393846',mage:'#435a8c'
 };
 const FAMILY_DARK={
-  warrior:'#303940',paladin:'#746448',hunter:'#2d3b2e',rogue:'#22222c',mage:'#28345c'
+  warrior:'#474044',paladin:'#746448',hunter:'#2d3b2e',rogue:'#22222c',mage:'#28345c'
 };
 const armour=['Chest','Shoulders','Hands','Waist','Legs','Feet'];
 const weapons={
@@ -67,7 +67,7 @@ function palette(item){
   const klass=itemClass(item),family=families[klass]||'warrior',t=tier(item),accent=CLASS_COLOURS[klass]||'#76d7d0';
   const base=mix(FAMILY_BASE[family],accent,family==='paladin'?.15:family==='mage'?.18:.10);
   const dark=FAMILY_DARK[family];
-  const tierTrim=['#70685e','#aa8256','#8fbfe8','#b88cff','#efc869'][t-1];
+  const tierTrim=(family==='warrior'?['#6f655c','#92785f','#b08b68','#d2a56f','#f0c57a']:family==='paladin'?['#8a7a63','#b49a70','#cfb579','#e3c779','#f0d68b']:['#70685e','#8b7660','#8fa4ad','#a897bd','#d8bd77'])[t-1];
   return {
     family,klass,tier:t,
     base,dark,
@@ -106,10 +106,45 @@ function atlasResolve(item,slot){
   const resources=[[/copper/,1],[/gold.*ore/,2],[/ingot|bar\b|steel/,3],[/crystal|quartz|gem|shard/,4],[/stone|rock/,5],[/silk|weave/,7],[/cloth|linen|cotton/,6],[/hide|pelt|fur/,8],[/leather/,9],[/thread|spool/,10],[/feather/,11],[/flower|bloom|petal/,13],[/root/,14],[/mushroom|fung/,15],[/wood|timber|bark/,16],[/wheat|grain/,17],[/herb|leaf|moss/,12],[/fang|tooth|claw/,18],[/horn/,19],[/bone/,20],[/scale/,21],[/dust|soul|essence|fragment/,22],[/ember|cinder|fire/,23],[/meat|steak|feast|food|ration/,24],[/bread/,25],[/fish/,26],[/tonic|venom|oil/,27],[/rune|sigil|ward/,28],[/gear|cog|module|gadget|drone/,29],[/key/,30],[/coin|gold|currency/,31],[/token|medal|mark|badge/,32],[/letter|quest|seal/,33],[/chest|cache|crate|reward/,34],[/orb|core|arcane|relic/,35],[/ore|iron|metal/,0]];
   const i=resources.find(([re])=>re.test(n))?.[1]??34;return entry('resources',Math.floor(i/6),i%6);
 }
+function auxKind(item){
+  const effect=item?.payload?.effect||item?.effect,attachmentFamily=item?.payload?.attachmentFamily||item?.attachmentFamily;
+  if(effect==='socket-gem'||attachmentFamily==='relic-core')return 'gem';
+  if(effect==='character-gadget')return 'gadget';
+  if(effect==='party-food')return 'food';
+  if(effect==='party-scroll')return 'scroll';
+  const n=[item?.name,item?.itemId,item?.key,item?.category,item?.kind].join(' ').toLowerCase();
+  if(item?.kind==='mount'||item?.kind==='pet'||item?.kind==='cell')return 'collection';
+  if(item?.category==='recipe'||/^recipe:/i.test(String(item?.name||''))||/scroll|schematic|pattern|notes/.test(n))return 'scroll';
+  if(item?.category==='key'||/\bkey\b/.test(n))return 'key';
+  if(/potion|flask|elixir|tonic|draught/.test(n))return 'potion';
+  if(/rune|sigil|ward|glyph/.test(n))return 'rune';
+  if(/food|ration|bread|fish|meat|feast/.test(n))return 'food';
+  if(/gadget|module|drone|gear|cog|device/.test(n))return 'gadget';
+  if(/ore|iron|metal|steel|ingot|bar/.test(n))return 'ore';
+  if(/wood|timber|bark/.test(n))return 'wood';
+  if(/herb|leaf|moss|flower|bloom|petal|root|mushroom|fung/.test(n))return 'herb';
+  if(/hide|pelt|fur|leather|scale/.test(n))return 'hide';
+  if(/bone|fang|tooth|claw|horn|feather/.test(n))return 'trophy';
+  if(/cloth|linen|cotton|silk|weave|thread|spool/.test(n))return 'fiber';
+  if(/crystal|quartz|gem|shard|orb|core/.test(n))return 'gem';
+  if(/dust|soul|essence|fragment|ember|cinder|fire/.test(n))return 'essence';
+  if(/coin|gold|currency|token|medal|mark|badge/.test(n))return 'currency';
+  if(/chest|cache|crate|reward/.test(n))return 'cache';
+  return 'utility';
+}
+function auxPalette(base,kind){
+  const accents={potion:'#75d6d0',rune:'#b58bf0',food:'#d6a66b',gadget:'#7fb7d5',ore:'#a99c8d',wood:'#9b724f',herb:'#82ad6b',hide:'#a37a5e',trophy:'#d8ccb0',fiber:'#b6a7c5',gem:'#78d8e8',essence:'#e18a63',currency:'#e0c16f',cache:'#b58b63',scroll:'#d8c18c',key:'#c0a16f',collection:'#9fd4c8',utility:'#8da1a8'};
+  const accent=accents[kind]||base.accent,metal=mix(base.base,accent,.18);
+  return {...base,accent,base:metal,light:mix(metal,'#ffffff',.28),trim:mix(base.trim,accent,.42),glow:mix(accent,'#ffffff',.30)};
+}
+function vectorAuxAsset(item){
+  const k=auxKind(item),id=identity(item),p=auxPalette(palette(item),k),v=hash(id+'|'+k)%4;
+  return {mode:'forge-vector',artDirection:ART_DIRECTION,key:'forge-aux-'+slug(k)+'-'+slug(id),rect:[0,0,100,100],pair:null,slot:'Aux',tier:tier(item),class:itemClass(item),family:p.family,variant:v,palette:p,itemType:k,itemName:String(item?.name||item?.key||id)};
+}
 function resolve(item,slot){
   item=item||{};const clean=String(slot||item.slot||'').replace(/[12]$/,'');
   if(clean&&['Head','Chest','Shoulders','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring','Trinket','Relic'].includes(clean))return vectorAsset(item,clean);
-  return atlasResolve(item,clean);
+  return vectorAuxAsset(item);
 }
 function motif(a,x=50,y=50,s=1){
   const p=a.palette,v=a.variant,t=a.tier;
@@ -135,6 +170,35 @@ function familyChest(a){
   if(f==='rogue')return '<path d="M20 19 L38 9 L50 18 L62 9 L80 19 L71 91 H29Z" fill="'+p.dark+'" stroke="'+ink+'" stroke-width="5" stroke-linejoin="round"/><path d="M30 18 L69 80 M70 18 L31 80" stroke="'+p.base+'" stroke-width="9"/><path d="M33 21 L66 76 M67 21 L34 76" stroke="'+p.trim+'" stroke-width="2.2"/>';
   if(f==='mage')return '<path d="M24 15 L40 8 L50 21 L60 8 L76 15 L71 91 L50 98 L29 91Z" fill="'+p.base+'" stroke="'+ink+'" stroke-width="5" stroke-linejoin="round"/><path d="M40 10 L50 28 L60 10 M50 28 V90" fill="none" stroke="'+p.trim+'" stroke-width="3"/><path d="M29 72 Q50 84 71 72" fill="none" stroke="'+p.light+'" stroke-width="4" opacity=".7"/>';
   return '<path d="M15 22 L34 9 H66 L85 22 L75 89 L50 96 L25 89Z" fill="'+p.base+'" stroke="'+ink+'" stroke-width="5" stroke-linejoin="round"/><path d="M20 27 L50 44 L80 27 L72 59 L50 75 L28 59Z" fill="'+p.dark+'" opacity=".72"/><path d="M50 18 V84 M25 49 H75" stroke="'+p.trim+'" stroke-width="3"/>';
+}
+function warriorHead(a){
+  const p=a.palette,ink=p.ink,t=a.tier;
+  let out='<path d="M17 72 Q18 22 50 13 Q82 22 83 72 L70 88 L61 69 Q50 59 39 69 L30 88Z" fill="'+p.base+'" stroke="'+ink+'" stroke-width="6" stroke-linejoin="round"/><path d="M27 44 Q50 31 73 44" fill="none" stroke="'+p.trim+'" stroke-width="'+(t>=3?4:3)+'"/>';
+  if(t>=2)out+='<path d="M20 44 H80" stroke="'+ink+'" stroke-width="8"/><path d="M22 44 H78" stroke="'+p.trim+'" stroke-width="4"/><circle cx="29" cy="44" r="3" fill="'+p.dark+'"/><circle cx="71" cy="44" r="3" fill="'+p.dark+'"/>';
+  if(t>=3)out+='<path d="M50 14 L59 28 L53 39 H47 L41 28Z" fill="'+p.light+'" stroke="'+ink+'" stroke-width="4"/><path d="M23 57 L13 49 L27 49 M77 57 L87 49 L73 49" fill="'+p.trim+'" stroke="'+ink+'" stroke-width="3"/>';
+  if(t>=4)out+='<path d="M29 35 L18 16 L36 28 M71 35 L82 16 L64 28" fill="'+p.trim+'" stroke="'+ink+'" stroke-width="4"/><path d="M50 31 L57 40 L50 49 L43 40Z" fill="'+p.glow+'" stroke="'+ink+'" stroke-width="3"/>';
+  if(t>=5)out+='<path d="M34 26 L25 4 L43 20 M66 26 L75 4 L57 20 M50 17 L50 1" fill="none" stroke="'+p.trim+'" stroke-width="7" stroke-linecap="round"/><path d="M21 63 L9 52 L24 54 M79 63 L91 52 L76 54" fill="'+p.trim+'" stroke="'+ink+'" stroke-width="3"/><path d="M27 78 Q50 91 73 78" fill="none" stroke="'+p.glow+'" stroke-width="3" opacity=".85"/>';
+  return out;
+}
+function auxMarkup(a){
+  const p=a.palette,ink=p.ink,k=a.itemType||'utility';
+  if(k==='potion')return '<path d="M38 9 H62 L59 28 Q77 39 73 68 Q69 91 50 94 Q31 91 27 68 Q23 39 41 28Z" fill="'+p.base+'" stroke="'+ink+'" stroke-width="6"/><path d="M31 58 Q50 48 69 58 Q67 84 50 87 Q33 84 31 58Z" fill="'+p.glow+'" opacity=".86"/><path d="M39 18 H61" stroke="'+p.trim+'" stroke-width="5"/>';
+  if(k==='scroll')return '<path d="M18 18 Q28 8 42 16 H80 V82 Q69 92 56 84 H18Z" fill="#d8c6a0" stroke="'+ink+'" stroke-width="6"/><path d="M31 36 H68 M31 50 H63 M31 64 H69" stroke="'+p.dark+'" stroke-width="3"/>'+motif(a,72,22,.38);
+  if(k==='key')return '<circle cx="33" cy="39" r="18" fill="none" stroke="'+ink+'" stroke-width="10"/><circle cx="33" cy="39" r="18" fill="none" stroke="'+p.trim+'" stroke-width="5"/><path d="M47 51 L88 90 M66 69 L76 59 M77 80 L87 70" stroke="'+ink+'" stroke-width="9"/><path d="M48 51 L88 90" stroke="'+p.trim+'" stroke-width="4"/>';
+  if(k==='food')return '<path d="M18 64 Q50 34 82 64 L73 86 H27Z" fill="'+p.base+'" stroke="'+ink+'" stroke-width="6"/><path d="M31 61 Q50 45 69 61" fill="none" stroke="'+p.light+'" stroke-width="5"/><circle cx="42" cy="67" r="4" fill="'+p.trim+'"/><circle cx="58" cy="63" r="4" fill="'+p.trim+'"/>';
+  if(k==='gadget')return '<path d="M20 28 L50 10 L80 28 L88 61 L64 88 H36 L12 61Z" fill="'+p.dark+'" stroke="'+ink+'" stroke-width="6"/><circle cx="50" cy="50" r="19" fill="'+p.base+'" stroke="'+p.trim+'" stroke-width="4"/><path d="M50 20 V31 M50 69 V80 M20 50 H31 M69 50 H80" stroke="'+p.trim+'" stroke-width="5"/><circle cx="50" cy="50" r="7" fill="'+p.glow+'"/>';
+  if(k==='wood')return '<path d="M20 78 L69 17 L83 28 L34 89Z" fill="#79543d" stroke="'+ink+'" stroke-width="6"/><path d="M34 67 L59 36 M43 75 L67 46" stroke="#b5815a" stroke-width="3"/>';
+  if(k==='herb')return '<path d="M50 89 Q49 55 57 22" stroke="#48643e" stroke-width="6"/><path d="M52 50 Q26 28 23 47 Q34 64 52 58 M56 38 Q75 16 82 35 Q75 53 56 50" fill="#7ea66a" stroke="'+ink+'" stroke-width="5"/>';
+  if(k==='hide')return '<path d="M20 23 L39 13 L50 24 L63 12 L83 27 L75 47 L85 71 L64 90 L50 80 L35 90 L14 70 L27 48Z" fill="#946d52" stroke="'+ink+'" stroke-width="6"/><path d="M30 41 Q50 28 71 42 M29 64 Q50 53 72 65" fill="none" stroke="#c0926f" stroke-width="3"/>';
+  if(k==='trophy')return '<path d="M29 15 Q63 38 77 78 Q56 94 39 73 Q50 48 29 15Z" fill="#d9cfb2" stroke="'+ink+'" stroke-width="6"/><path d="M40 32 Q56 50 66 73" stroke="#a99d80" stroke-width="3" fill="none"/>';
+  if(k==='fiber')return '<path d="M18 31 Q50 14 82 31 L74 83 Q50 94 26 83Z" fill="'+p.base+'" stroke="'+ink+'" stroke-width="6"/><path d="M27 38 Q50 27 73 38 M24 52 Q50 41 76 52 M27 66 Q50 55 73 66" fill="none" stroke="'+p.light+'" stroke-width="3"/>';
+  if(k==='ore')return '<path d="M16 61 L31 22 L65 13 L87 42 L71 83 L32 88Z" fill="'+p.base+'" stroke="'+ink+'" stroke-width="6"/><path d="M31 23 L52 39 L65 14 M52 39 L71 82 M52 39 L31 83" fill="none" stroke="'+p.light+'" stroke-width="3" opacity=".65"/>';
+  if(k==='gem')return '<path d="M50 7 L81 34 L67 86 L33 86 L19 34Z" fill="'+p.base+'" stroke="'+ink+'" stroke-width="6"/><path d="M50 17 L69 38 L60 72 L40 72 L31 38Z" fill="'+p.glow+'" stroke="'+p.trim+'" stroke-width="3"/><path d="M50 17 V72 M31 38 H69" stroke="#fff" stroke-width="2" opacity=".35"/>';
+  if(k==='essence'||k==='rune')return '<path d="M50 7 L79 31 L72 77 L50 94 L28 77 L21 31Z" fill="'+p.dark+'" stroke="'+ink+'" stroke-width="6"/><path d="M50 18 L65 39 L58 69 L50 78 L42 69 L35 39Z" fill="'+p.glow+'" opacity=".84" stroke="'+p.trim+'" stroke-width="3"/>'+motif(a,50,48,.75);
+  if(k==='currency')return '<circle cx="50" cy="50" r="35" fill="'+p.trim+'" stroke="'+ink+'" stroke-width="6"/><circle cx="50" cy="50" r="24" fill="'+p.base+'" stroke="'+p.dark+'" stroke-width="3"/>'+motif(a,50,50,.75);
+  if(k==='collection')return '<path d="M50 7 L82 25 L88 61 L65 90 H35 L12 61 L18 25Z" fill="'+p.dark+'" stroke="'+ink+'" stroke-width="6"/><path d="M50 17 L72 30 L78 58 L61 78 H39 L22 58 L28 30Z" fill="'+p.base+'" stroke="'+p.trim+'" stroke-width="3"/><path d="M50 25 L60 45 L50 68 L40 45Z" fill="'+p.glow+'" stroke="'+ink+'" stroke-width="3"/>';
+  if(k==='cache')return '<path d="M13 34 L25 17 H75 L87 34 V84 H13Z" fill="'+p.base+'" stroke="'+ink+'" stroke-width="6"/><path d="M13 43 H87 M43 44 H57 V64 H43Z" stroke="'+p.trim+'" stroke-width="5" fill="'+p.dark+'"/>';
+  return '<path d="M50 7 L80 31 L70 82 L50 95 L30 82 L20 31Z" fill="'+p.base+'" stroke="'+ink+'" stroke-width="6"/><circle cx="50" cy="51" r="20" fill="'+p.dark+'" stroke="'+p.trim+'" stroke-width="4"/>'+motif(a,50,51,.82);
 }
 function vectorMarkup(a,part){
   const p=a.palette,ink=p.ink,slot=a.slot,t=a.tier,flip=part===1;
@@ -162,14 +226,15 @@ function vectorMarkup(a,part){
     else if(a.family==='hunter')body='<path d="M16 72 Q18 20 50 13 Q82 20 84 72 L69 91 L62 66 Q50 56 38 66 L31 91Z" fill="'+p.dark+'" stroke="'+ink+'" stroke-width="6"/><path d="M25 47 Q50 29 75 47" fill="none" stroke="'+p.trim+'" stroke-width="4"/>';
     else if(a.family==='rogue')body='<path d="M15 71 Q18 19 50 12 Q82 19 85 71 L71 91 L62 68 Q50 58 38 68 L29 91Z" fill="'+p.dark+'" stroke="'+ink+'" stroke-width="6"/><path d="M29 50 Q50 38 71 50" stroke="'+p.trim+'" stroke-width="4" fill="none"/>';
     else if(a.family==='paladin')body='<path d="M17 72 Q19 18 50 12 Q81 18 83 72 L70 86 Q50 73 30 86Z" fill="'+p.light+'" stroke="'+ink+'" stroke-width="6"/><path d="M29 35 L38 13 L50 28 L63 11 L72 36" fill="'+p.trim+'" stroke="'+ink+'" stroke-width="3"/>';
-    else body='<path d="M14 72 Q17 16 50 10 Q83 16 86 72 L72 87 Q50 74 28 87Z" fill="'+p.base+'" stroke="'+ink+'" stroke-width="6"/><path d="M24 38 L50 21 L76 38 M50 22 V76" fill="none" stroke="'+p.trim+'" stroke-width="4"/>';
+    else body=warriorHead(a);
     body+=motif(a,50,48,.65);
   }else if(slot==='Weapon')body=weaponMarkup(a);
   else if(slot==='OffHand')body=offhandMarkup(a);
   else if(slot==='Ring')body='<ellipse cx="50" cy="52" rx="26" ry="33" fill="none" stroke="'+ink+'" stroke-width="12"/><ellipse cx="50" cy="52" rx="26" ry="33" fill="none" stroke="'+p.trim+'" stroke-width="6"/><path d="M39 21 L50 8 L61 21 L50 35Z" fill="'+p.glow+'" stroke="'+ink+'" stroke-width="4"/>';
   else if(slot==='Trinket')body='<path d="M50 7 L78 31 L70 78 L50 95 L30 78 L22 31Z" fill="'+p.dark+'" stroke="'+ink+'" stroke-width="6"/><path d="M50 19 L66 38 L58 70 L50 80 L42 70 L34 38Z" fill="'+p.glow+'" stroke="'+p.trim+'" stroke-width="3"/>'+motif(a,50,49,.65);
   else if(slot==='Relic')body='<path d="M50 7 L83 31 L72 81 L50 96 L28 81 L17 31Z" fill="'+p.base+'" stroke="'+ink+'" stroke-width="6"/><circle cx="50" cy="51" r="22" fill="'+p.dark+'" stroke="'+p.trim+'" stroke-width="4"/>'+motif(a,50,51,.9)+tierDetail(a);
-  if(!body)body='<path d="M18 18 H82 V82 H18Z" fill="'+p.base+'" stroke="'+ink+'" stroke-width="6"/>'+motif(a);
+  else if(slot==='Aux')body=auxMarkup(a);
+  if(!body)body=auxMarkup(a);
   if(t>=4&&['Chest','Shoulders','Hands','Feet','Head'].includes(slot))body+='<path d="M18 84 Q50 95 82 84" fill="none" stroke="'+p.glow+'" stroke-width="'+(t===5?4:3)+'" opacity=".7"/>';
   return (flip?'<g transform="translate(100 0) scale(-1 1)">':'<g>')+body+'</g>';
 }
@@ -213,10 +278,10 @@ function sprite(asset,x,y,w,h,part,contain){
 }
 function icon(item){
   const a=resolve(item);
-  return '<svg viewBox="0 0 128 128" role="img" aria-label="'+escape(item?.name||item?.key||'Item')+'" focusable="false" data-item-model="'+(a.mode==='forge-vector'?ART_DIRECTION:'illustrated-v2-atlas')+'">'+sprite(a,8,8,112,112,null,true)+'</svg>';
+  return '<svg viewBox="0 0 128 128" role="img" aria-label="'+escape(item?.name||item?.key||'Item')+'" focusable="false" data-item-model="'+ART_DIRECTION+'">'+sprite(a,8,8,112,112,null,true)+'</svg>';
 }
 window.CellboundItemVisuals={
   version:VERSION,artDirection:ART_DIRECTION,resolve,sprite,icon,tier,type,families,atlases:A,
-  identity,palette,vectorAsset
+  identity,palette,vectorAsset,vectorAuxAsset,auxKind
 };
 })();
