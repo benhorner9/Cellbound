@@ -25,6 +25,28 @@ const CLASS={
  Shaman:['#2988ed','#174e92'],
  Warlock:['#8788ee','#4e407b']
 };
+const SET_VISUALS={
+ 'warrior-t4':['#5d6267','#292628','#b28d59','#d7a16c'],'warrior-t5':['#30343a','#181b20','#b9975d','#d46c49'],
+ 'paladin-t4':['#d4c9ad','#2d3b50','#d4ae58','#ffe09a'],'paladin-t5':['#3a495b','#171e27','#d0aa58','#f2d99d'],
+ 'priest-t4':['#d6dfdc','#566370','#c9ba8c','#f5ffff'],'priest-t5':['#77747e','#25262c','#b9b1a0','#e6e8f5'],
+ 'druid-t4':['#6c533d','#304436','#aab9a4','#8fc58a'],'druid-t5':['#304345','#302a39','#82946b','#86d5ad'],
+ 'hunter-t4':['#666c49','#342e27','#ab8d58','#c3d18a'],'hunter-t5':['#313b35','#171d1a','#858e84','#91b56f'],
+ 'rogue-t4':['#3c3d45','#24222c','#8f9199','#c0b76d'],'rogue-t5':['#24282d','#15181d','#70747a','#d5c76f'],
+ 'mage-t4':['#3d3d67','#202539','#aaa5bd','#75d2e7'],'mage-t5':['#283748','#292335','#b79b63','#69c9e2'],
+ 'shaman-t4':['#4b5d63','#27343a','#b7a477','#6dcbdc'],'shaman-t5':['#313b41','#252b2e','#a97250','#66bdf0'],
+ 'warlock-t4':['#4a3f50','#201d25','#9d825b','#99cf71'],'warlock-t5':['#272632','#2b1f28','#a38c59','#8fc76c'],
+ 'monk-t4':['#b9ad8c','#2e4d47','#b37b51','#66d5a8'],'monk-t5':['#35394b','#1f2c2e','#c2bba4','#75dfb8'],
+ 'death-knight-t4':['#393d44','#1b1e22','#9199a1','#77bad8'],'death-knight-t5':['#2a2e34','#191b1f','#a0a8af','#72d0e8'],
+ 'demon-hunter-t4':['#303335','#1c2c2b','#698b68','#73d66a'],'demon-hunter-t5':['#22262b','#183039','#8a6e51','#79e26c'],
+ 'evoker-t4':['#8a6849','#28464a','#c2b696','#68d4ca'],'evoker-t5':['#37474b','#342b32','#b6a05f','#7bdccc']
+};
+const MATERIAL_VISUALS=[
+ ['#59636a','#252d32','#9b835e','#90aab2'],['#6e5948','#2f2924','#b48e58','#b9a17c'],
+ ['#4f6159','#26312d','#8d9d7a','#8db79e'],['#5d5666','#29262f','#9d8fa6','#aa9fba'],
+ ['#66614f','#302e27','#b1a173','#c2b585'],['#4d5c68','#242b31','#8ea2ae','#8db9cf']
+];
+const FULL_CLASSES=['Warrior','Paladin','Priest','Druid','Hunter','Rogue','Mage','Shaman','Warlock','Monk','Death Knight','Demon Hunter','Evoker'];
+
 const ARMOUR={
  Warrior:'plate',Paladin:'plate','Death Knight':'plate',
  Priest:'cloth',Mage:'cloth',Warlock:'cloth',
@@ -89,11 +111,23 @@ function rarityOf(x){return String(x?.rarity||((Number(x?.tier)||0)>=4?'Epic':(N
 function classOf(x){return String(x?.class||((Array.isArray(x?.classes)&&x.classes.length===1)?x.classes[0]:'')||'')}
 function tierOf(x){return Math.max(1,Math.min(5,Number(x?.tier)||1))}
 function pvpBand(x){const n=String(x?.name||'');return Object.keys(PVP).find(function(k){return n.indexOf(k)===0})||''}
-function palette(x){
- const pvp=pvpBand(x),rar=RARITY[rarityOf(x)]||RARITY.Common,klass=CLASS[classOf(x)];
- const base=pvp?PVP[pvp]:(klass||rar);
- return {a:base[0],b:base[1],rarity:rar[0],dark:'#071014',ink:'#dce8e5',gold:'#d9b86f'}
+function itemSetId(x){
+ if(x?.setId)return String(x.setId);
+ const id=idOf(x).toLowerCase(),m=id.match(/(?:^|-)t([45])(?:-|$)/);
+ if(m)return slug(classOf(x))+'-t'+m[1];
+ return null
 }
+function palette(x){
+ const pvp=pvpBand(x),rar=RARITY[rarityOf(x)]||RARITY.Common,klass=classOf(x),classPal=CLASS[klass]||['#7c8d8a','#34413f'];
+ if(pvp){
+  const base=PVP[pvp];return {a:base[0],b:base[1],rarity:rar[0],dark:'#071014',ink:'#dce8e5',gold:'#d9b86f',accent:classPal[0],glow:base[0],paletteMode:'pvp'}
+ }
+ const setId=itemSetId(x),set=SET_VISUALS[setId];
+ if(set)return {a:set[0],b:set[1],rarity:rar[0],dark:'#071014',ink:'#dce8e5',gold:set[2],accent:classPal[0],glow:set[3],paletteMode:'set-first',setId};
+ const mat=MATERIAL_VISUALS[detailSeedLite(x)%MATERIAL_VISUALS.length];
+ return {a:mat[0],b:mat[1],rarity:rar[0],dark:'#071014',ink:'#dce8e5',gold:mat[2],accent:classPal[0],glow:mat[3],paletteMode:'material-first',setId:null}
+}
+function detailSeedLite(x){return hash(idOf(x)+'|'+slotOf(x)+'|'+classOf(x))}
 function detailSeed(x){return hash(idOf(x)+'|'+slotOf(x)+'|'+classOf(x)+'|'+tierOf(x))}
 function frame(seed,pal,tier){
  const notch=5+(seed%8),orb=12+((seed>>>4)%10);
@@ -162,37 +196,44 @@ function genericGearBase(p,x,seed){
  return relic(p,classOf(x),seed)
 }
 function betaIconClass(x){
- const k=classOf(x);return ['Warrior','Paladin','Hunter','Rogue','Mage'].includes(k)?k:'';
+ const k=classOf(x);return FULL_CLASSES.includes(k)?k:'';
+}
+function classIconGlyph(k,p,x,y,s){
+ const c=p.accent||p.glow||p.rarity,a=Number(s)||1;
+ if(k==='Warrior')return '<path d="M'+(x-8*a)+' '+(y-5*a)+' L'+x+' '+(y+2*a)+' L'+(x+8*a)+' '+(y-5*a)+' M'+(x-6*a)+' '+(y+5*a)+' L'+x+' '+(y+9*a)+' L'+(x+6*a)+' '+(y+5*a)+'" fill="none" stroke="'+c+'" stroke-width="'+(2*a)+'"/>';
+ if(k==='Paladin')return '<circle cx="'+x+'" cy="'+y+'" r="'+(7*a)+'" fill="none" stroke="'+c+'" stroke-width="'+(1.8*a)+'"/><path d="M'+x+' '+(y-11*a)+' V'+(y+11*a)+' M'+(x-11*a)+' '+y+' H'+(x+11*a)+'" stroke="'+c+'" stroke-width="'+(1.8*a)+'"/>';
+ if(k==='Priest')return '<ellipse cx="'+x+'" cy="'+(y-4*a)+'" rx="'+(11*a)+'" ry="'+(4*a)+'" fill="none" stroke="'+c+'" stroke-width="'+(1.7*a)+'"/><path d="M'+x+' '+y+' V'+(y+11*a)+' M'+(x-5*a)+' '+(y+5*a)+' H'+(x+5*a)+'" stroke="'+c+'" stroke-width="'+(1.6*a)+'"/>';
+ if(k==='Druid')return '<path d="M'+x+' '+(y+10*a)+' Q'+(x-11*a)+' '+y+' '+(x-3*a)+' '+(y-11*a)+' Q'+(x+12*a)+' '+(y-7*a)+' '+x+' '+(y+10*a)+'Z" fill="none" stroke="'+c+'" stroke-width="'+(1.8*a)+'"/><path d="M'+(x-4*a)+' '+(y+6*a)+' L'+(x+6*a)+' '+(y-5*a)+'" stroke="'+c+'" stroke-width="'+(1.4*a)+'"/>';
+ if(k==='Hunter')return '<path d="M'+(x-11*a)+' '+(y+8*a)+' L'+(x+8*a)+' '+(y-11*a)+' M'+(x+2*a)+' '+(y-11*a)+' H'+(x+8*a)+' V'+(y-5*a)+'" fill="none" stroke="'+c+'" stroke-width="'+(2*a)+'"/>';
+ if(k==='Rogue')return '<path d="M'+(x-9*a)+' '+(y-9*a)+' L'+(x+9*a)+' '+(y+9*a)+' M'+(x+9*a)+' '+(y-9*a)+' L'+(x-9*a)+' '+(y+9*a)+'" stroke="'+c+'" stroke-width="'+(1.8*a)+'"/>';
+ if(k==='Mage')return '<path d="M'+x+' '+(y-12*a)+' L'+(x+4*a)+' '+(y-4*a)+' L'+(x+12*a)+' '+y+' L'+(x+4*a)+' '+(y+4*a)+' L'+x+' '+(y+12*a)+' L'+(x-4*a)+' '+(y+4*a)+' L'+(x-12*a)+' '+y+' L'+(x-4*a)+' '+(y-4*a)+'Z" fill="none" stroke="'+c+'" stroke-width="'+(1.7*a)+'"/>';
+ if(k==='Shaman')return '<path d="M'+(x-9*a)+' '+(y-11*a)+' L'+(x+1*a)+' '+(y-3*a)+' L'+(x-4*a)+' '+(y+3*a)+' L'+(x+10*a)+' '+(y+11*a)+'" fill="none" stroke="'+c+'" stroke-width="'+(2*a)+'"/><circle cx="'+x+'" cy="'+y+'" r="'+(2.5*a)+'" fill="'+c+'"/>';
+ if(k==='Warlock')return '<path d="M'+(x-12*a)+' '+y+' Q'+x+' '+(y-10*a)+' '+(x+12*a)+' '+y+' Q'+x+' '+(y+10*a)+' '+(x-12*a)+' '+y+'Z" fill="none" stroke="'+c+'" stroke-width="'+(1.8*a)+'"/><circle cx="'+x+'" cy="'+y+'" r="'+(3*a)+'" fill="'+c+'"/>';
+ if(k==='Monk')return '<circle cx="'+x+'" cy="'+y+'" r="'+(9*a)+'" fill="none" stroke="'+c+'" stroke-width="'+(1.7*a)+'"/><circle cx="'+x+'" cy="'+y+'" r="'+(2.5*a)+'" fill="'+c+'"/><path d="M'+x+' '+(y-13*a)+' V'+(y-9*a)+' M'+(x-11*a)+' '+(y+7*a)+' L'+(x-8*a)+' '+(y+4*a)+' M'+(x+11*a)+' '+(y+7*a)+' L'+(x+8*a)+' '+(y+4*a)+'" stroke="'+c+'" stroke-width="'+(1.5*a)+'"/>';
+ if(k==='Death Knight')return '<path d="M'+(x-9*a)+' '+(y-10*a)+' L'+x+' '+(y-3*a)+' L'+(x+9*a)+' '+(y-10*a)+' M'+x+' '+(y-3*a)+' V'+(y+11*a)+' M'+(x-8*a)+' '+(y+7*a)+' H'+(x+8*a)+'" fill="none" stroke="'+c+'" stroke-width="'+(2*a)+'"/>';
+ if(k==='Demon Hunter')return '<path d="M'+(x-12*a)+' '+(y-8*a)+' Q'+(x-3*a)+' '+y+' '+(x-10*a)+' '+(y+10*a)+' M'+(x+12*a)+' '+(y-8*a)+' Q'+(x+3*a)+' '+y+' '+(x+10*a)+' '+(y+10*a)+'" fill="none" stroke="'+c+'" stroke-width="'+(2.2*a)+'"/>';
+ if(k==='Evoker')return '<path d="M'+x+' '+(y-12*a)+' L'+(x+9*a)+' '+(y-3*a)+' L'+(x+5*a)+' '+(y+10*a)+' L'+x+' '+(y+5*a)+' L'+(x-5*a)+' '+(y+10*a)+' L'+(x-9*a)+' '+(y-3*a)+'Z" fill="none" stroke="'+c+'" stroke-width="'+(1.8*a)+'"/>';
+ return''
 }
 function betaIconOverlay(p,x,seed){
  const k=betaIconClass(x);if(!k)return'';
  const tier=tierOf(x),slot=slotOf(x),hi=tier>=4,prestige=tier>=5;
- let out='<g data-item-visuals="v2" data-class-visual="'+slug(k)+'" opacity=".96">';
- if(k==='Warrior'){
-  out+='<path d="M48 46 L64 57 L80 46 M48 82 L64 71 L80 82" fill="none" stroke="'+p.rarity+'" stroke-width="'+(tier>=3?4:3)+'"/>';
-  if(tier>=2)out+='<circle cx="42" cy="64" r="3" fill="'+p.gold+'"/><circle cx="86" cy="64" r="3" fill="'+p.gold+'"/>';
-  if(hi)out+='<path d="M35 46 L26 35 M93 46 L102 35" stroke="'+p.a+'" stroke-width="4"/>';
-  if(prestige)out+='<path d="M64 31 L57 18 L64 22 L71 18Z" fill="'+p.rarity+'"/>';
- }else if(k==='Paladin'){
-  out+='<circle cx="64" cy="63" r="'+(tier>=3?17:13)+'" fill="none" stroke="'+p.gold+'" stroke-width="3"/><path d="M64 44 V82 M46 63 H82" stroke="'+p.rarity+'" stroke-width="'+(tier>=3?4:3)+'"/>';
-  if(hi)out+='<path d="M39 43 L31 34 M89 43 L97 34 M39 83 L31 92 M89 83 L97 92" stroke="'+p.a+'" stroke-width="3"/>';
-  if(prestige)out+='<ellipse cx="64" cy="29" rx="15" ry="5" fill="none" stroke="'+p.rarity+'" stroke-width="2.5"/>';
- }else if(k==='Hunter'){
-  out+='<path d="M43 85 L83 43 M75 43 H83 V51" fill="none" stroke="'+p.rarity+'" stroke-width="4"/><path d="M46 40 Q64 23 82 40" fill="none" stroke="'+p.a+'" stroke-width="3"/>';
-  if(tier>=2)out+='<path d="M88 34 l12 -7 l-5 13Z" fill="'+p.gold+'"/>';
-  if(hi)out+='<path d="M37 77 l-10 7 M91 49 l10 -7" stroke="'+p.a+'" stroke-width="3"/>';
-  if(prestige)out+='<path d="M82 31 q14 -13 20 -7 q-10 5 -17 14" fill="'+p.rarity+'" opacity=".78"/>';
- }else if(k==='Rogue'){
-  out+='<path d="M46 44 L82 84 M82 44 L46 84" stroke="'+p.rarity+'" stroke-width="'+(tier>=3?5:3.5)+'"/><path d="M42 40 l7 -13 l5 14 M86 40 l-7 -13 l-5 14" fill="'+p.b+'" stroke="'+p.a+'" stroke-width="2"/>';
-  if(hi)out+='<circle cx="64" cy="64" r="10" fill="none" stroke="'+p.a+'" stroke-width="2" stroke-dasharray="3 3"/>';
-  if(prestige)out+='<path d="M64 38 l-7 -10 l7 -8 l7 8Z" fill="'+p.rarity+'"/>';
- }else if(k==='Mage'){
-  out+='<path d="M64 39 L70 56 L88 63 L70 70 L64 89 L58 70 L40 63 L58 56Z" fill="none" stroke="'+p.rarity+'" stroke-width="'+(tier>=3?4:3)+'"/><circle cx="64" cy="63" r="'+(tier>=3?8:5)+'" fill="'+p.a+'" opacity=".55"/>';
-  if(tier>=2)out+='<circle cx="42" cy="44" r="3" fill="'+p.rarity+'"/><circle cx="86" cy="44" r="3" fill="'+p.rarity+'"/>';
-  if(hi)out+='<circle cx="64" cy="63" r="25" fill="none" stroke="'+p.a+'" stroke-width="2" opacity=".55"/>';
-  if(prestige)out+='<path d="M64 33 L58 20 L64 13 L70 20Z" fill="'+p.rarity+'" opacity=".86"/>';
- }
- // Slot cue keeps icons readable at small size without replacing class identity.
+ let out='<g data-item-visuals="v2" data-palette-mode="'+p.paletteMode+'" data-class-visual="'+slug(k)+'" opacity=".96">';
+ out+=classIconGlyph(k,p,64,63,tier>=4?1.05:.88);
+ if(k==='Priest'&&hi)out+='<ellipse cx="64" cy="35" rx="17" ry="5" fill="none" stroke="'+p.glow+'" stroke-width="2"/>';
+ else if(k==='Druid'&&tier>=3)out+='<path d="M46 43 Q35 27 31 21 M82 43 Q93 27 97 21" fill="none" stroke="'+p.gold+'" stroke-width="3"/>';
+ else if(k==='Shaman'&&tier>=3)out+='<path d="M42 42 L32 29 M86 42 L96 29" stroke="'+p.glow+'" stroke-width="3"/>';
+ else if(k==='Warlock'&&hi)out+='<circle cx="64" cy="63" r="24" fill="none" stroke="'+p.glow+'" stroke-width="2" opacity=".55"/>';
+ else if(k==='Monk'&&tier>=3)out+='<path d="M42 82 Q64 94 86 82" fill="none" stroke="'+p.gold+'" stroke-width="3"/>';
+ else if(k==='Death Knight'&&tier>=3)out+='<path d="M42 42 L34 25 M86 42 L94 25 M64 39 V22" stroke="'+p.gold+'" stroke-width="3"/>';
+ else if(k==='Demon Hunter'&&tier>=3)out+='<path d="M42 43 Q31 35 32 24 M86 43 Q97 35 96 24" fill="none" stroke="'+p.glow+'" stroke-width="3"/>';
+ else if(k==='Evoker'&&tier>=3)out+='<path d="M45 43 L37 28 L52 37 M83 43 L91 28 L76 37" fill="'+p.b+'" stroke="'+p.gold+'" stroke-width="2"/>';
+ else if(k==='Warrior'&&tier>=3)out+='<path d="M43 43 L34 31 M85 43 L94 31" stroke="'+p.gold+'" stroke-width="3"/>';
+ else if(k==='Paladin'&&hi)out+='<ellipse cx="64" cy="35" rx="15" ry="5" fill="none" stroke="'+p.glow+'" stroke-width="2"/>';
+ else if(k==='Hunter'&&tier>=3)out+='<path d="M83 36 q14 -12 20 -6 q-11 5 -17 13" fill="'+p.gold+'" opacity=".75"/>';
+ else if(k==='Rogue'&&tier>=3)out+='<path d="M46 39 l-8 -11 M82 39 l8 -11" stroke="'+p.gold+'" stroke-width="2.5"/>';
+ else if(k==='Mage'&&hi)out+='<circle cx="64" cy="63" r="24" fill="none" stroke="'+p.glow+'" stroke-width="2" opacity=".5"/>';
+ if(prestige)out+='<circle cx="64" cy="63" r="31" fill="none" stroke="'+p.glow+'" stroke-width="1.6" opacity=".38"/>';
  if(slot==='Head')out+='<path d="M42 101 Q64 91 86 101" fill="none" stroke="'+p.ink+'" stroke-width="2" opacity=".5"/>';
  else if(slot==='Weapon')out+='<path d="M30 101 H98" stroke="'+p.ink+'" stroke-width="2" opacity=".5"/>';
  else if(slot==='OffHand')out+='<path d="M50 100 Q64 108 78 100" fill="none" stroke="'+p.ink+'" stroke-width="2" opacity=".5"/>';
@@ -283,7 +324,7 @@ function artHTML(item,size,extra){
  const x={...item},seed=detailSeed(x),p=palette(x),tier=tierOf(x),uid='cbia'+seed.toString(36),title=esc(x.name||idOf(x));
  const body=artBody(p,x,seed),pvp=pvpBand(x);
  const cls=['cb-item-art','cb-item-'+slug(kindOf(x)),'rarity-'+slug(rarityOf(x)),pvp?'cb-item-pvp':'',extra].filter(Boolean).join(' ');
- const svg='<svg viewBox="0 0 128 128" role="img" aria-label="'+title+'" data-item-visuals="'+(kindOf(x)==='gear'?'v2':'classic')+'" focusable="false"><defs>'+
+ const svg='<svg viewBox="0 0 128 128" role="img" aria-label="'+title+'" data-item-visuals="'+(kindOf(x)==='gear'?'v2':'classic')+'" data-palette-mode="'+(kindOf(x)==='gear'?p.paletteMode:'utility')+'" focusable="false"><defs>'+
  '<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+p.a+'"/><stop offset="1" stop-color="'+p.b+'"/></linearGradient>'+
  '<linearGradient id="m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+p.a+'"/><stop offset=".48" stop-color="'+p.b+'"/><stop offset="1" stop-color="'+p.rarity+'"/></linearGradient>'+
  '<filter id="'+uid+'"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity=".65"/></filter></defs>'+
@@ -291,7 +332,7 @@ function artHTML(item,size,extra){
  (tier>=4?'<circle cx="64" cy="64" r="52" fill="none" stroke="'+p.rarity+'" stroke-width="1.5" opacity=".38"/>':'')+
  (pvp?'<path d="M20 105 L36 89 M108 105 L92 89" stroke="'+p.gold+'" stroke-width="4" opacity=".8"/>':'')+
  '</svg>';
- return '<span class="'+esc(cls)+'" style="width:'+size+'px;height:'+size+'px" data-item-art="'+esc(idOf(x))+'" data-item-kind="'+esc(kindOf(x))+'" data-item-visuals="'+(kindOf(x)==='gear'?'v2':'classic')+'" title="'+title+'">'+svg+'</span>'
+ return '<span class="'+esc(cls)+'" style="width:'+size+'px;height:'+size+'px" data-item-art="'+esc(idOf(x))+'" data-item-kind="'+esc(kindOf(x))+'" data-item-visuals="'+(kindOf(x)==='gear'?'v2':'classic')+'" data-palette-mode="'+(kindOf(x)==='gear'?p.paletteMode:'utility')+'" title="'+title+'">'+svg+'</span>'
 }
 function findConsumable(key){
  const P=window.CellboundProfessions,all=Object.values(P?.PROFESSIONS||{}).flatMap(function(v){return v.recipes||[]});
@@ -394,7 +435,7 @@ function enhanceTrade(root){
  })
 }
 function enhanceAll(root){installDataAdapters();enhancePvp(root);enhanceCollections(root);enhanceCrafting(root);enhanceFourfold(root);enhanceTrade(root)}
-window.CellboundItemArt={VERSION:'2.0.0',ITEM_VISUALS_VERSION:ITEM_VISUALS_VERSION,ART_DIRECTION:CELLBOUND_ITEM_ART_DIRECTION,artHTML:artHTML,materialHTML:materialHTML,consumableHTML:consumableHTML,collectionHTML:collectionHTML,findConsumable:findConsumable,resolveGear:resolveGear,install:installDataAdapters,enhance:enhanceAll,SPECIAL:SPECIAL,MATERIAL_NAMES:MATERIAL_NAMES,CONSUMABLE_NAMES:CONSUMABLE_NAMES};
+window.CellboundItemArt={VERSION:'2.1.0',ITEM_VISUALS_VERSION:ITEM_VISUALS_VERSION,ART_DIRECTION:CELLBOUND_ITEM_ART_DIRECTION,SET_VISUALS:SET_VISUALS,FULL_CLASSES:FULL_CLASSES,artHTML:artHTML,materialHTML:materialHTML,consumableHTML:consumableHTML,collectionHTML:collectionHTML,findConsumable:findConsumable,resolveGear:resolveGear,install:installDataAdapters,enhance:enhanceAll,SPECIAL:SPECIAL,MATERIAL_NAMES:MATERIAL_NAMES,CONSUMABLE_NAMES:CONSUMABLE_NAMES};
 installDataAdapters();
 if(typeof document!=='undefined'){
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){enhanceAll(document)});
