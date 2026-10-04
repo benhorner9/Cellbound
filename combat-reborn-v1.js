@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.5.1';
+const VERSION='1.5.2';
 // Balance baseline: 2026-09-30 chapter-wide progression and role audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
@@ -1473,9 +1473,49 @@ function visibleCastPoint(ctx,u,target,range,preferred){
  const candidates=offsets.map(off=>openPosition(ctx,{x:target.position.x+Math.cos(base+off)*radius,y:target.position.y+Math.sin(base+off)*radius},1.35)).filter(valid);
  return candidates.sort((a,b)=>dist(u.position,a)-dist(u.position,b))[0]||pref
 }
+function activePersistentHazards(ctx){
+ const hazards=Object.values(ctx?.activeGroundHazards||{});
+ return hazards.filter(h=>h&&Number(h.endAt)>Number(ctx?.time||0))
+}
+function persistentHazardContains(ctx,u,hazard,pos=null,margin=0){
+ if(!u||!hazard?.center)return false;
+ const point=pos||physicalPosition(ctx,u),radius=Math.max(1,Number(hazard.radius)||1),body=Math.max(.35,bodyRadius(u));
+ return dist(point,hazard.center)<=radius+body*.65+Math.max(0,Number(margin)||0)
+}
+function persistentHazardEscapePoint(ctx,u,hazard,from=null){
+ const start=from||physicalPosition(ctx,u),center=hazard?.center||arenaCenter(ctx),clearance=Math.max(4,Number(hazard?.radius)||8)+bodyRadius(u)+2.2;
+ let base=Math.atan2(start.y-center.y,start.x-center.x);
+ if(dist(start,center)<.25){
+  const live=livingPlayers(ctx),slot=Math.max(0,live.findIndex(p=>p.id===u.id)),count=Math.max(1,live.length);
+  base=-Math.PI/2+(slot/count)*Math.PI*2
+ }
+ const offsets=[0,.38,-.38,.76,-.76,1.12,-1.12,1.55,-1.55,Math.PI];
+ const hazards=activePersistentHazards(ctx);
+ const valid=p=>pointInsideArena(ctx,p,bodyRadius(u)*.45)
+  &&!environmentBlockers(ctx).some(b=>b.blocksMovement!==false&&pointInBlocker(p,b,Math.max(.65,bodyRadius(u)*.5)))
+  &&!hazards.some(h=>persistentHazardContains(ctx,u,h,p,.35));
+ const candidates=offsets.map(off=>openPosition(ctx,{x:center.x+Math.cos(base+off)*clearance,y:center.y+Math.sin(base+off)*clearance},1.7)).filter(valid);
+ return candidates.sort((a,b)=>dist(start,a)-dist(start,b))[0]||openPosition(ctx,{x:center.x+Math.cos(base)*clearance,y:center.y+Math.sin(base)*clearance},1.7)
+}
+function persistentHazardSafeDestination(ctx,u,destination){
+ if(unitTeam(u)!=='party'||!destination)return destination;
+ const hazards=activePersistentHazards(ctx);if(!hazards.length)return destination;
+ let safe=copy(destination);
+ for(let guard=0;guard<Math.min(4,hazards.length+1);guard++){
+  const hit=hazards.find(h=>persistentHazardContains(ctx,u,h,safe,.25));if(!hit)break;
+  safe=persistentHazardEscapePoint(ctx,u,hit,physicalPosition(ctx,u))
+ }
+ return safe
+}
+function ensurePersistentHazardEscape(ctx,u,hazard,reason='persistent ground escape'){
+ if(!u?.alive||!persistentHazardContains(ctx,u,hazard,physicalPosition(ctx,u),0))return false;
+ const destination=persistentHazardEscapePoint(ctx,u,hazard,physicalPosition(ctx,u));
+ if(dist(physicalPosition(ctx,u),destination)>.45)moveTo(ctx,u,destination,340,reason);
+ return true
+}
 function moveTo(ctx,u,pos,duration=420,reason='positioning'){
  if(!u?.alive)return false;
- const from=copy(physicalPosition(ctx,u)),environmentRoute=navigationWaypoint(ctx,from,pos),bodyRoute=collisionWaypoint(ctx,u,from,environmentRoute.point,reason),to=bodyRoute.point,baseTravel=Math.max(80,Number(duration)||420);
+ const from=copy(physicalPosition(ctx,u)),safeDestination=persistentHazardSafeDestination(ctx,u,pos),environmentRoute=navigationWaypoint(ctx,from,safeDestination),bodyRoute=collisionWaypoint(ctx,u,from,environmentRoute.point,reason),to=bodyRoute.point,baseTravel=Math.max(80,Number(duration)||420);
  if(dist(from,to)<.5)return true;
  if(u.currentCast){
   emit(ctx,'CAST_CANCELLED',{source:u.id,target:u.currentCast.target,ability:u.currentCast.ability,result:'movement',position:from});
@@ -3643,13 +3683,24 @@ function applyMechanicStatus(ctx,enemy,m,target){
 }
 function spawnPersistentHazard(ctx,e,m,cast){
  const center=copy(cast?.hazardPosition||e.position),radius=Math.max(4,Number(m.radius)||11),persistMs=Math.max(1800,Number(m.persistMs)||10000),tickMs=Math.max(500,Number(m.tickMs)||1000),damage=Math.max(1,Number(m.tickDamage)||7),hazardId='hazard-'+cast.token;
+ const endAt=ctx.time+persistMs,hazard={id:hazardId,center,radius,endAt,tickMs,damage,source:e.id,ability:m.name};
+ ctx.activeGroundHazards=ctx.activeGroundHazards||{};ctx.activeGroundHazards[hazardId]=hazard;
  emit(ctx,'GROUND_HAZARD_SPAWNED',{source:e.id,ability:m.name,result:'active',position:center,payload:{hazardId,radius,duration:persistMs,tickMs,damage}});
- const endAt=ctx.time+persistMs;
+ // A persistent pool is authoritative immediately. Anyone still overlapping it starts escaping,
+ // and all later movement is prevented from choosing a destination inside an active pool.
+ livingPlayers(ctx).forEach(p=>ensurePersistentHazardEscape(ctx,p,hazard));
  const tick=()=>{
-   if(ctx.finished||!e.alive)return;
-   if(ctx.time>=endAt){emit(ctx,'GROUND_HAZARD_EXPIRED',{source:e.id,ability:m.name,result:'expired',position:center,payload:{hazardId}});return}
+   if(ctx.finished||!e.alive){delete ctx.activeGroundHazards?.[hazardId];return}
+   if(ctx.time>=endAt){delete ctx.activeGroundHazards?.[hazardId];emit(ctx,'GROUND_HAZARD_EXPIRED',{source:e.id,ability:m.name,result:'expired',position:center,payload:{hazardId}});return}
    const hit=[];
-   livingPlayers(ctx).forEach(p=>{if(dist(p.position,center)<=radius){hit.push(p.id);dealDamage(ctx,e,p,damage*enemyPressure(ctx,e,p),m.name,{damageType:m.damageType||'physical',avoidable:true})}});
+   livingPlayers(ctx).forEach(p=>{
+    const current=physicalPosition(ctx,p);
+    if(persistentHazardContains(ctx,p,hazard,current,0)){
+     hit.push(p.id);
+     dealDamage(ctx,e,p,damage*enemyPressure(ctx,e,p),m.name,{damageType:m.damageType||'physical',avoidable:true});
+     ensurePersistentHazardEscape(ctx,p,hazard)
+    }
+   });
    emit(ctx,'GROUND_HAZARD_TICK',{source:e.id,ability:m.name,result:hit.length?'damage':'clear',position:center,payload:{hazardId,radius,targets:hit}});
    schedule(ctx,ctx.time+tickMs,tick,'persistent-ground-tick')
  };
@@ -3687,9 +3738,10 @@ function resolveMechanic(ctx,e,m,token){
  }
  if(m.type==='adds'){spawnAdds(ctx,e,m);mechanicStat(ctx,'adds',false);scheduleNextMechanic(ctx);return}
  if(m.type==='persistent-circle'){
-  const target=getUnit(ctx,cast.targetId),success=target?cast.responses?.[target.id]!==false:true;
-  if(target&&!success)dealDamage(ctx,e,target,18*enemyPressure(ctx,e,target),m.name,{damageType:m.damageType||'physical',avoidable:true});
-  spawnPersistentHazard(ctx,e,m,cast);mechanicStat(ctx,'persistent-circle',target?!success:false);scheduleNextMechanic(ctx);return
+  const hazard={center:copy(cast.hazardPosition||e.position),radius:Math.max(4,Number(m.radius)||11)};
+  const impactHits=livingPlayers(ctx).filter(p=>persistentHazardContains(ctx,p,hazard,physicalPosition(ctx,p),0));
+  impactHits.forEach(p=>dealDamage(ctx,e,p,18*enemyPressure(ctx,e,p),m.name,{damageType:m.damageType||'physical',avoidable:true}));
+  spawnPersistentHazard(ctx,e,m,cast);mechanicStat(ctx,'persistent-circle',impactHits.length>0);scheduleNextMechanic(ctx);return
  }
  if(m.type==='healer-swipe'){
   const target=getUnit(ctx,cast.targetId);let failed=false;
@@ -3810,8 +3862,16 @@ function startMechanic(ctx,m){
   if(target){const plan=mechanicResponse(ctx,target,'line',duration,enemy);castState.responses[target.id]=plan.success;castState.reactionMs[target.id]=plan.reactionMs}
  }else if(m.type==='persistent-circle'){
   const preferredRoles=Array.isArray(m.targetRoles)?m.targetRoles.map(String):[],rolePool=preferredRoles.length?live.filter(p=>preferredRoles.includes(p.role)):live,rangedPool=m.preferRanged?rolePool.filter(p=>p.role==='healer'||!isMeleeCombatant(p)):rolePool,pool=rangedPool.length?rangedPool:(rolePool.length?rolePool:live);
-  const target=pool[Math.floor(ctx.rng()*Math.max(1,pool.length))]||live[0];castState.targetId=target?.id||null;castState.targetIds=target?[target.id]:[];castState.hazardPosition=copy(target?.position||enemy.position);
-  if(target){const plan=mechanicResponse(ctx,target,'circle',duration,enemy);castState.responses[target.id]=plan.success;castState.reactionMs[target.id]=plan.reactionMs}
+  const target=pool[Math.floor(ctx.rng()*Math.max(1,pool.length))]||live[0],radius=Math.max(4,Number(m.radius)||11);
+  castState.targetId=target?.id||null;castState.hazardPosition=copy(target?physicalPosition(ctx,target):enemy.position);
+  const projected={center:castState.hazardPosition,radius},threatened=live.filter(p=>persistentHazardContains(ctx,p,projected,physicalPosition(ctx,p),0));
+  castState.targetIds=threatened.map(p=>p.id);
+  threatened.forEach(p=>{
+   const baseReaction=executionReaction(ctx,p,'movement'),error=shouldMistake(ctx,p,'movement',2200),hesitation=error?Math.round(260+ctx.rng()*520):0,reaction=baseReaction+hesitation,travel=340;
+   castState.reactionMs[p.id]=reaction;castState.responses[p.id]=reaction+travel<=Math.max(520,duration-40);
+   if(error)recordMistake(ctx,p,'movement',reaction>duration?'reacted too late to persistent ground':'hesitated inside persistent ground',{target:enemy.id,ability:m.name,reactionMs:reaction});
+   schedule(ctx,ctx.time+reaction,()=>{if(p.alive)moveTo(ctx,p,persistentHazardEscapePoint(ctx,p,projected,physicalPosition(ctx,p)),travel,'persistent ground escape')},'persistent-ground-reaction')
+  })
  }else if(m.type==='healer-swipe'){
   const healers=live.filter(p=>p.role==='healer'),target=healers[Math.floor(ctx.rng()*Math.max(1,healers.length))]||live.find(p=>p.role!=='tank')||live[0];
   castState.targetId=target?.id||null;castState.targetIds=target?[target.id]:[];
@@ -3945,7 +4005,7 @@ function simulate(options={}){
   crowdControl:options.tactics?.crowdControl||'disabled'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,finished:false,onEvent:options.onEvent||null};
+ const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,activeGroundHazards:{},finished:false,onEvent:options.onEvent||null};
  players.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  enemies.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  settlePhysicalSpace(ctx,[...players,...enemies]);
