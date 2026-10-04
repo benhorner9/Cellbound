@@ -34,7 +34,7 @@ for(const item of G.items){
     if(item.slot==='Weapon'){
       assert(near(num(html,'data-grip-x'),fit.weaponX),item.itemId+' main-hand X not on side-held grip for '+race+'/'+gender);
       assert(near(num(html,'data-grip-y'),fit.weaponY),item.itemId+' main-hand Y not on side-held grip for '+race+'/'+gender);
-      assert(fit.weaponX>=fit.baseRightHand,item.itemId+' side-held weapon must not move inward');
+      assert(fit.weaponX>=fit.weaponSideMin,item.itemId+' side-held weapon must not move inward');
       const weaponAt=html.indexOf('cb-paper-side-weapon'),headAt=html.indexOf('cb-paper-head');
       assert(weaponAt>headAt,item.itemId+' side-held main-hand must render above body/head');
       assert(html.includes('data-weapon-pose="side-held"'),item.itemId+' missing side-held weapon pose');
@@ -86,7 +86,7 @@ for(const klass of G.CLASS_ORDER)for(const tier of [1,2,3,4,5])for(const race of
   assert(weaponAt>=0,klass+' '+race+' frame '+frame+' missing side-held weapon');
   assert(near(num(weaponHtml,'data-grip-x'),fit.weaponX),klass+' '+race+' frame '+frame+' weapon mismatch');
   assert(near(num(weaponHtml,'data-grip-y'),fit.weaponY),klass+' '+race+' frame '+frame+' weapon Y mismatch');
-  assert(fit.weaponX>=fit.baseRightHand,klass+' '+race+' frame '+frame+' weapon moved across body instead of to side');
+  assert(fit.weaponX>=fit.weaponSideMin,klass+' '+race+' frame '+frame+' weapon moved across body instead of to side');
   bodyChecks++;
 }
 assert.equal(bodyChecks,G.CLASS_ORDER.length*5*6*2*3);
