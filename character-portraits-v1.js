@@ -880,7 +880,105 @@ function articulatedPlate(c,item,slot,highlighted){
   return '<g class="'+paperSlotClass(slot,highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,slot))+'"'+(slot==='Chest'?' data-chest-top="'+f.chestTop.toFixed(2)+'"':'')+' data-armour-construction="articulated-v2">'+out+'</g>';
 }
 
+
+function betaLegVisual(c,item,highlighted){
+  const klass=wearableClass(c,item),f=gearFitProfile(c,item),t=Math.max(1,clampTier(item.tier)),pal=gearPalette(c,item,t,'Legs');
+  const edge='#20282c',l=f.leftLeg,r=f.rightLeg,th=f.legHalf,calf=f.calfHalf,hip=f.hipHalf;
+  const P=(d,fill=pal.base,stroke=edge,sw=1.3)=>'<path d="'+d+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'" stroke-linejoin="round"/>';
+  const L=(d,stroke=pal.trim,sw=.9,op=.65)=>'<path d="'+d+'" fill="none" stroke="'+stroke+'" stroke-width="'+sw+'" stroke-linecap="round" opacity="'+op+'"/>';
+  let out='';
+  if(klass==='Warrior'||klass==='Paladin'){
+    const gild=klass==='Paladin'?mixHex(pal.trim,'#e4c56b',.45):pal.trim;
+    out+=P('M'+(120-hip)+' 246 Q120 251 '+(120+hip)+' 246 L'+(r+th)+' 276 L'+(r+calf)+' 352 H'+(r-calf)+' L123 266 H117 L'+(l+calf)+' 352 H'+(l-calf)+' L'+(l-th)+' 276Z',mixHex(pal.dark,'#272d30',.25),edge,1.1);
+    for(const x of [l,r]){
+      out+=P('M'+(x-th+1)+' 261 Q'+x+' 256 '+(x+th-1)+' 261 L'+(x+th-2)+' 292 L'+x+' 302 L'+(x-th+2)+' 292Z');
+      out+=P('M'+x+' 298 L'+(x+th)+' 304 L'+(x+th-1)+' 315 L'+x+' 322 L'+(x-th+1)+' 315 L'+(x-th)+' 304Z',mixHex(pal.base,pal.dark,.08),edge,1.2);
+      out+=L('M'+(x-th+3)+' 267 L'+(x-th+4)+' 287 M'+(x+th-3)+' 267 L'+(x+th-4)+' 287',pal.light,.8,.55);
+      out+=L('M'+(x-th+2)+' 312 Q'+x+' 319 '+(x+th-2)+' 312',gild,1.0,.78);
+      if(t>=3)out+=P('M'+(x-th)+' 249 L'+(x+th)+' 251 L'+(x+th-2)+' 269 L'+x+' 274 L'+(x-th+2)+' 268Z',mixHex(pal.base,pal.dark,.06),gild,1.0);
+      if(klass==='Paladin'&&t>=3)out+=motifMarkup('sun',x,282,.28,gild);
+    }
+  }else if(klass==='Hunter'){
+    const hide=mixHex(pal.base,'#5a4637',.22),dark=mixHex(pal.dark,'#30251f',.25);
+    out+=P('M'+(120-hip)+' 247 Q120 252 '+(120+hip)+' 247 L'+(r+th-1)+' 280 L'+(r+calf)+' 354 H'+(r-calf)+' L123 268 H117 L'+(l+calf)+' 354 H'+(l-calf)+' L'+(l-th+1)+' 280Z',hide,edge,1.1);
+    for(const x of [l,r]){
+      out+=P('M'+(x-th+2)+' 263 L'+(x+th-2)+' 268 L'+(x+th-4)+' 296 L'+x+' 302 L'+(x-th+4)+' 294Z',dark,edge,.9);
+      out+=L('M'+(x-th+4)+' 273 L'+(x+th-5)+' 279 M'+(x-th+5)+' 289 L'+(x+th-6)+' 294',pal.trim,.9,.7);
+      out+='<rect x="'+(x-5)+'" y="312" width="10" height="7" rx="1" fill="'+dark+'" stroke="'+pal.trim+'" stroke-width=".8"/>';
+    }
+  }else if(klass==='Rogue'){
+    const black=mixHex(pal.base,'#22282d',.4),deep=mixHex(pal.dark,'#070a0d',.38);
+    out+=P('M'+(120-hip)+' 247 Q120 251 '+(120+hip)+' 247 L'+(r+th-2)+' 277 L'+(r+calf-1)+' 354 H'+(r-calf+1)+' L123 269 H117 L'+(l+calf-1)+' 354 H'+(l-calf+1)+' L'+(l-th+2)+' 277Z',black,deep,1.0);
+    for(const x of [l,r]){
+      out+=P('M'+(x-th+3)+' 275 L'+(x+th-3)+' 275 L'+(x+th-4)+' 298 Q'+x+' 303 '+(x-th+4)+' 298Z',mixHex(black,'#ffffff',.05),deep,.8);
+      out+=P('M'+(x-th+4)+' 302 L'+(x+th-4)+' 302 L'+(x+th-5)+' 317 Q'+x+' 323 '+(x-th+5)+' 317Z',deep,pal.trim,.75);
+      out+=L('M'+(x-th+3)+' 286 L'+(x+th-3)+' 291',pal.trim,.7,.55);
+    }
+  }else{
+    // Mage front robe panel; back skirt already comes from the cloth chest.
+    const cloth=mixHex(pal.base,pal.accent,.16),dark=mixHex(pal.dark,'#111827',.18);
+    out+=P('M'+(120-hip)+' 246 Q120 253 '+(120+hip)+' 246 L'+(120+hip+7)+' 354 Q'+(120+hip)+' 366 126 360 L120 292 L114 360 Q'+(120-hip)+' 366 '+(120-hip-7)+' 354Z',cloth,dark,1.1);
+    out+=P('M120 252 L120 292 L126 360 Q'+(120+hip)+' 365 '+(120+hip+7)+' 354 L'+(120+hip)+' 250Z',mixHex(cloth,pal.dark,.10),'none',0);
+    out+=L('M115 258 L110 352 M125 258 L130 352',pal.trim,.8,.55);
+    if(t>=3)out+=L('M'+(120-hip+5)+' 277 Q120 287 '+(120+hip-5)+' 277',pal.glow,1.0,.55);
+    if(t>=4)out+=motifMarkup('star',120,306,.34,pal.glow);
+  }
+  return '<g class="'+paperSlotClass('Legs',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Legs'))+'" data-leg-design="beta-illustrated">'+out+'</g>';
+}
+function betaFeetVisual(c,item,highlighted){
+  const klass=wearableClass(c,item),f=gearFitProfile(c,item),t=Math.max(1,clampTier(item.tier)),pal=gearPalette(c,item,t,'Feet');
+  const edge='#20282c',l=f.leftLeg,r=f.rightLeg,fw=f.footHalf,calf=f.calfHalf;
+  const P=(d,fill=pal.base,stroke=edge,sw=1.2)=>'<path d="'+d+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+sw+'" stroke-linejoin="round"/>';
+  const L=(d,stroke=pal.trim,sw=.85,op=.7)=>'<path d="'+d+'" fill="none" stroke="'+stroke+'" stroke-width="'+sw+'" opacity="'+op+'"/>';
+  let out='';
+  if(klass==='Warrior'||klass==='Paladin'){
+    const gild=klass==='Paladin'?mixHex(pal.trim,'#e4c56b',.45):pal.trim;
+    for(const side of [-1,1]){
+      const x=side<0?l:r,toe=x+side*4,w=calf+1;
+      out+=P('M'+(x-w)+' 325 L'+(x+w)+' 325 L'+(x+w-1)+' 365 L'+(toe+fw)+' 380 Q'+toe+' 387 '+(toe-fw)+' 380 L'+(x-w+1)+' 365Z');
+      out+=P('M'+x+' 327 L'+(x+w-2)+' 332 L'+(x+w-3)+' 360 L'+x+' 367 L'+(x-w+3)+' 360 L'+(x-w+2)+' 332Z',mixHex(pal.base,pal.light,.12),edge,1.0);
+      out+=L('M'+x+' 330 V363',pal.light,.8,.58);
+      out+=L('M'+(toe-fw+2)+' 375 Q'+toe+' 381 '+(toe+fw-2)+' 375',gild,.9,.75);
+      if(t>=3)out+=motifMarkup(klass==='Paladin'?'sun':'chevron',x,344,.24,gild);
+    }
+  }else if(klass==='Hunter'||klass==='Rogue'){
+    const boot=klass==='Rogue'?mixHex(pal.dark,'#111519',.45):mixHex(pal.dark,'#3d2d24',.28);
+    for(const side of [-1,1]){
+      const x=side<0?l:r,toe=x+side*4,w=calf+.2;
+      out+=P('M'+(x-w)+' 337 L'+(x+w)+' 337 L'+(x+w-.5)+' 368 L'+(toe+fw)+' 380 Q'+toe+' 386 '+(toe-fw)+' 380 L'+(x-w+.5)+' 368Z',boot,edge,1.0);
+      out+=L('M'+(x-w+2)+' 348 L'+(x+w-2)+' 351 M'+(x-w+2)+' 357 L'+(x+w-2)+' 360',pal.trim,.75,.65);
+      if(klass==='Hunter')out+='<rect x="'+(x-5)+'" y="342" width="10" height="7" rx="1" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width=".7"/>';
+    }
+  }else{
+    for(const side of [-1,1]){
+      const x=side<0?l:r,toe=x+side*3;
+      out+=P('M'+(x-fw*.75)+' 349 L'+(x+fw*.75)+' 349 L'+(x+fw*.7)+' 373 L'+(toe+fw*.9)+' 382 Q'+toe+' 386 '+(toe-fw*.9)+' 382 L'+(x-fw*.7)+' 373Z',mixHex(pal.dark,pal.accent,.12),edge,.9);
+      out+=L('M'+(x-fw*.6)+' 362 Q'+x+' 366 '+(x+fw*.6)+' 362',pal.glow,.75,.5);
+    }
+  }
+  return '<g class="'+paperSlotClass('Feet',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Feet'))+'" data-feet-design="beta-illustrated">'+out+'</g>';
+}
+function betaHandVisual(c,item,highlighted){
+  const klass=wearableClass(c,item),f=gearFitProfile(c,item),t=Math.max(1,clampTier(item.tier)),pal=gearPalette(c,item,t,'Hands');
+  const edge='#20282c',metal=klass==='Warrior'||klass==='Paladin';
+  let out='';
+  for(const x of [f.leftHand,f.rightHand]){
+    const w=(metal?8.8:klass==='Mage'?6.2:7.2)*(f.p.hand||1);
+    if(metal){
+      out+='<path d="M'+(x-w)+' 255 Q'+x+' 251 '+(x+w)+' 255 L'+(x+w-2)+' 271 L'+(x+w-1)+' 281 Q'+x+' 287 '+(x-w+1)+' 281 L'+(x-w+2)+' 271Z" fill="'+pal.base+'" stroke="'+edge+'" stroke-width="1.2"/>';
+      out+='<path d="M'+(x-w+2)+' 263 Q'+x+' 267 '+(x+w-2)+' 263 M'+(x-w+2)+' 271 Q'+x+' 275 '+(x+w-2)+' 271" fill="none" stroke="'+pal.trim+'" stroke-width=".85"/>';
+    }else if(klass==='Mage'){
+      out+='<path d="M'+(x-w)+' 258 Q'+x+' 255 '+(x+w)+' 258 L'+(x+w-1)+' 274 Q'+x+' 279 '+(x-w+1)+' 274Z" fill="'+mixHex(pal.base,pal.accent,.14)+'" stroke="'+edge+'" stroke-width=".9"/>';
+      out+='<path d="M'+(x-w+1)+' 261 Q'+x+' 265 '+(x+w-1)+' 261" fill="none" stroke="'+pal.glow+'" stroke-width=".75" opacity=".55"/>';
+    }else{
+      out+='<path d="M'+(x-w)+' 260 Q'+x+' 256 '+(x+w)+' 260 L'+(x+w-1)+' 276 Q'+x+' 282 '+(x-w+1)+' 276Z" fill="'+mixHex(pal.dark,klass==='Hunter'?'#4a362a':'#151a1e',.28)+'" stroke="'+edge+'" stroke-width=".9"/>';
+      out+='<path d="M'+(x-w+1)+' 265 Q'+x+' 268 '+(x+w-1)+' 265" fill="none" stroke="'+pal.trim+'" stroke-width=".7"/>';
+    }
+  }
+  return '<g transform="translate(0 '+(f.handY-283)+')" class="'+paperSlotClass('Hands',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Hands'))+'" data-hand-design="beta-illustrated">'+out+'</g>';
+}
 function paperLegsRaw(c,skin,highlighted){
+  const betaItem=itemForSlot(c,'Legs');if(betaItem&&BETA_VISUAL_CLASSES.has(wearableClass(c,betaItem)))return betaLegVisual(c,betaItem,highlighted);
   if(itemForSlot(c,'Legs')&&gearProfile(itemForSlot(c,'Legs')).family==='plate')return articulatedPlate(c,itemForSlot(c,'Legs'),'Legs',highlighted);
   var item=itemForSlot(c,'Legs');if(!item)return'';
   var fit=gearFitProfile(c,item),p=fit.p,tier=clampTier(item.tier),pal=gearPalette(c,item,tier||1,'Legs'),v=pal.variant,klass=gearClass(item),gp=gearProfile(item),tv=tierVisualProfile(tier);
@@ -912,6 +1010,7 @@ function paperLegsRaw(c,skin,highlighted){
 }
 function paperFeet(c,skin,highlighted){var out=materialSurface(paperFeetRaw(c,skin,highlighted),c,'Feet');return PAINTED_RACES.has(c.race)?'<g transform="translate(0 6)">'+out+'</g>':out}
 function paperFeetRaw(c,skin,highlighted){
+  const betaItem=itemForSlot(c,'Feet');if(betaItem&&BETA_VISUAL_CLASSES.has(wearableClass(c,betaItem)))return betaFeetVisual(c,betaItem,highlighted);
   if(itemForSlot(c,'Feet')&&gearProfile(itemForSlot(c,'Feet')).family==='plate')return articulatedPlate(c,itemForSlot(c,'Feet'),'Feet',highlighted);
   var item=itemForSlot(c,'Feet');if(!item)return'';
   var fit=gearFitProfile(c,item),tier=clampTier(item.tier),pal=gearPalette(c,item,tier||1,'Feet'),v=pal.variant,klass=gearClass(item),gp=gearProfile(item),tv=tierVisualProfile(tier);
@@ -934,6 +1033,7 @@ function paperFeetRaw(c,skin,highlighted){
 function paperArms(c,skin,highlighted){return materialSurface(paperArmsRaw(c,skin,highlighted),c,'Hands')}
 function paperArmsRaw(c,skin,highlighted){
   const item=itemForSlot(c,'Hands');if(!item)return '';
+  if(BETA_VISUAL_CLASSES.has(wearableClass(c,item)))return betaHandVisual(c,item,highlighted);
   const tier=clampTier(item.tier),pal=gearPalette(c,item,tier,'Hands'),f=gearFitProfile(c,item),metal=['plate','mail'].includes(gearProfile(item).family),w=(metal?9:7)*(f.p.hand||1);
   let out='';
   for(const x of [f.leftHand,f.rightHand]){
