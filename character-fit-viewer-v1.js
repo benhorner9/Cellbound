@@ -23,6 +23,7 @@ function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&l
 function isOwner(){return Boolean(window.CellboundAdmin?.isAdmin)&&String(window.CellboundAdmin?.role||'').toLowerCase()==='owner'}
 function G(){return window.CellboundGear}
 function CP(){return window.CellboundPortraits}
+function CR(){return window.CellboundCharacterRig}
 function positions(){return G()?.EQUIPMENT_POSITION_ORDER||['Head','Shoulders','Chest','Hands','Waist','Legs','Feet','Weapon','OffHand','Ring1','Ring2','Trinket1','Trinket2','Relic']}
 function slotForPosition(pos){return pos?.startsWith('Ring')?'Ring':pos?.startsWith('Trinket')?'Trinket':pos}
 function allItems(){return (G()?.items||[]).filter(x=>x&&x.enabled!==false)}
@@ -78,17 +79,18 @@ function character(overrides={}){
   };
 }
 function anchorSVG(c){
-  if(!state.anchors||!CP()?.gearFitProfile)return'';
-  const f=CP().gearFitProfile(c),wf=CP()?.weaponFitProfile?.(c,c?.equipment?.Weapon),marks=[
-    [f.leftShoulder,f.shoulderY,'SH'],[f.rightShoulder,f.shoulderY,'SH'],
-    [f.leftHand,f.handY,'H'],[f.rightHand,f.handY,'H'],
-    [120-f.waistHalf,f.waistY,'W'],[120+f.waistHalf,f.waistY,'W'],
-    [f.leftLeg,302,'L'],[f.rightLeg,302,'L'],
-    [wf?.anchorX??f.weaponX,wf?.anchorY??f.handY,'MH'],[f.offhandX,f.handY,'OH']
+  if(!state.anchors||!CR()?.anchors)return'';
+  const a=CR().anchors(c),marks=[
+    [a.leftShoulder,'SH'],[a.rightShoulder,'SH'],
+    [a.leftHand,'H'],[a.rightHand,'H'],
+    [a.leftHip,'HIP'],[a.rightHip,'HIP'],
+    [a.mainHand,'MH'],[a.offHand,'OH'],
+    [a.leftFoot,'FT'],[a.rightFoot,'FT'],
+    [a.crown,'CR'],[a.hairline,'HL']
   ];
   return '<svg class="cfv-anchor-layer" viewBox="0 0 240 410" aria-hidden="true">'+
-    marks.map(([x,rawY,l])=>{const y=CP().rigY?.(c.race,rawY)??rawY;return '<g><circle cx="'+x+'" cy="'+y+'" r="3.2"/><text x="'+(x+5)+'" y="'+(y-4)+'">'+l+'</text></g>'}).join('')+
-    '<path d="M'+(120-f.hipHalf)+' 252 H'+(120+f.hipHalf)+' M'+(120-f.waistHalf)+' 247 H'+(120+f.waistHalf)+'" />'+
+    marks.map(([p,l])=>'<g><circle cx="'+p.x+'" cy="'+p.y+'" r="3.2"/><text x="'+(p.x+5)+'" y="'+(p.y-4)+'">'+l+'</text></g>').join('')+
+    '<path d="M'+a.leftHip.x+' '+a.waist.y+' H'+a.rightHip.x+' M'+a.leftShoulder.x+' '+a.leftShoulder.y+' H'+a.rightShoulder.x+'" />'+
   '</svg>';
 }
 function modelHTML(c,label){
@@ -98,7 +100,7 @@ function modelHTML(c,label){
     '<div class="cfv-model-stage" style="--cfv-zoom:'+(Math.max(60,Math.min(150,Number(state.zoom)||100))/100)+'">'+
       '<div class="cfv-model-inner">'+doll+anchorSVG(c)+'</div>'+
     '</div>'+
-    '<footer><span>'+esc(state.loadout==='base'?'BASE BODY':state.loadout==='full'?c.class+' T'+state.tier+' FULL SET':item?.name||'NO ITEM')+'</span><em>'+esc(state.loadout==='single'?state.position:'ALL FIT POINTS')+'</em></footer></article>';
+    '<footer><span>'+esc(state.loadout==='base'?'BASE BODY':state.loadout==='full'?c.class+' T'+state.tier+' FULL SET':item?.name||'NO ITEM')+'</span><em>'+esc((CR()?.masterRig?.(c)?.id||'rig')+' · '+(state.loadout==='single'?state.position:'ALL FIT POINTS'))+'</em></footer></article>';
 }
 function comparisonModels(){
   if(state.compare==='frames')return [0,1,2].map(frame=>({c:character({frame}),label:FRAME_NAMES[frame]}));
@@ -140,11 +142,12 @@ function validateCharacter(c,{highlight='',requireFull=false}={}){
   return html;
 }
 function auditCurrent(){
-  const P=CP(),item=canonicalItem();
-  if(!P?.paperDollHTML||!P?.gearFitProfile)return{ok:0,total:0,failures:['Character visual engine unavailable.']};
+  const P=CP(),R=CR(),item=canonicalItem();
+  if(!P?.paperDollHTML||!P?.gearFitProfile||!R?.validateAll)return{ok:0,total:0,failures:['Master rig / character visual engine unavailable.']};
+  const rigAudit=R.validateAll(),failures=[...rigAudit.errors];let ok=rigAudit.ok?R.masterRigCount:0,total=R.masterRigCount;
   const cases=[];
   RACES.forEach(race=>[0,1].forEach(gender=>[0,1,2].forEach(frame=>cases.push({race,gender,frame}))));
-  const failures=[];let ok=0;
+  total+=cases.length;
   for(const body of cases){
     try{
       const c=character(body),html=validateCharacter(c,{highlight:state.loadout==='single'?state.position:''});
@@ -152,7 +155,7 @@ function auditCurrent(){
       ok++;
     }catch(error){failures.push(body.race+' '+GENDER_NAMES[body.gender]+' '+FRAME_NAMES[body.frame]+': '+(error?.message||error))}
   }
-  return{ok,total:cases.length,failures};
+  return{ok,total,failures,rigCount:R.masterRigCount,variantCount:cases.length};
 }
 function auditBetaMatrix(){
   const P=CP(),classes=G()?.CLASS_ORDER||[];
@@ -180,7 +183,7 @@ function statsHTML(){
   return '<div class="cfv-stats">'+
     '<div><span>CATALOGUE</span><b>'+count+' items</b></div>'+
     '<div><span>MODEL LOCK</span><b>'+esc(CP()?.modelContract||'unlocked')+'</b></div>'+
-    '<div><span>BODY MATRIX</span><b>36 bodies</b></div>'+
+    '<div><span>MASTER RIGS</span><b>'+esc(CR()?.masterRigCount||0)+' locked · 36 bodies</b></div>'+
     '<div><span>VIEWING</span><b>'+esc(state.loadout==='full'?'Full set':state.loadout==='single'?'Single item':'Base only')+'</b></div>'+
     '<div><span>ITEM</span><b>'+esc(item?item.slot+' · T'+item.tier:'None')+'</b></div>'+
   '</div>';
@@ -191,7 +194,7 @@ function render(){
   if(item&&state.itemId!==item.itemId){state.itemId=item.itemId;saveState()}
   const compareClass='cfv-compare-'+state.compare;
   mount.innerHTML='<section class="cfv-shell">'+
-    '<header class="cfv-header"><div><small>OWNER CHARACTER LAB · V9 BETA LOCK</small><h2>Character Fit Viewer</h2><p>Inspect every equipment piece against every v9 race, sex and body frame without changing live character data.</p></div><div class="cfv-header-actions"><button id="cfvAudit" type="button">RUN 36-BODY AUDIT</button><button id="cfvBetaAudit" type="button">RUN BETA MATRIX</button><button id="cfvClose" type="button">CLOSE</button></div></header>'+
+    '<header class="cfv-header"><div><small>OWNER CHARACTER LAB · V12 MASTER RIG</small><h2>Character Fit Viewer</h2><p>Inspect equipment against 12 fixed race/sex master rigs plus the Lean, Balanced and Strong deformation variants without changing live character data.</p></div><div class="cfv-header-actions"><button id="cfvAudit" type="button">RUN MASTER RIG AUDIT</button><button id="cfvBetaAudit" type="button">RUN BETA MATRIX</button><button id="cfvClose" type="button">CLOSE</button></div></header>'+
     statsHTML()+
     '<div class="cfv-toolbar">'+
       '<label><span>RACE</span><select id="cfvRace">'+RACES.map(x=>option(x,x,state.race)).join('')+'</select></label>'+
@@ -250,9 +253,9 @@ function showAuditResult(result,label){
     ?'<b>'+result.ok+' / '+result.total+' '+esc(label)+' PASSED</b><span>'+esc(result.failures.slice(0,4).join(' · '))+(result.failures.length>4?' · +'+(result.failures.length-4)+' more':'')+'</span>'
     :'<b>'+result.ok+' / '+result.total+' '+esc(label)+' PASSED</b><span>No missing layers, invalid anchors, bad chest anchors, layer-order faults or broken SVG values were found.</span>';
 }
-function runAudit(){showAuditResult(auditCurrent(),'BODY CONFIGURATIONS')}
+function runAudit(){showAuditResult(auditCurrent(),'MASTER RIG + FRAME CONFIGURATIONS')}
 function runBetaAudit(){
-  const el=$('#cfvAuditResult');if(el){el.hidden=false;el.dataset.tone='busy';el.innerHTML='<b>RUNNING V9 BETA MATRIX…</b><span>Checking every class, tier, race, sex and frame combination.</span>'}
+  const el=$('#cfvAuditResult');if(el){el.hidden=false;el.dataset.tone='busy';el.innerHTML='<b>RUNNING V12 RIG MATRIX…</b><span>Checking every class, tier, race, sex and frame combination.</span>'}
   setTimeout(()=>showAuditResult(auditBetaMatrix(),'BETA CONFIGURATIONS'),0);
 }
 function bind(){
