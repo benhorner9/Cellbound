@@ -44,7 +44,7 @@ const engine=engineName==='webkit'?webkit:chromium;
           const c={id:'item-v2-'+slug(klass)+'-'+tier,race,class:klass,appearance,equipment};
           const svg=P.paperDollSVG(c),chest=equipment.Chest,weapon=equipment.Weapon,classSlug=slug(klass),mode=tier>=4?'set-first':'material-first';
           if(!svg.includes('data-item-visuals="v2"'))failures.push(klass+' T'+tier+' model missing V2 root');
-          if(!svg.includes('data-equipment-fit="v3"')||!svg.includes('data-weapon-pose="side-held-v1"'))failures.push(klass+' T'+tier+' model missing fit v3 / side-held contract');
+          if(!svg.includes('data-equipment-fit="v4"')||!svg.includes('data-weapon-pose="side-held-v1"'))failures.push(klass+' T'+tier+' model missing fit v4 / side-held contract');
           if(!svg.includes('cb-paper-side-weapon')||!svg.includes('data-weapon-pose="side-held"'))failures.push(klass+' T'+tier+' weapon is not side-held');
           const fit=P.gearFitProfile(c);
           if(fit.weaponX<fit.weaponSideMin)failures.push(klass+' T'+tier+' weapon moved inward across body');
@@ -75,7 +75,7 @@ const engine=engineName==='webkit'?webkit:chromium;
     });
 
     assert.equal(result.itemVisualsVersion,2);
-    assert.equal(result.equipmentFitVersion,3);
+    assert.equal(result.equipmentFitVersion,4);
     assert.equal(result.weaponPoseVersion,1);
     assert.equal(result.itemArtVersion,2);
     assert.equal(result.direction,'class-tier-v2');
@@ -102,7 +102,7 @@ const engine=engineName==='webkit'?webkit:chromium;
       assert(new Set(styles).size>=2,klass+' lower-body silhouettes must vary by tier');
     }
     await page.screenshot({path:'/tmp/cellbound-item-visuals-v2-'+engineName+'.png',fullPage:true});
-    console.log(engineName+' Item Visuals V2 / fit v3 passed: 13 classes × 5 tiers, side-held weapons, varied cloth lowers, set-owned palettes and matching inventory icons.');
+    console.log(engineName+' Item Visuals V2 / fit v4 passed: 13 classes × 5 tiers, side-held weapons, varied cloth lowers, set-owned palettes and matching inventory icons.');
   }finally{
     await browser.close();
   }
