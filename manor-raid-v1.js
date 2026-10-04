@@ -534,7 +534,7 @@ async function syncSharedRaidView(force=false){
    ?(entryHealthForSide(side)<100?' Your party was recovered after the previous room and enters at 50% health.':'')
    :((entryHealthForSide(0)<100||entryHealthForSide(1)<100)?' One five-character party was recovered after the previous room and enters at 50% health.':'');
  const play=viewer.playSharedEncounter({
-   party:pack.party,encounter:pack.encounter,result:pack.result,
+   party:pack.party,encounter:pack.encounter,result:pack.result,zone:'manor-raid',
    enemyDisplayMax:null,
    startAt:readyStartAt()||stamp(session?.state?.stageStartedAt),
    header:'THE MANOR · '+String(room).toUpperCase()+' · LIVE 2D RAID',
