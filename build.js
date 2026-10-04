@@ -162,7 +162,7 @@ for(const file of files){
   }
   if(file==='character-forge-v1.js'){
     for(const hook of ["window.CellboundCharacterForge","const STEPS=['form','class','identity','confirm']","assets/characters/forge-bases/","data-forge-sex","data-forge-race","data-forge-class"])if(!contents.includes(hook))throw new Error('Character Forge runtime is missing '+hook);
-    for(const retired of ['data-appearance-field','data-appearance-randomize','skinTone','facialHair'])if(contents.includes(retired)&&retired!=='skinTone')throw new Error('Character Forge must remain race/sex only for beta: '+retired);
+    for(const retired of ['data-appearance-field','data-appearance-randomize','cc-editor-appearance'])if(contents.includes(retired))throw new Error('Character Forge must remain race/sex only for beta: '+retired);
   }
   if(file==='character-rig-v1.js'){
     for(const hook of ["window.CellboundCharacterRig","CONTRACT='master-rig-v1'","masterRigCount:12","function validateAll()","function fitSlot(","function anchors(","function masterRig(","REQUIRED_ANCHORS","LAYER_ORDER"])if(!contents.includes(hook))throw new Error('Master character rig is missing '+hook);
