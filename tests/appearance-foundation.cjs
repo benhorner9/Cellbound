@@ -9,6 +9,7 @@ assert.equal(P.modelContract,'classic-paper-doll-v1');
 assert.equal(P.baseArtContract,'classic-paper-doll-v1');
 assert.equal(P.rigContract,'master-rig-v1');
 assert.equal(P.masterRigCount,12);
+assert.equal(P.raceIdentityVersion,1);
 
 let checked=0;
 for(const race of Object.keys(P.RACES))for(const gender of [0,1]){
@@ -16,6 +17,8 @@ for(const race of Object.keys(P.RACES))for(const gender of [0,1]){
  const c={id:'existing',name:'Keeper',race,class:'Warrior',level:15,appearance,equipment:{},inventory:[{id:'preserved'}],talents:{a:3}};
  const before=JSON.stringify(c),base=P.paperDollSVG(c,{showGear:false});
  assert(base.includes('data-character-style="classic-paper-doll"'));
+ assert(base.includes('data-race-identity="v1"'));
+ assert(base.includes('cb-paper-race-'+race.toLowerCase()),race+' must expose a race-specific body detail layer');
  assert(base.includes('data-base-art="classic-paper-doll-v1"'));
  assert(base.includes('data-model-mode="base"'));
  assert(!base.includes('assets/characters/forge-bases/'));
@@ -29,7 +32,14 @@ for(const race of Object.keys(P.RACES))for(const gender of [0,1]){
  const portrait=P.portraitHTML(c);assert(portrait.includes('<svg'));
  checked++;
 }
-console.log('Classic paper-doll foundation: '+checked+' race/sex states; clean base, class independence, serialization and anchors passed.');
+const identityBases=Object.keys(P.RACES).map(race=>P.paperDollSVG({id:'identity-'+race,race,class:'Warrior',appearance:{race,gender:0,frame:1,hair:0,feature:0,marking:0},equipment:{}},{showGear:false}).replace(/pd[a-z0-9]+/g,'ID').replace(/#[0-9a-f]{6}/gi,'#HEX'));
+assert.equal(new Set(identityBases).size,Object.keys(P.RACES).length,'Every race must have a distinct base silhouette/detail signature');
+for(const race of Object.keys(P.RACES)){
+ const male=P.paperDollSVG({id:'sex-'+race,race,class:'Warrior',appearance:{race,gender:0,frame:1,hair:0,feature:0},equipment:{}},{showGear:false});
+ const female=P.paperDollSVG({id:'sex-'+race,race,class:'Warrior',appearance:{race,gender:1,frame:1,hair:0,feature:0},equipment:{}},{showGear:false});
+ assert.notEqual(male,female,race+' male/female bodies must remain visually distinct');
+}
+console.log('Classic race identity foundation: '+checked+' race/sex states; six unique race signatures, sex variants, serialization and anchors passed.');
 
 for(const race of Object.keys(P.RACES))for(const gender of [0,1])for(const frame of [0,1,2])for(const klass of ['Warrior','Paladin','Hunter','Rogue','Mage'])for(const tier of [1,2,3,4,5]){
  const c={id:'slot-fit',race,class:klass,appearance:{gender,frame},equipment:{}};
