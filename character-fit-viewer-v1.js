@@ -150,7 +150,7 @@ function validateCharacter(c,{highlight='',requireFull=false}={}){
   if(c.equipment?.Weapon){
     const weaponAt=html.indexOf('cb-paper-front-weapon'),headAt=html.indexOf('cb-paper-head');
     if(weaponAt<0||weaponAt<headAt)throw new Error('main-hand weapon is not on the front layer');
-    if(!closeTo(svgNumber(html,'data-grip-x'),fit.weaponX)||!closeTo(svgNumber(html,'data-grip-y'),fit.handY))throw new Error('main-hand grip is not attached to the right hand');
+    const weaponHtml=html.slice(weaponAt);if(!closeTo(svgNumber(weaponHtml,'data-grip-x'),fit.weaponX)||!closeTo(svgNumber(weaponHtml,'data-grip-y'),fit.handY))throw new Error('main-hand grip is not attached to the right hand');
   }
   if(c.equipment?.OffHand){
     const type=P.offHandType(c.equipment.OffHand,c),offAt=html.indexOf('data-offhand-type="'+type+'"'),armsAt=html.indexOf('cb-paper-arms'),headAt=html.indexOf('cb-paper-head'),weaponAt=html.indexOf('cb-paper-front-weapon');
