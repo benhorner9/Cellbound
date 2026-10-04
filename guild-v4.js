@@ -105,8 +105,8 @@ const BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue',
 const BETA_PLAYABLE_CLASS_SET=new Set(BETA_PLAYABLE_CLASSES);
 function hasStaffClassBypass(){
   const admin=globalThis.CellboundAdmin;
-  const role=String(admin?.role||'').toLowerCase();
-  return Boolean(admin?.isAdmin&&(role==='owner'||role==='admin'));
+  const role=String(admin?.role||account?.admin_role||'').toLowerCase();
+  return Boolean((admin?.isAdmin||['owner','admin'].includes(role))&&['owner','admin'].includes(role));
 }
 function isBetaClassPlayable(name){return hasStaffClassBypass()||BETA_PLAYABLE_CLASS_SET.has(String(name||''))}
 function isCharacterBetaPlayable(c){return Boolean(c&&isBetaClassPlayable(c.class))}
@@ -170,8 +170,9 @@ function entitlementFromAccount(a){
   const until=a?.membership_active_until?new Date(a.membership_active_until).getTime():0;
   const staffMember=Boolean(a?.staff_member);
   const member=staffMember||Boolean(a?.membership_override)||(until>Date.now());
-  const isAdmin=Boolean(globalThis.CellboundAdmin?.isAdmin);
-  return {member,staffMember,isAdmin,chatBadge:a?.chat_badge||'player',playerModDiscountEligible:Boolean(a?.player_mod_discount_eligible),rosterCap:isAdmin?20:member?10:5,professionSlots:1,recoveryMinutes:member?MEMBER_RECOVERY_MINUTES:STANDARD_RECOVERY_MINUTES,membershipActiveUntil:a?.membership_active_until||null};
+  const adminRole=String(globalThis.CellboundAdmin?.role||a?.admin_role||'').toLowerCase();
+  const isAdmin=Boolean(globalThis.CellboundAdmin?.isAdmin||['owner','admin'].includes(adminRole));
+  return {member,staffMember,isAdmin,adminRole,chatBadge:a?.chat_badge||'player',playerModDiscountEligible:Boolean(a?.player_mod_discount_eligible),rosterCap:isAdmin?20:member?10:5,professionSlots:1,recoveryMinutes:member?MEMBER_RECOVERY_MINUTES:STANDARD_RECOVERY_MINUTES,membershipActiveUntil:a?.membership_active_until||null};
 }
 function entitlements(){return entitlementFromAccount(account);}
 function classDef(c){return classes[c.class]||classes.Warrior;}
@@ -422,18 +423,19 @@ function flushPendingSave(){
 }
 async function loadAccount(user){
   currentUser=user;setSync('Loading…','busy');
-  const [accountResult,identityResult]=await Promise.all([
+  const [accountResult,identityResult,adminResult]=await Promise.all([
     supabaseClient.from('guild_accounts').select('user_id,game_state,guild_name,membership_active_until,membership_override,updated_at').eq('user_id',user.id).maybeSingle(),
-    supabaseClient.rpc('cellbound_social_identity')
+    supabaseClient.rpc('cellbound_social_identity'),
+    supabaseClient.rpc('cellbound_admin_status')
   ]);
-  const {data,error}=accountResult,identity=identityResult?.data;
+  const {data,error}=accountResult,identity=identityResult?.data,adminStatus=adminResult?.data;
   if(error){
     console.error('Cellbound account load failed',error);
-    account={user_id:user.id,guild_name:null,membership_active_until:null,membership_override:false,staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible)};
+    account={user_id:user.id,guild_name:null,membership_active_until:null,membership_override:false,staff_member:Boolean(identity?.staff_member),admin_role:adminStatus?.is_admin?adminStatus.role:null,chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible)};
     state=migrateState(localCandidate(user.id)||initialState());setSync('Local fallback','error');writeLocal();return;
   }
   if(identityResult?.error)console.warn('Cellbound social identity unavailable',identityResult.error);
-  account={...(data||{user_id:user.id,guild_name:null,membership_active_until:null,membership_override:false}),staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible)};
+  account={...(data||{user_id:user.id,guild_name:null,membership_active_until:null,membership_override:false}),staff_member:Boolean(identity?.staff_member),admin_role:adminStatus?.is_admin?adminStatus.role:null,chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible)};
   const remoteRaw=data?.game_state&&typeof data.game_state==='object'&&Object.keys(data.game_state).length?data.game_state:null;
   const localRaw=localCandidate(user.id);
   const remoteRoster=Array.isArray(remoteRaw?.roster)?remoteRaw.roster.length:0;
