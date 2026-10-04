@@ -43,9 +43,12 @@ async function updateReport(id,status,note){
 function playerMarkup(p){
  return '<div class="admin-player-result"><header><span><small>SELECTED TESTER</small><b>'+esc(p.guild_name||'Unnamed guild')+'</b><em>'+esc(p.email||'')+'</em></span><strong>'+esc(String(p.user_id||'').slice(0,8))+'</strong></header><div><span><small>ROSTER</small><b>'+Number(p.roster_count||0)+'</b></span><span><small>CELL SHOCK</small><b>'+Number(p.cell_shock_affected||0)+' affected</b></span><span><small>ACTIVE DUNGEONS</small><b>'+Number(p.active_dungeon_attempts||0)+'</b></span><span><small>ONBOARDING</small><b>'+esc(p.onboarding_complete?'Complete':p.onboarding_stage||'Unknown')+'</b></span></div></div>'
 }
+function setPlayerActionsDisabled(disabled){
+ ['#adminPlayerRecoveryActions','#adminPlayerAccountActions'].forEach(sel=>$(sel)?.querySelectorAll('button').forEach(b=>b.disabled=Boolean(disabled)||!selectedPlayer))
+}
 function renderPlayer(){
- const root=$('#adminPlayerResult'),actions=$('#adminPlayerRecoveryActions');if(root)root.innerHTML=selectedPlayer?playerMarkup(selectedPlayer):'<div class="admin-beta-empty">Find a player by exact email, guild name or account ID.</div>';
- if(actions)actions.querySelectorAll('button').forEach(b=>b.disabled=!selectedPlayer)
+ const root=$('#adminPlayerResult');if(root)root.innerHTML=selectedPlayer?playerMarkup(selectedPlayer):'<div class="admin-beta-empty">Find a player by exact email, guild name or account ID.</div>';
+ setPlayerActionsDisabled(!selectedPlayer)
 }
 async function lookupPlayer(){
  if(!adminReady())return;const input=$('#adminPlayerLookup'),value=String(input?.value||'').trim();if(value.length<3){opMessage('Enter an email, guild name or account ID.','error');return}
@@ -65,7 +68,33 @@ async function recoverPlayer(action){
   const {data,error}=await db.rpc('cellbound_admin_recover_player',{p_user_id:selectedPlayer.user_id,p_action:action});if(error)throw error;
   selectedPlayer=data?.player||selectedPlayer;renderPlayer();opMessage('Recovery complete: '+(labels[action]||action)+'.','ok')
  }catch(error){opMessage(error.message||'Player recovery failed.','error')}
- finally{root?.querySelectorAll('button').forEach(b=>b.disabled=!selectedPlayer)}
+ finally{setPlayerActionsDisabled(false)}
+}
+async function maxPlayerAccount(){
+ if(!adminReady()||!selectedPlayer?.user_id)return;
+ const label=selectedPlayer.email||selectedPlayer.guild_name||'this account';
+ if(!confirm('MAX ACCOUNT for '+label+'?\n\nThis sets the current roster to Level 15 / iLvl 50, clears Cell Shock, completes current progression gates and unlocks Heroic + Cellbound+20 for testing.'))return;
+ setPlayerActionsDisabled(true);
+ try{
+  const {data,error}=await db.rpc('cellbound_admin_max_player',{p_user_id:selectedPlayer.user_id});if(error)throw error;
+  selectedPlayer=data?.player||selectedPlayer;renderPlayer();opMessage('Account maxed for endgame testing. The player should refresh/reload before testing.','ok')
+ }catch(error){opMessage(error.message||'Could not max this account.','error')}
+ finally{setPlayerActionsDisabled(false)}
+}
+async function freshStartPlayer(){
+ if(!adminReady()||!selectedPlayer?.user_id)return;
+ const email=String(selectedPlayer.email||'').trim();
+ if(!email){opMessage('This account has no email to use as the safety confirmation.','error');return}
+ const typed=prompt('FRESH START '+email+'?\n\nThis resets characters, progression, dungeon/endgame state and active gameplay for this account. Login and staff permissions are preserved.\n\nType the account email exactly to continue:');
+ if(typed===null)return;
+ if(String(typed).trim().toLowerCase()!==email.toLowerCase()){opMessage('Fresh Start cancelled: email confirmation did not match.','error');return}
+ if(!confirm('Final confirmation: reset '+email+' to a brand-new playable state?'))return;
+ setPlayerActionsDisabled(true);
+ try{
+  const {data,error}=await db.rpc('cellbound_admin_fresh_start_player',{p_user_id:selectedPlayer.user_id,p_confirmation:typed});if(error)throw error;
+  selectedPlayer=data?.player||selectedPlayer;renderPlayer();opMessage('Fresh Start complete. The player can reload and begin onboarding again.','ok')
+ }catch(error){opMessage(error.message||'Fresh Start failed.','error')}
+ finally{setPlayerActionsDisabled(false)}
 }
 function bind(){
  if(bound)return;bound=true;
@@ -74,6 +103,8 @@ function bind(){
  $('#adminFindPlayer')?.addEventListener('click',lookupPlayer);
  $('#adminPlayerLookup')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();lookupPlayer()}});
  $('#adminPlayerRecoveryActions')?.querySelectorAll('[data-recover-player]').forEach(b=>b.addEventListener('click',()=>recoverPlayer(b.dataset.recoverPlayer)));
+ $('#adminPlayerAccountActions')?.querySelector('[data-admin-player-account="max"]')?.addEventListener('click',maxPlayerAccount);
+ $('#adminPlayerAccountActions')?.querySelector('[data-admin-player-account="fresh"]')?.addEventListener('click',freshStartPlayer);
  window.addEventListener('cellbound:admin-status',e=>{if(e.detail?.isAdmin){refreshReports();renderPlayer()}});
  window.addEventListener('cellbound:admin-panel-changed',e=>{
   if(e.detail?.panel==='reports'&&adminReady())refreshReports();
