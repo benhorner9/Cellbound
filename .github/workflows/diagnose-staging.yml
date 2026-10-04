@@ -51,3 +51,10 @@ jobs:
           sed -n '1,80p' /tmp/cb-guild.html || true
           echo "===== HTTPS guild refresh/redirect hooks ====="
           grep -Ein 'http-equiv|refresh|location\.|location=|window\.location|replace\(|reload\(|setTimeout|setInterval|iframe|canonical' /tmp/cb-guild.html | head -80 || true
+          echo "===== Combat Reborn versions by FTP path ====="
+          for path in "/combat-reborn-v1.js" "/cb/combat-reborn-v1.js"; do
+            printf '%s: ' "$path"
+            curl --insecure --silent --show-error --ssl-reqd --user "$FTP_USERNAME:$FTP_PASSWORD" "ftp://$FTP_SERVER:$PORT$path" 2>/dev/null | grep -Eo "const VERSION='[^']+'" | head -1 || true
+          done
+          echo "===== HTTPS Combat Reborn version ====="
+          curl --silent --show-error --location --max-redirs 10 "https://cb.athleticsmanagergame.com/combat-reborn-v1.js?diag=$GITHUB_SHA" | grep -Eo "const VERSION='[^']+'" | head -1 || true
