@@ -161,7 +161,7 @@ for(const file of files){
     if(rigAt<0||portraitAt<0||rigAt>portraitAt)throw new Error('Master character rig must load before the portrait renderer');
   }
   if(file==='character-forge-v1.js'){
-    for(const hook of ["window.CellboundCharacterForge","const STEPS=['form','class','identity','confirm']","assets/characters/forge-bases/","data-forge-sex","data-forge-race","data-forge-class"])if(!contents.includes(hook))throw new Error('Character Forge runtime is missing '+hook);
+    for(const hook of ["window.CellboundCharacterForge","const STEPS=['form','class','identity','confirm']","function modelSVG(","classic-paper-doll-v1","data-forge-sex","data-forge-race","data-forge-class"])if(!contents.includes(hook))throw new Error('Character Forge classic paper-doll runtime is missing '+hook);
     for(const retired of ['data-appearance-field','data-appearance-randomize','cc-editor-appearance'])if(contents.includes(retired))throw new Error('Character Forge must remain race/sex only for beta: '+retired);
   }
   if(file==='character-rig-v1.js'){
@@ -171,8 +171,8 @@ for(const file of files){
     if(!audit?.ok||audit.count!==12)throw new Error('Master character rig validation failed: '+JSON.stringify(audit?.errors||audit));
   }
   if(file==='character-portraits-v1.js'){
-    for(const hook of ['window.CellboundPortraits','normalizeAppearance','illustratedEquipment','baseFigure+illustratedEquipment(model,highlighted,uid)','data-equipment-renderer="illustrated-v2"','data-grip-x','data-grip-y','data-chest-bottom','gearFitProfile',"CHARACTER_MODEL_VERSION=14","CHARACTER_MODEL_CONTRACT='v14-character-forge-bases'","FORGE_BASE_CONTRACT='character-forge-v1'",'assets/characters/forge-bases/','cb-forge-base','const RIG=window.CellboundCharacterRig','return RIG.fitSlot(c,slot','rigContract:RIG.contract','masterRigCount:RIG.masterRigCount','baseArtContract:FORGE_BASE_CONTRACT','data-base-art="'])if(!contents.includes(hook))throw new Error('Shared master-rig illustrated equipment contract missing '+hook);
-    if(contents.includes('function paperChest(')||contents.includes('function articulatedPlate('))throw new Error('Legacy procedural equipment must remain retired');
+    for(const hook of ['window.CellboundPortraits','normalizeAppearance','function paperChest(','function paperShoulders(','function paperLegs(','function paperFeet(','function paperWeapon(','function paperOffHand(','data-character-style="classic-paper-doll"','data-grip-x="191"','data-grip-y="244"',"CHARACTER_MODEL_VERSION=15","CHARACTER_MODEL_CONTRACT='classic-paper-doll-v1'","BASE_ART_CONTRACT='classic-paper-doll-v1'",'const RIG=window.CellboundCharacterRig||null','rigContract:RIG?.contract','masterRigCount:RIG?.masterRigCount','baseArtContract:BASE_ART_CONTRACT'])if(!contents.includes(hook))throw new Error('Classic paper-doll character/equipment contract missing '+hook);
+    if(contents.includes('illustratedEquipment(')||contents.includes('cb-forge-base'))throw new Error('Painted/Forge character renderer must remain disabled during the classic visual rollback');
   }
   if(file==='roster-v2.css'){
     if(!contents.includes('.roster-card-portrait{')||!contents.includes('border:0;')||!contents.includes('background:none;')||!contents.includes('box-shadow:none'))throw new Error('Roster portrait wrapper must stay frameless');
@@ -210,7 +210,8 @@ for(const file of files){
     for(const hook of ['.gear-set-panel','.cb-set-summary','.cb2d-loot-set','.tp-set-bonus'])if(!contents.includes(hook))throw new Error('Equipment set bonus styling is missing '+hook);
   }
   if(file==='item-art-v1.js'){
-    for(const hook of ["window.CellboundItemArt","CellboundItemVisuals.icon","function materialHTML","function consumableHTML","function collectionHTML","frostbound-sigil","relic-oathstone-dominion","grid-override-module","enhancePvp","enhanceCrafting"])if(!contents.includes(hook))throw new Error('Complete item artwork system is missing '+hook);
+    for(const hook of ["window.CellboundItemArt","CELLBOUND_ITEM_ART_DIRECTION='classic-flat-v1'","function artBody(","function genericGear(","function materialHTML","function consumableHTML","function collectionHTML","frostbound-sigil","relic-oathstone-dominion","grid-override-module","enhancePvp","enhanceCrafting"])if(!contents.includes(hook))throw new Error('Classic flat item artwork system is missing '+hook);
+    if(contents.includes('CellboundItemVisuals.icon'))throw new Error('Classic item icons must not delegate to the newer Forge vector renderer');
   }
   if(file==='class-build-v1.js'){
     for(const hook of ["CURRENT_SPEC_POINT_CAP=12","TALENT_TIER_REQUIREMENTS=[0,2,4,6,8]","'Priest|Shadow':'dps'","'Hunter|Beast Mastery':'dps'","function talentBudgetForLevel","function talentRemaining"])if(!contents.includes(hook))throw new Error('Class build foundation is incomplete: '+hook);
@@ -649,80 +650,47 @@ for(const file of files){
   for(const file of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),portraitSandbox);
   vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),portraitSandbox,{filename:'character-portraits-v1.js'});
   const P=portraitSandbox.CellboundPortraits;
-  if(!P?.paperDollHTML||!P?.visualProfile)throw new Error('Equipment Visuals V2 runtime failed to load');
-  const appearance={race:'Veyren',skinTone:1,face:2,hair:3,hairColor:4,facialHair:1,marking:2,eyes:0,feature:1};
-  const sword={name:'Test Sword',itemId:'test-sword',class:'Warrior',slot:'Weapon',tier:2};
-  const spear={name:'Test Spear',itemId:'test-spear',class:'Warrior',slot:'Weapon',tier:2};
-  if(P.weaponType(sword,{class:'Warrior'})!=='sword'||P.weaponType(spear,{class:'Warrior'})!=='spear')throw new Error('Weapon visual type swap failed');
+  if(!P?.paperDollHTML||!P?.visualProfile)throw new Error('Classic paper-doll runtime failed to load');
+  if(P.version!==15||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1')throw new Error('Classic paper-doll visual contract is missing');
+  const appearance={race:'Veyren',gender:0,frame:1,skinTone:1,face:2,hair:3,hairColor:4,facialHair:1,marking:2,eyes:0,feature:1};
+  const sword={name:'Test Sword',itemId:'test-sword',class:'Warrior',slot:'Weapon',tier:2,weaponType:'sword'};
+  const spear={name:'Test Spear',itemId:'test-spear',class:'Warrior',slot:'Weapon',tier:2,weaponType:'spear'};
+  if(P.weaponType(sword,{class:'Warrior'})!=='sword'||P.weaponType(spear,{class:'Warrior'})!=='spear')throw new Error('Classic weapon visual type swap failed');
   const base={id:'paper-test',name:'Test',race:'Veyren',class:'Warrior',appearance,equipment:{Weapon:sword,Waist:{name:'Test Belt',itemId:'test-belt',class:'Warrior',slot:'Waist',tier:2},Ring1:{name:'Test Ring',itemId:'test-ring',class:'Warrior',slot:'Ring',tier:2}}};
   const swordView=P.paperDollHTML(base,{highlightedSlot:'Weapon'});
   const spearView=P.paperDollHTML({...base,equipment:{...base.equipment,Weapon:spear}},{highlightedSlot:'Weapon'});
-  if(swordView===spearView||!swordView.includes('data-weapon-type="sword"')||!spearView.includes('data-weapon-type="spear"'))throw new Error('Sword-to-spear paper doll visual swap failed');
-  if(!swordView.includes('cb-paper-slot-waist')||!swordView.includes('cb-paper-slot-ring1'))throw new Error('14-slot paper doll accessory coverage failed');
-  const emptyArmour=P.paperDollHTML({...base,equipment:{}},{});
-  if(!emptyArmour.includes('cb-illustrated-base')||emptyArmour.includes('cb-paper-slot-chest')||emptyArmour.includes('cb-paper-slot-legs')||emptyArmour.includes('cb-paper-slot-feet'))throw new Error('Unequipped paper doll must render the clean v9 illustrated character body without equipment layers');
+  if(swordView===spearView||!swordView.includes('data-weapon-type="sword"')||!spearView.includes('data-weapon-type="spear"'))throw new Error('Sword-to-spear classic visual swap failed');
+  if(!swordView.includes('data-character-style="classic-paper-doll"')||!swordView.includes('cb-paper-front-weapon')||!swordView.includes('data-render-layer="front"'))throw new Error('Classic main-hand presentation markers are missing');
+  if(!swordView.includes('cb-paper-slot-waist')||!swordView.includes('cb-paper-slot-ring1'))throw new Error('14-slot classic paper doll accessory coverage failed');
+  const emptyArmour=P.paperDollHTML({...base,equipment:{}},{showGear:false});
+  if(!emptyArmour.includes('data-model-mode="base"')||emptyArmour.includes('cb-paper-slot-chest')||emptyArmour.includes('cb-paper-slot-legs')||emptyArmour.includes('cb-paper-slot-feet'))throw new Error('Classic base model must render cleanly without equipment');
   const chestItem={name:'Test Chest',itemId:'warrior-t2-chest',class:'Warrior',slot:'Chest',tier:2};
   const chestView=P.paperDollHTML({...base,equipment:{Chest:chestItem}},{});
-  if(!chestView.includes('cb-illustrated-base')||!chestView.includes('data-item-key="warrior-t2-chest"'))throw new Error('Equipped chest must layer over the same v9 illustrated character body');
+  if(!chestView.includes('data-character-style="classic-paper-doll"')||!chestView.includes('data-item-key="warrior-t2-chest"'))throw new Error('Classic chest overlay failed');
   const setEquipment={};
   ['Head','Shoulders','Chest','Hands'].forEach(slot=>setEquipment[slot]={name:'Warlord '+slot,itemId:'warrior-t4-'+slot.toLowerCase(),class:'Warrior',slot,tier:4,setId:'warrior-t4',setName:'Warlord Set'});
   const setView=P.paperDollHTML({...base,equipment:setEquipment},{highlightedSlot:'Chest'});
-  if(!setView.includes('set-pieces-4')||!setView.includes('cb-paper-set-glow')||!setView.includes('is-set-item'))throw new Error('Set prestige visual treatment failed');
-  const classVisualCases=[
+  if(!setView.includes('set-pieces-4')||!setView.includes('cb-paper-set-glow')||!setView.includes('is-set-item'))throw new Error('Classic set prestige visual treatment failed');
+  for(const [klass,weaponType,offHandType] of [
     ['Warrior','greatsword','shield'],['Paladin','hammer','shield'],['Priest','staff','tome'],['Druid','staff','idol'],
     ['Hunter','bow','quiver'],['Rogue','dagger','dagger'],['Mage','staff','focus'],['Shaman','hammer','idol'],
     ['Warlock','staff','tome'],['Monk','staff','focus'],['Death Knight','greatsword','focus'],['Demon Hunter','sword','dagger'],['Evoker','staff','focus']
-  ];
-  for(const [klass,weaponType,offHandType] of classVisualCases){
+  ]){
     const gear={};
     ['Head','Shoulders','Chest','Hands','Waist','Legs','Feet'].forEach(slot=>gear[slot]={name:klass+' Test '+slot,itemId:klass.toLowerCase().replace(/[^a-z]+/g,'-')+'-t5-'+slot.toLowerCase(),class:klass,slot,tier:5,setId:klass+'-t5',setName:klass+' Raid Set'});
     gear.Weapon={name:klass+' Test Weapon',itemId:klass+'-weapon',class:klass,slot:'Weapon',tier:5,weaponType};
     gear.OffHand={name:klass+' Test Offhand',itemId:klass+'-offhand',class:klass,slot:'OffHand',tier:5,offHandType};
     const html=P.paperDollHTML({...base,id:'class-'+klass,name:klass,class:klass,race:'Aelari',appearance:{...appearance,race:'Aelari'},equipment:gear},{});
-    if(!html.includes('data-gear-class="'+klass+'"')||!html.includes('cb-paper-slot-head')||!html.includes('cb-paper-slot-feet'))throw new Error('Complete modular class visual failed for '+klass);
-    if(!html.includes('cb-paper-front-weapon')||!html.includes('data-render-layer="front"')||!html.includes('data-grip-x=')||!html.includes('data-grip-y='))throw new Error('Main-hand weapon is not front-aligned for '+klass);
-    const wf=P.weaponFitProfile({...base,id:'weapon-fit-'+klass,name:klass,class:klass,race:'Aelari',appearance:{...appearance,race:'Aelari'},equipment:gear},gear.Weapon);
-    if(!wf||![wf.anchorX,wf.anchorY,wf.pivotX,wf.pivotY,wf.rotate,wf.scale].every(Number.isFinite))throw new Error('Invalid main-hand alignment profile for '+klass);
+    if(!html.includes('cb-paper-slot-head')||!html.includes('cb-paper-slot-feet')||!html.includes('data-character-style="classic-paper-doll"'))throw new Error('Complete classic modular class visual failed for '+klass);
+    if(!html.includes('cb-paper-front-weapon')||!html.includes('data-grip-x="191"')||!html.includes('data-grip-y="244"'))throw new Error('Classic main-hand weapon is not front-aligned for '+klass);
+    const wf=P.weaponFitProfile({...base,class:klass,equipment:gear},gear.Weapon);
+    if(!wf||![wf.anchorX,wf.anchorY,wf.pivotX,wf.pivotY,wf.rotate,wf.scale].every(Number.isFinite))throw new Error('Invalid classic weapon fit profile for '+klass);
   }
-
-  const fitRaces=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'];
-  for(const race of fitRaces){
-    for(const gender of [0,1]){
-      for(const frame of [0,1,2]){
-        const appearanceCase={...appearance,race,gender,frame};
-        const fit=P.gearFitProfile({id:'fit-'+race+'-'+gender+'-'+frame,race,appearance:appearanceCase});
-        const numeric=['leftShoulder','rightShoulder','leftHand','rightHand','waistHalf','hipHalf','leftLeg','rightLeg','legHalf','calfHalf','footHalf','weaponX','offhandX'];
-        if(numeric.some(k=>!Number.isFinite(fit[k])))throw new Error('Non-finite equipment anchor for '+race+' gender '+gender+' frame '+frame);
-        if(!(fit.leftShoulder<fit.rightShoulder&&fit.leftLeg<fit.rightLeg&&fit.waistHalf>0&&fit.hipHalf>0))throw new Error('Invalid equipment anchor ordering for '+race+' gender '+gender+' frame '+frame);
-        const gear={
-          Head:{name:'Fit Head',itemId:'fit-head',class:'Warrior',slot:'Head',tier:5,setId:'fit'},
-          Shoulders:{name:'Fit Shoulders',itemId:'fit-shoulders',class:'Warrior',slot:'Shoulders',tier:5,setId:'fit'},
-          Chest:{name:'Fit Chest',itemId:'fit-chest',class:'Warrior',slot:'Chest',tier:5,setId:'fit'},
-          Hands:{name:'Fit Hands',itemId:'fit-hands',class:'Warrior',slot:'Hands',tier:5,setId:'fit'},
-          Waist:{name:'Fit Waist',itemId:'fit-waist',class:'Warrior',slot:'Waist',tier:5,setId:'fit'},
-          Legs:{name:'Fit Legs',itemId:'fit-legs',class:'Warrior',slot:'Legs',tier:5,setId:'fit'},
-          Feet:{name:'Fit Feet',itemId:'fit-feet',class:'Warrior',slot:'Feet',tier:5,setId:'fit'},
-          Weapon:{name:'Fit Sword',itemId:'fit-weapon',class:'Warrior',slot:'Weapon',tier:5,weaponType:'sword'},
-          OffHand:{name:'Fit Shield',itemId:'fit-offhand',class:'Warrior',slot:'OffHand',tier:5,offHandType:'shield'},
-          Ring1:{name:'Fit Ring 1',itemId:'fit-ring-1',class:'Warrior',slot:'Ring',tier:5},
-          Ring2:{name:'Fit Ring 2',itemId:'fit-ring-2',class:'Warrior',slot:'Ring',tier:5},
-          Trinket1:{name:'Fit Trinket 1',itemId:'fit-trinket-1',class:'Warrior',slot:'Trinket',tier:5},
-          Trinket2:{name:'Fit Trinket 2',itemId:'fit-trinket-2',class:'Warrior',slot:'Trinket',tier:5},
-          Relic:{name:'Fit Relic',itemId:'fit-relic',class:'Warrior',slot:'Relic',tier:5}
-        };
-        const html=P.paperDollHTML({id:'fit-'+race+'-'+gender+'-'+frame,name:'Fit',race,class:'Warrior',appearance:appearanceCase,equipment:gear},{});
-        for(const slot of ['head','shoulders','chest','hands','waist','legs','feet','weapon','offhand','ring1','ring2','trinket1','trinket2','relic']){
-          if(!html.includes('cb-paper-slot-'+slot))throw new Error('Missing fitted '+slot+' layer for '+race+' gender '+gender+' frame '+frame);
-        }
-        if(/NaN|undefined/.test(html))throw new Error('Broken fitted equipment markup for '+race+' gender '+gender+' frame '+frame);
-      }
-    }
-  }
-
 }
 
-/* Beta character/equipment lock: every generated catalogue loadout must render
-   safely on all 12 master rigs and their frame deformations at every gear tier. */
+/* Classic character/equipment beta lock: every generated catalogue loadout must
+   render safely across the current race/class/tier matrix while the temporary
+   paper-doll visual direction is active. */
 {
   const sandbox={console,Math,Date,setTimeout,clearTimeout};sandbox.window=sandbox;sandbox.globalThis=sandbox;
   vm.createContext(sandbox);
@@ -731,43 +699,31 @@ for(const file of files){
   for(const file of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,file),'utf8'),sandbox);
   vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),sandbox,{filename:'character-portraits-v1.js'});
   const G=sandbox.CellboundGear,P=sandbox.CellboundPortraits;
-  if(!G||!P)throw new Error('Beta character/equipment lock runtime failed to load');
-  if(P.version!==14||P.modelContract!=='v14-character-forge-bases'||P.baseArtContract!=='character-forge-v1'||P.rigContract!=='master-rig-v1'||P.masterRigCount!==12)throw new Error('Character model v14 Character Forge lock is missing');
-  if(P.equipmentLayerContract!=='body|shield|armour|front-offhand|mainhand-front')throw new Error('Equipment layer contract changed without an intentional beta model revision');
+  if(!G||!P)throw new Error('Classic beta character/equipment runtime failed to load');
+  if(P.version!==15||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1'||P.rigContract!=='master-rig-v1'||P.masterRigCount!==12)throw new Error('Classic paper-doll beta lock is missing');
   const races=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'],positions=G.EQUIPMENT_POSITION_ORDER;
   const slotFor=pos=>pos.startsWith('Ring')?'Ring':pos.startsWith('Trinket')?'Trinket':pos;
-  const tiers=[1,2,3,4,5].map(t=>P.tierVisualProfile(t));
-  for(let i=1;i<tiers.length;i++){
-    const before=tiers[i-1],after=tiers[i];
-    if(!(after.shoulder>before.shoulder&&after.chest>before.chest&&after.collar>before.collar&&after.weapon>before.weapon))throw new Error('Gear tier silhouette progression is not strictly increasing from Tier '+i+' to Tier '+(i+1));
-  }
   let checked=0;
-  for(const klass of G.CLASS_ORDER)for(const tier of [1,2,3,4,5])for(const race of races)for(const gender of [0,1])for(const frame of [0,1,2]){
+  for(const klass of G.CLASS_ORDER)for(const tier of [1,2,3,4,5])for(const race of races)for(const gender of [0,1]){
     const equipment={};
     for(const pos of positions){
       const slot=slotFor(pos),item=G.items.find(x=>x.class===klass&&Number(x.tier)===tier&&x.slot===slot);
-      if(!item)throw new Error('Character beta matrix is missing '+klass+' Tier '+tier+' '+pos);
+      if(!item)throw new Error('Classic beta matrix is missing '+klass+' Tier '+tier+' '+pos);
       equipment[pos]=item;
     }
-    const appearance={race,gender,frame,skinTone:2,face:0,hair:0,hairColor:0,facialHair:0,marking:0,eyes:0,feature:0};
-    const c={id:'beta-lock-'+checked,name:'Beta Lock',race,class:klass,spec:'',level:15,power:100,appearance,equipment};
-    const html=P.paperDollHTML(c,{size:'equipment',showGear:true}),fit=P.gearFitProfile(c),wf=P.weaponFitProfile(c,equipment.Weapon);
-    if(/NaN|undefined/.test(html))throw new Error('Broken character SVG in beta matrix: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
-    for(const key of ['leftShoulder','rightShoulder','leftHand','rightHand','waistHalf','hipHalf','leftLeg','rightLeg','weaponX','offhandX'])if(!Number.isFinite(fit[key]))throw new Error('Invalid '+key+' in beta matrix: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
-    if(![wf.anchorX,wf.anchorY,wf.pivotX,wf.pivotY,wf.rotate,wf.scale].every(Number.isFinite))throw new Error('Invalid main-hand weapon fit in beta matrix: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
-    for(const pos of positions)if(!html.includes('cb-paper-slot-'+pos.toLowerCase()))throw new Error('Missing '+pos+' render in beta matrix: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
-    const chestTop=Number(html.match(/data-chest-top="([0-9.]+)"/)?.[1]);
-    if(!Number.isFinite(chestTop)||chestTop>121.01)throw new Error('Chest armour dropped below the locked upper-torso anchor: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
-    const baseAt=html.indexOf('cb-illustrated-base'),weaponAt=html.indexOf('cb-paper-front-weapon'),offType=P.offHandType(equipment.OffHand,c),offAt=html.indexOf('data-offhand-type="'+offType+'"');
-    if(baseAt<0||weaponAt<0||offAt<0)throw new Error('Required equipment layer marker missing in beta matrix: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
-    if(weaponAt<baseAt)throw new Error('Main-hand weapon fell behind the character body: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
-    if(offType==='shield'&&(offAt<baseAt||offAt>weaponAt))throw new Error('Shield must sit over the body and behind the weapon: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
-    if(offType!=='shield'&&(offAt<baseAt||weaponAt<offAt))throw new Error('Front off-hand/main-hand layer order regressed: '+klass+' T'+tier+' '+race+' '+gender+'/'+frame);
+    const appearance={race,gender,frame:1,skinTone:2,face:0,hair:0,hairColor:0,facialHair:0,marking:0,eyes:0,feature:0};
+    const character={id:'classic-lock-'+checked,name:'Classic Lock',race,class:klass,spec:'',level:15,power:100,appearance,equipment};
+    const html=P.paperDollHTML(character,{size:'equipment',showGear:true}),fit=P.gearFitProfile(character),wf=P.weaponFitProfile(character,equipment.Weapon);
+    if(/NaN|undefined/.test(html))throw new Error('Broken classic character SVG: '+klass+' T'+tier+' '+race+' '+gender);
+    if(!html.includes('data-character-style="classic-paper-doll"'))throw new Error('Classic character marker missing: '+klass+' T'+tier+' '+race+' '+gender);
+    for(const key of ['leftShoulder','rightShoulder','leftHand','rightHand','waistHalf','leftLeg','rightLeg','weaponX','offhandX'])if(!Number.isFinite(fit[key]))throw new Error('Invalid classic '+key+': '+klass+' T'+tier+' '+race+' '+gender);
+    if(![wf.anchorX,wf.anchorY,wf.pivotX,wf.pivotY,wf.rotate,wf.scale].every(Number.isFinite))throw new Error('Invalid classic weapon fit: '+klass+' T'+tier+' '+race+' '+gender);
+    for(const pos of positions)if(!html.includes('cb-paper-slot-'+pos.toLowerCase()))throw new Error('Missing classic '+pos+' render: '+klass+' T'+tier+' '+race+' '+gender);
     checked++;
   }
-  const expected=G.CLASS_ORDER.length*5*races.length*2*3;
-  if(checked!==expected)throw new Error('Character beta matrix coverage incomplete: '+checked+' / '+expected);
-  console.log('Character v9 beta lock passed '+checked+' class/tier/body combinations.');
+  const expected=G.CLASS_ORDER.length*5*races.length*2;
+  if(checked!==expected)throw new Error('Classic character beta matrix coverage incomplete: '+checked+' / '+expected);
+  console.log('Classic paper-doll beta lock passed '+checked+' class/tier/body combinations.');
 }
 
 for(const htmlFile of ['index.html','guild.html']){

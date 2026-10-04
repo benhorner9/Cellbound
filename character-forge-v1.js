@@ -27,8 +27,12 @@ function ensureDraft(d){
  return d;
 }
 function normaliseStep(step){return STEPS.includes(step)?step:(step==='race'||step==='appearance'||step==='features'?'form':'form')}
+function modelSVG(race,gender,klass){
+ const subject={id:'forge-preview-'+race+'-'+gender,race,class:klass||'Warrior',appearance:appearance(race,gender),equipment:{}};
+ return P?.paperDollSVG?P.paperDollSVG(subject,{showGear:false}):'<img src="'+asset(race,gender)+'" alt="">';
+}
 function previewHTML(d,cls=''){
- return '<div class="cf-model '+cls+'"><img src="'+asset(d.race,d.appearance.gender)+'" alt="'+esc(d.race+' '+sexName(d.appearance.gender))+' base model" draggable="false"></div>';
+ return '<div class="cf-model '+cls+'" data-forge-art="classic-paper-doll-v1" data-gender="'+(Number(d.appearance.gender)===1?'female':'male')+'">'+modelSVG(d.race,d.appearance.gender,d.klass)+'</div>';
 }
 function nav(step){
  return '<nav class="cf-steps">'+STEPS.map((s,i)=>'<button type="button" data-forge-step="'+s+'" class="'+(s===step?'active':'')+'"><i>'+(i+1)+'</i><span>'+STEP_NAMES[s]+'</span></button>').join('')+'</nav>';
@@ -38,7 +42,7 @@ function formPanel(o,d){
  return '<div class="cf-body-pick"><div class="cf-sex"><span>BODY</span>'+
   [0,1].map(g=>'<button type="button" data-forge-sex="'+g+'" class="'+(Number(d.appearance.gender)===g?'active':'')+'">'+sexName(g)+'</button>').join('')+
  '</div><div class="cf-race-grid">'+races.map(r=>'<button type="button" class="cf-race-card '+(r.id===d.race?'active':'')+'" data-forge-race="'+esc(r.id)+'">'+
-   '<div class="cf-race-model"><img src="'+asset(r.id,d.appearance.gender)+'" alt="" draggable="false"></div>'+
+   '<div class="cf-race-model" data-forge-art="classic-paper-doll-v1">'+modelSVG(r.id,d.appearance.gender,d.klass)+'</div>'+
    '<div><b>'+esc(r.id)+'</b><small>'+esc(r.trait||'')+'</small><p>'+esc(LORE[r.id]||r.lore||'')+'</p></div>'+
   '</button>').join('')+'</div></div>';
 }

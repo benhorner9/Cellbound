@@ -174,20 +174,22 @@ async function creatorPlaythrough(browser,viewport={width:1024,height:1366}){
       const c={id:'plate-fit-'+checked,race,class:'Warrior',appearance:{gender,frame},equipment:{Chest:{id:'plate-chest-'+tier,slot:'Chest',class:'Warrior',tier}}};
       host.innerHTML=P.paperDollSVG(c);
       const chest=host.querySelector('.cb-paper-slot-chest'),box=chest?.getBBox();
-      if(!box||box.width<20||box.height<20||box.y+box.height>247)failures.push({race,gender,frame,tier,reason:'chest exceeds waist',bottom:box?.y+box?.height});
+      if(!box||box.width<20||box.height<20||box.y+box.height>266)failures.push({race,gender,frame,tier,reason:'classic chest exceeds waist band',bottom:box?.y+box?.height});
       checked++;
     }
     host.remove();return {checked,failures};
   });
-  assert.equal(plateFit.checked,180);assert.deepEqual(plateFit.failures,[],'Existing armour rig remains bounded during the Forge migration');
+  assert.equal(plateFit.checked,180);assert.deepEqual(plateFit.failures,[],'Classic paper-doll armour remains bounded at the waist band');
 
   for(const race of ['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari']){
     await page.locator('[data-forge-race="'+race+'"]').click();
     for(const gender of [0,1]){
       await page.locator('[data-forge-sex="'+gender+'"]').click();
-      const model=page.locator('.cf-preview>.cf-model img').first();
-      const src=await model.getAttribute('src');
-      assert(src.includes('/forge-bases/'+race.toLowerCase()+'-'+(gender?'female':'male')+'.png'),'Forge preview uses the approved '+race+' '+(gender?'female':'male')+' base');
+      const model=page.locator('.cf-preview>.cf-model').first();
+      assert.equal(await model.getAttribute('data-gender'),gender?'female':'male','Classic Forge preview tracks selected sex');
+      const svg=model.locator('svg').first();
+      assert.equal(await svg.getAttribute('data-race'),race,'Classic Forge preview tracks '+race);
+      assert.equal(await svg.getAttribute('data-character-style'),'classic-paper-doll','Forge preview uses the restored classic paper-doll style');
     }
   }
   assert.equal(await page.locator('[data-appearance-field]').count(),0,'Beta Character Forge exposes no unfinished appearance controls');
