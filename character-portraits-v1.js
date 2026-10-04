@@ -463,7 +463,7 @@ function paperRaceNeck(c,p,skin){
   var race=c.race||c.appearance?.race||'Veyren',nw=p.neck||14;
   // The head now sits into the neck rather than floating above a long column.
   // Keep race-specific thickness, but constrain the visible vertical length.
-  var top=race==='Stoneborn'?111:112,bottom=race==='Aelari'?137:138,shoulderJoin=140;
+  var top=race==='Stoneborn'?111:112,bottom=race==='Stoneborn'?138:race==='Aelari'?136:137,shoulderJoin=bottom+2;
   var base='<g class="cb-paper-neck" data-neck-top="'+top+'" data-neck-bottom="'+bottom+'"><path d="M'+(120-nw/2)+' '+top+' L'+(120-nw/2)+' '+bottom+' Q120 '+shoulderJoin+' '+(120+nw/2)+' '+bottom+' L'+(120+nw/2)+' '+top+'Z" fill="'+skin+'" stroke="#182027" stroke-width="2.5"/>';
   var detail='';
   if(race==='Stoneborn')detail='<path d="M'+(120-nw/2+2)+' 120 L120 126 L'+(120+nw/2-2)+' 119 M'+(120-nw/2+3)+' 133 L120 129 L'+(120+nw/2-3)+' 134" fill="none" stroke="#e3d8d0" stroke-width="1.8" opacity=".4"/>';
@@ -807,7 +807,7 @@ function paperDollSVG(c,opts){
   var neck=paperRaceNeck(c,profile,skin);
   var hip=profile.hip||32;
   var under='<path d="M'+(120-hip)+' 236 Q120 250 '+(120+hip)+' 236 L'+(120+hip+1)+' 268 Q120 282 '+(120-hip-1)+' 268Z" fill="#162126" stroke="#10171b" stroke-width="3"/><path d="M'+(120-hip+6)+' 252 Q120 261 '+(120+hip-6)+' 252" fill="none" stroke="#526065" stroke-width="1.3" opacity=".36"/>';
-  var headScale=profile.headScale||1,headX=70+(50*(1-headScale)),headY=25+(50*(1-headScale));
+  var headScale=profile.headScale||1,headX=70+(50*(1-headScale)),headY=28+(50*(1-headScale));
   return '<svg viewBox="0 0 240 410" data-race="'+esc(race)+'" data-model-mode="'+(showGear?'equipped':'base')+'" data-base-art="'+BASE_ART_CONTRACT+'" data-character-style="classic-paper-doll" data-race-identity="v2" data-equipment-fit="v2" role="img" aria-hidden="true" focusable="false">'+
     '<defs><radialGradient id="'+uid+'a" cx="50%" cy="46%" r="54%"><stop offset="0%" stop-color="'+accent+'" stop-opacity=".13"/><stop offset="70%" stop-color="'+accent+'" stop-opacity=".025"/><stop offset="100%" stop-color="'+accent+'" stop-opacity="0"/></radialGradient></defs>'+
     '<ellipse cx="120" cy="214" rx="110" ry="180" fill="url(#'+uid+'a)"/>'+
