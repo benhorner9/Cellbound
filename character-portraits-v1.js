@@ -461,14 +461,18 @@ function paperRaceFootDetails(c){
 }
 function paperRaceNeck(c,p,skin){
   var race=c.race||c.appearance?.race||'Veyren',nw=p.neck||14;
-  var base='<path d="M'+(120-nw/2)+' 109 L'+(120-nw/2)+' 143 Q120 151 '+(120+nw/2)+' 143 L'+(120+nw/2)+' 109Z" fill="'+skin+'" stroke="#182027" stroke-width="2.5"/>';
-  if(race==='Stoneborn')return base+'<path d="M'+(120-nw/2+2)+' 122 L120 129 L'+(120+nw/2-2)+' 120 M'+(120-nw/2+3)+' 136 L120 131 L'+(120+nw/2-3)+' 138" fill="none" stroke="#e3d8d0" stroke-width="1.8" opacity=".4"/>';
-  if(race==='Thornkin')return base+'<path d="M116 113 Q122 123 117 139 M124 113 Q118 124 123 139" fill="none" stroke="#5d7848" stroke-width="1.9" opacity=".72"/>';
-  if(race==='Emberkin')return base+'<path d="M116 112 L121 122 L117 132 L122 141" fill="none" stroke="#ff7740" stroke-width="1.8" opacity=".78"/>';
-  if(race==='Nymari')return base+'<path d="M'+(120-nw/2+1)+' 120 l-5 3 M'+(120-nw/2+1)+' 126 l-5 3 M'+(120+nw/2-1)+' 120 l5 3 M'+(120+nw/2-1)+' 126 l5 3" stroke="#96eff0" stroke-width="1.5" opacity=".72"/>';
-  if(race==='Veyren')return base+'<path d="M116 120 L120 115 L124 120 L120 126Z" fill="none" stroke="#aa7bd0" stroke-width="1.4" opacity=".6"/>';
-  if(race==='Aelari')return base+'<path d="M120 115 V139" stroke="#e3c9f8" stroke-width="1.2" opacity=".35"/>';
-  return base;
+  // The head now sits into the neck rather than floating above a long column.
+  // Keep race-specific thickness, but constrain the visible vertical length.
+  var top=race==='Stoneborn'?111:112,bottom=race==='Stoneborn'?138:race==='Aelari'?136:137,shoulderJoin=bottom+2;
+  var base='<g class="cb-paper-neck" data-neck-top="'+top+'" data-neck-bottom="'+bottom+'"><path d="M'+(120-nw/2)+' '+top+' L'+(120-nw/2)+' '+bottom+' Q120 '+shoulderJoin+' '+(120+nw/2)+' '+bottom+' L'+(120+nw/2)+' '+top+'Z" fill="'+skin+'" stroke="#182027" stroke-width="2.5"/>';
+  var detail='';
+  if(race==='Stoneborn')detail='<path d="M'+(120-nw/2+2)+' 120 L120 126 L'+(120+nw/2-2)+' 119 M'+(120-nw/2+3)+' 133 L120 129 L'+(120+nw/2-3)+' 134" fill="none" stroke="#e3d8d0" stroke-width="1.8" opacity=".4"/>';
+  else if(race==='Thornkin')detail='<path d="M116 115 Q122 122 117 135 M124 115 Q118 123 123 135" fill="none" stroke="#5d7848" stroke-width="1.9" opacity=".72"/>';
+  else if(race==='Emberkin')detail='<path d="M116 114 L121 121 L117 129 L122 136" fill="none" stroke="#ff7740" stroke-width="1.8" opacity=".78"/>';
+  else if(race==='Nymari')detail='<path d="M'+(120-nw/2+1)+' 119 l-5 3 M'+(120-nw/2+1)+' 125 l-5 3 M'+(120+nw/2-1)+' 119 l5 3 M'+(120+nw/2-1)+' 125 l5 3" stroke="#96eff0" stroke-width="1.5" opacity=".72"/>';
+  else if(race==='Veyren')detail='<path d="M116 119 L120 115 L124 119 L120 125Z" fill="none" stroke="#aa7bd0" stroke-width="1.4" opacity=".6"/>';
+  else if(race==='Aelari')detail='<path d="M120 116 V134" stroke="#e3c9f8" stroke-width="1.2" opacity=".35"/>';
+  return base+detail+'</g>';
 }
 function paperRaceSilhouette(c,p,skin){
   var race=c.race||c.appearance?.race||'Veyren';
@@ -803,7 +807,7 @@ function paperDollSVG(c,opts){
   var neck=paperRaceNeck(c,profile,skin);
   var hip=profile.hip||32;
   var under='<path d="M'+(120-hip)+' 236 Q120 250 '+(120+hip)+' 236 L'+(120+hip+1)+' 268 Q120 282 '+(120-hip-1)+' 268Z" fill="#162126" stroke="#10171b" stroke-width="3"/><path d="M'+(120-hip+6)+' 252 Q120 261 '+(120+hip-6)+' 252" fill="none" stroke="#526065" stroke-width="1.3" opacity=".36"/>';
-  var headScale=profile.headScale||1,headX=70+(50*(1-headScale)),headY=20+(50*(1-headScale));
+  var headScale=profile.headScale||1,headX=70+(50*(1-headScale)),headY=29+(50*(1-headScale));
   return '<svg viewBox="0 0 240 410" data-race="'+esc(race)+'" data-model-mode="'+(showGear?'equipped':'base')+'" data-base-art="'+BASE_ART_CONTRACT+'" data-character-style="classic-paper-doll" data-race-identity="v2" data-equipment-fit="v2" role="img" aria-hidden="true" focusable="false">'+
     '<defs><radialGradient id="'+uid+'a" cx="50%" cy="46%" r="54%"><stop offset="0%" stop-color="'+accent+'" stop-opacity=".13"/><stop offset="70%" stop-color="'+accent+'" stop-opacity=".025"/><stop offset="100%" stop-color="'+accent+'" stop-opacity="0"/></radialGradient></defs>'+
     '<ellipse cx="120" cy="214" rx="110" ry="180" fill="url(#'+uid+'a)"/>'+
