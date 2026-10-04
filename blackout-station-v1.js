@@ -422,13 +422,15 @@ function eventRender(e){
    if(e.payload?.threat)Object.entries(e.payload.threat).forEach(([id,v])=>{const ch=charFor(id);if(ch)run.threat[ch.id]=Number(v)||0});
    queueMeterRender();break;
   case'PHASE_CHANGE':window.CellboundCombatFX?.phase?.($('#bsArena'));window.CellboundFX?.phase?.(e.ability||'Power instability',e.payload?.healthPct);bsPowerSurge(900);hideRoleZones(true);setStatus(e.ability||'Power instability');feed((e.ability||'Calder changes phase')+'. The reactor surges and the station lights begin to fail.');break;
+  case'PARTY_COMMAND':if(e.result!=='cooldown'){feed('Party executes '+String(e.ability||'command').replace(/-/g,' ')+'.')}break;
   case'MECHANIC_TELEGRAPH':
    window.CellboundCombatFX?.mechanic?.($('#bsArena'),'warning');
+   {const mt=String(e.payload?.mechanicType||''),rec=mt==='interrupt'?'interrupt':mt==='cone'?'defensive':null;document.querySelectorAll('[data-bs-command]').forEach(b=>b.classList.toggle('recommended',!!rec&&b.dataset.bsCommand===rec))}
    if(e.payload?.mechanicType==='role-circles'){showRoleZones(e.payload.zones);setStatus('ROLE CIRCUITS — RED TANK · YELLOW DAMAGE · BLUE HEALER');feed('Calder pulls the power. Get every character into the correct coloured circuit.')}
    else if($('#bsRoleZones')?.childElementCount)hideRoleZones(true);
    break;
   case'CAST_START':castStart(e.ability||'Enemy cast',Number(e.payload?.duration)||0);break;
-  case'CAST_FINISH':castClear();break;
+  case'CAST_FINISH':castClear();document.querySelectorAll('[data-bs-command]').forEach(b=>b.classList.remove('recommended'));break;
   case'INTERRUPT':castClear();if(e.result==='success')window.CellboundCombatFX?.interrupt?.($('[data-bs="'+target+'"]')||$('#bsArena'));break;
   case'MECHANIC_SAFE':if(target){floatText(target,'PROTECTED','heal')}break;
   case'ROLE_SHOCKWAVE':{
@@ -448,11 +450,23 @@ function eventRender(e){
  }
 }
 async function playTimeline(result,tok){
- const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
+ let activeResult=result,events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
  if(!run)return false;if(!events.length)return result?.outcome==='victory';
  return await new Promise(resolve=>{
   let index=0,simTime=0,wallAnchor=Number(run?.runtimeStageStartedAt)||Date.now(),simAnchor=0,lastSpeed=null,finished=false,visualErrors=0,raf=0;
-  const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);resolve(value)};
+  const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);if(run?.liveCombat)run.liveCombat.issue=null;resolve(value)};
+  const issueCommand=(type,payload={})=>{
+   const live=run?.liveCombat,C=window.CellboundCombatStandard;if(!live?.options||!C?.simulate)return{ok:false,reason:'unavailable'};
+   const now=Math.max(0,Number(simTime)||0);if(now<Number(live.cooldownUntil||0))return{ok:false,reason:'cooldown',remainingMs:live.cooldownUntil-now};
+   const command={id:'bs-live-'+(++live.seq),type:String(type||''),atMs:Math.round(now+120),targetId:payload?.targetId||null},next=[...(live.commands||[]),command];
+   let replanned;try{replanned=C.simulate({...live.options,commandTimeline:next},live.meta||{})}catch(error){console.warn('Blackout Station live command replan failed',type,error);return{ok:false,reason:'simulation'}}
+   live.commands=next;live.cooldownUntil=now+3200;live.result=replanned;activeResult=replanned;run.result=replanned;
+   try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,replanned)}catch(_){}
+   events=(replanned.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
+   const nextIndex=events.findIndex(e=>(Number(e.timestamp)||0)>now+4);index=nextIndex<0?events.length:nextIndex;
+   return{ok:true,command,result:replanned}
+  };
+  if(run?.liveCombat){run.liveCombat.issue=issueCommand;run.liveCombat.now=()=>simTime}
   const frame=()=>{
    if(finished)return;
    if(tok!==token||!run){finish(false);return}
@@ -465,11 +479,24 @@ async function playTimeline(result,tok){
     const e=events[index++];handled++;
     try{eventRender(e)}catch(error){visualErrors++;console.warn('Blackout Station combat visual recovered',e?.type,e?.ability,error);if(visualErrors===1)feed('A display event was recovered without interrupting combat.')}
    }
-   if(index>=events.length){finish(result?.outcome==='victory');return}
+   if(index>=events.length){finish(activeResult?.outcome==='victory');return}
    raf=requestAnimationFrame(frame)
   };
   raf=requestAnimationFrame(frame)
  })
+}
+function bsCommandLabel(kind){return kind==='interrupt'?'Interrupt now':kind==='defensive'?'Defensive stance':kind==='burn'?'Burn phase':'Party command'}
+function bsIssueCommand(kind,button){
+ if(!run)return;if(button){button.classList.add('active');setTimeout(()=>button.classList.remove('active'),420)}
+ const response=run.liveCombat?.issue?.(kind,{});
+ if(!response?.ok){feed(response?.reason==='cooldown'?'Commander call recovering — hold for the next opening.':'That command is not available right now.');return}
+ document.querySelectorAll('[data-bs-command]').forEach(b=>b.disabled=true);
+ const cooldown=Math.max(700,Math.round(3200/Math.max(.25,Number(run.speed)||1)));
+ setTimeout(()=>{if(run)document.querySelectorAll('[data-bs-command]').forEach(b=>b.disabled=false)},cooldown);
+ if(kind==='interrupt')bsAct('dps','Interrupt command issued');
+ if(kind==='defensive')bsAct('tank','Party defensives committed');
+ if(kind==='burn')bsAct('dps','Damage cooldowns committed');
+ feed('Commander: '+bsCommandLabel(kind)+'.')
 }
 function bsUseCombatPotion(button){
  const helper=window.CellboundDungeon2D,used=helper?.useCombatPotion?.({state:state(),members:party(),getHp:c=>Number(run?.hp?.[c.id])||0,setHp:(c,v)=>{run.hp[c.id]=v}});
@@ -502,7 +529,7 @@ function drawCombat(){
  '<div class="cb2d-route bs2d-route"><span class="done"><i>1</i>Grid Alignment</span><span class="current"><i>2</i>Dr. Vex Calder</span></div>'+
  '<div class="cb2d-layout"><main>'+
  '<div id="bsArena" class="cb2d-arena bs-arena bs-live-room"><div class="cb2d-floor bs-station-env"><img class="bs-room-art" src="'+BLACKOUT_REACTOR_SCENE+'" alt="" decoding="async" draggable="false"></div>'+bsReactorLifeMarkup()+'<div class="cb2d-ground-legend"><span class="danger">RED · TANK</span><span class="spawn">YELLOW · DAMAGE</span><span class="aggro">BLUE · HEALER</span></div><div id="bsRoleZones" class="bs-role-zones"></div><div id="bsTelegraphs"></div><div id="bsUnits"></div><div id="bsFx"></div><div class="cb2d-room-tag"><small>REACTOR CORE</small><b>Main turbine chamber</b></div><div class="cb2d-caption"><span>FINAL BOSS</span><b id="bsStatus">Power restored. Calder engages.</b></div></div>'+
- '<div class="cb2d-controls bs-authority"><div><b>TACTICS LOCKED</b><small>The party follows your selected plan. Role circuits react to live positions.</small></div><div><b>CALDER OVERCHARGE</b><small>+'+oc+'% maximum health from diagnostics used.</small></div>'+(window.CellboundDungeon2D?.combatPotionButtonMarkup?.('data-bs-potion')||'<button type="button" data-bs-potion disabled><b>USE POTION · ×0</b><small>No combat potions available</small></button>')+'</div>'+
+ '<div class="cb2d-controls bs-authority"><div class="bs-command-copy"><b>PARTY COMMANDS</b><small>React to Calder while role circuits remain automatic.</small></div><button type="button" class="cbr-command" data-bs-command="interrupt"><b>INTERRUPT</b><small>Stop Core Siphon.</small></button><button type="button" class="cbr-command" data-bs-command="defensive"><b>DEFENSIVE</b><small>Brace for heavy damage.</small></button><button type="button" class="cbr-command" data-bs-command="burn"><b>BURN</b><small>Commit damage cooldowns.</small></button><div class="bs-overcharge"><b>OVERCHARGE +'+oc+'%</b><small>From diagnostics used.</small></div>'+(window.CellboundDungeon2D?.combatPotionButtonMarkup?.('data-bs-potion')||'<button type="button" data-bs-potion disabled><b>USE POTION · ×0</b><small>No combat potions available</small></button>')+'</div>'+
  '<div class="cb2d-feed"><small>COMBAT FEED</small><div id="bsFeed"></div></div></main>'+
  '<aside><div class="cb2d-cast" id="bsCast"><small>ENEMY CAST</small><div><b id="bsCastName">—</b><strong id="bsCastTime">—</strong></div><div class="cb2d-castbar"><i id="bsCastFill"></i></div></div>'+
  '<div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span>LIVE</span></div><div id="bsDamage" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span>LIVE</span></div><div id="bsHealing" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span>Calder</span></div><div id="bsThreat" class="cb2d-meter-list"></div></section></div>'+
@@ -513,6 +540,7 @@ function drawCombat(){
  r.querySelector('[data-bs-close]').onclick=close;
  r.querySelector('[data-bs-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  r.querySelector('[data-bs-potion]')?.addEventListener('click',e=>bsUseCombatPotion(e.currentTarget));
+ r.querySelectorAll('[data-bs-command]').forEach(b=>b.onclick=()=>bsIssueCommand(b.dataset.bsCommand,b));
  window.CellboundDungeon2D?.refreshCombatPotionButton?.(r.querySelector('[data-bs-potion]'),state());
  renderPartyRows();
  bsMountReactorScene();
@@ -526,8 +554,10 @@ function drawCombat(){
 async function startBoss(resumed=false){
  if(!run)return;if(!resumed)await window.CellboundBossDossier?.show?.('vex-calder');drawCombat();window.CellboundFX?.boss?.('Dr. Vex Calder','Restore the grid. Survive the role circuits.');const tok=token,C=window.CellboundCombatStandard;if(!C?.simulate){setStatus('Combat failed to start');feed('The encounter could not start. Reload and try again.');return}
  try{
-  const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:100,_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0}));
-  let result=C.simulate({party:combatParty,encounter:bossEncounter(),tactics:{pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced'},seed:'blackout-station:'+run.seed},{zone:'blackout-station'});
+  const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:100,_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0})),
+  simOptions={party:combatParty,encounter:bossEncounter(),tactics:{pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced'},seed:'blackout-station:'+run.seed},simMeta={zone:'blackout-station'};
+  let result=C.simulate(simOptions,simMeta);
+  run.liveCombat={options:simOptions,meta:simMeta,commands:[],seq:0,cooldownUntil:0,result};
   const hasCombat=(result.events||[]).some(e=>e.type==='DAMAGE_DEALT'||e.type==='HEAL_RECEIVED'||e.type==='ABILITY_START');
   if(!hasCombat)throw new Error('Combat Reborn produced no actionable events.');
   run.result=result;
