@@ -165,13 +165,13 @@ for(const file of files){
     for(const retired of ['data-appearance-field','data-appearance-randomize','cc-editor-appearance'])if(contents.includes(retired))throw new Error('Character Forge must remain race/sex only for beta: '+retired);
   }
   if(file==='character-rig-v1.js'){
-    for(const hook of ["window.CellboundCharacterRig","CONTRACT='master-rig-v1'","FIT_VERSION=3","fitVersion:FIT_VERSION","masterRigCount:12","function validateAll()","function fitSlot(","function anchors(","function masterRig(","REQUIRED_ANCHORS","LAYER_ORDER"])if(!contents.includes(hook))throw new Error('Master character rig is missing '+hook);
+    for(const hook of ["window.CellboundCharacterRig","CONTRACT='master-rig-v1'","FIT_VERSION=4","fitVersion:FIT_VERSION","masterRigCount:12","function validateAll()","function fitSlot(","function anchors(","function masterRig(","REQUIRED_ANCHORS","LAYER_ORDER"])if(!contents.includes(hook))throw new Error('Master character rig is missing '+hook);
     const sandbox={window:{}};vm.createContext(sandbox);vm.runInContext(contents,sandbox,{filename:file});
     const audit=sandbox.window.CellboundCharacterRig?.validateAll?.();
     if(!audit?.ok||audit.count!==12)throw new Error('Master character rig validation failed: '+JSON.stringify(audit?.errors||audit));
   }
   if(file==='character-portraits-v1.js'){
-    for(const hook of ['window.CellboundPortraits','normalizeAppearance','const CLASS_GEAR_STYLE=','const SET_VISUALS=','const MATERIAL_VISUALS=','function gearPalette(','function classGlyph(','function raceFacePath(','function raceFaceDetails(','function paperRaceSilhouette(','function paperRaceTorsoDetails(','function paperRaceLegDetails(','function paperRaceFootDetails(','function paperRaceNeck(','function paperFit(','function clothLowerStyle(','function lowerSilhouetteMarkup(','function betaHeadDetail(','function betaChestDetail(','function betaShoulderDetail(','function betaHandDetail(','function betaWaistDetail(','function betaLegDetail(','function betaFootDetail(','function betaWeaponDetail(','function betaOffhandDetail(','function paperChest(','function paperShoulders(','function paperLegs(','function paperFeet(','function paperWeapon(','function paperOffHand(','data-character-style="classic-paper-doll"','data-race-identity="v2"','data-equipment-fit="v3"','data-item-visuals="v2"','data-palette-mode="gear-owned"','data-weapon-pose="side-held-v1"','data-alignment="v3"','data-fit-version',"ITEM_VISUALS_VERSION=2","EQUIPMENT_FIT_VERSION=3","RACE_IDENTITY_VERSION=2","WEAPON_POSE_VERSION=1","CHARACTER_MODEL_VERSION=15","CHARACTER_MODEL_CONTRACT='classic-paper-doll-v1'","BASE_ART_CONTRACT='classic-paper-doll-v1'",'const RIG=window.CellboundCharacterRig||null','rigContract:RIG?.contract','masterRigCount:RIG?.masterRigCount','baseArtContract:BASE_ART_CONTRACT'])if(!contents.includes(hook))throw new Error('Classic paper-doll character/equipment contract missing '+hook);
+    for(const hook of ['window.CellboundPortraits','normalizeAppearance','const CLASS_GEAR_STYLE=','const SET_VISUALS=','const MATERIAL_VISUALS=','function gearPalette(','function classGlyph(','function raceFacePath(','function raceFaceDetails(','function paperRaceSilhouette(','function paperRaceTorsoDetails(','function paperRaceLegDetails(','function paperRaceFootDetails(','function paperRaceNeck(','function paperFit(','function clothLowerStyle(','function lowerSilhouetteMarkup(','function betaHeadDetail(','function betaChestDetail(','function betaShoulderDetail(','function betaHandDetail(','function betaWaistDetail(','function betaLegDetail(','function betaFootDetail(','function betaWeaponDetail(','function betaOffhandDetail(','function paperChest(','function paperShoulders(','function paperLegs(','function paperFeet(','function paperWeapon(','function paperOffHand(','data-character-style="classic-paper-doll"','data-race-identity="v2"','data-equipment-fit="v4"','data-item-visuals="v2"','data-palette-mode="gear-owned"','data-weapon-pose="side-held-v1"','data-alignment="v4"','data-fit-version',"ITEM_VISUALS_VERSION=2","EQUIPMENT_FIT_VERSION=4","RACE_IDENTITY_VERSION=2","WEAPON_POSE_VERSION=1","CHARACTER_MODEL_VERSION=15","CHARACTER_MODEL_CONTRACT='classic-paper-doll-v1'","BASE_ART_CONTRACT='classic-paper-doll-v1'",'const RIG=window.CellboundCharacterRig||null','rigContract:RIG?.contract','masterRigCount:RIG?.masterRigCount','baseArtContract:BASE_ART_CONTRACT'])if(!contents.includes(hook))throw new Error('Classic paper-doll character/equipment contract missing '+hook);
     if(contents.includes('illustratedEquipment(')||contents.includes('cb-forge-base'))throw new Error('Painted/Forge character renderer must remain disabled during the classic visual rollback');
   }
   if(file==='roster-v2.css'){
@@ -182,7 +182,7 @@ for(const file of files){
     for(const hook of ['#party .party-choice{','grid-template-columns:56px minmax(0,1fr) auto','#party .party-choice>div:nth-child(2){','text-overflow:ellipsis'])if(!contents.includes(hook))throw new Error('Active Party portrait/text spacing is missing '+hook);
   }
   if(file==='character-fit-viewer-v1.js'){
-    for(const hook of ['function isOwner()','function auditCurrent()','function auditBetaMatrix()','function validateCharacter(','36 bodies','RUN CURRENT ITEM AUDIT','RUN FULL FIT MATRIX','CP()?.modelContract','function CR(){return window.CellboundCharacterRig}','R.validateAll()','compare===\'frames\'','compare===\'sexes\'','compare===\'races\'','AUTO CYCLE ITEMS','SHOW FIT POINTS','gearFitProfile','equipmentFitVersion!==3','main-hand weapon is not using the side-held pose','shield must remain behind the body'])if(!contents.includes(hook))throw new Error('Owner Character Fit Viewer is missing '+hook);
+    for(const hook of ['function isOwner()','function auditCurrent()','function auditBetaMatrix()','function validateCharacter(','36 bodies','RUN CURRENT ITEM AUDIT','RUN FULL FIT MATRIX','CP()?.modelContract','function CR(){return window.CellboundCharacterRig}','R.validateAll()','compare===\'frames\'','compare===\'sexes\'','compare===\'races\'','AUTO CYCLE ITEMS','SHOW FIT POINTS','gearFitProfile','equipmentFitVersion!==4','main-hand weapon is not using the side-held pose','shield must remain behind the body'])if(!contents.includes(hook))throw new Error('Owner Character Fit Viewer is missing '+hook);
     if(!contents.includes("toLowerCase()==='owner'"))throw new Error('Character Fit Viewer must remain owner-only');
     if(contents.includes('Game.save')||contents.includes('persistState'))throw new Error('Character Fit Viewer must not mutate live game state');
   }
@@ -651,7 +651,7 @@ for(const file of files){
   vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),portraitSandbox,{filename:'character-portraits-v1.js'});
   const P=portraitSandbox.CellboundPortraits;
   if(!P?.paperDollHTML||!P?.visualProfile)throw new Error('Classic paper-doll runtime failed to load');
-  if(P.version!==15||P.raceIdentityVersion!==2||P.equipmentFitVersion!==3||P.itemVisualsVersion!==2||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1')throw new Error('Classic paper-doll Item Visuals V2 / fit v3 contract is missing');
+  if(P.version!==15||P.raceIdentityVersion!==2||P.equipmentFitVersion!==4||P.itemVisualsVersion!==2||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1')throw new Error('Classic paper-doll Item Visuals V2 / fit v4 contract is missing');
   const appearance={race:'Veyren',gender:0,frame:1,skinTone:1,face:2,hair:3,hairColor:4,facialHair:1,marking:2,eyes:0,feature:1};
   const sword={name:'Test Sword',itemId:'test-sword',class:'Warrior',slot:'Weapon',tier:2,weaponType:'sword'};
   const spear={name:'Test Spear',itemId:'test-spear',class:'Warrior',slot:'Weapon',tier:2,weaponType:'spear'};
@@ -687,7 +687,7 @@ for(const file of files){
     const setPalette=P.gearPalette(testCharacter,gear.Chest,5,'Chest');
     if(setPalette.paletteMode!=='set-first'||String(setPalette.base).toLowerCase()===String(P.CLASS_COLORS[klass]||'').toLowerCase())throw new Error('Set palette must own its colour identity instead of copying '+klass+' class colour');
     const fit=P.gearFitProfile(testCharacter),weaponAt=html.indexOf('cb-paper-side-weapon'),weaponHtml=weaponAt>=0?html.slice(weaponAt):'',gripX=Number((weaponHtml.match(/data-grip-x="([0-9.-]+)"/)||[])[1]),gripY=Number((weaponHtml.match(/data-grip-y="([0-9.-]+)"/)||[])[1]);
-    if(weaponAt<0||!html.includes('data-equipment-fit="v3"')||Math.abs(gripX-fit.weaponX)>.11||Math.abs(gripY-fit.weaponY)>.11||fit.weaponX<fit.weaponSideMin)throw new Error('Side-held main-hand fit is not anchored outside the torso for '+klass);
+    if(weaponAt<0||!html.includes('data-equipment-fit="v4"')||Math.abs(gripX-fit.weaponX)>.11||Math.abs(gripY-fit.weaponY)>.11||fit.weaponX<fit.weaponSideMin)throw new Error('Side-held main-hand fit is not anchored outside the torso for '+klass);
     const wf=P.weaponFitProfile(testCharacter,gear.Weapon);
     if(!wf||![wf.anchorX,wf.anchorY,wf.pivotX,wf.pivotY,wf.rotate,wf.scale].every(Number.isFinite))throw new Error('Invalid classic weapon fit profile for '+klass);
   }
@@ -705,7 +705,7 @@ for(const file of files){
   vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),sandbox,{filename:'character-portraits-v1.js'});
   const G=sandbox.CellboundGear,P=sandbox.CellboundPortraits;
   if(!G||!P)throw new Error('Classic beta character/equipment runtime failed to load');
-  if(P.version!==15||P.raceIdentityVersion!==2||P.equipmentFitVersion!==3||P.itemVisualsVersion!==2||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1'||P.rigContract!=='master-rig-v1'||P.masterRigCount!==12)throw new Error('Classic paper-doll full-class Item Visuals V2 / fit v3 lock is missing');
+  if(P.version!==15||P.raceIdentityVersion!==2||P.equipmentFitVersion!==4||P.itemVisualsVersion!==2||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1'||P.rigContract!=='master-rig-v1'||P.masterRigCount!==12)throw new Error('Classic paper-doll full-class Item Visuals V2 / fit v4 lock is missing');
   const races=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'],positions=G.EQUIPMENT_POSITION_ORDER;
   const slotFor=pos=>pos.startsWith('Ring')?'Ring':pos.startsWith('Trinket')?'Trinket':pos;
   let checked=0;
@@ -728,7 +728,7 @@ for(const file of files){
     for(const key of ['leftShoulder','rightShoulder','leftHand','rightHand','waistHalf','leftLeg','rightLeg','weaponX','offhandX'])if(!Number.isFinite(fit[key]))throw new Error('Invalid classic '+key+': '+klass+' T'+tier+' '+race+' '+gender);
     if(![wf.anchorX,wf.anchorY,wf.pivotX,wf.pivotY,wf.rotate,wf.scale].every(Number.isFinite))throw new Error('Invalid classic weapon fit: '+klass+' T'+tier+' '+race+' '+gender);
     for(const pos of positions)if(!html.includes('cb-paper-slot-'+pos.toLowerCase()))throw new Error('Missing classic '+pos+' render: '+klass+' T'+tier+' '+race+' '+gender);
-    if(!html.includes('data-equipment-fit="v3"')||!html.includes('data-fit-version="3"')||!html.includes('data-alignment="v3"'))throw new Error('Equipment fit v3 markers missing: '+klass+' T'+tier+' '+race+' '+gender);
+    if(!html.includes('data-equipment-fit="v4"')||!html.includes('data-fit-version="4"')||!html.includes('data-alignment="v4"'))throw new Error('Equipment fit v4 markers missing: '+klass+' T'+tier+' '+race+' '+gender);
     if(!html.includes('cb-paper-side-weapon')||!html.includes('data-weapon-pose="side-held"')||fit.weaponX<fit.weaponSideMin)throw new Error('Side-held weapon presentation missing: '+klass+' T'+tier+' '+race+' '+gender);
     checked++;
   }
@@ -738,7 +738,7 @@ for(const file of files){
   }
   const expected=G.CLASS_ORDER.length*5*races.length*2;
   if(checked!==expected)throw new Error('Classic character beta matrix coverage incomplete: '+checked+' / '+expected);
-  console.log('Full-class Item Visuals V2 / fit v3 lock passed '+checked+' class/tier/body combinations with set-first palettes, side-held weapons and cloth silhouette variety.');
+  console.log('Full-class Item Visuals V2 / fit v4 lock passed '+checked+' class/tier/body combinations with set-first palettes, side-held weapons and cloth silhouette variety.');
 }
 
 for(const htmlFile of ['index.html','guild.html']){

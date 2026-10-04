@@ -6,8 +6,8 @@ for(const file of ['gear-data.js','item-atlas-v2.js','item-visuals-v2.js','chara
 }
 const G=ctx.CellboundGear,P=ctx.CellboundPortraits,R=ctx.CellboundCharacterRig;
 assert(G&&P&&R);
-assert.equal(R.fitVersion,3);
-assert.equal(P.equipmentFitVersion,3);
+assert.equal(R.fitVersion,4);
+assert.equal(P.equipmentFitVersion,4);
 
 const races=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'];
 const slotPosition=item=>item.slot==='Ring'?'Ring1':item.slot==='Trinket'?'Trinket1':item.slot;
@@ -26,10 +26,15 @@ for(const item of G.items){
     const c={id:'fit-'+item.itemId+'-'+race+'-'+gender,race,class:item.class,appearance,equipment:{[pos]:item}};
     const html=P.paperDollSVG(c),fit=P.gearFitProfile(c);
     assert(!/NaN|Infinity|undefined/.test(html),item.itemId+' broken SVG on '+race+'/'+gender);
-    assert(html.includes('data-equipment-fit="v3"'),item.itemId+' missing v3 model fit contract');
+    assert(html.includes('data-equipment-fit="v4"'),item.itemId+' missing v4 model fit contract');
     assert(html.includes('cb-paper-slot-'+pos.toLowerCase()),item.itemId+' missing '+pos+' layer');
-    assert(html.includes('data-fit-version="3"'),item.itemId+' did not use equipment fit v3');
-    assert(html.includes('data-alignment="v3"'),item.itemId+' missing v3 slot alignment marker');
+    assert(html.includes('data-fit-version="4"'),item.itemId+' did not use equipment fit v4');
+    assert(html.includes('data-alignment="v4"'),item.itemId+' missing v4 slot alignment marker');
+    if(item.slot==='Shoulders')assert(html.includes('cb-paper-pad-left')&&html.includes('cb-paper-pad-right'),item.itemId+' shoulder geometry must be body-fitted');
+    if(item.slot==='Hands')assert(html.includes('cb-paper-glove-left')&&html.includes('cb-paper-glove-right'),item.itemId+' glove geometry must be wrist-fitted');
+    if(item.slot==='Chest')assert(html.includes('cb-paper-chest-shell'),item.itemId+' chest must use fitted torso shell');
+    if(item.slot==='Legs'&&P.clothLowerStyle(item)==='trousers')assert(html.includes('cb-paper-leg-left')&&html.includes('cb-paper-leg-right'),item.itemId+' leg geometry must follow leg centres');
+    if(item.slot==='Feet')assert(html.includes('cb-paper-boot-left')&&html.includes('cb-paper-boot-right'),item.itemId+' boots must follow ankle centres');
 
     if(item.slot==='Weapon'){
       assert(near(num(html,'data-grip-x'),fit.weaponX),item.itemId+' main-hand X not on side-held grip for '+race+'/'+gender);
@@ -80,7 +85,10 @@ for(const klass of G.CLASS_ORDER)for(const tier of [1,2,3,4,5])for(const race of
   const c={id:'loadout-'+bodyChecks,race,class:klass,appearance:{race,gender,frame,skinTone:1,face:0,hair:0,hairColor:0,facialHair:0,marking:0,eyes:0,feature:0},equipment};
   const html=P.paperDollSVG(c),fit=P.gearFitProfile(c);
   assert(!/NaN|Infinity|undefined/.test(html));
-  assert(html.includes('data-equipment-fit="v3"'));
+  assert(fit.leftPad>fit.leftShoulder&&fit.rightPad<fit.rightShoulder,klass+' '+race+' frame '+frame+' shoulder pads must sit inward over shoulder joints');
+  assert(fit.leftLeg>120-fit.p.hip*.5&&fit.rightLeg<120+fit.p.hip*.5,klass+' '+race+' frame '+frame+' leg centres must sit beneath the hips');
+  assert(fit.waistHalf<=Math.max(fit.p.waist*1.08,fit.p.hip*.69)+.01,klass+' '+race+' frame '+frame+' belt must stay close to torso width');
+  assert(html.includes('data-equipment-fit="v4"'));
   for(const pos of G.EQUIPMENT_POSITION_ORDER)assert(html.includes('cb-paper-slot-'+pos.toLowerCase()),klass+' '+race+' frame '+frame+' missing '+pos);
   const weaponAt=html.indexOf('cb-paper-side-weapon'),weaponHtml=weaponAt>=0?html.slice(weaponAt):'';
   assert(weaponAt>=0,klass+' '+race+' frame '+frame+' missing side-held weapon');
@@ -99,4 +107,4 @@ for(const klass of ['Mage','Priest','Warlock','Druid']){
  assert(styles.includes('trousers'),klass+' must retain at least one trouser tier');
  assert(styles.some(x=>x!=='trousers'),klass+' must include at least one robe/skirt tier');
 }
-console.log('Equipment fit v3: '+itemChecks+' item/body checks across all 12 master models; '+bodyChecks+' complete loadouts across all 36 race/sex/frame bodies; side-held weapons and varied cloth lowers verified.');
+console.log('Equipment fit v4: '+itemChecks+' item/body checks across all 12 master models; '+bodyChecks+' complete loadouts across all 36 race/sex/frame bodies; side-held weapons and varied cloth lowers verified.');

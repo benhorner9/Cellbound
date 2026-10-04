@@ -10,7 +10,7 @@
  * deformations of a canonical race/sex rig rather than extra body masters.
  */
 const VERSION=2;
-const FIT_VERSION=3;
+const FIT_VERSION=4;
 const CONTRACT='master-rig-v1';
 const CANVAS=Object.freeze({width:240,height:410,viewBox:'0 0 240 410',centerX:120});
 const RACES=Object.freeze(['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari']);
@@ -207,31 +207,33 @@ function weaponKind(subject){
 }
 function weaponPose(subject,baseRightHand,p,shoulderX){
   const kind=weaponKind(subject);
-  if(!kind)return {active:false,kind:'none',x:baseRightHand,y:283,angle:0,side:'right'};
+  if(!kind)return {active:false,kind:'none',x:baseRightHand,y:279,angle:0,side:'right',sideMin:shoulderX};
   const long=['staff','spear','bow','crossbow'].includes(kind);
   const compact=['dagger','wand','focus','scepter','rod'].includes(kind);
-  const offset=Math.max(long?22:compact?15:18,p.arm*(long?1.05:compact?.72:.86));
-  const sideMin=Math.min(194,shoulderX+Math.max(4,p.arm*.15));
-  const x=Math.max(sideMin,Math.min(194,baseRightHand+offset));
-  const angle=kind==='bow'?6:kind==='crossbow'?8:kind==='staff'||kind==='spear'?5:kind==='dagger'?11:7;
-  return {active:true,kind,x,y:283,angle,side:'right',sideMin};
+  const sideMin=Math.min(196,shoulderX+Math.max(10,p.arm*.55));
+  const natural=baseRightHand+(long?7:compact?4:6);
+  const x=Math.max(sideMin,Math.min(198,natural));
+  const angle=kind==='bow'?4:kind==='crossbow'?6:kind==='staff'||kind==='spear'?3:kind==='dagger'?9:6;
+  return {active:true,kind,x,y:279,angle,side:'right',sideMin};
 }
 function gearFitProfile(subject){
   const race=raceOf(subject),p=bodyProfile(subject),sex=sexName(subject),gender=p.gender,frame=p.frame;
   const shoulderY=race==='Stoneborn'?130:gender===1?133:131;
   const leftShoulder=120-p.shoulder,rightShoulder=120+p.shoulder;
-  const handReach=Math.max(5.5,p.arm*.50);
+  const handReach=Math.max(5.2,p.arm*.46);
   const leftHand=leftShoulder-handReach,baseRightHand=rightShoulder+handReach;
   const pose=weaponPose(subject,baseRightHand,p,rightShoulder);
-  const rightHand=pose.x,handY=283;
-  const hipHalf=p.hip,waistHalf=Math.max(p.waist,p.hip*.70);
+  const rightHand=pose.x,handY=279;
+  const hipHalf=p.hip,waistHalf=Math.max(p.waist*1.02,p.hip*.64);
+  const legOffset=p.hip*.38,legHalf=Math.max(8.5,p.leg*.62);
   return {
     race,gender,frame,p,centerX:120,shoulderY,
     leftShoulder,rightShoulder,leftHand,rightHand,baseRightHand,handY,
+    leftPad:120-p.shoulder*.82,rightPad:120+p.shoulder*.82,
     waistY:247,waistHalf,hipHalf,
-    leftLeg:120-p.hip*.47,rightLeg:120+p.hip*.47,
-    legHalf:Math.max(10.5,p.leg*.82),calfHalf:Math.max(8.2,p.leg*.62),footHalf:Math.max(10,p.leg*.72),
-    chestTop:gender===1?121:119,chestBottom:252,
+    leftLeg:120-legOffset,rightLeg:120+legOffset,
+    legHalf,calfHalf:Math.max(7.4,p.leg*.52),footHalf:Math.max(8.6,p.leg*.66),
+    chestTop:gender===1?140:138,chestBottom:244,
     weaponX:pose.x,weaponY:pose.y,weaponAngle:pose.angle,weaponPose:pose.active?'side-held':'rest',weaponKind:pose.kind,weaponSideMin:pose.sideMin??rightShoulder,
     offhandX:leftHand,offhandY:handY,
     headGearScaleX:(gender===1?.94:1)*([.94,1,1.05,.98][subject?.appearance?.face]||1)
@@ -245,7 +247,7 @@ function anchors(subject){
   a.leftShoulder={x:f.leftShoulder,y:shoulderY};a.rightShoulder={x:f.rightShoulder,y:shoulderY};
   a.leftHand={x:f.leftHand,y:rigY(f.handY)};a.rightHand={x:f.rightHand,y:rigY(f.handY)};
   a.mainHand={x:f.weaponX,y:rigY(f.weaponY)};a.offHand={x:f.offhandX,y:rigY(f.offhandY)};
-  a.leftHip={x:120-p.hip*.47,y:rigY(257)};a.rightHip={x:120+p.hip*.47,y:rigY(257)};
+  a.leftHip={x:f.leftLeg,y:rigY(257)};a.rightHip={x:f.rightLeg,y:rigY(257)};
   a.leftKnee={x:a.leftHip.x,y:rigY(322)};a.rightKnee={x:a.rightHip.x,y:rigY(322)};
   a.leftAnkle={x:a.leftHip.x,y:rigY(365)};a.rightAnkle={x:a.rightHip.x,y:rigY(365)};
   a.leftFoot={x:a.leftHip.x,y:rigY(380)};a.rightFoot={x:a.rightHip.x,y:rigY(380)};
@@ -276,9 +278,9 @@ function fitSlot(subject,slot,options){
     return{x:120-width/2,y,w:width,h:family==='mage'?22:18};
   }
   if(slot==='Shoulders'){
-    const width=p.arm*2.35*ff.shoulder*(race==='Stoneborn'?1.08:1),h=(32+(tier-1)*1.4)*(family==='paladin'?1.06:1);
+    const width=Math.max(18,p.arm*1.35*ff.shoulder)+(tier>=4?4:0),h=(27+(tier-1)*.8)*(family==='paladin'?1.03:1);
     const inset=['rogue','demon-hunter','mage','priest','warlock','monk'].includes(family)?5:['hunter','druid'].includes(family)?4:6;
-    const leftCenter=f.leftShoulder+inset,rightCenter=f.rightShoulder-inset,y=rigY(f.shoulderY)-h*.32+rf.shoulderY;
+    const leftCenter=f.leftPad,rightCenter=f.rightPad,y=rigY(f.shoulderY)-h*.28+rf.shoulderY;
     return{leftX:leftCenter-width/2,rightX:rightCenter-width/2,y,w:width,h,leftCenter,rightCenter};
   }
   if(slot==='Legs'){
@@ -286,12 +288,12 @@ function fitSlot(subject,slot,options){
     return{x:120-width/2,y,w:width,h:Math.max(150,bottom-y)+(cloth?28:0)};
   }
   if(slot==='Feet'){
-    const width=f.footHalf*2.05,y=rigY(348),bottom=399;
+    const width=f.footHalf*2,y=rigY(349),bottom=393;
     return{leftX:f.leftLeg-width/2,rightX:f.rightLeg-width/2,y,w:width,h:bottom-y};
   }
   if(slot==='Hands'){
-    const width=p.hand*19,y=rigY(f.handY)-32;
-    return{leftX:f.leftHand-width/2,rightX:f.rightHand-width/2,y,w:width,h:43,leftCenter:f.leftHand,rightCenter:f.rightHand};
+    const width=Math.max(13,p.hand*13)+(family==='warrior'||family==='paladin'||family==='death-knight'?3:0),y=rigY(f.handY)-30;
+    return{leftX:f.leftHand-width/2,rightX:f.rightHand-width/2,y,w:width,h:39,leftCenter:f.leftHand,rightCenter:f.rightHand};
   }
   if(slot==='Head'){
     const h=headRig(subject),face=[.94,1,1.05,.98][subject?.appearance?.face]||1,w=h.width*1.28*face;

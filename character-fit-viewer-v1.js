@@ -126,17 +126,17 @@ function closeTo(a,b,t=.12){return Number.isFinite(a)&&Number.isFinite(b)&&Math.
 function validateCharacter(c,{highlight='',requireFull=false}={}){
   const P=CP(),R=CR(),html=P.paperDollHTML(c,{size:'equipment',highlightedSlot:highlight,showGear:true}),fit=P.gearFitProfile(c);
   const nums=['leftShoulder','rightShoulder','leftHand','rightHand','baseRightHand','handY','waistHalf','hipHalf','leftLeg','rightLeg','weaponX','weaponY','offhandX','offhandY'];
-  if(P.equipmentFitVersion!==3||R?.fitVersion!==3)throw new Error('equipment fit v3 is not active');
+  if(P.equipmentFitVersion!==4||R?.fitVersion!==4)throw new Error('equipment fit v4 is not active');
   if(nums.some(k=>!Number.isFinite(fit[k])))throw new Error('invalid anchors');
   if(/NaN|Infinity|undefined/.test(html))throw new Error('invalid SVG output');
-  if(!html.includes('data-equipment-fit="v3"'))throw new Error('model is not using equipment fit v3');
+  if(!html.includes('data-equipment-fit="v4"'))throw new Error('model is not using equipment fit v4');
   if(!(fit.leftShoulder<fit.rightShoulder&&fit.leftHand<fit.rightHand&&fit.leftLeg<fit.rightLeg&&fit.waistHalf>0&&fit.hipHalf>0))throw new Error('invalid body anchor ordering');
 
   const core=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet'];
   for(const slot of core){
     if(!c.equipment?.[slot])continue;
     if(!html.includes('cb-paper-slot-'+slot.toLowerCase()))throw new Error(slot+' layer missing');
-    if(!html.includes('data-fit-version="3"')||!html.includes('data-alignment="v3"'))throw new Error(slot+' is not on fit/alignment v3');
+    if(!html.includes('data-fit-version="4"')||!html.includes('data-alignment="v4"'))throw new Error(slot+' is not on fit/alignment v3');
     const b=R?.fitSlot?.(c,slot,{family:fitFamily(c.class),tier:c.equipment[slot]?.tier||1});
     if(!b||!Number.isFinite(b.y)||!Number.isFinite(b.w)||!Number.isFinite(b.h)||b.w<=3||b.h<=3||b.y<-20||b.y>410)throw new Error(slot+' fit bounds invalid');
   }
@@ -223,7 +223,7 @@ function render(){
   if(item&&state.itemId!==item.itemId){state.itemId=item.itemId;saveState()}
   const compareClass='cfv-compare-'+state.compare;
   mount.innerHTML='<section class="cfv-shell">'+
-    '<header class="cfv-header"><div><small>OWNER CHARACTER LAB · FIT V3</small><h2>Character Fit Viewer</h2><p>Inspect every equipment slot against all race/sex master models and body variants. Fit V3 also checks side-held weapons and varied robe/skirt lower silhouettes.</p></div><div class="cfv-header-actions"><button id="cfvAudit" type="button">RUN CURRENT ITEM AUDIT</button><button id="cfvBetaAudit" type="button">RUN FULL FIT MATRIX</button><button id="cfvClose" type="button">CLOSE</button></div></header>'+
+    '<header class="cfv-header"><div><small>OWNER CHARACTER LAB · FIT V4</small><h2>Character Fit Viewer</h2><p>Inspect every equipment slot against all race/sex master models and body variants. Fit V4 also checks side-held weapons and varied robe/skirt lower silhouettes.</p></div><div class="cfv-header-actions"><button id="cfvAudit" type="button">RUN CURRENT ITEM AUDIT</button><button id="cfvBetaAudit" type="button">RUN FULL FIT MATRIX</button><button id="cfvClose" type="button">CLOSE</button></div></header>'+
     statsHTML()+
     '<div class="cfv-toolbar">'+
       '<label><span>RACE</span><select id="cfvRace">'+RACES.map(x=>option(x,x,state.race)).join('')+'</select></label>'+
@@ -284,7 +284,7 @@ function showAuditResult(result,label){
 }
 function runAudit(){showAuditResult(auditCurrent(),'CURRENT ITEM · ALL 36 BODIES')}
 function runBetaAudit(){
-  const el=$('#cfvAuditResult');if(el){el.hidden=false;el.dataset.tone='busy';el.innerHTML='<b>RUNNING EQUIPMENT FIT V3 MATRIX…</b><span>Checking every class, tier, race, sex and frame combination.</span>'}
+  const el=$('#cfvAuditResult');if(el){el.hidden=false;el.dataset.tone='busy';el.innerHTML='<b>RUNNING EQUIPMENT FIT V4 MATRIX…</b><span>Checking every class, tier, race, sex and frame combination.</span>'}
   setTimeout(()=>showAuditResult(auditBetaMatrix(),'FULL LOADOUT CONFIGURATIONS'),0);
 }
 function bind(){

@@ -54,8 +54,8 @@ const engine=engineName==='webkit'?webkit:chromium;
     });
 
     assert.equal(result.raceIdentityVersion,2);
-    assert.equal(result.fitVersion,3);
-    assert.equal(result.rigFitVersion,3);
+    assert.equal(result.fitVersion,4);
+    assert.equal(result.rigFitVersion,4);
     assert.equal(result.checked,12);
     assert.deepEqual(result.neckFailures,[],'Heads must overlap short natural necks: '+JSON.stringify(result.neckFailures,null,2));
     const p=result.profiles;
