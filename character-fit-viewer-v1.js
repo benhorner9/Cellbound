@@ -117,7 +117,7 @@ function groupedItemOptions(){
   }).join('');
 }
 function fitFamily(klass){
-  return ({Warrior:'warrior',Paladin:'paladin',Hunter:'hunter',Rogue:'rogue',Mage:'mage',Priest:'mage',Warlock:'mage',Druid:'hunter',Shaman:'hunter',Monk:'rogue',Evoker:'mage','Death Knight':'warrior','Demon Hunter':'rogue'})[klass]||'warrior';
+  return String(klass||'Warrior').toLowerCase().replace(/\s+/g,'-');
 }
 function svgNumber(html,name){
   const m=html.match(new RegExp(name+'="(-?[0-9.]+)"'));return m?Number(m[1]):NaN;
@@ -125,7 +125,7 @@ function svgNumber(html,name){
 function closeTo(a,b,t=.12){return Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<=t}
 function validateCharacter(c,{highlight='',requireFull=false}={}){
   const P=CP(),R=CR(),html=P.paperDollHTML(c,{size:'equipment',highlightedSlot:highlight,showGear:true}),fit=P.gearFitProfile(c);
-  const nums=['leftShoulder','rightShoulder','leftHand','rightHand','handY','waistHalf','hipHalf','leftLeg','rightLeg','weaponX','offhandX'];
+  const nums=['leftShoulder','rightShoulder','leftHand','rightHand','baseRightHand','handY','waistHalf','hipHalf','leftLeg','rightLeg','weaponX','weaponY','offhandX','offhandY'];
   if(P.equipmentFitVersion!==3||R?.fitVersion!==3)throw new Error('equipment fit v3 is not active');
   if(nums.some(k=>!Number.isFinite(fit[k])))throw new Error('invalid anchors');
   if(/NaN|Infinity|undefined/.test(html))throw new Error('invalid SVG output');
