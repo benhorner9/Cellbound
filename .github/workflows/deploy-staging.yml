@@ -43,7 +43,9 @@ jobs:
           test -f dist/guild-v4.js
           ! grep -F 'http-equiv="refresh" content="0;url=./index.html"' dist/guild.html
           ! grep -F 'window.location.replace("./index.html")' dist/guild.html
-          test -f dist/assets/gear/cellbound-gear-atlas.webp
+          test -f dist/item-atlas-v2.js
+          test -f dist/item-visuals-v2.js
+          for atlas in warrior paladin hunter rogue mage weapons secondary heads accessories resources; do test -f "dist/assets/items/illustrated-v2/$atlas.webp"; done
           ! grep -R --line-number -E 'href="/|src="/' dist/*.html
 
       - name: Deploy staging build
