@@ -3600,17 +3600,22 @@ function commandedInterrupt(ctx){
  return true
 }
 function applyPartyCommand(ctx,command){
- const type=String(command?.type||'').toLowerCase(),live=livingPlayers(ctx),duration=Math.max(1800,Number(command?.durationMs)||0);
+ const type=String(command?.type||'').toLowerCase(),live=livingPlayers(ctx),defaults={focus:7000,burn:6000,defensive:5000,spread:2400,regroup:2600,interrupt:1800};
+ const duration=Math.max(800,Number(command?.durationMs)||defaults[type]||2400);
  let result='accepted',targetId=command?.targetId||null;
+ if(Number(ctx.commandCooldownUntil)>ctx.time){
+  emit(ctx,'PARTY_COMMAND',{source:'commander',target:targetId,ability:type,result:'cooldown',payload:{commandId:command.id||null,type,remainingMs:Math.max(0,ctx.commandCooldownUntil-ctx.time),targetId}});
+  return
+ }
  if(type==='focus'){
   const preferred=targetId?getUnit(ctx,targetId):null;
   const target=(preferred?.alive&&preferred.role==='enemy'?preferred:null)||livingEnemies(ctx).slice().sort((a,b)=>(Number(b.isAdd)-Number(a.isAdd))||(Number(b.priority)||0)-(Number(a.priority)||0)||a.health-b.health)[0];
-  if(target){ctx.commandFocusId=target.id;ctx.commandFocusUntil=ctx.time+(duration||7000);ctx.enemies.forEach(e=>e.focusSelected=e.id===target.id);targetId=target.id}
+  if(target){ctx.commandFocusId=target.id;ctx.commandFocusUntil=ctx.time+duration;ctx.enemies.forEach(e=>e.focusSelected=e.id===target.id);targetId=target.id}
   else result='no-target'
  }else if(type==='burn'){
-  live.forEach(p=>applyStatus(ctx,p,p,{id:'commander-burn',name:'Burn Order',kind:'buff',duration:duration||6000,effect:{outgoingDamage:.18,haste:.08}}))
+  live.forEach(p=>applyStatus(ctx,p,p,{id:'commander-burn',name:'Burn Order',kind:'buff',duration,effect:{outgoingDamage:.18,haste:.08}}))
  }else if(type==='defensive'){
-  live.forEach(p=>{p.defensiveUntil=Math.max(Number(p.defensiveUntil)||0,ctx.time+(duration||5000));applyStatus(ctx,p,p,{id:'commander-defensive',name:'Hold Fast',kind:'buff',duration:duration||5000,effect:{incomingDamageReduction:.08}})})
+  live.forEach(p=>{p.defensiveUntil=Math.max(Number(p.defensiveUntil)||0,ctx.time+duration);applyStatus(ctx,p,p,{id:'commander-defensive',name:'Hold Fast',kind:'buff',duration,effect:{incomingDamageReduction:.08}})})
  }else if(type==='spread'){
   const cast=ctx.activeEnemyCast,enemy=cast?getUnit(ctx,cast.enemy):(livingEnemies(ctx).find(e=>e.kind==='boss')||livingEnemies(ctx)[0]),responseType=cast?.type==='line'?'line':cast?.type==='cone'?'cone':'circles';
   live.forEach(p=>{if(cast?.responses)cast.responses[p.id]=true;if(cast?.reactionMs)cast.reactionMs[p.id]=0;planMovement(ctx,p,responseType,enemy)});
@@ -3621,7 +3626,8 @@ function applyPartyCommand(ctx,command){
  }else if(type==='interrupt'){
   if(!commandedInterrupt(ctx))result='no-cast'
  }else result='unknown';
- emit(ctx,'PARTY_COMMAND',{source:'commander',target:targetId,ability:type,result,payload:{commandId:command.id||null,type,durationMs:duration||0,targetId}});
+ if(!['no-cast','no-target','unknown'].includes(result))ctx.commandCooldownUntil=ctx.time+3000;
+ emit(ctx,'PARTY_COMMAND',{source:'commander',target:targetId,ability:type,result,payload:{commandId:command.id||null,type,durationMs:duration,targetId,cooldownMs:3000}});
 }
 function schedulePartyCommands(ctx,raw){
  const timeline=normaliseCommandTimeline(raw);
@@ -4107,7 +4113,7 @@ function simulate(options={}){
   crowdControl:options.tactics?.crowdControl||'disabled'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicBag:Array.isArray(options.initialMechanicBag)?copy(options.initialMechanicBag):[],lastMechanicKey:options.initialLastMechanicKey||null,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,activeGroundHazards:{},finished:false,onEvent:options.onEvent||null};
+ const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicBag:Array.isArray(options.initialMechanicBag)?copy(options.initialMechanicBag):[],lastMechanicKey:options.initialLastMechanicKey||null,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,activeGroundHazards:{},commandFocusId:null,commandFocusUntil:0,commandCooldownUntil:0,finished:false,onEvent:options.onEvent||null};
  players.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  enemies.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  settlePhysicalSpace(ctx,[...players,...enemies]);
