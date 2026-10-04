@@ -126,17 +126,17 @@ function closeTo(a,b,t=.12){return Number.isFinite(a)&&Number.isFinite(b)&&Math.
 function validateCharacter(c,{highlight='',requireFull=false}={}){
   const P=CP(),R=CR(),html=P.paperDollHTML(c,{size:'equipment',highlightedSlot:highlight,showGear:true}),fit=P.gearFitProfile(c);
   const nums=['leftShoulder','rightShoulder','leftHand','rightHand','handY','waistHalf','hipHalf','leftLeg','rightLeg','weaponX','offhandX'];
-  if(P.equipmentFitVersion!==2||R?.fitVersion!==2)throw new Error('universal fit v2 is not active');
+  if(P.equipmentFitVersion!==3||R?.fitVersion!==3)throw new Error('equipment fit v3 is not active');
   if(nums.some(k=>!Number.isFinite(fit[k])))throw new Error('invalid anchors');
   if(/NaN|Infinity|undefined/.test(html))throw new Error('invalid SVG output');
-  if(!html.includes('data-equipment-fit="v2"'))throw new Error('model is not using universal fit v2');
+  if(!html.includes('data-equipment-fit="v3"'))throw new Error('model is not using equipment fit v3');
   if(!(fit.leftShoulder<fit.rightShoulder&&fit.leftHand<fit.rightHand&&fit.leftLeg<fit.rightLeg&&fit.waistHalf>0&&fit.hipHalf>0))throw new Error('invalid body anchor ordering');
 
   const core=['Head','Shoulders','Chest','Hands','Waist','Legs','Feet'];
   for(const slot of core){
     if(!c.equipment?.[slot])continue;
     if(!html.includes('cb-paper-slot-'+slot.toLowerCase()))throw new Error(slot+' layer missing');
-    if(!html.includes('data-fit-version="2"'))throw new Error(slot+' is not on fit v2');
+    if(!html.includes('data-fit-version="3"')||!html.includes('data-alignment="v3"'))throw new Error(slot+' is not on fit/alignment v3');
     const b=R?.fitSlot?.(c,slot,{family:fitFamily(c.class),tier:c.equipment[slot]?.tier||1});
     if(!b||!Number.isFinite(b.y)||!Number.isFinite(b.w)||!Number.isFinite(b.h)||b.w<=3||b.h<=3||b.y<-20||b.y>410)throw new Error(slot+' fit bounds invalid');
   }
@@ -148,14 +148,15 @@ function validateCharacter(c,{highlight='',requireFull=false}={}){
     if(!closeTo(svgNumber(html,'data-left-shoulder-x'),fit.leftShoulder)||!closeTo(svgNumber(html,'data-right-shoulder-x'),fit.rightShoulder))throw new Error('shoulders are not locked to the shoulder anchors');
   }
   if(c.equipment?.Weapon){
-    const weaponAt=html.indexOf('cb-paper-front-weapon'),headAt=html.indexOf('cb-paper-head');
-    if(weaponAt<0||weaponAt<headAt)throw new Error('main-hand weapon is not on the front layer');
-    const weaponHtml=html.slice(weaponAt);if(!closeTo(svgNumber(weaponHtml,'data-grip-x'),fit.weaponX)||!closeTo(svgNumber(weaponHtml,'data-grip-y'),fit.handY))throw new Error('main-hand grip is not attached to the right hand');
+    const weaponAt=html.indexOf('cb-paper-side-weapon'),headAt=html.indexOf('cb-paper-head');
+    if(weaponAt<0||weaponAt<headAt||!html.includes('data-weapon-pose="side-held"'))throw new Error('main-hand weapon is not using the side-held pose');
+    const weaponHtml=html.slice(weaponAt);if(!closeTo(svgNumber(weaponHtml,'data-grip-x'),fit.weaponX)||!closeTo(svgNumber(weaponHtml,'data-grip-y'),fit.weaponY))throw new Error('main-hand side grip is not attached to the posed right hand');
+    if(fit.weaponX<fit.baseRightHand)throw new Error('main-hand weapon crossed inward over the torso');
   }
   if(c.equipment?.OffHand){
-    const type=P.offHandType(c.equipment.OffHand,c),offAt=html.indexOf('data-offhand-type="'+type+'"'),armsAt=html.indexOf('cb-paper-arms'),headAt=html.indexOf('cb-paper-head'),weaponAt=html.indexOf('cb-paper-front-weapon');
+    const type=P.offHandType(c.equipment.OffHand,c),offAt=html.indexOf('data-offhand-type="'+type+'"'),armsAt=html.indexOf('cb-paper-arms'),headAt=html.indexOf('cb-paper-head'),weaponAt=html.indexOf('cb-paper-side-weapon');
     if(offAt<0)throw new Error('off-hand layer missing');
-    if(!closeTo(svgNumber(html.slice(offAt),'data-grip-x'),fit.offhandX)||!closeTo(svgNumber(html.slice(offAt),'data-grip-y'),fit.handY))throw new Error('off-hand grip is not attached to the left hand');
+    if(!closeTo(svgNumber(html.slice(offAt),'data-grip-x'),fit.offhandX)||!closeTo(svgNumber(html.slice(offAt),'data-grip-y'),fit.offhandY))throw new Error('off-hand grip is not attached to the left hand');
     if(type==='shield'&&offAt>armsAt)throw new Error('shield must remain behind the body');
     if(type!=='shield'&&offAt<headAt)throw new Error('front off-hand must remain above the body');
     if(c.equipment?.Weapon&&type!=='shield'&&weaponAt<offAt)throw new Error('main-hand must remain above front off-hand');
@@ -222,7 +223,7 @@ function render(){
   if(item&&state.itemId!==item.itemId){state.itemId=item.itemId;saveState()}
   const compareClass='cfv-compare-'+state.compare;
   mount.innerHTML='<section class="cfv-shell">'+
-    '<header class="cfv-header"><div><small>OWNER CHARACTER LAB · UNIVERSAL FIT V2</small><h2>Character Fit Viewer</h2><p>Inspect every equipment slot against all race/sex master models and Lean, Balanced and Strong body variants. Held items, gloves, shoulders, jewellery and armour now share one fit contract.</p></div><div class="cfv-header-actions"><button id="cfvAudit" type="button">RUN CURRENT ITEM AUDIT</button><button id="cfvBetaAudit" type="button">RUN FULL FIT MATRIX</button><button id="cfvClose" type="button">CLOSE</button></div></header>'+
+    '<header class="cfv-header"><div><small>OWNER CHARACTER LAB · FIT V3</small><h2>Character Fit Viewer</h2><p>Inspect every equipment slot against all race/sex master models and body variants. Fit V3 also checks side-held weapons and varied robe/skirt lower silhouettes.</p></div><div class="cfv-header-actions"><button id="cfvAudit" type="button">RUN CURRENT ITEM AUDIT</button><button id="cfvBetaAudit" type="button">RUN FULL FIT MATRIX</button><button id="cfvClose" type="button">CLOSE</button></div></header>'+
     statsHTML()+
     '<div class="cfv-toolbar">'+
       '<label><span>RACE</span><select id="cfvRace">'+RACES.map(x=>option(x,x,state.race)).join('')+'</select></label>'+
@@ -283,7 +284,7 @@ function showAuditResult(result,label){
 }
 function runAudit(){showAuditResult(auditCurrent(),'CURRENT ITEM · ALL 36 BODIES')}
 function runBetaAudit(){
-  const el=$('#cfvAuditResult');if(el){el.hidden=false;el.dataset.tone='busy';el.innerHTML='<b>RUNNING UNIVERSAL FIT V2 MATRIX…</b><span>Checking every class, tier, race, sex and frame combination.</span>'}
+  const el=$('#cfvAuditResult');if(el){el.hidden=false;el.dataset.tone='busy';el.innerHTML='<b>RUNNING EQUIPMENT FIT V3 MATRIX…</b><span>Checking every class, tier, race, sex and frame combination.</span>'}
   setTimeout(()=>showAuditResult(auditBetaMatrix(),'FULL LOADOUT CONFIGURATIONS'),0);
 }
 function bind(){
