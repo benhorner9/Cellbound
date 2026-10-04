@@ -27,7 +27,11 @@ const engine=engineName==='webkit'?webkit:chromium;
 
     const result=await page.evaluate(()=>{
       const P=window.CellboundPortraits,R=window.CellboundCharacterRig;
-      const races=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'],grid=document.querySelector('#grid'),profiles={};
+      const races=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'],grid=document.querySelector('#grid'),profiles={},neckFailures=[];
+      const modelBox=(svg,el)=>{
+        const sr=svg.getBoundingClientRect(),er=el.getBoundingClientRect(),sx=240/sr.width,sy=410/sr.height;
+        return{x:(er.left-sr.left)*sx,y:(er.top-sr.top)*sy,w:er.width*sx,h:er.height*sy};
+      };
       let checked=0;
       for(const race of races){
         profiles[race]=P.bodyProfile({race,appearance:{race,gender:0,frame:1}});
@@ -39,16 +43,21 @@ const engine=engineName==='webkit'?webkit:chromium;
           if(!root||root.dataset.raceIdentity!=='v2'||root.dataset.race!==race)throw new Error(race+' '+gender+' missing Race Identity V2 root contract');
           if(!svg.includes('cb-paper-race-'+race.toLowerCase()))throw new Error(race+' '+gender+' missing race-specific silhouette/detail class');
           if(svg.includes('cb-paper-slot-chest')||svg.includes('cb-paper-slot-legs')||svg.includes('cb-paper-slot-feet'))throw new Error(race+' '+gender+' base preview unexpectedly contains equipment');
+          const neck=root.querySelector('.cb-paper-neck'),head=root.querySelector('.cb-paper-head');
+          if(!neck||!head)throw new Error(race+' '+gender+' missing head/neck geometry');
+          const nb=modelBox(root,neck),hb=modelBox(root,head),visible=Math.max(0,(nb.y+nb.h)-(hb.y+hb.h));
+          if(nb.h>31||hb.y+hb.h<nb.y+4||visible>22)neckFailures.push({race,gender,neck:nb,head:hb,visible});
           checked++;
         }
       }
-      return{checked,profiles,fitVersion:P.equipmentFitVersion,rigFitVersion:R.fitVersion,raceIdentityVersion:P.raceIdentityVersion};
+      return{checked,profiles,neckFailures,fitVersion:P.equipmentFitVersion,rigFitVersion:R.fitVersion,raceIdentityVersion:P.raceIdentityVersion};
     });
 
     assert.equal(result.raceIdentityVersion,2);
     assert.equal(result.fitVersion,2);
     assert.equal(result.rigFitVersion,2);
     assert.equal(result.checked,12);
+    assert.deepEqual(result.neckFailures,[],'Heads must overlap short natural necks: '+JSON.stringify(result.neckFailures,null,2));
     const p=result.profiles;
     assert(p.Stoneborn.shoulder>p.Emberkin.shoulder&&p.Emberkin.shoulder>p.Thornkin.shoulder&&p.Thornkin.shoulder>p.Veyren.shoulder&&p.Veyren.shoulder>p.Nymari.shoulder&&p.Nymari.shoulder>p.Aelari.shoulder);
     assert(p.Stoneborn.waist-p.Aelari.waist>=18);
@@ -56,7 +65,7 @@ const engine=engineName==='webkit'?webkit:chromium;
     assert(p.Nymari.hip>p.Veyren.hip&&p.Nymari.hip>p.Aelari.hip);
 
     await page.screenshot({path:'/tmp/cellbound-race-identity-v2-'+engineName+'.png',fullPage:true});
-    console.log(engineName+' Race Identity V2 passed: 12 race/sex base models, distinct anatomy ordering and universal fit compatibility.');
+    console.log(engineName+' Race Identity V2 passed: 12 race/sex base models, short natural neck proportions, distinct anatomy ordering and universal fit compatibility.');
   }finally{
     await browser.close();
   }
