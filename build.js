@@ -171,7 +171,7 @@ for(const file of files){
     if(!audit?.ok||audit.count!==12)throw new Error('Master character rig validation failed: '+JSON.stringify(audit?.errors||audit));
   }
   if(file==='character-portraits-v1.js'){
-    for(const hook of ['window.CellboundPortraits','normalizeAppearance','function paperChest(','function paperShoulders(','function paperLegs(','function paperFeet(','function paperWeapon(','function paperOffHand(','data-character-style="classic-paper-doll"','data-grip-x="191"','data-grip-y="244"',"CHARACTER_MODEL_VERSION=15","CHARACTER_MODEL_CONTRACT='classic-paper-doll-v1'","BASE_ART_CONTRACT='classic-paper-doll-v1'",'const RIG=window.CellboundCharacterRig||null','rigContract:RIG?.contract','masterRigCount:RIG?.masterRigCount','baseArtContract:BASE_ART_CONTRACT'])if(!contents.includes(hook))throw new Error('Classic paper-doll character/equipment contract missing '+hook);
+    for(const hook of ['window.CellboundPortraits','normalizeAppearance','function raceFacePath(','function raceFaceDetails(','function paperRaceSilhouette(','function paperRaceTorsoDetails(','function paperRaceLegDetails(','function paperChest(','function paperShoulders(','function paperLegs(','function paperFeet(','function paperWeapon(','function paperOffHand(','data-character-style="classic-paper-doll"','data-race-identity="v1"','data-grip-x="191"','data-grip-y="244"',"RACE_IDENTITY_VERSION=1","CHARACTER_MODEL_VERSION=15","CHARACTER_MODEL_CONTRACT='classic-paper-doll-v1'","BASE_ART_CONTRACT='classic-paper-doll-v1'",'const RIG=window.CellboundCharacterRig||null','rigContract:RIG?.contract','masterRigCount:RIG?.masterRigCount','baseArtContract:BASE_ART_CONTRACT'])if(!contents.includes(hook))throw new Error('Classic paper-doll character/equipment contract missing '+hook);
     if(contents.includes('illustratedEquipment(')||contents.includes('cb-forge-base'))throw new Error('Painted/Forge character renderer must remain disabled during the classic visual rollback');
   }
   if(file==='roster-v2.css'){
@@ -651,7 +651,7 @@ for(const file of files){
   vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),portraitSandbox,{filename:'character-portraits-v1.js'});
   const P=portraitSandbox.CellboundPortraits;
   if(!P?.paperDollHTML||!P?.visualProfile)throw new Error('Classic paper-doll runtime failed to load');
-  if(P.version!==15||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1')throw new Error('Classic paper-doll visual contract is missing');
+  if(P.version!==15||P.raceIdentityVersion!==1||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1')throw new Error('Classic paper-doll race identity contract is missing');
   const appearance={race:'Veyren',gender:0,frame:1,skinTone:1,face:2,hair:3,hairColor:4,facialHair:1,marking:2,eyes:0,feature:1};
   const sword={name:'Test Sword',itemId:'test-sword',class:'Warrior',slot:'Weapon',tier:2,weaponType:'sword'};
   const spear={name:'Test Spear',itemId:'test-spear',class:'Warrior',slot:'Weapon',tier:2,weaponType:'spear'};
@@ -700,7 +700,7 @@ for(const file of files){
   vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),sandbox,{filename:'character-portraits-v1.js'});
   const G=sandbox.CellboundGear,P=sandbox.CellboundPortraits;
   if(!G||!P)throw new Error('Classic beta character/equipment runtime failed to load');
-  if(P.version!==15||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1'||P.rigContract!=='master-rig-v1'||P.masterRigCount!==12)throw new Error('Classic paper-doll beta lock is missing');
+  if(P.version!==15||P.raceIdentityVersion!==1||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1'||P.rigContract!=='master-rig-v1'||P.masterRigCount!==12)throw new Error('Classic paper-doll race identity beta lock is missing');
   const races=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'],positions=G.EQUIPMENT_POSITION_ORDER;
   const slotFor=pos=>pos.startsWith('Ring')?'Ring':pos.startsWith('Trinket')?'Trinket':pos;
   let checked=0;
