@@ -740,76 +740,144 @@ function paperLegs(c,skin,highlighted){var out=materialSurface(paperLegsRaw(c,sk
 // Plate pieces stop at anatomical joints. Dark textile connects the articulated plates;
 // no chest geometry extends into the legs, and every slot can be worn independently.
 function articulatedPlate(c,item,slot,highlighted){
-  const f=gearFitProfile(c,item),p=f.p,t=clampTier(item.tier),pal=gearPalette(c,item,t,slot);
-  const ink='#20292d',lining='#303638',edge=t>=3?pal.trim:pal.light;
-  const path=(d,fill=pal.base,stroke=ink,width=1.7)=>'<path d="'+d+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+width+'" stroke-linejoin="round"/>';
-  const line=(d,color=pal.light,width=1.2)=>path(d,'none',color,width);
-  const rivet=(x,y)=>'<circle cx="'+x+'" cy="'+y+'" r="1.15" fill="'+pal.trim+'" stroke="'+ink+'" stroke-width=".6"/>';
+  const f=gearFitProfile(c,item),p=f.p,t=clampTier(item.tier),pal=gearPalette(c,item,t,slot),klass=gearClass(item)||paperClass(c);
+  const race=f.race,ink='#20282c',lining=mixHex(pal.dark,'#2c3133',.35),edge=t>=3?pal.trim:pal.light;
+  const raceFit=({
+    Stoneborn:{shoulder:.96,waist:1.02,hip:1.00,top:-2},
+    Aelari:{shoulder:.95,waist:.96,hip:.96,top:1},
+    Thornkin:{shoulder:.96,waist:.99,hip:.98,top:0},
+    Emberkin:{shoulder:.96,waist:1.00,hip:.99,top:-1},
+    Nymari:{shoulder:.95,waist:.97,hip:.97,top:1},
+    Veyren:{shoulder:.96,waist:.98,hip:.98,top:0}
+  })[race]||{shoulder:.96,waist:.98,hip:.98,top:0};
+  const path=(d,fill=pal.base,stroke=ink,width=1.6)=>'<path d="'+d+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="'+width+'" stroke-linejoin="round"/>';
+  const line=(d,color=pal.light,width=1.1,opacity=1)=>'<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="'+width+'" stroke-linecap="round" opacity="'+opacity+'"/>';
+  const rivet=(x,y)=>'<circle cx="'+x+'" cy="'+y+'" r="1.05" fill="'+pal.trim+'" stroke="'+ink+'" stroke-width=".5"/>';
   let out='';
+
   if(slot==='Chest'){
-    const s=p.shoulder*.77,w=p.waist+1,n=p.neck*.7,top=f.chestTop;
-    out+='<g data-armour-part="padded-doublet">'+path('M'+(120-n)+' '+top+' L'+(120-s)+' '+(top+9)+' Q'+(120-s+4)+' 163 '+(120-w)+' 198 L'+(120-w)+' 237 Q120 246 '+(120+w)+' 237 L'+(120+w)+' 198 Q'+(120+s-4)+' 163 '+(120+s)+' '+(top+9)+' L'+(120+n)+' '+top+' Q120 '+(top+17)+' '+(120-n)+' '+top+'Z',lining)+'</g>';
-    out+='<g data-armour-part="breastplate">'+path('M'+(120-n)+' '+(top+4)+' Q120 '+(top+16)+' '+(120+n)+' '+(top+4)+' L'+(120+s-3)+' '+(top+12)+' Q'+(120+s-9)+' 155 '+(120+s-7)+' 172 L'+(120+w)+' 192 Q120 208 '+(120-w)+' 192 L'+(120-s+7)+' 172 Q'+(120-s+9)+' 155 '+(120-s+3)+' '+(top+12)+'Z')+
-      path('M120 '+(top+16)+' L120 199 Q'+(120-w)+' 186 '+(120-s+9)+' 168 L'+(120-s+5)+' '+(top+16)+' Q107 139 120 '+(top+16)+'Z',mixHex(pal.base,pal.light,.4),'none',0)+
-      path('M120 '+(top+16)+' L'+(120+s-6)+' '+(top+15)+' L'+(120+s-10)+' 172 L'+(120+w-2)+' 187 L120 199Z',mixHex(pal.base,pal.dark,.35),'none',0)+
-      path('M122 '+(top+18)+' L'+(120+s-10)+' '+(top+19)+' L'+(120+s-13)+' 165 L'+(120+w-4)+' 181 L122 191Z',pal.base,'none',0)+
-      line('M120 '+(top+16)+' V197',pal.light,1.8)+line('M'+(120-s+6)+' '+(top+13)+' Q'+(120-s+14)+' 151 '+(120-s+9)+' 169 M'+(120+s-6)+' '+(top+13)+' Q'+(120+s-14)+' 151 '+(120+s-9)+' 169',edge,2)+'</g>';
-    out+=line('M'+(120-s+10)+' '+(top+25)+' Q105 '+(top+24)+' 117 '+(top+34)+' M123 '+(top+34)+' Q135 '+(top+24)+' '+(120+s-10)+' '+(top+25),mixHex(pal.base,pal.light,.3),1.4);
-    if(gearClass(item)==='Paladin'){
-      for(const side of [-1,1])out+=line('M'+(120+side*(s-12))+' '+(top+19)+' Q'+(120+side*(s-15))+' 160 '+(120+side*(w-9))+' 184','#cec8ae',t>=3?3:1.5);
-      if(t>=2)out+=motifMarkup('sun',120,155,t>=4?.7:.45,pal.trim);
+    const sHalf=p.shoulder*.72*raceFit.shoulder,w=Math.max(18,(p.waist+1.5)*raceFit.waist),n=Math.max(8,p.neck*.62),top=f.chestTop+raceFit.top;
+    const breastBottom=top+67,plackTop=breastBottom-5,plackBottom=top+91,fauldTop=plackBottom+2;
+    // Close-fitting underlayer: it should never read as a cape or robe.
+    out+='<g data-armour-part="arming-doublet">'+
+      path('M'+(120-n)+' '+top+' L'+(120-sHalf)+' '+(top+10)+' Q'+(120-sHalf+5)+' '+(top+35)+' '+(120-w)+' '+(top+63)+' L'+(120-w)+' '+(plackBottom+8)+' Q120 '+(plackBottom+13)+' '+(120+w)+' '+(plackBottom+8)+' L'+(120+w)+' '+(top+63)+' Q'+(120+sHalf-5)+' '+(top+35)+' '+(120+sHalf)+' '+(top+10)+' L'+(120+n)+' '+top+' Q120 '+(top+13)+' '+(120-n)+' '+top+'Z',lining,ink,1.2)+
+      '</g>';
+
+    // Breastplate hugs the ribcage and stops well above the hips.
+    out+='<g data-armour-part="breastplate">'+
+      path('M'+(120-n)+' '+(top+3)+' Q120 '+(top+13)+' '+(120+n)+' '+(top+3)+' L'+(120+sHalf-4)+' '+(top+12)+' Q'+(120+sHalf-9)+' '+(top+37)+' '+(120+sHalf-10)+' '+(top+48)+' L'+(120+w+1)+' '+breastBottom+' Q120 '+(breastBottom+13)+' '+(120-w-1)+' '+breastBottom+' L'+(120-sHalf+10)+' '+(top+48)+' Q'+(120-sHalf+9)+' '+(top+37)+' '+(120-sHalf+4)+' '+(top+12)+'Z')+
+      path('M120 '+(top+13)+' L120 '+(breastBottom+6)+' Q'+(120-w)+' '+(breastBottom-3)+' '+(120-sHalf+10)+' '+(top+47)+' L'+(120-sHalf+6)+' '+(top+15)+' Q109 '+(top+18)+' 120 '+(top+13)+'Z',mixHex(pal.base,pal.light,.32),'none',0)+
+      path('M120 '+(top+13)+' L'+(120+sHalf-6)+' '+(top+15)+' L'+(120+sHalf-10)+' '+(top+47)+' L'+(120+w-2)+' '+(breastBottom-3)+' L120 '+(breastBottom+6)+'Z',mixHex(pal.base,pal.dark,.28),'none',0)+
+      line('M120 '+(top+15)+' V'+(breastBottom+5),pal.light,1.5,.68)+
+      line('M'+(120-sHalf+7)+' '+(top+14)+' Q'+(120-sHalf+12)+' '+(top+35)+' '+(120-sHalf+10)+' '+(top+47)+' M'+(120+sHalf-7)+' '+(top+14)+' Q'+(120+sHalf-12)+' '+(top+35)+' '+(120+sHalf-10)+' '+(top+47),edge,1.5,.85)+
+      '</g>';
+
+    // Plackart is short and rigid: no cloth-like drop below the stomach.
+    out+='<g data-armour-part="plackart">'+
+      path('M'+(120-w-2)+' '+plackTop+' L120 '+(plackTop+9)+' L'+(120+w+2)+' '+plackTop+' L'+(120+w)+' '+plackBottom+' Q120 '+(plackBottom+8)+' '+(120-w)+' '+plackBottom+'Z')+
+      line('M'+(120-w+2)+' '+(plackTop+2)+' L120 '+(plackTop+11)+' L'+(120+w-2)+' '+(plackTop+2),edge,1.35,.8)+
+      '</g>';
+
+    // Two short fauld lames finish at the belt; never become a hanging skirt.
+    const lameCount=t>=3?2:1;
+    for(let i=0;i<lameCount;i++){
+      const y=fauldTop+i*7,a=w+i*.65;
+      out+='<g data-armour-part="fauld">'+
+        path('M'+(120-a)+' '+y+' Q120 '+(y+7)+' '+(120+a)+' '+y+' L'+(120+a+.8)+' '+(y+5)+' Q120 '+(y+11)+' '+(120-a-.8)+' '+(y+5)+'Z')+
+        line('M'+(121-a)+' '+(y+5)+' Q120 '+(y+10)+' '+(119+a)+' '+(y+5),pal.light,.75,.65)+
+        '</g>';
     }
-    // Overlapping plackart and fauld terminate above the belt, not at the thighs.
-    out+='<g data-armour-part="plackart">'+path('M'+(120-w-2)+' 189 L120 201 L'+(120+w+2)+' 189 L'+(120+w-1)+' 212 Q120 224 '+(120-w+1)+' 212Z')+line('M'+(120-w+1)+' 192 L120 205 L'+(120+w-1)+' 192',edge,1.5)+'</g>';
-    for(let i=0;i<(t>=3?3:2);i++){const y=214+i*(t>=3?7:10),a=w+i;out+='<g data-armour-part="fauld">'+path('M'+(120-a)+' '+y+' Q120 '+(y+10)+' '+(120+a)+' '+y+' L'+(120+a+1)+' '+(y+7)+' Q120 '+(y+17)+' '+(119-a)+' '+(y+7)+'Z')+line('M'+(121-a)+' '+(y+8)+' Q120 '+(y+15)+' '+(119+a)+' '+(y+8),pal.light,.9)+'</g>';}
-    out+=line('M'+(120-n)+' '+(top+4)+' Q120 '+(top+16)+' '+(120+n)+' '+(top+4),edge,2.2);
-    for(const side of [-1,1]){out+=rivet(120+side*(s-8),top+18)+rivet(120+side*(w-3),211);if(t>=2)out+=path('M'+(120+side*(s-3))+' 157 l'+(side*5)+' 1 v12 l'+(-side*5)+' -1Z','#594634');}
-    if(t>=3)out+=line('M105 158 L120 166 L135 158',pal.trim,1.5);
-    if(t>=4){out+=motifMarkup(pal.set?.motif||'chevron',120,151,.65,pal.trim);for(const side of [-1,1])out+=line('M'+(120+side*9)+' 178 l'+(side*10)+' -5 l'+(side*4)+' -14',pal.trim,1.1);}
-    if(t===5)out+=path('M120 141 l3 5 l-3 5 l-3 -5Z',pal.glow,pal.trim,.8);
+
+    if(klass==='Paladin'){
+      // Paladin reads as polished plate with a sacred inlay, not a tabard/cape.
+      out+=line('M120 '+(top+24)+' V'+(plackTop+2),mixHex(pal.trim,'#f2e7bd',.35),2.0,.72);
+      out+=motifMarkup('sun',120,top+37,t>=4?.62:.43,pal.trim);
+      out+=line('M'+(120-w+5)+' '+(breastBottom-2)+' Q120 '+(breastBottom+7)+' '+(120+w-5)+' '+(breastBottom-2),pal.trim,1.45,.8);
+    }
+
+    out+=line('M'+(120-n)+' '+(top+3)+' Q120 '+(top+13)+' '+(120+n)+' '+(top+3),edge,1.8,.9);
+    for(const side of [-1,1]){
+      out+=rivet(120+side*(sHalf-8),top+19)+rivet(120+side*(w-3),plackBottom-1);
+      if(t>=3)out+=path('M'+(120+side*(sHalf-3))+' '+(top+37)+' l'+(side*4)+' 1 v9 l'+(-side*4)+' -1Z','#594634',ink,.8);
+    }
+    if(t>=3)out+=line('M106 '+(top+40)+' L120 '+(top+47)+' L134 '+(top+40),pal.trim,1.15,.72);
+    if(t>=4)out+=motifMarkup(pal.set?.motif||'chevron',120,top+31,.48,pal.trim);
+    if(t===5)out+=path('M120 '+(top+19)+' l3 5 l-3 5 l-3 -5Z',pal.glow,pal.trim,.7);
+
   }else if(slot==='Shoulders'){
     for(const side of [-1,1]){
-      const x=120+side*p.shoulder*.91,w=14+t*1.4,y=137-t*.5;
+      const x=side<0?f.leftShoulder:f.rightShoulder;
+      const capW=11+Math.min(4,t)*1.25,capH=12+Math.min(4,t)*1.1,y=f.shoulderY-2-(t>=4?1:0);
       out+='<g transform="translate('+x+' '+y+') scale('+side+' 1)" data-armour-part="pauldron">';
-      // Lower lames lie beneath the domed shoulder cap and follow the upper arm.
-      for(let i=(t>=3?2:1);i>=0;i--){const yy=13+i*8;out+=path('M-8 '+yy+' Q4 '+(yy-3)+' '+w+' '+(yy-6)+' L'+(w-1)+' '+(yy+5)+' Q5 '+(yy+11)+' -6 '+(yy+7)+'Z')+line('M-5 '+(yy+7)+' Q7 '+(yy+10)+' '+(w-2)+' '+(yy+4),pal.light,.9);}
-      out+=path('M-14 8 Q-11 -7 3 -8 Q'+(w-1)+' -8 '+(w+3)+' 7 L'+(w+1)+' 18 Q5 24 -12 16Z')+
-        path('M-11 6 Q-4 -6 9 -4 Q'+(w-2)+' -2 '+(w-1)+' 3 Q2 0 -11 11Z',mixHex(pal.base,pal.light,.45),'none',0)+
-        line('M-11 15 Q5 22 '+(w-1)+' 17',t>=3?pal.trim:pal.light,1.7)+rivet(-8,11)+rivet(w-3,12);
-      if(t>=4)out+=motifMarkup(pal.set?.motif||'chevron',3,9,.46,pal.trim);
-      if(t===5)out+=path('M'+(w-7)+' -4 L'+(w-4)+' -15 L'+(w+3)+' 4Z',pal.dark,pal.trim,1.3)+line('M-6 0 Q3 -5 11 -2',pal.glow,.9);
+      if(t>=3){
+        out+=path('M-7 '+(capH+4)+' Q3 '+(capH+1)+' '+(capW-1)+' '+capH+' L'+(capW-2)+' '+(capH+7)+' Q3 '+(capH+11)+' -6 '+(capH+8)+'Z');
+        if(t>=4)out+=path('M-6 '+(capH+10)+' Q3 '+(capH+8)+' '+(capW-2)+' '+(capH+7)+' L'+(capW-3)+' '+(capH+13)+' Q3 '+(capH+16)+' -5 '+(capH+14)+'Z');
+      }
+      out+=path('M-12 7 Q-9 -6 3 -7 Q'+(capW-1)+' -7 '+(capW+2)+' 6 L'+capW+' '+capH+' Q4 '+(capH+5)+' -11 '+(capH+1)+'Z')+
+        path('M-9 5 Q-3 -4 8 -3 Q'+(capW-2)+' -1 '+(capW-1)+' 3 Q2 0 -9 9Z',mixHex(pal.base,pal.light,.36),'none',0)+
+        line('M-9 '+(capH-1)+' Q3 '+(capH+4)+' '+(capW-1)+' '+(capH-1),t>=3?pal.trim:pal.light,1.25,.78)+rivet(-7,9)+rivet(capW-3,10);
+      if(t>=4)out+=motifMarkup(pal.set?.motif||'chevron',3,7,.36,pal.trim);
+      if(t===5)out+=path('M'+(capW-6)+' -3 L'+(capW-3)+' -12 L'+(capW+2)+' 3Z',pal.dark,pal.trim,1.0);
       out+='</g>';
     }
+
   }else if(slot==='Legs'){
-    const h=f.hipHalf,w=f.legHalf;
-    out+='<g data-armour-part="underleggings">'+path('M'+(120-h)+' 245 Q120 251 '+(120+h)+' 245 L'+(f.rightLeg+w)+' 278 L'+(f.rightLeg+f.calfHalf)+' 353 H'+(f.rightLeg-f.calfHalf)+' L123 264 H117 L'+(f.leftLeg+f.calfHalf)+' 353 H'+(f.leftLeg-f.calfHalf)+' L'+(f.leftLeg-w)+' 278Z',lining)+'</g>';
-    for(const side of [-1,1]){const x=side<0?f.leftLeg:f.rightLeg;
-      out+='<g data-armour-part="cuisse">'+path('M'+(x-w+1)+' 265 Q'+x+' 259 '+(x+w-1)+' 265 L'+(x+w-3)+' 291 L'+x+' 301 L'+(x-w+3)+' 291Z')+
-        path('M'+(x-w+3)+' 267 L'+(x-2)+' 264 V295 L'+(x-w+5)+' 288Z',mixHex(pal.base,pal.light,.4),'none',0)+line('M'+(x+w-4)+' 268 L'+(x+w-5)+' 289 L'+x+' 298',edge,1.2)+'</g>';
-      out+='<g data-armour-part="poleyn">'+path('M'+x+' 299 L'+(x+w)+' 304 L'+(x+w-1)+' 314 L'+x+' 320 L'+(x-w+1)+' 314 L'+(x-w)+' 304Z')+path('M'+x+' 301 L'+(x+w-2)+' 306 L'+x+' 310 L'+(x-w+2)+' 306Z',mixHex(pal.base,pal.light,.4),'none',0)+line('M'+(x-w+2)+' 313 L'+x+' 318 L'+(x+w-2)+' 313',edge)+'</g>';
-      if(t>=3)out+=path('M'+(x+side*(w-1))+' 304 l'+(side*7)+' -3 l'+(side*3)+' 9 l'+(-side*10)+' 7Z',pal.dark,edge,1.2);
-      out+=line('M'+(x-w+4)+' 325 H'+(x+w-4)+' M'+(x-w+4)+' 332 H'+(x+w-4),pal.dark,3);
-      // Tassets belong to leg armour, and leave a clear centre split.
-      if(t>=2)out+='<g data-armour-part="tasset">'+path('M'+(x-w)+' 247 L'+(x+w)+' 250 L'+(x+w-2)+' '+(t>=4?276:266)+' L'+x+' '+(t>=4?282:271)+' L'+(x-w-1)+' '+(t>=4?274:264)+'Z')+line('M'+(x-w+2)+' 257 L'+(x+w-2)+' 260',edge)+'</g>';
-      if(t>=4)out+=motifMarkup(pal.set?.motif||'chevron',x,260,.34,pal.trim);
+    const h=f.hipHalf*raceFit.hip,w=f.legHalf;
+    out+='<g data-armour-part="underleggings">'+path('M'+(120-h)+' 246 Q120 251 '+(120+h)+' 246 L'+(f.rightLeg+w)+' 278 L'+(f.rightLeg+f.calfHalf)+' 351 H'+(f.rightLeg-f.calfHalf)+' L123 264 H117 L'+(f.leftLeg+f.calfHalf)+' 351 H'+(f.leftLeg-f.calfHalf)+' L'+(f.leftLeg-w)+' 278Z',lining,ink,1.0)+'</g>';
+    for(const side of [-1,1]){
+      const x=side<0?f.leftLeg:f.rightLeg;
+      // Short tassets stay on the hip and never form long skirt/tail shapes.
+      if(t>=2){
+        const outer=x+side*(w-1),inner=x-side*(w-1),bottom=t>=4?269:264;
+        out+='<g data-armour-part="tasset">'+
+          path('M'+inner+' 248 L'+outer+' 250 L'+(outer-side*1)+' '+(bottom-3)+' L'+x+' '+bottom+' L'+(inner+side*2)+' '+(bottom-4)+'Z')+
+          line('M'+(inner+side*2)+' 256 L'+(outer-side*2)+' 258',edge,1.0,.75)+
+          '</g>';
+      }
+      out+='<g data-armour-part="cuisse">'+
+        path('M'+(x-w+1)+' 266 Q'+x+' 261 '+(x+w-1)+' 266 L'+(x+w-3)+' 290 L'+x+' 298 L'+(x-w+3)+' 290Z')+
+        path('M'+(x-w+3)+' 268 L'+(x-2)+' 265 V293 L'+(x-w+5)+' 287Z',mixHex(pal.base,pal.light,.33),'none',0)+
+        line('M'+(x+w-4)+' 269 L'+(x+w-5)+' 288 L'+x+' 296',edge,1.0,.75)+
+        '</g>';
+      out+='<g data-armour-part="poleyn">'+
+        path('M'+x+' 298 L'+(x+w)+' 303 L'+(x+w-1)+' 313 L'+x+' 318 L'+(x-w+1)+' 313 L'+(x-w)+' 303Z')+
+        path('M'+x+' 300 L'+(x+w-2)+' 305 L'+x+' 309 L'+(x-w+2)+' 305Z',mixHex(pal.base,pal.light,.34),'none',0)+
+        line('M'+(x-w+2)+' 312 L'+x+' 316 L'+(x+w-2)+' 312',edge,.9,.8)+
+        '</g>';
+      if(t>=3)out+=path('M'+(x+side*(w-1))+' 303 l'+(side*5)+' -2 l'+(side*2)+' 7 l'+(-side*7)+' 5Z',pal.dark,edge,1.0);
+      out+=line('M'+(x-w+4)+' 324 H'+(x+w-4)+' M'+(x-w+4)+' 331 H'+(x+w-4),pal.dark,2.2,.75);
+      if(t>=4)out+=motifMarkup(pal.set?.motif||'chevron',x,258,.28,pal.trim);
       out+=rivet(x-w+4,269)+rivet(x+w-4,269);
     }
+
   }else if(slot==='Feet'){
-    for(const side of [-1,1]){const x=side<0?f.leftLeg:f.rightLeg,w=f.calfHalf+1,toe=x+side*5;
-      out+=path('M'+(x-w)+' 327 H'+(x+w)+' L'+(x+w)+' 369 L'+(toe+w+2)+' 382 Q'+toe+' 391 '+(toe-w-2)+' 382 L'+(x-w)+' 370Z','#393432');
-      out+='<g data-armour-part="greave">'+path('M'+x+' 322 L'+(x+w)+' 329 L'+(x+w-2)+' 363 L'+x+' 371 L'+(x-w+2)+' 363 L'+(x-w)+' 329Z')+path('M'+x+' 325 V367 L'+(x-w+4)+' 361 L'+(x-w+2)+' 331Z',mixHex(pal.base,pal.light,.4),'none',0)+line('M'+x+' 326 V365',pal.light,1.6)+'</g>';
-      for(let i=0;i<3;i++){const y=369+i*5,spread=w+i*.6,tx=x+side*i*1.7;out+='<g data-armour-part="sabaton">'+path('M'+(tx-spread)+' '+y+' Q'+tx+' '+(y-4)+' '+(tx+spread)+' '+y+' L'+(tx+spread+1)+' '+(y+5)+' Q'+tx+' '+(y+9)+' '+(tx-spread-1)+' '+(y+5)+'Z')+line('M'+(tx-spread+1)+' '+(y+5)+' Q'+tx+' '+(y+8)+' '+(tx+spread-1)+' '+(y+5),pal.light,.9)+'</g>';}
-      if(t>=3)out+=line('M'+(x-w+3)+' 333 L'+x+' 328 L'+(x+w-3)+' 333',pal.trim,1.5);
-      if(t>=4)out+=motifMarkup(pal.set?.motif||'chevron',x,344,.35,pal.trim);
-      if(t===5)out+=line('M'+x+' 348 V357',pal.glow,1.1);
+    for(const side of [-1,1]){
+      const x=side<0?f.leftLeg:f.rightLeg,w=f.calfHalf+.7,toe=x+side*4;
+      out+=path('M'+(x-w)+' 327 H'+(x+w)+' L'+(x+w)+' 366 L'+(toe+w+1)+' 379 Q'+toe+' 386 '+(toe-w-1)+' 379 L'+(x-w)+' 367Z','#393432',ink,1.1);
+      out+='<g data-armour-part="greave">'+
+        path('M'+x+' 323 L'+(x+w)+' 330 L'+(x+w-2)+' 361 L'+x+' 368 L'+(x-w+2)+' 361 L'+(x-w)+' 330Z')+
+        path('M'+x+' 326 V364 L'+(x-w+4)+' 359 L'+(x-w+2)+' 332Z',mixHex(pal.base,pal.light,.32),'none',0)+
+        line('M'+x+' 327 V362',pal.light,1.2,.72)+
+        '</g>';
+      for(let i=0;i<2;i++){
+        const y=367+i*6,spread=w+i*.45,tx=x+side*i*1.4;
+        out+='<g data-armour-part="sabaton">'+path('M'+(tx-spread)+' '+y+' Q'+tx+' '+(y-3)+' '+(tx+spread)+' '+y+' L'+(tx+spread+.8)+' '+(y+5)+' Q'+tx+' '+(y+8)+' '+(tx-spread-.8)+' '+(y+5)+'Z')+'</g>';
+      }
+      if(t>=3)out+=line('M'+(x-w+3)+' 334 L'+x+' 329 L'+(x+w-3)+' 334',pal.trim,1.15,.8);
+      if(t>=4)out+=motifMarkup(pal.set?.motif||'chevron',x,344,.28,pal.trim);
     }
+
   }else if(slot==='Waist'){
-    const w=f.waistHalf+3;
-    out+=path('M'+(120-w)+' 238 Q120 246 '+(120+w)+' 238 V248 Q120 256 '+(120-w)+' 248Z','#4a382b',ink,1.8);
-    out+=path('M114 242 H126 V251 H114Z',pal.dark,edge,2)+line('M120 243 V250',pal.trim,1.5);
-    for(const side of [-1,1]){out+=rivet(120+side*(w-5),244);if(t>=3)out+=path('M'+(120+side*(w-10))+' 242 v8 l'+(side*5)+' -1 v-8Z',pal.base);}
+    const w=f.waistHalf+2;
+    out+=path('M'+(120-w)+' 238 Q120 244 '+(120+w)+' 238 V248 Q120 253 '+(120-w)+' 248Z','#4a382b',ink,1.3);
+    out+=path('M115 241 H125 V250 H115Z',pal.dark,edge,1.4)+line('M120 242 V249',pal.trim,1.0,.85);
+    for(const side of [-1,1]){
+      out+=rivet(120+side*(w-5),243);
+      if(t>=4)out+=path('M'+(120+side*(w-9))+' 242 v6 l'+(side*4)+' -1 v-6Z',pal.base,ink,.7);
+    }
   }
-  return '<g class="'+paperSlotClass(slot,highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,slot))+'"'+(slot==='Chest'?' data-chest-top="'+f.chestTop.toFixed(2)+'"':'')+' data-armour-construction="articulated">'+out+'</g>';
+
+  return '<g class="'+paperSlotClass(slot,highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,slot))+'"'+(slot==='Chest'?' data-chest-top="'+f.chestTop.toFixed(2)+'"':'')+' data-armour-construction="articulated-v2">'+out+'</g>';
 }
 
 function paperLegsRaw(c,skin,highlighted){
@@ -879,18 +947,18 @@ function paperArmsRaw(c,skin,highlighted){
 }
 function paperChest(c,highlighted){var out=materialSurface(paperChestRaw(c,highlighted),c,'Chest');return out}
 function fittedLeatherChest(c,item,highlighted){
-  const f=gearFitProfile(c,item),p=f.p,t=clampTier(item.tier),pal=gearPalette(c,item,t,'Chest'),hunter=gearClass(item)==='Hunter';
-  const s=p.shoulder*.75,w=p.waist+1,h=p.hip*.88,n=p.neck*.65,top=f.chestTop;
-  let out='<path d="M'+(120-n)+' '+top+' Q120 '+(top+14)+' '+(120+n)+' '+top+' L'+(120+s)+' '+(top+12)+' Q'+(120+s-8)+' 168 '+(120+w)+' 204 L'+(120+h)+' 247 L124 253 L120 240 L116 253 L'+(120-h)+' 247 L'+(120-w)+' 204 Q'+(120-s+8)+' 168 '+(120-s)+' '+(top+12)+'Z" fill="'+pal.base+'" stroke="'+pal.dark+'" stroke-width="2"/>';
-  out+='<path d="M'+(120-s+5)+' '+(top+16)+' Q'+(120-w-5)+' 170 '+(120-w+4)+' 211 L'+(120-h+6)+' 241 M'+(120+s-5)+' '+(top+16)+' Q'+(120+w+5)+' 170 '+(120+w-4)+' 211 L'+(120+h-6)+' 241" fill="none" stroke="'+pal.dark+'" stroke-width="5"/>';
-  out+='<path d="M'+(120-n)+' '+(top+3)+' Q120 '+(top+17)+' '+(120+n)+' '+(top+3)+' M120 '+(top+17)+' V236" fill="none" stroke="'+pal.dark+'" stroke-width="1.8"/>';
-  for(let y=163;y<227;y+=10)out+='<path d="M117 '+y+' l6 4" stroke="'+pal.trim+'" stroke-width=".9" opacity=".6"/>';
-  if(hunter){out+='<path d="M'+(120-s+8)+' '+(top+6)+' L'+(120+w-5)+' 220 l-7 4 L'+(120-s+1)+' '+(top+11)+'Z" fill="'+pal.dark+'"/><rect x="129" y="186" width="8" height="11" rx="1" fill="none" stroke="'+pal.trim+'" stroke-width="1.5"/>';}
-  if(t>=2)for(const side of [-1,1])out+='<path d="M'+(120+side*7)+' 151 Q'+(120+side*18)+' 143 '+(120+side*(s-9))+' 153 L'+(120+side*(w-4))+' 181 L'+(120+side*7)+' 185Z" fill="'+pal.dark+'" opacity=".35" stroke="'+pal.light+'" stroke-width=".9"/>';
-  if(t>=3)out+='<path d="M'+(120-n)+' '+(top+2)+' Q120 '+(top+13)+' '+(120+n)+' '+(top+2)+'" fill="none" stroke="'+pal.trim+'" stroke-width="2"/>';
-  if(t>=4)out+=motifMarkup(hunter?'arrow':'fang',120,145,.45,pal.trim);
-  if(t===5)out+='<path d="M111 229 l9 3 l9 -3" fill="none" stroke="'+pal.glow+'" stroke-width="1" opacity=".5"/>';
-  return '<g class="'+paperSlotClass('Chest',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Chest'))+'" data-chest-top="'+top+'" data-chest-design="fitted-leather">'+out+'</g>';
+  const f=gearFitProfile(c,item),p=f.p,t=clampTier(item.tier),pal=gearPalette(c,item,t,'Chest'),hunter=(gearClass(item)||paperClass(c))==='Hunter';
+  const s=p.shoulder*.72,w=p.waist+1,h=p.hip*.82,n=p.neck*.62,top=f.chestTop;
+  let out='<path d="M'+(120-n)+' '+top+' Q120 '+(top+12)+' '+(120+n)+' '+top+' L'+(120+s)+' '+(top+11)+' Q'+(120+s-8)+' 166 '+(120+w)+' 202 L'+(120+h)+' 240 Q120 248 '+(120-h)+' 240 L'+(120-w)+' 202 Q'+(120-s+8)+' 166 '+(120-s)+' '+(top+11)+'Z" fill="'+pal.base+'" stroke="'+pal.dark+'" stroke-width="1.7"/>';
+  out+='<path d="M'+(120-s+5)+' '+(top+15)+' Q'+(120-w-4)+' 168 '+(120-w+4)+' 207 L'+(120-h+6)+' 236 M'+(120+s-5)+' '+(top+15)+' Q'+(120+w+4)+' 168 '+(120+w-4)+' 207 L'+(120+h-6)+' 236" fill="none" stroke="'+pal.dark+'" stroke-width="3.6" opacity=".78"/>';
+  out+='<path d="M'+(120-n)+' '+(top+3)+' Q120 '+(top+15)+' '+(120+n)+' '+(top+3)+' M120 '+(top+15)+' V236" fill="none" stroke="'+pal.dark+'" stroke-width="1.35"/>';
+  for(let y=163;y<226;y+=11)out+='<path d="M117 '+y+' l6 4" stroke="'+pal.trim+'" stroke-width=".8" opacity=".52"/>';
+  if(hunter)out+='<path d="M'+(120-s+8)+' '+(top+7)+' L'+(120+w-5)+' 217 l-6 4 L'+(120-s+2)+' '+(top+12)+'Z" fill="'+pal.dark+'" opacity=".75"/><rect x="129" y="185" width="8" height="10" rx="1" fill="none" stroke="'+pal.trim+'" stroke-width="1.2"/>';
+  if(t>=2)for(const side of [-1,1])out+='<path d="M'+(120+side*7)+' 151 Q'+(120+side*17)+' 144 '+(120+side*(s-9))+' 153 L'+(120+side*(w-4))+' 181 L'+(120+side*7)+' 184Z" fill="'+pal.dark+'" opacity=".28" stroke="'+pal.light+'" stroke-width=".75"/>';
+  if(t>=3)out+='<path d="M'+(120-n)+' '+(top+2)+' Q120 '+(top+12)+' '+(120+n)+' '+(top+2)+'" fill="none" stroke="'+pal.trim+'" stroke-width="1.5"/>';
+  if(t>=4)out+=motifMarkup(hunter?'arrow':'fang',120,145,.38,pal.trim);
+  if(t===5)out+='<path d="M111 232 q9 4 18 0" fill="none" stroke="'+pal.glow+'" stroke-width=".9" opacity=".45"/>';
+  return '<g class="'+paperSlotClass('Chest',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Chest'))+'" data-chest-top="'+top+'" data-chest-design="fitted-leather-v2">'+out+'</g>';
 }
 function paperChestRaw(c,highlighted){
   if(itemForSlot(c,'Chest')&&gearProfile(itemForSlot(c,'Chest')).family==='leather')return fittedLeatherChest(c,itemForSlot(c,'Chest'),highlighted);
@@ -927,8 +995,8 @@ function paperWaistRaw(c,highlighted){
   if(gearProfile(item).family==='plate')return articulatedPlate(c,item,'Waist',highlighted);
   const f=gearFitProfile(c,item),t=clampTier(item.tier),pal=gearPalette(c,item,t,'Waist'),cloth=gearProfile(item).family==='cloth',w=f.waistHalf+2;
   let out='<path d="M'+(120-w)+' 238 Q120 246 '+(120+w)+' 238 V250 Q120 258 '+(120-w)+' 250Z" fill="'+pal.dark+'" stroke="#252729" stroke-width="1.5"/><rect x="115" y="242" width="10" height="9" rx="1" fill="'+pal.base+'" stroke="'+pal.trim+'" stroke-width="1.5"/>';
-  if(cloth)out+='<path d="M'+(120+w-9)+' 249 Q'+(120+w+6)+' 259 '+(120+w-3)+' 276 L'+(120+w-10)+' 271 Q'+(120+w-1)+' 261 '+(120+w-15)+' 251Z" fill="'+pal.base+'" stroke="'+pal.dark+'" stroke-width="1"/>';
-  else for(const side of [-1,1]){const x=120+side*(w-5);out+='<path d="M'+(x-5)+' 248 h10 l1 14 q-6 5 -12 0Z" fill="'+pal.base+'" stroke="'+pal.dark+'" stroke-width="1.4"/><path d="M'+(x-5)+' 251 q5 4 10 0" fill="none" stroke="'+pal.trim+'" stroke-width="1"/>';}
+  if(cloth)out+='<path d="M'+(120+w-9)+' 249 Q'+(120+w+4)+' 256 '+(120+w-2)+' 267 L'+(120+w-9)+' 264 Q'+(120+w-2)+' 257 '+(120+w-14)+' 251Z" fill="'+pal.base+'" stroke="'+pal.dark+'" stroke-width="1"/>';
+  else for(const side of [-1,1]){const x=120+side*(w-5);out+='<path d="M'+(x-5)+' 248 h10 l.8 10 q-5.8 4 -11.6 0Z" fill="'+pal.base+'" stroke="'+pal.dark+'" stroke-width="1.2"/><path d="M'+(x-5)+' 251 q5 3 10 0" fill="none" stroke="'+pal.trim+'" stroke-width=".9"/>';}
   if(t>=4)out+=itemRune(item,'Waist',pal,120,246,.3);
   return '<g class="'+paperSlotClass('Waist',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Waist'))+'" data-waist-design="'+(cloth?'short-sash':'utility-belt')+'">'+out+'</g>';
 }
