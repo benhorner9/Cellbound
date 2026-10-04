@@ -913,3 +913,11 @@
  .hs2d-arena.hollow-live-room .cb2d-live-scene,
  .hs2d-room-art{transition:none!important}
 }
+
+
+/* Combat commander six-action pass */
+.hs2d-unified-shell .cb2d-controls{grid-template-columns:repeat(6,minmax(0,1fr))}
+.hs2d-unified-shell .cb2d-controls button.recommended{border-color:rgba(225,183,91,.62);background:linear-gradient(180deg,rgba(58,45,20,.96),rgba(30,25,16,.96));box-shadow:0 0 0 1px rgba(225,183,91,.11),0 0 18px rgba(225,183,91,.08)}
+.hs2d-unified-shell .cb2d-controls button.recommended b{color:#f2d68f}
+@media(max-width:900px){.hs2d-unified-shell .cb2d-controls{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:560px){.hs2d-unified-shell .cb2d-controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
