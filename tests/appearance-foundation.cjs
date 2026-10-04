@@ -1,6 +1,6 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const sandbox={window:{}};vm.createContext(sandbox);vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../character-portraits-v1.js'),'utf8'),sandbox);
+const sandbox={window:{}};vm.createContext(sandbox);for(const file of ['item-atlas-v2.js','item-visuals-v2.js'])vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../'+file),'utf8'),sandbox);vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'../character-portraits-v1.js'),'utf8'),sandbox);
 const P=sandbox.window.CellboundPortraits;
 // Strip definition identifiers: a control must alter geometry, not just an SVG ID.
 const geometry=s=>s.replace(/pd[a-z0-9]+/g,'ID');
@@ -20,7 +20,7 @@ for(const race of Object.keys(P.RACES))for(const gender of [0,1])for(const frame
  const helmet={slot:'Head',class:'Warrior',tier:2,name:'Iron Helm'};
  assert.equal(P.equipmentCoverage({...c,equipment:{Head:helmet}}).hair,true);
  assert(!P.paperDollSVG({...c,equipment:{Head:helmet}}).includes('data-appearance-part="hair"'));
- assert.equal(P.equipmentCoverage({...c,equipment:{Head:{...helmet,class:'Mage'}}}).hair,false);
+ assert.equal(P.equipmentCoverage({...c,equipment:{Head:{...helmet,class:'Mage'}}}).hair,true);
  for(const anchor of Object.values(P.anatomicalAnchors(c)))assert(Number.isFinite(anchor.x)&&Number.isFinite(anchor.y));
  const portrait=P.portraitHTML(c);
  assert(portrait.includes('viewBox="65 0 110 95"')||portrait.includes('viewBox="65 15 110 110"'));
@@ -39,7 +39,7 @@ for(const race of Object.keys(P.RACES))for(const gender of [0,1])for(const frame
  for(const slot of ['Chest','Shoulders','Waist']){
   c.equipment={[slot]:{id:klass+'-'+slot+'-'+tier,slot,class:klass,tier}};
   const svg=P.paperDollSVG(c);
-  assert.equal(svg.includes('cb-paper-back-layer'),slot==='Chest'&&klass==='Mage',klass+' '+slot+' must own only its intended clothing');
+  assert.equal(svg.includes('cb-paper-back-layer'),false,klass+' '+slot+' must own only its intended clothing');
   assert(!/NaN|Infinity/.test(svg));
   if(slot==='Waist'&&klass==='Mage')assert(svg.includes('data-waist-design="short-sash"'));
  }

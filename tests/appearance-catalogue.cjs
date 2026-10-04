@@ -1,7 +1,7 @@
 'use strict';
 const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),path=require('path');
 const context={console,Math,Date,window:{}};context.window=context;vm.createContext(context);
-for(const file of ['gear-data.js','character-portraits-v1.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'..',file),'utf8'),context);
+for(const file of ['gear-data.js','item-atlas-v2.js','item-visuals-v2.js','character-portraits-v1.js'])vm.runInContext(fs.readFileSync(path.join(__dirname,'..',file),'utf8'),context);
 const P=context.CellboundPortraits,G=context.CellboundGear;
 let count=0;const start=performance.now();
 for(const race of Object.keys(P.RACES))for(const gender of [0,1])for(const item of G.items){

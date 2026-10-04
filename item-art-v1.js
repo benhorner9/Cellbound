@@ -87,132 +87,6 @@ function rarityOf(x){return String(x?.rarity||((Number(x?.tier)||0)>=4?'Epic':(N
 function classOf(x){return String(x?.class||((Array.isArray(x?.classes)&&x.classes.length===1)?x.classes[0]:'')||'')}
 function tierOf(x){return Math.max(1,Math.min(5,Number(x?.tier)||1))}
 function pvpBand(x){const n=String(x?.name||'');return Object.keys(PVP).find(function(k){return n.indexOf(k)===0})||''}
-function palette(x){
- const pvp=pvpBand(x),rar=RARITY[rarityOf(x)]||RARITY.Common,klass=CLASS[classOf(x)];
- const base=pvp?PVP[pvp]:(klass||rar);
- const shared=!pvp&&window.CellboundPortraits?.visualProfile?.({},x,x?.slot)?.palette;
- if(shared)return {a:shared.base,b:shared.dark,rarity:rar[0],dark:shared.dark,ink:'#273036',gold:shared.trim};
- return {a:base[0],b:base[1],rarity:rar[0],dark:'#071014',ink:'#dce8e5',gold:'#d9b86f'}
-}
-function detailSeed(x){return hash(idOf(x)+'|'+slotOf(x)+'|'+classOf(x)+'|'+tierOf(x))}
-function frame(seed,pal,tier){
- const notch=5+(seed%8),orb=12+((seed>>>4)%10);
- return '<rect x="7" y="7" width="114" height="114" rx="18" fill="#071014" stroke="'+pal.rarity+'" stroke-width="'+(tier>=4?3:2)+'" opacity=".98"/>'+
- '<path d="M18 32 L18 18 L'+(32+notch)+' 18 M110 32 L110 18 L'+(96-notch)+' 18 M18 96 L18 110 L'+(32+notch)+' 110 M110 96 L110 110 L'+(96-notch)+' 110" fill="none" stroke="'+pal.a+'" stroke-width="2" opacity=".55"/>'+
- '<circle cx="64" cy="64" r="'+(44+orb*.12)+'" fill="url(#g)" opacity=".24"/>'+
- '<circle cx="64" cy="64" r="48" fill="none" stroke="'+pal.a+'" stroke-width="1" opacity=".18" stroke-dasharray="'+(3+seed%4)+' '+(5+(seed>>>8)%5)+'"/>';
-}
-function runes(seed,pal,tier){
- let out='';const count=2+Math.min(4,tier);
- for(let i=0;i<count;i++){
-  const a=(seed+i*71)%360,r=41-(i%2)*5,x=64+Math.cos(a*Math.PI/180)*r,y=64+Math.sin(a*Math.PI/180)*r;
-  out+='<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+(1.3+(i%2)*.6)+'" fill="'+pal.rarity+'" opacity="'+(.25+tier*.07).toFixed(2)+'"/>';
- }
- return out
-}
-function plateHelmet(p,seed){return '<path d="M38 56 Q40 28 64 23 Q88 28 90 56 L84 91 L72 101 L56 101 L44 91 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M43 58 H85 L80 74 H70 L66 87 H61 L57 74 H48 Z" fill="'+p.dark+'" opacity=".9"/><path d="M64 27 V54 M48 39 L56 53 M80 39 L72 53" stroke="'+p.rarity+'" stroke-width="3" opacity=".75"/>'}
-function hood(p,seed){return '<path d="M36 65 Q38 27 64 22 Q90 27 92 65 L83 102 Q75 92 64 91 Q53 92 45 102 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M48 61 Q50 42 64 37 Q78 42 80 61 Q77 82 64 87 Q51 82 48 61" fill="'+p.dark+'"/><path d="M45 48 Q64 30 83 48" fill="none" stroke="'+p.rarity+'" stroke-width="3" opacity=".8"/>'}
-function circlet(p,seed){return '<path d="M30 70 Q64 44 98 70 L90 82 Q64 67 38 82 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M42 66 L50 43 L61 59 L64 34 L69 59 L79 43 L86 66" fill="none" stroke="'+p.rarity+'" stroke-width="5"/><circle cx="64" cy="61" r="6" fill="'+p.rarity+'" stroke="#fff" stroke-width="1"/>'}
-function shoulders(p,fam,seed){
- const wing=fam==='cloth'?'M20 48 Q36 27 54 43 L47 78 Q34 69 21 73 Z':'M17 50 Q34 28 53 42 L48 73 L24 82 L15 68 Z';
- return '<path d="'+wing+'" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><g transform="translate(128 0) scale(-1 1)"><path d="'+wing+'" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/></g><path d="M49 43 Q64 32 79 43 L76 82 Q64 93 52 82 Z" fill="'+p.dark+'" opacity=".75"/><path d="M28 51 L43 47 M100 51 L85 47" stroke="'+p.rarity+'" stroke-width="4"/>'}
-function chest(p,fam,seed){
- const hem=fam==='cloth'?'L86 108 L72 96 L64 110 L56 96 L42 108':'L83 105 H45';
- return '<path d="M42 31 L55 24 H73 L86 31 L97 52 L86 61 L83 105 H45 L42 61 L31 52 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M55 25 L64 43 L73 25 M64 43 V94" fill="none" stroke="'+p.rarity+'" stroke-width="3" opacity=".75"/><path d="M47 57 Q64 69 81 57" fill="none" stroke="'+p.ink+'" stroke-width="2" opacity=".55"/><path d="M45 105 '+hem+'" fill="none" stroke="'+p.rarity+'" stroke-width="2"/>';
-}
-function hands(p,fam,seed){return '<path d="M30 43 L48 37 L56 56 L52 94 L37 105 L25 93 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M98 43 L80 37 L72 56 L76 94 L91 105 L103 93 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M31 56 L50 51 M97 56 L78 51 M33 72 L51 68 M95 72 L77 68" stroke="'+p.rarity+'" stroke-width="3" opacity=".72"/>'}
-function waist(p,fam,seed){return '<path d="M25 49 Q64 38 103 49 L99 78 Q64 86 29 78 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M48 47 H80 V81 H48 Z" fill="'+p.dark+'" stroke="'+p.rarity+'" stroke-width="3"/><path d="M56 55 H72 V73 H56 Z" fill="none" stroke="'+p.ink+'" stroke-width="2"/><circle cx="64" cy="64" r="4" fill="'+p.rarity+'"/>'}
-function legs(p,fam,seed){return '<path d="M39 26 H89 L84 60 L78 108 H58 L55 69 L50 108 H30 L38 60 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M64 31 V62 M39 61 L55 67 M89 61 L73 67" stroke="'+p.rarity+'" stroke-width="3" opacity=".72"/>'}
-function feet(p,fam,seed){return '<path d="M35 35 L58 37 L56 79 L48 103 H19 Q17 92 27 83 L31 63 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M93 35 L70 37 L72 79 L80 103 H109 Q111 92 101 83 L97 63 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M28 68 L55 65 M100 68 L73 65" stroke="'+p.rarity+'" stroke-width="3"/>'}
-function sword(p,seed){return '<path d="M61 17 H67 L70 75 L83 88 L76 95 L64 84 L52 95 L45 88 L58 75 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M39 75 H89" stroke="'+p.gold+'" stroke-width="7"/><path d="M64 87 V111" stroke="'+p.ink+'" stroke-width="8"/><circle cx="64" cy="112" r="6" fill="'+p.rarity+'"/>'}
-function hammer(p,seed){return '<path d="M47 22 H91 L98 34 L90 58 H50 L40 47 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M64 57 L54 108 L66 111 L77 58" fill="'+p.b+'" stroke="'+p.ink+'" stroke-width="2"/><path d="M51 34 H88 M60 25 L56 55" stroke="'+p.rarity+'" stroke-width="4" opacity=".8"/>'}
-function staff(p,seed){return '<path d="M63 35 L58 111 H68 L66 35" fill="'+p.b+'" stroke="'+p.ink+'" stroke-width="2"/><path d="M64 17 L77 31 L69 47 L53 47 L47 31 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><circle cx="64" cy="32" r="8" fill="'+p.rarity+'" opacity=".85"/><path d="M46 31 Q64 13 82 31" fill="none" stroke="'+p.a+'" stroke-width="3"/>'}
-function bow(p,seed){return '<path d="M39 20 Q96 64 39 108 Q58 65 39 20" fill="none" stroke="url(#m)" stroke-width="8"/><path d="M41 22 L88 64 L41 106" fill="none" stroke="'+p.ink+'" stroke-width="2"/><path d="M28 64 H92 M85 58 L95 64 L85 70" stroke="'+p.rarity+'" stroke-width="4"/>'}
-function daggers(p,seed){return '<g transform="rotate(-20 48 65)"><path d="M45 18 L57 53 L50 73 L39 54 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M35 70 H57" stroke="'+p.rarity+'" stroke-width="6"/><path d="M46 72 V108" stroke="'+p.ink+'" stroke-width="7"/></g><g transform="translate(128 0) scale(-1 1) rotate(-20 48 65)"><path d="M45 18 L57 53 L50 73 L39 54 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M35 70 H57" stroke="'+p.rarity+'" stroke-width="6"/><path d="M46 72 V108" stroke="'+p.ink+'" stroke-width="7"/></g>'}
-function weapon(p,klass,seed){
- if(klass==='Hunter')return bow(p,seed);
- if(klass==='Rogue'||klass==='Demon Hunter')return daggers(p,seed);
- if(klass==='Paladin')return hammer(p,seed);
- if(['Priest','Druid','Mage','Warlock','Evoker','Shaman'].includes(klass))return staff(p,seed);
- return sword(p,seed)
-}
-function offhand(p,klass,seed){
- if(['Warrior','Paladin'].includes(klass))return '<path d="M64 18 L101 34 L94 79 Q84 102 64 112 Q44 102 34 79 L27 34 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="3"/><path d="M64 29 V98 M41 54 H87" stroke="'+p.rarity+'" stroke-width="4"/>';
- if(klass==='Hunter')return '<path d="M42 21 Q76 26 90 52 L75 108 H47 L34 52 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M47 31 L76 100 M57 29 L84 83 M37 51 L82 53" stroke="'+p.rarity+'" stroke-width="3" opacity=".65"/>';
- if(klass==='Rogue')return daggers(p,seed);
- return '<path d="M31 29 Q64 17 97 29 V99 Q64 87 31 99 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M64 26 V94 M41 43 Q52 36 61 45 M87 43 Q76 36 67 45" fill="none" stroke="'+p.rarity+'" stroke-width="3"/><circle cx="64" cy="65" r="8" fill="'+p.dark+'" stroke="'+p.rarity+'" stroke-width="2"/>';
-}
-function ring(p,seed){return '<circle cx="64" cy="68" r="31" fill="none" stroke="url(#m)" stroke-width="13"/><path d="M48 43 L56 24 H72 L80 43 L70 55 H58 Z" fill="'+p.rarity+'" stroke="'+p.ink+'" stroke-width="2"/><path d="M56 24 L64 43 L72 24 M48 43 H80" fill="none" stroke="#fff" stroke-width="2" opacity=".55"/>'}
-function trinket(p,seed){return '<path d="M34 22 Q64 52 94 22" fill="none" stroke="'+p.ink+'" stroke-width="4"/><path d="M64 45 L87 68 L75 104 H53 L41 68 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><circle cx="64" cy="72" r="11" fill="'+p.dark+'" stroke="'+p.rarity+'" stroke-width="3"/><path d="M64 54 V91 M47 72 H81" stroke="'+p.rarity+'" stroke-width="2" opacity=".7"/>'}
-function relic(p,klass,seed){return '<path d="M64 20 L90 47 L82 91 L64 109 L46 91 L38 47 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M64 31 L76 55 L64 90 L52 55 Z" fill="'+p.dark+'" stroke="'+p.rarity+'" stroke-width="3"/><circle cx="64" cy="61" r="7" fill="'+p.rarity+'"/>'}
-function genericGear(p,x,seed){
- const slot=slotOf(x),fam=ARMOUR[classOf(x)]||'leather';
- if(slot==='Head')return fam==='cloth'?hood(p,seed):fam==='leather'?hood(p,seed):circlet(p,seed)+plateHelmet(p,seed).replace(/opacity=".9"/,'opacity=".45"');
- if(slot==='Shoulders')return shoulders(p,fam,seed);
- if(slot==='Chest')return chest(p,fam,seed);
- if(slot==='Hands')return hands(p,fam,seed);
- if(slot==='Waist')return waist(p,fam,seed);
- if(slot==='Legs')return legs(p,fam,seed);
- if(slot==='Feet')return feet(p,fam,seed);
- if(slot==='Weapon')return weapon(p,classOf(x),seed);
- if(slot==='OffHand')return offhand(p,classOf(x),seed);
- if(slot==='Ring')return ring(p,seed);
- if(slot==='Trinket')return trinket(p,seed);
- if(slot==='Relic')return relic(p,classOf(x),seed);
- return relic(p,classOf(x),seed)
-}
-function crystal(p,mode){return '<path d="M64 17 L91 45 L77 106 H51 L37 45 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M64 18 V105 M38 45 H90 M51 105 L64 45 L77 105" fill="none" stroke="'+p.rarity+'" stroke-width="3" opacity=".65"/>'}
-function material(p,x,seed){
- const id=idOf(x),type=MATERIAL_NAMES[id]||'fragment';
- if(type==='iron'||type==='warden-iron')return '<path d="M27 72 L42 35 L77 27 L103 51 L91 91 L54 105 L25 89 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M41 49 L78 40 L90 56 L72 75 L39 78 Z" fill="'+p.rarity+'" opacity=".45"/><path d="M47 91 L86 79" stroke="#fff" stroke-width="3" opacity=".3"/>';
- if(type==='ember')return '<path d="M64 18 Q88 45 78 62 Q101 72 88 96 Q78 111 64 110 Q49 111 39 96 Q25 73 50 61 Q40 45 64 18" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M64 42 Q76 59 67 70 Q81 82 64 98 Q47 82 61 70 Q52 59 64 42" fill="'+p.rarity+'"/>';
- if(type==='soul'||type==='ancient')return '<path d="M64 20 Q93 38 88 67 Q84 96 64 109 Q44 96 40 67 Q35 38 64 20" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M50 62 Q64 44 78 62 Q69 73 64 91 Q59 73 50 62" fill="'+p.rarity+'" opacity=".8"/>';
- if(type==='shards')return '<path d="M30 92 L45 39 L60 84 Z M57 101 L70 25 L87 91 Z M82 100 L91 51 L104 94 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/>';
- return crystal(p,type)
-}
-function potion(p,kind,seed){
- const wide=kind==='flask'||kind==='shock';
- return '<path d="M54 20 H74 V38 L'+(wide?'91':'83')+' 57 V100 Q64 111 '+(wide?'37':'45')+' 100 V57 L54 38 Z" fill="'+p.dark+'" stroke="'+p.ink+'" stroke-width="2"/><path d="M50 66 H78 V96 Q64 104 50 96 Z" fill="url(#m)" opacity=".92"/><path d="M51 24 H77" stroke="'+p.rarity+'" stroke-width="6"/><circle cx="61" cy="75" r="4" fill="#fff" opacity=".55"/><circle cx="70" cy="86" r="3" fill="#fff" opacity=".35"/>';
-}
-function consumable(p,x,seed){
- const id=idOf(x),type=CONSUMABLE_NAMES[id]||String(x?.name||'').toLowerCase();
- const effect=x?.payload?.effect||'';
- if(effect==='socket-gem')return '<path d="M64 14 L91 33 L105 62 L87 94 L64 112 L41 94 L23 62 L37 33 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="3"/><path d="M37 33 L64 43 L91 33 M23 62 L64 43 L105 62 M41 94 L64 43 L87 94 M64 112 V43" fill="none" stroke="'+p.rarity+'" stroke-width="3"/><path d="M37 33 L41 94 M91 33 L87 94" stroke="#fff" stroke-width="2" opacity=".35"/>';
- if(effect==='character-gadget')return '<rect x="30" y="31" width="68" height="67" rx="10" fill="url(#m)" stroke="'+p.ink+'" stroke-width="3"/><circle cx="64" cy="63" r="21" fill="'+p.dark+'" stroke="'+p.rarity+'" stroke-width="4"/><circle cx="64" cy="63" r="9" fill="'+p.rarity+'"/><path d="M64 24 V36 M64 91 V103 M23 63 H36 M92 63 H105 M43 42 L52 52 M85 42 L76 52 M43 85 L52 75 M85 85 L76 75" stroke="'+p.gold+'" stroke-width="5" stroke-linecap="round"/>';
- if(effect==='character-food'||effect==='party-food')return '<ellipse cx="64" cy="87" rx="42" ry="20" fill="url(#m)" stroke="'+p.ink+'" stroke-width="3"/><ellipse cx="64" cy="84" rx="31" ry="12" fill="'+p.dark+'" stroke="'+p.rarity+'" stroke-width="2"/><path d="M40 70 Q31 48 47 43 Q57 35 64 47 Q79 31 88 47 Q103 59 84 71 Q66 79 40 70Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M57 34 Q48 26 57 18 M73 34 Q65 22 73 14" stroke="'+p.rarity+'" stroke-width="3" fill="none" opacity=".8"/>';
- if(effect==='character-scroll'||effect==='party-scroll')return '<path d="M38 27 Q30 21 29 34 V94 Q32 107 44 99 L91 101 Q102 106 101 93 V32 Q100 20 89 25 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="3"/><path d="M40 27 Q32 33 40 40 L87 40 Q97 35 92 25 M42 98 Q32 91 42 84 L87 84 Q98 91 92 100" fill="none" stroke="'+p.ink+'" stroke-width="3"/><path d="M47 53 H80 M47 64 H72 M47 74 H82" stroke="'+p.rarity+'" stroke-width="3" opacity=".75"/>';
- if(x?.payload?.attachmentFamily==='relic-core')return '<circle cx="64" cy="64" r="41" fill="'+p.dark+'" stroke="'+p.rarity+'" stroke-width="3"/><path d="M64 19 L94 43 L91 83 L64 109 L37 83 L34 43 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M64 36 L79 64 L64 92 L49 64 Z" fill="'+p.dark+'" stroke="'+p.rarity+'" stroke-width="3"/><circle cx="64" cy="64" r="8" fill="'+p.rarity+'"/>';
-
- if(type==='potion'||type==='flask'||type==='shock'||/potion|flask|draught/.test(type))return potion(p,type,seed);
- if(type==='rune'||type==='glyph'||/rune|glyph/.test(type))return '<path d="M64 17 L104 55 L83 108 H45 L24 55 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M64 34 L79 57 L70 82 L52 85 L45 61 Z M49 57 L82 78 M78 52 L51 84" fill="none" stroke="'+p.rarity+'" stroke-width="4"/>';
- if(type==='whetstone'||type==='stone'||/stone/.test(type))return '<path d="M25 84 L45 35 L101 49 L82 98 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M37 76 L88 57 M45 88 L94 69" stroke="'+p.rarity+'" stroke-width="3" opacity=".65"/>';
- if(type==='kit'||type==='harness'||type==='wrap'||type==='grip'||type==='lining')return '<path d="M30 39 H98 V94 H30 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M30 54 H98 M47 39 V94 M81 39 V94" stroke="'+p.rarity+'" stroke-width="3" opacity=".65"/><path d="M55 62 H73 V79 H55 Z" fill="'+p.dark+'" stroke="'+p.ink+'" stroke-width="2"/>';
- if(type==='thread'||/thread/.test(type))return '<circle cx="64" cy="66" r="34" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><circle cx="64" cy="66" r="16" fill="'+p.dark+'" stroke="'+p.rarity+'" stroke-width="3"/><path d="M30 66 Q64 39 98 66 Q64 93 30 66" fill="none" stroke="'+p.ink+'" stroke-width="3"/>';
- return potion(p,'potion',seed)
-}
-function special(p,x,seed,type){
- if(type==='frost-sigil')return '<path d="M64 18 L91 46 L79 103 H49 L37 46 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M64 30 V91 M45 48 L83 75 M83 48 L45 75" stroke="#bde9ff" stroke-width="5"/><circle cx="64" cy="62" r="10" fill="#e8fbff" opacity=".75"/>';
- if(type==='guardian')return '<path d="M64 17 L99 34 L91 81 Q79 105 64 113 Q49 105 37 81 L29 34 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="3"/><path d="M64 42 C49 29 39 48 45 61 C51 74 64 86 64 86 C64 86 77 74 83 61 C89 48 79 29 64 42Z" fill="'+p.rarity+'" stroke="'+p.ink+'" stroke-width="2"/>';
- if(type==='ember-staff')return staff(p,seed)+'<path d="M64 14 Q82 31 69 48 Q59 41 64 27 Q52 33 55 48 Q40 32 64 14" fill="#ff794c" opacity=".9"/>';
- if(type==='troll-heart')return '<path d="M64 104 C48 88 28 74 31 52 C34 29 57 27 64 42 C71 27 94 29 97 52 C100 74 80 88 64 104Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="3"/><path d="M47 56 L58 56 L63 45 L70 73 L76 60 H87" fill="none" stroke="'+p.rarity+'" stroke-width="4"/>';
- if(type==='blackglass')return '<path d="M64 16 L88 43 L77 105 H51 L40 43 Z" fill="#080b10" stroke="#9feaff" stroke-width="3"/><path d="M64 24 V100 M42 44 H86 M50 91 L78 53" stroke="#516a7d" stroke-width="3"/><circle cx="64" cy="62" r="10" fill="#9feaff" opacity=".36"/>';
- if(type==='grid-module')return '<rect x="27" y="28" width="74" height="73" rx="12" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M47 47 H81 M47 82 H81 M42 56 V75 M86 56 V75" stroke="'+p.rarity+'" stroke-width="4"/><path d="M70 42 L53 67 H65 L58 91 L80 62 H67 Z" fill="#ffe07a" stroke="'+p.ink+'" stroke-width="1.5"/>';
- if(type==='oathstone')return '<path d="M64 16 L99 45 L87 103 H41 L29 45 Z" fill="url(#m)" stroke="'+p.gold+'" stroke-width="3"/><path d="M64 31 V89 M44 52 H84" stroke="'+p.rarity+'" stroke-width="6"/>';
- if(type==='unbroken')return '<path d="M64 106 C47 90 28 74 32 50 C35 29 55 27 64 43 C73 27 93 29 96 50 C100 74 81 90 64 106Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="3"/><path d="M39 67 H89" stroke="'+p.rarity+'" stroke-width="5"/>';
- if(type==='chalice')return '<path d="M35 30 H93 Q91 67 70 75 V96 H84 V106 H44 V96 H58 V75 Q37 67 35 30Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M43 45 H85" stroke="'+p.rarity+'" stroke-width="5"/>';
- if(type==='bell')return '<path d="M38 83 Q45 67 45 48 Q46 25 64 22 Q82 25 83 48 Q83 67 90 83 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M32 84 H96" stroke="'+p.rarity+'" stroke-width="6"/><circle cx="64" cy="94" r="7" fill="'+p.gold+'"/>';
- if(type==='fang')return '<path d="M39 22 Q74 32 89 21 Q83 68 53 108 Q46 76 39 22Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M52 39 Q69 47 78 38" fill="none" stroke="'+p.rarity+'" stroke-width="4"/>';
- if(type==='mirror')return '<path d="M64 16 L92 33 L98 74 L77 108 H51 L30 74 L36 33 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="3"/><path d="M64 29 L81 39 L85 70 L72 92 H56 L43 70 L47 39 Z" fill="#d9f2ff" opacity=".38"/><path d="M52 36 L79 82 M44 58 L76 30" stroke="#fff" stroke-width="2" opacity=".7"/>';
- return relic(p,classOf(x),seed)
-}
-function collection(p,x,seed){
- const kind=String(x?.kind||'collection');
- if(kind==='mount')return '<path d="M25 87 Q30 55 56 45 Q65 24 82 25 L75 43 Q96 48 103 65 L88 63 Q82 86 64 93 L49 108 L46 93 L31 107 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M55 49 Q36 28 21 35 Q37 53 48 61 M80 46 Q99 27 109 42 Q95 54 86 60" fill="none" stroke="'+p.rarity+'" stroke-width="5"/>';
- if(kind==='pet')return '<path d="M64 25 L91 45 L86 86 L64 105 L42 86 L37 45 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><circle cx="53" cy="61" r="5" fill="#fff"/><circle cx="75" cy="61" r="5" fill="#fff"/><path d="M53 82 Q64 90 75 82" fill="none" stroke="'+p.rarity+'" stroke-width="3"/>';
- return '<path d="M64 16 L98 39 L91 89 L64 112 L37 89 L30 39 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M64 30 L81 50 L76 83 L64 96 L52 83 L47 50 Z" fill="'+p.dark+'" stroke="'+p.rarity+'" stroke-width="3"/><circle cx="64" cy="63" r="9" fill="'+p.rarity+'"/>';
-}
-function keyArt(p,x,seed){return '<circle cx="48" cy="52" r="23" fill="none" stroke="url(#m)" stroke-width="11"/><path d="M65 69 L105 109 M84 88 L96 76 M93 97 L105 85" stroke="'+p.ink+'" stroke-width="9"/><circle cx="48" cy="52" r="7" fill="'+p.rarity+'"/>'}
-function recipeArt(p,x,seed){return '<path d="M34 22 Q48 29 64 22 Q80 29 94 22 V105 Q80 98 64 105 Q48 98 34 105 Z" fill="url(#m)" stroke="'+p.ink+'" stroke-width="2"/><path d="M45 43 H83 M45 55 H76 M45 72 H83 M45 84 H68" stroke="'+p.dark+'" stroke-width="4" opacity=".78"/><path d="M76 73 L88 86 L76 98 L64 86 Z" fill="'+p.rarity+'" stroke="'+p.ink+'" stroke-width="2"/>'}
 function kindOf(x){
  const id=idOf(x);
  if(SPECIAL[id])return 'special';
@@ -225,32 +99,10 @@ function kindOf(x){
  if(slotOf(x))return 'gear';
  return 'utility'
 }
-function artBody(p,x,seed){
- const kind=kindOf(x),id=idOf(x);
- if(kind==='special')return special(p,x,seed,SPECIAL[id]);
- if(kind==='material')return material(p,x,seed);
- if(kind==='consumable')return consumable(p,x,seed);
- if(kind==='collection')return collection(p,x,seed);
- if(kind==='recipe')return recipeArt(p,x,seed);
- if(kind==='key')return keyArt(p,x,seed);
- if(kind==='utility')return special(p,x,seed,'grid-module');
- return genericGear(p,x,seed)
-}
 function artHTML(item,size,extra){
- if(!item)return '';
- size=Math.max(20,Math.round(Number(size)||64));extra=extra||'';
- const x={...item},seed=detailSeed(x),p=palette(x),tier=tierOf(x),uid='cbia'+seed.toString(36),title=esc(x.name||idOf(x));
- const body=artBody(p,x,seed).replace(/url\(#g\)/g,'url(#'+uid+'g)').replace(/url\(#m\)/g,'url(#'+uid+'m)'),pvp=pvpBand(x);
- const cls=['cb-item-art','cb-item-'+slug(kindOf(x)),'rarity-'+slug(rarityOf(x)),pvp?'cb-item-pvp':'',extra].filter(Boolean).join(' ');
- const svg='<svg viewBox="0 0 128 128" role="img" aria-label="'+title+'" focusable="false"><defs>'+
- '<linearGradient id="'+uid+'g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+p.a+'"/><stop offset="1" stop-color="'+p.b+'"/></linearGradient>'+
- '<linearGradient id="'+uid+'m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+p.a+'"/><stop offset=".35" stop-color="'+p.ink+'"/><stop offset=".46" stop-color="'+p.a+'"/><stop offset=".7" stop-color="'+p.b+'"/><stop offset="1" stop-color="'+p.rarity+'"/></linearGradient>'+
- '<filter id="'+uid+'"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#000" flood-opacity=".65"/></filter></defs>'+
- frame(seed,p,tier)+runes(seed,p,tier)+'<g filter="url(#'+uid+')">'+body+'</g>'+
- (tier>=4?'<circle cx="64" cy="64" r="52" fill="none" stroke="'+p.rarity+'" stroke-width="1.5" opacity=".38"/>':'')+
- (pvp?'<path d="M20 105 L36 89 M108 105 L92 89" stroke="'+p.gold+'" stroke-width="4" opacity=".8"/>':'')+
- '</svg>';
- return '<span class="'+esc(cls)+'" style="width:'+size+'px;height:'+size+'px" data-item-art="'+esc(idOf(x))+'" data-item-kind="'+esc(kindOf(x))+'" title="'+title+'">'+svg+'</span>'
+ if(!item)return '';size=Math.max(20,Math.round(Number(size)||64));
+ const title=esc(item.name||idOf(item)),cls=['cb-item-art','cb-item-'+slug(kindOf(item)),'rarity-'+slug(rarityOf(item)),extra||''].join(' ');
+ return '<span class="'+esc(cls)+'" style="width:'+size+'px;height:'+size+'px" data-item-art="'+esc(idOf(item))+'" data-item-kind="'+esc(kindOf(item))+'" title="'+title+'">'+window.CellboundItemVisuals.icon(item)+'</span>';
 }
 function findConsumable(key){
  const P=window.CellboundProfessions,all=Object.values(P?.PROFESSIONS||{}).flatMap(function(v){return v.recipes||[]});
@@ -272,7 +124,6 @@ function resolveGear(item){
 function installDataAdapters(){
  const G=window.CellboundGear,P=window.CellboundProfessions;
  if(G&&!G.__fullItemArtV1){
-  G.__legacyArtHTML=G.artHTML;
   G.artHTML=function(item,size,extra){
    const canonical=resolveGear(item)||item;
    const merged={...canonical,...item,itemId:item?.itemId||canonical?.itemId,baseItemId:item?.baseItemId};
@@ -283,7 +134,6 @@ function installDataAdapters(){
   G.__fullItemArtV1=true
  }
  if(P&&!P.__fullItemArtV1){
-  P.__legacyMaterialArtHTML=P.materialArtHTML;
   P.materialArtHTML=materialHTML;
   P.consumableArtHTML=consumableHTML;
   P.__fullItemArtV1=true
@@ -353,7 +203,7 @@ function enhanceTrade(root){
  })
 }
 function enhanceAll(root){installDataAdapters();enhancePvp(root);enhanceCollections(root);enhanceCrafting(root);enhanceFourfold(root);enhanceTrade(root)}
-window.CellboundItemArt={VERSION:'1.0.0',artHTML:artHTML,materialHTML:materialHTML,consumableHTML:consumableHTML,collectionHTML:collectionHTML,findConsumable:findConsumable,resolveGear:resolveGear,install:installDataAdapters,enhance:enhanceAll,SPECIAL:SPECIAL,MATERIAL_NAMES:MATERIAL_NAMES,CONSUMABLE_NAMES:CONSUMABLE_NAMES};
+window.CellboundItemArt={VERSION:'2.0.0',artHTML:artHTML,materialHTML:materialHTML,consumableHTML:consumableHTML,collectionHTML:collectionHTML,findConsumable:findConsumable,resolveGear:resolveGear,install:installDataAdapters,enhance:enhanceAll,SPECIAL:SPECIAL,MATERIAL_NAMES:MATERIAL_NAMES,CONSUMABLE_NAMES:CONSUMABLE_NAMES};
 installDataAdapters();
 if(typeof document!=='undefined'){
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){enhanceAll(document)});
