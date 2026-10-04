@@ -3,7 +3,9 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 const root=path.resolve(__dirname,'..'),context={console,Math,Date};context.window=context;context.globalThis=context;vm.createContext(context);
 for(const file of ['gear-data.js','profession-data.js','item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js','character-portraits-v1.js','item-art-v1.js'])vm.runInContext(fs.readFileSync(path.join(root,file),'utf8'),context,{filename:file});
 const IA=context.CellboundItemArt,P=context.CellboundPortraits,G=context.CellboundGear,Prof=context.CellboundProfessions;
-assert.equal(IA.ART_DIRECTION,'classic-flat-v1');
+assert.equal(IA.ART_DIRECTION,'class-tier-v2');
+assert.equal(IA.ITEM_VISUALS_VERSION,2);
+assert.equal(P.itemVisualsVersion,2);
 assert.equal(P.modelContract,'classic-paper-doll-v1');
 
 const gear=G.items;
@@ -12,6 +14,7 @@ for(const item of gear){
  assert(html.includes('<svg'),item.itemId);
  assert(html.includes('cb-item-art'));
  assert(!html.includes('data-item-model="forge-vector-v1"'));
+ assert(html.includes('data-item-visuals="v2"'),item.itemId+' must use Item Visuals V2 icon contract');
  assert.equal(JSON.stringify(item),before,'Item art must not mutate equipment data');
 }
 for(const key of Object.keys(Prof.MATERIALS||{})){
@@ -30,7 +33,17 @@ for(const klass of ['Warrior','Paladin','Hunter','Rogue','Mage'])for(const race 
  equipment.OffHand.offHandType=klass==='Hunter'?'quiver':klass==='Mage'?'focus':klass==='Rogue'?'dagger':'shield';
  const c={race,class:klass,appearance:{gender,frame:1},equipment},svg=P.paperDollSVG(c);
  assert(svg.includes('data-character-style="classic-paper-doll"'));
+ assert(svg.includes('data-item-visuals="v2"'));
+ assert(svg.includes('data-class-visual="'+klass.toLowerCase()+'"'),klass+' worn gear must expose class-specific V2 identity');
  assert(!svg.includes('data-equipment-renderer="illustrated-v2"'));
  for(const slot of ['Chest','Waist','Legs','Feet','Hands','Shoulders','Head'])assert(svg.includes('cb-paper-slot-'+slot.toLowerCase()),klass+' '+slot);
 }
-console.log('Classic item art: '+gear.length+' equipment icons plus materials/consumables render in classic-flat-v1; five beta class families render on all race states.');
+for(const klass of ['Warrior','Paladin','Hunter','Rogue','Mage']){
+ const t1=gear.find(x=>x.class===klass&&Number(x.tier)===1&&x.slot==='Chest');
+ const t5=gear.find(x=>x.class===klass&&Number(x.tier)===5&&x.slot==='Chest');
+ assert(t1&&t5,klass+' needs T1 and T5 chest art');
+ const a=G.artHTML(t1,64),b=G.artHTML(t5,64);
+ assert.notEqual(a,b,klass+' T1 and T5 item-card visuals must progress');
+ assert(a.includes('data-class-visual="'+klass.toLowerCase()+'"')&&b.includes('data-class-visual="'+klass.toLowerCase()+'"'),klass+' item-card art must carry its class signature');
+}
+console.log('Item Visuals V2: '+gear.length+' equipment icons retain coverage; five beta classes have class-specific worn and inventory identities with visible T1-T5 progression.');
