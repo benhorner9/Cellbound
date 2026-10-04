@@ -151,7 +151,7 @@ function validateCharacter(c,{highlight='',requireFull=false}={}){
     const weaponAt=html.indexOf('cb-paper-side-weapon'),headAt=html.indexOf('cb-paper-head');
     if(weaponAt<0||weaponAt<headAt||!html.includes('data-weapon-pose="side-held"'))throw new Error('main-hand weapon is not using the side-held pose');
     const weaponHtml=html.slice(weaponAt);if(!closeTo(svgNumber(weaponHtml,'data-grip-x'),fit.weaponX)||!closeTo(svgNumber(weaponHtml,'data-grip-y'),fit.weaponY))throw new Error('main-hand side grip is not attached to the posed right hand');
-    if(fit.weaponX<fit.baseRightHand)throw new Error('main-hand weapon crossed inward over the torso');
+    if(fit.weaponX<fit.weaponSideMin)throw new Error('main-hand weapon crossed inward over the torso');
   }
   if(c.equipment?.OffHand){
     const type=P.offHandType(c.equipment.OffHand,c),offAt=html.indexOf('data-offhand-type="'+type+'"'),armsAt=html.indexOf('cb-paper-arms'),headAt=html.indexOf('cb-paper-head'),weaponAt=html.indexOf('cb-paper-side-weapon');
