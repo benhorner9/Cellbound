@@ -315,7 +315,8 @@ body.bs2d-open{overflow:hidden}
   min-width:0;
 }
 .bs-authority{
-  grid-template-columns:repeat(2,minmax(0,1fr)) minmax(150px,.72fr)!important;
+  grid-template-columns:minmax(150px,1.2fr) repeat(3,minmax(105px,.8fr)) minmax(120px,.9fr) minmax(150px,1fr)!important;
+  gap:6px!important;
 }
 .bs-authority>div{
   min-height:58px;
@@ -335,11 +336,12 @@ body.bs2d-open{overflow:hidden}
   font-size:.44rem!important;
   line-height:1.35!important;
 }
-.bs-authority>div:nth-child(2){
+.bs-authority>.bs-overcharge{
   border-color:rgba(226,190,83,.18);
   background:rgba(42,35,17,.45);
 }
-.bs-authority>div:nth-child(2) b{color:#e0c56d}
+.bs-authority>.bs-overcharge b{color:#e0c56d}
+.bs-authority>.cbr-command{min-height:58px!important}
 .bs-authority>.cb2d-potion-button{width:100%;min-height:58px!important}
 .bs-station-env.cb2d-floor{
   position:absolute;
@@ -361,10 +363,12 @@ body.bs2d-open{overflow:hidden}
 
 @media(max-width:900px){
   .cb2d-arena.bs-arena{height:470px;min-height:470px}
+  .bs-authority{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 }
 @media(max-width:620px){
   .cb2d-arena.bs-arena{height:420px;min-height:420px}
-  .bs-authority{grid-template-columns:1fr!important}
+  .bs-authority{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .bs-authority>.bs-command-copy{grid-column:1/-1}
 }
 
 
