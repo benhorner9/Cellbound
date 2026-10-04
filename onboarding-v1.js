@@ -32,12 +32,14 @@ const SLOTS=[
 ];
 const ROLE_LABEL={tank:'Tank',healer:'Healer',dps:'Damage'};
 let Game=null,G=null,P=null,CP=null,db=null,user=null;
-let draft=[],activeSlot=0,builderStep='race',tutorialToken=0,tutorialCombatStats=null,tutorialComicBusy=false;
+let draft=[],activeSlot=0,builderStep='form',tutorialToken=0,tutorialCombatStats=null,tutorialComicBusy=false;
 
 const state=()=>Game?.getState?.();
 const onboarding=()=>state()?.onboarding||{};
 const raceById=id=>RACES.find(r=>r.id===id)||RACES[0];
 const portraitHTML=(c,size='md')=>CP?.portraitHTML?.(c,{size})||'<span class="cb-portrait cb-portrait--'+size+'"><b>'+esc(c?.portrait||initials(c?.name))+'</b></span>';
+const forgeAppearance=(race,gender=0,prior=null)=>window.CellboundCharacterForge?.appearance?.(race,gender,prior)||{...(prior||{}),race,gender:Number(gender)===1?1:0};
+const forgeAvatar=c=>'<img class="cf-party-avatar" src="'+window.CellboundCharacterForge.asset(c.race,c.appearance?.gender||0)+'" alt="" draggable="false">';
 
 function roleOptions(role){
   const out=[];
@@ -64,7 +66,7 @@ function defaultDraft(){
     const race=RACES.find(r=>r.roles.includes(slot.role))||RACES[0];
     const option=roleOptions(slot.role)[0];
         const name=randomName(race.id,rows.map(x=>x.name));
-    rows.push({slot:slot.key,role:slot.role,race:race.id,klass:option?.klass||'Warrior',spec:option?.spec||'Arms',name,appearance:CP?.randomAppearance?.(race.id)||{race:race.id}});
+    rows.push({slot:slot.key,role:slot.role,race:race.id,klass:option?.klass||'Warrior',spec:option?.spec||'Arms',name,appearance:forgeAppearance(race.id,0)});
   });
   return rows;
 }
@@ -74,7 +76,7 @@ function restoreDraft(){
     draft=saved.map((d,i)=>{
       const slot=SLOTS[i],race=RACES.some(r=>r.id===d.race&&r.roles.includes(slot.role))?d.race:(RACES.find(r=>r.roles.includes(slot.role))?.id||'Veyren');
       const opts=roleOptions(slot.role),valid=opts.find(o=>o.klass===d.klass)||opts[0];
-      const name=String(d.name||randomName(race)).slice(0,24);return{slot:slot.key,role:slot.role,race,klass:valid?.klass||'Warrior',spec:valid?.spec||'Arms',name,appearance:CP?.normalizeAppearance?.(d.appearance,name,race)||d.appearance||{race}};
+      const name=String(d.name||randomName(race)).slice(0,24);return{slot:slot.key,role:slot.role,race,klass:valid?.klass||'Warrior',spec:valid?.spec||'Arms',name,appearance:forgeAppearance(race,d.appearance?.gender,d.appearance)};
     });
   }else draft=defaultDraft();
 }
@@ -146,12 +148,12 @@ function renderPartyBuilder(){
   const d=draft[activeSlot],slot=SLOTS[activeSlot];
   const valid=()=>draft.every(x=>x.name.trim().length>=2&&x.name.trim().length<=24)&&new Set(draft.map(x=>x.name.trim().toLowerCase())).size===5;
   const root=ensureRoot();root.innerHTML=chrome('<div data-creation-mount></div>','party-builder');
-  window.CellboundCreationCentre.render({mount:root.querySelector('[data-creation-mount]'),draft:d,step:builderStep,
+  window.CellboundCharacterForge.render({mount:root.querySelector('[data-creation-mount]'),draft:d,step:builderStep,
     races:RACES,classes:roleOptions(slot.role),title:'Build your founding party',confirmTitle:'Confirm your party',confirmLabel:'CONFIRM PARTY & ENTER ZELTIRA →',
-    partyHTML:'<div class="creator-party-dots">'+draft.map((x,i)=>'<button data-slot="'+i+'" class="'+(i===activeSlot?'active':'')+'" title="'+esc(x.name)+'">'+portraitHTML({name:x.name,race:x.race,class:x.klass,appearance:x.appearance},'sm')+'<span>'+ROLE_LABEL[x.role]+'</span></button>').join('')+'</div>',
-    confirmHTML:'<div class="creator-confirm-grid">'+draft.map((x,i)=>'<button class="creator-confirm-member" data-slot="'+i+'">'+portraitHTML({name:x.name,race:x.race,appearance:x.appearance},'sm')+'<span><b>'+esc(x.name)+'</b><em>'+esc(x.race)+' · '+esc(x.klass)+'</em></span></button>').join('')+'</div>',
+    partyHTML:'<div class="creator-party-dots">'+draft.map((x,i)=>'<button data-slot="'+i+'" class="'+(i===activeSlot?'active':'')+'" title="'+esc(x.name)+'">'+forgeAvatar(x)+'<span>'+ROLE_LABEL[x.role]+'</span></button>').join('')+'</div>',
+    confirmHTML:'<div class="creator-confirm-grid">'+draft.map((x,i)=>'<button class="creator-confirm-member" data-slot="'+i+'">'+forgeAvatar(x)+'<span><b>'+esc(x.name)+'</b><em>'+esc(x.race)+' · '+esc(x.klass)+'</em></span></button>').join('')+'</div>',
     hint:valid()?'Your charter is ready.':'All five characters need unique names of at least 2 characters.',valid:valid(),isValid:valid,
-    onStep:step=>{builderStep=step;renderPartyBuilder()},onSlot:i=>{activeSlot=i;builderStep='race';renderPartyBuilder()},
+    onStep:step=>{builderStep=step;renderPartyBuilder()},onSlot:i=>{activeSlot=i;builderStep='form';renderPartyBuilder()},
     onChange:()=>{saveDraft();renderPartyBuilder()},onName:()=>saveDraft(),
     onRandomName:()=>{d.name=randomName(d.race,draft.filter((_,i)=>i!==activeSlot).map(x=>x.name))},onConfirm:createParty
   });
