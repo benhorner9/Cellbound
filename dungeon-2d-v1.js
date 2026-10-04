@@ -360,12 +360,12 @@ function commandRecommendationFor(e){
 }
 function setCombatCommandPrompt(e=null){
  const prompt=$('#cbrCommandPrompt'),statusEl=$('#cbrCommandStatus'),rec=commandRecommendationFor(e);
- $('[data-combat-command]').forEach(b=>b.classList.toggle('recommended',!!rec&&b.dataset.combatCommand===rec.command));
+ document.querySelectorAll('[data-combat-command]').forEach(b=>b.classList.toggle('recommended',!!rec&&b.dataset.combatCommand===rec.command));
  if(prompt)prompt.textContent=rec?.title||'Command the party';
  if(statusEl)statusEl.textContent=rec?'Recommended command highlighted. Your party still acts autonomously.':'React to mechanics or change the pace of the fight.'
 }
 function bindCombatCommandButtons(){
- $('[data-combat-command]').forEach(button=>button.onclick=()=>issueCombatCommand(button.dataset.combatCommand,button))
+ document.querySelectorAll('[data-combat-command]').forEach(button=>button.onclick=()=>issueCombatCommand(button.dataset.combatCommand,button))
 }
 function issueCombatCommand(type,button){
  if(!run||run.resolved)return;
@@ -374,11 +374,11 @@ function issueCombatCommand(type,button){
  if(now<cooldownUntil){status('Command recovery · '+Math.max(.1,(cooldownUntil-now)/1000).toFixed(1)+'s');return}
  const response=playback.issueCommand(type,{});
  if(!response?.ok){status(response?.reason==='replay'?'Replay cannot be changed':'Command could not be issued');return}
- run.commandCooldownUntil=now+3000;
+ run.commandCooldownUntil=now+3200;
  button?.classList.add('active');setTimeout(()=>button?.classList.remove('active'),420);
- $('[data-combat-command]').forEach(b=>b.disabled=true);
- const wallCooldown=Math.max(700,Math.round(3000/combatPlaybackSpeed(run?.speed||1)));
- setTimeout(()=>{if(!run?.resolved)$('[data-combat-command]').forEach(b=>b.disabled=false)},wallCooldown);
+ document.querySelectorAll('[data-combat-command]').forEach(b=>b.disabled=true);
+ const wallCooldown=Math.max(700,Math.round(3200/combatPlaybackSpeed(run?.speed||1)));
+ setTimeout(()=>{if(!run?.resolved)document.querySelectorAll('[data-combat-command]').forEach(b=>b.disabled=false)},wallCooldown);
  const labels={focus:'Focus target',spread:'Spread out',interrupt:'Interrupt now',defensive:'Defensive stance',burn:'Burn phase'};
  status(labels[type]||'Party command');log('Commander: '+(labels[type]||type)+'.');
  setCombatCommandPrompt()
