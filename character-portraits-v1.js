@@ -3,9 +3,10 @@
 
 const RIG=window.CellboundCharacterRig;
 if(!RIG||RIG.contract!=='master-rig-v1')throw new Error('Cellbound master character rig is not loaded');
-const CHARACTER_MODEL_VERSION=12;
+const CHARACTER_MODEL_VERSION=13;
 const PAINTED_RACES=new Set(['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari']);
-const CHARACTER_MODEL_CONTRACT='v12-master-rig';
+const USE_RASTER_RACE_BASES=false;
+const CHARACTER_MODEL_CONTRACT='v13-master-vector-races';
 const EQUIPMENT_LAYER_CONTRACT='body|shield|armour|front-offhand|mainhand-front';
 
 const CLASS_COLORS={
@@ -665,7 +666,7 @@ function illustratedBaseFigure(c,a,skin,eye,hair,p,uid,portrait){
   [lx,rx].forEach(x=>{for(var i=-1;i<=1;i++)fingers+='<path d="M'+(x+i*3)+' 282 l1 10"/>';fingers+='<path d="M'+(x+7)+' 276 l-4 8"/>'});
   hands+=fingers+'</g>';
   var coverage=equipmentCoverage(c);
-  var hairFull=coverage.hair?'':'<g data-appearance-part="hair" data-hair-race="'+esc(race)+'" data-hair-style="'+a.hair+'">'+(PAINTED_RACES.has(race)?'<g transform="'+paintedHairFit(a,race)+'">':'')+illustratedHairFull(a,hair,race,uid)+(PAINTED_RACES.has(race)?'</g>':'')+'</g>';
+  var hairFull=coverage.hair?'':'<g data-appearance-part="hair" data-hair-race="'+esc(race)+'" data-hair-style="'+a.hair+'">'+(USE_RASTER_RACE_BASES&&PAINTED_RACES.has(race)?'<g transform="'+paintedHairFit(a,race)+'">':'')+illustratedHairFull(a,hair,race,uid)+(USE_RASTER_RACE_BASES&&PAINTED_RACES.has(race)?'</g>':'')+'</g>';
 
   markings='<g opacity="'+(.35+a.glow*.21)+'">'+markings+'</g>';
   var faceMarks='';
@@ -689,8 +690,10 @@ function illustratedBaseFigure(c,a,skin,eye,hair,p,uid,portrait){
   if(coverage.growth){stoneHead='';thornHead=''}
   if(race==='Stoneborn'&&stoneHead)stoneHead='<g transform="translate(120 57) scale('+(0.85+a.feature*.12)+') translate(-120 -57)">'+stoneHead+'</g>';
   if(race==='Thornkin'&&thornHead)thornHead='<g transform="translate(120 57) scale('+(0.75+a.feature*.15)+') translate(-120 -57)">'+thornHead+'</g>';
-  if(PAINTED_RACES.has(race))return paintedBody(c,a,p,uid,skin,eye,hair,faceMarks+customFace+hairFull+stoneHead+thornHead+growth,markings,portrait);
-  return '<g class="cb-illustrated-base" data-race="'+esc(race)+'" data-gender="'+(female?'female':'male')+'">'+(portrait?'':leftLeg+rightLeg+feet+leftArm+rightArm+hands+neck+torso+sideShade+anatomy+markings+under)+ears+face+faceMarks+customFace+hairFull+stoneHead+thornHead+growth+'</g>';
+  if(USE_RASTER_RACE_BASES&&PAINTED_RACES.has(race))return paintedBody(c,a,p,uid,skin,eye,hair,faceMarks+customFace+hairFull+stoneHead+thornHead+growth,markings,portrait);
+  const vectorMarkup=(portrait?'':leftLeg+rightLeg+feet+leftArm+rightArm+hands+neck+torso+sideShade+anatomy+markings+under)+ears+face+faceMarks+customFace+hairFull+stoneHead+thornHead+growth;
+  if(PAINTED_RACES.has(race))return '<g class="cb-illustrated-base cb-master-vector-base" data-race="'+esc(race)+'" data-gender="'+(female?'female':'male')+'" data-base-art="master-vector-v1">'+paintedRig(vectorMarkup,uid+'masterVector')+'</g>';
+  return '<g class="cb-illustrated-base" data-race="'+esc(race)+'" data-gender="'+(female?'female':'male')+'">'+vectorMarkup+'</g>';
 }
 
 const MODEL_CACHE=new Map();
@@ -793,7 +796,7 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:CHARACTER_MODEL_VERSION,modelContract:CHARACTER_MODEL_CONTRACT,equipmentLayerContract:EQUIPMENT_LAYER_CONTRACT,
+  version:CHARACTER_MODEL_VERSION,modelContract:CHARACTER_MODEL_CONTRACT,equipmentLayerContract:EQUIPMENT_LAYER_CONTRACT,baseArtContract:'master-vector-v1',
   rigContract:RIG.contract,masterRigCount:RIG.masterRigCount,masterRig:RIG.masterRig,rig:RIG.resolve,fitSlot:RIG.fitSlot,
   anatomicalAnchors:anatomicalAnchors,rigY:(race,y)=>RIG.rigY(y),equipmentCoverage:equipmentCoverage,appearanceVersion:1,
   RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,headRig:PAINTED_HEAD_RIG,hairFit:paintedHairFit,
