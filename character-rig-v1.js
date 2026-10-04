@@ -44,23 +44,26 @@ const FRAME_DEFORM=Object.freeze([
 
 // Measurements taken from the approved painted base images in the final 240 x 410 canvas.
 const CALIBRATION=Object.freeze({
+  // V13 master-vector bodies are authored from the same anatomy formula used by the
+  // rig. Hand/helmet anchors therefore follow the actual illustrated silhouette
+  // rather than the retired raster mannequin measurements.
   Veyren:{
-    male:{hand:[58,182,220],head:[120,20,33]},female:{hand:[63,177,218],head:[120.5,20,34]}
+    male:{hand:[69.7,170.3,238],head:[120,20,41]},female:{hand:[78.6,161.4,238],head:[120,20,37]}
   },
   Stoneborn:{
-    male:{hand:[46,194,226],head:[120,23,35]},female:{hand:[58,182,218],head:[119.5,23,36]}
+    male:{hand:[55.8,184.2,238],head:[120,18.4,43.5]},female:{hand:[67.2,172.8,238],head:[120,18.4,39.2]}
   },
   Aelari:{
-    male:{hand:[68,172,212],head:[121,20,33]},female:{hand:[70,170,210],head:[120.5,20,34]}
+    male:{hand:[72.9,167.1,238],head:[120,20,41]},female:{hand:[81.3,158.7,238],head:[120,20,37]}
   },
   Thornkin:{
-    male:{hand:[63,177,214],head:[121,22,35]},female:{hand:[69,171,211],head:[120,22,35]}
+    male:{hand:[66.5,173.5,238],head:[120,20,41]},female:{hand:[76,164,238],head:[120,20,37]}
   },
   Emberkin:{
-    male:{hand:[52,188,225],head:[120,20,33]},female:{hand:[60,180,219],head:[120.5,20,34]}
+    male:{hand:[63.3,176.7,238],head:[120,20,41]},female:{hand:[73.4,166.6,238],head:[120,20,37]}
   },
   Nymari:{
-    male:{hand:[54,186,223],head:[120.5,20,34]},female:{hand:[62,178,218],head:[120.5,20,35]}
+    male:{hand:[70.8,169.2,238],head:[120,20,41]},female:{hand:[79.5,160.5,238],head:[120,20,37]}
   }
 });
 
@@ -112,7 +115,7 @@ function canonicalAnchors(race,sex){
   const shoulderY=rigY(race==='Stoneborn'?130:female?133:131);
   const chestTop=rigY(female?121:119),chestBottom=rigY(252),waistY=rigY(247);
   const leftShoulder=120-p.shoulder,rightShoulder=120+p.shoulder;
-  const leftHip=120-p.hip*.80,rightHip=120+p.hip*.80;
+  const leftHip=120-p.hip*.47,rightHip=120+p.hip*.47;
   return {
     head:{x:cal.head[0],y:cal.head[1]+20},
     crown:{x:cal.head[0],y:cal.head[1]},
@@ -181,7 +184,7 @@ function gearFitProfile(subject){
     race,gender,frame,p,centerX:120,shoulderY,
     leftShoulder,rightShoulder,leftHand,rightHand,handY,
     waistY:247,waistHalf,hipHalf,
-    leftLeg:120-p.hip*.80,rightLeg:120+p.hip*.80,
+    leftLeg:120-p.hip*.47,rightLeg:120+p.hip*.47,
     legHalf:Math.max(11.5,p.leg*.82),calfHalf:Math.max(8.8,p.leg*.62),footHalf:Math.max(11,p.leg*.72),
     chestTop:gender===1?121:119,chestBottom:252,
     weaponX:rightHand,offhandX:leftHand-8,
@@ -194,7 +197,7 @@ function anchors(subject){
   const a=Object.fromEntries(Object.entries(m.anchors).map(([k,v])=>[k,{x:x(v.x),y:v.y}]));
   const shoulderY=rigY(race==='Stoneborn'?130:sex==='female'?133:131);
   a.leftShoulder={x:120-p.shoulder,y:shoulderY};a.rightShoulder={x:120+p.shoulder,y:shoulderY};
-  a.leftHip={x:120-p.hip*.80,y:rigY(257)};a.rightHip={x:120+p.hip*.80,y:rigY(257)};
+  a.leftHip={x:120-p.hip*.47,y:rigY(257)};a.rightHip={x:120+p.hip*.47,y:rigY(257)};
   a.leftKnee={x:a.leftHip.x,y:rigY(322)};a.rightKnee={x:a.rightHip.x,y:rigY(322)};
   a.leftAnkle={x:a.leftHip.x,y:rigY(365)};a.rightAnkle={x:a.rightHip.x,y:rigY(365)};
   a.leftFoot={x:a.leftHip.x,y:rigY(380)};a.rightFoot={x:a.rightHip.x,y:rigY(380)};
