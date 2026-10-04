@@ -33,3 +33,15 @@ const preserved=JSON.stringify(legacy);P.applyToCharacter(legacy);const {appeara
 assert.equal(JSON.stringify(rest),preserved);assert.equal(appearance.appearanceVersion,1);
 assert.equal(JSON.stringify(P.normalizeAppearance(appearance,'old','Nymari')),JSON.stringify(appearance));
 console.log('Appearance foundation: '+checked+' race/sex/frame combinations; visible controls, class independence, non-destructive defaults, serialization, shared portraits and helmet coverage passed.');
+// Clothing belongs to its item slot: shoulders and belts must not manufacture robes/capes.
+for(const race of Object.keys(P.RACES))for(const gender of [0,1])for(const frame of [0,1,2])for(const klass of ['Warrior','Paladin','Hunter','Rogue','Mage'])for(const tier of [1,2,3,4,5]){
+ const c={id:'slot-fit',race,class:klass,appearance:{gender,frame},equipment:{}};
+ for(const slot of ['Chest','Shoulders','Waist']){
+  c.equipment={[slot]:{id:klass+'-'+slot+'-'+tier,slot,class:klass,tier}};
+  const svg=P.paperDollSVG(c);
+  assert.equal(svg.includes('cb-paper-back-layer'),slot==='Chest'&&klass==='Mage',klass+' '+slot+' must own only its intended clothing');
+  assert(!/NaN|Infinity/.test(svg));
+  if(slot==='Waist'&&klass==='Mage')assert(svg.includes('data-waist-design="short-sash"'));
+ }
+}
+console.log('Armour slot ownership: 2,700 race/sex/build/class/tier/slot combinations passed.');
