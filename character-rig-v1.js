@@ -81,7 +81,7 @@ const FAMILY_FIT=Object.freeze({
 });
 
 function clamp(n,min,max){return Math.max(min,Math.min(max,Number(n)||0))}
-function raceOf(subject){const race=subject?.race||subject?.appearance?.race||'Veyren';return RACES.includes(race)?race:'Veyren'}
+function raceOf(subject,override){const race=override?.race||(typeof subject==='string'?subject:subject?.race||subject?.appearance?.race)||'Veyren';return RACES.includes(race)?race:'Veyren'}
 function genderIndex(subject,override){
   const raw=override?.gender??subject?.appearance?.gender??subject?.gender??0;
   return Number(raw)===1?1:0;
@@ -160,11 +160,11 @@ function buildMaster(race,sex){
 const MASTER_RIGS=Object.freeze(Object.fromEntries(RACES.flatMap(r=>SEXES.map(s=>[masterKey(r,s),buildMaster(r,s)]))));
 
 function masterRig(subject,override){
-  const race=raceOf(subject),sex=sexName(subject,override);
+  const race=raceOf(subject,override),sex=sexName(subject,override);
   return MASTER_RIGS[masterKey(race,sex)];
 }
 function bodyProfile(subject,appearanceOverride){
-  return scaleMeasurements(raceOf(subject),sexName(subject,appearanceOverride),frameIndex(subject,appearanceOverride));
+  return scaleMeasurements(raceOf(subject,appearanceOverride),sexName(subject,appearanceOverride),frameIndex(subject,appearanceOverride));
 }
 
 // Compatibility fit profile used by the renderer. X is anatomical; legacy Y values
