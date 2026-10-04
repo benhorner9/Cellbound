@@ -1080,9 +1080,10 @@ function inferredEnemyBehaviour(data={},classification='trash'){
  const explicit=String(data.combatBehaviour||data.behaviour||data.aiStyle||'').trim().toLowerCase();
  if(explicit)return explicit;
  const clue=String((data.name||'')+' '+(data.visualArchetype||'')).toLowerCase(),range=Math.max(2,Number(data.attackRange)||5);
- if(/assassin|stalker|rogue|hound|prowler|lurker/.test(clue))return'assassin';
- if(/healer|medic|support|priest|chanter|mender/.test(clue))return'support';
- if(/archer|marksman|mage|caster|turret|gunner|spitter|seer|witch/.test(clue)||range>7)return'artillery';
+ if(/assassin|stalker|rogue|hound|prowler|lurker|crawler/.test(clue))return'assassin';
+ if(/healer|medic|support|priest|chanter|mender|keeper|choir/.test(clue))return'support';
+ if(/archer|marksman|mage|caster|turret|gunner|spitter|seer|witch|acolyte|binder|wisp|surveyor|drone/.test(clue)||range>7)return'artillery';
+ if(/skirmisher|shapeshifter|raider|duelist/.test(clue))return'skirmisher';
  if(/coward|scavenger|imp|runner/.test(clue))return'coward';
  return classification==='elite'?'bruiser':'bruiser'
 }
