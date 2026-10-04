@@ -230,7 +230,9 @@ function gearFitProfile(subject){
     leftShoulder,rightShoulder,leftHand,rightHand,baseRightHand,handY,
     waistY:247,waistHalf,hipHalf,
     leftLeg:120-p.hip*.47,rightLeg:120+p.hip*.47,
-    legHalf:Math.max(10.5,p.leg*.82),calfHalf:Math.max(8.2,p.leg*.62),footHalf:Math.max(10,p.leg*.72),
+    // Lower-body mass must track the hip/body silhouette. The old minimums made
+    // otherwise athletic bodies read as stick-thin once the torso was widened.
+    legHalf:Math.max(12.5,p.leg*.90),calfHalf:Math.max(10.5,p.leg*.72),footHalf:Math.max(11,p.leg*.76),
     chestTop:gender===1?121:119,chestBottom:252,
     weaponX:pose.x,weaponY:pose.y,weaponAngle:pose.angle,weaponPose:pose.active?'side-held':'rest',weaponKind:pose.kind,weaponSideMin:pose.sideMin??rightShoulder,
     offhandX:leftHand,offhandY:handY,
