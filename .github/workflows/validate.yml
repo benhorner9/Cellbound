@@ -59,6 +59,11 @@ jobs:
           node tests/living-combat.browser.cjs
           CELLBOUND_TEST_ENGINE=webkit node tests/living-combat.browser.cjs
 
+      - name: Equipment fit browser regression
+        run: |
+          node tests/equipment-fit.browser.cjs
+          CELLBOUND_TEST_ENGINE=webkit node tests/equipment-fit.browser.cjs
+
       - name: Full game browser playthrough
         run: |
           node tests/full-playthrough.browser.cjs
@@ -76,6 +81,7 @@ jobs:
           name: cellbound-release-review
           path: |
             /tmp/cellbound-living-combat.png
+            /tmp/cellbound-equipment-fit-*.png
             /tmp/cellbound-full-playthrough.png
             /tmp/cellbound-login-screen.png
             /tmp/cellbound-creator-*.png
