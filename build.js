@@ -171,7 +171,7 @@ for(const file of files){
     if(!audit?.ok||audit.count!==12)throw new Error('Master character rig validation failed: '+JSON.stringify(audit?.errors||audit));
   }
   if(file==='character-portraits-v1.js'){
-    for(const hook of ['window.CellboundPortraits','normalizeAppearance','function raceFacePath(','function raceFaceDetails(','function paperRaceSilhouette(','function paperRaceTorsoDetails(','function paperRaceLegDetails(','function paperRaceFootDetails(','function paperRaceNeck(','function paperFit(','function paperChest(','function paperShoulders(','function paperLegs(','function paperFeet(','function paperWeapon(','function paperOffHand(','data-character-style="classic-paper-doll"','data-race-identity="v2"','data-equipment-fit="v2"','data-fit-version',"EQUIPMENT_FIT_VERSION=2","RACE_IDENTITY_VERSION=2","CHARACTER_MODEL_VERSION=15","CHARACTER_MODEL_CONTRACT='classic-paper-doll-v1'","BASE_ART_CONTRACT='classic-paper-doll-v1'",'const RIG=window.CellboundCharacterRig||null','rigContract:RIG?.contract','masterRigCount:RIG?.masterRigCount','baseArtContract:BASE_ART_CONTRACT'])if(!contents.includes(hook))throw new Error('Classic paper-doll character/equipment contract missing '+hook);
+    for(const hook of ['window.CellboundPortraits','normalizeAppearance','function raceFacePath(','function raceFaceDetails(','function paperRaceSilhouette(','function paperRaceTorsoDetails(','function paperRaceLegDetails(','function paperRaceFootDetails(','function paperRaceNeck(','function paperFit(','function betaHeadDetail(','function betaChestDetail(','function betaShoulderDetail(','function betaHandDetail(','function betaWaistDetail(','function betaLegDetail(','function betaFootDetail(','function betaWeaponDetail(','function betaOffhandDetail(','function paperChest(','function paperShoulders(','function paperLegs(','function paperFeet(','function paperWeapon(','function paperOffHand(','data-character-style="classic-paper-doll"','data-race-identity="v2"','data-equipment-fit="v2"','data-item-visuals="v2"','data-fit-version',"ITEM_VISUALS_VERSION=2","EQUIPMENT_FIT_VERSION=2","RACE_IDENTITY_VERSION=2","CHARACTER_MODEL_VERSION=15","CHARACTER_MODEL_CONTRACT='classic-paper-doll-v1'","BASE_ART_CONTRACT='classic-paper-doll-v1'",'const RIG=window.CellboundCharacterRig||null','rigContract:RIG?.contract','masterRigCount:RIG?.masterRigCount','baseArtContract:BASE_ART_CONTRACT'])if(!contents.includes(hook))throw new Error('Classic paper-doll character/equipment contract missing '+hook);
     if(contents.includes('illustratedEquipment(')||contents.includes('cb-forge-base'))throw new Error('Painted/Forge character renderer must remain disabled during the classic visual rollback');
   }
   if(file==='roster-v2.css'){
@@ -210,7 +210,7 @@ for(const file of files){
     for(const hook of ['.gear-set-panel','.cb-set-summary','.cb2d-loot-set','.tp-set-bonus'])if(!contents.includes(hook))throw new Error('Equipment set bonus styling is missing '+hook);
   }
   if(file==='item-art-v1.js'){
-    for(const hook of ["window.CellboundItemArt","CELLBOUND_ITEM_ART_DIRECTION='classic-flat-v1'","function artBody(","function genericGear(","function materialHTML","function consumableHTML","function collectionHTML","frostbound-sigil","relic-oathstone-dominion","grid-override-module","enhancePvp","enhanceCrafting"])if(!contents.includes(hook))throw new Error('Classic flat item artwork system is missing '+hook);
+    for(const hook of ["window.CellboundItemArt","CELLBOUND_ITEM_ART_DIRECTION='class-tier-v2'","ITEM_VISUALS_VERSION=2","function artBody(","function genericGearBase(","function betaIconOverlay(","function genericGear(","function materialHTML","function consumableHTML","function collectionHTML","frostbound-sigil","relic-oathstone-dominion","grid-override-module","enhancePvp","enhanceCrafting"])if(!contents.includes(hook))throw new Error('Item Visuals V2 artwork system is missing '+hook);
     if(contents.includes('CellboundItemVisuals.icon'))throw new Error('Classic item icons must not delegate to the newer Forge vector renderer');
   }
   if(file==='class-build-v1.js'){
@@ -651,7 +651,7 @@ for(const file of files){
   vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),portraitSandbox,{filename:'character-portraits-v1.js'});
   const P=portraitSandbox.CellboundPortraits;
   if(!P?.paperDollHTML||!P?.visualProfile)throw new Error('Classic paper-doll runtime failed to load');
-  if(P.version!==15||P.raceIdentityVersion!==2||P.equipmentFitVersion!==2||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1')throw new Error('Classic paper-doll universal equipment fit contract is missing');
+  if(P.version!==15||P.raceIdentityVersion!==2||P.equipmentFitVersion!==2||P.itemVisualsVersion!==2||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1')throw new Error('Classic paper-doll Item Visuals V2 contract is missing');
   const appearance={race:'Veyren',gender:0,frame:1,skinTone:1,face:2,hair:3,hairColor:4,facialHair:1,marking:2,eyes:0,feature:1};
   const sword={name:'Test Sword',itemId:'test-sword',class:'Warrior',slot:'Weapon',tier:2,weaponType:'sword'};
   const spear={name:'Test Spear',itemId:'test-spear',class:'Warrior',slot:'Weapon',tier:2,weaponType:'spear'};
@@ -702,7 +702,7 @@ for(const file of files){
   vm.runInContext(fs.readFileSync(path.join(__dirname,'character-portraits-v1.js'),'utf8'),sandbox,{filename:'character-portraits-v1.js'});
   const G=sandbox.CellboundGear,P=sandbox.CellboundPortraits;
   if(!G||!P)throw new Error('Classic beta character/equipment runtime failed to load');
-  if(P.version!==15||P.raceIdentityVersion!==2||P.equipmentFitVersion!==2||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1'||P.rigContract!=='master-rig-v1'||P.masterRigCount!==12)throw new Error('Classic paper-doll universal equipment fit beta lock is missing');
+  if(P.version!==15||P.raceIdentityVersion!==2||P.equipmentFitVersion!==2||P.itemVisualsVersion!==2||P.modelContract!=='classic-paper-doll-v1'||P.baseArtContract!=='classic-paper-doll-v1'||P.rigContract!=='master-rig-v1'||P.masterRigCount!==12)throw new Error('Classic paper-doll Item Visuals V2 beta lock is missing');
   const races=['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari'],positions=G.EQUIPMENT_POSITION_ORDER;
   const slotFor=pos=>pos.startsWith('Ring')?'Ring':pos.startsWith('Trinket')?'Trinket':pos;
   let checked=0;
@@ -718,6 +718,7 @@ for(const file of files){
     const html=P.paperDollHTML(character,{size:'equipment',showGear:true}),fit=P.gearFitProfile(character),wf=P.weaponFitProfile(character,equipment.Weapon);
     if(/NaN|undefined/.test(html))throw new Error('Broken classic character SVG: '+klass+' T'+tier+' '+race+' '+gender);
     if(!html.includes('data-character-style="classic-paper-doll"'))throw new Error('Classic character marker missing: '+klass+' T'+tier+' '+race+' '+gender);
+    if(['Warrior','Paladin','Hunter','Rogue','Mage'].includes(klass)&&(!html.includes('data-item-visuals="v2"')||!html.includes('data-class-visual="'+klass.toLowerCase()+'"')))throw new Error('Item Visuals V2 class identity missing: '+klass+' T'+tier+' '+race+' '+gender);
     for(const key of ['leftShoulder','rightShoulder','leftHand','rightHand','waistHalf','leftLeg','rightLeg','weaponX','offhandX'])if(!Number.isFinite(fit[key]))throw new Error('Invalid classic '+key+': '+klass+' T'+tier+' '+race+' '+gender);
     if(![wf.anchorX,wf.anchorY,wf.pivotX,wf.pivotY,wf.rotate,wf.scale].every(Number.isFinite))throw new Error('Invalid classic weapon fit: '+klass+' T'+tier+' '+race+' '+gender);
     for(const pos of positions)if(!html.includes('cb-paper-slot-'+pos.toLowerCase()))throw new Error('Missing classic '+pos+' render: '+klass+' T'+tier+' '+race+' '+gender);
