@@ -14,7 +14,7 @@ for(const atlas of Object.values(V.atlases)){
 assert.equal(sprites,301);assert(bytes<6500000,'Compressed fallback atlas budget');
 
 const all=[...G.items,...Object.entries(context.CellboundProfessions.MATERIALS).map(([key,x])=>({...x,key,category:'material'})),...Object.values(context.CellboundProfessions.PROFESSIONS).flatMap(x=>x.recipes.map(r=>r.output))];
-let vectorGear=0,atlasFallback=0;
+let vectorGear=0,vectorAux=0;
 for(const item of all){
  const before=JSON.stringify(item),a=V.resolve(item),icon=V.icon(item);
  assert(a,'Every item must resolve artwork');
@@ -27,12 +27,16 @@ for(const item of all){
    assert(icon.includes(a.key),'Inventory icon and wearable source key must agree');
    assert(!icon.includes('<image href='),'Equipment icons must not fall back to the old painted atlas');
  }else{
-   atlasFallback++;
-   assert(a.src&&fs.existsSync(path.join(root,a.src)));
+   vectorAux++;
+   assert.equal(a.mode,'forge-vector',item.key||item.name);
+   assert.equal(a.artDirection,'forge-vector-v1');
+   assert(icon.includes('data-item-model="forge-vector-v1"'));
+   assert(icon.includes(a.key),'Non-equipment icon must keep a stable Forge source key');
+   assert(!icon.includes('<image href='),'Materials/consumables/recipes must not fall back to the painted atlas');
  }
  assert.equal(JSON.stringify(item),before,'Rendering must not mutate item data');
 }
-assert(vectorGear>0&&atlasFallback>0);
+assert(vectorGear>0&&vectorAux>0);
 assert.notEqual(V.resolve({slot:'Weapon',name:'Crossbow'}).key,V.resolve({slot:'Weapon',name:'Bow'}).key);
 
 for(const klass of ['Warrior','Paladin','Hunter','Rogue','Mage']){
@@ -55,4 +59,7 @@ for(const klass of ['Warrior','Paladin','Hunter','Rogue','Mage']){
   }
  }
 }
-console.log('Forge item models: '+vectorGear+' equipment mappings use '+V.artDirection+'; '+atlasFallback+' non-equipment mappings retain illustrated fallback; '+sprites+' fallback sprites; '+bytes+' compressed bytes.');
+const warriorHelms=[1,2,3,4,5].map(t=>V.icon({itemId:'warrior-helm-t'+t,class:'Warrior',slot:'Head',tier:t,name:'Warrior Helm T'+t}));
+assert.equal(new Set(warriorHelms).size,5,'Warrior helm T1-T5 must have five distinct progression renders');
+assert(warriorHelms[3].includes('forge-vector-v1')&&warriorHelms[4].includes('forge-vector-v1'));
+console.log('Forge item models: '+vectorGear+' equipment mappings and '+vectorAux+' non-equipment mappings use '+V.artDirection+'; '+sprites+' compatibility atlas sprites remain packaged; '+bytes+' compressed bytes.');
