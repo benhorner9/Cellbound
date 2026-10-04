@@ -389,9 +389,13 @@ function hsRenderRebornEvent(e){
    run.aggro=targetChar?.id||null;if(e.payload?.threat&&typeof e.payload.threat==='object'){Object.entries(e.payload.threat).forEach(([id,v])=>{const ch=hsCharacter(id);if(ch)run.threat[ch.id]=Number(v)||0})}hsRenderMeters();
    if(targetChar&&role(targetChar)!=='tank')feed(targetChar.name+' pulls aggro from the Tank.');
    break;
+  case'PARTY_COMMAND':if(e.result!=='cooldown'){feed('Party executes '+String(e.ability||'command').replace(/-/g,' ')+'.')}break;
   case'MECHANIC_TELEGRAPH':
-   setStatus((e.ability||'Mechanic')+' incoming…');feed((e.ability||'A mechanic')+' is telegraphed.');hsMechanicFromEvent(e);break;
-  case'MECHANIC_RESOLVE':hsClearMechanic(e.payload?.token,true);/* Engine events own return-to-formation movement. */break;
+   setStatus((e.ability||'Mechanic')+' incoming…');feed((e.ability||'A mechanic')+' is telegraphed.');hsMechanicFromEvent(e);{
+    const mt=String(e.payload?.mechanicType||''),rec=mt==='interrupt'?'interrupt':(['circle','circles','line'].includes(mt)?'spread':mt==='adds'?'focus':mt==='cone'?'defensive':null);
+    document.querySelectorAll('[data-hs-override]').forEach(b=>b.classList.toggle('recommended',!!rec&&b.dataset.hsOverride===rec))
+   }break;
+  case'MECHANIC_RESOLVE':hsClearMechanic(e.payload?.token,true);/* Engine events own return-to-formation movement. */document.querySelectorAll('[data-hs-override]').forEach(b=>b.classList.remove('recommended'));break;
   case'CAST_START':if(String(e.result||'')==='enemy'){hsCastStart(e.ability||'Enemy Cast',e.payload?.duration)}if(e.payload?.interruptible)feed((e.ability||'Cast')+' can be interrupted.');break;
   case'CAST_FINISH':hsCastClear();break;
   case'INTERRUPT':
@@ -408,12 +412,25 @@ function hsRenderRebornEvent(e){
  }
 }
 async function hsPlayTimeline(result,tok){
- const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
+ let activeResult=result,events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
  if(!run)return false;run.telegraphs={};
  if(!events.length)return result?.outcome==='victory';
  return await new Promise(resolve=>{
   let index=0,simTime=0,wallAnchor=Number(run?.runtimeStageStartedAt)||Date.now(),simAnchor=0,lastSpeed=null,finished=false,raf=0;
-  const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);resolve(value)};
+  const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);if(run?.liveCombat)run.liveCombat.issue=null;resolve(value)};
+  const issueCommand=(type,payload={})=>{
+   const live=run?.liveCombat,C=window.CellboundCombatStandard;if(!live?.options||!C?.simulate)return{ok:false,reason:'unavailable'};
+   const now=Math.max(0,Number(simTime)||0);if(now<Number(live.cooldownUntil||0))return{ok:false,reason:'cooldown',remainingMs:live.cooldownUntil-now};
+   const command={id:'hs-live-'+(++live.seq),type:String(type||''),atMs:Math.round(now+120),targetId:payload?.targetId||null},next=[...(live.commands||[]),command];
+   let replanned;try{replanned=C.simulate({...live.options,commandTimeline:next},live.meta||{})}catch(error){console.warn('hollow-sanctum-v1.js live command replan failed',type,error);return{ok:false,reason:'simulation'}}
+   replanned.stageId=result.stageId;replanned.stageTitle=result.stageTitle;replanned.startHp=result.startHp;
+   live.commands=next;live.cooldownUntil=now+3200;live.result=replanned;activeResult=replanned;
+   try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,replanned)}catch(_){}
+   events=(replanned.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
+   const nextIndex=events.findIndex(e=>(Number(e.timestamp)||0)>now+4);index=nextIndex<0?events.length:nextIndex;
+   return{ok:true,command,result:replanned}
+  };
+  if(run?.liveCombat){run.liveCombat.issue=issueCommand;run.liveCombat.now=()=>simTime}
   const frame=()=>{
    if(finished)return;
    if(tok!==token||!run){finish(false);return}
@@ -427,7 +444,7 @@ async function hsPlayTimeline(result,tok){
     try{hsRenderRebornEvent(event)}
     catch(error){console.error('Hollow Sanctum combat visual recovered',event?.type,event?.ability,error)}
    }
-   if(index>=events.length){finish(result?.outcome==='victory');return}
+   if(index>=events.length){finish(activeResult?.outcome==='victory');return}
    raf=requestAnimationFrame(frame)
   };
   raf=requestAnimationFrame(frame)
@@ -532,7 +549,8 @@ async function fightStage(s,tok,index){
  spawnStage(s);setStatus('Entering '+s.title+'…');feed('The party enters '+s.title+'.');await wait(650);if(tok!==token)return false;
  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
  const combatParty=party().map((c,i)=>Object.assign({},c,{_combatHealthPct:run.hp[c.id],_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0,_combatPosition:hsPartyStagePosition(s,i)}));
- const tactics={...hsTactics,interruptPriority:hsTactics.bossPlan==='control'?'high':hsTactics.interruptPriority,addPriority:hsTactics.bossPlan==='burn'?'boss':hsTactics.addPriority,defensiveUsage:hsTactics.bossPlan==='control'?'aggressive':hsTactics.defensiveUsage,cooldownUse:hsTactics.bossPlan==='burn'?'free':hsTactics.cooldownUse};const result=C.simulate({party:combatParty,encounter:hsRebornEncounter(s),tactics,seed:[run.endgame?.seed||'hollow-sanctum',s.id,index].join(':')},{zone:'hollow-sanctum'});
+ const tactics={...hsTactics,interruptPriority:hsTactics.bossPlan==='control'?'high':hsTactics.interruptPriority,addPriority:hsTactics.bossPlan==='burn'?'boss':hsTactics.addPriority,defensiveUsage:hsTactics.bossPlan==='control'?'aggressive':hsTactics.defensiveUsage,cooldownUse:hsTactics.bossPlan==='burn'?'free':hsTactics.cooldownUse},simOptions={party:combatParty,encounter:hsRebornEncounter(s),tactics,seed:[run.endgame?.seed||'hollow-sanctum',s.id,index].join(':')},simMeta={zone:'hollow-sanctum'};const result=C.simulate(simOptions,simMeta);
+ run.liveCombat={options:simOptions,meta:simMeta,commands:[],seq:0,cooldownUntil:0,result};
  result.stageId=s.id;result.stageTitle=s.title;result.startHp={...run.hp};run.history.push(result);
  const won=await hsPlayTimeline(result,tok);hsResultHealth(result);
  (result?.finalState?.players||[]).forEach(p=>{
@@ -584,17 +602,30 @@ function hsCastStart(name,duration){
  const panel=$('#hs2dCastPanel'),label=$('#hs2dCastName'),time=$('#hs2dCastTime'),fill=$('#hs2dCastFill');if(panel)panel.hidden=false;if(label)label.textContent=name||'Enemy cast';if(time)time.textContent=((Number(duration)||0)/1000).toFixed(1)+'s';if(fill){fill.style.transition='none';fill.style.width='0%';requestAnimationFrame(()=>requestAnimationFrame(()=>{if(!fill.isConnected)return;fill.style.transition='width '+Math.max(.1,(Number(duration)||500)/1000/(run?.speed||1))+'s linear';fill.style.width='100%'}))}
 }
 function hsCastClear(){const panel=$('#hs2dCastPanel'),label=$('#hs2dCastName'),time=$('#hs2dCastTime'),fill=$('#hs2dCastFill');if(panel)panel.hidden=false;if(label)label.textContent='—';if(time)time.textContent='—';if(fill){fill.style.transition='none';fill.style.width='0%'}}
+function hsCommandMessage(kind){
+ return kind==='focus'?'Focus priority target':kind==='interrupt'?'Interrupt now':kind==='defensive'?'Defensive stance':kind==='spread'?'Spread out':kind==='burn'?'Burn boss':'Party command'
+}
 function hsOverride(kind,button){
  if(!run)return;if(button){button.classList.add('active');setTimeout(()=>button.classList.remove('active'),450)}
- if(kind==='focus'){hsTactics.bossPlan='burn';hsAct('dps','Focusing priority target');feed('Override: focus priority target.')}
- if(kind==='interrupt'){hsTactics.interruptPriority='high';hsAct('dps','Interrupt priority raised');feed('Override: interrupt priority raised.')}
- if(kind==='defensive'){party().forEach(ch=>run.hp[ch.id]=Math.min(100,(Number(run.hp[ch.id])||0)+5));hsUpdateSidebar();hsAct('tank','Defensives committed');feed('Override: defensive cooldowns committed.')}
- if(kind==='burn'){hsTactics.bossPlan='burn';hsAct('dps','Damage cooldowns committed');feed('Override: burn boss.')}
  if(kind==='consumable'){
    const helper=window.CellboundDungeon2D,used=helper?.useCombatPotion?.({state:state(),members:party(),getHp:c=>Number(run.hp[c.id])||0,setHp:(c,v)=>{run.hp[c.id]=v}});
    if(!used?.ok){feed(used?.reason==='full'?'The party is already at full health.':'No combat potions remain. Craft or buy one before the next run.');helper?.refreshCombatPotionButton?.(button,state());return}
-   hsUpdateSidebar();helper?.refreshCombatPotionButton?.(button,state());feed(used.item.name+' restores '+used.target.name+' for '+used.healApplied+' HP.')
+   hsUpdateSidebar();helper?.refreshCombatPotionButton?.(button,state());feed(used.item.name+' restores '+used.target.name+' for '+used.healApplied+' HP.');return
  }
+ const response=run.liveCombat?.issue?.(kind,{});
+ if(!response?.ok){
+   feed(response?.reason==='cooldown'?'Commander call recovering — choose your next moment.':'That command is not available right now.');
+   return
+ }
+ document.querySelectorAll('[data-hs-override]').forEach(b=>{if(b.dataset.hsOverride!=='consumable')b.disabled=true});
+ const cooldown=Math.max(700,Math.round(3200/Math.max(.25,Number(run.speed)||1)));
+ setTimeout(()=>{if(run)document.querySelectorAll('[data-hs-override]').forEach(b=>{if(b.dataset.hsOverride!=='consumable')b.disabled=false})},cooldown);
+ if(kind==='focus')hsAct('dps','Focusing priority target');
+ if(kind==='interrupt')hsAct('dps','Interrupt command issued');
+ if(kind==='defensive')hsAct('tank','Party defensives committed');
+ if(kind==='spread')hsAct('dps','Party spreading from danger');
+ if(kind==='burn')hsAct('dps','Damage cooldowns committed');
+ feed('Commander: '+hsCommandMessage(kind)+'.')
 }
 function hsLootRarityClass(item){return 'rarity-'+String(item?.rarity||'common').toLowerCase().replace(/[^a-z0-9-]/g,'')}
 function hsLootGearCard(item,label='DUNGEON DROP'){
@@ -618,7 +649,7 @@ function draw(){
  r.innerHTML='<section class="cb2d-shell hs2d-unified-shell"><header class="cb2d-head"><div><small>THE HOLLOW SANCTUM · LIVE 2D DUNGEON</small><h2 id="hs2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close aria-label="Close dungeon">×</button></div></header>'+
  '<div class="cb2d-route hs2d-route">'+STAGES.map((x,i)=>'<span class="'+(i<run.stage?'done':i===run.stage?'current':'')+'"><i>'+(i+1)+'</i>'+esc(x.title)+'</span>').join('')+'</div>'+
  '<div class="cb2d-layout"><main><div class="cb2d-arena hs2d-arena hs2d-unified-arena" id="hs2dArena"><div class="cb2d-floor hs2d-floor"></div><div class="hs2d-environment" id="hs2dEnvironment"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="hs2dTelegraphs"></div><div id="hs2dUnits"></div><div id="hs2dFx"></div><div class="hs2d-room cb2d-room-tag" id="hs2dRoom"></div><div class="cb2d-caption hs2d-caption"><span id="hs2dType">'+esc(s.kind)+'</span><b id="hs2dStatus">Descending…</b></div></div>'+
- '<div class="cb2d-controls"><button data-hs-override="focus"><b>FOCUS TARGET</b><small>Force priority damage.</small></button><button data-hs-override="interrupt"><b>INTERRUPT NOW</b><small>Raise interrupt priority.</small></button><button data-hs-override="defensive"><b>DEFENSIVE</b><small>Stabilise the group.</small></button><button data-hs-override="burn"><b>BURN BOSS</b><small>Commit damage cooldowns.</small></button><button data-hs-override="consumable"><b>USE CONSUMABLE</b><small>Use available stock.</small></button></div>'+
+ '<div class="cb2d-controls"><button data-hs-override="focus"><b>FOCUS TARGET</b><small>Force priority damage.</small></button><button data-hs-override="interrupt"><b>INTERRUPT NOW</b><small>Raise interrupt priority.</small></button><button data-hs-override="defensive"><b>DEFENSIVE</b><small>Stabilise the group.</small></button><button data-hs-override="spread"><b>SPREAD OUT</b><small>Move clear of danger.</small></button><button data-hs-override="burn"><b>BURN BOSS</b><small>Commit damage cooldowns.</small></button><button data-hs-override="consumable"><b>USE CONSUMABLE</b><small>Use available stock.</small></button></div>'+
  '<div class="cb2d-feed hs2d-unified-feed"><small>COMBAT FEED</small><div id="hs2dFeed"></div></div></main>'+
  '<aside><div class="cb2d-cast" id="hs2dCastPanel"><small>ENEMY CAST</small><div><b id="hs2dCastName">—</b><strong id="hs2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="hs2dCastFill"></i></div></div>'+
  '<div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="hs2dDamageTotal">0 total</span></div><div id="hs2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="hs2dHealingTotal">0 total</span></div><div id="hs2dHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="hs2dThreatTarget">No target</span></div><div id="hs2dThreatMeter" class="cb2d-meter-list"></div></section></div>'+
