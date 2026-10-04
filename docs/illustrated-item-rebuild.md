@@ -1,4 +1,8 @@
-# Forge item model rebuild — staging
+# Visual direction status — classic rollback
+
+The painted/Forge item-model rollout is temporarily superseded on staging by `classic-paper-doll-v1` and `classic-flat-v1`, matching the simpler Cellbound paper-doll references from Oct 2–3.
+
+The underlying equipment catalogue, stats, slot rules, item IDs, sockets and progression remain unchanged. The newer Forge/atlas assets remain in the repository for future experimentation but are not the active character/item presentation during this rollback.
 
 This pass moves equipped gear onto the same visual language as the Character Forge bases.
 
