@@ -8,6 +8,8 @@ assert.equal(P.version,15);
 assert.equal(P.modelContract,'classic-paper-doll-v1');
 assert.equal(P.baseArtContract,'classic-paper-doll-v1');
 assert.equal(P.rigContract,'master-rig-v1');
+assert.equal(P.equipmentFitVersion,2);
+assert.equal(sandbox.CellboundCharacterRig.fitVersion,2);
 assert.equal(P.masterRigCount,12);
 assert.equal(P.raceIdentityVersion,1);
 
@@ -18,6 +20,7 @@ for(const race of Object.keys(P.RACES))for(const gender of [0,1]){
  const before=JSON.stringify(c),base=P.paperDollSVG(c,{showGear:false});
  assert(base.includes('data-character-style="classic-paper-doll"'));
  assert(base.includes('data-race-identity="v1"'));
+ assert(base.includes('data-equipment-fit="v2"'));
  assert(base.includes('cb-paper-race-'+race.toLowerCase()),race+' must expose a race-specific body detail layer');
  assert(base.includes('data-base-art="classic-paper-doll-v1"'));
  assert(base.includes('data-model-mode="base"'));
