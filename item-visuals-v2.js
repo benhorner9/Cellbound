@@ -32,7 +32,11 @@ function resolve(item,slot){
 }
 function sprite(asset,x,y,w,h,part,contain){
  const r=part==null?asset.rect:asset.pair?.[part]||asset.rect;
- return '<svg x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" viewBox="'+r.join(' ')+'" preserveAspectRatio="'+(contain?'xMidYMid meet':'none')+'" overflow="hidden" data-art-source="'+asset.key+'"><image href="'+asset.src+'" x="0" y="0" width="'+asset.width+'" height="'+asset.height+'"/></svg>';
+ const pid=('cb-item-'+asset.key+'-'+r.join('-')).replace(/[^a-zA-Z0-9_-]/g,'-');
+ return '<svg x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" viewBox="'+r.join(' ')+'" preserveAspectRatio="'+(contain?'xMidYMid meet':'none')+'" overflow="hidden" data-art-source="'+asset.key+'">'+
+  '<defs><pattern id="'+pid+'" patternUnits="userSpaceOnUse" x="0" y="0" width="'+asset.width+'" height="'+asset.height+'"><image href="'+asset.src+'" x="0" y="0" width="'+asset.width+'" height="'+asset.height+'"/></pattern></defs>'+
+  '<rect x="'+r[0]+'" y="'+r[1]+'" width="'+r[2]+'" height="'+r[3]+'" fill="url(#'+pid+')"/>'+
+ '</svg>';
 }
 function icon(item){const a=resolve(item);return '<svg viewBox="0 0 128 128" role="img" aria-label="'+escape(item.name||item.key||'Item')+'" focusable="false">'+sprite(a,8,8,112,112,null,true)+'</svg>'}
 window.CellboundItemVisuals={version:2,resolve,sprite,icon,tier,type,families,atlases:A};
