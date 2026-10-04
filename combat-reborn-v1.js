@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.5.2';
+const VERSION='1.6.0';
 // Balance baseline: 2026-09-30 chapter-wide progression and role audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
@@ -1076,6 +1076,16 @@ function normalisePlayer(c,i,zone=null){
   defensiveUntil:Math.max(0,Number(c?._combatDefensiveMs)||0),frenzyUntil:Math.max(0,Number(c?._combatFrenzyMs)||0),uniqueUsed:copy(c?._combatUniqueUsed||{}),nextDecision:100+(i*200),nextRegen:0,mistakeLocks:{},pendingTaunt:null,revivePenaltyUntil:Number(c?._reviveSicknessMs)||0,original:c
  };
 }
+function inferredEnemyBehaviour(data={},classification='trash'){
+ const explicit=String(data.combatBehaviour||data.behaviour||data.aiStyle||'').trim().toLowerCase();
+ if(explicit)return explicit;
+ const clue=String((data.name||'')+' '+(data.visualArchetype||'')).toLowerCase(),range=Math.max(2,Number(data.attackRange)||5);
+ if(/assassin|stalker|rogue|hound|prowler|lurker/.test(clue))return'assassin';
+ if(/healer|medic|support|priest|chanter|mender/.test(clue))return'support';
+ if(/archer|marksman|mage|caster|turret|gunner|spitter|seer|witch/.test(clue)||range>7)return'artillery';
+ if(/coward|scavenger|imp|runner/.test(clue))return'coward';
+ return classification==='elite'?'bruiser':'bruiser'
+}
 function normaliseEnemies(encounter){
  const raw=encounter.enemies||['Enemy'],baseLevel=Math.max(1,Number(encounter.level)||Number(encounter.recommendedLevel)||1);
  const baseHealth=Number(encounter.enemyHealth)||((encounter.kind==='final')?680:(encounter.kind==='boss'?480:(encounter.kind==='event'?220:120)));
@@ -1093,7 +1103,7 @@ function normaliseEnemies(encounter){
    bodyRadius:Math.max(.9,Number(data.bodyRadius)||(classification==='world-boss'?3.1:classification==='boss'?2.8:classification==='elite'?1.6:1.15)),
    target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},movingUntil:0,moveToken:0,moveStartedAt:0,moveFrom:null,moveTo:null,nextAttack:900+i*220,currentCast:null,
    isAdd:false,priority:Number.isFinite(Number(data.priority))?Number(data.priority):(i===0?2:1),focusSelected:Boolean(data.focusSelected),damageScale:rule.damage*damageMult,phaseDamageScale:1,hardEnraged:false,
-   visualArchetype:data.visualArchetype||null,targeting:String(data.targeting||'threat').toLowerCase(),attackRange:Math.max(2,Number(data.attackRange)||5),attackName:data.attackName||null,damageType:data.damageType||'physical',allAttacksAoe:Boolean(data.allAttacksAoe),passive:Boolean(data.passive),addGroup:data.addGroup||null
+   visualArchetype:data.visualArchetype||null,combatBehaviour:inferredEnemyBehaviour(data,classification),targeting:String(data.targeting||'threat').toLowerCase(),attackRange:Math.max(2,Number(data.attackRange)||5),attackName:data.attackName||null,damageType:data.damageType||'physical',allAttacksAoe:Boolean(data.allAttacksAoe),passive:Boolean(data.passive),addGroup:data.addGroup||null
   }
  })
 }
@@ -2779,6 +2789,9 @@ function maybeApplyCrowdControl(ctx){
 }
 
 function pickDamageTarget(ctx,u){
+ const commanded=ctx.commandFocusId&&Number(ctx.commandFocusUntil)>ctx.time?getUnit(ctx,ctx.commandFocusId):null;
+ if(commanded?.alive)return commanded;
+ if(ctx.commandFocusId&&Number(ctx.commandFocusUntil)<=ctx.time){ctx.commandFocusId=null;ctx.commandFocusUntil=0}
  const adds=livingEnemies(ctx).filter(e=>e.isAdd);
  if(adds.length&&ctx.tactics.addPriority!=='boss'){
   return adds.sort((a,b)=>(b.priority||0)-(a.priority||0)||a.health-b.health)[0];
@@ -3507,6 +3520,23 @@ function enemyBasicAttack(ctx,e){
  if(!e.alive||ctx.time<e.movingUntil||isCrowdControlled(e))return;
  if(e.passive){e.nextAttack=ctx.time+1000;return}
  const live=livingPlayers(ctx);if(!live.length)return;
+ const behaviour=String(e.combatBehaviour||'bruiser');
+ if(behaviour==='support'&&ctx.time>=Number(e.nextSupportAt||0)){
+  const ally=livingEnemies(ctx).filter(x=>x!==e&&x.health<x.maxHealth).sort((a,b)=>healthRatio(a)-healthRatio(b))[0];
+  if(ally){
+   const amount=Math.max(1,Math.round(ally.maxHealth*.055));ally.health=Math.min(ally.maxHealth,ally.health+amount);e.nextSupportAt=ctx.time+6800;
+   emit(ctx,'ENEMY_BEHAVIOUR',{source:e.id,target:ally.id,ability:'Support Pulse',result:'support',position:copy(e.position),payload:{behaviour,amount,targetHpPct:pct(ally.health,ally.maxHealth)}});
+   emit(ctx,'HEAL_RECEIVED',{source:e.id,target:ally.id,ability:'Support Pulse',amount,result:'enemy-heal',payload:{enemyHeal:true,targetHp:ally.health,targetMaxHealth:ally.maxHealth,targetHpPct:pct(ally.health,ally.maxHealth),overhealing:0}});
+   e.nextAttack=ctx.time+900;return
+  }
+ }
+ if(behaviour==='coward'&&e.kind!=='boss'&&healthRatio(e)<.28&&ctx.time>=Number(e.nextBehaviourAt||0)){
+  const home=arenaCenter(ctx),dx=e.position.x-home.x,dy=e.position.y-home.y,len=Math.hypot(dx,dy)||1;
+  moveTo(ctx,e,openPosition(ctx,{x:e.position.x+dx/len*14,y:e.position.y+dy/len*14},1.5),520,'enemy retreat');
+  e.nextBehaviourAt=ctx.time+4200;e.nextAttack=ctx.time+750;
+  emit(ctx,'ENEMY_BEHAVIOUR',{source:e.id,ability:'Retreat',result:'coward',position:copy(e.position),payload:{behaviour}});
+  return
+ }
  // Ordinary boss chasing is confined to a broad central engagement zone. Mechanics can
  // still deliberately move a boss elsewhere, but the normal threat loop cannot drag the
  // entire encounter into a wall or corner.
@@ -3517,9 +3547,18 @@ function enemyBasicAttack(ctx,e){
    e.nextAttack=ctx.time+580;return
   }
  }
- const randomTarget=e.targeting==='random',target=randomTarget?live[Math.floor(ctx.rng()*live.length)]:(topThreatTarget(ctx,e)||live[0]);if(!target)return;
- setAggro(ctx,e,target,randomTarget?'random targeting':'threat');
+ const randomTarget=e.targeting==='random'||behaviour==='skirmisher';
+ const assassinTarget=behaviour==='assassin'?(live.find(p=>p.role==='healer')||live.filter(p=>p.role!=='tank').sort((a,b)=>healthRatio(a)-healthRatio(b))[0]):null;
+ const target=assassinTarget||(randomTarget?live[Math.floor(ctx.rng()*live.length)]:(topThreatTarget(ctx,e)||live[0]));if(!target)return;
+ setAggro(ctx,e,target,assassinTarget?'assassin pressure':randomTarget?'random targeting':'threat');
  const range=Math.max(2,Number(e.attackRange)||5);
+ if(behaviour==='artillery'&&range>7&&dist(e.position,target.position)<Math.min(10,range*.42)&&ctx.time>=Number(e.nextBehaviourAt||0)){
+  const dx=e.position.x-target.position.x,dy=e.position.y-target.position.y,len=Math.hypot(dx,dy)||1;
+  moveTo(ctx,e,openPosition(ctx,{x:e.position.x+dx/len*10,y:e.position.y+dy/len*10},1.5),380,'artillery reposition');
+  e.nextBehaviourAt=ctx.time+2800;e.nextAttack=ctx.time+520;
+  emit(ctx,'ENEMY_BEHAVIOUR',{source:e.id,target:target.id,ability:'Reposition',result:'artillery',position:copy(e.position),payload:{behaviour}});
+  return
+ }
  const crowded=e.kind!=='boss'&&range<=7&&ctx.enemies.some(other=>other!==e&&other.alive&&other.target===target.id&&dist(other.position,e.position)<2.4);
  const separated=range<=7?nearestMeleePoint(target,e,ctx):null;
  if(!inRange(e,target,range)||!hasLineOfSight(ctx,e,target)||(crowded&&dist(e.position,separated)>1)){
@@ -3536,11 +3575,58 @@ function enemyBasicAttack(ctx,e){
   livingPlayers(ctx).forEach(p=>dealDamage(ctx,e,p,base*.62*enemyPressure(ctx,e,p)*roll,'Wild Wrath',{damageType:'magic',avoidable:false,aoe:true,aggroHit:true}));
  }else{
   const levelPressure=enemyPressure(ctx,e,target);
-  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability,result:randomTarget?'enemy-random':'enemy',payload:{randomTargeting:randomTarget,attackRange:range,classification:e.classification,visualArchetype:e.visualArchetype,damageType:e.damageType}});
+  emit(ctx,'ABILITY_START',{source:e.id,target:target.id,ability,result:randomTarget?'enemy-random':'enemy',payload:{randomTargeting:randomTarget,attackRange:range,classification:e.classification,visualArchetype:e.visualArchetype,combatBehaviour:behaviour,damageType:e.damageType}});
   dealDamage(ctx,e,target,base*levelPressure*roll,ability,{damageType:e.damageType||'physical',aggroHit:!randomTarget});
  }
  const cadence=e.classification==='world-boss'?1325:e.kind==='boss'?1450:e.classification==='elite'?1850:e.isAdd?1800:2050;
  e.nextAttack=ctx.time+cadence+Math.round(ctx.rng()*(e.kind==='boss'?220:320));
+}
+function normaliseCommandTimeline(raw){
+ return (Array.isArray(raw)?raw:[]).map((cmd,index)=>({
+  id:String(cmd?.id||('command-'+index)),type:String(cmd?.type||'').toLowerCase(),atMs:Math.max(0,Math.round(Number(cmd?.atMs??cmd?.timestamp)||0)),
+  targetId:cmd?.targetId?String(cmd.targetId):null,durationMs:Math.max(0,Math.round(Number(cmd?.durationMs)||0))
+ })).filter(cmd=>cmd.type).sort((a,b)=>a.atMs-b.atMs)
+}
+function commandedInterrupt(ctx){
+ const cast=ctx.activeEnemyCast;if(!cast||cast.interrupted||ctx.time>=cast.ends)return false;
+ const enemy=getUnit(ctx,cast.enemy);if(!enemy?.alive)return false;
+ const choices=livingPlayers(ctx).map(u=>({u,a:u.abilities.find(a=>a.kind==='interrupt'&&cooldownReady(u,a)&&inRange(u,enemy,a.range||10)&&hasLineOfSight(ctx,u,enemy))})).filter(x=>x.a);
+ if(!choices.length)return false;
+ choices.sort((a,b)=>executionQuality(ctx,b.u)-executionQuality(ctx,a.u)||(a.a.cd||0)-(b.a.cd||0));
+ const {u,a}=choices[0],st=ctx.stats.players[u.id];ctx.stats.interrupts.attempts++;if(st)st.interruptAttempts++;
+ u.cooldowns[a.id]=Math.round((a.cd||15000)*talentCooldownScale(u,a));cast.interrupted=true;ctx.activeEnemyCast=null;enemy.interruptedUntil=ctx.time+2600;
+ if(st){st.interrupts++;}ctx.stats.interrupts.success++;
+ emit(ctx,'INTERRUPT',{source:u.id,target:enemy.id,ability:a.name,result:'success',payload:{interruptedAbility:cast.name,token:cast.token,commanded:true}});
+ return true
+}
+function applyPartyCommand(ctx,command){
+ const type=String(command?.type||'').toLowerCase(),live=livingPlayers(ctx),duration=Math.max(1800,Number(command?.durationMs)||0);
+ let result='accepted',targetId=command?.targetId||null;
+ if(type==='focus'){
+  const preferred=targetId?getUnit(ctx,targetId):null;
+  const target=(preferred?.alive&&preferred.role==='enemy'?preferred:null)||livingEnemies(ctx).slice().sort((a,b)=>(Number(b.isAdd)-Number(a.isAdd))||(Number(b.priority)||0)-(Number(a.priority)||0)||a.health-b.health)[0];
+  if(target){ctx.commandFocusId=target.id;ctx.commandFocusUntil=ctx.time+(duration||7000);ctx.enemies.forEach(e=>e.focusSelected=e.id===target.id);targetId=target.id}
+  else result='no-target'
+ }else if(type==='burn'){
+  live.forEach(p=>applyStatus(ctx,p,p,{id:'commander-burn',name:'Burn Order',kind:'buff',duration:duration||6000,effect:{outgoingDamage:.18,haste:.08}}))
+ }else if(type==='defensive'){
+  live.forEach(p=>{p.defensiveUntil=Math.max(Number(p.defensiveUntil)||0,ctx.time+(duration||5000));applyStatus(ctx,p,p,{id:'commander-defensive',name:'Hold Fast',kind:'buff',duration:duration||5000,effect:{incomingDamageReduction:.08}})})
+ }else if(type==='spread'){
+  const cast=ctx.activeEnemyCast,enemy=cast?getUnit(ctx,cast.enemy):(livingEnemies(ctx).find(e=>e.kind==='boss')||livingEnemies(ctx)[0]),responseType=cast?.type==='line'?'line':cast?.type==='cone'?'cone':'circles';
+  live.forEach(p=>{if(cast?.responses)cast.responses[p.id]=true;if(cast?.reactionMs)cast.reactionMs[p.id]=0;planMovement(ctx,p,responseType,enemy)});
+  if(!cast)result='reposition'
+ }else if(type==='regroup'){
+  const tank=live.find(p=>p.role==='tank')||live[0],anchor=tank?.position||arenaCenter(ctx);
+  live.forEach((p,i)=>{const angle=-Math.PI/2+(i/Math.max(1,live.length))*Math.PI*2,r=p.role==='tank'?1.5:4.5;moveTo(ctx,p,openPosition(ctx,{x:anchor.x+Math.cos(angle)*r,y:anchor.y+Math.sin(angle)*r},1.5),340,'commander regroup')})
+ }else if(type==='interrupt'){
+  if(!commandedInterrupt(ctx))result='no-cast'
+ }else result='unknown';
+ emit(ctx,'PARTY_COMMAND',{source:'commander',target:targetId,ability:type,result,payload:{commandId:command.id||null,type,durationMs:duration||0,targetId}});
+}
+function schedulePartyCommands(ctx,raw){
+ const timeline=normaliseCommandTimeline(raw);
+ timeline.forEach(command=>schedule(ctx,command.atMs,()=>{if(!ctx.finished)applyPartyCommand(ctx,command)},'party-command'));
+ return timeline
 }
 function mechanicStat(ctx,type,failed){
  const m=ctx.stats.mechanics;m.byType[type]=m.byType[type]||{avoided:0,failed:0};
@@ -3963,12 +4049,28 @@ function checkBossPhases(ctx){
  }
 }
 
+function mechanicKey(m,index=0){return String(m?.id||m?.name||m?.type||('mechanic-'+index))}
+function refillMechanicBag(ctx,list){
+ const bag=list.map((_,i)=>i);
+ for(let i=bag.length-1;i>0;i--){const j=Math.floor(ctx.rng()*(i+1)),tmp=bag[i];bag[i]=bag[j];bag[j]=tmp}
+ if(bag.length>1&&ctx.lastMechanicKey&&mechanicKey(list[bag[0]],bag[0])===ctx.lastMechanicKey){
+  const swap=bag.findIndex((idx,i)=>i>0&&mechanicKey(list[idx],idx)!==ctx.lastMechanicKey);
+  if(swap>0){const tmp=bag[0];bag[0]=bag[swap];bag[swap]=tmp}
+ }
+ ctx.mechanicBag=bag
+}
 function scheduleNextMechanic(ctx){
  if(ctx.finished)return;
  const list=ctx.encounter.mechanics||[];if(!list.length)return;
  const baseDelay=Number(ctx.encounter.mechanicIntervalMs)||(ctx.encounter.kind==='final'?3600:ctx.encounter.kind==='boss'?4200:ctx.encounter.kind==='world-boss'?2500:5000);
  const delay=Math.max(900,Math.round(baseDelay*scalingValue(ctx,'mechanicFrequency',1)));
- const m=list[ctx.mechanicIndex++%list.length];
+ const randomPool=list.length>1&&['boss','final','world-boss'].includes(String(ctx.encounter.kind||''))&&ctx.encounter.randomMechanics!==false&&ctx.encounter.fixedMechanicOrder!==true;
+ let index;
+ if(randomPool){
+  if(!Array.isArray(ctx.mechanicBag)||!ctx.mechanicBag.length)refillMechanicBag(ctx,list);
+  index=ctx.mechanicBag.shift()
+ }else index=ctx.mechanicIndex%list.length;
+ const m=list[index]||list[0];ctx.mechanicIndex++;ctx.lastMechanicKey=mechanicKey(m,index);
  schedule(ctx,ctx.time+delay,()=>startMechanic(ctx,m),'mechanic-start');
 }
 function normaliseMechanics(encounter){
@@ -4005,11 +4107,11 @@ function simulate(options={}){
   crowdControl:options.tactics?.crowdControl||'disabled'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,activeGroundHazards:{},finished:false,onEvent:options.onEvent||null};
+ const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicBag:Array.isArray(options.initialMechanicBag)?copy(options.initialMechanicBag):[],lastMechanicKey:options.initialLastMechanicKey||null,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,activeGroundHazards:{},finished:false,onEvent:options.onEvent||null};
  players.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  enemies.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  settlePhysicalSpace(ctx,[...players,...enemies]);
- emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,physicalSpace:ctx.physicalSpace,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),units:[...players,...enemies].map(u=>({id:u.id,position:copy(u.position),facing:u.facing,alive:u.alive,role:u.role,classification:u.classification,visualArchetype:u.visualArchetype,attackRange:u.attackRange,damageType:u.damageType,bodyRadius:bodyRadius(u)})),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel,bodyRadius:bodyRadius(e)}))}});
+ emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,physicalSpace:ctx.physicalSpace,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),units:[...players,...enemies].map(u=>({id:u.id,position:copy(u.position),facing:u.facing,alive:u.alive,role:u.role,classification:u.classification,visualArchetype:u.visualArchetype,combatBehaviour:u.combatBehaviour||null,attackRange:u.attackRange,damageType:u.damageType,bodyRadius:bodyRadius(u)})),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel,bodyRadius:bodyRadius(e)}))}});
  players.forEach(u=>{
   Object.values(u.statuses||{}).forEach(st=>{
    if(Number(st.expiresAt)>0){
@@ -4043,7 +4145,7 @@ function simulate(options={}){
  const tank=players.find(p=>p.role==='tank')||players[0];
  if(tank)enemies.forEach(e=>{e.threat[tank.id]=ctx.tactics.pullStyle==='safe'?250:ctx.tactics.pullStyle==='aggressive'?125:180;setAggro(ctx,e,tank,'pull')});
  maybeApplyCrowdControl(ctx);
- scheduleNextMechanic(ctx);scheduleUnstableGround(ctx);
+ schedulePartyCommands(ctx,options.commandTimeline);scheduleNextMechanic(ctx);scheduleUnstableGround(ctx);
 
  const requestedMax=Number(options.maxDurationMs),sliceMode=Number.isFinite(requestedMax)&&requestedMax>0&&requestedMax<MAX_COMBAT_MS,maxDuration=sliceMode?Math.max(TICK,Math.round(requestedMax)):MAX_COMBAT_MS;
  let outcome='defeat';
@@ -4077,7 +4179,7 @@ function simulate(options={}){
  return{
   version:VERSION,seed,outcome,durationMs:ctx.time,events:ctx.events,summary,
   finalState:{players:copy(players),enemies:copy(enemies)},
-  continuation:{phaseTriggered:copy(ctx.phaseTriggered||{}),softEnraged:!!ctx.softEnraged,hardEnraged:!!ctx.hardEnraged,mechanicIndex:ctx.mechanicIndex,interruptCursor:ctx.interruptCursor,elapsedMs:ctx.elapsedOffsetMs+ctx.time},
+  continuation:{phaseTriggered:copy(ctx.phaseTriggered||{}),softEnraged:!!ctx.softEnraged,hardEnraged:!!ctx.hardEnraged,mechanicIndex:ctx.mechanicIndex,mechanicBag:copy(ctx.mechanicBag||[]),lastMechanicKey:ctx.lastMechanicKey||null,interruptCursor:ctx.interruptCursor,elapsedMs:ctx.elapsedOffsetMs+ctx.time},
   replay:{version:VERSION,seed,encounter:copy(encounter),events:copy(ctx.events),summary:copy(summary)}
  };
 }
