@@ -680,11 +680,12 @@ for(const file of files){
     ['Head','Shoulders','Chest','Hands','Waist','Legs','Feet'].forEach(slot=>gear[slot]={name:klass+' Test '+slot,itemId:klass.toLowerCase().replace(/[^a-z]+/g,'-')+'-t5-'+slot.toLowerCase(),class:klass,slot,tier:5,setId:klass+'-t5',setName:klass+' Raid Set'});
     gear.Weapon={name:klass+' Test Weapon',itemId:klass+'-weapon',class:klass,slot:'Weapon',tier:5,weaponType};
     gear.OffHand={name:klass+' Test Offhand',itemId:klass+'-offhand',class:klass,slot:'OffHand',tier:5,offHandType};
-    const html=P.paperDollHTML({...base,id:'class-'+klass,name:klass,class:klass,race:'Aelari',appearance:{...appearance,race:'Aelari'},equipment:gear},{});
+    const testCharacter={...base,id:'class-'+klass,name:klass,class:klass,race:'Aelari',appearance:{...appearance,race:'Aelari'},equipment:gear};
+    const html=P.paperDollHTML(testCharacter,{});
     if(!html.includes('cb-paper-slot-head')||!html.includes('cb-paper-slot-feet')||!html.includes('data-character-style="classic-paper-doll"'))throw new Error('Complete classic modular class visual failed for '+klass);
-    const fit=P.gearFitProfile({...base,class:klass,equipment:gear}),weaponAt=html.indexOf('cb-paper-front-weapon'),weaponHtml=weaponAt>=0?html.slice(weaponAt):'',gripX=Number((weaponHtml.match(/data-grip-x="([0-9.-]+)"/)||[])[1]),gripY=Number((weaponHtml.match(/data-grip-y="([0-9.-]+)"/)||[])[1]);
+    const fit=P.gearFitProfile(testCharacter),weaponAt=html.indexOf('cb-paper-front-weapon'),weaponHtml=weaponAt>=0?html.slice(weaponAt):'',gripX=Number((weaponHtml.match(/data-grip-x="([0-9.-]+)"/)||[])[1]),gripY=Number((weaponHtml.match(/data-grip-y="([0-9.-]+)"/)||[])[1]);
     if(weaponAt<0||!html.includes('data-equipment-fit="v2"')||Math.abs(gripX-fit.weaponX)>.11||Math.abs(gripY-fit.handY)>.11)throw new Error('Universal main-hand fit is not anchored to the hand for '+klass);
-    const wf=P.weaponFitProfile({...base,class:klass,equipment:gear},gear.Weapon);
+    const wf=P.weaponFitProfile(testCharacter,gear.Weapon);
     if(!wf||![wf.anchorX,wf.anchorY,wf.pivotX,wf.pivotY,wf.rotate,wf.scale].every(Number.isFinite))throw new Error('Invalid classic weapon fit profile for '+klass);
   }
 }
