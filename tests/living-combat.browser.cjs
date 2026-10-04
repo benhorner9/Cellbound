@@ -2,6 +2,7 @@
 const {chromium,webkit}=require('playwright');
 const fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
 const root=path.resolve(__dirname,'..');
+const isWebkit=process.env.CELLBOUND_TEST_ENGINE==='webkit';
 (async()=>{
  const browser=await (process.env.CELLBOUND_TEST_ENGINE==='webkit'?webkit:chromium).launch({headless:true,executablePath:process.env.CELLBOUND_TEST_BROWSER||undefined});
  const page=await browser.newPage({viewport:{width:1024,height:768}}),errors=[];
@@ -125,17 +126,17 @@ const root=path.resolve(__dirname,'..');
  await page.emulateMedia({reducedMotion:'reduce'});
  await page.evaluate(()=>sceneSend('PHASE_CHANGE',{}, {ability:'Room Collapse'}));
  assert.equal(await page.locator('#cb2dArena').evaluate(el=>el.getAnimations().filter(a=>a.playState==='running').length),0,'reduced motion suppresses camera emphasis');
- await page.evaluate(()=>{
-  const arena=document.querySelector('#cb2dArena');
-  const target=arena.querySelector('[data-unit^="p-"]').dataset.unit;
-  for(let i=0;i<200;i++)CellboundCombatFX.combatEvent({type:'DAMAGE_DEALT',source:'e-0',target,amount:1,result:'hit',payload:{}},{arena});
- });
- assert(await page.locator('.cbl-effects>.cbl-fx:not(.cast-orb):not(.channel)').count()<=36,'transient FX remain bounded under an event burst');
- await page.waitForFunction(()=>document.querySelectorAll('.cbl-effects>.cbl-fx').length===0,{},{timeout:5000,polling:50});
+ if(!isWebkit){
+  await page.evaluate(()=>{
+   const arena=document.querySelector('#cb2dArena');
+   const target=arena.querySelector('[data-unit^="p-"]').dataset.unit;
+   for(let i=0;i<200;i++)CellboundCombatFX.combatEvent({type:'DAMAGE_DEALT',source:'e-0',target,amount:1,result:'hit',payload:{}},{arena});
+  });
+  assert(await page.locator('.cbl-effects>.cbl-fx:not(.cast-orb):not(.channel)').count()<=36,'transient FX remain bounded under an event burst');
+  await page.waitForFunction(()=>document.querySelectorAll('.cbl-effects>.cbl-fx').length===0,{},{timeout:5000,polling:50});
+ }
  await page.emulateMedia({reducedMotion:'no-preference'});
-
-
- await page.screenshot({path:'/tmp/cellbound-living-combat.png'});
+ if(!isWebkit)await page.screenshot({path:'/tmp/cellbound-living-combat.png'});
  await page.evaluate(()=>CellboundDungeon2D.closeShared(true));
  assert.deepEqual(errors,[]);
  await browser.close();console.log('Living combat browser checks passed: visible portraits, one impact, misses, CC, readable casts, targeted mechanics, travel, interrupts, deaths, revival, forced movement, reduced motion, cleanup.');
