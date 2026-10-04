@@ -103,7 +103,13 @@ const classes={
 
 const BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue','Mage']);
 const BETA_PLAYABLE_CLASS_SET=new Set(BETA_PLAYABLE_CLASSES);
-function isBetaClassPlayable(name){return BETA_PLAYABLE_CLASS_SET.has(String(name||''))}
+function adminRole(){
+  const role=String(account?.admin_role||globalThis.CellboundAdmin?.role||'').toLowerCase();
+  return role==='owner'||role==='admin'?role:null;
+}
+function hasStaffClassAccess(){return Boolean(adminRole())}
+function availableClassNames(){return hasStaffClassAccess()?Object.keys(classes):BETA_PLAYABLE_CLASSES.slice()}
+function isBetaClassPlayable(name){return hasStaffClassAccess()||BETA_PLAYABLE_CLASS_SET.has(String(name||''))}
 function isCharacterBetaPlayable(c){return Boolean(c&&isBetaClassPlayable(c.class))}
 
 const RECRUIT_RACES=[
@@ -165,8 +171,8 @@ function entitlementFromAccount(a){
   const until=a?.membership_active_until?new Date(a.membership_active_until).getTime():0;
   const staffMember=Boolean(a?.staff_member);
   const member=staffMember||Boolean(a?.membership_override)||(until>Date.now());
-  const isAdmin=Boolean(globalThis.CellboundAdmin?.isAdmin);
-  return {member,staffMember,isAdmin,chatBadge:a?.chat_badge||'player',playerModDiscountEligible:Boolean(a?.player_mod_discount_eligible),rosterCap:isAdmin?20:member?10:5,professionSlots:1,recoveryMinutes:member?MEMBER_RECOVERY_MINUTES:STANDARD_RECOVERY_MINUTES,membershipActiveUntil:a?.membership_active_until||null};
+  const isAdmin=Boolean(adminRole());
+  return {member,staffMember,isAdmin,adminRole:adminRole(),chatBadge:a?.chat_badge||'player',playerModDiscountEligible:Boolean(a?.player_mod_discount_eligible),rosterCap:isAdmin?20:member?10:5,professionSlots:1,recoveryMinutes:member?MEMBER_RECOVERY_MINUTES:STANDARD_RECOVERY_MINUTES,membershipActiveUntil:a?.membership_active_until||null};
 }
 function entitlements(){return entitlementFromAccount(account);}
 function classDef(c){return classes[c.class]||classes.Warrior;}
@@ -417,18 +423,19 @@ function flushPendingSave(){
 }
 async function loadAccount(user){
   currentUser=user;setSync('Loading…','busy');
-  const [accountResult,identityResult]=await Promise.all([
+  const [accountResult,identityResult,adminResult]=await Promise.all([
     supabaseClient.from('guild_accounts').select('user_id,game_state,guild_name,membership_active_until,membership_override,updated_at').eq('user_id',user.id).maybeSingle(),
-    supabaseClient.rpc('cellbound_social_identity')
+    supabaseClient.rpc('cellbound_social_identity'),
+    supabaseClient.rpc('cellbound_admin_status')
   ]);
-  const {data,error}=accountResult,identity=identityResult?.data;
+  const {data,error}=accountResult,identity=identityResult?.data,adminStatus=adminResult?.data||{};
   if(error){
     console.error('Cellbound account load failed',error);
-    account={user_id:user.id,guild_name:null,membership_active_until:null,membership_override:false,staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible)};
+    account={user_id:user.id,guild_name:null,membership_active_until:null,membership_override:false,staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible),admin_role:adminStatus?.is_admin?adminStatus.role:null};
     state=migrateState(localCandidate(user.id)||initialState());setSync('Local fallback','error');writeLocal();return;
   }
   if(identityResult?.error)console.warn('Cellbound social identity unavailable',identityResult.error);
-  account={...(data||{user_id:user.id,guild_name:null,membership_active_until:null,membership_override:false}),staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible)};
+  account={...(data||{user_id:user.id,guild_name:null,membership_active_until:null,membership_override:false}),staff_member:Boolean(identity?.staff_member),chat_badge:identity?.chat_badge||'player',player_mod_discount_eligible:Boolean(identity?.player_mod_discount_eligible),admin_role:adminStatus?.is_admin?adminStatus.role:null};
   const remoteRaw=data?.game_state&&typeof data.game_state==='object'&&Object.keys(data.game_state).length?data.game_state:null;
   const localRaw=localCandidate(user.id);
   const remoteRoster=Array.isArray(remoteRaw?.roster)?remoteRaw.roster.length:0;
@@ -465,12 +472,13 @@ async function refreshMembershipStatus({render=true,silent=false}={}){
   const partyBefore=JSON.stringify(partySlotIds());
   const results=await Promise.all([
     supabaseClient.from('guild_accounts').select('membership_active_until,membership_override').eq('user_id',currentUser.id).maybeSingle(),
-    supabaseClient.rpc('cellbound_social_identity')
+    supabaseClient.rpc('cellbound_social_identity'),
+    supabaseClient.rpc('cellbound_admin_status')
   ]);
-  const accountResult=results[0],identityResult=results[1];
+  const accountResult=results[0],identityResult=results[1],adminResult=results[2];
   if(accountResult.error){if(!silent)console.warn('Membership refresh failed',accountResult.error);return entitlements().member}
   const identity=identityResult&&identityResult.data?identityResult.data:{};
-  account=Object.assign({},account||{},accountResult.data||{}, {staff_member:Boolean(identity.staff_member),chat_badge:identity.chat_badge||(account&&account.chat_badge)||'player',player_mod_discount_eligible:Boolean(identity.player_mod_discount_eligible)});
+  account=Object.assign({},account||{},accountResult.data||{}, {staff_member:Boolean(identity.staff_member),chat_badge:identity.chat_badge||(account&&account.chat_badge)||'player',player_mod_discount_eligible:Boolean(identity.player_mod_discount_eligible),admin_role:adminResult?.data?.is_admin?adminResult.data.role:null});
   const after=entitlements().member;
   removeInvalidPartyMembers(state);
   const partyChanged=partyBefore!==JSON.stringify(partySlotIds());
@@ -631,7 +639,8 @@ function renderRecruitModal(){
   root.hidden=false;document.body.classList.add('recruit-adventurer-open');
   root.innerHTML='<section class="recruit-modal"><div data-creation-mount></div></section>';
   const valid=()=>{const n=String(recruitDraft.name||'').trim();return n.length>=2&&n.length<=24&&!state.roster.some(c=>String(c.name||'').toLowerCase()===n.toLowerCase())};
-  const choices=Object.entries(classes).filter(([name])=>isBetaClassPlayable(name)).flatMap(([klass,c])=>Object.entries(c.specs||{}).map(([spec,d])=>({klass,spec,label:spec+' · '+roleLabel(d.role),icon:c.icon})));
+  const allowed=new Set(availableClassNames());
+  const choices=Object.entries(classes).filter(([name])=>allowed.has(name)).flatMap(([klass,c])=>Object.entries(c.specs||{}).map(([spec,d])=>({klass,spec,label:spec+' · '+roleLabel(d.role),icon:c.icon})));
   window.CellboundCharacterForge.render({mount:root.querySelector('[data-creation-mount]'),draft:recruitDraft,step:recruitDraft.creationStep||'form',
     races:RECRUIT_RACES,classes:choices,title:'Recruit a guild member',confirmLabel:'CONFIRM RECRUIT →',valid:valid(),isValid:valid,
     hint:'Choose a unique name. Your recruit starts at level 1 with basic equipment.',onStep:step=>{recruitDraft.creationStep=step;renderRecruitModal()},
@@ -1260,7 +1269,7 @@ function tickRecovery(){if(!state)return;let changed=false;state.roster.forEach(
 window.CellboundGame={
   ready:false,getState:()=>state,replaceState,getEntitlements:()=>entitlements(),getLevelCap:()=>PLAYER_LEVEL_CAP,getUser:()=>currentUser,getAccount:()=>account,getSupabase:()=>supabaseClient,isCharacterRosterUnlocked,refreshMembershipStatus,refreshStateFromServer,
   characterItemLevel,partyItemLevel,averagePartyLevel,xpNeeded,awardPartyXp,isUnavailable,formatRecovery:formatRemaining,persistState,save,canonicalItem,bosses,classes,portraitHTML,
-  betaPlayableClasses:BETA_PLAYABLE_CLASSES,isBetaClassPlayable,isCharacterBetaPlayable,
+  betaPlayableClasses:BETA_PLAYABLE_CLASSES,getPlayableClasses:availableClassNames,isBetaClassPlayable,isCharacterBetaPlayable,isStaffAdmin:hasStaffClassAccess,adminRole,
   addBankItem,addMaterial,renderAll,switchView,starterEquipment,
   getPartyCharacters:()=>partyCharacters(),
   applyPartyCellShock:(amount=PVE_WIPE_CELL_SHOCK)=>{const chars=partyCharacters();chars.forEach(ch=>applyCellShock(ch,amount));window.CellboundAnalytics?.track?.('cell_shock_applied',{amount:Number(amount)||0,party_size:chars.length,locked:chars.filter(ch=>isUnavailable(ch)).length});save();renderAll();return chars.map(ch=>({id:ch.id,name:ch.name,cellShock:ch.cellShock}));}
