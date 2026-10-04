@@ -26,12 +26,15 @@ const LAYER_ORDER=Object.freeze([
 ]);
 
 const RACE_GEOMETRY=Object.freeze({
-  Stoneborn:{shoulder:58,waist:36,hip:40,leg:19,arm:17.5,neck:20,headScale:1.07,hand:1.18},
-  Aelari:{shoulder:40,waist:23,hip:28,leg:11.5,arm:9.8,neck:10.5,headScale:.96,hand:.90},
-  Thornkin:{shoulder:50,waist:29,hip:33,leg:15.5,arm:13.8,neck:14.5,headScale:1.02,hand:1.02},
-  Emberkin:{shoulder:51,waist:30,hip:33,leg:15.5,arm:14.2,neck:15,headScale:1.02,hand:1.04},
-  Nymari:{shoulder:44,waist:26,hip:31,leg:13.5,arm:11.4,neck:12.5,headScale:.99,hand:.95},
-  Veyren:{shoulder:46,waist:27,hip:31,leg:13.5,arm:11.6,neck:13,headScale:.99,hand:.97}
+  // Race Identity V2 deliberately pushes the underlying anatomy apart. These
+  // values are also the source of truth for equipment fitting, so stronger
+  // silhouettes do not reintroduce the old "one body, many skins" problem.
+  Stoneborn:{shoulder:64,waist:40,hip:44,leg:21,arm:19.5,neck:23,headScale:1.10,hand:1.25},
+  Aelari:{shoulder:37,waist:21,hip:27,leg:10.5,arm:8.8,neck:9.5,headScale:.94,hand:.86},
+  Thornkin:{shoulder:53,waist:30,hip:35,leg:16.5,arm:14.8,neck:15.5,headScale:1.03,hand:1.04},
+  Emberkin:{shoulder:55,waist:29,hip:32,leg:15.2,arm:14.7,neck:15.5,headScale:1.04,hand:1.06},
+  Nymari:{shoulder:43,waist:27,hip:34,leg:14,arm:11.5,neck:12.5,headScale:1.01,hand:.96},
+  Veyren:{shoulder:45,waist:25.5,hip:30,leg:12.8,arm:11.1,neck:12.5,headScale:.98,hand:.95}
 });
 const SEX_SCALE=Object.freeze({
   male:{shoulder:1,waist:1,hip:1,leg:1,arm:1,neck:1,headScale:1,hand:1},
@@ -69,12 +72,12 @@ const CALIBRATION=Object.freeze({
 });
 
 const RACE_FIT=Object.freeze({
-  Veyren:{width:.98,chestY:0,shoulderY:0},
-  Stoneborn:{width:1.04,chestY:1,shoulderY:2},
-  Aelari:{width:.96,chestY:0,shoulderY:0},
-  Thornkin:{width:1,chestY:1,shoulderY:1},
-  Emberkin:{width:1.01,chestY:1,shoulderY:1},
-  Nymari:{width:.97,chestY:0,shoulderY:0}
+  Veyren:{width:.97,chestY:0,shoulderY:0},
+  Stoneborn:{width:1.08,chestY:1,shoulderY:2},
+  Aelari:{width:.92,chestY:-1,shoulderY:-1},
+  Thornkin:{width:1.03,chestY:1,shoulderY:1},
+  Emberkin:{width:1.04,chestY:0,shoulderY:0},
+  Nymari:{width:.98,chestY:0,shoulderY:0}
 });
 const FAMILY_FIT=Object.freeze({
   warrior:{chest:.90,shoulder:1},
