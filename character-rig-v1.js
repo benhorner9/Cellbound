@@ -150,7 +150,7 @@ function buildMaster(race,sex){
   return Object.freeze({
     id:masterKey(race,sex),race,sex,
     canvas:CANVAS,
-    baseAsset:'./assets/characters/race-bases/'+race.toLowerCase()+'-'+sex+'.webp',
+    baseAsset:'./assets/characters/forge-bases/'+race.toLowerCase()+'-'+sex+'.png',
     measurements:Object.freeze({...p}),
     calibration:Object.freeze({
       hand:Object.freeze([...calibration(race,sex).hand]),

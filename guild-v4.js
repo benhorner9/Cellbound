@@ -621,7 +621,7 @@ function openRecruit(slotIndex){
   const e=entitlements();
   if(e.rosterCap<=5||!state.onboarding?.complete||state.roster.length>=e.rosterCap||slotIndex!==state.roster.length)return;
   const klass=BETA_PLAYABLE_CLASSES[0],spec=Object.keys(classes[klass]?.specs||{})[0];
-  recruitDraft={race:'Veyren',klass,spec,name:recruitRandomName('Veyren'),appearance:CP?.randomAppearance?.('Veyren')||{race:'Veyren'}};renderRecruitModal()
+  recruitDraft={race:'Veyren',klass,spec,name:recruitRandomName('Veyren'),appearance:window.CellboundCharacterForge?.appearance?.('Veyren',0)||{race:'Veyren',gender:0}};renderRecruitModal()
 }
 function closeRecruit(){
   const root=$('#recruitAdventurerModal');if(root)root.hidden=true;document.body.classList.remove('recruit-adventurer-open');recruitDraft=null
@@ -632,7 +632,7 @@ function renderRecruitModal(){
   root.innerHTML='<section class="recruit-modal"><div data-creation-mount></div></section>';
   const valid=()=>{const n=String(recruitDraft.name||'').trim();return n.length>=2&&n.length<=24&&!state.roster.some(c=>String(c.name||'').toLowerCase()===n.toLowerCase())};
   const choices=Object.entries(classes).filter(([name])=>isBetaClassPlayable(name)).flatMap(([klass,c])=>Object.entries(c.specs||{}).map(([spec,d])=>({klass,spec,label:spec+' · '+roleLabel(d.role),icon:c.icon})));
-  window.CellboundCreationCentre.render({mount:root.querySelector('[data-creation-mount]'),draft:recruitDraft,step:recruitDraft.creationStep||'race',
+  window.CellboundCharacterForge.render({mount:root.querySelector('[data-creation-mount]'),draft:recruitDraft,step:recruitDraft.creationStep||'form',
     races:RECRUIT_RACES,classes:choices,title:'Recruit a guild member',confirmLabel:'CONFIRM RECRUIT →',valid:valid(),isValid:valid,
     hint:'Choose a unique name. Your recruit starts at level 1 with basic equipment.',onStep:step=>{recruitDraft.creationStep=step;renderRecruitModal()},
     onChange:()=>renderRecruitModal(),onName:()=>{},onRandomName:()=>{recruitDraft.name=recruitRandomName(recruitDraft.race)},onClose:closeRecruit,onConfirm:createRecruit
@@ -645,7 +645,7 @@ async function createRecruit(){
   if(e.rosterCap<=5||state.roster.length>=e.rosterCap){closeRecruit();renderAll();return}
   const name=String(recruitDraft.name||'').trim().replace(/\s+/g,' ');
   if(name.length<2||name.length>24||state.roster.some(c=>String(c.name||'').toLowerCase()===name.toLowerCase())){
-    const input=$('#ccCharacterName');if(input){input.setCustomValidity('Use a unique name between 2 and 24 characters.');input.reportValidity();setTimeout(()=>input.setCustomValidity(''),1800)}return
+    const input=$('#cfCharacterName');if(input){input.setCustomValidity('Use a unique name between 2 and 24 characters.');input.reportValidity();setTimeout(()=>input.setCustomValidity(''),1800)}return
   }
   const race=RECRUIT_RACES.find(x=>x.id===recruitDraft.race)||RECRUIT_RACES[0],klass=recruitDraft.klass,spec=recruitDraft.spec;
   if(!isBetaClassPlayable(klass)){alert('That class is not available during beta.');renderRecruitModal();return}

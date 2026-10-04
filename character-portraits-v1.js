@@ -3,10 +3,11 @@
 
 const RIG=window.CellboundCharacterRig;
 if(!RIG||RIG.contract!=='master-rig-v1')throw new Error('Cellbound master character rig is not loaded');
-const CHARACTER_MODEL_VERSION=13;
+const CHARACTER_MODEL_VERSION=14;
 const PAINTED_RACES=new Set(['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari']);
 const USE_RASTER_RACE_BASES=false;
-const CHARACTER_MODEL_CONTRACT='v13-master-vector-races';
+const FORGE_BASE_CONTRACT='character-forge-v1';
+const CHARACTER_MODEL_CONTRACT='v14-character-forge-bases';
 const EQUIPMENT_LAYER_CONTRACT='body|shield|armour|front-offhand|mainhand-front';
 
 const CLASS_COLORS={
@@ -87,12 +88,17 @@ function normalizeAppearance(input,seed,raceOverride){
   Object.keys(COUNTS).forEach(function(field){
     out[field]=int(src[field],COUNTS[field],['brows','nose','mouth','eyeShape','texture'].includes(field)?1:['pattern','featureColor'].includes(field)?0:field==='glow'?2:seeded(key,field,COUNTS[field]));
   });
-  if(out.gender===1)out.facialHair=0;
+  if(PAINTED_RACES.has(race)){
+    var gender=out.gender;
+    Object.assign(out,{gender:gender,frame:1,skinTone:0,face:0,brows:0,nose:0,mouth:0,eyeShape:0,eyes:0,hair:0,hairColor:0,facialHair:0,marking:0,feature:0,pattern:0,featureColor:0,texture:0,glow:0});
+  }else if(out.gender===1)out.facialHair=0;
   out.appearanceVersion=1;
   return out;
 }
 function randomAppearance(race){
-  var out={race:RACES[race]?race:'Veyren'};
+  var resolved=RACES[race]?race:'Veyren';
+  if(PAINTED_RACES.has(resolved))return normalizeAppearance({race:resolved,gender:Math.random()<.5?0:1},'forge-random',resolved);
+  var out={race:resolved};
   Object.keys(COUNTS).forEach(function(field){out[field]=Math.floor(Math.random()*COUNTS[field])});
   if(out.gender===1)out.facialHair=0;
   out.appearanceVersion=1;
@@ -605,6 +611,10 @@ function paintedBody(c,a,p,uid,skin,eye,hair,headDetails,bodyDetails,portrait){
 }
 function illustratedBaseFigure(c,a,skin,eye,hair,p,uid,portrait){
   var race=c.race||a.race||'Veyren',accent=raceDef(race).accent||'#76d7d0',female=p.gender===1;
+  if(PAINTED_RACES.has(race)){
+    var forgeSrc='./assets/characters/forge-bases/'+race.toLowerCase()+'-'+(a.gender?'female':'male')+'.png';
+    return '<g class="cb-illustrated-base cb-forge-base" data-race="'+esc(race)+'" data-gender="'+(a.gender?'female':'male')+'" data-base-art="'+FORGE_BASE_CONTRACT+'"><image href="'+forgeSrc+'" x="-16.6667" y="0" width="273.3334" height="410" preserveAspectRatio="none"/></g>';
+  }
   var s=p.shoulder,w=p.waist,h=p.hip,arm=p.arm,leg=p.leg;
   var headW=([.93,1,1.06,.98][a.face]||1)*(female?18.5:20.5)*(race==='Stoneborn'?1.06:1),headTop=race==='Stoneborn'?43:45,chin=female?102:104;
   var jaw=(female?11.8:14.5)+[-2,0,2,1][a.face],lx=120-s,rx=120+s;
@@ -796,7 +806,7 @@ function visualProfile(subject,item,slot){
 }
 
 window.CellboundPortraits={
-  version:CHARACTER_MODEL_VERSION,modelContract:CHARACTER_MODEL_CONTRACT,equipmentLayerContract:EQUIPMENT_LAYER_CONTRACT,baseArtContract:'master-vector-v1',
+  version:CHARACTER_MODEL_VERSION,modelContract:CHARACTER_MODEL_CONTRACT,equipmentLayerContract:EQUIPMENT_LAYER_CONTRACT,baseArtContract:FORGE_BASE_CONTRACT,
   rigContract:RIG.contract,masterRigCount:RIG.masterRigCount,masterRig:RIG.masterRig,rig:RIG.resolve,fitSlot:RIG.fitSlot,
   anatomicalAnchors:anatomicalAnchors,rigY:(race,y)=>RIG.rigY(y),equipmentCoverage:equipmentCoverage,appearanceVersion:1,
   RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,headRig:PAINTED_HEAD_RIG,hairFit:paintedHairFit,
