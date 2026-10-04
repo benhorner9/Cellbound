@@ -27,12 +27,12 @@ const engine=engineName==='webkit'?webkit:chromium;
 
     const result=await page.evaluate(()=>{
       const G=window.CellboundGear,P=window.CellboundPortraits,IA=window.CellboundItemArt;
-      const classes=G.CLASS_ORDER.slice(),positions=G.EQUIPMENT_POSITION_ORDER,grid=document.querySelector('#grid'),signatures={},failures=[],paletteSamples={};
+      const classes=G.CLASS_ORDER.slice(),positions=G.EQUIPMENT_POSITION_ORDER,grid=document.querySelector('#grid'),signatures={},failures=[],paletteSamples={},lowerStyles={};
       const slotFor=pos=>pos.startsWith('Ring')?'Ring':pos.startsWith('Trinket')?'Trinket':pos;
       const slug=v=>String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
       let checked=0;
       classes.forEach((klass,ci)=>{
-        signatures[klass]=[];paletteSamples[klass]={};
+        signatures[klass]=[];paletteSamples[klass]={};lowerStyles[klass]=[];
         for(let tier=1;tier<=5;tier++){
           const equipment={};
           for(const pos of positions){
@@ -44,6 +44,10 @@ const engine=engineName==='webkit'?webkit:chromium;
           const c={id:'item-v2-'+slug(klass)+'-'+tier,race,class:klass,appearance,equipment};
           const svg=P.paperDollSVG(c),chest=equipment.Chest,weapon=equipment.Weapon,classSlug=slug(klass),mode=tier>=4?'set-first':'material-first';
           if(!svg.includes('data-item-visuals="v2"'))failures.push(klass+' T'+tier+' model missing V2 root');
+          if(!svg.includes('data-equipment-fit="v3"')||!svg.includes('data-weapon-pose="side-held-v1"'))failures.push(klass+' T'+tier+' model missing fit v3 / side-held contract');
+          if(!svg.includes('cb-paper-side-weapon')||!svg.includes('data-weapon-pose="side-held"'))failures.push(klass+' T'+tier+' weapon is not side-held');
+          const fit=P.gearFitProfile(c);
+          if(fit.weaponX<fit.baseRightHand)failures.push(klass+' T'+tier+' weapon moved inward across body');
           if(!svg.includes('data-palette-mode="gear-owned"'))failures.push(klass+' T'+tier+' root missing gear-owned palette contract');
           if(!svg.includes('data-class-visual="'+classSlug+'"'))failures.push(klass+' T'+tier+' worn class signature missing');
           if(!svg.includes('data-palette-mode="'+mode+'"'))failures.push(klass+' T'+tier+' worn palette mode should be '+mode);
@@ -54,6 +58,8 @@ const engine=engineName==='webkit'?webkit:chromium;
           if(!chestIcon.includes('data-palette-mode="'+mode+'"')||!weaponIcon.includes('data-palette-mode="'+mode+'"'))failures.push(klass+' T'+tier+' item-card palette mode should be '+mode);
           const pal=P.gearPalette(c,chest,tier,'Chest');
           paletteSamples[klass][tier]={base:pal.base,accent:pal.accent,mode:pal.paletteMode,classColor:P.CLASS_COLORS[klass]};
+          const lower=P.clothLowerStyle(equipment.Legs);lowerStyles[klass].push(lower);
+          if(!svg.includes('data-lower-silhouette="'+lower+'"'))failures.push(klass+' T'+tier+' lower silhouette marker mismatch');
           const signature=svg.replace(/pd[a-z0-9]+/g,'ID').replace(/#[0-9a-f]{6}/gi,'#HEX');
           signatures[klass].push(signature);
           const card=document.createElement('article');card.className='card';
@@ -65,10 +71,12 @@ const engine=engineName==='webkit'?webkit:chromium;
           checked++;
         }
       });
-      return{checked,failures,signatures,paletteSamples,classCount:classes.length,itemVisualsVersion:P.itemVisualsVersion,itemArtVersion:IA.ITEM_VISUALS_VERSION,direction:IA.ART_DIRECTION};
+      return{checked,failures,signatures,paletteSamples,lowerStyles,classCount:classes.length,itemVisualsVersion:P.itemVisualsVersion,equipmentFitVersion:P.equipmentFitVersion,weaponPoseVersion:P.weaponPoseVersion,itemArtVersion:IA.ITEM_VISUALS_VERSION,direction:IA.ART_DIRECTION};
     });
 
     assert.equal(result.itemVisualsVersion,2);
+    assert.equal(result.equipmentFitVersion,3);
+    assert.equal(result.weaponPoseVersion,1);
     assert.equal(result.itemArtVersion,2);
     assert.equal(result.direction,'class-tier-v2');
     assert.equal(result.classCount,13);
@@ -87,8 +95,14 @@ const engine=engineName==='webkit'?webkit:chromium;
     assert.equal(new Set(Object.values(result.signatures).map(x=>x[4])).size,13,'All 13 class T5 gear signatures must remain distinct on the same race base');
     assert.equal(new Set(Object.values(result.paletteSamples).map(x=>x[4].base)).size,13,'All 13 T4 set palettes must be distinct');
     assert.equal(new Set(Object.values(result.paletteSamples).map(x=>x[5].base)).size,13,'All 13 T5 set palettes must be distinct');
+    for(const klass of ['Mage','Priest','Warlock','Druid']){
+      const styles=result.lowerStyles[klass];
+      assert(styles.includes('trousers'),klass+' must keep at least one trouser tier');
+      assert(styles.some(x=>x!=='trousers'),klass+' must include robe/skirt lower silhouettes');
+      assert(new Set(styles).size>=2,klass+' lower-body silhouettes must vary by tier');
+    }
     await page.screenshot({path:'/tmp/cellbound-item-visuals-v2-'+engineName+'.png',fullPage:true});
-    console.log(engineName+' Item Visuals V2 passed: 13 classes × 5 tiers, set-owned T4/T5 palettes, class-colour accents, worn models + matching inventory icons.');
+    console.log(engineName+' Item Visuals V2 / fit v3 passed: 13 classes × 5 tiers, side-held weapons, varied cloth lowers, set-owned palettes and matching inventory icons.');
   }finally{
     await browser.close();
   }
