@@ -815,7 +815,7 @@ function paperLegs(c,skin,highlighted){
   var gear='<g class="'+paperSlotClass('Legs',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Legs'))+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v4" data-left-leg-x="'+lc.toFixed(2)+'" data-right-leg-x="'+rc.toFixed(2)+'" data-lower-silhouette="'+style+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'">';
   if(robe){
     gear+=lowerSilhouetteMarkup(item,pal,p,style);
-    if(style==='kilt')gear+='<path d="'+legPath(lc)+' M'+legPath(rc)+'" fill="'+pal.dark+'" stroke="#111820" stroke-width="2.1" opacity=".88"/>';
+    if(style==='kilt')gear+='<path d="'+legPath(lc)+' '+legPath(rc)+'" fill="'+pal.dark+'" stroke="#111820" stroke-width="2.1" opacity=".88"/>';
   }else{
     gear+='<path class="cb-paper-leg-left" d="'+legPath(lc)+'" fill="'+pal.base+'" stroke="#111820" stroke-width="2.7"/><path class="cb-paper-leg-right" d="'+legPath(rc)+'" fill="'+pal.base+'" stroke="#111820" stroke-width="2.7"/>';
     if(heavy)gear+='<path d="M'+(lc-uh*.92)+' 286 L'+(lc+uh*.92)+' 286 L'+(lc+ch*.95)+' 316 Q'+lc+' 322 '+(lc-ch*.95)+' 316Z M'+(rc-uh*.92)+' 286 L'+(rc+uh*.92)+' 286 L'+(rc+ch*.95)+' 316 Q'+rc+' 322 '+(rc-ch*.95)+' 316Z" fill="'+pal.dark+'" stroke="'+pal.trim+'" stroke-width="1.6"/>';
