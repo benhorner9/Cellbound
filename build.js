@@ -275,7 +275,7 @@ for(const file of files){
     for(const hook of ["spec:'Outlaw'","id:'sinister-strike'","id:'pistol-shot'","id:'dispatch'","id:'roll-the-bones'","id:'blade-flurry'","id:'between-the-eyes'","id:'adrenaline-rush'","id:'killing-spree'","COMBO_POINTS_CHANGED","Opportunity","Quick Draw","Ruthlessness","Outlaw Rogue Combo Points","Outlaw Roll the Bones","Outlaw Blade Flurry","Outlaw Between the Eyes","Outlaw Killing Spree","Outlaw Rogue Talent Skill Gates"])if(!contents.includes(hook))throw new Error('Outlaw Rogue combat migration is incomplete: '+hook);
     if(!contents.includes("_combatPosition")||!contents.includes("data.currentPosition"))throw new Error('Combat slice position persistence is missing');
     if(!contents.includes("focusSelectedDamageOnly")||!contents.includes("!target.focusSelected"))throw new Error('Focus-selected damage gating is missing');
-    if(!contents.includes("const VERSION='1.5.1'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
+    if(!contents.includes("const VERSION='1.5.2'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
     for(const hook of ['function bodyRadius(','function physicalPosition(','function bodyClearance(','function openPhysicalPosition(','function segmentBodyHit(','function collisionWaypoint(','physicalSpace:encounter.physicalSpace!==false','bodyCollision:bodyRoute.body?','collisionContinuation:Boolean(collisionFinal)',"combatRange&&los&&ctx.physicalSpace&&u.role!=='tank'",'Physical Space Bodies','Physical Collision Metadata','Collision Melee Uptime'])if(!contents.includes(hook))throw new Error('Combat Reborn physical-space collision is missing '+hook);
     for(const hook of ['setBonusRulesFor','talentSkillCooldownScale','incomingDamageReduction','setBonuses?.damageScale','setBonuses?.healingScale'])if(!contents.includes(hook))throw new Error('Combat adaptive set foundation is missing '+hook);
     for(const hook of ["'Evoker|Devastation':[.92,.92,.92]","id:'word-of-glory'","id==='purifying-brew'","range:30,heal:24,cost:18,gcd:1500,cast:1700,cd:6500","range:30,heal:34,cost:15,gcd:1500,cast:1700,cd:0,chainBounces:3","range:30,heal:20,cost:16,gcd:1500,cast:0,cd:6000"])if(!contents.includes(hook))throw new Error('Chapter-wide role balance contract is missing '+hook);
@@ -1008,6 +1008,8 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
   if(raid.combatModel!=='Combat Reborn'||raid.combatZone!=='manor-raid')throw new Error('Manor raid did not use the standard Combat Reborn gateway');
   if(raid.summary.players.length!==10)throw new Error('Combat Reborn raid smoke test did not preserve all 10 characters');
   if(!raid.events.some(e=>e.type==='GROUND_HAZARD_SPAWNED'))throw new Error('Combat Reborn raid smoke test did not produce persistent floor hazards');
+  if(!raid.events.some(e=>e.type==='GROUND_HAZARD_TICK'))throw new Error('Combat Reborn persistent floor hazards did not tick');
+  if(!raid.events.some(e=>e.type==='MOVEMENT_START'&&e.result==='persistent ground escape'))throw new Error('Combat Reborn party did not actively escape persistent floor hazards');
   if(!raid.events.some(e=>e.type==='TANK_MARK'))throw new Error('Combat Reborn raid smoke test did not produce tank-mark mechanics');
   console.log('Combat Reborn 10-character Manor smoke test passed.');
   sandbox.CellboundCombatStandard.register('zeltira-first-expedition',{kind:'onboarding-dungeon',execution:'local',ui:'shared-cb2d'});
