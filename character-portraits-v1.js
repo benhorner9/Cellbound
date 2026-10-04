@@ -1,9 +1,11 @@
 (()=>{
 'use strict';
 
-const CHARACTER_MODEL_VERSION=11;
+const RIG=window.CellboundCharacterRig;
+if(!RIG||RIG.contract!=='master-rig-v1')throw new Error('Cellbound master character rig is not loaded');
+const CHARACTER_MODEL_VERSION=12;
 const PAINTED_RACES=new Set(['Veyren','Stoneborn','Aelari','Thornkin','Emberkin','Nymari']);
-const CHARACTER_MODEL_CONTRACT='v11-race-foundation-hair';
+const CHARACTER_MODEL_CONTRACT='v12-master-rig';
 const EQUIPMENT_LAYER_CONTRACT='body|shield|armour|front-offhand|mainhand-front';
 
 const CLASS_COLORS={
@@ -393,80 +395,11 @@ function gearPalette(c,item,tier,slot){
   return {accent,base,dark:mixHex(base,'#11171c',.62),light:mixHex(base,'#f1ebdb',family==='plate'?.40:.25),trim,glow:set?.glow||mixHex(accent,'#e7eff0',.35),set,variant,material:family};
 }
 
-function bodyProfile(subject,appearanceOverride){
-  var ch=typeof subject==='string'?{race:subject,appearance:appearanceOverride||{}}:(subject||{});
-  var race=ch.race||ch.appearance?.race||appearanceOverride?.race||'Veyren';
-  var a=appearanceOverride||ch.appearance||ch;
-  var key=ch.id||ch.name||race;
-  var gender=int(a.gender,2,seeded(key,'gender',2));
-  var frame=int(a.frame,3,seeded(key,'frame',3));
-  var base=({
-    Stoneborn:{shoulder:60,waist:35,hip:39,leg:20,arm:18,neck:20,headScale:1.08,hand:1.15},
-    Aelari:{shoulder:44,waist:24,hip:29,leg:13,arm:10.5,neck:11,headScale:.97,hand:.92},
-    Thornkin:{shoulder:50,waist:28,hip:33,leg:15.5,arm:13.5,neck:14,headScale:1,hand:1},
-    Emberkin:{shoulder:53,waist:30,hip:33,leg:16,arm:14.5,neck:15,headScale:1,hand:1.02},
-    Nymari:{shoulder:46,waist:26,hip:32,leg:14.5,arm:12,neck:12.5,headScale:.99,hand:.97},
-    Veyren:{shoulder:47,waist:27,hip:31,leg:14.5,arm:12,neck:13,headScale:.99,hand:.98}
-  })[race]||{shoulder:47,waist:27,hip:31,leg:14.5,arm:12,neck:13,headScale:.99,hand:.98};
-  var gs=gender===1
-    ?{shoulder:.88,waist:.88,hip:1.12,leg:.96,arm:.88,neck:.86,headScale:1.01,hand:.93}
-    :{shoulder:1.07,waist:1.04,hip:.95,leg:1.05,arm:1.10,neck:1.06,headScale:.99,hand:1.05};
-  var fs=[
-    {shoulder:.93,waist:.92,hip:.96,leg:.94,arm:.88,neck:.95,headScale:1.01,hand:.96},
-    {shoulder:1,waist:1,hip:1,leg:1,arm:1,neck:1,headScale:1,hand:1},
-    {shoulder:1.10,waist:1.06,hip:1.04,leg:1.08,arm:1.16,neck:1.07,headScale:.99,hand:1.07}
-  ][frame]||{shoulder:1,waist:1,hip:1,leg:1,arm:1,neck:1,headScale:1,hand:1};
-  var out={gender:gender,frame:frame};
-  ['shoulder','waist','hip','leg','arm','neck','headScale','hand'].forEach(function(k){out[k]=base[k]*gs[k]*fs[k]});
-  return out;
-}
-const PAINTED_HAND_RIG={Veyren:[[58,182,220],[63,177,218]],Stoneborn:[[46,194,226],[58,182,218]],Aelari:[[68,172,212],[70,170,210]],Thornkin:[[63,177,214],[69,171,211]],Emberkin:[[52,188,225],[60,180,219]],Nymari:[[54,186,223],[62,178,218]]};
-function gearFitProfile(c,item){
-  var p=bodyProfile(c),race=c?.race||c?.appearance?.race||'Veyren',gender=p.gender,frame=p.frame;
-  var shoulderY=race==='Stoneborn'?130:gender===1?133:131;
-  var leftShoulder=120-p.shoulder,rightShoulder=120+p.shoulder;
-  var spread=PAINTED_RACES.has(race)?13:0;
-  var leftHand=leftShoulder-spread,rightHand=rightShoulder+spread,handY=283;
-  if(PAINTED_HAND_RIG[race]){
-    const hand=PAINTED_HAND_RIG[race][gender],bodyScale=[.94,1,1.06][frame];
-    leftHand=120+(hand[0]-120)*bodyScale;rightHand=120+(hand[1]-120)*bodyScale;
-    handY=247+(hand[2]-179)*36/59;
-  }
-  var hipHalf=p.hip,legHalf=Math.max(11.5,p.leg*.82),calfHalf=Math.max(8.8,p.leg*.62);
-  var footHalf=Math.max(11,p.leg*.72);
-  var waistHalf=Math.max(p.waist,p.hip*.70);
-  return {
-    race:race,gender:gender,frame:frame,p:p,
-    centerX:120,shoulderY:shoulderY,
-    leftShoulder:leftShoulder,rightShoulder:rightShoulder,
-    leftHand:leftHand,rightHand:rightHand,handY:handY,
-    waistY:247,waistHalf:waistHalf,hipHalf:hipHalf,
-    leftLeg:120-p.hip*(PAINTED_RACES.has(race)?.80:.47),rightLeg:120+p.hip*(PAINTED_RACES.has(race)?.80:.47),
-    legHalf:legHalf,calfHalf:calfHalf,footHalf:footHalf,
-    chestTop:gender===1?121:119,chestBottom:252,
-    weaponX:rightHand,offhandX:leftHand-8,
-    headGearScaleX:(gender===1?.75:.78)*([.94,1,1.05,.98][c.appearance?.face]||1)
-  };
-}
-// Shared anatomical coordinates in the 240 x 410 model space. No class input.
-function anatomicalAnchors(c){
-  var f=gearFitProfile(c);
-  var anchors= {head:{x:120,y:60},face:{x:120,y:78},neck:{x:120,y:112},
-    leftShoulder:{x:f.leftShoulder,y:f.shoulderY},rightShoulder:{x:f.rightShoulder,y:f.shoulderY},
-    chest:{x:120,y:(f.chestTop+f.chestBottom)/2},waist:{x:120,y:f.waistY},
-    leftHand:{x:f.leftHand,y:f.handY},rightHand:{x:f.rightHand,y:f.handY},
-    mainHand:{x:f.weaponX,y:f.handY},offHand:{x:f.offhandX,y:f.handY},
-    back:{x:120,y:150},leftFoot:{x:f.leftLeg,y:380},rightFoot:{x:f.rightLeg,y:380}};
-  if(PAINTED_RACES.has(c.race))Object.values(anchors).forEach(a=>{a.y=rigY(a.y)});
-  return anchors;
-}
-function rigY(y){return y<=110?y*.8-16:y<=247?72+(y-110)*107/137:y<=283?179+(y-247)*59/36:238+(y-283)*172/127}
-
-function equipmentCoverage(c){
-  var head=itemForSlot(c,'Head');
-  if(!head)return {hair:false,growth:false};
-  return {hair:true,growth:true};
-}
+function bodyProfile(subject,appearanceOverride){return RIG.bodyProfile(subject,appearanceOverride)}
+function gearFitProfile(c,item){return RIG.gearFitProfile(c,item)}
+function anatomicalAnchors(c){return RIG.anchors(c)}
+function rigY(y){return RIG.rigY(y)}
+function equipmentCoverage(c){return RIG.equipmentCoverage(c)}
 function tierVisualProfile(tier){
   var t=Math.max(1,Math.min(5,Number(tier)||1));
   return [
@@ -543,19 +476,8 @@ function paperTierAura(c){
 
 // Head coordinates are measured on the 240x410 painted bases, independently of class.
 // Map once into the legacy rig's head band; the final band transform cancels below.
-const PAINTED_HEAD_RIG={
-  Veyren:[[120,20,33],[120.5,20,34]],
-  Stoneborn:[[120,23,35],[119.5,23,36]],
-  Aelari:[[121,20,33],[120.5,20,34]],
-  Thornkin:[[121,22,35],[120,22,35]],
-  Emberkin:[[120,20,33],[120.5,20,34]],
-  Nymari:[[120.5,20,34],[120.5,20,35]]
-};
-function paintedHairFit(a,race){
-  const [cx,crown,width]=(PAINTED_HEAD_RIG[race]||PAINTED_HEAD_RIG.Veyren)[Number(a.gender)===1?1:0];
-  const face=[.94,1,1.05,.98][a.face]||1;
-  return 'translate('+(120+(cx-120)*face)+' '+((crown-2+16)/.8)+') scale('+(width/50*face)+' .8) translate(-120 -36)';
-}
+const PAINTED_HEAD_RIG=Object.fromEntries(RIG.races.map(race=>[race,[0,1].map(gender=>{const h=RIG.headRig({race,appearance:{gender}});return [h.centerX,h.crownY,h.width]})]));
+function paintedHairFit(a,race){return RIG.hairFit(a,race)}
 function illustratedHairFull(a,hair,race,uid,layer){
   const h=Number(a.hair)||0;if(!h)return '';
   const back=layer==='back';if(back&&h!==3&&h!==5)return '';
@@ -782,45 +704,8 @@ function paperDollSVG(c,opts){
 }
 // Painted equipment uses final model coordinates, avoiding the old torso/leg warp.
 function illustratedWearableFit(c,item,slot){
- const V=window.CellboundItemVisuals,f=gearFitProfile(c,item),p=f.p;
- const family=V.families[gearClass(item)]||'warrior',race=f.race,t=V.tier(item);
- const raceWidth={Stoneborn:1.04,Aelari:.96,Thornkin:1.00,Emberkin:1.01,Nymari:.97,Veyren:.98}[race]||1;
- const classChest={warrior:.90,paladin:.92,hunter:.84,rogue:.80,mage:.85}[family]||.86;
- const classShoulder={warrior:1.00,paladin:1.04,hunter:.91,rogue:.82,mage:.88}[family]||.90;
- const topBase=rigY(f.chestTop),waistBase=rigY(f.waistY),chestBottom=Math.min(rigY(f.chestBottom),waistBase+12);
- if(slot==='Chest'){
-  const width=p.shoulder*2*classChest*raceWidth;
-  const top=topBase+({Stoneborn:1,Aelari:0,Thornkin:1,Emberkin:1,Nymari:0,Veyren:0}[race]||0);
-  const bottom=chestBottom+(family==='mage'?3:family==='paladin'?2:0);
-  return{x:120-width/2,y:top,w:width,h:Math.max(98,bottom-top),top,bottom};
- }
- if(slot==='Waist'){
-  const width=Math.max(p.waist*2.25,p.hip*1.55)*raceWidth;
-  const y=waistBase-4;
-  return{x:120-width/2,y,w:width,h:family==='mage'?22:18};
- }
- if(slot==='Shoulders'){
-  const width=p.arm*2.35*classShoulder*(race==='Stoneborn'?1.08:1);
-  const h=(32+(t-1)*1.4)*(family==='paladin'?1.06:1);
-  const inset=family==='rogue'?4:family==='mage'?5:family==='hunter'?4:6;
-  const leftCenter=f.leftShoulder+inset,rightCenter=f.rightShoulder-inset;
-  const y=rigY(f.shoulderY)-h*.32+({Stoneborn:2,Aelari:0,Thornkin:1,Emberkin:1,Nymari:0,Veyren:0}[race]||0);
-  return{leftX:leftCenter-width/2,rightX:rightCenter-width/2,y,w:width,h};
- }
- if(slot==='Legs'){
-  const width=p.hip*2.12*(race==='Stoneborn'?1.03:1);
-  const y=waistBase-1,bottom=rigY(356);
-  return{x:120-width/2,y,w:width,h:Math.max(150,bottom-y)+(family==='mage'?28:0)};
- }
- if(slot==='Feet'){
-  const width=f.footHalf*2.05,y=rigY(348),bottom=399;
-  return{leftX:f.leftLeg-width/2,rightX:f.rightLeg-width/2,y,w:width,h:bottom-y};
- }
- if(slot==='Hands'){
-  const width=p.hand*19,y=(PAINTED_RACES.has(f.race)?rigY(f.handY):f.handY)-32;
-  return{leftX:f.leftHand-width/2,rightX:f.rightHand-width/2,y,w:width,h:43};
- }
- return null;
+ const V=window.CellboundItemVisuals;if(!V)throw new Error('Illustrated item visuals are not loaded');
+ return RIG.fitSlot(c,slot,{family:V.families[gearClass(item)]||'warrior',tier:V.tier(item)});
 }
 function illustratedEquipment(c,highlighted,uid){
  const V=window.CellboundItemVisuals;if(!V)throw new Error('Illustrated item visuals are not loaded');
@@ -849,7 +734,7 @@ function illustratedEquipment(c,highlighted,uid){
    body=draw(fit.leftX,fit.y,fit.w,fit.h,0)+draw(fit.rightX,fit.y,fit.w,fit.h,1);
    attrs='data-wearable-fit="anatomical-v2"';
   }else if(slot==='Head'){
-   const rig=PAINTED_HEAD_RIG[f.race][p.gender],w=rig[2]*1.28,h=55,x=rig[0]-w/2,y=rig[1]-7;
+   const w=fit.w,h=fit.h,x=fit.x,y=fit.y;
    body=draw(x,y,w,h);
    if(!['warrior','paladin'].includes(V.families[gearClass(item)])){
     const id=uid+'hood';body='<defs><mask id="'+id+'"><rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="white"/><path d="M'+(x+w*.5)+' '+(y+h*.34)+' Q'+(x+w*.22)+' '+(y+h*.58)+' '+(x+w*.28)+' '+(y+h*.82)+' Q'+(x+w*.5)+' '+(y+h*.96)+' '+(x+w*.72)+' '+(y+h*.82)+' Q'+(x+w*.78)+' '+(y+h*.58)+' '+(x+w*.5)+' '+(y+h*.34)+'Z" fill="black"/></mask></defs><g mask="url(#'+id+')">'+body+'</g>';
@@ -909,7 +794,8 @@ function visualProfile(subject,item,slot){
 
 window.CellboundPortraits={
   version:CHARACTER_MODEL_VERSION,modelContract:CHARACTER_MODEL_CONTRACT,equipmentLayerContract:EQUIPMENT_LAYER_CONTRACT,
-  anatomicalAnchors:anatomicalAnchors,rigY:(race,y)=>PAINTED_RACES.has(race)?rigY(y):y,equipmentCoverage:equipmentCoverage,appearanceVersion:1,
+  rigContract:RIG.contract,masterRigCount:RIG.masterRigCount,masterRig:RIG.masterRig,rig:RIG.resolve,fitSlot:RIG.fitSlot,
+  anatomicalAnchors:anatomicalAnchors,rigY:(race,y)=>RIG.rigY(y),equipmentCoverage:equipmentCoverage,appearanceVersion:1,
   RACES:RACES,COUNTS:COUNTS,CLASS_COLORS:CLASS_COLORS,headRig:PAINTED_HEAD_RIG,hairFit:paintedHairFit,
   normalizeAppearance:normalizeAppearance,randomAppearance:randomAppearance,
   applyToCharacter:applyToCharacter,portraitHTML:portraitHTML,paperDollHTML:paperDollHTML,paperDollSVG:paperDollSVG,bodyProfile:bodyProfile,gearFitProfile:gearFitProfile,weaponFitProfile:weaponFitProfile,tierVisualProfile:tierVisualProfile,
