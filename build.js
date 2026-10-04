@@ -687,7 +687,7 @@ for(const file of files){
     const setPalette=P.gearPalette(testCharacter,gear.Chest,5,'Chest');
     if(setPalette.paletteMode!=='set-first'||String(setPalette.base).toLowerCase()===String(P.CLASS_COLORS[klass]||'').toLowerCase())throw new Error('Set palette must own its colour identity instead of copying '+klass+' class colour');
     const fit=P.gearFitProfile(testCharacter),weaponAt=html.indexOf('cb-paper-side-weapon'),weaponHtml=weaponAt>=0?html.slice(weaponAt):'',gripX=Number((weaponHtml.match(/data-grip-x="([0-9.-]+)"/)||[])[1]),gripY=Number((weaponHtml.match(/data-grip-y="([0-9.-]+)"/)||[])[1]);
-    if(weaponAt<0||!html.includes('data-equipment-fit="v3"')||Math.abs(gripX-fit.weaponX)>.11||Math.abs(gripY-fit.weaponY)>.11||fit.weaponX<fit.baseRightHand)throw new Error('Side-held main-hand fit is not anchored outside the torso for '+klass);
+    if(weaponAt<0||!html.includes('data-equipment-fit="v3"')||Math.abs(gripX-fit.weaponX)>.11||Math.abs(gripY-fit.weaponY)>.11||fit.weaponX<fit.weaponSideMin)throw new Error('Side-held main-hand fit is not anchored outside the torso for '+klass);
     const wf=P.weaponFitProfile(testCharacter,gear.Weapon);
     if(!wf||![wf.anchorX,wf.anchorY,wf.pivotX,wf.pivotY,wf.rotate,wf.scale].every(Number.isFinite))throw new Error('Invalid classic weapon fit profile for '+klass);
   }
@@ -729,7 +729,7 @@ for(const file of files){
     if(![wf.anchorX,wf.anchorY,wf.pivotX,wf.pivotY,wf.rotate,wf.scale].every(Number.isFinite))throw new Error('Invalid classic weapon fit: '+klass+' T'+tier+' '+race+' '+gender);
     for(const pos of positions)if(!html.includes('cb-paper-slot-'+pos.toLowerCase()))throw new Error('Missing classic '+pos+' render: '+klass+' T'+tier+' '+race+' '+gender);
     if(!html.includes('data-equipment-fit="v3"')||!html.includes('data-fit-version="3"')||!html.includes('data-alignment="v3"'))throw new Error('Equipment fit v3 markers missing: '+klass+' T'+tier+' '+race+' '+gender);
-    if(!html.includes('cb-paper-side-weapon')||!html.includes('data-weapon-pose="side-held"')||fit.weaponX<fit.baseRightHand)throw new Error('Side-held weapon presentation missing: '+klass+' T'+tier+' '+race+' '+gender);
+    if(!html.includes('cb-paper-side-weapon')||!html.includes('data-weapon-pose="side-held"')||fit.weaponX<fit.weaponSideMin)throw new Error('Side-held weapon presentation missing: '+klass+' T'+tier+' '+race+' '+gender);
     checked++;
   }
   for(const klass of ['Mage','Priest','Warlock','Druid']){
