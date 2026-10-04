@@ -420,12 +420,18 @@ function bodyProfile(subject,appearanceOverride){
   ['shoulder','waist','hip','leg','arm','neck','headScale','hand'].forEach(function(k){out[k]=base[k]*gs[k]*fs[k]});
   return out;
 }
+const PAINTED_HAND_RIG={Veyren:[[58,182,220],[63,177,218]],Stoneborn:[[46,194,226],[58,182,218]],Aelari:[[68,172,212],[70,170,210]],Thornkin:[[63,177,214],[69,171,211]],Emberkin:[[52,188,225],[60,180,219]],Nymari:[[54,186,223],[62,178,218]]};
 function gearFitProfile(c,item){
   var p=bodyProfile(c),race=c?.race||c?.appearance?.race||'Veyren',gender=p.gender,frame=p.frame;
   var shoulderY=race==='Stoneborn'?130:gender===1?133:131;
   var leftShoulder=120-p.shoulder,rightShoulder=120+p.shoulder;
   var spread=PAINTED_RACES.has(race)?13:0;
   var leftHand=leftShoulder-spread,rightHand=rightShoulder+spread,handY=283;
+  if(PAINTED_HAND_RIG[race]){
+    const hand=PAINTED_HAND_RIG[race][gender],bodyScale=[.94,1,1.06][frame];
+    leftHand=120+(hand[0]-120)*bodyScale;rightHand=120+(hand[1]-120)*bodyScale;
+    handY=247+(hand[2]-179)*36/59;
+  }
   var hipHalf=p.hip,legHalf=Math.max(11.5,p.leg*.82),calfHalf=Math.max(8.8,p.leg*.62);
   var footHalf=Math.max(11,p.leg*.72);
   var waistHalf=Math.max(p.waist,p.hip*.70);
@@ -869,7 +875,7 @@ function paperArmsRaw(c,skin,highlighted){
     if(tier>=3&&metal)out+='<path d="M'+(x-w+2)+' 265 Q'+x+' 269 '+(x+w-2)+' 265" fill="none" stroke="'+pal.light+'" stroke-width="1.4"/>';
     if(tier>=4)out+=itemRune(item,'Hands',pal,x,265,.3);
   }
-  return '<g class="'+paperSlotClass('Hands',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Hands'))+'">'+out+'</g>';
+  return '<g transform="translate(0 '+(f.handY-283)+')" class="'+paperSlotClass('Hands',highlighted,item)+'" data-item-key="'+esc(itemIdentity(item,'Hands'))+'">'+out+'</g>';
 }
 function paperChest(c,highlighted){var out=materialSurface(paperChestRaw(c,highlighted),c,'Chest');return out}
 function fittedLeatherChest(c,item,highlighted){
@@ -1342,9 +1348,9 @@ function paperDollSVGUncached(c,opts){
   return '<svg viewBox="'+(opts.portrait?(PAINTED_RACES.has(race)?'65 0 110 95':'65 15 110 110'):'0 0 240 410')+'" data-race="'+esc(race)+'" data-gender="'+(a.gender===1?'female':'male')+'" data-frame="'+esc(optionText('frame',a.frame,race).toLowerCase())+'" data-model-mode="equipped" role="img" aria-hidden="true" focusable="false">'+
     defs+baseBg+baseFigure+(PAINTED_RACES.has(race)?paintedRig:(markup=>markup))(
     paperTierAura(model)+
-    paperBackLayer(model)+
     paperOffHandBack(model,highlighted)+
     paperLegs(model,skin,highlighted)+paperFeet(model,skin,highlighted)+
+    paperBackLayer(model)+
     paperArms(model,skin,highlighted)+paperChest(model,highlighted)+paperWaist(model,highlighted)+paperShoulders(model,highlighted)+paperAccessories(model,highlighted)+
     '<g transform="translate('+headX+' '+headY+') scale('+headScale+')">'+paperHeadGearOnly(model,highlighted)+'</g>'+
     paperOffHandFront(model,highlighted)+
