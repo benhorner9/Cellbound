@@ -211,9 +211,10 @@ function weaponPose(subject,baseRightHand,p,shoulderX){
   const long=['staff','spear','bow','crossbow'].includes(kind);
   const compact=['dagger','wand','focus','scepter','rod'].includes(kind);
   const offset=Math.max(long?22:compact?15:18,p.arm*(long?1.05:compact?.72:.86));
-  const x=Math.min(202,Math.max(baseRightHand+offset,shoulderX+17));
-  const angle=kind==='bow'?7:kind==='crossbow'?10:kind==='staff'||kind==='spear'?6:kind==='dagger'?14:9;
-  return {active:true,kind,x,y:283,angle,side:'right'};
+  const sideMin=Math.min(194,shoulderX+Math.max(4,p.arm*.15));
+  const x=Math.max(sideMin,Math.min(194,baseRightHand+offset));
+  const angle=kind==='bow'?6:kind==='crossbow'?8:kind==='staff'||kind==='spear'?5:kind==='dagger'?11:7;
+  return {active:true,kind,x,y:283,angle,side:'right',sideMin};
 }
 function gearFitProfile(subject){
   const race=raceOf(subject),p=bodyProfile(subject),sex=sexName(subject),gender=p.gender,frame=p.frame;
@@ -231,7 +232,7 @@ function gearFitProfile(subject){
     leftLeg:120-p.hip*.47,rightLeg:120+p.hip*.47,
     legHalf:Math.max(10.5,p.leg*.82),calfHalf:Math.max(8.2,p.leg*.62),footHalf:Math.max(10,p.leg*.72),
     chestTop:gender===1?121:119,chestBottom:252,
-    weaponX:pose.x,weaponY:pose.y,weaponAngle:pose.angle,weaponPose:pose.active?'side-held':'rest',weaponKind:pose.kind,
+    weaponX:pose.x,weaponY:pose.y,weaponAngle:pose.angle,weaponPose:pose.active?'side-held':'rest',weaponKind:pose.kind,weaponSideMin:pose.sideMin??rightShoulder,
     offhandX:leftHand,offhandY:handY,
     headGearScaleX:(gender===1?.94:1)*([.94,1,1.05,.98][subject?.appearance?.face]||1)
   };
