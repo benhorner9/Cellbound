@@ -993,7 +993,7 @@ function paperOffHand(c,highlighted,layer){
   var pal=gearPalette(c,item,tier,'OffHand'),type=offHandType(item,c),v=pal.variant,isBack=type==='shield';
   if(layer==='back'&&!isBack)return'';
   if(layer==='front'&&isBack)return'';
-  var fit=paperFit(c),gx=fit.offhandX||fit.leftHand||49,gy=fit.handY||283,dx=gx-49,dy=gy-244;
+  var fit=paperFit(c),gx=fit.offhandX||fit.leftHand||49,gy=fit.offhandY||fit.handY||283,dx=gx-49,dy=gy-244;
   return '<g class="'+paperSlotClass('OffHand',highlighted,item)+'" data-offhand-type="'+esc(type)+'" data-item-key="'+esc(itemIdentity(item,'OffHand'))+'" data-render-layer="'+(isBack?'shield-back':'front-offhand')+'" data-fit-version="'+EQUIPMENT_FIT_VERSION+'" data-alignment="v3" data-grip-x="'+gx.toFixed(2)+'" data-grip-y="'+gy.toFixed(2)+'" data-item-visuals="v2" data-palette-mode="'+pal.paletteMode+'" data-class-visual="'+esc(gearClassSlug(item))+'" transform="translate('+dx.toFixed(2)+' '+dy.toFixed(2)+')">'+offHandMarkup(type,pal,v,tier,item)+'</g>';
 }
 function paperAccessories(c,highlighted){
