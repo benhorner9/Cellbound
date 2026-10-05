@@ -2701,6 +2701,7 @@ function doHeal(ctx,healer,target,amount,ability,opts={}){
 function killUnit(ctx,target,source,ability){
  if(!target.alive)return;
  target.alive=false;target.health=0;target.currentCast=null;
+ if(target.role==='enemy')ctx.mechanicBag=[];
  emit(ctx,target.role==='enemy'?(target.isAdd?'ADD_DEFEATED':'ENEMY_DEFEATED'):'PLAYER_DEFEATED',{source:source?.id||null,target:target.id,ability,result:'dead',position:copy(target.position)});
  if(target.role==='enemy')onEnemyDeathAffixes(ctx,target);
  if(target.role!=='enemy'){
@@ -3925,7 +3926,9 @@ function resolveMechanic(ctx,e,m,token){
  mechanicStat(ctx,m.type||'unknown',false);scheduleNextMechanic(ctx);
 }
 function startMechanic(ctx,m){
- const enemy=livingEnemies(ctx).find(x=>x.kind==='boss')||livingEnemies(ctx).find(x=>!isCrowdControlled(x))||livingEnemies(ctx)[0];if(!enemy)return;
+ const owner=m?.ownerEnemyId?getUnit(ctx,m.ownerEnemyId):null;
+ if(m?.ownerEnemyId&&!owner?.alive){ctx.mechanicBag=[];scheduleNextMechanic(ctx);return}
+ const enemy=owner||livingEnemies(ctx).find(x=>x.kind==='boss')||livingEnemies(ctx).find(x=>!isCrowdControlled(x))||livingEnemies(ctx)[0];if(!enemy)return;
  const token='m'+(++ctx.mechanicSeq),duration=Math.max(520,Math.round((Number(m.duration)||1600)*scalingValue(ctx,'castSpeed',1)));
  const castState={token,enemy:enemy.id,name:m.name,type:m.type,interrupted:false,ends:ctx.time+duration,responses:{},reactionMs:{},targetId:null,targetIds:[]};
  const live=livingPlayers(ctx);
@@ -4068,7 +4071,7 @@ function refillMechanicBag(ctx,list){
 }
 function scheduleNextMechanic(ctx){
  if(ctx.finished)return;
- const list=ctx.encounter.mechanics||[];if(!list.length)return;
+ const list=(ctx.encounter.mechanics||[]).filter(m=>!m.ownerEnemyId||getUnit(ctx,m.ownerEnemyId)?.alive);if(!list.length)return;
  const baseDelay=Number(ctx.encounter.mechanicIntervalMs)||(ctx.encounter.kind==='final'?3600:ctx.encounter.kind==='boss'?4200:ctx.encounter.kind==='world-boss'?2500:5000);
  const delay=Math.max(900,Math.round(baseDelay*scalingValue(ctx,'mechanicFrequency',1)));
  const randomPool=list.length>1&&['boss','final','world-boss'].includes(String(ctx.encounter.kind||''))&&ctx.encounter.randomMechanics!==false&&ctx.encounter.fixedMechanicOrder!==true;
@@ -4258,10 +4261,10 @@ function createLiveSession(options={}){
   emit(ctx,'ENEMY_REVIVED',{source:opts.source||target.id,target:target.id,ability:opts.ability||'Revive',result:'revived',position:copy(target.position),payload:{targetHp:target.health,targetMaxHealth:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),external:true}});
   return{ok:true,targetId:target.id,targetHpPct:pct(target.health,target.maxHealth),events:ctx.events.slice(start).map(copy),timeMs:ctx.time}
  };
- const addMechanics=(raw=[])=>{
-  const added=normaliseMechanics({mechanics:Array.isArray(raw)?raw:[]});
+ const addMechanics=(raw=[],ownerEnemyId=null)=>{
+  const added=normaliseMechanics({mechanics:Array.isArray(raw)?raw:[]}).map(m=>ownerEnemyId?{...m,ownerEnemyId:String(ownerEnemyId)}:m);
   if(!added.length)return{ok:false,count:0};
-  ctx.encounter.mechanics.push(...added);
+  ctx.mechanicBag=[];ctx.encounter.mechanics.push(...added);
   const mechanicQueued=ctx.queue.some(x=>x.label==='mechanic-start');
   if(!ctx.activeEnemyCast&&!mechanicQueued&&livingEnemies(ctx).length)scheduleNextMechanic(ctx);
   return{ok:true,count:added.length,timeMs:ctx.time}
@@ -4281,11 +4284,11 @@ function createLiveSession(options={}){
   if(opts.position)source.currentPosition=copy(opts.position);
   const mini={...copy(ctx.encounter),enemies:[source],enemyTypes:[source.classification],enemyHealth:Number(source.maxHealth)||Number(source.health)||Number(ctx.encounter.enemyHealth)||120,scaling:scale};
   const enemy=normaliseEnemies(mini)[0];enemy.id=id;enemy.position=openPosition(ctx,enemy.position,1.6);enemy.threat=Object.fromEntries(ctx.players.map(p=>[p.id,0]));
-  ctx.enemies.push(enemy);ctx.units[id]=enemy;
+  ctx.enemies.push(enemy);ctx.units[id]=enemy;ctx.mechanicBag=[];
   const tank=livingPlayers(ctx).find(p=>p.role==='tank')||livingPlayers(ctx)[0];
   if(tank){enemy.threat[tank.id]=ctx.tactics.pullStyle==='safe'?250:ctx.tactics.pullStyle==='aggressive'?125:180;setAggro(ctx,enemy,tank,'live spawn')}
   emit(ctx,'ENEMY_SPAWNED',{source:id,target:id,ability:enemy.name,result:'spawned',position:copy(enemy.position),payload:{name:enemy.name,level:enemy.level,classification:enemy.classification,classificationLabel:enemy.classificationLabel,maxHealth:enemy.maxHealth,live:true}});
-  if(Array.isArray(opts.mechanics)&&opts.mechanics.length)addMechanics(opts.mechanics);
+  if(Array.isArray(opts.mechanics)&&opts.mechanics.length)addMechanics(opts.mechanics,id);
   return{ok:true,id,enemy:copy(enemy),events:ctx.events.slice(Math.max(0,ctx.events.length-2)).map(copy),timeMs:ctx.time}
  };
  const snapshot=()=>buildCombatResult(ctx,ctx.finished?(ctx.outcome||'defeat'):'ongoing',false);
