@@ -11,7 +11,7 @@ const PATCH_NOTES=[
   'Completed the beta progression, economy and UI polish passes.'
  ]},
  {label:'Founding Beta',date:'2 Oct 2026',title:'Launch content locked',items:[
-  'Beta classes: Warrior, Paladin, Hunter, Rogue and Mage.',
+  'Balance testing: all classes and specialisations are temporarily unlocked on dev.',
   'All current dungeon content remains available as progression unlocks it.',
   'Null Complex opens after The Manor progression requirement is met.'
  ]}
