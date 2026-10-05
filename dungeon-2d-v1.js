@@ -1863,6 +1863,8 @@ async function override(t,b){
  if(t==='consumable'){
    const used=useCombatPotion({members:party(),getHp:c=>hp(c.id),setHp:(c,v)=>setHp(c.id,v),getCondition:c=>cond(c.id),setCondition:(c,v)=>setCond(c.id,v)});
    if(!used.ok){log(used.reason==='full'?'The party is already at full recovery.':'No combat potions remain. Craft or buy one before the next run.');refreshCombatPotionButton(b);return}
+   const liveHeal=run.rebornLiveSession?.heal?.(used.target.id,used.healApplied,{ability:used.item.name,source:'commander'});
+   if(liveHeal?.ok&&Number.isFinite(Number(liveHeal.targetHpPct)))setHp(used.target.id,Math.round(Number(liveHeal.targetHpPct)));
    floating('p-'+used.target.id,'+'+used.healApplied,'heal');act('healer',used.target.name+' uses '+used.item.name);updateRows();refreshCombatPotionButton(b);
    log(used.item.name+' restores '+used.target.name+' for '+used.healApplied+' HP'+(used.conditionApplied?' and '+used.conditionApplied+' Condition':'')+'.')
  }
