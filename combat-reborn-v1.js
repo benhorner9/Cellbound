@@ -3,13 +3,15 @@
 
 const VERSION='1.7.0';
 const COMMAND_RULES={
- focus:{cooldownMs:8000,sharedMs:3500},
- spread:{cooldownMs:10000,sharedMs:3500},
- interrupt:{cooldownMs:9000,sharedMs:2500},
- defensive:{cooldownMs:18000,sharedMs:3500},
- burn:{cooldownMs:20000,sharedMs:3500},
- regroup:{cooldownMs:10000,sharedMs:3500}
+ focus:{cooldownMs:8000,sharedMs:3000,cost:1},
+ spread:{cooldownMs:10000,sharedMs:3000,cost:1},
+ stack:{cooldownMs:10000,sharedMs:3000,cost:1},
+ regroup:{cooldownMs:10000,sharedMs:3000,cost:1},
+ interrupt:{cooldownMs:9000,sharedMs:2200,cost:1},
+ defensive:{cooldownMs:18000,sharedMs:3500,cost:2},
+ burn:{cooldownMs:20000,sharedMs:3500,cost:3}
 };
+const COMMAND_POWER_MAX=5,COMMAND_POWER_START=2,COMMAND_POWER_REGEN_MS=8000,COMMAND_POWER_REWARD_LOCK_MS=5000;
 // Balance baseline: 2026-09-30 chapter-wide progression and role audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
@@ -2737,7 +2739,12 @@ function doHeal(ctx,healer,target,amount,ability,opts={}){
 function killUnit(ctx,target,source,ability){
  if(!target.alive)return;
  target.alive=false;target.health=0;target.currentCast=null;
- if(target.role==='enemy')ctx.mechanicBag=[];
+ if(target.role==='enemy'){
+  ctx.mechanicBag=[];
+  if((target.isAdd||target.classification==='elite')&&ctx.time>=Number(ctx.nextCommandPowerRewardAt||0)){
+   if(gainCommandPower(ctx,1,'priority enemy defeated'))ctx.nextCommandPowerRewardAt=ctx.time+COMMAND_POWER_REWARD_LOCK_MS
+  }
+ }
  emit(ctx,target.role==='enemy'?(target.isAdd?'ADD_DEFEATED':'ENEMY_DEFEATED'):'PLAYER_DEFEATED',{source:source?.id||null,target:target.id,ability,result:'dead',position:copy(target.position)});
  if(target.role==='enemy')onEnemyDeathAffixes(ctx,target);
  if(target.role!=='enemy'){
@@ -3638,13 +3645,17 @@ function commandedInterrupt(ctx){
  return true
 }
 function applyPartyCommand(ctx,command){
- const type=String(command?.type||'').toLowerCase(),live=livingPlayers(ctx),defaults={focus:7000,burn:6000,defensive:5000,spread:2400,regroup:2600,interrupt:1800},rule=COMMAND_RULES[type]||{cooldownMs:8000,sharedMs:3500};
+ const type=String(command?.type||'').toLowerCase(),live=livingPlayers(ctx),defaults={focus:7000,burn:6000,defensive:5000,spread:2400,stack:2600,regroup:2600,interrupt:1800},rule=COMMAND_RULES[type]||{cooldownMs:8000,sharedMs:3500,cost:1};
  const duration=Math.max(800,Number(command?.durationMs)||defaults[type]||2400);
  let result='accepted',targetId=command?.targetId||null;
- const sharedRemaining=Math.max(0,(Number(ctx.commandCooldownUntil)||0)-ctx.time),commandRemaining=Math.max(0,(Number(ctx.commandCooldowns?.[type])||0)-ctx.time);
+ const sharedRemaining=Math.max(0,(Number(ctx.commandCooldownUntil)||0)-ctx.time),commandRemaining=Math.max(0,(Number(ctx.commandCooldowns?.[type])||0)-ctx.time),cost=Math.max(0,Number(rule.cost)||0),power=Math.max(0,Number(ctx.commandPower)||0);
  if(sharedRemaining>0||commandRemaining>0){
   const remainingMs=Math.max(sharedRemaining,commandRemaining),scope=commandRemaining>=sharedRemaining&&commandRemaining>0?'command':'shared';
-  emit(ctx,'PARTY_COMMAND',{source:'commander',target:targetId,ability:type,result:'cooldown',payload:{commandId:command.id||null,type,remainingMs,targetId,scope,sharedRemainingMs:sharedRemaining,commandRemainingMs:commandRemaining,cooldownMs:rule.cooldownMs,sharedCooldownMs:rule.sharedMs}});
+  emit(ctx,'PARTY_COMMAND',{source:'commander',target:targetId,ability:type,result:'cooldown',payload:{commandId:command.id||null,type,remainingMs,targetId,scope,sharedRemainingMs:sharedRemaining,commandRemainingMs:commandRemaining,cooldownMs:rule.cooldownMs,sharedCooldownMs:rule.sharedMs,cost,...commandPowerState(ctx)}});
+  return
+ }
+ if(power<cost){
+  emit(ctx,'PARTY_COMMAND',{source:'commander',target:targetId,ability:type,result:'no-power',payload:{commandId:command.id||null,type,targetId,cost,...commandPowerState(ctx)}});
   return
  }
  if(type==='focus'){
@@ -3660,17 +3671,22 @@ function applyPartyCommand(ctx,command){
   const cast=ctx.activeEnemyCast,enemy=cast?getUnit(ctx,cast.enemy):(livingEnemies(ctx).find(e=>e.kind==='boss')||livingEnemies(ctx)[0]),responseType=cast?.type==='line'?'line':cast?.type==='cone'?'cone':'circles';
   live.forEach(p=>{if(cast?.responses)cast.responses[p.id]=true;if(cast?.reactionMs)cast.reactionMs[p.id]=0;planMovement(ctx,p,responseType,enemy)});
   if(!cast)result='reposition'
- }else if(type==='regroup'){
+ }else if(type==='stack'){
   const tank=live.find(p=>p.role==='tank')||live[0],anchor=tank?.position||arenaCenter(ctx);
-  live.forEach((p,i)=>{const angle=-Math.PI/2+(i/Math.max(1,live.length))*Math.PI*2,r=p.role==='tank'?1.5:4.5;moveTo(ctx,p,openPosition(ctx,{x:anchor.x+Math.cos(angle)*r,y:anchor.y+Math.sin(angle)*r},1.5),340,'commander regroup')})
+  live.forEach((p,i)=>{const angle=(i/Math.max(1,live.length))*Math.PI*2,r=p.role==='tank'?.7:2.1;moveTo(ctx,p,openPosition(ctx,{x:anchor.x+Math.cos(angle)*r,y:anchor.y+Math.sin(angle)*r},1.1),300,'commander stack')})
+ }else if(type==='regroup'){
+  const centre=arenaCenter(ctx),tank=live.find(p=>p.role==='tank')||live[0],enemy=livingEnemies(ctx).find(e=>e.kind==='boss')||livingEnemies(ctx)[0],origin=enemy?.position||centre;
+  live.forEach((p,i)=>{let to;if(p.role==='tank'&&enemy)to=meleeFormationPoint(ctx,p,enemy);else{const angle=Math.PI+(i-(live.length-1)/2)*.22,r=p.role==='healer'?15:p.role==='dps'?11:7;to={x:origin.x+Math.cos(angle)*r,y:origin.y+Math.sin(angle)*r}};moveTo(ctx,p,openPosition(ctx,to,1.5),360,'commander regroup')})
  }else if(type==='interrupt'){
   if(!commandedInterrupt(ctx))result='no-cast'
  }else result='unknown';
  if(!['no-cast','no-target','unknown'].includes(result)){
+  ctx.commandPower=clamp((Number(ctx.commandPower)||0)-cost,0,ctx.commandPowerMax||COMMAND_POWER_MAX);
   ctx.commandCooldownUntil=ctx.time+rule.sharedMs;
-  ctx.commandCooldowns[type]=ctx.time+rule.cooldownMs
+  ctx.commandCooldowns[type]=ctx.time+rule.cooldownMs;
+  emitCommandPower(ctx,'spent',cost,type)
  }
- emit(ctx,'PARTY_COMMAND',{source:'commander',target:targetId,ability:type,result,payload:{commandId:command.id||null,type,durationMs:duration,targetId,cooldownMs:rule.cooldownMs,sharedCooldownMs:rule.sharedMs,readyAtMs:ctx.commandCooldowns[type]||ctx.time,sharedReadyAtMs:ctx.commandCooldownUntil||ctx.time}});
+ emit(ctx,'PARTY_COMMAND',{source:'commander',target:targetId,ability:type,result,payload:{commandId:command.id||null,type,durationMs:duration,targetId,cost,cooldownMs:rule.cooldownMs,sharedCooldownMs:rule.sharedMs,readyAtMs:ctx.commandCooldowns[type]||ctx.time,sharedReadyAtMs:ctx.commandCooldownUntil||ctx.time,...commandPowerState(ctx)}});
 }
 function schedulePartyCommands(ctx,raw){
  const timeline=normaliseCommandTimeline(raw);
@@ -3679,7 +3695,14 @@ function schedulePartyCommands(ctx,raw){
 }
 function mechanicStat(ctx,type,failed){
  const m=ctx.stats.mechanics;m.byType[type]=m.byType[type]||{avoided:0,failed:0};
- if(failed){m.failed++;m.byType[type].failed++}else{m.avoided++;m.byType[type].avoided++}
+ if(failed){m.failed++;m.byType[type].failed++}
+ else{
+  m.avoided++;m.byType[type].avoided++;
+  const rewardable=['circle','circles','cone','line','tank-mark','target-circle','role-circles','persistent-circle'];
+  if(rewardable.includes(String(type||''))&&ctx.time>=Number(ctx.nextCommandPowerRewardAt||0)){
+   if(gainCommandPower(ctx,1,'mechanic handled'))ctx.nextCommandPowerRewardAt=ctx.time+COMMAND_POWER_REWARD_LOCK_MS
+  }
+ }
 }
 function planMovement(ctx,u,type,anchor){
  if(!u.alive)return;
@@ -4158,7 +4181,7 @@ function createCombatContext(options={}){
   crowdControl:options.tactics?.crowdControl||'disabled'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),mechanicRng:rngFrom(seed+':mechanics'),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicBag:Array.isArray(options.initialMechanicBag)?copy(options.initialMechanicBag):[],lastMechanicKey:options.initialLastMechanicKey||null,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,activeGroundHazards:{},commandFocusId:null,commandFocusUntil:0,commandCooldownUntil:0,commandCooldowns:{},finished:false,outcome:null,onEvent:options.onEvent||null};
+ const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),mechanicRng:rngFrom(seed+':mechanics'),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicBag:Array.isArray(options.initialMechanicBag)?copy(options.initialMechanicBag):[],lastMechanicKey:options.initialLastMechanicKey||null,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,activeGroundHazards:{},commandFocusId:null,commandFocusUntil:0,commandCooldownUntil:0,commandCooldowns:{},commandPower:clamp(Number(options.commandPower??COMMAND_POWER_START),0,COMMAND_POWER_MAX),commandPowerMax:COMMAND_POWER_MAX,nextCommandPowerRegenAt:COMMAND_POWER_REGEN_MS,nextCommandPowerRewardAt:0,finished:false,outcome:null,onEvent:options.onEvent||null};
  players.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  enemies.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  settlePhysicalSpace(ctx,[...players,...enemies]);
@@ -4216,9 +4239,28 @@ function evaluateCombatOutcome(ctx){
  if(!livingPlayers(ctx).length)return'defeat';
  return null
 }
+function commandPowerState(ctx){
+ return{value:Math.round(Number(ctx?.commandPower)||0),max:Math.max(1,Number(ctx?.commandPowerMax)||COMMAND_POWER_MAX),nextRegenMs:Math.max(0,(Number(ctx?.nextCommandPowerRegenAt)||0)-(Number(ctx?.time)||0))}
+}
+function emitCommandPower(ctx,result,amount=0,reason=''){
+ emit(ctx,'COMMAND_POWER',{source:'commander',result,amount,payload:{...commandPowerState(ctx),reason}})
+}
+function gainCommandPower(ctx,amount=1,reason='tactical success'){
+ const before=Number(ctx.commandPower)||0,after=clamp(before+Math.max(0,Number(amount)||0),0,ctx.commandPowerMax||COMMAND_POWER_MAX);
+ ctx.commandPower=after;
+ if(after>before)emitCommandPower(ctx,'gained',after-before,reason);
+ return after-before
+}
+function tickCommandPower(ctx){
+ if(ctx.time<Number(ctx.nextCommandPowerRegenAt||0))return;
+ while(ctx.time>=Number(ctx.nextCommandPowerRegenAt||0)){
+  ctx.nextCommandPowerRegenAt=(Number(ctx.nextCommandPowerRegenAt)||COMMAND_POWER_REGEN_MS)+COMMAND_POWER_REGEN_MS;
+  if(ctx.commandPower<(ctx.commandPowerMax||COMMAND_POWER_MAX)){gainCommandPower(ctx,1,'battle rhythm');break}
+ }
+}
 function advanceCombatTick(ctx){
  if(!ctx||ctx.finished)return ctx?.outcome||null;
- processQueue(ctx);
+ processQueue(ctx);tickCommandPower(ctx);
  const outcome=evaluateCombatOutcome(ctx);
  if(outcome)return outcome;
  checkBossPhases(ctx);tickCooldowns(ctx);passiveResources(ctx);tickMonkStagger(ctx);tickPets(ctx);
@@ -4266,16 +4308,17 @@ function createLiveSession(options={}){
   if(outcome)result=finishCombatContext(ctx,outcome);
   return{finished:ctx.finished,outcome:ctx.outcome,timeMs:ctx.time,events:drainEvents(),result}
  };
+ const powerState=()=>({...commandPowerState(ctx)});
  const commandState=type=>{
-  const key=String(type||'').toLowerCase(),rule=COMMAND_RULES[key]||{cooldownMs:8000,sharedMs:3500},sharedRemainingMs=Math.max(0,(Number(ctx.commandCooldownUntil)||0)-ctx.time),commandRemainingMs=Math.max(0,(Number(ctx.commandCooldowns?.[key])||0)-ctx.time);
-  return{type:key,available:sharedRemainingMs<=0&&commandRemainingMs<=0,remainingMs:Math.max(sharedRemainingMs,commandRemainingMs),sharedRemainingMs,commandRemainingMs,cooldownMs:rule.cooldownMs,sharedCooldownMs:rule.sharedMs}
+  const key=String(type||'').toLowerCase(),rule=COMMAND_RULES[key]||{cooldownMs:8000,sharedMs:3500,cost:1},sharedRemainingMs=Math.max(0,(Number(ctx.commandCooldownUntil)||0)-ctx.time),commandRemainingMs=Math.max(0,(Number(ctx.commandCooldowns?.[key])||0)-ctx.time),cost=Math.max(0,Number(rule.cost)||0),power=Math.max(0,Number(ctx.commandPower)||0),affordable=power>=cost;
+  return{type:key,available:sharedRemainingMs<=0&&commandRemainingMs<=0&&affordable,affordable,cost,power,powerMax:ctx.commandPowerMax||COMMAND_POWER_MAX,remainingMs:Math.max(sharedRemainingMs,commandRemainingMs),sharedRemainingMs,commandRemainingMs,cooldownMs:rule.cooldownMs,sharedCooldownMs:rule.sharedMs}
  };
  const command=(type,payload={})=>{
   if(ctx.finished||stopped)return{ok:false,reason:'finished',events:[],state:commandState(type)};
   const before=ctx.events.length;
   applyPartyCommand(ctx,{id:payload.id||('live-'+ctx.time+'-'+type),type,targetId:payload.targetId||null,durationMs:payload.durationMs||0});
   const emitted=ctx.events.slice(before).map(copy),commandEvent=emitted.find(e=>e.type==='PARTY_COMMAND');
-  return{ok:!!commandEvent&&!['cooldown','unknown','no-cast','no-target'].includes(commandEvent.result),reason:commandEvent?.result||'unknown',event:commandEvent||null,events:emitted,timeMs:ctx.time,state:commandState(type)}
+  return{ok:!!commandEvent&&!['cooldown','unknown','no-cast','no-target','no-power'].includes(commandEvent.result),reason:commandEvent?.result||'unknown',event:commandEvent||null,events:emitted,timeMs:ctx.time,state:commandState(type),power:powerState()}
  };
  const heal=(targetId,amount,opts={})=>{
   if(ctx.finished||stopped)return{ok:false,reason:'finished',events:[]};
@@ -4339,7 +4382,7 @@ function createLiveSession(options={}){
  const snapshot=()=>buildCombatResult(ctx,ctx.finished?(ctx.outcome||'defeat'):'ongoing',false);
  const stop=(outcome='defeat')=>{stopped=true;return ctx.finished?buildCombatResult(ctx,ctx.outcome):finishCombatContext(ctx,outcome)};
  return{
-  version:VERSION,seed:ctx.seed,advance,command,commandState,heal,focus,reviveEnemy,spawnEnemy,addMechanics,setMechanicInterval,signal,drainEvents,snapshot,stop,
+  version:VERSION,seed:ctx.seed,advance,command,commandState,commandPowerState:powerState,heal,focus,reviveEnemy,spawnEnemy,addMechanics,setMechanicInterval,signal,drainEvents,snapshot,stop,
   get timeMs(){return ctx.time},get finished(){return ctx.finished},get outcome(){return ctx.outcome},
   debug:()=>({timeMs:ctx.time,queue:ctx.queue.length,activeCast:copy(ctx.activeEnemyCast),hazards:copy(ctx.activeGroundHazards),players:copy(ctx.players),enemies:copy(ctx.enemies)})
  }
@@ -5231,7 +5274,7 @@ function runSelfTests(){
 }
 
 window.CellboundCombatReborn={
- VERSION,COMMAND_RULES,CLASS_COLORS,RESOURCE_DEFS,CLASS_BUFFS,ABILITIES,LEVEL_RULES,ENEMY_CLASS_RULES,simulate,createLiveSession,replay,debugSnapshot,
+ VERSION,COMMAND_RULES,COMMAND_POWER_MAX,COMMAND_POWER_START,CLASS_COLORS,RESOURCE_DEFS,CLASS_BUFFS,ABILITIES,LEVEL_RULES,ENEMY_CLASS_RULES,simulate,createLiveSession,replay,debugSnapshot,
  skills:{classSkillPool,unlockedSkillPool,defaultSkillLoadout},
  talents:{rules:TALENT_RULES,skillRequirements:TALENT_SKILL_REQUIREMENTS,rank:characterTalentRank},
  tests:{run:runSelfTests},utils:{hashSeed,rngFrom,levelHealthScale,levelOutputScale,levelMatchMultiplier}
