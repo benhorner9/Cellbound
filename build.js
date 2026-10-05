@@ -154,7 +154,10 @@ for(const file of files){
   if(file==='blackout-station-v1.js'&&!contents.includes('craftedGridOverrideStack'))throw new Error('Crafted Engineering grid bypass is not integrated');
   if(file==='blackout-station-v1.js'&&!contents.includes('bs-grid-rig'))throw new Error('Blackout distribution board alignment rig is missing');
   if(file==='blackout-station-v1.css'&&(!contents.includes('top:37.5%')||!contents.includes('top:62.5%')||!contents.includes('Blackout Station exact cable alignment pass v3')))throw new Error('Blackout source/breaker alignment contract is missing');
-  if(file==='combat-standard-v1.js'&&!contents.includes('professionZone:meta.zone'))throw new Error('Combat gateway must pass encounter zone for Scribing');
+  if(file==='combat-standard-v1.js'){
+    if(!contents.includes('professionZone:meta.zone'))throw new Error('Combat gateway must pass encounter zone for Scribing');
+    for(const hook of ["const CONTRACT_VERSION='1.1.0'","function createLiveSession(","engine.createLiveSession","liveReady:!!window.CellboundCombatReborn?.createLiveSession"])if(!contents.includes(hook))throw new Error('Real-time combat gateway contract is missing '+hook);
+  }
 
   if(file==='guild.html'){
     const rigAt=contents.indexOf('./character-rig-v1.js'),portraitAt=contents.indexOf('./character-portraits-v1.js');
@@ -275,7 +278,8 @@ for(const file of files){
     for(const hook of ["spec:'Outlaw'","id:'sinister-strike'","id:'pistol-shot'","id:'dispatch'","id:'roll-the-bones'","id:'blade-flurry'","id:'between-the-eyes'","id:'adrenaline-rush'","id:'killing-spree'","COMBO_POINTS_CHANGED","Opportunity","Quick Draw","Ruthlessness","Outlaw Rogue Combo Points","Outlaw Roll the Bones","Outlaw Blade Flurry","Outlaw Between the Eyes","Outlaw Killing Spree","Outlaw Rogue Talent Skill Gates"])if(!contents.includes(hook))throw new Error('Outlaw Rogue combat migration is incomplete: '+hook);
     if(!contents.includes("_combatPosition")||!contents.includes("data.currentPosition"))throw new Error('Combat slice position persistence is missing');
     if(!contents.includes("focusSelectedDamageOnly")||!contents.includes("!target.focusSelected"))throw new Error('Focus-selected damage gating is missing');
-    if(!contents.includes("const VERSION='1.6.0'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
+    if(!contents.includes("const VERSION='1.7.0'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
+    for(const hook of ['function createCombatContext(','function advanceCombatTick(','function createLiveSession(','session.advance','command,heal','get timeMs(){return ctx.time}'])if(!contents.includes(hook))throw new Error('Real-time Combat Reborn session contract is missing '+hook);
     for(const hook of ['function applyPartyCommand(','function schedulePartyCommands(','PARTY_COMMAND','commandFocusId','mechanicRng','refillMechanicBag','combatBehaviour'])if(!contents.includes(hook))throw new Error('Commander combat variety contract is missing '+hook);
     for(const hook of ['function bodyRadius(','function physicalPosition(','function bodyClearance(','function openPhysicalPosition(','function segmentBodyHit(','function collisionWaypoint(','physicalSpace:encounter.physicalSpace!==false','bodyCollision:bodyRoute.body?','collisionContinuation:Boolean(collisionFinal)',"combatRange&&los&&ctx.physicalSpace&&u.role!=='tank'",'Physical Space Bodies','Physical Collision Metadata','Collision Melee Uptime'])if(!contents.includes(hook))throw new Error('Combat Reborn physical-space collision is missing '+hook);
     for(const hook of ['setBonusRulesFor','talentSkillCooldownScale','incomingDamageReduction','setBonuses?.damageScale','setBonuses?.healingScale'])if(!contents.includes(hook))throw new Error('Combat adaptive set foundation is missing '+hook);
@@ -507,9 +511,9 @@ for(const file of files){
     if(!contents.includes('config.autoContinueOnVictory')||!contents.includes('autoContinueDelayMs'))throw new Error('Interactive quest combat must support automatic victory flow');
     if((contents.match(/if\(config\.autoContinueOnVictory\)/g)||[]).length<2)throw new Error('Both standard and interactive quest combat must support automatic victory flow');
     if(!contents.includes("$$('[data-q-target]').forEach"))throw new Error('Live quest target controls must use querySelectorAll');
-    if(!contents.includes('async function qPlayReborn')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('Quest combat must use continuous Combat Reborn playback');
+    if(!contents.includes('async function qPlayReborn')||!contents.includes('requestAnimationFrame(frame)'))throw new Error('Quest combat must use continuous real-time Combat Reborn');
     for(const hook of ['data-q-speed','q2dHealingMeter','function qStatusTargets','CellboundCombatStatuses?.handle','data-q-side-resource','function qResourceDef','function qPulseUnit'])if(!contents.includes(hook))throw new Error('Quest combat HUD is missing '+hook);
-    if(!contents.includes("Date.now()-wallAnchor")||!contents.includes("Math.max(.25,Number(questFight?.speed)||1)"))throw new Error('Quest combat playback must use a speed-aware wall clock');
+    for(const hook of ['questFight?.liveSession','session.advance(delta)','C.createLiveSession(liveOptions,liveMeta)','document.hidden'])if(!contents.includes(hook))throw new Error('Quest real-time combat loop is missing '+hook);
     if(!contents.includes("level:2,recommendedItemLevel:18")||!contents.includes("level:4,recommendedItemLevel:20")||!contents.includes("level:5,recommendedItemLevel:22")||!contents.includes("level:6,recommendedItemLevel:24"))throw new Error('Quest combat progression targets are missing');
   }
   if(file==='thirteenth-bell-v1.js'){
@@ -987,6 +991,20 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     throw new Error('Combat Reborn self-tests failed: '+(failed||'test runtime unavailable'));
   }
   console.log('Combat Reborn self-tests passed: '+result.passed+'/'+result.total+'.');
+  const liveParty=[
+    {id:'live-tank',name:'Live Tank',class:'Warrior',spec:'Protection',power:12,level:10},
+    {id:'live-heal',name:'Live Heal',class:'Priest',spec:'Holy',power:12,level:10},
+    {id:'live-d1',name:'Live Mage',class:'Mage',spec:'Arcane',power:12,level:10},
+    {id:'live-d2',name:'Live Hunter',class:'Hunter',spec:'Marksman',power:12,level:10},
+    {id:'live-d3',name:'Live Rogue',class:'Rogue',spec:'Assassination',power:12,level:10}
+  ];
+  const liveEncounter={id:'build-live-smoke',kind:'boss',level:10,enemies:[{name:'Live Smoke Boss',classification:'boss'}],enemyHealth:4200,mechanicIntervalMs:2200,mechanics:[['Pulse','circles',1200],['Cast','interrupt',1300]]};
+  const live=sandbox.CellboundCombatStandard.createLiveSession({party:liveParty,encounter:liveEncounter,seed:'build-live-smoke'},{zone:'ashen-vault'});
+  if(!live||typeof live.advance!=='function'||typeof live.command!=='function')throw new Error('Real-time Combat Reborn session failed to initialise');
+  live.advance(1600);const command=live.command('burn');if(!command.ok)throw new Error('Real-time Combat Reborn command did not mutate the running session');
+  let liveResult=null,liveGuard=0;while(!live.finished&&liveGuard++<3000){const step=live.advance(100);if(step.result)liveResult=step.result}
+  if(!liveResult||!['victory','defeat'].includes(liveResult.outcome)||!liveResult.events.some(e=>e.type==='PARTY_COMMAND'))throw new Error('Real-time Combat Reborn smoke test did not finish with live command events');
+  console.log('Combat Reborn real-time session smoke test passed.');
   const raidParty=[
     {id:'rt1',name:'Tank A',class:'Warrior',spec:'Protection',power:44,level:15,itemLevel:44},
     {id:'rh1',name:'Healer A',class:'Priest',spec:'Holy',power:44,level:15,itemLevel:44},
