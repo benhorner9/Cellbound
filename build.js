@@ -64,7 +64,7 @@ for(const file of files){
     for(const hook of ['.cbvfx-layer','.cbvfx-events','.cbvfx-burst.damage','.cbvfx-burst.heal','.cbvfx-burst.interrupt','.cbvfx-burst.death','data-cbvfx-theme="ashen"','data-cbvfx-theme="hollow"','data-cbvfx-theme="chaos"','data-cbvfx-theme="blackout"','data-cbvfx-theme="pvp"','cbvfxLootReveal','prefers-reduced-motion'])if(!contents.includes(hook))throw new Error('Shared combat VFX styling is missing '+hook);
   }
     if(file==='dungeon-2d-v1.js'){
-    for(const hook of ['function refreshCombatCommandCooldowns','function refreshExternalCommandCooldowns','function selectCommanderTarget(','cbrCommandPower','cbrCommandTarget','COMMAND POWER','NEED \' +state.cost+\' CP','commandState:type=>session.commandState?.(type)','commandPowerState:()=>session.commandPowerState?.()',"id:'stack'","id:'regroup'"])if(!contents.includes(hook))throw new Error('Commander v2 UI is missing '+hook);
+    for(const hook of ['function refreshCombatCommandCooldowns','function refreshExternalCommandCooldowns','function selectCommanderTarget(','cbrCommandPower','cbrCommandTarget','COMMAND POWER',"small.textContent='NEED '+state.cost+' CP'",'commandState:type=>session.commandState?.(type)','commandPowerState:()=>session.commandPowerState?.()',"id:'stack'","id:'regroup'"])if(!contents.includes(hook))throw new Error('Commander v2 UI is missing '+hook);
   }
 if(file==='quests-v2.js'){
     for(const hook of ["id:'signal-from-nowhere'","Prototype 07 — The Reconstituted","progression.nullComplexUnlocked","isNullComplexUnlocked"])if(!contents.includes(hook))throw new Error('Signal From Nowhere quest is missing '+hook);
