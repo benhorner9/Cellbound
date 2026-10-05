@@ -196,7 +196,7 @@ function root(){let r=$('#cb2dBackdrop');if(!r){r=document.createElement('div');
 function close(silentExternal=false){
  token++;removeRebornReplayControls();
  const callback=run?.externalOnClose,wasExternal=Boolean(run?.externalMode);
- run=null;document.body.classList.remove('cb2d-open');const r=root();r.hidden=true;r.innerHTML='';
+ run=null;document.body.classList.remove('cb2d-open');const r=root();r.hidden=true;r.innerHTML='';r.classList.remove('cbcombat-backdrop');
  if(wasExternal&&!silentExternal&&typeof callback==='function'){try{callback()}catch(error){console.warn('Shared combat close callback failed',error)}}
 }
 function knowledge(key){const p=party();return p.length?Math.round(p.reduce((n,c)=>n+(Number(c.knowledge&&c.knowledge[key])||0),0)/p.length):0}
