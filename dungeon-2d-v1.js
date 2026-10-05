@@ -390,69 +390,10 @@ function commanderTargetName(id){
  const unit=id?$('[data-unit="'+id+'"]'):null,label=unit?.querySelector('span');
  return String(label?.childNodes?.[0]?.textContent||'').trim()||'AUTO'
 }
-function commanderTargetPercent(id){
- const raw=String(id||''),match=/^e-(\d+)$/.exec(raw);
- if(match){
-   const i=Number(match[1]),max=Math.max(1,Number(run?.enemyDisplayMax?.[i])||Number(run?.enemyMax?.[i])||1),hpNow=Math.max(0,Number(run?.enemyHp?.[i])||0);
-   return clamp(hpNow/max*100,0,100)
- }
- const fill=raw?$('[data-unit="'+raw+'"] .cb2d-unit-hp i'):null,p=parseFloat(fill?.style?.width||'');
- return Number.isFinite(p)?clamp(p,0,100):100
-}
-function refreshCommanderTargetCard(){
- const card=$('#cbrTargetCard');if(!card)return;
- const selected=run?.directControlUnitId||null,id=run?.commandTargetId||(selected?run?.directControlTargets?.[selected]:null)||null;
- const nameEl=card.querySelector('[data-target-name]'),metaEl=card.querySelector('[data-target-meta]'),hpEl=card.querySelector('[data-target-hp]'),fill=card.querySelector('[data-target-hp-fill]'),avatar=card.querySelector('.cbr-target-avatar');
- if(!id){
-   card.classList.add('empty');if(nameEl)nameEl.textContent='NO TARGET';if(metaEl)metaEl.textContent='Tap an enemy in the battlefield';if(hpEl)hpEl.textContent='—';if(fill)fill.style.width='0%';if(avatar)avatar.textContent='?';return
- }
- const unit=$('[data-unit="'+id+'"]'),name=commanderTargetName(id),meta=String(unit?.querySelector('.cb2d-unit-meta')?.textContent||'PRIORITY TARGET').trim(),pct=commanderTargetPercent(id);
- card.classList.remove('empty');if(nameEl)nameEl.textContent=name.toUpperCase();if(metaEl)metaEl.textContent=meta||'PRIORITY TARGET';if(hpEl)hpEl.textContent=Math.round(pct)+'%';if(fill)fill.style.width=pct+'%';if(avatar)avatar.textContent=hudInitial(name)
-}
-function directControlUnitName(id){
- const raw=String(id||''),ch=raw.startsWith('p-')?party().find(x=>String(x.id)===raw.slice(2)):null,unit=raw?$('[data-unit="'+raw+'"]'):null,label=unit?.querySelector(':scope > span');
- return ch?.name||String(label?.childNodes?.[0]?.textContent||'').trim()||'CHARACTER'
-}
-function refreshDirectControl(){
- if(!run)return;
- const selected=run.directControlUnitId||null,target=selected?run.directControlTargets?.[selected]:null,statusEl=$('#cbrDirectStatus');
- document.querySelectorAll('#cb2dUnits .cb2d-unit.party').forEach(u=>u.classList.toggle('player-selected',!!selected&&u.dataset.unit===selected));
- document.querySelectorAll('[data-row]').forEach(row=>row.classList.toggle('player-selected',!!selected&&selected==='p-'+row.dataset.row));
- document.querySelectorAll('#cb2dUnits .cb2d-unit.enemy').forEach(u=>u.classList.toggle('player-target',!!target&&u.dataset.unit===target));
- if(statusEl){
-  if(!selected)statusEl.textContent='Tap a character · tap ground to move · tap an enemy to target';
-  else statusEl.textContent=directControlUnitName(selected)+(target?' → '+commanderTargetName(target):' selected')+' · tap or drag to reposition'
- }
-}
-function selectDirectControlUnit(id){
- if(!run||run.resolved)return false;
- const unit=$('[data-unit="'+id+'"]');if(!unit||unit.classList.contains('enemy')||unit.classList.contains('dead')||!String(id).startsWith('p-'))return false;
- run.directControlUnitId=id;refreshDirectControl();status(directControlUnitName(id)+' selected · choose a position or enemy');return true
-}
-function setDirectControlTarget(targetId){
- if(!run||run.resolved||!run.directControlUnitId)return false;
- const target=$('[data-unit="'+targetId+'"]');if(!target||!target.classList.contains('enemy')||target.classList.contains('dead'))return false;
- const playback=run.rebornPlayback,response=playback?.setPlayerTarget?.(run.directControlUnitId,targetId);
- if(!response?.ok){status('Target order is not available yet');return false}
- run.directControlTargets=run.directControlTargets||{};run.directControlTargets[run.directControlUnitId]=targetId;
- run.commandTargetId=targetId;refreshCommanderTarget();
- const ch=party().find(x=>'p-'+x.id===run.directControlUnitId);if(ch&&role(ch)!=='healer'){run.hudTargets=run.hudTargets||{};run.hudTargets[ch.id]=targetId;updateCombatHudRow(ch.id)}
- status(directControlUnitName(run.directControlUnitId)+' attacking '+commanderTargetName(targetId));refreshDirectControl();return true
-}
-function moveDirectControlUnit(unitId,clientX,clientY){
- if(!run||run.resolved||!unitId)return false;
- const arena=$('#cb2dArena'),playback=run.rebornPlayback;if(!arena||!playback?.movePlayer)return false;
- const rect=arena.getBoundingClientRect();if(!rect.width||!rect.height)return false;
- const x=Math.max(2,Math.min(98,(Number(clientX)-rect.left)/rect.width*100)),y=Math.max(3,Math.min(97,(Number(clientY)-rect.top)/rect.height*100));
- const response=playback.movePlayer(unitId,{x,y},{holdMs:5000});
- if(!response?.ok){status('Move order could not be issued');return false}
- status(directControlUnitName(unitId)+' repositioning');refreshDirectControl();return true
-}
 function refreshCommanderTarget(){
  const label=$('#cbrCommandTarget'),id=run?.commandTargetId;
  document.querySelectorAll('[data-unit^="e-"],[data-unit^="add-"],[data-unit^="tb-"]').forEach(u=>u.classList.toggle('commander-target',!!id&&u.dataset.unit===id));
- if(label)label.textContent=id?'TARGET · '+commanderTargetName(id).toUpperCase():'TARGET · AUTO';
- refreshCommanderTargetCard()
+ if(label)label.textContent=id?'TARGET · '+commanderTargetName(id).toUpperCase():'TARGET · AUTO'
 }
 function selectCommanderTarget(id){
  if(!run||run.resolved)return;
@@ -532,10 +473,9 @@ function refreshExternalCommandCooldowns(session,selector,attribute){
   }
  })
 }
-function combatCommandDeckMarkup(potionAttribute='data-combat-potion',title='Command the party',copy='AI handles combat abilities. You control positions, targets and party orders.'){
+function combatCommandDeckMarkup(potionAttribute='data-combat-potion',title='Command the party',copy='Combat Reborn controls movement, targeting and abilities. Use Command Center orders to influence the fight.'){
  return '<div class="cbr-command-copy"><small>COMMANDER</small><b id="cbrCommandPrompt">'+esc(title)+'</b><span id="cbrCommandStatus">'+esc(copy)+'</span></div>'+
   '<div class="cbr-command-meta"><div><span>COMMAND POWER</span><b id="cbrCommandPower"></b></div><button type="button" id="cbrCommandTarget" class="cbr-command-target">TARGET · AUTO</button></div>'+
-  '<div class="cbr-direct-control"><b>DIRECT CONTROL</b><span id="cbrDirectStatus">Tap a character · tap ground to move · tap an enemy to target</span></div>'+
   '<div class="cbr-command-grid">'+LIVE_COMBAT_COMMANDS.map(cmd=>'<button type="button" class="cbr-command" data-combat-command="'+cmd.id+'" disabled><b>'+cmd.label+'</b><small>'+commandReadyHint(cmd.id)+'</small></button>').join('')+
   combatPotionButtonMarkup(potionAttribute)+'</div>'
 }
@@ -555,41 +495,13 @@ function setCombatCommandPrompt(e=null){
 }
 function bindCombatCommandButtons(){
  document.querySelectorAll('[data-combat-command]').forEach(button=>button.onclick=()=>issueCombatCommand(button.dataset.combatCommand,button));
- const arena=$('#cb2dArena');
- if(arena&&!arena.dataset.directControlBound){
-  arena.dataset.directControlBound='1';arena.classList.add('direct-control');
-  arena.addEventListener('click',e=>{
-   if(!run||run.resolved||performance.now()<Number(run.directControlSuppressClickUntil||0))return;
-   const unit=e.target.closest?.('.cb2d-unit');
-   if(unit?.dataset?.unit&&arena.contains(unit)){
-    if(unit.classList.contains('enemy')){
-     if(run.directControlUnitId)setDirectControlTarget(unit.dataset.unit);else selectCommanderTarget(unit.dataset.unit);
-     return
-    }
-    if(String(unit.dataset.unit).startsWith('p-')){selectDirectControlUnit(unit.dataset.unit);return}
-   }
-   if(run.directControlUnitId)moveDirectControlUnit(run.directControlUnitId,e.clientX,e.clientY)
-  });
-  arena.addEventListener('pointerdown',e=>{
-   const unit=e.target.closest?.('.cb2d-unit.party');if(!unit?.dataset?.unit||unit.classList.contains('dead'))return;
-   selectDirectControlUnit(unit.dataset.unit);
-   run.directControlDrag={unitId:unit.dataset.unit,pointerId:e.pointerId,x:e.clientX,y:e.clientY};
-   try{arena.setPointerCapture?.(e.pointerId)}catch(_){}
-  });
-  arena.addEventListener('pointerup',e=>{
-   const drag=run?.directControlDrag;if(!drag||drag.pointerId!==e.pointerId)return;
-   run.directControlDrag=null;const distance=Math.hypot(e.clientX-drag.x,e.clientY-drag.y);
-   if(distance>10&&moveDirectControlUnit(drag.unitId,e.clientX,e.clientY)){run.directControlSuppressClickUntil=performance.now()+350;e.preventDefault()}
-   try{arena.releasePointerCapture?.(e.pointerId)}catch(_){}
-  });
-  arena.addEventListener('pointercancel',()=>{if(run)run.directControlDrag=null})
+ const units=$('#cb2dUnits');
+ if(units&&!units.dataset.commandTargetBound){
+  units.dataset.commandTargetBound='1';
+  units.addEventListener('click',e=>{const enemy=e.target.closest?.('.cb2d-unit.enemy');if(enemy?.dataset?.unit)selectCommanderTarget(enemy.dataset.unit)})
  }
- document.querySelectorAll('[data-row]').forEach(row=>{
-  if(row.dataset.directControlBound)return;row.dataset.directControlBound='1';
-  row.addEventListener('click',()=>{const id=row.dataset.row;if(id)selectDirectControlUnit('p-'+id)})
- });
  const target=$('#cbrCommandTarget');if(target)target.onclick=()=>{if(!run)return;run.commandTargetId=null;refreshCommanderTarget();status('Priority target cleared · automatic targeting')}
- refreshCommanderTarget();refreshDirectControl();refreshCombatCommandCooldowns()
+ refreshCommanderTarget();refreshCombatCommandCooldowns()
 }
 function issueCombatCommand(type,button){
  if(!run||run.resolved)return;
@@ -649,7 +561,7 @@ function combatBattleTopbarMarkup(){
 }
 function combatShellMarkup(options={}){
  const title=options.title||'Combat',header=options.header||'CELLBOUND · LIVE COMBAT',route=options.route||'',partyLabel=options.partyLabel||('PARTY · '+party().length+' CHARACTERS'),kind=options.kind||'combat';
- const command=options.commandMarkup||combatCommandDeckMarkup(options.potionAttribute||'data-combat-potion',options.planTitle||'Command the party',options.planCopy||'AI handles combat abilities. You control positions, targets and party orders.');
+ const command=options.commandMarkup||combatCommandDeckMarkup(options.potionAttribute||'data-combat-potion',options.planTitle||'Command the party',options.planCopy||'Combat Reborn runs the fight. Use Command Center orders to change priorities and tactics.');
  return '<section class="cbcombat-shell" data-combat-view="fresh-v1">'+
   '<header class="cbcombat-header"><div class="cbcombat-title"><small>'+esc(header)+'</small><h2 id="cb2dTitle">'+esc(title)+'</h2></div><div class="cbcombat-header-actions"><span class="cbcombat-live-dot"><i></i>LIVE</span><button data-speed type="button">1×</button><button data-close type="button" aria-label="Close combat">×</button></div></header>'+
   '<div class="cbcombat-route" id="cb2dRoute">'+route+'</div>'+
@@ -675,7 +587,6 @@ function drawViewer(){
   kind:s.kind,
   potionAttribute:'data-combat-potion'
  });
- refreshCommanderTargetCard();
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.resolved&&!confirm('Leave the Ashen Vault?'))return;close()};
  r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  r.querySelector('[data-combat-potion]')?.addEventListener('click',e=>override('consumable',e.currentTarget));
@@ -874,7 +785,7 @@ function preloadAshenBattlefields(){
 function renderDungeonEnvironment(s){
  const arena=$('#cb2dArena'),root=$('#cb2dEnvironment'),tag=$('#cb2dRoomTag');if(!arena||!root)return;
  const cfg=ASHEN_ROOMS[s.id]||ASHEN_ROOMS['broken-gate'],life=cfg.life||{};
- arena.className='cb2d-arena cbcombat-arena direct-control theme-ashen room-'+cfg.room+(s.kind==='boss'||s.kind==='final'?' boss-room':'');
+ arena.className='cb2d-arena cbcombat-arena theme-ashen room-'+cfg.room+(s.kind==='boss'||s.kind==='final'?' boss-room':'');
  arena.querySelectorAll('.cb2d-bespoke-foreground-layer,.cb2d-stage-image').forEach(n=>n.remove());
  root.innerHTML='';
  if(cfg.art){
@@ -1160,7 +1071,6 @@ function setEnemyHp(index,value){
  const displayMax=Math.max(1,Number(run.enemyDisplayMax?.[index])||run.enemyMax[index]||1);
  const pct=clamp((run.enemyHp[index]/displayMax)*100,0,100);
  const bar=$('[data-unit="e-'+index+'"] .cb2d-unit-hp i');if(bar)bar.style.width=pct+'%';updateBossHud(index,pct);
- if(run?.commandTargetId==='e-'+index)refreshCommanderTargetCard();
  const unit=$('[data-unit="e-'+index+'"]');
  if(unit){
    unit.classList.toggle('critical',pct<30&&pct>0);
@@ -1900,7 +1810,7 @@ async function playLiveRebornSession(result,tok){
   }
  };
  renderEvents(session.drainEvents?.()||[]);
- run.rebornPlayback={issueCommand:(type,payload={})=>session.command(type,payload),commandState:type=>session.commandState?.(type),commandPowerState:()=>session.commandPowerState?.(),setPlayerTarget:(unitId,targetId)=>session.setPlayerTarget?.(unitId,targetId),movePlayer:(unitId,position,opts={})=>session.movePlayer?.(unitId,position,opts),now:()=>session.timeMs,result:()=>activeResult};refreshCombatCommandCooldowns();refreshDirectControl();
+ run.rebornPlayback={issueCommand:(type,payload={})=>session.command(type,payload),commandState:type=>session.commandState?.(type),commandPowerState:()=>session.commandPowerState?.(),now:()=>session.timeMs,result:()=>activeResult};refreshCombatCommandCooldowns();
  return await new Promise(resolve=>{
   const finishPlayback=(value,finalResult=null)=>{
    if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
@@ -2004,8 +1914,8 @@ function runRebornStage(s){
  const C=window.CellboundCombatStandard;if(!C?.createLiveSession)throw new Error('Real-time Combat Reborn gateway is unavailable');
  const startHp=Object.fromEntries(party().map(c=>[c.id,hp(c.id)]));
  const combatParty=party().map((c,i)=>Object.assign({},c,{_combatHealthPct:hp(c.id),_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0,_combatPosition:stagePartyPosition(s,c,i)}));
- const simOptions={party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:[run.endgame?.seed||'ashen-vault',s.id,run.stage].join(':'),commanderDirectControl:true},meta={zone:'ashen-vault'};
- run.rebornCommands=[];run.commandSeq=0;run.commandCooldownUntil=0;run.directControlTargets={};run.commandTargetId=null;run.rebornSimulation={options:simOptions,meta};
+ const simOptions={party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:[run.endgame?.seed||'ashen-vault',s.id,run.stage].join(':')},meta={zone:'ashen-vault'};
+ run.rebornCommands=[];run.commandSeq=0;run.commandCooldownUntil=0;run.commandTargetId=null;run.rebornSimulation={options:simOptions,meta};
  run.rebornLiveSession=C.createLiveSession(simOptions,meta);
  const result=run.rebornLiveSession.snapshot();result.stageId=s.id;result.stageTitle=s.title;result.startHp=startHp;return result
 }
@@ -2244,9 +2154,8 @@ function sharedViewerShell(options={}){
   arenaClass:options.arenaClass||'',
   potionAttribute:'data-shared-potion',
   planTitle:options.planTitle||'Command the party',
-  planCopy:options.planCopy||'AI handles rotations and abilities. You control positioning, targets and Command Center orders.'
+  planCopy:options.planCopy||'Combat Reborn runs movement, rotations and mechanics. Use Command Center orders to influence the fight.'
  });
- refreshCommanderTargetCard();
  r.querySelector('[data-close]').onclick=close;
  r.querySelector('[data-speed]').onclick=e=>{if(!run)return;run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  r.querySelector('[data-shared-potion]')?.addEventListener('click',e=>{
@@ -2270,7 +2179,7 @@ function spawnSharedEncounter(s,result,options={}){
  clearArenaEphemera();$('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
  const initialUnits=new Map((result.events?.find(e=>e.type==='COMBAT_START')?.payload?.units||[]).map(u=>[u.id,u]));
  const arena=$('#cb2dArena'),env=$('#cb2dEnvironment'),tag=$('#cb2dRoomTag');
- if(arena)arena.className='cb2d-arena cbcombat-arena direct-control theme-'+esc(options.theme||'manor')+' room-'+esc(options.room||s?.id||'shared')+(['boss','final'].includes(String(s?.kind||''))?' boss-room':'');
+ if(arena)arena.className='cb2d-arena cbcombat-arena theme-'+esc(options.theme||'manor')+' room-'+esc(options.room||s?.id||'shared')+(['boss','final'].includes(String(s?.kind||''))?' boss-room':'');
  if(env)env.innerHTML='<div class="cb2d-ambience">'+Array.from({length:10},(_,i)=>'<i class="cb2d-ambient ash" style="--x:'+(8+(i*9)%84)+'%;--delay:-'+(i*.41)+'s;--dur:'+(4+(i%4)*.5)+'s;--drift:'+(-12+(i%5)*6)+'px"></i>').join('')+'</div>';
  if(tag)tag.innerHTML='<b>'+esc(options.roomLabel||s?.title||'Combat')+'</b><small>'+esc(options.ambience||'AI runs every rotation. You command positions, targets and party orders.')+'</small>';
  const baseEnemies=(result?.finalState?.enemies||[]).filter(e=>!e.isAdd&&/^e-\d+$/.test(String(e.id||'')));
@@ -2293,7 +2202,7 @@ function spawnSharedEncounter(s,result,options={}){
    const pos=initialUnits.get('e-'+i)?.position||{x:68,y};
    addUnit('e-'+i,name,boss?'enemy boss':'enemy',pos.x,pos.y,boss?'big':'',meta?('Lv. '+(meta.level||s?.level||1)+' · '+String(meta.classificationLabel||data.classification||'ENEMY').toUpperCase()):'');
  });
- primeCombatHudTargets(sourceEnemies.length?'e-0':null);renderPartyHudState();mountBossHud(s);refreshDirectControl()
+ primeCombatHudTargets(sourceEnemies.length?'e-0':null);renderPartyHudState();mountBossHud(s)
 }
 function openSharedExploration(options={}){
  const extParty=Array.isArray(options.party)?options.party.filter(Boolean):[];
@@ -2335,7 +2244,7 @@ async function playSharedEncounter(options={}){
    rebornHistory:[],rebornReplay:null,rebornResult:result,rebornTelegraphs:{},groundHazards:{},rebornCastTimer:null,
    runtimeStageStartedAt:Number(options.startAt)||0,rebornCommands:[],commandSeq:0,commandCooldownUntil:0};
  const startTactics=result?.events?.find(e=>e.type==='COMBAT_START')?.payload?.tactics||options.tactics||{};
- run.rebornSimulation={options:{party:extParty,encounter:copyObject(encounter),tactics:copyObject(startTactics),seed:result.seed,commanderDirectControl:options.commanderDirectControl!==false},meta:options.zone?{zone:options.zone}:{}};
+ run.rebornSimulation={options:{party:extParty,encounter:copyObject(encounter),tactics:copyObject(startTactics),seed:result.seed},meta:options.zone?{zone:options.zone}:{}};
  const C=window.CellboundCombatStandard;if(C?.createLiveSession){
    run.rebornLiveSession=C.createLiveSession(run.rebornSimulation.options,run.rebornSimulation.meta);
    const liveStart=run.rebornLiveSession.snapshot();
