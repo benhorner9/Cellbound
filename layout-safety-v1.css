@@ -299,6 +299,9 @@ body.bs2d-open{
   overflow:hidden;
 }
 
+/* Combat feed removed: keep the battlefield and Commander controls as the primary play surface. */
+.cb2d-layout>main>.cb2d-feed{display:none!important}
+
 @media (min-width:1051px) and (min-height:650px){
   body.cb2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
   body.hs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
