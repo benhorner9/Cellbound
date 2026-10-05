@@ -638,6 +638,7 @@ function qUseCombatPotion(button){
   if(!questFight)return;
   const helper=window.CellboundDungeon2D,used=helper?.useCombatPotion?.({state:state(),members:qCombatants(),getHp:c=>Number(questFight.partyHp?.[c.id])||0,setHp:(c,v)=>qSetPartyHp(c,v)});
   if(!used?.ok){qLog(used?.reason==='full'?'The party is already at full health.':'No combat potions remain. Craft or buy one before the next fight.');helper?.refreshCombatPotionButton?.(button,state());return}
+  const liveHeal=questFight.liveSession?.heal?.(used.target.id,used.healApplied,{ability:used.item.name,source:'commander'});if(liveHeal?.ok&&Number.isFinite(Number(liveHeal.targetHpPct)))qSetPartyHp(used.target,Math.round(Number(liveHeal.targetHpPct)));
   helper?.refreshCombatPotionButton?.(button,state());qLog(used.item.name+' restores '+used.target.name+' for '+used.healApplied+' HP.');window.CellboundFX?.micro?.(used.item.name+' used','cell')
 }
 function qTargetControlsMarkup(){
@@ -810,38 +811,35 @@ function qRenderRebornEvent(e){
   }
 }
 async function qPlayReborn(result,tok){
-  const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
-  if(!questFight)return false;questFight.telegraphs={};
-  if(!events.length)return result?.outcome==='victory';
-  return await new Promise(resolve=>{
-    let index=0,simTime=0,wallAnchor=Number(questFight?.wallClockStartAt)||Date.now(),simAnchor=0,lastSpeed=null,finished=false,raf=0;
-    const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);resolve(value)};
-    const frame=()=>{
-      if(finished)return;
-      if(tok!==encounterToken||!questFight){finish(false);return}
-      const speed=Math.max(.25,Number(questFight?.speed)||1);
-      if(lastSpeed===null)lastSpeed=speed;
-      else if(lastSpeed!==speed){simAnchor=simTime;wallAnchor=Date.now();lastSpeed=speed}
-      simTime=Math.max(simTime,simAnchor+Math.max(0,Date.now()-wallAnchor)*speed);
-      questFight.elapsedMs=Math.max(Number(questFight.elapsedMs)||0,simTime);
-      const frameStarted=performance.now();let handled=0;
-      while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<36&&performance.now()-frameStarted<9){
-        const event=events[index++];handled++;
-        try{qRenderRebornEvent(event)}
-        catch(error){console.warn('Quest combat visual recovered',event?.type,event?.ability,error)}
-      }
-      if(index>=events.length){finish(result?.outcome==='victory');return}
-      raf=requestAnimationFrame(frame)
-    };
-    raf=requestAnimationFrame(frame)
-  })
+ const session=questFight?.liveSession;if(!session?.advance)throw new Error('Real-time quest combat session unavailable');
+ if(!questFight)return false;questFight.telegraphs={};
+ const renderEvents=events=>{for(const event of events||[]){try{qRenderRebornEvent(event)}catch(error){console.warn('Quest live combat visual recovered',event?.type,event?.ability,error)}}};
+ renderEvents(session.drainEvents?.()||[]);
+ return await new Promise(resolve=>{
+  let finished=false,raf=0,lastWall=performance.now();
+  const finish=(value,finalResult=null)=>{
+   if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
+   const final=finalResult||session.snapshot?.()||result;if(final){try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,final)}catch(_){}questFight.result=final}
+   questFight.liveSession=null;resolve(value)
+  };
+  const frame=now=>{
+   if(finished)return;if(tok!==encounterToken||!questFight){finish(false);return}
+   if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
+   const delta=Math.max(0,Math.min(250,now-lastWall))*Math.max(.25,Number(questFight.speed)||1);lastWall=now;
+   const step=session.advance(delta);questFight.elapsedMs=Math.max(Number(questFight.elapsedMs)||0,Number(step.timeMs)||0);
+   if(step.events?.length)renderEvents(step.events);
+   if(step.finished){const final=step.result||session.snapshot?.()||result;finish(final?.outcome==='victory',final);return}
+   raf=requestAnimationFrame(frame)
+  };
+  raf=requestAnimationFrame(frame)
+ })
 }
 function qEncounterFromConfig(config){
   const meta=config.combat||{},kind=meta.kind||(config.enemies.length===1?'boss':'trash');
   return{id:'quest-'+String(config.title||'fight').toLowerCase().replace(/[^a-z0-9]+/g,'-'),title:config.title,kind,level:Math.max(1,Number(meta.level)||1),recommendedItemLevel:Math.max(0,Number(meta.recommendedItemLevel)||0),enemyLevels:meta.enemyLevels||null,enemyTypes:meta.enemyTypes||null,enemies:[...config.enemies],enemyHealth:Number(meta.enemyHealth)|| (kind==='final'?900:kind==='boss'?700:330),mechanics:meta.mechanics||[],mechanicIntervalMs:Math.max(0,Number(meta.mechanicIntervalMs)||0),phases:meta.phases||[],environment:meta.environment||{},scaling:meta.scaling||{},resolveAtBossHealthPct:Math.max(0,Math.min(.95,Number(meta.resolveAtBossHealthPct)||0)),resolveLabel:meta.resolveLabel||null}
 }
 async function runQuest2DFight(config){
-  const p=Array.isArray(config?.participants)&&config.participants.length?config.participants:party(),C=window.CellboundCombatStandard;if((!config?.allowSolo&&p.length!==5)||(config?.allowSolo&&p.length!==1)||!C?.simulate)return false;
+  const p=Array.isArray(config?.participants)&&config.participants.length?config.participants:party(),C=window.CellboundCombatStandard;if((!config?.allowSolo&&p.length!==5)||(config?.allowSolo&&p.length!==1)||!C?.createLiveSession)return false;
   const tok=++encounterToken;
   return await new Promise(resolve=>{
     let settled=false;const finish=value=>{if(settled)return;settled=true;resolve(value)};
@@ -853,7 +851,7 @@ async function runQuest2DFight(config){
     (async()=>{
       try{
         await wait(600);if(tok!==encounterToken)return;
-        const result=C.simulate({
+        const liveOptions={
           party:p.map(c=>{const x=carried[c.id]||{};return Object.assign({},c,{
             _combatHealthPct:x.healthPct==null?100:Number(x.healthPct),
             _combatResource:x.resource||null,
@@ -865,8 +863,8 @@ async function runQuest2DFight(config){
           encounter,
           tactics:{interruptPriority:'standard',addPriority:'immediate',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced'},
           seed:config.seed||['quest',tok,config.title,Date.now()].join(':')
-        },{zone:'quest-encounters'});
-        questFight.result=result;
+        },liveMeta={zone:'quest-encounters'},session=C.createLiveSession(liveOptions,liveMeta),result=session.snapshot();
+        questFight.liveSession=session;questFight.result=result;
         if(Array.isArray(result?.finalState?.enemies)){const main=result.finalState.enemies.filter(e=>!e.isAdd);questFight.enemyMax=main.map(e=>e.maxHealth);questFight.enemyHp=[...questFight.enemyMax]}
         const won=await qPlayReborn(result,tok);if(tok!==encounterToken)return;
         if(typeof config.onResult==='function')await config.onResult(result);
