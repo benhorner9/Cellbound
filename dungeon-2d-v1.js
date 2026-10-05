@@ -629,6 +629,8 @@ function applyUnitPosition(e,x,y,instant=false){
  const safe=combatSafePoint(e.dataset.unit,x,y),p=unitPixelPosition(safe.x,safe.y),arena=$('#cb2dArena');
  e.dataset.x=String(safe.x);e.dataset.y=String(safe.y);
  if(instant)e.style.transitionDuration='0ms';
+ // Percentage coordinates are the authoritative visual fallback. Pixel vars remain for legacy/live FX.
+ e.style.setProperty('--unit-left',safe.x+'%');e.style.setProperty('--unit-top',safe.y+'%');
  e.style.setProperty('--unit-x',p.x+'px');e.style.setProperty('--unit-y',p.y+'px');
  if(arena?.dataset?.bespokeBattlefield==='1'){
    const min=Number(arena.dataset.depthMin)||.94,max=Number(arena.dataset.depthMax)||1.06,t=clamp((safe.y-10)/80,0,1);
@@ -703,9 +705,16 @@ function renderDungeonEnvironment(s){
  const arena=$('#cb2dArena'),root=$('#cb2dEnvironment'),tag=$('#cb2dRoomTag');if(!arena||!root)return;
  const cfg=ASHEN_ROOMS[s.id]||ASHEN_ROOMS['broken-gate'],life=cfg.life||{};
  arena.className='cb2d-arena theme-ashen room-'+cfg.room+(s.kind==='boss'||s.kind==='final'?' boss-room':'');
- arena.querySelectorAll('.cb2d-bespoke-foreground-layer').forEach(n=>n.remove());
+ arena.querySelectorAll('.cb2d-bespoke-foreground-layer,.cb2d-stage-image').forEach(n=>n.remove());
  root.innerHTML='';
  if(cfg.art){
+   const stageImg=document.createElement('img');
+   stageImg.className='cb2d-stage-image';stageImg.alt='';stageImg.setAttribute('aria-hidden','true');
+   try{stageImg.src=new URL(cfg.art,document.baseURI).href}catch(_){stageImg.src=cfg.art}
+   stageImg.decoding='async';stageImg.loading='eager';
+   stageImg.onerror=()=>arena.classList.add('stage-image-failed');
+   stageImg.onload=()=>arena.classList.remove('stage-image-failed');
+   arena.insertBefore(stageImg,root);
    arena.dataset.bespokeBattlefield='1';arena.dataset.collisionProfile=s.id;arena.dataset.roomLife=life.profile||'ashen';
    arena.dataset.depthMin=String(life.depthMin??.94);arena.dataset.depthMax=String(life.depthMax??1.06);
    arena.style.setProperty('--cb2d-battlefield','url("'+cfg.art+'")');
