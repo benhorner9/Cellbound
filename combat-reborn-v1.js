@@ -2509,7 +2509,7 @@ function specHealingBalance(u){
  const v=curves[key];return v?progressionBlend(u.level,...v):1
 }
 function lateBalanceFactor(level,target){
- const l=Math.max(1,Number(level)||1),t=Math.max(.70,Math.min(1.65,Number(target)||1));
+ const l=Math.max(1,Number(level)||1),t=Math.max(.70,Math.min(1.80,Number(target)||1));
  if(l<12)return 1;
  return 1+(t-1)*clamp((l-12)/3,0,1)
 }
@@ -2524,13 +2524,13 @@ function specEndgameDamageAdjustment(u){
 }
 function specEndgameHealingAdjustment(u){
  const key=u.class+'|'+u.spec,targets={
-  'Paladin|Holy':1.60,'Priest|Holy':1.52,'Druid|Restoration':.82,'Shaman|Restoration':.86,'Monk|Mistweaver':.84,'Evoker|Preservation':.90
+  'Paladin|Holy':1.75,'Priest|Holy':1.52,'Druid|Restoration':.82,'Shaman|Restoration':.90,'Monk|Mistweaver':.78,'Evoker|Preservation':.90
  };
  return lateBalanceFactor(u.level,targets[key]||1)
 }
 function specEndgameTankTakenAdjustment(u){
  const key=u.class+'|'+u.spec,targets={
-  'Warrior|Protection':.88,'Paladin|Protection':1.18,'Monk|Brewmaster':1.05,'Death Knight|Blood':1.08,'Demon Hunter|Vengeance':.95
+  'Warrior|Protection':.88,'Paladin|Protection':1.35,'Monk|Brewmaster':1.05,'Death Knight|Blood':1.08,'Demon Hunter|Vengeance':1.08
  };
  return lateBalanceFactor(u.level,targets[key]||1)
 }
