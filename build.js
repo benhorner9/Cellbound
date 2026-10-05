@@ -497,7 +497,10 @@ for(const file of files){
   if(resumableDungeonHooks[file])for(const hook of resumableDungeonHooks[file])if(!contents.includes(hook))throw new Error(file+' resumable dungeon runtime is missing '+hook);
   if(file==='manor-raid-v1.js'&&!contents.includes('startAt:readyStartAt()'))throw new Error('The Manor shared viewer must resume from the server encounter clock');
   if(file==='quests-v2.js'&&(!contents.includes('config.seed||')||!contents.includes('wallClockStartAt:Number(config.wallClockStartAt)')))throw new Error('Quest combat must support deterministic resumed dungeon playback');
-  if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','twelve-below-v1.js','world-boss-2d-v1.js','pvp-viewer-v1.js','onboarding-v1.js','quests-v2.js'].includes(file)){
+  if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','onboarding-v1.js','quests-v2.js'].includes(file)){
+    if(!contents.includes('requestAnimationFrame(frame)')||!contents.includes('document.hidden')||!contents.includes('session.advance('))throw new Error(file+' must advance a real-time Combat Reborn session from the browser frame loop');
+  }
+  if(['twelve-below-v1.js','world-boss-2d-v1.js','pvp-viewer-v1.js'].includes(file)){
     for(const legacy of ['Math.min(rawDelta,100)','Math.min(100,Math.max(0,now-last','Math.min(Math.max(0,now-lastFrame),100)']){
       if(contents.includes(legacy))throw new Error(file+' still discards background combat time');
     }
