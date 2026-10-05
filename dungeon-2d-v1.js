@@ -660,7 +660,6 @@ function combatShellMarkup(options={}){
    '<main class="cbcombat-panel cbcombat-battle-panel">'+combatArenaMarkup(kind,options.arenaClass||'')+'</main>'+
    '<aside class="cbcombat-panel cbcombat-meters-panel">'+combatMetersMarkup()+'</aside>'+
   '</div>'+
-  '<div class="cb2d-feed" hidden><p id="cb2dFeed"></p></div>'+
   '<div class="cb2d-end" id="cb2dEnd" hidden></div>'+
  '</section>'
 }
@@ -683,8 +682,8 @@ function drawViewer(){
  feed();renderCombatMeters();renderRebornHealingMeter();
  requestAnimationFrame(()=>syncUnitPixelPositions())
 }
-function feed(){const e=$('#cb2dFeed');if(e&&run)e.innerHTML=run.log.slice(-6).map(esc).join('<br>')}
-function log(t){if(!run)return;run.log.push(t);run.log=run.log.slice(-30);feed()}
+function feed(){return}
+function log(t){if(!run)return;run.log.push(t);run.log=run.log.slice(-30)}
 function status(t){const e=$('#cb2dStatus');if(e)e.textContent=t}
 function act(r,t){const e=$('[data-act="'+r+'"] em');if(e)e.textContent=t}
 function updateRows(){
