@@ -1046,3 +1046,42 @@ body.bs2d-open{
   body.cc2d-open .cb2d-layout>main>.cbr-command-panel,
   body.bs2d-open .cb2d-layout>main>.cbr-command-panel{grid-template-columns:190px minmax(0,1fr)!important}
 }
+
+
+/* Fullscreen HUD theme collision fix v1
+   dungeon-theme-v1 gives the normal aside an opaque themed background with ID
+   specificity. In fullscreen combat the aside is deliberately stretched over the
+   whole arena as a HUD host, so that normal background becomes a full-screen black
+   sheet. Override it at equal/higher specificity after dungeon-theme-v1. */
+@media (min-width:1051px) and (min-height:650px){
+  :is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-layout>aside{
+    background:transparent!important;
+    background-image:none!important;
+    border:0!important;
+    box-shadow:none!important;
+    backdrop-filter:none!important;
+  }
+
+  :is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-layout>main{
+    background:transparent!important;
+    background-image:none!important;
+  }
+
+  :is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-layout>aside>.cb2d-party{
+    background:linear-gradient(90deg,rgba(3,9,12,.36),rgba(3,9,12,.08))!important;
+    border-color:transparent!important;
+    box-shadow:none!important;
+  }
+
+  :is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-layout>aside>.cb2d-cast{
+    background:linear-gradient(90deg,rgba(3,8,10,.08),rgba(3,8,10,.52))!important;
+    border-color:transparent!important;
+    box-shadow:none!important;
+  }
+
+  :is(#cb2dBackdrop,#hs2dBackdrop,#cc2dBackdrop,#bs2dBackdrop) .cb2d-layout>aside .cb2d-meter-panel{
+    background:linear-gradient(90deg,rgba(2,7,9,.02),rgba(2,7,9,.46))!important;
+    border-color:transparent!important;
+    box-shadow:none!important;
+  }
+}
