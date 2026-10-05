@@ -627,7 +627,7 @@ function qSelectTarget(index){
   if(!questFight)return;
   const i=Math.max(0,Math.min(questFight.enemies.length-1,Number(index)||0));
   if((Number(questFight.enemyHp?.[i])||0)<=0)return;
-  questFight.focusTarget=i;qRefreshTargetControls();qRenderMeters(i);
+  questFight.focusTarget=i;questFight.liveSession?.focus?.('e-'+i);qRefreshTargetControls();qRenderMeters(i);
   qStatus('Focus target: '+questFight.enemies[i]);
   qLog('Target switched to '+questFight.enemies[i]+'.')
 }
@@ -889,24 +889,24 @@ async function runQuest2DFight(config){
   });
 }
 async function runInteractiveQuest2DFight(config){
-  const p=party(),C=window.CellboundCombatStandard;if(p.length!==5||!C?.simulate)return false;
-  const tok=++encounterToken,sliceMs=Math.max(1400,Number(config.sliceMs)||2400),reviveMs=Math.max(3000,Number(config.reviveWindowMs)||12000),revivePct=Math.max(1,Math.min(100,Number(config.revivePct)||35));
+  const p=party(),C=window.CellboundCombatStandard;if(p.length!==5||!C?.createLiveSession)return false;
+  const tok=++encounterToken,reviveMs=Math.max(3000,Number(config.reviveWindowMs)||12000),revivePct=Math.max(1,Math.min(100,Number(config.revivePct)||35));
   return await new Promise(resolve=>{
-    let settled=false,step=0,elapsed=0,lastResult=null;
-    const finish=value=>{if(settled)return;settled=true;resolve(value)};
+    let settled=false,elapsed=0,raf=0;
+    const finish=value=>{if(settled)return;settled=true;if(raf)cancelAnimationFrame(raf);resolve(value)};
     const encounter=qEncounterFromConfig(config),entries=config.enemies||[],names=entries.map(x=>typeof x==='object'&&x?x.name||'Unknown Enemy':x);
-    const initialMax=entries.map(x=>typeof x==='object'&&x&&Number(x.maxHealth||x.health)>0?Number(x.maxHealth||x.health):encounter.enemyHealth);
-    const carry={},enemyPositions=[],downAt={},deathAt={};
-    questFight={token:tok,title:config.title,presentationKind:config.presentationKind||'quest',phases:Array.isArray(config.phases)&&config.phases.length?config.phases:['Combat'],phase:0,speed:1,elapsedMs:0,eventOffset:0,enemies:names,level:encounter.level,enemyLevels:encounter.enemyLevels,enemyTypes:encounter.enemyTypes,eliteIndex:Number.isInteger(config.eliteIndex)?config.eliteIndex:-1,enemyMax:[...initialMax],enemyHp:[...initialMax],partyHp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=qResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),damage:Object.fromEntries(p.map(c=>[c.id,0])),healing:Object.fromEntries(p.map(c=>[c.id,0])),overhealing:Object.fromEntries(p.map(c=>[c.id,0])),threat:initialMax.map(()=>Object.fromEntries(p.map(c=>[c.id,0]))),aggro:initialMax.map(()=>null),log:[],telegraphs:{},finished:false,focusTarget:Math.max(0,Number(config.initialTarget)||0)};
+    const initialMax=entries.map(x=>typeof x==='object'&&x&&Number(x.maxHealth||x.health)>0?Number(x.maxHealth||x.health):encounter.enemyHealth),downAt={},deathAt={};
+    questFight={token:tok,title:config.title,presentationKind:config.presentationKind||'quest',phases:Array.isArray(config.phases)&&config.phases.length?config.phases:['Combat'],phase:0,speed:1,elapsedMs:0,eventOffset:0,enemies:names,level:encounter.level,enemyLevels:encounter.enemyLevels,enemyTypes:encounter.enemyTypes,eliteIndex:Number.isInteger(config.eliteIndex)?config.eliteIndex:-1,enemyMax:[...initialMax],enemyHp:[...initialMax],partyHp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=qResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),damage:Object.fromEntries(p.map(c=>[c.id,0])),healing:Object.fromEntries(p.map(c=>[c.id,0])),overhealing:Object.fromEntries(p.map(c=>[c.id,0])),threat:initialMax.map(()=>Object.fromEntries(p.map(c=>[c.id,0]))),aggro:initialMax.map(()=>null),log:[],telegraphs:{},finished:false,focusTarget:Math.max(0,Number(config.initialTarget)||0),liveSession:null,result:null};
     qDraw({...config,allowTargetSwitch:true},finish);qSpawn();qLog(config.ambience);qStatus('Choose a Hound and call the target.');
     window.CellboundFX?.boss?.(config.title,config.location||'');
 
-    const statusCarry=fp=>Object.values(fp?.statuses||{}).map(st=>({...st,remainingMs:Math.max(0,(Number(st.expiresAt)||0)-Number(lastResult?.durationMs||0))})).filter(st=>st.remainingMs>0);
     const reviveEnemy=i=>{
+      const session=questFight?.liveSession,response=session?.reviveEnemy?.('e-'+i,revivePct,{ability:'Licked Wounds'});
+      if(!response?.ok)return false;
       const hp=Math.max(1,Math.round((questFight.enemyMax[i]||1)*revivePct/100));questFight.enemyHp[i]=hp;delete downAt[i];delete deathAt[i];
       const u=qUnit('e-'+i);u?.classList.remove('dead');qSetEnemyHp(i,hp);qFloat('e-'+i,'LICKED WOUNDS','heal');qPulseUnit('e-'+i,'healed',500);
       qLog(questFight.enemies[i]+' uses Licked Wounds and returns at '+revivePct+'%.');qStatus('LICKED WOUNDS · '+questFight.enemies[i]+' REVIVED');
-      window.CellboundCombatFX?.heal?.(u||document.querySelector('.quest-cb2d-arena'));qRefreshTargetControls()
+      window.CellboundCombatFX?.heal?.(u||document.querySelector('.quest-cb2d-arena'));qRefreshTargetControls();return true
     };
     const ensureFocus=()=>{
       const current=Number(questFight.focusTarget)||0;if((Number(questFight.enemyHp[current])||0)>0)return current;
@@ -927,8 +927,7 @@ async function runInteractiveQuest2DFight(config){
         const totalDamage=Object.values(questFight.damage).reduce((n,x)=>n+Number(x||0),0),totalHealing=Object.values(questFight.healing).reduce((n,x)=>n+Number(x||0),0);
         end.innerHTML='<div><small>QUEST FIGHT COMPLETE</small><h3>'+esc(config.title)+'</h3><p>'+esc(config.completeText||'The way forward is clear.')+'</p><div class="cbr-analysis-grid quest-cbr-summary"><article><span>TIME</span><b>'+Math.round(elapsed/1000)+'s</b></article><article><span>DAMAGE</span><b>'+Math.round(totalDamage).toLocaleString()+'</b></article><article><span>HEALING</span><b>'+Math.round(totalHealing).toLocaleString()+'</b></article><article><span>REVIVE RULE</span><b>BEATEN</b></article></div></div><button data-q-continue>CONTINUE QUEST →</button>';
       }else{
-        end.hidden=false;
-        qStatus('PARTY DEFEATED');window.CellboundFX?.wipe?.('The Three Hounds overwhelm the party.');Game.applyPartyCellShock?.(25);await Game.persistState?.();
+        end.hidden=false;qStatus('PARTY DEFEATED');window.CellboundFX?.wipe?.('The Three Hounds overwhelm the party.');Game.applyPartyCellShock?.(25);await Game.persistState?.();
         end.innerHTML='<div><small>QUEST FIGHT FAILED</small><h3>'+esc(config.title)+'</h3><p>Recover, then try again. Balance the pack before committing to the first kill.</p></div><button data-q-continue>RETURN TO QUEST →</button>';
       }
       end.querySelector('[data-q-continue]').onclick=()=>{window.CellboundCombatStatuses?.clear?.(encounterRoot());encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(won)}
@@ -936,50 +935,44 @@ async function runInteractiveQuest2DFight(config){
 
     (async()=>{
       try{
-        qRenderRebornEvent({timestamp:0,type:'COMBAT_START',result:'started'});await wait(450);
-        while(tok===encounterToken&&!settled){
-          const aliveNow=questFight.enemyHp.map((hp,i)=>Number(hp)>0?i:-1).filter(i=>i>=0);
-          if(!aliveNow.length){
-            const times=Object.values(deathAt).map(Number).filter(Number.isFinite);
-            if(times.length===names.length&&Math.max(...times)-Math.min(...times)<=reviveMs){await showEnd(true);return}
-            const oldest=Object.keys(deathAt).map(Number).sort((a,b)=>(deathAt[a]||0)-(deathAt[b]||0))[0];if(Number.isInteger(oldest)){reviveEnemy(oldest);continue}
-            await showEnd(true);return
+        await wait(450);if(tok!==encounterToken||settled)return;
+        const initialFocus=Math.max(0,Math.min(names.length-1,Number(questFight.focusTarget)||0));
+        const enemyInput=entries.map((entry,i)=>({
+          ...(typeof entry==='object'&&entry?entry:{name:entry}),name:names[i],absoluteHealth:true,maxHealth:questFight.enemyMax[i],currentHealth:questFight.enemyHp[i],priority:i===initialFocus?100:1,focusSelected:i===initialFocus
+        }));
+        const partyInput=p.map(c=>Object.assign({},c,{_combatHealthPct:100,_combatResource:questFight.resources[c.id]}));
+        const runEncounter={...encounter,enemies:enemyInput,mechanics:config.interactiveMechanics||[],focusSelectedDamageOnly:Boolean(config.focusSelectedDamageOnly),suppressAutoVictory:true};
+        const session=C.createLiveSession({party:partyInput,encounter:runEncounter,tactics:{interruptPriority:'standard',addPriority:'immediate',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced',cooldownUse:'difficult'},seed:['quest-live',tok,config.title].join(':')},{zone:'quest-encounters'});
+        questFight.liveSession=session;questFight.result=session.snapshot();session.focus('e-'+initialFocus);
+        const renderEvents=events=>{
+          for(const event of events||[]){
+            if(event.type==='ENEMY_DEFEATED'){const i=qEventEnemyIndex(event.target);if(i>=0&&downAt[i]==null){downAt[i]=Number(event.timestamp)||session.timeMs;deathAt[i]=downAt[i]}}
+            try{qRenderRebornEvent(event)}catch(error){console.warn('Interactive quest live combat visual recovered',event?.type,event?.ability,error)}
           }
-          Object.keys(downAt).map(Number).forEach(i=>{if((Number(questFight.enemyHp[i])||0)<=0&&elapsed-(downAt[i]||0)>=reviveMs&&questFight.enemyHp.some((hp,j)=>j!==i&&Number(hp)>0))reviveEnemy(i)});
-          const focus=ensureFocus(),enemyInput=entries.map((entry,i)=>({
-            ...(typeof entry==='object'&&entry?entry:{name:entry}),name:names[i],absoluteHealth:true,maxHealth:questFight.enemyMax[i],currentHealth:questFight.enemyHp[i],priority:i===focus?100:1,focusSelected:i===focus,currentPosition:enemyPositions[i]||null
-          }));
-          const partyInput=p.map(c=>{const x=carry[c.id]||{};return Object.assign({},c,{
-            _combatHealthPct:x.healthPct==null?questFight.partyHp[c.id]:x.healthPct,_combatResource:x.resource||questFight.resources[c.id],_combatCooldowns:x.cooldowns||{},
-            _combatStatuses:Array.isArray(x.statuses)?x.statuses:[],_combatDefensiveMs:Number(x.defensiveMs)||0,_reviveSicknessMs:Number(x.reviveSicknessMs)||0,_combatUniqueUsed:x.uniqueUsed||{},_combatPosition:x.position||null,
-            _combatTalentTimers:x.talentTimers||{},_combatTalentFlags:x.talentFlags||{},_combatTalentCounters:x.talentCounters||{},_combatDamageActions:Number(x.damageActions)||0
-          })});
-          const runEncounter={...encounter,enemies:enemyInput,mechanics:config.interactiveMechanics||[],focusSelectedDamageOnly:Boolean(config.focusSelectedDamageOnly)};
-          lastResult=C.simulate({party:partyInput,encounter:runEncounter,tactics:{interruptPriority:'standard',addPriority:'immediate',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced',cooldownUse:'difficult'},seed:['quest-live',tok,config.title,step++].join(':'),maxDurationMs:sliceMs,elapsedOffsetMs:elapsed},{zone:'quest-encounters'});
-          const sliceStart=elapsed,mainEnemies=(lastResult.finalState?.enemies||[]).filter(e=>!e.isAdd);
-          lastResult.events.filter(e=>e.type==='ENEMY_DEFEATED').forEach(e=>{const i=qEventEnemyIndex(e.target);if(i>=0&&downAt[i]==null){downAt[i]=sliceStart+Number(e.timestamp||0);deathAt[i]=downAt[i]}});
-          questFight.eventOffset=sliceStart;
-          const visual={...lastResult,outcome:'ongoing',events:(lastResult.events||[]).filter(e=>e.type!=='COMBAT_START'&&e.type!=='COMBAT_END')};
-          await qPlayReborn(visual,tok);if(tok!==encounterToken||settled)return;
-          elapsed+=Number(lastResult.durationMs)||sliceMs;questFight.eventOffset=elapsed;
-          mainEnemies.forEach((e,i)=>{questFight.enemyMax[i]=Number(e.maxHealth)||questFight.enemyMax[i];questFight.enemyHp[i]=Math.max(0,Number(e.health)||0);enemyPositions[i]=e.position?{x:Number(e.position.x),y:Number(e.position.y)}:enemyPositions[i];qSetEnemyHp(i,questFight.enemyHp[i])});
-          (lastResult.finalState?.players||[]).forEach(fp=>{
-            const id=fp.characterId||String(fp.id||'').replace(/^p-/,'');const c=p.find(x=>String(x.id)===String(id));if(!c)return;
-            const healthPct=fp.maxHealth>0?fp.health/fp.maxHealth*100:0;questFight.partyHp[c.id]=healthPct;questFight.resources[c.id]=fp.resource||questFight.resources[c.id];qSetPartyHp(c,healthPct);
-            const sliceDuration=Math.max(0,Number(lastResult?.durationMs)||0),talentTimers=Object.fromEntries(Object.entries(fp.talentTimers||{}).map(([k,v])=>[k,Math.max(0,(Number(v)||0)-sliceDuration)]));
-            carry[c.id]={healthPct,resource:fp.resource,cooldowns:fp.cooldowns||{},statuses:statusCarry(fp),defensiveMs:fp.defensiveUntil||0,reviveSicknessMs:fp.revivePenaltyUntil||0,uniqueUsed:fp.uniqueUsed||{},position:fp.position?{x:Number(fp.position.x),y:Number(fp.position.y)}:carry[c.id]?.position,talentTimers,talentFlags:fp.talentFlags||{},talentCounters:fp.talentCounters||{},damageActions:Number(fp.damageActions)||0}
-          });
-          if(lastResult.outcome==='defeat'){await showEnd(false);return}
+        };
+        renderEvents(session.drainEvents?.()||[]);
+        let lastWall=performance.now();
+        const frame=async now=>{
+          if(settled||tok!==encounterToken||!questFight){finish(false);return}
+          if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
+          const delta=Math.max(0,Math.min(250,now-lastWall))*Math.max(.25,Number(questFight.speed)||1);lastWall=now;
+          const step=session.advance(delta);elapsed=Number(step.timeMs)||elapsed;questFight.elapsedMs=elapsed;
+          if(step.events?.length)renderEvents(step.events);
+          if(step.finished){questFight.result=step.result||session.snapshot?.();await showEnd(false);return}
           const dead=questFight.enemyHp.map((hp,i)=>Number(hp)<=0?i:-1).filter(i=>i>=0),living=questFight.enemyHp.map((hp,i)=>Number(hp)>0?i:-1).filter(i=>i>=0);
           if(dead.length===names.length){
-            const times=dead.map(i=>Number(deathAt[i]??elapsed));if(Math.max(...times)-Math.min(...times)<=reviveMs){await showEnd(true);return}
-            const oldest=dead.sort((a,b)=>(deathAt[a]||0)-(deathAt[b]||0))[0];reviveEnemy(oldest)
+            const times=dead.map(i=>Number(deathAt[i]??elapsed));
+            if(times.length===names.length&&Math.max(...times)-Math.min(...times)<=reviveMs){
+              questFight.result=session.stop('victory');renderEvents(session.drainEvents?.()||[]);await showEnd(true);return
+            }
+            const oldest=dead.slice().sort((a,b)=>(deathAt[a]||0)-(deathAt[b]||0))[0];reviveEnemy(oldest)
           }else if(living.length){
             dead.forEach(i=>{if(downAt[i]!=null&&elapsed-downAt[i]>=reviveMs)reviveEnemy(i)})
           }
-          qRefreshTargetControls()
-        }
-      }catch(err){console.error('Interactive quest combat failed',err);encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}
+          ensureFocus();qRefreshTargetControls();raf=requestAnimationFrame(frame)
+        };
+        raf=requestAnimationFrame(frame)
+      }catch(err){console.error('Interactive quest live combat failed',err);encounterRoot().hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)}
     })()
   })
 }
