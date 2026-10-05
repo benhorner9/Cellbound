@@ -1913,3 +1913,32 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
   will-change:left,top,transform!important;
 }
 .cb2d-arena.theme-ashen .cb2d-unit.dead{opacity:.22!important}
+
+
+/* Fullscreen combat overlay isolation v3
+   The legacy cb2d-floor is an opaque black layer. In fullscreen HUD mode the real
+   battlefield image must sit above it, and the WebGL canvas is temporarily disabled
+   so no render surface can cover the fight on iPad Safari. */
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-floor{
+  z-index:0!important;
+  background-color:transparent!important;
+  background-image:none!important;
+  opacity:1!important;
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-stage-image{
+  z-index:1!important;
+  opacity:1!important;
+  visibility:visible!important;
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-live-scene{
+  display:none!important;
+  opacity:0!important;
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"]::before,
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"]::after{
+  z-index:2!important;
+  pointer-events:none!important;
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-environment{z-index:3!important}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] #cb2dTelegraphs{z-index:68!important}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] #cb2dUnits{z-index:72!important}
