@@ -4156,6 +4156,10 @@ function createCombatContext(options={}){
  return ctx
 }
 function evaluateCombatOutcome(ctx){
+ if(ctx.encounter.suppressAutoVictory){
+  if(!livingPlayers(ctx).length)return'defeat';
+  return null
+ }
  const resolvePct=Math.max(0,Math.min(.95,Number(ctx.encounter.resolveAtBossHealthPct)||0));
  if(resolvePct>0){
   const boss=ctx.enemies.find(e=>e.kind==='boss'&&e.alive),remainingRivals=ctx.enemies.filter(e=>e.alive&&!e.isAdd&&e!==boss);
@@ -4236,10 +4240,28 @@ function createLiveSession(options={}){
   emit(ctx,'CONSUMABLE_USED',{source:opts.source||'commander',target:target.id,ability:opts.ability||'Combat Potion',amount:effective,result:'used',payload:{targetHpPct:pct(target.health,max),external:true}});
   return{ok:true,amount:effective,targetHpPct:pct(target.health,max),events:ctx.events.slice(start).map(copy)}
  };
+ const focus=(targetId,durationMs=600000)=>{
+  if(ctx.finished||stopped)return{ok:false,reason:'finished',events:[]};
+  const raw=String(targetId||''),target=getUnit(ctx,raw.startsWith('e-')?raw:'e-'+raw);
+  if(!target?.alive||target.role!=='enemy')return{ok:false,reason:'target',events:[]};
+  const start=ctx.events.length;ctx.commandFocusId=target.id;ctx.commandFocusUntil=ctx.time+Math.max(1000,Number(durationMs)||600000);
+  ctx.enemies.forEach(e=>e.focusSelected=e.id===target.id);
+  emit(ctx,'PARTY_COMMAND',{source:'commander',target:target.id,ability:'focus',result:'target-switch',payload:{type:'focus',targetId:target.id,live:true}});
+  return{ok:true,targetId:target.id,events:ctx.events.slice(start).map(copy),timeMs:ctx.time}
+ };
+ const reviveEnemy=(targetId,healthPct=35,opts={})=>{
+  if(ctx.finished||stopped)return{ok:false,reason:'finished',events:[]};
+  const raw=String(targetId||''),target=getUnit(ctx,raw.startsWith('e-')?raw:'e-'+raw);
+  if(!target||target.role!=='enemy')return{ok:false,reason:'target',events:[]};
+  const start=ctx.events.length,pctValue=clamp(Number(healthPct)||35,1,100);
+  target.alive=true;target.health=Math.max(1,Math.round(target.maxHealth*pctValue/100));target.currentCast=null;target.interruptedUntil=0;target.movingUntil=0;target.nextAttack=ctx.time+Math.max(300,Number(opts.attackDelayMs)||900);
+  emit(ctx,'ENEMY_REVIVED',{source:opts.source||target.id,target:target.id,ability:opts.ability||'Revive',result:'revived',position:copy(target.position),payload:{targetHp:target.health,targetMaxHealth:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),external:true}});
+  return{ok:true,targetId:target.id,targetHpPct:pct(target.health,target.maxHealth),events:ctx.events.slice(start).map(copy),timeMs:ctx.time}
+ };
  const snapshot=()=>buildCombatResult(ctx,ctx.finished?(ctx.outcome||'defeat'):'ongoing',false);
  const stop=(outcome='defeat')=>{stopped=true;return ctx.finished?buildCombatResult(ctx,ctx.outcome):finishCombatContext(ctx,outcome)};
  return{
-  version:VERSION,seed:ctx.seed,advance,command,heal,drainEvents,snapshot,stop,
+  version:VERSION,seed:ctx.seed,advance,command,heal,focus,reviveEnemy,drainEvents,snapshot,stop,
   get timeMs(){return ctx.time},get finished(){return ctx.finished},get outcome(){return ctx.outcome},
   debug:()=>({timeMs:ctx.time,queue:ctx.queue.length,activeCast:copy(ctx.activeEnemyCast),hazards:copy(ctx.activeGroundHazards),players:copy(ctx.players),enemies:copy(ctx.enemies)})
  }
