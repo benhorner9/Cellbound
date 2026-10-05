@@ -278,7 +278,7 @@ function twelveLiveResult(final,outcome){
 }
 function tbSpawnLiveBoss(session,index){
  const b=BOSSES[index];if(!b||!session)return false;
- const id='tb-'+b.id,level=TWELVE_BALANCE.baseBossLevel+Math.floor(index/3),aliveCount=Math.max(1,Number(run?.activeBosses?.size)||0+1);
+ const id='tb-'+b.id,level=TWELVE_BALANCE.baseBossLevel+Math.floor(index/3),aliveCount=Math.max(1,(Number(run?.activeBosses?.size)||0)+1);
  session.signal('TOMB_OPEN',{source:id,target:id,ability:b.name,result:'opened',payload:{bossId:b.id,name:b.name,index,vice:b.vice,rune:b.rune}});
  const spawned=session.spawnEnemy({
   name:b.name,classification:'boss',absoluteHealth:true,maxHealth:Math.round(b.health*TWELVE_BALANCE.bossHealthScale),level,
