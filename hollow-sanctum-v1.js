@@ -15,47 +15,39 @@ const STAGES=[
 const HOLLOW_ROOMS={
  gallery:{
   zone:'GALLERY OF ECHOES',
-  description:'A candlelit processional hall where teal soul-fire leaks through ancient stone.',
-  art:'./assets/hollow-sanctum/rooms/gallery.webp?v=2',
+  description:'Collapsed ceremonial entrance hall where Hollowed Surveyors guard the processional route.',
+  art:'./assets/hollow-sanctum/rooms/gallery.webp?v=3',
   liveProfile:'hollow-gallery',
-  route:{entry:{x:50,y:98},entryInside:{x:50,y:83},partyAnchors:[[50,68],[44,72],[56,72],[41,78],[59,78]],exitPath:[{x:50,y:55},{x:50,y:36},{x:50,y:18},{x:50,y:3}],spread:2.1},
-  enemyAnchors:[[50,35],[40,43],[60,43]],
-  bounds:{left:11,right:89,top:11,bottom:89},
-  walkable:[[30,12],[70,12],[86,25],[91,48],[88,75],[74,87],[26,87],[12,75],[9,48],[14,25]],
-  blockers:[
-   {id:'gallery-column-nw',x:18,y:27,w:8,h:20},{id:'gallery-column-ne',x:82,y:27,w:8,h:20},
-   {id:'gallery-column-sw',x:16,y:72,w:9,h:18},{id:'gallery-column-se',x:84,y:72,w:9,h:18}
-  ]
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:78},engage:{x:50,y:58},partyAnchors:[[50,64],[44,67],[56,67],[40,70],[60,70]],exitPath:[{x:50,y:56},{x:50,y:42},{x:50,y:28},{x:50,y:13},{x:50,y:2}],spread:2.0},
+  enemyAnchors:[[50,36],[39,45],[61,45]],
+  bounds:{left:21,right:79,top:23,bottom:74},
+  walkable:[[38,23],[62,23],[73,31],[79,44],[77,58],[67,70],[58,74],[42,74],[33,70],[23,58],[21,44],[27,31]],
+  blockers:[]
  },
  sentinel:{
-  zone:'GUARDIAN CHAMBER',
-  description:'A fractured guardian court suspended above a spectral gulf.',
-  art:'./assets/hollow-sanctum/rooms/sentinel.webp?v=2',
+  zone:'GLASSJAW SENTINEL',
+  description:'A guardian chamber built around a fractured relic core. Fracture Line and Glassjaw Sweep punish bad positioning.',
+  art:'./assets/hollow-sanctum/rooms/sentinel.webp?v=3',
   liveProfile:'hollow-sentinel',
-  route:{entry:{x:2,y:27},entryInside:{x:18,y:31},partyAnchors:[[38,47],[31,44],[35,53],[26,40],[28,57]],exitPath:[{x:61,y:42},{x:73,y:30},{x:84,y:17},{x:98,y:5}],spread:2.0},
-  enemyAnchors:[[62,43]],
-  bounds:{left:10,right:91,top:10,bottom:90},
-  walkable:[[18,16],[72,10],[89,23],[92,55],[82,78],[62,89],[28,88],[11,72],[9,48],[8,31],[14,22]],
-  blockers:[
-   {id:'sentinel-fire-nw',shape:'ellipse',x:13,y:24,rx:5,ry:8,blocksLos:false},
-   {id:'sentinel-fire-east',shape:'ellipse',x:83,y:39,rx:5,ry:8,blocksLos:false},
-   {id:'sentinel-fire-south',shape:'ellipse',x:54,y:77,rx:5,ry:8,blocksLos:false}
-  ]
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:79},engage:{x:50,y:60},partyAnchors:[[50,66],[44,69],[56,69],[40,72],[60,72]],exitPath:[{x:50,y:57},{x:36,y:50},{x:33,y:37},{x:38,y:23},{x:50,y:11},{x:50,y:2}],spread:1.9},
+  enemyAnchors:[[50,51]],
+  bounds:{left:20,right:80,top:24,bottom:75},
+  walkable:[[39,24],[61,24],[72,31],[79,43],[80,56],[72,68],[61,75],[39,75],[28,68],[20,56],[21,43],[28,31]],
+  arena:{shape:'ellipse',cx:50,cy:51,rx:30,ry:24},
+  blockers:[{id:'sentinel-fractured-core',shape:'ellipse',x:50,y:36,rx:8.5,ry:9.5,blocksLos:false,blocksMovement:true}]
  },
  choir:{
-  zone:'INNER SHRINE',
-  description:'The sanctum heart, where the Bound Choir hangs above a living ritual floor.',
-  art:'./assets/hollow-sanctum/rooms/choir.webp?v=2',
+  zone:'THE BOUND CHOIR',
+  description:'The inner shrine. Survive Resonance Collapse, Shattering Hymn and the Echo Choir.',
+  art:'./assets/hollow-sanctum/rooms/choir.webp?v=3',
   liveProfile:'hollow-choir',
-  route:{entry:{x:50,y:98},entryInside:{x:50,y:84},partyAnchors:[[50,69],[44,73],[56,73],[41,79],[59,79]],exitPath:[],spread:2.0},
-  enemyAnchors:[[50,35]],
-  bounds:{left:9,right:91,top:10,bottom:91},
-  arena:{shape:'ellipse',cx:50,cy:54,rx:40,ry:35},
-  blockers:[
-   {id:'choir-suspended-core',shape:'ellipse',x:50,y:31,rx:8,ry:11,blocksLos:true,blocksMovement:true},
-   {id:'choir-front-pillar-left',x:13,y:73,w:8,h:24,blocksLos:false},
-   {id:'choir-front-pillar-right',x:87,y:73,w:8,h:24,blocksLos:false}
-  ]
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:79},engage:{x:50,y:60},partyAnchors:[[50,66],[44,69],[56,69],[40,72],[60,72]],exitPath:[],spread:2.0},
+  enemyAnchors:[[50,45]],
+  addAnchors:[{x:34,y:48},{x:66,y:48}],
+  bounds:{left:20,right:80,top:26,bottom:76},
+  walkable:[[39,26],[61,26],[72,33],[79,45],[80,57],[72,69],[61,76],[39,76],[28,69],[20,57],[21,45],[28,33]],
+  arena:{shape:'ellipse',cx:50,cy:52,rx:30,ry:24},
+  blockers:[]
  }
 };
 const RELIC={itemId:'quest-blackglass-resonator',name:'Blackglass Resonator',class:'All',classes:'all',slot:'Relic',tier:3,rarity:'Rare',tierLabel:'Quest Relic',enabled:true,dropEnabled:false,itemLevel:30,power:10,tradeState:'soulbound',questArtMaterial:'void-crystal',lore:'Recovered from The Bound Choir beneath Zeltira.'};
@@ -302,7 +294,8 @@ function hsRebornEncounter(s){
  const room=HOLLOW_ROOMS[s.id]||{};
  const enemies=s.enemies.map((name,i)=>({name,currentPosition:hsEnemyStagePosition(s,i)}));
  const environment={room:s.id,bounds:{...(room.bounds||{})},arena:room.arena?{...room.arena}:undefined,walkable:Array.isArray(room.walkable)?room.walkable.map(p=>[Number(p[0]),Number(p[1])]):undefined,blockers:(room.blockers||[]).map(b=>({...b,points:Array.isArray(b.points)?b.points.map(p=>[Number(p[0]),Number(p[1])]):b.points,blocksLos:b.blocksLos!==false,blocksMovement:b.blocksMovement!==false}))};
- const base={id:s.id,title:s.title,kind:s.combatKind||'trash',level:s.level||1,recommendedItemLevel:s.level<=6?24:s.level===7?26:28,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies,enemyHealth:s.enemyHealth,mechanics:(s.mechanics||[]).map(m=>Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}),environment};
+ const mechanics=(s.mechanics||[]).map(m=>{const mechanic=Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m};if(mechanic.type==='adds'&&Array.isArray(room.addAnchors)&&room.addAnchors.length)mechanic.spawnPoints=room.addAnchors.map(p=>({x:Number(p.x),y:Number(p.y)}));return mechanic});
+ const base={id:s.id,title:s.title,kind:s.combatKind||'trash',level:s.level||1,recommendedItemLevel:s.level<=6?24:s.level===7?26:28,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies,enemyHealth:s.enemyHealth,mechanics,environment};
  return window.CellboundEndgame?.stageConfig?.('hollow-sanctum',base)||base
 }
 function hsResultHealth(result){
@@ -318,7 +311,8 @@ function hsMechanicFromEvent(e){
    ids.forEach((id,i)=>{const t=hsTelegraph('circle',i===0?(e.ability||'TARGETED AREA'):'',null,id,145);if(t){t.dataset.hsMulti=tokenId}})
    tg={remove:()=>$$('[data-hs-multi="'+tokenId+'"]').forEach(x=>x.remove()),classList:{add:k=>$$('[data-hs-multi="'+tokenId+'"]').forEach(x=>x.classList.add(k))}};
  }else if(type==='adds'){
-   const layer=$('#hs2dTelegraphs');if(layer){tg=document.createElement('div');tg.className='hs2d-tele circle dynamic';tg.innerHTML='<span>ADDS SPAWNING</span>';tg.style.left='74%';tg.style.top='50%';tg.style.width='150px';tg.style.height='150px';tg.style.transform='translate(-50%,-50%)';layer.appendChild(tg)}
+   const layer=$('#hs2dTelegraphs'),room=HOLLOW_ROOMS[STAGES[run?.stage]?.id]||{},anchors=Array.isArray(room.addAnchors)&&room.addAnchors.length?room.addAnchors:[{x:68,y:50}];
+   if(layer){tg=document.createElement('div');tg.className='hs2d-add-spawn-wrap';tg.style.cssText='position:absolute;inset:0;pointer-events:none';anchors.forEach((p,i)=>{const mark=document.createElement('div');mark.className='hs2d-tele circle dynamic';mark.innerHTML='<span>'+(i===0?'ADDS SPAWNING':'ADD')+'</span>';mark.style.left=Number(p.x)+'%';mark.style.top=Number(p.y)+'%';mark.style.width='112px';mark.style.height='112px';mark.style.transform='translate(-50%,-50%)';tg.appendChild(mark)});layer.appendChild(tg)}
  }else if(type==='interrupt'){
    const layer=$('#hs2dTelegraphs');if(layer){tg=document.createElement('div');tg.className='hs2d-tele circle dynamic';tg.innerHTML='<span>INTERRUPT '+esc(e.ability||'CAST')+'</span>';const p=hsPoint(source);if(p){tg.style.left=p.x+'px';tg.style.top=p.y+'px';tg.style.width='92px';tg.style.height='92px';tg.style.transform='translate(-50%,-50%)'}layer.appendChild(tg)}
  }
