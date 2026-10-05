@@ -2,7 +2,7 @@
 'use strict';
 
 const MODEL='Combat Reborn';
-const CONTRACT_VERSION='1.0.0';
+const CONTRACT_VERSION='1.1.0';
 const zones=new Map();
 
 function core(){
@@ -24,6 +24,13 @@ function simulate(options={},meta={}){
   if(meta?.zone)result.combatZone=meta.zone;
   return result
 }
+function createLiveSession(options={},meta={}){
+  const engine=core();
+  if(typeof engine.createLiveSession!=='function')throw new Error('Combat Reborn live-session API is unavailable');
+  const session=engine.createLiveSession(meta?.zone?{...options,professionZone:meta.zone}:options);
+  if(!session||typeof session.advance!=='function'||typeof session.command!=='function')throw new Error('Combat Reborn returned an invalid live session');
+  return session
+}
 function assertServerPayload(payload,zone='server-combat'){
   if(!payload||payload.combatModel!==MODEL){
     throw new Error(zone+' did not return the required Combat Reborn combat model');
@@ -40,13 +47,14 @@ function audit(){
     model:MODEL,
     contract:CONTRACT_VERSION,
     engineReady:!!window.CellboundCombatReborn?.simulate,
+    liveReady:!!window.CellboundCombatReborn?.createLiveSession,
     engineVersion:engineVersion(),
     zones:[...zones.values()]
   }
 }
 
 window.CellboundCombatStandard={
-  MODEL,CONTRACT_VERSION,core,simulate,assertServerPayload,register,audit,
+  MODEL,CONTRACT_VERSION,core,simulate,createLiveSession,assertServerPayload,register,audit,
   UI:{
     shell:'shared CB2D combat shell',
     vitals:'HP above class resource',
