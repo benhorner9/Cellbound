@@ -1916,7 +1916,7 @@ function runRebornStage(s){
  const startHp=Object.fromEntries(party().map(c=>[c.id,hp(c.id)]));
  const combatParty=party().map((c,i)=>Object.assign({},c,{_combatHealthPct:hp(c.id),_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0,_combatPosition:stagePartyPosition(s,c,i)}));
  const simOptions={party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:[run.endgame?.seed||'ashen-vault',s.id,run.stage].join(':')},meta={zone:'ashen-vault'};
- run.rebornCommands=[];run.commandSeq=0;run.commandCooldownUntil=0;run.directControlTargets={};run.commandTargetId=null;run.rebornSimulation={options:simOptions,meta};
+ run.rebornCommands=[];run.commandSeq=0;run.commandCooldownUntil=0;run.commandTargetId=null;run.rebornSimulation={options:simOptions,meta};
  run.rebornLiveSession=C.createLiveSession(simOptions,meta);
  const result=run.rebornLiveSession.snapshot();result.stageId=s.id;result.stageTitle=s.title;result.startHp=startHp;return result
 }
