@@ -324,7 +324,7 @@ function hudInitial(name){
 }
 function hudClassColor(c){return window.CellboundPortraits?.CLASS_COLORS?.[c?.class]||'#78d7cf'}
 function hudResourceState(c){
- const def=resourceDefFor(c),r=run?.resources?.[c?.id]||{name:def.name,max:def.max,value:def.start},max=Math.max(1,Number(r.max)||Number(def.max)||100),value=clamp(Number(r.value)??Number(def.start)||0,0,max),name=String(r.name||def.name||'Power');
+ const def=resourceDefFor(c),r=run?.resources?.[c?.id]||{name:def.name,max:def.max,value:def.start},max=Math.max(1,Number(r.max)||Number(def.max)||100),raw=Number(r.value),value=clamp(Number.isFinite(raw)?raw:(Number(def.start)||0),0,max),name=String(r.name||def.name||'Power');
  return{name,max,value,pct:value/max*100,key:resourceClass(name)}
 }
 function hudTargetName(id){
