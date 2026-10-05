@@ -791,7 +791,7 @@ body.bs2d-open{
   body.cc2d-open .cb2d-party-row,
   body.bs2d-open .cb2d-party-row{
     position:relative!important;display:grid!important;grid-template-columns:40px minmax(0,1fr) 82px!important;gap:7px!important;align-items:center!important;
-    min-height:54px!important;padding:5px 7px 5px 5px!important;border:1px solid color-mix(in srgb,var(--hud-class,#78d7cf) 22%,rgba(255,255,255,.04))!important;
+    min-height:68px!important;padding:5px 7px 5px 5px!important;border:1px solid color-mix(in srgb,var(--hud-class,#78d7cf) 22%,rgba(255,255,255,.04))!important;
     border-left:3px solid var(--hud-class,#78d7cf)!important;border-radius:7px!important;
     background:linear-gradient(90deg,rgba(3,9,12,.80),rgba(3,9,12,.52) 74%,rgba(3,9,12,.18))!important;
     box-shadow:0 7px 18px rgba(0,0,0,.20)!important;backdrop-filter:blur(7px);
@@ -829,9 +829,25 @@ body.bs2d-open{
   .cb2d-party-name>b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#eef4f1!important;font-size:.48rem!important}
   .cb2d-party-name>em{color:var(--hud-class,#78d7cf);font-size:.29rem!important;font-style:normal!important;font-weight:900;letter-spacing:.08em}
   .cb2d-party-action{display:block!important;margin-top:2px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;color:#91a49e!important;font-size:.34rem!important}
-  .cb2d-party-condition{display:block!important;margin-top:2px!important;color:#657873!important;font-size:.28rem!important}
-  .cb2d-party-row .cb2d-side-hp{height:5px!important;margin-top:4px!important;background:rgba(0,0,0,.46)!important;border-radius:999px!important}
-  .cb2d-party-row .cb2d-side-hp>i{background:linear-gradient(90deg,var(--hud-class,#69ca8a),#77d89a)!important}
+  .cb2d-party-statline{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:6px!important;margin-top:2px!important}
+  .cb2d-party-statline small{color:#73857f!important;font-size:.26rem!important;font-weight:900!important;letter-spacing:.06em!important;text-transform:uppercase!important}
+  .cb2d-party-statline b{color:#dce8e4!important;font-size:.27rem!important;font-weight:800!important}
+  .cb2d-party-statline.resource small{overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  .cb2d-party-condition{display:block!important;margin-top:2px!important;color:#657873!important;font-size:.25rem!important}
+  .cb2d-party-row .cb2d-side-hp,.cb2d-party-row .cb2d-side-resource{display:block!important;overflow:hidden!important;border-radius:999px!important;background:rgba(0,0,0,.48)!important}
+  .cb2d-party-row .cb2d-side-hp{height:5px!important;margin-top:2px!important}
+  .cb2d-party-row .cb2d-side-resource{height:4px!important;margin-top:2px!important}
+  .cb2d-party-row .cb2d-side-hp>i,.cb2d-party-row .cb2d-side-resource>i{display:block!important;height:100%!important;transition:width .22s linear!important}
+  .cb2d-party-row .cb2d-side-hp>i{background:linear-gradient(90deg,#3e9d61,#72d392)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-mana>i{background:linear-gradient(90deg,#3b6fc5,#6ba8ee)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-rage>i{background:linear-gradient(90deg,#9f352f,#dd5d4e)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-energy>i{background:linear-gradient(90deg,#a8862c,#e0c657)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-focus>i{background:linear-gradient(90deg,#a7612d,#df9b53)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-runic-power>i{background:linear-gradient(90deg,#397b9a,#69c5df)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-fury>i{background:linear-gradient(90deg,#713ca5,#b06ce0)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-essence>i{background:linear-gradient(90deg,#2f8274,#61c8b3)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-insanity>i{background:linear-gradient(90deg,#62408c,#a77ad1)!important}
+  .cb2d-party-row .cb2d-side-resource.resource-maelstrom>i{background:linear-gradient(90deg,#356f9e,#67aee0)!important}
 
   .cb2d-party-target{
     min-width:0;display:grid!important;grid-template-columns:23px minmax(0,1fr)!important;gap:5px!important;align-items:center!important;
@@ -994,6 +1010,22 @@ body.bs2d-open{
   body.hs2d-open .cb2d-layout>main>.cb2d-feed,
   body.cc2d-open .cb2d-layout>main>.cb2d-feed,
   body.bs2d-open .cb2d-layout>main>.cb2d-feed{display:none!important}
+
+  /* Never let transition/fallback layers cover the live battlefield in fullscreen HUD mode. */
+  body.cb2d-open .cb2d-arena .cb2d-room-fade,
+  body.hs2d-open .cb2d-arena .cb2d-room-fade,
+  body.cc2d-open .cb2d-arena .cb2d-room-fade,
+  body.bs2d-open .cb2d-arena .cb2d-room-fade{display:none!important}
+
+  body.cb2d-open .cb2d-arena #cb2dUnits,
+  body.hs2d-open .cb2d-arena #cb2dUnits,
+  body.cc2d-open .cb2d-arena #cb2dUnits,
+  body.bs2d-open .cb2d-arena #cb2dUnits{z-index:72!important}
+
+  body.cb2d-open .cb2d-arena #cb2dTelegraphs,
+  body.hs2d-open .cb2d-arena #cb2dTelegraphs,
+  body.cc2d-open .cb2d-arena #cb2dTelegraphs,
+  body.bs2d-open .cb2d-arena #cb2dTelegraphs{z-index:68!important}
 }
 
 /* Slightly tighter HUD for smaller iPad landscape widths while preserving the one-row Commander bar. */
