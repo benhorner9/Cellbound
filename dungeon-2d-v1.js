@@ -334,7 +334,7 @@ function hudTargetName(id){
 function hudPartyRows(){
  return party().map(c=>{
    const rr=String(role(c)),target=run?.hudTargets?.[c.id]||null,targetName=hudTargetName(target),friendly=String(target||'').startsWith('p-');
-   const action=String(run?.hudActions?.[c.id]||'Ready'),roleMark=rr==='tank'?'T':rr==='healer'?'H':'D',targetMark=friendly?'✚':'›';
+   const action=String(run?.hudActions?.[c.id]||'Ready'),roleMark=rr==='tank'?'T':rr==='healer'?'H':'D',targetMark=target?hudInitial(targetName):'—';
    return '<div class="cb2d-party-row '+esc(classKey(c))+' role-'+esc(rr)+'" data-row="'+esc(c.id)+'" data-combat-party="p-'+esc(c.id)+'" style="--hud-class:'+esc(hudClassColor(c))+'">'+
     '<span class="cb2d-party-avatar"><i class="cb2d-party-fallback">'+hudInitial(c.name)+'</i><em>'+roleMark+'</em></span>'+
     '<span class="cb2d-party-main"><span class="cb2d-party-name"><b>'+esc(c.name)+'</b><em>'+rr.toUpperCase()+'</em></span>'+
@@ -531,7 +531,7 @@ function updateCombatHudRow(id){
  if(targetEl){
    targetEl.classList.toggle('friendly',friendly);targetEl.classList.toggle('hostile',!friendly);
    const icon=targetEl.querySelector('[data-hud-target-icon]'),label=targetEl.querySelector('b'),kind=targetEl.querySelector('small');
-   if(icon)icon.textContent=friendly?'✚':'›';if(label)label.textContent=hudTargetName(target);if(kind)kind.textContent=rr==='healer'?'HEALING':'TARGET'
+   const targetName=hudTargetName(target);if(icon)icon.textContent=target?hudInitial(targetName):'—';if(label)label.textContent=targetName;if(kind)kind.textContent=rr==='healer'?'HEALING':'TARGET'
  }
  if(actionEl)actionEl.textContent=String(run?.hudActions?.[ch.id]||'Ready');
  if(hpEl)hpEl.textContent=hp(ch.id)+'%';
