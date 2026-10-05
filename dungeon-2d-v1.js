@@ -623,9 +623,6 @@ function useCombatPotion(options={}){
  return{ok:true,item,target,healApplied:nextHp-beforeHp,conditionApplied:nextCondition==null?0:nextCondition-beforeCondition,remaining:combatPotionSummary(st).count}
 }
 function dockFullscreenCombatMeta(){return false}
-function combatTargetCardMarkup(){
- return '<div class="cbr-target-card empty" id="cbrTargetCard"><small>TARGETED ENEMY</small><div class="cbr-target-main"><span class="cbr-target-avatar">?</span><span><b data-target-name>NO TARGET</b><em data-target-meta>Tap an enemy in the battlefield</em></span><strong data-target-hp>—</strong></div><em class="cbr-target-hp"><i data-target-hp-fill style="width:0%"></i></em></div>'
-}
 function combatCastMarkup(){
  return '<div class="cb2d-cast cbcombat-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div>'
 }
@@ -639,11 +636,15 @@ function combatMetersMarkup(){
 function combatArenaMarkup(kind='combat',arenaClass=''){
  return '<div class="cb2d-arena cbcombat-arena '+esc(arenaClass||'')+'" id="cb2dArena">'+
   '<div class="cb2d-floor"></div><div class="cb2d-environment" id="cb2dEnvironment"></div>'+
-  '<div class="cb2d-room-tag" id="cb2dRoomTag"></div>'+
-  '<div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD · AGGRO</span></div>'+
   combatCastMarkup()+
   '<div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div>'+
   '<div class="cb2d-caption"><span id="cb2dType">'+esc(String(kind||'combat').toUpperCase())+'</span><b id="cb2dStatus">Entering encounter…</b></div>'+
+ '</div>'
+}
+function combatBattleTopbarMarkup(){
+ return '<div class="cbcombat-battle-topbar">'+
+  '<div class="cb2d-room-tag" id="cb2dRoomTag"></div>'+
+  '<div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD · AGGRO</span></div>'+
  '</div>'
 }
 function combatShellMarkup(options={}){
@@ -654,10 +655,10 @@ function combatShellMarkup(options={}){
   '<div class="cbcombat-route" id="cb2dRoute">'+route+'</div>'+
   '<div class="cbcombat-grid">'+
    '<div class="cbcombat-left-column">'+
-    '<section class="cbcombat-panel cbcombat-party-panel">'+combatTargetCardMarkup()+'<div class="cb2d-party cbcombat-party"><small>'+partyLabel+'</small><div id="cb2dRows">'+hudPartyRows()+'</div></div></section>'+
+    '<section class="cbcombat-panel cbcombat-party-panel"><div class="cb2d-party cbcombat-party"><small>'+partyLabel+'</small><div id="cb2dRows">'+hudPartyRows()+'</div></div></section>'+
     '<section class="cbcombat-panel cbcombat-command-panel cb2d-controls cbr-command-panel" data-reborn="1">'+command+'</section>'+
    '</div>'+
-   '<main class="cbcombat-panel cbcombat-battle-panel">'+combatArenaMarkup(kind,options.arenaClass||'')+'</main>'+
+   '<main class="cbcombat-panel cbcombat-battle-panel">'+combatBattleTopbarMarkup()+combatArenaMarkup(kind,options.arenaClass||'')+'</main>'+
    '<aside class="cbcombat-panel cbcombat-meters-panel">'+combatMetersMarkup()+'</aside>'+
   '</div>'+
   '<div class="cb2d-end" id="cb2dEnd" hidden></div>'+

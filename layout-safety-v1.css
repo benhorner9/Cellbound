@@ -1700,7 +1700,7 @@ body.bs2d-open{
   min-height:0;
   display:grid;
   grid-template-columns:1fr;
-  grid-template-rows:minmax(0,1.06fr) minmax(292px,.94fr);
+  grid-template-rows:minmax(0,1fr) minmax(205px,.52fr);
   gap:var(--cbcombat-gap);
   overflow:hidden
 }
@@ -1719,7 +1719,7 @@ body.bs2d-open{
 .cbcombat-party-panel{
   display:flex;
   flex-direction:column;
-  gap:8px;
+  gap:0;
   padding:9px
 }
 .cbcombat-party-panel .cbr-target-card{
@@ -1819,7 +1819,7 @@ body.bs2d-open{
   min-height:0;
   display:grid!important;
   grid-template-columns:1fr!important;
-  grid-template-rows:repeat(5,minmax(52px,1fr))!important;
+  grid-template-rows:repeat(5,minmax(60px,1fr))!important;
   grid-auto-flow:row!important;
   gap:5px!important;
   overflow:hidden!important
@@ -1836,7 +1836,7 @@ body.bs2d-open{
   align-items:center!important;
   width:100%!important;
   min-width:0!important;
-  min-height:52px!important;
+  min-height:60px!important;
   max-height:none!important;
   height:100%!important;
   margin:0!important;
@@ -1860,21 +1860,49 @@ body.bs2d-open{
 .cbcombat-party .cb2d-party-avatar{
   width:32px!important;height:32px!important
 }
-.cbcombat-party .cb2d-party-main{min-width:0}
+.cbcombat-party .cb2d-party-main{
+  min-width:0;
+  display:block!important
+}
+.cbcombat-party .cb2d-party-name{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:6px!important
+}
 .cbcombat-party .cb2d-party-name b{font-size:9px!important}
 .cbcombat-party .cb2d-party-name em{font-size:6px!important}
 .cbcombat-party .cb2d-party-action{
+  display:block!important;
   max-width:100%;
+  margin-top:1px!important;
   overflow:hidden;
   font-size:6px!important;
   text-overflow:ellipsis;
   white-space:nowrap
 }
-.cbcombat-party .cb2d-party-statline{font-size:6px!important}
+.cbcombat-party .cb2d-party-statline{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:space-between!important;
+  gap:6px!important;
+  margin-top:2px!important;
+  font-size:6px!important
+}
+.cbcombat-party .cb2d-party-statline small,
+.cbcombat-party .cb2d-party-statline b{
+  display:block!important;
+  font-size:6px!important
+}
 .cbcombat-party .cb2d-party-target,
 .cbcombat-party .cb2d-party-condition{display:none!important}
 .cbcombat-party .cb2d-side-hp,
-.cbcombat-party .cb2d-side-resource{height:4px!important}
+.cbcombat-party .cb2d-side-resource{
+  display:block!important;
+  width:100%!important;
+  height:4px!important;
+  margin-top:1px!important
+}
 
 /* COMMAND PANEL */
 .cbcombat-command-panel.cb2d-controls{
@@ -1936,8 +1964,8 @@ body.bs2d-open{
   min-width:0!important;
   min-height:0;
   display:grid!important;
-  grid-template-columns:repeat(2,minmax(0,1fr))!important;
-  grid-template-rows:repeat(4,minmax(0,1fr))!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  grid-template-rows:repeat(2,minmax(0,1fr))!important;
   grid-auto-flow:row!important;
   align-content:stretch!important;
   justify-content:stretch!important;
@@ -1979,8 +2007,80 @@ body.bs2d-open{
 /* BATTLEFIELD PANEL */
 .cbcombat-battle-panel{
   position:relative;
+  display:grid!important;
+  grid-template-rows:auto minmax(0,1fr)!important;
+  gap:6px!important;
   padding:8px;
   background:#070f13
+}
+.cbcombat-battle-topbar{
+  min-width:0!important;
+  min-height:38px!important;
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) auto!important;
+  gap:10px!important;
+  align-items:center!important;
+  padding:5px 7px!important;
+  overflow:hidden!important;
+  border:1px solid rgba(255,255,255,.055)!important;
+  border-radius:7px!important;
+  background:#081216!important
+}
+.cbcombat-battle-topbar .cb2d-room-tag{
+  position:relative!important;
+  inset:auto!important;
+  left:auto!important;
+  top:auto!important;
+  right:auto!important;
+  bottom:auto!important;
+  z-index:1!important;
+  width:auto!important;
+  max-width:none!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important
+}
+.cbcombat-battle-topbar .cb2d-room-tag b{
+  display:block!important;
+  color:#d7c49b!important;
+  font-size:8px!important;
+  line-height:1.1!important
+}
+.cbcombat-battle-topbar .cb2d-room-tag small{
+  display:block!important;
+  margin-top:2px!important;
+  overflow:hidden!important;
+  color:#8f755c!important;
+  font-size:6px!important;
+  line-height:1.2!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important
+}
+.cbcombat-battle-topbar .cb2d-ground-legend{
+  position:relative!important;
+  inset:auto!important;
+  left:auto!important;
+  top:auto!important;
+  right:auto!important;
+  bottom:auto!important;
+  z-index:1!important;
+  display:flex!important;
+  gap:5px!important;
+  align-items:center!important;
+  margin:0!important;
+  pointer-events:none!important
+}
+.cbcombat-battle-topbar .cb2d-ground-legend span{
+  padding:4px 6px!important;
+  border:1px solid rgba(255,255,255,.055)!important;
+  border-radius:4px!important;
+  background:#0b171b!important;
+  font-size:6px!important;
+  white-space:nowrap!important
 }
 .cbcombat-battle-panel>.cb2d-arena.cbcombat-arena{
   position:relative!important;
@@ -2014,10 +2114,10 @@ body.bs2d-open{
   position:absolute!important;
   z-index:60!important;
   left:50%!important;
-  top:9px!important;
+  top:auto!important;
   right:auto!important;
-  bottom:auto!important;
-  width:min(430px,64%)!important;
+  bottom:10px!important;
+  width:min(460px,58%)!important;
   margin:0!important;
   padding:8px 10px!important;
   transform:translateX(-50%)!important;
@@ -2046,8 +2146,65 @@ body.bs2d-open{
 .cbcombat-battle-panel .cb2d-caption{
   left:10px!important;
   bottom:10px!important;
+  max-width:28%!important;
   padding:6px 8px!important;
   pointer-events:none
+}
+
+
+.cbcombat-battle-panel .cbr-boss-frame{
+  position:absolute!important;
+  z-index:62!important;
+  left:50%!important;
+  top:10px!important;
+  right:auto!important;
+  bottom:auto!important;
+  transform:translateX(-50%)!important;
+  display:grid!important;
+  grid-template-columns:auto minmax(220px,420px) auto!important;
+  gap:8px!important;
+  align-items:center!important;
+  width:min(560px,72%)!important;
+  min-width:0!important;
+  padding:7px 10px!important;
+  border:1px solid rgba(225,129,69,.25)!important;
+  border-radius:7px!important;
+  background:rgba(15,8,7,.90)!important;
+  box-shadow:0 8px 24px rgba(0,0,0,.28)!important;
+  backdrop-filter:blur(8px)!important;
+  pointer-events:none!important
+}
+.cbcombat-battle-panel .cbr-boss-frame>small{
+  color:#d99662!important;
+  font-size:7px!important;
+  font-weight:900!important;
+  letter-spacing:.12em!important
+}
+.cbcombat-battle-panel .cbr-boss-frame>b{
+  grid-column:2!important;
+  color:#f0e6dc!important;
+  font:600 10px Georgia,serif!important;
+  text-align:center!important
+}
+.cbcombat-battle-panel .cbr-boss-frame>em{
+  grid-column:2!important;
+  display:block!important;
+  height:7px!important;
+  overflow:hidden!important;
+  border-radius:999px!important;
+  background:rgba(0,0,0,.58)!important
+}
+.cbcombat-battle-panel .cbr-boss-frame>em>i{
+  display:block!important;
+  height:100%!important;
+  background:linear-gradient(90deg,#8d2c26,#da6246)!important;
+  transition:width .18s linear!important
+}
+.cbcombat-battle-panel .cbr-boss-frame>strong{
+  grid-column:3!important;
+  grid-row:1/3!important;
+  color:#e7b291!important;
+  font-size:8px!important
 }
 
 /* Large, deliberate iPad touch targets. */
@@ -2221,7 +2378,11 @@ body.bs2d-open{
     --cbcombat-right:clamp(180px,19vw,220px)
   }
   .cbcombat-grid{padding:7px}
-  .cbcombat-left-column{grid-template-rows:minmax(0,1fr) minmax(276px,.92fr)}
+  .cbcombat-left-column{grid-template-rows:minmax(0,1fr) minmax(195px,.50fr)}
+  .cbcombat-command-panel .cbr-command-grid{
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    grid-template-rows:repeat(2,minmax(0,1fr))!important
+  }
   .cbcombat-party-panel,
   .cbcombat-command-panel,
   .cbcombat-battle-panel,
