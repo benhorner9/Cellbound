@@ -398,6 +398,7 @@ function refreshDirectControl(){
  if(!run)return;
  const selected=run.directControlUnitId||null,target=selected?run.directControlTargets?.[selected]:null,statusEl=$('#cbrDirectStatus');
  document.querySelectorAll('#cb2dUnits .cb2d-unit.party').forEach(u=>u.classList.toggle('player-selected',!!selected&&u.dataset.unit===selected));
+ document.querySelectorAll('[data-row]').forEach(row=>row.classList.toggle('player-selected',!!selected&&selected==='p-'+row.dataset.row));
  document.querySelectorAll('#cb2dUnits .cb2d-unit.enemy').forEach(u=>u.classList.toggle('player-target',!!target&&u.dataset.unit===target));
  if(statusEl){
   if(!selected)statusEl.textContent='Tap a character · tap ground to move · tap an enemy to target';
