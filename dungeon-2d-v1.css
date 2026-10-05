@@ -1965,3 +1965,236 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 .cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-environment{z-index:3!important}
 .cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] #cb2dTelegraphs{z-index:68!important}
 .cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] #cb2dUnits{z-index:72!important}
+
+
+/* === COMMANDER COMBAT SCENE V2 · touch-first battlefield === */
+.cbr-command-scene{
+  width:min(1560px,99vw);
+  max-height:99vh;
+  overflow:auto;
+  overscroll-behavior:contain
+}
+.cbr-command-scene>.cb2d-head{
+  position:sticky;top:0;z-index:90;
+  min-height:58px;padding:10px 14px;
+  background:linear-gradient(90deg,rgba(20,23,22,.98),rgba(7,18,23,.98));
+  backdrop-filter:none
+}
+.cbr-command-scene>.cb2d-head h2{margin-top:2px;font-size:1.35rem}
+.cbr-command-scene>.cb2d-route{
+  gap:5px;padding:5px 8px;
+  scrollbar-width:none
+}
+.cbr-command-scene>.cb2d-route::-webkit-scrollbar{display:none}
+.cbr-command-scene>.cb2d-route span{min-width:112px;padding:5px 7px;font-size:8px}
+.cbr-command-scene>.cb2d-route span i{width:16px;height:16px}
+
+.cbr-command-scene>.cb2d-layout{display:block;min-height:0}
+.cbr-command-scene .cb2d-layout>main{padding:8px;background:#071014}
+.cbr-command-scene .cb2d-layout>aside[hidden]{display:none!important}
+.cbr-command-scene .cbr-secondary-combat-info{display:none!important}
+
+.cbr-command-scene .cb2d-arena{
+  height:clamp(500px,calc(100dvh - 300px),760px);
+  min-height:500px;
+  border-radius:10px;
+  border-color:rgba(216,185,118,.16);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 10px 30px rgba(0,0,0,.24)
+}
+.cbr-command-scene .cb2d-caption{
+  left:10px;bottom:10px;
+  padding:6px 9px;border-radius:6px;
+  pointer-events:none
+}
+.cbr-command-scene .cb2d-caption span{font-size:8px}
+.cbr-command-scene .cb2d-caption b{font-size:10px}
+
+.cbr-command-scene .cbr-arena-cast{
+  position:absolute;z-index:55;
+  left:50%;top:10px;transform:translateX(-50%);
+  width:min(480px,58%);
+  margin:0;padding:9px 12px;
+  border:1px solid rgba(223,114,85,.28);
+  border-radius:9px;
+  background:rgba(5,11,14,.9);
+  box-shadow:0 8px 24px rgba(0,0,0,.25);
+  pointer-events:none
+}
+.cbr-command-scene .cbr-arena-cast>small{font-size:8px}
+.cbr-command-scene .cbr-arena-cast b{font-size:12px}
+.cbr-command-scene .cbr-arena-cast strong{font-size:10px}
+.cbr-command-scene .cbr-arena-cast .cb2d-castbar{height:7px;margin-top:6px;border-radius:999px;overflow:hidden}
+
+/* 64px touch targets: the visual marker stays centered inside the larger hit box. */
+.cbr-command-scene .cb2d-unit{
+  width:64px;height:64px;
+  display:grid;place-items:center;
+  margin-left:-32px;margin-top:-32px;
+  transform:translate3d(var(--unit-x,0px),var(--unit-y,0px),0);
+  pointer-events:auto
+}
+.cbr-command-scene .cb2d-unit>i{
+  width:42px;height:42px;
+  border-width:0;
+  box-shadow:0 0 0 5px rgba(255,255,255,.045),0 0 22px currentColor
+}
+.cbr-command-scene .cb2d-unit.enemy>i{width:38px;height:38px}
+.cbr-command-scene .cb2d-unit.enemy.small>i{width:30px;height:30px}
+.cbr-command-scene .cb2d-unit.enemy.big>i,
+.cbr-command-scene .cb2d-unit.enemy.boss>i{
+  width:60px;height:60px;
+  box-shadow:0 0 0 6px rgba(217,200,80,.08),0 0 32px rgba(217,200,80,.45)
+}
+.cbr-command-scene .cb2d-unit>span{
+  top:58px;min-width:132px;
+  padding:2px 4px;
+  font-size:10px;font-weight:800;
+  line-height:1.15;
+  text-shadow:0 2px 4px #000,0 0 8px #000
+}
+.cbr-command-scene .cb2d-unit.enemy.big>span,
+.cbr-command-scene .cb2d-unit.enemy.boss>span{top:68px;font-size:11px}
+.cbr-command-scene .cb2d-unit>span .cb2d-unit-meta{margin-top:3px;font-size:8px}
+.cbr-command-scene .cb2d-unit-hp{
+  top:3px;width:56px;height:6px;
+  border-radius:999px
+}
+.cbr-command-scene .cb2d-unit.enemy .cb2d-unit-hp{width:52px}
+.cbr-command-scene .cb2d-unit.boss .cb2d-unit-hp,
+.cbr-command-scene .cb2d-unit.big .cb2d-unit-hp{top:-1px;width:82px;height:7px}
+.cbr-command-scene .cb2d-unit .cbr-resource{
+  top:53px;width:58px;height:5px
+}
+.cbr-command-scene .cb2d-unit.player-selected:before{
+  width:58px;height:58px;border-width:3px;
+  box-shadow:0 0 0 6px rgba(112,211,255,.1),0 0 24px rgba(82,184,235,.42)
+}
+.cbr-command-scene .cb2d-unit.enemy.player-target:before{
+  width:52px;height:52px;border-width:3px
+}
+.cbr-command-scene .cb2d-unit.enemy.big.player-target:before,
+.cbr-command-scene .cb2d-unit.enemy.boss.player-target:before{width:72px;height:72px}
+.cbr-command-scene .cb2d-unit.enemy.commander-target:after{width:56px;height:56px;border-width:3px}
+.cbr-command-scene .cb2d-unit.enemy.big.commander-target:after,
+.cbr-command-scene .cb2d-unit.enemy.boss.commander-target:after{width:76px;height:76px}
+
+/* Mechanics need to read instantly while dragging characters. */
+.cbr-command-scene .cb2d-tg.circle,
+.cbr-command-scene .cb2d-tg.circles>i{border-width:3px}
+.cbr-command-scene .cb2d-tg.line{border-width:2px}
+.cbr-command-scene .cb2d-tg.cone{border-left-width:4px}
+
+/* Five large selectable party cards live directly under the battlefield. */
+.cbr-party-dock{margin-top:8px}
+.cbr-command-scene .cbr-party-strip{
+  margin:0;padding:7px 8px;
+  border:1px solid rgba(112,166,198,.17);
+  border-radius:9px;
+  background:rgba(6,16,22,.94)
+}
+.cbr-command-scene .cbr-party-strip>small{
+  display:block;margin:0 0 6px;
+  color:#7ea6bd;font-size:8px;font-weight:900;letter-spacing:.1em
+}
+.cbr-command-scene .cbr-party-strip #cb2dRows{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:6px
+}
+.cbr-command-scene .cbr-party-strip .cb2d-party-row{
+  min-width:0;min-height:58px;
+  grid-template-columns:12px minmax(0,1fr) auto;
+  gap:7px;align-items:center;
+  margin:0;padding:7px 8px;
+  border:1px solid rgba(255,255,255,.055);
+  border-radius:7px;
+  background:rgba(255,255,255,.022);
+  cursor:pointer;
+  touch-action:manipulation
+}
+.cbr-command-scene .cbr-party-strip .cb2d-party-row:hover{
+  border-color:rgba(105,191,235,.22);
+  background:rgba(74,143,181,.06)
+}
+.cbr-command-scene .cbr-party-strip .cb2d-party-row b{font-size:10px}
+.cbr-command-scene .cbr-party-strip .cb2d-party-row small{font-size:8px;line-height:1.25}
+.cbr-command-scene .cbr-party-strip .cb2d-party-row strong{font-size:9px}
+.cbr-command-scene .cbr-party-strip .cb2d-party-row.commander-selected,
+.cbr-command-scene .cbr-party-strip .cb2d-party-row:has(+ *){}
+
+.cbr-command-scene .cb2d-controls.cbr-command-panel{
+  position:sticky;bottom:0;z-index:80;
+  margin-top:8px;padding:9px 10px;
+  border-color:rgba(104,173,220,.28);
+  border-radius:10px 10px 0 0;
+  background:rgba(5,13,19,.98);
+  box-shadow:0 -10px 28px rgba(0,0,0,.28)
+}
+.cbr-command-scene .cbr-command-copy{
+  margin-bottom:6px;
+  grid-template-columns:auto 1fr auto
+}
+.cbr-command-scene .cbr-command-copy small{font-size:8px}
+.cbr-command-scene .cbr-command-copy b{font-size:12px}
+.cbr-command-scene .cbr-command-copy span{
+  grid-column:auto;
+  margin:0;text-align:right;font-size:9px
+}
+.cbr-command-scene .cbr-command-meta{
+  margin-bottom:6px;padding:6px 8px
+}
+.cbr-command-scene .cbr-command-meta span{font-size:8px}
+.cbr-command-scene .cbr-command-target{
+  min-height:34px!important;
+  padding:6px 10px!important;
+  font-size:9px!important
+}
+.cbr-command-scene #cbrCommandPower>i{width:10px;height:10px}
+.cbr-command-scene .cbr-direct-control{
+  margin-bottom:6px;padding:6px 8px
+}
+.cbr-command-scene .cbr-direct-control b{font-size:9px}
+.cbr-command-scene .cbr-direct-control span{font-size:9px}
+.cbr-command-scene .cbr-command-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:7px
+}
+.cbr-command-scene .cb2d-controls .cbr-command,
+.cbr-command-scene .cbr-command-grid .cb2d-potion-button{
+  min-height:62px!important;
+  padding:9px 10px!important;
+  border-radius:8px
+}
+.cbr-command-scene .cb2d-controls .cbr-command b,
+.cbr-command-scene .cbr-command-grid .cb2d-potion-button b{font-size:11px!important}
+.cbr-command-scene .cb2d-controls .cbr-command small,
+.cbr-command-scene .cbr-command-grid .cb2d-potion-button small{font-size:8px!important;line-height:1.3}
+
+/* iPad portrait / narrower touch layouts. */
+@media(max-width:900px){
+  .cbr-command-scene{width:100vw;max-height:100dvh}
+  .cbr-command-scene .cb2d-arena{
+    height:clamp(470px,calc(100dvh - 300px),660px);
+    min-height:470px
+  }
+  .cbr-command-scene .cbr-party-strip #cb2dRows{grid-template-columns:repeat(5,minmax(92px,1fr));overflow-x:auto}
+  .cbr-command-scene .cbr-command-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .cbr-command-scene .cbr-arena-cast{width:min(520px,72%)}
+}
+@media(max-width:700px){
+  .cbr-command-scene>.cb2d-head{min-height:52px;padding:8px 10px}
+  .cbr-command-scene>.cb2d-head h2{font-size:1.05rem}
+  .cbr-command-scene>.cb2d-route{display:none}
+  .cbr-command-scene .cb2d-layout>main{padding:4px}
+  .cbr-command-scene .cb2d-arena{height:56dvh;min-height:430px;border-radius:6px}
+  .cbr-command-scene .cb2d-unit{width:58px;height:58px;margin-left:-29px;margin-top:-29px}
+  .cbr-command-scene .cb2d-unit>i{width:38px;height:38px}
+  .cbr-command-scene .cb2d-unit.enemy>i{width:35px;height:35px}
+  .cbr-command-scene .cb2d-unit.enemy.big>i,
+  .cbr-command-scene .cb2d-unit.enemy.boss>i{width:54px;height:54px}
+  .cbr-command-scene .cb2d-unit>span{top:53px;font-size:9px}
+  .cbr-command-scene .cbr-party-strip #cb2dRows{grid-template-columns:repeat(5,minmax(104px,1fr))}
+  .cbr-command-scene .cbr-command-copy span{display:none}
+  .cbr-command-scene .cbr-command-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cbr-command-scene .cbr-arena-cast{top:6px;width:78%;padding:7px 9px}
+}
