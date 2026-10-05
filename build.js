@@ -347,7 +347,7 @@ if(file==='quests-v2.js'){
   if(file==='hollow-sanctum-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Hollow Sanctum');
   if(file==='hollow-sanctum-v1.js'){
     for(const hook of ["unitId='p-'+c.id","move('p-'+ch.id","if(id.startsWith('p-'))return party().some","CellboundCombatPortraits?.refresh?.()"])if(!contents.includes(hook))throw new Error('Hollow Sanctum must use canonical player IDs for combat portraits: '+hook);
-    for(const hook of ["gallery.webp?v=3","sentinel.webp?v=3","choir.webp?v=3","addAnchors:[{x:34,y:48},{x:66,y:48}]","mechanic.spawnPoints=room.addAnchors","sentinel-fractured-core","entry:{x:50,y:98}"])if(!contents.includes(hook))throw new Error('Hollow Sanctum void-room combat mapping is missing '+hook);
+    for(const hook of ["gallery.webp?v=4","sentinel.webp?v=4","choir.webp?v=4","addAnchors:[{x:34,y:48},{x:66,y:48}]","mechanic.spawnPoints=room.addAnchors","sentinel-fractured-core","entry:{x:50,y:98}"])if(!contents.includes(hook))throw new Error('Hollow Sanctum void-room combat mapping is missing '+hook);
     if(contents.includes("addUnit('p'+i")||contents.includes("move('p'+i"))throw new Error('Legacy Hollow Sanctum p0-p4 player tokens break shared combat portraits');
   }
   if(file==='chaos-canyon-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Chaos Canyon');
