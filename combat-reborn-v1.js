@@ -4258,10 +4258,40 @@ function createLiveSession(options={}){
   emit(ctx,'ENEMY_REVIVED',{source:opts.source||target.id,target:target.id,ability:opts.ability||'Revive',result:'revived',position:copy(target.position),payload:{targetHp:target.health,targetMaxHealth:target.maxHealth,targetHpPct:pct(target.health,target.maxHealth),external:true}});
   return{ok:true,targetId:target.id,targetHpPct:pct(target.health,target.maxHealth),events:ctx.events.slice(start).map(copy),timeMs:ctx.time}
  };
+ const addMechanics=(raw=[])=>{
+  const added=normaliseMechanics({mechanics:Array.isArray(raw)?raw:[]});
+  if(!added.length)return{ok:false,count:0};
+  ctx.encounter.mechanics.push(...added);
+  const mechanicQueued=ctx.queue.some(x=>x.label==='mechanic-start');
+  if(!ctx.activeEnemyCast&&!mechanicQueued&&livingEnemies(ctx).length)scheduleNextMechanic(ctx);
+  return{ok:true,count:added.length,timeMs:ctx.time}
+ };
+ const setMechanicInterval=ms=>{
+  const value=Math.max(800,Number(ms)||0);if(!value)return false;ctx.encounter.mechanicIntervalMs=value;return true
+ };
+ const signal=(type,data={})=>{
+  if(ctx.finished||stopped)return null;
+  return emit(ctx,String(type||'LIVE_SIGNAL'),data)
+ };
+ const spawnEnemy=(data={},opts={})=>{
+  if(ctx.finished||stopped)return{ok:false,reason:'finished',events:[]};
+  const id=String(opts.id||data.id||('e-live-'+(ctx.enemies.length+1)));
+  if(ctx.units[id])return{ok:false,reason:'duplicate',events:[]};
+  const scale={...(ctx.encounter.scaling||{}),...(opts.scaling||{})},source={...copy(data),classification:data.classification||opts.classification||'elite'};
+  if(opts.position)source.currentPosition=copy(opts.position);
+  const mini={...copy(ctx.encounter),enemies:[source],enemyTypes:[source.classification],enemyHealth:Number(source.maxHealth)||Number(source.health)||Number(ctx.encounter.enemyHealth)||120,scaling:scale};
+  const enemy=normaliseEnemies(mini)[0];enemy.id=id;enemy.position=openPosition(ctx,enemy.position,1.6);enemy.threat=Object.fromEntries(ctx.players.map(p=>[p.id,0]));
+  ctx.enemies.push(enemy);ctx.units[id]=enemy;
+  const tank=livingPlayers(ctx).find(p=>p.role==='tank')||livingPlayers(ctx)[0];
+  if(tank){enemy.threat[tank.id]=ctx.tactics.pullStyle==='safe'?250:ctx.tactics.pullStyle==='aggressive'?125:180;setAggro(ctx,enemy,tank,'live spawn')}
+  emit(ctx,'ENEMY_SPAWNED',{source:id,target:id,ability:enemy.name,result:'spawned',position:copy(enemy.position),payload:{name:enemy.name,level:enemy.level,classification:enemy.classification,classificationLabel:enemy.classificationLabel,maxHealth:enemy.maxHealth,live:true}});
+  if(Array.isArray(opts.mechanics)&&opts.mechanics.length)addMechanics(opts.mechanics);
+  return{ok:true,id,enemy:copy(enemy),events:ctx.events.slice(Math.max(0,ctx.events.length-2)).map(copy),timeMs:ctx.time}
+ };
  const snapshot=()=>buildCombatResult(ctx,ctx.finished?(ctx.outcome||'defeat'):'ongoing',false);
  const stop=(outcome='defeat')=>{stopped=true;return ctx.finished?buildCombatResult(ctx,ctx.outcome):finishCombatContext(ctx,outcome)};
  return{
-  version:VERSION,seed:ctx.seed,advance,command,heal,focus,reviveEnemy,drainEvents,snapshot,stop,
+  version:VERSION,seed:ctx.seed,advance,command,heal,focus,reviveEnemy,spawnEnemy,addMechanics,setMechanicInterval,signal,drainEvents,snapshot,stop,
   get timeMs(){return ctx.time},get finished(){return ctx.finished},get outcome(){return ctx.outcome},
   debug:()=>({timeMs:ctx.time,queue:ctx.queue.length,activeCast:copy(ctx.activeEnemyCast),hazards:copy(ctx.activeGroundHazards),players:copy(ctx.players),enemies:copy(ctx.enemies)})
  }
