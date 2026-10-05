@@ -327,7 +327,7 @@ body.bs2d-open{
   body.cc2d-open .cb2d-layout>main,
   body.bs2d-open .cb2d-layout>main{
     display:grid;
-    grid-template-rows:clamp(470px,52dvh,560px) auto minmax(72px,96px);
+    grid-template-rows:470px auto;
     min-width:0;
     min-height:0;
     overflow:visible;
@@ -339,8 +339,9 @@ body.bs2d-open{
   body.bs2d-open .cb2d-layout>main>.cb2d-arena{
     width:100%!important;
     max-width:none!important;
-    height:100%!important;
+    height:470px!important;
     min-height:470px!important;
+    max-height:470px!important;
     justify-self:stretch;
     align-self:stretch;
   }
@@ -349,6 +350,7 @@ body.bs2d-open{
   body.hs2d-open .cb2d-layout>main>.cb2d-feed,
   body.cc2d-open .cb2d-layout>main>.cb2d-feed,
   body.bs2d-open .cb2d-layout>main>.cb2d-feed{
+    display:none!important;
     min-height:0;
     max-height:96px;
     overflow:hidden;
