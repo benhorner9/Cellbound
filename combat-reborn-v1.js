@@ -2508,6 +2508,33 @@ function specHealingBalance(u){
  };
  const v=curves[key];return v?progressionBlend(u.level,...v):1
 }
+function lateBalanceFactor(level,target){
+ const l=Math.max(1,Number(level)||1),t=Math.max(.70,Math.min(1.40,Number(target)||1));
+ if(l<12)return 1;
+ return 1+(t-1)*clamp((l-12)/3,0,1)
+}
+function specEndgameDamageAdjustment(u){
+ const key=u.class+'|'+u.spec,targets={
+  'Warrior|Arms':.94,'Priest|Shadow':1.04,'Druid|Balance':.97,'Hunter|Marksman':1.06,'Hunter|Beast Mastery':.91,
+  'Rogue|Assassination':1.13,'Rogue|Outlaw':.90,'Mage|Arcane':1.12,'Mage|Frost':1.09,'Shaman|Elemental':1.00,
+  'Warlock|Demonology':.94,'Warlock|Destruction':1.13,'Monk|Windwalker':1.00,'Death Knight|Frost':.95,'Death Knight|Unholy':.90,
+  'Demon Hunter|Havoc':1.08,'Evoker|Devastation':1.10
+ };
+ return lateBalanceFactor(u.level,targets[key]||1)
+}
+function specEndgameHealingAdjustment(u){
+ const key=u.class+'|'+u.spec,targets={
+  'Paladin|Holy':1.40,'Priest|Holy':1.40,'Druid|Restoration':.86,'Shaman|Restoration':.88,'Monk|Mistweaver':.90,'Evoker|Preservation':.90
+ };
+ return lateBalanceFactor(u.level,targets[key]||1)
+}
+function specEndgameTankTakenAdjustment(u){
+ const key=u.class+'|'+u.spec,targets={
+  'Warrior|Protection':.90,'Paladin|Protection':1.10,'Monk|Brewmaster':.96,'Death Knight|Blood':1.00,'Demon Hunter|Vengeance':.95
+ };
+ return lateBalanceFactor(u.level,targets[key]||1)
+}
+
 
 function itemLevelOutputMultiplier(ctx,u){
  const recommended=Math.max(0,Number(ctx?.encounter?.recommendedItemLevel)||0),itemLevel=Math.max(0,Number(u?.itemLevel)||0);
@@ -2522,7 +2549,7 @@ function itemLevelOutputMultiplier(ctx,u){
 function rollDamage(ctx,u,a,target){
  const power=1+Math.min(.35,u.power*.012),levelScale=u.baseStats?.outputScale||levelOutputScale(u.level),match=levelMatchMultiplier(u.level,target?.level||1);
  const variance=.9+ctx.rng()*.2,revivePenalty=u.revivePenaltyUntil>ctx.time?.85:1,frenzy=u.frenzyUntil>ctx.time?1.15:1;
- let amount=(Number(a.damage)||12)*power*levelScale*match*variance*revivePenalty*frenzy*Math.max(.1,1+statusBonus(u,'outgoingDamage'))*professionOutputScale(u,'damage')*talentDamageScale(ctx,u,a,target)*Math.max(.5,Number(u?.setBonuses?.damageScale)||1)*specDamageBalance(u)*itemLevelOutputMultiplier(ctx,u);
+ let amount=(Number(a.damage)||12)*power*levelScale*match*variance*revivePenalty*frenzy*Math.max(.1,1+statusBonus(u,'outgoingDamage'))*professionOutputScale(u,'damage')*talentDamageScale(ctx,u,a,target)*Math.max(.5,Number(u?.setBonuses?.damageScale)||1)*specDamageBalance(u)*specEndgameDamageAdjustment(u)*itemLevelOutputMultiplier(ctx,u);
  if(!u.relicOpeningUsed&&Number(u?.professionProcs?.openingBurstPct)>0){amount*=1+Number(u.professionProcs.openingBurstPct)/100;u.relicOpeningUsed=true}
  if(healthRatio(target)<=.35&&Number(u?.professionProcs?.executeDamagePct)>0)amount*=1+Number(u.professionProcs.executeDamagePct)/100;
  let executeBelow=Number(a.executeBelow)||0,executeMultiplier=Math.max(1,Number(a.executeMultiplier)||1.5);
@@ -2548,6 +2575,7 @@ function itemLevelIncomingMultiplier(ctx,target){
 function mitigation(ctx,target,damageType='physical',opts={}){
  const profile=target?.defence||{},gearTaken=damageType==='magic'?(Number(profile.magicTaken)||1):(Number(profile.physicalTaken)||1);
  let value=target.role==='tank'?(damageType==='magic'?.82:.72):1;
+ if(target.role==='tank')value*=specEndgameTankTakenAdjustment(target);
  value*=gearTaken;value*=itemLevelIncomingMultiplier(ctx,target);
  const profession=target?.professionBonuses||{};
  if(damageType==='magic')value*=1-clamp((Number(profession.magicWardPct)||0)/100,0,.35);
@@ -2690,7 +2718,7 @@ function doHeal(ctx,healer,target,amount,ability,opts={}){
  const before=target.health,max=target.maxHealth;
  const healingScale=Math.max(.1,1+statusBonus(healer,'outgoingHealing'))*Math.max(.1,1+statusBonus(target,'incomingHealing'));
  const triage=healthRatio(target)<=.4?1+Math.max(0,Number(healer?.professionProcs?.triageHealPct)||0)/100:1;
- const raw=Math.max(1,Math.round(amount*healingScale*professionOutputScale(healer,'healing')*specHealingBalance(healer)*itemLevelOutputMultiplier(ctx,healer)*triage));
+ const raw=Math.max(1,Math.round(amount*healingScale*professionOutputScale(healer,'healing')*specHealingBalance(healer)*specEndgameHealingAdjustment(healer)*itemLevelOutputMultiplier(ctx,healer)*triage));
  target.health=clamp(before+raw,0,max);
  const effective=target.health-before,over=Math.max(0,raw-effective);
  const st=ctx.stats.players[healer.id];st.healing+=effective;st.overhealing+=over;st.abilityHealing[ability]=(st.abilityHealing[ability]||0)+effective;
@@ -3187,7 +3215,7 @@ function permanentHunterBeast(ctx,owner){
 function petDamage(ctx,pet,target,base,ability,{cleave=0,multiplier=1}={}){
  const owner=pet?.owner;if(!pet?.active||!owner?.alive||!target?.alive)return 0;
  const bond=talentRank(owner,'Demonic Bond'),dread=talentRank(owner,'Dread Calling'),master=talentRank(owner,'Master Summoner');
- let scale=(owner.baseStats?.outputScale||levelOutputScale(owner.level))*(1+bond*.05)*Math.max(.1,1+statusBonus(owner,'outgoingDamage'))*multiplier*Math.max(.5,Number(owner?.setBonuses?.petDamageScale)||1)*specDamageBalance(owner)*itemLevelOutputMultiplier(ctx,owner);
+ let scale=(owner.baseStats?.outputScale||levelOutputScale(owner.level))*(1+bond*.05)*Math.max(.1,1+statusBonus(owner,'outgoingDamage'))*multiplier*Math.max(.5,Number(owner?.setBonuses?.petDamageScale)||1)*specDamageBalance(owner)*specEndgameDamageAdjustment(owner)*itemLevelOutputMultiplier(ctx,owner);
  if(pet.type==='dreadstalker')scale*=1+dread*.08;
  if(pet.type==='tyrant')scale*=1.18+master*.05;
  if(owner.class==='Hunter'&&owner.spec==='Beast Mastery'){
@@ -3625,9 +3653,9 @@ function applyPartyCommand(ctx,command){
   if(target){ctx.commandFocusId=target.id;ctx.commandFocusUntil=ctx.time+duration;ctx.enemies.forEach(e=>e.focusSelected=e.id===target.id);targetId=target.id}
   else result='no-target'
  }else if(type==='burn'){
-  live.forEach(p=>applyStatus(ctx,p,p,{id:'commander-burn',name:'Burn Order',kind:'buff',duration,effect:{outgoingDamage:.18,haste:.08}}))
+  live.forEach(p=>applyStatus(ctx,p,p,{id:'commander-burn',name:'Burn Order',kind:'buff',duration,effect:{outgoingDamage:.12,haste:.05}}))
  }else if(type==='defensive'){
-  live.forEach(p=>{p.defensiveUntil=Math.max(Number(p.defensiveUntil)||0,ctx.time+duration);applyStatus(ctx,p,p,{id:'commander-defensive',name:'Hold Fast',kind:'buff',duration,effect:{incomingDamageReduction:.08}})})
+  live.forEach(p=>applyStatus(ctx,p,p,{id:'commander-defensive',name:'Hold Fast',kind:'buff',duration,effect:{incomingDamageReduction:.18}}))
  }else if(type==='spread'){
   const cast=ctx.activeEnemyCast,enemy=cast?getUnit(ctx,cast.enemy):(livingEnemies(ctx).find(e=>e.kind==='boss')||livingEnemies(ctx)[0]),responseType=cast?.type==='line'?'line':cast?.type==='cone'?'cone':'circles';
   live.forEach(p=>{if(cast?.responses)cast.responses[p.id]=true;if(cast?.reactionMs)cast.reactionMs[p.id]=0;planMovement(ctx,p,responseType,enemy)});
