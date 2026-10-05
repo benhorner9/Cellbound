@@ -1005,7 +1005,13 @@ const combatPortraitRuntime=fs.readFileSync(path.join(__dirname,'combat-portrait
     {id:'live-d3',name:'Live Rogue',class:'Rogue',spec:'Assassination',power:12,level:10}
   ];
   const liveEncounter={id:'build-live-smoke',kind:'boss',level:10,enemies:[{name:'Live Smoke Boss',classification:'boss'}],enemyHealth:4200,mechanicIntervalMs:2200,mechanics:[['Pulse','circles',1200],['Cast','interrupt',1300]]};
-  const live=sandbox.CellboundCombatStandard.createLiveSession({party:liveParty,encounter:liveEncounter,seed:'build-live-smoke'},{zone:'ashen-vault'});
+  const economy=sandbox.CellboundCombatStandard.createLiveSession({party:liveParty,encounter:{...liveEncounter,enemyHealth:99999},seed:'build-command-power-smoke'},{zone:'ashen-vault'});
+  if(!economy||typeof economy.advance!=='function'||typeof economy.command!=='function'||typeof economy.commandPowerState!=='function')throw new Error('Commander Power live-session API failed to initialise');
+  const initialPower=economy.commandPowerState();if(initialPower.value!==2||initialPower.max!==5)throw new Error('Commander Power must start at 2 / 5');
+  const blockedBurn=economy.command('burn');if(blockedBurn.ok||blockedBurn.reason!=='no-power')throw new Error('Burn must require 3 Command Power');
+  economy.advance(8200);if(economy.commandPowerState().value<3)throw new Error('Commander Power did not regenerate during live combat');
+  const poweredBurn=economy.command('burn');if(!poweredBurn.ok)throw new Error('Burn did not execute after enough Command Power was earned');
+  const live=sandbox.CellboundCombatStandard.createLiveSession({party:liveParty,encounter:liveEncounter,seed:'build-live-smoke',commandPower:5},{zone:'ashen-vault'});
   if(!live||typeof live.advance!=='function'||typeof live.command!=='function')throw new Error('Real-time Combat Reborn session failed to initialise');
   live.advance(1600);const command=live.command('burn');if(!command.ok)throw new Error('Real-time Combat Reborn command did not mutate the running session');
   let liveResult=null,liveGuard=0;while(!live.finished&&liveGuard++<3000){const step=live.advance(100);if(step.result)liveResult=step.result}
