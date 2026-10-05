@@ -1525,7 +1525,56 @@ function mountRebornReplayControls(){
  el.querySelector('[data-cbr-speed]').onclick=e=>{const speeds=[.5,1,2],i=speeds.indexOf(run.replaySpeed),next=speeds[(i+1)%speeds.length];run.replaySpeed=next;e.currentTarget.textContent=next+'×'};
  el.querySelector('[data-cbr-restart]').onclick=()=>{run.replayRestartRequested=true;run.replayPaused=false;const p=el.querySelector('[data-cbr-pause]');if(p)p.textContent='PAUSE'}
 }
+async function playLiveRebornSession(result,tok){
+ const session=run?.rebornLiveSession;if(!session?.advance||!session?.command)throw new Error('Live Combat Reborn session is unavailable');
+ const stageMeta={stageId:result?.stageId,stageTitle:result?.stageTitle,startHp:result?.startHp};
+ run.combatActive=true;run.rebornResult=result;run.rebornTelegraphs={};ensureRebornHealingMeter();renderRebornHealingMeter();configureRebornViewer(false);
+ let activeResult=result,finished=false,raf=0,lastWall=performance.now();
+ const renderEvents=events=>{
+  for(const event of events||[]){
+   if(run?.externalMode&&typeof run.externalOnEvent==='function'){
+    try{run.externalOnEvent(event,activeResult)}catch(error){console.warn('Shared combat event callback failed',error)}
+   }
+   try{renderRebornEvent(event,activeResult,false)}
+   catch(error){
+    console.warn('Live combat visual recovered',event?.type,event?.ability,error);
+    if(event?.type==='INTERACTION_REQUIRED')status((event.ability||'Interaction')+' · response required')
+   }
+  }
+ };
+ renderEvents(session.drainEvents?.()||[]);
+ run.rebornPlayback={issueCommand:(type,payload={})=>session.command(type,payload),now:()=>session.timeMs,result:()=>activeResult};
+ return await new Promise(resolve=>{
+  const finishPlayback=(value,finalResult=null)=>{
+   if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
+   const final=finalResult||session.snapshot?.()||activeResult;
+   if(final){
+    final.stageId=stageMeta.stageId;final.stageTitle=stageMeta.stageTitle;final.startHp=stageMeta.startHp;
+    activeResult=final;run.rebornResult=final;
+    try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,final)}catch(_){}
+   }
+   if(run){run.combatActive=false;run.rebornPlayback=null;run.rebornLiveSession=null}
+   resolve(value)
+  };
+  const frame=now=>{
+   if(finished)return;
+   if(tok!==token||!run){finishPlayback('cancelled');return}
+   if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
+   const speed=combatPlaybackSpeed(run?.speed||1),delta=Math.max(0,Math.min(250,now-lastWall))*speed;lastWall=now;
+   const step=session.advance(delta);
+   if(step.events?.length)renderEvents(step.events);
+   if(step.result)activeResult=step.result;
+   if(step.finished){
+    const final=step.result||session.snapshot?.()||activeResult;
+    finishPlayback(final?.outcome==='victory'?'victory':'defeat',final);return
+   }
+   raf=requestAnimationFrame(frame)
+  };
+  raf=requestAnimationFrame(frame)
+ })
+}
 async function playRebornTimeline(result,tok,{replayMode=false}={}){
+ if(!replayMode&&run?.rebornLiveSession)return playLiveRebornSession(result,tok);
  let activeResult=result,events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
  run.combatActive=true;run.rebornResult=result;run.rebornTelegraphs={};ensureRebornHealingMeter();renderRebornHealingMeter();configureRebornViewer(replayMode);
  if(replayMode)mountRebornReplayControls();
@@ -1594,13 +1643,13 @@ async function playRebornTimeline(result,tok,{replayMode=false}={}){
  })
 }
 function runRebornStage(s){
- const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway is unavailable');
+ const C=window.CellboundCombatStandard;if(!C?.createLiveSession)throw new Error('Real-time Combat Reborn gateway is unavailable');
  const startHp=Object.fromEntries(party().map(c=>[c.id,hp(c.id)]));
  const combatParty=party().map((c,i)=>Object.assign({},c,{_combatHealthPct:hp(c.id),_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0,_combatPosition:stagePartyPosition(s,c,i)}));
- const simOptions={party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:[run.endgame?.seed||'ashen-vault',s.id,run.stage].join(':')};
- run.rebornCommands=[];run.commandSeq=0;run.commandCooldownUntil=0;run.rebornSimulation={options:simOptions,meta:{zone:'ashen-vault'}};
- const result=C.simulate(simOptions,run.rebornSimulation.meta);
- result.stageId=s.id;result.stageTitle=s.title;result.startHp=startHp;return result
+ const simOptions={party:combatParty,encounter:rebornEncounter(s),tactics:rebornTactics(),seed:[run.endgame?.seed||'ashen-vault',s.id,run.stage].join(':')},meta={zone:'ashen-vault'};
+ run.rebornCommands=[];run.commandSeq=0;run.commandCooldownUntil=0;run.rebornSimulation={options:simOptions,meta};
+ run.rebornLiveSession=C.createLiveSession(simOptions,meta);
+ const result=run.rebornLiveSession.snapshot();result.stageId=s.id;result.stageTitle=s.title;result.startHp=startHp;return result
 }
 function captureRebornResult(result){
  run.rebornResult=result;run.rebornReplay=result?.replay||null;run.rebornHistory=run.rebornHistory||[];
@@ -1917,6 +1966,11 @@ async function playSharedEncounter(options={}){
    runtimeStageStartedAt:Number(options.startAt)||0,rebornCommands:[],commandSeq:0,commandCooldownUntil:0};
  const startTactics=result?.events?.find(e=>e.type==='COMBAT_START')?.payload?.tactics||options.tactics||{};
  run.rebornSimulation={options:{party:extParty,encounter:copyObject(encounter),tactics:copyObject(startTactics),seed:result.seed},meta:options.zone?{zone:options.zone}:{}};
+ const C=window.CellboundCombatStandard;if(C?.createLiveSession){
+   run.rebornLiveSession=C.createLiveSession(run.rebornSimulation.options,run.rebornSimulation.meta);
+   const liveStart=run.rebornLiveSession.snapshot();
+   try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,liveStart)}catch(_){}
+ }
  sharedViewerShell(options);spawnSharedEncounter(run.externalStage,result,options);
  const outcome=await playRebornTimeline(result,tok);
  if(tok!==token||!run)return'cancelled';
