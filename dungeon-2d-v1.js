@@ -637,12 +637,12 @@ function mountCommanderCombatScene(scope=document){
  const layout=shell.querySelector(':scope>.cb2d-layout'),main=layout?.querySelector(':scope>main'),arena=main?.querySelector(':scope>.cb2d-arena'),controls=main?.querySelector(':scope>.cb2d-controls'),aside=layout?.querySelector(':scope>aside');
  if(!layout||!main||!arena||!controls||!aside)return;
  shell.dataset.commandSceneMounted='1';shell.classList.add('cbr-command-scene','cbr-three-column-combat');
- main.classList.add('cbr-combat-center');
+ main.classList.add('cbr-combat-center','cbr-panel','cbr-combat-panel-box');
 
  const left=document.createElement('section');
- left.className='cbr-combat-left';
+ left.className='cbr-combat-left cbr-panel-column';
  const upper=document.createElement('div');
- upper.className='cbr-left-upper';
+ upper.className='cbr-left-upper cbr-panel cbr-party-target-panel';
  const target=document.createElement('div');
  target.className='cbr-target-card empty';target.id='cbrTargetCard';
  target.innerHTML='<small>TARGETED ENEMY</small><div class="cbr-target-main"><span class="cbr-target-avatar">?</span><span><b data-target-name>NO TARGET</b><em data-target-meta>Tap an enemy in the battlefield</em></span><strong data-target-hp>—</strong></div><em class="cbr-target-hp"><i data-target-hp-fill style="width:0%"></i></em>';
@@ -651,7 +651,7 @@ function mountCommanderCombatScene(scope=document){
  const party=aside.querySelector('.cb2d-party');
  if(party){party.classList.add('cbr-party-stack');upper.appendChild(party)}
  left.appendChild(upper);
- controls.classList.add('cbr-left-commands');left.appendChild(controls);
+ controls.classList.add('cbr-left-commands','cbr-panel','cbr-command-panel-box');left.appendChild(controls);
  layout.insertBefore(left,main);
 
  const cast=aside.querySelector('.cb2d-cast');
@@ -663,7 +663,7 @@ function mountCommanderCombatScene(scope=document){
    const threat=meters.querySelector('.cb2d-meter-panel.threat'),damage=meters.querySelector('.cb2d-meter-panel.damage'),healing=meters.querySelector('.cb2d-meter-panel.healing');
    [threat,damage,healing].forEach(panel=>{if(panel)meters.appendChild(panel)})
  }
- aside.classList.add('cbr-combat-right');aside.hidden=false;
+ aside.classList.add('cbr-combat-right','cbr-panel','cbr-meters-panel-box');aside.hidden=false;
  aside.querySelector('.cb2d-actions')?.classList.add('cbr-secondary-combat-info');
  aside.querySelector('.cb2d-plan')?.classList.add('cbr-secondary-combat-info');
  const feed=main.querySelector('.cb2d-feed');if(feed)feed.classList.add('cbr-secondary-combat-info');
