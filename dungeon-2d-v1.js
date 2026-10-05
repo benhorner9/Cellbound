@@ -848,7 +848,8 @@ function roomFadeInDuringEntry(){
  if(!run?.roomTransitionBlack)return;
  const fade=ensureRoomFade();if(!fade)return;
  fade.classList.add('is-black');fade.classList.remove('is-clear');
- requestAnimationFrame(()=>requestAnimationFrame(()=>setRoomFade(false,680)));
+ requestAnimationFrame(()=>requestAnimationFrame(()=>setRoomFade(false,520)));
+ setTimeout(()=>{if(!fade.isConnected)return;fade.classList.remove('is-black');fade.classList.add('is-clear');fade.style.opacity='0'},820);
  run.roomTransitionBlack=false
 }
 function clearArenaEphemera(){
