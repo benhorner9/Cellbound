@@ -15,119 +15,903 @@ const STAGES=[
  {id:'vaultheart',title:'The Vaultheart',kind:'final',level:5,enemyTypes:['boss'],bossId:'vaultheart',knowledge:'vaultheart',base:70,enemies:['The Vaultheart'],mechanics:[['Core Pulse','circle',2100],['Fracture Spawn','adds',1500],['Rupture Beam','line',1800],['Core Collapse','circle',2600]]}
 ];
 const ASHEN_ROOMS={
- 'broken-gate':{
-   room:'broken-gate',label:'Collapsed Vault Entrance',ambience:'Ash drifts through a shattered seal.',
-   art:'./assets/ashen-vault/battlefields/broken-gate.avif',artPosition:'50% 50%',
-   route:{entry:{x:21,y:92},entryInside:{x:28,y:70},engage:{x:61,y:43},partyAnchors:[{x:45,y:56},{x:39,y:50},{x:37,y:60},{x:31,y:52},{x:31,y:63}],exitPath:[{x:61,y:43},{x:72,y:36},{x:82,y:29},{x:90,y:23}],spread:2.5},enemyAnchors:[{x:61,y:37},{x:68,y:45},{x:69,y:58}],
-   bounds:{left:12,right:84,top:24,bottom:83},
-   walkable:[[18,32],[38,27],[72,30],[82,42],[79,64],[66,79],[33,80],[17,66],[14,46]],
-   life:{profile:'ash-gate',particles:24,mix:['ash','ember','ash','smoke'],depthMin:.945,depthMax:1.055,light:'rgba(255,116,54,.26)',hotspots:[{type:'fire',x:15,y:31,w:11,h:18,i:.72,d:0},{type:'fire',x:79,y:31,w:11,h:18,i:.68,d:.7},{type:'lava',x:56,y:53,w:30,h:14,r:-7,i:.5,d:.4},{type:'lava',x:36,y:72,w:25,h:11,r:8,i:.38,d:1.2}]},
-   occluders:[
-     {clip:'polygon(0 0,12% 0,10% 24%,6% 48%,11% 72%,17% 100%,0 100%)',opacity:.93},
-     {clip:'polygon(88% 0,100% 0,100% 100%,91% 100%,94% 72%,90% 46%,92% 22%)',opacity:.94}
+ "broken-gate": {
+  "room": "broken-gate",
+  "label": "Collapsed Vault Entrance",
+  "ambience": "The broken gate opens onto the first furnace court.",
+  "art": "./assets/ashen-vault/rooms/broken-gate.webp",
+  "artPosition": "50% 50%",
+  "route": {
+   "entry": {
+    "x": 50,
+    "y": 98
+   },
+   "entryInside": {
+    "x": 50,
+    "y": 82
+   },
+   "engage": {
+    "x": 50,
+    "y": 61
+   },
+   "partyAnchors": [
+    {
+     "x": 50,
+     "y": 62
+    },
+    {
+     "x": 44,
+     "y": 64
+    },
+    {
+     "x": 56,
+     "y": 64
+    },
+    {
+     "x": 40,
+     "y": 59
+    },
+    {
+     "x": 60,
+     "y": 59
+    }
    ],
-   blockers:[
-     {id:'broken-lava-west',shape:'polygon',points:[[14,41],[21,40],[31,46],[27,54],[17,53],[13,48]],blocksLos:false},
-     {id:'broken-lava-mid',shape:'polygon',points:[[51,47],[61,46],[69,53],[65,60],[55,59],[49,53]],blocksLos:false},
-     {id:'broken-lava-southwest',shape:'polygon',points:[[28,67],[39,65],[47,74],[43,80],[32,79],[27,73]],blocksLos:false},
-     {id:'broken-lava-southeast',shape:'polygon',points:[[59,60],[71,59],[79,66],[73,74],[62,72],[57,66]],blocksLos:false}
+   "exitPath": [
+    {
+     "x": 50,
+     "y": 56
+    },
+    {
+     "x": 50,
+     "y": 42
+    },
+    {
+     "x": 50,
+     "y": 29
+    },
+    {
+     "x": 50,
+     "y": 18
+    },
+    {
+     "x": 50,
+     "y": 7
+    }
+   ],
+   "spread": 2.2
+  },
+  "enemyAnchors": [
+   {
+    "x": 50,
+    "y": 33
+   },
+   {
+    "x": 43,
+    "y": 40
+   },
+   {
+    "x": 57,
+    "y": 40
+   }
+  ],
+  "bounds": {
+   "left": 22,
+   "right": 78,
+   "top": 26,
+   "bottom": 69
+  },
+  "walkable": [
+   [
+    30,
+    27
+   ],
+   [
+    70,
+    27
+   ],
+   [
+    77,
+    39
+   ],
+   [
+    77,
+    57
+   ],
+   [
+    68,
+    67
+   ],
+   [
+    32,
+    67
+   ],
+   [
+    23,
+    58
+   ],
+   [
+    23,
+    41
    ]
- },
- 'hall-embers':{
-   room:'hall-embers',label:'Ember Processional Hall',ambience:'Old braziers still breathe beneath the ash.',
-   art:'./assets/ashen-vault/battlefields/hall-embers.avif',artPosition:'50% 50%',
-   route:{entry:{x:50,y:94},entryInside:{x:50,y:72},engage:{x:50,y:42},partyAnchors:[{x:50,y:60},{x:44,y:64},{x:56,y:64},{x:41,y:70},{x:59,y:70}],exitPath:[{x:50,y:38},{x:50,y:24},{x:50,y:10},{x:50,y:3}],spread:2.2},enemyAnchors:[{x:50,y:32},{x:39,y:40},{x:61,y:40}],
-   bounds:{left:10,right:90,top:18,bottom:82},
-   walkable:[[17,24],[30,19],[70,19],[84,26],[89,44],[86,68],[73,79],[29,79],[14,68],[11,45]],
-   life:{profile:'ember-hall',particles:24,mix:['ember','ash','ember','smoke'],depthMin:.94,depthMax:1.06,light:'rgba(255,139,61,.24)',hotspots:[
-     {type:'fireglow',x:40.2,y:10.4,w:6.2,h:9.0,i:.78,d:0},
-     {type:'fireglow',x:59.4,y:10.4,w:6.2,h:9.0,i:.78,d:.31},
-     {type:'fireglow',x:23.0,y:16.2,w:6.8,h:10.0,i:.72,d:.18},
-     {type:'fireglow',x:72.3,y:16.2,w:6.8,h:10.0,i:.72,d:.53},
-     {type:'fireglow',x:9.7,y:60.6,w:8.0,h:11.0,i:.82,d:.42},
-     {type:'fireglow',x:85.3,y:60.0,w:8.0,h:11.0,i:.82,d:.76}
-   ]},
-   occluders:[
-     {clip:'polygon(0 72%,9% 66%,17% 79%,22% 100%,0 100%)',opacity:.9},
-     {clip:'polygon(100% 70%,91% 65%,83% 80%,78% 100%,100% 100%)',opacity:.9}
+  ],
+  "life": {
+   "profile": "ash-gate",
+   "particles": 18,
+   "mix": [
+    "ash",
+    "ember",
+    "ash",
+    "smoke"
    ],
-   blockers:[]
+   "depthMin": 0.955,
+   "depthMax": 1.045,
+   "light": "rgba(255,116,54,.22)",
+   "hotspots": []
+  },
+  "occluders": [],
+  "blockers": []
  },
- 'kael':{
-   room:'warden-seal',label:'The Warden Seal',ambience:'Chains hold an ancient oath around the chamber.',
-   art:'./assets/ashen-vault/battlefields/kael.avif',artPosition:'50% 50%',
-   route:{entry:{x:50,y:95},entryInside:{x:50,y:70},engage:{x:50,y:47},partyAnchors:[{x:50,y:61},{x:44,y:65},{x:56,y:65},{x:42,y:71},{x:58,y:71}],exitPath:[{x:50,y:31},{x:50,y:19},{x:50,y:9},{x:50,y:2}],spread:2.1},enemyAnchors:[{x:50,y:43}],
-   bounds:{left:15,right:85,top:14,bottom:78},arena:{shape:'ellipse',cx:50,cy:46,rx:33,ry:30},
-   life:{profile:'warden-seal',particles:30,mix:['ember','ember','ash','smoke'],depthMin:.94,depthMax:1.065,light:'rgba(255,101,46,.30)',hotspots:[{type:'fire',x:18,y:28,w:10,h:17,i:.76,d:0},{type:'fire',x:82,y:28,w:10,h:17,i:.76,d:.55},{type:'fire',x:18,y:70,w:10,h:17,i:.68,d:1.1},{type:'fire',x:82,y:70,w:10,h:17,i:.68,d:.25},{type:'rune',x:50,y:47,w:34,h:27,i:.62,d:.2}]},
-   occluders:[
-     {clip:'polygon(0 77%,12% 69%,20% 82%,26% 100%,0 100%)',opacity:.9},
-     {clip:'polygon(100% 76%,88% 69%,80% 83%,75% 100%,100% 100%)',opacity:.9}
+ "hall-embers": {
+  "room": "hall-embers",
+  "label": "Hall of Embers",
+  "ambience": "A broad ember court links the outer gate to the Warden Seal.",
+  "art": "./assets/ashen-vault/rooms/hall-embers.webp",
+  "artPosition": "50% 50%",
+  "route": {
+   "entry": {
+    "x": 50,
+    "y": 98
+   },
+   "entryInside": {
+    "x": 50,
+    "y": 82
+   },
+   "engage": {
+    "x": 50,
+    "y": 62
+   },
+   "partyAnchors": [
+    {
+     "x": 50,
+     "y": 63
+    },
+    {
+     "x": 44,
+     "y": 65
+    },
+    {
+     "x": 56,
+     "y": 65
+    },
+    {
+     "x": 40,
+     "y": 60
+    },
+    {
+     "x": 60,
+     "y": 60
+    }
    ],
-   blockers:[]
- },
- 'furnace':{
-   room:'furnace-passage',label:'Furnace Passage',ambience:'Heat pulses through cracked iron channels.',
-   art:'./assets/ashen-vault/battlefields/furnace.avif',artPosition:'50% 50%',
-   route:{entry:{x:17,y:18},entryInside:{x:28,y:33},engage:{x:61,y:54},partyAnchors:[{x:38,y:39},{x:33,y:35},{x:34,y:43},{x:28,y:32},{x:28,y:46}],exitPath:[{x:58,y:55},{x:68,y:64},{x:78,y:73},{x:89,y:84}],spread:2.2},enemyAnchors:[{x:61,y:50},{x:69,y:62}],
-   bounds:{left:14,right:84,top:24,bottom:82},
-   walkable:[[24,38],[39,31],[60,35],[76,47],[79,61],[67,73],[48,74],[31,65],[22,53]],
-   life:{profile:'furnace',particles:34,mix:['ember','ember','smoke','ember','ash'],depthMin:.94,depthMax:1.065,light:'rgba(255,102,34,.34)',hotspots:[{type:'vent',x:82,y:24,w:13,h:17,i:.82,d:0},{type:'vent',x:88,y:51,w:14,h:20,i:.9,d:.7},{type:'vent',x:84,y:78,w:13,h:18,i:.78,d:1.4},{type:'lava',x:52,y:38,w:29,h:12,r:37,i:.66,d:.2},{type:'lava',x:40,y:65,w:31,h:12,r:38,i:.58,d:.85},{type:'heat',x:62,y:55,w:48,h:45,i:.54,d:.4}]},
-   occluders:[
-     {clip:'polygon(0 0,13% 0,11% 25%,15% 48%,10% 73%,18% 100%,0 100%)',opacity:.92},
-     {clip:'polygon(87% 0,100% 0,100% 100%,82% 100%,90% 72%,85% 48%,89% 24%)',opacity:.92}
+   "exitPath": [
+    {
+     "x": 50,
+     "y": 56
+    },
+    {
+     "x": 50,
+     "y": 42
+    },
+    {
+     "x": 50,
+     "y": 30
+    },
+    {
+     "x": 50,
+     "y": 18
+    },
+    {
+     "x": 50,
+     "y": 7
+    }
    ],
-   blockers:[
-     {id:'furnace-lava-north',shape:'polygon',points:[[45,27],[53,25],[66,41],[60,49],[53,45],[43,34]],blocksLos:false},
-     {id:'furnace-lava-west',shape:'polygon',points:[[18,49],[27,47],[42,60],[35,69],[26,64],[15,57]],blocksLos:false},
-     {id:'furnace-lava-south',shape:'polygon',points:[[35,61],[44,58],[58,71],[52,80],[43,75],[33,67]],blocksLos:false},
-     {id:'furnace-lava-east',shape:'polygon',points:[[65,48],[78,50],[84,58],[79,66],[68,62],[61,55]],blocksLos:false}
+   "spread": 2.2
+  },
+  "enemyAnchors": [
+   {
+    "x": 50,
+    "y": 35
+   },
+   {
+    "x": 42,
+    "y": 42
+   },
+   {
+    "x": 58,
+    "y": 42
+   }
+  ],
+  "bounds": {
+   "left": 24,
+   "right": 76,
+   "top": 28,
+   "bottom": 71
+  },
+  "walkable": [
+   [
+    32,
+    29
+   ],
+   [
+    68,
+    29
+   ],
+   [
+    75,
+    41
+   ],
+   [
+    73,
+    61
+   ],
+   [
+    64,
+    69
+   ],
+   [
+    36,
+    69
+   ],
+   [
+    27,
+    61
+   ],
+   [
+    25,
+    42
    ]
- },
- 'embermaw':{
-   room:'embermaw-forge',label:'The Ember Forge',ambience:'The floor itself glows beneath Embermaw.',
-   art:'./assets/ashen-vault/battlefields/embermaw.avif',artPosition:'50% 50%',
-   route:{entry:{x:7,y:51},entryInside:{x:27,y:51},engage:{x:50,y:51},partyAnchors:[{x:42,y:50},{x:39,y:46},{x:39,y:55},{x:35,y:44},{x:35,y:58}],exitPath:[{x:66,y:51},{x:78,y:51},{x:91,y:51},{x:97,y:51}],spread:2.0},enemyAnchors:[{x:50,y:50}],
-   bounds:{left:16,right:84,top:18,bottom:82},arena:{shape:'ellipse',cx:50,cy:50,rx:32,ry:29},
-   life:{profile:'embermaw',particles:38,mix:['ember','ember','ember','smoke','ash'],depthMin:.935,depthMax:1.07,light:'rgba(255,91,30,.38)',hotspots:[{type:'rune',x:50,y:50,w:43,h:38,i:.66,d:.15},{type:'lava',x:50,y:26,w:13,h:27,r:90,i:.72,d:.3},{type:'lava',x:72,y:50,w:24,h:11,r:0,i:.72,d:.65},{type:'lava',x:50,y:74,w:13,h:27,r:90,i:.72,d:1.0},{type:'lava',x:28,y:50,w:24,h:11,r:0,i:.72,d:1.35},{type:'heat',x:50,y:50,w:58,h:55,i:.72,d:.25}]},
-   occluders:[
-     {clip:'polygon(0 78%,13% 68%,22% 82%,29% 100%,0 100%)',opacity:.88},
-     {clip:'polygon(100% 78%,87% 68%,78% 82%,71% 100%,100% 100%)',opacity:.88}
+  ],
+  "life": {
+   "profile": "ember-hall",
+   "particles": 18,
+   "mix": [
+    "ember",
+    "ash",
+    "ember",
+    "smoke"
    ],
-   blockers:[
-     {id:'embermaw-lava-n',shape:'polygon',points:[[47,19],[53,19],[55,38],[52,42],[48,42],[45,38]],blocksLos:false},
-     {id:'embermaw-lava-ne',shape:'polygon',points:[[61,37],[76,27],[81,32],[68,48],[62,47]],blocksLos:false},
-     {id:'embermaw-lava-se',shape:'polygon',points:[[62,57],[79,68],[75,74],[58,63]],blocksLos:false},
-     {id:'embermaw-lava-s',shape:'polygon',points:[[47,60],[53,60],[55,81],[46,81]],blocksLos:false},
-     {id:'embermaw-lava-sw',shape:'polygon',points:[[38,57],[22,70],[18,64],[35,51]],blocksLos:false},
-     {id:'embermaw-lava-nw',shape:'polygon',points:[[37,42],[21,33],[25,27],[42,38]],blocksLos:false}
+   "depthMin": 0.955,
+   "depthMax": 1.045,
+   "light": "rgba(255,139,61,.20)",
+   "hotspots": []
+  },
+  "occluders": [],
+  "blockers": []
+ },
+ "kael": {
+  "room": "warden-seal",
+  "label": "The Warden Seal",
+  "ambience": "The central seal is kept clear for Kael’s arena.",
+  "art": "./assets/ashen-vault/rooms/kael.webp",
+  "artPosition": "50% 50%",
+  "route": {
+   "entry": {
+    "x": 50,
+    "y": 98
+   },
+   "entryInside": {
+    "x": 50,
+    "y": 82
+   },
+   "engage": {
+    "x": 50,
+    "y": 63
+   },
+   "partyAnchors": [
+    {
+     "x": 50,
+     "y": 63
+    },
+    {
+     "x": 44,
+     "y": 65
+    },
+    {
+     "x": 56,
+     "y": 65
+    },
+    {
+     "x": 40,
+     "y": 60
+    },
+    {
+     "x": 60,
+     "y": 60
+    }
+   ],
+   "exitPath": [
+    {
+     "x": 50,
+     "y": 56
+    },
+    {
+     "x": 50,
+     "y": 43
+    },
+    {
+     "x": 50,
+     "y": 31
+    },
+    {
+     "x": 50,
+     "y": 20
+    },
+    {
+     "x": 50,
+     "y": 8
+    }
+   ],
+   "spread": 2.1
+  },
+  "enemyAnchors": [
+   {
+    "x": 50,
+    "y": 42
+   }
+  ],
+  "addAnchors": [
+   {
+    "x": 34,
+    "y": 48
+   },
+   {
+    "x": 66,
+    "y": 48
+   }
+  ],
+  "bounds": {
+   "left": 18,
+   "right": 82,
+   "top": 26,
+   "bottom": 73
+  },
+  "arena": {
+   "shape": "ellipse",
+   "cx": 50,
+   "cy": 50,
+   "rx": 31,
+   "ry": 22
+  },
+  "life": {
+   "profile": "warden-seal",
+   "particles": 22,
+   "mix": [
+    "ember",
+    "ember",
+    "ash",
+    "smoke"
+   ],
+   "depthMin": 0.95,
+   "depthMax": 1.05,
+   "light": "rgba(255,101,46,.24)",
+   "hotspots": []
+  },
+  "occluders": [],
+  "blockers": []
+ },
+ "furnace": {
+  "room": "furnace-passage",
+  "label": "Furnace Passage",
+  "ambience": "Only the central stone causeway is safe enough to fight on.",
+  "art": "./assets/ashen-vault/rooms/furnace.webp",
+  "artPosition": "50% 50%",
+  "route": {
+   "entry": {
+    "x": 50,
+    "y": 98
+   },
+   "entryInside": {
+    "x": 50,
+    "y": 83
+   },
+   "engage": {
+    "x": 50,
+    "y": 64
+   },
+   "partyAnchors": [
+    {
+     "x": 50,
+     "y": 64
+    },
+    {
+     "x": 46,
+     "y": 66
+    },
+    {
+     "x": 54,
+     "y": 66
+    },
+    {
+     "x": 43,
+     "y": 61
+    },
+    {
+     "x": 57,
+     "y": 61
+    }
+   ],
+   "exitPath": [
+    {
+     "x": 50,
+     "y": 58
+    },
+    {
+     "x": 50,
+     "y": 45
+    },
+    {
+     "x": 50,
+     "y": 32
+    },
+    {
+     "x": 50,
+     "y": 19
+    },
+    {
+     "x": 50,
+     "y": 7
+    }
+   ],
+   "spread": 1.8
+  },
+  "enemyAnchors": [
+   {
+    "x": 46,
+    "y": 35
+   },
+   {
+    "x": 54,
+    "y": 35
+   }
+  ],
+  "bounds": {
+   "left": 34,
+   "right": 66,
+   "top": 21,
+   "bottom": 71
+  },
+  "walkable": [
+   [
+    39,
+    22
+   ],
+   [
+    61,
+    22
+   ],
+   [
+    64,
+    32
+   ],
+   [
+    60,
+    43
+   ],
+   [
+    63,
+    55
+   ],
+   [
+    59,
+    69
+   ],
+   [
+    41,
+    69
+   ],
+   [
+    37,
+    55
+   ],
+   [
+    40,
+    43
+   ],
+   [
+    36,
+    32
    ]
- },
- 'vault-depths':{
-   room:'vault-depths',label:'Sealed Vault Depths',ambience:'Dead reliquaries line the path inward.',
-   art:'./assets/ashen-vault/battlefields/vault-depths.avif',artPosition:'50% 50%',
-   route:{entry:{x:5,y:56},entryInside:{x:25,y:56},engage:{x:59,y:48},partyAnchors:[{x:38,y:54},{x:33,y:49},{x:34,y:60},{x:28,y:47},{x:28,y:64}],exitPath:[{x:66,y:43},{x:74,y:35},{x:82,y:27},{x:91,y:20}],spread:2.3},enemyAnchors:[{x:62,y:42},{x:66,y:53},{x:57,y:61}],
-   bounds:{left:12,right:88,top:20,bottom:84},
-   walkable:[[22,31],[38,24],[67,24],[82,34],[86,52],[81,69],[68,80],[31,80],[17,69],[14,48]],
-   life:{profile:'vault-depths',particles:20,mix:['ash','smoke','ash','ember'],depthMin:.95,depthMax:1.05,light:'rgba(192,107,98,.18)',hotspots:[{type:'relic',x:20,y:29,w:14,h:19,i:.36,d:0},{type:'relic',x:80,y:29,w:14,h:19,i:.34,d:.9},{type:'relic',x:22,y:71,w:14,h:19,i:.3,d:.45},{type:'relic',x:78,y:71,w:14,h:19,i:.3,d:1.3},{type:'glow',x:51,y:51,w:39,h:27,i:.18,d:.2}]},
-   occluders:[
-     {clip:'polygon(0 70%,10% 66%,18% 80%,24% 100%,0 100%)',opacity:.94},
-     {clip:'polygon(100% 70%,90% 66%,82% 80%,76% 100%,100% 100%)',opacity:.94}
+  ],
+  "life": {
+   "profile": "furnace",
+   "particles": 24,
+   "mix": [
+    "ember",
+    "ember",
+    "smoke",
+    "ash"
    ],
-   blockers:[]
+   "depthMin": 0.955,
+   "depthMax": 1.045,
+   "light": "rgba(255,102,34,.28)",
+   "hotspots": []
+  },
+  "occluders": [],
+  "blockers": []
  },
- 'vaultheart':{
-   room:'vaultheart-sanctum',label:'The Vaultheart Sanctum',ambience:'A sealed Cell reliquary hums beneath the final chamber.',
-   art:'./assets/ashen-vault/battlefields/vaultheart.avif',artPosition:'50% 50%',
-   route:{entry:{x:50,y:96},entryInside:{x:50,y:77},engage:{x:50,y:58},partyAnchors:[{x:50,y:66},{x:44,y:70},{x:56,y:70},{x:41,y:76},{x:59,y:76}],exitPath:[],spread:2.0},enemyAnchors:[{x:50,y:29}],
-   bounds:{left:13,right:87,top:14,bottom:83},arena:{shape:'ellipse',cx:50,cy:49,rx:34,ry:32},
-   life:{profile:'vaultheart',particles:34,mix:['ember','smoke','ember','ash'],depthMin:.935,depthMax:1.07,light:'rgba(255,103,52,.30)',hotspots:[{type:'core',x:50,y:42,w:25,h:28,i:.88,d:0},{type:'rune',x:50,y:52,w:48,h:40,i:.58,d:.3},{type:'fire',x:19,y:27,w:10,h:17,i:.65,d:.8},{type:'fire',x:81,y:27,w:10,h:17,i:.65,d:1.15},{type:'heat',x:50,y:46,w:58,h:50,i:.5,d:.2}]},
-   occluders:[
-     {clip:'polygon(0 77%,13% 68%,21% 81%,27% 100%,0 100%)',opacity:.9},
-     {clip:'polygon(100% 77%,87% 68%,79% 81%,73% 100%,100% 100%)',opacity:.9}
+ "embermaw": {
+  "room": "embermaw-forge",
+  "label": "The Ember Forge",
+  "ambience": "Embermaw holds the circular forge floor below the furnace maw.",
+  "art": "./assets/ashen-vault/rooms/embermaw.webp",
+  "artPosition": "50% 50%",
+  "route": {
+   "entry": {
+    "x": 50,
+    "y": 98
+   },
+   "entryInside": {
+    "x": 50,
+    "y": 82
+   },
+   "engage": {
+    "x": 50,
+    "y": 62
+   },
+   "partyAnchors": [
+    {
+     "x": 50,
+     "y": 62
+    },
+    {
+     "x": 44,
+     "y": 64
+    },
+    {
+     "x": 56,
+     "y": 64
+    },
+    {
+     "x": 40,
+     "y": 59
+    },
+    {
+     "x": 60,
+     "y": 59
+    }
    ],
-   blockers:[
-     {id:'vaultheart-core',shape:'ellipse',x:50,y:42,rx:9,ry:12,blocksLos:true}
+   "exitPath": [
+    {
+     "x": 50,
+     "y": 55
+    },
+    {
+     "x": 50,
+     "y": 43
+    },
+    {
+     "x": 50,
+     "y": 32
+    },
+    {
+     "x": 50,
+     "y": 23
+    },
+    {
+     "x": 50,
+     "y": 14
+    }
+   ],
+   "spread": 2
+  },
+  "enemyAnchors": [
+   {
+    "x": 50,
+    "y": 40
+   }
+  ],
+  "bounds": {
+   "left": 23,
+   "right": 77,
+   "top": 30,
+   "bottom": 72
+  },
+  "arena": {
+   "shape": "ellipse",
+   "cx": 50,
+   "cy": 50,
+   "rx": 28,
+   "ry": 20
+  },
+  "life": {
+   "profile": "embermaw",
+   "particles": 26,
+   "mix": [
+    "ember",
+    "ember",
+    "ember",
+    "smoke",
+    "ash"
+   ],
+   "depthMin": 0.95,
+   "depthMax": 1.05,
+   "light": "rgba(255,91,30,.30)",
+   "hotspots": []
+  },
+  "occluders": [],
+  "blockers": []
+ },
+ "vault-depths": {
+  "room": "vault-depths",
+  "label": "The Vault Depths",
+  "ambience": "The descent narrows into a chained central platform.",
+  "art": "./assets/ashen-vault/rooms/vault-depths.webp",
+  "artPosition": "50% 50%",
+  "route": {
+   "entry": {
+    "x": 50,
+    "y": 98
+   },
+   "entryInside": {
+    "x": 50,
+    "y": 83
+   },
+   "engage": {
+    "x": 50,
+    "y": 63
+   },
+   "partyAnchors": [
+    {
+     "x": 50,
+     "y": 63
+    },
+    {
+     "x": 44,
+     "y": 65
+    },
+    {
+     "x": 56,
+     "y": 65
+    },
+    {
+     "x": 40,
+     "y": 60
+    },
+    {
+     "x": 60,
+     "y": 60
+    }
+   ],
+   "exitPath": [
+    {
+     "x": 50,
+     "y": 56
+    },
+    {
+     "x": 50,
+     "y": 43
+    },
+    {
+     "x": 50,
+     "y": 31
+    },
+    {
+     "x": 50,
+     "y": 19
+    },
+    {
+     "x": 50,
+     "y": 8
+    }
+   ],
+   "spread": 2.1
+  },
+  "enemyAnchors": [
+   {
+    "x": 50,
+    "y": 36
+   },
+   {
+    "x": 42,
+    "y": 45
+   },
+   {
+    "x": 58,
+    "y": 45
+   }
+  ],
+  "addAnchors": [
+   {
+    "x": 34,
+    "y": 49
+   },
+   {
+    "x": 66,
+    "y": 49
+   }
+  ],
+  "bounds": {
+   "left": 28,
+   "right": 72,
+   "top": 27,
+   "bottom": 70
+  },
+  "walkable": [
+   [
+    39,
+    28
+   ],
+   [
+    61,
+    28
+   ],
+   [
+    70,
+    39
+   ],
+   [
+    68,
+    57
+   ],
+   [
+    60,
+    68
+   ],
+   [
+    40,
+    68
+   ],
+   [
+    32,
+    57
+   ],
+   [
+    30,
+    40
    ]
+  ],
+  "life": {
+   "profile": "vault-depths",
+   "particles": 16,
+   "mix": [
+    "ash",
+    "smoke",
+    "ash",
+    "ember"
+   ],
+   "depthMin": 0.955,
+   "depthMax": 1.045,
+   "light": "rgba(255,112,58,.18)",
+   "hotspots": []
+  },
+  "occluders": [],
+  "blockers": []
+ },
+ "vaultheart": {
+  "room": "vaultheart-sanctum",
+  "label": "The Vaultheart Sanctum",
+  "ambience": "The final platform surrounds the exposed Vaultheart.",
+  "art": "./assets/ashen-vault/rooms/vaultheart.webp",
+  "artPosition": "50% 50%",
+  "route": {
+   "entry": {
+    "x": 50,
+    "y": 98
+   },
+   "entryInside": {
+    "x": 50,
+    "y": 83
+   },
+   "engage": {
+    "x": 50,
+    "y": 64
+   },
+   "partyAnchors": [
+    {
+     "x": 50,
+     "y": 64
+    },
+    {
+     "x": 44,
+     "y": 66
+    },
+    {
+     "x": 56,
+     "y": 66
+    },
+    {
+     "x": 40,
+     "y": 61
+    },
+    {
+     "x": 60,
+     "y": 61
+    }
+   ],
+   "exitPath": [],
+   "spread": 2
+  },
+  "enemyAnchors": [
+   {
+    "x": 50,
+    "y": 43
+   }
+  ],
+  "addAnchors": [
+   {
+    "x": 33,
+    "y": 51
+   },
+   {
+    "x": 67,
+    "y": 51
+   }
+  ],
+  "bounds": {
+   "left": 22,
+   "right": 78,
+   "top": 28,
+   "bottom": 72
+  },
+  "walkable": [
+   [
+    32,
+    30
+   ],
+   [
+    68,
+    30
+   ],
+   [
+    76,
+    41
+   ],
+   [
+    73,
+    60
+   ],
+   [
+    64,
+    70
+   ],
+   [
+    36,
+    70
+   ],
+   [
+    27,
+    60
+   ],
+   [
+    24,
+    42
+   ]
+  ],
+  "life": {
+   "profile": "vaultheart",
+   "particles": 24,
+   "mix": [
+    "ember",
+    "smoke",
+    "ember",
+    "ash"
+   ],
+   "depthMin": 0.95,
+   "depthMax": 1.05,
+   "light": "rgba(255,103,52,.26)",
+   "hotspots": [
+    {
+     "type": "core",
+     "x": 50,
+     "y": 40,
+     "w": 18,
+     "h": 19,
+     "i": 0.62,
+     "d": 0
+    }
+   ]
+  },
+  "occluders": [],
+  "blockers": []
  }
 };
 let Game=null,G=null,P=null,run=null,token=0,rebornLoaderPromise=null,requestedRunOptions=null;
@@ -1514,8 +2298,9 @@ function rebornEncounter(s){
    arena:room.arena?{...room.arena}:undefined,
    walkable:Array.isArray(room.walkable)?room.walkable.map(p=>[Number(p[0]),Number(p[1])]):undefined
  };
+ const mechanics=s.mechanics.map(m=>{const mechanic=Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m};if(mechanic.type==='adds'&&Array.isArray(room.addAnchors)&&room.addAnchors.length)mechanic.spawnPoints=room.addAnchors.map(p=>({x:Number(p.x),y:Number(p.y)}));return mechanic});
  const enemies=s.enemies.map((name,i)=>({name,currentPosition:stageEnemyPosition(s,i)}));
- const base={id:s.id,title:s.title,kind:s.kind,level:s.level||1,recommendedItemLevel,knowledgeKey:s.knowledge||s.id,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies,enemyHealth:s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120,mechanics:s.mechanics.map(m=>Array.isArray(m)?{name:m[0],type:m[1],duration:m[2]}:{...m}),environment};
+ const base={id:s.id,title:s.title,kind:s.kind,level:s.level||1,recommendedItemLevel,knowledgeKey:s.knowledge||s.id,enemyLevels:s.enemyLevels||null,enemyTypes:s.enemyTypes||null,enemies,enemyHealth:s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120,mechanics,environment};
  return window.CellboundEndgame?.stageConfig?.('ashen-vault',base)||base
 }
 function copyObject(v){return JSON.parse(JSON.stringify(v||{}))}

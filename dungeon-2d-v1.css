@@ -1087,7 +1087,7 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 
 /* Ashen Vault generated environment asset pass */
 .cb2d-arena.theme-ashen .cb2d-floor{
-  background-image:url('./assets/ashen-vault/environment/floor-atlas.png')!important;
+  background-image:none!important;
   background-repeat:no-repeat!important;
   background-size:300% 300%!important;
   filter:brightness(.68) saturate(.82) contrast(1.08);
@@ -1134,7 +1134,7 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 .cb2d-arena.theme-ashen .cb2d-prop.prop-chain,
 .cb2d-arena.theme-ashen .cb2d-prop.prop-furnace,
 .cb2d-arena.theme-ashen .cb2d-prop.prop-rubble{
-  background-image:url('./assets/ashen-vault/environment/props-atlas.png')!important;
+  background-image:none!important;
   background-repeat:no-repeat!important;
   border:0!important;
   border-radius:0!important;
@@ -1350,10 +1350,10 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 }
 
 
-/* Ashen Vault bespoke battlefields v1 */
+/* Ashen Vault illustrated room artwork v2 */
 .cb2d-arena.theme-ashen[data-bespoke-battlefield="1"]{
   position:relative;isolation:isolate;width:100%!important;min-width:0;height:auto!important;min-height:0!important;max-height:none!important;
-  aspect-ratio:auto!important;justify-self:stretch!important;align-self:stretch!important;
+  aspect-ratio:16/9!important;justify-self:stretch!important;align-self:stretch!important;
   overflow:hidden;background:#080504!important;border-color:rgba(255,126,49,.28);
   box-shadow:inset 0 0 0 1px rgba(255,153,73,.07),0 20px 54px rgba(0,0,0,.34);
 }

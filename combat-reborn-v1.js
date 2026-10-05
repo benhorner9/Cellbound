@@ -3805,6 +3805,18 @@ function tryInterrupt(ctx,e,mechanic,castToken){
   },'duplicate-interrupt')
  }
 }
+function spawnPointForAdd(ctx,mechanic,index,count){
+ const rawPoints=Array.isArray(mechanic?.spawnPoints)?mechanic.spawnPoints:[],raw=rawPoints.length?rawPoints[index%rawPoints.length]:null;
+ let requested=null;
+ if(Array.isArray(raw)&&Number.isFinite(Number(raw[0]))&&Number.isFinite(Number(raw[1])))requested={x:Number(raw[0]),y:Number(raw[1])};
+ else if(raw&&Number.isFinite(Number(raw.x))&&Number.isFinite(Number(raw.y)))requested={x:Number(raw.x),y:Number(raw.y)};
+ else if(Number.isFinite(Number(mechanic?.x))&&Number.isFinite(Number(mechanic?.y)))requested={x:Number(mechanic.x),y:Number(mechanic.y)};
+ if(!requested){
+  const center=arenaCenter(ctx),b=arenaBounds(ctx),radius=Math.max(4,Math.min(12,(b.right-b.left)*.22,(b.bottom-b.top)*.22)),slots=Math.max(2,Number(count)||2),angle=-Math.PI/2+(index/slots)*Math.PI*2;
+  requested={x:center.x+Math.cos(angle)*radius,y:center.y+Math.sin(angle)*radius}
+ }
+ return openPosition(ctx,requested,1.15)
+}
 function spawnAdds(ctx,e,mechanic={}){
  const base=ctx.enemies.length,group=String(mechanic.addGroup||mechanic.addName||'adds');
  const maxActiveRaw=Number(mechanic.maxActive),maxActive=Number.isFinite(maxActiveRaw)?Math.max(1,Math.min(12,Math.round(maxActiveRaw))):Infinity;
@@ -3812,22 +3824,22 @@ function spawnAdds(ctx,e,mechanic={}){
  const requested=Number(mechanic.addCount),wanted=Number.isFinite(requested)?Math.max(1,Math.min(5,Math.round(requested))):2+Math.max(0,Math.min(2,Number(ctx.encounter.scaling?.addCountBonus)||0));
  const count=Math.max(0,Math.min(wanted,maxActive-active)),addName=String(mechanic.addName||'Cave Spawn');
  for(let i=0;i<count;i++){
-  const id='add-'+ctx.addSeq++,level=Math.max(1,Number(e.level)||Number(ctx.encounter.level)||1),rule=enemyClassRule('add'),healthScale=Math.max(.25,Number(mechanic.healthScale)||1),maxHealth=Math.round(72*levelHealthScale(level)*rule.health*scalingValue(ctx,'enemyHealth',1)*healthScale),add={id,name:addName,role:'enemy',kind:'enemy',classification:'add',classificationLabel:rule.label,level,maxHealth,health:maxHealth,alive:true,position:{x:Number(mechanic.x)||74,y:Number(mechanic.y)||(i?66:34)},facing:180,bodyRadius:Math.max(.9,Number(mechanic.bodyRadius)||1.1),target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},nextAttack:ctx.time+600+i*150,currentCast:null,isAdd:true,priority:Number.isFinite(Number(mechanic.priority))?Number(mechanic.priority):3,damageScale:rule.damage*scalingValue(ctx,'enemyDamage',1)*Math.max(.25,Number(mechanic.damageScale)||1),visualArchetype:mechanic.visualArchetype||null,targeting:String(mechanic.targeting||'threat').toLowerCase(),attackRange:Math.max(2,Number(mechanic.attackRange)||5),attackName:mechanic.attackName||null,damageType:mechanic.damageType||'physical',allAttacksAoe:Boolean(mechanic.allAttacksAoe),passive:Boolean(mechanic.passive),addGroup:group};
+  const id='add-'+ctx.addSeq++,level=Math.max(1,Number(e.level)||Number(ctx.encounter.level)||1),rule=enemyClassRule('add'),healthScale=Math.max(.25,Number(mechanic.healthScale)||1),maxHealth=Math.round(72*levelHealthScale(level)*rule.health*scalingValue(ctx,'enemyHealth',1)*healthScale),spawn=spawnPointForAdd(ctx,mechanic,i,count),add={id,name:addName,role:'enemy',kind:'enemy',classification:'add',classificationLabel:rule.label,level,maxHealth,health:maxHealth,alive:true,position:spawn,facing:180,bodyRadius:Math.max(.9,Number(mechanic.bodyRadius)||1.1),target:null,threat:{},forcedTarget:null,forcedUntil:0,cooldowns:{},statuses:{},nextAttack:ctx.time+600+i*150,currentCast:null,isAdd:true,priority:Number.isFinite(Number(mechanic.priority))?Number(mechanic.priority):3,damageScale:rule.damage*scalingValue(ctx,'enemyDamage',1)*Math.max(.25,Number(mechanic.damageScale)||1),visualArchetype:mechanic.visualArchetype||null,targeting:String(mechanic.targeting||'threat').toLowerCase(),attackRange:Math.max(2,Number(mechanic.attackRange)||5),attackName:mechanic.attackName||null,damageType:mechanic.damageType||'physical',allAttacksAoe:Boolean(mechanic.allAttacksAoe),passive:Boolean(mechanic.passive),addGroup:group};
   add.movingUntil=0;add.moveToken=0;add.moveStartedAt=0;add.moveFrom=null;add.moveTo=null;ctx.enemies.push(add);ctx.units[id]=add;add.position=openPhysicalPosition(ctx,add,add.position,1.15);ctx.players.forEach(p=>add.threat[p.id]=0);
   const random=livingPlayers(ctx)[Math.floor(ctx.rng()*livingPlayers(ctx).length)];if(random)add.threat[random.id]=120;
   setAggro(ctx,add,topThreatTarget(ctx,add),'spawn');
   emit(ctx,'ADD_SPAWNED',{source:e.id,target:add.id,ability:mechanic.spawnAbility||'Summon',result:'spawned',position:copy(add.position),payload:{name:add.name,maxHealth:add.maxHealth,target:add.target,level:add.level,classification:add.classification,classificationLabel:add.classificationLabel,visualArchetype:add.visualArchetype,attackRange:add.attackRange,damageType:add.damageType,addGroup:group,bodyRadius:bodyRadius(add)}});
   if(ctx.tactics?.crowdControl==='priority-elites'){
-    const controller=livingPlayers(ctx).filter(p=>p.role==='dps').sort((a,b)=>executionQuality(ctx,b)-executionQuality(ctx,a))[0];
-    if(controller&&i===0){applyStatus(ctx,controller,add,{id:'tactical-control-add-'+id,name:'Tactical Crowd Control',kind:'debuff',duration:1800,cc:'stun'});emit(ctx,'CROWD_CONTROL',{source:controller.id,target:add.id,ability:'Tactical Crowd Control',result:'applied',payload:{duration:1800,policy:'priority-elites'}})}
+   const controller=livingPlayers(ctx).filter(p=>p.role==='dps').sort((a,b)=>executionQuality(ctx,b)-executionQuality(ctx,a))[0];
+   if(controller&&i===0){applyStatus(ctx,controller,add,{id:'tactical-control-add-'+id,name:'Tactical Crowd Control',kind:'debuff',duration:1800,cc:'stun'});emit(ctx,'CROWD_CONTROL',{source:controller.id,target:add.id,ability:'Tactical Crowd Control',result:'applied',payload:{duration:1800,policy:'priority-elites'}})}
   }
  }
  if(!count&&Number.isFinite(maxActive)){
-   const activeAdds=livingEnemies(ctx).filter(x=>x.isAdd&&String(x.addGroup||x.name||'adds')===group),overclock=Math.max(1,Number(mechanic.overclockOnCap)||1);
-   if(overclock>1&&activeAdds.length){
-     activeAdds.forEach(add=>{add.damageScale=Math.min(6,(Number(add.damageScale)||1)*overclock);add.nextAttack=Math.min(Number(add.nextAttack)||ctx.time+800,ctx.time+350)});
-     emit(ctx,'ADD_OVERCLOCKED',{source:e.id,ability:mechanic.overclockAbility||'Overclock',result:'empower',payload:{addGroup:group,targets:activeAdds.map(x=>x.id),damageScale:overclock}})
-   }else emit(ctx,'ADD_SPAWN_SKIPPED',{source:e.id,ability:mechanic.spawnAbility||'Summon',result:'max-active',payload:{addGroup:group,maxActive,active}});
+  const activeAdds=livingEnemies(ctx).filter(x=>x.isAdd&&String(x.addGroup||x.name||'adds')===group),overclock=Math.max(1,Number(mechanic.overclockOnCap)||1);
+  if(overclock>1&&activeAdds.length){
+   activeAdds.forEach(add=>{add.damageScale=Math.min(6,(Number(add.damageScale)||1)*overclock);add.nextAttack=Math.min(Number(add.nextAttack)||ctx.time+800,ctx.time+350)});
+   emit(ctx,'ADD_OVERCLOCKED',{source:e.id,ability:mechanic.overclockAbility||'Overclock',result:'empower',payload:{addGroup:group,targets:activeAdds.map(x=>x.id),damageScale:overclock}})
+  }else emit(ctx,'ADD_SPAWN_SKIPPED',{source:e.id,ability:mechanic.spawnAbility||'Summon',result:'max-active',payload:{addGroup:group,maxActive,active}});
  }
 }
 function mechanicStatusDefinition(m){
