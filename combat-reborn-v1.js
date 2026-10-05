@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.7.0';
+const VERSION='1.8.0';
 const COMMAND_RULES={
  focus:{cooldownMs:8000,sharedMs:3000,cost:1},
  spread:{cooldownMs:10000,sharedMs:3000,cost:1},
@@ -1520,6 +1520,7 @@ function persistentHazardEscapePoint(ctx,u,hazard,from=null){
 }
 function persistentHazardSafeDestination(ctx,u,destination){
  if(unitTeam(u)!=='party'||!destination)return destination;
+ if(ctx.commanderDirectControl)return destination;
  const hazards=activePersistentHazards(ctx);if(!hazards.length)return destination;
  let safe=copy(destination);
  for(let guard=0;guard<Math.min(4,hazards.length+1);guard++){
@@ -1530,6 +1531,7 @@ function persistentHazardSafeDestination(ctx,u,destination){
 }
 function ensurePersistentHazardEscape(ctx,u,hazard,reason='persistent ground escape'){
  if(!u?.alive||!persistentHazardContains(ctx,u,hazard,physicalPosition(ctx,u),0))return false;
+ if(ctx.commanderDirectControl&&unitTeam(u)==='party')return false;
  const destination=persistentHazardEscapePoint(ctx,u,hazard,physicalPosition(ctx,u));
  if(dist(physicalPosition(ctx,u),destination)>.45)moveTo(ctx,u,destination,340,reason);
  return true
@@ -1603,10 +1605,11 @@ function supportFormationAnchor(ctx,u,target){
  return enemy?.alive?enemy:target
 }
 function moveIntoRange(ctx,u,target,range,abilityKind='damage'){
- const r=Math.max(2,Number(range)||5),los=hasLineOfSight(ctx,u,target),supportive=u.role==='healer'&&['heal','group-heal','battle-rez','defensive','support'].includes(String(abilityKind||''));
+ const r=Math.max(2,Number(range)||5),los=hasLineOfSight(ctx,u,target),supportive=u.role==='healer'&&['heal','group-heal','battle-rez','defensive','support'].includes(String(abilityKind||'')),commanderHold=ctx.commanderDirectControl&&Number(u.commandPositionUntil)>ctx.time;
  if(supportive){
    const targetInRange=inRange(u,target,r);
    if(targetInRange&&los){
+     if(commanderHold)return true;
      // Healers hold a party backline; they do not orbit whichever ally currently needs a heal.
      const anchor=supportFormationAnchor(ctx,u,target),urgent=target?.maxHealth>0&&target.health/target.maxHealth<.62;
      if(anchor&&anchor.id!==target.id&&!urgent){
@@ -1617,6 +1620,7 @@ function moveIntoRange(ctx,u,target,range,abilityKind='damage'){
    }
    const angle=Math.atan2(u.position.y-target.position.y,u.position.x-target.position.x),radius=Math.min(18,Math.max(6,r*.72));
    const desired=visibleCastPoint(ctx,u,target,r,{x:target.position.x+Math.cos(angle)*radius,y:target.position.y+Math.sin(angle)*radius});
+   if(commanderHold)return false;
    moveTo(ctx,u,desired,480,!los?'line of sight':'support range');return false
  }
  if(r<=7){
@@ -1625,12 +1629,14 @@ function moveIntoRange(ctx,u,target,range,abilityKind='damage'){
    const tolerance=u.role==='tank'?(ctx.physicalSpace?3.35:2.1):3.75;
    if(combatRange&&los&&slotDistance<=tolerance)return true;
    if(combatRange&&los&&target.movingUntil>ctx.time&&slotDistance<=(ctx.physicalSpace?6.75:4.75))return true;
+   if(commanderHold)return false;
    moveTo(ctx,u,desired,500,!los?'line of sight':u.role==='tank'?'tank positioning':'melee formation');
    return false
  }
  const formation=rangedFormationPoint(ctx,u,target,r),desired=visibleCastPoint(ctx,u,target,r,formation),slotDistance=dist(u.position,desired);
  if(inRange(u,target,r)&&los&&slotDistance<=6.25)return true;
  if(inRange(u,target,r)&&los&&target.movingUntil>ctx.time&&slotDistance<=9)return true;
+ if(commanderHold)return false;
  moveTo(ctx,u,desired,500,!los?'line of sight':'ranged formation');
  return false
 }
@@ -2801,14 +2807,15 @@ function scheduleUnstableGround(ctx){
  schedule(ctx,ctx.time+5200,()=>{
   if(ctx.finished)return;
   const live=livingPlayers(ctx),enemy=livingEnemies(ctx)[0];if(!live.length||!enemy)return;
-  const target=live[Math.floor(ctx.rng()*live.length)],duration=1250,token='affix-ground-'+(++ctx.mechanicSeq);
+  const target=live[Math.floor(ctx.rng()*live.length)],duration=1250,token='affix-ground-'+(++ctx.mechanicSeq),telegraphPosition=copy(physicalPosition(ctx,target));
   const plan=mechanicResponse(ctx,target,'circle',duration,enemy);
-  emit(ctx,'AFFIX_TRIGGER',{source:enemy.id,target:target.id,ability:'Unstable Ground',result:'telegraph',position:copy(target.position),payload:{affix:'unstable-ground',token,duration}});
-  emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:target.id,ability:'Unstable Ground',result:'telegraph',position:copy(target.position),payload:{mechanicType:'circle',duration,token,targetId:target.id,targetIds:[target.id],responses:{[target.id]:plan.success}}});
+  emit(ctx,'AFFIX_TRIGGER',{source:enemy.id,target:target.id,ability:'Unstable Ground',result:'telegraph',position:copy(telegraphPosition),payload:{affix:'unstable-ground',token,duration}});
+  emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:target.id,ability:'Unstable Ground',result:'telegraph',position:copy(telegraphPosition),payload:{mechanicType:'circle',duration,token,targetId:target.id,targetIds:[target.id],responses:{[target.id]:plan.success},telegraphPositions:{[target.id]:copy(telegraphPosition)}}});
   schedule(ctx,ctx.time+duration,()=>{
-   emit(ctx,'MECHANIC_RESOLVE',{source:enemy.id,target:target.id,ability:'Unstable Ground',result:'resolve',payload:{mechanicType:'circle',token}});
-   if(target.alive&&!plan.success)dealDamage(ctx,enemy,target,24*enemyPressure(ctx,enemy,target),'Unstable Ground',{damageType:'magic',avoidable:true});
-   scheduleUnstableGround(ctx)
+   const escaped=ctx.commanderDirectControl?dist(physicalPosition(ctx,target),telegraphPosition)>6:plan.success;
+   emit(ctx,'MECHANIC_RESOLVE',{source:enemy.id,target:target.id,ability:'Unstable Ground',result:escaped?'avoided':'resolve',payload:{mechanicType:'circle',token}});
+   if(target.alive&&!escaped)dealDamage(ctx,enemy,target,24*enemyPressure(ctx,enemy,target),'Unstable Ground',{damageType:'magic',avoidable:true});
+   mechanicStat(ctx,'circle',!escaped);scheduleUnstableGround(ctx)
   },'affix-ground-resolve')
  },'affix-ground-start')
 }
@@ -2837,6 +2844,9 @@ function pickDamageTarget(ctx,u){
  const commanded=ctx.commandFocusId&&Number(ctx.commandFocusUntil)>ctx.time?getUnit(ctx,ctx.commandFocusId):null;
  if(commanded?.alive)return commanded;
  if(ctx.commandFocusId&&Number(ctx.commandFocusUntil)<=ctx.time){ctx.commandFocusId=null;ctx.commandFocusUntil=0}
+ const personal=u?.commanderTargetId?getUnit(ctx,u.commanderTargetId):null;
+ if(personal?.alive&&personal.role==='enemy')return personal;
+ if(u?.commanderTargetId)u.commanderTargetId=null;
  const adds=livingEnemies(ctx).filter(e=>e.isAdd);
  if(adds.length&&ctx.tactics.addPriority!=='boss'){
   return adds.sort((a,b)=>(b.priority||0)-(a.priority||0)||a.health-b.health)[0];
@@ -3729,6 +3739,7 @@ function planMovement(ctx,u,type,anchor){
  moveTo(ctx,u,openPosition(ctx,to,1.7),320,'mechanic response');
 }
 function mechanicResponse(ctx,u,type,duration,enemy){
+ if(ctx.commanderDirectControl)return{success:false,reactionMs:null,manual:true};
  const baseReaction=executionReaction(ctx,u,'movement');
  const error=shouldMistake(ctx,u,'movement',2200);
  const hesitation=error?Math.round(260+ctx.rng()*520):0;
@@ -3742,6 +3753,31 @@ function mechanicResponse(ctx,u,type,duration,enemy){
  // Even failed players try to move. If they are late, the impact can land while they are still escaping.
  schedule(ctx,ctx.time+reaction,()=>{if(u.alive)planMovement(ctx,u,type,enemy)},'mechanic-reaction');
  return{success,reactionMs:reaction}
+}
+
+function pointSegmentDistance(point,a,b){
+ const dx=b.x-a.x,dy=b.y-a.y,len2=dx*dx+dy*dy;
+ if(len2<=.0001)return dist(point,a);
+ const t=clamp(((point.x-a.x)*dx+(point.y-a.y)*dy)/len2,0,1),nearest={x:a.x+dx*t,y:a.y+dy*t};
+ return dist(point,nearest)
+}
+function manualMechanicSuccess(ctx,p,m,cast,e){
+ if(!ctx.commanderDirectControl)return cast.responses?.[p.id]!==false;
+ const current=physicalPosition(ctx,p),start=cast.telegraphPositions?.[p.id]||copy(current),enemyStart=cast.enemyStart||physicalPosition(ctx,e);
+ if(m.type==='circle')return dist(current,physicalPosition(ctx,e))>Math.max(7,Number(m.radius)||10);
+ if(m.type==='circles'||m.type==='target-circle')return dist(current,start)>Math.max(5,Number(m.radius)||7);
+ if(m.type==='line'||m.type==='healer-swipe'){
+  const targetStart=cast.telegraphPositions?.[cast.targetId]||start,width=Math.max(4,Number(m.width)||6);
+  return pointSegmentDistance(current,enemyStart,targetStart)>width*.5+bodyRadius(p)*.45
+ }
+ if(m.type==='cone'){
+  if(p.role==='tank')return true;
+  const tank=livingPlayers(ctx).find(x=>x.role==='tank')||getUnit(ctx,cast.targetId),aim=tank?physicalPosition(ctx,tank):(cast.telegraphPositions?.[cast.targetId]||enemyStart);
+  const ax=aim.x-enemyStart.x,ay=aim.y-enemyStart.y,bx=current.x-enemyStart.x,by=current.y-enemyStart.y,al=Math.hypot(ax,ay)||1,bl=Math.hypot(bx,by)||1;
+  const angle=Math.acos(clamp((ax*bx+ay*by)/(al*bl),-1,1))*180/Math.PI;
+  return bl>Math.max(12,Number(m.range)||23)||angle>Math.max(24,Number(m.halfAngle)||42)
+ }
+ return cast.responses?.[p.id]!==false
 }
 function tryInterrupt(ctx,e,mechanic,castToken){
  const policy=ctx.tactics.interruptPriority;
@@ -3904,7 +3940,7 @@ function resolveMechanic(ctx,e,m,token){
  if(m.type==='healer-swipe'){
   const target=getUnit(ctx,cast.targetId);let failed=false;
   if(target?.alive){
-   const success=cast.responses?.[target.id]!==false;
+   const success=manualMechanicSuccess(ctx,target,m,cast,e);
    if(!success){failed=true;dealDamage(ctx,e,target,46*enemyPressure(ctx,e,target),m.name,{damageType:'physical',avoidable:true});applyMechanicStatus(ctx,e,m,target)}
    livingPlayers(ctx).filter(p=>p.id!==target.id&&dist(p.position,target.position)<=10).forEach(p=>{failed=true;dealDamage(ctx,e,p,32*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:true})})
   }
@@ -3913,7 +3949,7 @@ function resolveMechanic(ctx,e,m,token){
  if(m.type==='target-circle'){
   const target=getUnit(ctx,cast.targetId);let failed=false;
   if(target?.alive){
-   const success=cast.responses?.[target.id]!==false;
+   const success=manualMechanicSuccess(ctx,target,m,cast,e);
    if(!success){failed=true;dealDamage(ctx,e,target,40*enemyPressure(ctx,e,target),m.name,{damageType:m.damageType||'magic',avoidable:true});applyMechanicStatus(ctx,e,m,target)}
    livingPlayers(ctx).filter(p=>p.id!==target.id&&dist(p.position,target.position)<=Math.max(6,Number(m.radius)||10)).forEach(p=>{failed=true;dealDamage(ctx,e,p,34*enemyPressure(ctx,e,p),m.name,{damageType:m.damageType||'magic',avoidable:true})})
   }
@@ -3953,7 +3989,7 @@ function resolveMechanic(ctx,e,m,token){
   let failed=false;
   livingPlayers(ctx).forEach(p=>{
    if(p.role==='tank'){dealDamage(ctx,e,p,38*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:false});applyMechanicStatus(ctx,e,m,p);return}
-   const success=cast.responses?.[p.id]!==false;
+   const success=manualMechanicSuccess(ctx,p,m,cast,e);
    if(!success){failed=true;dealDamage(ctx,e,p,28*enemyPressure(ctx,e,p),m.name,{damageType:'physical',avoidable:true});applyMechanicStatus(ctx,e,m,p)}
   });
   mechanicStat(ctx,'cone',failed);scheduleNextMechanic(ctx);return;
@@ -3961,7 +3997,7 @@ function resolveMechanic(ctx,e,m,token){
  if(m.type==='circle'||m.type==='circles'){
   let failed=false;
   livingPlayers(ctx).forEach(p=>{
-   const success=cast.responses?.[p.id]!==false;
+   const success=manualMechanicSuccess(ctx,p,m,cast,e);
    if(!success){failed=true;dealDamage(ctx,e,p,(m.type==='circles'?24:28)*enemyPressure(ctx,e,p),m.name,{damageType:'magic',avoidable:true});applyMechanicStatus(ctx,e,m,p)}
   });
   mechanicStat(ctx,m.type,failed);scheduleNextMechanic(ctx);return;
@@ -3969,7 +4005,7 @@ function resolveMechanic(ctx,e,m,token){
  if(m.type==='line'){
   const target=getUnit(ctx,cast.targetId);
   if(target?.alive){
-   const success=cast.responses?.[target.id]!==false;
+   const success=manualMechanicSuccess(ctx,target,m,cast,e);
    if(!success){dealDamage(ctx,e,target,32*enemyPressure(ctx,e,target),m.name,{damageType:'physical',avoidable:true});applyMechanicStatus(ctx,e,m,target)}
    mechanicStat(ctx,'line',!success);
   }else mechanicStat(ctx,'line',false);
@@ -3994,8 +4030,8 @@ function startMechanic(ctx,m){
  if(m?.ownerEnemyId&&!owner?.alive){ctx.mechanicBag=[];scheduleNextMechanic(ctx);return}
  const enemy=owner||livingEnemies(ctx).find(x=>x.kind==='boss')||livingEnemies(ctx).find(x=>!isCrowdControlled(x))||livingEnemies(ctx)[0];if(!enemy)return;
  const token='m'+(++ctx.mechanicSeq),duration=Math.max(520,Math.round((Number(m.duration)||1600)*scalingValue(ctx,'castSpeed',1)));
- const castState={token,enemy:enemy.id,name:m.name,type:m.type,interrupted:false,ends:ctx.time+duration,responses:{},reactionMs:{},targetId:null,targetIds:[]};
- const live=livingPlayers(ctx);
+ const castState={token,enemy:enemy.id,name:m.name,type:m.type,interrupted:false,ends:ctx.time+duration,responses:{},reactionMs:{},targetId:null,targetIds:[],telegraphPositions:{},enemyStart:copy(physicalPosition(ctx,enemy))};
+ const live=livingPlayers(ctx);live.forEach(p=>castState.telegraphPositions[p.id]=copy(physicalPosition(ctx,p)));
  ctx.activeEnemyCast=castState;
 
  if(m.type==='knockback'||m.type==='pull'){
@@ -4027,6 +4063,7 @@ function startMechanic(ctx,m){
   const projected={center:castState.hazardPosition,radius},threatened=live.filter(p=>persistentHazardContains(ctx,p,projected,physicalPosition(ctx,p),0));
   castState.targetIds=threatened.map(p=>p.id);
   threatened.forEach(p=>{
+   if(ctx.commanderDirectControl){castState.reactionMs[p.id]=null;castState.responses[p.id]=false;return}
    const baseReaction=executionReaction(ctx,p,'movement'),error=shouldMistake(ctx,p,'movement',2200),hesitation=error?Math.round(260+ctx.rng()*520):0,reaction=baseReaction+hesitation,travel=340;
    castState.reactionMs[p.id]=reaction;castState.responses[p.id]=reaction+travel<=Math.max(520,duration-40);
    if(error)recordMistake(ctx,p,'movement',reaction>duration?'reacted too late to persistent ground':'hesitated inside persistent ground',{target:enemy.id,ability:m.name,reactionMs:reaction});
@@ -4051,7 +4088,9 @@ function startMechanic(ctx,m){
   castState.zones={...defaults,...copy(m.zones||{})};castState.targetIds=live.map(p=>p.id);
   enemy.movingUntil=Math.max(Number(enemy.movingUntil)||0,ctx.time+duration);enemy.nextAttack=Math.max(Number(enemy.nextAttack)||0,ctx.time+duration+650);
   live.forEach(p=>{
-   const correct=castState.zones[p.role]||castState.zones.dps,baseReaction=executionReaction(ctx,p,'movement'),error=shouldMistake(ctx,p,'movement',2600);
+   const correct=castState.zones[p.role]||castState.zones.dps;
+   if(ctx.commanderDirectControl){castState.reactionMs[p.id]=null;castState.responses[p.id]=false;return}
+   const baseReaction=executionReaction(ctx,p,'movement'),error=shouldMistake(ctx,p,'movement',2600);
    const hesitation=error?Math.round(350+ctx.rng()*850):0,reaction=baseReaction+hesitation,travel=520;
    let destination=correct;
    if(error&&m.strict){
@@ -4069,9 +4108,9 @@ function startMechanic(ctx,m){
   })
  }
 
- emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:castState.targetId,ability:m.name,result:'telegraph',position:copy(enemy.position),payload:{mechanicType:m.type,duration,hazardPosition:copy(castState.hazardPosition||null),token,interruptible:m.type==='interrupt'||m.type==='self-heal',targetId:castState.targetId,targetIds:copy(castState.targetIds),responses:copy(castState.responses),reactionMs:copy(castState.reactionMs),zones:copy(castState.zones||null)}});
+ emit(ctx,'MECHANIC_TELEGRAPH',{source:enemy.id,target:castState.targetId,ability:m.name,result:'telegraph',position:copy(enemy.position),payload:{mechanicType:m.type,duration,hazardPosition:copy(castState.hazardPosition||null),token,interruptible:m.type==='interrupt'||m.type==='self-heal',targetId:castState.targetId,targetIds:copy(castState.targetIds),responses:copy(castState.responses),reactionMs:copy(castState.reactionMs),telegraphPositions:copy(castState.telegraphPositions),zones:copy(castState.zones||null)}});
  emit(ctx,'CAST_START',{source:enemy.id,target:castState.targetId,ability:m.name,result:'enemy',payload:{duration,interruptible:m.type==='interrupt'||m.type==='self-heal',mechanicType:m.type,hazardPosition:copy(castState.hazardPosition||null),token,targetId:castState.targetId,targetIds:copy(castState.targetIds)}});
- if(m.type==='interrupt'||m.type==='self-heal')tryInterrupt(ctx,enemy,m,token);
+ if((m.type==='interrupt'||m.type==='self-heal')&&!ctx.commanderDirectControl)tryInterrupt(ctx,enemy,m,token);
  else if(m.type==='cone'){
   const tank=getUnit(ctx,castState.targetId);
   if(tank){enemy.target=tank.id;updateFacing(enemy,tank)}
@@ -4181,11 +4220,11 @@ function createCombatContext(options={}){
   crowdControl:options.tactics?.crowdControl||'disabled'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),mechanicRng:rngFrom(seed+':mechanics'),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicBag:Array.isArray(options.initialMechanicBag)?copy(options.initialMechanicBag):[],lastMechanicKey:options.initialLastMechanicKey||null,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,activeGroundHazards:{},commandFocusId:null,commandFocusUntil:0,commandCooldownUntil:0,commandCooldowns:{},commandPower:clamp(Number(options.commandPower??COMMAND_POWER_START),0,COMMAND_POWER_MAX),commandPowerMax:COMMAND_POWER_MAX,nextCommandPowerRegenAt:COMMAND_POWER_REGEN_MS,nextCommandPowerRewardAt:0,finished:false,outcome:null,onEvent:options.onEvent||null};
+ const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),mechanicRng:rngFrom(seed+':mechanics'),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,commanderDirectControl:options.commanderDirectControl===true,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicBag:Array.isArray(options.initialMechanicBag)?copy(options.initialMechanicBag):[],lastMechanicKey:options.initialLastMechanicKey||null,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,activeGroundHazards:{},commandFocusId:null,commandFocusUntil:0,commandCooldownUntil:0,commandCooldowns:{},commandPower:clamp(Number(options.commandPower??COMMAND_POWER_START),0,COMMAND_POWER_MAX),commandPowerMax:COMMAND_POWER_MAX,nextCommandPowerRegenAt:COMMAND_POWER_REGEN_MS,nextCommandPowerRewardAt:0,finished:false,outcome:null,onEvent:options.onEvent||null};
  players.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  enemies.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  settlePhysicalSpace(ctx,[...players,...enemies]);
- emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,physicalSpace:ctx.physicalSpace,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),units:[...players,...enemies].map(u=>({id:u.id,position:copy(u.position),facing:u.facing,alive:u.alive,role:u.role,classification:u.classification,visualArchetype:u.visualArchetype,combatBehaviour:u.combatBehaviour||null,attackRange:u.attackRange,damageType:u.damageType,bodyRadius:bodyRadius(u)})),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel,bodyRadius:bodyRadius(e)}))}});
+ emit(ctx,'COMBAT_START',{result:'started',payload:{encounter:encounter.id||encounter.title||'Encounter',seed,tactics,physicalSpace:ctx.physicalSpace,commanderDirectControl:ctx.commanderDirectControl,scaling:copy(encounter.scaling||{}),affixes:copy(encounter.affixes||[]),units:[...players,...enemies].map(u=>({id:u.id,position:copy(u.position),facing:u.facing,alive:u.alive,role:u.role,classification:u.classification,visualArchetype:u.visualArchetype,combatBehaviour:u.combatBehaviour||null,attackRange:u.attackRange,damageType:u.damageType,bodyRadius:bodyRadius(u)})),partyLevels:players.map(p=>({id:p.id,level:p.level})),enemies:enemies.map(e=>({id:e.id,name:e.name,level:e.level,classification:e.classification,classificationLabel:e.classificationLabel,bodyRadius:bodyRadius(e)}))}});
  players.forEach(u=>{
   Object.values(u.statuses||{}).forEach(st=>{
    if(Number(st.expiresAt)>0){
@@ -4341,6 +4380,33 @@ function createLiveSession(options={}){
   emit(ctx,'PARTY_COMMAND',{source:'commander',target:target.id,ability:'focus',result:'target-switch',payload:{type:'focus',targetId:target.id,live:true}});
   return{ok:true,targetId:target.id,events:ctx.events.slice(start).map(copy),timeMs:ctx.time}
  };
+ const setPlayerTarget=(unitId,targetId)=>{
+  if(ctx.finished||stopped)return{ok:false,reason:'finished',events:[]};
+  const rawUnit=String(unitId||''),u=getUnit(ctx,rawUnit)||getUnit(ctx,rawUnit.startsWith('p-')?rawUnit:'p-'+rawUnit);
+  if(!u?.alive||u.role==='enemy')return{ok:false,reason:'unit',events:[]};
+  const start=ctx.events.length,rawTarget=targetId==null?'':String(targetId);
+  if(!rawTarget){
+   u.commanderTargetId=null;
+   emit(ctx,'TARGET_CHANGED',{source:u.id,target:null,ability:'Commander Target',result:'automatic',position:copy(u.position),payload:{commander:true}});
+   return{ok:true,unitId:u.id,targetId:null,events:ctx.events.slice(start).map(copy),timeMs:ctx.time}
+  }
+  const target=getUnit(ctx,rawTarget)||getUnit(ctx,rawTarget.startsWith('e-')?rawTarget:'e-'+rawTarget);
+  if(!target?.alive||target.role!=='enemy')return{ok:false,reason:'target',events:[]};
+  u.commanderTargetId=target.id;u.target=target.id;updateFacing(u,target);
+  emit(ctx,'TARGET_CHANGED',{source:u.id,target:target.id,ability:'Commander Target',result:'manual',position:copy(u.position),payload:{commander:true}});
+  return{ok:true,unitId:u.id,targetId:target.id,events:ctx.events.slice(start).map(copy),timeMs:ctx.time}
+ };
+ const movePlayer=(unitId,position={},opts={})=>{
+  if(ctx.finished||stopped)return{ok:false,reason:'finished',events:[]};
+  const raw=String(unitId||''),u=getUnit(ctx,raw)||getUnit(ctx,raw.startsWith('p-')?raw:'p-'+raw);
+  if(!u?.alive||u.role==='enemy')return{ok:false,reason:'unit',events:[]};
+  const x=Number(position.x),y=Number(position.y);if(!Number.isFinite(x)||!Number.isFinite(y))return{ok:false,reason:'position',events:[]};
+  const start=ctx.events.length,from=copy(physicalPosition(ctx,u)),to=openPosition(ctx,{x:clamp(x,0,100),y:clamp(y,0,100)},1.5);
+  const travel=Math.max(180,Math.min(700,Math.round(Number(opts.durationMs)||dist(from,to)*24)));
+  u.commandPositionUntil=ctx.time+Math.max(travel+250,Number(opts.holdMs)||5000);
+  moveTo(ctx,u,to,travel,'commander move');
+  return{ok:true,unitId:u.id,position:copy(to),holdUntil:u.commandPositionUntil,events:ctx.events.slice(start).map(copy),timeMs:ctx.time}
+ };
  const reviveEnemy=(targetId,healthPct=35,opts={})=>{
   if(ctx.finished||stopped)return{ok:false,reason:'finished',events:[]};
   const raw=String(targetId||''),target=getUnit(ctx,raw.startsWith('e-')?raw:'e-'+raw);
@@ -4383,7 +4449,7 @@ function createLiveSession(options={}){
  const snapshot=()=>buildCombatResult(ctx,ctx.finished?(ctx.outcome||'defeat'):'ongoing',false);
  const stop=(outcome='defeat')=>{stopped=true;return ctx.finished?buildCombatResult(ctx,ctx.outcome):finishCombatContext(ctx,outcome)};
  return{
-  version:VERSION,seed:ctx.seed,advance,command,commandState,commandPowerState:powerState,heal,focus,reviveEnemy,spawnEnemy,addMechanics,setMechanicInterval,signal,drainEvents,snapshot,stop,
+  version:VERSION,seed:ctx.seed,advance,command,commandState,commandPowerState:powerState,heal,focus,setPlayerTarget,movePlayer,reviveEnemy,spawnEnemy,addMechanics,setMechanicInterval,signal,drainEvents,snapshot,stop,
   get timeMs(){return ctx.time},get finished(){return ctx.finished},get outcome(){return ctx.outcome},
   debug:()=>({timeMs:ctx.time,queue:ctx.queue.length,activeCast:copy(ctx.activeEnemyCast),hazards:copy(ctx.activeGroundHazards),players:copy(ctx.players),enemies:copy(ctx.enemies)})
  }
