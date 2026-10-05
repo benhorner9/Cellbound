@@ -2029,6 +2029,7 @@ body.bs2d-open{
   width:66px!important;height:66px!important;
   display:grid!important;place-items:center!important;
   margin-left:-33px!important;margin-top:-33px!important;
+  transform:translate3d(var(--unit-x,0px),var(--unit-y,0px),0)!important;
   pointer-events:auto!important
 }
 .cbcombat-battle-panel .cb2d-unit>i{
