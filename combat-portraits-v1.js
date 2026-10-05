@@ -11,6 +11,7 @@ const PLAYER_SELECTORS=[
   '[data-bs^="p-"]',
   '[data-tb-unit^="p-"]',
   '[data-q-unit^="p-"]',
+  '[data-combat-party^="p-"]',
   '.wb2d-unit.own[data-unit-key]',
   '.pvp2d-unit[data-pvp2d-unit]'
 ].join(',');
@@ -40,6 +41,7 @@ function key(v){return String(v||'').trim().replace(/[^a-zA-Z0-9_-]+/g,'-')}
 function unitName(el){
   const node=el.matches('.pvp2d-unit')?el.querySelector('.pvp2d-name>b'):
     el.matches('.wb2d-unit')?el.querySelector('.wb2d-unit-label'):
+    el.matches('.cb2d-party-row')?el.querySelector('.cb2d-party-name>b'):
     el.querySelector(':scope > span');
   if(!node)return'';
   if(el.matches('.cb2d-unit')&&node.childNodes?.length)return String(node.childNodes[0]?.textContent||'').trim();
@@ -52,6 +54,7 @@ function refFor(el){
   if(el.dataset.bs?.startsWith('p-'))return el.dataset.bs.slice(2);
   if(el.dataset.tbUnit?.startsWith('p-'))return el.dataset.tbUnit.slice(2);
   if(el.dataset.qUnit?.startsWith('p-'))return el.dataset.qUnit.slice(2);
+  if(el.dataset.combatParty?.startsWith('p-'))return el.dataset.combatParty.slice(2);
   if(el.matches('.wb2d-unit.own')&&el.dataset.unitKey?.startsWith('you-'))return el.dataset.unitKey.slice(4);
   if(el.matches('.pvp2d-unit')){
     const raw=String(el.dataset.pvp2dUnit||'');
@@ -133,6 +136,10 @@ function mount(el,c){
     el.insertAdjacentHTML('beforeend','<div class="cb-combat-portrait">'+html+'</div>');
     return;
   }
+  if(el.matches('.cb2d-party-row')){
+    const slot=el.querySelector('.cb2d-party-avatar');
+    if(slot){slot.querySelector('.cb-combat-portrait')?.remove();slot.insertAdjacentHTML('beforeend','<div class="cb-combat-portrait">'+html+'</div>');return}
+  }
   el.insertAdjacentHTML('beforeend','<div class="cb-combat-portrait">'+html+'</div>');
 }
 function upgrade(root=document){
@@ -160,5 +167,5 @@ function start(){
 }
 if(document.body)start();else document.addEventListener('DOMContentLoaded',start,{once:true});
 
-window.CellboundCombatPortraits={registerCharacters:characters=>{matchCharacters=Array.isArray(characters)?characters.slice(0,40):[]},refresh,upgrade,bosses:BOSS_ART,monsters:MONSTERS,version:'1.2.0'};
+window.CellboundCombatPortraits={registerCharacters:characters=>{matchCharacters=Array.isArray(characters)?characters.slice(0,40):[]},refresh,upgrade,bosses:BOSS_ART,monsters:MONSTERS,version:'1.3.0'};
 })();
