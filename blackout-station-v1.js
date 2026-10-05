@@ -450,36 +450,25 @@ function eventRender(e){
  }
 }
 async function playTimeline(result,tok){
- let activeResult=result,events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
- if(!run)return false;if(!events.length)return result?.outcome==='victory';
+ const session=run?.liveCombat?.session;if(!session?.advance||!session?.command)throw new Error('Real-time Combat Reborn session unavailable');
+ if(!run)return false;
+ const renderEvents=events=>{for(const e of events||[]){try{eventRender(e)}catch(error){console.warn('Blackout Station live combat visual recovered',e?.type,e?.ability,error)}}};
+ renderEvents(session.drainEvents?.()||[]);
+ run.liveCombat.issue=(type,payload={})=>session.command(type,payload);
  return await new Promise(resolve=>{
-  let index=0,simTime=0,wallAnchor=Number(run?.runtimeStageStartedAt)||Date.now(),simAnchor=0,lastSpeed=null,finished=false,visualErrors=0,raf=0;
-  const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);if(run?.liveCombat)run.liveCombat.issue=null;resolve(value)};
-  const issueCommand=(type,payload={})=>{
-   const live=run?.liveCombat,C=window.CellboundCombatStandard;if(!live?.options||!C?.simulate)return{ok:false,reason:'unavailable'};
-   const now=Math.max(0,Number(simTime)||0);if(now<Number(live.cooldownUntil||0))return{ok:false,reason:'cooldown',remainingMs:live.cooldownUntil-now};
-   const command={id:'bs-live-'+(++live.seq),type:String(type||''),atMs:Math.round(now+120),targetId:payload?.targetId||null},next=[...(live.commands||[]),command];
-   let replanned;try{replanned=C.simulate({...live.options,commandTimeline:next},live.meta||{})}catch(error){console.warn('Blackout Station live command replan failed',type,error);return{ok:false,reason:'simulation'}}
-   live.commands=next;live.cooldownUntil=now+3200;live.result=replanned;activeResult=replanned;run.result=replanned;
-   try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,replanned)}catch(_){}
-   events=(replanned.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
-   const nextIndex=events.findIndex(e=>(Number(e.timestamp)||0)>now+4);index=nextIndex<0?events.length:nextIndex;
-   return{ok:true,command,result:replanned}
+  let finished=false,raf=0,lastWall=performance.now();
+  const finish=(value,finalResult=null)=>{
+   if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
+   const final=finalResult||session.snapshot?.()||result;if(final){try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,final)}catch(_){}run.result=final}
+   if(run?.liveCombat){run.liveCombat.result=final;run.liveCombat.issue=null;run.liveCombat.session=null}
+   resolve(value)
   };
-  if(run?.liveCombat){run.liveCombat.issue=issueCommand;run.liveCombat.now=()=>simTime}
-  const frame=()=>{
-   if(finished)return;
-   if(tok!==token||!run){finish(false);return}
-   const speed=Math.max(.25,Number(run.speed)||1);
-   if(lastSpeed===null)lastSpeed=speed;
-   else if(lastSpeed!==speed){simAnchor=simTime;wallAnchor=Date.now();lastSpeed=speed}
-   simTime=Math.max(simTime,simAnchor+Math.max(0,Date.now()-wallAnchor)*speed);run.combatElapsed=simTime;
-   const frameStarted=performance.now();let handled=0;
-   while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<32&&performance.now()-frameStarted<9){
-    const e=events[index++];handled++;
-    try{eventRender(e)}catch(error){visualErrors++;console.warn('Blackout Station combat visual recovered',e?.type,e?.ability,error);if(visualErrors===1)feed('A display event was recovered without interrupting combat.')}
-   }
-   if(index>=events.length){finish(activeResult?.outcome==='victory');return}
+  const frame=now=>{
+   if(finished)return;if(tok!==token||!run){finish(false);return}
+   if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
+   const delta=Math.max(0,Math.min(250,now-lastWall))*Math.max(.25,Number(run.speed)||1);lastWall=now;
+   const step=session.advance(delta);run.combatElapsed=step.timeMs;if(step.events?.length)renderEvents(step.events);
+   if(step.finished){const final=step.result||session.snapshot?.()||result;finish(final?.outcome==='victory',final);return}
    raf=requestAnimationFrame(frame)
   };
   raf=requestAnimationFrame(frame)
@@ -501,6 +490,7 @@ function bsIssueCommand(kind,button){
 function bsUseCombatPotion(button){
  const helper=window.CellboundDungeon2D,used=helper?.useCombatPotion?.({state:state(),members:party(),getHp:c=>Number(run?.hp?.[c.id])||0,setHp:(c,v)=>{run.hp[c.id]=v}});
  if(!used?.ok){feed(used?.reason==='full'?'The party is already at full health.':'No combat potions remain. Craft or buy one before the next run.');helper?.refreshCombatPotionButton?.(button,state());return}
+ const liveHeal=run.liveCombat?.session?.heal?.(used.target.id,used.healApplied,{ability:used.item.name,source:'commander'});if(liveHeal?.ok&&Number.isFinite(Number(liveHeal.targetHpPct)))run.hp[used.target.id]=Math.round(Number(liveHeal.targetHpPct));
  renderPartyRows();helper?.refreshCombatPotionButton?.(button,state());feed(used.item.name+' restores '+used.target.name+' for '+used.healApplied+' HP.')
 }
 function bsReactorLifeMarkup(){
@@ -552,14 +542,14 @@ function drawCombat(){
  feed('Power restored. Dr. Vex Calder enters the reactor core.')
 }
 async function startBoss(resumed=false){
- if(!run)return;if(!resumed)await window.CellboundBossDossier?.show?.('vex-calder');drawCombat();window.CellboundFX?.boss?.('Dr. Vex Calder','Restore the grid. Survive the role circuits.');const tok=token,C=window.CellboundCombatStandard;if(!C?.simulate){setStatus('Combat failed to start');feed('The encounter could not start. Reload and try again.');return}
+ if(!run)return;if(!resumed)await window.CellboundBossDossier?.show?.('vex-calder');drawCombat();window.CellboundFX?.boss?.('Dr. Vex Calder','Restore the grid. Survive the role circuits.');const tok=token,C=window.CellboundCombatStandard;if(!C?.createLiveSession){setStatus('Combat failed to start');feed('The real-time combat engine could not start. Reload and try again.');return}
  try{
   const combatParty=party().map(c=>Object.assign({},c,{_combatHealthPct:100,_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0})),
   simOptions={party:combatParty,encounter:bossEncounter(),tactics:{pullStyle:'normal',cooldownUse:'difficult',interruptPriority:'standard',interruptAssignment:'dps-rotation',crowdControl:'priority-elites',defensiveUsage:'standard',addPriority:'immediate',movementDiscipline:'balanced'},seed:'blackout-station:'+run.seed},simMeta={zone:'blackout-station'};
-  let result=C.simulate(simOptions,simMeta);
-  run.liveCombat={options:simOptions,meta:simMeta,commands:[],seq:0,cooldownUntil:0,result};
-  const hasCombat=(result.events||[]).some(e=>e.type==='DAMAGE_DEALT'||e.type==='HEAL_RECEIVED'||e.type==='ABILITY_START');
-  if(!hasCombat)throw new Error('Combat Reborn produced no actionable events.');
+  const session=C.createLiveSession(simOptions,simMeta),result=session.snapshot();
+  run.liveCombat={session,issue:null,commands:[],seq:0,cooldownUntil:0,result};
+  const hasCombat=(result.events||[]).some(e=>e.type==='COMBAT_START');
+  if(!hasCombat)throw new Error('Combat Reborn live session produced no start event.');
   run.result=result;
   if(!run.runtimeStageStartedAt)run.runtimeStageStartedAt=Date.now();
   await bsSaveRuntime('combat');
