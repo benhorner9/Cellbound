@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.3.1';
+const VERSION='1.3.2';
 const states=new WeakMap();
 const PROFILES={
   'ash-gate':{intensity:.52,heat:.44,pulse:.00,center:[.50,.50],radius:.18,warm:1,cool:0,core:[1,.46,.12]},
@@ -121,8 +121,8 @@ function visible(arena){
 function create(arena){
   const canvas=document.createElement('canvas');canvas.className='cb2d-live-scene';canvas.setAttribute('aria-hidden','true');
   const first=arena.firstElementChild;first?arena.insertBefore(canvas,first):arena.appendChild(canvas);
-  const gl=canvas.getContext('webgl',{alpha:false,antialias:false,depth:false,stencil:false,premultipliedAlpha:false,powerPreference:'high-performance'})||
-           canvas.getContext('experimental-webgl',{alpha:false,antialias:false,depth:false,stencil:false,premultipliedAlpha:false});
+  const gl=canvas.getContext('webgl',{alpha:true,antialias:false,depth:false,stencil:false,premultipliedAlpha:false,powerPreference:'high-performance'})||
+           canvas.getContext('experimental-webgl',{alpha:true,antialias:false,depth:false,stencil:false,premultipliedAlpha:false});
   if(!gl){canvas.remove();return null}
   const p=program(gl);gl.useProgram(p);
   const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
@@ -137,7 +137,9 @@ function create(arena){
     cool:gl.getUniformLocation(p,'u_cool'),green:gl.getUniformLocation(p,'u_green'),coreColor:gl.getUniformLocation(p,'u_coreColor'),center:gl.getUniformLocation(p,'u_center'),
     radius:gl.getUniformLocation(p,'u_radius'),viewAspect:gl.getUniformLocation(p,'u_viewAspect'),texAspect:gl.getUniformLocation(p,'u_texAspect')
   };
-  const state={arena,canvas,gl,p,tex,loc,src:'',profile:'ashen',loaded:false,raf:0,start:performance.now(),token:0,dpr:1,texAspect:16/9,ro:null,reduced:matchMedia('(prefers-reduced-motion: reduce)').matches};
+  const state={arena,canvas,gl,p,tex,loc,src:'',profile:'ashen',loaded:false,ready:false,raf:0,start:performance.now(),token:0,dpr:1,texAspect:16/9,ro:null,reduced:matchMedia('(prefers-reduced-motion: reduce)').matches};
+  canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();state.loaded=false;state.ready=false;arena.removeAttribute('data-live-scene-ready')},{passive:false});
+  canvas.addEventListener('webglcontextrestored',()=>{const src=state.src,profileName=state.profile;unmount(arena);requestAnimationFrame(()=>mount(arena,{src,profile:profileName}))});
   const resize=()=>{
     const r=arena.getBoundingClientRect(),cap=innerWidth<800?1.25:1.6,dpr=Math.min(cap,devicePixelRatio||1);
     const w=Math.max(2,Math.round(r.width*dpr)),h=Math.max(2,Math.round(r.height*dpr));
@@ -170,16 +172,16 @@ function frame(state,now){
   gl.uniform1f(state.loc.viewAspect,Math.max(.01,state.canvas.width/state.canvas.height));
   gl.uniform1f(state.loc.texAspect,Math.max(.01,state.texAspect||16/9));
   gl.drawArrays(gl.TRIANGLES,0,6);
+  if(!state.ready&&!gl.isContextLost()&&gl.getError()===gl.NO_ERROR){state.ready=true;arena.dataset.liveSceneReady='1'}
   if(!state.reduced)state.raf=requestAnimationFrame(t2=>frame(state,t2))
 }
 function load(state,src){
-  const token=++state.token;state.loaded=false;state.arena.removeAttribute('data-live-scene-ready');
+  const token=++state.token;state.loaded=false;state.ready=false;state.arena.removeAttribute('data-live-scene-ready');
   const img=new Image();img.decoding='async';
   img.onload=()=>{
     if(token!==state.token||!state.arena.isConnected)return;
     const gl=state.gl;gl.bindTexture(gl.TEXTURE_2D,state.tex);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
     gl.texImage2D(gl.TEXTURE_2D,0,gl.RGB,gl.RGB,gl.UNSIGNED_BYTE,img);state.texAspect=Math.max(.01,(img.naturalWidth||img.width||16)/(img.naturalHeight||img.height||9));state.loaded=true;state.start=performance.now();
-    state.arena.dataset.liveSceneReady='1';
     if(state.raf)cancelAnimationFrame(state.raf);
     state.raf=requestAnimationFrame(t=>frame(state,t))
   };
