@@ -641,6 +641,25 @@ function qUseCombatPotion(button){
   const liveHeal=questFight.liveSession?.heal?.(used.target.id,used.healApplied,{ability:used.item.name,source:'commander'});if(liveHeal?.ok&&Number.isFinite(Number(liveHeal.targetHpPct)))qSetPartyHp(used.target,Math.round(Number(liveHeal.targetHpPct)));
   helper?.refreshCombatPotionButton?.(button,state());qLog(used.item.name+' restores '+used.target.name+' for '+used.healApplied+' HP.');window.CellboundFX?.micro?.(used.item.name+' used','cell')
 }
+function qDungeonCommandMarkup(){
+  const commands=[['focus','FOCUS','Force priority damage.'],['interrupt','INTERRUPT','Stop the current cast.'],['spread','SPREAD','Move clear of danger.'],['stack','STACK','Collapse around the tank.'],['regroup','REGROUP','Reset combat formation.'],['defensive','DEFENSIVE','Stabilise the group.'],['burn','BURN','Commit damage cooldowns.']];
+  return '<div class="cb2d-controls cbr-command-panel cbr-external-command-panel q-dungeon-command-panel">'+commands.map(x=>'<button type="button" class="cbr-command" data-q-command="'+x[0]+'"><b>'+x[1]+'</b><small>'+x[2]+'</small></button>').join('')+qPotionMarkup()+'</div>'
+}
+function qIssueDungeonCommand(kind,button){
+  if(!questFight)return;
+  const session=questFight.liveSession,response=session?.command?.(kind,{targetId:kind==='focus'?'e-'+Math.max(0,Number(questFight.focusTarget)||0):null});
+  if(!response?.ok){
+    const state=session?.commandState?.(kind);
+    if(response?.reason==='cooldown'&&state)qStatus('Command recovery · '+Math.max(.1,(Number(state.remainingMs)||Number(state.commandRemainingMs)||0)/1000).toFixed(1)+'s');
+    else if(response?.reason==='no-power'&&state)qStatus('Need '+state.cost+' Command Power');
+    else qStatus('That command is not available yet.');
+    return
+  }
+  button?.classList.add('active');setTimeout(()=>button?.classList.remove('active'),420);
+  const label={focus:'Focus target',interrupt:'Interrupt now',spread:'Spread out',stack:'Stack up',regroup:'Regroup formation',defensive:'Defensive stance',burn:'Burn phase'}[kind]||'Party command';
+  qStatus(label);qLog('Commander: '+label+'.');
+  window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(session,'[data-q-command]','qCommand')
+}
 function qTargetControlsMarkup(){
   if(!questFight)return'';
   return '<div class="cb2d-controls quest-live-targets"><div class="quest-live-target-copy"><small>LIVE TARGET PRIORITY</small><b>Call the party target during combat.</b><span>Bring all three Hounds low, then finish them inside the Licked Wounds window.</span></div><div class="quest-live-target-grid">'+questFight.enemies.map((name,i)=>'<button type="button" data-q-target="'+i+'" class="'+(i===Number(questFight.focusTarget)?'active':'')+'"><span>'+esc(name)+'</span><small>100%</small><em><i style="width:100%"></i></em></button>').join('')+'</div>'+qPotionMarkup()+'</div>'
@@ -656,13 +675,14 @@ function qShowContinuation(end,{won,title,text,analysis=''}){
 function qDraw(config,finish){
   const root=encounterRoot();root.className='cb2d-backdrop quest-cb2d-backdrop';root.hidden=false;document.body.classList.add('quest-cb2d-open');
   const visualClass=String(config.visualClass||'').replace(/[^a-z0-9-_ ]/gi,'').trim(),environmentMarkup=String(config.environmentMarkup||''),solo=config.allowSolo===true,questLabel=String(config.quest||config.title||'Quest').toUpperCase();
-  const liveKind=config.presentationKind==='dungeon'?'LIVE 2D DUNGEON':'LIVE 2D QUEST',partyLabel=config.partyLabel||(solo?'SOLO ADVENTURER':'ACTIVE FIVE'),controlMarkup=config.allowTargetSwitch?qTargetControlsMarkup():'<div class="cb2d-controls cbr-plan-lock has-consumable"><div class="cbr-plan-lock-copy"><small>QUEST FIGHT</small><b>'+(solo?'Your adventurer is committed.':'Your party is committed.')+'</b><span>'+(solo?'Watch the solo trial play out and see how this adventurer handles the encounter.':'Watch the fight play out and see how the party handles the encounter.')+'</span></div>'+qPotionMarkup()+'</div>';
-  root.innerHTML='<section class="cb2d-shell quest-cb2d-shell '+esc(visualClass)+'"><header class="cb2d-head"><div><small>'+esc(questLabel)+' · LV '+Math.max(1,Number(config.combat?.level)||1)+' · '+liveKind+'</small><h2>'+esc(config.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-q-speed>1×</button><button data-q-close>×</button></div></header>'+
+  const dungeonPresentation=config.presentationKind==='dungeon',liveKind=dungeonPresentation?'LIVE 2D DUNGEON':'LIVE 2D QUEST',partyLabel=config.partyLabel||(solo?'SOLO ADVENTURER':'ACTIVE FIVE'),controlMarkup=dungeonPresentation?qDungeonCommandMarkup():(config.allowTargetSwitch?qTargetControlsMarkup():'<div class="cb2d-controls cbr-plan-lock has-consumable"><div class="cbr-plan-lock-copy"><small>QUEST FIGHT</small><b>'+(solo?'Your adventurer is committed.':'Your party is committed.')+'</b><span>'+(solo?'Watch the solo trial play out and see how this adventurer handles the encounter.':'Watch the fight play out and see how the party handles the encounter.')+'</span></div>'+qPotionMarkup()+'</div>');
+  root.innerHTML='<section class="cb2d-shell quest-cb2d-shell '+(dungeonPresentation?'dungeon-presentation ':'')+esc(visualClass)+'"><header class="cb2d-head"><div><small>'+esc(questLabel)+' · LV '+Math.max(1,Number(config.combat?.level)||1)+' · '+liveKind+'</small><h2>'+esc(config.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-q-speed>1×</button><button data-q-close>×</button></div></header>'+
     '<div class="cb2d-route" id="q2dRoute">'+qRoute()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena quest-cb2d-arena" id="q2dArena"><div class="cb2d-floor"></div><div class="quest-cb2d-environment">'+environmentMarkup+'</div><div class="cb2d-room-tag"><b>'+esc(config.location)+'</b><small>'+esc(config.ambience)+'</small></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="q2dTelegraphs"></div><div id="q2dUnits"></div><div class="cb2d-caption"><span>QUEST FIGHT</span><b id="q2dStatus">Entering encounter…</b></div></div>'+
     controlMarkup+
     '<div class="cb2d-feed"><small>COMBAT FEED</small><p id="q2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="q2dCastName">—</b><strong id="q2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="q2dCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="q2dDamageTotal">0 total</span></div><div id="q2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="q2dHealingTotal">0 total</span></div><div id="q2dHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="q2dThreatTarget">No target</span></div><div id="q2dThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-q-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-q-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Holding range</em></div><div data-q-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>'+esc(partyLabel)+'</small>'+qRows()+'</div></aside></div><div class="cb2d-end" id="q2dEnd" hidden></div></section>';
   root.querySelector('[data-q-speed]').onclick=e=>{if(!questFight)return;questFight.speed=questFight.speed===2?1:2;e.currentTarget.textContent=questFight.speed+'×'};
   root.querySelectorAll('[data-q-target]').forEach(b=>b.onclick=()=>qSelectTarget(Number(b.dataset.qTarget)));qRefreshTargetControls();
+  root.querySelectorAll('[data-q-command]').forEach(b=>b.onclick=()=>qIssueDungeonCommand(b.dataset.qCommand,b));
   root.querySelector('[data-q-potion]')?.addEventListener('click',e=>qUseCombatPotion(e.currentTarget));
   window.CellboundDungeon2D?.refreshCombatPotionButton?.(root.querySelector('[data-q-potion]'),state());
   root.querySelector('[data-q-close]').onclick=()=>{if(!questFight?.finished&&!confirm('Leave this quest fight? It will restart.'))return;encounterToken++;window.CellboundCombatStatuses?.clear?.(root);root.hidden=true;document.body.classList.remove('quest-cb2d-open');finish(false)};
@@ -827,6 +847,7 @@ async function qPlayReborn(result,tok){
    if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
    const delta=Math.max(0,Math.min(250,now-lastWall))*Math.max(.25,Number(questFight.speed)||1);lastWall=now;
    const step=session.advance(delta);questFight.elapsedMs=Math.max(Number(questFight.elapsedMs)||0,Number(step.timeMs)||0);
+   if(questFight.presentationKind==='dungeon')window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(session,'[data-q-command]','qCommand');
    if(step.events?.length)renderEvents(step.events);
    if(step.finished){const final=step.result||session.snapshot?.()||result;finish(final?.outcome==='victory',final);return}
    raf=requestAnimationFrame(frame)
@@ -864,7 +885,7 @@ async function runQuest2DFight(config){
           tactics:{interruptPriority:'standard',addPriority:'immediate',defensiveUsage:'standard',pullStyle:'normal',movementDiscipline:'balanced'},
           seed:config.seed||['quest',tok,config.title,Date.now()].join(':')
         },liveMeta={zone:'quest-encounters'},session=C.createLiveSession(liveOptions,liveMeta),result=session.snapshot();
-        questFight.liveSession=session;questFight.result=result;
+        questFight.liveSession=session;questFight.result=result;if(questFight.presentationKind==='dungeon')window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(session,'[data-q-command]','qCommand');
         if(Array.isArray(result?.finalState?.enemies)){const main=result.finalState.enemies.filter(e=>!e.isAdd);questFight.enemyMax=main.map(e=>e.maxHealth);questFight.enemyHp=[...questFight.enemyMax]}
         const won=await qPlayReborn(result,tok);if(tok!==encounterToken)return;
         if(typeof config.onResult==='function')await config.onResult(result);
