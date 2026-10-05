@@ -1869,3 +1869,47 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
   mix-blend-mode:screen!important;
   background:transparent!important;
 }
+
+
+/* Hard visibility fallback for fullscreen Ashen combat v2 */
+.cb2d-arena.theme-ashen{
+  z-index:1!important;
+}
+.cb2d-arena.theme-ashen .cb2d-stage-image{
+  position:absolute!important;
+  inset:0!important;
+  z-index:0!important;
+  display:block!important;
+  width:100%!important;
+  height:100%!important;
+  max-width:none!important;
+  object-fit:cover!important;
+  object-position:var(--cb2d-battlefield-position,50% 50%)!important;
+  opacity:1!important;
+  visibility:visible!important;
+  pointer-events:none!important;
+  filter:brightness(.96) saturate(1.04) contrast(1.02)!important;
+}
+.cb2d-arena.theme-ashen .cb2d-floor{
+  z-index:1!important;
+  background-color:transparent!important;
+}
+.cb2d-arena.theme-ashen .cb2d-live-scene{z-index:2!important}
+.cb2d-arena.theme-ashen .cbvfx-layer{z-index:3!important}
+.cb2d-arena.theme-ashen .cb2d-environment{z-index:4!important}
+.cb2d-arena.theme-ashen #cb2dTelegraphs{z-index:68!important}
+.cb2d-arena.theme-ashen #cb2dUnits{z-index:72!important}
+.cb2d-arena.theme-ashen .cb2d-room-tag,
+.cb2d-arena.theme-ashen .cb2d-caption,
+.cb2d-arena.theme-ashen .cb2d-ground-legend{z-index:90!important}
+
+.cb2d-arena.theme-ashen .cb2d-unit{
+  left:var(--unit-left,50%)!important;
+  top:var(--unit-top,50%)!important;
+  display:block!important;
+  visibility:visible!important;
+  opacity:1;
+  transform:translate(-50%,-50%) scale(var(--cb2d-depth-scale,1))!important;
+  will-change:left,top,transform!important;
+}
+.cb2d-arena.theme-ashen .cb2d-unit.dead{opacity:.22!important}
