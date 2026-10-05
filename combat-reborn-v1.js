@@ -4225,10 +4225,21 @@ function createLiveSession(options={}){
   const emitted=ctx.events.slice(before).map(copy),commandEvent=emitted.find(e=>e.type==='PARTY_COMMAND');
   return{ok:!!commandEvent&&!['cooldown','unknown','no-cast','no-target'].includes(commandEvent.result),reason:commandEvent?.result||'unknown',event:commandEvent||null,events:emitted,timeMs:ctx.time}
  };
+ const heal=(targetId,amount,opts={})=>{
+  if(ctx.finished||stopped)return{ok:false,reason:'finished',events:[]};
+  const raw=String(targetId||''),target=getUnit(ctx,raw.startsWith('p-')?raw:'p-'+raw);
+  if(!target?.alive)return{ok:false,reason:'target',events:[]};
+  const before=target.health,max=target.maxHealth,value=Math.max(0,Number(amount)||0);
+  target.health=clamp(before+value,0,max);
+  const effective=target.health-before,over=Math.max(0,value-effective),start=ctx.events.length;
+  emit(ctx,'HEAL_RECEIVED',{source:opts.source||'commander',target:target.id,ability:opts.ability||'Combat Potion',amount:effective,result:over?'overheal':'heal',position:copy(target.position),payload:{overhealing:over,targetHp:target.health,targetMax:max,targetHpPct:pct(target.health,max),external:true}});
+  emit(ctx,'CONSUMABLE_USED',{source:opts.source||'commander',target:target.id,ability:opts.ability||'Combat Potion',amount:effective,result:'used',payload:{targetHpPct:pct(target.health,max),external:true}});
+  return{ok:true,amount:effective,targetHpPct:pct(target.health,max),events:ctx.events.slice(start).map(copy)}
+ };
  const snapshot=()=>buildCombatResult(ctx,ctx.finished?(ctx.outcome||'defeat'):'ongoing',false);
  const stop=(outcome='defeat')=>{stopped=true;return ctx.finished?buildCombatResult(ctx,ctx.outcome):finishCombatContext(ctx,outcome)};
  return{
-  version:VERSION,seed:ctx.seed,advance,command,drainEvents,snapshot,stop,
+  version:VERSION,seed:ctx.seed,advance,command,heal,drainEvents,snapshot,stop,
   get timeMs(){return ctx.time},get finished(){return ctx.finished},get outcome(){return ctx.outcome},
   debug:()=>({timeMs:ctx.time,queue:ctx.queue.length,activeCast:copy(ctx.activeEnemyCast),hazards:copy(ctx.activeGroundHazards),players:copy(ctx.players),enemies:copy(ctx.enemies)})
  }
