@@ -1814,31 +1814,44 @@ body.bs2d-open{
 }
 .cbcombat-party #cb2dRows{
   flex:1 1 auto;
+  width:100%!important;
+  min-width:0!important;
   min-height:0;
-  display:grid;
-  grid-template-columns:1fr;
-  grid-template-rows:repeat(5,minmax(0,1fr));
-  gap:5px;
-  overflow:hidden
-}
-.cbcombat-party .cb2d-party-row{
-  position:relative!important;
   display:grid!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:repeat(5,minmax(52px,1fr))!important;
+  grid-auto-flow:row!important;
+  gap:5px!important;
+  overflow:hidden!important
+}
+.cbcombat-party #cb2dRows>.cb2d-party-row{
+  position:relative!important;
+  inset:auto!important;
+  display:grid!important;
+  visibility:visible!important;
+  opacity:1!important;
   grid-template-columns:34px minmax(0,1fr)!important;
+  grid-template-rows:1fr!important;
   gap:7px!important;
   align-items:center!important;
+  width:100%!important;
   min-width:0!important;
-  min-height:0!important;
-  height:auto!important;
+  min-height:52px!important;
+  max-height:none!important;
+  height:100%!important;
   margin:0!important;
   padding:6px 7px!important;
   overflow:hidden!important;
   border:1px solid rgba(255,255,255,.055)!important;
   border-radius:7px!important;
   background:#0a1418!important;
+  transform:none!important;
   cursor:pointer;
   touch-action:manipulation
 }
+
+.cbcombat-party #cb2dRows>.cb2d-party-row:nth-child(n+6){display:none!important}
+.cbcombat-party #cb2dRows>.cb2d-party-row>*{min-width:0!important}
 .cbcombat-party .cb2d-party-row.player-selected{
   border-color:rgba(112,211,255,.58)!important;
   background:#102530!important;
@@ -1919,20 +1932,33 @@ body.bs2d-open{
 }
 .cbcombat-command-panel .cbr-command-grid{
   flex:1 1 auto;
+  width:100%!important;
+  min-width:0!important;
   min-height:0;
   display:grid!important;
   grid-template-columns:repeat(2,minmax(0,1fr))!important;
   grid-template-rows:repeat(4,minmax(0,1fr))!important;
-  gap:6px!important
+  grid-auto-flow:row!important;
+  align-content:stretch!important;
+  justify-content:stretch!important;
+  gap:6px!important;
+  overflow:hidden!important
 }
 .cbcombat-command-panel .cbr-command,
 .cbcombat-command-panel .cb2d-potion-button{
+  width:100%!important;
+  max-width:none!important;
   min-width:0!important;
   min-height:0!important;
-  height:auto!important;
+  height:100%!important;
   padding:7px!important;
   margin:0!important;
   border-radius:7px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:center!important;
+  overflow:hidden!important;
   touch-action:manipulation
 }
 .cbcombat-command-panel .cbr-command b,
@@ -2126,8 +2152,7 @@ body.bs2d-open{
 }
 .cbcombat-shell.results-mode>.cbcombat-header,
 .cbcombat-shell.results-mode>.cbcombat-route,
-.cbcombat-shell.results-mode>.cbcombat-grid,
-.cbcombat-shell.results-mode>.cb2d-feed{
+.cbcombat-shell.results-mode>.cbcombat-grid{
   display:none!important
 }
 .cbcombat-shell.results-mode>.cb2d-end{
