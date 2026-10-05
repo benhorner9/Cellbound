@@ -279,7 +279,7 @@ for(const file of files){
     if(!contents.includes("_combatPosition")||!contents.includes("data.currentPosition"))throw new Error('Combat slice position persistence is missing');
     if(!contents.includes("focusSelectedDamageOnly")||!contents.includes("!target.focusSelected"))throw new Error('Focus-selected damage gating is missing');
     if(!contents.includes("const VERSION='1.7.0'")||!contents.includes('tests:{run:runSelfTests}'))throw new Error('Canonical Combat Reborn engine/version is missing');
-    for(const hook of ['function createCombatContext(','function advanceCombatTick(','function createLiveSession(','const advance=deltaMs=>','version:VERSION,seed:ctx.seed,advance,command,heal','get timeMs(){return ctx.time}'])if(!contents.includes(hook))throw new Error('Real-time Combat Reborn session contract is missing '+hook);
+    for(const hook of ['function createCombatContext(','function advanceCombatTick(','function createLiveSession(','const advance=deltaMs=>','spawnEnemy,addMechanics,setMechanicInterval,signal','version:VERSION,seed:ctx.seed,advance,command,heal','get timeMs(){return ctx.time}'])if(!contents.includes(hook))throw new Error('Real-time Combat Reborn session contract is missing '+hook);
     for(const hook of ['function applyPartyCommand(','function schedulePartyCommands(','PARTY_COMMAND','commandFocusId','mechanicRng','refillMechanicBag','combatBehaviour'])if(!contents.includes(hook))throw new Error('Commander combat variety contract is missing '+hook);
     for(const hook of ['function bodyRadius(','function physicalPosition(','function bodyClearance(','function openPhysicalPosition(','function segmentBodyHit(','function collisionWaypoint(','physicalSpace:encounter.physicalSpace!==false','bodyCollision:bodyRoute.body?','collisionContinuation:Boolean(collisionFinal)',"combatRange&&los&&ctx.physicalSpace&&u.role!=='tank'",'Physical Space Bodies','Physical Collision Metadata','Collision Melee Uptime'])if(!contents.includes(hook))throw new Error('Combat Reborn physical-space collision is missing '+hook);
     for(const hook of ['setBonusRulesFor','talentSkillCooldownScale','incomingDamageReduction','setBonuses?.damageScale','setBonuses?.healingScale'])if(!contents.includes(hook))throw new Error('Combat adaptive set foundation is missing '+hook);
@@ -450,7 +450,7 @@ for(const file of files){
     if(!contents.includes('minimumItemLevel:38')||!contents.includes('baseRecommendedItemLevel:40')||!contents.includes('bossHealthScale:1.55')||!contents.includes('pressureScale:1.24'))throw new Error('Twelve Below full-gear balance contract is missing');
     if((contents.match(/itemLevel:42,power:10,statBudgetMultiplier:1/g)||[]).length!==6)throw new Error('Twelve Below relics must remain six iLvl 42 endgame chase pieces');
     if(contents.includes("toISOString().slice(0,10)"))throw new Error('Twelve Below daily reset must use local calendar time');
-    if(!contents.includes('requestAnimationFrame(frame)'))throw new Error('Twelve Below playback must use the continuous frame clock');
+    for(const hook of ['async function playLiveRun(','Combat.createLiveSession(','session.spawnEnemy(','session.signal(\'TOMB_OPEN\'','session.advance(delta)','data-tb-command','suppressAutoVictory:true'])if(!contents.includes(hook))throw new Error('Twelve Below real-time survival runtime is missing '+hook);
     if(!contents.includes("if(kills>=12)return .55")||!contents.includes("shards=kills+Math.floor(kills/4)*2+(kills===12?2:0)"))throw new Error('Twelve Below chase reward balance regressed');
     for(const hook of ['function burialCryptMarkup','function tbAtmosphere','function tbArenaBurst','tb-depth-backdrop','tb-crypt-ring','tb-soul-braziers','tb-grave-fog','TB_VICE_COLORS'])if(!contents.includes(hook))throw new Error('Twelve Below visual-reborn runtime is missing '+hook);
   }
@@ -497,10 +497,10 @@ for(const file of files){
   if(resumableDungeonHooks[file])for(const hook of resumableDungeonHooks[file])if(!contents.includes(hook))throw new Error(file+' resumable dungeon runtime is missing '+hook);
   if(file==='manor-raid-v1.js'&&!contents.includes('startAt:readyStartAt()'))throw new Error('The Manor shared viewer must resume from the server encounter clock');
   if(file==='quests-v2.js'&&(!contents.includes('config.seed||')||!contents.includes('wallClockStartAt:Number(config.wallClockStartAt)')))throw new Error('Quest combat must support deterministic resumed dungeon playback');
-  if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','onboarding-v1.js','quests-v2.js'].includes(file)){
+  if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','twelve-below-v1.js','onboarding-v1.js','quests-v2.js'].includes(file)){
     if(!contents.includes('requestAnimationFrame(frame)')||!contents.includes('document.hidden')||!contents.includes('session.advance('))throw new Error(file+' must advance a real-time Combat Reborn session from the browser frame loop');
   }
-  if(['twelve-below-v1.js','world-boss-2d-v1.js','pvp-viewer-v1.js'].includes(file)){
+  if(['world-boss-2d-v1.js','pvp-viewer-v1.js'].includes(file)){
     for(const legacy of ['Math.min(rawDelta,100)','Math.min(100,Math.max(0,now-last','Math.min(Math.max(0,now-lastFrame),100)']){
       if(contents.includes(legacy))throw new Error(file+' still discards background combat time');
     }
