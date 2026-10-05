@@ -398,7 +398,7 @@ if(file==='quests-v2.js'){
     if(!contents.includes('CellboundCombatFX'))throw new Error(file+' is not wired to the shared combat VFX layer');
   }
   if(file==='dungeon-2d-v1.js'){
-    for(const hook of ['function combatPotionStacks(','function combatPotionButtonMarkup(','function useCombatPotion(','data-combat-potion','data-shared-potion','combatPotionSummary,combatPotionButtonMarkup,refreshCombatPotionButton,useCombatPotion'])if(!contents.includes(hook))throw new Error('Shared combat potion runtime is missing '+hook);
+    for(const hook of ['function combatPotionStacks(','function combatPotionButtonMarkup(','function useCombatPotion(','data-combat-potion','data-shared-potion','combatPotionSummary,combatPotionButtonMarkup,refreshCombatPotionButton,refreshExternalCommandCooldowns,useCombatPotion'])if(!contents.includes(hook))throw new Error('Shared combat potion runtime is missing '+hook);
     if(contents.includes("find(y=>!y.payload?.effect)"))throw new Error('Combat potion command must never consume an unrelated consumable');
   }
   if(['hollow-sanctum-v1.js','chaos-canyon-v1.js'].includes(file)){
