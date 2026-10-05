@@ -431,7 +431,7 @@ async function hsPlayTimeline(result,tok){
    if(finished)return;if(tok!==token||!run){finish(false);return}
    if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
    const delta=Math.max(0,Math.min(250,now-lastWall))*Math.max(.25,Number(run.speed)||1);lastWall=now;
-   const step=session.advance(delta);if(step.events?.length)renderEvents(step.events);
+   const step=session.advance(delta);window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(session,'[data-hs-override]:not([data-hs-override="consumable"])','hsOverride');if(step.events?.length)renderEvents(step.events);
    if(step.finished){const final=step.result||session.snapshot?.()||result;finish(final?.outcome==='victory',final);return}
    raf=requestAnimationFrame(frame)
   };
@@ -605,9 +605,7 @@ function hsOverride(kind,button){
    feed(response?.reason==='cooldown'?'Commander call recovering — choose your next moment.':'That command is not available right now.');
    return
  }
- document.querySelectorAll('[data-hs-override]').forEach(b=>{if(b.dataset.hsOverride!=='consumable')b.disabled=true});
- const cooldown=Math.max(700,Math.round(3200/Math.max(.25,Number(run.speed)||1)));
- setTimeout(()=>{if(run)document.querySelectorAll('[data-hs-override]').forEach(b=>{if(b.dataset.hsOverride!=='consumable')b.disabled=false})},cooldown);
+ window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(run.liveCombat?.session,'[data-hs-override]:not([data-hs-override="consumable"])','hsOverride');
  if(kind==='focus')hsAct('dps','Focusing priority target');
  if(kind==='interrupt')hsAct('dps','Interrupt command issued');
  if(kind==='defensive')hsAct('tank','Party defensives committed');
