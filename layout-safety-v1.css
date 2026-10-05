@@ -1091,6 +1091,14 @@ body.bs2d-open{
    One presentation contract for Ashen Vault, Hollow Sanctum, Chaos Canyon,
    Blackout Station, shared CB2D encounters and dungeon-presented quest fights. */
 @media (min-width:1051px) and (min-height:650px){
+  :is(.cb2d-backdrop,.hs2d-backdrop,.cc2d-backdrop,.bs2d-backdrop,.quest-cb2d-backdrop):has(>.combat-hud-fullscreen){
+    padding:0!important;
+    place-items:stretch!important;
+    background:#030608!important;
+    background-image:none!important;
+    backdrop-filter:none!important;
+  }
+
   .cb2d-shell.combat-hud-fullscreen:not(.cb2d-brief):not(.results-mode){
     --hud-edge:14px;
     --hud-party-w:252px;
@@ -1155,7 +1163,7 @@ body.bs2d-open{
     top:50%!important;
     right:auto!important;
     bottom:auto!important;
-    width:min(100vw,calc(100dvh * 16 / 9))!important;
+    width:min(100vw,177.7778dvh)!important;
     height:auto!important;
     min-height:0!important;
     max-height:none!important;
