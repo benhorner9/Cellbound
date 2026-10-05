@@ -70,7 +70,7 @@ const FS=[
 'float activeMask(vec3 c){return max(max(warmMask(c)*u_warm,coolMask(c)*u_cool),greenMask(c)*u_green);}',
 'void main(){',
 '  vec2 uv=v_uv;',
-'  if(u_viewAspect>u_texAspect){uv.y=(uv.y-.5)*(u_texAspect/u_viewAspect)+.5;}else{uv.x=(uv.x-.5)*(u_viewAspect/u_texAspect)+.5;}'
+'  if(u_viewAspect>u_texAspect){uv.y=(uv.y-.5)*(u_texAspect/u_viewAspect)+.5;}else{uv.x=(uv.x-.5)*(u_viewAspect/u_texAspect)+.5;}',
 '  vec3 original=texture2D(u_tex,uv).rgb;',
 '  float active0=activeMask(original);',
 '  float below1=activeMask(texture2D(u_tex,clamp(uv+vec2(0.0,.026),0.0,1.0)).rgb);',
