@@ -345,9 +345,46 @@ const LIVE_COMBAT_COMMANDS=[
  {id:'defensive',label:'DEFENSIVE',hint:'Protect the whole party'},
  {id:'burn',label:'BURN',hint:'Commit damage cooldowns'}
 ];
+function commandRule(type){
+ return window.CellboundCombatReborn?.COMMAND_RULES?.[type]||{cooldownMs:8000,sharedMs:3500}
+}
+function commandReadyHint(type){
+ const cmd=LIVE_COMBAT_COMMANDS.find(x=>x.id===type),rule=commandRule(type);
+ return (cmd?.hint||'Party command')+' · '+Math.round(rule.cooldownMs/1000)+'s cooldown'
+}
+function refreshCombatCommandCooldowns(){
+ const playback=run?.rebornPlayback;
+ document.querySelectorAll('[data-combat-command]').forEach(button=>{
+  const type=button.dataset.combatCommand,state=playback?.commandState?.(type),small=button.querySelector('small');
+  if(!button.dataset.readyHint)button.dataset.readyHint=commandReadyHint(type);
+  if(!state){if(small)small.textContent=button.dataset.readyHint;return}
+  const own=Math.max(0,Number(state.commandRemainingMs)||0),shared=Math.max(0,Number(state.sharedRemainingMs)||0);
+  button.disabled=!state.available;
+  button.classList.toggle('cooling',own>0);
+  if(small){
+   if(own>0)small.textContent='COOLDOWN · '+Math.max(.1,own/1000).toFixed(1)+'s';
+   else if(shared>0)small.textContent='COMMAND RECOVERY · '+Math.max(.1,shared/1000).toFixed(1)+'s';
+   else small.textContent=button.dataset.readyHint
+  }
+ })
+}
+function refreshExternalCommandCooldowns(session,selector,attribute){
+ document.querySelectorAll(selector).forEach(button=>{
+  const type=button.dataset?.[attribute],state=session?.commandState?.(type),small=button.querySelector('small');
+  if(!type||!state)return;
+  if(!button.dataset.readyHint)button.dataset.readyHint=small?.textContent||'Party command';
+  const own=Math.max(0,Number(state.commandRemainingMs)||0),shared=Math.max(0,Number(state.sharedRemainingMs)||0);
+  button.disabled=!state.available;button.classList.toggle('cooling',own>0);
+  if(small){
+   if(own>0)small.textContent='COOLDOWN · '+Math.max(.1,own/1000).toFixed(1)+'s';
+   else if(shared>0)small.textContent='COMMAND RECOVERY · '+Math.max(.1,shared/1000).toFixed(1)+'s';
+   else small.textContent=button.dataset.readyHint
+  }
+ })
+}
 function combatCommandDeckMarkup(potionAttribute='data-combat-potion',title='Command the party',copy='React to the fight. Commands alter the live Combat Reborn result.'){
  return '<div class="cbr-command-copy"><small>PARTY COMMANDS</small><b id="cbrCommandPrompt">'+esc(title)+'</b><span id="cbrCommandStatus">'+esc(copy)+'</span></div>'+
-  '<div class="cbr-command-grid">'+LIVE_COMBAT_COMMANDS.map(cmd=>'<button type="button" class="cbr-command" data-combat-command="'+cmd.id+'"><b>'+cmd.label+'</b><small>'+cmd.hint+'</small></button>').join('')+
+  '<div class="cbr-command-grid">'+LIVE_COMBAT_COMMANDS.map(cmd=>'<button type="button" class="cbr-command" data-combat-command="'+cmd.id+'"><b>'+cmd.label+'</b><small>'+commandReadyHint(cmd.id)+'</small></button>').join('')+
   combatPotionButtonMarkup(potionAttribute)+'</div>'
 }
 function commandRecommendationFor(e){
@@ -370,18 +407,19 @@ function bindCombatCommandButtons(){
 function issueCombatCommand(type,button){
  if(!run||run.resolved)return;
  const playback=run.rebornPlayback;if(!playback?.issueCommand){log('Party commands are unavailable for this encounter.');return}
- const now=Number(playback.now?.())||0,cooldownUntil=Number(run.commandCooldownUntil)||0;
- if(now<cooldownUntil){status('Command recovery · '+Math.max(.1,(cooldownUntil-now)/1000).toFixed(1)+'s');return}
  const response=playback.issueCommand(type,{});
- if(!response?.ok){status(response?.reason==='replay'?'Replay cannot be changed':'Command could not be issued');return}
- run.commandCooldownUntil=now+3200;
+ if(!response?.ok){
+  const state=response?.state||playback.commandState?.(type);
+  if(response?.reason==='cooldown'&&state){
+   const seconds=Math.max(.1,(Number(state.remainingMs)||0)/1000).toFixed(1);
+   status((Number(state.commandRemainingMs)>0?'Command cooldown · ':'Command recovery · ')+seconds+'s')
+  }else status(response?.reason==='replay'?'Replay cannot be changed':'Command could not be issued');
+  refreshCombatCommandCooldowns();return
+ }
  button?.classList.add('active');setTimeout(()=>button?.classList.remove('active'),420);
- document.querySelectorAll('[data-combat-command]').forEach(b=>b.disabled=true);
- const wallCooldown=Math.max(700,Math.round(3200/combatPlaybackSpeed(run?.speed||1)));
- setTimeout(()=>{if(!run?.resolved)document.querySelectorAll('[data-combat-command]').forEach(b=>b.disabled=false)},wallCooldown);
  const labels={focus:'Focus target',spread:'Spread out',interrupt:'Interrupt now',defensive:'Defensive stance',burn:'Burn phase'};
  status(labels[type]||'Party command');log('Commander: '+(labels[type]||type)+'.');
- setCombatCommandPrompt()
+ setCombatCommandPrompt();refreshCombatCommandCooldowns()
 }
 function useCombatPotion(options={}){
  const st=options.state||state(),members=(options.members||party()).filter(Boolean),getHealth=options.getHp||(()=>100),setHealth=options.setHp||(()=>{}),getCondition=options.getCondition||null,setConditionValue=options.setCondition||null;
@@ -1543,7 +1581,7 @@ async function playLiveRebornSession(result,tok){
   }
  };
  renderEvents(session.drainEvents?.()||[]);
- run.rebornPlayback={issueCommand:(type,payload={})=>session.command(type,payload),now:()=>session.timeMs,result:()=>activeResult};
+ run.rebornPlayback={issueCommand:(type,payload={})=>session.command(type,payload),commandState:type=>session.commandState?.(type),now:()=>session.timeMs,result:()=>activeResult};refreshCombatCommandCooldowns();
  return await new Promise(resolve=>{
   const finishPlayback=(value,finalResult=null)=>{
    if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
@@ -1562,6 +1600,7 @@ async function playLiveRebornSession(result,tok){
    if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
    const speed=combatPlaybackSpeed(run?.speed||1),delta=Math.max(0,Math.min(250,now-lastWall))*speed;lastWall=now;
    const step=session.advance(delta);
+   refreshCombatCommandCooldowns();
    if(step.events?.length)renderEvents(step.events);
    if(step.result)activeResult=step.result;
    if(step.finished){
@@ -2007,7 +2046,7 @@ function init(){
  document.documentElement.dataset.cb2d='ready';
  syncEntryButton();
  setInterval(syncEntryButton,400);
- window.CellboundDungeon2D={open:openDungeon,briefing,currentRun:()=>run,openSharedExploration,playSharedEncounter,externalCharacters,combatPotionSummary,combatPotionButtonMarkup,refreshCombatPotionButton,useCombatPotion,closeShared:(silent=false)=>{if(run?.externalMode)close(Boolean(silent))}};
+ window.CellboundDungeon2D={open:openDungeon,briefing,currentRun:()=>run,openSharedExploration,playSharedEncounter,externalCharacters,combatPotionSummary,combatPotionButtonMarkup,refreshCombatPotionButton,refreshExternalCommandCooldowns,useCombatPotion,closeShared:(silent=false)=>{if(run?.externalMode)close(Boolean(silent))}};
 }
 init();
 })();
