@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.6.0';
+const VERSION='1.7.0';
 // Balance baseline: 2026-09-30 chapter-wide progression and role audit.
 const TICK=100;
 const MAX_COMBAT_MS=180000;
@@ -4097,11 +4097,11 @@ function buildSummary(ctx,outcome){
   mechanics:copy(ctx.stats.mechanics),mistakes:copy(ctx.stats.mistakes),battleResurrections:ctx.stats.battleResurrections,phases:copy(ctx.phaseTriggered||{}),softEnraged:!!ctx.softEnraged,hardEnraged:!!ctx.hardEnraged,players
  };
 }
-function simulate(options={}){
+function createCombatContext(options={}){
  const encounter=copy(options.encounter||{});
  encounter.mechanics=normaliseMechanics(encounter);
  const seed=options.seed||[encounter.id||'encounter',Date.now(),(options.party||[]).map(x=>x.id).join('-')].join(':');
- const players=(options.party||[]).map((c,i)=>normalisePlayer(c,i,options.professionZone)),enemies=normaliseEnemies(encounter),units={};
+ const players=(options.party||[]).map((ch,i)=>normalisePlayer(ch,i,options.professionZone)),enemies=normaliseEnemies(encounter),units={};
  [...players,...enemies].forEach(u=>units[u.id]=u);enemies.forEach(e=>players.forEach(p=>e.threat[p.id]=0));
  const tactics={
   interruptPriority:options.tactics?.interruptPriority||options.tactics?.interrupts||'standard',
@@ -4114,7 +4114,7 @@ function simulate(options={}){
   crowdControl:options.tactics?.crowdControl||'disabled'
  };
  const environment=copy(encounter.environment||{blockers:[]});
- const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),mechanicRng:rngFrom(seed+':mechanics'),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicBag:Array.isArray(options.initialMechanicBag)?copy(options.initialMechanicBag):[],lastMechanicKey:options.initialLastMechanicKey||null,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,activeGroundHazards:{},commandFocusId:null,commandFocusUntil:0,commandCooldownUntil:0,finished:false,onEvent:options.onEvent||null};
+ const ctx={time:0,elapsedOffsetMs:Math.max(0,Number(options.elapsedOffsetMs)||0),rng:rngFrom(seed),mechanicRng:rngFrom(seed+':mechanics'),seed,encounter,environment,tactics,players,enemies,units,pets:[],petSeq:0,physicalSpace:encounter.physicalSpace!==false,events:[],queue:[],stats:makeStats(players),mechanicIndex:Math.max(0,Number(options.mechanicIndex)||0),mechanicBag:Array.isArray(options.initialMechanicBag)?copy(options.initialMechanicBag):[],lastMechanicKey:options.initialLastMechanicKey||null,mechanicSeq:0,addSeq:0,mistakeSeq:0,pendingResurrections:0,pendingHazards:0,interruptCursor:Math.max(0,Number(options.interruptCursor)||0),ccApplied:false,phaseTriggered:copy(options.initialPhaseTriggered||{}),softEnraged:!!options.initialSoftEnraged,hardEnraged:!!options.initialHardEnraged,elapsedOffset:Math.max(0,Number(options.initialElapsedMs)||0),activeEnemyCast:null,activeGroundHazards:{},commandFocusId:null,commandFocusUntil:0,commandCooldownUntil:0,finished:false,outcome:null,onEvent:options.onEvent||null};
  players.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  enemies.forEach(u=>{u.position=openPosition(ctx,u.position,1.35)});
  settlePhysicalSpace(ctx,[...players,...enemies]);
@@ -4153,42 +4153,99 @@ function simulate(options={}){
  if(tank)enemies.forEach(e=>{e.threat[tank.id]=ctx.tactics.pullStyle==='safe'?250:ctx.tactics.pullStyle==='aggressive'?125:180;setAggro(ctx,e,tank,'pull')});
  maybeApplyCrowdControl(ctx);
  schedulePartyCommands(ctx,options.commandTimeline);scheduleNextMechanic(ctx);scheduleUnstableGround(ctx);
-
+ return ctx
+}
+function evaluateCombatOutcome(ctx){
+ const resolvePct=Math.max(0,Math.min(.95,Number(ctx.encounter.resolveAtBossHealthPct)||0));
+ if(resolvePct>0){
+  const boss=ctx.enemies.find(e=>e.kind==='boss'&&e.alive),remainingRivals=ctx.enemies.filter(e=>e.alive&&!e.isAdd&&e!==boss);
+  if(boss&&healthRatio(boss)<=resolvePct&&!remainingRivals.length){
+   emit(ctx,'ENCOUNTER_RESOLVED',{source:boss.id,ability:ctx.encounter.resolveLabel||'Encounter Resolution',result:'escaped',position:copy(boss.position),payload:{bossHealthPct:pct(boss.health,boss.maxHealth),thresholdPct:Math.round(resolvePct*100)}});
+   return'victory'
+  }
+ }
+ if(!livingEnemies(ctx).length&&ctx.pendingResurrections<=0&&ctx.pendingHazards<=0)return'victory';
+ if(!livingPlayers(ctx).length)return'defeat';
+ return null
+}
+function advanceCombatTick(ctx){
+ if(!ctx||ctx.finished)return ctx?.outcome||null;
+ processQueue(ctx);
+ const outcome=evaluateCombatOutcome(ctx);
+ if(outcome)return outcome;
+ checkBossPhases(ctx);tickCooldowns(ctx);passiveResources(ctx);tickMonkStagger(ctx);tickPets(ctx);
+ ctx.players.forEach(u=>playerAI(ctx,u));
+ ctx.enemies.forEach(e=>{if(e.alive&&ctx.time>=e.nextAttack)enemyBasicAttack(ctx,e)});
+ ctx.time+=TICK;
+ return null
+}
+function buildCombatResult(ctx,outcome=ctx?.outcome||'ongoing',includeReplay=true){
+ const summary=buildSummary(ctx,outcome);
+ return{
+  version:VERSION,seed:ctx.seed,outcome,durationMs:ctx.time,events:copy(ctx.events),summary,
+  finalState:{players:copy(ctx.players),enemies:copy(ctx.enemies)},
+  continuation:{phaseTriggered:copy(ctx.phaseTriggered||{}),softEnraged:!!ctx.softEnraged,hardEnraged:!!ctx.hardEnraged,mechanicIndex:ctx.mechanicIndex,mechanicBag:copy(ctx.mechanicBag||[]),lastMechanicKey:ctx.lastMechanicKey||null,interruptCursor:ctx.interruptCursor,elapsedMs:ctx.elapsedOffsetMs+ctx.time},
+  replay:includeReplay?{version:VERSION,seed:ctx.seed,encounter:copy(ctx.encounter),events:copy(ctx.events),summary:copy(summary)}:null
+ }
+}
+function finishCombatContext(ctx,outcome,{emitEnd=true}={}){
+ if(!ctx)return null;
+ if(ctx.finished)return buildCombatResult(ctx,ctx.outcome||outcome||'defeat');
+ activePets(ctx).slice().forEach(p=>dismissPet(ctx,p,'combat-end'));
+ ctx.finished=true;ctx.outcome=outcome||'defeat';ctx.queue.length=0;
+ ctx.players.filter(u=>u.alive).forEach(u=>emitResourceState(ctx,u,'final'));
+ if(emitEnd)emit(ctx,'COMBAT_END',{result:ctx.outcome,payload:{durationMs:ctx.time}});
+ ctx.stats.endedAt=ctx.time;
+ return buildCombatResult(ctx,ctx.outcome)
+}
+function createLiveSession(options={}){
+ const ctx=createCombatContext(options),maxDuration=Math.max(TICK,Number(options.maxDurationMs)||MAX_COMBAT_MS);
+ let accumulator=0,eventCursor=0,stopped=false;
+ const drainEvents=()=>{
+  const events=ctx.events.slice(eventCursor).map(copy);eventCursor=ctx.events.length;return events
+ };
+ const advance=deltaMs=>{
+  if(ctx.finished||stopped)return{finished:ctx.finished,outcome:ctx.outcome,timeMs:ctx.time,events:drainEvents(),result:ctx.finished?buildCombatResult(ctx,ctx.outcome):null};
+  accumulator+=Math.max(0,Number(deltaMs)||0);
+  let outcome=null,steps=0;
+  while(accumulator>=TICK&&!ctx.finished&&steps<120){
+   accumulator-=TICK;steps++;
+   outcome=advanceCombatTick(ctx);
+   if(outcome)break;
+   if(ctx.time>maxDuration){emit(ctx,'ENRAGE',{result:'timeout'});outcome='defeat';break}
+  }
+  let result=null;
+  if(outcome)result=finishCombatContext(ctx,outcome);
+  return{finished:ctx.finished,outcome:ctx.outcome,timeMs:ctx.time,events:drainEvents(),result}
+ };
+ const command=(type,payload={})=>{
+  if(ctx.finished||stopped)return{ok:false,reason:'finished',events:[]};
+  const before=ctx.events.length;
+  applyPartyCommand(ctx,{id:payload.id||('live-'+ctx.time+'-'+type),type,targetId:payload.targetId||null,durationMs:payload.durationMs||0});
+  const emitted=ctx.events.slice(before).map(copy),commandEvent=emitted.find(e=>e.type==='PARTY_COMMAND');
+  return{ok:!!commandEvent&&!['cooldown','unknown','no-cast','no-target'].includes(commandEvent.result),reason:commandEvent?.result||'unknown',event:commandEvent||null,events:emitted,timeMs:ctx.time}
+ };
+ const snapshot=()=>buildCombatResult(ctx,ctx.finished?(ctx.outcome||'defeat'):'ongoing',false);
+ const stop=(outcome='defeat')=>{stopped=true;return ctx.finished?buildCombatResult(ctx,ctx.outcome):finishCombatContext(ctx,outcome)};
+ return{
+  version:VERSION,seed:ctx.seed,advance,command,drainEvents,snapshot,stop,
+  get timeMs(){return ctx.time},get finished(){return ctx.finished},get outcome(){return ctx.outcome},
+  debug:()=>({timeMs:ctx.time,queue:ctx.queue.length,activeCast:copy(ctx.activeEnemyCast),hazards:copy(ctx.activeGroundHazards),players:copy(ctx.players),enemies:copy(ctx.enemies)})
+ }
+}
+function simulate(options={}){
  const requestedMax=Number(options.maxDurationMs),sliceMode=Number.isFinite(requestedMax)&&requestedMax>0&&requestedMax<MAX_COMBAT_MS,maxDuration=sliceMode?Math.max(TICK,Math.round(requestedMax)):MAX_COMBAT_MS;
+ const ctx=createCombatContext(options);
  let outcome='defeat';
  while(ctx.time<=maxDuration){
-  processQueue(ctx);
-  const resolvePct=Math.max(0,Math.min(.95,Number(ctx.encounter.resolveAtBossHealthPct)||0));
-  if(resolvePct>0){
-   const boss=ctx.enemies.find(e=>e.kind==='boss'&&e.alive),remainingRivals=ctx.enemies.filter(e=>e.alive&&!e.isAdd&&e!==boss);
-   if(boss&&healthRatio(boss)<=resolvePct&&!remainingRivals.length){
-    emit(ctx,'ENCOUNTER_RESOLVED',{source:boss.id,ability:ctx.encounter.resolveLabel||'Encounter Resolution',result:'escaped',position:copy(boss.position),payload:{bossHealthPct:pct(boss.health,boss.maxHealth),thresholdPct:Math.round(resolvePct*100)}});
-    outcome='victory';break
-   }
-  }
-  if(!livingEnemies(ctx).length&&ctx.pendingResurrections<=0&&ctx.pendingHazards<=0){outcome='victory';break}
-  if(!livingPlayers(ctx).length){outcome='defeat';break}
-  checkBossPhases(ctx);tickCooldowns(ctx);passiveResources(ctx);tickMonkStagger(ctx);tickPets(ctx);
-  players.forEach(u=>playerAI(ctx,u));
-  enemies.forEach(e=>{if(e.alive&&ctx.time>=e.nextAttack)enemyBasicAttack(ctx,e)});
-  ctx.time+=TICK;
+  const resolved=advanceCombatTick(ctx);
+  if(resolved){outcome=resolved;break}
  }
  if(ctx.time>maxDuration){
   if(sliceMode&&livingPlayers(ctx).length&&livingEnemies(ctx).length)outcome='ongoing';
   else if(!sliceMode)emit(ctx,'ENRAGE',{result:'timeout'});
  }
- activePets(ctx).slice().forEach(p=>dismissPet(ctx,p,'combat-end'));
- ctx.finished=true;ctx.queue.length=0;
- players.filter(u=>u.alive).forEach(u=>emitResourceState(ctx,u,'final'));
- emit(ctx,'COMBAT_END',{result:outcome,payload:{durationMs:ctx.time}});
- ctx.stats.endedAt=ctx.time;
- const summary=buildSummary(ctx,outcome);
- return{
-  version:VERSION,seed,outcome,durationMs:ctx.time,events:ctx.events,summary,
-  finalState:{players:copy(players),enemies:copy(enemies)},
-  continuation:{phaseTriggered:copy(ctx.phaseTriggered||{}),softEnraged:!!ctx.softEnraged,hardEnraged:!!ctx.hardEnraged,mechanicIndex:ctx.mechanicIndex,mechanicBag:copy(ctx.mechanicBag||[]),lastMechanicKey:ctx.lastMechanicKey||null,interruptCursor:ctx.interruptCursor,elapsedMs:ctx.elapsedOffsetMs+ctx.time},
-  replay:{version:VERSION,seed,encounter:copy(encounter),events:copy(ctx.events),summary:copy(summary)}
- };
+ return finishCombatContext(ctx,outcome)
 }
 
 function replay(replayData,onEvent,opts={}){
@@ -5063,7 +5120,7 @@ function runSelfTests(){
 }
 
 window.CellboundCombatReborn={
- VERSION,CLASS_COLORS,RESOURCE_DEFS,CLASS_BUFFS,ABILITIES,LEVEL_RULES,ENEMY_CLASS_RULES,simulate,replay,debugSnapshot,
+ VERSION,CLASS_COLORS,RESOURCE_DEFS,CLASS_BUFFS,ABILITIES,LEVEL_RULES,ENEMY_CLASS_RULES,simulate,createLiveSession,replay,debugSnapshot,
  skills:{classSkillPool,unlockedSkillPool,defaultSkillLoadout},
  talents:{rules:TALENT_RULES,skillRequirements:TALENT_SKILL_REQUIREMENTS,rank:characterTalentRank},
  tests:{run:runSelfTests},utils:{hashSeed,rngFrom,levelHealthScale,levelOutputScale,levelMatchMultiplier}
