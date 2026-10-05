@@ -515,8 +515,8 @@ function act(r,t){const e=$('[data-act="'+r+'"] em');if(e)e.textContent=t}
 function updateRows(){
  party().forEach(c=>{
    const row=$('[data-row="'+c.id+'"]');
-   const value=row?.querySelector('strong');if(value)value.textContent=hp(c.id)+' HP';
-   const detail=row?.querySelector('small');if(detail)detail.textContent=String(role(c)).toUpperCase()+' · '+c.spec+' · Condition '+cond(c.id)+'%';
+   const value=row?.querySelector('[data-hud-hp]');if(value)value.textContent=hp(c.id)+'%';
+   const detail=row?.querySelector('[data-hud-condition]');if(detail)detail.textContent='Condition '+cond(c.id)+'%';
    const bar=$('[data-side-hp="'+c.id+'"]');if(bar)bar.style.width=hp(c.id)+'%';
    const unit=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(unit)unit.style.width=hp(c.id)+'%';
    const marker=$('[data-unit="p-'+c.id+'"]');if(marker)marker.classList.toggle('dead',hp(c.id)<=0);
@@ -1491,7 +1491,7 @@ function rebornDebugEvent(e,result){
 function cbrStatusTargets(id){
  const out=[],unit=$('[data-unit="'+id+'"]');if(unit)out.push(unit);
  if(String(id||'').startsWith('p-')){
-  const ch=rebornPlayerByUnit(id),row=ch?$('[data-row="'+ch.id+'"]'):null,mirror=row?.querySelector('span');
+  const ch=rebornPlayerByUnit(id),row=ch?$('[data-row="'+ch.id+'"]'):null,mirror=row?.querySelector('.cb2d-party-main')||row?.querySelector('span');
   if(mirror)out.push({el:mirror,mirror:true})
  }
  return out
