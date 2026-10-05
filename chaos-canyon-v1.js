@@ -399,42 +399,30 @@ function ccRenderRebornEvent(e){
  }
 }
 async function ccPlayTimeline(result,tok){
- let activeResult=result,events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
+ const session=run?.liveCombat?.session;if(!session?.advance||!session?.command)throw new Error('Real-time Combat Reborn session unavailable');
  if(!run)return false;run.telegraphs={};
- if(!events.length)return result?.outcome==='victory';
+ const stageMeta={stageId:result?.stageId,stageTitle:result?.stageTitle,startHp:result?.startHp};
+ const renderEvents=events=>{for(const event of events||[]){try{ccRenderRebornEvent(event)}catch(error){console.warn('chaos-canyon-v1.js live combat visual recovered',event?.type,event?.ability,error)}}};
+ renderEvents(session.drainEvents?.()||[]);
+ run.liveCombat.issue=(type,payload={})=>session.command(type,payload);
  return await new Promise(resolve=>{
-   let index=0,simTime=0,wallAnchor=Number(run?.runtimeStageStartedAt)||Date.now(),simAnchor=0,lastSpeed=null,finished=false,raf=0;
-   const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);if(run?.liveCombat)run.liveCombat.issue=null;resolve(value)};
-   const issueCommand=(type,payload={})=>{
-    const live=run?.liveCombat,C=window.CellboundCombatStandard;if(!live?.options||!C?.simulate)return{ok:false,reason:'unavailable'};
-    const now=Math.max(0,Number(simTime)||0);if(now<Number(live.cooldownUntil||0))return{ok:false,reason:'cooldown',remainingMs:live.cooldownUntil-now};
-    const command={id:'cc-live-'+(++live.seq),type:String(type||''),atMs:Math.round(now+120),targetId:payload?.targetId||null},next=[...(live.commands||[]),command];
-    let replanned;try{replanned=C.simulate({...live.options,commandTimeline:next},live.meta||{})}catch(error){console.warn('chaos-canyon-v1.js live command replan failed',type,error);return{ok:false,reason:'simulation'}}
-    replanned.stageId=result.stageId;replanned.stageTitle=result.stageTitle;replanned.startHp=result.startHp;
-    live.commands=next;live.cooldownUntil=now+3200;live.result=replanned;activeResult=replanned;
-    try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,replanned)}catch(_){}
-    events=(replanned.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0));
-    const nextIndex=events.findIndex(e=>(Number(e.timestamp)||0)>now+4);index=nextIndex<0?events.length:nextIndex;
-    return{ok:true,command,result:replanned}
-   };
-   if(run?.liveCombat){run.liveCombat.issue=issueCommand;run.liveCombat.now=()=>simTime}
-   const frame=()=>{
-     if(finished)return;
-     if(tok!==token||!run){finish(false);return}
-     const speed=Math.max(.25,Number(run.speed)||1);
-     if(lastSpeed===null)lastSpeed=speed;
-     else if(lastSpeed!==speed){simAnchor=simTime;wallAnchor=Date.now();lastSpeed=speed}
-     simTime=Math.max(simTime,simAnchor+Math.max(0,Date.now()-wallAnchor)*speed);
-     const frameStarted=performance.now();let handled=0;
-     while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<36&&performance.now()-frameStarted<9){
-       const event=events[index++];handled++;
-       try{ccRenderRebornEvent(event)}
-       catch(error){console.error('Chaos Canyon combat visual recovered',event?.type||'UNKNOWN_EVENT',event?.ability||'',error)}
-     }
-     if(index>=events.length){finish(activeResult?.outcome==='victory');return}
-     raf=requestAnimationFrame(frame)
-   };
+  let finished=false,raf=0,lastWall=performance.now();
+  const finish=(value,finalResult=null)=>{
+   if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
+   const final=finalResult||session.snapshot?.()||result;
+   if(final){final.stageId=stageMeta.stageId;final.stageTitle=stageMeta.stageTitle;final.startHp=stageMeta.startHp;try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,final)}catch(_){}}
+   if(run?.liveCombat){run.liveCombat.result=final;run.liveCombat.issue=null;run.liveCombat.session=null}
+   resolve(value)
+  };
+  const frame=now=>{
+   if(finished)return;if(tok!==token||!run){finish(false);return}
+   if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
+   const delta=Math.max(0,Math.min(250,now-lastWall))*Math.max(.25,Number(run.speed)||1);lastWall=now;
+   const step=session.advance(delta);if(step.events?.length)renderEvents(step.events);
+   if(step.finished){const final=step.result||session.snapshot?.()||result;finish(final?.outcome==='victory',final);return}
    raf=requestAnimationFrame(frame)
+  };
+  raf=requestAnimationFrame(frame)
  })
 }
 function ccStageSummary(result){
@@ -556,11 +544,11 @@ async function fightStage(s,tok,index){
  // Threat belongs to the current encounter; damage/healing belong to the whole dungeon.
  run.threat=Object.fromEntries(party().map(ch=>[ch.id,0]));run.aggro=null;ccRenderMeters();
  spawnStage(s);setStatus('Entering '+s.title+'…');feed('The party enters '+s.title+'.');await wait(650);if(tok!==token)return false;
- const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
+ const C=window.CellboundCombatStandard;if(!C?.createLiveSession)throw new Error('Real-time Combat Reborn standard gateway unavailable');
  if(s.id==='warden'&&run?.chaosScar)ccApplyScarStatus();
  const combatParty=party().map((c,i)=>Object.assign({},c,{_combatHealthPct:run.hp[c.id],_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0,_combatPosition:ccPartyPosition(s,i)}));
- const tactics={...ccTactics,interruptPriority:ccTactics.bossPlan==='control'?'high':ccTactics.interruptPriority,addPriority:ccTactics.bossPlan==='burn'?'boss':ccTactics.addPriority,defensiveUsage:ccTactics.bossPlan==='control'?'aggressive':ccTactics.defensiveUsage,cooldownUse:ccTactics.bossPlan==='burn'?'free':ccTactics.cooldownUse},simOptions={party:combatParty,encounter:ccRebornEncounter(s),tactics,seed:[run.endgame?.seed||'chaos-canyon',s.id,index].join(':')},simMeta={zone:'chaos-canyon'};const result=C.simulate(simOptions,simMeta);
- run.liveCombat={options:simOptions,meta:simMeta,commands:[],seq:0,cooldownUntil:0,result};
+ const tactics={...ccTactics,interruptPriority:ccTactics.bossPlan==='control'?'high':ccTactics.interruptPriority,addPriority:ccTactics.bossPlan==='burn'?'boss':ccTactics.addPriority,defensiveUsage:ccTactics.bossPlan==='control'?'aggressive':ccTactics.defensiveUsage,cooldownUse:ccTactics.bossPlan==='burn'?'free':ccTactics.cooldownUse},simOptions={party:combatParty,encounter:ccRebornEncounter(s),tactics,seed:[run.endgame?.seed||'chaos-canyon',s.id,index].join(':')},simMeta={zone:'chaos-canyon'};const session=C.createLiveSession(simOptions,simMeta),result=session.snapshot();
+ run.liveCombat={session,issue:null,commands:[],seq:0,cooldownUntil:0,result};
  result.stageId=s.id;result.stageTitle=s.title;result.startHp={...run.hp};run.history.push(result);
  const won=await ccPlayTimeline(result,tok);ccResultHealth(result);
  (result?.finalState?.players||[]).forEach(p=>{
@@ -620,7 +608,7 @@ function ccOverride(kind,button){
  if(kind==='consumable'){
    const helper=window.CellboundDungeon2D,used=helper?.useCombatPotion?.({state:state(),members:party(),getHp:c=>Number(run.hp[c.id])||0,setHp:(c,v)=>{run.hp[c.id]=v}});
    if(!used?.ok){feed(used?.reason==='full'?'The party is already at full health.':'No combat potions remain. Craft or buy one before the next run.');helper?.refreshCombatPotionButton?.(button,state());return}
-   ccUpdateSidebar();helper?.refreshCombatPotionButton?.(button,state());feed(used.item.name+' restores '+used.target.name+' for '+used.healApplied+' HP.');return
+   const liveHeal=run.liveCombat?.session?.heal?.(used.target.id,used.healApplied,{ability:used.item.name,source:'commander'});if(liveHeal?.ok&&Number.isFinite(Number(liveHeal.targetHpPct)))run.hp[used.target.id]=Math.round(Number(liveHeal.targetHpPct));ccUpdateSidebar();helper?.refreshCombatPotionButton?.(button,state());feed(used.item.name+' restores '+used.target.name+' for '+used.healApplied+' HP.');return
  }
  const response=run.liveCombat?.issue?.(kind,{});
  if(!response?.ok){
