@@ -81,6 +81,41 @@ function flushPending(){
   if(!pendingInfo||playerBusy())return;
   const info=pendingInfo;pendingInfo=null;showGate(info);
 }
+const DEV_BUILD_RELOAD_KEY='cellbound_dev_build_reload_v1';
+function parseDevBuild(html){
+  const source=String(html||'');
+  const build=(source.match(/window\.CELLBOUND_BUILD=['"]([^'"]+)['"]/)||[])[1]||'';
+  const number=Number((source.match(/window\.CELLBOUND_BUILD_NUMBER=['"]([^'"]+)['"]/)||[])[1]||0)||0;
+  return{build:String(build).trim(),number}
+}
+async function checkDevBuild(){
+  if(busy||document.visibilityState==='hidden'||playerBusy())return null;
+  const local=currentBuild(),localNumber=currentBuildNumber();
+  if(!local||local==='development'||local.includes('__CELLBOUND_BUILD__'))return null;
+  busy=true;
+  try{
+    const url=new URL('./guild.html',location.href);
+    url.searchParams.set('devcheck',Date.now().toString());
+    const response=await fetch(url.href,{cache:'no-store',credentials:'same-origin'});
+    if(!response.ok)return null;
+    const remote=parseDevBuild(await response.text());
+    if(!remote.build||remote.build==='development'||remote.build.includes('__CELLBOUND_BUILD__'))return null;
+    const newer=remote.number>0&&localNumber>0?remote.number>localNumber:remote.build!==local;
+    if(!newer)return null;
+    const stamp=remote.build+':'+remote.number;
+    if(sessionStorage.getItem(DEV_BUILD_RELOAD_KEY)===stamp)return remote;
+    sessionStorage.setItem(DEV_BUILD_RELOAD_KEY,stamp);
+    try{await Promise.race([Game?.persistState?.()||Promise.resolve(),new Promise(r=>setTimeout(r,900))])}catch{}
+    const next=new URL('./guild.html',location.href);
+    next.searchParams.set('devbuild',remote.build);
+    next.searchParams.set('t',Date.now().toString());
+    location.replace(next.href);
+    return remote
+  }catch(error){
+    console.warn('Dev build freshness check failed',error);
+    return null
+  }finally{busy=false}
+}
 async function check(){
   if(busy||!db)return;busy=true;
   try{
@@ -106,8 +141,8 @@ async function check(){
 async function init(){
   Game=window.CellboundGame;
   if(!Game?.ready){setTimeout(init,120);return}
-  // Release enforcement is production-only. Staging/dev builds use a separate
-  // deployment stream and must never be forced to match the production build.
+  // Production follows the published release gate. Dev/staging instead watches
+  // its own deployed guild.html build id and performs at most one reload per new build.
   if(!releaseGateEnabled()){
     hideGate();
     window.CellboundRelease={
@@ -118,8 +153,12 @@ async function init(){
       message:null,
       publishedAt:null,
       channel:'development',
-      refresh:async()=>{hideGate();return null}
+      refresh:checkDevBuild
     };
+    setTimeout(checkDevBuild,1800);
+    timer=setInterval(checkDevBuild,12000);
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')checkDevBuild()});
+    window.addEventListener('beforeunload',()=>clearInterval(timer),{once:true});
     return;
   }
   db=Game.getSupabase?.();
