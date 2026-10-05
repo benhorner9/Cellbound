@@ -402,13 +402,10 @@ function selectCommanderTarget(id){
 }
 function commandContextReady(type){
  const key=String(type||''),ctx=run?.commandContext||{};
- if(key==='interrupt')return !!ctx.interrupt;
- if(key==='spread')return !!ctx.spread;
- if(key==='stack')return !!ctx.stack;
- return true
+ return key==='interrupt'?!!ctx.interrupt:true
 }
 function commandWaitingHint(type){
- return type==='interrupt'?'WAITING FOR CAST':type==='spread'?'WAITING FOR MOVE CALL':type==='stack'?'WAITING FOR STACK CALL':'NOT READY'
+ return type==='interrupt'?'WAITING FOR CAST':'NOT READY'
 }
 function updateCommandContextFromEvent(e){
  if(!run||!e)return;
