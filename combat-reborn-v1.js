@@ -4311,7 +4311,8 @@ function createLiveSession(options={}){
  const powerState=()=>({...commandPowerState(ctx)});
  const commandState=type=>{
   const key=String(type||'').toLowerCase(),rule=COMMAND_RULES[key]||{cooldownMs:8000,sharedMs:3500,cost:1},sharedRemainingMs=Math.max(0,(Number(ctx.commandCooldownUntil)||0)-ctx.time),commandRemainingMs=Math.max(0,(Number(ctx.commandCooldowns?.[key])||0)-ctx.time),cost=Math.max(0,Number(rule.cost)||0),power=Math.max(0,Number(ctx.commandPower)||0),affordable=power>=cost;
-  return{type:key,available:sharedRemainingMs<=0&&commandRemainingMs<=0&&affordable,affordable,cost,power,powerMax:ctx.commandPowerMax||COMMAND_POWER_MAX,remainingMs:Math.max(sharedRemainingMs,commandRemainingMs),sharedRemainingMs,commandRemainingMs,cooldownMs:rule.cooldownMs,sharedCooldownMs:rule.sharedMs}
+  const cast=ctx.activeEnemyCast,contextReady=key!=='interrupt'||Boolean(cast&&!cast.interrupted&&ctx.time<Number(cast.ends||0));
+  return{type:key,available:sharedRemainingMs<=0&&commandRemainingMs<=0&&affordable&&contextReady,contextReady,affordable,cost,power,powerMax:ctx.commandPowerMax||COMMAND_POWER_MAX,remainingMs:Math.max(sharedRemainingMs,commandRemainingMs),sharedRemainingMs,commandRemainingMs,cooldownMs:rule.cooldownMs,sharedCooldownMs:rule.sharedMs}
  };
  const command=(type,payload={})=>{
   if(ctx.finished||stopped)return{ok:false,reason:'finished',events:[],state:commandState(type)};
