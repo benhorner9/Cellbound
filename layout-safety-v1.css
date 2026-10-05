@@ -305,10 +305,11 @@ body.bs2d-open{
   body.cc2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode),
   body.bs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode){
     display:grid;
-    grid-template-rows:auto auto minmax(0,1fr) auto;
-    height:calc(100dvh - 32px)!important;
-    max-height:calc(100dvh - 32px)!important;
-    overflow:hidden!important;
+    grid-template-rows:auto auto auto auto;
+    min-height:calc(100dvh - 32px)!important;
+    height:auto!important;
+    max-height:none!important;
+    overflow:visible!important;
     overscroll-behavior:none;
   }
 
@@ -318,7 +319,7 @@ body.bs2d-open{
   body.bs2d-open .cb2d-shell:not(.cb2d-brief):not(.results-mode)>.cb2d-layout{
     height:auto;
     min-height:0!important;
-    overflow:hidden;
+    overflow:visible;
   }
 
   body.cb2d-open .cb2d-layout>main,
@@ -326,17 +327,21 @@ body.bs2d-open{
   body.cc2d-open .cb2d-layout>main,
   body.bs2d-open .cb2d-layout>main{
     display:grid;
-    grid-template-rows:minmax(0,1fr) auto minmax(72px,96px);
+    grid-template-rows:clamp(470px,52dvh,560px) auto minmax(72px,96px);
+    min-width:0;
     min-height:0;
-    overflow:hidden;
+    overflow:visible;
   }
 
   body.cb2d-open .cb2d-layout>main>.cb2d-arena,
   body.hs2d-open .cb2d-layout>main>.cb2d-arena,
   body.cc2d-open .cb2d-layout>main>.cb2d-arena,
   body.bs2d-open .cb2d-layout>main>.cb2d-arena{
-    height:auto!important;
-    min-height:0!important;
+    width:100%!important;
+    max-width:none!important;
+    height:100%!important;
+    min-height:470px!important;
+    justify-self:stretch;
     align-self:stretch;
   }
 
