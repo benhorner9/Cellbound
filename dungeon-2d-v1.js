@@ -340,29 +340,51 @@ function refreshCombatPotionButton(button,st=state()){
 }
 const LIVE_COMBAT_COMMANDS=[
  {id:'focus',label:'FOCUS',hint:'Priority target'},
- {id:'spread',label:'SPREAD',hint:'Escape / create space'},
  {id:'interrupt',label:'INTERRUPT',hint:'Stop the current cast'},
+ {id:'spread',label:'SPREAD',hint:'Escape / create space'},
+ {id:'stack',label:'STACK',hint:'Collapse around the tank'},
+ {id:'regroup',label:'REGROUP',hint:'Reset combat formation'},
  {id:'defensive',label:'DEFENSIVE',hint:'Protect the whole party'},
  {id:'burn',label:'BURN',hint:'Commit damage cooldowns'}
 ];
 function commandRule(type){
- return window.CellboundCombatReborn?.COMMAND_RULES?.[type]||{cooldownMs:8000,sharedMs:3500}
+ return window.CellboundCombatReborn?.COMMAND_RULES?.[type]||{cooldownMs:8000,sharedMs:3500,cost:1}
 }
 function commandReadyHint(type){
  const cmd=LIVE_COMBAT_COMMANDS.find(x=>x.id===type),rule=commandRule(type);
- return (cmd?.hint||'Party command')+' · '+Math.round(rule.cooldownMs/1000)+'s cooldown'
+ return (cmd?.hint||'Party command')+' · '+Math.max(0,Number(rule.cost)||0)+' CP · '+Math.round(rule.cooldownMs/1000)+'s'
+}
+function commanderTargetName(id){
+ const unit=id?$('[data-unit="'+id+'"]'):null,label=unit?.querySelector('span');
+ return String(label?.childNodes?.[0]?.textContent||'').trim()||'AUTO'
+}
+function refreshCommanderTarget(){
+ const label=$('#cbrCommandTarget'),id=run?.commandTargetId;
+ document.querySelectorAll('[data-unit^="e-"],[data-unit^="add-"],[data-unit^="tb-"]').forEach(u=>u.classList.toggle('commander-target',!!id&&u.dataset.unit===id));
+ if(label)label.textContent=id?'TARGET · '+commanderTargetName(id).toUpperCase():'TARGET · AUTO';
+}
+function selectCommanderTarget(id){
+ if(!run||run.resolved)return;
+ const unit=$('[data-unit="'+id+'"]');if(!unit||unit.classList.contains('dead'))return;
+ run.commandTargetId=id;refreshCommanderTarget();status('Priority target selected · '+commanderTargetName(id));log('Commander selects '+commanderTargetName(id)+'. Press FOCUS to commit the call.')
 }
 function refreshCombatCommandCooldowns(){
- const playback=run?.rebornPlayback;
+ const playback=run?.rebornPlayback,power=playback?.commandPowerState?.();
+ const powerEl=$('#cbrCommandPower');
+ if(powerEl&&power){
+  const value=Math.max(0,Number(power.value)||0),max=Math.max(1,Number(power.max)||5);
+  powerEl.innerHTML=Array.from({length:max},(_,i)=>'<i class="'+(i<value?'filled':'')+'"></i>').join('')+'<strong>'+value+'/'+max+'</strong>'
+ }
  document.querySelectorAll('[data-combat-command]').forEach(button=>{
   const type=button.dataset.combatCommand,state=playback?.commandState?.(type),small=button.querySelector('small');
   if(!button.dataset.readyHint)button.dataset.readyHint=commandReadyHint(type);
   if(!state){if(small)small.textContent=button.dataset.readyHint;return}
   const own=Math.max(0,Number(state.commandRemainingMs)||0),shared=Math.max(0,Number(state.sharedRemainingMs)||0);
   button.disabled=!state.available;
-  button.classList.toggle('cooling',own>0);
+  button.classList.toggle('cooling',own>0);button.classList.toggle('no-power',state.affordable===false);
   if(small){
-   if(own>0)small.textContent='COOLDOWN · '+Math.max(.1,own/1000).toFixed(1)+'s';
+   if(state.affordable===false)small.textContent='NEED '+state.cost+' CP · HAVE '+state.power;
+   else if(own>0)small.textContent='COOLDOWN · '+Math.max(.1,own/1000).toFixed(1)+'s';
    else if(shared>0)small.textContent='COMMAND RECOVERY · '+Math.max(.1,shared/1000).toFixed(1)+'s';
    else small.textContent=button.dataset.readyHint
   }
@@ -374,16 +396,18 @@ function refreshExternalCommandCooldowns(session,selector,attribute){
   if(!type||!state)return;
   if(!button.dataset.readyHint)button.dataset.readyHint=small?.textContent||'Party command';
   const own=Math.max(0,Number(state.commandRemainingMs)||0),shared=Math.max(0,Number(state.sharedRemainingMs)||0);
-  button.disabled=!state.available;button.classList.toggle('cooling',own>0);
+  button.disabled=!state.available;button.classList.toggle('cooling',own>0);button.classList.toggle('no-power',state.affordable===false);
   if(small){
-   if(own>0)small.textContent='COOLDOWN · '+Math.max(.1,own/1000).toFixed(1)+'s';
+   if(state.affordable===false)small.textContent='NEED '+state.cost+' CP';
+   else if(own>0)small.textContent='COOLDOWN · '+Math.max(.1,own/1000).toFixed(1)+'s';
    else if(shared>0)small.textContent='COMMAND RECOVERY · '+Math.max(.1,shared/1000).toFixed(1)+'s';
    else small.textContent=button.dataset.readyHint
   }
  })
 }
 function combatCommandDeckMarkup(potionAttribute='data-combat-potion',title='Command the party',copy='React to the fight. Commands alter the live Combat Reborn result.'){
- return '<div class="cbr-command-copy"><small>PARTY COMMANDS</small><b id="cbrCommandPrompt">'+esc(title)+'</b><span id="cbrCommandStatus">'+esc(copy)+'</span></div>'+
+ return '<div class="cbr-command-copy"><small>COMMANDER</small><b id="cbrCommandPrompt">'+esc(title)+'</b><span id="cbrCommandStatus">'+esc(copy)+'</span></div>'+
+  '<div class="cbr-command-meta"><div><span>COMMAND POWER</span><b id="cbrCommandPower"></b></div><button type="button" id="cbrCommandTarget" class="cbr-command-target">TARGET · AUTO</button></div>'+
   '<div class="cbr-command-grid">'+LIVE_COMBAT_COMMANDS.map(cmd=>'<button type="button" class="cbr-command" data-combat-command="'+cmd.id+'"><b>'+cmd.label+'</b><small>'+commandReadyHint(cmd.id)+'</small></button>').join('')+
   combatPotionButtonMarkup(potionAttribute)+'</div>'
 }
@@ -402,22 +426,30 @@ function setCombatCommandPrompt(e=null){
  if(statusEl)statusEl.textContent=rec?'Recommended command highlighted. Your party still acts autonomously.':'React to mechanics or change the pace of the fight.'
 }
 function bindCombatCommandButtons(){
- document.querySelectorAll('[data-combat-command]').forEach(button=>button.onclick=()=>issueCombatCommand(button.dataset.combatCommand,button))
+ document.querySelectorAll('[data-combat-command]').forEach(button=>button.onclick=()=>issueCombatCommand(button.dataset.combatCommand,button));
+ const units=$('#cb2dUnits');
+ if(units&&!units.dataset.commandTargetBound){
+  units.dataset.commandTargetBound='1';
+  units.addEventListener('click',e=>{const enemy=e.target.closest?.('.cb2d-unit.enemy');if(enemy?.dataset?.unit)selectCommanderTarget(enemy.dataset.unit)})
+ }
+ const target=$('#cbrCommandTarget');if(target)target.onclick=()=>{if(!run)return;run.commandTargetId=null;refreshCommanderTarget();status('Priority target cleared · automatic targeting')}
+ refreshCommanderTarget();refreshCombatCommandCooldowns()
 }
 function issueCombatCommand(type,button){
  if(!run||run.resolved)return;
  const playback=run.rebornPlayback;if(!playback?.issueCommand){log('Party commands are unavailable for this encounter.');return}
- const response=playback.issueCommand(type,{});
+ const response=playback.issueCommand(type,{targetId:type==='focus'?(run.commandTargetId||null):null});
  if(!response?.ok){
   const state=response?.state||playback.commandState?.(type);
   if(response?.reason==='cooldown'&&state){
    const seconds=Math.max(.1,(Number(state.remainingMs)||0)/1000).toFixed(1);
    status((Number(state.commandRemainingMs)>0?'Command cooldown · ':'Command recovery · ')+seconds+'s')
-  }else status(response?.reason==='replay'?'Replay cannot be changed':'Command could not be issued');
+  }else if(response?.reason==='no-power'&&state)status('Need '+state.cost+' Command Power · '+state.power+'/'+state.powerMax+' available');
+  else status(response?.reason==='replay'?'Replay cannot be changed':'Command could not be issued');
   refreshCombatCommandCooldowns();return
  }
  button?.classList.add('active');setTimeout(()=>button?.classList.remove('active'),420);
- const labels={focus:'Focus target',spread:'Spread out',interrupt:'Interrupt now',defensive:'Defensive stance',burn:'Burn phase'};
+ const labels={focus:'Focus target',spread:'Spread out',stack:'Stack up',regroup:'Regroup formation',interrupt:'Interrupt now',defensive:'Defensive stance',burn:'Burn phase'};
  status(labels[type]||'Party command');log('Commander: '+(labels[type]||type)+'.');
  setCombatCommandPrompt();refreshCombatCommandCooldowns()
 }
@@ -1504,8 +1536,12 @@ function renderRebornEvent(e,result,replayMode=false){
    flash('OVERCLOCK',true);status(e.ability||'Turrets overclocked');log((e.ability||'Adds')+' empowers active adds.');break;
   case'INTERACTION_REQUIRED':
    flash(String(e.ability||'INTERACTION').toUpperCase(),true);status((e.ability||'Interaction')+' · response required');log((e.ability||'An encounter interaction')+' requires a response.');break;
+  case'COMMAND_POWER':
+   refreshCombatCommandCooldowns();
+   if(e.result==='gained')log('Command Power +'+Math.round(Number(e.amount)||1)+' · '+String(e.payload?.reason||'tactical success')+'.');
+   break;
   case'PARTY_COMMAND':
-   if(e.result!=='cooldown'&&e.result!=='unknown'){flash('COMMAND · '+String(e.ability||'').toUpperCase(),false);log('Party command executed: '+String(e.ability||'command').replace(/-/g,' ')+'.')}
+   if(!['cooldown','unknown','no-power'].includes(e.result)){flash('COMMAND · '+String(e.ability||'').toUpperCase(),false);log('Party command executed: '+String(e.ability||'command').replace(/-/g,' ')+'.')}
    break;
   case'ENEMY_BEHAVIOUR':
    if(e.result==='support')log('Enemy support unit reinforces '+(e.target||'an ally')+'.');
@@ -1522,6 +1558,7 @@ function renderRebornEvent(e,result,replayMode=false){
    flash('ADDS SPAWN',true);window.CellboundCombatFX?.spawn?.($('[data-unit="'+e.target+'"]')||$('#cb2dArena'));log((e.payload?.name||'Adds')+' enter the fight.');break;
   case'ADD_DEFEATED':case'ENEMY_DEFEATED':{
    const u=$('[data-unit="'+e.target+'"]');if(u){u.classList.add('dying');deathBurst(e.target);window.CellboundCombatFX?.death?.(u,{boss:e.type==='ENEMY_DEFEATED'&&['boss','final'].includes(String(currentStageDef()?.kind||''))});setTimeout(()=>u.classList.add('dead'),240)}
+   if(run?.commandTargetId===e.target){run.commandTargetId=null;refreshCommanderTarget()}
    if(e.type==='ADD_DEFEATED')log('An add is defeated.');break;
   }
   case'PLAYER_DEFEATED':
@@ -1581,7 +1618,7 @@ async function playLiveRebornSession(result,tok){
   }
  };
  renderEvents(session.drainEvents?.()||[]);
- run.rebornPlayback={issueCommand:(type,payload={})=>session.command(type,payload),commandState:type=>session.commandState?.(type),now:()=>session.timeMs,result:()=>activeResult};refreshCombatCommandCooldowns();
+ run.rebornPlayback={issueCommand:(type,payload={})=>session.command(type,payload),commandState:type=>session.commandState?.(type),commandPowerState:()=>session.commandPowerState?.(),now:()=>session.timeMs,result:()=>activeResult};refreshCombatCommandCooldowns();
  return await new Promise(resolve=>{
   const finishPlayback=(value,finalResult=null)=>{
    if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
