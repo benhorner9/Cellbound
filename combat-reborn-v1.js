@@ -2509,28 +2509,28 @@ function specHealingBalance(u){
  const v=curves[key];return v?progressionBlend(u.level,...v):1
 }
 function lateBalanceFactor(level,target){
- const l=Math.max(1,Number(level)||1),t=Math.max(.70,Math.min(1.40,Number(target)||1));
+ const l=Math.max(1,Number(level)||1),t=Math.max(.70,Math.min(1.65,Number(target)||1));
  if(l<12)return 1;
  return 1+(t-1)*clamp((l-12)/3,0,1)
 }
 function specEndgameDamageAdjustment(u){
  const key=u.class+'|'+u.spec,targets={
   'Warrior|Arms':.94,'Priest|Shadow':1.04,'Druid|Balance':.97,'Hunter|Marksman':1.06,'Hunter|Beast Mastery':.91,
-  'Rogue|Assassination':1.13,'Rogue|Outlaw':.90,'Mage|Arcane':1.12,'Mage|Frost':1.09,'Shaman|Elemental':1.00,
-  'Warlock|Demonology':.94,'Warlock|Destruction':1.13,'Monk|Windwalker':1.00,'Death Knight|Frost':.95,'Death Knight|Unholy':.90,
-  'Demon Hunter|Havoc':1.08,'Evoker|Devastation':1.10
+  'Rogue|Assassination':1.13,'Rogue|Outlaw':1.00,'Mage|Arcane':1.18,'Mage|Frost':1.09,'Shaman|Elemental':1.00,
+  'Warlock|Demonology':.94,'Warlock|Destruction':1.00,'Monk|Windwalker':1.00,'Death Knight|Frost':.95,'Death Knight|Unholy':.90,
+  'Demon Hunter|Havoc':1.08,'Evoker|Devastation':1.05
  };
  return lateBalanceFactor(u.level,targets[key]||1)
 }
 function specEndgameHealingAdjustment(u){
  const key=u.class+'|'+u.spec,targets={
-  'Paladin|Holy':1.40,'Priest|Holy':1.40,'Druid|Restoration':.86,'Shaman|Restoration':.88,'Monk|Mistweaver':.90,'Evoker|Preservation':.90
+  'Paladin|Holy':1.60,'Priest|Holy':1.52,'Druid|Restoration':.82,'Shaman|Restoration':.86,'Monk|Mistweaver':.84,'Evoker|Preservation':.90
  };
  return lateBalanceFactor(u.level,targets[key]||1)
 }
 function specEndgameTankTakenAdjustment(u){
  const key=u.class+'|'+u.spec,targets={
-  'Warrior|Protection':.90,'Paladin|Protection':1.10,'Monk|Brewmaster':.96,'Death Knight|Blood':1.00,'Demon Hunter|Vengeance':.95
+  'Warrior|Protection':.88,'Paladin|Protection':1.18,'Monk|Brewmaster':1.05,'Death Knight|Blood':1.08,'Demon Hunter|Vengeance':.95
  };
  return lateBalanceFactor(u.level,targets[key]||1)
 }
