@@ -1556,3 +1556,466 @@ body.bs2d-open{
     transition:color .18s ease,background .18s ease,border-color .18s ease!important;
   }
 }
+
+
+/* === PANELLED COMBAT CONTRACT V1 ===
+   Final override for commander/direct-control combat.
+   Four independent panels: party+target, commands, battlefield, meters. */
+@media (min-width:850px) and (min-height:620px){
+  :is(.cb2d-backdrop,.hs2d-backdrop,.cc2d-backdrop,.bs2d-backdrop,.quest-cb2d-backdrop):has(>.cbr-three-column-combat){
+    padding:8px!important;
+    place-items:stretch!important;
+    background:#03070a!important;
+    backdrop-filter:none!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen.cbr-three-column-combat:not(.results-mode){
+    --panel-gap:10px;
+    --left-panel-w:clamp(260px,23vw,330px);
+    --right-panel-w:clamp(210px,17vw,260px);
+    position:relative!important;
+    inset:auto!important;
+    display:grid!important;
+    grid-template-rows:auto auto minmax(0,1fr)!important;
+    width:100%!important;
+    height:calc(100dvh - 16px)!important;
+    min-height:0!important;
+    max-height:calc(100dvh - 16px)!important;
+    overflow:hidden!important;
+    border:1px solid rgba(128,169,190,.14)!important;
+    border-radius:10px!important;
+    background:#050b0f!important;
+    box-sizing:border-box!important;
+  }
+
+  .cb2d-shell.cbr-three-column-combat>.cb2d-head{
+    position:relative!important;
+    inset:auto!important;
+    z-index:20!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    align-items:center!important;
+    width:auto!important;
+    height:auto!important;
+    min-height:58px!important;
+    padding:9px 14px!important;
+    border:0!important;
+    border-bottom:1px solid rgba(255,255,255,.055)!important;
+    background:#071015!important;
+    box-shadow:none!important;
+  }
+  .cb2d-shell.cbr-three-column-combat>.cb2d-head h2{
+    margin:2px 0 0!important;
+    font-size:1.18rem!important;
+  }
+  .cb2d-shell.cbr-three-column-combat>.cb2d-head .cbr-head-context{
+    display:none!important;
+  }
+
+  .cb2d-shell.cbr-three-column-combat>.cb2d-route{
+    position:relative!important;
+    inset:auto!important;
+    z-index:10!important;
+    display:flex!important;
+    width:auto!important;
+    transform:none!important;
+    gap:5px!important;
+    min-height:31px!important;
+    padding:4px 8px!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    border:0!important;
+    border-bottom:1px solid rgba(255,255,255,.045)!important;
+    border-radius:0!important;
+    background:#060e12!important;
+    box-shadow:none!important;
+    scrollbar-width:none!important;
+  }
+  .cb2d-shell.cbr-three-column-combat>.cb2d-route::-webkit-scrollbar{display:none!important}
+  .cb2d-shell.cbr-three-column-combat>.cb2d-route span{
+    flex:0 0 auto!important;
+    min-width:108px!important;
+    padding:4px 6px!important;
+    font-size:7px!important;
+  }
+
+  .cb2d-shell.cbr-three-column-combat>.cb2d-layout{
+    position:relative!important;
+    inset:auto!important;
+    z-index:1!important;
+    display:grid!important;
+    grid-template-columns:var(--left-panel-w) minmax(0,1fr) var(--right-panel-w)!important;
+    grid-template-rows:minmax(0,1fr)!important;
+    gap:var(--panel-gap)!important;
+    width:auto!important;
+    height:auto!important;
+    min-width:0!important;
+    min-height:0!important;
+    padding:var(--panel-gap)!important;
+    overflow:hidden!important;
+    background:#03080b!important;
+    box-sizing:border-box!important;
+  }
+
+  .cb2d-shell.cbr-three-column-combat .cbr-panel{
+    box-sizing:border-box!important;
+    min-width:0!important;
+    min-height:0!important;
+    border:1px solid rgba(123,168,194,.17)!important;
+    border-radius:9px!important;
+    background:linear-gradient(180deg,#09151b,#061015)!important;
+    box-shadow:0 8px 24px rgba(0,0,0,.18)!important;
+  }
+
+  /* LEFT COLUMN = two genuinely separate panels. */
+  .cb2d-shell.cbr-three-column-combat .cbr-combat-left{
+    position:relative!important;
+    inset:auto!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:minmax(0,1.05fr) minmax(300px,.95fr)!important;
+    gap:var(--panel-gap)!important;
+    width:auto!important;
+    height:auto!important;
+    min-width:0!important;
+    min-height:0!important;
+    padding:0!important;
+    overflow:hidden!important;
+    background:transparent!important;
+  }
+
+  .cb2d-shell.cbr-three-column-combat .cbr-party-target-panel{
+    position:relative!important;
+    inset:auto!important;
+    display:flex!important;
+    flex-direction:column!important;
+    gap:8px!important;
+    width:auto!important;
+    height:auto!important;
+    min-height:0!important;
+    padding:10px!important;
+    overflow:hidden!important;
+  }
+
+  .cb2d-shell.cbr-three-column-combat .cbr-target-card{
+    flex:0 0 auto!important;
+    margin:0!important;
+    padding:9px!important;
+    border:1px solid rgba(210,153,84,.20)!important;
+    border-radius:7px!important;
+    background:#11120f!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-target-main{
+    grid-template-columns:38px minmax(0,1fr) auto!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-target-avatar{
+    width:38px!important;height:38px!important;
+  }
+
+  .cb2d-shell.cbr-three-column-combat .cbr-party-stack{
+    position:relative!important;
+    inset:auto!important;
+    flex:1 1 auto!important;
+    display:flex!important;
+    flex-direction:column!important;
+    min-width:0!important;
+    min-height:0!important;
+    width:auto!important;
+    padding:0!important;
+    margin:0!important;
+    overflow:hidden!important;
+    border:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-party-stack>small{
+    flex:0 0 auto!important;
+    margin:0 0 5px!important;
+    font-size:8px!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-party-stack #cb2dRows{
+    flex:1 1 auto!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:repeat(5,minmax(0,1fr))!important;
+    gap:5px!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-party-stack .cb2d-party-row{
+    position:relative!important;
+    inset:auto!important;
+    display:grid!important;
+    grid-template-columns:32px minmax(0,1fr)!important;
+    align-items:center!important;
+    min-width:0!important;
+    min-height:0!important;
+    height:auto!important;
+    padding:6px 7px!important;
+    margin:0!important;
+    overflow:hidden!important;
+    border:1px solid rgba(255,255,255,.055)!important;
+    border-radius:7px!important;
+    background:#0a1418!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-party-stack .cb2d-party-row.player-selected{
+    border-color:rgba(112,211,255,.55)!important;
+    background:#102530!important;
+    box-shadow:inset 3px 0 #70d3ff!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-party-stack .cb2d-party-target,
+  .cb2d-shell.cbr-three-column-combat .cbr-party-stack .cb2d-party-condition{
+    display:none!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-party-stack .cb2d-party-action{
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+
+  .cb2d-shell.cbr-three-column-combat .cbr-command-panel-box{
+    position:relative!important;
+    inset:auto!important;
+    z-index:1!important;
+    display:flex!important;
+    flex-direction:column!important;
+    width:auto!important;
+    height:auto!important;
+    min-width:0!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:9px!important;
+    overflow:hidden!important;
+    background:linear-gradient(180deg,#09151d,#061017)!important;
+    box-shadow:0 8px 24px rgba(0,0,0,.18)!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-command-panel-box .cbr-command-copy{
+    flex:0 0 auto!important;
+    display:block!important;
+    margin:0 0 5px!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-command-panel-box .cbr-command-copy span{
+    display:none!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-command-panel-box .cbr-command-meta{
+    flex:0 0 auto!important;
+    margin:0 0 5px!important;
+    padding:5px 6px!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-command-panel-box .cbr-direct-control{
+    flex:0 0 auto!important;
+    display:block!important;
+    min-height:0!important;
+    margin:0 0 6px!important;
+    padding:5px 6px!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-command-panel-box .cbr-direct-control span{
+    display:block!important;
+    margin-top:2px!important;
+    font-size:7px!important;
+    line-height:1.25!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-command-panel-box .cbr-command-grid{
+    flex:1 1 auto!important;
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-template-rows:repeat(4,minmax(0,1fr))!important;
+    gap:6px!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-command-panel-box .cbr-command,
+  .cb2d-shell.cbr-three-column-combat .cbr-command-panel-box .cb2d-potion-button{
+    min-width:0!important;
+    min-height:0!important;
+    height:auto!important;
+    padding:7px!important;
+    margin:0!important;
+    border-radius:7px!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-command-panel-box .cbr-command b,
+  .cb2d-shell.cbr-three-column-combat .cbr-command-panel-box .cb2d-potion-button b{
+    font-size:9px!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-command-panel-box .cbr-command small,
+  .cb2d-shell.cbr-three-column-combat .cbr-command-panel-box .cb2d-potion-button small{
+    display:block!important;
+    margin-top:2px!important;
+    overflow:hidden!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+    font-size:6px!important;
+  }
+
+  /* CENTRE = one dedicated combat panel, no outside HUD bleeding over it. */
+  .cb2d-shell.cbr-three-column-combat .cbr-combat-panel-box{
+    position:relative!important;
+    inset:auto!important;
+    display:block!important;
+    width:auto!important;
+    height:auto!important;
+    min-width:0!important;
+    min-height:0!important;
+    padding:8px!important;
+    overflow:hidden!important;
+    background:#070f13!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-combat-panel-box>.cb2d-arena{
+    position:relative!important;
+    inset:auto!important;
+    left:auto!important;top:auto!important;right:auto!important;bottom:auto!important;
+    width:100%!important;
+    height:100%!important;
+    min-width:0!important;
+    min-height:0!important;
+    max-width:none!important;
+    max-height:none!important;
+    aspect-ratio:auto!important;
+    transform:none!important;
+    margin:0!important;
+    border:1px solid rgba(255,255,255,.06)!important;
+    border-radius:7px!important;
+    box-shadow:inset 0 0 45px rgba(0,0,0,.16)!important;
+    overflow:hidden!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-combat-panel-box>.cb2d-feed{
+    display:none!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-arena-cast{
+    position:absolute!important;
+    z-index:55!important;
+    left:50%!important;top:9px!important;right:auto!important;bottom:auto!important;
+    width:min(430px,62%)!important;
+    transform:translateX(-50%)!important;
+    margin:0!important;
+  }
+
+  /* RIGHT = one dedicated meters panel with three internal meter sections. */
+  .cb2d-shell.cbr-three-column-combat .cbr-meters-panel-box{
+    position:relative!important;
+    inset:auto!important;
+    z-index:1!important;
+    display:block!important;
+    width:auto!important;
+    height:auto!important;
+    min-width:0!important;
+    min-height:0!important;
+    padding:9px!important;
+    margin:0!important;
+    overflow:hidden!important;
+    pointer-events:auto!important;
+    background:linear-gradient(180deg,#09151b,#061015)!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-meters-panel-box>.cb2d-combat-meters{
+    position:relative!important;
+    inset:auto!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    grid-template-rows:repeat(3,minmax(0,1fr))!important;
+    gap:8px!important;
+    width:100%!important;
+    height:100%!important;
+    min-width:0!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:hidden!important;
+    pointer-events:auto!important;
+    background:transparent!important;
+    border:0!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-meters-panel-box .cb2d-meter-panel{
+    position:relative!important;
+    inset:auto!important;
+    display:block!important;
+    min-width:0!important;
+    min-height:0!important;
+    padding:9px!important;
+    margin:0!important;
+    overflow:hidden!important;
+    border:1px solid rgba(255,255,255,.055)!important;
+    border-radius:7px!important;
+    background:#0a1418!important;
+    box-shadow:none!important;
+    pointer-events:auto!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-meters-panel-box .cb2d-meter-head small{
+    font-size:9px!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-meters-panel-box .cb2d-meter-head span{
+    font-size:7px!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-meters-panel-box .cb2d-meter-label b{
+    font-size:8px!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-meters-panel-box .cb2d-meter-label span{
+    font-size:7px!important;
+  }
+
+  .cb2d-shell.cbr-three-column-combat .cbr-meters-panel-box>.cb2d-actions,
+  .cb2d-shell.cbr-three-column-combat .cbr-meters-panel-box>.cb2d-plan{
+    display:none!important;
+  }
+
+  /* Keep the playable units large enough for iPad touch. */
+  .cb2d-shell.cbr-three-column-combat .cb2d-unit{
+    width:68px!important;height:68px!important;
+    margin-left:-34px!important;margin-top:-34px!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cb2d-unit>i{
+    width:44px!important;height:44px!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cb2d-unit.enemy>i{
+    width:40px!important;height:40px!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cb2d-unit.enemy.big>i,
+  .cb2d-shell.cbr-three-column-combat .cb2d-unit.enemy.boss>i{
+    width:62px!important;height:62px!important;
+  }
+}
+
+@media (min-width:850px) and (max-width:1100px) and (min-height:620px){
+  .cb2d-shell.combat-hud-fullscreen.cbr-three-column-combat{
+    --panel-gap:7px;
+    --left-panel-w:clamp(230px,25vw,280px);
+    --right-panel-w:clamp(185px,19vw,220px);
+  }
+  .cb2d-shell.cbr-three-column-combat>.cb2d-layout{padding:7px!important}
+  .cb2d-shell.cbr-three-column-combat .cbr-party-target-panel,
+  .cb2d-shell.cbr-three-column-combat .cbr-command-panel-box,
+  .cb2d-shell.cbr-three-column-combat .cbr-combat-panel-box,
+  .cb2d-shell.cbr-three-column-combat .cbr-meters-panel-box{
+    padding:7px!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-combat-left{
+    grid-template-rows:minmax(0,1fr) minmax(285px,.92fr)!important;
+  }
+}
+
+/* Phone fallback: panels stack instead of overlaying the battlefield. */
+@media (max-width:849px){
+  .cb2d-shell.cbr-three-column-combat>.cb2d-layout{
+    position:relative!important;
+    inset:auto!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+    height:auto!important;
+    padding:8px!important;
+    overflow:auto!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-combat-panel-box{
+    order:1!important;
+    min-height:430px!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-combat-left{
+    order:2!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:8px!important;
+  }
+  .cb2d-shell.cbr-three-column-combat .cbr-meters-panel-box{
+    order:3!important;
+    min-height:420px!important;
+  }
+}
