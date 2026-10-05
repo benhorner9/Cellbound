@@ -653,6 +653,7 @@ function draw(){
  '<div class="cb2d-party"><small>PARTY CONDITION · ILVL '+ilvl()+'</small><div id="cc2dRows">'+ccPartyRows()+'</div></div>'+
  '<div class="cb2d-plan"><small>EXPEDITION STYLE</small><b>'+esc(String(ccTactics.strategyPreset||'balanced').toUpperCase())+'</b><span>Same combat rules · Chaos Canyon encounter mechanics</span></div></aside></div>'+
  '<div id="cc2dEnd" class="cb2d-end" hidden></div></section>';
+ window.CellboundDungeon2D?.dockFullscreenCombatMeta?.(r);
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.done&&!confirm('Leave Chaos Canyon?'))return;close()};
  r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  r.querySelectorAll('[data-cc-override]').forEach(b=>b.onclick=()=>ccOverride(b.dataset.ccOverride,b));
