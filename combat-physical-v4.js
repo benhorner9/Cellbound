@@ -203,6 +203,7 @@ function setPosition(scene,u,p,duration=0){
  const el=u.el,x=clamp(Number(p.x),0,100),y=clamp(Number(p.y),0,100);
  el.dataset.x=String(x);el.dataset.y=String(y);el.style.transitionDuration=(reduce()?0:duration/scene.speed)+'ms';
  if(scene.arena.id==='cb2dArena'&&el.dataset.unit){
+   el.style.setProperty('--unit-left',x+'%');el.style.setProperty('--unit-top',y+'%');
    el.style.setProperty('--unit-x',x/100*scene.arena.clientWidth+'px');el.style.setProperty('--unit-y',y/100*scene.arena.clientHeight+'px');
    if(scene.arena.dataset.bespokeBattlefield==='1'){
      const min=Number(scene.arena.dataset.depthMin)||.94,max=Number(scene.arena.dataset.depthMax)||1.06,t=clamp((y-10)/80,0,1);
