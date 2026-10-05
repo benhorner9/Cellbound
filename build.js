@@ -507,10 +507,8 @@ for(const file of files){
     if(!contents.includes('Date.now()-wallAnchor')&&!contents.includes('Date.now()-playStartedAt'))throw new Error(file+' must use a wall-clock combat timeline');
   }
   if(file==='quests-v2.js'){
-    if(!contents.includes("Number(lastResult?.durationMs)"))throw new Error('Interactive slice duration must use lastResult');
-    if(!contents.includes("_combatTalentTimers:x.talentTimers||{}")||!contents.includes("talentTimers=Object.fromEntries"))throw new Error('Quest sliced talent state carry is missing');
-    if(!contents.includes("_combatPosition:x.position||null")||!contents.includes("enemyPositions[i]=e.position"))throw new Error('Interactive quest position carry is missing');
-    if(!contents.includes("focusSelected:i===focus")||!contents.includes("focusSelectedDamageOnly:Boolean(config.focusSelectedDamageOnly)"))throw new Error('Interactive quest focus marker is missing');
+    for(const hook of ['async function runInteractiveQuest2DFight','C.createLiveSession({party:partyInput','suppressAutoVictory:true',"session.focus('e-'+initialFocus)",'session?.reviveEnemy?.','session.stop(\'victory\')','reviveWindowMs'])if(!contents.includes(hook))throw new Error('Interactive quest real-time revive-window combat is missing '+hook);
+    if(!contents.includes("focusSelected:i===initialFocus")||!contents.includes("focusSelectedDamageOnly:Boolean(config.focusSelectedDamageOnly)"))throw new Error('Interactive quest focus marker is missing');
     if(!contents.includes('config.autoContinueOnVictory')||!contents.includes('autoContinueDelayMs'))throw new Error('Interactive quest combat must support automatic victory flow');
     if((contents.match(/if\(config\.autoContinueOnVictory\)/g)||[]).length<2)throw new Error('Both standard and interactive quest combat must support automatic victory flow');
     if(!contents.includes("$$('[data-q-target]').forEach"))throw new Error('Live quest target controls must use querySelectorAll');
