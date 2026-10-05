@@ -390,6 +390,25 @@ function commanderTargetName(id){
  const unit=id?$('[data-unit="'+id+'"]'):null,label=unit?.querySelector('span');
  return String(label?.childNodes?.[0]?.textContent||'').trim()||'AUTO'
 }
+function commanderTargetPercent(id){
+ const raw=String(id||''),match=/^e-(\d+)$/.exec(raw);
+ if(match){
+   const i=Number(match[1]),max=Math.max(1,Number(run?.enemyDisplayMax?.[i])||Number(run?.enemyMax?.[i])||1),hpNow=Math.max(0,Number(run?.enemyHp?.[i])||0);
+   return clamp(hpNow/max*100,0,100)
+ }
+ const fill=raw?$('[data-unit="'+raw+'"] .cb2d-unit-hp i'):null,p=parseFloat(fill?.style?.width||'');
+ return Number.isFinite(p)?clamp(p,0,100):100
+}
+function refreshCommanderTargetCard(){
+ const card=$('#cbrTargetCard');if(!card)return;
+ const selected=run?.directControlUnitId||null,id=run?.commandTargetId||(selected?run?.directControlTargets?.[selected]:null)||null;
+ const nameEl=card.querySelector('[data-target-name]'),metaEl=card.querySelector('[data-target-meta]'),hpEl=card.querySelector('[data-target-hp]'),fill=card.querySelector('[data-target-hp-fill]'),avatar=card.querySelector('.cbr-target-avatar');
+ if(!id){
+   card.classList.add('empty');if(nameEl)nameEl.textContent='NO TARGET';if(metaEl)metaEl.textContent='Tap an enemy in the battlefield';if(hpEl)hpEl.textContent='—';if(fill)fill.style.width='0%';if(avatar)avatar.textContent='?';return
+ }
+ const unit=$('[data-unit="'+id+'"]'),name=commanderTargetName(id),meta=String(unit?.querySelector('.cb2d-unit-meta')?.textContent||'PRIORITY TARGET').trim(),pct=commanderTargetPercent(id);
+ card.classList.remove('empty');if(nameEl)nameEl.textContent=name.toUpperCase();if(metaEl)metaEl.textContent=meta||'PRIORITY TARGET';if(hpEl)hpEl.textContent=Math.round(pct)+'%';if(fill)fill.style.width=pct+'%';if(avatar)avatar.textContent=hudInitial(name)
+}
 function directControlUnitName(id){
  const raw=String(id||''),ch=raw.startsWith('p-')?party().find(x=>String(x.id)===raw.slice(2)):null,unit=raw?$('[data-unit="'+raw+'"]'):null,label=unit?.querySelector(':scope > span');
  return ch?.name||String(label?.childNodes?.[0]?.textContent||'').trim()||'CHARACTER'
@@ -433,6 +452,7 @@ function refreshCommanderTarget(){
  const label=$('#cbrCommandTarget'),id=run?.commandTargetId;
  document.querySelectorAll('[data-unit^="e-"],[data-unit^="add-"],[data-unit^="tb-"]').forEach(u=>u.classList.toggle('commander-target',!!id&&u.dataset.unit===id));
  if(label)label.textContent=id?'TARGET · '+commanderTargetName(id).toUpperCase():'TARGET · AUTO';
+ refreshCommanderTargetCard()
 }
 function selectCommanderTarget(id){
  if(!run||run.resolved)return;
@@ -616,19 +636,39 @@ function mountCommanderCombatScene(scope=document){
  const shell=(scope?.matches?.('.cb2d-shell.combat-hud-fullscreen')?scope:scope?.querySelector?.('.cb2d-shell.combat-hud-fullscreen'));if(!shell||shell.dataset.commandSceneMounted==='1')return;
  const layout=shell.querySelector(':scope>.cb2d-layout'),main=layout?.querySelector(':scope>main'),arena=main?.querySelector(':scope>.cb2d-arena'),controls=main?.querySelector(':scope>.cb2d-controls'),aside=layout?.querySelector(':scope>aside');
  if(!layout||!main||!arena||!controls||!aside)return;
- shell.dataset.commandSceneMounted='1';shell.classList.add('cbr-command-scene');
+ shell.dataset.commandSceneMounted='1';shell.classList.add('cbr-command-scene','cbr-three-column-combat');
+ main.classList.add('cbr-combat-center');
+
+ const left=document.createElement('section');
+ left.className='cbr-combat-left';
+ const upper=document.createElement('div');
+ upper.className='cbr-left-upper';
+ const target=document.createElement('div');
+ target.className='cbr-target-card empty';target.id='cbrTargetCard';
+ target.innerHTML='<small>TARGETED ENEMY</small><div class="cbr-target-main"><span class="cbr-target-avatar">?</span><span><b data-target-name>NO TARGET</b><em data-target-meta>Tap an enemy in the battlefield</em></span><strong data-target-hp>—</strong></div><em class="cbr-target-hp"><i data-target-hp-fill style="width:0%"></i></em>';
+ upper.appendChild(target);
+
+ const party=aside.querySelector('.cb2d-party');
+ if(party){party.classList.add('cbr-party-stack');upper.appendChild(party)}
+ left.appendChild(upper);
+ controls.classList.add('cbr-left-commands');left.appendChild(controls);
+ layout.insertBefore(left,main);
+
  const cast=aside.querySelector('.cb2d-cast');
  if(cast){cast.classList.add('cbr-arena-cast');arena.appendChild(cast)}
- const party=aside.querySelector('.cb2d-party');
- if(party){
-   const dock=document.createElement('div');dock.className='cbr-party-dock';
-   main.insertBefore(dock,controls);dock.appendChild(party);party.classList.add('cbr-party-strip')
+
+ const meters=aside.querySelector('.cb2d-combat-meters');
+ if(meters){
+   meters.classList.add('cbr-meter-stack');
+   const threat=meters.querySelector('.cb2d-meter-panel.threat'),damage=meters.querySelector('.cb2d-meter-panel.damage'),healing=meters.querySelector('.cb2d-meter-panel.healing');
+   [threat,damage,healing].forEach(panel=>{if(panel)meters.appendChild(panel)})
  }
- aside.querySelector('.cb2d-combat-meters')?.classList.add('cbr-secondary-combat-info');
+ aside.classList.add('cbr-combat-right');aside.hidden=false;
  aside.querySelector('.cb2d-actions')?.classList.add('cbr-secondary-combat-info');
  aside.querySelector('.cb2d-plan')?.classList.add('cbr-secondary-combat-info');
- aside.hidden=true;
  const feed=main.querySelector('.cb2d-feed');if(feed)feed.classList.add('cbr-secondary-combat-info');
+
+ refreshCommanderTargetCard();
  requestAnimationFrame(()=>syncUnitPixelPositions())
 }
 function drawViewer(){
@@ -1119,6 +1159,7 @@ function setEnemyHp(index,value){
  const displayMax=Math.max(1,Number(run.enemyDisplayMax?.[index])||run.enemyMax[index]||1);
  const pct=clamp((run.enemyHp[index]/displayMax)*100,0,100);
  const bar=$('[data-unit="e-'+index+'"] .cb2d-unit-hp i');if(bar)bar.style.width=pct+'%';updateBossHud(index,pct);
+ if(run?.commandTargetId==='e-'+index)refreshCommanderTargetCard();
  const unit=$('[data-unit="e-'+index+'"]');
  if(unit){
    unit.classList.toggle('critical',pct<30&&pct>0);
