@@ -467,7 +467,7 @@ async function playTimeline(result,tok){
    if(finished)return;if(tok!==token||!run){finish(false);return}
    if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
    const delta=Math.max(0,Math.min(250,now-lastWall))*Math.max(.25,Number(run.speed)||1);lastWall=now;
-   const step=session.advance(delta);run.combatElapsed=step.timeMs;if(step.events?.length)renderEvents(step.events);
+   const step=session.advance(delta);run.combatElapsed=step.timeMs;window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(session,'[data-bs-command]','bsCommand');if(step.events?.length)renderEvents(step.events);
    if(step.finished){const final=step.result||session.snapshot?.()||result;finish(final?.outcome==='victory',final);return}
    raf=requestAnimationFrame(frame)
   };
@@ -479,9 +479,7 @@ function bsIssueCommand(kind,button){
  if(!run)return;if(button){button.classList.add('active');setTimeout(()=>button.classList.remove('active'),420)}
  const response=run.liveCombat?.issue?.(kind,{});
  if(!response?.ok){feed(response?.reason==='cooldown'?'Commander call recovering — hold for the next opening.':'That command is not available right now.');return}
- document.querySelectorAll('[data-bs-command]').forEach(b=>b.disabled=true);
- const cooldown=Math.max(700,Math.round(3200/Math.max(.25,Number(run.speed)||1)));
- setTimeout(()=>{if(run)document.querySelectorAll('[data-bs-command]').forEach(b=>b.disabled=false)},cooldown);
+ window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(run.liveCombat?.session,'[data-bs-command]','bsCommand');
  if(kind==='interrupt')bsAct('dps','Interrupt command issued');
  if(kind==='defensive')bsAct('tank','Party defensives committed');
  if(kind==='burn')bsAct('dps','Damage cooldowns committed');
