@@ -259,3 +259,71 @@
  .cbl-cast-glyph,.cbl-mechanic-marker,.cbl-fx.force{animation:none!important}
  .cbl-cast-glyph{opacity:.5;scale:1}.cbl-mechanic-marker{opacity:.9}
 }
+
+
+/* Living Combat fluidity v4.5
+   Presentation-only smoothing: no combat timings, hit checks or balance values change. */
+.cbl-scene .cbl-unit{
+  transition-property:left,top,transform,opacity!important;
+  transition-duration:var(--cbl-move-ms,420ms);
+  transition-timing-function:cubic-bezier(.22,.72,.22,1)!important;
+  will-change:left,top,transform!important;
+}
+.cbl-live .cbl-unit[data-combat-state="idle"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot){
+  animation:cblCombatIdle 2.9s ease-in-out infinite alternate!important;
+  animation-delay:var(--cbl-idle-delay,0s)!important;
+}
+.cbl-live .cbl-unit[data-motion="heavy"][data-combat-state="idle"] :is(.cb-combat-portrait,.cb-combat-boss-portrait){
+  animation-duration:3.8s!important;
+}
+.cbl-live .cbl-unit[data-motion="dart"][data-combat-state="idle"] :is(.cb-combat-portrait,.pvp2d-token){
+  animation-duration:2.15s!important;
+}
+.cbl-live .cbl-unit[data-motion="rush"][data-combat-state="idle"] :is(.cb-combat-portrait,.pvp2d-token){
+  animation-duration:2.35s!important;
+}
+.cbl-unit[data-combat-state="moving"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot){
+  animation:cblStride .22s ease-in-out infinite alternate!important;
+}
+.cbl-unit[data-motion="heavy"][data-combat-state="moving"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.pvp2d-token){animation-duration:.34s!important}
+.cbl-unit[data-motion="brutal"][data-combat-state="moving"] :is(.cb-combat-portrait,.cb-combat-boss-portrait){animation-duration:.39s!important}
+.cbl-unit[data-motion="dart"][data-combat-state="moving"] :is(.cb-combat-portrait,.pvp2d-token),
+.cbl-unit[data-motion="rush"][data-combat-state="moving"] :is(.cb-combat-portrait,.pvp2d-token){animation-duration:.16s!important}
+.cbl-unit[data-combat-state="attacking"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot){
+  filter:brightness(1.06) saturate(1.05);
+}
+.cbl-unit[data-combat-state="healing"] :is(.cb-combat-portrait,.pvp2d-token){
+  filter:brightness(1.08);
+}
+.cbl-unit[data-combat-state="casting"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token),
+.cbl-unit[data-combat-state="channeling"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token){
+  animation:cblCastFloat 1.05s ease-in-out infinite alternate!important;
+  animation-delay:var(--cbl-idle-delay,0s)!important;
+}
+.cbl-scene :is(.cb2d-unit-hp,.pvp2d-hp,.wb2d-unit-hp)>i{transition:width .22s cubic-bezier(.22,.72,.22,1)!important}
+.cbl-fx.connection{animation-duration:.28s}
+.cbl-fx.connection.heal{animation-duration:.46s}
+.cbl-fx.contact{animation-duration:.30s}
+.cbl-fx.slash{animation-duration:.32s}
+
+@keyframes cblCombatIdle{
+  0%{translate:-.4px 0;rotate:-.35deg;scale:1}
+  45%{translate:.25px -1px;rotate:.18deg;scale:1.009}
+  100%{translate:.55px -.25px;rotate:.38deg;scale:1.014}
+}
+@keyframes cblStride{
+  from{translate:-.7px .6px;rotate:-1.25deg;scale:.995}
+  to{translate:.7px -2.2px;rotate:1.25deg;scale:1.01}
+}
+@keyframes cblCastFloat{
+  from{translate:0 .5px;scale:.992}
+  to{translate:0 -2px;scale:1.018}
+}
+@media(prefers-reduced-motion:reduce){
+  .cbl-live .cbl-unit[data-combat-state="idle"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot),
+  .cbl-unit[data-combat-state="moving"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token,.wb2d-unit-dot),
+  .cbl-unit[data-combat-state="casting"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token),
+  .cbl-unit[data-combat-state="channeling"] :is(.cb-combat-portrait,.cb-combat-boss-portrait,.cb-combat-monster-portrait,.pvp2d-token){
+    animation:none!important;
+  }
+}
