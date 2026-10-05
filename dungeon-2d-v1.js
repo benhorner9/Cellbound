@@ -391,6 +391,13 @@ function refreshCombatCommandCooldowns(){
  })
 }
 function refreshExternalCommandCooldowns(session,selector,attribute){
+ const first=document.querySelector(selector),container=first?.closest?.('.cb2d-controls'),power=session?.commandPowerState?.();
+ if(container&&power){
+  let badge=container.querySelector('.cbr-inline-power');
+  if(!badge){badge=document.createElement('div');badge.className='cbr-inline-power';container.prepend(badge)}
+  const value=Math.max(0,Number(power.value)||0),max=Math.max(1,Number(power.max)||5);
+  badge.innerHTML='<span>COMMAND POWER</span><b>'+Array.from({length:max},(_,i)=>'<i class="'+(i<value?'filled':'')+'"></i>').join('')+'</b><strong>'+value+'/'+max+'</strong>'
+ }
  document.querySelectorAll(selector).forEach(button=>{
   const type=button.dataset?.[attribute],state=session?.commandState?.(type),small=button.querySelector('small');
   if(!type||!state)return;
