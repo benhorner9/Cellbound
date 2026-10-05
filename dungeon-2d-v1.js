@@ -622,65 +622,66 @@ function useCombatPotion(options={}){
  Game?.save?.();
  return{ok:true,item,target,healApplied:nextHp-beforeHp,conditionApplied:nextCondition==null?0:nextCondition-beforeCondition,remaining:combatPotionSummary(st).count}
 }
-function dockFullscreenCombatMeta(scope=document){
- const shell=(scope?.matches?.('.cb2d-shell.combat-hud-fullscreen')?scope:scope?.querySelector?.('.cb2d-shell.combat-hud-fullscreen'));if(!shell)return;
- const head=shell.querySelector(':scope>.cb2d-head'),arena=shell.querySelector('.cb2d-layout>main>.cb2d-arena');if(!head||!arena)return;
- let dock=head.querySelector('.cbr-head-context');
- if(!dock){dock=document.createElement('div');dock.className='cbr-head-context';const live=head.querySelector('.cb2d-live');head.insertBefore(dock,live||null)}
- const room=arena.querySelector(':scope>.cb2d-room-tag'),legend=arena.querySelector(':scope>.cb2d-ground-legend');
- if(room){room.classList.add('cbr-docked-room');dock.appendChild(room)}
- if(legend){legend.classList.add('cbr-docked-legend');dock.appendChild(legend)}
- arena.querySelector(':scope>.cb2d-caption')?.classList.add('cbr-status-caption')
+function dockFullscreenCombatMeta(){return false}
+function combatTargetCardMarkup(){
+ return '<div class="cbr-target-card empty" id="cbrTargetCard"><small>TARGETED ENEMY</small><div class="cbr-target-main"><span class="cbr-target-avatar">?</span><span><b data-target-name>NO TARGET</b><em data-target-meta>Tap an enemy in the battlefield</em></span><strong data-target-hp>—</strong></div><em class="cbr-target-hp"><i data-target-hp-fill style="width:0%"></i></em></div>'
 }
-function mountCommanderCombatScene(scope=document){
- const shell=(scope?.matches?.('.cb2d-shell.combat-hud-fullscreen')?scope:scope?.querySelector?.('.cb2d-shell.combat-hud-fullscreen'));if(!shell||shell.dataset.commandSceneMounted==='1')return;
- const layout=shell.querySelector(':scope>.cb2d-layout'),main=layout?.querySelector(':scope>main'),arena=main?.querySelector(':scope>.cb2d-arena'),controls=main?.querySelector(':scope>.cb2d-controls'),aside=layout?.querySelector(':scope>aside');
- if(!layout||!main||!arena||!controls||!aside)return;
- shell.dataset.commandSceneMounted='1';shell.classList.add('cbr-command-scene','cbr-three-column-combat');
- main.classList.add('cbr-combat-center','cbr-panel','cbr-combat-panel-box');
-
- const left=document.createElement('section');
- left.className='cbr-combat-left cbr-panel-column';
- const upper=document.createElement('div');
- upper.className='cbr-left-upper cbr-panel cbr-party-target-panel';
- const target=document.createElement('div');
- target.className='cbr-target-card empty';target.id='cbrTargetCard';
- target.innerHTML='<small>TARGETED ENEMY</small><div class="cbr-target-main"><span class="cbr-target-avatar">?</span><span><b data-target-name>NO TARGET</b><em data-target-meta>Tap an enemy in the battlefield</em></span><strong data-target-hp>—</strong></div><em class="cbr-target-hp"><i data-target-hp-fill style="width:0%"></i></em>';
- upper.appendChild(target);
-
- const party=aside.querySelector('.cb2d-party');
- if(party){party.classList.add('cbr-party-stack');upper.appendChild(party)}
- left.appendChild(upper);
- controls.classList.add('cbr-left-commands','cbr-panel','cbr-command-panel-box');left.appendChild(controls);
- layout.insertBefore(left,main);
-
- const cast=aside.querySelector('.cb2d-cast');
- if(cast){cast.classList.add('cbr-arena-cast');arena.appendChild(cast)}
-
- const meters=aside.querySelector('.cb2d-combat-meters');
- if(meters){
-   meters.classList.add('cbr-meter-stack');
-   const threat=meters.querySelector('.cb2d-meter-panel.threat'),damage=meters.querySelector('.cb2d-meter-panel.damage'),healing=meters.querySelector('.cb2d-meter-panel.healing');
-   [threat,damage,healing].forEach(panel=>{if(panel)meters.appendChild(panel)})
- }
- aside.classList.add('cbr-combat-right','cbr-panel','cbr-meters-panel-box');aside.hidden=false;
- aside.querySelector('.cb2d-actions')?.classList.add('cbr-secondary-combat-info');
- aside.querySelector('.cb2d-plan')?.classList.add('cbr-secondary-combat-info');
- const feed=main.querySelector('.cb2d-feed');if(feed)feed.classList.add('cbr-secondary-combat-info');
-
- refreshCommanderTargetCard();
- requestAnimationFrame(()=>syncUnitPixelPositions())
+function combatCastMarkup(){
+ return '<div class="cb2d-cast cbcombat-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div>'
+}
+function combatMetersMarkup(){
+ return '<div class="cb2d-combat-meters cbcombat-meter-stack">'+
+  '<section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT</small><span id="cb2dThreatTarget">No target</span></div><div id="cb2dThreatMeter" class="cb2d-meter-list"></div></section>'+
+  '<section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE</small><span id="cb2dDamageTotal">0 total</span></div><div id="cb2dDamageMeter" class="cb2d-meter-list"></div></section>'+
+  '<section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING</small><span id="cb2dHealingTotal">0 total</span></div><div id="cb2dHealingMeter" class="cb2d-meter-list"></div></section>'+
+ '</div>'
+}
+function combatArenaMarkup(kind='combat',arenaClass=''){
+ return '<div class="cb2d-arena cbcombat-arena '+esc(arenaClass||'')+'" id="cb2dArena">'+
+  '<div class="cb2d-floor"></div><div class="cb2d-environment" id="cb2dEnvironment"></div>'+
+  '<div class="cb2d-room-tag" id="cb2dRoomTag"></div>'+
+  '<div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD · AGGRO</span></div>'+
+  combatCastMarkup()+
+  '<div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div>'+
+  '<div class="cb2d-caption"><span id="cb2dType">'+esc(String(kind||'combat').toUpperCase())+'</span><b id="cb2dStatus">Entering encounter…</b></div>'+
+ '</div>'
+}
+function combatShellMarkup(options={}){
+ const title=options.title||'Combat',header=options.header||'CELLBOUND · LIVE COMBAT',route=options.route||'',partyLabel=options.partyLabel||('PARTY · '+party().length+' CHARACTERS'),kind=options.kind||'combat';
+ const command=options.commandMarkup||combatCommandDeckMarkup(options.potionAttribute||'data-combat-potion',options.planTitle||'Command the party',options.planCopy||'AI handles combat abilities. You control positions, targets and party orders.');
+ return '<section class="cbcombat-shell" data-combat-view="fresh-v1">'+
+  '<header class="cbcombat-header"><div class="cbcombat-title"><small>'+esc(header)+'</small><h2 id="cb2dTitle">'+esc(title)+'</h2></div><div class="cbcombat-header-actions"><span class="cbcombat-live-dot"><i></i>LIVE</span><button data-speed type="button">1×</button><button data-close type="button" aria-label="Close combat">×</button></div></header>'+
+  '<div class="cbcombat-route" id="cb2dRoute">'+route+'</div>'+
+  '<div class="cbcombat-grid">'+
+   '<div class="cbcombat-left-column">'+
+    '<section class="cbcombat-panel cbcombat-party-panel">'+combatTargetCardMarkup()+'<div class="cb2d-party cbcombat-party"><small>'+partyLabel+'</small><div id="cb2dRows">'+hudPartyRows()+'</div></div></section>'+
+    '<section class="cbcombat-panel cbcombat-command-panel cb2d-controls cbr-command-panel" data-reborn="1">'+command+'</section>'+
+   '</div>'+
+   '<main class="cbcombat-panel cbcombat-battle-panel">'+combatArenaMarkup(kind,options.arenaClass||'')+'</main>'+
+   '<aside class="cbcombat-panel cbcombat-meters-panel">'+combatMetersMarkup()+'</aside>'+
+  '</div>'+
+  '<div class="cb2d-feed" hidden><p id="cb2dFeed"></p></div>'+
+  '<div class="cb2d-end" id="cb2dEnd" hidden></div>'+
+ '</section>'
 }
 function drawViewer(){
  preloadAshenBattlefields();
- const s=currentStageDef(),r=root();r.hidden=false;
- r.innerHTML='<section class="cb2d-shell combat-hud-fullscreen"><header class="cb2d-head"><div><small>THE ASHEN VAULT · LIVE 2D DUNGEON</small><h2 id="cb2dTitle">'+esc(s.title)+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close aria-label="Close dungeon">×</button></div></header><div class="cb2d-route" id="cb2dRoute">'+route()+'</div><div class="cb2d-layout"><main><div class="cb2d-arena" id="cb2dArena"><div class="cb2d-floor"></div><div class="cb2d-environment" id="cb2dEnvironment"></div><div class="cb2d-room-tag" id="cb2dRoomTag"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div><div class="cb2d-caption"><span id="cb2dType">'+s.kind.toUpperCase()+'</span><b id="cb2dStatus">Entering encounter…</b></div></div><div class="cb2d-controls cbr-command-panel" data-reborn="1">'+combatCommandDeckMarkup('data-combat-potion')+'</div><div class="cb2d-feed"><small>COMBAT FEED</small><p id="cb2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="cb2dDamageTotal">0 total</span></div><div id="cb2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="cb2dHealingTotal">0 total</span></div><div id="cb2dHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="cb2dThreatTarget">No target</span></div><div id="cb2dThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>PARTY · ILVL '+ilvl()+'</small><div id="cb2dRows">'+rows()+'</div></div><div class="cb2d-plan"><small>PERSISTENT TACTICS</small><b>'+tactics.aggression.toUpperCase()+' PULLS · '+tactics.cooldowns.toUpperCase()+' COOLDOWNS</b><span>'+tactics.interruptAssignment.toUpperCase()+' INTERRUPTS · '+tactics.cc.toUpperCase()+' CC · '+tactics.bossPlan.toUpperCase()+' BOSSES</span></div></aside></div><div class="cb2d-end" id="cb2dEnd" hidden></div></section>';
- dockFullscreenCombatMeta(r);mountCommanderCombatScene(r);
+ const s=currentStageDef(),r=root();r.hidden=false;r.classList.add('cbcombat-backdrop');
+ r.innerHTML=combatShellMarkup({
+  header:'THE ASHEN VAULT · LIVE DUNGEON',
+  title:s.title,
+  route:route(),
+  partyLabel:'PARTY · ILVL '+ilvl(),
+  kind:s.kind,
+  potionAttribute:'data-combat-potion'
+ });
+ refreshCommanderTargetCard();
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.resolved&&!confirm('Leave the Ashen Vault?'))return;close()};
  r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  r.querySelector('[data-combat-potion]')?.addEventListener('click',e=>override('consumable',e.currentTarget));
  bindCombatCommandButtons();setCombatCommandPrompt();
  feed();renderCombatMeters();renderRebornHealingMeter();
+ requestAnimationFrame(()=>syncUnitPixelPositions())
 }
 function feed(){const e=$('#cb2dFeed');if(e&&run)e.innerHTML=run.log.slice(-6).map(esc).join('<br>')}
 function log(t){if(!run)return;run.log.push(t);run.log=run.log.slice(-30);feed()}
@@ -873,7 +874,7 @@ function preloadAshenBattlefields(){
 function renderDungeonEnvironment(s){
  const arena=$('#cb2dArena'),root=$('#cb2dEnvironment'),tag=$('#cb2dRoomTag');if(!arena||!root)return;
  const cfg=ASHEN_ROOMS[s.id]||ASHEN_ROOMS['broken-gate'],life=cfg.life||{};
- arena.className='cb2d-arena direct-control theme-ashen room-'+cfg.room+(s.kind==='boss'||s.kind==='final'?' boss-room':'');
+ arena.className='cb2d-arena cbcombat-arena direct-control theme-ashen room-'+cfg.room+(s.kind==='boss'||s.kind==='final'?' boss-room':'');
  arena.querySelectorAll('.cb2d-bespoke-foreground-layer,.cb2d-stage-image').forEach(n=>n.remove());
  root.innerHTML='';
  if(cfg.art){
@@ -1045,11 +1046,11 @@ function clearArenaEphemera(){
  arena.querySelectorAll('.cb2d-projectile,.cb2d-number,.cb2d-threat-line,.cb2d-travel-banner,.cb2d-stage-clear,.cb2d-death-burst,.cbr-boss-frame').forEach(x=>x.remove())
 }
 function enterResultsMode(){
- const shell=$('.cb2d-shell');if(shell){shell.classList.add('results-mode');shell.scrollTop=0}
+ const shell=$('.cbcombat-shell')||$('.cb2d-shell');if(shell){shell.classList.add('results-mode');shell.scrollTop=0}
  const end=$('#cb2dEnd');if(end){end.hidden=false;end.scrollTop=0}
 }
 function exitResultsMode(){
- const shell=$('.cb2d-shell');if(shell){shell.classList.remove('results-mode');shell.scrollTop=0}
+ const shell=$('.cbcombat-shell')||$('.cb2d-shell');if(shell){shell.classList.remove('results-mode');shell.scrollTop=0}
 }
 function compactDungeonResults(rootEl){
  if(!rootEl)return;
@@ -1699,7 +1700,6 @@ function renderRebornEvent(e,result,replayMode=false){
  if(!run||!e)return;
  rebornDebugEvent(e,result);
  const visualSpeed=()=>combatPlaybackSpeed(replayMode?(run?.replaySpeed||1):(run?.speed||1));
- try{window.CellboundCombat3D?.event?.(e,result,{replayMode,speed:visualSpeed()})}catch(error){console.warn('3D combat prototype recovered',e?.type,error)}
  window.CellboundCombatFX?.combatEvent?.(e,{arena:$('#cb2dArena'),speed:visualSpeed});
  updateCommandContextFromEvent(e);
  if(window.CellboundCombatStatuses?.handle(e,{resolve:cbrStatusTargets,speed:visualSpeed}))return;
@@ -2233,10 +2233,20 @@ function sharedRouteMarkup(route,currentId){
 }
 function sharedRows(){return hudPartyRows()}
 function sharedViewerShell(options={}){
- const s=currentStageDef(),r=root();r.hidden=false;document.body.classList.add('cb2d-open');
- const header=options.header||'CELLBOUND · LIVE 2D COMBAT',route=sharedRouteMarkup(options.route,options.currentId||s?.id),subtitle=options.subtitle||'TACTICS LOCKED';
- r.innerHTML='<section class="cb2d-shell combat-hud-fullscreen cb2d-shared-shell '+esc(options.shellClass||'')+'"><header class="cb2d-head"><div><small>'+esc(header)+'</small><h2 id="cb2dTitle">'+esc(options.title||s?.title||'Combat')+'</h2></div><div class="cb2d-live"><i></i>LIVE <button data-speed>1×</button><button data-close aria-label="Close combat">×</button></div></header><div class="cb2d-route" id="cb2dRoute">'+route+'</div><div class="cb2d-layout"><main><div class="cb2d-arena '+esc(options.arenaClass||'')+'" id="cb2dArena"><div class="cb2d-floor"></div><div class="cb2d-environment" id="cb2dEnvironment"></div><div class="cb2d-room-tag" id="cb2dRoomTag"></div><div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD LINK · AGGRO</span></div><div id="cb2dTelegraphs"></div><div id="cb2dUnits"></div><div class="cb2d-caption"><span id="cb2dType">'+esc(String(s?.kind||'combat').toUpperCase())+'</span><b id="cb2dStatus">Entering encounter…</b></div></div><div class="cb2d-controls cbr-command-panel" data-reborn="1">'+combatCommandDeckMarkup('data-shared-potion',options.planTitle||'Command the party',options.planCopy||'AI handles rotations and abilities. You control positioning, targets and Command Center orders.')+'</div><div class="cb2d-feed"><small>COMBAT FEED</small><p id="cb2dFeed"></p></div></main><aside><div class="cb2d-cast"><small>ENEMY CAST</small><div><b id="cb2dCastName">—</b><strong id="cb2dCastTime">—</strong></div><div class="cb2d-castbar"><i id="cb2dCastFill"></i></div></div><div class="cb2d-combat-meters"><section class="cb2d-meter-panel damage"><div class="cb2d-meter-head"><small>DAMAGE METER</small><span id="cb2dDamageTotal">0 total</span></div><div id="cb2dDamageMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel healing"><div class="cb2d-meter-head"><small>HEALING METER</small><span id="cb2dHealingTotal">0 total</span></div><div id="cb2dHealingMeter" class="cb2d-meter-list"></div></section><section class="cb2d-meter-panel threat"><div class="cb2d-meter-head"><small>THREAT METER</small><span id="cb2dThreatTarget">No target</span></div><div id="cb2dThreatMeter" class="cb2d-meter-list"></div></section></div><div class="cb2d-actions"><small>PARTY ACTIONS</small><div data-act="tank"><i class="cb2d-dot tank"></i><b>Tank</b><em>Taking point</em></div><div data-act="healer"><i class="cb2d-dot healer"></i><b>Healer</b><em>Following formation</em></div><div data-act="dps"><i class="cb2d-dot dps"></i><b>Damage</b><em>Acquiring targets</em></div></div><div class="cb2d-party"><small>PARTY · '+party().length+' CHARACTERS · ILVL '+ilvl()+'</small><div id="cb2dRows">'+sharedRows()+'</div></div><div class="cb2d-plan"><small>COMBAT MODEL</small><b>COMBAT REBORN · SHARED CB2D VIEWER</b><span>REAL POSITIONS · THREAT · RESOURCES · BUFFS / DEBUFFS</span></div></aside></div><div class="cb2d-end" id="cb2dEnd" hidden></div></section>';
- if(!run?.externalExploration)mountCommanderCombatScene(r);
+ const s=currentStageDef(),r=root();r.hidden=false;r.classList.add('cbcombat-backdrop');document.body.classList.add('cb2d-open');
+ const header=options.header||'CELLBOUND · LIVE COMBAT',route=sharedRouteMarkup(options.route,options.currentId||s?.id);
+ r.innerHTML=combatShellMarkup({
+  header,
+  title:options.title||s?.title||'Combat',
+  route,
+  partyLabel:'PARTY · '+party().length+' CHARACTERS · ILVL '+ilvl(),
+  kind:String(s?.kind||'combat'),
+  arenaClass:options.arenaClass||'',
+  potionAttribute:'data-shared-potion',
+  planTitle:options.planTitle||'Command the party',
+  planCopy:options.planCopy||'AI handles rotations and abilities. You control positioning, targets and Command Center orders.'
+ });
+ refreshCommanderTargetCard();
  r.querySelector('[data-close]').onclick=close;
  r.querySelector('[data-speed]').onclick=e=>{if(!run)return;run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  r.querySelector('[data-shared-potion]')?.addEventListener('click',e=>{
@@ -2245,7 +2255,8 @@ function sharedViewerShell(options={}){
    floating('p-'+used.target.id,'+'+used.healApplied,'heal');updateRows();refreshCombatPotionButton(e.currentTarget);log(used.item.name+' restores '+used.target.name+' for '+used.healApplied+' HP'+(used.conditionApplied?' and '+used.conditionApplied+' Condition':'')+'.')
  });
  bindCombatCommandButtons();setCombatCommandPrompt();
- feed();renderCombatMeters();renderRebornHealingMeter()
+ feed();renderCombatMeters();renderRebornHealingMeter();
+ requestAnimationFrame(()=>syncUnitPixelPositions())
 }
 function sharedFormationPosition(c,index,total){
  const profile=combatProfile(c),same=party().filter(x=>combatProfile(x)===profile),slot=Math.max(0,same.indexOf(c)),count=Math.max(1,same.length);
@@ -2259,7 +2270,7 @@ function spawnSharedEncounter(s,result,options={}){
  clearArenaEphemera();$('#cb2dUnits').innerHTML='';$('#cb2dTelegraphs').innerHTML='';
  const initialUnits=new Map((result.events?.find(e=>e.type==='COMBAT_START')?.payload?.units||[]).map(u=>[u.id,u]));
  const arena=$('#cb2dArena'),env=$('#cb2dEnvironment'),tag=$('#cb2dRoomTag');
- if(arena)arena.className='cb2d-arena direct-control theme-'+esc(options.theme||'manor')+' room-'+esc(options.room||s?.id||'shared')+(['boss','final'].includes(String(s?.kind||''))?' boss-room':'');
+ if(arena)arena.className='cb2d-arena cbcombat-arena direct-control theme-'+esc(options.theme||'manor')+' room-'+esc(options.room||s?.id||'shared')+(['boss','final'].includes(String(s?.kind||''))?' boss-room':'');
  if(env)env.innerHTML='<div class="cb2d-ambience">'+Array.from({length:10},(_,i)=>'<i class="cb2d-ambient ash" style="--x:'+(8+(i*9)%84)+'%;--delay:-'+(i*.41)+'s;--dur:'+(4+(i%4)*.5)+'s;--drift:'+(-12+(i%5)*6)+'px"></i>').join('')+'</div>';
  if(tag)tag.innerHTML='<b>'+esc(options.roomLabel||s?.title||'Combat')+'</b><small>'+esc(options.ambience||'AI runs every rotation. You command positions, targets and party orders.')+'</small>';
  const baseEnemies=(result?.finalState?.enemies||[]).filter(e=>!e.isAdd&&/^e-\d+$/.test(String(e.id||'')));
@@ -2292,7 +2303,7 @@ function openSharedExploration(options={}){
  resources:{},cooldowns:{},statuses:{},reviveSickness:{},expeditionTimeMs:0,condition:Object.fromEntries(extParty.map(c=>[c.id,100])),hp:Object.fromEntries(extParty.map(c=>[c.id,100])),enemyHp:[],enemyMax:[],threat:[],aggro:[],damageDone:{},healingDone:{},overhealing:{},hitCount:{},identityTimers:{},log:[],resolved:false,combatActive:false,mechanicActive:false,allowKill:false,shotSeq:0,groundHazards:{}};
  sharedViewerShell({...options,subtitle:options.subtitle||'EXPLORATION',planTitle:options.planTitle||'Explore the room',planCopy:options.planCopy||'Choose a doorway to move into the next chamber.'});
  const arena=$('#cb2dArena'),env=$('#cb2dEnvironment'),tag=$('#cb2dRoomTag'),units=$('#cb2dUnits');
- if(arena)arena.className='cb2d-arena theme-'+esc(options.theme||'null')+' room-'+esc(options.room||'exploration')+' exploration-room';
+ if(arena)arena.className='cb2d-arena cbcombat-arena theme-'+esc(options.theme||'null')+' room-'+esc(options.room||'exploration')+' exploration-room';
  if(env)env.innerHTML=options.environmentHtml||'';
  if(tag)tag.innerHTML='<b>'+esc(options.roomLabel||options.title||'Room')+'</b><small>'+esc(options.ambience||'The party searches the chamber.')+'</small>';
  if(units)units.innerHTML='';
