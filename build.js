@@ -264,7 +264,7 @@ for(const file of files){
   }
   if(file==='combat-reborn-v1.js'){
     for(const hook of ['professionProcs,relicOpeningUsed:false','professionProcs?.openingBurstPct','professionProcs?.executeDamagePct','professionProcs?.lowHealthWardPct','professionProcs?.triageHealPct'])if(!contents.includes(hook))throw new Error('Conditional profession combat effect is missing '+hook);
-    if(!contents.includes('normalisePlayer(c,i,options.professionZone)'))throw new Error('Scribing encounter affinity must enter combat player normalisation');
+    if(!contents.includes('normalisePlayer(ch,i,options.professionZone)')&&!contents.includes('normalisePlayer(c,i,options.professionZone)'))throw new Error('Scribing encounter affinity must enter combat player normalisation');
     if(!contents.includes("if(!moveIntoRange(ctx,u,target,5))return true")||!contents.includes("_combatTalentTimers"))throw new Error('Bladestorm melee movement rule is missing');
     for(const hook of ['function professionCombatBonuses','professionOutputScale(u,\'damage\')','professionOutputScale(healer,\'healing\')','professionBonuses?.haste','professionBonuses?.crit','professionBonuses?.block','profession.magicWardPct'])if(!contents.includes(hook))throw new Error('Profession attachments are not wired into real combat: '+hook);
     for(const hook of ["spec:'Havoc'","spec:'Vengeance'","id:'havoc-metamorphosis'","id:'spirit-bomb'","SOUL_FRAGMENT_CHANGED","'fel-barrage':'Fel Barrage'"])if(!contents.includes(hook))throw new Error('Demon Hunter combat kit is incomplete: '+hook);
