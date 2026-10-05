@@ -323,6 +323,10 @@ function hudInitial(name){
  return (parts.length>1?(parts[0][0]+parts[parts.length-1][0]):String(parts[0]||'?').slice(0,2)).toUpperCase()
 }
 function hudClassColor(c){return window.CellboundPortraits?.CLASS_COLORS?.[c?.class]||'#78d7cf'}
+function hudResourceState(c){
+ const def=resourceDefFor(c),r=run?.resources?.[c?.id]||{name:def.name,max:def.max,value:def.start},max=Math.max(1,Number(r.max)||Number(def.max)||100),value=clamp(Number(r.value)??Number(def.start)||0,0,max),name=String(r.name||def.name||'Power');
+ return{name,max,value,pct:value/max*100,key:resourceClass(name)}
+}
 function hudTargetName(id){
  if(!id)return'ACQUIRING';
  if(String(id).startsWith('p-')){
@@ -334,15 +338,17 @@ function hudTargetName(id){
 function hudPartyRows(){
  return party().map(c=>{
    const rr=String(role(c)),target=run?.hudTargets?.[c.id]||null,targetName=hudTargetName(target),friendly=String(target||'').startsWith('p-');
-   const action=String(run?.hudActions?.[c.id]||'Ready'),roleMark=rr==='tank'?'T':rr==='healer'?'H':'D',targetMark=target?hudInitial(targetName):'—';
+   const action=String(run?.hudActions?.[c.id]||'Ready'),roleMark=rr==='tank'?'T':rr==='healer'?'H':'D',targetMark=target?hudInitial(targetName):'—',res=hudResourceState(c);
    return '<div class="cb2d-party-row '+esc(classKey(c))+' role-'+esc(rr)+'" data-row="'+esc(c.id)+'" data-combat-party="p-'+esc(c.id)+'" style="--hud-class:'+esc(hudClassColor(c))+'">'+
     '<span class="cb2d-party-avatar"><i class="cb2d-party-fallback">'+hudInitial(c.name)+'</i><em>'+roleMark+'</em></span>'+
     '<span class="cb2d-party-main"><span class="cb2d-party-name"><b>'+esc(c.name)+'</b><em>'+rr.toUpperCase()+'</em></span>'+
       '<small class="cb2d-party-action" data-hud-action="'+esc(c.id)+'">'+esc(action)+'</small>'+
+      '<span class="cb2d-party-statline"><small>HP</small><b data-hud-hp="'+esc(c.id)+'">'+hp(c.id)+'%</b></span>'+
       '<em class="cb2d-side-hp"><i data-side-hp="'+esc(c.id)+'" style="width:'+hp(c.id)+'%"></i></em>'+
+      '<span class="cb2d-party-statline resource '+esc(res.key)+'"><small data-hud-resource-name="'+esc(c.id)+'">'+esc(res.name)+'</small><b data-hud-resource-value="'+esc(c.id)+'">'+Math.round(res.value)+'/'+Math.round(res.max)+'</b></span>'+
+      '<em class="cb2d-side-resource '+esc(res.key)+'"><i data-hud-resource="'+esc(c.id)+'" style="width:'+res.pct+'%"></i></em>'+
       '<small class="cb2d-party-condition" data-hud-condition="'+esc(c.id)+'">Condition '+cond(c.id)+'%</small></span>'+
-    '<span class="cb2d-party-target '+(friendly?'friendly':'hostile')+'" data-hud-target="'+esc(c.id)+'"><i data-hud-target-icon>'+targetMark+'</i><span><small>'+(rr==='healer'?'HEALING':'TARGET')+'</small><b>'+esc(targetName)+'</b></span></span>'+
-    '<strong data-hud-hp="'+esc(c.id)+'">'+hp(c.id)+'%</strong></div>'
+    '<span class="cb2d-party-target '+(friendly?'friendly':'hostile')+'" data-hud-target="'+esc(c.id)+'"><i data-hud-target-icon>'+targetMark+'</i><span><small>'+(rr==='healer'?'HEALING':'TARGET')+'</small><b>'+esc(targetName)+'</b></span></span></div>'
  }).join('')
 }
 function rows(){return hudPartyRows()}
@@ -527,7 +533,7 @@ function updateCombatHudRow(id){
  const ch=party().find(x=>String(x.id)===String(id));if(!ch)return;
  const row=$('[data-row="'+ch.id+'"]');if(!row)return;
  const rr=String(role(ch)),target=run?.hudTargets?.[ch.id]||null,friendly=String(target||'').startsWith('p-');
- const targetEl=row.querySelector('[data-hud-target="'+ch.id+'"]'),actionEl=row.querySelector('[data-hud-action="'+ch.id+'"]'),hpEl=row.querySelector('[data-hud-hp="'+ch.id+'"]'),conditionEl=row.querySelector('[data-hud-condition="'+ch.id+'"]');
+ const targetEl=row.querySelector('[data-hud-target="'+ch.id+'"]'),actionEl=row.querySelector('[data-hud-action="'+ch.id+'"]'),hpEl=row.querySelector('[data-hud-hp="'+ch.id+'"]'),conditionEl=row.querySelector('[data-hud-condition="'+ch.id+'"]'),resourceBar=row.querySelector('[data-hud-resource="'+ch.id+'"]'),resourceName=row.querySelector('[data-hud-resource-name="'+ch.id+'"]'),resourceValue=row.querySelector('[data-hud-resource-value="'+ch.id+'"]'),res=hudResourceState(ch);
  if(targetEl){
    targetEl.classList.toggle('friendly',friendly);targetEl.classList.toggle('hostile',!friendly);
    const icon=targetEl.querySelector('[data-hud-target-icon]'),label=targetEl.querySelector('b'),kind=targetEl.querySelector('small');
@@ -535,6 +541,9 @@ function updateCombatHudRow(id){
  }
  if(actionEl)actionEl.textContent=String(run?.hudActions?.[ch.id]||'Ready');
  if(hpEl)hpEl.textContent=hp(ch.id)+'%';
+ if(resourceBar){resourceBar.style.width=res.pct+'%';const wrap=resourceBar.closest('.cb2d-side-resource');if(wrap){[...wrap.classList].filter(x=>x.startsWith('resource-')).forEach(x=>wrap.classList.remove(x));wrap.classList.add(res.key)}}
+ if(resourceName)resourceName.textContent=res.name;
+ if(resourceValue)resourceValue.textContent=Math.round(res.value)+'/'+Math.round(res.max);
  if(conditionEl)conditionEl.textContent='Condition '+cond(ch.id)+'%';
  row.classList.toggle('dead',hp(ch.id)<=0)
 }
@@ -1445,7 +1454,8 @@ function rebornResourceVisual(e){
  if(!bar)return;
  const fallback=c?resourceDefFor(c):{name:'Power',max:100,start:100},name=e.payload?.resource||fallback.name,max=e.payload?.max??fallback.max,value=e.payload?.value??fallback.start;
  if(c&&run?.resources)run.resources[c.id]={name,max,value};
- updateResourceBarElement(bar,name,value,max,e.type,e.result||'')
+ updateResourceBarElement(bar,name,value,max,e.type,e.result||'');
+ if(c)updateCombatHudRow(c.id)
 }
 function rebornCastStart(e){
  const n=$('#cb2dCastName'),tm=$('#cb2dCastTime'),f=$('#cb2dCastFill'),duration=Math.max(0,Number(e.payload?.duration)||0);
