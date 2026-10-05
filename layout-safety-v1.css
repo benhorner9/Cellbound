@@ -1383,3 +1383,150 @@ body.bs2d-open{
     min-width:96px!important;
   }
 }
+
+
+/* Fullscreen dungeon HUD polish v4
+   Move arena metadata into the top bar, remove the floating status caption,
+   eliminate side frosting, and make unavailable commands visibly unavailable. */
+@media (min-width:1051px) and (min-height:650px){
+  .cb2d-shell.combat-hud-fullscreen>.cb2d-head{
+    height:92px!important;
+    min-height:92px!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context{
+    position:absolute!important;
+    z-index:4!important;
+    left:258px!important;
+    right:282px!important;
+    bottom:7px!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:space-between!important;
+    gap:14px!important;
+    min-width:0!important;
+    pointer-events:none!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context>.cbr-docked-room{
+    position:static!important;
+    inset:auto!important;
+    display:flex!important;
+    align-items:baseline!important;
+    gap:7px!important;
+    max-width:360px!important;
+    min-width:0!important;
+    padding:0!important;
+    margin:0!important;
+    border:0!important;
+    background:none!important;
+    box-shadow:none!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+    white-space:nowrap!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context>.cbr-docked-room b{
+    flex:0 0 auto!important;
+    display:block!important;
+    color:#d7c4a2!important;
+    font-family:Georgia,serif!important;
+    font-size:.43rem!important;
+    font-weight:400!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context>.cbr-docked-room small{
+    min-width:0!important;
+    display:block!important;
+    margin:0!important;
+    overflow:hidden!important;
+    color:#8d9a94!important;
+    font-size:.30rem!important;
+    line-height:1.2!important;
+    text-overflow:ellipsis!important;
+    white-space:nowrap!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context>.cbr-docked-legend{
+    position:static!important;
+    inset:auto!important;
+    flex:0 0 auto!important;
+    display:flex!important;
+    gap:5px!important;
+    margin:0!important;
+    pointer-events:none!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context>.cbr-docked-legend span{
+    padding:3px 5px!important;
+    border:1px solid rgba(255,255,255,.045)!important;
+    background:rgba(3,8,10,.74)!important;
+    box-shadow:none!important;
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+    font-size:.28rem!important;
+    letter-spacing:.045em!important;
+  }
+
+  .cb2d-shell.combat-hud-fullscreen .cbr-status-caption,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>main>.cb2d-arena>.cb2d-caption{
+    display:none!important;
+  }
+
+  /* No frosted/blurred side panels. The world should stay sharp underneath. */
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside>.cb2d-party,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside>.cb2d-cast,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside>.cb2d-combat-meters,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside .cb2d-meter-panel,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>main>.cbr-command-panel{
+    -webkit-backdrop-filter:none!important;
+    backdrop-filter:none!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside>.cb2d-combat-meters::before,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-layout>aside>.cb2d-combat-meters::after{
+    display:none!important;
+    content:none!important;
+  }
+
+  /* Commands are neutral grey until the engine + encounter context says they can fire. */
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel .cbr-command:disabled,
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel .cbr-command.context-locked,
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>button:disabled{
+    opacity:1!important;
+    border-color:rgba(120,130,134,.10)!important;
+    background:rgba(13,17,19,.90)!important;
+    background-image:none!important;
+    color:#5f6b70!important;
+    box-shadow:none!important;
+    filter:grayscale(1) saturate(.12)!important;
+    cursor:not-allowed!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel .cbr-command:disabled b,
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel .cbr-command.context-locked b,
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>button:disabled b{
+    color:#69757a!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel .cbr-command:disabled small,
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel .cbr-command.context-locked small,
+  .cb2d-shell.combat-hud-fullscreen .cbr-external-command-panel>button:disabled small{
+    color:#465158!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel .cbr-command.recommended:disabled{
+    border-color:rgba(120,130,134,.10)!important;
+    background:rgba(13,17,19,.90)!important;
+    box-shadow:none!important;
+  }
+}
+
+@media (min-width:1051px) and (max-width:1220px) and (min-height:650px){
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context{
+    left:222px!important;
+    right:250px!important;
+    gap:8px!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context>.cbr-docked-room{
+    max-width:270px!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-head-context>.cbr-docked-legend span{
+    padding:3px 4px!important;
+    font-size:.25rem!important;
+  }
+}
