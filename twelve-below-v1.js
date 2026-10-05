@@ -295,8 +295,7 @@ function tbIssueCommand(type,button){
  const response=session.command(type,{});
  if(!response?.ok){feed(response?.reason==='cooldown'?'Commander call recovering.':'That command is not available right now.','danger');return}
  button?.classList.add('active');setTimeout(()=>button?.classList.remove('active'),320);
- $$('[data-tb-command]').forEach(b=>b.disabled=true);
- setTimeout(()=>{if(run)$$('[data-tb-command]').forEach(b=>b.disabled=false)},Math.max(700,3200/playSpeed));
+ window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(session,'[data-tb-command]','tbCommand');
  feed('Commander: '+String(type||'command').replace(/-/g,' ')+'.','good')
 }
 async function playLiveRun(session){
@@ -327,7 +326,7 @@ async function playLiveRun(session){
    if(token!==playToken||!run){session.stop('overrun');finished=true;resolve();return}
    if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
    const delta=Math.max(0,Math.min(250,now-lastWall))*Math.max(1,Number(playSpeed)||1);lastWall=now;
-   const step=session.advance(delta);run.elapsed=Number(step.timeMs)||run.elapsed||0;
+   const step=session.advance(delta);run.elapsed=Number(step.timeMs)||run.elapsed||0;window.CellboundDungeon2D?.refreshExternalCommandCooldowns?.(session,'[data-tb-command]','tbCommand');
    if(step.events?.length)renderEvents(step.events);
    openDueBosses();const spawnedEvents=session.drainEvents?.()||[];if(spawnedEvents.length)renderEvents(spawnedEvents);
    const countdown=$('#tbCountdown');
