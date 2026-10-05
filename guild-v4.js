@@ -101,7 +101,7 @@ const classes={
   }}
 };
 
-const BETA_PLAYABLE_CLASSES=Object.freeze(['Warrior','Paladin','Hunter','Rogue','Mage']);
+const BETA_PLAYABLE_CLASSES=Object.freeze(Object.keys(classes)); // staging balance pass: all classes unlocked
 const BETA_PLAYABLE_CLASS_SET=new Set(BETA_PLAYABLE_CLASSES);
 function adminRole(){
   const role=String(account?.admin_role||globalThis.CellboundAdmin?.role||'').toLowerCase();
