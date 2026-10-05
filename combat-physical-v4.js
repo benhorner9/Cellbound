@@ -182,6 +182,8 @@ function unit(scene,el){
  const p=profile(el);u={el,p,target:null,dead:false,statuses:new Map(),state:'idle',until:0,animation:null,cast:null};scene.units.set(el,u);
  if(p===ENEMY)enemyProfile(u,{classification:el.classList.contains('boss')?'boss':el.classList.contains('elite')?'elite':''});
  el.classList.add('cbl-unit');el.dataset.motion=u.p.motion;el.style.setProperty('--cbl-accent',p.accent);
+ // Desynchronise idle/stance loops so the party never looks like one repeated slide.
+ const phase=(scene.units.size*.37)%3.2;el.style.setProperty('--cbl-idle-delay',(-phase).toFixed(2)+'s');
  const nose=document.createElement('i');nose.className='cbl-facing';nose.setAttribute('aria-hidden','true');el.appendChild(nose);
  const ground=document.createElement('i');ground.className='cbl-ground';ground.setAttribute('aria-hidden','true');el.appendChild(ground);
  return u
@@ -194,14 +196,19 @@ function direction(a,b){const x=b.x-a.x,y=b.y-a.y,len=Math.hypot(x,y)||1;return{
 function face(u,target){if(!u||!target||u.dead)return;u.target=target;const d=direction(center(u.el),center(target));u.el.style.setProperty('--cbl-facing',d.angle+'deg');u.el.style.setProperty('--face-angle',d.angle+'deg')}
 function motion(u,frames,duration,scene){
  if(!u||reduce())return;u.animation?.cancel();
- u.animation=actor(u.el)?.animate?.(frames,{duration:Math.max(35,duration/scene.speed),easing:'ease-out'});
+ const easing=u.p.motion==='dart'||u.p.motion==='rush'?'cubic-bezier(.18,.82,.22,1)':u.p.motion==='heavy'||u.p.motion==='brutal'?'cubic-bezier(.22,.66,.28,1)':'cubic-bezier(.2,.72,.24,1)';
+ u.animation=actor(u.el)?.animate?.(frames,{duration:Math.max(70,duration/scene.speed),easing,fill:'none'});
 }
 function setPosition(scene,u,p,duration=0){
  if(!u||!p||!Number.isFinite(Number(p.x))||!Number.isFinite(Number(p.y)))return;
  u.position={x:Number(p.x),y:Number(p.y)};
  if(scene.position){scene.position(u.el,p,reduce()?0:duration/scene.speed);return}
- const el=u.el,x=clamp(Number(p.x),0,100),y=clamp(Number(p.y),0,100);
- el.dataset.x=String(x);el.dataset.y=String(y);el.style.transitionDuration=(reduce()?0:duration/scene.speed)+'ms';
+ const el=u.el,x=clamp(Number(p.x),0,100),y=clamp(Number(p.y),0,100),moveMs=reduce()?0:Math.max(0,Number(duration)||0)/scene.speed;
+ el.dataset.x=String(x);el.dataset.y=String(y);
+ el.style.transitionProperty='left, top, transform, opacity';
+ el.style.transitionDuration=moveMs+'ms';
+ el.style.transitionTimingFunction='cubic-bezier(.22,.72,.22,1)';
+ el.style.setProperty('--cbl-move-ms',moveMs+'ms');
  if(scene.arena.id==='cb2dArena'&&el.dataset.unit){
    el.style.setProperty('--unit-left',x+'%');el.style.setProperty('--unit-top',y+'%');
    el.style.setProperty('--unit-x',x/100*scene.arena.clientWidth+'px');el.style.setProperty('--unit-y',y/100*scene.arena.clientHeight+'px');
@@ -281,14 +288,14 @@ function strike(scene,u,t,e,heal=false){
   if(f)f.n.style.setProperty('--cbl-accent',heal?'#76efac':u.p.accent);
  }else if(d.len<110){
   const reach=Math.min(u.p.lunge,d.len*.16,12),x=d.x*reach,y=d.y*reach;
-  motion(u,[{translate:x+'px '+y+'px',rotate:['flow','fluid'].includes(u.p.motion)?'8deg':u.p.motion==='brutal'?'-6deg':'0deg',scale:heavy?'1.09':'1.04'},{translate:'0px 0px',rotate:'0deg',scale:'1'}],u.p.motion==='dart'?180:310,scene);
+  motion(u,[{translate:x+'px '+y+'px',rotate:['flow','fluid'].includes(u.p.motion)?'8deg':u.p.motion==='brutal'?'-6deg':'0deg',scale:heavy?'1.09':'1.04'},{translate:'0px 0px',rotate:'0deg',scale:'1'}],u.p.motion==='dart'?240:380,scene);
   const stroke=/shield|bash/i.test(e.ability||'')?'shield-strike':/thrust|pierce|stab/i.test(e.ability||'')?'thrust':/spin|whirl|sweep/i.test(e.ability||'')?'sweep':/overhead|cleave|crush/i.test(e.ability||'')?'overhead':u.p.motion;
   const f=effect(scene,'slash '+stroke,u.el,t.el,260);if(f)f.n.style.setProperty('--cbl-accent',u.p.accent);
  }
  if(heal){const f=effect(scene,'heal-ring'+(Number(e.payload?.targetHpPct)<40?' emergency':'')+(/HoT/.test(e.ability||'')?' periodic':''),null,t.el,500);return}
  if(['miss','missed','dodge','dodged','immune'].includes(e.result))return;
  effect(scene,(e.result==='blocked'?'shield':'contact')+(heavy?' heavy':''),null,t.el,240);
- motion(t,[{translate:(d.x*2*intensity)+'px '+(d.y*2*intensity)+'px',scale:heavy?'.94':'.98'},{translate:'0px 0px',scale:'1'}],230,scene)
+ motion(t,[{translate:(d.x*2*intensity)+'px '+(d.y*2*intensity)+'px',scale:heavy?'.94':'.98'},{translate:'0px 0px',scale:'1'}],280,scene)
 }
 function statuses(u,e){
  if(!u)return;
@@ -317,11 +324,20 @@ function livingEvent(e,opts={}){
   scene.live=true;room(scene,e);emphasis(scene,'entry');arena.classList.add('cbl-live');arena.querySelectorAll(UNIT).forEach(el=>unit(scene,el));
   for(const v of e.payload?.units||[]){const a=unit(scene,resolve(v.id,opts,arena));if(a){enemyProfile(a,v);const group=String(v.id).match(/^p-(?:raid|maid)-(\d+)-/);if(group)a.el.dataset.raidParty=group[1];a.dead=v.alive===false;if(!a.dead)a.el.classList.remove('dead','dying');a.target=null;a.statuses.clear();a.el.dataset.control='';state(a,a.dead?'dead':'idle');setPosition(scene,a,v.position);a.el.style.setProperty('--cbl-facing',(v.facing||0)+'deg')}}framing(scene);break;
  case'MOVEMENT_START':
-  if(u&&!u.dead){u.el.dataset.intent=String(e.result||'moving');setPosition(scene,u,e.payload?.to,Number(e.payload?.duration)||420);clearCast(u);state(u,['knockback','pull'].includes(e.result)?'displaced':'moving',performance.now()+(Number(e.payload?.duration)||420)/scene.speed);if(['knockback','pull'].includes(e.result))effect(scene,'force '+e.result,null,u.el,420);if(e.position&&e.payload?.to){const d=direction(e.position,e.payload.to);u.el.style.setProperty('--cbl-facing',d.angle+'deg');u.target=null}}break;
- case'MOVEMENT_END':if(u&&!u.dead){setPosition(scene,u,e.position);state(u,controlled(u)?'controlled':'idle');if(t)face(u,t.el);if(arena.dataset.bespokeBattlefield==='1'&&arena.classList.contains('theme-ashen')&&!reduce())effect(scene,'ground-kick',null,u.el,360)}break;
+  if(u&&!u.dead){
+   const duration=Number(e.payload?.duration)||420;
+   u.el.dataset.intent=String(e.result||'moving');
+   if(e.position&&e.payload?.to){
+    const d=direction(e.position,e.payload.to),strength=clamp(d.len/22,.35,1);
+    u.el.style.setProperty('--cbl-facing',d.angle+'deg');u.el.style.setProperty('--cbl-move-angle',d.angle+'deg');u.el.style.setProperty('--cbl-move-strength',String(strength));u.target=null
+   }
+   setPosition(scene,u,e.payload?.to,duration);clearCast(u);state(u,['knockback','pull'].includes(e.result)?'displaced':'moving',performance.now()+duration/scene.speed);
+   if(['knockback','pull'].includes(e.result))effect(scene,'force '+e.result,null,u.el,420)
+  }break;
+ case'MOVEMENT_END':if(u&&!u.dead){setPosition(scene,u,e.position,80);state(u,controlled(u)?'controlled':'idle');delete u.el.dataset.intent;if(t)face(u,t.el);if(arena.dataset.bespokeBattlefield==='1'&&arena.classList.contains('theme-ashen')&&!reduce())effect(scene,'ground-kick',null,u.el,360)}break;
  case'ABILITY_START':
-  if(canAct(u)){enemyProfile(u,e.payload||{});u.action=e;if(t)face(u,t.el);state(u,kind(e,u)==='heal'?'healing':'attacking',performance.now()+450/scene.speed);
-   if(!(e.payload?.castTime>0))motion(u,[{scale:'.97'},{scale:'1'}],210,scene)}break;
+  if(canAct(u)){enemyProfile(u,e.payload||{});u.action=e;if(t)face(u,t.el);state(u,kind(e,u)==='heal'?'healing':'attacking',performance.now()+560/scene.speed);
+   if(!(e.payload?.castTime>0))motion(u,[{scale:'.965',translate:'0 1px',offset:0},{scale:'1.035',translate:'0 -1px',offset:.46},{scale:'1',translate:'0 0',offset:1}],300,scene)}break;
  case'CAST_START':
   if(canAct(u)){clearCast(u);u.target=t?.el||null;u.cast={event:e,destination:e.payload?.hazardPosition||null,start:performance.now(),duration:Math.max(1,Number(e.payload?.duration)||1000)/scene.speed};u.el.classList.add('cbl-casting');u.el.dataset.castStyle=u.p.cast;state(u,/channel|beam|drain|torrent|disintegrate/i.test(e.ability||'')?'channeling':'casting');if(t)face(u,t.el);mountCastVisual(u,e)}break;
  case'CAST_CANCELLED':case'CAST_FINISH':case'ABILITY_FINISH':clearCast(u);if(u&&!u.dead&&!controlled(u))state(u,'idle');break;
@@ -368,7 +384,7 @@ function wake(){
 function frame(){
  const now=performance.now(); // Same clock as cast starts, effect expiry and state transitions.
  if(frameWatchdog){clearTimeout(frameWatchdog);frameWatchdog=0}
- raf=0;if(now-last<32){wake();return}last=now;
+ raf=0;if(now-last<15){wake();return}last=now;
  let active=false;
  for(const [arena,scene] of scenes){
   if(!arena.isConnected){for(const u of scene.units.values()){u.animation?.cancel();clearCast(u)}for(const f of scene.effects){clearTimeout(f.timer);f.n.remove()}scene.effects.clear();scene.resize?.disconnect();scene.camera?.cancel();scenes.delete(arena);continue}
@@ -412,7 +428,7 @@ function frame(){
 }
 function combatEvent(e,opts={}){try{livingEvent(e,opts)}catch(error){console.warn('Living combat visual skipped',e?.type,error)}}
 FX.mount=mount;FX.combatEvent=combatEvent;FX.physicalEvent=combatEvent;
-FX.encounterThemes=THEMES;FX.ownsHazards=true;FX.visualProfiles=PROFILES;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.4.0';FX.living=true;
+FX.encounterThemes=THEMES;FX.ownsHazards=true;FX.visualProfiles=PROFILES;FX.ownsMovement=true;FX.VERSION_PHYSICAL='4.5.0';FX.living=true;
 // Legacy public entry points remain callable but no longer duplicate shared reactions.
 for(const name of ['impact','heal','death','spawn','interrupt']){const old=FX[name];FX[name]=function(el,...args){if(el?.closest?.('.cbl-scene'))return;return old?.(el,...args)}}
 })();
