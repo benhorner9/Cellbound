@@ -643,6 +643,7 @@ function draw(){
  '<div class="cb2d-party"><small>PARTY CONDITION · ILVL '+ilvl()+'</small><div id="hs2dRows">'+hsPartyRows()+'</div></div>'+
  '<div class="cb2d-plan"><small>EXPEDITION STYLE</small><b>'+esc(String(hsTactics.strategyPreset||'balanced').toUpperCase())+'</b><span>Same combat rules · Hollow Sanctum encounter mechanics</span></div></aside></div>'+
  '<div id="hs2dEnd" class="cb2d-end" hidden></div></section>';
+ window.CellboundDungeon2D?.dockFullscreenCombatMeta?.(r);
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.done&&!confirm('Leave The Hollow Sanctum?'))return;close()};
  r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  r.querySelectorAll('[data-hs-override]').forEach(b=>b.onclick=()=>hsOverride(b.dataset.hsOverride,b));
