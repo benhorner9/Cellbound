@@ -1846,3 +1846,26 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 @media(prefers-reduced-motion:reduce){
   .cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-live-scene{transition:none}
 }
+
+
+/* Fullscreen battlefield visibility guard v1
+   Keep the authored room art visible even when iPad/Safari WebGL returns a blank frame.
+   The live scene becomes an additive enhancement rather than the only battlefield layer. */
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"]{
+  background-color:#080504!important;
+  background-image:var(--cb2d-battlefield)!important;
+  background-repeat:no-repeat!important;
+  background-size:cover!important;
+  background-position:var(--cb2d-battlefield-position,50% 50%)!important;
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-floor,
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"][data-live-scene-ready="1"] .cb2d-floor{
+  opacity:1!important;
+  visibility:visible!important;
+}
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"] .cb2d-live-scene,
+.cb2d-arena.theme-ashen[data-bespoke-battlefield="1"][data-live-scene-ready="1"] .cb2d-live-scene{
+  opacity:.34!important;
+  mix-blend-mode:screen!important;
+  background:transparent!important;
+}
