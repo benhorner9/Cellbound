@@ -964,36 +964,36 @@ function tdRenderCombatEvent(e,telegraphs){
     case'COMBAT_END':tdGlobalCastClear();tdFeed(e.result==='victory'?'Encounter clear.':'The Pathfinder ward pulls the party clear.');break;
   }
 }
-async function tdPlayCombat(result,my){
-  const events=(result?.events||[]).slice().sort((a,b)=>(Number(a.timestamp)||0)-(Number(b.timestamp)||0)),telegraphs={};
-  if(!events.length)return result?.outcome==='victory';
-  return await new Promise(resolve=>{
-    let index=0,simTime=0,wallAnchor=Date.now(),finished=false,raf=0;
-    const finish=value=>{if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);resolve(value)};
-    const frame=()=>{
-      if(finished)return;
-      if(my!==tutorialToken){finish(false);return}
-      simTime=Math.max(simTime,Math.max(0,Date.now()-wallAnchor));
-      const frameStarted=performance.now();let handled=0;
-      while(index<events.length&&(Number(events[index].timestamp)||0)<=simTime+4&&handled<36&&performance.now()-frameStarted<9){
-        const event=events[index++];handled++;
-        try{tdRenderCombatEvent(event,telegraphs)}
-        catch(error){console.warn('First Expedition combat visual recovered',event?.type,event?.ability,error)}
-      }
-      if(index>=events.length){finish(result?.outcome==='victory');return}
-      raf=requestAnimationFrame(frame)
-    };
-    raf=requestAnimationFrame(frame)
-  })
+async function tdPlayCombat(session,result,my){
+ const telegraphs={};if(!session?.advance)return false;
+ const renderEvents=events=>{for(const event of events||[]){try{tdRenderCombatEvent(event,telegraphs)}catch(error){console.warn('First Expedition live combat visual recovered',event?.type,event?.ability,error)}}};
+ renderEvents(session.drainEvents?.()||[]);
+ return await new Promise(resolve=>{
+  let finished=false,raf=0,lastWall=performance.now();
+  const finish=(value,finalResult=null)=>{
+   if(finished)return;finished=true;if(raf)cancelAnimationFrame(raf);
+   const final=finalResult||session.snapshot?.()||result;if(final)try{Object.keys(result).forEach(k=>delete result[k]);Object.assign(result,final)}catch(_){}
+   resolve(value)
+  };
+  const frame=now=>{
+   if(finished)return;if(my!==tutorialToken){finish(false);return}
+   if(document.hidden){lastWall=now;raf=requestAnimationFrame(frame);return}
+   const delta=Math.max(0,Math.min(250,now-lastWall));lastWall=now;
+   const step=session.advance(delta);if(step.events?.length)renderEvents(step.events);
+   if(step.finished){const final=step.result||session.snapshot?.()||result;finish(final?.outcome==='victory',final);return}
+   raf=requestAnimationFrame(frame)
+  };
+  raf=requestAnimationFrame(frame)
+ })
 }
 async function fightTdPack(encounter,my){
   spawnTdEnemies(encounter);await sleep(350);
-  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
+  const C=window.CellboundCombatStandard;if(!C?.createLiveSession)throw new Error('Real-time Combat Reborn standard gateway unavailable');
   const roster=state().roster;
   roster.forEach(c=>tdSetPartyHpByEvent(c,100));
   const combatParty=roster.map(c=>Object.assign({},c,{power:Math.max(Number(c.power)||1,30),_combatHealthPct:100}));
   if(tutorialCombatStats){tutorialCombatStats.threat=Object.fromEntries(roster.map(c=>[c.id,0]));tutorialCombatStats.aggro=null;tutorialCombatStats.currentEnemy=encounter.name;tdRenderMeters()}
-  const result=C.simulate({
+  const liveOptions={
     party:combatParty,
     encounter:{
       id:encounter.id,title:encounter.name,kind:encounter.combatKind||(encounter.boss?'boss':'trash'),
@@ -1002,8 +1002,8 @@ async function fightTdPack(encounter,my){
     },
     tactics:{interruptPriority:'high',addPriority:'immediate',defensiveUsage:'aggressive',pullStyle:'safe',movementDiscipline:'safety'},
     seed:['zeltira-first-expedition',my,encounter.id].join(':')
-  },{zone:'zeltira-first-expedition'});
-  const won=await tdPlayCombat(result,my);
+  },liveMeta={zone:'zeltira-first-expedition'},session=C.createLiveSession(liveOptions,liveMeta),result=session.snapshot();
+  const won=await tdPlayCombat(session,result,my);
   if(!won){
     tdFeed('The Pathfinder ward pulls the five back from the brink. Elara resets the approach.');
     return false
