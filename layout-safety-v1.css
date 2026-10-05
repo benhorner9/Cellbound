@@ -1530,3 +1530,29 @@ body.bs2d-open{
     font-size:.25rem!important;
   }
 }
+
+
+/* Fullscreen HUD motion pass v5 — smooth data changes without slowing input. */
+@media (min-width:1051px) and (min-height:650px){
+  .cb2d-shell.combat-hud-fullscreen .cb2d-party-row .cb2d-side-hp>i,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-party-row .cb2d-side-resource>i,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-meter-row>em>i,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-castbar>i{
+    transition-property:width!important;
+    transition-timing-function:cubic-bezier(.22,.72,.22,1)!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cb2d-party-row .cb2d-side-hp>i,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-party-row .cb2d-side-resource>i{
+    transition-duration:.24s!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cb2d-meter-row>em>i{
+    transition-duration:.32s!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cbr-command-panel button{
+    transition:background .16s ease,border-color .16s ease,color .16s ease,opacity .16s ease,filter .16s ease,transform .12s ease!important;
+  }
+  .cb2d-shell.combat-hud-fullscreen .cb2d-party-target,
+  .cb2d-shell.combat-hud-fullscreen .cb2d-party-action{
+    transition:color .18s ease,background .18s ease,border-color .18s ease!important;
+  }
+}
