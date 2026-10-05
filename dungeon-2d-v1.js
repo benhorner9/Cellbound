@@ -318,9 +318,34 @@ async function start(){
 function route(){
  return STAGES.map((s,i)=>'<span class="'+(i<run.stage?'done':i===run.stage?'current':'')+'"><i>'+(i+1)+'</i>'+esc(s.title)+'</span>').join('');
 }
-function rows(){
- return party().map(c=>'<div class="cb2d-party-row" data-row="'+c.id+'"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+String(role(c)).toUpperCase()+' · '+esc(c.spec)+' · Condition '+cond(c.id)+'%</small><em class="cb2d-side-hp"><i data-side-hp="'+c.id+'" style="width:'+hp(c.id)+'%"></i></em></span><strong>'+hp(c.id)+' HP</strong></div>').join('');
+function hudInitial(name){
+ const parts=String(name||'?').trim().split(/\s+/).filter(Boolean);
+ return (parts.length>1?(parts[0][0]+parts[parts.length-1][0]):String(parts[0]||'?').slice(0,2)).toUpperCase()
 }
+function hudClassColor(c){return window.CellboundPortraits?.CLASS_COLORS?.[c?.class]||'#78d7cf'}
+function hudTargetName(id){
+ if(!id)return'ACQUIRING';
+ if(String(id).startsWith('p-')){
+   const ch=party().find(x=>String(x.id)===String(id).slice(2));return ch?.name||'ALLY'
+ }
+ const unit=$('[data-unit="'+id+'"]'),label=unit?.querySelector(':scope > span');
+ return String(label?.childNodes?.[0]?.textContent||'').trim()||String(id).replace(/^e-|^add-/,'ENEMY ')
+}
+function hudPartyRows(){
+ return party().map(c=>{
+   const rr=String(role(c)),target=run?.hudTargets?.[c.id]||null,targetName=hudTargetName(target),friendly=String(target||'').startsWith('p-');
+   const action=String(run?.hudActions?.[c.id]||'Ready'),roleMark=rr==='tank'?'T':rr==='healer'?'H':'D',targetMark=friendly?'✚':'›';
+   return '<div class="cb2d-party-row '+esc(classKey(c))+' role-'+esc(rr)+'" data-row="'+esc(c.id)+'" data-combat-party="p-'+esc(c.id)+'" style="--hud-class:'+esc(hudClassColor(c))+'">'+
+    '<span class="cb2d-party-avatar"><i class="cb2d-party-fallback">'+hudInitial(c.name)+'</i><em>'+roleMark+'</em></span>'+
+    '<span class="cb2d-party-main"><span class="cb2d-party-name"><b>'+esc(c.name)+'</b><em>'+rr.toUpperCase()+'</em></span>'+
+      '<small class="cb2d-party-action" data-hud-action="'+esc(c.id)+'">'+esc(action)+'</small>'+
+      '<em class="cb2d-side-hp"><i data-side-hp="'+esc(c.id)+'" style="width:'+hp(c.id)+'%"></i></em>'+
+      '<small class="cb2d-party-condition" data-hud-condition="'+esc(c.id)+'">Condition '+cond(c.id)+'%</small></span>'+
+    '<span class="cb2d-party-target '+(friendly?'friendly':'hostile')+'" data-hud-target="'+esc(c.id)+'"><i data-hud-target-icon>'+targetMark+'</i><span><small>'+(rr==='healer'?'HEALING':'TARGET')+'</small><b>'+esc(targetName)+'</b></span></span>'+
+    '<strong data-hud-hp="'+esc(c.id)+'">'+hp(c.id)+'%</strong></div>'
+ }).join('')
+}
+function rows(){return hudPartyRows()}
 function combatPotionStacks(st=state()){
  return (Array.isArray(st?.consumables)?st.consumables:[]).filter(x=>(Number(x?.quantity)||0)>0&&x?.payload?.effect==='combat-potion')
 }
@@ -495,8 +520,39 @@ function updateRows(){
    const bar=$('[data-side-hp="'+c.id+'"]');if(bar)bar.style.width=hp(c.id)+'%';
    const unit=$('[data-unit="p-'+c.id+'"] .cb2d-unit-hp i');if(unit)unit.style.width=hp(c.id)+'%';
    const marker=$('[data-unit="p-'+c.id+'"]');if(marker)marker.classList.toggle('dead',hp(c.id)<=0);
+   updateCombatHudRow(c.id);
  })
 }
+function updateCombatHudRow(id){
+ const ch=party().find(x=>String(x.id)===String(id));if(!ch)return;
+ const row=$('[data-row="'+ch.id+'"]');if(!row)return;
+ const rr=String(role(ch)),target=run?.hudTargets?.[ch.id]||null,friendly=String(target||'').startsWith('p-');
+ const targetEl=row.querySelector('[data-hud-target="'+ch.id+'"]'),actionEl=row.querySelector('[data-hud-action="'+ch.id+'"]'),hpEl=row.querySelector('[data-hud-hp="'+ch.id+'"]'),conditionEl=row.querySelector('[data-hud-condition="'+ch.id+'"]');
+ if(targetEl){
+   targetEl.classList.toggle('friendly',friendly);targetEl.classList.toggle('hostile',!friendly);
+   const icon=targetEl.querySelector('[data-hud-target-icon]'),label=targetEl.querySelector('b'),kind=targetEl.querySelector('small');
+   if(icon)icon.textContent=friendly?'✚':'›';if(label)label.textContent=hudTargetName(target);if(kind)kind.textContent=rr==='healer'?'HEALING':'TARGET'
+ }
+ if(actionEl)actionEl.textContent=String(run?.hudActions?.[ch.id]||'Ready');
+ if(hpEl)hpEl.textContent=hp(ch.id)+'%';
+ if(conditionEl)conditionEl.textContent='Condition '+cond(ch.id)+'%';
+ row.classList.toggle('dead',hp(ch.id)<=0)
+}
+function setCombatHudState(c,targetId,ability){
+ if(!run||!c)return;
+ run.hudTargets=run.hudTargets||{};run.hudActions=run.hudActions||{};
+ const rr=String(role(c)),target=String(targetId||''),friendly=target.startsWith('p-'),hostile=target.startsWith('e-')||target.startsWith('add-')||target.startsWith('tb-');
+ if(rr==='healer'){
+   if(friendly)run.hudTargets[c.id]=target
+ }else if(hostile)run.hudTargets[c.id]=target;
+ if(ability)run.hudActions[c.id]=String(ability);
+ updateCombatHudRow(c.id)
+}
+function clearCombatHudTarget(targetId){
+ if(!run?.hudTargets)return;
+ party().forEach(c=>{if(run.hudTargets[c.id]===targetId){run.hudTargets[c.id]=null;updateCombatHudRow(c.id)}})
+}
+function renderPartyHudState(){party().forEach(c=>updateCombatHudRow(c.id));window.CellboundCombatPortraits?.refresh?.()}
 function queueCombatMeterRender(includeHealing=false){
  if(!run)return;
  if(includeHealing)run.pendingHealingMeter=true;
@@ -544,8 +600,11 @@ function unitPixelPosition(x,y){
  return{x:(clamp(Number(x)||0,0,100)/100)*arena.clientWidth,y:(clamp(Number(y)||0,0,100)/100)*arena.clientHeight}
 }
 function combatSafePoint(id,x,y){
- const arena=$('#cb2dArena'),transit=arena?.classList.contains('travelling')||arena?.classList.contains('room-entering');
- return{x:clamp(Number(x)||50,transit?2:8,transit?98:92),y:clamp(Number(y)||50,transit?2:12,transit?98:88)}
+ const arena=$('#cb2dArena'),transit=arena?.classList.contains('travelling')||arena?.classList.contains('room-entering'),hud=innerWidth>=1051&&innerHeight>=650;
+ if(transit)return{x:clamp(Number(x)||50,2,98),y:clamp(Number(y)||50,2,98)};
+ const xInset=hud&&arena?clamp((272/Math.max(1,arena.clientWidth))*100,10,22):8;
+ const bottomInset=hud&&arena?clamp((112/Math.max(1,arena.clientHeight))*100,10,20):12;
+ return{x:clamp(Number(x)||50,xInset,100-xInset),y:clamp(Number(y)||50,12,100-bottomInset)}
 }
 function applyUnitPosition(e,x,y,instant=false){
  if(!e)return;
@@ -786,7 +845,7 @@ function roomFadeInDuringEntry(){
 function clearArenaEphemera(){
  const arena=$('#cb2dArena');if(!arena)return;
  arena.classList.remove('travelling','between-stages','stage-cleared');
- arena.querySelectorAll('.cb2d-projectile,.cb2d-number,.cb2d-threat-line,.cb2d-travel-banner,.cb2d-stage-clear,.cb2d-death-burst').forEach(x=>x.remove())
+ arena.querySelectorAll('.cb2d-projectile,.cb2d-number,.cb2d-threat-line,.cb2d-travel-banner,.cb2d-stage-clear,.cb2d-death-burst,.cbr-boss-frame').forEach(x=>x.remove())
 }
 function enterResultsMode(){
  const shell=$('.cb2d-shell');if(shell){shell.classList.add('results-mode');shell.scrollTop=0}
@@ -859,7 +918,7 @@ function spawn(s){
  const max=s.kind==='final'?680:s.kind==='boss'?480:s.kind==='event'?220:120;
  run.enemyMax=s.enemies.map(()=>max);run.enemyHp=s.enemies.map(()=>max);
  run.threat=s.enemies.map(()=>Object.fromEntries(party().map(c=>[c.id,0])));
- run.aggro=s.enemies.map(()=>null);
+ run.aggro=s.enemies.map(()=>null);run.hudTargets={};run.hudActions={};
  // Damage and healing are dungeon-long meters. Threat is encounter-only.
  run.combatStartedAt=0;run.lastMeterAt=0;renderCombatMeters();renderRebornHealingMeter();
  const entry=route.entry||{x:4,y:50},inside=route.entryInside||{x:16,y:50},spread=Number(route.spread)||2.2;
@@ -875,6 +934,7 @@ function spawn(s){
    addUnit('e-'+i,n,boss?'enemy boss':'enemy',p.x,p.y,boss?'big':'',enemyMetaText(s,i))
  });
  if(run?.roomTransitionBlack)roomFadeInDuringEntry();
+ renderPartyHudState();mountBossHud(s);
  setTimeout(()=>arena?.classList.remove('room-entering'),720)
 }
 function point(id){
@@ -882,13 +942,26 @@ function point(id){
  const a=arena.getBoundingClientRect(),r=u.getBoundingClientRect();
  return{x:r.left-a.left+r.width/2,y:r.top-a.top+r.height/2};
 }
+function mountBossHud(s=currentStageDef()){
+ const arena=$('#cb2dArena');if(!arena)return;
+ arena.querySelector('.cbr-boss-frame')?.remove();
+ if(!['boss','final'].includes(String(s?.kind||'')))return;
+ const raw=s?.enemies?.[0],name=typeof raw==='object'?(raw?.name||s?.title):(raw||s?.title||'Boss');
+ const el=document.createElement('div');el.className='cbr-boss-frame';el.innerHTML='<small>BOSS</small><b>'+esc(name)+'</b><em><i data-cbr-boss-hp style="width:100%"></i></em><strong data-cbr-boss-pct>100%</strong>';arena.appendChild(el)
+}
+function updateBossHud(index,pct){
+ if(index!==0)return;
+ const frame=$('.cbr-boss-frame');if(!frame)return;
+ const fill=frame.querySelector('[data-cbr-boss-hp]'),label=frame.querySelector('[data-cbr-boss-pct]'),value=clamp(Number(pct)||0,0,100);
+ if(fill)fill.style.width=value+'%';if(label)label.textContent=Math.round(value)+'%'
+}
 function setEnemyHp(index,value){
  if(!run)return;
  const previous=Number(run.enemyHp[index])||0;
  run.enemyHp[index]=clamp(Math.round(value),0,run.enemyMax[index]||1);
  const displayMax=Math.max(1,Number(run.enemyDisplayMax?.[index])||run.enemyMax[index]||1);
  const pct=clamp((run.enemyHp[index]/displayMax)*100,0,100);
- const bar=$('[data-unit="e-'+index+'"] .cb2d-unit-hp i');if(bar)bar.style.width=pct+'%';
+ const bar=$('[data-unit="e-'+index+'"] .cb2d-unit-hp i');if(bar)bar.style.width=pct+'%';updateBossHud(index,pct);
  const unit=$('[data-unit="e-'+index+'"]');
  if(unit){
    unit.classList.toggle('critical',pct<30&&pct>0);
@@ -1447,6 +1520,7 @@ function renderRebornEvent(e,result,replayMode=false){
    const actor=$('[data-unit="'+e.source+'"]');if(actor){actor.classList.remove('attacking');requestAnimationFrame(()=>{if(actor.isConnected)actor.classList.add('attacking')});setTimeout(()=>actor.classList.remove('attacking'),360)}
    if(srcChar){
      const r=role(srcChar);act(r==='tank'?'tank':r==='healer'?'healer':'dps',srcChar.name+' · '+(e.ability||'Action'));
+     setCombatHudState(srcChar,e.target,e.ability||'Action');
      if(e.payload?.kind==='battle-rez'){status(srcChar.name+' is attempting a combat resurrection');log(srcChar.name+' commits to '+(e.ability||'a combat resurrection')+'.')}
      if(e.target)faceUnit(e.source,e.target);
      if(!(e.payload?.castTime>0)&&e.payload?.kind==='damage'&&e.target)projectile(e.source,e.target,attackKind(srcChar),260);
@@ -1470,13 +1544,13 @@ function renderRebornEvent(e,result,replayMode=false){
      const u=$('[data-unit="'+e.target+'"]'),bar=u?.querySelector('.cb2d-unit-hp i');if(bar)bar.style.width=clamp(Number(e.payload?.targetHpPct)||0,0,100)+'%';
    }
    if(targetChar){setHp(targetChar.id,Number(e.payload?.targetHpPct)||0);setCond(targetChar.id,cond(targetChar.id)-Math.max(1,Math.round((Number(e.amount)||0)/8)));updateRows()}
-   if(srcChar)recordDamage(srcChar,Number(e.amount)||0);
+   if(srcChar){setCombatHudState(srcChar,e.target,e.ability||'Attack');recordDamage(srcChar,Number(e.amount)||0)}
    if(e.target){hitReact(e.target,'hit');floating(e.target,'-'+Math.round(Number(e.amount)||0),e.result==='critical'?'crit':targetChar?'incoming':'damage');window.CellboundCombatFX?.impact?.($('[data-unit="'+e.target+'"]'),{critical:e.result==='critical'})}
    if(e.payload?.avoidable){log((targetChar?.name||'A player')+' is hit by avoidable '+(e.ability||'damage')+'.')}
    break;
   }
   case'HEAL_RECEIVED':
-   if(srcChar&&e.target)projectile(e.source,e.target,'heal',240);
+   if(srcChar&&e.target){setCombatHudState(srcChar,e.target,e.ability||'Healing');projectile(e.source,e.target,'heal',240)}
    if(targetChar){setHp(targetChar.id,Number(e.payload?.targetHpPct)||hp(targetChar.id));updateRows();hitReact(e.target,'heal');floating(e.target,'+'+Math.round(Number(e.amount)||0),'heal');window.CellboundCombatFX?.heal?.($('[data-unit="'+e.target+'"]'))}
    if(srcChar)recordRebornHealing(srcChar,Number(e.amount)||0,Number(e.payload?.overhealing)||0);
    break;
@@ -1566,10 +1640,11 @@ function renderRebornEvent(e,result,replayMode=false){
   case'ADD_DEFEATED':case'ENEMY_DEFEATED':{
    const u=$('[data-unit="'+e.target+'"]');if(u){u.classList.add('dying');deathBurst(e.target);window.CellboundCombatFX?.death?.(u,{boss:e.type==='ENEMY_DEFEATED'&&['boss','final'].includes(String(currentStageDef()?.kind||''))});setTimeout(()=>u.classList.add('dead'),240)}
    if(run?.commandTargetId===e.target){run.commandTargetId=null;refreshCommanderTarget()}
+   clearCombatHudTarget(e.target);
    if(e.type==='ADD_DEFEATED')log('An add is defeated.');break;
   }
   case'PLAYER_DEFEATED':
-   if(targetChar){setHp(targetChar.id,0);updateRows();const u=$('[data-unit="'+e.target+'"]');if(u){u.classList.add('dying');window.CellboundCombatFX?.death?.(u);setTimeout(()=>u.classList.add('dead'),220)}deathBurst(e.target);log(targetChar.name+' is defeated.')}break;
+   if(targetChar){run.hudTargets=run.hudTargets||{};run.hudActions=run.hudActions||{};run.hudTargets[targetChar.id]=null;run.hudActions[targetChar.id]='DEAD';setHp(targetChar.id,0);updateRows();const u=$('[data-unit="'+e.target+'"]');if(u){u.classList.add('dying');window.CellboundCombatFX?.death?.(u);setTimeout(()=>u.classList.add('dead'),220)}deathBurst(e.target);log(targetChar.name+' is defeated.')}break;
   case'CAST_FINISH':
    rebornCastClear('CAST COMPLETE');if(String(e.source||'').startsWith('e-'))log((e.ability||'Enemy cast')+' completes.');break;
   case'COMBAT_END':
@@ -1956,9 +2031,7 @@ function sharedRouteMarkup(route,currentId){
  const rows=Array.isArray(route)&&route.length?route:[{id:currentId||'combat',title:currentStageDef()?.title||'Combat'}];
  return rows.map((s,i)=>'<span class="'+(s.id===currentId?'current':'')+'"><i>'+(i+1)+'</i>'+esc(s.title||s.label||s.id||('Stage '+(i+1)))+'</span>').join('')
 }
-function sharedRows(){
- return party().map(c=>'<div class="cb2d-party-row" data-row="'+esc(c.id)+'"><i class="cb2d-dot '+classKey(c)+'"></i><span><b>'+esc(c.name)+'</b><small>'+String(role(c)).toUpperCase()+' · '+esc(c.spec||'')+' · Condition '+cond(c.id)+'%</small><em class="cb2d-side-hp"><i data-side-hp="'+esc(c.id)+'" style="width:'+hp(c.id)+'%"></i></em></span><strong>'+hp(c.id)+' HP</strong></div>').join('')
-}
+function sharedRows(){return hudPartyRows()}
 function sharedViewerShell(options={}){
  const s=currentStageDef(),r=root();r.hidden=false;document.body.classList.add('cb2d-open');
  const header=options.header||'CELLBOUND · LIVE 2D COMBAT',route=sharedRouteMarkup(options.route,options.currentId||s?.id),subtitle=options.subtitle||'TACTICS LOCKED';
@@ -1992,7 +2065,7 @@ function spawnSharedEncounter(s,result,options={}){
  run.enemyMax=baseEnemies.map(e=>Math.max(1,Number(e.maxHealth)||1));run.enemyHp=[...run.enemyMax];
  const requestedDisplayMax=Array.isArray(options.enemyDisplayMax)?options.enemyDisplayMax:[];
  run.enemyDisplayMax=run.enemyMax.map((max,i)=>Math.max(1,Number(requestedDisplayMax[i])||max));
- run.threat=run.enemyMax.map(()=>Object.fromEntries(party().map(c=>[c.id,0])));run.aggro=run.enemyMax.map(()=>null);
+ run.threat=run.enemyMax.map(()=>Object.fromEntries(party().map(c=>[c.id,0])));run.aggro=run.enemyMax.map(()=>null);run.hudTargets={};run.hudActions={};
  run.combatStartedAt=0;run.lastMeterAt=0;renderCombatMeters();renderRebornHealingMeter();
  party().forEach((c,i)=>{
    const pos=initialUnits.get('p-'+c.id)?.position||sharedFormationPosition(c,i,party().length);
@@ -2008,7 +2081,7 @@ function spawnSharedEncounter(s,result,options={}){
    const pos=initialUnits.get('e-'+i)?.position||{x:68,y};
    addUnit('e-'+i,name,boss?'enemy boss':'enemy',pos.x,pos.y,boss?'big':'',meta?('Lv. '+(meta.level||s?.level||1)+' · '+String(meta.classificationLabel||data.classification||'ENEMY').toUpperCase()):'');
  });
- window.CellboundCombatPortraits?.refresh?.()
+ renderPartyHudState();mountBossHud(s)
 }
 function openSharedExploration(options={}){
  const extParty=Array.isArray(options.party)?options.party.filter(Boolean):[];
