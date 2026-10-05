@@ -789,7 +789,7 @@ function unitPixelPosition(x,y){
 function combatSafePoint(id,x,y){
  const arena=$('#cb2dArena'),transit=arena?.classList.contains('travelling')||arena?.classList.contains('room-entering'),hud=innerWidth>=1051&&innerHeight>=650;
  if(transit)return{x:clamp(Number(x)||50,2,98),y:clamp(Number(y)||50,2,98)};
- const commandScene=!!arena?.closest?.('.cbr-command-scene');
+ const commandScene=!!arena?.closest?.('.cbr-command-scene,.cbcombat-shell');
  const xInset=commandScene?6:(hud&&arena?clamp((272/Math.max(1,arena.clientWidth))*100,10,22):8);
  const bottomInset=commandScene?9:(hud&&arena?clamp((112/Math.max(1,arena.clientHeight))*100,10,20):12);
  return{x:clamp(Number(x)||50,xInset,100-xInset),y:clamp(Number(y)||50,12,100-bottomInset)}
@@ -1863,12 +1863,12 @@ function configureRebornViewer(replayMode=false){
  const controls=$('.cb2d-controls');if(!controls)return;
  controls.dataset.reborn='1';
  if(replayMode){
-  controls.className='cb2d-controls cbr-plan-lock';
+  controls.className='cb2d-controls cbcombat-command-panel cbr-plan-lock';
   controls.innerHTML='<div class="cbr-plan-lock-copy"><small>REPLAY</small><b>Replay uses the completed fight.</b><span>Party commands are disabled while reviewing the original event stream.</span></div>';
   return
  }
  if(!controls.classList.contains('cbr-command-panel')){
-  controls.className='cb2d-controls cbr-command-panel';controls.innerHTML=combatCommandDeckMarkup('data-combat-potion');bindCombatCommandButtons();setCombatCommandPrompt()
+  controls.className='cb2d-controls cbcombat-panel cbcombat-command-panel cbr-command-panel';controls.innerHTML=combatCommandDeckMarkup('data-combat-potion');bindCombatCommandButtons();setCombatCommandPrompt()
  }
 }
 function removeRebornReplayControls(){const x=$('#cbrReplayControls');if(x)x.remove()}
