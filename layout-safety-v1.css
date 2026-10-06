@@ -3402,3 +3402,164 @@ body.tb-open{
     max-height:none!important
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   ASHEN VIEW CONTRACT — all standard PvE combat adopts the same live frame.
+   The HUD adapter preserves encounter-specific IDs/mechanics while moving the
+   live nodes into Ashen's party / battlefield / meters+commands structure.
+   -------------------------------------------------------------------------- */
+@media(min-width:850px){
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame{
+    --cbcombat-gap:10px;
+    --cbcombat-left:clamp(250px,23vw,330px);
+    --cbcombat-right:clamp(210px,17vw,270px);
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+    display:grid!important;
+    grid-template-rows:auto auto minmax(0,1fr)!important;
+    overflow:hidden!important;
+    border:1px solid rgba(122,162,184,.14)!important;
+    border-radius:10px!important;
+    background:#050b0f!important;
+    box-shadow:0 22px 70px rgba(0,0,0,.52)!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame>.cb2d-head.cbcombat-header{
+    position:relative!important;
+    inset:auto!important;
+    left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+    width:auto!important;
+    height:auto!important;
+    min-height:58px!important;
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    gap:16px!important;
+    align-items:center!important;
+    padding:9px 14px!important;
+    border:0!important;
+    border-bottom:1px solid rgba(255,255,255,.055)!important;
+    background:linear-gradient(90deg,#17130d,#071015)!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame>.cb2d-head .cbcombat-title small{
+    color:#a78d59!important;font-size:8px!important;font-weight:900!important;letter-spacing:.14em!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame>.cb2d-head .cbcombat-title h2{
+    margin:3px 0 0!important;color:#eee8dc!important;font-family:Georgia,serif!important;font-size:21px!important;font-weight:400!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame>.cb2d-head .cb2d-live.cbcombat-header-actions{
+    display:flex!important;align-items:center!important;gap:7px!important;color:#9caaa5!important;font-size:9px!important;font-weight:900!important;letter-spacing:.08em!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame>.cb2d-head .cb2d-live>i{
+    width:7px!important;height:7px!important;border-radius:50%!important;background:#6fd49b!important;box-shadow:0 0 12px rgba(111,212,155,.45)!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame>.cb2d-head .cb2d-live button{
+    min-width:36px!important;height:34px!important;padding:0 9px!important;border:1px solid rgba(255,255,255,.08)!important;border-radius:4px!important;background:#0b1417!important;color:#a8b5b0!important;font-size:10px!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame>.cb2d-route.cbcombat-route{
+    position:relative!important;
+    inset:auto!important;
+    left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+    width:auto!important;
+    min-height:31px!important;
+    transform:none!important;
+    display:flex!important;
+    gap:5px!important;
+    padding:4px 8px!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    border:0!important;
+    border-bottom:1px solid rgba(255,255,255,.045)!important;
+    border-radius:0!important;
+    background:#060e12!important;
+    box-shadow:none!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame>.cb2d-layout.cbcombat-grid{
+    position:relative!important;
+    inset:auto!important;
+    width:auto!important;
+    height:auto!important;
+    min-width:0!important;
+    min-height:0!important;
+    display:grid!important;
+    grid-template-columns:var(--cbcombat-left) minmax(0,1fr) var(--cbcombat-right)!important;
+    grid-template-rows:minmax(0,1fr)!important;
+    gap:var(--cbcombat-gap)!important;
+    padding:var(--cbcombat-gap)!important;
+    overflow:hidden!important;
+    background:#03080b!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame .cbstd-legacy-extras{display:none!important}
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame .cbcombat-left-column,
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame .cbcombat-right-column{
+    min-width:0!important;min-height:0!important;overflow:hidden!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame .cbcombat-left-column{
+    display:grid!important;grid-template-rows:minmax(0,1fr)!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame .cbcombat-right-column{
+    display:grid!important;grid-template-rows:minmax(260px,.46fr) minmax(300px,.54fr)!important;gap:var(--cbcombat-gap)!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame .cbcombat-party-panel>.cb2d-party.cbcombat-party{
+    grid-column:auto!important;grid-row:auto!important;
+    width:100%!important;height:100%!important;
+    min-width:0!important;min-height:0!important;
+    margin:0!important;padding:0!important;
+    border:0!important;background:transparent!important;overflow:hidden!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame .cbcombat-battle-panel{
+    min-width:0!important;min-height:0!important;display:grid!important;grid-template-rows:auto minmax(0,1fr)!important;gap:6px!important;padding:8px!important;overflow:hidden!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame .cbcombat-battle-panel>.cb2d-arena.cbcombat-arena{
+    position:relative!important;
+    inset:auto!important;
+    grid-column:auto!important;grid-row:auto!important;
+    width:100%!important;height:100%!important;
+    min-width:0!important;min-height:0!important;
+    max-width:none!important;max-height:none!important;
+    aspect-ratio:auto!important;
+    transform:none!important;margin:0!important;
+    overflow:hidden!important;
+    border:1px solid rgba(255,255,255,.055)!important;border-radius:7px!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame .cbcombat-battle-panel .cb2d-cast.cbcombat-cast{
+    position:absolute!important;
+    z-index:60!important;
+    left:50%!important;top:auto!important;right:auto!important;bottom:10px!important;
+    grid-column:auto!important;grid-row:auto!important;
+    width:min(460px,58%)!important;
+    margin:0!important;padding:8px 10px!important;
+    transform:translateX(-50%)!important;
+    border:1px solid rgba(221,113,84,.24)!important;border-radius:7px!important;
+    background:rgba(5,11,14,.90)!important;
+    pointer-events:none!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame .cbcombat-meters-panel>.cb2d-combat-meters.cbcombat-meter-stack{
+    grid-column:auto!important;grid-row:auto!important;
+    align-self:stretch!important;
+    width:100%!important;height:100%!important;max-height:none!important;
+    min-width:0!important;min-height:0!important;
+    display:grid!important;grid-template-columns:1fr!important;grid-template-rows:repeat(3,minmax(0,auto))!important;
+    align-content:start!important;gap:6px!important;
+    margin:0!important;padding:0!important;overflow:hidden!important;border:0!important;background:transparent!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame .cbcombat-right-column>.cb2d-controls.cbcombat-command-panel{
+    grid-column:auto!important;grid-row:auto!important;
+    align-self:stretch!important;
+    width:100%!important;height:100%!important;max-height:none!important;
+    min-width:0!important;min-height:0!important;
+    margin:0!important;padding:8px!important;
+    overflow:hidden!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame .cbcombat-command-panel>.cbr-command-groups{
+    flex:1 1 auto!important;min-height:0!important;
+    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame .cbcombat-command-panel .cbr-command-column{
+    min-height:0!important;display:grid!important;grid-template-columns:1fr!important;grid-template-rows:repeat(4,minmax(0,1fr))!important;gap:5px!important
+  }
+  .cb2d-shell.cbstd-hud.cbstd-ashen-frame .cbcombat-command-panel .cbr-command-column>button{
+    width:100%!important;height:100%!important;min-height:0!important;margin:0!important
+  }
+}
