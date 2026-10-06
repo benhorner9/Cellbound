@@ -10,6 +10,9 @@ function attrName(v,fallback){
  const raw=String(v||fallback||'').trim();
  return /^data-[a-z0-9-]+$/i.test(raw)?raw:String(fallback||'')
 }
+function idAttr(v){
+ const raw=String(v||'').trim();return /^[A-Za-z][A-Za-z0-9_:-]*$/.test(raw)?' id="'+raw+'"':''
+}
 function shellMarkup(options={}){
  const header=options.header||'CELLBOUND · LIVE COMBAT';
  const title=options.title||'Combat';
@@ -33,19 +36,19 @@ function shellMarkup(options={}){
  const closeLabel=esc(options.closeLabel||'Close combat');
  const commandGrouped=options.commandGrouped===true?' data-cbstd-grouped="1"':'';
  return '<section class="cbcombat-shell cbcombat-standard-hud '+esc(shellClass)+'" data-combat-view="canonical-v1">'+
-  '<header class="cbcombat-header"><div class="cbcombat-title"><small>'+esc(header)+'</small><h2>'+esc(title)+'</h2></div>'+
+  '<header class="cbcombat-header"><div class="cbcombat-title"><small>'+esc(header)+'</small><h2'+idAttr(options.titleId)+'>'+esc(title)+'</h2></div>'+
    '<div class="cbcombat-header-actions"><span class="cbcombat-live-dot"><i></i>LIVE</span>'+
     (showSpeed?'<button type="button" '+speedAttr+'>'+speedLabel+'</button>':'')+
     (showClose?'<button type="button" '+closeAttr+' aria-label="'+closeLabel+'">×</button>':'')+
    '</div></header>'+
-  '<div class="cbcombat-route">'+route+'</div>'+
+  '<div class="cbcombat-route"'+idAttr(options.routeId)+'>'+route+'</div>'+
   '<div class="cbcombat-grid">'+
-   '<div class="cbcombat-left-column"><section class="cbcombat-panel cbcombat-party-panel"><div class="cb2d-party cbcombat-party"><small>'+esc(partyLabel)+'</small><div class="cbcombat-party-rows" data-combat-party-rows>'+partyMarkup+'</div><div class="cbcombat-pet-rows" data-combat-pets '+(petsMarkup?'':'hidden')+'>'+petsMarkup+'</div></div></section></div>'+
+   '<div class="cbcombat-left-column"><section class="cbcombat-panel cbcombat-party-panel"><div class="cb2d-party cbcombat-party"><small>'+esc(partyLabel)+'</small><div class="cbcombat-party-rows" data-combat-party-rows'+idAttr(options.partyRowsId)+'>'+partyMarkup+'</div><div class="cbcombat-pet-rows" data-combat-pets'+idAttr(options.petsId)+' '+(petsMarkup?'':'hidden')+'>'+petsMarkup+'</div></div></section></div>'+
    '<main class="cbcombat-panel cbcombat-battle-panel">'+battleTopbar+'<div class="cbcombat-arena-wrap">'+arenaMarkup+castMarkup+'</div></main>'+
    '<aside class="cbcombat-right-column"><section class="cbcombat-panel cbcombat-meters-panel">'+metersMarkup+'</section>'+
     '<section class="cbcombat-panel cbcombat-command-panel cb2d-controls cbr-command-panel"'+commandGrouped+'>'+commandsMarkup+'</section>'+rightExtra+'</aside>'+
   '</div>'+
-  (endMarkup||'<div class="cb2d-end" data-combat-end hidden></div>')+
+  (endMarkup||'<div class="cb2d-end" data-combat-end'+idAttr(options.endId)+' hidden></div>')+
  '</section>'
 }
 function normalise(shell){
