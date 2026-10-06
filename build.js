@@ -507,7 +507,7 @@ if(file==='quests-v2.js'){
   }
   const resumableDungeonHooks={
     'dungeon-2d-v1.js':['ashenSaveRuntime','ashenRestoreRuntime',"beginOrResumeAttempt?.('ashen-vault')",'runtimeStageStartedAt'],
-    'hollow-sanctum-v1.js':['hsSaveRuntime','hsRestoreRuntime',"beginOrResumeAttempt?.('hollow-sanctum')",'runtimeStageStartedAt'],
+    'hollow-sanctum-v1.js':['hsSaveRuntime','hsRestoreRuntime',"beginAttempt('hollow-sanctum')",'runtimeStageStartedAt'],
     'chaos-canyon-v1.js':['ccSaveRuntime','ccRestoreRuntime',"beginOrResumeAttempt?.('chaos-canyon')",'runtimeStageStartedAt'],
     'blackout-station-v1.js':['bsSaveRuntime','bsRestoreRuntime',"beginOrResumeAttempt?.('blackout-station')",'runtimeStageStartedAt'],
     'fractured-ages-v1.js':['faSaveRuntime','faRestoreRuntime',"beginOrResumeAttempt?.('fractured-ages')",'wallClockStartAt']
