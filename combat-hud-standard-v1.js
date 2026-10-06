@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.0.0';
+const VERSION='1.0.1';
 const ACTIVE_SELECTOR='.cb2d-shell.cbstd-hud:not(.results-mode)';
 const COMMAND_ATTACK=new Set(['focus','interrupt','stack','burn']);
 const COMMAND_DEFENCE=new Set(['spread','regroup','defensive','potion']);
@@ -137,7 +137,10 @@ function organiseCommands(shell){
 }
 function orderMeters(shell){
   const meters=shell.querySelector('.cb2d-combat-meters');if(!meters)return;
-  ['threat','damage','healing'].forEach(type=>{const node=meters.querySelector('.cb2d-meter-panel.'+type);if(node)meters.appendChild(node)})
+  const desired=['threat','damage','healing'].map(type=>meters.querySelector('.cb2d-meter-panel.'+type)).filter(Boolean);
+  const current=[...meters.children].filter(node=>node.matches?.('.cb2d-meter-panel'));
+  if(desired.length===current.length&&desired.every((node,index)=>current[index]===node))return;
+  desired.forEach(node=>meters.appendChild(node))
 }
 function ensurePetHost(shell){
   const party=shell.querySelector('.cb2d-party');if(!party)return null;
