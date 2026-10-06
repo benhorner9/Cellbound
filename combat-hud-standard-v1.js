@@ -32,12 +32,12 @@ function rowId(row){
 function ensureRowsHost(shell){
   const party=shell.querySelector('.cb2d-party');if(!party)return null;
   let host=party.querySelector(':scope > .cbstd-party-rows');
-  if(host)return host;
+  if(host){host.classList.add('cbcombat-party-rows');return host;}
   const known=[...party.children].find(el=>el.querySelector?.('.cb2d-party-row'));
-  if(known){known.classList.add('cbstd-party-rows');return known}
+  if(known){known.classList.add('cbstd-party-rows','cbcombat-party-rows');return known}
   const direct=[...party.children].filter(el=>el.matches?.('.cb2d-party-row'));
   if(!direct.length)return null;
-  host=document.createElement('div');host.className='cbstd-party-rows';
+  host=document.createElement('div');host.className='cbstd-party-rows cbcombat-party-rows';
   direct[0].before(host);direct.forEach(row=>host.appendChild(row));
   return host
 }
