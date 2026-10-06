@@ -1125,7 +1125,7 @@ function hudPartyRows(){
       '<span class="cb2d-party-statline resource '+esc(res.key)+'"><small data-hud-resource-name="'+esc(c.id)+'">'+esc(res.name)+'</small><b data-hud-resource-value="'+esc(c.id)+'">'+Math.round(res.value)+'/'+Math.round(res.max)+'</b></span>'+
       '<em class="cb2d-side-resource '+esc(res.key)+'"><i data-hud-resource="'+esc(c.id)+'" style="width:'+res.pct+'%"></i></em>'+
       '<small class="cb2d-party-condition" data-hud-condition="'+esc(c.id)+'">Condition '+cond(c.id)+'%</small></span>'+
-    '<span class="cb2d-party-target '+(friendly?'friendly':'hostile')+'" data-hud-target="'+esc(c.id)+'"><i data-hud-target-icon>'+targetMark+'</i><span><small>'+(rr==='healer'?'HEALING':'TARGET')+'</small><b>'+esc(targetName)+'</b></span></span></div>'
+    '<span class="cb2d-party-target '+(friendly?'friendly':'hostile')+'" data-hud-target="'+esc(c.id)+'"><i data-hud-target-icon>'+targetMark+'</i><span><small>TARGET</small><b>'+esc(targetName)+'</b></span></span></div>'
  }).join('')
 }
 function hudPetOwnerName(ownerId){
@@ -1446,7 +1446,7 @@ function updateCombatHudRow(id){
  if(targetEl){
    targetEl.classList.toggle('friendly',friendly);targetEl.classList.toggle('hostile',!friendly);
    const icon=targetEl.querySelector('[data-hud-target-icon]'),label=targetEl.querySelector('b'),kind=targetEl.querySelector('small');
-   const targetName=hudTargetName(target);if(icon)icon.textContent=target?hudInitial(targetName):'—';if(label)label.textContent=targetName;if(kind)kind.textContent=rr==='healer'?'HEALING':'TARGET'
+   const targetName=hudTargetName(target);if(icon)icon.textContent=target?hudInitial(targetName):'—';if(label)label.textContent=targetName;if(kind)kind.textContent='TARGET'
  }
  if(actionEl)actionEl.textContent=String(run?.hudActions?.[ch.id]||'Ready');
  if(hpEl)hpEl.textContent=hp(ch.id)+'%';
