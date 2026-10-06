@@ -518,29 +518,32 @@ if(file==='quests-v2.js'){
   if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','twelve-below-v1.js','onboarding-v1.js','quests-v2.js'].includes(file)){
     if(!contents.includes('requestAnimationFrame(frame)')||!contents.includes('document.hidden')||!contents.includes('session.advance('))throw new Error(file+' must advance a real-time Combat Reborn session from the browser frame loop');
   }
-  const ashenCombatViewHooks={
-    'dungeon-2d-v1.js':['combatShellMarkup({',"commandPlacement:'right'"],
-    'hollow-sanctum-v1.js':['combat-hud-fullscreen cbstd-hud'],
-    'chaos-canyon-v1.js':['combat-hud-fullscreen cbstd-hud'],
-    'blackout-station-v1.js':['combat-hud-fullscreen cbstd-hud'],
-    'twelve-below-v1.js':['combat-hud-fullscreen cbstd-hud'],
-    'quests-v2.js':['combat-hud-fullscreen cbstd-hud'],
+  const canonicalCombatViewHooks={
+    'dungeon-2d-v1.js':['window.CellboundCombatViewer','Viewer.markup({'],
+    'hollow-sanctum-v1.js':['window.CellboundCombatViewer','Viewer.mount(r,{'],
+    'chaos-canyon-v1.js':['window.CellboundCombatViewer','Viewer.mount(r,{'],
+    'blackout-station-v1.js':['window.CellboundCombatViewer','Viewer.mount(r,{'],
+    'twelve-below-v1.js':['window.CellboundCombatViewer','Viewer.mount(root,{'],
+    'quests-v2.js':['window.CellboundCombatViewer','Viewer.mount(root,{'],
     'fractured-ages-v1.js':["presentationKind:'dungeon'"],
     'manor-raid-v1.js':['playSharedEncounter({'],
     'onboarding-v1.js':['playSharedEncounter({']
   };
-  if(ashenCombatViewHooks[file])for(const hook of ashenCombatViewHooks[file])if(!contents.includes(hook))throw new Error(file+' must use the Ashen Vault combat-view contract: missing '+hook);
+  if(canonicalCombatViewHooks[file])for(const hook of canonicalCombatViewHooks[file])if(!contents.includes(hook))throw new Error(file+' must use the canonical Cellbound combat viewer: missing '+hook);
+  if(['hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','twelve-below-v1.js','quests-v2.js'].includes(file)&&contents.includes('combat-hud-fullscreen cbstd-hud'))
+    throw new Error(file+' reintroduced a legacy standalone combat shell instead of CellboundCombatViewer');
   if(file==='combat-viewer-v1.js'){
     for(const hook of ["window.CellboundCombatViewer","data-combat-view=\"canonical-v1\"","function mount(root,options={})","cbcombat-grid"])
       if(!contents.includes(hook))throw new Error('Canonical combat viewer contract is missing '+hook);
   }
+  if(file==='guild.html'&&!/combat-viewer-v1\.js\?v=\d+/.test(contents))throw new Error('Canonical combat viewer is not loaded by guild.html');
   if(file==='combat-hud-standard-v1.js'){
     for(const hook of ["cbstdFrame='ashen-v2'","shell.classList.remove('combat-hud-fullscreen','cbstd-hud')","layout.classList.remove('cb2d-layout')","cbcombat-party-rows"])
       if(!contents.includes(hook))throw new Error('Ashen legacy-frame promotion cleanup is missing '+hook);
   }
   if(file==='layout-safety-v1.css'){
-    for(const hook of ['.cb2d-shell.cbstd-ashen-frame>.cbcombat-grid',').cbcombat-backdrop{','.cbcombat-party .cbcombat-party-rows'])
-      if(!contents.includes(hook))throw new Error('Ashen promoted-frame CSS contract is missing '+hook);
+    for(const hook of ['data-combat-view="canonical-v1"','.cbcombat-arena-wrap',').cbcombat-backdrop{','.cbcombat-party-rows'])
+      if(!contents.includes(hook))throw new Error('Canonical combat-view CSS contract is missing '+hook);
   }
   if(['world-boss-2d-v1.js','pvp-viewer-v1.js'].includes(file)){
     for(const legacy of ['Math.min(rawDelta,100)','Math.min(100,Math.max(0,now-last','Math.min(Math.max(0,now-lastFrame),100)']){
