@@ -13,9 +13,9 @@ const STAGES=[
  {id:'warden',title:'The Chaos Warden',kind:'BOSS',combatKind:'boss',level:10,enemyTypes:['boss'],enemyHealth:1180,enemies:['The Chaos Warden'],mechanics:[['Canyon Crush','cone',1750],['Wild Barrage','circles',1450],['Savage Leap','circle',1500],['Chaos Pulse','circles',1350]]},
  {id:'wildheart',title:'Wildheart Passage',kind:'TRASH',combatKind:'trash',level:10,enemyTypes:['elite','trash','trash'],enemyHealth:225,enemies:['Chaos Shapeshifter','Canyon Keeper','Living Boulder'],mechanics:[['Wild Mend','interrupt',1900],['Boulder Rush','line',1350],['Thorn Eruption','circles',1450]]},
  {id:'vorran',title:'Archdruid Vorran',kind:'FINAL BOSS',combatKind:'final',level:11,enemyTypes:['boss'],enemyHealth:1900,enemies:['Archdruid Vorran'],mechanics:[{name:'Rejuvenation',type:'self-heal',duration:1900,healPct:.09}],phases:[
-  {id:'vorran-close-one',name:'The Canyon Closes',atPct:75,damageScale:1.04,arenaBounds:{left:20,right:80,top:15,bottom:85},arena:{shape:'ellipse',cx:50,cy:50,rx:30,ry:35}},
-  {id:'vorran-close-two',name:'Roots Close In',atPct:50,damageScale:1.08,arenaBounds:{left:28,right:72,top:22,bottom:78},arena:{shape:'ellipse',cx:50,cy:50,rx:22,ry:28}},
-  {id:'vorran-unbound',name:'True Chaos',atPct:25,damageScale:1.18,allAttacksAoe:true,arenaBounds:{left:36,right:64,top:31,bottom:69},arena:{shape:'ellipse',cx:50,cy:50,rx:14,ry:19},addMechanics:[{name:'Wild Wrath: Unbound',type:'circles',duration:1200}]}
+  {id:'vorran-close-one',name:'The Canyon Closes',atPct:75,damageScale:1.04,arenaBounds:{left:25,right:75,top:31,bottom:73},arena:{shape:'ellipse',cx:50,cy:52,rx:25,ry:21}},
+  {id:'vorran-close-two',name:'Roots Close In',atPct:50,damageScale:1.08,arenaBounds:{left:32,right:68,top:37,bottom:68},arena:{shape:'ellipse',cx:50,cy:52,rx:18,ry:16}},
+  {id:'vorran-unbound',name:'True Chaos',atPct:25,damageScale:1.18,allAttacksAoe:true,arenaBounds:{left:39,right:61,top:43,bottom:62},arena:{shape:'ellipse',cx:50,cy:52,rx:11,ry:10},addMechanics:[{name:'Wild Wrath: Unbound',type:'circles',duration:1200}]}
  ]}
 ];
 const ROUTE=[
@@ -24,58 +24,64 @@ const ROUTE=[
 ];
 const CANYON_ROOMS={
  'canyon-mouth':{
-  zone:'CANYON ENTRANCE',description:'Sunlight cuts through the woodland canyon as corrupted wildlife blocks the old druid road.',
-  art:'./assets/chaos-canyon/rooms/canyon-mouth.webp?v=1',liveProfile:'canyon-mouth',
-  route:{entry:{x:50,y:98},entryInside:{x:50,y:84},partyAnchors:[[50,67],[44,71],[56,71],[41,77],[59,77]],exitPath:[{x:50,y:53},{x:50,y:34},{x:50,y:17},{x:50,y:3}],spread:2.1},
-  enemies:[[50,36],[41,44],[59,44]],
-  bounds:{left:10,right:90,top:10,bottom:90},walkable:[[25,12],[75,12],[89,28],[91,70],[76,88],[24,88],[9,70],[11,28]],
-  blockers:[{id:'mouth-left-stone',x:15,y:37,w:8,h:26},{id:'mouth-right-stone',x:85,y:37,w:8,h:26}]
+  zone:'CANYON ENTRANCE',description:'The old druid road opens into a corruption-lit woodland canyon.',
+  art:'./assets/chaos-canyon/rooms/canyon-mouth.webp?v=2',liveProfile:'canyon-mouth',
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:78},engage:{x:50,y:58},partyAnchors:[[50,64],[44,67],[56,67],[40,71],[60,71]],exitPath:[{x:50,y:56},{x:50,y:42},{x:50,y:28},{x:50,y:14},{x:50,y:2}],spread:2},
+  enemies:[[50,37],[41,45],[59,45]],
+  bounds:{left:22,right:78,top:23,bottom:74},
+  walkable:[[39,23],[61,23],[72,31],[78,44],[76,59],[67,70],[58,74],[42,74],[33,70],[24,59],[22,44],[28,31]],
+  blockers:[]
  },
  'thorn-trail':{
-  zone:'THORN TRAIL',description:'Ancient roots and thorn-vines squeeze the canyon road into a living kill lane.',
-  art:'./assets/chaos-canyon/rooms/thorn-trail.webp?v=1',liveProfile:'canyon-thorn',
-  route:{entry:{x:50,y:98},entryInside:{x:50,y:84},partyAnchors:[[50,67],[45,71],[55,71],[42,77],[58,77]],exitPath:[{x:50,y:53},{x:50,y:34},{x:50,y:17},{x:50,y:3}],spread:1.9},
-  enemies:[[50,36],[42,44],[58,44]],
-  bounds:{left:15,right:85,top:9,bottom:91},walkable:[[35,10],[65,10],[78,26],[82,69],[69,89],[31,89],[18,69],[22,26]],
-  blockers:[{id:'trail-thorns-left',x:20,y:43,w:8,h:38,blocksLos:false},{id:'trail-thorns-right',x:80,y:43,w:8,h:38,blocksLos:false}]
+  zone:'THORN TRAIL',description:'Ancient roots and thorn-vines squeeze the road into a narrow kill lane.',
+  art:'./assets/chaos-canyon/rooms/thorn-trail.webp?v=2',liveProfile:'canyon-thorn',
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:79},engage:{x:50,y:59},partyAnchors:[[50,65],[45,68],[55,68],[42,72],[58,72]],exitPath:[{x:50,y:56},{x:50,y:42},{x:50,y:28},{x:50,y:14},{x:50,y:2}],spread:1.8},
+  enemies:[[50,36],[42,45],[58,45]],
+  bounds:{left:29,right:71,top:20,bottom:76},
+  walkable:[[42,20],[58,20],[67,29],[71,45],[68,61],[60,75],[40,75],[32,61],[29,45],[33,29]],
+  blockers:[]
  },
  sentinel:{
-  zone:'SENTINEL BASIN',description:'A druidic guardian waits on an old runestone court suspended above waterfalls and mist.',
-  art:'./assets/chaos-canyon/rooms/sentinel.webp?v=1',liveProfile:'canyon-sentinel',
-  route:{entry:{x:50,y:98},entryInside:{x:50,y:83},partyAnchors:[[50,68],[44,72],[56,72],[41,78],[59,78]],exitPath:[{x:50,y:54},{x:50,y:35},{x:50,y:18},{x:50,y:3}],spread:2.0},
-  enemies:[[50,40]],
-  bounds:{left:10,right:90,top:9,bottom:91},arena:{shape:'ellipse',cx:50,cy:52,rx:39,ry:37},
-  blockers:[{id:'sentinel-left-pillar',x:15,y:34,w:7,h:24},{id:'sentinel-right-pillar',x:85,y:34,w:7,h:24}]
+  zone:'SENTINEL BASIN',description:'The old runestone court opens into a dedicated guardian arena.',
+  art:'./assets/chaos-canyon/rooms/sentinel.webp?v=2',liveProfile:'canyon-sentinel',
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:78},engage:{x:50,y:59},partyAnchors:[[50,65],[44,68],[56,68],[40,72],[60,72]],exitPath:[{x:50,y:56},{x:50,y:42},{x:50,y:28},{x:50,y:14},{x:50,y:2}],spread:2},
+  enemies:[[50,42]],
+  bounds:{left:20,right:80,top:25,bottom:75},
+  arena:{shape:'ellipse',cx:50,cy:51,rx:30,ry:23},
+  blockers:[]
  },
  warden:{
-  zone:"WARDEN'S SHELF",description:'The crossing ends on a broad woodland shelf where the Chaos Warden controls the canyon path.',
-  art:'./assets/chaos-canyon/rooms/warden.webp?v=1',liveProfile:'canyon-warden',
-  route:{entry:{x:50,y:98},entryInside:{x:50,y:83},partyAnchors:[[50,67],[44,71],[56,71],[41,77],[59,77]],exitPath:[{x:42,y:52},{x:31,y:35},{x:20,y:19},{x:9,y:4}],spread:2.0},
-  enemies:[[58,42]],
-  bounds:{left:8,right:92,top:8,bottom:91},walkable:[[18,9],[82,9],[92,27],[91,70],[75,89],[25,89],[8,70],[9,27]],
-  blockers:[{id:'warden-left-root',x:10,y:48,w:9,h:42,blocksLos:false},{id:'warden-right-edge',x:90,y:52,w:7,h:36,blocksLos:false}]
+  zone:"WARDEN'S SHELF",description:'Purple Chaos Scars split the woodland shelf beneath the Warden.',
+  art:'./assets/chaos-canyon/rooms/warden.webp?v=2',liveProfile:'canyon-warden',
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:78},engage:{x:50,y:59},partyAnchors:[[50,65],[44,68],[56,68],[40,72],[60,72]],exitPath:[{x:50,y:56},{x:50,y:42},{x:50,y:28},{x:50,y:14},{x:50,y:2}],spread:2},
+  enemies:[[50,42]],
+  bounds:{left:21,right:79,top:25,bottom:75},
+  arena:{shape:'ellipse',cx:50,cy:52,rx:29,ry:23},
+  blockers:[]
  },
  wildheart:{
-  zone:'WILDHEART PASSAGE',description:'Floating stone and glowing roots mark the canyon where Vorran has bent the woodland to his will.',
-  art:'./assets/chaos-canyon/rooms/wildheart.webp?v=1',liveProfile:'canyon-wildheart',
-  route:{entry:{x:50,y:98},entryInside:{x:50,y:84},partyAnchors:[[50,68],[44,72],[56,72],[41,78],[59,78]],exitPath:[{x:50,y:54},{x:50,y:35},{x:50,y:18},{x:50,y:3}],spread:2.0},
-  enemies:[[50,38],[41,46],[59,46]],
-  bounds:{left:9,right:91,top:8,bottom:91},walkable:[[24,10],[76,10],[91,27],[91,71],[76,89],[24,89],[9,71],[9,27]],
-  blockers:[{id:'wildheart-left-root',x:11,y:46,w:8,h:42,blocksLos:false},{id:'wildheart-right-root',x:89,y:46,w:8,h:42,blocksLos:false}]
+  zone:'WILDHEART PASSAGE',description:'Vorran’s keepers hold the last wooded causeway before the Rootheart.',
+  art:'./assets/chaos-canyon/rooms/wildheart.webp?v=2',liveProfile:'canyon-wildheart',
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:79},engage:{x:50,y:59},partyAnchors:[[50,65],[44,68],[56,68],[40,72],[60,72]],exitPath:[{x:50,y:56},{x:50,y:42},{x:50,y:28},{x:50,y:14},{x:50,y:2}],spread:2},
+  enemies:[[50,36],[41,45],[59,45]],
+  bounds:{left:24,right:76,top:23,bottom:74},
+  walkable:[[40,23],[60,23],[70,31],[76,45],[73,60],[65,70],[58,74],[42,74],[35,70],[27,60],[24,45],[30,31]],
+  blockers:[]
  },
  vorran:{
-  zone:'HEART OF CHAOS',description:'Vorran stands inside the Rootheart. The ritual floor will not survive the fight.',
-  art:'./assets/chaos-canyon/rooms/vorran.webp?v=1',liveProfile:'canyon-vorran',
-  route:{entry:{x:50,y:98},entryInside:{x:50,y:84},partyAnchors:[[50,70],[44,74],[56,74],[41,80],[59,80]],exitPath:[],spread:2.0},
-  enemies:[[50,38]],
-  bounds:{left:11,right:89,top:13,bottom:90},arena:{shape:'ellipse',cx:50,cy:54,rx:38,ry:34},blockers:[]
+  zone:'HEART OF CHAOS',description:'The Rootheart arena breaks away in rings and drags the fight toward its centre.',
+  art:'./assets/chaos-canyon/rooms/vorran.webp?v=2',liveProfile:'canyon-vorran',
+  route:{entry:{x:50,y:98},entryInside:{x:50,y:80},engage:{x:50,y:61},partyAnchors:[[50,66],[44,69],[56,69],[40,72],[60,72]],exitPath:[],spread:2},
+  enemies:[[50,40]],
+  bounds:{left:20,right:80,top:26,bottom:76},
+  arena:{shape:'ellipse',cx:50,cy:52,rx:30,ry:24},
+  blockers:[]
  }
 };
 const CANYON_CROSSING={
- zone:'THE CHASM',description:'Seven unstable stepping stones wind across a mist-filled canyon gulf.',
- art:'./assets/chaos-canyon/rooms/crossing.webp?v=1',liveProfile:'canyon-crossing'
+ zone:'THE CHASM',description:'Seven unstable stepping stones span the chaos-lit gulf.',
+ art:'./assets/chaos-canyon/rooms/crossing.webp?v=2',liveProfile:'canyon-crossing'
 };
-const CROSSING_ENV='<div class="ccenv ccenv-crossing"><div class="ccenv-chasm"></div><div class="ccenv-cliff left"></div><div class="ccenv-cliff right"></div><div class="ccenv-far-ledge"></div><i class="ccenv-root root1"></i><i class="ccenv-root root2"></i><span class="ccenv-cell c1"></span><span class="ccenv-cell c2"></span></div>';
 const XP=1600;
 const wait=ms=>new Promise(r=>setTimeout(r,Math.round(ms/((run&&run.speed)||1))));
 const state=()=>Game?.getState?.();
@@ -171,9 +177,9 @@ async function syncXp(gains){
 function setStatus(text){const e=$('#cc2dStatus');if(e)e.textContent=text}
 function feed(text){if(!run)return;run.log.push(text);const e=$('#cc2dFeed');if(e)e.innerHTML=run.log.slice(-7).reverse().map(x=>'<p>'+esc(x)+'</p>').join('')}
 function ccArenaScale(){return STAGES[run?.stage]?.id==='vorran'?[1,.78,.55,.30][Math.max(0,Math.min(3,Number(run?.vorranShrink)||0))]:1}
-function ccArenaPoint(x,y){const scale=ccArenaScale();return{x:50+(Number(x)-50)*scale,y:50+(Number(y)-50)*scale}}
+function ccArenaPoint(x,y){const scale=ccArenaScale();return{x:50+(Number(x)-50)*scale,y:52+(Number(y)-52)*scale}}
 function addUnit(id,label,cls,x,y,big=false,meta='',characterId=null){const e=document.createElement('div'),safe=ccSafePoint(id,x,y);e.className='cc2d-unit cb2d-unit '+cls+(big?' big':'');e.dataset.cc=id;if(characterId)e.dataset.unit='p-'+characterId;e.dataset.rawX=safe.x;e.dataset.rawY=safe.y;const p=ccArenaPoint(safe.x,safe.y);e.style.left=p.x+'%';e.style.top=p.y+'%';e.innerHTML='<i></i><span>'+esc(label)+(meta?'<small class="cc2d-unit-meta">'+esc(meta)+'</small>':'')+'</span><em><i></i></em>';$('#cc2dUnits').appendChild(e)}
-function ccSafePoint(id,x,y){const arena=$('#cc2dArena'),transit=arena?.classList.contains('travelling')||arena?.classList.contains('room-entering');return{x:Math.max(transit?2:7,Math.min(transit?98:93,Number(x)||50)),y:Math.max(transit?2:11,Math.min(transit?98:89,Number(y)||50))}}
+function ccSafePoint(id,x,y){const arena=$('#cc2dArena'),transit=arena?.classList.contains('travelling')||arena?.classList.contains('room-entering');if(transit)return{x:Math.max(2,Math.min(98,Number(x)||50)),y:Math.max(2,Math.min(98,Number(y)||50))};const room=CANYON_ROOMS[STAGES[run?.stage]?.id]||CANYON_ROOMS['canyon-mouth'],b=room?.bounds||{},left=Math.max(7,Number(b.left)||7),right=Math.min(93,Number(b.right)||93),top=Math.max(11,Number(b.top)||11),bottom=Math.min(89,Number(b.bottom)||89);return{x:Math.max(left,Math.min(right,Number(x)||50)),y:Math.max(top,Math.min(bottom,Number(y)||50))}}
 function move(id,x,y,ms=550){const e=$('[data-cc="'+id+'"]');if(!e)return;const safe=ccSafePoint(id,x,y);e.dataset.rawX=safe.x;e.dataset.rawY=safe.y;const p=ccArenaPoint(safe.x,safe.y);e.style.transitionDuration=ms+'ms';e.style.left=p.x+'%';e.style.top=p.y+'%'}
 function ccReflowArena(ms=760){document.querySelectorAll('[data-cc]').forEach(e=>{const x=Number(e.dataset.rawX),y=Number(e.dataset.rawY);if(Number.isFinite(x)&&Number.isFinite(y))move(e.dataset.cc,x,y,ms)})}
 function ccPoint(id){const arena=$('#cc2dArena'),e=$('[data-cc="'+id+'"]');if(!arena||!e)return null;const ar=arena.getBoundingClientRect(),r=e.getBoundingClientRect();return{x:r.left+r.width/2-ar.left,y:r.top+r.height/2-ar.top,w:ar.width,h:ar.height}}
