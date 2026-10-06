@@ -528,11 +528,17 @@ if(file==='quests-v2.js'){
   if(file.endsWith('.js')&&contents.includes('combat-hud-fullscreen cbstd-hud'))
     throw new Error(file+' reintroduced a legacy standalone combat shell instead of CellboundCombatViewer');
   if(file==='combat-viewer-v1.js'){
-    for(const hook of ["window.CellboundCombatViewer","data-combat-view=\"canonical-v1\"","data-combat-profile=\"pve\"","function mount(root,options={})","cbcombat-grid","cbcombat-arena-wrap '+esc(battleClass)","arena.dataset.combatArena='canonical'"])
+    for(const hook of ["window.CellboundCombatViewer","data-combat-view=\"canonical-v1\"","data-combat-profile=\"pve\"","function mount(root,options={})","function setResults(root,enabled=true)","cbcombat-grid","cbcombat-arena-wrap '+esc(battleClass)","arena.dataset.combatArena='canonical'"])
       if(!contents.includes(hook))throw new Error('Canonical combat viewer contract is missing '+hook);
     if(contents.includes('markup:shellMarkup'))throw new Error('CellboundCombatViewer markup-only public API must stay retired');
     if(contents.includes("cbcombat-standard-hud '+esc(shellClass)"))throw new Error('PvE encounter classes must not be applied to the canonical outer shell');
   }
+  if(['hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js'].includes(file)){
+    for(const legacy of ["$('.hs2d-route')","$('.cc2d-route')","$('.hs2d-shell')","$('.cc2d-shell')","$('.bs2d-shell')"])
+      if(contents.includes(legacy))throw new Error(file+' still depends on a retired standalone combat-shell selector: '+legacy);
+  }
+  if(file==='hollow-sanctum-v1.js'&&(!contents.includes("routeId:'hs2dRoute'")||!contents.includes("$('#hs2dRoute').innerHTML")))throw new Error('Hollow route updates must target the canonical viewer route');
+  if(file==='chaos-canyon-v1.js'&&(!contents.includes("routeId:'cc2dRoute'")||!contents.includes("$('#cc2dRoute').innerHTML")))throw new Error('Chaos route updates must target the canonical viewer route');
   if(file!=='combat-viewer-v1.js'&&file.endsWith('.js')&&contents.includes('CellboundCombatViewer')&&contents.includes('Viewer.markup('))throw new Error(file+' must use CellboundCombatViewer.mount(); markup-only render paths are retired');
   if(file==='guild.html'&&!/combat-viewer-v1\.js\?v=\d+/.test(contents))throw new Error('Canonical combat viewer is not loaded by guild.html');
   if(file==='combat-hud-standard-v1.js'){
