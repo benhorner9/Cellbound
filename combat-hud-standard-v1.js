@@ -1,0 +1,213 @@
+(()=>{
+'use strict';
+
+const VERSION='1.0.0';
+const ACTIVE_SELECTOR='.cb2d-shell.cbstd-hud:not(.results-mode)';
+const COMMAND_ATTACK=new Set(['focus','interrupt','stack','burn']);
+const COMMAND_DEFENCE=new Set(['spread','regroup','defensive','potion']);
+
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function visible(el){
+  if(!el||!el.isConnected||el.hidden)return false;
+  const backdrop=el.closest('.cb2d-backdrop,.hs2d-backdrop,.cc2d-backdrop,.bs2d-backdrop');
+  if(backdrop?.hidden)return false;
+  return getComputedStyle(el).display!=='none'
+}
+function activeShell(){
+  return [...document.querySelectorAll(ACTIVE_SELECTOR)].reverse().find(visible)||null
+}
+function normaliseId(v){
+  let s=String(v||'').trim();
+  if(s.startsWith('p-'))s=s.slice(2);
+  return s
+}
+function rowId(row){
+  if(!row)return'';
+  const direct=row.dataset.cbstdPartyId||row.dataset.hsSideRow||row.dataset.ccSideRow||row.dataset.bsSideRow||row.dataset.qRow||row.dataset.tbSideRow||'';
+  if(direct)return normaliseId(direct);
+  const nested=row.querySelector('[data-td-side],[data-q-side-hp],[data-bs-side-hp],[data-cc-side-hp],[data-hs-side-hp],[data-tb-side-hp]');
+  if(!nested)return'';
+  return normaliseId(nested.dataset.tdSide||nested.dataset.qSideHp||nested.dataset.bsSideHp||nested.dataset.ccSideHp||nested.dataset.hsSideHp||nested.dataset.tbSideHp||'')
+}
+function partyRows(shell){
+  return [...shell.querySelectorAll('.cb2d-party .cb2d-party-row')].filter(row=>{
+    const id=rowId(row);if(!id)return false;row.dataset.cbstdPartyId=id;return true
+  })
+}
+function rowName(row){
+  return String(row?.querySelector('b')?.childNodes?.[0]?.textContent||row?.querySelector('b')?.textContent||rowId(row)||'ALLY').trim()
+}
+function findPartyRow(shell,id){
+  const want=normaliseId(id);
+  return partyRows(shell).find(row=>rowId(row)===want)||null
+}
+function targetNode(shell,id){
+  const raw=String(id||'');
+  const selectors=[
+    '[data-unit="'+CSS.escape(raw)+'"]',
+    '[data-hs="'+CSS.escape(raw)+'"]',
+    '[data-cc="'+CSS.escape(raw)+'"]',
+    '[data-q-unit="'+CSS.escape(raw)+'"]',
+    '[data-tb-unit="'+CSS.escape(raw)+'"]',
+    '[data-bs="'+CSS.escape(raw)+'"]'
+  ];
+  if(/^e-\d+$/.test(raw))selectors.push('[data-bs="'+CSS.escape(raw.replace('-',''))+'"]');
+  for(const selector of selectors){const el=shell.querySelector(selector);if(el)return el}
+  return null
+}
+function targetName(shell,id){
+  if(!id)return'ACQUIRING';
+  if(String(id).startsWith('p-')){
+    const row=findPartyRow(shell,id);return rowName(row)||'ALLY'
+  }
+  const node=targetNode(shell,id),label=node?.querySelector(':scope > span,b,.cb2d-unit-label');
+  const txt=String(label?.childNodes?.[0]?.textContent||label?.textContent||'').trim();
+  if(txt)return txt;
+  if(/^e-\d+$/.test(String(id)))return'ENEMY '+(Number(String(id).slice(2))+1);
+  return String(id).replace(/^add-/,'ADD ').replace(/^e-/,'ENEMY ')
+}
+function initials(name){
+  const p=String(name||'?').trim().split(/\s+/).filter(Boolean);
+  return (p.length>1?(p[0][0]+p[p.length-1][0]):String(p[0]||'?').slice(0,2)).toUpperCase()
+}
+function ensureTarget(row){
+  let target=row.querySelector(':scope > .cbstd-party-target');
+  if(target)return target;
+  target=document.createElement('div');target.className='cbstd-party-target';
+  target.innerHTML='<i>—</i><span><small>TARGET</small><b>ACQUIRING</b></span>';
+  row.appendChild(target);return target
+}
+function setTarget(shell,source,targetId){
+  const row=findPartyRow(shell,source);if(!row)return;
+  const target=ensureTarget(row),name=targetName(shell,targetId),friendly=String(targetId||'').startsWith('p-');
+  target.classList.toggle('friendly',friendly);target.classList.toggle('hostile',!friendly);
+  const icon=target.querySelector('i'),label=target.querySelector('b');
+  if(icon)icon.textContent=targetId?initials(name):'—';
+  if(label)label.textContent=name
+}
+function clearTargets(shell){
+  partyRows(shell).forEach(row=>{
+    const target=ensureTarget(row);target.classList.remove('friendly','hostile');
+    const icon=target.querySelector('i'),label=target.querySelector('b');
+    if(icon)icon.textContent='—';if(label)label.textContent='ACQUIRING'
+  })
+}
+function commandId(button){
+  if(!button)return'';
+  const d=button.dataset;
+  if(d.combatCommand)return d.combatCommand;
+  if(d.hsOverride)return d.hsOverride;
+  if(d.ccCommand)return d.ccCommand;
+  if(d.bsCommand)return d.bsCommand;
+  if(d.qCommand)return d.qCommand;
+  if(d.tbCommand)return d.tbCommand;
+  if([...button.attributes].some(a=>/potion/i.test(a.name)))return'potion';
+  const text=String(button.querySelector('b')?.textContent||button.textContent||'').toLowerCase();
+  if(/interrupt/.test(text))return'interrupt';if(/focus/.test(text))return'focus';if(/spread/.test(text))return'spread';if(/stack/.test(text))return'stack';
+  if(/regroup/.test(text))return'regroup';if(/defensive|defend/.test(text))return'defensive';if(/burn/.test(text))return'burn';if(/potion/.test(text))return'potion';
+  return''
+}
+function organiseCommands(shell){
+  const panel=shell.querySelector('.cbr-command-panel.cb2d-controls,.cb2d-controls.cbr-command-panel');if(!panel||panel.dataset.cbstdGrouped==='1')return;
+  const buttons=[...panel.querySelectorAll('button')].filter(b=>COMMAND_ATTACK.has(commandId(b))||COMMAND_DEFENCE.has(commandId(b)));
+  if(buttons.length<4)return;
+  const groups=document.createElement('div');groups.className='cbstd-command-groups';
+  const attack=document.createElement('section');attack.className='cbstd-command-group attack';attack.innerHTML='<small>ATTACK / PRESSURE</small><div></div>';
+  const defence=document.createElement('section');defence.className='cbstd-command-group defence';defence.innerHTML='<small>DEFEND / RECOVER</small><div></div>';
+  groups.append(attack,defence);
+  buttons.forEach(b=>{
+    const id=commandId(b);(COMMAND_ATTACK.has(id)?attack:defence).querySelector('div').appendChild(b)
+  });
+  panel.appendChild(groups);panel.dataset.cbstdGrouped='1'
+}
+function orderMeters(shell){
+  const meters=shell.querySelector('.cb2d-combat-meters');if(!meters)return;
+  ['threat','damage','healing'].forEach(type=>{const node=meters.querySelector('.cb2d-meter-panel.'+type);if(node)meters.appendChild(node)})
+}
+function ensurePetHost(shell){
+  const party=shell.querySelector('.cb2d-party');if(!party)return null;
+  let host=party.querySelector(':scope > .cbstd-pets');
+  if(!host){host=document.createElement('div');host.className='cbstd-pets';host.hidden=true;party.appendChild(host)}
+  return host
+}
+function ownerName(shell,id){
+  const row=findPartyRow(shell,id);return rowName(row)||'Party member'
+}
+function renderPets(shell){
+  const host=ensurePetHost(shell);if(!host)return;
+  const pets=[...(shell.__cbstdPets?.values?.()||[])];
+  const party=shell.querySelector('.cb2d-party');
+  if(!pets.length){
+    host.hidden=true;host.innerHTML='';
+    party?.classList.remove('cbstd-has-pets','cbstd-pets-dense','cbstd-pets-ultra');
+    return
+  }
+  const grouped=new Map();
+  pets.forEach(p=>{
+    const key=[p.ownerId,p.type||p.name||p.id].join('|'),prev=grouped.get(key);
+    if(prev){prev.count++;if(p.targetId)prev.targetId=p.targetId;if(p.action)prev.action=p.action}
+    else grouped.set(key,{...p,count:1})
+  });
+  party?.classList.add('cbstd-has-pets');
+  party?.classList.toggle('cbstd-pets-dense',grouped.size>=5);
+  party?.classList.toggle('cbstd-pets-ultra',grouped.size>=9);
+  host.hidden=false;
+  host.innerHTML='<small>PETS / SUMMONS</small>'+[...grouped.values()].map(p=>{
+    const t=targetName(shell,p.targetId);
+    return '<div class="cbstd-pet-row"><i>◆</i><span><b>'+esc(p.name||'Summon')+(p.count>1?' ×'+p.count:'')+'</b><small>'+esc(ownerName(shell,p.ownerId))+(p.action?' · '+esc(p.action):'')+'</small></span><em><small>TARGET</small><b>'+esc(t)+'</b></em></div>'
+  }).join('')
+}
+function handlePet(shell,e){
+  if(!shell.__cbstdPets)shell.__cbstdPets=new Map();
+  const pets=shell.__cbstdPets,id=String(e?.payload?.petId||e?.target||e?.source||'');
+  if(e.type==='PET_SUMMONED'){
+    if(id)pets.set(id,{id,ownerId:String(e.payload?.ownerId||e.source||''),name:String(e.payload?.name||e.ability||'Summon'),type:String(e.payload?.petType||''),targetId:null,action:e.result==='permanent'?'Active':'Summoned'})
+  }else if(e.type==='PET_DISMISSED'){
+    if(id)pets.delete(id)
+  }else if(String(e.source||'').startsWith('pet-')||e.payload?.pet===true){
+    const pet=pets.get(String(e.source||''));if(pet){if(e.target)pet.targetId=e.target;if(e.ability)pet.action=String(e.ability)}
+  }
+  renderPets(shell)
+}
+function upgradeRows(shell){
+  partyRows(shell).forEach(ensureTarget);ensurePetHost(shell)
+}
+function upgrade(shell){
+  if(!shell||!shell.matches?.(ACTIVE_SELECTOR))return;
+  shell.classList.add('cbstd-mounted');orderMeters(shell);organiseCommands(shell);upgradeRows(shell)
+}
+function upgradeAll(root=document){
+  if(root?.matches?.(ACTIVE_SELECTOR))upgrade(root);
+  root?.querySelectorAll?.(ACTIVE_SELECTOR).forEach(upgrade)
+}
+function combatEvent(detail){
+  const shell=activeShell(),e=detail?.event;if(!shell||!e)return;
+  if(e.type==='COMBAT_START'){shell.__cbstdPets=new Map();clearTargets(shell);renderPets(shell);return}
+  if(e.type==='PET_SUMMONED'||e.type==='PET_DISMISSED'||String(e.source||'').startsWith('pet-')||e.payload?.pet===true)handlePet(shell,e);
+  if(['ABILITY_START','DAMAGE_DEALT','HEAL_RECEIVED'].includes(e.type)&&String(e.source||'').startsWith('p-')&&e.target)setTarget(shell,e.source,e.target);
+  if(e.type==='PLAYER_DEFEATED'&&String(e.target||'').startsWith('p-'))setTarget(shell,e.target,null)
+}
+window.addEventListener('cellbound:combat-event',e=>combatEvent(e.detail));
+const observer=new MutationObserver(records=>{
+  const shells=new Set();
+  records.forEach(r=>{
+    const host=r.target?.closest?.(ACTIVE_SELECTOR);if(host)shells.add(host);
+    r.addedNodes.forEach(n=>{
+      if(n.nodeType!==1)return;
+      if(n.matches?.(ACTIVE_SELECTOR))shells.add(n);
+      n.querySelectorAll?.(ACTIVE_SELECTOR).forEach(s=>shells.add(s));
+      const parent=n.closest?.(ACTIVE_SELECTOR);if(parent)shells.add(parent)
+    })
+  });
+  shells.forEach(upgrade)
+});
+if(document.body){observer.observe(document.body,{childList:true,subtree:true});upgradeAll()}else document.addEventListener('DOMContentLoaded',()=>{observer.observe(document.body,{childList:true,subtree:true});upgradeAll()},{once:true});
+
+window.CellboundCombatHUDStandard={
+  version:VERSION,upgrade,upgradeAll,
+  profiles:{
+    pve:{party:'left',battlefield:'center',meters:['threat','damage','healing'],commands:'right',scroll:false},
+    pvp:{base:'pve',teamRosters:true,objectiveHeader:true,threat:false}
+  }
+};
+})();
