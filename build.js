@@ -530,6 +530,14 @@ if(file==='quests-v2.js'){
     'onboarding-v1.js':['playSharedEncounter({']
   };
   if(ashenCombatViewHooks[file])for(const hook of ashenCombatViewHooks[file])if(!contents.includes(hook))throw new Error(file+' must use the Ashen Vault combat-view contract: missing '+hook);
+  if(file==='combat-hud-standard-v1.js'){
+    for(const hook of ["cbstdFrame='ashen-v2'","shell.classList.remove('combat-hud-fullscreen','cbstd-hud')","layout.classList.remove('cb2d-layout')","cbcombat-party-rows"])
+      if(!contents.includes(hook))throw new Error('Ashen legacy-frame promotion cleanup is missing '+hook);
+  }
+  if(file==='layout-safety-v1.css'){
+    for(const hook of ['.cb2d-shell.cbstd-ashen-frame>.cbcombat-grid',').cbcombat-backdrop{','.cbcombat-party .cbcombat-party-rows'])
+      if(!contents.includes(hook))throw new Error('Ashen promoted-frame CSS contract is missing '+hook);
+  }
   if(['world-boss-2d-v1.js','pvp-viewer-v1.js'].includes(file)){
     for(const legacy of ['Math.min(rawDelta,100)','Math.min(100,Math.max(0,now-last','Math.min(Math.max(0,now-lastFrame),100)']){
       if(contents.includes(legacy))throw new Error(file+' still discards background combat time');
