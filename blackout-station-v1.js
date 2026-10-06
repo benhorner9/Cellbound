@@ -513,7 +513,7 @@ function bsPowerSurge(ms=760){
 
 function drawCombat(){
  const r=root(),oc=(Number(run?.cluesUsed)||0)*CLUE_HP_PCT;r.hidden=false;
- r.innerHTML='<section class="cb2d-shell combat-hud-fullscreen bs2d-shell">'+
+ r.innerHTML='<section class="cb2d-shell combat-hud-fullscreen cbstd-hud bs2d-shell">'+
  '<header class="cb2d-head"><div><small>BLACKOUT STATION · LIVE 2D DUNGEON</small><h2 id="bsTitle">Dr. Vex Calder</h2></div><div class="cb2d-live"><i></i>LIVE <button data-bs-speed>'+run.speed+'×</button><button data-bs-close aria-label="Close dungeon">×</button></div></header>'+
  '<div class="cb2d-route bs2d-route"><span class="done"><i>1</i>Grid Alignment</span><span class="current"><i>2</i>Dr. Vex Calder</span></div>'+
  '<div class="cb2d-layout"><main>'+
