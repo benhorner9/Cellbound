@@ -110,9 +110,9 @@ function commandId(button){
   if(!button)return'';
   const d=button.dataset;
   if(d.combatCommand)return d.combatCommand;
-  if(d.hsOverride)return d.hsOverride;
+  if(d.hsOverride)return d.hsOverride==='consumable'?'potion':d.hsOverride;
   if(d.ccCommand)return d.ccCommand;
-  if(d.ccOverride)return d.ccOverride;
+  if(d.ccOverride)return d.ccOverride==='consumable'?'potion':d.ccOverride;
   if(d.bsCommand)return d.bsCommand;
   if(d.qCommand)return d.qCommand;
   if(d.tbCommand)return d.tbCommand;
