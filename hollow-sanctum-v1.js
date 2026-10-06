@@ -16,7 +16,7 @@ const HOLLOW_ROOMS={
  gallery:{
   zone:'GALLERY OF ECHOES',
   description:'A shattered processional chamber suspended over the void. The party enters from the south causeway and clears the open central floor before leaving through the north gate.',
-  art:'./assets/hollow-sanctum/rooms/gallery.webp?v=20261006b',
+  art:'./assets/hollow-sanctum/rooms/gallery.webp?v=20261006c',
   liveProfile:'hollow-gallery',
   route:{
    entry:{x:50,y:98},entryInside:{x:50,y:84},engage:{x:50,y:62},
@@ -32,7 +32,7 @@ const HOLLOW_ROOMS={
  sentinel:{
   zone:'GLASSJAW SENTINEL',
   description:'A circular relic court built around a suspended void core. Fight on the open ring, then route around the core to the north gate.',
-  art:'./assets/hollow-sanctum/rooms/sentinel.webp?v=20261006b',
+  art:'./assets/hollow-sanctum/rooms/sentinel.webp?v=20261006c',
   liveProfile:'hollow-sentinel',
   route:{
    entry:{x:50,y:98},entryInside:{x:50,y:84},engage:{x:50,y:63},
@@ -49,7 +49,7 @@ const HOLLOW_ROOMS={
  choir:{
   zone:'THE BOUND CHOIR',
   description:'The final fractured shrine. The Bound Choir holds the lower ritual floor while the immense crystal nexus dominates the northern dais.',
-  art:'./assets/hollow-sanctum/rooms/choir.webp?v=20261006b',
+  art:'./assets/hollow-sanctum/rooms/choir.webp?v=20261006c',
   liveProfile:'hollow-choir',
   route:{
    entry:{x:50,y:98},entryInside:{x:50,y:84},engage:{x:50,y:64},
@@ -265,6 +265,19 @@ function hsEnsureFade(){
 function hsSetFade(black,duration=560){
  const fade=hsEnsureFade();if(!fade)return;fade.style.setProperty('--hs-fade-ms',Math.max(0,Number(duration)||0)+'ms');fade.classList.toggle('is-black',Boolean(black))
 }
+async function hsWaitForRoomArt(art,timeout=1400){
+ if(!art)return;
+ if(!(art.complete&&art.naturalWidth>0)){
+  await Promise.race([
+   new Promise(resolve=>{
+    const done=()=>{art.removeEventListener('load',done);art.removeEventListener('error',done);resolve()};
+    art.addEventListener('load',done,{once:true});art.addEventListener('error',done,{once:true})
+   }),
+   new Promise(resolve=>setTimeout(resolve,Math.max(250,Number(timeout)||1400)))
+  ])
+ }
+ try{await art.decode?.()}catch(error){}
+}
 function stageEnvironment(s){
  const room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery,arena=$('#hs2dArena'),environment=$('#hs2dEnvironment'),src=room.art,fallback='./assets/dungeons/hollow-sanctum.webp';
  arena.className='cb2d-arena hs2d-arena hs2d-unified-arena hollow-live-room stage-'+s.id;
@@ -273,19 +286,20 @@ function stageEnvironment(s){
  // Hollow Sanctum now uses the supplied room artwork directly. Remove any stale
  // generated living-scene canvas so it cannot cover or replace the authored map.
  arena.querySelectorAll('.cb2d-live-scene,.hs-live-scene').forEach(node=>node.remove());
+ let art=null;
  if(environment){
-  environment.innerHTML='<img class="hs2d-room-art" src="'+src+'" alt="" decoding="async" draggable="false">';
-  const art=environment.querySelector('.hs2d-room-art');
+  environment.innerHTML='<img class="hs2d-room-art" src="'+src+'" alt="" decoding="async" fetchpriority="high" draggable="false">';
+  art=environment.querySelector('.hs2d-room-art');
   art?.addEventListener('error',()=>{
    if(art.dataset.hsFallback==='1')return;
    art.dataset.hsFallback='1';art.src=fallback
   },{once:true})
  }
  const tag=$('#hs2dRoom');if(tag)tag.innerHTML='<em>'+esc(room.zone||'HOLLOW SANCTUM')+'</em><b>'+esc(s.title)+'</b><small>'+esc(room.description||'The sanctum closes around the party.')+'</small>';
- hsEnsureFade()
+ hsEnsureFade();return art
 }
-function spawnStage(s){
- stageEnvironment(s);$('#hs2dUnits').innerHTML='';$('#hs2dTelegraphs').innerHTML='';$('#hs2dFx').innerHTML='';
+async function spawnStage(s){
+ const art=stageEnvironment(s);$('#hs2dUnits').innerHTML='';$('#hs2dTelegraphs').innerHTML='';$('#hs2dFx').innerHTML='';
  const chars=party(),room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery,route=room.route||{},entry=route.entry||{x:5,y:50},inside=route.entryInside||{x:20,y:50},spread=Number(route.spread)||2;
  const arena=$('#hs2dArena');arena?.classList.add('room-entering');
  chars.forEach((c,i)=>{
@@ -299,8 +313,12 @@ function spawnStage(s){
   addUnit('e'+i,n,big?'enemy boss':'enemy',target.x,target.y,big,'Lv. '+m.level+' · '+m.label)
  });
  if(run?.roomTransitionBlack){
-  const fade=hsEnsureFade();fade?.classList.add('is-black');requestAnimationFrame(()=>requestAnimationFrame(()=>hsSetFade(false,720)));run.roomTransitionBlack=false
- }else hsSetFade(false,0);
+  const fade=hsEnsureFade();fade?.classList.add('is-black');
+  await hsWaitForRoomArt(art,1600);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>hsSetFade(false,720)));run.roomTransitionBlack=false
+ }else{
+  await hsWaitForRoomArt(art,900);hsSetFade(false,0)
+ }
  setTimeout(()=>arena?.classList.remove('room-entering'),760);
  requestAnimationFrame(()=>window.CellboundCombatPortraits?.refresh?.())
 }
@@ -551,7 +569,7 @@ async function hsRecoverFallen(tok){
 async function fightStage(s,tok,index){
  // Threat belongs to the current encounter; damage/healing belong to the whole dungeon.
  run.threat=Object.fromEntries(party().map(ch=>[ch.id,0]));run.aggro=null;hsRenderMeters();
- spawnStage(s);setStatus('Entering '+s.title+'…');feed('The party enters '+s.title+'.');await wait(650);if(tok!==token)return false;
+ await spawnStage(s);setStatus('Entering '+s.title+'…');feed('The party enters '+s.title+'.');await wait(650);if(tok!==token)return false;
  const C=window.CellboundCombatStandard;if(!C?.createLiveSession)throw new Error('Real-time Combat Reborn standard gateway unavailable');
  const combatParty=party().map((c,i)=>Object.assign({},c,{_combatHealthPct:run.hp[c.id],_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0,_combatPosition:hsPartyStagePosition(s,i)}));
  const tactics={...hsTactics,interruptPriority:hsTactics.bossPlan==='control'?'high':hsTactics.interruptPriority,addPriority:hsTactics.bossPlan==='burn'?'boss':hsTactics.addPriority,defensiveUsage:hsTactics.bossPlan==='control'?'aggressive':hsTactics.defensiveUsage,cooldownUse:hsTactics.bossPlan==='burn'?'free':hsTactics.cooldownUse},simOptions={party:combatParty,encounter:hsRebornEncounter(s),tactics,seed:[run.endgame?.seed||'hollow-sanctum',s.id,index].join(':')},simMeta={zone:'hollow-sanctum'};const session=C.createLiveSession(simOptions,simMeta),result=session.snapshot();
