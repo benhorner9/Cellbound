@@ -1,8 +1,8 @@
 (()=>{
 'use strict';
 
-const VERSION='1.1.1';
-const ACTIVE_SELECTOR='.cb2d-shell.cbstd-hud:not(.results-mode),.cb2d-shell.cbstd-ashen-frame:not(.results-mode)';
+const VERSION='1.2.0';
+const ACTIVE_SELECTOR='.cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode),.cb2d-shell.cbstd-hud:not(.results-mode),.cb2d-shell.cbstd-ashen-frame:not(.results-mode)';
 const COMMAND_ATTACK=new Set(['focus','interrupt','stack','burn']);
 const COMMAND_DEFENCE=new Set(['spread','regroup','defensive','potion']);
 
@@ -123,7 +123,7 @@ function commandId(button){
   return''
 }
 function organiseCommands(shell){
-  const panel=shell.querySelector('.cbr-command-panel.cb2d-controls,.cb2d-controls.cbr-command-panel');if(!panel||panel.dataset.cbstdGrouped==='1')return;
+  const panel=shell.querySelector('.cbr-command-panel.cb2d-controls,.cb2d-controls.cbr-command-panel');if(!panel)return;if(panel.dataset.cbstdGrouped==='1'||panel.querySelector('.cbr-command-groups,.cbstd-command-groups')){panel.dataset.cbstdGrouped='1';return;}
   const buttons=[...panel.querySelectorAll('button')].filter(b=>COMMAND_ATTACK.has(commandId(b))||COMMAND_DEFENCE.has(commandId(b)));
   if(buttons.length<4)return;
   const groups=document.createElement('div');groups.className='cbstd-command-groups cbr-command-groups';
@@ -144,8 +144,8 @@ function orderMeters(shell){
 }
 function ensurePetHost(shell){
   const party=shell.querySelector('.cb2d-party');if(!party)return null;
-  let host=party.querySelector(':scope > .cbstd-pets');
-  if(!host){host=document.createElement('div');host.className='cbstd-pets cbcombat-pet-rows';host.hidden=true;party.appendChild(host)}else host.classList.add('cbcombat-pet-rows')
+  let host=party.querySelector(':scope > .cbstd-pets,:scope > .cbcombat-pet-rows');
+  if(!host){host=document.createElement('div');host.className='cbstd-pets cbcombat-pet-rows';host.hidden=true;party.appendChild(host)}else host.classList.add('cbstd-pets','cbcombat-pet-rows')
   return host
 }
 function ownerName(shell,id){
@@ -259,7 +259,7 @@ function adoptAshenFrame(shell){
 }
 function upgrade(shell){
   if(!shell||!shell.matches?.(ACTIVE_SELECTOR))return;
-  shell.classList.add('cbstd-mounted');orderMeters(shell);organiseCommands(shell);upgradeRows(shell);adoptAshenFrame(shell)
+  shell.classList.add('cbstd-mounted');orderMeters(shell);organiseCommands(shell);upgradeRows(shell);if(shell.dataset.combatView!=='canonical-v1')adoptAshenFrame(shell)
 }
 function upgradeAll(root=document){
   if(root?.matches?.(ACTIVE_SELECTOR))upgrade(root);

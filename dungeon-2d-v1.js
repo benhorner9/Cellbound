@@ -1398,21 +1398,20 @@ function combatBattleTopbarMarkup(){
  '</div>'
 }
 function combatShellMarkup(options={}){
+ const Viewer=window.CellboundCombatViewer;if(!Viewer?.markup)throw new Error('Canonical combat viewer unavailable');
  const title=options.title||'Combat',header=options.header||'CELLBOUND · LIVE COMBAT',route=options.route||'',partyLabel=options.partyLabel||('PARTY · '+party().length+' CHARACTERS'),kind=options.kind||'combat';
- const command=options.commandMarkup||combatCommandDeckMarkup(options.potionAttribute||'data-combat-potion',options.planTitle||'Command the party',options.planCopy||'Combat Reborn runs the fight. Use Command Center orders to change priorities and tactics.'),commandRight=options.commandPlacement==='right';
- const commandPanel='<section class="cbcombat-panel cbcombat-command-panel cb2d-controls cbr-command-panel" data-reborn="1">'+command+'</section>';
- const partyPanel='<section class="cbcombat-panel cbcombat-party-panel"><div class="cb2d-party cbcombat-party"><small>'+partyLabel+'</small><div id="cb2dRows">'+hudPartyRows()+'</div><div id="cb2dPetRows" class="cbcombat-pet-rows" hidden></div></div></section>';
- const rightPanel=commandRight?'<aside class="cbcombat-right-column"><section class="cbcombat-panel cbcombat-meters-panel">'+combatMetersMarkup()+'</section>'+commandPanel+'</aside>':'<aside class="cbcombat-panel cbcombat-meters-panel">'+combatMetersMarkup()+'</aside>';
- return '<section class="cbcombat-shell '+esc(options.shellClass||'')+'" data-combat-view="fresh-v1" data-party-size="'+party().length+'">'+
-  '<header class="cbcombat-header"><div class="cbcombat-title"><small>'+esc(header)+'</small><h2 id="cb2dTitle">'+esc(title)+'</h2></div><div class="cbcombat-header-actions"><span class="cbcombat-live-dot"><i></i>LIVE</span><button data-speed type="button">1×</button><button data-close type="button" aria-label="Close combat">×</button></div></header>'+
-  '<div class="cbcombat-route" id="cb2dRoute">'+route+'</div>'+
-  '<div class="cbcombat-grid">'+
-   '<div class="cbcombat-left-column">'+partyPanel+(commandRight?'':commandPanel)+'</div>'+
-   '<main class="cbcombat-panel cbcombat-battle-panel">'+combatBattleTopbarMarkup()+combatArenaMarkup(kind,options.arenaClass||'')+'</main>'+
-   rightPanel+
-  '</div>'+
-  '<div class="cb2d-end" id="cb2dEnd" hidden></div>'+
- '</section>'
+ const command=options.commandMarkup||combatCommandDeckMarkup(options.potionAttribute||'data-combat-potion',options.planTitle||'Command the party',options.planCopy||'Combat Reborn runs the fight. Use Command Center orders to change priorities and tactics.');
+ return Viewer.markup({
+  header,title,routeMarkup:route,partyLabel,
+  partyMarkup:hudPartyRows(),partyRowsId:'cb2dRows',petsId:'cb2dPetRows',
+  battleTopbarMarkup:combatBattleTopbarMarkup(),
+  arenaMarkup:combatArenaMarkup(kind,options.arenaClass||''),
+  metersMarkup:combatMetersMarkup(),
+  commandsMarkup:command,commandGrouped:true,
+  shellClass:options.shellClass||'',
+  speedAttribute:'data-speed',closeAttribute:'data-close',
+  titleId:'cb2dTitle',routeId:'cb2dRoute',endId:'cb2dEnd'
+ })
 }
 function drawViewer(){
  preloadAshenBattlefields();
