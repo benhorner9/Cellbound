@@ -65,6 +65,7 @@ function targetNode(shell,id){
     '[data-bs="'+CSS.escape(raw)+'"]'
   ];
   if(/^e-\d+$/.test(raw))selectors.push('[data-bs="'+CSS.escape(raw.replace('-',''))+'"]');
+  if(raw.startsWith('tb-'))selectors.push('[data-tb-boss="'+CSS.escape(raw.slice(3))+'"]');
   for(const selector of selectors){const el=shell.querySelector(selector);if(el)return el}
   return null
 }
@@ -111,6 +112,7 @@ function commandId(button){
   if(d.combatCommand)return d.combatCommand;
   if(d.hsOverride)return d.hsOverride;
   if(d.ccCommand)return d.ccCommand;
+  if(d.ccOverride)return d.ccOverride;
   if(d.bsCommand)return d.bsCommand;
   if(d.qCommand)return d.qCommand;
   if(d.tbCommand)return d.tbCommand;
