@@ -8,7 +8,7 @@ const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
 
-let Game=null,db=null,user=null,server={season:D.SEASON,rotation:{},progress:[],weekly:{},recentRuns:[],achievements:[]},leaderboards={},attempts={},attemptStartPromises={};
+let Game=null,db=null,user=null,server={season:D.SEASON,rotation:{},progress:[],weekly:{},recentRuns:[],achievements:[]},leaderboards={},attempts={},attemptStartPromises={},attemptAbandonPromises={};
 const selection={
  'ashen-vault':{difficulty:'normal',tier:1},
  'hollow-sanctum':{difficulty:'normal',tier:1},
@@ -281,6 +281,7 @@ async function resumeAttempt(dungeonId){
 async function beginOrResumeAttempt(dungeonId){
  if(attemptStartPromises[dungeonId])return attemptStartPromises[dungeonId];
  const pending=(async()=>{
+   if(attemptAbandonPromises[dungeonId]){try{await attemptAbandonPromises[dungeonId]}catch(error){console.warn('Dungeon abandon sync failed before fresh entry',error)}}
    const resumed=await resumeAttempt(dungeonId);
    const runtime=resumed?.runtimeState;
    if(resumed?.active&&runtime&&typeof runtime==='object'&&Number(runtime.version)>=1&&!['failed','completed','abandoned'].includes(String(runtime.phase||''))){
@@ -291,6 +292,27 @@ async function beginOrResumeAttempt(dungeonId){
  attemptStartPromises[dungeonId]=pending;
  try{return await pending}finally{delete attemptStartPromises[dungeonId]}
 }
+async function abandonAttempt(dungeonId){
+ if(attemptAbandonPromises[dungeonId])return attemptAbandonPromises[dungeonId];
+ const pending=(async()=>{
+   let attempt=attempts[dungeonId];
+   if(!attempt?.attemptId){
+     const resumed=await resumeAttempt(dungeonId);
+     if(!resumed?.active||!resumed?.attemptId){delete attempts[dungeonId];return{ok:true,reason:'no-active-attempt'}}
+     attempt=resumed
+   }
+   if(!db){delete attempts[dungeonId];return{ok:false,reason:'service-unavailable'}}
+   const payload={version:1,kind:dungeonId,phase:'abandoned',abandonedAt:new Date().toISOString()};
+   const {data,error}=await db.rpc('save_dungeon_attempt_runtime',{p_attempt_id:attempt.attemptId,p_runtime_state:payload});
+   delete attempts[dungeonId];
+   if(error){console.warn('Dungeon attempt could not be abandoned cleanly',error);return{ok:false,error}}
+   window.CellboundAnalytics?.track?.('dungeon_abandoned',{dungeon_id:dungeonId,attempt_id:attempt.attemptId},{key:'dungeon_abandoned:'+attempt.attemptId});
+   return data||{ok:true}
+ })();
+ attemptAbandonPromises[dungeonId]=pending;
+ try{return await pending}finally{delete attemptAbandonPromises[dungeonId]}
+}
+
 async function saveRuntime(dungeonId,runtimeState){
  let attempt=attempts[dungeonId];
  if(!attempt?.attemptId){
@@ -468,7 +490,7 @@ async function init(){
  window.addEventListener('cellbound:dungeon-complete',()=>refresh());
  await refresh();
  window.CellboundEndgame={
-   refresh,render,currentConfig,stageConfig,beginAttempt,beginOrResumeAttempt,resumeAttempt,saveRuntime,recordRun,rollPersonalLoot,rollChapterLoot,rollClearLoot,rollClearLootBundle,clearLootGuaranteed,recordClearLootOutcome,shardReward,rollChase,
+   refresh,render,currentConfig,stageConfig,beginAttempt,beginOrResumeAttempt,resumeAttempt,saveRuntime,abandonAttempt,recordRun,rollPersonalLoot,rollChapterLoot,rollClearLoot,rollClearLootBundle,clearLootGuaranteed,recordClearLootOutcome,shardReward,rollChase,
    progressFor,difficultyUnlocked,choose,prepare,runSummaryLabel,achievementName,debugSnapshot,tierPickerMarkup,getSelection:id=>({...selection[id]})
  }
 }

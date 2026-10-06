@@ -148,7 +148,7 @@ function renderCard(){
  try{window.CellboundDungeonBrowser?.refresh?.()}catch(e){}
 }
 function openDungeon(options){Game=window.CellboundGame;if(!Game?.ready)return;db=Game.getSupabase?.();if(options?.difficulty)window.CellboundEndgame?.choose?.('fractured-ages',options.difficulty,options.tier||1);briefing()}
-function close(){run=null;const r=root();if(!window.CellboundCombatViewer?.dismiss?.(r)){r.hidden=true;r.innerHTML='';r.remove?.()}document.body.classList.remove('fa-open');Game?.switchView?.('content');renderCard()}
+function close(){const shouldAbandon=Boolean(run&&!run.done&&run?.endgame?.attemptId);if(shouldAbandon)window.CellboundEndgame?.abandonAttempt?.('fractured-ages');run=null;const r=root();if(!window.CellboundCombatViewer?.dismiss?.(r)){r.hidden=true;r.innerHTML='';r.remove?.()}document.body.classList.remove('fa-open');Game?.switchView?.('content');renderCard()}
 function briefing(){
  const baseGate=readiness(true),gate=readiness(),r=root();r.hidden=false;document.body.classList.add('fa-open');
  if(!baseGate.ok){r.innerHTML='<section class="fa-shell fa-brief"><header><div><small>THE FRACTURED AGES · ENTRY CHECK</small><h2>The timeline will not open.</h2></div><button data-fa-close aria-label="Close dungeon">×</button></header><div class="fa-blocked"><b>NOT READY</b><p>'+esc(baseGate.reason)+'</p><button data-fa-party>OPEN PARTY BUILDER →</button></div></section>';r.querySelector('[data-fa-close]').onclick=close;r.querySelector('[data-fa-party]').onclick=()=>{close();Game.switchView?.('party')};return}

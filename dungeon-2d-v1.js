@@ -970,6 +970,8 @@ function combatProfile(c){
 }
 function root(){let r=$('#cb2dBackdrop');if(!r){r=document.createElement('div');r.id='cb2dBackdrop';r.className='cb2d-backdrop';r.hidden=true;document.body.appendChild(r)}return r}
 function close(silentExternal=false){
+ const shouldAbandon=Boolean(run&&!run.externalMode&&!run.resolved&&!run.done&&run?.endgame?.attemptId);
+ if(shouldAbandon)window.CellboundEndgame?.abandonAttempt?.('ashen-vault');
  token++;removeRebornReplayControls();
  const callback=run?.externalOnClose,wasExternal=Boolean(run?.externalMode);
  run=null;document.body.classList.remove('cb2d-open');const r=root();
