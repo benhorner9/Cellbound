@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.1.1';
+const VERSION='1.1.2';
 
 function esc(v){
  return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))
@@ -92,5 +92,5 @@ function mount(root,options={}){
  return shell
 }
 
-window.CellboundCombatViewer={version:VERSION,markup:shellMarkup,mount,normalise,profiles:{pve:'canonical-v1',pvp:'canonical-v1'}};
+window.CellboundCombatViewer={version:VERSION,mount,normalise,profiles:{pve:'canonical-v1'}};
 })();
