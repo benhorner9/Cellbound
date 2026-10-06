@@ -16,7 +16,7 @@ const HOLLOW_ROOMS={
  gallery:{
   zone:'GALLERY OF ECHOES',
   description:'A shattered processional chamber suspended over the void. The party enters from the south causeway and clears the open central floor before leaving through the north gate.',
-  art:'./assets/hollow-sanctum/rooms/gallery.webp?v=20261006e',
+  art:'./assets/hollow-sanctum/rooms/gallery-void-v2.webp',
   liveProfile:'hollow-gallery',
   route:{
    entry:{x:50,y:98},entryInside:{x:50,y:84},engage:{x:50,y:62},
@@ -32,7 +32,7 @@ const HOLLOW_ROOMS={
  sentinel:{
   zone:'GLASSJAW SENTINEL',
   description:'A circular relic court built around a suspended void core. Fight on the open ring, then route around the core to the north gate.',
-  art:'./assets/hollow-sanctum/rooms/sentinel.webp?v=20261006e',
+  art:'./assets/hollow-sanctum/rooms/sentinel-void-v2.webp',
   liveProfile:'hollow-sentinel',
   route:{
    entry:{x:50,y:98},entryInside:{x:50,y:84},engage:{x:50,y:63},
@@ -49,7 +49,7 @@ const HOLLOW_ROOMS={
  choir:{
   zone:'THE BOUND CHOIR',
   description:'The final fractured shrine. The Bound Choir holds the lower ritual floor while the immense crystal nexus dominates the northern dais.',
-  art:'./assets/hollow-sanctum/rooms/choir.webp?v=20261006e',
+  art:'./assets/hollow-sanctum/rooms/choir-void-v2.webp',
   liveProfile:'hollow-choir',
   route:{
    entry:{x:50,y:98},entryInside:{x:50,y:84},engage:{x:50,y:64},
@@ -104,7 +104,7 @@ function renderCard(){
  const q=qstate(),open=Boolean(q?.flags?.hollowSanctumUnlocked),done=Boolean(q?.flags?.hollowFirstClear),clears=Number(q?.hollowCompletions)||0,pi=ilvl(),gate=readiness(true);
  if(card){
   card.innerHTML='<article class="dungeon-browser-card hollow '+(open?'unlocked':'locked')+'" data-dungeon-card="hollow-sanctum">'+
-   '<div class="dungeon-browser-art has-image hollow-art"><img src="./assets/hollow-sanctum/rooms/gallery.webp?v=20261006e" alt="" loading="lazy" decoding="async"><span>'+(open?'ZELTIRA UNDERDEEP':'UNKNOWN SIGNAL')+'</span><strong>◇</strong></div>'+
+   '<div class="dungeon-browser-art has-image hollow-art"><img src="./assets/hollow-sanctum/rooms/gallery-void-v2.webp" alt="" loading="lazy" decoding="async"><span>'+(open?'ZELTIRA UNDERDEEP':'UNKNOWN SIGNAL')+'</span><strong>◇</strong></div>'+
    '<div class="dungeon-browser-copy"><div class="dungeon-browser-heading"><div><small>DUNGEON</small><h3>'+(open?'The Hollow Sanctum':'Undiscovered Dungeon')+'</h3></div><b id="hollowDungeonStatus">'+(open?(done?'CLEARED':'NEWLY UNLOCKED'):'QUEST LOCKED')+'</b></div>'+
    '<p>'+(open?'An ancient crystal shrine beneath Zeltira, ending at the ritual chamber of the Bound Choir.':'Your guild has evidence of something beneath Zeltira, but the route remains sealed.')+'</p>'+
    '<div class="dungeon-browser-meta"><span>3 stages</span><span>'+(open?'iLvl 24+':'Quest discovery')+'</span><span>Party iLvl '+(pi||'—')+'</span></div>'+
@@ -118,7 +118,7 @@ function renderCard(){
  ];
  mount.innerHTML='<div class="dungeon-detail-toolbar"><div><small>DUNGEON JOURNAL</small><b>'+(open?'The Hollow Sanctum':'Undiscovered Dungeon')+'</b></div><button type="button" data-dungeon-close>CLOSE DETAILS ×</button></div>'+
   '<div class="dungeon-journal-hero hollow-journal-hero">'+
-   '<div class="dungeon-journal-art has-image hollow-journal-art '+(open?'':'locked-image')+'" data-dungeon-art="hollow-sanctum"><img src="./assets/hollow-sanctum/rooms/gallery.webp?v=20261006e" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="journal-eyebrow">'+(open?'ZELTIRA UNDERDEEP · DUNGEON':'SEALED LOCATION · UNKNOWN')+'</span><h3>'+(open?'The Hollow Sanctum':'The Sealed Underroad')+'</h3><p>'+(open?'A buried ceremonial complex where Cell glass has grown through ancient stone. Voices still answer from the deeper chambers.':'The route beneath Zeltira has not yet been opened. Complete Echoes Beneath Zeltira to discover what lies beyond the Hollow Seal.')+'</p><div class="journal-badges"><span>5 adventurers</span><span>3 stages</span><span>Party iLvl '+(pi||'—')+'</span></div></div>'+
+   '<div class="dungeon-journal-art has-image hollow-journal-art '+(open?'':'locked-image')+'" data-dungeon-art="hollow-sanctum"><img src="./assets/hollow-sanctum/rooms/gallery-void-v2.webp" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="journal-eyebrow">'+(open?'ZELTIRA UNDERDEEP · DUNGEON':'SEALED LOCATION · UNKNOWN')+'</span><h3>'+(open?'The Hollow Sanctum':'The Sealed Underroad')+'</h3><p>'+(open?'A buried ceremonial complex where Cell glass has grown through ancient stone. Voices still answer from the deeper chambers.':'The route beneath Zeltira has not yet been opened. Complete Echoes Beneath Zeltira to discover what lies beyond the Hollow Seal.')+'</p><div class="journal-badges"><span>5 adventurers</span><span>3 stages</span><span>Party iLvl '+(pi||'—')+'</span></div></div>'+
    '<div class="journal-entry-panel"><small>ENTRY REQUIREMENT</small><b>'+(open?'Quest Access · Party Item Level 24':'Echoes Beneath Zeltira')+'</b><p>'+(open?esc(gate.reason):'Follow the investigation beneath Zeltira and break the Hollow Seal.')+'</p><button '+(open?'data-hs-enter':'data-hs-quests')+' '+(open&&!gate.ok?'disabled':'')+'>'+(open?'ENTER THE HOLLOW SANCTUM':'OPEN QUEST JOURNAL →')+'</button></div>'+
   '</div>'+
   '<div class="dungeon-journal-layout">'+
