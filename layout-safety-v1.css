@@ -2648,3 +2648,125 @@ body.bs2d-open{
   .cbcombat-shell.ashen-vault-combat .cbcombat-meters-panel{min-height:320px}
   .cbcombat-shell.ashen-vault-combat .cbcombat-command-panel{min-height:360px!important}
 }
+
+
+/* Ashen combat is a fixed game HUD: party + summons never become scroll regions. */
+.cbcombat-shell.ashen-vault-combat .cbcombat-party{
+  overflow:hidden!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party #cb2dRows{
+  flex:1 1 auto!important;
+  min-height:0!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-rows{
+  flex:0 0 auto!important;
+  width:100%;
+  max-height:none!important;
+  overflow:visible!important;
+  scrollbar-width:none
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-rows::-webkit-scrollbar{
+  display:none
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-rows:not([hidden]){
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  grid-auto-rows:30px;
+  gap:4px;
+  margin-top:5px;
+  padding-top:5px
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-rows>small{
+  grid-column:1/-1;
+  margin:0!important;
+  min-height:12px
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-row{
+  grid-template-columns:16px minmax(0,1fr);
+  grid-template-rows:1fr;
+  gap:5px;
+  min-height:30px;
+  height:30px;
+  margin:0;
+  padding:4px 5px
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-icon{
+  width:16px;height:16px;
+  font-size:6px
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-main b{
+  font-size:6px
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-main small{
+  margin-top:1px;
+  font-size:5px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-target{
+  grid-column:1/-1;
+  position:absolute;
+  right:5px;
+  bottom:3px;
+  width:auto;
+  max-width:48%;
+  display:flex;
+  gap:3px
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-target>i{
+  display:none
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-target small{
+  display:none
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-target b{
+  font-size:5px;
+  color:#cfa9d2
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-row{
+  position:relative
+}
+
+/* When summons are present, reclaim a little height from each party card rather than scrolling. */
+.cbcombat-shell.ashen-vault-combat .cbcombat-party.has-pets #cb2dRows{
+  grid-template-rows:repeat(5,minmax(68px,1fr))!important;
+  gap:4px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party.has-pets #cb2dRows>.cb2d-party-row{
+  min-height:68px!important;
+  grid-template-rows:minmax(0,1fr) 22px!important;
+  padding:5px 6px 4px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party.has-pets .cb2d-party-avatar{
+  width:29px!important;
+  height:29px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party.has-pets .cb2d-party-target{
+  height:21px;
+  padding:2px 5px
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party.has-pets .cb2d-party-action{
+  margin-top:0!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party.has-pets .cb2d-side-hp,
+.cbcombat-shell.ashen-vault-combat .cbcombat-party.has-pets .cb2d-side-resource{
+  height:3px!important
+}
+
+/* Larger summon sets remain on-screen by becoming denser, never scrollable. */
+.cbcombat-shell.ashen-vault-combat .cbcombat-party.has-pets .cbcombat-pet-rows{
+  grid-template-columns:repeat(2,minmax(0,1fr))
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party[style*="--pet-groups: 5"] .cbcombat-pet-rows,
+.cbcombat-shell.ashen-vault-combat .cbcombat-party[style*="--pet-groups: 6"] .cbcombat-pet-rows,
+.cbcombat-shell.ashen-vault-combat .cbcombat-party[style*="--pet-groups: 7"] .cbcombat-pet-rows,
+.cbcombat-shell.ashen-vault-combat .cbcombat-party[style*="--pet-groups: 8"] .cbcombat-pet-rows{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-auto-rows:27px
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party[style*="--pet-groups: 5"] .cbcombat-pet-row,
+.cbcombat-shell.ashen-vault-combat .cbcombat-party[style*="--pet-groups: 6"] .cbcombat-pet-row,
+.cbcombat-shell.ashen-vault-combat .cbcombat-party[style*="--pet-groups: 7"] .cbcombat-pet-row,
+.cbcombat-shell.ashen-vault-combat .cbcombat-party[style*="--pet-groups: 8"] .cbcombat-pet-row{
+  height:27px;
+  min-height:27px;
+  padding:3px 4px
+}
