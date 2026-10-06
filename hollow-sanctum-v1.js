@@ -505,11 +505,11 @@ async function hsReplayFinalFight(){
 
 async function hsFail(s,result){
  run.done=true;Game.applyPartyCellShock?.(25);const st=state();st.activity.push('The guild wiped in The Hollow Sanctum at '+s.title+'. All five gained 25% Cell Shock.');Game.save?.();await Game.persistState?.();
- const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end cb2d-results-screen';$('.hs2d-shell')?.classList.add('results-mode');end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Mastery records and the cause of the wipe are retained.</p></div>'+hsFailureDiagnosis(result)+hsStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
+ const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end cb2d-results-screen';window.CellboundCombatViewer?.setResults?.(root(),true);end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>Wipe at '+esc(s.title)+'.</h3><p>All five adventurers gained 25% Cell Shock. Mastery records and the cause of the wipe are retained.</p></div>'+hsFailureDiagnosis(result)+hsStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
 }
 async function hsFailNoHealer(s,result){
  run.done=true;Game.applyPartyCellShock?.(25);const st=state();st.activity.push('The Hollow Sanctum expedition ended after '+s.title+' because the party had no healer to revive fallen adventurers. All five gained 25% Cell Shock.');Game.save?.();await Game.persistState?.();
- const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end cb2d-results-screen';$('.hs2d-shell')?.classList.add('results-mode');end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>No healer available after '+esc(s.title)+'.</h3><p>A fallen adventurer cannot be recovered without a healer. The expedition ends here and all five gain 25% Cell Shock.</p></div>'+hsFailureDiagnosis(result)+hsStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
+ const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end cb2d-results-screen';window.CellboundCombatViewer?.setResults?.(root(),true);end.innerHTML='<div><small>EXPEDITION FAILED</small><h3>No healer available after '+esc(s.title)+'.</h3><p>A fallen adventurer cannot be recovered without a healer. The expedition ends here and all five gain 25% Cell Shock.</p></div>'+hsFailureDiagnosis(result)+hsStageSummary(result)+'<button data-return>RETURN TO DUNGEON JOURNAL →</button>';end.querySelector('[data-return]').onclick=close
 }
 async function hsRecoverFallen(tok){
  let fallen=party().filter(c=>(Number(run.hp[c.id])||0)<=0);if(!fallen.length)return true;
@@ -716,7 +716,7 @@ async function hsRunFrom(startIndex,tok){
   if(s.combatKind==='final')await window.CellboundBossDossier?.show?.('bound-choir');
   if(/boss/i.test(String(s.kind||s.combatKind||'')))window.CellboundFX?.boss?.(s.title);
   $('#hs2dTitle').textContent=s.title;const type=$('#hs2dType');if(type)type.textContent=s.kind;
-  $('.hs2d-route').innerHTML=STAGES.map((x,j)=>'<span class="'+(j<i?'done':j===i?'current':'')+'"><i>'+(j+1)+'</i>'+esc(x.title)+'</span>').join('');
+  $('#hs2dRoute').innerHTML=STAGES.map((x,j)=>'<span class="'+(j<i?'done':j===i?'current':'')+'"><i>'+(j+1)+'</i>'+esc(x.title)+'</span>').join('');
   if(!await fightStage(s,tok,i)){await hsSaveRuntime('failed');return}
   if(['boss','final'].includes(s.combatKind)){
     const expired=window.CellboundProfessions?.consumeBossChargesOnce?.(party(),'hollow-sanctum:'+run.endgame?.attemptId+':'+s.id,state())||[];
@@ -755,7 +755,7 @@ async function complete(){
  if(first)Game.addBankItem?.({...RELIC,source:'The Bound Choir · First Clear'});
  s.activity.push('The Hollow Sanctum · '+(run.endgame?.label||'Normal')+' cleared. Score '+Number(run.endgameRecord?.score||metrics.scorePreview).toLocaleString()+'. Each adventurer earned '+(run?.xpReward||XP)+' XP.'+(gearDrops.length?' '+gearDrops.length+' equipment drops were sent to the Guild Bank.':'')+(first?' Blackglass Resonator added to the Guild Bank.':'')+(professionDrops.length?' Profession materials: '+window.CellboundProfessions?.formatReagentDrops?.(professionDrops)+'.':''));
  Game.save?.();await Game.persistState?.();await syncXp(gains);run.done=true;window.dispatchEvent(new CustomEvent('cellbound:hollow-complete',{detail:{firstClear:first,difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs}}));window.dispatchEvent(new CustomEvent('cellbound:dungeon-complete',{detail:{id:'hollow-sanctum',difficulty:mode,tier,score:run.endgameRecord?.score||metrics.scorePreview,timeMs:metrics.timeMs}}));
- const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end cb2d-loot-screen cb2d-results-screen';$('.hs2d-shell')?.classList.add('results-mode');
+ const end=$('#hs2dEnd');end.hidden=false;end.className='cb2d-end cb2d-loot-screen cb2d-results-screen';window.CellboundCombatViewer?.setResults?.(root(),true);
  const lootGear=[...gearDrops,...(first?[RELIC]:[])].filter(Boolean),materials=[
    {key:'void-crystal',name:'Void Crystal',quantity:first?2:1,source:'The Hollow Sanctum',rarity:'Rare'},
    ...(shards?[{key:'cell-shards',name:'Cell Shards',quantity:shards,source:'Dungeon Clear',rarity:'Rare'}]:[]),
