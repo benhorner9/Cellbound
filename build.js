@@ -415,7 +415,7 @@ if(file==='quests-v2.js'){
     if(contents.includes("||list[0]"))throw new Error(file+' can still consume a non-potion item from the combat consumable button');
   }
   if(file==='chaos-canyon-v1.js'){
-    for(const hook of ["canyon-mouth.webp?v=2","thorn-trail.webp?v=2","sentinel.webp?v=2","crossing.webp?v=2","warden.webp?v=2","wildheart.webp?v=2","vorran.webp?v=2","entry:{x:50,y:98}","arenaBounds:{left:39,right:61,top:43,bottom:62}","y:52+(Number(y)-52)*scale","Seven unstable stepping stones span the chaos-lit gulf"])if(!contents.includes(hook))throw new Error('Chaos Canyon wooded-room mapping is missing '+hook);
+    for(const hook of ["canyon-mouth.avif?v=3","thorn-trail.avif?v=3","sentinel.avif?v=3","crossing.avif?v=3","warden.avif?v=3","wildheart.avif?v=3","vorran.avif?v=3","entry:{x:50,y:98}","arenaBounds:{left:39,right:61,top:43,bottom:62}","y:52+(Number(y)-52)*scale","Seven unstable stepping stones span the chaos-lit gulf"])if(!contents.includes(hook))throw new Error('Chaos Canyon wooded-room mapping is missing '+hook);
   }
   if(file==='blackout-station-v1.js'){
     for(const hook of ['function bsUseCombatPotion(','data-bs-potion','combatPotionButtonMarkup','refreshCombatPotionButton'])if(!contents.includes(hook))throw new Error('Blackout Station combat potion control is missing '+hook);
