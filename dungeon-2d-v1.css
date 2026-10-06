@@ -550,6 +550,7 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 .cbr-inline-power{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid rgba(113,164,197,.13);border-radius:6px;background:rgba(5,16,24,.72)}
 .cbr-inline-power b{display:flex;gap:4px}.cbr-inline-power strong{margin-left:auto;color:#d7edf9;font-size:9px}
 .cbr-command-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.cbcombat-shell.ashen-vault-combat .cbr-command-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 .cb2d-controls .cbr-command{min-height:50px;padding:7px 8px;border:1px solid rgba(113,164,197,.16);border-radius:7px;background:rgba(9,21,30,.92);color:#cfdae1;text-align:left;transition:border-color .15s ease,background .15s ease,transform .15s ease}
 .cb2d-controls .cbr-command b{font-size:.45rem;letter-spacing:.04em}
 .cb2d-controls .cbr-command small{font-size:.32rem;color:#758995;line-height:1.25}

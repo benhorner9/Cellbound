@@ -1338,7 +1338,7 @@ function combatBattleTopbarMarkup(){
 function combatShellMarkup(options={}){
  const title=options.title||'Combat',header=options.header||'CELLBOUND · LIVE COMBAT',route=options.route||'',partyLabel=options.partyLabel||('PARTY · '+party().length+' CHARACTERS'),kind=options.kind||'combat';
  const command=options.commandMarkup||combatCommandDeckMarkup(options.potionAttribute||'data-combat-potion',options.planTitle||'Command the party',options.planCopy||'Combat Reborn runs the fight. Use Command Center orders to change priorities and tactics.');
- return '<section class="cbcombat-shell" data-combat-view="fresh-v1">'+
+ return '<section class="cbcombat-shell '+esc(options.shellClass||'')+'" data-combat-view="fresh-v1">'+
   '<header class="cbcombat-header"><div class="cbcombat-title"><small>'+esc(header)+'</small><h2 id="cb2dTitle">'+esc(title)+'</h2></div><div class="cbcombat-header-actions"><span class="cbcombat-live-dot"><i></i>LIVE</span><button data-speed type="button">1×</button><button data-close type="button" aria-label="Close combat">×</button></div></header>'+
   '<div class="cbcombat-route" id="cb2dRoute">'+route+'</div>'+
   '<div class="cbcombat-grid">'+
@@ -1361,7 +1361,8 @@ function drawViewer(){
   route:route(),
   partyLabel:'PARTY · ILVL '+ilvl(),
   kind:s.kind,
-  potionAttribute:'data-combat-potion'
+  potionAttribute:'data-combat-potion',
+  shellClass:'ashen-vault-combat'
  });
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.resolved&&!confirm('Leave the Ashen Vault?'))return;close()};
  r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
