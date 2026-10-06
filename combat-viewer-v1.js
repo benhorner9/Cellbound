@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.1.2';
+const VERSION='1.1.3';
 
 function esc(v){
  return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))
@@ -82,6 +82,10 @@ function normalise(shell){
  });
  return shell
 }
+function setResults(root,enabled=true){
+ const shell=root?.matches?.('.cbcombat-shell[data-combat-view="canonical-v1"]')?root:root?.querySelector?.('.cbcombat-shell[data-combat-view="canonical-v1"]');
+ if(!shell)return null;shell.classList.toggle('results-mode',Boolean(enabled));return shell
+}
 function mount(root,options={}){
  if(!root)throw new Error('CellboundCombatViewer.mount requires a root element');
  root.hidden=false;
@@ -92,5 +96,5 @@ function mount(root,options={}){
  return shell
 }
 
-window.CellboundCombatViewer={version:VERSION,mount,normalise,profiles:{pve:'canonical-v1'}};
+window.CellboundCombatViewer={version:VERSION,mount,normalise,setResults,profiles:{pve:'canonical-v1'}};
 })();
