@@ -1128,6 +1128,41 @@ function hudPartyRows(){
     '<span class="cb2d-party-target '+(friendly?'friendly':'hostile')+'" data-hud-target="'+esc(c.id)+'"><i data-hud-target-icon>'+targetMark+'</i><span><small>'+(rr==='healer'?'HEALING':'TARGET')+'</small><b>'+esc(targetName)+'</b></span></span></div>'
  }).join('')
 }
+function hudPetOwnerName(ownerId){
+ const id=String(ownerId||'').replace(/^p-/,'');
+ return party().find(x=>String(x.id)===id)?.name||'Party member'
+}
+function renderCombatPetRows(){
+ const root=$('#cb2dPetRows');if(!root)return;
+ const pets=Object.values(run?.hudPets||{}).filter(Boolean);
+ if(!pets.length){root.hidden=true;root.innerHTML='';return}
+ const grouped=new Map();
+ pets.forEach(p=>{
+   const key=[p.ownerId,p.type||p.name||p.id].join('|'),prev=grouped.get(key);
+   if(prev){prev.count++;if(p.targetId)prev.targetId=p.targetId;if(p.action)prev.action=p.action}
+   else grouped.set(key,{...p,count:1})
+ });
+ root.hidden=false;
+ root.innerHTML='<small>PETS / SUMMONS</small>'+[...grouped.values()].map(p=>{
+   const owner=hudPetOwnerName(p.ownerId),target=hudTargetName(p.targetId),mark=p.targetId?hudInitial(target):'—';
+   return '<div class="cbcombat-pet-row"><span class="cbcombat-pet-icon">◆</span><span class="cbcombat-pet-main"><b>'+esc(p.name||'Summon')+(p.count>1?' ×'+p.count:'')+'</b><small>'+esc(owner)+(p.action?' · '+esc(p.action):'')+'</small></span><span class="cbcombat-pet-target"><i>'+mark+'</i><span><small>TARGET</small><b>'+esc(target)+'</b></span></span></div>'
+ }).join('')
+}
+function setCombatPetHud(e){
+ if(!run||!e)return;
+ run.hudPets=run.hudPets||{};
+ const eventId=String(e.payload?.petId||e.target||e.source||'');
+ if(e.type==='PET_SUMMONED'){
+   if(!eventId)return;
+   run.hudPets[eventId]={id:eventId,ownerId:String(e.payload?.ownerId||e.source||''),name:String(e.payload?.name||e.ability||'Summon'),type:String(e.payload?.petType||''),targetId:null,action:e.result==='permanent'?'Active':'Summoned'};
+ }else if(e.type==='PET_DISMISSED'){
+   if(eventId)delete run.hudPets[eventId];
+ }else if(String(e.source||'').startsWith('pet-')||e.payload?.pet===true){
+   const pet=run.hudPets[String(e.source||'')];
+   if(pet){if(e.target)pet.targetId=e.target;if(e.ability)pet.action=String(e.ability)}
+ }
+ renderCombatPetRows()
+}
 function rows(){return hudPartyRows()}
 function combatPotionStacks(st=state()){
  return (Array.isArray(st?.consumables)?st.consumables:[]).filter(x=>(Number(x?.quantity)||0)>0&&x?.payload?.effect==='combat-potion')
@@ -1351,17 +1386,17 @@ function combatBattleTopbarMarkup(){
 }
 function combatShellMarkup(options={}){
  const title=options.title||'Combat',header=options.header||'CELLBOUND · LIVE COMBAT',route=options.route||'',partyLabel=options.partyLabel||('PARTY · '+party().length+' CHARACTERS'),kind=options.kind||'combat';
- const command=options.commandMarkup||combatCommandDeckMarkup(options.potionAttribute||'data-combat-potion',options.planTitle||'Command the party',options.planCopy||'Combat Reborn runs the fight. Use Command Center orders to change priorities and tactics.');
+ const command=options.commandMarkup||combatCommandDeckMarkup(options.potionAttribute||'data-combat-potion',options.planTitle||'Command the party',options.planCopy||'Combat Reborn runs the fight. Use Command Center orders to change priorities and tactics.'),commandRight=options.commandPlacement==='right';
+ const commandPanel='<section class="cbcombat-panel cbcombat-command-panel cb2d-controls cbr-command-panel" data-reborn="1">'+command+'</section>';
+ const partyPanel='<section class="cbcombat-panel cbcombat-party-panel"><div class="cb2d-party cbcombat-party"><small>'+partyLabel+'</small><div id="cb2dRows">'+hudPartyRows()+'</div><div id="cb2dPetRows" class="cbcombat-pet-rows" hidden></div></div></section>';
+ const rightPanel=commandRight?'<aside class="cbcombat-right-column"><section class="cbcombat-panel cbcombat-meters-panel">'+combatMetersMarkup()+'</section>'+commandPanel+'</aside>':'<aside class="cbcombat-panel cbcombat-meters-panel">'+combatMetersMarkup()+'</aside>';
  return '<section class="cbcombat-shell '+esc(options.shellClass||'')+'" data-combat-view="fresh-v1">'+
   '<header class="cbcombat-header"><div class="cbcombat-title"><small>'+esc(header)+'</small><h2 id="cb2dTitle">'+esc(title)+'</h2></div><div class="cbcombat-header-actions"><span class="cbcombat-live-dot"><i></i>LIVE</span><button data-speed type="button">1×</button><button data-close type="button" aria-label="Close combat">×</button></div></header>'+
   '<div class="cbcombat-route" id="cb2dRoute">'+route+'</div>'+
   '<div class="cbcombat-grid">'+
-   '<div class="cbcombat-left-column">'+
-    '<section class="cbcombat-panel cbcombat-party-panel"><div class="cb2d-party cbcombat-party"><small>'+partyLabel+'</small><div id="cb2dRows">'+hudPartyRows()+'</div></div></section>'+
-    '<section class="cbcombat-panel cbcombat-command-panel cb2d-controls cbr-command-panel" data-reborn="1">'+command+'</section>'+
-   '</div>'+
+   '<div class="cbcombat-left-column">'+partyPanel+(commandRight?'':commandPanel)+'</div>'+
    '<main class="cbcombat-panel cbcombat-battle-panel">'+combatBattleTopbarMarkup()+combatArenaMarkup(kind,options.arenaClass||'')+'</main>'+
-   '<aside class="cbcombat-panel cbcombat-meters-panel">'+combatMetersMarkup()+'</aside>'+
+   rightPanel+
   '</div>'+
   '<div class="cb2d-end" id="cb2dEnd" hidden></div>'+
  '</section>'
@@ -1377,12 +1412,14 @@ function drawViewer(){
   kind:s.kind,
   potionAttribute:'data-combat-potion',
   shellClass:'ashen-vault-combat',
-  commandMarkup:ashenCommandDeckMarkup('data-combat-potion')
+  commandMarkup:ashenCommandDeckMarkup('data-combat-potion'),
+  commandPlacement:'right'
  });
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.resolved&&!confirm('Leave the Ashen Vault?'))return;close()};
  r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
  r.querySelector('[data-combat-potion]')?.addEventListener('click',e=>override('consumable',e.currentTarget));
  bindCombatCommandButtons();setCombatCommandPrompt();
+ renderCombatPetRows();
  feed();renderCombatMeters();renderRebornHealingMeter();
  requestAnimationFrame(()=>syncUnitPixelPositions())
 }
@@ -1433,7 +1470,7 @@ function clearCombatHudTarget(targetId){
  if(!run?.hudTargets)return;
  party().forEach(c=>{if(run.hudTargets[c.id]===targetId){run.hudTargets[c.id]=null;updateCombatHudRow(c.id)}})
 }
-function renderPartyHudState(){party().forEach(c=>updateCombatHudRow(c.id));window.CellboundCombatPortraits?.refresh?.()}
+function renderPartyHudState(){party().forEach(c=>updateCombatHudRow(c.id));renderCombatPetRows();window.CellboundCombatPortraits?.refresh?.()}
 function primeCombatHudTargets(enemyId='e-0'){
  if(!run)return;
  run.hudTargets=run.hudTargets||{};run.hudActions=run.hudActions||{};
@@ -2408,7 +2445,10 @@ function renderRebornEvent(e,result,replayMode=false){
  if(window.CellboundCombatStatuses?.handle(e,{resolve:cbrStatusTargets,speed:visualSpeed}))return;
  const srcChar=rebornPlayerByUnit(e.source),targetChar=rebornPlayerByUnit(e.target),enemyIdx=rebornEnemyIndex(e.target),sourceEnemyIdx=rebornEnemyIndex(e.source);
  switch(e.type){
+  case'PET_SUMMONED':case'PET_DISMISSED':
+   setCombatPetHud(e);break;
   case'COMBAT_START':{
+   run.hudPets={};renderCombatPetRows();
    const arena=$('#cb2dArena');window.CellboundCombatFX?.mount?.(arena);
    if(!replayMode&&['boss','final'].includes(String(currentStageDef()?.kind||'')))window.CellboundCombatFX?.boss?.(arena,currentStageDef()?.title||'Boss');
    status(replayMode?'Replay started':'Combat live');log((replayMode?'Replay: ':'')+'Combat begins.');break;
@@ -2420,6 +2460,7 @@ function renderRebornEvent(e,result,replayMode=false){
    if(srcChar&&e.result==='line of sight'){const rr=role(srcChar);act(rr==='tank'?'tank':rr==='healer'?'healer':'dps',srcChar.name+' · Repositioning for line of sight')}
    break;
   case'ABILITY_START':{
+   if(String(e.source||'').startsWith('pet-')||e.payload?.pet===true)setCombatPetHud(e);
    const actor=$('[data-unit="'+e.source+'"]');if(actor){actor.classList.remove('attacking');requestAnimationFrame(()=>{if(actor.isConnected)actor.classList.add('attacking')});setTimeout(()=>actor.classList.remove('attacking'),360)}
    if(srcChar){
      const r=role(srcChar);act(r==='tank'?'tank':r==='healer'?'healer':'dps',srcChar.name+' · '+(e.ability||'Action'));
@@ -2442,6 +2483,7 @@ function renderRebornEvent(e,result,replayMode=false){
    if(srcChar&&e.target&&String(e.target).startsWith('e-')&&e.result==='resolved'&&Number(e.payload?.castTime)>0)projectile(e.source,e.target,attackKind(srcChar),220);
    break;
   case'DAMAGE_DEALT':{
+   if(String(e.source||'').startsWith('pet-')||e.payload?.pet===true)setCombatPetHud(e);
    if(enemyIdx>=0&&run.enemyHp?.[enemyIdx]!=null)setEnemyHp(enemyIdx,Number(e.payload?.targetHp)||0);
    else if(String(e.target||'').startsWith('add-')){
      const u=$('[data-unit="'+e.target+'"]'),bar=u?.querySelector('.cb2d-unit-hp i');if(bar)bar.style.width=clamp(Number(e.payload?.targetHpPct)||0,0,100)+'%';
