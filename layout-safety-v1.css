@@ -3918,3 +3918,70 @@ body.tb-open{
   flex:1 1 auto!important;
   min-height:0!important
 }
+
+
+/* Canonical viewer hard sandbox: encounter/theme classes may style battlefield
+   contents only. They cannot alter the shared PvE frame geometry. */
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"]{
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  display:grid!important;
+  grid-template-rows:auto auto minmax(0,1fr)!important;
+  overflow:hidden!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"]>.cbcombat-grid{
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  display:grid!important;
+  grid-template-columns:var(--cbcombat-left) minmax(0,1fr) var(--cbcombat-right)!important;
+  grid-template-rows:minmax(0,1fr)!important;
+  gap:var(--cbcombat-gap)!important;
+  overflow:hidden!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"] .cbcombat-left-column,
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"] .cbcombat-battle-panel,
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"] .cbcombat-right-column{
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  align-self:stretch!important;
+  justify-self:stretch!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"] .cbcombat-arena-wrap{
+  position:relative!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  display:block!important;
+  overflow:hidden!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  transform:none!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"] .cbcombat-command-panel{
+  display:flex!important;
+  flex-direction:column!important;
+  grid-template-columns:none!important
+}
