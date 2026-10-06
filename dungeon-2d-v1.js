@@ -1424,7 +1424,7 @@ function drawViewer(){
   partyLabel:'PARTY · ILVL '+ilvl(),
   kind:s.kind,
   potionAttribute:'data-combat-potion',
-  shellClass:'ashen-vault-combat',
+  shellClass:'ashen-vault-combat cbcombat-standard-hud',
   commandMarkup:ashenCommandDeckMarkup('data-combat-potion'),
   commandPlacement:'right'
  });
@@ -3001,6 +3001,9 @@ function sharedViewerShell(options={}){
   kind:String(s?.kind||'combat'),
   arenaClass:options.arenaClass||'',
   potionAttribute:'data-shared-potion',
+  shellClass:((options.shellClass||'')+' cbcombat-standard-hud').trim(),
+  commandMarkup:ashenCommandDeckMarkup('data-shared-potion'),
+  commandPlacement:'right',
   planTitle:options.planTitle||'Command the party',
   planCopy:options.planCopy||'Combat Reborn runs movement, rotations and mechanics. Use Command Center orders to influence the fight.'
  });
