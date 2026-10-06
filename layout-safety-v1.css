@@ -3253,3 +3253,89 @@ body.bs2d-open{
 .cbcombat-shell.cbcombat-standard-hud[data-party-size="10"] .cbcombat-party .cb2d-party-action{
   font-size:5px!important
 }
+
+
+/* Compact content-specific details inside the shared right command rail. */
+@media(min-width:850px){
+  .cb2d-shell.cbstd-hud .cbr-command-panel{
+    display:flex!important;
+    flex-direction:column!important
+  }
+  .cb2d-shell.cbstd-hud .cbr-command-panel>.cbstd-command-groups{
+    flex:1 1 auto!important;
+    height:auto!important;
+    min-height:0!important
+  }
+  .cb2d-shell.cbstd-hud .bs-command-copy,
+  .cb2d-shell.cbstd-hud .bs-overcharge,
+  .cb2d-shell.cbstd-hud .quest-live-target-inline{
+    flex:0 0 auto!important
+  }
+  .cb2d-shell.cbstd-hud .bs-command-copy{
+    margin:0 0 4px!important
+  }
+  .cb2d-shell.cbstd-hud .bs-command-copy small{
+    display:none!important
+  }
+  .cb2d-shell.cbstd-hud .bs-overcharge{
+    min-height:20px!important;
+    margin:4px 0 0!important;
+    padding:3px 5px!important
+  }
+  .cb2d-shell.cbstd-hud .quest-live-target-inline{
+    min-width:0;
+    margin:0 0 5px;
+    padding:4px 5px;
+    overflow:hidden;
+    border:1px solid rgba(225,183,91,.15);
+    border-radius:6px;
+    background:rgba(32,27,15,.42)
+  }
+  .cb2d-shell.cbstd-hud .quest-live-target-inline>small{
+    display:block;
+    margin:0 0 3px;
+    color:#cfb46e;
+    font-size:5px;
+    font-weight:900;
+    letter-spacing:.08em
+  }
+  .cb2d-shell.cbstd-hud .quest-live-target-inline .quest-live-target-grid{
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:3px!important
+  }
+  .cb2d-shell.cbstd-hud .quest-live-target-inline .quest-live-target-grid button{
+    min-width:0!important;
+    min-height:25px!important;
+    height:25px!important;
+    padding:3px 4px!important;
+    overflow:hidden
+  }
+  .cb2d-shell.cbstd-hud .quest-live-target-inline .quest-live-target-grid button span{
+    display:block;
+    overflow:hidden;
+    font-size:5px!important;
+    text-overflow:ellipsis;
+    white-space:nowrap
+  }
+  .cb2d-shell.cbstd-hud .quest-live-target-inline .quest-live-target-grid button small{
+    font-size:5px!important
+  }
+  .cb2d-shell.cbstd-hud .tb-live-rule{
+    display:none!important
+  }
+  .cb2d-shell.cbstd-hud .tb-event-route{
+    min-height:42px!important;
+    display:grid!important;
+    grid-template-columns:minmax(250px,.55fr) minmax(0,1fr)!important;
+    gap:8px!important;
+    align-items:center!important;
+    padding:4px 8px!important;
+    overflow:hidden!important
+  }
+  .cb2d-shell.cbstd-hud .tb-event-route .tb-scorebar,
+  .cb2d-shell.cbstd-hud .tb-event-route .tb-tomb-track{
+    min-width:0!important;
+    margin:0!important
+  }
+}
