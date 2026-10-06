@@ -644,7 +644,7 @@ function draw(){
   header:'THE HOLLOW SANCTUM · LIVE DUNGEON',title:stage.title,routeMarkup,
   partyLabel:'PARTY CONDITION · ILVL '+ilvl(),partyMarkup:hsPartyRows(),partyRowsId:'hs2dRows',
   battleTopbarMarkup:topbar,arenaMarkup,castMarkup:cast,metersMarkup:meters,commandsMarkup:commands,
-  shellClass:'hs2d-unified-shell',speedAttribute:'data-speed',closeAttribute:'data-close',
+  theme:'hollow',battleClass:'hs2d-unified-shell',partySize:party().length,speedAttribute:'data-speed',closeAttribute:'data-close',
   titleId:'hs2dTitle',endId:'hs2dEnd'
  });
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.done&&!confirm('Leave The Hollow Sanctum?'))return;close()};
