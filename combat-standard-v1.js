@@ -42,7 +42,7 @@ function instrumentLiveSession(session,meta={}){
       return out
     }
   };
-  ['advance','drainEvents','command','heal','focus','reviveEnemy','spawnEnemy','signal'].forEach(wrap);
+  ['advance','drainEvents'].forEach(wrap);
   return session
 }
 function createLiveSession(options={},meta={}){
