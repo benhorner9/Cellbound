@@ -355,6 +355,7 @@ if(file==='quests-v2.js'){
   }
   if(file==='layout-safety-v1.css'){
     for(const hook of ['iPad / landscape live-combat viewport lock','min-height:calc(100dvh - 32px)!important','grid-template-rows:470px auto','.cb2d-layout>main>.cb2d-feed{display:none!important}','grid-template-rows:auto auto auto minmax(0,1fr)','overscroll-behavior:contain','>.cb2d-plan'])if(!contents.includes(hook))throw new Error('Live combat viewport lock is missing '+hook);
+    for(const hook of ['RESULTS MODE FINAL AUTHORITY','.results-mode>.cbcombat-grid','.results-mode>.cb2d-end'])if(!contents.includes(hook))throw new Error('Canonical results screen override is missing '+hook);
   }
   if(file==='dungeon-2d-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Ashen Vault');
   if(file==='hollow-sanctum-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Hollow Sanctum');

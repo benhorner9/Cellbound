@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.1.4';
+const VERSION='1.1.5';
 
 function esc(v){
  return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))
@@ -84,7 +84,27 @@ function normalise(shell){
 }
 function setResults(root,enabled=true){
  const shell=root?.matches?.('.cbcombat-shell[data-combat-view="canonical-v1"]')?root:root?.querySelector?.('.cbcombat-shell[data-combat-view="canonical-v1"]');
- if(!shell)return null;shell.classList.toggle('results-mode',Boolean(enabled));return shell
+ if(!shell)return null;
+ const on=Boolean(enabled),live=[...shell.children].filter(node=>node.matches?.('.cbcombat-header,.cbcombat-route,.cbcombat-grid')),end=shell.querySelector(':scope > .cb2d-end');
+ shell.classList.toggle('results-mode',on);
+ live.forEach(node=>{
+  if(on){node.setAttribute('aria-hidden','true');node.style.setProperty('display','none','important')}
+  else{node.removeAttribute('aria-hidden');node.style.removeProperty('display')}
+ });
+ if(end){
+  if(on){
+   end.hidden=false;end.removeAttribute('hidden');end.removeAttribute('aria-hidden');
+   end.style.setProperty('display','block','important');
+   end.style.setProperty('position','absolute','important');
+   end.style.setProperty('inset','0','important');
+   end.style.setProperty('overflow-y','auto','important');
+   end.scrollTop=0
+  }else{
+   end.style.removeProperty('display');end.style.removeProperty('position');end.style.removeProperty('inset');end.style.removeProperty('overflow-y')
+  }
+ }
+ shell.scrollTop=0;
+ return shell
 }
 function dismiss(root,{remove=true}={}){
  if(!root)return false;

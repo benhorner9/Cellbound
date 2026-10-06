@@ -487,11 +487,11 @@ function ccCombatAnalysisHTML(){
 async function ccReplayFinalFight(){
  const h=(run?.history||[]).slice(-1)[0];if(!h?.events?.length)return;
  const s=STAGES.find(x=>x.id===h.stageId)||STAGES[STAGES.length-1],end=$('#cc2dEnd'),savedHp={...run.hp};
- if(end)end.hidden=true;
+ window.CellboundCombatViewer?.setResults?.(root(),false);if(end)end.hidden=true;
  Object.entries(h.startHp||{}).forEach(([id,v])=>run.hp[id]=Number(v)||0);
  spawnStage(s);ccUpdateSidebar();setStatus('Replay · final fight');feed('Replay uses the original fight.');
  await ccPlayTimeline(h,token);
- run.hp=savedHp;ccUpdateSidebar();if(end)end.hidden=false
+ run.hp=savedHp;ccUpdateSidebar();if(end)end.hidden=false;window.CellboundCombatViewer?.setResults?.(root(),true)
 }
 
 async function ccFail(s,result){

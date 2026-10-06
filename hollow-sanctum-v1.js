@@ -529,11 +529,11 @@ function hsCombatAnalysisHTML(){
 async function hsReplayFinalFight(){
  const h=(run?.history||[]).slice(-1)[0];if(!h?.events?.length)return;
  const s=STAGES.find(x=>x.id===h.stageId)||STAGES[STAGES.length-1],end=$('#hs2dEnd'),savedHp={...run.hp};
- if(end)end.hidden=true;
+ window.CellboundCombatViewer?.setResults?.(root(),false);if(end)end.hidden=true;
  Object.entries(h.startHp||{}).forEach(([id,v])=>run.hp[id]=Number(v)||0);
  await spawnStage(s);hsUpdateSidebar();setStatus('Replay · final fight');feed('Replay uses the original fight.');
  await hsPlayTimeline(h,token);
- run.hp=savedHp;hsUpdateSidebar();if(end)end.hidden=false
+ run.hp=savedHp;hsUpdateSidebar();if(end)end.hidden=false;window.CellboundCombatViewer?.setResults?.(root(),true)
 }
 
 async function hsFail(s,result){

@@ -4005,3 +4005,69 @@ body.tb-open{
   transform:none!important;
   overflow:hidden!important
 }
+
+
+/* RESULTS MODE FINAL AUTHORITY — reward screen replaces live combat */
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode{
+  position:relative!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  display:block!important;
+  overflow:hidden!important;
+  background:#05090b!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode>.cbcombat-header,
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode>.cbcombat-route,
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode>.cbcombat-grid{
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode>.cb2d-end{
+  position:absolute!important;
+  inset:0!important;
+  z-index:500!important;
+  box-sizing:border-box!important;
+  width:100%!important;
+  height:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  max-width:none!important;
+  max-height:none!important;
+  margin:0!important;
+  padding:0!important;
+  display:block!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  background:#05090b!important;
+  backdrop-filter:none!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode>.cb2d-end[hidden]{
+  display:none!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode>.cb2d-end:not([hidden]){
+  display:block!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode .cb2d-loot-wrap{
+  box-sizing:border-box!important;
+  width:min(1120px,calc(100% - 32px))!important;
+  max-width:1120px!important;
+  min-height:100%!important;
+  margin:0 auto!important;
+  padding:28px 0 36px!important
+}
+@media(max-width:760px){
+  .cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pve"].results-mode .cb2d-loot-wrap{
+    width:calc(100% - 20px)!important;
+    padding:18px 0 28px!important
+  }
+}
