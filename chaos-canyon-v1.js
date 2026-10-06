@@ -658,7 +658,7 @@ function draw(){
   partyLabel:'PARTY CONDITION · ILVL '+ilvl(),partyMarkup:ccPartyRows(),partyRowsId:'cc2dRows',
   battleTopbarMarkup:topbar,arenaMarkup,castMarkup:cast,metersMarkup:meters,commandsMarkup:commands,
   theme:'chaos',battleClass:'cc2d-unified-shell',partySize:party().length,speedAttribute:'data-speed',closeAttribute:'data-close',
-  titleId:'cc2dTitle',endId:'cc2dEnd'
+  titleId:'cc2dTitle',routeId:'cc2dRoute',endId:'cc2dEnd'
  });
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.done&&!confirm('Leave Chaos Canyon?'))return;close()};
  r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
