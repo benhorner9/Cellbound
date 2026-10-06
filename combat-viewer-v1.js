@@ -13,7 +13,21 @@ function attrName(v,fallback){
 function idAttr(v){
  const raw=String(v||'').trim();return /^[A-Za-z][A-Za-z0-9_:-]*$/.test(raw)?' id="'+raw+'"':''
 }
+function pvpMarkup(options={}){
+ const shellClass=String(options.shellClass||'').replace(/[^a-z0-9_ -]/gi,'').trim();
+ const header=options.header||'LIVE PVP COMBAT',title=options.title||'PvP';
+ const center=String(options.headerCenterMarkup||''),actions=String(options.headerActionsMarkup||'');
+ const left=String(options.leftMarkup||''),arena=String(options.arenaMarkup||''),right=String(options.rightMarkup||''),footer=String(options.footerMarkup||'');
+ return '<section class="cbcombat-shell cbcombat-pvp-shell '+esc(shellClass)+'" data-combat-view="canonical-v1" data-combat-profile="pvp">'+
+  '<header class="cbcombat-header pvp2d-head"><div class="cbcombat-title"><small>'+esc(header)+'</small><h2>'+esc(title)+'</h2></div>'+center+'<div class="cbcombat-header-actions pvp2d-controls">'+actions+'</div></header>'+
+  '<div class="cbcombat-grid cbcombat-pvp-grid pvp2d-layout"><aside class="cbcombat-panel cbcombat-pvp-team blue">'+left+'</aside>'+
+   '<main class="cbcombat-panel cbcombat-battle-panel pvp2d-arena" id="pvp2dArena">'+arena+'</main>'+
+   '<aside class="cbcombat-panel cbcombat-pvp-team red">'+right+'</aside></div>'+
+  footer+
+ '</section>'
+}
 function shellMarkup(options={}){
+ if(options.profile==='pvp')return pvpMarkup(options);
  const header=options.header||'CELLBOUND · LIVE COMBAT';
  const title=options.title||'Combat';
  const route=String(options.routeMarkup??options.route??'');
@@ -76,5 +90,5 @@ function mount(root,options={}){
  return shell
 }
 
-window.CellboundCombatViewer={version:VERSION,markup:shellMarkup,mount,normalise};
+window.CellboundCombatViewer={version:VERSION,markup:shellMarkup,mount,normalise,profiles:{pve:'canonical-v1',pvp:'canonical-v1'}};
 })();
