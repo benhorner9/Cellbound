@@ -747,7 +747,14 @@ async function start(){
   document.body.classList.remove('cbx-transition-open')
  }catch(error){console.warn('Hollow entry transition cleanup skipped',error)}
  draw();
- await hsRunFrom(Math.min(STAGES.length-1,Number(run.stage)||0),tok)
+ try{
+  await hsRunFrom(Math.min(STAGES.length-1,Number(run.stage)||0),tok)
+ }catch(error){
+  console.error('Hollow Sanctum combat start failed',error);
+  setStatus('Combat failed to start · '+(error?.message||'unknown error'));
+  feed('Combat could not initialise. '+(error?.message||'Unknown combat error.'));
+  throw error
+ }
 }
 async function complete(){
  const s=state(),q=qstate(),first=!q.flags.hollowFirstClear,metrics=hsRunMetrics();run.endgameMetrics=metrics;const record=await window.CellboundEndgame?.recordRun?.('hollow-sanctum',metrics);run.endgameRecord=record&&!record.error?record:null;const mode=run.endgame?.difficulty||'normal';run.xpReward=BAL?.dungeonXp?.('hollow-sanctum',{difficulty:mode,firstClear:first})||(first&&mode==='normal'?4350:XP);const gains=awardXp(),tier=Number(run.endgame?.tier)||0,gearDrops=window.CellboundEndgame?.rollClearLootBundle?.('hollow-sanctum','choir')||[window.CellboundEndgame?.rollClearLoot?.('hollow-sanctum','choir',1)].filter(Boolean),gold=mode==='normal'?220:mode==='heroic'?300:340+tier*12,renown=mode==='normal'?100:mode==='heroic'?135:150+tier*5;s.gold=(Number(s.gold)||0)+gold;s.renown=(Number(s.renown)||0)+renown;const shards=window.CellboundEndgame?.shardReward?.('hollow-sanctum')||0;if(shards)Game.addMaterial?.('cell-shards',shards);const chase=window.CellboundEndgame?.rollChase?.('hollow-sanctum');if(chase)s.activity.push('Very rare collection reward: '+chase.name+'.');Game.addMaterial?.('void-crystal',first?2:1);const professionDrops=window.CellboundProfessions?.rollContentReagents?.('hollow-sanctum',{difficulty:mode,tier})||[];professionDrops.forEach(d=>Game.addMaterial?.(d.key,d.quantity));q.flags.hollowFirstClear=true;q.hollowCompletions=(Number(q.hollowCompletions)||0)+1;
