@@ -1,8 +1,8 @@
 (()=>{
 'use strict';
 
-const VERSION='1.2.0';
-const ACTIVE_SELECTOR='.cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode),.cb2d-shell.cbstd-hud:not(.results-mode),.cb2d-shell.cbstd-ashen-frame:not(.results-mode)';
+const VERSION='2.0.0';
+const ACTIVE_SELECTOR='.cbcombat-shell[data-combat-view="canonical-v1"]:not(.results-mode)';
 const COMMAND_ATTACK=new Set(['focus','interrupt','stack','burn']);
 const COMMAND_DEFENCE=new Set(['spread','regroup','defensive','potion']);
 
@@ -195,71 +195,10 @@ function upgradeRows(shell){
   });
   ensurePetHost(shell)
 }
-function adoptAshenFrame(shell){
-  if(!shell||shell.dataset.cbstdFrame==='ashen-v2')return;
-  const layout=shell.querySelector(':scope > .cb2d-layout,:scope > .cbcombat-grid'),main=layout?.querySelector(':scope > main'),legacyAside=layout?.querySelector(':scope > aside');
-  const arena=main?.querySelector(':scope > .cb2d-arena')||shell.querySelector('.cb2d-arena');
-  const party=legacyAside?.querySelector(':scope > .cb2d-party')||shell.querySelector('.cb2d-party');
-  const meters=legacyAside?.querySelector(':scope > .cb2d-combat-meters')||shell.querySelector('.cb2d-combat-meters');
-  const controls=main?.querySelector(':scope > .cb2d-controls')||layout?.querySelector('.cb2d-controls');
-  if(!layout||!main||!legacyAside||!arena||!party||!meters||!controls)return;
 
-  shell.classList.add('cbcombat-shell','cbcombat-standard-hud','cbstd-ashen-frame');
-  shell.classList.remove('combat-hud-fullscreen','cbstd-hud');
-  const backdrop=shell.closest('.cb2d-backdrop,.hs2d-backdrop,.cc2d-backdrop,.bs2d-backdrop,.quest-cb2d-backdrop,.tb-backdrop');
-  backdrop?.classList.add('cbcombat-backdrop');
-
-  const header=shell.querySelector(':scope > .cb2d-head,:scope > .cbcombat-header');
-  if(header){
-    header.classList.remove('cb2d-head');header.classList.add('cbcombat-header');
-    header.firstElementChild?.classList.add('cbcombat-title');
-    const live=header.querySelector('.cb2d-live');
-    if(live){
-      live.classList.remove('cb2d-live');live.classList.add('cbcombat-header-actions');
-      let badge=live.querySelector('.cbcombat-live-dot');
-      if(!badge){
-        badge=document.createElement('span');badge.className='cbcombat-live-dot';badge.innerHTML='<i></i>LIVE';
-        [...live.childNodes].filter(n=>n.nodeType===3||n.nodeName==='I').forEach(n=>n.remove());
-        live.insertBefore(badge,live.firstChild)
-      }
-    }
-  }
-
-  let route=shell.querySelector(':scope > .cb2d-route,:scope > .cbcombat-route');
-  if(route){route.classList.remove('cb2d-route');route.classList.add('cbcombat-route')}
-  else{
-    route=document.createElement('div');route.className='cbcombat-route cbstd-generated-route';
-    const title=header?.querySelector('h2')?.textContent||'Combat';
-    route.innerHTML='<span class="current"><i>◆</i>'+esc(title)+'</span>';
-    if(header)header.after(route);else shell.prepend(route)
-  }
-
-  layout.classList.remove('cb2d-layout');layout.classList.add('cbcombat-grid','cbstd-promoted-grid');
-
-  const left=document.createElement('div');left.className='cbcombat-left-column cbstd-adopted-left';
-  const partyPanel=document.createElement('section');partyPanel.className='cbcombat-panel cbcombat-party-panel';
-  party.classList.add('cbcombat-party');partyPanel.appendChild(party);left.appendChild(partyPanel);
-
-  const battle=document.createElement('main');battle.className='cbcombat-panel cbcombat-battle-panel cbstd-adopted-battle';
-  const topbar=document.createElement('div');topbar.className='cbcombat-battle-topbar';
-  const room=arena.querySelector('.cb2d-room-tag'),legend=arena.querySelector('.cb2d-ground-legend');
-  if(room)topbar.appendChild(room);if(legend)topbar.appendChild(legend);if(topbar.childElementCount)battle.appendChild(topbar);
-  const cast=legacyAside.querySelector(':scope > .cb2d-cast')||shell.querySelector('.cb2d-cast');
-  if(cast){cast.classList.add('cbcombat-cast');arena.appendChild(cast)}
-  arena.classList.add('cbcombat-arena');battle.appendChild(arena);
-
-  const right=document.createElement('aside');right.className='cbcombat-right-column cbstd-adopted-right';
-  const meterPanel=document.createElement('section');meterPanel.className='cbcombat-panel cbcombat-meters-panel';
-  meters.classList.add('cbcombat-meter-stack');meterPanel.appendChild(meters);right.appendChild(meterPanel);
-  controls.classList.add('cbcombat-panel','cbcombat-command-panel');right.appendChild(controls);
-
-  main.classList.add('cbstd-legacy-extras');legacyAside.classList.add('cbstd-legacy-extras');
-  layout.append(left,battle,right);
-  shell.dataset.cbstdFrame='ashen-v2'
-}
 function upgrade(shell){
   if(!shell||!shell.matches?.(ACTIVE_SELECTOR))return;
-  shell.classList.add('cbstd-mounted');orderMeters(shell);organiseCommands(shell);upgradeRows(shell);if(shell.dataset.combatView!=='canonical-v1')adoptAshenFrame(shell)
+  shell.classList.add('cbstd-mounted');orderMeters(shell);organiseCommands(shell);upgradeRows(shell)
 }
 function upgradeAll(root=document){
   if(root?.matches?.(ACTIVE_SELECTOR))upgrade(root);
