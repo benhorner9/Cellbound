@@ -1249,11 +1249,25 @@ function refreshExternalCommandCooldowns(session,selector,attribute){
   }
  })
 }
+function combatCommandButtonMarkup(cmd){
+ return '<button type="button" class="cbr-command" data-combat-command="'+cmd.id+'" disabled><b>'+cmd.label+'</b><small>'+commandReadyHint(cmd.id)+'</small></button>'
+}
 function combatCommandDeckMarkup(potionAttribute='data-combat-potion',title='Command the party',copy='Combat Reborn controls movement, targeting and abilities. Use Command Center orders to influence the fight.'){
  return '<div class="cbr-command-copy"><small>COMMANDER</small><b id="cbrCommandPrompt">'+esc(title)+'</b><span id="cbrCommandStatus">'+esc(copy)+'</span></div>'+
   '<div class="cbr-command-meta"><div><span>COMMAND POWER</span><b id="cbrCommandPower"></b></div><button type="button" id="cbrCommandTarget" class="cbr-command-target">TARGET · AUTO</button></div>'+
-  '<div class="cbr-command-grid">'+LIVE_COMBAT_COMMANDS.map(cmd=>'<button type="button" class="cbr-command" data-combat-command="'+cmd.id+'" disabled><b>'+cmd.label+'</b><small>'+commandReadyHint(cmd.id)+'</small></button>').join('')+
+  '<div class="cbr-command-grid">'+LIVE_COMBAT_COMMANDS.map(combatCommandButtonMarkup).join('')+
   combatPotionButtonMarkup(potionAttribute)+'</div>'
+}
+function ashenCommandDeckMarkup(potionAttribute='data-combat-potion'){
+ const byId=id=>LIVE_COMBAT_COMMANDS.find(cmd=>cmd.id===id);
+ const attack=['focus','interrupt','stack','burn'].map(byId).filter(Boolean);
+ const defence=['spread','regroup','defensive'].map(byId).filter(Boolean);
+ return '<div class="cbr-command-copy"><small>COMMANDER</small><b id="cbrCommandPrompt">Command the party</b><span id="cbrCommandStatus">Attack from the left. Defend and recover from the right.</span></div>'+
+  '<div class="cbr-command-meta"><div><span>COMMAND POWER</span><b id="cbrCommandPower"></b></div><button type="button" id="cbrCommandTarget" class="cbr-command-target">TARGET · AUTO</button></div>'+
+  '<div class="cbr-command-groups">'+
+   '<section class="cbr-command-group attack"><small>ATTACK / PRESSURE</small><div class="cbr-command-column">'+attack.map(combatCommandButtonMarkup).join('')+'</div></section>'+
+   '<section class="cbr-command-group defence"><small>DEFEND / RECOVER</small><div class="cbr-command-column">'+defence.map(combatCommandButtonMarkup).join('')+combatPotionButtonMarkup(potionAttribute)+'</div></section>'+
+  '</div>'
 }
 function commandRecommendationFor(e){
  const type=String(e?.payload?.mechanicType||'');
@@ -1362,7 +1376,8 @@ function drawViewer(){
   partyLabel:'PARTY · ILVL '+ilvl(),
   kind:s.kind,
   potionAttribute:'data-combat-potion',
-  shellClass:'ashen-vault-combat'
+  shellClass:'ashen-vault-combat',
+  commandMarkup:ashenCommandDeckMarkup('data-combat-potion')
  });
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.resolved&&!confirm('Leave the Ashen Vault?'))return;close()};
  r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
