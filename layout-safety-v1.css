@@ -2755,18 +2755,31 @@ body.bs2d-open{
 .cbcombat-shell.ashen-vault-combat .cbcombat-party.has-pets .cbcombat-pet-rows{
   grid-template-columns:repeat(2,minmax(0,1fr))
 }
-.cbcombat-shell.ashen-vault-combat .cbcombat-party[style*="--pet-groups: 5"] .cbcombat-pet-rows,
-.cbcombat-shell.ashen-vault-combat .cbcombat-party[style*="--pet-groups: 6"] .cbcombat-pet-rows,
-.cbcombat-shell.ashen-vault-combat .cbcombat-party[style*="--pet-groups: 7"] .cbcombat-pet-rows,
-.cbcombat-shell.ashen-vault-combat .cbcombat-party[style*="--pet-groups: 8"] .cbcombat-pet-rows{
+.cbcombat-shell.ashen-vault-combat .cbcombat-party.pets-dense .cbcombat-pet-rows{
   grid-template-columns:repeat(3,minmax(0,1fr));
   grid-auto-rows:27px
 }
-.cbcombat-shell.ashen-vault-combat .cbcombat-party[style*="--pet-groups: 5"] .cbcombat-pet-row,
-.cbcombat-shell.ashen-vault-combat .cbcombat-party[style*="--pet-groups: 6"] .cbcombat-pet-row,
-.cbcombat-shell.ashen-vault-combat .cbcombat-party[style*="--pet-groups: 7"] .cbcombat-pet-row,
-.cbcombat-shell.ashen-vault-combat .cbcombat-party[style*="--pet-groups: 8"] .cbcombat-pet-row{
+.cbcombat-shell.ashen-vault-combat .cbcombat-party.pets-dense .cbcombat-pet-row{
   height:27px;
   min-height:27px;
   padding:3px 4px
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party.pets-ultra .cbcombat-pet-rows{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-auto-rows:24px;
+  gap:3px
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party.pets-ultra .cbcombat-pet-row{
+  height:24px;
+  min-height:24px;
+  padding:2px 3px
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party.pets-ultra .cbcombat-pet-main small{
+  display:none!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party.pets-ultra .cbcombat-pet-main b{
+  font-size:5.5px
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party.pets-ultra .cbcombat-pet-target{
+  max-width:44%
 }
