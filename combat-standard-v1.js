@@ -24,12 +24,33 @@ function simulate(options={},meta={}){
   if(meta?.zone)result.combatZone=meta.zone;
   return result
 }
+function dispatchCombatEvents(events,meta={}){
+  if(!Array.isArray(events)||!events.length)return;
+  events.forEach(event=>{
+    try{window.dispatchEvent(new CustomEvent('cellbound:combat-event',{detail:{event,zone:meta?.zone||null,profile:meta?.profile||'pve'}}))}catch(_){}
+  })
+}
+function instrumentLiveSession(session,meta={}){
+  if(!session||session.__cellboundHudInstrumented)return session;
+  session.__cellboundHudInstrumented=true;
+  const wrap=name=>{
+    if(typeof session[name]!=='function')return;
+    const raw=session[name].bind(session);
+    session[name]=(...args)=>{
+      const out=raw(...args);
+      dispatchCombatEvents(out?.events,meta);
+      return out
+    }
+  };
+  ['advance','drainEvents','command','heal','focus','reviveEnemy','spawnEnemy','signal'].forEach(wrap);
+  return session
+}
 function createLiveSession(options={},meta={}){
   const engine=core();
   if(typeof engine.createLiveSession!=='function')throw new Error('Combat Reborn live-session API is unavailable');
   const session=engine.createLiveSession(meta?.zone?{...options,professionZone:meta.zone}:options);
   if(!session||typeof session.advance!=='function'||typeof session.command!=='function')throw new Error('Combat Reborn returned an invalid live session');
-  return session
+  return instrumentLiveSession(session,meta)
 }
 function assertServerPayload(payload,zone='server-combat'){
   if(!payload||payload.combatModel!==MODEL){
@@ -54,7 +75,7 @@ function audit(){
 }
 
 window.CellboundCombatStandard={
-  MODEL,CONTRACT_VERSION,core,simulate,createLiveSession,assertServerPayload,register,audit,
+  MODEL,CONTRACT_VERSION,core,simulate,createLiveSession,assertServerPayload,register,audit,dispatchCombatEvents,
   UI:{
     shell:'shared CB2D combat shell',
     vitals:'HP above class resource',
