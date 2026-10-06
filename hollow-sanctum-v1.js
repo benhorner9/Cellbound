@@ -15,47 +15,54 @@ const STAGES=[
 const HOLLOW_ROOMS={
  gallery:{
   zone:'GALLERY OF ECHOES',
-  description:'A candlelit processional hall where teal soul-fire leaks through ancient stone.',
-  art:'./assets/hollow-sanctum/rooms/gallery.webp?v=2',
+  description:'A shattered processional chamber suspended over the void. The party enters from the south causeway and clears the open central floor before leaving through the north gate.',
+  art:'./assets/hollow-sanctum/rooms/gallery.webp?v=20261006e',
   liveProfile:'hollow-gallery',
-  route:{entry:{x:50,y:98},entryInside:{x:50,y:83},partyAnchors:[[50,68],[44,72],[56,72],[41,78],[59,78]],exitPath:[{x:50,y:55},{x:50,y:36},{x:50,y:18},{x:50,y:3}],spread:2.1},
-  enemyAnchors:[[50,35],[40,43],[60,43]],
-  bounds:{left:11,right:89,top:11,bottom:89},
-  walkable:[[30,12],[70,12],[86,25],[91,48],[88,75],[74,87],[26,87],[12,75],[9,48],[14,25]],
-  blockers:[
-   {id:'gallery-column-nw',x:18,y:27,w:8,h:20},{id:'gallery-column-ne',x:82,y:27,w:8,h:20},
-   {id:'gallery-column-sw',x:16,y:72,w:9,h:18},{id:'gallery-column-se',x:84,y:72,w:9,h:18}
-  ]
+  route:{
+   entry:{x:50,y:98},entryInside:{x:50,y:84},engage:{x:50,y:62},
+   partyAnchors:[[50,68],[44,71],[56,71],[40,74],[60,74]],
+   exitPath:[{x:50,y:59},{x:50,y:48},{x:50,y:36},{x:50,y:24},{x:50,y:13},{x:50,y:4},{x:50,y:-2}],
+   spread:2.0
+  },
+  enemyAnchors:[[50,43],[40,49],[60,49]],
+  bounds:{left:24,right:76,top:18,bottom:80},
+  walkable:[[39,18],[61,18],[70,24],[76,36],[76,56],[69,69],[60,80],[40,80],[31,69],[24,56],[24,36],[30,24]],
+  blockers:[]
  },
  sentinel:{
-  zone:'GUARDIAN CHAMBER',
-  description:'A fractured guardian court suspended above a spectral gulf.',
-  art:'./assets/hollow-sanctum/rooms/sentinel.webp?v=2',
+  zone:'GLASSJAW SENTINEL',
+  description:'A circular relic court built around a suspended void core. Fight on the open ring, then route around the core to the north gate.',
+  art:'./assets/hollow-sanctum/rooms/sentinel.webp?v=20261006e',
   liveProfile:'hollow-sentinel',
-  route:{entry:{x:2,y:27},entryInside:{x:18,y:31},partyAnchors:[[38,47],[31,44],[35,53],[26,40],[28,57]],exitPath:[{x:61,y:42},{x:73,y:30},{x:84,y:17},{x:98,y:5}],spread:2.0},
-  enemyAnchors:[[62,43]],
-  bounds:{left:10,right:91,top:10,bottom:90},
-  walkable:[[18,16],[72,10],[89,23],[92,55],[82,78],[62,89],[28,88],[11,72],[9,48],[8,31],[14,22]],
-  blockers:[
-   {id:'sentinel-fire-nw',shape:'ellipse',x:13,y:24,rx:5,ry:8,blocksLos:false},
-   {id:'sentinel-fire-east',shape:'ellipse',x:83,y:39,rx:5,ry:8,blocksLos:false},
-   {id:'sentinel-fire-south',shape:'ellipse',x:54,y:77,rx:5,ry:8,blocksLos:false}
-  ]
+  route:{
+   entry:{x:50,y:98},entryInside:{x:50,y:84},engage:{x:50,y:63},
+   partyAnchors:[[50,70],[44,73],[56,73],[40,76],[60,76]],
+   exitPath:[{x:50,y:60},{x:43,y:54},{x:39,y:46},{x:39,y:35},{x:43,y:25},{x:50,y:15},{x:50,y:5},{x:50,y:-2}],
+   spread:1.9
+  },
+  enemyAnchors:[[50,53]],
+  bounds:{left:24,right:76,top:17,bottom:81},
+  walkable:[[39,17],[61,17],[70,23],[76,35],[76,57],[69,70],[60,81],[40,81],[31,70],[24,57],[24,35],[30,23]],
+  arena:{shape:'ellipse',cx:50,cy:54,rx:28,ry:25},
+  blockers:[{id:'sentinel-void-core',shape:'ellipse',x:50,y:36,rx:6.5,ry:8.0,blocksLos:false,blocksMovement:true}]
  },
  choir:{
-  zone:'INNER SHRINE',
-  description:'The sanctum heart, where the Bound Choir hangs above a living ritual floor.',
-  art:'./assets/hollow-sanctum/rooms/choir.webp?v=2',
+  zone:'THE BOUND CHOIR',
+  description:'The final fractured shrine. The Bound Choir holds the lower ritual floor while the immense crystal nexus dominates the northern dais.',
+  art:'./assets/hollow-sanctum/rooms/choir.webp?v=20261006e',
   liveProfile:'hollow-choir',
-  route:{entry:{x:50,y:98},entryInside:{x:50,y:84},partyAnchors:[[50,69],[44,73],[56,73],[41,79],[59,79]],exitPath:[],spread:2.0},
-  enemyAnchors:[[50,35]],
-  bounds:{left:9,right:91,top:10,bottom:91},
-  arena:{shape:'ellipse',cx:50,cy:54,rx:40,ry:35},
-  blockers:[
-   {id:'choir-suspended-core',shape:'ellipse',x:50,y:31,rx:8,ry:11,blocksLos:true,blocksMovement:true},
-   {id:'choir-front-pillar-left',x:13,y:73,w:8,h:24,blocksLos:false},
-   {id:'choir-front-pillar-right',x:87,y:73,w:8,h:24,blocksLos:false}
-  ]
+  route:{
+   entry:{x:50,y:98},entryInside:{x:50,y:84},engage:{x:50,y:64},
+   partyAnchors:[[50,72],[44,75],[56,75],[40,78],[60,78]],
+   exitPath:[],
+   spread:2.0
+  },
+  enemyAnchors:[[50,56]],
+  addAnchors:[{x:35,y:57},{x:65,y:57}],
+  bounds:{left:24,right:76,top:22,bottom:81},
+  walkable:[[37,22],[63,22],[72,30],[76,44],[75,61],[68,73],[60,81],[40,81],[32,73],[25,61],[24,44],[28,30]],
+  arena:{shape:'ellipse',cx:50,cy:57,rx:27,ry:23},
+  blockers:[{id:'choir-fractured-shrine',shape:'ellipse',x:50,y:31,rx:13,ry:18,blocksLos:false,blocksMovement:true}]
  }
 };
 const RELIC={itemId:'quest-blackglass-resonator',name:'Blackglass Resonator',class:'All',classes:'all',slot:'Relic',tier:3,rarity:'Rare',tierLabel:'Quest Relic',enabled:true,dropEnabled:false,itemLevel:30,power:10,tradeState:'soulbound',questArtMaterial:'void-crystal',lore:'Recovered from The Bound Choir beneath Zeltira.'};
@@ -97,7 +104,7 @@ function renderCard(){
  const q=qstate(),open=Boolean(q?.flags?.hollowSanctumUnlocked),done=Boolean(q?.flags?.hollowFirstClear),clears=Number(q?.hollowCompletions)||0,pi=ilvl(),gate=readiness(true);
  if(card){
   card.innerHTML='<article class="dungeon-browser-card hollow '+(open?'unlocked':'locked')+'" data-dungeon-card="hollow-sanctum">'+
-   '<div class="dungeon-browser-art has-image hollow-art"><img src="./assets/dungeons/hollow-sanctum.webp" alt="" loading="lazy" decoding="async"><span>'+(open?'ZELTIRA UNDERDEEP':'UNKNOWN SIGNAL')+'</span><strong>◇</strong></div>'+
+   '<div class="dungeon-browser-art has-image hollow-art"><img src="./assets/hollow-sanctum/rooms/gallery.webp?v=20261006e" alt="" loading="lazy" decoding="async"><span>'+(open?'ZELTIRA UNDERDEEP':'UNKNOWN SIGNAL')+'</span><strong>◇</strong></div>'+
    '<div class="dungeon-browser-copy"><div class="dungeon-browser-heading"><div><small>DUNGEON</small><h3>'+(open?'The Hollow Sanctum':'Undiscovered Dungeon')+'</h3></div><b id="hollowDungeonStatus">'+(open?(done?'CLEARED':'NEWLY UNLOCKED'):'QUEST LOCKED')+'</b></div>'+
    '<p>'+(open?'An ancient crystal shrine beneath Zeltira, ending at the ritual chamber of the Bound Choir.':'Your guild has evidence of something beneath Zeltira, but the route remains sealed.')+'</p>'+
    '<div class="dungeon-browser-meta"><span>3 stages</span><span>'+(open?'iLvl 24+':'Quest discovery')+'</span><span>Party iLvl '+(pi||'—')+'</span></div>'+
@@ -111,7 +118,7 @@ function renderCard(){
  ];
  mount.innerHTML='<div class="dungeon-detail-toolbar"><div><small>DUNGEON JOURNAL</small><b>'+(open?'The Hollow Sanctum':'Undiscovered Dungeon')+'</b></div><button type="button" data-dungeon-close>CLOSE DETAILS ×</button></div>'+
   '<div class="dungeon-journal-hero hollow-journal-hero">'+
-   '<div class="dungeon-journal-art has-image hollow-journal-art '+(open?'':'locked-image')+'" data-dungeon-art="hollow-sanctum"><img src="./assets/dungeons/hollow-sanctum.webp" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="journal-eyebrow">'+(open?'ZELTIRA UNDERDEEP · DUNGEON':'SEALED LOCATION · UNKNOWN')+'</span><h3>'+(open?'The Hollow Sanctum':'The Sealed Underroad')+'</h3><p>'+(open?'A buried ceremonial complex where Cell glass has grown through ancient stone. Voices still answer from the deeper chambers.':'The route beneath Zeltira has not yet been opened. Complete Echoes Beneath Zeltira to discover what lies beyond the Hollow Seal.')+'</p><div class="journal-badges"><span>5 adventurers</span><span>3 stages</span><span>Party iLvl '+(pi||'—')+'</span></div></div>'+
+   '<div class="dungeon-journal-art has-image hollow-journal-art '+(open?'':'locked-image')+'" data-dungeon-art="hollow-sanctum"><img src="./assets/hollow-sanctum/rooms/gallery.webp?v=20261006e" alt="" aria-hidden="true" loading="lazy" decoding="async"><span class="journal-eyebrow">'+(open?'ZELTIRA UNDERDEEP · DUNGEON':'SEALED LOCATION · UNKNOWN')+'</span><h3>'+(open?'The Hollow Sanctum':'The Sealed Underroad')+'</h3><p>'+(open?'A buried ceremonial complex where Cell glass has grown through ancient stone. Voices still answer from the deeper chambers.':'The route beneath Zeltira has not yet been opened. Complete Echoes Beneath Zeltira to discover what lies beyond the Hollow Seal.')+'</p><div class="journal-badges"><span>5 adventurers</span><span>3 stages</span><span>Party iLvl '+(pi||'—')+'</span></div></div>'+
    '<div class="journal-entry-panel"><small>ENTRY REQUIREMENT</small><b>'+(open?'Quest Access · Party Item Level 24':'Echoes Beneath Zeltira')+'</b><p>'+(open?esc(gate.reason):'Follow the investigation beneath Zeltira and break the Hollow Seal.')+'</p><button '+(open?'data-hs-enter':'data-hs-quests')+' '+(open&&!gate.ok?'disabled':'')+'>'+(open?'ENTER THE HOLLOW SANCTUM':'OPEN QUEST JOURNAL →')+'</button></div>'+
   '</div>'+
   '<div class="dungeon-journal-layout">'+
@@ -259,18 +266,41 @@ function hsEnsureFade(){
 function hsSetFade(black,duration=560){
  const fade=hsEnsureFade();if(!fade)return;fade.style.setProperty('--hs-fade-ms',Math.max(0,Number(duration)||0)+'ms');fade.classList.toggle('is-black',Boolean(black))
 }
+async function hsWaitForRoomArt(art,timeout=1400){
+ if(!art)return;
+ if(!(art.complete&&art.naturalWidth>0)){
+  await Promise.race([
+   new Promise(resolve=>{
+    const done=()=>{art.removeEventListener('load',done);art.removeEventListener('error',done);resolve()};
+    art.addEventListener('load',done,{once:true});art.addEventListener('error',done,{once:true})
+   }),
+   new Promise(resolve=>setTimeout(resolve,Math.max(250,Number(timeout)||1400)))
+  ])
+ }
+ try{await art.decode?.()}catch(error){}
+}
 function stageEnvironment(s){
  const room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery,arena=$('#hs2dArena'),environment=$('#hs2dEnvironment'),src=room.art;
  arena.className='cb2d-arena hs2d-arena hs2d-unified-arena hollow-live-room stage-'+s.id;
- arena.dataset.hollowRoom=s.id;arena.dataset.bespokeBattlefield='1';
- if(environment)environment.innerHTML='<img class="hs2d-room-art" src="'+src+'" alt="" decoding="async" draggable="false">';
- const renderer=window.CellboundLivingScenes||window.CellboundAshenLiveScenes;
- renderer?.mount?.(arena,{src,profile:room.liveProfile||'hollow-gallery'});
+ arena.dataset.hollowRoom=s.id;arena.dataset.bespokeBattlefield='1';arena.dataset.directRoomArt='1';
+ delete arena.dataset.liveSceneReady;
+ // Hollow Sanctum now uses the supplied room artwork directly. Remove any stale
+ // generated living-scene canvas so it cannot cover or replace the authored map.
+ arena.querySelectorAll('.cb2d-live-scene,.hs-live-scene').forEach(node=>node.remove());
+ let art=null;
+ if(environment){
+  environment.innerHTML='<img class="hs2d-room-art" src="'+src+'" alt="" decoding="async" fetchpriority="high" draggable="false">';
+  art=environment.querySelector('.hs2d-room-art');
+  art?.addEventListener('error',()=>{
+   art.dataset.hsLoadError='1';
+   console.error('Hollow Sanctum room artwork failed to load:',src)
+  },{once:true})
+ }
  const tag=$('#hs2dRoom');if(tag)tag.innerHTML='<em>'+esc(room.zone||'HOLLOW SANCTUM')+'</em><b>'+esc(s.title)+'</b><small>'+esc(room.description||'The sanctum closes around the party.')+'</small>';
- hsEnsureFade()
+ hsEnsureFade();return art
 }
-function spawnStage(s){
- stageEnvironment(s);$('#hs2dUnits').innerHTML='';$('#hs2dTelegraphs').innerHTML='';$('#hs2dFx').innerHTML='';
+async function spawnStage(s){
+ const art=stageEnvironment(s);$('#hs2dUnits').innerHTML='';$('#hs2dTelegraphs').innerHTML='';$('#hs2dFx').innerHTML='';
  const chars=party(),room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery,route=room.route||{},entry=route.entry||{x:5,y:50},inside=route.entryInside||{x:20,y:50},spread=Number(route.spread)||2;
  const arena=$('#hs2dArena');arena?.classList.add('room-entering');
  chars.forEach((c,i)=>{
@@ -284,8 +314,12 @@ function spawnStage(s){
   addUnit('e'+i,n,big?'enemy boss':'enemy',target.x,target.y,big,'Lv. '+m.level+' · '+m.label)
  });
  if(run?.roomTransitionBlack){
-  const fade=hsEnsureFade();fade?.classList.add('is-black');requestAnimationFrame(()=>requestAnimationFrame(()=>hsSetFade(false,720)));run.roomTransitionBlack=false
- }else hsSetFade(false,0);
+  const fade=hsEnsureFade();fade?.classList.add('is-black');
+  await hsWaitForRoomArt(art,1600);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>hsSetFade(false,720)));run.roomTransitionBlack=false
+ }else{
+  await hsWaitForRoomArt(art,900);hsSetFade(false,0)
+ }
  setTimeout(()=>arena?.classList.remove('room-entering'),760);
  requestAnimationFrame(()=>window.CellboundCombatPortraits?.refresh?.())
 }
@@ -491,7 +525,7 @@ async function hsReplayFinalFight(){
  const s=STAGES.find(x=>x.id===h.stageId)||STAGES[STAGES.length-1],end=$('#hs2dEnd'),savedHp={...run.hp};
  if(end)end.hidden=true;
  Object.entries(h.startHp||{}).forEach(([id,v])=>run.hp[id]=Number(v)||0);
- spawnStage(s);hsUpdateSidebar();setStatus('Replay · final fight');feed('Replay uses the original fight.');
+ await spawnStage(s);hsUpdateSidebar();setStatus('Replay · final fight');feed('Replay uses the original fight.');
  await hsPlayTimeline(h,token);
  run.hp=savedHp;hsUpdateSidebar();if(end)end.hidden=false
 }
@@ -529,7 +563,7 @@ async function hsRecoverFallen(tok){
 async function fightStage(s,tok,index){
  // Threat belongs to the current encounter; damage/healing belong to the whole dungeon.
  run.threat=Object.fromEntries(party().map(ch=>[ch.id,0]));run.aggro=null;hsRenderMeters();
- spawnStage(s);setStatus('Entering '+s.title+'…');feed('The party enters '+s.title+'.');await wait(650);if(tok!==token)return false;
+ await spawnStage(s);setStatus('Entering '+s.title+'…');feed('The party enters '+s.title+'.');await wait(650);if(tok!==token)return false;
  const C=window.CellboundCombatStandard;if(!C?.simulate)throw new Error('Combat Reborn standard gateway unavailable');
  const combatParty=party().map((c,i)=>Object.assign({},c,{_combatHealthPct:run.hp[c.id],_combatResource:run.resources?.[c.id]||null,_combatItemLevel:Number(Game?.characterItemLevel?.(c))||Number(c.gear)||0,_combatCooldowns:run.cooldowns?.[c.id]||{},_combatStatuses:run.statuses?.[c.id]||[],_reviveSicknessMs:run.reviveSickness?.[c.id]||0,_combatPosition:hsPartyStagePosition(s,i)}));
  const tactics={...hsTactics,interruptPriority:hsTactics.bossPlan==='control'?'high':hsTactics.interruptPriority,addPriority:hsTactics.bossPlan==='burn'?'boss':hsTactics.addPriority,defensiveUsage:hsTactics.bossPlan==='control'?'aggressive':hsTactics.defensiveUsage,cooldownUse:hsTactics.bossPlan==='burn'?'free':hsTactics.cooldownUse};const result=C.simulate({party:combatParty,encounter:hsRebornEncounter(s),tactics,seed:[run.endgame?.seed||'hollow-sanctum',s.id,index].join(':')},{zone:'hollow-sanctum'});
