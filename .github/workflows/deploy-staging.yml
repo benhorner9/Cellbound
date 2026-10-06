@@ -46,8 +46,10 @@ jobs:
           test -f dist/item-atlas-v2.js
           test -f dist/item-visuals-v2.js
           for atlas in warrior paladin hunter rogue mage weapons secondary heads accessories resources; do test -f "dist/assets/items/illustrated-v2/$atlas.webp"; done
-          grep -F 'data-combat-view="fresh-v1"' dist/dungeon-2d-v1.js
-          grep -F 'FRESH COMBAT VIEW V1' dist/layout-safety-v1.css
+          test -f dist/combat-viewer-v1.js
+          grep -F 'data-combat-view="canonical-v1"' dist/combat-viewer-v1.js
+          grep -F 'combat-viewer-v1.js?v=' dist/guild.html
+          grep -F 'CANONICAL COMBAT VIEWER' dist/layout-safety-v1.css
           ! grep -F 'combat-3d-v1.js' dist/guild.html
           ! grep -F 'combat-3d-v1.css' dist/guild.html
           ! grep -R --line-number -E 'href="/|src="/' dist/*.html
