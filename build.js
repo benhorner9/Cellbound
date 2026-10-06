@@ -536,7 +536,7 @@ if(file==='quests-v2.js'){
   if(file.endsWith('.js')&&contents.includes('combat-hud-fullscreen cbstd-hud'))
     throw new Error(file+' reintroduced a legacy standalone combat shell instead of CellboundCombatViewer');
   if(file==='combat-viewer-v1.js'){
-    for(const hook of ["window.CellboundCombatViewer","data-combat-view=\"canonical-v1\"","data-combat-profile=\"pve\"","function mount(root,options={})","cbcombat-grid","cbcombat-arena-wrap '+esc(battleClass)"])
+    for(const hook of ["window.CellboundCombatViewer","data-combat-view=\"canonical-v1\"","data-combat-profile=\"pve\"","function mount(root,options={})","cbcombat-grid","cbcombat-arena-wrap '+esc(battleClass)","arena.dataset.combatArena='canonical'"])
       if(!contents.includes(hook))throw new Error('Canonical combat viewer contract is missing '+hook);
     if(contents.includes("cbcombat-standard-hud '+esc(shellClass)"))throw new Error('PvE encounter classes must not be applied to the canonical outer shell');
   }
