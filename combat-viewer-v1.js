@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.0.0';
+const VERSION='1.1.0';
 
 function esc(v){
  return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))
@@ -41,7 +41,9 @@ function shellMarkup(options={}){
  const commandsMarkup=String(options.commandsMarkup||'');
  const rightExtra=String(options.rightExtraMarkup||'');
  const endMarkup=String(options.endMarkup||'');
- const shellClass=String(options.shellClass||'').replace(/[^a-z0-9_ -]/gi,'').trim();
+ const battleClass=String(options.battleClass||options.shellClass||'').replace(/[^a-z0-9_ -]/gi,'').trim();
+ const theme=String(options.theme||'default').replace(/[^a-z0-9_-]/gi,'').toLowerCase()||'default';
+ const partySize=Math.max(1,Number(options.partySize)||5);
  const speedAttr=attrName(options.speedAttribute,'data-combat-speed');
  const closeAttr=attrName(options.closeAttribute,'data-combat-close');
  const speedLabel=esc(options.speedLabel||'1×');
@@ -49,7 +51,7 @@ function shellMarkup(options={}){
  const showClose=options.showClose!==false;
  const closeLabel=esc(options.closeLabel||'Close combat');
  const commandGrouped=options.commandGrouped===true?' data-cbstd-grouped="1"':'';
- return '<section class="cbcombat-shell cbcombat-standard-hud '+esc(shellClass)+'" data-combat-view="canonical-v1">'+
+ return '<section class="cbcombat-shell cbcombat-standard-hud" data-combat-view="canonical-v1" data-combat-profile="pve" data-combat-theme="'+esc(theme)+'" data-party-size="'+partySize+'">'+
   '<header class="cbcombat-header"><div class="cbcombat-title"><small>'+esc(header)+'</small><h2'+idAttr(options.titleId)+'>'+esc(title)+'</h2></div>'+
    '<div class="cbcombat-header-actions"><span class="cbcombat-live-dot"><i></i>LIVE</span>'+
     (showSpeed?'<button type="button" '+speedAttr+'>'+speedLabel+'</button>':'')+
@@ -58,7 +60,7 @@ function shellMarkup(options={}){
   '<div class="cbcombat-route"'+idAttr(options.routeId)+'>'+route+'</div>'+
   '<div class="cbcombat-grid">'+
    '<div class="cbcombat-left-column"><section class="cbcombat-panel cbcombat-party-panel"><div class="cb2d-party cbcombat-party"><small>'+esc(partyLabel)+'</small><div class="cbcombat-party-rows" data-combat-party-rows'+idAttr(options.partyRowsId)+'>'+partyMarkup+'</div><div class="cbcombat-pet-rows" data-combat-pets'+idAttr(options.petsId)+' '+(petsMarkup?'':'hidden')+'>'+petsMarkup+'</div></div></section></div>'+
-   '<main class="cbcombat-panel cbcombat-battle-panel">'+battleTopbar+'<div class="cbcombat-arena-wrap">'+arenaMarkup+castMarkup+'</div></main>'+
+   '<main class="cbcombat-panel cbcombat-battle-panel">'+battleTopbar+'<div class="cbcombat-arena-wrap '+esc(battleClass)+'" data-combat-theme="'+esc(theme)+'">'+arenaMarkup+castMarkup+'</div></main>'+
    '<aside class="cbcombat-right-column"><section class="cbcombat-panel cbcombat-meters-panel">'+metersMarkup+'</section>'+
     '<section class="cbcombat-panel cbcombat-command-panel cb2d-controls cbr-command-panel"'+commandGrouped+'>'+commandsMarkup+'</section>'+rightExtra+'</aside>'+
   '</div>'+

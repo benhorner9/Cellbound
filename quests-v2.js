@@ -692,7 +692,7 @@ function qDraw(config,finish){
   title:config.title,routeMarkup:qRoute(),routeId:'q2dRoute',
   partyLabel,partyMarkup:qRows(),
   battleTopbarMarkup:topbar,arenaMarkup,castMarkup:cast,metersMarkup:meters,commandsMarkup:commandMarkup,
-  shellClass:'quest-cb2d-shell '+(dungeonPresentation?'dungeon-presentation ':'')+visualClass,
+  theme:dungeonPresentation?'fractured':'quest',battleClass:'quest-cb2d-shell '+(dungeonPresentation?'dungeon-presentation ':'')+visualClass,partySize:qCombatants().length,
   speedAttribute:'data-q-speed',closeAttribute:'data-q-close',endId:'q2dEnd'
  });
  root.querySelector('[data-q-speed]').onclick=e=>{if(!questFight)return;questFight.speed=questFight.speed===2?1:2;e.currentTarget.textContent=questFight.speed+'×'};

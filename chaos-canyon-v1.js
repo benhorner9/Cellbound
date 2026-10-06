@@ -657,7 +657,7 @@ function draw(){
   header:'CHAOS CANYON · LIVE DUNGEON',title:stage.title,routeMarkup:ccRouteMarkup(stage.id,false),
   partyLabel:'PARTY CONDITION · ILVL '+ilvl(),partyMarkup:ccPartyRows(),partyRowsId:'cc2dRows',
   battleTopbarMarkup:topbar,arenaMarkup,castMarkup:cast,metersMarkup:meters,commandsMarkup:commands,
-  shellClass:'cc2d-unified-shell',speedAttribute:'data-speed',closeAttribute:'data-close',
+  theme:'chaos',battleClass:'cc2d-unified-shell',partySize:party().length,speedAttribute:'data-speed',closeAttribute:'data-close',
   titleId:'cc2dTitle',endId:'cc2dEnd'
  });
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.done&&!confirm('Leave Chaos Canyon?'))return;close()};

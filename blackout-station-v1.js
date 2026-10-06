@@ -523,7 +523,7 @@ function drawCombat(){
   routeMarkup:'<span class="done"><i>1</i>Grid Alignment</span><span class="current"><i>2</i>Dr. Vex Calder</span>',
   partyLabel:'PARTY CONDITION · ILVL '+ilvl(),partyMarkup:'',partyRowsId:'bsRows',
   battleTopbarMarkup:topbar,arenaMarkup,castMarkup:cast,metersMarkup:meters,commandsMarkup:commands,
-  shellClass:'bs2d-shell',speedAttribute:'data-bs-speed',closeAttribute:'data-bs-close',
+  theme:'blackout',battleClass:'bs2d-shell',partySize:party().length,speedAttribute:'data-bs-speed',closeAttribute:'data-bs-close',
   speedLabel:run.speed+'×',titleId:'bsTitle',endId:'bsEnd'
  });
  r.querySelector('[data-bs-close]').onclick=close;
