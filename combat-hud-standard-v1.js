@@ -1,15 +1,15 @@
 (()=>{
 'use strict';
 
-const VERSION='1.1.0';
-const ACTIVE_SELECTOR='.cb2d-shell.cbstd-hud:not(.results-mode)';
+const VERSION='1.1.1';
+const ACTIVE_SELECTOR='.cb2d-shell.cbstd-hud:not(.results-mode),.cb2d-shell.cbstd-ashen-frame:not(.results-mode)';
 const COMMAND_ATTACK=new Set(['focus','interrupt','stack','burn']);
 const COMMAND_DEFENCE=new Set(['spread','regroup','defensive','potion']);
 
 function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function visible(el){
   if(!el||!el.isConnected||el.hidden)return false;
-  const backdrop=el.closest('.cb2d-backdrop,.hs2d-backdrop,.cc2d-backdrop,.bs2d-backdrop');
+  const backdrop=el.closest('.cb2d-backdrop,.hs2d-backdrop,.cc2d-backdrop,.bs2d-backdrop,.quest-cb2d-backdrop,.tb-backdrop');
   if(backdrop?.hidden)return false;
   return getComputedStyle(el).display!=='none'
 }
@@ -87,7 +87,7 @@ function initials(name){
 function ensureTarget(row){
   let target=row.querySelector(':scope > .cbstd-party-target');
   if(target)return target;
-  target=document.createElement('div');target.className='cbstd-party-target';
+  target=document.createElement('div');target.className='cbstd-party-target cb2d-party-target';
   target.innerHTML='<i>—</i><span><small>TARGET</small><b>ACQUIRING</b></span>';
   row.appendChild(target);return target
 }
@@ -131,7 +131,7 @@ function organiseCommands(shell){
   const defence=document.createElement('section');defence.className='cbstd-command-group cbr-command-group defence';defence.innerHTML='<small>DEFEND / RECOVER</small><div class="cbr-command-column"></div>';
   groups.append(attack,defence);
   buttons.forEach(b=>{
-    const id=commandId(b);(COMMAND_ATTACK.has(id)?attack:defence).querySelector('div').appendChild(b)
+    const id=commandId(b);b.classList.add('cbr-command');(COMMAND_ATTACK.has(id)?attack:defence).querySelector('div').appendChild(b)
   });
   panel.appendChild(groups);panel.dataset.cbstdGrouped='1'
 }
@@ -145,7 +145,7 @@ function orderMeters(shell){
 function ensurePetHost(shell){
   const party=shell.querySelector('.cb2d-party');if(!party)return null;
   let host=party.querySelector(':scope > .cbstd-pets');
-  if(!host){host=document.createElement('div');host.className='cbstd-pets';host.hidden=true;party.appendChild(host)}
+  if(!host){host=document.createElement('div');host.className='cbstd-pets cbcombat-pet-rows';host.hidden=true;party.appendChild(host)}else host.classList.add('cbcombat-pet-rows')
   return host
 }
 function ownerName(shell,id){
@@ -172,7 +172,7 @@ function renderPets(shell){
   host.hidden=false;
   host.innerHTML='<small>PETS / SUMMONS</small>'+[...grouped.values()].map(p=>{
     const t=targetName(shell,p.targetId);
-    return '<div class="cbstd-pet-row"><i>◆</i><span><b>'+esc(p.name||'Summon')+(p.count>1?' ×'+p.count:'')+'</b><small>'+esc(ownerName(shell,p.ownerId))+(p.action?' · '+esc(p.action):'')+'</small></span><em><small>TARGET</small><b>'+esc(t)+'</b></em></div>'
+    return '<div class="cbstd-pet-row cbcombat-pet-row"><i class="cbcombat-pet-icon">◆</i><span class="cbcombat-pet-main"><b>'+esc(p.name||'Summon')+(p.count>1?' ×'+p.count:'')+'</b><small>'+esc(ownerName(shell,p.ownerId))+(p.action?' · '+esc(p.action):'')+'</small></span><em class="cbcombat-pet-target"><small>TARGET</small><b>'+esc(t)+'</b></em></div>'
   }).join('')
 }
 function handlePet(shell,e){
@@ -188,31 +188,59 @@ function handlePet(shell,e){
   renderPets(shell)
 }
 function upgradeRows(shell){
-  partyRows(shell).forEach(ensureTarget);ensurePetHost(shell)
+  partyRows(shell).forEach(row=>{
+    ensureTarget(row);
+    const dot=row.querySelector(':scope > i.cb2d-dot');if(dot)dot.classList.add('cb2d-party-avatar');
+    const main=[...row.children].find(node=>node.tagName==='SPAN'&&!node.classList.contains('cb2d-party-target'));if(main)main.classList.add('cb2d-party-main')
+  });
+  ensurePetHost(shell)
 }
 function adoptAshenFrame(shell){
-  if(!shell||shell.dataset.cbstdFrame==='ashen-v1')return;
-  const layout=shell.querySelector(':scope > .cb2d-layout'),main=layout?.querySelector(':scope > main'),legacyAside=layout?.querySelector(':scope > aside');
+  if(!shell||shell.dataset.cbstdFrame==='ashen-v2')return;
+  const layout=shell.querySelector(':scope > .cb2d-layout,:scope > .cbcombat-grid'),main=layout?.querySelector(':scope > main'),legacyAside=layout?.querySelector(':scope > aside');
   const arena=main?.querySelector(':scope > .cb2d-arena')||shell.querySelector('.cb2d-arena');
   const party=legacyAside?.querySelector(':scope > .cb2d-party')||shell.querySelector('.cb2d-party');
   const meters=legacyAside?.querySelector(':scope > .cb2d-combat-meters')||shell.querySelector('.cb2d-combat-meters');
-  const controls=main?.querySelector(':scope > .cb2d-controls')||shell.querySelector('.cb2d-controls');
+  const controls=main?.querySelector(':scope > .cb2d-controls')||layout?.querySelector('.cb2d-controls');
   if(!layout||!main||!legacyAside||!arena||!party||!meters||!controls)return;
+
   shell.classList.add('cbcombat-shell','cbcombat-standard-hud','cbstd-ashen-frame');
-  const header=shell.querySelector(':scope > .cb2d-head');
+  shell.classList.remove('combat-hud-fullscreen','cbstd-hud');
+  const backdrop=shell.closest('.cb2d-backdrop,.hs2d-backdrop,.cc2d-backdrop,.bs2d-backdrop,.quest-cb2d-backdrop,.tb-backdrop');
+  backdrop?.classList.add('cbcombat-backdrop');
+
+  const header=shell.querySelector(':scope > .cb2d-head,:scope > .cbcombat-header');
   if(header){
-    header.classList.add('cbcombat-header');
+    header.classList.remove('cb2d-head');header.classList.add('cbcombat-header');
     header.firstElementChild?.classList.add('cbcombat-title');
-    const live=header.querySelector('.cb2d-live');if(live)live.classList.add('cbcombat-header-actions','cbcombat-live-dot')
+    const live=header.querySelector('.cb2d-live');
+    if(live){
+      live.classList.remove('cb2d-live');live.classList.add('cbcombat-header-actions');
+      let badge=live.querySelector('.cbcombat-live-dot');
+      if(!badge){
+        badge=document.createElement('span');badge.className='cbcombat-live-dot';badge.innerHTML='<i></i>LIVE';
+        [...live.childNodes].filter(n=>n.nodeType===3||n.nodeName==='I').forEach(n=>n.remove());
+        live.insertBefore(badge,live.firstChild)
+      }
+    }
   }
-  shell.querySelector(':scope > .cb2d-route')?.classList.add('cbcombat-route');
-  layout.classList.add('cbcombat-grid');
+
+  let route=shell.querySelector(':scope > .cb2d-route,:scope > .cbcombat-route');
+  if(route){route.classList.remove('cb2d-route');route.classList.add('cbcombat-route')}
+  else{
+    route=document.createElement('div');route.className='cbcombat-route cbstd-generated-route';
+    const title=header?.querySelector('h2')?.textContent||'Combat';
+    route.innerHTML='<span class="current"><i>◆</i>'+esc(title)+'</span>';
+    if(header)header.after(route);else shell.prepend(route)
+  }
+
+  layout.classList.remove('cb2d-layout');layout.classList.add('cbcombat-grid','cbstd-promoted-grid');
 
   const left=document.createElement('div');left.className='cbcombat-left-column cbstd-adopted-left';
   const partyPanel=document.createElement('section');partyPanel.className='cbcombat-panel cbcombat-party-panel';
   party.classList.add('cbcombat-party');partyPanel.appendChild(party);left.appendChild(partyPanel);
 
-  const battle=document.createElement('section');battle.className='cbcombat-panel cbcombat-battle-panel cbstd-adopted-battle';
+  const battle=document.createElement('main');battle.className='cbcombat-panel cbcombat-battle-panel cbstd-adopted-battle';
   const topbar=document.createElement('div');topbar.className='cbcombat-battle-topbar';
   const room=arena.querySelector('.cb2d-room-tag'),legend=arena.querySelector('.cb2d-ground-legend');
   if(room)topbar.appendChild(room);if(legend)topbar.appendChild(legend);if(topbar.childElementCount)battle.appendChild(topbar);
@@ -227,7 +255,7 @@ function adoptAshenFrame(shell){
 
   main.classList.add('cbstd-legacy-extras');legacyAside.classList.add('cbstd-legacy-extras');
   layout.append(left,battle,right);
-  shell.dataset.cbstdFrame='ashen-v1'
+  shell.dataset.cbstdFrame='ashen-v2'
 }
 function upgrade(shell){
   if(!shell||!shell.matches?.(ACTIVE_SELECTOR))return;
