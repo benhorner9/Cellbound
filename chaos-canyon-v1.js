@@ -25,7 +25,7 @@ const ROUTE=[
 const CANYON_ROOMS={
  'canyon-mouth':{
   zone:'CANYON ENTRANCE',description:'The old druid road opens into a corruption-lit woodland canyon.',
-  art:'./assets/chaos-canyon/rooms/canyon-mouth.avif?v=3',liveProfile:'canyon-mouth',
+  art:'./assets/chaos-canyon/rooms/canyon-mouth.webp?v=4',liveProfile:'canyon-mouth',
   route:{entry:{x:50,y:98},entryInside:{x:50,y:78},engage:{x:50,y:58},partyAnchors:[[50,64],[44,67],[56,67],[40,71],[60,71]],exitPath:[{x:50,y:56},{x:50,y:42},{x:50,y:28},{x:50,y:14},{x:50,y:2}],spread:2},
   enemies:[[50,37],[41,45],[59,45]],
   bounds:{left:22,right:78,top:23,bottom:74},
@@ -34,7 +34,7 @@ const CANYON_ROOMS={
  },
  'thorn-trail':{
   zone:'THORN TRAIL',description:'Ancient roots and thorn-vines squeeze the road into a narrow kill lane.',
-  art:'./assets/chaos-canyon/rooms/thorn-trail.avif?v=3',liveProfile:'canyon-thorn',
+  art:'./assets/chaos-canyon/rooms/thorn-trail.webp?v=4',liveProfile:'canyon-thorn',
   route:{entry:{x:50,y:98},entryInside:{x:50,y:79},engage:{x:50,y:59},partyAnchors:[[50,65],[45,68],[55,68],[42,72],[58,72]],exitPath:[{x:50,y:56},{x:50,y:42},{x:50,y:28},{x:50,y:14},{x:50,y:2}],spread:1.8},
   enemies:[[50,36],[42,45],[58,45]],
   bounds:{left:29,right:71,top:20,bottom:76},
@@ -43,7 +43,7 @@ const CANYON_ROOMS={
  },
  sentinel:{
   zone:'SENTINEL BASIN',description:'The old runestone court opens into a dedicated guardian arena.',
-  art:'./assets/chaos-canyon/rooms/sentinel.avif?v=3',liveProfile:'canyon-sentinel',
+  art:'./assets/chaos-canyon/rooms/sentinel.webp?v=4',liveProfile:'canyon-sentinel',
   route:{entry:{x:50,y:98},entryInside:{x:50,y:78},engage:{x:50,y:59},partyAnchors:[[50,65],[44,68],[56,68],[40,72],[60,72]],exitPath:[{x:50,y:56},{x:50,y:42},{x:50,y:28},{x:50,y:14},{x:50,y:2}],spread:2},
   enemies:[[50,42]],
   bounds:{left:20,right:80,top:25,bottom:75},
@@ -52,7 +52,7 @@ const CANYON_ROOMS={
  },
  warden:{
   zone:"WARDEN'S SHELF",description:'Purple Chaos Scars split the woodland shelf beneath the Warden.',
-  art:'./assets/chaos-canyon/rooms/warden.avif?v=3',liveProfile:'canyon-warden',
+  art:'./assets/chaos-canyon/rooms/warden.webp?v=4',liveProfile:'canyon-warden',
   route:{entry:{x:50,y:98},entryInside:{x:50,y:78},engage:{x:50,y:59},partyAnchors:[[50,65],[44,68],[56,68],[40,72],[60,72]],exitPath:[{x:50,y:56},{x:50,y:42},{x:50,y:28},{x:50,y:14},{x:50,y:2}],spread:2},
   enemies:[[50,42]],
   bounds:{left:21,right:79,top:25,bottom:75},
@@ -61,7 +61,7 @@ const CANYON_ROOMS={
  },
  wildheart:{
   zone:'WILDHEART PASSAGE',description:'Vorran’s keepers hold the last wooded causeway before the Rootheart.',
-  art:'./assets/chaos-canyon/rooms/wildheart.avif?v=3',liveProfile:'canyon-wildheart',
+  art:'./assets/chaos-canyon/rooms/wildheart.webp?v=4',liveProfile:'canyon-wildheart',
   route:{entry:{x:50,y:98},entryInside:{x:50,y:79},engage:{x:50,y:59},partyAnchors:[[50,65],[44,68],[56,68],[40,72],[60,72]],exitPath:[{x:50,y:56},{x:50,y:42},{x:50,y:28},{x:50,y:14},{x:50,y:2}],spread:2},
   enemies:[[50,36],[41,45],[59,45]],
   bounds:{left:24,right:76,top:23,bottom:74},
@@ -70,7 +70,7 @@ const CANYON_ROOMS={
  },
  vorran:{
   zone:'HEART OF CHAOS',description:'The Rootheart arena breaks away in rings and drags the fight toward its centre.',
-  art:'./assets/chaos-canyon/rooms/vorran.avif?v=3',liveProfile:'canyon-vorran',
+  art:'./assets/chaos-canyon/rooms/vorran.webp?v=4',liveProfile:'canyon-vorran',
   route:{entry:{x:50,y:98},entryInside:{x:50,y:80},engage:{x:50,y:61},partyAnchors:[[50,66],[44,69],[56,69],[40,72],[60,72]],exitPath:[],spread:2},
   enemies:[[50,40]],
   bounds:{left:20,right:80,top:26,bottom:76},
@@ -80,7 +80,7 @@ const CANYON_ROOMS={
 };
 const CANYON_CROSSING={
  zone:'THE CHASM',description:'Seven unstable stepping stones span the chaos-lit gulf.',
- art:'./assets/chaos-canyon/rooms/crossing.avif?v=3',liveProfile:'canyon-crossing'
+ art:'./assets/chaos-canyon/rooms/crossing.webp?v=4',liveProfile:'canyon-crossing'
 };
 const XP=1600;
 const wait=ms=>new Promise(r=>setTimeout(r,Math.round(ms/((run&&run.speed)||1))));
