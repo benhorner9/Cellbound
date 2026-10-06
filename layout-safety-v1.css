@@ -3873,3 +3873,48 @@ body.tb-open{
     backdrop-filter:none!important
   }
 }
+
+
+/* Canonical combat viewer owns the entire viewport. Content-specific roots no
+   longer decide combat height, placement or scroll behaviour. */
+.cbcombat-backdrop{
+  position:fixed!important;
+  inset:0!important;
+  z-index:1200!important;
+  box-sizing:border-box!important;
+  width:100vw!important;
+  height:100dvh!important;
+  min-width:0!important;
+  min-height:0!important;
+  padding:8px!important;
+  display:grid!important;
+  place-items:stretch!important;
+  overflow:hidden!important;
+  background:#03070a!important;
+  background-image:none!important;
+  backdrop-filter:none!important
+}
+.cbcombat-backdrop>.cbcombat-shell[data-combat-view="canonical-v1"]{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+  max-height:none!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"]:not([data-combat-profile="pvp"]) .cbcombat-left-column{
+  grid-template-rows:minmax(0,1fr)!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-party-panel,
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-party,
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-battle-panel,
+.cbcombat-shell[data-combat-view="canonical-v1"] .cbcombat-arena-wrap{
+  height:100%!important;
+  min-height:0!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pvp"]{
+  display:flex!important;
+  flex-direction:column!important
+}
+.cbcombat-shell[data-combat-view="canonical-v1"][data-combat-profile="pvp"]>.cbcombat-pvp-grid{
+  flex:1 1 auto!important;
+  min-height:0!important
+}

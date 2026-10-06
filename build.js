@@ -527,10 +527,13 @@ if(file==='quests-v2.js'){
     'quests-v2.js':['window.CellboundCombatViewer','Viewer.mount(root,{'],
     'fractured-ages-v1.js':["presentationKind:'dungeon'"],
     'manor-raid-v1.js':['playSharedEncounter({'],
-    'onboarding-v1.js':['playSharedEncounter({']
+    'onboarding-v1.js':['playSharedEncounter({'],
+    'pvp-viewer-v1.js':['window.CellboundCombatViewer',"profile:'pvp'"]
   };
   if(canonicalCombatViewHooks[file])for(const hook of canonicalCombatViewHooks[file])if(!contents.includes(hook))throw new Error(file+' must use the canonical Cellbound combat viewer: missing '+hook);
-  if(['hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','twelve-below-v1.js','quests-v2.js'].includes(file)&&contents.includes('combat-hud-fullscreen cbstd-hud'))
+  if(file!=='combat-viewer-v1.js'&&contents.includes('<section class="cbcombat-shell'))
+    throw new Error(file+' must not construct the canonical combat shell directly; use CellboundCombatViewer');
+  if(file.endsWith('.js')&&contents.includes('combat-hud-fullscreen cbstd-hud'))
     throw new Error(file+' reintroduced a legacy standalone combat shell instead of CellboundCombatViewer');
   if(file==='combat-viewer-v1.js'){
     for(const hook of ["window.CellboundCombatViewer","data-combat-view=\"canonical-v1\"","function mount(root,options={})","cbcombat-grid"])
@@ -538,8 +541,9 @@ if(file==='quests-v2.js'){
   }
   if(file==='guild.html'&&!/combat-viewer-v1\.js\?v=\d+/.test(contents))throw new Error('Canonical combat viewer is not loaded by guild.html');
   if(file==='combat-hud-standard-v1.js'){
-    for(const hook of ["cbstdFrame='ashen-v2'","shell.classList.remove('combat-hud-fullscreen','cbstd-hud')","layout.classList.remove('cb2d-layout')","cbcombat-party-rows"])
-      if(!contents.includes(hook))throw new Error('Ashen legacy-frame promotion cleanup is missing '+hook);
+    for(const hook of ['data-combat-view="canonical-v1"','orderMeters(shell)','organiseCommands(shell)','upgradeRows(shell)'])
+      if(!contents.includes(hook))throw new Error('Canonical combat HUD behaviour is missing '+hook);
+    if(contents.includes('adoptAshenFrame'))throw new Error('Legacy combat-view conversion must not return; all combat mounts CellboundCombatViewer directly');
   }
   if(file==='layout-safety-v1.css'){
     for(const hook of ['data-combat-view="canonical-v1"','.cbcombat-arena-wrap',').cbcombat-backdrop{','.cbcombat-party-rows'])
