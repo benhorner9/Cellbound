@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const VERSION='1.3.5';
+const VERSION='1.3.6';
 const BOSSES={
   'vaultheart':{
     dungeon:'The Ashen Vault',name:'The Vaultheart',title:'The Living Core Beneath the Vault',theme:'ashen',artwork:'./assets/bosses/ashen-vault-vaultheart.webp',
@@ -155,7 +155,21 @@ async function stinger(id,cfg){
 async function show(id,options={}){
   const cfg=BOSSES[id];if(!cfg)return true;
   const p=prefs(),seen=Boolean(p?.seen?.[id]),skip=p?.skip?.[id]===true;
-  if(!options.forceFull&&seen&&skip)return stinger(id,cfg);
+  if(!options.forceFull&&seen&&skip){
+    try{
+      return await Promise.race([
+        stinger(id,cfg),
+        wait(reduce()?500:1800).then(()=>{
+          if(active?.dataset?.boss===id)remove();
+          return true
+        })
+      ])
+    }catch(error){
+      console.warn('Boss dossier stinger failed open',id,error);
+      if(active?.dataset?.boss===id)remove();
+      return true
+    }
+  }
   return full(id,cfg,options)
 }
 function reset(id){
