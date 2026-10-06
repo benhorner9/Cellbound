@@ -398,14 +398,7 @@ if(file==='quests-v2.js'){
     if(file!=='dungeon-2d-v1.js'&&!contents.includes('rollClearLootBundle'))throw new Error(file+' must use the balanced multi-drop clear reward bundle');
     if(!contents.includes('recommendedItemLevel')||!contents.includes('requires Item Level'))throw new Error(file+' must enforce selected-difficulty Item Level requirements');
   }
-  if(file==='pvp-viewer-v1.css'){
-    for(const hook of [".pvp2d-lower{","height:132px","max-height:132px",".pvp2d-feed{","overflow-y:auto","height:264px",".pvp2d-lower>section.pvp2d-meters","grid-template-columns:repeat(3,minmax(0,1fr))",".pvp2d-map{",".pvp2d-map-block",".pvp2d-map-area.tunnel",".pvp2d-hill-site",".pvp2d-hill.rotating","score-tick","pvpScoreTick","shifting-court","veilspire-arena",".pvp2d-arena-storm",".pvp2d-storm-fog","pvpStormDrift"])if(!contents.includes(hook))throw new Error('PvP combat feed/map/healing-meter presentation is missing '+hook);
-  }
-  if(file==='pvp-combat-v1.js'){
-    for(const hook of ["const VERSION='1.8.0'","cellwind-bastion","shifting-court","veilspire-arena","PVP_MAPS","findMapPath","hasLineOfSight","LOS_BLOCKED","ARENA_STORM_PHASES","arenaStormAtTime","arenaAct","arenaTick","storm-progress","dampening","assignKothRoles","rotateHill","kothAct","hill-rotate","hill-contested","hill-score","assignCtfRoles","ctfCarrierAct","ctfAct","ctf-standoff","carryFlagHome","resolveDroppedFlag","window.CellboundPvPCombat"])if(!contents.includes(hook))throw new Error('PvP combat engine is missing '+hook);
-    if(/THREAT_GENERATED|AGGRO_CHANGED|threatTable|\bthreat\b/i.test(contents))throw new Error('PvP combat must never use PvE threat or aggro');
-  }
-  if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','quests-v2.js','pvp-viewer-v1.js'].includes(file)){
+  if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','quests-v2.js'].includes(file)){
     if(!contents.includes('CellboundCombatFX'))throw new Error(file+' is not wired to the shared combat VFX layer');
   }
   if(file==='dungeon-2d-v1.js'){
@@ -435,18 +428,9 @@ if(file==='quests-v2.js'){
   if(file==='blackout-station-v1.css'&&!contents.includes('.bs-authority>.cb2d-potion-button'))throw new Error('Blackout Station potion action styling is missing');
   if(file==='economy-v2.js'&&!contents.includes('USE POTION button'))throw new Error('Crafted combat potions must explain their live-combat use');
 
-  if(file==='pvp-viewer-v1.js'){
-    for(const hook of ["const VERSION='2.0.0'","requestAnimationFrame(frame)","'DAMAGE_DEALT'","'HEAL_RECEIVED'","'PLAYER_DEFEATED'","'FLAG_STATE'","'ARENA_STATE'","LOS_BLOCKED","mapMarkup","Cellwind Bastion","VEILSPIRE","pvp2d-arena-storm","storm-progress","Battle Fatigue","updateArenaStorm","pvp2d-hill-site","hill-rotate","hill-roles","hill-contested","hill-score","updateHill","score-tick","$(root,'[data-pvp2d-hill-site]')","ctf-opening","ctf-roles","ctf-standoff","FLAG STANDOFF","objectiveBadge","e.payload?.from","dataNode","viewer recovery active","carryFlagVisual","resetFlagVisual","REAL TIME","window.CellboundPvPViewer"])if(!contents.includes(hook))throw new Error('PvP 2D viewer is missing '+hook);
-    if(/data-pvp-speed|pb\.speed|simTime\s*\+=\s*delta\s*\*/.test(contents))throw new Error('PvP viewer must be locked to real-time 1x playback');
-    if(contents.includes('CSS.escape'))throw new Error('PvP viewer must use iPad-safe data selectors instead of CSS.escape');
-    if(!contents.includes("e.result==='returned'")||!contents.includes("e.result==='dropped'"))throw new Error('PvP viewer must render CTF dropped and returned flag states');
-  }
-  if(file==='pvp-match-v1.js'){
-    for(const hook of ["const VERSION='1.0.0'","OPPONENT FOUND","deadline=Date.now()+10000","CellboundPvPViewer","RETURN TO THE CRUCIBLE","window.CellboundPvPMatch"])if(!contents.includes(hook))throw new Error('Dedicated PvP match flow is missing '+hook);
-  }
   if(file==='pvp-v1.js'){
-    for(const hook of ["'capture-the-flag'","'king-of-the-hill'","const ARENA_UNLOCK_RANK=5","pvpEquipment","seasonCrests","CellboundPvPCombat","CellboundPvPViewer","CellboundPvPMatch","FIND ","window.CellboundPvP"])if(!contents.includes(hook))throw new Error('PvP foundation is missing '+hook);
-    if(contents.includes('characterItemLevel(c)'))throw new Error('PvP equipment must remain isolated from PvE Item Level');
+    for(const hook of ["const PVP_ENABLED=false","const pvpEnabled=()=>false","PvP is currently locked","shared Combat Reborn and Cellbound combat viewer framework","window.CellboundPvP"])if(!contents.includes(hook))throw new Error('Locked PvP shell contract is missing '+hook);
+    if(contents.includes("CellboundAdmin?.role==='owner'"))throw new Error('Locked PvP must not expose an owner bypass to a retired standalone engine');
   }
   if(file==='evolution-v1.js'){
     if(/worldBossGrid|CellboundWorldBoss2D|WORLD_BOSS_META/.test(contents))throw new Error('Legacy shared World Boss presentation must remain removed');
