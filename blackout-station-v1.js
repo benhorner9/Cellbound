@@ -115,7 +115,7 @@ function briefing(){
 }
 function openDungeon(options){Game=window.CellboundGame;if(!Game?.ready)return;db=Game.getSupabase?.();if(options?.difficulty)window.CellboundEndgame?.choose?.('blackout-station',options.difficulty,options.tier||1);briefing()}
 function close(){
- token++;run=null;document.body.classList.remove('bs2d-open');const r=root();r.hidden=true;Game?.switchView?.('content');renderCard()
+ token++;run=null;document.body.classList.remove('bs2d-open');const r=root();if(!window.CellboundCombatViewer?.dismiss?.(r)){r.hidden=true;r.innerHTML='';r.remove?.()}Game?.switchView?.('content');renderCard()
 }
 
 function solvedBoard(){return [...Array(15).keys(),null]}

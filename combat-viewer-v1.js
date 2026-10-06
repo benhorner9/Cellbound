@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.1.3';
+const VERSION='1.1.4';
 
 function esc(v){
  return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))
@@ -86,8 +86,28 @@ function setResults(root,enabled=true){
  const shell=root?.matches?.('.cbcombat-shell[data-combat-view="canonical-v1"]')?root:root?.querySelector?.('.cbcombat-shell[data-combat-view="canonical-v1"]');
  if(!shell)return null;shell.classList.toggle('results-mode',Boolean(enabled));return shell
 }
+function dismiss(root,{remove=true}={}){
+ if(!root)return false;
+ try{
+  root.hidden=true;
+  root.setAttribute('hidden','');
+  root.setAttribute('aria-hidden','true');
+  root.classList.remove('cbcombat-backdrop');
+  root.replaceChildren();
+  root.style.setProperty('display','none','important');
+  if(remove&&root.isConnected)root.remove();
+  return true
+ }catch(error){
+  console.warn('Canonical combat viewer close recovery',error);
+  try{root.hidden=true;root.innerHTML='';root.remove?.()}catch(_){}
+  return false
+ }
+}
 function mount(root,options={}){
  if(!root)throw new Error('CellboundCombatViewer.mount requires a root element');
+ root.style.removeProperty('display');
+ root.removeAttribute('aria-hidden');
+ root.removeAttribute('hidden');
  root.hidden=false;
  root.classList.add('cbcombat-backdrop');
  root.innerHTML=shellMarkup(options);
@@ -96,5 +116,5 @@ function mount(root,options={}){
  return shell
 }
 
-window.CellboundCombatViewer={version:VERSION,mount,normalise,setResults,profiles:{pve:'canonical-v1'}};
+window.CellboundCombatViewer={version:VERSION,mount,dismiss,normalise,setResults,profiles:{pve:'canonical-v1'}};
 })();
