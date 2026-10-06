@@ -259,6 +259,13 @@ if(file==='quests-v2.js'){
     if(!contents.includes('enemyHealth:1.50,enemyDamage:1.38')||!contents.includes('enemyHealth:1.60*(1+(t-1)*.08)'))throw new Error('Full-gear Heroic / Cellbound+ combat tuning is missing');
     if(!contents.includes('uniqueChance:{normal:0'))throw new Error('Tier 4 uniques must not leak into Normal difficulty');
   }
+  if(file.endsWith('.js')){
+    if(file!=='combat-reborn-v1.js'&&contents.includes('window.CellboundCombatReborn='))throw new Error(file+' defines a second Combat Reborn engine');
+    if(file!=='combat-standard-v1.js'&&contents.includes('window.CellboundCombatStandard='))throw new Error(file+' defines a second combat gateway');
+    if(file!=='combat-viewer-v1.js'&&contents.includes('window.CellboundCombatViewer='))throw new Error(file+' defines a second combat viewer');
+    if(contents.includes('window.CellboundPvPCombat='))throw new Error(file+' defines a retired standalone PvP combat engine');
+    if(contents.includes('window.CellboundCombat3D='))throw new Error(file+' defines a retired standalone 3D combat renderer');
+  }
   if(file==='combat-identities-v1.js'){
     if(contents.includes('COMBAT REBORN BUNDLED FALLBACK')||contents.includes('window.CellboundCombatReborn='))throw new Error('Combat identities must not bundle a second Combat Reborn engine');
     if(!contents.includes('function ratingCurve')||!contents.includes('function primaryCurve'))throw new Error('Full-loadout rating diminishing returns are missing');
@@ -616,7 +623,7 @@ if(file==='quests-v2.js'){
     const layoutSafetyLink=(contents.match(/<link rel="stylesheet" href="\.\/layout-safety-v1\.css\?v=[0-9]+">/)||[])[0]||'';
     if(!layoutSafetyLink||contents.lastIndexOf('<link rel="stylesheet"')!==contents.indexOf(layoutSafetyLink))throw new Error('Layout safety stylesheet must remain the final CSS layer in guild.html');
     if(contents.includes('id="attemptBtn"')||contents.includes('id="bossSelect"')||contents.includes('id="attemptModal"'))throw new Error('Legacy RNG boss-attempt UI must not return');
-    if(!contents.includes('combat-reborn-v1.js'))throw new Error('Canonical Combat Reborn engine is not linked from guild.html');
+    for(const asset of ['combat-reborn-v1.js','combat-standard-v1.js','combat-viewer-v1.js','combat-hud-standard-v1.js'])if(!contents.includes(asset))throw new Error('Canonical combat stack is not linked from guild.html: '+asset);
     if(!contents.includes('expedition-presentation-v1.css')||!contents.includes('expedition-presentation-v1.js'))throw new Error('Shared PvE expedition presentation assets are not linked from guild.html');
     if(!contents.includes('boss-dossier-v1.css')||!contents.includes('boss-dossier-v1.js'))throw new Error('Final boss dossier assets are not linked from guild.html');
     if(!contents.includes('dungeon-theme-v1.css'))throw new Error('Per-dungeon PvE theme layer is not linked from guild.html');
