@@ -749,7 +749,10 @@ async function start(){
   }else{
    run={stage:0,done:false,speed:1,log:[],damageDone:Object.fromEntries(p.map(ch=>[ch.id,0])),healingDone:Object.fromEntries(p.map(ch=>[ch.id,0])),overhealing:Object.fromEntries(p.map(ch=>[ch.id,0])),threat:Object.fromEntries(p.map(ch=>[ch.id,0])),aggro:null,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=hsResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),statuses:Object.fromEntries(p.map(c=>[c.id,[]])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{},runtimeStageStartedAt:Date.now()}
   }
-  await window.CellboundExpeditionPresentation?.enter?.('hollow-sanctum',{difficulty:attempt.difficulty||eg.diff?.name||'Normal'});
+  try{
+   document.querySelectorAll('.cbx-transition').forEach(node=>node.remove());
+   document.body.classList.remove('cbx-transition-open')
+  }catch(_){}
   draw();
   if(run?._pendingCompletion){run._pendingCompletion=false;await complete();return}
   await hsRunFrom(Math.max(0,Math.min(STAGES.length-1,Number(run.stage)||0)),tok)
