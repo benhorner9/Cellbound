@@ -67,16 +67,19 @@ function mapMarkup(map){
   return '<div class="pvp2d-map" data-pvp-map="'+esc(map.id||'battleground')+'"><div class="pvp2d-map-title"><small>'+mapType+'</small><b>'+esc(map.name||'Cellwind Bastion')+'</b></div>'+areas+walls+'<div class="pvp2d-map-prop arch a1"></div><div class="pvp2d-map-prop arch a2"></div><div class="pvp2d-map-prop rubble r1"></div><div class="pvp2d-map-prop rubble r2"></div></div>'
 }
 function shellMarkup(match,units,map=null){
+  const Viewer=window.CellboundCombatViewer;if(!Viewer?.markup)throw new Error('Canonical combat viewer unavailable');
   const blue=units.filter(x=>x.team==='blue'),red=units.filter(x=>x.team==='red');
   const label=match.kind==='arena'?match.size+'v'+match.size+' RATED ARENA':match.size+'v'+match.size+' · '+(match.mode==='capture-the-flag'?'CAPTURE THE FLAG':'KING OF THE HILL');
-  return '<div class="pvp2d-shell '+(map?'with-map':'')+'">'+
-    '<header class="pvp2d-head"><div><small>LIVE PVP COMBAT</small><h3>'+esc(label)+'</h3></div><div class="pvp2d-head-center"><b id="pvp2dScore">'+(match.kind==='arena'?(blue.length+'–'+red.length):'0–0')+'</b><span id="pvp2dObjective">'+(match.kind==='arena'?'Eliminate the opposing squad':match.mode==='capture-the-flag'?'First to 3 captures':'First to 100 control')+'</span></div><div class="pvp2d-controls"><span id="pvp2dTimer">0:00</span><b>REAL TIME</b></div></header>'+
-    '<div class="pvp2d-layout"><aside>'+rosterMarkup(blue,'blue')+'</aside>'+
-    '<main class="pvp2d-arena" id="pvp2dArena"><div class="pvp2d-floor"></div>'+mapMarkup(map)+'<div class="pvp2d-grid"></div>'+objectiveMarkup(match,map)+'<div id="pvp2dUnits" class="pvp2d-units">'+units.map(unitMarkup).join('')+'</div><div id="pvp2dFx" class="pvp2d-fx"></div><div id="pvp2dBanner" class="pvp2d-banner"></div></main>'+
-    '<aside>'+rosterMarkup(red,'red')+'</aside></div>'+
-    '<div class="pvp2d-lower"><section><header><small>COMBAT FEED</small><b id="pvp2dStatus">The gates are opening…</b></header><div id="pvp2dFeed" class="pvp2d-feed"></div></section>'+
-    '<section class="pvp2d-meters"><div><header><small>DAMAGE</small><b>Blue</b></header><div id="pvp2dDamageBlue"></div></div><div><header><small>DAMAGE</small><b>Red</b></header><div id="pvp2dDamageRed"></div></div><div><header><small>HEALING</small><b>Both teams</b></header><div id="pvp2dHealing"></div></div></section></div>'+
-  '</div>'
+  const arena='<div class="pvp2d-floor"></div>'+mapMarkup(map)+'<div class="pvp2d-grid"></div>'+objectiveMarkup(match,map)+'<div id="pvp2dUnits" class="pvp2d-units">'+units.map(unitMarkup).join('')+'</div><div id="pvp2dFx" class="pvp2d-fx"></div><div id="pvp2dBanner" class="pvp2d-banner"></div>';
+  const headerCenter='<div class="pvp2d-head-center"><b id="pvp2dScore">'+(match.kind==='arena'?(blue.length+'–'+red.length):'0–0')+'</b><span id="pvp2dObjective">'+(match.kind==='arena'?'Eliminate the opposing squad':match.mode==='capture-the-flag'?'First to 3 captures':'First to 100 control')+'</span></div>';
+  const headerActions='<span id="pvp2dTimer">0:00</span><b>REAL TIME</b>';
+  const footer='<div class="pvp2d-lower"><section><header><small>COMBAT FEED</small><b id="pvp2dStatus">The gates are opening…</b></header><div id="pvp2dFeed" class="pvp2d-feed"></div></section><section class="pvp2d-meters"><div><header><small>DAMAGE</small><b>Blue</b></header><div id="pvp2dDamageBlue"></div></div><div><header><small>DAMAGE</small><b>Red</b></header><div id="pvp2dDamageRed"></div></div><div><header><small>HEALING</small><b>Both teams</b></header><div id="pvp2dHealing"></div></div></section></div>';
+  return Viewer.markup({
+    profile:'pvp',header:'LIVE PVP COMBAT',title:label,
+    headerCenterMarkup:headerCenter,headerActionsMarkup:headerActions,
+    leftMarkup:rosterMarkup(blue,'blue'),arenaMarkup:arena,rightMarkup:rosterMarkup(red,'red'),
+    footerMarkup:footer,shellClass:'pvp2d-shell '+(map?'with-map':'')
+  })
 }
 function flagBasePoint(owner){return owner==='blue'?{x:12,y:50}:{x:88,y:50}}
 function flagElement(root,owner){return flagNode(root,owner)}
