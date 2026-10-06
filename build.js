@@ -518,6 +518,18 @@ if(file==='quests-v2.js'){
   if(['dungeon-2d-v1.js','hollow-sanctum-v1.js','chaos-canyon-v1.js','blackout-station-v1.js','twelve-below-v1.js','onboarding-v1.js','quests-v2.js'].includes(file)){
     if(!contents.includes('requestAnimationFrame(frame)')||!contents.includes('document.hidden')||!contents.includes('session.advance('))throw new Error(file+' must advance a real-time Combat Reborn session from the browser frame loop');
   }
+  const ashenCombatViewHooks={
+    'dungeon-2d-v1.js':['combatShellMarkup({',"commandPlacement:'right'"],
+    'hollow-sanctum-v1.js':['combat-hud-fullscreen cbstd-hud'],
+    'chaos-canyon-v1.js':['combat-hud-fullscreen cbstd-hud'],
+    'blackout-station-v1.js':['combat-hud-fullscreen cbstd-hud'],
+    'twelve-below-v1.js':['combat-hud-fullscreen cbstd-hud'],
+    'quests-v2.js':['combat-hud-fullscreen cbstd-hud'],
+    'fractured-ages-v1.js':["presentationKind:'dungeon'"],
+    'manor-raid-v1.js':['playSharedEncounter({'],
+    'onboarding-v1.js':['playSharedEncounter({']
+  };
+  if(ashenCombatViewHooks[file])for(const hook of ashenCombatViewHooks[file])if(!contents.includes(hook))throw new Error(file+' must use the Ashen Vault combat-view contract: missing '+hook);
   if(['world-boss-2d-v1.js','pvp-viewer-v1.js'].includes(file)){
     for(const legacy of ['Math.min(rawDelta,100)','Math.min(100,Math.max(0,now-last','Math.min(Math.max(0,now-lastFrame),100)']){
       if(contents.includes(legacy))throw new Error(file+' still discards background combat time');
