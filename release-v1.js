@@ -32,13 +32,21 @@ function playerBusy(){
     const el=$(selector);
     return Boolean(el&&!el.hidden)
   };
+  const activeDungeon=selector=>{
+    const el=$(selector);
+    if(!el||el.hidden)return false;
+    // Tactical briefings are safe to refresh. Treat only an active dungeon
+    // viewer/results screen as busy so a stuck ENTERING briefing cannot trap
+    // staging on an older JavaScript build.
+    return !el.querySelector('.cb2d-brief')
+  };
   return Boolean(
-    visible('#cb2dBackdrop')||
-    visible('#hs2dBackdrop')||
-    visible('#cc2dBackdrop')||
-    visible('#bs2dBackdrop')||
-    visible('#fracturedAgesBackdrop')||
-    visible('#twelveBelowBackdrop')||
+    activeDungeon('#cb2dBackdrop')||
+    activeDungeon('#hs2dBackdrop')||
+    activeDungeon('#cc2dBackdrop')||
+    activeDungeon('#bs2dBackdrop')||
+    activeDungeon('#fracturedAgesBackdrop')||
+    activeDungeon('#twelveBelowBackdrop')||
     visible('#worldBoss2dBackdrop')||
     visible('#attemptModal')||
     visible('#evoExpeditionBackdrop')||

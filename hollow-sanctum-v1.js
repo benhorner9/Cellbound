@@ -749,8 +749,19 @@ async function start(){
   try{await hsTimeout(Game.persistState?.(),2500,'Save')}catch(error){console.warn('Hollow pre-entry save timed out; continuing',error)}
   const service=await hsWaitForEndgame(),eg=hsEndgameConfig();
   if(!service?.beginAttempt)throw new Error('Dungeon service unavailable');
-  const attempt=await hsTimeout(service.beginAttempt('hollow-sanctum'),8000,'Hollow dungeon start');
+  if(startButton&&startButton.isConnected)startButton.textContent='STARTING DUNGEON…';
+  let attempt=null;
+  try{
+   attempt=await hsTimeout(service.beginAttempt('hollow-sanctum'),6000,'Hollow dungeon start')
+  }catch(startError){
+   console.warn('Hollow start response timed out; checking for the server-created attempt',startError);
+   if(!service?.resumeAttempt)throw startError;
+   if(startButton&&startButton.isConnected)startButton.textContent='RECOVERING ENTRY…';
+   const recovered=await hsTimeout(service.resumeAttempt('hollow-sanctum'),4500,'Hollow dungeon recovery');
+   if(recovered?.active&&recovered?.attemptId)attempt={...recovered,resumed:false};else throw startError
+  }
   if(!attempt||attempt.error)throw attempt?.error||new Error('Dungeon attempt could not be started');
+  if(startButton&&startButton.isConnected)startButton.textContent='OPENING DUNGEON…';
   token++;const tok=token,p=party();
   run={stage:0,done:false,speed:1,log:[],damageDone:Object.fromEntries(p.map(ch=>[ch.id,0])),healingDone:Object.fromEntries(p.map(ch=>[ch.id,0])),overhealing:Object.fromEntries(p.map(ch=>[ch.id,0])),threat:Object.fromEntries(p.map(ch=>[ch.id,0])),aggro:null,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=hsResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),statuses:Object.fromEntries(p.map(c=>[c.id,[]])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{},runtimeStageStartedAt:Date.now()}
   try{
