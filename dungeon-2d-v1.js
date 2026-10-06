@@ -1135,7 +1135,13 @@ function hudPetOwnerName(ownerId){
 function renderCombatPetRows(){
  const root=$('#cb2dPetRows');if(!root)return;
  const pets=Object.values(run?.hudPets||{}).filter(Boolean);
- if(!pets.length){root.hidden=true;root.innerHTML='';return}
+ if(!pets.length){
+   root.hidden=true;root.innerHTML='';
+   const partyHud=root.closest('.cbcombat-party');
+   partyHud?.classList.remove('has-pets','pets-dense','pets-ultra');
+   partyHud?.style.removeProperty('--pet-groups');
+   return
+ }
  const grouped=new Map();
  pets.forEach(p=>{
    const key=[p.ownerId,p.type||p.name||p.id].join('|'),prev=grouped.get(key);
@@ -1143,6 +1149,13 @@ function renderCombatPetRows(){
    else grouped.set(key,{...p,count:1})
  });
  root.hidden=false;
+ const partyHud=root.closest('.cbcombat-party');
+ if(partyHud){
+   partyHud.classList.add('has-pets');
+   partyHud.classList.toggle('pets-dense',grouped.size>=5);
+   partyHud.classList.toggle('pets-ultra',grouped.size>=9);
+   partyHud.style.setProperty('--pet-groups',String(Math.max(1,grouped.size)))
+ }
  root.innerHTML='<small>PETS / SUMMONS</small>'+[...grouped.values()].map(p=>{
    const owner=hudPetOwnerName(p.ownerId),target=hudTargetName(p.targetId),mark=p.targetId?hudInitial(target):'—';
    return '<div class="cbcombat-pet-row"><span class="cbcombat-pet-icon">◆</span><span class="cbcombat-pet-main"><b>'+esc(p.name||'Summon')+(p.count>1?' ×'+p.count:'')+'</b><small>'+esc(owner)+(p.action?' · '+esc(p.action):'')+'</small></span><span class="cbcombat-pet-target"><i>'+mark+'</i><span><small>TARGET</small><b>'+esc(target)+'</b></span></span></div>'
