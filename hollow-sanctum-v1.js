@@ -680,9 +680,16 @@ async function hsSaveRuntime(phase='stage'){
  })
 }
 function hsRestoreRuntime(attempt){
- const snap=attempt?.runtimeState||{},saved=snap.run||{};
+ const snap=attempt?.runtimeState||{},saved=snap.run||{},members=party();
  Object.assign(hsTactics,snap.tactics||{});
- run={...saved,telegraphs:{},runtimeStageStartedAt:Number(snap.stageStartedAt)||Date.now(),_restored:true};
+ const zeros=Object.fromEntries(members.map(c=>[c.id,0])),fullHp=Object.fromEntries(members.map(c=>[c.id,100]));
+ const rawStage=Number(saved.stage),phase=String(snap.phase||''),pendingCompletion=phase==='between'&&Number.isFinite(rawStage)&&rawStage>=STAGES.length;
+ const safeStage=Number.isFinite(rawStage)?Math.max(0,Math.min(STAGES.length-1,rawStage)):0;
+ run={...saved,stage:safeStage,done:false,speed:Number(saved.speed)||1,log:Array.isArray(saved.log)?saved.log:[],
+  damageDone:{...zeros,...(saved.damageDone||{})},healingDone:{...zeros,...(saved.healingDone||{})},overhealing:{...zeros,...(saved.overhealing||{})},
+  threat:{...zeros,...(saved.threat||{})},hp:{...fullHp,...(saved.hp||{})},resources:{...(saved.resources||{})},cooldowns:{...(saved.cooldowns||{})},
+  statuses:{...(saved.statuses||{})},reviveSickness:{...zeros,...(saved.reviveSickness||{})},history:Array.isArray(saved.history)?saved.history:[],
+  telegraphs:{},runtimeStageStartedAt:Number(snap.stageStartedAt)||Date.now(),_restored:!pendingCompletion,_pendingCompletion:pendingCompletion};
  run.endgame={...(saved.endgame||{}),attemptId:attempt.attemptId,seed:attempt.seed,difficulty:attempt.difficulty,tier:Number(attempt.tier)||0,targetTimeMs:Number(attempt.targetTimeMs)||Number(saved.endgame?.targetTimeMs)||0,dungeonVersion:Number(attempt.dungeonVersion)||Number(saved.endgame?.dungeonVersion)||2};
  return run
 }
@@ -732,18 +739,27 @@ async function hsRunFrom(startIndex,tok){
 async function start(){
  const gate=readiness();if(!gate.ok){briefing();return}
  const startButton=root().querySelector('[data-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
- await Game.persistState?.();
- const service=await hsWaitForEndgame(),eg=hsEndgameConfig(),attempt=await service?.beginOrResumeAttempt?.('hollow-sanctum')||await service?.beginAttempt?.('hollow-sanctum');
- if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN EXPEDITION →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Descent again.');return}
- token++;const tok=token,p=party();
- if(attempt.resumed&&attempt.runtimeState?.kind==='hollow-sanctum'){
-  hsRestoreRuntime(attempt)
- }else{
-  run={stage:0,done:false,speed:1,log:[],damageDone:Object.fromEntries(p.map(ch=>[ch.id,0])),healingDone:Object.fromEntries(p.map(ch=>[ch.id,0])),overhealing:Object.fromEntries(p.map(ch=>[ch.id,0])),threat:Object.fromEntries(p.map(ch=>[ch.id,0])),aggro:null,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=hsResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),statuses:Object.fromEntries(p.map(c=>[c.id,[]])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{},runtimeStageStartedAt:Date.now()}
+ try{
+  await Game.persistState?.();
+  const service=await hsWaitForEndgame(),eg=hsEndgameConfig(),attempt=await service?.beginOrResumeAttempt?.('hollow-sanctum')||await service?.beginAttempt?.('hollow-sanctum');
+  if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN EXPEDITION →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Descent again.');return}
+  token++;const tok=token,p=party();
+  if(attempt.resumed&&attempt.runtimeState?.kind==='hollow-sanctum'){
+   hsRestoreRuntime(attempt)
+  }else{
+   run={stage:0,done:false,speed:1,log:[],damageDone:Object.fromEntries(p.map(ch=>[ch.id,0])),healingDone:Object.fromEntries(p.map(ch=>[ch.id,0])),overhealing:Object.fromEntries(p.map(ch=>[ch.id,0])),threat:Object.fromEntries(p.map(ch=>[ch.id,0])),aggro:null,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=hsResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),statuses:Object.fromEntries(p.map(c=>[c.id,[]])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{},runtimeStageStartedAt:Date.now()}
+  }
+  await window.CellboundExpeditionPresentation?.enter?.('hollow-sanctum',{difficulty:attempt.difficulty||eg.diff?.name||'Normal'});
+  draw();
+  if(run?._pendingCompletion){run._pendingCompletion=false;await complete();return}
+  await hsRunFrom(Math.max(0,Math.min(STAGES.length-1,Number(run.stage)||0)),tok)
+ }catch(error){
+  console.error('Hollow Sanctum entry failed',error);
+  token++;run=null;
+  try{window.CellboundExpeditionPresentation?.leave?.()}catch(_){}
+  briefing();
+  alert('The Hollow Sanctum could not finish loading. Please try again.')
  }
- await window.CellboundExpeditionPresentation?.enter?.('hollow-sanctum',{difficulty:attempt.difficulty||eg.diff?.name||'Normal'});
- draw();
- await hsRunFrom(Math.min(STAGES.length-1,Number(run.stage)||0),tok)
 }
 async function complete(){
  const s=state(),q=qstate(),first=!q.flags.hollowFirstClear,metrics=hsRunMetrics();run.endgameMetrics=metrics;const record=await window.CellboundEndgame?.recordRun?.('hollow-sanctum',metrics);run.endgameRecord=record&&!record.error?record:null;const mode=run.endgame?.difficulty||'normal';run.xpReward=BAL?.dungeonXp?.('hollow-sanctum',{difficulty:mode,firstClear:first})||(first&&mode==='normal'?4350:XP);const gains=awardXp(),tier=Number(run.endgame?.tier)||0,gearDrops=window.CellboundEndgame?.rollClearLootBundle?.('hollow-sanctum','choir')||[window.CellboundEndgame?.rollClearLoot?.('hollow-sanctum','choir',1)].filter(Boolean),gold=mode==='normal'?220:mode==='heroic'?300:340+tier*12,renown=mode==='normal'?100:mode==='heroic'?135:150+tier*5;s.gold=(Number(s.gold)||0)+gold;s.renown=(Number(s.renown)||0)+renown;const shards=window.CellboundEndgame?.shardReward?.('hollow-sanctum')||0;if(shards)Game.addMaterial?.('cell-shards',shards);const chase=window.CellboundEndgame?.rollChase?.('hollow-sanctum');if(chase)s.activity.push('Very rare collection reward: '+chase.name+'.');Game.addMaterial?.('void-crystal',first?2:1);const professionDrops=window.CellboundProfessions?.rollContentReagents?.('hollow-sanctum',{difficulty:mode,tier})||[];professionDrops.forEach(d=>Game.addMaterial?.(d.key,d.quantity));q.flags.hollowFirstClear=true;q.hollowCompletions=(Number(q.hollowCompletions)||0)+1;
