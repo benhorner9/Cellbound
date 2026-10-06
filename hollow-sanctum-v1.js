@@ -16,7 +16,7 @@ const HOLLOW_ROOMS={
  gallery:{
   zone:'GALLERY OF ECHOES',
   description:'A shattered processional chamber suspended over the void. The party enters from the south causeway and clears the open central floor before leaving through the north gate.',
-  art:'./assets/hollow-sanctum/rooms/gallery.webp?v=20261006c',
+  art:'./assets/hollow-sanctum/rooms/gallery.webp?v=20261006d',
   liveProfile:'hollow-gallery',
   route:{
    entry:{x:50,y:98},entryInside:{x:50,y:84},engage:{x:50,y:62},
@@ -32,7 +32,7 @@ const HOLLOW_ROOMS={
  sentinel:{
   zone:'GLASSJAW SENTINEL',
   description:'A circular relic court built around a suspended void core. Fight on the open ring, then route around the core to the north gate.',
-  art:'./assets/hollow-sanctum/rooms/sentinel.webp?v=20261006c',
+  art:'./assets/hollow-sanctum/rooms/sentinel.webp?v=20261006d',
   liveProfile:'hollow-sentinel',
   route:{
    entry:{x:50,y:98},entryInside:{x:50,y:84},engage:{x:50,y:63},
@@ -49,7 +49,7 @@ const HOLLOW_ROOMS={
  choir:{
   zone:'THE BOUND CHOIR',
   description:'The final fractured shrine. The Bound Choir holds the lower ritual floor while the immense crystal nexus dominates the northern dais.',
-  art:'./assets/hollow-sanctum/rooms/choir.webp?v=20261006c',
+  art:'./assets/hollow-sanctum/rooms/choir.webp?v=20261006d',
   liveProfile:'hollow-choir',
   route:{
    entry:{x:50,y:98},entryInside:{x:50,y:84},engage:{x:50,y:64},
