@@ -162,6 +162,12 @@ async function hsWaitForEndgame(){
  for(let i=0;i<20;i++){if(window.CellboundEndgame?.beginAttempt)return window.CellboundEndgame;await new Promise(r=>setTimeout(r,100))}
  return null
 }
+function hsTimeout(promise,ms,label){
+ return Promise.race([
+  Promise.resolve(promise),
+  new Promise((_,reject)=>setTimeout(()=>reject(new Error((label||'Operation')+' timed out')),ms))
+ ])
+}
 
 function briefing(){
  const baseGate=readiness(true),gate=readiness(),r=root();r.hidden=false;document.body.classList.add('hs2d-open');
@@ -740,28 +746,29 @@ async function start(){
  const gate=readiness();if(!gate.ok){briefing();return}
  const startButton=root().querySelector('[data-start]');if(startButton){startButton.disabled=true;startButton.textContent='ENTERING…'}
  try{
-  await Game.persistState?.();
-  const service=await hsWaitForEndgame(),eg=hsEndgameConfig(),attempt=await service?.beginOrResumeAttempt?.('hollow-sanctum')||await service?.beginAttempt?.('hollow-sanctum');
-  if(!attempt||attempt.error){if(startButton){startButton.disabled=false;startButton.textContent='BEGIN EXPEDITION →'}alert(attempt?.error?.message||'Dungeon service is still loading. Try Begin Descent again.');return}
+  try{await hsTimeout(Game.persistState?.(),2500,'Save')}catch(error){console.warn('Hollow pre-entry save timed out; continuing',error)}
+  const service=await hsWaitForEndgame(),eg=hsEndgameConfig();
+  if(!service?.beginAttempt)throw new Error('Dungeon service unavailable');
+  const attempt=await hsTimeout(service.beginAttempt('hollow-sanctum'),8000,'Hollow dungeon start');
+  if(!attempt||attempt.error)throw attempt?.error||new Error('Dungeon attempt could not be started');
   token++;const tok=token,p=party();
-  if(attempt.resumed&&attempt.runtimeState?.kind==='hollow-sanctum'){
-   hsRestoreRuntime(attempt)
-  }else{
-   run={stage:0,done:false,speed:1,log:[],damageDone:Object.fromEntries(p.map(ch=>[ch.id,0])),healingDone:Object.fromEntries(p.map(ch=>[ch.id,0])),overhealing:Object.fromEntries(p.map(ch=>[ch.id,0])),threat:Object.fromEntries(p.map(ch=>[ch.id,0])),aggro:null,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=hsResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),statuses:Object.fromEntries(p.map(c=>[c.id,[]])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{},runtimeStageStartedAt:Date.now()}
-  }
+  run={stage:0,done:false,speed:1,log:[],damageDone:Object.fromEntries(p.map(ch=>[ch.id,0])),healingDone:Object.fromEntries(p.map(ch=>[ch.id,0])),overhealing:Object.fromEntries(p.map(ch=>[ch.id,0])),threat:Object.fromEntries(p.map(ch=>[ch.id,0])),aggro:null,endgame:{difficulty:eg.difficulty,tier:eg.tier||0,label:eg.diff?.name||'Normal',targetTimeMs:Number(attempt.targetTimeMs)||eg.targetTimeMs,recommendedItemLevel:eg.recommendedItemLevel,dungeonVersion:eg.dungeon?.version||2,affixes:[...(eg.affixes||[])],attemptId:attempt.attemptId,seed:attempt.seed},hp:Object.fromEntries(p.map(c=>[c.id,100])),resources:Object.fromEntries(p.map(c=>{const d=hsResourceDef(c);return[c.id,{name:d.name,max:d.max,value:d.start}]})),cooldowns:Object.fromEntries(p.map(c=>[c.id,{}])),statuses:Object.fromEntries(p.map(c=>[c.id,[]])),reviveSickness:Object.fromEntries(p.map(c=>[c.id,0])),expeditionTimeMs:0,reviveReadyAt:0,outOfCombatRevives:0,history:[],telegraphs:{},runtimeStageStartedAt:Date.now()}
   try{
    document.querySelectorAll('.cbx-transition').forEach(node=>node.remove());
    document.body.classList.remove('cbx-transition-open')
   }catch(_){}
   draw();
-  if(run?._pendingCompletion){run._pendingCompletion=false;await complete();return}
-  await hsRunFrom(Math.max(0,Math.min(STAGES.length-1,Number(run.stage)||0)),tok)
+  hsRunFrom(0,tok).catch(error=>{
+   console.error('Hollow Sanctum run failed after entry',error);
+   setStatus('Dungeon encountered an error.');
+   feed('The dungeon stopped unexpectedly. Return to the journal and try again.')
+  })
  }catch(error){
   console.error('Hollow Sanctum entry failed',error);
   token++;run=null;
   try{window.CellboundExpeditionPresentation?.leave?.()}catch(_){}
-  briefing();
-  alert('The Hollow Sanctum could not finish loading. Please try again.')
+  if(startButton&&startButton.isConnected){startButton.disabled=false;startButton.textContent='BEGIN EXPEDITION →'}
+  alert('The Hollow Sanctum could not start: '+(error?.message||'Unknown error')+'.')
  }
 }
 async function complete(){
