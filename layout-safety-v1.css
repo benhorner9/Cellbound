@@ -2362,3 +2362,289 @@ body.bs2d-open{
   .cbcombat-battle-panel,
   .cbcombat-meters-panel{padding:7px}
 }
+
+
+/* Ashen Vault live HUD: targets left, compact meters + commands right. */
+.cbcombat-shell.ashen-vault-combat .cbcombat-left-column{
+  grid-template-rows:minmax(0,1fr)!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-right-column{
+  min-width:0;
+  min-height:0;
+  display:grid;
+  grid-template-columns:1fr;
+  grid-template-rows:minmax(260px,.46fr) minmax(300px,.54fr);
+  gap:var(--cbcombat-gap);
+  overflow:hidden
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-right-column>.cbcombat-panel{
+  width:100%;
+  height:100%
+}
+
+/* Party cards gain a dedicated live target row. */
+.cbcombat-shell.ashen-vault-combat .cbcombat-party #cb2dRows{
+  grid-template-rows:repeat(5,minmax(82px,1fr))!important;
+  gap:6px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party #cb2dRows>.cb2d-party-row{
+  grid-template-columns:34px minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,1fr) 27px!important;
+  min-height:82px!important;
+  padding:6px 7px 5px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party .cb2d-party-avatar{
+  grid-column:1;
+  grid-row:1
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party .cb2d-party-main{
+  grid-column:2;
+  grid-row:1
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party .cb2d-party-target{
+  grid-column:1/-1;
+  grid-row:2;
+  min-width:0;
+  display:grid!important;
+  grid-template-columns:20px minmax(0,1fr);
+  gap:6px;
+  align-items:center;
+  height:25px;
+  margin-top:2px;
+  padding:3px 6px;
+  overflow:hidden;
+  border:1px solid rgba(213,91,72,.25);
+  border-radius:5px;
+  background:rgba(43,15,14,.62)
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party .cb2d-party-target.friendly{
+  border-color:rgba(88,168,205,.25);
+  background:rgba(10,30,42,.68)
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party .cb2d-party-target>i{
+  width:18px;
+  height:18px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:50%;
+  color:#f0d8cd;
+  font-size:6px;
+  font-style:normal;
+  font-weight:900
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party .cb2d-party-target>span{
+  min-width:0;
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:6px;
+  align-items:center
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party .cb2d-party-target small{
+  display:block!important;
+  color:#c67b6c!important;
+  font-size:6px!important;
+  font-weight:900;
+  letter-spacing:.08em
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party .cb2d-party-target.friendly small{
+  color:#7bb8d6!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-party .cb2d-party-target b{
+  min-width:0;
+  overflow:hidden;
+  color:#e8e4dc;
+  font-size:7px!important;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+
+/* Active pets/summons sit under the five party cards and share their live targets. */
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-rows{
+  flex:0 0 auto;
+  max-height:126px;
+  margin-top:6px;
+  padding-top:6px;
+  overflow-y:auto;
+  border-top:1px solid rgba(173,92,177,.16)
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-rows[hidden]{display:none!important}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-rows>small{
+  display:block;
+  margin:0 0 5px;
+  color:#c379c7;
+  font-size:6px;
+  font-weight:900;
+  letter-spacing:.11em
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-row{
+  min-width:0;
+  display:grid;
+  grid-template-columns:20px minmax(0,1fr) minmax(82px,.8fr);
+  gap:6px;
+  align-items:center;
+  min-height:37px;
+  margin-top:4px;
+  padding:5px 6px;
+  border:1px solid rgba(173,92,177,.18);
+  border-radius:6px;
+  background:rgba(25,10,31,.52)
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-icon{
+  width:20px;
+  height:20px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(194,106,200,.28);
+  border-radius:50%;
+  color:#d58cda;
+  font-size:8px
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-main,
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-target>span{min-width:0}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-main b{
+  display:block;
+  overflow:hidden;
+  color:#e7d7e9;
+  font-size:7px;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-main small{
+  display:block!important;
+  margin-top:2px;
+  overflow:hidden;
+  color:#9d72a0!important;
+  font-size:6px!important;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-target{
+  min-width:0;
+  display:grid;
+  grid-template-columns:16px minmax(0,1fr);
+  gap:5px;
+  align-items:center
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-target>i{
+  width:16px;height:16px;
+  display:grid;place-items:center;
+  border:1px solid rgba(213,91,72,.22);
+  border-radius:50%;
+  color:#dfb1a9;
+  font-size:5px;
+  font-style:normal
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-target small{
+  display:block;
+  color:#bd7468;
+  font-size:5px;
+  font-weight:900;
+  letter-spacing:.06em
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-pet-target b{
+  display:block;
+  overflow:hidden;
+  color:#d9d5cf;
+  font-size:6px;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+
+/* Keep Threat, Damage and Healing together at the top of the right rail. */
+.cbcombat-shell.ashen-vault-combat .cbcombat-meters-panel{
+  padding:7px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-meter-stack{
+  height:auto!important;
+  grid-template-rows:repeat(3,minmax(0,auto))!important;
+  align-content:start!important;
+  gap:6px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-meter-stack .cb2d-meter-panel{
+  padding:6px 7px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-meter-stack .cb2d-meter-head{
+  margin-bottom:4px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-meter-stack .cb2d-meter-list{
+  gap:3px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-meter-stack .cb2d-meter-row{
+  min-height:0!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-meter-stack .cb2d-meter-label b{
+  font-size:7px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-meter-stack .cb2d-meter-label span{
+  font-size:5px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-meter-stack .cb2d-meter-row>em{
+  height:3px!important
+}
+
+/* Full two-column command deck occupies the saved lower-right space. */
+.cbcombat-shell.ashen-vault-combat .cbcombat-right-column .cbcombat-command-panel{
+  min-height:0!important;
+  padding:8px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-right-column .cbr-command-copy{
+  margin-bottom:4px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-right-column .cbr-command-meta{
+  margin-bottom:6px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-right-column .cbr-command-groups{
+  flex:1 1 auto;
+  min-height:0;
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:6px!important;
+  align-items:stretch!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-right-column .cbr-command-group{
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  padding:5px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-right-column .cbr-command-group>small{
+  flex:0 0 auto;
+  margin-bottom:4px!important;
+  font-size:7px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-right-column .cbr-command-column{
+  flex:1 1 auto;
+  min-height:0;
+  display:grid!important;
+  grid-template-columns:1fr!important;
+  grid-template-rows:repeat(4,minmax(0,1fr))!important;
+  gap:5px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-right-column .cbr-command-column .cbr-command,
+.cbcombat-shell.ashen-vault-combat .cbcombat-right-column .cbr-command-column .cb2d-potion-button{
+  min-height:0!important;
+  height:100%!important;
+  padding:6px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-right-column .cbr-command-column .cbr-command b,
+.cbcombat-shell.ashen-vault-combat .cbcombat-right-column .cbr-command-column .cb2d-potion-button b{
+  font-size:7px!important
+}
+.cbcombat-shell.ashen-vault-combat .cbcombat-right-column .cbr-command-column .cbr-command small,
+.cbcombat-shell.ashen-vault-combat .cbcombat-right-column .cbr-command-column .cb2d-potion-button small{
+  font-size:5px!important;
+  white-space:normal!important;
+  line-height:1.2!important
+}
+
+@media(max-width:849px){
+  .cbcombat-shell.ashen-vault-combat .cbcombat-right-column{
+    grid-row:3;
+    display:grid;
+    grid-template-rows:auto auto;
+    overflow:visible
+  }
+  .cbcombat-shell.ashen-vault-combat .cbcombat-meters-panel{min-height:320px}
+  .cbcombat-shell.ashen-vault-combat .cbcombat-command-panel{min-height:360px!important}
+}
