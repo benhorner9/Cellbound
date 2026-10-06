@@ -346,6 +346,8 @@ if(file==='quests-v2.js'){
   if(file==='dungeon-2d-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Ashen Vault');
   if(file==='hollow-sanctum-v1.js'&&!contents.includes('aria-label="Close dungeon"'))throw new Error('Accessible close control is missing from Hollow Sanctum');
   if(file==='hollow-sanctum-v1.js'){
+    for(const hook of ["./assets/hollow-sanctum/rooms/gallery.webp","./assets/hollow-sanctum/rooms/sentinel.webp","./assets/hollow-sanctum/rooms/choir.webp","fallback='./assets/dungeons/hollow-sanctum.webp'"])if(!contents.includes(hook))throw new Error('Hollow Sanctum room asset recovery is missing '+hook);
+    if(/assets\/hollow-sanctum\/rooms\/[^'"]+\.webp\?v=/.test(contents))throw new Error('Hollow Sanctum room artwork must not use query-string cache busting on staging');
     for(const hook of ["unitId='p-'+c.id","move('p-'+ch.id","if(id.startsWith('p-'))return party().some","CellboundCombatPortraits?.refresh?.()"])if(!contents.includes(hook))throw new Error('Hollow Sanctum must use canonical player IDs for combat portraits: '+hook);
     for(const hook of ["gallery.webp?v=4","sentinel.webp?v=4","choir.webp?v=4","addAnchors:[{x:34,y:48},{x:66,y:48}]","mechanic.spawnPoints=room.addAnchors","sentinel-fractured-core","entry:{x:50,y:98}"])if(!contents.includes(hook))throw new Error('Hollow Sanctum void-room combat mapping is missing '+hook);
     if(contents.includes("addUnit('p'+i")||contents.includes("move('p'+i"))throw new Error('Legacy Hollow Sanctum p0-p4 player tokens break shared combat portraits');

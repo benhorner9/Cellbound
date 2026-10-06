@@ -16,7 +16,7 @@ const HOLLOW_ROOMS={
  gallery:{
   zone:'GALLERY OF ECHOES',
   description:'Collapsed ceremonial entrance hall where Hollowed Surveyors guard the processional route.',
-  art:'./assets/hollow-sanctum/rooms/gallery.webp?v=4',
+  art:'./assets/hollow-sanctum/rooms/gallery.webp',
   liveProfile:'hollow-gallery',
   route:{entry:{x:50,y:98},entryInside:{x:50,y:78},engage:{x:50,y:58},partyAnchors:[[50,64],[44,67],[56,67],[40,70],[60,70]],exitPath:[{x:50,y:56},{x:50,y:42},{x:50,y:28},{x:50,y:13},{x:50,y:2}],spread:2.0},
   enemyAnchors:[[50,36],[39,45],[61,45]],
@@ -27,7 +27,7 @@ const HOLLOW_ROOMS={
  sentinel:{
   zone:'GLASSJAW SENTINEL',
   description:'A guardian chamber built around a fractured relic core. Fracture Line and Glassjaw Sweep punish bad positioning.',
-  art:'./assets/hollow-sanctum/rooms/sentinel.webp?v=4',
+  art:'./assets/hollow-sanctum/rooms/sentinel.webp',
   liveProfile:'hollow-sentinel',
   route:{entry:{x:50,y:98},entryInside:{x:50,y:79},engage:{x:50,y:60},partyAnchors:[[50,66],[44,69],[56,69],[40,72],[60,72]],exitPath:[{x:50,y:57},{x:36,y:50},{x:33,y:37},{x:38,y:23},{x:50,y:11},{x:50,y:2}],spread:1.9},
   enemyAnchors:[[50,51]],
@@ -39,7 +39,7 @@ const HOLLOW_ROOMS={
  choir:{
   zone:'THE BOUND CHOIR',
   description:'The inner shrine. Survive Resonance Collapse, Shattering Hymn and the Echo Choir.',
-  art:'./assets/hollow-sanctum/rooms/choir.webp?v=4',
+  art:'./assets/hollow-sanctum/rooms/choir.webp',
   liveProfile:'hollow-choir',
   route:{entry:{x:50,y:98},entryInside:{x:50,y:79},engage:{x:50,y:60},partyAnchors:[[50,66],[44,69],[56,69],[40,72],[60,72]],exitPath:[],spread:2.0},
   enemyAnchors:[[50,45]],
@@ -252,11 +252,20 @@ function hsSetFade(black,duration=560){
  const fade=hsEnsureFade();if(!fade)return;fade.style.setProperty('--hs-fade-ms',Math.max(0,Number(duration)||0)+'ms');fade.classList.toggle('is-black',Boolean(black))
 }
 function stageEnvironment(s){
- const room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery,arena=$('#hs2dArena'),environment=$('#hs2dEnvironment'),src=room.art;
+ const room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery,arena=$('#hs2dArena'),environment=$('#hs2dEnvironment'),src=room.art,fallback='./assets/dungeons/hollow-sanctum.webp';
  arena.className='cb2d-arena hs2d-arena hs2d-unified-arena hollow-live-room stage-'+s.id;
  arena.dataset.hollowRoom=s.id;arena.dataset.bespokeBattlefield='1';
- if(environment)environment.innerHTML='<img class="hs2d-room-art" src="'+src+'" alt="" decoding="async" draggable="false">';
  const renderer=window.CellboundLivingScenes||window.CellboundAshenLiveScenes;
+ if(environment){
+  environment.innerHTML='<img class="hs2d-room-art" src="'+src+'" alt="" decoding="async" draggable="false">';
+  const art=environment.querySelector('.hs2d-room-art');
+  art?.addEventListener('error',()=>{
+   if(art.dataset.hsFallback==='1')return;
+   art.dataset.hsFallback='1';
+   art.src=fallback;
+   renderer?.mount?.(arena,{src:fallback,profile:room.liveProfile||'hollow-gallery'})
+  },{once:true})
+ }
  renderer?.mount?.(arena,{src,profile:room.liveProfile||'hollow-gallery'});
  const tag=$('#hs2dRoom');if(tag)tag.innerHTML='<em>'+esc(room.zone||'HOLLOW SANCTUM')+'</em><b>'+esc(s.title)+'</b><small>'+esc(room.description||'The sanctum closes around the party.')+'</small>';
  hsEnsureFade()
