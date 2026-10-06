@@ -551,6 +551,15 @@ linear-gradient(180deg,rgba(7,12,14,.985),rgba(5,9,11,.995));backdrop-filter:blu
 .cbr-inline-power b{display:flex;gap:4px}.cbr-inline-power strong{margin-left:auto;color:#d7edf9;font-size:9px}
 .cbr-command-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .cbcombat-shell.ashen-vault-combat .cbr-command-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cbcombat-shell.ashen-vault-combat .cbr-command-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:start}
+.cbcombat-shell.ashen-vault-combat .cbr-command-group{min-width:0;padding:7px;border:1px solid rgba(113,164,197,.12);border-radius:7px;background:rgba(5,15,22,.5)}
+.cbcombat-shell.ashen-vault-combat .cbr-command-group>small{display:block;margin:0 0 6px;color:#7d9fb3;font-size:8px;font-weight:900;letter-spacing:.1em;text-align:center}
+.cbcombat-shell.ashen-vault-combat .cbr-command-group.attack>small{color:#d6a768}
+.cbcombat-shell.ashen-vault-combat .cbr-command-group.defence>small{color:#72b9d8}
+.cbcombat-shell.ashen-vault-combat .cbr-command-column{display:grid;grid-template-columns:1fr;gap:6px}
+.cbcombat-shell.ashen-vault-combat .cbr-command-column .cbr-command,
+.cbcombat-shell.ashen-vault-combat .cbr-command-column .cb2d-potion-button{width:100%;min-width:0;min-height:50px!important}
+@media(max-width:560px){.cbcombat-shell.ashen-vault-combat .cbr-command-groups{gap:5px}.cbcombat-shell.ashen-vault-combat .cbr-command-group{padding:5px}}
 .cb2d-controls .cbr-command{min-height:50px;padding:7px 8px;border:1px solid rgba(113,164,197,.16);border-radius:7px;background:rgba(9,21,30,.92);color:#cfdae1;text-align:left;transition:border-color .15s ease,background .15s ease,transform .15s ease}
 .cb2d-controls .cbr-command b{font-size:.45rem;letter-spacing:.04em}
 .cb2d-controls .cbr-command small{font-size:.32rem;color:#758995;line-height:1.25}
