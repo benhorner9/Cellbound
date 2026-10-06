@@ -519,7 +519,7 @@ if(file==='quests-v2.js'){
     if(!contents.includes('requestAnimationFrame(frame)')||!contents.includes('document.hidden')||!contents.includes('session.advance('))throw new Error(file+' must advance a real-time Combat Reborn session from the browser frame loop');
   }
   const canonicalCombatViewHooks={
-    'dungeon-2d-v1.js':['window.CellboundCombatViewer','Viewer.markup({'],
+    'dungeon-2d-v1.js':['window.CellboundCombatViewer','Viewer.mount(rootEl,{'],
     'hollow-sanctum-v1.js':['window.CellboundCombatViewer','Viewer.mount(r,{'],
     'chaos-canyon-v1.js':['window.CellboundCombatViewer','Viewer.mount(r,{'],
     'blackout-station-v1.js':['window.CellboundCombatViewer','Viewer.mount(r,{'],
@@ -536,9 +536,11 @@ if(file==='quests-v2.js'){
   if(file.endsWith('.js')&&contents.includes('combat-hud-fullscreen cbstd-hud'))
     throw new Error(file+' reintroduced a legacy standalone combat shell instead of CellboundCombatViewer');
   if(file==='combat-viewer-v1.js'){
-    for(const hook of ["window.CellboundCombatViewer","data-combat-view=\"canonical-v1\"","function mount(root,options={})","cbcombat-grid"])
+    for(const hook of ["window.CellboundCombatViewer","data-combat-view=\"canonical-v1\"","data-combat-profile=\"pve\"","function mount(root,options={})","cbcombat-grid","cbcombat-arena-wrap '+esc(battleClass)"])
       if(!contents.includes(hook))throw new Error('Canonical combat viewer contract is missing '+hook);
+    if(contents.includes("cbcombat-standard-hud '+esc(shellClass)"))throw new Error('PvE encounter classes must not be applied to the canonical outer shell');
   }
+  if(file==='dungeon-2d-v1.js'&&contents.includes('Viewer.markup({'))throw new Error('Ashen/shared combat must use CellboundCombatViewer.mount(), not markup()');
   if(file==='guild.html'&&!/combat-viewer-v1\.js\?v=\d+/.test(contents))throw new Error('Canonical combat viewer is not loaded by guild.html');
   if(file==='combat-hud-standard-v1.js'){
     for(const hook of ['data-combat-view="canonical-v1"','orderMeters(shell)','organiseCommands(shell)','upgradeRows(shell)'])
@@ -546,7 +548,7 @@ if(file==='quests-v2.js'){
     if(contents.includes('adoptAshenFrame'))throw new Error('Legacy combat-view conversion must not return; all combat mounts CellboundCombatViewer directly');
   }
   if(file==='layout-safety-v1.css'){
-    for(const hook of ['data-combat-view="canonical-v1"','.cbcombat-arena-wrap',').cbcombat-backdrop{','.cbcombat-party-rows'])
+    for(const hook of ['data-combat-view="canonical-v1"','.cbcombat-arena-wrap',').cbcombat-backdrop{','.cbcombat-party-rows','Canonical viewer hard sandbox'])
       if(!contents.includes(hook))throw new Error('Canonical combat-view CSS contract is missing '+hook);
   }
   if(['world-boss-2d-v1.js','pvp-viewer-v1.js'].includes(file)){
