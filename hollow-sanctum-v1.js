@@ -645,7 +645,7 @@ function draw(){
   partyLabel:'PARTY CONDITION · ILVL '+ilvl(),partyMarkup:hsPartyRows(),partyRowsId:'hs2dRows',
   battleTopbarMarkup:topbar,arenaMarkup,castMarkup:cast,metersMarkup:meters,commandsMarkup:commands,
   theme:'hollow',battleClass:'hs2d-unified-shell',partySize:party().length,speedAttribute:'data-speed',closeAttribute:'data-close',
-  titleId:'hs2dTitle',endId:'hs2dEnd'
+  titleId:'hs2dTitle',routeId:'hs2dRoute',endId:'hs2dEnd'
  });
  r.querySelector('[data-close]').onclick=()=>{if(run&&!run.done&&!confirm('Leave The Hollow Sanctum?'))return;close()};
  r.querySelector('[data-speed]').onclick=e=>{run.speed=run.speed===2?1:2;e.currentTarget.textContent=run.speed+'×'};
