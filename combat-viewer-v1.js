@@ -1,7 +1,7 @@
 (()=>{
 'use strict';
 
-const VERSION='1.1.0';
+const VERSION='1.1.1';
 
 function esc(v){
  return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))
@@ -70,7 +70,7 @@ function shellMarkup(options={}){
 function normalise(shell){
  if(!shell)return shell;
  const arena=shell.querySelector('.cbcombat-arena-wrap > .cb2d-arena,.cbcombat-arena-wrap > [data-combat-arena]');
- if(arena)arena.classList.add('cbcombat-arena');
+ if(arena){arena.classList.add('cbcombat-arena');arena.dataset.combatArena='canonical'}
  const cast=shell.querySelector('.cbcombat-arena-wrap > .cb2d-cast');
  if(cast)cast.classList.add('cbcombat-cast');
  const meters=shell.querySelector('.cbcombat-meters-panel > .cb2d-combat-meters');
