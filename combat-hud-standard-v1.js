@@ -29,8 +29,21 @@ function rowId(row){
   if(!nested)return'';
   return normaliseId(nested.dataset.tdSide||nested.dataset.qSideHp||nested.dataset.bsSideHp||nested.dataset.ccSideHp||nested.dataset.hsSideHp||nested.dataset.tbSideHp||'')
 }
+function ensureRowsHost(shell){
+  const party=shell.querySelector('.cb2d-party');if(!party)return null;
+  let host=party.querySelector(':scope > .cbstd-party-rows');
+  if(host)return host;
+  const known=[...party.children].find(el=>el.querySelector?.('.cb2d-party-row'));
+  if(known){known.classList.add('cbstd-party-rows');return known}
+  const direct=[...party.children].filter(el=>el.matches?.('.cb2d-party-row'));
+  if(!direct.length)return null;
+  host=document.createElement('div');host.className='cbstd-party-rows';
+  direct[0].before(host);direct.forEach(row=>host.appendChild(row));
+  return host
+}
 function partyRows(shell){
-  return [...shell.querySelectorAll('.cb2d-party .cb2d-party-row')].filter(row=>{
+  const host=ensureRowsHost(shell),scope=host||shell.querySelector('.cb2d-party');
+  return [...(scope?.querySelectorAll?.('.cb2d-party-row')||[])].filter(row=>{
     const id=rowId(row);if(!id)return false;row.dataset.cbstdPartyId=id;return true
   })
 }
