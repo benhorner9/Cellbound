@@ -15,39 +15,54 @@ const STAGES=[
 const HOLLOW_ROOMS={
  gallery:{
   zone:'GALLERY OF ECHOES',
-  description:'Collapsed ceremonial entrance hall where Hollowed Surveyors guard the processional route.',
-  art:'./assets/hollow-sanctum/rooms/gallery.webp',
+  description:'A shattered processional chamber suspended over the void. The party enters from the south causeway and clears the open central floor before leaving through the north gate.',
+  art:'./assets/hollow-sanctum/rooms/gallery.webp?v=20261006b',
   liveProfile:'hollow-gallery',
-  route:{entry:{x:50,y:98},entryInside:{x:50,y:78},engage:{x:50,y:58},partyAnchors:[[50,64],[44,67],[56,67],[40,70],[60,70]],exitPath:[{x:50,y:56},{x:50,y:42},{x:50,y:28},{x:50,y:13},{x:50,y:2}],spread:2.0},
-  enemyAnchors:[[50,36],[39,45],[61,45]],
-  bounds:{left:21,right:79,top:23,bottom:74},
-  walkable:[[38,23],[62,23],[73,31],[79,44],[77,58],[67,70],[58,74],[42,74],[33,70],[23,58],[21,44],[27,31]],
+  route:{
+   entry:{x:50,y:98},entryInside:{x:50,y:84},engage:{x:50,y:62},
+   partyAnchors:[[50,68],[44,71],[56,71],[40,74],[60,74]],
+   exitPath:[{x:50,y:59},{x:50,y:48},{x:50,y:36},{x:50,y:24},{x:50,y:13},{x:50,y:4},{x:50,y:-2}],
+   spread:2.0
+  },
+  enemyAnchors:[[50,43],[40,49],[60,49]],
+  bounds:{left:24,right:76,top:18,bottom:80},
+  walkable:[[39,18],[61,18],[70,24],[76,36],[76,56],[69,69],[60,80],[40,80],[31,69],[24,56],[24,36],[30,24]],
   blockers:[]
  },
  sentinel:{
   zone:'GLASSJAW SENTINEL',
-  description:'A guardian chamber built around a fractured relic core. Fracture Line and Glassjaw Sweep punish bad positioning.',
-  art:'./assets/hollow-sanctum/rooms/sentinel.webp',
+  description:'A circular relic court built around a suspended void core. Fight on the open ring, then route around the core to the north gate.',
+  art:'./assets/hollow-sanctum/rooms/sentinel.webp?v=20261006b',
   liveProfile:'hollow-sentinel',
-  route:{entry:{x:50,y:98},entryInside:{x:50,y:79},engage:{x:50,y:60},partyAnchors:[[50,66],[44,69],[56,69],[40,72],[60,72]],exitPath:[{x:50,y:57},{x:36,y:50},{x:33,y:37},{x:38,y:23},{x:50,y:11},{x:50,y:2}],spread:1.9},
-  enemyAnchors:[[50,51]],
-  bounds:{left:20,right:80,top:24,bottom:75},
-  walkable:[[39,24],[61,24],[72,31],[79,43],[80,56],[72,68],[61,75],[39,75],[28,68],[20,56],[21,43],[28,31]],
-  arena:{shape:'ellipse',cx:50,cy:51,rx:30,ry:24},
-  blockers:[{id:'sentinel-fractured-core',shape:'ellipse',x:50,y:36,rx:8.5,ry:9.5,blocksLos:false,blocksMovement:true}]
+  route:{
+   entry:{x:50,y:98},entryInside:{x:50,y:84},engage:{x:50,y:63},
+   partyAnchors:[[50,70],[44,73],[56,73],[40,76],[60,76]],
+   exitPath:[{x:50,y:60},{x:43,y:54},{x:39,y:46},{x:39,y:35},{x:43,y:25},{x:50,y:15},{x:50,y:5},{x:50,y:-2}],
+   spread:1.9
+  },
+  enemyAnchors:[[50,53]],
+  bounds:{left:24,right:76,top:17,bottom:81},
+  walkable:[[39,17],[61,17],[70,23],[76,35],[76,57],[69,70],[60,81],[40,81],[31,70],[24,57],[24,35],[30,23]],
+  arena:{shape:'ellipse',cx:50,cy:54,rx:28,ry:25},
+  blockers:[{id:'sentinel-void-core',shape:'ellipse',x:50,y:36,rx:6.5,ry:8.0,blocksLos:false,blocksMovement:true}]
  },
  choir:{
   zone:'THE BOUND CHOIR',
-  description:'The inner shrine. Survive Resonance Collapse, Shattering Hymn and the Echo Choir.',
-  art:'./assets/hollow-sanctum/rooms/choir.webp',
+  description:'The final fractured shrine. The Bound Choir holds the lower ritual floor while the immense crystal nexus dominates the northern dais.',
+  art:'./assets/hollow-sanctum/rooms/choir.webp?v=20261006b',
   liveProfile:'hollow-choir',
-  route:{entry:{x:50,y:98},entryInside:{x:50,y:79},engage:{x:50,y:60},partyAnchors:[[50,66],[44,69],[56,69],[40,72],[60,72]],exitPath:[],spread:2.0},
-  enemyAnchors:[[50,45]],
-  addAnchors:[{x:34,y:48},{x:66,y:48}],
-  bounds:{left:20,right:80,top:26,bottom:76},
-  walkable:[[39,26],[61,26],[72,33],[79,45],[80,57],[72,69],[61,76],[39,76],[28,69],[20,57],[21,45],[28,33]],
-  arena:{shape:'ellipse',cx:50,cy:52,rx:30,ry:24},
-  blockers:[]
+  route:{
+   entry:{x:50,y:98},entryInside:{x:50,y:84},engage:{x:50,y:64},
+   partyAnchors:[[50,72],[44,75],[56,75],[40,78],[60,78]],
+   exitPath:[],
+   spread:2.0
+  },
+  enemyAnchors:[[50,56]],
+  addAnchors:[{x:35,y:57},{x:65,y:57}],
+  bounds:{left:24,right:76,top:22,bottom:81},
+  walkable:[[37,22],[63,22],[72,30],[76,44],[75,61],[68,73],[60,81],[40,81],[32,73],[25,61],[24,44],[28,30]],
+  arena:{shape:'ellipse',cx:50,cy:57,rx:27,ry:23},
+  blockers:[{id:'choir-fractured-shrine',shape:'ellipse',x:50,y:31,rx:13,ry:18,blocksLos:false,blocksMovement:true}]
  }
 };
 const RELIC={itemId:'quest-blackglass-resonator',name:'Blackglass Resonator',class:'All',classes:'all',slot:'Relic',tier:3,rarity:'Rare',tierLabel:'Quest Relic',enabled:true,dropEnabled:false,itemLevel:30,power:10,tradeState:'soulbound',questArtMaterial:'void-crystal',lore:'Recovered from The Bound Choir beneath Zeltira.'};
@@ -253,19 +268,19 @@ function hsSetFade(black,duration=560){
 function stageEnvironment(s){
  const room=HOLLOW_ROOMS[s.id]||HOLLOW_ROOMS.gallery,arena=$('#hs2dArena'),environment=$('#hs2dEnvironment'),src=room.art,fallback='./assets/dungeons/hollow-sanctum.webp';
  arena.className='cb2d-arena hs2d-arena hs2d-unified-arena hollow-live-room stage-'+s.id;
- arena.dataset.hollowRoom=s.id;arena.dataset.bespokeBattlefield='1';
- const renderer=window.CellboundLivingScenes||window.CellboundAshenLiveScenes;
+ arena.dataset.hollowRoom=s.id;arena.dataset.bespokeBattlefield='1';arena.dataset.directRoomArt='1';
+ delete arena.dataset.liveSceneReady;
+ // Hollow Sanctum now uses the supplied room artwork directly. Remove any stale
+ // generated living-scene canvas so it cannot cover or replace the authored map.
+ arena.querySelectorAll('.cb2d-live-scene,.hs-live-scene').forEach(node=>node.remove());
  if(environment){
   environment.innerHTML='<img class="hs2d-room-art" src="'+src+'" alt="" decoding="async" draggable="false">';
   const art=environment.querySelector('.hs2d-room-art');
   art?.addEventListener('error',()=>{
    if(art.dataset.hsFallback==='1')return;
-   art.dataset.hsFallback='1';
-   art.src=fallback;
-   renderer?.mount?.(arena,{src:fallback,profile:room.liveProfile||'hollow-gallery'})
+   art.dataset.hsFallback='1';art.src=fallback
   },{once:true})
  }
- renderer?.mount?.(arena,{src,profile:room.liveProfile||'hollow-gallery'});
  const tag=$('#hs2dRoom');if(tag)tag.innerHTML='<em>'+esc(room.zone||'HOLLOW SANCTUM')+'</em><b>'+esc(s.title)+'</b><small>'+esc(room.description||'The sanctum closes around the party.')+'</small>';
  hsEnsureFade()
 }
