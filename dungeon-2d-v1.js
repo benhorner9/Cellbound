@@ -1397,18 +1397,19 @@ function combatBattleTopbarMarkup(){
   '<div class="cb2d-ground-legend"><span class="danger">RED · MOVE / AVOID</span><span class="spawn">AMBER · SPAWN / PRIORITY</span><span class="aggro">GOLD · AGGRO</span></div>'+
  '</div>'
 }
-function combatShellMarkup(options={}){
- const Viewer=window.CellboundCombatViewer;if(!Viewer?.markup)throw new Error('Canonical combat viewer unavailable');
+function mountCombatViewer(rootEl,options={}){
+ const Viewer=window.CellboundCombatViewer;if(!Viewer?.mount)throw new Error('Canonical combat viewer unavailable');
  const title=options.title||'Combat',header=options.header||'CELLBOUND · LIVE COMBAT',route=options.route||'',partyLabel=options.partyLabel||('PARTY · '+party().length+' CHARACTERS'),kind=options.kind||'combat';
  const command=options.commandMarkup||combatCommandDeckMarkup(options.potionAttribute||'data-combat-potion',options.planTitle||'Command the party',options.planCopy||'Combat Reborn runs the fight. Use Command Center orders to change priorities and tactics.');
- return Viewer.markup({
+ return Viewer.mount(rootEl,{
   header,title,routeMarkup:route,partyLabel,
-  partyMarkup:hudPartyRows(),partyRowsId:'cb2dRows',petsId:'cb2dPetRows',
+  partyMarkup:hudPartyRows(),partyRowsId:'cb2dRows',petsId:'cb2dPetRows',partySize:party().length,
   battleTopbarMarkup:combatBattleTopbarMarkup(),
   arenaMarkup:combatArenaMarkup(kind,options.arenaClass||''),
   metersMarkup:combatMetersMarkup(),
   commandsMarkup:command,commandGrouped:true,
-  shellClass:options.shellClass||'',
+  battleClass:options.battleClass||options.shellClass||'',
+  theme:options.theme||'default',
   speedAttribute:'data-speed',closeAttribute:'data-close',
   titleId:'cb2dTitle',routeId:'cb2dRoute',endId:'cb2dEnd'
  })
@@ -1416,14 +1417,15 @@ function combatShellMarkup(options={}){
 function drawViewer(){
  preloadAshenBattlefields();
  const s=currentStageDef(),r=root();r.hidden=false;r.classList.add('cbcombat-backdrop');
- r.innerHTML=combatShellMarkup({
+ mountCombatViewer(r,{
   header:'THE ASHEN VAULT · LIVE DUNGEON',
   title:s.title,
   route:route(),
   partyLabel:'PARTY · ILVL '+ilvl(),
   kind:s.kind,
   potionAttribute:'data-combat-potion',
-  shellClass:'ashen-vault-combat cbcombat-standard-hud',
+  theme:'ashen',
+  battleClass:'ashen-vault-combat',
   commandMarkup:ashenCommandDeckMarkup('data-combat-potion'),
   commandPlacement:'right'
  });
@@ -2992,7 +2994,7 @@ function sharedRows(){return hudPartyRows()}
 function sharedViewerShell(options={}){
  const s=currentStageDef(),r=root();r.hidden=false;r.classList.add('cbcombat-backdrop');document.body.classList.add('cb2d-open');
  const header=options.header||'CELLBOUND · LIVE COMBAT',route=sharedRouteMarkup(options.route,options.currentId||s?.id);
- r.innerHTML=combatShellMarkup({
+ mountCombatViewer(r,{
   header,
   title:options.title||s?.title||'Combat',
   route,
@@ -3000,7 +3002,8 @@ function sharedViewerShell(options={}){
   kind:String(s?.kind||'combat'),
   arenaClass:options.arenaClass||'',
   potionAttribute:'data-shared-potion',
-  shellClass:((options.shellClass||'')+' cbcombat-standard-hud').trim(),
+  theme:options.theme||'shared',
+  battleClass:options.shellClass||'',
   commandMarkup:ashenCommandDeckMarkup('data-shared-potion'),
   commandPlacement:'right',
   planTitle:options.planTitle||'Command the party',
