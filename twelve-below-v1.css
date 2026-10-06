@@ -1116,3 +1116,26 @@ body.tb-open{overflow:hidden}
 @media(prefers-reduced-motion:reduce){
   .tb-floor-seal,.tb-ground:before,.tb-soul-braziers i,.tb-grave-fog,.tb-spectral-pass i,.tb-unit.enemy>i{animation:none!important}
 }
+
+
+/* Twelve Below keeps event information inside the canonical route without
+   changing the shared combat shell geometry. */
+.cbcombat-shell[data-combat-theme="twelve"] .cbcombat-route{
+  display:block!important;
+  padding:0!important
+}
+.cbcombat-shell[data-combat-theme="twelve"] .cbcombat-route .tb-scorebar{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  min-height:43px;
+  background:#081115
+}
+.cbcombat-shell[data-combat-theme="twelve"] .cbcombat-route .tb-tomb-track{
+  display:grid;
+  grid-template-columns:repeat(12,minmax(54px,1fr));
+  gap:5px;
+  padding:7px 12px;
+  overflow-x:auto;
+  border-bottom:1px solid rgba(255,255,255,.045);
+  background:#071013
+}
