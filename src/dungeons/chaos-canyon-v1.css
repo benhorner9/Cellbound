@@ -958,7 +958,7 @@
 .cc2d-arena.canyon-live-room.room-entering .cc2d-room{opacity:.72;transition:opacity .25s ease}
 .cc2d-arena.canyon-live-room .cc2d-unit{
   transform:translate(-50%,-50%);transform-origin:50% 76%;
-  filter:drop-shadow(0 7px 5px rgba(0,0,0,.54)) drop-shadow(0 0 4px rgba(94,226,112,.12));
+  filter:drop-shadow(0 7px 5px rgba(0,0,0,.54));
 }
 .cc2d-arena.canyon-live-room .cc2d-unit:before{
   content:"";position:absolute;left:50%;top:72%;width:42px;height:15px;border-radius:50%;transform:translate(-50%,-50%);
@@ -1024,3 +1024,6 @@
 .cc2d-unified-shell .cb2d-controls button.recommended b{color:#f2d68f}
 @media(max-width:900px){.cc2d-unified-shell .cb2d-controls{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){.cc2d-unified-shell .cb2d-controls{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Match the canonical Ashen character grounding: no artificial halo/disc below units. */
+.cc2d-arena.canyon-live-room .cc2d-unit:before{display:none!important}
