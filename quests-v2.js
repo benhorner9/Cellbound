@@ -192,9 +192,9 @@ function dialogueRoot(){
  return root
 }
 const QUEST_COMIC_ART={
- ashen:['./assets/dungeons/ashen-vault.webp','./assets/bosses/ashen-vault-vaultheart.webp','./assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp','./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp'],
- hollow:['./assets/hollow-sanctum/rooms/gallery-void-v2.webp','./assets/bosses/hollow-sanctum-bound-choir.webp','./assets/comics/tutorial/moonlit_ruins_and_the_glowing_wardstone.webp','./assets/comics/tutorial/warden_s_descent_into_the_ruins.webp'],
- zeltira:['./assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp','./assets/comics/tutorial/the_quartermaster_s_choice.webp','./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp','./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp'],
+ ashen:['./assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp','./assets/quests/ashes-east-road-cinder-cart.webp','./assets/dungeons/ashen-vault.webp','./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp'],
+ hollow:['./assets/comics/tutorial/moonlit_ruins_and_the_glowing_wardstone.webp','./assets/hollow-sanctum/rooms/gallery-void-v2.webp','./assets/comics/tutorial/warden_s_descent_into_the_ruins.webp','./assets/bosses/hollow-sanctum-bound-choir.webp'],
+ zeltira:['./assets/comics/tutorial/wardens_at_the_twilight_city_gate.webp','./assets/comics/tutorial/dawn_briefing_on_the_ash_road.webp','./assets/comics/tutorial/the_quartermaster_s_choice.webp','./assets/comics/tutorial/dawn_departure_from_zeltira_citadel.webp'],
  trial:['./assets/comics/tutorial/arcane_overload_a_warden_s_lesson.webp','./assets/comics/tutorial/the_warden_and_the_arcane_diadem.webp','./assets/comics/tutorial/arcane_forge_beneath_the_twilight_citadel.webp','./assets/comics/tutorial/moonlit_ruins_and_the_glowing_wardstone.webp']
 };
 function questComicArtSet(title,speaker){
