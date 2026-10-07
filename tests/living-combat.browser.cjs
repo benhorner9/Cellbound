@@ -78,7 +78,7 @@ const isWebkit=process.env.CELLBOUND_TEST_ENGINE==='webkit';
   window.testParty=Array.from({length:10},(_,i)=>({id:'raid-'+Math.floor(i/5)+'-'+i,name:['Aegis','Mercy','Ember','Fletch','Shade'][i%5]+(i<5?' A':' B'),class:['Warrior','Priest','Mage','Hunter','Rogue'][i%5],spec:['Protection','Holy','Arcane','Marksman','Assassination'][i%5],role:i%5===0?'tank':i%5===1?'healer':'dps',level:15,power:12,itemLevel:30}));
   window.CellboundGame={ready:true,getState:()=>({roster:window.testParty}),getPartyCharacters:()=>window.testParty,characterItemLevel:()=>30,isUnavailable:()=>false};
  });
- for(const f of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js','character-portraits-v1.js','combat-portraits-v1.js','combat-reborn-v1.js','dungeon-2d-v1.js'])await page.addScriptTag({content:fs.readFileSync(path.join(root,'dist',f),'utf8')});
+ for(const f of ['item-atlas-v2.js','item-visuals-v2.js','character-rig-v1.js','character-portraits-v1.js','combat-portraits-v1.js','combat-reborn-v1.js','combat-viewer-v1.js','combat-hud-standard-v1.js','dungeon-2d-v1.js'])await page.addScriptTag({content:fs.readFileSync(path.join(root,'dist',f),'utf8')});
  await page.evaluate(()=>{
   const encounter={id:'manor-butler',title:'The Butler',kind:'boss',level:15,enemies:[{name:'The Butler',classification:'boss'}],enemyHealth:10000,mechanics:[]};
   const result=CellboundCombatReborn.simulate({party:window.testParty,encounter,seed:'browser-raid',maxDurationMs:12000});

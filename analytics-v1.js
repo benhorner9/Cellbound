@@ -46,12 +46,22 @@ async function send(payload){
     properties:cleanProperties(payload.properties)
   };
   if(row.event_key)sentKeys.add(row.event_key);
-  const {error}=await db.from('analytics_events').insert(row);
-  if(error&&String(error.code||'')!=='23505'){
+  const {data,error}=await db.rpc('cellbound_record_analytics_event',{
+    p_event_name:row.event_name,
+    p_event_key:row.event_key,
+    p_session_id:row.session_id,
+    p_channel:row.channel,
+    p_build_id:row.build_id,
+    p_build_number:row.build_number,
+    p_page_view:row.page_view,
+    p_properties:row.properties
+  });
+  if(error){
     if(row.event_key)sentKeys.delete(row.event_key);
-    console.warn('Cellbound analytics event skipped',row.event_name,error)
+    console.warn('Cellbound analytics event skipped',row.event_name,error);
+    return null
   }
-  return error?null:row
+  return data===false?null:row
 }
 function track(eventName,properties={},options={}){
   const name=String(eventName||'').trim().toLowerCase();

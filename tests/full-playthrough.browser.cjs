@@ -480,7 +480,7 @@ async function coreGameplayLoopPlaythrough(browser){
   await page.close();
 }
 
-async function betaClassAndNullGatePlaythrough(browser){
+async function classAvailabilityAndNullGatePlaythrough(browser){
   const seed=matureState();
   seed.progression.manorRaidCleared=false;
   seed.progression.nullComplexUnlocked=false;
@@ -490,8 +490,8 @@ async function betaClassAndNullGatePlaythrough(browser){
   const errors=await mount(page,seed);
   await page.waitForFunction(()=>document.querySelector('#cellboundOnboarding')?.hidden===true,{},{timeout:10000,polling:50});
 
-  assert.deepEqual(await page.evaluate(()=>CellboundGame.betaPlayableClasses),['Warrior','Paladin','Hunter','Rogue','Mage'],'beta exposes exactly the five selected classes');
-  assert.equal(await page.evaluate(()=>['Priest','Druid','Shaman','Warlock','Monk','Death Knight','Demon Hunter','Evoker'].every(x=>!CellboundGame.isBetaClassPlayable(x))),true,'all other classes are unavailable during beta');
+  assert.deepEqual(await page.evaluate(()=>CellboundGame.betaPlayableClasses),await page.evaluate(()=>Object.keys(CellboundGame.classes)),'staging balance pass exposes the full class roster');
+  assert.equal(await page.evaluate(()=>Object.keys(CellboundGame.classes).every(x=>CellboundGame.isBetaClassPlayable(x))),true,'every class is playable during the staging balance pass');
 
   const oldSaveLock=await page.evaluate(()=>{
     const s=CellboundGame.getState(),healer=s.roster.find(c=>c.id==='heal');
@@ -501,8 +501,8 @@ async function betaClassAndNullGatePlaythrough(browser){
     healer.class=original.class;healer.spec=original.spec;CellboundGame.renderAll();
     return result;
   });
-  assert.equal(oldSaveLock.playable,false,'future-class characters from old saves remain preserved but unavailable');
-  assert.equal(oldSaveLock.partyCount,4,'an unavailable old-save class cannot participate in the active five');
+  assert.equal(oldSaveLock.playable,true,'all-class staging balance pass keeps legacy class characters playable');
+  assert.equal(oldSaveLock.partyCount,5,'all-class staging balance pass preserves a complete active party');
 
   const contentRuntime=await page.evaluate(()=>({
     hollow:typeof window.CellboundHollowSanctum,
@@ -549,7 +549,7 @@ async function breakGamePlaythrough(browser){
     };
   });
   assert.equal(repaired.unique,true,'corrupted saves cannot duplicate the same adventurer across party slots');
-  assert.equal(repaired.oldPriestInParty,false,'locked beta classes are removed from corrupted active-party state');
+  assert.equal(repaired.oldPriestInParty,true,'playable classes remain in the repaired active-party state');
   assert.equal(repaired.badQty,1,'negative Bank stack quantities are repaired to one');
   assert.equal(repaired.shards,0,'negative material balances are clamped to zero');
   assert.equal(repaired.hollowroot,3,'fractional material balances are normalised');
@@ -708,7 +708,7 @@ async function ownerDungeonGeneratorPlaythrough(browser){
     await persistenceReloadPlaythrough(browser);
     await mainGamePlaythrough(browser);
     await coreGameplayLoopPlaythrough(browser);
-    await betaClassAndNullGatePlaythrough(browser);
+    await classAvailabilityAndNullGatePlaythrough(browser);
     await breakGamePlaythrough(browser);
     await ownerDungeonGeneratorPlaythrough(browser);
     console.log('Full Cellbound browser playthrough passed: creator, save/reload recovery, onboarding persistence, five-class beta lock, all dungeon content retained, Manor-gated Null Complex, adversarial corrupted-save repair, rapid-action protection, Cell Shock recovery, dungeon refresh/resume, party, quest/dungeon shell, loot Bank, dismantle, crafting completion, equipment progression, harder-content unlock, activities, raids, market, PvP/social shell, beta support intake, admin triage/recovery, beta analytics, owner dungeon generator and responsive layouts.');
