@@ -88,5 +88,5 @@ function render(o){
  root.querySelector('[data-forge-close]')?.addEventListener('click',o.onClose);
  root.querySelectorAll('[data-slot]').forEach(b=>b.onclick=()=>o.onSlot?.(Number(b.dataset.slot)));
 }
-window.CellboundCharacterForge=Object.freeze({version:VERSION,render,appearance,lore:LORE});
+window.CellboundCharacterForge=Object.freeze({version:VERSION,render,appearance,modelSVG,lore:LORE});
 })();
