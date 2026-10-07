@@ -399,3 +399,49 @@ body{
  .main>.topbar:after{left:10px;right:10px}
  .view>.section-intro,.view .panel,#overview .home-destination{border-radius:7px!important}
 }
+
+
+/* Desktop/tablet sidebar behaviour v1 */
+@media(min-width:721px){
+  .app-shell{
+    align-items:start;
+  }
+  .sidebar{
+    position:sticky!important;
+    top:0!important;
+    align-self:start;
+    height:100dvh!important;
+    max-height:100dvh!important;
+    min-height:0!important;
+    overflow:hidden!important;
+  }
+  .sidebar .brand,
+  .sidebar .season-card,
+  .sidebar .sign-out{
+    flex:0 0 auto;
+  }
+  .sidebar .primary-nav{
+    flex:1 1 auto!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(var(--cbw-gold),.24) transparent;
+    padding-right:4px;
+  }
+  .sidebar .primary-nav::-webkit-scrollbar{
+    width:5px;
+  }
+  .sidebar .primary-nav::-webkit-scrollbar-track{
+    background:transparent;
+  }
+  .sidebar .primary-nav::-webkit-scrollbar-thumb{
+    background:rgba(var(--cbw-gold),.20);
+    border-radius:999px;
+  }
+  .sidebar .primary-nav::-webkit-scrollbar-thumb:hover{
+    background:rgba(var(--cbw-gold),.34);
+  }
+}
